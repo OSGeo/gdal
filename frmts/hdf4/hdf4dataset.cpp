@@ -30,6 +30,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.26  2003/11/07 15:48:01  dron
+ * TranslateHDF4Attributes() improved, added GetDataTypeSize().
+ *
  * Revision 1.25  2003/11/05 17:05:02  warmerda
  * Fixed type casting problem (bug 431).
  *
@@ -225,19 +228,51 @@ char **HDF4Dataset::GetMetadata( const char *pszDomain )
 /*	Pointer to filled buffer will be returned.			*/
 /************************************************************************/
 
-char *SPrintArray(signed char *piaDataArray, int nValues, char * pszDelimiter)
+static char *SPrintArray( GDALDataType eDataType, void *paDataArray,
+                          int nValues, char * pszDelimiter )
 {
-    char *pszString, *pszField;
-    int i, iFieldSize, iStringSize;
-    
-    iFieldSize = 4 + strlen( pszDelimiter );
+    char        *pszString, *pszField;
+    int         i, iFieldSize, iStringSize;
+
+    iFieldSize = 32 + strlen( pszDelimiter );
     pszField = (char *)CPLMalloc( iFieldSize + 1 );
     iStringSize = nValues * iFieldSize + 1;
     pszString = (char *)CPLMalloc( iStringSize );
     memset( pszString, 0, iStringSize );
     for ( i = 0; i < nValues; i++ )
     {
-        sprintf( pszField, "%d%s", piaDataArray[i], (i < nValues - 1)?pszDelimiter:"" );
+        switch ( eDataType )
+        {
+            case GDT_Byte:
+                sprintf( pszField, "%d%s", ((GByte *)paDataArray)[i],
+                     (i < nValues - 1)?pszDelimiter:"" );
+                break;
+            case GDT_UInt16:
+                sprintf( pszField, "%d%s", ((GUInt16 *)paDataArray)[i],
+                     (i < nValues - 1)?pszDelimiter:"" );
+                break;
+            case GDT_Int16:
+            default:
+                sprintf( pszField, "%d%s", ((GInt16 *)paDataArray)[i],
+                     (i < nValues - 1)?pszDelimiter:"" );
+                break;
+            case GDT_UInt32:
+                sprintf( pszField, "%d%s", ((GUInt32 *)paDataArray)[i],
+                     (i < nValues - 1)?pszDelimiter:"" );
+                break;
+            case GDT_Int32:
+                sprintf( pszField, "%d%s", ((GInt32 *)paDataArray)[i],
+                     (i < nValues - 1)?pszDelimiter:"" );
+                break;
+            case GDT_Float32:
+                sprintf( pszField, "%.7g%s", ((float *)paDataArray)[i],
+                     (i < nValues - 1)?pszDelimiter:"" );
+                break;
+            case GDT_Float64:
+                sprintf( pszField, "%.15g%s", ((double *)paDataArray)[i],
+                     (i < nValues - 1)?pszDelimiter:"" );
+                break;
+        }
         strcat( pszString, pszField );
     }
     
@@ -245,184 +280,37 @@ char *SPrintArray(signed char *piaDataArray, int nValues, char * pszDelimiter)
     return pszString;
 }
 
-char *SPrintArray(GByte *piaDataArray, int nValues, char * pszDelimiter)
+/************************************************************************/
+/*              Translate HDF4 data type into GDAL data type            */
+/************************************************************************/
+GDALDataType HDF4Dataset::GetDataType( int32 iNumType )
 {
-    char *pszString, *pszField;
-    int i, iFieldSize, iStringSize;
-    
-    iFieldSize = 4 + strlen( pszDelimiter );
-    pszField = (char *)CPLMalloc( iFieldSize + 1 );
-    iStringSize = nValues * iFieldSize + 1;
-    pszString = (char *)CPLMalloc( iStringSize );
-    memset( pszString, 0, iStringSize );
-    for ( i = 0; i < nValues; i++ )
+    switch (iNumType)
     {
-        sprintf( pszField, "%d%s", piaDataArray[i], (i < nValues - 1)?pszDelimiter:"" );
-        strcat( pszString, pszField );
+        case DFNT_CHAR8: // The same as DFNT_CHAR
+        case DFNT_UCHAR8: // The same as DFNT_UCHAR
+        case DFNT_INT8:
+        case DFNT_UINT8:
+            return GDT_Byte;
+        case DFNT_INT16:
+            return GDT_Int16;
+        case DFNT_UINT16:
+            return GDT_UInt16;
+        case DFNT_INT32:
+            return GDT_Int32;
+        case DFNT_UINT32:
+            return GDT_UInt32;
+        case DFNT_INT64:
+            return GDT_Unknown;
+        case DFNT_UINT64:
+            return GDT_Unknown;
+        case DFNT_FLOAT32:
+            return GDT_Float32;
+        case DFNT_FLOAT64:
+            return GDT_Float64;
+        default:
+            return GDT_Unknown;
     }
-    
-    CPLFree( pszField );
-    return pszString;
-}
-
-char *SPrintArray(GInt16 *piaDataArray, int nValues, char * pszDelimiter)
-{
-    char *pszString, *pszField;
-    int i, iFieldSize, iStringSize;
-    
-    iFieldSize = 6 + strlen( pszDelimiter );
-    pszField = (char *)CPLMalloc( iFieldSize + 1 );
-    iStringSize = nValues * iFieldSize + 1;
-    pszString = (char *)CPLMalloc( iStringSize );
-    memset( pszString, 0, iStringSize );
-    for ( i = 0; i < nValues; i++ )
-    {
-        sprintf( pszField, "%d%s", piaDataArray[i], (i < nValues - 1)?pszDelimiter:"" );
-        strcat( pszString, pszField );
-    }
-    
-    CPLFree( pszField );
-    return pszString;
-}
-
-char *SPrintArray(GUInt16 *piaDataArray, int nValues, char * pszDelimiter)
-{
-    char *pszString, *pszField;
-    int i, iFieldSize, iStringSize;
-    
-    iFieldSize = 6 + strlen( pszDelimiter );
-    pszField = (char *)CPLMalloc( iFieldSize + 1 );
-    iStringSize = nValues * iFieldSize + 1;
-    pszString = (char *)CPLMalloc( iStringSize );
-    memset( pszString, 0, iStringSize );
-    for ( i = 0; i < nValues; i++ )
-    {
-        sprintf( pszField, "%d%s", piaDataArray[i], (i < nValues - 1)?pszDelimiter:"" );
-        strcat( pszString, pszField );
-    }
-    
-    CPLFree( pszField );
-    return pszString;
-}
-
-char *SPrintArray(GInt32 *piaDataArray, int nValues, char * pszDelimiter)
-{
-    char *pszString, *pszField;
-    int i, iFieldSize, iStringSize;
-    
-    iFieldSize = 11 + strlen( pszDelimiter );
-    pszField = (char *)CPLMalloc( iFieldSize + 1 );
-    iStringSize = nValues * iFieldSize + 1;
-    pszString = (char *)CPLMalloc( iStringSize );
-    memset( pszString, 0, iStringSize );
-    for ( i = 0; i < nValues; i++ )
-    {
-        sprintf( pszField, "%d%s", piaDataArray[i], (i < nValues - 1)?pszDelimiter:"" );
-        strcat( pszString, pszField );
-    }
-    
-    CPLFree( pszField );
-    return pszString;
-}
-
-char *SPrintArray(GUInt32 *piaDataArray, int nValues, char * pszDelimiter)
-{
-    char *pszString, *pszField;
-    int i, iFieldSize, iStringSize;
-    
-    iFieldSize = 11 + strlen( pszDelimiter );
-    pszField = (char *)CPLMalloc( iFieldSize + 1 );
-    iStringSize = nValues * iFieldSize + 1;
-    pszString = (char *)CPLMalloc( iStringSize );
-    memset( pszString, 0, iStringSize );
-    for ( i = 0; i < nValues; i++ )
-    {
-        sprintf( pszField, "%d%s", piaDataArray[i], (i < nValues - 1)?pszDelimiter:"" );
-        strcat( pszString, pszField );
-    }
-    
-    CPLFree( pszField );
-    return pszString;
-}
-
-char *SPrintArray(GIntBig *piaDataArray, int nValues, char * pszDelimiter)
-{
-    char *pszString, *pszField;
-    int i, iFieldSize, iStringSize;
-    
-    iFieldSize = 21 + strlen( pszDelimiter );
-    pszField = (char *)CPLMalloc( iFieldSize + 1 );
-    iStringSize = nValues * iFieldSize + 1;
-    pszString = (char *)CPLMalloc( iStringSize );
-    memset( pszString, 0, iStringSize );
-    for ( i = 0; i < nValues; i++ )
-    {
-        sprintf( pszField, "%Ld%s", piaDataArray[i], (i < nValues - 1)?pszDelimiter:"" );
-        strcat( pszString, pszField );
-    }
-    
-    CPLFree( pszField );
-    return pszString;
-}
-
-char *SPrintArray(GUIntBig *piaDataArray, int nValues, char * pszDelimiter)
-{
-    char *pszString, *pszField;
-    int i, iFieldSize, iStringSize;
-    
-    iFieldSize = 21 + strlen( pszDelimiter );
-    pszField = (char *)CPLMalloc( iFieldSize + 1 );
-    iStringSize = nValues * iFieldSize + 1;
-    pszString = (char *)CPLMalloc( iStringSize );
-    memset( pszString, 0, iStringSize );
-    for ( i = 0; i < nValues; i++ )
-    {
-        sprintf( pszField, "%Ld%s", piaDataArray[i], (i < nValues - 1)?pszDelimiter:"" );
-        strcat( pszString, pszField );
-    }
-    
-    CPLFree( pszField );
-    return pszString;
-}
-
-char *SPrintArray(float *pfaDataArray, int nValues, char * pszDelimiter)
-{
-    char *pszString, *pszField;
-    int i, iFieldSize, iStringSize;
-    
-    iFieldSize = 13 + strlen( pszDelimiter );
-    pszField = (char *)CPLMalloc( iFieldSize + 1 );
-    iStringSize = nValues * iFieldSize + 1;
-    pszString = (char *)CPLMalloc( iStringSize );
-    memset( pszString, 0, iStringSize );
-    for ( i = 0; i < nValues; i++ )
-    {
-        sprintf( pszField, "%.7g%s", pfaDataArray[i], (i < nValues - 1)?pszDelimiter:"" );
-        strcat( pszString, pszField );
-    }
-    
-    CPLFree( pszField );
-    return pszString;
-}
-
-char *SPrintArray(double *pdfaDataArray, int nValues, char * pszDelimiter)
-{
-    char *pszString, *pszField;
-    int i, iFieldSize, iStringSize;
-    
-    iFieldSize = 22 + strlen( pszDelimiter );
-    pszField = (char *)CPLMalloc( iFieldSize + 1 );
-    iStringSize = nValues * iFieldSize + 1;
-    pszString = (char *)CPLMalloc( iStringSize );
-    memset( pszString, 0, iStringSize );
-    for ( i = 0; i < nValues; i++ )
-    {
-        sprintf( pszField, "%.15g%s", pdfaDataArray[i], (i < nValues - 1)?pszDelimiter:"" );
-        strcat( pszString, pszField );
-    }
-    
-    CPLFree( pszField );
-    return pszString;
 }
 
 /************************************************************************/
@@ -434,47 +322,63 @@ const char *HDF4Dataset::GetDataTypeName( int32 iNumType )
     switch (iNumType)
     {
         case DFNT_CHAR8: // The same as DFNT_CHAR
-	return "8-bit character";
-	break;
+	    return "8-bit character";
 	case DFNT_UCHAR8: // The same as DFNT_UCHAR
-	return "8-bit unsigned character";
-	break;
+	    return "8-bit unsigned character";
         case DFNT_INT8:
-	return "8-bit integer";
-	break;
+	    return "8-bit integer";
         case DFNT_UINT8:
-	return "8-bit unsigned integer";
-	break;
+	    return "8-bit unsigned integer";
         case DFNT_INT16:
-	return "16-bit integer";
-	break;
+	    return "16-bit integer";
         case DFNT_UINT16:
-	return "16-bit unsigned integer";
-	break;
+	    return "16-bit unsigned integer";
         case DFNT_INT32:
-	return "32-bit integer";
-	break;
+	    return "32-bit integer";
         case DFNT_UINT32:
-	return "32-bit unsigned integer";
-	break;
+	    return "32-bit unsigned integer";
         case DFNT_INT64:
-	return "64-bit integer";
-	break;
+	    return "64-bit integer";
         case DFNT_UINT64:
-	return "64-bit unsigned integer";
-	break;
+	    return "64-bit unsigned integer";
         case DFNT_FLOAT32:
-	return "32-bit floating-point";
-	break;
+	    return "32-bit floating-point";
         case DFNT_FLOAT64:
-	return "64-bit floating-point";
-	break;
+	    return "64-bit floating-point";
 	default:
-	return "unknown type";
-	break;
+	    return "unknown type";
     }
 }
-	
+
+/************************************************************************/
+/*		Return the size of data type in bytes           	*/
+/************************************************************************/
+
+int HDF4Dataset::GetDataTypeSize( int32 iNumType )
+{
+    switch (iNumType)
+    {
+        case DFNT_CHAR8: // The same as DFNT_CHAR
+	case DFNT_UCHAR8: // The same as DFNT_UCHAR
+        case DFNT_INT8:
+        case DFNT_UINT8:
+	    return 1;
+        case DFNT_INT16:
+        case DFNT_UINT16:
+	    return 2;
+        case DFNT_INT32:
+        case DFNT_UINT32:
+        case DFNT_FLOAT32:
+	    return 4;
+        case DFNT_INT64:
+        case DFNT_UINT64:
+        case DFNT_FLOAT64:
+	    return 8;
+	default:
+	    return 0;
+    }
+}
+
 /************************************************************************/
 /*         Tokenize HDF-EOS attributes.                                 */
 /************************************************************************/
@@ -711,113 +615,37 @@ char** HDF4Dataset::TranslateHDF4Attributes( int32 iHandle,
     int32 iAttribute, char *pszAttrName, int32 iNumType, int32 nValues,
     char **papszMetadata )
 {
-    int8	*pbData = NULL;
+    void	*pData = NULL;
     char	*pszTemp = NULL;
     
-    // Allocate a buffer to hold the attribute data.
-    switch (iNumType)
+/* -------------------------------------------------------------------- */
+/*     Allocate a buffer to hold the attribute data.                    */
+/* -------------------------------------------------------------------- */
+    if ( iNumType == DFNT_CHAR8 || iNumType == DFNT_UCHAR8 )
+        pData = CPLMalloc( (nValues + 1) * GetDataTypeSize(iNumType) );
+    else
+        pData = CPLMalloc( nValues * GetDataTypeSize(iNumType) );
+
+/* -------------------------------------------------------------------- */
+/*     Read the attribute data.                                         */
+/* -------------------------------------------------------------------- */
+    SDreadattr( iHandle, iAttribute, pData );
+    if ( iNumType == DFNT_CHAR8 || iNumType == DFNT_UCHAR8 )
     {
-        case DFNT_CHAR8: // The same as DFNT_CHAR
-	pbData = (int8 *)CPLMalloc( (nValues + 1) * sizeof(char8) );
-	pbData[nValues] = '\0';
-	break;
-	case DFNT_UCHAR8: // The same as DFNT_UCHAR
-	pbData = (int8 *)CPLMalloc( (nValues + 1) * sizeof(uchar8) );
-	pbData[nValues] = '\0';
-	break;
-        case DFNT_INT8:
-	pbData = (int8 *)CPLMalloc( nValues * sizeof(int8) );
-	break;
-        case DFNT_UINT8:
-	pbData = (int8 *)CPLMalloc( nValues * sizeof(uint8) );
-	break;
-        case DFNT_INT16:
-	pbData = (int8 *)CPLMalloc( nValues * sizeof(int16) );
-	break;
-        case DFNT_UINT16:
-	pbData = (int8 *)CPLMalloc( nValues * sizeof(uint16) );
-	break;
-        case DFNT_INT32:
-	pbData = (int8 *)CPLMalloc( nValues * sizeof(int32) );
-	break;
-        case DFNT_UINT32:
-	pbData = (int8 *)CPLMalloc( nValues * sizeof(uint32) );
-	break;
-        case DFNT_INT64:
-	pbData = (int8 *)CPLMalloc( nValues * 8 );
-	break;
-        case DFNT_UINT64:
-	pbData = (int8 *)CPLMalloc( nValues * 8 );
-	break;
-        case DFNT_FLOAT32:
-	pbData = (int8 *)CPLMalloc( nValues * sizeof(float) );
-	break;
-        case DFNT_FLOAT64:
-	pbData = (int8 *)CPLMalloc( nValues * sizeof(float64) );
-	break;
-	default:
-	break;
+        ((char *)pData)[nValues] = '\0';
+        papszMetadata = CSLAddNameValue( papszMetadata, pszAttrName, 
+                                         (const char *) pData );
     }
-    // Read the file attribute data.
-    SDreadattr( iHandle, iAttribute, pbData );
-    switch (iNumType)
+    else
     {
-        case DFNT_CHAR8: // The same as DFNT_CHAR
-        papszMetadata = CSLAddNameValue( papszMetadata, pszAttrName, 
-                                         (const char *) pbData );
-	break;
-	case DFNT_UCHAR8: // The same as DFNT_UCHAR
-        papszMetadata = CSLAddNameValue( papszMetadata, pszAttrName, 
-                                         (const char *) pbData );
-	break;
-        case DFNT_INT8:
-	pszTemp = SPrintArray( (signed char *)pbData, nValues, ", " );
+        pszTemp = SPrintArray( GetDataType(iNumType), pData, nValues, ", " );
         papszMetadata = CSLAddNameValue( papszMetadata, pszAttrName, pszTemp );
-	break;
-        case DFNT_UINT8:
-	pszTemp = SPrintArray( (GByte *)pbData, nValues, ", " );
-        papszMetadata = CSLAddNameValue( papszMetadata, pszAttrName, pszTemp );
-	break;
-        case DFNT_INT16:
-	pszTemp = SPrintArray( (GInt16 *)pbData, nValues, ", " );
-        papszMetadata = CSLAddNameValue( papszMetadata, pszAttrName, pszTemp );
-	break;
-        case DFNT_UINT16:
-	pszTemp = SPrintArray( (GUInt16 *)pbData, nValues, ", " );
-        papszMetadata = CSLAddNameValue( papszMetadata, pszAttrName, pszTemp );
-	break;
-        case DFNT_INT32:
-	pszTemp = SPrintArray( (GInt32 *)pbData, nValues, ", " );
-        papszMetadata = CSLAddNameValue( papszMetadata, pszAttrName, pszTemp );
-	break;
-        case DFNT_UINT32:
-	pszTemp = SPrintArray( (GUInt32 *)pbData, nValues, ", " );
-        papszMetadata = CSLAddNameValue( papszMetadata, pszAttrName, pszTemp );
-	break;
-        case DFNT_INT64:
-	pszTemp = SPrintArray( (GIntBig *)pbData, nValues, ", " );
-        papszMetadata = CSLAddNameValue( papszMetadata, pszAttrName, pszTemp );
-	break;
-        case DFNT_UINT64:
-	pszTemp = SPrintArray( (GUIntBig *)pbData, nValues, ", " );
-        papszMetadata = CSLAddNameValue( papszMetadata, pszAttrName, pszTemp );
-	break;
-        case DFNT_FLOAT32:
-	pszTemp = SPrintArray((float *)pbData, nValues, ", ");
-        papszMetadata = CSLAddNameValue( papszMetadata, pszAttrName, pszTemp );
-	break;
-        case DFNT_FLOAT64:
-	pszTemp = SPrintArray((double *)pbData, nValues, ", ");
-        papszMetadata = CSLAddNameValue( papszMetadata, pszAttrName, pszTemp );
-	break;
-	default:
-	break;
+        if ( pszTemp )
+	    CPLFree( pszTemp );
     }
     
-    if ( pszTemp )
-	CPLFree( pszTemp );
-    if ( pbData )
-	CPLFree( pbData );
+    if ( pData )
+	CPLFree( pData );
 
     return papszMetadata;
 }
@@ -1005,7 +833,12 @@ CPLErr HDF4Dataset::ReadGlobalAttributes( int32 iHandler )
              EQUALN( szAttrName, "badpixelinformation", 19 ) ||
 	     EQUALN( szAttrName, "product_summary", 15 ) ||
 	     EQUALN( szAttrName, "dem_specific", 12 ) ||
+	     EQUALN( szAttrName, "bts_specific", 12 ) ||
+	     EQUALN( szAttrName, "etse_specific", 13 ) ||
+	     EQUALN( szAttrName, "dst_specific", 12 ) ||
 	     EQUALN( szAttrName, "acv_specific", 12 ) ||
+	     EQUALN( szAttrName, "act_specific", 12 ) ||
+	     EQUALN( szAttrName, "etst_specific", 13 ) ||
 	     EQUALN( szAttrName, "level_1_carryover", 17 ) )
         {
             papszGlobalMetadata = TranslateHDF4EOSAttributes( iHandler,
@@ -1106,9 +939,9 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
         }
         else if ( EQUAL( pszValue, "AST_04" )
                   || EQUAL( pszValue, "AST_05" )
-                  || EQUAL( pszValue, "AST_06V" )
-                  || EQUAL( pszValue, "AST_06S" )
-                  || EQUAL( pszValue, "AST_06T" )
+                  || EQUAL( pszValue, "AST_06VD" )
+                  || EQUAL( pszValue, "AST_06SD" )
+                  || EQUAL( pszValue, "AST_06TD" )
                   || EQUAL( pszValue, "AST_07" )
                   || EQUAL( pszValue, "AST_08" )
                   || EQUAL( pszValue, "AST_09" )
@@ -1229,7 +1062,9 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
              && !EQUALN( szName, "ImageData", 9 ) )
 		continue;
 	else if ( (poDS->iDataType == AST14DEM || poDS->iDataType == ASTER_L2 )
-                  && !EQUALN( szName, "Band", 4 ) )
+                  && !EQUALN( szName, "Band", 4 )
+                  && !EQUALN( szName, "QA_DataPlane", 12 )
+                  && !EQUALN( szName, "KineticTemperature", 18 ) )
 		continue;
 	else if ( (poDS->iDataType == MODIS_L1B ) && !EQUALN( szName, "EV_", 3 ) )
         {
@@ -1405,7 +1240,7 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
               CPLSPrintf( "HDF4_SDS:%s:\"%s\":%d", poDS->pszDataType,
 			  poOpenInfo->pszFilename, i) );
         sprintf( szTemp, "SUBDATASET_%d_DESC", nCount + 1 );
-	pszString = SPrintArray( (GInt32 *)aiDimSizes, iRank, "x" );
+	pszString = SPrintArray( GDT_UInt32, aiDimSizes, iRank, "x" );
         poDS->papszSubDatasets = CSLSetNameValue(poDS->papszSubDatasets, szTemp,
 	    CPLSPrintf( "[%s] %s (%s)", pszString,
 		        pszName, poDS->GetDataTypeName(iNumType)) );
@@ -1441,7 +1276,7 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->papszSubDatasets = CSLSetNameValue(poDS->papszSubDatasets, szTemp,
               CPLSPrintf( "HDF4_GR:UNKNOWN:\"%s\":%d", poOpenInfo->pszFilename, i));
         sprintf( szTemp, "SUBDATASET_%d_DESC", nCount + 1 );
-	pszString = SPrintArray( (GInt32 *)aiDimSizes, 2, "x" );
+	pszString = SPrintArray( GDT_UInt32, aiDimSizes, 2, "x" );
         poDS->papszSubDatasets = CSLSetNameValue(poDS->papszSubDatasets, szTemp,
               CPLSPrintf( "[%sx%d] %s (%s)", pszString,
 		          iRank, szName, poDS->GetDataTypeName(iNumType)) );
