@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  1999/11/04 21:10:30  warmerda
+ * Added CreateField() method.
+ *
  * Revision 1.3  1999/07/27 00:51:39  warmerda
  * added GetInfo(), fixed args for other methods
  *
@@ -106,3 +109,15 @@ const char *OGRLayer::GetInfo( const char * pszTag )
     return NULL;
 }
 
+/************************************************************************/
+/*                            CreateField()                             */
+/************************************************************************/
+
+OGRErr OGRLayer::CreateField( OGRFieldDefn * poField, int bApproxOK )
+
+{
+    CPLError( CE_Failure, CPLE_NotSupported,
+              "CreateField() not supported by this layer.\n" );
+              
+    return CE_Failure;
+}
