@@ -29,6 +29,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2004/10/05 19:30:44  fwarmerdam
+ * Added bug fix for a "full" shape record at the end of the .RT2 file.
+ * http://bugzilla.remotesensing.org/show_bug.cgi?id=628
+ *
  * Revision 1.19  2004/02/12 16:00:03  warmerda
  * failure to open shapefile is no longer an error, just a warning
  *
@@ -469,8 +473,9 @@ OGRFeature *TigerCompleteChain::GetFeature( int nRecordId )
     if( VSIFRead( achRecord, psRT1Info->nRecordLength, 1, fpPrimary ) != 1 )
     {
         CPLError( CE_Failure, CPLE_FileIO,
-                  "Failed to read record %d of %s1",
-                  nRecordId, pszModule );
+                  "Failed to read %d bytes of record %d of %s1 at offset %d",
+                  psRT1Info->nRecordLength, nRecordId, pszModule,
+                  (nRecordId+nRT1RecOffset) * nRecordLength );
         return NULL;
     }
 
@@ -566,6 +571,8 @@ int TigerCompleteChain::AddShapePoints( int nTLID, int nRecordId,
 
     for( ; TRUE; nShapeRecId++ )
     {
+        int  nBytesRead = 0;
+
         if( VSIFSeek( fpShape, (nShapeRecId-1) * nShapeRecLen,
                       SEEK_SET ) != 0 )
         {
@@ -575,11 +582,24 @@ int TigerCompleteChain::AddShapePoints( int nTLID, int nRecordId,
             return FALSE;
         }
 
-        if( VSIFRead( achShapeRec, psRT2Info->nRecordLength, 1, fpShape ) != 1 )
+        nBytesRead = VSIFRead( achShapeRec, 1, psRT2Info->nRecordLength, 
+                               fpShape );
+
+        /* 
+        ** Handle case where the last record in the file is full.  We will
+        ** try to read another record but not find it.  We require that we
+        ** have found at least one shape record for this case though. 
+        */
+        if( nBytesRead <= 0 && VSIFEof( fpShape ) 
+            && poLine->getNumPoints() > 0 )
+            break;
+
+        if( nBytesRead != psRT2Info->nRecordLength )
         {
             CPLError( CE_Failure, CPLE_FileIO,
-                      "Failed to read record %d of %s2",
-                      nShapeRecId-1, pszModule );
+                      "Failed to read %d bytes of record %d of %s2 at offset %d",
+                      psRT2Info->nRecordLength, nShapeRecId, pszModule,
+                      (nShapeRecId-1) * nShapeRecLen );
             return FALSE;
         }
 
