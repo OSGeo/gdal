@@ -29,6 +29,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.19  2002/12/30 15:07:45  dron
+ * SetProjCS() call removed.
+ *
  * Revision 1.18  2002/12/19 19:20:20  dron
  * Wrong comments removed.
  *
@@ -941,7 +944,6 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 	     EQUAL( CSLFetchNameValue( poDS->papszGlobalMetadata,
 		CPLSPrintf("MPMETHOD%s", &poDS->szName[9]) ), "UTM" ) )
 	{
-            oSRS.SetProjCS( "UTM" );
 	    oSRS.SetWellKnownGeogCS( "WGS84" );
             
 	    poDS->ReadCoordinates( CSLFetchNameValue( 
@@ -990,7 +992,6 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 	}
 	break;
 	case AST14DEM:
-            oSRS.SetProjCS( "UTM" );
 	    oSRS.SetWellKnownGeogCS( "WGS84" );
             
 	    poDS->ReadCoordinates( CSLFetchNameValue( 
