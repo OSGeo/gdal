@@ -35,6 +35,10 @@
  * of the GDAL core, but dependent on the Common Portability Library.
  *
  * $Log$
+ * Revision 1.30  2004/02/04 16:51:24  warmerda
+ * We now need to hardcode the size of the #Bin_Function# since we don't know
+ * the size of the BaseData in the HFASetMetadata() call.
+ *
  * Revision 1.29  2003/05/21 15:35:05  warmerda
  * cleanup type conversion warnings
  *
@@ -1903,6 +1907,9 @@ CPLErr HFASetMetadata( HFAHandle hHFA, int nBand, char **papszMD )
     poEdsc_BinFunction =
         new HFAEntry( hHFA, "#Bin_Function#", "Edsc_BinFunction",
                       poEdsc_Table );
+
+    // Because of the BaseData we have to hardcode the size. 
+    poEdsc_BinFunction->MakeData( 30 );
 
     poEdsc_BinFunction->SetIntField( "numBins", 1 );
     poEdsc_BinFunction->SetStringField( "binFunction", "direct" );
