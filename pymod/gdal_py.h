@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2003/09/26 15:58:58  warmerda
+ * keep track if we used internal defs
+ *
  * Revision 1.2  2000/12/23 02:11:50  warmerda
  * moved Python.h include outside CPL_C_START brackets
  *
@@ -60,8 +63,12 @@ PyObject *py_NumPyArrayToGDALFilename( PyObject *, PyObject * );
 
 #ifndef HAVE_NUMPY
 
-enum PyArray_TYPES { PyArray_CHAR, PyArray_UBYTE, PyArray_SBYTE,
-			PyArray_SHORT, PyArray_INT, PyArray_LONG,
+#define NUMPY_DEFS_WRONG
+
+enum PyArray_TYPES {    PyArray_CHAR, PyArray_UBYTE, PyArray_SBYTE,
+		        PyArray_SHORT, PyArray_USHORT, 
+		        PyArray_INT, PyArray_UINT, 
+			PyArray_LONG,
 			PyArray_FLOAT, PyArray_DOUBLE, 
 			PyArray_CFLOAT, PyArray_CDOUBLE,
 			PyArray_OBJECT,
