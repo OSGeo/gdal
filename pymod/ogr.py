@@ -28,6 +28,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.7  2003/03/03 05:16:11  warmerda
+# added DeleteLayer and DeleteDataSource methods
+#
 # Revision 1.6  2003/03/03 02:46:05  warmerda
 # added ogr.Driver class
 #
@@ -150,11 +153,14 @@ class Driver:
             return DataSource( ds_o )
 
     def CreateDataSource( self, filename, options = None ):
-        ds_o = _gdal.OGR_Dr_CreateDataSource( self._o, filename, None )
+        ds_o = _gdal.OGR_Dr_CreateDataSource( self._o, filename, "NULL" )
         if ds_o is None:
             return None
         else:
             return DataSource( ds_o )
+
+    def DeleteDataSource( self, filename ):
+        return _gdal.OGR_Dr_DeleteDataSource( self._o, filename )
 
 #############################################################################
 # OGRDataSource
@@ -189,6 +195,9 @@ class DataSource:
             return Layer( l_obj )
         else:
             return None
+
+    def DeleteLayer( self, iLayer ):
+        return _gdal.OGR_DS_DeleteLayer( self._o, iLayer )
 
     def GetLayerByName(self,name):
         layer_count = self.GetLayerCount()

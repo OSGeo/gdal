@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.56  2003/03/03 05:15:42  warmerda
+ * added DeleteLayer and DeleteDataSource methods
+ *
  * Revision 1.55  2003/03/02 17:13:35  warmerda
  * Fixed CPLPopErrorHandler.
  *
@@ -2559,6 +2562,7 @@ void OGR_DS_Destroy( OGRDataSourceH );
 const char  *OGR_DS_GetName( OGRDataSourceH );
 int     OGR_DS_GetLayerCount( OGRDataSourceH );
 OGRLayerH  OGR_DS_GetLayer( OGRDataSourceH, int );
+int     OGR_DS_DeleteLayer( OGRDataSourceH, int );
 int     OGR_DS_TestCapability( OGRDataSourceH, const char * );
 OGRLayerH  OGR_DS_ExecuteSQL( OGRDataSourceH, const char *, OGRGeometryH, 
                               const char * );
@@ -2625,6 +2629,7 @@ OGRDataSourceH  OGR_Dr_Open( OGRSFDriverH, const char *, int );
 int     OGR_Dr_TestCapability( OGRSFDriverH, const char * );
 OGRDataSourceH  OGR_Dr_CreateDataSource( OGRSFDriverH, const char *,
                                                 char ** );
+int     OGR_Dr_DeleteDataSource( OGRSFDriverH, const char * );
 
 /* OGRSFDriverRegistrar */
 
