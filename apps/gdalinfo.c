@@ -26,6 +26,9 @@
  * serves as an early test harnass.
  *
  * $Log$
+ * Revision 1.35  2004/08/09 14:39:07  warmerda
+ * added shared list dump
+ *
  * Revision 1.34  2004/04/29 13:44:25  warmerda
  * added raster category and scale/offset support
  *
@@ -131,6 +134,7 @@
 #include "gdal.h"
 #include "ogr_srs_api.h"
 #include "cpl_string.h"
+#include "cpl_conv.h"
 
 CPL_CVSID("$Id$");
 
@@ -486,6 +490,8 @@ int main( int argc, char ** argv )
     GDALDumpOpenDatasets( stderr );
 
     GDALDestroyDriverManager();
+
+    CPLDumpSharedList( NULL );
 
     exit( 0 );
 }
