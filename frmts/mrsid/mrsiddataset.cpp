@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2004/03/19 12:19:48  dron
+ * Few improvements; several memory leaks fixed.
+ *
  * Revision 1.7  2004/02/08 14:29:43  dron
  * Support for DSDK v.3.2.x.
  *
@@ -92,11 +95,6 @@ class MrSIDDataset : public GDALDataset
 {
     friend class MrSIDRasterBand;
 
-#ifdef MRSID_DSDK_VERSION_31
-    FileSpecification   *poFilename;
-#else
-    LTFileSpec          *poFilename;
-#endif
     MrSIDImageFile      *poMrSidFile;
     MrSIDNavigator      *poMrSidNav;
     Pixel               *poDefaultPixel;
@@ -117,11 +115,12 @@ class MrSIDDataset : public GDALDataset
     char                *pszProjection;
     GTIFDefn            *psDefn;
 
+    int                 bIsOverview;
     int		        nOverviewCount;
     MrSIDDataset        **papoOverviewDS;
 
     CPLErr              OpenZoomLevel( int iZoom );
-    char                *SerializeMetadataElement( const MetadataElement *poElem );
+    char                *SerializeMetadataElement( const MetadataElement *poElement );
     int                 GetMetadataElement( const char *pszKey, void *pValue );
     void                FetchProjParms();
     void                GetGTIFDefn();
@@ -459,7 +458,6 @@ GDALRasterBand *MrSIDRasterBand::GetOverview( int i )
 
 MrSIDDataset::MrSIDDataset()
 {
-    poFilename = NULL;
     poMrSidFile = NULL;
     poMrSidNav = NULL;
     poDefaultPixel = NULL;
@@ -478,6 +476,7 @@ MrSIDDataset::MrSIDDataset()
     adfGeoTransform[5] = 1.0;
     psDefn = NULL;
     nCurrentZoomLevel = 0;
+    bIsOverview = FALSE;
     nOverviewCount = 0;
     papoOverviewDS = NULL;
 
@@ -490,11 +489,9 @@ MrSIDDataset::MrSIDDataset()
 MrSIDDataset::~MrSIDDataset()
 {
     // Delete MrSID file object only in base dataset object and don't delete
-    // it in overviews. Filename object in overviews will be empty.
-    if ( poMrSidFile && poFilename )
+    // it in overviews.
+    if ( poMrSidFile && !bIsOverview )
         delete poMrSidFile;
-    if ( poFilename )
-        delete poFilename;
     if ( poMrSidNav )
         delete poMrSidNav;
     if ( poDefaultPixel )
@@ -545,13 +542,13 @@ const char *MrSIDDataset::GetProjectionRef()
 /*                      SerializeMetadataElement()                      */
 /************************************************************************/
 
-char *MrSIDDataset::SerializeMetadataElement( const MetadataElement *poElem )
+char *MrSIDDataset::SerializeMetadataElement( const MetadataElement *poElement )
 {
 #ifdef MRSID_DSDK_VERSION_31
-    IntDimension oDim = poElem->getDimensions();
+    IntDimension oDim = poElement->getDimensions();
 #else
-    IntDimension oDim( poElem->getDimensionWidth(),
-                       poElem->getDimensionHeight() );
+    IntDimension oDim( poElement->getDimensionWidth(),
+                       poElement->getDimensionHeight() );
 #endif
     int         i, j, iLength;
     const char  *pszTemp = NULL;
@@ -560,26 +557,26 @@ char *MrSIDDataset::SerializeMetadataElement( const MetadataElement *poElem )
     for ( i = 0; i < oDim.height; i++ )
         for ( j = 0; j < oDim.width; j++ )
         {
-            switch( poElem->type() )
+            switch( poElement->type() )
             {
                 case MetadataValue::BYTE:
                 case MetadataValue::SHORT:
                 case MetadataValue::LONG:
-                    pszTemp = CPLSPrintf( "%lu", (unsigned long)(*poElem)[i][j] );
+                    pszTemp = CPLSPrintf( "%lu", (unsigned long)(*poElement)[i][j] );
                 break;
                 case MetadataValue::SBYTE:
                 case MetadataValue::SSHORT:
                 case MetadataValue::SLONG:
-                    pszTemp = CPLSPrintf( "%ld", (long)(*poElem)[i][j] );
+                    pszTemp = CPLSPrintf( "%ld", (long)(*poElement)[i][j] );
                 break;
                 case MetadataValue::FLOAT:
-                    pszTemp = CPLSPrintf( "%f", (float)(*poElem)[i][j] );
+                    pszTemp = CPLSPrintf( "%f", (float)(*poElement)[i][j] );
                 break;
                 case MetadataValue::DOUBLE:
-                    pszTemp = CPLSPrintf( "%lf", (double)(*poElem)[i][j] );
+                    pszTemp = CPLSPrintf( "%lf", (double)(*poElement)[i][j] );
                 break;
                 case MetadataValue::ASCII:
-                    pszTemp = (const char*)poElem->getMetadataValue();
+                    pszTemp = (const char*)poElement->getMetadataValue();
                 break;
                 default:
                     pszTemp = "";
@@ -606,60 +603,59 @@ int MrSIDDataset::GetMetadataElement( const char *pszKey, void *pValue )
     if ( !poMrSidMetadata->keyExists( pszKey ) )
         return FALSE;
 
-    MetadataElement *poElem =
-        new MetadataElement( poMrSidMetadata->getValue( pszKey ) );
+    MetadataElement oElement( poMrSidMetadata->getValue( pszKey ) );
 
-    /* XXX: return FALSE if we have more than one element in metadata record*/
-    if ( poElem->getDimensionality() != MetadataElement::SINGLE_VALUE )
+    /* XXX: return FALSE if we have more than one element in metadata record */
+    if ( oElement.getDimensionality() != MetadataElement::SINGLE_VALUE )
         return FALSE;
 
-    switch( poElem->type() )
+    switch( oElement.type() )
     {
         case MetadataValue::BYTE:
         {
-            unsigned char iValue = (*poElem)[0][0];
+            unsigned char iValue = oElement[0][0];
             memcpy( pValue, &iValue, sizeof( iValue ) );
         }
         break;
         case MetadataValue::SHORT:
         {
-            unsigned short iValue = (*poElem)[0][0];
+            unsigned short iValue = oElement[0][0];
             memcpy( pValue, &iValue, sizeof( iValue ) );
         }
         break;
         case MetadataValue::LONG:
         {
-            unsigned long iValue = (*poElem)[0][0];
+            unsigned long iValue = oElement[0][0];
             memcpy( pValue, &iValue, sizeof( iValue ) );
         }
         break;
         case MetadataValue::SBYTE:
         {
-            char iValue = (*poElem)[0][0];
+            char iValue = oElement[0][0];
             memcpy( pValue, &iValue, sizeof( iValue ) );
         }
         break;
         case MetadataValue::SSHORT:
         {
-            signed short iValue = (*poElem)[0][0];
+            signed short iValue = oElement[0][0];
             memcpy( pValue, &iValue, sizeof( iValue ) );
         }
         break;
         case MetadataValue::SLONG:
         {
-            signed long iValue = (*poElem)[0][0];
+            signed long iValue = oElement[0][0];
             memcpy( pValue, &iValue, sizeof( iValue ) );
         }
         break;
         case MetadataValue::FLOAT:
         {
-            float fValue = (*poElem)[0][0];
+            float fValue = oElement[0][0];
             memcpy( pValue, &fValue, sizeof( fValue ) );
         }
         break;
         case MetadataValue::DOUBLE:
         {
-            double dfValue = (*poElem)[0][0];
+            double dfValue = oElement[0][0];
             memcpy( pValue, &dfValue, sizeof( dfValue ) );
         }
         break;
@@ -772,7 +768,7 @@ static int EPSGProjMethodToCTProjMethod( int nEPSG )
 /*      identifiers for all the EPSG supported projections.  As the     */
 /*      trf_method.csv table grows with new projections, this code      */
 /*      will need to be updated.                                        */
-/*      Explicitly copied from geo_normalize.c of the GeoTIFF package   */
+/*      Explicitly copied from geo_normalize.c of the GeoTIFF package.  */
 /************************************************************************/
 
 static int SetGTParmIds( int nCTProjection, 
@@ -895,13 +891,14 @@ static int SetGTParmIds( int nCTProjection,
 /*      Fetch the projection parameters for a particular projection     */
 /*      from MrSID metadata, and fill the GTIFDefn structure out        */
 /*      with them.                                                      */
+/*      Explicitly copied from geo_normalize.c of the GeoTIFF package.  */
 /************************************************************************/
 
 void MrSIDDataset::FetchProjParms()
 {
-    double	dfNatOriginLong, dfNatOriginLat, dfRectGridAngle;
-    double	dfFalseEasting, dfFalseNorthing, dfNatOriginScale;
-    double	dfStdParallel1, dfStdParallel2, dfAzimuth;
+    double dfNatOriginLong = 0.0, dfNatOriginLat = 0.0, dfRectGridAngle = 0.0;
+    double dfFalseEasting = 0.0, dfFalseNorthing = 0.0, dfNatOriginScale = 1.0;
+    double dfStdParallel1 = 0.0, dfStdParallel2 = 0.0, dfAzimuth = 0.0;
 
 /* -------------------------------------------------------------------- */
 /*      Get the false easting, and northing if available.               */
@@ -1557,6 +1554,8 @@ void MrSIDDataset::GetGTIFDefn()
             psDefn->ProjParm[6] = 10000000.0;
     }
 
+    if ( pszProjection )
+        CPLFree( pszProjection );
     pszProjection = GTIFGetOGISDefn( psDefn );
 }
 
@@ -1684,12 +1683,11 @@ GDALDataset *MrSIDDataset::Open( GDALOpenInfo * poOpenInfo )
     try
     {
 #ifdef MRSID_DSDK_VERSION_31
-        poDS->poFilename = new FileSpecification( poOpenInfo->pszFilename );
-        poDS->poMrSidFile = new MrSIDImageFile( *poDS->poFilename );
+        FileSpecification oFilename( poOpenInfo->pszFilename );
+        poDS->poMrSidFile = new MrSIDImageFile( oFilename );
 #else
-        poDS->poFilename = new LTFileSpec( poOpenInfo->pszFilename );
-        poDS->poMrSidFile = new MrSIDImageFile( *poDS->poFilename,
-                                                (LTCallbacks *)0 );
+        LTFileSpec      oFilename( poOpenInfo->pszFilename );
+        poDS->poMrSidFile = new MrSIDImageFile( oFilename, (LTCallbacks *)0 );
 #endif
     }
     catch ( ... )
@@ -1751,10 +1749,9 @@ GDALDataset *MrSIDDataset::Open( GDALOpenInfo * poOpenInfo )
         for ( i = 0; i < poDS->nOverviewCount; i++ )
         {
             poDS->papoOverviewDS[i] = new MrSIDDataset();
-
             poDS->papoOverviewDS[i]->poMrSidFile = poDS->poMrSidFile;
-
             poDS->papoOverviewDS[i]->OpenZoomLevel( i + 1 );
+            poDS->papoOverviewDS[i]->bIsOverview = TRUE;
             
         }
     }
