@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.114  2005/04/05 19:57:58  fwarmerdam
+ * added STDCALL on PyProgressProxy
+ *
  * Revision 1.113  2005/03/01 17:38:10  fwarmerdam
  * fixed pszSrcWKT in GDALCreateAndReprojectImage
  *
@@ -838,7 +841,8 @@ typedef struct {
 /*                          PyProgressProxy()                           */
 /************************************************************************/
 
-int PyProgressProxy( double dfComplete, const char *pszMessage, void *pData )
+int CPL_STDCALL
+PyProgressProxy( double dfComplete, const char *pszMessage, void *pData )
 
 {
     PyProgressData *psInfo = (PyProgressData *) pData;
