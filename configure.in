@@ -948,7 +948,8 @@ else
       if test -r "$with_mrsid/include/mrsid_writers/MG3ImageWriter.h" ; then
         AC_MSG_RESULT([found MrSID ESDK version 4.0.x.])
 	MRSID_FLAGS="-DMRSID_ESDK_VERSION_40 $MRSID_FLAGS"
-	LIBS="-lltiesdk $LIBS"
+	MRSID_INCLUDE="-I$with_mrsid/include/mrsid_writers -I$with_mrsid/include/j2k_writers $MRSID_INCLUDE"
+	LIBS="-L$with_mrsid/3rd-party/lib/Release -lcryptopp -lltiesdk $LIBS"
       fi
 
     else
