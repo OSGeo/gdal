@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.29  2001/11/02 19:24:42  warmerda
+ * avoid warnings
+ *
  * Revision 1.28  2001/11/01 16:47:03  warmerda
  * use factories to destroy features and geometry
  *
@@ -748,7 +751,7 @@ HRESULT CSFCommand::ExtractSpatialQuery( DBPARAMS *pParams )
     
     CPLDebug( "OGR_OLEDB", "%d parameter bindings found.", cBindings );
 
-    for( iBinding = 0; iBinding < cBindings; iBinding++ )
+    for( iBinding = 0; iBinding < (int) cBindings; iBinding++ )
     {
         CPLDebug( "OGR_OLEDB", 
                   "iOrdinal=%d,obValue=%d,obLength=%d,cbMaxLen=%d,wType=%d",
@@ -1030,7 +1033,6 @@ HRESULT CSFRowset::Execute(DBPARAMS * pParams, LONG* pcRowsAffected)
     USES_CONVERSION;
 	
     // Get the appropriate Data Source
-    int         nOGRIndex;
     OGRDataSource *poDS;
     char	*pszCommand;
     char        *pszLayerName;
