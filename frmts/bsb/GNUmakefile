@@ -25,9 +25,6 @@ bsb2raw:	bsb2raw.o bsb_read.o
 
 install-obj:	$(foreach file,$(OBJ),../o/$(file))
 
-../o/%.o:	%.o
-	cp $*.o ../o
-
 dist:	
 	rm -rf $(DISTDIR)
 	mkdir $(DISTDIR)

@@ -18,12 +18,6 @@ install-obj:	$(foreach file,$(OBJ),../o/$(file))
 %.o:    %.cpp
 	$(CXX) -c $(GDAL_INCLUDE) $(CXXFLAGS) $*.cpp -o $*.o
 
-
-../o/%.o:	%.o
-	cp $*.o ../o
-
-
-
 dted_test:	dted_test.o $(OBJ)
 	$(CXX) -o dted_test dted_test.o dted_api.o dted_create.o dted_ptstream.o \
 		 ../../port/cpl.a -lm 

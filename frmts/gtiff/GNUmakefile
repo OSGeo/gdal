@@ -53,6 +53,3 @@ lib-geotiff:
 
 install-obj:	$(SUBLIBS) \
 		$(foreach file,$(OBJ),../o/$(file))
-
-../o/%.o:	%.o
-	cp $*.o ../o

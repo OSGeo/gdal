@@ -58,9 +58,6 @@ test_img2tif:	img2tif
 
 install-obj:	$(foreach file,$(OBJ),../o/$(file))
 
-../o/%.o:	%.o
-	cp $*.o ../o
-
 img2tif-dist:
 	rm -rf img2tif_dist
 	mkdir img2tif_dist

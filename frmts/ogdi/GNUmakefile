@@ -16,6 +16,3 @@ clean:
 	$(CXX) -c $(GDAL_INCLUDE) $(CXXFLAGS) $(OGDI_INCLUDE) $*.cpp -o $*.o
 
 install-obj:	$(foreach file,$(OBJ),../o/$(file))
-
-../o/%.o:	%.o
-	cp $*.o ../o

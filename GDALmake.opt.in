@@ -209,3 +209,12 @@ CONFIG_LIBS_INS	=	$(foreach LF,$(GDAL_LIBS),$(INST_LIB)/$(notdir $(LF)))\
 			 $(LIBS)
 EXE_DEP_LIBS	=	$(GDALA_DEP)
 endif
+
+
+#
+# generic library rules
+#
+
+../o/%.o:	%.o
+	cp $*.o ../o
+
