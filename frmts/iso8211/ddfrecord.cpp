@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2003/11/12 21:21:55  warmerda
+ * fixed to include field terminators when creating fields
+ *
  * Revision 1.20  2003/09/17 21:11:07  warmerda
  * try to create new default field instance when needed
  *
@@ -259,6 +262,7 @@ int DDFRecord::Write()
 
     szLeader[20] = (char) ('0' + _sizeFieldLength);
     szLeader[21] = (char) ('0' + _sizeFieldPos);
+    szLeader[22] = '0';
     szLeader[23] = (char) ('0' + _sizeFieldTag);
 
     /* notdef: lots of stuff missing */
@@ -1516,6 +1520,13 @@ int DDFRecord::CreateDefaultFieldInstance( DDFField *poField,
     pachRawData = poField->GetFieldDefn()->GetDefaultValue( &nRawSize );
     if( pachRawData == NULL )
         return FALSE;
+
+    if( iIndexWithinField == 0 )
+    {
+        nRawSize++;
+        pachRawData = (char *) CPLRealloc(pachRawData,nRawSize);
+        pachRawData[nRawSize-1] = DDF_FIELD_TERMINATOR;
+    }
 
     nSuccess = SetFieldRaw( poField, iIndexWithinField, pachRawData, nRawSize);
 
