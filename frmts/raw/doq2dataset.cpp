@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2001/09/19 20:56:19  warmerda
+ * handle multiple BAND_CONTENT fields, improve metadata handling
+ *
  * Revision 1.9  2001/07/18 04:51:57  warmerda
  * added CPL_CVSID
  *
@@ -97,7 +100,6 @@ class DOQ2Dataset : public RawDataset
     double	dfXPixelSize, dfYPixelSize;
 
     char	*pszProjection;
-    char        *pszDescription;
 
   public:
     		DOQ2Dataset();
@@ -105,7 +107,6 @@ class DOQ2Dataset : public RawDataset
 
     CPLErr 	GetGeoTransform( double * padfTransform );
     const char  *GetProjectionRef( void );
-    const char  *GetDescriptionRef( void );
     
     static GDALDataset *Open( GDALOpenInfo * );
 };
@@ -117,7 +118,6 @@ class DOQ2Dataset : public RawDataset
 DOQ2Dataset::DOQ2Dataset()
 {
     pszProjection = NULL;
-    pszDescription = NULL;
     fpImage = NULL;
 }
 
@@ -129,7 +129,6 @@ DOQ2Dataset::~DOQ2Dataset()
 
 {
     CPLFree( pszProjection );
-    CPLFree( pszDescription );
     if( fpImage != NULL )
         VSIFClose( fpImage );
 }
@@ -162,16 +161,6 @@ const char *DOQ2Dataset::GetProjectionRef()
 }
 
 /************************************************************************/
-/*                        GetDescriptionString()                         */
-/************************************************************************/
-
-const char *DOQ2Dataset::GetDescriptionRef()
-
-{
-    return pszDescription;
-}
-
-/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
@@ -195,142 +184,153 @@ GDALDataset *DOQ2Dataset::Open( GDALOpenInfo * poOpenInfo )
     char *pszQuadquad = NULL;
     char *pszState = NULL;
     int	        nZone=0, nProjType=0;
-    int		nSkipBytes=0, nBytesPerLine, i;
+    int		nSkipBytes=0, nBytesPerLine, i, nBandCount = 0;
     double      dfULXMap=0.0, dfULYMap = 0.0;
     double      dfXDim=0.0, dfYDim=0.0;
+    char	**papszMetadata = NULL;
 
     pszLine = CPLReadLine( poOpenInfo->fp );
     if(! EQUALN(pszLine,"BEGIN_USGS_DOQ_HEADER", 21) )
-      return NULL;
+        return NULL;
 
     while( (pszLine = CPLReadLine( poOpenInfo->fp )) )
-      {
+    {
 	char    **papszTokens;
 
         nLineCount++;
 
 	if( EQUAL(pszLine,"END_USGS_DOQ_HEADER") )
-	  break;
+            break;
 
 	papszTokens = CSLTokenizeString( pszLine );
         if( CSLCount( papszTokens ) < 2 )
-	  {
+        {
             CSLDestroy( papszTokens );
             break;
-	  }
+        }
         
         if( EQUAL(papszTokens[0],"SAMPLES_AND_LINES") )
-	  {
+        {
             nWidth = atoi(papszTokens[1]);
             nHeight = atoi(papszTokens[2]);
-	  }
-        if( EQUAL(papszTokens[0],"QUADRANGLE_NAME") )
-	  {
-	    if (strchr(pszLine, '"') != NULL) {
-	      char *ptr;
-	      pszQuadname = CPLStrdup(strchr(pszLine, '"')+1);
-	      ptr = strrchr(pszQuadname, '"');
-	      if (ptr) *ptr = '\0';
-	    } else {
-	      pszQuadname = CPLStrdup(papszTokens[1]);
-	    }
-	  }
-        if( EQUAL(papszTokens[0],"QUADRANT") )
-	  {
-	    pszQuadquad = CPLStrdup(papszTokens[1]);
-	  }
-        if( EQUAL(papszTokens[0],"STATE") )
-	  {
-	    pszState = CPLStrdup(papszTokens[1]);
-	  }
+        }
         else if( EQUAL(papszTokens[0],"BYTE_COUNT") )
-	  {
+        {
             nSkipBytes = atoi(papszTokens[1]);
-	  }
+        }
         else if( EQUAL(papszTokens[0],"XY_ORIGIN") )
-	  {
+        {
             dfULXMap = atof(papszTokens[1]);
             dfULYMap = atof(papszTokens[2]);
-	  }
+        }
         else if( EQUAL(papszTokens[0],"HORIZONTAL_RESOLUTION") )
         {
             dfXDim = dfYDim = atof(papszTokens[1]);
         }
 	else if( EQUAL(papszTokens[0],"BAND_ORGANIZATION") )
         {
-	  if( EQUAL(papszTokens[1],"SINGLE FILE") )
-	    nBandStorage = 1;
-	  if( EQUAL(papszTokens[1],"BSQ") )
-	    nBandStorage = 1;
-	  if( EQUAL(papszTokens[1],"BIL") )
-	    nBandStorage = 1;
-	  if( EQUAL(papszTokens[1],"BIP") )
-	    nBandStorage = 4;
+            if( EQUAL(papszTokens[1],"SINGLE FILE") )
+                nBandStorage = 1;
+            if( EQUAL(papszTokens[1],"BSQ") )
+                nBandStorage = 1;
+            if( EQUAL(papszTokens[1],"BIL") )
+                nBandStorage = 1;
+            if( EQUAL(papszTokens[1],"BIP") )
+                nBandStorage = 4;
 	}
 	else if( EQUAL(papszTokens[0],"BAND_CONTENT") )
         {
-	  if( EQUAL(papszTokens[1],"BLACK&WHITE") )
-	    nBandTypes = 1;
-	  else if( EQUAL(papszTokens[1],"COLOR") )
-	    nBandTypes = 5;
-	  else if( EQUAL(papszTokens[1],"RGB") )
-	    nBandTypes = 5;
+            if( EQUAL(papszTokens[1],"BLACK&WHITE") )
+                nBandTypes = 1;
+            else if( EQUAL(papszTokens[1],"COLOR") )
+                nBandTypes = 5;
+            else if( EQUAL(papszTokens[1],"RGB") )
+                nBandTypes = 5;
+            else if( EQUAL(papszTokens[1],"RED") )
+                nBandTypes = 5;
+            else if( EQUAL(papszTokens[1],"GREEN") )
+                nBandTypes = 5;
+            else if( EQUAL(papszTokens[1],"BLUE") )
+                nBandTypes = 5;
+
+            nBandCount++;
         }
         else if( EQUAL(papszTokens[0],"BITS_PER_PIXEL") )
-	  {
+        {
 	    nBytesPerPixel = (atoi(papszTokens[1]) / 8);
-	  }
+        }
         else if( EQUAL(papszTokens[0],"HORIZONTAL_COORDINATE_SYSTEM") )
-	  {
+        {
 	    if( EQUAL(papszTokens[1],"UTM") ) 
-	      nProjType = 1;
+                nProjType = 1;
 	    else if( EQUAL(papszTokens[1],"SPCS") ) 
-	      nProjType = 2;
+                nProjType = 2;
 	    else if( EQUAL(papszTokens[1],"GEOGRAPHIC") ) 
-	      nProjType = 0;
-	  }
+                nProjType = 0;
+        }
         else if( EQUAL(papszTokens[0],"COORDINATE_ZONE") )
-	    {
-	      nZone = atoi(papszTokens[1]);
-	    }
+        {
+            nZone = atoi(papszTokens[1]);
+        }
         else if( EQUAL(papszTokens[0],"HORIZONTAL_UNITS") )
-	  {
+        {
 	    if( EQUAL(papszTokens[1],"METERS") )
-	      pszUnits = "UNIT[\"metre\",1]";
+                pszUnits = "UNIT[\"metre\",1]";
 	    else if( EQUAL(papszTokens[1],"FEET") )
-	      pszUnits = "UNIT[\"US survey foot\",0.304800609601219]";
-	  }
+                pszUnits = "UNIT[\"US survey foot\",0.304800609601219]";
+        }
         else if( EQUAL(papszTokens[0],"HORIZONTAL_DATUM") )
-	  {
+        {
 	    if( EQUAL(papszTokens[1],"NAD27") ) 
-	      {
+            {
 		pszDatumLong = NAD27_DATUM;
 		pszDatumShort = "NAD 27";
-	      }
+            }
 	    else if( EQUAL(papszTokens[1],"WGS72") ) 
-	      {
+            {
 		pszDatumLong = WGS72_DATUM;
 		pszDatumShort = "WGS 72";
-	      }
+            }
 	    else if( EQUAL(papszTokens[1],"WGS84") ) 
-	      {
+            {
 		pszDatumLong = WGS84_DATUM;
 		pszDatumShort = "WGS 84";
-	      }
+            }
 	    else if( EQUAL(papszTokens[1],"NAD83") ) 
-	      {
+            {
 		pszDatumLong = NAD83_DATUM;
 		pszDatumShort = "NAD 83";
-	      }
+            }
 	    else
-	      {
+            {
 		pszDatumLong = "DATUM[\"unknown\"]";
 		pszDatumShort = "unknown";
-	      }
-	  }        
+            }
+        }    
+        else
+        {
+            /* we want to generically capture all the other metadata */
+        
+            char szMetaDataValue[81];
+            int  iToken;
+
+            szMetaDataValue[0] = '\0';
+            for( iToken = 1; papszTokens[iToken] != NULL; iToken++ )
+            {
+                if( EQUAL(papszTokens[iToken],"*") )
+                    continue;
+
+                if( iToken > 1 )
+                    strcat( szMetaDataValue, " " );
+                strcat( szMetaDataValue, papszTokens[iToken] );
+            }
+            papszMetadata = CSLAddNameValue( papszMetadata, 
+                                             papszTokens[0], 
+                                             szMetaDataValue );
+        }
 	
         CSLDestroy( papszTokens );
-      }
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Do these values look coherent for a DOQ file?  It would be      */
@@ -340,7 +340,10 @@ GDALDataset *DOQ2Dataset::Open( GDALOpenInfo * poOpenInfo )
         || nHeight < 500 || nHeight > 25000
         || nBandStorage < 0 || nBandStorage > 4
         || nBandTypes < 1 || nBandTypes > 9 )
+    {
+        CSLDestroy( papszMetadata );
         return NULL;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Check the configuration.  We don't currently handle all         */
@@ -351,6 +354,7 @@ GDALDataset *DOQ2Dataset::Open( GDALOpenInfo * poOpenInfo )
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "DOQ Data Type (%d) is not a supported configuration.\n",
                   nBandTypes );
+        CSLDestroy( papszMetadata );
         return NULL;
     }
     
@@ -365,6 +369,9 @@ GDALDataset *DOQ2Dataset::Open( GDALOpenInfo * poOpenInfo )
 
     poDS->nRasterXSize = nWidth;
     poDS->nRasterYSize = nHeight;
+
+    poDS->SetMetadata( papszMetadata );
+    CSLDestroy( papszMetadata );
     
 /* -------------------------------------------------------------------- */
 /*      Assume ownership of the file handled from the GDALOpenInfo.     */
@@ -375,14 +382,17 @@ GDALDataset *DOQ2Dataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Compute layout of data.                                         */
 /* -------------------------------------------------------------------- */
+    if( nBandCount < 2 )
+        nBandCount = nBytesPerPixel / 8;
+    else
+        nBytesPerPixel *= nBandCount;
 
     nBytesPerLine = nBytesPerPixel * nWidth;
     
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
-    poDS->nBands = nBytesPerPixel;
-    for( i = 0; i < poDS->nBands; i++ )
+    for( i = 0; i < nBandCount; i++ )
     {
         poDS->SetBand( i+1, 
             new RawRasterBand( poDS, i+1, poDS->fpImage,
@@ -391,13 +401,15 @@ GDALDataset *DOQ2Dataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
     if (nProjType == 1)
-      {
+    {
 	poDS->pszProjection = 
-	  CPLStrdup(CPLSPrintf( UTM_FORMAT, pszDatumShort, pszDatumLong,
-				nZone * 6 - 183, pszUnits ));
-      } else {
+            CPLStrdup(CPLSPrintf( UTM_FORMAT, pszDatumShort, pszDatumLong,
+                                  nZone * 6 - 183, pszUnits ));
+    } 
+    else 
+    {
 	poDS->pszProjection = CPLStrdup("");
-      }
+    }
 
     poDS->dfULX = dfULXMap;
     poDS->dfULY = dfULYMap;
@@ -408,13 +420,14 @@ GDALDataset *DOQ2Dataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->dfULX -= poDS->dfXPixelSize / 2;
     poDS->dfULY += poDS->dfYPixelSize / 2;
 
-    poDS->pszDescription = 
-      CPLStrdup(CPLSPrintf( "USGS GeoTIFF Q-Quadrangle 1:12000 %s %s, %s.",
-			    pszQuadname, pszQuadquad, pszState));
-    
     if ( pszQuadname ) CPLFree( pszQuadname );
     if ( pszQuadquad) CPLFree( pszQuadquad );
     if ( pszState) CPLFree( pszState );
+
+/* -------------------------------------------------------------------- */
+/*      Check for overviews.                                            */
+/* -------------------------------------------------------------------- */
+    poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
 
     return( poDS );
 }

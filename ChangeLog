@@ -1,4 +1,12 @@
+2001-09-19  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* frmts/raw/doq2dataset.cpp: fixes for file submitted by Eric Miller,
+	and also overhauled to return all non-structural fields as metadata.
+
 2001-09-17  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* aclocal.m4: added printf() call to -shared test to ensure cygwin
+	doesn't falsely succeed.
 
 	* frmts/gdalallregister.cpp: register doq2 format ... it seems to 
 	have been omitted.
