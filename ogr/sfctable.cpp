@@ -30,6 +30,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  1999/07/08 20:27:25  warmerda
+ * Implemented creation on an OGRFeatureDefn for the layer, and
+ * implemented GetOGRFeature().
+ *
  * Revision 1.7  1999/06/26 05:34:17  warmerda
  * Added support for poSRS, and use creating geometry
  *
@@ -56,8 +60,7 @@
 #include "sfctable.h"
 #include "sfcschemarowsets.h"
 #include "sfcdatasource.h"
-#include "ogr_geometry.h"
-#include "ogr_spatialref.h"
+#include "ogr_feature.h"
 #include "assert.h"
 #include "oledb_sup.h"
 #include "cpl_string.h"
@@ -78,6 +81,9 @@ SFCTable::SFCTable()
     nGeomType = wkbUnknown;
     poSRS = NULL;
 
+    poDefn = NULL;
+    panColOrdinal = NULL;
+
     pszTableName = NULL;
     pszDefGeomColumn = NULL;
 }
@@ -89,6 +95,10 @@ SFCTable::SFCTable()
 SFCTable::~SFCTable()
 
 {
+    if( poDefn != NULL )
+        delete poDefn;
+
+    CPLFree( panColOrdinal );
     CPLFree( pszTableName );
     CPLFree( pszDefGeomColumn );
 
@@ -167,6 +177,65 @@ void SFCTable::SetTableName( const char * pszTableName )
 int SFCTable::ReadSchemaInfo( CDataSource * poDS )
 
 {
+/* -------------------------------------------------------------------- */
+/*      Prepare a definition for the columns of this table as an        */
+/*      OGRFeatureDefn.                                                 */
+/* -------------------------------------------------------------------- */
+    poDefn = new OGRFeatureDefn( GetTableName() );
+    panColOrdinal = (ULONG *) CPLMalloc(sizeof(ULONG) * GetColumnCount());
+
+    for( ULONG iColumn = 0; iColumn < GetColumnCount(); iColumn++ )
+    {
+        DBCOLUMNINFO*     psCInfo = m_pColumnInfo + iColumn;
+        OGRFieldDefn      oField( "", OFTInteger );
+        char              *pszName = NULL;
+
+        if( iColumn == iGeomColumn )
+            continue;
+
+        UnicodeToAnsi( psCInfo->pwszName, &pszName );
+        oField.SetName( pszName );
+        CoTaskMemFree( pszName );
+        pszName = NULL;
+
+        switch( psCInfo->wType )
+        {
+            case DBTYPE_I4:
+                oField.SetType( OFTInteger );
+                oField.SetWidth( 11 );
+                break;
+
+            case DBTYPE_R4:
+                oField.SetType( OFTReal );
+                oField.SetWidth( 16 );
+                oField.SetPrecision( psCInfo->bPrecision );
+                break;
+
+            case DBTYPE_R8:
+                oField.SetType( OFTReal );
+                oField.SetWidth( 24 );
+                oField.SetPrecision( psCInfo->bPrecision );
+                break;
+
+            case DBTYPE_STR:
+                oField.SetType( OFTString );
+                if( psCInfo->ulColumnSize < 100000 )
+                    oField.SetWidth( psCInfo->ulColumnSize );
+                break;
+
+            default:
+                oField.SetType( OFTString );
+                oField.SetWidth( 1 );
+                break;
+        }
+
+        poDefn->AddFieldDefn( &oField );
+        panColOrdinal[poDefn->GetFieldCount()-1] = psCInfo->iOrdinal;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Read the geometry column information.                           */
+/* -------------------------------------------------------------------- */
     CSession      oSession;
 
     if( FAILED(oSession.Open( *poDS ) ) )
@@ -331,7 +400,7 @@ int SFCTable::HasGeometry()
 void SFCTable::IdentifyGeometry()
 
 {
-    int    iCol;
+    ULONG    iCol;
 
     if( m_spRowset == NULL || bTriedToIdentify )
         return;
@@ -566,7 +635,7 @@ BYTE *SFCTable::GetWKBGeometry( int * pnSize )
 void SFCTable::ReleaseIUnknowns()
 
 {
-    for( int i = 0; i < GetColumnCount(); i++ )
+    for( ULONG i = 0; i < GetColumnCount(); i++ )
     {
         DBTYPE      nType;
 
@@ -613,6 +682,81 @@ OGRGeometry * SFCTable::GetOGRGeometry()
         return poGeom;
     else
         return NULL;
+}
+
+/************************************************************************/
+/*                         GetOGRFeatureDefn()                          */
+/************************************************************************/
+
+OGRFeatureDefn *SFCTable::GetOGRFeatureDefn()
+
+{
+    return poDefn;
+}
+
+/************************************************************************/
+/*                           GetOGRFeature()                            */
+/************************************************************************/
+
+OGRFeature *SFCTable::GetOGRFeature()
+
+{
+    OGRFeature      *poFeature;
+
+    if( poDefn == NULL )
+        return NULL;
+
+    poFeature = new OGRFeature( poDefn );
+    poFeature->SetGeometryDirectly( GetOGRGeometry() );
+
+    for( int iColumn = 0; iColumn < poDefn->GetFieldCount(); iColumn++ )
+    {
+        ULONG             iColOrdinal = panColOrdinal[iColumn];
+        DBTYPE            wType;
+
+        GetColumnType( iColOrdinal, &wType );
+        switch( wType )
+        {
+            case DBTYPE_I4:
+                int            nValue;
+                GetValue( iColOrdinal, &nValue );
+                poFeature->SetField( iColumn, nValue );
+                break;
+
+            case DBTYPE_R4:
+                float      fValue;
+                GetValue( iColOrdinal, &fValue );
+                poFeature->SetField( iColumn, (double) fValue );
+                break;
+
+            case DBTYPE_R8:
+                double      dfValue;
+                GetValue( iColOrdinal, &dfValue );
+                poFeature->SetField( iColumn, dfValue );
+                break;
+
+            case DBTYPE_STR:
+                char        *pszValue;
+                ULONG       nLength;
+
+                GetLength( iColOrdinal, &nLength );
+                pszValue = (char *) CPLMalloc(nLength+1);
+                strncpy( pszValue, (const char *) GetValue(iColOrdinal), 
+                         nLength );
+                pszValue[nLength] = '\0';
+
+                poFeature->SetField( iColumn, pszValue );
+
+                CPLFree( pszValue );
+                break;
+
+            default:
+                poFeature->SetField( iColumn, "" );
+                break;
+        }
+    }
+
+    return poFeature;
 }
 
 /************************************************************************/
