@@ -1,0 +1,37 @@
+/*!
+\page faq
+
+<title>GDAL FAQ</title>
+
+<ol>
+<!--------------------------------------------------------------------------->
+
+<li> <b>What's this OGR Stuff?</b><p>
+
+The gdal/ogr tree holds source for a vector IO library inspired by
+OpenGIS Simple Features.  In theory it is separate from GDAL, but currently
+they reside in the same source tree and are somewhat entangled.  More
+information can be found at
+<a href="http://gdal.velocet.ca/projects/opengis/">http://gdal.velocet.ca/projects/opengis</a>.  It is my plan to fold OGR into GDAL properly at some point
+in the future.  Then GDAL will be a raster and vector libraries. <p>
+
+<!--------------------------------------------------------------------------->
+<li> <b>How do I add support for a new format?</b><p>
+
+Currently there is no tutorial on how to do this.  You may be able to
+copy a similar format's code, and modify accordingly. Some notes:<p>
+
+<ul>
+<li> Create a new directory under gdal/frmts for the format.
+<li> Add the format code to gdal/GDALmake.opt (and GDALmake.opt.in).
+<li> Add auto-registration code to gdal/frmts/gdalallregister.cpp.
+<li> Add to gdal/frmts/makefile.vc if you want it to get built on windows.
+<li> If it is simple <i>raw</i> pixel, line or band interleaved format it
+may be easier to subclass RawDataset as is done for the various formats in
+the gdal/frmts/raw directory.
+</ul>
+
+</ol>
+
+*/
+
