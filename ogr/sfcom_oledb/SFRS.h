@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2001/10/22 21:29:50  warmerda
+ * reworked to allow selecting a subset of fields
+ *
  * Revision 1.8  2001/09/06 03:26:10  warmerda
  * converted to use SFAccessorImpl.h
  *
@@ -61,18 +64,10 @@
 #include "SFAccessorImpl.h" 
 
 /************************************************************************/
-/*                              SchemaInfo                              */
-/************************************************************************/
-class SchemaInfo
-{
-public:
-    int			nOffset;
-    OGRFieldType	eFieldType;	
-};
-
-/************************************************************************/
 /*                            CVirtualArray                             */
 /************************************************************************/
+
+class CSFRowset;
 
 class CVirtualArray
 {
@@ -80,18 +75,26 @@ public:
 	CVirtualArray();
 	~CVirtualArray();
 	void	RemoveAll();
-	void	Initialize(int nArraySize, OGRLayer *pOGRLayer,int);
+	void	Initialize(int nArraySize, OGRLayer *pOGRLayer,int,
+                           CSFRowset *);
 	BYTE    &operator[](int iIndex);
 	int	GetSize() const {return m_nArraySize;}
 private:
+        int     FillGeometry( OGRGeometry *poGeometry, 
+                              unsigned char *pabyBuffer,
+                              ATLCOLUMNINFO *pColInfo );
+        int     FillOGRField( OGRFeature *poFeature, int iField,
+                              unsigned char *pabyBuffer,
+                              ATLCOLUMNINFO *pColInfo );
+        
 	int	m_nPackedRecordLength;
 	BYTE	*mBuffer;
         int     m_nBufferSize;
 	OGRLayer *m_pOGRLayer;
 	int	m_nArraySize;
 	int	m_nLastRecordAccessed;
-	CSimpleArray<SchemaInfo> aSchemaInfo;
 	OGRFeatureDefn	*m_pFeatureDefn;
+        CSFRowset       *m_pRowset;
 };
 
 /************************************************************************/
@@ -378,10 +381,13 @@ class CSFRowset :
 public CSFRowsetImpl< CSFRowset, CShapeFile, CSFCommand, CVirtualArray>
 
 {
+    int       ParseCommand( const char *, OGRLayer * );
+    
 public:
     HRESULT Execute(DBPARAMS * pParams, LONG* pcRowsAffected);
 
     CSimpleArray<ATLCOLUMNINFO>		m_paColInfo;
+    CSimpleArray<int>                   m_panOGRIndex;
     OGRDataSource                      *m_poDS;
     int                                 m_iLayer;
 };

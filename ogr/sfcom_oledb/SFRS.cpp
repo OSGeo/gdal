@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.25  2001/10/22 21:29:50  warmerda
+ * reworked to allow selecting a subset of fields
+ *
  * Revision 1.24  2001/10/02 14:25:16  warmerda
  * ensure attribute query is cleared when not in use
  *
@@ -99,6 +102,7 @@
 #include "sfutil.h"
 #include "cpl_error.h"
 #include "cpl_conv.h"
+#include "cpl_string.h"
 
 // Select one of BLOB_NONE, BLOB_IUNKNOWN, BLOB_BYTES, or BLOB_BYTES_BY_REF
 // This will determine the type and handling of the geometry column.
@@ -453,13 +457,15 @@ void CVirtualArray::RemoveAll()
 /*      Initialize the record cache.                                    */
 /************************************************************************/
 
-void	CVirtualArray::Initialize(int nArraySize, OGRLayer *pLayer,int nBufferSize)
+void	CVirtualArray::Initialize(int nArraySize, OGRLayer *pLayer,
+                                  int nBufferSize, CSFRowset *poRowset )
 {
         m_nBufferSize  = nBufferSize;
 	mBuffer	       = (BYTE *) malloc(nBufferSize);
 	m_nArraySize   = nArraySize;
 	m_pOGRLayer    = pLayer;
 	m_pFeatureDefn = pLayer->GetLayerDefn();
+        m_pRowset      = poRowset;
 
         CPLDebug( "OGR_OLEDB", "CVirtualArray::Initialize()" );
         m_pOGRLayer->ResetReading();
@@ -528,118 +534,138 @@ BYTE &CVirtualArray::operator[](int iIndex)
         return *mBuffer;
     }
 
-    // Fill in the FID
-    int nOffset = 0;
+/* -------------------------------------------------------------------- */
+/*      Fill in fields.                                                 */
+/* -------------------------------------------------------------------- */
+    int      iDBField;
 
-    *((int *) &(mBuffer[nOffset])) = poFeature->GetFID();
-    nOffset += 8;
-    
-    // Fill the buffer first with field info.
-    int i;
-    for (i=0; i < m_pFeatureDefn->GetFieldCount(); i++)
+    for( iDBField = 0; iDBField < m_pRowset->m_paColInfo.GetSize(); iDBField++)
     {
-        OGRFieldDefn *poDefn;
+        ATLCOLUMNINFO *pColInfo;
+        int           nOGRIndex;
+        
+        pColInfo = &(m_pRowset->m_paColInfo[iDBField]);
+        nOGRIndex = m_pRowset->m_panOGRIndex[iDBField];
 
-        poDefn = m_pFeatureDefn->GetFieldDefn(i);
-
-        switch(poDefn->GetType())
+        if( nOGRIndex == -1 )
         {
-            case OFTInteger:
-                *((int *) &(mBuffer[nOffset])) = poFeature->GetFieldAsInteger(i);
-                nOffset += 8;		
-                break;
-		
-            case OFTReal:
-                *((double *) &(mBuffer[nOffset])) = poFeature->GetFieldAsDouble(i);
-                nOffset += 8;
-                break;
-
-            case OFTIntegerList:
-            case OFTRealList:
-            case OFTStringList:
-            {
-                int nStringWidth = 80;
-                const char *pszStr = poFeature->GetFieldAsString(i);
-                strncpy((char *) &(mBuffer[nOffset]),pszStr,nStringWidth);
-                mBuffer[nOffset+nStringWidth+1] = 0;
-                nOffset += ((((nStringWidth+1)/8)+1)*8);
-            }
-            break;
-
-            case OFTString:
-            {
-                int nStringWidth = poDefn->GetWidth() == 0 ? STRING_BUFFER_SIZE -1 : poDefn->GetWidth();
-
-                const char *pszStr = poFeature->GetFieldAsString(i);
-                strncpy((char *) &(mBuffer[nOffset]),pszStr,nStringWidth);
-                mBuffer[nOffset+nStringWidth+1] = 0;
-                nOffset += ((((nStringWidth+1)/8)+1)*8);
-            }
-            break;
+            *((int*) (mBuffer + pColInfo->cbOffset)) = poFeature->GetFID();
+        }
+        else if( nOGRIndex == -2 )
+        {
+            FillGeometry( poFeature->GetGeometryRef(), mBuffer, pColInfo );
+        }
+        else 
+        {
+            FillOGRField( poFeature, nOGRIndex, mBuffer, pColInfo );
         }
     }
 
-    OGRGeometry *poGeom = poFeature->GetGeometryRef();
+    delete poFeature;
+
+    return (*mBuffer);
+}
+
+/************************************************************************/
+/*                            FillGeometry()                            */
+/************************************************************************/
+
+int CVirtualArray::FillGeometry( OGRGeometry *poGeom, 
+                                 unsigned char *pabyBuffer,
+                                 ATLCOLUMNINFO *pColInfo )
+
+{
+    int      nOffset = pColInfo->cbOffset;
+
+    if( poGeom == NULL )
+        return TRUE;
+    
+    int                 nSize = poGeom->WkbSize();
 
 /* -------------------------------------------------------------------- */
 /*      IUnknown geometry handling.                                     */
 /* -------------------------------------------------------------------- */
 #ifdef BLOB_IUNKNOWN
-    if( poGeom != NULL )
-    {
-        unsigned char	*pByte  = (unsigned char *) malloc(poGeom->WkbSize());
-        poGeom->exportToWkb((OGRwkbByteOrder) 1, pByte);
-
 #ifdef SFISTREAM_DEBUG
-        CPLDebug( "OGR_OLEDB", 
-                  "Push %d bytes into Stream: %2X%2X%2X%2X%2X%2X%2X%2X\n", 
-                  poGeom->WkbSize(),
-                  pByte[0], 
-                  pByte[1], 
-                  pByte[2], 
-                  pByte[3], 
-                  pByte[4], 
-                  pByte[5], 
-                  pByte[6], 
-                  pByte[7] );
+    CPLDebug( "OGR_OLEDB", 
+              "Push %d bytes into Stream: %2X%2X%2X%2X%2X%2X%2X%2X\n", 
+              poGeom->WkbSize(),
+              pByte[0], 
+              pByte[1], 
+              pByte[2], 
+              pByte[3], 
+              pByte[4], 
+              pByte[5], 
+              pByte[6], 
+              pByte[7] );
 #endif
 
-        IStream	*pStream = new SFIStream(pByte,poGeom->WkbSize());
-        *((void **) &(mBuffer[nOffset])) = pStream;
-    }
-    else
-    {
-        CPLDebug( "OGR_OLEDB", "NULL Geometry\n" );
-        *((void **) &(mBuffer[nOffset])) = NULL;
-    }
+    unsigned char	*pByte  = (unsigned char *) malloc(nSize);
+    poGeom->exportToWkb((OGRwkbByteOrder) 1, pByte);
+
+    IStream	*pStream = new SFIStream(pByte,nSize);
+    *((void **) (pabyBuffer + nOffset)) = pStream;
 #endif
 
 /* -------------------------------------------------------------------- */
 /*      BYTES geometry handling.                                        */
 /* -------------------------------------------------------------------- */
 #ifdef BLOB_BYTES
-    if( poGeom != NULL )
-    {
-        int            nSize = poGeom->WkbSize();
-        
-        if( nSize <= 50000 )
-            poGeom->exportToWkb( (OGRwkbByteOrder) 1, mBuffer+nOffset );
-        else
-        {
-            CPLDebug( "OGR_OLEDB", "Geometry to big (%d bytes).", nSize );
-            memset( mBuffer+nOffset, 0, 50000 );
-        }
-    }
+    if( nSize >= pColInfo.ulColumnSize )
+        poGeom->exportToWkb( (OGRwkbByteOrder) 1, pabyBuffer + nOffset );
     else
-    {
-        CPLDebug( "OGR_OLEDB", "NULL Geometry" );
-        memset( mBuffer+nOffset, 0, 50000 );
-    }
+        CPLDebug( "OGR_OLEDB", "Geometry to big (%d bytes).", nSize );
 #endif
-	
-    delete poFeature;
 
-    return (*mBuffer);
+    return TRUE;
+}
+	
+/************************************************************************/
+/*                            FillOGRField()                            */
+/*                                                                      */
+/*      Copy information for one field into the provided buffer from    */
+/*      an OGRFeature.                                                  */
+/************************************************************************/
+
+int CVirtualArray::FillOGRField( OGRFeature *poFeature, int iField, 
+                                 unsigned char *pabyBuffer, 
+                                 ATLCOLUMNINFO *pColInfo )
+
+{
+    OGRFieldDefn *poDefn;
+    int           nOffset = pColInfo->cbOffset;
+
+    poDefn = m_pFeatureDefn->GetFieldDefn(iField);
+
+    switch(poDefn->GetType())
+    {
+        case OFTInteger:
+            CPLAssert( pColInfo->ulColumnSize == 4 );
+            *((int *) (pabyBuffer + nOffset)) = 
+                poFeature->GetFieldAsInteger(iField);
+            break;
+            
+        case OFTReal:
+            CPLAssert( pColInfo->ulColumnSize == 8 );
+            *((double *) (pabyBuffer + nOffset)) = 
+                poFeature->GetFieldAsDouble(iField);
+            break;
+            
+        case OFTIntegerList:
+        case OFTRealList:
+        case OFTStringList:
+        case OFTString:
+        {
+            int nStringWidth = pColInfo->ulColumnSize - 1;
+            const char *pszStr = poFeature->GetFieldAsString(iField);
+
+            strncpy((char *) pabyBuffer + nOffset,pszStr,nStringWidth);
+            pabyBuffer[nOffset+nStringWidth+1] = '\0';
+        }
+        break;
+    }
+
+    return TRUE;
 }
 
 /************************************************************************/
@@ -819,7 +845,10 @@ HRESULT CSFCommand::ExtractSpatialQuery( DBPARAMS *pParams )
             if( FAILED(hr) )
                 pIStream = NULL;
         }
-         
+
+        CPLDebug( "OGR_OLEDB", "Got pIStream=%p from %p", 
+                  pIStream, pIUnknown );
+
         if( pIStream != NULL )
         {
             BYTE      abyChunk[32];
@@ -841,12 +870,19 @@ HRESULT CSFCommand::ExtractSpatialQuery( DBPARAMS *pParams )
             while( nBytesRead == sizeof(abyChunk) );
     
             pIStream->Release();
+
+            CPLDebug( "OGR_OLEDB", "Read %d bytes from stream.", nSize );
         }
 
         if( nSize > 0 )
+        {
             eErr = 
                 OGRGeometryFactory::createFromWkb( pRawData, NULL, &poGeometry,
                                                    nSize );
+            CPLDebug( "OGR_OLEDB", "createFromWkb() = %d/%p\n", 
+                      eErr, poGeometry );
+        }
+
         if( nSize == 0 || eErr != OGRERR_NONE )
             CPLDebug("OGR_OLEDB", 
                      "Corrupt IUNKNOWN VARIANT WKB in ExtractSpatialQuery().");
@@ -883,6 +919,73 @@ HRESULT CSFCommand::ExtractSpatialQuery( DBPARAMS *pParams )
 }
 
 /************************************************************************/
+/*                            ParseCommand()                            */
+/*                                                                      */
+/*      For now this method just extracts the list of selected          */
+/*      fields, and sets them in m_panOGRIndex.                         */
+/************************************************************************/
+
+int CSFRowset::ParseCommand( const char *pszCommand, 
+                             OGRLayer *poLayer )
+
+{
+    char      **papszTokens;
+    OGRFeatureDefn *poDefn = poLayer->GetLayerDefn();
+
+    papszTokens = CSLTokenizeStringComplex( pszCommand, " ,", 
+                                            FALSE, FALSE );
+
+    if( CSLCount(papszTokens) > 1 
+        && EQUAL(papszTokens[0],"SELECT") 
+        && !EQUAL(papszTokens[1],"*") )
+    {
+        int      iToken, iOGRIndex;
+
+        for( iToken = 1; 
+             papszTokens[iToken] != NULL && !EQUAL(papszTokens[iToken],"FROM");
+             iToken++ )
+        {
+            iOGRIndex = poDefn->GetFieldIndex( papszTokens[iToken] );
+
+            if( EQUAL(papszTokens[iToken],"FID") )
+            {
+                iOGRIndex = -1;
+                m_panOGRIndex.Add( iOGRIndex );
+            }
+            else if( EQUAL(papszTokens[iToken],"OGIS_GEOMETRY") )
+            {
+                iOGRIndex = -2;
+                m_panOGRIndex.Add( iOGRIndex );
+            }
+            else if( iOGRIndex == -1 )
+            {
+                CPLDebug( "OGR_OLEDB", "Unrecognised field `%s', skipping.", 
+                          papszTokens[iToken] );
+            }
+            else
+                m_panOGRIndex.Add( iOGRIndex );
+        }
+    }
+    else
+    {
+        int      iOGRIndex;
+
+        iOGRIndex = -1;
+        m_panOGRIndex.Add(iOGRIndex);
+
+        for( iOGRIndex = 0; iOGRIndex < poDefn->GetFieldCount(); iOGRIndex++ ) 
+            m_panOGRIndex.Add(iOGRIndex);
+        
+        iOGRIndex = -2;
+        m_panOGRIndex.Add(iOGRIndex);
+    }
+
+    CSLDestroy(papszTokens);
+
+    return TRUE;
+}
+
+/************************************************************************/
 /*                         CSFRowset::Execute()                         */
 /************************************************************************/
 
@@ -891,6 +994,7 @@ HRESULT CSFRowset::Execute(DBPARAMS * pParams, LONG* pcRowsAffected)
     USES_CONVERSION;
 	
     // Get the appropriate Data Source
+    int         nOGRIndex;
     OGRDataSource *poDS;
     char	*pszCommand;
     char        *pszLayerName;
@@ -963,7 +1067,7 @@ HRESULT CSFRowset::Execute(DBPARAMS * pParams, LONG* pcRowsAffected)
     if (pszLayerName == NULL)
     {
         return SFReportError(DB_E_ERRORSINCOMMAND,IID_IUnknown,0,
-                         "Unable to extract layer name from SQL statement.");
+                             "Unable to extract layer name from SQL statement.");
     }
 
     // Now check to see which layer is specified.
@@ -994,6 +1098,10 @@ HRESULT CSFRowset::Execute(DBPARAMS * pParams, LONG* pcRowsAffected)
     m_poDS = poDS;
     m_iLayer = i;
     
+    // extract list of fields requested
+    
+    ParseCommand( pszCommand, pLayer );
+
     // Now that we have a layer set a filter if necessary.
     if (poGeometry)
         pLayer->SetSpatialFilter(poGeometry);
@@ -1012,120 +1120,129 @@ HRESULT CSFRowset::Execute(DBPARAMS * pParams, LONG* pcRowsAffected)
     if (pcRowsAffected)
         *pcRowsAffected = nTotalRows;
 
-    // Add the FID column.
+    // Setup to define fields. 
+    int  iField;
     int nOffset = 0;
     ATLCOLUMNINFO colInfo;
-
-    memset(&colInfo, 0, sizeof(ATLCOLUMNINFO));
-
-    colInfo.pwszName = ::SysAllocString(A2OLE("FID"));
-    colInfo.iOrdinal = 1;
-    colInfo.dwFlags  = 0;
-    colInfo.columnid.uName.pwszName = colInfo.pwszName;
-    colInfo.cbOffset	= nOffset;
-    colInfo.bScale	= ~0;
-    colInfo.bPrecision  = ~0;
-    colInfo.ulColumnSize = 4;
-    colInfo.wType = DBTYPE_I4;
-
-    nOffset += 8; // keep 8byte aligned.
-    
-    m_paColInfo.Add(colInfo);
-
-    // Now set the column info!
-	
     OGRFeatureDefn *poDefn = pLayer->GetLayerDefn();
-	
-    for (i=0; i < poDefn->GetFieldCount(); i++)
+
+    // define all fields.
+    for( iField = 0; iField < m_panOGRIndex.GetSize(); iField++ )
     {
-        OGRFieldDefn	*poField;
-		
-        poField = poDefn->GetFieldDefn(i);
-		
+        int      nOGRIndex = m_panOGRIndex[iField];
+
         memset(&colInfo, 0, sizeof(ATLCOLUMNINFO));
-		
-        colInfo.pwszName      = ::SysAllocString(A2OLE(poField->GetNameRef()));
-        colInfo.iOrdinal	= i+2;
-        colInfo.dwFlags		= DBCOLUMNFLAGS_ISFIXEDLENGTH;
-        colInfo.columnid.uName.pwszName = colInfo.pwszName;
-        colInfo.cbOffset	= nOffset;
-        colInfo.bScale		= ~0;
-        colInfo.bPrecision      = ~0;
-        
-        switch(poField->GetType())
+
+        // Add the FID column.
+        if( nOGRIndex == -1 )
         {
-            case OFTInteger:
-                colInfo.ulColumnSize = 4;
-                colInfo.wType	     = DBTYPE_I4;
-                nOffset += 8; // Make everything 8byte aligned
-                if( poField->GetWidth() != 0 )
-                    colInfo.bPrecision = poField->GetWidth();
-                break;
-
-            case OFTReal:
-                colInfo.wType	     = DBTYPE_R8;
-                colInfo.ulColumnSize = 8;
-                nOffset += 8;
-                break;
-
-            case OFTString:
-                colInfo.wType	     = DBTYPE_STR;
-                colInfo.ulColumnSize = poField->GetWidth() == 0 ? STRING_BUFFER_SIZE-1 : poField->GetWidth();
-                colInfo.dwFlags      = 0;
-                nOffset += (((colInfo.ulColumnSize+1) / 8) + 1) * 8;
-                break;
-
-            case OFTIntegerList:
-            case OFTRealList:
-            case OFTStringList:
-                colInfo.wType	     = DBTYPE_STR;
-                colInfo.ulColumnSize = 80;
-                nOffset += (((colInfo.ulColumnSize+1) / 8) + 1) * 8;
-                colInfo.dwFlags      = 0;
-                break;
-                
-            default:
-                assert(FALSE);
+            colInfo.pwszName = ::SysAllocString(A2OLE("FID"));
+            colInfo.iOrdinal = iField+1;
+            colInfo.dwFlags  = 0;
+            colInfo.columnid.uName.pwszName = colInfo.pwszName;
+            colInfo.cbOffset	= nOffset;
+            colInfo.bScale	= ~0;
+            colInfo.bPrecision  = ~0;
+            colInfo.ulColumnSize = 4;
+            colInfo.wType = DBTYPE_I4;
+            
+            nOffset += 8; // keep 8byte aligned.
+            m_paColInfo.Add(colInfo);
         }
 
-        m_paColInfo.Add(colInfo);
-    }
-
-    // Set the geometry info
-
-    memset(&colInfo, 0, sizeof(ATLCOLUMNINFO));
-
+        // Geometry field.
+        else if( nOGRIndex == -2 )
+        {
 #ifdef BLOB_IUNKNOWN	
-    colInfo.pwszName	= ::SysAllocString(A2OLE("OGIS_GEOMETRY"));
-    colInfo.iOrdinal	= i+2;
-    colInfo.dwFlags		= DBCOLUMNFLAGS_ISFIXEDLENGTH|DBCOLUMNFLAGS_MAYBENULL|DBCOLUMNFLAGS_ISNULLABLE;
-    colInfo.ulColumnSize= 4;
-    colInfo.bPrecision  = ~0;
-    colInfo.bScale	= ~0;
-    colInfo.columnid.uName.pwszName = colInfo.pwszName;
-    colInfo.cbOffset	= nOffset;
-    colInfo.wType	= DBTYPE_IUNKNOWN;
-    nOffset += 4;
-
-    m_paColInfo.Add(colInfo);
+            colInfo.pwszName	= ::SysAllocString(A2OLE("OGIS_GEOMETRY"));
+            colInfo.iOrdinal	= iField+1;
+            colInfo.dwFlags		= DBCOLUMNFLAGS_ISFIXEDLENGTH|DBCOLUMNFLAGS_MAYBENULL|DBCOLUMNFLAGS_ISNULLABLE;
+            colInfo.ulColumnSize= 4;
+            colInfo.bPrecision  = ~0;
+            colInfo.bScale	= ~0;
+            colInfo.columnid.uName.pwszName = colInfo.pwszName;
+            colInfo.cbOffset	= nOffset;
+            colInfo.wType	= DBTYPE_IUNKNOWN;
+            nOffset += 4;
+            
+            m_paColInfo.Add(colInfo);
 #endif
 
 #ifdef BLOB_BYTES
-    colInfo.pwszName	= ::SysAllocString(A2OLE("OGIS_GEOMETRY"));
-    colInfo.iOrdinal	= i+2;
-    colInfo.dwFlags	= DBCOLUMNFLAGS_MAYBENULL|DBCOLUMNFLAGS_ISNULLABLE;
-    colInfo.ulColumnSize= 50000;
-    colInfo.bPrecision  = ~0;
-    colInfo.bScale	= ~0;
-    colInfo.columnid.uName.pwszName = colInfo.pwszName;
-    colInfo.cbOffset	= nOffset;
-    colInfo.wType	= DBTYPE_BYTES;
-    nOffset += colInfo.ulColumnSize;
-
-    m_paColInfo.Add(colInfo);
+            colInfo.pwszName	= ::SysAllocString(A2OLE("OGIS_GEOMETRY"));
+            colInfo.iOrdinal	= iField+1;
+            colInfo.dwFlags	= DBCOLUMNFLAGS_MAYBENULL|DBCOLUMNFLAGS_ISNULLABLE;
+            colInfo.ulColumnSize= 50000;
+            colInfo.bPrecision  = ~0;
+            colInfo.bScale	= ~0;
+            colInfo.columnid.uName.pwszName = colInfo.pwszName;
+            colInfo.cbOffset	= nOffset;
+            colInfo.wType	= DBTYPE_BYTES;
+            nOffset += colInfo.ulColumnSize;
+            
+            m_paColInfo.Add(colInfo);
 #endif
+        }
+        
+        else
+        {
+            OGRFieldDefn	*poField;
+		
+            poField = poDefn->GetFieldDefn(nOGRIndex);
+		
+            memset(&colInfo, 0, sizeof(ATLCOLUMNINFO));
+		
+            colInfo.pwszName      = ::SysAllocString(A2OLE(poField->GetNameRef()));
+            colInfo.iOrdinal	= iField+1;
+            colInfo.dwFlags	= DBCOLUMNFLAGS_ISFIXEDLENGTH;
+            colInfo.columnid.uName.pwszName = colInfo.pwszName;
+            colInfo.cbOffset	= nOffset;
+            colInfo.bScale	= ~0;
+            colInfo.bPrecision  = ~0;
+            
+            switch(poField->GetType())
+            {
+                case OFTInteger:
+                    colInfo.ulColumnSize = 4;
+                    colInfo.wType = DBTYPE_I4;
+                    nOffset += 8; // Make everything 8byte aligned
+                    if( poField->GetWidth() != 0 )
+                        colInfo.bPrecision = poField->GetWidth();
+                    break;
 
-    m_rgRowData.Initialize(nTotalRows,pLayer,nOffset);
+                case OFTReal:
+                    colInfo.wType = DBTYPE_R8;
+                    colInfo.ulColumnSize = 8;
+                    nOffset += 8;
+                    break;
+
+                case OFTString:
+                    colInfo.wType	     = DBTYPE_STR;
+                    colInfo.ulColumnSize = poField->GetWidth() == 0 ? STRING_BUFFER_SIZE-1 : poField->GetWidth();
+                    colInfo.dwFlags = 0;
+                    nOffset += (((colInfo.ulColumnSize+1) / 8) + 1) * 8;
+                    break;
+
+                case OFTIntegerList:
+                case OFTRealList:
+                case OFTStringList:
+                    colInfo.wType = DBTYPE_STR;
+                    colInfo.ulColumnSize = 80;
+                    nOffset += (((colInfo.ulColumnSize+1) / 8) + 1) * 8;
+                    colInfo.dwFlags = 0;
+                    break;
+                
+                default:
+                    assert(FALSE);
+            }
+
+            m_paColInfo.Add(colInfo);
+        }
+
+        CPLDebug( "OGR_OLEDB", "Defined field `%S'", colInfo.pwszName );
+    }
+
+    m_rgRowData.Initialize(nTotalRows,pLayer,nOffset,this);
 
     return S_OK;
 }
