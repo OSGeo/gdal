@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.52  2002/09/04 06:52:35  warmerda
+ * added GDALDestroyDriverManager
+ *
  * Revision 1.51  2002/07/09 20:33:12  warmerda
  * expand tabs
  *
@@ -351,6 +354,7 @@ int CPL_DLL         GDALGetDriverCount();
 GDALDriverH CPL_DLL GDALGetDriver( int );
 int         CPL_DLL GDALRegisterDriver( GDALDriverH );
 void        CPL_DLL GDALDeregisterDriver( GDALDriverH );
+void        CPL_DLL GDALDestroyDriverManager( void );
 CPLErr      CPL_DLL GDALDeleteDataset( GDALDriverH, const char * );
 
 /* The following are deprecated */
