@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2002/08/06 21:16:41  warmerda
+ * fixed possible overrun error in exportToWkt()
+ *
  * Revision 1.9  2001/12/19 22:44:14  warmerda
  * fixed bug in conversion to WKT
  *
@@ -131,7 +134,7 @@ OGRGeometry *OGRMultiPoint::clone()
 OGRErr OGRMultiPoint::exportToWkt( char ** ppszReturn )
 
 {
-    int         nMaxString = getNumGeometries() * 16 * 2 + 20;
+    int         nMaxString = getNumGeometries() * 20 + 128;
     int         nRetLen = 0;
 
     *ppszReturn = (char *) VSIMalloc( nMaxString );
@@ -144,13 +147,17 @@ OGRErr OGRMultiPoint::exportToWkt( char ** ppszReturn )
     {
         OGRPoint        *poPoint = (OGRPoint *) getGeometryRef( i );
 
-        assert( nMaxString > (int) strlen(*ppszReturn+nRetLen) + 32 + nRetLen);
-        
         if( i > 0 )
             strcat( *ppszReturn + nRetLen, "," );
 
         nRetLen += strlen(*ppszReturn + nRetLen);
 
+        if( nMaxString < nRetLen + 100 )
+        {
+            nMaxString = nMaxString * 2;
+            *ppszReturn = (char *) CPLRealloc(*ppszReturn,nMaxString);
+        }
+        
         if( poPoint->getCoordinateDimension() == 3 )
             OGRMakeWktCoordinate( *ppszReturn + nRetLen,
                                   poPoint->getX(), 
