@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2004/08/11 18:43:50  warmerda
+ * restructure init to support derived class, add pszVRTPath to serialize
+ *
  * Revision 1.16  2004/07/30 21:51:29  warmerda
  * added support for VRTRawRasterBand
  *
@@ -170,12 +173,15 @@ void VRTDataset::FlushCache()
     /* -------------------------------------------------------------------- */
     /*      Convert tree to a single block of XML text.                     */
     /* -------------------------------------------------------------------- */
-    CPLXMLNode *psDSTree = SerializeToXML();
+    char *pszVRTPath = CPLStrdup(CPLGetPath(GetDescription()));
+    CPLXMLNode *psDSTree = SerializeToXML( pszVRTPath );
     char *pszXML;
 
     pszXML = CPLSerializeXMLTree( psDSTree );
 
     CPLDestroyXMLNode( psDSTree );
+
+    CPLFree( pszVRTPath );
 
     /* -------------------------------------------------------------------- */
     /*      Write to disk.                                                  */
@@ -190,7 +196,7 @@ void VRTDataset::FlushCache()
 /*                           SerializeToXML()                           */
 /************************************************************************/
 
-CPLXMLNode *VRTDataset::SerializeToXML()
+CPLXMLNode *VRTDataset::SerializeToXML( const char *pszVRTPath )
 
 {
     /* -------------------------------------------------------------------- */
@@ -281,9 +287,9 @@ CPLXMLNode *VRTDataset::SerializeToXML()
     /* -------------------------------------------------------------------- */
     for( int iBand = 0; iBand < nBands; iBand++ )
     {
-        CPLXMLNode *psBandTree;
+        CPLXMLNode *psBandTree = 
+            ((VRTRasterBand *) papoBands[iBand])->SerializeToXML(pszVRTPath);
 
-        psBandTree = ((VRTRasterBand *) papoBands[iBand])->SerializeToXML();
         if( psBandTree != NULL )
             CPLAddXMLChild( psDSTree, psBandTree );
     }
@@ -291,6 +297,144 @@ CPLXMLNode *VRTDataset::SerializeToXML()
     return psDSTree;
 }
 
+/************************************************************************/
+/*                              XMLInit()                               */
+/************************************************************************/
+
+CPLErr VRTDataset::XMLInit( CPLXMLNode *psTree, const char *pszVRTPath )
+
+{
+    if( pszVRTPath != NULL )
+        this->pszVRTPath = CPLStrdup(pszVRTPath);
+
+/* -------------------------------------------------------------------- */
+/*      Check for an SRS node.                                          */
+/* -------------------------------------------------------------------- */
+    if( strlen(CPLGetXMLValue(psTree, "SRS", "")) > 0 )
+        pszProjection = CPLStrdup(CPLGetXMLValue(psTree, "SRS", ""));
+
+/* -------------------------------------------------------------------- */
+/*      Check for a GeoTransform node.                                  */
+/* -------------------------------------------------------------------- */
+    if( strlen(CPLGetXMLValue(psTree, "GeoTransform", "")) > 0 )
+    {
+        const char *pszGT = CPLGetXMLValue(psTree, "GeoTransform", "");
+        char	**papszTokens;
+
+        papszTokens = CSLTokenizeStringComplex( pszGT, ",", FALSE, FALSE );
+        if( CSLCount(papszTokens) != 6 )
+        {
+            CPLError( CE_Warning, CPLE_AppDefined,
+                      "GeoTransform node does not have expected six values.");
+        }
+        else
+        {
+            for( int iTA = 0; iTA < 6; iTA++ )
+                adfGeoTransform[iTA] = atof(papszTokens[iTA]);
+            bGeoTransformSet = TRUE;
+        }
+
+        CSLDestroy( papszTokens );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Check for GCPs.                                                 */
+/* -------------------------------------------------------------------- */
+    CPLXMLNode *psGCPList = CPLGetXMLNode( psTree, "GCPList" );
+
+    if( psGCPList != NULL )
+    {
+        CPLXMLNode *psXMLGCP;
+
+        CPLFree( pszGCPProjection );
+        pszGCPProjection =
+            CPLStrdup(CPLGetXMLValue(psGCPList,"Projection",""));
+         
+        // Count GCPs.
+        int  nGCPMax = 0;
+         
+        for( psXMLGCP = psGCPList->psChild; psXMLGCP != NULL; 
+             psXMLGCP = psXMLGCP->psNext )
+            nGCPMax++;
+         
+        pasGCPList = (GDAL_GCP *) CPLCalloc(sizeof(GDAL_GCP),nGCPMax);
+         
+        for( psXMLGCP = psGCPList->psChild; psXMLGCP != NULL; 
+             psXMLGCP = psXMLGCP->psNext )
+        {
+            GDAL_GCP *psGCP = pasGCPList + nGCPCount;
+
+            if( !EQUAL(psXMLGCP->pszValue,"GCP") || 
+                psXMLGCP->eType != CXT_Element )
+                continue;
+             
+            GDALInitGCPs( 1, psGCP );
+             
+            CPLFree( psGCP->pszId );
+            psGCP->pszId = CPLStrdup(CPLGetXMLValue(psXMLGCP,"Id",""));
+             
+            CPLFree( psGCP->pszInfo );
+            psGCP->pszInfo = CPLStrdup(CPLGetXMLValue(psXMLGCP,"Info",""));
+             
+            psGCP->dfGCPPixel = atof(CPLGetXMLValue(psXMLGCP,"Pixel","0.0"));
+            psGCP->dfGCPLine = atof(CPLGetXMLValue(psXMLGCP,"Line","0.0"));
+             
+            psGCP->dfGCPX = atof(CPLGetXMLValue(psXMLGCP,"X","0.0"));
+            psGCP->dfGCPY = atof(CPLGetXMLValue(psXMLGCP,"Y","0.0"));
+            psGCP->dfGCPZ = atof(CPLGetXMLValue(psXMLGCP,"Z","0.0"));
+
+            nGCPCount++;
+        }
+    }
+     
+/* -------------------------------------------------------------------- */
+/*      Apply any dataset level metadata.                               */
+/* -------------------------------------------------------------------- */
+    VRTApplyMetadata( psTree, this );
+
+/* -------------------------------------------------------------------- */
+/*      Create band information objects.                                */
+/* -------------------------------------------------------------------- */
+    int		nBands = 0;
+    CPLXMLNode *psChild;
+
+    for( psChild=psTree->psChild; psChild != NULL; psChild=psChild->psNext )
+    {
+        if( psChild->eType == CXT_Element
+            && EQUAL(psChild->pszValue,"VRTRasterBand") )
+        {
+            VRTRasterBand  *poBand = NULL;
+            const char *pszSubclass = CPLGetXMLValue( psChild, "subclass", 
+                                                      "VRTSourcedRasterBand" );
+
+            if( EQUAL(pszSubclass,"VRTSourcedRasterBand") )
+                poBand = new VRTSourcedRasterBand( this, nBands+1 );
+            else if( EQUAL(pszSubclass, "VRTRawRasterBand") )
+                poBand = new VRTRawRasterBand( this, nBands+1 );
+            else if( EQUAL(pszSubclass, "VRTWarpedRasterBand") )
+                poBand = new VRTWarpedRasterBand( this, nBands+1 );
+            else
+                CPLError( CE_Failure, CPLE_AppDefined,
+                          "VRTRasterBand of unrecognised subclass '%s'.",
+                          pszSubclass );
+
+            if( poBand != NULL 
+                && poBand->XMLInit( psChild, pszVRTPath ) == CE_None )
+            {
+                SetBand( ++nBands, poBand );
+            }
+            else
+            {
+                CPLDestroyXMLNode( psTree );
+                if( poBand )
+                    delete poBand; 
+                return CE_Failure;
+            }
+        }
+    }
+    
+    return CE_None;
+}
 
 /************************************************************************/
 /*                            GetGCPCount()                             */
@@ -526,137 +670,18 @@ GDALDataset *VRTDataset::OpenXML( const char *pszXML, const char *pszVRTPath )
 /*      Create the new virtual dataset object.                          */
 /* -------------------------------------------------------------------- */
     VRTDataset *poDS;
+    int nXSize = atoi(CPLGetXMLValue(psTree,"rasterXSize","0"));
+    int nYSize = atoi(CPLGetXMLValue(psTree,"rasterYSize","0"));
 
-    poDS = new VRTDataset(atoi(CPLGetXMLValue(psTree,"rasterXSize","0")),
-                          atoi(CPLGetXMLValue(psTree,"rasterYSize","0")));
+    if( strstr(pszXML,"VRTWarpedDataset") != NULL )
+        poDS = new VRTWarpedDataset( nXSize, nYSize );
+    else
+        poDS = new VRTDataset( nXSize, nYSize );
 
-    poDS->eAccess = GA_ReadOnly;
-    if( pszVRTPath != NULL )
-        poDS->pszVRTPath = CPLStrdup(pszVRTPath);
-
-    /* -------------------------------------------------------------------- */
-    /*	Check for an SRS node.						*/
-    /* -------------------------------------------------------------------- */
-    if( strlen(CPLGetXMLValue(psTree, "SRS", "")) > 0 )
-        poDS->pszProjection = CPLStrdup(CPLGetXMLValue(psTree, "SRS", ""));
-
- /* -------------------------------------------------------------------- */
- /*      Check for a GeoTransform node.                                  */
- /* -------------------------------------------------------------------- */
-    if( strlen(CPLGetXMLValue(psTree, "GeoTransform", "")) > 0 )
+    if( poDS->XMLInit( psTree, pszVRTPath ) != CE_None )
     {
-        const char *pszGT = CPLGetXMLValue(psTree, "GeoTransform", "");
-        char	**papszTokens;
-
-        papszTokens = CSLTokenizeStringComplex( pszGT, ",", FALSE, FALSE );
-        if( CSLCount(papszTokens) != 6 )
-        {
-            CPLError( CE_Warning, CPLE_AppDefined,
-                      "GeoTransform node does not have expected six values.");
-        }
-        else
-        {
-            for( int iTA = 0; iTA < 6; iTA++ )
-                poDS->adfGeoTransform[iTA] = atof(papszTokens[iTA]);
-            poDS->bGeoTransformSet = TRUE;
-        }
-
-        CSLDestroy( papszTokens );
-    }
-
-    /* -------------------------------------------------------------------- */
-    /*      Check for GCPs.                                                 */
-    /* -------------------------------------------------------------------- */
-    CPLXMLNode *psGCPList = CPLGetXMLNode( psTree, "GCPList" );
-
-    if( psGCPList != NULL )
-    {
-        CPLXMLNode *psXMLGCP;
-
-        CPLFree( poDS->pszGCPProjection );
-        poDS->pszGCPProjection =
-            CPLStrdup(CPLGetXMLValue(psGCPList,"Projection",""));
-         
-        // Count GCPs.
-        int  nGCPMax = 0;
-         
-        for( psXMLGCP = psGCPList->psChild; psXMLGCP != NULL; 
-             psXMLGCP = psXMLGCP->psNext )
-            nGCPMax++;
-         
-        poDS->pasGCPList = (GDAL_GCP *) CPLCalloc(sizeof(GDAL_GCP),nGCPMax);
-         
-        for( psXMLGCP = psGCPList->psChild; psXMLGCP != NULL; 
-             psXMLGCP = psXMLGCP->psNext )
-        {
-            GDAL_GCP *psGCP = poDS->pasGCPList + poDS->nGCPCount;
-
-            if( !EQUAL(psXMLGCP->pszValue,"GCP") || 
-                psXMLGCP->eType != CXT_Element )
-                continue;
-             
-            GDALInitGCPs( 1, psGCP );
-             
-            CPLFree( psGCP->pszId );
-            psGCP->pszId = CPLStrdup(CPLGetXMLValue(psXMLGCP,"Id",""));
-             
-            CPLFree( psGCP->pszInfo );
-            psGCP->pszInfo = CPLStrdup(CPLGetXMLValue(psXMLGCP,"Info",""));
-             
-            psGCP->dfGCPPixel = atof(CPLGetXMLValue(psXMLGCP,"Pixel","0.0"));
-            psGCP->dfGCPLine = atof(CPLGetXMLValue(psXMLGCP,"Line","0.0"));
-             
-            psGCP->dfGCPX = atof(CPLGetXMLValue(psXMLGCP,"X","0.0"));
-            psGCP->dfGCPY = atof(CPLGetXMLValue(psXMLGCP,"Y","0.0"));
-            psGCP->dfGCPZ = atof(CPLGetXMLValue(psXMLGCP,"Z","0.0"));
-
-            poDS->nGCPCount++;
-        }
-    }
-     
-/* -------------------------------------------------------------------- */
-/*      Apply any dataset level metadata.                               */
-/* -------------------------------------------------------------------- */
-    VRTApplyMetadata( psTree, poDS );
-
-/* -------------------------------------------------------------------- */
-/*      Create band information objects.                                */
-/* -------------------------------------------------------------------- */
-    int		nBands = 0;
-    CPLXMLNode *psChild;
-
-    for( psChild=psTree->psChild; psChild != NULL; psChild=psChild->psNext )
-    {
-        if( psChild->eType == CXT_Element
-            && EQUAL(psChild->pszValue,"VRTRasterBand") )
-        {
-            VRTRasterBand  *poBand = NULL;
-            const char *pszSubclass = CPLGetXMLValue( psChild, "subclass", 
-                                                      "VRTSourcedRasterBand" );
-
-            if( EQUAL(pszSubclass,"VRTSourcedRasterBand") )
-                poBand = new VRTSourcedRasterBand( poDS, nBands+1 );
-            else if( EQUAL(pszSubclass, "VRTRawRasterBand") )
-                poBand = new VRTRawRasterBand( poDS, nBands+1 );
-            else
-                CPLError( CE_Failure, CPLE_AppDefined,
-                          "VRTRasterBand of unrecognised subclass '%s'.",
-                          pszSubclass );
-
-            if( poBand != NULL 
-                && poBand->XMLInit( psChild, poDS->pszVRTPath ) == CE_None )
-            {
-                poDS->SetBand( ++nBands, poBand );
-            }
-            else
-            {
-                CPLDestroyXMLNode( psTree );
-                if( poBand )
-                    delete poBand; 
-                delete poDS;
-                return NULL;
-            }
-        }
+        delete poDS;
+        return NULL;
     }
 
 /* -------------------------------------------------------------------- */
