@@ -37,7 +37,7 @@ LINKARGS =	$(OBJ_OGR) $(OGR_FRMTS) $(ALL_LIBS)
 DEPLIBS	=	$(OGR_FRMTS)
 !ENDIF
 
-default:        ogr.lib ogrinfo.exe test_ogrsf.exe ogr2ogr.exe
+default:        ogr.lib ogrinfo.exe test_ogrsf.exe ogr2ogr.exe ogrtindex.exe
 
 ogrsf_frmts\ogrsf_frmts.lib:
 
@@ -110,6 +110,7 @@ sdts2mi.exe:      sdts2mi.obj $(OBJ_OGR) $(DEPLIBS)
 install:	default
 	copy ogrinfo.exe $(BINDIR)
 	copy ogr2ogr.exe $(BINDIR)
+	copy ogrtindex.exe $(BINDIR)
 
 clean:
 	-del *.obj
