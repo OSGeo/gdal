@@ -29,6 +29,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.12  2000/06/26 21:11:10  warmerda
+# Added default rules for overviews
+#
 # Revision 1.11  2000/06/26 19:54:52  warmerda
 # improve defaulting rules for overviewlist
 #
@@ -197,9 +200,9 @@ class Dataset:
         if overviewlist is None:
             if self.RasterXSize > 4096:
                 overviewlist = [2,4,8,16,32,64]
-            else if self.RasterXSize > 2048:
+            elif self.RasterXSize > 2048:
                 overviewlist = [2,4,8,16,32]
-            else if self.RasterXSize > 1024:
+            elif self.RasterXSize > 1024:
                 overviewlist = [2,4,8,16]
             else:
                 overviewlist = [2,4,8]
