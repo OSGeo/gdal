@@ -6458,3 +6458,16 @@ SED=$lt_cv_path_SED
 ])
 AC_MSG_RESULT([$SED])
 ])
+
+
+dnl ---------------------------------------------------------------------------
+dnl Message output
+dnl ---------------------------------------------------------------------------
+AC_DEFUN(LOC_MSG,[
+echo "$1"
+])
+
+AC_DEFUN(LOC_YES_NO,[if test -n "${$1}" ; then echo yes ; else echo no ; fi])
+
+AC_DEFUN(LOC_MSG_USE,[
+[echo "  $1: ]`LOC_YES_NO($2)`"])
