@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.2  2000/11/28 02:28:54  warmerda
+ * Added error checks, GetGeoTransform and GetProjection
+ *
  * Revision 1.1  2000/11/27 19:03:26  warmerda
  * New
  *
@@ -56,6 +59,27 @@ static int JDEMGetField( char *pszField, int nWidth )
     szWork[nWidth] = '\0';
 
     return atoi(szWork);
+}
+
+/************************************************************************/
+/*                            JDEMGetAngle()                            */
+/************************************************************************/
+
+static double JDEMGetAngle( char *pszField )
+
+{
+    int		nAngle = JDEMGetField( pszField, 7 );
+    int		nDegree, nMin, nSec;
+
+    // Note, this isn't very general purpose, but it would appear
+    // from the field widths that angles are never negative.  Nice
+    // to be a country in the "first quadrant". 
+
+    nDegree = nAngle / 10000;
+    nMin = (nAngle / 100) % 100;
+    nSec = nAngle % 100;
+    
+    return nDegree + nMin / 60.0 + nSec / 3600.0;
 }
 
 /************************************************************************/
@@ -134,10 +158,28 @@ CPLErr JDEMRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     pszRecord = (char *) CPLMalloc(nRecordSize);
     VSIFRead( pszRecord, 1, nRecordSize, poGDS->fp );
 
+    if( !EQUALN((char *) poGDS->abyHeader,pszRecord,6) )
+    {
+        CPLFree( pszRecord );
+
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "JDEM Scanline corrupt.  Perhaps file was not transferred\n"
+                  "in binary mode?" );
+        return CE_Failure;
+    }
+    
+    if( JDEMGetField( pszRecord + 6, 3 ) != nBlockYOff + 1 )
+    {
+        CPLFree( pszRecord );
+
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "JDEM scanline out of order, JDEM driver does not\n"
+                  "currently support partial datasets." );
+        return CE_Failure;
+    }
+
     for( i = 0; i < nBlockXSize; i++ )
         ((float *) pImage)[i] = JDEMGetField( pszRecord + 9 + 5 * i, 5) * 0.1;
-
-    CPLFree( pszRecord );
 
     return CE_None;
 }
@@ -155,8 +197,9 @@ CPLErr JDEMRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 JDEMDataset::~JDEMDataset()
 
 {
+    if( fp != NULL )
+        VSIFClose( fp );
 }
-
 
 /************************************************************************/
 /*                          GetGeoTransform()                           */
@@ -165,7 +208,23 @@ JDEMDataset::~JDEMDataset()
 CPLErr JDEMDataset::GetGeoTransform( double * padfTransform )
 
 {
-    return CE_Failure;
+    double	dfLLLat, dfLLLong, dfURLat, dfURLong;
+
+    dfLLLat = JDEMGetAngle( (char *) abyHeader + 29 );
+    dfLLLong = JDEMGetAngle( (char *) abyHeader + 36 );
+    dfURLat = JDEMGetAngle( (char *) abyHeader + 43 );
+    dfURLong = JDEMGetAngle( (char *) abyHeader + 50 );
+    
+    padfTransform[0] = dfLLLong;
+    padfTransform[3] = dfURLat;
+    padfTransform[1] = (dfURLong - dfLLLong) / GetRasterXSize();
+    padfTransform[2] = 0.0;
+        
+    padfTransform[4] = 0.0;
+    padfTransform[5] = -1 * (dfURLat - dfLLLat) / GetRasterYSize();
+
+
+    return CE_None;
 }
 
 /************************************************************************/
@@ -175,7 +234,7 @@ CPLErr JDEMDataset::GetGeoTransform( double * padfTransform )
 const char *JDEMDataset::GetProjectionRef()
 
 {
-    return( "" );
+    return( "GEOGCS[\"Tokyo\",DATUM[\"Tokyo\",SPHEROID[\"Bessel 1841\",6377397.155,299.1528128,AUTHORITY[\"EPSG\",7004]],TOWGS84[-148,507,685,0,0,0,0],AUTHORITY[\"EPSG\",6301]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",8901]],UNIT[\"DMSH\",0.0174532925199433,AUTHORITY[\"EPSG\",9108]],AXIS[\"Lat\",NORTH],AXIS[\"Long\",EAST],AUTHORITY[\"EPSG\",4301]]" );
 }
 
 /************************************************************************/
