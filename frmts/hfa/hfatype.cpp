@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2000/12/29 16:37:32  warmerda
+ * Use GUInt32 for all file offsets
+ *
  * Revision 1.3  2000/09/29 21:42:38  warmerda
  * preliminary write support implemented
  *
@@ -188,7 +191,7 @@ void HFAType::Dump( FILE * fp )
 
 CPLErr 
 HFAType::SetInstValue( const char * pszFieldPath,
-                       GByte *pabyData, int nDataOffset, int nDataSize,
+                       GByte *pabyData, GUInt32 nDataOffset, int nDataSize,
                        char chReqType, void *pValue )
 
 {
@@ -274,7 +277,7 @@ HFAType::SetInstValue( const char * pszFieldPath,
 
 void *
 HFAType::ExtractInstValue( const char * pszFieldPath,
-                           GByte *pabyData, int nDataOffset, int nDataSize,
+                           GByte *pabyData, GUInt32 nDataOffset, int nDataSize,
                            char chReqType )
 
 {
@@ -347,8 +350,8 @@ HFAType::ExtractInstValue( const char * pszFieldPath,
 /************************************************************************/
 
 void HFAType::DumpInstValue( FILE * fpOut,
-                             GByte *pabyData, int nDataOffset, int nDataSize,
-                             const char * pszPrefix )
+                           GByte *pabyData, GUInt32 nDataOffset, int nDataSize,
+                           const char * pszPrefix )
 
 {
     int		iField;

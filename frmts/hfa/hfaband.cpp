@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2000/12/29 16:37:32  warmerda
+ * Use GUInt32 for all file offsets
+ *
  * Revision 1.12  2000/10/31 19:13:53  warmerda
  * Look for overviews even if RRDNames exists and fails
  *
@@ -238,7 +241,7 @@ CPLErr	HFABand::LoadBlockInfo()
         return CE_Failure;
     }
 
-    panBlockStart = (int *) CPLMalloc(sizeof(int) * nBlocks);
+    panBlockStart = (GUInt32 *) CPLMalloc(sizeof(GUInt32) * nBlocks);
     panBlockSize = (int *) CPLMalloc(sizeof(int) * nBlocks);
     panBlockFlag = (int *) CPLMalloc(sizeof(int) * nBlocks);
 

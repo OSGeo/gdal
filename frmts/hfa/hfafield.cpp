@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2000/12/29 16:37:32  warmerda
+ * Use GUInt32 for all file offsets
+ *
  * Revision 1.9  2000/10/12 19:30:32  warmerda
  * substantially improved write support
  *
@@ -354,7 +357,7 @@ void HFAField::Dump( FILE * fp )
 
 CPLErr
 HFAField::SetInstValue( const char * pszField, int nIndexValue,
-                        GByte *pabyData, int nDataOffset, int nDataSize,
+                        GByte *pabyData, GUInt32 nDataOffset, int nDataSize,
                         char chReqType, void *pValue )
 
 {
@@ -591,8 +594,8 @@ HFAField::SetInstValue( const char * pszField, int nIndexValue,
 
 void *
 HFAField::ExtractInstValue( const char * pszField, int nIndexValue,
-                            GByte *pabyData, int nDataOffset, int nDataSize,
-                            char chReqType )
+                           GByte *pabyData, GUInt32 nDataOffset, int nDataSize,
+                           char chReqType )
 
 {
     char		*pszStringRet = NULL;
@@ -872,9 +875,9 @@ int HFAField::GetInstCount( GByte * pabyData )
 /*                           DumpInstValue()                            */
 /************************************************************************/
 
-void HFAField::DumpInstValue(  FILE *fpOut, 
-                               GByte *pabyData, int nDataOffset, int nDataSize,
-                               const char *pszPrefix )
+void HFAField::DumpInstValue( FILE *fpOut, 
+                           GByte *pabyData, GUInt32 nDataOffset, int nDataSize,
+                           const char *pszPrefix )
 
 {
     int		iEntry, nEntries;

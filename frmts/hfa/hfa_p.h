@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2000/12/29 16:37:32  warmerda
+ * Use GUInt32 for all file offsets
+ *
  * Revision 1.8  2000/10/31 18:02:32  warmerda
  * Added external and unnamed overview support
  *
@@ -127,7 +130,7 @@ HFAInfo_t *HFAGetDependent( HFAInfo_t *, const char * );
 class HFABand
 {
     int		nBlocks;
-    int		*panBlockStart;
+    GUInt32	*panBlockStart;
     int		*panBlockSize;
     int		*panBlockFlag;
 
@@ -276,16 +279,16 @@ class HFAField
     void	Dump( FILE * );
 
     void	*ExtractInstValue( const char * pszField, int nIndexValue,
-                               GByte *pabyData, int nDataOffset, int nDataSize,
-                               char chReqType );
+                     GByte *pabyData, GUInt32 nDataOffset, int nDataSize,
+                     char chReqType );
 
     CPLErr      SetInstValue( const char * pszField, int nIndexValue,
-                              GByte *pabyData, int nDataOffset, int nDataSize,
-                              char chReqType, void *pValue );
+                     GByte *pabyData, GUInt32 nDataOffset, int nDataSize,
+                     char chReqType, void *pValue );
 
     void	DumpInstValue( FILE *fpOut, 
-                               GByte *pabyData, int nDataOffset, int nDataSize,
-                               const char *pszPrefix = NULL );
+                     GByte *pabyData, GUInt32 nDataOffset, int nDataSize,
+                     const char *pszPrefix = NULL );
     
     int		GetInstBytes( GByte * pabyData );
     int		GetInstCount( GByte * pabyData );
@@ -319,14 +322,14 @@ class HFAType
 
     int		GetInstBytes( GByte * pabyData );
     void	*ExtractInstValue( const char * pszField,
-                               GByte *pabyData, int nDataOffset, int nDataSize,
+                           GByte *pabyData, GUInt32 nDataOffset, int nDataSize,
                                char chReqType );
     CPLErr      SetInstValue( const char * pszField,
-                              GByte *pabyData, int nDataOffset, int nDataSize,
-                              char chReqType, void * pValue );
+                           GByte *pabyData, GUInt32 nDataOffset, int nDataSize,
+                           char chReqType, void * pValue );
     void	DumpInstValue( FILE *fpOut, 
-                               GByte *pabyData, int nDataOffset, int nDataSize,
-                               const char *pszPrefix = NULL );
+                           GByte *pabyData, GUInt32 nDataOffset, int nDataSize,
+                           const char *pszPrefix = NULL );
 };
 
 /************************************************************************/
