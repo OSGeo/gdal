@@ -68,6 +68,7 @@ dist:	docs
 	cp html/* $(DISTDIR)/html
 	autoconf
 	cp *.cpp *.h configure Makefile.in $(DISTDIR)
+	rm $(DISTDIR)/sdtsdataset.cpp
 	cp $(ISO8211DIR)/{*.cpp,*.h} $(DISTDIR)
 	rm configure
 	cp $(GDAL_ROOT)/port/{cpl_error*,cpl_port*,cpl_string*} $(DISTDIR)
