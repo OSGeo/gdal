@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.40  2003/06/20 02:12:35  warmerda
+ * set photometric tag
+ *
  * Revision 1.39  2003/06/19 19:39:09  warmerda
  * when preparing a coordinate-system inmemory GeoTIFF also write image data
  *
@@ -1670,6 +1673,7 @@ CPLErr GTIFMemBufFromWkt( const char *pszWKT, const double *padfGeoTransform,
     TIFFSetField( hTIFF, TIFFTAG_SAMPLESPERPIXEL, 1 );
     TIFFSetField( hTIFF, TIFFTAG_ROWSPERSTRIP, 1 );
     TIFFSetField( hTIFF, TIFFTAG_PLANARCONFIG, PLANARCONFIG_CONTIG );
+    TIFFSetField( hTIFF, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_MINISBLACK );
     
 /* -------------------------------------------------------------------- */
 /*      Get the projection definition.                                  */
