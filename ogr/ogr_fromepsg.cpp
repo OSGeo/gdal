@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2000/12/07 03:46:04  danmo
+ * Made papszDatumEquiv[] const
+ *
  * Revision 1.5  2000/10/23 13:01:59  warmerda
  * Fixed OSRSetStatePlane
  *
@@ -53,7 +56,7 @@
 #  define PI 3.14159265358979323846
 #endif
 
-static char *papszDatumEquiv[] =
+static const char *papszDatumEquiv[] =
 {
     "Militar_Geographische_Institut",
     "Militar_Geographische_Institute",
@@ -141,7 +144,7 @@ EPSGAngleStringToDD( const char * pszAngle, int nUOMAngle )
         char	*pszDecimal;
         
         dfAngle = ABS(atoi(pszAngle));
-        pszDecimal = strchr(pszAngle,'.');
+        pszDecimal = (char *) strchr(pszAngle,'.');
         if( pszDecimal != NULL && strlen(pszDecimal) > 1 )
         {
             char	szMinutes[3];
