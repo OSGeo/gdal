@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.26  2002/06/25 14:45:50  warmerda
+ * added RegisterOGRFME()
+ *
  * Revision 1.25  2002/04/25 03:42:04  warmerda
  * fixed spatial filter support on SQL results
  *
@@ -306,6 +309,7 @@ void CPL_DLL RegisterOGRDGN();
 void CPL_DLL RegisterOGRGML();
 void CPL_DLL RegisterOGRAVCBin();
 void CPL_DLL RegisterOGRAVCE00();
+void CPL_DLL RegisterOGRFME();
 CPL_C_END
 
 
