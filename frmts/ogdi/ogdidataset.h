@@ -29,6 +29,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.10  2002/06/17 13:41:25  warmerda
+ * ensure gdal_priv.h is included first for largefile handling
+ *
  * Revision 1.9  2001/06/23 22:40:53  warmerda
  * added SUBDATASETS support
  *
@@ -61,9 +64,19 @@
 #ifndef OGDIDATASET_H_INCLUDED
 #define OGDIDATASET_H_INCLUDED
 
-#include <math.h>
-#include "ecs.h"
 #include "gdal_priv.h"
+#include <math.h>
+
+// MIN/MAX conflict with 
+#undef MIN
+#undef MAX
+
+#include "ecs.h"
+
+#ifndef MAX
+#  define MIN(a,b)      ((a<b) ? a : b)
+#  define MAX(a,b)      ((a>b) ? a : b)
+#endif
 
 CPL_C_START
 void	GDALRegister_OGDI(void);
