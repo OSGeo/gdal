@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.42  2002/09/26 18:14:22  warmerda
+ * added preliminary OGR support
+ *
  * Revision 1.41  2002/09/11 14:30:06  warmerda
  * added GDALMajorObject.SetDescription()
  *
@@ -109,6 +112,7 @@
 #include "ogr_srs_api.h"
 #include "gdal_py.h"
 #include "cpl_minixml.h"
+#include "ogr_api.h"
 
 CPL_CVSID("$Id$");
 
@@ -1882,3 +1886,160 @@ py_CPLDebug(PyObject *self, PyObject *args) {
 
 %native(CPLDebug) py_CPLDebug;
 
+/* -------------------------------------------------------------------- */
+/*      OGR_API Stuff.							*/
+/* -------------------------------------------------------------------- */
+typedef void *OGRGeometryH;
+
+typedef void *OGRFieldDefnH;
+typedef void *OGRFeatureDefnH;
+typedef void *OGRFeatureH;
+
+typedef struct
+{
+    double      MinX;
+    double      MaxX;
+    double      MinY;
+    double      MaxY;
+} OGREnvelope;
+
+typedef int OGRErr;
+typedef int OGRwkbGeometryType;
+typedef int OGRFieldType;
+typedef int OGRJustification;
+
+/* OGRFieldDefn */
+
+OGRFieldDefnH  OGR_Fld_Create( const char *, OGRFieldType );
+void    OGR_Fld_Destroy( OGRFieldDefnH );
+
+void    OGR_Fld_SetName( OGRFieldDefnH, const char * );
+const char  *OGR_Fld_GetNameRef( OGRFieldDefnH );
+OGRFieldType  OGR_Fld_GetType( OGRFieldDefnH );
+void    OGR_Fld_SetType( OGRFieldDefnH, OGRFieldType );
+OGRJustification  OGR_Fld_GetJustify( OGRFieldDefnH );
+void    OGR_Fld_SetJustify( OGRFieldDefnH, OGRJustification );
+int     OGR_Fld_GetWidth( OGRFieldDefnH );
+void    OGR_Fld_SetWidth( OGRFieldDefnH, int );
+int     OGR_Fld_GetPrecision( OGRFieldDefnH );
+void    OGR_Fld_SetPrecision( OGRFieldDefnH, int );
+void    OGR_Fld_Set( OGRFieldDefnH, const char *, OGRFieldType, 
+                            int, int, OGRJustification );
+
+const char  *OGR_GetFieldTypeName( OGRFieldType );
+
+/* OGRFeatureDefn */
+
+OGRFeatureDefnH  OGR_FD_Create( const char * );
+void    OGR_FD_Destroy( OGRFeatureDefnH );
+const char  *OGR_FD_GetName( OGRFeatureDefnH );
+int     OGR_FD_GetFieldCount( OGRFeatureDefnH );
+OGRFieldDefnH  OGR_FD_GetFieldDefn( OGRFeatureDefnH, int );
+int     OGR_FD_GetFieldIndex( OGRFeatureDefnH, const char * );
+void    OGR_FD_AddFieldDefn( OGRFeatureDefnH, OGRFieldDefnH );
+OGRwkbGeometryType  OGR_FD_GetGeomType( OGRFeatureDefnH );
+void    OGR_FD_SetGeomType( OGRFeatureDefnH, OGRwkbGeometryType );
+int     OGR_FD_Reference( OGRFeatureDefnH );
+int     OGR_FD_Dereference( OGRFeatureDefnH );
+int     OGR_FD_GetReferenceCount( OGRFeatureDefnH );
+
+/* OGRFeature */
+
+OGRFeatureH  OGR_F_Create( OGRFeatureDefnH );
+void    OGR_F_Destroy( OGRFeatureH );
+OGRFeatureDefnH  OGR_F_GetDefnRef( OGRFeatureH );
+
+OGRErr  OGR_F_SetGeometryDirectly( OGRFeatureH, OGRGeometryH );
+OGRErr  OGR_F_SetGeometry( OGRFeatureH, OGRGeometryH );
+OGRGeometryH  OGR_F_GetGeometryRef( OGRFeatureH );
+OGRFeatureH  OGR_F_Clone( OGRFeatureH );
+int     OGR_F_Equal( OGRFeatureH, OGRFeatureH );
+
+int     OGR_F_GetFieldCount( OGRFeatureH );
+OGRFieldDefnH  OGR_F_GetFieldDefnRef( OGRFeatureH, int );
+int     OGR_F_GetFieldIndex( OGRFeatureH, const char * );
+
+int     OGR_F_IsFieldSet( OGRFeatureH, int );
+void    OGR_F_UnsetField( OGRFeatureH, int );
+
+int     OGR_F_GetFieldAsInteger( OGRFeatureH, int );
+double  OGR_F_GetFieldAsDouble( OGRFeatureH, int );
+const char  *OGR_F_GetFieldAsString( OGRFeatureH, int );
+const int  *OGR_F_GetFieldAsIntegerList( OGRFeatureH, int, int * );
+const double  *OGR_F_GetFieldAsDoubleList( OGRFeatureH, int, int * );
+char   **OGR_F_GetFieldAsStringList( OGRFeatureH, int );
+
+void    OGR_F_SetFieldInteger( OGRFeatureH, int, int );
+void    OGR_F_SetFieldDouble( OGRFeatureH, int, double );
+void    OGR_F_SetFieldString( OGRFeatureH, int, const char * );
+void    OGR_F_SetFieldIntegerList( OGRFeatureH, int, int, int * );
+void    OGR_F_SetFieldDoubleList( OGRFeatureH, int, int, double * );
+void    OGR_F_SetFieldStringList( OGRFeatureH, int, char ** );
+
+long    OGR_F_GetFID( OGRFeatureH );
+OGRErr  OGR_F_SetFID( OGRFeatureH, long );
+void    OGR_F_DumpReadable( OGRFeatureH, FILE * );
+OGRErr  OGR_F_SetFrom( OGRFeatureH, OGRFeatureH, int );
+
+const char  *OGR_F_GetStyleString( OGRFeatureH );
+void    OGR_F_SetStyleString( OGRFeatureH, const char * );
+
+/* -------------------------------------------------------------------- */
+/*      ogrsf_frmts.h                                                   */
+/* -------------------------------------------------------------------- */
+
+typedef void *OGRLayerH;
+typedef void *OGRDataSourceH;
+typedef void *OGRSFDriverH;
+
+/* OGRLayer */
+
+OGRGeometryH  OGR_L_GetSpatialFilter( OGRLayerH );
+void    OGR_L_SetSpatialFilter( OGRLayerH, OGRGeometryH );
+OGRErr  OGR_L_SetAttributeFilter( OGRLayerH, const char * );
+void    OGR_L_ResetReading( OGRLayerH );
+OGRFeatureH  OGR_L_GetNextFeature( OGRLayerH );
+OGRFeatureH  OGR_L_GetFeature( OGRLayerH, long );
+OGRErr  OGR_L_SetFeature( OGRLayerH, OGRFeatureH );
+OGRErr  OGR_L_CreateFeature( OGRLayerH, OGRFeatureH );
+OGRFeatureDefnH  OGR_L_GetLayerDefn( OGRLayerH );
+OGRSpatialReferenceH  OGR_L_GetSpatialRef( OGRLayerH );
+int     OGR_L_GetFeatureCount( OGRLayerH, int );
+OGRErr  OGR_L_GetExtent( OGRLayerH, OGREnvelope *, int );
+int     OGR_L_TestCapability( OGRLayerH, const char * );
+OGRErr  OGR_L_CreateField( OGRLayerH, OGRFieldDefnH, int );
+OGRErr  OGR_L_StartTransaction( OGRLayerH );
+OGRErr  OGR_L_CommitTransaction( OGRLayerH );
+OGRErr  OGR_L_RollbackTransaction( OGRLayerH );
+
+/* OGRDataSource */
+
+void OGR_DS_Destroy( OGRDataSourceH );
+const char  *OGR_DS_GetName( OGRDataSourceH );
+int     OGR_DS_GetLayerCount( OGRDataSourceH );
+OGRLayerH  OGR_DS_GetLayer( OGRDataSourceH, int );
+OGRLayerH  OGR_DS_CreateLayer( OGRDataSourceH, const char *, 
+                                      OGRSpatialReferenceH, OGRwkbGeometryType,
+                                      char ** );
+int     OGR_DS_TestCapability( OGRDataSourceH, const char * );
+OGRLayerH  OGR_DS_ExecuteSQL( OGRDataSourceH, const char *, OGRGeometryH, 
+                              const char * );
+void    OGR_DS_ReleaseResultSet( OGRDataSourceH, OGRLayerH );
+
+/* OGRSFDriver */
+
+const char  *OGR_Dr_GetName( OGRSFDriverH );
+OGRDataSourceH  OGR_Dr_Open( OGRSFDriverH, const char *, int );
+int     OGR_Dr_TestCapability( OGRSFDriverH, const char * );
+OGRDataSourceH  OGR_Dr_CreateDataSource( OGRSFDriverH, const char *,
+                                                char ** );
+
+/* OGRSFDriverRegistrar */
+
+OGRDataSourceH OGROpen( const char *, int, OGRSFDriverH * );
+void           OGRRegisterDriver( OGRSFDriverH );
+int            OGRGetDriverCount();
+OGRSFDriverH   OGRGetDriver( int );
+
+/* note: this is also declared in ogrsf_frmts.h */
+void  OGRRegisterAll();
