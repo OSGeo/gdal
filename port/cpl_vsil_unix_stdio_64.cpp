@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.6  2002/06/17 14:00:16  warmerda
+ * segregate VSIStatL() and VSIStatBufL.
+ *
  * Revision 1.5  2002/06/15 00:07:23  aubin
  * mods to enable 64bit file i/o
  *
@@ -148,6 +151,16 @@ int VSIFEofL( FILE * fp )
 
 {
     return VSIFEof( fp );
+}
+
+/************************************************************************/
+/*                              VSIStatL()                              */
+/************************************************************************/
+
+int VSIStatL( const char * pszFilename, VSIStatBufL * pStatBuf )
+
+{
+    return( stat64( pszFilename, pStatBuf ) );
 }
 
 #endif /* defined UNIX_STDIO_64 */

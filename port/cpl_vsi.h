@@ -32,6 +32,9 @@
  * specific checking, io redirection and so on. 
  * 
  * $Log$
+ * Revision 1.14  2002/06/17 14:00:16  warmerda
+ * segregate VSIStatL() and VSIStatBufL.
+ *
  * Revision 1.13  2002/06/15 02:13:13  aubin
  * remove debug test for 64bit compile
  *
@@ -131,6 +134,27 @@ int CPL_DLL     VSIUngetc( int, FILE * );
 int CPL_DLL     VSIFEof( FILE * );
 
 /* ==================================================================== */
+/*      VSIStat() related.                                              */
+/* ==================================================================== */
+
+typedef struct stat VSIStatBuf;
+int CPL_DLL VSIStat( const char *, VSIStatBuf * );
+
+#ifdef _WIN32
+#  define VSI_ISLNK(x)  ( 0 )            /* N/A on Windows */
+#  define VSI_ISREG(x)  ((x) & S_IFREG)
+#  define VSI_ISDIR(x)  ((x) & S_IFDIR)
+#  define VSI_ISCHR(x)  ((x) & S_IFCHR)
+#  define VSI_ISBLK(x)  ( 0 )            /* N/A on Windows */
+#else
+#  define VSI_ISLNK(x)  S_ISLNK(x)
+#  define VSI_ISREG(x)  S_ISREG(x)
+#  define VSI_ISDIR(x)  S_ISDIR(x)
+#  define VSI_ISCHR(x)  S_ISCHR(x)
+#  define VSI_ISBLK(x)  S_ISBLK(x)
+#endif
+
+/* ==================================================================== */
 /*      64bit stdio file access functions.  If we have a big size       */
 /*      defined, then provide protypes for the large file API,          */
 /*      otherwise redefine to use the regular api.                      */
@@ -149,6 +173,9 @@ size_t CPL_DLL  VSIFWriteL( void *, size_t, size_t, FILE * );
 int CPL_DLL     VSIFEofL( FILE * );
 void CPL_DLL    VSIFFlushL( FILE * );
 
+typedef struct stat64 VSIStatBufL;
+int CPL_DLL     VSIStatL( const char *, VSIStatBufL * );
+
 #else
 
 typedef long vsi_l_offset;
@@ -164,34 +191,9 @@ typedef long vsi_l_offset;
 #define VSIFWriteL     VSIFWrite
 #define VSIFEofL       VSIFEof
 #define VSIFFlushL     VSIFFlush
+#define VSIStatBufL    VSIStatBuf
+#define VSIStatL       VSIStat
 
-#endif
-
-/* ==================================================================== */
-/*      VSIStat() related.                                              */
-/* ==================================================================== */
-
-#ifdef VSI_LARGE_API_SUPPORTED
-typedef struct stat64 VSIStatBuf;
-#else
-typedef struct stat VSIStatBuf;
-#endif
-
-
-int CPL_DLL     VSIStat( const char *, VSIStatBuf * );
-
-#ifdef _WIN32
-#  define VSI_ISLNK(x)  ( 0 )            /* N/A on Windows */
-#  define VSI_ISREG(x)  ((x) & S_IFREG)
-#  define VSI_ISDIR(x)  ((x) & S_IFDIR)
-#  define VSI_ISCHR(x)  ((x) & S_IFCHR)
-#  define VSI_ISBLK(x)  ( 0 )            /* N/A on Windows */
-#else
-#  define VSI_ISLNK(x)  S_ISLNK(x)
-#  define VSI_ISREG(x)  S_ISREG(x)
-#  define VSI_ISDIR(x)  S_ISDIR(x)
-#  define VSI_ISCHR(x)  S_ISCHR(x)
-#  define VSI_ISBLK(x)  S_ISBLK(x)
 #endif
 
 /* ==================================================================== */
