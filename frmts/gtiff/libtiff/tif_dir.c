@@ -1,4 +1,4 @@
-/* $Id: tif_dir.c,v 1.34 2004/07/03 10:26:55 dron Exp $ */
+/* $Id: tif_dir.c,v 1.35 2004/08/23 12:57:52 dron Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -1133,6 +1133,7 @@ TIFFDefaultDirectory(TIFF* tif)
 	td->td_inkset = INKSET_CMYK;
 	td->td_ninks = 4;
 	tif->tif_postdecode = _TIFFNoPostDecode;
+        tif->tif_foundfield = NULL;
 	tif->tif_tagmethods.vsetfield = _TIFFVSetField;
 	tif->tif_tagmethods.vgetfield = _TIFFVGetField;
 	tif->tif_tagmethods.printdir = NULL;

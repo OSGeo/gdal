@@ -763,7 +763,7 @@ static	int32 find1span(u_char*, int32, int32);
  * table.  The ``base'' of the bit string is supplied
  * along with the start+end bit indices.
  */
-static int32
+inline static int32
 find0span(u_char* bp, int32 bs, int32 be)
 {
 	int32 bits = be - bs;
@@ -822,7 +822,7 @@ find0span(u_char* bp, int32 bs, int32 be)
 	return (span);
 }
 
-static int32
+inline static int32
 find1span(u_char* bp, int32 bs, int32 be)
 {
 	int32 bits = be - bs;
