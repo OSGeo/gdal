@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2001/09/10 19:27:36  warmerda
+ * added GetMinMax() and raster data types
+ *
  * Revision 1.8  2001/07/18 04:51:57  warmerda
  * added CPL_CVSID
  *
@@ -496,6 +499,13 @@ int SDTSRasterReader::GetTransform( double * padfTransformOut )
 /*                           GetRasterType()                            */
 /************************************************************************/
 
+/**
+ * Fetch the pixel data type.
+ *
+ * Returns one of SDTS_RT_INT16 (1) or SDTS_RT_FLOAT32 (6) indicating the
+ * type of buffer that should be passed to GetBlock().
+ */
+
 int SDTSRasterReader::GetRasterType()
 
 {
@@ -504,3 +514,72 @@ int SDTSRasterReader::GetRasterType()
     else
         return 1;
 }
+
+/************************************************************************/
+/*                             GetMinMax()                              */
+/************************************************************************/
+
+/**
+ * Fetch the minimum and maximum raster values that occur in the file.
+ *
+ * Note this operation current results in a scan of the entire file.
+ *
+ * @param pdfMin variable in which the minimum value encountered is returned.
+ * @param pdfMax variable in which the maximum value encountered is returned.
+ * @param dfNoData a value to ignore when computing min/max, defaults to
+ * -32766.
+ *
+ * @return TRUE on success, or FALSE if an error occurs.
+ */
+
+int SDTSRasterReader::GetMinMax( double * pdfMin, double * pdfMax,
+                                 double dfNoData )
+
+{
+    void	*pBuffer;
+    int		bFirst = TRUE;
+    int		b32Bit = GetRasterType() == SDTS_RT_FLOAT32;
+
+    CPLAssert( GetBlockXSize() == GetXSize() && GetBlockYSize() == 1 );
+    
+    pBuffer = CPLMalloc(sizeof(float) * GetXSize());
+
+    for( int iLine = 0; iLine < GetYSize(); iLine++ )
+    {
+        if( !GetBlock( 0, iLine, pBuffer ) )
+        {
+            CPLFree( pBuffer );
+            return FALSE;
+        }
+
+        for( int iPixel = 0; iPixel < GetXSize(); iPixel++ )
+        {
+            double	dfValue;
+            
+            if( b32Bit )
+                dfValue = ((float *) pBuffer)[iPixel];
+            else
+                dfValue = ((short *) pBuffer)[iPixel];
+
+            if( dfValue != dfNoData )
+            {
+                if( bFirst )
+                {
+                    *pdfMin = *pdfMax = dfValue;
+                    bFirst = FALSE;
+                }
+                else
+                {
+                    *pdfMin = MIN(*pdfMin,dfValue);
+                    *pdfMax = MAX(*pdfMax,dfValue);
+                }
+            }
+        }
+    }
+
+    CPLFree( pBuffer );
+    
+    return !bFirst;
+}
+
+

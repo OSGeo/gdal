@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2001/09/10 19:27:36  warmerda
+ * added GetMinMax() and raster data types
+ *
  * Revision 1.9  2001/07/18 04:51:57  warmerda
  * added CPL_CVSID
  *
@@ -304,7 +307,7 @@ SDTSRasterBand::SDTSRasterBand( SDTSDataset *poDS, int nBand,
     this->nBand = nBand;
     this->poRL = poRL;
 
-    if( poRL->GetRasterType() == 1 )
+    if( poRL->GetRasterType() == SDTS_RT_INT16 )
         eDataType = GDT_Int16;
     else
         eDataType = GDT_Float32;

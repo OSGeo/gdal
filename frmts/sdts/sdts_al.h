@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.25  2001/09/10 19:27:36  warmerda
+ * added GetMinMax() and raster data types
+ *
  * Revision 1.24  2001/01/19 21:20:29  warmerda
  * expanded tabs
  *
@@ -648,8 +651,13 @@ class SDTSRasterReader
     void        Close();
 
     int         GetRasterType();        /* 1 = int16, see GDAL types */
+#define SDTS_RT_INT16   1   
+#define SDTS_RT_FLOAT32 6
 
     int         GetTransform( double * );
+
+    int         GetMinMax( double * pdfMin, double * pdfMax,
+                           double dfNoData );
 
     /**
       Fetch the raster width.
