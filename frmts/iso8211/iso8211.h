@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2003/08/21 21:21:44  warmerda
+ * expose the binary format type for a subfield defn
+ *
  * Revision 1.15  2003/07/03 15:38:46  warmerda
  * some write capabilities added
  *
@@ -352,8 +355,6 @@ public:
     
     void        Dump( FILE * fp );
 
-private:
-
 /**
   Binary format: this is the digit immediately following the B or b for
   binary formats. 
@@ -366,6 +367,11 @@ typedef enum {
     FloatReal=4,
     FloatComplex=5
 } DDFBinaryFormat;
+
+    DDFBinaryFormat GetBinaryFormat(void) const { return eBinaryFormat; }
+    
+
+private:
 
   char      *pszName;   // a.k.a. subfield mnemonic
   char      *pszFormatString; 
