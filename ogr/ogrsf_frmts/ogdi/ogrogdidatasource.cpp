@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2002/01/13 01:46:31  warmerda
+ * fix handling of dataset names with drive colon
+ *
  * Revision 1.4  2001/07/18 04:55:16  warmerda
  * added CPL_CSVID
  *
@@ -113,6 +116,15 @@ int OGROGDIDataSource::Open( const char * pszNewName, int bTestOpen )
         pszWorkingName = CPLStrdup( pszNewName );
 
         pszFamily = strrchr(pszWorkingName, ':');
+
+        // Don't treat drive name colon as family separator.  It is assumed
+        // that drive names are on character long, and preceeded by a 
+        // forward or backward slash.
+        if( pszFamily < pszWorkingName+2 
+            || pszFamily[-2] == '/'
+            || pszFamily[-2] == '\\' )
+            pszFamily = NULL;
+        
         if (pszFamily && pszFamily != pszWorkingName + 4)
         {
             pszLyrName = strrchr(pszWorkingName, ':');
