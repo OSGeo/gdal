@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2004/10/08 20:05:24  fwarmerdam
+ * Avoid leaking uninitialized OGRSQLiteDataSource.
+ *
  * Revision 1.2  2004/07/12 20:50:46  warmerda
  * table/database creation now implemented
  *
@@ -68,10 +71,6 @@ OGRDataSource *OGRSQLiteDriver::Open( const char * pszFilename,
                                      int bUpdate )
 
 {
-    OGRSQLiteDataSource     *poDS;
-
-    poDS = new OGRSQLiteDataSource();
-
 /* -------------------------------------------------------------------- */
 /*      Verify that the target is a real file, and has an               */
 /*      appropriate magic string at the beginning.                      */
@@ -95,6 +94,10 @@ OGRDataSource *OGRSQLiteDriver::Open( const char * pszFilename,
 /*      We think this is really an SQLite database, go ahead and try    */
 /*      and open it.                                                    */
 /* -------------------------------------------------------------------- */
+    OGRSQLiteDataSource     *poDS;
+
+    poDS = new OGRSQLiteDataSource();
+
     if( !poDS->Open( pszFilename ) )
     {
         delete poDS;
