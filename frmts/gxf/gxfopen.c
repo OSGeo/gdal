@@ -29,6 +29,13 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2003/09/22 14:57:18  warmerda
+ * Fixed bug recognising #MAP_PROJECTION when a #MAP_TRANSFORM was in
+ * the file (see 1133_resmag.gxf).  Also fixed a bug with the allocation of
+ * the scanline offset buffer which can cause memory corruption for files
+ * longer than they are wide.
+ * http://bugzilla.remotesensing.org/show_bug.cgi?id=395
+ *
  * Revision 1.10  2001/07/18 04:51:57  warmerda
  * added CPL_CVSID
  *
@@ -266,7 +273,7 @@ GXFHandle GXFOpen( const char * pszFilename )
         {
             psGXF->nSense = atoi(papszList[0]);
         }
-        else if( EQUALN(szTitle,"#MAP_PROJECTION",5) )
+        else if( EQUALN(szTitle,"#MAP_PROJECTION",8) )
         {
             psGXF->papszMapProjection = papszList;
             papszList = NULL;
@@ -336,7 +343,7 @@ GXFHandle GXFOpen( const char * pszFilename )
 /*      Allocate, and initialize the raw scanline offset array.         */
 /* -------------------------------------------------------------------- */
     psGXF->panRawLineOffset = (long *)
-        CPLCalloc( sizeof(long), psGXF->nRawXSize );
+        CPLCalloc( sizeof(long), psGXF->nRawYSize );
 
     psGXF->panRawLineOffset[0] = VSIFTell( psGXF->fp );
 
