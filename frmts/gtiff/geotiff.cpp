@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2000/03/23 18:47:52  warmerda
+ * added support for writing tiled TIFF
+ *
  * Revision 1.20  2000/03/23 16:54:35  warmerda
  * fixed up geotransform initialization
  *
@@ -277,8 +280,7 @@ CPLErr GTiffRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /*	exist yet, but that we want to read.  Just set to zeros and	*/
 /*	return.								*/
 /* -------------------------------------------------------------------- */
-    if( !TIFFIsTiled(poGDS->hTIFF)
-        && poGDS->eAccess == GA_Update
+    if( poGDS->eAccess == GA_Update
         && (((int) poGDS->hTIFF->tif_dir.td_nstrips) <= nBlockId
             || poGDS->hTIFF->tif_dir.td_stripbytecount[nBlockId] == 0) )
     {
@@ -421,18 +423,28 @@ CPLErr GTiffRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
     poGDS->SetDirectory();
 
     CPLAssert( poGDS != NULL
-               && nBlockXOff == 0
+               && nBlockXOff >= 0
                && nBlockYOff >= 0
                && pImage != NULL );
 
-    CPLAssert( nBlockXOff == 0 );
+    CPLAssert( poGDS->nBands == 1 
+               || poGDS->nPlanarConfig == PLANARCONFIG_SEPARATE );
 
-    nBlockBufSize = TIFFStripSize( poGDS->hTIFF );
-    nBlockId = nBlockYOff + (nBand-1) * poGDS->nBlocksPerBand;
+    nBlockId = nBlockXOff + nBlockYOff * nBlocksPerRow
+        + (nBand-1) * poGDS->nBlocksPerBand;
+        
+    if( TIFFIsTiled(poGDS->hTIFF) )
+    {
+        nBlockBufSize = TIFFTileSize( poGDS->hTIFF );
+        TIFFWriteEncodedTile( poGDS->hTIFF, nBlockId, pImage, nBlockBufSize );
+    }
+    else
+    {
+        nBlockBufSize = TIFFStripSize( poGDS->hTIFF );
+        TIFFWriteEncodedStrip( poGDS->hTIFF, nBlockId, pImage, nBlockBufSize );
+    }
     
-    TIFFWriteEncodedStrip( poGDS->hTIFF, nBlockId, pImage, nBlockBufSize );
-    
-    return CE_Failure;
+    return CE_None;
 }
 
 /************************************************************************/
@@ -551,6 +563,8 @@ GTiffDataset::GTiffDataset()
 GTiffDataset::~GTiffDataset()
 
 {
+    FlushCache();
+
     if( bBase )
     {
         for( int i = 0; i < nOverviewCount; i++ )
@@ -564,8 +578,6 @@ GTiffDataset::~GTiffDataset()
 
     if( poColorTable != NULL )
         delete poColorTable;
-
-    FlushCache();
 
     WriteGeoTIFFInfo();
 
@@ -923,15 +935,25 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, uint32 nDirOffsetIn,
 GDALDataset *GTiffDataset::Create( const char * pszFilename,
                                    int nXSize, int nYSize, int nBands,
                                    GDALDataType eType,
-                                   char ** /* notdef: papszParmList */ )
+                                   char **papszParmList )
 
 {
     GTiffDataset *	poDS;
     TIFF		*hTIFF;
+    int                 nBlockXSize = 0, nBlockYSize = 0;
+    int                 bTiled = FALSE;
     
 /* -------------------------------------------------------------------- */
 /*	Setup values based on options.					*/
 /* -------------------------------------------------------------------- */
+    if( CSLFetchNameValue(papszParmList,"TILED") != NULL )
+        bTiled = TRUE;
+
+    if( CSLFetchNameValue(papszParmList,"BLOCKXSIZE")  != NULL )
+        nBlockXSize = atoi(CSLFetchNameValue(papszParmList,"BLOCKXSIZE"));
+
+    if( CSLFetchNameValue(papszParmList,"BLOCKYSIZE")  != NULL )
+        nBlockYSize = atoi(CSLFetchNameValue(papszParmList,"BLOCKYSIZE"));
 
 /* -------------------------------------------------------------------- */
 /*      Try opening the dataset.                                        */
@@ -979,8 +1001,16 @@ GDALDataset *GTiffDataset::Create( const char * pszFilename,
 
     TIFFSetField( hTIFF, TIFFTAG_SAMPLESPERPIXEL, nBands );
 
-    TIFFSetField( hTIFF, TIFFTAG_PLANARCONFIG, PLANARCONFIG_CONTIG );
-    poDS->nPlanarConfig = PLANARCONFIG_CONTIG;
+    if( nBands > 1 )
+    {
+        TIFFSetField( hTIFF, TIFFTAG_PLANARCONFIG, PLANARCONFIG_SEPARATE );
+        poDS->nPlanarConfig = PLANARCONFIG_SEPARATE;
+    }
+    else
+    {
+        TIFFSetField( hTIFF, TIFFTAG_PLANARCONFIG, PLANARCONFIG_CONTIG );
+        poDS->nPlanarConfig = PLANARCONFIG_CONTIG;
+    }
 
     if( nBands == 3 )
         poDS->nPhotometric = PHOTOMETRIC_RGB;
@@ -989,21 +1019,42 @@ GDALDataset *GTiffDataset::Create( const char * pszFilename,
     
     TIFFSetField( hTIFF, TIFFTAG_PHOTOMETRIC, poDS->nPhotometric);
 
-    poDS->nRowsPerStrip = TIFFDefaultStripSize(hTIFF,0);
-    TIFFSetField( hTIFF, TIFFTAG_ROWSPERSTRIP, poDS->nRowsPerStrip );
+    if( bTiled )
+    {
+        if( nBlockXSize == 0 )
+            nBlockXSize = 256;
+        
+        if( nBlockYSize == 0 )
+            nBlockYSize = 256;
+
+        TIFFSetField( hTIFF, TIFFTAG_TILEWIDTH, nBlockXSize );
+        TIFFSetField( hTIFF, TIFFTAG_TILELENGTH, nBlockYSize );
+
+        poDS->nBlockXSize = nBlockXSize;
+        poDS->nBlockYSize = nBlockYSize;
+    }
+    else
+    {
+        if( nBlockYSize == 0 )
+            poDS->nRowsPerStrip = TIFFDefaultStripSize(hTIFF,0);
+        else
+            poDS->nRowsPerStrip = nBlockYSize;
+
+        TIFFSetField( hTIFF, TIFFTAG_ROWSPERSTRIP, poDS->nRowsPerStrip );
+
+        poDS->nBlockXSize = nXSize;
+        poDS->nBlockYSize = poDS->nRowsPerStrip;
+    }
     
     poDS->nBlocksPerBand =
-        ((nYSize + poDS->nRowsPerStrip - 1) / poDS->nRowsPerStrip);
+        ((nYSize + poDS->nBlockYSize - 1) / poDS->nBlockYSize)
+        * ((nXSize + poDS->nBlockXSize - 1) / poDS->nBlockXSize);
 
-    poDS->nBlockXSize = nXSize;
-    poDS->nBlockYSize = poDS->nRowsPerStrip;
-    
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
     int		iBand;
 
-    poDS->nBands = nBands;
     for( iBand = 0; iBand < nBands; iBand++ )
     {
         poDS->SetBand( iBand+1, new GTiffRasterBand( poDS, iBand+1 ) );
