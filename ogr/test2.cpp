@@ -1,45 +1,32 @@
-#include "ogr_feature.h"
-#include "../frmts/shapelib/shapefil.h"
-#include <assert.h>
-
-OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape );
-OGRFeatureDefn *SHPReadOGRFeatureDefn( SHPHandle hSHP, DBFHandle hDBF );
-OGRFeature *SHPReadOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
-                               OGRFeatureDefn * poDefn, int iShape );
+#include "ogrsf_frmts.h"
 
 int main( int argc, char ** argv )
 
 {
-    SHPHandle	hSHP;
-    DBFHandle   hDBF;
-    int		nShapeCount, i;
-    OGRFeatureDefn *poDefn;
-    
-    assert( argc == 2 );
+    OGRDataSource *poDS;
+    int		iLayer;
 
-    hSHP = SHPOpen( argv[1], "rb" );
-    hDBF = DBFOpen( argv[1], "rb" );
+    RegisterOGRShape();
 
-    assert( hSHP != NULL && hDBF != NULL );
+    poDS = OGRSFDriverRegistrar::Open( argv[1], FALSE );
+    if( poDS == NULL )
+        exit( 1 );
 
-    SHPGetInfo( hSHP, &nShapeCount, NULL, NULL, NULL );
+    printf( "Data Source: %s\n", poDS->GetName() );
 
-    poDefn = SHPReadOGRFeatureDefn( hSHP, hDBF );
-
-    for( i = 0; i < nShapeCount; i++ )
+    for( iLayer = 0; iLayer < poDS->GetLayerCount(); iLayer++ )
     {
+        OGRLayer	*poLayer;
         OGRFeature	*poFeature;
 
-        poFeature = SHPReadOGRFeature( hSHP, hDBF, poDefn, i );
+        poLayer = poDS->GetLayer( iLayer );
 
-        if( poFeature != NULL )
+        while( (poFeature = poLayer->GetNextFeature()) != NULL )
+        {
             poFeature->DumpReadable( stdout );
-
-        delete poFeature;
+            delete poFeature;
+        }
     }
 
-    delete poDefn;
-
-    DBFClose( hDBF );
-    SHPClose( hSHP );
+    delete poDS;
 }
