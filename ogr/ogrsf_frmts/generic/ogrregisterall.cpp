@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2002/01/25 20:40:51  warmerda
+ * register gml
+ *
  * Revision 1.7  2001/07/18 04:55:16  warmerda
  * added CPL_CSVID
  *
@@ -69,6 +72,7 @@ void OGRRegisterAll()
     RegisterOGRS57();
     RegisterOGRTAB();
     RegisterOGRDGN();
+    RegisterOGRGML();
 #ifdef OGDI_ENABLED
     RegisterOGROGDI();
 #endif
