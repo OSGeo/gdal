@@ -28,6 +28,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.4  2001/06/21 20:40:31  warmerda
+ * *** empty log message ***
+ *
  * Revision 1.3  2001/06/11 13:47:07  warmerda
  * initialize HighPart in VSIFTellL()
  *
