@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.42  2003/09/15 20:53:06  warmerda
+ * fleshed out feature writing
+ *
  * Revision 1.41  2003/09/12 21:18:06  warmerda
  * fixed width of AGEN field
  *
@@ -197,6 +200,7 @@ S57Reader::S57Reader( const char * pszFilename )
     bGenerateLNAM = FALSE;
     bAddSOUNDGDepth = FALSE;
     bReturnPrimitives = FALSE;
+    bReturnLinkages = FALSE;
 
     bMissingWarningIssued = FALSE;
     bAttrWarningIssued = FALSE;
@@ -395,6 +399,12 @@ void S57Reader::SetOptions( char ** papszOptionsIn )
         bReturnPrimitives = TRUE;
     else
         bReturnPrimitives = FALSE;
+
+    pszOptionValue = CSLFetchNameValue( papszOptions, S57O_RETURN_LINKAGES );
+    if( pszOptionValue != NULL && !EQUAL(pszOptionValue,"OFF") )
+        bReturnLinkages = TRUE;
+    else
+        bReturnLinkages = FALSE;
 
 }
 
@@ -739,6 +749,10 @@ OGRFeature *S57Reader::AssembleFeature( DDFRecord * poRecord,
     nOBJL = poRecord->GetIntSubfield( "FRID", 0, "OBJL", 0 );
     poFeature->SetField( "OBJL", nOBJL );
 
+    poFeature->SetField( "RCID",
+                         poRecord->GetIntSubfield( "FRID", 0, "RCID", 0 ));
+    poFeature->SetField( "PRIM",
+                         poRecord->GetIntSubfield( "FRID", 0, "PRIM", 0 ));
     poFeature->SetField( "GRUP",
                          poRecord->GetIntSubfield( "FRID", 0, "GRUP", 0 ));
     poFeature->SetField( "RVER",
@@ -757,6 +771,12 @@ OGRFeature *S57Reader::AssembleFeature( DDFRecord * poRecord,
     {
         GenerateLNAMAndRefs( poRecord, poFeature );
     }
+
+/* -------------------------------------------------------------------- */
+/*      Generate primitive references if requested.                     */
+/* -------------------------------------------------------------------- */
+    if( bReturnLinkages )
+        GenerateFSPTAttributes( poRecord, poFeature );
 
 /* -------------------------------------------------------------------- */
 /*      Apply object class specific attributes, if supported.           */
@@ -965,6 +985,67 @@ void S57Reader::GenerateLNAMAndRefs( DDFRecord * poRecord,
 
     poFeature->SetField( "LNAM_REFS", papszRefs );
     CSLDestroy( papszRefs );
+}
+
+/************************************************************************/
+/*                       GenerateFSPTAttributes()                       */
+/************************************************************************/
+
+void S57Reader::GenerateFSPTAttributes( DDFRecord * poRecord,
+                                        OGRFeature * poFeature )
+
+{
+/* -------------------------------------------------------------------- */
+/*      Feature the spatial record containing the point.                */
+/* -------------------------------------------------------------------- */
+    DDFField    *poFSPT;
+    int         nCount, i;
+
+    poFSPT = poRecord->FindField( "FSPT" );
+    if( poFSPT == NULL )
+        return;
+        
+    nCount = poFSPT->GetRepeatCount();
+
+/* -------------------------------------------------------------------- */
+/*      Allocate working lists of the attributes.                       */
+/* -------------------------------------------------------------------- */
+    int *panORNT, *panUSAG, *panMASK, *panRCNM, *panRCID;
+    
+    panORNT = (int *) CPLMalloc( sizeof(int) * nCount );
+    panUSAG = (int *) CPLMalloc( sizeof(int) * nCount );
+    panMASK = (int *) CPLMalloc( sizeof(int) * nCount );
+    panRCNM = (int *) CPLMalloc( sizeof(int) * nCount );
+    panRCID = (int *) CPLMalloc( sizeof(int) * nCount );
+
+/* -------------------------------------------------------------------- */
+/*      loop over all entries, decoding them.                           */
+/* -------------------------------------------------------------------- */
+    for( i = 0; i < nCount; i++ )
+    {
+        panRCID[i] = ParseName( poFSPT, i, panRCNM + i );
+        panORNT[i] = poRecord->GetIntSubfield( "FSPT", 0, "ORNT",i);
+        panUSAG[i] = poRecord->GetIntSubfield( "FSPT", 0, "USAG",i);
+        panMASK[i] = poRecord->GetIntSubfield( "FSPT", 0, "MASK",i);
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Assign to feature.                                              */
+/* -------------------------------------------------------------------- */
+    poFeature->SetField( "NAME_RCNM", nCount, panRCNM );
+    poFeature->SetField( "NAME_RCID", nCount, panRCID );
+    poFeature->SetField( "ORNT", nCount, panORNT );
+    poFeature->SetField( "USAG", nCount, panUSAG );
+    poFeature->SetField( "MASK", nCount, panMASK );
+
+/* -------------------------------------------------------------------- */
+/*      Cleanup.                                                        */
+/* -------------------------------------------------------------------- */
+    CPLFree( panRCNM );
+    CPLFree( panRCID );
+    CPLFree( panORNT );
+    CPLFree( panUSAG );
+    CPLFree( panMASK );
 }
 
 /************************************************************************/
@@ -1739,6 +1820,18 @@ void S57Reader::GenerateStandardAttributes( OGRFeatureDefn *poFDefn )
     OGRFieldDefn        oField( "", OFTInteger );
 
 /* -------------------------------------------------------------------- */
+/*      RCID                                                            */
+/* -------------------------------------------------------------------- */
+    oField.Set( "RCID", OFTInteger, 10, 0 );
+    poFDefn->AddFieldDefn( &oField );
+
+/* -------------------------------------------------------------------- */
+/*      PRIM                                                            */
+/* -------------------------------------------------------------------- */
+    oField.Set( "PRIM", OFTInteger, 3, 0 );
+    poFDefn->AddFieldDefn( &oField );
+
+/* -------------------------------------------------------------------- */
 /*      GRUP                                                            */
 /* -------------------------------------------------------------------- */
     oField.Set( "GRUP", OFTInteger, 3, 0 );
@@ -1783,6 +1876,27 @@ void S57Reader::GenerateStandardAttributes( OGRFeatureDefn *poFDefn )
         poFDefn->AddFieldDefn( &oField );
         
         oField.Set( "LNAM_REFS", OFTStringList, 16, 0 );
+        poFDefn->AddFieldDefn( &oField );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      LNAM - only generated when LNAM strings are being used.         */
+/* -------------------------------------------------------------------- */
+    if( bReturnLinkages )
+    {
+        oField.Set( "NAME_RCNM", OFTIntegerList, 3, 0 );
+        poFDefn->AddFieldDefn( &oField );
+        
+        oField.Set( "NAME_RCID", OFTIntegerList, 10, 0 );
+        poFDefn->AddFieldDefn( &oField );
+        
+        oField.Set( "ORNT", OFTIntegerList, 1, 0 );
+        poFDefn->AddFieldDefn( &oField );
+        
+        oField.Set( "USAG", OFTIntegerList, 1, 0 );
+        poFDefn->AddFieldDefn( &oField );
+
+        oField.Set( "MASK", OFTIntegerList, 3, 0 );
         poFDefn->AddFieldDefn( &oField );
     }
 }

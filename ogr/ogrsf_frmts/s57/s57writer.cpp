@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2003/09/15 20:53:06  warmerda
+ * fleshed out feature writing
+ *
  * Revision 1.1  2003/09/09 16:47:06  warmerda
  * New
  *
@@ -62,8 +65,6 @@ S57Writer::~S57Writer()
 
 {
     Close();
-    if( poRegistrar != NULL )
-        delete poRegistrar;
 }
 
 /************************************************************************/
@@ -218,16 +219,59 @@ int S57Writer::CreateS57File( const char *pszFilename )
     poModule->AddField( poFDefn );
 
 /* -------------------------------------------------------------------- */
+/*      Create the VRPC field.                                          */
+/* -------------------------------------------------------------------- */
+    poFDefn = new DDFFieldDefn();
+
+    poFDefn->Create( "VRPC", "Vector Record Pointer Control field", "",
+                     DDFFieldDefn::vector, DDFFieldDefn::mixed_data_type );
+
+    poFDefn->AddSubfield( "VPUI", "b11" );
+    poFDefn->AddSubfield( "VPIX", "b12" );
+    poFDefn->AddSubfield( "NVPT", "b12" );
+
+    poModule->AddField( poFDefn );
+
+/* -------------------------------------------------------------------- */
+/*      Create the VRPT field.                                          */
+/* -------------------------------------------------------------------- */
+    poFDefn = new DDFFieldDefn();
+
+    poFDefn->Create( "VRPT", "Vector record pointer field", "*",
+                     DDFFieldDefn::array, DDFFieldDefn::mixed_data_type );
+
+    poFDefn->AddSubfield( "NAME", "B(40)" );
+    poFDefn->AddSubfield( "ORNT", "b11" );
+    poFDefn->AddSubfield( "USAG", "b11" );
+    poFDefn->AddSubfield( "TOPI", "b11" );
+    poFDefn->AddSubfield( "MASK", "b11" );
+
+    poModule->AddField( poFDefn );
+
+/* -------------------------------------------------------------------- */
 /*      Create the ATTV field.                                          */
 /* -------------------------------------------------------------------- */
     poFDefn = new DDFFieldDefn();
 
-    poFDefn->Create( "ATTV", "Vector record attribute field", "",
-                     DDFFieldDefn::vector, DDFFieldDefn::mixed_data_type );
+    poFDefn->Create( "ATTV", "Vector record attribute field", "*",
+                     DDFFieldDefn::array, DDFFieldDefn::mixed_data_type );
 
-    /* how do I mark this as repeating? */
     poFDefn->AddSubfield( "ATTL", "b12" );
     poFDefn->AddSubfield( "ATVL", "A" );
+
+    poModule->AddField( poFDefn );
+
+/* -------------------------------------------------------------------- */
+/*      Create the SGCC field.                                          */
+/* -------------------------------------------------------------------- */
+    poFDefn = new DDFFieldDefn();
+
+    poFDefn->Create( "SGCC", "Coordinate Control Field", "",
+                     DDFFieldDefn::vector, DDFFieldDefn::mixed_data_type );
+
+    poFDefn->AddSubfield( "CCUI", "b11" );
+    poFDefn->AddSubfield( "CCIX", "b12" );
+    poFDefn->AddSubfield( "CCNC", "b12" );
 
     poModule->AddField( poFDefn );
 
@@ -237,9 +281,8 @@ int S57Writer::CreateS57File( const char *pszFilename )
     poFDefn = new DDFFieldDefn();
 
     poFDefn->Create( "SG2D", "2-D coordinate field", "*",
-                     DDFFieldDefn::vector, DDFFieldDefn::mixed_data_type );
+                     DDFFieldDefn::array, DDFFieldDefn::mixed_data_type );
 
-    /* how do I mark this as repeating? */
     poFDefn->AddSubfield( "YCOO", "b24" );
     poFDefn->AddSubfield( "XCOO", "b24" );
 
@@ -251,9 +294,8 @@ int S57Writer::CreateS57File( const char *pszFilename )
     poFDefn = new DDFFieldDefn();
 
     poFDefn->Create( "SG3D", "3-D coordinate (sounding array) field", "*",
-                     DDFFieldDefn::vector, DDFFieldDefn::mixed_data_type );
+                     DDFFieldDefn::array, DDFFieldDefn::mixed_data_type );
 
-    /* how do I mark this as repeating? */
     poFDefn->AddSubfield( "YCOO", "b24" );
     poFDefn->AddSubfield( "XCOO", "b24" );
     poFDefn->AddSubfield( "VE3D", "b24" );
@@ -261,9 +303,119 @@ int S57Writer::CreateS57File( const char *pszFilename )
     poModule->AddField( poFDefn );
 
 /* -------------------------------------------------------------------- */
+/*      Create the FRID field.                                          */
+/* -------------------------------------------------------------------- */
+    poFDefn = new DDFFieldDefn();
 
-// need to add: VRPC, VRPT, SGCC, FRID, FOID, ATTF, NATF, FFPC, 
-// FFPT, FSPC, and FSPT
+    poFDefn->Create( "FRID", "Feature record identifier field", "",
+                     DDFFieldDefn::vector, DDFFieldDefn::mixed_data_type );
+
+    poFDefn->AddSubfield( "RCNM", "b11" );
+    poFDefn->AddSubfield( "RCID", "b14" );
+    poFDefn->AddSubfield( "PRIM", "b11" );
+    poFDefn->AddSubfield( "GRUP", "b11" );
+    poFDefn->AddSubfield( "OBJL", "b12" );
+    poFDefn->AddSubfield( "RVER", "b12" );
+    poFDefn->AddSubfield( "RUIN", "b11" );
+
+    poModule->AddField( poFDefn );
+
+/* -------------------------------------------------------------------- */
+/*      Create the FOID field.                                          */
+/* -------------------------------------------------------------------- */
+    poFDefn = new DDFFieldDefn();
+
+    poFDefn->Create( "FOID", "Feature object identifier field", "",
+                     DDFFieldDefn::vector, DDFFieldDefn::mixed_data_type );
+
+    poFDefn->AddSubfield( "AGEN", "b12" );
+    poFDefn->AddSubfield( "FIDN", "b14" );
+    poFDefn->AddSubfield( "FIDS", "b12" );
+
+    poModule->AddField( poFDefn );
+
+/* -------------------------------------------------------------------- */
+/*      Create the ATTF field.                                          */
+/* -------------------------------------------------------------------- */
+    poFDefn = new DDFFieldDefn();
+
+    poFDefn->Create( "ATTF", "Feature record attribute field", "*",
+                     DDFFieldDefn::array, DDFFieldDefn::mixed_data_type );
+
+    poFDefn->AddSubfield( "ATTL", "b12" );
+    poFDefn->AddSubfield( "ATVL", "A" );
+
+    poModule->AddField( poFDefn );
+
+/* -------------------------------------------------------------------- */
+/*      Create the NATF field.                                          */
+/* -------------------------------------------------------------------- */
+    poFDefn = new DDFFieldDefn();
+
+    poFDefn->Create( "NATF", "Feature record national attribute field", "*",
+                     DDFFieldDefn::array, DDFFieldDefn::mixed_data_type );
+
+    poFDefn->AddSubfield( "ATTL", "b12" );
+    poFDefn->AddSubfield( "ATVL", "A" );
+
+    poModule->AddField( poFDefn );
+
+/* -------------------------------------------------------------------- */
+/*      Create the FFPC field.                                          */
+/* -------------------------------------------------------------------- */
+    poFDefn = new DDFFieldDefn();
+
+    poFDefn->Create( "FFPC", "Feature record to feature object pointer control field", "",
+                     DDFFieldDefn::vector, DDFFieldDefn::mixed_data_type );
+
+    poFDefn->AddSubfield( "FFUI", "b11" );
+    poFDefn->AddSubfield( "FFIX", "b12" );
+    poFDefn->AddSubfield( "NFPT", "b12" );
+
+    poModule->AddField( poFDefn );
+
+/* -------------------------------------------------------------------- */
+/*      Create the FFPT field.                                          */
+/* -------------------------------------------------------------------- */
+    poFDefn = new DDFFieldDefn();
+
+    poFDefn->Create( "FFPT", "Feature record to feature object pointer field", "*",
+                     DDFFieldDefn::array, DDFFieldDefn::mixed_data_type );
+
+    poFDefn->AddSubfield( "LNAM", "B(64)" );
+    poFDefn->AddSubfield( "RIND", "b11" );
+    poFDefn->AddSubfield( "COMT", "A" );
+
+    poModule->AddField( poFDefn );
+
+/* -------------------------------------------------------------------- */
+/*      Create the FSPC field.                                          */
+/* -------------------------------------------------------------------- */
+    poFDefn = new DDFFieldDefn();
+
+    poFDefn->Create( "FSPC", "Feature record to spatial record pointer control field", "",
+                     DDFFieldDefn::vector, DDFFieldDefn::mixed_data_type );
+
+    poFDefn->AddSubfield( "FSUI", "b11" );
+    poFDefn->AddSubfield( "FSIX", "b12" );
+    poFDefn->AddSubfield( "NSPT", "b12" );
+
+    poModule->AddField( poFDefn );
+
+/* -------------------------------------------------------------------- */
+/*      Create the FSPT field.                                          */
+/* -------------------------------------------------------------------- */
+    poFDefn = new DDFFieldDefn();
+
+    poFDefn->Create( "FSPT", "Feature record to spatial record pointer field", 
+                     "*", DDFFieldDefn::array, DDFFieldDefn::mixed_data_type );
+
+    poFDefn->AddSubfield( "NAME", "B(40)" );
+    poFDefn->AddSubfield( "ORNT", "b11" );
+    poFDefn->AddSubfield( "USAG", "b11" );
+    poFDefn->AddSubfield( "MASK", "b11" );
+
+    poModule->AddField( poFDefn );
 
 /* -------------------------------------------------------------------- */
 /*      Create file.                                                    */
@@ -407,7 +559,7 @@ DDFRecord *S57Writer::MakeRecord()
 
     abyData[0] = nNext0001Index % 256;
     abyData[1] = nNext0001Index / 256; 
-    abyData[2] = 0x1e;
+    abyData[2] = DDF_FIELD_TERMINATOR;
 
     poField = poRec->AddField( poModule->FindFieldDefn( "0001" ) );
     poRec->SetFieldRaw( poField, 0, (const char *) abyData, 3 );
@@ -436,29 +588,30 @@ int S57Writer::WriteGeometry( DDFRecord *poRec, int nVertCount,
     poField = poRec->AddField( poModule->FindFieldDefn( pszFieldName ) );
 
     if( padfZ )
-        nRawDataSize = 12 * nVertCount;
+        nRawDataSize = 12 * nVertCount + 1;
     else
-        nRawDataSize = 8 * nVertCount;
+        nRawDataSize = 8 * nVertCount + 1;
 
     pabyRawData = (unsigned char *) CPLMalloc(nRawDataSize);
+    pabyRawData[nRawDataSize-1] = DDF_UNIT_TERMINATOR;
 
-    for( i = 0; i < nRawDataSize; i++ )
+    for( i = 0; i < nVertCount; i++ )
     {
         GInt32 nXCOO, nYCOO, nVE3D;
 
-        nXCOO = (GInt32) floor(padfX[i] * nCOMF + 0.5);
-        nYCOO = (GInt32) floor(padfY[i] * nCOMF + 0.5);
+        nXCOO = CPL_LSBWORD32((GInt32) floor(padfX[i] * nCOMF + 0.5));
+        nYCOO = CPL_LSBWORD32((GInt32) floor(padfY[i] * nCOMF + 0.5));
         
         if( padfZ == NULL )
         {
             memcpy( pabyRawData + i * 8, &nYCOO, 4 );
-            memcpy( pabyRawData + i * 8 + 4, &nYCOO, 4 );
+            memcpy( pabyRawData + i * 8 + 4, &nXCOO, 4 );
         }
         else
         {
-            nVE3D = (GInt32) floor( padfZ[i] * nSOMF + 0.5 );
+            nVE3D = CPL_LSBWORD32((GInt32) floor( padfZ[i] * nSOMF + 0.5 ));
             memcpy( pabyRawData + i * 12, &nYCOO, 4 );
-            memcpy( pabyRawData + i * 12 + 4, &nYCOO, 4 );
+            memcpy( pabyRawData + i * 12 + 4, &nXCOO, 4 );
             memcpy( pabyRawData + i * 12 + 8, &nVE3D, 4 );
         }
     }
@@ -549,7 +702,7 @@ int S57Writer::WritePrimitive( OGRFeature *poFeature )
     }
 
 /* -------------------------------------------------------------------- */
-/*      Handle LINESTRINGs (edges).                                     */
+/*      Handle LINESTRINGs (edge) geometry.                             */
 /* -------------------------------------------------------------------- */
     else if( poGeom != NULL 
              && wkbFlatten(poGeom->getGeometryType()) == wkbLineString )
@@ -560,8 +713,6 @@ int S57Writer::WritePrimitive( OGRFeature *poFeature )
 
         CPLAssert( poFeature->GetFieldAsInteger( "RCNM") == RCNM_VE );
 
-        poField = poRec->AddField( poModule->FindFieldDefn( "SG2D" ) );
-        
         padfX = (double *) CPLMalloc(sizeof(double) * nVCount);
         padfY = (double *) CPLMalloc(sizeof(double) * nVCount);
 
@@ -575,6 +726,55 @@ int S57Writer::WritePrimitive( OGRFeature *poFeature )
 
         CPLFree( padfX );
         CPLFree( padfY );
+        
+    }
+
+/* -------------------------------------------------------------------- */
+/*      edge node linkages.                                             */
+/* -------------------------------------------------------------------- */
+    if( poFeature->GetDefnRef()->GetFieldIndex( "NAME_RCNM_0" ) >= 0 )
+    {
+        DDFField *poField;
+        char     szName[5];
+        int      nRCID;
+
+        CPLAssert( poFeature->GetFieldAsInteger( "NAME_RCNM_0") == RCNM_VC );
+
+        poField = poRec->AddField( poModule->FindFieldDefn( "VRPT" ) );
+        
+        nRCID = poFeature->GetFieldAsInteger( "NAME_RCID_0");
+        szName[0] = RCNM_VC;
+        szName[1] = nRCID & 0xff;
+        szName[2] = (nRCID & 0xff00) >> 8;
+        szName[3] = (nRCID & 0xff0000) >> 16;
+        szName[4] = (nRCID & 0xff000000) >> 24;
+        
+        poRec->SetStringSubfield( "VRPT", 0, "NAME", 0, szName, 5 );
+        poRec->SetIntSubfield   ( "VRPT", 0, "ORNT", 0, 
+                                  poFeature->GetFieldAsInteger( "ORNT_0") );
+        poRec->SetIntSubfield   ( "VRPT", 0, "USAG", 0, 
+                                  poFeature->GetFieldAsInteger( "USAG_0") );
+        poRec->SetIntSubfield   ( "VRPT", 0, "TOPI", 0, 
+                                  poFeature->GetFieldAsInteger( "TOPI_0") );
+        poRec->SetIntSubfield   ( "VRPT", 0, "MASK", 0, 
+                                  poFeature->GetFieldAsInteger( "MASK_0") );
+        
+        nRCID = poFeature->GetFieldAsInteger( "NAME_RCID_1");
+        szName[0] = RCNM_VC;
+        szName[1] = nRCID & 0xff;
+        szName[2] = (nRCID & 0xff00) >> 8;
+        szName[3] = (nRCID & 0xff0000) >> 16;
+        szName[4] = (nRCID & 0xff000000) >> 24;
+        
+        poRec->SetStringSubfield( "VRPT", 0, "NAME", 1, szName, 5 );
+        poRec->SetIntSubfield   ( "VRPT", 0, "ORNT", 1, 
+                                  poFeature->GetFieldAsInteger( "ORNT_1") );
+        poRec->SetIntSubfield   ( "VRPT", 0, "USAG", 1, 
+                                  poFeature->GetFieldAsInteger( "USAG_1") );
+        poRec->SetIntSubfield   ( "VRPT", 0, "TOPI", 1, 
+                                  poFeature->GetFieldAsInteger( "TOPI_1") );
+        poRec->SetIntSubfield   ( "VRPT", 0, "MASK", 1, 
+                                  poFeature->GetFieldAsInteger( "MASK_1") );
     }
 
 /* -------------------------------------------------------------------- */
@@ -595,10 +795,185 @@ int S57Writer::WriteCompleteFeature( OGRFeature *poFeature )
 {
     OGRFeatureDefn *poFDefn = poFeature->GetDefnRef();
 
+/* -------------------------------------------------------------------- */
+/*      We handle primitives in a seperate method.                      */
+/* -------------------------------------------------------------------- */
     if( EQUAL(poFDefn->GetName(),OGRN_VI) 
         || EQUAL(poFDefn->GetName(),OGRN_VC) 
         || EQUAL(poFDefn->GetName(),OGRN_VE) )
         return WritePrimitive( poFeature );
 
-    return FALSE;
+/* -------------------------------------------------------------------- */
+/*      Create the record.                                              */
+/* -------------------------------------------------------------------- */
+    DDFRecord *poRec = MakeRecord();
+
+/* -------------------------------------------------------------------- */
+/*      Add the FRID.                                                   */
+/* -------------------------------------------------------------------- */
+    DDFField *poField;
+
+    poField = poRec->AddField( poModule->FindFieldDefn( "FRID" ) );
+
+    poRec->SetIntSubfield   ( "FRID", 0, "RCNM", 0, 100 );
+    poRec->SetIntSubfield   ( "FRID", 0, "RCID", 0, 
+                              poFeature->GetFieldAsInteger( "RCID" ) );
+    poRec->SetIntSubfield   ( "FRID", 0, "PRIM", 0, 
+                              poFeature->GetFieldAsInteger( "PRIM" ) );
+    poRec->SetIntSubfield   ( "FRID", 0, "GRUP", 0, 
+                              poFeature->GetFieldAsInteger( "GRUP") );
+    poRec->SetIntSubfield   ( "FRID", 0, "OBJL", 0, 
+                              poFeature->GetFieldAsInteger( "OBJL") );
+    poRec->SetIntSubfield   ( "FRID", 0, "RVER", 0, 1 ); /* always new insert*/
+    poRec->SetIntSubfield   ( "FRID", 0, "RUIN", 0, 1 );
+        
+/* -------------------------------------------------------------------- */
+/*      Add the FOID                                                    */
+/* -------------------------------------------------------------------- */
+    poField = poRec->AddField( poModule->FindFieldDefn( "FOID" ) );
+
+    poRec->SetIntSubfield   ( "FOID", 0, "AGEN", 0, 
+                              poFeature->GetFieldAsInteger( "AGEN") );
+    poRec->SetIntSubfield   ( "FOID", 0, "FIDN", 0, 
+                              poFeature->GetFieldAsInteger( "FIDN") );
+    poRec->SetIntSubfield   ( "FOID", 0, "FIDS", 0, 
+                              poFeature->GetFieldAsInteger( "FIDS") );
+
+/* -------------------------------------------------------------------- */
+/*      Add the FSPT if needed.                                         */
+/* -------------------------------------------------------------------- */
+    if( poFeature->IsFieldSet( poFeature->GetFieldIndex("NAME_RCNM") ) )
+    {
+        int nItemCount, i;
+        const int *panRCNM, *panRCID, *panORNT, *panUSAG, *panMASK;
+        unsigned char *pabyRawData;
+        int nRawDataSize;
+
+        panRCNM = poFeature->GetFieldAsIntegerList( "NAME_RCNM", &nItemCount );
+        panRCID = poFeature->GetFieldAsIntegerList( "NAME_RCID", &nItemCount );
+        panORNT = poFeature->GetFieldAsIntegerList( "ORNT", &nItemCount );
+        panUSAG = poFeature->GetFieldAsIntegerList( "USAG", &nItemCount );
+        panMASK = poFeature->GetFieldAsIntegerList( "MASK", &nItemCount );
+
+        CPLAssert( sizeof(int) == sizeof(GInt32) );
+
+        nRawDataSize = nItemCount * 8 + 1;
+        pabyRawData = (unsigned char *) CPLMalloc(nRawDataSize);
+        pabyRawData[nRawDataSize-1] = DDF_UNIT_TERMINATOR;
+
+        for( i = 0; i < nItemCount; i++ )
+        {
+            GInt32 nRCID = CPL_LSBWORD32(panRCID[i]);
+
+            pabyRawData[i*8 + 0] = panRCNM[i];
+            memcpy( pabyRawData + i*8 + 1, &nRCID, 4 );
+            pabyRawData[i*8 + 5] = panORNT[i];
+            pabyRawData[i*8 + 6] = panUSAG[i];
+            pabyRawData[i*8 + 7] = panMASK[i];
+        }
+
+        poField = poRec->AddField( poModule->FindFieldDefn( "FSPT" ) );
+        poRec->SetFieldRaw( poField, 0, 
+                            (const char *) pabyRawData, nRawDataSize );
+        CPLFree( pabyRawData );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      ATTF support.                                                   */
+/* -------------------------------------------------------------------- */
+    
+    if( poRegistrar != NULL 
+        && poRegistrar->SelectClass( poFeature->GetDefnRef()->GetName() )
+        && !WriteATTF( poRec, poFeature ) )
+        return FALSE;
+
+/* -------------------------------------------------------------------- */
+/*      Write out the record.                                           */
+/* -------------------------------------------------------------------- */
+    poRec->Write();
+    delete poRec;
+
+    return TRUE;
 }
+
+/************************************************************************/
+/*                           SetClassBased()                            */
+/************************************************************************/
+
+void S57Writer::SetClassBased( S57ClassRegistrar * poReg )
+
+{
+    poRegistrar = poReg;
+}
+
+/************************************************************************/
+/*                             WriteATTF()                              */
+/************************************************************************/
+
+int S57Writer::WriteATTF( DDFRecord *poRec, OGRFeature *poFeature )
+{
+    int nRawSize=0, nACount = 0;
+    char achRawData[5000];
+    char **papszAttrList; 
+
+    CPLAssert( poRegistrar != NULL );
+
+/* -------------------------------------------------------------------- */
+/*      Loop over all attributes.                                       */
+/* -------------------------------------------------------------------- */
+    papszAttrList = poRegistrar->GetAttributeList(NULL); 
+    
+    for( int iAttr = 0; papszAttrList[iAttr] != NULL; iAttr++ )
+    {
+        int iField = poFeature->GetFieldIndex( papszAttrList[iAttr] );
+        GInt16 nATTL;
+        const char *pszATVL;
+        
+        if( iField < 0 )
+            continue;
+
+        if( !poFeature->IsFieldSet( iField ) )
+            continue;
+
+        nATTL = poRegistrar->FindAttrByAcronym( papszAttrList[iAttr] );
+        if( nATTL == -1 )
+            continue;
+
+        nATTL = CPL_LSBWORD16( nATTL );
+        memcpy( achRawData + nRawSize, &nATTL, 2 );
+        nRawSize += 2;
+        
+        pszATVL = poFeature->GetFieldAsString( iField );
+        if( strlen(pszATVL) + nRawSize + 10 > sizeof(achRawData) )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                      "Too much ATTF data for fixed buffer size." );
+            return FALSE;
+        }
+
+        memcpy( achRawData + nRawSize, pszATVL, strlen(pszATVL) );
+        nRawSize += strlen(pszATVL);
+        achRawData[nRawSize++] = DDF_UNIT_TERMINATOR;
+    
+        nACount++;
+    }
+
+    achRawData[nRawSize++] = DDF_FIELD_TERMINATOR;
+
+/* -------------------------------------------------------------------- */
+/*      If we got no attributes, return without adding ATTF.            */
+/* -------------------------------------------------------------------- */
+    if( nACount == 0 )
+        return TRUE;
+
+/* -------------------------------------------------------------------- */
+/*      Write the new field value.                                      */
+/* -------------------------------------------------------------------- */
+    DDFField *poField;
+
+    poField = poRec->AddField( poModule->FindFieldDefn( "ATTF" ) );
+
+    return poRec->SetFieldRaw( poField, 0, achRawData, nRawSize );
+}
+
+
