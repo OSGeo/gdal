@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.36  2001/09/21 16:29:21  warmerda
+ * fixed typos in docs
+ *
  * Revision 1.35  2001/09/21 16:21:02  warmerda
  * added Clear(), and SetFromUserInput() methods
  *
@@ -1458,9 +1461,9 @@ OGRErr OSRSetWellKnownGeogCS( OGRSpatialReferenceH hSRS, const char *pszName )
  * may take the following forms:
  *
  * <ol>
- * <li> Well Known Text definition - passed on to importFromWKT().
+ * <li> Well Known Text definition - passed on to importFromWkt().
  * <li> "EPSG:n" - number passed on to importFromEPSG(). 
- * <li> filename - file read for WKT definition, passed on to importFromWKT().
+ * <li> filename - file read for WKT definition, passed on to importFromWkt().
  * <li> well known name accepted by SetWellKnownGeogCS(), such as NAD27, NAD83,
  * WGS84 or WGS72. 
  * </ol>
