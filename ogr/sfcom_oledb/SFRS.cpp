@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.30  2001/11/19 21:03:38  warmerda
+ * fix a few minor memory leaks
+ *
  * Revision 1.29  2001/11/02 19:24:42  warmerda
  * avoid warnings
  *
@@ -106,13 +109,13 @@
  */
 
 #include <assert.h>
+#include "cpl_error.h"
 #include "stdafx.h"
 #include "SF.h"
 #include "SFRS.h"
 #include "SFSess.h"
 #include "ogr_geometry.h"
 #include "sfutil.h"
-#include "cpl_error.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
 
@@ -910,6 +913,7 @@ HRESULT CSFCommand::ExtractSpatialQuery( DBPARAMS *pParams )
                                                    nSize );
             CPLDebug( "OGR_OLEDB", "createFromWkb() = %d/%p\n", 
                       eErr, poGeometry );
+            CoTaskMemFree( pRawData );
         }
 
         if( nSize == 0 || eErr != OGRERR_NONE )
@@ -954,6 +958,11 @@ HRESULT CSFCommand::ExtractSpatialQuery( DBPARAMS *pParams )
 CSFRowset::~CSFRowset()
 
 {
+    int            i;
+
+    for( i = 0; i < m_paColInfo.GetSize(); i++)
+        SysFreeString( m_paColInfo[i].pwszName );
+    
     CPLDebug( "OGR_OLEDB", "~CSFRowset()" );
 }
 
@@ -1038,6 +1047,7 @@ HRESULT CSFRowset::Execute(DBPARAMS * pParams, LONG* pcRowsAffected)
     char        *pszLayerName;
     char        *pszWHERE = NULL;
     IUnknown    *pIUnknown;
+
     QueryInterface(IID_IUnknown,(void **) &pIUnknown);
     poDS = SFGetOGRDataSource(pIUnknown);
     assert(poDS);
@@ -1147,7 +1157,10 @@ HRESULT CSFRowset::Execute(DBPARAMS * pParams, LONG* pcRowsAffected)
         pLayer->SetSpatialFilter(NULL);
 
     if( pszWHERE != NULL )
+    {
         pLayer->SetAttributeFilter( pszWHERE );
+        CPLFree( pszWHERE );
+    }
     else
         pLayer->SetAttributeFilter( NULL );
 	
