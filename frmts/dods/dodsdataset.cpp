@@ -79,9 +79,10 @@ const char *nlat = "Northernmost_Latitude"; ///<
 const char *slat = "Southernmost_Latitude"; ///<
 const char *wlon = "Westernmost_Longitude"; ///<
 const char *elon = "Easternmost_Longitude"; ///<
-const char *gcs = "GeographicCS";	///<
-const char *pcs = "ProjectionCS";	///<
+const char *gcs = "GeographicCS";	    ///<
+const char *pcs = "ProjectionCS";	    ///<
 const char *norm_proj_param = "Norm_Proj_Param"; ///<
+const char *spatial_ref = "spatial_ref";    ///<
 //@}
 
 /** Register OPeNDAP' driver with the GDAL driver manager. This C function
@@ -524,6 +525,15 @@ DODSDataset::get_geo_info(DAS &das, DDS &dds) throw(Error)
 	get_geo_ref_error(d_oVarName, gcs);
     DBG(cerr << gcs << ": " << value << endl);
     oSRS.SetWellKnownGeogCS(value.c_str());
+
+    //Set a full coordinate system from "spatial_ref" in WKT or any user input.
+    value = at->get_attr(spatial_ref);
+    if( value != "" value != "None" )
+    {
+        DBG(cerr << spatial_ref << ": " << value << endl);
+        
+        oSRS.SetFromUserInput( value );
+    }
 
     char *pszWKT = NULL;
     oSRS.exportToWkt(&pszWKT);
@@ -1331,6 +1341,9 @@ DODSRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
 }
 
 // $Log$
+// Revision 1.11  2004/09/08 15:33:55  warmerda
+// added support for spatial_ref (WKT)
+//
 // Revision 1.10  2004/06/17 18:08:26  warmerda
 // Added support for transposing and flipping grids if needed.
 // Added support for falling back to "whole image at once" block based
