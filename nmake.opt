@@ -110,8 +110,10 @@ JPEG_SUPPORTED = 1
 #		-I$(MRSID_DIR)\include\j2k_readers
 # MRSID_LIB =	$(MRSID_DIR)\lib\Release_md\lti_dsdk_dll.lib advapi32.lib user32.lib
 #MRSID_FLAGS =	-DMRSID_DSDK_VERSION_40
-# Enable this, if you have the MrSID Encoding SDK and want to create MrSID files
+# Enable these, if you have the MrSID Encoding SDK and want
+# to create MrSID files
 #MRSID_FLAGS =	-DMRSID_ESDK_VERSION_40 $(MRSID_FLAGS)
+#MRSID_LIB =	$(MRSID_DIR)\lib\Release_md\lti_esdk_dll.lib $MRSID_LIB
 
 # PostGIS Libraries
 #PG_INC_DIR = n:\pkg\libpq_win32\include
