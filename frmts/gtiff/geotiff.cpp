@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.93  2003/05/28 16:21:25  warmerda
+ * added logic to set RGB/alpha for 4 bands in Create() case
+ *
  * Revision 1.92  2003/05/20 20:15:06  warmerda
  * dont use geopixelscale if it is zero, like in some IKONOS images
  *
@@ -2492,8 +2495,17 @@ TIFF *GTiffCreate( const char * pszFilename,
     TIFFSetField( hTIFF, TIFFTAG_SAMPLESPERPIXEL, nBands );
     TIFFSetField( hTIFF, TIFFTAG_PLANARCONFIG, nPlanar );
 
-    if( nBands == 3 )
+    if( nBands == 3 && eType == GDT_Byte )
         TIFFSetField( hTIFF, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_RGB );
+    else if( nBands == 4 && eType == GDT_Byte )
+    {
+        uint16 v[1];
+
+        v[0] = EXTRASAMPLE_ASSOCALPHA;
+	TIFFSetField(hTIFF, TIFFTAG_EXTRASAMPLES, 1, v);
+        TIFFSetField( hTIFF, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_RGB );
+        TIFFSetField( hTIFF, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_RGB );
+    }
     else
         TIFFSetField( hTIFF, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_MINISBLACK );
     
