@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2001/07/04 03:08:21  warmerda
+ * fixed FRADDL width
+ *
  * Revision 1.5  2001/01/19 21:15:20  warmerda
  * expanded tabs
  *
@@ -374,7 +377,7 @@ OGRFeature *TigerCompleteChain::GetFeature( int nRecordId )
     SetField( poFeature, "FETYPE", achRecord, 50, 53 );
     SetField( poFeature, "FEDIRS", achRecord, 54, 55 );
     SetField( poFeature, "CFCC", achRecord, 56, 58 );
-    SetField( poFeature, "FRADDL", achRecord, 59, 59 );
+    SetField( poFeature, "FRADDL", achRecord, 59, 69 );
     SetField( poFeature, "TOADDL", achRecord, 70, 80 );
     SetField( poFeature, "FRADDR", achRecord, 81, 91 );
     SetField( poFeature, "TOADDR", achRecord, 92, 102 );
