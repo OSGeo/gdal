@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.22  2002/01/25 20:47:58  warmerda
+ * added GML registration
+ *
  * Revision 1.21  2001/11/15 21:19:21  warmerda
  * added transaction semantics
  *
@@ -286,6 +289,7 @@ void CPL_DLL RegisterOGRMIF();
 void CPL_DLL RegisterOGROGDI();
 void CPL_DLL RegisterOGRPG();
 void CPL_DLL RegisterOGRDGN();
+void CPL_DLL RegisterOGRGML();
 CPL_C_END
 
 
