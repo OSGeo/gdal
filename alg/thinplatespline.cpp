@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2005/03/15 08:04:39  fwarmerdam
+ * Define FLT_MAX/MIN if not found elsewhere.
+ *
  * Revision 1.4  2004/12/31 02:12:40  fwarmerdam
  * Avoid warnings.
  *
@@ -51,6 +54,11 @@
 #  include <float.h>
 #elif defined(HAVE_VALUES_H)
 #  include <values.h>
+#endif
+
+#ifndef FLT_MAX
+#  define FLT_MAX 1e+37
+#  define FLT_MIN 1e-37
 #endif
 
 VizGeorefSpline2D* viz_xy2llz;
