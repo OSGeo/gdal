@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2004/05/06 07:15:39  dron
+ * Added Hotine Oblique Mercator Two Point Natural Origin projection.
+ *
  * Revision 1.4  2003/05/28 19:16:42  warmerda
  * fixed up argument names and stuff for docs
  *
@@ -59,6 +62,12 @@ static char *papszParameterDefinitions[] = {
     SRS_PP_FALSE_EASTING,       "False Easting",        "m",     "0.0",
     SRS_PP_FALSE_NORTHING,      "False Northing",       "m",     "0.0",
     SRS_PP_AZIMUTH,             "Azimuth",              "Angle", "0.0",
+    SRS_PP_LONGITUDE_OF_POINT_1,"Longitude of Point 1", "Long",  "0.0",
+    SRS_PP_LATITUDE_OF_POINT_1, "Latitude of Point 1",  "Lat",   "0.0",
+    SRS_PP_LONGITUDE_OF_POINT_2,"Longitude of Point 2", "Long",  "0.0",
+    SRS_PP_LATITUDE_OF_POINT_2, "Latitude of Point 2",  "Lat",   "0.0",
+    SRS_PP_LONGITUDE_OF_POINT_3,"Longitude of Point 3", "Long",  "0.0",
+    SRS_PP_LATITUDE_OF_POINT_3, "Latitude of Point 3",  "Lat",   "0.0",
     SRS_PP_RECTIFIED_GRID_ANGLE,"Rectified Grid Angle", "Angle", "0.0", 
     NULL
 };
@@ -179,6 +188,18 @@ static char *papszProjectionDefinitions[] = {
     SRS_PP_LONGITUDE_OF_CENTER,
     SRS_PP_AZIMUTH, 
     SRS_PP_RECTIFIED_GRID_ANGLE,
+    SRS_PP_SCALE_FACTOR, 
+    SRS_PP_FALSE_EASTING, 
+    SRS_PP_FALSE_NORTHING,
+
+    "*",
+    SRS_PT_HOTINE_OBLIQUE_MERCATOR_TWO_POINT_NATURAL_ORIGIN,
+    "Hotine Oblique Mercator Two Point Natural Origin",
+    SRS_PP_LATITUDE_OF_CENTER,
+    SRS_PP_LATITUDE_OF_POINT_1,
+    SRS_PP_LONGITUDE_OF_POINT_1,
+    SRS_PP_LATITUDE_OF_POINT_2,
+    SRS_PP_LONGITUDE_OF_POINT_2,
     SRS_PP_SCALE_FACTOR, 
     SRS_PP_FALSE_EASTING, 
     SRS_PP_FALSE_NORTHING,
