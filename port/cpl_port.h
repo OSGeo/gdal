@@ -38,6 +38,9 @@
  *   GUInt16, and GByte are defined.
  *
  * $Log$
+ * Revision 1.17  2000/07/06 20:30:03  warmerda
+ * Removed extra NULL definition.
+ *
  * Revision 1.16  2000/04/26 18:25:10  warmerda
  * implement CPL_DLL
  *
@@ -187,10 +190,6 @@ typedef int             GBool;
 #ifndef MAX
 #  define MIN(a,b)      ((a<b) ? a : b)
 #  define MAX(a,b)      ((a>b) ? a : b)
-#endif
-
-#ifndef NULL
-#define NULL 0
 #endif
 
 #ifndef ABS
