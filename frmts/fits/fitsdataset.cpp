@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2001/09/14 17:05:39  warmerda
+ * Used strrchr() instead of rindex().
+ *
  * Revision 1.5  2001/07/18 04:51:56  warmerda
  * added CPL_CVSID
  *
@@ -468,7 +471,7 @@ CPLErr FITSDataset::Init(fitsfile* hFITS_, bool isExistingFile_) {
 	value[strlen(value) - 1] = '\0';
       }
       // Check for long string
-      if (rindex(newValue, '&') == newValue + strlen(newValue) - 1) {
+      if (strrchr(newValue, '&') == newValue + strlen(newValue) - 1) {
 	// Value string ends in "&", so use long string conventions
 	char* longString = 0;
 	fits_read_key_longstr(hFITS, key, &longString, 0, &status);
