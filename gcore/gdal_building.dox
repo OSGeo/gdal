@@ -132,7 +132,17 @@ you use the "nmake /f makefile.vc install" command.
 
 <li> <b>OPTFLAGS</b>: Set this to contain the desired compiler flags for
 compiling.  The default is a debug build but there is usually a suitable
-alternative for optimized builds commented out in the template file. 
+alternative for optimized builds commented out in the template file. Please,
+note that if you will build GDAL against the third-party libraries
+(installed from precompiled binaries or compiled by yourself) you should keep
+the run-time linking options for that libraries and for GDAL the same. For
+example, if you will use /MD option in <b>OPTFLAGS</b> string (link against
+multithreaded dynamic library), the same should be used to build other
+libraries, such as HDF4 or JasPer. If you don't have library sources then read
+the documentation, supplied with library, to figure out how it was compiled
+and set up the same linking option in <b>OPTFLAGS</b>. Mixing different
+linking options or release/debug flags will result in build failures or in
+crashes during run time.
 
 </ul>
 
