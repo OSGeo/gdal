@@ -16,7 +16,7 @@ CPPFLAGS	:=	$(GDAL_INCLUDE) $(CPPFLAGS) $(XTRA_OPT)
 default:	$(OBJ)
 
 clean:
-	rm -f *.o
+	rm -f *.o $(O_OBJ)
 
 ../o/%.o:	libungif/%.c
 	$(CC) -c $(CPPFLAGS) $(CFLAGS) $< -o $@
