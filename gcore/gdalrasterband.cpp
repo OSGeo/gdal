@@ -28,6 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************
  * $Log$
+ * Revision 1.49  2004/09/02 16:03:57  warmerda
+ * Fixed another bug in the GetBlock() example.
+ *
  * Revision 1.48  2004/06/04 14:55:16  warmerda
  * Fixed doc error.
  *
@@ -382,12 +385,12 @@ CPLErr GDALRasterIO( GDALRasterBandH hBand, GDALRWFlag eRWFlag,
 
              // Compute the portion of the block that is valid
              // for partial edge blocks.
-             if( iXBlock * nXBlockSize > poBand->GetXSize() )
+             if( (iXBlock+1) * nXBlockSize > poBand->GetXSize() )
                  nXValid = poBand->GetXSize() - iXBlock * nXBlockSize;
              else
                  nXValid = nXBlockSize;
 
-             if( iYBlock * nYBlockSize > poBand->GetYSize() )
+             if( (iYBlock+1) * nYBlockSize > poBand->GetYSize() )
                  nYValid = poBand->GetYSize() - iYBlock * nYBlockSize;
              else
                  nYValid = nYBlockSize;
