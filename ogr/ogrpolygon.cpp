@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.29  2004/10/04 21:06:46  fwarmerdam
+ * added centroid support
+ *
  * Revision 1.28  2004/09/17 15:05:36  fwarmerdam
  * added get_Area() support
  *
@@ -116,6 +119,12 @@
 
 #include "ogr_geometry.h"
 #include "ogr_p.h"
+#include "ogr_geos.h"
+#include "ogr_api.h"
+
+#ifdef HAVE_GEOS
+#  include "geos/geosAlgorithm.h"
+#endif
 
 CPL_CVSID("$Id$");
 
@@ -769,13 +778,80 @@ OGRErr OGRPolygon::exportToWkt( char ** ppszDstText ) const
 /*                              Centroid()                              */
 /************************************************************************/
 
-int OGRPolygon::Centroid( OGRPoint * ) const
+/**
+ * Compute the polygon centroid.
+ *
+ * The centroid location is applied to the passed in OGRPoint object.
+ *
+ * @return OGRERR_NONE on success or OGRERR_FAILURE on error.
+ */
+
+int OGRPolygon::Centroid( OGRPoint *poPoint ) const
 
 {
+    if( poPoint == NULL )
+        return OGRERR_FAILURE;
+
+#ifndef HAVE_GEOS
     // notdef ... not implemented yet.
     
     return OGRERR_FAILURE;
+#else
+    geos::Geometry *poThisGeosGeom, *poOtherGeosGeom = 0;
+    
+    poThisGeosGeom = exportToGEOS();
+
+    if( poThisGeosGeom != NULL )
+    {
+    	poOtherGeosGeom = poThisGeosGeom->getCentroid();
+
+	poPoint->setX( poOtherGeosGeom->getCoordinate()->x );
+	poPoint->setY( poOtherGeosGeom->getCoordinate()->y );
+	poPoint->setZ( poOtherGeosGeom->getCoordinate()->z );
+
+    	delete poThisGeosGeom;
+    	delete poOtherGeosGeom;
+
+    	return OGRERR_NONE;
+    }
+    else
+    {
+    	return OGRERR_FAILURE;
+    }
+
+#endif /* HAVE_GEOS */
 }
+
+/************************************************************************/
+/*                           OGR_G_Centroid()                           */
+/************************************************************************/
+
+int OGR_G_Centroid( OGRGeometryH hPolygon, OGRGeometryH hCentroidPoint )
+
+{
+    OGRPolygon *poPoly = ((OGRPolygon *) hPolygon);
+    OGRPoint *poCentroid = ((OGRPoint *) hCentroidPoint);
+    
+    if( poCentroid == NULL )
+        return OGRERR_FAILURE;
+
+    if( wkbFlatten(poCentroid->getGeometryType()) != wkbPoint )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Passed wrong geometry type as centroid argument." );
+        return OGRERR_FAILURE;
+    }
+
+    if( wkbFlatten(poPoly->getGeometryType()) != wkbPolygon )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Invoked Centroid() on non-Polygon." );
+        return OGRERR_FAILURE;
+    }
+                            
+    return poPoly->Centroid( poCentroid );
+}
+
 
 /************************************************************************/
 /*                           PointOnSurface()                           */
