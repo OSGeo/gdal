@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2001/09/28 04:03:52  warmerda
+ * partially upraded to PostGIS 0.6
+ *
  * Revision 1.5  2001/06/26 20:59:13  warmerda
  * implement efficient spatial and attribute query support
  *
@@ -84,6 +87,8 @@ class OGRPGLayer : public OGRLayer
     char		*pszGeomColumn;
 
     void		BuildWhere(void);
+    char 	       *BuildFields(void);
+
     char	        *pszQuery;
     char		*pszWHERE;
 
@@ -131,12 +136,18 @@ class OGRPGDataSource : public OGRDataSource
     int			bHavePostGIS;
 
     PGconn		*hPGConn;
+
+    void		DeleteLayer( const char *pszLayerName );
     
   public:
     			OGRPGDataSource();
     			~OGRPGDataSource();
 
     PGconn             *GetPGConn() { return hPGConn; }
+
+    int                 FetchSRSId( OGRSpatialReference * poSRS );
+    OGRSpatialReference *FetchSRS( int nSRSId );
+    OGRErr              InitializeMetadataTables();
 
     int			Open( const char *, int bUpdate, int bTestOpen );
     int                 OpenTable( const char *, int bUpdate, int bTestOpen );

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2001/09/28 04:03:52  warmerda
+ * partially upraded to PostGIS 0.6
+ *
  * Revision 1.6  2001/07/18 04:55:16  warmerda
  * added CPL_CSVID
  *
@@ -257,12 +260,75 @@ int OGRPGDataSource::OpenTable( const char *pszNewName, int bUpdate,
 }
 
 /************************************************************************/
+/*                            DeleteLayer()                             */
+/************************************************************************/
+
+void OGRPGDataSource::DeleteLayer( const char *pszLayerName )
+
+{
+    int	iLayer;
+
+/* -------------------------------------------------------------------- */
+/*      Try to find layer.                                              */
+/* -------------------------------------------------------------------- */
+    for( iLayer = 0; iLayer < nLayers; iLayer++ )
+    {
+        if( EQUAL(pszLayerName,papoLayers[iLayer]->GetLayerDefn()->GetName()) )
+            break;
+    }
+
+    if( iLayer == nLayers )
+        return;
+
+/* -------------------------------------------------------------------- */
+/*      Blow away our OGR structures related to the layer.  This is     */
+/*      pretty dangerous if anything has a reference to this layer!     */
+/* -------------------------------------------------------------------- */
+    CPLDebug( "OGR_PG", "DeleteLayer(%s)", pszLayerName );
+
+    delete papoLayers[iLayer];
+    memmove( papoLayers + iLayer, papoLayers + iLayer + 1, 
+             sizeof(void *) * (nLayers - iLayer - 1) );
+    nLayers--;
+
+/* -------------------------------------------------------------------- */
+/*      Remove from the database.                                       */
+/* -------------------------------------------------------------------- */
+    PGresult            *hResult;
+    char		szCommand[1024];
+
+    hResult = PQexec(hPGConn, "BEGIN");
+    PQclear( hResult );
+
+    if( bHavePostGIS )
+    {
+        sprintf( szCommand, 
+                 "SELECT DropGeometryColumn('warmerda','%s','wkb_geometry')",
+                 pszLayerName );
+
+        PQexec( hPGConn, szCommand );
+        PQclear( hResult );
+    }
+
+    sprintf( szCommand, "DROP TABLE %s", pszLayerName );
+    PQexec( hPGConn, szCommand );
+    PQclear( hResult );
+    
+    sprintf( szCommand, "DROP SEQUENCE %s_ogc_fid_seq", pszLayerName );
+    PQexec( hPGConn, szCommand );
+    PQclear( hResult );
+    
+    hResult = PQexec(hPGConn, "COMMIT");
+    PQclear( hResult );
+}
+
+/************************************************************************/
 /*                            CreateLayer()                             */
 /************************************************************************/
 
 OGRLayer *
 OGRPGDataSource::CreateLayer( const char * pszLayerName,
-                              OGRSpatialReference *,
+                              OGRSpatialReference *poSRS,
                               OGRwkbGeometryType eType,
                               char ** papszOptions )
 
@@ -271,6 +337,36 @@ OGRPGDataSource::CreateLayer( const char * pszLayerName,
     char		szCommand[1024];
     const char		*pszGeomType;
 
+/* -------------------------------------------------------------------- */
+/*      Do we already have this layer?  If so, should we blow it        */
+/*      away?                                                           */
+/* -------------------------------------------------------------------- */
+    int	iLayer;
+
+    for( iLayer = 0; iLayer < nLayers; iLayer++ )
+    {
+        if( EQUAL(pszLayerName,papoLayers[iLayer]->GetLayerDefn()->GetName()) )
+        {
+            if( CSLFetchNameValue( papszOptions, "OVERWRITE" ) != NULL
+                && !EQUAL(CSLFetchNameValue(papszOptions,"OVERWRITE"),"NO") )
+            {
+                DeleteLayer( pszLayerName );
+            }
+            else
+            {
+                CPLError( CE_Failure, CPLE_AppDefined, 
+                          "Layer %s already exists, CreateLayer failed.\n"
+                          "Use the layer creation option OVERWRITE=YES to "
+                          "replace it.",
+                          pszLayerName );
+                return NULL;
+            }
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Handle the GEOM_TYPE option.                                    */
+/* -------------------------------------------------------------------- */
     pszGeomType = CSLFetchNameValue( papszOptions, "GEOM_TYPE" );
     if( pszGeomType == NULL )
     {
@@ -280,17 +376,42 @@ OGRPGDataSource::CreateLayer( const char * pszLayerName,
             pszGeomType = "bytea";
     }
 
+    if( bHavePostGIS && !EQUAL(pszGeomType,"geometry") )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Can't override GEOM_TYPE in PostGIS enabled databases.\n"
+                  "Creation of layer %s with GEOM_TYPE %s has failed.",
+                  pszLayerName, pszGeomType );
+        return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Try to get the SRS Id of this spatial reference system,         */
+/*      adding tot the srs table if needed.                             */
+/* -------------------------------------------------------------------- */
+    int nSRSId = -1;
+
+    if( poSRS != NULL )
+        nSRSId = FetchSRSId( poSRS );
+
+/* -------------------------------------------------------------------- */
+/*      Create a basic table with the FID.  Also include the            */
+/*      geometry if this is not a PostGIS enabled table.                */
+/* -------------------------------------------------------------------- */
     hResult = PQexec(hPGConn, "BEGIN");
     PQclear( hResult );
 
-/* -------------------------------------------------------------------- */
-/*      Create a table with just the FID and geometry fields.		*/
-/* -------------------------------------------------------------------- */
-    sprintf( szCommand, 
-             "CREATE TABLE %s ( "
-             "   OGC_FID SERIAL, "
-             "   WKB_GEOMETRY %s )",
-             pszLayerName, pszGeomType );
+    if( !bHavePostGIS )
+        sprintf( szCommand, 
+                 "CREATE TABLE %s ( "
+                 "   OGC_FID SERIAL, "
+                 "   WKB_GEOMETRY %s )",
+                 pszLayerName, pszGeomType );
+    else
+        sprintf( szCommand, 
+                 "CREATE TABLE %s ( OGC_FID SERIAL )", 
+                 pszLayerName );
+
     hResult = PQexec(hPGConn, szCommand);
     if( PQresultStatus(hResult) != PGRES_COMMAND_OK )
     {
@@ -311,7 +432,69 @@ OGRPGDataSource::CreateLayer( const char * pszLayerName,
 /*      "geometric layers", capturing the WKT projection, and           */
 /*      perhaps some other housekeeping.                                */
 /* -------------------------------------------------------------------- */
-    
+    if( bHavePostGIS )
+    {
+        const char *pszGeometryType;
+
+        switch( eType & (0x7fff) )
+        {
+          case wkbPoint:
+            pszGeometryType = "POINT";
+            break;
+
+          case wkbLineString:
+            pszGeometryType = "LINESTRING";
+            break;
+
+          case wkbPolygon:
+            pszGeometryType = "POLYGON";
+            break;
+
+          case wkbMultiPoint:
+            pszGeometryType = "MULTIPOINT";
+            break;
+
+          case wkbMultiLineString:
+            pszGeometryType = "MULTILINESTRING";
+            break;
+
+          case wkbMultiPolygon:
+            pszGeometryType = "MULTIPOLYGON";
+            break;
+
+          case wkbGeometryCollection:
+            pszGeometryType = "GEOMETRYCOLLECTION";
+            break;
+
+          default:
+            pszGeometryType = "GEOMETRY";
+            break;
+
+        }
+
+        sprintf( szCommand, 
+                 "SELECT AddGeometryColumn('warmerda','%s','wkb_geometry',%d,'%s',%d)",
+                 pszLayerName, nSRSId, pszGeometryType, 3 );
+
+        CPLDebug( "OGR_PG", "PQexec(%s)", szCommand );
+        hResult = PQexec(hPGConn, szCommand);
+
+        if( !hResult 
+            || PQresultStatus(hResult) != PGRES_TUPLES_OK )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                      "AddGeometryColumn failed for layer %s, layer creation has failed.",
+                      pszLayerName );
+            
+            PQclear( hResult );
+
+            hResult = PQexec(hPGConn, "ROLLBACK");
+            PQclear( hResult );
+
+            return NULL;
+        }
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Complete, and commit the transaction.                           */
 /* -------------------------------------------------------------------- */
@@ -370,4 +553,133 @@ static void OGRPGNoticeProcessor( void *arg, const char * pszMessage )
 
 {
     CPLDebug( "OGR_PG_NOTICE", "%s", pszMessage );
+}
+
+/************************************************************************/
+/*                      InitializeMetadataTables()                      */
+/*                                                                      */
+/*      Create the metadata tables (SPATIAL_REF_SYS and                 */
+/*      GEOMETRY_COLUMNS).                                              */
+/************************************************************************/
+
+OGRErr OGRPGDataSource::InitializeMetadataTables()
+
+{
+    // implement later.
+    return OGRERR_FAILURE;
+}
+
+/************************************************************************/
+/*                              FetchSRS()                              */
+/*                                                                      */
+/*      Return a SRS corresponding to a particular id.  Note that       */
+/*      reference counting should be honoured on the returned           */
+/*      OGRSpatialReference, as handles may be cached.                  */
+/************************************************************************/
+
+OGRSpatialReference *OGRPGDataSource::FetchSRS( int nId )
+
+{
+    // implement later.
+    return NULL;
+}
+
+/************************************************************************/
+/*                             FetchSRSId()                             */
+/*                                                                      */
+/*      Fetch the id corresponding to an SRS, and if not found, add     */
+/*      it to the table.                                                */
+/************************************************************************/
+
+int OGRPGDataSource::FetchSRSId( OGRSpatialReference * poSRS )
+
+{
+    PGresult            *hResult;
+    char		szCommand[10000];
+    char		*pszWKT = NULL;
+    int			nSRSId;
+
+    if( poSRS == NULL )
+        return -1;
+
+/* -------------------------------------------------------------------- */
+/*      Translate SRS to WKT.                                           */
+/* -------------------------------------------------------------------- */
+    if( poSRS->exportToWkt( &pszWKT ) != OGRERR_NONE )
+        return -1;
+    
+    CPLAssert( strlen(pszWKT) < sizeof(szCommand) - 500 );
+
+/* -------------------------------------------------------------------- */
+/*      Try to find in the existing table.                              */
+/* -------------------------------------------------------------------- */
+    hResult = PQexec(hPGConn, "BEGIN");
+
+    sprintf( szCommand, 
+             "SELECT srid FROM spatial_ref_sys WHERE srtext = '%s'",
+             pszWKT );
+    hResult = PQexec(hPGConn, szCommand );
+                     
+/* -------------------------------------------------------------------- */
+/*      We got it!  Return it.                                          */
+/* -------------------------------------------------------------------- */
+    if( hResult && PQresultStatus(hResult) == PGRES_TUPLES_OK 
+        && PQntuples(hResult) > 0 )
+    {
+        nSRSId = atoi(PQgetvalue( hResult, 0, 0 ));
+        
+        PQclear( hResult );
+
+        hResult = PQexec(hPGConn, "COMMIT");
+        PQclear( hResult );
+
+        return nSRSId;
+    }
+    
+/* -------------------------------------------------------------------- */
+/*      If the command actually failed, then the metadata table is      */
+/*      likely missing. Try defining it.                                */
+/* -------------------------------------------------------------------- */
+    int		bTableMissing;
+
+    bTableMissing = 
+        hResult == NULL || PQresultStatus(hResult) != PGRES_COMMAND_OK;
+
+    hResult = PQexec(hPGConn, "COMMIT");
+    PQclear( hResult );
+
+    if( bTableMissing )
+    {
+        if( InitializeMetadataTables() != OGRERR_NONE )
+            return -1;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Get the current maximum srid in the srs table.                  */
+/* -------------------------------------------------------------------- */
+    hResult = PQexec(hPGConn, "BEGIN");
+    PQclear( hResult );
+
+    hResult = PQexec(hPGConn, "SELECT MAX(ogc_fid) FROM spatial_ref_sys" );
+
+    if( hResult && PQresultStatus(hResult) != PGRES_TUPLES_OK )
+    {
+        nSRSId = atoi(PQgetvalue(hResult,0,0)) + 1;
+        PQclear( hResult );
+    }
+    
+/* -------------------------------------------------------------------- */
+/*      Try adding the SRS to the SRS table.                            */
+/* -------------------------------------------------------------------- */
+    sprintf( szCommand, 
+             "INSERT INTO spatial_ref_sys (srid,srtext) VALUES (%d,'%s')",
+             nSRSId, pszWKT );
+             
+    hResult = PQexec(hPGConn, szCommand );
+    PQclear( hResult );
+
+    hResult = PQexec(hPGConn, "COMMIT");
+    PQclear( hResult );
+
+    return nSRSId;
 }

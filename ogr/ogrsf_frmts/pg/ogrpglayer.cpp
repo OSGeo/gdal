@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2001/09/28 04:03:52  warmerda
+ * partially upraded to PostGIS 0.6
+ *
  * Revision 1.6  2001/07/18 04:55:16  warmerda
  * added CPL_CSVID
  *
@@ -275,6 +278,57 @@ void OGRPGLayer::BuildWhere()
 }
 
 /************************************************************************/
+/*                            BuildFields()                             */
+/*                                                                      */
+/*      Build list of fields to fetch, performing any required          */
+/*      transformations (such as on geometry).                          */
+/************************************************************************/
+
+char *OGRPGLayer::BuildFields()
+
+{
+    int		i, nSize;
+    char	*pszFieldList;
+
+    nSize = 25;
+    if( pszGeomColumn )
+        nSize += strlen(pszGeomColumn);
+
+    for( i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
+        nSize += strlen(poFeatureDefn->GetFieldDefn(i)->GetNameRef()) + 2;
+
+    pszFieldList = (char *) CPLMalloc(nSize);
+
+    if( pszGeomColumn )
+    {
+        if( bHasPostGISGeometry )
+        {
+            sprintf( pszFieldList, "AsText(%s)", pszGeomColumn );
+        }
+        else
+        {
+            sprintf( pszFieldList, "%s", pszGeomColumn );
+        }
+    }
+    else
+        pszFieldList[0] = '\0';
+
+    for( i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
+    {
+        const char *pszName = poFeatureDefn->GetFieldDefn(i)->GetNameRef();
+
+        if( strlen(pszFieldList) > 0 )
+            strcat( pszFieldList, ", " );
+
+        strcat( pszFieldList, pszName );
+    }
+
+    CPLAssert( (int) strlen(pszFieldList) < nSize );
+
+    return pszFieldList;
+}
+
+/************************************************************************/
 /*                         SetAttributeFilter()                         */
 /************************************************************************/
 
@@ -361,14 +415,19 @@ OGRFeature *OGRPGLayer::GetNextRawFeature()
 /* -------------------------------------------------------------------- */
     if( iNextShapeId == 0 )
     {
+        char	*pszFields = BuildFields();
+
         hCursorResult = PQexec(hPGConn, "BEGIN");
         PQclear( hCursorResult );
 
         sprintf( szCommand, 
                  "DECLARE %s CURSOR for "
-                 "SELECT * FROM %s "
+                 "SELECT %s FROM %s "
                  "%s", 
-                 pszCursorName, poFeatureDefn->GetName(), pszWHERE );
+                 pszCursorName, pszFields, 
+                 poFeatureDefn->GetName(), pszWHERE );
+
+        CPLFree( pszFields );
 
         CPLDebug( "OGR_PG", "PQexec(%s)\n", 
                   szCommand );
@@ -450,7 +509,8 @@ OGRFeature *OGRPGLayer::GetNextRawFeature()
         int	iOGRField;
 
         if( bHasPostGISGeometry
-                 && EQUAL(PQfname(hCursorResult,iField),pszGeomColumn) )
+            && (EQUAL(PQfname(hCursorResult,iField),pszGeomColumn)
+                || EQUAL(PQfname(hCursorResult,iField),"astext") ) )
         {
             char	*pszWKT;
             OGRGeometry *poGeometry = NULL;
@@ -732,7 +792,7 @@ OGRErr OGRPGLayer::CreateFeature( OGRFeature *poFeature )
         if( pszWKT != NULL )
         {
             sprintf( szCommand + strlen(szCommand), 
-                     "'%s', ", pszWKT );
+                     "GeometryFromText('%s'::TEXT,-1), ", pszWKT );
             OGRFree( pszWKT );
         }
         else
@@ -808,8 +868,10 @@ OGRErr OGRPGLayer::CreateFeature( OGRFeature *poFeature )
     hResult = PQexec(hPGConn, szCommand);
     if( PQresultStatus(hResult) != PGRES_COMMAND_OK )
     {
+        CPLDebug( "OGR_PG", "PQexec(%s)\n", szCommand );
         CPLError( CE_Failure, CPLE_AppDefined, 
-                  "%s\n%s", szCommand, PQerrorMessage(hPGConn) );
+                  "INSERT command for new feature failed.\n%s", 
+                  PQerrorMessage(hPGConn) );
 
         PQclear( hResult );
         hResult = PQexec( hPGConn, "ROLLBACK" );
