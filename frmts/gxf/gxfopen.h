@@ -24,6 +24,9 @@
  * gxfopen.h: Includes for underlying GXF reading code.
  *
  * $Log$
+ * Revision 1.5  1999/01/11 15:33:06  warmerda
+ * Added function
+ *
  * Revision 1.4  1998/12/15 19:07:40  warmerda
  * Add Close, move Readline, add zmin/max, add readscanline
  *
@@ -67,6 +70,8 @@ char	*GXFGetMapProjectionAsPROJ4( GXFHandle );
 
 CPLErr  GXFGetRawPosition( GXFHandle, double *, double *, double *, double *,
                            double * );
+CPLErr  GXFGetPROJ4Position( GXFHandle, double *, double *, double *, double *,
+                             double * );
 
 void     GXFClose( GXFHandle hGXF );
 
