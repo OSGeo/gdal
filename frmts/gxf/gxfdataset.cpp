@@ -1,4 +1,11 @@
 /******************************************************************************
+ * $Id$
+ *
+ * Project:  GXF Reader
+ * Purpose:  GDAL binding for GXF reader.
+ * Author:   Frank Warmerdam, warmerda@home.com
+ *
+ ******************************************************************************
  * Copyright (c) 1998, Frank Warmerdam
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -19,12 +26,11 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************
- *
- * gxfdataset.cpp
- *
- * The GXF driver, and dataset implementation.
  * 
  * $Log$
+ * Revision 1.4  1999/10/27 20:21:45  warmerda
+ * added projection/transform support
+ *
  * Revision 1.3  1999/01/11 15:32:12  warmerda
  * Added testing of file to verify it is GXF.
  *
@@ -38,6 +44,10 @@
 
 #include "gxfopen.h"
 #include "gdal_priv.h"
+
+#ifndef PI
+#  define PI 3.14159265358979323846
+#endif
 
 static GDALDriver	*poGXFDriver = NULL;
 
@@ -59,8 +69,15 @@ class GXFDataset : public GDALDataset
     
     GXFHandle	hGXF;
 
+    char	*pszProjection;
+
   public:
+		~GXFDataset();
+    
     static GDALDataset *Open( GDALOpenInfo * );
+
+    CPLErr 	GetGeoTransform( double * padfTransform );
+    const char *GetProjectionRef();
 };
 
 /************************************************************************/
@@ -125,6 +142,64 @@ CPLErr GXFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 }
 
 /************************************************************************/
+/* ==================================================================== */
+/*				GXFDataset				*/
+/* ==================================================================== */
+/************************************************************************/
+
+/************************************************************************/
+/*                            ~GXFDataset()                             */
+/************************************************************************/
+
+GXFDataset::~GXFDataset()
+
+{
+    CPLFree( pszProjection );
+}
+
+
+/************************************************************************/
+/*                          GetGeoTransform()                           */
+/************************************************************************/
+
+CPLErr GXFDataset::GetGeoTransform( double * padfTransform )
+
+{
+    CPLErr	eErr;
+    double	dfXOrigin, dfYOrigin, dfXSize, dfYSize, dfRotation;
+
+    eErr = GXFGetPosition( hGXF, &dfXOrigin, &dfYOrigin,
+                           &dfXSize, &dfYSize, &dfRotation );
+
+    if( eErr != CE_None )
+        return eErr;
+
+    // Transform to radians. 
+    dfRotation = (dfRotation / 360.0) * 2 * PI;
+
+    padfTransform[1] = dfXSize * cos(dfRotation);
+    padfTransform[2] = dfYSize * sin(dfRotation);
+    padfTransform[4] = dfXSize * sin(dfRotation);
+    padfTransform[5] = -1 * dfYSize * cos(dfRotation);
+
+    // take into account that GXF is point or center of pixel oriented.
+    padfTransform[0] = dfXOrigin - 0.5*padfTransform[1] - 0.5*padfTransform[2];
+    padfTransform[3] = dfYOrigin - 0.5*padfTransform[4] - 0.5*padfTransform[5];
+    
+    return CE_None;
+}
+
+/************************************************************************/
+/*                          GetProjectionRef()                          */
+/************************************************************************/
+
+const char *GXFDataset::GetProjectionRef()
+
+{
+    return( pszProjection );
+}
+
+/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
@@ -175,6 +250,11 @@ GDALDataset *GXFDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->hGXF = hGXF;
     poDS->poDriver = poGXFDriver;
     
+/* -------------------------------------------------------------------- */
+/*	Establish the projection.					*/
+/* -------------------------------------------------------------------- */
+    poDS->pszProjection = GXFGetMapProjectionAsPROJ4( hGXF );
+
 /* -------------------------------------------------------------------- */
 /*      Capture some information from the file that is of interest.     */
 /* -------------------------------------------------------------------- */
