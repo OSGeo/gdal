@@ -1,12 +1,16 @@
 
 # Location of Visual C++ directory
-VCDIR   = 	F:\VisualStudio\VC98
-PYDIR   =	C:\Python
+VCDIR   = 	D:\Software\VStudio\VC98
+PYDIR   =	D:\Software\Python20
+
+#ECWDIR  = 	D:\Software\ECW_SDK
+#ECWLIB  =       $(ECWDIR)\lib\NCSEcw.lib $(ECWDIR)\lib\NCSUtil.lib
+#ECWDEF  =       /DFRMT_ecw
 
 # Location to install .exe, .dll and python stuff
 
 BINDIR = D:\bin
-PY_INST_DIR = c:\usr\pymod
+PY_INST_DIR = D:\bin\pymod
 
 # Location of MS Data Access SDK 
 MSDASDK =	F:\MSDASDK
