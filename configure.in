@@ -227,7 +227,7 @@ if test "$with_grass" != "yes" -a "$with_grass" != "no" ; then
 
   AC_CHECK_LIB(grass_gis,G_asprintf,GRASS_SETTING=grass57+,GRASS_SETTING=no,-L$with_grass/lib -lgrass_datetime)
    
-  if test "$GRASS_SETTING" = "grass" ; then   
+  if test "$GRASS_SETTING" = "grass57+" ; then   
     LIBS="-L$with_grass/lib -lgrass_I -lgrass_vask -lgrass_gmath -lgrass_gis -lgrass_datetime $LIBS"
     GRASS_INCLUDE="-I$with_grass/include"
   else
