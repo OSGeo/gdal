@@ -32,7 +32,7 @@ OGR_LIBS =	$(OGR)\ogrsf_frmts\ogrsf_frmts.lib \
 !ENDIF
 
 LOC_OBJ =       SF.obj SFRS.obj sfutil.obj sftraceback.obj sfregister.obj \
-		ogrvirtualarray.obj swq.obj sfdscache.obj
+		ogrvirtualarray.obj swq.obj sfdscache.obj SFDS.obj SFSess.obj
 
 default:	$(DLLNAME)
 
@@ -71,6 +71,12 @@ sftraceback.cpp:	$(SFOLEDB)\sftraceback.cpp
 
 SFRS.cpp:	$(SFOLEDB)\SFRS.cpp
 	copy $(SFOLEDB)\SFRS.cpp
+
+SFSess.cpp:	$(SFOLEDB)\SFSess.cpp
+	copy $(SFOLEDB)\SFSess.cpp
+
+SFDS.cpp: $(SFOLEDB)\SFDS.cpp
+	copy $(SFOLEDB)\SFDS.cpp
 
 SFDSCache.cpp:	$(SFOLEDB)\SFDSCache.cpp
 	copy $(SFOLEDB)\SFDSCache.cpp
