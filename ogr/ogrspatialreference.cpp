@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.73  2003/04/01 14:34:45  warmerda
+ * Clarify SetUTM() documentation.
+ *
  * Revision 1.72  2003/03/28 17:42:05  warmerda
  * fixed reference/dereference problem
  *
@@ -2742,6 +2745,8 @@ OGRErr OGRSpatialReference::SetVDG( double dfCMeridian,
  *
  * This will generate a projection definition with the full set of 
  * transverse mercator projection parameters for the given UTM zone.
+ * If no PROJCS[] description is set yet, one will be set to look
+ * like "UTM Zone %d, {Northern, Southern} Hemisphere". 
  *
  * This method is the same as the C function OSRSetUTM().
  *
