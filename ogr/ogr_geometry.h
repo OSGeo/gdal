@@ -29,6 +29,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  1999/05/31 15:01:59  warmerda
+ * OGRCurve now an abstract base class with essentially no implementation.
+ * Everything moved down to OGRLineString where it belongs.  Also documented
+ * classes.
+ *
  * Revision 1.7  1999/05/31 11:05:08  warmerda
  * added some documentation
  *
@@ -222,27 +227,37 @@ class OGRPoint : public OGRGeometry
 
 /**
  * Abstract curve base class.
- *
- * Contrary to the OpenGIS data model, a number of LineString method
- * have been moved down to the OGRCurve class. 
  */
 
 class OGRCurve : public OGRGeometry
+{
+  public:
+    // ICurve methods
+    virtual double get_Length() = 0;
+    virtual void StartPoint(OGRPoint *) = 0;
+    virtual void EndPoint(OGRPoint *) = 0;
+    virtual int  get_IsClosed();
+    virtual void Value( double, OGRPoint * ) = 0;
+
+};
+
+/************************************************************************/
+/*                            OGRLineString                             */
+/************************************************************************/
+
+/**
+ * Concrete representation of a multi-vertex line.
+ */
+
+class OGRLineString : public OGRCurve
 {
   protected:
     int 	nPointCount;
     OGRRawPoint	*paoPoints;
 
   public:
-    		OGRCurve();
-    virtual     ~OGRCurve();
-
-    // ICurve methods
-    virtual double get_Length();
-    virtual void StartPoint(OGRPoint *);
-    virtual void EndPoint(OGRPoint *);
-    virtual int  get_IsClosed();
-    virtual void Value( double, OGRPoint * );
+    		OGRLineString();
+    virtual     ~OGRLineString();
 
     // IWks Interface
     virtual int	WkbSize();
@@ -255,31 +270,27 @@ class OGRCurve : public OGRGeometry
     virtual int	getDimension();
     virtual int	getCoordinateDimension();
 
+    // ICurve methods
+    virtual double get_Length();
+    virtual void StartPoint(OGRPoint *);
+    virtual void EndPoint(OGRPoint *);
+    virtual void Value( double, OGRPoint * );
+    
     // ILineString methods
     int		getNumPoints() { return nPointCount; }
     void	getPoint( int, OGRPoint * );
     double	getX( int i ) { return paoPoints[i].x; }
     double	getY( int i ) { return paoPoints[i].y; }
 
-    // non-standard
+    // non standard.
     void	setNumPoints( int );
     void	setPoint( int, OGRPoint * );
     void	setPoint( int, double, double );
     void	setPoints( int, OGRRawPoint * );
     void	addPoint( OGRPoint * );
     void	addPoint( double, double );
-};
 
-/************************************************************************/
-/*                            OGRLineString                             */
-/************************************************************************/
-class OGRLineString : public OGRCurve
-{
-  public:
-    		OGRLineString();
-    virtual     ~OGRLineString();
-
-    // non standard.
+    // non-standard from OGRGeometry
     virtual OGRwkbGeometryType getGeometryType();
     virtual const char *getGeometryName();
     virtual OGRGeometry *clone();
@@ -291,6 +302,14 @@ class OGRLineString : public OGRCurve
 /*                                                                      */
 /*      This is an alias for OGRLineString for now.                     */
 /************************************************************************/
+
+/**
+ * Concrete representation of a closed ring.
+ *
+ * This class is functionally equivelent to an OGRLineString, but has a
+ * separate identity to maintain alignment with the OpenGIS simple feature
+ * data model.  It exists to serve as a component of an OGRPolygon.
+ */
 
 class OGRLinearRing : public OGRLineString
 {
@@ -323,17 +342,31 @@ class OGRLinearRing : public OGRLineString
 /*                              OGRSurface                              */
 /************************************************************************/
 
+/**
+ * Abstract base class for 2 dimensional objects like polygons.
+ */
+
 class OGRSurface : public OGRGeometry
 {
   public:
     virtual double      get_Area() = 0;
-    virtual int         Centroid( OGRPoint * ) = 0;
-    virtual int         PointOnSurface( OGRPoint * ) = 0;
+    virtual OGRErr      Centroid( OGRPoint * ) = 0;
+    virtual OGRErr      PointOnSurface( OGRPoint * ) = 0;
 };
 
 /************************************************************************/
 /*                              OGRPolygon                              */
 /************************************************************************/
+
+/**
+ * Concrete class representing polygons.
+ *
+ * Note that the OpenGIS simple features polygons consist of one outer
+ * ring, and zero or more inner rings.  A polygon cannot represent disconnected
+ * regions (such as multiple islands in a political body).  The
+ * OGRMultiPolygon must be used for this.
+ */
+
 class OGRPolygon : public OGRSurface
 {
     int		nRingCount;
@@ -378,6 +411,13 @@ class OGRPolygon : public OGRSurface
 /*                        OGRGeometryCollection                         */
 /************************************************************************/
 
+/**
+ * A collection of 1 or more geometry objects.
+ *
+ * All geometries must share a common spatial reference system, and
+ * Subclasses may impose additional restrictions on the contents.
+ */
+
 class OGRGeometryCollection : public OGRGeometry
 {
     int		nGeomCount;
@@ -415,6 +455,10 @@ class OGRGeometryCollection : public OGRGeometry
 /************************************************************************/
 /*                           OGRMultiPolygon                            */
 /************************************************************************/
+
+/**
+ * A collection of non-overlapping OGRPolygons.
+ */
 
 class OGRMultiPolygon : public OGRGeometryCollection
 {

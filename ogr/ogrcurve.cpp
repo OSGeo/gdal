@@ -28,6 +28,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  1999/05/31 15:01:59  warmerda
+ * OGRCurve now an abstract base class with essentially no implementation.
+ * Everything moved down to OGRLineString where it belongs.  Also documented
+ * classes.
+ *
  * Revision 1.5  1999/05/31 11:05:08  warmerda
  * added some documentation
  *
@@ -47,495 +52,82 @@
 
 #include "ogr_geometry.h"
 #include "ogr_p.h"
-#include <assert.h>
-
-/************************************************************************/
-/*                              OGRCurve()                              */
-/************************************************************************/
-
-OGRCurve::OGRCurve()
-
-{
-    nPointCount = 0;
-    paoPoints = NULL;
-}
-
-/************************************************************************/
-/*                             ~OGRCurve()                              */
-/************************************************************************/
-
-OGRCurve::~OGRCurve()
-
-{
-    if( paoPoints != NULL )
-        OGRFree( paoPoints );
-}
-
-/************************************************************************/
-/*                            getDimension()                            */
-/************************************************************************/
-
-int OGRCurve::getDimension()
-
-{
-    return 1;
-}
-
-/************************************************************************/
-/*                       getCoordinateDimension()                       */
-/************************************************************************/
-
-int OGRCurve::getCoordinateDimension()
-
-{
-    return 2;
-}
-
-/************************************************************************/
-/*                              WkbSize()                               */
-/*                                                                      */
-/*      Return the size of this object in well known binary             */
-/*      representation including the byte order, and type information.  */
-/************************************************************************/
-
-int OGRCurve::WkbSize()
-
-{
-    return 5 + 4 + 16 * nPointCount;
-}
-
-/************************************************************************/
-/*                              getPoint()                              */
-/************************************************************************/
-
-/**
- * Fetch a point in line string.
- *
- * This method properly belongs on the OGRLineString, and it fetches one
- * of the vertices in the line string by index.
- *
- * This method relates to the ILineString::get_Point() method.
- *
- * @param i the vertex to fetch, from 0 to getNumPoints()-1.
- * @param poPoint a point to initialize with the fetched point.
- */
-
-void	OGRCurve::getPoint( int i, OGRPoint * poPoint )
-
-{
-    assert( i >= 0 );
-    assert( i < nPointCount );
-    assert( poPoint != NULL );
-
-    poPoint->setX( paoPoints[i].x );
-    poPoint->setY( paoPoints[i].y );
-}
-
-/************************************************************************/
-/*                            setNumPoints()                            */
-/************************************************************************/
-
-/**
- * Set number of points in geometry.
- *
- * This method primary exists to preset the number of points in a linestring
- * geometry before setPoint() is used to assign them to avoid reallocating
- * the array larger with each call to addPoint(). 
- *
- * This method has no SFCOM analog.
- *
- * @param nNewPointCount the new number of points for geometry.
- */
-
-void OGRCurve::setNumPoints( int nNewPointCount )
-
-{
-    if( nNewPointCount == 0 )
-    {
-        if( paoPoints != NULL )
-            OGRFree( paoPoints );
-        paoPoints = NULL;
-        nPointCount = nNewPointCount;
-        return;
-    }
-
-    if( nNewPointCount > nPointCount )
-    {
-        paoPoints = (OGRRawPoint *)
-            OGRRealloc(paoPoints, sizeof(OGRRawPoint) * nNewPointCount);
-
-        assert( paoPoints != NULL );
-
-        memset( paoPoints + nPointCount,
-                0, sizeof(OGRRawPoint) * (nNewPointCount - nPointCount) );
-    }
-
-    nPointCount = nNewPointCount;
-}
-
-/************************************************************************/
-/*                              setPoint()                              */
-/************************************************************************/
-
-
-void OGRCurve::setPoint( int iPoint, OGRPoint * poPoint )
-
-{
-    setPoint( iPoint, poPoint->getX(), poPoint->getY() );
-}
-
-/************************************************************************/
-/*                              setPoint()                              */
-/************************************************************************/
-
-void OGRCurve::setPoint( int iPoint, double xIn, double yIn )
-
-{
-    if( iPoint >= nPointCount )
-        setNumPoints( iPoint+1 );
-
-    paoPoints[iPoint].x = xIn;
-    paoPoints[iPoint].y = yIn;
-}
-
-/************************************************************************/
-/*                              addPoint()                              */
-/************************************************************************/
-
-void OGRCurve::addPoint( OGRPoint * poPoint )
-
-{
-    setPoint( nPointCount, poPoint->getX(), poPoint->getY() );
-}
-
-/************************************************************************/
-/*                              addPoint()                              */
-/************************************************************************/
-
-void OGRCurve::addPoint( double x, double y )
-
-{
-    setPoint( nPointCount, x, y );
-}
-
-/************************************************************************/
-/*                             setPoints()                              */
-/*                                                                      */
-/*      Set all the points from a passed in list.                       */
-/************************************************************************/
-
-void OGRCurve::setPoints( int nPointsIn, OGRRawPoint * paoPointsIn )
-
-{
-    setNumPoints( nPointsIn );
-    memcpy( paoPoints, paoPointsIn, sizeof(OGRRawPoint) * nPointsIn);
-}
-
-/************************************************************************/
-/*                           importFromWkb()                            */
-/*                                                                      */
-/*      Initialize from serialized stream in well known binary          */
-/*      format.                                                         */
-/************************************************************************/
-
-OGRErr OGRCurve::importFromWkb( unsigned char * pabyData,
-                                int nBytesAvailable )
-
-{
-    OGRwkbByteOrder	eByteOrder;
-    
-    if( nBytesAvailable < 21 && nBytesAvailable != -1 )
-        return OGRERR_NOT_ENOUGH_DATA;
-
-/* -------------------------------------------------------------------- */
-/*      Get the byte order byte.                                        */
-/* -------------------------------------------------------------------- */
-    eByteOrder = (OGRwkbByteOrder) *pabyData;
-    assert( eByteOrder == wkbXDR || eByteOrder == wkbNDR );
-
-/* -------------------------------------------------------------------- */
-/*      Get the geometry feature type.  For now we assume that          */
-/*      geometry type is between 0 and 255 so we only have to fetch     */
-/*      one byte.                                                       */
-/* -------------------------------------------------------------------- */
-#ifdef DEBUG
-    OGRwkbGeometryType eGeometryType;
-    
-    if( eByteOrder == wkbNDR )
-        eGeometryType = (OGRwkbGeometryType) pabyData[1];
-    else
-        eGeometryType = (OGRwkbGeometryType) pabyData[4];
-
-    assert( eGeometryType == wkbLineString );
-#endif    
-
-/* -------------------------------------------------------------------- */
-/*      Get the vertex count.                                           */
-/* -------------------------------------------------------------------- */
-    int		nNewNumPoints;
-    
-    memcpy( &nNewNumPoints, pabyData + 5, 4 );
-    
-    if( OGR_SWAP( eByteOrder ) )
-        nNewNumPoints = CPL_SWAP32(nNewNumPoints);
-
-    setNumPoints( nNewNumPoints );
-    
-/* -------------------------------------------------------------------- */
-/*      Get the vertex.                                                 */
-/* -------------------------------------------------------------------- */
-    memcpy( paoPoints, pabyData + 9, 16 * nPointCount );
-    
-    if( OGR_SWAP( eByteOrder ) )
-    {
-        for( int i = 0; i < nPointCount; i++ )
-        {
-            CPL_SWAPDOUBLE( &(paoPoints[i].x) );
-            CPL_SWAPDOUBLE( &(paoPoints[i].y) );
-        }
-    }
-
-    return OGRERR_NONE;
-}
-
-/************************************************************************/
-/*                            exportToWkb()                             */
-/*                                                                      */
-/*      Build a well known binary representation of this object.        */
-/************************************************************************/
-
-OGRErr	OGRCurve::exportToWkb( OGRwkbByteOrder eByteOrder,
-                               unsigned char * pabyData )
-
-{
-/* -------------------------------------------------------------------- */
-/*      Set the byte order.                                             */
-/* -------------------------------------------------------------------- */
-    pabyData[0] = (unsigned char) eByteOrder;
-
-/* -------------------------------------------------------------------- */
-/*      Set the geometry feature type.                                  */
-/* -------------------------------------------------------------------- */
-    if( eByteOrder == wkbNDR )
-    {
-        pabyData[1] = wkbLineString;
-        pabyData[2] = 0;
-        pabyData[3] = 0;
-        pabyData[4] = 0;
-    }
-    else
-    {
-        pabyData[1] = 0;
-        pabyData[2] = 0;
-        pabyData[3] = 0;
-        pabyData[4] = wkbLineString;
-    }
-    
-/* -------------------------------------------------------------------- */
-/*      Copy in the raw data.                                           */
-/* -------------------------------------------------------------------- */
-    memcpy( pabyData+5, &nPointCount, 4 );
-
-/* -------------------------------------------------------------------- */
-/*      Copy in the raw data.                                           */
-/* -------------------------------------------------------------------- */
-    memcpy( pabyData+9, paoPoints, 16 * nPointCount );
-
-/* -------------------------------------------------------------------- */
-/*      Swap if needed.                                                 */
-/* -------------------------------------------------------------------- */
-    if( OGR_SWAP( eByteOrder ) )
-    {
-        int	nCount;
-
-        nCount = CPL_SWAP32( nPointCount );
-        memcpy( pabyData+5, &nCount, 4 );
-
-        for( int i = 0; i < nPointCount; i++ )
-        {
-            CPL_SWAPDOUBLE( pabyData + 9 + 16 * i );
-            CPL_SWAPDOUBLE( pabyData + 9 + 16 * i + 8 );
-        }
-    }
-    
-    return OGRERR_NONE;
-}
-
-/************************************************************************/
-/*                           importFromWkt()                            */
-/*                                                                      */
-/*      Instantiate from well known text format.  Currently this is     */
-/*      `LINESTRING ( x y, x y, ...)',                                  */
-/************************************************************************/
-
-OGRErr OGRCurve::importFromWkt( char ** ppszInput )
-
-{
-    char	szToken[OGR_WKT_TOKEN_MAX];
-    const char	*pszInput = *ppszInput;
-
-    if( paoPoints != NULL )
-    {
-        nPointCount = 0;
-        CPLFree( paoPoints );
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Read and verify the ``LINESTRING'' keyword token.               */
-/* -------------------------------------------------------------------- */
-    pszInput = OGRWktReadToken( pszInput, szToken );
-
-    if( !EQUAL(szToken,getGeometryName()) )
-        return OGRERR_CORRUPT_DATA;
-
-/* -------------------------------------------------------------------- */
-/*      Read the point list which should consist of exactly one point.  */
-/* -------------------------------------------------------------------- */
-    int			nMaxPoint = 0;
-
-    nPointCount = 0;
-
-    pszInput = OGRWktReadPoints( pszInput, &paoPoints, &nMaxPoint,
-                                 &nPointCount );
-    if( pszInput == NULL )
-        return OGRERR_CORRUPT_DATA;
-
-    *ppszInput = (char *) pszInput;
-    
-    return OGRERR_NONE;
-}
-
-/************************************************************************/
-/*                            exportToWkt()                             */
-/*                                                                      */
-/*      Translate this structure into it's well known text format       */
-/*      equivelent.  This could be made alot more CPU efficient!        */
-/************************************************************************/
-
-OGRErr OGRCurve::exportToWkt( char ** ppszReturn )
-
-{
-    int		nMaxString = nPointCount * 16 * 2 + 20;
-
-    *ppszReturn = (char *) VSIMalloc( nMaxString );
-    if( *ppszReturn == NULL )
-        return OGRERR_NOT_ENOUGH_MEMORY;
-
-    sprintf( *ppszReturn, "%s (", getGeometryName() );
-
-    for( int i = 0; i < nPointCount; i++ )
-    {
-        assert( nMaxString > (int) strlen(*ppszReturn) + 32 );
-
-        if( i > 0 )
-            strcat( *ppszReturn, "," );
-
-        strcat( *ppszReturn, OGRMakeWktCoordinate( paoPoints[i].x,
-                                                   paoPoints[i].y ) );
-    }
-
-    strcat( *ppszReturn, ")" );
-
-    return OGRERR_NONE;
-}
-
-/************************************************************************/
-/*                             get_Length()                             */
-/*                                                                      */
-/*      For now we return a simple euclidian 2D distance.               */
-/************************************************************************/
-
-double OGRCurve::get_Length()
-
-{
-    double      dfLength = 0;
-    int         i;
-
-    for( i = 0; i < nPointCount-1; i++ )
-    {
-        double      dfDeltaX, dfDeltaY;
-
-        dfDeltaX = paoPoints[i+1].x - paoPoints[i].x;
-        dfDeltaY = paoPoints[i+1].y - paoPoints[i].y;
-        dfLength += sqrt(dfDeltaX*dfDeltaX + dfDeltaY*dfDeltaY);
-    }
-    
-    return dfLength;
-}
-
-/************************************************************************/
-/*                             StartPoint()                             */
-/************************************************************************/
-
-void OGRCurve::StartPoint( OGRPoint * poPoint )
-
-{
-    getPoint( 0, poPoint );
-}
-
-/************************************************************************/
-/*                              EndPoint()                              */
-/************************************************************************/
-
-void OGRCurve::EndPoint( OGRPoint * poPoint )
-
-{
-    getPoint( nPointCount-1, poPoint );
-}
 
 /************************************************************************/
 /*                            get_IsClosed()                            */
 /************************************************************************/
 
+/**
+ * Return TRUE if curve is closed.
+ *
+ * Tests if a curve is closed. A curve is closed if its start point is
+ * equal to its end point.
+ *
+ * This method relates to the SFCOM ICurve::get_IsClosed() method.
+ *
+ * @return TRUE if closed, else FALSE.
+ */
+
 int OGRCurve::get_IsClosed()
 
 {
-    return( nPointCount > 1 
-            && paoPoints[0].x == paoPoints[nPointCount-1].x
-            && paoPoints[0].y == paoPoints[nPointCount-1].y );
+    OGRPoint		oStartPoint, oEndPoint;
+
+    StartPoint( &oStartPoint );
+    EndPoint( &oEndPoint );
+
+    if( oStartPoint.getX() == oEndPoint.getX()
+        && oStartPoint.getY() == oEndPoint.getY() )
+    {
+        return TRUE;
+    }
+    else
+    {
+        return FALSE;
+    }
 }
 
-/************************************************************************/
-/*                               Value()                                */
-/*                                                                      */
-/*      Get an interpolated point at some distance along the curve.     */
-/************************************************************************/
+/**
+ * \fn double OGRCurve::get_Length();
+ *
+ * Returns the length of the curve.
+ *
+ * This method relates to the SFCOM ICurve::get_Length() method.
+ *
+ * @return the length of the curve, zero if the curve hasn't been
+ * initialized.
+ */
 
-void OGRCurve::Value( double dfDistance, OGRPoint * poPoint )
+/**
+ * \fn void OGRCurve::StartPoint( OGRPoint * poPoint );
+ *
+ * Return the curve start point.
+ *
+ * This method relates to the SF COM ICurve::get_StartPoint() method.
+ *
+ * @param poPoint the point to be assigned the start location.
+ */
 
-{
-    double      dfLength = 0;
-    int         i;
+/**
+ * \fn void OGRCurve::EndPoint( OGRPoint * poPoint );
+ *
+ * Return the curve end point.
+ *
+ * This method relates to the SF COM ICurve::get_EndPoint() method.
+ *
+ * @param poPoint the point to be assigned the end location.
+ */
 
-    if( dfDistance < 0 )
-    {
-        StartPoint( poPoint );
-        return;
-    }
-
-    for( i = 0; i < nPointCount-1; i++ )
-    {
-        double      dfDeltaX, dfDeltaY, dfSegLength;
-
-        dfDeltaX = paoPoints[i+1].x - paoPoints[i].x;
-        dfDeltaY = paoPoints[i+1].y - paoPoints[i].y;
-        dfSegLength = sqrt(dfDeltaX*dfDeltaX + dfDeltaY*dfDeltaY);
-
-        if( dfLength <= dfDistance && dfLength + dfSegLength >= dfDistance )
-        {
-            double      dfRatio;
-
-            dfRatio = (dfDistance - dfLength) / dfSegLength;
-
-            poPoint->setX( paoPoints[i].x * (1 - dfRatio)
-                           + paoPoints[i+1].x * dfRatio );
-            poPoint->setY( paoPoints[i].y * (1 - dfRatio)
-                           + paoPoints[i+1].y * dfRatio );
-            return;
-        }
-    }
-    
-    EndPoint( poPoint );
-}
-
+/**
+ * \fn void OGRCurve::Value( double dfDistance, OGRPoint * poPoint );
+ *
+ * Fetch point at given distance along curve.
+ *
+ * This method relates to the SF COM ICurve::get_Value() method.
+ *
+ * @param dfDistance distance along the curve at which to sample position.
+ *                   This distance should be between zero and get_Length()
+ *                   for this curve.
+ * @param poPoint the point to be assigned the curve position.
+ */
 
