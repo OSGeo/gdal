@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2001/02/15 15:33:18  warmerda
+ * don't access through tif pointer if open fails
+ *
  * Revision 1.1  2001/01/03 17:03:41  warmerda
  * *** empty log message ***
  *
@@ -147,7 +150,8 @@ TIFFOpen(const char* name, const char* mode)
 	    _tiffSeekProc, _tiffCloseProc, _tiffSizeProc,
 	    _tiffMapProc, _tiffUnmapProc);
 
-        tif->tif_fd = 0;
+        if( tif != NULL )
+            tif->tif_fd = 0;
         
 	return tif;
 }
