@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  1999/10/13 13:19:22  warmerda
+ * Fixed CreateFeature() documentation.
+ *
  * Revision 1.4  1999/07/27 00:50:34  warmerda
  * added a number of OGRLayer methods
  *
@@ -368,7 +371,7 @@
 
 /**
 
- \fn OGRErr OGRLayer::OGRCreateFeature( OGRFeature * poFeature );
+ \fn OGRErr OGRLayer::CreateFeature( OGRFeature * poFeature );
 
  Create and write a new feature within a layer.
 
