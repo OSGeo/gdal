@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2002/12/17 21:23:15  warmerda
+ * implement LUT reading and writing
+ *
  * Revision 1.5  2002/12/17 20:03:08  warmerda
  * added rudimentary NITF 1.1 support
  *
@@ -380,18 +383,21 @@ NITFFile *NITFCreate( const char *pszFilename,
         }
         else
         {
-            int iC;
+            int iC, nCount=256;
+
+            if( CSLFetchNameValue(papszOptions,"LUT_SIZE") != NULL )
+                nCount = atoi(CSLFetchNameValue(papszOptions,"LUT_SIZE"));
 
             PLACE(pachIMHDR+nOffset+12, NLUTSn, "3"                        );
-            PLACE(pachIMHDR+nOffset+13, NELUTn, "256"                      );
+            PLACE(pachIMHDR+nOffset+13, NELUTn, CPLSPrintf("%05d",nCount)  );
 
-            for( iC = 0; iC < 256; iC++ )
+            for( iC = 0; iC < nCount; iC++ )
             {
-                pachIMHDR[nOffset+18+iC+  0] = iC;
-                pachIMHDR[nOffset+18+iC+256] = iC;
-                pachIMHDR[nOffset+18+iC+512] = iC;
+                pachIMHDR[nOffset+18+iC+       0] = iC;
+                pachIMHDR[nOffset+18+iC+nCount*1] = iC;
+                pachIMHDR[nOffset+18+iC+nCount*2] = iC;
             }
-            nOffset += 18 + 256*3;
+            nOffset += 18 + nCount*3;
         }
     }
 

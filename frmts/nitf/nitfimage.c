@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2002/12/17 21:23:15  warmerda
+ * implement LUT reading and writing
+ *
  * Revision 1.4  2002/12/17 20:03:08  warmerda
  * added rudimentary NITF 1.1 support
  *
@@ -257,8 +260,9 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
             atoi(NITFGetField( szTemp, pachHeader, nOffset, 5 ));
         nOffset += 5;
 
+        psBandInfo->nLUTLocation = nOffset + psSegInfo->nSegmentHeaderStart;
+
         psBandInfo->pabyLUT = (unsigned char *) CPLCalloc(768,1);
-        
         memcpy( psBandInfo->pabyLUT, pachHeader + nOffset, 
                 psBandInfo->nSignificantLUTEntries );
         nOffset += psBandInfo->nSignificantLUTEntries;
@@ -786,7 +790,44 @@ int NITFWriteImageLine( NITFImage *psImage, int nLine, int nBand, void *pData )
     return BLKREAD_OK;
 }
 
+/************************************************************************/
+/*                            NITFWriteLUT()                            */
+/************************************************************************/
 
+int NITFWriteLUT( NITFImage *psImage, int nBand, int nColors, 
+                  unsigned char *pabyLUT )
+
+{
+    NITFBandInfo *psBandInfo;
+    int           bSuccess = TRUE;
+
+    if( nBand < 1 || nBand > psImage->nBands )
+        return FALSE;
+
+    psBandInfo = psImage->pasBandInfo + (nBand-1);
+
+    if( nColors > psBandInfo->nSignificantLUTEntries )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Unable to write all %d LUT entries, only able to write %d.",
+                  nColors, psBandInfo->nSignificantLUTEntries );
+        nColors = psBandInfo->nSignificantLUTEntries;
+        bSuccess = FALSE;
+    }
+
+    VSIFSeek( psImage->psFile->fp, psBandInfo->nLUTLocation, SEEK_SET );
+    VSIFWrite( pabyLUT, 1, nColors, psImage->psFile->fp );
+    VSIFSeek( psImage->psFile->fp, 
+              psBandInfo->nLUTLocation + psBandInfo->nSignificantLUTEntries, 
+              SEEK_SET );
+    VSIFWrite( pabyLUT+256, 1, nColors, psImage->psFile->fp );
+    VSIFSeek( psImage->psFile->fp, 
+              psBandInfo->nLUTLocation + 2*psBandInfo->nSignificantLUTEntries, 
+              SEEK_SET );
+    VSIFWrite( pabyLUT+512, 1, nColors, psImage->psFile->fp );
+
+    return bSuccess;
+}
 
 /************************************************************************/
 /*                           NITFTrimWhite()                            */
