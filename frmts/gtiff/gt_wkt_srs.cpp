@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.50  2005/02/07 13:30:30  dron
+ * Memory leak removed.
+ *
  * Revision 1.49  2004/10/18 21:12:44  fwarmerdam
  * Always emit angular units as degrees.
  *
@@ -388,7 +391,7 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
     if( psDefn->Ellipsoid != KvUserDefined )
         oSRS.SetAuthority( "SPHEROID", "EPSG", psDefn->Ellipsoid );
 
-    GTIFFreeMemory( pszGeogName );
+    CPLFree( pszGeogName );
     CPLFree( pszDatumName );
     GTIFFreeMemory( pszPMName );
     GTIFFreeMemory( pszSpheroidName );
