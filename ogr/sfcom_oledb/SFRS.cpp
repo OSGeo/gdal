@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  1999/06/21 21:08:46  warmerda
+ * added some extra debugging info in GetInitDataSource()
+ *
  * Revision 1.9  1999/06/21 20:53:07  warmerda
  * Avoid crashing if InitDataSource() returns NULL.
  *
@@ -52,6 +55,7 @@
 #include "oledb_sf.h"
 
 OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape );
+void OGRComDebug( const char * pszDebugClass, const char * pszFormat, ... );
 
 #define MIN(a,b) ( a < b ? a : b)
 
@@ -433,10 +437,12 @@ static char *GetInitDataSource(CSFRowset *pRowset)
 	HRESULT		hr;
 	char		*pszDataSource = NULL;
 
-	hr = pRowset->QueryInterface(IID_IRowsetInfo,(void **) &pRInfo);
+        OGRComDebug( "Info", "In GetInitDataSource\n" );
 
+	hr = pRowset->QueryInterface(IID_IRowsetInfo,(void **) &pRInfo);
 	if (SUCCEEDED(hr))
 	{
+                OGRComDebug( "Info", "Got IRowsetInfo\n" );
 		IGetDataSource	*pIGetDataSource;
 		hr = pRInfo->GetSpecification(IID_IGetDataSource, (IUnknown **) &pIGetDataSource);
 		pRInfo->Release();
@@ -445,6 +451,7 @@ static char *GetInitDataSource(CSFRowset *pRowset)
 		{
 			IDBProperties *pIDBProp;
 
+                        OGRComDebug( "Info", "Got IGetDataSource\n" );
 			hr = pIGetDataSource->GetDataSource(IID_IDBProperties, (IUnknown **) &pIDBProp);
 			pIGetDataSource->Release();
 
@@ -456,6 +463,7 @@ static char *GetInitDataSource(CSFRowset *pRowset)
 				ULONG		nPropSets;
 				DBPROPSET	*rgPropSets;
 
+                                OGRComDebug( "Info", "Got Properties\n" );
 				rgPropIds[0] = DBPROP_INIT_DATASOURCE;
 
 				sPropIdSets[0].cPropertyIDs = 1;
@@ -470,6 +478,8 @@ static char *GetInitDataSource(CSFRowset *pRowset)
 					char *pszSource = (char *)  OLE2A(rgPropSets[0].rgProperties[0].vValue.bstrVal);
 					pszDataSource = (char *) malloc(1+strlen(pszSource));
 					strcpy(pszDataSource,pszSource);
+                                        OGRComDebug( "Info", 
+                                                     "Got rgPropSets\n" );
 				}
 
 				if (rgPropSets)
