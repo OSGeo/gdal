@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2005/02/24 21:54:36  fwarmerdam
+ * added support for decimal fields.
+ *
  * Revision 1.3  2005/02/22 12:54:27  fwarmerdam
  * use OGRLayer base spatial filter support
  *
@@ -162,6 +165,10 @@ OGRFeatureDefn *OGRMySQLTableLayer::ReadTableDefinition( const char *pszTable )
         else if( EQUAL(pszType,"bigint") )
         {
             oField.SetType( OFTInteger );
+        }
+        else if( EQUALN(pszType,"decimal",7) )
+        {
+            oField.SetType( OFTReal );
         }
         else if( EQUAL(pszType,"float") )
         {
