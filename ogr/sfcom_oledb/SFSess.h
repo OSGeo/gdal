@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  1999/06/15 03:03:16  kshih
+ * Provider Type schema Rowset
+ *
  * Revision 1.4  1999/06/13 17:49:46  warmerda
  * Added copyright header, and some comments.
  *
@@ -274,6 +277,28 @@ class CSFSessionPTSchemaRowset :
 public:
 	HRESULT Execute(LONG* pcRowsAffected, ULONG, const VARIANT*)
 	{
+		USES_CONVERSION;
+
+		CPROVIDER_TYPERow trDataI,trDataR,trDataS,trDataBlob;
+		
+		lstrcpyW(trDataI.m_szName,A2OLE("Integer"));
+		trDataI.m_nType  = DBTYPE_I4;
+		m_rgRowData.Add(trDataI);
+
+		lstrcpyW(trDataR.m_szName,A2OLE("Real"));
+		trDataR.m_nType = DBTYPE_R8;
+		m_rgRowData.Add(trDataR);
+
+		lstrcpyW(trDataS.m_szName,A2OLE("String"));
+		trDataS.m_nType = DBTYPE_STR;
+		trDataS.m_ulSize = 256;
+		trDataS.m_bUnsignedAttribute = NULL;
+		m_rgRowData.Add(trDataS);
+
+		lstrcpyW(trDataBlob.m_szName,A2OLE("Geometry"));
+		trDataS.m_nType = DBTYPE_BYTES;
+		m_rgRowData.Add(trDataBlob);
+
 		return S_OK;
 	}
 };
