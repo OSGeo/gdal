@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2003/10/10 19:12:06  warmerda
+ * Ensure registrar is created before trying to use it.
+ *
  * Revision 1.14  2003/05/28 19:18:04  warmerda
  * fixup argument names for docs
  *
@@ -481,7 +484,8 @@ void OGRSFDriverRegistrar::RegisterDriver( OGRSFDriver * poDriver )
 void OGRRegisterDriver( OGRSFDriverH hDriver )
 
 {
-    poRegistrar->RegisterDriver( (OGRSFDriver *) hDriver );
+    OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( 
+        (OGRSFDriver *) hDriver );
 }
 
 /************************************************************************/
@@ -554,5 +558,7 @@ OGRSFDriver *OGRSFDriverRegistrar::GetDriverByName( const char * pszName )
 OGRSFDriverH OGRGetDriverByName( const char *pszName )
 
 {
-    return (OGRSFDriverH) poRegistrar->GetDriverByName( pszName );
+    ;
+    return (OGRSFDriverH) 
+        OGRSFDriverRegistrar::GetRegistrar()->GetDriverByName( pszName );
 }
