@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.4  2001/07/18 04:00:49  warmerda
+ * added CPL_CVSID
+ *
  * Revision 1.3  2000/09/25 19:59:03  warmerda
  * look for WIN32 not _WIN32
  *
@@ -43,6 +46,7 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 
+CPL_CVSID("$Id$");
 
 #ifdef WIN32
 

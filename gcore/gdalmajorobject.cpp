@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2001/07/18 04:04:30  warmerda
+ * added CPL_CVSID
+ *
  * Revision 1.2  2000/06/26 15:26:21  warmerda
  * added GDALGetDescription
  *
@@ -38,6 +41,8 @@
 
 #include "gdal_priv.h"
 #include "cpl_string.h"
+
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                          GDALMajorObject()                           */

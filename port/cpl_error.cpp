@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.17  2001/07/18 04:00:49  warmerda
+ * added CPL_CVSID
+ *
  * Revision 1.16  2001/02/15 16:30:57  warmerda
  * fixed initialization of fpLog
  *
@@ -81,6 +84,8 @@
 
 #include "cpl_error.h"
 #include "cpl_vsi.h"
+
+CPL_CVSID("$Id$");
 
 /* static buffer to store the last error message.  We'll assume that error
  * messages cannot be longer than 2000 chars... which is quite reasonable

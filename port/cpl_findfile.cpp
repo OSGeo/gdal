@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2001/07/18 04:00:49  warmerda
+ * added CPL_CVSID
+ *
  * Revision 1.2  2001/01/19 21:16:41  warmerda
  * expanded tabs
  *
@@ -38,6 +41,8 @@
 
 #include "cpl_conv.h"
 #include "cpl_string.h"
+
+CPL_CVSID("$Id$");
 
 static int bFinderInitialized = FALSE;
 static int nFileFinders = 0;

@@ -26,6 +26,9 @@
  *
  * 
  * $Log$
+ * Revision 1.6  2001/07/18 04:04:30  warmerda
+ * added CPL_CVSID
+ *
  * Revision 1.5  2001/06/22 21:00:06  warmerda
  * fixed support for caching override by environment variable
  *
@@ -44,6 +47,8 @@
  */
 
 #include "gdal_priv.h"
+
+CPL_CVSID("$Id$");
 
 static int nTileAgeTicker = 0; 
 static int bCacheMaxInitialized = FALSE;

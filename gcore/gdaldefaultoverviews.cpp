@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2001/07/18 04:04:30  warmerda
+ * added CPL_CVSID
+ *
  * Revision 1.6  2001/06/22 21:00:38  warmerda
  * fixed several problems with regenerating existing overviews
  *
@@ -50,6 +53,8 @@
  */
 
 #include "gdal_priv.h"
+
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                        GDALDefaultOverviews()                        */

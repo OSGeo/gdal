@@ -26,6 +26,9 @@
  *
  * 
  * $Log$
+ * Revision 1.10  2001/07/18 04:04:30  warmerda
+ * added CPL_CVSID
+ *
  * Revision 1.9  2001/01/03 05:32:20  warmerda
  * avoid depending on VSIStatBuf file size for 2GB issues
  *
@@ -57,6 +60,8 @@
 
 #include "gdal_priv.h"
 #include "cpl_conv.h"
+
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /* ==================================================================== */

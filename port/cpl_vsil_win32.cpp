@@ -28,6 +28,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.5  2001/07/18 04:00:49  warmerda
+ * added CPL_CVSID
+ *
  * Revision 1.4  2001/06/21 20:40:31  warmerda
  * *** empty log message ***
  *
@@ -45,6 +48,8 @@
 #include "cpl_vsi.h"
 
 #if defined(WIN32)
+
+CPL_CVSID("$Id$");
 
 #include <windows.h>
 

@@ -30,6 +30,9 @@
  *    instance validation of access strings to fopen().
  * 
  * $Log$
+ * Revision 1.10  2001/07/18 04:00:49  warmerda
+ * added CPL_CVSID
+ *
  * Revision 1.9  2001/04/30 18:19:06  warmerda
  * avoid stat on macos_pre10
  *
@@ -60,6 +63,8 @@
  */
 
 #include "cpl_vsi.h"
+
+CPL_CVSID("$Id$");
 
 /* for stat() */
 

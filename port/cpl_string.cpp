@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.16  2001/07/18 04:00:49  warmerda
+ * added CPL_CVSID
+ *
  * Revision 1.15  2001/01/19 21:16:41  warmerda
  * expanded tabs
  *
@@ -79,6 +82,8 @@
 
 #include "cpl_string.h"
 #include "cpl_vsi.h"
+
+CPL_CVSID("$Id$");
 
 /*=====================================================================
                     StringList manipulation functions.

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2001/07/18 04:04:30  warmerda
+ * added CPL_CVSID
+ *
  * Revision 1.7  2001/07/16 15:21:46  warmerda
  * added AVERAGE_MAGPHASE option for complex images
  *
@@ -52,6 +55,8 @@
  */
 
 #include "gdal_priv.h"
+
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                       GDALDownsampleChunk32R()                       */

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2001/07/18 04:00:49  warmerda
+ * added CPL_CVSID
+ *
  * Revision 1.2  2001/01/19 21:16:41  warmerda
  * expanded tabs
  *
@@ -44,6 +47,8 @@
 
 #include "cpl_csv.h"
 #include "cpl_conv.h"
+
+CPL_CVSID("$Id$");
 
 /* ==================================================================== */
 /*      The CSVTable is a persistant set of info about an open CSV      */

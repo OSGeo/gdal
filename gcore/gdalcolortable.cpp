@@ -27,12 +27,17 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************
  * $Log$
+ * Revision 1.2  2001/07/18 04:04:30  warmerda
+ * added CPL_CVSID
+ *
  * Revision 1.1  2000/03/06 02:26:00  warmerda
  * New
  *
  */
 
 #include "gdal_priv.h"
+
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                           GDALColorTable()                           */

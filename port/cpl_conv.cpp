@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2001/07/18 04:00:49  warmerda
+ * added CPL_CVSID
+ *
  * Revision 1.12  2001/03/09 03:19:24  danmo
  * Set pszRLBuffer=NULL after freeing it to avoid reallocating an invalid ptr
  *
@@ -67,6 +70,8 @@
  */
 
 #include "cpl_conv.h"
+
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                             CPLCalloc()                              */

@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2001/07/18 04:04:31  warmerda
+ * added CPL_CVSID
+ *
  * Revision 1.13  2000/08/16 15:50:52  warmerda
  * fixed some bugs with floating (datasetless) bands
  *
@@ -70,6 +73,8 @@
  */
 
 #include "gdal_priv.h"
+
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                             IRasterIO()                              */

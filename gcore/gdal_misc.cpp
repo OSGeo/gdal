@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.24  2001/07/18 04:04:30  warmerda
+ * added CPL_CVSID
+ *
  * Revision 1.23  2001/05/01 18:09:25  warmerda
  * added GDALReadWorldFile()
  *
@@ -101,6 +104,8 @@
 
 #include "gdal_priv.h"
 #include "cpl_string.h"
+
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                           __pure_virtual()                           */

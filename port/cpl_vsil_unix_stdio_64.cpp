@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.3  2001/07/18 04:00:49  warmerda
+ * added CPL_CVSID
+ *
  * Revision 1.2  2001/06/21 21:39:32  warmerda
  * Fixed typo with rewind.
  *
@@ -40,6 +43,8 @@
 #include "cpl_vsi.h"
 
 #if defined(UNIX_STDIO_64)
+
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                              VSIFOpen()                              */

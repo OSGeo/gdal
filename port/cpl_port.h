@@ -42,6 +42,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.27  2001/07/18 04:00:49  warmerda
+ * added CPL_CVSID
+ *
  * Revision 1.26  2001/06/21 21:17:26  warmerda
  * added irix 64bit file api support
  *
@@ -356,6 +359,21 @@ m * this version of the CPL_SWAP64() macro with a less efficient one.
 #  define CPL_MSBPTR32(x)       CPL_SWAP32PTR(x)
 #  define CPL_LSBPTR64(x)       
 #  define CPL_MSBPTR64(x)       CPL_SWAP64PTR(x)
+#endif
+
+/***********************************************************************
+ * Define CPL_CVSID() macro.  It can be disabled during a build by
+ * defining DISABLE_CPLID in the compiler options.
+ *
+ * The cvsid_aw() function is just there to prevent reports of cpl_cvsid()
+ * being unused.
+ */
+
+#ifndef DISABLE_CVSID
+#  define CPL_CVSID(string)	static char cpl_cvsid[] = string; \
+static char *cvsid_aw() { return( cvsid_aw() ? ((char *) NULL) : cpl_cvsid ); }
+#else
+#  define CPL_CVSID(string)
 #endif
 
 #endif /* ndef CPL_BASE_H_INCLUDED */

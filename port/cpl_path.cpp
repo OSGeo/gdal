@@ -28,6 +28,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.8  2001/07/18 04:00:49  warmerda
+ * added CPL_CVSID
+ *
  * Revision 1.7  2001/05/12 19:20:55  warmerda
  * Fixed documentation of CPLGetExtension().
  *
@@ -53,6 +56,8 @@
 
 #include "cpl_conv.h"
 #include "cpl_string.h"
+
+CPL_CVSID("$Id$");
 
 
 static char     szStaticResult[1024]; /* should be size of larged possible

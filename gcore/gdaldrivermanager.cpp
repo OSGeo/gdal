@@ -25,6 +25,9 @@
  * The GDALDriverManager class from gdal_priv.h.
  * 
  * $Log$
+ * Revision 1.8  2001/07/18 04:04:30  warmerda
+ * added CPL_CVSID
+ *
  * Revision 1.7  2000/08/29 21:09:15  warmerda
  * added logic to push INST_DATA on data file search stack
  *
@@ -50,6 +53,8 @@
 
 #include "gdal_priv.h"
 #include "cpl_string.h"
+
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /* ==================================================================== */

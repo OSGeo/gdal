@@ -28,6 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************
  * $Log$
+ * Revision 1.23  2001/07/18 04:04:30  warmerda
+ * added CPL_CVSID
+ *
  * Revision 1.22  2001/07/05 13:13:40  warmerda
  * added UnitType from C support
  *
@@ -97,6 +100,8 @@
 
 #include "gdal_priv.h"
 #include "cpl_string.h"
+
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                           GDALRasterBand()                           */

@@ -28,6 +28,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.3  2001/07/18 04:00:49  warmerda
+ * added CPL_CVSID
+ *
  * Revision 1.2  2001/04/30 18:16:16  warmerda
  * added big pre10 ifdef
  *
@@ -45,6 +48,8 @@
 
 #ifdef macos_pre10
  
+CPL_CVSID("$Id$");
+
 int strcasecmp(char * str1, char * str2)
 {
     int i;

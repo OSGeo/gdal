@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2001/07/18 04:04:30  warmerda
+ * added CPL_CVSID
+ *
  * Revision 1.7  2000/01/12 19:41:04  warmerda
  * Ensure lat/long projections handled properly, especially for OGC
  * definitions.
@@ -58,6 +61,8 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 #include "ogr_spatialref.h"
+
+CPL_CVSID("$Id$");
 
 typedef struct { double u, v; }	UV;
 

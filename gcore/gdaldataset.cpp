@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.23  2001/07/18 04:04:30  warmerda
+ * added CPL_CVSID
+ *
  * Revision 1.22  2001/01/10 22:24:37  warmerda
  * Patched GDALDataset::FlushCache() to recover gracefully if papoBands
  * doesn't exist yet matching nBands.
@@ -90,6 +93,8 @@
 
 #include "gdal_priv.h"
 #include "cpl_string.h"
+
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                            GDALDataset()                             */
