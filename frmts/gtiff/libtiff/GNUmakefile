@@ -54,10 +54,20 @@ default:	$(OBJ)
 clean:
 	rm -f $(O_OBJ) *.o *.a
 
-update:
+import:
+	@if test ! -d ~/osrs/geotiff ; then \
+	  echo reimport requires libgeotiff checked out ~/osrs/geotiff ; \
+	  exit 1; \
+	fi
+
 	mv port.h port_safe.h
 	copymatch.sh ~/osrs/libtiff/libtiff *.c *.h
 	mv port_safe.h port.h
+
+	@echo
+	@echo 'Now do something like:'
+	@echo '% cvs commit -m "updated to libtiff 3.6.0"'
+	@echo
 
 install-obj:	$(O_OBJ)
 
