@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.133  2005/03/22 05:12:15  fwarmerdam
+ * first crack at support 9-15 bit depths
+ *
  * Revision 1.132  2005/03/07 14:23:49  fwarmerdam
  * Added PROFILE support in CreateCopy().
  *
@@ -175,6 +178,7 @@ class GTiffDataset : public GDALDataset
     friend class GTiffRasterBand;
     friend class GTiffRGBABand;
     friend class GTiffBitmapBand;
+    friend class GTiffOddBitsBand;
     
     TIFF	*hTIFF;
 
@@ -1249,6 +1253,153 @@ GDALColorTable *GTiffBitmapBand::GetColorTable()
 
 {
     return poColorTable;
+}
+
+/************************************************************************/
+/* ==================================================================== */
+/*                             GTiffOddBitsBand                         */
+/* ==================================================================== */
+/************************************************************************/
+
+class GTiffOddBitsBand : public GTiffRasterBand
+{
+    friend class GTiffDataset;
+  public:
+
+                   GTiffOddBitsBand( GTiffDataset *, int );
+    virtual       ~GTiffOddBitsBand();
+
+    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IWriteBlock( int, int, void * );
+};
+
+
+/************************************************************************/
+/*                           GTiffOddBitsBand()                          */
+/************************************************************************/
+
+GTiffOddBitsBand::GTiffOddBitsBand( GTiffDataset *poGDS, int nBand )
+        : GTiffRasterBand( poGDS, nBand )
+
+{
+
+    if( nBand != 1 )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported, 
+                  "One bit deep TIFF files only supported with one sample per pixel (band)." );
+    }
+
+    eDataType = GDT_Byte;
+    if( poGDS->nBitsPerSample > 8 && poGDS->nBitsPerSample < 16 )
+        eDataType = GDT_UInt16;
+}
+
+/************************************************************************/
+/*                          ~GTiffOddBitsBand()                          */
+/************************************************************************/
+
+GTiffOddBitsBand::~GTiffOddBitsBand()
+
+{
+}
+
+/************************************************************************/
+/*                            IWriteBlock()                             */
+/************************************************************************/
+
+CPLErr GTiffOddBitsBand::IWriteBlock( int, int, void * )
+
+{
+    CPLError( CE_Failure, CPLE_AppDefined, 
+              "Odd bits raster bands are read-only." );
+    return CE_Failure;
+}
+
+/************************************************************************/
+/*                             IReadBlock()                             */
+/************************************************************************/
+
+CPLErr GTiffOddBitsBand::IReadBlock( int nBlockXOff, int nBlockYOff,
+                                    void * pImage )
+
+{
+    GTiffDataset	*poGDS = (GTiffDataset *) poDS;
+    int			nBlockBufSize, nBlockId;
+    CPLErr		eErr = CE_None;
+
+    poGDS->SetDirectory();
+
+    if( TIFFIsTiled(poGDS->hTIFF) )
+        nBlockBufSize = TIFFTileSize( poGDS->hTIFF );
+    else
+    {
+        CPLAssert( nBlockXOff == 0 );
+        nBlockBufSize = TIFFStripSize( poGDS->hTIFF );
+    }
+
+    nBlockId = nBlockXOff + nBlockYOff * nBlocksPerRow;
+
+    if( poGDS->nPlanarConfig == PLANARCONFIG_SEPARATE )
+        nBlockId += (nBand-1) * poGDS->nBlocksPerBand;
+
+/* -------------------------------------------------------------------- */
+/*	Handle the case of a strip in a writable file that doesn't	*/
+/*	exist yet, but that we want to read.  Just set to zeros and	*/
+/*	return.								*/
+/* -------------------------------------------------------------------- */
+    if( poGDS->eAccess == GA_Update && !poGDS->IsBlockAvailable(nBlockId) )
+    {
+        memset( pImage, 0,
+                nBlockXSize * nBlockYSize
+                * GDALGetDataTypeSize(eDataType) / 8 );
+        return CE_None;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Load the block buffer.                                          */
+/* -------------------------------------------------------------------- */
+    eErr = poGDS->LoadBlockBuf( nBlockId );
+    if( eErr != CE_None )
+        return eErr;
+
+/* -------------------------------------------------------------------- */
+/*      Handle 9-15 bits to 16 bits.                                    */
+/* -------------------------------------------------------------------- */
+    if( eDataType == GDT_UInt16 )
+    {
+        int	iBit, iPixel, iBitOffset = 0, nBlockPixels;
+        int     iPixelBitSkip, iBandBitOffset;
+
+        if( poGDS->nPlanarConfig == PLANARCONFIG_CONTIG )
+        {
+            iPixelBitSkip = poGDS->nBands * poGDS->nBitsPerSample;
+            iBandBitOffset = (nBand-1) * poGDS->nBitsPerSample;
+        }
+        else
+        {
+            iPixelBitSkip = poGDS->nBitsPerSample;
+            iBandBitOffset = 0;
+        }
+
+        nBlockPixels = nBlockXSize * nBlockYSize;
+        for( iPixel = 0; iPixel < nBlockPixels; iPixel++ )
+        {
+            iBitOffset = iBandBitOffset + iPixel * iPixelBitSkip;
+            GUInt16   nOutWord = 0;
+
+            for( iBit = 0; iBit < poGDS->nBitsPerSample; iBit++ )
+            {
+                if( poGDS->pabyBlockBuf[iBitOffset>>3] 
+                    & (0x80 >>(iBitOffset & 7)) )
+                    nOutWord |= (1 << (poGDS->nBitsPerSample - 1 - iBit));
+                iBitOffset++;
+            } 
+            
+            ((GUInt16 *) pImage)[iPixel] = nOutWord;
+        }
+    }
+    
+    return CE_None;
 }
 
 /************************************************************************/
@@ -2397,6 +2548,8 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, uint32 nDirOffsetIn,
             SetBand( iBand+1, new GTiffRGBABand( this, iBand+1 ) );
         else if( bTreatAsBitmap )
             SetBand( iBand+1, new GTiffBitmapBand( this, iBand+1 ) );
+        else if( nBitsPerSample > 8 && nBitsPerSample < 16 )
+            SetBand( iBand+1, new GTiffOddBitsBand( this, iBand+1 ) );
         else
             SetBand( iBand+1, new GTiffRasterBand( this, iBand+1 ) );
     }
