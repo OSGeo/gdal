@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2001/09/27 14:28:44  warmerda
+ * first hack at 3D support
+ *
  * Revision 1.9  2001/08/21 03:01:39  warmerda
  * added raw_data support
  *
@@ -80,7 +83,8 @@ int DGNTestOpen( GByte *pabyHeader, int nByteCount )
     if( nByteCount < 4 )
         return TRUE;
 
-    if( pabyHeader[0] != 0x08 || pabyHeader[1] != 0x09
+    if( (pabyHeader[0] != 0x08 && pabyHeader[0] != 0xC8) 
+        || pabyHeader[1] != 0x09
         || pabyHeader[2] != 0xFE || pabyHeader[3] != 0x02 )
         return FALSE;
 
@@ -156,7 +160,6 @@ DGNHandle DGNOpen( const char * pszFilename )
     psDGN->next_element_id = 0;
 
     psDGN->got_tcb = FALSE;
-    psDGN->dimension = 2;
     psDGN->scale = 1.0;
     psDGN->origin_x = 0.0;
     psDGN->origin_y = 0.0;
@@ -167,6 +170,11 @@ DGNHandle DGNOpen( const char * pszFilename )
     psDGN->element_index = NULL;
 
     psDGN->got_bounds = FALSE;
+
+    if( abyHeader[0] == 0xC8 )
+        psDGN->dimension = 3;
+    else
+        psDGN->dimension = 2;
 
     return (DGNHandle) psDGN;
 }
