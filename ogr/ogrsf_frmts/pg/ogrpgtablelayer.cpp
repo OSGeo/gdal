@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.22  2004/09/16 18:24:47  fwarmerdam
+ * fixed trimming code, just truncate long text
+ *
  * Revision 1.21  2004/07/10 04:47:40  warmerda
  * Ensure that setting a NULL (or empty) query reset pszQuery to NULL.
  * Use soft transactions more carefully.
@@ -698,6 +701,15 @@ OGRErr OGRPGTableLayer::CreateFeature( OGRFeature *poFeature )
             
             for( iChar = 0; pszStrValue[iChar] != '\0'; iChar++ )
             {
+                if( poFeatureDefn->GetFieldDefn(i)->GetWidth() > 0
+                    && iChar == poFeatureDefn->GetFieldDefn(i)->GetWidth() )
+                {
+                    CPLDebug( "PG", 
+                              "Truncated %s field value, it was too long.",
+                              poFeatureDefn->GetFieldDefn(i)->GetNameRef() );
+                    break;
+                }
+
                 if( pszStrValue[iChar] == '\\' 
                     || pszStrValue[iChar] == '\'' )
                 {
@@ -707,12 +719,9 @@ OGRErr OGRPGTableLayer::CreateFeature( OGRFeature *poFeature )
                 else
                     pszCommand[nOffset++] = pszStrValue[iChar];
             }
+
             pszCommand[nOffset] = '\0';
             strcat( pszCommand+nOffset, "'" );
-            if( poFeatureDefn->GetFieldDefn(i)->GetWidth() > 0 )
-                sprintf( pszCommand + strlen(pszCommand), 
-                         "::varchar(%d)", 
-                         poFeatureDefn->GetFieldDefn(i)->GetWidth() );
         }
         else
         {
