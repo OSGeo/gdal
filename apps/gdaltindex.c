@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2003/10/24 13:33:38  warmerda
+ * Changed include path again, so it will work on unix and windows.
+ *
  * Revision 1.3  2003/10/24 13:32:28  warmerda
  * Fixed include path to work with GNUmakefile.
  *
@@ -39,7 +42,7 @@
  *
  */
 
-#include "ogrsf_frmts/shape/shapefil.h"
+#include "shapelib/shapefil.h"
 #include "gdal.h"
 
 CPL_CVSID("$Id$");
