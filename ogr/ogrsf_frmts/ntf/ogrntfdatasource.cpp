@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2001/12/12 02:50:00  warmerda
+ * avoid leaks, and UMC
+ *
  * Revision 1.10  2001/12/11 20:37:49  warmerda
  * add option to avoid caching indexed records on multiple readers
  *
@@ -129,6 +132,9 @@ OGRNTFDataSource::~OGRNTFDataSource()
     CPLFree( pszName );
 
     CSLDestroy( papszOptions );
+
+    CSLDestroy( papszFCNum );
+    CSLDestroy( papszFCName );
 
     delete poSpatialRef;
 }
@@ -251,7 +257,8 @@ int OGRNTFDataSource::Open( const char * pszFilename, int bTestOpen,
                 continue;
             }
             
-            if( EQUALN(candidateFileList[i] + strlen(candidateFileList[i])-4,
+            if( strlen(candidateFileList[i]) > 4
+              && EQUALN(candidateFileList[i] + strlen(candidateFileList[i])-4,
                        ".ntf",4) )
             {
                 char       fullFilename[2048];
@@ -268,6 +275,8 @@ int OGRNTFDataSource::Open( const char * pszFilename, int bTestOpen,
                 papszFileList = CSLAddString( papszFileList, fullFilename );
             }
         }
+
+        CSLDestroy( candidateFileList );
 
         if( CSLCount(papszFileList) == 0 )
         {
