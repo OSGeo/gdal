@@ -25,6 +25,9 @@
  * Main format registration function.
  * 
  * $Log$
+ * Revision 1.65  2004/09/03 19:06:50  warmerda
+ * added CPG driver
+ *
  * Revision 1.64  2004/05/26 17:45:39  warmerda
  * added LAN format
  *
@@ -385,6 +388,7 @@ void GDALAllRegister()
     GDALRegister_FAST();
     GDALRegister_BT();
     GDALRegister_LAN();
+    GDALRegister_CPG();
 #endif
 
 #ifdef FRMT_jp2kak
