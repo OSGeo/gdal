@@ -35,6 +35,9 @@
  * of the GDAL core, but dependent on the Common Portability Library.
  *
  * $Log$
+ * Revision 1.16  2002/05/21 15:09:12  warmerda
+ * read/write support for GDAL_MetaData table now supported
+ *
  * Revision 1.15  2002/04/12 20:19:49  warmerda
  * improved debug info
  *
@@ -1475,3 +1478,164 @@ HFAHandle HFACreate( const char * pszFilename,
     return psInfo;
 }
 
+/************************************************************************/
+/*                           HFAGetMetadata()                           */
+/*                                                                      */
+/*      Read metadata structured in a table called GDAL_MetaData.       */
+/************************************************************************/
+
+char ** HFAGetMetadata( HFAHandle hHFA, int nBand )
+
+{
+    HFAEntry *poTable;
+
+    if( nBand > 0 && nBand <= hHFA->nBands )
+        poTable = hHFA->papoBand[nBand - 1]->poNode->GetChild();
+    else if( nBand == 0 )
+        poTable = hHFA->poRoot->GetChild();
+    else
+        return NULL;
+
+    for( ; poTable != NULL && !EQUAL(poTable->GetName(),"GDAL_MetaData");
+         poTable = poTable->GetNext() ) {}
+
+    if( poTable == NULL || !EQUAL(poTable->GetType(),"Edsc_Table") )
+        return NULL;
+
+    if( poTable->GetIntField( "numRows" ) != 1 )
+    {
+        CPLDebug( "HFADataset", "GDAL_MetaData.numRows = %d, expected 1!",
+                  poTable->GetIntField( "numRows" ) );
+        return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Loop over each column.  Each column will be one metadata        */
+/*      entry, with the title being the key, and the row value being    */
+/*      the value.  There is only ever one row in GDAL_MetaData         */
+/*      tables.                                                         */
+/* -------------------------------------------------------------------- */
+    HFAEntry *poColumn;
+    char    **papszMD = NULL;
+
+    for( poColumn = poTable->GetChild(); 
+         poColumn != NULL;
+         poColumn = poColumn->GetNext() )
+    {
+        const char *pszValue;
+        int        columnDataPtr;
+
+        // Skip the #Bin_Function# entry.
+        if( EQUALN(poColumn->GetName(),"#",1) )
+            continue;
+
+        pszValue = poColumn->GetStringField( "dataType" );
+        if( pszValue == NULL || !EQUAL(pszValue,"string") )
+            continue;
+
+        columnDataPtr = poColumn->GetIntField( "columnDataPtr" );
+        if( columnDataPtr == 0 )
+            continue;
+
+/* -------------------------------------------------------------------- */
+/*      read up to 500 bytes from the indicated location.               */
+/* -------------------------------------------------------------------- */
+        char szMDValue[501];
+        int  nMDBytes = sizeof(szMDValue)-1;
+
+        if( VSIFSeek( hHFA->fp, columnDataPtr, SEEK_SET ) != 0 )
+            continue;
+
+        nMDBytes = VSIFRead( szMDValue, 1, nMDBytes, hHFA->fp );
+        if( nMDBytes == 0 )
+            continue;
+
+        szMDValue[nMDBytes] = '\0';
+
+        papszMD = CSLSetNameValue( papszMD, poColumn->GetName(), szMDValue );
+    }
+
+    return papszMD;
+}
+
+/************************************************************************/
+/*                           HFASetMetadata()                           */
+/************************************************************************/
+
+CPLErr HFASetMetadata( HFAHandle hHFA, int nBand, char **papszMD )
+
+{
+    if( papszMD == NULL )
+        return CE_None;
+
+    HFAEntry  *poNode;
+
+    if( nBand > 0 && nBand <= hHFA->nBands )
+        poNode = hHFA->papoBand[nBand - 1]->poNode;
+    else if( nBand == 0 )
+        poNode = hHFA->poRoot;
+    else 
+        return CE_Failure;
+
+/* -------------------------------------------------------------------- */
+/*      Create the Descriptor table.                                    */
+/* -------------------------------------------------------------------- */
+    HFAEntry	*poEdsc_Table;
+
+    poEdsc_Table = new HFAEntry( hHFA, "GDAL_MetaData", "Edsc_Table",
+                                 poNode );
+
+    poEdsc_Table->SetIntField( "numrows", 1 );
+
+/* -------------------------------------------------------------------- */
+/*      Create the Binning function node.  I am not sure that we        */
+/*      really need this though.                                        */
+/* -------------------------------------------------------------------- */
+    HFAEntry       *poEdsc_BinFunction;
+
+    poEdsc_BinFunction = 
+        new HFAEntry( hHFA, "#Bin_Function#", "Edsc_BinFunction",
+                      poEdsc_Table );
+
+    poEdsc_BinFunction->SetIntField( "numBins", 1 );
+    poEdsc_BinFunction->SetStringField( "binFunction", "direct" );
+    poEdsc_BinFunction->SetDoubleField( "minLimit", 0.0 );
+    poEdsc_BinFunction->SetDoubleField( "maxLimit", 0.0 );
+
+/* -------------------------------------------------------------------- */
+/*      Process each metadata item as a separate column.		*/
+/* -------------------------------------------------------------------- */
+    for( int iColumn = 0; papszMD[iColumn] != NULL; iColumn++ )
+    {
+        HFAEntry        *poEdsc_Column;
+        char            *pszKey = NULL;
+        const char      *pszValue;
+
+        pszValue = CPLParseNameValue( papszMD[iColumn], &pszKey );
+        if( pszValue == NULL )
+            continue;
+
+/* -------------------------------------------------------------------- */
+/*      Create the Edsc_Column.                                         */
+/* -------------------------------------------------------------------- */
+        poEdsc_Column = new HFAEntry( hHFA, pszKey, "Edsc_Column", 
+                                      poEdsc_Table );
+        poEdsc_Column->SetIntField( "numRows", 1 );
+        poEdsc_Column->SetStringField( "dataType", "string" );
+        poEdsc_Column->SetIntField( "maxNumChars", strlen(pszValue)+1 );
+
+/* -------------------------------------------------------------------- */
+/*      Write the data out.                                             */
+/* -------------------------------------------------------------------- */
+        int      nOffset = HFAAllocateSpace( hHFA, strlen(pszValue)+1);
+
+        poEdsc_Column->SetIntField( "columnDataPtr", nOffset );
+
+        VSIFSeekL( hHFA->fp, nOffset, SEEK_SET );
+        VSIFWriteL( (void *) pszValue, 1, strlen(pszValue)+1, hHFA->fp );
+
+        CPLFree( pszKey );
+    }
+
+    return CE_Failure;
+}

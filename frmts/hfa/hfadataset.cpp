@@ -29,6 +29,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.19  2002/05/21 15:09:12  warmerda
+ * read/write support for GDAL_MetaData table now supported
+ *
  * Revision 1.18  2002/05/21 05:29:48  warmerda
  * added metadata support from a table named GDAL_MetaData
  *
@@ -275,6 +278,8 @@ class CPL_DLL HFADataset : public GDALDataset
     
     HFAHandle	hHFA;
 
+    int         bMetadataDirty;
+
     int         bGeoDirty;
     double      adfGeoTransform[6];
     char	*pszProjection;
@@ -303,6 +308,8 @@ class CPL_DLL HFADataset : public GDALDataset
     virtual CPLErr GetGeoTransform( double * );
     virtual CPLErr SetGeoTransform( double * );
 
+    virtual CPLErr SetMetadata( char **, const char * = "" );
+
     virtual void   FlushCache( void );
 };
 
@@ -326,6 +333,8 @@ class HFARasterBand : public GDALRasterBand
 
     HFAHandle	hHFA;
 
+    int         bMetadataDirty;
+
   public:
 
                    HFARasterBand( HFADataset *, int, int );
@@ -340,7 +349,7 @@ class HFARasterBand : public GDALRasterBand
     virtual int    GetOverviewCount();
     virtual GDALRasterBand *GetOverview( int );
 
-    void           ScanForGDALMetadata();
+    virtual CPLErr SetMetadata( char **, const char * = "" );
 };
 
 static GDALDriver	*poHFADriver = NULL;
@@ -362,6 +371,7 @@ HFARasterBand::HFARasterBand( HFADataset *poDS, int nBand, int iOverview )
     this->poCT = NULL;
     this->nThisOverview = iOverview;
     this->papoOverviewBands = NULL;
+    this->bMetadataDirty = FALSE;
 
     HFAGetBandInfo( hHFA, nBand, &nHFADataType,
                     &nBlockXSize, &nBlockYSize, &nOverviews );
@@ -464,7 +474,18 @@ HFARasterBand::HFARasterBand( HFADataset *poDS, int nBand, int iOverview )
         }
     }
 
-    ScanForGDALMetadata();
+/* -------------------------------------------------------------------- */
+/*      Collect Metadata.                                               */
+/* -------------------------------------------------------------------- */
+    if( nThisOverview == -1 )
+    {
+        char **papszMD = HFAGetMetadata( hHFA, nBand );
+        if( papszMD != NULL )
+        {
+            SetMetadata( papszMD );
+            poDS->bMetadataDirty = FALSE;
+        }
+    }
 }
 
 /************************************************************************/
@@ -580,76 +601,15 @@ GDALColorTable *HFARasterBand::GetColorTable()
 }
 
 /************************************************************************/
-/*                        ScanForGDALMetadata()                         */
+/*                            SetMetadata()                             */
 /************************************************************************/
 
-void HFARasterBand::ScanForGDALMetadata()
+CPLErr HFARasterBand::SetMetadata( char **papszMDIn, const char *pszDomain )
 
 {
-    if( nThisOverview != -1 )
-        return;
+    bMetadataDirty = TRUE;
 
-    HFAEntry *poLayerNode = hHFA->papoBand[nBand - 1]->poNode;
-    HFAEntry *poTable;
-
-    for( poTable = poLayerNode->GetChild(); 
-         poTable != NULL && !EQUAL(poTable->GetName(),"GDAL_MetaData");
-         poTable = poTable->GetNext() ) {}
-
-    if( poTable == NULL || !EQUAL(poTable->GetType(),"Edsc_Table") )
-        return;
-
-    if( poTable->GetIntField( "numRows" ) != 1 )
-    {
-        CPLDebug( "HFADataset", "GDAL_MetaData.numRows = %d, expected 1!",
-                  poTable->GetIntField( "numRows" ) );
-        return;
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Loop over each column.  Each column will be one metadata        */
-/*      entry, with the title being the key, and the row value being    */
-/*      the value.  There is only ever one row in GDAL_MetaData         */
-/*      tables.                                                         */
-/* -------------------------------------------------------------------- */
-    HFAEntry *poColumn;
-
-    for( poColumn = poTable->GetChild(); 
-         poColumn != NULL;
-         poColumn = poColumn->GetNext() )
-    {
-        const char *pszValue;
-        int        columnDataPtr;
-
-        // Skip the #Bin_Function# entry.
-        if( EQUALN(poColumn->GetName(),"#",1) )
-            continue;
-
-        pszValue = poColumn->GetStringField( "dataType" );
-        if( pszValue == NULL || !EQUAL(pszValue,"string") )
-            continue;
-
-        columnDataPtr = poColumn->GetIntField( "columnDataPtr" );
-        if( columnDataPtr == 0 )
-            continue;
-
-/* -------------------------------------------------------------------- */
-/*      read up to 500 bytes from the indicated location.               */
-/* -------------------------------------------------------------------- */
-        char szMDValue[501];
-        int  nMDBytes = sizeof(szMDValue)-1;
-
-        if( VSIFSeek( hHFA->fp, columnDataPtr, SEEK_SET ) != 0 )
-            continue;
-
-        nMDBytes = VSIFRead( szMDValue, 1, nMDBytes, hHFA->fp );
-        if( nMDBytes == 0 )
-            continue;
-
-        szMDValue[nMDBytes] = '\0';
-
-        SetMetadataItem( poColumn->GetName(), szMDValue );
-    }
+    return GDALRasterBand::SetMetadata( papszMDIn, pszDomain );
 }
 
 
@@ -658,7 +618,6 @@ void HFARasterBand::ScanForGDALMetadata()
 /*                            HFADataset                               */
 /* ==================================================================== */
 /************************************************************************/
-
 
 /************************************************************************/
 /*                            HFADataset()                            */
@@ -670,6 +629,7 @@ HFADataset::HFADataset()
     hHFA = NULL;
     bGeoDirty = FALSE;
     pszProjection = CPLStrdup("");
+    this->bMetadataDirty = FALSE;
 }
 
 /************************************************************************/
@@ -696,16 +656,26 @@ void HFADataset::FlushCache()
 {
     GDALDataset::FlushCache();
 
-/* -------------------------------------------------------------------- */
-/*      If necessary write various georef structures.                   */
-/* -------------------------------------------------------------------- */
-    if( bGeoDirty )
-    {
-/* -------------------------------------------------------------------- */
-/*      Set the projection.                                             */
-/* -------------------------------------------------------------------- */
-        WriteProjection();
+    if( eAccess != GA_Update )
+        return;
 
+    if( bGeoDirty )
+        WriteProjection();
+    
+    if( bMetadataDirty && GetMetadata() != NULL )
+    {
+        HFASetMetadata( hHFA, 0, GetMetadata() );
+        bMetadataDirty = FALSE;
+    }
+
+    for( int iBand = 0; iBand < nBands; iBand++ )
+    {
+        HFARasterBand *poBand = (HFARasterBand *) GetRasterBand(iBand+1);
+        if( poBand->bMetadataDirty && poBand->GetMetadata() != NULL )
+        {
+            HFASetMetadata( hHFA, iBand+1, poBand->GetMetadata() );
+            poBand->bMetadataDirty = FALSE;
+        }
     }
 }
 
@@ -1418,6 +1388,7 @@ GDALDataset *HFADataset::Open( GDALOpenInfo * poOpenInfo )
 
     poDS->hHFA = hHFA;
     poDS->poDriver = poHFADriver;
+    poDS->eAccess = poOpenInfo->eAccess;
 
 /* -------------------------------------------------------------------- */
 /*      Establish raster info.                                          */
@@ -1473,6 +1444,16 @@ GDALDataset *HFADataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
 
+/* -------------------------------------------------------------------- */
+/*      Check for GDAL style metadata.                                  */
+/* -------------------------------------------------------------------- */
+    char **papszMD = HFAGetMetadata( hHFA, 0 );
+    if( papszMD != NULL )
+    {
+        poDS->SetMetadata( papszMD );
+        poDS->bMetadataDirty = FALSE;
+    }
+
     return( poDS );
 }
 
@@ -1501,6 +1482,18 @@ CPLErr HFADataset::SetProjection( const char * pszNewProjection )
 }
 
 /************************************************************************/
+/*                            SetMetadata()                             */
+/************************************************************************/
+
+CPLErr HFADataset::SetMetadata( char **papszMDIn, const char *pszDomain )
+
+{
+    bMetadataDirty = TRUE;
+
+    return GDALDataset::SetMetadata( papszMDIn, pszDomain );
+}
+
+/************************************************************************/
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
@@ -1513,7 +1506,7 @@ CPLErr HFADataset::GetGeoTransform( double * padfTransform )
 }
 
 /************************************************************************/
-/*                          GetSeoTransform()                           */
+/*                          SetGeoTransform()                           */
 /************************************************************************/
 
 CPLErr HFADataset::SetGeoTransform( double * padfTransform )
@@ -1524,6 +1517,7 @@ CPLErr HFADataset::SetGeoTransform( double * padfTransform )
 
     return CE_None;
 }
+
 
 /************************************************************************/
 /*                               Create()                               */
@@ -1671,7 +1665,36 @@ HFADataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             CPLFree( padfGreen );
             CPLFree( padfBlue );
         }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Do we have metadata for any of the bands or the dataset as a    */
+/*      whole?                                                          */
+/* -------------------------------------------------------------------- */
+    if( poSrcDS->GetMetadata() != NULL )
+        poDS->SetMetadata( poSrcDS->GetMetadata() );
+
+    for( iBand = 0; iBand < poSrcDS->GetRasterCount(); iBand++ )
+    {
+        GDALRasterBand *poSrcBand = poSrcDS->GetRasterBand( iBand+1 );
+        poDS->GetRasterBand(iBand+1)->SetMetadata( poSrcBand->GetMetadata() );
     }    
+
+#ifdef notdef
+    char **papszMD = poSrcDS->GetMetadata();
+
+    if( papszMD != NULL )
+        HFASetMetadata( poDS->hHFA, 0, papszMD );
+
+    for( iBand = 0; iBand < poSrcDS->GetRasterCount(); iBand++ )
+    {
+        GDALRasterBand *poSrcBand = poSrcDS->GetRasterBand( iBand+1 );
+        char **papszMD = poSrcBand->GetMetadata();
+
+        if( papszMD != NULL )
+            HFASetMetadata( poDS->hHFA, iBand+1, papszMD );
+    }    
+#endif
 
 /* -------------------------------------------------------------------- */
 /*      Copy projection information.                                    */

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2002/05/21 15:09:12  warmerda
+ * read/write support for GDAL_MetaData table now supported
+ *
  * Revision 1.18  2001/07/18 04:51:57  warmerda
  * added CPL_CVSID
  *
@@ -1100,3 +1103,4 @@ CPLErr HFABand::SetPCT( int nColors,
 
     return( CE_None );
 }
+

@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2002/05/21 15:09:12  warmerda
+ * read/write support for GDAL_MetaData table now supported
+ *
  * Revision 1.7  2000/10/20 04:18:15  warmerda
  * added overviews, stateplane, and u4
  *
@@ -150,41 +153,46 @@ typedef struct {
 
 CPL_C_START
 
-HFAHandle HFAOpen( const char * pszFilename, const char * pszMode );
-void	HFAClose( HFAHandle );
+HFAHandle CPL_DLL HFAOpen( const char * pszFilename, const char * pszMode );
+void	CPL_DLL HFAClose( HFAHandle );
 
-HFAHandle HFACreateLL( const char *pszFilename );
-HFAHandle HFACreate( const char *pszFilename, int nXSize, int nYSize, 
-                     int nBands, int nDataType, char ** papszOptions );
-CPLErr  HFAFlush( HFAHandle );
+HFAHandle CPL_DLL HFACreateLL( const char *pszFilename );
+HFAHandle CPL_DLL HFACreate( const char *pszFilename, int nXSize, int nYSize, 
+                             int nBands, int nDataType, char ** papszOptions );
+CPLErr  CPL_DLL HFAFlush( HFAHandle );
 
-const Eprj_MapInfo *HFAGetMapInfo( HFAHandle );
-CPLErr HFASetMapInfo( HFAHandle, const Eprj_MapInfo * );
-const Eprj_Datum *HFAGetDatum( HFAHandle );
-CPLErr HFASetDatum( HFAHandle, const Eprj_Datum * );
-const Eprj_ProParameters *HFAGetProParameters( HFAHandle );
-CPLErr HFASetProParameters( HFAHandle, const Eprj_ProParameters * );
+const Eprj_MapInfo CPL_DLL *HFAGetMapInfo( HFAHandle );
+CPLErr CPL_DLL HFASetMapInfo( HFAHandle, const Eprj_MapInfo * );
+const Eprj_Datum CPL_DLL *HFAGetDatum( HFAHandle );
+CPLErr CPL_DLL HFASetDatum( HFAHandle, const Eprj_Datum * );
+const Eprj_ProParameters CPL_DLL *HFAGetProParameters( HFAHandle );
+CPLErr CPL_DLL HFASetProParameters( HFAHandle, const Eprj_ProParameters * );
 
-CPLErr	HFAGetRasterInfo( HFAHandle hHFA, int *pnXSize, int *pnYSize,
-                          int *pnBands );
-CPLErr  HFAGetBandInfo( HFAHandle hHFA, int nBand, int * pnDataType,
-                        int * pnBlockXSize, int * pnBlockYSize, 
-                        int * pnOverviews );
-CPLErr  HFAGetOverviewInfo( HFAHandle hHFA, int nBand, int nOverview, 
-                            int * pnXSize, int * pnYSize,
-                            int * pnBlockXSize, int * pnBlockYSize );
-CPLErr  HFAGetRasterBlock( HFAHandle hHFA, int nBand, int nXBlock, int nYBlock,
-                           void * pData );
-CPLErr  HFAGetOverviewRasterBlock( HFAHandle hHFA, int nBand, int iOverview,
+CPLErr CPL_DLL HFAGetRasterInfo( HFAHandle hHFA, int *pnXSize, int *pnYSize,
+                                 int *pnBands );
+CPLErr CPL_DLL HFAGetBandInfo( HFAHandle hHFA, int nBand, int * pnDataType,
+                               int * pnBlockXSize, int * pnBlockYSize, 
+                               int * pnOverviews );
+CPLErr CPL_DLL HFAGetOverviewInfo( HFAHandle hHFA, int nBand, int nOverview, 
+                                   int * pnXSize, int * pnYSize,
+                                   int * pnBlockXSize, int * pnBlockYSize );
+CPLErr CPL_DLL HFAGetRasterBlock( HFAHandle hHFA, int nBand, int nXBlock, 
+                                  int nYBlock, void * pData );
+CPLErr CPL_DLL HFAGetOverviewRasterBlock( HFAHandle hHFA, int nBand, 
+                                          int iOverview,
                                    int nXBlock, int nYBlock, void * pData );
-CPLErr  HFASetRasterBlock( HFAHandle hHFA, int nBand, int nXBlock, int nYBlock,
-                           void * pData );
-int     HFAGetDataTypeBits( int );
-CPLErr	HFAGetPCT( HFAHandle, int, int *, double **, double **, double ** );
-CPLErr  HFASetPCT( HFAHandle, int, int, double *, double *, double * );
-void    HFADumpTree( HFAHandle, FILE * );
-void    HFADumpDictionary( HFAHandle, FILE * );
-CPLErr  HFAGetDataRange( HFAHandle, int, double *, double * );
+CPLErr CPL_DLL HFASetRasterBlock( HFAHandle hHFA, int nBand, 
+                                  int nXBlock, int nYBlock,
+                                  void * pData );
+int     CPL_DLL HFAGetDataTypeBits( int );
+CPLErr	CPL_DLL HFAGetPCT( HFAHandle, int, int *, 
+                           double **, double **, double ** );
+CPLErr  CPL_DLL HFASetPCT( HFAHandle, int, int, double *, double *, double * );
+void    CPL_DLL HFADumpTree( HFAHandle, FILE * );
+void    CPL_DLL HFADumpDictionary( HFAHandle, FILE * );
+CPLErr  CPL_DLL HFAGetDataRange( HFAHandle, int, double *, double * );
+char  CPL_DLL **HFAGetMetadata( HFAHandle hHFA, int nBand );
+CPLErr  CPL_DLL HFASetMetadata( HFAHandle hHFA, int nBand, char ** );
 
 /* -------------------------------------------------------------------- */
 /*      data types.                                                     */
