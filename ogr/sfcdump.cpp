@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  1999/09/07 14:03:47  warmerda
+ * improved usage message, default to dumpfeat
+ *
  * Revision 1.8  1999/07/09 13:05:19  warmerda
  * type safe fix
  *
@@ -85,10 +88,17 @@ static void Usage()
 
 {
     printf(
-      "Usage: sfcdump [-provider provider_clsid_alias] [-ds datasource]\n"
-      "           [-table tablename] [-column geom_column_name]\n"
-      "           [-action {dumpprov,dumpgeom,dumpschema,dumptables,dumpsftables}]\n"
-      "-quiet\n" );
+      "Usage: sfcdump [-provider classname] [-ds datasource] [-table tablename]\n"
+      "           [-action {dumpprov, dumptables, dumpsftables,\n"
+      "                     dumpgeom, dumpfeat, dumpschema}]\n"
+      "           [-quiet]\n"
+      "\n"
+      "Example:\n"
+      "     C:> sfcdump -provider Microsoft.Jet.OLEDB.3.51\n"
+      "                 -ds c:\\World.mdb -table worldmif_geometry\n"
+      "or\n"
+      "     C:> sfcdump -provider Softmap.SF.Shape -ds c:\\polygon\n"
+      "                 -table Shape\n" );
 
     OleSupUninitialize();
     exit( 1 );
@@ -103,7 +113,7 @@ void main( int nArgc, char ** papszArgv )
     const char *pszProvider = "Microsoft.Jet.OLEDB.3.51";
     const char *pszDataSource = "f:\\opengis\\SFData\\World.mdb";
     const char *pszTable = "worldmif_geometry";
-    const char *pszAction = "dumpgeom";
+    const char *pszAction = "dumpfeat";
    
 /* -------------------------------------------------------------------- */
 /*      Initialize OLE                                                  */
@@ -146,6 +156,10 @@ void main( int nArgc, char ** papszArgv )
         else if( stricmp( papszArgv[iArg],"-quiet") == 0 )
         {
             bVerbose = FALSE;
+        }
+        else if( stricmp( papszArgv[iArg],"-help") == 0 )
+        {
+            Usage();
         }
         else
         {
