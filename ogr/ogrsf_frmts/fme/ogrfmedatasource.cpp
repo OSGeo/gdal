@@ -23,6 +23,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2003/02/03 15:59:36  warmerda
+ * Move oCacheIndex testing into its own scope in destructor to avoid weird
+ * compiler bug.
+ *
  * Revision 1.10  2002/11/01 15:28:03  warmerda
  * added OGRFME_TMPDIR environment variable support
  *
@@ -346,24 +350,26 @@ OGRFMEDataSource::~OGRFMEDataSource()
 /*      If we have a cached instances, decrement the reference count.   */
 /* -------------------------------------------------------------------- */
 #ifdef SUPPORT_PERSISTENT_CACHE
-    OGRFMECacheIndex   oCacheIndex( 
-                           CPLFormFilename(GetTmpDir(), "ogrfmeds", "ind" ) );
-
-    if( pszReaderName != NULL && nLayers > 0 
-        && bUseCaching && oCacheIndex.Lock() && oCacheIndex.Load() )
     {
-        CPLXMLNode        *psMatchDS = NULL;
+        OGRFMECacheIndex   oCacheIndex( 
+            CPLFormFilename(GetTmpDir(), "ogrfmeds", "ind" ) );
 
-        psMatchDS = oCacheIndex.FindMatch( pszReaderName, pszDataset, 
-                                           *poUserDirectives );
+        if( pszReaderName != NULL && nLayers > 0 
+            && bUseCaching && oCacheIndex.Lock() && oCacheIndex.Load() )
+        {
+            CPLXMLNode        *psMatchDS = NULL;
 
-        if( psMatchDS != NULL )
-            oCacheIndex.Dereference( psMatchDS );
+            psMatchDS = oCacheIndex.FindMatch( pszReaderName, pszDataset, 
+                                               *poUserDirectives );
 
-        if( oCacheIndex.ExpireOldCaches( poSession ) || psMatchDS != NULL )
-            oCacheIndex.Save();
+            if( psMatchDS != NULL )
+                oCacheIndex.Dereference( psMatchDS );
 
-        oCacheIndex.Unlock();
+            if( oCacheIndex.ExpireOldCaches( poSession ) || psMatchDS != NULL )
+                oCacheIndex.Save();
+
+            oCacheIndex.Unlock();
+        }
     }
 #endif /* def SUPPORT_PERSISTENT_CACHE */
 
