@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2004/10/30 04:44:00  fwarmerdam
+ * Fixed error report when fetching layer.
+ *
  * Revision 1.6  2004/10/16 21:56:36  fwarmerdam
  * Fixed initialization of "z".
  *
@@ -217,7 +220,7 @@ int OGRVRTLayer::Initialize( CPLXMLNode *psLTree, const char *pszVRTDirectory )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                   "Failed to find layer '%s' on datasource '%s'.", 
-                      pszLayerName, pszSrcDSName );
+                      pszSrcLayerName, pszSrcDSName );
             CPLFree( pszSrcDSName );
             return FALSE;
         }
