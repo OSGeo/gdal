@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2002/03/01 20:42:00  warmerda
+ * fixed parsing of connect string, see bug 107
+ *
  * Revision 1.10  2002/01/13 21:48:32  warmerda
  * fixed addgeometrycolumn call to include pszDBname
  *
@@ -164,7 +167,7 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
         {
             if( pszDBName[i] == ' ' )					
             {
-                pszDBName = '\0';
+                pszDBName[i] = '\0';
                 break;
             }
         }
@@ -174,6 +177,7 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
     else
         pszDBName = CPLStrdup( "unknown_dbname" );
         
+    CPLDebug( "OGR_PG", "DBName=\"%s\"", pszDBName );
 
 /* -------------------------------------------------------------------- */
 /*      Test to see if this database instance has support for the       */
