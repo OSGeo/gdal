@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2003/03/27 17:20:20  warmerda
+ * improved request error
+ *
  * Revision 1.9  2003/03/27 17:18:07  warmerda
  * added inline CRS defs, and -debug
  *
@@ -329,7 +332,8 @@ CPLXMLNode *WCTSCollectKVPRequest()
 /*      Unrecognised.                                                   */
 /* -------------------------------------------------------------------- */
     else
-        WCTSEmitServiceException( "Unrecognised REQUEST value." );
+        WCTSEmitServiceException( 
+            CPLSPrintf( "Unrecognised REQUEST value (%s).", pszRequest) );
 
     return NULL;
 }
