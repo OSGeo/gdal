@@ -23,6 +23,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2003/03/12 14:45:24  warmerda
+ * Don't report that FME driver doesn't support update unless this is
+ * an FME supported dataset.
+ *
  * Revision 1.1  2002/05/29 20:41:35  warmerda
  * New
  *
@@ -96,21 +100,23 @@ int OGRFMEDriver::TestCapability( const char * )
 OGRDataSource *OGRFMEDriver::Open( const char * pszFilename, int bUpdate )
 
 {
-    if( bUpdate )
-    {
-        CPLError( CE_Failure, CPLE_OpenFailed,
-                  "FMEObjects Driver doesn't support update." );
-        return NULL;
-    }
-    
     OGRFMEDataSource    *poDS = new OGRFMEDataSource;
 
     if( !poDS->Open( pszFilename ) )
     {
         delete poDS;
-        poDS = NULL;
+        return NULL;
     }
 
+    if( bUpdate )
+    {
+        delete poDS;
+
+        CPLError( CE_Failure, CPLE_OpenFailed,
+                  "FMEObjects Driver doesn't support update." );
+        return NULL;
+    }
+    
     return poDS;
 }
 
