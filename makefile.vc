@@ -8,6 +8,23 @@ lib:
 	del gdal.lib
 	lib /out:gdal.lib port\*.obj core\*.obj frmts\o\*.obj ogr\ogr*.obj 
 
+clean:	
+	cd port
+	$(MAKE) /f makefile.vc clean
+	cd ..
+	cd core
+	$(MAKE) /f makefile.vc clean
+	cd ..
+	cd frmts
+	$(MAKE) /f makefile.vc clean
+	cd ..
+	cd ogr
+	$(MAKE) clean
+	cd ..
+	cd apps
+	$(MAKE) /f makefile.vc clean
+	cd ..
+
 port_dir:
 	cd port
 	$(MAKE) /f makefile.vc
