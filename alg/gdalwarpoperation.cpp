@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2004/08/09 14:38:27  warmerda
+ * added serialize/deserialize support for warpoptions and transformers
+ *
  * Revision 1.19  2004/04/29 13:44:55  warmerda
  * fixed some memory leaks
  *
@@ -212,6 +215,16 @@ GDALWarpOperation::~GDALWarpOperation()
     }
 
     WipeChunkList();
+}
+
+/************************************************************************/
+/*                             GetOptions()                             */
+/************************************************************************/
+
+const GDALWarpOptions *GDALWarpOperation::GetOptions()
+
+{
+    return psOptions;
 }
 
 /************************************************************************/

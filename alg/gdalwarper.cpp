@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2004/08/09 14:38:27  warmerda
+ * added serialize/deserialize support for warpoptions and transformers
+ *
  * Revision 1.13  2004/04/01 18:58:41  warmerda
  * fixed GDALReprojectImage() -- pass on eResampleAlg
  *
@@ -74,6 +77,7 @@
 
 #include "gdalwarper.h"
 #include "cpl_string.h"
+#include "cpl_minixml.h"
 
 CPL_CVSID("$Id$");
 
@@ -628,3 +632,332 @@ GDALWarpOptions *GDALCloneWarpOptions( const GDALWarpOptions *psSrcOptions )
     return psDstOptions;
 }
 
+/************************************************************************/
+/*                      GDALSerializeWarpOptions()                      */
+/************************************************************************/
+
+CPLXMLNode *GDALSerializeWarpOptions( const GDALWarpOptions *psWO )
+
+{
+    CPLXMLNode *psTree;
+
+/* -------------------------------------------------------------------- */
+/*      Create root.                                                    */
+/* -------------------------------------------------------------------- */
+    psTree = CPLCreateXMLNode( NULL, CXT_Element, "GDALWarpOptions" );
+    
+/* -------------------------------------------------------------------- */
+/*      WarpMemoryLimit                                                 */
+/* -------------------------------------------------------------------- */
+    CPLCreateXMLElementAndValue( 
+        psTree, "WarpMemoryLimit", 
+        CPLSPrintf("%g", psWO->dfWarpMemoryLimit ) );
+
+/* -------------------------------------------------------------------- */
+/*      ResampleAlg                                                     */
+/* -------------------------------------------------------------------- */
+    const char *pszAlgName;
+
+    if( psWO->eResampleAlg == GRA_NearestNeighbour )
+        pszAlgName = "NearestNeighbour";
+    else if( psWO->eResampleAlg == GRA_Bilinear )
+        pszAlgName = "Bilinear";
+    else if( psWO->eResampleAlg == GRA_Cubic )
+        pszAlgName = "Cubic";
+    else if( psWO->eResampleAlg == GRA_CubicSpline )
+        pszAlgName = "CubicSpline";
+    else
+        pszAlgName = "Unknown";
+
+    CPLCreateXMLElementAndValue( 
+        psTree, "ResampleAlg", pszAlgName );
+
+/* -------------------------------------------------------------------- */
+/*      Working Data Type                                               */
+/* -------------------------------------------------------------------- */
+
+    CPLCreateXMLElementAndValue( 
+        psTree, "WorkingDataType", 
+        GDALGetDataTypeName( psWO->eWorkingDataType ) );
+
+/* -------------------------------------------------------------------- */
+/*      Source and Destination Data Source                              */
+/* -------------------------------------------------------------------- */
+    if( psWO->hSrcDS != NULL )
+    {
+        CPLCreateXMLElementAndValue( 
+            psTree, "SourceDataset", 
+            GDALGetDescription( psWO->hSrcDS ) );
+    }
+    
+    if( psWO->hDstDS != NULL && strlen(GDALGetDescription(psWO->hDstDS)) != 0 )
+    {
+        CPLCreateXMLElementAndValue( 
+            psTree, "DestinationDataset", 
+            GDALGetDescription( psWO->hDstDS ) );
+    }
+    
+/* -------------------------------------------------------------------- */
+/*      Serialize transformer.                                          */
+/* -------------------------------------------------------------------- */
+    if( psWO->pfnTransformer != NULL )
+    {
+        CPLXMLNode *psTransformerContainer;
+
+        psTransformerContainer = 
+            CPLCreateXMLNode( psTree, CXT_Element, "Transformer" );
+
+        CPLAddXMLChild( psTransformerContainer, 
+                        GDALSerializeTransformer( psWO->pfnTransformer,
+                                                  psWO->pTransformerArg ));
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Band count and lists.                                           */
+/* -------------------------------------------------------------------- */
+    CPLXMLNode *psBandList;
+    int i;
+
+    if( psWO->nBandCount != 0 )
+        psBandList = CPLCreateXMLNode( psTree, CXT_Element, "BandList" );
+
+    for( i = 0; i < psWO->nBandCount; i++ )
+    {
+        CPLXMLNode *psBand;
+
+        psBand = CPLCreateXMLNode( psBandList, CXT_Element, "BandMapping" );
+        if( psWO->panSrcBands != NULL )
+            CPLCreateXMLNode( 
+                CPLCreateXMLNode( psBand, CXT_Attribute, "src" ),
+                CXT_Text, CPLSPrintf( "%d", psWO->panSrcBands[i] ) );
+        if( psWO->panDstBands != NULL )
+            CPLCreateXMLNode( 
+                CPLCreateXMLNode( psBand, CXT_Attribute, "dst" ),
+                CXT_Text, CPLSPrintf( "%d", psWO->panDstBands[i] ) );
+        
+        if( psWO->padfSrcNoDataReal != NULL )
+            CPLCreateXMLElementAndValue( 
+                psBand, "SrcNoDataReal", 
+                CPLSPrintf( "%.16g", psWO->padfSrcNoDataReal[i] ) );
+
+        if( psWO->padfSrcNoDataImag != NULL )
+            CPLCreateXMLElementAndValue( 
+                psBand, "SrcNoDataImag", 
+                CPLSPrintf( "%.16g", psWO->padfSrcNoDataImag[i] ) );
+
+        if( psWO->padfDstNoDataReal != NULL )
+            CPLCreateXMLElementAndValue( 
+                psBand, "DstNoDataReal", 
+                CPLSPrintf( "%.16g", psWO->padfDstNoDataReal[i] ) );
+
+        if( psWO->padfDstNoDataImag != NULL )
+            CPLCreateXMLElementAndValue( 
+                psBand, "DstNoDataImag", 
+                CPLSPrintf( "%.16g", psWO->padfDstNoDataImag[i] ) );
+    }
+
+    return psTree;
+}
+
+/************************************************************************/
+/*                     GDALDeserializeWarpOptions()                     */
+/************************************************************************/
+
+GDALWarpOptions *GDALDeserializeWarpOptions( CPLXMLNode *psTree )
+
+{
+    CPLErrorReset();
+
+/* -------------------------------------------------------------------- */
+/*      Verify this is the right kind of object.                        */
+/* -------------------------------------------------------------------- */
+    if( psTree == NULL || psTree->eType != CXT_Element
+        || !EQUAL(psTree->pszValue,"GDALWarpOptions") )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Wrong node, unable to deserialize GDALWarpOptions." );
+        return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Create pre-initialized warp options.                            */
+/* -------------------------------------------------------------------- */
+    GDALWarpOptions *psWO = GDALCreateWarpOptions();
+
+/* -------------------------------------------------------------------- */
+/*      Warp memory limit.                                              */
+/* -------------------------------------------------------------------- */
+    psWO->dfWarpMemoryLimit = 
+        atof(CPLGetXMLValue(psTree,"WarpMemoryLimit","0.0"));
+
+/* -------------------------------------------------------------------- */
+/*      resample algorithm                                              */
+/* -------------------------------------------------------------------- */
+    const char *pszValue = 
+        CPLGetXMLValue(psTree,"ResampleAlg","Default");
+
+    if( EQUAL(pszValue,"NearestNeighbour") )
+        psWO->eResampleAlg = GRA_NearestNeighbour;
+    else if( EQUAL(pszValue,"Bilinear") )
+        psWO->eResampleAlg = GRA_Bilinear;
+    else if( EQUAL(pszValue,"Cubic") )
+        psWO->eResampleAlg = GRA_Cubic;
+    else if( EQUAL(pszValue,"CubicSpline") )
+        psWO->eResampleAlg = GRA_CubicSpline;
+    else if( EQUAL(pszValue,"Default") )
+        /* leave as is */;
+    else
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Unrecognise ResampleAlg value '%s'.",
+                  pszValue );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Working data type.                                              */
+/* -------------------------------------------------------------------- */
+    psWO->eWorkingDataType = 
+        GDALGetDataTypeByName(
+            CPLGetXMLValue(psTree,"WorkingDataType","Unknown"));
+
+/* -------------------------------------------------------------------- */
+/*      Source Dataset.                                                 */
+/* -------------------------------------------------------------------- */
+    pszValue = CPLGetXMLValue(psTree,"SourceDataset",NULL);
+
+    if( pszValue != NULL )
+        psWO->hSrcDS = GDALOpenShared( pszValue, GA_ReadOnly );
+
+/* -------------------------------------------------------------------- */
+/*      Destination Dataset.                                            */
+/* -------------------------------------------------------------------- */
+    pszValue = CPLGetXMLValue(psTree,"DestinationDataset",NULL);
+
+    if( pszValue != NULL )
+        psWO->hDstDS = GDALOpenShared( pszValue, GA_Update );
+
+/* -------------------------------------------------------------------- */
+/*      First, count band mappings so we can establish the bandcount.   */
+/* -------------------------------------------------------------------- */
+    CPLXMLNode *psBandTree = CPLGetXMLNode( psTree, "BandList" );
+    CPLXMLNode *psBand = NULL;
+
+    psWO->nBandCount = 0;
+    
+    for( psBand=psBandTree->psChild; psBand != NULL; psBand = psBand->psNext )
+    {
+        if( psBand->eType != CXT_Element 
+            || !EQUAL(psBand->pszValue,"BandMapping") )
+            continue;
+
+        psWO->nBandCount++;
+    }
+
+/* ==================================================================== */
+/*      Now actually process each bandmapping.                          */
+/* ==================================================================== */
+    int iBand = 0;
+
+    for( psBand=psBandTree->psChild; psBand != NULL; psBand = psBand->psNext )
+    {
+        if( psBand->eType != CXT_Element 
+            || !EQUAL(psBand->pszValue,"BandMapping") )
+            continue;
+
+/* -------------------------------------------------------------------- */
+/*      Source band                                                     */
+/* -------------------------------------------------------------------- */
+        if( psWO->panSrcBands == NULL )
+            psWO->panSrcBands = (int *)CPLMalloc(sizeof(int)*psWO->nBandCount);
+        
+        pszValue = CPLGetXMLValue(psBand,"src",NULL);
+        if( pszValue == NULL )
+            psWO->panSrcBands[iBand] = iBand+1;
+        else
+            psWO->panSrcBands[iBand] = atoi(pszValue);
+        
+/* -------------------------------------------------------------------- */
+/*      Destination band.                                               */
+/* -------------------------------------------------------------------- */
+        pszValue = CPLGetXMLValue(psBand,"dst",NULL);
+        if( pszValue != NULL )
+        {
+            if( psWO->panDstBands == NULL )
+                psWO->panDstBands = 
+                    (int *) CPLMalloc(sizeof(int)*psWO->nBandCount);
+
+            psWO->panDstBands[iBand] = atoi(pszValue);
+        }
+        
+/* -------------------------------------------------------------------- */
+/*      Source nodata.                                                  */
+/* -------------------------------------------------------------------- */
+        pszValue = CPLGetXMLValue(psBand,"SrcNoDataReal",NULL);
+        if( pszValue != NULL )
+        {
+            if( psWO->padfSrcNoDataReal == NULL )
+                psWO->padfSrcNoDataReal = 
+                    (double *) CPLCalloc(sizeof(double),psWO->nBandCount);
+
+            psWO->padfSrcNoDataReal[iBand] = atof(pszValue);
+        }
+        
+        pszValue = CPLGetXMLValue(psBand,"SrcNoDataImag",NULL);
+        if( pszValue != NULL )
+        {
+            if( psWO->padfSrcNoDataImag == NULL )
+                psWO->padfSrcNoDataImag = 
+                    (double *) CPLCalloc(sizeof(double),psWO->nBandCount);
+
+            psWO->padfSrcNoDataReal[iBand] = atof(pszValue);
+        }
+        
+/* -------------------------------------------------------------------- */
+/*      Destination nodata.                                             */
+/* -------------------------------------------------------------------- */
+        pszValue = CPLGetXMLValue(psBand,"DstNoDataReal",NULL);
+        if( pszValue != NULL )
+        {
+            if( psWO->padfDstNoDataReal == NULL )
+                psWO->padfDstNoDataReal = 
+                    (double *) CPLCalloc(sizeof(double),psWO->nBandCount);
+
+            psWO->padfDstNoDataReal[iBand] = atof(pszValue);
+        }
+        
+        pszValue = CPLGetXMLValue(psBand,"DstNoDataImag",NULL);
+        if( pszValue != NULL )
+        {
+            if( psWO->padfDstNoDataImag == NULL )
+                psWO->padfDstNoDataImag = 
+                    (double *) CPLCalloc(sizeof(double),psWO->nBandCount);
+
+            psWO->padfDstNoDataReal[iBand] = atof(pszValue);
+        }
+        
+        iBand++;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Transformation.                                                 */
+/* -------------------------------------------------------------------- */
+    CPLXMLNode *psTransformer = CPLGetXMLNode( psTree, "Transformer" );
+
+    if( psTransformer != NULL && psTransformer->psChild != NULL )
+    {
+        GDALDeserializeTransformer( psTransformer->psChild, 
+                                    &(psWO->pfnTransformer),
+                                    &(psWO->pTransformerArg) );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      If any error has occured, cleanup else return success.          */
+/* -------------------------------------------------------------------- */
+    if( CPLGetLastErrorNo() != CE_None )
+    {
+        GDALDestroyWarpOptions( psWO );
+        return NULL;
+    }
+    else
+        return psWO;
+}

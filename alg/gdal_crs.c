@@ -51,6 +51,9 @@
  ***************************************************************************
  *
  * $Log$
+ * Revision 1.6  2004/08/09 14:38:27  warmerda
+ * added serialize/deserialize support for warpoptions and transformers
+ *
  * Revision 1.5  2004/03/19 15:22:02  warmerda
  * Fixed double free of padfRasterX. Submitted by Scott Reynolds.
  *
@@ -70,6 +73,8 @@
 
 #include "gdal_alg.h"
 #include "cpl_conv.h"
+#include "cpl_minixml.h"
+#include "cpl_string.h"
 
 #define MAXORDER 3
 
@@ -82,6 +87,11 @@ struct Control_Points
     double *n2;
     int *status;
 };
+
+CPL_C_START
+CPLXMLNode *GDALSerializeGCPTransformer( void *pTransformArg );
+void *GDALDeserializeGCPTransformer( CPLXMLNode *psTree );
+CPL_C_END
 
 /* crs.c */
 static int CRS_georef(double, double, double *, double *, 
@@ -99,6 +109,9 @@ typedef struct
 
     int    nOrder;
     int    bReversed;
+
+    int       nGCPCount;
+    GDAL_GCP *pasGCPList;
     
 } GCPTransformInfo;
 
@@ -156,6 +169,9 @@ void *GDALCreateGCPTransformer( int nGCPCount, const GDAL_GCP *pasGCPList,
     psInfo = (GCPTransformInfo *) CPLCalloc(sizeof(GCPTransformInfo),1);
     psInfo->bReversed = bReversed;
     psInfo->nOrder = nReqOrder;
+
+    psInfo->pasGCPList = GDALDuplicateGCPs( nGCPCount, pasGCPList );
+    psInfo->nGCPCount = nGCPCount;
 
 /* -------------------------------------------------------------------- */
 /*      Allocate and initialize the working points list.                */
@@ -226,6 +242,11 @@ void *GDALCreateGCPTransformer( int nGCPCount, const GDAL_GCP *pasGCPList,
 void GDALDestroyGCPTransformer( void *pTransformArg )
 
 {
+    GCPTransformInfo *psInfo = (GCPTransformInfo *) pTransformArg;
+
+    GDALDeinitGCPs( psInfo->nGCPCount, psInfo->pasGCPList );
+    CPLFree( psInfo->pasGCPList );
+
     CPLFree( pTransformArg );
 }
 
@@ -284,6 +305,149 @@ int GDALGCPTransform( void *pTransformArg, int bDstToSrc,
     }
 
     return TRUE;
+}
+
+/************************************************************************/
+/*                    GDALSerializeGCPTransformer()                     */
+/************************************************************************/
+
+CPLXMLNode *GDALSerializeGCPTransformer( void *pTransformArg )
+
+{
+    CPLXMLNode *psTree;
+    GCPTransformInfo *psInfo = (GCPTransformInfo *) pTransformArg;
+
+    psTree = CPLCreateXMLNode( NULL, CXT_Element, "GCPTransformer" );
+
+/* -------------------------------------------------------------------- */
+/*      Serialize Order and bReversed.                                  */
+/* -------------------------------------------------------------------- */
+    CPLCreateXMLElementAndValue( 
+        psTree, "Order", 
+        CPLSPrintf( "%d", psInfo->nOrder ) );
+                         
+    CPLCreateXMLElementAndValue( 
+        psTree, "Reversed", 
+        CPLSPrintf( "%d", psInfo->bReversed ) );
+                                 
+/* -------------------------------------------------------------------- */
+/*	Attach GCP List. 						*/
+/* -------------------------------------------------------------------- */
+    if( psInfo->nGCPCount > 0 )
+    {
+        int iGCP;
+        CPLXMLNode *psGCPList = CPLCreateXMLNode( psTree, CXT_Element, 
+                                                  "GCPList" );
+
+        for( iGCP = 0; iGCP < psInfo->nGCPCount; iGCP++ )
+        {
+            CPLXMLNode *psXMLGCP;
+            GDAL_GCP *psGCP = psInfo->pasGCPList + iGCP;
+
+            psXMLGCP = CPLCreateXMLNode( psGCPList, CXT_Element, "GCP" );
+
+            CPLSetXMLValue( psXMLGCP, "#Id", psGCP->pszId );
+
+            if( psGCP->pszInfo != NULL && strlen(psGCP->pszInfo) > 0 )
+                CPLSetXMLValue( psXMLGCP, "Info", psGCP->pszInfo );
+
+            CPLSetXMLValue( psXMLGCP, "#Pixel", 
+                            CPLSPrintf( "%.4f", psGCP->dfGCPPixel ) );
+
+            CPLSetXMLValue( psXMLGCP, "#Line", 
+                            CPLSPrintf( "%.4f", psGCP->dfGCPLine ) );
+
+            CPLSetXMLValue( psXMLGCP, "#X", 
+                            CPLSPrintf( "%.12E", psGCP->dfGCPX ) );
+
+            CPLSetXMLValue( psXMLGCP, "#Y", 
+                            CPLSPrintf( "%.12E", psGCP->dfGCPY ) );
+
+            if( psGCP->dfGCPZ != 0.0 )
+                CPLSetXMLValue( psXMLGCP, "#GCPZ", 
+                                CPLSPrintf( "%.12E", psGCP->dfGCPZ ) );
+        }
+    }
+
+    return psTree;
+}
+
+/************************************************************************/
+/*               GDALDeserializeReprojectionTransformer()               */
+/************************************************************************/
+
+void *GDALDeserializeGCPTransformer( CPLXMLNode *psTree )
+
+{
+    GDAL_GCP *pasGCPList = 0;
+    int nGCPCount = 0;
+    void *pResult;
+    int nReqOrder;
+    int bReversed;
+
+    /* -------------------------------------------------------------------- */
+    /*      Check for GCPs.                                                 */
+    /* -------------------------------------------------------------------- */
+    CPLXMLNode *psGCPList = CPLGetXMLNode( psTree, "GCPList" );
+
+    if( psGCPList != NULL )
+    {
+        int  nGCPMax = 0;
+        CPLXMLNode *psXMLGCP;
+         
+        // Count GCPs.
+        for( psXMLGCP = psGCPList->psChild; psXMLGCP != NULL; 
+             psXMLGCP = psXMLGCP->psNext )
+            nGCPMax++;
+         
+        pasGCPList = (GDAL_GCP *) CPLCalloc(sizeof(GDAL_GCP),nGCPMax);
+
+        for( psXMLGCP = psGCPList->psChild; psXMLGCP != NULL; 
+             psXMLGCP = psXMLGCP->psNext )
+        {
+            GDAL_GCP *psGCP = pasGCPList + nGCPCount;
+
+            if( !EQUAL(psXMLGCP->pszValue,"GCP") || 
+                psXMLGCP->eType != CXT_Element )
+                continue;
+             
+            GDALInitGCPs( 1, psGCP );
+             
+            CPLFree( psGCP->pszId );
+            psGCP->pszId = CPLStrdup(CPLGetXMLValue(psXMLGCP,"Id",""));
+             
+            CPLFree( psGCP->pszInfo );
+            psGCP->pszInfo = CPLStrdup(CPLGetXMLValue(psXMLGCP,"Info",""));
+             
+            psGCP->dfGCPPixel = atof(CPLGetXMLValue(psXMLGCP,"Pixel","0.0"));
+            psGCP->dfGCPLine = atof(CPLGetXMLValue(psXMLGCP,"Line","0.0"));
+             
+            psGCP->dfGCPX = atof(CPLGetXMLValue(psXMLGCP,"X","0.0"));
+            psGCP->dfGCPY = atof(CPLGetXMLValue(psXMLGCP,"Y","0.0"));
+            psGCP->dfGCPZ = atof(CPLGetXMLValue(psXMLGCP,"Z","0.0"));
+            nGCPCount++;
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Get other flags.                                                */
+/* -------------------------------------------------------------------- */
+    nReqOrder = atoi(CPLGetXMLValue(psTree,"Order","3"));
+    bReversed = atoi(CPLGetXMLValue(psTree,"Reversed","0"));
+
+/* -------------------------------------------------------------------- */
+/*      Generate transformation.                                        */
+/* -------------------------------------------------------------------- */
+    pResult = GDALCreateGCPTransformer( nGCPCount, pasGCPList, nReqOrder, 
+                                        bReversed );
+    
+/* -------------------------------------------------------------------- */
+/*      Cleanup GCP copy.                                               */
+/* -------------------------------------------------------------------- */
+    GDALDeinitGCPs( nGCPCount, pasGCPList );
+    CPLFree( pasGCPList );
+
+    return pResult;
 }
 
 /************************************************************************/
