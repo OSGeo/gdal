@@ -28,9 +28,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2000/12/07 03:52:47  danmo
+ * Unix port - handle strstr() return value as const char *
+ *
  * Revision 1.1  2000/08/18 21:26:01  svillene
  * OGR Representation
- *
  *
  */
 
@@ -589,7 +591,7 @@ GBool OGRStyleTable::LoadStyleTable(const char *pszFilename)
 /****************************************************************************/
 const char *OGRStyleTable::Find(const char *pszName)
 {
-    char *pszDash = NULL;
+    const char *pszDash = NULL;
     const char *pszOutput = NULL;
 
     int nPos;
