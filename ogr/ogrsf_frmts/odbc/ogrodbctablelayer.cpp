@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2003/10/29 17:47:38  warmerda
+ * Added FIDcolumn (based on primary key) support
+ *
  * Revision 1.2  2003/09/26 18:22:41  warmerda
  * Fixed SetAttributeFilter().
  *
@@ -91,14 +94,35 @@ CPLErr OGRODBCTableLayer::Initialize( const char *pszTableName,
     pszFIDColumn = NULL;
 
 /* -------------------------------------------------------------------- */
+/*      Do we have a simple primary key?                                */
+/* -------------------------------------------------------------------- */
+    CPLODBCStatement oGetKey( poSession );
+    
+    if( oGetKey.GetPrimaryKeys( pszTableName ) && oGetKey.Fetch() )
+    {
+        pszFIDColumn = CPLStrdup(oGetKey.GetColData( 3 ));
+        
+        if( oGetKey.Fetch() ) // more than one field in key! 
+        {
+            CPLFree( pszFIDColumn );
+            pszFIDColumn = NULL;
+        }
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Get the column definitions for this table.                      */
 /* -------------------------------------------------------------------- */
     CPLODBCStatement oGetCol( poSession );
+    CPLErr eErr;
 
     if( !oGetCol.GetColumns( pszTableName ) )
         return CE_Failure;
 
-    return BuildFeatureDefn( pszTableName, &oGetCol );
+    eErr = BuildFeatureDefn( pszTableName, &oGetCol );
+    if( eErr != CE_None )
+        return eErr;
+
+    return CE_None;
 }
 
 /************************************************************************/
@@ -181,7 +205,37 @@ OGRErr OGRODBCTableLayer::ResetStatement()
 void OGRODBCTableLayer::ResetReading()
 
 {
+    ClearStatement();
     OGRODBCLayer::ResetReading();
+}
+
+/************************************************************************/
+/*                             GetFeature()                             */
+/************************************************************************/
+
+OGRFeature *OGRODBCTableLayer::GetFeature( long nFeatureId )
+
+{
+    if( pszFIDColumn == NULL )
+        return OGRODBCLayer::GetFeature( nFeatureId );
+
+    ClearStatement();
+
+    iNextShapeId = nFeatureId;
+
+    poStmt = new CPLODBCStatement( poDS->GetSession() );
+    poStmt->Append( "SELECT * FROM " );
+    poStmt->Append( poFeatureDefn->GetName() );
+    poStmt->Appendf( " WHERE %s = %d", pszFIDColumn, nFeatureId );
+
+    if( !poStmt->ExecuteSQL() )
+    {
+        delete poStmt;
+        poStmt = NULL;
+        return NULL;
+    }
+
+    return GetNextRawFeature();
 }
 
 /************************************************************************/
