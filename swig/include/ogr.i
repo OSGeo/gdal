@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.9  2005/02/18 22:03:51  hobu
+ * Finished up Layer
+ *
  * Revision 1.8  2005/02/18 20:41:19  hobu
  * it compiles and it doesn't blow up.  IMO this is a
  * good stopping point :)
@@ -128,6 +131,7 @@ using namespace std;
 
 #include "ogr_api.h"
 #include "ogr_core.h"
+#include "cpl_port.h"
 #include "cpl_string.h"
 
 typedef void SpatialReference;
@@ -356,6 +360,208 @@ ds[0:4] would return a list of the first four layers."""
 
 
 
+%rename (Layer) OGRLayerH;
+%apply (THROW_OGR_ERROR) {OGRErr};
+class OGRLayerH {
+  OGRLayerH();
+  ~OGRLayerH();
+public:
+%extend {
+
+  int Reference() {
+    return OGR_L_Reference(self);
+  }
+
+  int Dereference() {
+    return OGR_L_Dereference(self);
+  }
+  
+  int GetRefCount() {
+    return OGR_L_GetRefCount(self);
+  }
+  
+  void SetSpatialFilter(OGRGeometryH filter) {
+    OGR_L_SetSpatialFilter (self, filter);
+  }
+  
+  void SetSpatialFilterRect( double minx, double miny,
+                             double maxx, double maxy) {
+    OGR_L_SetSpatialFilterRect(self, minx, miny, maxx, maxy);                          
+  }
+  
+  %newobject GetSpatialFilter;
+  OGRGeometryH *GetSpatialFilter() {
+    return (OGRGeometryH *) OGR_L_GetSpatialFilter(self);
+  }
+
+  OGRErr SetAttributeFilter(char* filter_string) {
+    OGRErr err = OGR_L_SetAttributeFilter(self, filter_string);
+    if (err != 0) {
+      throw err;
+    }
+    return 0;
+  }
+  
+  void ResetReading() {
+    OGR_L_ResetReading(self);
+  }
+  
+  const char * GetName() {
+    return OGR_FD_GetName(OGR_L_GetLayerDefn(self));
+  }
+  
+  %newobject GetFeature;
+  OGRFeatureH *GetFeature(long fid) {
+    return (OGRFeatureH*) OGR_L_GetFeature(self, fid);
+  }
+  
+  %newobject GetNextFeature;
+  OGRFeatureH *GetNextFeature() {
+    return (OGRFeatureH*) OGR_L_GetNextFeature(self);
+  }
+  
+  OGRErr SetNextByIndex(long new_index) {
+    OGRErr err = OGR_L_SetNextByIndex(self, new_index);
+    if (err != 0) {
+      throw err;
+    }
+    return 0;
+  }
+  
+  OGRErr SetFeature(OGRFeatureH feature) {
+    OGRErr err = OGR_L_SetFeature(self, feature);
+    if (err != 0) {
+      throw err;
+    }
+    return 0;
+  }
+  
+  OGRErr CreateFeature(OGRFeatureH feature) {
+    OGRErr err = OGR_L_CreateFeature(self, feature);
+    if (err != 0) {
+      throw err;
+    }
+    return 0;
+  }
+  
+  OGRErr DeleteFeature(long fid) {
+    OGRErr err = OGR_L_DeleteFeature(self, fid);
+    if (err != 0) {
+      throw err;
+    }
+    return 0;
+  }
+  
+  OGRErr SyncToDisk() {
+    OGRErr err = OGR_L_SyncToDisk(self);
+    if (err != 0) {
+      throw err;
+    }
+    return 0;
+  }
+  
+  %newobject GetLayerDefn;
+  OGRFeatureDefnH *GetLayerDefn() {
+    return (OGRFeatureDefnH*) OGR_L_GetLayerDefn(self);
+  }
+  
+  int GetFeatureCount(int force) {
+    return OGR_L_GetFeatureCount(self, force);
+  }
+  
+  //TODO make a typemap to return this as a four-tuple
+  %newobject GetExtent;
+  OGREnvelope GetExtent(int force) {
+    OGREnvelope extent;
+    OGRErr err = OGR_L_GetExtent(self, &extent, force);
+    if (err != 0)
+      throw err;
+    return extent;
+  }
+
+  int TestCapability(const char* cap) {
+    return OGR_L_TestCapability(self, cap);
+  }
+  
+  %feature( "kwargs" ) CreateField;
+  OGRErr CreateField(OGRFieldDefnH field_def, int approx_ok = 1) {
+    OGRErr err = OGR_L_CreateField(self, field_def, approx_ok);
+    if (err != 0)
+      throw err;
+    return 0;
+  }
+  
+  OGRErr StartTransaction() {
+    OGRErr err = OGR_L_StartTransaction(self);
+    if (err != 0)
+      throw err;
+    return 0;
+  }
+  
+  OGRErr CommitTransaction() {
+    OGRErr err = OGR_L_CommitTransaction(self);
+    if (err != 0)
+      throw err;
+    return 0;
+  }
+
+  OGRErr RollbackTransaction() {
+    OGRErr err = OGR_L_RollbackTransaction(self);
+    if (err != 0)
+      throw err;
+    return 0;
+  }
+  
+  %newobject GetSpatialRef;
+  SpatialReference *GetSpatialRef() {
+    return (SpatialReference*) OGR_L_GetSpatialRef(self);
+  }
+  
+  GIntBig GetFeatureRead() {
+    return OGR_L_GetFeaturesRead(self);
+  }
+  
+  %pythoncode {
+    def __len__(self):
+        """Returns the number of features in the layer"""
+        return self.GetFeatureCount()
+
+    def __getitem__(self, value):
+        """Support list and slice -like access to the layer.
+layer[0] would return the first feature on the layer.
+layer[0:4] would return a list of the first four features."""
+        if isinstance(value, types.SliceType):
+            output = []
+            if value.stop == sys.maxint:
+                #for an unending slice, sys.maxint is used
+                #We need to stop before that or GDAL will write an
+                #error to stdout
+                stop = len(self) - 1
+            else:
+                stop = value.stop
+            for i in xrange(value.start,stop,step=value.step):
+                feature = self.GetFeature(i)
+                if feature:
+                    output.append(feature)
+                else:
+                    return output
+            return output
+        if isinstance(value, types.IntType):
+            if value > len(self)-1:
+                raise IndexError
+            return self.GetFeature(value)
+        else:
+            raise TypeError,"Input %s is not of IntType or SliceType" % type(value)
+  }
+} /* %extend */
+
+
+}; /* class OGRLayerH */
+
+%clear (OGRErr);
+
+
+
 %{
 char const *OGRSFDriverH_name_get( OGRSFDriverH *h ) {
   return OGR_Dr_GetName( h );
@@ -364,6 +570,7 @@ char const *OGRSFDriverH_name_get( OGRSFDriverH *h ) {
 char const *OGRDataSourceH_name_get( OGRDataSourceH *h ) {
   return OGR_DS_GetName( h );
 }
+
 
 %}
 
@@ -414,12 +621,14 @@ char const *OGRDataSourceH_name_get( OGRDataSourceH *h ) {
   
 %}
 
+%feature( "kwargs" ) CreateGeometryFromWkb;
 %newobject CreateGeometryFromWkb;
+%apply (int nLen, char *pBuf ) { (int len, char *bin_string)};
 %inline %{
-  OGRGeometryH CreateGeometryFromWkb( unsigned char * bin_string, 
-                                      SpatialReference *reference ) {
+  OGRGeometryH CreateGeometryFromWkb( int len, char *bin_string, 
+                                      SpatialReference *reference=NULL ) {
     OGRGeometryH geom;
-    OGRErr err = OGR_G_CreateFromWkb(bin_string,
+    OGRErr err = OGR_G_CreateFromWkb( (unsigned char *) bin_string,
                                       reference,
                                       &geom);
     if (err != 0 )
@@ -428,6 +637,8 @@ char const *OGRDataSourceH_name_get( OGRDataSourceH *h ) {
   }
  
 %}
+%clear (int len, char *bin_string);
+
 
 %feature( "kwargs" ) CreateGeometryFromWkt;
 %apply (char **ignorechange) { (char **) };
