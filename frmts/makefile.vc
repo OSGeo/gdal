@@ -5,11 +5,8 @@ EXTRAFLAGS =	-DFRMT_ceos -DFRMT_aigrid -DFRMT_elas -DFRMT_hfa -DFRMT_gtiff\
 		-DFRMT_sdts -DFRMT_raw -DFRMT_gxf -DFRMT_ceos2 -DFRMT_png \
 		-DFRMT_dted -DFRMT_mem -DFRMT_jdem -DFRMT_gif \
 		-DFRMT_envisat -DFRMT_aaigrid -DFRMT_usgsdem -DFRMT_l1b \
-		-DFRMT_fit -DFRMT_vrt -DFRMT_xpm -DFRMT_bmp $(BSBDEF) \
-		-DFRMT_nitf -DFRMT_pcidsk \
-		$(JPEGDEF) $(JP2KAKDEF) $(MRSIDDEF) $(FITSDEF) \
-		$(JPEG2000DEF) $(ECWDEF) $(OGDIDEF) $(HDFDEF) $(ZLIBDEF) \
-		$(NETCDFDEF)
+		-DFRMT_fit -DFRMT_vrt -DFRMT_xpm -DFRMT_bmp \
+		-DFRMT_nitf -DFRMT_pcidsk
 
 MOREEXTRA =	
 
@@ -18,45 +15,45 @@ DIRLIST =	$(EXTRAFLAGS:-DFRMT_=)
 !INCLUDE $(GDAL_ROOT)/nmake.opt
 
 !IFDEF JPEG_SUPPORTED
-JPEGDEF =	-DFRMT_jpeg
+EXTRAFLAGS	=	$(EXTRAFLAGS) -DFRMT_jpeg
 !ENDIF
 
 !IFDEF BSB_SUPPORTED
-BSBDEF =	-DFRMT_bsb
+EXTRAFLAGS	=	$(EXTRAFLAGS) -DFRMT_bsb
 !ENDIF
 
 !IFDEF OGDIDIR
-OGDIDEF	=	-DFRMT_ogdi
+EXTRAFLAGS	=	$(EXTRAFLAGS) -DFRMT_ogdi
 !ELSE
-ZLIBDEF =	-DFRMT_zlib
+EXTRAFLAGS	=	$(EXTRAFLAGS) -DFRMT_zlib
 !ENDIF
 
 !IFDEF JASPER_DIR
-JPEG2000DEF	=	-DFRMT_jpeg2000
+EXTRAFLAGS	=	$(EXTRAFLAGS) -DFRMT_jpeg2000
 !ENDIF
 
 !IFDEF KAKDIR
-JP2KAKDEF = -DFRMT_jp2kak
+EXTRAFLAGS	=	$(EXTRAFLAGS) -DFRMT_jp2kak
 !ENDIF
 
 !IFDEF ECWDIR
-ECWDEF	=	-DFRMT_ecw
+EXTRAFLAGS	=	$(EXTRAFLAGS) -DFRMT_ecw
 !ENDIF
 
 !IFDEF HDF4_DIR
-HDFDEF	=	-DFRMT_hdf4
+EXTRAFLAGS	=	$(EXTRAFLAGS) -DFRMT_hdf4
 !ENDIF
 
 !IFDEF MRSID_DIR
-MRSIDDEF	=	-DFRMT_mrsid
+EXTRAFLAGS	=	$(EXTRAFLAGS) -DFRMT_mrsid
 !ENDIF
 
 !IFDEF FITS_DIR
-FITSDEF		=	-DFRMT_fits
+EXTRAFLAGS	=	$(EXTRAFLAGS) -DFRMT_fits
 !ENDIF
 
 !IFDEF NETCDF_SETTING
-NETCDFDEF		=	-DFRMT_netcdf
+EXTRAFLAGS	=	$(EXTRAFLAGS) -DFRMT_netcdf
 !ENDIF
 
 default:	o\gdalallregister.obj subdirs
@@ -65,7 +62,10 @@ list:
 	echo $(DIRLIST)
 
 subdirs:
-	for %d in ( $(DIRLIST) ) do call ..\submake.bat %d
+	for %d in ( $(DIRLIST) ) do \
+		cd %d \
+		&& nmake /NOLOGO /f makefile.vc \
+		&& cd ..
 
 o\gdalallregister.obj:	gdalallregister.cpp
 	$(CC) $(CFLAGS) $(MOREEXTRA) /c gdalallregister.cpp
@@ -73,6 +73,10 @@ o\gdalallregister.obj:	gdalallregister.cpp
 
 clean:
 	-del o\*.obj *.obj
-	for %d in ( $(DIRLIST) ) do call ..\submake.bat %d clean
-	..\submake.bat iso8211 clean
+	for %d in ( $(DIRLIST) ) do \
+		cd %d \
+		&& nmake /NOLOGO /f makefile.vc clean \
+		&& cd ..
+	cd iso8211
+	nmake /NOLOGO /f makefile.vc clean
 
