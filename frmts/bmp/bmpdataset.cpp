@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.23  2003/06/17 17:59:03  dron
+ * Do not close GDALOpenInfo::fp handler before reopening.
+ *
  * Revision 1.22  2003/05/30 05:26:56  dron
  * Fixed problem with scanline numbering.
  *
@@ -938,9 +941,6 @@ GDALDataset *BMPDataset::Open( GDALOpenInfo * poOpenInfo )
 
     if( !EQUALN((const char *) poOpenInfo->pabyHeader, "BM", 2) )
         return NULL;
-
-    VSIFCloseL( poOpenInfo->fp );
-    poOpenInfo->fp = NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
