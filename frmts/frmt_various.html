@@ -468,30 +468,6 @@ band will attempt to return if the units are Feet ("ft") or Meters ("m").
 
 NOTE: Implemented as <tt>gdal/frmts/sdts/sdtsdataset.cpp</tt>.<p>
 
-<h2><a name="USGSDEM">USGSDEM -- USGS ASCII DEM</a></h2>
-
-GDAL includes support for reading USGS ASCII DEM files.  These are the
-traditional format used by USGS before being replaced by SDTS.  Most popular
-variations on USGS DEM files should be supported, including correct
-recognition of coordinate system, and georerenced positioning.<p>
-
-The 7.5 minute (UTM grid) USGS DEM files will generally have regions of
-missing data around the edges, and these are properly marked with
-a nodata value.  Elevation values in USGS DEM files may be in meters or
-feet, and this will be indicated by the return value of 
-GDALRasterBand::GetUnitType() (either "m" or "ft").<p>
-
-Note that USGS DEM files are represented as one big tile.  This may cause
-cache thrashing problems if the GDAL tile cache size is small.  It will also
-result in a substantial delay when the first pixel is read as the whole file
-will be ingested. <p>
-
-Some of the code for implementing usgsdemdataset.cpp was derived from 
-VTP code by Ben Discoe.  See the <a href="http://www.vterrain.org/">Virtual
-Terrain</a> project for more information on VTP.<p>
-
-NOTE: Implemented as <tt>gdal/frmts/sdts/usgsdemdataset.cpp</tt>.<p>
-
 <h2><a name="XPM">XPM - X11 Pixmap</a></h2>
 
 GDAL includes support for reading and writing XPM (X11 Pixmap Format) 
