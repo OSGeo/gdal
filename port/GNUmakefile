@@ -1,7 +1,8 @@
 include ../GDALmake.opt
 
 
-OBJ	=	cpl_conv.o cpl_error.o cpl_string.o cpl_vsisimple.o
+OBJ	=	cpl_conv.o cpl_error.o cpl_string.o cpl_vsisimple.o \
+		cplgetsymbol.o
 
 default:	$(OBJ)
 
