@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2004/01/26 18:28:32  warmerda
+ * provide default types if not defined in file
+ *
  * Revision 1.6  2003/04/22 19:40:36  warmerda
  * fixed email address
  *
@@ -54,6 +57,39 @@
 #include "cpl_conv.h"
 
 CPL_CVSID("$Id$");
+
+static char *apszDefDefn[] = {
+    NULL,
+    NULL,
+
+    "Edsc_Column", 
+    "{1:lnumRows,1:LcolumnDataPtr,1:e4:integer,real,complex,string,dataType,1:lmaxNumChars,}Edsc_Column", 
+    
+    "Eprj_Size",
+    "{1:dwidth,1:dheight,}Eprj_Size",
+
+    "Eprj_Coordinate",
+    "{1:dx,1:dy,}Eprj_Coordinate",
+
+    "Eprj_MapInfo", 
+    "{0:pcproName,1:*oEprj_Coordinate,upperLeftCenter,1:*oEprj_Coordinate,lowerRightCenter,1:*oEprj_Size,pixelSize,0:pcunits,}Eprj_MapInfo",
+    
+    "Eimg_StatisticsParameters830", 
+    "{0:poEmif_String,LayerNames,1:*bExcludedValues,1:oEmif_String,AOIname,1:lSkipFactorX,1:lSkipFactorY,1:*oEdsc_BinFunction,BinFunction,}Eimg_StatisticsParameters830",
+    
+    "Esta_Statistics", 
+    "{1:dminimum,1:dmaximum,1:dmean,1:dmedian,1:dmode,1:dstddev,}Esta_Statistics",
+
+    "Edsc_BinFunction", 
+    "{1:lnumBins,1:e4:direct,linear,logarithmic,explicit,binFunctionType,1:dminLimit,1:dmaxLimit,1:*bbinLimits,}Edsc_BinFunction",
+
+    "Eimg_NonInitializedValue", 
+    "{1:*bvalueBD,}Eimg_NonInitializedValue",
+
+    NULL,
+    NULL };
+    
+    
 
 /************************************************************************/
 /* ==================================================================== */
@@ -91,15 +127,21 @@ HFADictionary::HFADictionary( const char * pszString )
             delete poNewType;
     }
 
+
 /* -------------------------------------------------------------------- */
-/*      Did we get a Edsc_Column definition?  For some reason it is     */
-/*      missing from some new files.                                    */
+/*      Provide hardcoded values for some definitions that are          */
+/*      sometimes missing from the data dictionary for unknown          */
+/*      reasons.                                                        */
 /* -------------------------------------------------------------------- */
-    if( FindType( "Edsc_Column" ) == NULL )
+    for( i = 0; apszDefDefn[i] != NULL; i += 2 )
     {
-        HFAType *poNewType = new HFAType();
-        poNewType->Initialize( "{1:lnumRows,1:LcolumnDataPtr,1:e4:integer,real,complex,string,dataType,1:lmaxNumChars,}Edsc_Column" );
-        AddType( poNewType );
+        if( FindType( apszDefDefn[i] ) == NULL )
+        {
+            HFAType *poNewType = new HFAType();
+
+            poNewType->Initialize( apszDefDefn[i+1] );
+            AddType( poNewType );
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -198,7 +240,7 @@ int HFADictionary::GetItemSize( char chType )
         return 16;
 
       case 'b':
-        return 8;
+        return -1;
         
       case 'o':
       case 'x':
