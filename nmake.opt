@@ -3,7 +3,7 @@
 # Edit as required. GDAL_HOME is used for convenience here,
 # but this particular relative organization is not mandatory.
 
-GDAL_HOME = "D:\Build\GDAL"
+GDAL_HOME = "C:\GDALBuild"
 BINDIR = $(GDAL_HOME)\bin
 PY_INST_DIR = $(GDAL_HOME)\pymod
 LIBDIR = $(GDAL_HOME)\lib
@@ -125,6 +125,9 @@ OCI_LIB =	$(ORACLE_HOME)\oci\lib\msvc\ociw32.lib \
 		$(ORACLE_HOME)\oci\lib\msvc\oci.lib
 !ENDIF
 
+# Any extra libraries needed on this platform?
+ADD_LIBS	=
+
 # Comment out the following if you want to build with Python support, but
 # you don't have Numeric Python installed (with include files).  Numeric
 # integration may not work.
@@ -161,7 +164,8 @@ ODBCLIB = odbc32.lib
 
 EXTERNAL_LIBS =	$(OGDILIB) $(XERCES_LIB) $(OCI_LIB) $(PG_LIB) $(ODBCLIB) \
 		$(ECWLIB) $(HDF4_LIB) $(FME_LIB) $(JASPER_LIB) $(MRSID_LIB) \
-		$(FITS_LIB) $(JPEG_LIB) $(PNG_LIB) $(NETCDF_LIB) $(PROJ4_LIB)
+		$(FITS_LIB) $(JPEG_LIB) $(PNG_LIB) $(NETCDF_LIB) $(PROJ4_LIB) \
+		$(GEOTIFF_LIB) $(TIFF_LIB) $(ADD_LIBS)
 
 .c.obj:	
 	$(CC) $(CFLAGS) /c $*.c
