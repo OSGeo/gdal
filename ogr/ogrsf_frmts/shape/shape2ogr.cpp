@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.23  2002/10/04 04:31:40  warmerda
+ * Fixes for writing 3D multipoints.
+ *
  * Revision 1.22  2002/10/04 04:30:46  warmerda
  * Fixed some bugs in 3D support for writing polygons.
  *
@@ -305,7 +308,7 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom )
         int		iPoint;
         SHPObject	*psShape;
 
-        if( poGeom->getGeometryType() != wkbMultiPoint )
+        if( wkbFlatten(poGeom->getGeometryType()) != wkbMultiPoint )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                       "Attempt to write non-multipoint (%s) geometry to "
