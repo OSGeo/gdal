@@ -26,6 +26,9 @@
  * serves as an early test harnass.
  *
  * $Log$
+ * Revision 1.22  2002/01/13 01:42:37  warmerda
+ * add -sample test
+ *
  * Revision 1.21  2001/11/17 21:40:58  warmerda
  * converted to use OGR projection services
  *
@@ -112,7 +115,7 @@ int main( int argc, char ** argv )
     double		adfGeoTransform[6];
     GDALDriverH		hDriver;
     char		**papszMetadata;
-    int                 bComputeMinMax = FALSE;
+    int                 bComputeMinMax = FALSE, bSample = FALSE;
 
     if( argc < 2 )
     {
@@ -123,6 +126,12 @@ int main( int argc, char ** argv )
     if( EQUAL(argv[1],"-mm") )
     {
         bComputeMinMax = TRUE;
+        argv++;
+    }
+
+    if( EQUAL(argv[1],"-sample") )
+    {
+        bSample = TRUE;
         argv++;
     }
 
@@ -260,6 +269,16 @@ int main( int argc, char ** argv )
         int         nBlockXSize, nBlockYSize;
 
         hBand = GDALGetRasterBand( hDataset, iBand+1 );
+
+        if( bSample )
+        {
+            float afSample[10000];
+            int   nCount;
+
+            nCount = GDALGetRandomRasterSample( hBand, 10000, afSample );
+            printf( "Got %d samples.\n", nCount );
+        }
+        
         GDALGetBlockSize( hBand, &nBlockXSize, &nBlockYSize );
         printf( "Band %d Block=%dx%d Type=%s, ColorInterp=%s\n", iBand+1,
                 nBlockXSize, nBlockYSize,
