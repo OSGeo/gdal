@@ -3,7 +3,7 @@ GDAL_ROOT	=	..\..
 DIRLIST		=	generic shape ntf sdts tiger s57 dgn mitab gml avc \
 			rec mem vrt csv \
 			$(OGDIDIR) $(FMEDIR) $(OCIDIR) $(PG_DIR) \
-			$(ODBCDIR) $(SQLITE_DIR)
+			$(ODBCDIR) $(SQLITE_DIR) $(MYSQL_DIR)
 
 !INCLUDE $(GDAL_ROOT)\nmake.opt
 
@@ -32,6 +32,11 @@ PG_DIR = pg
 PG_OBJ = pg\*.obj
 !ENDIF
 
+!IFDEF MYSQL_INC_DIR
+MYSQL_DIR = mysql
+MYSQL_OBJ = mysql\*.obj
+!ENDIF
+
 !IFDEF SQLITE_LIB
 SQLITE_DIR = sqlite
 SQLITE_OBJ = sqlite\*.obj
@@ -46,9 +51,9 @@ default:
 	lib /out:ogrsf_frmts.lib generic\*.obj shape\*.obj ntf\*.obj \
 				 sdts\*.obj s57\*.obj tiger\*.obj gml\*.obj \
 				 mitab\*.obj dgn\*.obj avc\*.obj mem\*.obj \
-				 vrt\*.obj csv\*.obj \
+				 vrt\*.obj csv\*.obj rec\*.obj \
 				$(OGDIOBJ) $(ODBCOBJ) $(SQLITE_OBJ) \
-				$(FMEOBJ) $(OCIOBJ) $(PG_OBJ) rec\*.obj
+				$(FMEOBJ) $(OCIOBJ) $(PG_OBJ) $(MYSQL_OBJ)
 	lib /out:ogrsf_frmts_sup.lib \
 				 ..\..\frmts\iso8211\*.obj \
 				 ..\..\frmts\sdts\sdtsattrreader.obj \
