@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2002/03/07 22:39:01  warmerda
+ * include ogr_gml_geom.h
+ *
  * Revision 1.3  2002/03/06 20:08:24  warmerda
  * add accelerated GetFeatureCount and GetExtent
  *
@@ -47,11 +50,7 @@
 #include "ogrsf_frmts.h"
 #include "gmlreader.h"
 
-/* -------------------------------------------------------------------- */
-/*      Simple GML geometry conversion functions.                       */
-/* -------------------------------------------------------------------- */
-OGRGeometry *GML2OGRGeometry( const char * );
-char *OGR2GMLGeometry( OGRGeometry * );
+#include "ogr_gml_geom.h"
 
 class OGRGMLDataSource;
 
