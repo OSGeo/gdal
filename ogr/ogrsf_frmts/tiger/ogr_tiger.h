@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  1999/12/15 19:59:52  warmerda
+ * added new file types
+ *
  * Revision 1.2  1999/11/04 21:14:31  warmerda
  * various improvements, and TestCapability()
  *
@@ -98,6 +101,98 @@ public:
     		      TigerCompleteChain( OGRTigerDataSource *,
                                           const char * );
   virtual            ~TigerCompleteChain();
+
+  virtual int         SetModule( const char * );
+
+  virtual OGRFeature *GetFeature( int );
+};
+
+/************************************************************************/
+/*                    TigerAltName (Type 4 records)                     */
+/************************************************************************/
+
+class TigerAltName : public TigerFileBase
+{
+public:
+    		      TigerAltName( OGRTigerDataSource *,
+                                          const char * );
+  virtual            ~TigerAltName();
+
+  virtual int         SetModule( const char * );
+
+  virtual OGRFeature *GetFeature( int );
+};
+
+/************************************************************************/
+/*                    TigerFeatureIds (Type 5 records)                  */
+/************************************************************************/
+
+class TigerFeatureIds : public TigerFileBase
+{
+public:
+    		      TigerFeatureIds( OGRTigerDataSource *,
+                                       const char * );
+  virtual            ~TigerFeatureIds();
+
+  virtual int         SetModule( const char * );
+
+  virtual OGRFeature *GetFeature( int );
+};
+
+/************************************************************************/
+/*                    TigerZipCodes (Type 6 records)                    */
+/************************************************************************/
+
+class TigerZipCodes : public TigerFileBase
+{
+public:
+    		      TigerZipCodes( OGRTigerDataSource *, const char * );
+  virtual            ~TigerZipCodes();
+
+  virtual int         SetModule( const char * );
+
+  virtual OGRFeature *GetFeature( int );
+};
+
+/************************************************************************/
+/*                   TigerLandmarks (Type 7 records)                    */
+/************************************************************************/
+
+class TigerLandmarks : public TigerFileBase
+{
+public:
+    		      TigerLandmarks( OGRTigerDataSource *, const char * );
+  virtual            ~TigerLandmarks();
+
+  virtual int         SetModule( const char * );
+
+  virtual OGRFeature *GetFeature( int );
+};
+
+/************************************************************************/
+/*                   TigerAreaLandmarks (Type 8 records)                */
+/************************************************************************/
+
+class TigerAreaLandmarks : public TigerFileBase
+{
+public:
+    		      TigerAreaLandmarks( OGRTigerDataSource *, const char * );
+  virtual            ~TigerAreaLandmarks();
+
+  virtual int         SetModule( const char * );
+
+  virtual OGRFeature *GetFeature( int );
+};
+
+/************************************************************************/
+/*                   TigerKeyFeatures (Type 9 records)                  */
+/************************************************************************/
+
+class TigerKeyFeatures : public TigerFileBase
+{
+public:
+    		      TigerKeyFeatures( OGRTigerDataSource *, const char * );
+  virtual            ~TigerKeyFeatures();
 
   virtual int         SetModule( const char * );
 

@@ -1,8 +1,8 @@
 /******************************************************************************
  * $Id$
  *
- * Project:  UK NTF Reader
- * Purpose:  Implements OGRNTFDataSource class
+ * Project:  TIGER/Line Translator
+ * Purpose:  Implements OGRTigerDataSource class
  * Author:   Frank Warmerdam, warmerda@home.com
  *
  ******************************************************************************
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  1999/12/15 19:59:52  warmerda
+ * added new file types
+ *
  * Revision 1.2  1999/11/04 21:14:31  warmerda
  * various improvements, and TestCapability()
  *
@@ -280,6 +283,31 @@ int OGRTigerDataSource::Open( const char * pszFilename, int bTestOpen,
     AddLayer( new OGRTigerLayer( this,
                                  new TigerCompleteChain( this,
                                                          papszModules[0]) ));
+
+    /* should we have kept track of whether we encountered an RT4 file? */
+    AddLayer( new OGRTigerLayer( this,
+                                 new TigerAltName( this,
+                                                   papszModules[0]) ));
+    
+    AddLayer( new OGRTigerLayer( this,
+                                 new TigerFeatureIds( this,
+                                                      papszModules[0]) ));
+    
+    AddLayer( new OGRTigerLayer( this,
+                                 new TigerZipCodes( this,
+                                                    papszModules[0]) ));
+    
+    AddLayer( new OGRTigerLayer( this,
+                                 new TigerLandmarks( this,
+                                                     papszModules[0]) ));
+    
+    AddLayer( new OGRTigerLayer( this,
+                                 new TigerAreaLandmarks( this,
+                                                     papszModules[0]) ));
+    
+    AddLayer( new OGRTigerLayer( this,
+                                 new TigerKeyFeatures( this,
+                                                       papszModules[0]) ));
     
     return TRUE;
 }

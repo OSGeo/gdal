@@ -3,8 +3,10 @@ GDAL_ROOT	=	../../..
 
 include $(GDAL_ROOT)/GDALmake.opt
 
-OBJ	=	tigerfilebase.o tigercompletechain.o \
-		ogrtigerdriver.o ogrtigerdatasource.o ogrtigerlayer.o
+OBJ	=	tigerfilebase.o tigercompletechain.o tigeraltname.o \
+		tigerfeatureids.o tigerzipcodes.o tigerlandmarks.o \
+		tigerarealandmarks.o tigerkeyfeatures.o \
+		ogrtigerdriver.o ogrtigerdatasource.o ogrtigerlayer.o 
 
 ALL_C_FLAGS	=	-I.. -I../.. -I$(GDAL_ROOT)/port $(CFLAGS)
 
