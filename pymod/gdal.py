@@ -4,7 +4,7 @@
 #  Name:     gdal.py
 #  Project:  GDAL Python Interface
 #  Purpose:  GDAL Shadow Class Implementations
-#  Author:   Frank Warmerdam, warmerda@home.com
+#  Author:   Frank Warmerdam, warmerdam@pobox.com
 # 
 #******************************************************************************
 #  Copyright (c) 2000, Frank Warmerdam
@@ -29,6 +29,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.44  2003/03/25 05:58:37  warmerda
+# add better pointer and stringlist support
+#
 # Revision 1.43  2003/03/18 06:05:12  warmerda
 # Added GDALDataset::FlushCache()
 #
@@ -74,84 +77,10 @@
 # Revision 1.29  2002/01/18 05:46:52  warmerda
 # added support for writing arrays to a GDAL band
 #
-# Revision 1.28  2001/10/19 15:43:52  warmerda
-# added SetGCPs, and SetMetadata support
-#
-# Revision 1.27  2001/10/01 13:24:17  warmerda
-# Fixed last fix.
-#
-# Revision 1.26  2001/09/30 04:42:13  warmerda
-# _gdal.GDALOpen() returns None, not "NULL".
-#
-# Revision 1.25  2001/08/23 03:37:59  warmerda
-# added GetCacheUsed() method
-#
-# Revision 1.24  2001/06/26 02:22:39  warmerda
-# added metadata domain support, and GetSubDatasets
-#
-# Revision 1.23  2001/05/07 14:50:44  warmerda
-# added python access to GDALComputeRasterMinMax
-#
-# Revision 1.22  2001/01/23 15:49:00  warmerda
-# added RGBFile2PCTFile
-#
-# Revision 1.21  2001/01/22 22:34:06  warmerda
-# added median cut, and dithering algorithms
-#
-# Revision 1.20  2000/12/14 17:38:49  warmerda
-# added GDALDriver.Delete
-#
-# Revision 1.19  2000/10/30 21:25:41  warmerda
-# added access to CPL error functions
-#
-# Revision 1.18  2000/10/30 14:12:49  warmerda
-# Fixed bug in GetRasterColorTable().
-#
-# Revision 1.17  2000/10/06 15:31:34  warmerda
-# added nodata support
-#
-# Revision 1.16  2000/07/27 21:34:08  warmerda
-# added description, and driver access
-#
-# Revision 1.15  2000/07/25 17:45:03  warmerda
-# added access to CPLDebug
-#
-# Revision 1.14  2000/07/19 19:43:29  warmerda
-# updated for numpy support
-#
-# Revision 1.13  2000/06/27 16:48:57  warmerda
-# added progress func support
-#
-# Revision 1.12  2000/06/26 21:11:10  warmerda
-# Added default rules for overviews
-#
-# Revision 1.11  2000/06/26 19:54:52  warmerda
-# improve defaulting rules for overviewlist
-#
-# Revision 1.10  2000/06/26 18:46:31  warmerda
-# Added Dataset.BuildOverviews
-#
-# Revision 1.9  2000/06/26 17:58:15  warmerda
-# added driver, createcopy support
-#
-# Revision 1.8  2000/06/13 18:14:19  warmerda
-# added control of the gdal raster cache
-#
-# Revision 1.7  2000/05/15 14:17:57  warmerda
-# fixed metadata handling
-#
-# Revision 1.6  2000/04/03 19:42:07  warmerda
-# fixed up handling of band properties
-#
-# Revision 1.5  2000/03/31 14:25:43  warmerda
-# added metadata and gcp support
-#
-# Revision 1.4  2000/03/10 13:55:56  warmerda
-# added lots of methods
-#
 
 import _gdal
 from gdalconst import *
+from _gdal import ptrcreate, ptrfree, ptrvalue, ptrset, ptrcast, ptradd, ptrmap
 
 def Debug(msg_class, message):
     _gdal.CPLDebug( msg_class, message )
@@ -317,8 +246,27 @@ def GCPsToGeoTransform( gcp_list, approx_ok = 1 ):
                                 gcp.GCPX, gcp.GCPY, gcp.GCPZ) )
 
         return _gdal.GDALGCPsToGeoTransform( tuple_list, approx_ok )
+
+class MajorObject:
+
+    def GetMetadata( self, domain = '' ):
+        md = _gdal.GDALGetMetadata( self._o, domain )
+        md_dict = _gdal.StringListToDict( md )
+        return md_dict
         
-class Driver:
+    def SetMetadata(self, metadata, domain = ''):
+        md_c = _gdal.DictToStringList( metadata )
+        result = _gdal.GDALSetMetadata(self._o, md_c, domain)
+        _gdal.CSLDestroy(md_c)
+        return result
+
+    def GetDescription(self):
+        return _gdal.GDALGetDescription( self._o )
+    
+    def SetDescription(self, description ):
+        _gdal.GDALSetDescription( self._o, description )
+    
+class Driver(MajorObject):
     
     def __init__(self, _obj):
         self._o = _obj
@@ -351,19 +299,7 @@ class Driver:
     def Delete(self, filename):
         return _gdal.GDALDeleteDataset( self._o, filename )
 
-    def GetMetadata(self, domain = None):
-        if domain is None:
-            return _gdal.GDALGetMetadata(self._o)
-        else:
-            return _gdal.GDALGetMetadata(self._o, domain)
-
-    def SetMetadata(self, metadata, domain = None):
-        if domain is None:
-            return _gdal.GDALSetMetadata(self._o, metadata)
-        else:
-            return _gdal.GDALSetMetadata(self._o, metadatadomain)
-        
-class Dataset:
+class Dataset(MajorObject):
 
     def __init__(self, _obj):
         self._o = _obj
@@ -384,12 +320,6 @@ class Dataset:
     def GetDriver(self):
         return Driver(_obj= _gdal.GDALGetDatasetDriver(self._o))
 
-    def GetDescription(self):
-        return _gdal.GDALGetDescription( self._o )
-    
-    def SetDescription(self, description ):
-        _gdal.GDALSetDescription( self._o, description )
-    
     def GetRasterBand(self, i):
         if i > 0 & i <= self.RasterCount:
             return self._band[i-1]
@@ -397,10 +327,30 @@ class Dataset:
             return None
 
     def GetGeoTransform(self):
-        return _gdal.GDALGetGeoTransform(self._o)
+        c_transform = _gdal.ptrcreate('double',0,6)
+        err = _gdal.GDALGetGeoTransform(self._o, c_transform)
+        transform = ( _gdal.ptrvalue(c_transform,0),
+                      _gdal.ptrvalue(c_transform,1),
+                      _gdal.ptrvalue(c_transform,2),
+                      _gdal.ptrvalue(c_transform,3),
+                      _gdal.ptrvalue(c_transform,4),
+                      _gdal.ptrvalue(c_transform,5) )
+        _gdal.ptrfree( c_transform )
+
+        if err != 0:
+            raise ValueError, 'GetGeoTransform() failed:' + GetLastErrorMsg()
+        
+        return transform
 
     def SetGeoTransform(self,transform):
-        _gdal.GDALSetGeoTransform(self._o,transform)
+        c_transform = _gdal.ptrcreate('double',0,6)
+        for i in range(6):
+            _gdal.ptrset( c_transform, transform[i], i );
+        
+        err = _gdal.GDALSetGeoTransform(self._o,c_transform)
+        _gdal.ptrfree( c_transform )
+
+        return err
 
     def SetProjection(self,projection):
         return _gdal.GDALSetProjection(self._o,projection)
@@ -410,18 +360,6 @@ class Dataset:
 
     def GetProjectionRef(self):
         return _gdal.GDALGetProjectionRef(self._o)
-
-    def GetMetadata(self, domain = None):
-        if domain is None:
-            return _gdal.GDALGetMetadata(self._o)
-        else:
-            return _gdal.GDALGetMetadata(self._o, domain)
-
-    def SetMetadata(self, metadata, domain = None):
-        if domain is None:
-            return _gdal.GDALSetMetadata(self._o, metadata)
-        else:
-            return _gdal.GDALSetMetadata(self._o, metadatadomain)
 
     def GetSubDatasets(self):
         sd_list = []
@@ -490,31 +428,13 @@ class Dataset:
     def FlushCache(self):
         _gdal.GDALFlushCache( self._o )
     
-class Band:            
+class Band(MajorObject):
     def __init__(self, _obj):
         self._o = _obj
         self.DataType = _gdal.GDALGetRasterDataType(self._o)
         self.XSize = _gdal.GDALGetRasterBandXSize(self._o)
         self.YSize = _gdal.GDALGetRasterBandYSize(self._o)
         
-    def GetMetadata(self, domain = None):
-        if domain is None:
-            return _gdal.GDALGetMetadata(self._o)
-        else:
-            return _gdal.GDALGetMetadata(self._o, domain)
-
-    def SetMetadata(self, metadata, domain = None):
-        if domain is None:
-            return _gdal.GDALSetMetadata(self._o, metadata)
-        else:
-            return _gdal.GDALSetMetadata(self._o, metadatadomain)
-
-    def GetDescription(self):
-        return _gdal.GDALGetDescription( self._o )
-    
-    def SetDescription(self, description ):
-        _gdal.GDALSetDescription( self._o, description )
-    
     def ReadRaster(self, xoff, yoff, xsize, ysize,
                    buf_xsize = None, buf_ysize = None, buf_type = None):
 
@@ -581,13 +501,24 @@ class Band:
                                             include_out_of_range, approx_ok)
 
     def ComputeRasterMinMax(self, approx_ok = 0):
-        return _gdal.GDALComputeRasterMinMax(self._o, approx_ok )
+        c_minmax = ptrcreate('double',0,2)
+        _gdal.GDALComputeRasterMinMax(self._o, approx_ok, c_minmax )
+        result = ( ptrvalue(c_minmax,0), ptrvalue(c_minmax,1) )
+        ptrfree( c_minmax )
+        return result
     
     def GetMetadata(self):
         return _gdal.GDALGetMetadata(self._o)
 
     def GetNoDataValue(self):
-        return _gdal.GDALGetRasterNoDataValue(self._o)
+        c_success_flag = ptrcreate('int',0,1)
+        result = _gdal.GDALGetRasterNoDataValue(self._o,c_success_flag)
+        success_flag = ptrvalue(c_success_flag,0)
+        ptrfree(c_success_flag)
+        if success_flag:
+            return result
+        else:
+            return None
 
     def SetNoDataValue(self,value):
         return _gdal.GDALSetRasterNoDataValue(self._o,value)
