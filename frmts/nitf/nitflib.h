@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2002/12/17 05:26:26  warmerda
+ * implement basic write support
+ *
  * Revision 1.2  2002/12/03 04:43:54  warmerda
  * lots of work
  *
@@ -88,6 +91,11 @@ typedef struct {
 NITFFile CPL_DLL *NITFOpen( const char *pszFilename, int bUpdatable );
 void     CPL_DLL  NITFClose( NITFFile * );
 
+NITFFile CPL_DLL *NITFCreate( const char *pszFilename, 
+                              int nPixels, int nLines, int nBands, 
+                              int nBitsPerSample, const char *pszPVType,
+                              char **papszOptions );
+
 /* -------------------------------------------------------------------- */
 /*      Image level access.                                             */
 /* -------------------------------------------------------------------- */
@@ -124,6 +132,7 @@ typedef struct {
     char       szICAT[9];
 
     char       chICORDS;
+    int        nZone;
     double     dfULX;
     double     dfULY;
     double     dfURX;
@@ -155,6 +164,10 @@ int       CPL_DLL  NITFReadImageBlock( NITFImage *, int nBlockX, int nBlockY,
                                        int nBand, void *pData );
 int       CPL_DLL  NITFReadImageLine( NITFImage *, int nLine, int nBand, 
                                       void *pData );
+int       CPL_DLL  NITFWriteImageBlock( NITFImage *, int nBlockX, int nBlockY,
+                                        int nBand, void *pData );
+int       CPL_DLL  NITFWriteImageLine( NITFImage *, int nLine, int nBand, 
+                                       void *pData );
 
 #define BLKREAD_OK    0
 #define BLKREAD_NULL  1

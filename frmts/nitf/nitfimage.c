@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2002/12/17 05:26:26  warmerda
+ * implement basic write support
+ *
  * Revision 1.2  2002/12/03 18:08:16  warmerda
  * implemented nitf VQ decompression
  *
@@ -44,6 +47,7 @@
 CPL_CVSID("$Id$");
 
 static char *NITFTrimWhite( char * );
+static int NITFIsAllDigits( const char *, int );
 
 /************************************************************************/
 /*                          NITFImageAccess()                           */
@@ -111,13 +115,56 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
     NITFTrimWhite( NITFGetField( psImage->szICAT, pachHeader, 360, 8 ) );
 
 /* -------------------------------------------------------------------- */
-/*      Read the image bounds.                                          */
+/*      Read the image bounds.  According to the specification the      */
+/*      60 character IGEOGLO field should occur unless the ICORDS is    */
+/*      ' '; however, some datasets (ie. an ADRG OVERVIEW.OVR file)     */
+/*      have 'N' in the ICORDS but still no IGEOGLO.  To detect this    */
+/*      we verify that the IGEOGLO value seems valid before             */
+/*      accepting that it must be there.                                */
 /* -------------------------------------------------------------------- */
     nOffset = 371;
     psImage->chICORDS = pachHeader[nOffset++];
 
-    if( psImage->chICORDS != ' ' && psImage->chICORDS != 'N' )
+    if( psImage->chICORDS != ' ' 
+        && (psImage->chICORDS != 'N' 
+            || NITFIsAllDigits( pachHeader+nOffset, 60)) )
+    {
+        int iCoord;
+
+        for( iCoord = 0; iCoord < 4; iCoord++ )
+        {
+            const char *pszCoordPair = pachHeader + nOffset + iCoord*15;
+            double *pdfXY = &(psImage->dfULX) + iCoord*2;
+
+            if( psImage->chICORDS == 'N' || psImage->chICORDS == 'S' )
+            {
+                psImage->nZone = 
+                    atoi(NITFGetField( szTemp, pszCoordPair, 0, 2 ));
+
+                pdfXY[0] = atof(NITFGetField( szTemp, pszCoordPair, 2, 6 ));
+                pdfXY[1] = atof(NITFGetField( szTemp, pszCoordPair, 8, 7 ));
+            }
+            else if( psImage->chICORDS == 'G' )
+            {
+                pdfXY[1] = 
+                    atof(NITFGetField( szTemp, pszCoordPair, 0, 2 )) 
+                  + atof(NITFGetField( szTemp, pszCoordPair, 2, 2 )) / 60.0
+                  + atof(NITFGetField( szTemp, pszCoordPair, 4, 2 )) / 3600.0;
+                if( pszCoordPair[6] == 's' || pszCoordPair[6] == 'S' )
+                    pdfXY[1] *= -1;
+
+                pdfXY[0] = 
+                    atof(NITFGetField( szTemp, pszCoordPair, 7, 3 )) 
+                  + atof(NITFGetField( szTemp, pszCoordPair,10, 2 )) / 60.0
+                  + atof(NITFGetField( szTemp, pszCoordPair,12, 2 )) / 3600.0;
+
+                if( pszCoordPair[14] == 'w' || pszCoordPair[14] == 'W' )
+                    pdfXY[0] *= -1;
+            }
+        }
+
         nOffset += 60;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Read the image comments.                                        */
@@ -537,6 +584,186 @@ int NITFReadImageBlock( NITFImage *psImage, int nBlockX, int nBlockY,
 }
 
 /************************************************************************/
+/*                        NITFWriteImageBlock()                         */
+/************************************************************************/
+
+int NITFWriteImageBlock( NITFImage *psImage, int nBlockX, int nBlockY, 
+                         int nBand, void *pData )
+
+{
+    CPLError( CE_Failure, CPLE_AppDefined,
+              "NITFWriteImageBlock() not implemented at this time." );
+    return BLKREAD_FAIL;
+}
+
+/************************************************************************/
+/*                         NITFReadImageLine()                          */
+/************************************************************************/
+
+int NITFReadImageLine( NITFImage *psImage, int nLine, int nBand, void *pData )
+
+{
+    int   nLineOffsetInFile, nLineSize;
+    unsigned char *pabyLineBuf;
+
+    if( nBand == 0 )
+        return BLKREAD_FAIL;
+
+    if( psImage->nBlocksPerRow != 1 || psImage->nBlocksPerColumn != 1 )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Scanline access not supported on tiled NITF files." );
+        return BLKREAD_FAIL;
+    }
+
+    if( !EQUAL(psImage->szIC,"NC") )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Scanline access not supported on compressed NITF files." );
+        return BLKREAD_FAIL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Workout location and size of data in file.                      */
+/* -------------------------------------------------------------------- */
+    nLineOffsetInFile = psImage->panBlockStart[0]
+        + psImage->nLineOffset * nLine
+        + psImage->nBandOffset * (nBand-1);
+
+    nLineSize = psImage->nPixelOffset * (psImage->nCols - 1) 
+        + psImage->nWordSize;
+
+    VSIFSeek( psImage->psFile->fp, nLineOffsetInFile, SEEK_SET );
+
+/* -------------------------------------------------------------------- */
+/*      Can we do a direct read into our buffer.                        */
+/* -------------------------------------------------------------------- */
+    if( psImage->nWordSize == psImage->nPixelOffset
+        && psImage->nWordSize * psImage->nBlockWidth == psImage->nLineOffset )
+    {
+        VSIFRead( pData, 1, nLineSize, psImage->psFile->fp );
+
+        return BLKREAD_OK;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Allocate a buffer for all the interleaved data, and read        */
+/*      it.                                                             */
+/* -------------------------------------------------------------------- */
+    pabyLineBuf = (unsigned char *) CPLMalloc(nLineSize);
+    VSIFRead( pabyLineBuf, 1, nLineSize, psImage->psFile->fp );
+
+/* -------------------------------------------------------------------- */
+/*      Copy the desired data out of the interleaved buffer.            */
+/* -------------------------------------------------------------------- */
+    {
+        GByte *pabySrc, *pabyDst;
+        int iPixel;
+        
+        pabySrc = pabyLineBuf;
+        pabyDst = ((GByte *) pData);
+        
+        for( iPixel = 0; iPixel < psImage->nBlockWidth; iPixel++ )
+        {
+            memcpy( pabyDst + iPixel * psImage->nWordSize, 
+                    pabySrc + iPixel * psImage->nPixelOffset,
+                    psImage->nWordSize );
+        }
+    }
+
+    CPLFree( pabyLineBuf );
+
+    return BLKREAD_OK;
+}
+
+/************************************************************************/
+/*                         NITFWriteImageLine()                         */
+/************************************************************************/
+
+int NITFWriteImageLine( NITFImage *psImage, int nLine, int nBand, void *pData )
+
+{
+    int   nLineOffsetInFile, nLineSize;
+    unsigned char *pabyLineBuf;
+
+    if( nBand == 0 )
+        return BLKREAD_FAIL;
+
+    if( psImage->nBlocksPerRow != 1 || psImage->nBlocksPerColumn != 1 )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Scanline access not supported on tiled NITF files." );
+        return BLKREAD_FAIL;
+    }
+
+    if( !EQUAL(psImage->szIC,"NC") )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Scanline access not supported on compressed NITF files." );
+        return BLKREAD_FAIL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Workout location and size of data in file.                      */
+/* -------------------------------------------------------------------- */
+    nLineOffsetInFile = psImage->panBlockStart[0]
+        + psImage->nLineOffset * nLine
+        + psImage->nBandOffset * (nBand-1);
+
+    nLineSize = psImage->nPixelOffset * (psImage->nCols - 1) 
+        + psImage->nWordSize;
+
+    VSIFSeek( psImage->psFile->fp, nLineOffsetInFile, SEEK_SET );
+
+/* -------------------------------------------------------------------- */
+/*      Can we do a direct write into our buffer.                       */
+/* -------------------------------------------------------------------- */
+    if( psImage->nWordSize == psImage->nPixelOffset
+        && psImage->nWordSize * psImage->nBlockWidth == psImage->nLineOffset )
+    {
+        VSIFWrite( pData, 1, nLineSize, psImage->psFile->fp );
+
+        return BLKREAD_OK;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Allocate a buffer for all the interleaved data, and read        */
+/*      it.                                                             */
+/* -------------------------------------------------------------------- */
+    pabyLineBuf = (unsigned char *) CPLMalloc(nLineSize);
+    VSIFRead( pabyLineBuf, 1, nLineSize, psImage->psFile->fp );
+
+/* -------------------------------------------------------------------- */
+/*      Copy the desired data out of the interleaved buffer.            */
+/* -------------------------------------------------------------------- */
+    {
+        GByte *pabySrc, *pabyDst;
+        int iPixel;
+        
+        pabySrc = pabyLineBuf;
+        pabyDst = ((GByte *) pData);
+        
+        for( iPixel = 0; iPixel < psImage->nBlockWidth; iPixel++ )
+        {
+            memcpy( pabySrc + iPixel * psImage->nPixelOffset,
+                    pabyDst + iPixel * psImage->nWordSize, 
+                    psImage->nWordSize );
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Write the results back out.                                     */
+/* -------------------------------------------------------------------- */
+    VSIFSeek( psImage->psFile->fp, nLineOffsetInFile, SEEK_SET );
+    VSIFWrite( pabyLineBuf, 1, nLineSize, psImage->psFile->fp );
+    CPLFree( pabyLineBuf );
+
+    return BLKREAD_OK;
+}
+
+
+
+/************************************************************************/
 /*                           NITFTrimWhite()                            */
 /*                                                                      */
 /*      Trim any white space off the white of the passed string in      */
@@ -553,4 +780,25 @@ char *NITFTrimWhite( char *pszTarget )
         pszTarget[i--] = '\0';
 
     return pszTarget;
+}
+
+/************************************************************************/
+/*                          NITFIsAllDigits()                           */
+/*                                                                      */
+/*      This is used in verifying that the IGEOLO value is actually     */
+/*      present for ICORDS='N'.   We also allow for spaces.             */
+/************************************************************************/
+
+static int NITFIsAllDigits( const char *pachBuffer, int nCharCount )
+
+{
+    int i;
+
+    for( i = 0; i < nCharCount; i++ )
+    {
+        if( pachBuffer[i] != ' '
+            && (pachBuffer[i] < '1' || pachBuffer[i] > '0' ) )
+            return FALSE;
+    }
+    return TRUE;
 }
