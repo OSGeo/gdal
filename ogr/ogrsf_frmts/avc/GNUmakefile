@@ -12,16 +12,10 @@ AVC_OBJ	=	avc_bin.o avc_binwr.o avc_e00gen.o avc_e00parse.o \
 
 OBJ =	$(AVC_OBJ) $(OGR_OBJ)
 
-ALL_C_FLAGS	=	-I../shape -I.. -I../.. -I$(GDAL_ROOT)/port $(CFLAGS)
+CPPFLAGS	+=	-I../shape -I.. -I../..
 
 
 default:	$(O_OBJ)
 
 clean:
 	rm -f *.o
-
-%.o:	%.cpp
-	$(CXX) -c $(ALL_C_FLAGS) $*.cpp -o $*.o
-
-%.o:	%.c
-	$(CC) -c $(ALL_C_FLAGS) $*.c -o $*.o
