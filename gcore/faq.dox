@@ -83,6 +83,30 @@ Yes, you can use the <a href="gdal_utilities.html#gdalwarp">gdalwarp</a>
 utility program or programmatically use the GDALWarpOperation class described
 in the <a href="warptut.html">Warp API Tutorial</a>.
 
+<!--------------------------------------------------------------------------->
+
+<li> <b>Why won't gdalwarp or gdal_merge write to most formats?</b><p>
+
+GDAL supports many raster formats for reading, but significantly less formats
+for writing.  Of the ones supported for writing most are only supported in
+<i>create copy</i> mode.  Essentially this means they have to be written
+sequentially from a provided input copy of the image to be written.  
+Programs like gdal_merge.py or gdalwarp that write chunks of imagery 
+non-sequentially cannot easily write to these sequential write formats. 
+Generally speaking formats that are compressed, such as PNG, JPEG and GIF
+are sequential write.  Also some formats require information such as the
+coordinate system and color table to be known at creation time and so these
+are also sequential write formats.<p>
+
+When you encounter this problem it is generally a good idea to first write
+the result to GeoTIFF format, and then translate to the desired target
+format.<p>
+
+To determine which formats support which capabilities, use the --formats
+switch with pretty much any GDAL utility.  Each driver will include either
+<b>rw</b> (read-only), <b>rw</b> (read or sequential write) or <b>rw+</b>
+(read, sequential write or random write).<p>
+
 </ol>
 
 */
