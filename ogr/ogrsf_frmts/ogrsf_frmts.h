@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.28  2002/12/28 04:09:18  warmerda
+ * added Oracle support
+ *
  * Revision 1.27  2002/09/26 18:15:31  warmerda
  * moved capabilities macros to ogr_core.h for ogr_api.h
  *
@@ -295,6 +298,7 @@ void CPL_DLL RegisterOGRTAB();
 void CPL_DLL RegisterOGRMIF();
 void CPL_DLL RegisterOGROGDI();
 void CPL_DLL RegisterOGRPG();
+void CPL_DLL RegisterOGROCI();
 void CPL_DLL RegisterOGRDGN();
 void CPL_DLL RegisterOGRGML();
 void CPL_DLL RegisterOGRAVCBin();
