@@ -1,0 +1,269 @@
+<html>
+<head>
+<title>Various Supported GDAL Raster Formats</title>
+</head>
+
+<body bgcolor="#ffffff">
+
+<h1>Various Support GDAL Raster Formats</h1>
+
+
+<h2><a name="AIG">AIG -- Arc/Info Binary Grid</a></h2>
+
+Supported for read access, including reading of an affine georeferencing 
+transform.  This format is the internal binary format for Arc/Info Grid, 
+and takes the form of a coverage level directory in an Arc/Info database. 
+To open the coverage select the coverage directory, or an .adf file (such as
+hdr.adf) from within it.<p>
+
+This driver is implemented based on a reverse engineering of the format.  See
+the <a href="http://gdal.velocet.ca/projects/aigrid/index.html">format 
+description</a> for more details.<p>
+
+Note that another driver (<a href="#GIO">GIO</a>) is available for Windows 
+platforms with ArcView installed.<p>
+
+NOTE: Implemented as <tt>gdal/frmts/aigrid/aigdataset.cpp</tt>.<p>
+
+<h2><a name="CEOS">CEOS -- CEOS Image</a></h2>
+
+This is a simple, read-only reader for ceos image files.  To use, select
+the main imagery file.  This driver reads only the image data, and does
+not capture any metadata, or georeferencing.<p>
+
+This driver is known to work with CEOS data produced by Spot Image, but
+will have problems with many other data sources.  In particular, it will
+only work with eight bit unsigned data.<p>
+
+See the separate <a href="#SAR_CEOS">SAR_CEOS</a> driver for access to 
+SAR CEOS data products.<p>
+
+NOTE: Implemented as <tt>gdal/frmts/ceos/ceosdataset.cpp</tt>.<p>
+
+<h2><a name="DOQ1">DOQ1 -- First Generation USGS DOQ</a></h2>
+
+Support for read access, including reading of an affine georeferencing 
+transform, and capture of the projection string.   This format is the old,
+unlabelled DOQ (Digital Ortho Quad) format from the USGS.<p>
+
+NOTE: Implemented as <tt>gdal/frmts/raw/doq1dataset.cpp</tt>.<p>
+
+<h2><a name="DOQ2">DOQ2 -- New Labelled USGS DOQ</a></h1>
+
+Support for read access, including reading of an affine georeferencing 
+transform, and capture of the projection string.   This format is the new,
+labelled DOQ (Digital Ortho Quad) format from the USGS.<p>
+
+This driver was implemented by Derrick J Brashear.<p>
+
+NOTE: Implemented as <tt>gdal/frmts/raw/doq2dataset.cpp</tt>.<p>
+
+<h2><a name="DTED">DTED -- Military Elevation Data</a></h2>
+
+GDAL supports DTED Levels 1, and 2 elevation data for read access.  Elevation
+data is returned as 16 bit signed integer.  Appropriate projection (always
+WGS84) and georeferencing information is also returned.   No other metadata 
+is captured.
+<p>
+
+NOTE: Implemented as <tt>gdal/frmts/dted/dteddataset.cpp</tt>.<p>
+
+<h2><a name="EFF">EFF -- Eosat Fast Format</a></h2>
+
+Support for read access to EOSAT Fast Format data is available in GDAL.  
+EOSAT datasets normally consist of one or more raster data files (eg. 
+BAND1.DAT, BAND2.DAT, ...) and a header file which must be called HEADER.DAT.
+To open the dataset select the HEADER.DAT file.<p>
+
+Currently only the raster data is accessed.  Georeferencing, and other meta
+data is ignored.<p>
+
+NOTE: Implemented as <tt>gdal/frmts/raw/effdataset.cpp</tt>.<p>
+
+<h2><a name="EHdr">EHdr -- ESRI .hdr Labelled</h2>
+
+GDAL support the ESRI .hdr labelling format for reading raw raster data
+(often referred to as ESRI BIL format) for read-only access.  Eight, sixteen
+and thirty-two bit integer raster data types are supported as well as reading
+of the affine georeferencing transform.  Reading of projection definitions
+is not supported.  Unrecognised options in the .hdr file are ignored.  To 
+open a dataset select the file with the .hdr extension. <p>
+
+This driver may be sufficient to read GTopo 30 data, and Geospot products.<p>
+
+NOTE: Implemented as <tt>gdal/frmts/raw/ehdrdataset.cpp</tt>.<p>
+
+<h2><a name="GIO">GIO -- Arc/Info Binary Grid</a></h2>
+
+This is a second implementation for reading, and writing Arc/Info grids, and
+only works on Windows platforms with ArcView installed.  It uses the 
+AVGRIDIO.DLL installed with ArcView to implement full access.<p>
+
+This driver supports georeferencing bounds, but no projection definition. 
+New coverages can be created with a code of GIO. <p>
+
+Also see the <a href="#AIG">AIG</a> read-only driver available on all 
+platforms.<p>
+
+NOTE: Implemented as <tt>gdal/frmts/aigrid/giodataset.cpp</tt>.<p>
+
+<h2><a name="GXF">GXF -- Grid eXchange File</a></h2>
+
+This is a raster exchange format propagated by Geosoft, and made a standard
+in the gravity/magnetics field.  The format is supported for read, and write
+and includes support for georeferencing information, and projections. <p>
+
+Details on the supporting code, and format can be found on the
+<a href="http://gdal.velocet.ca/projects/gxf/index.html">GXF-3</a> page.<p>
+
+NOTE: Implemented as <tt>gdal/frmts/gxf/gxfdataset.cpp</tt>.<p>
+
+<h2><a name="HFA">HFA -- Erdas Imagine .img</a></h2>
+
+GDAL supports Erdas Imagine .img format for read access.  The current
+implementation ignores pyramid levels, georeferencing and metadata, but 
+does support the image data types U8, U16, S16, and F32.<p>
+
+This driver could be easily upgraded to include proper georeferencing
+and projection support.   Encourage me if you need this.<p>
+
+More information, and other tools are available on the
+<a href="http://gdal.velocet.ca/projects/imagine/hfa_index.html">
+Imagine (.img) Reader</a> page.<p>
+
+NOTE: Implemented as <tt>gdal/frmts/hfa/hfadataset.cpp</tt>.<p>
+
+<h2><a name="HKV">HKV -- Atlantis HKV Blob</a></h2>
+
+GDAL supports HKV Blob raster file format for read, update, and creation.
+This format is primarily used internally to the Atlantis Scientific InSAR
+processing system.<p>
+
+To select an HKV dataset select the directory containing the <tt>attrib</tt>, 
+and <tt>blob</tt> files for the dataset.<p>
+
+Currently only the UTM projection is supported (georef.projection.name = utm),
+with the affine transform computed from the lat/long control points.   In
+any event, if GCPs are available in a georef file, they are returned with 
+the dataset.<p>
+
+Newly created files (with a type of <tt>HKV</tt>) are always just raw rasters
+with no georeferencing information.  For read, and creation all data types
+(real, integer and complex in bit depths of 8, 16, 32) should be supported. <p>
+
+NOTE: Implemented as <tt>gdal/frmts/raw/hkvdataset.cpp</tt>.<p>
+
+<h2><a name="MFF">MFF -- Atlantis MFF Raster</a></h2>
+
+GDAL includes read, update, and creation support for Atlantis Scientific's
+MFF raster format.  MFF dataset consist of a header file (typically with
+the extension .hdr) and a set of data files with extensions like .x00, .b00
+and so on.   To open a dataset select the .hdr file.<p>
+
+Reading lat/long GCPs (TOP_LEFT_CORNER, ...) is supported but there is no
+support for reading affine georeferencing or projection information.<p>
+
+Unrecognised keywords from the .hdr file are preserved as metadata. <p>
+
+All data types with GDAL equivelents are supported, including 8, 16, 32 and
+64 bit data precisions in integer, real and complex data types.  In addition
+tile organized files (as produced by the Atlantis SAR Processor - APP) are
+supported for reading. <p>
+
+On creation (with a format code of MFF) a simple, ungeoreferenced raster
+file is created.<p>
+
+MFF files are not normally portable between systems with different byte orders.
+However GDAL honours the new BYTE_ORDER keyword which can take a value of
+LSB (Integer -- little endian), and MSB (Motorola -- big endian).  This may
+be manually added to the .hdr file if required.<p>
+
+NOTE: Implemented as <tt>gdal/frmts/raw/mffdataset.cpp</tt>.<p>
+
+<h2><a name="PAux">PAux -- PCI .aux Labelled Raw Format</a></h2>
+
+GDAL includes a partial implementation of the PCI .aux labelled raw raster 
+file for read, write and creation.  To open a PCI labelled file, select the
+raw data file itself.  The .aux file (which must have a common base name) will
+be checked for automatically. <p>
+
+The format type for creating new files is <tt>PAux</tt>.  All PCI data types
+(8U, 16U, 16S, and 32R) are supported.  Currently georeferencing, projections, 
+and other metadata is ignored.<p>
+
+NOTE: Implemented as <tt>gdal/frmts/raw/pauxdataset.cpp</tt>.<p>
+
+See Also: <a href="http://www.pcigeomatics.com/cgi-bin/pcihlp/GDB|Supported+File+Formats|Raw+Binary+Image+Format+(RAW)|Raw+.aux+Format">PCI's .aux Format
+Description</a><p>
+
+<h2><a name="PNG">PNG -- Portable Network Graphics</a></h2>
+
+GDAL includes support for reading, and creating .png files.  Greyscale, 
+pseudo-colored, RGB and RGBA PNG files are supported as well as precisions of
+eight and sixteen bits per sample.<p>
+
+PNG files are linearly compressed, so random reading of large PNG files can
+be very inefficient (resulting in many restarts of decompression from the
+start of the file).<p>
+
+Text chunks are translated into metadata, typically with multiple lines per
+item. <p>
+
+PNG files can be created with a type of PNG, using the CreateCopy() method, 
+requiring a prototype to read from.<p>
+
+NOTE: Implemented as <tt>gdal/frmts/png/pngdataset.cpp</tt>. 
+
+PNG support is implemented based on the libpng reference library.  
+More information is available at ftp://ftp.uu.net/graphics/png.<p>
+
+<h2><a name="SAR_CEOS">SAR_CEOS -- CEOS SAR Image</a></h2>
+
+This is a read-only reader for CEOS SAR image files.  To use, select
+the main imagery file.<p>
+
+This driver works with most Radarsat and ERS data
+products, including simple look complex products; however, it is unlikely
+to work for non-Radar CEOS products.  The simplier <a href="#CEOS">CEOS</a>
+driver is often appropriate for these.<p>
+
+This driver will attempt to read 15 lat/long GCPS by sampling the per-scanline
+CEOS superstructure information.  It also captures various pieces of metadata
+from various header files, including:<p>
+
+<pre>
+  CEOS_LOGICAL_VOLUME_ID=EERS-1-SAR-MLD  
+  CEOS_PROCESSING_FACILITY=APP         
+  CEOS_PROCESSING_AGENCY=CCRS    
+  CEOS_PROCESSING_COUNTRY=CANADA      
+  CEOS_SOFTWARE_ID=APP 1.62    
+  CEOS_ACQUISITION_TIME=19911029162818919               
+  CEOS_SENSOR_CLOCK_ANGLE=  90.000
+  CEOS_ELLIPSOID=IUGG_75         
+  CEOS_SEMI_MAJOR=    6378.1400000
+  CEOS_SEMI_MINOR=    6356.7550000
+</pre>
+
+NOTE: Implemented as <tt>gdal/frmts/ceos2/sar_ceosdataset.cpp</tt>.<p>
+
+<h2><a name="SDTS">SDTS -- USGS SDTS DEM</a></h2>
+
+GDAL includes support for reading USGS SDTS formatted DEMs.  USGS DEMs are
+always returned with a data type of signed sixteen bit integer.  Projection
+and georeferencing information is also returned.<p>
+
+SDTS datasets consist of a number of files.  Each DEM should have one file
+with a name like XXXCATD.DDF.  This should be selected to open
+the dataset.<p>
+
+BUGS: <p>
+<ul>
+<li> Floating point SDTS DEMs are apparently not supported.<p>
+<li> Projection definitions are currently returned in PROJ.4 format, instead
+of OGC WKT format.<p>
+</ul>
+
+NOTE: Implemented as <tt>gdal/frmts/sdts/sdtsdataset.cpp</tt>.<p>
+
+</body>
+</html>
