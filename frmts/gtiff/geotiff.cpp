@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.131  2005/02/15 16:08:34  fwarmerdam
+ * dont put out scale and offset if defaulted
+ *
  * Revision 1.130  2005/02/10 04:31:11  fwarmerdam
  * added option to keep YCbCr in raw form
  *
@@ -2041,7 +2044,7 @@ void GTiffDataset::WriteMetadata( GDALDataset *poSrcDS, TIFF *hTIFF )
         double dfOffset = poBand->GetOffset( &bSuccess );
         double dfScale = poBand->GetScale();
 
-        if( bSuccess )
+        if( bSuccess && (dfOffset != 0.0 || dfScale != 1.0) )
         {
             char szValue[128];
 
