@@ -3,10 +3,10 @@
 # 
 #  Project:  OSR (OGRSpatialReference/CoordinateTransform) Python Interface
 #  Purpose:  OSR Shadow Class Implementations
-#  Author:   Frank Warmerdam, warmerda@home.com
+#  Author:   Frank Warmerdam, warmerdam@pobox.com
 # 
 #******************************************************************************
-#  Copyright (c) 2000, Frank Warmerdam
+#  Copyright (c) 2000, Frank Warmerdam <warmerdam@pobox.com>
 # 
 #  Permission is hereby granted, free of charge, to any person obtaining a
 #  copy of this software and associated documentation files (the "Software"),
@@ -28,6 +28,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.21  2003/02/20 04:14:04  warmerda
+# Updated email.
+#
 # Revision 1.20  2003/02/06 05:53:56  warmerda
 # Blow an exception when the CoordinateTransformation constructor fails.
 #
