@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2001/12/14 20:36:08  warmerda
+ * fixed interpretation of the sign of short RMin values
+ *
  * Revision 1.15  2001/07/18 04:51:56  warmerda
  * added CPL_CVSID
  *
@@ -487,6 +490,16 @@ CPLErr AIGReadBlock( FILE * fp, int nBlockOffset, int nBlockSize,
         {
             nMin = nMin * 256 + *pabyCur;
             pabyCur++;
+        }
+
+        if( pabyRaw[4] > 127 )
+        {
+            if( nMinSize == 2 )
+                nMin = nMin - 65536;
+            else if( nMinSize == 1 )
+                nMin = nMin - 256;
+            else if( nMinSize == 3 )
+                nMin = nMin - 256*256*256;
         }
     }
     
