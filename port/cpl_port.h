@@ -42,6 +42,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.41  2005/03/17 04:20:24  fwarmerdam
+ * added FORCE_CDECL
+ *
  * Revision 1.40  2005/03/11 14:59:07  fwarmerdam
  * Default to assuming nothing is infinite if isinf() macro not defined.
  * Per http://bugzilla.remotesensing.org/show_bug.cgi?id=795
@@ -250,6 +253,11 @@ typedef unsigned long    GUIntBig;
 #endif
 #endif
 
+#ifdef _MSC_VER
+#  define FORCE_CDECL  __cdecl
+#else
+#  define FORCE_CDECL 
+#endif
 
 #ifndef NULL
 #  define NULL  0
