@@ -1,5 +1,6 @@
 
 GDAL_ROOT	=	.
+WEB_DIR		= /web/remotesensing/gdal
 
 include GDALmake.opt
 
@@ -112,9 +113,7 @@ install-docs:
 	cp html/*.* $(INST_DOCS)/gdal
 
 web-update:	docs
-	rm -rf /u/www/gdal/html
-	mkdir /u/www/gdal/html
-	cp html/*.* /u/www/gdal/html
+	cp html/*.* $(WEB_DIR)
 
 install:	all install-actions
 
