@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2003/12/11 22:44:11  warmerda
+ * ensure external .prj flag gets set
+ *
  * Revision 1.1  2003/12/11 06:18:18  warmerda
  * New
  *
@@ -278,6 +281,7 @@ CPLErr BTDataset::SetProjection( const char *pszNewProjection )
     {
         VSIFPrintf( fp, "%s\n", pszProjection );
         VSIFClose( fp );
+        abyHeader[60] = 1;
     }
     else
     {
