@@ -29,6 +29,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2004/02/13 15:58:11  warmerda
+ * Fixed serious bug with GetInstBytes() for BASEDATA * fields with
+ * a count of zero.  Such as the Excluded field of most stats nodes!
+ *
  * Revision 1.14  2003/12/08 19:09:34  warmerda
  * implemented DumpInstValue and GetInstBytes for basedata
  *
@@ -841,7 +845,7 @@ int HFAField::GetInstBytes( GByte * pabyData )
     else
         nCount = 1;
 
-    if( chItemType == 'b' )
+    if( chItemType == 'b' && nCount != 0 )
     {
         GInt32 nRows, nColumns;
         GInt16 nBaseItemType;
