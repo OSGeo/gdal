@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2001/08/28 20:41:14  warmerda
+ * added support for type 5 GTYPE values on GEOMETRY record
+ *
  * Revision 1.16  2001/08/23 14:47:31  warmerda
  * Added support for adding an _LIST attribute to the OGRFeatures in
  * cases of GENERIC features for which an attribute appears more than
@@ -607,5 +610,24 @@ class OGRNTFDriver : public OGRSFDriver
     OGRDataSource *Open( const char *, int );
     int                 TestCapability( const char * );
 };
+
+/************************************************************************/
+/*                          Support functions.                          */
+/************************************************************************/
+int NTFArcCenterFromEdgePoints( double x_c0, double y_c0,
+                                double x_c1, double y_c1, 
+                                double x_c2, double y_c2, 
+                                double *x_center, double *y_center );
+OGRGeometry *
+NTFStrokeArcToOGRGeometry_Points( double dfCenterX, double dfCenterY, 
+                                  double dfRadius, 
+                                  double dfStartX, double dfStartY,
+                                  double dfEndX, double dfEndY,
+                                  int nVertexCount );
+OGRGeometry *
+NTFStrokeArcToOGRGeometry_Angles( double dfCenterX, double dfCenterY, 
+                                  double dfRadius, 
+                                  double dfStartAngle, double dfEndAngle,
+                                  int nVertexCount );
 
 #endif /* ndef _NTF_H_INCLUDED */

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2001/08/28 20:41:14  warmerda
+ * added support for type 5 GTYPE values on GEOMETRY record
+ *
  * Revision 1.19  2001/08/23 13:36:38  warmerda
  * fixed circle to line to close properly
  *
@@ -662,14 +665,44 @@ OGRGeometry *NTFFileReader::ProcessGeometry( NTFRecord * poRecord,
     }
 
 /* -------------------------------------------------------------------- */
+/*      Arc defined by three points on the arc.				*/
+/* -------------------------------------------------------------------- */
+    else if( nGType == 5 && nNumCoord == 3 )
+    {
+        double  adfX[3], adfY[3], dfCenterX, dfCenterY, dfRadius;
+        int     iCoord;
+
+        for( iCoord = 0; iCoord < nNumCoord; iCoord++ )
+        {
+            int            iStart = 14 + iCoord * (GetXYLen()*2+1);
+
+            adfX[iCoord] = atoi(poRecord->GetField(iStart+0,
+                                                  iStart+GetXYLen()-1)) 
+                * GetXYMult() + GetXOrigin();
+            adfY[iCoord] = atoi(poRecord->GetField(iStart+GetXYLen(),
+                                                  iStart+GetXYLen()*2-1)) 
+                * GetXYMult() + GetYOrigin();
+        }
+
+        NTFArcCenterFromEdgePoints( adfX[0], adfY[0], adfX[1], adfY[1], 
+                                    adfX[2], adfY[2], &dfCenterX, &dfCenterY );
+        dfRadius = sqrt( (dfCenterX - adfX[0]) * (dfCenterX - adfX[0])
+                         + (dfCenterY - adfY[0]) * (dfCenterY - adfY[0]) );
+
+        poGeometry = NTFStrokeArcToOGRGeometry_Points( dfCenterX, dfCenterY,
+                                                       dfRadius, 
+                                                       adfX[0], adfY[0], 
+                                                       adfX[2], adfY[2], 72 );
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Circle                                                          */
 /* -------------------------------------------------------------------- */
     else if( nGType == 7 )
     {
         double  dfCenterX, dfCenterY, dfArcX, dfArcY, dfRadius;
-        int     iCenterStart = 14, iPoint;
+        int     iCenterStart = 14;
         int     iArcStart = 14 + 2 * GetXYLen() + 1;
-        
 
         dfCenterX = atoi(poRecord->GetField(iCenterStart,
                                             iCenterStart+GetXYLen()-1))
@@ -688,24 +721,15 @@ OGRGeometry *NTFFileReader::ProcessGeometry( NTFRecord * poRecord,
         dfRadius = sqrt( (dfCenterX - dfArcX) * (dfCenterX - dfArcX)
                          + (dfCenterY - dfArcY) * (dfCenterY - dfArcY) );
 
-        OGRLineString      *poLine = new OGRLineString;
-        
-        poGeometry = poLine;
-        poLine->setNumPoints( 72 );
-        
-        for( iPoint = 0; iPoint <= 72; iPoint++ )
-        {
-            double      dfAngle = iPoint * (2*PI/72.0);
-            
-            dfArcX = dfCenterX + cos(dfAngle) * dfRadius;
-            dfArcY = dfCenterY + sin(dfAngle) * dfRadius;
-
-            poLine->setPoint( iPoint, dfArcX, dfArcY );
-        }
+        poGeometry = NTFStrokeArcToOGRGeometry_Angles( dfCenterX, dfCenterY,
+                                                       dfRadius, 
+                                                       0.0, 360.0, 
+                                                       72 );
     }
 
     else
     {
+        fprintf( stderr, "GType = %d\n", nGType );
         CPLAssert( FALSE );
     }
 
@@ -1879,3 +1903,4 @@ NTFRecord **NTFFileReader::GetNextIndexedRecordGroup( NTFRecord **
 
     return apoCGroup + 1;
 }
+
