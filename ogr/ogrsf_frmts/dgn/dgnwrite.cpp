@@ -28,6 +28,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2003/08/19 20:17:15  warmerda
+ * Implemented DGNCreateConeElem(). Extended DGNCreateComplex*() to
+ * support 3D surface and 3D solid elements.
+ * Marius Kintel
+ *
  * Revision 1.12  2003/06/27 14:50:53  warmerda
  * avoid warnings
  *
@@ -1172,6 +1177,151 @@ DGNCreateArcElem( DGNHandle hDGN, int nType,
 }
                                  
 /************************************************************************/
+/*                          DGNCreateConeElem()                         */
+/************************************************************************/
+
+/**
+ * Create Cone element.
+ *
+ * Create a new 3D cone element.
+ *
+ * The newly created element will still need to be written to file using
+ * DGNWriteElement(). Also the level and other core values will be defaulted.
+ * Use DGNUpdateElemCore() on the element before writing to set these values.
+ *
+ * @param hDGN the DGN file on which the element will eventually be written.
+ * @param dfCenter1X the center of the first bounding circle (X).
+ * @param dfCenter1Y the center of the first bounding circle (Y).
+ * @param dfCenter1Z the center of the first bounding circle (Z).
+ * @param dfRadius1 the radius of the first bounding circle.
+ * @param dfCenter2X the center of the second bounding circle (X).
+ * @param dfCenter2Y the center of the second bounding circle (Y).
+ * @param dfCenter2Z the center of the second bounding circle (Z).
+ * @param dfRadius2 the radius of the second bounding circle.
+ * @param panQuaternion 3D orientation quaternion (NULL for default orientation - circles parallel to the X-Y plane).
+ * 
+ * @return the new element (DGNElemCone) or NULL on failure.
+ */
+
+DGNElemCore *
+DGNCreateConeElem( DGNHandle hDGN,
+                   double dfCenter_1X, double dfCenter_1Y,
+                   double dfCenter_1Z, double dfRadius_1,
+                   double dfCenter_2X, double dfCenter_2Y,
+                   double dfCenter_2Z, double dfRadius_2,
+                   int *panQuaternion )
+{
+    DGNElemCone *psCone;
+    DGNElemCore *psCore;
+    DGNInfo *psDGN = (DGNInfo *) hDGN;
+    DGNPoint sMin, sMax, sCenter_1, sCenter_2;
+    double dfScaledRadius;
+
+/* -------------------------------------------------------------------- */
+/*      Allocate element.                                               */
+/* -------------------------------------------------------------------- */
+    psCone = (DGNElemCone *) CPLCalloc( sizeof(DGNElemCone), 1 );
+    psCore = &(psCone->core);
+
+    DGNInitializeElemCore( hDGN, psCore );
+    psCore->stype = DGNST_CONE;
+    psCore->type = DGNT_CONE;
+
+/* -------------------------------------------------------------------- */
+/*      Set cone specific information in the structure.                 */
+/* -------------------------------------------------------------------- */
+    sCenter_1.x = dfCenter_1X;
+    sCenter_1.y = dfCenter_1Y;
+    sCenter_1.z = dfCenter_1Z;
+    sCenter_2.x = dfCenter_2X;
+    sCenter_2.y = dfCenter_2Y;
+    sCenter_2.z = dfCenter_2Z;
+    psCone->center_1 = sCenter_1;
+    psCone->center_2 = sCenter_2;
+    psCone->radius_1 = dfRadius_1;
+    psCone->radius_2 = dfRadius_2;
+
+    memset( psCone->quat, 0, sizeof(int) * 4 );
+    if( panQuaternion != NULL )
+    {
+        memcpy( psCone->quat, panQuaternion, sizeof(long)*4 );
+    }
+    else {
+      psCone->quat[0] = 1 << 31;
+      psCone->quat[1] = 0;
+      psCone->quat[2] = 0;
+      psCone->quat[3] = 0;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Setup Raw data for the cone.                                    */
+/* -------------------------------------------------------------------- */
+    psCore->raw_bytes = 118;
+    psCore->raw_data = (unsigned char*) CPLCalloc(psCore->raw_bytes,1);
+
+    /* unknown data */
+    psCore->raw_data[36] = 0;
+    psCore->raw_data[37] = 0;
+    
+    /* quaternion */
+    DGN_WRITE_INT32( psCone->quat[0], psCore->raw_data + 38 );
+    DGN_WRITE_INT32( psCone->quat[1], psCore->raw_data + 42 );
+    DGN_WRITE_INT32( psCone->quat[2], psCore->raw_data + 46 );
+    DGN_WRITE_INT32( psCone->quat[3], psCore->raw_data + 50 );
+
+    /* center_1 */
+    DGNInverseTransformPoint( psDGN, &sCenter_1 );
+    memcpy( psCore->raw_data + 54, &sCenter_1.x, 8 );
+    memcpy( psCore->raw_data + 62, &sCenter_1.y, 8 );
+    memcpy( psCore->raw_data + 70, &sCenter_1.z, 8 );
+    IEEE2DGNDouble( psCore->raw_data + 54 );
+    IEEE2DGNDouble( psCore->raw_data + 62 );
+    IEEE2DGNDouble( psCore->raw_data + 70 );
+
+    /* radius_1 */
+    dfScaledRadius = psCone->radius_1 / psDGN->scale;
+    memcpy( psCore->raw_data + 78, &dfScaledRadius, 8 );
+    IEEE2DGNDouble( psCore->raw_data + 78 );
+
+    /* center_2 */
+    DGNInverseTransformPoint( psDGN, &sCenter_2 );
+    memcpy( psCore->raw_data + 86, &sCenter_2.x, 8 );
+    memcpy( psCore->raw_data + 94, &sCenter_2.y, 8 );
+    memcpy( psCore->raw_data + 102, &sCenter_2.z, 8 );
+    IEEE2DGNDouble( psCore->raw_data + 86 );
+    IEEE2DGNDouble( psCore->raw_data + 94 );
+    IEEE2DGNDouble( psCore->raw_data + 102 );
+
+    /* radius_2 */
+    dfScaledRadius = psCone->radius_2 / psDGN->scale;
+    memcpy( psCore->raw_data + 110, &dfScaledRadius, 8 );
+    IEEE2DGNDouble( psCore->raw_data + 110 );
+    
+/* -------------------------------------------------------------------- */
+/*      Set the core raw data, including the bounds.                    */
+/* -------------------------------------------------------------------- */
+    DGNUpdateElemCoreExtended( hDGN, psCore );
+
+    //FIXME: Calculate bounds. Do we need to take the quaternion into account?
+    // kintel 20030819
+
+    // Old implementation attempt:
+    // What if center_1.z > center_2.z ?
+//     double largestRadius = 
+//       psCone->radius_1>psCone->radius_2?psCone->radius_1:psCone->radius_2;
+//     sMin.x = psCone->center_1.x-largestRadius;
+//     sMin.y = psCone->center_1.y-largestRadius;
+//     sMin.z = psCone->center_1.z;
+//     sMax.x = psCone->center_2.x+largestRadius;
+//     sMax.y = psCone->center_2.y+largestRadius;
+//     sMax.z = psCone->center_2.z;
+
+    DGNWriteBounds( psDGN, psCore, &sMin, &sMax );
+    
+    return psCore;
+}
+                                 
+/************************************************************************/
 /*                         DGNCreateTextElem()                          */
 /************************************************************************/
 
@@ -1427,6 +1577,9 @@ DGNCreateComplexHeaderElem( DGNHandle hDGN, int nType,
  * group plus 5.  The DGNCreateComplexHeaderFromGroup() can be used to build
  * a complex element from the members more conveniently.  
  *
+ * If you are creating a 3D surface or solid, the surftype is initialized
+ * to DGNSUT_SOLID for surface and DGNSOT_VOLUME_OF_PROJECTION for solid.
+ *
  * @param hDGN the file on which the element will be written.
  * @param nType either DGNT_COMPLEX_CHAIN_HEADER or DGNT_COMPLEX_SHAPE_HEADER
  * depending on whether the list is open or closed (last point equal to last).
@@ -1442,7 +1595,9 @@ DGNCreateComplexHeaderElem( DGNHandle hDGN, int nType,
     DGNElemCore *psCore;
 
     CPLAssert( nType == DGNT_COMPLEX_CHAIN_HEADER 
-               || nType == DGNT_COMPLEX_SHAPE_HEADER );
+               || nType == DGNT_COMPLEX_SHAPE_HEADER
+               || nType == DGNT_3DSURFACE_HEADER 
+               || nType == DGNT_3DSOLID_HEADER );
 
 /* -------------------------------------------------------------------- */
 /*      Allocate element.                                               */
@@ -1460,17 +1615,28 @@ DGNCreateComplexHeaderElem( DGNHandle hDGN, int nType,
 /* -------------------------------------------------------------------- */
     psCH->totlength = nTotLength;
     psCH->numelems = nNumElems;
+    psCH->surftype = 0;
 
 /* -------------------------------------------------------------------- */
 /*      Setup Raw data for the text specific portion.                   */
 /* -------------------------------------------------------------------- */
-    psCore->raw_bytes = 48;
+    if ( nType == DGNT_COMPLEX_CHAIN_HEADER 
+         || nType == DGNT_COMPLEX_SHAPE_HEADER ) 
+      psCore->raw_bytes = 48;
+    else 
+      psCore->raw_bytes = 42;
+
     psCore->raw_data = (unsigned char*) CPLCalloc(psCore->raw_bytes,1);
 
     psCore->raw_data[36] = (unsigned char) (nTotLength % 256);
     psCore->raw_data[37] = (unsigned char) (nTotLength / 256);
     psCore->raw_data[38] = (unsigned char) (nNumElems % 256);
     psCore->raw_data[39] = (unsigned char) (nNumElems / 256);
+    if ( nType == DGNT_3DSURFACE_HEADER 
+         || nType == DGNT_3DSOLID_HEADER ) {
+      psCore->raw_data[40] = (unsigned char) (psCH->surftype % 256);
+      psCore->raw_data[41] = (unsigned char) (psCH->surftype / 256);
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Set the core raw data.                                          */
@@ -1494,8 +1660,10 @@ DGNCreateComplexHeaderElem( DGNHandle hDGN, int nType,
  * setting the level based on the level of the member elements. 
  * 
  * @param hDGN the file on which the element will be written.
- * @param nType either DGNT_COMPLEX_CHAIN_HEADER or DGNT_COMPLEX_SHAPE_HEADER
- * depending on whether the list is open or closed (last point equal to last).
+ * @param nType DGNT_COMPLEX_CHAIN_HEADER, DGNT_COMPLEX_SHAPE_HEADER, 
+ * DGNT_3DSURFACE_HEADER or DGNT_3DSOLID_HEADER.
+ * depending on whether the list is open or closed (last point equal to last)
+ * or if the object represents a surface or a solid.
  * @param nNumElems the number of elements in the complex group not including
  * the header element. 
  * @param papsElems array of pointers to nNumElems elements in the complex
