@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.3  2002/12/05 19:25:35  dron
+ * Preliminary CreateCopy() function.
+ *
  * Revision 1.2  2002/12/04 18:37:49  dron
  * Support 32-bit, 24-bit True Color images and 8-bit pseudocolor ones.
  *
@@ -78,15 +81,15 @@ enum BMPComprMethod
 
 typedef struct
 {
-    GByte	iType[2];	// Signature "BM"
+    GByte	bType[2];	// Signature "BM"
     GUInt32	iSize;		// Size in bytes of the bitmap file. Should always
 				// be ignored while reading because of error
 				// in Windows 3.0 SDK's description of this field
-
     GUInt16	iReserved1;	// Reserved, set as 0
     GUInt16	iReserved2;	// Reserved, set as 0
     GUInt32	iOffBits;	// Offset of the image from file start in bytes
 } BitmapFileHeader;
+const int	BFH_SIZE = 14;
 
 typedef struct
 {
@@ -124,7 +127,7 @@ typedef struct
     GUInt32	iCSType;	// Colour space of the DIB.
 } BitmapInfoHeader;
 
-// We will use playn byte array instead of this structure, but declaration
+// We will use plain byte array instead of this structure, but declaration
 // provided for reference
 typedef struct
 {
@@ -175,7 +178,7 @@ class BMPRasterBand : public GDALRasterBand
 
     int		nScanSize;
     int		iBytesPerPixel;
-    GByte	*iScan;
+    GByte	*pabyScan;
     
   public:
 
@@ -210,7 +213,7 @@ BMPRasterBand::BMPRasterBand( BMPDataset *poDS, int nBand )
     CPLDebug( "BMP", "Band %d: set nBlockXSize=%d, nBlockYSize=%d, nScanSize=%d",
 	      nBand, nBlockXSize, nBlockYSize, nScanSize );
     
-    iScan = (GByte *)CPLMalloc( nScanSize * nBlockYSize );
+    pabyScan = (GByte *) CPLMalloc( nScanSize * nBlockYSize );
 }
 
 /************************************************************************/
@@ -219,7 +222,7 @@ BMPRasterBand::BMPRasterBand( BMPDataset *poDS, int nBand )
 
 BMPRasterBand::~BMPRasterBand()
 {
-    CPLFree( iScan );
+    CPLFree( pabyScan );
 }
 
 /************************************************************************/
@@ -230,7 +233,7 @@ CPLErr BMPRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 				  void * pImage )
 {
     BMPDataset	*poGDS = (BMPDataset *) poDS;
-    long	iScanOffset;
+    long	pabyScanOffset;
     int		i, j;
     int		nBlockSize = nBlockXSize * nBlockYSize;
 
@@ -240,22 +243,22 @@ CPLErr BMPRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     {
 	if ( poGDS->sInfoHeader.iHeight > 0 )
 	{
-	    iScanOffset = poGDS->sFileHeader.iSize -
+	    pabyScanOffset = poGDS->sFileHeader.iSize -
 		(nBlockYOff + 1) * nScanSize;
 	}
 	else
 	{
-	    iScanOffset = poGDS->sFileHeader.iOffBits +
+	    pabyScanOffset = poGDS->sFileHeader.iOffBits +
 			  nBlockYOff * nScanSize;
 	}
-	VSIFSeek( poGDS->fp, iScanOffset, SEEK_SET );
-	VSIFRead( iScan, 1, nScanSize, poGDS->fp );
+	VSIFSeek( poGDS->fp, pabyScanOffset, SEEK_SET );
+	VSIFRead( pabyScan, 1, nScanSize, poGDS->fp );
 	
 	for( i = 0, j = nBlockXOff; i < nBlockSize; i++ )
 	{
 	    // Colour triplets in BMP file organized in reverse order:
 	    // blue, green, red
-	    ((GByte *) pImage)[i] = iScan[j + iBytesPerPixel - nBand];
+	    ((GByte *) pImage)[i] = pabyScan[j + iBytesPerPixel - nBand];
 	    j += iBytesPerPixel;
 	}
     }
@@ -401,7 +404,7 @@ GDALDataset *BMPDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Read the BitmapInfoHeader.                                      */
 /* -------------------------------------------------------------------- */
-    VSIFSeek( poDS->fp, 14, SEEK_SET );
+    VSIFSeek( poDS->fp, BFH_SIZE, SEEK_SET );
     VSIFRead( &poDS->sInfoHeader.iSize, 1, 4, poDS->fp );
     VSIFRead( &poDS->sInfoHeader.iWidth, 1, 4, poDS->fp );
     VSIFRead( &poDS->sInfoHeader.iHeight, 1, 4, poDS->fp );
@@ -429,9 +432,9 @@ GDALDataset *BMPDataset::Open( GDALOpenInfo * poOpenInfo )
 #endif
     
     CPLDebug( "BMP", "Windows Device Independent Bitmap parameters:\n"
-	      " width: %d\n height: %d\n planes: %d\n bpp: %d\n compression: %d\n"
-	      " image size: %d\n X resolution: %d\n Y resolution: %d\n"
-	      " colours used: %d\n colours important: %d",
+	      " file size: %d\n width: %d\n height: %d\n planes: %d\n bpp: %d\n"
+	      " compression: %d\n image size: %d\n X resolution: %d\n"
+	      " Y resolution: %d\n colours used: %d\n colours important: %d",
 	      poDS->sInfoHeader.iWidth, poDS->sInfoHeader.iHeight,
 	      poDS->sInfoHeader.iPlanes, poDS->sInfoHeader.iBitCount,
 	      poDS->sInfoHeader.iCompression, poDS->sInfoHeader.iSizeImage,
@@ -458,7 +461,7 @@ GDALDataset *BMPDataset::Open( GDALOpenInfo * poOpenInfo )
 	    else
 		poDS->nColorTableSize = 1 << poDS->sInfoHeader.iBitCount;
 	    poDS->pabyColorTable = (GByte *)CPLMalloc( 4 * poDS->nColorTableSize );
-	    VSIFSeek( poDS->fp, 14 + poDS->sInfoHeader.iSize, SEEK_SET );
+	    VSIFSeek( poDS->fp, BFH_SIZE + poDS->sInfoHeader.iSize, SEEK_SET );
 	    VSIFRead( poDS->pabyColorTable, 4, poDS->nColorTableSize, poDS->fp );
 
 	    GDALColorEntry oEntry;
@@ -498,6 +501,159 @@ GDALDataset *BMPDataset::Open( GDALOpenInfo * poOpenInfo )
 }
 
 /************************************************************************/
+/*                      BMPImageCreateCopy()                            */
+/************************************************************************/
+
+static GDALDataset *
+BMPImageCreateCopy( const char * pszFilename, GDALDataset *poSrcDS, 
+                    int bStrict, char ** papszOptions, 
+                    GDALProgressFunc pfnProgress, void * pProgressData )
+
+{
+    int  nBands = poSrcDS->GetRasterCount();
+    int  nXSize = poSrcDS->GetRasterXSize();
+    int  nYSize = poSrcDS->GetRasterYSize();
+
+    if( !pfnProgress( 0.0, NULL, pProgressData ) )
+        return NULL;
+
+    if( nBands != 1 && nBands != 3 )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported, 
+                  "BMP driver doesn't support %d bands. Must be 1 or 3.\n",
+                  nBands );
+
+        return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Create the dataset.                                             */
+/* -------------------------------------------------------------------- */
+    FILE        *fpImage;
+
+    fpImage = VSIFOpen( pszFilename, "wt" );
+    if( fpImage == NULL )
+    {
+        CPLError( CE_Failure, CPLE_OpenFailed, 
+                  "Unable to create file %s.\n", 
+                  pszFilename );
+        return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Create BitmapInfoHeader                                         */
+/* -------------------------------------------------------------------- */
+    BitmapInfoHeader	sInfoHeader;
+    int			nScanSize;
+
+    sInfoHeader.iSize = 40;
+    sInfoHeader.iWidth = nXSize;
+    sInfoHeader.iHeight = nYSize;
+    sInfoHeader.iPlanes = 1;
+    sInfoHeader.iBitCount = ( nBands == 3 )?24:8;
+    sInfoHeader.iCompression = BMPC_RGB;
+    nScanSize = ((sInfoHeader.iWidth * sInfoHeader.iBitCount + 31) & ~31) / 8;
+    sInfoHeader.iSizeImage = nScanSize * sInfoHeader.iHeight;
+    sInfoHeader.iXPelsPerMeter = 0;
+    sInfoHeader.iYPelsPerMeter = 0;
+    if (sInfoHeader.iBitCount < 24 ) 
+        sInfoHeader.iClrUsed = ( 1 << sInfoHeader.iBitCount );
+    else
+	sInfoHeader.iClrUsed = 0;
+    sInfoHeader.iClrImportant = 0;
+
+/* -------------------------------------------------------------------- */
+/*      Create BitmapFileHeader                                         */
+/* -------------------------------------------------------------------- */
+    BitmapFileHeader	sFileHeader;
+
+    sFileHeader.bType[0] = 'B';
+    sFileHeader.bType[1] = 'M';
+    sFileHeader.iSize = BFH_SIZE + sInfoHeader.iSize +
+	sInfoHeader.iClrUsed * 4 + sInfoHeader.iSizeImage;
+    sFileHeader.iReserved1 = 0;
+    sFileHeader.iReserved2 = 0;
+    sFileHeader.iOffBits = BFH_SIZE + sInfoHeader.iSize +
+	sInfoHeader.iClrUsed * 4;
+
+/* -------------------------------------------------------------------- */
+/*      Write all structures to the file                                */
+/* -------------------------------------------------------------------- */
+    // FIXME: swap in case of MSB
+    VSIFWrite( &sFileHeader.bType, 1, 2, fpImage );
+    VSIFWrite( &sFileHeader.iSize, 4, 1, fpImage );
+    VSIFWrite( &sFileHeader.iReserved1, 2, 1, fpImage );
+    VSIFWrite( &sFileHeader.iReserved2, 2, 1, fpImage );
+    VSIFWrite( &sFileHeader.iOffBits, 4, 1, fpImage );
+
+    VSIFWrite( &sInfoHeader.iSize, 4, 1, fpImage );
+    VSIFWrite( &sInfoHeader.iWidth, 4, 1, fpImage );
+    VSIFWrite( &sInfoHeader.iHeight, 4, 1, fpImage );
+    VSIFWrite( &sInfoHeader.iPlanes, 2, 1, fpImage );
+    VSIFWrite( &sInfoHeader.iBitCount, 2, 1, fpImage );
+    VSIFWrite( &sInfoHeader.iCompression, 4, 1, fpImage );
+    VSIFWrite( &sInfoHeader.iSizeImage, 4, 1, fpImage );
+    VSIFWrite( &sInfoHeader.iXPelsPerMeter, 4, 1, fpImage );
+    VSIFWrite( &sInfoHeader.iYPelsPerMeter, 4, 1, fpImage );
+    VSIFWrite( &sInfoHeader.iClrUsed, 4, 1, fpImage );
+    VSIFWrite( &sInfoHeader.iClrImportant, 4, 1, fpImage );
+    
+    if ( nBands == 1 )
+    {
+	// colour table...
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Loop over image, copying image data.                            */
+/* -------------------------------------------------------------------- */
+    GByte	    *pabyOutput, *pabyInput;
+    int		    iBand, iLine, iInPixel, iOutPixel;
+    CPLErr	    eErr = CE_None;
+    GDALRasterBand  *poBand;
+
+
+    pabyInput = (GByte *) CPLMalloc( nXSize );
+    pabyOutput = (GByte *) CPLMalloc( nScanSize );
+    memset( pabyOutput, 0, nScanSize );
+    
+    for( iLine = nYSize - 1; eErr == CE_None && iLine >= 0; iLine-- )
+    {
+	for ( iBand = nBands; iBand > 0; iBand-- )
+	{
+	    poBand = poSrcDS->GetRasterBand( iBand );
+	    eErr = poBand->RasterIO( GF_Read, 0, iLine, nXSize, 1,
+				     pabyInput, nXSize, 1, GDT_Byte,
+				     sizeof(GByte), sizeof(GByte) * nXSize );
+	    for ( iInPixel = 0, iOutPixel = iBand - 1;
+		  iInPixel < nXSize; iInPixel++, iOutPixel+=nBands )
+	    {
+		pabyOutput[iOutPixel] = pabyInput[iInPixel];
+	    }
+	}
+	if ( VSIFWrite( pabyOutput, 1, nScanSize, fpImage ) <= 0 )
+	{
+	    eErr = CE_Failure;
+	    CPLError( CE_Failure, CPLE_FileIO,
+		      "Can't write line %d", nYSize - iLine - 1 );
+	}
+	if( eErr == CE_None &&
+	    !pfnProgress((nYSize - iLine) /
+			 ((double) nYSize), NULL, pProgressData) )
+	{
+	    eErr = CE_Failure;
+	    CPLError( CE_Failure, CPLE_UserInterrupt, 
+		      "User terminated CreateCopy()" );
+	}
+    }
+
+    CPLFree( pabyOutput );
+    CPLFree( pabyInput );
+    VSIFClose( fpImage );
+
+    return (GDALDataset *) GDALOpen( pszFilename, GA_Update );
+}
+
+/************************************************************************/
 /*                        GDALRegister_BMP()				*/
 /************************************************************************/
 
@@ -515,8 +671,10 @@ void GDALRegister_BMP()
                                    "MS Windows Device Independent Bitmap" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
                                    "frmt_bmp.html" );
+        poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, "Byte" );
 
         poDriver->pfnOpen = BMPDataset::Open;
+        poDriver->pfnCreateCopy = BMPImageCreateCopy;
 
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
