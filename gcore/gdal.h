@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.32  2000/10/06 15:23:03  warmerda
+ * added some new functions
+ *
  * Revision 1.31  2000/08/25 14:26:51  warmerda
  * added GDALHasArbitraryOverviews
  *
@@ -162,6 +165,7 @@ typedef enum {
 int CPL_DLL GDALGetDataTypeSize( GDALDataType );
 int CPL_DLL GDALDataTypeIsComplex( GDALDataType );
 const char CPL_DLL *GDALGetDataTypeName( GDALDataType );
+GDALDataType CPL_DLL GDALDataTypeUnion( GDALDataType, GDALDataType );
 
 /*! Flag indicating read/write, or read-only access to data. */
 typedef enum {
@@ -358,10 +362,14 @@ char CPL_DLL  **GDALGetRasterMetadata( GDALRasterBandH );
 
 GDALColorInterp CPL_DLL GDALGetRasterColorInterpretation( GDALRasterBandH );
 GDALColorTableH CPL_DLL GDALGetRasterColorTable( GDALRasterBandH );
+CPLErr CPL_DLL GDALSetRasterColorTable( GDALRasterBandH, GDALColorTableH );
 int CPL_DLL     GDALHasArbitraryOverviews( GDALRasterBandH );
 int CPL_DLL             GDALGetOverviewCount( GDALRasterBandH );
 GDALRasterBandH CPL_DLL GDALGetOverview( GDALRasterBandH, int );
-double CPL_DLL GDALGetRasterNoDataValue( GDALRasterBandH, int *pbSuccess );
+double CPL_DLL GDALGetRasterNoDataValue( GDALRasterBandH, int * );
+CPLErr CPL_DLL GDALSetRasterNoDataValue( GDALRasterBandH, double );
+char ** CPL_DLL GDALGetRasterCategoryNames( GDALRasterBandH );
+CPLErr CPL_DLL GDALSetRasterCategoryNames( GDALRasterBandH, char ** );
 double CPL_DLL GDALGetRasterMinimum( GDALRasterBandH, int *pbSuccess );
 double CPL_DLL GDALGetRasterMaximum( GDALRasterBandH, int *pbSuccess );
 void CPL_DLL GDALComputeRasterMinMax( GDALRasterBandH hBand, int bApproxOK,
