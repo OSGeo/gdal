@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.3  2004/12/20 05:03:00  fwarmerdam
+ * implemented preliminary coordinate system export
+ *
  * Revision 1.2  2004/12/10 22:13:58  fwarmerdam
  * convert to unix format
  *
@@ -45,6 +48,10 @@
 CPL_CVSID("$Id$");
 
 #if defined(FRMT_ecw) && defined(HAVE_COMPRESS)
+
+CPL_C_START
+char **ECWGetCSList(void);
+CPL_C_END
 
 class GDALECWCompressor : public CNCSFile {
 
@@ -142,6 +149,184 @@ bool GDALECWCompressor::WriteCancel()
 }
 
 /************************************************************************/
+/*                        ECWTranslateFromWKT()                         */
+/************************************************************************/
+
+static int ECWTranslateFromWKT( const char *pszWKT, 
+                                char *pszProjection,
+                                char *pszDatum )
+
+{
+    OGRSpatialReference oSRS;
+    char *pszWKTIn = (char *) pszWKT;
+    char **papszCSLookup;
+
+    strcpy( pszProjection, "RAW" );
+    strcpy( pszDatum, "RAW" );
+    
+    oSRS.importFromWkt( &pszWKTIn );
+    
+    if( oSRS.IsLocal() )
+        return TRUE;
+
+/* -------------------------------------------------------------------- */
+/*      Do we have an overall EPSG number for this coordinate system?   */
+/* -------------------------------------------------------------------- */
+    const char *pszAuthorityCode = NULL;
+    const char *pszAuthorityName = NULL;
+    UINT32 nEPSGCode = 0;
+
+    if( oSRS.IsProjected() )
+    {
+        pszAuthorityCode =  oSRS.GetAuthorityCode( "PROJCS" );
+        pszAuthorityName =  oSRS.GetAuthorityName( "PROJCS" );
+    }
+    else if( oSRS.IsGeographic() )
+    {
+        pszAuthorityCode =  oSRS.GetAuthorityCode( "GEOGCS" );
+        pszAuthorityName =  oSRS.GetAuthorityName( "GEOGCS" );
+    }
+
+    if( pszAuthorityName != NULL && EQUAL(pszAuthorityName,"EPSG") 
+        && pszAuthorityCode != NULL && atoi(pszAuthorityCode) > 0 )
+        nEPSGCode = (UINT32) atoi(pszAuthorityCode);
+
+    if( nEPSGCode != 0 )
+    {
+        char *pszEPSGProj = NULL, *pszEPSGDatum = NULL;
+        CNCSError oErr;
+
+        oErr = 
+            CNCSJP2FileView::GetGDTProjDat( atoi(pszAuthorityCode), 
+                                            &pszEPSGProj, &pszEPSGDatum );
+
+        CPLDebug( "ECW", "GetGDTProjDat(%d) = %s/%s", 
+                  atoi(pszAuthorityCode), pszEPSGProj, pszEPSGDatum );
+
+        if( oErr.GetErrorNumber() == NCS_SUCCESS
+            && pszEPSGProj != NULL && pszEPSGDatum != NULL )
+        {
+            strcpy( pszProjection, pszEPSGProj );
+            strcpy( pszDatum, pszEPSGDatum );
+            return TRUE;
+        }
+    }
+        
+/* -------------------------------------------------------------------- */
+/*      Is our GEOGCS name already defined in ecw_cs.dat?               */
+/* -------------------------------------------------------------------- */
+    const char *pszMatch = NULL;
+    const char *pszGEOGCS = oSRS.GetAttrValue( "GEOGCS" );
+    const char *pszWKTDatum = oSRS.GetAttrValue( "DATUM" );
+
+    papszCSLookup = ECWGetCSList();
+
+    if( pszGEOGCS != NULL )
+        pszMatch = CSLFetchNameValue( papszCSLookup, pszGEOGCS );
+
+    if( pszMatch != NULL && EQUALN(pszMatch,"GEOGCS",6) )
+    {
+        strcpy( pszDatum, pszGEOGCS );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Is this a "well known" geographic coordinate system?            */
+/* -------------------------------------------------------------------- */
+    if( EQUAL(pszDatum,"RAW") )
+    {
+        if( nEPSGCode == 4326 
+            || (strstr(pszGEOGCS,"WGS") && strstr(pszGEOGCS,"84") )
+            || (strstr(pszWKTDatum,"WGS") && strstr(pszWKTDatum,"84") ) )
+            strcpy( pszDatum, "WGS84" );
+
+        else if( nEPSGCode == 4322 
+            || (strstr(pszGEOGCS,"WGS") && strstr(pszGEOGCS,"72") )
+            || (strstr(pszWKTDatum,"WGS") && strstr(pszWKTDatum,"72") ) )
+            strcpy( pszDatum, "WGS72DOD" );
+        
+        else if( nEPSGCode == 4267 
+            || (strstr(pszGEOGCS,"NAD") && strstr(pszGEOGCS,"27") )
+            || (strstr(pszWKTDatum,"NAD") && strstr(pszWKTDatum,"27") ) )
+            strcpy( pszDatum, "NAD27" );
+        
+        else if( nEPSGCode == 4269 
+            || (strstr(pszGEOGCS,"NAD") && strstr(pszGEOGCS,"83") )
+            || (strstr(pszWKTDatum,"NAD") && strstr(pszWKTDatum,"83") ) )
+            strcpy( pszDatum, "NAD83" );
+
+        else if( nEPSGCode == 4277 )
+            strcpy( pszDatum, "OSGB36" );
+
+        else if( nEPSGCode == 4278 )
+            strcpy( pszDatum, "OSGB78" );
+
+        else if( nEPSGCode == 4201 )
+            strcpy( pszDatum, "ADINDAN" );
+
+        else if( nEPSGCode == 4202 )
+            strcpy( pszDatum, "AGD66" );
+
+        else if( nEPSGCode == 4203 )
+            strcpy( pszDatum, "AGD84" );
+
+        else if( nEPSGCode == 4209 )
+            strcpy( pszDatum, "ARC1950" );
+
+        else if( nEPSGCode == 4210 )
+            strcpy( pszDatum, "ARC1960" );
+
+        else if( nEPSGCode == 4275 )
+            strcpy( pszDatum, "NTF" );
+
+        else if( nEPSGCode == 4284 )
+            strcpy( pszDatum, "PULKOVO" );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Are we working with a geographic (geodetic) coordinate system?  */
+/* -------------------------------------------------------------------- */
+
+    if( oSRS.IsGeographic() )
+    {
+        strcpy( pszProjection, "GEODETIC" );
+        return TRUE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Is this a UTM projection?                                       */
+/* -------------------------------------------------------------------- */
+    int bNorth, nZone;
+
+    nZone = oSRS.GetUTMZone( &bNorth );
+    if( nZone > 0 )
+    {
+        if( bNorth )
+            sprintf( pszProjection, "NUTM%02d", nZone );
+        else
+            sprintf( pszProjection, "SUTM%02d", nZone );
+        return TRUE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Is our GEOGCS name already defined in ecw_cs.dat?               */
+/* -------------------------------------------------------------------- */
+    const char *pszPROJCS = oSRS.GetAttrValue( "PROJCS" );
+
+    if( pszPROJCS != NULL )
+        pszMatch = CSLFetchNameValue( papszCSLookup, pszGEOGCS );
+    else
+        pszMatch = NULL;
+
+    if( pszMatch != NULL && EQUALN(pszMatch,"PROJCS",6) )
+    {
+        strcpy( pszProjection, pszPROJCS );
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
+/************************************************************************/
 /*                           ECWCreateCopy()                            */
 /************************************************************************/
 
@@ -216,8 +401,6 @@ ECWCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     psClient->nSizeX = nXSize;
     psClient->nSizeY = nYSize;
     psClient->nCompressionRate = (int) MAX(1,100 / (100-fTargetCompression));
-    psClient->szDatum = "RAW";
-    psClient->szProjection = "RAW";
     psClient->eCellSizeUnits = ECW_CELL_UNITS_METERS;
 
     psClient->eCellType = NCSCT_UINT8;
@@ -393,7 +576,34 @@ ECWCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Projection.                                                     */
 /* -------------------------------------------------------------------- */
-    /* TODO */
+    char szProjection[128];
+    char szDatum[128];
+
+    strcpy( szProjection, "RAW" );
+    strcpy( szDatum, "RAW" );
+    
+    if( CSLFetchNameValue(papszOptions, "PROJ") != NULL )
+        strcpy( szProjection, 
+                CSLFetchNameValue(papszOptions, "PROJ") );
+
+    if( CSLFetchNameValue(papszOptions, "DATUM") != NULL )
+    {
+        strcpy( szDatum, CSLFetchNameValue(papszOptions, "DATUM") );
+        if( EQUAL(szProjection,"RAW") )
+            strcpy( szProjection, "GEODETIC" );
+    }
+
+    if( EQUAL(szProjection,"RAW") )
+    {
+        ECWTranslateFromWKT( poSrcDS->GetProjectionRef(), 
+                             szProjection, szDatum );
+    }
+
+    psClient->szDatum = szDatum;
+    psClient->szProjection = szProjection;
+
+    CPLDebug( "ECW", "Writing with PROJ=%s, DATUM=%s", 
+              szProjection, szDatum );
 
 /* -------------------------------------------------------------------- */
 /*      Handle special case of a JPEG2000 data stream in another file.  */
