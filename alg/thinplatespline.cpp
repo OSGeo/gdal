@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2004/12/31 02:12:40  fwarmerdam
+ * Avoid warnings.
+ *
  * Revision 1.3  2004/12/31 02:02:31  fwarmerdam
  * added check of HAVE_FLOAT_H and HAVE_VALUES_H
  *
@@ -261,7 +264,7 @@ int VizGeorefSpline2D::solve(void)
         for ( p = 0; p < _nof_points; p++ )
         {
             int min_index = -1;
-            double min_u;
+            double min_u = 0;
             for ( p1 = 0; p1 < _nof_points; p1++ )
             {
                 if ( unused[p1] )
@@ -353,7 +356,7 @@ int VizGeorefSpline2D::get_point( const double Px, const double Py, double *vars
 	int v, r;
 	double tmp, Pu;
 	double fact;
-	int leftP, rightP, found = 0;
+	int leftP=0, rightP=0, found = 0;
 	
 	switch ( type )
 	{
