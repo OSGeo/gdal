@@ -43,6 +43,9 @@
  *    application termination. 
  * 
  * $Log$
+ * Revision 1.4  2000/05/15 22:26:42  warmerda
+ * Avoid warning.
+ *
  * Revision 1.3  2000/04/28 20:57:07  warmerda
  * Removed some unused code.
  *
@@ -630,7 +633,7 @@ PNGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Setup some parameters.                                          */
 /* -------------------------------------------------------------------- */
-    int  nColorType, nBitDepth;
+    int  nColorType=0, nBitDepth;
     GDALDataType eType;
 
     if( nBands == 1 )
