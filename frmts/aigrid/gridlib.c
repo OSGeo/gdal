@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2000/02/18 14:47:25  warmerda
+ * Avoid unused variable warnings.
+ *
  * Revision 1.10  2000/02/18 14:41:00  warmerda
  * added support for 0xcf
  *
@@ -77,6 +80,9 @@ CPLErr AIGProcessRaw32BitFloatBlock( GByte *pabyCur, int nDataSize, int nMin,
 {
     int		i;
 
+    (void) nDataSize;
+    (void) nMin;
+
     CPLAssert( nDataSize >= nBlockXSize*nBlockYSize*4 );
     
 /* -------------------------------------------------------------------- */
@@ -118,6 +124,8 @@ CPLErr AIGProcessRaw32BitBlock( GByte *pabyCur, int nDataSize, int nMin,
 {
     int		i;
 
+    (void) nDataSize;
+
     CPLAssert( nDataSize >= nBlockXSize*nBlockYSize*4 );
     
 /* -------------------------------------------------------------------- */
@@ -147,6 +155,9 @@ CPLErr AIGProcessIntConstBlock( GByte *pabyCur, int nDataSize, int nMin,
 {
     int		i;
 
+    (void) pabyCur;
+    (void) nDataSize;
+
     CPLAssert( nDataSize <= 8 );
     
 /* -------------------------------------------------------------------- */
@@ -172,6 +183,8 @@ CPLErr AIGProcessRaw16BitBlock( GByte *pabyCur, int nDataSize, int nMin,
 {
     int		i;
 
+    (void) nDataSize;
+    
     CPLAssert( nDataSize >= nBlockXSize*nBlockYSize*2 );
     
 /* -------------------------------------------------------------------- */
@@ -200,6 +213,7 @@ CPLErr AIGProcessRaw4BitBlock( GByte *pabyCur, int nDataSize, int nMin,
 {
     int		i;
 
+    (void) nDataSize;
     CPLAssert( nDataSize >= (nBlockXSize*nBlockYSize+1)/2 );
     
 /* -------------------------------------------------------------------- */
@@ -228,6 +242,8 @@ CPLErr AIGProcessRawBlock( GByte *pabyCur, int nDataSize, int nMin,
 
 {
     int		i;
+
+    (void) nDataSize;
 
     CPLAssert( nDataSize >= nBlockXSize*nBlockYSize );
     
@@ -533,7 +549,7 @@ CPLErr AIGReadBlock( FILE * fp, int nBlockOffset, int nBlockSize,
     {
         for( i = nBlockXSize * nBlockYSize - 1; i >= 0; i-- )
         {
-            if( panData[i] == ESRI_GRID_NO_DATA )
+            if( ((GInt32) panData[i]) == ESRI_GRID_NO_DATA )
                 panData[i] = GRID_NO_DATA;
         }
     }
