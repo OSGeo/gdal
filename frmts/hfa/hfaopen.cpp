@@ -35,6 +35,9 @@
  * of the GDAL core, but dependent on the Common Portability Library.
  *
  * $Log$
+ * Revision 1.13  2001/01/08 14:17:27  warmerda
+ * Use nDictMax for CPLMalloc().
+ *
  * Revision 1.12  2001/01/03 16:20:10  warmerda
  * Converted to large file API
  *
@@ -83,8 +86,8 @@
 static char * HFAGetDictionary( HFAHandle hHFA )
 
 {
-    char	*pszDictionary = (char *) CPLMalloc(100); 
     int		nDictMax = 100;
+    char	*pszDictionary = (char *) CPLMalloc(nDictMax); 
     int		nDictSize = 0;
     
     VSIFSeekL( hHFA->fp, hHFA->nDictionaryPos, SEEK_SET );
