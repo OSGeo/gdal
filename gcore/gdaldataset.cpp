@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2000/10/06 15:27:13  warmerda
+ * default bands to same access as dataset in SetBand()
+ *
  * Revision 1.20  2000/08/09 16:26:00  warmerda
  * debug message on dataset cleanup
  *
@@ -226,6 +229,7 @@ void GDALDataset::SetBand( int nNewBand, GDALRasterBand * poBand )
     poBand->poDS = this;
     poBand->nRasterXSize = nRasterXSize;
     poBand->nRasterYSize = nRasterYSize;
+    poBand->eAccess = eAccess; /* default access to be same as dataset */
 }
 
 /************************************************************************/
