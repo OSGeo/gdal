@@ -9,6 +9,11 @@
 
  *
  * $Log$
+ * Revision 1.25  2005/02/24 16:36:31  kruland
+ * Added IF_FALSE_RETURN_NONE typemap for GCPsToGeoTransform method.
+ * Changed GCPs typemaps to use new object rather than raw tuple.
+ * Added out typemap for char **s.  Currently used in osr.GetProjectionMethods.
+ *
  * Revision 1.24  2005/02/24 16:13:57  hobu
  * freearg patch for tostring argin typemap
  * Added dummy typemaps (just copied the python ones)
@@ -143,6 +148,24 @@
 {
  /* %typemap(ret) IF_ERR_RETURN_NONE */
   if (result != 0 ) {
+    Py_XDECREF( resultobj );
+    resultobj = Py_None;
+    Py_INCREF(resultobj);
+  }
+  if (resultobj == 0) {
+    resultobj = Py_None;
+    Py_INCREF(resultobj);
+  }
+}
+%typemap(out) IF_FALSE_RETURN_NONE
+{
+  /* %typemap(out) IF_FALSE_RETURN_NONE */
+  resultobj = 0;
+}
+%typemap(ret) IF_FALSE_RETURN_NONE
+{
+ /* %typemap(ret) IF_FALSE_RETURN_NONE */
+  if (result == 0 ) {
     Py_XDECREF( resultobj );
     resultobj = Py_None;
     Py_INCREF(resultobj);
@@ -422,15 +445,16 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
   /* %typemap(argout) (int *nGCPs, GDAL_GCP const **pGCPs ) */
   PyObject *dict = PyTuple_New( *$1 );
   for( int i = 0; i < *$1; i++ ) {
+    GDAL_GCP *o = new_GDAL_GCP( (*$2)[i].dfGCPX,
+                                (*$2)[i].dfGCPY,
+                                (*$2)[i].dfGCPZ,
+                                (*$2)[i].dfGCPPixel,
+                                (*$2)[i].dfGCPLine,
+                                (*$2)[i].pszInfo,
+                                (*$2)[i].pszId );
+	
     PyTuple_SetItem(dict, i, 
-      Py_BuildValue("(ssddddd)", 
-                    (*$2)[i].pszId,
-                    (*$2)[i].pszInfo,
-                    (*$2)[i].dfGCPPixel,
-                    (*$2)[i].dfGCPLine,
-                    (*$2)[i].dfGCPX,
-                    (*$2)[i].dfGCPY,
-                    (*$2)[i].dfGCPZ ) );
+       SWIG_NewPointerObj((void*)o,SWIGTYPE_p_GDAL_GCP,1) );
   }
   Py_DECREF($result);
   $result = dict;
@@ -448,16 +472,12 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
   $2 = tmpGCPList;
   for( int i = 0; i<$1; i++ ) {
     PyObject *o = PySequence_GetItem($input,i);
-    if ( !PyArg_ParseTuple(o,"ssddddd:Parse GCP List",
-                      &tmpGCPList->pszId,
-                      &tmpGCPList->pszInfo,
-                      &tmpGCPList->dfGCPPixel,
-                      &tmpGCPList->dfGCPLine,
-                      &tmpGCPList->dfGCPX,
-                      &tmpGCPList->dfGCPY,
-                      &tmpGCPList->dfGCPZ) ) {
+    GDAL_GCP *item = 0;
+    SWIG_Python_ConvertPtr( o, (void**)&item, SWIGTYPE_p_GDAL_GCP, SWIG_POINTER_EXCEPTION | 0 );
+    if ( ! item ) {
       SWIG_fail;
     }
+    memcpy( (void*) item, (void*) tmpGCPList, sizeof( GDAL_GCP ) );
     ++tmpGCPList;
   }
 }
@@ -572,6 +592,24 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
   /* %typemap(python,freearg) char **options */
   CSLDestroy( $1 );
 }
+%typemap(python,out) char **options
+{
+  /* %typemap(out) char ** -> ( string ) */
+  char **stringarray = $1;
+  if ( stringarray == NULL ) {
+    $result = Py_None;
+    Py_INCREF( $result );
+  }
+  else {
+    int len = CSLCount( stringarray );
+    $result = PyTuple_New( len );
+    for ( int i = 0; i < len; ++i, ++stringarray ) {
+      PyObject *o = PyString_FromString( *stringarray );
+      PyTuple_SET_ITEM($result, i, o );
+    }
+    CSLDestroy( $1 );
+  }
+}
 
 /*
  * Typemaps map mutable char ** arguments from PyStrings.  Does not
@@ -595,7 +633,14 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
 %typemap(python,argout,fragment="t_output_helper") (char **argout)
 {
   /* %typemap(python,argout) (char **argout) */
-  PyObject *o = PyString_FromString( *$1 );
+  PyObject *o;
+  if ( $1 ) {
+    o = PyString_FromString( *$1 );
+  }
+  else {
+    o = Py_None;
+    Py_INCREF( o );
+  }
   $result = t_output_helper($result, o);
 }
 %typemap(python,freearg) (char **argout)
@@ -711,3 +756,4 @@ OPTIONAL_POD(int,i);
   PyArg_Parse( $input, "s", &val );
   $1 = &val;
 }
+
