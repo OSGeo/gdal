@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2001/11/16 21:14:03  warmerda
+ * added VRT dataset
+ *
  * Revision 1.7  2001/09/19 15:26:14  warmerda
  * added doq2
  *
@@ -89,6 +92,7 @@ void CPL_DLL GDALRegister_FITS(void);
 void CPL_DLL GDALRegister_ECW(void);
 void CPL_DLL GDALRegister_FujiBAS(void);
 void CPL_DLL GDALRegister_FIT(void);
+void CPL_DLL GDALRegister_VRT(void);
 CPL_C_END
 
 #endif /* ndef GDAL_FRMTS_H_INCLUDED */
