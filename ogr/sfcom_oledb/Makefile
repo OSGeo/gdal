@@ -15,12 +15,14 @@ OLE_LIBS =	ole32.lib oleaut32.lib
 
 LOC_OBJ	=	SF.obj SFRS.obj
 
-#SHR_OBJ =	..\ogrgeometryfactory.obj ..\ogrpoint.obj ..\ogrcurve.obj \
-#		..\ogrlinestring.obj ..\ogrpolygon.obj ..\ogrlinearring.obj \
-#		..\oledb_sup.obj ..\ogrgeometry.obj ..\ogrutils.obj 
-
-SHR_OBJ =	..\..\frmts\shapelib\dbfopen.obj \
-		..\..\frmts\shapelib\shpopen.obj
+SHR_OBJ =	..\ogrgeometryfactory.obj ..\ogrpoint.obj ..\ogrcurve.obj \
+		..\ogrlinestring.obj ..\ogrpolygon.obj ..\ogrlinearring.obj \
+		..\oledb_sup.obj ..\ogrgeometry.obj ..\ogrutils.obj \
+		..\ogrgeometrycollection.obj ..\ogrmultipolygon.obj \
+		..\ogrmultilinestring.obj ..\ogrmultipoint.obj \
+		..\..\frmts\shapelib\dbfopen.obj \
+		..\..\frmts\shapelib\shpopen.obj \
+		..\..\port\*.obj
 
 default:	SF.dll
 
