@@ -28,6 +28,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.2  2002/07/11 19:36:34  warmerda
+ * CPLCreateMutex() should implicitly acquire it, fix stub version
+ *
  * Revision 1.1  2002/05/24 04:01:01  warmerda
  * New
  *
@@ -59,7 +62,7 @@ void *CPLCreateMutex()
 {
     unsigned char *pabyMutex = (unsigned char *) CPLMalloc( 4 );
 
-    pabyMutex[0] = 0;
+    pabyMutex[0] = 1;
     pabyMutex[1] = 'r';
     pabyMutex[2] = 'e';
     pabyMutex[3] = 'd';
