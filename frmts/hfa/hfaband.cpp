@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.32  2003/05/21 15:35:05  warmerda
+ * cleanup type conversion warnings
+ *
  * Revision 1.31  2003/05/13 19:32:10  warmerda
  * support for reading and writing opacity provided by Diana Esch-Mosher
  *
@@ -458,7 +461,7 @@ CPLErr	HFABand::LoadExternalBlockInfo()
 /*      Uncompress ESRI Grid compression format block.                  */
 /************************************************************************/
 
-static CPLErr UncompressBlock( GByte *pabyCData, int nSrcBytes,
+static CPLErr UncompressBlock( GByte *pabyCData, int /* nSrcBytes */,
                                GByte *pabyDest, int nMaxPixels, 
                                int nDataType )
 
@@ -556,15 +559,15 @@ static CPLErr UncompressBlock( GByte *pabyCData, int nSrcBytes,
                 || nDataType == EPT_u2 || nDataType == EPT_u1 )
             {
                 CPLAssert( nDataValue < 256 );
-                ((GByte *) pabyDest)[nPixelsOutput] = nDataValue;
+                ((GByte *) pabyDest)[nPixelsOutput] = (GByte) nDataValue;
             }
             else if( nDataType == EPT_u16 )
             {
-                ((GUInt16 *) pabyDest)[nPixelsOutput] = nDataValue;
+                ((GUInt16 *) pabyDest)[nPixelsOutput] = (GUInt16) nDataValue;
             }
             else if( nDataType == EPT_s16 )
             {
-                ((GInt16 *) pabyDest)[nPixelsOutput] = nDataValue;
+                ((GInt16 *) pabyDest)[nPixelsOutput] = (GInt16) nDataValue;
             }
             else if( nDataType == EPT_f32 )
             {
@@ -695,7 +698,7 @@ static CPLErr UncompressBlock( GByte *pabyCData, int nSrcBytes,
             for( i = 0; i < nRepeatCount; i++ )
             {
                 CPLAssert( nDataValue < 256 );
-                ((GByte *) pabyDest)[nPixelsOutput++] = nDataValue;
+                ((GByte *) pabyDest)[nPixelsOutput++] = (GByte)nDataValue;
             }
         }
         else if( nDataType == EPT_u16 )
@@ -704,7 +707,7 @@ static CPLErr UncompressBlock( GByte *pabyCData, int nSrcBytes,
             
             for( i = 0; i < nRepeatCount; i++ )
             {
-                ((GUInt16 *) pabyDest)[nPixelsOutput++] = nDataValue;
+                ((GUInt16 *) pabyDest)[nPixelsOutput++] = (GUInt16)nDataValue;
             }
         }
         else if( nDataType == EPT_s16 )
@@ -713,7 +716,7 @@ static CPLErr UncompressBlock( GByte *pabyCData, int nSrcBytes,
             
             for( i = 0; i < nRepeatCount; i++ )
             {
-                ((GInt16 *) pabyDest)[nPixelsOutput++] = nDataValue;
+                ((GInt16 *) pabyDest)[nPixelsOutput++] = (GInt16)nDataValue;
             }
         }
         else if( nDataType == EPT_f32 )
@@ -757,9 +760,9 @@ static CPLErr UncompressBlock( GByte *pabyCData, int nSrcBytes,
             for( i = 0; i < nRepeatCount; i++ )
             {
                 if( (nPixelsOutput & 0x1) == 0 )
-                    pabyDest[nPixelsOutput>>1] = nDataValue;
+                    pabyDest[nPixelsOutput>>1] = (GByte) nDataValue;
                 else
-                    pabyDest[nPixelsOutput>>1] |= (nDataValue<<4);
+                    pabyDest[nPixelsOutput>>1] |= (GByte) (nDataValue<<4);
 
                 nPixelsOutput++;
             }
@@ -850,9 +853,9 @@ CPLErr HFABand::GetRasterBlock( int nXBlock, int nYBlock, void * pData )
         GByte 	*pabyCData;
         CPLErr  eErr;
 
-        pabyCData = (GByte *) CPLMalloc( nBlockSize );
+        pabyCData = (GByte *) CPLMalloc( (size_t) nBlockSize );
 
-        if( VSIFReadL( pabyCData, nBlockSize, 1, fpData ) != 1 )
+        if( VSIFReadL( pabyCData, (size_t) nBlockSize, 1, fpData ) != 1 )
         {
             CPLFree( pabyCData );
 
@@ -872,8 +875,8 @@ CPLErr HFABand::GetRasterBlock( int nXBlock, int nYBlock, void * pData )
             }
         }
 
-        eErr = UncompressBlock( pabyCData, nBlockSize,
-                                (GByte *) pData, nBlockXSize*nBlockYSize, 
+        eErr = UncompressBlock( pabyCData, (int) nBlockSize,
+                                (GByte *) pData, nBlockXSize*nBlockYSize,
                                 nDataType );
 
         CPLFree( pabyCData );
@@ -884,7 +887,7 @@ CPLErr HFABand::GetRasterBlock( int nXBlock, int nYBlock, void * pData )
 /* -------------------------------------------------------------------- */
 /*      Read uncompressed data directly into the return buffer.         */
 /* -------------------------------------------------------------------- */
-    if( VSIFReadL( pData, nBlockSize, 1, fpData ) != 1 )
+    if( VSIFReadL( pData, (size_t) nBlockSize, 1, fpData ) != 1 )
     {
 	memset( pData, 0, 
 	    HFAGetDataTypeBits(nDataType)*nBlockXSize*nBlockYSize/8 );
@@ -1022,7 +1025,7 @@ CPLErr HFABand::SetRasterBlock( int nXBlock, int nYBlock, void * pData )
 /* -------------------------------------------------------------------- */
 /*      Write uncompressed data.				        */
 /* -------------------------------------------------------------------- */
-    if( VSIFWriteL( pData, nBlockSize, 1, fpData ) != 1 )
+    if( VSIFWriteL( pData, (size_t) nBlockSize, 1, fpData ) != 1 )
         return CE_Failure;
 
 /* -------------------------------------------------------------------- */

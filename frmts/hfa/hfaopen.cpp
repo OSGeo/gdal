@@ -35,6 +35,9 @@
  * of the GDAL core, but dependent on the Common Portability Library.
  *
  * $Log$
+ * Revision 1.29  2003/05/21 15:35:05  warmerda
+ * cleanup type conversion warnings
+ *
  * Revision 1.28  2003/05/13 19:32:10  warmerda
  * support for reading and writing opacity provided by Diana Esch-Mosher
  *
@@ -258,7 +261,7 @@ HFAHandle HFAOpen( const char * pszFilename, const char * pszAccess )
 /*      Collect file size.                                              */
 /* -------------------------------------------------------------------- */
     VSIFSeekL( fp, 0, SEEK_END );
-    psInfo->nEndOfFile = VSIFTellL( fp );
+    psInfo->nEndOfFile = (GUInt32) VSIFTellL( fp );
 
 /* -------------------------------------------------------------------- */
 /*      Instantiate the root entry.                                     */
@@ -1317,7 +1320,7 @@ HFAHandle HFACreateLL( const char * pszFilename )
 
     psInfo->poDictionary = new HFADictionary( psInfo->pszDictionary );
 
-    psInfo->nEndOfFile = VSIFTellL( fp );
+    psInfo->nEndOfFile = (GUInt32) VSIFTellL( fp );
 
 /* -------------------------------------------------------------------- */
 /*      Create a root entry.                                            */
@@ -1759,7 +1762,7 @@ HFAHandle HFACreate( const char * pszFilename,
 	    if ( iRemainder )
 	    {
 		for ( i = nBytesPerRow - 1; i < nBlockMapSize; i+=nBytesPerRow )
-		    pabyBlockMap[i] = (1<<iRemainder) - 1;
+		    pabyBlockMap[i] = (GByte) ((1<<iRemainder) - 1);
 	    }
 
 	    VSIFWriteL( pabyBlockMap, 1, nBlockMapSize, fpExternal );
