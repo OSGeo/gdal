@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  1999/07/14 05:23:38  warmerda
+ * Added projection set methods, and #defined tokens
+ *
  * Revision 1.2  1999/07/05 17:19:26  warmerda
  * initial implementation
  *
@@ -604,3 +607,395 @@ OGRErr OGRSpatialReference::importFromWkt( char ** ppszInput )
 
     return poRoot->importFromWkt( ppszInput );
 }
+
+/************************************************************************/
+/*                              SetNode()                               */
+/************************************************************************/
+
+OGRErr OGRSpatialReference::SetNode( const char * pszNodePath,
+                                     const char * pszNewNodeValue )
+
+{
+    char	**papszPathTokens;
+    int		i;
+    OGR_SRSNode	*poNode;
+
+    papszPathTokens = CSLTokenizeStringComplex(pszNodePath, "|", TRUE, FALSE);
+
+    if( CSLCount( papszPathTokens ) < 1 )
+        return OGRERR_FAILURE;
+
+    if( GetRoot() == NULL || !EQUAL(papszPathTokens[0],GetRoot()->GetValue()) )
+    {
+        SetRoot( new OGR_SRSNode( papszPathTokens[0] ) );
+    }
+
+    poNode = GetRoot();
+    for( i = 1; papszPathTokens[i] != NULL; i++ )
+    {
+        int	j;
+        
+        for( j = 0; j < poNode->GetChildCount(); j++ )
+        {
+            if( EQUAL(poNode->GetChild( j )->GetValue(),papszPathTokens[i]) )
+            {
+                poNode = poNode->GetChild(j);
+                break;
+            }
+        }
+
+        if( j == poNode->GetChildCount() )
+        {
+            OGR_SRSNode	*poNewNode = new OGR_SRSNode( papszPathTokens[i] );
+            poNode->AddChild( poNewNode );
+            poNode = poNewNode;
+        }
+    }
+
+    CSLDestroy( papszPathTokens );
+
+    if( poNode->GetChildCount() > 0 )
+        poNode->GetChild(0)->SetValue( pszNewNodeValue );
+    else
+        poNode->AddChild( new OGR_SRSNode( pszNewNodeValue ) );
+
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                              SetNode()                               */
+/************************************************************************/
+
+OGRErr OGRSpatialReference::SetNode( const char *pszNodePath,
+                                     double dfValue )
+
+{
+    char	szValue[64];
+
+    if( ABS(dfValue - (int) dfValue) == 0.0 )
+        sprintf( szValue, "%d", (int) dfValue );
+    else
+        sprintf( szValue, "%.12f", dfValue );
+
+    return SetNode( pszNodePath, szValue );
+}
+
+/************************************************************************/
+/*                           SetProjection()                            */
+/************************************************************************/
+
+OGRErr OGRSpatialReference::SetProjection( const char * pszProjection )
+
+{
+    if( !GetAttrNode( "PROJCS" ) )
+    {
+        SetNode( "PROJCS", "unnamed" );
+    }
+    
+    return SetNode( "PROJCS|PROJECTION", pszProjection );
+}
+
+/************************************************************************/
+/*                            SetProjParm()                             */
+/************************************************************************/
+
+OGRErr OGRSpatialReference::SetProjParm( const char * pszParmName,
+                                         double dfValue )
+
+{
+    OGR_SRSNode	*poPROJCS = GetAttrNode( "PROJCS" );
+    OGR_SRSNode *poParm;
+    char	szValue[64];
+
+    if( poPROJCS == NULL || GetAttrNode( pszParmName ) != NULL )
+        return OGRERR_FAILURE;
+
+    poParm = new OGR_SRSNode( "PARAMETER" );
+    poParm->AddChild( new OGR_SRSNode( pszParmName ) );
+
+    if( ABS(dfValue - (int) dfValue) == 0.0 )
+        sprintf( szValue, "%d", (int) dfValue );
+    else
+        sprintf( szValue, "%.12f", dfValue );
+
+    poParm->AddChild( new OGR_SRSNode( szValue ) );
+
+    poPROJCS->AddChild( poParm );
+
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                               SetTM()                                */
+/************************************************************************/
+
+OGRErr OGRSpatialReference::SetTM( double dfCenterLat, double dfCenterLong,
+                                   double dfScale,
+                                   double dfFalseEasting,
+                                   double dfFalseNorthing )
+
+{
+    SetProjection( SRS_PT_TRANSVERSE_MERCATOR );
+    SetProjParm( SRS_PP_LATITUDE_OF_CENTER, dfCenterLat );
+    SetProjParm( SRS_PP_LONGITUDE_OF_CENTER, dfCenterLong );
+    SetProjParm( SRS_PP_SCALE_FACTOR, dfScale );
+    SetProjParm( SRS_PP_FALSE_EASTING, dfFalseEasting );
+    SetProjParm( SRS_PP_FALSE_NORTHING, dfFalseNorthing );
+
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                              SetACEA()                               */
+/************************************************************************/
+
+OGRErr OGRSpatialReference::SetACEA( double dfStdP1, double dfStdP2,
+                                     double dfCenterLat, double dfCenterLong,
+                                     double dfFalseEasting,
+                                     double dfFalseNorthing )
+
+{
+    SetProjection( SRS_PT_ALBERS_CONIC_EQUAL_AREA );
+    SetProjParm( SRS_PP_STANDARD_PARALLEL_1, dfStdP1 );
+    SetProjParm( SRS_PP_STANDARD_PARALLEL_2, dfStdP2 );
+    SetProjParm( SRS_PP_LATITUDE_OF_CENTER, dfCenterLat );
+    SetProjParm( SRS_PP_LONGITUDE_OF_CENTER, dfCenterLong );
+    SetProjParm( SRS_PP_FALSE_EASTING, dfFalseEasting );
+    SetProjParm( SRS_PP_FALSE_NORTHING, dfFalseNorthing );
+
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                               SetAE()                                */
+/************************************************************************/
+
+OGRErr OGRSpatialReference::SetAE( double dfCenterLat, double dfCenterLong,
+                                   double dfFalseEasting,
+                                   double dfFalseNorthing )
+
+{
+    SetProjection( SRS_PT_AZIMUTHAL_EQUIDISTANT );
+    SetProjParm( SRS_PP_LATITUDE_OF_CENTER, dfCenterLat );
+    SetProjParm( SRS_PP_LONGITUDE_OF_CENTER, dfCenterLong );
+    SetProjParm( SRS_PP_FALSE_EASTING, dfFalseEasting );
+    SetProjParm( SRS_PP_FALSE_NORTHING, dfFalseNorthing );
+
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                               SetEC()                                */
+/************************************************************************/
+
+OGRErr OGRSpatialReference::SetEC( double dfStdP1, double dfStdP2,
+                                   double dfCenterLat, double dfCenterLong,
+                                   double dfFalseEasting,
+                                   double dfFalseNorthing )
+
+{
+    SetProjection( SRS_PT_EQUIDISTANT_CONIC );
+    SetProjParm( SRS_PP_STANDARD_PARALLEL_1, dfStdP1 );
+    SetProjParm( SRS_PP_STANDARD_PARALLEL_2, dfStdP2 );
+    SetProjParm( SRS_PP_LATITUDE_OF_CENTER, dfCenterLat );
+    SetProjParm( SRS_PP_LONGITUDE_OF_CENTER, dfCenterLong );
+    SetProjParm( SRS_PP_FALSE_EASTING, dfFalseEasting );
+    SetProjParm( SRS_PP_FALSE_NORTHING, dfFalseNorthing );
+
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                               SetHOM()                               */
+/************************************************************************/
+
+OGRErr OGRSpatialReference::SetHOM( double dfCenterLat, double dfCenterLong,
+                                    double dfAzimuth, double dfRectToSkew,
+                                    double dfScale,
+                                    double dfFalseEasting,
+                                    double dfFalseNorthing )
+
+{
+    SetProjection( SRS_PT_EQUIDISTANT_CONIC );
+    SetProjParm( SRS_PP_LATITUDE_OF_CENTER, dfCenterLat );
+    SetProjParm( SRS_PP_LONGITUDE_OF_CENTER, dfCenterLong );
+    SetProjParm( SRS_PP_AZIMUTH, dfAzimuth );
+    SetProjParm( "Rectified_to_skewed_grid", dfRectToSkew );
+    SetProjParm( SRS_PP_SCALE_FACTOR, dfScale );
+    SetProjParm( SRS_PP_FALSE_EASTING, dfFalseEasting );
+    SetProjParm( SRS_PP_FALSE_NORTHING, dfFalseNorthing );
+
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                              SetLAEA()                               */
+/************************************************************************/
+
+OGRErr OGRSpatialReference::SetLAEA( double dfCenterLat, double dfCenterLong,
+                                   double dfFalseEasting,
+                                   double dfFalseNorthing )
+
+{
+    SetProjection( SRS_PT_LAMBERT_AZIMUTHAL_EQUAL_AREA );
+    SetProjParm( SRS_PP_LATITUDE_OF_CENTER, dfCenterLat );
+    SetProjParm( SRS_PP_LONGITUDE_OF_CENTER, dfCenterLong );
+    SetProjParm( SRS_PP_FALSE_EASTING, dfFalseEasting );
+    SetProjParm( SRS_PP_FALSE_NORTHING, dfFalseNorthing );
+
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                               SetLCC()                               */
+/************************************************************************/
+
+OGRErr OGRSpatialReference::SetLCC( double dfStdP1, double dfStdP2,
+                                    double dfCenterLat, double dfCenterLong,
+                                    double dfFalseEasting,
+                                    double dfFalseNorthing )
+
+{
+    SetProjection( SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP );
+    SetProjParm( SRS_PP_STANDARD_PARALLEL_1, dfStdP1 );
+    SetProjParm( SRS_PP_STANDARD_PARALLEL_2, dfStdP2 );
+    SetProjParm( SRS_PP_LATITUDE_OF_CENTER, dfCenterLat );
+    SetProjParm( SRS_PP_LONGITUDE_OF_CENTER, dfCenterLong );
+    SetProjParm( SRS_PP_FALSE_EASTING, dfFalseEasting );
+    SetProjParm( SRS_PP_FALSE_NORTHING, dfFalseNorthing );
+
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                              SetLCCB()                               */
+/************************************************************************/
+
+OGRErr OGRSpatialReference::SetLCCB( double dfStdP1, double dfStdP2,
+                                     double dfCenterLat, double dfCenterLong,
+                                     double dfFalseEasting,
+                                     double dfFalseNorthing )
+
+{
+    SetProjection( SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP_BELGIUM );
+    SetProjParm( SRS_PP_STANDARD_PARALLEL_1, dfStdP1 );
+    SetProjParm( SRS_PP_STANDARD_PARALLEL_2, dfStdP2 );
+    SetProjParm( SRS_PP_LATITUDE_OF_CENTER, dfCenterLat );
+    SetProjParm( SRS_PP_LONGITUDE_OF_CENTER, dfCenterLong );
+    SetProjParm( SRS_PP_FALSE_EASTING, dfFalseEasting );
+    SetProjParm( SRS_PP_FALSE_NORTHING, dfFalseNorthing );
+
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                               SetMC()                                */
+/************************************************************************/
+
+OGRErr OGRSpatialReference::SetMC( double dfCenterLat, double dfCenterLong,
+                                   double dfFalseEasting,
+                                   double dfFalseNorthing )
+
+{
+    SetProjection( SRS_PT_MILLER_CYLINDRICAL );
+    SetProjParm( SRS_PP_LATITUDE_OF_CENTER, dfCenterLat );
+    SetProjParm( SRS_PP_LONGITUDE_OF_CENTER, dfCenterLong );
+    SetProjParm( SRS_PP_FALSE_EASTING, dfFalseEasting );
+    SetProjParm( SRS_PP_FALSE_NORTHING, dfFalseNorthing );
+
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                            SetMercator()                             */
+/************************************************************************/
+
+OGRErr OGRSpatialReference::SetMercator( double dfCenterLat, double dfCenterLong,
+                                         double dfScale,
+                                         double dfFalseEasting,
+                                         double dfFalseNorthing )
+
+{
+    SetProjection( SRS_PT_MERCATOR_1SP );
+    SetProjParm( SRS_PP_LATITUDE_OF_CENTER, dfCenterLat );
+    SetProjParm( SRS_PP_LONGITUDE_OF_CENTER, dfCenterLong );
+    SetProjParm( SRS_PP_SCALE_FACTOR, dfScale );
+    SetProjParm( SRS_PP_FALSE_EASTING, dfFalseEasting );
+    SetProjParm( SRS_PP_FALSE_NORTHING, dfFalseNorthing );
+
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                              SetNZMG()                               */
+/************************************************************************/
+
+OGRErr OGRSpatialReference::SetNZMG( double dfCenterLat, double dfCenterLong,
+                                     double dfFalseEasting,
+                                     double dfFalseNorthing )
+
+{
+    SetProjection( SRS_PT_NEW_ZEALAND_MAP_GRID );
+    SetProjParm( SRS_PP_LATITUDE_OF_CENTER, dfCenterLat );
+    SetProjParm( SRS_PP_LONGITUDE_OF_CENTER, dfCenterLong );
+    SetProjParm( SRS_PP_FALSE_EASTING, dfFalseEasting );
+    SetProjParm( SRS_PP_FALSE_NORTHING, dfFalseNorthing );
+
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                            SetRobinson()                             */
+/************************************************************************/
+
+OGRErr OGRSpatialReference::SetRobinson( double dfCenterLong,
+                                         double dfFalseEasting,
+                                         double dfFalseNorthing )
+
+{
+    SetProjection( SRS_PT_ROBINSON );
+    SetProjParm( SRS_PP_LONGITUDE_OF_CENTER, dfCenterLong );
+    SetProjParm( SRS_PP_FALSE_EASTING, dfFalseEasting );
+    SetProjParm( SRS_PP_FALSE_NORTHING, dfFalseNorthing );
+
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                           SetSinusoidal()                            */
+/************************************************************************/
+
+OGRErr OGRSpatialReference::SetSinusoidal( double dfCenterLong,
+                                           double dfFalseEasting,
+                                           double dfFalseNorthing )
+
+{
+    SetProjection( SRS_PT_SINUSOIDAL );
+    SetProjParm( SRS_PP_LONGITUDE_OF_CENTER, dfCenterLong );
+    SetProjParm( SRS_PP_FALSE_EASTING, dfFalseEasting );
+    SetProjParm( SRS_PP_FALSE_NORTHING, dfFalseNorthing );
+
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                          SetStereographic()                          */
+/************************************************************************/
+
+OGRErr OGRSpatialReference::SetStereographic(
+    					double dfCenterLat, double dfCenterLong,
+                                        double dfScale,
+                                        double dfFalseEasting,
+                                        double dfFalseNorthing )
+
+{
+    SetProjection( SRS_PT_STEREOGRAPHIC );
+    SetProjParm( SRS_PP_LATITUDE_OF_CENTER, dfCenterLat );
+    SetProjParm( SRS_PP_LONGITUDE_OF_CENTER, dfCenterLong );
+    SetProjParm( SRS_PP_SCALE_FACTOR, dfScale );
+    SetProjParm( SRS_PP_FALSE_EASTING, dfFalseEasting );
+    SetProjParm( SRS_PP_FALSE_NORTHING, dfFalseNorthing );
+
+    return OGRERR_NONE;
+}
+

@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  1999/07/14 05:23:38  warmerda
+ * Added projection set methods, and #defined tokens
+ *
  * Revision 1.3  1999/06/25 20:21:18  warmerda
  * fleshed out classes
  *
@@ -137,10 +140,164 @@ class OGRSpatialReference
 
     OGRErr      importFromWkt( char ** );
     OGRErr      exportToWkt( char ** );
+
+    OGRErr      SetNode( const char *, const char * );
+    OGRErr      SetNode( const char *, double );
+
+    OGRErr	SetProjection( const char * );
+    OGRErr	SetProjParm( const char *, double );
+
+    // Albers Conic Equal Area
+    OGRErr      SetACEA( double dfStdP1, double dfStdP2,
+                         double dfCenterLat, double dfCenterLong,
+                         double dfFalseEasting, double dfFalseNorthing );
+
+    // Azimuthal Equidistant
+    OGRErr      SetAE( double dfCenterLat, double dfCenterLong,
+                       double dfFalseEasting, double dfFalseNorthing );
+
+    // Equidistant Conic
+    OGRErr      SetEC( double dfStdP1, double dfStdP2,
+                       double dfCenterLat, double dfCenterLong,
+                       double dfFalseEasting, double dfFalseNorthing );
+
+    // Hotine Oblique Mercator
+    OGRErr      SetHOM( double dfCenterLat, double dfCenterLong,
+                        double dfAzimuth, double dfRectToSkew,
+                        double dfScale,
+                        double dfFalseEasting, double dfFalseNorthing );
+
+    // Lambert Azimuthal Equal-Area
+    OGRErr      SetLAEA( double dfCenterLat, double dfCenterLong,
+                         double dfFalseEasting, double dfFalseNorthing );
+
+    // Lambert Conformal Conic
+    OGRErr      SetLCC( double dfStdP1, double dfStdP2,
+                        double dfCenterLat, double dfCenterLong,
+                        double dfFalseEasting, double dfFalseNorthing );
+
+    // Lambert Conformal Conic (Belgium)
+    OGRErr      SetLCCB( double dfStdP1, double dfStdP2,
+                         double dfCenterLat, double dfCenterLong,
+                         double dfFalseEasting, double dfFalseNorthing );
+    
+    // Miller Cylindrical
+    OGRErr      SetMC( double dfCenterLat, double dfCenterLong,
+                       double dfFalseEasting, double dfFalseNorthing );
+
+    // Mercator
+    OGRErr      SetMercator( double dfCenterLat, double dfCenterLong,
+                             double dfScale, 
+                             double dfFalseEasting, double dfFalseNorthing );
+
+    // New Zealand Map Grid
+    OGRErr      SetNZMG( double dfCenterLat, double dfCenterLong,
+                         double dfFalseEasting, double dfFalseNorthing );
+
+    // Robinson
+    OGRErr      SetRobinson( double dfCenterLong, 
+                             double dfFalseEasting, double dfFalseNorthing );
+    
+    // Sinusoidal
+    OGRErr      SetSinusoidal( double dfCenterLong, 
+                               double dfFalseEasting, double dfFalseNorthing );
+    
+    // Stereographic
+    OGRErr      SetStereographic( double dfCenterLat, double dfCenterLong,
+                                  double dfScale,
+                                 double dfFalseEasting,double dfFalseNorthing);
+    
+    // Transverse Mercator
+    OGRErr      SetTM( double dfCenterLat, double dfCenterLong,
+                       double dfScale,
+                       double dfFalseEasting, double dfFalseNorthing );
 };
 
+/* ==================================================================== */
+/*      Some "standard" strings.                                        */
+/* ==================================================================== */
+
+#define SRS_PT_CASSINI_SOLDNER	"Cassini-Soldner"
+#define SRS_PT_EQUIDISTANT_CONIC "Equidistant Conic"
+#define SRS_PT_EQUIRECTANGULAR  "Equirectangular"
+#define SRS_PT_MERCATOR_1SP     "Mercator (1SP)"
+#define SRS_PT_MERCATOR_2SP     "Mercator (2SP)"
+#define SRS_PT_ROBINSON         "Robinson"
+#define SRS_PT_ALBERS_CONIC_EQUAL_AREA					\
+				"Albers Conic Equal-Area"
+#define SRS_PT_LAMBERT_CONFORMAL_CONIC_1SP				\
+                                "Lambert Conformal Conic (1SP)"
+#define SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP			        \
+                                "Lambert Conformal Conic (2SP)"
+#define SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP_BELGIUM		        \
+                                "Lambert Conformal Conic (2SP Belgium)"
+#define SRS_PT_LAMBERT_AZIMUTHAL_EQUAL_AREA		        \
+                                "Lambert Azimuthal Equal Area"
+#define SRS_PT_TRANSVERSE_MERCATOR					\
+                                "Transverse Mercator"
+#define SRS_PT_TRANSVERSE_MERCATOR_SOUTH_ORIENTED			\
+                                "Transverse Mercator (South Oriented)"
+#define SRS_PT_OBLIQUE_STEREOGRAPHIC					\
+                                "Oblique Stereographic"
+#define SRS_PT_POLAR_STEREOGRAPHIC					\
+                                "Polar Stereographic"
+#define SRS_PT_NEW_ZEALAND_MAP_GRID					\
+                                "New Zealand Map Grid"
+#define SRS_PT_HOTINE_OBLIQUE_MERCATOR 					\
+                                "Hotine Oblique Mercator"
+#define SRS_PT_LABORDE_OBLIQUE_MERCATOR 				\
+                                "Laborde Oblique Mercator"
+#define SRS_PT_SWISS_OBLIQUE_CYLINDRICAL 				\
+                                "Laborde Oblique Cylindrical"
+#define SRS_PT_OBLIQUE_MERCATOR "Oblique Mercator"
+#define SRS_PT_TUNISIA_MINING_GRID					\
+                                "Tunisia Mining Grid"
+#define SRS_PT_AZIMUTHAL_EQUIDISTANT "Azimuthal Equidistant"
+#define SRS_PT_MILLER_CYLINDRICAL "Miller Cylindrical"
+#define SRS_PT_SINUSOIDAL	"Sinusoidal"
+#define SRS_PT_STEREOGRAPHIC	"Stereographic"
+#define SRS_PT_NEW_ZEALAND_MAP_GRID "New Zealand Map Grid" 
+
+
+#define SRS_PP_CENTRAL_MERIDIAN		"central_meridian"
+#define SRS_PP_SCALE_FACTOR     	"scale_factor"
+#define SRS_PP_STANDARD_PARALLEL_1	"standard_parallel_1"
+#define SRS_PP_STANDARD_PARALLEL_2	"standard_parallel_2"
+#define SRS_PP_LONGITUDE_OF_CENTER      "longitude_of_center"
+#define SRS_PP_LATITUDE_OF_CENTER       "latitude_of_center"
+#define SRS_PP_LATITUDE_OF_ORIGIN       "latitude_of_origin"
+#define SRS_PP_FALSE_EASTING		"false_easting"
+#define SRS_PP_FALSE_NORTHING		"false_northing"
+#define SRS_PP_AZIMUTH			"azimuth"
+#define SRS_PP_LONGITUDE_OF_POINT_1     "longitude_of_point_1"
+#define SRS_PP_LATITUDE_OF_POINT_1      "latitude_of_point_1"
+#define SRS_PP_LONGITUDE_OF_POINT_2     "longitude_of_point_2"
+#define SRS_PP_LATITUDE_OF_POINT_2      "latitude_of_point_2"
+#define SRS_PP_LONGITUDE_OF_POINT_3     "longitude_of_point_3"
+#define SRS_PP_LATITUDE_OF_POINT_3      "latitude_of_point_3"
+#define SRS_PP_LANDSAT_NUMBER		"landsat_number"
+#define SRS_PP_PATH_NUMBER		"path_number"
+#define SRS_PP_PERSPECTIVE_POINT_HEIGHT "perspective_point_height"
+#define SRS_PP_FIPSZONE			"fipszone"
+#define SRS_PP_ZONE			"zone"
+
+#define SRS_UL_METER		"Meter"
+#define SRS_UL_FOOT		"Foot (International)" /* or just "FOOT"? */
+#define SRS_UL_FOOT_CONV                    "0.3048"
+#define SRS_UL_US_FOOT          "U.S. Foot" /* or "US survey foot" */
+#define SRS_UL_US_FOOT_CONV                 "0.3048006"
+#define SRS_UL_NAUTICAL_MILE    "Nautical Mile"
+#define SRS_UL_NAUTICAL_MILE_CONV           "1852.0"
+#define SRS_UL_LINK		"Link"		/* Based on US Foot */
+#define SRS_UL_LINK_CONV                    "0.20116684023368047"
+#define SRS_UL_CHAIN		"Chain"		/* based on US Foot */
+#define SRS_UL_CHAIN_CONV                   "2.0116684023368047"
+#define SRS_UL_ROD		"Rod"		/* based on US Foot */
+#define SRS_UL_ROD_CONV                     "5.02921005842012"
+
+#define SRS_UA_DEGREE		"Degree"
+#define SRS_UA_DEGREE_CONV                  "0.0174532925199433"
+#define SRS_UA_RADIAN		"Radian"
+                                
+
 #endif /* ndef _OGR_SPATIALREF_H_INCLUDED */
-
-
-
-
