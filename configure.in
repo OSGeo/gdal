@@ -1236,6 +1236,14 @@ export EXE_EXT
 AC_SUBST(EXE_EXT,$EXE_EXT)
 
 dnl ---------------------------------------------------------------------------
+dnl If datadir is set to @prefix@/share, the modify it to be 
+dnl @prefix@/share/gdal.  I wish we could default this.
+dnl ---------------------------------------------------------------------------
+if test "$datadir" = '${prefix}/share' ; then
+  datadir='${prefix}/share/gdal'
+fi
+
+dnl ---------------------------------------------------------------------------
 dnl Python Checks
 dnl ---------------------------------------------------------------------------
 
