@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2004/01/06 19:04:15  warmerda
+ * some iso8211.h enums changed names
+ *
  * Revision 1.5  2003/11/17 20:10:46  warmerda
  * added support for writing FFPT linkages
  *
@@ -123,8 +126,8 @@ int S57Writer::CreateS57File( const char *pszFilename )
     poFDefn = new DDFFieldDefn();
 
     poFDefn->Create( "0000", "", "0001DSIDDSIDDSSI0001DSPM0001VRIDVRIDATTVVRIDVRPCVRIDVRPTVRIDSGCCVRIDSG2DVRIDSG3D0001FRIDFRIDFOIDFRIDATTFFRIDNATFFRIDFFPCFRIDFFPTFRIDFSPCFRIDFSPT",
-                     DDFFieldDefn::elementary, 
-                     DDFFieldDefn::char_string );
+                     dsc_elementary, 
+                     dtc_char_string );
 
     poModule->AddField( poFDefn );
 
@@ -134,7 +137,7 @@ int S57Writer::CreateS57File( const char *pszFilename )
     poFDefn = new DDFFieldDefn();
 
     poFDefn->Create( "0001", "ISO 8211 Record Identifier", "", 
-                     DDFFieldDefn::elementary, DDFFieldDefn::bit_string,
+                     dsc_elementary, dtc_bit_string,
                      "(b12)" );
 
     poModule->AddField( poFDefn );
@@ -145,7 +148,7 @@ int S57Writer::CreateS57File( const char *pszFilename )
     poFDefn = new DDFFieldDefn();
 
     poFDefn->Create( "DSID", "Data set identification field", "",
-                     DDFFieldDefn::vector, DDFFieldDefn::mixed_data_type );
+                     dsc_vector, dtc_mixed_data_type );
 
     poFDefn->AddSubfield( "RCNM", "b11" );
     poFDefn->AddSubfield( "RCID", "b14" );
@@ -172,7 +175,7 @@ int S57Writer::CreateS57File( const char *pszFilename )
     poFDefn = new DDFFieldDefn();
 
     poFDefn->Create( "DSSI", "Data set structure information field", "",
-                     DDFFieldDefn::vector, DDFFieldDefn::mixed_data_type );
+                     dsc_vector, dtc_mixed_data_type );
 
     poFDefn->AddSubfield( "DSTR", "b11" );
     poFDefn->AddSubfield( "AALL", "b11" );
@@ -194,7 +197,7 @@ int S57Writer::CreateS57File( const char *pszFilename )
     poFDefn = new DDFFieldDefn();
 
     poFDefn->Create( "DSPM", "Data set parameter field", "",
-                     DDFFieldDefn::vector, DDFFieldDefn::mixed_data_type );
+                     dsc_vector, dtc_mixed_data_type );
 
     poFDefn->AddSubfield( "RCNM", "b11" );
     poFDefn->AddSubfield( "RCID", "b14" );
@@ -218,7 +221,7 @@ int S57Writer::CreateS57File( const char *pszFilename )
     poFDefn = new DDFFieldDefn();
 
     poFDefn->Create( "VRID", "Vector record identifier field", "",
-                     DDFFieldDefn::vector, DDFFieldDefn::mixed_data_type );
+                     dsc_vector, dtc_mixed_data_type );
 
     poFDefn->AddSubfield( "RCNM", "b11" );
     poFDefn->AddSubfield( "RCID", "b14" );
@@ -233,7 +236,7 @@ int S57Writer::CreateS57File( const char *pszFilename )
     poFDefn = new DDFFieldDefn();
 
     poFDefn->Create( "VRPC", "Vector Record Pointer Control field", "",
-                     DDFFieldDefn::vector, DDFFieldDefn::mixed_data_type );
+                     dsc_vector, dtc_mixed_data_type );
 
     poFDefn->AddSubfield( "VPUI", "b11" );
     poFDefn->AddSubfield( "VPIX", "b12" );
@@ -247,7 +250,7 @@ int S57Writer::CreateS57File( const char *pszFilename )
     poFDefn = new DDFFieldDefn();
 
     poFDefn->Create( "VRPT", "Vector record pointer field", "*",
-                     DDFFieldDefn::array, DDFFieldDefn::mixed_data_type );
+                     dsc_array, dtc_mixed_data_type );
 
     poFDefn->AddSubfield( "NAME", "B(40)" );
     poFDefn->AddSubfield( "ORNT", "b11" );
@@ -263,7 +266,7 @@ int S57Writer::CreateS57File( const char *pszFilename )
     poFDefn = new DDFFieldDefn();
 
     poFDefn->Create( "ATTV", "Vector record attribute field", "*",
-                     DDFFieldDefn::array, DDFFieldDefn::mixed_data_type );
+                     dsc_array, dtc_mixed_data_type );
 
     poFDefn->AddSubfield( "ATTL", "b12" );
     poFDefn->AddSubfield( "ATVL", "A" );
@@ -276,7 +279,7 @@ int S57Writer::CreateS57File( const char *pszFilename )
     poFDefn = new DDFFieldDefn();
 
     poFDefn->Create( "SGCC", "Coordinate Control Field", "",
-                     DDFFieldDefn::vector, DDFFieldDefn::mixed_data_type );
+                     dsc_vector, dtc_mixed_data_type );
 
     poFDefn->AddSubfield( "CCUI", "b11" );
     poFDefn->AddSubfield( "CCIX", "b12" );
@@ -290,7 +293,7 @@ int S57Writer::CreateS57File( const char *pszFilename )
     poFDefn = new DDFFieldDefn();
 
     poFDefn->Create( "SG2D", "2-D coordinate field", "*",
-                     DDFFieldDefn::array, DDFFieldDefn::mixed_data_type );
+                     dsc_array, dtc_mixed_data_type );
 
     poFDefn->AddSubfield( "YCOO", "b24" );
     poFDefn->AddSubfield( "XCOO", "b24" );
@@ -303,7 +306,7 @@ int S57Writer::CreateS57File( const char *pszFilename )
     poFDefn = new DDFFieldDefn();
 
     poFDefn->Create( "SG3D", "3-D coordinate (sounding array) field", "*",
-                     DDFFieldDefn::array, DDFFieldDefn::mixed_data_type );
+                     dsc_array, dtc_mixed_data_type );
 
     poFDefn->AddSubfield( "YCOO", "b24" );
     poFDefn->AddSubfield( "XCOO", "b24" );
@@ -317,7 +320,7 @@ int S57Writer::CreateS57File( const char *pszFilename )
     poFDefn = new DDFFieldDefn();
 
     poFDefn->Create( "FRID", "Feature record identifier field", "",
-                     DDFFieldDefn::vector, DDFFieldDefn::mixed_data_type );
+                     dsc_vector, dtc_mixed_data_type );
 
     poFDefn->AddSubfield( "RCNM", "b11" );
     poFDefn->AddSubfield( "RCID", "b14" );
@@ -335,7 +338,7 @@ int S57Writer::CreateS57File( const char *pszFilename )
     poFDefn = new DDFFieldDefn();
 
     poFDefn->Create( "FOID", "Feature object identifier field", "",
-                     DDFFieldDefn::vector, DDFFieldDefn::mixed_data_type );
+                     dsc_vector, dtc_mixed_data_type );
 
     poFDefn->AddSubfield( "AGEN", "b12" );
     poFDefn->AddSubfield( "FIDN", "b14" );
@@ -349,7 +352,7 @@ int S57Writer::CreateS57File( const char *pszFilename )
     poFDefn = new DDFFieldDefn();
 
     poFDefn->Create( "ATTF", "Feature record attribute field", "*",
-                     DDFFieldDefn::array, DDFFieldDefn::mixed_data_type );
+                     dsc_array, dtc_mixed_data_type );
 
     poFDefn->AddSubfield( "ATTL", "b12" );
     poFDefn->AddSubfield( "ATVL", "A" );
@@ -362,7 +365,7 @@ int S57Writer::CreateS57File( const char *pszFilename )
     poFDefn = new DDFFieldDefn();
 
     poFDefn->Create( "NATF", "Feature record national attribute field", "*",
-                     DDFFieldDefn::array, DDFFieldDefn::mixed_data_type );
+                     dsc_array, dtc_mixed_data_type );
 
     poFDefn->AddSubfield( "ATTL", "b12" );
     poFDefn->AddSubfield( "ATVL", "A" );
@@ -375,7 +378,7 @@ int S57Writer::CreateS57File( const char *pszFilename )
     poFDefn = new DDFFieldDefn();
 
     poFDefn->Create( "FFPC", "Feature record to feature object pointer control field", "",
-                     DDFFieldDefn::vector, DDFFieldDefn::mixed_data_type );
+                     dsc_vector, dtc_mixed_data_type );
 
     poFDefn->AddSubfield( "FFUI", "b11" );
     poFDefn->AddSubfield( "FFIX", "b12" );
@@ -389,7 +392,7 @@ int S57Writer::CreateS57File( const char *pszFilename )
     poFDefn = new DDFFieldDefn();
 
     poFDefn->Create( "FFPT", "Feature record to feature object pointer field", "*",
-                     DDFFieldDefn::array, DDFFieldDefn::mixed_data_type );
+                     dsc_array, dtc_mixed_data_type );
 
     poFDefn->AddSubfield( "LNAM", "B(64)" );
     poFDefn->AddSubfield( "RIND", "b11" );
@@ -403,7 +406,7 @@ int S57Writer::CreateS57File( const char *pszFilename )
     poFDefn = new DDFFieldDefn();
 
     poFDefn->Create( "FSPC", "Feature record to spatial record pointer control field", "",
-                     DDFFieldDefn::vector, DDFFieldDefn::mixed_data_type );
+                     dsc_vector, dtc_mixed_data_type );
 
     poFDefn->AddSubfield( "FSUI", "b11" );
     poFDefn->AddSubfield( "FSIX", "b12" );
@@ -417,7 +420,7 @@ int S57Writer::CreateS57File( const char *pszFilename )
     poFDefn = new DDFFieldDefn();
 
     poFDefn->Create( "FSPT", "Feature record to spatial record pointer field", 
-                     "*", DDFFieldDefn::array, DDFFieldDefn::mixed_data_type );
+                     "*", dsc_array, dtc_mixed_data_type );
 
     poFDefn->AddSubfield( "NAME", "B(40)" );
     poFDefn->AddSubfield( "ORNT", "b11" );
