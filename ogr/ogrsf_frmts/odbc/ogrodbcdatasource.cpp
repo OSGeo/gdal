@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2003/10/06 19:18:30  warmerda
+ * Added userid/password support
+ *
  * Revision 1.1  2003/09/25 17:08:37  warmerda
  * New
  *
@@ -90,16 +93,65 @@ int OGRODBCDataSource::Open( const char * pszNewName, int bUpdate,
     CPLAssert( nLayers == 0 );
 
 /* -------------------------------------------------------------------- */
+/*      Split out userid, password and DSN.  The general form is        */
+/*      user/password@dsn.  But if there are no @ characters the        */
+/*      whole thing is assumed to be a DSN.                             */
+/* -------------------------------------------------------------------- */
+    char *pszUserid = NULL;
+    char *pszPassword = NULL;
+    char *pszDSN = NULL;
+
+    if( strstr(pszNewName+5,"@") == NULL )
+    {
+        pszDSN = CPLStrdup(pszNewName+5);
+    }
+    else
+    {
+        char *pszTarget;
+
+        pszDSN = CPLStrdup(strstr(pszNewName+5,"@")+1);
+        if( pszNewName[5] == '/' )
+        {
+            pszPassword = CPLStrdup(pszNewName + 6);
+            pszTarget = strstr(pszPassword,"@");
+            *pszTarget = '\0';
+        }
+        else
+        {
+            pszUserid = CPLStrdup(pszNewName+5);
+            pszTarget = strstr(pszUserid,"@");
+            *pszTarget = '\0';
+
+            pszTarget = strstr(pszUserid,"/");
+            if( pszTarget != NULL )
+            {
+                *pszTarget = '\0';
+                pszPassword = CPLStrdup(pszTarget+1);
+            }
+        }
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Initialize based on the DSN.                                    */
 /* -------------------------------------------------------------------- */
-    if( !oSession.EstablishSession( pszNewName + 5, NULL, NULL ) )
+    CPLDebug( "ODBC", "EstablishSession(%s,%s,%s)", 
+              pszDSN, pszUserid, pszPassword );
+
+    if( !oSession.EstablishSession( pszDSN, pszUserid, pszPassword ) )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "Unable to initialize ODBC connection to DSN %s,\n"
                   "%s", 
                   pszNewName+5, oSession.GetLastError() );
+        CPLFree( pszDSN );
+        CPLFree( pszUserid );
+        CPLFree( pszPassword );
         return FALSE;
     }
+
+    CPLFree( pszDSN );
+    CPLFree( pszUserid );
+    CPLFree( pszPassword );
 
     pszName = CPLStrdup( pszNewName );
     
@@ -121,7 +173,7 @@ int OGRODBCDataSource::Open( const char * pszNewName, int bUpdate,
         }
     }
 
-    return nLayers > 0 || bUpdate;
+    return TRUE;
 }
 
 /************************************************************************/
