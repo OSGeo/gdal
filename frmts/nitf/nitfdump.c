@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2003/05/29 19:50:10  warmerda
+ * added RPC (and more general TRE) reporting
+ *
  * Revision 1.5  2002/12/18 21:18:38  warmerda
  * report corners more sensibly
  *
@@ -49,6 +52,8 @@
 
 CPL_CVSID("$Id$");
 
+static void DumpRPC( NITFImage *psImage, NITFRPC00BInfo *psRPC );
+
 /************************************************************************/
 /*                                main()                                */
 /************************************************************************/
@@ -58,6 +63,7 @@ int main( int nArgc, char ** papszArgv )
 {
     NITFFile	*psFile;
     int          iSegment;
+    char         szTemp[100];
 
     if( nArgc < 2 )
     {
@@ -73,17 +79,24 @@ int main( int nArgc, char ** papszArgv )
         exit( 2 );
 
 /* -------------------------------------------------------------------- */
-/*      Dump first TRE tag if there are any.                            */
+/*      Dump first TRE list.                                            */
 /* -------------------------------------------------------------------- */
     if( psFile->pachTRE != NULL )
     {
-        printf( "File contains %d bytes of TRE data.  "
-                "The first tag is %6.6s.\n", 
-                psFile->nTREBytes, psFile->pachTRE );
+        int nTREBytes = psFile->nTREBytes;
+        const char *pszTREData = psFile->pachTRE;
 
-        if( psFile->apanVQLUT[3] != NULL )
-            printf( "  ... got VQ LUTs.\n" );
 
+        printf( "File TREs:" );
+
+        while( nTREBytes > 10 )
+        {
+            int nThisTRESize = atoi(NITFGetField(szTemp, pszTREData, 6, 5 ));
+
+            printf( " %6.6s(%d)", pszTREData, nThisTRESize );
+            pszTREData += nThisTRESize + 11;
+            nTREBytes -= (nThisTRESize + 11);
+        }
         printf( "\n" );
     }
 
@@ -129,6 +142,7 @@ int main( int nArgc, char ** papszArgv )
     {
         NITFSegmentInfo *psSegInfo = psFile->pasSegmentInfo + iSegment;
         NITFImage *psImage;
+        NITFRPC00BInfo sRPCInfo;
         int iBand;
 
         if( !EQUAL(psSegInfo->szSegmentType,"IM") )
@@ -161,6 +175,25 @@ int main( int nArgc, char ** papszArgv )
                 psImage->nBlocksPerRow, psImage->nBlocksPerColumn,
                 psImage->nBlockWidth, psImage->nBlockHeight );
         
+        if( psImage->pachTRE != NULL )
+        {
+            int nTREBytes = psImage->nTREBytes;
+            const char *pszTREData = psImage->pachTRE;
+            
+            
+            printf( "  Image TREs:" );
+            
+            while( nTREBytes > 10 )
+            {
+                int nThisTRESize = atoi(NITFGetField(szTemp, pszTREData, 6, 5 ));
+                
+                printf( " %6.6s(%d)", pszTREData, nThisTRESize );
+                pszTREData += nThisTRESize + 11;
+                nTREBytes -= (nThisTRESize + 11);
+            }
+            printf( "\n" );
+        }
+
         if( strlen(psImage->pszComments) > 0 )
             printf( "  Comments:\n%s\n", psImage->pszComments );
 
@@ -171,6 +204,11 @@ int main( int nArgc, char ** papszArgv )
             printf( "  Band %d: IREPBAND=%s, ISUBCAT=%s, %d LUT entries.\n",
                     iBand + 1, psBandInfo->szIREPBAND, psBandInfo->szISUBCAT,
                     psBandInfo->nSignificantLUTEntries );
+        }
+
+        if( NITFReadRPC00B( psImage, &sRPCInfo ) )
+        {
+            DumpRPC( psImage, &sRPCInfo );
         }
     }
 
@@ -183,3 +221,98 @@ int main( int nArgc, char ** papszArgv )
 }
 
 
+/************************************************************************/
+/*                              DumpRPC()                               */
+/************************************************************************/
+
+static void DumpRPC( NITFImage *psImage, NITFRPC00BInfo *psRPC )
+
+{
+    int  i;
+
+    printf( "  RPC00B:\n" );
+    printf( "    SUCCESS=%d\n", psRPC->SUCCESS );
+    printf( "    ERR_BIAS=%.16g\n", psRPC->ERR_BIAS );
+    printf( "    ERR_RAND=%.16g\n", psRPC->ERR_RAND );
+
+    printf( "    LINE_OFF=%.16g\n", psRPC->LINE_OFF );
+    printf( "    SAMP_OFF=%.16g\n", psRPC->SAMP_OFF );
+    printf( "    LAT_OFF =%.16g\n", psRPC->LAT_OFF );
+    printf( "    LONG_OFF=%.16g\n", psRPC->LONG_OFF );
+    printf( "    HEIGHT_OFF=%.16g\n", psRPC->HEIGHT_OFF );
+
+    printf( "    LINE_SCALE=%.16g\n", psRPC->LINE_SCALE );
+    printf( "    SAMP_SCALE=%.16g\n", psRPC->SAMP_SCALE );
+    printf( "    LAT_SCALE =%.16g\n", psRPC->LAT_SCALE );
+    printf( "    LONG_SCALE=%.16g\n", psRPC->LONG_SCALE );
+    printf( "    HEIGHT_SCALE=%.16g\n", psRPC->HEIGHT_SCALE );
+
+    printf( "    LINE_NUM_COEFF = " );
+    for( i=0; i < 20; i++ )
+    {
+        printf( "%.12g ", psRPC->LINE_NUM_COEFF[i] );
+
+        if( i == 19 )
+            printf( "\n" );
+        else if( (i%5) == 4  )
+            printf( "\n                     " );
+    }
+    
+    printf( "    LINE_DEN_COEFF = " );
+    for( i=0; i < 20; i++ )
+    {
+        printf( "%.12g ", psRPC->LINE_DEN_COEFF[i] );
+
+        if( i == 19 )
+            printf( "\n" );
+        else if( (i%5) == 4  )
+            printf( "\n                     " );
+    }
+    
+    printf( "    SAMP_NUM_COEFF = " );
+    for( i=0; i < 20; i++ )
+    {
+        printf( "%.12g ", psRPC->SAMP_NUM_COEFF[i] );
+
+        if( i == 19 )
+            printf( "\n" );
+        else if( (i%5) == 4  )
+            printf( "\n                     " );
+    }
+    
+    printf( "    SAMP_DEN_COEFF = " );
+    for( i=0; i < 20; i++ )
+    {
+        printf( "%.12g ", psRPC->SAMP_DEN_COEFF[i] );
+
+        if( i == 19 )
+            printf( "\n" );
+        else if( (i%5) == 4  )
+            printf( "\n                     " );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Dump some known locations.                                      */
+/* -------------------------------------------------------------------- */
+    {
+        double adfLong[] = { psImage->dfULX, psImage->dfURX, 
+                             psImage->dfLLX, psImage->dfLRX, 
+                             (psImage->dfULX + psImage->dfLRX) / 2,
+                             (psImage->dfULX + psImage->dfLRX) / 2 };
+        double adfLat[] = { psImage->dfULY, psImage->dfURY, 
+                            psImage->dfLLY, psImage->dfLRY, 
+                            (psImage->dfULY + psImage->dfLRY) / 2,
+                            (psImage->dfULY + psImage->dfLRY) / 2 };
+        double adfHeight[] = { 0.0, 0.0, 0.0, 0.0, 0.0, 300.0 };
+        double dfPixel, dfLine;
+        
+        for( i = 0; i < sizeof(adfLong) / sizeof(double); i++ )
+        {
+            NITFRPCGeoToImage( psRPC, adfLong[i], adfLat[i], adfHeight[i], 
+                               &dfPixel, &dfLine );
+            
+            printf( "    RPC Transform (%.12g,%.12g,%g) -> (%g,%g)\n", 
+                    adfLong[i], adfLat[i], adfHeight[i], dfPixel, dfLine );
+        }
+    }
+}
