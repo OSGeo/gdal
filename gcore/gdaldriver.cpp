@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2001/10/05 20:35:26  warmerda
+ * CreateCopy() won't try to write default geotransform
+ *
  * Revision 1.20  2001/09/24 15:58:27  warmerda
  * improved progress reporting in createcopy
  *
@@ -290,7 +293,13 @@ GDALDataset *GDALDriver::CreateCopy( const char * pszFilename,
 /* -------------------------------------------------------------------- */
     double	adfGeoTransform[6];
 
-    if( poSrcDS->GetGeoTransform( adfGeoTransform ) == CE_None )
+    if( poSrcDS->GetGeoTransform( adfGeoTransform ) == CE_None 
+        && (adfGeoTransform[0] != 0.0 
+            || adfGeoTransform[1] != 1.0
+            || adfGeoTransform[2] != 0.0
+            || adfGeoTransform[3] != 0.0
+            || adfGeoTransform[4] != 0.0
+            || adfGeoTransform[5] != 1.0) )
     {
         poDstDS->SetGeoTransform( adfGeoTransform );
     }
