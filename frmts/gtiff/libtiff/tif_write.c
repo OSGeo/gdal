@@ -1,4 +1,4 @@
-/* $Id: /cvsroot/osrs/libtiff/libtiff/tif_write.c,v 1.11 2004/04/14 06:34:40 dron Exp $ */
+/* $Id: tif_write.c,v 1.12 2004/09/14 06:42:55 dron Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -349,7 +349,7 @@ TIFFWriteEncodedTile(TIFF* tif, ttile_t tile, tdata_t data, tsize_t cc)
 	td = &tif->tif_dir;
 	if (tile >= td->td_nstrips) {
 		TIFFError(module, "%s: Tile %lu out of range, max %lu",
-		    tif->tif_name, (u_long) tile, (u_long) td->td_nstrips);
+		    tif->tif_name, (unsigned long) tile, (unsigned long) td->td_nstrips);
 		return ((tsize_t) -1);
 	}
 	/*
@@ -408,7 +408,7 @@ TIFFWriteEncodedTile(TIFF* tif, ttile_t tile, tdata_t data, tsize_t cc)
 		return ((tsize_t) -1);
 	if (!isFillOrder(tif, td->td_fillorder) &&
 	    (tif->tif_flags & TIFF_NOBITREV) == 0)
-		TIFFReverseBits((u_char *)tif->tif_rawdata, tif->tif_rawcc);
+		TIFFReverseBits((unsigned char *)tif->tif_rawdata, tif->tif_rawcc);
 	if (tif->tif_rawcc > 0 && !TIFFAppendToStrip(tif, tile,
 	    tif->tif_rawdata, tif->tif_rawcc))
 		return ((tsize_t) -1);
@@ -435,8 +435,8 @@ TIFFWriteRawTile(TIFF* tif, ttile_t tile, tdata_t data, tsize_t cc)
 		return ((tsize_t) -1);
 	if (tile >= tif->tif_dir.td_nstrips) {
 		TIFFError(module, "%s: Tile %lu out of range, max %lu",
-		    tif->tif_name, (u_long) tile,
-		    (u_long) tif->tif_dir.td_nstrips);
+		    tif->tif_name, (unsigned long) tile,
+		    (unsigned long) tif->tif_dir.td_nstrips);
 		return ((tsize_t) -1);
 	}
 	return (TIFFAppendToStrip(tif, tile, (tidata_t) data, cc) ?
@@ -639,7 +639,7 @@ TIFFAppendToStrip(TIFF* tif, tstrip_t strip, tidata_t data, tsize_t cc)
 			if (!SeekOK(tif, td->td_stripoffset[strip])) {
 				TIFFError(module,
 					  "%s: Seek error at scanline %lu",
-					  tif->tif_name, (u_long)tif->tif_row);
+					  tif->tif_name, (unsigned long)tif->tif_row);
 				return (0);
 			}
 		} else
@@ -650,7 +650,7 @@ TIFFAppendToStrip(TIFF* tif, tstrip_t strip, tidata_t data, tsize_t cc)
 
 	if (!WriteOK(tif, data, cc)) {
 		TIFFError(module, "%s: Write error at scanline %lu",
-		    tif->tif_name, (u_long) tif->tif_row);
+		    tif->tif_name, (unsigned long) tif->tif_row);
 		return (0);
 	}
 	tif->tif_curoff += cc;
@@ -669,7 +669,7 @@ TIFFFlushData1(TIFF* tif)
 	if (tif->tif_rawcc > 0) {
 		if (!isFillOrder(tif, tif->tif_dir.td_fillorder) &&
 		    (tif->tif_flags & TIFF_NOBITREV) == 0)
-			TIFFReverseBits((u_char *)tif->tif_rawdata,
+			TIFFReverseBits((unsigned char *)tif->tif_rawdata,
 			    tif->tif_rawcc);
 		if (!TIFFAppendToStrip(tif,
 		    isTiled(tif) ? tif->tif_curtile : tif->tif_curstrip,
@@ -692,3 +692,5 @@ TIFFSetWriteOffset(TIFF* tif, toff_t off)
 {
 	tif->tif_curoff = off;
 }
+
+/* vim: set ts=8 sts=8 sw=8 noet: */

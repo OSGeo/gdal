@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_predict.c,v 1.4 2003/07/08 16:40:46 warmerda Exp $ */
+/* $Id: tif_predict.c,v 1.5 2004/09/14 06:38:49 dron Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -169,9 +169,9 @@ horAcc8(TIFF* tif, tidata_t cp0, tsize_t cc)
 		 * Pipeline the most common cases.
 		 */
 		if (stride == 3)  {
-			u_int cr = cp[0];
-			u_int cg = cp[1];
-			u_int cb = cp[2];
+			unsigned int cr = cp[0];
+			unsigned int cg = cp[1];
+			unsigned int cb = cp[2];
 			do {
 				cc -= 3, cp += 3;
 				cp[0] = (char) (cr += cp[0]);
@@ -179,10 +179,10 @@ horAcc8(TIFF* tif, tidata_t cp0, tsize_t cc)
 				cp[2] = (char) (cb += cp[2]);
 			} while ((int32) cc > 0);
 		} else if (stride == 4)  {
-			u_int cr = cp[0];
-			u_int cg = cp[1];
-			u_int cb = cp[2];
-			u_int ca = cp[3];
+			unsigned int cr = cp[0];
+			unsigned int cg = cp[1];
+			unsigned int cb = cp[2];
+			unsigned int ca = cp[3];
 			do {
 				cc -= 4, cp += 4;
 				cp[0] = (char) (cr += cp[0]);
@@ -360,7 +360,7 @@ PredictorEncodeTile(TIFF* tif, tidata_t bp0, tsize_t cc0, tsample_t s)
 {
 	TIFFPredictorState *sp = PredictorState(tif);
 	tsize_t cc = cc0, rowsize;
-	u_char* bp = bp0;
+	unsigned char* bp = bp0;
 
 	assert(sp != NULL);
 	assert(sp->pfunc != NULL);
@@ -462,3 +462,5 @@ TIFFPredictorInit(TIFF* tif)
 	sp->pfunc = NULL;			/* no predictor routine */
 	return (1);
 }
+
+/* vim: set ts=8 sts=8 sw=8 noet: */
