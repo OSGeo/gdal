@@ -29,6 +29,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.8  2001/04/18 17:58:41  warmerda
+ * fixed raster size calculation
+ *
  * Revision 1.7  2001/04/17 21:46:04  warmerda
  * complete Image support, utilize cln_GetLayerCapabilities()
  *
@@ -576,12 +579,12 @@ GDALDataset *OGDIDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Establish raster info.                                          */
 /* -------------------------------------------------------------------- */
     poDS->nRasterXSize = (int) 
-        ((poDS->sGlobalBounds.east - poDS->sGlobalBounds.west)
-         / poDS->sGlobalBounds.ew_res);
-        
+        (((poDS->sGlobalBounds.east - poDS->sGlobalBounds.west)
+          / poDS->sGlobalBounds.ew_res) + 0.5);
+    
     poDS->nRasterYSize = (int) 
-        ((poDS->sGlobalBounds.north - poDS->sGlobalBounds.south)
-         / poDS->sGlobalBounds.ns_res);
+        (((poDS->sGlobalBounds.north - poDS->sGlobalBounds.south)
+          / poDS->sGlobalBounds.ns_res) + 0.5);
 
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
