@@ -105,7 +105,8 @@ JPEG_SUPPORTED = 1
 # Following suitable for the MrSID DSDK version 4.0.x.
 #MRSID_INCLUDE = -I$(MRSID_DIR)\include\base -I$(MRSID_DIR)\include\support \
 #		-I$(MRSID_DIR)\include\metadata \
-#		-I$(MRSID_DIR)\include\mrsid_readers
+#		-I$(MRSID_DIR)\include\mrsid_readers \
+#		-I$(MRSID_DIR)\include\j2k_readers
 #MRSID_LIB =	/LIBPATH:$(MRSID_DIR)\lib\Release_md \
 #		lti_dsdk.lib advapi32.lib user32.lib
 #MRSID_FLAGS =	-DMRSID_DSDK_VERSION_40

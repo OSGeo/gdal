@@ -866,7 +866,7 @@ else
       AC_MSG_RESULT([found MrSID DSDK version 4.0.x.])
 
       HAVE_MRSID=yes
-      MRSID_INCLUDE="-I$with_mrsid/include/base -I$with_mrsid/include/metadata -I$with_mrsid/include/mrsid_readers -I$with_mrsid/include/support"
+      MRSID_INCLUDE="-I$with_mrsid/include/base -I$with_mrsid/include/metadata -I$with_mrsid/include/mrsid_readers -I$with_mrsid/include/j2k_readers -I$with_mrsid/include/support"
       LIBS="-lltidsdk -lpthread $LIBS"
 
       if test -r "$with_mrsid/lib/libltidsdk.a" ; then
