@@ -169,26 +169,6 @@ Details on the supporting code, and format can be found on the
 
 NOTE: Implemented as <tt>gdal/frmts/gxf/gxfdataset.cpp</tt>.<p>
 
-<h2><a name="HKV">HKV -- Atlantis HKV Image</a></h2>
-
-GDAL supports HKV Image raster file format for read, update, and creation.
-This format is primarily used internally to the Atlantis Scientific InSAR
-processing system.<p>
-
-To select an HKV dataset select the directory containing the <tt>attrib</tt>, 
-and <tt>blob</tt> files for the dataset.<p>
-
-Currently only the UTM projection is supported (georef.projection.name = utm),
-with the affine transform computed from the lat/long control points.   In
-any event, if GCPs are available in a georef file, they are returned with 
-the dataset.<p>
-
-Newly created files (with a type of <tt>HKV</tt>) are always just raw rasters
-with no georeferencing information.  For read, and creation all data types
-(real, integer and complex in bit depths of 8, 16, 32) should be supported. <p>
-
-NOTE: Implemented as <tt>gdal/frmts/raw/hkvdataset.cpp</tt>.<p>
-
 <h2><a name="MFF">MFF -- Atlantis MFF Raster</a></h2>
 
 GDAL includes read, update, and creation support for Atlantis Scientific's
@@ -215,6 +195,26 @@ LSB (Integer -- little endian), and MSB (Motorola -- big endian).  This may
 be manually added to the .hdr file if required.<p>
 
 NOTE: Implemented as <tt>gdal/frmts/raw/mffdataset.cpp</tt>.<p>
+
+<h2><a name="MFF2">MFF2 -- Atlantis MFF2 Image</a></h2>
+
+GDAL supports MFF2 Image raster file format for read, update, and creation.
+This format is primarily used internally to the Atlantis Scientific InSAR
+processing system.<p>
+
+To select an MFF2 dataset select the directory containing the <tt>attrib</tt>, 
+and <tt>image_data</tt> files for the dataset.<p>
+
+Currently only the UTM projection is supported (georef.projection.name = utm),
+with the affine transform computed from the lat/long control points.   In
+any event, if GCPs are available in a georef file, they are returned with 
+the dataset.<p>
+
+Newly created files (with a type of <tt>MFF2</tt>) are always just raw rasters
+with no georeferencing information.  For read, and creation all data types
+(real, integer and complex in bit depths of 8, 16, 32) should be supported. <p>
+
+NOTE: Implemented as <tt>gdal/frmts/raw/hkvdataset.cpp</tt>.<p>
 
 <h2><a name="PAux">PAux -- PCI .aux Labelled Raw Format</a></h2>
 
