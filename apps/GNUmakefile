@@ -35,6 +35,10 @@ gdaltindex:	gdaltindex.o $(DEP_LIBS)
 	$(CXX) $(LNK_FLAGS) gdaltindex.o $(XTRAOBJ) \
 		$(GDAL_SLIB_LINK) $(LIBS) -o gdaltindex
 
+test1:	test1.o $(DEP_LIBS)
+	$(CXX) $(LNK_FLAGS) test1.o $(XTRAOBJ) \
+		$(GDAL_SLIB_LINK) $(LIBS) -o test1
+
 clean:
 	rm -f *.o gdalinfo core
 
