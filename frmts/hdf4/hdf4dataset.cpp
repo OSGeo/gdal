@@ -30,6 +30,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.19  2003/03/01 15:54:43  dron
+ * Significant improvements in HDF EOS metadata parsing.
+ *
  * Revision 1.18  2003/02/27 14:28:55  dron
  * Fixes in HDF-EOS metadata parsing algorithm.
  *
@@ -141,7 +144,7 @@ HDF4Dataset::~HDF4Dataset()
     if( fp != NULL )
         VSIFClose( fp );
     if( hHDF4 > 0 )
-	Hclose(hHDF4);
+	Hclose( hHDF4 );
 }
 
 /************************************************************************/
@@ -416,7 +419,7 @@ const char *HDF4Dataset::GetDataTypeName( int32 iNumType )
 /************************************************************************/
 /*         Tokenize HDF-EOS attributes.                                 */
 /************************************************************************/
-char ** SLTokenizeHDFEOSAttrs( const char * pszString )
+char ** TokenizeHDFEOSAttrs( const char * pszString )
 
 {
     const char  *pszDelimiters = " \t\n\r";
@@ -503,6 +506,43 @@ char ** SLTokenizeHDFEOSAttrs( const char * pszString )
 }
 
 /************************************************************************/
+/*     Find object name and its value in HDF-EOS attributes.            */
+/*     Function returns pointer to the string in list next behind       */
+/*     recognized object.                                               */
+/************************************************************************/
+char **HDF4EOSGetObject( char **papszAttrList,
+			 char **ppszAttrName, char **ppszAttrValue)
+{
+    int	    iCount, i, j;
+    *ppszAttrName = NULL;
+    *ppszAttrValue = NULL;
+
+    iCount = CSLCount( papszAttrList );
+    for ( i = 0; i < iCount - 2; i++ )
+    {
+	if ( EQUAL( papszAttrList[i], "OBJECT" ) )
+	{
+	    i += 2;
+	    for ( j = 1; i + j < iCount - 2; j++ )
+	    {
+	        if ( EQUAL( papszAttrList[i + j], "END_OBJECT" ) ||
+		     EQUAL( papszAttrList[i + j], "OBJECT" ) )
+	            return &papszAttrList[i + j];
+	        else if ( EQUAL( papszAttrList[i + j], "VALUE" ) )
+	        {
+		    *ppszAttrName = papszAttrList[i];
+	            *ppszAttrValue = papszAttrList[i + j + 2];
+
+		    return &papszAttrList[i + j + 2];
+	        }
+	    }
+	}
+    }
+
+    return NULL;
+}
+
+/************************************************************************/
 /*         Translate HDF4-EOS attributes in GDAL metadata items         */
 /************************************************************************/
 char** HDF4Dataset::TranslateHDF4EOSAttributes( int32 iHandle,
@@ -556,35 +596,32 @@ char** HDF4Dataset::TranslateHDF4EOSAttributes( int32 iHandle,
     // We are interested in OBJECTS structures only.
 
     char *pszAttrName, *pszAttrValue;
-    char **papszAttrList;
-    int iCount, i, j;
+    char *pszAddAttrName = NULL;
+    char **papszAttrList, **papszAttrs;
     
-    papszAttrList = SLTokenizeHDFEOSAttrs( pszData );
-    iCount = CSLCount( papszAttrList );
-    for ( i = 0; i < iCount - 2; i++ )
+    papszAttrList = TokenizeHDFEOSAttrs( pszData );
+    papszAttrs = papszAttrList;
+    while ( papszAttrs )
     {
-	if ( EQUAL( papszAttrList[i], "OBJECT" ) )
+	papszAttrs =
+	    HDF4EOSGetObject( papszAttrs, &pszAttrName, &pszAttrValue );
+	if ( pszAttrName && pszAttrValue )
 	{
-	    i += 2;
-	    pszAttrName = papszAttrList[i];
-	    for ( j = 1; i + j < iCount - 2; j++ )
+	    // Now we should recognize special type of HDF EOS metastructures:
+	    // ADDITIONALATTRIBUTENAME = <name>
+	    // PARAMETERVALUE = <value>
+	    if ( EQUAL( pszAttrName, "ADDITIONALATTRIBUTENAME" ) )
+		pszAddAttrName = pszAttrValue;
+	    else if ( pszAddAttrName && EQUAL( pszAttrName, "PARAMETERVALUE" ) )
 	    {
-	        if ( EQUAL( papszAttrList[i + j], "END_OBJECT" ) )
-	            break;
-		else if ( EQUAL( papszAttrList[i + j], "OBJECT" ) )
-		{
-		    i = i + j - 1;
-		    break;
-		}
-	        else if ( EQUAL( papszAttrList[i + j], "VALUE" ) )
-	        {
-		    i += j;
-		    i += 2;
-	            pszAttrValue = papszAttrList[i];
-	            papszMetadata =
-			CSLAddNameValue( papszMetadata, pszAttrName, pszAttrValue );
-		    break;
-	        }
+		papszMetadata =
+		    CSLAddNameValue( papszMetadata, pszAddAttrName, pszAttrValue );
+		pszAddAttrName = NULL;
+	    }
+	    else
+	    {
+		papszMetadata =
+		    CSLAddNameValue( papszMetadata, pszAttrName, pszAttrValue );
 	    }
 	}
     }
@@ -928,7 +965,7 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
     SDend( poDS->hSD );
 
 /* -------------------------------------------------------------------- */
-/*              The same list builded for raster images.                */
+/*              The same list builds for raster images.                 */
 /* -------------------------------------------------------------------- */
     int32	iGR;
     int32	iInterlaceMode; 
