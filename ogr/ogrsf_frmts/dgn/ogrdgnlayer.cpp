@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2002/05/31 16:57:21  warmerda
+ * made Text, MSLink and EntityNum attributes available
+ *
  * Revision 1.19  2002/03/27 21:36:50  warmerda
  * added implementation of GetFeature()
  *
@@ -159,6 +162,33 @@ OGRDGNLayer::OGRDGNLayer( const char * pszName, DGNHandle hDGN )
     oField.SetName( "Style" );
     oField.SetType( OFTInteger );
     oField.SetWidth( 1 );
+    oField.SetPrecision( 0 );
+    poFeatureDefn->AddFieldDefn( &oField );
+
+/* -------------------------------------------------------------------- */
+/*      EntityNum                                                       */
+/* -------------------------------------------------------------------- */
+    oField.SetName( "EntityNum" );
+    oField.SetType( OFTInteger );
+    oField.SetWidth( 8 );
+    oField.SetPrecision( 0 );
+    poFeatureDefn->AddFieldDefn( &oField );
+
+/* -------------------------------------------------------------------- */
+/*      MSLink                                                          */
+/* -------------------------------------------------------------------- */
+    oField.SetName( "MSLink" );
+    oField.SetType( OFTInteger );
+    oField.SetWidth( 10 );
+    oField.SetPrecision( 0 );
+    poFeatureDefn->AddFieldDefn( &oField );
+
+/* -------------------------------------------------------------------- */
+/*      Text                                                            */
+/* -------------------------------------------------------------------- */
+    oField.SetName( "Text" );
+    oField.SetType( OFTString );
+    oField.SetWidth( 0 );
     oField.SetPrecision( 0 );
     poFeatureDefn->AddFieldDefn( &oField );
 }
@@ -303,14 +333,28 @@ OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement )
     poFeature->SetField( "ColorIndex", psElement->color );
     poFeature->SetField( "Weight", psElement->weight );
     poFeature->SetField( "Style", psElement->style );
+    
+/* -------------------------------------------------------------------- */
+/*      Apply first MSLink if available.                                */
+/* -------------------------------------------------------------------- */
+    unsigned char *pabyData;
+    int nEntityNum=0, nMSLink=0;
 
-    char	gv_color[128];
-    int		gv_red, gv_green, gv_blue;
-    char        szFSColor[128], szPen[256];
+    pabyData = DGNGetLinkage( hDGN, psElement, 0, NULL, &nEntityNum, &nMSLink, 
+                              NULL );
+    if( pabyData && (nMSLink != 0 || nEntityNum != 0) )
+    {
+        poFeature->SetField( "EntityNum", nEntityNum );
+        poFeature->SetField( "MSLink", nMSLink );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Lookup color.                                                   */
 /* -------------------------------------------------------------------- */
+    char	gv_color[128];
+    int		gv_red, gv_green, gv_blue;
+    char        szFSColor[128], szPen[256];
+
     szFSColor[0] = '\0';
     if( DGNLookupColor( hDGN, psElement->color, 
                         &gv_red, &gv_green, &gv_blue ) )
@@ -490,6 +534,8 @@ OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement )
 
           poFeature->SetStyleString( pszOgrFS );
           CPLFree( pszOgrFS );
+
+          poFeature->SetField( "Text", psText->string );
       }
       break;
 
