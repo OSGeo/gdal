@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.27  2004/02/22 09:52:04  dron
+ * Fix compirison casting problems in OGRGeometryCollection::Equal().
+ *
  * Revision 1.26  2004/02/21 15:36:14  warmerda
  * const correctness updates for geometry: bug 289
  *
@@ -810,7 +813,7 @@ OGRBoolean OGRGeometryCollection::Equal( OGRGeometry * poOther ) const
 {
     OGRGeometryCollection *poOGC = (OGRGeometryCollection *) poOther;
 
-    if( poOther == this )
+    if( poOGC == this )
         return TRUE;
     
     if( poOther->getGeometryType() != getGeometryType() )
