@@ -13,7 +13,7 @@ OBJ	=	sdtsiref.o sdtscatd.o sdtslinereader.o sdtslib.o \
 		sdtspolygonreader.o sdtsxref.o sdtsrasterreader.o \
 		sdtsindexedreader.o
 
-CPPFLAGS =	-I$(ISO8211DIR) $(GDAL_INCLUDE)
+CPPFLAGS :=	-I$(ISO8211DIR) $(CPPFLAGS)
 
 SDTSLIB	=	libsdts_al.a
 LIBS	:=	$(SDTSLIB) $(ISO8211DIR)/libiso8211.a $(GDAL_LIB) $(LIBS)
@@ -34,7 +34,7 @@ $(SDTSLIB):	$(OBJ)
 	ar r $(SDTSLIB) $?
 
 sdts2shp:	sdts2shp.cpp $(SDTSLIB)
-	$(CXX) $(ALL_CXX_FLAGS) -I$(SHPDIR) sdts2shp.cpp \
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -I$(SHPDIR) sdts2shp.cpp \
 		$(SHPDIR)/shpopen.o $(SHPDIR)/dbfopen.o \
 		$(LIBS) -o sdts2shp
 
