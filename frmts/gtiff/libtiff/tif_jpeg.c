@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_jpeg.c,v 1.13 2003/02/03 06:35:06 warmerda Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_jpeg.c,v 1.14 2003/05/27 16:10:57 warmerda Exp $ */
 
 /*
  * Copyright (c) 1994-1997 Sam Leffler
@@ -658,8 +658,7 @@ JPEGPreDecode(TIFF* tif, tsample_t s)
 	segment_height = td->td_imagelength - tif->tif_row;
 	if (isTiled(tif)) {
                 segment_width = td->td_tilewidth;
-		if (segment_height > td->td_tilelength)
-			segment_height = td->td_tilelength;
+                segment_height = td->td_tilelength;
 		sp->bytesperline = TIFFTileRowSize(tif);
 	} else {
 		if (segment_height > td->td_rowsperstrip)
@@ -676,7 +675,7 @@ JPEGPreDecode(TIFF* tif, tsample_t s)
 	}
 	if (sp->cinfo.d.image_width != segment_width ||
 	    sp->cinfo.d.image_height != segment_height) {
-		TIFFError(module, 
+		TIFFWarning(module, 
                  "Improper JPEG strip/tile size, expected %dx%d, got %dx%d",
                           segment_width, 
                           segment_height,
