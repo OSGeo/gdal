@@ -29,6 +29,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.16  2003/02/15 14:23:09  dron
+ * Fix in GetGeoTransform().
+ *
  * Revision 1.15  2003/02/03 18:40:15  dron
  * Type of input data checked in Create() method now.
  *
@@ -255,7 +258,6 @@ class BMPDataset : public GDALDataset
     CPLErr		GetGeoTransform( double * padfTransform );
     virtual CPLErr	SetGeoTransform( double * );
     const char		*GetProjectionRef();
-
 };
 
 /************************************************************************/
@@ -805,11 +807,10 @@ BMPDataset::~BMPDataset()
 
 CPLErr BMPDataset::GetGeoTransform( double * padfTransform )
 {
+    memcpy( padfTransform, adfGeoTransform, sizeof(adfGeoTransform[0]) * 6 );
+    
     if( bGeoTransformValid )
-    {
-        memcpy( padfTransform, adfGeoTransform, sizeof(adfGeoTransform[0]) * 6 );
         return CE_None;
-    }
     else
         return CE_Failure;
 }
