@@ -28,6 +28,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2002/03/27 21:04:38  warmerda
+ * Added support for reading, and creating lone .dbf files for wkbNone geometry
+ * layers.  Added support for creating a single .shp file instead of a directory
+ * if a path ending in .shp is passed to the data source create method.
+ *
  * Revision 1.7  2001/09/04 15:35:14  warmerda
  * add support for deferring geometry type selection till first feature
  *
@@ -75,7 +80,10 @@ OGRShapeLayer::OGRShapeLayer( const char * pszName,
 
     iNextShapeId = 0;
 
-    nTotalShapeCount = hSHP->nRecords;
+    if( hSHP != NULL )
+        nTotalShapeCount = hSHP->nRecords;
+    else 
+        nTotalShapeCount = hDBF->nRecords;
     
     poFeatureDefn = SHPReadOGRFeatureDefn( pszName, hSHP, hDBF );
 
@@ -97,7 +105,8 @@ OGRShapeLayer::~OGRShapeLayer()
     if( hDBF != NULL )
         DBFClose( hDBF );
 
-    SHPClose( hSHP );
+    if( hSHP != NULL )
+        SHPClose( hSHP );
 
     if( poFilterGeom != NULL )
         delete poFilterGeom;
@@ -275,6 +284,9 @@ OGRErr OGRShapeLayer::GetExtent (OGREnvelope *psExtent, int bForce)
 
 {
     double adMin[4], adMax[4];
+
+    if( hSHP == NULL )
+        return OGRERR_FAILURE;
 
     SHPGetInfo(hSHP, NULL, NULL, adMin, adMax);
 

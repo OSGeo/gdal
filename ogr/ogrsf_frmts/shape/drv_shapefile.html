@@ -23,8 +23,8 @@ violation of the OGR (and Simple Features) data model, and will be corrected
 at some point in the future.  The new ESRI measure values are discarded
 if encountered. <p>
 
-Shapefiles have no projection definition, and so the features handled via
-the shapefile driver will have no projection definition. <p>
+If a .prj files in old Arc/Info style or new ESRI OGC WKT style is present,
+it will be read and used to associate a projection with features.<p>
 
 <h2>Creation Issues</h2>
 
@@ -33,6 +33,9 @@ set (.shp, .shx, and .dbf) as a layer.  The dataset name will be treated
 as a directory name.  If the directory already exists it is used and 
 existing files in the directory are ignored.  If the directory does not
 exist it will be created.<p>
+
+As a special case attempts to create a new dataset with the extension .shp
+will result in a single file set being created instead of a directory.<p>
 
 ESRI shapefiles can only store one kind of geometry per layer (shapefile). 
 On creation this is may be set based on the source file (if a uniform geometry
@@ -43,7 +46,7 @@ to the layer, the output will be terminated with an error.<p>
 
 Note that this can make it very difficult to translate a mixed geometry layer
 from another format into Shapefile format using ogr2ogr, since ogr2ogr has
-not support for separating out geometries from a source layer.<p>
+no support for separating out geometries from a source layer.<p>
 
 Shapefile feature attributes are stored in an associated .dbf file, and so
 attributes suffer a number of limitations:<P>
@@ -78,6 +81,7 @@ None<p>
 
 
 <b>SHPT=type</b>: Override the type of shapefile created.  Can be one of
+NULL for a simple .dbf file with no .shp file, 
  POINT, ARC, POLYGON or MULTIPOINT for 2D, or 
 POINTZ, ARCZ, POLYGONZ or MULTIPOINTZ for 3D.  Shapefiles with <i>measure</i>
 values are not supported, nor are MULTIPATCH files.<p>

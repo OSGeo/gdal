@@ -28,6 +28,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2002/03/27 21:04:38  warmerda
+ * Added support for reading, and creating lone .dbf files for wkbNone geometry
+ * layers.  Added support for creating a single .shp file instead of a directory
+ * if a path ending in .shp is passed to the data source create method.
+ *
  * Revision 1.4  2001/12/12 17:24:08  warmerda
  * use CPLStat, not VSIStat
  *
@@ -93,13 +98,14 @@ OGRDataSource *OGRShapeDriver::Open( const char * pszFilename,
 /************************************************************************/
 
 OGRDataSource *OGRShapeDriver::CreateDataSource( const char * pszName,
-                                                 char ** /* papszOptions */ )
+                                                 char **papszOptions )
 
 {
     VSIStatBuf	stat;
+    int         bSingleNewFile = FALSE;
 
 /* -------------------------------------------------------------------- */
-/*      Verify that the target is a valid directory.                    */
+/*      Is the target a valid existing directory?                       */
 /* -------------------------------------------------------------------- */
     if( CPLStat( pszName, &stat ) == 0 )
     {
@@ -112,6 +118,19 @@ OGRDataSource *OGRShapeDriver::CreateDataSource( const char * pszName,
             return NULL;
         }
     }
+
+/* -------------------------------------------------------------------- */
+/*      Does it end in the extension .shp indicating the user likely    */
+/*      wants to create a single file set?                              */
+/* -------------------------------------------------------------------- */
+    else if( EQUAL(CPLGetExtension(pszName),"shp") )
+    {
+        bSingleNewFile = TRUE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Otherwise try to create a new directory.                        */
+/* -------------------------------------------------------------------- */
     else
     {
         if( VSIMkdir( pszName, 0755 ) != 0 )
@@ -128,9 +147,11 @@ OGRDataSource *OGRShapeDriver::CreateDataSource( const char * pszName,
 /* -------------------------------------------------------------------- */
 /*      Return a new OGRDataSource()                                    */
 /* -------------------------------------------------------------------- */
-    OGRShapeDataSource	*poDS = new OGRShapeDataSource();
+    OGRShapeDataSource	*poDS = NULL;
 
-    if( !poDS->Open( pszName, TRUE, FALSE ) )
+    poDS = new OGRShapeDataSource();
+    
+    if( !poDS->Open( pszName, TRUE, FALSE, bSingleNewFile ) )
     {
         delete poDS;
         return NULL;

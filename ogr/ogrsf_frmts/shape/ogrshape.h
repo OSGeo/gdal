@@ -29,6 +29,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2002/03/27 21:04:38  warmerda
+ * Added support for reading, and creating lone .dbf files for wkbNone geometry
+ * layers.  Added support for creating a single .shp file instead of a directory
+ * if a path ending in .shp is passed to the data source create method.
+ *
  * Revision 1.8  2001/09/04 15:35:14  warmerda
  * add support for deferring geometry type selection till first feature
  *
@@ -136,12 +141,15 @@ class OGRShapeDataSource : public OGRDataSource
     char		*pszName;
 
     int			bDSUpdate;
+
+    int                 bSingleNewFile;
     
   public:
     			OGRShapeDataSource();
     			~OGRShapeDataSource();
 
-    int			Open( const char *, int bUpdate, int bTestOpen );
+    int			Open( const char *, int bUpdate, int bTestOpen,
+                              int bSingleNewFile = FALSE );
     int                 OpenFile( const char *, int bUpdate, int bTestOpen );
 
     const char	        *GetName() { return pszName; }
