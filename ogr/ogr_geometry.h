@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.43  2003/04/28 15:39:33  warmerda
+ * ryan added forceToMultiPolyline and forceToMultiPoint
+ *
  * Revision 1.42  2003/03/06 20:29:27  warmerda
  * added GML import/export entry points
  *
@@ -680,7 +683,8 @@ class CPL_DLL OGRGeometryFactory
 
     static OGRGeometry * forceToPolygon( OGRGeometry * );
     static OGRGeometry * forceToMultiPolygon( OGRGeometry * );
-
+    static OGRGeometry * forceToMultiPoint( OGRGeometry * );
+    static OGRGeometry * forceToMultiLineString( OGRGeometry * );
 };
 
 #endif /* ndef _OGR_GEOMETRY_H_INCLUDED */

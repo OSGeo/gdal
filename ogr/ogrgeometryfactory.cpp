@@ -4,7 +4,7 @@
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Factory for converting geometry to and from well known binary
  *           format.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 1999, Frank Warmerdam
@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2003/04/28 15:39:33  warmerda
+ * ryan added forceToMultiPolyline and forceToMultiPoint
+ *
  * Revision 1.17  2003/03/31 15:55:42  danmo
  * Added C API function docs
  *
@@ -616,6 +619,130 @@ OGRGeometry *OGRGeometryFactory::forceToMultiPolygon( OGRGeometry *poGeom )
         return poGeom;
 
     OGRMultiPolygon *poMP = new OGRMultiPolygon();
+    poMP->addGeometry( poGeom );
+
+    return poMP;
+}
+
+/************************************************************************/
+/*                        forceToMultiPoint()                           */
+/************************************************************************/
+
+/**
+ * Convert to multipoint.
+ *
+ * Tries to force the provided geometry to be a multipoint.  Currently
+ * this just effects a change on points.  The passed in geometry is
+ * consumed and a new one returned (or potentially the same one). 
+ * 
+ * @return new geometry.
+ */
+
+OGRGeometry *OGRGeometryFactory::forceToMultiPoint( OGRGeometry *poGeom )
+
+{
+    if( poGeom == NULL )
+        return NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Check for the case of a geometrycollection that can be          */
+/*      promoted to MultiPoint.                                         */
+/* -------------------------------------------------------------------- */
+    if( wkbFlatten(poGeom->getGeometryType()) == wkbGeometryCollection )
+    {
+        int iGeom;
+        int bAllPoint = TRUE;
+        OGRGeometryCollection *poGC = (OGRGeometryCollection *) poGeom;
+
+        for( iGeom = 0; iGeom < poGC->getNumGeometries(); iGeom++ )
+        {
+            if( wkbFlatten(poGC->getGeometryRef(iGeom)->getGeometryType())
+                != wkbPoint )
+                bAllPoint = FALSE;
+        }
+
+        if( !bAllPoint )
+            return poGeom;
+        
+        OGRMultiPoint *poMP = new OGRMultiPoint();
+
+        while( poGC->getNumGeometries() > 0 )
+        {
+            poMP->addGeometryDirectly( poGC->getGeometryRef(0) );
+            poGC->removeGeometry( 0, FALSE );
+        }
+
+        delete poGC;
+
+        return poMP;
+    }
+
+    if( wkbFlatten(poGeom->getGeometryType()) != wkbPoint )
+        return poGeom;
+
+    OGRMultiPoint *poMP = new OGRMultiPoint();
+    poMP->addGeometry( poGeom );
+
+    return poMP;
+}
+
+/************************************************************************/
+/*                        forceToMultiLinestring()                      */
+/************************************************************************/
+
+/**
+ * Convert to multilinestring.
+ *
+ * Tries to force the provided geometry to be a multilinestring.  Currently
+ * this just effects a change on linestrings.  The passed in geometry is
+ * consumed and a new one returned (or potentially the same one). 
+ * 
+ * @return new geometry.
+ */
+
+OGRGeometry *OGRGeometryFactory::forceToMultiLineString( OGRGeometry *poGeom )
+
+{
+    if( poGeom == NULL )
+        return NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Check for the case of a geometrycollection that can be          */
+/*      promoted to MultiPoint.                                         */
+/* -------------------------------------------------------------------- */
+    if( wkbFlatten(poGeom->getGeometryType()) == wkbGeometryCollection )
+    {
+        int iGeom;
+        int bAllLines = TRUE;
+        OGRGeometryCollection *poGC = (OGRGeometryCollection *) poGeom;
+
+        for( iGeom = 0; iGeom < poGC->getNumGeometries(); iGeom++ )
+        {
+            if( wkbFlatten(poGC->getGeometryRef(iGeom)->getGeometryType())
+                != wkbLineString )
+                bAllLines = FALSE;
+        }
+
+        if( !bAllLines )
+            return poGeom;
+        
+        OGRMultiLineString *poMP = new OGRMultiLineString();
+
+        while( poGC->getNumGeometries() > 0 )
+        {
+            poMP->addGeometryDirectly( poGC->getGeometryRef(0) );
+            poGC->removeGeometry( 0, FALSE );
+        }
+
+        delete poGC;
+
+        return poMP;
+    }
+
+    if( wkbFlatten(poGeom->getGeometryType()) != wkbLineString )
+        return poGeom;
+
+    OGRMultiLineString *poMP = new OGRMultiLineString();
     poMP->addGeometry( poGeom );
 
     return poMP;
