@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.14  2005/03/22 04:37:47  fwarmerdam
+ * Integrated ECW_LARGE_OK option.
+ *
  * Revision 1.13  2005/03/02 14:40:33  fwarmerdam
  * Fixed up TARGET validation.
  *
@@ -735,6 +738,15 @@ CPLErr GDALECWCompressor::Initialize(
         m_OStream.Access( fpVSIL, TRUE, real_filename,
                           subfile_offset, subfile_size );
     }
+
+/* -------------------------------------------------------------------- */
+/*      Check if we can enable large files.  This option should only    */
+/*      be set when the application is adhering to one of the           */
+/*      ERMapper options for licensing larger than 500MB input          */
+/*      files.  See Bug 767.                                            */
+/* -------------------------------------------------------------------- */
+    if( CSLTestBoolean(CPLGetConfigOption( "ECW_LARGE_OK", "NO" )) )
+        CNCSFile::SetKeySize();
 
 /* -------------------------------------------------------------------- */
 /*      Set the file info.                                              */
