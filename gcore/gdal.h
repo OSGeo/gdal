@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.40  2001/12/10 17:43:22  warmerda
+ * fixed GDALAddBand() prototype
+ *
  * Revision 1.39  2001/11/18 00:52:15  warmerda
  * removed GDALProjDef
  *
@@ -346,7 +349,8 @@ int CPL_DLL	GDALGetRasterYSize( GDALDatasetH );
 int CPL_DLL	GDALGetRasterCount( GDALDatasetH );
 GDALRasterBandH CPL_DLL GDALGetRasterBand( GDALDatasetH, int );
 
-CPLErr CPL_DLL  GDALAddBand( GDALDataType eType, char **papszOptions );
+CPLErr CPL_DLL  GDALAddBand( GDALDatasetH hDS, GDALDataType eType, 
+                             char **papszOptions );
 
 const char CPL_DLL *GDALGetProjectionRef( GDALDatasetH );
 CPLErr CPL_DLL  GDALSetProjection( GDALDatasetH, const char * );
