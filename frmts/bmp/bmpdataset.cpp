@@ -29,6 +29,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.13  2002/12/15 15:13:33  dron
+ * BMP structures extended.
+ *
  * Revision 1.12  2002/12/13 14:15:50  dron
  * IWriteBlock() fixed, CreateCopy() removed, added RLE4 decoding and OS/2 BMP
  * support.
@@ -80,7 +83,7 @@ CPL_C_END
 enum BMPType
 {
     BMPT_WIN4,	    // BMP used in Windows 3.0/NT 3.51/95
-    BMPT_WIN5,	    // BMP used in Windows 98/Me/2000/XP
+    BMPT_WIN5,	    // BMP used in Windows NT 4.0/98/Me/2000/XP
     BMPT_OS21,	    // BMP used in OS/2 PM 1.x
     BMPT_OS22	    // BMP used in OS/2 PM 2.x
 };
@@ -102,7 +105,7 @@ enum BMPType
 // | Colour-index array  |
 // +---------------------+
 //
-// All numbers stored in LSB order.
+// All numbers stored in Intel order with least significant byte first.
 
 enum BMPComprMethod
 {
@@ -116,6 +119,28 @@ enum BMPComprMethod
     BMPC_JPEG,			// Indicates that the image is a JPEG image.
     BMPC_PNG			// Indicates that the image is a PNG image.
 };
+
+enum BMPLCSType			// Type of logical color space.
+{
+    LCS_CALIBRATED_RGB = 0;	// This value indicates that endpoints and gamma
+				// values are given in the appropriate fields.
+    LCS_DEVICE_RGB = 1;
+    LCS_DEVICE_CMYK = 2;
+};
+
+typedef struct
+{
+    GInt32	iCIEX;
+    GInt32	iCIEY;
+    GInt32	iCIEZ;
+} BMPCIEXYZ;
+
+typedef struct			// This structure contains the x, y, and z
+{				// coordinates of the three colors that correspond
+    BMPCIEXYZ	iCIERed;	// to the red, green, and blue endpoints for
+    BMPCIEXYZ	iCIEGreen;	// a specified logical color space.
+    BMPCIEXYZ	iCIEBlue;
+} BMPCIEXYZTriple;
 
 typedef struct
 {
@@ -163,8 +188,20 @@ typedef struct
     GInt32	iBlueMask;	// The same for blue component
     GInt32	iAlphaMask;	// Colour mask that specifies the alpha
 				// component of each pixel.
-    GInt32	iCSType;	// Colour space of the DIB.
+    BMPLCSType	iCSType;	// Colour space of the DIB.
+    BMPCIEXYZTriple sEndpoints; // This member is ignored unless the iCSType member
+				// specifies LCS_CALIBRATED_RGB.
+    GInt32	iGammaRed;	// Toned response curve for red. This member
+				// is ignored unless color values are calibrated
+				// RGB values and iCSType is set to
+				// LCS_CALIBRATED_RGB. Specified in 16^16 format.
+    GInt32	iGammaGreen;	// Toned response curve for green.
+    GInt32	iGammaBlue;	// Toned response curve for blue.
 } BitmapInfoHeader;
+const int	BIH_WIN4SIZE = 40; // For BMPT_WIN4
+const int	BIH_WIN5SIZE = 57; // For BMPT_WIN5
+const int	BIH_OS21SIZE = 12; // For BMPT_OS21
+const int	BIH_OS22SIZE = 64; // For BMPT_OS22
 
 // We will use plain byte array instead of this structure, but declaration
 // provided for reference
@@ -871,11 +908,12 @@ GDALDataset *BMPDataset::Open( GDALOpenInfo * poOpenInfo )
     CPL_SWAP32PTR( &poDS->sInfoHeader.iSize );
 #endif
 
-    if ( poDS->sInfoHeader.iSize == 40 )
+    if ( poDS->sInfoHeader.iSize == BIH_WIN4SIZE )
 	eBMPType = BMPT_WIN4;
-    else if ( poDS->sInfoHeader.iSize == 12 )
+    else if ( poDS->sInfoHeader.iSize == BIH_OS21SIZE )
 	eBMPType = BMPT_OS21;
-    else if ( poDS->sInfoHeader.iSize == 64 || poDS->sInfoHeader.iSize == 16 )
+    else if ( poDS->sInfoHeader.iSize == BIH_OS22SIZE64 ||
+	      poDS->sInfoHeader.iSize == 16 )
 	eBMPType = BMPT_OS22;
     else
 	eBMPType = BMPT_WIN5;
