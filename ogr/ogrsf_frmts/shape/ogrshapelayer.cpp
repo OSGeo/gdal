@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2003/05/21 04:03:54  warmerda
+ * expand tabs
+ *
  * Revision 1.14  2003/04/21 19:03:20  warmerda
  * added SyncToDisk support
  *
@@ -183,7 +186,7 @@ void OGRShapeLayer::ResetReading()
 OGRFeature *OGRShapeLayer::GetNextFeature()
 
 {
-    OGRFeature	*poFeature;
+    OGRFeature  *poFeature;
 
     while( TRUE )
     {
@@ -251,8 +254,8 @@ OGRErr OGRShapeLayer::CreateFeature( OGRFeature *poFeature )
         && eRequestedGeomType == wkbUnknown 
         && poFeature->GetGeometryRef() != NULL )
     {
-        OGRGeometry	*poGeom = poFeature->GetGeometryRef();
-        int		nShapeType;
+        OGRGeometry     *poGeom = poFeature->GetGeometryRef();
+        int             nShapeType;
         
         switch( poGeom->getGeometryType() )
         {
@@ -402,7 +405,7 @@ int OGRShapeLayer::TestCapability( const char * pszCap )
 OGRErr OGRShapeLayer::CreateField( OGRFieldDefn *poField, int bApproxOK )
 
 {
-    int		iNewField;
+    int         iNewField;
     if( GetFeatureCount(TRUE) != 0 )
     {
         CPLError( CE_Failure, CPLE_NotSupported,
@@ -465,7 +468,7 @@ OGRErr OGRShapeLayer::CreateField( OGRFieldDefn *poField, int bApproxOK )
 
     if( iNewField != -1 )
         return OGRERR_NONE;
-    else	
+    else        
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Can't create field %s in Shape DBF file, reason unknown.\n",
@@ -497,8 +500,8 @@ OGRSpatialReference *OGRShapeLayer::GetSpatialRef()
 int OGRShapeLayer::ResetGeomType( int nNewGeomType )
 
 {
-    char	abyHeader[100];
-    int		nStartPos;
+    char        abyHeader[100];
+    int         nStartPos;
 
     if( nTotalShapeCount > 0 )
         return FALSE;

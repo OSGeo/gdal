@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2003/05/21 03:59:42  warmerda
+ * expand tabs
+ *
  * Revision 1.3  2002/05/09 16:03:19  warmerda
  * major upgrade to support SRS better and add ExecuteSQL
  *
@@ -71,7 +74,7 @@ OGRDataSource *OGRPGDriver::Open( const char * pszFilename,
                                      int bUpdate )
 
 {
-    OGRPGDataSource	*poDS;
+    OGRPGDataSource     *poDS;
 
     poDS = new OGRPGDataSource();
 
@@ -92,7 +95,7 @@ OGRDataSource *OGRPGDriver::CreateDataSource( const char * pszName,
                                               char ** /* papszOptions */ )
 
 {
-    OGRPGDataSource	*poDS;
+    OGRPGDataSource     *poDS;
 
     poDS = new OGRPGDataSource();
 

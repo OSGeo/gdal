@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2003/05/21 04:03:54  warmerda
+ * expand tabs
+ *
  * Revision 1.13  2003/04/21 19:03:20  warmerda
  * added SyncToDisk support
  *
@@ -98,17 +101,17 @@ class OGRShapeLayer : public OGRLayer
 {
     OGRSpatialReference *poSRS;
     OGRFeatureDefn     *poFeatureDefn;
-    OGRGeometry		*poFilterGeom;
-    int			iNextShapeId;
-    int			nTotalShapeCount;
+    OGRGeometry         *poFilterGeom;
+    int                 iNextShapeId;
+    int                 nTotalShapeCount;
 
-    SHPHandle		hSHP;
-    DBFHandle		hDBF;
+    SHPHandle           hSHP;
+    DBFHandle           hDBF;
 
-    int			bUpdateAccess;
+    int                 bUpdateAccess;
 
     OGRwkbGeometryType  eRequestedGeomType;
-    int			ResetGeomType( int nNewType );
+    int                 ResetGeomType( int nNewType );
 
     long               *panMatchingFIDs;
     int                 iMatchingFID;
@@ -116,25 +119,25 @@ class OGRShapeLayer : public OGRLayer
     int                 bHeaderDirty;
 
   public:
-    			OGRShapeLayer( const char * pszName,
+                        OGRShapeLayer( const char * pszName,
                                        SHPHandle hSHP, DBFHandle hDBF,
                                        OGRSpatialReference *poSRS,
                                        int bUpdate, 
                                        OGRwkbGeometryType eReqType );
-    			~OGRShapeLayer();
+                        ~OGRShapeLayer();
 
-    OGRGeometry *	GetSpatialFilter() { return poFilterGeom; }
-    void		SetSpatialFilter( OGRGeometry * );
+    OGRGeometry *       GetSpatialFilter() { return poFilterGeom; }
+    void                SetSpatialFilter( OGRGeometry * );
 
-    void		ResetReading();
-    OGRFeature *	GetNextFeature();
+    void                ResetReading();
+    OGRFeature *        GetNextFeature();
 
     OGRFeature         *GetFeature( long nFeatureId );
     OGRErr              SetFeature( OGRFeature *poFeature );
     OGRErr              CreateFeature( OGRFeature *poFeature );
     OGRErr              SyncToDisk();
     
-    OGRFeatureDefn *	GetLayerDefn() { return poFeatureDefn; }
+    OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
 
     int                 GetFeatureCount( int );
     OGRErr              GetExtent(OGREnvelope *psExtent, int bForce);
@@ -154,25 +157,25 @@ class OGRShapeLayer : public OGRLayer
 class OGRShapeDataSource : public OGRDataSource
 {
     OGRShapeLayer     **papoLayers;
-    int			nLayers;
+    int                 nLayers;
     
-    char		*pszName;
+    char                *pszName;
 
-    int			bDSUpdate;
+    int                 bDSUpdate;
 
     int                 bSingleNewFile;
     
   public:
-    			OGRShapeDataSource();
-    			~OGRShapeDataSource();
+                        OGRShapeDataSource();
+                        ~OGRShapeDataSource();
 
-    int			Open( const char *, int bUpdate, int bTestOpen,
+    int                 Open( const char *, int bUpdate, int bTestOpen,
                               int bSingleNewFile = FALSE );
     int                 OpenFile( const char *, int bUpdate, int bTestOpen );
 
-    const char	        *GetName() { return pszName; }
-    int			GetLayerCount() { return nLayers; }
-    OGRLayer		*GetLayer( int );
+    const char          *GetName() { return pszName; }
+    int                 GetLayerCount() { return nLayers; }
+    OGRLayer            *GetLayer( int );
 
     virtual OGRLayer    *CreateLayer( const char *, 
                                       OGRSpatialReference * = NULL,
@@ -189,7 +192,7 @@ class OGRShapeDataSource : public OGRDataSource
 class OGRShapeDriver : public OGRSFDriver
 {
   public:
-    		~OGRShapeDriver();
+                ~OGRShapeDriver();
                 
     const char *GetName();
     OGRDataSource *Open( const char *, int );

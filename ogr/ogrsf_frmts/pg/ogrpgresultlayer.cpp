@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2003/05/21 03:59:42  warmerda
+ * expand tabs
+ *
  * Revision 1.2  2003/02/01 07:55:48  warmerda
  * avoid dependence on libpq-fs.h
  *
@@ -45,21 +48,21 @@ CPL_CVSID("$Id$");
 /* These are the OIDs for some builtin types, as returned by PQftype(). */
 /* They were copied from pg_type.h in src/include/catalog/pg_type.h */
 
-#define BOOLOID			16
-#define BYTEAOID		17
-#define CHAROID			18
-#define NAMEOID			19
-#define INT8OID			20
-#define INT2OID			21
-#define INT2VECTOROID	22
-#define INT4OID			23
-#define REGPROCOID		24
-#define TEXTOID			25
-#define OIDOID			26
-#define TIDOID		27
+#define BOOLOID                 16
+#define BYTEAOID                17
+#define CHAROID                 18
+#define NAMEOID                 19
+#define INT8OID                 20
+#define INT2OID                 21
+#define INT2VECTOROID   22
+#define INT4OID                 23
+#define REGPROCOID              24
+#define TEXTOID                 25
+#define OIDOID                  26
+#define TIDOID          27
 #define XIDOID 28
 #define CIDOID 29
-#define OIDVECTOROID	30
+#define OIDVECTOROID    30
 #define FLOAT4OID 700
 #define FLOAT8OID 701
 
@@ -115,7 +118,7 @@ OGRFeatureDefn *OGRPGResultLayer::ReadResultDefinition()
 /*      Parse the returned table information.                           */
 /* -------------------------------------------------------------------- */
     OGRFeatureDefn *poDefn = new OGRFeatureDefn( "sql_statement" );
-    int		   iRawField;
+    int            iRawField;
 
     for( iRawField = 0; iRawField < PQnfields(hInitialResult); iRawField++ )
     {

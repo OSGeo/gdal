@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2003/05/21 03:58:49  warmerda
+ * expand tabs
+ *
  * Revision 1.5  2001/07/18 04:55:16  warmerda
  * added CPL_CSVID
  *
@@ -175,7 +178,7 @@ void OGROGDILayer::ResetReading()
 OGRFeature *OGROGDILayer::GetNextFeature()
 
 {
-    OGRFeature	*poFeature=NULL;
+    OGRFeature  *poFeature=NULL;
     ecs_Result  *psResult;
     int         i;
 
@@ -465,7 +468,7 @@ void OGROGDILayer::BuildFeatureDefn()
     numFields = oaf->oa.oa_len;
     for( i = 0; i < numFields; i++ )
     {
-        OGRFieldDefn	oField("", OFTInteger);
+        OGRFieldDefn    oField("", OFTInteger);
 
         oField.SetName( oaf->oa.oa_val[i].name );
         oField.SetPrecision( 0 );
@@ -520,7 +523,7 @@ void OGROGDILayer::BuildFeatureDefn()
 /* -------------------------------------------------------------------- */
     if( m_eFamily == Text )
     {
-        OGRFieldDefn	oField("text", OFTString);
+        OGRFieldDefn    oField("text", OFTString);
 
         m_poFeatureDefn->AddFieldDefn( &oField );
     }

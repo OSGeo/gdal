@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2003/05/21 03:54:01  warmerda
+ * expand tabs
+ *
  * Revision 1.19  2003/04/22 19:37:50  warmerda
  * Added sync to disk
  *
@@ -243,7 +246,7 @@ int OGROCIDataSource::OpenTable( const char *pszNewName,
 /* -------------------------------------------------------------------- */
 /*      Create the layer object.                                        */
 /* -------------------------------------------------------------------- */
-    OGROCITableLayer	*poLayer;
+    OGROCITableLayer    *poLayer;
 
     poLayer = new OGROCITableLayer( this, pszNewName, pszGeomCol, nSRID, 
                                     bUpdate, FALSE );
@@ -271,7 +274,7 @@ int OGROCIDataSource::OpenTable( const char *pszNewName,
 void OGROCIDataSource::ValidateLayer( const char *pszLayerName )
 
 {
-    int	iLayer;
+    int iLayer;
 
 /* -------------------------------------------------------------------- */
 /*      Try to find layer.                                              */
@@ -354,7 +357,7 @@ void OGROCIDataSource::ValidateLayer( const char *pszLayerName )
 void OGROCIDataSource::DeleteLayer( const char *pszLayerName )
 
 {
-    int	iLayer;
+    int iLayer;
 
 /* -------------------------------------------------------------------- */
 /*      Try to find layer.                                              */
@@ -386,7 +389,7 @@ void OGROCIDataSource::DeleteLayer( const char *pszLayerName )
 /*      Remove from the database.                                       */
 /* -------------------------------------------------------------------- */
     OGROCIStatement oCommand( poSession );
-    char	    szCommand[1024];
+    char            szCommand[1024];
 
     sprintf( szCommand, "DROP TABLE \"%s\"", pszLayerName );
     oCommand.Execute( szCommand );
@@ -410,7 +413,7 @@ OGROCIDataSource::CreateLayer( const char * pszLayerName,
                                char ** papszOptions )
 
 {
-    char		szCommand[1024];
+    char                szCommand[1024];
     char               *pszSafeLayerName = CPLStrdup(pszLayerName);
 
     poSession->CleanName( pszSafeLayerName );
@@ -419,7 +422,7 @@ OGROCIDataSource::CreateLayer( const char * pszLayerName,
 /*      Do we already have this layer?  If so, should we blow it        */
 /*      away?                                                           */
 /* -------------------------------------------------------------------- */
-    int	iLayer;
+    int iLayer;
 
     for( iLayer = 0; iLayer < nLayers; iLayer++ )
     {
@@ -451,7 +454,7 @@ OGROCIDataSource::CreateLayer( const char * pszLayerName,
     char szSRSId[100];
 
     if( CSLFetchNameValue( papszOptions, "SRID" ) != NULL )
-	strcpy( szSRSId, CSLFetchNameValue( papszOptions, "SRID" ) );	  
+        strcpy( szSRSId, CSLFetchNameValue( papszOptions, "SRID" ) );     
     else if( poSRS != NULL )
         sprintf( szSRSId, "%d", FetchSRSId( poSRS ) );
     else
@@ -492,7 +495,7 @@ OGROCIDataSource::CreateLayer( const char * pszLayerName,
 /*      Create the layer object.                                        */
 /* -------------------------------------------------------------------- */
     const char *pszLoaderFile = CSLFetchNameValue(papszOptions,"LOADER_FILE");
-    OGROCIWritableLayer	*poLayer;
+    OGROCIWritableLayer *poLayer;
 
     if( pszLoaderFile == NULL )
         poLayer = new OGROCITableLayer( this, pszSafeLayerName, "ORA_GEOMETRY",
@@ -710,8 +713,8 @@ OGRSpatialReference *OGROCIDataSource::FetchSRS( int nId )
 int OGROCIDataSource::FetchSRSId( OGRSpatialReference * poSRS )
 
 {
-    char		*pszWKT = NULL;
-    int			nSRSId;
+    char                *pszWKT = NULL;
+    int                 nSRSId;
 
     if( poSRS == NULL )
         return -1;

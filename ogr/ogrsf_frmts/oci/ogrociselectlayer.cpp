@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2003/05/21 03:54:01  warmerda
+ * expand tabs
+ *
  * Revision 1.3  2003/01/06 17:59:07  warmerda
  * initialize FID field
  *
@@ -92,7 +95,7 @@ OGROCISelectLayer::ReadTableDefinition( OGROCIStatement *poCommand )
 /*      Parse the returned table information.                           */
 /* -------------------------------------------------------------------- */
     for( int iParm = 0; TRUE; iParm++ )
-    {								
+    {                                                           
         OGRFieldDefn oField( "", OFTString );
         int          nStatus;
         OCIParam     *hParmDesc;

@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2003/05/21 03:54:01  warmerda
+ * expand tabs
+ *
  * Revision 1.1  2003/04/04 06:17:47  warmerda
  * New
  *
@@ -252,7 +255,7 @@ OGRErr OGROCIWritableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK 
 
 {
     OGROCISession      *poSession = poDS->GetSession();
-    char		szFieldType[256];
+    char                szFieldType[256];
     OGRFieldDefn        oField( poFieldIn );
 
 /* -------------------------------------------------------------------- */
@@ -261,7 +264,7 @@ OGRErr OGROCIWritableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK 
 /* -------------------------------------------------------------------- */
     if( bLaunderColumnNames )
     {
-        char	*pszSafeName = CPLStrdup( oField.GetNameRef() );
+        char    *pszSafeName = CPLStrdup( oField.GetNameRef() );
 
         poSession->CleanName( pszSafeName );
         oField.SetName( pszSafeName );

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2003/05/21 04:03:54  warmerda
+ * expand tabs
+ *
  * Revision 1.7  2003/03/20 19:11:05  warmerda
  * ensure delete cleans up indexes
  *
@@ -86,7 +89,7 @@ OGRDataSource *OGRShapeDriver::Open( const char * pszFilename,
                                      int bUpdate )
 
 {
-    OGRShapeDataSource	*poDS;
+    OGRShapeDataSource  *poDS;
 
     poDS = new OGRShapeDataSource();
 
@@ -108,7 +111,7 @@ OGRDataSource *OGRShapeDriver::CreateDataSource( const char * pszName,
                                                  char **papszOptions )
 
 {
-    VSIStatBuf	stat;
+    VSIStatBuf  stat;
     int         bSingleNewFile = FALSE;
 
 /* -------------------------------------------------------------------- */
@@ -155,7 +158,7 @@ OGRDataSource *OGRShapeDriver::CreateDataSource( const char * pszName,
 /* -------------------------------------------------------------------- */
 /*      Return a new OGRDataSource()                                    */
 /* -------------------------------------------------------------------- */
-    OGRShapeDataSource	*poDS = NULL;
+    OGRShapeDataSource  *poDS = NULL;
 
     poDS = new OGRShapeDataSource();
     

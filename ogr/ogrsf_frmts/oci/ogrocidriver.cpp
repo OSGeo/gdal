@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2003/05/21 03:54:01  warmerda
+ * expand tabs
+ *
  * Revision 1.4  2003/01/20 20:57:44  warmerda
  * Create() now opens DB in update mode
  *
@@ -73,7 +76,7 @@ OGRDataSource *OGROCIDriver::Open( const char * pszFilename,
                                      int bUpdate )
 
 {
-    OGROCIDataSource	*poDS;
+    OGROCIDataSource    *poDS;
 
     poDS = new OGROCIDataSource();
 
@@ -94,7 +97,7 @@ OGRDataSource *OGROCIDriver::CreateDataSource( const char * pszName,
                                                char ** /* papszOptions */ )
 
 {
-    OGROCIDataSource	*poDS;
+    OGROCIDataSource    *poDS;
 
     poDS = new OGROCIDataSource();
 

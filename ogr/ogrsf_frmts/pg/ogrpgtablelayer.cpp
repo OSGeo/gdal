@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2003/05/21 03:59:42  warmerda
+ * expand tabs
+ *
  * Revision 1.12  2003/02/01 07:55:48  warmerda
  * avoid dependence on libpq-fs.h
  *
@@ -71,7 +74,7 @@
 
 CPL_CVSID("$Id$");
 
-#define CURSOR_PAGE	1
+#define CURSOR_PAGE     1
 
 /************************************************************************/
 /*                          OGRPGTableLayer()                           */
@@ -123,8 +126,8 @@ OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition( const char * pszTable )
 
 {
     PGresult            *hResult;
-    char		szCommand[1024];
-    PGconn		*hPGConn = poDS->GetPGConn();
+    char                szCommand[1024];
+    PGconn              *hPGConn = poDS->GetPGConn();
     
 /* -------------------------------------------------------------------- */
 /*      Fire off commands to get back the schema of the table.          */
@@ -165,11 +168,11 @@ OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition( const char * pszTable )
 /*      Parse the returned table information.                           */
 /* -------------------------------------------------------------------- */
     OGRFeatureDefn *poDefn = new OGRFeatureDefn( pszTable );
-    int		   iRecord;
+    int            iRecord;
 
     for( iRecord = 0; iRecord < PQntuples(hResult); iRecord++ )
     {
-        const char	*pszType, *pszFormatType;
+        const char      *pszType, *pszFormatType;
         OGRFieldDefn    oField( PQgetvalue( hResult, iRecord, 0 ), OFTString);
 
         pszType = PQgetvalue(hResult, iRecord, 1 );
@@ -308,7 +311,7 @@ void OGRPGTableLayer::SetSpatialFilter( OGRGeometry * poGeomIn )
 void OGRPGTableLayer::BuildWhere()
 
 {
-    char	szWHERE[4096];
+    char        szWHERE[4096];
 
     CPLFree( pszWHERE );
     pszWHERE = NULL;
@@ -386,8 +389,8 @@ void OGRPGTableLayer::ResetReading()
 char *OGRPGTableLayer::BuildFields()
 
 {
-    int		i, nSize;
-    char	*pszFieldList;
+    int         i, nSize;
+    char        *pszFieldList;
 
     nSize = 25;
     if( pszGeomColumn )
@@ -464,9 +467,9 @@ OGRErr OGRPGTableLayer::SetFeature( OGRFeature *poFeature )
 OGRErr OGRPGTableLayer::CreateFeature( OGRFeature *poFeature )
 
 {
-    PGconn		*hPGConn = poDS->GetPGConn();
+    PGconn              *hPGConn = poDS->GetPGConn();
     PGresult            *hResult;
-    char		*pszCommand;
+    char                *pszCommand;
     int                 i, bNeedComma;
     unsigned int        nCommandBufSize;;
     OGRErr              eErr;
@@ -479,7 +482,7 @@ OGRErr OGRPGTableLayer::CreateFeature( OGRFeature *poFeature )
     pszCommand = (char *) CPLMalloc(nCommandBufSize);
 
 /* -------------------------------------------------------------------- */
-/*      Form the INSERT command.  					*/
+/*      Form the INSERT command.                                        */
 /* -------------------------------------------------------------------- */
     sprintf( pszCommand, "INSERT INTO \"%s\" (", poFeatureDefn->GetName() );
 
@@ -513,7 +516,7 @@ OGRErr OGRPGTableLayer::CreateFeature( OGRFeature *poFeature )
     bNeedComma = poFeature->GetGeometryRef() != NULL;
     if( bHasPostGISGeometry && poFeature->GetGeometryRef() != NULL)
     {
-        char	*pszWKT = NULL;
+        char    *pszWKT = NULL;
 
         // Do we need to force nSRSId to be set?
         if( nSRSId == -2 )
@@ -540,7 +543,7 @@ OGRErr OGRPGTableLayer::CreateFeature( OGRFeature *poFeature )
     }
     else if( bHasWkb && !bWkbAsOid && poFeature->GetGeometryRef() != NULL )
     {
-        char	*pszBytea = GeometryToBYTEA( poFeature->GetGeometryRef() );
+        char    *pszBytea = GeometryToBYTEA( poFeature->GetGeometryRef() );
 
         if( strlen(pszCommand) + strlen(pszBytea) > nCommandBufSize - 10000 )
         {
@@ -559,7 +562,7 @@ OGRErr OGRPGTableLayer::CreateFeature( OGRFeature *poFeature )
     }
     else if( bHasWkb && bWkbAsOid && poFeature->GetGeometryRef() != NULL )
     {
-        Oid	oid = GeometryToOID( poFeature->GetGeometryRef() );
+        Oid     oid = GeometryToOID( poFeature->GetGeometryRef() );
 
         if( oid != 0 )
         {
@@ -637,7 +640,7 @@ OGRErr OGRPGTableLayer::CreateFeature( OGRFeature *poFeature )
         if( poFeatureDefn->GetFieldDefn(i)->GetType() != OFTInteger
                  && poFeatureDefn->GetFieldDefn(i)->GetType() != OFTReal )
         {
-            int		iChar;
+            int         iChar;
 
             /* We need to quote and escape string fields. */
             strcat( pszCommand+nOffset, "'" );
@@ -694,7 +697,7 @@ OGRErr OGRPGTableLayer::CreateFeature( OGRFeature *poFeature )
 #ifdef notdef
     /* Should we use this oid to get back the FID and assign back to the
        feature?  I think we are supposed to. */
-    Oid	nNewOID = PQoidValue( hResult );
+    Oid nNewOID = PQoidValue( hResult );
     printf( "nNewOID = %d\n", (int) nNewOID );
 #endif
     PQclear( hResult );
@@ -728,10 +731,10 @@ int OGRPGTableLayer::TestCapability( const char * pszCap )
 OGRErr OGRPGTableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK )
 
 {
-    PGconn		*hPGConn = poDS->GetPGConn();
+    PGconn              *hPGConn = poDS->GetPGConn();
     PGresult            *hResult;
-    char		szCommand[1024];
-    char		szFieldType[256];
+    char                szCommand[1024];
+    char                szFieldType[256];
     OGRFieldDefn        oField( poFieldIn );
 
 /* -------------------------------------------------------------------- */
@@ -740,8 +743,8 @@ OGRErr OGRPGTableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK )
 /* -------------------------------------------------------------------- */
     if( bLaunderColumnNames )
     {
-        char	*pszSafeName = CPLStrdup( oField.GetNameRef() );
-        int	i;
+        char    *pszSafeName = CPLStrdup( oField.GetNameRef() );
+        int     i;
 
         for( i = 0; pszSafeName[i] != '\0'; i++ )
         {
@@ -862,10 +865,10 @@ int OGRPGTableLayer::GetFeatureCount( int bForce )
 /*      After all someone else could be adding records from another     */
 /*      application when working against a database.                    */
 /* -------------------------------------------------------------------- */
-    PGconn		*hPGConn = poDS->GetPGConn();
+    PGconn              *hPGConn = poDS->GetPGConn();
     PGresult            *hResult;
-    char		szCommand[4096];
-    int			nCount = 0;
+    char                szCommand[4096];
+    int                 nCount = 0;
 
     poDS->FlushSoftTransaction();
     hResult = PQexec(hPGConn, "BEGIN");
@@ -912,9 +915,9 @@ OGRSpatialReference *OGRPGTableLayer::GetSpatialRef()
 {
     if( nSRSId == -2 )
     {
-        PGconn		*hPGConn = poDS->GetPGConn();
+        PGconn          *hPGConn = poDS->GetPGConn();
         PGresult        *hResult;
-        char		szCommand[1024];
+        char            szCommand[1024];
 
         nSRSId = -1;
 

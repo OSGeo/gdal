@@ -92,7 +92,7 @@ int main()
 
     for( iRow = 0; iRow < 100; iRow++ )
     {
-        anField1[iRow] = iRow;					       
+        anField1[iRow] = iRow;                                         
         sprintf( szField2 + iRow*4, "%3d", iRow );
         anGType[iRow] = 3001;
         anSRID[iRow] = -1;
@@ -110,8 +110,8 @@ int main()
         anElemInfo[2] = 1;
 
         // Prepare the VARRAY of ordinate values. 
-	for (i = 0; i < nElemInfoCount; i++)
-	{
+        for (i = 0; i < nElemInfoCount; i++)
+        {
             if( oSession.Failed( 
                 OCINumberFromInt( oSession.hError, 
                                   (dvoid *) (anElemInfo + i),
@@ -127,7 +127,7 @@ int main()
                                (dvoid *)0, aphElemInfos[iRow]),
                 "OCICollAppend") )
                 exit( 1 );
-	}
+        }
 
         //---------------------------------------------------------------
         double adfOrdinates[6];
@@ -142,8 +142,8 @@ int main()
         adfOrdinates[5] = 0.0;
 
         // Prepare the VARRAY of ordinate values. 
-	for (i = 0; i < nOrdCount; i++)
-	{
+        for (i = 0; i < nOrdCount; i++)
+        {
             if( oSession.Failed( 
                 OCINumberFromReal( oSession.hError, 
                                   (dvoid *) (adfOrdinates + i),
@@ -158,7 +158,7 @@ int main()
                                (dvoid *)0, aphOrdinates[iRow]),
                 "OCICollAppend") )
                 exit( 1 );
-	}
+        }
 
         // -------------------------------------------------------------
         SDO_GEOMETRY_TYPE *poGeom = aoGeometries + iRow;

@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2003/05/21 03:58:49  warmerda
+ * expand tabs
+ *
  * Revision 1.5  2002/01/13 01:46:31  warmerda
  * fix handling of dataset names with drive colon
  *
@@ -205,7 +208,7 @@ int OGROGDIDataSource::Open( const char * pszNewName, int bTestOpen )
 
         if( pszLyrName != NULL )
         {
-            ecs_Family	eFamily;
+            ecs_Family  eFamily;
 
             if (EQUAL(pszFamily, "Line"))
                 eFamily = Line;
@@ -234,7 +237,7 @@ int OGROGDIDataSource::Open( const char * pszNewName, int bTestOpen )
 /* -------------------------------------------------------------------- */
         else
         {
-            int		i;
+            int         i;
             const ecs_LayerCapabilities *psLayerCap;
 
             for( i = 0; 

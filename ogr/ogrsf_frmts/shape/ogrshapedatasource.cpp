@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2003/05/21 04:03:54  warmerda
+ * expand tabs
+ *
  * Revision 1.20  2003/03/27 22:12:14  warmerda
  * Yow ... fix to second last fix.
  *
@@ -137,7 +140,7 @@ int OGRShapeDataSource::Open( const char * pszNewName, int bUpdate,
                               int bTestOpen, int bSingleNewFileIn )
 
 {
-    VSIStatBuf	stat;
+    VSIStatBuf  stat;
     
     CPLAssert( nLayers == 0 );
     
@@ -196,7 +199,7 @@ int OGRShapeDataSource::Open( const char * pszNewName, int bUpdate,
 
         for( iCan = 0; iCan < nCandidateCount; iCan++ )
         {
-            char	*pszFilename;
+            char        *pszFilename;
             const char  *pszCandidate = papszCandidates[iCan];
 
             if( strlen(pszCandidate) < 4
@@ -223,7 +226,7 @@ int OGRShapeDataSource::Open( const char * pszNewName, int bUpdate,
         // Try and .dbf files without apparent associated shapefiles. 
         for( iCan = 0; iCan < nCandidateCount; iCan++ )
         {
-            char	*pszFilename;
+            char        *pszFilename;
             const char  *pszCandidate = papszCandidates[iCan];
             const char  *pszLayerName;
             int         iLayer, bGotAlready = FALSE;
@@ -296,8 +299,8 @@ int OGRShapeDataSource::OpenFile( const char *pszNewName, int bUpdate,
                                   int bTestOpen )
 
 {
-    SHPHandle	hSHP;
-    DBFHandle	hDBF;
+    SHPHandle   hSHP;
+    DBFHandle   hDBF;
     const char *pszExtension = CPLGetExtension( pszNewName );
 
     if( !EQUAL(pszExtension,"shp") && !EQUAL(pszExtension,"shx")
@@ -341,12 +344,12 @@ int OGRShapeDataSource::OpenFile( const char *pszNewName, int bUpdate,
 /* -------------------------------------------------------------------- */
     OGRSpatialReference *poSRS = NULL;
     const char  *pszPrjFile = CPLResetExtension( pszNewName, "prj" );
-    FILE	*fp;
+    FILE        *fp;
 
     fp = VSIFOpen( pszPrjFile, "r" );
     if( fp != NULL )
     {
-        char	**papszLines;
+        char    **papszLines;
 
         VSIFClose( fp );
         
@@ -364,14 +367,14 @@ int OGRShapeDataSource::OpenFile( const char *pszNewName, int bUpdate,
 /* -------------------------------------------------------------------- */
 /*      Extract the basename of the file.                               */
 /* -------------------------------------------------------------------- */
-    char	*pszBasename;
+    char        *pszBasename;
 
     pszBasename = CPLStrdup(CPLGetBasename(pszNewName));
 
 /* -------------------------------------------------------------------- */
 /*      Create the layer object.                                        */
 /* -------------------------------------------------------------------- */
-    OGRShapeLayer	*poLayer;
+    OGRShapeLayer       *poLayer;
 
     poLayer = new OGRShapeLayer( pszBasename, hSHP, hDBF, poSRS, bUpdate,
                                  wkbUnknown );
@@ -402,9 +405,9 @@ OGRShapeDataSource::CreateLayer( const char * pszLayerName,
                                  char ** papszOptions )
 
 {
-    SHPHandle	hSHP;
-    DBFHandle	hDBF;
-    int		nShapeType;
+    SHPHandle   hSHP;
+    DBFHandle   hDBF;
+    int         nShapeType;
 
 /* -------------------------------------------------------------------- */
 /*      Verify we are in update mode.                                   */
@@ -544,7 +547,7 @@ OGRShapeDataSource::CreateLayer( const char * pszLayerName,
 /* -------------------------------------------------------------------- */
 /*      Create the shapefile.                                           */
 /* -------------------------------------------------------------------- */
-    char	*pszFilename;
+    char        *pszFilename;
 
     if( nShapeType != SHPT_NULL )
     {
@@ -590,9 +593,9 @@ OGRShapeDataSource::CreateLayer( const char * pszLayerName,
 /* -------------------------------------------------------------------- */
     if( poSRS != NULL )
     {
-        char	*pszWKT = NULL;
+        char    *pszWKT = NULL;
         const char *pszPrjFile = CPLFormFilename( NULL, pszBasename, "prj");
-        FILE	*fp;
+        FILE    *fp;
 
         /* the shape layer needs it's own copy */
         poSRS = poSRS->Clone();
@@ -610,7 +613,7 @@ OGRShapeDataSource::CreateLayer( const char * pszLayerName,
 /* -------------------------------------------------------------------- */
 /*      Create the layer object.                                        */
 /* -------------------------------------------------------------------- */
-    OGRShapeLayer	*poLayer;
+    OGRShapeLayer       *poLayer;
 
     poLayer = new OGRShapeLayer( pszLayerName, hSHP, hDBF, poSRS, TRUE,
                                  eType );
