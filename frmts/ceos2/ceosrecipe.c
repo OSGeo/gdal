@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2001/10/23 14:26:52  warmerda
+ * D-PAF ERS-1: allow CIS4 as alias for CI*4
+ *
  * Revision 1.8  2001/10/18 17:04:09  warmerda
  * added hacks to determine record length and pd pixels/line for Telaviv ERS data
  *
@@ -72,6 +75,7 @@ CeosStringType_t CeosDataType[] = { { "IU1", __CEOS_TYP_UCHAR },
 				    { "UI2", __CEOS_TYP_USHORT },
 				    { "CI*2", __CEOS_TYP_COMPLEX_CHAR },
 				    { "CI*4", __CEOS_TYP_COMPLEX_SHORT },
+				    { "CIS4", __CEOS_TYP_COMPLEX_SHORT },
 				    { "CI*8", __CEOS_TYP_COMPLEX_LONG },
 				    { "C*8", __CEOS_TYP_COMPLEX_FLOAT },
 				    { "R*4", __CEOS_TYP_FLOAT },
