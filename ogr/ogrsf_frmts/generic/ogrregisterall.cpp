@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2004/07/20 19:19:11  warmerda
+ * added CSV
+ *
  * Revision 1.19  2004/07/10 05:03:42  warmerda
  * added SQLite
  *
@@ -109,6 +112,7 @@ void OGRRegisterAll()
     RegisterOGRAVCBin();
     RegisterOGRREC();
     RegisterOGRMEM();
+    RegisterOGRCSV();
     RegisterOGRGML();
 #ifdef SQLITE_ENABLED
     RegisterOGRSQLite();
