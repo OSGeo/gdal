@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2003/05/12 18:48:57  warmerda
+ * added preliminary 3D write support
+ *
  * Revision 1.7  2002/11/12 19:46:12  warmerda
  * use default seed file if none given
  *
@@ -211,7 +214,7 @@ OGRLayer *OGRDGNDataSource::CreateLayer( const char *pszLayerName,
     const char *pszSeed, *pszMasterUnit = "m", *pszSubUnit = "cm";
     const char *pszValue;
     int nUORPerSU=100, nSUPerMU=1;
-    int nCreationFlags = 0;
+    int nCreationFlags = 0, b3DRequested;
     double dfOriginX = -21474836.0,  /* default origin centered on zero */
            dfOriginY = -21474836.0,  /* with two decimals of precision */
            dfOriginZ = -21474836.0;
@@ -246,9 +249,14 @@ OGRLayer *OGRDGNDataSource::CreateLayer( const char *pszLayerName,
 /* -------------------------------------------------------------------- */
     CSLInsertStrings( papszOptions, 0, papszExtraOptions );
 
+    b3DRequested = CSLFetchBoolean( papszOptions, "3D", 
+                                    (((int) eGeomType) & wkb25DBit) );
+
     pszSeed = CSLFetchNameValue( papszOptions, "SEED" );
     if( pszSeed )
         nCreationFlags |= DGNCF_USE_SEED_ORIGIN | DGNCF_USE_SEED_UNITS;
+    else if( b3DRequested )
+        pszSeed = CPLFindFile( "gdal", "seed_3d.dgn" );
     else
         pszSeed = CPLFindFile( "gdal", "seed_2d.dgn" );
 

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.30  2003/05/12 18:48:57  warmerda
+ * added preliminary 3D write support
+ *
  * Revision 1.29  2003/01/20 20:07:06  warmerda
  * added cell header writing api
  *
@@ -616,6 +619,7 @@ void CPL_DLL         DGNSetOptions( DGNHandle, int );
 int CPL_DLL          DGNTestOpen( GByte *, int );
 const DGNElementInfo CPL_DLL *DGNGetElementIndex( DGNHandle, int * );
 int CPL_DLL          DGNGetExtents( DGNHandle, double * );
+int CPL_DLL          DGNGetDimension( DGNHandle );
 DGNElemCore CPL_DLL *DGNReadElement( DGNHandle );
 void CPL_DLL         DGNFreeElement( DGNHandle, DGNElemCore * );
 void CPL_DLL         DGNRewind( DGNHandle );
@@ -668,6 +672,14 @@ DGNElemCore CPL_DLL  *
                                   double dfPrimaryAxis, double dfSecondaryAxis,
                                   double dfRotation, 
                                   double dfStartAngle, double dfSweepAngle );
+
+DGNElemCore CPL_DLL  *
+              DGNCreateArcElem( DGNHandle hDGN, int nType, 
+                                double dfOriginX, double dfOriginY,
+                                double dfOriginZ, 
+                                double dfPrimaryAxis, double dfSecondaryAxis,
+                                double dfStartAngle, double dfSweepAngle,
+                                double dfRotation, long *panQuaternion );
 
 DGNElemCore CPL_DLL *
              DGNCreateTextElem( DGNHandle hDGN, const char *pszText, 
