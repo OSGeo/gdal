@@ -25,6 +25,9 @@
  * Main format registration function.
  * 
  * $Log$
+ * Revision 1.76  2005/04/04 15:25:26  fwarmerdam
+ * GDALAllRegister() now CPL_STDCALL
+ *
  * Revision 1.75  2005/01/15 07:46:53  fwarmerdam
  * added GDALRegister_JP2ECW
  *
@@ -66,193 +69,6 @@
  *
  * Revision 1.62  2004/01/07 20:06:34  warmerda
  * Added netcdf support
- *
- * Revision 1.61  2003/12/12 23:06:12  jimg
- * Added test for DODS. It's near the end, grouped with the formats that are
- * expensive to test for, and it's run only if FRMT_dods is defined.
- *
- * Revision 1.60  2003/12/11 06:18:35  warmerda
- * added BT driver
- *
- * Revision 1.59  2003/10/09 13:37:14  warmerda
- * Remove GDALRegister_AIGrid2() ... too undependable.
- *
- * Revision 1.58  2003/09/09 08:32:17  dron
- * PCIDSK added.
- *
- * Revision 1.57  2003/06/26 19:51:49  dron
- * Register HDF4 driver before ESRI to avoid confusion when ESRI .hdr exist.
- *
- * Revision 1.56  2003/04/23 12:23:17  dron
- * Added MrSID format.
- *
- * Revision 1.55  2003/02/19 07:14:56  dron
- * EFF support removed.
- *
- * Revision 1.54  2003/02/14 11:27:16  dron
- * GDALRegister_JPEG2000() moved behind of PNM and other JasPer formats.
- *
- * Revision 1.53  2002/12/03 19:03:08  dron
- * Added BMP driver.
- *
- * Revision 1.52  2002/12/03 04:42:35  warmerda
- * added NITF
- *
- * Revision 1.51  2002/11/05 06:20:07  warmerda
- * hacks for JP2KAK support
- *
- * Revision 1.50  2002/10/21 18:03:22  warmerda
- * added AutoSkipDrivers() call
- *
- * Revision 1.49  2002/10/10 10:43:37  dron
- * Fix for buiding GDAL with JasPer software under Windows.
- *
- * Revision 1.48  2002/10/05 12:05:21  dron
- * JPEG2000, L1B and HDF4 registrations moved in front of RAW (to avoid
- * problems with PAux). Removed extra JPEG2000 registration. FAST registration
- * combined with other RAW formats.
- *
- * Revision 1.47  2002/10/03 05:41:17  warmerda
- * added GSC Geogrid format
- *
- * Revision 1.46  2002/09/19 14:49:41  warmerda
- * added jpeg2000
- *
- * Revision 1.45  2002/08/13 16:59:53  dron
- * New driver: EOSAT FAST format
- *
- * Revision 1.44  2002/07/16 13:30:27  dron
- * New driver: HDF4 dataset.
- *
- * Revision 1.43  2002/06/13 09:53:45  dron
- * Registration of AVHRR L1B driver moved above of GRASS driver registartion.
- *
- * Revision 1.42  2002/05/08 16:34:26  dron
- * NOAA Polar Orbiter Dataset reader added
- *
- * Revision 1.41  2002/04/12 20:19:25  warmerda
- * added xpm
- *
- * Revision 1.40  2002/03/04 21:54:20  warmerda
- * added envi format
- *
- * Revision 1.39  2001/12/08 04:43:48  warmerda
- * added BSB registration
- *
- * Revision 1.38  2001/11/27 14:39:41  warmerda
- * added usgsdem
- *
- * Revision 1.37  2001/11/16 21:13:47  warmerda
- * added VRT dataset
- *
- * Revision 1.36  2001/09/17 18:05:20  warmerda
- * Register DOQ2 format.
- *
- * Revision 1.35  2001/07/18 04:51:56  warmerda
- * added CPL_CVSID
- *
- * Revision 1.34  2001/07/05 23:53:53  nemec
- * Add FIT file format
- *
- * Revision 1.33  2001/05/15 13:24:42  warmerda
- * added fujibas
- *
- * Revision 1.32  2001/04/02 17:11:45  warmerda
- * added ecw support
- *
- * Revision 1.31  2001/03/12 15:17:32  warmerda
- * added aaigrid
- *
- * Revision 1.30  2001/03/06 03:53:44  sperkins
- * Added FITS format support.
- *
- * Revision 1.29  2001/02/06 16:34:30  warmerda
- * moved format registration entry points to gdal_frmts.h
- *
- * Revision 1.28  2001/01/15 14:32:30  warmerda
- * added envisat
- *
- * Revision 1.27  2001/01/10 04:41:09  warmerda
- * added gif support
- *
- * Revision 1.26  2001/01/03 18:53:23  warmerda
- * Added PNM
- *
- * Revision 1.25  2000/11/27 19:03:44  warmerda
- * added JDEM format
- *
- * Revision 1.24  2000/11/16 14:48:53  warmerda
- * moved GXF down in driver ordering
- *
- * Revision 1.23  2000/09/11 13:32:26  warmerda
- * added grass
- *
- * Revision 1.22  2000/07/19 19:06:39  warmerda
- * added mem
- *
- * Revision 1.21  2000/06/20 17:36:38  warmerda
- * added eosat fast format support
- *
- * Revision 1.20  2000/04/28 20:59:03  warmerda
- * added jpeg
- *
- * Revision 1.19  2000/04/27 20:02:17  warmerda
- * added png
- *
- * Revision 1.18  2000/04/04 23:44:45  warmerda
- * also call auto register function
- *
- * Revision 1.17  2000/03/31 13:35:32  warmerda
- * added SAR_CEOS
- *
- * Revision 1.16  2000/03/07 21:34:50  warmerda
- * added HKV
- *
- * Revision 1.15  2000/03/06 21:51:09  warmerda
- * Added MFF
- *
- * Revision 1.14  2000/01/31 16:24:37  warmerda
- * added aigrid2
- *
- * Revision 1.13  1999/12/29 20:42:45  warmerda
- * Added DOQ1
- *
- * Revision 1.12  1999/10/21 13:24:52  warmerda
- * Added documentation.
- *
- * Revision 1.11  1999/08/13 03:25:58  warmerda
- * add paux
- *
- * Revision 1.10  1999/07/23 19:36:41  warmerda
- * added raw/ehdr support
- *
- * Revision 1.9  1999/06/03 14:05:33  warmerda
- * added SDTS support
- *
- * Revision 1.8  1999/05/17 01:51:43  warmerda
- * Removed unused variable.
- *
- * Revision 1.7  1999/05/13 15:28:19  warmerda
- * Added elas format.
- *
- * Revision 1.6  1999/05/05 17:32:53  warmerda
- * added ceos
- *
- * Revision 1.5  1999/02/04 22:14:46  warmerda
- * added aigrid format
- *
- * Revision 1.4  1999/01/27 18:33:45  warmerda
- * Use FMRT_ macros to test if format avail
- *
- * Revision 1.3  1999/01/11 15:30:16  warmerda
- * added OGDI
- *
- * Revision 1.2  1998/12/03 18:37:26  warmerda
- * Drop GDB, add geotiff.
- *
- * Revision 1.1  1998/11/29 22:22:14  warmerda
- * New
- *
  */
 
 #include "gdal_priv.h"
@@ -293,7 +109,7 @@ static char *szConfiguredFormats = "GDAL_FORMATS";
  *
  */
 
-void GDALAllRegister()
+void CPL_STDCALL GDALAllRegister()
 
 {
     GetGDALDriverManager()->AutoLoadDrivers();
