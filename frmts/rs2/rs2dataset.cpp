@@ -1,7 +1,7 @@
 /******************************************************************************
  * $Id$
  *
- * Project:  Polarmetric Workstation
+ * Project:  Polarimetric Workstation
  * Purpose:  Radarsat 2 - XML Products (product.xml) driver
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2004/11/11 00:16:01  gwalter
+ * Polarmetric->Polarimetric.
+ *
  * Revision 1.3  2004/11/02 19:38:19  fwarmerdam
  * set help topic
  *
@@ -120,7 +123,7 @@ RS2RasterBand::RS2RasterBand( RS2Dataset *poDSIn,
     eDataType = eDataTypeIn;
 
     if( *pszPole != '\0' )
-        SetMetadataItem( "POLARMETRIC_INTERP", pszPole );
+        SetMetadataItem( "POLARIMETRIC_INTERP", pszPole );
 }
 
 /************************************************************************/

@@ -2,7 +2,7 @@
  * $Id$
  *
  * Project:  AirSAR Reader
- * Purpose:  Implements read support for AirSAR Polarmetric data.
+ * Purpose:  Implements read support for AirSAR Polarimetric data.
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.5  2004/11/11 00:16:01  gwalter
+ * Polarmetric->Polarimetric.
+ *
  * Revision 1.4  2004/10/12 15:42:25  fwarmerdam
  * Change all bands to be complex so that overviews will build properly
  *
@@ -137,37 +140,37 @@ AirSARRasterBand::AirSARRasterBand( AirSARDataset *poDS,
     switch( nBand )
     {
       case 1:
-        SetMetadataItem( "POLARMETRIC_INTERP", "Covariance_11" );
+        SetMetadataItem( "POLARIMETRIC_INTERP", "Covariance_11" );
         SetDescription( "Covariance_11" );
         eDataType = GDT_CFloat32;
         break;
 
       case 2:
-        SetMetadataItem( "POLARMETRIC_INTERP", "Covariance_12" );
+        SetMetadataItem( "POLARIMETRIC_INTERP", "Covariance_12" );
         SetDescription( "Covariance_12" );
         eDataType = GDT_CFloat32;
         break;
 
       case 3:
-        SetMetadataItem( "POLARMETRIC_INTERP", "Covariance_13" );
+        SetMetadataItem( "POLARIMETRIC_INTERP", "Covariance_13" );
         SetDescription( "Covariance_13" );
         eDataType = GDT_CFloat32;
         break;
 
       case 4:
-        SetMetadataItem( "POLARMETRIC_INTERP", "Covariance_22" );
+        SetMetadataItem( "POLARIMETRIC_INTERP", "Covariance_22" );
         SetDescription( "Covariance_22" );
         eDataType = GDT_CFloat32;
         break;
 
       case 5:
-        SetMetadataItem( "POLARMETRIC_INTERP", "Covariance_23" );
+        SetMetadataItem( "POLARIMETRIC_INTERP", "Covariance_23" );
         SetDescription( "Covariance_23" );
         eDataType = GDT_CFloat32;
         break;
 
       case 6:
-        SetMetadataItem( "POLARMETRIC_INTERP", "Covariance_33" );
+        SetMetadataItem( "POLARIMETRIC_INTERP", "Covariance_33" );
         SetDescription( "Covariance_33" );
         eDataType = GDT_CFloat32;
         break;
@@ -644,7 +647,7 @@ void GDALRegister_AirSAR()
         
         poDriver->SetDescription( "AirSAR" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
-                                   "AirSAR Polarmetric Image" );
+                                   "AirSAR Polarimetric Image" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_airsar.html" );
         poDriver->pfnOpen = AirSARDataset::Open;
 

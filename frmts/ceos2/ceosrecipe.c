@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2004/11/11 00:16:01  gwalter
+ * Polarmetric->Polarimetric.
+ *
  * Revision 1.17  2004/11/01 18:22:07  fwarmerdam
  * added PALSAR support
  *
@@ -579,7 +582,7 @@ static int SIRCRecipeFCN( CeosSARVolume_t *volume, void *token )
 /*      First, we need to check if the "SAR Data Format Type            */
 /*      identifier" is set to "COMPRESSED CROSS-PRODUCTS" which is      */
 /*      pretty idiosyncratic to SIRC products.  It might also appear    */
-/*      for some other similarly encoded Polarmetric data I suppose.    */
+/*      for some other similarly encoded Polarimetric data I suppose.    */
 /* -------------------------------------------------------------------- */
     /* IMAGE_OPT */
     TypeCode.UCharCode.Subtype1 = 63;
@@ -646,7 +649,7 @@ static int PALSARRecipeFCN( CeosSARVolume_t *volume, void *token )
 /*      First, we need to check if the "SAR Data Format Type            */
 /*      identifier" is set to "COMPRESSED CROSS-PRODUCTS" which is      */
 /*      pretty idiosyncratic to SIRC products.  It might also appear    */
-/*      for some other similarly encoded Polarmetric data I suppose.    */
+/*      for some other similarly encoded Polarimetric data I suppose.    */
 /* -------------------------------------------------------------------- */
     /* IMAGE_OPT */
     TypeCode.UCharCode.Subtype1 = 63;
