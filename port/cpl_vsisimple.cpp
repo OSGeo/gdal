@@ -30,6 +30,9 @@
  *    instance validation of access strings to fopen().
  * 
  * $Log$
+ * Revision 1.4  2000/01/25 03:11:03  warmerda
+ * added unlink and mkdir
+ *
  * Revision 1.3  1998/12/14 04:50:33  warmerda
  * Avoid C++ comments so it will be C compilable as well.
  *
@@ -260,4 +263,24 @@ int VSIStat( const char * pszFilename, VSIStatBuf * pStatBuf )
 
 {
     return( stat( pszFilename, pStatBuf ) );
+}
+
+/************************************************************************/
+/*                              VSIMkdir()                              */
+/************************************************************************/
+
+int VSIMkdir( const char *pszPathname, long mode )
+
+{
+    return mkdir( pszPathname, mode );
+}
+
+/************************************************************************/
+/*                             VSIUnlink()                              */
+/************************************************************************/
+
+int VSIUnlink( const char * pszFilename )
+
+{
+    return unlink( pszFilename );
 }

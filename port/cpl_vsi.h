@@ -32,6 +32,9 @@
  * specific checking, io redirection and so on. 
  * 
  * $Log$
+ * Revision 1.6  2000/01/25 03:11:03  warmerda
+ * added unlink and mkdir
+ *
  * Revision 1.5  1999/05/23 02:43:57  warmerda
  * Added documentation block.
  *
@@ -133,6 +136,13 @@ void CPL_DLL   *VSIMalloc( size_t );
 void CPL_DLL	VSIFree( void * );
 void CPL_DLL   *VSIRealloc( void *, size_t );
 char CPL_DLL   *VSIStrdup( const char * );
+
+/* ==================================================================== */
+/*      Other...                                                        */
+/* ==================================================================== */
+
+int CPL_DLL VSIMkdir( const char * pathname, long mode );
+int CPL_DLL VSIUnlink( const char * pathname );
 
 CPL_C_END
 
