@@ -26,6 +26,9 @@
  * Supporting routines for reading Geosoft GXF files.
  *
  * $Log$
+ * Revision 1.3  1998/12/14 04:52:06  warmerda
+ * Added projection support, fixed bugs in compressed image support.
+ *
  * Revision 1.2  1998/12/06 02:54:10  warmerda
  * Raw read access now working.
  *
@@ -59,6 +62,9 @@ typedef struct {
     double	dfTransformScale;
     double	dfTransformOffset;
     char	*pszTransformName;
+
+    char	**papszMapProjection;
+    char	**papszMapDatumTransform;
 
     char	*pszUnitName;
     double	dfUnitToMeter;
@@ -301,6 +307,11 @@ GXFHandle GXFOpen( const char * pszFilename )
         {
             psGXF->nSense = atoi(papszList[0]);
         }
+        else if( EQUALN(szTitle,"#MAP_PROJECTION",5) )
+        {
+            psGXF->papszMapProjection = papszList;
+            papszList = NULL;
+        }
         else if( EQUALN(szTitle,"#TRAN",5) )
         {
             char	**papszFields;
@@ -455,19 +466,25 @@ static int GXFReadRawScanlineFrom( GXFInfo_t * psGXF, long iOffset,
                     int		nCount, i;
                     double	dfValue;
 
-                    nCount = (int)
-                        GXFParseBase90( psGXF, pszLine+psGXF->nGType, FALSE);
-                    if( pszLine[psGXF->nGType*2] == '!' )
+                    pszLine += psGXF->nGType;
+                    if( strlen(pszLine) < psGXF->nGType )
+                        pszLine = CPLReadLine( psGXF->fp );
+                    
+                    nCount = (int) GXFParseBase90( psGXF, pszLine, FALSE);
+                    pszLine += psGXF->nGType;
+                    
+                    if( strlen(pszLine) < psGXF->nGType )
+                        pszLine = CPLReadLine( psGXF->fp );
+                    
+                    if( *pszLine == '!' )
                         dfValue = psGXF->dfSetDummyTo;
                     else
-                        dfValue = GXFParseBase90( psGXF,
-                                                  pszLine+psGXF->nGType*2,
-                                                  TRUE );
-                    
-                    for( i = 0; i < nCount; i++ )
-                        padfLineBuf[nValuesRead++] = dfValue;
+                        dfValue = GXFParseBase90( psGXF, pszLine, TRUE );
 
-                    pszLine += psGXF->nGType*2;
+                    CPLAssert( nValuesRead + nCount <= nValuesSought );
+                    
+                    for( i=0; i < nCount && nValuesRead < nValuesSought; i++ )
+                        padfLineBuf[nValuesRead++] = dfValue;
                 }
                 else
                 {
@@ -547,11 +564,11 @@ CPLErr GXFGetRawScanline( GXFHandle hGXF, int iScanline, double * padfLineBuf )
 }
 
 /************************************************************************/
-/*                             GXFGetInfo()                             */
+/*                             GXFGetRawInfo()                          */
 /************************************************************************/
 
-CPLErr GXFGetInfo( GXFHandle hGXF, int *pnXSize, int *pnYSize,
-                   int * pnSense )
+CPLErr GXFGetRawInfo( GXFHandle hGXF, int *pnXSize, int *pnYSize,
+                      int * pnSense )
 
 {
     GXFInfo_t	*psGXF = (GXFInfo_t *) hGXF;
@@ -568,3 +585,475 @@ CPLErr GXFGetInfo( GXFHandle hGXF, int *pnXSize, int *pnYSize,
     return( CE_None );
 }
 
+/************************************************************************/
+/*                        GXFGetMapProjection()                         */
+/*                                                                      */
+/*      Return the lines related to the map projection.  It is up to    */
+/*      the caller to parse them and interprete.  The return result     */
+/*      will be NULL if not projection item was found.                  */
+/************************************************************************/
+
+char **GXFGetMapProjection( GXFHandle hGXF )
+
+{
+    return( ((GXFInfo_t *) hGXF)->papszMapProjection );
+}
+
+/************************************************************************/
+/*                      GXFGetMapDatumTransform()                       */
+/*                                                                      */
+/*      Return the lines related to the datum transformation.           */
+/************************************************************************/
+
+char **GXFGetMapDatumTransform( GXFHandle hGXF )
+
+{
+    return( ((GXFInfo_t *) hGXF)->papszMapDatumTransform );
+}
+
+/************************************************************************/
+/*                     GXFGetMapProjectionAsPROJ4()                     */
+/*                                                                      */
+/*      Return the map projection definition in PROJ.4 format.          */
+/************************************************************************/
+
+char *GXFGetMapProjectionAsPROJ4( GXFHandle hGXF )
+
+{
+    GXFInfo_t	*psGXF = (GXFInfo_t *) hGXF;
+    char	**papszMethods;
+    char	szPROJ4[512];
+
+/* -------------------------------------------------------------------- */
+/*      If there was nothing in the file return "unknown".              */
+/* -------------------------------------------------------------------- */
+    if( CSLCount(psGXF->papszMapProjection) < 3 )
+        return( CPLStrdup( "unknown" ) );
+
+/* -------------------------------------------------------------------- */
+/*      Parse the third line, looking for known projection methods.     */
+/* -------------------------------------------------------------------- */
+    szPROJ4[0] = '\0';
+    
+    papszMethods = CSLTokenizeStringComplex( psGXF->papszMapProjection[2], ",",
+                                             TRUE, TRUE );
+
+#ifdef DBMALLOC
+    malloc_chain_check(1);
+#endif    
+    
+    if( CSLCount(papszMethods) < 1 )
+    {
+        CSLDestroy(papszMethods);
+        return( CPLStrdup( "unknown" ) );
+    }
+    
+    if( EQUAL(papszMethods[0],"Geographic") )
+    {
+        strcat( szPROJ4, "+proj=longlat" );
+    }
+
+    else if( EQUAL(papszMethods[0],"Lambert Conic Conformal (1SP)")
+             && CSLCount(papszMethods) > 5 )
+    {
+        /* notdef: It isn't clear that this 1SP + scale method is even
+           supported by PROJ.4 */
+        
+        strcat( szPROJ4, "+proj=lcc" );
+
+        strcat( szPROJ4, " +lat_0=" );
+        strcat( szPROJ4, papszMethods[1] );
+
+        strcat( szPROJ4, " +lon_0=" );
+        strcat( szPROJ4, papszMethods[2] );
+
+        strcat( szPROJ4, " +k=" );
+        strcat( szPROJ4, papszMethods[3] );
+        
+        strcat( szPROJ4, " +x_0=" );
+        strcat( szPROJ4, papszMethods[4] );
+
+        strcat( szPROJ4, " +y_0=" );
+        strcat( szPROJ4, papszMethods[5] );
+    }
+    
+    else if( EQUAL(papszMethods[0],"Lambert Conic Conformal (2SP)")
+             || EQUAL(papszMethods[0],"Lambert Conformal (2SP Belgium)") )
+    {
+        /* notdef: Note we are apparently losing whatever makes the
+           Belgium variant different than normal LCC, but hopefully
+           they are close! */
+        
+        strcat( szPROJ4, "+proj=lcc" );
+
+        if( CSLCount(papszMethods) > 1 )
+        {
+            strcat( szPROJ4, " +lat_1=" );
+            strcat( szPROJ4, papszMethods[1] );
+        }
+
+        if( CSLCount(papszMethods) > 2 )
+        {
+            strcat( szPROJ4, " +lat_2=" );
+            strcat( szPROJ4, papszMethods[2] );
+        }
+
+        if( CSLCount(papszMethods) > 3 )
+        {
+            strcat( szPROJ4, " +lat_0=" );
+            strcat( szPROJ4, papszMethods[3] );
+        }
+
+        if( CSLCount(papszMethods) > 4 )
+        {
+            strcat( szPROJ4, " +lon_0=" );
+            strcat( szPROJ4, papszMethods[4] );
+        }
+
+        if( CSLCount(papszMethods) > 5 )
+        {
+            strcat( szPROJ4, " +x_0=" );
+            strcat( szPROJ4, papszMethods[5] );
+        }
+
+        if( CSLCount(papszMethods) > 6 )
+        {
+            strcat( szPROJ4, " +y_0=" );
+            strcat( szPROJ4, papszMethods[6] );
+        }
+    }
+    
+    else if( EQUAL(papszMethods[0],"Mercator (1SP)")
+             && CSLCount(papszMethods) > 5 )
+    {
+        /* notdef: it isn't clear that +proj=merc support a scale of other 
+           than 1.0 in PROJ.4 */
+        
+        strcat( szPROJ4, "+proj=merc" );
+
+        strcat( szPROJ4, " +lat_ts=" );
+        strcat( szPROJ4, papszMethods[1] );
+
+        strcat( szPROJ4, " +lon_0=" );
+        strcat( szPROJ4, papszMethods[2] );
+
+        strcat( szPROJ4, " +k=" );
+        strcat( szPROJ4, papszMethods[3] );
+        
+        strcat( szPROJ4, " +x_0=" );
+        strcat( szPROJ4, papszMethods[4] );
+
+        strcat( szPROJ4, " +y_0=" );
+        strcat( szPROJ4, papszMethods[5] );
+    }
+    
+    else if( EQUAL(papszMethods[0],"Mercator (2SP)")
+             && CSLCount(papszMethods) > 4 )
+    {
+        /* notdef: it isn't clear that +proj=merc support a scale of other 
+           than 1.0 in PROJ.4 */
+        
+        strcat( szPROJ4, "+proj=merc" );
+
+        strcat( szPROJ4, " +lat_ts=" );
+        strcat( szPROJ4, papszMethods[1] );
+
+        strcat( szPROJ4, " +lon_0=" );
+        strcat( szPROJ4, papszMethods[2] );
+
+        strcat( szPROJ4, " +x_0=" );
+        strcat( szPROJ4, papszMethods[3] );
+
+        strcat( szPROJ4, " +y_0=" );
+        strcat( szPROJ4, papszMethods[4] );
+    }
+    
+    else if( EQUAL(papszMethods[0],"Hotine Oblique Mercator") 
+             && CSLCount(papszMethods) > 7 )
+    {
+        /* Note that only the second means of specifying omerc is supported
+           by this code in GXF. */
+        strcat( szPROJ4, "+proj=omerc" );
+
+        strcat( szPROJ4, " +lat_0=" );
+        strcat( szPROJ4, papszMethods[1] );
+        
+        strcat( szPROJ4, " +lonc=" );
+        strcat( szPROJ4, papszMethods[2] );
+        
+        strcat( szPROJ4, " +alpha=" );
+        strcat( szPROJ4, papszMethods[3] );
+
+        if( atof(papszMethods[4]) < 0.00001 )
+        {
+            strcat( szPROJ4, " +not_rot" );
+        }
+        else
+        {
+            if( atof(papszMethods[4]) + atof(papszMethods[3]) < 0.00001 )
+                /* ok */;
+            else
+                /* notdef: no way to specify arbitrary angles! */;
+        }
+
+        strcat( szPROJ4, " +k=" );
+        strcat( szPROJ4, papszMethods[5] );
+
+        strcat( szPROJ4, " +x_0=" );
+        strcat( szPROJ4, papszMethods[6] );
+
+        strcat( szPROJ4, " +y_0=" );
+        strcat( szPROJ4, papszMethods[7] );
+    }
+
+    else if( EQUAL(papszMethods[0],"Laborde Oblique Mercator")
+             && CSLCount(papszMethods) > 6 )
+    {
+        strcat( szPROJ4, "+proj=labrd" );
+
+        strcat( szPROJ4, " +lat_0=" );
+        strcat( szPROJ4, papszMethods[1] );
+        
+        strcat( szPROJ4, " +lon_0=" );
+        strcat( szPROJ4, papszMethods[2] );
+        
+        strcat( szPROJ4, " +azi=" );
+        strcat( szPROJ4, papszMethods[3] );
+
+        strcat( szPROJ4, " +k=" );
+        strcat( szPROJ4, papszMethods[4] );
+
+        strcat( szPROJ4, " +x_0=" );
+        strcat( szPROJ4, papszMethods[5] );
+
+        strcat( szPROJ4, " +y_0=" );
+        strcat( szPROJ4, papszMethods[6] );
+    }
+    
+    else if( EQUAL(papszMethods[0],"New Zealand Map Grid")
+             && CSLCount(papszMethods) > 4 )
+    {
+        strcat( szPROJ4, "+proj=nzmg" );
+
+        strcat( szPROJ4, " +lat_0=" );
+        strcat( szPROJ4, papszMethods[1] );
+        
+        strcat( szPROJ4, " +lon_0=" );
+        strcat( szPROJ4, papszMethods[2] );
+        
+        strcat( szPROJ4, " +x_0=" );
+        strcat( szPROJ4, papszMethods[3] );
+
+        strcat( szPROJ4, " +y_0=" );
+        strcat( szPROJ4, papszMethods[4] );
+    }
+    
+    else if( EQUAL(papszMethods[0],"New Zealand Map Grid")
+             && CSLCount(papszMethods) > 4 )
+    {
+        strcat( szPROJ4, "+proj=nzmg" );
+
+        strcat( szPROJ4, " +lat_0=" );
+        strcat( szPROJ4, papszMethods[1] );
+        
+        strcat( szPROJ4, " +lon_0=" );
+        strcat( szPROJ4, papszMethods[2] );
+        
+        strcat( szPROJ4, " +x_0=" );
+        strcat( szPROJ4, papszMethods[3] );
+
+        strcat( szPROJ4, " +y_0=" );
+        strcat( szPROJ4, papszMethods[4] );
+    }
+    
+    else if( (EQUAL(papszMethods[0],"Oblique Stereographic")
+              || EQUAL(papszMethods[0],"Polar Stereographic"))
+             && CSLCount(papszMethods) > 5 )
+    {
+        /* there is an option to produce +lat_ts, which we ignore */
+        
+        strcat( szPROJ4, "+proj=stere" );
+
+        strcat( szPROJ4, " +lat_0=" );
+        strcat( szPROJ4, papszMethods[1] );
+        
+        strcat( szPROJ4, " +lon_0=" );
+        strcat( szPROJ4, papszMethods[2] );
+        
+        strcat( szPROJ4, " +k=" );
+        strcat( szPROJ4, papszMethods[3] );
+
+        strcat( szPROJ4, " +x_0=" );
+        strcat( szPROJ4, papszMethods[4] );
+
+        strcat( szPROJ4, " +y_0=" );
+        strcat( szPROJ4, papszMethods[5] );
+    }
+    
+    else if( EQUAL(papszMethods[0],"Swiss Oblique Cylindrical")
+             && CSLCount(papszMethods) > 4 )
+    {
+        /* notdef: geotiff's geo_ctrans.inc says this is the same as
+           ObliqueMercator_Rosenmund, which GG's geotiff support just
+           maps directly to +proj=omerc, though I find that questionable. */
+
+        strcat( szPROJ4, "+proj=omerc" );
+
+        strcat( szPROJ4, " +lat_0=" );
+        strcat( szPROJ4, papszMethods[1] );
+        
+        strcat( szPROJ4, " +lonc=" );
+        strcat( szPROJ4, papszMethods[2] );
+        
+        strcat( szPROJ4, " +x_0=" );
+        strcat( szPROJ4, papszMethods[3] );
+
+        strcat( szPROJ4, " +y_0=" );
+        strcat( szPROJ4, papszMethods[4] );
+    }
+
+    else if( EQUAL(papszMethods[0],"Transverse Mercator")
+             && CSLCount(papszMethods) > 5 )
+    {
+        /* notdef: geotiff's geo_ctrans.inc says this is the same as
+           ObliqueMercator_Rosenmund, which GG's geotiff support just
+           maps directly to +proj=omerc, though I find that questionable. */
+
+        strcat( szPROJ4, "+proj=tmerc" );
+
+        strcat( szPROJ4, " +lat_0=" );
+        strcat( szPROJ4, papszMethods[1] );
+        
+        strcat( szPROJ4, " +lon_0=" );
+        strcat( szPROJ4, papszMethods[2] );
+        
+        strcat( szPROJ4, " +k=" );
+        strcat( szPROJ4, papszMethods[3] );
+        
+        strcat( szPROJ4, " +x_0=" );
+        strcat( szPROJ4, papszMethods[4] );
+
+        strcat( szPROJ4, " +y_0=" );
+        strcat( szPROJ4, papszMethods[5] );
+    }
+
+    else if( EQUAL(papszMethods[0],"Transverse Mercator (South Oriented)")
+             && CSLCount(papszMethods) > 5 )
+    {
+        /* notdef: I don't know how south oriented is different from
+           normal, and I don't find any mention of it in Geotiff;s geo_ctrans.
+           Translating as tmerc, but that is presumably wrong. */
+
+        strcat( szPROJ4, "+proj=tmerc" );
+
+        strcat( szPROJ4, " +lat_0=" );
+        strcat( szPROJ4, papszMethods[1] );
+        
+        strcat( szPROJ4, " +lon_0=" );
+        strcat( szPROJ4, papszMethods[2] );
+        
+        strcat( szPROJ4, " +k=" );
+        strcat( szPROJ4, papszMethods[3] );
+        
+        strcat( szPROJ4, " +x_0=" );
+        strcat( szPROJ4, papszMethods[4] );
+
+        strcat( szPROJ4, " +y_0=" );
+        strcat( szPROJ4, papszMethods[5] );
+    }
+
+    else if( EQUAL(papszMethods[0],"Equidistant Conic")
+             && CSLCount(papszMethods) > 6 )
+    {
+        strcat( szPROJ4, "+proj=eqdc" );
+
+        strcat( szPROJ4, " +lat_1=" );
+        strcat( szPROJ4, papszMethods[1] );
+        
+        strcat( szPROJ4, " +lat_2=" );
+        strcat( szPROJ4, papszMethods[2] );
+        
+        strcat( szPROJ4, " +lat_0=" );
+        strcat( szPROJ4, papszMethods[3] );
+        
+        strcat( szPROJ4, " +lon_0=" );
+        strcat( szPROJ4, papszMethods[4] );
+        
+        strcat( szPROJ4, " +x_0=" );
+        strcat( szPROJ4, papszMethods[5] );
+
+        strcat( szPROJ4, " +y_0=" );
+        strcat( szPROJ4, papszMethods[6] );
+    }
+
+    else if( EQUAL(papszMethods[0],"Polyconic") 
+             && CSLCount(papszMethods) > 5 )
+    {
+        strcat( szPROJ4, "+proj=poly" );
+
+        strcat( szPROJ4, " +lat_0=" );
+        strcat( szPROJ4, papszMethods[1] );
+        
+        strcat( szPROJ4, " +lon_0=" );
+        strcat( szPROJ4, papszMethods[2] );
+
+#ifdef notdef
+        /*not supported by PROJ.4 */
+        strcat( szPROJ4, " +k=" );
+        strcat( szPROJ4, papszMethods[3] );
+#endif
+        strcat( szPROJ4, " +x_0=" ); 
+        strcat( szPROJ4, papszMethods[4] );
+
+        strcat( szPROJ4, " +y_0=" );
+        strcat( szPROJ4, papszMethods[5] );
+    }
+
+    else
+    {
+        strcat( szPROJ4, "unknown" );
+    }
+
+/* -------------------------------------------------------------------- */
+/*          Now we should try to get the ellipsoid parameters.          */
+/* -------------------------------------------------------------------- */
+    strcat( szPROJ4, " +ellps=clrk66" );
+
+    CSLDestroy( papszMethods );
+    
+    return( CPLStrdup( szPROJ4 ) );
+}
+
+
+/************************************************************************/
+/*                         GXFGetRawPosition()                          */
+/*                                                                      */
+/*      Get the raw grid positioning information.  Return CE_Failure    */
+/*      if no positioning info was available.                           */
+/************************************************************************/
+
+CPLErr GXFGetRawPosition( GXFHandle hGXF,
+                          double * pdfXOrigin, double * pdfYOrigin,
+                          double * pdfXPixelSize, double * pdfYPixelSize,
+                          double * pdfRotation )
+
+{
+    GXFInfo_t	*psGXF = (GXFInfo_t *) hGXF;
+    
+    if( pdfXOrigin != NULL )
+        *pdfXOrigin = psGXF->dfXOrigin;
+    if( pdfYOrigin != NULL )
+        *pdfYOrigin = psGXF->dfYOrigin;
+    if( pdfXPixelSize != NULL )
+        *pdfXPixelSize = psGXF->dfXPixelSize;
+    if( pdfYPixelSize != NULL )
+        *pdfYPixelSize = psGXF->dfYPixelSize;
+    if( pdfRotation != NULL )
+        *pdfRotation = psGXF->dfRotation;
+
+    if( psGXF->dfXOrigin == 0.0 && psGXF->dfYOrigin == 0.0
+        && psGXF->dfXPixelSize == 0.0 && psGXF->dfYPixelSize == 0.0 )
+        return( CE_Failure );
+    else
+        return( CE_None );
+}
