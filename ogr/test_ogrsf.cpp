@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  1999/09/22 13:31:04  warmerda
+ * added SDTS
+ *
  * Revision 1.4  1999/08/30 14:52:55  warmerda
  * fixed error report
  *
@@ -65,6 +68,7 @@ int main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
     RegisterOGRShape();
     RegisterOGRNTF();
+    RegisterOGRSDTS();
 
 /* -------------------------------------------------------------------- */
 /*      Processing command line arguments.                              */
