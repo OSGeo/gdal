@@ -85,7 +85,7 @@ lclean:
 distclean:	dist-clean
 
 dist-clean:	clean
-	rm -f GDALmake.opt port/cpl_config.h config.cache
+	rm -f GDALmake.opt port/cpl_config.h config.cache config.status
 
 config:	configure
 	./configure
