@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.49  2001/06/29 03:11:30  warmerda
+ * Fixed handling of RGBA band ordering on big endian systems.
+ *
  * Revision 1.48  2001/05/31 13:51:56  warmerda
  * Improved magic number testing.
  *
@@ -761,7 +764,7 @@ CPLErr GTiffRGBABand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /* -------------------------------------------------------------------- */
 /*      Handle simple case of eight bit data, and pixel interleaving.   */
 /* -------------------------------------------------------------------- */
-    int   iDestLine;
+    int   iDestLine, nBO;
     int   nThisBlockYSize;
 
     if( (nBlockYOff+1) * nBlockYSize > GetYSize()
@@ -770,13 +773,19 @@ CPLErr GTiffRGBABand::IReadBlock( int nBlockXOff, int nBlockYOff,
     else
         nThisBlockYSize = nBlockYSize;
 
+#ifdef CPL_LSB
+    nBO = nBand - 1;
+#else
+    nBO = 4 - nBand;
+#endif
+
     for( iDestLine = 0; iDestLine < nThisBlockYSize; iDestLine++ )
     {
         int	nSrcOffset;
 
         nSrcOffset = (nThisBlockYSize - iDestLine - 1) * nBlockXSize * 4;
 
-        GDALCopyWords( poGDS->pabyBlockBuf + nBand-1 + nSrcOffset, GDT_Byte, 4,
+        GDALCopyWords( poGDS->pabyBlockBuf + nBO + nSrcOffset, GDT_Byte, 4,
                        ((GByte *) pImage)+iDestLine*nBlockXSize, GDT_Byte, 1, 
                        nBlockXSize );
     }
@@ -1457,7 +1466,8 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
      && (poOpenInfo->pabyHeader[0] != 'M' || poOpenInfo->pabyHeader[1] != 'M'))
         return NULL;
 
-    if( poOpenInfo->pabyHeader[2] != 0x2A || poOpenInfo->pabyHeader[3] != 0 )
+    if( (poOpenInfo->pabyHeader[2] != 0x2A || poOpenInfo->pabyHeader[3] != 0)
+        && (poOpenInfo->pabyHeader[3] != 0x2A || poOpenInfo->pabyHeader[2] != 0) )
         return NULL;
 
 /* -------------------------------------------------------------------- */
