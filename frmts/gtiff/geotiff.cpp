@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.117  2004/09/30 19:34:04  fwarmerdam
+ * Fixed memory leak of codecs info.
+ *
  * Revision 1.116  2004/09/25 05:21:27  fwarmerdam
  * report only available compression types if we can query
  *
@@ -3801,6 +3804,7 @@ void GDALRegister_GTiff()
                 strcat( szOptionalCompressItems,
                         "       <Value>DEFLATE</Value>" );
         }
+        _TIFFfree( codecs );
 #endif        
 
 /* -------------------------------------------------------------------- */
