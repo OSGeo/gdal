@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2005/02/02 21:09:44  fwarmerdam
+ * track m_nFeaturesRead
+ *
  * Revision 1.6  2004/10/19 22:05:03  dmorissette
  * Remove trailing spaces in string attribute fields (MapServer bug 184)
  *
@@ -78,6 +81,13 @@ OGRAVCLayer::OGRAVCLayer( AVCFileType eSectionTypeIn,
 OGRAVCLayer::~OGRAVCLayer()
 
 {
+    if( m_nFeaturesRead > 0 && poFeatureDefn != NULL )
+    {
+        CPLDebug( "AVC", "%d features read on layer '%s'.",
+                  (int) m_nFeaturesRead, 
+                  poFeatureDefn->GetName() );
+    }
+
     if( poFeatureDefn != NULL )
     {
         delete poFeatureDefn;
@@ -230,6 +240,8 @@ int OGRAVCLayer::SetupFeatureDefinition( const char *pszName )
 OGRFeature *OGRAVCLayer::TranslateFeature( void *pAVCFeature )
 
 {
+    m_nFeaturesRead++;
+
     switch( eSectionType )
     {
 /* ==================================================================== */
