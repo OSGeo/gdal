@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2003/01/14 22:14:04  warmerda
+ * added logic to force Geometry collection to multipolygon
+ *
  * Revision 1.13  2003/01/08 22:04:11  warmerda
  * added forceToPolygon and forceToMultiPolygon methods
  *
@@ -490,13 +493,46 @@ OGRGeometry *OGRGeometryFactory::forceToMultiPolygon( OGRGeometry *poGeom )
     if( poGeom == NULL )
         return NULL;
 
-    if( wkbFlatten(poGeom->getGeometryType()) != wkbPolygon )
-        return poGeom;
+/* -------------------------------------------------------------------- */
+/*      Check for the case of a geometrycollection that can be          */
+/*      promoted to MultiPolygon.                                       */
+/* -------------------------------------------------------------------- */
+    if( wkbFlatten(poGeom->getGeometryType()) == wkbGeometryCollection )
+    {
+        int iGeom;
+        int bAllPoly = TRUE;
+        OGRGeometryCollection *poGC = (OGRGeometryCollection *) poGeom;
+
+        for( iGeom = 0; iGeom < poGC->getNumGeometries(); iGeom++ )
+        {
+            if( wkbFlatten(poGC->getGeometryRef(iGeom)->getGeometryType())
+                != wkbPolygon )
+                bAllPoly = FALSE;
+        }
+
+        if( !bAllPoly )
+            return poGeom;
+        
+        OGRMultiPolygon *poMP = new OGRMultiPolygon();
+
+        while( poGC->getNumGeometries() > 0 )
+        {
+            poMP->addGeometryDirectly( poGC->getGeometryRef(0) );
+            poGC->removeGeometry( 0, FALSE );
+        }
+
+        delete poGC;
+
+        return poMP;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Eventually we should try to split the polygon into component    */
 /*      island polygons.  But thats alot of work and can be put off.    */
 /* -------------------------------------------------------------------- */
+    if( wkbFlatten(poGeom->getGeometryType()) != wkbPolygon )
+        return poGeom;
+
     OGRMultiPolygon *poMP = new OGRMultiPolygon();
     poMP->addGeometry( poGeom );
 
