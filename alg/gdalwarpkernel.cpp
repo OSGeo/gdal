@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2003/03/16 15:07:48  dron
+ * GWKNearestByte() added.
+ *
  * Revision 1.5  2003/03/02 05:26:21  warmerda
  * fixed bugs in source validity mask handling
  *
@@ -54,6 +57,7 @@ CPL_CVSID("$Id$");
 
 static CPLErr GWKGeneralCase( GDALWarpKernel * );
 static CPLErr GWKNearestNoMasksByte( GDALWarpKernel *poWK );
+static CPLErr GWKNearestByte( GDALWarpKernel *poWK );
 
 /************************************************************************/
 /* ==================================================================== */
@@ -530,6 +534,10 @@ CPLErr GDALWarpKernel::PerformWarp()
         && pafDstDensity == NULL )
         return GWKNearestNoMasksByte( this );
 
+    if( eWorkingDataType == GDT_Byte
+        && eResample == GRA_NearestNeighbour )
+        return GWKNearestByte( this );
+
     return GWKGeneralCase( this );
 }
                                   
@@ -773,6 +781,44 @@ static int GWKGetPixelValue( GDALWarpKernel *poWK, int iBand,
 }
                              
 /************************************************************************/
+/*                          GWKGetPixelByte()                           */
+/************************************************************************/
+
+static int GWKGetPixelByte( GDALWarpKernel *poWK, int iBand, 
+                            int iSrcOffset, double *pdfDensity, 
+                            GByte *pbValue )
+
+{
+    GByte *pabySrc = poWK->papabySrcImage[iBand];
+
+    if( poWK->panUnifiedSrcValid != NULL
+        && !((poWK->panUnifiedSrcValid[iSrcOffset>>5]
+              & (0x01 << (iSrcOffset & 0x1f))) ) )
+    {
+        *pdfDensity = 0.0;
+        return FALSE;
+    }
+
+    if( poWK->papanBandSrcValid != NULL
+        && poWK->papanBandSrcValid[iBand] != NULL
+        && !((poWK->papanBandSrcValid[iBand][iSrcOffset>>5]
+              & (0x01 << (iSrcOffset & 0x1f)))) )
+    {
+        *pdfDensity = 0.0;
+        return FALSE;
+    }
+
+    *pbValue = pabySrc[iSrcOffset];
+
+    if( poWK->pafUnifiedSrcDensity != NULL )
+        *pdfDensity = poWK->pafUnifiedSrcDensity[iSrcOffset];
+    else
+        *pdfDensity = 1.0;
+
+    return *pdfDensity != 0.0;
+}
+
+/************************************************************************/
 /*                        GWKBilinearResample()                         */
 /************************************************************************/
 
@@ -1015,7 +1061,7 @@ static CPLErr GWKGeneralCase( GDALWarpKernel *poWK )
             iDstOffset = iDstX + iDstY * nDstXSize;
             if( poWK->panDstValid != NULL
                 && (poWK->panDstValid[iDstOffset>>5]
-                    && (0x01 << (iDstOffset & 0x1f))) )
+                    & (0x01 << (iDstOffset & 0x1f))) )
                 continue;
 
 /* ==================================================================== */
@@ -1094,9 +1140,9 @@ static CPLErr GWKGeneralCase( GDALWarpKernel *poWK )
 /************************************************************************/
 /*                       GWKNearestNoMasksByte()                        */
 /*                                                                      */
-/*      This is the most general case.  It attempts to handle all       */
-/*      possible features with relatively little concern for            */
-/*      efficiency.                                                     */
+/*      Case for 8bit input data with nearest neighbour resampling      */
+/*      without concerning about masking. Should be as fast as          */
+/*      possible for this particular transformation type.               */
 /************************************************************************/
 
 static CPLErr GWKNearestNoMasksByte( GDALWarpKernel *poWK )
@@ -1197,6 +1243,157 @@ static CPLErr GWKNearestNoMasksByte( GDALWarpKernel *poWK )
             {
                 poWK->papabyDstImage[iBand][iDstOffset] = 
                     poWK->papabySrcImage[iBand][iSrcOffset];
+            }
+        }
+
+/* -------------------------------------------------------------------- */
+/*      Report progress to the user, and optionally cancel out.         */
+/* -------------------------------------------------------------------- */
+        if( !poWK->pfnProgress( poWK->dfProgressBase + poWK->dfProgressScale *
+                                ((iDstY+1) / (double) nDstYSize), 
+                                "", poWK->pProgress ) )
+        {
+            CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
+            eErr = CE_Failure;
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Cleanup and return.                                             */
+/* -------------------------------------------------------------------- */
+    CPLFree( padfX );
+    CPLFree( padfY );
+    CPLFree( padfZ );
+    CPLFree( pabSuccess );
+
+    return eErr;
+}
+
+/************************************************************************/
+/*                          GWKNearestByte()                            */
+/*                                                                      */
+/*      Case for 8bit input data with nearest neighbour resampling      */
+/*      using valid flags. Should be as fast as possible for this       */
+/*      particular transformation type.                                 */
+/************************************************************************/
+
+static CPLErr GWKNearestByte( GDALWarpKernel *poWK )
+
+{
+    int iDstY;
+    int nDstXSize = poWK->nDstXSize, nDstYSize = poWK->nDstYSize;
+    int nSrcXSize = poWK->nSrcXSize, nSrcYSize = poWK->nSrcYSize;
+    CPLErr eErr = CE_None;
+
+    CPLDebug( "GDAL", "GDALWarpKernel()::GWKNearestByte()\n"
+              "Src=%d,%d,%dx%d Dst=%d,%d,%dx%d",
+              poWK->nSrcXOff, poWK->nSrcYOff, 
+              poWK->nSrcXSize, poWK->nSrcYSize,
+              poWK->nDstXOff, poWK->nDstYOff, 
+              poWK->nDstXSize, poWK->nDstYSize );
+
+    if( !poWK->pfnProgress( poWK->dfProgressBase, "", poWK->pProgress ) )
+    {
+        CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
+        return CE_Failure;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Allocate x,y,z coordinate arrays for transformation ... one     */
+/*      scanlines worth of positions.                                   */
+/* -------------------------------------------------------------------- */
+    double *padfX, *padfY, *padfZ;
+    int    *pabSuccess;
+
+    padfX = (double *) CPLMalloc(sizeof(double) * nDstXSize);
+    padfY = (double *) CPLMalloc(sizeof(double) * nDstXSize);
+    padfZ = (double *) CPLMalloc(sizeof(double) * nDstXSize);
+    pabSuccess = (int *) CPLMalloc(sizeof(int) * nDstXSize);
+
+/* ==================================================================== */
+/*      Loop over output lines.                                         */
+/* ==================================================================== */
+    for( iDstY = 0; iDstY < nDstYSize && eErr == CE_None; iDstY++ )
+    {
+        int iDstX;
+
+/* -------------------------------------------------------------------- */
+/*      Setup points to transform to source image space.                */
+/* -------------------------------------------------------------------- */
+        for( iDstX = 0; iDstX < nDstXSize; iDstX++ )
+        {
+            padfX[iDstX] = iDstX + 0.5 + poWK->nDstXOff;
+            padfY[iDstX] = iDstY + 0.5 + poWK->nDstYOff;
+            padfZ[iDstX] = 0.0;
+        }
+
+/* -------------------------------------------------------------------- */
+/*      Transform the points from destination pixel/line coordinates    */
+/*      to source pixel/line coordinates.                               */
+/* -------------------------------------------------------------------- */
+        poWK->pfnTransformer( poWK->pTransformerArg, TRUE, nDstXSize, 
+                              padfX, padfY, padfZ, pabSuccess );
+
+/* ==================================================================== */
+/*      Loop over pixels in output scanline.                            */
+/* ==================================================================== */
+        for( iDstX = 0; iDstX < nDstXSize; iDstX++ )
+        {
+            int iDstOffset;
+
+            if( !pabSuccess[iDstX] )
+                continue;
+
+/* -------------------------------------------------------------------- */
+/*      Figure out what pixel we want in our source raster, and skip    */
+/*      further processing if it is well off the source image.          */
+/* -------------------------------------------------------------------- */
+            // We test against the value before casting to avoid the
+            // problem of asymmetric truncation effects around zero.  That is
+            // -0.5 will be 0 when cast to an int. 
+            if( padfX[iDstX] < poWK->nSrcXOff 
+                || padfY[iDstX] < poWK->nSrcYOff )
+                continue;
+
+            int iSrcX, iSrcY, iSrcOffset;
+
+            iSrcX = ((int) padfX[iDstX]) - poWK->nSrcXOff;
+            iSrcY = ((int) padfY[iDstX]) - poWK->nSrcYOff;
+
+            if( iSrcX >= nSrcXSize || iSrcY >= nSrcYSize )
+                continue;
+
+            iSrcOffset = iSrcX + iSrcY * nSrcXSize;
+
+/* -------------------------------------------------------------------- */
+/*      Don't generate output pixels for which the destination valid    */
+/*      mask exists and is already set.                                 */
+/* -------------------------------------------------------------------- */
+            iDstOffset = iDstX + iDstY * nDstXSize;
+            if( poWK->panDstValid != NULL
+                && (poWK->panDstValid[iDstOffset>>5]
+                    & (0x01 << (iDstOffset & 0x1f))) )
+                continue;
+
+/* ==================================================================== */
+/*      Loop processing each band.                                      */
+/* ==================================================================== */
+            int iBand;
+
+            for( iBand = 0; iBand < poWK->nBands; iBand++ )
+            {
+                GByte   bValue = 0;
+                double  dfDensity = 0.0;
+
+/* -------------------------------------------------------------------- */
+/*      Collect the source value.                                       */
+/* -------------------------------------------------------------------- */
+                if ( GWKGetPixelByte( poWK, iBand, iSrcOffset, &dfDensity,
+                                      &bValue ) )
+                {
+                    // FIXME: process density value here
+                    poWK->papabyDstImage[iBand][iDstOffset] = bValue;
+                }
             }
         }
 
