@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2001/08/28 20:50:03  warmerda
+ * expand tabs
+ *
  * Revision 1.13  2001/08/23 14:47:31  warmerda
  * Added support for adding an _LIST attribute to the OGRFeatures in
  * cases of GENERIC features for which an attribute appears more than
@@ -923,7 +926,7 @@ void OGRNTFDataSource::EstablishGenericLayers()
     for( int iFile = 0; iFile < nNTFFileCount; iFile++ )
     {
         NTFFileReader   *poPReader = NULL;
-        int		n3DFlag = 0;
+        int             n3DFlag = 0;
         
         poPReader = papoNTFFileReader[iFile];
         if( poPReader->GetProductId() != NPC_UNKNOWN )

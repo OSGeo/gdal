@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2001/08/28 20:50:03  warmerda
+ * expand tabs
+ *
  * Revision 1.20  2001/08/28 20:41:14  warmerda
  * added support for type 5 GTYPE values on GEOMETRY record
  *
@@ -665,7 +668,7 @@ OGRGeometry *NTFFileReader::ProcessGeometry( NTFRecord * poRecord,
     }
 
 /* -------------------------------------------------------------------- */
-/*      Arc defined by three points on the arc.				*/
+/*      Arc defined by three points on the arc.                         */
 /* -------------------------------------------------------------------- */
     else if( nGType == 5 && nNumCoord == 3 )
     {

@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2001/08/28 20:50:03  warmerda
+ * expand tabs
+ *
  * Revision 1.1  2001/08/28 20:40:44  warmerda
  * New
  *
@@ -106,7 +109,7 @@ int NTFArcCenterFromEdgePoints( double x_c0, double y_c0,
 /* -------------------------------------------------------------------- */
 /*      Turn these into the Ax+By+C = 0 form of the lines.              */
 /* -------------------------------------------------------------------- */
-    double	a1, a2, b1, b2, c1, c2;
+    double      a1, a2, b1, b2, c1, c2;
 
     a1 = m1;
     a2 = m2;
@@ -121,7 +124,7 @@ int NTFArcCenterFromEdgePoints( double x_c0, double y_c0,
 /*      Compute the intersection of the two lines through the center    */
 /*      of the circle, using Kramers rule.                              */
 /* -------------------------------------------------------------------- */
-    double	det_inv;
+    double      det_inv;
 
     if( a1*b2 - a2*b1 == 0.0 )
         return FALSE;
@@ -146,7 +149,7 @@ NTFStrokeArcToOGRGeometry_Points( double dfCenterX, double dfCenterY,
                                   int nVertexCount )
     
 {
-    double	dfStartAngle, dfEndAngle;
+    double      dfStartAngle, dfEndAngle;
 
     if( dfStartX == dfEndX && dfStartY == dfEndY )
     {
@@ -155,7 +158,7 @@ NTFStrokeArcToOGRGeometry_Points( double dfCenterX, double dfCenterY,
     }
     else
     {
-        double	dfDeltaX, dfDeltaY;
+        double  dfDeltaX, dfDeltaY;
 
         dfDeltaX = dfStartX - dfCenterX;
         dfDeltaY = dfStartY - dfCenterY;
@@ -187,8 +190,8 @@ NTFStrokeArcToOGRGeometry_Angles( double dfCenterX, double dfCenterY,
 
 {
     OGRLineString      *poLine = new OGRLineString;
-    double	       dfArcX, dfArcY, dfSlice;
-    int		       iPoint;
+    double             dfArcX, dfArcY, dfSlice;
+    int                iPoint;
         
     nVertexCount = MAX(2,nVertexCount);
     dfSlice = (dfEndAngle-dfStartAngle)/(nVertexCount-1);
