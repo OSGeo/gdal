@@ -19,7 +19,11 @@ OBJ	= \
 
 O_OBJ	=	$(foreach file,$(OBJ),../../o/$(file))
 
-ALL_C_FLAGS	=	-I../libtiff $(CFLAGS)
+ALL_C_FLAGS	=	$(CFLAGS)
+
+ifeq ($(TIFF_SETTING),internal)
+ALL_C_FLAGS	=	-I../libtiff $(ALL_C_FLAGS)
+endif
 
 
 default:	$(OBJ)

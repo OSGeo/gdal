@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2001/10/12 15:06:05  warmerda
+ * various build improvements to avoid internal/external conflicts
+ *
  * Revision 1.8  2001/07/18 04:51:56  warmerda
  * added CPL_CVSID
  *
@@ -55,10 +58,12 @@
  *
  */
 
+#include "gdal_priv.h"
+#define CPL_SERV_H_INCLUDED
+
 #include "tiffiop.h"
 #include "xtiffio.h"
 #include "geotiff.h"
-#include "gdal_priv.h"
 #include "tif_ovrcache.h"
 
 CPL_CVSID("$Id$");
