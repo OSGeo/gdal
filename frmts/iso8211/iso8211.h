@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  1999/08/13 03:26:29  warmerda
+ * added Rewind()
+ *
  * Revision 1.4  1999/05/07 14:11:22  warmerda
  * added subfield value fetches on record, and other odds and ends.
  *
@@ -102,6 +105,7 @@ class DDFModule
     void	Dump( FILE * fp );
 
     DDFRecord   *ReadRecord( void );
+    void	Rewind( long nOffset = -1 );
 
     DDFFieldDefn *FindFieldDefn( const char * );
 
@@ -120,6 +124,7 @@ class DDFModule
     
   private:
     FILE	*fpDDF;
+    long	nFirstRecordOffset;
 
     char 	_interchangeLevel;
     char	_inlineCodeExtensionIndicator;

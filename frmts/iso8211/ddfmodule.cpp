@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  1999/08/13 03:26:14  warmerda
+ * added Rewind()
+ *
  * Revision 1.5  1999/05/08 20:15:59  warmerda
  * added validity checking, and better cleanup on error
  *
@@ -319,6 +322,12 @@ int DDFModule::Open( const char * pszFilename )
 
     CPLFree( pachRecord );
     
+/* -------------------------------------------------------------------- */
+/*      Record the current file offset, the beginning of the first      */
+/*      data record.                                                    */
+/* -------------------------------------------------------------------- */
+    nFirstRecordOffset = VSIFTell( fpDDF );
+    
     return TRUE;
 }
 
@@ -504,4 +513,30 @@ void DDFModule::RemoveCloneRecord( DDFRecord * poRecord )
     }
 
     CPLAssert( FALSE );
+}
+
+/************************************************************************/
+/*                               Rewind()                               */
+/************************************************************************/
+
+/**
+ * Return to first record.
+ * 
+ * The next call to ReadRecord() will read the first data record in the file.
+ *
+ * @param nOffset the offset in the file to return to.  By default this is
+ * -1, a special value indicating that reading should return to the first
+ * data record.  Otherwise it is an absolute byte offset in the file.
+ */
+
+void DDFModule::Rewind( long nOffset )
+
+{
+    if( nOffset == -1 )
+        nOffset = nFirstRecordOffset;
+
+    if( fpDDF == NULL )
+        return;
+    
+    VSIFSeek( fpDDF, nOffset, SEEK_SET );
 }
