@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.14  2002/10/04 16:23:56  dron
+ * Memory leak fixed.
+ *
  * Revision 1.13  2002/09/04 06:50:37  warmerda
  * avoid static driver pointers
  *
@@ -412,8 +415,10 @@ L1BDataset::L1BDataset()
 L1BDataset::~L1BDataset()
 
 {
-    if ( pasGCPList != NULL )
+    if ( pasGCPList )
         CPLFree( pasGCPList );
+    if ( pasCorners )
+	CPLFree( pasCorners );
     if( fp != NULL )
         VSIFClose( fp );
 }
@@ -721,6 +726,7 @@ void L1BDataset::ProcessDatasetHeader()
 	CPL_SWAP16PTR(&iInstrumentStatus);
 #endif
     }
+    CPLFree( piHeader );
 }
 
 /************************************************************************/
