@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2003/04/22 19:37:50  warmerda
+ * Added sync to disk
+ *
  * Revision 1.18  2003/04/04 06:18:08  warmerda
  * first pass implementation of loader support
  *
@@ -561,6 +564,10 @@ OGRLayer * OGROCIDataSource::ExecuteSQL( const char *pszSQLCommand,
                                         const char *pszDialect )
 
 {
+/* -------------------------------------------------------------------- */
+/*      Ensure any pending stuff is flushed to the database.            */
+/* -------------------------------------------------------------------- */
+    SyncToDisk();
 
 /* -------------------------------------------------------------------- */
 /*      Special case DELLAYER: command.                                 */

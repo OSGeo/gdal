@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.23  2003/04/22 19:37:51  warmerda
+ * Added sync to disk
+ *
  * Revision 1.22  2003/04/11 16:27:42  warmerda
  * add support for bound feature writing in OGROCITableLayer
  *
@@ -1690,5 +1693,18 @@ OGRErr OGROCITableLayer::FlushPendingFeatures()
     }
     else
         return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                             SyncToDisk()                             */
+/*                                                                      */
+/*      Perhaps we should also be putting the metadata into a           */
+/*      useable state?                                                  */
+/************************************************************************/
+
+OGRErr OGROCITableLayer::SyncToDisk()
+
+{
+    return FlushPendingFeatures();
 }
 

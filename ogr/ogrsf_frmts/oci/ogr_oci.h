@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2003/04/22 19:37:51  warmerda
+ * Added sync to disk
+ *
  * Revision 1.16  2003/04/11 18:20:57  warmerda
  * added external dat file in VARIABLE mode
  *
@@ -496,6 +499,8 @@ class OGROCITableLayer : public OGROCIWritableLayer
     virtual OGRErr      CreateFeature( OGRFeature *poFeature );
     
     virtual int         TestCapability( const char * );
+
+    virtual OGRErr      SyncToDisk();
 
     // following methods are not base class overrides
     int                 IsValid() { return bValidTable; }
