@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.31  2002/02/22 22:23:38  warmerda
+ * added tolerances when assembling polygons
+ *
  * Revision 1.30  2002/02/18 21:12:23  warmerda
  * added OGRBuildPolygonFromEdges
  *
@@ -158,6 +161,9 @@ enum OGRwkbGeometryType
     wkbMultiPoint25D = 0x8004,
     wkbMultiPolygon25D = 0x8006,
 };
+
+#define wkb25DBit 0x8000
+#define wkbFlatten(x)  ((x) & (~wkb25DBit))
 
 #define ogrZMarker 0x21125711
 
@@ -671,6 +677,9 @@ class CPL_DLL OGRGeometryFactory
 };
 
 OGRPolygon *OGRBuildPolygonFromEdges( OGRGeometryCollection * poLines,
-                                      int bBestEffort, OGRErr * peErr = NULL );
+                                      int bBestEffort, 
+                                      int bAutoClose, 
+                                      double dfTolerance,
+                                      OGRErr * peErr = NULL );
 
 #endif /* ndef _OGR_GEOMETRY_H_INCLUDED */
