@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2003/03/19 20:34:23  warmerda
+ * add support for tables from external datasources
+ *
  * Revision 1.4  2003/03/05 05:10:17  warmerda
  * implement join support
  *
@@ -75,6 +78,9 @@ class CPL_DLL OGRGenSQLResultsLayer : public OGRLayer
     int         iFIDFieldIndex;
 
     OGRField    *pasOrderByIndex;
+
+    int         nExtraDSCount;
+    OGRDataSource **papoExtraDS;
 
     OGRFeature *TranslateFeature( OGRFeature * );
     void        CreateOrderByIndex();
