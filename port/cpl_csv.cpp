@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2002/09/04 06:16:32  warmerda
+ * added CPLReadLine(NULL) to cleanup
+ *
  * Revision 1.3  2001/07/18 04:00:49  warmerda
  * added CPL_CVSID
  *
@@ -162,7 +165,10 @@ void CSVDeaccess( const char * pszFilename )
     }
 
     if( psTable == NULL )
+    {
+        CPLDebug( "CPL_CSV", "CPLDeaccess( %s ) - no match.", pszFilename );
         return;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Remove the link from the list.                                  */
@@ -182,6 +188,8 @@ void CSVDeaccess( const char * pszFilename )
     CPLFree( psTable->pszFilename );
 
     CPLFree( psTable );
+
+    CPLReadLine( NULL );
 }
 
 /************************************************************************/
