@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2002/04/25 21:03:07  warmerda
+ * avoid strcasecmp
+ *
  * Revision 1.3  2002/04/25 16:07:55  warmerda
  * fleshed out DISTINCT support
  *
@@ -713,8 +716,8 @@ int OGRGenSQLResultsLayer::Compare( OGRField *pasFirstTuple,
                 && pasSecondTuple[iKey].Set.nMarker2 == OGRUnsetMarker) )
             nResult = 0;
         else if( poFDefn->GetType() == OFTString )
-            nResult = strcasecmp(pasFirstTuple[iKey].String,
-                                 pasSecondTuple[iKey].String);
+            nResult = strcmp(pasFirstTuple[iKey].String,
+                             pasSecondTuple[iKey].String);
         else if( poFDefn->GetType() == OFTInteger )
         {
             if( pasFirstTuple[iKey].Integer < pasSecondTuple[iKey].Integer )
