@@ -29,6 +29,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2003/04/09 07:10:47  warmerda
+ * Added byte swapping for non-eight bit data on little endian platforms.
+ * Multi-byte NITF image data is always bigendian.
+ * http://bugzilla.remotesensing.org/show_bug.cgi?id=316
+ *
  * Revision 1.11  2003/03/28 13:57:12  warmerda
  * fixed C++ comment (per bug 311)
  *
@@ -72,6 +77,8 @@ CPL_CVSID("$Id$");
 
 static char *NITFTrimWhite( char * );
 static int NITFIsAllDigits( const char *, int );
+static void NITFSwapWords( void *pData, int nWordSize, int nWordCount,
+                           int nWordSkip );
 
 /************************************************************************/
 /*                          NITFImageAccess()                           */
@@ -632,7 +639,15 @@ int NITFReadImageBlock( NITFImage *psImage, int nBlockX, int nBlockY,
             return BLKREAD_FAIL;
         }
         else
+        {
+#ifdef CPL_LSB
+            NITFSwapWords( pData, psImage->nWordSize, 
+                           psImage->nBlockWidth * psImage->nBlockHeight, 
+                           psImage->nWordSize );
+#endif
+
             return BLKREAD_OK;
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -671,6 +686,12 @@ int NITFReadImageBlock( NITFImage *psImage, int nBlockX, int nBlockY,
                         psImage->nWordSize );
             }
         }
+
+#ifdef CPL_LSB
+        NITFSwapWords( pData, psImage->nWordSize, 
+                       psImage->nBlockWidth * psImage->nBlockHeight, 
+                       psImage->nWordSize );
+#endif
 
         CPLFree( pabyWrkBuf );
 
@@ -769,6 +790,11 @@ int NITFReadImageLine( NITFImage *psImage, int nLine, int nBand, void *pData )
     {
         VSIFRead( pData, 1, nLineSize, psImage->psFile->fp );
 
+#ifdef CPL_LSB
+        NITFSwapWords( pData, psImage->nWordSize, 
+                       psImage->nBlockWidth, psImage->nWordSize );
+#endif
+
         return BLKREAD_OK;
     }
 
@@ -795,6 +821,11 @@ int NITFReadImageLine( NITFImage *psImage, int nLine, int nBand, void *pData )
                     pabySrc + iPixel * psImage->nPixelOffset,
                     psImage->nWordSize );
         }
+
+#ifdef CPL_LSB
+        NITFSwapWords( (void *) pabyDst, psImage->nWordSize, 
+                       psImage->nBlockWidth, psImage->nWordSize );
+#endif
     }
 
     CPLFree( pabyLineBuf );
@@ -1054,3 +1085,83 @@ static int NITFIsAllDigits( const char *pachBuffer, int nCharCount )
     }
     return TRUE;
 }
+
+/************************************************************************/
+/*                           NITFSwapWords()                            */
+/************************************************************************/
+
+static void NITFSwapWords( void *pData, int nWordSize, int nWordCount,
+                           int nWordSkip )
+
+{
+    int         i;
+    GByte       *pabyData = (GByte *) pData;
+
+    switch( nWordSize )
+    {
+      case 1:
+        break;
+
+      case 2:
+        CPLAssert( nWordSize >= 2 );
+        for( i = 0; i < nWordCount; i++ )
+        {
+            GByte       byTemp;
+
+            byTemp = pabyData[0];
+            pabyData[0] = pabyData[1];
+            pabyData[1] = byTemp;
+
+            pabyData += nWordSkip;
+        }
+        break;
+        
+      case 4:
+        CPLAssert( nWordSize >= 4 );
+        for( i = 0; i < nWordCount; i++ )
+        {
+            GByte       byTemp;
+
+            byTemp = pabyData[0];
+            pabyData[0] = pabyData[3];
+            pabyData[3] = byTemp;
+
+            byTemp = pabyData[1];
+            pabyData[1] = pabyData[2];
+            pabyData[2] = byTemp;
+
+            pabyData += nWordSkip;
+        }
+        break;
+
+      case 8:
+        CPLAssert( nWordSize >= 8 );
+        for( i = 0; i < nWordCount; i++ )
+        {
+            GByte       byTemp;
+
+            byTemp = pabyData[0];
+            pabyData[0] = pabyData[7];
+            pabyData[7] = byTemp;
+
+            byTemp = pabyData[1];
+            pabyData[1] = pabyData[6];
+            pabyData[6] = byTemp;
+
+            byTemp = pabyData[2];
+            pabyData[2] = pabyData[5];
+            pabyData[5] = byTemp;
+
+            byTemp = pabyData[3];
+            pabyData[3] = pabyData[4];
+            pabyData[4] = byTemp;
+
+            pabyData += nWordSkip;
+        }
+        break;
+
+      default:
+        CPLAssert( FALSE );
+    }
+}
+
