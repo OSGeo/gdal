@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2001/07/19 16:58:39  warmerda
+ * ensure version initialized, even if not testopen
+ *
  * Revision 1.13  2001/07/19 16:05:49  warmerda
  * clear out tabs
  *
@@ -322,7 +325,7 @@ int OGRTigerDataSource::Open( const char * pszFilename, int bTestOpen,
     
     for( i = 0; papszFileList[i] != NULL; i++ )
     {
-        if( bTestOpen )
+        if( bTestOpen || i == 0 )
         {
             char        szHeader[80];
             FILE        *fp;
