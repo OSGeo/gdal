@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2001/11/09 14:55:29  warmerda
+ * fixed 3D support for arcs
+ *
  * Revision 1.15  2001/09/27 14:28:44  warmerda
  * first hack at 3D support
  *
@@ -357,15 +360,6 @@ DGNElemCore *DGNReadElement( DGNHandle hDGN )
 
           psEllipse->startang = DGN_INT32( psDGN->abyElem + 36 );
           psEllipse->startang = psEllipse->startang / 360000.0;
-#ifdef notdef
-          nSweepVal = DGN_INT32( psDGN->abyElem + 40 );
-          if( nSweepVal & 0x80000000 ) 
-              psEllipse->sweepang = - (nSweepVal & 0x7fffffff)/360000.0;
-          else if( nSweepVal  == 0 )
-              psEllipse->sweepang = 360.0;
-          else
-              psEllipse->sweepang = nSweepVal / 360000.0;
-#else
           if( psDGN->abyElem[41] & 0x80 )
           {
               psDGN->abyElem[41] &= 0x7f;
@@ -378,7 +372,6 @@ DGNElemCore *DGNReadElement( DGNHandle hDGN )
               psEllipse->sweepang = 360.0;
           else
               psEllipse->sweepang = nSweepVal / 360000.0;
-#endif
           
           memcpy( &(psEllipse->primary_axis), psDGN->abyElem + 44, 8 );
           DGN2IEEEDouble( &(psEllipse->primary_axis) );
@@ -388,14 +381,31 @@ DGNElemCore *DGNReadElement( DGNHandle hDGN )
           DGN2IEEEDouble( &(psEllipse->secondary_axis) );
           psEllipse->secondary_axis *= psDGN->scale;
           
-          psEllipse->rotation = DGN_INT32( psDGN->abyElem + 60 );
-          psEllipse->rotation = psEllipse->rotation / 360000.0;
+          if( psDGN->dimension == 2 )
+          {
+              psEllipse->rotation = DGN_INT32( psDGN->abyElem + 60 );
+              psEllipse->rotation = psEllipse->rotation / 360000.0;
           
-          memcpy( &(psEllipse->origin.x), psDGN->abyElem + 64, 8 );
-          DGN2IEEEDouble( &(psEllipse->origin.x) );
+              memcpy( &(psEllipse->origin.x), psDGN->abyElem + 64, 8 );
+              DGN2IEEEDouble( &(psEllipse->origin.x) );
+              
+              memcpy( &(psEllipse->origin.y), psDGN->abyElem + 72, 8 );
+              DGN2IEEEDouble( &(psEllipse->origin.y) );
+          }
+          else 
+          {
+              /* for now we don't try to handle quaternion */
+              psEllipse->rotation = 0;
+          
+              memcpy( &(psEllipse->origin.x), psDGN->abyElem + 76, 8 );
+              DGN2IEEEDouble( &(psEllipse->origin.x) );
+              
+              memcpy( &(psEllipse->origin.y), psDGN->abyElem + 84, 8 );
+              DGN2IEEEDouble( &(psEllipse->origin.y) );
 
-          memcpy( &(psEllipse->origin.y), psDGN->abyElem + 72, 8 );
-          DGN2IEEEDouble( &(psEllipse->origin.y) );
+              memcpy( &(psEllipse->origin.z), psDGN->abyElem + 92, 8 );
+              DGN2IEEEDouble( &(psEllipse->origin.z) );
+          }
 
           DGNTransformPoint( psDGN, &(psEllipse->origin) );
 
