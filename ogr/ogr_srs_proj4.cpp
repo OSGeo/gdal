@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.41  2003/05/28 18:17:38  warmerda
+ * treat meter or m as meter
+ *
  * Revision 1.40  2003/05/20 18:09:36  warmerda
  * fixed so that importFromProj4() will transform linear parameter units
  *
@@ -787,7 +790,7 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
         }
         else if( (pszValue = CSLFetchNameValue(papszNV, "units")) != NULL )
         {
-            if( EQUAL(pszValue,"meter" ) )
+            if( EQUAL(pszValue,"meter" ) || EQUAL(pszValue,"m") )
                 SetLinearUnits( SRS_UL_METER, 1.0 );
             else if( EQUAL(pszValue,"us-ft" ) )
                 SetLinearUnits( SRS_UL_US_FOOT, atof(SRS_UL_US_FOOT_CONV) );
