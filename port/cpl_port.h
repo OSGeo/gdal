@@ -42,6 +42,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.35  2003/12/11 03:16:02  warmerda
+ * Added CPL_IS_LSB macro with value 0 (MSB) or 1 (LSB).
+ *
  * Revision 1.34  2003/09/08 11:11:05  dron
  * Include time.h and locale.h.
  *
@@ -282,6 +285,12 @@ char * strdup (char *instr);
 
 #if ! ( defined(CPL_LSB) || defined(CPL_MSB) )
 #define CPL_LSB
+#endif
+
+#ifdef CPL_MSB
+#  define CPL_IS_LSB 0
+#else
+#  define CPL_IS_LSB 1
 #endif
 
 /*---------------------------------------------------------------------
