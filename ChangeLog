@@ -1,5 +1,7 @@
 2001-02-06  Frank Warmerdam  <warmerdam@pobox.com>
 
+	* Export various OGR classes, and entry points from DLL.
+
 	* Fixed numpydataset.cpp to use sscanf() to parse pointer.
 
 2001-02-05  Frank Warmerdam  <warmerdam@pobox.com>
