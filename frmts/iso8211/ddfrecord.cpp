@@ -28,6 +28,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.23  2003/12/08 20:32:48  warmerda
+ * Added some improved error checking in DDFRecord() on the leader values.
+ * Try reading extra bytes to find field terminator if the last byte in
+ * a record isn't the field terminator.
+ *
  * Revision 1.22  2003/12/02 16:50:21  warmerda
  * fixed problems with writing some kinds of records
  *
@@ -337,7 +342,7 @@ int DDFRecord::ReadHeader()
     else if( nReadBytes != (int) nLeaderSize )
     {
         CPLError( CE_Failure, CPLE_FileIO,
-                  "Leader is short on DDF file.\n" );
+                  "Leader is short on DDF file." );
         
         return FALSE;
     }
@@ -355,6 +360,15 @@ int DDFRecord::ReadHeader()
     _sizeFieldLength = achLeader[20] - '0';
     _sizeFieldPos = achLeader[21] - '0';
     _sizeFieldTag = achLeader[23] - '0';
+
+    if( _sizeFieldLength < 0 || _sizeFieldLength > 9 
+        || _sizeFieldPos < 0 || _sizeFieldPos > 9
+        || _sizeFieldTag < 0 || _sizeFieldTag > 9 )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "ISO8211 record leader appears to be corrupt." );
+        return FALSE;
+    }
 
     if( _leaderIden == 'R' )
         nReuseHeader = TRUE;
@@ -393,6 +407,27 @@ int DDFRecord::ReadHeader()
                       "Data record is short on DDF file." );
           
             return FALSE;
+        }
+
+/* -------------------------------------------------------------------- */
+/*      If we don't find a field terminator at the end of the record    */
+/*      we will read extra bytes till we get to it.                     */
+/* -------------------------------------------------------------------- */
+        while( pachData[nDataSize-1] != DDF_FIELD_TERMINATOR )
+        {
+            nDataSize++;
+            pachData = (char *) CPLRealloc(pachData,nDataSize);
+            
+            if( VSIFRead( pachData + nDataSize - 1, 1, 1, poModule->GetFP() )
+                != 1 )
+            {
+                CPLError( CE_Failure, CPLE_FileIO, 
+                          "Data record is short on DDF file." );
+                
+                return FALSE;
+            }
+            CPLDebug( "ISO8211", 
+                      "Didn't find field terminator, read one more byte." );
         }
 
 /* -------------------------------------------------------------------- */
