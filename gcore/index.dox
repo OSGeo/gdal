@@ -27,6 +27,12 @@ mailing list.  Subscriptions can be done, and archives reviewed
 Incomplete (but useful) <a href="hierarchy.html">API Documentation</a> 
 exists for GDAL, and was created using Doxygen (as was this page). <p>
 
+<h2>Bug Reporting</h2>
+
+GDAL bugs <a href="http://bugzilla.remotesensing.org/enter_bug.cgi">can be reported</a>, and 
+<a href="http://bugzilla.remotesensing.org/buglist.cgi">can be listed</a> 
+using BugZilla.<p>
+
 <h2>Source Access</h2>
 
 The GDAL source is available by anonymous CVS:<p>
