@@ -28,6 +28,9 @@
  * ****************************************************************************
  *
  * $Log$
+ * Revision 1.22  2004/07/28 17:51:09  warmerda
+ * updated to use VRTSourcedRasterBand
+ *
  * Revision 1.21  2004/04/23 22:18:40  warmerda
  * Another memory leak.
  *
@@ -688,7 +691,7 @@ int main( int argc, char ** argv )
 
     for( i = 0; i < nBandCount; i++ )
     {
-        VRTRasterBand   *poVRTBand;
+        VRTSourcedRasterBand   *poVRTBand;
         GDALRasterBand  *poSrcBand;
         GDALDataType    eBandType;
         double          dfNoData;
@@ -709,7 +712,7 @@ int main( int argc, char ** argv )
 /*      Create this band.                                               */
 /* -------------------------------------------------------------------- */
         poVDS->AddBand( eBandType, NULL );
-        poVRTBand = (VRTRasterBand *) poVDS->GetRasterBand( i+1 );
+        poVRTBand = (VRTSourcedRasterBand *) poVDS->GetRasterBand( i+1 );
             
 /* -------------------------------------------------------------------- */
 /*      Do we need to collect scaling information?                      */
