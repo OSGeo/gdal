@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.125  2004/11/11 21:03:38  fwarmerdam
+ * dont try and write tiepoint+pixelscale for southup images, bug 666
+ *
  * Revision 1.124  2004/10/27 18:17:19  fwarmerdam
  * avoid variable sized arrays, not C++ standard
  *
@@ -1920,10 +1923,11 @@ void GTiffDataset::WriteGeoTIFFInfo()
     {
 
 /* -------------------------------------------------------------------- */
-/*      Write the transform.  We ignore the rotational coefficients     */
-/*      for now.  We will fix this up later. (notdef)                   */
+/*      Write the transform.  If we have a normal north-up image we     */
+/*      use the tiepoint plus pixelscale otherwise we use a matrix.     */
 /* -------------------------------------------------------------------- */
-	if( adfGeoTransform[2] == 0.0 && adfGeoTransform[4] == 0.0 )
+	if( adfGeoTransform[2] == 0.0 && adfGeoTransform[4] == 0.0 
+            && adfGeoTransform[5] < 0.0 )
 	{
 	    double	adfPixelScale[3], adfTiePoints[6];
 
@@ -3253,8 +3257,10 @@ GTiffCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             || adfGeoTransform[4] != 0.0 || ABS(adfGeoTransform[5]) != 1.0 ))
     {
 
-        if( adfGeoTransform[2] == 0.0 && adfGeoTransform[4] == 0.0 )
+        if( adfGeoTransform[2] == 0.0 && adfGeoTransform[4] == 0.0 
+            && adfGeoTransform[5] < 0.0 )
         {
+
             double	adfPixelScale[3], adfTiePoints[6];
 
             adfPixelScale[0] = adfGeoTransform[1];
