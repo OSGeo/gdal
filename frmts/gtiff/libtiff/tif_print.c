@@ -1,4 +1,4 @@
-/* $Id: tif_print.c,v 1.19 2004/10/10 11:56:03 dron Exp $ */
+/* $Id: tif_print.c,v 1.22 2005/03/21 10:17:37 dron Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -492,82 +492,92 @@ TIFFPrintDirectory(TIFF* tif, FILE* fd, long flags)
             int  i;
             short count;
 
-            count = (short) TIFFGetTagListCount( tif );
-            for( i = 0; i < count; i++ )
-            {
-                ttag_t  tag = TIFFGetTagListEntry( tif, i );
-                const TIFFFieldInfo *fld;
+            count = (short) TIFFGetTagListCount(tif);
+            for(i = 0; i < count; i++) {
+                ttag_t  tag = TIFFGetTagListEntry(tif, i);
+                const TIFFFieldInfo *fip;
+                uint16 value_count;
+                int j, mem_alloc = 0;
+                void *raw_data;
 
-                fld = TIFFFieldWithTag( tif, tag );
-                if( fld == NULL )
-                    continue;
+                fip = TIFFFieldWithTag(tif, tag);
+                if(fip == NULL)
+			continue;
 
-                if( fld->field_passcount )
-                {
-                    short value_count;
-                    int j;
-                    void *raw_data;
-                    
-                    if( TIFFGetField( tif, tag, &value_count, &raw_data ) != 1 )
-                        continue;
+		if(fip->field_passcount) {
+			if(TIFFGetField(tif, tag, &value_count, &raw_data) != 1)
+				continue;
+		} else {
+			if (fip->field_readcount == TIFF_VARIABLE
+			    || fip->field_readcount == TIFF_VARIABLE2)
+				value_count = 1;
+			else if (fip->field_readcount == TIFF_SPP)
+				value_count = td->td_samplesperpixel;
+			else
+				value_count = fip->field_readcount;
+			if (fip->field_type == TIFF_ASCII
+			    || fip->field_readcount == TIFF_VARIABLE
+			    || fip->field_readcount == TIFF_VARIABLE2
+			    || fip->field_readcount == TIFF_SPP
+			    || value_count > 1) {
+				if(TIFFGetField(tif, tag, &raw_data) != 1)
+					continue;
+			} else {
+				raw_data = _TIFFmalloc(
+					_TIFFDataSize(fip->field_type)
+					* value_count);
+				mem_alloc = 1;
+				if(TIFFGetField(tif, tag, raw_data) != 1)
+					continue;
+			}
+		}
 
-                    fprintf(fd, "  %s: ", fld->field_name );
+		fprintf(fd, "  %s: ", fip->field_name);
 
-                    for( j = 0; j < value_count; j++ )
-                    {
-			if( fld->field_type == TIFF_BYTE )
-                            fprintf( fd, "%d",
-                                     (int) ((char *) raw_data)[j] );
-			else if( fld->field_type == TIFF_SHORT )
-                            fprintf( fd, "%d",
-                                     (int) ((unsigned short *) raw_data)[j] );
-			else if( fld->field_type == TIFF_SSHORT )
-                            fprintf( fd, "%d",
-                                     (int) ((short *) raw_data)[j] );
-                        else if( fld->field_type == TIFF_LONG )
-                            fprintf( fd, "%d",
-                                     (int) ((unsigned long *) raw_data)[j] );
-                        else if( fld->field_type == TIFF_SLONG )
-                            fprintf( fd, "%d",
-                                     (int) ((long *) raw_data)[j] );
-			else if( fld->field_type == TIFF_RATIONAL )
-			    fprintf( fd, "%f",
-				     ((float *) raw_data)[j] );
-			else if( fld->field_type == TIFF_SRATIONAL )
-			    fprintf( fd, "%f",
-				     ((float *) raw_data)[j] );
-                        else if( fld->field_type == TIFF_ASCII )
-                        {
-                            fprintf( fd, "%s",
-                                     (char *) raw_data );
-                            break;
-                        }
-                        else if( fld->field_type == TIFF_DOUBLE )
-                            fprintf( fd, "%f",
-                                     ((double *) raw_data)[j] );
-                        else if( fld->field_type == TIFF_FLOAT )
-                            fprintf( fd, "%f",
-                                     ((float *) raw_data)[j] );
-                        else
-                        {
-                            fprintf( fd,
-                                     "<unsupported data type in TIFFPrint>" );
-                            break;
-                        }
+		for(j = 0; j < value_count; j++) {
+		    if(fip->field_type == TIFF_BYTE)
+		        fprintf(fd, "%u",
+				(unsigned int) ((unsigned char *) raw_data)[j]);
+		    else if(fip->field_type == TIFF_UNDEFINED)
+		        fprintf(fd, "0x%x",
+				(unsigned int) ((unsigned char *) raw_data)[j]);		    else if(fip->field_type == TIFF_SBYTE)
+		        fprintf(fd, "%d", (int) ((char *) raw_data)[j]);
+		    else if(fip->field_type == TIFF_SHORT)
+		        fprintf(fd, "%u",
+		    	    (unsigned int)((unsigned short *) raw_data)[j]);
+		    else if(fip->field_type == TIFF_SSHORT)
+		        fprintf(fd, "%d", (int)((short *) raw_data)[j]);
+		    else if(fip->field_type == TIFF_LONG)
+		        fprintf(fd, "%lu",
+		    	    (int)((unsigned long *) raw_data)[j]);
+		    else if(fip->field_type == TIFF_SLONG)
+		        fprintf(fd, "%ld", (long)((long *) raw_data)[j]);
+		    else if(fip->field_type == TIFF_RATIONAL
+			    || fip->field_type == TIFF_SRATIONAL
+			    || fip->field_type == TIFF_FLOAT)
+		        fprintf(fd, "%f", ((float *) raw_data)[j]);
+		    else if(fip->field_type == TIFF_IFD)
+		        fprintf(fd, "0x%x",
+		    	    (int)((unsigned long *) raw_data)[j]);
+		    else if(fip->field_type == TIFF_ASCII) {
+		        fprintf(fd, "%s", (char *) raw_data);
+		        break;
+		    }
+		    else if(fip->field_type == TIFF_DOUBLE)
+		        fprintf(fd, "%f", ((double *) raw_data)[j]);
+		    else if(fip->field_type == TIFF_FLOAT)
+		        fprintf(fd, "%f", ((float *)raw_data)[j]);
+		    else {
+		        fprintf(fd, "<unsupported data type in TIFFPrint>");
+		        break;
+		    }
 
-                        if( j < value_count-1 )
-                            fprintf( fd, "," );
-                    }
-                    fprintf( fd, "\n" );
-                } 
-                else if( !fld->field_passcount
-                         && fld->field_type == TIFF_ASCII )
-                {
-                    char *data;
-                    
-                    if( TIFFGetField( tif, tag, &data ) )
-                        fprintf(fd, "  %s: %s\n", fld->field_name, data );
-                }
+		    if(j < value_count - 1)
+		        fprintf(fd, ",");
+		}
+		fprintf(fd, "\n");
+		if(mem_alloc)
+			_TIFFfree(raw_data);
             }
         }
         
