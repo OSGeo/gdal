@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: geotiff_proj4.c,v 1.3 1999/03/10 18:11:17 geotiff Exp $
+ * $Id: geotiff_proj4.c,v 1.1 1999/03/10 18:24:35 warmerda Exp $
  *
  * Project:  libgeotiff
  * Purpose:  Code to convert a normalized GeoTIFF definition into a PROJ.4
@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log: geotiff_proj4.c,v $
+ * Revision 1.1  1999/03/10 18:24:35  warmerda
+ * New
+ *
  * Revision 1.3  1999/03/10 18:11:17  geotiff
  * Removed comment about this not being the master ... now it is.
  *
@@ -41,7 +44,7 @@
  */
 
 #include <stdio.h>
-
+#include <string.h>
 #include "geotiff.h"
 #include "geo_normalize.h"
 #include "geovalues.h"
