@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.11  2003/07/08 20:28:09  warmerda
+ * avoid warings
+ *
  * Revision 1.10  2002/12/04 15:55:27  warmerda
  * Remap BSB 1 based pixel values to 0 based when reading, and the corresponding
  * shift up when writing.  Merge duplicate colors in color table when writing.
@@ -504,9 +507,9 @@ BSBCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             int nOutValue = (int) (iColor / 4.1) + 1;
 
             anRemap[iColor] = nOutValue;
-            abyPCT[nOutValue*3 + 0] = iColor;
-            abyPCT[nOutValue*3 + 1] = iColor;
-            abyPCT[nOutValue*3 + 2] = iColor;
+            abyPCT[nOutValue*3 + 0] = (unsigned char) iColor;
+            abyPCT[nOutValue*3 + 1] = (unsigned char) iColor;
+            abyPCT[nOutValue*3 + 2] = (unsigned char) iColor;
         }
         nPCTSize = 64;
     }
@@ -521,10 +524,10 @@ BSBCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
             poCT->GetColorEntryAsRGB( iColor, &sEntry );
             
-            anRemap[iColor] = iColor + 1;
-            abyPCT[(iColor+1)*3 + 0] = sEntry.c1;
-            abyPCT[(iColor+1)*3 + 1] = sEntry.c2;
-            abyPCT[(iColor+1)*3 + 2] = sEntry.c3;
+            anRemap[iColor] = (unsigned char) (iColor + 1);
+            abyPCT[(iColor+1)*3 + 0] = (unsigned char) sEntry.c1;
+            abyPCT[(iColor+1)*3 + 1] = (unsigned char) sEntry.c2;
+            abyPCT[(iColor+1)*3 + 2] = (unsigned char) sEntry.c3;
         }
 
         // Add entries for pixel values which apparently will not occur.
