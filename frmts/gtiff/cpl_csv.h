@@ -1,5 +1,13 @@
 /******************************************************************************
- * Copyright (c) 1998, Frank Warmerdam
+ * $Id$
+ *
+ * Project:  Common Portability Library
+ * Purpose:  Functions for reading and scaning CSV (comma separated,
+ *           variable length text files holding tables) files.  
+ * Author:   Frank Warmerdam, warmerda@home.com
+ *
+ ******************************************************************************
+ * Copyright (c) 1999, Frank Warmerdam
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -20,11 +28,10 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************
  *
- * cpl_csv.h
+ * $Log$
+ * Revision 1.2  1999/02/24 16:22:58  warmerda
+ * cpl_csv.c
  *
- * Prototypes, and stuff for CSV access functions.
- *
- * $Log: 
  */
 
 #ifndef CPL_CSV_H_INCLUDED
@@ -47,9 +54,17 @@ char CPL_DLL **CSVReadParseLine( FILE * );
 char CPL_DLL **CSVScanLines( FILE *, int, const char *, CSVCompareCriteria );
 char CPL_DLL **CSVScanFile( const char *, int, const char *,
                             CSVCompareCriteria );
+char CPL_DLL **CSVScanFileByName( const char *, const char *, const char *,
+                                  CSVCompareCriteria );
+int CPL_DLL CSVGetFieldId( FILE *, const char * );
+int CPL_DLL CSVGetFileFieldId( const char *, const char * );
 
-#define CSVC_
+void CPL_DLL CSVDeaccess( const char * );
+
+const char CPL_DLL *CSVGetField( const char *, const char *, const char *,
+                                 CSVCompareCriteria, const char * );
 
 CPL_C_END
 
 #endif /* ndef CPL_CSV_H_INCLUDED */
+
