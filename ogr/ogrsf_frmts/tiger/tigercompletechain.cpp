@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2004/01/13 17:23:49  warmerda
+ * recover more gracefully from RT2 open errors
+ *
  * Revision 1.15  2003/10/15 19:09:46  warmerda
  * fixed memory leak of panShapeRecordId array
  *
@@ -461,8 +464,12 @@ OGRFeature *TigerCompleteChain::GetFeature( int nRecordId )
                      atoi(GetField(achRecord, 191, 200)) / 1000000.0,
                      atoi(GetField(achRecord, 201, 209)) / 1000000.0 );
 
-    AddShapePoints( poFeature->GetFieldAsInteger("TLID"), nRecordId,
-                    poLine, 0 );
+    if( !AddShapePoints( poFeature->GetFieldAsInteger("TLID"), nRecordId,
+                         poLine, 0 ) )
+    {
+        delete poFeature;
+        return NULL;
+    }
     
     poLine->addPoint(atoi(GetField(achRecord, 210, 219)) / 1000000.0,
                      atoi(GetField(achRecord, 220, 228)) / 1000000.0 );
@@ -479,15 +486,21 @@ OGRFeature *TigerCompleteChain::GetFeature( int nRecordId )
 /*      and add the points to the passed line geometry.                 */
 /************************************************************************/
 
-void TigerCompleteChain::AddShapePoints( int nTLID, int nRecordId,
-                                         OGRLineString * poLine, int nSeqNum ) 
+int TigerCompleteChain::AddShapePoints( int nTLID, int nRecordId,
+                                        OGRLineString * poLine, int nSeqNum ) 
 
 {
     int         nShapeRecId;
 
     nShapeRecId = GetShapeRecordId( nRecordId, nTLID );
+
+    // -2 means an error occured.
+    if( nShapeRecId == -2 )
+        return FALSE;
+
+    // -1 means there are no extra shape vertices, but things worked fine.
     if( nShapeRecId == -1 )
-        return;
+        return TRUE;
 
 /* -------------------------------------------------------------------- */
 /*      Read all the sequential records with the same TLID.             */
@@ -503,7 +516,7 @@ void TigerCompleteChain::AddShapePoints( int nTLID, int nRecordId,
             CPLError( CE_Failure, CPLE_FileIO,
                       "Failed to seek to %d of %s2",
                       (nShapeRecId-1) * nShapeRecLen, pszModule );
-            return;
+            return FALSE;
         }
 
         if( VSIFRead( achShapeRec, psRT2Info->nRecordLength, 1, fpShape ) != 1 )
@@ -511,7 +524,7 @@ void TigerCompleteChain::AddShapePoints( int nTLID, int nRecordId,
             CPLError( CE_Failure, CPLE_FileIO,
                       "Failed to read record %d of %s2",
                       nShapeRecId-1, pszModule );
-            return;
+            return FALSE;
         }
 
         if( atoi(GetField(achShapeRec,6,15)) != nTLID )
@@ -541,6 +554,8 @@ void TigerCompleteChain::AddShapePoints( int nTLID, int nRecordId,
         if( iVertex < 10 )
             break;
     }
+
+    return TRUE;
 }
 
 /************************************************************************/
@@ -573,7 +588,7 @@ int TigerCompleteChain::GetShapeRecordId( int nChainId, int nTLID )
                       pszFilename );
 
             CPLFree( pszFilename );
-            return -1;
+            return -2;
         }
         
         CPLFree( pszFilename );
@@ -635,7 +650,7 @@ int TigerCompleteChain::GetShapeRecordId( int nChainId, int nTLID )
             CPLError( CE_Failure, CPLE_FileIO,
                       "Failed to seek to %d of %s2",
                       (nWorkingRecId-1) * nShapeRecLen, pszModule );
-            return -1;
+            return -2;
         }
 
         if( VSIFRead( achShapeRec, psRT2Info->nRecordLength, 1, fpShape ) != 1 )
@@ -644,7 +659,7 @@ int TigerCompleteChain::GetShapeRecordId( int nChainId, int nTLID )
                 CPLError( CE_Failure, CPLE_FileIO,
                           "Failed to read record %d of %s2",
                           nWorkingRecId-1, pszModule );
-            return -1;
+            return -2;
         }
 
         if( atoi(GetField(achShapeRec,6,15)) == nTLID )
