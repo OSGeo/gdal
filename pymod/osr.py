@@ -28,6 +28,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.11  2001/10/10 20:47:49  warmerda
+# added some OSR methods
+#
 # Revision 1.10  2001/03/14 21:00:41  warmerda
 # Fixed bug in Get/SetAttrValue().
 #
@@ -100,6 +103,18 @@ class SpatialReference:
 
     def CloneGeogCS(self):
         return SpatialReference(obj=_gdal.OSRCloneGeogCS( self._o ))
+    
+    def Clone(self):
+        return SpatialReference(obj=_gdal.OSRClone( self._o ))
+    
+    def Validate(self):
+        return _gdal.OSRValidate( self._o )
+    
+    def MorphToESRI(self):
+        return _gdal.OSRMorphToESRI( self._o )
+    
+    def MorphFromESRI(self):
+        return _gdal.OSRMorphFromESRI( self._o )
     
     def ImportFromEPSG(self,code):
         return _gdal.OSRImportFromEPSG( self._o, code )

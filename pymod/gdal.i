@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.31  2001/10/10 20:47:49  warmerda
+ * added some OSR methods
+ *
  * Revision 1.30  2001/07/18 04:44:17  warmerda
  * added CPL_CVSID
  *
@@ -1066,6 +1069,10 @@ int     OSRDereference( OGRSpatialReferenceH );
 
 int     OSRImportFromEPSG( OGRSpatialReferenceH, int );
 OGRSpatialReferenceH OSRCloneGeogCS( OGRSpatialReferenceH );
+
+int     OSRMorphToESRI( OGRSpatialReferenceH );
+int     OSRMorphFromESRI( OGRSpatialReferenceH );
+int     OSRValidate( OGRSpatialReferenceH );
 
 int     OSRSetAttrValue( OGRSpatialReferenceH hSRS, const char * pszNodePath,
                          const char * pszNewNodeValue );
