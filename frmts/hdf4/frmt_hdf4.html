@@ -141,7 +141,7 @@ Or you may use <b>gdal_translate</b> for reading image bands from this
 dataset.<p>
 
 Note that you should provide exactly the contents of the line marked 
-<b>SUBDATASET_n_NAME</b> to GDAL, including the <b>HDF4_SDS:</b> prefix..<p>
+<b>SUBDATASET_n_NAME</b> to GDAL, including the <b>HDF4_SDS:</b> prefix.<p>
 
 This driver is intended only for importing remote sensing and geospatial 
 datasets in form of raster images. If you want explore all data contained in 
@@ -205,6 +205,25 @@ Creation Options:<p>
 All HDF4 attributes are transparently translated as GDAL metadata. In the HDF 
 file attributes may be assigned assigned to the whole file as well as to 
 particular subdatasets.
+
+<h2>Driver building</h2>
+
+This driver builded on top of NCSA HDF library, so you need one to compile
+GDAL with HDF4 support. You may search your operating system distribution for
+the precompiled binaries or download source code or binaries from the NCSA HDF
+Home Page (see links below).<p>
+
+Please note, that NCSA HDF library compiled with several defaults which is
+defined in <i>hlimits.h</i> file. For example, <i>hlimits.h</i> defines
+the maximum number of opened files:
+
+<pre>
+#   define MAX_FILE   32
+</pre>
+
+If you need open more HDF4 files simultaneously you should change this value
+and rebuild HDF4 library (there is no need to rebuild GDAL if it is already
+compiled with HDF4 support).
 
 <h2>See Also:</h2>
 
