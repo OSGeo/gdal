@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2002/09/11 14:18:17  warmerda
+ * added channel description support
+ *
  * Revision 1.19  2002/09/04 06:50:37  warmerda
  * avoid static driver pointers
  *
@@ -166,6 +169,8 @@ class PAuxRasterBand : public RawRasterBand
 
     virtual GDALColorTable *GetColorTable();
     virtual GDALColorInterp GetColorInterpretation();
+
+    virtual void SetDescription( const char *pszNewDescription );
 };
 
 /************************************************************************/
@@ -186,11 +191,19 @@ PAuxRasterBand::PAuxRasterBand( GDALDataset *poDS, int nBand,
     poCT = NULL;
 
 /* -------------------------------------------------------------------- */
-/*      See if we have colors.  Currently we must have color zero,      */
-/*      but this shouldn't really be a limitation.                      */
+/*      Does this channel have a description?                           */
 /* -------------------------------------------------------------------- */
     char	szTarget[128];
 
+    sprintf( szTarget, "ChanDesc-%d", nBand );
+    if( CSLFetchNameValue( poPDS->papszAuxLines, szTarget ) != NULL )
+        GDALRasterBand::SetDescription( 
+            CSLFetchNameValue( poPDS->papszAuxLines, szTarget ) );
+
+/* -------------------------------------------------------------------- */
+/*      See if we have colors.  Currently we must have color zero,      */
+/*      but this shouldn't really be a limitation.                      */
+/* -------------------------------------------------------------------- */
     sprintf( szTarget, "METADATA_IMG_%d_Class_%d_Color", nBand, 0 );
     if( CSLFetchNameValue( poPDS->papszAuxLines, szTarget ) != NULL )
     {
@@ -288,6 +301,34 @@ CPLErr PAuxRasterBand::SetNoDataValue( double dfNewValue )
 
     return CE_None;
 }
+
+/************************************************************************/
+/*                           SetDescription()                           */
+/*                                                                      */
+/*      We override the set description so we can mark the auxfile      */
+/*      info as changed.                                                */
+/************************************************************************/
+
+void PAuxRasterBand::SetDescription( const char *pszNewDescription )
+
+{
+    PAuxDataset *poPDS = (PAuxDataset *) poDS;
+
+    if( GetAccess() == GA_Update )
+    {
+        char	szTarget[128];
+
+        sprintf( szTarget, "ChanDesc-%d", nBand );
+        poPDS->papszAuxLines = 
+            CSLSetNameValue( poPDS->papszAuxLines, 
+                             szTarget, pszNewDescription  );
+    
+        poPDS->bAuxUpdated = TRUE;
+    }
+
+    GDALRasterBand::SetDescription( pszNewDescription );
+}
+
 
 /************************************************************************/
 /*                           GetColorTable()                            */
@@ -890,6 +931,8 @@ GDALDataset *PAuxDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->ScanForGCPs();
 
     CPLFree( pszTarget );
+
+    poDS->bAuxUpdated = FALSE;
 
     return( poDS );
 }
