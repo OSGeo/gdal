@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2003/01/13 13:50:13  warmerda
+ * dont quote table names, it doesnt seem to work with userid.tablename
+ *
  * Revision 1.12  2003/01/10 22:31:53  warmerda
  * no longer encode ordinates into SQL statement when creating features
  *
@@ -306,9 +309,9 @@ void OGROCITableLayer::BuildFullQueryStatement()
 
     oCmd.Append( "SELECT " );
     oCmd.Append( pszFields );
-    oCmd.Append( " FROM \"" );
+    oCmd.Append( " FROM " );
     oCmd.Append( poFeatureDefn->GetName() );
-    oCmd.Append( "\" " );
+    oCmd.Append( " " );
     oCmd.Append( pszWHERE );
 
     pszQueryStatement = oCmd.StealString();
@@ -341,9 +344,9 @@ OGRFeature *OGROCITableLayer::GetFeature( long nFeatureId )
 
     oCmd.Append( "SELECT " );
     oCmd.Append( pszFields );
-    oCmd.Append( " FROM \"" );
+    oCmd.Append( " FROM " );
     oCmd.Append( poFeatureDefn->GetName() );
-    oCmd.Append( "\" " );
+    oCmd.Append( " " );
     oCmd.Appendf( 50+strlen(pszFIDName), 
                   " WHERE \"%s\" = %ld ", 
                   pszFIDName, nFeatureId );
@@ -547,7 +550,7 @@ OGRErr OGROCITableLayer::SetFeature( OGRFeature *poFeature )
     OGROCIStatement     oCmdStatement( poDS->GetSession() );
 
     oCmdText.Appendf( strlen(poFeatureDefn->GetName())+strlen(pszFIDName)+100,
-                      "DELETE FROM \"%s\" WHERE \"%s\" = %d",
+                      "DELETE FROM %s WHERE \"%s\" = %d",
                       poFeatureDefn->GetName(), 
                       pszFIDName, 
                       poFeature->GetFID() );
@@ -853,7 +856,7 @@ OGRErr OGROCITableLayer::CreateFeature( OGRFeature *poFeature )
 /* -------------------------------------------------------------------- */
 /*      Form the INSERT command.  					*/
 /* -------------------------------------------------------------------- */
-    sprintf( pszCommand, "INSERT INTO \"%s\" (", poFeatureDefn->GetName() );
+    sprintf( pszCommand, "INSERT INTO %s (", poFeatureDefn->GetName() );
 
     if( poFeature->GetGeometryRef() != NULL )
     {
@@ -1182,7 +1185,7 @@ OGRErr OGROCITableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK )
                           + strlen(oField.GetNameRef())
                           + strlen(szFieldType) );
 
-    sprintf( oCommand.GetString(), "ALTER TABLE \"%s\" ADD \"%s\" %s", 
+    sprintf( oCommand.GetString(), "ALTER TABLE %s ADD \"%s\" %s", 
              poFeatureDefn->GetName(), oField.GetNameRef(), szFieldType );
     if( oAddField.Execute( oCommand.GetString() ) != CE_None )
         return OGRERR_FAILURE;
@@ -1222,7 +1225,7 @@ int OGROCITableLayer::GetFeatureCount( int bForce )
     char               szCommand[1024];
     char               **papszResult;
 
-    sprintf( szCommand, "SELECT COUNT(*) FROM \"%s\" %s", 
+    sprintf( szCommand, "SELECT COUNT(*) FROM %s %s", 
              poFeatureDefn->GetName(), pszWHERE );
 
     oGetCount.Execute( szCommand );
@@ -1341,7 +1344,7 @@ void OGROCITableLayer::FinalizeNewLayer()
 // lose my connection to the database!
     OGROCIStringBuf  sIndexCmd;
 
-    sIndexCmd.Appendf( 10000, "CREATE INDEX \"%s\" ON \"%s\"(\"%s\") "
+    sIndexCmd.Appendf( 10000, "CREATE INDEX \"%s\" ON %s(\"%s\") "
                        "INDEXTYPE IS MDSYS.SPATIAL_INDEX "
                        "PARAMETERS( 'SDO_LEVEL = 5' )",
                        szIndexName, 
