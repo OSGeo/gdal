@@ -2,7 +2,7 @@ GDAL_ROOT	=	..\..
 
 DIRLIST		=	generic shape ntf sdts tiger s57 dgn mitab gml avc \
 			rec mem vrt $(OGDIDIR) $(FMEDIR) $(OCIDIR) $(PG_DIR) \
-			$(ODBCDIR)
+			$(ODBCDIR) $(SQLITE_DIR)
 
 !INCLUDE $(GDAL_ROOT)\nmake.opt
 
@@ -31,6 +31,11 @@ PG_DIR = pg
 PG_OBJ = pg\*.obj
 !ENDIF
 
+!IFDEF SQLITE_LIB
+SQLITE_DIR = sqlite
+SQLITE_OBJ = sqlite\*.obj
+!ENDIF
+
 default:
 	for %d in ( $(DIRLIST) ) do \
 		cd %d \
@@ -41,7 +46,7 @@ default:
 				 sdts\*.obj s57\*.obj tiger\*.obj gml\*.obj \
 				 mitab\*.obj dgn\*.obj avc\*.obj mem\*.obj \
 				 vrt\*.obj \
-				$(OGDIOBJ) $(ODBCOBJ) \
+				$(OGDIOBJ) $(ODBCOBJ) $(SQLITE_OBJ) \
 				$(FMEOBJ) $(OCIOBJ) $(PG_OBJ) rec\*.obj
 	lib /out:ogrsf_frmts_sup.lib \
 				 ..\..\frmts\iso8211\*.obj \
