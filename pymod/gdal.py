@@ -29,6 +29,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.22  2001/01/23 15:49:00  warmerda
+# added RGBFile2PCTFile
+#
 # Revision 1.21  2001/01/22 22:34:06  warmerda
 # added median cut, and dithering algorithms
 #
@@ -136,6 +139,37 @@ def DitherRGB2PCT( red, green, blue, target, ct,
                    callback = None, callback_data = None ):
     return _gdal.GDALDitherRGB2PCT( red._o, green._o, blue._o, target._o,
                                     ct._o, callback, callback_data )
+
+def RGBFile2PCTFile( src_filename, dst_filename ):
+    src_ds = Open(src_filename)
+    if src_ds is None:
+        return 1
+
+    ct = ColorTable()
+    err = ComputeMedianCutPCT( src_ds.GetRasterBand(1),
+                               src_ds.GetRasterBand(2),
+                               src_ds.GetRasterBand(3),
+                               256, ct )
+    if err <> 0:
+        return err
+
+    gtiff_driver = GetDriverByName('GTiff')
+    if gtiff_driver is None:
+        return 1
+
+    dst_ds = gtiff_driver.Create( dst_filename,
+                                  src_ds.RasterXSize, src_ds.RasterYSize )
+    dst_ds.GetRasterBand(1).SetRasterColorTable( ct )
+
+    err = DitherRGB2PCT( src_ds.GetRasterBand(1),
+                         src_ds.GetRasterBand(2),
+                         src_ds.GetRasterBand(3),
+                         dst_ds.GetRasterBand(1),
+                         ct )
+    dst_ds = None
+    src_ds = None
+
+    return 0
 
 def GetDriverList():
     list = []
