@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2000/10/23 13:01:59  warmerda
+ * Fixed OSRSetStatePlane
+ *
  * Revision 1.4  2000/10/20 04:19:38  warmerda
  * added setstateplane
  *
@@ -1121,7 +1124,7 @@ OGRErr OGRSpatialReference::SetStatePlane( int nZone, int bNAD83 )
 /*                          OSRSetStatePlane()                          */
 /************************************************************************/
 
-OGRErr OSRImportFromEPSG( OGRSpatialReferenceH hSRS, int nZone, int bNAD83 )
+OGRErr OSRSetStatePlane( OGRSpatialReferenceH hSRS, int nZone, int bNAD83 )
 
 {
     return ((OGRSpatialReference *) hSRS)->SetStatePlane( nZone, bNAD83 );
