@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/10/03 01:02:56  warmerda
+ * added NAMEREC and COLLECT handling
+ *
  * Revision 1.1  1999/10/01 14:45:42  warmerda
  * New
  *
@@ -147,15 +150,7 @@ void OGRNTFDataSource::WorkupGeneric( NTFFileReader * poReader )
         NTFGenericClass	*poClass = GetGClass( papoGroup[0]->GetType() );
 
         poClass->nFeatureCount++;
-
-        if( poClass->nFeatureCount == 1 )
-        {
-            printf( "Group: " );
-            for( int i = 0; papoGroup[i] != NULL; i++ )
-                printf( "%d ", papoGroup[i]->GetType() );
-            printf( "\n" );
-        }
-
+        
 /* -------------------------------------------------------------------- */
 /*      Loop over constituent records collecting attributes.            */
 /* -------------------------------------------------------------------- */
@@ -191,10 +186,16 @@ void OGRNTFDataSource::WorkupGeneric( NTFFileReader * poReader )
               break;
 
               case NRT_TEXTREP:
+              case NRT_NAMEPOSTN:
                 poClass->CheckAddAttr( "FONT", "I4", 4 );
                 poClass->CheckAddAttr( "TEXT_HT", "R3,1", 3 );
                 poClass->CheckAddAttr( "DIG_POSTN", "I1", 1 );
                 poClass->CheckAddAttr( "ORIENT", "R4,1", 4 );
+                break;
+
+              case NRT_NAMEREC:
+                poClass->CheckAddAttr( "TEXT", "A*",
+                                       atoi(poRecord->GetField(13,14)) );
                 break;
 
               case NRT_GEOMETRY:
@@ -314,6 +315,58 @@ static OGRFeature *TranslateGenericNode( NTFFileReader *poReader,
 }
 
 /************************************************************************/
+/*                     TranslateGenericCollection()                     */
+/************************************************************************/
+
+static OGRFeature *TranslateGenericCollection( NTFFileReader *poReader,
+                                               OGRNTFLayer *poLayer,
+                                               NTFRecord **papoGroup )
+
+{
+    if( CSLCount((char **) papoGroup) < 1 
+        || papoGroup[0]->GetType() != NRT_COLLECT )
+        return NULL;
+        
+    OGRFeature	*poFeature = new OGRFeature( poLayer->GetLayerDefn() );
+
+    // COLL_ID
+    poFeature->SetField( "COLL_ID", atoi(papoGroup[0]->GetField( 3, 8 )) );
+
+    // NUM_PARTS
+    int 	nPartCount=0;
+    int		*panParts = NULL;
+
+    if( papoGroup[0]->GetLength() > 18 )
+    {
+        nPartCount = atoi(papoGroup[0]->GetField(9,12));
+        panParts = (int *) CPLCalloc(sizeof(int),nPartCount);
+    }
+
+    poFeature->SetField( "NUM_PARTS", nPartCount );
+
+    // TYPE
+    for( int iPart = 0; iPart < nPartCount; iPart++ )
+        panParts[iPart] = atoi(papoGroup[0]->GetField(13+iPart*8,
+                                                      14+iPart*8));
+
+    poFeature->SetField( "TYPE", nPartCount, panParts );
+
+    // ID
+    for( int iPart = 0; iPart < nPartCount; iPart++ )
+        panParts[iPart] = atoi(papoGroup[0]->GetField(15+iPart*8,
+                                                      20+iPart*8));
+
+    poFeature->SetField( "ID", nPartCount, panParts );
+
+    CPLFree( panParts );
+
+    // ATTREC Attributes
+    AddGenericAttributes( poReader, papoGroup, poFeature );
+
+    return poFeature;
+}
+
+/************************************************************************/
 /*                        TranslateGenericText()                        */
 /************************************************************************/
 
@@ -363,6 +416,71 @@ static OGRFeature *TranslateGenericText( NTFFileReader *poReader,
                                  atoi(poRecord->GetField(16,16)) );
             poFeature->SetField( "ORIENT",
                                  atoi(poRecord->GetField(17,20)) * 0.1 );
+            break;
+        }
+    }
+
+    return poFeature;
+}
+
+/************************************************************************/
+/*                        TranslateGenericName()                        */
+/************************************************************************/
+
+static OGRFeature *TranslateGenericName( NTFFileReader *poReader,
+                                         OGRNTFLayer *poLayer,
+                                         NTFRecord **papoGroup )
+
+{
+    int		iRec;
+    
+    if( CSLCount((char **) papoGroup) < 2
+        || papoGroup[0]->GetType() != NRT_NAMEREC )
+        return NULL;
+        
+    OGRFeature	*poFeature = new OGRFeature( poLayer->GetLayerDefn() );
+
+    // NAME_ID
+    poFeature->SetField( "NAME_ID", atoi(papoGroup[0]->GetField( 3, 8 )) );
+
+    // TEXT_CODE
+    poFeature->SetField( "TEXT_CODE", papoGroup[0]->GetField( 8, 12 ) );
+
+    // TEXT
+    int	nNumChar = atoi(papoGroup[0]->GetField(13,14));
+
+    poFeature->SetField( "TEXT", papoGroup[0]->GetField( 15, 15+nNumChar-1));
+
+    // Geometry
+    for( iRec = 0; papoGroup[iRec] != NULL; iRec++ )
+    {
+        if( papoGroup[iRec]->GetType() == NRT_GEOMETRY
+            || papoGroup[iRec]->GetType() == NRT_GEOMETRY3D )
+        {
+            poFeature->SetGeometryDirectly(
+                poReader->ProcessGeometry(papoGroup[iRec]));
+            poFeature->SetField( "GEOM_ID", papoGroup[iRec]->GetField(3,8) );
+            break;
+        }
+    }
+
+    // ATTREC Attributes
+    AddGenericAttributes( poReader, papoGroup, poFeature );
+
+    // NAMEPOSTN information
+    for( iRec = 0; papoGroup[iRec] != NULL; iRec++ )
+    {
+        NTFRecord	*poRecord = papoGroup[iRec];
+        
+        if( poRecord->GetType() == NRT_NAMEPOSTN )
+        {
+            poFeature->SetField( "FONT", atoi(poRecord->GetField(3,6)) );
+            poFeature->SetField( "TEXT_HT",
+                                 atoi(poRecord->GetField(7,9)) * 0.1 );
+            poFeature->SetField( "DIG_POSTN",
+                                 atoi(poRecord->GetField(10,10)) );
+            poFeature->SetField( "ORIENT",
+                                 atoi(poRecord->GetField(11,14)) * 0.1 );
             break;
         }
     }
@@ -638,26 +756,6 @@ void OGRNTFDataSource::EstablishGenericLayers()
 {
     int		iType;
     
-    for( iType = 0; iType < 100; iType++ )
-    {
-        NTFGenericClass	*poClass = aoGenericClass + iType;
-        
-        if( poClass->nFeatureCount == 0 )
-            continue;
-
-        printf( "\n" );
-        printf( "Feature Type = %d\n", iType );
-        printf( "Feature Count = %d\n", poClass->nFeatureCount );
-
-        for( int iAttr = 0; iAttr < poClass->nAttrCount; iAttr++ )
-        {
-            printf( "  Name=%s Format=%s MaxWidth=%d\n",
-                    poClass->papszAttrNames[iAttr],
-                    poClass->papszAttrFormats[iAttr],
-                    poClass->panAttrMaxWidth[iAttr] );
-        }
-    }
-
 /* -------------------------------------------------------------------- */
 /*      Pick an initial NTFFileReader to build the layers against.      */
 /* -------------------------------------------------------------------- */
@@ -705,6 +803,14 @@ void OGRNTFDataSource::EstablishGenericLayers()
                             "TEXT_ID", OFTInteger, 6, 0,
                             NULL );
         }
+        else if( iType == NRT_NAMEREC )
+        {
+            poPReader->
+            EstablishLayer( "GENERIC_NAME", wkbPoint,
+                            TranslateGenericName, NRT_NAMEREC, poClass,
+                            "NAME_ID", OFTInteger, 6, 0,
+                            NULL );
+        }
         else if( iType == NRT_NODEREC )
         {
             poPReader->
@@ -714,6 +820,17 @@ void OGRNTFDataSource::EstablishGenericLayers()
                             "NUM_LINKS", OFTInteger, 4, 0,
                             "GEOM_ID_OF_LINK", OFTIntegerList, 6, 0,
                             "DIR", OFTIntegerList, 1, 0,
+                            NULL );
+        }
+        else if( iType == NRT_COLLECT )
+        {
+            poPReader->
+            EstablishLayer( "GENERIC_COLLECTION", wkbNone,
+                            TranslateGenericCollection, NRT_COLLECT, poClass,
+                            "COLL_ID", OFTInteger, 6, 0,
+                            "NUM_PARTS", OFTInteger, 4, 0,
+                            "TYPE", OFTIntegerList, 2, 0,
+                            "ID", OFTIntegerList, 6, 0,
                             NULL );
         }
         else if( iType == NRT_POLYGON )

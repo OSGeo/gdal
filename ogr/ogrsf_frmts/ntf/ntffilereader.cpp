@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  1999/10/03 01:02:56  warmerda
+ * added NAMEREC and COLLECT handling
+ *
  * Revision 1.8  1999/10/01 14:47:51  warmerda
  * major upgrade: generic, string feature codes, etc
  *
@@ -1491,6 +1494,8 @@ NTFRecord **NTFFileReader::GetNextIndexedRecordGroup( NTFRecord **
             while( nPrevType != NRT_VTR
                    && nPrevType != NRT_NODEREC
                    && nPrevType != NRT_TEXTREC
+                   && nPrevType != NRT_NAMEREC
+                   && nPrevType != NRT_COLLECT
                    && nPrevType != NRT_POLYGON
                    && nPrevType != NRT_POINTREC
                    && nPrevType != NRT_LINEREC );
@@ -1617,6 +1622,29 @@ NTFRecord **NTFFileReader::GetNextIndexedRecordGroup( NTFRecord **
         AddToIndexGroup( apoCGroup,
                          GetIndexedRecord( NRT_GEOMETRY,
                                            atoi(poAnchor->GetField(9,14)) ) );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Handle COLLECT.                                                 */
+/* -------------------------------------------------------------------- */
+    else if( poAnchor->GetType() == NRT_COLLECT )
+    {
+        int	nParts = atoi(poAnchor->GetField(9,12));
+        int	nAttOffset = 13 + nParts * 8;
+        int	nAttCount = 0;
+        
+        if( poAnchor->GetLength() > nAttOffset + 2 )
+            nAttCount = atoi(poAnchor->GetField(nAttOffset,nAttOffset+1));
+
+        for( int iAtt = 0; iAtt < nAttCount; iAtt++ )
+        {
+            int	iStart = nAttOffset + 2 + iAtt * 6;
+            
+            AddToIndexGroup(
+                apoCGroup,
+                GetIndexedRecord( NRT_ATTREC,
+                                  atoi(poAnchor->GetField(iStart,iStart+5)) ));
+        }
     }
 
 /* -------------------------------------------------------------------- */
