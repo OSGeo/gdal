@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2002/12/06 21:43:28  warmerda
+ * removed luts
+ *
  * Revision 1.2  2002/12/05 21:44:19  warmerda
  * initial implementation
  *
@@ -47,10 +50,7 @@ CPL_CVSID("$Id$");
 /************************************************************************/
 
 int GDALSimpleImageWarp( GDALDatasetH hSrcDS, GDALDatasetH hDstDS, 
-                         int nBandCount, int *panBandList,
-                         GByte *pabyRedLUT, 
-                         GByte *pabyGreenLUT,
-                         GByte *pabyBlueLUT,
+                         int nBandCount, int *panBandList, 
                          GDALTransformerFunc pfnTransform, void *pTransformArg,
                          GDALProgressFunc pfnProgress, void *pProgressArg, 
                          const char **papszWarpOptions )
@@ -72,7 +72,6 @@ int GDALSimpleImageWarp( GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
             panBandList[iBand] = iBand+1;
 
         nResult = GDALSimpleImageWarp( hSrcDS, hDstDS, nBandCount, panBandList,
-                                       pabyRedLUT, pabyGreenLUT, pabyBlueLUT,
                                        pfnTransform, pTransformArg, 
                                        pfnProgress, pProgressArg, 
                                        papszWarpOptions );
@@ -85,7 +84,7 @@ int GDALSimpleImageWarp( GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
 /* -------------------------------------------------------------------- */
     if( pfnProgress )
     {
-        if( !pfnProgress( 0.0, "Loading source image", pProgressArg ) )
+        if( !pfnProgress( 0.0, "", pProgressArg ) )
             return FALSE;
     }
 
