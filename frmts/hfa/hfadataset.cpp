@@ -29,6 +29,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.6  2000/08/18 16:24:06  warmerda
+ * Added color table support
+ *
  * Revision 1.5  2000/08/15 19:28:26  warmerda
  * added help topic
  *
@@ -90,13 +93,16 @@ class HFARasterBand : public GDALRasterBand
 {
     friend	HFADataset;
 
+    GDALColorTable *poCT;
+
   public:
 
                    HFARasterBand( HFADataset *, int );
+    virtual        ~HFARasterBand();
 
-    // should override RasterIO eventually.
-    
     virtual CPLErr IReadBlock( int, int, void * );
+    virtual GDALColorInterp GetColorInterpretation();
+    virtual GDALColorTable *GetColorTable();
 };
 
 static GDALDriver	*poHFADriver = NULL;
@@ -112,6 +118,7 @@ HFARasterBand::HFARasterBand( HFADataset *poDS, int nBand )
     
     this->poDS = poDS;
     this->nBand = nBand;
+    this->poCT = NULL;
 
     HFAGetBandInfo( poDS->hHFA, nBand, &nHFADataType,
                     &nBlockXSize, &nBlockYSize );
@@ -141,7 +148,43 @@ HFARasterBand::HFARasterBand( HFADataset *poDS, int nBand )
            so easy from within constructors. */
         break;
     }
+
+/* -------------------------------------------------------------------- */
+/*      Collect color table if present.                                 */
+/* -------------------------------------------------------------------- */
+    double    *padfRed, *padfGreen, *padfBlue;
+    int       nColors;
+
+    if( HFAGetPCT( poDS->hHFA, nBand, &nColors, 
+                   &padfRed, &padfGreen, &padfBlue ) == CE_None
+        && nColors > 0 )
+    {
+        poCT = new GDALColorTable();
+        for( int iColor = 0; iColor < nColors; iColor++ )
+        {
+            GDALColorEntry   sEntry;
+
+            sEntry.c1 = (int) (padfRed[iColor]   * 255);
+            sEntry.c2 = (int) (padfGreen[iColor] * 255);
+            sEntry.c3 = (int) (padfBlue[iColor]  * 255);
+            sEntry.c4 = 255;
+            poCT->SetColorEntry( iColor, &sEntry );
+        }
+    }
 }
+
+/************************************************************************/
+/*                           ~HFARasterBand()                           */
+/************************************************************************/
+
+HFARasterBand::~HFARasterBand()
+
+{
+    FlushCache();
+    if( poCT != NULL )
+        delete poCT;
+}
+
 
 /************************************************************************/
 /*                             IReadBlock()                             */
@@ -157,6 +200,28 @@ CPLErr HFARasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                pImage ) );
 }
 
+/************************************************************************/
+/*                       GetColorInterpretation()                       */
+/************************************************************************/
+
+GDALColorInterp HFARasterBand::GetColorInterpretation()
+
+{
+    if( poCT != NULL )
+        return GCI_PaletteIndex;
+    else
+        return GCI_Undefined;
+}
+
+/************************************************************************/
+/*                           GetColorTable()                            */
+/************************************************************************/
+
+GDALColorTable *HFARasterBand::GetColorTable()
+
+{
+    return poCT;
+}
 
 /************************************************************************/
 /* ==================================================================== */
