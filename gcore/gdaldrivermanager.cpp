@@ -25,6 +25,10 @@
  * The GDALDriverManager class from gdal_priv.h.
  * 
  * $Log$
+ * Revision 1.22  2005/01/19 20:27:17  fwarmerdam
+ * Search in lib/gdalplugins instead of directly in lib directory.
+ * Only try files endning in .dll, .so or .dylib.  see bug 746
+ *
  * Revision 1.21  2004/11/22 16:01:29  fwarmerdam
  * added GDAL_PREFIX
  *
@@ -544,8 +548,8 @@ void GDALDriverManager::AutoSkipDrivers()
  * There are a few rules for the driver path.  If the GDAL_DRIVER_PATH
  * environment variable it set, it is taken to be a list of directories
  * to search separated by colons on unix, or semi-colons on Windows.  Otherwise
- * the /usr/local/lib directory, and (if known) the lib subdirectory of the
- * gdal home directory are searched. 
+ * the /usr/local/lib/gdalplugins directory, and (if known) the lib/gdalplugins
+ * subdirectory of the gdal home directory are searched. 
  */
 
 void GDALDriverManager::AutoLoadDrivers()
@@ -571,15 +575,18 @@ void GDALDriverManager::AutoLoadDrivers()
     else
     {
 #ifdef GDAL_PREFIX
-        papszSearchPath = CSLAddString( papszSearchPath, GDAL_PREFIX "/lib" );
+        papszSearchPath = CSLAddString( papszSearchPath, 
+                                        GDAL_PREFIX "/lib/gdalplugins" );
 #else
-        papszSearchPath = CSLAddString( papszSearchPath, "/usr/local/lib" );
+        papszSearchPath = CSLAddString( papszSearchPath, 
+                                        "/usr/local/lib/gdalplugins" );
 #endif
 
         if( strlen(GetHome()) > 0 )
         {
             papszSearchPath = CSLAddString( papszSearchPath, 
-                                  CPLFormFilename( GetHome(), "lib", NULL ) );
+                                  CPLFormFilename( GetHome(), 
+                                                   "lib/gdalplugins", NULL ) );
         }
     }
 
@@ -594,9 +601,15 @@ void GDALDriverManager::AutoLoadDrivers()
         {
             char   *pszFuncName;
             const char *pszFilename;
+            const char *pszExtension = CPLGetExtension( papszFiles[iFile] );
             void   *pRegister;
 
             if( !EQUALN(papszFiles[iFile],"gdal_",5) )
+                continue;
+
+            if( !EQUAL(pszExtension,"dll") 
+                && !EQUAL(pszExtension,"so") 
+                && !EQUAL(pszExtension,"dylib") )
                 continue;
 
             pszFuncName = (char *) CPLCalloc(strlen(papszFiles[iFile])+20,1);
