@@ -633,8 +633,8 @@ o Install ogrsf_frmts.a on install if building with OGR support enabled.
 
 o Reports layer extents in ogrinfo.
 
-OGR 1.1.5 Significant Bugs
---------------------------
+OGR 1.1.5 Significant Bug Fixes
+-------------------------------
 
 o OGRSpatialReference:
 - Fix bug with extracting linear units from EPSG derived definitions.
