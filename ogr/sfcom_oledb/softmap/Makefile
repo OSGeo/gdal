@@ -9,7 +9,8 @@ DLLNAME	=	SoftmapSF.dll
 # Add -DATL_CPL_TRACE to get detailed ATL traces.
 EXTRAFLAGS =	-I$(SFOLEDB) \
 		-I$(MSDASDK)\include\oledb -I$(OGR) -I$(SFOLEDB) /W2 \
-		-I$(OGR)\ogrsf_frmts -I$(VCDIR)\ATL\Include
+		-I$(OGR)\ogrsf_frmts -I$(VCDIR)\ATL\Include \
+		-DSUPPORT_ADSK_GEOM_EXTENT
 
 !INCLUDE $(GDAL_ROOT)/nmake.opt
 
@@ -21,7 +22,7 @@ OGR_LIBS =	..\..\..\gdal_i.lib $(LIBS)
 OGR_LIBS =	$(OGR)\ogrsf_frmts\ogrsf_frmts.lib \
 		$(OGR)\ogrsf_frmts\ogrsf_frmts_sup.lib \
 		$(OGR)\ogroledb.lib $(OGR)\ogr.lib \
-		$(GDAL_ROOT)\port\cpl.lib  $(OGDILIB)
+		$(GDAL_ROOT)\port\cpl.lib  $(OGDILIB) $(XERCES_LIB)
 !ENDIF
 
 LOC_OBJ =       SF.obj SFRS.obj sfutil.obj sftraceback.obj sfregister.obj \
