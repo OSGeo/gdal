@@ -28,6 +28,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.29  2004/09/17 15:07:57  fwarmerdam
+# added getArea
+#
 # Revision 1.28  2004/08/19 14:08:28  warmerda
 # watch for NULL return values too in geos functions
 #
@@ -846,6 +849,9 @@ class Geometry:
 
     def Empty( self, other_geom ):
         return _gdal.OGR_G_Empty( self._o, other_geom._o )
+
+    def GetArea( self ):
+        return _gdal.OGR_G_GetArea( self._o )
 
     def GetPointCount( self):
         return _gdal.OGR_G_GetPointCount( self._o )

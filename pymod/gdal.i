@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.102  2004/09/17 15:07:57  fwarmerdam
+ * added getArea
+ *
  * Revision 1.101  2004/08/11 19:04:34  warmerda
  * added warping related support
  *
@@ -2785,6 +2788,8 @@ OGRGeometryH OGR_G_Union( OGRGeometryH, OGRGeometryH );
 OGRGeometryH OGR_G_Difference( OGRGeometryH, OGRGeometryH );
 OGRGeometryH OGR_G_SymmetricDifference( OGRGeometryH, OGRGeometryH );
 double OGR_G_Distance( OGRGeometryH, OGRGeometryH );
+
+double OGR_G_GetArea( OGRGeometryH );
 
 void   OGR_G_Empty( OGRGeometryH );
 
