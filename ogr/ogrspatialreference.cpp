@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.67  2003/01/31 02:27:08  warmerda
+ * modified SetFromUserInput() to avoid large buffer on stack
+ *
  * Revision 1.66  2003/01/08 18:14:28  warmerda
  * added FixupOrdering()
  *
@@ -1537,44 +1540,49 @@ OGRErr OGRSpatialReference::SetFromUserInput( const char * pszDefinition )
 /*      Try to open it as a file.                                       */
 /* -------------------------------------------------------------------- */
     FILE        *fp;
-    char        szBuffer[100000], *pszBufPtr;
+    int         nBufMax = 100000;
+    char        *pszBufPtr, *pszBuffer;
     int         nBytes;
 
     fp = VSIFOpen( pszDefinition, "rt" );
     if( fp == NULL )
         return OGRERR_CORRUPT_DATA;
 
-    nBytes = VSIFRead( szBuffer, 1, sizeof(szBuffer), fp );
+    pszBuffer = (char *) CPLMalloc(nBufMax);
+    nBytes = VSIFRead( pszBuffer, 1, nBufMax-1, fp );
     VSIFClose( fp );
 
-    if( nBytes == sizeof(szBuffer) )
+    if( nBytes == nBufMax-1 )
     {
         CPLDebug( "OGR", 
                   "OGRSpatialReference::SetFromUserInput(%s), opened file\n"
                   "but it is to large for our generous buffer.  Is it really\n"
                   "just a WKT definition?" );
+        CPLFree( pszBuffer );
         return OGRERR_FAILURE;
     }
 
-    szBuffer[nBytes] = '\0';
+    pszBuffer[nBytes] = '\0';
 
-    pszBufPtr = szBuffer;
+    pszBufPtr = pszBuffer;
     while( pszBufPtr[0] == ' ' || pszBufPtr[0] == '\n' )
         pszBufPtr++;
 
-    if( szBuffer[0] == '<' )
-        return importFromXML( pszBufPtr );
-    else if( strstr(szBuffer,"+proj") != NULL 
-             || strstr(szBuffer,"+init") != NULL )
-        return importFromProj4( pszBufPtr );
+    if( pszBufPtr[0] == '<' )
+        err = importFromXML( pszBufPtr );
+    else if( strstr(pszBuffer,"+proj") != NULL 
+             || strstr(pszBuffer,"+init") != NULL )
+        err = importFromProj4( pszBufPtr );
     else
     {
         err = importFromWkt( &pszBufPtr );
         if( err == OGRERR_NONE && bESRI )
             err = morphFromESRI();
-
-        return err;
     }
+
+    CPLFree( pszBuffer );
+
+    return err;
 }
 
 /************************************************************************/
