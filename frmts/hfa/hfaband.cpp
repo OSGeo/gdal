@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.30  2003/04/29 08:53:45  dron
+ * In Get/SetRasterBlock calculate block offset in place when we have spill file.
+ *
  * Revision 1.29  2003/04/22 19:39:10  warmerda
  * dont emit debug message on failed read unless it is not an external file
  *
@@ -263,9 +266,12 @@ HFABand::~HFABand()
     if( nOverviews > 0 )
         CPLFree( papoOverviews );
 
-    CPLFree( panBlockStart );
-    CPLFree( panBlockSize );
-    CPLFree( panBlockFlag );
+    if ( panBlockStart )
+        CPLFree( panBlockStart );
+    if ( panBlockSize )
+        CPLFree( panBlockSize );
+    if ( panBlockFlag )
+        CPLFree( panBlockFlag );
 
     CPLFree( apadfPCT[0] );
     CPLFree( apadfPCT[1] );
@@ -285,7 +291,7 @@ CPLErr	HFABand::LoadBlockInfo()
     int		iBlock;
     HFAEntry	*poDMS;
     
-    if( panBlockStart != NULL )
+    if( panBlockFlag != NULL )
         return( CE_None );
 
     poDMS = poNode->GetNamedChild( "RasterDMS" );
@@ -341,14 +347,12 @@ CPLErr	HFABand::LoadExternalBlockInfo()
     int		iBlock;
     HFAEntry	*poDMS;
     
-    if( panBlockStart != NULL )
+    if( panBlockFlag != NULL )
         return( CE_None );
 
 /* -------------------------------------------------------------------- */
 /*      Get the info structure.                                         */
 /* -------------------------------------------------------------------- */
-    int	nLayerStackCount, nLayerStackIndex;
-
     poDMS = poNode->GetNamedChild( "ExternalRasterDMS" );
     CPLAssert( poDMS != NULL );
 
@@ -393,8 +397,6 @@ CPLErr	HFABand::LoadExternalBlockInfo()
 /* -------------------------------------------------------------------- */
 /*      Allocate blockmap.                                              */
 /* -------------------------------------------------------------------- */
-    panBlockStart = (vsi_l_offset *) CPLMalloc(sizeof(vsi_l_offset) * nBlocks);
-    panBlockSize = (int *) CPLMalloc(sizeof(int) * nBlocks);
     panBlockFlag = (int *) CPLMalloc(sizeof(int) * nBlocks);
 
 /* -------------------------------------------------------------------- */
@@ -424,8 +426,6 @@ CPLErr	HFABand::LoadExternalBlockInfo()
 /*      from data base address.  Blocks are never compressed.           */
 /*      Validity is determined from the validity bitmap.                */
 /* -------------------------------------------------------------------- */
-    vsi_l_offset nBlockSize, nBlockStart;
-
     nBlockStart = poDMS->GetIntField( "layerStackDataOffset[0]" );
     nBlockSize = (nBlockXSize*nBlockYSize*HFAGetDataTypeBits(nDataType)+7) / 8;
 
@@ -433,12 +433,6 @@ CPLErr	HFABand::LoadExternalBlockInfo()
     {
         int	nRow, nColumn, nBit;
 
-        panBlockStart[iBlock] = nBlockStart 
-            + nBlockSize * iBlock * nLayerStackCount
-            + nLayerStackIndex * nBlockSize;
-        
-        panBlockSize[iBlock] = nBlockSize;
-        
         nColumn = iBlock % nBlocksPerRow;
         nRow = iBlock / nBlocksPerRow;
         nBit = nRow * nBytesPerRow * 8 + nColumn + 20 * 8;
@@ -791,13 +785,8 @@ CPLErr HFABand::GetRasterBlock( int nXBlock, int nYBlock, void * pData )
     if( LoadBlockInfo() != CE_None )
         return CE_Failure;
 
-    if( fpExternal != NULL )
-        fpData = fpExternal;
-    else
-        fpData = psInfo->fp;
-
     iBlock = nXBlock + nYBlock * nBlocksPerRow;
-    
+
 /* -------------------------------------------------------------------- */
 /*      If the block isn't valid, we just return all zeros, and an	*/
 /*	indication of success.                        			*/
@@ -813,7 +802,24 @@ CPLErr HFABand::GetRasterBlock( int nXBlock, int nYBlock, void * pData )
 /* -------------------------------------------------------------------- */
 /*      Otherwise we really read the data.                              */
 /* -------------------------------------------------------------------- */
-    if( VSIFSeekL( fpData, panBlockStart[iBlock], SEEK_SET ) != 0 )
+    vsi_l_offset    nBlockOffset;
+
+    // Calculate block offset in case we have spill file. Use predefined
+    // block map otherwise.
+    if ( fpExternal )
+    {
+        fpData = fpExternal;
+        nBlockOffset = nBlockStart + nBlockSize * iBlock * nLayerStackCount
+            + nLayerStackIndex * nBlockSize;
+    }
+    else
+    {
+        fpData = psInfo->fp;
+        nBlockOffset = panBlockStart[iBlock];
+        nBlockSize = panBlockSize[iBlock];
+    }
+
+    if( VSIFSeekL( fpData, nBlockOffset, SEEK_SET ) != 0 )
     {
         // XXX: We will not report error here, because file just may be
 	// in update state and data for this block will be available later
@@ -826,7 +832,7 @@ CPLErr HFABand::GetRasterBlock( int nXBlock, int nYBlock, void * pData )
         else
         {
             CPLError( CE_Failure, CPLE_FileIO, "Seek to %d failed.\n",
-		  panBlockStart[iBlock] );
+		  nBlockOffset );
             return CE_Failure;
         }
     }
@@ -840,9 +846,9 @@ CPLErr HFABand::GetRasterBlock( int nXBlock, int nYBlock, void * pData )
         GByte 	*pabyCData;
         CPLErr  eErr;
 
-        pabyCData = (GByte *) CPLMalloc(panBlockSize[iBlock]);
+        pabyCData = (GByte *) CPLMalloc( nBlockSize );
 
-        if( VSIFReadL( pabyCData, panBlockSize[iBlock], 1, fpData ) != 1 )
+        if( VSIFReadL( pabyCData, nBlockSize, 1, fpData ) != 1 )
         {
             CPLFree( pabyCData );
 
@@ -857,12 +863,12 @@ CPLErr HFABand::GetRasterBlock( int nXBlock, int nYBlock, void * pData )
             {
                 CPLError( CE_Failure, CPLE_FileIO,
                           "Read of %d bytes at %d failed.\n", 
-                          panBlockSize[iBlock], panBlockStart[iBlock] );
+                          nBlockSize, nBlockOffset );
                 return CE_Failure;
             }
         }
 
-        eErr = UncompressBlock( pabyCData, panBlockSize[iBlock],
+        eErr = UncompressBlock( pabyCData, nBlockSize,
                                 (GByte *) pData, nBlockXSize*nBlockYSize, 
                                 nDataType );
 
@@ -874,14 +880,13 @@ CPLErr HFABand::GetRasterBlock( int nXBlock, int nYBlock, void * pData )
 /* -------------------------------------------------------------------- */
 /*      Read uncompressed data directly into the return buffer.         */
 /* -------------------------------------------------------------------- */
-    if( VSIFReadL( pData, panBlockSize[iBlock], 1, fpData ) != 1 )
+    if( VSIFReadL( pData, nBlockSize, 1, fpData ) != 1 )
     {
 	memset( pData, 0, 
 	    HFAGetDataTypeBits(nDataType)*nBlockXSize*nBlockYSize/8 );
         if( fpData != fpExternal )
             CPLDebug( "HFABand", "Read of %d bytes at %d failed.\n", 
-                      panBlockSize[iBlock],
-                      panBlockStart[iBlock] );
+                      nBlockSize, nBlockOffset );
 
 	return CE_None;
     }
@@ -936,11 +941,6 @@ CPLErr HFABand::SetRasterBlock( int nXBlock, int nYBlock, void * pData )
     if( LoadBlockInfo() != CE_None )
         return CE_Failure;
 
-    if( fpExternal != NULL )
-        fpData = fpExternal;
-    else
-        fpData = psInfo->fp;
-
     iBlock = nXBlock + nYBlock * nBlocksPerRow;
     
     if( (panBlockFlag[iBlock] & (BFLG_VALID|BFLG_COMPRESSED)) == 0 )
@@ -957,10 +957,27 @@ CPLErr HFABand::SetRasterBlock( int nXBlock, int nYBlock, void * pData )
 /* -------------------------------------------------------------------- */
 /*      Move to the location that the data sits.                        */
 /* -------------------------------------------------------------------- */
-    if( VSIFSeekL( fpData, panBlockStart[iBlock], SEEK_SET ) != 0 )
+    vsi_l_offset    nBlockOffset;
+
+    // Calculate block offset in case we have spill file. Use predefined
+    // block map otherwise.
+    if ( fpExternal )
+    {
+        fpData = fpExternal;
+        nBlockOffset = nBlockStart + nBlockSize * iBlock * nLayerStackCount
+            + nLayerStackIndex * nBlockSize;
+    }
+    else
+    {
+        fpData = psInfo->fp;
+        nBlockOffset = panBlockStart[iBlock];
+        nBlockSize = panBlockSize[iBlock];
+    }
+
+    if( VSIFSeekL( fpData, nBlockOffset, SEEK_SET ) != 0 )
     {
         CPLError( CE_Failure, CPLE_FileIO, 
-                  "Seek to %d failed.\n", panBlockStart[iBlock] );
+                  "Seek to %d failed.\n", nBlockOffset );
         return CE_Failure;
     }
 
@@ -1001,7 +1018,7 @@ CPLErr HFABand::SetRasterBlock( int nXBlock, int nYBlock, void * pData )
 /* -------------------------------------------------------------------- */
 /*      Write uncompressed data.				        */
 /* -------------------------------------------------------------------- */
-    if( VSIFWriteL( pData, panBlockSize[iBlock], 1, fpData ) != 1 )
+    if( VSIFWriteL( pData, nBlockSize, 1, fpData ) != 1 )
         return CE_Failure;
 
 /* -------------------------------------------------------------------- */

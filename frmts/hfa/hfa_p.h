@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2003/04/29 08:53:45  dron
+ * In Get/SetRasterBlock calculate block offset in place when we have spill file.
+ *
  * Revision 1.13  2003/04/22 19:40:36  warmerda
  * fixed email address
  *
@@ -153,9 +156,17 @@ HFAInfo_t *HFAGetDependent( HFAInfo_t *, const char * );
 class HFABand
 {
     int		nBlocks;
+
+    // Used for single-file modification
     vsi_l_offset *panBlockStart;
     int		*panBlockSize;
     int		*panBlockFlag;
+
+    // Used for spill-file modification
+    vsi_l_offset nBlockStart;
+    vsi_l_offset nBlockSize;
+    int         nLayerStackCount;
+    int         nLayerStackIndex;
 
 #define BFLG_VALID	0x01    
 #define BFLG_COMPRESSED	0x02
