@@ -29,6 +29,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.29  2003/06/30 14:44:28  dron
+ * Fixed problem introduced with Hyperion support.
+ *
  * Revision 1.28  2003/06/26 20:42:31  dron
  * Support for Hyperion Level 1 data product.
  *
@@ -1062,6 +1065,21 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
     
     poDS->nRasterXSize = poDS->aiDimSizes[poDS->iXDim];
     poDS->nRasterYSize = poDS->aiDimSizes[poDS->iYDim];
+
+    if ( poDS->iDataType == HYPERION_L1 )
+    {
+        // XXX: Hyperion SDSs has Height x Bands x Width dimensions scheme
+        poDS->nBands = poDS->aiDimSizes[1];
+        poDS->nRasterXSize = poDS->aiDimSizes[2];
+        poDS->nRasterYSize = poDS->aiDimSizes[0];
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Create band information objects.                                */
+/* -------------------------------------------------------------------- */
+    for( i = 1; i <= poDS->nBands; i++ )
+        poDS->SetBand( i, new HDF4ImageRasterBand( poDS, i,
+                                    poDS->GetDataType( poDS->iNumType ) ) );
 
 /* -------------------------------------------------------------------- */
 /*      Now we will handle particular types of HDF products. Every      */
@@ -2109,24 +2127,12 @@ CleanupAndBreakAsterL2:
         case HYPERION_L1:
         {
             CPLDebug( "HDF4Image", "Input dataset interpreted as HYPERION_L1" );
-
-            // XXX: Hyperion SDSs has Height x Bands x Width dimensions
-            poDS->nBands = poDS->aiDimSizes[1];
-            poDS->nRasterXSize = poDS->aiDimSizes[2];
-            poDS->nRasterYSize = poDS->aiDimSizes[0];
         }
         break;
 
         default:
         break;
     }
-
-/* -------------------------------------------------------------------- */
-/*      Create band information objects.                                */
-/* -------------------------------------------------------------------- */
-    for( i = 1; i <= poDS->nBands; i++ )
-        poDS->SetBand( i, new HDF4ImageRasterBand( poDS, i,
-                                    poDS->GetDataType( poDS->iNumType ) ) );
 
     return( poDS );
 }
