@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2004/08/13 16:15:08  warmerda
+ * added some docs
+ *
  * Revision 1.3  2004/08/12 08:24:26  warmerda
  * added overview support
  *
@@ -67,6 +70,11 @@ CPL_CVSID("$Id$");
  * dataset should be honoured.  That is, don't just GDALClose() it unless it 
  * was opened with GDALOpenShared(). 
  *
+ * The returned dataset will have no associated filename for itself.  If you
+ * want to write the virtual dataset description to a file, use the
+ * GDALSetDescription() function (or SetDescription() method) on the dataset
+ * to assign a filename before it is closed.  
+ *
  * @param hSrcDS The source dataset. 
  *
  * @param pszSrcWKT The coordinate system of the source image.  If NULL, it 
@@ -80,9 +88,6 @@ CPL_CVSID("$Id$");
  *
  * @param dfMaxError Maximum error measured in input pixels that is allowed in 
  * approximating the transformation (0.0 for exact calculations).
- *
- * @param nOverviewLevels The number of "power of 2" overview levels to be 
- * built.  If zero, no overview levels will be managed.  
  *
  * @param psOptions Additional warp options, normally NULL.
  *
@@ -151,6 +156,18 @@ GDALDatasetH GDALAutoCreateWarpedVRT( GDALDatasetH hSrcDS,
 /* -------------------------------------------------------------------- */
     GDALSetGenImgProjTransformerDstGeoTransform( 
         psWO->pTransformerArg, adfDstGeoTransform );
+
+/* -------------------------------------------------------------------- */
+/*      Do we want to apply an approximating transformation?            */
+/* -------------------------------------------------------------------- */
+    if( dfMaxError > 0.0 )
+    {
+        psWO->pTransformerArg = 
+            GDALCreateApproxTransformer( psWO->pfnTransformer, 
+                                         psWO->pTransformerArg, 
+                                         dfMaxError );
+        psWO->pfnTransformer = GDALApproxTransform;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Create the VRT file.                                            */
