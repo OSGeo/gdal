@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.45  2004/02/05 17:07:59  dron
+ * Support for HOM projection, specified by two points on centerline.
+ *
  * Revision 1.44  2003/06/27 19:02:04  warmerda
  * added OSRProj4Tokenize(), fixes plus related tokenizing bug in bug 355
  *
@@ -1306,6 +1309,23 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
                  GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
                  GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
                  GetNormProjParm(SRS_PP_AZIMUTH,0.0),
+                 GetNormProjParm(SRS_PP_SCALE_FACTOR,1.0),
+                 GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
+                 GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0) );
+    }
+
+    else if( EQUAL(pszProjection,
+                   SRS_PT_HOTINE_OBLIQUE_MERCATOR_TWO_POINT_NATURAL_ORIGIN) )
+    {
+        sprintf( szProj4+strlen(szProj4),
+                 "+proj=omerc +lat_0=%.16g"
+                 " +lon_1=%.16g +lat_1=%.16g +lon_2=%.16g +lat_2=%.16g"
+                 " +k=%.16g +x_0=%.16g +y_0=%.16g ",
+                 GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
+                 GetNormProjParm(SRS_PP_LATITUDE_OF_POINT_1,0.0),
+                 GetNormProjParm(SRS_PP_LONGITUDE_OF_POINT_1,0.0),
+                 GetNormProjParm(SRS_PP_LATITUDE_OF_POINT_2,0.0),
+                 GetNormProjParm(SRS_PP_LONGITUDE_OF_POINT_2,0.0),
                  GetNormProjParm(SRS_PP_SCALE_FACTOR,1.0),
                  GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
                  GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0) );

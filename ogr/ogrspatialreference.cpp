@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.82  2004/02/05 17:07:59  dron
+ * Support for HOM projection, specified by two points on centerline.
+ *
  * Revision 1.81  2003/12/05 16:22:49  warmerda
  * optimized IsProjected
  *
@@ -866,7 +869,7 @@ OGRErr OSRSetAngularUnits( OGRSpatialReferenceH hSRS,
  * will be assumed.  This method only checks directly under the GEOGCS node
  * for units.
  *
- * This method does the same thing as the C function OSRGetAngularUnits()/
+ * This method does the same thing as the C function OSRGetAngularUnits().
  *
  * @param ppszName a pointer to be updated with the pointer to the 
  * units name.  The returned value remains internal to the OGRSpatialReference
@@ -2755,6 +2758,23 @@ OGRErr OSRSetGnomonic( OGRSpatialReferenceH hSRS,
 /*                               SetHOM()                               */
 /************************************************************************/
 
+/**
+ * Set a Hotine Oblique Mercator projection using azimuth angle.
+ *
+ * This method does the same thing as the C function OSRSetHOM().
+ *
+ * @param dfCenterLat Latitude of the projection origin.
+ * @param dfCenterLong Longitude of the projection origin.
+ * @param dfAzimuth Azimuth, measured clockwise from North, of the projection
+ * centerline.
+ * @param dfRectToSkew ?.
+ * @param dfScale Scale factor applies to the projection origin.
+ * @param dfFalseEasting False easting.
+ * @param dfFalseNorthing False northing.
+ *
+ * @return OGRERR_NONE on success.
+ */ 
+
 OGRErr OGRSpatialReference::SetHOM( double dfCenterLat, double dfCenterLong,
                                     double dfAzimuth, double dfRectToSkew,
                                     double dfScale,
@@ -2789,6 +2809,69 @@ OGRErr OSRSetHOM( OGRSpatialReferenceH hSRS,
     return ((OGRSpatialReference *) hSRS)->SetHOM( 
         dfCenterLat, dfCenterLong, 
         dfAzimuth, dfRectToSkew, 
+        dfScale,
+        dfFalseEasting, dfFalseNorthing );
+}
+
+/************************************************************************/
+/*                             SetHOM2PNO()                             */
+/************************************************************************/
+
+/**
+ * Set a Hotine Oblique Mercator projection using two points on projection
+ * centerline.
+ *
+ * This method does the same thing as the C function OSRSetHOM2PNO().
+ *
+ * @param dfCenterLat Latitude of the projection origin.
+ * @param dfLat1 Latitude of the first point on center line.
+ * @param dfLong1 Longitude of the first point on center line.
+ * @param dfLat2 Latitude of the second point on center line.
+ * @param dfLong2 Longitude of the second point on center line.
+ * @param dfScale Scale factor applies to the projection origin.
+ * @param dfFalseEasting False easting.
+ * @param dfFalseNorthing False northing.
+ *
+ * @return OGRERR_NONE on success.
+ */ 
+
+OGRErr OGRSpatialReference::SetHOM2PNO( double dfCenterLat,
+                                        double dfLat1, double dfLong1,
+                                        double dfLat2, double dfLong2,
+                                        double dfScale,
+                                        double dfFalseEasting,
+                                        double dfFalseNorthing )
+
+{
+    SetProjection( SRS_PT_HOTINE_OBLIQUE_MERCATOR_TWO_POINT_NATURAL_ORIGIN );
+    SetNormProjParm( SRS_PP_LATITUDE_OF_CENTER, dfCenterLat );
+    SetNormProjParm( SRS_PP_LATITUDE_OF_POINT_1, dfLat1 );
+    SetNormProjParm( SRS_PP_LONGITUDE_OF_POINT_1, dfLong1 );
+    SetNormProjParm( SRS_PP_LATITUDE_OF_POINT_2, dfLat2 );
+    SetNormProjParm( SRS_PP_LONGITUDE_OF_POINT_2, dfLong2 );
+    SetNormProjParm( SRS_PP_SCALE_FACTOR, dfScale );
+    SetNormProjParm( SRS_PP_FALSE_EASTING, dfFalseEasting );
+    SetNormProjParm( SRS_PP_FALSE_NORTHING, dfFalseNorthing );
+
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                           OSRSetHOM2PNO()                            */
+/************************************************************************/
+
+OGRErr OSRSetHOM2PNO( OGRSpatialReferenceH hSRS, 
+                      double dfCenterLat,
+                      double dfLat1, double dfLong1,
+                      double dfLat2, double dfLong2,
+                      double dfScale,
+                      double dfFalseEasting, double dfFalseNorthing )
+    
+{
+    return ((OGRSpatialReference *) hSRS)->SetHOM2PNO( 
+        dfCenterLat,
+        dfLat1, dfLong1,
+        dfLat2, dfLong2,
         dfScale,
         dfFalseEasting, dfFalseNorthing );
 }
