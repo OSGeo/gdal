@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2004/01/05 22:38:17  warmerda
+ * stripped out some junk
+ *
  * Revision 1.3  2004/01/05 22:23:40  warmerda
  * added ExecuteSQL implementation via OGRODBCSelectLayer
  *
@@ -193,8 +196,6 @@ class OGRODBCDataSource : public OGRDataSource
     int                 bDSUpdate;
     CPLODBCSession      oSession;
 
-    void                DeleteLayer( const char *pszLayerName );
-
     // We maintain a list of known SRID to reduce the number of trips to
     // the database to get SRSes. 
     int                 nKnownSRID;
@@ -213,13 +214,6 @@ class OGRODBCDataSource : public OGRDataSource
     const char          *GetName() { return pszName; }
     int                 GetLayerCount() { return nLayers; }
     OGRLayer            *GetLayer( int );
-
-#ifdef notdef
-    virtual OGRLayer    *CreateLayer( const char *, 
-                                      OGRSpatialReference * = NULL,
-                                      OGRwkbGeometryType = wkbUnknown,
-                                      char ** = NULL );
-#endif
 
     int                 TestCapability( const char * );
 
