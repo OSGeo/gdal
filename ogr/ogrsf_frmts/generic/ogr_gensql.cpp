@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2002/04/25 03:42:04  warmerda
+ * fixed spatial filter support on SQL results
+ *
  * Revision 1.1  2002/04/25 02:24:37  warmerda
  * New
  *
@@ -126,6 +129,8 @@ OGRGenSQLResultsLayer::OGRGenSQLResultsLayer( OGRDataSource *poSrcDS,
 /* -------------------------------------------------------------------- */
     if( psSelectInfo->order_specs > 0 && !psSelectInfo->summary_record_only )
         CreateOrderByIndex();
+
+    ResetReading();
 }
 
 /************************************************************************/
@@ -565,8 +570,6 @@ void OGRGenSQLResultsLayer::CreateOrderByIndex()
 
         iFeature++;
     }
-
-    ResetReading();
 
 /* -------------------------------------------------------------------- */
 /*      Quick sort the records.                                         */

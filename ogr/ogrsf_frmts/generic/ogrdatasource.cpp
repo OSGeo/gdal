@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2002/04/25 03:42:04  warmerda
+ * fixed spatial filter support on SQL results
+ *
  * Revision 1.4  2002/04/25 02:24:45  warmerda
  * added ExecuteSQL method
  *
@@ -92,7 +95,7 @@ OGRLayer *OGRDataSource::CreateLayer( const char * pszName,
 /************************************************************************/
 
 OGRLayer * OGRDataSource::ExecuteSQL( const char *pszSQLCommand,
-                                      OGREnvelope *psEnvelope,
+                                      OGRGeometry *poSpatialFilter,
                                       const char *pszDialect )
 
 {
@@ -181,9 +184,10 @@ OGRLayer * OGRDataSource::ExecuteSQL( const char *pszSQLCommand,
 /* -------------------------------------------------------------------- */
     OGRGenSQLResultsLayer *poResults;
 
-    poResults = new OGRGenSQLResultsLayer( this, psSelectInfo, NULL );
+    poResults = new OGRGenSQLResultsLayer( this, psSelectInfo, 
+                                           poSpatialFilter );
 
-    // Eventually, we should keep track of layers to cleanup for sure.
+    // Eventually, we should keep track of layers to cleanup.
 
     return poResults;
 }
