@@ -23,4 +23,5 @@ spatialreferenceidl_p.c
 *.exp
 sdts2mi
 epsgtest
-
+sfcdump*
+*.opt
