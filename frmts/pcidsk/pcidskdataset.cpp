@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2003/10/08 07:58:53  dron
+ * Few fixes in WriteGeoSegment().
+ *
  * Revision 1.5  2003/10/05 15:31:38  dron
  * Added support for external raw files.
  *
@@ -87,6 +90,8 @@ class PCIDSKDataset : public RawDataset
     vsi_l_offset        nGcpPtrOffset;  // Offset in bytes to the pointer
                                         // to GCP segment
     vsi_l_offset        nGcpOffset;     // Offset in bytes to the GCP segment
+
+    int                 bGeoSegmentDirty;
 
     GDAL_GCP            *pasGCPList;
     long                 nGCPCount;
@@ -173,6 +178,7 @@ PCIDSKDataset::PCIDSKDataset()
     nBands = 0;
     pszCreatTime = NULL;
     nGeoOffset = 0;
+    bGeoSegmentDirty = FALSE;
     pszProjection = CPLStrdup( "" );
     pszGCPProjection = CPLStrdup( "" );
     nGCPCount = 0;
@@ -233,6 +239,7 @@ CPLErr PCIDSKDataset::GetGeoTransform( double * padfTransform )
 CPLErr PCIDSKDataset::SetGeoTransform( double * padfTransform )
 {
     memcpy( adfGeoTransform, padfTransform, sizeof(double) * 6 );
+    bGeoSegmentDirty = TRUE;
 
     return CE_None;
 }
@@ -259,6 +266,7 @@ CPLErr PCIDSKDataset::SetProjection( const char *pszNewProjection )
     if ( pszProjection )
 	CPLFree( pszProjection );
     pszProjection = CPLStrdup( pszNewProjection );
+    bGeoSegmentDirty = TRUE;
 
     return CE_None;
 }
@@ -301,24 +309,30 @@ const GDAL_GCP *PCIDSKDataset::GetGCPs()
 
 void PCIDSKDataset::FlushCache()
 {
-    char        szTemp[64];
-
     GDALDataset::FlushCache();
+
+    if( GetAccess() == GA_Update )
+    {
+        char        szTemp[64];
 
 /* -------------------------------------------------------------------- */
 /*      Write out pixel size.                                           */
 /* -------------------------------------------------------------------- */
-    CPLPrintDouble( szTemp, "%16.9E", ABS(adfGeoTransform[1]) );
-    CPLPrintDouble( szTemp + 16, "%16.9E", ABS(adfGeoTransform[5]) );
+        CPLPrintDouble( szTemp, "%16.9E", ABS(adfGeoTransform[1]) );
+        CPLPrintDouble( szTemp + 16, "%16.9E", ABS(adfGeoTransform[5]) );
 
-    VSIFSeekL( fp, 408, SEEK_SET );
-    VSIFWriteL( (void *)szTemp, 1, 32, fp );
+        VSIFSeekL( fp, 408, SEEK_SET );
+        VSIFWriteL( (void *)szTemp, 1, 32, fp );
 
 /* -------------------------------------------------------------------- */
 /*      Write out Georeferencing segment.                               */
 /* -------------------------------------------------------------------- */
-    if ( nGeoOffset )
-        WriteGeoSegment();
+        if ( nGeoOffset && bGeoSegmentDirty )
+        {
+            WriteGeoSegment();
+            bGeoSegmentDirty = FALSE;
+        }
+    }
 }
 
 /************************************************************************/
@@ -334,6 +348,10 @@ void PCIDSKDataset::WriteGeoSegment( )
     OGRSpatialReference oSRS;
     int             i;
 
+#ifdef DEBUG
+    CPLDebug( "PCIDSK", "Writing out georeferencing segment." );
+#endif
+    
     VSILocalTime( &nTime, &oUpdateTime );
 
     CPLPrintStringFill( szTemp, "Master Georeferencing Segment for File", 64 );
@@ -343,7 +361,7 @@ void PCIDSKDataset::WriteGeoSegment( )
     else
         CPLPrintTime( szTemp + 128, 16, "%H:%M %d-%b-%y ", &oUpdateTime, "C" );
     CPLPrintTime( szTemp + 144, 16, "%H:%M %d-%b-%y ", &oUpdateTime, "C" );
-    CPLPrintStringFill( szTemp + 160, "", 64 );
+    CPLPrintStringFill( szTemp + 160, "", 224 );
     // Write the history line
     CPLPrintStringFill( szTemp + 384,
                         "GDAL: Master Georeferencing Segment for File", 64 );
@@ -351,7 +369,7 @@ void PCIDSKDataset::WriteGeoSegment( )
     // Fill other lines with spaces
     CPLPrintStringFill( szTemp + 464, "", 80 * 7 );
 
-    // More history lines may be used if needed.
+    // More history lines may be used, if needed.
     // CPLPrintStringFill( szTemp + 464, "History2", 80 );
     // CPLPrintStringFill( szTemp + 544, "History3", 80 );
     // CPLPrintStringFill( szTemp + 624, "History4", 80 );
@@ -473,8 +491,10 @@ GDALDataset *PCIDSKDataset::Open( GDALOpenInfo * poOpenInfo )
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "Failed to re-open %s within PCIDSK driver.\n",
                   poOpenInfo->pszFilename );
+        delete poDS;
         return NULL;
     }
+    poDS->eAccess = poOpenInfo->eAccess;
 
 /* ==================================================================== */
 /*   Read PCIDSK File Header.                                           */
