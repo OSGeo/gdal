@@ -1,6 +1,6 @@
 /******************************************************************************
  * $Id$
- *
+g *
  * Project:  GDAL 
  * Purpose:  ECW (ERMapper Wavelet Compression Format) Driver
  * Author:   Frank Warmerdam, warmerdam@pobox.com
@@ -28,6 +28,11 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.24  2004/12/10 19:18:05  fwarmerdam
+ * Overhauled to use C++ ECW SDK classes.
+ * Moved creation code into ecwcreatecopy.cpp
+ * Support J2K_SUBFILE for reading "virtually".
+ *
  * Revision 1.23  2004/06/24 04:53:40  warmerda
  * remove assert in IRasterIO(), seems to be unneeded
  *
@@ -104,9 +109,7 @@
 #include "ogr_spatialref.h"
 #include "cpl_string.h"
 #include "cpl_conv.h"
-#include <NCSECWClient.h>
-#include <NCSECWCompressClient.h>
-#include <NCSErrors.h>
+#include "vsiiostream.h"
 
 CPL_CVSID("$Id$");
 
@@ -116,20 +119,8 @@ static unsigned char jpc_header[] = {0xff,0x4f};
 static unsigned char jp2_header[] = 
 {0x00,0x00,0x00,0x0c,0x6a,0x50,0x20,0x20,0x0d,0x0a,0x87,0x0a};
 
-/* As of July 2002 only uncompress support is available on Unix */
-#ifdef WIN32
-#define HAVE_COMPRESS
-#endif
-
 static int    gnTriedCSFile = FALSE;
 static char **gpapszCSLookup = NULL;
-
-typedef struct {
-    int              bCancelled;
-    GDALProgressFunc pfnProgress;
-    void             *pProgressData;
-    GDALDataset      *poSrc;
-} ECWCompressInfo;
 
 /************************************************************************/
 /* ==================================================================== */
@@ -143,7 +134,9 @@ class CPL_DLL ECWDataset : public GDALDataset
 {
     friend class ECWRasterBand;
 
-    NCSFileView *hFileView;
+    FILE        *fpVSIL;
+
+    CNCSJP2FileView *poFileView;
     NCSFileViewFileInfo *psFileInfo;
 
     int         nFullResWindowBand;
@@ -178,6 +171,7 @@ class ECWRasterBand : public GDALRasterBand
 {
     friend class ECWDataset;
     
+    // NOTE: poDS may be altered for NITF/JPEG2000 files!
     ECWDataset     *poGDS;
 
     virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
@@ -201,6 +195,8 @@ ECWRasterBand::ECWRasterBand( ECWDataset *poDS, int nBand )
 
 {
     this->poDS = poDS;
+    poGDS = poDS;
+
     this->nBand = nBand;
     eDataType = GDT_Byte;
     nBlockXSize = poDS->GetRasterXSize();
@@ -228,7 +224,6 @@ CPLErr ECWRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                                  int nPixelSpace, int nLineSpace )
     
 {
-    ECWDataset	*poODS = (ECWDataset *) poDS;
     NCSError     eNCSErr;
     int          iBand, bDirect;
     int          nNewXSize = nBufXSize, nNewYSize = nBufYSize;
@@ -283,19 +278,20 @@ CPLErr ECWRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 /* -------------------------------------------------------------------- */
 /*      Establish access at the desired resolution.                     */
 /* -------------------------------------------------------------------- */
+    CNCSError oErr;
+
     iBand = nBand-1;
-    poODS->nFullResWindowBand = -1;
-    eNCSErr = NCScbmSetFileView( poODS->hFileView, 
-                                 1, (unsigned int *) (&iBand),
-                                 nXOff, nYOff, 
-                                 nXOff + nXSize - 1, 
-                                 nYOff + nYSize - 1,
-                                 nNewXSize, nNewYSize );
-    if( eNCSErr != NCS_SUCCESS )
+    poGDS->nFullResWindowBand = -1;
+    oErr = poGDS->poFileView->SetView( 1, (unsigned int *) (&iBand),
+                                       nXOff, nYOff, 
+                                       nXOff + nXSize - 1, 
+                                       nYOff + nYSize - 1,
+                                       nNewXSize, nNewYSize );
+    if( oErr.GetErrorNumber() != NCS_SUCCESS )
     {
         CPLFree( pabyWorkBuffer );
         CPLError( CE_Failure, CPLE_AppDefined, 
-                  "%s", NCSGetErrorText(eNCSErr) );
+                  "%s", oErr.GetErrorMessage() );
         
         return CE_Failure;
     }
@@ -323,7 +319,7 @@ CPLErr ECWRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 
 	if ( nNewYSize == nBufYSize || iSrcLine == (int)(iDstLine * dfSrcYInc) )
 	{
-            eRStatus = NCScbmReadViewLineBIL( poODS->hFileView, &pabySrcBuf );
+            eRStatus = poGDS->poFileView->ReadLineBIL( &pabySrcBuf );
 
 	    if( eRStatus != NCSECW_READ_OK )
 	    {
@@ -378,17 +374,15 @@ CPLErr ECWRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 CPLErr ECWRasterBand::IReadBlock( int, int nBlockYOff, void * pImage )
 
 {
-    ECWDataset	*poODS = (ECWDataset *) poDS;
-
 /* -------------------------------------------------------------------- */
 /*      Do we need to reset the view window?                            */
 /* -------------------------------------------------------------------- */
-    if( nBand != poODS->nFullResWindowBand
-        || poODS->nLastScanlineRead >= nBlockYOff )
+    if( nBand != poGDS->nFullResWindowBand
+        || poGDS->nLastScanlineRead >= nBlockYOff )
     {
         CPLErr eErr;
 
-        eErr = poODS->ResetFullResViewWindow( nBand, nBlockYOff );
+        eErr = poGDS->ResetFullResViewWindow( nBand, nBlockYOff );
         if( eErr != CE_None )
             return eErr;
     }
@@ -396,12 +390,11 @@ CPLErr ECWRasterBand::IReadBlock( int, int nBlockYOff, void * pImage )
 /* -------------------------------------------------------------------- */
 /*      Load lines till we get to the desired scanline.                 */
 /* -------------------------------------------------------------------- */
-    while( poODS->nLastScanlineRead < nBlockYOff )
+    while( poGDS->nLastScanlineRead < nBlockYOff )
     {
         NCSEcwReadStatus  eRStatus;
 
-        eRStatus = NCScbmReadViewLineBIL( poODS->hFileView, 
-                                          (unsigned char **) &pImage );
+        eRStatus = poGDS->poFileView->ReadLineBIL( (unsigned char **) &pImage );
         
         if( eRStatus != NCSECW_READ_OK )
         {
@@ -410,7 +403,7 @@ CPLErr ECWRasterBand::IReadBlock( int, int nBlockYOff, void * pImage )
             return CE_Failure;
         }
 
-        poODS->nLastScanlineRead++;
+        poGDS->nLastScanlineRead++;
     }
 
     return CE_None;
@@ -432,6 +425,8 @@ ECWDataset::ECWDataset()
 {
     nFullResWindowBand = -1;
     pszProjection = NULL;
+    poFileView = NULL;
+    fpVSIL = NULL;
 }
 
 /************************************************************************/
@@ -442,6 +437,13 @@ ECWDataset::~ECWDataset()
 
 {
     CPLFree( pszProjection );
+    if( poFileView != NULL )
+    {
+        //delete poFileView;
+    }
+
+    if( fpVSIL != NULL )
+        delete fpVSIL;
 }
 
 /************************************************************************/
@@ -463,11 +465,13 @@ CPLErr ECWDataset::ResetFullResViewWindow( int nBand,
               nRasterXSize-1, nRasterYSize-1,
               nRasterXSize, nRasterYSize-nStartLine );
 #endif
-                              
-    eNCSErr = NCScbmSetFileView( hFileView, 1, &iBand,
-                                 0, nStartLine, 
-                                 nRasterXSize-1, nRasterYSize-1,
-                                 nRasterXSize, nRasterYSize-nStartLine );
+    CNCSError oErr;
+
+    oErr = poFileView->SetView( 1, &iBand,
+                                0, nStartLine, 
+                                nRasterXSize-1, nRasterYSize-1,
+                                nRasterXSize, nRasterYSize-nStartLine );
+    eNCSErr = oErr.GetErrorNumber();
 
     if( eNCSErr != NCS_SUCCESS )
     {
@@ -527,16 +531,17 @@ CPLErr ECWDataset::IRasterIO( GDALRWFlag eRWFlag,
     UINT32 anBandIndices[100];
     int    i;
     NCSError     eNCSErr;
+    CNCSError    oErr;
     
     for( i = 0; i < nBandCount; i++ )
         anBandIndices[i] = panBandMap[i] - 1;
 
-    eNCSErr = NCScbmSetFileView( hFileView, 
-                                 nBandCount, anBandIndices,
-                                 nXOff, nYOff, 
-                                 nXOff + nXSize - 1, 
-                                 nYOff + nYSize - 1,
-                                 nBufXSize, nBufYSize );
+    oErr = poFileView->SetView( nBandCount, anBandIndices,
+                                nXOff, nYOff, 
+                                nXOff + nXSize - 1, 
+                                nYOff + nYSize - 1,
+                                nBufXSize, nBufYSize );
+    eNCSErr = oErr.GetErrorNumber();
     
     if( eNCSErr != NCS_SUCCESS )
     {
@@ -563,7 +568,7 @@ CPLErr ECWDataset::IRasterIO( GDALRWFlag eRWFlag,
         NCSEcwReadStatus  eRStatus;
         int  iX;
 
-        eRStatus = NCScbmReadViewLineBIL( hFileView, papabyBIL );
+        eRStatus = poFileView->ReadLineBIL( papabyBIL );
         if( eRStatus != NCSECW_READ_OK )
         {
             CPLFree( pabyBILScanline );
@@ -596,15 +601,68 @@ CPLErr ECWDataset::IRasterIO( GDALRWFlag eRWFlag,
 GDALDataset *ECWDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
-    NCSFileView      *hFileView = NULL;
+    CNCSJP2FileView *poFileView = NULL;
     NCSError         eErr;
+    CNCSError        oErr;
     int              i;
+    FILE            *fpVSIL = NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Handle special case of a JPEG2000 data stream in another file.  */
+/* -------------------------------------------------------------------- */
+    if( EQUALN(poOpenInfo->pszFilename,"J2K_SUBFILE:",12) )
+    {
+        int            subfile_offset=-1, subfile_size=-1;
+        char *real_filename = NULL;
+
+        if( sscanf( poOpenInfo->pszFilename, "J2K_SUBFILE:%d,%d", 
+                    &subfile_offset, &subfile_size ) != 2 )
+          {
+              CPLError( CE_Failure, CPLE_OpenFailed, 
+                        "Failed to parse J2K_SUBFILE specification." );
+              return NULL;
+          }
+
+          real_filename = strstr(poOpenInfo->pszFilename,",");
+          if( real_filename != NULL )
+              real_filename = strstr(real_filename+1,",");
+          if( real_filename != NULL )
+              real_filename = real_filename++;
+          else
+          {
+              CPLError( CE_Failure, CPLE_OpenFailed, 
+                        "Failed to parse J2K_SUBFILE specification." );
+              return NULL;
+          }
+
+          FILE *fpVSIL = VSIFOpenL( real_filename, "rb" );
+          if( fpVSIL == NULL )
+          {
+              CPLError( CE_Failure, CPLE_OpenFailed, 
+                        "Failed to open %s.",  real_filename );
+              return NULL;
+          }
+
+          VSIIOStream *poIOStream;
+          poIOStream = new VSIIOStream();
+          poIOStream->Access( fpVSIL, FALSE, real_filename,
+                              subfile_offset, subfile_size );
+
+          poFileView = new CNCSJP2FileView();
+          oErr = poFileView->Open( poIOStream, false );
+          if( oErr.GetErrorNumber() != NCS_SUCCESS )
+          {
+              CPLError( CE_Failure, CPLE_AppDefined, "%s",
+                        oErr.GetErrorMessage() );			
+              return NULL;
+          }
+    }
 
 /* -------------------------------------------------------------------- */
 /*      This has to either be a file on disk ending in .ecw or a        */
 /*      ecwp: protocol url.                                             */
 /* -------------------------------------------------------------------- */
-    if( poOpenInfo->nHeaderBytes >= 16 
+    else if( poOpenInfo->nHeaderBytes >= 16 
         && (memcmp( poOpenInfo->pabyHeader, jpc_header, 
                     sizeof(jpc_header) ) == 0
             || memcmp( poOpenInfo->pabyHeader, jp2_header, 
@@ -618,14 +676,19 @@ GDALDataset *ECWDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Open the client interface.                                      */
 /* -------------------------------------------------------------------- */
-    eErr = NCScbmOpenFileView( poOpenInfo->pszFilename, &hFileView, NULL );
-    CPLDebug( "ECW", "NCScbmOpenFileView(%s): eErr = %d", 
-              poOpenInfo->pszFilename, (int) eErr );
-    if( eErr != NCS_SUCCESS )
+    if( poFileView == NULL )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "%s", NCSGetErrorText(eErr) );
-        return NULL;
+        poFileView = new CNCSFile();
+        oErr = poFileView->Open( poOpenInfo->pszFilename, FALSE );
+        eErr = oErr.GetErrorNumber();
+        CPLDebug( "ECW", "NCScbmOpenFileView(%s): eErr = %d", 
+                  poOpenInfo->pszFilename, (int) eErr );
+        if( eErr != NCS_SUCCESS )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                      "%s", NCSGetErrorText(eErr) );
+            return NULL;
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -635,18 +698,13 @@ GDALDataset *ECWDataset::Open( GDALOpenInfo * poOpenInfo )
 
     poDS = new ECWDataset();
 
-    poDS->hFileView = hFileView;
-    
+    poDS->poFileView = poFileView;
+    poDS->fpVSIL = fpVSIL;
+
 /* -------------------------------------------------------------------- */
 /*      Fetch general file information.                                 */
 /* -------------------------------------------------------------------- */
-    eErr = NCScbmGetViewFileInfo( hFileView, &(poDS->psFileInfo) );
-    if( eErr != NCS_SUCCESS )
-    {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "%s", NCSGetErrorText(eErr) );
-        return NULL;
-    }
+    poDS->psFileInfo = (NCSFileViewFileInfo *) poFileView->GetFileInfo();
 
     CPLDebug( "ECW", "FileInfo: SizeXY=%d,%d Bands=%d\n"
               "       OriginXY=%g,%g  CellIncrementXY=%g,%g\n",
@@ -807,248 +865,6 @@ void ECWDataset::ECW2WKTProjection()
     oSRS.exportToWkt( &pszProjection );
 }
 
-/************************************************************************/
-/*                         ECWCompressReadCB()                          */
-/************************************************************************/
-
-static BOOLEAN ECWCompressReadCB( struct NCSEcwCompressClient *psClient, 
-                                  UINT32 nNextLine, IEEE4 **ppInputArray )
-
-{
-    ECWCompressInfo      *psCompressInfo;
-    int                  iBand;
-
-    psCompressInfo = (ECWCompressInfo *) psClient->pClientData;
-
-    for( iBand = 0; iBand < (int) psClient->nInputBands; iBand++ )
-    {
-        GDALRasterBand      *poBand;
-
-
-        poBand = psCompressInfo->poSrc->GetRasterBand( iBand+1 );
-
-        if( poBand->RasterIO( GF_Read, 0, nNextLine, poBand->GetXSize(), 1, 
-                              ppInputArray[iBand], poBand->GetXSize(), 1, 
-                              GDT_Float32, 0, 0 ) != CE_None )
-            return FALSE;
-    }
-
-    return TRUE;
-}
-
-/************************************************************************/
-/*                        ECWCompressStatusCB()                         */
-/************************************************************************/
-
-static void ECWCompressStatusCB( NCSEcwCompressClient *psClient, 
-                                 UINT32 nCurrentLine )
-
-{
-    ECWCompressInfo      *psCompressInfo;
-
-    psCompressInfo = (ECWCompressInfo *) psClient->pClientData;
-    
-    psCompressInfo->bCancelled = 
-        !psCompressInfo->pfnProgress( nCurrentLine 
-                                      / (float) psClient->nInOutSizeY,
-                                      NULL, psCompressInfo->pProgressData );
-}
-
-/************************************************************************/
-/*                        ECWCompressCancelCB()                         */
-/************************************************************************/
-
-static BOOLEAN ECWCompressCancelCB( NCSEcwCompressClient *psClient )
-
-{
-    ECWCompressInfo      *psCompressInfo;
-
-    psCompressInfo = (ECWCompressInfo *) psClient->pClientData;
-
-    return (BOOLEAN) psCompressInfo->bCancelled;
-}
-
-#ifdef HAVE_COMPRESS
-/************************************************************************/
-/*                           ECWCreateCopy()                            */
-/************************************************************************/
-
-static GDALDataset *
-ECWCreateCopy( const char * pszFilename, GDALDataset *poSrcDS, 
-                 int bStrict, char ** papszOptions, 
-                 GDALProgressFunc pfnProgress, void * pProgressData )
-
-{
-    int  nBands = poSrcDS->GetRasterCount();
-    int  nXSize = poSrcDS->GetRasterXSize();
-    int  nYSize = poSrcDS->GetRasterYSize();
-
-    if( !pfnProgress( 0.0, NULL, pProgressData ) )
-        return NULL;
-
-/* -------------------------------------------------------------------- */
-/*      Do some rudimentary checking in input.                          */
-/* -------------------------------------------------------------------- */
-    if( nBands == 0 )
-    {
-        CPLError( CE_Failure, CPLE_NotSupported, 
-                  "ECW driver requires at least one band as input." );
-        return NULL;
-    }
-
-    if( nXSize < 128 || nYSize < 128 )
-    {
-        CPLError( CE_Failure, CPLE_NotSupported, 
-                  "ECW driver requires image to be at least 128x128,\n"
-                  "the source image is %dx%d.\n", 
-                  nXSize, nYSize );
-        return NULL;
-    }
-
-    if( poSrcDS->GetRasterBand(1)->GetRasterDataType() != GDT_Byte 
-        && bStrict )
-    {
-        CPLError( CE_Failure, CPLE_NotSupported, 
-                  "CW driver doesn't support data type %s. "
-                  "Only eight bit bands supported.\n", 
-                  GDALGetDataTypeName( 
-                      poSrcDS->GetRasterBand(1)->GetRasterDataType()) );
-
-        return NULL;
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Parse out some known options.                                   */
-/* -------------------------------------------------------------------- */
-    float      fTargetCompression = 75.0;
-
-    if( CSLFetchNameValue(papszOptions, "TARGET") != NULL )
-    {
-        fTargetCompression = (float) 
-            atof(CSLFetchNameValue(papszOptions, "TARGET"));
-        
-        if( fTargetCompression < 1.1 || fTargetCompression > 100.0 )
-        {
-            CPLError( CE_Failure, CPLE_NotSupported, 
-                      "TARGET compression of %.3f invalid, should be a\n"
-                      "value between 1 and 100 percent.\n", 
-                      (double) fTargetCompression );
-            return NULL;
-        }
-    }
-        
-/* -------------------------------------------------------------------- */
-/*      Create and initialize compressor.                               */
-/* -------------------------------------------------------------------- */
-    NCSEcwCompressClient      *psClient;
-    ECWCompressInfo           sCompressInfo;
-
-    psClient = NCSEcwCompressAllocClient();
-    if( psClient == NULL )
-    {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "NCSEcwCompressAllocClient() failed.\n" );
-        return NULL;
-    }
-
-    psClient->nInputBands = nBands;
-    psClient->nInOutSizeX = nXSize;
-    psClient->nInOutSizeY = nYSize;
-    psClient->fTargetCompression = fTargetCompression;
-
-    if( nBands == 1 )
-        psClient->eCompressFormat = COMPRESS_UINT8;
-    else if( nBands == 3 )
-        psClient->eCompressFormat = COMPRESS_RGB;
-    else
-        psClient->eCompressFormat = COMPRESS_MULTI;
-
-    strcpy( psClient->szOutputFilename, pszFilename );
-
-    sCompressInfo.bCancelled = FALSE;
-    sCompressInfo.pfnProgress = pfnProgress;
-    sCompressInfo.pProgressData = pProgressData;
-    sCompressInfo.poSrc = poSrcDS;
-
-    psClient->pReadCallback = ECWCompressReadCB;
-    psClient->pStatusCallback = ECWCompressStatusCB;
-    psClient->pCancelCallback = ECWCompressCancelCB;
-    psClient->pClientData = (void *) &sCompressInfo;
-
-/* -------------------------------------------------------------------- */
-/*      Set block size if desired.                                      */
-/* -------------------------------------------------------------------- */
-    psClient->nBlockSizeX = 256;
-    psClient->nBlockSizeY = 256;
-    if( CSLFetchNameValue(papszOptions, "BLOCKSIZE") != NULL )
-    {
-        psClient->nBlockSizeX = atoi(CSLFetchNameValue(papszOptions, 
-                                                       "BLOCKSIZE"));
-        psClient->nBlockSizeY = atoi(CSLFetchNameValue(papszOptions, 
-                                                       "BLOCKSIZE"));
-    }
-        
-    if( CSLFetchNameValue(papszOptions, "BLOCKXSIZE") != NULL )
-        psClient->nBlockSizeX = atoi(CSLFetchNameValue(papszOptions, 
-                                                       "BLOCKXSIZE"));
-        
-    if( CSLFetchNameValue(papszOptions, "BLOCKYSIZE") != NULL )
-        psClient->nBlockSizeX = atoi(CSLFetchNameValue(papszOptions, 
-                                                       "BLOCKYSIZE"));
-        
-/* -------------------------------------------------------------------- */
-/*      Georeferencing.                                                 */
-/* -------------------------------------------------------------------- */
-    double      adfGeoTransform[6];
-
-    if( poSrcDS->GetGeoTransform( adfGeoTransform ) == CE_None )
-    {
-        if( adfGeoTransform[2] != 0.0 || adfGeoTransform[4] != 0.0 )
-            CPLError( CE_Warning, CPLE_NotSupported, 
-                      "Rotational coefficients ignored, georeferencing of\n"
-                      "output ECW file will be incorrect.\n" );
-        else
-        {
-            psClient->fOriginX = adfGeoTransform[0];
-            psClient->fOriginY = adfGeoTransform[3];
-            psClient->fCellIncrementX = adfGeoTransform[1];
-            psClient->fCellIncrementY = adfGeoTransform[5];
-        }
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Start the compression.                                          */
-/* -------------------------------------------------------------------- */
-    NCSError      eError;
-
-    eError = NCSEcwCompressOpen( psClient, FALSE );
-    if( eError == NCS_SUCCESS )
-    {
-        eError = NCSEcwCompress( psClient );
-        NCSEcwCompressClose( psClient );
-    }
-
-    if( eError != NCS_SUCCESS )
-    {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "ECW compression failed.\n%s", 
-                  NCSGetErrorText( eError ) );
-
-        NCSEcwCompressFreeClient( psClient );
-        return NULL;
-    }
-
-    if( !pfnProgress( 1.0, NULL, pProgressData ) )
-        return NULL;
-
-/* -------------------------------------------------------------------- */
-/*      Cleanup, and return read-only handle.                           */
-/* -------------------------------------------------------------------- */
-    NCSEcwCompressFreeClient( psClient );
-    
-    return (GDALDataset *) GDALOpen( pszFilename, GA_ReadOnly );
-}
-#endif /* def HAVE_COMPRESS */
 #endif /* def FRMT_ecw */
 
 /************************************************************************/
