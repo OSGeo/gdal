@@ -13,17 +13,23 @@ normally built into OGR, but may be built in on platforms where the
 Oracle client libraries are available. <p>
 
 When opening a database, it's name should be specified in the form
-"OCI:userid/password@database_instance".  The database_instance portion may
-be omitted when accessing the default local database instance.  <p>
+"OCI:userid/password@database_instance:table,table".  The list of tables
+is optional.  The database_instance portion may be omitted 
+when accessing the default local database instance.<p>
 
-Currently all spatially enabled tables listed in the users 
-USER_SDO_GEOM_METADATA table are treated by OGR as layers with the table
+If the list of tables is not provided, then all tables appearing in 
+ALL_SDO_GEOM_METADATA will be treated by OGR as layers with the table
 names as the layer names.  Non-spatial tables or spatial tables not listed
-in the USER_SDO_GEOM_METADATA table are not directly accessable.<p>
+in the ALL_SDO_GEOM_METADATA table are not accessable unless explicitly
+listed in the datasource name.  Even in databases where all desired layers
+are in the ALL_SDO_GEOM_METADATA table, it may be desirable to list only
+the tables to be used as this can substantially reduce initialization time
+in databases with many tables.<p>
 
 If the table has an integer column called OGR_FID it will be used as the
-feature id by OGR (and it will not appear as a regular attribute).  When loading
-data into Oracle Spatial OGR will always create the OGR_FID field. <p>
+feature id by OGR (and it will not appear as a regular attribute).  When 
+loading data into Oracle Spatial OGR will always create the OGR_FID field.
+<p>
 
 <h2>SQL Issues</h2>
 

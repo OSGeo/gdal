@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2004/11/22 19:24:15  fwarmerdam
+ * added support for a list of tables in the datasource name
+ *
  * Revision 1.19  2003/09/13 03:47:24  warmerda
  * Added paeInd to BindScalar
  *
@@ -319,6 +322,8 @@ class OGROCILayer : public OGRLayer
 
     const char         *GetGeomName() { return pszGeomName; }
     const char         *GetFIDName() { return pszFIDName; }
+
+    int                 LookupTableSRID();
 };
 
 /************************************************************************/
@@ -487,7 +492,6 @@ class OGROCITableLayer : public OGROCIWritableLayer
   public:
                         OGROCITableLayer( OGROCIDataSource *,
                                           const char * pszName,
-                                          const char *pszGeomCol, 
                                           int nSRID, int bUpdate, int bNew );
                         ~OGROCITableLayer();
 
@@ -558,7 +562,6 @@ class OGROCIDataSource : public OGRDataSource
 
     int                 Open( const char *, int bUpdate, int bTestOpen );
     int                 OpenTable( const char *pszTableName, 
-                                   const char *pszGeomCol,
                                    int nSRID, int bUpdate, int bTestOpen );
 
     const char          *GetName() { return pszName; }

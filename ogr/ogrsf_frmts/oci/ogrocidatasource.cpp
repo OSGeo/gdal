@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.25  2004/11/22 19:24:15  fwarmerdam
+ * added support for a list of tables in the datasource name
+ *
  * Revision 1.24  2004/11/09 02:49:12  fwarmerdam
  * Don't add user_sdo_geom_metadata record till finalize (layer load complete)
  * time as that is when we have all the diminfo details.  Inserts of metadata
@@ -197,9 +200,26 @@ int OGROCIDataSource::Open( const char * pszNewName, int bUpdate,
     char *pszUserid;
     const char *pszPassword = "";
     const char *pszDatabase = "";
+    char **papszTableList = NULL;
     int   i;
 
     pszUserid = CPLStrdup( pszNewName + 4 );
+
+    // Is there a table list? 
+    for( i = strlen(pszUserid)-1; i > 1; i-- )
+    {
+        if( pszUserid[i] == ':' )
+        {
+            papszTableList = CSLTokenizeStringComplex( pszUserid+i+1, ",",
+                                                       TRUE, FALSE );
+            pszUserid[i] = '\0';
+            break;
+        }
+
+        if( pszUserid[i] == '/' || pszUserid[i] == '@' )
+            break;
+    }
+
     for( i = 0; 
          pszUserid[i] != '\0' && pszUserid[i] != '/' && pszUserid[i] != '@';
          i++ ) {}
@@ -232,35 +252,44 @@ int OGROCIDataSource::Open( const char * pszNewName, int bUpdate,
     bDSUpdate = bUpdate;
 
 /* -------------------------------------------------------------------- */
-/*      Get a list of available spatial tables and make them into       */
-/*      layers.                                                         */
+/*      If no list of target tables was provided, collect a list of     */
+/*      spatial tables now.                                             */
 /* -------------------------------------------------------------------- */
-    OGROCIStatement oGetTables( poSession );
-
-    if( oGetTables.Execute( 
-        "SELECT TABLE_NAME, COLUMN_NAME, SRID, OWNER FROM ALL_SDO_GEOM_METADATA" ) 
-        == CE_None )
+    if( papszTableList == NULL )
     {
-        char **papszRow;
+        OGROCIStatement oGetTables( poSession );
 
-        while( (papszRow = oGetTables.SimpleFetchRow()) != NULL )
+        if( oGetTables.Execute( 
+            "SELECT TABLE_NAME, OWNER FROM ALL_SDO_GEOM_METADATA" ) 
+            == CE_None )
         {
-            int nSRID = -1;
-            char szFullTableName[100];
+            char **papszRow;
 
-            if( papszRow[2] != NULL )
-                nSRID = atoi(papszRow[2]);
+            while( (papszRow = oGetTables.SimpleFetchRow()) != NULL )
+            {
+                char szFullTableName[100];
 
-            if( EQUAL(papszRow[3],pszUserid) )
-                strcpy( szFullTableName, papszRow[0] );
-            else
-                sprintf( szFullTableName, "%s.%s", papszRow[3], papszRow[0] );
+                if( EQUAL(papszRow[1],pszUserid) )
+                    strcpy( szFullTableName, papszRow[0] );
+                else
+                    sprintf( szFullTableName, "%s.%s", 
+                             papszRow[1], papszRow[0] );
 
-            OpenTable( szFullTableName, papszRow[1], nSRID, bUpdate, FALSE );
+                if( CSLFindString( papszTableList, szFullTableName ) == -1 )
+                    papszTableList = CSLAddString( papszTableList, 
+                                                   szFullTableName );
+            }
         }
     }
-
     CPLFree( pszUserid );
+
+/* -------------------------------------------------------------------- */
+/*      Open all the selected tables or views.                          */
+/* -------------------------------------------------------------------- */
+    for( i = 0; papszTableList != NULL && papszTableList[i] != NULL; i++ )
+    {
+        OpenTable( papszTableList[i], -1, bUpdate, FALSE );
+    }
 
     return TRUE;
 }
@@ -270,7 +299,6 @@ int OGROCIDataSource::Open( const char * pszNewName, int bUpdate,
 /************************************************************************/
 
 int OGROCIDataSource::OpenTable( const char *pszNewName, 
-                                 const char *pszGeomCol,
                                  int nSRID, int bUpdate, int bTestOpen )
 
 {
@@ -279,7 +307,7 @@ int OGROCIDataSource::OpenTable( const char *pszNewName,
 /* -------------------------------------------------------------------- */
     OGROCITableLayer    *poLayer;
 
-    poLayer = new OGROCITableLayer( this, pszNewName, pszGeomCol, nSRID, 
+    poLayer = new OGROCITableLayer( this, pszNewName, nSRID, 
                                     bUpdate, FALSE );
 
     if( !poLayer->IsValid() )
@@ -516,7 +544,7 @@ OGROCIDataSource::CreateLayer( const char * pszLayerName,
     OGROCIWritableLayer *poLayer;
 
     if( pszLoaderFile == NULL )
-        poLayer = new OGROCITableLayer( this, pszSafeLayerName, "ORA_GEOMETRY",
+        poLayer = new OGROCITableLayer( this, pszSafeLayerName, 
                                         EQUAL(szSRSId,"NULL") ? -1 : atoi(szSRSId),
                                         TRUE, TRUE );
     else
@@ -902,4 +930,3 @@ int OGROCIDataSource::FetchSRSId( OGRSpatialReference * poSRS )
     else
         return nSRSId;
 }
-
