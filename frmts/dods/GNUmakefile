@@ -27,7 +27,7 @@ docs:
 	doxygen
 
 clean:
-	-rm -f *.o *.lo *~
+	-rm -f *.o *.lo *~ $(O_OBJ)
 	-rm -rf docs
 	-rm dodsdataset_test using_dods
 
