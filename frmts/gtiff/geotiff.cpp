@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.34  2000/07/17 14:52:51  warmerda
+ * added preliminary complex support
+ *
  * Revision 1.33  2000/07/13 21:39:48  warmerda
  * implemented CreateCopy() method which supports GCPs and color tables
  *
@@ -96,6 +99,11 @@ void	GDALRegister_GTiff(void);
 char *  GTIFGetOGISDefn( GTIFDefn * );
 int     GTIFSetFromOGISDefn( GTIF *, const char * );
 CPL_C_END
+
+/* Local Atlantis Extension: hopefully add to libtiff eventually */
+
+#define	SAMPLEFORMAT_COMPLEXINT		5 /* !signed complex integer data */
+#define	SAMPLEFORMAT_COMPLEXIEEEFP	6 /* !complex IEEE floating point */
 
 
 /************************************************************************/
@@ -226,7 +234,11 @@ GTiffRasterBand::GTiffRasterBand( GTiffDataset *poDS, int nBand )
     }
     else if( poDS->nBitsPerSample == 32 )
     {
-        if( nSampleFormat == SAMPLEFORMAT_IEEEFP )
+        if( nSampleFormat == SAMPLEFORMAT_COMPLEXINT )
+            eDataType = GDT_CInt16;
+        else if( nSampleFormat == SAMPLEFORMAT_COMPLEXIEEEFP )
+            eDataType = GDT_CFloat32;
+        else if( nSampleFormat == SAMPLEFORMAT_IEEEFP )
             eDataType = GDT_Float32;
         else if( nSampleFormat == SAMPLEFORMAT_INT )
             eDataType = GDT_Int32;
@@ -1212,8 +1224,12 @@ TIFF *GTiffCreate( const char * pszFilename,
 
     if( eType == GDT_Int16 || eType == GDT_Int32 )
         nSampleFormat = SAMPLEFORMAT_INT;
+    else if( eType == GDT_CInt16 || eType == GDT_CInt32 )
+        nSampleFormat = SAMPLEFORMAT_COMPLEXINT;
     else if( eType == GDT_Float32 || eType == GDT_Float64 )
         nSampleFormat = SAMPLEFORMAT_IEEEFP;
+    else if( eType == GDT_CFloat32 || eType == GDT_CFloat64 )
+        nSampleFormat = SAMPLEFORMAT_COMPLEXIEEEFP;
     else
         nSampleFormat = SAMPLEFORMAT_UINT;
 
