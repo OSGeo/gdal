@@ -3,30 +3,42 @@ GDAL_ROOT	=	../../..
 
 include $(GDAL_ROOT)/GDALmake.opt
 
-OBJ	=	gmlpropertydefn.o gmlfeatureclass.o gmlfeature.o gmlreader.o \
-		gmlhandler.o gmlreadstate.o trstring.o
+CORE_OBJ =	gmlpropertydefn.o gmlfeatureclass.o gmlfeature.o gmlreader.o
 
-ALL_C_FLAGS	=	-I/usr/local/include/xercesc \
-	-I.. -I../.. -I$(GDAL_ROOT)/port \
+OGR_OBJ =	gml2ogrgeometry.o ogr2gmlgeometry.o \
+		ogrgmldriver.o ogrgmldatasource.o ogrgmllayer.o
+
+ALL_C_FLAGS	=	$(XERCES_INCLUDE) -I.. -I../.. -I$(GDAL_ROOT)/port \
 	$(filter-out -Wall,$(CFLAGS))
-XERCESLIB =	-lxerces-c1_6_0 -lpthread
 
+ifeq ($(HAVE_XERCES),yes)
+CORE_OBJ :=	$(CORE_OBJ) gmlreadstate.o gmlhandler.o trstring.o
+ALL_C_FLAGS :=  -DHAVE_XERCES=1 $(ALL_C_FLAGS)
+else
+ALL_C_FLAGS :=  -DHAVE_XERCES=0 $(ALL_C_FLAGS)
+endif
 
-
-default:	$(OBJ)
+default:	$(CORE_OBJ) $(OGR_OBJ) gmlview
 
 clean:
-	rm -f *.o gmldump
+	rm -f *.o gmlview
 
 %.o:	%.cpp
 	$(CXX) -c $(ALL_C_FLAGS) $*.cpp -o $*.o
-#	ar r ../ogrsf_frmts.a $*.o
+	ar r ../ogrsf_frmts.a $*.o
 
 %.o:	%.c
 	$(CC) -c $(ALL_C_FLAGS) $*.c -o $*.o
 #	ar r ../ogrsf_frmts.a $*.o
 
-gmlview:	gmlview.o $(OBJ)
-	$(CXX) $(LNK_FLAGS) gmlview.o $(OBJ) $(XERCESLIB) $(CPL_LIB) \
+gmlview:	gmlview.cpp $(CORE_OBJ)
+	$(CXX) $(ALL_C_FLAGS) $(LNK_FLAGS) \
+		gmlview.cpp gml2ogrgeometry.o $(CORE_OBJ) \
+		../ogrsf_frmts.a ../../ogr.a $(CPL_LIB) $(LIBS) \
 		-o gmlview
+
+
+xtest:	xtest.cpp
+	$(CXX) $(ALL_C_FLAGS) $(LNK_FLAGS) xtest.cpp \
+		$(LIBS) -o xtest
 
