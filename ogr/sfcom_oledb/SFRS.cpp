@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.28  2001/11/01 16:47:03  warmerda
+ * use factories to destroy features and geometry
+ *
  * Revision 1.27  2001/10/24 16:17:25  warmerda
  * improve debugging support
  *
@@ -515,7 +518,7 @@ BYTE &CVirtualArray::operator[](int iIndex)
             if( poFeature )
             {
                 CPLDebug( "OGR_OLEDB", "." );
-                delete poFeature;
+                OGRFeature::DestroyFeature( poFeature );
             }
             else
             {
@@ -576,7 +579,7 @@ BYTE &CVirtualArray::operator[](int iIndex)
         }
     }
 
-    delete poFeature;
+    OGRFeature::DestroyFeature( poFeature );
 
     return (*mBuffer);
 }
@@ -671,11 +674,11 @@ int CVirtualArray::FillOGRField( OGRFeature *poFeature, int iField,
         case OFTStringList:
         case OFTString:
         {
-            int nStringWidth = pColInfo->ulColumnSize - 1;
             const char *pszStr = poFeature->GetFieldAsString(iField);
+            int nStringWidth = MIN(strlen(pszStr),pColInfo->ulColumnSize - 1);
 
             strncpy((char *) pabyBuffer + nOffset,pszStr,nStringWidth);
-            pabyBuffer[nOffset+nStringWidth+1] = '\0';
+            pabyBuffer[nOffset+nStringWidth] = '\0';
         }
         break;
     }
@@ -706,7 +709,7 @@ HRESULT CSFCommand::Execute(IUnknown * pUnkOuter, REFIID riid,
     // clean up spatial filter geometry if still hanging around.
     if( poGeometry != NULL )
     {
-        delete poGeometry;
+        OGRGeometryFactory::destroyGeometry( poGeometry );
         poGeometry = NULL;
     }
     
