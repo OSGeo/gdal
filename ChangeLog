@@ -1,3 +1,7 @@
+2002-01-25  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* configure: add support for linking against Xerces library.
+
 2002-01-21  Simon Perkins  <s.perkins@lanl.gov>
 
 	* frmts/fits/fitsdataset.cpp: Silently truncate when writing
