@@ -9,6 +9,11 @@
 
  *
  * $Log$
+ * Revision 1.24  2005/02/24 16:13:57  hobu
+ * freearg patch for tostring argin typemap
+ * Added dummy typemaps (just copied the python ones)
+ * for the typemaps used in OGR for C#
+ *
  * Revision 1.23  2005/02/23 21:01:10  hobu
  * swap the decref with the asstring in the
  * tostring argin typemap
@@ -635,9 +640,61 @@ OPTIONAL_POD(int,i);
  *
  * Formats the object using str and returns the string representation
  */
+
 %typemap(python,in) (tostring argin) (PyObject *str)
 {
   /* %typemap(python,in) (tostring argin) */
+  str = PyObject_Str( $input );
+  if ( str == 0 ) {
+    PyErr_SetString( PyExc_RuntimeError, "Unable to format argument as string");
+    SWIG_fail;
+  }
+ 
+  $1 = PyString_AsString(str); 
+}
+%typemap(python,freearg)(tostring argin)
+{
+  /* %typemap(python,freearg) (tostring argin) */
+  Py_DECREF(str$argnum);
+}
+%typemap(python,typecheck,precedence=SWIG_TYPECHECK_POINTER) (tostring argin)
+{
+  /* %typemap(python,typecheck,precedence=SWIG_TYPECHECK_POINTER) (tostring argin) */
+  $1 = 1;
+}
+
+/* CSHARP TYPEMAPS */
+
+%typemap(csharp,in,numinputs=0) (int *nLen, char **pBuf ) ( int nLen, char *pBuf )
+{
+  /* %typemap(in,numinputs=0) (int *nLen, char **pBuf ) */
+  $1 = &nLen;
+  $2 = &pBuf;
+}
+
+%typemap(csharp,argout) (int *nLen, char **pBuf )
+{
+  /* %typemap(argout) (int *nLen, char **pBuf ) */
+  Py_XDECREF($result);
+  $result = PyString_FromStringAndSize( *$2, *$1 );
+}
+%typemap(csharp,freearg) (int *nLen, char **pBuf )
+{
+  /* %typemap(python,freearg) (int *nLen, char **pBuf ) */
+  if( $1 ) {
+    free( *$2 );
+  }
+}
+%typemap(csharp,in,numinputs=1) (int nLen, char *pBuf )
+{
+  /* %typemap(in,numinputs=1) (int nLen, char *pBuf ) */
+  PyString_AsStringAndSize($input, &$2, &$1 );
+}
+
+
+%typemap(csharp,in) (tostring argin) (PyObject *str)
+{
+  /* %typemap(csharp,in) (tostring argin) */
   str = PyObject_Str( $input );
   if ( str == 0 ) {
     PyErr_SetString( PyExc_RuntimeError, "Unable to format argument as string");
@@ -647,8 +704,10 @@ OPTIONAL_POD(int,i);
   $1 = PyString_AsString(str); 
   Py_DECREF(str);
 }
-%typemap(python,typecheck,precedence=SWIG_TYPECHECK_POINTER) (tostring argin)
+
+%typemap(csharp,in) (char **ignorechange) ( char *val )
 {
-  /* %typemap(python,typecheck,precedence=SWIG_TYPECHECK_POINTER) (tostring argin) */
-  $1 = 1;
+  /* %typemap(in) (char **ignorechange) */
+  PyArg_Parse( $input, "s", &val );
+  $1 = &val;
 }
