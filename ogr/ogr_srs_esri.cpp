@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2001/03/16 22:15:48  warmerda
+ * added support for reading WKT in importFromEPSG
+ *
  * Revision 1.4  2001/01/26 14:56:11  warmerda
  * added Transverse Mercator .prj support
  *
@@ -176,6 +179,26 @@ static const char*OSR_GDS( char **papszNV, const char * pszField,
 OGRErr OGRSpatialReference::importFromESRI( char **papszPrj )
 
 {
+    if( papszPrj == NULL || papszPrj[0] == NULL )
+        return OGRERR_CORRUPT_DATA;
+
+/* -------------------------------------------------------------------- */
+/*      Some newer ESRI products, like ArcPad, produce .prj files       */
+/*      with WKT in them.  Check if that appears to be the case.        */
+/*                                                                      */
+/*      ESRI uses an odd datum naming scheme, so some further           */
+/*      massaging may be required.                                      */
+/* -------------------------------------------------------------------- */
+    if( EQUALN(papszPrj[0],"GEOGCS",6)
+        || EQUALN(papszPrj[0],"PROJCS",6)
+        || EQUALN(papszPrj[0],"LOCAL_CS",8) )
+    {
+        char	*pszWKT;
+
+        pszWKT = papszPrj[0];
+        return importFromWkt( &pszWKT );
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Operate on the basis of the projection name.                    */
 /* -------------------------------------------------------------------- */
