@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.36  2004/02/25 09:02:25  dron
+ * Fixed bug in CPLPackedDMSToDec().
+ *
  * Revision 1.35  2004/02/21 10:08:54  dron
  * Fixes in various string handling functions.
  *
@@ -1285,9 +1288,9 @@ double CPLPackedDMSToDec( double dfPacked )
     dfSign = ( dfPacked < 0.0 )? -1 : 1;
         
     dfSeconds = ABS( dfPacked );
-    dfDegrees = dfSeconds / 1000000.0;
+    dfDegrees = floor(dfSeconds / 1000000.0);
     dfSeconds = dfSeconds - dfDegrees * 1000000.0;
-    dfMinutes = dfSeconds / 1000.0;
+    dfMinutes = floor(dfSeconds / 1000.0);
     dfSeconds = dfSeconds - dfMinutes * 1000.0;
     dfSeconds = dfSign * ( dfDegrees * 3600.0 + dfMinutes * 60.0 + dfSeconds);
     dfDegrees = dfSeconds / 3600.0;
