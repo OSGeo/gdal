@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.5  2000/01/31 03:55:49  warmerda
+ * Added support for writing out georeferencing to newly created datsets.
+ *
  * Revision 1.4  2000/01/13 19:10:53  warmerda
  * Call AccessWindowSet() _before_ creating a new layer.
  *
@@ -129,11 +132,15 @@ class CPL_DLL GIODataset : public GDALDataset
 {
     friend	GIORasterBand;
 
+    char       *pszPath;
+
     int         bCreated;
     int         nGridChannel;
     int         nCellType;
     double      dfCellSize;
     double      adfGeoTransform[6];
+
+    void        WriteGeoreference();
 
   public:
                 GIODataset();
@@ -145,6 +152,7 @@ class CPL_DLL GIODataset : public GDALDataset
                                 GDALDataType eType, char ** papszParmList );
 
     virtual CPLErr GetGeoTransform( double * );
+    virtual CPLErr SetGeoTransform( double * );
 };
 
 /************************************************************************/
@@ -254,8 +262,78 @@ GIODataset::~GIODataset()
     FlushCache();
     if( nGridChannel != -1 )
         pfnCellLayerClose( nGridChannel );
+
+    if( bCreated )
+        WriteGeoreference();
+
+    CPLFree( pszPath );
 }
 
+/************************************************************************/
+/*                         WriteGeoreference()                          */
+/************************************************************************/
+
+void GIODataset::WriteGeoreference()
+
+{
+/* -------------------------------------------------------------------- */
+/*      If this is a created dataset, we will write the                 */
+/*      georeferencing out directly.  We do this by hand, since         */
+/*      using the ESRI API we can only do this as part of the           */
+/*      creation.  First we update the bounds file.                     */
+/* -------------------------------------------------------------------- */
+    FILE      *fp;
+    double    adfFileBounds[4];
+
+    fp = VSIFOpen( CPLFormFilename( pszPath, "dblbnd", "adf" ), "wb" );
+    if( fp == NULL )
+    {
+        CPLError( CE_Failure, CPLE_OpenFailed,
+                  "Unable to open dbfbnd.adf to update georeferencing." );
+        return;
+    }
+
+    adfFileBounds[0] = adfGeoTransform[0];
+    adfFileBounds[1] = adfGeoTransform[3]+adfGeoTransform[5]*GetRasterYSize();
+    adfFileBounds[2] = adfGeoTransform[0]+adfGeoTransform[1]*GetRasterXSize();
+    adfFileBounds[3] = adfGeoTransform[3];
+
+#ifdef CPL_LSB
+    CPL_SWAPDOUBLE( adfFileBounds+0 );
+    CPL_SWAPDOUBLE( adfFileBounds+1 );
+    CPL_SWAPDOUBLE( adfFileBounds+2 );
+    CPL_SWAPDOUBLE( adfFileBounds+3 );
+#endif
+    
+    VSIFWrite( adfFileBounds, 1, 32, fp );
+    VSIFClose( fp );
+
+/* -------------------------------------------------------------------- */
+/*      Now update the cellsize in the header file.                     */
+/* -------------------------------------------------------------------- */
+    double      adfCellSizes[2];
+
+    fp = VSIFOpen( CPLFormFilename( pszPath, "hdr", "adf" ), "wb" );
+    if( fp == NULL )
+    {
+        CPLError( CE_Failure, CPLE_OpenFailed,
+                  "Unable to open hdr.adf to update georeferencing." );
+        return;
+    }
+    
+    adfCellSizes[0] = adfGeoTransform[1];
+    adfCellSizes[1] = ABS(adfGeoTransform[5]);
+                          
+#ifdef CPL_LSB
+    CPL_SWAPDOUBLE( adfCellSizes+0 );
+    CPL_SWAPDOUBLE( adfCellSizes+1 );
+#endif
+
+    VSIFSeek( fp, 256, SEEK_SET );
+    VSIFWrite( adfCellSizes, 1, 16, fp );
+
+    VSIFClose( fp );
+}
 
 /************************************************************************/
 /*                                Open()                                */
@@ -345,6 +423,7 @@ GDALDataset *GIODataset::Open( GDALOpenInfo * poOpenInfo )
 
     poDS = new GIODataset();
 
+    poDS->pszPath = pszCoverName;
     poDS->nGridChannel = nChannel;
     poDS->poDriver = poGIODriver;
 
@@ -391,6 +470,21 @@ CPLErr GIODataset::GetGeoTransform( double * padfTransform )
 
 {
     memcpy( padfTransform, adfGeoTransform, sizeof(double)*6 );
+
+    return( CE_None );
+}
+
+/************************************************************************/
+/*                          SetGeoTransform()                           */
+/************************************************************************/
+
+CPLErr GIODataset::SetGeoTransform( double * padfTransform )
+
+{
+    if( padfTransform[2] != 0.0 || padfTransform[4] != 0.0 )
+        return CE_Failure;
+
+    memcpy( adfGeoTransform, padfTransform, sizeof(double)*6 );
 
     return( CE_None );
 }
@@ -476,6 +570,7 @@ GDALDataset *GIODataset::Create( const char * pszFilename,
 
     poDS = new GIODataset();
 
+    poDS->pszPath = CPLStrdup( pszFilename );
     poDS->nGridChannel = nChannel;
     poDS->poDriver = poGIODriver;
     poDS->bCreated = TRUE;
