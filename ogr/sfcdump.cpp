@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  1999/06/10 14:37:45  warmerda
+ * added oledbgis.h
+ *
  * Revision 1.3  1999/06/09 21:00:10  warmerda
  * added support for spatial table identification
  *
@@ -49,6 +52,7 @@
 #include "ogr_geometry.h"
 #include "cpl_conv.h"
 #include <atldbsch.h>
+#include "oledbgis.h"
 
 static int      bVerbose = TRUE;
 
