@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.20  2003/07/08 21:23:23  warmerda
+ * avoid warnings
+ *
  * Revision 1.19  2003/06/19 12:28:45  dron
  * More fixes in GCP extraction.
  *
@@ -332,10 +335,10 @@ CPLErr L1BRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             CPL_SWAP32PTR(&iword);
 #endif
             jword = iword & 0x3FF00000;
-            iScan1[j++] = jword >> 20;
+            iScan1[j++] = (GUInt16) (jword >> 20);
             jword = iword & 0x000FFC00;
-            iScan1[j++] = jword >> 10;
-            iScan1[j++] = iword & 0x000003FF;
+            iScan1[j++] = (GUInt16) (jword >> 10);
+            iScan1[j++] = (GUInt16) (iword & 0x000003FF);
         }
         CPLFree(iRawScan);
         break;

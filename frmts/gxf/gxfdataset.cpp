@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.13  2003/07/08 21:20:21  warmerda
+ * avoid warnings
+ *
  * Revision 1.12  2002/09/04 06:50:37  warmerda
  * avoid static driver pointers
  *
@@ -158,7 +161,7 @@ CPLErr GXFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     eErr = GXFGetRawScanline( poGXF_DS->hGXF, nBlockYOff, padfBuffer );
     
     for( i = 0; i < nBlockXSize; i++ )
-        pafBuffer[i] = padfBuffer[i];
+        pafBuffer[i] = (float) padfBuffer[i];
 
     CPLFree( padfBuffer );
     

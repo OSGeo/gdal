@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2003/07/08 21:10:19  warmerda
+ * avoid warnings
+ *
  * Revision 1.18  2003/05/18 11:05:07  dron
  * Fixed problem in IRasterIO().
  *
@@ -800,7 +803,7 @@ int RawRasterBand::Seek( vsi_l_offset nOffset, int nSeekMode )
     if( bIsVSIL )
         return VSIFSeekL( fpRaw, nOffset, nSeekMode );
     else
-        return VSIFSeek( fpRaw, nOffset, nSeekMode );
+        return VSIFSeek( fpRaw, (long) nOffset, nSeekMode );
 }
 
 /************************************************************************/

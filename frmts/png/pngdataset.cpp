@@ -43,6 +43,9 @@
  *    application termination. 
  * 
  * $Log$
+ * Revision 1.23  2003/07/08 21:27:34  warmerda
+ * avoid warnings
+ *
  * Revision 1.22  2003/01/31 18:08:24  warmerda
  * Added test for broken png_get_channels().  I don't know what is *really*
  * going on here.
@@ -884,7 +887,7 @@ PNGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
          || nColorType == PNG_COLOR_TYPE_GRAY_ALPHA)
         && dfNoDataValue > 0 && dfNoDataValue < 65536 )
     {
-        sTRNSColor.gray = (int) dfNoDataValue;
+        sTRNSColor.gray = (png_uint_16) dfNoDataValue;
         png_set_tRNS( hPNG, psPNGInfo, NULL, 0, &sTRNSColor );
     }
 
@@ -913,9 +916,9 @@ PNGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             if( sEntry.c4 != 255 )
                 bFoundTrans = TRUE;
 
-            pasPNGColors[iColor].red = sEntry.c1;
-            pasPNGColors[iColor].green = sEntry.c2;
-            pasPNGColors[iColor].blue = sEntry.c3;
+            pasPNGColors[iColor].red = (png_byte) sEntry.c1;
+            pasPNGColors[iColor].green = (png_byte) sEntry.c2;
+            pasPNGColors[iColor].blue = (png_byte) sEntry.c3;
         }
         
         png_set_PLTE( hPNG, psPNGInfo, pasPNGColors, 
@@ -933,7 +936,7 @@ PNGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             for( iColor = 0; iColor < poCT->GetColorEntryCount(); iColor++ )
             {
                 poCT->GetColorEntryAsRGB( iColor, &sEntry );
-                pabyAlpha[iColor] = sEntry.c4;
+                pabyAlpha[iColor] = (unsigned char) sEntry.c4;
 
                 if( bHaveNoData && iColor == (int) dfNoDataValue )
                     pabyAlpha[iColor] = 0;

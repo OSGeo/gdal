@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.8  2003/07/08 21:21:56  warmerda
+ * avoid warnings
+ *
  * Revision 1.7  2002/09/04 06:50:37  warmerda
  * avoid static driver pointers
  *
@@ -194,7 +197,8 @@ CPLErr JDEMRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     }
 
     for( i = 0; i < nBlockXSize; i++ )
-        ((float *) pImage)[i] = JDEMGetField( pszRecord + 9 + 5 * i, 5) * 0.1;
+        ((float *) pImage)[i] = (float)
+            (JDEMGetField( pszRecord + 9 + 5 * i, 5) * 0.1);
 
     return CE_None;
 }
