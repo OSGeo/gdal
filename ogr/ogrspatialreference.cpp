@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.80  2003/10/07 04:20:50  warmerda
+ * added WMS AUTO: support
+ *
  * Revision 1.79  2003/09/18 14:43:40  warmerda
  * Ensure that SetAuthority() clears old nodes.
  * Don't crash on NULL root in exportToPrettyWkt().
@@ -1465,6 +1468,7 @@ OGRErr OSRCopyGeogCSFrom( OGRSpatialReferenceH hSRS,
  * <ol>
  * <li> Well Known Text definition - passed on to importFromWkt().
  * <li> "EPSG:n" - number passed on to importFromEPSG(). 
+ * <li> "AUTO:proj_id,unit_id,lon0,lat0" - WMS auto projections.
  * <li> PROJ.4 definitions - passed on to importFromProj4().
  * <li> filename - file read for WKT, XML or PROJ.4 definition.
  * <li> well known name accepted by SetWellKnownGeogCS(), such as NAD27, NAD83,
@@ -1516,9 +1520,10 @@ OGRErr OGRSpatialReference::SetFromUserInput( const char * pszDefinition )
     }
 
     if( EQUALN(pszDefinition,"EPSG:",5) )
-    {
         return importFromEPSG( atoi(pszDefinition+5) );
-    }
+
+    if( EQUALN(pszDefinition,"AUTO:",5) )
+        return importFromWMSAUTO( pszDefinition );
 
     if( EQUAL(pszDefinition,"NAD27") 
         || EQUAL(pszDefinition,"NAD83") 
@@ -1590,6 +1595,113 @@ OGRErr OSRSetFromUserInput( OGRSpatialReferenceH hSRS, const char *pszDef )
 
 {
     return ((OGRSpatialReference *) hSRS)->SetFromUserInput( pszDef );
+}
+
+/************************************************************************/
+/*                         importFromWMSAUTO()                          */
+/************************************************************************/
+
+OGRErr OGRSpatialReference::importFromWMSAUTO( const char * pszDefinition )
+
+{
+    char **papszTokens;
+    int nProjId, nUnitsId;
+    double dfRefLong, dfRefLat;
+    
+/* -------------------------------------------------------------------- */
+/*      Tokenize                                                        */
+/* -------------------------------------------------------------------- */
+    if( EQUALN(pszDefinition,"AUTO:",5) )
+        pszDefinition += 5;
+
+    papszTokens = CSLTokenizeStringComplex( pszDefinition, ",", FALSE, TRUE );
+
+    if( CSLCount(papszTokens) != 4 )
+    {
+        CSLDestroy( papszTokens );
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "AUTO projection has wrong number of arguments, expected\n"
+                  "AUTO:proj_id,units_id,ref_long,ref_lat" );
+        return OGRERR_FAILURE;
+    }
+
+    nProjId = atoi(papszTokens[0]);
+    nUnitsId = atoi(papszTokens[1]);
+    dfRefLong = atof(papszTokens[2]);
+    dfRefLat = atof(papszTokens[3]);
+
+    CSLDestroy( papszTokens );
+
+/* -------------------------------------------------------------------- */
+/*      Build coordsys.                                                 */
+/* -------------------------------------------------------------------- */
+    Clear();
+
+    switch( nProjId )
+    {
+      case 42001: // Auto UTM
+        SetUTM( (int) floor( (dfRefLong + 180.0) / 6.0 ) + 1, 
+                dfRefLat >= 0.0 );
+        break;
+
+      case 42002: // Auto TM (strangely very UTM-like).
+        SetTM( 0, dfRefLong, 0.9996, 
+               500000.0, (dfRefLat >= 0.0) ? 0.0 : 10000000.0 );
+        break;
+
+      case 42003: // Auto Orthographic.
+        SetOrthographic( dfRefLat, dfRefLong, 0.0, 0.0 );
+        break;
+
+      case 42004: // Auto Equirectangular
+        SetEquirectangular( dfRefLat, dfRefLong, 0.0, 0.0 );
+        break;
+
+      case 42005:
+        SetMollweide( dfRefLong, 0.0, 0.0 );
+        break;
+
+      default:
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Unsupported projection id in importFromWMSAUTO(): %d", 
+                  nProjId );
+        return OGRERR_FAILURE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Set units.                                                      */
+/* -------------------------------------------------------------------- */
+
+    switch( nUnitsId )
+    {
+      case 9001:
+        SetLinearUnits( SRS_UL_METER, 1.0 );
+        break;
+
+      case 9002:
+        SetLinearUnits( "Foot", 0.3048 );
+        break;
+
+      case 9003:
+        SetLinearUnits( "US survey foot", 0.304800609601 );
+        break;
+
+      default:
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Unsupported units code (%d).", 
+                  nUnitsId );
+        return OGRERR_FAILURE;
+        break;
+    }
+    
+    SetAuthority( "PROJCS|UNIT", "EPSG", nUnitsId );
+
+/* -------------------------------------------------------------------- */
+/*      Set WGS84.                                                      */
+/* -------------------------------------------------------------------- */
+    SetWellKnownGeogCS( "WGS84" );
+
+    return OGRERR_NONE;
 }
 
 /************************************************************************/
