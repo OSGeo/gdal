@@ -37,11 +37,14 @@
  ******************************************************************************
  *
  * $Log$
- * Revision 1.5  2001/07/20 13:05:00  warmerda
- * further hacked SHPAPI_CALL
- *
- * Revision 1.4  2001/07/20 12:35:02  warmerda
+ * Revision 1.6  2001/11/01 16:30:30  warmerda
  * updated
+ *
+ * Revision 1.21  2001/11/01 16:29:55  warmerda
+ * move pabyRec into SHPInfo for thread safety
+ *
+ * Revision 1.20  2001/07/20 13:06:02  warmerda
+ * fixed SHPAPI attribute for SHPTreeFindLikelyShapes
  *
  * Revision 1.19  2001/05/31 19:20:13  warmerda
  * added DBFGetFieldIndex()
@@ -99,10 +102,7 @@
  *
  */
 
-#include "cpl_port.h"
-
-#define SHPAPI_CALL CPL_DLL
-#define SHPAPI_CALL1(x)      SHPAPI_CALL *
+#include <stdio.h>
 
 #ifdef USE_DBMALLOC
 #include <dbmalloc.h>
@@ -112,6 +112,11 @@
 extern "C" {
 #endif
 
+#ifndef SHPAPI_CALL
+#define SHPAPI_CALL
+#endif
+
+#define SHPAPI_CALL1(x)      * SHPAPI_CALL
     
 /************************************************************************/
 /*                        Configuration options.                        */
@@ -151,6 +156,9 @@ typedef	struct
     double	adBoundsMax[4];
 
     int		bUpdated;
+
+    unsigned char *pabyRec;
+    int         nBufSize;
 } SHPInfo;
 
 typedef SHPInfo * SHPHandle;
