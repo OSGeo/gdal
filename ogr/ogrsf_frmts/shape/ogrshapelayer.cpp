@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2005/01/04 03:43:41  fwarmerdam
+ * added support for creating and destroying spatial indexes
+ *
  * Revision 1.16  2005/01/03 22:26:21  fwarmerdam
  * updated to use spatial indexing
  *
@@ -719,6 +722,92 @@ OGRErr OGRShapeLayer::SyncToDisk()
 
     if( hDBF != NULL )
         fflush( hDBF->fp );
+
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                          DropSpatialIndex()                          */
+/************************************************************************/
+
+OGRErr OGRShapeLayer::DropSpatialIndex()
+
+{
+    if( !CheckForQIX() )
+    {
+        CPLError( CE_Warning, CPLE_AppDefined, 
+                  "Layer %s has no spatial index, DROP SPATIAL INDEX failed.",
+                  poFeatureDefn->GetName() );
+        return OGRERR_FAILURE;
+    }
+
+    VSIFClose( fpQIX );
+    fpQIX = NULL;
+    bCheckedForQIX = FALSE;
+    
+    const char *pszQIXFilename;
+
+    pszQIXFilename = CPLResetExtension( pszFullName, "qix" );
+    CPLDebug( "SHAPE", "Unlinking index file %s", pszQIXFilename );
+
+    if( VSIUnlink( pszQIXFilename ) != 0 )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Failed to delete file %s.\n%s", 
+                  pszQIXFilename, VSIStrerror( errno ) );
+        return OGRERR_FAILURE;
+    }
+    else
+        return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                         CreateSpatialIndex()                         */
+/************************************************************************/
+
+OGRErr OGRShapeLayer::CreateSpatialIndex( int nMaxDepth )
+
+{
+/* -------------------------------------------------------------------- */
+/*      If we have an existing spatial index, blow it away first.       */
+/* -------------------------------------------------------------------- */
+    if( CheckForQIX() )
+        DropSpatialIndex();
+
+    bCheckedForQIX = FALSE;
+
+/* -------------------------------------------------------------------- */
+/*      Build a quadtree structure for this file.                       */
+/* -------------------------------------------------------------------- */
+    SHPTree	*psTree;
+
+    SyncToDisk();
+    psTree = SHPCreateTree( hSHP, 2, nMaxDepth, NULL, NULL );
+
+/* -------------------------------------------------------------------- */
+/*      Trim unused nodes from the tree.                                */
+/* -------------------------------------------------------------------- */
+    SHPTreeTrimExtraNodes( psTree );
+
+/* -------------------------------------------------------------------- */
+/*      Dump tree to .qix file.                                         */
+/* -------------------------------------------------------------------- */
+    char *pszQIXFilename;
+
+    pszQIXFilename = CPLStrdup(CPLResetExtension( pszFullName, "qix" ));
+
+    CPLDebug( "SHAPE", "Creating index file %s", pszQIXFilename );
+
+    SHPWriteTree( psTree, pszQIXFilename );
+    CPLFree( pszQIXFilename );
+
+
+/* -------------------------------------------------------------------- */
+/*      cleanup                                                         */
+/* -------------------------------------------------------------------- */
+    SHPDestroyTree( psTree );
+
+    CheckForQIX();
 
     return OGRERR_NONE;
 }
