@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.41  2003/06/20 19:33:54  warmerda
+ * fixed use of const string as non-const argument - bugzilla 350
+ *
  * Revision 1.40  2003/06/20 02:12:35  warmerda
  * set photometric tag
  *
@@ -1759,7 +1762,9 @@ CPLErr GTIFMemBufFromWkt( const char *pszWKT, const double *padfGeoTransform,
 /* -------------------------------------------------------------------- */
 /*      Cleanup and return the created memory buffer.                   */
 /* -------------------------------------------------------------------- */
-    TIFFWriteEncodedStrip( hTIFF, 0, "", 1 );
+    GByte bySmallImage = 0;
+
+    TIFFWriteEncodedStrip( hTIFF, 0, (char *) &bySmallImage, 1 );
     TIFFWriteCheck( hTIFF, TIFFIsTiled(hTIFF), "GTIFMemBufFromWkt");
     TIFFWriteDirectory( hTIFF );
 
