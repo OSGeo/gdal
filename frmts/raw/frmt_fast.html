@@ -22,6 +22,10 @@ text.<p>
 This driver wants administrative file for input. Filenames of images will be
 extracted and data will be imported, every file will be interpreted as band.<p>
 
+<h2>Data</h2>
+
+<h3>FAST-L7A</h3>
+
 FAST-L7A consists form several files: big ones with image data and three
 small files with administrative information. You should give to driver one
 of the administrative files:<p>
@@ -76,6 +80,61 @@ FST = FAST file extension<br>
 So you should give to driver one of the <tt>L7fppprrr_rrrYYYYMMDD_HPN.FST</tt>, 
 <tt>L7fppprrr_rrrYYYYMMDD_HRF.FST</tt> or
 <tt>L7fppprrr_rrrYYYYMMDD_HTM.FST</tt> files.
+
+<h3>IRS-1C/1D</h3>
+
+Fast Format REV. C does not contain band filenames in administrative header.
+So we should guess band filenames, because different data distributors name
+their files differently. Several naming schemes hardcoded in GDAL's FAST
+driver. These are:<p>
+
+<tt>
+&lt;header&gt;.&lt;ext&gt;<br>
+&lt;header&gt;.1.&lt;ext&gt;<br>
+&lt;header&gt;.2.&lt;ext&gt;<br>
+...<br>
+</tt><p>
+
+or<p>
+
+<tt>
+&lt;header&gt;.&lt;ext&gt;<br>
+band1.&lt;ext&gt;<br>
+band2.&lt;ext&gt;<br>
+...<br>
+</tt><p>
+
+or<p>
+
+<tt>
+&lt;header&gt;.&lt;ext&gt;<br>
+band1.dat<br>
+band2.dat<br>
+...<br>
+</tt><p>
+
+or<p>
+
+<tt>
+&lt;header&gt;.&lt;ext&gt;<br>
+imagery1.&lt;ext&gt;<br>
+imagery2.&lt;ext&gt;<br>
+...<br>
+</tt><p>
+
+or<p>
+
+<tt>
+&lt;header&gt;.&lt;ext&gt;<br>
+imagery1.dat<br>
+imagery2.dat<br>
+...<br>
+</tt><p>
+
+in lower or upper case. Header file could be named arbitrarily. This should
+cover majority of distributors fantasy in naming files. But if you out of
+luck and your datasets named differently you should rename them manually
+before importing data with GDAL.<p>
 
 <h2>Georeference</h2>
 
