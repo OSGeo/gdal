@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.25  2003/03/03 20:10:05  gwalter
+ * Updated MFF and HKV (MFF2) georeferencing support.
+ *
  * Revision 1.24  2002/11/23 18:54:17  warmerda
  * added CREATIONDATATYPES metadata for drivers
  *
@@ -107,6 +110,7 @@
 #include "cpl_string.h"
 #include <ctype.h>
 #include "ogr_spatialref.h"
+#include "atlsci_spheroid.h"
 
 CPL_CVSID("$Id$");
 
@@ -135,6 +139,64 @@ class HKVRasterBand : public RawRasterBand
 };
 
 /************************************************************************/
+/*                      HKV Spheroids                                   */
+/************************************************************************/
+
+class HKVSpheroidList : public SpheroidList
+{
+
+public:
+
+  HKVSpheroidList();
+  ~HKVSpheroidList();
+
+};
+
+HKVSpheroidList :: HKVSpheroidList()
+{
+  num_spheroids = 29;
+  epsilonR = 0.1;
+  epsilonI = 0.000001;
+
+  spheroids[0].SetValuesByEqRadiusAndInvFlattening("airy-1830",6377563.396,299.3249646);
+  spheroids[1].SetValuesByEqRadiusAndInvFlattening("modified-airy",6377340.189,299.3249646);
+  spheroids[2].SetValuesByEqRadiusAndInvFlattening("australian-national",6378160,298.25);
+  spheroids[3].SetValuesByEqRadiusAndInvFlattening("bessel-1841-namibia",6377483.865,299.1528128);
+  spheroids[4].SetValuesByEqRadiusAndInvFlattening("bessel-1841",6377397.155,299.1528128);
+  spheroids[5].SetValuesByEqRadiusAndInvFlattening("clarke-1858",6378294.0,294.297);
+  spheroids[6].SetValuesByEqRadiusAndInvFlattening("clarke-1866",6378206.4,294.9786982);
+  spheroids[7].SetValuesByEqRadiusAndInvFlattening("clarke-1880",6378249.145,293.465);
+  spheroids[8].SetValuesByEqRadiusAndInvFlattening("everest-india-1830",6377276.345,300.8017);
+  spheroids[9].SetValuesByEqRadiusAndInvFlattening("everest-sabah-sarawak",6377298.556,300.8017);
+  spheroids[10].SetValuesByEqRadiusAndInvFlattening("everest-india-1956",6377301.243,300.8017);
+  spheroids[11].SetValuesByEqRadiusAndInvFlattening("everest-malaysia-1969",6377295.664,300.8017);
+  spheroids[12].SetValuesByEqRadiusAndInvFlattening("everest-malay-sing",6377304.063,300.8017);
+  spheroids[13].SetValuesByEqRadiusAndInvFlattening("everest-pakistan",6377309.613,300.8017);
+  spheroids[14].SetValuesByEqRadiusAndInvFlattening("modified-fisher-1960",6378155,298.3);
+  spheroids[15].SetValuesByEqRadiusAndInvFlattening("helmert-1906",6378200,298.3);
+  spheroids[16].SetValuesByEqRadiusAndInvFlattening("hough-1960",6378270,297);
+  spheroids[17].SetValuesByEqRadiusAndInvFlattening("hughes",6378273.0,298.279);
+  spheroids[18].SetValuesByEqRadiusAndInvFlattening("indonesian-1974",6378160,298.247);
+  spheroids[19].SetValuesByEqRadiusAndInvFlattening("international-1924",6378388,297);
+  spheroids[20].SetValuesByEqRadiusAndInvFlattening("iugc-67",6378160.0,298.254);
+  spheroids[21].SetValuesByEqRadiusAndInvFlattening("iugc-75",6378140.0,298.25298);
+  spheroids[22].SetValuesByEqRadiusAndInvFlattening("krassovsky-1940",6378245,298.3);
+  spheroids[23].SetValuesByEqRadiusAndInvFlattening("kaula",6378165.0,292.308);
+  spheroids[24].SetValuesByEqRadiusAndInvFlattening("grs-80",6378137,298.257222101);
+  spheroids[25].SetValuesByEqRadiusAndInvFlattening("south-american-1969",6378160,298.25);
+  spheroids[26].SetValuesByEqRadiusAndInvFlattening("wgs-72",6378135,298.26);
+  spheroids[27].SetValuesByEqRadiusAndInvFlattening("wgs-84",6378137,298.257223563);
+  spheroids[28].SetValuesByEqRadiusAndInvFlattening("ev-wgs-84",6378137.0,298.252841); 
+  spheroids[29].SetValuesByEqRadiusAndInvFlattening("ev-bessel",6377397.0,299.1976073);
+
+}
+
+HKVSpheroidList::~HKVSpheroidList()
+
+{
+}
+
+/************************************************************************/
 /* ==================================================================== */
 /*				HKVDataset				*/
 /* ==================================================================== */
@@ -152,8 +214,10 @@ class HKVDataset : public RawDataset
 
     void        ProcessGeoref(const char *);
     void        ProcessGeorefGCP(char **, const char *, double, double);
+    CPLErr      SetGCPProjection(const char *); /* for use in CreateCopy */
 
     char        *pszProjection;
+    char        *pszGCPProjection;
     double      adfGeoTransform[6];
 
     char	**papszAttrib;
@@ -179,6 +243,12 @@ class HKVDataset : public RawDataset
     static GDALDataset *Create( const char * pszFilename,
                                 int nXSize, int nYSize, int nBands,
                                 GDALDataType eType, char ** papszParmList );
+    static GDALDataset *CreateCopy( const char * pszFilename, 
+                                    GDALDataset *poSrcDS, 
+                                    int bStrict, char ** papszOptions, 
+                                    GDALProgressFunc pfnProgress, 
+                                    void * pProgressData );
+
     static CPLErr Delete( const char * pszName );
 };
 
@@ -237,6 +307,7 @@ HKVDataset::HKVDataset()
     nGCPCount = 0;
     pasGCPList = NULL;
     pszProjection = CPLStrdup("");
+    pszGCPProjection = CPLStrdup("");
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
     adfGeoTransform[2] = 0.0;
@@ -253,7 +324,6 @@ HKVDataset::~HKVDataset()
 
 {
     FlushCache();
-
     if( bGeorefChanged )
     {
         const char	*pszFilename;
@@ -265,7 +335,7 @@ HKVDataset::~HKVDataset()
 
     if( fpBlob != NULL )
         VSIFCloseL( fpBlob );
-
+ 
     if( nGCPCount > 0 )
     {
         GDALDeinitGCPs( nGCPCount, pasGCPList );
@@ -273,7 +343,7 @@ HKVDataset::~HKVDataset()
     }
 
     CPLFree( pszProjection );
-
+    CPLFree( pszGCPProjection );
     CPLFree( pszPath );
     CSLDestroy( papszGeoref );
     CSLDestroy( papszAttrib );
@@ -296,7 +366,7 @@ const char *HKVDataset::GetProjectionRef()
 CPLErr HKVDataset::GetGeoTransform( double * padfTransform )
 
 {
-    memcpy( padfTransform,  adfGeoTransform, sizeof(double) * 6 );
+    memcpy( padfTransform,  adfGeoTransform, sizeof(double) * 6 ); 
     return( CE_None );
 }
 
@@ -309,113 +379,361 @@ CPLErr HKVDataset::SetGeoTransform( double * padfTransform )
 {
     char	szValue[128];
 
+    /* NOTE:  Geotransform coordinates must match the current projection   */
+    /* of the dataset being changed (not the geotransform source).         */
+    /* ie. be in lat/longs for LL projected; UTM for UTM projected.        */
+    /* SET PROJECTION BEFORE SETTING GEOTRANSFORM TO AVOID SYNCHRONIZATION */
+    /* PROBLEMS!                                                           */
+
+    /* Update the geotransform itself */
     memcpy( adfGeoTransform, padfTransform, sizeof(double)*6 );
 
-/* -------------------------------------------------------------------- */
-/*      top left                                                        */
-/* -------------------------------------------------------------------- */
-    sprintf( szValue, "%.10f", padfTransform[3] );
-    papszGeoref = CSLSetNameValue( papszGeoref, "top_left.latitude", 
-                                   szValue );
 
-    sprintf( szValue, "%.10f", padfTransform[0] );
-    papszGeoref = CSLSetNameValue( papszGeoref, "top_left.longitude", 
-                                   szValue );
+    /* Update georef GCPs for saving later */
+    if(( CSLFetchNameValue( papszGeoref, "projection.name" ) != NULL ) &&
+       ( EQUAL(CSLFetchNameValue( papszGeoref, "projection.name" ),"UTM" )))
 
-/* -------------------------------------------------------------------- */
-/*      top_right                                                       */
-/* -------------------------------------------------------------------- */
-    sprintf( szValue, "%.10f", padfTransform[3] );
-    papszGeoref = CSLSetNameValue( papszGeoref, "top_right.latitude", 
-                                   szValue );
-
-    sprintf( szValue, "%.10f", 
-             padfTransform[0] + GetRasterXSize() * padfTransform[1] );
-    papszGeoref = CSLSetNameValue( papszGeoref, "top_right.longitude", 
-                                   szValue );
-
-/* -------------------------------------------------------------------- */
-/*      bottom_left                                                     */
-/* -------------------------------------------------------------------- */
-    sprintf( szValue, "%.10f", 
-             padfTransform[3] + GetRasterYSize() * padfTransform[5] );
-    papszGeoref = CSLSetNameValue( papszGeoref, "bottom_left.latitude", 
-                                   szValue );
-
-    sprintf( szValue, "%.10f", padfTransform[0] );
-    papszGeoref = CSLSetNameValue( papszGeoref, "bottom_left.longitude", 
-                                   szValue );
-
-/* -------------------------------------------------------------------- */
-/*      bottom_right                                                    */
-/* -------------------------------------------------------------------- */
-    sprintf( szValue, "%.10f", 
-             padfTransform[3] + GetRasterYSize() * padfTransform[5] );
-    papszGeoref = CSLSetNameValue( papszGeoref, "bottom_right.latitude", 
-                                   szValue );
-
-    sprintf( szValue, "%.10f", 
-             padfTransform[0] + GetRasterXSize() * padfTransform[1] );
-    papszGeoref = CSLSetNameValue( papszGeoref, "bottom_right.longitude", 
-                                   szValue );
-
-/* -------------------------------------------------------------------- */
-/*      Center                                                          */
-/* -------------------------------------------------------------------- */
-    sprintf( szValue, "%.10f", 
-             padfTransform[3] + GetRasterYSize() * padfTransform[5] * 0.5 );
-    papszGeoref = CSLSetNameValue( papszGeoref, "centre.latitude", 
-                                   szValue );
-
-    sprintf( szValue, "%.10f", 
-             padfTransform[0] + GetRasterXSize() * padfTransform[1] * 0.5 );
-    papszGeoref = CSLSetNameValue( papszGeoref, "centre.longitude", 
-                                   szValue );
-
-/* -------------------------------------------------------------------- */
-/*      Set projection to LL if not previously set.                     */
-/* -------------------------------------------------------------------- */
-    if( CSLFetchNameValue( papszGeoref, "projection.name" ) == NULL )
     {
-        papszGeoref = CSLSetNameValue( papszGeoref, "projection.name", "LL" );
-        papszGeoref = CSLSetNameValue( papszGeoref, "spheroid.name", 
-                                       "ev-wgs-84" );
+        double temp_lat, temp_long;
+        OGRSpatialReference oUTM;
+        OGRSpatialReference oLL;
+        OGRCoordinateTransformation *poTransform = NULL;
+        int bSuccess=TRUE;
+        char *pszPtemp;
+        char *pszGCPtemp;
+
+        /* pass copies of projection info, not originals (pointers */
+        /* get updated by importFromWkt)                           */
+        pszPtemp = CPLStrdup(pszProjection);
+        pszGCPtemp = CPLStrdup(pszGCPProjection);
+        oUTM.importFromWkt(&pszPtemp);
+        oLL.importFromWkt(&pszGCPtemp);
+
+        poTransform = OGRCreateCoordinateTransformation( &oUTM, &oLL );
+        if( poTransform == NULL )
+            bSuccess = FALSE;
+
+    /* Projection is utm- coordinates need to be transformed */
+    /* -------------------------------------------------------------------- */
+    /*      top left                                                        */
+    /* -------------------------------------------------------------------- */
+
+        temp_lat = padfTransform[3];
+        temp_long = padfTransform[0]; 
+        if( !bSuccess || !poTransform->Transform( 1, &temp_long, &temp_lat ) )
+            bSuccess = FALSE;
+
+        if (bSuccess)
+        {
+            sprintf( szValue, "%.10f", temp_lat );
+            papszGeoref = CSLSetNameValue( papszGeoref, "top_left.latitude", 
+                                           szValue );
+
+            sprintf( szValue, "%.10f", temp_long );
+            papszGeoref = CSLSetNameValue( papszGeoref, "top_left.longitude", 
+                                           szValue );
+        }
+
+    /* -------------------------------------------------------------------- */
+    /*      top_right                                                       */
+    /* -------------------------------------------------------------------- */
+
+        temp_lat = padfTransform[3] + (GetRasterXSize()-1) * padfTransform[4];
+        temp_long = padfTransform[0] + (GetRasterXSize()-1) * padfTransform[1];
+        if( !bSuccess || !poTransform->Transform( 1, &temp_long, &temp_lat ) )
+            bSuccess = FALSE;
+
+        if (bSuccess)
+        {
+            sprintf( szValue, "%.10f", temp_lat );
+            papszGeoref = CSLSetNameValue( papszGeoref, "top_right.latitude", 
+                                           szValue );
+
+            sprintf( szValue, "%.10f", temp_long );
+            papszGeoref = CSLSetNameValue( papszGeoref, "top_right.longitude", 
+                                           szValue );
+        }
+
+    /* -------------------------------------------------------------------- */
+    /*      bottom_left                                                     */
+    /* -------------------------------------------------------------------- */
+        temp_lat = padfTransform[3] + (GetRasterYSize()-1) * padfTransform[5];
+        temp_long = padfTransform[0] + (GetRasterYSize()-1) * padfTransform[2]; 
+        if( !bSuccess || !poTransform->Transform( 1, &temp_long, &temp_lat ) )
+            bSuccess = FALSE;
+
+        if (bSuccess)
+        {
+            sprintf( szValue, "%.10f", temp_lat );
+            papszGeoref = CSLSetNameValue( papszGeoref, "bottom_left.latitude", 
+                                           szValue );
+
+            sprintf( szValue, "%.10f", temp_long );
+            papszGeoref = CSLSetNameValue( papszGeoref, "bottom_left.longitude", 
+                                           szValue );
+        }
+
+    /* -------------------------------------------------------------------- */
+    /*      bottom_right                                                    */
+    /* -------------------------------------------------------------------- */
+        temp_lat = padfTransform[3] + (GetRasterXSize()-1) * padfTransform[4] + 
+          (GetRasterYSize()-1) * padfTransform[5];
+        temp_long = padfTransform[0] + (GetRasterXSize()-1) * padfTransform[1] + 
+          (GetRasterYSize()-1) * padfTransform[2];
+        if( !bSuccess || !poTransform->Transform( 1, &temp_long, &temp_lat ) )
+            bSuccess = FALSE;
+
+        if (bSuccess)
+        {
+            sprintf( szValue, "%.10f", temp_lat );
+            papszGeoref = CSLSetNameValue( papszGeoref, "bottom_right.latitude", 
+                                           szValue );
+
+            sprintf( szValue, "%.10f", temp_long );
+            papszGeoref = CSLSetNameValue( papszGeoref, "bottom_right.longitude", 
+                                           szValue );
+        }
+
+    /* -------------------------------------------------------------------- */
+    /*      Center                                                          */
+    /* -------------------------------------------------------------------- */
+        temp_lat = padfTransform[3] + (GetRasterXSize()-1) * padfTransform[4] * 0.5 +
+          (GetRasterYSize()-1) * padfTransform[5] * 0.5;
+        temp_long = padfTransform[0] + (GetRasterXSize()-1) * padfTransform[1] * 0.5 +
+                 (GetRasterYSize()-1) * padfTransform[2] * 0.5; 
+        if( !bSuccess || !poTransform->Transform( 1, &temp_long, &temp_lat ) )
+            bSuccess = FALSE;
+
+        if (bSuccess)
+        {
+            sprintf( szValue, "%.10f", temp_lat );
+            papszGeoref = CSLSetNameValue( papszGeoref, "centre.latitude", 
+                                           szValue );
+
+            sprintf( szValue, "%.10f", temp_long );
+            papszGeoref = CSLSetNameValue( papszGeoref, "centre.longitude", 
+                                           szValue );
+        }
+    
+        if (!bSuccess)
+        {
+          CPLError(CE_Warning,CPLE_AppDefined,
+                   "Warning- error setting header info in SetGeoTransform. Changes may not be saved properly.\n"); 
+        }
+     
+        if (poTransform != NULL)
+            delete poTransform;
     }
+    else
+    {
+    /* Projection is lat/long- coordinates don't need to be transformed */
+    /* -------------------------------------------------------------------- */
+    /*      top left                                                        */
+    /* -------------------------------------------------------------------- */
+        sprintf( szValue, "%.10f", padfTransform[3] );
+        papszGeoref = CSLSetNameValue( papszGeoref, "top_left.latitude", 
+                                       szValue );
+
+        sprintf( szValue, "%.10f", padfTransform[0] );
+        papszGeoref = CSLSetNameValue( papszGeoref, "top_left.longitude", 
+                                       szValue );
+
+    /* -------------------------------------------------------------------- */
+    /*      top_right                                                       */
+    /* -------------------------------------------------------------------- */
+        sprintf( szValue, "%.10f", 
+                 padfTransform[3] + (GetRasterXSize()-1) * padfTransform[4] );
+        papszGeoref = CSLSetNameValue( papszGeoref, "top_right.latitude", 
+                                       szValue );
+
+        sprintf( szValue, "%.10f", 
+                 padfTransform[0] + (GetRasterXSize()-1) * padfTransform[1] );
+        papszGeoref = CSLSetNameValue( papszGeoref, "top_right.longitude", 
+                                       szValue );
+
+    /* -------------------------------------------------------------------- */
+    /*      bottom_left                                                     */
+    /* -------------------------------------------------------------------- */
+        sprintf( szValue, "%.10f", 
+                 padfTransform[3] + (GetRasterYSize()-1) * padfTransform[5] );
+        papszGeoref = CSLSetNameValue( papszGeoref, "bottom_left.latitude", 
+                                       szValue );
+
+        sprintf( szValue, "%.10f", 
+                 padfTransform[0] + (GetRasterYSize()-1) * padfTransform[2] );
+        papszGeoref = CSLSetNameValue( papszGeoref, "bottom_left.longitude", 
+                                       szValue );
+
+    /* -------------------------------------------------------------------- */
+    /*      bottom_right                                                    */
+    /* -------------------------------------------------------------------- */
+        sprintf( szValue, "%.10f", 
+                 padfTransform[3] + (GetRasterXSize()-1) * padfTransform[4] + 
+                 (GetRasterYSize()-1) * padfTransform[5] );
+        papszGeoref = CSLSetNameValue( papszGeoref, "bottom_right.latitude", 
+                                       szValue );
+
+        sprintf( szValue, "%.10f", 
+                 padfTransform[0] + (GetRasterXSize()-1) * padfTransform[1] + 
+                 (GetRasterYSize()-1) * padfTransform[2] );
+        papszGeoref = CSLSetNameValue( papszGeoref, "bottom_right.longitude", 
+                                       szValue );
+
+    /* -------------------------------------------------------------------- */
+    /*      Center                                                          */
+    /* -------------------------------------------------------------------- */
+        sprintf( szValue, "%.10f", 
+                 padfTransform[3] + (GetRasterXSize()-1) * padfTransform[4] * 0.5 +
+                 (GetRasterYSize()-1) * padfTransform[5] * 0.5);
+        papszGeoref = CSLSetNameValue( papszGeoref, "centre.latitude", 
+                                       szValue );
+
+        sprintf( szValue, "%.10f", 
+                 padfTransform[0] + (GetRasterXSize()-1) * padfTransform[1] * 0.5 +
+                 (GetRasterYSize()-1) * padfTransform[2] * 0.5);
+        papszGeoref = CSLSetNameValue( papszGeoref, "centre.longitude", 
+                                       szValue );
+    
+    /* -------------------------------------------------------------------- */
+    /*      Set projection to LL if not previously set.                     */
+    /* -------------------------------------------------------------------- */
+        if( CSLFetchNameValue( papszGeoref, "projection.name" ) == NULL )
+        {
+            papszGeoref = CSLSetNameValue( papszGeoref, "projection.name", "LL" );
+            papszGeoref = CSLSetNameValue( papszGeoref, "spheroid.name", 
+                                           "ev-wgs-84" );
+        }
+    }
+
 
     bGeorefChanged = TRUE;
 
     return( CE_None );
 }
 
+CPLErr HKVDataset::SetGCPProjection( const char *pszNewProjection )
+{
+    if( !EQUALN(pszNewProjection,"GEOGCS",6)
+        && !EQUAL(pszNewProjection,"") )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                "GCPs must be in lat/long coordinates for MFF2 (hkv).",
+                  pszNewProjection );
+        
+        return CE_Failure;
+    }
+    
+    CPLFree( pszGCPProjection );
+    this->pszGCPProjection = CPLStrdup(pszNewProjection);
+
+    return CE_None;
+}
+
 /************************************************************************/
 /*                           SetProjection()                            */
 /*                                                                      */
 /*      We provide very limited support for setting the projection.     */
-/*      Currently all that is supported is controlling whether the      */
-/*      datum is WGS84 (the default), or Bessel Ellipsoid (as is        */
-/*      found with Japanese DEM data with Tokyo datum).                 */
 /************************************************************************/
 
-CPLErr HKVDataset::SetProjection( const char * pszProjection )
+CPLErr HKVDataset::SetProjection( const char * pszNewProjection )
 
 {
-    printf( "HKVDataset::SetProjection(%s)\n", pszProjection );
+    OGRSpatialReference *oSRS;
+    HKVSpheroidList *hkvEllipsoids;
+    double eq_radius, inv_flattening;
+    OGRErr ogrerrorEq=OGRERR_NONE;
+    OGRErr ogrerrorInvf=OGRERR_NONE;
+    OGRErr ogrerrorOl=OGRERR_NONE;
+    char *modifiableProjection = NULL;
 
-    papszGeoref = CSLSetNameValue( papszGeoref, "projection.name", "LL" );
+    char *spheroid_name = NULL;
 
-    if( strstr(pszProjection,"Bessel") != NULL )
+    /* This function is used to create a georef file */
+
+
+    printf( "HKVDataset::SetProjection(%s)\n", pszNewProjection );
+
+    if( !EQUALN(pszNewProjection,"GEOGCS",6)
+        && !EQUALN(pszNewProjection,"PROJCS",6)
+        && !EQUAL(pszNewProjection,"") )
     {
-        papszGeoref = CSLSetNameValue( papszGeoref, "spheroid.name", 
-                                       "ev-bessel" );
+        CPLError( CE_Failure, CPLE_AppDefined,
+                "Only OGC WKT Projections supported for writing to HKV.\n"
+                "%s not supported.",
+                  pszNewProjection );
+        
+        return CE_Failure;
+    }
+    else if (EQUAL(pszNewProjection,""))
+    {
+      CPLFree( pszProjection );
+      pszProjection = (char *) CPLStrdup(pszNewProjection); 
+
+      return CE_None;
+    }
+    CPLFree( pszProjection );
+    pszProjection = (char *) CPLStrdup(pszNewProjection);
+   
+
+    /* importFromWkt updates the pointer, so don't use pszNewProjection directly */
+    modifiableProjection=CPLStrdup(pszNewProjection);
+
+    oSRS = new OGRSpatialReference;
+    oSRS->importFromWkt(&modifiableProjection);
+
+    if ((oSRS->GetAttrValue("PROJECTION") != NULL) && 
+        (EQUAL(oSRS->GetAttrValue("PROJECTION"),SRS_PT_TRANSVERSE_MERCATOR)))
+    {
+      char *ol_txt;
+    
+        ol_txt=(char *) CPLMalloc(255);
+        papszGeoref = CSLSetNameValue( papszGeoref, "projection.name", "utm" );
+        sprintf(ol_txt,"%f",oSRS->GetProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0,&ogrerrorOl));
+        papszGeoref = CSLSetNameValue( papszGeoref, "projection.origin_longitude",
+        ol_txt );
+        CPLFree(ol_txt);
+    }
+    else if ((oSRS->GetAttrValue("PROJECTION") == NULL) && (oSRS->IsGeographic()))
+    {
+        papszGeoref = CSLSetNameValue( papszGeoref, "projection.name", "LL" );
     }
     else
     {
-        papszGeoref = CSLSetNameValue( papszGeoref, "spheroid.name", 
-                                       "ev-wgs-84" );
+      CPLError( CE_Warning, CPLE_AppDefined,
+                "Unrecognized projection- assuming lat/long.");
+        papszGeoref = CSLSetNameValue( papszGeoref, "projection.name", "LL" );
     }
+    eq_radius = oSRS->GetSemiMajor(&ogrerrorEq);
+    inv_flattening = oSRS->GetInvFlattening(&ogrerrorInvf);
+    if ((ogrerrorEq == OGRERR_NONE) && (ogrerrorInvf == OGRERR_NONE)) 
+    {
+        hkvEllipsoids = new HKVSpheroidList;
+        spheroid_name = hkvEllipsoids->GetSpheroidNameByEqRadiusAndInvFlattening(eq_radius,inv_flattening);
+        if (spheroid_name != NULL)
+        {
+            papszGeoref = CSLSetNameValue( papszGeoref, "spheroid.name", 
+                                           spheroid_name );
+        }
+        delete hkvEllipsoids;
+    }
+    else
+    {
+      /* default to previous behaviour if spheroid not found by */
+      /* radius and inverse flattening */
 
+        if( strstr(pszNewProjection,"Bessel") != NULL )
+        {
+            papszGeoref = CSLSetNameValue( papszGeoref, "spheroid.name", 
+                                       "ev-bessel" );
+        }
+        else
+        {
+            papszGeoref = CSLSetNameValue( papszGeoref, "spheroid.name", 
+                                       "ev-wgs-84" );
+        }                                   
+    }
     bGeorefChanged = TRUE;
-
+    delete oSRS;
     return CE_None;
 }
 
@@ -436,10 +754,7 @@ int HKVDataset::GetGCPCount()
 const char *HKVDataset::GetGCPProjection()
 
 {
-    if( nGCPCount > 0 )
-        return "GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",7030]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY[\"EPSG\",6326]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",8901]],UNIT[\"DMSH\",0.0174532925199433,AUTHORITY[\"EPSG\",9108]],AXIS[\"Lat\",NORTH],AXIS[\"Long\",EAST],AUTHORITY[\"EPSG\",4326]]";
-    else
-        return "";
+  return pszGCPProjection;
 }
 
 /************************************************************************/
@@ -505,6 +820,7 @@ void HKVDataset::ProcessGeoref( const char * pszFilename )
 
 {
     int   i;
+    HKVSpheroidList *hkvEllipsoids = NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Load the georef file, and boil white space away from around     */
@@ -514,6 +830,8 @@ void HKVDataset::ProcessGeoref( const char * pszFilename )
     papszGeoref = CSLLoad( pszFilename );
     if( papszGeoref == NULL )
         return;
+
+    hkvEllipsoids = new HKVSpheroidList;
 
     for( i = 0; papszGeoref[i] != NULL; i++ )
     {
@@ -549,68 +867,192 @@ void HKVDataset::ProcessGeoref( const char * pszFilename )
     ProcessGeorefGCP( papszGeoref, "bottom_right", 
                       GetRasterXSize()-1, GetRasterYSize()-1 );
     ProcessGeorefGCP( papszGeoref, "centre", 
-                      GetRasterXSize()/2.0, GetRasterYSize()/2.0 );
+                      (GetRasterXSize()-1)/2.0, (GetRasterYSize()-1)/2.0 );
 
 /* -------------------------------------------------------------------- */
 /*      Do we have a recognised projection?                             */
 /* -------------------------------------------------------------------- */
-    const char *pszProjName, *pszOriginLong;
+    const char *pszProjName, *pszOriginLong, *pszSpheroidName;
+    double eq_radius, inv_flattening;
 
     pszProjName = CSLFetchNameValue(papszGeoref, 
                                     "projection.name");
     pszOriginLong = CSLFetchNameValue(papszGeoref, 
                                       "projection.origin_longitude");
+    pszSpheroidName = CSLFetchNameValue(papszGeoref, 
+                                      "spheroid.name");
 
-    if( pszProjName != NULL && EQUAL(pszProjName,"utm") 
-        && pszOriginLong != NULL && nGCPCount == 5 )
+
+    if ((pszSpheroidName != NULL) && (hkvEllipsoids->SpheroidInList(pszSpheroidName)))
     {
-        int nZone = (int)((atof(pszOriginLong)+184.5) / 6.0);
+      eq_radius=hkvEllipsoids->GetSpheroidEqRadius(pszSpheroidName);
+      inv_flattening=hkvEllipsoids->GetSpheroidInverseFlattening(pszSpheroidName);
+    }
+    else if (pszProjName != NULL)
+    {
+      CPLError(CE_Warning,CPLE_AppDefined,"Warning- unrecognized ellipsoid.  Using wgs-84 parameters.\n");
+      eq_radius=hkvEllipsoids->GetSpheroidEqRadius("wgs-84");
+      inv_flattening=hkvEllipsoids->GetSpheroidInverseFlattening("wgs-84");
+    }
+
+    if( (pszProjName != NULL) && EQUAL(pszProjName,"utm") && (nGCPCount == 5) )
+    {
+      /*int nZone = (int)((atof(pszOriginLong)+184.5) / 6.0); */
+        int nZone;
+
+        if (pszOriginLong == NULL)
+        {
+            /* If origin not specified, assume 0.0 */
+            CPLError(CE_Warning,CPLE_AppDefined,
+                   "Warning- no projection origin longitude specified.  Assuming 0.0.");
+            nZone = 31;
+        }
+        else
+            nZone = 31 + (int) floor(atof(pszOriginLong)/6.0);
+
         OGRSpatialReference oUTM;
         OGRSpatialReference oLL;
         OGRCoordinateTransformation *poTransform = NULL;
-        double dfUtmULX, dfUtmULY, dfUtmLRX, dfUtmLRY;
+        double dfUtmX[5], dfUtmY[5]; 
+        int gcp_index;
+
+        GDAL_GCP *utm_gcps;
         int    bSuccess = TRUE;
 
         if( pasGCPList[4].dfGCPY < 0 )
             oUTM.SetUTM( nZone, 0 );
         else
             oUTM.SetUTM( nZone, 1 );
-
-        oUTM.SetWellKnownGeogCS( "WGS84" );
-
-        oLL.SetWellKnownGeogCS( "WGS84" );
-        
+     
+        if (pszOriginLong != NULL)
+        {
+            oUTM.SetProjParm(SRS_PP_CENTRAL_MERIDIAN,atof(pszOriginLong));
+        }
+        if ((pszSpheroidName == NULL) || (EQUAL(pszSpheroidName,"wgs-84")))
+          {
+            oUTM.SetWellKnownGeogCS( "WGS84" );
+            oLL.SetWellKnownGeogCS( "WGS84" );
+          }
+        else
+        {
+          if (hkvEllipsoids->SpheroidInList(pszSpheroidName))
+          { 
+            oUTM.SetGeogCS( "unknown","unknown",pszSpheroidName,
+                            hkvEllipsoids->GetSpheroidEqRadius(pszSpheroidName), 
+                            hkvEllipsoids->GetSpheroidInverseFlattening(pszSpheroidName)
+                          );
+            oLL.SetGeogCS( "unknown","unknown",pszSpheroidName,
+                            hkvEllipsoids->GetSpheroidEqRadius(pszSpheroidName), 
+                            hkvEllipsoids->GetSpheroidInverseFlattening(pszSpheroidName)
+                           );
+          }
+          else
+          {
+            CPLError(CE_Warning,CPLE_AppDefined,"Warning- unrecognized ellipsoid.  Using wgs-84 parameters.\n");
+            oUTM.SetWellKnownGeogCS( "WGS84" );
+            oLL.SetWellKnownGeogCS( "WGS84" );
+          }
+        }  
+  
         poTransform = OGRCreateCoordinateTransformation( &oLL, &oUTM );
         if( poTransform == NULL )
             bSuccess = FALSE;
 
-        dfUtmULX = pasGCPList[0].dfGCPX;
-        dfUtmULY = pasGCPList[0].dfGCPY;
-        if( bSuccess && !poTransform->Transform( 1, &dfUtmULX, &dfUtmULY ) )
-            bSuccess = FALSE;
+        for(gcp_index=0;gcp_index<5;gcp_index++)
+        {
+            dfUtmX[gcp_index] = pasGCPList[gcp_index].dfGCPX;
+            dfUtmY[gcp_index] = pasGCPList[gcp_index].dfGCPY;
 
-        dfUtmLRX = pasGCPList[3].dfGCPX;
-        dfUtmLRY = pasGCPList[3].dfGCPY;
-        if( bSuccess && !poTransform->Transform( 1, &dfUtmLRX, &dfUtmLRY ) )
-            bSuccess = FALSE;
+            if( bSuccess && !poTransform->Transform( 1, &(dfUtmX[gcp_index]), &(dfUtmY[gcp_index]) ) )
+                bSuccess = FALSE;
+ 
+        }
 
         if( bSuccess )
         {
+            int transform_ok = FALSE;
+
+            utm_gcps = (GDAL_GCP *) CPLCalloc(sizeof(GDAL_GCP),5);
+            GDALInitGCPs(5,utm_gcps);
+
+            for(gcp_index=0;gcp_index<5;gcp_index++)
+            {
+                utm_gcps[gcp_index].dfGCPX = dfUtmX[gcp_index];
+                utm_gcps[gcp_index].dfGCPY = dfUtmY[gcp_index];
+                utm_gcps[gcp_index].dfGCPZ = 0.0;
+                utm_gcps[gcp_index].dfGCPPixel = pasGCPList[gcp_index].dfGCPPixel;
+                utm_gcps[gcp_index].dfGCPLine = pasGCPList[gcp_index].dfGCPLine;
+
+            }
+            transform_ok = GDALGCPsToGeoTransform(5,utm_gcps,adfGeoTransform,0);
+        
+            /*printf("Geotransform: 0: %f 1: %f 2: %f\n3: %f 4: %f 5: %f\n\n",adfGeoTransform[0],adfGeoTransform[1],adfGeoTransform[2],adfGeoTransform[3],adfGeoTransform[4],adfGeoTransform[5]);*/
+            if (transform_ok == FALSE)
+            {
+              /* transform may not be sufficient in all cases (slant range projection) */
+                adfGeoTransform[0] = 0.0;
+                adfGeoTransform[1] = 1.0;
+                adfGeoTransform[2] = 0.0;
+                adfGeoTransform[3] = 0.0;
+                adfGeoTransform[4] = 0.0;
+                adfGeoTransform[5] = 1.0;
+            }
+            GDALDeinitGCPs(5,utm_gcps);
+
             CPLFree( pszProjection );
+            CPLFree( pszGCPProjection );
             pszProjection = NULL;
+            pszGCPProjection = NULL;
             oUTM.exportToWkt( &pszProjection );
+            oLL.exportToWkt( &pszGCPProjection );
             
-            adfGeoTransform[0] = dfUtmULX;
-            adfGeoTransform[1] = (dfUtmLRX - dfUtmULX) / (GetRasterXSize()-1);
-            adfGeoTransform[2] = 0.0;
-            adfGeoTransform[3] = dfUtmULY;
-            adfGeoTransform[4] = 0.0;
-            adfGeoTransform[5] = (dfUtmLRY - dfUtmULY) / (GetRasterYSize()-1);
         }
 
         if( poTransform != NULL )
             delete poTransform;
     }
+    else if ((pszProjName != NULL) && (nGCPCount == 5))
+    {
+        OGRSpatialReference oLL;
+        int transform_ok = FALSE;
+
+
+        if ((pszSpheroidName == NULL) || (EQUAL(pszSpheroidName,"wgs-84")))
+          {
+            oLL.SetWellKnownGeogCS( "WGS84" );
+          }
+        else
+        {
+          if (hkvEllipsoids->SpheroidInList(pszSpheroidName))
+          { 
+            oLL.SetGeogCS( "","",pszSpheroidName,
+                            hkvEllipsoids->GetSpheroidEqRadius(pszSpheroidName), 
+                            hkvEllipsoids->GetSpheroidInverseFlattening(pszSpheroidName)
+                           );
+          }
+          else
+          {
+            CPLError(CE_Warning,CPLE_AppDefined,"Warning- unrecognized ellipsoid.  Using wgs-84 parameters.\n");
+            oLL.SetWellKnownGeogCS( "WGS84" );
+          }
+
+            transform_ok = GDALGCPsToGeoTransform(5,pasGCPList,adfGeoTransform,0);
+            if (transform_ok == FALSE)
+            {
+                adfGeoTransform[0] = 0.0;
+                adfGeoTransform[1] = 1.0;
+                adfGeoTransform[2] = 0.0;
+                adfGeoTransform[3] = 0.0;
+                adfGeoTransform[4] = 0.0;
+                adfGeoTransform[5] = 1.0;
+            }
+            oLL.exportToWkt( &pszGCPProjection );
+            oLL.exportToWkt( &pszProjection );
+          
+        }  
+    }
+
+    delete hkvEllipsoids;
 }
 
 /************************************************************************/
@@ -1058,6 +1500,287 @@ CPLErr HKVDataset::Delete( const char * pszName )
 }
 
 /************************************************************************/
+/*                             CreateCopy()                             */
+/************************************************************************/
+
+GDALDataset *
+HKVDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS, 
+                        int bStrict, char ** papszOptions, 
+                        GDALProgressFunc pfnProgress, void * pProgressData )
+
+{
+    HKVDataset	*poDS;
+    GDALDataType eType = GDT_Byte;
+    int          iBand;
+    char szValue[128];
+
+    if( !pfnProgress( 0.0, NULL, pProgressData ) )
+        return NULL;
+    for( iBand = 0; iBand < poSrcDS->GetRasterCount(); iBand++ )
+    {
+        GDALRasterBand *poBand = poSrcDS->GetRasterBand( iBand+1 );
+        eType = GDALDataTypeUnion( eType, poBand->GetRasterDataType() );
+    }    
+
+    poDS = (HKVDataset *) Create( pszFilename, 
+                                  poSrcDS->GetRasterXSize(), 
+                                  poSrcDS->GetRasterYSize(), 
+                                  poSrcDS->GetRasterCount(), 
+                                  eType, papszOptions );
+
+/* -------------------------------------------------------------------- */
+/*      Copy the image data.                                            */
+/* -------------------------------------------------------------------- */
+    int         nXSize = poDS->GetRasterXSize();
+    int         nYSize = poDS->GetRasterYSize();
+    int  	nBlockXSize, nBlockYSize, nBlockTotal, nBlocksDone;
+
+    poDS->GetRasterBand(1)->GetBlockSize( &nBlockXSize, &nBlockYSize );
+
+    nBlockTotal = ((nXSize + nBlockXSize - 1) / nBlockXSize)
+        * ((nYSize + nBlockYSize - 1) / nBlockYSize)
+        * poSrcDS->GetRasterCount();
+
+    nBlocksDone = 0;
+    for( iBand = 0; iBand < poSrcDS->GetRasterCount(); iBand++ )
+    {
+        GDALRasterBand *poSrcBand = poSrcDS->GetRasterBand( iBand+1 );
+        GDALRasterBand *poDstBand = poDS->GetRasterBand( iBand+1 );
+        int	       iYOffset, iXOffset;
+        void           *pData;
+        CPLErr  eErr;
+
+
+        pData = CPLMalloc(nBlockXSize * nBlockYSize
+                          * GDALGetDataTypeSize(eType) / 8);
+
+        for( iYOffset = 0; iYOffset < nYSize; iYOffset += nBlockYSize )
+        {
+            for( iXOffset = 0; iXOffset < nXSize; iXOffset += nBlockXSize )
+            {
+                int	nTBXSize, nTBYSize;
+
+                if( !pfnProgress( (nBlocksDone++) / (float) nBlockTotal,
+                                  NULL, pProgressData ) )
+                {
+                    CPLError( CE_Failure, CPLE_UserInterrupt, 
+                              "User terminated" );
+                    delete poDS;
+
+                    GDALDriver *poHKVDriver = 
+                        (GDALDriver *) GDALGetDriverByName( "MFF2" );
+                    poHKVDriver->Delete( pszFilename );
+                    return NULL;
+                }
+
+                nTBXSize = MIN(nBlockXSize,nXSize-iXOffset);
+                nTBYSize = MIN(nBlockYSize,nYSize-iYOffset);
+
+                eErr = poSrcBand->RasterIO( GF_Read, 
+                                            iXOffset, iYOffset, 
+                                            nTBXSize, nTBYSize,
+                                            pData, nTBXSize, nTBYSize,
+                                            eType, 0, 0 );
+                if( eErr != CE_None )
+                {
+                    return NULL;
+                }
+            
+                eErr = poDstBand->RasterIO( GF_Write, 
+                                            iXOffset, iYOffset, 
+                                            nTBXSize, nTBYSize,
+                                            pData, nTBXSize, nTBYSize,
+                                            eType, 0, 0 );
+
+                if( eErr != CE_None )
+                {
+                    return NULL;
+                }
+            }
+        }
+
+        CPLFree( pData );
+    }
+/* -------------------------------------------------------------------- */
+/*      Copy georeferencing information, if enough is available.        */
+/* -------------------------------------------------------------------- */
+
+    int georef_created = FALSE;
+    /* Try to locate the corner and center GCP's- want to copy MFF */
+    /* GCPs directly if present.  Check that the coordinates are   */
+    /* in lat/long first though (GEOGCS as opposed to PROJCS at    */ 
+    /* the start of the projection string).                        */
+
+    if (( poSrcDS->GetGCPCount() > 4 ) && 
+        ( poSrcDS->GetGCPProjection() != NULL ) &&
+        ( EQUALN(poSrcDS->GetGCPProjection(),"GEOGCS",6)))
+    {
+        const GDAL_GCP *pasGCPs = poSrcDS->GetGCPs();
+        double	*padfTiepoints, gcppix, gcpline;
+        char foundinfo[10]="00000\n";
+
+
+        /* MFF2 requires corner and center gcps */
+        padfTiepoints = (double *) 
+            CPLMalloc(2*sizeof(double)*5);
+
+        for( int iGCP = 0; iGCP < poSrcDS->GetGCPCount(); iGCP++ )
+        {
+          gcppix=pasGCPs[iGCP].dfGCPPixel;
+          gcpline=pasGCPs[iGCP].dfGCPLine;
+          
+          if ((gcppix == 0.0) && (gcpline == 0.0))
+          {
+            padfTiepoints[0]=pasGCPs[iGCP].dfGCPX;
+            padfTiepoints[1]=pasGCPs[iGCP].dfGCPY;
+            foundinfo[0]='1';
+          } 
+          else if ((gcppix == poSrcDS->GetRasterXSize()-1) && (gcpline == 0.0))
+          {
+            padfTiepoints[2]=pasGCPs[iGCP].dfGCPX;
+            padfTiepoints[3]=pasGCPs[iGCP].dfGCPY;
+            foundinfo[1]='1';
+          } 
+          else if ((gcppix == 0.0) && (gcpline == poSrcDS->GetRasterYSize()-1))
+          {
+            padfTiepoints[4]=pasGCPs[iGCP].dfGCPX;
+            padfTiepoints[5]=pasGCPs[iGCP].dfGCPY;
+            foundinfo[2]='1';
+          } 
+          else if ((gcppix == poSrcDS->GetRasterXSize()-1) && (gcpline == poSrcDS->GetRasterYSize()-1))
+          {
+            padfTiepoints[6]=pasGCPs[iGCP].dfGCPX;
+            padfTiepoints[7]=pasGCPs[iGCP].dfGCPY;
+            foundinfo[3]='1';
+          } 
+          else if ((gcppix == (poSrcDS->GetRasterXSize()-1)/2.0) && (gcpline == (poSrcDS->GetRasterYSize()-1)/2.0))
+          {
+            padfTiepoints[8]=pasGCPs[iGCP].dfGCPX;
+            padfTiepoints[9]=pasGCPs[iGCP].dfGCPY;
+            foundinfo[4]='1';
+          } 
+       }
+       if EQUAL(foundinfo,"11111\n")
+       {
+          /* -------------------------------------------------------------------- */
+          /*      top left                                                        */
+          /* -------------------------------------------------------------------- */
+              sprintf( szValue, "%.10f", padfTiepoints[1] );
+              poDS->papszGeoref = CSLSetNameValue( poDS->papszGeoref, "top_left.latitude", 
+                                             szValue );
+
+              sprintf( szValue, "%.10f", padfTiepoints[0] );
+              poDS->papszGeoref = CSLSetNameValue( poDS->papszGeoref, "top_left.longitude", 
+                                   szValue );
+             
+          /* -------------------------------------------------------------------- */
+          /*      top_right                                                       */
+          /* -------------------------------------------------------------------- */
+              sprintf( szValue, "%.10f", padfTiepoints[3] );
+              poDS->papszGeoref = CSLSetNameValue( poDS->papszGeoref, "top_right.latitude", 
+                                   szValue );
+
+              sprintf( szValue, "%.10f", padfTiepoints[2] );
+              poDS->papszGeoref = CSLSetNameValue( poDS->papszGeoref, "top_right.longitude", 
+                                   szValue );
+
+          /* -------------------------------------------------------------------- */
+          /*      bottom_left                                                     */
+          /* -------------------------------------------------------------------- */
+              sprintf( szValue, "%.10f", padfTiepoints[5] );
+              poDS->papszGeoref = CSLSetNameValue( poDS->papszGeoref, "bottom_left.latitude", 
+                                             szValue );
+
+              sprintf( szValue, "%.10f", padfTiepoints[4] );
+              poDS->papszGeoref = CSLSetNameValue( poDS->papszGeoref, "bottom_left.longitude", 
+                                             szValue );
+
+          /* -------------------------------------------------------------------- */
+          /*      bottom_right                                                    */
+          /* -------------------------------------------------------------------- */
+              sprintf( szValue, "%.10f", padfTiepoints[7] );
+              poDS->papszGeoref = CSLSetNameValue( poDS->papszGeoref, "bottom_right.latitude", 
+                                             szValue );
+
+              sprintf( szValue, "%.10f", padfTiepoints[6] );
+              poDS->papszGeoref = CSLSetNameValue( poDS->papszGeoref, "bottom_right.longitude", 
+                                             szValue );
+
+          /* -------------------------------------------------------------------- */
+          /*      Center                                                          */
+          /* -------------------------------------------------------------------- */
+              sprintf( szValue, "%.10f", padfTiepoints[9] );
+              poDS->papszGeoref = CSLSetNameValue( poDS->papszGeoref, "centre.latitude", 
+                                             szValue );
+
+              sprintf( szValue, "%.10f", padfTiepoints[8] );
+              poDS->papszGeoref = CSLSetNameValue( poDS->papszGeoref, "centre.longitude", 
+                                             szValue );
+         
+              poDS->SetProjection(CPLStrdup(poSrcDS->GetProjectionRef()));
+
+              /* georef file will be saved automatically when dataset is deleted */
+              /* because SetProjection sets a flag to indicate it's necessary.   */
+
+              georef_created = TRUE;
+       }
+       CPLFree( padfTiepoints );
+    }
+
+    if (georef_created != TRUE)
+    {
+      double *tempGeoTransform=NULL; 
+
+      tempGeoTransform = (double *) CPLMalloc(6*sizeof(double));
+
+      if (( poSrcDS->GetGeoTransform( tempGeoTransform ) == CE_None)
+          && (tempGeoTransform[0] != 0.0 || tempGeoTransform[1] != 1.0
+          || tempGeoTransform[2] != 0.0 || tempGeoTransform[3] != 0.0
+              || tempGeoTransform[4] != 0.0 || ABS(tempGeoTransform[5]) != 1.0 ))
+      {
+          OGRSpatialReference oUTMorLL;
+          char *srcProjection=NULL;
+          char *newGCPProjection=NULL;
+
+          srcProjection = CPLStrdup(poSrcDS->GetProjectionRef());
+          oUTMorLL.importFromWkt(&srcProjection);
+          (oUTMorLL.GetAttrNode("GEOGCS"))->exportToWkt(&newGCPProjection);
+
+          poDS->SetGCPProjection(newGCPProjection);
+          poDS->SetProjection(poSrcDS->GetProjectionRef());
+          poDS->SetGeoTransform(tempGeoTransform);
+
+          CPLFree(tempGeoTransform);
+
+          /* georef file will be saved automatically when dataset is deleted */
+          /* because SetProjection sets a flag to indicate it's necessary.   */
+
+  
+          georef_created = TRUE;
+      }
+      else
+      {
+        CPLFree(tempGeoTransform);
+      }
+    }    
+   
+    if( !pfnProgress( 1.0, NULL, pProgressData ) )
+    {
+        CPLError( CE_Failure, CPLE_UserInterrupt, 
+                  "User terminated" );
+        delete poDS;
+
+        GDALDriver *poHKVDriver = 
+            (GDALDriver *) GDALGetDriverByName( "MFF2" );
+        poHKVDriver->Delete( pszFilename );
+        return NULL;
+    }
+
+    return poDS;
+}
+
+
+/************************************************************************/
 /*                         GDALRegister_HKV()                          */
 /************************************************************************/
 
@@ -1081,6 +1804,7 @@ void GDALRegister_HKV()
         poDriver->pfnOpen = HKVDataset::Open;
         poDriver->pfnCreate = HKVDataset::Create;
         poDriver->pfnDelete = HKVDataset::Delete;
+        poDriver->pfnCreateCopy = HKVDataset::CreateCopy;
 
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
