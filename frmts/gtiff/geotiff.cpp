@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.99  2003/08/25 13:57:54  warmerda
+ * Added support for XRESOLUTION, YRESOLUTION and RESOLUTIONUNIT.
+ *
  * Revision 1.98  2003/07/18 19:32:54  warmerda
  * fixed pszProjection initialize change from last commit
  *
@@ -1844,6 +1847,12 @@ void GTiffDataset::WriteMetadata( GDALDataset *poSrcDS, TIFF *hTIFF )
             TIFFSetField( hTIFF, TIFFTAG_SOFTWARE, pszItemValue );
         else if( EQUAL(pszItemName,"TIFFTAG_DATETIME") )
             TIFFSetField( hTIFF, TIFFTAG_DATETIME, pszItemValue );
+        else if( EQUAL(pszItemName,"TIFFTAG_XRESOLUTION") )
+            TIFFSetField( hTIFF, TIFFTAG_XRESOLUTION, atof(pszItemValue) );
+        else if( EQUAL(pszItemName,"TIFFTAG_YRESOLUTION") )
+            TIFFSetField( hTIFF, TIFFTAG_YRESOLUTION, atof(pszItemValue) );
+        else if( EQUAL(pszItemName,"TIFFTAG_RESOLUTIONUNIT") )
+            TIFFSetField( hTIFF, TIFFTAG_RESOLUTIONUNIT, atoi(pszItemValue) );
         else
         {
             CPLXMLNode *psItem; 
@@ -2389,7 +2398,9 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, uint32 nDirOffsetIn,
 /* -------------------------------------------------------------------- */
 /*      Capture some other potentially interesting information.         */
 /* -------------------------------------------------------------------- */
-        char	*pszText;
+        char	*pszText, szWorkMDI[200];
+        float   fResolution;
+        uint16  nResUnits;
 
         if( TIFFGetField( hTIFF, TIFFTAG_DOCUMENTNAME, &pszText ) )
             SetMetadataItem( "TIFFTAG_DOCUMENTNAME",  pszText );
@@ -2401,7 +2412,32 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, uint32 nDirOffsetIn,
             SetMetadataItem( "TIFFTAG_SOFTWARE", pszText );
 
         if( TIFFGetField( hTIFF, TIFFTAG_DATETIME, &pszText ) )
-            SetMetadataItem(  "TIFFTAG_DATETIME", pszText );
+            SetMetadataItem( "TIFFTAG_DATETIME", pszText );
+
+        if( TIFFGetField( hTIFF, TIFFTAG_XRESOLUTION, &fResolution ) )
+        {
+            sprintf( szWorkMDI, "%.8g", fResolution );
+            SetMetadataItem( "TIFFTAG_XRESOLUTION", szWorkMDI );
+        }
+
+        if( TIFFGetField( hTIFF, TIFFTAG_YRESOLUTION, &fResolution ) )
+        {
+            sprintf( szWorkMDI, "%.8g", fResolution );
+            SetMetadataItem( "TIFFTAG_YRESOLUTION", szWorkMDI );
+        }
+
+        if( TIFFGetField( hTIFF, TIFFTAG_RESOLUTIONUNIT, &nResUnits ) )
+        {
+            if( nResUnits == RESUNIT_NONE )
+                sprintf( szWorkMDI, "%d (unitless)", nResUnits );
+            else if( nResUnits == RESUNIT_INCH )
+                sprintf( szWorkMDI, "%d (pixels/inch)", nResUnits );
+            else if( nResUnits == RESUNIT_CENTIMETER )
+                sprintf( szWorkMDI, "%d (pixels/cm)", nResUnits );
+            else
+                sprintf( szWorkMDI, "%d", nResUnits );
+            SetMetadataItem( "TIFFTAG_RESOLUTIONUNIT", szWorkMDI );
+        }
 
         if( TIFFGetField( hTIFF, TIFFTAG_GDAL_METADATA, &pszText ) )
         {
