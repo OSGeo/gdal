@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.25  2002/08/28 16:30:46  warmerda
+ * fixed bug 1 related to CAtlArray.Add() method
+ *
  * Revision 1.24  2002/08/15 15:39:47  warmerda
  * Fixed type of m_nAuthorityId to be in, instead of WCHAR, to conform to the
  * SF spec (as per http://bugzilla.remotesensing.org/show_bug.cgi?id=140.
@@ -227,7 +230,7 @@ class CSFSessionTRSchemaRowset :
         
         CPLDebug( "OGR_OLEDB",
                   "CSFSessionTRSchemaRowset::Execute()." );
-                
+
         if( cRestrictions >= 3
             && rgRestrictions[2].vt == VT_BSTR )
         {
@@ -244,7 +247,7 @@ class CSFSessionTRSchemaRowset :
 
         if (!poDS)
         {
-            // Prep errors as well
+            CPLDebug( "OGR_OLEDB", "SFGetOGRDataSource() failed." );
             return S_FALSE;
         }
         
@@ -259,8 +262,7 @@ class CSFSessionTRSchemaRowset :
             
             lstrcpyW(trData.m_szType, OLESTR("TABLE"));
             lstrcpyW(trData.m_szTable,A2OLE(poDefn->GetName()));
-            if (!m_rgRowData.Add(trData))
-                return E_OUTOFMEMORY;
+            m_rgRowData.Add(trData);
         }
         
         *pcRowsAffected = m_rgRowData.GET_SIZE_MACRO();
@@ -346,8 +348,7 @@ class CSFSessionColSchemaRowset :
             lstrcpyW(trData.m_szColumnName,A2OLE("FID"));
             trData.m_ulOrdinalPosition = 1;
             
-            if (!m_rgRowData.Add(trData))
-                return E_OUTOFMEMORY;
+            m_rgRowData.Add(trData);
             
             // Add all the regular feature attributes.
             for (i=0; i < poDefn->GetFieldCount(); i++)
@@ -388,8 +389,7 @@ class CSFSessionColSchemaRowset :
                 lstrcpyW(trData.m_szColumnName,A2OLE(poField->GetNameRef()));
                 trData.m_ulOrdinalPosition = i+2;
 				
-                if (!m_rgRowData.Add(trData))
-                    return E_OUTOFMEMORY;
+                m_rgRowData.Add(trData);
             }
 
             // Add the geometry column.
@@ -398,8 +398,7 @@ class CSFSessionColSchemaRowset :
             lstrcpyW(trData.m_szColumnName,A2OLE("OGIS_GEOMETRY"));
             trData.m_ulOrdinalPosition = i+2;
             trData.m_nDataType = DBTYPE_IUNKNOWN;
-            if (!m_rgRowData.Add(trData))
-                return E_OUTOFMEMORY;
+            m_rgRowData.Add(trData);
         }
 
         *pcRowsAffected = m_rgRowData.GET_SIZE_MACRO();
