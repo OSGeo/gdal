@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.25  2002/02/11 16:53:32  warmerda
+ * ensure file opened in binary mode
+ *
  * Revision 1.24  2002/02/08 20:43:06  warmerda
  * improved error checking and propagation
  *
@@ -296,7 +299,7 @@ int NTFFileReader::Open( const char * pszFilenameIn )
 /* -------------------------------------------------------------------- */
 /*      Open the file.                                                  */
 /* -------------------------------------------------------------------- */
-    fp = VSIFOpen( pszFilename, "r" );
+    fp = VSIFOpen( pszFilename, "rb" );
 
     // notdef: we should likely issue a proper CPL error message based
     // based on errno here. 
