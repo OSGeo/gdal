@@ -29,6 +29,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.66  2004/08/11 19:04:35  warmerda
+# added warping related support
+#
 # Revision 1.65  2004/07/30 21:09:49  warmerda
 # added AddBand(), and RefreshBandInfo()
 #
@@ -353,6 +356,64 @@ def RGBFile2PCTFile( src_filename, dst_filename ):
     src_ds = None
 
     return 0
+
+def AutoCreateWarpedVRT( src_ds, src_wkt = None, dst_wkt = None,
+                         eResampleAlg = GRA_NearestNeighbour,
+                         maxerror = 0.0 ):
+    
+    src_wkt = ToNULLableString( src_wkt )
+    dst_wkt = ToNULLableString( dst_wkt )
+    new_ds = _gdal.GDALAutoCreateWarpedVRT( src_ds._o, src_wkt, dst_wkt,
+                                            eResampleAlg, maxerror, 'NULL' )
+    FreeNULLableString( src_wkt )                                        
+    FreeNULLableString( dst_wkt )
+
+    if new_ds is not None:
+        _gdal.GDALDereferenceDataset( new_ds )
+        return Dataset( _obj = new_ds )
+    else:
+        raise ValueError, _gdal.CPLGetLastErrorMsg()
+
+def ReprojectImage( src_ds, dst_ds, src_wkt = None, dst_wkt = None,
+                    eResampleAlg = GRA_NearestNeighbour, warp_memory = 0.0,
+                    maxerror = 0.0 ):
+    
+    src_wkt = ToNULLableString( src_wkt )
+    dst_wkt = ToNULLableString( dst_wkt )
+    err = _gdal.GDALReprojectImage( src_ds._o, src_wkt, dst_ds._o, dst_wkt,
+                                    eResampleAlg, warp_memory, maxerror,
+                                    'NULL', 'NULL', 'NULL' )
+    FreeNULLableString( src_wkt )                                        
+    FreeNULLableString( dst_wkt )
+
+    return err
+
+def CreateAndReprojectImage( src_ds, dst_filename,
+                             src_wkt = None, dst_wkt = None,
+                             dst_driver = None, create_options = [],
+                             eResampleAlg = GRA_NearestNeighbour,
+                             warp_memory = 0.0, maxerror = 0.0 ):
+
+    if dst_driver is None:
+        dst_driver = 'NULL'
+    else:
+        dst_driver = dst_driver._o
+        
+    src_wkt = ToNULLableString( src_wkt )
+    dst_wkt = ToNULLableString( dst_wkt )
+    options_strlist = _gdal.ListToStringList( create_options )
+    
+    err = _gdal.GDALCreateAndReprojectImage(
+        src_ds._o, src_wkt, dst_filename, dst_wkt,
+        dst_driver, options_strlist,
+        eResampleAlg, warp_memory, maxerror,
+        'NULL', 'NULL', 'NULL' )
+    
+    FreeNULLableString( src_wkt )                                        
+    FreeNULLableString( dst_wkt )
+    _gdal.CSLDestroy( options_strlist )
+
+    return err
 
 ###############################################################################
 

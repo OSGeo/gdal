@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.101  2004/08/11 19:04:34  warmerda
+ * added warping related support
+ *
  * Revision 1.100  2004/07/30 21:09:30  warmerda
  * added AddBand()
  *
@@ -287,6 +290,7 @@
 #include "gdal_py.h"
 #include "cpl_minixml.h"
 #include "ogr_api.h"
+#include "gdalwarper.h"
 
 CPL_CVSID("$Id$");
 
@@ -300,6 +304,8 @@ typedef char **stringList;
 typedef char *NULLableString;
 
 %}
+
+typedef void *NULLableString;
 
 %native(NumPyArrayToGDALFilename) py_NumPyArrayToGDALFilename;
 
@@ -716,6 +722,33 @@ void  GDALSetCacheMax( int nBytes );
 int   GDALGetCacheMax();
 int   GDALGetCacheUsed();
 int   GDALFlushCacheBlock();
+
+/* ==================================================================== */
+/*      gdalwarper.h                                                    */
+/* ==================================================================== */
+
+CPLErr
+GDALReprojectImage( GDALDatasetH hSrcDS, NULLableString pszSrcWKT, 
+                    GDALDatasetH hDstDS, NULLableString pszDstWKT,
+                    int eResampleAlg, double dfWarpMemoryLimit,
+                    double dfMaxError,
+                    void *pfnProgress, void *pProgressArg, 
+                    void *psOptions );
+
+CPLErr
+GDALCreateAndReprojectImage( GDALDatasetH hSrcDS, const char *pszSrcWKT, 
+                    NULLableString pszDstFilename, NULLableString pszDstWKT,
+                    GDALDriverH hDstDriver, stringList papszCreateOptions,
+                    int eResampleAlg, double dfWarpMemoryLimit,
+                    double dfMaxError,
+                    void *pfnProgress, void *pProgressArg, 
+                    void *psOptions );
+
+GDALDatasetH
+GDALAutoCreateWarpedVRT( GDALDatasetH hSrcDS, 
+                         NULLableString pszSrcWKT, NULLableString pszDstWKT, 
+              		 int eResampleAlg, 
+                         double dfMaxError, const void *psOptions );
 
 /* ==================================================================== */
 /*	Support function for progress callbacks to python.              */
@@ -3154,7 +3187,6 @@ void    OGR_F_SetStyleString( OGRFeatureH, const char * );
 typedef void *OGRLayerH;
 typedef void *OGRDataSourceH;
 typedef void *OGRSFDriverH;
-typedef void *NULLableString;
 
 /* OGRLayer */
 

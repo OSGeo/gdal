@@ -29,6 +29,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.9  2004/08/11 19:04:35  warmerda
+# added warping related support
+#
 # Revision 1.8  2004/02/10 11:08:53  dron
 # Added GDT_TypeCount constant.
 #
@@ -93,6 +96,13 @@ GCI_CyanBand=10
 GCI_MagentaBand=11
 GCI_YellowBand=12
 GCI_BlackBand=13
+
+# GDALResampleAlg
+
+GRA_NearestNeighbour = 0
+GRA_Bilinear         = 1
+GRA_Cubic            = 2
+GRA_CubicSpline      = 3
 
 # GDALPaletteInterp
 GPI_Gray=0
