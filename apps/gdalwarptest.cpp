@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2003/05/06 18:11:29  warmerda
+ * added -multi in usage
+ *
  * Revision 1.6  2003/04/23 05:18:02  warmerda
  * added -multi switch
  *
@@ -78,7 +81,7 @@ static void Usage()
         "    [-te xmin ymin xmax ymax] [-tr xres yres] [-ts width height]\n"
         "    [-wo \"NAME=VALUE\"] [-ot Byte/Int16/...] [-wt Byte/Int16]\n"
         "    [-rn] [-rb] [-rc] [-srcnodata value [value...]]\n" 
-        "    [-wm memory_in_mb]\n"
+        "    [-wm memory_in_mb] [-multi]\n"
         "    [-of format] [-co \"NAME=VALUE\"]* srcfile dstfile\n" );
     exit( 1 );
 }
