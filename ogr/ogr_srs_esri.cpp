@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.25  2003/06/23 14:49:17  warmerda
+ * added InitDatumMappingTable, and use of gdal_datum.csv file
+ *
  * Revision 1.24  2003/06/17 14:39:00  warmerda
  * Translate Equirectangular to/from Equidistant_Cylindrical
  *
@@ -107,10 +110,11 @@
 
 #include "ogr_spatialref.h"
 #include "ogr_p.h"
+#include "cpl_csv.h"
 
 CPL_CVSID("$Id$");
 
-char *apszProjMapping[] = {
+static char *apszProjMapping[] = {
     "Albers", SRS_PT_ALBERS_CONIC_EQUAL_AREA,
     "Cassini", SRS_PT_CASSINI_SOLDNER,
     "Hotine_Oblique_Mercator_Azimuth_Natural_Origin", 
@@ -124,21 +128,18 @@ char *apszProjMapping[] = {
     "Equidistant_Cylindrical", SRS_PT_EQUIRECTANGULAR,
     NULL, NULL }; 
  
-char *apszAlbersMapping[] = {
+static char *apszAlbersMapping[] = {
     SRS_PP_CENTRAL_MERIDIAN, SRS_PP_LONGITUDE_OF_CENTER, 
     SRS_PP_LATITUDE_OF_ORIGIN, SRS_PP_LATITUDE_OF_CENTER,
     NULL, NULL };
 
-char *apszArgMapping[] = {
+static char *apszArgMapping[] = {
     
     NULL, NULL }; 
  
-char *apszDatumMapping[] = {
-    "North_American_1927", SRS_DN_NAD27,
-    "North_American_1983", SRS_DN_NAD83,
-    NULL, NULL }; 
+static char **papszDatumMapping = NULL;
  
-char *apszUnitMapping[] = {
+static char *apszUnitMapping[] = {
     "Meter", "meter",
     "Meter", "metre",
     "Foot", "foot",
@@ -297,6 +298,8 @@ static int anUsgsEsriZones[] =
  5400,    0
 };
 
+void OGREPSGDatumNameMassage( char ** ppszDatum );
+
 /************************************************************************/
 /*                           ESRIToUSGSZone()                           */
 /*                                                                      */
@@ -318,6 +321,96 @@ static int ESRIToUSGSZone( int nESRIZone )
 
     return 0;
 }
+
+/************************************************************************/
+/*                       InitDatumMappingTable()                        */
+/************************************************************************/
+
+static void InitDatumMappingTable()
+
+{
+    static char *apszDefaultDatumMapping[] = {
+        "6267", "North_American_1927", SRS_DN_NAD27,
+        "6269", "North_American_1983", SRS_DN_NAD83,
+        NULL, NULL, NULL }; 
+
+    if( papszDatumMapping != NULL )
+        return;
+
+/* -------------------------------------------------------------------- */
+/*      Try to open the datum.csv file.                                 */
+/* -------------------------------------------------------------------- */
+    const char  *pszFilename = CSVFilename("gdal_datum.csv");
+    FILE * fp = VSIFOpen( pszFilename, "rb" );
+
+/* -------------------------------------------------------------------- */
+/*      Use simple default set if we can't find the file.               */
+/* -------------------------------------------------------------------- */
+    if( fp == NULL )
+    {
+        papszDatumMapping = apszDefaultDatumMapping;
+        return;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Figure out what fields we are interested in.                    */
+/* -------------------------------------------------------------------- */
+    char **papszFieldNames = CSVReadParseLine( fp );
+    int  nDatumCodeField = CSLFindString( papszFieldNames, "DATUM_CODE" );
+    int  nEPSGNameField = CSLFindString( papszFieldNames, "DATUM_NAME" );
+    int  nESRINameField = CSLFindString( papszFieldNames, "ESRI_DATUM_NAME" );
+
+    CSLDestroy( papszFieldNames );
+
+    if( nDatumCodeField == -1 || nEPSGNameField == -1 || nESRINameField == -1 )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Failed to find required field in datum.csv in InitDatumMappingTable(), using default table setup." );
+        
+        papszDatumMapping = apszDefaultDatumMapping;
+        return;
+    }
+    
+/* -------------------------------------------------------------------- */
+/*      Read each line, adding a detail line for each.                  */
+/* -------------------------------------------------------------------- */
+    int nMappingCount = 0;
+    const int nMaxDatumMappings = 1000;
+    char **papszFields;
+    papszDatumMapping = (char **)CPLCalloc(sizeof(char*),nMaxDatumMappings*3);
+
+    for( papszFields = CSVReadParseLine( fp );
+         papszFields != NULL;
+         papszFields = CSVReadParseLine( fp ) )
+    {
+        int nFieldCount = CSLCount(papszFields);
+
+        CPLAssert( nMappingCount+1 < nMaxDatumMappings );
+
+        if( MAX(nEPSGNameField,MAX(nDatumCodeField,nESRINameField)) 
+            < nFieldCount 
+            && nMaxDatumMappings > nMappingCount+1 )
+        {
+            papszDatumMapping[nMappingCount*3+0] = 
+                CPLStrdup( papszFields[nDatumCodeField] );
+            papszDatumMapping[nMappingCount*3+1] = 
+                CPLStrdup( papszFields[nESRINameField] );
+            papszDatumMapping[nMappingCount*3+2] = 
+                CPLStrdup( papszFields[nEPSGNameField] );
+            OGREPSGDatumNameMassage( &(papszDatumMapping[nMappingCount*3+2]) );
+
+            nMappingCount++;
+        }
+        CSLDestroy( papszFields );
+    }
+
+    VSIFClose( fp );
+
+    papszDatumMapping[nMappingCount*3+0] = NULL;
+    papszDatumMapping[nMappingCount*3+1] = NULL;
+    papszDatumMapping[nMappingCount*3+2] = NULL;
+}
+
 
 /************************************************************************/
 /*                         OSRImportFromESRI()                          */
@@ -736,8 +829,10 @@ OGRErr OGRSpatialReference::morphToESRI()
 /* -------------------------------------------------------------------- */
 /*      Translate DATUM keywords that are misnamed.                     */
 /* -------------------------------------------------------------------- */
+    InitDatumMappingTable();
+
     GetRoot()->applyRemapper( "DATUM", 
-                              apszDatumMapping+1, apszDatumMapping, 2 );
+                              papszDatumMapping+2, papszDatumMapping+1, 3 );
 
 /* -------------------------------------------------------------------- */
 /*      Translate UNIT keywords that are misnamed, or even the wrong    */
@@ -845,6 +940,14 @@ OGRErr OGRSpatialReference::morphFromESRI()
         return OGRERR_NONE;
 
 /* -------------------------------------------------------------------- */
+/*      Translate DATUM keywords that are oddly named.                  */
+/* -------------------------------------------------------------------- */
+    InitDatumMappingTable();
+
+    GetRoot()->applyRemapper( "DATUM", 
+                              papszDatumMapping+1, papszDatumMapping+2, 3 );
+
+/* -------------------------------------------------------------------- */
 /*      Try to remove any D_ in front of the datum name.                */
 /* -------------------------------------------------------------------- */
     OGR_SRSNode *poDatum;
@@ -897,8 +1000,10 @@ OGRErr OGRSpatialReference::morphFromESRI()
 /* -------------------------------------------------------------------- */
 /*      Translate DATUM keywords that are misnamed.                     */
 /* -------------------------------------------------------------------- */
+    InitDatumMappingTable();
+
     GetRoot()->applyRemapper( "DATUM", 
-                              apszDatumMapping, apszDatumMapping+1, 2 );
+                              papszDatumMapping+1, papszDatumMapping+2, 3 );
 
     return eErr;
 }
@@ -912,4 +1017,3 @@ OGRErr OSRMorphFromESRI( OGRSpatialReferenceH hSRS )
 {
     return ((OGRSpatialReference *) hSRS)->morphFromESRI();
 }
-
