@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2004/09/22 20:39:15  fwarmerdam
+ * some updates to reduce spurious error reports
+ *
  * Revision 1.1  2004/09/13 18:18:26  fwarmerdam
  * Variant code from Radim that works with GRASS 5.7 libraries directly.
  * Currently coordinate system support is broken with this version.
@@ -803,8 +806,8 @@ GDALDataset *GRASSDataset::Open( GDALOpenInfo * poOpenInfo )
 	hasGisbase = true;
     }
 
-    if ( !SplitPath( poOpenInfo->pszFilename, &pszGisdb, &pszLoc, &pszMapset, &pszElem, &pszName) ) {
-        CPLError( CE_Warning, CPLE_AppDefined, "GRASS: Cannot parse raster path" );
+    if ( !SplitPath( poOpenInfo->pszFilename, &pszGisdb, &pszLoc, &pszMapset,
+                     &pszElem, &pszName) ) {
 	return NULL;
     }
 
@@ -812,9 +815,11 @@ GDALDataset *GRASSDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Check element name                                              */
 /* -------------------------------------------------------------------- */
     if ( strcmp(pszElem,"cellhd") != 0 && strcmp(pszElem,"group") != 0 ) { 
-        CPLError( CE_Warning, CPLE_AppDefined, "GRASS: Wrong element name: '%s', "
-		  "must be 'cellhd' or 'group'", pszElem );
-	free(pszGisdb); free(pszLoc); free(pszMapset); free(pszElem); free(pszName);
+	free(pszGisdb); 
+        free(pszLoc); 
+        free(pszMapset); 
+        free(pszElem); 
+        free(pszName);
 	return NULL;
     }
     
@@ -834,7 +839,6 @@ GDALDataset *GRASSDataset::Open( GDALOpenInfo * poOpenInfo )
     if ( strcmp(pszElem,"cellhd") == 0 ) {
 	
         if ( G_find_file2("cell", pszName, pszMapset) == NULL ) {
-	    CPLError( CE_Warning, CPLE_AppDefined, "GRASS: Cannot find raster '%s'", pszName );
 	    free(pszGisdb); free(pszLoc); free(pszMapset); free(pszElem); free(pszName);
 	    return NULL;
 	}
@@ -850,7 +854,6 @@ GDALDataset *GRASSDataset::Open( GDALOpenInfo * poOpenInfo )
 
         I_init_group_ref( &ref );
         if ( I_get_group_ref( pszName, &ref ) == 0 ) {
-	    CPLError( CE_Warning, CPLE_AppDefined, "GRASS: Cannot read group '%s'", pszName );
 	    free(pszGisdb); free(pszLoc); free(pszMapset); free(pszElem); free(pszName);
 	    return NULL;
 	}
@@ -948,7 +951,7 @@ void GDALRegister_GRASS()
         
         poDriver->SetDescription( "GRASS" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
-                                   "GRASS Database Rasters" );
+                                   "GRASS Database Rasters (5.7+)" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
                                    "frmt_grass.html" );
         
