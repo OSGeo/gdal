@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2000/03/24 20:00:46  warmerda
+ * Don't require IMAGE_FILE_FORMAT.
+ *
  * Revision 1.3  2000/03/13 14:34:42  warmerda
  * avoid const problem on write
  *
@@ -152,8 +155,15 @@ GDALDataset *MFFDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Verify it is an MFF file.                                       */
 /* -------------------------------------------------------------------- */
-    if( CSLFetchNameValue( papszHdrLines, "IMAGE_FILE_FORMAT" ) == NULL
-        || !EQUAL(CSLFetchNameValue(papszHdrLines,"IMAGE_FILE_FORMAT"),"MFF") )
+    if( CSLFetchNameValue( papszHdrLines, "IMAGE_FILE_FORMAT" ) != NULL
+        && !EQUAL(CSLFetchNameValue(papszHdrLines,"IMAGE_FILE_FORMAT"),"MFF") )
+    {
+        CSLDestroy( papszHdrLines );
+        return NULL;
+    }
+
+    if( CSLFetchNameValue( papszHdrLines, "IMAGE_LINES" ) == NULL 
+        || CSLFetchNameValue(papszHdrLines,"LINE_SAMPLES") == NULL )
     {
         CSLDestroy( papszHdrLines );
         return NULL;
