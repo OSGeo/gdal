@@ -9,6 +9,11 @@
 
  *
  * $Log$
+ * Revision 1.14  2005/02/17 21:14:48  kruland
+ * Use swig library's typemaps.i and fragments.i to support returning
+ * multiple argument values as a tuple.  Use this in all the custom
+ * argout typemaps.
+ *
  * Revision 1.13  2005/02/17 17:27:13  kruland
  * Changed the handling of fixed size double arrays to make it fit more
  * naturally with GDAL/OSR usage.  Declare as typedef double * double_17;
@@ -59,6 +64,36 @@
 */
 
 /*
+ * Include the fragments typemap helpers from swig library
+ * These provide facilities to collect output arguments into
+ * lists.
+ */
+%include "fragments.i"
+
+/*
+ * Include the typemaps from swig library for returning of
+ * standard types through arguments.
+ */
+%include "typemaps.i"
+
+%apply (double *OUTPUT) { double *argout };
+
+/*
+ *
+ * define a simple macro which can be used
+ * as part of an %exception clause which cases the
+ * method to ignore its return code
+ */
+%define IGNORE_RC
+{
+  /* IGNORE_RC exception */
+  $action
+  Py_DECREF( $result );
+  $result = 0;
+}
+%enddef 
+
+/*
  * SWIG macro to define fixed length array typemaps
  *
  * defines the following:
@@ -86,22 +121,22 @@
 %define ARRAY_TYPEMAP(size)
 %typemap(python,in,numinputs=0) ( double_ ## size argout) (double argout[size])
 {
-  /* %typemap(in,numinputs=0) (double_size *argout) */
+  /* %typemap(in,numinputs=0) (double_ ## size argout) */
   $1 = argout;
 }
-%typemap(python,argout) ( double_ ## size argout)
+%typemap(python,argout,fragment="t_output_helper") ( double_ ## size argout)
 {
-  /* %typemap(argout) (double_size *argout) */
-  Py_DECREF( $result );
-  $result = PyTuple_New( size );
+  /* %typemap(argout) (double_ ## size *argout) */
+  PyObject *out = PyTuple_New( size );
   for( unsigned int i=0; i<size; i++ ) {
     PyObject *val = PyFloat_FromDouble( $1[i] );
-    PyTuple_SetItem( $result, i, val );
+    PyTuple_SetItem( out, i, val );
   }
+  $result = t_output_helper($result,out);
 }
 %typemap(python,in) (double_ ## size argin) (double argin[size])
 {
-  /* %typemap(python,in) (double_size argin) */
+  /* %typemap(python,in) (double_ ## size argin) */
   $1 = argin;
   if (! PySequence_Check($input) ) {
     PyErr_SetString(PyExc_TypeError, "not a sequence");
@@ -133,9 +168,13 @@ ARRAY_TYPEMAP(2);
  */
 ARRAY_TYPEMAP(6);
 
+// Used by SpatialReference
 ARRAY_TYPEMAP(7);
 ARRAY_TYPEMAP(15);
 ARRAY_TYPEMAP(17);
+
+// Used by CoordinateTransformation::TransformPoint()
+ARRAY_TYPEMAP(3);
 
 /*
  *  Typemap for counted arrays of ints <- PySequence
@@ -377,6 +416,27 @@ ARRAY_TYPEMAP(17);
   /* %typemap(in) (char **ignorechange) */
   PyArg_Parse( $input, "s", &val );
   $1 = &val;
+}
+
+/*
+ * Typemap for char **argout.
+ */
+%typemap(python,in,numinputs=0) (char **argout) ( char *argout=0 )
+{
+  /* %typemap(python,in,numinputs=0) (char **argout) */
+  $1 = &argout;
+}
+%typemap(python,argout,fragment="t_output_helper") (char **argout)
+{
+  /* %typemap(python,argout) (char **argout) */
+  PyObject *o = PyString_FromString( *$1 );
+  $result = t_output_helper($result, o);
+}
+%typemap(python,freearg) (char **argout)
+{
+  /* %typemap(python,freearg) (char **argout) */
+  if ( *$1 )
+    CPLFree( *$1 );
 }
 
 /*
