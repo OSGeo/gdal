@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.22  2002/02/22 22:17:42  warmerda
+ * Ensure that components of complex chain/shapes are spatially selected
+ * based on the decision made for their owner (header).
+ *
  * Revision 1.21  2002/02/06 22:39:08  warmerda
  * dont filter out non-spatial features with spatial filter
  *
@@ -133,6 +137,7 @@ int DGNGotoElement( DGNHandle hDGN, int element_id )
         return FALSE;
 
     psDGN->next_element_id = element_id;
+    psDGN->in_complex_group = FALSE;
 
     return TRUE;
 }
@@ -164,7 +169,7 @@ static int DGNLoadRawElement( DGNInfo *psDGN, int *pnType, int *pnLevel )
 /* -------------------------------------------------------------------- */
 /*      Read the rest of the element data into the working buffer.      */
 /* -------------------------------------------------------------------- */
-    CPLAssert( nWords * 2 + 4 <= sizeof(psDGN->abyElem) );
+    CPLAssert( nWords * 2 + 4 <= (int) sizeof(psDGN->abyElem) );
 
     if( (int) VSIFRead( psDGN->abyElem + 4, 2, nWords, psDGN->fp ) != nWords )
         return FALSE;
@@ -704,6 +709,24 @@ DGNElemCore *DGNReadElement( DGNHandle hDGN )
                      || nXMax < psDGN->sf_min_x
                      || nYMax < psDGN->sf_min_y )
                 bInsideFilter = FALSE;
+
+            /*
+            ** We want to select complex elements based on the extents of
+            ** the header, not the individual elements.
+            */
+            if( psDGN->abyElem[0] & 0x80 /* complex flag set */ )
+            {
+                if( nType == DGNT_COMPLEX_CHAIN_HEADER
+                    || nType == DGNT_COMPLEX_SHAPE_HEADER )
+                {
+                    psDGN->in_complex_group = TRUE;
+                    psDGN->select_complex_group = bInsideFilter;
+                }
+                else if( psDGN->in_complex_group )
+                    bInsideFilter = psDGN->select_complex_group;
+            }
+            else
+                psDGN->in_complex_group = FALSE;
         }
     } while( !bInsideFilter );
 
@@ -901,6 +924,7 @@ void DGNRewind( DGNHandle hDGN )
     VSIRewind( psDGN->fp );
 
     psDGN->next_element_id = 0;
+    psDGN->in_complex_group = FALSE;
 }
 
 /************************************************************************/

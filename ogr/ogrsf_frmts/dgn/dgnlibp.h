@@ -29,6 +29,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2002/02/22 22:17:42  warmerda
+ * Ensure that components of complex chain/shapes are spatially selected
+ * based on the decision made for their owner (header).
+ *
  * Revision 1.11  2002/02/06 20:32:33  warmerda
  * handle improbably large elements
  *
@@ -106,6 +110,9 @@ typedef struct {
 
     int         has_spatial_filter;
     int         sf_converted_to_uor;
+
+    int         select_complex_group;
+    int         in_complex_group;
 
     GUInt32	sf_min_x;
     GUInt32	sf_min_y;
