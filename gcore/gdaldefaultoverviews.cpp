@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2000/06/19 18:48:49  warmerda
+ * fixed message
+ *
  * Revision 1.2  2000/06/19 14:42:27  warmerda
  * Don't close old overviews till after we have identified which already
  * exist, otherwise multiple copies of overviews may be created.
@@ -171,7 +174,7 @@ GDALDefaultOverviews::BuildOverviews(
     {
         CPLError( CE_Failure, CPLE_NotSupported,
                   "Generation of overviews in external TIFF currently only"
-                  " support when operating on all bands.\n" 
+                  " supported when operating on all bands.\n" 
                   "Operation failed.\n" );
         return CE_Failure;
     }
@@ -302,3 +305,4 @@ GDALDefaultOverviews::BuildOverviews(
 
     return eErr;
 }
+
