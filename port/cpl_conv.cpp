@@ -1,4 +1,11 @@
 /******************************************************************************
+ * $Id$
+ *
+ * Project:  CPL - Common Portability Library
+ * Purpose:  Convenience functions.
+ * Author:   Frank Warmerdam, warmerda@home.com
+ *
+ ******************************************************************************
  * Copyright (c) 1998, Frank Warmerdam
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -20,9 +27,10 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************
  *
- * cpl_conv.c: Various CPL convenience functions (from cpl_conv.h).
- *
  * $Log$
+ * Revision 1.8  2000/04/05 21:02:47  warmerda
+ * Added CPLVerifyConfiguration()
+ *
  * Revision 1.7  1999/08/27 12:55:39  danmo
  * Support 0 bytes allocations in CPLRealloc()
  *
@@ -111,6 +119,8 @@ void *CPLMalloc( size_t nSize )
 
 {
     void	*pReturn;
+
+    CPLVerifyConfiguration();
 
     if( nSize == 0 )
         return NULL;
@@ -300,3 +310,31 @@ const char *CPLReadLine( FILE * fp )
     return( pszRLBuffer );
 }
 
+/************************************************************************/
+/*                       CPLVerifyConfiguration()                       */
+/************************************************************************/
+
+void CPLVerifyConfiguration()
+
+{
+/* -------------------------------------------------------------------- */
+/*      Verify data types.                                              */
+/* -------------------------------------------------------------------- */
+    CPLAssert( sizeof(GInt32) == 4 );
+    CPLAssert( sizeof(GInt16) == 2 );
+    CPLAssert( sizeof(GByte) == 1 );
+
+/* -------------------------------------------------------------------- */
+/*      Verify byte order                                               */
+/* -------------------------------------------------------------------- */
+    GInt32   nTest;
+
+    nTest = 1;
+
+#ifdef CPL_LSB
+    CPLAssert( ((GByte *) &nTest)[0] == 1 );
+#endif
+#ifdef CPL_MSB
+    CPLAssert( ((uchar *) &nTest)[3] == 1 );
+#endif    
+}
