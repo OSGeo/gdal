@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2000/07/11 14:35:43  warmerda
+ * added documentation
+ *
  * Revision 1.18  2000/06/27 16:46:56  warmerda
  * default to using dummy progress func
  *
@@ -746,7 +749,16 @@ const GDAL_GCP *GDALGetGCPs( GDALDatasetH hDS )
  * @param pfnProgress a function to call to report progress, or NULL.
  * @param pProgressData application data to pass to the progress function.
  *
- * @return CE_None on success or CE_Failure if the operation doesn't work. 
+ * @return CE_None on success or CE_Failure if the operation doesn't work.
+ *
+ * For example, to build overview level 2, 4 and 8 on all bands the following
+ * call could be made:
+ * <pre>
+ *   int       anOverviewList[3] = { 2, 4, 8 };
+ *   
+ *   poDataset->BuildOverviews( "NEAREST", 3, anOverviewList, 0, NULL, 
+ *                              GDALDummyProgress, NULL );
+ * </pre>
  */
 
 CPLErr GDALDataset::BuildOverviews( const char *pszResampling, 

@@ -151,7 +151,7 @@ A raster band has the following properties:
 defined for the dataset, if this is a full resolution band. 
 
 <li> A datatype (GDALDataType).  One of Byte, UInt16, Int16, UInt32, Int32, 
-Float32, or Float64.  
+Float32, Float64, and the complex types CInt16, CInt32, CFloat32, and CFloat64.
 
 <li> A block size.  This is a preferred (efficient) access chunk size.  For 
 tiled images this will be one tile.  For scanline oriented images this will 

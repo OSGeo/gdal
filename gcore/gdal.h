@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.29  2000/07/11 14:35:43  warmerda
+ * added documentation
+ *
  * Revision 1.28  2000/06/27 17:30:21  warmerda
  * added GDALGetRasterSampleOverview
  *
@@ -160,28 +163,29 @@ typedef enum {
     /*! Read/write access. */           GA_Update = 1
 } GDALAccess;
 
+/*! Read/Write flag for RasterIO() method */
 typedef enum {
-    GF_Read = 0,
-    GF_Write = 1
+    /*! Read data */   GF_Read = 0,
+    /*! Write data */  GF_Write = 1
 } GDALRWFlag;
 
 /*! Types of color interpretation for raster bands. */
 typedef enum
 {
     GCI_Undefined=0,
-    GCI_GrayIndex=1,
-    GCI_PaletteIndex=2,
-    GCI_RedBand=3,
-    GCI_GreenBand=4,
-    GCI_BlueBand=5,
-    GCI_AlphaBand=6,
-    GCI_HueBand=7,
-    GCI_SaturationBand=8,
-    GCI_LightnessBand=9,
-    GCI_CyanBand=10,
-    GCI_MagentaBand=11,
-    GCI_YellowBand=12,
-    GCI_BlackBand=13
+    /*! Greyscale */                                      GCI_GrayIndex=1,
+    /*! Paletted (see associated color table) */          GCI_PaletteIndex=2,
+    /*! Red band of RGBA image */                         GCI_RedBand=3,
+    /*! Green band of RGBA image */                       GCI_GreenBand=4,
+    /*! Blue band of RGBA image */                        GCI_BlueBand=5,
+    /*! Alpha (0=transparent, 255=opaque) */              GCI_AlphaBand=6,
+    /*! Hue band of HLS image */                          GCI_HueBand=7,
+    /*! Saturation band of HLS image */                   GCI_SaturationBand=8,
+    /*! Lightness band of HLS image */                    GCI_LightnessBand=9,
+    /*! Cyan band of CMYK image */                        GCI_CyanBand=10,
+    /*! Magenta band of CMYK image */                     GCI_MagentaBand=11,
+    /*! Yellow band of CMYK image */                      GCI_YellowBand=12,
+    /*! Black band of CMLY image */                       GCI_BlackBand=13
 } GDALColorInterp;
 
 /*! Translate a GDALColorInterp into a user displayable string. */
@@ -190,10 +194,10 @@ const char CPL_DLL *GDALGetColorInterpretationName( GDALColorInterp );
 /*! Types of color interpretations for a GDALColorTable. */
 typedef enum 
 {
-    GPI_Gray=0,
-    GPI_RGB=1,
-    GPI_CMYK=2,
-    GPI_HLS=3
+  /*! Grayscale (in GDALColorEntry.c1) */                      GPI_Gray=0,
+  /*! Red, Green, Blue and Alpha in (in c1, c2, c3 and c4) */  GPI_RGB=1,
+  /*! Cyan, Magenta, Yellow and Black (in c1, c2, c3 and c4)*/ GPI_CMYK=2,
+  /*! Hue, Lightness and Saturation (in c1, c2, and c3) */     GPI_HLS=3
 } GDALPaletteInterp;
 
 /*! Translate a GDALPaletteInterp into a user displayable string. */
@@ -209,7 +213,6 @@ const char CPL_DLL *GDALGetPaletteInterpretationName( GDALPaletteInterp );
 /* -------------------------------------------------------------------- */
 /*      Define handle types related to various internal classes.        */
 /* -------------------------------------------------------------------- */
-
 typedef void *GDALMajorObjectH;
 typedef void *GDALDatasetH;
 typedef void *GDALRasterBandH;
@@ -220,6 +223,8 @@ typedef void *GDALColorTableH;
 /* -------------------------------------------------------------------- */
 /*      Callback "progress" function.                                   */
 /* -------------------------------------------------------------------- */
+/*! Progresss function signature, see GDALDummyProgress() for details. */
+
 typedef int (*GDALProgressFunc)(double,const char *, void *);
 int CPL_DLL GDALDummyProgress( double, const char *, void *);
 int CPL_DLL GDALScaledProgress( double, const char *, void *);
@@ -380,16 +385,16 @@ void CPL_DLL
 /** Color tuple */
 typedef struct
 {
-    /** gray, red, cyan or hue */
+    /*! gray, red, cyan or hue */
     short      c1;      
 
-    /* green, magenta, or lightness */    
+    /*! green, magenta, or lightness */    
     short      c2;      
 
-    /* blue, yellow, or saturation */
+    /*! blue, yellow, or saturation */
     short      c3;      
 
-    /* alpha or blackband */
+    /*! alpha or blackband */
     short      c4;      
 } GDALColorEntry;
 

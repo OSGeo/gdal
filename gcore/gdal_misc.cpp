@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2000/07/11 14:35:43  warmerda
+ * added documentation
+ *
  * Revision 1.17  2000/07/05 17:53:33  warmerda
  * Removed unused code related to nXCheck.
  *
@@ -456,6 +459,70 @@ void GDALComputeRasterMinMax( GDALRasterBandH hBand, int bApproxOK,
 /************************************************************************/
 /*                         GDALDummyProgress()                          */
 /************************************************************************/
+
+/**
+ * Stub progress function.
+ *
+ * Many long running operations within GDAL the option of passing a
+ * progress function.  The progress function is intended to provide a 
+ * way of displaying a progress indicator to the user, and for the user
+ * to terminate the process prematurely.  Applications not desiring 
+ * to utilize this support should normally pass GDALDummyProgress as
+ * the pfnProgress argument and NULL as the pData argument.  
+ * 
+ * Applications wishing to take advantage of the progress semantics should
+ * pass a function implementing GDALProgressFunc semantics. 
+ *
+ * <pre>
+ * typedef int (*GDALProgressFunc)(double dfComplete,
+ *                                 const char *pszMessage, 
+ *                                 void *pData);
+ * </pre>
+ *
+ * @param dfComplete Passed in the with ratio of the operation that is
+ * complete, and is a value between 0.0 and 1.0.  
+ * 
+ * @param pszMessage This is normally passed in as NULL, but will occasionally
+ * be passed in with a message about what is happening that may be displayed
+ * to the user. 
+ *
+ * @param pData Application data (as passed via pData into GDAL operation).
+ *
+ * @return TRUE if the operation should continue, or FALSE if the user
+ * has requested a cancel. 
+ * 
+ * For example, an application might implement the following simple
+ * text progress reporting mechanism, using pData to pass a default message:
+ *
+ * <pre>
+ * int MyTextProgress( double dfComplete, const char *pszMessage, void *pData)
+ * {
+ *     if( pszMessage != NULL )
+ *         printf( "%d%% complete: %s\n", (int) (dfComplete*100), pszMessage );
+ *     else if( pData != NULL )
+ *         printf( "%d%% complete:%s\n", (int) (dfComplete*100),
+ *                 (char *) pData );
+ *     else
+ *         printf( "%d%% complete.\n", (int) (dfComplete*100) );
+ *     
+ *     return TRUE;
+ * }
+ * </pre>
+ *
+ * This could be utilized with the GDALDataset::BuildOverviews() method like
+ * this:
+ *
+ * <pre>
+ *      int       anOverviewList[3] = {2, 4, 8};
+ *
+ *      poDataset->BuildOverviews( "NEAREST", 3, anOverviewList, 0, NULL, 
+ *                                 MyTextProgress, "building overviews" );
+ * </pre>
+ * 
+ * More often that implementing custom progress functions, applications 
+ * will just use existing progress functions like GDALDummyProgress(), and 
+ * GDALScaledProgress().  Python scripts also can pass progress functions.
+ */
 
 int GDALDummyProgress( double, const char *, void * )
 
