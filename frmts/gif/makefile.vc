@@ -16,4 +16,8 @@ default:	$(OBJ)
 
 clean:
 	-del *.obj
+	cd libungif
+	$(MAKE) /f makefile.vc clean
+	cd ..
+
 

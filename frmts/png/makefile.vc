@@ -16,4 +16,7 @@ default:	$(OBJ)
 
 clean:
 	-del *.obj
+	cd libpng
+	$(MAKE) /f makefile.vc clean
+	cd ..
 
