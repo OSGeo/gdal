@@ -25,6 +25,9 @@
  * Main format registration function.
  * 
  * $Log$
+ * Revision 1.50  2002/10/21 18:03:22  warmerda
+ * added AutoSkipDrivers() call
+ *
  * Revision 1.49  2002/10/10 10:43:37  dron
  * Fix for buiding GDAL with JasPer software under Windows.
  *
@@ -358,4 +361,10 @@ void GDALAllRegister()
 #ifdef FRMT_grass
     GDALRegister_GRASS();
 #endif
+
+/* -------------------------------------------------------------------- */
+/*      Deregister any drivers explicitly marked as supressed by the    */
+/*      GDAL_SKIP environment variable.                                 */
+/* -------------------------------------------------------------------- */
+    GetGDALDriverManager()->AutoSkipDrivers();
 }
