@@ -8,7 +8,7 @@ default:	lib GDALmake.opt
 
 lib:	$(GDAL_LIB)
 
-$(GDAL_LIB):	port-target ogr-target core-target frmts-target force-lib
+$(GDAL_LIB):	port-target ogr-target core-target frmts-target force-lib py-target
 
 force-lib:
 	ar r $(GDAL_LIB) $(GDAL_OBJ)
@@ -32,13 +32,26 @@ core-target:
 frmts-target:
 	(cd frmts; $(MAKE))
 
+#
+#	We only make python a default target if we think python is installed.
+#
+ifeq ($(PYTHON),no)
+py-target:
+else
+py-target:	py-module
+endif
+
 clean:	lclean
 	(cd port; $(MAKE) clean)
 	(cd ogr; $(MAKE) clean)
 	(cd core; $(MAKE) clean)
 	(cd frmts; $(MAKE) clean)
 	(cd apps; $(MAKE) clean)
+	(cd pymod; $(MAKE) clean)
 	(cd viewer; $(MAKE) clean)
+
+py-module:
+	(cd pymod; $(MAKE))
 
 lclean:
 	rm -f *.a *.so
