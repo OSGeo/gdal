@@ -29,6 +29,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.73  2005/02/15 03:31:26  fwarmerdam
+# added Register and Deregister methods on gdal.Driver
+#
 # Revision 1.72  2004/12/19 21:40:58  fwarmerdam
 # added AdviseRead() method on Band object
 #
@@ -557,6 +560,12 @@ class Driver(MajorObject):
 
     def Delete(self, filename):
         return _gdal.GDALDeleteDataset( self._o, filename )
+
+    def Register(self):
+        _gdal.GDALRegisterDriver( self._o )
+
+    def Deregister(self):
+        _gdal.GDALDeregisterDriver( self._o )
 
 ###############################################################################
 
