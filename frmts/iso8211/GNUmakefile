@@ -2,7 +2,7 @@ GDAL_ROOT	=	../..
 
 include $(GDAL_ROOT)/GDALmake.opt
 
-VERSION =	0.1
+VERSION =	0.9
 DISTDIR =	iso8211lib-$(VERSION)
 WEB_DIR =	/u/www/projects/iso8211
 
