@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2004/11/29 15:01:55  fwarmerdam
+ * Fixed typo in printf as per Bug 691.
+ *
  * Revision 1.13  2004/11/14 04:57:04  fwarmerdam
  * added -srcalpha switch, and automatic alpha detection
  *
@@ -831,7 +834,7 @@ GDALWarpCreateOutput( GDALDatasetH hSrcDS, const char *pszFilename,
 /*      Create the output file.                                         */
 /* -------------------------------------------------------------------- */
     if( !bQuiet )
-        printf( "Creating output file is that %dP x %dL.\n", nPixels, nLines );
+        printf( "Creating output file that is %dP x %dL.\n", nPixels, nLines );
 
     hDstDS = GDALCreate( hDriver, pszFilename, nPixels, nLines, 
                          nDstBandCount, eDT, papszCreateOptions );
