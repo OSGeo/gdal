@@ -1,12 +1,12 @@
 /**********************************************************************
- * $Id: mitab_ogr_datasource.cpp,v 1.5 2002/02/08 16:52:16 warmerda Exp $
+ * $Id: mitab_ogr_datasource.cpp,v 1.6 2003/03/21 14:20:49 warmerda Exp $
  *
  * Name:     mitab_ogr_datasource.cpp
  * Project:  MapInfo Mid/Mif, Tab ogr support
  * Language: C++
  * Purpose:  Implementation of OGRTABDataSource.
  * Author:   Stephane Villeneuve, stephane.v@videotron.ca
- *           and Frank Warmerdam, warmerda@home.com
+ *           and Frank Warmerdam, warmerdam@pobox.com
  *
  **********************************************************************
  * Copyright (c) 1999, 2000, Stephane Villeneuve
@@ -29,7 +29,11 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
+ *
  * $Log: mitab_ogr_datasource.cpp,v $
+ * Revision 1.6  2003/03/21 14:20:49  warmerda
+ * fixed email
+ *
  * Revision 1.5  2002/02/08 16:52:16  warmerda
  * added support for FORMAT=MIF option for creating layers
  *

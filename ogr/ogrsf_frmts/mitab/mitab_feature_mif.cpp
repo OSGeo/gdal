@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_feature_mif.cpp,v 1.24 2002/11/27 22:51:52 daniel Exp $
+ * $Id: mitab_feature_mif.cpp,v 1.25 2003/12/19 07:52:34 fwarmerdam Exp $
  *
  * Name:     mitab_feature.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -31,6 +31,9 @@
  **********************************************************************
  *
  * $Log: mitab_feature_mif.cpp,v $
+ * Revision 1.25  2003/12/19 07:52:34  fwarmerdam
+ * write 3d as 2d
+ *
  * Revision 1.24  2002/11/27 22:51:52  daniel
  * Bug 1631:Do not produce an error if .mid data records end with a stray ','
  * Treat tabs (\t) as a blank space delimiter when reading .mif coordinates
@@ -332,7 +335,7 @@ int TABPoint::WriteGeometryToMIFFile(MIDDATAFile *fp)
      * Fetch and validate geometry
      *----------------------------------------------------------------*/
     poGeom = GetGeometryRef();
-    if (poGeom && poGeom->getGeometryType() == wkbPoint)
+    if (poGeom && wkbFlatten(poGeom->getGeometryType()) == wkbPoint)
         poPoint = (OGRPoint*)poGeom;
     else
     {
@@ -416,7 +419,7 @@ int TABFontPoint::WriteGeometryToMIFFile(MIDDATAFile *fp)
      * Fetch and validate geometry
      *----------------------------------------------------------------*/
     poGeom = GetGeometryRef();
-    if (poGeom && poGeom->getGeometryType() == wkbPoint)
+    if (poGeom && wkbFlatten(poGeom->getGeometryType()) == wkbPoint)
         poPoint = (OGRPoint*)poGeom;
     else
     {
@@ -504,7 +507,7 @@ int TABCustomPoint::WriteGeometryToMIFFile(MIDDATAFile *fp)
      * Fetch and validate geometry
      *----------------------------------------------------------------*/
     poGeom = GetGeometryRef();
-    if (poGeom && poGeom->getGeometryType() == wkbPoint)
+    if (poGeom && wkbFlatten(poGeom->getGeometryType()) == wkbPoint)
         poPoint = (OGRPoint*)poGeom;
     else
     {
@@ -713,7 +716,7 @@ int TABPolyline::WriteGeometryToMIFFile(MIDDATAFile *fp)
      * Fetch and validate geometry
      *----------------------------------------------------------------*/
     poGeom = GetGeometryRef();
-    if (poGeom && poGeom->getGeometryType() == wkbLineString)
+    if (poGeom && wkbFlatten(poGeom->getGeometryType()) == wkbLineString)
     {
         /*-------------------------------------------------------------
          * Simple polyline
@@ -735,7 +738,7 @@ int TABPolyline::WriteGeometryToMIFFile(MIDDATAFile *fp)
             }
         }
     }
-    else if (poGeom && poGeom->getGeometryType() == wkbMultiLineString)
+    else if (poGeom && wkbFlatten(poGeom->getGeometryType()) == wkbMultiLineString)
     {
         /*-------------------------------------------------------------
          * Multiple polyline... validate all components
@@ -749,7 +752,7 @@ int TABPolyline::WriteGeometryToMIFFile(MIDDATAFile *fp)
         for(iLine=0; iLine < numLines; iLine++)
         {
             poGeom = poMultiLine->getGeometryRef(iLine);
-            if (poGeom && poGeom->getGeometryType() == wkbLineString)
+            if (poGeom && wkbFlatten(poGeom->getGeometryType()) == wkbLineString)
             { 
                 poLine = (OGRLineString*)poGeom;
                 nNumPoints = poLine->getNumPoints();
@@ -944,8 +947,8 @@ int TABRegion::WriteGeometryToMIFFile(MIDDATAFile *fp)
 
     poGeom = GetGeometryRef();
 
-    if (poGeom && (poGeom->getGeometryType() == wkbPolygon ||
-                   poGeom->getGeometryType() == wkbMultiPolygon ) )
+    if (poGeom && (wkbFlatten(poGeom->getGeometryType()) == wkbPolygon ||
+                   wkbFlatten(poGeom->getGeometryType()) == wkbMultiPolygon ) )
     {
         /*=============================================================
          * REGIONs are similar to PLINE MULTIPLE
@@ -1169,7 +1172,7 @@ int TABRectangle::WriteGeometryToMIFFile(MIDDATAFile *fp)
      * Fetch and validate geometry
      *----------------------------------------------------------------*/
     poGeom = GetGeometryRef();
-    if (poGeom && poGeom->getGeometryType() == wkbPolygon)
+    if (poGeom && wkbFlatten(poGeom->getGeometryType()) == wkbPolygon)
         poPolygon = (OGRPolygon*)poGeom;
     else
     {
@@ -1319,8 +1322,8 @@ int TABEllipse::WriteGeometryToMIFFile(MIDDATAFile *fp)
     OGREnvelope         sEnvelope;
  
     poGeom = GetGeometryRef();
-    if ( (poGeom && poGeom->getGeometryType() == wkbPolygon ) ||
-         (poGeom && poGeom->getGeometryType() == wkbPoint )  )
+    if ( (poGeom && wkbFlatten(poGeom->getGeometryType()) == wkbPolygon ) ||
+         (poGeom && wkbFlatten(poGeom->getGeometryType()) == wkbPoint )  )
         poGeom->getEnvelope(&sEnvelope);
     else
     {
@@ -1919,7 +1922,7 @@ int TABMultiPoint::WriteGeometryToMIFFile(MIDDATAFile *fp)
      * Fetch and validate geometry
      *----------------------------------------------------------------*/
     poGeom = GetGeometryRef();
-    if (poGeom && poGeom->getGeometryType() == wkbMultiPoint)
+    if (poGeom && wkbFlatten(poGeom->getGeometryType()) == wkbMultiPoint)
     {
         poMultiPoint = (OGRMultiPoint*)poGeom;
         nNumPoints = poMultiPoint->getNumGeometries();
@@ -1932,7 +1935,7 @@ int TABMultiPoint::WriteGeometryToMIFFile(MIDDATAFile *fp)
              * Validate each point
              *-----------------------------------------------------------*/
             poGeom = poMultiPoint->getGeometryRef(iPoint);
-            if (poGeom && poGeom->getGeometryType() == wkbPoint)
+            if (poGeom && wkbFlatten(poGeom->getGeometryType()) == wkbPoint)
             { 
                 poPoint = (OGRPoint*)poGeom;
                 fp->WriteLine("%.16g %.16g\n",poPoint->getX(),poPoint->getY());

@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_priv.h,v 1.35 2003/01/18 20:25:44 daniel Exp $
+ * $Id: mitab_priv.h,v 1.36 2003/08/12 23:17:21 dmorissette Exp $
  *
  * Name:     mitab_priv.h
  * Project:  MapInfo TAB Read/Write library
@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log: mitab_priv.h,v $
+ * Revision 1.36  2003/08/12 23:17:21  dmorissette
+ * Added reading of v500+ coordsys affine params (Anthony D. - Encom)
+ *
  * Revision 1.35  2003/01/18 20:25:44  daniel
  * Increased MIDMAXCHAR value to 10000
  *
@@ -259,6 +262,16 @@ typedef struct TABProjInfo_t
     double      dDatumShiftY;
     double      dDatumShiftZ;
     double      adDatumParams[5];
+
+    // Affine parameters only in .map version 500 and up
+    GByte       nAffineFlag;    // 0=No affine param, 1=Affine params   
+    GByte       nAffineUnits;
+    double      dAffineParamA;  // Affine params
+    double      dAffineParamB;
+    double      dAffineParamC;
+    double      dAffineParamD;
+    double      dAffineParamE;
+    double      dAffineParamF;
 
 } TABProjInfo;
 

@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_indfile.cpp,v 1.8 2001/05/01 03:38:23 daniel Exp $
+ * $Id: mitab_indfile.cpp,v 1.9 2003/07/24 02:45:57 daniel Exp $
  *
  * Name:     mitab_indfile.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -31,6 +31,9 @@
  **********************************************************************
  *
  * $Log: mitab_indfile.cpp,v $
+ * Revision 1.9  2003/07/24 02:45:57  daniel
+ * Fixed problem scanning node in TABINDNode::FindNext() - bug 2176, FW
+ *
  * Revision 1.8  2001/05/01 03:38:23  daniel
  * Added update support (allows creating new index in existing IND files).
  *
@@ -1339,7 +1342,7 @@ GInt32 TABINDNode::FindNext(GByte *pKeyValue)
             m_nCurIndexEntry = 0;
         }
 
-        if (m_nCurIndexEntry >= m_numEntriesInNode &&
+        if (m_nCurIndexEntry < m_numEntriesInNode &&
             IndexKeyCmp(pKeyValue, m_nCurIndexEntry) == 0)
         {
            /* Found it!  Return the record number */
