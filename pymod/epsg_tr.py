@@ -30,6 +30,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.13  2004/11/01 17:25:39  fwarmerdam
+# ensure SQL and PROJ.4 strings are SQL escaped for PostGIS
+#
 # Revision 1.12  2004/05/10 17:09:30  warmerda
 # improve PostGIS output
 #
@@ -71,6 +74,7 @@
 import osr
 import sys
 import string
+import gdal
 
 # =============================================================================
 def Usage():
@@ -142,6 +146,8 @@ def trHandleCode(code, gen_dict_line, report_error, output_format):
             if err:
                 print '-- (unable to translate)'
             else:
+                wkt = gdal.EscapeString(wkt,scheme=gdal.CPLES_SQL)
+                proj4text = gdal.EscapeString(proj4text,scheme=gdal.CPLES_SQL)
                 print 'INSERT INTO "spatial_ref_sys" ("srid","auth_name","auth_srid","srtext","proj4text") VALUES (%s,\'EPSG\',%s,\'%s\',\'%s\');' % \
                       (str(code),str(code),wkt,proj4text)
             
