@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.23  2003/05/12 18:08:33  warmerda
+ * added 25D settings for -nlt.
+ *
  * Revision 1.22  2003/01/22 18:13:35  warmerda
  * use indirect (in DLL) feature creation and destruction
  *
@@ -211,11 +214,27 @@ int main( int nArgc, char ** papszArgv )
             else if( EQUAL(papszArgv[iArg+1],"GEOMETRYCOLLECTION") )
                 eGType = wkbGeometryCollection;
             else if( EQUAL(papszArgv[iArg+1],"MULTIPOINT") )
-                eGType = wkbPoint;
+                eGType = wkbMultiPoint;
             else if( EQUAL(papszArgv[iArg+1],"MULTILINESTRING") )
-                eGType = wkbLineString;
+                eGType = wkbMultiLineString;
             else if( EQUAL(papszArgv[iArg+1],"MULTIPOLYGON") )
                 eGType = wkbMultiPolygon;
+            else if( EQUAL(papszArgv[iArg+1],"GEOMETRY25D") )
+                eGType = wkbUnknown | wkb25DBit;
+            else if( EQUAL(papszArgv[iArg+1],"POINT25D") )
+                eGType = wkbPoint25D;
+            else if( EQUAL(papszArgv[iArg+1],"LINESTRING25D") )
+                eGType = wkbLineString25D;
+            else if( EQUAL(papszArgv[iArg+1],"POLYGON25D") )
+                eGType = wkbPolygon25D;
+            else if( EQUAL(papszArgv[iArg+1],"GEOMETRYCOLLECTION25D") )
+                eGType = wkbGeometryCollection25D;
+            else if( EQUAL(papszArgv[iArg+1],"MULTIPOINT25D") )
+                eGType = wkbMultiPoint25D;
+            else if( EQUAL(papszArgv[iArg+1],"MULTILINESTRING25D") )
+                eGType = wkbMultiLineString25D;
+            else if( EQUAL(papszArgv[iArg+1],"MULTIPOLYGON25D") )
+                eGType = wkbMultiPolygon25D;
             else
             {
                 fprintf( stderr, "-nlt %s: type not recognised.\n", 
@@ -530,7 +549,8 @@ static void Usage()
             " -nln name: Assign an alternate name to the new layer\n"
             " -nlt type: Force a geometry type for new layer.  One of NONE, GEOMETRY,\n"
             "      POINT, LINESTRING, POLYGON, GEOMETRYCOLLECTION, MULTIPOINT, MULTILINE,\n"
-            "      MULTIPOLYGON, or MULTILINESTRING. Default is type of source layer.\n" );
+            "      MULTIPOLYGON, or MULTILINESTRING.  Add \"25D\" for 3D layers.\n"
+            "      Default is type of source layer.\n" );
 
     printf(" -a_srs srs_def: Assign an output SRS\n"
            " -t_srs srs_def: Reproject/transform to this SRS on output\n"
