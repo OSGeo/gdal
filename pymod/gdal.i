@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.51  2003/01/08 18:17:24  warmerda
+ * implemented a few new functions including custom CreateLayer
+ *
  * Revision 1.50  2003/01/02 21:41:07  warmerda
  * added GetField(), and BuildPolygonFromEdges methods
  *
@@ -1373,6 +1376,8 @@ OGRSpatialReferenceH OSRCloneGeogCS( OGRSpatialReferenceH );
 int     OSRMorphToESRI( OGRSpatialReferenceH );
 int     OSRMorphFromESRI( OGRSpatialReferenceH );
 int     OSRValidate( OGRSpatialReferenceH );
+int     OSRFixupOrdering( OGRSpatialReferenceH );
+int     OSRStripCTParms( OGRSpatialReferenceH );
 
 int     OSRSetAttrValue( OGRSpatialReferenceH hSRS, const char * pszNodePath,
                          const char * pszNewNodeValue );
@@ -2212,7 +2217,7 @@ int     OGR_FD_GetFieldCount( OGRFeatureDefnH );
 OGRFieldDefnH  OGR_FD_GetFieldDefn( OGRFeatureDefnH, int );
 int     OGR_FD_GetFieldIndex( OGRFeatureDefnH, const char * );
 void    OGR_FD_AddFieldDefn( OGRFeatureDefnH, OGRFieldDefnH );
-OGRwkbGeometryType  OGR_FD_GetGeomType( OGRFeatureDefnH );
+OGRwkbGeometryType OGR_FD_GetGeomType( OGRFeatureDefnH );
 void    OGR_FD_SetGeomType( OGRFeatureDefnH, OGRwkbGeometryType );
 int     OGR_FD_Reference( OGRFeatureDefnH );
 int     OGR_FD_Dereference( OGRFeatureDefnH );
@@ -2384,13 +2389,64 @@ void OGR_DS_Destroy( OGRDataSourceH );
 const char  *OGR_DS_GetName( OGRDataSourceH );
 int     OGR_DS_GetLayerCount( OGRDataSourceH );
 OGRLayerH  OGR_DS_GetLayer( OGRDataSourceH, int );
-OGRLayerH  OGR_DS_CreateLayer( OGRDataSourceH, const char *, 
-                                      OGRSpatialReferenceH, OGRwkbGeometryType,
-                                      char ** );
 int     OGR_DS_TestCapability( OGRDataSourceH, const char * );
 OGRLayerH  OGR_DS_ExecuteSQL( OGRDataSourceH, const char *, OGRGeometryH, 
                               const char * );
 void    OGR_DS_ReleaseResultSet( OGRDataSourceH, OGRLayerH );
+
+%{
+static PyObject *
+py_OGR_DS_CreateLayer(PyObject *self, PyObject *args) {
+
+    OGRSpatialReferenceH hSRS = NULL;
+    OGRDataSourceH hDS;
+    OGRLayerH      hLayer;
+    char           **papszOptions = NULL;
+    char *srs_in = NULL, *ds_in = NULL, *pszName = NULL; 
+    int  nGeomType, i;
+    PyObject *psOptionsList = NULL;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"ssziO!:OGR_DS_CreateLayer", 
+			 &ds_in, &pszName, &srs_in, &nGeomType, 
+                         &PyList_Type, &psOptionsList ))
+        return NULL;
+
+    if (SWIG_GetPtr_2(ds_in,(void **) &hDS,_OGRDataSourceH)) {
+        PyErr_SetString(PyExc_TypeError,
+                        "Type error in argument 1 of OGR_DS_CreateLayer."
+                        "  Expected _OGRDataSourceH.");
+        return NULL;
+    }
+
+    if (srs_in != NULL
+        && SWIG_GetPtr_2(srs_in,(void **) &hSRS,_OGRSpatialReferenceH)) {
+        PyErr_SetString(PyExc_TypeError,
+                        "Type error in argument 3 of OGR_DS_CreateLayer."
+                        "  Expected _OGRSpatialReferenceH.");
+        return NULL;
+    }
+   
+    for( i = 0; i < PyList_Size(psOptionsList); i++ )
+    {
+	const char *pszItem = NULL;
+	if( !PyArg_Parse( PyList_GET_ITEM(psOptionsList,i), "s", &pszItem ))
+        {
+	    PyErr_SetString(PyExc_ValueError, "bad option list item");
+	    return NULL;
+        }
+	papszOptions = CSLAddString( papszOptions, pszItem );
+    }
+
+    hLayer = OGR_DS_CreateLayer( hDS, pszName, hSRS, nGeomType, papszOptions );
+
+    SWIG_MakePtr(_ptemp, (char *) hLayer,"_OGRLayerH");
+    return Py_BuildValue("s",_ptemp);
+}
+%} 
+
+%native(OGR_DS_CreateLayer) py_OGR_DS_CreateLayer;
 
 /* OGRSFDriver */
 
