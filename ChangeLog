@@ -1,3 +1,8 @@
+2001-08-31  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* frmts/ceos2/sar_ceosdataset.cpp: added support for the SAR Toolbox
+	(from Alaska SAR Facility) naming convension for CEOS files. 
+
 2001-08-30  Frank Warmerdam  <warmerdam@pobox.com>
 
 	* frmts/ceos2/sar_ceosdataset.cpp: added four corner support for ERS

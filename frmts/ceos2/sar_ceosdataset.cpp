@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2001/08/31 15:17:48  warmerda
+ * added ASF SAR Toolbox naming convention support
+ *
  * Revision 1.16  2001/08/30 18:24:06  warmerda
  * added support for reading map projection record in ers dataset
  *
@@ -90,20 +93,22 @@ CPL_C_START
 void	GDALRegister_SAR_CEOS(void);
 CPL_C_END
 
-char *CeosExtension[][5] = { 
-{ "vol", "led", "img", "trl", "nul" },
-{ "vol", "lea", "img", "trl", "nul" },
-{ "vol", "led", "img", "tra", "nul" },
-{ "vol", "lea", "img", "tra", "nul" },
+char *CeosExtension[][6] = { 
+{ "vol", "led", "img", "trl", "nul", "ext" },
+{ "vol", "lea", "img", "trl", "nul", "ext" },
+{ "vol", "led", "img", "tra", "nul", "ext" },
+{ "vol", "lea", "img", "tra", "nul", "ext" },
+
+{ "vdf", "ldr", "img", "tra", "nul", "ext2" },
 
 /* Radarsat: basename, not extension */
-{ "vdf_dat", "lea_%02d", "dat_%02d", "tra_%02d", "nul_vdf"},
+{ "vdf_dat", "lea_%02d", "dat_%02d", "tra_%02d", "nul_vdf", "base" },
 
 /* Ers-1: basename, not extension */
-{ "vdf_dat", "lea_%02d", "dat_%02d", "tra_%02d", "nul_dat"},
+{ "vdf_dat", "lea_%02d", "dat_%02d", "tra_%02d", "nul_dat", "base" },
 
 /* end marker */
-{ NULL, NULL, NULL, NULL, NULL } 
+{ NULL, NULL, NULL, NULL, NULL, NULL } 
 };
 
 static int 
@@ -839,7 +844,7 @@ GDALDataset *SAR_CEOSDataset::Open( GDALOpenInfo * poOpenInfo )
             char *pszFilename;
             
             /* build filename */
-            if( strlen(CeosExtension[e][iFile]) > 3 )
+            if( EQUAL(CeosExtension[e][5],"base") )
             {
                 char    szMadeBasename[32];
 
@@ -847,11 +852,23 @@ GDALDataset *SAR_CEOSDataset::Open( GDALOpenInfo * poOpenInfo )
                 pszFilename = CPLStrdup(
                     CPLFormFilename(pszPath,szMadeBasename, pszExtension));
             }
-            else
+            else if( EQUAL(CeosExtension[e][5],"ext") )
             {
                 pszFilename = CPLStrdup(
                     CPLFormFilename(pszPath,pszBasename,
                                     CeosExtension[e][iFile]));
+            }
+            
+            // This is for SAR SLC as per the SAR Toolbox (from ASF).
+            else if( EQUAL(CeosExtension[e][5],"ext2") )
+            {
+                char szThisExtension[32];
+
+                sprintf( szThisExtension, "%s%s", 
+                         CeosExtension[e][iFile], 
+                         pszExtension+3 );
+                pszFilename = CPLStrdup(
+                    CPLFormFilename(pszPath,pszBasename,szThisExtension));
             }
 
             /* try to open */
