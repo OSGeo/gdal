@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2002/07/20 12:27:13  dron
+ * Fixed building with externally preinstalled TIFF library.
+ *
  * Revision 1.9  2001/10/12 15:06:05  warmerda
  * various build improvements to avoid internal/external conflicts
  *
@@ -61,7 +64,7 @@
 #include "gdal_priv.h"
 #define CPL_SERV_H_INCLUDED
 
-#include "tiffiop.h"
+#include "tiffio.h"
 #include "xtiffio.h"
 #include "geotiff.h"
 #include "tif_ovrcache.h"
