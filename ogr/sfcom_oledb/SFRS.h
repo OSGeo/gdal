@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2002/04/25 17:39:31  warmerda
+ * added ICommandPrepare, and IRowsetChange interfaces
+ *
  * Revision 1.15  2002/04/17 19:53:17  warmerda
  * added SELECT COUNT(*) support
  *
@@ -189,6 +192,7 @@ class ATL_NO_VTABLE CSFCommand :
 	public IConvertTypeImpl<CSFCommand>,
 	public IColumnsInfoImpl<CSFCommand>,
         public ICommandWithParametersImpl<CSFCommand>,
+        public ICommandPrepare, //20020411 - ryan
 	public CSFCommandSupportsErrorInfoImpl
 {
 public:
@@ -202,6 +206,7 @@ BEGIN_COM_MAP(CSFCommand)
 	COM_INTERFACE_ENTRY(IColumnsInfo)
 	COM_INTERFACE_ENTRY(IConvertType)
 	COM_INTERFACE_ENTRY(ISupportErrorInfo)
+        COM_INTERFACE_ENTRY(ICommandPrepare) //20020411 - ryan
 END_COM_MAP()
 // ICommand
 public:
@@ -228,6 +233,17 @@ public:
 	{
 		return CShapeFile::GetColumnInfo(pv,pcInfo);
 	}
+        
+        //ICommandPrepare - 20020111 - ryan
+        STDMETHOD(Prepare)(ULONG cExpectedRuns) 
+        { 
+            return S_OK; 
+        }
+        STDMETHOD(Unprepare)() 
+        { 
+            return S_OK; 
+        }
+        
 BEGIN_PROPSET_MAP(CSFCommand)
 	BEGIN_PROPERTY_SET(DBPROPSET_ROWSET)
 		PROPERTY_INFO_ENTRY(IAccessor)
@@ -273,6 +289,7 @@ class CSFRowsetImpl :
 	public IColumnsInfoImpl<T>,
 	public IConvertTypeImpl<T>,
         public IColumnsRowsetImpl<T,CreatorClass>,
+        public IRowsetChange, //20020411 - ryan
 	public RowsetInterface
 {
 public:
@@ -280,6 +297,22 @@ public:
 	typedef CreatorClass _RowsetCreatorClass;
 	typedef ArrayType _RowsetArrayType;
 	typedef CSFRowsetImpl< T, Storage, CreatorClass, ArrayType, RowClass, RowsetInterface> _RowsetBaseClass;
+
+    //IRowsetChange - 20020411 - ryan
+    STDMETHOD(DeleteRows) (HCHAPTER hChapter, ULONG cRows, 
+                           const HROW rghRows[], DBROWSTATUS rgRowStatus[]) 
+    { 
+        ATLTRACENOTIMPL("CSFRowsetImpl::DeleteRows"); 
+    }
+    STDMETHOD(InsertRow) (HCHAPTER hChapter, HACCESSOR hAccessor, 
+                          void* pData, HROW* phRow)     
+    { 
+        ATLTRACENOTIMPL("CSFRowsetImpl::InsertRow"); 
+    }
+    STDMETHOD(SetData) (HROW hRow, HACCESSOR hAccessor, void* pData)
+    { 
+        ATLTRACENOTIMPL("CSFRowsetImpl::SetData"); 
+    }
 
 BEGIN_COM_MAP(CSFRowsetImpl)
 	COM_INTERFACE_ENTRY(IAccessor)
@@ -289,7 +322,9 @@ BEGIN_COM_MAP(CSFRowsetImpl)
 	COM_INTERFACE_ENTRY(IColumnsRowset)
 	COM_INTERFACE_ENTRY(IConvertType)
 	COM_INTERFACE_ENTRY(IRowsetIdentity)
+        COM_INTERFACE_ENTRY_IID(IID_IRowsetLocate, IRowset) //20020411 - ryan
 	COM_INTERFACE_ENTRY(IRowset)
+        COM_INTERFACE_ENTRY(IRowsetChange) //20020411 - ryan
 END_COM_MAP()
 
         virtual ~CSFRowsetImpl()
