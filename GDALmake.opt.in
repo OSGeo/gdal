@@ -8,6 +8,11 @@ C_DBGFLAGS =	-g -DDEBUG
 
 LIBS	=	@LIBS@ -lm
 
+PYTHON_INCLUDES = @PYTHON_INCLUDES@
+PYTHON = @PYTHON@
+
+HAVE_OGDI = @HAVE_OGDI@
+
 #
 #	Whether we use debug flags, or optimization is determined by
 #	the CFG environment variable.  Set to debug for debug builds.
@@ -39,15 +44,16 @@ LD_SHARED	=	@LD_SHARED@
 GDAL_INCLUDE	=	-I$(GDAL_ROOT) -I$(GDAL_ROOT)/port -I$(GDAL_ROOT)/core\
 			-I$(GDAL_ROOT)/ogr
 
-GDAL_VER	=	1.0
+GDAL_VER	=	1.1
 GDAL_LIB	= 	$(GDAL_ROOT)/gdal.a
 GDAL_SLIB	=	$(GDAL_ROOT)/gdal.$(GDAL_VER).so
 
 OGR_LIB		=	$(GDAL_ROOT)/ogr/ogr.a
 CPL_LIB		=	$(GDAL_ROOT)/port/cpl.a
 
-ifneq ($(TOPDIR),)
-OGDI_LIBS	=	-L$(TOPDIR)/bin/linux -logdi -lzlib
+ifneq ($(HAVE_OGDI),yes)
+OGDI_LIBS	=	@OGDI_LIBS@
+OGDI_INCLUDE	=	@OGDI_INCLUDE@
 OGDI_FLAG	=	ENABLED
 OGDI_FRMT	=	ogdi
 endif
