@@ -3,7 +3,7 @@ GDAL_ROOT	=	../..
 
 include $(GDAL_ROOT)/GDALmake.opt
 
-OBJ	=	rawdataset.o ehdrdataset.o
+OBJ	=	rawdataset.o ehdrdataset.o pauxdataset.o
 
 ALL_C_FLAGS	=	$(GDAL_INCLUDE) $(CFLAGS)
 
