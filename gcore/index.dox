@@ -82,8 +82,8 @@ are also available.<p>
 <li> <a href="gdal_drivertut.html">GDAL Driver Implementation Tutorial</a>
 <li> <a href="warptut.html">GDAL Warp API Tutorial</a>
 <li> gdal.h - the GDAL C API.
-<li> <a href="class_GDALDataset.html">GDALDataset</a>
-<li> <a href="class_GDALRasterBand.html">GDALRasterBand</a>
+<li> <a href="classGDALDataset.html">GDALDataset</a>
+<li> <a href="classGDALRasterBand.html">GDALRasterBand</a>
 </ul>
 
 <h2>Related Information</h2>
