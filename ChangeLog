@@ -1,3 +1,8 @@
+2003-04-24  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* port/cpl_multiproc.cpp: Implement pthreads based mutex, and thread
+	support.  Added configure option (--with-threads) in configure.
+
 2003-04-22  Andrey Kiselev  <dron@remotesensing.org>
 	
 	* apps/gdalinfo.c: New switches: -nogcp and -nomd to suppress
