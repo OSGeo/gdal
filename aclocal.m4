@@ -16,6 +16,46 @@ AC_DEFUN(AC_HAVE_LONG_LONG,
   rm -f conftest*
 ])
 
+# AC_LANG_FUNC_LINK_TRY_CUSTOM(C++)(FUNCTION,INCLUDE,CODE)
+# ----------------------------------
+m4_define([AC_LANG_FUNC_LINK_TRY_CUSTOM],
+[AC_LANG_PROGRAM(
+[
+#include <assert.h>
+$2
+void test_f()
+{
+  $3
+}
+])])
+
+# -----------------------------------------------------------------
+# AC_CHECK_FUNC_CUSTOM(FUNCTION, [INCLUDE], [CODE], 
+#                      [ACTION-IF-FOUND], [ACTION-IF-NOT-FOUND])
+# -----------------------------------------------------------------
+# This function is primariliy added to facilite testing that 
+# function prototypes are properly found such that functions can
+# be compiled properly in C++.  In particular, we want to include
+# the real include file, not internal define prototypes. 
+#
+# eg.
+# AC_LANG_PUSH(C++)
+# AC_CHECK_FUNC_CUSTOM(gmtime_r,[#include <time.h>],[time_t t; struct tm ltime; t = time(0); gmtime_r( &t, &ltime );])
+# AC_LANG_POP(C++)
+# -----------------------------------------------------------------
+AC_DEFUN([AC_CHECK_FUNC_CUSTOM],
+[AS_VAR_PUSHDEF([ac_var], [ac_cv_func_$1])dnl
+AC_CACHE_CHECK([for $1], ac_var,
+[AC_LINK_IFELSE([AC_LANG_FUNC_LINK_TRY_CUSTOM([$1],[$2],[$3])],
+                [AS_VAR_SET(ac_var, yes)],
+                [AS_VAR_SET(ac_var, no)])])
+AS_IF([test AS_VAR_GET(ac_var) = yes], [$4], [$5])dnl
+AS_VAR_POPDEF([ac_var])dnl
+dnl AC_MSG_RESULT([AC_LANG_FUNC_LINK_TRY_CUSTOM([$1],[$2],[$3])])
+dnl exit
+])# AC_CHECK_FUNC
+
+
 dnl ---------------------------------------------------------------------------
 dnl Check for Unix 64 bit STDIO API (fseek64, ftell64 like on IRIX).
 dnl ---------------------------------------------------------------------------

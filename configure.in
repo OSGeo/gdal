@@ -50,10 +50,17 @@ AC_CHECK_HEADERS(fcntl.h unistd.h dbmalloc.h dlfcn.h stdint.h limits.h locale.h)
 dnl Checks for library functions.
 AC_C_BIGENDIAN
 AC_FUNC_VPRINTF
-AC_CHECK_FUNCS(vsnprintf)
-AC_CHECK_FUNCS(gmtime_r)
-AC_CHECK_FUNCS(localtime_r)
-AC_CHECK_FUNCS(setlocale)
+AC_CHECK_FUNCS(vsnprintf)					
+
+dnl Make sure at least these are checked under C++.  Prototypes missing on 
+dnl some platforms.
+
+AC_CHECK_FUNC(setlocale)
+
+AC_LANG_PUSH(C++)
+AC_CHECK_FUNC_CUSTOM(gmtime_r,[#include <time.h>],[time_t t; struct tm ltime; t = time(0); gmtime_r( &t, &ltime );])
+AC_CHECK_FUNC_CUSTOM(localtime_r,[#include <time.h>],[time_t t; struct tm ltime; t = time(0); localtime_r( &t, &ltime );])
+AC_LANG_POP(C++)
 
 dnl Check for 64 bit file API
 AC_HAVE_LONG_LONG
