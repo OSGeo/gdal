@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2001/07/19 13:26:32  warmerda
+ * enable override of existing modules
+ *
  * Revision 1.10  2001/07/18 04:55:16  warmerda
  * added CPL_CSVID
  *
@@ -461,6 +464,40 @@ const char *OGRTigerDataSource::GetModule( int iModule )
 }
 
 /************************************************************************/
+/*                            CheckModule()                             */
+/*                                                                      */
+/*      This is used by the writer to check if this module has been     */
+/*      written to before.                                              */
+/************************************************************************/
+
+int OGRTigerDataSource::CheckModule( const char *pszModule )
+
+{
+    int		i;
+
+    for( i = 0; i < nModules; i++ )
+    {
+        if( EQUAL(pszModule,papszModules[i]) )
+            return TRUE;
+    }
+    return FALSE;
+}
+
+/************************************************************************/
+/*                             AddModule()                              */
+/************************************************************************/
+
+void OGRTigerDataSource::AddModule( const char *pszModule )
+
+{
+    if( CheckModule( pszModule ) )
+        return;
+
+    papszModules = CSLAddString( papszModules, pszModule );
+    nModules++;
+}
+
+/************************************************************************/
 /*                           BuildFilename()                            */
 /************************************************************************/
 
@@ -651,4 +688,33 @@ OGRLayer *OGRTigerDataSource::CreateLayer( const char *pszLayerName,
         AddLayer( poLayer );
 
     return poLayer;
+}
+
+/************************************************************************/
+/*                         DeleteModuleFiles()                          */
+/************************************************************************/
+
+void OGRTigerDataSource::DeleteModuleFiles( const char *pszModule )
+
+{
+    char	**papszDirFiles = CPLReadDir( GetDirPath() );
+    int		i, nCount = CSLCount(papszDirFiles);
+    
+    for( i = 0; i < nCount; i++ )
+    {
+        if( EQUALN(pszModule,papszDirFiles[i],strlen(pszModule)) )
+        {
+            const char	*pszFilename;
+
+            pszFilename = CPLFormFilename( GetDirPath(), 
+                                           papszDirFiles[i], 
+                                           NULL );
+            if( VSIUnlink( pszFilename ) != 0 )
+            {
+                CPLDebug( "OGR_TIGER", "Failed to unlink %s", pszFilename );
+            }
+        }
+    }
+
+    CSLDestroy( papszDirFiles );
 }

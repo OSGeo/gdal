@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2001/07/19 13:26:32  warmerda
+ * enable override of existing modules
+ *
  * Revision 1.7  2001/07/18 04:55:16  warmerda
  * added CPL_CSVID
  *
@@ -428,6 +431,16 @@ int TigerFileBase::SetWriteModule( const char *pszExtension, int nRecLen,
         pszModule = NULL;
     }
 
+/* -------------------------------------------------------------------- */
+/*      Is this a module we have never written to before?  If so, we    */
+/*      will try to blow away any existing files in this file set.      */
+/* -------------------------------------------------------------------- */
+    if( !poDS->CheckModule( szFullModule ) )
+    {
+        poDS->DeleteModuleFiles( szFullModule );
+        poDS->AddModule( szFullModule );
+    }
+    
 /* -------------------------------------------------------------------- */
 /*      Does this file already exist?                                   */
 /* -------------------------------------------------------------------- */

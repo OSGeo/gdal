@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2001/07/19 13:26:32  warmerda
+ * enable override of existing modules
+ *
  * Revision 1.8  2001/07/04 23:25:32  warmerda
  * first round implementation of writer
  *
@@ -511,6 +514,10 @@ class OGRTigerDataSource : public OGRDataSource
 
     int                 GetModuleCount() { return nModules; }
     const char         *GetModule( int );
+    int                 CheckModule( const char *pszModule );
+    void                AddModule( const char *pszModule );
+
+    void		DeleteModuleFiles( const char *pszModule );
 
     virtual OGRLayer    *CreateLayer( const char *, 
                                       OGRSpatialReference * = NULL,
