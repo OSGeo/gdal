@@ -26,6 +26,9 @@
 ###############################################################################
 # 
 #  $Log$
+#  Revision 1.3  2002/04/03 21:12:05  warmerda
+#  added -separate flag for Gerald Buckmaster
+#
 #  Revision 1.2  2000/11/29 20:36:18  warmerda
 #  allow output file to be preexisting
 #
@@ -40,22 +43,21 @@ import sys
 verbose = 0
 
 # =============================================================================
-def raster_copy( s_fh, s_xoff, s_yoff, s_xsize, s_ysize,
-                 t_fh, t_xoff, t_yoff, t_xsize, t_ysize ):
+def raster_copy( s_fh, s_xoff, s_yoff, s_xsize, s_ysize, s_band_n,
+                 t_fh, t_xoff, t_yoff, t_xsize, t_ysize, t_band_n ):
 
     if verbose != 0:
         print 'Copy %d,%d,%d,%d to %d,%d,%d,%d.' \
               % (s_xoff, s_yoff, s_xsize, s_ysize,
              t_xoff, t_yoff, t_xsize, t_ysize )
 
-    for band in range(min(t_fh.RasterCount,s_fh.RasterCount)):
-        s_band = s_fh.GetRasterBand( band + 1 )
-        t_band = t_fh.GetRasterBand( band + 1 )
+    s_band = s_fh.GetRasterBand( s_band_n )
+    t_band = t_fh.GetRasterBand( t_band_n )
 
-        data = s_band.ReadRaster( s_xoff, s_yoff, s_xsize, s_ysize,
-                                  t_xsize, t_ysize, t_band.DataType )
-        t_band.WriteRaster( t_xoff, t_yoff, t_xsize, t_ysize,
-                            data, t_xsize, t_ysize, t_band.DataType )
+    data = s_band.ReadRaster( s_xoff, s_yoff, s_xsize, s_ysize,
+                              t_xsize, t_ysize, t_band.DataType )
+    t_band.WriteRaster( t_xoff, t_yoff, t_xsize, t_ysize,
+                        data, t_xsize, t_ysize, t_band.DataType )
         
 
     return 0
@@ -118,7 +120,7 @@ class file_info:
         print 'UL:(%f,%f)   LR:(%f,%f)' \
               % (self.ulx,self.uly,self.lrx,self.lry)
 
-    def copy_into( self, t_fh ):
+    def copy_into( self, t_fh, s_band = 1, t_band = 1 ):
         """
         Copy this files image into target file.
 
@@ -177,14 +179,15 @@ class file_info:
         # Open the source file, and copy the selected region.
         s_fh = gdal.Open( self.filename )
         
-        return raster_copy( s_fh, sw_xoff, sw_yoff, sw_xsize, sw_ysize,
-                            t_fh, tw_xoff, tw_yoff, tw_xsize, tw_ysize )
+        return \
+            raster_copy( s_fh, sw_xoff, sw_yoff, sw_xsize, sw_ysize, s_band,
+                         t_fh, tw_xoff, tw_yoff, tw_xsize, tw_ysize, t_band )
 
 
 # =============================================================================
 def Usage():
     print 'Usage: gdal_merge.py [-o out_filename] [-f out_format] [-v]'
-    print '                     [-ps pixelsize_x pixelsize_y]'
+    print '                     [-ps pixelsize_x pixelsize_y] [-separate]'
     print '                     [-ul_lr ulx uly lrx lry] input_files'
     print
 
@@ -201,6 +204,7 @@ if __name__ == '__main__':
 
     ulx = None
     psize_x = None
+    separate = 0
 
     # Parse command line arguments.
     i = 1
@@ -213,6 +217,9 @@ if __name__ == '__main__':
 
         elif arg == '-v':
             verbose = 1
+
+        elif arg == '-separate':
+            separate = 1
 
         elif arg == '-f':
             i = i + 1
@@ -277,17 +284,27 @@ if __name__ == '__main__':
         xsize = int((lrx - ulx) / geotransform[1])
         ysize = int((lry - uly) / geotransform[5])
 
-        t_fh = Driver.Create( out_file, xsize, ysize, 1,
+        if separate != 0:
+            bands = len(file_infos)
+        else:
+            bands = 1
+
+        t_fh = Driver.Create( out_file, xsize, ysize, bands,
                               file_infos[0].band_type, '' )
         t_fh.SetGeoTransform( geotransform )
 
     # Copy data from source files into output file.
+    t_band = 1
     for fi in file_infos:
         if verbose != 0:
             print
             fi.report()
-            
-        fi.copy_into( t_fh )
 
+        if separate == 0 :
+            fi.copy_into( t_fh )
+        else:
+            fi.copy_into( t_fh, 1, t_band )
+            t_band = t_band+1
+            
     # Force file to be closed.
     t_fh = None
