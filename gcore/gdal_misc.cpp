@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.49  2003/08/18 12:43:47  warmerda
+ * always include ogr_spatialref.h
+ *
  * Revision 1.48  2003/08/12 22:13:32  warmerda
  * Changed GDALReadTabFile(0 so that if the CoordSys results in a PROJCS, but
  * the UNITS keyword is set to "degrees" we just use the GEOGCS portion.  It
@@ -118,8 +121,9 @@
 
 CPL_CVSID("$Id$");
 
-#ifdef HAVE_MITAB
 #include "ogr_spatialref.h"
+
+#ifdef HAVE_MITAB
 // from mitab component.
 OGRSpatialReference * MITABCoordSys2SpatialRef( const char * pszCoordSys );
 #endif
