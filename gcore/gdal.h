@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.78  2004/03/28 16:01:46  warmerda
+ * added GDALApplyGeoTransform()
+ *
  * Revision 1.77  2004/03/10 19:18:29  warmerda
  * updated date
  *
@@ -347,6 +350,8 @@ int CPL_DLL GDALGCPsToGeoTransform( int nGCPCount, const GDAL_GCP *pasGCPs,
                                     double *padfGeoTransform, int bApproxOK ); 
 int CPL_DLL GDALInvGeoTransform( double *padfGeoTransformIn, 
                                  double *padfInvGeoTransformOut );
+void CPL_DLL GDALApplyGeoTransform( double *, double, double, 
+                                    double *, double * );
 
 /* ==================================================================== */
 /*      major objects (dataset, and, driver, drivermanager).            */
