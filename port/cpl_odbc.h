@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2003/10/06 20:04:08  warmerda
+ * added escaping support
+ *
  * Revision 1.5  2003/10/06 17:16:18  warmerda
  * added windows.h for windows, and fixed m_panColSize type
  *
@@ -133,6 +136,7 @@ class CPL_DLL CPLODBCStatement {
 
     // Command buffer related.
     void           Clear();
+    void           AppendEscaped( const char * );
     void           Append( const char * );
     void           Append( int );
     void           Append( double );
