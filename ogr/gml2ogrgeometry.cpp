@@ -37,6 +37,9 @@
  *   compromising the system.
  *
  * $Log$
+ * Revision 1.7  2003/09/22 05:34:46  warmerda
+ * implemented support for various kinds of geometry collections
+ *
  * Revision 1.6  2003/04/17 08:23:07  dron
  * Completed security audit, few fixes in error format strings.
  *
@@ -491,7 +494,7 @@ static OGRGeometry *GML2OGRGeometry_XMLNode( CPLXMLNode *psNode )
                 if( !EQUAL(poPolygon->getGeometryName(),"POLYGON") )
                 {
                     CPLError( CE_Failure, CPLE_AppDefined, 
-                              "Got %.500s geometry as polygonMember instead of POLYGON.",
+                              "Got %.500s geometry as polygonMember instead of MULTIPOLYGON.",
                               poPolygon->getGeometryName() );
                     delete poPolygon;
                     delete poMPoly;
@@ -503,6 +506,116 @@ static OGRGeometry *GML2OGRGeometry_XMLNode( CPLXMLNode *psNode )
         }
 
         return poMPoly;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      MultiPoint                                                      */
+/* -------------------------------------------------------------------- */
+    if( EQUAL(pszBaseGeometry,"MultiPoint") )
+    {
+        CPLXMLNode *psChild;
+        OGRMultiPoint *poMP = new OGRMultiPoint();
+
+        // collect points.
+        for( psChild = psNode->psChild; 
+             psChild != NULL;
+             psChild = psChild->psNext ) 
+        {
+            if( psChild->eType == CXT_Element
+                && EQUAL(BareGMLElement(psChild->pszValue),"pointMember") )
+            {
+                OGRPoint *poPoint;
+
+                poPoint = (OGRPoint *) 
+                    GML2OGRGeometry_XMLNode( psChild->psChild );
+                if( poPoint == NULL 
+                    || wkbFlatten(poPoint->getGeometryType()) != wkbPoint )
+                {
+                    CPLError( CE_Failure, CPLE_AppDefined, 
+                              "Got %.500s geometry as pointMember instead of MULTIPOINT",
+                              poPoint ? poPoint->getGeometryName() : "NULL" );
+                    delete poPoint;
+                    delete poMP;
+                    return NULL;
+                }
+
+                poMP->addGeometryDirectly( poPoint );
+            }
+        }
+
+        return poMP;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      MultiLineString                                                 */
+/* -------------------------------------------------------------------- */
+    if( EQUAL(pszBaseGeometry,"MultiLineString") )
+    {
+        CPLXMLNode *psChild;
+        OGRMultiLineString *poMP = new OGRMultiLineString();
+
+        // collect lines
+        for( psChild = psNode->psChild; 
+             psChild != NULL;
+             psChild = psChild->psNext ) 
+        {
+            if( psChild->eType == CXT_Element
+                && EQUAL(BareGMLElement(psChild->pszValue),"lineStringMember") )
+            {
+                OGRGeometry *poGeom;
+
+                poGeom = GML2OGRGeometry_XMLNode( psChild->psChild );
+                if( poGeom == NULL 
+                    || wkbFlatten(poGeom->getGeometryType()) != wkbLineString )
+                {
+                    CPLError( CE_Failure, CPLE_AppDefined, 
+                              "Got %.500s geometry as Member instead of LINESTRING.",
+                              poGeom ? poGeom->getGeometryName() : "NULL" );
+                    delete poGeom;
+                    delete poMP;
+                    return NULL;
+                }
+
+                poMP->addGeometryDirectly( poGeom );
+            }
+        }
+
+        return poMP;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      GeometryCollection                                              */
+/* -------------------------------------------------------------------- */
+    if( EQUAL(pszBaseGeometry,"GeometryCollection") )
+    {
+        CPLXMLNode *psChild;
+        OGRGeometryCollection *poGC = new OGRGeometryCollection();
+
+        // collect geoms
+        for( psChild = psNode->psChild; 
+             psChild != NULL;
+             psChild = psChild->psNext ) 
+        {
+            if( psChild->eType == CXT_Element
+                && EQUAL(BareGMLElement(psChild->pszValue),"geometryMember") )
+            {
+                OGRGeometry *poGeom;
+
+                poGeom = GML2OGRGeometry_XMLNode( psChild->psChild );
+                if( poGeom == NULL )
+                {
+                    CPLError( CE_Failure, CPLE_AppDefined, 
+                              "Failed to get geometry in geometryMember" );
+                    delete poGeom;
+                    delete poGC;
+                    return NULL;
+                }
+
+                poGC->addGeometryDirectly( poGeom );
+            }
+        }
+
+        return poGC;
     }
 
     CPLError( CE_Failure, CPLE_AppDefined, 
