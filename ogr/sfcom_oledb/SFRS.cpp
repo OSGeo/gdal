@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.40  2002/04/30 17:16:59  warmerda
+ * set eKind for columnid as per fix from Ryan
+ *
  * Revision 1.39  2002/04/29 20:43:18  warmerda
  * Ensure that ExecuteSQL() prepared layers are cleaned up
  *
@@ -750,6 +753,7 @@ HRESULT CSFRowset::Execute(DBPARAMS * pParams, LONG* pcRowsAffected)
             colInfo.iOrdinal = iField+1;
             colInfo.dwFlags  = 0;
             colInfo.columnid.uName.pwszName = colInfo.pwszName;
+            colInfo.columnid.eKind = DBKIND_NAME;
             colInfo.cbOffset	= nOffset;
             colInfo.bScale	= ~0;
             colInfo.bPrecision  = ~0;
@@ -771,6 +775,7 @@ HRESULT CSFRowset::Execute(DBPARAMS * pParams, LONG* pcRowsAffected)
             colInfo.bPrecision  = ~0;
             colInfo.bScale	= ~0;
             colInfo.columnid.uName.pwszName = colInfo.pwszName;
+            colInfo.columnid.eKind = DBKIND_NAME;
             colInfo.cbOffset	= nOffset;
             colInfo.wType	= DBTYPE_IUNKNOWN;
             nOffset += 4;
@@ -786,6 +791,7 @@ HRESULT CSFRowset::Execute(DBPARAMS * pParams, LONG* pcRowsAffected)
             colInfo.bPrecision  = ~0;
             colInfo.bScale	= ~0;
             colInfo.columnid.uName.pwszName = colInfo.pwszName;
+            colInfo.columnid.eKind = DBKIND_NAME;
             colInfo.cbOffset	= nOffset;
             colInfo.wType	= DBTYPE_BYTES;
             nOffset += colInfo.ulColumnSize;
@@ -806,6 +812,7 @@ HRESULT CSFRowset::Execute(DBPARAMS * pParams, LONG* pcRowsAffected)
             colInfo.iOrdinal	= iField+1;
             colInfo.dwFlags	= DBCOLUMNFLAGS_ISFIXEDLENGTH;
             colInfo.columnid.uName.pwszName = colInfo.pwszName;
+            colInfo.columnid.eKind = DBKIND_NAME;
             colInfo.cbOffset	= nOffset;
             colInfo.bScale	= ~0;
             colInfo.bPrecision  = ~0;
