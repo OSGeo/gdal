@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2003/04/29 19:03:58  warmerda
+ * removed extra comma
+ *
  * Revision 1.17  2003/03/03 05:05:54  warmerda
  * added support for DeleteDataSource and DeleteLayer
  *
@@ -179,7 +182,7 @@ typedef enum
     wkbMultiPoint25D = 0x80000004,
     wkbMultiLineString25D = 0x80000005,
     wkbMultiPolygon25D = 0x80000006,
-    wkbGeometryCollection25D = 0x80000007,
+    wkbGeometryCollection25D = 0x80000007
 } OGRwkbGeometryType;
 
 #define wkb25DBit 0x80000000
