@@ -9,6 +9,13 @@
 
  *
  * $Log$
+ * Revision 1.4  2005/02/15 06:00:28  kruland
+ * Fixed critical bug in %typemap(in) std::vector<double>.  Used incorrect python
+ * parse call.
+ * Removed some stray cout's.
+ * Gave the "argument" to the %typemap(out) char** mapping.  This makes it easier
+ * to control its application.
+ *
  * Revision 1.3  2005/02/14 23:56:02  hobu
  * Added log info and C99-style comments
  *
@@ -66,7 +73,7 @@
    for (unsigned int i=0; i<size; i++) {
      PyObject *o = PySequence_GetItem($input,i);
      double val;
-     PyArg_ParseTuple(o, "d", &val );
+     PyArg_Parse(o, "d", &val );
      $1.push_back( val );
    }
 }
@@ -95,7 +102,6 @@
                     (*$2)[i].dfGCPY,
                     (*$2)[i].dfGCPZ ) );
   }
-cout << "leaving" << endl;
   Py_DECREF($result);
   $result = dict;
 }
@@ -126,7 +132,7 @@ cout << "leaving" << endl;
 /*
 * Typemap char ** -> dict
 */
-%typemap(out) char **
+%typemap(out) char **dict
 {
   /* %typemap(out) char ** -> to hash */
   char **valptr = $1;
