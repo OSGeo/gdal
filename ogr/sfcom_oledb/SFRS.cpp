@@ -4,6 +4,7 @@
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  OGRVirtualArray/CSFCommand (OLE DB records reader) implementation.
  * Author:   Ken Shih, kshih@home.com
+ *           Frank Warmerdam, warmerrdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 1999, Les Technologies SoftMap Inc.
@@ -28,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.38  2002/04/29 20:31:57  warmerda
+ * allow ExecuteSQL() to handle FID
+ *
  * Revision 1.37  2002/04/25 20:15:26  warmerda
  * upgraded to use ExecuteSQL()
  *
@@ -496,13 +500,16 @@ CSFRowset::~CSFRowset()
 /************************************************************************/
 
 char *CSFRowset::ProcessSpecialFields( const char *pszRawCommand, 
-                                       int *pbAddFID, int *pbAddGeometry )
+                                       int *pbAddGeometry )
 
 {
     swq_select *select_info = NULL;
     const char *error;
     int        i;
 
+/* -------------------------------------------------------------------- */
+/*      Preparse the statement.                                         */
+/* -------------------------------------------------------------------- */
     error = swq_select_preparse( pszRawCommand, &select_info );
     if( error != NULL )
     {
@@ -510,27 +517,56 @@ char *CSFRowset::ProcessSpecialFields( const char *pszRawCommand,
         return CPLStrdup( pszRawCommand );
     }
 
-    *pbAddFID = FALSE;
+/* -------------------------------------------------------------------- */
+/*      Expand "SELECT *" to have a list of fields.  We ensure that     */
+/*      FID and OGIS_GEOMETRY will be included.  We do this because     */
+/*      the default OGRGenSQLResultLayer support won't include FID      */
+/*      unless explicitly requested.                                    */
+/* -------------------------------------------------------------------- */
+    OGRLayer *poLayer = NULL; 
+
+    for( i = 0; i < m_poDS->GetLayerCount(); i++ )
+    {
+        if( EQUAL(m_poDS->GetLayer(i)->GetLayerDefn()->GetName(),
+                  select_info->from_table) )
+        {
+            poLayer = m_poDS->GetLayer(i);
+            break;
+        }
+    }
+
+    if( poLayer != NULL )
+    {
+        char **papszFieldNames;
+        int  nFieldCount = poLayer->GetLayerDefn()->GetFieldCount() + 2;
+
+        papszFieldNames = (char **) CPLMalloc(sizeof(char *) * nFieldCount);
+        papszFieldNames[0] = "FID";
+        for( i = 0; i < nFieldCount-2; i++ )
+            papszFieldNames[i+1] = (char *) 
+                poLayer->GetLayerDefn()->GetFieldDefn(i)->GetNameRef();
+
+        papszFieldNames[nFieldCount-1] = "OGIS_GEOMETRY";
+
+        swq_select_expand_wildcard( select_info, nFieldCount, papszFieldNames);
+        
+        CPLFree( papszFieldNames );
+    }
+    
+/* -------------------------------------------------------------------- */
+/*      Now go back and strip out any OGIS_GEOMETRY occurances,         */
+/*      since we have to handle that ourselves.                         */
+/* -------------------------------------------------------------------- */
     *pbAddGeometry = FALSE;
 
     for( i = 0; i < select_info->result_columns; i++ )
     {
         swq_col_def *def = select_info->column_defs + i;
 
-        if( i == 0 && def->col_func_name == NULL 
-            && strcmp(def->field_name,"*") == 0 )
+        if( def->col_func_name == NULL
+                 && (stricmp(def->field_name,"OGIS_GEOMETRY") == 0 ) )
         {
-            *pbAddFID = TRUE;
             *pbAddGeometry = TRUE;
-        }
-        else if( def->col_func_name == NULL
-                 && (stricmp(def->field_name,"OGIS_GEOMETRY") == 0 
-                     || stricmp(def->field_name,"FID") == 0) )
-        {
-            if( stricmp(def->field_name,"FID") == 0 )
-                *pbAddFID = TRUE;
-            else 
-                *pbAddGeometry = TRUE;
 
             /* Strip one item out of the list of columns */
             swq_free( def->field_name );
@@ -564,7 +600,8 @@ HRESULT CSFRowset::Execute(DBPARAMS * pParams, LONG* pcRowsAffected)
     OGRDataSource *poDS;
     char	*pszCommand;
     IUnknown    *pIUnknown;
-    int         bAddFID = TRUE, bAddGeometry = TRUE;
+    int         bAddGeometry = TRUE;
+    int         bAddFID = FALSE;
 
     QueryInterface(IID_IUnknown,(void **) &pIUnknown);
     poDS = SFGetOGRDataSource(pIUnknown);
@@ -586,7 +623,7 @@ HRESULT CSFRowset::Execute(DBPARAMS * pParams, LONG* pcRowsAffected)
         char *pszCleanCommand;
 
         pszCleanCommand = 
-            ProcessSpecialFields( pszCommand, &bAddFID, &bAddGeometry );
+            ProcessSpecialFields( pszCommand, &bAddGeometry );
 
         m_poLayer = m_poDS->ExecuteSQL( pszCleanCommand, poGeometry, NULL );
         CPLFree( pszCleanCommand );
@@ -622,6 +659,7 @@ HRESULT CSFRowset::Execute(DBPARAMS * pParams, LONG* pcRowsAffected)
         }
 
         m_poLayer->SetSpatialFilter(poGeometry);
+        bAddFID = TRUE;
     }
 
 /* -------------------------------------------------------------------- */
@@ -636,7 +674,7 @@ HRESULT CSFRowset::Execute(DBPARAMS * pParams, LONG* pcRowsAffected)
         iOGRIndex = -1;
         m_panOGRIndex.Add(iOGRIndex);
     }
-    
+
     /* All the regular attributes */
     for( iOGRIndex = 0; iOGRIndex < poDefn->GetFieldCount(); iOGRIndex++ ) 
         m_panOGRIndex.Add(iOGRIndex);

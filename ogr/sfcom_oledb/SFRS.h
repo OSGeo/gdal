@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2002/04/29 20:31:57  warmerda
+ * allow ExecuteSQL() to handle FID
+ *
  * Revision 1.17  2002/04/25 20:15:26  warmerda
  * upgraded to use ExecuteSQL()
  *
@@ -478,7 +481,7 @@ class CSFRowset :
 public CSFRowsetImpl< CSFRowset, CShapeFile, CSFCommand, OGRVirtualArray>
 
 {
-    char          *ProcessSpecialFields( const char *, int *, int * );
+    char          *ProcessSpecialFields( const char *, int * );
 public:
 
     virtual       ~CSFRowset();
