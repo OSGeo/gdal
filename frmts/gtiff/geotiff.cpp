@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.25  2000/05/01 01:53:33  warmerda
+ * added various compress options
+ *
  * Revision 1.24  2000/04/21 21:53:42  warmerda
  * rewrote metadata support, do flush before changing directories
  *
@@ -1035,6 +1038,7 @@ GDALDataset *GTiffDataset::Create( const char * pszFilename,
     TIFF		*hTIFF;
     int                 nBlockXSize = 0, nBlockYSize = 0;
     int                 bTiled = FALSE;
+    int                 nCompression = COMPRESSION_NONE;
     
 /* -------------------------------------------------------------------- */
 /*	Setup values based on options.					*/
@@ -1047,6 +1051,23 @@ GDALDataset *GTiffDataset::Create( const char * pszFilename,
 
     if( CSLFetchNameValue(papszParmList,"BLOCKYSIZE")  != NULL )
         nBlockYSize = atoi(CSLFetchNameValue(papszParmList,"BLOCKYSIZE"));
+
+    if( CSLFetchNameValue(papszParmList,"COMPRESS")  != NULL )
+    {
+        if( EQUAL(CSLFetchNameValue(papszParmList,"COMPRESS"),"JPEG") )
+            nCompression = COMPRESSION_JPEG;
+        else if( EQUAL(CSLFetchNameValue(papszParmList,"COMPRESS"),"LZW") )
+            nCompression = COMPRESSION_LZW;
+        else if( EQUAL(CSLFetchNameValue(papszParmList,"COMPRESS"),"PACKBITS"))
+            nCompression = COMPRESSION_PACKBITS;
+        else if( EQUAL(CSLFetchNameValue(papszParmList,"COMPRESS"),"DEFLATE")
+               || EQUAL(CSLFetchNameValue(papszParmList,"COMPRESS"),"ZIP"))
+            nCompression = COMPRESSION_DEFLATE;
+        else
+            CPLError( CE_Warning, CPLE_IllegalArg, 
+                      "COMPRESS=%s value not recognised, ignoring.", 
+                      CSLFetchNameValue(papszParmList,"COMPRESS") );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Try opening the dataset.                                        */
@@ -1077,6 +1098,7 @@ GDALDataset *GTiffDataset::Create( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Setup some standard flags.                                      */
 /* -------------------------------------------------------------------- */
+    TIFFSetField( hTIFF, TIFFTAG_COMPRESSION, nCompression );
     TIFFSetField( hTIFF, TIFFTAG_IMAGEWIDTH, nXSize );
     TIFFSetField( hTIFF, TIFFTAG_IMAGELENGTH, nYSize );
     TIFFSetField( hTIFF, TIFFTAG_BITSPERSAMPLE,
