@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2001/07/18 05:03:05  warmerda
+ * added CPL_CVSID
+ *
  * Revision 1.9  2001/03/15 03:19:23  warmerda
  * added polyconic (9818) support
  *
@@ -60,6 +63,8 @@
 
 #include "ogr_spatialref.h"
 #include "cpl_csv.h"
+
+CPL_CVSID("$Id$");
 
 #ifndef PI
 #  define PI 3.14159265358979323846

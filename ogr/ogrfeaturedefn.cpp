@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2001/07/18 05:03:05  warmerda
+ * added CPL_CVSID
+ *
  * Revision 1.4  1999/10/01 14:46:38  warmerda
  * don't blow assertion trying to get non-existant fields
  *
@@ -43,6 +46,8 @@
 
 #include "ogr_feature.h"
 #include "ogr_p.h"
+
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                           OGRFeatureDefn()                           */

@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2001/07/18 05:03:05  warmerda
+ * added CPL_CVSID
+ *
  * Revision 1.1  2001/06/19 15:46:41  warmerda
  * New
  *
@@ -37,6 +40,8 @@
 #include <assert.h>
 #include "ogr_feature.h"
 #include "ogr_p.h"
+
+CPL_CVSID("$Id$");
 
 CPL_C_START
 #include "swq.h"

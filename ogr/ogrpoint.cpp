@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2001/07/18 05:03:05  warmerda
+ * added CPL_CVSID
+ *
  * Revision 1.13  1999/11/18 19:02:19  warmerda
  * expanded tabs
  *
@@ -72,6 +75,8 @@
 #include "ogr_geometry.h"
 #include "ogr_p.h"
 #include <assert.h>
+
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                              OGRPoint()                              */

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2001/07/18 05:03:05  warmerda
+ * added CPL_CVSID
+ *
  * Revision 1.5  2001/05/29 02:24:33  warmerda
  * fixed bracket count on import
  *
@@ -48,6 +51,8 @@
 #include "ogr_geometry.h"
 #include "ogr_p.h"
 #include <assert.h>
+
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                          getGeometryType()                           */

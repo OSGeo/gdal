@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2001/07/18 05:03:05  warmerda
+ * added CPL_CVSID
+ *
  * Revision 1.7  1999/09/07 12:06:13  warmerda
  * type casting warning fixed
  *
@@ -56,6 +59,8 @@
 #include "sfcschemarowsets.h"
 #include "ogr_geometry.h"
 #include "cpl_string.h"
+
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                           SFCDataSource()                            */

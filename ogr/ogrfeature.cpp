@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2001/07/18 05:03:05  warmerda
+ * added CPL_CVSID
+ *
  * Revision 1.17  2001/06/01 14:32:27  warmerda
  * added CreateFeature factory method
  *
@@ -83,6 +86,8 @@
 
 #include "ogr_feature.h"
 #include "ogr_p.h"
+
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                             OGRFeature()                             */

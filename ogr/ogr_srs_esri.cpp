@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2001/07/18 05:03:05  warmerda
+ * added CPL_CVSID
+ *
  * Revision 1.5  2001/03/16 22:15:48  warmerda
  * added support for reading WKT in importFromEPSG
  *
@@ -47,6 +50,8 @@
 
 #include "ogr_spatialref.h"
 #include "ogr_p.h"
+
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                         OSRImportFromESRI()                          */

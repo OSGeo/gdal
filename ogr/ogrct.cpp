@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2001/07/18 05:03:05  warmerda
+ * added CPL_CVSID
+ *
  * Revision 1.8  2001/05/24 21:02:42  warmerda
  * moved OGRCoordinateTransform destructor defn
  *
@@ -58,6 +61,8 @@
 #include "cpl_error.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
+
+CPL_CVSID("$Id$");
 
 /* ==================================================================== */
 /*      PROJ.4 interface stuff.                                         */

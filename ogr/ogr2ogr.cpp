@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2001/07/18 05:03:05  warmerda
+ * added CPL_CVSID
+ *
  * Revision 1.8  2001/06/26 20:58:20  warmerda
  * added -nln switch
  *
@@ -57,6 +60,8 @@
 #include "ogrsf_frmts.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
+
+CPL_CVSID("$Id$");
 
 static void Usage();
 

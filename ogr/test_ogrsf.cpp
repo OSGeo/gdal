@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2001/07/18 05:03:05  warmerda
+ * added CPL_CVSID
+ *
  * Revision 1.9  1999/11/26 02:15:36  warmerda
  * Fixed report of SRS problems.
  *
@@ -59,6 +62,8 @@
 
 #include "ogrsf_frmts.h"
 #include "cpl_conv.h"
+
+CPL_CVSID("$Id$");
 
 int     bReadOnly = FALSE;
 int     bVerbose = TRUE;

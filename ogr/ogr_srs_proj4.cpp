@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2001/07/18 05:03:05  warmerda
+ * added CPL_CVSID
+ *
  * Revision 1.17  2001/03/02 04:37:43  danmo
  * Return empty string for LOCAL_CS in exportToProj4().
  *
@@ -77,6 +80,8 @@
 
 #include "ogr_spatialref.h"
 #include "ogr_p.h"
+
+CPL_CVSID("$Id$");
 
 /* -------------------------------------------------------------------- */
 /*      The following list comes from osrs/proj/src/pj_ellps.c          */

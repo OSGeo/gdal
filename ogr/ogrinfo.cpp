@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2001/07/18 05:03:05  warmerda
+ * added CPL_CVSID
+ *
  * Revision 1.10  2001/07/17 15:00:21  danmo
  * Report layer extent in ReportOnLayer().
  *
@@ -63,6 +66,8 @@
 #include "ogrsf_frmts.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
+
+CPL_CVSID("$Id$");
 
 int     bReadOnly = FALSE;
 int     bVerbose = TRUE;

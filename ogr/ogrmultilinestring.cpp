@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2001/07/18 05:03:05  warmerda
+ * added CPL_CVSID
+ *
  * Revision 1.5  2001/05/24 18:05:18  warmerda
  * substantial fixes to WKT support for MULTIPOINT/LINE/POLYGON
  *
@@ -47,6 +50,8 @@
 
 #include "ogr_geometry.h"
 #include "ogr_p.h"
+
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                          getGeometryType()                           */

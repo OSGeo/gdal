@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2001/07/18 05:03:05  warmerda
+ * added CPL_CVSID
+ *
  * Revision 1.5  2001/05/29 02:24:00  warmerda
  * fixed negative support for Z coordinate
  *
@@ -49,6 +52,8 @@
 #include "ogr_geometry.h"
 #include "ogr_p.h"
 #include <ctype.h>
+
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                        OGRMakeWktCoordinate()                        */

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.31  2001/07/18 05:03:05  warmerda
+ * added CPL_CVSID
+ *
  * Revision 1.30  2001/07/16 03:34:55  warmerda
  * various fixes, and improvements suggested by Ben Driscoe on gdal list
  *
@@ -122,6 +125,8 @@
 
 #include "ogr_spatialref.h"
 #include "ogr_p.h"
+
+CPL_CVSID("$Id$");
 
 /* why would fipszone and zone be paramers when they relate to a composite
    projection which renders done into a non-zoned projection? */

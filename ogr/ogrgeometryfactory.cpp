@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2001/07/18 05:03:05  warmerda
+ * added CPL_CVSID
+ *
  * Revision 1.8  2001/06/01 14:34:02  warmerda
  * added debugging of corrupt geometry
  *
@@ -60,6 +63,8 @@
 #include "ogr_geometry.h"
 #include "ogr_p.h"
 #include <assert.h>
+
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                           createFromWkb()                            */

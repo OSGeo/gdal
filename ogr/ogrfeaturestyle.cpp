@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2001/07/18 05:03:05  warmerda
+ * added CPL_CVSID
+ *
  * Revision 1.5  2001/07/03 04:20:26  danmo
  * Allow empty strings in style string param values, and replaced printf messages
  * in the code with CPLError() calls.
@@ -51,6 +54,7 @@
 #include "ogr_feature.h"
 #include "ogr_featurestyle.h"
 
+CPL_CVSID("$Id$");
 
 /****************************************************************************/
 /*                Class Parameter (used in the String)                      */

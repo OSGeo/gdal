@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2001/07/18 05:03:05  warmerda
+ * added CPL_CVSID
+ *
  * Revision 1.2  2001/01/19 21:10:46  warmerda
  * replaced tabs
  *
@@ -38,6 +41,8 @@
 
 #include "ogr_srs_api.h"
 #include "cpl_string.h"
+
+CPL_CVSID("$Id$");
 
 static char *papszParameterDefinitions[] = {
     SRS_PP_CENTRAL_MERIDIAN,    "Central Meridian",     "Long",  "0.0",

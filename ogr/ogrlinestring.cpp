@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2001/07/18 05:03:05  warmerda
+ * added CPL_CVSID
+ *
  * Revision 1.18  2001/05/24 18:06:06  warmerda
  * fixed comment
  *
@@ -89,6 +92,8 @@
 #include "ogr_geometry.h"
 #include "ogr_p.h"
 #include <assert.h>
+
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                           OGRLineString()                            */
