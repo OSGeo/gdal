@@ -1,5 +1,5 @@
 
-OBJ	=	gdal_wrap.obj gdal_custom.obj
+OBJ	=	gdal_wrap.obj gdalnumeric.obj numpydataset.obj
 PYGDAL_DLL	=	_gdal.dll
 
 GDAL_ROOT	=	..
