@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2000/04/21 21:54:37  warmerda
+ * updated metadata API
+ *
  * Revision 1.20  2000/03/31 13:41:25  warmerda
  * added gcps
  *
@@ -249,6 +252,18 @@ void GDALDeinitGCPs( int, GDAL_GCP * );
 GDAL_GCP *GDALDuplicateGCPs( int, const GDAL_GCP * );
 
 /* ==================================================================== */
+/*      major objects (dataset, and, driver, drivermanager).            */
+/* ==================================================================== */
+
+char CPL_DLL  **GDALGetMetadata( GDALMajorObjectH, const char * );
+CPLErr CPL_DLL  GDALSetMetadata( GDALMajorObjectH, char **,
+                                 const char * );
+char CPL_DLL  **GDALGetMetadataItem( GDALMajorObjectH, const char * );
+CPLErr CPL_DLL  GDALSetMetadataItem( GDALMajorObjectH,
+                                     const char *, const char *,
+                                     const char * );
+
+/* ==================================================================== */
 /*      GDALDataset class ... normally this represents one file.        */
 /* ==================================================================== */
 
@@ -271,7 +286,6 @@ const GDAL_GCP CPL_DLL *GDALGetGCPs( GDALDatasetH );
 void CPL_DLL   *GDALGetInternalHandle( GDALDatasetH, const char * );
 int CPL_DLL     GDALReferenceDataset( GDALDatasetH );
 int CPL_DLL     GDALDereferenceDataset( GDALDatasetH );
-char CPL_DLL  **GDALGetDatasetMetadata( GDALDatasetH );
 
 /* ==================================================================== */
 /*      GDALRasterBand ... one band/channel in a dataset.               */
