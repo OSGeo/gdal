@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  1999/11/11 21:59:07  warmerda
+ * added GetDriver() for datasets
+ *
  * Revision 1.9  1999/10/21 13:23:45  warmerda
  * Added a bit of driver related documentation.
  *
@@ -130,6 +133,8 @@ class CPL_DLL GDALProjDef
 
 class CPL_DLL GDALDataset : public GDALMajorObject
 {
+    friend GDALDatasetH GDALOpen( const char *, GDALAccess);
+    
   protected:
     GDALDriver	*poDriver;
     GDALAccess	eAccess;
@@ -161,6 +166,7 @@ class CPL_DLL GDALDataset : public GDALMajorObject
     virtual CPLErr SetGeoTransform( double * );
 
     virtual void *GetInternalHandle( const char * );
+    virtual GDALDriver *GetDriver(void);
 };
 
 /* ******************************************************************** */

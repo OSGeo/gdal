@@ -25,6 +25,9 @@
  * The GDALDataset class.
  * 
  * $Log$
+ * Revision 1.9  1999/11/11 21:59:07  warmerda
+ * added GetDriver() for datasets
+ *
  * Revision 1.8  1999/10/01 14:44:02  warmerda
  * added documentation
  *
@@ -505,3 +508,33 @@ void *GDALGetInternalHandle( GDALDatasetH hDS, const char * pszRequest )
 {
     return( ((GDALDataset *) hDS)->GetInternalHandle(pszRequest) );
 }
+
+/************************************************************************/
+/*                             GetDriver()                              */
+/************************************************************************/
+
+/**
+ * Fetch the driver to which this dataset relates.
+ *
+ * This method is the same as the C GDALGetDatasetDriver() function.
+ *
+ * @return the driver on which the dataset was created with GDALOpen() or
+ * GDALCreate().
+ */
+
+GDALDriver * GDALDataset::GetDriver()
+
+{
+    return poDriver;
+}
+
+/************************************************************************/
+/*                        GDALGetDatasetDriver()                        */
+/************************************************************************/
+
+GDALDriverH GDALGetDatasetDriver( GDALDatasetH hDataset )
+
+{
+    return (GDALDriverH) ((GDALDataset *) hDataset)->GetDriver();
+}
+

@@ -26,6 +26,9 @@
  * that calls the GDAL library.
  * 
  * $Log$
+ * Revision 1.13  1999/11/11 21:59:06  warmerda
+ * added GetDriver() for datasets
+ *
  * Revision 1.12  1999/10/21 13:23:28  warmerda
  * Added C callable driver related functions.
  *
@@ -153,6 +156,7 @@ const char CPL_DLL *GDALGetDriverHelpTopic( GDALDriverH );
 /*      GDALDataset class ... normally this represents one file.        */
 /* ==================================================================== */
 
+GDALDriverH CPL_DLL GDALGetDatasetDriver( GDALDatasetH );
 void CPL_DLL   GDALClose( GDALDatasetH );
 int CPL_DLL	GDALGetRasterXSize( GDALDatasetH );
 int CPL_DLL	GDALGetRasterYSize( GDALDatasetH );

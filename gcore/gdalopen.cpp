@@ -26,6 +26,9 @@
  *
  * 
  * $Log$
+ * Revision 1.5  1999/11/11 21:59:07  warmerda
+ * added GetDriver() for datasets
+ *
  * Revision 1.4  1999/10/01 14:44:02  warmerda
  * added documentation
  *
@@ -138,7 +141,12 @@ GDALDatasetH GDALOpen( const char * pszFilename, GDALAccess eAccess )
 
         poDS = poDriver->pfnOpen( &oOpenInfo );
         if( poDS != NULL )
+        {
+            if( poDS->poDriver == NULL )
+                poDS->poDriver = poDriver;
+            
             return (GDALDatasetH) poDS;
+        }
 
         if( CPLGetLastErrorNo() != 0 )
             return NULL;
