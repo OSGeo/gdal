@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2004/04/15 18:54:38  warmerda
+ * added UnitType, Offset, Scale and CategoryNames support
+ *
  * Revision 1.12  2004/03/16 18:34:35  warmerda
  * added support for relativeToVRT attribute on SourceFilename
  *
@@ -177,6 +180,12 @@ class CPL_DLL VRTRasterBand : public GDALRasterBand
 
     GDALColorInterp eColorInterp;
 
+    char           *pszUnitType;
+    char           **papszCategoryNames;
+    
+    double         dfOffset;
+    double         dfScale;
+
     void           Initialize( int nXSize, int nYSize );
 
     virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
@@ -232,6 +241,18 @@ class CPL_DLL VRTRasterBand : public GDALRasterBand
 
     virtual CPLErr SetColorInterpretation( GDALColorInterp );
     virtual GDALColorInterp GetColorInterpretation();
+
+    virtual const char *GetUnitType();
+    CPLErr SetUnitType( const char * ); 
+
+    virtual char **GetCategoryNames();
+    virtual CPLErr SetCategoryNames( char ** );
+
+    virtual double GetOffset( int *pbSuccess = NULL );
+    CPLErr SetOffset( double );
+    virtual double GetScale( int *pbSuccess = NULL );
+    CPLErr SetScale( double );
+
 };
 
 /************************************************************************/

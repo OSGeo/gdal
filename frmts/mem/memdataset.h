@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2004/04/15 18:54:10  warmerda
+ * added UnitType, Offset, Scale and CategoryNames support
+ *
  * Revision 1.9  2002/11/20 05:18:09  warmerda
  * added AddBand() implementation
  *
@@ -119,6 +122,12 @@ class CPL_DLL MEMRasterBand : public GDALRasterBand
     GDALColorTable *poColorTable;
     GDALColorInterp eColorInterp;
 
+    char           *pszUnitType;
+    char           **papszCategoryNames;
+    
+    double         dfOffset;
+    double         dfScale;
+
   public:
 
                    MEMRasterBand( GDALDataset *poDS, int nBand,
@@ -140,6 +149,17 @@ class CPL_DLL MEMRasterBand : public GDALRasterBand
     virtual CPLErr SetColorTable( GDALColorTable * ); 
 
     virtual CPLErr SetColorInterpretation( GDALColorInterp );
+
+    virtual const char *GetUnitType();
+    CPLErr SetUnitType( const char * ); 
+
+    virtual char **GetCategoryNames();
+    virtual CPLErr SetCategoryNames( char ** );
+
+    virtual double GetOffset( int *pbSuccess = NULL );
+    CPLErr SetOffset( double );
+    virtual double GetScale( int *pbSuccess = NULL );
+    CPLErr SetScale( double );
 };
 
 #endif /* ndef MEMDATASET_H_INCLUDED */
