@@ -26,6 +26,9 @@
 ###############################################################################
 # 
 #  $Log$
+#  Revision 1.6  2003/01/20 22:19:08  warmerda
+#  added nodata support
+#
 #  Revision 1.5  2002/12/12 14:54:42  warmerda
 #  added the -pct flag to copy over a pct
 #
@@ -45,12 +48,20 @@
 
 import gdal
 import sys
+import Numeric
 
 verbose = 0
 
 # =============================================================================
 def raster_copy( s_fh, s_xoff, s_yoff, s_xsize, s_ysize, s_band_n,
-                 t_fh, t_xoff, t_yoff, t_xsize, t_ysize, t_band_n ):
+                 t_fh, t_xoff, t_yoff, t_xsize, t_ysize, t_band_n,
+                 nodata=None ):
+
+    if nodata is not None:
+        return raster_copy_with_nodata(
+            s_fh, s_xoff, s_yoff, s_xsize, s_ysize, s_band_n,
+            t_fh, t_xoff, t_yoff, t_xsize, t_ysize, t_band_n,
+            nodata )
 
     if verbose != 0:
         print 'Copy %d,%d,%d,%d to %d,%d,%d,%d.' \
@@ -65,6 +76,30 @@ def raster_copy( s_fh, s_xoff, s_yoff, s_xsize, s_ysize, s_band_n,
     t_band.WriteRaster( t_xoff, t_yoff, t_xsize, t_ysize,
                         data, t_xsize, t_ysize, t_band.DataType )
         
+
+    return 0
+    
+# =============================================================================
+def raster_copy_with_nodata( s_fh, s_xoff, s_yoff, s_xsize, s_ysize, s_band_n,
+                             t_fh, t_xoff, t_yoff, t_xsize, t_ysize, t_band_n,
+                             nodata ):
+
+    if verbose != 0:
+        print 'Copy %d,%d,%d,%d to %d,%d,%d,%d.' \
+              % (s_xoff, s_yoff, s_xsize, s_ysize,
+             t_xoff, t_yoff, t_xsize, t_ysize )
+
+    s_band = s_fh.GetRasterBand( s_band_n )
+    t_band = t_fh.GetRasterBand( t_band_n )
+
+    data_src = s_band.ReadAsArray( s_xoff, s_yoff, s_xsize, s_ysize,
+                                   t_xsize, t_ysize )
+    data_dst = t_band.ReadAsArray( t_xoff, t_yoff, t_xsize, t_ysize )
+
+    nodata_test = Numeric.equal(data_src,nodata)
+    to_write = Numeric.choose( nodata_test, (data_src, data_dst) )
+                               
+    t_band.WriteArray( to_write, t_xoff, t_yoff )
 
     return 0
     
@@ -132,7 +167,7 @@ class file_info:
         print 'UL:(%f,%f)   LR:(%f,%f)' \
               % (self.ulx,self.uly,self.lrx,self.lry)
 
-    def copy_into( self, t_fh, s_band = 1, t_band = 1 ):
+    def copy_into( self, t_fh, s_band = 1, t_band = 1, nodata_arg=None ):
         """
         Copy this files image into target file.
 
@@ -193,14 +228,16 @@ class file_info:
         
         return \
             raster_copy( s_fh, sw_xoff, sw_yoff, sw_xsize, sw_ysize, s_band,
-                         t_fh, tw_xoff, tw_yoff, tw_xsize, tw_ysize, t_band )
+                         t_fh, tw_xoff, tw_yoff, tw_xsize, tw_ysize, t_band,
+                         nodata_arg )
 
 
 # =============================================================================
 def Usage():
     print 'Usage: gdal_merge.py [-o out_filename] [-f out_format] [-v] [-pct]'
     print '                     [-ps pixelsize_x pixelsize_y] [-separate]'
-    print '                     [-ul_lr ulx uly lrx lry] input_files'
+    print '                     [-ul_lr ulx uly lrx lry] [-n nodata_value]'
+    print '                     input_files'
     print
 
 # =============================================================================
@@ -218,6 +255,7 @@ if __name__ == '__main__':
     psize_x = None
     separate = 0
     copy_pct = 0
+    nodata = None
 
     # Parse command line arguments.
     i = 1
@@ -236,6 +274,10 @@ if __name__ == '__main__':
 
         elif arg == '-pct':
             copy_pct = 1
+
+        elif arg == '-n':
+            i = i + 1
+            nodata = int(sys.argv[i])
 
         elif arg == '-f':
             i = i + 1
@@ -320,9 +362,9 @@ if __name__ == '__main__':
             fi.report()
 
         if separate == 0 :
-            fi.copy_into( t_fh )
+            fi.copy_into( t_fh, 1, 1, nodata )
         else:
-            fi.copy_into( t_fh, 1, t_band )
+            fi.copy_into( t_fh, 1, t_band, nodata )
             t_band = t_band+1
             
     # Force file to be closed.
