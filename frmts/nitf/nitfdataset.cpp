@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2003/03/24 15:10:54  warmerda
+ * Don't crash out if no image segments found.
+ *
  * Revision 1.6  2002/12/21 18:12:10  warmerda
  * added driver metadata
  *
@@ -443,6 +446,19 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo )
         }
     }
 
+/* -------------------------------------------------------------------- */
+/*      If no image segments found report this to the user.             */
+/* -------------------------------------------------------------------- */
+    if( psImage == NULL )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "The file %s appears to be an NITF file, but no image\n"
+                  "blocks were found on it.  GDAL cannot utilize non-image\n"
+                  "NITF files.", 
+                  poOpenInfo->pszFilename );
+        return NULL;
+    }
+    
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
