@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2001/11/18 15:46:45  warmerda
+ * added SRS and GeoTransform
+ *
  * Revision 1.1  2001/11/16 21:14:31  warmerda
  * New
  *
@@ -51,9 +54,17 @@ class VRTRasterBand;
 
 class CPL_DLL VRTDataset : public GDALDataset
 {
+    char           *pszProjection;
+
+    int            bGeoTransformSet;
+    double         adfGeoTransform[6];
+
   public:
                  VRTDataset(int nXSize, int nYSize);
                 ~VRTDataset();
+
+    virtual const char *GetProjectionRef(void);
+    virtual CPLErr GetGeoTransform( double * );
 
     static GDALDataset *Open( GDALOpenInfo * );
 };
@@ -73,7 +84,6 @@ class CPL_DLL VRTRasterBand : public GDALRasterBand
     virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
                               void *, int, int, GDALDataType,
                               int, int );
-
   public:
 
     		   VRTRasterBand( GDALDataset *poDS, int nBand );

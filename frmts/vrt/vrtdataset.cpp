@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2001/11/18 15:46:45  warmerda
+ * added SRS and GeoTransform
+ *
  * Revision 1.1  2001/11/16 21:14:31  warmerda
  * New
  *
@@ -36,6 +39,7 @@
 #include "vrtdataset.h"
 #include "cpl_string.h"
 #include "cpl_minixml.h"
+#include "cpl_string.h"
 
 CPL_CVSID("$Id$");
 
@@ -50,6 +54,15 @@ VRTDataset::VRTDataset( int nXSize, int nYSize )
 {
     nRasterXSize = nXSize;
     nRasterYSize = nYSize;
+    pszProjection = NULL;
+
+    bGeoTransformSet = FALSE;
+    adfGeoTransform[0] = 0.0;
+    adfGeoTransform[1] = 1.0;
+    adfGeoTransform[2] = 0.0;
+    adfGeoTransform[3] = 0.0;
+    adfGeoTransform[4] = 0.0;
+    adfGeoTransform[5] = 1.0;
 }
 
 /************************************************************************/
@@ -60,6 +73,32 @@ VRTDataset::~VRTDataset()
 
 {
     FlushCache();
+    CPLFree( pszProjection );
+}
+
+/************************************************************************/
+/*                          GetProjectionRef()                          */
+/************************************************************************/
+
+const char *VRTDataset::GetProjectionRef()
+
+{
+    return pszProjection;
+}
+
+/************************************************************************/
+/*                          GetGeoTransform()                           */
+/************************************************************************/
+
+CPLErr VRTDataset::GetGeoTransform( double * padfGeoTransform )
+
+{
+    memcpy( padfGeoTransform, adfGeoTransform, sizeof(double) * 6 );
+    
+    if( bGeoTransformSet )
+        return CE_None;
+    else
+        return CE_Failure;
 }
 
 /************************************************************************/
@@ -141,6 +180,36 @@ GDALDataset *VRTDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->poDriver = poVRTDriver;
 
     poDS->eAccess = GA_ReadOnly;
+
+/* -------------------------------------------------------------------- */
+/*	Check for an SRS node.						*/
+/* -------------------------------------------------------------------- */
+    if( strlen(CPLGetXMLValue(psTree, "SRS", "")) > 0 )
+        poDS->pszProjection = CPLStrdup(CPLGetXMLValue(psTree, "SRS", ""));
+
+/* -------------------------------------------------------------------- */
+/*      Check for a GeoTransform node.                                  */
+/* -------------------------------------------------------------------- */
+    if( strlen(CPLGetXMLValue(psTree, "GeoTransform", "")) > 0 )
+    {
+        const char *pszGT = CPLGetXMLValue(psTree, "GeoTransform", "");
+        char	**papszTokens;
+
+        papszTokens = CSLTokenizeStringComplex( pszGT, ",", FALSE, FALSE );
+        if( CSLCount(papszTokens) != 6 )
+        {
+            CPLError( CE_Warning, CPLE_AppDefined,
+                      "GeoTransform node does not have expected six values.");
+        }
+        else
+        {
+            for( int iTA = 0; iTA < 6; iTA++ )
+                poDS->adfGeoTransform[iTA] = atof(papszTokens[iTA]);
+            poDS->bGeoTransformSet = TRUE;
+        }
+
+        CSLDestroy( papszTokens );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
