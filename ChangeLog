@@ -1,6 +1,12 @@
+2002-02-07  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* frmts/raw/pauxdataset.cpp: Bug reported by Max fixed.  Only read
+	or write the exactly number of bytes required to avoid slight reads
+	past end of file resulting in error and data loss.
+
 2002-02-06  Frank Warmerdam  <warmerdam@pobox.com>
 
-	* ntf_estlayers.cpp: TEXT_CODE now 4 wide, not 3. 
+	* ntf_estlayers.cpp: TEXT_CODE now 4 wide, not 3.
 
 	* OLEDB Provider: Fixed serious bug resulting in the end of rowset
 	not being returned properly in many cases. 
