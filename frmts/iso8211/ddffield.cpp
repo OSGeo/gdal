@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  1999/05/07 14:10:49  warmerda
+ * added maxbytes to getsubfielddata()
+ *
  * Revision 1.3  1999/05/06 15:39:26  warmerda
  * avoid printing non-ASCII characters
  *
@@ -136,14 +139,12 @@ void DDFField::Dump( FILE * fp )
  * DDFField data to that belonging to the requested subfield.  This can
  * be relatively expensive.<p>
  *
- * This method only fetches data for the first instance of repeating
- * subfields.  Use the DDFSubfieldDefn methods such as
- * DDFSubfieldDefn::ExtractIntData() directly to step through the record
- * data if you want to extract repeated fields.  That is also the most
- * efficient means to extract all the data from a field with many subfields.
- *
  * @param poSFDefn The definition of the subfield for which the raw
  * data pointer is desired.
+ * @param pnMaxBytes The maximum number of bytes that can be accessed from
+ * the returned data pointer is placed in this int, unless it is NULL.
+ * @param iSubfieldIndex The instance of this subfield to fetch.  Use zero
+ * (the default) for the first instance.
  *
  * @return A pointer into the DDFField's data that belongs to the subfield.
  * This returned pointer is invalidated by the next record read
@@ -151,7 +152,8 @@ void DDFField::Dump( FILE * fp )
  * by the application.
  */
 
-const char *DDFField::GetSubfieldData( DDFSubfieldDefn *poSFDefn )
+const char *DDFField::GetSubfieldData( DDFSubfieldDefn *poSFDefn,
+                                       int *pnMaxBytes, int iSubfieldIndex )
 
 {
     int		iOffset = 0;
@@ -159,22 +161,30 @@ const char *DDFField::GetSubfieldData( DDFSubfieldDefn *poSFDefn )
     if( poSFDefn == NULL )
         return NULL;
 
-    for( int iSF = 0; iSF < poDefn->GetSubfieldCount(); iSF++ )
+    while( iSubfieldIndex >= 0 )
     {
-        int	nBytesConsumed;
-        DDFSubfieldDefn * poThisSFDefn = poDefn->GetSubfield( iSF );
-        
-        if( poThisSFDefn == poSFDefn )
-            return pachData + iOffset;
+        for( int iSF = 0; iSF < poDefn->GetSubfieldCount(); iSF++ )
+        {
+            int	nBytesConsumed;
+            DDFSubfieldDefn * poThisSFDefn = poDefn->GetSubfield( iSF );
+            
+            if( poThisSFDefn == poSFDefn && iSubfieldIndex == 0 )
+            {
+                if( pnMaxBytes != NULL )
+                    *pnMaxBytes = nDataSize - iOffset;
+                
+                return pachData + iOffset;
+            }
+            
+            poThisSFDefn->GetDataLength( pachData+iOffset, nDataSize - iOffset,
+                                         &nBytesConsumed);
+            iOffset += nBytesConsumed;
+        }
 
-        poThisSFDefn->GetDataLength( pachData+iOffset, nDataSize - iOffset,
-                                     &nBytesConsumed);
-        iOffset += nBytesConsumed;
+        iSubfieldIndex--;
     }
 
-    // We didn't find our target subfield!
-    CPLAssert( FALSE );
-    
+    // We didn't find our target subfield or instance!
     return NULL;
 }
 
