@@ -43,6 +43,10 @@
  *    application termination. 
  * 
  * $Log$
+ * Revision 1.29  2004/08/26 21:20:08  warmerda
+ * Adjusted so png_access_version_number() is not called for old libpng
+ * versions (pre 1.2).
+ *
  * Revision 1.28  2004/08/25 13:42:37  warmerda
  * Added png version checking after png_create_read_struct() as per suggestion from
  * Ben Discoe.
@@ -645,11 +649,17 @@ GDALDataset *PNGDataset::Open( GDALOpenInfo * poOpenInfo )
                                          NULL, NULL );
     if (poDS->hPNG == NULL)
     {
+#if LIBPNG_VER_MINOR >= 2 || LIBPNG_VER_MAJOR > 1
         int version = png_access_version_number();
         CPLError( CE_Failure, CPLE_NotSupported, 
                   "The PNG driver failed to access libpng with version '%s',"
                   " library is actually version '%d'.\n",
                   PNG_LIBPNG_VER_STRING, version);
+#else
+        CPLError( CE_Failure, CPLE_NotSupported, 
+                  "The PNG driver failed to in png_create_read_struct().\n"
+                  "This may be due to version compatibility problems." );
+#endif
         delete poDS;
         return NULL;
     }
