@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2000/01/11 22:12:13  warmerda
+ * added InsertChild
+ *
  * Revision 1.4  1999/11/18 19:02:19  warmerda
  * expanded tabs
  *
@@ -191,10 +194,40 @@ OGR_SRSNode *OGR_SRSNode::GetNode( const char * pszName )
 void OGR_SRSNode::AddChild( OGR_SRSNode * poNew )
 
 {
+    InsertChild( poNew, nChildren );
+}
+
+/************************************************************************/
+/*                            InsertChild()                             */
+/************************************************************************/
+
+/**
+ * Insert the passed node as a child of target node, at the indicated
+ * position. 
+ *
+ * Note that ownership of the passed node is assumed by the node on which
+ * the method is invoked ... use the Clone() method if the original is to
+ * be preserved.  All existing children at location iChild and beyond are
+ * push down one space to make space for the new child. 
+ *
+ * @param poNew the node to add as a child.
+ * @param iChild position to insert, use 0 to insert at the beginning. 
+ */
+
+void OGR_SRSNode::InsertChild( OGR_SRSNode * poNew, int iChild )
+
+{
+    if( iChild > nChildren )
+        iChild = nChildren;
+
     nChildren++;
     papoChildNodes = (OGR_SRSNode **)
         CPLRealloc( papoChildNodes, sizeof(void*) * nChildren );
-    papoChildNodes[nChildren-1] = poNew;
+
+    memmove( papoChildNodes + iChild + 1, papoChildNodes + iChild,
+             sizeof(void*) * (nChildren - iChild) );
+    
+    papoChildNodes[iChild] = poNew;
 }
 
 /************************************************************************/

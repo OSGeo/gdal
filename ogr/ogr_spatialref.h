@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2000/01/11 22:12:13  warmerda
+ * added InsertChild
+ *
  * Revision 1.10  2000/01/06 19:46:10  warmerda
  * added special logic for setting, and recognising UTM
  *
@@ -102,6 +105,7 @@ class OGR_SRSNode
 
     OGR_SRSNode *GetNode( const char * );
 
+    void        InsertChild( OGR_SRSNode *, int );
     void        AddChild( OGR_SRSNode * );
 
     const char  *GetValue() { return pszValue; }
