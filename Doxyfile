@@ -43,13 +43,13 @@ LATEX_OUTPUT          =
 # each generated HTML page. If it is left blank doxygen will generate a 
 # standard header.
 
-HTML_HEADER          =
+HTML_HEADER          = html/gdal_header.html
 
 # The HTML_FOOTER tag can be used to specify a personal HTML footer for 
 # each generated HTML page. If it is left blank doxygen will generate a 
 # standard footer.
 
-HTML_FOOTER          =
+HTML_FOOTER          = html/gdal_footer.html
 
 # The QUIET tag can be used to turn on/off the messages that are generated
 # by doxygen. Possible values are YES and NO. If left blank NO is used.
@@ -115,9 +115,8 @@ FULL_PATH_NAMES = NO
 # directories like "/usr/src/myproject". Separate the files or directories 
 # with spaces.
 
-INPUT            =	port core frmts/gdalallregister.cpp \
-			frmts/gtiff/frmt_gtiff.dox \
-			frmts/jpeg/frmt_jpeg.dox
+INPUT            =	port core frmts/gdalallregister.cpp
+
 
 # If the value of the INPUT tag contains directories, you can use the 
 # FILE_PATTERNS tag to specify one or more wildcard patterns (like *.cpp 
