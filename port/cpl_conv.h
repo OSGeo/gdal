@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.25  2003/09/28 14:14:16  dron
+ * Added CPLScanString().
+ *
  * Revision 1.24  2003/09/08 11:09:53  dron
  * Added CPLPrintDouble() and CPLPrintTime().
  *
@@ -117,6 +120,7 @@ const char CPL_DLL *CPLReadLine( FILE * );
 /* -------------------------------------------------------------------- */
 /*      Read a numeric value from an ASCII character string.            */
 /* -------------------------------------------------------------------- */
+char CPL_DLL *CPLScanString( char *, int, int, int );
 double CPL_DLL CPLScanDouble( char *, int );
 long CPL_DLL CPLScanLong( char *, int );
 
