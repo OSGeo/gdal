@@ -28,6 +28,9 @@ clean:
 %.o:	%.c
 	$(CC) -c $(GDAL_INCLUDE) $(CFLAGS) $(XTRA_OPT) $*.c -o $*.o
 
+%.o:	libjpeg/%.c
+	$(CC) -c $(GDAL_INCLUDE) $(CFLAGS) $(XTRA_OPT) libjpeg/$*.c -o $*.o
+
 %.o:	%.cpp
 	$(CXX) -c $(GDAL_INCLUDE) $(CXXFLAGS) $(XTRA_OPT) $*.cpp -o $*.o
 
