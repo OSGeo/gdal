@@ -15,16 +15,21 @@ source to stdout (the terminal).
 \verbatim
 Usage: ogrinfo [-ro] [-q] [-where restricted_where]
                [-spat xmin ymin xmax ymax] [-fid fid]
+               [-sql statement] [-al]
                datasource_name [layer [layer ...]]
 \endverbatim
 
 <ul>
 <li> <b>-ro</b>: Open the data source in read-only mode.  
+<li> <b>-al</b>: List all features of all layers (used instead of listing 
+the layer names).
 <li> <b>-q</b>: Quiet verbose reporting of various information, including
 coordinate system, layer schema, extents, and feature count. 
 <li> <b>-where</b> <i>restricted_where</i>: An attribute query in a restricted
 form of the queries used in the SQL WHERE statement.   Only features matching
 the attribute query will be reported.
+<li> <b>-sql</b> <i>statement</i>: Execute the indicated statement
+and return the result.
 <li> <b>-spat</b> <i>xmin ymin xmax ymax</i>: The area of interest.  Only
 features within the rectangle will be reported.
 <li> <b>-fid</b> <i>fid</i>: If provided, only the feature with this feature
