@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  1999/05/06 14:41:03  warmerda
+ * Removed unused variable.
+ *
  * Revision 1.2  1999/05/06 14:23:49  warmerda
  * optimised DDFScanInt()
  *
@@ -50,7 +53,6 @@ long DDFScanInt( const char * pszString, int nMaxChars )
 
 {
     char	szWorking[33];
-    int		i;
 
     if( nMaxChars > 32 || nMaxChars == 0 )
         nMaxChars = 32;
