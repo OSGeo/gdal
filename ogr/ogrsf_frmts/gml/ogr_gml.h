@@ -29,6 +29,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2003/04/03 16:23:49  warmerda
+ * Added support for XSISCHEMA creation option which may be INTERNAL, EXTERNAL
+ * or OFF.  EXTERNAL (write an associated .xsd file) is the default.
+ *
  * Revision 1.7  2003/03/07 14:53:21  warmerda
  * implement preliminary BXFS write support
  *
@@ -122,6 +126,8 @@ class OGRGMLDataSource : public OGRDataSource
     char		*pszName;
     
     OGRGMLLayer         *TranslateGMLSchema( GMLFeatureClass * );
+
+    char               **papszCreateOptions;
 
     // output related parameters 
     FILE		*fpOutput;
