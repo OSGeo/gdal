@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  1999/09/07 12:06:13  warmerda
+ * type casting warning fixed
+ *
  * Revision 1.6  1999/06/26 05:26:49  warmerda
  * Separate out GetWKTFromSRSId static method for use of SFCTable
  *
@@ -379,7 +382,7 @@ char * SFCDataSource::GetWKTFromSRSId( CSession * poSession, int nSRS_ID )
 /* -------------------------------------------------------------------- */
     while( oTable.MoveNext() == S_OK )
     {
-        if( oTable.m_nSRS_ID == nSRS_ID )
+        if( oTable.m_nSRS_ID == (ULONG) nSRS_ID )
         {
             pszReturnString = oTable.m_szSpatialRefSystemWKT;
             goto ReturnValue;
