@@ -57,32 +57,41 @@ if sys.platform == 'win32':
             
     # don't forget to add gdal to the list :)
     libraries.append('gdal')
+    extra_link_args = ['/NODEFAULTLIB:MSVCRT']
 
 else:
     libraries = ['gdal']
     library_dirs = ['../../']
+    extra_link_args = []
 
 
 gdal_module = Extension('_gdal',
                     sources=['gdal_wrap.cpp'],
                     include_dirs = include_dirs,
                     libraries = libraries,
-                    library_dirs = library_dirs)
+                    library_dirs = library_dirs,
+                    extra_link_args = extra_link_args)
+
 gdalconst_module = Extension('_gdalconst',
                     sources=['gdalconst_wrap.c'],
                     include_dirs = include_dirs,
                     libraries = libraries,
-                    library_dirs = library_dirs)
+                    library_dirs = library_dirs,
+                    extra_link_args = extra_link_args)
+
 osr_module = Extension('_osr',
                     sources=['osr_wrap.cpp'],
                     include_dirs = include_dirs,
                     libraries = libraries,
-                    library_dirs = library_dirs)
+                    library_dirs = library_dirs,
+                    extra_link_args = extra_link_args)
+
 ogr_module = Extension('_ogr',
                     sources=['ogr_wrap.cpp'],
                     include_dirs = include_dirs,
                     libraries = libraries,
-                    library_dirs = library_dirs)
+                    library_dirs = library_dirs,
+                    extra_link_args = extra_link_args)
 
 
 setup( name = 'Gdal Wrapper',
@@ -93,4 +102,4 @@ setup( name = 'Gdal Wrapper',
        ext_modules = [gdal_module,
                       gdalconst_module,
                       osr_module,
-                      ogr_module] )
+                      ogr_module],debug=1 )
