@@ -9,6 +9,10 @@
 
  *
  * $Log$
+ * Revision 1.3  2005/02/17 21:12:06  kruland
+ * More complete implementation of SpatialReference and CoordinateTransformation.
+ * Satisfies the osr gdalautotests with 1 exception.
+ *
  * Revision 1.2  2005/02/17 03:39:25  kruland
  * Use %constant decls for the constants.
  *
@@ -113,31 +117,415 @@
 #include <iostream>
 using namespace std;
 
+#include "cpl_conv.h"
+
 #include "ogr_srs_api.h"
 
 typedef void SpatialReference;
+typedef void CoordinateTransformation;
+
+typedef double * double_3;
+typedef double * double_7;
+typedef double * double_15;
+typedef double * double_17;
+
 %}
 
 %import gdal_typemaps.i
 
+typedef int OGRErr;
+
+/******************************************************************************
+ *
+ *  Global methods
+ *
+ */
+
+// NEEDED GLOBALS 
+// GetProjectionMethods 
+// GetWellKnowGeogCSAsWKT 
+
+/******************************************************************************
+ *
+ *  Spatial Reference Object.
+ *
+ */
+
 class SpatialReference {
 private:
-  ~SpatialReference();
 public:
 %extend {
   SpatialReference( char const * arg = "" ) {
-    return (SpatialReference*) OSRNewSpatialReference(arg);
+    SpatialReference *sr = (SpatialReference*) OSRNewSpatialReference(arg);
+    if (sr) {
+      OSRReference( sr );
+    }
+    return sr;
   }
 
-%apply (char **ignorechange) { char **arg };
-  OGRErr ImportFromWkt( char **arg ) {
-    return OSRImportFromWkt( self, arg );
+  ~SpatialReference() {
+    if (OSRDereference( self ) == 0 ) {
+      OSRDestroySpatialReference( self );
+    }
   }
-%clear (char **arg);
+
+/* NEEDED */
+// Reference ?  I don't think this are needed in script-land
+// Dereference ?  I don't think this are needed in script-land
+
+%newobject __str__;
+  char *__str__() {
+    char *buf = 0;
+    OSRExportToPrettyWkt( self, &buf, 0 );
+    return buf;
+  }
 
   int IsSame( SpatialReference *rhs ) {
     return OSRIsSame( self, rhs );
   }
 
-}
+  int IsSameGeogCS( SpatialReference *rhs ) {
+    return OSRIsSameGeogCS( self, rhs );
+  }
+
+  int IsGeographic() {
+    return OSRIsGeographic(self);
+  }
+
+  int IsProjected() {
+    return OSRIsProjected(self);
+  }
+
+  const char *GetAttrValue( const char *name, int child = 0 ) {
+    return OSRGetAttrValue( self, name, child );
+  }
+
+/*
+  const char *__getattr__( const char *name ) {
+    return OSRGetAttrValue( self, name, 0 );
+  }
+*/
+
+  OGRErr SetAttrValue( const char *name, const char *value ) {
+    return OSRSetAttrValue( self, name, value ); 
+  }
+
+/*
+  OGRErr __setattr__( const char *name, const char *value ) {
+    return OSRSetAttrValue( self, name, value );
+  }
+*/
+
+  OGRErr SetAngularUnits( const char*name, double to_radians ) {
+    return OSRSetAngularUnits( self, name, to_radians );
+  }
+
+  double GetAngularUnits() {
+    return OSRGetAngularUnits( self, 0 );
+  }
+
+  OGRErr SetLinearUnits( const char*name, double to_meters ) {
+    return OSRSetAngularUnits( self, name, to_meters );
+  }
+
+  double GetLinearUnits() {
+    return OSRGetLinearUnits( self, 0 );
+  }
+
+  const char *GetLinearUnitsName() {
+    const char *name = 0;
+    if ( OSRIsProjected( self ) ) {
+      name = OSRGetAttrValue( self, "PROJCS|UNIT", 0 );
+    }
+    else if ( OSRIsLocal( self ) ) {
+      name = OSRGetAttrValue( self, "LOCAL_CS|UNIT", 0 );
+    }
+
+    if (name != 0) 
+      return name;
+
+    return "Meter";
+  }
+
+  const char *GetAuthorityCode( const char *target_key ) {
+    return OSRGetAuthorityCode( self, target_key );
+  }
+
+  const char *GetAuthorityName( const char *target_key ) {
+    return OSRGetAuthorityName( self, target_key );
+  }
+
+  OGRErr SetUTM( int zone, int north =1 ) {
+    return OSRSetUTM( self, zone, north );
+  }
+
+  OGRErr SetStatePlane( int zone, int is_nad83 = 1, char const *unitsname = "", double units = 0.0 ) {
+    return OSRSetStatePlaneWithUnits( self, zone, is_nad83, unitsname, units );
+  }
+
+  OGRErr AutoIdentifyEPSG() {
+    return OSRAutoIdentifyEPSG( self );
+  }
+
+  OGRErr SetProjection( char const *arg ) {
+    return OSRSetProjection( self, arg );
+  }
+
+  OGRErr SetProjParm( const char *name, double val ) {
+    return OSRSetProjParm( self, name, val ); 
+  }
+
+  double GetProjParm( const char *name, double default_val = 0.0 ) {
+    // Return code ignored.
+    return OSRGetProjParm( self, name, default_val, 0 );
+  }
+
+  OGRErr SetNormProjParm( const char *name, double val ) {
+    return OSRSetNormProjParm( self, name, val );
+  }
+
+  double GetNormProjParm( const char *name, double default_val = 0.0 ) {
+    // Return code ignored.
+    return OSRGetNormProjParm( self, name, default_val, 0 );
+  }
+
+  OGRErr SetACEA( double stdp1, double stdp2, double clat, double clong, double fe, double fn ) {
+    return OSRSetACEA( self, stdp1, stdp2, clat, clong, fe, fn );
+  }
+
+  OGRErr SetAE( double clat, double clon, double fe, double fn ) {
+    return OSRSetAE( self, clat, clon, fe, fn );
+  }
+
+  OGRErr SetCS( double clat, double clong, double fe, double fn ) {
+    return OSRSetCS( self, clat, clong, fe, fn );
+  }
+
+  OGRErr SetBonne( double clat, double clong, double fe, double fn ) {
+    return OSRSetBonne( self, clat, clong, fe, fn );
+  }
+
+  OGRErr SetEC( double stdp1, double stdp2, double clat, double clong, double fe, double fn ) {
+    return OSRSetEC( self, stdp1, stdp2, clat, clong, fe, fn );
+  }
+
+  OGRErr SetEckertIV( double cm, double fe, double fn ) {
+    return OSRSetEckertIV( self, cm, fe, fn );
+  }
+
+  OGRErr SetEckertVI( double cm, double fe, double fn ) {
+    return OSRSetEckertVI( self, cm, fe, fn );
+  }
+
+  OGRErr SetEquirectangular( double clat, double clong, double fe, double fn ) {
+    return OSRSetEquirectangular( self, clat, clong, fe, fn );
+  }
+
+%feature( "kwargs" ) SetGS;
+  OGRErr SetGS( double cm, double fe, double fn ) {
+    return OSRSetGS( self, cm, fe, fn );
+  }
+
+  OGRErr SetWellKnownGeogCS( const char *name ) {
+    return OSRSetWellKnownGeogCS( self, name );
+  }
+
+  OGRErr SetFromUserInput( const char *name ) {
+    return OSRSetFromUserInput( self, name );
+  }
+
+  OGRErr CopyGeogCSFrom( SpatialReference *rhs ) {
+    return OSRCopyGeogCSFrom( self, rhs );
+  }
+
+  OGRErr SetTOWGS84( double p1, double p2, double p3,
+                     double p4 = 0.0, double p5 = 0.0,
+                     double p6 = 0.0, double p7 = 0.0 ) {
+    return OSRSetTOWGS84( self, p1, p2, p3, p4, p5, p6, p7 );
+  }
+
+  // This really should trap the return code from OSRGetTOWGS84
+  void GetTOWGS84( double_7 argout ) {
+    OSRGetTOWGS84( self, argout, 7 );
+  }
+
+  OGRErr SetGeogCS( const char * pszGeogName,
+                    const char * pszDatumName,
+                    const char * pszEllipsoidName,
+                    double dfSemiMajor, double dfInvFlattening,
+                    const char * pszPMName = "Greenwich",
+                    double dfPMOffset = 0.0,
+                    const char * pszUnits = "degree",
+                    double dfConvertToRadians =  0.0174532925199433 ) {
+    return OSRSetGeogCS( self, pszGeogName, pszDatumName, pszEllipsoidName,
+                         dfSemiMajor, dfInvFlattening,
+                         pszPMName, dfPMOffset, pszUnits, dfConvertToRadians );
+  }
+
+  OGRErr SetProjCS( const char *name = "unnamed" ) {
+    return OSRSetProjCS( self, name );
+  }
+
+%apply (char **ignorechange) { (char **) };
+  OGRErr ImportFromWkt( char **ppszInput ) {
+    return OSRImportFromWkt( self, ppszInput );
+  }
+%clear (char **);
+
+  OGRErr ImportFromProj4( char *ppszInput ) {
+    return OSRImportFromProj4( self, ppszInput );
+  }
+
+%apply (char **ignorechange) { (char **) };
+  OGRErr ImportFromESRI( char **ppszInput ) {
+    return OSRImportFromESRI( self, ppszInput );
+  }
+%clear (char **);
+
+  OGRErr ImportFromEPSG( int arg ) {
+    return OSRImportFromEPSG(self, arg);
+  }
+
+  OGRErr ImportFromPCI( char const *proj, char const *units = "METRE",
+                        double_17 argin = 0 ) {
+    return OSRImportFromPCI( self, proj, units, argin );
+  }
+
+  OGRErr ImportFromUSGS( long proj_code, long zone = 0,
+                         double_15 argin = 0,
+                         long datum_code = 0 ) {
+    return OSRImportFromUSGS( self, proj_code, zone, argin, datum_code );
+  }
+
+  OGRErr ImportFromXML( char const *xmlString ) {
+    return OSRImportFromXML( self, xmlString );
+  }
+
+  void ExportToWkt( char **argout ) {
+    OSRExportToWkt( self, argout );
+  }
+
+  void  ExportToPrettyWkt( char **argout, int simplify = 0 ) {
+    OSRExportToPrettyWkt( self, argout, simplify );
+  }
+
+  void ExportToProj4( char **argout ) {
+    OSRExportToProj4( self, argout );
+  }
+
+%apply (char **argout) { (char **) };
+%apply (double_17 argout) { (double_17 parms ) };
+  void ExportToPCI( char **proj, char **units, double_17 parms ) {
+    double *parmptr = 0;
+    if ( OSRExportToPCI( self, proj, units, &parmptr ) != 0 ) {
+      // throw something?
+    }
+    double *tmpptr = parmptr;
+    for(int i=0;i<17;i++)
+      *(parms++) = *(parmptr++);
+    CPLFree( tmpptr );
+  }
+%clear (char **);
+%clear (double_17 parms);
+
+%apply (long *OUTPUT) { (long*) };
+%apply (double_15 argout) { (double_15 parms) }
+  void ExportToUSGS( long *code, long *zone, double_15 parms, long *datum ) {
+    double *parmptr = 0;
+    if ( OSRExportToUSGS( self, code, zone, &parmptr, datum ) != 0 ) {
+      // throw something?
+    }
+    double *tmpptr = parmptr;
+    for(int i=0;i<15;i++)
+      *(parms++) = *(parmptr++);
+    CPLFree( tmpptr );
+  }
+%clear (long*);
+%clear (double_15 parms);
+
+  void ExportToXML( char **argout, const char *dialect = "" ) {
+    OSRExportToXML( self, argout, dialect );
+  }
+
+%newobject CloneGeogCS;
+  SpatialReference *CloneGeogCS() {
+    return (SpatialReference*) OSRCloneGeogCS(self);
+  }
+
+/*
+ * Commented out until the headers have changed to make OSRClone visible.
+%newobject Clone;
+  SpatialReference *Clone() {
+    return (SpatialReference*) OSRClone(self);
+  }
+*/
+
+  OGRErr Validate() {
+    return OSRValidate(self);
+  }
+
+  OGRErr StripCTParms() {
+    return OSRStripCTParms(self);
+  }
+
+  OGRErr FixupOrdering() {
+    return OSRFixupOrdering(self);
+  }
+
+  OGRErr Fixup() {
+    return OSRFixup(self);
+  }
+
+  OGRErr MorphToESRI() {
+    return OSRMorphToESRI(self);
+  }
+
+  OGRErr MorphFromESRI() {
+    return OSRMorphFromESRI(self);
+  }
+
+
+} /* %extend */
+};
+
+
+/******************************************************************************
+ *
+ *  CoordinateTransformation Object
+ *
+ */
+
+class CoordinateTransformation {
+private:
+public:
+%extend {
+
+  CoordinateTransformation( SpatialReference *src, SpatialReference *dst ) {
+    CoordinateTransformation *obj = (CoordinateTransformation*) OCTNewCoordinateTransformation( src, dst );
+    if (obj == 0 ) {
+      throw "Failed to create coordinate transformation";
+    }
+  }
+
+  ~CoordinateTransformation() {
+    OCTDestroyCoordinateTransformation( self );
+  }
+
+// Need to apply argin typemap second so the numinputs=1 version gets applied
+// instead of the numinputs=0 version from argout.
+%apply (double_3 argout) {(double_3 inout)};
+%apply (double_3 argin) {(double_3 inout)};
+  void TransformPoint( double_3 inout ) {
+    OCTTransform( self, 1, &inout[0], &inout[1], &inout[2] );
+  }
+%clear (double_3 inout);
+
+  void TransformPoint( double_3 argout, double x, double y, double z = 0.0 ) {
+    argout[0] = x;
+    argout[1] = y;
+    argout[2] = z;
+    OCTTransform( self, 1, &argout[0], &argout[1], &argout[2] );
+  }
+
+} /*extend */
 };
