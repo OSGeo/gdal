@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2000/01/10 17:36:56  warmerda
+ * Avoid errors when looking for the libproj.so.
+ *
  * Revision 1.5  1999/07/29 19:09:23  warmerda
  * added windows support for proj.dll
  *
@@ -83,9 +86,12 @@ static int LoadProjLibrary()
         return( pfn_pj_init != NULL );
 
     bTriedToLoad = TRUE;
-    
+
+    CPLPushErrorHandler( CPLQuietErrorHandler );
     pfn_pj_init = (PJ *(*)(int, char**)) CPLGetSymbol( LIBNAME,
                                                        "pj_init" );
+    CPLPopErrorHandler();
+    
     if( pfn_pj_init == NULL )
        return( FALSE );
 
