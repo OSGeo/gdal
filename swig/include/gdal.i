@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.21  2005/02/24 17:20:02  hobu
+ * return the dataset in AutoCreateWarpedVRT
+ *
  * Revision 1.20  2005/02/24 16:34:14  kruland
  * Defined GCP as an object.  Manipulate as an object.  Defined __str__
  * and serialize as python only methods.
@@ -402,5 +405,7 @@ GDALDatasetShadow *AutoCreateWarpedVRT( GDALDatasetShadow *src_ds,
   if (ds == 0) {
     throw CPLGetLastErrorMsg();
   }
+  return ds;
+  
 }
 %}
