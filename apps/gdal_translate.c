@@ -28,6 +28,9 @@
  * ****************************************************************************
  *
  * $Log$
+ * Revision 1.9  2000/03/06 02:18:42  warmerda
+ * added -outsize option
+ *
  * Revision 1.8  2000/02/18 03:52:16  warmerda
  * Added support for setting the output band data type, but still does
  * no scaling.
@@ -68,6 +71,7 @@ static void Usage()
 {
     printf( "Usage: gdal_translate [-ot {Byte/UInt16/UInt32/Int32/Float32/Float64}]\n"
             "                      [-of format] [-b band]\n"
+            "			   [-outsize xsize ysize]\n"
             "                      src_dataset dst_dataset\n" );
 }
 
@@ -87,16 +91,17 @@ int main( int argc, char ** argv )
     int			*panBandList, nBandCount;
     double		adfGeoTransform[6];
     GDALDataType	eOutputType = GDT_Unknown;
+    int			nOXSize = 0, nOYSize = 0;
 
 /* -------------------------------------------------------------------- */
 /*      Handle command line arguments.                                  */
 /* -------------------------------------------------------------------- */
     for( i = 1; i < argc; i++ )
     {
-        if( EQUAL(argv[i],"-of") )
+        if( EQUAL(argv[i],"-of") && i < argc-1 )
             pszFormat = argv[++i];
 
-        else if( EQUAL(argv[i],"-ot") )
+        else if( EQUAL(argv[i],"-ot") && i < argc-1 )
         {
             int	iType;
             
@@ -118,9 +123,22 @@ int main( int argc, char ** argv )
             }
             i++;
         }
-        else if( EQUAL(argv[i],"-b") )
+        else if( EQUAL(argv[i],"-b") && i < argc-1 )
             nSrcBand = atoi(argv[++i]);
             
+        else if( EQUAL(argv[i],"-outsize") && i < argc-2 )
+        {
+            nOXSize = atoi(argv[++i]);
+            nOYSize = atoi(argv[++i]);
+        }   
+
+        else if( argv[i][0] == '-' )
+        {
+            printf( "Option %s incomplete, or not recognised.\n\n", 
+                    argv[i] );
+            Usage();
+            exit( 2 );
+        }
         else if( pszSource == NULL )
             pszSource = argv[i];
 
@@ -183,7 +201,7 @@ int main( int argc, char ** argv )
     }
 
 /* -------------------------------------------------------------------- */
-/*      Create the output database.                                     */
+/*      Find the output driver.                                         */
 /* -------------------------------------------------------------------- */
     hDriver = GDALGetDriverByName( pszFormat );
     if( hDriver == NULL )
@@ -203,13 +221,25 @@ int main( int argc, char ** argv )
         exit( 1 );
     }
 
+/* -------------------------------------------------------------------- */
+/*      Establish some parameters.                                      */
+/* -------------------------------------------------------------------- */
     if( eOutputType == GDT_Unknown )
     {
         hBand = GDALGetRasterBand( hDataset, panBandList[0] );
         eOutputType = GDALGetRasterDataType(hBand);
     }
+
+    if( nOXSize == 0 )
+    {
+        nOXSize = nRasterXSize;
+        nOYSize = nRasterYSize;
+    }
     
-    hOutDS = GDALCreate( hDriver, pszDest, nRasterXSize, nRasterYSize,
+/* -------------------------------------------------------------------- */
+/*      Create the output database.                                     */
+/* -------------------------------------------------------------------- */
+    hOutDS = GDALCreate( hDriver, pszDest, nOXSize, nOYSize, 
                          nBandCount, eOutputType, NULL );
     if( hOutDS == NULL )
     {
@@ -247,18 +277,27 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
         nPixelSize = GDALGetDataTypeSize( GDALGetRasterDataType(hBand) ) / 8;
 
-        pabyBlock = (GByte *) CPLMalloc(nPixelSize*nRasterXSize);
+        pabyBlock = (GByte *) CPLMalloc(nPixelSize*nOXSize);
 
-        for( iBlockY = 0; iBlockY < nRasterYSize; iBlockY++ )
+        for( iBlockY = 0; iBlockY < nOYSize; iBlockY++ )
         {
+            int		iSrcYOff;
+
+            if( nOYSize == nRasterYSize )
+                iSrcYOff = iBlockY;
+            else
+            {
+                iSrcYOff = (iBlockY / (double) nOYSize) * nRasterYSize;
+            }
+
             GDALRasterIO( hBand, GF_Read,
-                          0, iBlockY, nRasterXSize, 1,
-                          pabyBlock, nRasterXSize, 1,
+                          0, iSrcYOff, nRasterXSize, 1,
+                          pabyBlock, nOXSize, 1,
                           GDALGetRasterDataType(hBand),
                           0, 0 );
             GDALRasterIO( hDstBand, GF_Write,
-                          0, iBlockY, nRasterXSize, 1,
-                          pabyBlock, nRasterXSize, 1,
+                          0, iBlockY, nOXSize, 1,
+                          pabyBlock, nOXSize, 1,
                           GDALGetRasterDataType(hBand),
                           0, 0 );
         }
