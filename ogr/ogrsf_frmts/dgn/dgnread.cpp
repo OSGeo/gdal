@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2002/01/15 06:38:51  warmerda
+ * moved some functions to dgnhelp.cpp
+ *
  * Revision 1.17  2001/12/19 15:29:56  warmerda
  * added preliminary cell header support
  *
@@ -238,6 +241,7 @@ DGNElemCore *DGNReadElement( DGNHandle hDGN )
           psCell->levels[1] = psDGN->abyElem[46] + psDGN->abyElem[47] * 256;
           psCell->levels[2] = psDGN->abyElem[48] + psDGN->abyElem[49] * 256;
           psCell->levels[3] = psDGN->abyElem[50] + psDGN->abyElem[51] * 256;
+          psCell->core.color = psDGN->abyElem[35];
 
           if( psDGN->dimension == 2 )
           {
@@ -248,6 +252,23 @@ DGNElemCore *DGNReadElement( DGNHandle hDGN )
 
               psCell->origin.x = DGN_INT32( psDGN->abyElem + 84 );
               psCell->origin.y = DGN_INT32( psDGN->abyElem + 88 );
+#ifdef notdef
+              double a, b, c, d, a2, c2;
+              a = DGN_INT32( psDGN->abyElem + 68 );
+              b = DGN_INT32( psDGN->abyElem + 72 );
+              c = DGN_INT32( psDGN->abyElem + 76 );
+              d = DGN_INT32( psDGN->abyElem + 80 );
+              a2 = a * a;
+              c2 = c * c;
+              
+              psCell->xscale = sqrt(a2 + c2) / 214748;
+              psCell->yscale = sqrt(b*b + d*d) / 214748;
+              psCell->rotation = acos(a / sqrt(a2 + c2));
+              if (b <= 0)
+                  psCell->rotation = psCell->rotation * 180 / PI;
+              else
+                  psCell->rotation = 360 - psCell->rotation * 180 / PI;
+#endif
           }
           else
           {
@@ -763,308 +784,6 @@ void DGNRewind( DGNHandle hDGN )
     psDGN->next_element_id = 0;
 }
 
-
-/************************************************************************/
-/*                           DGNDumpElement()                           */
-/************************************************************************/
-
-/**
- * Emit textual report of an element.
- *
- * This function exists primarily for debugging, and will produce a textual
- * report about any element type to the designated file. 
- *
- * @param hDGN the file from which the element originated.
- * @param psElement the element to report on.
- * @param fp the file (such as stdout) to report the element information to.
- */
-
-void DGNDumpElement( DGNHandle hDGN, DGNElemCore *psElement, FILE *fp )
-
-{
-    fprintf( fp, "\n" );
-    fprintf( fp, "Element:%-12s Level:%2d id:%-6d ",
-             DGNTypeToName( psElement->type ),
-             psElement->level, 
-             psElement->element_id );
-
-    if( psElement->complex )
-        fprintf( fp, "(Complex) " );
-
-    if( psElement->deleted )
-        fprintf( fp, "(DELETED) " );
-
-    fprintf( fp, "\n" );
-
-#ifdef DGN_DEBUG
-    fprintf( fp, "  offset=%d  size=%d bytes\n", 
-             psElement->offset, psElement->size );
-#endif    
-
-    fprintf( fp, 
-             "  graphic_group:%-3d color:%d weight:%d style:%d\n", 
-             psElement->graphic_group,
-             psElement->color,
-             psElement->weight,
-             psElement->style );
-
-    if( psElement->properties != 0 )
-    {
-        int	nClass;
-
-        fprintf( fp, "  properties=%d", psElement->properties );
-        if( psElement->properties & DGNPF_HOLE )
-            fprintf( fp, ",HOLE" );
-        if( psElement->properties & DGNPF_SNAPPABLE )
-            fprintf( fp, ",SNAPPABLE" );
-        if( psElement->properties & DGNPF_PLANAR )
-            fprintf( fp, ",PLANAR" );
-        if( psElement->properties & DGNPF_ORIENTATION )
-            fprintf( fp, ",ORIENTATION" );
-        if( psElement->properties & DGNPF_ATTRIBUTES )
-            fprintf( fp, ",ATTRIBUTES" );
-        if( psElement->properties & DGNPF_MODIFIED )
-            fprintf( fp, ",MODIFIED" );
-        if( psElement->properties & DGNPF_NEW )
-            fprintf( fp, ",NEW" );
-        if( psElement->properties & DGNPF_LOCKED )
-            fprintf( fp, ",LOCKED" );
-
-        nClass = psElement->properties & DGNPF_CLASS;
-        if( nClass == DGNC_PATTERN_COMPONENT )
-            fprintf( fp, ",PATTERN_COMPONENT" );
-        else if( nClass == DGNC_CONSTRUCTION_ELEMENT )
-            fprintf( fp, ",CONSTRUCTION ELEMENT" );
-        else if( nClass == DGNC_DIMENSION_ELEMENT )
-            fprintf( fp, ",DIMENSION ELEMENT" );
-        else if( nClass == DGNC_PRIMARY_RULE_ELEMENT )
-            fprintf( fp, ",PRIMARY RULE ELEMENT" );
-        else if( nClass == DGNC_LINEAR_PATTERNED_ELEMENT )
-            fprintf( fp, ",LINEAR PATTERNED ELEMENT" );
-        else if( nClass == DGNC_CONSTRUCTION_RULE_ELEMENT )
-            fprintf( fp, ",CONSTRUCTION_RULE_ELEMENT" );
-            
-        fprintf( fp, "\n" );
-    }
-
-    switch( psElement->stype )
-    {
-      case DGNST_MULTIPOINT:
-      {
-          DGNElemMultiPoint	*psLine = (DGNElemMultiPoint *) psElement;
-          int			i;
-          
-          for( i=0; i < psLine->num_vertices; i++ )
-              fprintf( fp, "  (%.6f,%.6f,%.6f)\n", 
-                       psLine->vertices[i].x, 
-                       psLine->vertices[i].y, 
-                       psLine->vertices[i].z );
-      }
-      break;
-
-      case DGNST_CELL_HEADER:
-      {
-          DGNElemCellHeader	*psCell = (DGNElemCellHeader*) psElement;
-
-          fprintf( fp, "  totlength=%d, name=%s, class=%x, levels=%02x%02x%02x%02x\n", 
-                   psCell->totlength, psCell->name, psCell->cclass, 
-                   psCell->levels[0], psCell->levels[1], psCell->levels[2], 
-                   psCell->levels[3] );
-          fprintf( fp, "  rnglow=(%.5f,%.5f), rnghigh=(%.5f,%.5f)\n",
-                   psCell->rnglow.x, psCell->rnglow.y, 
-                   psCell->rnghigh.x, psCell->rnghigh.y ); 
-          fprintf( fp, "  origin=(%.5f,%.5f)\n", 
-                   psCell->origin.x, psCell->origin.y );
-      }
-      break;
-
-      case DGNST_ARC:
-      {
-          DGNElemArc	*psArc = (DGNElemArc *) psElement;
-
-          fprintf( fp, 
-                   "  origin=(%.5f,%.5f), rotation=%f\n"
-                   "  axes=(%.5f,%.5f), start angle=%f, sweep=%f\n", 
-                   psArc->origin.x, 
-                   psArc->origin.y, 
-                   psArc->rotation,
-                   psArc->primary_axis,
-                   psArc->secondary_axis,
-                   psArc->startang,
-                   psArc->sweepang );                   
-      }
-      break;
-
-      case DGNST_TEXT:
-      {
-          DGNElemText	*psText = (DGNElemText *) psElement;
-
-          fprintf( fp, 
-                   "  origin=(%.5f,%.5f), rotation=%f\n"
-                   "  font=%d, just=%d, length_mult=%g, height_mult=%g\n"
-                   "  string = \"%s\"\n",
-                   psText->origin.x, 
-                   psText->origin.y, 
-                   psText->rotation,
-                   psText->font_id,
-                   psText->justification,
-                   psText->length_mult,
-                   psText->height_mult,
-                   psText->string );
-      }
-      break;
-
-      case DGNST_COMPLEX_HEADER:
-      {
-          DGNElemComplexHeader	*psHdr = (DGNElemComplexHeader *) psElement;
-
-          fprintf( fp, 
-                   "  totlength=%d, numelems=%d\n",
-                   psHdr->totlength,
-                   psHdr->numelems );
-      }
-      break;
-
-      case DGNST_COLORTABLE:
-      {
-          DGNElemColorTable *psCT = (DGNElemColorTable *) psElement;
-          int			i;
-
-          fprintf( fp, "  screen_flag: %d\n", psCT->screen_flag );
-          for( i = 0; i < 256; i++ )
-          {
-              fprintf( fp, "  %3d: (%3d,%3d,%3d)\n",
-                       i, 
-                       psCT->color_info[i][0], 
-                       psCT->color_info[i][1], 
-                       psCT->color_info[i][2] );
-          }
-      }
-      break;
-
-      case DGNST_TCB:
-      {
-          DGNElemTCB *psTCB = (DGNElemTCB *) psElement;
-
-          fprintf( fp, "  dimension = %d\n", psTCB->dimension );
-          fprintf( fp, "  uor_per_subunit = %ld, subunits = `%s'\n",
-                   psTCB->uor_per_subunit, psTCB->sub_units );
-          fprintf( fp, "  subunits_per_master = %ld, master units = `%s'\n",
-                   psTCB->subunits_per_master, psTCB->master_units );
-          fprintf( fp, "  origin = (%.5f,%.5f,%.5f)\n", 
-                   psTCB->origin_x,
-                   psTCB->origin_y,
-                   psTCB->origin_z );
-      }
-      break;
-
-      default:
-        break;
-    }
-
-    if( psElement->attr_bytes > 0 )
-    {
-        int       i;
-
-        fprintf( fp, "Attributes (%d bytes):\n", psElement->attr_bytes );
-        for( i = 0; i < psElement->attr_bytes; i++ )
-        {
-            if( (i%32) == 0 && i != 0 )
-                fprintf( fp, "\n" );
-            fprintf( fp, "%02x", psElement->attr_data[i] );
-        }
-        fprintf( fp, "\n" );
-    }
-}
-
-/************************************************************************/
-/*                           DGNTypeToName()                            */
-/************************************************************************/
-
-/**
- * Convert type to name.
- *
- * Returns a human readable name for an element type such as DGNT_LINE.
- *
- * @param nType the DGNT_* type code to translate.
- *
- * @return a pointer to an internal string with the translation.  This string
- * should not be modified or freed.
- */
-
-const char *DGNTypeToName( int nType )
-
-{
-    static char	szNumericResult[16];
-
-    switch( nType )
-    {
-      case DGNT_CELL_LIBRARY:
-        return "Cell Library";
-        
-      case DGNT_CELL_HEADER:
-        return "Cell Header";
-        
-      case DGNT_LINE:
-        return "Line";
-        
-      case DGNT_LINE_STRING:
-        return "Line String";
-
-      case DGNT_GROUP_DATA:
-        return "Group Data";
-
-      case DGNT_SHAPE:
-        return "Shape";
-        
-      case DGNT_TEXT_NODE:
-        return "Text Node";
-
-      case DGNT_DIGITIZER_SETUP:
-        return "Digitizer Setup";
-        
-      case DGNT_TCB:
-        return "TCB";
-        
-      case DGNT_LEVEL_SYMBOLOGY:
-        return "Level Symbology";
-        
-      case DGNT_CURVE:
-        return "Curve";
-        
-      case DGNT_COMPLEX_CHAIN_HEADER:
-        return "Complex Chain Header";
-        
-      case DGNT_COMPLEX_SHAPE_HEADER:
-        return "Complex Shape Header";
-        
-      case DGNT_ELLIPSE:
-        return "Ellipse";
-        
-      case DGNT_ARC:
-        return "Arc";
-        
-      case DGNT_TEXT:
-        return "Text";
-
-      case DGNT_BSPLINE:
-        return "B-Spline";
-
-      case DGNT_APPLICATION_ELEM:
-        return "Application Element";
-
-      case DGNT_SHARED_CELL_DEFN:
-        return "Shared Cell Definition";
-        
-      case DGNT_SHARED_CELL_ELEM:
-        return "Shared Cell Element";
-        
-      default:
-        sprintf( szNumericResult, "%d", nType );
-        return szNumericResult;
-    }
-}
-
 /************************************************************************/
 /*                         DGNTransformPoint()                          */
 /************************************************************************/
@@ -1295,88 +1014,5 @@ void DGNBuildIndex( DGNInfo *psDGN )
     }
 
     DGNRewind( psDGN );
-}
-
-/************************************************************************/
-/*                           DGNLookupColor()                           */
-/************************************************************************/
-
-/**
- * Translate color index into RGB values.
- *
- * @param hDGN the file.
- * @param color_index the color index to lookup.
- * @param red location to put red component.
- * @param green location to put green component.
- * @param blue location to put blue component.
- *
- * @return TRUE on success or FALSE on failure.  May fail if color_index is
- * out of range, or if a color table has not been read yet. 
- */
-
-int DGNLookupColor( DGNHandle hDGN, int color_index, 
-                    int * red, int * green, int * blue )
-
-{
-    DGNInfo	*psDGN = (DGNInfo *) hDGN;
-
-    if( color_index < 0 || color_index > 255 || !psDGN->got_color_table )
-        return FALSE;
-
-    *red = psDGN->color_table[color_index][0];
-    *green = psDGN->color_table[color_index][1];
-    *blue = psDGN->color_table[color_index][2];
-
-    return TRUE;
-}
-
-/************************************************************************/
-/*                          DGNRad50ToAscii()                           */
-/*                                                                      */
-/*      Convert one 32-bits Radix-50 to ASCII (6 chars).                */
-/************************************************************************/
-
-void DGNRad50ToAscii(unsigned short rad50, char *str )
-{
-    unsigned char cTimes;
-    unsigned long value;
-    unsigned long temp;
-    char ch;
-
-    while (rad50 > 0)
-    {
-        value = rad50;
-        cTimes = 0;
-        while (value >= 40)
-        {
-            value /= 40;
-            cTimes ++;
-        }
-
-        /* Map 0..39 to ASCII */
-        if (value==0)                      
-            ch = ' ';          /* space */
-        else if (value >= 1 && value <= 26)  
-            ch = value-1+'A';/* printable alpha A..Z */
-        else if (value == 27)              
-            ch = '$';          /* dollar */
-        else if (value == 28)              
-            ch = '.';          /* period */
-        else if (value == 29)              
-            ch = ' ';          /* unused char, emit a space instead */
-        else if (value >= 30 && value <= 39) 
-            ch = value-30+'0';   /* digit 0..9 */
-
-        *str = ch;
-        str++;
-
-        temp = 1;
-        while (cTimes-- > 0)
-            temp *= 40;
-
-        rad50-=value*temp;
-    }
-    /* Do zero-terminate */
-    *str = '\0';
 }
 
