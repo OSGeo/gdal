@@ -26,6 +26,9 @@
  * serves as an early test harnass.
  *
  * $Log$
+ * Revision 1.15  2000/08/25 14:26:02  warmerda
+ * added nodata, and arbitrary overview reporting
+ *
  * Revision 1.14  2000/06/12 14:21:43  warmerda
  * Fixed min/max printf.
  *
@@ -202,8 +205,8 @@ int main( int argc, char ** argv )
 /* ==================================================================== */
     for( iBand = 0; iBand < GDALGetRasterCount( hDataset ); iBand++ )
     {
-        double      dfMin, dfMax, adfCMinMax[2];
-        int         bGotMin, bGotMax;
+        double      dfMin, dfMax, adfCMinMax[2], dfNoData;
+        int         bGotMin, bGotMax, bGotNodata;
         int         nBlockXSize, nBlockYSize;
 
         hBand = GDALGetRasterBand( hDataset, iBand+1 );
@@ -217,7 +220,7 @@ int main( int argc, char ** argv )
 
         dfMin = GDALGetRasterMinimum( hBand, &bGotMin );
         dfMax = GDALGetRasterMaximum( hBand, &bGotMax );
-        printf( "Min=%.3f/%d, Max=%.3f/%d",  dfMin, bGotMin, dfMax, bGotMax);
+        printf( "  Min=%.3f/%d, Max=%.3f/%d",  dfMin, bGotMin, dfMax, bGotMax);
         
         if( bComputeMinMax )
         {
@@ -226,6 +229,12 @@ int main( int argc, char ** argv )
                     adfCMinMax[0], adfCMinMax[1] );
         }
         printf( "\n" );
+
+        dfNoData = GDALGetRasterNoDataValue( hBand, &bGotNodata );
+        if( bGotNodata )
+        {
+            printf( "  NoData Value=%g\n", dfNoData );
+        }
 
         if( GDALGetOverviewCount(hBand) > 0 )
         {
@@ -247,6 +256,11 @@ int main( int argc, char ** argv )
                         GDALGetRasterBandYSize( hOverview ) );
             }
             printf( "\n" );
+        }
+
+        if( GDALHasArbitraryOverviews( hBand ) )
+        {
+            printf( "  Overviews: arbitrary\n" );
         }
 
         papszMetadata = GDALGetMetadata( hBand, NULL );
