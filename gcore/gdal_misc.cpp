@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2000/04/17 20:59:40  warmerda
+ * Removed printf.
+ *
  * Revision 1.11  2000/04/17 20:59:14  warmerda
  * fixed sampling bug
  *
@@ -474,10 +477,6 @@ int GDALGetRandomRasterSample( GDALRasterBandH hBand, int nSamples,
         double dfValue = 0.0;
         int  iXBlock, iYBlock, nXCheck, nYCheck, iOffset;
         GDALRasterBlock *poBlock;
-
-        printf( "Capture up to %d samples from block %d.\n", 
-                nSamples - nActualSamples, 
-                iSampleBlock );
 
         iYBlock = iSampleBlock / nBlocksPerRow;
         iXBlock = iSampleBlock - nBlocksPerRow * iYBlock;
