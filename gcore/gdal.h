@@ -26,6 +26,9 @@
  * that calls the GDAL library.
  * 
  * $Log$
+ * Revision 1.5  1998/12/31 18:53:33  warmerda
+ * Add GDALGetDriverByName
+ *
  * Revision 1.4  1998/12/06 22:16:27  warmerda
  * Added GDALCreate().
  *
@@ -96,6 +99,8 @@ GDALDatasetH CPL_DLL GDALCreate( GDALDriverH hDriver,
                                  char ** );
 GDALDatasetH CPL_DLL GDALOpen( const char *, GDALAccess );
 
+GDALDriverH CPL_DLL GDALGetDriverByName( const char * );
+
 /* ==================================================================== */
 /*      GDALDataset class ... normally this represents one file.        */
 /* ==================================================================== */
@@ -124,6 +129,8 @@ CPLErr CPL_DLL GDALRasterIO( GDALRasterBandH hRBand, GDALRWFlag eRWFlag,
                               int nPixelSpace, int nLineSpace );
 CPLErr CPL_DLL GDALReadBlock( GDALRasterBandH, int, int, void * );
 CPLErr CPL_DLL GDALWriteBlock( GDALRasterBandH, int, int, void * );
+
+/* need to add functions related to block cache */
 
 CPL_C_END
 

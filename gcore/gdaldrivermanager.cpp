@@ -25,6 +25,9 @@
  * The GDALDriverManager class from gdal_priv.h.
  * 
  * $Log$
+ * Revision 1.2  1998/12/31 18:53:33  warmerda
+ * Add GDALGetDriverByName
+ *
  * Revision 1.1  1998/12/03 18:32:01  warmerda
  * New
  *
@@ -201,3 +204,14 @@ GDALDriver * GDALDriverManager::GetDriverByName( const char * pszName )
 
     return NULL;
 }
+
+/************************************************************************/
+/*                        GDALGetDriverByName()                         */
+/************************************************************************/
+
+GDALDriverH GDALGetDriverByName( const char * pszName )
+
+{
+    return( GetGDALDriverManager()->GetDriverByName( pszName ) );
+}
+
