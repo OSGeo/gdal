@@ -30,8 +30,8 @@
  ******************************************************************************
  *
  * $Log$
- * Revision 1.9  2001/08/23 03:37:33  warmerda
- * added nodata api
+ * Revision 1.10  2001/09/06 01:54:31  warmerda
+ * added gcp functions
  *
  * Revision 1.8  2000/11/09 16:25:30  warmerda
  * added various srs defines
@@ -205,6 +205,34 @@ typedef void *GDALColorTableH;
 typedef void *OGRSpatialReferenceH;
 
 /* ==================================================================== */
+/*      GDAL_GCP                                                        */
+/* ==================================================================== */
+
+/** Ground Control Point */
+typedef struct
+{
+    /** Unique identifier, often numeric */
+    char	*pszId; 
+
+    /** Informational message or "" */
+    char	*pszInfo;
+
+    /** Pixel (x) location of GCP on raster */
+    double 	dfGCPPixel;
+    /** Line (y) location of GCP on raster */
+    double	dfGCPLine;
+
+    /** X position of GCP in georeferenced space */
+    double	dfGCPX;
+
+    /** Y position of GCP in georeferenced space */
+    double	dfGCPY;
+
+    /** Elevation of GCP, or zero if not known */
+    double	dfGCPZ;
+} GDAL_GCP;
+
+/* ==================================================================== */
 /*      Registration/driver related.                                    */
 /* ==================================================================== */
 
@@ -259,6 +287,15 @@ GDAL_ENTRY CPLErr (*pfnGDALSetGeoTransform)( GDALDatasetH, double* ) GDAL_NULL;
 GDAL_ENTRY void *(*pfnGDALGetInternalHandle)( GDALDatasetH,
                                               const char * ) GDAL_NULL;
 #define GDALGetInternalHandle pfnGDALGetInternalHandle
+
+GDAL_ENTRY int (*pfnGDALGetGCPCount)( GDALDatasetH ) GDAL_NULL;
+#define GDALGetGCPCount pfnGDALGetGCPCount
+
+GDAL_ENTRY const char *(*pfnGDALGetGCPProjection)( GDALDatasetH ) GDAL_NULL;
+#define GDALGetGCPProjection pfnGDALGetGCPProjection
+
+GDAL_ENTRY const GDAL_GCP *(*pfnGDALGetGCPs)( GDALDatasetH ) GDAL_NULL;
+#define GDALGetGCPs pfnGDALGetGCPs
 
 /* ==================================================================== */
 /*      GDALRasterBand ... one band/channel in a dataset.               */

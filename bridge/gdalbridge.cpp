@@ -30,8 +30,8 @@
  ******************************************************************************
  *
  * $Log$
- * Revision 1.11  2001/08/23 03:37:33  warmerda
- * added nodata api
+ * Revision 1.12  2001/09/06 01:54:31  warmerda
+ * added gcp functions
  *
  * Revision 1.10  2000/09/26 15:20:32  warmerda
  * added GDALGetRasterBand{X,Y}Size
@@ -178,6 +178,15 @@ int GDALBridgeInitialize( const char * pszTargetDir )
 
     GDALGetInternalHandle = (void *(*)(GDALDatasetH, const char *))
         GBGetSymbol( szPath, "GDALGetInternalHandle" );
+
+    GDALGetGCPCount = (int (*)(GDALDatasetH))
+        GBGetSymbol( szPath, "GDALGetGCPCount" );
+
+    GDALGetGCPProjection = (const char *(*)(GDALDatasetH))
+        GBGetSymbol( szPath, "GDALGetGCPProjection" );
+
+    GDALGetGCPs = (const GDAL_GCP *(*)(GDALDatasetH))
+        GBGetSymbol( szPath, "GDALGetGCPs" );
 
     GDALGetRasterDataType = (GDALDataType (*)(GDALRasterBandH))
         GBGetSymbol( szPath, "GDALGetRasterDataType" );
