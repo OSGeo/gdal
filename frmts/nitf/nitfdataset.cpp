@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.34  2005/02/22 08:20:58  fwarmerdam
+ * ensure we can capture color interp on jpeg2000 streams
+ *
  * Revision 1.33  2005/02/18 19:29:16  fwarmerdam
  * added SetColorIntepretation support: bug 752
  *
@@ -142,6 +145,9 @@ static void NITFPatchImageLength( const char *pszFilename,
                                   GIntBig nPixelCount );
 
 static GDALDataset *poWritableJ2KDataset = NULL;
+static CPLErr NITFSetColorInterpretation( NITFImage *psImage, 
+                                          int nBand,
+                                          GDALColorInterp eInterp );
 
 /************************************************************************/
 /* ==================================================================== */
@@ -436,10 +442,12 @@ GDALColorInterp NITFRasterBand::GetColorInterpretation()
 }
 
 /************************************************************************/
-/*                       SetColorInterpretation()                       */
+/*                     NITFSetColorInterpretation()                     */
 /************************************************************************/
 
-CPLErr NITFRasterBand::SetColorInterpretation( GDALColorInterp eInterp )
+static CPLErr NITFSetColorInterpretation( NITFImage *psImage, 
+                                          int nBand,
+                                          GDALColorInterp eInterp )
 
 {
     NITFBandInfo *psBandInfo = psImage->pasBandInfo + nBand - 1;
@@ -460,6 +468,8 @@ CPLErr NITFRasterBand::SetColorInterpretation( GDALColorInterp eInterp )
         pszREP = "Cb";
     else if( eInterp == GCI_YCbCr_CrBand )
         pszREP = "Cr";
+    else if( eInterp == GCI_Undefined )
+        return CE_None;
 
     if( pszREP == NULL )
     {
@@ -497,6 +507,16 @@ CPLErr NITFRasterBand::SetColorInterpretation( GDALColorInterp eInterp )
     }
     
     return CE_None;
+}
+
+/************************************************************************/
+/*                       SetColorInterpretation()                       */
+/************************************************************************/
+
+CPLErr NITFRasterBand::SetColorInterpretation( GDALColorInterp eInterp )
+
+{
+    return NITFSetColorInterpretation( psImage, nBand, eInterp );
 }
 
 /************************************************************************/
@@ -572,6 +592,23 @@ NITFDataset::~NITFDataset()
     FlushCache();
 
 /* -------------------------------------------------------------------- */
+/*      If we have been writing to a JPEG2000 file, check if the        */
+/*      color interpretations were set.  If so, apply the settings      */
+/*      to the NITF file.                                               */
+/* -------------------------------------------------------------------- */
+    if( poJ2KDataset != NULL )
+    {
+        int i;
+
+        for( i = 0; i < nBands && papoBands != NULL; i++ )
+        {
+            if( papoBands[i]->GetColorInterpretation() != GCI_Undefined )
+                NITFSetColorInterpretation( psImage, i+1, 
+                                papoBands[i]->GetColorInterpretation() );
+        }
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Close the underlying NITF file.                                 */
 /* -------------------------------------------------------------------- */
     int nImageStart = -1;
@@ -597,11 +634,13 @@ NITFDataset::~NITFDataset()
 /* -------------------------------------------------------------------- */
     if( poJ2KDataset != NULL )
     {
+        int i;
+
         GDALClose( (GDALDatasetH) poJ2KDataset );
         
         // the bands are really jpeg2000 bands ... remove them 
         // from the NITF list so they won't get destroyed twice.
-        for( int i = 0; i < nBands && papoBands != NULL; i++ )
+        for( i = 0; i < nBands && papoBands != NULL; i++ )
             papoBands[i] = NULL;
     }
 
@@ -1771,5 +1810,3 @@ void GDALRegister_NITF()
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
 }
-
-
