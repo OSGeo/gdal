@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.9  2002/12/11 16:13:04  dron
+ * Support for 16-bit RGB images (untested).
+ *
  * Revision 1.8  2002/12/10 22:12:59  dron
  * RLE8 decoding added.
  *
@@ -302,6 +305,27 @@ CPLErr BMPRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 	    j += iBytesPerPixel;
 	}
     }
+    if ( poGDS->sInfoHeader.iBitCount == 16 )
+    {
+	for ( i = 0, j = 0; i < nBlockSize; i++ )
+	{
+	    switch ( nBand )
+	    {
+		case 1:
+		((GByte *) pImage)[i] = pabyScan[i + 1] & 0x1F;
+		break;
+		case 2:
+		((GByte *) pImage)[i] = ((pabyScan[i] & 0x03) << 3) |
+					((pabyScan[i + 1] & 0xE0) >> 5);
+		break;
+		case 3:
+		((GByte *) pImage)[i] = (pabyScan[i] & 0x7c) >> 2;
+		break;
+		default:
+		break;
+	    }
+	}
+    }
     else if ( poGDS->sInfoHeader.iBitCount == 4 )
     {
 	for ( i = 0, j = 0; i < nBlockSize; i++ )
@@ -569,7 +593,7 @@ BMPComprRasterBand::BMPComprRasterBand( BMPDataset *poDS, int nBand )
 		else
 		    break;
 	    }
-	    else
+	    else				    // Absolute mode
 	    {
 		iLength = pabyComprBuf[i++];
 		for ( k = 0; k < iLength && j < iUncomprSize && i < iComprSize; k++ )
