@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2002/07/19 20:32:41  warmerda
+ * report failed reads
+ *
  * Revision 1.1  2001/12/08 04:35:16  warmerda
  * New
  *
@@ -51,6 +54,7 @@ int main( int nArgc, char **papszArgv )
     int		iLine, i;
     GByte	*pabyScanline;
     FILE	*fp;
+    int         nError = 0;
     
     if( nArgc < 3 )
     {
@@ -72,11 +76,17 @@ int main( int nArgc, char **papszArgv )
     pabyScanline = (GByte *) CPLMalloc(psInfo->nXSize);
     for( iLine = 0; iLine < psInfo->nYSize; iLine++ )
     {
-        BSBReadScanline( psInfo, iLine, pabyScanline );
+        if( !BSBReadScanline( psInfo, iLine, pabyScanline ) )
+            nError++;
+
         VSIFWrite( pabyScanline, 1, psInfo->nXSize, fp );
     }
 
     VSIFClose( fp );
+
+    if( nError > 0 )
+        fprintf( stderr, "Read failed for %d scanlines out of %d.\n",
+                 nError, psInfo->nYSize );
 
 /* -------------------------------------------------------------------- */
 /*      Write .aux file.                                                */
