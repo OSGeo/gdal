@@ -29,6 +29,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.6  2000/04/03 19:42:07  warmerda
+# fixed up handling of band properties
+#
 # Revision 1.5  2000/03/31 14:25:43  warmerda
 # added metadata and gcp support
 #
@@ -139,17 +142,17 @@ class Dataset:
 class Band:            
     def __init__(self, _obj):
         self._o = _obj
-        DataType = _gdal.GDALGetRasterDataType(self._o)
-        XSize = _gdal.GDALGetRasterBandXSize(self._o)
-        YSize = _gdal.GDALGetRasterBandYSize(self._o)
+        self.DataType = _gdal.GDALGetRasterDataType(self._o)
+        self.XSize = _gdal.GDALGetRasterBandXSize(self._o)
+        self.YSize = _gdal.GDALGetRasterBandYSize(self._o)
         
     def ReadRaster(self, xoff, yoff, xsize, ysize,
                    buf_xsize = None, buf_ysize = None, buf_type = None):
 
         if buf_xsize is None:
-            buf_xsize = self.xsize;
+            buf_xsize = xsize;
         if buf_ysize is None:
-            buf_ysize = self.ysize;
+            buf_ysize = ysize;
         if buf_type is None:
             buf_type = self.DataType;
             
@@ -165,7 +168,7 @@ class Band:
         if buf_ysize is None:
             buf_ysize = ysize;
         if buf_type is None:
-            buf_type = DataType;
+            buf_type = self.DataType;
 
         if len(buf_string) < buf_xsize * buf_ysize \
            * (_gdal.GDALGetDataTypeSize(buf_type) / 8):
