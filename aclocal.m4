@@ -23,8 +23,9 @@ AC_DEFUN(MY_TEST_BIGENDIAN,
 
   if test $ac_cv_c_bigendian = yes ; then
     AC_DEFINE(WORDS_BIGENDIAN, 1,
-             [Define if your processor stores words with the most significant
-              byte first (like Motorola and SPARC, unlike Intel and VAX).])
+             [Define to 1 if your processor stores words with the most
+	     significant byte first (like Motorola and SPARC, unlike Intel
+	     and VAX).])
   fi
 ])
 
@@ -38,7 +39,7 @@ AC_DEFUN(AC_HAVE_LONG_LONG,
 
   echo 'int main() { long long off=0; }' >> conftest.c
   if test -z "`${CC} -o conftest conftest.c 2>&1`" ; then
-    AC_DEFINE(HAVE_LONG_LONG)
+    AC_DEFINE(HAVE_LONG_LONG, 1, [Define to 1, if your compiler supports long long data type])
     AC_MSG_RESULT([long long])
   else
     AC_MSG_RESULT([no])
@@ -52,6 +53,7 @@ dnl ---------------------------------------------------------------------------
 
 AC_DEFUN(AC_UNIX_STDIO_64,
 [
+  AC_DEFINE(UNIX_STDIO_64, 1, [Define to 1 if you have fseek64, ftell64])
   AC_ARG_WITH(unix_stdio_64,[  --with-unix-stdio-64[=ARG] Utilize 64 stdio api - yes/no)],,)
 
   AC_MSG_CHECKING([for 64bit file io])
@@ -98,7 +100,8 @@ AC_DEFUN(AC_UNIX_STDIO_64,
       with_unix_stdio_64=yes
       VSI_FTELL64=ftello64
       VSI_FSEEK64=fseeko64
-      AC_DEFINE(VSI_NEED_LARGEFILE64_SOURCE)
+      AC_DEFINE(VSI_NEED_LARGEFILE64_SOURCE, 1, [Define to 1, if you have
+      LARGEFILE64_SOURCE])
     fi
     rm -f conftest*
   fi
@@ -107,11 +110,14 @@ AC_DEFUN(AC_UNIX_STDIO_64,
     AC_MSG_RESULT([yes])
 
     AC_DEFINE(UNIX_STDIO_64)
-    AC_DEFINE(VSI_LARGE_API_SUPPORTED)
+    AC_DEFINE(VSI_LARGE_API_SUPPORTED, 1, [Define to 1, if you have 64 bit
+    STDIO API])
 
     export VSI_FTELL64 VSI_FSEEK64
-    AC_DEFINE_UNQUOTED(VSI_FTELL64,$VSI_FTELL64)
-    AC_DEFINE_UNQUOTED(VSI_FSEEK64,$VSI_FSEEK64)
+    AC_DEFINE_UNQUOTED(VSI_FTELL64,$VSI_FTELL64, [Define to 1, if you have
+    ftell64])
+    AC_DEFINE_UNQUOTED(VSI_FSEEK64,$VSI_FSEEK64, [Define to 1, if you have
+    fseek64])
   else
     AC_MSG_RESULT([no])
   fi
@@ -147,11 +153,13 @@ AC_DEFUN(AC_COMPILER_WFLAGS,
 	# check for GNU compiler, and use -Wall
 	if test "$GCC" = "yes"; then
 		C_WFLAGS="-Wall"
-		AC_DEFINE(USE_GNUCC)
+		AC_DEFINE(USE_GNUCC, 1, [Define to 1, if you have GNU C
+		compiler])
 	fi
 	if test "$GXX" = "yes"; then
 		CXX_WFLAGS="-Wall"
-		AC_DEFINE(USE_GNUCC)
+		AC_DEFINE(USE_GNUCC, 1, [Define to 1, if you have GNU C
+		compiler])
 	fi
 	AC_SUBST(CXX_WFLAGS,$CXX_WFLAGS)
 	AC_SUBST(C_WFLAGS,$C_WFLAGS)
