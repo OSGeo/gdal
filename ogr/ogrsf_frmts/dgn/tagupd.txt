@@ -1,0 +1,116 @@
+	DGN Tag Updater Documentation
+	=============================
+
+VB Declare Statements for API
+-----------------------------
+
+The VB callable DGNReadTags() and DGNWriteTags() functions should be declared
+like this in VB.
+
+Declare Function DGNReadTags _
+   Lib "dgnrw.dll" _
+   Alias "_vbDGNReadTags@28" _
+   (ByVal Filename As String, ByVal TagScheme As Long, _
+    ByRef TagCount As Long, _
+    ByRef TagSets As Variant, ByRef TagNames As Variant, _
+    ByRef TagValues As Variant, ByRef ErrorMsg As Variant) As Long
+    
+Declare Function DGNWriteTags _
+   Lib "dgnrw.dll" _
+   Alias "_vbDGNWriteTags@28" _
+   (ByVal Filename As String, ByVal TagScheme As Long, _
+    ByVal TagCount As Long, _
+    ByRef TagSets As Variant, ByRef TagNames As Variant, _
+    ByRef TagValues As Variant, ByRef ErrorMsg As Variant) As Long
+
+The dgnrw.dll should generally be somewhere in the path, or the declare
+statements may be altered to provide the exact path to the DLL.
+
+
+DBReadTags
+----------
+
+The DGNReadTags() function reads all the tag elements in a DGN file.  For
+each tag the tagset name, tag name and tag value are returned.  The tag
+value is always returned as a string regardless of the type of tag.  
+
+long DGNReadTags( Filename, TagScheme, TagCount, 
+                  TagSets, TagNames, TagValues, ErrorMsg )
+
+ Filename (in)  - The relative or absolute path to the file to be read.
+ TagScheme (in) - This should always be zero for now (ignored).
+ TagCount (out) - Set with the number of tags read.  (VARIANT)
+ TagSets  (out) - Set with array of tag set names for each tag read. (VARIANT)
+ TagNames (out) - Set with array of tag names for each tag read. (VARIANT)
+ TagValues (out)- Set with arrya of tag values (as strings)=.  (VARIANT)
+ ErrorMsg (out) - Set with any error messages generated in the library. 
+
+The function returns 0 on failure or non-zero on success. 
+
+Example of Usage:
+
+Private Sub Command1_Click()
+ 
+  Dim ErrorMsg As Variant
+  Dim TagCount As Long
+  Dim TagSets As Variant
+  Dim TagNames As Variant
+  Dim TagValues As Variant
+ 
+  RetCode = DGNReadTags("e:\dgn\test.dgn", 0, TagCount, _
+                         TagSets, TagNames, TagValues, _
+                         ErrorMsg)
+  
+  Report = ""
+  NL = Chr(13) + Chr(10)
+  For iTag = 1 To TagCount
+    Report = Report + TagSets(iTag) + ":" + TagNames(iTag) + " = " + TagValues(iTag) + NL
+  Next
+  
+  Text1.Text = Report
+End Sub
+
+
+DBWriteTags
+-----------
+
+The DGNWriteTags() function updates the values of one or more tags in a DGN 
+file. 
+
+long DGNWriteTags( Filename, TagScheme, TagCount, 
+                   TagSets, TagNames, TagValues, ErrorMsg )
+
+ Filename (in)  - The relative or absolute path to the file to be read.
+ TagScheme (in) - This should always be zero for now (ignored).
+ TagCount  (in) - Number of tags to write.
+ TagSets   (in) - Tag set names of tags to write. 
+ TagNames  (in) - Tag names of tags to write. 
+ TagValues (in) - Values of tags to write (as strings). 
+ ErrorMsg (out) - Set with any error messages generated in the library. 
+
+The function returns 0 on failure or non-zero on success. 
+
+Example of Usage:
+
+Private Sub Command2_Click()
+ 
+  Dim ErrorMsg As Variant
+  Dim TagSets(1) As String
+  Dim TagNames(1) As String
+  Dim TagValues(1) As String
+  
+  TagSets(0) = "facility name"
+  TagNames(0) = "facility name"
+  TagValues(0) = "Darlington"
+   
+  RetCode = DGNWriteTags("e:\dgn\test.dgn", 0, 1, _
+                         TagSets, TagNames, TagValues, _
+                         ErrorMsg)
+  
+  If RetCode <> 0 Then
+    Text1.Text = "Success"
+  Else
+    Text1.Text = "ERROR: " + ErrorMsg
+  End If
+ 
+End Sub
