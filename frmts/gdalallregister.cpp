@@ -25,6 +25,11 @@
  * Main format registration function.
  * 
  * $Log$
+ * Revision 1.48  2002/10/05 12:05:21  dron
+ * JPEG2000, L1B and HDF4 registrations moved in front of RAW (to avoid
+ * problems with PAux). Removed extra JPEG2000 registration. FAST registration
+ * combined with other RAW formats.
+ *
  * Revision 1.47  2002/10/03 05:41:17  warmerda
  * added GSC Geogrid format
  *
@@ -300,6 +305,20 @@ void GDALAllRegister()
     GDALRegister_ECW();
 #endif
 
+#ifdef FRMT_jpeg2000
+    GDALRegister_JP2KAK();
+    GDALRegister_JPEG2000();
+#endif
+
+#ifdef FRMT_hdf4
+    GDALRegister_HDF4();
+    GDALRegister_HDF4Image();
+#endif
+
+#ifdef FRMT_l1b
+    GDALRegister_L1B();
+#endif
+
 #ifdef FRMT_raw
     GDALRegister_PNM();
     GDALRegister_DOQ1();
@@ -312,28 +331,11 @@ void GDALAllRegister()
     GDALRegister_EFF();
     GDALRegister_FujiBAS();
     GDALRegister_GSC();
+    GDALRegister_FAST();
 #endif
 
 #ifdef FRMT_fit
     GDALRegister_FIT();
-#endif
-
-#ifdef FRMT_jpeg2000
-    GDALRegister_JP2KAK();
-    GDALRegister_JPEG2000();
-#endif
-
-#ifdef FRMT_fast
-    GDALRegister_FAST();
-#endif
-
-#ifdef FRMT_hdf4
-    GDALRegister_HDF4();
-    GDALRegister_HDF4Image();
-#endif
-
-#ifdef FRMT_l1b
-    GDALRegister_L1B();
 #endif
 
 /* -------------------------------------------------------------------- */
