@@ -30,6 +30,12 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2003/01/14 15:11:00  warmerda
+ * Added layer creation options caching on layer.
+ * Set SRID in spatial query.
+ * Support user override of DIMINFO bounds in FinalizeNewLayer().
+ * Support user override of indexing options, or disabling of indexing.
+ *
  * Revision 1.13  2003/01/13 13:50:13  warmerda
  * dont quote table names, it doesnt seem to work with userid.tablename
  *
@@ -89,7 +95,7 @@ static int nHits = 0;
 OGROCITableLayer::OGROCITableLayer( OGROCIDataSource *poDSIn, 
                                     const char * pszTableName,
                                     const char * pszGeomColIn,
-                                    int nSRID, int bUpdate, int bNewLayerIn )
+                                    int nSRIDIn, int bUpdate, int bNewLayerIn )
 
 {
     poDS = poDSIn;
@@ -97,6 +103,7 @@ OGROCITableLayer::OGROCITableLayer( OGROCIDataSource *poDSIn,
     pszQuery = NULL;
     pszWHERE = CPLStrdup( "" );
     pszQueryStatement = NULL;
+    papszOptions = NULL;
     
     bUpdateAccess = bUpdate;
     bNewLayer = bNewLayerIn;
@@ -113,6 +120,7 @@ OGROCITableLayer::OGROCITableLayer( OGROCIDataSource *poDSIn,
     CPLFree( pszGeomName );
     pszGeomName = CPLStrdup( pszGeomColIn );
 
+    nSRID = nSRIDIn;
     poSRS = poDSIn->FetchSRS( nSRID );
     if( poSRS != NULL )
         poSRS->Reference();
@@ -138,11 +146,25 @@ OGROCITableLayer::~OGROCITableLayer()
 
     CPLFree( pszQuery );
     CPLFree( pszWHERE );
+    CSLDestroy( papszOptions );
 
     if( poSRS != NULL && poSRS->Dereference() == 0 )
         delete poSRS;
 
     CPLFree( padfOrdinals );
+}
+
+/************************************************************************/
+/*                             SetOptions()                             */
+/*                                                                      */
+/*      Set layer creation or other options.                            */
+/************************************************************************/
+
+void OGROCITableLayer::SetOptions( char **papszOptionsIn )
+
+{
+    CSLDestroy( papszOptions );
+    papszOptions = CSLDuplicate( papszOptionsIn );
 }
 
 /************************************************************************/
@@ -269,7 +291,12 @@ void OGROCITableLayer::BuildWhere()
 
         oWHERE.Append( "WHERE sdo_filter(" );
         oWHERE.Append( pszGeomName );
-        oWHERE.Append( ", MDSYS.SDO_GEOMETRY(2003,NULL,NULL," );
+        oWHERE.Append( ", MDSYS.SDO_GEOMETRY(2003," );
+        if( nSRID == -1 )
+            oWHERE.Append( "NULL" );
+        else
+            oWHERE.Appendf( 15, "%d", nSRID );
+        oWHERE.Append( ",NULL," );
         oWHERE.Append( "MDSYS.SDO_ELEM_INFO_ARRAY(1,1003,3)," );
         oWHERE.Append( "MDSYS.SDO_ORDINATE_ARRAY(" );
         oWHERE.Appendf( 200, "%.16g,%.16g,%.16g,%.16g", 
@@ -1252,6 +1279,41 @@ void OGROCITableLayer::SetDimension( int nNewDim )
 }
 
 /************************************************************************/
+/*                            ParseDIMINFO()                            */
+/************************************************************************/
+
+void OGROCITableLayer::ParseDIMINFO( const char *pszOptionName, 
+                                     double *pdfMin, 
+                                     double *pdfMax,
+                                     double *pdfRes )
+
+{
+    const char *pszUserDIMINFO;
+    char **papszTokens;
+
+    pszUserDIMINFO = CSLFetchNameValue( papszOptions, pszOptionName );
+    if( pszUserDIMINFO == NULL )
+        return;
+
+    papszTokens = 
+        CSLTokenizeStringComplex( pszUserDIMINFO, ",", FALSE, FALSE );
+    if( CSLCount(papszTokens) != 3 )
+    {
+        CSLDestroy( papszTokens );
+        CPLError( CE_Warning, CPLE_AppDefined, 
+                  "Ignoring %s, it does not contain three comma separated values.", 
+                  pszOptionName );
+        return;
+    }
+
+    *pdfMin = atof(papszTokens[0]);
+    *pdfMax = atof(papszTokens[1]);
+    *pdfRes = atof(papszTokens[2]);
+
+    CSLDestroy( papszTokens );
+}
+
+/************************************************************************/
 /*                          FinalizeNewLayer()                          */
 /*                                                                      */
 /*      Our main job here is to update the USER_SDO_GEOM_METADATA       */
@@ -1264,37 +1326,68 @@ void OGROCITableLayer::FinalizeNewLayer()
 
 {
     OGROCIStringBuf  sDimUpdate;
-    double           dfResSize;
 
 /* -------------------------------------------------------------------- */
-/*      Prepare dimension update statement.                             */
+/*      If the dimensions are degenerate (all zeros) then we assume     */
+/*      there were no geometries, and we don't bother setting the       */
+/*      dimensions.                                                     */
 /* -------------------------------------------------------------------- */
-    sDimUpdate.Append( "UPDATE USER_SDO_GEOM_METADATA SET DIMINFO = " );
-    sDimUpdate.Append( "MDSYS.SDO_DIM_ARRAY(" );
+    if( sExtent.MaxX == 0 && sExtent.MinX == 0
+        && sExtent.MaxY == 0 && sExtent.MinY == 0 )
+    {
+        CPLError( CE_Warning, CPLE_AppDefined, 
+                  "Layer %s appears to have no geometry ... not setting SDO DIMINFO metadata.", 
+                  poFeatureDefn->GetName() );
+        return;
+                  
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Establish the extents and resolution to use.                    */
+/* -------------------------------------------------------------------- */
+    double           dfResSize;
+    double           dfXMin, dfXMax, dfXRes;
+    double           dfYMin, dfYMax, dfYRes;
+    double           dfZMin, dfZMax, dfZRes;
 
     if( sExtent.MaxX - sExtent.MinX > 400 )
         dfResSize = 0.001;
     else
         dfResSize = 0.0000001;
 
+    dfXMin = sExtent.MinX - dfResSize * 3;
+    dfXMax = sExtent.MaxX + dfResSize * 3;
+    dfXRes = dfResSize;
+    ParseDIMINFO( "DIMINFO_X", &dfXMin, &dfXMax, &dfXRes );
+    
+    dfYMin = sExtent.MinY - dfResSize * 3;
+    dfYMax = sExtent.MaxY + dfResSize * 3;
+    dfYRes = dfResSize;
+    ParseDIMINFO( "DIMINFO_Y", &dfYMin, &dfYMax, &dfYRes );
+    
+    dfZMin = -100000.0;
+    dfZMax = 100000.0;
+    dfZRes = 0.002;
+    ParseDIMINFO( "DIMINFO_Z", &dfZMin, &dfZMax, &dfZRes );
+    
+/* -------------------------------------------------------------------- */
+/*      Prepare dimension update statement.                             */
+/* -------------------------------------------------------------------- */
+    sDimUpdate.Append( "UPDATE USER_SDO_GEOM_METADATA SET DIMINFO = " );
+    sDimUpdate.Append( "MDSYS.SDO_DIM_ARRAY(" );
+
     sDimUpdate.Appendf(200,
                        "MDSYS.SDO_DIM_ELEMENT('X',%.16g,%.16g,%.12g)",
-                       sExtent.MinX - dfResSize * 3,
-                       sExtent.MaxX + dfResSize * 3,
-                       dfResSize );
+                       dfXMin, dfXMax, dfXRes );
     sDimUpdate.Appendf(200,
                        ",MDSYS.SDO_DIM_ELEMENT('Y',%.16g,%.16g,%.12g)",
-                       sExtent.MinY - dfResSize * 3,
-                       sExtent.MaxY + dfResSize * 3,
-                       dfResSize );
+                       dfYMin, dfYMax, dfYRes );
 
-    // We choose this pretty arbitrarily under the assumption the Z 
-    // is elevation in some reasonable range.  It is somewhat hard to
-    // collect Z range information.
     if( nDimension == 3 )
     {
-        sDimUpdate.Append(",MDSYS.SDO_DIM_ELEMENT('Z',"
-                          "-100000.0,100000.0,0.002)");
+        sDimUpdate.Appendf(200,
+                           ",MDSYS.SDO_DIM_ELEMENT('Z',%.16g,%.16g,%.12g)",
+                           dfZMin, dfZMax, dfZRes );
     }
 
     sDimUpdate.Append( ")" );
@@ -1309,6 +1402,13 @@ void OGROCITableLayer::FinalizeNewLayer()
     OGROCIStatement oExecStatement( poDS->GetSession() );
 
     if( oExecStatement.Execute( sDimUpdate.GetString() ) != CE_None )
+        return;
+
+/* -------------------------------------------------------------------- */
+/*      If the user has disabled INDEX support then don't create the    */
+/*      index.                                                          */
+/* -------------------------------------------------------------------- */
+    if( !CSLFetchBoolean( papszOptions, "INDEX", TRUE ) )
         return;
 
 /* -------------------------------------------------------------------- */
@@ -1345,11 +1445,17 @@ void OGROCITableLayer::FinalizeNewLayer()
     OGROCIStringBuf  sIndexCmd;
 
     sIndexCmd.Appendf( 10000, "CREATE INDEX \"%s\" ON %s(\"%s\") "
-                       "INDEXTYPE IS MDSYS.SPATIAL_INDEX "
-                       "PARAMETERS( 'SDO_LEVEL = 5' )",
+                       "INDEXTYPE IS MDSYS.SPATIAL_INDEX ",
                        szIndexName, 
                        poFeatureDefn->GetName(), 
                        pszGeomName );
+
+    if( CSLFetchNameValue( papszOptions, "INDEX_PARAMETERS" ) != NULL )
+    {
+        sIndexCmd.Append( " PARAMETERS( '" );
+        sIndexCmd.Append( CSLFetchNameValue(papszOptions,"INDEX_PARAMETERS") );
+        sIndexCmd.Append( "' )" );
+    }
 
     if( oExecStatement.Execute( sIndexCmd.GetString() ) != CE_None )
     {
