@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.30  2005/03/04 21:04:06  fwarmerdam
+ * Added setting of dimension based on geometry type, or DIM override.
+ *
  * Revision 1.29  2004/07/10 04:45:52  warmerda
  * more rigerous soft transaction handling
  *
@@ -473,11 +476,15 @@ OGRPGDataSource::CreateLayer( const char * pszLayerNameIn,
     char                szCommand[1024];
     const char          *pszGeomType;
     char                *pszLayerName;
+    int                 nDimension = 3;
 
     if( CSLFetchBoolean(papszOptions,"LAUNDER",TRUE) )
         pszLayerName = LaunderName( pszLayerNameIn );
     else
         pszLayerName = CPLStrdup( pszLayerNameIn );
+
+    if( wkbFlatten(eType) == eType )
+        nDimension = 2;
 
 /* -------------------------------------------------------------------- */
 /*      Do we already have this layer?  If so, should we blow it        */
@@ -583,6 +590,9 @@ OGRPGDataSource::CreateLayer( const char * pszLayerNameIn,
     {
         const char *pszGeometryType;
 
+        if( CSLFetchNameValue( papszOptions, "DIM") != NULL )
+            nDimension = atoi(CSLFetchNameValue( papszOptions, "DIM"));
+
         /* Sometimes there is an old cruft entry in the geometry_columns
          * table if things were not properly cleaned up before.  We make
          * an effort to clean out such cruft.
@@ -633,7 +643,8 @@ OGRPGDataSource::CreateLayer( const char * pszLayerNameIn,
 
         sprintf( szCommand, 
                  "select AddGeometryColumn('%s','%s','wkb_geometry',%d,'%s',%d)",
-                 pszDBName, pszLayerName, nSRSId, pszGeometryType, 3 );
+                 pszDBName, pszLayerName, nSRSId, pszGeometryType, 
+                 nDimension );
 
         CPLDebug( "OGR_PG", "PQexec(%s)", szCommand );
         hResult = PQexec(hPGConn, szCommand);
