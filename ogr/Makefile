@@ -1,7 +1,7 @@
 
 LINKFLAGS =	/Zi /MTd
 EXTRAFLAGS =	-I$(MSDASDK)\inc \
-		-I$(VCDIR)\ATL\Include -DWIN32 \
+		-I"$(VCDIR)\ATL\Include" -DWIN32 \
 		-I. -Iogrsf_frmts -I..\frmts\gtiff\libgeotiff /W3
 
 GDAL_ROOT = 	..
