@@ -28,6 +28,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.21  2004/01/06 18:18:53  warmerda
+# improved error checking in geometry creation methods
+#
 # Revision 1.20  2003/12/09 20:09:59  warmerda
 # No such function as OGR_Fld_GetName()!
 #
@@ -685,7 +688,12 @@ def CreateGeometryFromWkb( bin_string, srs = None ):
     else:
         srs_o = ''
     _obj = _gdal.OGR_G_CreateFromWkb( bin_string, srs_o )
-    return Geometry( obj = _obj )
+    if _obj is not None and _obj != 'NULL':
+        return Geometry( obj = _obj )
+    elif len(_gdal.CPLGetLastErrorMsg()) == 0:
+        raise ValueError, 'Failed to parse WKB in ogr.CreateGeometryFromWkb()'
+    else:
+        raise ValueError, _gdal.CPLGetLastErrorMsg()
 
 def CreateGeometryFromWkt( string, srs = None ):
     if srs is not None:
@@ -693,11 +701,21 @@ def CreateGeometryFromWkt( string, srs = None ):
     else:
         srs_o = ''
     _obj = _gdal.OGR_G_CreateFromWkt( string, srs_o )
-    return Geometry( obj = _obj )
+    if _obj is not None and _obj != 'NULL':
+        return Geometry( obj = _obj )
+    elif len(_gdal.CPLGetLastErrorMsg()) == 0:
+        raise ValueError, 'Failed to parse WKT in ogr.CreateGeometryFromWkt()'
+    else:
+        raise ValueError, _gdal.CPLGetLastErrorMsg()
 
 def CreateGeometryFromGML( string ):
     _obj = _gdal.OGR_G_CreateFromGML( string )
-    return Geometry( obj = _obj )
+    if _obj is not None and _obj != 'NULL':
+        return Geometry( obj = _obj )
+    elif len(_gdal.CPLGetLastErrorMsg()) == 0:
+        raise ValueError, 'Failed to parse GML in ogr.CreateGeometryFromGML()'
+    else:
+        raise ValueError, _gdal.CPLGetLastErrorMsg()
 
 class Geometry:
     def __init__(self, type=None, obj=None):
