@@ -28,6 +28,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.53  2005/02/28 15:01:56  fwarmerdam
+ * Applied patch to add +towgs84 parameter if one is well known for a given
+ * EPSG GEOGCS, and no datum shifting info is available in the source defn.
+ * See http://bugzilla.remotesensing.org/show_bug.cgi?id=784
+ *
  * Revision 1.52  2005/02/09 20:25:39  fwarmerdam
  * Changed default height for GEOS projection.
  *
@@ -188,6 +193,8 @@
 #include "ogr_spatialref.h"
 #include "ogr_p.h"
 #include "cpl_conv.h"
+
+extern int EPSGGetWGS84Transform( int nGeogCS, double *padfTransform );
 
 CPL_CVSID("$Id$");
 
@@ -1632,11 +1639,18 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
     char  szTOWGS84[256];
     int nEPSGDatum = -1;
     const char *pszAuthority;
+    int nEPSGGeogCS = -1;
+    const char *pszGeogCSAuthority;
 
     pszAuthority = GetAuthorityName( "DATUM" );
 
     if( pszAuthority != NULL && EQUAL(pszAuthority,"EPSG") )
         nEPSGDatum = atoi(GetAuthorityCode( "DATUM" ));
+
+    pszGeogCSAuthority = GetAuthorityName( "GEOGCS" );
+
+    if( pszGeogCSAuthority != NULL && EQUAL(pszGeogCSAuthority,"EPSG") )
+        nEPSGGeogCS = atoi(GetAuthorityCode( "GEOGCS" ));
 
     if( pszDatum == NULL )
         /* nothing */;
@@ -1681,6 +1695,23 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
                      poTOWGS84->GetChild(4)->GetValue(),
                      poTOWGS84->GetChild(5)->GetValue(),
                      poTOWGS84->GetChild(6)->GetValue() );
+            pszPROJ4Datum = szTOWGS84;
+        }
+    }
+
+    else if( nEPSGGeogCS != -1 )
+    {
+        double padfTransform[7];
+        if( EPSGGetWGS84Transform( nEPSGGeogCS, padfTransform ) )
+        {
+            sprintf( szTOWGS84, "+towgs84=%f,%f,%f,%f,%f,%f,%f",
+                     padfTransform[0],
+                     padfTransform[1],
+                     padfTransform[2],
+                     padfTransform[3],
+                     padfTransform[4],
+                     padfTransform[5],
+                     padfTransform[6] );
             pszPROJ4Datum = szTOWGS84;
         }
     }
