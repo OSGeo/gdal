@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2001/11/09 19:06:07  warmerda
+ * disable various DS properties, added debugging
+ *
  * Revision 1.13  2001/10/24 16:02:02  warmerda
  * added debug call
  *
@@ -78,6 +81,10 @@ template <class T>
 class ATL_NO_VTABLE MyIDBInitializeImpl : public IDBInitializeImpl<T>
 {
   public:
+             MyIDBInitializeImpl()
+        {
+            CPLDebug( "OGR_OLEDB", "MyIDBInitializeImpl() constructor" );
+        }
     virtual ~MyIDBInitializeImpl()
 	{
             CPLDebug( "OGR_OLEDB", "~MyIDBInitializeImpl()" );
@@ -102,6 +109,7 @@ class ATL_NO_VTABLE MyIDBInitializeImpl : public IDBInitializeImpl<T>
 
                 OGRDataSource *poDS;
                 poDS = OGRSFDriverRegistrar::Open( pszDataSource, FALSE );
+                CPLDebug( "OGR_OLEDB", "Open(%s) = %p", pszDataSource, poDS );
 
                 if (poDS)
                 {
@@ -168,17 +176,17 @@ BEGIN_PROPSET_MAP(CSFSource)
 		PROPERTY_INFO_ENTRY_VALUE(SQLSUPPORT,DBPROPVAL_SQL_SUBMINIMUM)
 	END_PROPERTY_SET(DBPROPSET_DATASOURCEINFO)
 	BEGIN_PROPERTY_SET(DBPROPSET_DBINIT)
-		PROPERTY_INFO_ENTRY(AUTH_PASSWORD)
-		PROPERTY_INFO_ENTRY(AUTH_PERSIST_SENSITIVE_AUTHINFO)
-		PROPERTY_INFO_ENTRY(AUTH_USERID)
+//		PROPERTY_INFO_ENTRY(AUTH_PASSWORD)
+//		PROPERTY_INFO_ENTRY(AUTH_PERSIST_SENSITIVE_AUTHINFO)
+//		PROPERTY_INFO_ENTRY(AUTH_USERID)
 		PROPERTY_INFO_ENTRY(INIT_DATASOURCE)
 		PROPERTY_INFO_ENTRY(INIT_HWND)
-		PROPERTY_INFO_ENTRY(INIT_LCID)
-		PROPERTY_INFO_ENTRY(INIT_LOCATION)
-		PROPERTY_INFO_ENTRY(INIT_MODE)
-		PROPERTY_INFO_ENTRY(INIT_PROMPT)
+//		PROPERTY_INFO_ENTRY(INIT_LCID)
+//		PROPERTY_INFO_ENTRY(INIT_LOCATION)
+//		PROPERTY_INFO_ENTRY(INIT_MODE)
+//		PROPERTY_INFO_ENTRY(INIT_PROMPT)
 		PROPERTY_INFO_ENTRY(INIT_PROVIDERSTRING)
-		PROPERTY_INFO_ENTRY(INIT_TIMEOUT)
+//		PROPERTY_INFO_ENTRY(INIT_TIMEOUT)
 	END_PROPERTY_SET(DBPROPSET_DBINIT)
 	BEGIN_PROPERTY_SET(DBPROPSET_OGIS_SPATIAL_OPS)
 		PROPERTY_INFO_ENTRY_EX(OGIS_TOUCHES, VT_BOOL, DBPROPFLAGS_READ, VARIANT_FALSE,0)
