@@ -38,7 +38,7 @@ sdts2shp:	sdts2shp.cpp $(SDTSLIB)
 		$(SHPDIR)/shpopen.o $(SHPDIR)/dbfopen.o \
 		$(LIBS) -o sdts2shp
 
-install-obj:	$(SDTSLIB) $(O_OBJ) ../o/sdtsdataset.o
+install-obj:	$(O_OBJ) ../o/sdtsdataset.o
 
 docs:
 	rm -rf html
