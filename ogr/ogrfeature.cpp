@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.28  2003/04/08 20:57:28  warmerda
+ * added RemapFields on OGRFeature
+ *
  * Revision 1.27  2003/04/03 23:39:11  danmo
  * Small updates to C API docs (Normand S.)
  *
@@ -2320,4 +2323,56 @@ void OGR_F_SetStyleString( OGRFeatureH hFeat, const char *pszStyle )
 void OGRFeature::SetStyleTable(OGRStyleTable *poStyleTable)
 {
     m_poStyleTable = poStyleTable;
+}
+
+/************************************************************************/
+/*                            RemapFields()                             */
+/*                                                                      */
+/*      This is used to transform a feature "in place" from one         */
+/*      feature defn to another with minimum work.                      */
+/************************************************************************/
+
+OGRErr OGRFeature::RemapFields( OGRFeatureDefn *poNewDefn, 
+                                int *panRemapSource )
+
+{
+    int  iDstField;
+    OGRField *pauNewFields;
+
+    if( poNewDefn == NULL )
+        poNewDefn = poDefn;
+
+    pauNewFields = (OGRField *) CPLCalloc( poNewDefn->GetFieldCount(), 
+                                           sizeof(OGRField) );
+
+    for( iDstField = 0; iDstField < poDefn->GetFieldCount(); iDstField++ )
+    {
+        if( panRemapSource[iDstField] == -1 )
+        {
+            pauNewFields[iDstField].Set.nMarker1 = OGRUnsetMarker;
+            pauNewFields[iDstField].Set.nMarker2 = OGRUnsetMarker;
+        }
+        else
+        {
+            memcpy( pauNewFields + iDstField, 
+                    pauFields + panRemapSource[iDstField],
+                    sizeof(OGRField) );
+        }
+    }
+
+    /* 
+    ** We really should be freeing memory for old columns that
+    ** are no longer present.  We don't for now because it is a bit messy
+    ** and would take too long to test.  
+    */
+
+/* -------------------------------------------------------------------- */
+/*      Apply new definition and fields.                                */
+/* -------------------------------------------------------------------- */
+    CPLFree( pauFields );
+    pauFields = pauNewFields;
+
+    poDefn = poNewDefn;
+
+    return OGRERR_NONE;
 }
