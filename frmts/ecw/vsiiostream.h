@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.6  2005/03/10 14:48:42  fwarmerdam
+ * Return false on read requests of zero bytes, at David's suggestion.
+ *
  * Revision 1.5  2005/02/24 15:11:42  fwarmerdam
  * fixed debug arguments in Read()
  *
@@ -166,7 +169,7 @@ class VSIIOStream : public CNCSJPCIOStream
 
     virtual bool NCS_FASTCALL Read(void* buffer, UINT32 count) {
         if( count == 0 )
-            return true;
+            return false;
 
 //        return(1 == VSIFReadL( buffer, count, 1, fpVSIL ) );
 
