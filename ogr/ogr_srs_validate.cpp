@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2001/11/21 03:43:00  warmerda
+ * a variety of fixes to validate to allow for CT style parms
+ *
  * Revision 1.1  2001/10/11 19:23:49  warmerda
  * New
  *
@@ -515,11 +518,12 @@ OGRErr OGRSpatialReference::Validate()
             }
             else if( EQUAL(poNode->GetValue(),"PRIMEM") )
             {
-                if( poNode->GetChildCount() != 2 )
+                if( poNode->GetChildCount() < 2 
+                    || poNode->GetChildCount() > 3 )
                 {
                     CPLDebug( "OGRSpatialReference::Validate",
                               "PRIMEM has wrong number of children (%d),"
-                              "not 2 as expected.\n",
+                              "not 2 or 3 as expected.\n",
                               poNode->GetChildCount() );
                     
                     return OGRERR_CORRUPT_DATA;
@@ -527,10 +531,11 @@ OGRErr OGRSpatialReference::Validate()
             }
             else if( EQUAL(poNode->GetValue(),"UNIT") )
             {
-                if( poNode->GetChildCount() != 2 )
+                if( poNode->GetChildCount() != 2 
+                    && poNode->GetChildCount() != 3 )
                 {
                     CPLDebug( "OGRSpatialReference::Validate",
-                           "UNIT has wrong number of children (%d), not 2.\n",
+                       "UNIT has wrong number of children (%d), not 2 or 3.\n",
                               poNode->GetChildCount() );
                     return OGRERR_CORRUPT_DATA;
                 }
@@ -543,6 +548,26 @@ OGRErr OGRSpatialReference::Validate()
                     return OGRERR_CORRUPT_DATA;
                 }
             }
+            else if( EQUAL(poNode->GetValue(),"AXIS") )
+            {
+                if( poNode->GetChildCount() != 2 )
+                {
+                    CPLDebug( "OGRSpatialReference::Validate",
+                       "AXIS has wrong number of children (%d), not 2.\n",
+                              poNode->GetChildCount() );
+                    return OGRERR_CORRUPT_DATA;
+                }
+            }
+            else if( EQUAL(poNode->GetValue(),"AUTHORITY") )
+            {
+                if( poNode->GetChildCount() != 2 )
+                {
+                    CPLDebug( "OGRSpatialReference::Validate",
+                       "AUTHORITY has wrong number of children (%d), not 2.\n",
+                              poNode->GetChildCount() );
+                    return OGRERR_CORRUPT_DATA;
+                }
+            }
             else
             {
                 CPLDebug( "OGRSpatialReference::Validate",
@@ -551,6 +576,14 @@ OGRErr OGRSpatialReference::Validate()
                 
                 return OGRERR_CORRUPT_DATA;
             }
+        }
+
+        if( poGEOGCS->GetNode("DATUM") == NULL )
+        {
+            CPLDebug( "OGRSpatialReference::Validate",
+                      "No DATUM child in GEOGCS.\n" );
+            
+            return OGRERR_CORRUPT_DATA;
         }
     }
 
@@ -562,39 +595,82 @@ OGRErr OGRSpatialReference::Validate()
     if( poDATUM != NULL )
     {
         OGR_SRSNode     *poSPHEROID;
+        int             bGotSpheroid = FALSE;
+        int		i;
 
-        if( poDATUM->GetChildCount() != 2 )
+        if( poDATUM->GetChildCount() == 0 )
         {
             CPLDebug( "OGRSpatialReference::Validate",
-                      "DATUM has wrong number of children (%d),"
-                      "not 2 as expected.\n",
+                      "DATUM has no children.",
                       poDATUM->GetChildCount() );
             
             return OGRERR_CORRUPT_DATA;
         }
-        else if( !EQUAL(poDATUM->GetChild(1)->GetValue(),"SPHEROID") )
+
+        for( i = 1; i < poDATUM->GetChildCount(); i++ )
         {
-            CPLDebug( "OGRSpatialReference::Validate",
-                      "DATUM missing SPHEROID.\n" );
-            return OGRERR_CORRUPT_DATA;
+            OGR_SRSNode *poNode;
+            poNode = poDATUM->GetChild(i);
+
+            if( EQUAL(poNode->GetValue(),"SPHEROID") )
+            {
+                poSPHEROID = poDATUM->GetChild(1);
+                bGotSpheroid = TRUE;
+
+                if( poSPHEROID->GetChildCount() != 3 
+                    && poSPHEROID->GetChildCount() != 4 )
+                {
+                    CPLDebug( "OGRSpatialReference::Validate",
+                              "SPHEROID has wrong number of children (%d),"
+                              "not 3 or 4 as expected.\n",
+                              poSPHEROID->GetChildCount() );
+                    
+                    return OGRERR_CORRUPT_DATA;
+                }
+                else if( atof(poSPHEROID->GetChild(1)->GetValue()) == 0.0 )
+                {
+                    CPLDebug( "OGRSpatialReference::Validate",
+                              "SPHEROID semi-major axis is zero (%s)!\n",
+                              poSPHEROID->GetChild(1)->GetValue() );
+                    return OGRERR_CORRUPT_DATA;
+                }
+            }
+            else if( EQUAL(poNode->GetValue(),"AUTHORITY") )
+            {
+                if( poNode->GetChildCount() != 2 )
+                {
+                    CPLDebug( "OGRSpatialReference::Validate",
+                       "AUTHORITY has wrong number of children (%d), not 2.\n",
+                              poNode->GetChildCount() );
+                    return OGRERR_CORRUPT_DATA;
+                }
+            }
+            else if( EQUAL(poNode->GetValue(),"TOWGS84") )
+            {
+                if( poNode->GetChildCount() != 3 
+                    && poNode->GetChildCount() != 7)
+                {
+                    CPLDebug( "OGRSpatialReference::Validate",
+                   "TOWGS84 has wrong number of children (%d), not 3 or 7.\n",
+                              poNode->GetChildCount() );
+                    return OGRERR_CORRUPT_DATA;
+                }
+            }
+            else
+            {
+                CPLDebug( "OGRSpatialReference::Validate",
+                          "Unexpected child for DATUM `%s'.\n",
+                          poNode->GetValue() );
+                
+                return OGRERR_CORRUPT_DATA;
+            }
         }
 
-        poSPHEROID = poDATUM->GetChild(1);
-
-        if( poSPHEROID->GetChildCount() != 3 )
+        if( !bGotSpheroid )
         {
             CPLDebug( "OGRSpatialReference::Validate",
-                      "SPHEROID has wrong number of children (%d),"
-                      "not 3 as expected.\n",
-                      poSPHEROID->GetChildCount() );
+                      "No SPHEROID child in DATUM.\n" );
             
-            return OGRERR_CORRUPT_DATA;
-        }
-        else if( atof(poSPHEROID->GetChild(1)->GetValue()) == 0.0 )
-        {
-            CPLDebug( "OGRSpatialReference::Validate",
-                      "SPHEROID semi-major axis is zero (%s)!\n",
-                      poSPHEROID->GetChild(1)->GetValue() );
             return OGRERR_CORRUPT_DATA;
         }
     }        
