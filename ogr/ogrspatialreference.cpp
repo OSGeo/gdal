@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2000/06/09 13:26:03  warmerda
+ * avoid using an inverse flattening of zero
+ *
  * Revision 1.17  2000/05/30 22:45:45  warmerda
  * added OSRCloneGeogCS()
  *
@@ -1403,7 +1406,10 @@ double OGRSpatialReference::GetSemiMinor( OGRErr * pnErr )
     dfSemiMajor = GetSemiMajor( pnErr );
     dfInvFlattening = GetInvFlattening( pnErr );
 
-    return dfSemiMajor * (1.0 - 1.0/dfInvFlattening);
+    if( ABS(dfInvFlattening) < 0.000000000001 )
+        return dfSemiMajor;
+    else
+        return dfSemiMajor * (1.0 - 1.0/dfInvFlattening);
 }
 
 /************************************************************************/
