@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2002/09/17 13:09:28  warmerda
+ * fix zone in WKT description - bugzilla 199
+ *
  * Revision 1.15  2002/09/16 16:17:53  warmerda
  * XY_ORIGIN is the top left corner of pixel!
  *
@@ -85,7 +88,7 @@ void	GDALRegister_DOQ2(void);
 CPL_C_END
 
 #define UTM_FORMAT \
-"PROJCS[\"%s / UTM zone 1N\",GEOGCS[%s,PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433]],PROJECTION[\"Transverse_Mercator\"],PARAMETER[\"latitude_of_origin\",0],PARAMETER[\"central_meridian\",%d],PARAMETER[\"scale_factor\",0.9996],PARAMETER[\"false_easting\",500000],PARAMETER[\"false_northing\",0],%s]"
+"PROJCS[\"%s / UTM zone %dN\",GEOGCS[%s,PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433]],PROJECTION[\"Transverse_Mercator\"],PARAMETER[\"latitude_of_origin\",0],PARAMETER[\"central_meridian\",%d],PARAMETER[\"scale_factor\",0.9996],PARAMETER[\"false_easting\",500000],PARAMETER[\"false_northing\",0],%s]"
 
 #define WGS84_DATUM \
 "\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563]]"
@@ -414,8 +417,8 @@ GDALDataset *DOQ2Dataset::Open( GDALOpenInfo * poOpenInfo )
     if (nProjType == 1)
     {
 	poDS->pszProjection = 
-            CPLStrdup(CPLSPrintf( UTM_FORMAT, pszDatumShort, pszDatumLong,
-                                  nZone * 6 - 183, pszUnits ));
+            CPLStrdup(CPLSPrintf( UTM_FORMAT, pszDatumShort, nZone, 
+                                  pszDatumLong, nZone * 6 - 183, pszUnits ));
     } 
     else 
     {
