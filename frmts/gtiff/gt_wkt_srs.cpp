@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.27  2002/10/10 21:06:08  warmerda
+ * fine tuned the WktToMemBuf function ... works now
+ *
  * Revision 1.26  2002/10/08 23:01:07  warmerda
  * Added code for building/consuming simple memory geotiff files for JPEG2000
  *
@@ -129,8 +132,9 @@ CPL_C_START
 char *  GTIFGetOGISDefn( GTIFDefn * );
 int     GTIFSetFromOGISDefn( GTIF *, const char * );
 
-CPLErr CPL_DLL GTIFMemBufFromWkt( const char *pszWKT, double *padfGeoTransform,
-                                  int nGCPCount, GDAL_GCP *pasGCPList,
+CPLErr CPL_DLL GTIFMemBufFromWkt( const char *pszWKT, 
+                                  const double *padfGeoTransform,
+                                  int nGCPCount, const GDAL_GCP *pasGCPList,
                                   int *pnSize, unsigned char **ppabyBuffer );
 CPLErr CPL_DLL GTIFWktFromMemBuf( int nSize, unsigned char *pabyBuffer, 
                           char **ppszWKT, double *padfGeoTransform,
@@ -1382,7 +1386,6 @@ CPLErr GTIFWktFromMemBuf( int nSize, unsigned char *pabyBuffer,
         padfGeoTransform[1] = padfScale[0];
         padfGeoTransform[5] = - ABS(padfScale[1]);
 
-        
         if( TIFFGetField(hTIFF,TIFFTAG_GEOTIEPOINTS,&nCount,&padfTiePoints )
             && nCount >= 6 )
         {
@@ -1443,8 +1446,8 @@ CPLErr GTIFWktFromMemBuf( int nSize, unsigned char *pabyBuffer,
 /*                         GTIFMemBufFromWkt()                          */
 /************************************************************************/
 
-CPLErr GTIFMemBufFromWkt( const char *pszWKT, double *padfGeoTransform,
-                          int nGCPCount, GDAL_GCP *pasGCPList,
+CPLErr GTIFMemBufFromWkt( const char *pszWKT, const double *padfGeoTransform,
+                          int nGCPCount, const GDAL_GCP *pasGCPList,
                           int *pnSize, unsigned char **ppabyBuffer )
 
 {
@@ -1468,6 +1471,15 @@ CPLErr GTIFMemBufFromWkt( const char *pszWKT, double *padfGeoTransform,
                   "TIFF/GeoTIFF structure is corrupt." );
         return CE_Failure;
     }
+
+/* -------------------------------------------------------------------- */
+/*      Write some minimal set of image parameters.                     */
+/* -------------------------------------------------------------------- */
+    TIFFSetField( hTIFF, TIFFTAG_IMAGEWIDTH, 1 );
+    TIFFSetField( hTIFF, TIFFTAG_IMAGELENGTH, 1 );
+    TIFFSetField( hTIFF, TIFFTAG_BITSPERSAMPLE, 8 );
+    TIFFSetField( hTIFF, TIFFTAG_SAMPLESPERPIXEL, 1 );
+    TIFFSetField( hTIFF, TIFFTAG_PLANARCONFIG, PLANARCONFIG_CONTIG );
     
 /* -------------------------------------------------------------------- */
 /*      Get the projection definition.                                  */
@@ -1553,6 +1565,9 @@ CPLErr GTIFMemBufFromWkt( const char *pszWKT, double *padfGeoTransform,
 /* -------------------------------------------------------------------- */
 /*      Cleanup and return the created memory buffer.                   */
 /* -------------------------------------------------------------------- */
+    TIFFWriteCheck( hTIFF, TIFFIsTiled(hTIFF), "GTIFMemBufFromWkt");
+    TIFFWriteDirectory( hTIFF );
+
     XTIFFClose( hTIFF );
 
     *pnSize = sIOBuf.size;
