@@ -58,10 +58,11 @@ This should be appropriate for all recent years of TIGER/Line production.<P>
 There is no update or creation support in the TIGER/Line driver.<p>
 
 The reader was implemented for TIGER/Line 1998 files, but some effort has
-gone into ensuring compatibility with 1992, 1995, 1997, 1999 and 2000
+gone into ensuring compatibility with 1992, 1995, 1997, 1999, 2000 and 2002
 TIGER/Line products as well.  It is believe that any TIGER/Line product
 from the 1990's should work with the reader, with the possible loss of some
 version specific information.<p>
+
 
 <h3>Feature Representation</h3>
 
@@ -166,9 +167,11 @@ records and if available the related type S (Polygon Additional Geographic
 Entity Codes) records.  The POLYID attribute is the primary key, uniquely
 identifying a polygon within a county module. <p>
 
-These features have an associated polygon geometry, automatically collected
-by the standard reader pipeline.  It is collected from CompleteChain 
-geometries based on the type I (PolyChainLink) records. <p>
+These features do not have any geometry associated with them as read by
+the OGR TIGER driver.  It needs to be externally related using the
+PolyChainLink.  The gdal/pymod/samples/tigerpoly.py script may be used
+to read a TIGER dataset and extract the polygon layer <b>with geometry</b>
+as a shapefile. 
 
 <h4>EntityNames</h4>
 
