@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  1999/10/05 17:53:11  warmerda
+ * GetLinearUnits() should look for UNIT not UNITS.
+ *
  * Revision 1.6  1999/09/29 16:37:05  warmerda
  * added several new projection set methods
  *
@@ -756,7 +759,7 @@ double OGRSpatialReference::GetLinearUnits( char ** ppszName )
     {
         OGR_SRSNode	*poChild = poPROJCS->GetChild(iChild);
         
-        if( EQUAL(poChild->GetValue(),"UNITS")
+        if( EQUAL(poChild->GetValue(),"UNIT")
             && poChild->GetChildCount() == 2 )
         {
             if( ppszName != NULL )
