@@ -1,4 +1,3 @@
-#include "gdb.h"
 #include "ceos.h"
 
 #define PROJ_STR_SIZE 16

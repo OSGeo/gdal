@@ -18,7 +18,6 @@
  */
 
 #include "ceos.h"
-#include "cclproj.h"
 
 #define MAP_PROJ_RECORD_TYPECODE   { 18, 20, 18, 20 }
 
