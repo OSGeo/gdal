@@ -28,6 +28,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.10  2001/03/14 21:00:41  warmerda
+# Fixed bug in Get/SetAttrValue().
+#
 # Revision 1.9  2000/11/17 17:16:13  warmerda
 # added ImportFromESRI()
 #
@@ -108,10 +111,10 @@ class SpatialReference:
         return _gdal.OSRIsProjected( self._o )
 
     def GetAttrValue(self, name, child = 0):
-        return _gdal.OSRGetAttrValue(self, name, child)
+        return _gdal.OSRGetAttrValue(self._o, name, child)
     
     def SetAttrValue(self, name, value):
-        return _gdal.OSRSetAttrValue(self, name, value)
+        return _gdal.OSRSetAttrValue(self._o, name, value)
 
     def SetWellKnownGeogCS(self, name):
         return _gdal.OSRSetWellKnownGeogCS(self._o, name)
