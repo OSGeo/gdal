@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.29  2002/11/24 02:44:42  warmerda
+ * cleanup poSRS leak when writing geotiff info
+ *
  * Revision 1.28  2002/11/23 18:56:56  warmerda
  * fixed GEOTIEPOINTS setting for mem dataset
  *
@@ -1320,6 +1323,10 @@ int GTIFSetFromOGISDefn( GTIF * psGTIF, const char *pszOGCWKT )
 /*      Write the GCS information.                                      */
 /* -------------------------------------------------------------------- */
     
+/* -------------------------------------------------------------------- */
+/*      Cleanup                                                         */
+/* -------------------------------------------------------------------- */
+    delete poSRS;
 
     return TRUE;
 }
