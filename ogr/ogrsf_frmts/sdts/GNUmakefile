@@ -15,7 +15,7 @@ LINCLUDE =	-I.. -I../.. -I$(GDAL_ROOT)/port -I$(SDTSDIR) -I$(ISODIR)
 
 include $(GDAL_ROOT)/GDALmake.opt
 
-default:	$(OBJ)
+default:	$(OBJ) libs
 
 clean:
 	rm -f *.o
@@ -28,3 +28,6 @@ install-libs:
 	./install-libs.sh $(ISOLIB) $(FRMTSLIB)
 	./install-libs.sh $(SDTSLIB) $(FRMTSLIB)
 
+libs:	
+	(cd ../../../frmts/iso8211; $(MAKE))
+	(cd ../../../frmts/sdts; $(MAKE))
