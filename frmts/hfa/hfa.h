@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2000/10/13 21:14:08  warmerda
+ * added more projection codes
+ *
  * Revision 1.5  2000/10/12 19:30:31  warmerda
  * substantially improved write support
  *
@@ -217,6 +220,39 @@ CPLErr  HFAGetDataRange( HFAHandle, int, double *, double * );
 #define EPRJ_HOTINE_OBLIQUE_MERCATOR            20
 #define EPRJ_SPACE_OBLIQUE_MERCATOR             21
 #define EPRJ_MODIFIED_TRANSVERSE_MERCATOR       22
+#define EPRJ_EOSAT_SOM                          23
+#define EPRJ_ROBINSON                           24
+#define EPRJ_SOM_A_AND_B                        25
+#define EPRJ_ALASKA_CONFORMAL                   26
+#define EPRJ_INTERRUPTED_GOODE_HOMOLOSINE       27
+#define EPRJ_MOLLWEIDE                          28
+#define EPRJ_INTERRUPTED_MOLLWEIDE              29
+#define EPRJ_HAMMER                             30
+#define EPRJ_WAGNER_IV                          31
+#define EPRJ_WAGNER_VII                         32
+#define EPRJ_OBLATED_EQUAL_AREA                 33
+#define EPRJ_PLATE_CARREE                       34
+#define EPRJ_EQUIDISTANT_CYLINDRICAL            35
+#define EPRJ_GAUSS_KRUGER                       36
+#define EPRJ_ECKERT_VI                          37
+#define EPRJ_ECKERT_V                           38
+#define EPRJ_ECKERT_IV                          39
+#define EPRJ_ECKERT_III                         40
+#define EPRJ_ECKERT_II                          41
+#define EPRJ_ECKERT_I                           42
+#define EPRJ_GALL_STEREOGRAPHIC                 43
+#define EPRJ_BEHRMANN                           44
+#define EPRJ_WINKEL_I                           45
+#define EPRJ_WINKEL_II                          46
+#define EPRJ_QUARTIC_AUTHALIC                   47
+#define EPRJ_LOXIMUTHAL                         48
+#define EPRJ_BONNE                              49
+#define EPRJ_STEREOGRAPHIC_EXTENDED             50
+#define EPRJ_CASSINI                            51
+#define EPRJ_TWO_POINT_EQUIDISTANT              52
+
+#define EPRJ_EXTERNAL_RSO			"eprj_rso"
+#define EPRJ_EXTERNAL_NZMG                      "nzmg"
 
 CPL_C_END
 
