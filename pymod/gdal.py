@@ -29,6 +29,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.59  2004/03/12 16:41:22  warmerda
+# Added some new cpl level functions
+#
 # Revision 1.58  2004/02/25 09:04:33  dron
 # Added wrappers for GDALPackedDMSToDec() and GDALDecToPackedDMS().
 #
@@ -124,7 +127,6 @@
 import _gdal
 from gdalconst import *
 from _gdal import ptrcreate, ptrfree, ptrvalue, ptrset, ptrcast, ptradd, ptrmap, ptrptrcreate, ptrptrvalue, ptrptrset
-     
 
 def ToNULLableString(x):
     if x is None or x == 'NULL':
@@ -141,6 +143,9 @@ def ToNULLableString(x):
 def FreeNULLableString(x):
     if x is not 'NULL':
         ptrfree( x )
+
+###############################################################################
+# CPL Level Services
 
 def Debug(msg_class, message):
     _gdal.CPLDebug( msg_class, message )
@@ -163,12 +168,33 @@ def PushErrorHandler( handler = "CPLQuietErrorHandler" ):
 def PopErrorHandler():
     _gdal.CPLPopErrorHandler()
 
+def PushFinderLocation( x ):
+    _gdal.CPLPushFinderLocation( x )
+
+def PopFinderLocation():
+    _gdal.CPLPopFinderLocation()
+
+def FinderClean():
+    _gdal.CPLFinderClean()
+
+def FindFile( classname, basename ):
+    return _gdal.CPLFindFile( classname, basename )
+
+def SetConfigOption( name, value ):
+    _gdal.CPLSetConfigOption( name, value )
+
+def GetConfigOption( name, default ):
+    return _gdal.CPLGetConfigOption( name, default )
+
 def ParseXMLString( text ):
     return _gdal.CPLParseXMLString( text )
     
 def SerializeXMLTree( tree ):
     return _gdal.CPLSerializeXMLTree( tree )
     
+###############################################################################
+# GDAL Services not related to objects.
+
 def GetCacheMax():
     return _gdal.GDALGetCacheMax()
 
@@ -196,9 +222,38 @@ def GetColorInterpretationName(type):
 def GetPaletteInterpretationName(type):
     return _gdal.GDALGetPaletteInterpretationName(type)
 
+def DecToDMS(angle, axis, precision = 2):
+    """Translate a decimal degrees value to a DMS string with hemisphere."""
+    return _gdal.GDALDecToDMS(angle, axis, precision)
+
+def PackedDMSToDec(packed_angle):
+    """Convert a packed DMS value (DDDMMMSSS.SS) into decimal degrees."""
+    return _gdal.GDALPackedDMSToDec(packed_angle)
+
+def DecToPackedDMS(angle):
+    """Convert decimal degrees into packed DMS value (DDDMMMSSS.SS)."""
+    return _gdal.GDALDecToPackedDMS(angle)
+
 def TermProgress( ratio, msg = '', ptr = None ):
     return _gdal.GDALTermProgress( ratio, msg, 'NULL' )
 
+def GetDriverList():
+    list = []
+    _gdal.GDALAllRegister()
+    driver_count = _gdal.GDALGetDriverCount()
+    for iDriver in range(driver_count):
+        list.append( Driver(_gdal.GDALGetDriver( iDriver )) )
+    return list
+
+def GetDriverByName(name):
+    _gdal.GDALAllRegister()
+    driver_count = _gdal.GDALGetDriverCount()
+    for iDriver in range(driver_count):
+        driver_o = _gdal.GDALGetDriver( iDriver )
+        if _gdal.GDALGetDriverShortName(driver_o) == name:
+            return Driver(driver_o)
+    return None
+    
 def Open(file,access=GA_ReadOnly):
     _gdal.GDALAllRegister()
     _obj = _gdal.GDALOpen(file,access)
@@ -216,6 +271,9 @@ def OpenShared(file,access=GA_ReadOnly):
     else:
         _gdal.GDALDereferenceDataset( _obj )
         return Dataset(_obj)
+
+###############################################################################
+# Some GDAL algorithms.
 
 def ComputeMedianCutPCT( red, green, blue, color_count, ct,
                          callback = None, callback_data = None ):
@@ -259,35 +317,8 @@ def RGBFile2PCTFile( src_filename, dst_filename ):
 
     return 0
 
-def DecToDMS(angle, axis, precision = 2):
-    """Translate a decimal degrees value to a DMS string with hemisphere."""
-    return _gdal.GDALDecToDMS(angle, axis, precision)
+###############################################################################
 
-def PackedDMSToDec(packed_angle):
-    """Convert a packed DMS value (DDDMMMSSS.SS) into decimal degrees."""
-    return _gdal.GDALPackedDMSToDec(packed_angle)
-
-def DecToPackedDMS(angle):
-    """Convert decimal degrees into packed DMS value (DDDMMMSSS.SS)."""
-    return _gdal.GDALDecToPackedDMS(angle)
-
-def GetDriverList():
-    list = []
-    _gdal.GDALAllRegister()
-    driver_count = _gdal.GDALGetDriverCount()
-    for iDriver in range(driver_count):
-        list.append( Driver(_gdal.GDALGetDriver( iDriver )) )
-    return list
-
-def GetDriverByName(name):
-    _gdal.GDALAllRegister()
-    driver_count = _gdal.GDALGetDriverCount()
-    for iDriver in range(driver_count):
-        driver_o = _gdal.GDALGetDriver( iDriver )
-        if _gdal.GDALGetDriverShortName(driver_o) == name:
-            return Driver(driver_o)
-    return None
-    
 class GCP:
     def __init__(self):
         self.GCPX = 0.0
@@ -328,6 +359,8 @@ def GCPsToGeoTransform( gcp_list, approx_ok = 1 ):
 
         return _gdal.GDALGCPsToGeoTransform( tuple_list, approx_ok )
 
+###############################################################################
+
 class MajorObject:
 
     def GetMetadata( self, domain = '' ):
@@ -349,6 +382,8 @@ class MajorObject:
     def SetDescription(self, description ):
         _gdal.GDALSetDescription( self._o, description )
     
+###############################################################################
+
 class Driver(MajorObject):
     
     def __init__(self, _obj):
@@ -381,6 +416,8 @@ class Driver(MajorObject):
 
     def Delete(self, filename):
         return _gdal.GDALDeleteDataset( self._o, filename )
+
+###############################################################################
 
 class Dataset(MajorObject):
 
@@ -511,6 +548,8 @@ class Dataset(MajorObject):
     def FlushCache(self):
         _gdal.GDALFlushCache( self._o )
     
+###############################################################################
+
 class Band(MajorObject):
     def __init__(self, _obj):
         self._o = _obj
@@ -621,6 +660,8 @@ class Band(MajorObject):
             ysize = self.YSize
 
         return _gdal.GDALChecksumImage( self._o, xoff, yoff, xsize, ysize )
+
+###############################################################################
 
 class ColorTable:
     def __init__(self, _obj = None, mode = GPI_RGB ):
