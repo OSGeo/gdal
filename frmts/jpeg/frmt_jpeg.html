@@ -31,6 +31,12 @@ option can be used to select other values.  Values must be in the
 range 10-100.  Low values result in higher compression ratios, but poorer
 image quality.  A value of 100 will result in lossless compression.<p>
 
+<li> <b>PROGRESSIVE=ON</b>: Enabled generation of progressive jpegs.  In some
+cases these will display a reduced resolution image in viewers such as
+Netscape, and Internet Explorer, before the full file has been downloaded.
+However, some applications cannot read progressive jpegs at all. GDAL can
+read progressive jpegs, but takes no advantage of their progressive nature.<p>
+
 </ul>
 
 See Also:<p>
