@@ -32,6 +32,9 @@
  * specific checking, io redirection and so on. 
  * 
  * $Log$
+ * Revision 1.4  1999/02/25 04:48:11  danmo
+ * Added VSIStat() macros specific to _WIN32 (for MSVC++)
+ *
  * Revision 1.3  1999/01/28 18:31:25  warmerda
  * Test on _WIN32 rather than WIN32.  It seems to be more reliably defined.
  *
@@ -86,11 +89,19 @@ int CPL_DLL	VSIFEof( FILE * );
 typedef struct stat VSIStatBuf;
 int CPL_DLL	VSIStat( const char *, VSIStatBuf * );
 
-#define VSI_ISLNK(x)	S_ISLNK(x)
-#define VSI_ISREG(x)	S_ISREG(x)
-#define VSI_ISDIR(x)	S_ISDIR(x)
-#define VSI_ISCHR(x)	S_ISCHR(x)
-#define VSI_ISBLK(x)	S_ISBLK(x)
+#ifdef _WIN32
+#  define VSI_ISLNK(x)	( 0 )            /* N/A on Windows */
+#  define VSI_ISREG(x)	((x) & S_IFREG)
+#  define VSI_ISDIR(x)	((x) & S_IFDIR)
+#  define VSI_ISCHR(x)	((x) & S_IFCHR)
+#  define VSI_ISBLK(x)	( 0 )            /* N/A on Windows */
+#else
+#  define VSI_ISLNK(x)	S_ISLNK(x)
+#  define VSI_ISREG(x)	S_ISREG(x)
+#  define VSI_ISDIR(x)	S_ISDIR(x)
+#  define VSI_ISCHR(x)	S_ISCHR(x)
+#  define VSI_ISBLK(x)	S_ISBLK(x)
+#endif
 
 /* ==================================================================== */
 /*      Memory allocation                                               */
