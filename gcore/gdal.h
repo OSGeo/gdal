@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.33  2000/10/06 18:30:01  warmerda
+ * Fixed CPL_DLL position for GDALGetRasterCategoryNames().
+ *
  * Revision 1.32  2000/10/06 15:23:03  warmerda
  * added some new functions
  *
@@ -368,7 +371,7 @@ int CPL_DLL             GDALGetOverviewCount( GDALRasterBandH );
 GDALRasterBandH CPL_DLL GDALGetOverview( GDALRasterBandH, int );
 double CPL_DLL GDALGetRasterNoDataValue( GDALRasterBandH, int * );
 CPLErr CPL_DLL GDALSetRasterNoDataValue( GDALRasterBandH, double );
-char ** CPL_DLL GDALGetRasterCategoryNames( GDALRasterBandH );
+char CPL_DLL ** GDALGetRasterCategoryNames( GDALRasterBandH );
 CPLErr CPL_DLL GDALSetRasterCategoryNames( GDALRasterBandH, char ** );
 double CPL_DLL GDALGetRasterMinimum( GDALRasterBandH, int *pbSuccess );
 double CPL_DLL GDALGetRasterMaximum( GDALRasterBandH, int *pbSuccess );
