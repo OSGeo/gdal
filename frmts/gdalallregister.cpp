@@ -25,6 +25,9 @@
  * Main format registration function.
  * 
  * $Log$
+ * Revision 1.14  2000/01/31 16:24:37  warmerda
+ * added aigrid2
+ *
  * Revision 1.13  1999/12/29 20:42:45  warmerda
  * Added DOQ1
  *
@@ -75,6 +78,7 @@ void GDALRegister_GXF(void);
 void GDALRegister_OGDI(void);
 void GDALRegister_HFA(void);
 void GDALRegister_AIGrid(void);
+void GDALRegister_AIGrid2(void);
 void GDALRegister_CEOS(void);
 void GDALRegister_SDTS(void);
 void GDALRegister_ELAS(void);
@@ -145,6 +149,7 @@ void GDALAllRegister()
 #endif
     
 #ifdef FRMT_aigrid
+    GDALRegister_AIGrid2();
     GDALRegister_AIGrid();
 #endif
 
