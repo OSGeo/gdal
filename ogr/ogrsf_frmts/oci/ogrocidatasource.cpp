@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2003/01/13 13:49:43  warmerda
+ * add multi-user table support (ALL_SDO_GEOM_METADATA)
+ *
  * Revision 1.10  2003/01/10 22:31:06  warmerda
  * use OGROCISession::CleanName() to fixup names
  *
@@ -170,7 +173,7 @@ int OGROCIDataSource::Open( const char * pszNewName, int bUpdate,
     OGROCIStatement oGetTables( poSession );
 
     if( oGetTables.Execute( 
-        "SELECT TABLE_NAME, COLUMN_NAME, SRID FROM USER_SDO_GEOM_METADATA" ) 
+        "SELECT TABLE_NAME, COLUMN_NAME, SRID, OWNER FROM ALL_SDO_GEOM_METADATA" ) 
         == CE_None )
     {
         char **papszRow;
@@ -178,11 +181,17 @@ int OGROCIDataSource::Open( const char * pszNewName, int bUpdate,
         while( (papszRow = oGetTables.SimpleFetchRow()) != NULL )
         {
             int nSRID = -1;
+            char szFullTableName[100];
 
             if( papszRow[2] != NULL )
                 nSRID = atoi(papszRow[2]);
 
-            OpenTable( papszRow[0], papszRow[1], nSRID, bUpdate, FALSE );
+            if( EQUAL(papszRow[3],pszUserid) )
+                strcpy( szFullTableName, papszRow[0] );
+            else
+                sprintf( szFullTableName, "%s.%s", papszRow[3], papszRow[0] );
+
+            OpenTable( szFullTableName, papszRow[1], nSRID, bUpdate, FALSE );
         }
     }
 
