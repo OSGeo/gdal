@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.30  2003/04/02 18:46:45  gwalter
+ * Fixed one-off error in number of spheroids.
+ *
  * Revision 1.29  2003/03/20 19:12:35  gwalter
  * Fix identity geotransform check in hkvdataset.cpp.
  *
@@ -166,7 +169,7 @@ public:
 
 HKVSpheroidList :: HKVSpheroidList()
 {
-  num_spheroids = 29;
+  num_spheroids = 30;
   epsilonR = 0.1;
   epsilonI = 0.000001;
 
