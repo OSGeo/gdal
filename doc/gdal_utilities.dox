@@ -769,7 +769,7 @@ Usage:
 gdal_merge.py [-o out_filename] [-of out_format] [-co NAME=VALUE]*
                      [-ps pixelsize_x pixelsize_y] [-separate] [-v] [-pct]
                      [-ul_lr ulx uly lrx lry] [-n nodata_value] [-init value]
-                     [-separate] input_files
+                     [-ot datatype] input_files
 \endverbatim
 \if man
 \section mdescription DESCRIPTION
@@ -787,6 +787,9 @@ Output format, defaults to GeoTIFF (GTiff).
 </dd>
 <dt> <b>-co</b> <i>NAME=VALUE</i>:</dt><dd> 
 Creation option for output file.  Multiple options can be specified.
+</dd>
+<dt> <b>-ot</b> <i>datatype</i>:</dt><dd> 
+Force the output image bands to have a specific type. Use type names (ie. Byte, Int16,...)
 </dd>
 <dt> <b>-ps</b> <i>pixelsize_x pixelsize_y</i>:</dt><dd> Pixel size to be used for the
 output file.  If not specified the resolution of the first input file will
