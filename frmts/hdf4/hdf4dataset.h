@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.14  2004/06/19 21:37:31  dron
+ * Use HDF-EOS library for appropriate datasets; major cpde rewrite.
+ *
  * Revision 1.13  2003/11/07 15:49:14  dron
  * Added GetDataType() and GetDataTypeName().
  *
@@ -75,43 +78,25 @@
 
 #include "cpl_list.h"
 
-typedef enum			// Types of subdatasets:
+typedef enum			// Types of dataset:
 {
     HDF4_SDS,			// Scientific Dataset
     HDF4_GR,			// General Raster Image
+    HDF4_EOS,                   // HDF EOS
     HDF4_UNKNOWN
-} HDF4SubdatasetType;
+} HDF4DatasetType;
 
 typedef enum			// Types of data products:
 {
     GDAL_HDF4,			// HDF written by GDAL
+    EOS_GRID,                   // HDF-EOS Grid
+    EOS_SWATH,                  // HDF-EOS Swath
     SEAWIFS_L1A,		// SeaWiFS Level-1A Data
     SEAWIFS_L2,			// SeaWiFS Level-2 Data
     SEAWIFS_L3,			// SeaWiFS Level-3 Standard Mapped Image
-    ASTER_L1A,			// ASTER Level 1A
-    ASTER_L1B,			// ASTER Level 1B
-    ASTER_L2,			// ASTER Level 2
-    AST14DEM,			// ASTER DEM
-    MODIS_L1B,                  // MODIS Level 1B
-    MODIS_L2,                   // MODIS Level 2
-    MODIS_L3,                   // MODIS Level 3
-    MODIS_UNK,
     HYPERION_L1,                // Hyperion L1 Data Product
     UNKNOWN
-} HDF4Datatype;
-
-struct HDF4EOSDimensionMap
-{
-    char        *pszDataDimension;
-    double      dfOffset;
-    double      dfIncrement;
-};
-
-struct HDF4EOSDataField
-{
-    char        *pszDataFieldName;
-    CPLList     *psDimList;
-};
+} HDF4SubdatasetType;
 
 /************************************************************************/
 /* ==================================================================== */
@@ -127,19 +112,16 @@ class HDF4Dataset : public GDALDataset
     char        **HDF4EOSTokenizeAttrs( const char *pszString );
     char        **HDF4EOSGetObject( char **papszAttrList, char **ppszAttrName,
                                     char **ppszAttrValue );
-    void        HDF4EOSParseStructMetadata( int32, int32, int32 );
      
   protected:
 
     FILE	*fp;
     int32	hHDF4, hSD, hGR;
     int32	nDatasets, nImages;
-    HDF4Datatype iDataType;
-    const char	*pszDataType;
+    HDF4DatasetType iDatasetType;
+    HDF4SubdatasetType iSubdatasetType;
+    const char	*pszSubdatasetType;
 
-    CPLList     *psDataField;
-    CPLList     *psDimMap;
-    
     char	**papszGlobalMetadata;
     char	**papszSubDatasets;
 
@@ -157,6 +139,10 @@ class HDF4Dataset : public GDALDataset
     virtual char **GetMetadata( const char * pszDomain = "" );
     static GDALDataset *Open( GDALOpenInfo * );
 };
+
+char *SPrintArray( GDALDataType eDataType, void *paDataArray,
+                          int nValues, char * pszDelimiter );
+
 
 #endif /* _HDF4DATASET_H_INCLUDED_ */
 

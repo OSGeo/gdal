@@ -30,6 +30,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.27  2004/06/19 21:37:31  dron
+ * Use HDF-EOS library for appropriate datasets; major cpde rewrite.
+ *
  * Revision 1.26  2003/11/07 15:48:01  dron
  * TranslateHDF4Attributes() improved, added GetDataTypeSize().
  *
@@ -82,7 +85,7 @@
  * Initial support for HDF4 creation.
  *
  * Revision 1.9  2002/09/25 14:44:40  warmerda
- * Fixed iDataType initialization.
+ * Fixed iSubdatasetType initialization.
  *
  * Revision 1.8  2002/09/06 10:42:23  dron
  * Georeferencing for ASTER Level 1b datasets and ASTER DEMs.
@@ -114,6 +117,8 @@
 #include "hdf.h"
 #include "mfhdf.h"
 
+#include "HdfEosDef.h"
+
 #include "gdal_priv.h"
 #include "cpl_string.h"
 #include "hdf4dataset.h"
@@ -143,8 +148,6 @@ HDF4Dataset::HDF4Dataset()
     hHDF4 = 0;
     hSD = 0;
     hGR = 0;
-    psDataField = NULL;
-    psDimMap = NULL;
     papszGlobalMetadata = NULL;
     papszSubDatasets = NULL;
 }
@@ -168,43 +171,6 @@ HDF4Dataset::~HDF4Dataset()
         VSIFClose( fp );
     if( hHDF4 > 0 )
 	Hclose( hHDF4 );
-
-    if ( psDimMap )
-    {
-        int     i, nCount;
-
-        nCount = CPLListCount( psDimMap );
-        for ( i = 0; i < nCount; i++ )
-        {
-            HDF4EOSDimensionMap *psTemp;
-
-            psTemp = (HDF4EOSDimensionMap *)
-                CPLListGetData( CPLListGet( psDimMap, i ) );
-            CPLFree( psTemp->pszDataDimension );
-            CPLFree( psTemp );
-
-        }
-        CPLListDestroy( psDimMap );
-    }
-
-    if ( psDataField )
-    {
-        int     i, nCount;
-
-        nCount = CPLListCount( psDataField );
-        for ( i = 0; i < nCount; i++ )
-        {
-            HDF4EOSDataField *psTemp;
-
-            psTemp = (HDF4EOSDataField *)
-                CPLListGetData( CPLListGet( psDataField, i ) );
-            CPLFree( psTemp->pszDataFieldName );
-            CPLListDestroy( psTemp->psDimList );
-            CPLFree( psTemp );
-
-        }
-        CPLListDestroy( psDataField );
-    }
 }
 
 /************************************************************************/
@@ -221,6 +187,7 @@ char **HDF4Dataset::GetMetadata( const char *pszDomain )
 }
 
 /************************************************************************/
+/*                           SPrintArray()                              */
 /*	Prints numerical arrays in string buffer.			*/
 /*	This function takes pfaDataArray as a pointer to printed array,	*/
 /*	nValues as a number of values to print and pszDelimiter as a	*/
@@ -228,7 +195,7 @@ char **HDF4Dataset::GetMetadata( const char *pszDomain )
 /*	Pointer to filled buffer will be returned.			*/
 /************************************************************************/
 
-static char *SPrintArray( GDALDataType eDataType, void *paDataArray,
+char *SPrintArray( GDALDataType eDataType, void *paDataArray,
                           int nValues, char * pszDelimiter )
 {
     char        *pszString, *pszField;
@@ -651,162 +618,6 @@ char** HDF4Dataset::TranslateHDF4Attributes( int32 iHandle,
 }
 
 /************************************************************************/
-/*                    HDF4EOSParseStructMetadata()                      */
-/************************************************************************/
-
-void HDF4Dataset::HDF4EOSParseStructMetadata( int32 iHandle, int32 iAttribute,
-                                              int32 nValues )
-{
-    char	*pszData;
-    char        **papszAttrList;
-    int	        iCount, i, j;
-    CPLList     *psDM = NULL;
-    
-    pszData = (char *)CPLMalloc( (nValues + 1) * sizeof(char) );
-    pszData[nValues] = '\0';
-    SDreadattr( iHandle, iAttribute, pszData );
-    
-    papszAttrList =
-        CSLTokenizeString2( pszData, "\r\n\t =", CSLT_HONOURSTRINGS );
-
-    iCount = CSLCount( papszAttrList );
-    for ( i = 0; i < iCount - 3; i++ )
-    {
-
-/* -------------------------------------------------------------------- */
-/*     Extract DimensionMap table.                                      */
-/* -------------------------------------------------------------------- */
-        if ( EQUAL( papszAttrList[i], "GROUP" )
-             && EQUALN( papszAttrList[i + 1], "DimensionMap", 12 ) )
-        {
-            i += 2;
-            do
-            {
-                if ( EQUAL( papszAttrList[i], "OBJECT" ) &&
-                     EQUALN( papszAttrList[i + 1], "DimensionMap", 12 ) )
-                {
-                    for ( j = 2; i + j < iCount - 1; j++ )
-                    {
-                        HDF4EOSDimensionMap *psTemp;
-
-                        if ( EQUAL( papszAttrList[i + j], "END_OBJECT" ) ||
-                             EQUAL( papszAttrList[i + j], "OBJECT" ) )
-                        {
-                            break;
-                        }
-                        else if ( EQUAL(papszAttrList[i + j], "DataDimension") )
-                        {
-                            psTemp = (HDF4EOSDimensionMap *)
-                                CPLMalloc( sizeof(HDF4EOSDimensionMap) );
-                            psTemp->pszDataDimension =
-                                CPLStrdup( papszAttrList[i + j + 1] );
-                            psDM = CPLListAppend( psDM, psTemp );
-
-                            // Store head of the list for later freeing
-                            if ( !psDimMap )
-                                psDimMap = psDM;
-                        }
-                        else if ( EQUAL( papszAttrList[i + j], "Offset" ) )
-                        {
-                            psTemp = (HDF4EOSDimensionMap *)
-                                CPLListGetData( CPLListGetLast(psDM) );
-                            psTemp->dfOffset = atof( papszAttrList[i + j + 1] );
-                        }
-                        else if ( EQUAL( papszAttrList[i + j], "Increment" ) )
-                        {
-                            psTemp = (HDF4EOSDimensionMap *)
-                                CPLListGetData( CPLListGetLast(psDM) );
-                            psTemp->dfIncrement =
-                                atof( papszAttrList[i + j + 1] );
-                        }
-                    }
-
-                    i += j;
-                }
-                
-                i++;
-            }
-            while ( i < iCount - 2 && !EQUAL( papszAttrList[i], "END_GROUP" ) );
-            i++;
-        }
-
-/* -------------------------------------------------------------------- */
-/*     Extract DataField table.                                         */
-/* -------------------------------------------------------------------- */
-        if ( i < iCount - 3
-             && EQUAL( papszAttrList[i], "GROUP" )
-             && EQUALN( papszAttrList[i + 1], "DataField", 9 ) )
-        {
-            i += 2;
-            do
-            {
-                if ( EQUAL( papszAttrList[i], "OBJECT" ) &&
-                     EQUALN( papszAttrList[i + 1], "DataField", 9 ) )
-                {
-                    for ( j = 2; i + j < iCount - 1; j++ )
-                    {
-                        HDF4EOSDataField *psTemp;
-
-                        if ( EQUAL( papszAttrList[i + j], "END_OBJECT" ) ||
-                             EQUAL( papszAttrList[i + j], "OBJECT" ) )
-                        {
-                            break;
-                        }
-                        else if ( EQUAL( papszAttrList[i + j], "DataFieldName" ) )
-                        {
-                            psTemp = (HDF4EOSDataField *)
-                                CPLMalloc(sizeof(HDF4EOSDataField));
-                            psTemp->pszDataFieldName =
-                                CPLStrdup( papszAttrList[i + j + 1] );
-                            psTemp->psDimList = NULL;
-                            psDataField = CPLListAppend( psDataField, psTemp );
-                        }
-                        else if ( EQUAL( papszAttrList[i + j], "DimList" ) )
-                        {
-                            int k, l;
-                            char **papszDimList =
-                                CSLTokenizeString2( papszAttrList[i + j + 1],
-                                                    "(), ",
-                                                    CSLT_HONOURSTRINGS );
-                            psTemp = (HDF4EOSDataField *)
-                                CPLListGetData( CPLListGetLast(psDataField) );
-                            for ( k = 0; k < CSLCount(papszDimList); k++ )
-                            {
-                                for ( l = 0; l < CPLListCount(psDM); l++ )
-                                {
-                                    CPLList *psElem = CPLListGet( psDM, l );
-                                    if( EQUAL( papszDimList[k],
-        ((HDF4EOSDimensionMap *)CPLListGetData( psElem ))->pszDataDimension ) )
-                                    {
-                                        psTemp->psDimList =
-                                            CPLListAppend( psTemp->psDimList,
-                                                    CPLListGetData( psElem ) );
-                                        break;
-                                    }
-                                }
-                            }
-
-                            CSLDestroy( papszDimList );
-                        }
-                    }
-
-                    i += j;
-                }
-                
-                i++;
-            }
-            while ( i < iCount - 1 && !EQUAL( papszAttrList[i], "END_GROUP" ) );
-
-            // Point psDM to the last value.
-            psDM = CPLListGetLast( psDM );
-        }
-    }
-
-    CSLDestroy( papszAttrList );
-    CPLFree( pszData );
-}
-
-/************************************************************************/
 /*                       ReadGlobalAttributes()                         */
 /************************************************************************/
 
@@ -845,9 +656,7 @@ CPLErr HDF4Dataset::ReadGlobalAttributes( int32 iHandler )
 		iAttribute, nValues, papszGlobalMetadata );
         }
 	else if ( EQUALN( szAttrName, "structmetadata.", 15 ) )
-        {
-            HDF4EOSParseStructMetadata( iHandler, iAttribute, nValues );
-        }
+            continue;
         else
         {
 	    papszGlobalMetadata = TranslateHDF4Attributes( iHandler,
@@ -864,7 +673,7 @@ CPLErr HDF4Dataset::ReadGlobalAttributes( int32 iHandler )
 GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
-    int		i;
+    int32	i;
     
     if( poOpenInfo->fp == NULL )
         return NULL;
@@ -919,134 +728,266 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     const char	*pszValue;
     
-    if ( (pszValue = CSLFetchNameValue(poDS->papszGlobalMetadata, "Signature"))
+    if ( (pszValue = CSLFetchNameValue(poDS->papszGlobalMetadata,
+                                       "Signature"))
 	 && EQUAL( pszValue, pszGDALSignature ) )
     {
-	poDS->iDataType = GDAL_HDF4;
-	poDS->pszDataType = "GDAL_HDF4";
+	poDS->iSubdatasetType = GDAL_HDF4;
+	poDS->pszSubdatasetType = "GDAL_HDF4";
     }
-    else if ( (pszValue = CSLFetchNameValue(poDS->papszGlobalMetadata, "SHORTNAME")) )
-    {
-	if ( EQUAL( pszValue, "ASTL1A" ) )
-        {
-            poDS->iDataType = ASTER_L1A;
-            poDS->pszDataType = "ASTER_L1A";
-        }
-        else if ( EQUAL( pszValue, "ASTL1B" ) )
-        {
-            poDS->iDataType = ASTER_L1B;
-	    poDS->pszDataType = "ASTER_L1B";
-        }
-        else if ( EQUAL( pszValue, "AST_04" )
-                  || EQUAL( pszValue, "AST_05" )
-                  || EQUAL( pszValue, "AST_06VD" )
-                  || EQUAL( pszValue, "AST_06SD" )
-                  || EQUAL( pszValue, "AST_06TD" )
-                  || EQUAL( pszValue, "AST_07" )
-                  || EQUAL( pszValue, "AST_08" )
-                  || EQUAL( pszValue, "AST_09" )
-                  || EQUAL( pszValue, "AST_09T" ) )
-        {
-            poDS->iDataType = ASTER_L2;
-            poDS->pszDataType = "ASTER_L2";
-        }
-        else if ( EQUAL( pszValue, "AST14DEM" ) )
-        {
-            poDS->iDataType = AST14DEM;
-            poDS->pszDataType = "AST14DEM";
-        }
-        else if ( EQUAL( pszValue, "GSUB1" )
-            // L1B EV 1km
-            || EQUAL( pszValue, "MOD021KM" ) || EQUAL( pszValue, "MYD021KM" )
-            // L1B EV 500m
-            || EQUAL( pszValue, "MOD02HKM" ) || EQUAL( pszValue, "MYD02HKM" )
-            // L1B EV 250m
-            || EQUAL( pszValue, "MOD02QKM" ) || EQUAL( pszValue, "MYD02QKM" ) ) 
-        {
-            poDS->iDataType = MODIS_L1B;
-            poDS->pszDataType = "MODIS_L1B";
-        }
-        else if ( strlen( pszValue ) == 8
-                  && (EQUALN( pszValue, "MO", 2 ) || EQUALN( pszValue, "MY", 2 ))
-                  && (EQUALN( pszValue + 2, "04", 2 )
-                      || EQUALN( pszValue + 2, "36", 2 )
-                      || EQUALN( pszValue + 2, "1D", 2 ))
-                  && (*(pszValue + 4) == 'M' || *(pszValue + 4) == 'S'
-                      || *(pszValue + 4) == 'N' || *(pszValue + 4) == 'Q'
-                      || *(pszValue + 4) == 'F' || *(pszValue + 4) == '1'
-                      || *(pszValue + 4) == '2' || *(pszValue + 4) == '3')
-                  && (*(pszValue + 5) == 'D' || *(pszValue + 5) == 'W'
-                      || *(pszValue + 5) == 'M' || *(pszValue + 5) == 'N') )
 
-        {
-            poDS->iDataType = MODIS_L3;
-            poDS->pszDataType = "MODIS_L3";
-        }
-        else if ( EQUAL( pszValue, "MODOCL2" )
-                  || EQUAL( pszValue, "MYDOCL2" )
-                  || EQUAL( pszValue, "MODOCL2A" )
-                  || EQUAL( pszValue, "MYDOCL2A" )
-                  || EQUAL( pszValue, "MODOCL2B" )
-                  || EQUAL( pszValue, "MYDOCL2B" )
-                  || EQUAL( pszValue, "MODOCQC" )
-                  || EQUAL( pszValue, "MYDOCQC" )
-                  || EQUAL( pszValue, "MOD28L2" )
-                  || EQUAL( pszValue, "MYD28L2" )
-                  || EQUAL( pszValue, "MOD28QC" )
-                  || EQUAL( pszValue, "MYD28QC" ) )
-
-        {
-            poDS->iDataType = MODIS_L2;
-            poDS->pszDataType = "MODIS_L2";
-        }
-        else
-        {
-            poDS->iDataType = UNKNOWN;
-            poDS->pszDataType = "UNKNOWN";
-        }
-    }
     else if ( (pszValue = CSLFetchNameValue(poDS->papszGlobalMetadata, "Title"))
 	 && EQUAL( pszValue, "SeaWiFS Level-1A Data" ) )
     {
-	poDS->iDataType = SEAWIFS_L1A;
-	poDS->pszDataType = "SEAWIFS_L1A";
+	poDS->iSubdatasetType = SEAWIFS_L1A;
+	poDS->pszSubdatasetType = "SEAWIFS_L1A";
     }
+
     else if ( (pszValue = CSLFetchNameValue(poDS->papszGlobalMetadata, "Title"))
 	&& EQUAL( pszValue, "SeaWiFS Level-2 Data" ) )
     {
-	poDS->iDataType = SEAWIFS_L2;
-	poDS->pszDataType = "SEAWIFS_L2";
+	poDS->iSubdatasetType = SEAWIFS_L2;
+	poDS->pszSubdatasetType = "SEAWIFS_L2";
     }
+
     else if ( (pszValue = CSLFetchNameValue(poDS->papszGlobalMetadata, "Title"))
 	&& EQUAL( pszValue, "SeaWiFS Level-3 Standard Mapped Image" ) )
     {
-	poDS->iDataType = SEAWIFS_L3;
-	poDS->pszDataType = "SEAWIFS_L3";
+	poDS->iSubdatasetType = SEAWIFS_L3;
+	poDS->pszSubdatasetType = "SEAWIFS_L3";
     }
+
     else if ( (pszValue = CSLFetchNameValue(poDS->papszGlobalMetadata,
                                             "L1 File Generated By"))
 	&& EQUALN( pszValue, "HYP version ", 12 ) )
     {
-	poDS->iDataType = HYPERION_L1;
-	poDS->pszDataType = "HYPERION_L1";
+	poDS->iSubdatasetType = HYPERION_L1;
+	poDS->pszSubdatasetType = "HYPERION_L1";
     }
+
     else
     {
-	poDS->iDataType = UNKNOWN;
-	poDS->pszDataType = "UNKNOWN";
+	poDS->iSubdatasetType = UNKNOWN;
+	poDS->pszSubdatasetType = "UNKNOWN";
     }
+
+/* -------------------------------------------------------------------- */
+/*  If we have HDF-EOS dataset, process it here.                  	*/
+/* -------------------------------------------------------------------- */
+    char	szName[VSNAMELENMAX + 1], szTemp[8192];
+    char	*pszString;
+    const char  *pszName;
+    int		nCount;
+    int32	aiDimSizes[MAX_VAR_DIMS];
+    int32	iRank, iNumType, nAttrs;
+
+    if ( CSLFetchNameValue(poDS->papszGlobalMetadata, "HDFEOSVersion") )
+    {
+        int32   nSubDatasets, nStrBufSize;
+        
+/* -------------------------------------------------------------------- */
+/*  Process swath layers.                                           	*/
+/* -------------------------------------------------------------------- */
+        hHDF4 = SWopen( poOpenInfo->pszFilename, DFACC_READ );
+        nSubDatasets = SWinqswath(poOpenInfo->pszFilename, NULL, &nStrBufSize);
+        if ( nSubDatasets > 0 && nStrBufSize > 0 )
+        {
+            char    *pszSwathList;
+            char    **papszSwaths;
+
+            pszSwathList = (char *)CPLMalloc( nStrBufSize + 1 );
+            SWinqswath( poOpenInfo->pszFilename, pszSwathList, &nStrBufSize );
+
+#if DEBUG
+            CPLDebug( "HDF4", "List of HDF-EOS swaths: %s", pszSwathList );
+#endif
+
+            papszSwaths =
+                CSLTokenizeString2( pszSwathList, ",", CSLT_HONOURSTRINGS );
+            CPLFree( pszSwathList );
+
+            if ( nSubDatasets != CSLCount(papszSwaths) )
+            {
+                CSLDestroy( papszSwaths );
+                delete poDS;
+                CPLDebug( "HDF4", "Can not parse list of HDF-EOS grids." );
+                return NULL;
+            }
+
+            for ( i = 0; i < nSubDatasets; i++)
+            {
+                char    *pszFieldList;
+                char    **papszFields;
+                int32   *paiRank, *paiNumType;
+                int32   hSW, nFields, j;
+
+                hSW = SWattach( hHDF4, papszSwaths[i] );
+
+                nFields = SWnentries( hSW, HDFE_NENTDFLD, &nStrBufSize );
+                pszFieldList = (char *)CPLMalloc( nStrBufSize + 1 );
+                paiRank = (int32 *)CPLMalloc( nFields * sizeof(int32) );
+                paiNumType = (int32 *)CPLMalloc( nFields * sizeof(int32) );
+
+                SWinqdatafields( hSW, pszFieldList, paiRank, paiNumType );
+
+#if DEBUG
+                CPLDebug( "HDF4", "Number of data fields in swath %ld: %d",
+                          i, nFields );
+                CPLDebug( "HDF4", "List of data fields in swath %ld: %s",
+                          i, pszFieldList );
+                CPLDebug( "HDF4", "Data fields ranks: %s",
+                          SPrintArray( GDT_UInt32, paiRank, nFields, "," ) );
+#endif
+
+                papszFields = CSLTokenizeString2( pszFieldList, ",",
+                                                  CSLT_HONOURSTRINGS );
+                
+                for ( j = 0; j < nFields; j++ )
+                {
+                    SWfieldinfo( hSW, papszFields[j], &iRank, aiDimSizes,
+                                 &iNumType, NULL );
+
+                    if ( iRank < 2 )
+                        continue;
+
+	            // Add field to the list of GDAL subdatasets
+                    nCount = CSLCount( poDS->papszSubDatasets ) / 2;
+                    sprintf( szTemp, "SUBDATASET_%d_NAME", nCount + 1 );
+	            // We will use the field index as an identificator.
+                    poDS->papszSubDatasets =
+                        CSLSetNameValue(poDS->papszSubDatasets, szTemp,
+                                CPLSPrintf( "HDF4_EOS:EOS_SWATH:\"%s\":%s:%s",
+                                            poOpenInfo->pszFilename,
+                                            papszSwaths[i], papszFields[j]));
+
+                    sprintf( szTemp, "SUBDATASET_%d_DESC", nCount + 1 );
+                    pszString = SPrintArray( GDT_UInt32, aiDimSizes,
+                                             iRank, "x" );
+                    poDS->papszSubDatasets =
+                        CSLSetNameValue( poDS->papszSubDatasets, szTemp,
+                                         CPLSPrintf( "[%s] %s (%s)", pszString,
+                                            papszFields[j],
+                                            poDS->GetDataTypeName(iNumType) ) );
+                    CPLFree( pszString );
+                }
+
+                CSLDestroy( papszFields );
+                CPLFree( paiNumType );
+                CPLFree( paiRank );
+                CPLFree( pszFieldList );
+                SWdetach( hSW );
+            }
+
+            CSLDestroy( papszSwaths );
+            SWclose( hHDF4 );
+        }
+
+/* -------------------------------------------------------------------- */
+/*  Process grid layers.                                           	*/
+/* -------------------------------------------------------------------- */
+        hHDF4 = GDopen( poOpenInfo->pszFilename, DFACC_READ );
+        nSubDatasets = GDinqgrid( poOpenInfo->pszFilename, NULL, &nStrBufSize );
+        if ( nSubDatasets > 0 && nStrBufSize > 0 )
+        {
+            char    *pszGridList;
+            char    **papszGrids;
+
+            pszGridList = (char *)CPLMalloc( nStrBufSize + 1 );
+            GDinqgrid( poOpenInfo->pszFilename, pszGridList, &nStrBufSize );
+
+#if DEBUG
+            CPLDebug( "HDF4", "List of HDF-EOS grids: %s", pszGridList );
+#endif
+
+            papszGrids =
+                CSLTokenizeString2( pszGridList, ",", CSLT_HONOURSTRINGS );
+            CPLFree( pszGridList );
+
+            if ( nSubDatasets != CSLCount(papszGrids) )
+            {
+                CSLDestroy( papszGrids );
+                delete poDS;
+                CPLDebug( "HDF4", "Can not parse list of HDF-EOS grids." );
+                return NULL;
+            }
+
+            for ( i = 0; i < nSubDatasets; i++)
+            {
+                char    *pszFieldList;
+                char    **papszFields;
+                int32   *paiRank, *paiNumType;
+                int32   hGD, nFields, j;
+
+                hGD = GDattach( hHDF4, papszGrids[i] );
+
+                nFields = GDnentries( hGD, HDFE_NENTDFLD, &nStrBufSize );
+                pszFieldList = (char *)CPLMalloc( nStrBufSize + 1 );
+                paiRank = (int32 *)CPLMalloc( nFields * sizeof(int32) );
+                paiNumType = (int32 *)CPLMalloc( nFields * sizeof(int32) );
+
+                GDinqfields( hGD, pszFieldList, paiRank, paiNumType );
+
+#if DEBUG
+                CPLDebug( "HDF4", "Number of fields in grid %ld: %d",
+                          i, nFields );
+                CPLDebug( "HDF4", "List of fields in grid %ld: %s",
+                          i, pszFieldList );
+                CPLDebug( "HDF4", "Fields ranks: %s",
+                          SPrintArray( GDT_UInt32, paiRank, nFields, "," ) );
+#endif
+
+                papszFields = CSLTokenizeString2( pszFieldList, ",",
+                                                  CSLT_HONOURSTRINGS );
+                
+                for ( j = 0; j < nFields; j++ )
+                {
+                    GDfieldinfo( hGD, papszFields[j], &iRank, aiDimSizes,
+                                 &iNumType, NULL );
+
+                    if ( iRank < 2 )
+                        continue;
+
+	            // Add field to the list of GDAL subdatasets
+                    nCount = CSLCount( poDS->papszSubDatasets ) / 2;
+                    sprintf( szTemp, "SUBDATASET_%d_NAME", nCount + 1 );
+	            // We will use the field index as an identificator.
+                    poDS->papszSubDatasets =
+                        CSLSetNameValue(poDS->papszSubDatasets, szTemp,
+                                CPLSPrintf( "HDF4_EOS:EOS_GRID:\"%s\":%s:%s",
+                                            poOpenInfo->pszFilename,
+                                            papszGrids[i], papszFields[j]));
+
+                    sprintf( szTemp, "SUBDATASET_%d_DESC", nCount + 1 );
+                    pszString = SPrintArray( GDT_UInt32, aiDimSizes,
+                                             iRank, "x" );
+                    poDS->papszSubDatasets =
+                        CSLSetNameValue( poDS->papszSubDatasets, szTemp,
+                                         CPLSPrintf("[%s] %s (%s)", pszString,
+                                             papszFields[j],
+                                             poDS->GetDataTypeName(iNumType)) );
+                    CPLFree( pszString );
+                }
+
+                CSLDestroy( papszFields );
+                CPLFree( paiNumType );
+                CPLFree( paiRank );
+                CPLFree( pszFieldList );
+                GDdetach( hGD );
+            }
+
+            CSLDestroy( papszGrids );
+            GDclose( hHDF4 );
+        }
+        GDclose( hHDF4 );
+    }
+
+    else
+    {
 
 /* -------------------------------------------------------------------- */
 /*  Make a list of subdatasets from SDSs contained in input HDF file.	*/
 /* -------------------------------------------------------------------- */
-    char	szName[VSNAMELENMAX + 1], szTemp[1024];
-    const char  *pszName;
-    char	*pszString;
     int32	iSDS;
-    int32	iRank; 			// Number of dimensions in the SDS
-    int32	iNumType, nAttrs;
-    int32	aiDimSizes[MAX_VAR_DIMS];
-    int		nCount;
 
     for ( i = 0; i < poDS->nDatasets; i++ )
     {
@@ -1057,175 +998,8 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
 	if ( iRank == 1 )		// Skip 1D datsets
 		continue;
 
-	// Sort known datasets. We will display only image bands
-	if ( (poDS->iDataType == ASTER_L1A || poDS->iDataType == ASTER_L1B )
-             && !EQUALN( szName, "ImageData", 9 ) )
-		continue;
-	else if ( (poDS->iDataType == AST14DEM || poDS->iDataType == ASTER_L2 )
-                  && !EQUALN( szName, "Band", 4 )
-                  && !EQUALN( szName, "QA_DataPlane", 12 )
-                  && !EQUALN( szName, "KineticTemperature", 18 ) )
-		continue;
-	else if ( (poDS->iDataType == MODIS_L1B ) && !EQUALN( szName, "EV_", 3 ) )
-        {
-		continue;
-        }
-	else if ( poDS->iDataType == MODIS_L2 || poDS->iDataType == MODIS_L3 )
-        {
-            // MODIS Ocean Parameters
-            if ( EQUALN( szName, "nLw_412", 7 ) )
-                pszName =
-                    CPLSPrintf( "%s: Normalized water-leaving radiance at 412 nm",
-                                szName );
-            else if ( EQUALN( szName, "nLw_443", 7 ) )
-                pszName =
-                    CPLSPrintf( "%s: Normalized water-leaving radiance at 443 nm",
-                                szName );
-            else if ( EQUALN( szName, "nLw_488", 7 ) )
-                pszName =
-                    CPLSPrintf( "%s: Normalized water-leaving radiance at 488 nm",
-                                szName );
-            else if ( EQUALN( szName, "nLw_531", 7 ) )
-                pszName =
-                    CPLSPrintf( "%s: Normalized water-leaving radiance at 531 nm",
-                                szName );
-            else if ( EQUALN( szName, "nLw_551", 7 ) )
-                pszName =
-                    CPLSPrintf( "%s: Normalized water-leaving radiance at 551 nm",
-                                szName );
-            else if ( EQUALN( szName, "nLw_667", 7 ) )
-                pszName =
-                    CPLSPrintf( "%s: Normalized water-leaving radiance at 667 nm",
-                                szName );
-            else if ( EQUALN( szName, "nLw_678", 7 ) )
-                pszName =
-                    CPLSPrintf( "%s: Normalized water-leaving radiance at 678 nm",
-                                szName );
-            else if ( EQUALN( szName, "Tau_865", 7 ) )
-                pszName =
-                    CPLSPrintf( "%s: Aerosol optical thickness, 865 nm",
-                                szName );
-            else if ( EQUALN( szName, "Eps_78", 6 ) )
-                pszName =
-                    CPLSPrintf( "%s: Epsilon of aerosol correction, 765 & 865 nm",
-                                szName );
-            else if ( EQUALN( szName, "aer_model1", 10 ) )
-                pszName =
-                    CPLSPrintf( "%s: Aerosol model identification number 1",
-                                szName );
-            else if ( EQUALN( szName, "aer_model2", 10 ) )
-                pszName =
-                    CPLSPrintf( "%s: Aerosol model identification number 2",
-                                szName );
-            else if ( EQUALN( szName, "eps_clr_water", 13 ) )
-                pszName =
-                    CPLSPrintf( "%s: Epsilon of clear water aerosol correction, 531 & 667 nm",
-                                szName );
-            else if ( EQUALN( szName, "CZCS_pigment", 12 ) )
-                pszName =
-                    CPLSPrintf( "%s: Chlorophyll-a + phaeopigment, fluorometric, empirical",
-                                szName );
-            else if ( EQUALN( szName, "chlor_MODIS", 11 ) )
-                pszName =
-                    CPLSPrintf( "%s: Chlorophyll-a concentration, HPLC, empirical",
-                                szName );
-            else if ( EQUALN( szName, "pigment_c1_total", 16 ) )
-                pszName =
-                    CPLSPrintf( "%s: Total pigment concentration, HPLC, empirical",
-                                szName );
-            else if ( EQUALN( szName, "chlor_fluor_ht", 14 ) )
-                pszName =
-                    CPLSPrintf( "%s: Chlorophyll fluorescence line height",
-                                szName );
-            else if ( EQUALN( szName, "chlor_fluor_base", 16 ) )
-                pszName =
-                    CPLSPrintf( "%s: Chlorophyll fluorescence baseline",
-                                szName );
-            else if ( EQUALN( szName, "chlor_fluor_effic", 17 ) )
-                pszName =
-                    CPLSPrintf( "%s: Chlorophyll fluorescence efficiency",
-                                szName );
-            else if ( EQUALN( szName, "susp_solids_conc", 16 ) )
-                pszName =
-                    CPLSPrintf( "%s: Total suspended matter concentration in ocean",
-                                szName );
-            else if ( EQUALN( szName, "cocco_pigmnt_conc", 17 ) )
-                pszName =
-                    CPLSPrintf( "%s: Pigment concentration in voccolithophore blooms",
-                                szName );
-            else if ( EQUALN( szName, "cocco_conc_detach", 17 ) )
-                pszName =
-                    CPLSPrintf( "%s: Detached coccolithophore concentration",
-                                szName );
-            else if ( EQUALN( szName, "calcite_conc", 12 ) )
-                pszName = CPLSPrintf( "%s: Calcite concentration", szName );
-            else if ( EQUALN( szName, "K_490", 5 ) )
-                pszName =
-                    CPLSPrintf( "%s: Diffuse attenuation coefficient at 490 nm",
-                                szName );
-            else if ( EQUALN( szName, "phycoeryth_conc", 15 ) )
-                pszName =
-                    CPLSPrintf( "%s: Phycoerythrobilin concentration", szName );
-            else if ( EQUALN( szName, "phycou_conc", 11 ) )
-                pszName =
-                    CPLSPrintf( "%s: Phycourobilin concentration", szName );
-            else if ( EQUALN( szName, "chlor_a_2", 9 ) )
-                pszName =
-                    CPLSPrintf( "%s: Chlorophyll-a concentration, SeaWiFS analog - OC3M",
-                                szName );
-            else if ( EQUALN( szName, "chlor_a_3", 9 ) )
-                pszName =
-                    CPLSPrintf( "%s: Chlorophyll-a concentration, semianalytic",
-                                szName );
-            else if ( EQUALN( szName, "ipar", 4 ) )
-                pszName =
-                    CPLSPrintf( "%s: Instantaneous photosynthetically available radiation",
-                                szName );
-            else if ( EQUALN( szName, "arp", 3 ) )
-                pszName =
-                    CPLSPrintf( "%s: Instantaneous absorbed radiation by phytoplankton for fluorescence",
-                                szName );
-            else if ( EQUALN( szName, "absorp_coef_gelb", 16 ) )
-                pszName =
-                    CPLSPrintf( "%s: Gelbstoff absorption coefficient at 400 nm",
-                                szName );
-            else if ( EQUALN( szName, "chlor_absorb", 12 ) )
-                pszName =
-                    CPLSPrintf( "%s: Phytoplankton absorption coefficient at 675 nm",
-                                szName );
-            else if ( EQUALN( szName, "tot_absorb_412", 14 ) )
-                pszName =
-                    CPLSPrintf( "%s: Total absorption coefficient, 412 nm",
-                                szName );
-            else if ( EQUALN( szName, "tot_absorb_443", 14 ) )
-                pszName =
-                    CPLSPrintf( "%s: Total absorption coefficient, 443 nm",
-                                szName );
-            else if ( EQUALN( szName, "tot_absorb_488", 14 ) )
-                pszName =
-                    CPLSPrintf( "%s: Total absorption coefficient, 488 nm",
-                                szName );
-            else if ( EQUALN( szName, "tot_absorb_531", 14 ) )
-                pszName =
-                    CPLSPrintf( "%s: Total absorption coefficient, 531 nm",
-                                szName );
-            else if ( EQUALN( szName, "tot_absorb_551", 14 ) )
-                pszName =
-                    CPLSPrintf( "%s: Total absorption coefficient, 551 nm",
-                                szName );
-            /* XXX: 'sst4' should go before 'sst' case */
-            else if ( EQUALN( szName, "sst4", 4 ) )
-                pszName =
-                    CPLSPrintf( "%s: Sea surface temperature, daytime, 4 micron",
-                                szName );
-            else if ( EQUALN( szName, "sst", 3 ) )
-                pszName =
-                    CPLSPrintf( "%s: Sea surface temperature, daytime, 11 micron",
-                                szName );
-            else
-		pszName = szName;
-        }
-	else if ( (poDS->iDataType == SEAWIFS_L1A ) &&
+	// Do sort of known datasets. We will display only image bands
+        if ( (poDS->iSubdatasetType == SEAWIFS_L1A ) &&
 		  !EQUALN( szName, "l1a_data", 8 ) )
 		continue;
         else
@@ -1237,7 +1011,7 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
 	// We will use SDS index as an identificator, because SDS names
 	// are not unique. Filename also needed for further file opening
         poDS->papszSubDatasets = CSLSetNameValue(poDS->papszSubDatasets, szTemp, 
-              CPLSPrintf( "HDF4_SDS:%s:\"%s\":%d", poDS->pszDataType,
+              CPLSPrintf( "HDF4_SDS:%s:\"%s\":%d", poDS->pszSubdatasetType,
 			  poOpenInfo->pszFilename, i) );
         sprintf( szTemp, "SUBDATASET_%d_DESC", nCount + 1 );
 	pszString = SPrintArray( GDT_UInt32, aiDimSizes, iRank, "x" );
@@ -1285,6 +1059,8 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
 	GRendaccess( iGR );
     }
     GRend( poDS->hGR );
+
+    }
     
     poDS->nRasterXSize = poDS->nRasterYSize = 512; // XXX: bogus values
     
