@@ -9,6 +9,11 @@
 
  *
  * $Log$
+ * Revision 1.17  2005/02/20 19:42:53  kruland
+ * Rename the Swig shadow classes so the names do not give the impression that
+ * they are any part of the GDAL/OSR apis.  There were no bugs with the old
+ * names but they were confusing.
+ *
  * Revision 1.16  2005/02/18 18:41:37  kruland
  * Added %feature("autodoc");
  *
@@ -89,6 +94,10 @@ using namespace std;
 typedef double *double_2;
 typedef double *double_6;
 
+typedef void GDALDriverShadow;
+typedef void GDALDatasetShadow;
+typedef void GDALRasterBandShadow;
+
 %}
 
 %feature("compactdefaultargs");
@@ -162,22 +171,22 @@ double GDALDecToPackedDMS( double );
 //************************************************************************
 
 %inline %{
-GDALDriver* GetDriverByName( char const *name ) {
-  return (GDALDriver*) GDALGetDriverByName( name );
+GDALDriverShadow* GetDriverByName( char const *name ) {
+  return (GDALDriverShadow*) GDALGetDriverByName( name );
 }
 %}
 
 %newobject Open;
 %inline %{
-GDALDataset* Open( char const* name, GDALAccess eAccess = GA_ReadOnly ) {
-  return (GDALDataset*) GDALOpen( name, eAccess );
+GDALDatasetShadow* Open( char const* name, GDALAccess eAccess = GA_ReadOnly ) {
+  return (GDALDatasetShadow*) GDALOpen( name, eAccess );
 }
 %}
 
 %newobject OpenShared;
 %inline %{
-GDALDataset* OpenShared( char const* name, GDALAccess eAccess = GA_ReadOnly ) {
-  return (GDALDataset*) GDALOpenShared( name, eAccess );
+GDALDatasetShadow* OpenShared( char const* name, GDALAccess eAccess = GA_ReadOnly ) {
+  return (GDALDatasetShadow*) GDALOpenShared( name, eAccess );
 }
 %}
 

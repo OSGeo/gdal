@@ -9,6 +9,11 @@
 
  *
  * $Log$
+ * Revision 1.7  2005/02/20 19:42:53  kruland
+ * Rename the Swig shadow classes so the names do not give the impression that
+ * they are any part of the GDAL/OSR apis.  There were no bugs with the old
+ * names but they were confusing.
+ *
  * Revision 1.6  2005/02/18 18:42:07  kruland
  * Added %feature("autodoc");
  *
@@ -136,8 +141,8 @@ using namespace std;
 
 #include "ogr_srs_api.h"
 
-typedef void SpatialReference;
-typedef void CoordinateTransformation;
+typedef void OSRSpatialReferenceShadow;
+typedef void OSRCoordinateTransformationShadow;
 
 typedef double * double_3;
 typedef double * double_7;
@@ -171,19 +176,20 @@ typedef int OGRErr;
  *
  */
 
-class SpatialReference {
+%rename (SpatialReference) OSRSpatialReferenceShadow;
+class OSRSpatialReferenceShadow {
 private:
 public:
 %extend {
-  SpatialReference( char const * arg = "" ) {
-    SpatialReference *sr = (SpatialReference*) OSRNewSpatialReference(arg);
+  OSRSpatialReferenceShadow( char const * arg = "" ) {
+    OSRSpatialReferenceShadow *sr = (OSRSpatialReferenceShadow*) OSRNewSpatialReference(arg);
     if (sr) {
       OSRReference( sr );
     }
     return sr;
   }
 
-  ~SpatialReference() {
+  ~OSRSpatialReferenceShadow() {
     if (OSRDereference( self ) == 0 ) {
       OSRDestroySpatialReference( self );
     }
@@ -200,11 +206,11 @@ public:
     return buf;
   }
 
-  int IsSame( SpatialReference *rhs ) {
+  int IsSame( OSRSpatialReferenceShadow *rhs ) {
     return OSRIsSame( self, rhs );
   }
 
-  int IsSameGeogCS( SpatialReference *rhs ) {
+  int IsSameGeogCS( OSRSpatialReferenceShadow *rhs ) {
     return OSRIsSameGeogCS( self, rhs );
   }
 
@@ -356,7 +362,7 @@ public:
     return OSRSetFromUserInput( self, name );
   }
 
-  OGRErr CopyGeogCSFrom( SpatialReference *rhs ) {
+  OGRErr CopyGeogCSFrom( OSRSpatialReferenceShadow *rhs ) {
     return OSRCopyGeogCSFrom( self, rhs );
   }
 
@@ -471,15 +477,15 @@ public:
   }
 
 %newobject CloneGeogCS;
-  SpatialReference *CloneGeogCS() {
-    return (SpatialReference*) OSRCloneGeogCS(self);
+  OSRSpatialReferenceShadow *CloneGeogCS() {
+    return (OSRSpatialReferenceShadow*) OSRCloneGeogCS(self);
   }
 
 /*
  * Commented out until the headers have changed to make OSRClone visible.
 %newobject Clone;
-  SpatialReference *Clone() {
-    return (SpatialReference*) OSRClone(self);
+  OSRSpatialReferenceShadow *Clone() {
+    return (OSRSpatialReferenceShadow*) OSRClone(self);
   }
 */
 
@@ -518,20 +524,21 @@ public:
  *
  */
 
-class CoordinateTransformation {
+%rename (CoordinateTransformation) OSRCoordinateTransformationShadow;
+class OSRCoordinateTransformationShadow {
 private:
 public:
 %extend {
 
-  CoordinateTransformation( SpatialReference *src, SpatialReference *dst ) {
-    CoordinateTransformation *obj = (CoordinateTransformation*) OCTNewCoordinateTransformation( src, dst );
+  OSRCoordinateTransformationShadow( OSRSpatialReferenceShadow *src, OSRSpatialReferenceShadow *dst ) {
+    OSRCoordinateTransformationShadow *obj = (OSRCoordinateTransformationShadow*) OCTNewCoordinateTransformation( src, dst );
     if (obj == 0 ) {
       throw "Failed to create coordinate transformation";
     }
     return obj;
   }
 
-  ~CoordinateTransformation() {
+  ~OSRCoordinateTransformationShadow() {
     OCTDestroyCoordinateTransformation( self );
   }
 

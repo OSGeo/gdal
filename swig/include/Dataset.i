@@ -9,6 +9,11 @@
 
  *
  * $Log$
+ * Revision 1.6  2005/02/20 19:42:53  kruland
+ * Rename the Swig shadow classes so the names do not give the impression that
+ * they are any part of the GDAL/OSR apis.  There were no bugs with the old
+ * names but they were confusing.
+ *
  * Revision 1.5  2005/02/17 17:27:13  kruland
  * Changed the handling of fixed size double arrays to make it fit more
  * naturally with GDAL/OSR usage.  Declare as typedef double * double_17;
@@ -35,15 +40,15 @@
 
 //************************************************************************
 //
-// Define the extensions for Dataset (nee GDALDataset)
+// Define the extensions for Dataset (nee GDALDatasetShadow)
 //
 //************************************************************************
 
-%rename (Dataset) GDALDataset;
+%rename (Dataset) GDALDatasetShadow;
 
-class GDALDataset {
+class GDALDatasetShadow {
 private:
-  GDALDataset();
+  GDALDatasetShadow();
 public:
 %extend {
 
@@ -52,7 +57,7 @@ public:
   int RasterYSize;
 %mutable;
 
-  ~GDALDataset() {
+  ~GDALDatasetShadow() {
     if ( GDALDereferenceDataset( self ) <= 0 ) {
       GDALClose(self);
     }
@@ -62,8 +67,8 @@ public:
     return (GDALDriver*) GDALGetDatasetDriver( self );
   }
 
-  GDALRasterBand* GetRasterBand(int nBand ) {
-    return (GDALRasterBand*) GDALGetRasterBand( self, nBand );
+  GDALRasterBandShadow* GetRasterBand(int nBand ) {
+    return (GDALRasterBandShadow*) GDALGetRasterBand( self, nBand );
   }
 
   char const *GetProjection() {
@@ -143,10 +148,10 @@ public:
 };
 
 %{
-int GDALDataset_RasterXSize_get( GDALDataset *h ) {
+int GDALDatasetShadow_RasterXSize_get( GDALDatasetShadow *h ) {
   return GDALGetRasterXSize( h );
 }
-int GDALDataset_RasterYSize_get( GDALDataset *h ) {
+int GDALDatasetShadow_RasterYSize_get( GDALDatasetShadow *h ) {
   return GDALGetRasterYSize( h );
 }
 %}
