@@ -6,7 +6,7 @@
  * Author:   Stephane Villeneuve, stephane.v@videotron.ca
  *
  ******************************************************************************
- * Copyright (c) 2000, Frank Warmerdam
+ * Copyright (c) 2000-2001, Stephane Villeneuve
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2001/07/03 03:20:55  danmo
+ * Avoid losing Scale value during OGRStyleTool::Parse().
+ *
  * Revision 1.3  2001/01/19 21:10:47  warmerda
  * replaced tabs
  *
@@ -940,15 +943,17 @@ GBool OGRStyleTool::Parse(OGRStyleParamId *pasStyle,
     
     i=0;
 
-    
+    // Save Scale and output Units because the parsing code will alter 
+    // the values
     eLastUnit = m_eUnit;
-    
+    double dSavedScale = m_dfScale;
+
     while (i < CSLCount(papszToken2))
     {
         for (j=0;j<nCount;j++)
           if (EQUAL(pasStyle[j].pszToken,papszToken2[i]))
           {
-                  if (pasStyle[j].bGeoref == TRUE)
+              if (pasStyle[j].bGeoref == TRUE)
                 SetInternalInputUnitFromParam(papszToken2[i+1]);
               
               OGRStyleTool::SetParamStr(pasStyle[j] ,
@@ -962,6 +967,7 @@ GBool OGRStyleTool::Parse(OGRStyleParamId *pasStyle,
     }
 
     m_eUnit = eLastUnit;
+    m_dfScale = dSavedScale;
 
     CSLDestroy(papszToken2);
     CSLDestroy(papszToken);
