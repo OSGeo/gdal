@@ -159,7 +159,7 @@ ENABLE_PREPROCESSING = YES
 # names in the source code. If set to NO (the default) only conditional 
 # compilation will be performed.
 
-MACRO_EXPANSION = NO
+MACRO_EXPANSION = YES
 
 # If the SEARCH_INCLUDES tag is set to YES (the default) the includes files
 # in the INCLUDE_PATH (see below) will be search if a #include is found.
@@ -178,7 +178,7 @@ INCLUDE_PATH =
 # or name=definition (no spaces). In the former case 1 is used as the
 # definition.
 
-PREDEFINED =
+PREDEFINED = HAVE_DLFCN_H CPL_DLL CPL_C_START CPL_C_END __cplusplus
 
 # If the EXPAND_ONLY_PREDEF and MACRO_EXPANSION tags are both set to YES
 # then the macro expansion is limited to the macros specified with the
