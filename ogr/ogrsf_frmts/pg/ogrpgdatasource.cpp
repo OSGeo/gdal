@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2002/01/13 21:48:32  warmerda
+ * fixed addgeometrycolumn call to include pszDBname
+ *
  * Revision 1.9  2002/01/13 16:23:16  warmerda
  * capture dbname= parameter for use in AddGeometryColumn() call
  *
@@ -509,8 +512,8 @@ OGRPGDataSource::CreateLayer( const char * pszLayerName,
         }
 
         sprintf( szCommand, 
-                 "SELECT AddGeometryColumn('warmerda','%s','wkb_geometry',%d,'%s',%d)",
-                 pszLayerName, nSRSId, pszGeometryType, 3 );
+                 "SELECT AddGeometryColumn('%s','%s','wkb_geometry',%d,'%s',%d)",
+                 pszDBName, pszLayerName, nSRSId, pszGeometryType, 3 );
 
         CPLDebug( "OGR_PG", "PQexec(%s)", szCommand );
         hResult = PQexec(hPGConn, szCommand);
