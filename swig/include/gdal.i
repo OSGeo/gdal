@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.10  2005/02/15 22:31:52  kruland
+ * Moved CPL wrapping to cpl.i
+ *
  * Revision 1.9  2005/02/15 22:02:16  kruland
  * Previous revision introduced a problem.  Put the #defines CPL_* back in
  * until the cpl specific code is cleaned up.
@@ -67,163 +70,12 @@ typedef double double_2[2];
 %import gdal_typemaps.i
 
 typedef int GDALAccess;
+typedef int GDALDataType;
 
 %rename (AllRegister) GDALAllRegister;
 void GDALAllRegister();
 
-//
-// CPL
-/* ==================================================================== */
-/*      Support function for error reporting callbacks to python.       */
-/* ==================================================================== */
-
-%{
-
-typedef struct _PyErrorHandlerData {
-    PyObject *psPyErrorHandler;
-    struct _PyErrorHandlerData *psPrevious;
-} PyErrorHandlerData;
-
-static PyErrorHandlerData *psPyHandlerStack = NULL;
-
-/************************************************************************/
-/*                        PyErrorHandlerProxy()                         */
-/************************************************************************/
-
-void PyErrorHandlerProxy( CPLErr eErrType, int nErrorCode, const char *pszMsg )
-
-{
-    PyObject *psArgs;
-    PyObject *psResult;
-
-    CPLAssert( psPyHandlerStack != NULL );
-    if( psPyHandlerStack == NULL )
-        return;
-
-    psArgs = Py_BuildValue("(iis)", (int) eErrType, nErrorCode, pszMsg );
-
-    psResult = PyEval_CallObject( psPyHandlerStack->psPyErrorHandler, psArgs);
-    Py_XDECREF(psArgs);
-
-    if( psResult != NULL )
-    {
-        Py_XDECREF( psResult );
-    }
-}
-
-/************************************************************************/
-/*                        CPLPushErrorHandler()                         */
-/************************************************************************/
-static PyObject *
-py_CPLPushErrorHandler(PyObject *self, PyObject *args) {
-
-    PyObject *psPyCallback = NULL;
-    PyErrorHandlerData *psCBData = NULL;
-    char *pszCallbackName = NULL;
-    CPLErrorHandler pfnHandler = NULL;
-
-    self = self;
-
-    if(!PyArg_ParseTuple(args,"O:CPLPushErrorHandler",	&psPyCallback ) )
-        return NULL;
-
-    psCBData = (PyErrorHandlerData *) CPLCalloc(sizeof(PyErrorHandlerData),1);
-    psCBData->psPrevious = psPyHandlerStack;
-    psPyHandlerStack = psCBData;
-
-    if( PyArg_Parse( psPyCallback, "s", &pszCallbackName ) )
-    {
-        if( EQUAL(pszCallbackName,"CPLQuietErrorHandler") )
-	    pfnHandler = CPLQuietErrorHandler;
-        else if( EQUAL(pszCallbackName,"CPLDefaultErrorHandler") )
-	    pfnHandler = CPLDefaultErrorHandler;
-        else if( EQUAL(pszCallbackName,"CPLLoggingErrorHandler") )
-            pfnHandler = CPLLoggingErrorHandler;
-        else
-        {
-	    PyErr_SetString(PyExc_ValueError,
-   	            "Unsupported callback name in CPLPushErrorHandler");
-            return NULL;
-        }
-    }
-    else
-    {
-	PyErr_Clear();
-	pfnHandler = PyErrorHandlerProxy;
-        psCBData->psPyErrorHandler = psPyCallback;
-        Py_INCREF( psPyCallback );
-    }
-
-    CPLPushErrorHandler( pfnHandler );
-
-    Py_INCREF(Py_None);
-    return Py_None;
-}
-
-%}
-
-%native(CPLPushErrorHandler) py_CPLPushErrorHandler;
-
-%ignore CPLPushErrorHandler;
-
-#define CPL_DLL
-#define CPL_C_START extern "C" {
-#define CPL_C_END }
-
-%include "port/cpl_error.h"
-%include "port/cpl_conv.h"
-
-%pythoncode %{
-def Debug(msg_class, message):
-    _gdal.CPLDebug( msg_class, message )
-
-def Error(err_class = CE_Failure, err_code = CPLE_AppDefined, msg = 'error' ):
-    _gdal.CPLError( err_class, err_code, msg )
-
-def ErrorReset():
-    _gdal.CPLErrorReset()
-
-def GetLastErrorNo():
-    return _gdal.CPLGetLastErrorNo()
-    
-def GetLastErrorType():
-    return _gdal.CPLGetLastErrorType()
-    
-def GetLastErrorMsg():
-    return _gdal.CPLGetLastErrorMsg()
-
-def PushErrorHandler( handler = "CPLQuietErrorHandler" ):
-    _gdal.CPLPushErrorHandler( handler )
-
-def PopErrorHandler():
-    _gdal.CPLPopErrorHandler()
-
-def PushFinderLocation( x ):
-    _gdal.CPLPushFinderLocation( x )
-
-def PopFinderLocation():
-    _gdal.CPLPopFinderLocation()
-
-def FinderClean():
-    _gdal.CPLFinderClean()
-
-def FindFile( classname, basename ):
-    return _gdal.CPLFindFile( classname, basename )
-
-def SetConfigOption( name, value ):
-    _gdal.CPLSetConfigOption( name, value )
-
-def GetConfigOption( name, default ):
-    return _gdal.CPLGetConfigOption( name, default )
-
-def ParseXMLString( text ):
-    return _gdal.CPLParseXMLString( text )
-    
-def SerializeXMLTree( tree ):
-    return _gdal.CPLSerializeXMLTree( tree )
-
-
-%}
+%include "cpl.i"
 
 %include "Driver.i"
 
