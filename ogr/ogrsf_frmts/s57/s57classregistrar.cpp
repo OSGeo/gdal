@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2000/08/30 09:14:08  warmerda
+ * added use of CPLFindFile
+ *
  * Revision 1.3  2000/06/07 20:50:58  warmerda
  * make CSV location configurable with env variable
  *
@@ -85,16 +88,23 @@ int S57ClassRegistrar::LoadInfo( const char * pszDirectory, int bReportErr )
     if( pszDirectory == NULL && getenv( "S57_CSV" ) != NULL )
         pszDirectory = getenv( "S57_CSV" );
 
-    if( pszDirectory == NULL )
-        pszDirectory = ".";
-
 /* ==================================================================== */
 /*      Read the s57objectclasses file.                                 */
 /* ==================================================================== */
 /* -------------------------------------------------------------------- */
 /*      Try to open the csv file.                                       */
 /* -------------------------------------------------------------------- */
-    pszFilename = CPLFormFilename( pszDirectory, "s57objectclasses.csv", NULL);
+    if( pszDirectory == NULL )
+    {
+        pszFilename = CPLFindFile( "s57", "s57objectclasses.csv" );
+        if( pszFilename == NULL )
+            pszFilename = "s57objectclasses.csv";
+    }
+    else
+    {
+        pszFilename = CPLFormFilename( pszDirectory, 
+                                       "s57objectclasses.csv", NULL);
+    }
 
     fp = VSIFOpen( pszFilename, "rt" );
     if( fp == NULL )
@@ -155,7 +165,17 @@ int S57ClassRegistrar::LoadInfo( const char * pszDirectory, int bReportErr )
 /* ==================================================================== */
 /*      Read the attributes list.                                       */
 /* ==================================================================== */
-    pszFilename = CPLFormFilename( pszDirectory, "s57attributes.csv", NULL);
+    if( pszDirectory == NULL )
+    {
+        pszFilename = CPLFindFile( "s57", "s57attributes.csv" );
+        if( pszFilename == NULL )
+            pszFilename = "s57attributes.csv";
+    }
+    else
+    {
+        pszFilename = CPLFormFilename( pszDirectory, 
+                                       "s57attributes.csv", NULL);
+    }
 
     fp = VSIFOpen( pszFilename, "rt" );
     if( fp == NULL )
@@ -223,7 +243,7 @@ int S57ClassRegistrar::LoadInfo( const char * pszDirectory, int bReportErr )
         CSLDestroy( papszTokens );
     }
 
-    VSIFClose( fp );
+     VSIFClose( fp );
     
 /* -------------------------------------------------------------------- */
 /*      Build unsorted index of attributes.                             */
