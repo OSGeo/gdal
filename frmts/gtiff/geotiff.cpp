@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.55  2001/10/10 14:19:25  warmerda
+ * substantial restructuring to added INTERLEAVE output option
+ *
  * Revision 1.54  2001/10/04 17:29:47  warmerda
  * hopefully fixed #if tests
  *
@@ -199,7 +202,11 @@ class GTiffDataset : public GDALDataset
     uint32	nBlockYSize;
 
     int		nLoadedBlock;		/* or tile */
+    int         bLoadedBlockDirty;  
     GByte	*pabyBlockBuf;
+
+    CPLErr      LoadBlockBuf( int );
+    CPLErr      FlushBlockBuf();
 
     char	*pszProjection;
     double	adfGeoTransform[6];
@@ -408,61 +415,12 @@ CPLErr GTiffRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     }
 
 /* -------------------------------------------------------------------- */
-/*      Allocate a temporary buffer for this strip.                     */
+/*      Load desired block                                              */
 /* -------------------------------------------------------------------- */
-    if( poGDS->pabyBlockBuf == NULL )
-    {
-        poGDS->pabyBlockBuf = (GByte *) VSICalloc( 1, nBlockBufSize );
-        if( poGDS->pabyBlockBuf == NULL )
-        {
-            CPLError( CE_Failure, CPLE_OutOfMemory,
-                   "Unable to allocate %d bytes for a temporary strip buffer\n"
-                      "in GeoTIFF driver.",
-                      nBlockBufSize );
-            
-            return( CE_Failure );
-        }
-    }
-    
-/* -------------------------------------------------------------------- */
-/*      Read the strip                                                  */
-/* -------------------------------------------------------------------- */
-    if( poGDS->nLoadedBlock != nBlockId )
-    {
-        if( TIFFIsTiled( poGDS->hTIFF ) )
-        {
-            if( TIFFReadEncodedTile(poGDS->hTIFF, nBlockId,
-                                    poGDS->pabyBlockBuf,
-                                    nBlockBufSize) == -1 )
-            {
-                /* Once TIFFError() is properly hooked, this can go away */
-                CPLError( CE_Failure, CPLE_AppDefined,
-                          "TIFFReadEncodedTile() failed." );
-                
-                memset( poGDS->pabyBlockBuf, 0, nBlockBufSize );
-                
-                eErr = CE_Failure;
-            }
-        }
-        else
-        {
-            if( TIFFReadEncodedStrip(poGDS->hTIFF, nBlockId,
-                                     poGDS->pabyBlockBuf,
-                                     nBlockBufSize) == -1 )
-            {
-                /* Once TIFFError() is properly hooked, this can go away */
-                CPLError( CE_Failure, CPLE_AppDefined,
-                          "TIFFReadEncodedStrip() failed." );
-                
-                memset( poGDS->pabyBlockBuf, 0, nBlockBufSize );
-                
-                eErr = CE_Failure;
-            }
-        }
-    }
+    eErr = poGDS->LoadBlockBuf( nBlockId );
+    if( eErr != CE_None )
+        return eErr;
 
-    poGDS->nLoadedBlock = nBlockId;
-                              
 /* -------------------------------------------------------------------- */
 /*      Handle simple case of eight bit data, and pixel interleaving.   */
 /* -------------------------------------------------------------------- */
@@ -514,6 +472,7 @@ CPLErr GTiffRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
 {
     GTiffDataset	*poGDS = (GTiffDataset *) poDS;
     int		nBlockId, nBlockBufSize;
+    CPLErr      eErr = CE_None;
 
     poGDS->Crystalize();
     poGDS->SetDirectory();
@@ -523,22 +482,63 @@ CPLErr GTiffRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
                && nBlockYOff >= 0
                && pImage != NULL );
 
-    CPLAssert( poGDS->nBands == 1 
-               || poGDS->nPlanarConfig == PLANARCONFIG_SEPARATE );
-
-    nBlockId = nBlockXOff + nBlockYOff * nBlocksPerRow
-        + (nBand-1) * poGDS->nBlocksPerBand;
+/* -------------------------------------------------------------------- */
+/*      Handle case of "separate" images                                */
+/* -------------------------------------------------------------------- */
+    if( poGDS->nPlanarConfig == PLANARCONFIG_SEPARATE
+        || poGDS->nBands == 1 )
+    {
+        nBlockId = nBlockXOff + nBlockYOff * nBlocksPerRow
+            + (nBand-1) * poGDS->nBlocksPerBand;
         
-    if( TIFFIsTiled(poGDS->hTIFF) )
-    {
-        nBlockBufSize = TIFFTileSize( poGDS->hTIFF );
-        TIFFWriteEncodedTile( poGDS->hTIFF, nBlockId, pImage, nBlockBufSize );
+        if( TIFFIsTiled(poGDS->hTIFF) )
+        {
+            nBlockBufSize = TIFFTileSize( poGDS->hTIFF );
+            if( TIFFWriteEncodedTile( poGDS->hTIFF, nBlockId, pImage, 
+                                      nBlockBufSize ) == -1 )
+                eErr = CE_Failure;
+        }
+        else
+        {
+            nBlockBufSize = TIFFStripSize( poGDS->hTIFF );
+            if( TIFFWriteEncodedStrip( poGDS->hTIFF, nBlockId, pImage, 
+                                       nBlockBufSize ) == -1 )
+                eErr = CE_Failure;
+        }
+
+        return eErr;
     }
-    else
+
+/* -------------------------------------------------------------------- */
+/*      Handle case of pixel interleaved (PLANARCONFIG_CONTIG) images.  */
+/* -------------------------------------------------------------------- */
+
+    nBlockId = nBlockXOff + nBlockYOff * nBlocksPerRow;
+        
+    eErr = poGDS->LoadBlockBuf( nBlockId );
+    if( eErr != CE_None )
+        return eErr;
+
+/* -------------------------------------------------------------------- */
+/*      Handle simple case of eight bit data, and pixel interleaving.   */
+/* -------------------------------------------------------------------- */
+    int	i, nBlockPixels, nWordBytes;
+    GByte	*pabyImage;
+
+    nWordBytes = poGDS->nBitsPerSample / 8;
+    pabyImage = poGDS->pabyBlockBuf + (nBand - 1) * nWordBytes;
+    
+    nBlockPixels = nBlockXSize * nBlockYSize;
+    for( i = 0; i < nBlockPixels; i++ )
     {
-        nBlockBufSize = TIFFStripSize( poGDS->hTIFF );
-        TIFFWriteEncodedStrip( poGDS->hTIFF, nBlockId, pImage, nBlockBufSize );
+        for( int j = 0; j < nWordBytes; j++ )
+        {
+            pabyImage[j] = ((GByte *) pImage)[i*nWordBytes + j];
+        }
+        pabyImage += poGDS->nBands * nWordBytes;
     }
+
+    poGDS->bLoadedBlockDirty = TRUE;
 
     return CE_None;
 }
@@ -939,61 +939,12 @@ CPLErr GTiffBitmapBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     nBlockId = nBlockXOff + nBlockYOff * nBlocksPerRow;
 
 /* -------------------------------------------------------------------- */
-/*      Allocate a temporary buffer for this strip.                     */
+/*      Load the block buffer.                                          */
 /* -------------------------------------------------------------------- */
-    if( poGDS->pabyBlockBuf == NULL )
-    {
-        poGDS->pabyBlockBuf = (GByte *) VSICalloc( 1, nBlockBufSize );
-        if( poGDS->pabyBlockBuf == NULL )
-        {
-            CPLError( CE_Failure, CPLE_OutOfMemory,
-                   "Unable to allocate %d bytes for a temporary strip buffer\n"
-                      "in GeoTIFF driver.",
-                      nBlockBufSize );
-            
-            return( CE_Failure );
-        }
-    }
-    
-/* -------------------------------------------------------------------- */
-/*      Read the strip                                                  */
-/* -------------------------------------------------------------------- */
-    if( poGDS->nLoadedBlock != nBlockId )
-    {
-        if( TIFFIsTiled( poGDS->hTIFF ) )
-        {
-            if( TIFFReadEncodedTile( poGDS->hTIFF, nBlockId, 
-                                     poGDS->pabyBlockBuf,
-                                     nBlockBufSize ) == -1 )
-            {
-                memset( poGDS->pabyBlockBuf, 0, nBlockBufSize );
-                CPLError( CE_Failure, CPLE_AppDefined,
-                          "TIFFReadEncodedStrip() failed.\n" );
-                
-                eErr = CE_Failure;
-            }
-        }
-        else
-        {
-            
-            if( TIFFReadEncodedStrip( poGDS->hTIFF, nBlockId, 
-                                      poGDS->pabyBlockBuf,
-                                      nBlockBufSize ) == -1 )
-            {
-                memset( poGDS->pabyBlockBuf, 0, nBlockBufSize );
-                CPLError( CE_Failure, CPLE_AppDefined,
-                          "TIFFReadEncodedStrip() failed.\n" );
-                
-                eErr = CE_Failure;
-            }
-        }
+    eErr = poGDS->LoadBlockBuf( nBlockId );
+    if( eErr != CE_None )
+        return eErr;
 
-        if( eErr != CE_None )
-            return eErr;
-
-        poGDS->nLoadedBlock = nBlockId;
-    }
-                              
 /* -------------------------------------------------------------------- */
 /*      Translate 1bit data to eight bit.                               */
 /* -------------------------------------------------------------------- */
@@ -1179,6 +1130,7 @@ GTiffDataset::GTiffDataset()
 
 {
     nLoadedBlock = -1;
+    bLoadedBlockDirty = FALSE;
     pabyBlockBuf = NULL;
     hTIFF = NULL;
     bNewDataset = FALSE;
@@ -1259,6 +1211,153 @@ GTiffDataset::~GTiffDataset()
 }
 
 /************************************************************************/
+/*                           FlushBlockBuf()                            */
+/************************************************************************/
+
+CPLErr GTiffDataset::FlushBlockBuf()
+
+{
+    int		nBlockBufSize;
+    CPLErr      eErr = CE_None;
+
+    if( nLoadedBlock < 0 || !bLoadedBlockDirty )
+        return CE_None;
+
+    if( TIFFIsTiled(hTIFF) )
+        nBlockBufSize = TIFFTileSize( hTIFF );
+    else
+        nBlockBufSize = TIFFStripSize( hTIFF );
+
+    bLoadedBlockDirty = FALSE;
+
+    if( TIFFIsTiled( hTIFF ) )
+    {
+        if( TIFFWriteEncodedTile(hTIFF, nLoadedBlock, pabyBlockBuf,
+                                 nBlockBufSize) == -1 )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "TIFFWriteEncodedTile() failed." );
+            eErr = CE_Failure;
+        }
+    }
+    else
+    {
+        if( TIFFWriteEncodedStrip(hTIFF, nLoadedBlock, pabyBlockBuf,
+                                 nBlockBufSize) == -1 )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "TIFFWriteEncodedStrip() failed." );
+            eErr = CE_Failure;
+        }
+    }
+
+    return eErr;;
+}
+
+/************************************************************************/
+/*                            LoadBlockBuf()                            */
+/*                                                                      */
+/*      Load working block buffer with request block (tile/strip).      */
+/************************************************************************/
+
+CPLErr GTiffDataset::LoadBlockBuf( int nBlockId )
+
+{
+    int	nBlockBufSize;
+    CPLErr	eErr = CE_None;
+
+    if( nLoadedBlock == nBlockId )
+        return CE_None;
+
+/* -------------------------------------------------------------------- */
+/*      If we have a dirty loaded block, flush it out first.            */
+/* -------------------------------------------------------------------- */
+    if( nLoadedBlock != -1 && bLoadedBlockDirty )
+    {
+        eErr = FlushBlockBuf();
+        if( eErr != CE_None )
+            return eErr;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Get block size.                                                 */
+/* -------------------------------------------------------------------- */
+    if( TIFFIsTiled(hTIFF) )
+        nBlockBufSize = TIFFTileSize( hTIFF );
+    else
+        nBlockBufSize = TIFFStripSize( hTIFF );
+
+/* -------------------------------------------------------------------- */
+/*      Allocate a temporary buffer for this strip.                     */
+/* -------------------------------------------------------------------- */
+    if( pabyBlockBuf == NULL )
+    {
+        pabyBlockBuf = (GByte *) VSICalloc( 1, nBlockBufSize );
+        if( pabyBlockBuf == NULL )
+        {
+            CPLError( CE_Failure, CPLE_OutOfMemory,
+                      "Unable to allocate %d bytes for a temporary strip buffer\n"
+                      "in GeoTIFF driver.",
+                      nBlockBufSize );
+            
+            return( CE_Failure );
+        }
+    }
+    
+/* -------------------------------------------------------------------- */
+/*      If we don't have this block already loaded, and we know it      */
+/*      doesn't yet exist on disk, just zero the memory buffer and      */
+/*      pretend we loaded it.                                           */
+/* -------------------------------------------------------------------- */
+    if( eAccess == GA_Update 
+        && (((int) hTIFF->tif_dir.td_nstrips) <= nBlockId
+            || hTIFF->tif_dir.td_stripbytecount[nBlockId] == 0) )
+    {
+        memset( pabyBlockBuf, 0, nBlockBufSize );
+        nLoadedBlock = nBlockId;
+        return CE_None;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Load the block, if it isn't our current block.                  */
+/* -------------------------------------------------------------------- */
+    if( TIFFIsTiled( hTIFF ) )
+    {
+        if( TIFFReadEncodedTile(hTIFF, nBlockId, pabyBlockBuf,
+                                nBlockBufSize) == -1 )
+        {
+            /* Once TIFFError() is properly hooked, this can go away */
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "TIFFReadEncodedTile() failed." );
+                
+            memset( pabyBlockBuf, 0, nBlockBufSize );
+                
+            eErr = CE_Failure;
+        }
+    }
+    else
+    {
+        if( TIFFReadEncodedStrip(hTIFF, nBlockId, pabyBlockBuf,
+                                 nBlockBufSize) == -1 )
+        {
+            /* Once TIFFError() is properly hooked, this can go away */
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "TIFFReadEncodedStrip() failed." );
+                
+            memset( pabyBlockBuf, 0, nBlockBufSize );
+                
+            eErr = CE_Failure;
+        }
+    }
+
+    nLoadedBlock = nBlockId;
+    bLoadedBlockDirty = FALSE;
+
+    return eErr;
+}
+
+
+/************************************************************************/
 /*                             Crystalize()                             */
 /*                                                                      */
 /*      Make sure that the directory information is written out for     */
@@ -1292,9 +1391,13 @@ void GTiffDataset::FlushCache()
 {
     GDALDataset::FlushCache();
 
+    if( bLoadedBlockDirty && nLoadedBlock != -1 )
+        FlushBlockBuf();
+
     CPLFree( pabyBlockBuf );
     pabyBlockBuf = NULL;
     nLoadedBlock = -1;
+    bLoadedBlockDirty = FALSE;
 }
 
 /************************************************************************/
@@ -2013,7 +2116,8 @@ TIFF *GTiffCreate( const char * pszFilename,
     int                 bTiled = FALSE;
     int                 nCompression = COMPRESSION_NONE;
     uint16              nSampleFormat;
-    
+    int			nPlanar;
+
 /* -------------------------------------------------------------------- */
 /*	Setup values based on options.					*/
 /* -------------------------------------------------------------------- */
@@ -2025,6 +2129,31 @@ TIFF *GTiffCreate( const char * pszFilename,
 
     if( CSLFetchNameValue(papszParmList,"BLOCKYSIZE")  != NULL )
         nBlockYSize = atoi(CSLFetchNameValue(papszParmList,"BLOCKYSIZE"));
+
+    if( CSLFetchNameValue(papszParmList,"INTERLEAVE")  != NULL )
+    {
+        const char *pszInterleave;
+
+        pszInterleave = CSLFetchNameValue(papszParmList,"INTERLEAVE");
+        if( EQUAL(pszInterleave,"PIXEL") )
+            nPlanar = PLANARCONFIG_CONTIG;
+        else if( EQUAL(pszInterleave,"BAND") )
+            nPlanar = PLANARCONFIG_SEPARATE;
+        else
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                     "INTERLEAVE=%s unsupported, value must be PIXEL or BAND.",
+                      pszInterleave );
+            return NULL;
+        }
+    }
+    else 
+    {
+        if( nBands == 1 )
+            nPlanar = PLANARCONFIG_CONTIG;
+        else
+            nPlanar = PLANARCONFIG_SEPARATE;
+    }
 
     if( CSLFetchNameValue(papszParmList,"COMPRESS")  != NULL )
     {
@@ -2077,15 +2206,7 @@ TIFF *GTiffCreate( const char * pszFilename,
 
     TIFFSetField( hTIFF, TIFFTAG_SAMPLEFORMAT, nSampleFormat );
     TIFFSetField( hTIFF, TIFFTAG_SAMPLESPERPIXEL, nBands );
-
-    if( nBands > 1 )
-    {
-        TIFFSetField( hTIFF, TIFFTAG_PLANARCONFIG, PLANARCONFIG_SEPARATE );
-    }
-    else
-    {
-        TIFFSetField( hTIFF, TIFFTAG_PLANARCONFIG, PLANARCONFIG_CONTIG );
-    }
+    TIFFSetField( hTIFF, TIFFTAG_PLANARCONFIG, nPlanar );
 
     if( nBands == 3 )
         TIFFSetField( hTIFF, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_RGB );
@@ -2218,6 +2339,7 @@ GTiffCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     int  nYSize = poSrcDS->GetRasterYSize();
     GDALDataType eType = poSrcDS->GetRasterBand(1)->GetRasterDataType();
     CPLErr      eErr = CE_None;
+    uint16 nPlanarConfig;
         
     if( !pfnProgress( 0.0, NULL, pProgressData ) )
         return NULL;
@@ -2230,6 +2352,8 @@ GTiffCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
     if( hTIFF == NULL )
         return NULL;
+
+    TIFFGetField( hTIFF, TIFFTAG_PLANARCONFIG, &nPlanarConfig );
 
 /* -------------------------------------------------------------------- */
 /*      Are we really producing an RGBA image?  If so, set the          */
@@ -2410,7 +2534,7 @@ GTiffCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Copy image data ... tiled.                                      */
 /* -------------------------------------------------------------------- */
-    if( TIFFIsTiled( hTIFF ) )
+    if( TIFFIsTiled( hTIFF ) && nPlanarConfig == PLANARCONFIG_SEPARATE )
     {
         uint32  nBlockXSize;
         uint32	nBlockYSize;
@@ -2492,7 +2616,7 @@ GTiffCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Copy image data, one scanline at a time.                        */
 /* -------------------------------------------------------------------- */
-    else
+    else if( !TIFFIsTiled(hTIFF) && nPlanarConfig == PLANARCONFIG_SEPARATE )
     {
         int     nLinesDone = 0, nPixelSize, nLineSize;
         GByte   *pabyLine;
@@ -2532,6 +2656,139 @@ GTiffCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                     CPLError( CE_Failure, CPLE_UserInterrupt, 
                               "User terminated CreateCopy()" );
                 }
+            }
+        }
+
+        CPLFree( pabyLine );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Copy image data ... tiled.                                      */
+/* -------------------------------------------------------------------- */
+    else if( TIFFIsTiled( hTIFF ) && nPlanarConfig == PLANARCONFIG_CONTIG )
+    {
+        uint32  nBlockXSize;
+        uint32	nBlockYSize;
+        int     nTileSize, nTilesAcross, nTilesDown, iTileX, iTileY, nElemSize;
+        GByte   *pabyTile;
+        int     nTilesDone = 0, nPixelSize;
+
+        TIFFGetField( hTIFF, TIFFTAG_TILEWIDTH, &nBlockXSize );
+        TIFFGetField( hTIFF, TIFFTAG_TILELENGTH, &nBlockYSize );
+        
+        nTilesAcross = (nXSize+nBlockXSize-1) / nBlockXSize;
+        nTilesDown = (nYSize+nBlockYSize-1) / nBlockYSize;
+
+        nElemSize = GDALGetDataTypeSize(eType) / 8;
+        nPixelSize = nElemSize * nBands;
+        nTileSize =  nPixelSize * nBlockXSize * nBlockYSize;
+        pabyTile = (GByte *) CPLMalloc(nTileSize);
+
+        for( iTileY = 0; 
+             eErr == CE_None && iTileY < nTilesDown; 
+             iTileY++ )
+        {
+            for( iTileX = 0; 
+                 eErr == CE_None && iTileX < nTilesAcross; 
+                 iTileX++ )
+            {
+                int   nThisBlockXSize = nBlockXSize;
+                int   nThisBlockYSize = nBlockYSize;
+                
+                if( (int) ((iTileX+1) * nBlockXSize) > nXSize )
+                {
+                    nThisBlockXSize = nXSize - iTileX*nBlockXSize;
+                    memset( pabyTile, 0, nTileSize );
+                }
+
+                if( (int) ((iTileY+1) * nBlockYSize) > nYSize )
+                {
+                    nThisBlockYSize = nYSize - iTileY*nBlockYSize;
+                    memset( pabyTile, 0, nTileSize );
+                }
+
+                for( int iBand = 0; 
+                     eErr == CE_None && iBand < nBands; 
+                     iBand++ )
+                {
+                    GDALRasterBand *poBand = poSrcDS->GetRasterBand(iBand+1);
+
+                    eErr = poBand->RasterIO( GF_Read, 
+                                             iTileX * nBlockXSize, 
+                                             iTileY * nBlockYSize, 
+                                             nThisBlockXSize, 
+                                             nThisBlockYSize,
+                                             pabyTile + iBand * nElemSize,
+                                             nThisBlockXSize, 
+                                             nThisBlockYSize, eType,
+                                             nPixelSize, 
+                                             nBlockXSize * nPixelSize );
+                }
+
+                TIFFWriteEncodedTile( hTIFF, nTilesDone, pabyTile, 
+                                      nTileSize );
+
+                nTilesDone++;
+
+                if( eErr == CE_None 
+                    && !pfnProgress( nTilesDone / 
+                                     ((double) nTilesAcross * nTilesDown),
+                                     NULL, pProgressData ) )
+                {
+                    eErr = CE_Failure;
+                    CPLError( CE_Failure, CPLE_UserInterrupt, 
+                              "User terminated CreateCopy()" );
+                }
+            }
+        }
+
+        CPLFree( pabyTile );
+    }
+/* -------------------------------------------------------------------- */
+/*      Copy image data, one scanline at a time.                        */
+/* -------------------------------------------------------------------- */
+    else if( !TIFFIsTiled(hTIFF) && nPlanarConfig == PLANARCONFIG_CONTIG )
+    {
+        int     nLinesDone = 0, nPixelSize, nLineSize, nElemSize;
+        GByte   *pabyLine;
+
+        nElemSize = GDALGetDataTypeSize(eType) / 8;
+        nPixelSize = nElemSize * nBands;
+        nLineSize =  nPixelSize * nXSize;
+        pabyLine = (GByte *) CPLMalloc(nLineSize);
+
+        for( int iLine = 0; 
+             eErr == CE_None && iLine < nYSize; 
+             iLine++ )
+        {
+            for( int iBand = 0; 
+                 eErr == CE_None && iBand < nBands; 
+                 iBand++ )
+            {
+                GDALRasterBand *poBand = poSrcDS->GetRasterBand(iBand+1);
+
+                eErr = poBand->RasterIO( GF_Read, 0, iLine, nXSize, 1, 
+                                         pabyLine + iBand * nElemSize, 
+                                         nXSize, 1, eType, 
+                                         nPixelSize, nLineSize );
+            }
+
+            if( eErr == CE_None 
+                && TIFFWriteScanline( hTIFF, pabyLine, iLine, 0 ) == -1 )
+            {
+                CPLError( CE_Failure, CPLE_AppDefined,
+                          "TIFFWriteScanline failed." );
+                eErr = CE_Failure;
+            }
+
+            nLinesDone++;
+            if( eErr == CE_None 
+                && !pfnProgress( nLinesDone / ((double) nYSize), 
+                                 NULL, pProgressData ) )
+            {
+                eErr = CE_Failure;
+                CPLError( CE_Failure, CPLE_UserInterrupt, 
+                          "User terminated CreateCopy()" );
             }
         }
 
