@@ -55,6 +55,14 @@ JPEG_SUPPORTED = 1
 #PNGDIR = c:/projects/libpng-1.0.8
 #PNG_LIB = $(PNGDIR)/libpng.lib
 
+# if using an external libtiff library
+#TIFF_INC =	-Ic:/warmerda/libtiff/libtiff
+#TIFF_LIB =	c:/warmerda/libtiff/libtiff/libtiff_i.lib
+
+# if using an external libgeotiff library
+#GEOTIFF_INC =   -Ic:/warmerda/libgeotiff -Ic:/warmerda/libgeotiff/libxtiff
+#GEOTIFF_LIB =   C:/warmerda/libgeotiff/geotiff_i.lib
+
 # Uncomment the following and update to enable ECW support.
 #ECWDIR  = 	D:\Software\ECW_SDK
 #ECWLIB  =       $(ECWDIR)\lib\NCSEcw.lib $(ECWDIR)\lib\NCSEcwC.lib \
