@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2003/05/30 16:17:21  warmerda
+ * fix warnings with casting and unused parameters
+ *
  * Revision 1.11  2002/11/23 18:54:17  warmerda
  * added CREATIONDATATYPES metadata for drivers
  *
@@ -141,6 +144,7 @@ CPLErr DTEDRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     int         nYSize = poDTED_DS->psDTED->nYSize;
     GInt16      *panData;
 
+    (void) nBlockXOff;
     CPLAssert( nBlockYOff == 0 );
 
 /* -------------------------------------------------------------------- */
@@ -281,6 +285,11 @@ DTEDCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                 GDALProgressFunc pfnProgress, void * pProgressData )
 
 {
+    (void) pProgressData;
+    (void) pfnProgress;
+    (void) papszOptions;
+    (void) bStrict;
+
 /* -------------------------------------------------------------------- */
 /*      Work out the level.                                             */
 /* -------------------------------------------------------------------- */

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2003/05/30 16:17:21  warmerda
+ * fix warnings with casting and unused parameters
+ *
  * Revision 1.7  2003/05/30 16:08:07  warmerda
  * fixed setting of SE corner in DSI record
  *
@@ -64,7 +67,7 @@ CPL_CVSID("$Id$");
 /*                           DTEDFormatDMS()                            */
 /************************************************************************/
 
-static void DTEDFormatDMS( char *achField, double dfAngle, 
+static void DTEDFormatDMS( unsigned char *achField, double dfAngle, 
                            const char *pszLatLong, const char *pszFormat )
 
 {
@@ -104,14 +107,14 @@ static void DTEDFormatDMS( char *achField, double dfAngle,
     sprintf( szWork, pszFormat,
              nDegrees, nMinutes, nSeconds, chHemisphere );
 
-    strncpy( achField, szWork, strlen(szWork) );
+    strncpy( (char *) achField, szWork, strlen(szWork) );
 }
 
 /************************************************************************/
 /*                             DTEDFormat()                             */
 /************************************************************************/
 
-static void DTEDFormat( char *pszTarget, const char *pszFormat, ... )
+static void DTEDFormat( unsigned char *pszTarget, const char *pszFormat, ... )
 
 {
     va_list args;
@@ -121,7 +124,7 @@ static void DTEDFormat( char *pszTarget, const char *pszFormat, ... )
     vsprintf( szWork, pszFormat, args );
     va_end(args);
 
-    strncpy( pszTarget, szWork, strlen(szWork) );
+    strncpy( (char *) pszTarget, szWork, strlen(szWork) );
 }
 
 /************************************************************************/
@@ -285,11 +288,11 @@ const char *DTEDCreate( const char *pszFilename, int nLevel,
     for( iProfile = 0; iProfile < nXSize; iProfile++ )
     {
         achRecord[1] = 0;
-        achRecord[2] = iProfile / 256;
-        achRecord[3] = iProfile % 256;
+        achRecord[2] = (GByte) (iProfile / 256);
+        achRecord[3] = (GByte) (iProfile % 256);
         
-        achRecord[4] = iProfile / 256;
-        achRecord[5] = iProfile % 256;
+        achRecord[4] = (GByte) (iProfile / 256);
+        achRecord[5] = (GByte) (iProfile % 256);
 
         if( VSIFWrite( achRecord, nYSize*2 + 12, 1, fp ) != 1 )
             return "Data record write failed.";
