@@ -33,6 +33,14 @@ is used as a source of OGC WKB geometry.<p>
 If there is an "ogc_fid" field, it will be used to set the feature id of
 the features, and not treated as a regular field. <p>
 
+The PostgreSQL driver passes SQL statements directly to PostgreSQL rather
+than evaluating them internally when using the ExecuteSQL() call on the
+OGRDataSource, or the -sql command option to ogr2ogr.  Attribute query
+expressions are also passed through to PostgreSQL.  The PostgreSQL
+driver in OGR supports the OGRDataSource::StartTrasaction(), 
+OGRDataSource::CommitTransaction() and OGRDataSource::RollbackTransaction()
+calls in the normal SQL sense.<p>
+
 <h2>Caveats</h2>
 
 <ul>
@@ -91,7 +99,50 @@ None<p>
 <b>GEOM_TYPE</b>: The GEOM_TYPE layer creation option can be set to 
 one of "Geometry", "BYTEA" or "OID" to force the type of geometry used for
 a table. <p>
+<li> <b>OVERWRITE</b>: This may be "YES" to force an existing layer of the
+desired name to be destroyed before creating the requested layer.<p>
 </ul>
+
+<h3>Example</h3>
+
+Simple translation of a shapefile into PostgreSQL.  The table 'abc' will
+be created with the features from abc.shp and attributes from abc.dbf. 
+The database instance (warmerda) must already exist, and the table abc must
+not already exist. <p>
+
+<pre>
+% ogr2ogr -f PostgreSQL PG:dbname=warmerda abc.shp
+</pre>
+
+This second example loads a political boundaries layer from VPF (via the
+<a href="drv_ogdi.html">OGDI driver</a>), and renames the layer from the
+cryptic OGDI layer name to something more sensible.  If an existing table
+of the desired name exists it is overwritten.<p>
+
+<pre>
+% ogr2ogr -f PostgreSQL PG:dbname=warmerda \
+        gltp:/vrf/usr4/mpp1/v0eur/vmaplv0/eurnasia \
+        -lco OVERWRITE=yes -nln polbndl_bnd 'polbndl@bnd(*)_line'
+</pre>
+
+In this example we merge tiger line data from two different directories of
+tiger files into one table.  Note that the second invocation uses -append
+and no OVERWRITE=yes. <p>
+
+<pre>
+% ogr2ogr -f PostgreSQL PG:dbname=warmerda tiger_michigan \
+     -lco OVERWRITE=yes CompleteChain
+% ogr2ogr -update -append -f PostgreSQL PG:dbname=warmerda tiger_ohio \
+     CompleteChain
+</pre>
+
+This example shows using ogrinfo to evaluate an SQL query statement 
+within PostgreSQL.  More sophisticated PostGIS specific queries may also be
+used via the -sql commandline switch to ogrinfo.<p>
+
+<pre>
+ogrinfo -ro PG:dbname=warmerda -sql "SELECT pop_1994 from canada where province_name = 'Alberta'"
+</pre>
 
 <h3>See Also</h3>
 
