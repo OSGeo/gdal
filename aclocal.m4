@@ -170,7 +170,8 @@ AC_DEFUN(AC_LD_SHARED,
 [
   echo 'void g(); int main(){ g(); return 0; }' > conftest1.c
 
-  echo 'void g(); void g(){}' > conftest2.c
+  echo '#include <stdio.h>' > conftest2.c
+  echo 'void g(); void g(){printf("");}' >> conftest2.c
   ${CC} ${C_PIC} -c conftest2.c
 
   SO_EXT="so"
