@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.22  2002/08/13 14:38:41  warmerda
+ * add some debugging
+ *
  * Revision 1.21  2002/08/13 13:31:02  warmerda
  * removed MEDC related checks
  *
@@ -225,6 +228,8 @@ OGRDataSource *SFGetOGRDataSource(IUnknown *pUnk)
 
     if (pUnk)
         pIDB = SFGetDataSourceProperties(pUnk);
+    else
+        CPLDebug( "OLEDB", "SFGetOGRDataSource, pUnk == NULL." );
 
     if (pIDB)
     {
@@ -237,12 +242,19 @@ OGRDataSource *SFGetOGRDataSource(IUnknown *pUnk)
             {
                 pOGR = (OGRDataSource*) (ulVal);
             }
+            else
+            {
+                CPLDebug( "OLEDB", 
+                   "SFGetOGRDatasource(), GetKey failed, or returned NULL." );
+            }
 
             pIKey->Release();
         }
 
         pIDB->Release();
     }
+    else
+        CPLDebug( "OLEDB", "SFGetOGRDataSource, pIDB == NULL." );
 
     return pOGR;
 }
