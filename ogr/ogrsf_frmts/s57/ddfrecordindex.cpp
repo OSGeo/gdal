@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2004/08/30 20:08:34  warmerda
+ * added support for client info stored with records
+ *
  * Revision 1.9  2004/08/27 19:58:38  warmerda
  * Don't delete clone records in Clear() method.  Leave this for the
  * DDFModule destructor to do (re: DMSG Bug 3025).
@@ -145,6 +148,7 @@ void DDFRecordIndex::AddRecord( int nKey, DDFRecord * poRecord )
 
     pasRecords[nRecordCount].nKey = nKey;
     pasRecords[nRecordCount].poRecord = poRecord;
+    pasRecords[nRecordCount].pClientData = NULL;
 
     nRecordCount++;
 }
@@ -200,20 +204,21 @@ DDFRecord * DDFRecordIndex::FindRecordByObjl( int nObjl )
 /*      Do a linear search based on the nObjl to find the desired record. */
 /* -------------------------------------------------------------------- */
     int nMinIndex = 0;
-        if (nLastObjl != nObjl) nLastObjlPos=0;
+    if (nLastObjl != nObjl) nLastObjlPos=0;
 
-         for (nMinIndex = nLastObjlPos; nMinIndex < nRecordCount; nMinIndex++)
-         {
-                if (nObjl == pasRecords[nMinIndex].poRecord->GetIntSubfield( "FRID", 0, "OBJL", 0 ) )
-                {
-                        nLastObjlPos=nMinIndex+1;  /* add 1, don't want to look at same again */
-                        nLastObjl=nObjl;
-                        return pasRecords[nMinIndex].poRecord;
-                }
-         }
+    for (nMinIndex = nLastObjlPos; nMinIndex < nRecordCount; nMinIndex++)
+    {
+        if (nObjl == pasRecords[nMinIndex].poRecord->GetIntSubfield( "FRID", 0, "OBJL", 0 ) )
+        {
+            nLastObjlPos=nMinIndex+1;  /* add 1, don't want to look at same again */
+            nLastObjl=nObjl;
+            return pasRecords[nMinIndex].poRecord;
+        }
+    }
 
-         nLastObjlPos=0;
-         nLastObjl=0;
+    nLastObjlPos=0;
+    nLastObjl=0;
+
     return NULL;
 }
 
@@ -320,5 +325,37 @@ DDFRecord * DDFRecordIndex::GetByIndex( int nIndex )
         return NULL;
     else
         return pasRecords[nIndex].poRecord;
+}
+
+/************************************************************************/
+/*                        GetClientInfoByIndex()                        */
+/************************************************************************/
+
+void * DDFRecordIndex::GetClientInfoByIndex( int nIndex )
+
+{
+    if( !bSorted )
+        Sort();
+
+    if( nIndex < 0 || nIndex >= nRecordCount )
+        return NULL;
+    else
+        return pasRecords[nIndex].pClientData;
+}
+
+/************************************************************************/
+/*                        SetClientInfoByIndex()                        */
+/************************************************************************/
+
+void DDFRecordIndex::SetClientInfoByIndex( int nIndex, void *pClientData )
+
+{
+    if( !bSorted )
+        Sort();
+
+    if( nIndex < 0 || nIndex >= nRecordCount )
+        return;
+    else
+        pasRecords[nIndex].pClientData = pClientData;
 }
 
