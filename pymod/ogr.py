@@ -28,6 +28,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.17  2003/10/06 22:28:54  warmerda
+# Added support for GetExtent().
+#
 # Revision 1.16  2003/09/22 05:48:50  warmerda
 # added GML geometry support
 #
@@ -392,7 +395,19 @@ class Layer:
         return _gdal.OGR_L_GetFeatureCount( self._o, force )
 
     def GetExtent( self, force = 1 ):
-        raise ValueError, 'Not implemented yet'
+        extents = _gdal.ptrcreate( 'double', '', 4 )
+        res = _gdal.OGR_L_GetExtent( self._o,
+                  _gdal.ptrcast(extents,'OGREnvelope_p'), force )
+        if res != 0:
+            ret_extents = None
+        else:
+            ret_extents = ( _gdal.ptrvalue( extents, 0 ),
+                            _gdal.ptrvalue( extents, 1 ),
+                            _gdal.ptrvalue( extents, 2 ),
+                            _gdal.ptrvalue( extents, 3 ) )
+        _gdal.ptrfree( extents )
+        
+        return ret_extents
 
     def TestCapability( self, cap ):
         return _gdal.OGR_L_TestCapability( self._o, cap )
