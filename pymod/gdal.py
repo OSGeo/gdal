@@ -29,6 +29,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.48  2003/05/28 16:20:17  warmerda
+# return default transform if GetGeoTransform() fails
+#
 # Revision 1.47  2003/05/20 14:30:37  warmerda
 # fixed GetRasterBand logic
 #
@@ -354,13 +357,16 @@ class Dataset(MajorObject):
 
     def GetGeoTransform(self):
         c_transform = _gdal.ptrcreate('double',0,6)
-        _gdal.GDALGetGeoTransform(self._o, c_transform)
-        transform = ( _gdal.ptrvalue(c_transform,0),
+        if _gdal.GDALGetGeoTransform(self._o, c_transform) == 0:
+            transform = ( _gdal.ptrvalue(c_transform,0),
                       _gdal.ptrvalue(c_transform,1),
                       _gdal.ptrvalue(c_transform,2),
                       _gdal.ptrvalue(c_transform,3),
                       _gdal.ptrvalue(c_transform,4),
                       _gdal.ptrvalue(c_transform,5) )
+        else:
+            transform = (0,1,0,0,0,1)
+  
         _gdal.ptrfree( c_transform )
 
         return transform
