@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.79  2003/09/18 14:43:40  warmerda
+ * Ensure that SetAuthority() clears old nodes.
+ * Don't crash on NULL root in exportToPrettyWkt().
+ *
  * Revision 1.78  2003/08/18 13:26:01  warmerda
  * added SetTMVariant() and related definitions
  *
@@ -545,6 +549,12 @@ OGRErr OGRSpatialReference::exportToPrettyWkt( char ** ppszResult,
                                                int bSimplify ) const
 
 {
+    if( poRoot == NULL )
+    {
+        *ppszResult = CPLStrdup("");
+        return OGRERR_NONE;
+    }
+
     if( bSimplify )
     {
         OGRSpatialReference *poSimpleClone = Clone();
@@ -3445,10 +3455,12 @@ OGRErr OGRSpatialReference::SetAuthority( const char *pszTargetKey,
         return OGRERR_FAILURE;
 
 /* -------------------------------------------------------------------- */
-/*      For now we assume there is no authority child.  Eventually      */
-/*      we will have to handle this properly.                           */
+/*      If there is an existing AUTHORITY child blow it away before     */
+/*      trying to set a new one.                                        */
 /* -------------------------------------------------------------------- */
-    /* CPLAssert( poNode->GetNode( "AUTHORITY" ) == NULL ); */
+    int iOldChild = poNode->FindChild( "AUTHORITY" );
+    if( iOldChild != -1 )
+        poNode->DestroyChild( iOldChild );
 
 /* -------------------------------------------------------------------- */
 /*      Create a new authority node.                                    */
