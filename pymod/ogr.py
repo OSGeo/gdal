@@ -28,6 +28,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.13  2003/06/10 14:43:33  warmerda
+# fixed NULL support in GetGeometryRef()
+#
 # Revision 1.12  2003/04/22 17:28:55  warmerda
 # added SyncToDisk, fix DumpReadable
 #
@@ -432,7 +435,7 @@ class Feature:
     def GetGeometryRef( self ):
         geom_o = _gdal.OGR_F_GetGeometryRef( self._o )
 
-        if geom_o is None:
+        if geom_o is None or geom_o == 'NULL':
             return None
         else:
             return Geometry( obj = geom_o )
