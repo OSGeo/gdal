@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.34  2005/02/10 04:31:55  fwarmerdam
+ * added support to preserve YCbCr images, added GetColorInterpretation()
+ *
  * Revision 1.33  2005/02/08 04:51:21  fwarmerdam
  * fixed J2K_SUBFILE parsing error, add ECWCreateJPEG2000
  *
@@ -223,6 +226,8 @@ class ECWRasterBand : public GDALRasterBand
     // NOTE: poDS may be altered for NITF/JPEG2000 files!
     ECWDataset     *poGDS;
 
+    GDALColorInterp         eBandInterp;
+
     virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
                               void *, int, int, GDALDataType,
                               int, int );
@@ -234,6 +239,7 @@ class ECWRasterBand : public GDALRasterBand
 
     virtual CPLErr IReadBlock( int, int, void * );
     virtual int    HasArbitraryOverviews() { return TRUE; }
+    virtual GDALColorInterp GetColorInterpretation();
 
     virtual CPLErr AdviseRead( int nXOff, int nYOff, int nXSize, int nYSize,
                                int nBufXSize, int nBufYSize, 
@@ -254,6 +260,54 @@ ECWRasterBand::ECWRasterBand( ECWDataset *poDS, int nBand )
     eDataType = poDS->eRasterDataType;
     nBlockXSize = poDS->GetRasterXSize();
     nBlockYSize = 1;
+
+/* -------------------------------------------------------------------- */
+/*      Work out band color interpretation.                             */
+/* -------------------------------------------------------------------- */
+    if( poDS->psFileInfo->eColorSpace == NCSCS_NONE )
+        eBandInterp = GCI_Undefined;
+    else if( poDS->psFileInfo->eColorSpace == NCSCS_GREYSCALE )
+        eBandInterp = GCI_GrayIndex;
+    else if( poDS->psFileInfo->eColorSpace == NCSCS_MULTIBAND )
+        eBandInterp = GCI_Undefined;
+    else if( poDS->psFileInfo->eColorSpace == NCSCS_sRGB )
+    {
+        if( nBand == 1 )
+            eBandInterp = GCI_RedBand;
+        else if( nBand == 2 )
+            eBandInterp = GCI_GreenBand;
+        else if( nBand == 3 )
+            eBandInterp = GCI_BlueBand;
+        else
+            eBandInterp = GCI_Undefined;
+    }
+    else if( poDS->psFileInfo->eColorSpace == NCSCS_YCbCr )
+    {
+        if( CSLTestBoolean( CPLGetConfigOption("CONVERT_YCBCR_TO_RGB","YES") ))
+        {
+            if( nBand == 1 )
+                eBandInterp = GCI_RedBand;
+            else if( nBand == 2 )
+                eBandInterp = GCI_GreenBand;
+            else if( nBand == 3 )
+                eBandInterp = GCI_BlueBand;
+            else
+                eBandInterp = GCI_Undefined;
+        }
+        else
+        {
+            if( nBand == 1 )
+                eBandInterp = GCI_YCbCr_YBand;
+            else if( nBand == 2 )
+                eBandInterp = GCI_YCbCr_CbBand;
+            else if( nBand == 3 )
+                eBandInterp = GCI_YCbCr_CrBand;
+            else
+                eBandInterp = GCI_Undefined;
+        }
+    }
+    else
+        eBandInterp = GCI_Undefined;
 }
 
 /************************************************************************/
@@ -264,6 +318,16 @@ ECWRasterBand::~ECWRasterBand()
 
 {
     FlushCache();
+}
+
+/************************************************************************/
+/*                       GetColorInterpretation()                       */
+/************************************************************************/
+
+GDALColorInterp ECWRasterBand::GetColorInterpretation()
+
+{
+    return eBandInterp;
 }
 
 /************************************************************************/
@@ -940,6 +1004,13 @@ GDALDataset *ECWDataset::Open( GDALOpenInfo * poOpenInfo )
     CNCSError        oErr;
     int              i;
     FILE            *fpVSIL = NULL;
+
+/* -------------------------------------------------------------------- */
+/*      This will disable automatic conversion of YCbCr to RGB by       */
+/*      the toolkit.                                                    */
+/* -------------------------------------------------------------------- */
+    if( !CSLTestBoolean( CPLGetConfigOption("CONVERT_YCBCR_TO_RGB","YES") ) )
+        NCSecwSetConfig(NCSCFG_JP2_MANAGE_ICC, FALSE);
 
 /* -------------------------------------------------------------------- */
 /*      Handle special case of a JPEG2000 data stream in another file.  */
