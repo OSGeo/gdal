@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.35  2004/05/04 17:54:06  warmerda
+ * keep longitudes greenwich relative
+ *
  * Revision 1.34  2004/04/28 00:27:58  warmerda
  * Added Albers Conic Area Area translation (method=9822).
  *
@@ -1160,8 +1163,13 @@ static double OGR_FetchParm( double *padfProjParms, int *panParmIds,
     }
 
 /* -------------------------------------------------------------------- */
-/*      Correct longitude to be relative to greenwich                   */
+/*      EPSG longitudes are relative to greenwich.  The follow code     */
+/*      could be used to make them relative to the prime meridian of    */
+/*      the associated GCS if that was appropriate.  However, the       */
+/*      SetNormProjParm() method expects longitudes relative to         */
+/*      greenwich, so there is nothing for us to do.                    */
 /* -------------------------------------------------------------------- */
+#ifdef notdef
     switch( nTargetId )
     {
       case NatOriginLong:
@@ -1179,6 +1187,7 @@ static double OGR_FetchParm( double *padfProjParms, int *panParmIds,
       default:
         ;
     }
+#endif
 
     return dfResult;
 }
