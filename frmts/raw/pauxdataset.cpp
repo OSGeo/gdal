@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2001/11/11 23:51:00  warmerda
+ * added required class keyword to friend declarations
+ *
  * Revision 1.12  2001/07/18 04:51:57  warmerda
  * added CPL_CVSID
  *
@@ -88,7 +91,7 @@ class PAuxRasterBand;
 
 class PAuxDataset : public RawDataset
 {
-    friend      PAuxRasterBand;
+    friend class PAuxRasterBand;
 
     FILE	*fpImage;	// image data file.
 

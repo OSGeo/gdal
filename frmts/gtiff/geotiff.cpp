@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.57  2001/11/11 23:50:59  warmerda
+ * added required class keyword to friend declarations
+ *
  * Revision 1.56  2001/10/12 15:06:05  warmerda
  * various build improvements to avoid internal/external conflicts
  *
@@ -185,9 +188,9 @@ class GTiffBitmapBand;
 
 class GTiffDataset : public GDALDataset
 {
-    friend	GTiffRasterBand;
-    friend	GTiffRGBABand;
-    friend	GTiffBitmapBand;
+    friend class GTiffRasterBand;
+    friend class GTiffRGBABand;
+    friend class GTiffBitmapBand;
     
     TIFF	*hTIFF;
 
@@ -270,7 +273,7 @@ class GTiffDataset : public GDALDataset
 
 class GTiffRasterBand : public GDALRasterBand
 {
-    friend	GTiffDataset;
+    friend class GTiffDataset;
 
   public:
 
@@ -681,7 +684,7 @@ GDALRasterBand *GTiffRasterBand::GetOverview( int i )
 
 class GTiffRGBABand : public GDALRasterBand
 {
-    friend	GTiffDataset;
+    friend class GTiffDataset;
 
   public:
 
@@ -840,7 +843,7 @@ GDALColorInterp GTiffRGBABand::GetColorInterpretation()
 
 class GTiffBitmapBand : public GDALRasterBand
 {
-    friend	GTiffDataset;
+    friend class GTiffDataset;
 
     GDALColorTable *poColorTable;
 

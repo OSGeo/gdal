@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.8  2001/11/11 23:51:00  warmerda
+ * added required class keyword to friend declarations
+ *
  * Revision 1.7  2001/08/22 17:11:30  warmerda
  * added support for .wld world files
  *
@@ -77,7 +80,7 @@ class JPGRasterBand;
 
 class JPGDataset : public GDALDataset
 {
-    friend	JPGRasterBand;
+    friend class JPGRasterBand;
 
     struct jpeg_decompress_struct sDInfo;
     struct jpeg_error_mgr sJErr;
@@ -108,7 +111,7 @@ class JPGDataset : public GDALDataset
 
 class JPGRasterBand : public GDALRasterBand
 {
-    friend	JPGDataset;
+    friend class JPGDataset;
 
   public:
 

@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.15  2001/11/11 23:50:59  warmerda
+ * added required class keyword to friend declarations
+ *
  * Revision 1.14  2001/09/18 18:52:13  warmerda
  * Added support for treating int grids as GInt32.  Added support for nodata
  * values.  Changes contributed by Andrew Loughhead.
@@ -172,7 +175,7 @@ class GIORasterBand;
 
 class CPL_DLL GIODataset : public GDALDataset
 {
-    friend	GIORasterBand;
+    friend class GIORasterBand;
 
     char       *pszPath;
 
@@ -206,7 +209,7 @@ class CPL_DLL GIODataset : public GDALDataset
 
 class GIORasterBand : public GDALRasterBand
 {
-    friend	GIODataset;
+    friend class GIODataset;
 
   public:
 

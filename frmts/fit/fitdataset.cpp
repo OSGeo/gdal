@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.11  2001/11/11 23:50:59  warmerda
+ * added required class keyword to friend declarations
+ *
  * Revision 1.10  2001/07/25 17:21:56  nemec
  * Fixed another bug with partial tiles (relating to different image origins)
  * Added more debugging info for simpler bug reports
@@ -94,7 +97,7 @@ class FITRasterBand;
 
 class FITDataset : public GDALDataset
 {
-    friend	FITRasterBand;
+    friend class FITRasterBand;
     
     FILE	*fp;
     FITinfo	*info;
@@ -123,7 +126,7 @@ static GDALDataset *FITCreateCopy(const char * pszFilename,
 
 class FITRasterBand : public GDALRasterBand
 {
-    friend	FITDataset;
+    friend class FITDataset;
     
     unsigned long recordSize; // number of bytes of a single page/block/record
     unsigned long numXBlocks; // number of pages in the X direction

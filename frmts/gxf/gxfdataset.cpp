@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.10  2001/11/11 23:51:00  warmerda
+ * added required class keyword to friend declarations
+ *
  * Revision 1.9  2001/07/18 04:51:57  warmerda
  * added CPL_CVSID
  *
@@ -82,7 +85,7 @@ class GXFRasterBand;
 
 class GXFDataset : public GDALDataset
 {
-    friend	GXFRasterBand;
+    friend class GXFRasterBand;
     
     GXFHandle	hGXF;
 
@@ -105,7 +108,7 @@ class GXFDataset : public GDALDataset
 
 class GXFRasterBand : public GDALRasterBand
 {
-    friend	GXFDataset;
+    friend class GXFDataset;
     
   public:
 

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2001/11/11 23:50:59  warmerda
+ * added required class keyword to friend declarations
+ *
  * Revision 1.6  2001/07/18 04:51:56  warmerda
  * added CPL_CVSID
  *
@@ -69,7 +72,7 @@ class CEOSRasterBand;
 
 class CEOSDataset : public GDALDataset
 {
-    friend	CEOSRasterBand;
+    friend class CEOSRasterBand;
     
     CEOSImage	*psCEOS;
 
@@ -85,7 +88,7 @@ class CEOSDataset : public GDALDataset
 
 class CEOSRasterBand : public GDALRasterBand
 {
-    friend	CEOSDataset;
+    friend class CEOSDataset;
     
   public:
 

@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.4  2001/11/11 23:50:59  warmerda
+ * added required class keyword to friend declarations
+ *
  * Revision 1.3  2001/07/18 04:51:56  warmerda
  * added CPL_CVSID
  *
@@ -69,7 +72,7 @@ class ECWRasterBand;
 
 class CPL_DLL ECWDataset : public GDALDataset
 {
-    friend	ECWRasterBand;
+    friend class ECWRasterBand;
 
     NCSFileView *hFileView;
     NCSFileViewFileInfo *psFileInfo;
@@ -91,7 +94,7 @@ class CPL_DLL ECWDataset : public GDALDataset
 
 class ECWRasterBand : public GDALRasterBand
 {
-    friend	   ECWDataset;
+    friend class ECWDataset;
     
     ECWDataset     *poGDS;
 

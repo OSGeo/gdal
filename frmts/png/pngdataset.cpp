@@ -43,6 +43,9 @@
  *    application termination. 
  * 
  * $Log$
+ * Revision 1.12  2001/11/11 23:51:00  warmerda
+ * added required class keyword to friend declarations
+ *
  * Revision 1.11  2001/09/28 14:30:19  warmerda
  * Ensure num_trans is initialized to zero in case png_get_tRNS fails.
  *
@@ -101,7 +104,7 @@ class PNGRasterBand;
 
 class PNGDataset : public GDALDataset
 {
-    friend	PNGRasterBand;
+    friend class PNGRasterBand;
 
     FILE        *fpImage;
     png_structp hPNG;
@@ -145,7 +148,7 @@ class PNGDataset : public GDALDataset
 
 class PNGRasterBand : public GDALRasterBand
 {
-    friend	PNGDataset;
+    friend class PNGDataset;
 
   public:
 
