@@ -25,6 +25,9 @@
  * The GDALDriverManager class from gdal_priv.h.
  * 
  * $Log$
+ * Revision 1.20  2004/09/23 16:21:32  fwarmerdam
+ * added call to OSRCleanup()
+ *
  * Revision 1.19  2004/04/29 19:14:27  warmerda
  * Avoid extra newline when autoregistering.
  *
@@ -86,6 +89,7 @@
 
 #include "gdal_priv.h"
 #include "cpl_string.h"
+#include "ogr_srs_api.h"
 
 CPL_CVSID("$Id$");
 
@@ -203,6 +207,12 @@ GDALDriverManager::~GDALDriverManager()
 /* -------------------------------------------------------------------- */
     CPLFinderClean();
     CPLFreeConfig();
+
+/* -------------------------------------------------------------------- */
+/*      Cleanup any memory allocated by the OGRSpatialReference         */
+/*      related subsystem.                                              */
+/* -------------------------------------------------------------------- */
+    OSRCleanup();
 
 /* -------------------------------------------------------------------- */
 /*      Ensure the global driver manager pointer is NULLed out.         */
