@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.11  2005/02/25 16:44:39  fwarmerdam
+ * modified WriteReadLine() to do a dataset level read
+ *
  * Revision 1.10  2005/02/22 08:22:03  fwarmerdam
  * added support for capturing color interp on writable bands
  *
@@ -137,6 +140,12 @@ GDALECWCompressor::~GDALECWCompressor()
 CPLErr GDALECWCompressor::CloseDown()
 
 {
+    for( int i = 0; i < sFileInfo.nBands; i++ )
+    {
+        CPLFree( sFileInfo.pBands[i].szDesc );
+    }
+    CPLFree( sFileInfo.pBands );
+
     Close( true );
 
     if( fpVSIL != NULL )
@@ -153,21 +162,38 @@ CNCSError GDALECWCompressor::WriteReadLine( UINT32 nNextLine,
                                             void **ppInputArray )
 
 {
-    int                  iBand;
+    int    iBand, *panBandMap;
+    CPLErr eErr;
+    GByte *pabyLineBuf;
+    int nWordSize = GDALGetDataTypeSize( eWorkDT ) / 8;
+
+    panBandMap = (int *) CPLMalloc(sizeof(int) * sFileInfo.nBands);
+    for( iBand = 0; iBand < sFileInfo.nBands; iBand++ )
+        panBandMap[iBand] = iBand+1;
+
+    pabyLineBuf = (GByte *) CPLMalloc( sFileInfo.nSizeX * sFileInfo.nBands
+                                       * nWordSize );
+
+    eErr = m_poSrcDS->RasterIO( GF_Read, 0, nNextLine, sFileInfo.nSizeX, 1, 
+                                pabyLineBuf, sFileInfo.nSizeX, 1, 
+                                eWorkDT, 
+                                sFileInfo.nBands, panBandMap,
+                                nWordSize, 0, nWordSize * sFileInfo.nSizeX );
 
     for( iBand = 0; iBand < (int) sFileInfo.nBands; iBand++ )
     {
-        GDALRasterBand      *poBand;
-
-        poBand = m_poSrcDS->GetRasterBand( iBand+1 );
-
-        if( poBand->RasterIO( GF_Read, 0, nNextLine, poBand->GetXSize(), 1, 
-                              ppInputArray[iBand], poBand->GetXSize(), 1, 
-                              eWorkDT, 0, 0 ) != CE_None )
-            return NCS_FILE_IO_ERROR;
+        memcpy( ppInputArray[iBand],
+                pabyLineBuf + nWordSize * sFileInfo.nSizeX * iBand, 
+                nWordSize * sFileInfo.nSizeX );
     }
 
-    return NCS_SUCCESS;
+    CPLFree( pabyLineBuf );
+    CPLFree( panBandMap );
+
+    if( eErr == CE_None )
+        return NCS_SUCCESS;
+    else
+        return NCS_FILEIO_ERROR;
 }
 
 /************************************************************************/
@@ -498,15 +524,15 @@ CPLErr GDALECWCompressor::Initialize(
 /* -------------------------------------------------------------------- */
 /*      Create band information structures.                             */
 /* -------------------------------------------------------------------- */
-    static NCSFileBandInfo asBandInfos[200];
     int iBand;
 
-    psClient->pBands = asBandInfos;
+    psClient->pBands = (NCSFileBandInfo *) 
+        CPLMalloc( sizeof(NCSFileBandInfo) * nBands );
     for( iBand = 0; iBand < nBands; iBand++ )
     {
-        asBandInfos[iBand].nBits = nBits;
-        asBandInfos[iBand].bSigned = bSigned;
-        asBandInfos[iBand].szDesc = CPLStrdup(
+        psClient->pBands[iBand].nBits = nBits;
+        psClient->pBands[iBand].bSigned = bSigned;
+        psClient->pBands[iBand].szDesc = CPLStrdup(
             CPLSPrintf("Band%d",iBand+1) );
     }
 
