@@ -11,7 +11,7 @@ OBJ	=	oci_utils.o ogrocisession.o ogrocistatement.o \
 ALL_C_FLAGS	=	-I.. -I../.. -I$(GDAL_ROOT)/port \
 		$(OCI_INCLUDE) $(CFLAGS)
 
-default:	$(OBJ)
+default:	$(O_OBJ)
 
 clean:
 	rm -f *.o

@@ -1,10 +1,16 @@
 include ../../GDALmake.opt
 
-default:
+default: ogrsf_frmts.a
+
+ogrsf_frmts.a:	sub-libs
+	ar r $@ ./o/*.o
+	$(RANLIB) ogrsf_frmts.a
+
+sub-libs:
 	(cd generic; $(MAKE) $*)
 	(cd shape; $(MAKE) $*)
 	(cd ntf; $(MAKE) $*)
-	(cd sdts; $(MAKE) $* default install-libs)
+	(cd sdts; $(MAKE) $*)
 	(cd tiger; $(MAKE) $*)
 	(cd s57; $(MAKE) $*)
 	(cd mitab; $(MAKE) $*)
@@ -25,15 +31,10 @@ endif
 ifeq ($(HAVE_FME),yes)
 	(cd fme; $(MAKE) $*)
 endif
-	$(MAKE) last-ranlib
-
-last-ranlib:	ogrsf_frmts.a
-	$(RANLIB) ogrsf_frmts.a
-	touch last-ranlib
 
 clean:
 	rm -f ogrsf_frmts.a
-	rm -f last-ranlib
+	rm o/*.o
 	(cd generic; $(MAKE) clean)
 	(cd shape; $(MAKE) clean)
 	(cd ntf; $(MAKE) clean)

@@ -12,7 +12,7 @@ ALL_C_FLAGS	=	-I.. -I../.. -I$(GDAL_ROOT)/port \
 		-DSUPPORT_INDIRECT_FMEDLL \
 		-DSUPPORT_PERSISTENT_CACHE
 
-default:	$(OBJ)
+default:	$(O_OBJ)
 
 clean:
 	rm -f *.o

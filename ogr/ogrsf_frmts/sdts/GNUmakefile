@@ -15,7 +15,7 @@ LINCLUDE =	-I.. -I../.. -I$(GDAL_ROOT)/port -I$(SDTSDIR) -I$(ISODIR)
 
 include $(GDAL_ROOT)/GDALmake.opt
 
-default:	$(OBJ) libs
+default:	$(O_OBJ) libs
 
 clean:
 	rm -f *.o *-marker
