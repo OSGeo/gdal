@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  1999/09/02 03:40:03  warmerda
+ * added indexed readers
+ *
  * Revision 1.6  1999/08/16 19:25:05  warmerda
  * added GetLayerPolygonReader() method
  *
@@ -59,6 +62,7 @@ SDTSTransfer::SDTSTransfer()
 {
     nLayers = 0;
     panLayerCATDEntry = NULL;
+    papoLayerReader = NULL;
 }
 
 /************************************************************************/
@@ -150,6 +154,12 @@ int SDTSTransfer::Open( const char * pszFilename )
             break;
         }
     }
+
+/* -------------------------------------------------------------------- */
+/*      Initialized the related indexed readers list.                   */
+/* -------------------------------------------------------------------- */
+    papoLayerReader = (SDTSIndexedReader **)
+        CPLCalloc(sizeof(SDTSIndexedReader*),oCATD.GetEntryCount());
 
     return TRUE;
 }
@@ -378,5 +388,115 @@ DDFModule *SDTSTransfer::GetLayerModuleReader( int iEntry )
     }
 }
 
+/************************************************************************/
+/*                       GetLayerIndexedReader()                        */
+/************************************************************************/
 
+SDTSIndexedReader *SDTSTransfer::GetLayerIndexedReader( int iEntry )
 
+{
+    if( papoLayerReader[iEntry] == NULL )
+    {
+        switch( oCATD.GetEntryType( panLayerCATDEntry[iEntry] ) )
+        {
+          case SLTAttr:
+            papoLayerReader[iEntry] = GetLayerAttrReader( iEntry );
+            break;
+
+          case SLTPoint:
+            papoLayerReader[iEntry] = GetLayerPointReader( iEntry );
+            break;
+
+          case SLTLine:
+            papoLayerReader[iEntry] = GetLayerLineReader( iEntry );
+            break;
+
+          case SLTPoly:
+            papoLayerReader[iEntry] = GetLayerPolygonReader( iEntry );
+            break;
+
+          default:
+            break;
+        }
+    }
+    
+    return papoLayerReader[iEntry];
+}
+
+/************************************************************************/
+/*                             FindLayer()                              */
+/*                                                                      */
+/*      Find a layer based on a module name.                            */
+/************************************************************************/
+
+int SDTSTransfer::FindLayer( const char * pszModule )
+
+{
+    int		iLayer;
+
+    for( iLayer = 0; iLayer < nLayers; iLayer++ )
+    {
+        if( EQUAL(pszModule,
+                  oCATD.GetEntryModule( panLayerCATDEntry[iLayer] ) ) )
+        {
+            return iLayer;
+        }
+    }
+
+    return -1;
+}
+
+/************************************************************************/
+/*                        GetIndexedFeatureRef()                        */
+/************************************************************************/
+
+SDTSFeature *SDTSTransfer::GetIndexedFeatureRef( SDTSModId *poModId,
+                                                 SDTSLayerType *peType )
+
+{
+/* -------------------------------------------------------------------- */
+/*      Find the desired layer ... this is likely a significant slow    */
+/*      point in the whole process ... perhaps the last found could     */
+/*      be cached or something.                                         */
+/* -------------------------------------------------------------------- */
+    int		iLayer = FindLayer( poModId->szModule );
+    if( iLayer == -1 )
+        return NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Get the reader, and read a feature from it.                     */
+/* -------------------------------------------------------------------- */
+    SDTSIndexedReader  *poReader;
+
+    poReader = GetLayerIndexedReader( iLayer );
+    if( poReader == NULL )
+        return NULL;
+
+/* -------------------------------------------------------------------- */
+/*      return type, if requested.                                      */
+/* -------------------------------------------------------------------- */
+    if( peType != NULL )
+        *peType = GetLayerType(iLayer);
+
+    return poReader->GetIndexedFeatureRef( poModId->nRecord );
+}
+
+/************************************************************************/
+/*                              GetAttr()                               */
+/*                                                                      */
+/*      Fetch the attribute information corresponding to a given        */
+/*      SDTSModId.                                                      */
+/************************************************************************/
+
+DDFField *SDTSTransfer::GetAttr( SDTSModId *poModId )
+
+{
+    SDTSAttrRecord *poAttrRecord;
+
+    poAttrRecord = (SDTSAttrRecord *) GetIndexedFeatureRef( poModId );
+
+    if( poAttrRecord == NULL )
+        return NULL;
+
+    return poAttrRecord->poATTR;
+}

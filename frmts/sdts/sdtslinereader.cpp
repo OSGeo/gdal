@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  1999/09/02 03:40:03  warmerda
+ * added indexed readers
+ *
  * Revision 1.7  1999/08/10 02:52:13  warmerda
  * introduce use of SDTSApplyModIdList to capture multi-attributes
  *
@@ -112,11 +115,10 @@ int SDTSRawLine::Read( SDTS_IREF * poIREF, DDFRecord * poRecord )
         pszFieldName = poField->GetFieldDefn()->GetName();
 
         if( EQUAL(pszFieldName,"LINE") )
-            oLine.Set( poField );
+            oModId.Set( poField );
 
         else if( EQUAL(pszFieldName,"ATID") )
-            SDTSApplyModIdList( poField, MAX_RAWLINE_ATID,
-                                &nAttributes, aoATID );
+            ApplyATID( poField );
 
         else if( EQUAL(pszFieldName,"PIDL") )
             oLeftPoly.Set( poField );
@@ -158,7 +160,7 @@ void SDTSRawLine::Dump( FILE * fp )
 
     fprintf( fp, "SDTSRawLine\n" );
     fprintf( fp, "  Module=%s, Record#=%ld\n",
-             oLine.szModule, oLine.nRecord );
+             oModId.szModule, oModId.nRecord );
     if( oLeftPoly.nRecord != -1 )
         fprintf( fp, "  LeftPoly (Module=%s, Record=%ld)\n", 
                  oLeftPoly.szModule, oLeftPoly.nRecord );
@@ -272,11 +274,90 @@ SDTSRawLine * SDTSLineReader::GetNextLine()
 }
 
 /************************************************************************/
-/*                        ScanModuleReferences()                        */
+/*                          AttachToPolygons()                          */
+/*                                                                      */
+/*      Attach line features to all the polygon features they relate    */
+/*      to.                                                             */
 /************************************************************************/
 
-char ** SDTSLineReader::ScanModuleReferences( const char * pszFName )
+void SDTSLineReader::AttachToPolygons( SDTSTransfer * poTransfer )
 
 {
-    return SDTSScanModuleReferences( &oDDFModule, pszFName );
+/* -------------------------------------------------------------------- */
+/*      We force a filling of the index because when we attach the      */
+/*      lines we are just providing a pointer back to the line          */
+/*      features in this readers index.  If they aren't cached in       */
+/*      the index then the pointer will be invalid.                     */
+/* -------------------------------------------------------------------- */
+    FillIndex();
+
+/* ==================================================================== */
+/*      Loop over all lines, attaching them to the polygons they        */
+/*      have as right and left faces.                                   */
+/* ==================================================================== */
+    SDTSRawLine	*poLine;
+    SDTSPolygonReader *poPolyReader = NULL;
+    
+    Rewind();
+    while( (poLine = (SDTSRawLine *) GetNextFeature()) != NULL )
+    {
+/* -------------------------------------------------------------------- */
+/*      Skip lines with the same left and right polygon face.  These    */
+/*      are dangles, and will not contribute in any useful fashion      */
+/*      to the resulting polygon.                                       */
+/* -------------------------------------------------------------------- */
+        if( poLine->oLeftPoly.nRecord == poLine->oRightPoly.nRecord )
+            continue;
+
+/* -------------------------------------------------------------------- */
+/*      If we don't have our indexed polygon reader yet, try to get     */
+/*      it now.                                                         */
+/* -------------------------------------------------------------------- */
+        if( poPolyReader == NULL )
+        {
+            int		iPolyLayer = -1;
+            
+            if( poLine->oLeftPoly.nRecord != -1 )
+            {
+                iPolyLayer = poTransfer->FindLayer(poLine->oLeftPoly.szModule);
+            }
+            else if( poLine->oRightPoly.nRecord != -1 )
+            {
+               iPolyLayer = poTransfer->FindLayer(poLine->oRightPoly.szModule);
+            }
+
+            if( iPolyLayer == -1 )
+                continue;
+
+            poPolyReader = (SDTSPolygonReader *)
+                poTransfer->GetLayerIndexedReader(iPolyLayer);
+
+            if( poPolyReader == NULL )
+                return;
+        }
+
+/* -------------------------------------------------------------------- */
+/*      Attach line to right and/or left polygons.                      */
+/* -------------------------------------------------------------------- */
+        if( poLine->oLeftPoly.nRecord != -1 )
+        {
+            SDTSRawPolygon	*poPoly;
+
+            poPoly = (SDTSRawPolygon *) poPolyReader->GetIndexedFeatureRef(
+                poLine->oLeftPoly.nRecord );
+            if( poPoly != NULL )
+                poPoly->AddEdge( poLine );
+        }
+            
+        if( poLine->oRightPoly.nRecord != -1 )
+        {
+            SDTSRawPolygon	*poPoly;
+
+            poPoly = (SDTSRawPolygon *) poPolyReader->GetIndexedFeatureRef(
+                poLine->oRightPoly.nRecord );
+
+            if( poPoly != NULL )
+                poPoly->AddEdge( poLine );
+        }
+    }
 }

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  1999/09/02 03:40:03  warmerda
+ * added indexed readers
+ *
  * Revision 1.5  1999/08/16 15:45:46  warmerda
  * added IsSecondary()
  *
@@ -43,6 +46,47 @@
  */
 
 #include "sdts_al.h"
+
+
+/************************************************************************/
+/* ==================================================================== */
+/*			       SDTSAttrRecord				*/
+/* ==================================================================== */
+/************************************************************************/
+
+/************************************************************************/
+/*                           SDTSAttrRecord()                           */
+/************************************************************************/
+
+SDTSAttrRecord::SDTSAttrRecord()
+
+{
+    poWholeRecord = NULL;
+    poATTR = NULL;
+}
+
+/************************************************************************/
+/*                          ~SDTSAttrRecord()                           */
+/************************************************************************/
+
+SDTSAttrRecord::~SDTSAttrRecord()
+
+{
+    if( poWholeRecord != NULL )
+        delete poWholeRecord;
+}
+
+/************************************************************************/
+/*                                Dump()                                */
+/************************************************************************/
+
+void SDTSAttrRecord::Dump( FILE * fp )
+
+{
+    if( poATTR != NULL )
+        poATTR->Dump( fp );
+}
+
 
 /************************************************************************/
 /* ==================================================================== */
@@ -174,5 +218,31 @@ DDFField *SDTSAttrReader::GetNextRecord( SDTSModId * poModId,
         *ppoRecord = poRecord;
 
     return poATTP;
+}
+
+/************************************************************************/
+/*                         GetNextAttrRecord()                          */
+/************************************************************************/
+
+SDTSAttrRecord *SDTSAttrReader::GetNextAttrRecord()
+
+{
+    DDFRecord	*poRawRecord;
+    DDFField	*poATTRField;
+    SDTSModId   oModId;
+    SDTSAttrRecord *poAttrRecord;
+
+    poATTRField = GetNextRecord( &oModId, &poRawRecord );
+
+    if( poATTRField == NULL )
+        return NULL;
+
+    poAttrRecord = new SDTSAttrRecord();
+
+    poAttrRecord->poWholeRecord = poRawRecord;
+    poAttrRecord->poATTR = poATTRField;
+    memcpy( &(poAttrRecord->oModId), &oModId, sizeof(SDTSModId) );
+
+    return poAttrRecord;
 }
 

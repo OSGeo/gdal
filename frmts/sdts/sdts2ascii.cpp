@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  1999/09/02 03:40:03  warmerda
+ * added indexed readers
+ *
  * Revision 1.8  1999/08/16 21:00:02  warmerda
  * added szOBRP support for SDTSModId
  *
@@ -62,8 +65,9 @@ int main( int nArgc, char ** papszArgv )
 
 {
 {
-    SDTS_IREF	oIREF;
-    SDTS_CATD	oCATD;
+    SDTSTransfer oTransfer;
+    SDTS_CATD	*poCATD;
+    
     int		i;
     const char	*pszCATDFilename;
 
@@ -75,18 +79,19 @@ int main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
 /*      Read the catalog.                                               */
 /* -------------------------------------------------------------------- */
-    if( !oCATD.Read( pszCATDFilename ) )
+    if( !oTransfer.Open( pszCATDFilename ) )
     {
         printf( "Failed to read CATD file\n" );
         exit( 100 );
     }
 
     printf( "Catalog:\n" );
-    for( i = 0; i < oCATD.GetEntryCount(); i++ )
+    poCATD = oTransfer.GetCATD();
+    for( i = 0; i < poCATD->GetEntryCount(); i++ )
     {
         printf( "  %s: `%s'\n",
-                oCATD.GetEntryModule(i),
-                oCATD.GetEntryTypeDesc(i) );
+                poCATD->GetEntryModule(i),
+                poCATD->GetEntryTypeDesc(i) );
     }
     printf( "\n" );
     
@@ -105,9 +110,9 @@ int main( int nArgc, char ** papszArgv )
 /*      Dump the first line file.                                       */
 /* -------------------------------------------------------------------- */
 #ifdef notdef    
-    SDTSLineReader oLineReader( &oIREF );
+    SDTSLineReader oLineReader( oTransfer.GetIREF() );
 
-    if( oLineReader.Open( oCATD.GetModuleFilePath( "LE01" ) ) )
+    if( oLineReader.Open( poCATD->GetModuleFilePath( "LE01" ) ) )
     {
         SDTSRawLine	*poRawLine;
         
@@ -130,7 +135,7 @@ int main( int nArgc, char ** papszArgv )
 #ifndef notdef    
     SDTSPolygonReader oPolyReader;
 
-    if( oPolyReader.Open( oCATD.GetModuleFilePath( "PC01" ) ) )
+    if( oPolyReader.Open( poCATD->GetModuleFilePath( "PC01" ) ) )
     {
         SDTSRawPolygon	*poRawPoly;
         
@@ -139,11 +144,28 @@ int main( int nArgc, char ** papszArgv )
 
         while( (poRawPoly = oPolyReader.GetNextPolygon()) != NULL )
         {
-            printf( "PolyId:%s/%s nAttributes=%d  AreaId=%s\n",
-                    poRawPoly->oPolyId.GetName(),
-                    poRawPoly->oPolyId.szOBRP,
-                    poRawPoly->nAttributes,
-                    poRawPoly->oAreaId.GetName() );
+            int		iAttr;
+            
+            printf( "PolyId:%s/%s ",
+                    poRawPoly->oModId.GetName(),
+                    poRawPoly->oModId.szOBRP );
+
+            for( iAttr = 0; iAttr < poRawPoly->nAttributes; iAttr++ )
+            {
+                printf( " %s", poRawPoly->aoATID[iAttr].GetName() );
+            }
+            printf( "\n" );
+            for( iAttr = 0; iAttr < poRawPoly->nAttributes; iAttr++ )
+            {
+                DDFField	*poField;
+
+                poField = oTransfer.GetAttr( poRawPoly->aoATID + iAttr );
+                if( poField != NULL )
+                    poField->Dump( stdout );
+                else
+                    printf( "Unable to fetch %s.\n",
+                            poRawPoly->aoATID[iAttr].GetName() );
+            }
             delete poRawPoly;
         }
         
@@ -152,17 +174,17 @@ int main( int nArgc, char ** papszArgv )
 #endif
     
 /* -------------------------------------------------------------------- */
-/*	Dump all modules of type "Primary Attribute" in the catalog.	*/
+/*	Dump all modules of all secondary attribute modules.		*/
 /* -------------------------------------------------------------------- */
-#ifdef notdef    
-    SDTSAttrReader oAttrReader( &oIREF );
+#ifndef notdef    
+    SDTSAttrReader oAttrReader( oTransfer.GetIREF() );
 
-    for( i = 0; i < oCATD.GetEntryCount(); i++ )
+    for( i = 0; i < poCATD->GetEntryCount(); i++ )
     {
-        if( oCATD.GetEntryType(i) == SLTAttr )
+        if( poCATD->GetEntryType(i) == SLTAttr )
         {
             if( oAttrReader.Open(
-                	oCATD.GetModuleFilePath( oCATD.GetEntryModule(i)) )
+                	poCATD->GetModuleFilePath( poCATD->GetEntryModule(i)) )
                 && oAttrReader.IsSecondary() )
             {
                 DDFField	*poATTP;

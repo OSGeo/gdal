@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  1999/09/02 03:40:03  warmerda
+ * added indexed readers
+ *
  * Revision 1.4  1999/08/10 02:52:13  warmerda
  * introduce use of SDTSApplyModIdList to capture multi-attributes
  *
@@ -96,13 +99,11 @@ int SDTSRawPoint::Read( SDTS_IREF * poIREF, DDFRecord * poRecord )
         pszFieldName = poField->GetFieldDefn()->GetName();
 
         if( EQUAL(pszFieldName,"PNTS") )
-            oPoint.Set( poField );
+            oModId.Set( poField );
 
         else if( EQUAL(pszFieldName,"ATID") )
-        {
-            SDTSApplyModIdList( poField, MAX_RAWPOINT_ATID,
-                                &nAttributes, aoATID );
-        }
+            ApplyATID( poField );
+
         else if( EQUAL(pszFieldName,"ARID") )
         {
             oAreaId.Set( poField );
@@ -203,13 +204,3 @@ SDTSRawPoint * SDTSPointReader::GetNextPoint()
     }
 }
 
-
-/************************************************************************/
-/*                        ScanModuleReferences()                        */
-/************************************************************************/
-
-char ** SDTSPointReader::ScanModuleReferences( const char * pszFName )
-
-{
-    return SDTSScanModuleReferences( &oDDFModule, pszFName );
-}

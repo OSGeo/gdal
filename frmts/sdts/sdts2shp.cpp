@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/09/02 03:40:03  warmerda
+ * added indexed readers
+ *
  * Revision 1.1  1999/05/07 13:44:57  warmerda
  * New
  *
@@ -44,6 +47,16 @@ static void WritePointShapefile( const char *, SDTS_IREF *, SDTS_CATD *,
                                  const char * );
 static void WriteAttributeDBF( const char *, SDTS_IREF *, SDTS_CATD *,
                                const char * );
+static void WritePolygonShapefile( const char *, SDTSTransfer *, 
+                                   const char * );
+
+static void
+AddPrimaryAttrToDBFSchema( DBFHandle hDBF, SDTSTransfer * poTransfer,
+                           char ** papszModuleList );
+static void
+WritePrimaryAttrToDBF( DBFHandle hDBF, int nRecord, 
+                       SDTSTransfer *,
+                       SDTSFeature * poFeature );
 
 /************************************************************************/
 /*                               Usage()                                */
@@ -67,12 +80,12 @@ static void Usage()
 int main( int nArgc, char ** papszArgv )
 
 {
-    SDTS_IREF	oIREF;
-    SDTS_CATD	oCATD;
     int		i;
     const char	*pszCATDFilename = NULL;
     const char  *pszMODN = "LE01";
     char  	*pszShapefile = "sdts_out.shp";
+    SDTSTransfer oTransfer;
+   
 
 /* -------------------------------------------------------------------- */
 /*      Interpret commandline switches.                                 */
@@ -114,9 +127,9 @@ int main( int nArgc, char ** papszArgv )
     }
 
 /* -------------------------------------------------------------------- */
-/*      Read the catalog.                                               */
+/*      Open the transfer.                                              */
 /* -------------------------------------------------------------------- */
-    if( !oCATD.Read( pszCATDFilename ) )
+    if( !oTransfer.Open( pszCATDFilename ) )
     {
         fprintf( stderr,
                  "Failed to read CATD file `%s'\n",
@@ -124,35 +137,30 @@ int main( int nArgc, char ** papszArgv )
         exit( 100 );
     }
 
+/* -------------------------------------------------------------------- */
+/*      Dump available layer in verbose mode.                           */
+/* -------------------------------------------------------------------- */
     if( bVerbose )
     {
-        printf( "Catalog:\n" );
-        for( i = 0; i < oCATD.getEntryCount(); i++ )
+        printf( "Layers:\n" );
+        for( i = 0; i < oTransfer.GetLayerCount(); i++ )
         {
+            int		iCATDEntry = oTransfer.GetLayerCATDEntry(i);
+            
             printf( "  %s: `%s'\n",
-                    oCATD.getEntryModule(i),
-                    oCATD.getEntryType(i));
+                    oTransfer.GetCATD()->GetEntryModule(iCATDEntry),
+                    oTransfer.GetCATD()->GetEntryTypeDesc(iCATDEntry) );
         }
         printf( "\n" );
     }
         
 /* -------------------------------------------------------------------- */
-/*      Capture internal reference information so we can process        */
-/*      spatial addresses.                                              */
-/* -------------------------------------------------------------------- */
-    if( !oIREF.Read( oCATD.getModuleFilePath( "IREF" ) ) )
-    {
-        fprintf( stderr, "Failed to read IREF file `%s'\n",
-                 oCATD.getModuleFilePath( "IREF" ) );
-        exit( 100 );
-    }
-
-/* -------------------------------------------------------------------- */
 /*      If the module is an LE module, write it to an Arc file.         */
 /* -------------------------------------------------------------------- */
     if( pszMODN[0] == 'L' )
     {
-        WriteLineShapefile( pszShapefile, &oIREF, &oCATD, pszMODN );
+        WriteLineShapefile( pszShapefile, oTransfer.GetIREF(),
+                            oTransfer.GetCATD(), pszMODN );
     }
 
 /* -------------------------------------------------------------------- */
@@ -160,7 +168,8 @@ int main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
     else if( pszMODN[0] == 'A' )
     {
-        WriteAttributeDBF( pszShapefile, &oIREF, &oCATD, pszMODN );
+        WriteAttributeDBF( pszShapefile, oTransfer.GetIREF(),
+                           oTransfer.GetCATD(), pszMODN );
     }
 
 /* -------------------------------------------------------------------- */
@@ -168,7 +177,16 @@ int main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
     else if( pszMODN[0] == 'N' )
     {
-        WritePointShapefile( pszShapefile, &oIREF, &oCATD, pszMODN );
+        WritePointShapefile( pszShapefile, oTransfer.GetIREF(),
+                             oTransfer.GetCATD(), pszMODN );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      If the module is a polygon one, dump to Shapefile.              */
+/* -------------------------------------------------------------------- */
+    else if( pszMODN[0] == 'P' )
+    {
+        WritePolygonShapefile( pszShapefile, &oTransfer, pszMODN );
     }
 }
 
@@ -187,10 +205,10 @@ static void WriteLineShapefile( const char * pszShapefile,
 /* -------------------------------------------------------------------- */
 /*      Open the line module file.                                      */
 /* -------------------------------------------------------------------- */
-    if( !oLineReader.Open( poCATD->getModuleFilePath( pszMODN ) ) )
+    if( !oLineReader.Open( poCATD->GetModuleFilePath( pszMODN ) ) )
     {
         fprintf( stderr, "Failed to open %s.\n",
-                 poCATD->getModuleFilePath( pszMODN ) );
+                 poCATD->GetModuleFilePath( pszMODN ) );
         return;
     }
 
@@ -212,7 +230,7 @@ static void WriteLineShapefile( const char * pszShapefile,
 /* -------------------------------------------------------------------- */
     DBFHandle	hDBF;
     int		nLeftPolyField, nRightPolyField;
-    int		anAttribField[MAX_RAWLINE_ATID];
+    int		anAttribField[MAX_ATID];
     int		nStartNodeField, nEndNodeField, nSDTSRecordField;
     char	szDBFFilename[1024];
 
@@ -232,7 +250,7 @@ static void WriteLineShapefile( const char * pszShapefile,
     nStartNodeField = DBFAddField( hDBF, "StartNode", FTString, 12, 0 );
     nEndNodeField = DBFAddField( hDBF, "EndNode", FTString, 12, 0 );
     
-    for( i = 0; i < MAX_RAWLINE_ATID; i++ )
+    for( i = 0; i < MAX_ATID; i++ )
     {
         char	szID[20];
         
@@ -268,7 +286,7 @@ static void WriteLineShapefile( const char * pszShapefile,
         char	szID[13];
 
         DBFWriteIntegerAttribute( hDBF, iShape, nSDTSRecordField,
-                                  poRawLine->oLine.nRecord );
+                                  poRawLine->oModId.nRecord );
         
         sprintf( szID, "%s:%ld",
                  poRawLine->oLeftPoly.szModule,
@@ -290,7 +308,7 @@ static void WriteLineShapefile( const char * pszShapefile,
                  poRawLine->oEndNode.nRecord );
         DBFWriteStringAttribute( hDBF, iShape, nEndNodeField, szID );
 
-        for( i = 0; i < MAX_RAWLINE_ATID; i++ )
+        for( i = 0; i < MAX_ATID; i++ )
         {
             char	szID[12];
 
@@ -327,10 +345,10 @@ static void WritePointShapefile( const char * pszShapefile,
 /* -------------------------------------------------------------------- */
 /*      Open the line module file.                                      */
 /* -------------------------------------------------------------------- */
-    if( !oPointReader.Open( poCATD->getModuleFilePath( pszMODN ) ) )
+    if( !oPointReader.Open( poCATD->GetModuleFilePath( pszMODN ) ) )
     {
         fprintf( stderr, "Failed to open %s.\n",
-                 poCATD->getModuleFilePath( pszMODN ) );
+                 poCATD->GetModuleFilePath( pszMODN ) );
         return;
     }
 
@@ -351,7 +369,7 @@ static void WritePointShapefile( const char * pszShapefile,
 /*      Create the database file, and our basic set of attributes.      */
 /* -------------------------------------------------------------------- */
     DBFHandle	hDBF;
-    int		anAttribField[MAX_RAWLINE_ATID];
+    int		anAttribField[MAX_ATID];
     int		nAreaField, nSDTSRecordField;
     char	szDBFFilename[1024];
 
@@ -368,7 +386,7 @@ static void WritePointShapefile( const char * pszShapefile,
     nSDTSRecordField = DBFAddField( hDBF, "SDTSRecId", FTInteger, 8, 0 );
     nAreaField = DBFAddField( hDBF, "Area", FTString, 12, 0 );
     
-    for( i = 0; i < MAX_RAWLINE_ATID; i++ )
+    for( i = 0; i < MAX_ATID; i++ )
     {
         char	szID[20];
         
@@ -405,14 +423,14 @@ static void WritePointShapefile( const char * pszShapefile,
         char	szID[13];
 
         DBFWriteIntegerAttribute( hDBF, iShape, nSDTSRecordField,
-                                  poRawPoint->oPoint.nRecord );
+                                  poRawPoint->oModId.nRecord );
         
         sprintf( szID, "%s:%ld",
                  poRawPoint->oAreaId.szModule,
                  poRawPoint->oAreaId.nRecord );
         DBFWriteStringAttribute( hDBF, iShape, nAreaField, szID );
 
-        for( i = 0; i < MAX_RAWPOINT_ATID; i++ )
+        for( i = 0; i < MAX_ATID; i++ )
         {
             char	szID[12];
 
@@ -449,10 +467,10 @@ static void WriteAttributeDBF( const char * pszShapefile,
 /* -------------------------------------------------------------------- */
 /*      Open the line module file.                                      */
 /* -------------------------------------------------------------------- */
-    if( !oAttrReader.Open( poCATD->getModuleFilePath( pszMODN ) ) )
+    if( !oAttrReader.Open( poCATD->GetModuleFilePath( pszMODN ) ) )
     {
         fprintf( stderr, "Failed to open %s.\n",
-                 poCATD->getModuleFilePath( pszMODN ) );
+                 poCATD->GetModuleFilePath( pszMODN ) );
         return;
     }
 
@@ -620,3 +638,336 @@ static void WriteAttributeDBF( const char * pszShapefile,
     
     oAttrReader.Close();
 }    
+
+/************************************************************************/
+/*                       WritePolygonShapefile()                        */
+/************************************************************************/
+
+static void WritePolygonShapefile( const char * pszShapefile,
+                                   SDTSTransfer * poTransfer, 
+                                   const char * pszMODN )
+
+{
+    SDTSPolygonReader *poPolyReader;
+
+/* -------------------------------------------------------------------- */
+/*      Fetch a reference to the indexed polygon reader.                */
+/* -------------------------------------------------------------------- */
+    poPolyReader = (SDTSPolygonReader *) 
+        poTransfer->GetLayerIndexedReader( poTransfer->FindLayer( pszMODN ) );
+    
+    if( poPolyReader == NULL )
+    {
+        fprintf( stderr, "Failed to open %s.\n",
+                 poTransfer->GetCATD()->GetModuleFilePath( pszMODN ) );
+        return;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      To write polygons we need to build them from their related      */
+/*      arcs.  We don't know off hand which arc (line) layers           */
+/*      contribute so we process all line layers, attaching them to     */
+/*      polygons as appropriate.                                        */
+/* -------------------------------------------------------------------- */
+    for( int iLineLayer = 0;
+         iLineLayer < poTransfer->GetLayerCount();
+         iLineLayer++ )
+    {
+        SDTSLineReader	*poLineReader;
+        
+        if( poTransfer->GetLayerType(iLineLayer) != SLTLine )
+            continue;
+
+        poLineReader = (SDTSLineReader *)
+            poTransfer->GetLayerIndexedReader( iLineLayer );
+        if( poLineReader == NULL )
+            continue;
+
+        poLineReader->AttachToPolygons( poTransfer );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Create the Shapefile.                                           */
+/* -------------------------------------------------------------------- */
+    SHPHandle	hSHP;
+
+    hSHP = SHPCreate( pszShapefile, SHPT_POLYGON );
+    if( hSHP == NULL )
+    {
+        fprintf( stderr, "Unable to create shapefile `%s'\n",
+                 pszShapefile );
+        return;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Create the database file, and our basic set of attributes.      */
+/* -------------------------------------------------------------------- */
+    DBFHandle	hDBF;
+    int		nSDTSRecordField;
+    char	szDBFFilename[1024];
+
+    sprintf( szDBFFilename, "%s.dbf", pszShapefile );
+
+    hDBF = DBFCreate( szDBFFilename );
+    if( hDBF == NULL )
+    {
+        fprintf( stderr, "Unable to create shapefile .dbf for `%s'\n",
+                 pszShapefile );
+        return;
+    }
+
+    nSDTSRecordField = DBFAddField( hDBF, "SDTSRecId", FTInteger, 8, 0 );
+    AddPrimaryAttrToDBFSchema( hDBF, poTransfer,
+                               poPolyReader->ScanModuleReferences() );
+
+/* ==================================================================== */
+/*      Process all the polygon features in the module.                 */
+/* ==================================================================== */
+    SDTSRawPolygon	*poRawPoly;
+        
+    while( (poRawPoly = (SDTSRawPolygon *) poPolyReader->GetNextFeature())
+           != NULL )
+    {
+        int		iShape;
+
+        if( poRawPoly->nEdges == 0 )
+        {
+            printf( "Skipping polygon %s with no edges.\n",
+                    poRawPoly->oModId.GetName() );
+            continue;
+        }
+
+        if( !poRawPoly->AssembleRings() )
+        {
+            printf( "Problem assembling rings for %s.  Write anyways.\n",
+                    poRawPoly->oModId.GetName() );
+        }
+
+/* -------------------------------------------------------------------- */
+/*      Write out a shape with the vertices.                            */
+/* -------------------------------------------------------------------- */
+        SHPObject	*psShape;
+
+        psShape = SHPCreateObject( SHPT_POLYGON, -1, poRawPoly->nRings,
+                                   poRawPoly->panRingStart, NULL,
+                                   poRawPoly->nVertices,
+                                   poRawPoly->padfX, 
+                                   poRawPoly->padfY, 
+                                   poRawPoly->padfZ,
+                                   NULL );
+
+        iShape = SHPWriteObject( hSHP, -1, psShape );
+
+        SHPDestroyObject( psShape );
+
+/* -------------------------------------------------------------------- */
+/*      Write out the attributes.                                       */
+/* -------------------------------------------------------------------- */
+        DBFWriteIntegerAttribute( hDBF, iShape, nSDTSRecordField,
+                                  poRawPoly->oModId.nRecord );
+        WritePrimaryAttrToDBF( hDBF, iShape, poTransfer, poRawPoly );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Close, and cleanup.                                             */
+/* -------------------------------------------------------------------- */
+    DBFClose( hDBF );
+    SHPClose( hSHP );
+}    
+
+/************************************************************************/
+/*                        AddPrimaryAttrToDBF()                         */
+/*                                                                      */
+/*      Add the fields from all the given primary attribute modules     */
+/*      to the schema of the passed DBF file.                           */
+/************************************************************************/
+
+static void
+AddPrimaryAttrToDBFSchema( DBFHandle hDBF, SDTSTransfer *poTransfer,
+                           char ** papszModuleList )
+
+{
+    for( int iModule = 0;
+         papszModuleList != NULL && papszModuleList[iModule] != NULL;
+         iModule++ )
+    {
+        SDTSAttrReader	*poAttrReader;
+
+/* -------------------------------------------------------------------- */
+/*      Get a reader on the desired module.                             */
+/* -------------------------------------------------------------------- */
+        poAttrReader = (SDTSAttrReader *)
+            poTransfer->GetLayerIndexedReader(
+                poTransfer->FindLayer( papszModuleList[iModule] ) );
+
+        if( poAttrReader == NULL )
+        {
+            printf( "Unable to open attribute module %s, skipping.\n" ,
+                    papszModuleList[iModule] );
+            continue;
+        }
+
+        poAttrReader->Rewind();
+        
+/* -------------------------------------------------------------------- */
+/*      Read the first record so we can clone schema information off    */
+/*      of it.                                                          */
+/* -------------------------------------------------------------------- */
+        SDTSAttrRecord 	*poAttrFeature;
+
+        poAttrFeature = (SDTSAttrRecord *) poAttrReader->GetNextFeature();
+        if( poAttrFeature == NULL )
+        {
+            fprintf( stderr,
+                     "Didn't find any meaningful attribute records in %s.\n",
+                     papszModuleList[iModule] );
+        
+            continue;
+        }
+
+/* -------------------------------------------------------------------- */
+/*      Clone schema off the first record.  Eventually we need to       */
+/*      get the information out of the DDR record, but it isn't         */
+/*      clear to me how to accomplish that with the SDTS++ API.         */
+/*                                                                      */
+/*      The following approach may fail (dramatically) if some          */
+/*      records do not include all subfields.  Furthermore, no          */
+/*      effort is made to make DBF field names unique.  The SDTS        */
+/*      attributes often have names much beyond the 14 character dbf    */
+/*      limit which may result in non-unique attributes.                */
+/* -------------------------------------------------------------------- */
+        DDFFieldDefn 	*poFDefn = poAttrFeature->poATTR->GetFieldDefn();
+        int		iSF;
+        DDFField	*poSR = poAttrFeature->poATTR;
+    
+        for( iSF=0; iSF < poFDefn->GetSubfieldCount(); iSF++ )
+        {
+            DDFSubfieldDefn	*poSFDefn = poFDefn->GetSubfield( iSF );
+            int		nWidth = poSFDefn->GetWidth();
+            
+            switch( poSFDefn->GetType() )
+            {
+              case DDFString:
+                if( nWidth == 0 )
+                {
+                    int		nMaxBytes;
+                
+                    const char * pachData = poSR->GetSubfieldData(poSFDefn,
+                                                                  &nMaxBytes);
+
+                    nWidth = strlen(poSFDefn->ExtractStringData(pachData,
+                                                                nMaxBytes, NULL ));
+                }
+            
+                DBFAddField( hDBF, poSFDefn->GetName(), FTString, nWidth, 0 );
+                break;
+
+              case DDFInt:
+                if( nWidth == 0 )
+                    nWidth = 9;
+
+                DBFAddField( hDBF, poSFDefn->GetName(), FTInteger, nWidth, 0 );
+                break;
+
+              case DDFFloat:
+                DBFAddField( hDBF, poSFDefn->GetName(), FTDouble, 18, 6 );
+                break;
+
+              default:
+                fprintf( stderr,
+                         "Dropping attribute `%s' of module `%s'.  "
+                         "Type unsupported\n",
+                         poSFDefn->GetName(),
+                         papszModuleList[iModule] );
+                break;
+            }
+        }
+    }    
+}
+
+/************************************************************************/
+/*                       WritePrimaryAttrToDBF()                        */
+/************************************************************************/
+
+static void
+WritePrimaryAttrToDBF( DBFHandle hDBF, int iRecord, 
+                       SDTSTransfer * poTransfer, SDTSFeature * poFeature )
+
+{
+/* ==================================================================== */
+/*      Loop over all the attribute records linked to this feature.     */
+/* ==================================================================== */
+    int		iAttrRecord;
+    
+    for( iAttrRecord = 0; iAttrRecord < poFeature->nAttributes; iAttrRecord++)
+    {
+        DDFField	*poSR;
+
+        poSR = poTransfer->GetAttr( poFeature->aoATID+iAttrRecord );
+          
+/* -------------------------------------------------------------------- */
+/*      Process each subfield in the record.                            */
+/* -------------------------------------------------------------------- */
+        DDFFieldDefn 	*poFDefn = poSR->GetFieldDefn();
+        
+        for( int iSF=0; iSF < poFDefn->GetSubfieldCount(); iSF++ )
+        {
+            DDFSubfieldDefn	*poSFDefn = poFDefn->GetSubfield( iSF );
+            int			iField;
+            int			nMaxBytes;
+            const char * 	pachData = poSR->GetSubfieldData(poSFDefn,
+                                                                 &nMaxBytes);
+
+/* -------------------------------------------------------------------- */
+/*      Identify the related DBF field, if any.                         */
+/* -------------------------------------------------------------------- */
+            for( iField = 0; iField < hDBF->nFields; iField++ )
+            {
+                if( EQUALN(poSFDefn->GetName(),
+                           hDBF->pszHeader+iField*32,10) )
+                    break;
+            }
+
+            if( iField == hDBF->nFields )
+                iField = -1;
+            
+/* -------------------------------------------------------------------- */
+/*      Handle each of the types.                                       */
+/* -------------------------------------------------------------------- */
+            switch( poSFDefn->GetType() )
+            {
+              case DDFString:
+                const char	*pszValue;
+
+                pszValue = poSFDefn->ExtractStringData(pachData, nMaxBytes,
+                                                       NULL);
+
+                if( iField != -1 )
+                    DBFWriteStringAttribute(hDBF, iRecord, iField, pszValue );
+                break;
+
+              case DDFFloat:
+                double	dfValue;
+
+                dfValue = poSFDefn->ExtractFloatData(pachData, nMaxBytes,
+                                                     NULL);
+
+                if( iField != -1 )
+                    DBFWriteDoubleAttribute( hDBF, iRecord, iField, dfValue );
+                break;
+
+              case DDFInt:
+                int		nValue;
+
+                nValue = poSFDefn->ExtractIntData(pachData, nMaxBytes, NULL);
+
+                if( iField != -1 )
+                    DBFWriteIntegerAttribute( hDBF, iRecord, iField, nValue );
+                break;
+
+              default:
+                break;
+            }
+        } /* next subfield */
+    } /* next related record */
+}

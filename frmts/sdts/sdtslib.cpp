@@ -3,6 +3,7 @@
  *
  * Project:  SDTS Translator
  * Purpose:  Various utility functions that apply to all SDTS profiles.
+ *           SDTSModId, and SDTSFeature methods. 
  * Author:   Frank Warmerdam, warmerda@home.com
  *
  ******************************************************************************
@@ -28,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  1999/09/02 03:40:03  warmerda
+ * added indexed readers
+ *
  * Revision 1.6  1999/08/16 20:59:50  warmerda
  * added szOBRP support for SDTSModId
  *
@@ -52,15 +56,10 @@
 #include "cpl_string.h"
 
 /************************************************************************/
-/*                         SDTSApplyModIdList()                         */
-/*                                                                      */
-/*      Apply one or more module id's stored in a DDFField to a         */
-/*      SDTSModId list.  This is currently used for ATID on the         */
-/*      various feature types.                                          */
+/*                       SDTSFeature::ApplyATID()                       */
 /************************************************************************/
 
-void SDTSApplyModIdList( DDFField * poField, int nMaxAttributes,
-                         int * pnAttributes, SDTSModId *paoATID )
+void SDTSFeature::ApplyATID( DDFField * poField )
 
 {
     int		nRepeatCount = poField->GetRepeatCount();
@@ -75,10 +74,10 @@ void SDTSApplyModIdList( DDFField * poField, int nMaxAttributes,
 
     for( int iRepeat = 0; iRepeat < nRepeatCount; iRepeat++ )
     {
-        if( *pnAttributes < nMaxAttributes )
+        if( nAttributes < MAX_ATID )
         {
             const char * pabyData;
-            SDTSModId *poModId = paoATID + *pnAttributes;
+            SDTSModId *poModId = aoATID + nAttributes;
 
             pabyData = poField->GetSubfieldData( poMODN, NULL, iRepeat );
             
@@ -86,11 +85,19 @@ void SDTSApplyModIdList( DDFField * poField, int nMaxAttributes,
             poModId->szModule[4] = '\0';
             poModId->nRecord = atoi(pabyData + 4);
 
-            (*pnAttributes)++;
+            nAttributes++;
         }
     }
 }
 
+/************************************************************************/
+/*                            ~SDTSFeature()                            */
+/************************************************************************/
+
+SDTSFeature::~SDTSFeature()
+
+{
+}
 
 /************************************************************************/
 /*                           SDTSModId::Set()                           */

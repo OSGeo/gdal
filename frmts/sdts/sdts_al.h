@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  1999/09/02 03:40:03  warmerda
+ * added indexed readers
+ *
  * Revision 1.12  1999/08/16 20:59:28  warmerda
  * added szOBRP support for SDTSModId
  *
@@ -74,13 +77,12 @@
 
 class SDTS_IREF;
 class SDTSModId;
+class SDTSTransfer;
 
 #define SDTS_SIZEOF_SADR	8
 
 int SDTSGetSADR( SDTS_IREF *, DDFField *, int, double *, double *, double * );
 char **SDTSScanModuleReferences( DDFModule *, const char * );
-void SDTSApplyModIdList( DDFField * poField, int nMaxAttributes,
-                         int * pnAttributes, SDTSModId *paoATID );
 
 /************************************************************************/
 /*                              SDTS_IREF                               */
@@ -172,31 +174,6 @@ class SDTS_CATD
 };
 
 /************************************************************************/
-/*                            SDTSLineReader                            */
-/*                                                                      */
-/*      Class for reading any of the files lines.                       */
-/************************************************************************/
-
-class SDTSRawLine;
-
-class SDTSLineReader
-{
-    DDFModule   oDDFModule;
-
-    SDTS_IREF	*poIREF;
-    
-  public:
-    		SDTSLineReader( SDTS_IREF * );
-                ~SDTSLineReader();
-
-    int         Open( const char * );
-    SDTSRawLine *GetNextLine( void );
-    void	Close();
-
-    char **	ScanModuleReferences( const char * = "ATID" );
-};
-
-/************************************************************************/
 /*                              SDTSModId                               */
 /*                                                                      */
 /*      A simple class to encapsulate a model and record                */
@@ -219,21 +196,72 @@ class SDTSModId
 };
 
 /************************************************************************/
+/*                             SDTSFeature                              */
+/*                                                                      */
+/*      Base class for points, lines, polygons and attribute            */
+/*      records.                                                        */
+/************************************************************************/
+
+class SDTSFeature
+{
+public:
+
+    virtual            ~SDTSFeature();
+    
+    SDTSModId		oModId;
+
+#define MAX_ATID	4    
+    int		nAttributes;
+    SDTSModId	aoATID[MAX_ATID];
+
+    void        ApplyATID( DDFField * );
+};
+
+/************************************************************************/
+/*                          SDTSIndexedReader                           */
+/************************************************************************/
+
+class SDTSIndexedReader
+{
+    int			nIndexSize;
+    SDTSFeature	      **papoFeatures;
+
+    int			iCurrentFeature;
+
+protected:    
+    DDFModule   	oDDFModule;
+
+public:
+    			SDTSIndexedReader();
+    virtual            ~SDTSIndexedReader();
+    
+    virtual SDTSFeature  *GetNextRawFeature() = 0;
+    
+    SDTSFeature	       *GetNextFeature();
+
+    virtual void        Rewind();
+    
+    void		FillIndex();
+
+    SDTSFeature	       *GetIndexedFeatureRef( int );
+    char **		ScanModuleReferences( const char * = "ATID" );
+};
+
+
+/************************************************************************/
 /*                             SDTSRawLine                              */
 /*                                                                      */
 /*      Simple container for the information from a line read from a    */
 /*      line file.                                                      */
 /************************************************************************/
-class SDTSRawLine
+class SDTSRawLine : public SDTSFeature
 {
   public:
     		SDTSRawLine();
-                ~SDTSRawLine();
+    virtual    ~SDTSRawLine();
 
     int         Read( SDTS_IREF *, DDFRecord * );
 
-    SDTSModId	oLine;			/* LINE field */
-                
     int		nVertices;
 
     double	*padfX;
@@ -245,11 +273,48 @@ class SDTSRawLine
     SDTSModId	oStartNode;		/* SNID */
     SDTSModId	oEndNode;		/* ENID */
 
-#define MAX_RAWLINE_ATID	4    
-    int		nAttributes;
-    SDTSModId	aoATID[MAX_RAWLINE_ATID];  /* ATID (attribute) references */
-
     void	Dump( FILE * );
+};
+
+/************************************************************************/
+/*                            SDTSLineReader                            */
+/*                                                                      */
+/*      Class for reading any of the files lines.                       */
+/************************************************************************/
+
+class SDTSLineReader : public SDTSIndexedReader
+{
+    SDTS_IREF	*poIREF;
+    
+  public:
+    		SDTSLineReader( SDTS_IREF * );
+                ~SDTSLineReader();
+
+    int         Open( const char * );
+    SDTSRawLine *GetNextLine( void );
+    void	Close();
+    
+    SDTSFeature *GetNextRawFeature( void ) { return GetNextLine(); }
+
+    void        AttachToPolygons( SDTSTransfer * );
+};
+
+/************************************************************************/
+/*                            SDTSAttrRecord                            */
+/*                                                                      */
+/*      Simple "SDTSFeature" enabled contain for an attribute record.   */
+/************************************************************************/
+
+class SDTSAttrRecord : public SDTSFeature
+{
+  public:
+    		SDTSAttrRecord();
+    virtual    ~SDTSAttrRecord();
+
+    DDFRecord   *poWholeRecord;
+    DDFField    *poATTR;
+
+    virtual void Dump( FILE * );
 };
 
 /************************************************************************/
@@ -258,50 +323,25 @@ class SDTSRawLine
 /*      Class for reading any of the primary attribute files.           */
 /************************************************************************/
 
-class SDTSAttrRecord;
-
-class SDTSAttrReader
+class SDTSAttrReader : public SDTSIndexedReader
 {
-    DDFModule	oDDFModule;
-
     SDTS_IREF	*poIREF;
 
     int		bIsSecondary;
     
   public:
     		SDTSAttrReader( SDTS_IREF * );
-                ~SDTSAttrReader();
+   virtual     ~SDTSAttrReader();
 
     int         Open( const char * );
     DDFField	*GetNextRecord( SDTSModId * = NULL,
                                 DDFRecord ** = NULL );
+    SDTSAttrRecord *GetNextAttrRecord();
     void	Close();
 
     int		IsSecondary() { return bIsSecondary; }
-};
-
-/************************************************************************/
-/*                           SDTSPointReader                            */
-/*                                                                      */
-/*      Class for reading any of the point files.                       */
-/************************************************************************/
-
-class SDTSRawPoint;
-
-class SDTSPointReader
-{
-    DDFModule	oDDFModule;
-    SDTS_IREF	*poIREF;
     
-  public:
-    		SDTSPointReader( SDTS_IREF * );
-                ~SDTSPointReader();
-
-    int         Open( const char * );
-    SDTSRawPoint *GetNextPoint( void );
-    void	Close();
-
-    char **	ScanModuleReferences( const char * = "ATID" );
+    SDTSFeature *GetNextRawFeature( void ) { return GetNextAttrRecord(); }
 };
 
 /************************************************************************/
@@ -310,47 +350,40 @@ class SDTSPointReader
 /*      Simple container for the information from a point.              */
 /************************************************************************/
 
-class SDTSRawPoint
+class SDTSRawPoint : public SDTSFeature
 {
   public:
     		SDTSRawPoint();
-                ~SDTSRawPoint();
+    virtual    ~SDTSRawPoint();
 
     int         Read( SDTS_IREF *, DDFRecord * );
 
-    SDTSModId	oPoint;			/* PNTS field */
-                
     double	dfX;
     double	dfY;
     double	dfZ;
 
-#define MAX_RAWPOINT_ATID	4
-    int		nAttributes;
-    SDTSModId	aoATID[MAX_RAWPOINT_ATID];  /* ATID (attribute) references */
     SDTSModId   oAreaId;		/* ARID */
 };
 
 /************************************************************************/
-/*                          SDTSPolygonReader                           */
+/*                           SDTSPointReader                            */
 /*                                                                      */
-/*      Class for reading any of the polygon files.                     */
+/*      Class for reading any of the point files.                       */
 /************************************************************************/
 
-class SDTSRawPolygon;
-
-class SDTSPolygonReader
+class SDTSPointReader : public SDTSIndexedReader
 {
-    DDFModule	oDDFModule;
+    SDTS_IREF	*poIREF;
     
   public:
-    		SDTSPolygonReader();
-                ~SDTSPolygonReader();
+    		SDTSPointReader( SDTS_IREF * );
+    virtual    ~SDTSPointReader();
 
     int         Open( const char * );
-    SDTSRawPolygon *GetNextPolygon( void );
+    SDTSRawPoint *GetNextPoint( void );
     void	Close();
 
-    char **	ScanModuleReferences( const char * = "ATID" );
+    SDTSFeature *GetNextRawFeature( void ) { return GetNextPoint(); }
 };
 
 /************************************************************************/
@@ -359,19 +392,48 @@ class SDTSPolygonReader
 /*      Simple container for the information from a polygon             */
 /************************************************************************/
 
-class SDTSRawPolygon
+class SDTSRawPolygon : public SDTSFeature
 {
+    void        AddEdgeToRing( SDTSRawLine *, int, int );
+    
   public:
     		SDTSRawPolygon();
+    virtual    ~SDTSRawPolygon();
 
     int         Read( DDFRecord * );
 
-    SDTSModId	oPolyId;
-     
-#define MAX_RAWPOLYGON_ATID	4
-    int		nAttributes;
-    SDTSModId	aoATID[MAX_RAWPOLYGON_ATID];  /* ATID (attribute) references */
-    SDTSModId   oAreaId;		      /* ARID */
+    int		nEdges;
+    SDTSRawLine **papoEdges;
+
+    void	AddEdge( SDTSRawLine * );
+
+    int		AssembleRings();
+    
+    int		nRings;
+    int		nVertices;
+    int		*panRingStart;
+    double	*padfX;
+    double      *padfY;
+    double      *padfZ;
+};
+
+/************************************************************************/
+/*                          SDTSPolygonReader                           */
+/*                                                                      */
+/*      Class for reading any of the polygon files.                     */
+/************************************************************************/
+
+class SDTSPolygonReader : public SDTSIndexedReader
+{
+  public:
+    		SDTSPolygonReader();
+    virtual    ~SDTSPolygonReader();
+
+    int         Open( const char * );
+    SDTSRawPolygon *GetNextPolygon( void );
+    void	Close();
+
+    SDTSFeature *GetNextRawFeature( void ) { return GetNextPolygon(); }
 };
 
 /************************************************************************/
@@ -432,6 +494,7 @@ class SDTSTransfer
     int		Open( const char * );
     void	Close();
 
+    int		FindLayer( const char * );
     int		GetLayerCount() { return nLayers; }
     SDTSLayerType GetLayerType( int );
     int		GetLayerCATDEntry( int );
@@ -443,10 +506,18 @@ class SDTSTransfer
     SDTSRasterReader *GetLayerRasterReader( int );
     DDFModule	*GetLayerModuleReader( int );
 
+    SDTSIndexedReader *GetLayerIndexedReader( int );
+
     SDTS_CATD	*GetCATD() { return &oCATD ; }
     SDTS_IREF	*GetIREF() { return &oIREF; }
     SDTS_XREF   *GetXREF() { return &oXREF; }
+
+    SDTSFeature *GetIndexedFeatureRef( SDTSModId *,
+                                       SDTSLayerType *peType = NULL);
                 
+
+    DDFField *GetAttr( SDTSModId * );
+    
   private:
 
     SDTS_CATD	oCATD;
@@ -455,6 +526,7 @@ class SDTSTransfer
 
     int		nLayers;
     int		*panLayerCATDEntry;
+    SDTSIndexedReader **papoLayerReader;
 };
 
 #endif /* ndef SDTS_AL_H_INCLUDED */
