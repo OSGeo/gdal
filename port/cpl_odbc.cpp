@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2004/06/01 20:40:02  warmerda
+ * expanded tabs
+ *
  * Revision 1.13  2004/03/30 22:26:58  warmerda
  * Avoid use of SQLRowCount() in GetColumns().  It does not work reliably
  * with Oracle unixodbc driver on AIX.  Argg.
@@ -953,7 +956,7 @@ int CPLODBCStatement::GetColumns( const char *pszTable,
     SQLINTEGER nResultCount=0;
 
     if( Failed(SQLRowCount( m_hStmt, &nResultCount ) ) )
-	nResultCount = 0;
+        nResultCount = 0;
 
     if( nResultCount < 1 )
         m_nColCount = 500; // Hopefully lots.
