@@ -1,0 +1,224 @@
+GDAL 1.1.6 - Overview of Changes
+--------------------------------
+
+ o Implemented USGS DEM reading.
+
+ o Implemented BSB Format (Nautical Chart Format) read support.
+
+ o Preliminary implementation of Virtual Datasets (gdal/frmts/vrt). 
+
+ o Preliminary support for writing DTED files. 
+
+ o Some raw formats (ie. PAux, HKV) support files larger than 2GB.
+
+ o Add the AddBand() method on GDALDataset.
+
+ o PAux: Added color table read support. 
+
+ o Various fixes to OGDI driver.
+
+ o Stripped out the GDALProjDef related capabilities.  Superceeded by
+   OGRSpatialReference, and OGRCoordinateTransformation functionality.
+
+ o Improved CEOS support, notable for ESA LANDSAT files, D-PAF ERS-1 and
+   Telaviv ERS data. 
+
+ o geotiff: upgraded libtiff support to approximately libtiff 3.5.7.
+
+
+
+OGR 1.1.6 - Overview of Changes
+-------------------------------
+
+ o Fixed OGDI driver so that gltp urls with drive letters work properly on 
+   windows.
+
+ o Many improvements to OLE DB provider during the process of making it 
+   compatible with the MapGuide (SDP) client.  These include implementing
+   restrictions for schema rowsets, treating missing information like WKT
+   coordinate systems as NULL fields, and setting ISLONG on geometry fields.
+   Also made thread safe. 
+
+ o DGN: Thread SHAPE elements as polygons.  Set style information for text.
+   Added 3D support for most elements. 
+
+ o Fixed bugs in WKT format for some OGR geometry types (ie. multipoint).
+
+ o Added support for morphing to/from ESRI WKT format for OGRSpatialReference.
+
+ o NTF: Don't try to cache all the records from multiple files at once.
+
+ o Added experimental XML SRS support ... not the final schema.  Added
+   supporting "minixml" support to CPL.			
+
+ o PostGIS: Upgraded to PostGIS 0.6.  Added "soft transaction" semantics.  
+   Many create feature calls can now be part of one transaction.  Transactions
+   are now a general OGR concept although only implemented for PostGIS. 
+
+ o Added transform() and transformTo() methods for reprojecting geometries and
+   added user options for this in ogr2ogr.
+
+==============================================================================
+
+GDAL 1.1.5 New Features
+-----------------------
+
+o AIGrid:
+- Return nodata value.
+
+o OGDI:
+- Added format user documentation.
+- Added Sub Dataset support.
+- Utilize OGDI 3.1 style capabilities metadata.
+
+o SAR_CEOS:
+- Added support for Alaska SAR Toolbox naming convention.
+- Read map projection record for corner GCPs.
+
+o PNG Driver:
+- read/write support for transparency via colortable and nodata value.
+
+o Erdas Imagine (HFA) Driver:
+- Added support for reading external large image files.
+- Added support for uncompressed, but reduced precision blocks.
+
+o GIF Driver:
+- Added .wld world file support.
+- Added transparency read support.
+- Upgraded to libungif 4.x.
+
+o JPEG Driver:
+- Added .wld world file support.
+
+o PAux Driver:
+- Added limited gcp and projection read support.
+
+o GeoTIFF Driver:
+- Added specialized support for 1 bit files.
+- Upgraded world file reading (added .wld files), use
+GDALReadWorldFile().
+
+o JDEM Driver is new (Japanese DEM format).
+
+o FujiBAS Driver is new.
+
+o ERMapper ECW Driver is new.
+
+o GDAL Bridge: upgraded to include new entry points, like GCP access and
+nodata api.
+
+o gdal_translate: added the -not_scrict option.
+
+o GDALGetRandomRasterSample(): Return magnitude for random samples.
+
+o Added use of CPL_CVSID macro in most source files. Running the RCS ident
+command on any GDAL executable or shared library should now give a listing
+of most object file versions from which it was built.
+
+o Various improvements so that static builds will work under Cygwin.
+
+o Various improvements so that builds can be done on MacOS X.
+
+o Overviews: Implement AVERAGE_MAGPHASE option for complex image overviews.
+
+o Added support for sub datasets to gdalinfo, core api and OGDI raster driver.
+
+o The size of the GDAL cache can now be overridden with the GDAL_CACHEMAX
+environment variable (measured in MB).
+
+o Added Driver implementation tutorial to documentation.
+
+o Added apps/gdaltindex.c - application for building tile indexed raster
+datasets suitable for use with UMN MapServer.
+
+
+GDAL 1.1.5 Significant Bug Fixes
+--------------------------------
+
+o SAR_CEOS:
+- Don't try to get GCPs from scanlines with no prefix data.
+
+o GeoTIFF:
+- Fixed handling of RGBA band ordering on big endian systems.
+- Fixed bugs in overview generation, especially when updating in place.
+
+o gdal-config should work properly in all situations now.
+
+o JPEG Driver: improved magic number tested to avoid ignoring some jpeg files.
+
+o FITS Driver: lots of fixes and improvements.
+
+
+OGR 1.1.5 New Features
+----------------------
+
+o Implemented support for attribute query filters (SetAttributeFilter())
+on OGRLayer, provided SWQ based implementation, plugged into all
+drivers and added hooks to ogrinfo.
+
+o MapInfo Driver:
+- Added accelerated spatial query support.
+- Upgraded to current MITAB source as of GDAL release date.
+
+o S-57 Driver:
+- Added support for applying S-57 updates automatically.
+
+o SDTS Driver:
+- Added ENID and SNID to line features.
+- Return coordinate system in WKT instead of PROJ.4 format.
+
+o Shapefile Driver:
+- Auto determine shapefile type from first object written.
+- Added good support for NULL shapes, and NULL attribute fields.
+- Added support for .prj files (read and write).
+
+o PostgreSQL Driver:
+- Added PostGIS support.
+- Pass attribute queries through to PostgreSQL.
+
+o NTF Driver:
+- Added support for GTYPE 5 geometries (a type of arc).
+- Added support for GEOMETRY3D records in indexed (generic) datasets.
+
+o TIGER/Line Driver:
+- Added write support.
+- Improved read support for TIGER 2000.
+
+o OLE DB Provider:
+- Added support for spatial queries via ICommand parameters.
+- Added support for attribute queries by parsing out WHERE clause.
+- In general substantial rework and extentions were made to make it
+work with ESRI and AutoDesk clients.
+
+o Added gdal/data/stateplane.txt - a test file with one line per state plane
+zone for applications wanting to present options to users.
+
+o Install ogrsf_frmts.a on install if building with OGR support enabled.
+
+o Reports layer extents in ogrinfo.
+
+OGR 1.1.5 Significant Bugs
+--------------------------
+
+o OGRSpatialReference:
+- Fix bug with extracting linear units from EPSG derived definitions.
+- Fixed bug translating LCC from EPSG to WKT (importFromEPSG()).
+- Improved IsSame() test for GEOGCS now.
+- Fixed crash if PROJECTION missing from PROJCS definition.
+
+o S-57:
+- Improve recovery from corrupt line geometries.
+- Read objects as generic if the object class is not recognised.
+- Handle LIST attributes as a string, instead of as a single int.
+
+o NTF:
+- Fixed circle conversion to polylines to close the circle properly.
+- Upped MAX_LINK to 5000 to handle much more complex geometries.
+
+o DGN:
+- Don't include elements with the complex bit set in extents
+computations.
+
+o OGRGeometry:
+- Fixed WKT format (import and export) for various container types.
+- WKT import fixed for coordinates, and Z coordinates.
