@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2004/02/20 22:41:14  warmerda
+ * Fixed GetRGBFromString() to use 255 as the default alpha value instead
+ * of zero.  Fixes: http://bugzilla.remotesensing.org/show_bug.cgi?id=306
+ *
  * Revision 1.10  2003/09/29 15:12:20  warmerda
  * Fixed memory leaks in the pszValue's of the m_pasStyleValue lists.
  *
@@ -830,7 +834,7 @@ GBool OGRStyleTool::GetRGBFromString(const char *pszColor, int &nRed,
 {
    int nCount;
    
-   nTransparance = 0;
+   nTransparance = 255;
 
    nCount  = sscanf(pszColor,"#%2x%2x%2x%2x",&nRed,&nGreen,&nBlue, 
                     &nTransparance);
