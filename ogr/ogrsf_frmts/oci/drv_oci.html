@@ -49,8 +49,14 @@ fields. <p>
 <li> Various types such as objects, and BLOBs in Oracle will be completely
 ignored by OGR.<p>
 
-<li> Currently the OGR translaction semantics are not properly mapped onto
+<li> Currently the OGR transaction semantics are not properly mapped onto
 transaction semantics in Oracle.<p>
+
+<li> If an attribute called OGR_FID exists in the schema for tables being 
+read, it will be used as the FID.  Random (FID based) reads on tables without
+an identified (and indexed) FID field can be very slow.  To force use of a
+particular field name the OCI_FID configuration variable (ie. environment
+variable) can be set to the target field name. <p>
 
 </ul>
 
