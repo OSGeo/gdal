@@ -35,6 +35,11 @@
  * of the GDAL core, but dependent on the Common Portability Library.
  *
  * $Log$
+ * Revision 1.31  2004/02/25 18:54:03  warmerda
+ * Improve the check to see if we are over 4GB to avoid ULONG_MAX
+ * which may be more than 4GB on machines with large longs and to
+ * account for extra auxilary data we need space for.
+ *
  * Revision 1.30  2004/02/04 16:51:24  warmerda
  * We now need to hardcode the size of the #Bin_Function# since we don't know
  * the size of the BaseData in the HFASetMetadata() call.
@@ -1442,10 +1447,18 @@ HFAHandle HFACreate( const char * pszFilename,
     iFlagsSize = nBlockMapSize + 20;
 
 /* -------------------------------------------------------------------- */
-/*      Check whether we should create external large file with image.  */
+/*      Check whether we should create external large file with         */
+/*      image.  We create a spill file if the amount of imagery is      */
+/*      close to 4GB.  We don't check the amount of auxilary            */
+/*      information, so in theory if there were an awful lot of         */
+/*      non-imagery data our approximate size could be smaller than     */
+/*      the file will actually we be.  We leave room for 10MB of        */
+/*      auxilary data.                                                  */
 /* -------------------------------------------------------------------- */
-    if ( (GUIntBig)nBytesPerBlock * (GUIntBig)nBlocks *
-	 (GUIntBig)nBands > ULONG_MAX )
+    double dfApproxSize = (double)nBytesPerBlock * (double)nBlocks *
+        (double)nBands + 10000000.0;
+
+    if( dfApproxSize > 429496729.0 )
     {
 	HFAEntry *poImgFormat;
 
