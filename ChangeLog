@@ -1,3 +1,9 @@
+2002-11-18  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* gdal/ogr/ogrsf_frmts/ntf: Implemented Meridian2 support as per
+
+	http://bugzilla.remotesensing.org/show_bug.cgi?id=233
+
 2002-11-12  Andrey Kiselev  <dron@remotesensing.org>
 	
 	* /gdal/frmts/hdf4/hdf4imagedataset.cpp:
