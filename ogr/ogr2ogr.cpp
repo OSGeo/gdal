@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.25  2004/10/30 15:50:41  fwarmerdam
+ * added -skipfailures doc
+ *
  * Revision 1.24  2004/06/02 18:06:15  warmerda
  * Fix failure logic when output layer not found.
  *
@@ -546,6 +549,7 @@ static void Usage()
             " -select field_list: Comma-delimited list of fields from input layer to\n"
             "                     copy to the new layer (defaults to all)\n" 
             " -where restricted_where: Attribute query (like SQL WHERE)\n" 
+            " -skipfailures: skip features or layers that fail to convert\n"
             " -spat xmin ymin xmax ymax: spatial query extents\n"
             " -dsco NAME=VALUE: Dataset creation option (format specific)\n"
             " -lco  NAME=VALUE: Layer creation option (format specific)\n"
