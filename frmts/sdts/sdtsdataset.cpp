@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2003/02/06 03:18:49  warmerda
+ * use Fixup() on SRS to set linear units
+ *
  * Revision 1.14  2002/09/04 06:50:37  warmerda
  * avoid static driver pointers
  *
@@ -267,6 +270,8 @@ GDALDataset *SDTSDataset::Open( GDALOpenInfo * poOpenInfo )
         oSRS.SetWellKnownGeogCS( "WGS84" );
     else
         oSRS.SetWellKnownGeogCS( "WGS84" );
+
+    oSRS.Fixup();
 
     poDS->pszProjection = NULL;
     if( oSRS.exportToWkt( &poDS->pszProjection ) != OGRERR_NONE )
