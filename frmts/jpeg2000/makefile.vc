@@ -1,14 +1,24 @@
 
-OBJ	=	jpeg2000dataset.obj
-
-EXTRAFLAGS = 	-I..\iso8211 $(JASPER_INCLUDE) /DWIN32 -DFRMT_jpeg2000
-
 GDAL_ROOT	=	..\..
 
 !INCLUDE $(GDAL_ROOT)\nmake.opt
 
-default:	$(OBJ)
+!IFDEF KAKDIR
+OBJ	=	jp2kakdataset.obj
+EXTRAFLAGS = 	-I$(KAKDIR) /DKDU_PENTIUM_MSVC /GX
+KAKINSTALL =	kakinstall
+!ELSE
+OBJ	=	jpeg2000dataset.obj
+EXTRAFLAGS = 	$(JASPER_INCLUDE) /DWIN32 -DFRMT_jpeg2000
+!ENDIF
+
+
+
+default:	$(OBJ) $(KAKINSTALL)
 	copy *.obj ..\o
+
+kakinstall:
+	copy $(KAKDIR)\*.obj ..\o
 
 clean:
 	-del *.obj
