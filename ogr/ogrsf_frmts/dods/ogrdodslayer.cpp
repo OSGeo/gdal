@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2004/01/22 21:15:50  warmerda
+ * parse url into components
+ *
  * Revision 1.1  2004/01/21 20:08:29  warmerda
  * New
  *
@@ -259,9 +262,14 @@ int OGRDODSLayer::ProvideDataDDS()
     bDataLoaded = TRUE;
     try
     {
-        string oURL = (poDS->GetName() + 5);
-        poConnection = new AISConnect( oURL );
-        poConnection->request_data( oDataDDS );
+        poConnection = new AISConnect( poDS->oBaseURL );
+        CPLDebug( "DODS", "request_data(%s,%s)",
+                  poDS->oBaseURL.c_str(),
+                  (poDS->oProjection + poDS->oConstraints).c_str() );
+
+        // We may need to use custom constraints here. 
+        poConnection->request_data( oDataDDS, 
+                                    poDS->oProjection + poDS->oConstraints );
     }
     catch (Error &e)
     {
