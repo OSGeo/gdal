@@ -32,7 +32,6 @@ AC_SUBST(HAVE_LIBTOOL,$with_libtool)
 
 dnl Checks for libraries.
 AC_CHECK_LIB(dl,dlopen,,,)
-AC_CHECK_LIB(dbmalloc,malloc_chain_check,,,)
 
 dnl We don't need to add math library at all targets
 case "$target_os" in
@@ -56,12 +55,12 @@ AC_CHECK_FUNCS(snprintf)
 dnl Make sure at least these are checked under C++.  Prototypes missing on 
 dnl some platforms.
 
-AC_CHECK_FUNC(setlocale)
-
 AC_LANG_PUSH(C++)
 AC_CHECK_FUNC_CUSTOM(gmtime_r,[#include <time.h>],[time_t t; struct tm ltime; t = time(0); gmtime_r( &t, &ltime );])
 AC_CHECK_FUNC_CUSTOM(localtime_r,[#include <time.h>],[time_t t; struct tm ltime; t = time(0); localtime_r( &t, &ltime );])
 AC_LANG_POP(C++)
+
+AC_CHECK_FUNC(setlocale)
 
 dnl Check for 64 bit file API
 AC_HAVE_LONG_LONG
