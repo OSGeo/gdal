@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2004/05/11 17:27:33  warmerda
+ * Set eAccess properly in Open().
+ *
  * Revision 1.5  2004/03/02 15:14:07  warmerda
  * Fixed CPL_MSB case.
  *
@@ -694,6 +697,7 @@ GDALDataset *BTDataset::Open( GDALOpenInfo * poOpenInfo )
                   poOpenInfo->pszFilename );
         return NULL;
     }
+    poDS->eAccess = poOpenInfo->eAccess;
 
 /* -------------------------------------------------------------------- */
 /*      Create band information objects                                 */
