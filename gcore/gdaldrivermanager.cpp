@@ -25,6 +25,9 @@
  * The GDALDriverManager class from gdal_priv.h.
  * 
  * $Log$
+ * Revision 1.7  2000/08/29 21:09:15  warmerda
+ * added logic to push INST_DATA on data file search stack
+ *
  * Revision 1.6  2000/04/22 12:25:41  warmerda
  * Documented AutoLoadDrivers().
  *
@@ -95,6 +98,10 @@ GDALDriverManager::GDALDriverManager()
 
     CPLAssert( poDM == NULL );
     poDM = this;
+
+#ifdef INST_DATA
+    CPLPushFinderLocation( INST_DATA );
+#endif
 }
 
 /************************************************************************/
