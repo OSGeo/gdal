@@ -6,7 +6,7 @@
  *           base class provides default implementation for many methods.
  * Author:   Frank Warmerdam, warmerda@home.com
  *
- **********************************************************************
+ ******************************************************************************
  * Copyright (c) 1998, Frank Warmerdam
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -28,6 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************
  * $Log$
+ * Revision 1.14  2000/03/24 00:09:05  warmerda
+ * rewrote cache management
+ *
  * Revision 1.13  2000/03/10 13:54:37  warmerda
  * fixed use of overviews in gethistogram
  *
@@ -88,9 +91,6 @@ GDALRasterBand::GDALRasterBand()
 
     nBlocksPerRow = 0;
     nBlocksPerColumn = 0;
-
-    nLoadedBlocks = 0;
-    nMaxLoadableBlocks = 0;
 
     papoBlocks = NULL;
 }
@@ -592,16 +592,6 @@ void GDALRasterBand::InitBlockInfo()
     
     papoBlocks = (GDALRasterBlock **)
         CPLCalloc( sizeof(void*), nBlocksPerRow * nBlocksPerColumn );
-
-/* -------------------------------------------------------------------- */
-/*      Don't override caching info if the subclass has already set     */
-/*      it.  Eventually I imagine the application should be mostly      */
-/*      in control of this.                                             */
-/* -------------------------------------------------------------------- */
-    if( nMaxLoadableBlocks < 1 )
-    {
-        nMaxLoadableBlocks = nBlocksPerRow;
-    }
 }
 
 
@@ -636,10 +626,6 @@ CPLErr GDALRasterBand::AdoptBlock( int nBlockXOff, int nBlockYOff,
     papoBlocks[nBlockIndex] = poBlock;
     poBlock->Touch();
 
-    nLoadedBlocks++;
-    if( nLoadedBlocks > nMaxLoadableBlocks )
-        FlushBlock();
-
     return( CE_None );
 }
 
@@ -661,14 +647,23 @@ CPLErr GDALRasterBand::AdoptBlock( int nBlockXOff, int nBlockYOff,
 CPLErr GDALRasterBand::FlushCache()
 
 {
-    CPLErr	eErr = CE_None;
-
-    while( nLoadedBlocks > 0 && eErr == CE_None )
+    for( int iY = 0; iY < nBlocksPerColumn; iY++ )
     {
-        eErr = FlushBlock();
+        for( int iX = 0; iX < nBlocksPerRow; iX++ )
+        {
+            if( papoBlocks[iX + iY*nBlocksPerRow] != NULL )
+            {
+                CPLErr    eErr;
+
+                eErr = FlushBlock( iX, iY );
+
+                if( eErr != CE_None )
+                    return eErr;
+            }
+        }
     }
-    
-    return( eErr );
+
+    return( CE_None );
 }
 
 /************************************************************************/
@@ -701,38 +696,6 @@ CPLErr GDALRasterBand::FlushBlock( int nBlockXOff, int nBlockYOff )
     InitBlockInfo();
     
 /* -------------------------------------------------------------------- */
-/*      Select a block if none indicated.                               */
-/*                                                                      */
-/*      Currently we scan all possible blocks, but for efficiency in    */
-/*      cases with many blocks we should eventually modify the          */
-/*      GDALRasterBand to keep a linked list of blocks by age.          */
-/* -------------------------------------------------------------------- */
-    if( nBlockXOff == -1 || nBlockYOff == -1 )
-    {
-        int		i, nBlocks;
-        int		nOldestAge = 0x7fffffff;
-        int		nOldestBlock = -1;
-
-        nBlocks = nBlocksPerRow * nBlocksPerColumn;
-
-        for( i = 0; i < nBlocks; i++ )
-        {
-            if( papoBlocks[i] != NULL
-                && papoBlocks[i]->GetAge() < nOldestAge )
-            {
-                nOldestAge = papoBlocks[i]->GetAge();
-                nOldestBlock = i;
-            }
-        }
-
-        if( nOldestBlock == -1 )
-            return( CE_None );
-
-        nBlockXOff = nOldestBlock % nBlocksPerRow;
-        nBlockYOff = (nOldestBlock - nBlockXOff) / nBlocksPerRow;
-    }
-
-/* -------------------------------------------------------------------- */
 /*      Validate                                                        */
 /* -------------------------------------------------------------------- */
     CPLAssert( nBlockXOff >= 0 && nBlockXOff < nBlocksPerRow );
@@ -747,18 +710,12 @@ CPLErr GDALRasterBand::FlushBlock( int nBlockXOff, int nBlockYOff )
 /*      Remove, and update count.                                       */
 /* -------------------------------------------------------------------- */
     papoBlocks[nBlockIndex] = NULL;
-    nLoadedBlocks--;
 
-    CPLAssert( nLoadedBlocks >= 0 );
-    
 /* -------------------------------------------------------------------- */
 /*      Is the target block dirty?  If so we need to write it.          */
 /* -------------------------------------------------------------------- */
     if( poBlock->GetDirty() )
-    {
-        eErr = IWriteBlock( nBlockXOff, nBlockYOff, poBlock->GetDataRef() );
-        poBlock->MarkClean();
-    }
+        poBlock->Write();
 
 /* -------------------------------------------------------------------- */
 /*      Deallocate the block;                                           */
@@ -830,8 +787,7 @@ GDALRasterBlock * GDALRasterBand::GetBlockRef( int nXBlockOff,
     {
         GDALRasterBlock	*poBlock;
         
-        poBlock = new GDALRasterBlock( nBlockXSize, nBlockYSize,
-                                       eDataType, NULL );
+        poBlock = new GDALRasterBlock( this, nXBlockOff, nYBlockOff );
 
         /* allocate data space */
         if( poBlock->Internalize() != CE_None )

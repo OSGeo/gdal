@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2000/03/24 00:09:05  warmerda
+ * rewrote cache management
+ *
  * Revision 1.18  2000/03/09 23:22:03  warmerda
  * added GetHistogram
  *
@@ -263,6 +266,7 @@ CPLErr CPL_DLL GDALGetRasterHistogram( GDALRasterBandH hBand,
                                        int bIncludeOutOfRange, int bApproxOK,
                                        GDALProgressFunc pfnProgress,
                                        void * pProgressData );
+int CPL_DLL GDALGetRandomRasterSample( GDALRasterBandH, int, float * );
 
 /* need to add functions related to block cache */
 
@@ -304,6 +308,15 @@ CPLErr 	CPL_DLL GDALReprojectToLongLat( GDALProjDefH, double *, double * );
 CPLErr 	CPL_DLL GDALReprojectFromLongLat( GDALProjDefH, double *, double * );
 void    CPL_DLL GDALDestroyProjDef( GDALProjDefH );
 const char CPL_DLL *GDALDecToDMS( double, const char *, int );
+
+/* ==================================================================== */
+/*      GDAL Cache Management                                           */
+/* ==================================================================== */
+
+void CPL_DLL GDALSetCacheMax( int nBytes );
+int CPL_DLL GDALGetCacheMax();
+int CPL_DLL GDALGetCacheUsed();
+int CPL_DLL GDALFlushCacheBlock();
 
 CPL_C_END
 

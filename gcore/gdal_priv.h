@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2000/03/24 00:09:05  warmerda
+ * rewrote cache management
+ *
  * Revision 1.15  2000/03/09 23:22:03  warmerda
  * added GetHistogram
  *
@@ -199,27 +202,43 @@ class CPL_DLL GDALRasterBlock
     int			nAge;
     int			bDirty;
 
+    int                 nXOff;
+    int                 nYOff;
+       
     int			nXSize;
     int			nYSize;
     
     void		*pData;
 
+    GDALRasterBand      *poBand;
+    
+    GDALRasterBlock     *poNext;
+    GDALRasterBlock     *poPrevious;
+
   public:
-		GDALRasterBlock( int, int, GDALDataType, void * );
+		GDALRasterBlock( GDALRasterBand *, int, int );
     virtual	~GDALRasterBlock();
 
     CPLErr	Internalize( void );	/* make copy of data */
     void	Touch( void );		/* update age */
     void	MarkDirty( void );      /* data has been modified since read */
-    void	MarkClean( void );     
+    void	MarkClean( void );
+
+    CPLErr      Write();
 
     GDALDataType GetDataType() { return eType; }
+    int		GetXOff() { return nXOff; }
+    int		GetYOff() { return nYOff; }
     int		GetXSize() { return nXSize; }
     int		GetYSize() { return nYSize; }
     int		GetAge() { return nAge; }
     int		GetDirty() { return bDirty; }
 
     void	*GetDataRef( void ) { return pData; }
+
+    GDALRasterBand *GetBand() { return poBand; }
+
+    static void FlushOldestBlock();
 };
 
 
@@ -272,12 +291,10 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
     int		nBlocksPerRow;
     int		nBlocksPerColumn;
 
-    int		nLoadedBlocks;
-    int		nMaxLoadableBlocks;
-    
     GDALRasterBlock **papoBlocks;
 
     friend class GDALDataset;
+    friend class GDALRasterBlock;
 
   protected:
     virtual CPLErr IReadBlock( int, int, void * ) = 0;
@@ -289,7 +306,6 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
                                      void *, int, int, GDALDataType,
                                      int, int );
 
-    CPLErr	   FlushBlock( int = -1, int = -1 );
     CPLErr	   AdoptBlock( int, int, GDALRasterBlock * );
     void           InitBlockInfo();
 
@@ -314,6 +330,7 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
 
     GDALRasterBlock *GetBlockRef( int, int );
     CPLErr	FlushCache();
+    CPLErr	FlushBlock( int = -1, int = -1 );
 
     // New OpengIS CV_SampleDimension stuff.
 
