@@ -6,7 +6,7 @@ include $(GDAL_ROOT)/GDALmake.opt
 
 XTRAOPTS = -I../mem
 
-CPPFLAGS	+=	$(GDAL_INCLUDE) $(XTRAOPTS)
+CPPFLAGS	:=	$(GDAL_INCLUDE) $(XTRAOPTS) $(CPPFLAGS)
 
 default:	$(OBJ)
 

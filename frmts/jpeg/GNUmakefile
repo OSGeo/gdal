@@ -20,7 +20,7 @@ OBJ	=	jpgdataset.o
 XTRA_OPT	=	
 endif
 
-CPPFLAGS	+=	$(XTRA_OPT) $(GDAL_INCLUDE)
+CPPFLAGS	:=	$(XTRA_OPT) $(GDAL_INCLUDE) $(CPPFLAGS)
 
 default:	$(OBJ)
 

@@ -136,6 +136,7 @@ KAKDIR = @KAKDIR@
 # JPEG-2000 Support via JasPer library.
 #
 HAVE_JASPER     = @HAVE_JASPER@
+JASPER_INCLUDE  = -I../libjasper/include
 
 #
 # MrSID support via LizardTech's DSDK
@@ -239,10 +240,10 @@ endif # HAVE_LIBTOOL
 O_OBJ =	$(foreach file,$(OBJ),../o/$(file))
 
 ../o/%.o:	%.c
-	$(CC) $(CPPFLAGS) $(CFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c -o $@ $<
 
 ../o/%.o:	%.cpp
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c -o $@ $<
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c -o $@ $<
 
 #
 # default rules for handling subdirectories

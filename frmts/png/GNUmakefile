@@ -16,7 +16,7 @@ endif
 
 XTRA_OPT	:=	$(XTRA_OPT) -I../zlib
 
-CPPFLAGS	+=	$(XTRA_OPT) $(GDAL_INCLUDE)
+CPPFLAGS	:=	$(XTRA_OPT) $(GDAL_INCLUDE) $(CPPFLAGS)
 
 default:	$(OBJ)
 

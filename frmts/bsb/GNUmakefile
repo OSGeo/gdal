@@ -9,7 +9,7 @@ OBJ	=	bsb_read.o bsbdataset.o
 
 DISTDIR =	bsb-$(VERSION)
 
-CPPFLAGS	+=	$(GDAL_INCLUDE)
+CPPFLAGS	:=	$(GDAL_INCLUDE) $(CPPFLAGS)
 
 default:	$(OBJ)
 

@@ -4,7 +4,7 @@ include $(GDAL_ROOT)/GDALmake.opt
 
 OBJ	=	pcidskdataset.o
 
-CPPFLAGS	+=	$(GDAL_INCLUDE) -I../raw
+CPPFLAGS	:=	$(GDAL_INCLUDE) -I../raw $(CPPFLAGS)
 
 default:	$(OBJ)
 

@@ -11,7 +11,7 @@ else
 OBJ	=	gifdataset.o
 endif
 
-CPPFLAGS	+=	$(GDAL_INCLUDE) $(XTRA_OPT)
+CPPFLAGS	:=	$(GDAL_INCLUDE) $(CPPFLAGS) $(XTRA_OPT)
 
 default:	$(OBJ)
 

@@ -4,7 +4,7 @@ include $(GDAL_ROOT)/GDALmake.opt
 
 OBJ	=	aaigriddataset.o
 
-CPPFLAGS	+=	$(GDAL_INCLUDE) $(XTRA_OPT)
+CPPFLAGS	:=	$(GDAL_INCLUDE) $(CPPFLAGS) $(XTRA_OPT)
 
 default:	$(OBJ)
 

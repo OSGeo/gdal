@@ -5,7 +5,7 @@ include $(GDAL_ROOT)/GDALmake.opt
 
 OBJ	=	dted_api.o dteddataset.o dted_create.o dted_ptstream.o
 
-CPPFLAGS	+=	$(GDAL_INCLUDE)
+CPPFLAGS	:=	$(GDAL_INCLUDE) $(CPPFLAGS)
 
 default:	$(OBJ)
 
