@@ -29,6 +29,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.30  2003/04/28 20:50:18  warmerda
+ * implement dataset level IO, and attempt to optimization createcopy()
+ *
  * Revision 1.29  2003/04/22 19:40:36  warmerda
  * fixed email address
  *
@@ -316,6 +319,11 @@ class CPL_DLL HFADataset : public GDALDataset
 
     CPLErr      ReadProjection();
     CPLErr      WriteProjection();
+
+  protected:
+    virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
+                              void *, int, int, GDALDataType,
+                              int, int *, int, int, int );
 
   public:
                 HFADataset();
@@ -1596,6 +1604,37 @@ CPLErr HFADataset::SetGeoTransform( double * padfTransform )
     return CE_None;
 }
 
+/************************************************************************/
+/*                             IRasterIO()                              */
+/*                                                                      */
+/*      Multi-band raster io handler.  Here we ensure that the block    */
+/*      based loading is used for spill file rasters.  That is          */
+/*      because they are effectively pixel interleaved, so              */
+/*      processing all bands for a given block together avoid extra     */
+/*      seeks.                                                          */
+/************************************************************************/
+
+CPLErr HFADataset::IRasterIO( GDALRWFlag eRWFlag, 
+                              int nXOff, int nYOff, int nXSize, int nYSize,
+                              void *pData, int nBufXSize, int nBufYSize, 
+                              GDALDataType eBufType,
+                              int nBandCount, int *panBandMap, 
+                              int nPixelSpace, int nLineSpace, int nBandSpace )
+
+{
+    if( hHFA->papoBand[panBandMap[0]-1]->fpExternal != NULL 
+        && nBandCount > 1 )
+        return GDALDataset::BlockBasedRasterIO( 
+            eRWFlag, nXOff, nYOff, nXSize, nYSize,
+            pData, nBufXSize, nBufYSize, eBufType, 
+            nBandCount, panBandMap, nPixelSpace, nLineSpace, nBandSpace );
+    else
+        return 
+            GDALDataset::IRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
+                                    pData, nBufXSize, nBufYSize, eBufType, 
+                                    nBandCount, panBandMap, 
+                                    nPixelSpace, nLineSpace, nBandSpace );
+}
 
 /************************************************************************/
 /*                               Create()                               */
@@ -1689,6 +1728,7 @@ HFADataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     HFADataset	*poDS;
     GDALDataType eType = GDT_Byte;
     int          iBand;
+    int          nBandCount = poSrcDS->GetRasterCount();
 
     if( !pfnProgress( 0.0, NULL, pProgressData ) )
         return NULL;
@@ -1696,7 +1736,7 @@ HFADataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Create the basic dataset.                                       */
 /* -------------------------------------------------------------------- */
-    for( iBand = 0; iBand < poSrcDS->GetRasterCount(); iBand++ )
+    for( iBand = 0; iBand < nBandCount; iBand++ )
     {
         GDALRasterBand *poBand = poSrcDS->GetRasterBand( iBand+1 );
         eType = GDALDataTypeUnion( eType, poBand->GetRasterDataType() );
@@ -1705,14 +1745,14 @@ HFADataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     poDS = (HFADataset *) Create( pszFilename,
                                   poSrcDS->GetRasterXSize(),
                                   poSrcDS->GetRasterYSize(),
-                                  poSrcDS->GetRasterCount(),
+                                  nBandCount,
                                   eType, papszOptions );
 
 /* -------------------------------------------------------------------- */
 /*      Does the source have a PCT for any of the bands?  If so,        */
 /*      copy it over.                                                   */
 /* -------------------------------------------------------------------- */
-    for( iBand = 0; iBand < poSrcDS->GetRasterCount(); iBand++ )
+    for( iBand = 0; iBand < nBandCount; iBand++ )
     {
         GDALRasterBand *poBand = poSrcDS->GetRasterBand( iBand+1 );
         GDALColorTable *poCT;
@@ -1752,7 +1792,7 @@ HFADataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     if( poSrcDS->GetMetadata() != NULL )
         poDS->SetMetadata( poSrcDS->GetMetadata() );
 
-    for( iBand = 0; iBand < poSrcDS->GetRasterCount(); iBand++ )
+    for( iBand = 0; iBand < nBandCount; iBand++ )
     {
         GDALRasterBand *poSrcBand = poSrcDS->GetRasterBand( iBand+1 );
         poDS->GetRasterBand(iBand+1)->SetMetadata( poSrcBand->GetMetadata() );
@@ -1764,7 +1804,7 @@ HFADataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     if( papszMD != NULL )
         HFASetMetadata( poDS->hHFA, 0, papszMD );
 
-    for( iBand = 0; iBand < poSrcDS->GetRasterCount(); iBand++ )
+    for( iBand = 0; iBand < nBandCount; iBand++ )
     {
         GDALRasterBand *poSrcBand = poSrcDS->GetRasterBand( iBand+1 );
         char **papszMD = poSrcBand->GetMetadata();
@@ -1801,23 +1841,33 @@ HFADataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
     nBlockTotal = ((nXSize + nBlockXSize - 1) / nBlockXSize)
         * ((nYSize + nBlockYSize - 1) / nBlockYSize)
-        * poSrcDS->GetRasterCount();
+        * nBandCount;
 
     nBlocksDone = 0;
-    for( iBand = 0; iBand < poSrcDS->GetRasterCount(); iBand++ )
+    for( iBand = 0; iBand < nBandCount; iBand++ )
     {
         GDALRasterBand *poSrcBand = poSrcDS->GetRasterBand( iBand+1 );
         GDALRasterBand *poDstBand = poDS->GetRasterBand( iBand+1 );
-        int	       iYOffset, iXOffset;
+        int	       iYOffset;
         void           *pData;
         CPLErr  eErr;
+        int            nMoveLines = nBlockYSize;
 
-
-        pData = CPLMalloc(nBlockXSize * nBlockYSize
+#define TRANSFER_BY_BLOCK
+#ifdef TRANSFER_BY_BLOCK
+        pData = CPLMalloc(nBlockXSize * nMoveLines
                           * GDALGetDataTypeSize(eType) / 8);
+#else
+xx
+        pData = CPLMalloc(nXSize * nMoveLines
+                          * GDALGetDataTypeSize(eType) / 8);
+#endif
 
-        for( iYOffset = 0; iYOffset < nYSize; iYOffset += nBlockYSize )
+        for( iYOffset = 0; iYOffset < nYSize; iYOffset += nMoveLines )
         {
+#ifdef TRANSFER_BY_BLOCK
+            int iXOffset;
+
             for( iXOffset = 0; iXOffset < nXSize; iXOffset += nBlockXSize )
             {
                 int	nTBXSize, nTBYSize;
@@ -1836,7 +1886,7 @@ HFADataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                 }
 
                 nTBXSize = MIN(nBlockXSize,nXSize-iXOffset);
-                nTBYSize = MIN(nBlockYSize,nYSize-iYOffset);
+                nTBYSize = MIN(nMoveLines,nYSize-iYOffset);
 
                 eErr = poSrcBand->RasterIO( GF_Read,
                                             iXOffset, iYOffset,
@@ -1859,6 +1909,45 @@ HFADataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                     return NULL;
                 }
             }
+#else
+            if( !pfnProgress( (iYOffset + iBand*nYSize)  
+                              / (float) (nYSize * nBandCount), 
+                              NULL, pProgressData ))
+            {
+                CPLError( CE_Failure, CPLE_UserInterrupt,
+                          "User terminated" );
+                delete poDS;
+
+                GDALDriver *poHFADriver =
+                    (GDALDriver *) GDALGetDriverByName( "HFA" );
+                poHFADriver->Delete( pszFilename );
+                return NULL;
+            }
+
+            int	nTBYSize;
+
+            nTBYSize = MIN(nMoveLines,nYSize-iYOffset);
+            eErr = poSrcBand->RasterIO( GF_Read,
+                                        0, iYOffset, nXSize, nTBYSize,
+                                        pData, nXSize, nTBYSize,
+                                        eType, 0, 0 );
+            if( eErr != CE_None )
+            {
+                return NULL;
+            }
+            
+            eErr = poDstBand->RasterIO( GF_Write,
+                                        0, iYOffset, nXSize, nTBYSize,
+                                        pData, nXSize, nTBYSize,
+                                        eType, 0, 0 );
+
+            if( eErr != CE_None )
+            {
+                return NULL;
+            }
+
+            poDstBand->FlushCache();
+#endif
         }
 
         CPLFree( pData );
