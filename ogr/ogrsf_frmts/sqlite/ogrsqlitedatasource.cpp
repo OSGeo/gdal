@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2004/10/30 05:13:10  fwarmerdam
+ * ensure we shut the database on exit!
+ *
  * Revision 1.5  2004/07/13 15:11:19  warmerda
  * implemented SetFeature, transaction support
  *
@@ -90,6 +93,9 @@ OGRSQLiteDataSource::~OGRSQLiteDataSource()
     }
     CPLFree( panSRID );
     CPLFree( papoSRS );
+
+    if( hDB != NULL )
+        sqlite3_close( hDB );
 }
 
 /************************************************************************/
