@@ -28,6 +28,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.41  2005/02/03 14:22:16  fwarmerdam
+# Added __str__ method on Geometry.
+#
 # Revision 1.40  2005/02/02 04:36:53  fwarmerdam
 # Default index to 0 in geometry GetX/Y/Z.
 # Added GetFeaturesRead() and SetNextByIndex() methods on layer.
@@ -930,6 +933,9 @@ class Geometry:
         if self.thisown:
             self.Destroy()
             
+    def __str__(self):
+        return self.ExportToWkt()
+        
     def Destroy( self ):
         if not self.thisown:
             print 'Destroy invoked on unowned geometry.' 
