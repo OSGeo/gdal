@@ -44,6 +44,9 @@
  *   without vsnprintf(). 
  *
  * $Log$
+ * Revision 1.40  2004/08/16 20:23:46  warmerda
+ * added .csv escaping
+ *
  * Revision 1.39  2004/07/12 21:50:38  warmerda
  * Added SQL escaping style
  *
@@ -1216,6 +1219,12 @@ void CSLSetNameValueSeparator( char ** papszList, const char *pszSeparator )
  * Suitable for use when constructing literal values for SQL commands where
  * the literal will be enclosed in single quotes.
  *
+ * CPLES_CSV(4): If the values contains commas, double quotes, or newlines it 
+ * placed in double quotes, and double quotes in the value are doubled.
+ * Suitable for use when constructing field values for .csv files.  Note that
+ * CPLUnescapeString() currently does not support this format, only 
+ * CPLEscapeString().  See cpl_csv.cpp for csv parsing support.
+ *
  * @param pszInput the string to escape.  
  * @param nLength The number of bytes of data to preserve.  If this is -1
  * the strlen(pszString) function will be used to compute the length.
@@ -1341,6 +1350,37 @@ char *CPLEscapeString( const char *pszInput, int nLength,
                 pszOutput[iOut++] = pszInput[iIn];
         }
         pszOutput[iOut] = '\0';
+    }
+    else if( nScheme == CPLES_CSV )
+    {
+        if( strchr( pszInput, '\"' ) == NULL
+            && strchr( pszInput, ',') == NULL
+            && strchr( pszInput, 10) == NULL 
+            && strchr( pszInput, 13) == NULL )
+        {
+            strcpy( pszOutput, pszInput );
+        }
+        else
+        {
+            int iOut = 1, iIn;
+
+            pszOutput[0] = '\"';
+
+            for( iIn = 0; iIn < nLength; iIn++ )
+            {
+                if( pszInput[iIn] == '\"' )
+                {
+                    pszOutput[iOut++] = '\"';
+                    pszOutput[iOut++] = '\"';
+                }
+                else if( pszInput[iIn] == 13 )
+                    /* drop DOS LF's in strings. */;
+                else
+                    pszOutput[iOut++] = pszInput[iIn];
+            }
+            pszOutput[iOut++] = '\"';
+            pszOutput[iOut++] = '\0';
+        }
     }
     else
     {
