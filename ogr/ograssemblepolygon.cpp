@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2003/04/03 23:39:11  danmo
+ * Small updates to C API docs (Normand S.)
+ *
  * Revision 1.7  2003/04/01 14:46:46  warmerda
  * Reintroduce rev 1.5 migration of main entry point to C API.
  *
@@ -170,15 +173,14 @@ static void AddEdgeToRing( OGRLinearRing * poRing, OGRLineString * poLine,
 /**
  * Build a ring from a bunch of arcs.
  *
- * @param poLines line string geometry handle to add to the ring.
- * @param bBestEffort not yet implemented.
+ * @param poLines handle to the line string geometry to add to the ring.
+ * @param bBestEffort not yet implemented???.
  * @param bAutoClose indicates if the ring should be close when first and
  * last points of the ring are the same.
- * @param dfTolerance tolerance inside witch two arcs are condisidered
- * close enough to be assembly.
+ * @param dfTolerance tolerance into which two arcs are considered
+ * close enough to be joined.
  * @param peErr OGRERR_NONE on success, or OGRERR_FAILURE on failure.
- * @return an handle of the new geometry, a polygon.
- *
+ * @return an handle to the new geometry, a polygon.
  *
  */
 
@@ -337,4 +339,6 @@ OGRGeometryH OGRBuildPolygonFromEdges( OGRGeometryH hLines,
     
     return (OGRGeometryH) poPolygon;
 }
+
+
 

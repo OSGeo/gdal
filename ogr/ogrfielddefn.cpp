@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2003/04/03 23:39:11  danmo
+ * Small updates to C API docs (Normand S.)
+ *
  * Revision 1.7  2003/03/31 15:55:42  danmo
  * Added C API function docs
  *
@@ -106,7 +109,7 @@ OGRFieldDefn::OGRFieldDefn( OGRFieldDefn *poPrototype )
  *
  * @param pszName the name of the new field definition.
  * @param eType the type of the new field definition.
- * @return the new field definition.
+ * @return handle to the new field definition.
  */
 
 OGRFieldDefnH OGR_Fld_Create( const char *pszName, OGRFieldType eType )
@@ -148,9 +151,7 @@ OGRFieldDefn::~OGRFieldDefn()
 /**
  * Destroy a field definition.
  *
- * This function is the same as the CPP method OGRFieldDefn::~OGRFieldDefn().
- *
- * @param hDefn field definition to destroy.
+ * @param hDefn handle to the field definition to destroy.
  */
 
 void OGR_Fld_Destroy( OGRFieldDefnH hDefn )
@@ -186,7 +187,7 @@ void OGRFieldDefn::SetName( const char * pszNameIn )
  *
  * This function is the same as the CPP method OGRFieldDefn::SetName().
  *
- * @param hDefn field definition to apply the new name to.
+ * @param hDefn handle to the field definition to apply the new name to.
  * @param pszName the new name to apply.
  */
 
@@ -219,7 +220,7 @@ void OGR_Fld_SetName( OGRFieldDefnH hDefn, const char *pszName )
  *
  * This function is the same as the CPP method OGRFieldDefn::GetNameRef().
  *
- * @param hDefn the field definition.
+ * @param hDefn handle to the field definition.
  * @return the name of the field definition.
  * 
  */
@@ -252,7 +253,7 @@ const char *OGR_Fld_GetNameRef( OGRFieldDefnH hDefn )
  *
  * This function is the same as the CPP method OGRFieldDefn::GetType().
  *
- * @param hDefn field definition to get type from.
+ * @param hDefn handle to the field definition to get type from.
  * @return field type.
  */
 
@@ -286,7 +287,7 @@ OGRFieldType OGR_Fld_GetType( OGRFieldDefnH hDefn )
  *
  * This function is the same as the CPP method OGRFieldDefn::SetType().
  *
- * @param hDefn field definition to set type to.
+ * @param hDefn handle to the field definition to set type to.
  * @param eType the new field type.
  */
 
@@ -424,7 +425,7 @@ const char *OGR_GetFieldTypeName( OGRFieldType eType )
  *
  * This function is the same as the CPP method OGRFieldDefn::GetJustify().
  *
- * @param hDefn field definition to get justification from.
+ * @param hDefn handle to the field definition to get justification from.
  * @return the justification.
  */
 
@@ -456,7 +457,7 @@ OGRJustification OGR_Fld_GetJustify( OGRFieldDefnH hDefn )
  *
  * This function is the same as the CPP method OGRFieldDefn::SetJustify().
  *
- * @param hDefn field definition to set justification to.
+ * @param hDefn handle to the field definition to set justification to.
  * @param eJustify the new justification.
  */
 
@@ -488,7 +489,7 @@ void OGR_Fld_SetJustify( OGRFieldDefnH hDefn, OGRJustification eJustify )
  *
  * This function is the same as the CPP method OGRFieldDefn::GetWidth().
  *
- * @param hDefn field definition to get justification from.
+ * @param hDefn handle to the field definition to get width from.
  * @return the width, zero means no specified width. 
  */
 
@@ -520,7 +521,7 @@ int OGR_Fld_GetWidth( OGRFieldDefnH hDefn )
  *
  * This function is the same as the CPP method OGRFieldDefn::SetWidth().
  *
- * @param hDefn field definition to set width to.
+ * @param hDefn handle to the field definition to set width to.
  * @param nNewWidth the new width.
  */
 
@@ -554,7 +555,7 @@ void OGR_Fld_SetWidth( OGRFieldDefnH hDefn, int nNewWidth )
  *
  * This function is the same as the CPP method OGRFieldDefn::GetPrecision().
  *
- * @param hDefn field definition to get precision from.
+ * @param hDefn handle to the field definition to get precision from.
  * @return the precision.
  */
 
@@ -590,7 +591,7 @@ int OGR_Fld_GetPrecision( OGRFieldDefnH hDefn )
  *
  * This function is the same as the CPP method OGRFieldDefn::SetPrecision().
  *
- * @param hDefn field definition to set precision to.
+ * @param hDefn handle to the field definition to set precision to.
  * @param nPrecision the new precision. 
  */
 
@@ -639,7 +640,7 @@ void OGRFieldDefn::Set( const char *pszNameIn,
  *
  * This function is the same as the CPP method OGRFieldDefn::Set().
  *
- * @param hDefn field definition to set to.
+ * @param hDefn handle to the field definition to set to.
  * @param pszNameIn the new name to assign.
  * @param eTypeIn the new type (one of the OFT values like OFTInteger). 
  * @param nWidthIn the preferred formatting width.  Defaults to zero indicating
@@ -659,4 +660,3 @@ void OGR_Fld_Set( OGRFieldDefnH hDefn, const char *pszNameIn,
     ((OGRFieldDefn *) hDefn)->Set( pszNameIn, eTypeIn, nWidthIn, 
                                    nPrecisionIn, eJustifyIn );
 }
-

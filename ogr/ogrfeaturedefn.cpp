@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2003/04/03 23:39:11  danmo
+ * Small updates to C API docs (Normand S.)
+ *
  * Revision 1.8  2003/03/31 15:55:42  danmo
  * Added C API function docs
  *
@@ -72,7 +75,7 @@ CPL_CVSID("$Id$");
  *
  * This method is the same as the C function OGR_FD_Create().
  *
- * @param pszName the name to be assigned` to this layer/class.  It does not
+ * @param pszName the name to be assigned to this layer/class.  It does not
  * need to be unique. 
  */
 
@@ -101,7 +104,7 @@ OGRFeatureDefn::OGRFeatureDefn( const char * pszName )
  *
  * @param pszName the name to be assigned to this layer/class.  It does not
  * need to be unique. 
- * @return the newly created feature definition.
+ * @return handle to the newly created feature definition.
  */
 
 OGRFeatureDefnH OGR_FD_Create( const char *pszName )
@@ -145,7 +148,7 @@ OGRFeatureDefn::~OGRFeatureDefn()
  * This function is the same as the CPP method 
  * OGRFeatureDefn::~OGRFeatureDefn().
  *
- * @param hDefn the name of the feature definition to be destroyed.
+ * @param hDefn handle to the feature definition to be destroyed.
  */
 
 void OGR_FD_Destroy( OGRFeatureDefnH hDefn )
@@ -177,7 +180,7 @@ void OGR_FD_Destroy( OGRFeatureDefnH hDefn )
  *
  * This function is the same as the CPP method OGRFeatureDefn::GetName().
  *
- * @param hDefn feature definition to get the name from.
+ * @param hDefn handle to the feature definition to get the name from.
  * @return the name.  This name is internal and should not be modified, or
  * freed.
  */
@@ -209,7 +212,8 @@ const char *OGR_FD_GetName( OGRFeatureDefnH hDefn )
  * Fetch number of fields on the passed feature definition.
  *
  * This function is the same as the CPP OGRFeatureDefn::GetFieldCount().
- * @param feature definition to get the fields count from.
+ *
+ * @param dDefn handle to the feature definition to get the fields count from.
  * @return count of fields.
  */
 
@@ -255,10 +259,11 @@ OGRFieldDefn *OGRFeatureDefn::GetFieldDefn( int iField )
  * This function is the same as the CPP method 
  * OGRFeatureDefn::GetFieldDefn().
  *
- * @param hDefn feature definition to get the field definition from.
+ * @param hDefn handle to the feature definition to get the field definition
+ * from.
  * @param iField the field to fetch, between 0 and GetFieldCount()-1.
  *
- * @return a pointer to an internal field definition object.  This object
+ * @return an handle to an internal field definition object.  This object
  * should not be modified or freed by the application.
  */
 
@@ -301,14 +306,15 @@ void OGRFeatureDefn::AddFieldDefn( OGRFieldDefn * poNewDefn )
 /**
  * Add a new field definition to the passed feature definition.
  *
- * This method should only be called while there are no OGRFeature
+ * This function  should only be called while there are no OGRFeature
  * objects in existance based on this OGRFeatureDefn.  The OGRFieldDefn
  * passed in is copied, and remains the responsibility of the caller.
  *
  * This function is the same as the CPP method OGRFeatureDefn::AddFieldDefn.
  *
- * @param hDefn feature definition to add the field definition to.
- * @param hNewField the definition of the new field.
+ * @param hDefn handle to the feature definition to add the field definition
+ * to.
+ * @param hNewField handle to the new field definition.
  */
 
 void OGR_FD_AddFieldDefn( OGRFeatureDefnH hDefn, OGRFieldDefnH hNewField )
@@ -337,7 +343,7 @@ void OGR_FD_AddFieldDefn( OGRFeatureDefnH hDefn, OGRFieldDefnH hNewField )
  *
  * This function is the same as the CPP method OGRFeatureDefn::GetGeomType().
  *
- * @param hDefn feature definition to get the geometry type from.
+ * @param hDefn handle to the feature definition to get the geometry type from.
  * @return the base type for all geometry related to this definition.
  */
 
@@ -385,7 +391,8 @@ void OGRFeatureDefn::SetGeomType( OGRwkbGeometryType eNewType )
  *
  * This function is the same as the CPP method OGRFeatureDefn::SetGeomType().
  *
- * @param hDefn layer or feature definition to set the geometry type to.
+ * @param hDefn handle to the layer or feature definition to set the geometry
+ * type to.
  * @param eType the new type to assign.
  */
 
@@ -424,7 +431,8 @@ void OGR_FD_SetGeomType( OGRFeatureDefnH hDefn, OGRwkbGeometryType eType )
  *
  * This function is the same as the CPP method OGRFeatureDefn::Reference().
  *
- * @param hDefn feature definition on witch OGRFeature are based on.
+ * @param hDefn handle to the feature definition on witch OGRFeature are
+ * based on.
  * @return the updated reference count.
  */
 
@@ -457,7 +465,8 @@ int OGR_FD_Reference( OGRFeatureDefnH hDefn )
  *
  * This function is the same as the CPP method OGRFeatureDefn::Dereference().
  *
- * @param hDefn feature definition on witch OGRFeature are based on. 
+ * @param hDefn handle to the feature definition on witch OGRFeature are
+ * based on. 
  * @return the updated reference count.
  */
 
@@ -491,7 +500,8 @@ int OGR_FD_Dereference( OGRFeatureDefnH hDefn )
  * This function is the same as the CPP method 
  * OGRFeatureDefn::GetReferenceCount().
  *
- * @param hDefn feature definition on witch OGRFeature are based on. 
+ * @param hDefn hanlde to the feature definition on witch OGRFeature are
+ * based on. 
  * @return the current reference count.
  */
 
@@ -542,7 +552,7 @@ int OGRFeatureDefn::GetFieldIndex( const char * pszFieldName )
  *
  * This function is the same as the CPP method OGRFeatureDefn::GetFieldIndex.
  *
- * @param hDefn feature definition to get field index from. 
+ * @param hDefn handle to the feature definition to get field index from. 
  * @param pszFieldName the field name to search for.
  *
  * @return the field index, or -1 if no match found.
