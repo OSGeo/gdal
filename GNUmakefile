@@ -89,12 +89,13 @@ py-module:	lib-target
 	(cd pymod; $(MAKE))
 
 lclean:
-	rm -f *.a *.so config.log config.cache html/*.*
+	rm -f *.a *.so config.log config.cache html/*.* *.la
 
 distclean:	dist-clean
 
 dist-clean:	clean
 	rm -f GDALmake.opt port/cpl_config.h config.cache config.status
+	rm -f libtool
 	find . -name "*.lo" -exec rm -f '{}' ';'
 	find . -name .libs -exec rm -rf '{}' ';'
 
