@@ -24,7 +24,10 @@
  *
  * The GDALDataset class.
  * 
- * $Log: 
+ * $Log$
+ * Revision 1.4  1999/01/11 15:37:55  warmerda
+ * fixed log keyword
+ * 
  */
 
 #include "gdal_priv.h"
