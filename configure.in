@@ -927,7 +927,12 @@ if test "$PG_CONFIG" = "no" ; then
 else
   if test -d $PG_CONFIG ; then
       AC_MSG_RESULT([no])
-      AC_MSG_ERROR([--with-pg argument is a directory, but it should be the path to the pg_config script])
+      AC_MSG_ERROR([--with-pg argument is a directory.  It should be the path to the pg_config script, often somewhere like /usr/local/pgsql/bin/pg_config.])
+  fi
+
+  if test \! -x $PG_CONFIG ; then
+      AC_MSG_RESULT([no])
+      AC_MSG_ERROR([--with-pg argument is a not an executable file.  It should be the path to the pg_config script, often somewhere like /usr/local/pgsql/bin/pg_config.])
   fi
 
   HAVE_PG=yes
