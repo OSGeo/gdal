@@ -28,6 +28,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.20  2003/02/06 05:53:56  warmerda
+# Blow an exception when the CoordinateTransformation constructor fails.
+#
 # Revision 1.19  2003/02/06 05:49:28  warmerda
 # Translate 'NULL' into None for CoordinateTransformation class constructor.
 #
@@ -88,6 +91,7 @@
 #
 
 import _gdal
+import gdal
 
 def GetProjectionMethods():
     return _gdal.OPTGetProjectionMethods()
@@ -244,10 +248,14 @@ class CoordinateTransformation:
         if target is None:
             target = source[1]
             source = source[0]
-            
+
+        gdal.ErrorReset()
         self._o = _gdal.OCTNewCoordinateTransformation( source._o, target._o )
-        if self._o == 'NULL':
-            self._o = None
+        if self._o is None or self._o == 'NULL':
+            if len(gdal.GetLastErrorMsg()) > 0:
+                raise ValueError, gdal.GetLastErrorMsg()
+            else:
+                raise ValueError, 'Failed to create coordinate transformation.'
 
     def __del__(self):
         if self._o: 
