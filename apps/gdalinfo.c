@@ -26,6 +26,9 @@
  * serves as an early test harnass.
  *
  * $Log$
+ * Revision 1.34  2004/04/29 13:44:25  warmerda
+ * added raster category and scale/offset support
+ *
  * Revision 1.33  2004/04/13 15:09:41  warmerda
  * clean up arguments
  *
@@ -340,7 +343,7 @@ int main( int argc, char ** argv )
     for( iBand = 0; iBand < GDALGetRasterCount( hDataset ); iBand++ )
     {
         double      dfMin, dfMax, adfCMinMax[2], dfNoData;
-        int         bGotMin, bGotMax, bGotNodata;
+        int         bGotMin, bGotMax, bGotNodata, bSuccess;
         int         nBlockXSize, nBlockYSize;
 
         hBand = GDALGetRasterBand( hDataset, iBand+1 );
@@ -423,6 +426,22 @@ int main( int argc, char ** argv )
         {
             printf( "  Unit Type: %s\n", GDALGetRasterUnitType(hBand) );
         }
+
+        if( GDALGetRasterCategoryNames(hBand) != NULL )
+        {
+            char **papszCategories = GDALGetRasterCategoryNames(hBand);
+            int i;
+
+            printf( "  Categories:\n" );
+            for( i = 0; papszCategories[i] != NULL; i++ )
+                printf( "    %3d: %s\n", i, papszCategories[i] );
+        }
+
+        if( GDALGetRasterScale( hBand, &bSuccess ) != 1.0 
+            || GDALGetRasterOffset( hBand, &bSuccess ) != 0.0 )
+            printf( "  Offset: %g,   Scale:%g\n",
+                    GDALGetRasterOffset( hBand, &bSuccess ),
+                    GDALGetRasterScale( hBand, &bSuccess ) );
 
         papszMetadata = GDALGetMetadata( hBand, NULL );
         if( CSLCount(papszMetadata) > 0 )
