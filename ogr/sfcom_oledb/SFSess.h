@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.22  2002/08/09 21:34:30  warmerda
+ * .net porting changes (minor)
+ *
  * Revision 1.21  2002/08/08 22:03:25  warmerda
  * add support for some restrictions
  *
@@ -253,7 +256,7 @@ class CSFSessionTRSchemaRowset :
                 return E_OUTOFMEMORY;
         }
         
-        *pcRowsAffected = m_rgRowData.GetSize();
+        *pcRowsAffected = m_rgRowData.GetCount();
         
         return S_OK;
     }
@@ -392,7 +395,7 @@ class CSFSessionColSchemaRowset :
                 return E_OUTOFMEMORY;
         }
 
-        *pcRowsAffected = m_rgRowData.GetSize();
+        *pcRowsAffected = m_rgRowData.GetCount();
         
         return S_OK;
     }
@@ -431,7 +434,7 @@ public:
 		trDataS.m_nType = DBTYPE_IUNKNOWN;
 		m_rgRowData.Add(trDataBlob);
 
-		*pcRowsAffected = m_rgRowData.GetSize();
+		*pcRowsAffected = m_rgRowData.GetCount();
 		return S_OK;
 	}
 };
@@ -600,7 +603,7 @@ public CRowsetImpl <CSFSessionSchemaOGISTables,OGISTables_Row, CSFSession>
             }
         }
 
-        *pcRowsAffected = m_rgRowData.GetSize();
+        *pcRowsAffected = m_rgRowData.GetCount();
         
         return S_OK;
     }
@@ -934,7 +937,7 @@ public CCRRowsetImpl<CSFSessionSchemaOGISGeoColumns,OGISGeometry_Row,CSFSession>
                 }
             }
 
-            *pcRowsAffected = m_rgRowData.GetSize();
+            *pcRowsAffected = m_rgRowData.GET_SIZE_MACRO();
 
             return S_OK;
         }
@@ -1147,7 +1150,7 @@ public CCRRowsetImpl<CSFSessionSchemaSpatRef,OGISSpat_Row,CSFSession>
                 }
             }
 
-            *pcRowsAffected = m_rgRowData.GetSize();
+            *pcRowsAffected = m_rgRowData.GET_SIZE_MACRO();
 
             return S_OK;
         }
