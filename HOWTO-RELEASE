@@ -25,10 +25,12 @@
 
 5.5) Place Release notice in ChangeLog file. 
 
-6) Tag the release set in CVS. 
+6) Tag the release set in CVS: 
 
    eg. 
    % cvs tag -F gdal_1_1_6 
+
+6.5) Also tag the "autotest" tree as above.
 
 7) Create the source distributions using the mkgdaldist.sh script.  The
    argument should be the version number (ie. 1.1.6).  Hit enter when 
@@ -37,14 +39,10 @@
    eg.
    % mkgdaldist.sh 1.1.6
 
-8) Publish the resulting files.  
+8) Publish the resulting files on ftp.remotesensing.org/gdal, 
+   gdal.mapptools.org/dl and ftp.gdal.org/htdocs/dl.
 
-   eg.
-   % scp gdal-1.1.5.tar.gz gdal115.zip remotesensing.org:/ftp/remotesensing/pub/gdal
-   
-
-9) Announce release to the gdal-dev@remotesensing.org and 
-   sfcom-dev@yahoogroups.com mailing lists.
+9) Announce release to the gdal-dev@remotesensing.org, and freegis@freegis.org.
 
 10) Update the freshmeat.net entry for GDAL. 
 
