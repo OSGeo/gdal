@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2000/10/17 02:23:33  warmerda
+ * improve error reporting
+ *
  * Revision 1.5  2000/06/19 18:46:59  warmerda
  * added -skipfailures
  *
@@ -181,7 +184,11 @@ int main( int nArgc, char ** papszArgv )
     
     poODS = poDriver->CreateDataSource( pszDestDataSource, papszDSCO );
     if( poODS == NULL )
+    {
+        printf( "%s driver failed to create %s\n", 
+                pszFormat, pszDestDataSource );
         exit( 1 );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Process each data source layer.                                 */
