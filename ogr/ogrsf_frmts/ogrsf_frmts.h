@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2001/06/19 15:50:23  warmerda
+ * added feature attribute query support
+ *
  * Revision 1.19  2001/03/15 04:01:43  danmo
  * Added OGRLayer::GetExtent()
  *
@@ -123,10 +126,13 @@
 class CPL_DLL OGRLayer
 {
   public:
-    virtual     ~OGRLayer(){}
-                 OGRLayer(){m_poStyleTable = NULL;}
+                OGRLayer();
+    virtual     ~OGRLayer();
+
     virtual OGRGeometry *GetSpatialFilter() = 0;
     virtual void        SetSpatialFilter( OGRGeometry * ) = 0;
+
+    virtual OGRErr      SetAttributeFilter( const char * );
 
     virtual void        ResetReading() = 0;
     virtual OGRFeature *GetNextFeature() = 0;
@@ -153,6 +159,7 @@ class CPL_DLL OGRLayer
 
  protected:
     OGRStyleTable *m_poStyleTable;
+    OGRFeatureQuery *m_poAttrQuery;
 };
 
 

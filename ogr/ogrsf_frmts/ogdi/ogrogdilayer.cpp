@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2001/06/19 15:50:23  warmerda
+ * added feature attribute query support
+ *
  * Revision 1.3  2001/04/17 21:41:02  warmerda
  * Added use of cln_GetLayerCapabilities() to query list of available layers.
  * Restructured OGROGDIDataSource and OGROGDILayer classes somewhat to
@@ -171,6 +174,7 @@ OGRFeature *OGROGDILayer::GetNextFeature()
     ecs_Result  *psResult;
     int         i;
 
+  TryAgain:
     if (m_nTotalShapeCount != -1 && m_iNextShapeId >= m_nTotalShapeCount )
         return NULL;
         
@@ -298,6 +302,15 @@ OGRFeature *OGROGDILayer::GetNextFeature()
         poFeature->SetField( "text", ECSGEOM(psResult).text.desc );
     }
 
+/* -------------------------------------------------------------------- */
+/*      Do we need to apply an attribute test?                          */
+/* -------------------------------------------------------------------- */
+    if( m_poAttrQuery != NULL
+        && !m_poAttrQuery->Evaluate( poFeature ) )
+    {
+        delete poFeature;
+        goto TryAgain;
+    }
 
     return poFeature;
 }

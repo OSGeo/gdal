@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2001/06/19 15:50:23  warmerda
+ * added feature attribute query support
+ *
  * Revision 1.6  2001/01/19 20:31:12  warmerda
  * expand tabs
  *
@@ -163,10 +166,14 @@ OGRFeature *OGRNTFLayer::GetNextFeature()
     while( TRUE )
     {
         poFeature = poCurrentReader->ReadOGRFeature( this );
-        if( poFeature == NULL
-            || poFilterGeom == NULL
-            || poFeature->GetGeometryRef() == NULL 
-            || poFilterGeom->Intersect( poFeature->GetGeometryRef() ) )
+        if( poFeature == NULL )
+            break;
+
+        if( (poFilterGeom == NULL
+             || poFeature->GetGeometryRef() == NULL 
+             || poFilterGeom->Intersect( poFeature->GetGeometryRef() ) )
+            && (m_poAttrQuery == NULL
+                || m_poAttrQuery->Evaluate( poFeature )) )
             break;
 
         delete poFeature;

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2001/06/19 15:50:23  warmerda
+ * added feature attribute query support
+ *
  * Revision 1.3  2001/03/16 22:16:10  warmerda
  * added support for ESRI .prj files
  *
@@ -132,8 +135,10 @@ OGRFeature *OGRShapeLayer::GetNextFeature()
         poFeature = SHPReadOGRFeature( hSHP, hDBF, poFeatureDefn,
                                        iNextShapeId++ );
 
-        if( poFilterGeom == NULL
+        if( (poFilterGeom == NULL
             || poFilterGeom->Intersect( poFeature->GetGeometryRef() ) )
+            && (m_poAttrQuery == NULL
+                || m_poAttrQuery->Evaluate( poFeature )) )
             return poFeature;
 
         delete poFeature;

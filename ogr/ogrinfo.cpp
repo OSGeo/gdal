@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2001/06/19 15:48:36  warmerda
+ * added feature attribute query support
+ *
  * Revision 1.7  2000/03/14 21:37:49  warmerda
  * report layer geometry type
  *
@@ -60,7 +63,7 @@ int     bVerbose = TRUE;
 
 static void Usage();
 
-static void ReportOnLayer( OGRLayer * );
+static void ReportOnLayer( OGRLayer *, const char * );
 
 /************************************************************************/
 /*                                main()                                */
@@ -69,6 +72,7 @@ static void ReportOnLayer( OGRLayer * );
 int main( int nArgc, char ** papszArgv )
 
 {
+    const char *pszWHERE = NULL;
     const char  *pszDataSource = NULL;
     char        **papszLayers = NULL;
     
@@ -86,6 +90,10 @@ int main( int nArgc, char ** papszArgv )
             bReadOnly = TRUE;
         else if( EQUAL(papszArgv[iArg],"-q") )
             bVerbose = FALSE;
+        else if( EQUAL(papszArgv[iArg],"-where") && papszArgv[iArg+1] != NULL )
+        {
+            pszWHERE = papszArgv[++iArg];
+        }
         else if( papszArgv[iArg][0] == '-' )
         {
             Usage();
@@ -179,7 +187,7 @@ int main( int nArgc, char ** papszArgv )
         else if( CSLFindString( papszLayers,
                                 poLayer->GetLayerDefn()->GetName() ) != -1 )
         {
-            ReportOnLayer( poLayer );
+            ReportOnLayer( poLayer, pszWHERE );
         }
     }
 
@@ -210,7 +218,7 @@ static void Usage()
 /*                           ReportOnLayer()                            */
 /************************************************************************/
 
-static void ReportOnLayer( OGRLayer * poLayer )
+static void ReportOnLayer( OGRLayer * poLayer, const char *pszWHERE )
 
 {
     OGRFeatureDefn      *poDefn = poLayer->GetLayerDefn();
@@ -249,9 +257,16 @@ static void ReportOnLayer( OGRLayer * poLayer )
     }
 
 /* -------------------------------------------------------------------- */
+/*      Set attribute filter if provided.                               */
+/* -------------------------------------------------------------------- */
+    if( pszWHERE != NULL )
+        poLayer->SetAttributeFilter( pszWHERE );
+
+/* -------------------------------------------------------------------- */
 /*      Read, and dump features.                                        */
 /* -------------------------------------------------------------------- */
     OGRFeature  *poFeature;
+
     while( (poFeature = poLayer->GetNextFeature()) != NULL )
     {
         poFeature->DumpReadable( stdout );

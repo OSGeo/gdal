@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2001/06/19 15:50:23  warmerda
+ * added feature attribute query support
+ *
  * Revision 1.2  2000/11/23 06:03:35  warmerda
  * added Oid support
  *
@@ -82,6 +85,7 @@ class OGRPGLayer : public OGRLayer
     void		SetSpatialFilter( OGRGeometry * );
 
     void		ResetReading();
+    OGRFeature *	GetNextRawFeature();
     OGRFeature *	GetNextFeature();
 
     OGRFeature         *GetFeature( long nFeatureId );

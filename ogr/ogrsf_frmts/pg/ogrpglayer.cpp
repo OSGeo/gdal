@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2001/06/19 15:50:23  warmerda
+ * added feature attribute query support
+ *
  * Revision 1.2  2000/11/23 06:03:35  warmerda
  * added Oid support
  *
@@ -233,6 +236,32 @@ void OGRPGLayer::ResetReading()
 /************************************************************************/
 
 OGRFeature *OGRPGLayer::GetNextFeature()
+
+{
+
+    for( ; TRUE; )
+    {
+        OGRFeature	*poFeature;
+
+        poFeature = GetNextRawFeature();
+        if( poFeature == NULL )
+            return NULL;
+
+        if( (poFilterGeom == NULL
+            || poFilterGeom->Intersect( poFeature->GetGeometryRef() ) )
+            && (m_poAttrQuery == NULL
+                || m_poAttrQuery->Evaluate( poFeature )) )
+            return poFeature;
+
+        delete poFeature;
+    }
+}
+
+g/************************************************************************/
+/*                         GetNextRawFeature()                          */
+/************************************************************************/
+
+OGRFeature *OGRPGLayer::GetNextRawFeature()
 
 {
     PGconn	*hPGConn = poDS->GetPGConn();

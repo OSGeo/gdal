@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2001/06/19 15:50:23  warmerda
+ * added feature attribute query support
+ *
  * Revision 1.6  2001/03/07 19:29:46  warmerda
  * added support for stroking curves
  *
@@ -348,8 +351,10 @@ OGRFeature *OGRDGNLayer::GetNextFeature()
             continue;
         }
 
-        if( poFilterGeom == NULL
+        if( (poFilterGeom == NULL
             || poFilterGeom->Intersect( poFeature->GetGeometryRef() ) )
+            && (m_poAttrQuery == NULL
+                || m_poAttrQuery->Evaluate( poFeature )) )
             return poFeature;
 
         delete poFeature;

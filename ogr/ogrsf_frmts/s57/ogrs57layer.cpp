@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2001/06/19 15:50:23  warmerda
+ * added feature attribute query support
+ *
  * Revision 1.3  1999/11/26 03:07:08  warmerda
  * set spatial reference on features
  *
@@ -175,10 +178,14 @@ OGRFeature *OGRS57Layer::GetNextFeature()
     while( TRUE )
     {
         poFeature = GetNextUnfilteredFeature();
-        if( poFeature == NULL
-            || poFilterGeom == NULL
-            || poFeature->GetGeometryRef() == NULL 
-            || poFilterGeom->Intersect( poFeature->GetGeometryRef() ) )
+        if( poFeature == NULL )
+            break;
+
+        if( (poFilterGeom == NULL
+             || poFeature->GetGeometryRef() == NULL 
+             || poFilterGeom->Intersect( poFeature->GetGeometryRef() ) )
+            && (m_poAttrQuery == NULL
+                || m_poAttrQuery->Evaluate( poFeature )) )
             break;
 
         delete poFeature;

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2001/06/19 15:50:23  warmerda
+ * added feature attribute query support
+ *
  * Revision 1.4  2001/01/19 21:15:20  warmerda
  * expanded tabs
  *
@@ -201,11 +204,15 @@ OGRFeature *OGRTigerLayer::GetNextFeature()
     {
         OGRFeature      *poFeature = GetFeature( ++iLastFeatureId );
 
-        if( poFeature == NULL
-            || poFilterGeom == NULL
-            || poFeature->GetGeometryRef() == NULL 
-            || poFilterGeom->Intersect( poFeature->GetGeometryRef() ) )
-            return poFeature;
+        if( poFeature == NULL )
+            break;
+
+        if( (poFilterGeom == NULL
+             || poFeature->GetGeometryRef() == NULL 
+             || poFilterGeom->Intersect( poFeature->GetGeometryRef() ) )
+            && (m_poAttrQuery == NULL
+                || m_poAttrQuery->Evaluate( poFeature )) )
+            break;
 
         delete poFeature;
     }

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2001/06/19 15:48:36  warmerda
+ * added feature attribute query support
+ *
  * Revision 1.18  2001/06/01 14:33:00  warmerda
  * added CreateFeature factory method
  *
@@ -386,6 +389,24 @@ class CPL_DLL OGRFeature
     virtual void        SetStyleTable(OGRStyleTable *poStyleTable);
 
     static OGRFeature  *CreateFeature( OGRFeatureDefn * );
+};
+
+/************************************************************************/
+/*                           OGRFeatureQuery                            */
+/************************************************************************/
+
+class CPL_DLL OGRFeatureQuery
+{
+  private:
+    OGRFeatureDefn *poTargetDefn;
+    void	   *pSWQExpr;
+    
+  public:
+                OGRFeatureQuery();
+                ~OGRFeatureQuery();
+
+    OGRErr	Compile( OGRFeatureDefn *, const char * );
+    int		Evaluate( OGRFeature * );
 };
 
 #endif /* ndef _OGR_FEATURE_H_INCLUDED */
