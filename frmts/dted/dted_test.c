@@ -1,25 +1,39 @@
 #include "dted_api.h"
 #include <stdio.h>
 
-int main()
+int main( int argc, char ** argv )
 
 {
     DTEDInfo    *psInfo;
-    int         iY, iX;
+    int         iY, iX, nOutLevel;
     void        *pStream;
     GInt16      *panData;
+    const char  *pszFilename;
 
+    if( argc > 1 )
+        pszFilename = argv[1];
+    else
+    {
+        printf( "Usage: dted_test <in_file> [<out_level>]\n" );
+        exit(0);
+    }
+
+    if( argc > 2 )
+        nOutLevel = atoi(argv[2]);
+    else
+        nOutLevel = 0;
+    
 /* -------------------------------------------------------------------- */
 /*      Open input file.                                                */
 /* -------------------------------------------------------------------- */
-    psInfo = DTEDOpen( "n43.dt0", "rb", FALSE );
+    psInfo = DTEDOpen( pszFilename, "rb", FALSE );
     if( psInfo == NULL )
         exit(1);
 
 /* -------------------------------------------------------------------- */
 /*      Create output stream.                                           */
 /* -------------------------------------------------------------------- */
-    pStream = DTEDCreatePtStream( ".", 0 );
+    pStream = DTEDCreatePtStream( ".", nOutLevel );
 
     if( pStream == NULL )
         exit( 1 );
@@ -36,10 +50,10 @@ int main()
         for( iY = 0; iY < psInfo->nYSize; iY++ )
         {
             DTEDWritePt( pStream, 
-                         psInfo->dfULCornerX + iX * psInfo->dfPixelSizeX * 2
+                         psInfo->dfULCornerX + iX * psInfo->dfPixelSizeX
                          + psInfo->dfPixelSizeX * 0.5,
                          psInfo->dfULCornerY 
-                         - (psInfo->nYSize-iY-1) * psInfo->dfPixelSizeX * 2
+                         - (psInfo->nYSize-iY-1) * psInfo->dfPixelSizeX
                          - psInfo->dfPixelSizeY * 0.5,
                          panData[iY] );
         }
