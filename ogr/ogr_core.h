@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2002/10/24 20:53:02  warmerda
+ * expand tabs
+ *
  * Revision 1.9  2002/09/26 18:13:17  warmerda
  * moved some defs to ogr_core.h for sharing with ogr_api.h
  *
@@ -70,10 +73,10 @@
 class OGREnvelope
 {
   public:
-	OGREnvelope()
-	{
-		MinX = MaxX = MinY = MaxY = 0;
-	}
+        OGREnvelope()
+        {
+                MinX = MaxX = MinY = MaxY = 0;
+        }
     double      MinX;
     double      MaxX;
     double      MinY;
