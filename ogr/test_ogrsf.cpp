@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  1999/08/30 14:52:55  warmerda
+ * fixed error report
+ *
  * Revision 1.3  1999/08/28 03:11:29  warmerda
  * Register NTF format.  Improve error reporting.
  *
@@ -405,7 +408,7 @@ static void TestSpatialFilter( OGRLayer *poLayer )
     {
         printf( "INFO: Skipping Spatial Filter test for %s.\n"
                 "      No features in layer.\n",
-                poTargetFeature->GetDefnRef()->GetName() );
+                poLayer->GetLayerDefn()->GetName() );
         return;
     }
 
