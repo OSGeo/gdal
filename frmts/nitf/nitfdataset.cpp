@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2004/02/09 05:18:07  warmerda
+ * fixed up north/south MGRS support
+ *
  * Revision 1.14  2004/02/09 05:04:41  warmerda
  * added ICORDS=U (MGRS) support
  *
@@ -525,12 +528,12 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo )
         oSRSWork.SetWellKnownGeogCS( "WGS84" );
         oSRSWork.exportToWkt( &(poDS->pszProjection) );
     }
-    else if( psImage->chICORDS == 'U' && psImage->nZone > 0 )
+    else if( psImage->chICORDS == 'U' && psImage->nZone != 0 )
     {
         CPLFree( poDS->pszProjection );
         poDS->pszProjection = NULL;
 
-        oSRSWork.SetUTM( psImage->nZone, psImage->chICORDS == 'N' );
+        oSRSWork.SetUTM( ABS(psImage->nZone), psImage->nZone > 0 );
         oSRSWork.SetWellKnownGeogCS( "WGS84" );
         oSRSWork.exportToWkt( &(poDS->pszProjection) );
     }
