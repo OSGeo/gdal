@@ -2,7 +2,8 @@
 # Algorithms
 #
 
-OBJ =	gdaldither.obj gdalmediancut.obj
+OBJ =	gdaldither.obj gdalmediancut.obj gdal_crs.obj gdaltransformer.obj \
+	gdalsimplewarp.obj 
 
 GDAL_ROOT	=	..
 
