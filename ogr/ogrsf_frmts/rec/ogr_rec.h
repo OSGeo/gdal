@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2003/02/04 20:42:45  warmerda
+ * skip zero length fields, improve type handling
+ *
  * Revision 1.1  2003/02/03 21:11:35  warmerda
  * New
  *
@@ -55,6 +58,7 @@ class OGRRECLayer : public OGRLayer
     int                 nFieldCount;
     int                *panFieldOffset;
     int                *panFieldWidth;
+    int                 nRecordLength;
 
     int                 nNextFID;
 

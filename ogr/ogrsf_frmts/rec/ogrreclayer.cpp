@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2003/02/04 20:42:45  warmerda
+ * skip zero length fields, improve type handling
+ *
  * Revision 1.1  2003/02/03 21:11:35  warmerda
  * New
  *
@@ -80,42 +83,68 @@ OGRRECLayer::OGRRECLayer( const char *pszLayerNameIn,
 
     poFeatureDefn = new OGRFeatureDefn( pszLayerNameIn );
 
-    nFieldCount = nFieldCountIn;
-    panFieldOffset = (int *) CPLCalloc(sizeof(int),nFieldCount);
-    panFieldWidth = (int *) CPLCalloc(sizeof(int),nFieldCount);
+    nFieldCount = 0;
+    panFieldOffset = (int *) CPLCalloc(sizeof(int),nFieldCountIn);
+    panFieldWidth = (int *) CPLCalloc(sizeof(int),nFieldCountIn);
 
 /* -------------------------------------------------------------------- */
 /*      Read field definition lines.                                    */
 /* -------------------------------------------------------------------- */
     int         iField;
 
-    for( iField = 0; iField < nFieldCountIn; iField++ )
+    for( nFieldCount=0, iField = 0; iField < nFieldCountIn; iField++ )
     {
         const char *pszLine = CPLReadLine( fp );
-        
+        int         nTypeCode;
+        OGRFieldType eFType = OFTString;
 
         if( pszLine == NULL )
             return;
 
         if( strlen(pszLine) < 44 )
             return;
-        
-        OGRFieldDefn oField( RECGetField( pszLine, 2, 14 ), 
-                             OFTInteger );
 
-        if( iField > 0 )
-            panFieldOffset[iField]
-                = panFieldOffset[iField-1] + panFieldWidth[iField-1];
-        panFieldWidth[iField] = atoi( RECGetField( pszLine, 37, 4 ) );
+        // Extract field width. 
+        panFieldWidth[nFieldCount] = atoi( RECGetField( pszLine, 37, 4 ) );
 
-        if( panFieldWidth[iField] == 0 )
-            return;
+        // Is this an real, integer or string field?  Default to string.
+        nTypeCode = atoi(RECGetField(pszLine,33,4));
+        if( nTypeCode == 12 )
+            eFType = OFTInteger;
+        else if( nTypeCode == 0 || nTypeCode == 6 || nTypeCode == 102 )
+        {
+            if( panFieldWidth[nFieldCount] < 3 )
+                eFType = OFTInteger;
+            else
+                eFType = OFTReal;
+        }
+        else
+            eFType = OFTString;
 
-        oField.SetWidth( panFieldWidth[iField] );
+        OGRFieldDefn oField( RECGetField( pszLine, 2, 10 ), eFType );
+
+        // Establish field offset. 
+        if( nFieldCount > 0 )
+            panFieldOffset[nFieldCount]
+                = panFieldOffset[nFieldCount-1] + panFieldWidth[nFieldCount-1];
+
+        if( eFType == OFTReal )
+        {
+            oField.SetWidth( panFieldWidth[nFieldCount]*2 );
+            oField.SetPrecision( panFieldWidth[nFieldCount]-1 );
+        }
+        else
+            oField.SetWidth( panFieldWidth[nFieldCount] );
+
+        // Skip fields that are only screen labels.
+        if( panFieldWidth[nFieldCount] == 0 )
+            continue;
 
         poFeatureDefn->AddFieldDefn( &oField );
+        nFieldCount++;
     }
 
+    nRecordLength = panFieldOffset[nFieldCount-1]+panFieldWidth[nFieldCount-1];
     bIsValid = TRUE;
 
     nStartOfData = VSIFTell( fp );
@@ -151,19 +180,47 @@ void OGRRECLayer::ResetReading()
 OGRFeature * OGRRECLayer::GetNextUnfilteredFeature()
 
 {
-    const char *pszLine = CPLReadLine( fpREC );
+/* -------------------------------------------------------------------- */
+/*      Read and assemble the source data record.                       */
+/* -------------------------------------------------------------------- */
+    int        nDataLen = 0;
+    char       *pszRecord = (char *) CPLMalloc(nRecordLength + 2 );
 
-    if( pszLine == NULL )
-        return NULL;
-
-    if( (int) strlen(pszLine) 
-        < panFieldOffset[nFieldCount-1] + panFieldWidth[nFieldCount-1] )
+    while( nDataLen < nRecordLength )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "Record %d doesn't have the required %d characters of data.",
-                  nNextFID,
-                  panFieldOffset[nFieldCount-1]+panFieldWidth[nFieldCount-1] );
-        return NULL;
+        const char *pszLine = CPLReadLine( fpREC );
+        int         iSegLen;
+
+        if( pszLine == NULL )
+        {
+            CPLFree( pszRecord );
+            return NULL;
+        }
+
+        // Strip off end-of-line '!' marker. 
+        iSegLen = strlen(pszLine);
+        if( pszLine[iSegLen-1] != '!' )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                      "Apparent corrupt data line .. record FID=%d", 
+                      nNextFID );
+            CPLFree( pszRecord );
+            return NULL;
+        }
+
+        iSegLen--;
+        if( nDataLen + iSegLen > nRecordLength )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                      "Too much data for record %d.", 
+                      nNextFID );
+            CPLFree( pszRecord );
+            return NULL;
+        }
+
+        strncpy( pszRecord+nDataLen, pszLine, iSegLen );
+        pszRecord[nDataLen+iSegLen] = '\0';
+        nDataLen += iSegLen;
     }
 
 /* -------------------------------------------------------------------- */
@@ -181,7 +238,7 @@ OGRFeature * OGRRECLayer::GetNextUnfilteredFeature()
     for( iAttr = 0; iAttr < nFieldCount; iAttr++)
     {
         const char *pszFieldText = 
-            RECGetField( pszLine, 
+            RECGetField( pszRecord, 
                          panFieldOffset[iAttr] + 1,
                          panFieldWidth[iAttr] );
 
