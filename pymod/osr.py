@@ -28,6 +28,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.41  2004/05/12 19:27:31  dron
+# Added well known datum and units names.
+#
 # Revision 1.40  2004/05/10 17:09:15  warmerda
 # added autoidentifyepsg
 #
@@ -179,6 +182,25 @@ SRS_PP_PATH_NUMBER              = "path_number"
 SRS_PP_PERSPECTIVE_POINT_HEIGHT = "perspective_point_height"
 SRS_PP_FIPSZONE                 = "fipszone"
 SRS_PP_ZONE                     = "zone"
+
+SRS_UL_METER			= "Meter"
+SRS_UL_FOOT			= "Foot (International)"
+SRS_UL_FOOT_CONV                    "0.3048"
+SRS_UL_US_FOOT			= "U.S. Foot"
+SRS_UL_US_FOOT_CONV             = "0.3048006"
+SRS_UL_NAUTICAL_MILE		= "Nautical Mile"
+SRS_UL_NAUTICAL_MILE_CONV       = "1852.0"
+SRS_UL_LINK			= "Link"
+SRS_UL_LINK_CONV                = "0.20116684023368047"
+SRS_UL_CHAIN			= "Chain"
+SRS_UL_CHAIN_CONV               = "2.0116684023368047"
+SRS_UL_ROD			= "Rod"
+SRS_UL_ROD_CONV                 = "5.02921005842012"
+
+SRS_DN_NAD27			= "North_American_Datum_1927"
+SRS_DN_NAD83			= "North_American_Datum_1983"
+SRS_DN_WGS72			= "WGS_1972"
+SRS_DN_WGS84			= "WGS_1984"
 
 SRS_WGS84_SEMIMAJOR             = 6378137.0
 SRS_WGS84_INVFLATTENING         = 298.257223563
