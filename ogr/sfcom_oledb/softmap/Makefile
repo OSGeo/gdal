@@ -14,10 +14,15 @@ EXTRAFLAGS =	-I$(SFOLEDB) \
 !INCLUDE $(GDAL_ROOT)/nmake.opt
 
 OLE_LIBS =	ole32.lib oleaut32.lib 
+
+!IFDEF DLLBUILD
+OGR_LIBS =	..\..\..\gdal_i.lib $(LIBS)
+!ELSE
 OGR_LIBS =	$(OGR)\ogrsf_frmts\ogrsf_frmts.lib \
 		$(OGR)\ogrsf_frmts\ogrsf_frmts_sup.lib \
 		$(OGR)\ogroledb.lib $(OGR)\ogr.lib \
 		$(GDAL_ROOT)\port\cpl.lib  $(OGDILIB)
+!ENDIF
 
 LOC_OBJ =       SF.obj SFRS.obj sfutil.obj sftraceback.obj sfregister.obj
 
