@@ -28,6 +28,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.13  2001/10/23 18:52:43  warmerda
+# modify initializer for Peppers
+#
 # Revision 1.12  2001/10/19 14:46:16  warmerda
 # added SetGeogCS() and __str__
 #
@@ -176,7 +179,24 @@ class SpatialReference:
     
 class CoordinateTransformation:
     
-    def __init__(self,source,target):
+    def __init__(self,source,target = None):
+        """
+        Initialize coordinate transform.
+
+        source -- source osr.SpatialReference coordinate system.
+        target -- destination osr.SpatialReference coordinate system.
+        """
+        #
+        # NOTE: A special requirement of the Atlantis Peppers system is
+        # that it needs to be able to instantiate a coordinate tranform
+        # by just passing in a tuple with two SpatialReference objects.  We
+        # assume this is the case if target is None.
+
+        self._o = None
+        if target is None:
+            target = source[1]
+            source = source[0]
+            
         self._o = _gdal.OCTNewCoordinateTransformation( source._o, target._o )
 
     def __del__(self):
