@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2001/09/12 17:03:21  warmerda
+ * auto update support
+ *
  * Revision 1.13  2001/08/30 21:18:39  warmerda
  * fixed typedef
  *
@@ -248,6 +251,8 @@ class S57Reader
     int                 iPointOffset;
     OGRFeature          *poMultiPoint;
 
+    int                 bAutoReadUpdates;
+
     void                ClearPendingMultiPoint();
     OGRFeature         *NextPendingMultiPoint();
 
@@ -285,7 +290,7 @@ class S57Reader
 
     void                Ingest();
     int                 ApplyUpdates( DDFModule * );
-    int                 FindAndApplyUpdates( const char *pszPath );
+    int                 FindAndApplyUpdates( const char *pszPath=NULL );
 
     void                Rewind();
     OGRFeature          *ReadNextFeature( OGRFeatureDefn * = NULL );
