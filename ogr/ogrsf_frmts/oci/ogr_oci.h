@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2003/04/04 22:04:28  warmerda
+ * added incomplete support for variable mode
+ *
  * Revision 1.12  2003/04/04 06:18:08  warmerda
  * first pass implementation of loader support
  *
@@ -353,6 +356,11 @@ public:
 /*                          OGROCILoaderLayer                           */
 /************************************************************************/
 
+#define LDRM_UNKNOWN  0
+#define LDRM_STREAM   1
+#define LDRM_VARIABLE 2
+#define LDRM_BINARY   3
+
 class OGROCILoaderLayer : public OGROCIWritableLayer
 {
     OGREnvelope         sExtent;
@@ -361,8 +369,14 @@ class OGROCILoaderLayer : public OGROCIWritableLayer
     FILE		*fpLoader;
     int                 bHeaderWritten;
 
+    int                 nLDRMode;
+
     void 		WriteLoaderHeader();
     void                FinalizeNewLayer();
+
+    OGRErr		WriteFeatureStreamMode( OGRFeature * );
+    OGRErr		WriteFeatureVariableMode( OGRFeature * );
+    OGRErr		WriteFeatureBinaryMode( OGRFeature * );
 
   public:
     			OGROCILoaderLayer( OGROCIDataSource *,
