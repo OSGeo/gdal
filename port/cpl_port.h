@@ -42,6 +42,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.29  2002/01/17 01:40:27  warmerda
+ * added _LARGEFILE64_SOURCE support
+ *
  * Revision 1.28  2001/08/30 21:20:49  warmerda
  * expand tabs
  *
@@ -114,6 +117,10 @@
 
 #ifdef unix
 #  undef WIN32
+#endif
+
+#if defined(VSI_NEED_LARGEFILE64_SOURCE) && !defined(_LARGEFILE64_SOURCE)
+#  define _LARGEFILE64_SOURCE 1
 #endif
 
 /* ==================================================================== */

@@ -1,3 +1,8 @@
+2002-01-16  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* port/cpl_config.h.in, port/cpl_port.h, aclocal.m4, configure:
+	add support for predefining _LARGEFILE64_SOURCE when necessary.
+
 2002-01-12  Frank Warmerdam  <warmerdam@pobox.com>
 
 	* core/gdal.h: added GDAL_VERSION_NUM, GDAL_RELEASE_DATE and
