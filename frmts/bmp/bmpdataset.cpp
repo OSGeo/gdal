@@ -29,6 +29,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.31  2004/09/28 14:05:21  fwarmerdam
+ * Try to strategically check the success of VSIFWriteL() calls in
+ * the Create() method as per:
+ * http://bugzilla.remotesensing.org/show_bug.cgi?id=619
+ *
  * Revision 1.30  2004/06/08 15:53:08  dron
  * Even more fixes.
  *
@@ -1292,7 +1297,17 @@ GDALDataset *BMPDataset::Create( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Write all structures to the file                                */
 /* -------------------------------------------------------------------- */
-    VSIFWriteL( &poDS->sFileHeader.bType, 1, 2, poDS->fp );
+    if( VSIFWriteL( &poDS->sFileHeader.bType, 1, 2, poDS->fp ) != 2 )
+    {
+        CPLError( CE_Failure, CPLE_FileIO, 
+                  "Write of first 2 bytes to BMP file %s failed.\n"
+                  "Is file system full?",
+                  pszFilename );
+        VSIFCloseL( poDS->fp );
+        delete poDS;
+
+        return NULL;
+    }
 
     GInt32      iLong;
     GUInt32     iULong;
@@ -1331,8 +1346,19 @@ GDALDataset *BMPDataset::Create( const char * pszFilename,
     VSIFWriteL( &iULong, 4, 1, poDS->fp );
 
     if ( poDS->sInfoHeader.iClrUsed )
-        VSIFWriteL( poDS->pabyColorTable, 1,
-                   poDS->nColorElems * poDS->sInfoHeader.iClrUsed, poDS->fp );
+    {
+        if( VSIFWriteL( poDS->pabyColorTable, 1,
+                        poDS->nColorElems * poDS->sInfoHeader.iClrUsed, poDS->fp ) 
+            != poDS->nColorElems * poDS->sInfoHeader.iClrUsed )
+        {
+            CPLError( CE_Failure, CPLE_FileIO, 
+                      "Error writing color table.  Is disk full?" );
+            VSIFCloseL( poDS->fp );
+            delete poDS;
+
+            return NULL;
+        }
+    }
 
     poDS->nRasterXSize = nXSize;
     poDS->nRasterYSize = nYSize;
