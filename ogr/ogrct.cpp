@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2003/06/27 19:02:50  warmerda
+ * changed to use pj_init_plus instead of CSLTokenizeString
+ *
  * Revision 1.20  2003/01/21 22:04:34  warmerda
  * don't report errors for pj_get_def or pj_dalloc missing
  *
@@ -114,6 +117,7 @@ typedef struct { double u, v; } projUV;
 
 #endif
 
+static projPJ       (*pfn_pj_init_plus)(const char *) = NULL;
 static projPJ       (*pfn_pj_init)(int, char**) = NULL;
 static projUV       (*pfn_pj_fwd)(projUV, projPJ) = NULL;
 static projUV       (*pfn_pj_inv)(projUV, projPJ) = NULL;
@@ -186,6 +190,7 @@ static int LoadProjLibrary()
 
 #ifdef PROJ_STATIC
     pfn_pj_init = pj_init;
+    pfn_pj_init_plus = pj_init_plus;
     pfn_pj_fwd = pj_fwd;
     pfn_pj_inv = pj_inv;
     pfn_pj_free = pj_free;
@@ -206,6 +211,8 @@ static int LoadProjLibrary()
     if( pfn_pj_init == NULL )
        return( FALSE );
 
+    pfn_pj_init_plus = (projPJ (*)(const char *)) 
+        CPLGetSymbol( pszLibName, "pj_init_plus" );
     pfn_pj_fwd = (projUV (*)(projUV,projPJ)) 
         CPLGetSymbol( pszLibName, "pj_fwd" );
     pfn_pj_inv = (projUV (*)(projUV,projPJ)) 
@@ -254,18 +261,13 @@ static int LoadProjLibrary()
 char *OCTProj4Normalize( const char *pszProj4Src )
 
 {
-    char        **papszArgs;
     char        *pszNewProj4Def, *pszCopy;
     projPJ      psPJSource = NULL;
 
     if( !LoadProjLibrary() || pfn_pj_dalloc == NULL || pfn_pj_get_def == NULL )
         return CPLStrdup( pszProj4Src );
 
-    papszArgs = CSLTokenizeStringComplex( pszProj4Src, " +",TRUE,FALSE );
-    
-    psPJSource = pfn_pj_init( CSLCount(papszArgs), papszArgs );
-
-    CSLDestroy( papszArgs );
+    psPJSource = pfn_pj_init_plus( pszProj4Src );
 
     if( psPJSource == NULL )
         return CPLStrdup( pszProj4Src );
@@ -442,14 +444,12 @@ int OGRProj4CT::Initialize( OGRSpatialReference * poSourceIn,
 /* -------------------------------------------------------------------- */
 /*      Establish PROJ.4 handle for source if projection.               */
 /* -------------------------------------------------------------------- */
-    char        *pszProj4Defn, **papszArgs;
+    char        *pszProj4Defn;
 
     if( poSRSSource->exportToProj4( &pszProj4Defn ) != OGRERR_NONE )
         return FALSE;
 
-    papszArgs = CSLTokenizeStringComplex( pszProj4Defn, " +",TRUE,FALSE );
-    
-    psPJSource = pfn_pj_init( CSLCount(papszArgs), papszArgs );
+    psPJSource = pfn_pj_init_plus( pszProj4Defn );
     
     if( psPJSource == NULL )
     {
@@ -470,7 +470,6 @@ int OGRProj4CT::Initialize( OGRSpatialReference * poSourceIn,
         }
     }
     
-    CSLDestroy( papszArgs );
     CPLFree( pszProj4Defn );
     
     if( psPJSource == NULL )
@@ -482,16 +481,13 @@ int OGRProj4CT::Initialize( OGRSpatialReference * poSourceIn,
     if( poSRSTarget->exportToProj4( &pszProj4Defn ) != OGRERR_NONE )
         return FALSE;
 
-    papszArgs = CSLTokenizeStringComplex( pszProj4Defn, " +",TRUE,FALSE );
-    
-    psPJTarget = pfn_pj_init( CSLCount(papszArgs), papszArgs );
+    psPJTarget = pfn_pj_init_plus( pszProj4Defn );
     
     if( psPJTarget == NULL )
         CPLError( CE_Failure, CPLE_NotSupported, 
                   "Failed to initialize PROJ.4 with `%s'.", 
                   pszProj4Defn );
     
-    CSLDestroy( papszArgs );
     CPLFree( pszProj4Defn );
     
     if( psPJTarget == NULL )
