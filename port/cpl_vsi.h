@@ -32,6 +32,9 @@
  * specific checking, io redirection and so on. 
  * 
  * $Log$
+ * Revision 1.8  2001/01/03 16:17:50  warmerda
+ * added large file API
+ *
  * Revision 1.7  2000/12/14 18:29:48  warmerda
  * added VSIMkdir
  *
@@ -97,6 +100,7 @@ int CPL_DLL 	VSIFClose( FILE * );
 int CPL_DLL     VSIFSeek( FILE *, long, int );
 long CPL_DLL	VSIFTell( FILE * );
 void CPL_DLL    VSIRewind( FILE * );
+void CPL_DLL    VSIFFlush( FILE * );
 
 size_t CPL_DLL	VSIFRead( void *, size_t, size_t, FILE * );
 size_t CPL_DLL  VSIFWrite( void *, size_t, size_t, FILE * );
@@ -108,6 +112,42 @@ int CPL_DLL     VSIFGetc( FILE * );
 int CPL_DLL     VSIFPutc( int, FILE * );
 int CPL_DLL     VSIUngetc( int, FILE * );
 int CPL_DLL	VSIFEof( FILE * );
+
+/* ==================================================================== */
+/*      64bit stdio file access functions.  If we have a big size       */
+/*      defined, then provide protypes for the large file API,          */
+/*      otherwise redefine to use the regular api.                      */
+/* ==================================================================== */
+#ifdef VSI_LARGE_API_SUPPORTED
+
+typedef GUIntBig vsi_l_offset;
+
+FILE CPL_DLL *	VSIFOpenL( const char *, const char * );
+int CPL_DLL 	VSIFCloseL( FILE * );
+int CPL_DLL     VSIFSeekL( FILE *, vsi_l_offset, int );
+vsi_l_offset CPL_DLL VSIFTellL( FILE * );
+void CPL_DLL    VSIRewindL( FILE * );
+size_t CPL_DLL	VSIFReadL( void *, size_t, size_t, FILE * );
+size_t CPL_DLL  VSIFWriteL( void *, size_t, size_t, FILE * );
+int CPL_DLL	VSIFEofL( FILE * );
+void CPL_DLL    VSIFFlushL( FILE * );
+
+#else
+
+typedef long vsi_l_offset;
+
+#define vsi_l_offset long
+
+#define VSIFOpenL      VSIFOpen
+#define VSIFCloseL     VSIFClose
+#define VSIFSeekL      VSIFSeek
+#define VSIFTellL      VSIFTell
+#define VSIFRewindL    VSIFRewind
+#define VSIFReadL      VSIFRead
+#define VSIFWriteL     VSIFWrite
+#define VSIFEofL       VSIFEof
+
+#endif
 
 /* ==================================================================== */
 /*      VSIStat() related.                                              */
