@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.42  2003/06/23 14:09:52  warmerda
+ * Use gdal_datum.csv and fallback to datum.csv.
+ *
  * Revision 1.41  2003/06/20 19:33:54  warmerda
  * fixed use of const string as non-const argument - bugzilla 350
  *
@@ -573,7 +576,10 @@ static int OGCDatumName2EPSGDatumCode( const char * pszOGCName )
 /* -------------------------------------------------------------------- */
 /*      Open the table if possible.                                     */
 /* -------------------------------------------------------------------- */
-    fp = VSIFOpen( CSVFilename("datum.csv"), "r" );
+    fp = VSIFOpen( CSVFilename("gdal_datum.csv"), "r" );
+    if( fp == NULL )
+        fp = VSIFOpen( CSVFilename("datum.csv"), "r" );
+
     if( fp == NULL )
         return nReturn;
 
