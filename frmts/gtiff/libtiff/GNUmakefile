@@ -13,6 +13,7 @@ OBJ	= \
 	tif_dirwrite.o \
 	tif_dumpmode.o \
 	tif_error.o \
+	tif_extension.o \
 	tif_fax3.o \
 	tif_fax3sm.o \
 	tif_getimage.o \

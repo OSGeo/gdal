@@ -10,6 +10,7 @@ OBJ	= \
 	tif_dirwrite.obj \
 	tif_dumpmode.obj \
 	tif_error.obj \
+	tif_extension.obj \
 	tif_fax3.obj \
 	tif_fax3sm.obj \
 	tif_getimage.obj \
