@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  1999/11/26 19:09:29  warmerda
+ * Swapped XY for soundings.
+ *
  * Revision 1.13  1999/11/26 16:17:58  warmerda
  * added DSNM
  *
@@ -752,16 +755,16 @@ void S57Reader::AssembleSoundingGeometry( DDFRecord * poFRecord,
         double		dfX, dfY, dfZ = 0.0;
         int		nBytesConsumed;
 
-        dfX = poXCOO->ExtractIntData( pachData, nBytesLeft,
-                                      &nBytesConsumed ) / (double) nCOMF;
-        nBytesLeft -= nBytesConsumed;
-        pachData += nBytesConsumed;
-        
         dfY = poYCOO->ExtractIntData( pachData, nBytesLeft,
                                       &nBytesConsumed ) / (double) nCOMF;
         nBytesLeft -= nBytesConsumed;
         pachData += nBytesConsumed;
 
+        dfX = poXCOO->ExtractIntData( pachData, nBytesLeft,
+                                      &nBytesConsumed ) / (double) nCOMF;
+        nBytesLeft -= nBytesConsumed;
+        pachData += nBytesConsumed;
+        
         if( poVE3D != NULL )
         {
             dfZ = poYCOO->ExtractIntData( pachData, nBytesLeft,
