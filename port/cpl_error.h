@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.13  2000/08/24 18:08:17  warmerda
+ * made default and quiet error handlers public on windows
+ *
  * Revision 1.12  2000/06/26 21:44:07  warmerda
  * added CPLE_UserInterrupt for progress terminations
  *
@@ -104,8 +107,8 @@ typedef void (*CPLErrorHandler)(CPLErr, int, const char*);
 CPLErrorHandler CPL_DLL CPLSetErrorHandler(CPLErrorHandler);
 void CPL_DLL CPLPushErrorHandler( CPLErrorHandler );
 void CPL_DLL CPLPopErrorHandler();
-void CPLDefaultErrorHandler( CPLErr, int, const char * );
-void CPLQuietErrorHandler( CPLErr, int, const char * );
+void CPL_DLL CPLDefaultErrorHandler( CPLErr, int, const char * );
+void CPL_DLL CPLQuietErrorHandler( CPLErr, int, const char * );
 
 void CPL_DLL CPLDebug( const char *, const char *, ... );
 void CPL_DLL _CPLAssert( const char *, const char *, int );
