@@ -28,6 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************
  * $Log$
+ * Revision 1.31  2002/08/14 12:33:34  warmerda
+ * Validate eRWFlag.
+ *
  * Revision 1.30  2002/07/09 20:33:12  warmerda
  * expand tabs
  *
@@ -258,6 +261,14 @@ CPLErr GDALRasterBand::RasterIO( GDALRWFlag eRWFlag,
                   "Access window out of range in RasterIO().  Requested\n"
                   "(%d,%d) of size %dx%d on raster of %dx%d.",
                   nXOff, nYOff, nXSize, nYSize, nRasterXSize, nRasterYSize );
+        return CE_Failure;
+    }
+
+    if( eRWFlag != GF_Read && eRWFlag != GF_Write )
+    {
+        CPLError( CE_Failure, CPLE_IllegalArg,
+                  "eRWFlag = %d, only GF_Read (0) and GF_Write (1) are legal.",
+                  eRWFlag );
         return CE_Failure;
     }
 
