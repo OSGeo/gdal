@@ -30,6 +30,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.28  2004/09/08 17:55:13  dron
+ * Few problems fixed.
+ *
  * Revision 1.27  2004/06/19 21:37:31  dron
  * Use HDF-EOS library for appropriate datasets; major cpde rewrite.
  *
@@ -790,6 +793,9 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
         hHDF4 = SWopen( poOpenInfo->pszFilename, DFACC_READ );
         nSubDatasets = SWinqswath(poOpenInfo->pszFilename, NULL, &nStrBufSize);
+#if DEBUG
+        CPLDebug( "HDF4", "Number of HDF-EOS swaths: %d", nSubDatasets );
+#endif
         if ( nSubDatasets > 0 && nStrBufSize > 0 )
         {
             char    *pszSwathList;
@@ -887,6 +893,9 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
         hHDF4 = GDopen( poOpenInfo->pszFilename, DFACC_READ );
         nSubDatasets = GDinqgrid( poOpenInfo->pszFilename, NULL, &nStrBufSize );
+#if DEBUG
+        CPLDebug( "HDF4", "Number of HDF-EOS grids: %d", nSubDatasets );
+#endif
         if ( nSubDatasets > 0 && nStrBufSize > 0 )
         {
             char    *pszGridList;
