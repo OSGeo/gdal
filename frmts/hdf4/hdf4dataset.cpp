@@ -30,6 +30,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.16  2002/11/29 18:25:22  dron
+ * MODIS determination improved.
+ *
  * Revision 1.15  2002/11/13 06:43:15  warmerda
  * quote filename in case it contains a drive indicator
  *
@@ -801,24 +804,6 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
 	poDS->iDataType = GDAL_HDF4;
 	poDS->pszDataType = "GDAL_HDF4";
     }
-    else if ( (pszValue = CSLFetchNameValue(poDS->papszGlobalMetadata, "Title"))
-	 && EQUAL( pszValue, "SeaWiFS Level-1A Data" ) )
-    {
-	poDS->iDataType = SEAWIFS_L1A;
-	poDS->pszDataType = "SEAWIFS_L1A";
-    }
-    else if ( (pszValue = CSLFetchNameValue(poDS->papszGlobalMetadata, "Title"))
-	&& EQUAL( pszValue, "SeaWiFS Level-2 Data" ) )
-    {
-	poDS->iDataType = SEAWIFS_L2;
-	poDS->pszDataType = "SEAWIFS_L2";
-    }
-    else if ( (pszValue = CSLFetchNameValue(poDS->papszGlobalMetadata, "Title"))
-	&& EQUAL( pszValue, "SeaWiFS Level-3 Standard Mapped Image" ) )
-    {
-	poDS->iDataType = SEAWIFS_L3;
-	poDS->pszDataType = "SEAWIFS_L3";
-    }
     else if ( (pszValue = CSLFetchNameValue(poDS->papszGlobalMetadata, "SHORTNAME"))
 	&& EQUAL( pszValue, "ASTL1A" ) )
     {
@@ -837,8 +822,8 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->iDataType = AST14DEM;
 	poDS->pszDataType = "AST14DEM";
     }
-    else if ( (pszValue = CSLFetchNameValue(poDS->papszGlobalMetadata, "ALGORITHMPACKAGENAME"))
-	&& EQUAL( pszValue, "MODIS Level 1B channel subset" ) ) // FIXME: does it right?
+    else if ( (pszValue = CSLFetchNameValue(poDS->papszGlobalMetadata, "SHORTNAME"))
+	&& EQUAL( pszValue, "GSUB1" ) ) 
     {
         poDS->iDataType = MODIS_L1B;
 	poDS->pszDataType = "MODIS_L1B";
@@ -854,6 +839,24 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
     {
         poDS->iDataType = MODIS_UNK;
 	poDS->pszDataType = "MODIS_UNK";
+    }
+    else if ( (pszValue = CSLFetchNameValue(poDS->papszGlobalMetadata, "Title"))
+	 && EQUAL( pszValue, "SeaWiFS Level-1A Data" ) )
+    {
+	poDS->iDataType = SEAWIFS_L1A;
+	poDS->pszDataType = "SEAWIFS_L1A";
+    }
+    else if ( (pszValue = CSLFetchNameValue(poDS->papszGlobalMetadata, "Title"))
+	&& EQUAL( pszValue, "SeaWiFS Level-2 Data" ) )
+    {
+	poDS->iDataType = SEAWIFS_L2;
+	poDS->pszDataType = "SEAWIFS_L2";
+    }
+    else if ( (pszValue = CSLFetchNameValue(poDS->papszGlobalMetadata, "Title"))
+	&& EQUAL( pszValue, "SeaWiFS Level-3 Standard Mapped Image" ) )
+    {
+	poDS->iDataType = SEAWIFS_L3;
+	poDS->pszDataType = "SEAWIFS_L3";
     }
     else
     {
@@ -883,12 +886,14 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
 
 	// Sort known datasets. We will display only image bands
 	if ( (poDS->iDataType == ASTER_L1A || poDS->iDataType == ASTER_L1B ) &&
-	     !EQUAL( szName, "ImageData" ) )
+	     !EQUALN( szName, "ImageData", 9 ) )
 		continue;
-	else if ( (poDS->iDataType == AST14DEM ) && !EQUAL( szName, "Band" ) )
+	else if ( (poDS->iDataType == AST14DEM ) && !EQUALN( szName, "Band", 4 ) )
+		continue;
+	else if ( (poDS->iDataType == MODIS_L1B ) && !EQUALN( szName, "EV_", 3 ) )
 		continue;
 	else if ( (poDS->iDataType == SEAWIFS_L1A ) &&
-		  !EQUAL( szName, "l1a_data" ) )
+		  !EQUALN( szName, "l1a_data", 8 ) )
 		continue;
 	
 	// Add datasets with multiple dimensions to the list of GDAL subdatasets
