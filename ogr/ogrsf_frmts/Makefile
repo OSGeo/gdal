@@ -11,6 +11,8 @@ default:
 	$(MAKE) $*
 	cd ..\s57
 	$(MAKE) $*
+	cd ..\mitab
+	$(MAKE) $*
 	cd ..
 	lib /out:ogrsf_frmts.lib generic\*.obj shape\*.obj ntf\*.obj \
 				 sdts\*.obj s57\*.obj tiger\*.obj \
@@ -41,4 +43,6 @@ clean:
 	cd ..\tiger
 	$(MAKE) clean
 	cd ..\s57
+	$(MAKE) clean
+	cd ..\mitab
 	$(MAKE) clean
