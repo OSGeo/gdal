@@ -1,0 +1,12 @@
+2000-09-27  Frank Warmerdam  <warmerda@cs46980-c>
+
+	* Added colortable support for grass driver. 
+
+	* Fixed libtiff build to include ZIP/Deflate support.
+
+	* Added configure time support for -lz or the internal implementation.
+
+2000-09-25  Frank Warmerdam  <warmerda@cs46980-c>
+
+	* Release 1.1.1 issued.
+
