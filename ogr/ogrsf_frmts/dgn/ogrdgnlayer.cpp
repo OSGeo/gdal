@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.31  2004/02/24 14:24:08  warmerda
+ * Fixed a bug where 0/0 linkages terminated all other linkages on an element.
+ *
  * Revision 1.30  2004/02/23 21:45:03  warmerda
  * added support for various link formats
  *
@@ -418,28 +421,32 @@ OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement )
 #define MAX_LINK 100    
     int anEntityNum[MAX_LINK], anMSLink[MAX_LINK];
     unsigned char *pabyData;
-    int iLink=0;
+    int iLink=0, nLinkCount=0;
 
     anEntityNum[0] = 0;
     anMSLink[0] = 0;
 
     pabyData = DGNGetLinkage( hDGN, psElement, iLink, NULL, 
                               anEntityNum+iLink, anMSLink+iLink, NULL );
-    while( pabyData && (anMSLink[iLink] != 0 || anEntityNum[iLink] != 0) 
-           && iLink < MAX_LINK )
+    while( pabyData && nLinkCount < MAX_LINK )
     {
         iLink++;
-        anEntityNum[iLink] = 0;
-        anMSLink[iLink] = 0;
+
+        if( anEntityNum[nLinkCount] != 0 || anMSLink[nLinkCount] != 0 )
+            nLinkCount++;
+
+        anEntityNum[nLinkCount] = 0;
+        anMSLink[nLinkCount] = 0;
 
         pabyData = DGNGetLinkage( hDGN, psElement, iLink, NULL, 
-                                  anEntityNum+iLink, anMSLink+iLink, NULL );
+                                  anEntityNum+nLinkCount, anMSLink+nLinkCount, 
+                                  NULL );
     }
 
 /* -------------------------------------------------------------------- */
 /*      Apply attribute linkage to feature.                             */
 /* -------------------------------------------------------------------- */
-    if( iLink > 0 )
+    if( nLinkCount > 0 )
     {
         if( EQUAL(pszLinkFormat,"FIRST") )
         {
@@ -448,25 +455,24 @@ OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement )
         }
         else if( EQUAL(pszLinkFormat,"LIST") )
         {
-            poFeature->SetField( "EntityNum", iLink, anEntityNum );
-            poFeature->SetField( "MSLink", iLink, anMSLink );
+            poFeature->SetField( "EntityNum", nLinkCount, anEntityNum );
+            poFeature->SetField( "MSLink", nLinkCount, anMSLink );
         }
         else if( EQUAL(pszLinkFormat,"STRING") )
         {
             char szEntityList[MAX_LINK*9], szMSLinkList[MAX_LINK*9];
-            int iLink2, nEntityLen = 0, nMSLinkLen = 0;
+            int nEntityLen = 0, nMSLinkLen = 0;
 
-
-            for( iLink2 = 0; iLink2 < iLink; iLink2++ )
+            for( iLink = 0; iLink < nLinkCount; iLink++ )
             {
-                if( iLink2 != 0 )
+                if( iLink != 0 )
                 {
                     szEntityList[nEntityLen++] = ',';
                     szMSLinkList[nMSLinkLen++] = ',';
                 }
 
-                sprintf( szEntityList + nEntityLen, "%d", anEntityNum[iLink2]);
-                sprintf( szMSLinkList + nMSLinkLen, "%d", anMSLink[iLink2] );
+                sprintf( szEntityList + nEntityLen, "%d", anEntityNum[iLink]);
+                sprintf( szMSLinkList + nMSLinkLen, "%d", anMSLink[iLink] );
                 
                 nEntityLen += strlen(szEntityList + nEntityLen );
                 nMSLinkLen += strlen(szMSLinkList + nMSLinkLen );
