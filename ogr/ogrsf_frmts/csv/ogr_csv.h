@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2004/07/31 04:50:22  warmerda
+ * started write support
+ *
  * Revision 1.2  2004/07/20 20:53:26  warmerda
  * added support for reading directories of CSV files
  *
@@ -84,12 +87,15 @@ class OGRCSVDataSource : public OGRDataSource
 
     OGRCSVLayer       **papoLayers;
     int                 nLayers;
+
+    int                 bUpdate;
     
   public:
                         OGRCSVDataSource();
                         ~OGRCSVDataSource();
 
-    int                 Open( const char * pszFilename );
+    int                 Open( const char * pszFilename,
+                              int bUpdate, int bForceAccept );
     int                 OpenTable( const char * pszFilename );
     
     const char          *GetName() { return pszName; }

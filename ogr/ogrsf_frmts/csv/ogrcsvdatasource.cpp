@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2004/07/31 04:50:22  warmerda
+ * started write support
+ *
  * Revision 1.2  2004/07/20 20:53:26  warmerda
  * added support for reading directories of CSV files
  *
@@ -54,6 +57,8 @@ OGRCSVDataSource::OGRCSVDataSource()
     nLayers = 0;
 
     pszName = NULL;
+
+    bUpdate = FALSE;
 }
 
 /************************************************************************/
@@ -99,10 +104,12 @@ OGRLayer *OGRCSVDataSource::GetLayer( int iLayer )
 /*                                Open()                                */
 /************************************************************************/
 
-int OGRCSVDataSource::Open( const char * pszFilename )
+int OGRCSVDataSource::Open( const char * pszFilename, int bUpdateIn,
+                            int bForceOpen )
 
 {
     pszName = CPLStrdup( pszFilename );
+    bUpdate = bUpdateIn;
 
 /* -------------------------------------------------------------------- */
 /*      Determine what sort of object this is.                          */
@@ -158,7 +165,7 @@ int OGRCSVDataSource::Open( const char * pszFilename )
 /*      We presume that this is indeed intended to be a CSV             */
 /*      datasource if over half the files were .csv files.              */
 /* -------------------------------------------------------------------- */
-    return nNotCSVCount < nLayers;
+    return bForceOpen || nNotCSVCount < nLayers;
 }
 
 /************************************************************************/

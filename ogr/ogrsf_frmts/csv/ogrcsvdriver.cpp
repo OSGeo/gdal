@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2004/07/31 04:50:22  warmerda
+ * started write support
+ *
  * Revision 1.2  2004/07/20 20:53:26  warmerda
  * added support for reading directories of CSV files
  *
@@ -69,7 +72,7 @@ OGRDataSource *OGRCSVDriver::Open( const char * pszFilename, int bUpdate )
 {
     OGRCSVDataSource   *poDS = new OGRCSVDataSource();
 
-    if( !poDS->Open( pszFilename ) )
+    if( !poDS->Open( pszFilename, bUpdate, FALSE ) )
     {
         delete poDS;
         poDS = NULL;
@@ -108,24 +111,29 @@ OGRDataSource *OGRCSVDriver::CreateDataSource( const char * pszName,
         return NULL;
     }
 
-#ifdef notdef
 /* -------------------------------------------------------------------- */
-/*      Create the datasource.                                          */
+/*      Create a directory.                                             */
 /* -------------------------------------------------------------------- */
-    OGRSQLiteDataSource     *poDS;
+    if( VSIMkdir( pszName, 0755 ) != 0 )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Failed to create directory %s:\n%s", 
+                  pszName, VSIStrerror( errno ) );
+        return NULL;
+    }
 
-    poDS = new OGRSQLiteDataSource();
+/* -------------------------------------------------------------------- */
+/*      Force it to open as a datasource.                               */
+/* -------------------------------------------------------------------- */
+    OGRCSVDataSource   *poDS = new OGRCSVDataSource();
 
-    if( !poDS->Open( pszName ) )
+    if( !poDS->Open( pszName, TRUE, TRUE ) )
     {
         delete poDS;
         return NULL;
     }
 
     return poDS;
-#else
-    return NULL;
-#endif
 }
 
 /************************************************************************/
