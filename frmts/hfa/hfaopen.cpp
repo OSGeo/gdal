@@ -35,6 +35,9 @@
  * of the GDAL core, but dependent on the Common Portability Library.
  *
  * $Log$
+ * Revision 1.26  2003/04/04 16:10:24  dron
+ * Use ULONG_MAX to determine maximum file size. Depends on <limits.h> now.
+ *
  * Revision 1.25  2003/03/25 11:13:02  dron
  * Handle path properly in HFADelete().
  *
@@ -114,6 +117,7 @@
 
 #include "hfa_p.h"
 #include "cpl_conv.h"
+#include <limits.h>
 
 CPL_CVSID("$Id$");
 
@@ -1424,18 +1428,8 @@ HFAHandle HFACreate( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Check whether we should create external large file with image.  */
 /* -------------------------------------------------------------------- */
-#ifdef WIN32
-
-#define	MAX_SIZE    4294967295i64
-
-#else
-
-#define MAX_SIZE    4294967295LL
-
-#endif
-
     if ( (GUIntBig)nBytesPerBlock * (GUIntBig)nBlocks *
-	 (GUIntBig)nBands > MAX_SIZE )
+	 (GUIntBig)nBands > ULONG_MAX )
     {
 	HFAEntry *poImgFormat;
 
