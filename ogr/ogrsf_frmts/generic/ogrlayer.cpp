@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.24  2005/02/22 12:47:47  fwarmerdam
+ * use haveGEOS() test, instead of HAVE_GEOS
+ *
  * Revision 1.23  2005/02/22 12:42:18  fwarmerdam
  * Added OGRLayer SetSpatialFilter(), and GetSpatialFilter() methods as well
  * as code to help implement fast bounding box spatial tests.
@@ -676,6 +679,19 @@ void OGRLayer::SetSpatialFilterRect( double dfMinX, double dfMinY,
 }
 
 /************************************************************************/
+/*                     OGR_L_SetSpatialFilterRect()                     */
+/************************************************************************/
+
+void OGR_L_SetSpatialFilterRect( OGRLayerH hLayer, 
+                                 double dfMinX, double dfMinY, 
+                                 double dfMaxX, double dfMaxY )
+
+{
+    ((OGRLayer *) hLayer)->SetSpatialFilterRect( dfMinX, dfMinY, 
+                                                 dfMaxX, dfMaxY );
+}
+
+/************************************************************************/
 /*                           InstallFilter()                            */
 /*                                                                      */
 /*      This method is only intended to be used from within             */
@@ -799,25 +815,11 @@ int OGRLayer::FilterGeometry( OGRGeometry *poGeometry )
         return TRUE;
     else
     {
-#ifdef HAVE_GEOS 
-        return m_poFilterGeom->Intersects( poGeometry );
-#else
-        return TRUE;
-#endif
+        if( OGRGeometryFactory::haveGEOS() )
+            return m_poFilterGeom->Intersects( poGeometry );
+        else
+            return TRUE;
     }
-}
-
-/************************************************************************/
-/*                     OGR_L_SetSpatialFilterRect()                     */
-/************************************************************************/
-
-void OGR_L_SetSpatialFilterRect( OGRLayerH hLayer, 
-                                 double dfMinX, double dfMinY, 
-                                 double dfMaxX, double dfMaxY )
-
-{
-    ((OGRLayer *) hLayer)->SetSpatialFilterRect( dfMinX, dfMinY, 
-                                                 dfMaxX, dfMaxY );
 }
 
 /************************************************************************/
