@@ -43,6 +43,9 @@
  *    application termination. 
  * 
  * $Log$
+ * Revision 1.3  2000/04/28 20:57:07  warmerda
+ * Removed some unused code.
+ *
  * Revision 1.2  2000/04/28 20:56:01  warmerda
  * converted to use CreateCopy() instead of Create()
  *
@@ -96,9 +99,6 @@ class PNGDataset : public GDALDataset
                  ~PNGDataset();
 
     static GDALDataset *Open( GDALOpenInfo * );
-    static GDALDataset *Create( const char * pszFilename,
-                                int nXSize, int nYSize, int nBands,
-                                GDALDataType eType, char ** papszParmList );
 
     virtual void FlushCache( void );
 };
@@ -118,7 +118,6 @@ class PNGRasterBand : public GDALRasterBand
                    PNGRasterBand( PNGDataset *, int );
 
     virtual CPLErr IReadBlock( int, int, void * );
-    virtual CPLErr IWriteBlock( int, int, void * );
 
     virtual GDALColorInterp GetColorInterpretation();
     virtual GDALColorTable *GetColorTable();
@@ -193,55 +192,6 @@ CPLErr PNGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         {
             ((GByte *) pImage)[i] = pabyScanline[i*nPixelOffset];
             ((GByte *) pImage)[i+1] = pabyScanline[i*nPixelOffset+1];
-        }
-    }
-
-    return CE_None;
-}
-
-/************************************************************************/
-/*                            IWriteBlock()                             */
-/************************************************************************/
-
-CPLErr PNGRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
-                                   void * pImage )
-
-{
-    PNGDataset	*poGDS = (PNGDataset *) poDS;
-    CPLErr      eErr;
-    GByte       *pabyScanline;
-    int         i, nPixelSize, nPixelOffset, nXSize = GetXSize();
-    
-    CPLAssert( nBlockXOff == 0 );
-    
-    eErr = poGDS->LoadScanline( nBlockYOff );
-    if( eErr != CE_None )
-        return eErr;
-
-    if( poGDS->nBitDepth == 16 )
-        nPixelSize = 2;
-    else
-        nPixelSize = 1;
-    nPixelOffset = poGDS->nBands * nPixelSize;
-
-    pabyScanline = poGDS->pabyBuffer 
-        + (nBlockYOff - poGDS->nBufferStartLine) * nPixelOffset * nXSize
-        + nPixelSize * (nBand - 1);
-
-    if( nPixelSize == nPixelOffset )
-        memcpy( pabyScanline, pImage, nPixelSize * nXSize );
-    else if( nPixelSize == 1 )
-    {
-        for( i = 0; i < nXSize; i++ )
-            pabyScanline[i*nPixelOffset] = ((GByte *) pImage)[i];
-    }
-    else 
-    {
-        CPLAssert( nPixelSize == 2 );
-        for( i = 0; i < nXSize; i++ )
-        {
-            pabyScanline[i*nPixelOffset] = ((GByte *) pImage)[i];
-            pabyScanline[i*nPixelOffset+1] = ((GByte *) pImage)[i+1];
         }
     }
 
