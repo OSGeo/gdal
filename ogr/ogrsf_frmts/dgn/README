@@ -27,3 +27,20 @@ like:
 It is left as an excercise to the reader to figure out how to handle it on
 Windows.
 
+
+Release Notes
+=============
+
+Release 1.3
+-----------
+
+ o Added raw_data/raw_bytes members of DGNElemCore, and DGNSetOptions()
+   to allow control of when raw element image is retained. 
+
+ o Added -r flag to dgndump to dump raw contents of desired elements. 
+
+ o Add CPL_CVSID() to simplify tracking of versions. 
+
+ o Fixed bug with freeing element index in DGNClose(). 
+
+
