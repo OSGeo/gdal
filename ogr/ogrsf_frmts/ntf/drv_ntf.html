@@ -202,7 +202,9 @@ products. <p>
 
 It is possible to force a known product to be treated as generic by setting
 the FORCE_GENERIC option to "ON" using OGRNTFDataSource::SetOptionsList() as
-is demonstrated in ntfdump.cpp. <p>
+is demonstrated in ntfdump.cpp.  This may also be accomplished from
+outside OGR applications by setting the OGR_NTF_OPTIONS environment 
+variable to "FORCE_GENERIC=ON".<p>
 
 </body>
 </html>
