@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2001/12/17 22:38:42  warmerda
+ * restructure LoadInfo() to support in-code tables
+ *
  * Revision 1.6  2001/07/18 04:55:16  warmerda
  * added CPL_CSVID
  *
@@ -56,6 +59,11 @@
 
 CPL_CVSID("$Id$");
 
+
+#ifdef S57_BUILTIN_CLASSES
+#include "s57tables.h"
+#endif
+
 /************************************************************************/
 /*                         S57ClassRegistrar()                          */
 /************************************************************************/
@@ -70,6 +78,7 @@ S57ClassRegistrar::S57ClassRegistrar()
 
     papszCurrentFields = NULL;
     papszTempResult = NULL;
+    papszNextLine = NULL;
 }
 
 /************************************************************************/
@@ -85,13 +94,85 @@ S57ClassRegistrar::~S57ClassRegistrar()
 }
 
 /************************************************************************/
+/*                              FindFile()                              */
+/************************************************************************/
+
+int S57ClassRegistrar::FindFile( const char *pszTarget, 
+                                 const char *pszDirectory, 
+                                 int bReportErr,
+                                 FILE **pfp )
+
+{
+    const char *pszFilename;
+    
+    if( pszDirectory == NULL )
+    {
+        pszFilename = CPLFindFile( "s57", pszTarget );
+        if( pszFilename == NULL )
+            pszFilename = pszTarget;
+    }
+    else
+    {
+        pszFilename = CPLFormFilename( pszDirectory, pszTarget, NULL );
+    }
+
+    *pfp = VSIFOpen( pszFilename, "rt" );
+
+#ifdef S57_BUILTIN_CLASSES
+    if( *pfp == NULL )
+    {
+        if( EQUAL(pszTarget, "s57objectclasses.csv") )
+            papszNextLine = gpapszS57Classes;
+        else
+            papszNextLine = gpapszS57attributes;
+    }
+#else
+    if( *pfp == NULL )
+    {
+        if( bReportErr )
+            CPLError( CE_Failure, CPLE_OpenFailed,
+                      "Failed to open %s.\n",
+                      pszFilename );
+        return FALSE;
+    }
+#endif
+
+    return TRUE;
+}
+
+/************************************************************************/
+/*                              ReadLine()                              */
+/*                                                                      */
+/*      Read a line from the provided file, or from the "built-in"      */
+/*      configuration file line list if the file is NULL.               */
+/************************************************************************/
+
+const char *S57ClassRegistrar::ReadLine( FILE * fp )
+
+{
+    if( fp != NULL )
+        return CPLReadLine( fp );
+
+    if( papszNextLine == NULL )
+        return NULL;
+
+    if( *papszNextLine == NULL )
+    {
+        papszNextLine = NULL;
+        return NULL;
+    }
+    else
+        return *(papszNextLine++);
+}
+
+/************************************************************************/
 /*                              LoadInfo()                              */
 /************************************************************************/
 
-int S57ClassRegistrar::LoadInfo( const char * pszDirectory, int bReportErr )
+int S57ClassRegistrar::LoadInfo( const char * pszDirectory, 
+                                 int bReportErr )
 
 {
-    const char  *pszFilename;
     FILE        *fp;
 
     if( pszDirectory == NULL && getenv( "S57_CSV" ) != NULL )
@@ -100,35 +181,13 @@ int S57ClassRegistrar::LoadInfo( const char * pszDirectory, int bReportErr )
 /* ==================================================================== */
 /*      Read the s57objectclasses file.                                 */
 /* ==================================================================== */
-/* -------------------------------------------------------------------- */
-/*      Try to open the csv file.                                       */
-/* -------------------------------------------------------------------- */
-    if( pszDirectory == NULL )
-    {
-        pszFilename = CPLFindFile( "s57", "s57objectclasses.csv" );
-        if( pszFilename == NULL )
-            pszFilename = "s57objectclasses.csv";
-    }
-    else
-    {
-        pszFilename = CPLFormFilename( pszDirectory, 
-                                       "s57objectclasses.csv", NULL);
-    }
-
-    fp = VSIFOpen( pszFilename, "rt" );
-    if( fp == NULL )
-    {
-        if( bReportErr )
-            CPLError( CE_Failure, CPLE_OpenFailed,
-                      "Failed to open %s.\n",
-                      pszFilename );
+    if( !FindFile( "s57objectclasses.csv", pszDirectory, bReportErr, &fp ) )
         return FALSE;
-    }
 
 /* -------------------------------------------------------------------- */
 /*      Skip the line defining the column titles.                       */
 /* -------------------------------------------------------------------- */
-    const char * pszLine = CPLReadLine( fp );
+    const char * pszLine = ReadLine( fp );
 
     if( !EQUAL(pszLine,
                "\"Code\",\"ObjectClass\",\"Acronym\",\"Attribute_A\","
@@ -149,7 +208,7 @@ int S57ClassRegistrar::LoadInfo( const char * pszDirectory, int bReportErr )
     nClasses = 0;
 
     while( nClasses < MAX_CLASSES
-           && (pszLine = CPLReadLine(fp)) != NULL )
+           && (pszLine = ReadLine(fp)) != NULL )
     {
         papszClassesInfo[nClasses] = CPLStrdup(pszLine);
         if( papszClassesInfo[nClasses] == NULL )
@@ -165,7 +224,8 @@ int S57ClassRegistrar::LoadInfo( const char * pszDirectory, int bReportErr )
 /* -------------------------------------------------------------------- */
 /*      Cleanup, and establish state.                                   */
 /* -------------------------------------------------------------------- */
-    VSIFClose( fp );
+    if( fp != NULL )
+        VSIFClose( fp );
     iCurrentClass = -1;
 
     if( nClasses == 0 )
@@ -174,32 +234,13 @@ int S57ClassRegistrar::LoadInfo( const char * pszDirectory, int bReportErr )
 /* ==================================================================== */
 /*      Read the attributes list.                                       */
 /* ==================================================================== */
-    if( pszDirectory == NULL )
-    {
-        pszFilename = CPLFindFile( "s57", "s57attributes.csv" );
-        if( pszFilename == NULL )
-            pszFilename = "s57attributes.csv";
-    }
-    else
-    {
-        pszFilename = CPLFormFilename( pszDirectory, 
-                                       "s57attributes.csv", NULL);
-    }
-
-    fp = VSIFOpen( pszFilename, "rt" );
-    if( fp == NULL )
-    {
-        if( bReportErr )
-            CPLError( CE_Failure, CPLE_OpenFailed,
-                      "Failed to open %s.\n",
-                      pszFilename );
+    if( !FindFile( "s57attributes.csv", pszDirectory, bReportErr, &fp ) )
         return FALSE;
-    }
 
 /* -------------------------------------------------------------------- */
 /*      Skip the line defining the column titles.                       */
 /* -------------------------------------------------------------------- */
-    pszLine = CPLReadLine( fp );
+    pszLine = ReadLine( fp );
 
     if( !EQUAL(pszLine,
           "\"Code\",\"Attribute\",\"Acronym\",\"Attributetype\",\"Class\"") )
@@ -225,7 +266,7 @@ int S57ClassRegistrar::LoadInfo( const char * pszDirectory, int bReportErr )
 /* -------------------------------------------------------------------- */
     int         iAttr;
     
-    while( (pszLine = CPLReadLine(fp)) != NULL )
+    while( (pszLine = ReadLine(fp)) != NULL )
     {
         char    **papszTokens = CSLTokenizeStringComplex( pszLine, ",",
                                                           TRUE, TRUE );
@@ -252,7 +293,8 @@ int S57ClassRegistrar::LoadInfo( const char * pszDirectory, int bReportErr )
         CSLDestroy( papszTokens );
     }
 
-     VSIFClose( fp );
+    if( fp != NULL )
+        VSIFClose( fp );
     
 /* -------------------------------------------------------------------- */
 /*      Build unsorted index of attributes.                             */
