@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.25  2004/03/10 18:09:35  warmerda
+ * Avoid warning on casting result of pointer subtraction.
+ *
  * Revision 1.24  2004/02/18 14:09:42  warmerda
  * doc fixups
  *
@@ -1892,7 +1895,7 @@ int DDFRecord::SetFloatSubfield( const char *pszField, int iFieldIndex,
     pachFieldInstData = poField->GetInstanceData( iFieldIndex,
                                                   &nInstanceSize );
 
-    nStartOffset = pachSubfieldData - pachFieldInstData;
+    nStartOffset = (int) (pachSubfieldData - pachFieldInstData);
 
     pachNewData = (char *) CPLMalloc(nFormattedLen);
     poSFDefn->FormatFloatValue( pachNewData, nFormattedLen, NULL, 
