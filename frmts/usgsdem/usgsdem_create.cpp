@@ -31,6 +31,11 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.5  2004/04/01 21:06:36  warmerda
+ * Added creation options for PRODUCER, OriginCode, and ProcessCode.
+ * Added support for reprojecting to NAD83.
+ * Fixed bug in A/B/C zone computation.
+ *
  * Revision 1.4  2004/04/01 18:36:01  warmerda
  * fixed rounding issue in testing quarter degree boundaries
  *
@@ -57,6 +62,8 @@ typedef struct
     GDALDataset *poSrcDS;
     const char *pszFilename;
     int         nXSize, nYSize;
+
+    char       *pszDstSRS;
 
     double      dfLLX, dfLLY;  // These are adjusted in to center of 
     double      dfULX, dfULY;  // corner pixels, and in decimal degrees.
@@ -85,6 +92,7 @@ static void USGSDEMWriteCleanup( USGSDEMWriteInfo *psWInfo )
 
 {
     CSLDestroy( psWInfo->papszOptions );
+    CPLFree( psWInfo->pszDstSRS );
     if( psWInfo->fp != NULL )
         VSIFClose( psWInfo->fp );
     if( psWInfo->panData != NULL )
@@ -203,7 +211,12 @@ static int USGSDEMWriteARecord( USGSDEMWriteInfo *psWInfo )
 /* -------------------------------------------------------------------- */
 /*      Producer                                                        */
 /* -------------------------------------------------------------------- */
-    if( pszTemplate == NULL )
+    pszOption = CSLFetchNameValue( psWInfo->papszOptions, "PRODUCER" );
+
+    if( pszOption != NULL )
+        TextFillR( achARec +  40, 60, pszOption );
+
+    else if( pszTemplate == NULL )
         TextFill( achARec +  40, 60, "" );
 
 /* -------------------------------------------------------------------- */
@@ -222,8 +235,13 @@ static int USGSDEMWriteARecord( USGSDEMWriteInfo *psWInfo )
 /* -------------------------------------------------------------------- */
 /*      Process code.                                                   */
 /* -------------------------------------------------------------------- */
-    if( pszTemplate == NULL )
-        TextFill( achARec + 135, 1, " " ); // Do we need a code for GDAL? 
+    pszOption = CSLFetchNameValue( psWInfo->papszOptions, "ProcessCode" );
+
+    if( pszOption != NULL )
+        TextFill( achARec + 135, 1, pszOption );
+
+    else if( pszTemplate == NULL )
+        TextFill( achARec + 135, 1, " " ); 
 
 /* -------------------------------------------------------------------- */
 /*      Filler                                                          */
@@ -239,8 +257,13 @@ static int USGSDEMWriteARecord( USGSDEMWriteInfo *psWInfo )
 /* -------------------------------------------------------------------- */
 /*      Origin code                                                     */
 /* -------------------------------------------------------------------- */
-    if( pszTemplate == NULL )
-        TextFill( achARec + 140, 4, "" );  // Should be YT for Yukon.
+    pszOption = CSLFetchNameValue( psWInfo->papszOptions, "OriginCode" );
+
+    if( pszOption != NULL )
+        TextFillR( achARec + 140, 4, pszOption );  // Should be YT for Yukon.
+
+    else if( pszTemplate == NULL )
+        TextFill( achARec + 140, 4, "" );
 
 /* -------------------------------------------------------------------- */
 /*      DEM level code (right justify)                                  */
@@ -674,13 +697,13 @@ static int USGSDEMProductSetup_CDED50K( USGSDEMWriteInfo *psWInfo )
     psWInfo->dfVertStepSize = 0.75 / 3600.0;
 
     /* Region A */
-    if( psWInfo->dfULY < 68.1 )
+    if( dfULY < 68.1 )
     {
         psWInfo->dfHorizStepSize = 0.75 / 3600.0;
     }
 
     /* Region B */
-    else if( psWInfo->dfULY < 80.1 )
+    else if( dfULY < 80.1 )
     {
         psWInfo->dfHorizStepSize = 1.5 / 3600.0;
         dfULX = floor( dfULX * 2 + 0.001 ) / 2.0;
@@ -713,6 +736,14 @@ static int USGSDEMProductSetup_CDED50K( USGSDEMWriteInfo *psWInfo )
         CSLSetNameValue( psWInfo->papszOptions, "DEMLevelCode", "1" );
     psWInfo->papszOptions = 
         CSLSetNameValue( psWInfo->papszOptions, "DataSpecVersion", "1020" );
+
+/* -------------------------------------------------------------------- */
+/*      Set the destination coordinate system.                          */
+/* -------------------------------------------------------------------- */
+    OGRSpatialReference oSRS;
+    oSRS.SetWellKnownGeogCS( "NAD83" );
+
+    oSRS.exportToWkt( &(psWInfo->pszDstSRS) );
 
     return TRUE;
 }
@@ -793,12 +824,45 @@ static int USGSDEMLoadRaster( USGSDEMWriteInfo *psWInfo,
     poMemDS->SetGeoTransform( adfGeoTransform );
 
 /* -------------------------------------------------------------------- */
+/*      Set coordinate system if we have a special one to set.          */
+/* -------------------------------------------------------------------- */
+    if( psWInfo->pszDstSRS )
+        poMemDS->SetProjection( psWInfo->pszDstSRS );
+
+/* -------------------------------------------------------------------- */
+/*      Establish the resampling kernel to use.                         */
+/* -------------------------------------------------------------------- */
+    GDALResampleAlg eResampleAlg = GRA_Bilinear;
+    const char *pszResample = CSLFetchNameValue( psWInfo->papszOptions, 
+                                                 "RESAMPLE" );
+
+    if( pszResample == NULL )
+        /* bilinear */;
+    else if( EQUAL(pszResample,"Nearest") )
+        eResampleAlg = GRA_NearestNeighbour;
+    else if( EQUAL(pszResample,"Bilinear") )
+        eResampleAlg = GRA_Bilinear;
+    else if( EQUAL(pszResample,"Cubic") )
+        eResampleAlg = GRA_Cubic;
+    else if( EQUAL(pszResample,"CubicSpline") )
+        eResampleAlg = GRA_CubicSpline;
+    else
+    {
+        CPLError( CE_Failure, CPLE_NotSupported, 
+                  "RESAMPLE=%s, not a supported resampling kernel.", 
+                  pszResample );
+        return FALSE;
+    }
+        
+/* -------------------------------------------------------------------- */
 /*      Perform a warp from source dataset to destination buffer        */
 /*      (memory dataset).                                               */
 /* -------------------------------------------------------------------- */
-    eErr = GDALReprojectImage( (GDALDatasetH) psWInfo->poSrcDS, NULL,
-                               (GDALDatasetH) poMemDS, NULL, 
-                               GRA_NearestNeighbour, 0.0, 0.0, NULL, NULL, 
+    eErr = GDALReprojectImage( (GDALDatasetH) psWInfo->poSrcDS, 
+                               psWInfo->poSrcDS->GetProjectionRef(),
+                               (GDALDatasetH) poMemDS, 
+                               psWInfo->pszDstSRS,
+                               eResampleAlg, 0.0, 0.0, NULL, NULL, 
                                NULL );
 
 /* -------------------------------------------------------------------- */
