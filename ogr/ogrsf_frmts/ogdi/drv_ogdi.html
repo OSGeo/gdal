@@ -71,6 +71,13 @@ Usage examples VMAP0 to SHAPE conversion with 'ogr2ogr':<BR>
    ogr2ogr polbnda.shp  gltp:/vrf/usr4/mpp1/v0eur/vmaplv0/eurnasia 'polbnda@bnd(*)_area'
 </PRE>
 
+An OGR SQL query against a VMAP dataset.  Again, note the careful quoting of
+the layer name. <p>
+
+<PRE>
+   ogrinfo -ro gltp:/vrf/usr4/mpp1/v0noa/vmaplv0/noamer \
+           -sql 'select * from "polbndl@bnd(*)_line" where use=26'
+</PRE>
 
 <h3>See Also</h3>
 
