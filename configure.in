@@ -868,6 +868,7 @@ AC_ARG_WITH(kakadu,[  --with-kakadu[=ARG]     Include Kakadu/JPEG2000 support],,
 if test "$with_kakadu" = "no" -o "$with_kakadu" = "" ; then
   KAKDIR=
   AC_MSG_RESULT([not requested.])
+  HAVE_KAKADU=no
 elif test "$with_kakadu" = "yes" ; then
   AC_MSG_ERROR([
 For JPEG2000 support using Kakadu you need provide the path to the Kakadu 
@@ -877,6 +878,7 @@ else
   OPT_GDAL_FORMATS="jp2kak $OPT_GDAL_FORMATS"
   LIBS="$LIBS -lkdu"
   AC_MSG_RESULT([requested.])
+  HAVE_KAKADU=yes
 fi
 
 AC_SUBST(KAKDIR,$KAKDIR)
@@ -1449,6 +1451,12 @@ dnl ---------------------------------------------------------------------------
 dnl Display configuration status
 dnl ---------------------------------------------------------------------------
 
+if test "$PYTHON" != "no" ; then
+  HAVE_PYTHON=yes
+else
+  HAVE_PYTHON=no
+fi
+
 LOC_MSG()
 LOC_MSG([GDAL is now configured for ${host}])
 LOC_MSG()
@@ -1469,6 +1477,7 @@ LOC_MSG([  LIBJPEG support:           ${JPEG_SETTING}])
 LOC_MSG([  LIBGIF support:            ${GIF_SETTING}])
 LOC_MSG([  OGDI support:              ${HAVE_OGDI}])
 LOC_MSG([  HDF4 support:              ${HAVE_HDF4}])
+LOC_MSG([  KAKADU support:            ${HAVE_KAKADU}])
 if test "x$HAVE_JASPER_UUID" != "x" ; then
   LOC_MSG([  JASPER support:            ${HAVE_JASPER} (GeoJP2=${HAVE_JASPER_UUID})])
 else
@@ -1485,6 +1494,8 @@ LOC_MSG([  SQLite support:            ${HAVE_SQLITE}])
 LOC_MSG([  GEOS support:              ${HAVE_GEOS}])
 LOC_MSG()
 LOC_MSG([  Statically link PROJ.4:    ${PROJ_STATIC}])
+LOC_MSG()
+LOC_MSG([  Python:                    ${HAVE_PYTHON}])
 LOC_MSG()
 LOC_MSG([  enable OGR building:       ${OGR_ENABLED}])
 LOC_MSG()
