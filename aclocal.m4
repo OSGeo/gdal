@@ -177,6 +177,8 @@ changequote([, ])dnl
 
 dnl finds information needed for compilation of shared library style python
 dnl extensions.  AM_PATH_PYTHON should be called before hand.
+dnl NFW: Modified from original to avoid overridding CC, SO and OPT
+
 AC_DEFUN(AM_INIT_PYEXEC_MOD,
   [AC_REQUIRE([AM_PATH_PYTHON])
   AC_MSG_CHECKING([for python headers])
@@ -215,15 +217,14 @@ print \"%s/lib/python%s/config/Makefile\"%(sys.exec_prefix, sys.version[:3])'`"
     am_cv_python_makefile=found
     changequote([, ])])
   AC_MSG_RESULT(done)
-  CC="$am_cv_python_CC"
-  OPT="$am_cv_python_OPT"
-  SO="$am_cv_python_SO"
+  PYTHON_CC="$am_cv_python_CC"
+  PYTHON_OPT="$am_cv_python_OPT"
+  PYTHON_SO="$am_cv_python_SO"
   PYTHON_CFLAGS="$am_cv_python_CCSHARED \$(OPT)"
   PYTHON_LINK="$am_cv_python_LDSHARED -o \[$]@"
 
-  AC_SUBST(CC)dnl
-  AC_SUBST(OPT)dnl
-  AC_SUBST(SO)dnl
+  AC_SUBST(PYTHON_CC)dnl
+  AC_SUBST(PYTHON_OPT)dnl
+  AC_SUBST(PYTHON_SO)dnl
   AC_SUBST(PYTHON_CFLAGS)dnl
   AC_SUBST(PYTHON_LINK)])
-
