@@ -8,7 +8,8 @@ include $(GDAL_ROOT)/GDALmake.opt
 
 OBJ	=	ogrs57driver.o ogrs57datasource.o ogrs57layer.o \
 		s57reader.o s57writer.o ddfrecordindex.o \
-		s57classregistrar.o s57filecollector.o
+		s57classregistrar.o s57filecollector.o \
+	        s57featuredefns.o
 
 CPPFLAGS	+=	-I.. -I../.. -I$(ISODIR)
 
@@ -26,3 +27,6 @@ s57dump:	s57dump.cpp $(OBJ)
 
 mks57:	mks57.cpp $(OBJ)
 	$(CXX) $(CPPFLAGS) $(CFLAGS) mks57.cpp $(OBJ) $(LIBS) -o mks57
+
+write_soundg:	write_soundg.cpp $(OBJ)
+	$(CXX) $(CPPFLAGS) $(CFLAGS) write_soundg.cpp $(OBJ) $(LIBS) -o write_soundg
