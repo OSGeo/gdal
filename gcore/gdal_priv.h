@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.45  2003/05/08 14:38:40  warmerda
+ * added BlockBasedFlushCache
+ *
  * Revision 1.44  2003/05/06 05:20:38  sperkins
  * cleaned up comments
  *
@@ -281,6 +284,7 @@ class CPL_DLL GDALDataset : public GDALMajorObject
     CPLErr BlockBasedRasterIO( GDALRWFlag, int, int, int, int,
                                void *, int, int, GDALDataType,
                                int, int *, int, int, int );
+    void   BlockBasedFlushCache();
 
     friend class GDALRasterBand;
     

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.38  2003/05/08 14:38:40  warmerda
+ * added BlockBasedFlushCache
+ *
  * Revision 1.37  2003/04/30 17:13:48  warmerda
  * added docs for many C functions
  *
@@ -260,6 +263,73 @@ void GDALFlushCache( GDALDatasetH hDS )
 
 {
     ((GDALDataset *) hDS)->FlushCache();
+}
+
+/************************************************************************/
+/*                        BlockBasedFlushCache()                        */
+/*                                                                      */
+/*      This helper method can be called by the                         */
+/*      GDALDataset::FlushCache() for particular drivers to ensure      */
+/*      that buffers will be flushed in a manner suitable for pixel     */
+/*      interleaved (by block) IO.  That is, if all the bands have      */
+/*      the same size blocks then a given block will be flushed for     */
+/*      all bands before proceeding to the next block.                  */
+/************************************************************************/
+
+void GDALDataset::BlockBasedFlushCache()
+
+{
+    GDALRasterBand *poBand1, *poBand;
+    int  nBlockXSize, nBlockYSize, iBand;
+    
+    poBand1 = GetRasterBand( 1 );
+    if( poBand1 == NULL )
+    {
+        GDALDataset::FlushCache();
+        return;
+    }
+
+    poBand1->GetBlockSize( &nBlockXSize, &nBlockYSize );
+    
+/* -------------------------------------------------------------------- */
+/*      Verify that all bands match.                                    */
+/* -------------------------------------------------------------------- */
+    for( iBand = 1; iBand < nBands; iBand++ )
+    {
+        int nThisBlockXSize, nThisBlockYSize;
+        GDALRasterBand *poBand = GetRasterBand( iBand+1 );
+        
+        poBand->GetBlockSize( &nThisBlockXSize, &nThisBlockYSize );
+        if( nThisBlockXSize != nBlockXSize && nThisBlockYSize != nBlockYSize )
+        {
+            GDALDataset::FlushCache();
+            return;
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Now flush writable data.                                        */
+/* -------------------------------------------------------------------- */
+    for( int iY = 0; iY < poBand1->nBlocksPerColumn; iY++ )
+    {
+        for( int iX = 0; iX < poBand1->nBlocksPerRow; iX++ )
+        {
+            for( iBand = 0; iBand < nBands; iBand++ )
+            {
+                GDALRasterBand *poBand = GetRasterBand( iBand+1 );
+                
+                if( poBand->papoBlocks[iX + iY*poBand1->nBlocksPerRow] != NULL)
+                {
+                    CPLErr    eErr;
+                    
+                    eErr = poBand->FlushBlock( iX, iY );
+                    
+                    if( eErr != CE_None )
+                        return;
+                }
+            }
+        }
+    }
 }
 
 /************************************************************************/
