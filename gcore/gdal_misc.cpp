@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.29  2001/12/07 20:04:21  warmerda
+ * fixed serious bug in random sampler
+ *
  * Revision 1.28  2001/11/30 03:41:26  warmerda
  * Fixed bug with the block sampling rate being too low to satisfy large
  * sample count values.  Fixed bug with tiled images including some uninitialized
@@ -907,7 +910,7 @@ int GDALGetRandomRasterSample( GDALRasterBandH hBand, int nSamples,
          iSampleBlock += nSampleRate )
     {
         double dfValue = 0.0, dfReal, dfImag;
-        int  iXBlock, iYBlock, iX, iY, iXValid, iYValid;
+        int  iXBlock, iYBlock, iX, iY, iXValid, iYValid, iRemainder = 0;
         GDALRasterBlock *poBlock;
 
         iYBlock = iSampleBlock / nBlocksPerRow;
@@ -929,7 +932,7 @@ int GDALGetRandomRasterSample( GDALRasterBandH hBand, int nSamples,
 
         for( iY = 0; iY < iYValid; iY++ )
         {
-            for( iX = 0; iX < iXValid; iX++ )
+            for( iX = iRemainder; iX < iXValid; iX += nBlockSampleRate )
             {
                 int	iOffset;
 
@@ -984,8 +987,11 @@ int GDALGetRandomRasterSample( GDALRasterBandH hBand, int nSamples,
                 if( bGotNoDataValue && dfValue == dfNoDataValue )
                     continue;
 
-                pafSampleBuf[nActualSamples++] = dfValue;
+                if( nActualSamples < nSamples )
+                    pafSampleBuf[nActualSamples++] = dfValue;
             }
+
+            iRemainder = iX - iXValid;
         }
     }
 
