@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  1999/11/17 19:38:22  warmerda
+ * Further performance tweaks to exportToWkt().
+ *
  * Revision 1.12  1999/11/04 18:31:32  warmerda
  * Improved efficiency of exportToWkt() for large line strings.
  *
@@ -746,10 +749,10 @@ OGRErr OGRLineString::exportToWkt( char ** ppszReturn )
 
     for( int i = 0; i < nPointCount; i++ )
     {
-        assert( nMaxString > (int) strlen(*ppszReturn) + 32 );
-
+        assert( nMaxString > (int) strlen(*ppszReturn+nRetLen) + 32 + nRetLen);
+        
         if( i > 0 )
-            strcat( *ppszReturn, "," );
+            strcat( *ppszReturn + nRetLen, "," );
 
         if( getCoordinateDimension() == 3 )
             strcat( *ppszReturn + nRetLen,
