@@ -2,7 +2,7 @@ GDAL_ROOT	=	$(shell (cd ..; pwd))
 
 include ../GDALmake.opt
 
-INCLUDE		=	$(GDAL_INCLUDE) -I$(GDAL_ROOT)/frmts -I$(GDAL_ROOT)/alg
+CPPFLAGS	+=	$(GDAL_INCLUDE) -I$(GDAL_ROOT)/frmts -I$(GDAL_ROOT)/alg
 DEP_LIBS	=	$(GDAL_LIB) $(XTRAOBJ)
 BIN_LIST	=	gdalinfo$(EXE) gdal_translate$(EXE) gdaladdo$(EXE) \
 			gdalwarp$(EXE)
@@ -52,12 +52,6 @@ clean:
 	rm -f *.o $(BIN_LIST) core gdal-config gdal-config-inst
 
 $(DEP_LIBS):
-
-%.o:	%.c
-	$(CC) $(INCLUDE) -c $(CFLAGS) $*.c -o $*.o
-
-%.o:	%.cpp
-	$(CXX) $(INCLUDE) -c $(CXXFLAGS) $*.cpp -o $*.o
 
 
 gdal-config:	gdal-config.in ../GDALmake.opt ./GNUmakefile ../VERSION

@@ -16,6 +16,8 @@ OBJ	=	gdalopen.o gdaldrivermanager.o gdaldriver.o gdaldataset.o \
 #CXXFLAGS 	:=	-DHAVE_MITAB $(CXXFLAGS)
 #endif
 
+CPPFLAGS	+=	$(GDAL_INCLUDE)
+
 default:	$(OBJ)
 
 clean:
@@ -27,12 +29,6 @@ docs:
 gdaldrivermanager.o:	gdaldrivermanager.cpp ../GDALmake.opt
 	$(CXX) -c $(GDAL_INCLUDE) $(CXXFLAGS) -DINST_DATA=\"$(INST_DATA)\" \
 		$*.cpp -o $*.o
-
-%.o:	%.c
-	$(CC) -c $(GDAL_INCLUDE) $(CFLAGS) $*.c -o $*.o
-
-%.o:	%.cpp
-	$(CXX) -c $(GDAL_INCLUDE) $(CXXFLAGS) $*.cpp -o $*.o
 
 install:
 	for f in *.h ; do $(INSTALL_DATA) $$f $(INST_INCLUDE) ; done
