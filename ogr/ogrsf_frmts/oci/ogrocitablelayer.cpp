@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.26  2003/09/17 16:36:33  warmerda
+ * fixed setting of dimension for point objects
+ *
  * Revision 1.25  2003/09/13 03:48:36  warmerda
  * actually use the papaeFieldInd to write NULL fields properly in bound create
  *
@@ -786,15 +789,15 @@ OGRErr OGROCITableLayer::UnboundCreateFeature( OGRFeature *poFeature )
         {
             OGRPoint *poPoint = (OGRPoint *) poGeometry;
 
-            if( poGeometry->getDimension() == 2 )
+            if( nDimension == 2 )
                 sprintf( szSDO_GEOMETRY,
-                         "%s(%d,%s,MDSYS.SDO_POINT_TYPE(%.16g,%.16g),NULL,NULL)",
+                         "%s(%d,%s,MDSYS.SDO_POINT_TYPE(%.16g,%.16g,0),NULL,NULL)",
                          SDO_GEOMETRY, 2001, szSRID, 
                          poPoint->getX(), poPoint->getY() );
             else
                 sprintf( szSDO_GEOMETRY, 
                          "%s(%d,%s,MDSYS.SDO_POINT_TYPE(%.16g,%.16g,%.16g),NULL,NULL)",
-                         SDO_GEOMETRY, 2001, szSRID, 
+                         SDO_GEOMETRY, 3001, szSRID, 
                          poPoint->getX(), poPoint->getY(), poPoint->getZ() );
         }
         else
@@ -1533,7 +1536,7 @@ OGRErr OGROCITableLayer::BoundCreateFeature( OGRFeature *poFeature )
                                (uword)sizeof(double),
                                &(psGeom->sdo_point.y) );
 
-            if( poGeometry->getDimension() == 2 )
+            if( nDimension == 2 )
             {
                 nGType = 2001;
                 psInd->sdo_point.z = OCI_IND_NULL;
