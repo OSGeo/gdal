@@ -2,7 +2,7 @@
  * $Id$
  *
  * Project:  Microsoft Windows Bitmap
- * Purpose:  Read MS Windows Device Independent Bitmap (DIB) files
+ * Purpose:  Read/write MS Windows Device Independent Bitmap (DIB) files
  *           and OS/2 Presentation Manager bitmaps v. 1.x and v. 2.x
  * Author:   Andrey Kiselev, dron@remotesensing.org
  *
@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2003/05/01 17:40:43  dron
+ * Report colour interpretation GCI_PaletteIndex for 1-bit images.
+ *
  * Revision 1.18  2003/03/27 15:51:06  dron
  * Improvements in update state handling in IReadBlock().
  *
@@ -356,8 +359,8 @@ CPLErr BMPRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         else
         {
             CPLError( CE_Failure, CPLE_FileIO,
-                      "Can't seek to offset %ld in input file to read data",
-                      iScanOffset);
+                      "Can't seek to offset %ld in input file to read data.",
+                      iScanOffset );
             return CE_Failure;
         }
     }
@@ -372,7 +375,7 @@ CPLErr BMPRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         else
         {
             CPLError( CE_Failure, CPLE_FileIO,
-                      "Can't read from offset %ld in input file", iScanOffset);
+                      "Can't read from offset %ld in input file.", iScanOffset );
             return CE_Failure;
         }
     }
@@ -425,7 +428,7 @@ CPLErr BMPRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     {
         for ( i = 0, j = 0; i < nBlockSize; i++ )
         {
-            switch ( i % 8 )
+            switch ( i & 0x7 )
             {
                 case 0:
                 ((GByte *) pImage)[i] = (pabyScan[j] & 0x80) >> 7;
@@ -592,17 +595,10 @@ GDALColorInterp BMPRasterBand::GetColorInterpretation()
         else
             return GCI_Undefined;
     }
-    else if( poGDS->sInfoHeader.iBitCount == 8 ||
-             poGDS->sInfoHeader.iBitCount == 4 )
+    else
     {
         return GCI_PaletteIndex;
     }
-    else if( poGDS->sInfoHeader.iBitCount == 1 )
-    {
-        return GCI_GrayIndex;
-    }
-    else
-        return GCI_Undefined;
 }
 
 /************************************************************************/
@@ -878,7 +874,6 @@ void BMPDataset::FlushCache()
 {
     GDALDataset::FlushCache();
 }
-
 
 /************************************************************************/
 /*                                Open()                                */
