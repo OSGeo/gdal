@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2000/10/03 18:14:29  danmo
+ * Made OGRFeature::Get/SetStyleString() virtual
+ *
  * Revision 1.12  2000/08/18 21:26:53  svillene
  * Add representation
  *
@@ -276,7 +279,7 @@ class OGRFeature
     OGRField            *pauFields;
     char *              m_pszStyleString;
 
-   protected: 
+  protected: 
     OGRStyleTable       *m_poStyleTable;
     
     
@@ -364,10 +367,10 @@ class OGRFeature
     void                DumpReadable( FILE * );
 
     OGRErr              SetFrom( OGRFeature *, int = TRUE);
-    const char *        GetStyleString();
-    void                SetStyleString(const char *);
-    void                SetStyleTable(OGRStyleTable *poStyleTable);
-     //{m_poStyleTable = poStyleTable);
+
+    virtual const char *GetStyleString();
+    virtual void        SetStyleString(const char *);
+    virtual void        SetStyleTable(OGRStyleTable *poStyleTable);
 };
 
 #endif /* ndef _OGR_FEATURE_H_INCLUDED */
