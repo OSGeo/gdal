@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2003/05/06 18:32:48  warmerda
+ * Added WRITE_FLUSH option support.
+ * Fixed multi-threaded support so that mutexes are released after creation.
+ *
  * Revision 1.7  2003/04/28 20:47:59  warmerda
  * use dataset level RasterIO call
  *
@@ -571,6 +575,11 @@ CPLErr GDALWarpOperation::ChunkAndWarpMulti(
     hIOMutex = CPLCreateMutex();
     hWarpMutex = CPLCreateMutex();
 
+    CPLReleaseMutex( hThread1Mutex );
+    CPLReleaseMutex( hThread2Mutex );
+    CPLReleaseMutex( hIOMutex );
+    CPLReleaseMutex( hWarpMutex );
+
 /* -------------------------------------------------------------------- */
 /*      Collect the list of chunks to operate on.                       */
 /* -------------------------------------------------------------------- */
@@ -951,6 +960,11 @@ CPLErr GDALWarpOperation::WarpRegion( int nDstXOff, int nDstYOff,
                                     psOptions->nBandCount, 
                                     psOptions->panDstBands,
                                     0, 0, 0 );
+        if( CSLFetchBoolean( psOptions->papszWarpOptions, "WRITE_FLUSH", 
+                             FALSE ) )					
+        {
+            GDALFlushCache( psOptions->hDstDS );
+        }
     }
 
 /* -------------------------------------------------------------------- */
