@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.34  2003/06/21 23:24:36  warmerda
+ * added Set/Get TOWGS84 calls
+ *
  * Revision 1.33  2003/06/19 17:10:26  warmerda
  * a couple fixes in last commit
  *
@@ -354,6 +357,11 @@ OGRErr CPL_DLL OSRSetFromUserInput( OGRSpatialReferenceH hSRS,
                                     const char * );
 OGRErr CPL_DLL OSRCopyGeogCSFrom( OGRSpatialReferenceH hSRS, 
                                   OGRSpatialReferenceH hSrcSRS );
+OGRErr CPL_DLL OSRSetTOWGS84( OGRSpatialReferenceH hSRS, 
+                              double, double, double, 
+                              double, double, double, double );
+OGRErr CPL_DLL OSRGetTOWGS84( OGRSpatialReferenceH hSRS, double *, int );
+                        
 
 OGRErr CPL_DLL OSRSetGeogCS( OGRSpatialReferenceH hSRS,
                       const char * pszGeogName,
