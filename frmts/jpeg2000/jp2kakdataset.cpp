@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.4  2002/10/21 18:06:57  warmerda
+ * fixed multi-component write support
+ *
  * Revision 1.3  2002/10/10 21:07:06  warmerda
  * added support for writing GeoJP2 section
  *
@@ -1129,13 +1132,10 @@ JP2KAKCopyCreate( const char * pszFilename, GDALDataset *poSrcDS,
         comp = oTile.access_component(c);
 
         kdu_resolution res = comp.access_resolution(); // Get top resolution
-        kdu_dims comp_dims; res.get_dims(comp_dims);
-        if (c == 0)
-            dims = comp_dims;
-        else
-            assert(dims == comp_dims); // Must be true in this simple example.
-        CPLAssert( comp_dims.size.y == nYSize );
-        CPLAssert( comp_dims.size.x == nXSize );
+        res.get_dims(dims);
+
+        CPLAssert( dims.size.y == nYSize );
+        CPLAssert( dims.size.x == nXSize );
 
         line.pre_create(&allocator,dims.size.x,bReversible,bReversible);
 
