@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.28  2002/11/23 18:56:56  warmerda
+ * fixed GEOTIEPOINTS setting for mem dataset
+ *
  * Revision 1.27  2002/10/10 21:06:08  warmerda
  * fine tuned the WktToMemBuf function ... works now
  *
@@ -1558,7 +1561,7 @@ CPLErr GTIFMemBufFromWkt( const char *pszWKT, const double *padfGeoTransform,
             padfTiePoints[iGCP*6+5] = pasGCPList[iGCP].dfGCPZ;
         }
 
-        TIFFSetField( hTIFF, TIFFTAG_GEOTIEPOINTS, nGCPCount, padfTiePoints );
+        TIFFSetField( hTIFF, TIFFTAG_GEOTIEPOINTS, 6*nGCPCount, padfTiePoints);
         CPLFree( padfTiePoints );
     } 
 
