@@ -28,6 +28,10 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.14  2003/05/12 16:07:15  warmerda
+ * Open classes file in binary mode to avoid problem reported in
+ * http://bugzilla.remotesensing.org/show_bug.cgi?id=335
+ *
  * Revision 1.13  2003/05/05 15:36:33  warmerda
  * Treat any element ending in "member" as a feature container.
  *
@@ -570,7 +574,7 @@ int GMLReader::LoadClasses( const char *pszFile )
     int		nLength;
     char        *pszWholeText;
 
-    fp = VSIFOpen( pszFile, "r" );
+    fp = VSIFOpen( pszFile, "rb" );
 
     if( fp == NULL )
     {
