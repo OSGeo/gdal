@@ -33,6 +33,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2002/12/04 15:54:23  warmerda
+ * improved error reporting, remap 0 pixel values on write
+ *
  * Revision 1.9  2002/12/04 14:52:54  warmerda
  * Added binary flag writing.
  *
@@ -566,7 +569,15 @@ int BSBReadScanline( BSBInfo *psInfo, int nScanline,
     if( iPixel == psInfo->nXSize && nScanline < psInfo->nYSize-1 )
         psInfo->panLineOffset[nScanline+1] = VSIFTell( fp );
 
-    return iPixel == psInfo->nXSize;
+    if( iPixel != psInfo->nXSize )
+    {
+        CPLError( CE_Warning, CPLE_AppDefined, 
+                  "Got %d pixels when looking for %d pixels.",
+                  iPixel, psInfo->nXSize );
+        return FALSE;
+    }
+
+    return TRUE;
 }
 
 /************************************************************************/
@@ -649,12 +660,15 @@ int BSBWritePCT( BSBInfo *psInfo, int nPCTSize, unsigned char *pabyPCT )
 
 {
     int        i;
-
+    
+/* -------------------------------------------------------------------- */
+/*      Verify the PCT not too large.                                   */
+/* -------------------------------------------------------------------- */
     if( nPCTSize > 128 )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "Pseudo-color table too large (%d entries), at most 128\n"
-                  " entries allowed in BSB format." );
+                  " entries allowed in BSB format.", nPCTSize );
         return FALSE;
     }
 
@@ -686,7 +700,7 @@ int BSBWritePCT( BSBInfo *psInfo, int nPCTSize, unsigned char *pabyPCT )
 int BSBWriteScanline( BSBInfo *psInfo, unsigned char *pabyScanlineBuf )
 
 {
-    int   nValue, iX, byCountMask;
+    int   nValue, iX;
 
     if( psInfo->nLastLineWritten == psInfo->nYSize - 1 )
     {
@@ -726,7 +740,14 @@ int BSBWriteScanline( BSBInfo *psInfo, unsigned char *pabyScanlineBuf )
 /*      concept is patented!                                            */
 /* -------------------------------------------------------------------- */
     for( iX = 0; iX < psInfo->nXSize; iX++ )
-        VSIFPutc( pabyScanlineBuf[iX] << (7-psInfo->nColorSize), psInfo->fp );
+    {
+        if( pabyScanlineBuf[iX] == 0 )
+            VSIFPutc( 1 << (7-psInfo->nColorSize), 
+                      psInfo->fp );
+        else
+            VSIFPutc( pabyScanlineBuf[iX] << (7-psInfo->nColorSize), 
+                      psInfo->fp );
+    }
 
     VSIFPutc( 0x00, psInfo->fp );
 
