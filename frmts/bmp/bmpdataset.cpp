@@ -4,10 +4,10 @@
  * Project:  Microsoft Windows Bitmap
  * Purpose:  Read MS Windows Device Independent Bitmap (DIB) files
  *           and OS/2 Presentation Manager bitmaps v. 1.x and v. 2.x
- * Author:   Andrey Kiselev, dron@at1895.spb.edu
+ * Author:   Andrey Kiselev, dron@remotesensing.org
  *
  ******************************************************************************
- * Copyright (c) 2002, Andrey Kiselev <dron@at1895.spb.edu>
+ * Copyright (c) 2002, Andrey Kiselev <dron@remotesensing.org>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -29,6 +29,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.15  2003/02/03 18:40:15  dron
+ * Type of input data checked in Create() method now.
+ *
  * Revision 1.14  2002/12/15 15:24:41  dron
  * Typos fixed.
  *
@@ -1075,6 +1078,16 @@ GDALDataset *BMPDataset::Create( const char * pszFilename,
 				 GDALDataType eType, char **papszOptions )
 
 {
+    if( eType != GDT_Byte )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+              "Attempt to create BMP dataset with an illegal\n"
+              "data type (%s), only Byte supported by the format.\n",
+              GDALGetDataTypeName(eType) );
+
+        return NULL;
+    }
+
     if( nBands != 1 && nBands != 3 )
     {
         CPLError( CE_Failure, CPLE_NotSupported, 
