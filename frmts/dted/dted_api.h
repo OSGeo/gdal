@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2004/04/14 19:47:29  warmerda
+ * added better boundary support, and trimming
+ *
  * Revision 1.9  2004/01/29 23:35:22  gwalter
  * Add a few more metadata fields, make sure that
  * nodata value is recognized.
@@ -196,6 +199,7 @@ int   DTEDWritePt( void *hStream, double dfLong, double dfLat, double dfElev );
 void  DTEDFillPtStream( void *hStream, int nPixelSearchDist );
 void  DTEDPtStreamSetMetadata( void *hStream, DTEDMetaDataCode, const char *);
 void  DTEDClosePtStream( void *hStream );
+void  DTEDPtStreamTrimEdgeOnlyTiles( void *hStream );
 
 CPL_C_END
 
