@@ -5,25 +5,16 @@
 
 <h2>Binary Packages</h2>
 
-<h3>OpenEV_FW</h3>
+<h3>FWTools</h3>
 
-The OpenEV_FW binary releases for Linux and Windows systems include the
+The FWTools binary releases for Linux and Windows systems include the
 full set of GDAL libraries, utilities, python support and documentation 
-along with lots of other stuff (including the OpenEV viewer).  It can be
-downloaded from:
+along with lots of other stuff (including the OpenEV viewer).  More 
+information is available at:
 
-<a href="http://www.gdal.org/dl/openev/">http://www.gdal.org/dl/openev</a>
+<a href="http://fwtools.maptools.org/">http://fwtools.maptools.org/</a>
 
-or
-
-<a href="http://gdal.maptools.org/dl/openev">http://gdal.maptools.org/dl/openev</a>
-
-Note, the regular OpenEV releases (also mirrored in these locations) do not
-include the full suite of GDAL utilities nor as many built-in format drivers.
-The OpenEV_FW releases normally include development versions of GDAL, not
-the most recent stable release.<P>
-
-The OpenEV_FW binaries for Linux should work on pretty much any modern
+The FWTools binaries for Linux should work on pretty much any modern
 Intel Linux system.<p>
 
 <h3>Other Binary Packages</h3>
