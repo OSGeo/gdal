@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2001/09/24 18:40:17  warmerda
+ * Added MDS2 support, and metadata support
+ *
  * Revision 1.5  2001/07/18 04:51:56  warmerda
  * added CPL_CVSID
  *
@@ -75,6 +78,8 @@ class EnvisatDataset : public RawDataset
     GDAL_GCP    *pasGCPList;
 
     void        ScanForGCPs();
+
+    void	CollectMetadata( EnvisatFile_HeaderFlag );
 
   public:
     		EnvisatDataset();
@@ -263,6 +268,47 @@ void EnvisatDataset::ScanForGCPs()
 }
 
 /************************************************************************/
+/*                          CollectMetadata()                           */
+/************************************************************************/
+
+void EnvisatDataset::CollectMetadata( EnvisatFile_HeaderFlag  eMPHOrSPH )
+
+{
+    int		iKey;
+    
+    for( iKey = 0; TRUE; iKey++ )
+    {
+        const char *pszValue, *pszKey;
+        char  szHeaderKey[128];
+
+        pszKey = EnvisatFile_GetKeyByIndex(hEnvisatFile, eMPHOrSPH, iKey);
+        if( pszKey == NULL )
+            break;
+
+        pszValue = EnvisatFile_GetKeyValueAsString( hEnvisatFile, eMPHOrSPH,
+                                                    pszKey, NULL );
+
+        if( pszValue == NULL )
+            continue;
+
+        // skip some uninteresting structural information.
+        if( EQUAL(pszKey,"TOT_SIZE")
+            || EQUAL(pszKey,"SPH_SIZE")
+            || EQUAL(pszKey,"NUM_DSD")
+            || EQUAL(pszKey,"DSD_SIZE")
+            || EQUAL(pszKey,"NUM_DATA_SETS") )
+            continue;
+
+        if( eMPHOrSPH == MPH )
+            sprintf( szHeaderKey, "MPH_%s", pszKey );
+        else
+            sprintf( szHeaderKey, "SPH_%s", pszKey );
+
+        SetMetadataItem( szHeaderKey, pszValue );
+    }
+}
+
+/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
@@ -321,7 +367,6 @@ GDALDataset *EnvisatDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->nRasterXSize = EnvisatFile_GetKeyValueAsInt( hEnvisatFile, SPH,
                                                        "LINE_LENGTH", 0 );
     poDS->nRasterYSize = num_dsr;
-    poDS->nBands = 1;
     poDS->eAccess = GA_ReadOnly;
 
     pszDataType = EnvisatFile_GetKeyValueAsString( hEnvisatFile, SPH, 
@@ -368,6 +413,33 @@ GDALDataset *EnvisatDataset::Open( GDALOpenInfo * poOpenInfo )
                                       GDALGetDataTypeSize(eDataType) / 8, 
                                       dsr_size, 
                                       eDataType, bNative ) );
+
+/* -------------------------------------------------------------------- */
+/*      Do we have an MDS2 dataset that matches the MDS1 dataset?       */
+/* -------------------------------------------------------------------- */
+    int	num_dsr2, dsr_size2;
+    int nMDS2Index = EnvisatFile_GetDatasetIndex( hEnvisatFile, "MDS2" );
+
+    if( nMDS2Index != -1 )
+        EnvisatFile_GetDatasetInfo( hEnvisatFile, nMDS2Index, 
+                                    NULL, NULL, NULL, &ds_offset, NULL, 
+                                    &num_dsr2, &dsr_size2 );
+
+    if( num_dsr2 != 0 && num_dsr2 == num_dsr && dsr_size2 == dsr_size )
+    {
+        poDS->SetBand( 2, 
+                       new RawRasterBand( poDS, 2, poDS->fpImage,
+                                          ds_offset + 17, 
+                                          GDALGetDataTypeSize(eDataType) / 8, 
+                                          dsr_size, 
+                                          eDataType, bNative ) );
+    }
+    
+/* -------------------------------------------------------------------- */
+/*      Collect metadata.                                               */
+/* -------------------------------------------------------------------- */
+    poDS->CollectMetadata( MPH );
+    poDS->CollectMetadata( SPH );
 
 /* -------------------------------------------------------------------- */
 /*      Check for overviews.                                            */
