@@ -28,6 +28,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.12  2001/10/19 14:46:16  warmerda
+# added SetGeogCS() and __str__
+#
 # Revision 1.11  2001/10/10 20:47:49  warmerda
 # added some OSR methods
 #
@@ -133,6 +136,15 @@ class SpatialReference:
 
     def SetWellKnownGeogCS(self, name):
         return _gdal.OSRSetWellKnownGeogCS(self._o, name)
+
+    def SetGeogCS( self, geog_name, datum_name, ellipsoid_name,
+                   semi_major, inv_flattening,
+                   pm_name = 'Greenwich', pm_offset = 0.0,
+                   units = 'degree', conv_to_radian = 0.0174532925199433 ):
+        return _gdal.OSRSetGeogCS( self._o, geog_name, datum_name,
+                                   ellipsoid_name, semi_major, inv_flattening,
+                                   pm_name, pm_offset,
+                                   units, conv_to_radian )
     
     def SetProjCS(self, name = "unnamed" ):
         return _gdal.OSRSetProjCS(self._o, name)
@@ -157,6 +169,9 @@ class SpatialReference:
     
     def SetProjParm( self, name, value ):
         return _gdal.OSRSetProjParm( self._o, name, value )
+
+    def __str__( self ):
+        return self.ExportToPrettyWkt()
 
     
 class CoordinateTransformation:
