@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.32  2003/03/05 05:09:11  warmerda
+ * added GetLayerByName() method on OGRDataSource
+ *
  * Revision 1.31  2003/03/04 05:47:23  warmerda
  * added indexing support
  *
@@ -220,6 +223,7 @@ class CPL_DLL OGRDataSource
 
     virtual int         GetLayerCount() = 0;
     virtual OGRLayer    *GetLayer(int) = 0;
+    virtual OGRLayer    *GetLayerByName(const char *);
     virtual OGRErr      DeleteLayer(int);
 
     virtual int         TestCapability( const char * ) = 0;
