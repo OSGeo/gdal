@@ -45,17 +45,17 @@ main(int argc, char *argv[])
     // look at gdalallregister.cpp. 
     GDALAllRegister();
 
-    cerr << "Opening the dataset." << endl;
+    cout << "Opening the dataset." << endl;
 
     poDataset = static_cast<GDALDataset *>(GDALOpen(argv[1], GA_ReadOnly));
     if(poDataset == NULL) {
-	cerr << "Could not read the DODS dataset: " << argv[1] << endl;
+	cout << "Could not read the DODS dataset: " << argv[1] << endl;
 	exit(1);
     }
 
     // Now that we have the DODS dataset open, lets read the rasterband data. 
     for (int i = 0; i < poDataset->GetRasterCount(); i++) {
-	cerr << "Band Number: " << i+1 << endl;
+	cout << "Band Number: " << i+1 << endl;
 
 	GDALRasterBand *poBand = poDataset->GetRasterBand(i+1); 
 
@@ -64,8 +64,8 @@ main(int argc, char *argv[])
 	// read on...
 	int nBlockXSize, nBlockYSize;
 	poBand->GetBlockSize(&nBlockXSize, &nBlockYSize);
-	cerr << "Block = " << nBlockXSize << "x" << nBlockYSize << endl;
-	cerr << "Type = " << GDALGetDataTypeName(poBand->GetRasterDataType())
+	cout << "Block = " << nBlockXSize << "x" << nBlockYSize << endl;
+	cout << "Type = " << GDALGetDataTypeName(poBand->GetRasterDataType())
 	     << endl;
 
 	// Note that we don't put any information in the color interpretation
@@ -79,7 +79,7 @@ main(int argc, char *argv[])
 	if(!(bGotMin && bGotMax))
 	    GDALComputeRasterMinMax((GDALRasterBandH)poBand, TRUE, adfMinMax);
 
-	cerr << "Min = " << adfMinMax[0] << ", Max = " << adfMinMax[1] << endl;
+	cout << "Min = " << adfMinMax[0] << ", Max = " << adfMinMax[1] << endl;
         
 	// We don't support Overview or Colortables
 
@@ -95,19 +95,20 @@ main(int argc, char *argv[])
 			 pafData, nXSize, nYSize, GDT_Float32, 
 			 0, 0);
 
-	for (int y = 0; y < nYSize; ++y)
+	for (int y = 0; y < nYSize; ++y) {
+	    cout  << "[y=" << y << "]: ";
 	    for (int x = 0; x < nXSize; ++x)
 		cout << *(pafData + (y * nYSize) + x) << " ";
-	cout << endl;
+	    cout << endl;
+	}
     }
 
     delete poDataset;
 }
 
 // $Log$
+// Revision 1.2  2004/01/30 17:11:57  jimg
+// Spiffed up the output a bit.
+//
 // Revision 1.1  2003/12/12 23:28:17  jimg
 // Added.
-//
-// Revision 1.1  2003/12/12 22:52:20  jimg
-// Added.
-//
