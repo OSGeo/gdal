@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2000/03/06 02:23:54  warmerda
+ * don't use +datum syntax
+ *
  * Revision 1.6  1999/12/22 15:39:43  warmerda
  * fix to differentiate WGS variants
  *
@@ -289,7 +292,8 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 )
                  GetProjParm(SRS_PP_FALSE_NORTHING,0.0) );
     }
 
-    else if( EQUAL(pszProjection,SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP) )
+    else if( EQUAL(pszProjection,SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP)
+         || EQUAL(pszProjection,SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP_BELGIUM) )
     {
         sprintf( szProj4+strlen(szProj4),
                  "+proj=lcc +lat_1=%.9f +lat_2=%.9f +lat_0=%.9f +lon_0=%.9f"
@@ -420,11 +424,13 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 )
     }
     else if( EQUAL(pszDatum,"North_Americian_Datum_1927") )
     {
-        pszPROJ4Ellipse = "clrk66:+datum=nad27"; /* NAD 27 */
+//        pszPROJ4Ellipse = "clrk66:+datum=nad27"; /* NAD 27 */
+        pszPROJ4Ellipse = "clrk66";
     }
     else if( EQUAL(pszDatum,"North_Americian_Datum_1983") )
     {
-        pszPROJ4Ellipse = "GRS80:+datum=nad83";	/* NAD 83 */
+//        pszPROJ4Ellipse = "GRS80:+datum=nad83";	/* NAD 83 */
+        pszPROJ4Ellipse = "GRS80";
     }
     
     if( pszPROJ4Ellipse == NULL )
