@@ -37,6 +37,9 @@
  *   hostile source.
  *
  * $Log$
+ * Revision 1.27  2003/12/04 15:46:51  warmerda
+ * Added CPLAddXMLSibling()
+ *
  * Revision 1.26  2003/12/04 15:19:43  warmerda
  * Added "=" support for "sidesearching" in a document.
  *
@@ -1281,6 +1284,36 @@ void CPLAddXMLChild( CPLXMLNode *psParent, CPLXMLNode *psChild )
     }
 
     psSib->psNext = psChild;
+}
+
+/************************************************************************/
+/*                          CPLAddXMLSibling()                          */
+/************************************************************************/
+
+/**
+ * Add new sibling.
+ *
+ * The passed psNewSibling is added to the end of siblings of the 
+ * psOlderSibling node.  That is, it is added to the end of the psNext
+ * chain.  There is no special handling if psNewSibling is an attribute. 
+ * If this is required, use CPLAddXMLChild(). 
+ *
+ * @param psOlderSibling the node to attach the sibling after.
+ *
+ * @param psNewSibling the node to add at the end of psOlderSiblings psNext 
+ * chain.
+ */
+
+void CPLAddXMLSibling( CPLXMLNode *psOlderSibling, CPLXMLNode *psNewSibling )
+
+{
+    if( psOlderSibling == NULL )
+        return;
+
+    while( psOlderSibling->psNext != NULL )
+        psOlderSibling = psOlderSibling->psNext;
+
+    psOlderSibling->psNext = psNewSibling;
 }
 
 /************************************************************************/

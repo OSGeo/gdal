@@ -28,6 +28,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.10  2003/12/04 15:46:51  warmerda
+ * Added CPLAddXMLSibling()
+ *
  * Revision 1.9  2003/11/05 20:14:21  warmerda
  * added lots of documentation
  *
@@ -162,6 +165,8 @@ CPLXMLNode CPL_DLL *CPLCreateXMLNode( CPLXMLNode *poParent,
 char       CPL_DLL *CPLSerializeXMLTree( CPLXMLNode *psNode );
 void       CPL_DLL  CPLAddXMLChild( CPLXMLNode *psParent,
                                     CPLXMLNode *psChild );
+void       CPL_DLL  CPLAddXMLSibling( CPLXMLNode *psOlderSibling,
+                                      CPLXMLNode *psNewSibling );
 CPLXMLNode CPL_DLL *CPLCreateXMLElementAndValue( CPLXMLNode *psParent,
                                                  const char *pszName,
                                                  const char *pszValue );
