@@ -29,6 +29,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2003/08/03 02:39:40  warmerda
+ * Fixed problem with byPrecision actually being a short in Ned's experience,
+ * instead of a short.   Tried to work around this in a way that isn't likely
+ * to break even if Oracle's behaviour changes to what is documented.
+ *
  * Revision 1.9  2003/05/21 03:54:01  warmerda
  * expand tabs
  *
@@ -325,7 +330,11 @@ OGROCISession::GetParmInfo( OCIParam *hParmDesc, OGRFieldDefn *poOGRDefn,
 
         case SQLT_NUM:
         {
-            ub1  byPrecision;
+            // NOTE: OCI docs say this should be ub1 type, but we have
+            // determined that oracle is actually returning a short so we
+            // use that type and try to compensate for possible problems by
+            // initializing, and dividing by 256 if it is large. 
+            unsigned short byPrecision = 0;
             sb1  nScale;
 
             if( Failed(
@@ -342,6 +351,9 @@ OGROCISession::GetParmInfo( OCIParam *hParmDesc, OGRFieldDefn *poOGRDefn,
             CPLDebug( "OCI", "%s: Scale=%d, Precision=%d", 
                       szTermColName, nScale, byPrecision );
 #endif
+            if( byPrecision > 255 )
+                byPrecision = byPrecision / 256;
+
             if( nScale < 0 )
                 poOGRDefn->SetType( OFTReal );
             else if( nScale > 0 )
