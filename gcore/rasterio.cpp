@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2000/05/15 14:33:49  warmerda
+ * don't crash on read failure
+ *
  * Revision 1.9  2000/04/04 15:25:13  warmerda
  * Fixed embarrasing bug in GDALCopyWords() for some cases.
  *
@@ -196,6 +199,8 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                     poBlock->MarkDirty();
                 
                 pabySrcBlock = (GByte *) poBlock->GetDataRef();
+                if( pabySrcBlock == NULL )
+                    return CE_Failure;
             }
 
 /* -------------------------------------------------------------------- */
