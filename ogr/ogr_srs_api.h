@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.42  2004/03/04 18:04:45  warmerda
+ * added importFromDict() support
+ *
  * Revision 1.41  2004/02/07 17:31:21  dron
  * Added OSRExportToUSGS() method.
  *
@@ -360,6 +363,8 @@ OGRErr CPL_DLL OSRImportFromPCI( OGRSpatialReferenceH hSRS, const char *,
 OGRErr CPL_DLL OSRImportFromUSGS( OGRSpatialReferenceH,
                                   long, long, double *, long);
 OGRErr CPL_DLL OSRImportFromXML( OGRSpatialReferenceH, const char * );
+OGRErr CPL_DLL OSRImportFromDict( OGRSpatialReferenceH, const char *, 
+                                  const char * );
 OGRErr CPL_DLL OSRExportToWkt( OGRSpatialReferenceH, char ** );
 OGRErr CPL_DLL OSRExportToPrettyWkt( OGRSpatialReferenceH, char **, int);
 OGRErr CPL_DLL OSRExportToProj4( OGRSpatialReferenceH, char **);
