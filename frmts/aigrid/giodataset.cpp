@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.6  2000/01/31 04:08:23  warmerda
+ * Fixed georeference writing.
+ *
  * Revision 1.5  2000/01/31 03:55:49  warmerda
  * Added support for writing out georeferencing to newly created datsets.
  *
@@ -69,6 +72,7 @@ static int      (*pfnPutWindowRow)(int, int, float *) = NULL;
 static int      (*pfnCellLayerClose)(int) = NULL;
 static int      (*pfnCellLayerCreate)(char *, int, int, int, double, 
                                       double*) = NULL;
+static int      (*pfnGridDelete)(char *) = NULL;
 CPL_C_END
 
 /************************************************************************/
@@ -111,10 +115,12 @@ static int LoadGridIOFunctions()
         CPLGetSymbol( "avgridio.dll", "PutWindowRow" );
     pfnCellLayerClose = (int (*)(int))
         CPLGetSymbol( "avgridio.dll", "CellLayerClose" );
+    pfnGridDelete = (int (*)(char*))
+        CPLGetSymbol( "avgridio.dll", "GridDelete" );
 
     if( pfnCellLayerOpen == NULL || pfnDescribeGridDbl == NULL
         || pfnAccessWindowSet == NULL || pfnGetWindowRowFloat == NULL
-        || pfnCellLayerClose == NULL )
+        || pfnCellLayerClose == NULL || pfnGridDelete == NULL )
         pfnGridIOSetup = NULL;
 
     return pfnGridIOSetup != NULL;
@@ -285,7 +291,7 @@ void GIODataset::WriteGeoreference()
     FILE      *fp;
     double    adfFileBounds[4];
 
-    fp = VSIFOpen( CPLFormFilename( pszPath, "dblbnd", "adf" ), "wb" );
+    fp = VSIFOpen( CPLFormFilename( pszPath, "dblbnd", "adf" ), "r+b" );
     if( fp == NULL )
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
@@ -313,7 +319,7 @@ void GIODataset::WriteGeoreference()
 /* -------------------------------------------------------------------- */
     double      adfCellSizes[2];
 
-    fp = VSIFOpen( CPLFormFilename( pszPath, "hdr", "adf" ), "wb" );
+    fp = VSIFOpen( CPLFormFilename( pszPath, "hdr", "adf" ), "r+b" );
     if( fp == NULL )
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
