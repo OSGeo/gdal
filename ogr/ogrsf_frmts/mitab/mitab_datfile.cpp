@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_datfile.cpp,v 1.6 2000/01/26 21:58:12 warmerda Exp $
+ * $Id: mitab_datfile.cpp,v 1.7 2000/04/21 16:11:52 warmerda Exp $
  *
  * Name:     mitab_datfile.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -31,6 +31,9 @@
  **********************************************************************
  *
  * $Log: mitab_datfile.cpp,v $
+ * Revision 1.7  2000/04/21 16:11:52  warmerda
+ * treat zero width fields as 255
+ *
  * Revision 1.6  2000/01/26 21:58:12  warmerda
  * reimport
  *
@@ -668,9 +671,9 @@ int  TABDATFile::AddField(const char *pszName, TABFieldType eType,
     if (m_numFields < 0)
         m_numFields = 0;
 
-    /* remap variable length fields to be 255 long fields. */
+    /* remap variable length fields to be 254 long fields. */
     if( nWidth == 0 )
-        nWidth = 255;
+        nWidth = 254;
 
     m_numFields++;
     m_pasFieldDef = (TABDATFieldDef*)CPLRealloc(m_pasFieldDef, 
