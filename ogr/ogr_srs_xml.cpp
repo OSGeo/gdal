@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2005/01/17 17:04:24  fwarmerdam
+ * major overhaul to more-or-less GML 3 CRS support
+ *
  * Revision 1.5  2003/05/21 04:49:17  warmerda
  * avoid warnings
  *
@@ -50,22 +53,207 @@
 #include "cpl_minixml.h"
 
 /************************************************************************/
+/*                              parseURN()                              */
+/*                                                                      */
+/*      Parses requested sections out of URN.  The passed in URN        */
+/*      *is* altered but the returned values point into the             */
+/*      original string.                                                */
+/************************************************************************/
+
+static int parseURN( char *pszURN, 
+                     char **ppszObjectType, 
+                     char **ppszAuthority, 
+                     char **ppszCode,
+                     char **ppszVersion = NULL )
+
+{
+    int  i;
+
+    if( ppszObjectType != NULL )
+        *ppszObjectType = "";
+    if( ppszAuthority != NULL )
+        *ppszAuthority = "";
+    if( ppszCode != NULL )
+        *ppszCode = "";
+    if( ppszVersion != NULL )
+        *ppszVersion = "";
+
+/* -------------------------------------------------------------------- */
+/*      Verify prefix.                                                  */
+/* -------------------------------------------------------------------- */
+    if( !EQUALN(pszURN,"urn:ogc:def:",12) )
+        return FALSE;
+
+/* -------------------------------------------------------------------- */
+/*      Extract object type                                             */
+/* -------------------------------------------------------------------- */
+    if( ppszObjectType != NULL )
+        *ppszObjectType = (char *) pszURN + 12;
+
+    i = 12;
+    while( pszURN[i] != ':' && pszURN[i] != '\0' )
+        i++;
+
+    if( pszURN[i] == '\0' )
+        return FALSE;
+
+    pszURN[i] = '\0';
+    i++;
+
+/* -------------------------------------------------------------------- */
+/*      Extract authority                                               */
+/* -------------------------------------------------------------------- */
+    if( ppszAuthority != NULL )
+        *ppszAuthority = (char *) pszURN + i;
+
+    while( pszURN[i] != ':' && pszURN[i] != '\0' )
+        i++;
+
+    if( pszURN[i] == '\0' )
+        return FALSE;
+
+    pszURN[i] = '\0';
+    i++;
+
+/* -------------------------------------------------------------------- */
+/*      Extract version                                                 */
+/* -------------------------------------------------------------------- */
+    if( ppszVersion != NULL )
+        *ppszVersion = (char *) pszURN + i;
+
+    while( pszURN[i] != ':' && pszURN[i] != '\0' )
+        i++;
+
+    if( pszURN[i] == '\0' )
+        return FALSE;
+
+    pszURN[i] = '\0';
+    i++;
+
+/* -------------------------------------------------------------------- */
+/*      Extract code.                                                   */
+/* -------------------------------------------------------------------- */
+    if( ppszCode != NULL )
+        *ppszCode = (char *) pszURN + i;
+    
+    return TRUE;
+}
+
+/************************************************************************/
 /*                               addURN()                               */
 /************************************************************************/
 
 static void addURN( CPLXMLNode *psTarget, 
-                    const char *pszType, 
-                    int nCode )
+                    const char *pszAuthority, 
+                    const char *pszObjectType, 
+                    int nCode,
+                    const char *pszVersion = "" )
 
 {
-    char szURN[128];
+    char szURN[200];
 
-    sprintf( szURN, "urn:EPSG::%s:%d", pszType, nCode );
+    if( pszVersion == NULL )
+        pszVersion = "";
+
+    CPLAssert( strlen(pszAuthority)+strlen(pszObjectType) < sizeof(szURN)-30 );
+
+    sprintf( szURN, "urn:ogc:def:%s:%s:%s:", 
+             pszObjectType, pszAuthority, pszVersion );
+    
+    if( nCode != 0 )
+        sprintf( szURN + strlen(szURN), "%d", nCode );
     
     CPLCreateXMLNode(
         CPLCreateXMLNode( psTarget, CXT_Attribute, "xlink:href" ),
         CXT_Text, szURN );
 }
+
+/************************************************************************/
+/*                         AddValueIDWithURN()                          */
+/*                                                                      */
+/*      Adds element of the form <ElementName                           */
+/*      xlink:href="urn_without_id">id</ElementName>"                   */
+/************************************************************************/
+
+static CPLXMLNode *
+AddValueIDWithURN( CPLXMLNode *psTarget, 
+                   const char *pszElement,
+                   const char *pszAuthority, 
+                   const char *pszObjectType, 
+                   int nCode,
+                   const char *pszVersion = "" )
+    
+{
+    char szCode[128];
+    CPLXMLNode *psElement;
+
+    sprintf( szCode, "%d", nCode );
+
+    psElement = CPLCreateXMLElementAndValue( psTarget, pszElement, szCode );
+    addURN( psElement, pszAuthority, pszObjectType, 0, pszVersion );
+
+    return psElement;
+}
+
+/************************************************************************/
+/*                          addAuthorityIDBlock()                          */
+/*                                                                      */
+/*      Creates a structure like:                                       */
+/*      <srsId>                                                         */
+/*        <name codeSpace="urn">code</name>                             */
+/*      </srsId>                                                        */
+/************************************************************************/
+static CPLXMLNode *addAuthorityIDBlock( CPLXMLNode *psTarget, 
+                                     const char *pszElement,
+                                     const char *pszAuthority, 
+                                     const char *pszObjectType, 
+                                     int nCode,
+                                     const char *pszVersion = "" )
+
+{
+    char szURN[200];
+
+/* -------------------------------------------------------------------- */
+/*      Prepare partial URN without the actual code.                    */
+/* -------------------------------------------------------------------- */
+    if( pszVersion == NULL )
+        pszVersion = "";
+
+    CPLAssert( strlen(pszAuthority)+strlen(pszObjectType) < sizeof(szURN)-30 );
+
+    sprintf( szURN, "urn:ogc:def:%s:%s:%s:", 
+             pszObjectType, pszAuthority, pszVersion );
+    
+/* -------------------------------------------------------------------- */
+/*      Prepare the base name, eg. <srsID>.                             */
+/* -------------------------------------------------------------------- */
+    CPLXMLNode *psElement = 
+        CPLCreateXMLNode( psTarget, CXT_Element, pszElement );
+
+/* -------------------------------------------------------------------- */
+/*      Prepare the name element.                                       */
+/* -------------------------------------------------------------------- */
+    CPLXMLNode * psName = 
+        CPLCreateXMLNode( psElement, CXT_Element, "gml:name" );
+
+/* -------------------------------------------------------------------- */
+/*      Prepare the codespace attribute.                                */
+/* -------------------------------------------------------------------- */
+    CPLCreateXMLNode(
+        CPLCreateXMLNode( psName, CXT_Attribute, "gml:codeSpace" ),
+        CXT_Text, szURN );
+
+/* -------------------------------------------------------------------- */
+/*      Attach code value to name node.                                 */
+/* -------------------------------------------------------------------- */
+    char szCode[32];
+    sprintf( szCode, "%d", nCode );
+
+    CPLCreateXMLNode( psName, CXT_Text, szCode );
+
+    return psElement;
+}
+    
 
 /************************************************************************/
 /*                              addGMLId()                              */
@@ -87,45 +275,14 @@ static void addGMLId( CPLXMLNode *psParent )
 }
 
 /************************************************************************/
-/*                               addID()                                */
-/************************************************************************/
-
-static CPLXMLNode *addID( CPLXMLNode *psParent, 
-                          const char *pszTagName,
-                          const char *pszCode, 
-                          const char *pszCodeSpace, 
-                          const char *pszEdition = NULL )
-
-{
-    CPLXMLNode *psIdentifier;
-
-    if( !EQUALN(pszTagName,"gml:",4) )
-    {
-        char *pszQTagName;
-
-        pszQTagName = (char *) CPLMalloc(strlen(pszTagName)+10);
-        sprintf( pszQTagName, "gml:%s", pszTagName );
-        psIdentifier = CPLCreateXMLNode( psParent, CXT_Element, pszQTagName );
-        CPLFree( pszQTagName );
-    }
-    else
-        psIdentifier = CPLCreateXMLNode( psParent, CXT_Element, pszTagName );
-
-    CPLCreateXMLElementAndValue( psIdentifier, "gml:code", pszCode );
-    CPLCreateXMLElementAndValue( psIdentifier, "gml:codeSpace", pszCodeSpace );
-    if( pszEdition != NULL )
-        CPLCreateXMLElementAndValue( psIdentifier, "gml:version", pszEdition );
-
-    return psIdentifier;
-}
-
-/************************************************************************/
 /*                        exportAuthorityToXML()                        */
 /************************************************************************/
 
 static CPLXMLNode *exportAuthorityToXML( const OGR_SRSNode *poAuthParent,
                                          const char *pszTagName,
-                                         CPLXMLNode *psXMLParent )
+                                         CPLXMLNode *psXMLParent,
+                                         const char *pszObjectType,
+                                         int bUseSubName = TRUE )
 
 {
     const OGR_SRSNode *poAuthority;
@@ -148,7 +305,13 @@ static CPLXMLNode *exportAuthorityToXML( const OGR_SRSNode *poAuthParent,
     pszCodeSpace = poAuthority->GetChild(0)->GetValue();
     pszEdition = NULL;
 
-    return addID( psXMLParent, pszTagName, pszCode, pszCodeSpace, pszEdition );
+    if( bUseSubName )
+        return addAuthorityIDBlock( psXMLParent, pszTagName, pszCodeSpace, 
+                                 pszObjectType, atoi(pszCode), pszEdition );
+    else
+        return AddValueIDWithURN( psXMLParent, pszTagName, pszCodeSpace, 
+                                  pszObjectType, atoi(pszCode), pszEdition );
+                              
 }
 
 /************************************************************************/
@@ -170,9 +333,9 @@ static void addProjArg( const OGRSpatialReference *poSRS, CPLXMLNode *psBase,
     const char *pszUOMValue;
 
     if( EQUAL(pszMeasureType,"Angular") )
-        pszUOMValue = "urn:EPSG::unitID:9102";
+        pszUOMValue = "urn:ogc:def:uom:EPSG::9102";
     else
-        pszUOMValue = "urn:EPSG::unitID:9001";
+        pszUOMValue = "urn:ogc:def:uom:EPSG::9001";
 
     psValue = CPLCreateXMLNode( psNode, CXT_Element, "gml:value" );
 
@@ -192,8 +355,8 @@ static void addProjArg( const OGRSpatialReference *poSRS, CPLXMLNode *psBase,
 /* -------------------------------------------------------------------- */
 /*      Add the valueOfParameter.                                       */
 /* -------------------------------------------------------------------- */
-    addURN( CPLCreateXMLNode( psNode, CXT_Element, "gml:valueOfParameter" ),
-            "parameterID", nParameterID );
+    AddValueIDWithURN( psNode, "gml:valueOfParameter", "EPSG", "parameter", 
+                       nParameterID );
 }
 
 /************************************************************************/
@@ -219,11 +382,11 @@ static CPLXMLNode *addAxis( CPLXMLNode *psXMLParent,
     {
         CPLCreateXMLNode( 
             CPLCreateXMLNode( psAxisXML, CXT_Attribute, "gml:uom" ),
-            CXT_Text, "urn:EPSG::unitID:9102" );
+            CXT_Text, "urn:ogc:def:uom:EPSG::9102" );
 
-        CPLCreateXMLElementAndValue( psAxisXML, "gml:axisName",
+        CPLCreateXMLElementAndValue( psAxisXML, "gml:name",
                                      "Geodetic latitude" );
-        addID( psAxisXML, "axisID", "9901", "EPSG", "6.0" );
+        addAuthorityIDBlock( psAxisXML, "gml:axisID", "EPSG", "axis", 9901 );
         CPLCreateXMLElementAndValue( psAxisXML, "gml:axisAbbrev", "Lat" );
         CPLCreateXMLElementAndValue( psAxisXML, "gml:axisDirection", "north" );
     }
@@ -231,11 +394,11 @@ static CPLXMLNode *addAxis( CPLXMLNode *psXMLParent,
     {
         CPLCreateXMLNode( 
             CPLCreateXMLNode( psAxisXML, CXT_Attribute, "gml:uom" ),
-            CXT_Text, "urn:EPSG::unitID:9102" );
+            CXT_Text, "urn:ogc:def:uom:EPSG::9102" );
 
-        CPLCreateXMLElementAndValue( psAxisXML, "gml:axisName",
+        CPLCreateXMLElementAndValue( psAxisXML, "gml:name",
                                      "Geodetic longitude" );
-        addID( psAxisXML, "axisID", "9902", "EPSG", "6.0" );
+        addAuthorityIDBlock( psAxisXML, "gml:axisID", "EPSG", "axis", 9902 );
         CPLCreateXMLElementAndValue( psAxisXML, "gml:axisAbbrev", "Lon" );
         CPLCreateXMLElementAndValue( psAxisXML, "gml:axisDirection", "east" );
     }
@@ -243,10 +406,10 @@ static CPLXMLNode *addAxis( CPLXMLNode *psXMLParent,
     {
         CPLCreateXMLNode( 
             CPLCreateXMLNode( psAxisXML, CXT_Attribute, "gml:uom" ),
-            CXT_Text, "urn:EPSG::unitID:9001" );
+            CXT_Text, "urn:ogc:def:uom:EPSG::9001" );
 
-        CPLCreateXMLElementAndValue( psAxisXML, "gml:axisName", "Easting" );
-        addID( psAxisXML, "axisID", "9906", "EPSG", "6.0" );
+        CPLCreateXMLElementAndValue( psAxisXML, "gml:name", "Easting" );
+        addAuthorityIDBlock( psAxisXML, "gml:axisID", "EPSG", "axis", 9906 );
         CPLCreateXMLElementAndValue( psAxisXML, "gml:axisAbbrev", "E" );
         CPLCreateXMLElementAndValue( psAxisXML, "gml:axisDirection", "east" );
     }
@@ -254,10 +417,10 @@ static CPLXMLNode *addAxis( CPLXMLNode *psXMLParent,
     {
         CPLCreateXMLNode( 
             CPLCreateXMLNode( psAxisXML, CXT_Attribute, "gml:uom" ),
-            CXT_Text, "urn:EPSG::unitID:9001" );
+            CXT_Text, "urn:ogc:def:uom:EPSG::9001" );
 
-        CPLCreateXMLElementAndValue( psAxisXML, "gml:axisName", "Northing" );
-        addID( psAxisXML, "axisID", "9907", "EPSG", "6.0" );
+        CPLCreateXMLElementAndValue( psAxisXML, "gml:name", "Northing" );
+        addAuthorityIDBlock( psAxisXML, "gml:axisID", "EPSG", "axis", 9907 );
         CPLCreateXMLElementAndValue( psAxisXML, "gml:axisAbbrev", "N" );
         CPLCreateXMLElementAndValue( psAxisXML, "gml:axisDirection", "north" );
     }
@@ -298,7 +461,7 @@ static CPLXMLNode *exportGeogCSToXML( const OGRSpatialReference *poSRS )
 /*      Does the overall coordinate system have an authority?  If so    */
 /*      attach as an identification section.                            */
 /* -------------------------------------------------------------------- */
-    exportAuthorityToXML( poGeogCS, "gml:srsID", psGCS_XML );
+    exportAuthorityToXML( poGeogCS, "gml:srsID", psGCS_XML, "crs" );
 
 /* -------------------------------------------------------------------- */
 /*      Insert a big whack of fixed stuff defining the                  */
@@ -314,7 +477,8 @@ static CPLXMLNode *exportGeogCSToXML( const OGRSpatialReference *poSRS )
     addGMLId( psECS  );
 
     CPLCreateXMLElementAndValue( psECS, "gml:csName", "ellipsoidal" );
-    addID( psECS, "csID", "6402", "EPSG", "6.0" );
+
+    addAuthorityIDBlock( psECS, "gml:csID", "EPSG", "cs", 6402 );
 
     addAxis( psECS, "Lat", NULL );
     addAxis( psECS, "Long", NULL );
@@ -346,7 +510,7 @@ static CPLXMLNode *exportGeogCSToXML( const OGRSpatialReference *poSRS )
 /* -------------------------------------------------------------------- */
 /*      Set authority id info if available.                             */
 /* -------------------------------------------------------------------- */
-    exportAuthorityToXML( poDatum, "gml:datumID", psDatumXML );
+    exportAuthorityToXML( poDatum, "gml:datumID", psDatumXML, "datum" );
 
 /* -------------------------------------------------------------------- */
 /*      Setup prime meridian information.                               */
@@ -365,7 +529,7 @@ static CPLXMLNode *exportGeogCSToXML( const OGRSpatialReference *poSRS )
     CPLCreateXMLElementAndValue( psPM, "gml:meridianName", pszPMName );
 
     if( poPMNode )
-        exportAuthorityToXML( poPMNode, "gml:meridianID", psPM );
+        exportAuthorityToXML( poPMNode, "gml:meridianID", psPM, "meridian" );
 
     CPLXMLNode *psAngle;
 
@@ -375,7 +539,7 @@ static CPLXMLNode *exportGeogCSToXML( const OGRSpatialReference *poSRS )
             CXT_Element, "gml:angle" );
     
     CPLCreateXMLNode( CPLCreateXMLNode( psAngle, CXT_Attribute, "gml:uom" ),
-                      CXT_Text, "urn:EPSG::unitID:9102" );
+                      CXT_Text, "urn:ogc:def:uom:EPSG::9102" );
 
     CPLCreateXMLNode( psAngle, CXT_Text, CPLSPrintf( "%.16g", dfPMOffset ) );
 
@@ -398,7 +562,8 @@ static CPLXMLNode *exportGeogCSToXML( const OGRSpatialReference *poSRS )
         CPLCreateXMLElementAndValue( psEllipseXML, "gml:ellipsoidName", 
                                      poEllipsoid->GetChild(0)->GetValue() );
 
-        exportAuthorityToXML( poEllipsoid, "gml:ellipsoidID", psEllipseXML );
+        exportAuthorityToXML( poEllipsoid, "gml:ellipsoidID", psEllipseXML,
+                              "ellipsoid");
         
         CPLXMLNode *psParmXML;
 
@@ -406,7 +571,7 @@ static CPLXMLNode *exportGeogCSToXML( const OGRSpatialReference *poSRS )
                                       "gml:semiMajorAxis" );
 
         CPLCreateXMLNode( CPLCreateXMLNode(psParmXML,CXT_Attribute,"gml:uom"),
-                          CXT_Text, "urn:EPSG::unitID:9001" );
+                          CXT_Text, "urn:ogc:def:uom:EPSG::9001" );
 
         CPLCreateXMLNode( psParmXML, CXT_Text, 
                           poEllipsoid->GetChild(1)->GetValue() );
@@ -418,7 +583,7 @@ static CPLXMLNode *exportGeogCSToXML( const OGRSpatialReference *poSRS )
                 CXT_Element, "gml:inverseFlattening" );
         
         CPLCreateXMLNode( CPLCreateXMLNode(psParmXML,CXT_Attribute,"gml:uom"),
-                          CXT_Text, "urn:EPSG::unitID:9201" );
+                          CXT_Text, "urn:ogc:def:uom:EPSG::9201" );
 
         CPLCreateXMLNode( psParmXML, CXT_Text, 
                           poEllipsoid->GetChild(2)->GetValue() );
@@ -455,7 +620,7 @@ static CPLXMLNode *exportProjCSToXML( const OGRSpatialReference *poSRS )
 /* -------------------------------------------------------------------- */
 /*      Add authority info if we have it.                               */
 /* -------------------------------------------------------------------- */
-    exportAuthorityToXML( poProjCS, "gml:srsID", psCRS_XML );
+    exportAuthorityToXML( poProjCS, "gml:srsID", psCRS_XML, "crs" );
 
 /* -------------------------------------------------------------------- */
 /*      Use the GEOGCS as a <baseCRS>                                   */
@@ -487,8 +652,8 @@ static CPLXMLNode *exportProjCSToXML( const OGRSpatialReference *poSRS )
 /* -------------------------------------------------------------------- */
     if( EQUAL(pszProjection,SRS_PT_TRANSVERSE_MERCATOR) )
     {
-        addURN( CPLCreateXMLNode( psDefinedBy, CXT_Element, "gml:usesMethod" ),
-                "methodID", 9807 );
+        AddValueIDWithURN( psConv, "gml:usesMethod", "EPSG", "method", 
+                           9807 );
 
         addProjArg( poSRS, psConv, "Angular", 0.0,
                     8801, SRS_PP_LATITUDE_OF_ORIGIN );
@@ -515,7 +680,7 @@ static CPLXMLNode *exportProjCSToXML( const OGRSpatialReference *poSRS )
     addGMLId( psCCS );
 
     CPLCreateXMLElementAndValue( psCCS, "gml:csName", "Cartesian" );
-    addID( psCCS, "csID", "4400", "EPSG", "6.0" );
+    addAuthorityIDBlock( psCCS, "gml:csID", "EPSG", "cs", 4400 );
     addAxis( psCCS, "E", NULL );
     addAxis( psCCS, "N", NULL );
 
@@ -645,17 +810,67 @@ static void importXMLAuthority( CPLXMLNode *psSrcXML,
 
 {
     CPLXMLNode *psIDNode = CPLGetXMLNode( psSrcXML, pszSourceKey );
+    CPLXMLNode *psNameNode = CPLGetXMLNode( psIDNode, "name" );
+    CPLXMLNode *psCodeSpace = CPLGetXMLNode( psNameNode, "codeSpace" );
+    char *pszAuthority, *pszCode, *pszURN;
+    int nCode = 0;
 
-    if( psIDNode == NULL )
+    if( psIDNode == NULL || psNameNode == NULL || psCodeSpace == NULL )
         return;
 
-    if( CPLGetXMLNode( psIDNode, "code" ) == NULL 
-        || CPLGetXMLNode( psIDNode, "codeSpace" ) == NULL )
+    pszURN = CPLStrdup(CPLGetXMLValue( psCodeSpace, "", "" ));
+    if( !parseURN( pszURN, NULL, &pszAuthority, &pszCode ) )
+    {
+        CPLFree( pszURN );
         return;
+    }
 
-    poSRS->SetAuthority( pszTargetKey, 
-                         CPLGetXMLValue(psIDNode,"codeSpace",""),
-                         atoi(CPLGetXMLValue(psIDNode,"code","0")));
+    if( strlen(pszCode) == 0 )
+        pszCode = (char *) CPLGetXMLValue( psNameNode, "", "" );
+
+    if( pszCode != NULL )
+        nCode = atoi(pszCode);
+
+    if( nCode != 0 )
+        poSRS->SetAuthority( pszTargetKey, pszAuthority, nCode );
+
+    CPLFree( pszURN );
+}
+
+/************************************************************************/
+/*                         getProjectionParm()                          */
+/************************************************************************/
+
+static double getProjectionParm( CPLXMLNode *psRootNode, 
+                                  int nParameterCode, 
+                                 const char * /*pszMeasureType */, 
+                                 double dfDefault )
+
+{
+    CPLXMLNode *psUsesParameter;
+
+    for( psUsesParameter = psRootNode->psChild; 
+         psUsesParameter != NULL;
+         psUsesParameter = psUsesParameter->psNext )
+    {
+        if( psUsesParameter->eType != CXT_Element
+            || !EQUAL(psUsesParameter->pszValue,"usesParameterValue") )
+            continue;
+
+        if( atoi(CPLGetXMLValue( psUsesParameter, "valueOfParameter", "0" ))
+            == nParameterCode )
+        {
+            const char *pszValue = CPLGetXMLValue( psUsesParameter, "value", 
+                                                   NULL );
+
+            if( pszValue != NULL )
+                return atof(pszValue);
+            else
+                return dfDefault;
+        }
+    }
+
+    return dfDefault;
 }
 
 /************************************************************************/
@@ -704,15 +919,39 @@ static OGRErr importGeogCSFromXML( OGRSpatialReference *poSRS,
     const char     *pszGeogName, *pszDatumName, *pszEllipsoidName, *pszPMName;
     double         dfSemiMajor, dfInvFlattening, dfPMOffset = 0.0;
 
+/* -------------------------------------------------------------------- */
+/*      Set the GEOGCS name from the srsName.                           */
+/* -------------------------------------------------------------------- */
     pszGeogName = 
         CPLGetXMLValue( psCRS, "srsName", "Unnamed GeogCS" );
 
 /* -------------------------------------------------------------------- */
-/*      Get datum name.                                                 */
+/*      If we don't seem to have a detailed coordinate system           */
+/*      definition, check if we can define based on an EPSG code.       */
 /* -------------------------------------------------------------------- */
     CPLXMLNode     *psDatum;
 
     psDatum = CPLGetXMLNode( psCRS, "usesGeodeticDatum.GeodeticDatum" );
+
+    if( psDatum == NULL )
+    {
+        OGRSpatialReference oIdSRS;
+
+        oIdSRS.SetLocalCS( "dummy" );
+        importXMLAuthority( psCRS, &oIdSRS, "srsID", "LOCAL_CS" );
+
+        if( oIdSRS.GetAuthorityCode( "LOCAL_CS" ) != NULL
+            && oIdSRS.GetAuthorityName( "LOCAL_CS" ) != NULL
+            && EQUAL(oIdSRS.GetAuthorityName("LOCAL_CS"),"EPSG") )
+        {
+            return poSRS->importFromEPSG( 
+                atoi(oIdSRS.GetAuthorityCode("LOCAL_CS")) );
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Get datum name.                                                 */
+/* -------------------------------------------------------------------- */
     pszDatumName = 
         CPLGetXMLValue( psDatum, "datumName", "Unnamed Datum" );
 
@@ -810,7 +1049,21 @@ static OGRErr importProjCSFromXML( OGRSpatialReference *poSRS,
 /* -------------------------------------------------------------------- */
     poSRS->SetProjCS( CPLGetXMLValue( psCRS, "srsName", "Unnamed" ) );
 
+/* -------------------------------------------------------------------- */
+/*      Get authority information if available.  If we got it, and      */
+/*      we seem to be lacking inline definition values, try and         */
+/*      define according to the EPSG code for the PCS.                  */
+/* -------------------------------------------------------------------- */
     importXMLAuthority( psCRS, poSRS, "srsID", "PROJCS" );
+
+    if( poSRS->GetAuthorityCode( "PROJCS" ) != NULL
+        && poSRS->GetAuthorityName( "PROJCS" ) != NULL
+        && EQUAL(poSRS->GetAuthorityName("PROJCS"),"EPSG")
+        && (CPLGetXMLNode( psCRS, "definedByConversion.Conversion" ) == NULL
+            || CPLGetXMLNode( psCRS, "baseCRS.GeographicCRS" ) == NULL) )
+    {
+        return poSRS->importFromEPSG( atoi(poSRS->GetAuthorityCode("PROJCS")) );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Try to set the GEOGCS info.                                     */
@@ -830,10 +1083,7 @@ static OGRErr importProjCSFromXML( OGRSpatialReference *poSRS,
 /* -------------------------------------------------------------------- */
     CPLXMLNode *psConv = NULL;
 
-    psSubXML = CPLGetXMLNode( psCRS, "definedByConversion" );
-    if( psSubXML != NULL )
-        psConv = psSubXML->psChild;
-
+    psConv = CPLGetXMLNode( psCRS, "definedByConversion.Conversion" );
     if( psConv == NULL || psConv->eType != CXT_Element )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
@@ -843,24 +1093,25 @@ static OGRErr importProjCSFromXML( OGRSpatialReference *poSRS,
     }
 
 /* -------------------------------------------------------------------- */
+/*      Determine the conversion method in effect.  We really ought     */
+/*      to  check the xlink:href URN to see if this is an EPSG          */
+/*      method value, but it is unlikely that other code spaces will    */
+/*      conflict.                                                       */
+/* -------------------------------------------------------------------- */
+    int nMethod = atoi(
+        CPLGetXMLValue( psConv, "usesMethod", "0" ) );
+    
+/* -------------------------------------------------------------------- */
 /*      Transverse Mercator.                                            */
 /* -------------------------------------------------------------------- */
-    if( EQUAL(psConv->pszValue,"TransverseMercatorConversion") )
+    if( nMethod == 9807 ) 
     {
         poSRS->SetTM( 
-            getNormalizedValue( psConv, 
-                                "usesLatitudeOfNaturalOriginValue.value", 
-                                "Linear", 0.0 ),
-            getNormalizedValue( psConv, 
-                                "usesLongitudeOfNaturalOriginValue.value", 
-                                "Angular", 0.0),
-            getNormalizedValue( psConv, 
-                                "usesScaleFactorAtNaturalOriginValue.value", 
-                                "Unitless", 1.0),
-            getNormalizedValue( psConv, "usesFalseEastingValue.value", 
-                                "Linear", 0.0),
-            getNormalizedValue( psConv, "usesFalseNorthingValue.value", 
-                                "Linear", 0.0) );
+            getProjectionParm( psConv, 8801, "Angular", 0.0 ), 
+            getProjectionParm( psConv, 8802, "Angular", 0.0 ), 
+            getProjectionParm( psConv, 8805, "Unitless", 1.0 ), 
+            getProjectionParm( psConv, 8806, "Linear", 0.0 ),
+            getProjectionParm( psConv, 8807, "Linear", 0.0 ) );
     }
 
 /* -------------------------------------------------------------------- */
@@ -869,8 +1120,8 @@ static OGRErr importProjCSFromXML( OGRSpatialReference *poSRS,
     else
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "Conversion %s not recognised.", 
-                  psConv->pszValue );
+                  "Conversion method %d not recognised.", 
+                  nMethod );
         return OGRERR_CORRUPT_DATA;
     }
 
@@ -893,6 +1144,7 @@ OGRErr OGRSpatialReference::importFromXML( const char *pszXML )
 
 {
     CPLXMLNode *psTree;
+    OGRErr  eErr = OGRERR_UNSUPPORTED_SRS;
 
     this->Clear();
         
@@ -907,19 +1159,30 @@ OGRErr OGRSpatialReference::importFromXML( const char *pszXML )
     CPLStripXMLNamespace( psTree, "gml", TRUE );
 
 /* -------------------------------------------------------------------- */
-/*      Import according to the root node type.                         */
+/*      Import according to the root node type.  We walk through        */
+/*      root elements as there is sometimes prefix stuff like           */
+/*      <?xml>.                                                         */
 /* -------------------------------------------------------------------- */
-    if( EQUAL(psTree->pszValue,"GeographicCRS") )
+    CPLXMLNode *psNode = psTree;
+
+    for( psNode = psTree; psNode != NULL; psNode = psNode->psNext )
     {
-        return importGeogCSFromXML( this, psTree );
+        if( EQUAL(psNode->pszValue,"GeographicCRS") )
+        {
+            eErr = importGeogCSFromXML( this, psNode );
+            break;
+        }
+        
+        else if( EQUAL(psNode->pszValue,"ProjectedCRS") )
+        {
+            eErr = importProjCSFromXML( this, psNode );
+            break;
+        }
     }
 
-    if( EQUAL(psTree->pszValue,"ProjectedCRS") )
-    {
-        return importProjCSFromXML( this, psTree );
-    }
+    CPLDestroyXMLNode( psTree );
 
-    return OGRERR_UNSUPPORTED_SRS;
+    return eErr;
 }
 
 /************************************************************************/
