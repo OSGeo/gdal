@@ -131,10 +131,9 @@ web-update:	docs
 
 install:	default install-actions
 
-install-actions:
+install-actions: install-lib
 	$(INSTALL_DIR) $(INST_BIN)
 	$(INSTALL_DIR) $(INST_DATA)
-	$(INSTALL_DIR) $(INST_LIB)
 	$(INSTALL_DIR) $(INST_INCLUDE)
 	(cd port; $(MAKE) install)
 	(cd gcore; $(MAKE) install)
@@ -145,7 +144,31 @@ install-actions:
 ifneq ($(PYTHON),no)
 	(cd pymod; $(MAKE) install)
 endif
-	for f in $(LIBGDAL-yes) ; do $(INSTALL_LIB) $$f $(INST_LIB) ; done
 	for f in data/*.* ; do $(INSTALL_DATA) $$f $(INST_DATA) ; done
 	$(LIBTOOL_FINISH) $(INST_LIB)
 
+ifeq ($(HAVE_LIBTOOL),yes)
+
+install-lib:
+	$(INSTALL_DIR) $(INST_LIB)
+	for f in $(LIBGDAL-yes) ; do $(INSTALL_LIB) $$f $(INST_LIB) ; done
+
+else
+
+GDAL_VER_MAJOR	=	$(firstword $(subst ., ,$(GDAL_VER)))
+GDAL_SLIB_B	=	$(notdir $(GDAL_SLIB))
+
+
+install-lib:
+	$(INSTALL_DIR) $(INST_LIB)
+	rm -f $(INST_LIB)/$(GDAL_SLIB_B)
+	rm -f $(INST_LIB)/$(GDAL_SLIB_B).$(GDAL_VER_MAJOR)
+	rm -f $(INST_LIB)/$(GDAL_SLIB_B).$(GDAL_VER)
+	$(INSTALL_LIB) $(GDAL_SLIB) $(INST_LIB)
+	mv $(INST_LIB)/$(GDAL_SLIB_B) $(INST_LIB)/$(GDAL_SLIB_B).$(GDAL_VER)
+	(cd $(INST_LIB) ; \
+	 ln -s $(GDAL_SLIB_B).$(GDAL_VER_MAJOR) $(GDAL_SLIB_B))
+	(cd $(INST_LIB) ; \
+	 ln -s $(GDAL_SLIB_B).$(GDAL_VER) $(GDAL_SLIB_B).$(GDAL_VER_MAJOR))
+
+endif
