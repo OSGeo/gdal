@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  1999/09/15 20:34:21  warmerda
+ * South_Oriented to SouthOrientated, prototype changes
+ *
  * Revision 1.6  1999/09/09 13:53:47  warmerda
  * use lower case for degree and radian
  *
@@ -160,7 +163,9 @@ class OGRSpatialReference
                            const char * pszEllipsoidName,
                            double dfSemiMajor, double dfInvFlattening,
                            const char * pszPMName = NULL,
-                           double dfPMOffset = 0.0 );
+                           double dfPMOffset = 0.0,
+                           const char * pszUnits = NULL,
+                           double dfConvertToRadians = 0.0 );
     double	GetSemiMajor( OGRErr * = NULL );
     double	GetSemiMinor( OGRErr * = NULL );
     double	GetInvFlattening( OGRErr * = NULL );
@@ -208,6 +213,11 @@ class OGRSpatialReference
     OGRErr      SetLCC( double dfStdP1, double dfStdP2,
                         double dfCenterLat, double dfCenterLong,
                         double dfFalseEasting, double dfFalseNorthing );
+
+    // Lambert Conformal Conic 1SP
+    OGRErr      SetLCC1SP( double dfCenterLat, double dfCenterLong,
+                           double dfScale,
+                           double dfFalseEasting, double dfFalseNorthing );
 
     // Lambert Conformal Conic (Belgium)
     OGRErr      SetLCCB( double dfStdP1, double dfStdP2,
@@ -296,7 +306,7 @@ class OGRSpatialReference
 #define SRS_PT_TRANSVERSE_MERCATOR					\
                                 "Transverse_Mercator"
 #define SRS_PT_TRANSVERSE_MERCATOR_SOUTH_ORIENTED			\
-                                "Transverse_Mercator_South_Oriented"
+                                "Transverse_Mercator_South_Orientated"
 #define SRS_PT_OBLIQUE_STEREOGRAPHIC					\
                                 "Oblique_Stereographic"
 #define SRS_PT_POLAR_STEREOGRAPHIC					\
