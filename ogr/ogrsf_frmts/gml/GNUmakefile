@@ -3,7 +3,8 @@ GDAL_ROOT	=	../../..
 
 include $(GDAL_ROOT)/GDALmake.opt
 
-CORE_OBJ =	gmlpropertydefn.o gmlfeatureclass.o gmlfeature.o gmlreader.o
+CORE_OBJ =	gmlpropertydefn.o gmlfeatureclass.o gmlfeature.o gmlreader.o \
+		parsexsd.o
 
 OGR_OBJ =	ogrgmldriver.o ogrgmldatasource.o ogrgmllayer.o
 
