@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_coordsys.cpp,v 1.12 2000/03/27 03:31:15 daniel Exp $
+ * $Id: mitab_coordsys.cpp,v 1.14 2000/09/28 16:39:44 warmerda Exp $
  *
  * Name:     mitab_coordsys.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -31,6 +31,13 @@
  **********************************************************************
  *
  * $Log: mitab_coordsys.cpp,v $
+ * Revision 1.14  2000/09/28 16:39:44  warmerda
+ * avoid warnings for unused, and unitialized variables
+ *
+ * Revision 1.13  2000/08/29 22:30:45  daniel
+ * Made MITABCoordSys2SpatialRef() return NULL for a NonEarth coordsys since
+ * returning an empty SpatialRef created confusion between LatLon and NonEarth
+ *
  * Revision 1.12  2000/03/27 03:31:15  daniel
  * Fixed parsing of CoordSys NonEarth broken by previous change
  *
@@ -166,7 +173,7 @@ OGRSpatialReference *MITABCoordSys2SpatialRef( const char * pszCoordSys )
 /* -------------------------------------------------------------------- */
     int		nDatum = 0;
     double	adfDatumParm[8];
-    int		nEllipsoid;
+    int		nEllipsoid=0;
 
     if( nProjection != 0 && CSLCount(papszNextField) > 0 )
     {
@@ -214,10 +221,19 @@ OGRSpatialReference *MITABCoordSys2SpatialRef( const char * pszCoordSys )
         /*--------------------------------------------------------------
          * NonEarth ... we return with an empty SpatialRef.  Eventually
          * we might want to include the units, but not for now.
+         *
+         * __TODO__ Changed to return NULL because returning an empty
+         * SpatialRef caused confusion between Latlon and NonEarth since
+         * empty SpatialRefs do have a GEOGCS set and makes them look like
+         * Lat/Lon SpatialRefs.
+         *
+         * Ideally we would like to return a SpatialRef whith no GEGOCS
          *-------------------------------------------------------------*/
       case 0:
         CSLDestroy(papszFields);
-        return poSR;
+        //return poSR;
+        delete poSR;
+        return NULL;
         break;
 
         /*--------------------------------------------------------------
@@ -464,6 +480,12 @@ OGRSpatialReference *MITABCoordSys2SpatialRef( const char * pszCoordSys )
     else if( EQUAL(pszMIFUnits, "mi" ) )
         poSR->SetLinearUnits( "Mile", 1609.344 );
 
+/* -------------------------------------------------------------------- */
+/*      For Non-Earth projection, we're done at this point.             */
+/* -------------------------------------------------------------------- */
+    if (nProjection == 0)
+        return NULL; //poSR;
+
 /* ==================================================================== */
 /*      Establish the GeogCS                                            */
 /* ==================================================================== */
@@ -572,7 +594,7 @@ OGRSpatialReference *MITABCoordSys2SpatialRef( const char * pszCoordSys )
     }
 
 /* -------------------------------------------------------------------- */
-/*      Set the GeogCS                                                  */
+/*      Set the GeogCS.                                                 */
 /* -------------------------------------------------------------------- */
     poSR->SetGeogCS( pszGeogName, szDatumName, pszSpheroidName,
                      dfSemiMajor, dfInvFlattening,
@@ -580,7 +602,7 @@ OGRSpatialReference *MITABCoordSys2SpatialRef( const char * pszCoordSys )
                      SRS_UA_DEGREE,
                      atof(SRS_UA_DEGREE_CONV) );
 
-    
+
 /* -------------------------------------------------------------------- */
 /*      Report on translation.                                          */
 /* -------------------------------------------------------------------- */
@@ -626,7 +648,16 @@ char *MITABSpatialRef2CoordSys( OGRSpatialReference * poSR )
 
     if( pszProjection == NULL )
     {
-        nProjection = 1;
+        /*--------------------------------------------------------------
+         * NULL projection.  
+         * We have 2 possibilities: CoordSys NonEarth or Lat/Lon 
+         * NonEarth ... is an empty SpatialRef.  
+         * Lat/Lon has no "PROJECTION" but GEOGCS is set
+         *-------------------------------------------------------------*/
+         if ( poSR->GetAttrValue("GEOGCS") == NULL)
+            nProjection = 0; // Non-Earth
+        else
+            nProjection = 1; // Lat/Lon
     }
     else if( EQUAL(pszProjection,SRS_PT_ALBERS_CONIC_EQUAL_AREA) )
     {
@@ -795,10 +826,9 @@ char *MITABSpatialRef2CoordSys( OGRSpatialReference * poSR )
      * ============================================================== */
     int		nDatum = 0;
     double	adfDatumParm[8];
-    int		nEllipsoid;
+    int		nEllipsoid=0;
     
     const char *pszWKTDatum = poSR->GetAttrValue("DATUM");
-    MapInfoDatumInfo *psDatumInfo = NULL;
 
     if( pszWKTDatum == NULL )
     {

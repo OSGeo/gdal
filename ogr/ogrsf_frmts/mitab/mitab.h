@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab.h,v 1.35 2000/07/04 01:45:16 warmerda Exp $
+ * $Id: mitab.h,v 1.40 2000/10/03 22:11:43 daniel Exp $
  *
  * Name:     mitab.h
  * Project:  MapInfo MIF Read/Write library
@@ -30,6 +30,21 @@
  **********************************************************************
  *
  * $Log: mitab.h,v $
+ * Revision 1.40  2000/10/03 22:11:43  daniel
+ * Added MITAB_VERSION
+ *
+ * Revision 1.39  2000/10/03 19:29:51  daniel
+ * Include OGR StyleString stuff (implemented by Stephane)
+ *
+ * Revision 1.38  2000/09/19 17:23:52  daniel
+ * Maintain and/or compute valid region and polyline center/label point
+ *
+ * Revision 1.37  2000/09/07 23:32:13  daniel
+ * Added RecordDeletedFlag to TABFeature with get/set methods
+ *
+ * Revision 1.36  2000/07/27 02:03:57  daniel
+ * Remove extra comma at end of TABCustSymbStyle enum
+ *
  * Revision 1.35  2000/07/04 01:45:16  warmerda
  * avoid warning on nfieldid of IsFieldUnique
  *
@@ -144,6 +159,11 @@
 #include "mitab_priv.h"
 #include "ogr_feature.h"
 #include "ogrsf_frmts.h"
+
+/*---------------------------------------------------------------------
+ * Current version of the MITAB library... always useful!
+ *--------------------------------------------------------------------*/
+#define MITAB_VERSION "1.0.2 (2000-10-03)"
 
 #ifndef PI
 #  define PI 3.14159265358979323846
@@ -760,7 +780,7 @@ typedef enum TABCustSymbStyle_t // Can be OR'ed
 { 
     TABCSNone       = 0,        // Transparent BG, use default colors
     TABCSBGOpaque   = 0x01,     // White pixels are opaque
-    TABCSApplyColor = 0x02,     // non-white pixels drawn using symbol color
+    TABCSApplyColor = 0x02      // non-white pixels drawn using symbol color
 } TABCustSymbStyle;
 
 /*=====================================================================
@@ -792,8 +812,9 @@ class ITABFeaturePen
     void        SetPenPattern(GByte val) {m_sPenDef.nLinePattern=val;};
     void        SetPenColor(GInt32 clr)  {m_sPenDef.rgbColor = clr;};
 
-    void        DumpPenDef(FILE *fpOut = NULL);
     const char *GetPenStyleString();
+
+    void        DumpPenDef(FILE *fpOut = NULL);
 };
 
 class ITABFeatureBrush
@@ -819,8 +840,9 @@ class ITABFeatureBrush
     void        SetBrushTransparent(GByte val)
                                           {m_sBrushDef.bTransparentFill=val;};
 
-    void        DumpBrushDef(FILE *fpOut = NULL);
     const char *GetBrushStyleString();
+
+    void        DumpBrushDef(FILE *fpOut = NULL);
 };
 
 class ITABFeatureFont
@@ -864,8 +886,9 @@ class ITABFeatureSymbol
     void        SetSymbolSize(GInt16 val)   { m_sSymbolDef.nPointSize = val;};
     void        SetSymbolColor(GInt32 clr)  { m_sSymbolDef.rgbColor = clr;};
 
-    void        DumpSymbolDef(FILE *fpOut = NULL);
     const char *GetSymbolStyleString(double dfAngle = 0.0);
+
+    void        DumpSymbolDef(FILE *fpOut = NULL);
 };
 
 
@@ -897,9 +920,9 @@ class TABFeature: public OGRFeature
     double      m_dXMax;
     double      m_dYMax;
 
-    void        CopyTABFeatureBase(TABFeature *poDestFeature);
+    GBool       m_bDeletedFlag;
 
-    static int         m_nStyleId;
+    void        CopyTABFeatureBase(TABFeature *poDestFeature);
 
   public:
              TABFeature(OGRFeatureDefn *poDefnIn );
@@ -910,6 +933,9 @@ class TABFeature: public OGRFeature
     virtual int             GetMapInfoType()  { return m_nMapInfoType; };
     virtual int            ValidateMapInfoType(){m_nMapInfoType=TAB_GEOM_NONE;
                                                  return m_nMapInfoType;};
+
+    GBool       IsRecordDeleted() { return m_bDeletedFlag; };
+    void        SetRecordDeleted(GBool bDeleted) { m_bDeletedFlag=bDeleted; };
 
     /*-----------------------------------------------------------------
      * TAB Support
@@ -986,6 +1012,8 @@ class TABPoint: public TABFeature,
     virtual int ReadGeometryFromMIFFile(MIDDATAFile *fp);
     virtual int WriteGeometryToMIFFile(MIDDATAFile *fp);
 
+    virtual const char *GetStyleString();
+
     virtual void DumpMIF(FILE *fpOut = NULL);
 };
 
@@ -1023,6 +1051,8 @@ class TABFontPoint: public TABPoint,
 
     virtual int ReadGeometryFromMIFFile(MIDDATAFile *fp);
     virtual int WriteGeometryToMIFFile(MIDDATAFile *fp);
+
+    virtual const char *GetStyleString();
 
     GBool       QueryFontStyle(TABFontStyle eStyleToQuery);
     void        ToggleFontStyle(TABFontStyle eStyleToToggle, GBool bStatus);
@@ -1075,6 +1105,8 @@ class TABCustomPoint: public TABPoint,
     virtual int ReadGeometryFromMIFFile(MIDDATAFile *fp);
     virtual int WriteGeometryToMIFFile(MIDDATAFile *fp);
 
+    virtual const char *GetStyleString();
+
     const char *GetSymbolNameRef()      { return GetFontNameRef(); };
     void        SetSymbolName(const char *pszName) {SetFontName(pszName);};
     
@@ -1102,6 +1134,10 @@ class TABCustomPoint: public TABPoint,
 class TABPolyline: public TABFeature, 
                    public ITABFeaturePen
 {
+  private:
+    GBool       m_bCenterIsSet;
+    double      m_dCenterX, m_dCenterY;
+
   public:
              TABPolyline(OGRFeatureDefn *poDefnIn);
     virtual ~TABPolyline();
@@ -1122,7 +1158,12 @@ class TABPolyline: public TABFeature,
     virtual int ReadGeometryFromMIFFile(MIDDATAFile *fp);
     virtual int WriteGeometryToMIFFile(MIDDATAFile *fp);
 
+    virtual const char *GetStyleString();
+
     virtual void DumpMIF(FILE *fpOut = NULL);
+
+    int         GetCenter(double &dX, double &dY);
+    void        SetCenter(double dX, double dY);
 
     // MapInfo-specific attributes... made available through public vars
     // for now.
@@ -1154,9 +1195,10 @@ class TABRegion: public TABFeature,
                  public ITABFeatureBrush
 {
     GBool       m_bSmooth;
-    GBool       m_bCentroid;
-    double      m_dfCentroidX, m_dfCentroidY;
   private:
+    GBool       m_bCenterIsSet;
+    double      m_dCenterX, m_dCenterY;
+
     int     ComputeNumRings(TABMAPCoordSecHdr **ppasSecHdrs, 
                             TABMAPFile *poMAPFile);
     int     AppendSecHdrs(OGRPolygon *poPolygon,
@@ -1185,7 +1227,12 @@ class TABRegion: public TABFeature,
     virtual int ReadGeometryFromMIFFile(MIDDATAFile *fp);
     virtual int WriteGeometryToMIFFile(MIDDATAFile *fp);
 
+    virtual const char *GetStyleString();
+
     virtual void DumpMIF(FILE *fpOut = NULL);
+
+    int         GetCenter(double &dX, double &dY);
+    void        SetCenter(double dX, double dY);
 };
 
 
@@ -1223,6 +1270,8 @@ class TABRectangle: public TABFeature,
 
     virtual int ReadGeometryFromMIFFile(MIDDATAFile *fp);
     virtual int WriteGeometryToMIFFile(MIDDATAFile *fp);
+
+    virtual const char *GetStyleString();
 
     virtual void DumpMIF(FILE *fpOut = NULL);
 
@@ -1276,6 +1325,8 @@ class TABEllipse: public TABFeature,
 
     virtual int ReadGeometryFromMIFFile(MIDDATAFile *fp);
     virtual int WriteGeometryToMIFFile(MIDDATAFile *fp);
+
+    virtual const char *GetStyleString();
 
     virtual void DumpMIF(FILE *fpOut = NULL);
 
@@ -1331,6 +1382,8 @@ class TABArc: public TABFeature,
     virtual int ReadGeometryFromMIFFile(MIDDATAFile *fp);
     virtual int WriteGeometryToMIFFile(MIDDATAFile *fp);
 
+    virtual const char *GetStyleString();
+
     virtual void DumpMIF(FILE *fpOut = NULL);
 
     double      GetStartAngle() { return m_dStartAngle; };
@@ -1382,6 +1435,8 @@ class TABText: public TABFeature,
     GInt16      m_nTextAlignment;       // Justification/Vert.Spacing/arrow
     GInt16      m_nFontStyle;           // Bold/italic/underlined/shadow/...
 
+    const char *GetLabelStyleString();
+
   public:
              TABText(OGRFeatureDefn *poDefnIn);
     virtual ~TABText();
@@ -1396,6 +1451,8 @@ class TABText: public TABFeature,
 
     virtual int ReadGeometryFromMIFFile(MIDDATAFile *fp);
     virtual int WriteGeometryToMIFFile(MIDDATAFile *fp);
+
+    virtual const char *GetStyleString();
 
     virtual void DumpMIF(FILE *fpOut = NULL);
 
@@ -1428,8 +1485,6 @@ class TABText: public TABFeature,
     GBool       IsFontBGColorUsed();
     int         GetFontStyleTABValue()           {return m_nFontStyle;};
     void        SetFontStyleTABValue(int nStyle){m_nFontStyle=(GInt16)nStyle;};
-
-    const char *GetLabelStyleString();
 
 };
 

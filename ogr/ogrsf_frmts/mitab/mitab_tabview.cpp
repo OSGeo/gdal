@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_tabview.cpp,v 1.6 2000/02/28 17:12:22 daniel Exp $
+ * $Id: mitab_tabview.cpp,v 1.7 2000/09/28 16:39:44 warmerda Exp $
  *
  * Name:     mitab_tabfile.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -32,6 +32,9 @@
  **********************************************************************
  *
  * $Log: mitab_tabview.cpp,v $
+ * Revision 1.7  2000/09/28 16:39:44  warmerda
+ * avoid warnings for unused, and unitialized variables
+ *
  * Revision 1.6  2000/02/28 17:12:22  daniel
  * Write support for joined tables and indexed fields
  *
@@ -1630,8 +1633,6 @@ int TABRelation::AddFieldNative(const char *pszName, TABFieldType eMapInfoType,
     if (m_poMainTable==NULL || m_poRelTable==NULL ||
         m_panMainTableFieldMap==NULL || m_panRelTableFieldMap==NULL)
         return -1;
-
-    OGRFieldDefn *poFieldDefn = NULL;
 
     if (!bUnique)
     {

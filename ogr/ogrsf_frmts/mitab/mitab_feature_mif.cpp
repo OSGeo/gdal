@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_feature_mif.cpp,v 1.13 2000/03/27 03:33:45 daniel Exp $
+ * $Id: mitab_feature_mif.cpp,v 1.16 2000/10/03 19:29:51 daniel Exp $
  *
  * Name:     mitab_feature.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -31,6 +31,15 @@
  **********************************************************************
  *
  * $Log: mitab_feature_mif.cpp,v $
+ * Revision 1.16  2000/10/03 19:29:51  daniel
+ * Include OGR StyleString stuff (implemented by Stephane)
+ *
+ * Revision 1.15  2000/09/28 16:39:44  warmerda
+ * avoid warnings for unused, and unitialized variables
+ *
+ * Revision 1.14  2000/09/19 17:23:53  daniel
+ * Maintain and/or compute valid region and polyline center/label point
+ *
  * Revision 1.13  2000/03/27 03:33:45  daniel
  * Treat SYMBOL line as optional when reading TABPoint
  *
@@ -82,17 +91,15 @@
 #include "mitab.h"
 #include "mitab_utils.h"
 #include <ctype.h>
-#include "ogr_featurestyle.h"
 
 /*=====================================================================
  *                      class TABFeature
  *====================================================================*/
-/**********************************************************************
- **********************************************************************/
+
 /**********************************************************************
  *                   TABFeature::ReadRecordFromMIDFile()
  *
- *  This methode is used to read the Record (Attributs) for all type of
+ *  This method is used to read the Record (Attributs) for all type of
  *  feature included in a mid/mif file.
  * 
  * Returns 0 on success, -1 on error, in which case CPLError() will have
@@ -103,7 +110,6 @@ int TABFeature::ReadRecordFromMIDFile(MIDDATAFile *fp)
     const char       *pszLine;
     char            **papszToken;
     int               nFields,i;
-    OGRFieldDefn     *poFDefn  = NULL;
 
     nFields = GetFieldCount();
     
@@ -140,7 +146,6 @@ int TABFeature::ReadRecordFromMIDFile(MIDDATAFile *fp)
 int TABFeature::WriteRecordToMIDFile(MIDDATAFile *fp)
 {
     int                  iField, numFields;
-    OGRFeatureDefn      *poDefn = GetDefnRef();
     OGRFieldDefn	*poFDefn = NULL;
 
     CPLAssert(fp);
@@ -230,9 +235,6 @@ int TABPoint::ReadGeometryFromMIFFile(MIDDATAFile *fp)
     char               **papszToken;
     const char *pszLine;
     double dfX,dfY;
-    char                *pszCurrentStyle;
-    const char          *pszName;
-    
     papszToken = CSLTokenizeString(fp->GetSavedLine());
      
     if (CSLCount(papszToken) !=3)
@@ -317,9 +319,6 @@ int TABFontPoint::ReadGeometryFromMIFFile(MIDDATAFile *fp)
     char               **papszToken;
     const char *pszLine;
     double dfX,dfY;
-    char                *pszCurrentStyle;
-    const char          *pszName;
-    
     papszToken = CSLTokenizeString(fp->GetSavedLine());
 
     if (CSLCount(papszToken) !=3)
@@ -357,22 +356,6 @@ int TABFontPoint::ReadGeometryFromMIFFile(MIDDATAFile *fp)
 
     SetMBR(dfX, dfY, dfX, dfY);
 
-    pszCurrentStyle =  CPLStrdup(GetSymbolStyleString(GetSymbolAngle()));
-    if (m_poStyleTable && (pszName = m_poStyleTable->
-			   GetStyleName(pszCurrentStyle)) != NULL)
-    {
-	SetStyleString(pszName);
-    }
-    else
-    {
-	pszName = CPLSPrintf("@MITAB_%d",m_nStyleId++);
-	if (m_poStyleTable)
-	  m_poStyleTable->AddStyle(pszName,
-				   pszCurrentStyle);
-	SetStyleString(pszName);
-    }
-    CPLFree(pszCurrentStyle);
-    
     /* Go to the first line of the next feature */
 
     while (((pszLine = fp->GetLine()) != NULL) && 
@@ -421,10 +404,7 @@ int TABCustomPoint::ReadGeometryFromMIFFile(MIDDATAFile *fp)
     char               **papszToken;
     const char          *pszLine;
     double               dfX,dfY;
-    char                *pszCurrentStyle;
-    const char          *pszName;
-    
-    
+
     papszToken = CSLTokenizeString(fp->GetSavedLine());
 
     
@@ -461,21 +441,6 @@ int TABCustomPoint::ReadGeometryFromMIFFile(MIDDATAFile *fp)
 
     SetMBR(dfX, dfY, dfX, dfY);
 
-    pszCurrentStyle =  CPLStrdup(GetSymbolStyleString());
-    if (m_poStyleTable && (pszName = m_poStyleTable->
-			   GetStyleName(pszCurrentStyle)) != NULL)
-    {
-	SetStyleString(pszName);
-    }
-    else
-    {
-	pszName = CPLSPrintf("@MITAB_%d",m_nStyleId++);
-	if (m_poStyleTable)
-	  m_poStyleTable->AddStyle(pszName,
-				   pszCurrentStyle);
-	SetStyleString(pszName);
-    }
-    CPLFree(pszCurrentStyle);
     /* Go to the first line of the next feature */
 
     while (((pszLine = fp->GetLine()) != NULL) && 
@@ -525,10 +490,8 @@ int TABPolyline::ReadGeometryFromMIFFile(MIDDATAFile *fp)
     OGRLineString       *poLine;
     OGRMultiLineString  *poMultiLine;
     GBool                bMultiple = FALSE;
-    int                  nNumPoints,nNumSec,i,j;
+    int                  nNumPoints,nNumSec=0,i,j;
     OGREnvelope          sEnvelope;
-    char                *pszCurrentStyle;
-    const char          *pszName;
     
 
     papszToken = CSLTokenizeString(fp->GetLastLine());
@@ -685,21 +648,6 @@ int TABPolyline::ReadGeometryFromMIFFile(MIDDATAFile *fp)
 	}
 	CSLDestroy(papszToken);
     }
-    pszCurrentStyle =  CPLStrdup(GetPenStyleString());
-    if (m_poStyleTable && (pszName = m_poStyleTable->
-			   GetStyleName(pszCurrentStyle)) != NULL)
-    {
-	SetStyleString(pszName);
-    }
-    else
-    {
-	pszName = CPLSPrintf("@MITAB_%d",m_nStyleId++);
-	if (m_poStyleTable)
-	  m_poStyleTable->AddStyle(pszName,
-				   pszCurrentStyle);
-	SetStyleString(pszName);
-    }
-    CPLFree(pszCurrentStyle);
     return 0; 
 }
 
@@ -804,13 +752,11 @@ int TABRegion::ReadGeometryFromMIFFile(MIDDATAFile *fp)
     OGRGeometry         *poGeometry = NULL;
     OGRPolygon          *poPolygon = NULL;
     OGRMultiPolygon     *poMultiPolygon = NULL;
-    int                  i,iSection, numLineSections;
+    int                  i,iSection, numLineSections=0;
     char               **papszToken;
     const char          *pszLine;
     OGREnvelope          sEnvelope;
-    char                *pszCurrentStyle;
-    const char          *pszName;
-    
+
     m_bSmooth = FALSE;
     /*=============================================================
      * REGION (Similar to PLINE MULTIPLE)
@@ -838,7 +784,7 @@ int TABRegion::ReadGeometryFromMIFFile(MIDDATAFile *fp)
 
     for(iSection=0; iSection<numLineSections; iSection++)
     {
-	int     numSectionVertices;
+	int     numSectionVertices = 0;
 
         poPolygon = new OGRPolygon();
 
@@ -922,36 +868,14 @@ int TABRegion::ReadGeometryFromMIFFile(MIDDATAFile *fp)
 	    {
 		if (CSLCount(papszToken) == 3)
 		{
-		    OGRPoint oPoint;
-		    oPoint.setX(fp->GetXTrans(atof(papszToken[1])));
-		    oPoint.setY(fp->GetYTrans(atof(papszToken[2])));
-		    if (poPolygon)
-		      poPolygon->Centroid(&oPoint);
-		    m_bCentroid = TRUE;
-		    m_dfCentroidX = fp->GetXTrans(atof(papszToken[1]));
-		    m_dfCentroidY = fp->GetYTrans(atof(papszToken[2]));
+                    SetCenter(fp->GetXTrans(atof(papszToken[1])),
+                              fp->GetYTrans(atof(papszToken[2])) );
 		}
 	    }
 	}
 	CSLDestroy(papszToken);
         papszToken = NULL;
     }
-
-    pszCurrentStyle =  CPLStrdup(CPLSPrintf("%s;%s",GetPenStyleString(),GetBrushStyleString()));
-    if (m_poStyleTable && (pszName = m_poStyleTable->
-			   GetStyleName(pszCurrentStyle)) != NULL)
-    {
-	SetStyleString(pszName);
-    }
-    else
-    {
-	pszName = CPLSPrintf("@MITAB_%d",m_nStyleId++);
-	if (m_poStyleTable)
-	  m_poStyleTable->AddStyle(pszName,
-				   pszCurrentStyle);
-	SetStyleString(pszName);
-    }
-    CPLFree(pszCurrentStyle);
     
     
     return 0; 
@@ -1024,10 +948,9 @@ int TABRegion::WriteGeometryToMIFFile(MIDDATAFile *fp)
 			    GetBrushFGColor());
 	}
 
-	if (m_bCentroid)
+	if (m_bCenterIsSet)
 	{
-	    fp->WriteLine("    Center %.16g %.16g\n", m_dfCentroidX,
-			  m_dfCentroidY);
+	    fp->WriteLine("    Center %.16g %.16g\n", m_dCenterX, m_dCenterY);
 	}
 
 
@@ -1052,10 +975,7 @@ int TABRectangle::ReadGeometryFromMIFFile(MIDDATAFile *fp)
     double               dXMin, dYMin, dXMax, dYMax;
     OGRPolygon          *poPolygon;
     OGRLinearRing       *poRing;
-    char                *pszCurrentStyle;
-    const char          *pszName;
-    
-    
+
     papszToken = CSLTokenizeString(fp->GetLastLine());
 
     if (CSLCount(papszToken) <  5)
@@ -1180,23 +1100,7 @@ int TABRectangle::ReadGeometryFromMIFFile(MIDDATAFile *fp)
        CSLDestroy(papszToken);
        papszToken = NULL;
    }
-
-    pszCurrentStyle =  CPLStrdup(CPLSPrintf("%s;%s",GetPenStyleString(),
-					    GetBrushStyleString()));
-    if (m_poStyleTable && (pszName = m_poStyleTable->
-			   GetStyleName(pszCurrentStyle)) != NULL)
-    {
-	SetStyleString(pszName);
-    }
-    else
-    {
-	pszName = CPLSPrintf("@MITAB_%d",m_nStyleId++);
-	if (m_poStyleTable)
-	  m_poStyleTable->AddStyle(pszName,
-				   pszCurrentStyle);
-	SetStyleString(pszName);
-    }
-    CPLFree(pszCurrentStyle);
+ 
    return 0; 
 
 }    
@@ -1269,10 +1173,7 @@ int TABEllipse::ReadGeometryFromMIFFile(MIDDATAFile *fp)
     double              dXMin, dYMin, dXMax, dYMax;
     OGRPolygon          *poPolygon;
     OGRLinearRing       *poRing;
-    char                *pszCurrentStyle;
-    const char          *pszName;
-    
-    
+
     papszToken = CSLTokenizeString(fp->GetLastLine());
 
     if (CSLCount(papszToken) != 5)
@@ -1355,21 +1256,6 @@ int TABEllipse::ReadGeometryFromMIFFile(MIDDATAFile *fp)
 	CSLDestroy(papszToken);
         papszToken = NULL;
     }
-    pszCurrentStyle =  CPLStrdup(CPLSPrintf("%s;%s",GetPenStyleString(),GetBrushStyleString()));
-    if (m_poStyleTable && (pszName = m_poStyleTable->
-			   GetStyleName(pszCurrentStyle)) != NULL)
-    {
-	SetStyleString(pszName);
-    }
-    else
-    {
-	pszName = CPLSPrintf("@MITAB_%d",m_nStyleId++);
-	if (m_poStyleTable)
-	  m_poStyleTable->AddStyle(pszName,
-				   pszCurrentStyle);
-	SetStyleString(pszName);
-    }
-    CPLFree(pszCurrentStyle);
     return 0; 
 }
 
@@ -1421,8 +1307,6 @@ int TABArc::ReadGeometryFromMIFFile(MIDDATAFile *fp)
     char               **papszToken;
     double               dXMin,dXMax, dYMin,dYMax;
     int                  numPts;
-    char                *pszCurrentStyle;
-    const char          *pszName;
     
     papszToken = CSLTokenizeString(fp->GetLastLine());
 
@@ -1528,22 +1412,7 @@ int TABArc::ReadGeometryFromMIFFile(MIDDATAFile *fp)
 	CSLDestroy(papszToken);
         papszToken = NULL;
    }
-   pszCurrentStyle =  CPLStrdup(GetPenStyleString());
-    if (m_poStyleTable && (pszName = m_poStyleTable->
-			   GetStyleName(pszCurrentStyle)) != NULL)
-    {
-	SetStyleString(pszName);
-    }
-    else
-    {
-	pszName = CPLSPrintf("@MITAB_%d",m_nStyleId++);
-	if (m_poStyleTable)
-	  m_poStyleTable->AddStyle(pszName,
-				   pszCurrentStyle);
-	SetStyleString(pszName);
-    }
-    CPLFree(pszCurrentStyle);
-    return 0; 
+   return 0; 
 }
 
 /**********************************************************************
@@ -1584,10 +1453,7 @@ int TABText::ReadGeometryFromMIFFile(MIDDATAFile *fp)
     const char          *pszLine;
     char               **papszToken;
     const char          *pszString;
-    char                *pszCurrentStyle;
-    const char          *pszName;
-    
-    
+  
     papszToken = CSLTokenizeString(fp->GetLastLine());
 
     if (CSLCount(papszToken) == 1)
@@ -1825,22 +1691,6 @@ int TABText::ReadGeometryFromMIFFile(MIDDATAFile *fp)
         m_dWidth = m_dHeight * ((dYMax-dYMin) - m_dHeight*dCos) /
                                                         (m_dHeight*dSin);
     m_dWidth = ABS(m_dWidth);
-
-   pszCurrentStyle =  CPLStrdup(GetLabelStyleString());
-    if (m_poStyleTable && (pszName = m_poStyleTable->
-			   GetStyleName(pszCurrentStyle)) != NULL)
-    {
-	SetStyleString(pszName);
-    }
-    else
-    {
-	pszName = CPLSPrintf("@MITAB_%d",m_nStyleId++);
-	if (m_poStyleTable)
-	  m_poStyleTable->AddStyle(pszName,
-				   pszCurrentStyle);
-	SetStyleString(pszName);
-    }
-    CPLFree(pszCurrentStyle);
     
    return 0; 
 }

@@ -46,6 +46,11 @@ ToDo - Open Questions:
 CHANGES - Current Version:
 --------------------------
 
+
+
+Version 1.0.2 - (2000-10-03)
+----------------------------
+
 - Avoid warnings building with gcc -Wall -O2 (NFW).
 
 - Modified generation of .MAP spatial index to generate a balanced tree
@@ -68,6 +73,18 @@ CHANGES - Current Version:
 
 - Made all open() methods completely case-insensitive on filenames on Unix
   (added TABAdjustCaseSensitiveFilename())
+
+- Added new MapInfo 6.0 datums in datum list.
+
+- Added OGR Feature Style String support when reading
+
+- Added support for writing arcs, ellipses and rectangles using the C API
+
+- Flushed tab2mif.cpp and mif2tab.cpp.  There is now a single tab2tab.cpp 
+  conversion program that can generate both TAB or MIF output, depending 
+  on output filename extension
+
+- Added #define MITAB_VERSION for apps that want to report library version.
 
 
 Version 1.0.1 - (2000-04-21)
@@ -184,5 +201,5 @@ Version 0.1 - (1999-12-04)
 
 
 ------------
-$Id: HISTORY.TXT,v 1.24 2000/09/28 16:40:16 warmerda Exp $
+$Id: HISTORY.TXT,v 1.27 2000/10/03 22:10:51 daniel Exp $
 ------------

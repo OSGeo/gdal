@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_feature.cpp,v 1.26 2000/04/21 12:39:05 daniel Exp $
+ * $Id: mitab_feature.cpp,v 1.30 2000/10/03 19:29:51 daniel Exp $
  *
  * Name:     mitab_feature.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -30,6 +30,18 @@
  **********************************************************************
  *
  * $Log: mitab_feature.cpp,v $
+ * Revision 1.30  2000/10/03 19:29:51  daniel
+ * Include OGR StyleString stuff (implemented by Stephane)
+ *
+ * Revision 1.29  2000/09/19 17:23:52  daniel
+ * Maintain and/or compute valid region and polyline center/label point
+ *
+ * Revision 1.28  2000/09/07 23:32:13  daniel
+ * Added RecordDeletedFlag to TABFeature with get/set methods
+ *
+ * Revision 1.27  2000/07/10 14:56:25  daniel
+ * Handle m_nOriginQuadrant==0 as quadrant 3 (reverse x and y axis)
+ *
  * Revision 1.26  2000/04/21 12:39:05  daniel
  * Added TABPolyline::GetNumParts()/GetPartRef()
  *
@@ -118,16 +130,11 @@
 
 #include "mitab.h"
 #include "mitab_utils.h"
-#include "ogr_featurestyle.h"
+#include "mitab_geometry.h"
+
 /*=====================================================================
  *                      class TABFeature
  *====================================================================*/
-
-
-/*--------------------------------------------------------------------
-  Used to create a stylename @MITAB_%d
-  -------------------------------------------------------------------- */
-int TABFeature::m_nStyleId = 1;
 
 
 /**********************************************************************
@@ -139,6 +146,7 @@ TABFeature::TABFeature(OGRFeatureDefn *poDefnIn):
                OGRFeature(poDefnIn)
 {
     m_nMapInfoType = TAB_GEOM_NONE;
+    m_bDeletedFlag = FALSE;
 
     SetMBR(0.0, 0.0, 0.0, 0.0);
 }
@@ -603,8 +611,6 @@ int TABPoint::ReadGeometryFromMAPFile(TABMAPFile *poMapFile)
     OGRGeometry         *poGeometry;
     TABMAPObjectBlock   *poObjBlock;
     GBool               bComprCoord;
-    char                *pszCurrentStyle;
-    const char          *pszName;
 
     /*-----------------------------------------------------------------
      * Fetch and validate geometry type
@@ -643,23 +649,6 @@ int TABPoint::ReadGeometryFromMAPFile(TABMAPFile *poMapFile)
 
     SetMBR(dX, dY, dX, dY);
 
-    
-    pszCurrentStyle = CPLStrdup(GetSymbolStyleString());
-    if (m_poStyleTable && (pszName = m_poStyleTable->
-			   GetStyleName(pszCurrentStyle)) != NULL)
-    {
-	SetStyleString(pszName);
-    }
-    else
-    {
-	pszName = CPLSPrintf("@MITAB_%d",m_nStyleId++);
-	if (m_poStyleTable)
-	  m_poStyleTable->AddStyle(pszName,
-				   pszCurrentStyle);
-	SetStyleString(pszName);
-    }
-    CPLFree(pszCurrentStyle);
-    
     return 0;
 }
 
@@ -768,6 +757,23 @@ double TABPoint::GetY()
     return poPoint->getY();
 }
 
+
+/**********************************************************************
+ *                   TABPoint::GetStyleString()
+ *
+ * Return style string for this feature.
+ *
+ * Style String is built only once during the first call to GetStyleString().
+ **********************************************************************/
+const char *TABPoint::GetStyleString()
+{
+    if (m_pszStyleString == NULL)
+    {
+        m_pszStyleString = CPLStrdup(GetSymbolStyleString());
+    }
+
+    return m_pszStyleString;
+}
 
 
 /**********************************************************************
@@ -909,9 +915,7 @@ int TABFontPoint::ReadGeometryFromMAPFile(TABMAPFile *poMapFile)
     OGRGeometry         *poGeometry;
     TABMAPObjectBlock   *poObjBlock;
     GBool               bComprCoord;
-    const char          *pszName;
-    char                *pszCurrentStyle;
-    
+
     /*-----------------------------------------------------------------
      * Fetch and validate geometry type
      *----------------------------------------------------------------*/
@@ -977,22 +981,6 @@ int TABFontPoint::ReadGeometryFromMAPFile(TABMAPFile *poMapFile)
 
     SetMBR(dX, dY, dX, dY);
 
-    pszCurrentStyle =  CPLStrdup(GetSymbolStyleString(GetSymbolAngle()));
-    if (m_poStyleTable && (pszName = m_poStyleTable->
-			   GetStyleName(pszCurrentStyle)) != NULL)
-    {
-	SetStyleString(pszName);
-    }
-    else
-    {
-	pszName = CPLSPrintf("@MITAB_%d",m_nStyleId++);
-	if (m_poStyleTable)
-	  m_poStyleTable->AddStyle(pszName,
-				   pszCurrentStyle);
-	SetStyleString(pszName);
-    }
-    CPLFree(pszCurrentStyle);
-    
     return 0;
 }
 
@@ -1137,6 +1125,23 @@ void TABFontPoint::SetSymbolAngle(double dAngle)
 }
 
 
+/**********************************************************************
+ *                   TABFontPoint::GetStyleString()
+ *
+ * Return style string for this feature.
+ *
+ * Style String is built only once during the first call to GetStyleString().
+ **********************************************************************/
+const char *TABFontPoint::GetStyleString()
+{
+    if (m_pszStyleString == NULL)
+    {
+        m_pszStyleString = CPLStrdup(GetSymbolStyleString(GetSymbolAngle()));
+    }
+
+    return m_pszStyleString;
+}
+
 
 /*=====================================================================
  *                      class TABCustomPoint
@@ -1214,8 +1219,7 @@ int TABCustomPoint::ReadGeometryFromMAPFile(TABMAPFile *poMapFile)
     OGRGeometry         *poGeometry;
     TABMAPObjectBlock   *poObjBlock;
     GBool               bComprCoord;
-    char                *pszCurrentStyle;
-    const char          *pszName;
+
     /*-----------------------------------------------------------------
      * Fetch and validate geometry type
      *----------------------------------------------------------------*/
@@ -1258,23 +1262,7 @@ int TABCustomPoint::ReadGeometryFromMAPFile(TABMAPFile *poMapFile)
     poGeometry = new OGRPoint(dX, dY);
     
     SetGeometryDirectly(poGeometry);
-    
-    pszCurrentStyle =  CPLStrdup(GetSymbolStyleString());
-    if (m_poStyleTable && (pszName = m_poStyleTable->
-			   GetStyleName(pszCurrentStyle)) != NULL)
-    {
-	SetStyleString(pszName);
-    }
-    else
-    {
-	pszName = CPLSPrintf("@MITAB_%d",m_nStyleId++);
-	if (m_poStyleTable)
-	  m_poStyleTable->AddStyle(pszName,
-				   pszCurrentStyle);
-	SetStyleString(pszName);
-    }
-    CPLFree(pszCurrentStyle);
-    
+
     SetMBR(dX, dY, dX, dY);
 
     return 0;
@@ -1339,6 +1327,23 @@ int TABCustomPoint::WriteGeometryToMAPFile(TABMAPFile *poMapFile)
 }
 
 
+/**********************************************************************
+ *                   TABCustomPoint::GetStyleString()
+ *
+ * Return style string for this feature.
+ *
+ * Style String is built only once during the first call to GetStyleString().
+ **********************************************************************/
+const char *TABCustomPoint::GetStyleString()
+{
+    if (m_pszStyleString == NULL)
+    {
+        m_pszStyleString = CPLStrdup(GetSymbolStyleString());
+    }
+
+    return m_pszStyleString;
+}
+
 /*=====================================================================
  *                      class TABPolyline
  *====================================================================*/
@@ -1352,6 +1357,7 @@ int TABCustomPoint::WriteGeometryToMAPFile(TABMAPFile *poMapFile)
 TABPolyline::TABPolyline(OGRFeatureDefn *poDefnIn):
               TABFeature(poDefnIn)
 {
+    m_bCenterIsSet = FALSE;
     m_bSmooth = FALSE;
 }
 
@@ -1388,6 +1394,9 @@ TABFeature *TABPolyline::CloneTABFeature(OGRFeatureDefn *poNewDefn/*=NULL*/)
     *(poNew->GetPenDefRef()) = *GetPenDefRef();
 
     poNew->m_bSmooth = m_bSmooth;
+    poNew->m_bCenterIsSet = m_bCenterIsSet;
+    poNew->m_dCenterX = m_dCenterX;
+    poNew->m_dCenterY = m_dCenterY;
 
     return poNew;
 }
@@ -1562,9 +1571,7 @@ int TABPolyline::ReadGeometryFromMAPFile(TABMAPFile *poMapFile)
     OGRLineString       *poLine;
     TABMAPObjectBlock   *poObjBlock;
     GBool               bComprCoord;
-    char                *pszCurrentStyle;
-    const char          *pszName;
-    
+
     /*-----------------------------------------------------------------
      * Fetch and validate geometry type
      *----------------------------------------------------------------*/
@@ -1622,6 +1629,8 @@ int TABPolyline::ReadGeometryFromMAPFile(TABMAPFile *poMapFile)
         }
         nCenterX = poObjBlock->ReadInt32();
         nCenterY = poObjBlock->ReadInt32();
+        poMapFile->Int2Coordsys(nCenterX, nCenterY, dX, dY);
+        SetCenter(dX, dY);
 
         poObjBlock->ReadIntCoord(bComprCoord, nX, nY);    // Read MBR
         poMapFile->Int2Coordsys(nX, nY, dXMin, dYMin);
@@ -1710,6 +1719,8 @@ int TABPolyline::ReadGeometryFromMAPFile(TABMAPFile *poMapFile)
         }
         nCenterX = poObjBlock->ReadInt32();
         nCenterY = poObjBlock->ReadInt32();
+        poMapFile->Int2Coordsys(nCenterX, nCenterY, dX, dY);
+        SetCenter(dX, dY);
 
         poObjBlock->ReadIntCoord(bComprCoord, nX, nY);    // Read MBR
         poMapFile->Int2Coordsys(nX, nY, dXMin, dYMin);
@@ -1797,22 +1808,7 @@ int TABPolyline::ReadGeometryFromMAPFile(TABMAPFile *poMapFile)
     SetGeometryDirectly(poGeometry);
 
     SetMBR(dXMin, dYMin, dXMax, dYMax);
-    
-    pszCurrentStyle =  CPLStrdup(GetPenStyleString());
-    if (m_poStyleTable && (pszName = m_poStyleTable->
-			   GetStyleName(pszCurrentStyle)) != NULL)
-    {
-	SetStyleString(pszName);
-    }
-    else
-    {
-	pszName = CPLSPrintf("@MITAB_%d",m_nStyleId++);
-	if (m_poStyleTable)
-	  m_poStyleTable->AddStyle(pszName,
-				   pszCurrentStyle);
-	SetStyleString(pszName);
-    }
-    CPLFree(pszCurrentStyle);
+
     return 0;
 }
 
@@ -1908,8 +1904,15 @@ int TABPolyline::WriteGeometryToMAPFile(TABMAPFile *poMapFile)
         poObjBlock->WriteInt32(nCoordBlockPtr);
         poObjBlock->WriteInt32(nCoordDataSize);
 
-        // Polyline center
-        poObjBlock->WriteIntCoord((nXMin+nXMax)/2, (nYMin+nYMax)/2);
+        // Polyline center point
+        double dX, dY;
+        if (GetCenter(dX, dY) != -1)
+        {
+            poMapFile->Coordsys2Int(dX, dY, nX, nY);
+            poObjBlock->WriteIntCoord(nX, nY);
+        }
+        else
+            poObjBlock->WriteIntCoord((nXMin+nXMax)/2, (nYMin+nYMax)/2);
 
         // MBR
         poObjBlock->WriteIntMBRCoord(nXMin, nYMin, nXMax, nYMax);
@@ -2066,8 +2069,15 @@ int TABPolyline::WriteGeometryToMAPFile(TABMAPFile *poMapFile)
         poObjBlock->WriteInt32(nCoordDataSize);
         poObjBlock->WriteInt16(numLines);
 
-        // Polyline center
-        poObjBlock->WriteIntCoord((nXMin+nXMax)/2, (nYMin+nYMax)/2);
+        // Polyline center point
+        double dX, dY;
+        if (GetCenter(dX, dY) != -1)
+        {
+            poMapFile->Coordsys2Int(dX, dY, nX, nY);
+            poObjBlock->WriteIntCoord(nX, nY);
+        }
+        else
+            poObjBlock->WriteIntCoord((nXMin+nXMax)/2, (nYMin+nYMax)/2);
 
         // MBR
         poObjBlock->WriteIntMBRCoord(nXMin, nYMin, nXMax, nYMax);
@@ -2086,6 +2096,23 @@ int TABPolyline::WriteGeometryToMAPFile(TABMAPFile *poMapFile)
         return -1;
 
     return 0;
+}
+
+/**********************************************************************
+ *                   TABPolyline::GetStyleString()
+ *
+ * Return style string for this feature.
+ *
+ * Style String is built only once during the first call to GetStyleString().
+ **********************************************************************/
+const char *TABPolyline::GetStyleString()
+{
+    if (m_pszStyleString == NULL)
+    {
+        m_pszStyleString = CPLStrdup(GetPenStyleString());
+    }
+
+    return m_pszStyleString;
 }
 
 
@@ -2155,10 +2182,85 @@ void TABPolyline::DumpMIF(FILE *fpOut /*=NULL*/)
         return;
     }
 
+    if (m_bCenterIsSet)
+        fprintf(fpOut, "Center %g %g\n", m_dCenterX, m_dCenterY);
+
     // Finish with PEN/BRUSH/etc. clauses
     DumpPenDef();
 
     fflush(fpOut);
+}
+
+/**********************************************************************
+ *                   TABPolyline::GetCenter()
+ *
+ * Returns the center point of the line.  Compute one if it was not 
+ * explicitly set:
+ *
+ * In MapInfo, for a simple or multiple polyline (pline), the center point 
+ * in the object definition is supposed to be either the center point of 
+ * the pline or the first section of a multiple pline (if an odd number of 
+ * points in the pline or first section), or the midway point between the 
+ * two central points (if an even number of points involved). 
+ *
+ * Returns 0 on success, -1 on error.
+ **********************************************************************/
+int TABPolyline::GetCenter(double &dX, double &dY)
+{
+    if (!m_bCenterIsSet)
+    {
+        OGRGeometry     *poGeom;
+        OGRLineString   *poLine = NULL;
+
+        poGeom = GetGeometryRef();
+        if (poGeom && poGeom->getGeometryType() == wkbLineString)
+        {
+            poLine = (OGRLineString *)poGeom;
+        }
+        else if (poGeom && poGeom->getGeometryType() == wkbMultiLineString)
+        {
+            OGRMultiLineString *poMultiLine = (OGRMultiLineString*)poGeom;
+            if (poMultiLine->getNumGeometries() > 0)
+                poLine = (OGRLineString *)poMultiLine->getGeometryRef(0);
+        }
+
+        if (poLine && poLine->getNumPoints() > 0)
+        {
+            int i = poLine->getNumPoints()/2;
+            if (poLine->getNumPoints() % 2 == 0)
+            {
+                // Return the midway between the 2 center points
+                m_dCenterX = (poLine->getX(i-1) + poLine->getX(i))/2.0;
+                m_dCenterY = (poLine->getY(i-1) + poLine->getY(i))/2.0;
+            }
+            else
+            {
+                // Return the center point
+                m_dCenterX = poLine->getX(i);
+                m_dCenterY = poLine->getY(i);
+            }
+            m_bCenterIsSet = TRUE;
+        }
+    }
+
+    if (!m_bCenterIsSet)
+        return -1;
+
+    dX = m_dCenterX;
+    dY = m_dCenterY;
+    return 0;
+}
+
+/**********************************************************************
+ *                   TABPolyline::SetCenter()
+ *
+ * Set the X,Y coordinates to use as center point for the line.
+ **********************************************************************/
+void TABPolyline::SetCenter(double dX, double dY)
+{
+    m_dCenterX = dX;
+    m_dCenterY = dY;
+    m_bCenterIsSet = TRUE;
 }
 
 
@@ -2174,7 +2276,7 @@ void TABPolyline::DumpMIF(FILE *fpOut /*=NULL*/)
 TABRegion::TABRegion(OGRFeatureDefn *poDefnIn):
               TABFeature(poDefnIn)
 {
-    m_bCentroid = FALSE;
+    m_bCenterIsSet = FALSE;
     m_bSmooth = FALSE;
 }
 
@@ -2214,9 +2316,9 @@ TABFeature *TABRegion::CloneTABFeature(OGRFeatureDefn *poNewDefn/*=NULL*/)
     *(poNew->GetBrushDefRef()) = *GetBrushDefRef();
 
     poNew->m_bSmooth = m_bSmooth;
-    poNew->m_bCentroid = m_bCentroid;
-    poNew->m_dfCentroidX = m_dfCentroidX;
-    poNew->m_dfCentroidY = m_dfCentroidY;
+    poNew->m_bCenterIsSet = m_bCenterIsSet;
+    poNew->m_dCenterX = m_dCenterX;
+    poNew->m_dCenterY = m_dCenterY;
 
     return poNew;
 }
@@ -2283,9 +2385,6 @@ int TABRegion::ReadGeometryFromMAPFile(TABMAPFile *poMapFile)
     OGRLinearRing       *poRing;
     TABMAPObjectBlock   *poObjBlock;
     GBool               bComprCoord;
-    char                *pszCurrentStyle;
-    const char          *pszName;
-    
 
     /*-----------------------------------------------------------------
      * Fetch and validate geometry type
@@ -2337,6 +2436,8 @@ int TABRegion::ReadGeometryFromMAPFile(TABMAPFile *poMapFile)
         }
         nCenterX = poObjBlock->ReadInt32();
         nCenterY = poObjBlock->ReadInt32();
+        poMapFile->Int2Coordsys(nCenterX, nCenterY, dX, dY);
+        SetCenter(dX, dY);
 
         poObjBlock->ReadIntCoord(bComprCoord, nX, nY);    // Read MBR
         poMapFile->Int2Coordsys(nX, nY, dXMin, dYMin);
@@ -2436,24 +2537,6 @@ int TABRegion::ReadGeometryFromMAPFile(TABMAPFile *poMapFile)
     SetGeometryDirectly(poGeometry);
 
     SetMBR(dXMin, dYMin, dXMax, dYMax);
-
-
-    pszCurrentStyle =  CPLStrdup(CPLSPrintf("%s;%s",GetPenStyleString(),GetBrushStyleString()));
-    if (m_poStyleTable && (pszName = m_poStyleTable->
-			   GetStyleName(pszCurrentStyle)) != NULL)
-    {
-	SetStyleString(pszName);
-    }
-    else
-    {
-	pszName = CPLSPrintf("@MITAB_%d",m_nStyleId++);
-	if (m_poStyleTable)
-	  m_poStyleTable->AddStyle(pszName,
-				   pszCurrentStyle);
-	SetStyleString(pszName);
-    }
-    CPLFree(pszCurrentStyle);
-    
 
     return 0;
 }
@@ -2577,8 +2660,15 @@ int TABRegion::WriteGeometryToMAPFile(TABMAPFile *poMapFile)
         poObjBlock->WriteInt32(nCoordDataSize);
         poObjBlock->WriteInt16(numRingsTotal);
 
-        // Polyline center
-        poObjBlock->WriteIntCoord((nXMin+nXMax)/2, (nYMin+nYMax)/2);
+        // Region center/label point
+        double dX, dY;
+        if (GetCenter(dX, dY) != -1)
+        {
+            poMapFile->Coordsys2Int(dX, dY, nX, nY);
+            poObjBlock->WriteIntCoord(nX, nY);
+        }
+        else
+            poObjBlock->WriteIntCoord((nXMin+nXMax)/2, (nYMin+nYMax)/2);
 
         // MBR
         poObjBlock->WriteIntMBRCoord(nXMin, nYMin, nXMax, nYMax);
@@ -2836,6 +2926,32 @@ OGRLinearRing *TABRegion::GetRingRef(int nRequestedRingIndex)
     return poRing;
 }
 
+/**********************************************************************
+ *                   TABRegion::GetStyleString()
+ *
+ * Return style string for this feature.
+ *
+ * Style String is built only once during the first call to GetStyleString().
+ **********************************************************************/
+const char *TABRegion::GetStyleString()
+{
+    if (m_pszStyleString == NULL)
+    {
+        // Since GetPen/BrushStyleString() use CPLSPrintf(), we need 
+        // to use temporary buffers
+        char *pszPen = CPLStrdup(GetPenStyleString());
+        char *pszBrush = CPLStrdup(GetBrushStyleString());
+
+        m_pszStyleString = CPLStrdup(CPLSPrintf("%s;%s", pszPen, pszBrush));
+
+        CPLFree(pszPen);
+        CPLFree(pszBrush);
+    }
+
+    return m_pszStyleString;
+}
+
+
 
 /**********************************************************************
  *                   TABRegion::DumpMIF()
@@ -2893,12 +3009,89 @@ void TABRegion::DumpMIF(FILE *fpOut /*=NULL*/)
         return;
     }
 
+    if (m_bCenterIsSet)
+        fprintf(fpOut, "Center %g %g\n", m_dCenterX, m_dCenterY);
+
     // Finish with PEN/BRUSH/etc. clauses
     DumpPenDef();
     DumpBrushDef();
 
     fflush(fpOut);
 }
+
+/**********************************************************************
+ *                   TABRegion::GetCenter()
+ *
+ * Returns the center/label point of the region.  
+ * Compute one using OGRPolygonLabelPoint() if it was not explicitly set 
+ * before.
+ *
+ * Returns 0 on success, -1 on error.
+ **********************************************************************/
+int TABRegion::GetCenter(double &dX, double &dY)
+{
+    if (!m_bCenterIsSet)
+    {
+        /*-------------------------------------------------------------
+         * Calculate label point.  If we have a multipolygon then we use 
+         * the first OGRPolygon in the feature to calculate the point.
+         *------------------------------------------------------------*/
+        OGRPoint        oLabelPoint;
+        OGRPolygon      *poPolygon=NULL;
+        OGRGeometry     *poGeom;
+
+        poGeom = GetGeometryRef();
+        if (poGeom == NULL)
+            return -1;
+
+        if (poGeom->getGeometryType() == wkbMultiPolygon)
+        {
+            OGRMultiPolygon *poMultiPolygon = (OGRMultiPolygon *)poGeom;
+            if (poMultiPolygon->getNumGeometries() > 0)
+                poPolygon = (OGRPolygon*)poMultiPolygon->getGeometryRef(0);
+        }
+        else if (poGeom->getGeometryType() == wkbPolygon)
+        {
+            poPolygon = (OGRPolygon*)poGeom;
+        }
+
+        if (poPolygon != NULL &&
+            OGRPolygonLabelPoint(poPolygon, &oLabelPoint) == OGRERR_NONE)
+        {
+            m_dCenterX = oLabelPoint.getX();
+            m_dCenterY = oLabelPoint.getY();
+        }
+        else
+        {
+            OGREnvelope oEnv;
+            poGeom->getEnvelope(&oEnv);
+            m_dCenterX = (oEnv.MaxX + oEnv.MinX)/2.0;
+            m_dCenterY = (oEnv.MaxY + oEnv.MinY)/2.0;
+        }
+
+        m_bCenterIsSet = TRUE;
+    }
+
+    if (!m_bCenterIsSet)
+        return -1;
+
+    dX = m_dCenterX;
+    dY = m_dCenterY;
+    return 0;
+}
+
+/**********************************************************************
+ *                   TABRegion::SetCenter()
+ *
+ * Set the X,Y coordinates to use as center/label point for the region.
+ **********************************************************************/
+void TABRegion::SetCenter(double dX, double dY)
+{
+    m_dCenterX = dX;
+    m_dCenterY = dY;
+    m_bCenterIsSet = TRUE;
+}
+
 
 /*=====================================================================
  *                      class TABRectangle
@@ -3015,9 +3208,7 @@ int TABRectangle::ReadGeometryFromMAPFile(TABMAPFile *poMapFile)
     OGRLinearRing       *poRing;
     TABMAPObjectBlock   *poObjBlock;
     GBool               bComprCoord;
-    char                *pszCurrentStyle;
-    const char          *pszName;
-    
+
     /*-----------------------------------------------------------------
      * Fetch and validate geometry type
      *----------------------------------------------------------------*/
@@ -3131,24 +3322,6 @@ int TABRectangle::ReadGeometryFromMAPFile(TABMAPFile *poMapFile)
 
     poPolygon->addRingDirectly(poRing);
     SetGeometryDirectly(poPolygon);
-    
-    pszCurrentStyle =  CPLStrdup(CPLSPrintf("%s;%s",GetPenStyleString(),
-					    GetBrushStyleString()));
-    if (m_poStyleTable && (pszName = m_poStyleTable->
-			   GetStyleName(pszCurrentStyle)) != NULL)
-    {
-	SetStyleString(pszName);
-    }
-    else
-    {
-	pszName = CPLSPrintf("@MITAB_%d",m_nStyleId++);
-	if (m_poStyleTable)
-	  m_poStyleTable->AddStyle(pszName,
-				   pszCurrentStyle);
-	SetStyleString(pszName);
-    }
-    CPLFree(pszCurrentStyle);
-        
 
     return 0;
 }
@@ -3226,6 +3399,30 @@ int TABRectangle::WriteGeometryToMAPFile(TABMAPFile *poMapFile)
     return 0;
 }
 
+/**********************************************************************
+ *                   TABRectangle::GetStyleString()
+ *
+ * Return style string for this feature.
+ *
+ * Style String is built only once during the first call to GetStyleString().
+ **********************************************************************/
+const char *TABRectangle::GetStyleString()
+{
+    if (m_pszStyleString == NULL)
+    {
+        // Since GetPen/BrushStyleString() use CPLSPrintf(), we need 
+        // to use temporary buffers
+        char *pszPen = CPLStrdup(GetPenStyleString());
+        char *pszBrush = CPLStrdup(GetBrushStyleString());
+
+        m_pszStyleString = CPLStrdup(CPLSPrintf("%s;%s", pszPen, pszBrush));
+
+        CPLFree(pszPen);
+        CPLFree(pszBrush);
+    }
+
+    return m_pszStyleString;
+}
 
 /**********************************************************************
  *                   TABRectangle::DumpMIF()
@@ -3416,9 +3613,7 @@ int TABEllipse::ReadGeometryFromMAPFile(TABMAPFile *poMapFile)
     OGRLinearRing       *poRing;
     TABMAPObjectBlock   *poObjBlock;
     GBool               bComprCoord;
-    char                *pszCurrentStyle;
-    const char          *pszName;
-    
+
     /*-----------------------------------------------------------------
      * Fetch and validate geometry type
      *----------------------------------------------------------------*/
@@ -3485,22 +3680,6 @@ int TABEllipse::ReadGeometryFromMAPFile(TABMAPFile *poMapFile)
     poPolygon->addRingDirectly(poRing);
     SetGeometryDirectly(poPolygon);
 
-    pszCurrentStyle =  CPLStrdup(CPLSPrintf("%s;%s",GetPenStyleString(),GetBrushStyleString()));
-    if (m_poStyleTable && (pszName = m_poStyleTable->
-			   GetStyleName(pszCurrentStyle)) != NULL)
-    {
-	SetStyleString(pszName);
-    }
-    else
-    {
-	pszName = CPLSPrintf("@MITAB_%d",m_nStyleId++);
-	if (m_poStyleTable)
-	  m_poStyleTable->AddStyle(pszName,
-				   pszCurrentStyle);
-	SetStyleString(pszName);
-    }
-    CPLFree(pszCurrentStyle);
-      
     return 0;
 }
 
@@ -3577,6 +3756,31 @@ int TABEllipse::WriteGeometryToMAPFile(TABMAPFile *poMapFile)
         return -1;
 
     return 0;
+}
+
+/**********************************************************************
+ *                   TABEllipse::GetStyleString()
+ *
+ * Return style string for this feature.
+ *
+ * Style String is built only once during the first call to GetStyleString().
+ **********************************************************************/
+const char *TABEllipse::GetStyleString()
+{
+    if (m_pszStyleString == NULL)
+    {
+        // Since GetPen/BrushStyleString() use CPLSPrintf(), we need 
+        // to use temporary buffers
+        char *pszPen = CPLStrdup(GetPenStyleString());
+        char *pszBrush = CPLStrdup(GetBrushStyleString());
+
+        m_pszStyleString = CPLStrdup(CPLSPrintf("%s;%s", pszPen, pszBrush));
+
+        CPLFree(pszPen);
+        CPLFree(pszBrush);
+    }
+
+    return m_pszStyleString;
 }
 
 
@@ -3766,9 +3970,7 @@ int TABArc::ReadGeometryFromMAPFile(TABMAPFile *poMapFile)
     TABMAPObjectBlock   *poObjBlock;
     GBool               bComprCoord;
     int                 numPts;
-    char                *pszCurrentStyle;
-    const char          *pszName;
-    
+
     /*-----------------------------------------------------------------
      * Fetch and validate geometry type
      *----------------------------------------------------------------*/
@@ -3820,8 +4022,15 @@ int TABArc::ReadGeometryFromMAPFile(TABMAPFile *poMapFile)
          *
          * The ReflectXAxis flag seems to have no effect here...
          *------------------------------------------------------------*/
+
+        /*-------------------------------------------------------------
+         * In version 100 .tab files (version 400 .map), it is possible
+         * to have a quadrant value of 0 and it should be treated the 
+         * same way as quadrant 3
+         *------------------------------------------------------------*/
         if ( poMapFile->GetHeaderBlock()->m_nCoordOriginQuadrant==1 ||
-             poMapFile->GetHeaderBlock()->m_nCoordOriginQuadrant==3  )
+             poMapFile->GetHeaderBlock()->m_nCoordOriginQuadrant==3 ||
+             poMapFile->GetHeaderBlock()->m_nCoordOriginQuadrant==0  )
         {
             // Quadrants 1 and 3 ... read order = start, end
             m_dStartAngle = poObjBlock->ReadInt16()/10.0;
@@ -3835,7 +4044,8 @@ int TABArc::ReadGeometryFromMAPFile(TABMAPFile *poMapFile)
         }
 
         if ( poMapFile->GetHeaderBlock()->m_nCoordOriginQuadrant==2 ||
-             poMapFile->GetHeaderBlock()->m_nCoordOriginQuadrant==3  )
+             poMapFile->GetHeaderBlock()->m_nCoordOriginQuadrant==3 ||
+             poMapFile->GetHeaderBlock()->m_nCoordOriginQuadrant==0 )
         {
             // X axis direction is flipped... adjust angle
             m_dStartAngle = (m_dStartAngle<=180.0) ? (180.0-m_dStartAngle):
@@ -3845,7 +4055,8 @@ int TABArc::ReadGeometryFromMAPFile(TABMAPFile *poMapFile)
         }
 
         if (poMapFile->GetHeaderBlock()->m_nCoordOriginQuadrant==3 ||
-            poMapFile->GetHeaderBlock()->m_nCoordOriginQuadrant==4)
+            poMapFile->GetHeaderBlock()->m_nCoordOriginQuadrant==4 ||
+            poMapFile->GetHeaderBlock()->m_nCoordOriginQuadrant==0 )
         {
             // Y axis direction is flipped... this reverses angle direction
             // Unfortunately we never found any file that contains this case,
@@ -3911,21 +4122,6 @@ int TABArc::ReadGeometryFromMAPFile(TABMAPFile *poMapFile)
 
     SetGeometryDirectly(poLine);
 
-    pszCurrentStyle =  CPLStrdup(GetPenStyleString());
-    if (m_poStyleTable && (pszName = m_poStyleTable->
-			   GetStyleName(pszCurrentStyle)) != NULL)
-    {
-	SetStyleString(pszName);
-    }
-    else
-    {
-	pszName = CPLSPrintf("@MITAB_%d",m_nStyleId++);
-	if (m_poStyleTable)
-	  m_poStyleTable->AddStyle(pszName,
-				   pszCurrentStyle);
-	SetStyleString(pszName);
-    }
-    CPLFree(pszCurrentStyle);
     return 0;
 }
 
@@ -4060,6 +4256,24 @@ void TABArc::SetEndAngle(double dAngle)
     while(dAngle > 360.0) dAngle -= 360.0;
 
     m_dEndAngle = dAngle;
+}
+
+
+/**********************************************************************
+ *                   TABArc::GetStyleString()
+ *
+ * Return style string for this feature.
+ *
+ * Style String is built only once during the first call to GetStyleString().
+ **********************************************************************/
+const char *TABArc::GetStyleString()
+{
+    if (m_pszStyleString == NULL)
+    {
+        m_pszStyleString = CPLStrdup(GetPenStyleString());
+    }
+
+    return m_pszStyleString;
 }
 
 /**********************************************************************
@@ -4243,9 +4457,7 @@ int TABText::ReadGeometryFromMAPFile(TABMAPFile *poMapFile)
     OGRGeometry         *poGeometry;
     TABMAPObjectBlock   *poObjBlock;
     GBool               bComprCoord;
-    char                *pszCurrentStyle;
-    const char          *pszName;
-    
+
     /*-----------------------------------------------------------------
      * Fetch and validate geometry type
      *----------------------------------------------------------------*/
@@ -4410,24 +4622,6 @@ int TABText::ReadGeometryFromMAPFile(TABMAPFile *poMapFile)
                                                         (m_dHeight*dSin);
     m_dWidth = ABS(m_dWidth);
 
-    
-    
-    pszCurrentStyle =  CPLStrdup(GetLabelStyleString());
-    if (m_poStyleTable && (pszName = m_poStyleTable->
-			   GetStyleName(pszCurrentStyle)) != NULL)
-    {
-	SetStyleString(pszName);
-    }
-    else
-    {
-	pszName = CPLSPrintf("@MITAB_%d",m_nStyleId++);
-	if (m_poStyleTable)
-	  m_poStyleTable->AddStyle(pszName,
-				   pszCurrentStyle);
-	SetStyleString(pszName);
-    }
-    CPLFree(pszCurrentStyle);
-    
     return 0;
 }
 
@@ -4564,46 +4758,6 @@ int TABText::WriteGeometryToMAPFile(TABMAPFile *poMapFile)
     return 0;
 }
 
-
-/**********************************************************************
- *                   TABText::GetLabelStyleString()
- *
- *  This is not the correct location, it should be in ITABFeatureFont,
- *  but it's really more easy to put it here.  This fct return a complete
- * string for the representation with the string to display
- **********************************************************************/
-const char *TABText::GetLabelStyleString()
-{
-    const char *pszStyle = NULL;
-    char szPattern[20];
-    int nJustification = 1;
-    
-    szPattern[0] = '\0';
-    
-
-    switch(GetTextJustification())
-    {
-      case TABTJCenter:
-	nJustification = 2;
-	break;
-      case TABTJRight:
-	nJustification = 1;
-	break;
-      case TABTJLeft:
-      default:
-	nJustification =1;
-	break;
-    }
-
-    
-    if (IsFontBGColorUsed())
-      pszStyle=CPLSPrintf("LABEL(t:\"%s\",a:%f,s:%f,c:#%6.6x,b:#%6.6x,p:%d)",GetTextString(),GetTextAngle(), GetTextBoxHeight(),GetFontFGColor(),GetFontBGColor(),nJustification);
-    else
-      pszStyle=CPLSPrintf("LABEL(t:\"%s\",a:%f,s:%f,c:#%6.6x,p:%d)",GetTextString(),GetTextAngle(), GetTextBoxHeight(),GetFontFGColor(),nJustification);
-     
-    return pszStyle;
-    
-}  
 
 /**********************************************************************
  *                   TABText::GetTextString()
@@ -4919,6 +5073,68 @@ int TABText::IsFontBGColorUsed()
     return (QueryFontStyle(TABFSBox) || QueryFontStyle(TABFSHalo));
 }
 
+/**********************************************************************
+ *                   TABText::GetLabelStyleString()
+ *
+ * This is not the correct location, it should be in ITABFeatureFont,
+ * but it's really more easy to put it here.  This fct return a complete
+ * string for the representation with the string to display
+ **********************************************************************/
+const char *TABText::GetLabelStyleString()
+{
+    const char *pszStyle = NULL;
+    char szPattern[20];
+    int nJustification = 1;
+    
+    szPattern[0] = '\0';
+    
+
+    switch(GetTextJustification())
+    {
+      case TABTJCenter:
+	nJustification = 2;
+	break;
+      case TABTJRight:
+	nJustification = 1;
+	break;
+      case TABTJLeft:
+      default:
+	nJustification =1;
+	break;
+    }
+
+    
+    if (IsFontBGColorUsed())
+        pszStyle=CPLSPrintf("LABEL(t:\"%s\",a:%f,s:%f,c:#%6.6x,b:#%6.6x,p:%d)",
+                            GetTextString(),GetTextAngle(), GetTextBoxHeight(),
+                            GetFontFGColor(),GetFontBGColor(),nJustification);
+    else
+        pszStyle=CPLSPrintf("LABEL(t:\"%s\",a:%f,s:%f,c:#%6.6x,p:%d)",
+                            GetTextString(),GetTextAngle(), GetTextBoxHeight(),
+                            GetFontFGColor(),nJustification);
+     
+    return pszStyle;
+    
+}  
+
+/**********************************************************************
+ *                   TABText::GetStyleString()
+ *
+ * Return style string for this feature.
+ *
+ * Style String is built only once during the first call to GetStyleString().
+ **********************************************************************/
+const char *TABText::GetStyleString()
+{
+    if (m_pszStyleString == NULL)
+    {
+        m_pszStyleString = CPLStrdup(GetLabelStyleString());
+    }
+
+    return m_pszStyleString;
+}
+
+
 
 /**********************************************************************
  *                   TABText::DumpMIF()
@@ -5175,27 +5391,6 @@ void  ITABFeaturePen::SetPenWidthMIF(int val)
 }
 
 /**********************************************************************
- *                   ITABFeaturePen::DumpPenDef()
- *
- * Dump pen definition information.
- **********************************************************************/
-void ITABFeaturePen::DumpPenDef(FILE *fpOut /*=NULL*/)
-{
-    if (fpOut == NULL)
-        fpOut = stdout;
-
-    fprintf(fpOut, "  m_nPenDefIndex         = %d\n", m_nPenDefIndex);
-    fprintf(fpOut, "  m_sPenDef.nRefCount    = %d\n", m_sPenDef.nRefCount);
-    fprintf(fpOut, "  m_sPenDef.nPixelWidth  = %d\n", m_sPenDef.nPixelWidth);
-    fprintf(fpOut, "  m_sPenDef.nLinePattern = %d\n", m_sPenDef.nLinePattern);
-    fprintf(fpOut, "  m_sPenDef.nPointWidth  = %d\n", m_sPenDef.nPointWidth);
-    fprintf(fpOut, "  m_sPenDef.rgbColor     = 0x%6.6x (%d)\n",
-                                     m_sPenDef.rgbColor, m_sPenDef.rgbColor);
-
-    fflush(fpOut);
-}
-
-/**********************************************************************
  *                   ITABFeaturePen::GetPenStyleString()
  *
  *  Return a PEN() string. All representations info for the pen are here.
@@ -5329,34 +5524,30 @@ const char *ITABFeaturePen::GetPenStyleString()
     return pszStyle;
 }
 
-/*=====================================================================
- *                      class ITABFeatureBrush
- *====================================================================*/
-
 /**********************************************************************
- *                   ITABFeatureBrush::DumpBrushDef()
+ *                   ITABFeaturePen::DumpPenDef()
  *
- * Dump Brush definition information.
+ * Dump pen definition information.
  **********************************************************************/
-void ITABFeatureBrush::DumpBrushDef(FILE *fpOut /*=NULL*/)
+void ITABFeaturePen::DumpPenDef(FILE *fpOut /*=NULL*/)
 {
     if (fpOut == NULL)
         fpOut = stdout;
 
-    fprintf(fpOut, "  m_nBrushDefIndex         = %d\n", m_nBrushDefIndex);
-    fprintf(fpOut, "  m_sBrushDef.nRefCount    = %d\n", m_sBrushDef.nRefCount);
-    fprintf(fpOut, "  m_sBrushDef.nFillPattern = %d\n", 
-                                                (int)m_sBrushDef.nFillPattern);
-    fprintf(fpOut, "  m_sBrushDef.bTransparentFill = %d\n", 
-                                            (int)m_sBrushDef.bTransparentFill);
-    fprintf(fpOut, "  m_sBrushDef.rgbFGColor   = 0x%6.6x (%d)\n",
-                               m_sBrushDef.rgbFGColor, m_sBrushDef.rgbFGColor);
-    fprintf(fpOut, "  m_sBrushDef.rgbBGColor   = 0x%6.6x (%d)\n",
-                               m_sBrushDef.rgbBGColor, m_sBrushDef.rgbBGColor);
+    fprintf(fpOut, "  m_nPenDefIndex         = %d\n", m_nPenDefIndex);
+    fprintf(fpOut, "  m_sPenDef.nRefCount    = %d\n", m_sPenDef.nRefCount);
+    fprintf(fpOut, "  m_sPenDef.nPixelWidth  = %d\n", m_sPenDef.nPixelWidth);
+    fprintf(fpOut, "  m_sPenDef.nLinePattern = %d\n", m_sPenDef.nLinePattern);
+    fprintf(fpOut, "  m_sPenDef.nPointWidth  = %d\n", m_sPenDef.nPointWidth);
+    fprintf(fpOut, "  m_sPenDef.rgbColor     = 0x%6.6x (%d)\n",
+                                     m_sPenDef.rgbColor, m_sPenDef.rgbColor);
 
     fflush(fpOut);
 }
 
+/*=====================================================================
+ *                      class ITABFeatureBrush
+ *====================================================================*/
 
 /**********************************************************************
  *                   ITABFeatureBrush::GetBrushStyleString()
@@ -5395,6 +5586,30 @@ const char *ITABFeatureBrush::GetBrushStyleString()
     
 }  
 
+/**********************************************************************
+ *                   ITABFeatureBrush::DumpBrushDef()
+ *
+ * Dump Brush definition information.
+ **********************************************************************/
+void ITABFeatureBrush::DumpBrushDef(FILE *fpOut /*=NULL*/)
+{
+    if (fpOut == NULL)
+        fpOut = stdout;
+
+    fprintf(fpOut, "  m_nBrushDefIndex         = %d\n", m_nBrushDefIndex);
+    fprintf(fpOut, "  m_sBrushDef.nRefCount    = %d\n", m_sBrushDef.nRefCount);
+    fprintf(fpOut, "  m_sBrushDef.nFillPattern = %d\n", 
+                                                (int)m_sBrushDef.nFillPattern);
+    fprintf(fpOut, "  m_sBrushDef.bTransparentFill = %d\n", 
+                                            (int)m_sBrushDef.bTransparentFill);
+    fprintf(fpOut, "  m_sBrushDef.rgbFGColor   = 0x%6.6x (%d)\n",
+                               m_sBrushDef.rgbFGColor, m_sBrushDef.rgbFGColor);
+    fprintf(fpOut, "  m_sBrushDef.rgbBGColor   = 0x%6.6x (%d)\n",
+                               m_sBrushDef.rgbBGColor, m_sBrushDef.rgbBGColor);
+
+    fflush(fpOut);
+}
+
 /*=====================================================================
  *                      class ITABFeatureFont
  *====================================================================*/
@@ -5420,28 +5635,6 @@ void ITABFeatureFont::DumpFontDef(FILE *fpOut /*=NULL*/)
 /*=====================================================================
  *                      class ITABFeatureSymbol
  *====================================================================*/
-
-/**********************************************************************
- *                   ITABFeatureSymbol::DumpSymbolDef()
- *
- * Dump Symbol definition information.
- **********************************************************************/
-void ITABFeatureSymbol::DumpSymbolDef(FILE *fpOut /*=NULL*/)
-{
-    if (fpOut == NULL)
-        fpOut = stdout;
-
-    fprintf(fpOut, "  m_nSymbolDefIndex       = %d\n", m_nSymbolDefIndex);
-    fprintf(fpOut, "  m_sSymbolDef.nRefCount  = %d\n", m_sSymbolDef.nRefCount);
-    fprintf(fpOut, "  m_sSymbolDef.nSymbolNo  = %d\n", m_sSymbolDef.nSymbolNo);
-    fprintf(fpOut, "  m_sSymbolDef.nPointSize = %d\n",m_sSymbolDef.nPointSize);
-    fprintf(fpOut, "  m_sSymbolDef._unknown_  = %d\n", 
-                                            (int)m_sSymbolDef._nUnknownValue_);
-    fprintf(fpOut, "  m_sSymbolDef.rgbColor   = 0x%6.6x (%d)\n",
-                                m_sSymbolDef.rgbColor, m_sSymbolDef.rgbColor);
-
-    fflush(fpOut);
-}
 
 /**********************************************************************
  *                   ITABFeatureSymbol::GetSymbolStyleString()
@@ -5479,7 +5672,7 @@ const char *ITABFeatureSymbol::GetSymbolStyleString(double dfAngle)
     }
     else if (m_sSymbolDef.nSymbolNo == 38)
       nOGRStyle = 5;
-     else if (m_sSymbolDef.nSymbolNo == 39)
+    else if (m_sSymbolDef.nSymbolNo == 39)
     {
 	nAngle = 45;
 	nOGRStyle = 5;
@@ -5518,3 +5711,25 @@ const char *ITABFeatureSymbol::GetSymbolStyleString(double dfAngle)
     return pszStyle;
     
 }  
+
+/**********************************************************************
+ *                   ITABFeatureSymbol::DumpSymbolDef()
+ *
+ * Dump Symbol definition information.
+ **********************************************************************/
+void ITABFeatureSymbol::DumpSymbolDef(FILE *fpOut /*=NULL*/)
+{
+    if (fpOut == NULL)
+        fpOut = stdout;
+
+    fprintf(fpOut, "  m_nSymbolDefIndex       = %d\n", m_nSymbolDefIndex);
+    fprintf(fpOut, "  m_sSymbolDef.nRefCount  = %d\n", m_sSymbolDef.nRefCount);
+    fprintf(fpOut, "  m_sSymbolDef.nSymbolNo  = %d\n", m_sSymbolDef.nSymbolNo);
+    fprintf(fpOut, "  m_sSymbolDef.nPointSize = %d\n",m_sSymbolDef.nPointSize);
+    fprintf(fpOut, "  m_sSymbolDef._unknown_  = %d\n", 
+                                            (int)m_sSymbolDef._nUnknownValue_);
+    fprintf(fpOut, "  m_sSymbolDef.rgbColor   = 0x%6.6x (%d)\n",
+                                m_sSymbolDef.rgbColor, m_sSymbolDef.rgbColor);
+
+    fflush(fpOut);
+}

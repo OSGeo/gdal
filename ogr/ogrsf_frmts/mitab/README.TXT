@@ -1,6 +1,5 @@
                          MITAB Library overview
                          ======================
-                        Last Update:  2000-01-15
 
 Note: until there is good complete documentation for the MITAB library,
 this README file is the only source of information for integrating the
@@ -53,6 +52,16 @@ available under the following OpenSource license terms:
  **********************************************************************
 
 
+USING THE TAB2TAB CONVERSION PROGRAM:
+-------------------------------------
+
+MITAB comes with a conversion program called TAB2TAB that can do tab-to-mif 
+and mif-to-tab translations:
+
+Usage: tab2tab <src_filename> <dst_filename>
+    Converts TAB or MIF file <src_filename> to TAB or MIF format.
+    The extension of <dst_filename> (.tab or .mif) defines the output format.
+
 
 COMPILING THE LIBRARY:
 ----------------------
@@ -61,10 +70,10 @@ When you extract the ZIP (or .tar.gz) file, you will get 3 directories
 and the makefiles to compile the library using VC++ 6 under Windows or 
 using GNU make and GCC on Unix.  
 
-The MITAB directory contains the core of the library and some test
-programs (tab2tab, tab2mif, mif2tab and mif2mif).  The OGR and CPL
-directories are support libraries used by MITAB and probably won't be of
-much interest to you at the beginning.
+The MITAB directory contains the core of the library and the TAB2TAB 
+conversion program.
+The OGR and CPL directories are support libraries used by MITAB and probably
+won't be of much interest to you at the beginning.
 
 To compile the lib on Windows: 
   In a DOS prompt, setup the VC++ environment variables by executing
@@ -73,7 +82,7 @@ To compile the lib on Windows:
         nmake -f makefile.vc
 
   This should automagically compile the 3 sub-directories and the test
-  programs (tab2mif.exe, mif2tab.exe, etc.) in the MITAB directory.
+  program (tab2tab.exe, tabdump.exe, mitabc_test.exe) in the MITAB directory.
 
 To compile the library on Unix:
 
@@ -194,5 +203,5 @@ the "\n" sequence in char attribute field values.
 
 
 ------------
-$Id: README.TXT,v 1.4 2000/02/28 08:11:36 daniel Exp $
+$Id: README.TXT,v 1.6 2000/10/03 22:15:40 daniel Exp $
 ------------

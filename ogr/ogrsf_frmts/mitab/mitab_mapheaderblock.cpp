@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_mapheaderblock.cpp,v 1.15 2000/03/13 05:59:25 daniel Exp $
+ * $Id: mitab_mapheaderblock.cpp,v 1.17 2000/09/19 19:35:53 daniel Exp $
  *
  * Name:     mitab_mapheaderblock.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -31,6 +31,12 @@
  **********************************************************************
  *
  * $Log: mitab_mapheaderblock.cpp,v $
+ * Revision 1.17  2000/09/19 19:35:53  daniel
+ * Set default scale/displacement when reading V100 headers
+ *
+ * Revision 1.16  2000/07/10 14:56:52  daniel
+ * Handle m_nOriginQuadrant==0 as quadrant 3 (reverse x and y axis)
+ *
  * Revision 1.15  2000/03/13 05:59:25  daniel
  * Switch from V400 to V500 .MAP header (1024 bytes)
  *
@@ -278,6 +284,15 @@ int     TABMAPHeaderBlock::InitBlockFromData(GByte *pabyBuf, int nSize,
     m_XDispl = ReadDouble();
     m_YDispl = ReadDouble();
 
+    /* In V.100 files, the scale and displacement do not appear to be set.
+     * we'll use m_nCoordPrecision to define the scale factor instead.
+     */
+    if (m_nMAPVersionNumber <= 100)
+    {
+        m_XScale = m_YScale = pow(10, m_nCoordPrecision);
+        m_XDispl = m_YDispl = 0.0;
+    }
+
     for(i=0; i<6; i++)
         m_sProj.adProjParams[i] = ReadDouble();
 
@@ -318,13 +333,18 @@ int TABMAPHeaderBlock::Int2Coordsys(GInt32 nX, GInt32 nY,
 
     // For some obscure reason, some guy decided that it would be 
     // more fun to be able to define our own origin quadrant!
+    //
+    // In version 100 .tab files (version 400 .map), it is possible to have 
+    // a quadrant 0 and it should be treated the same way as quadrant 3
 
-    if (m_nCoordOriginQuadrant==2 || m_nCoordOriginQuadrant==3)
+    if (m_nCoordOriginQuadrant==2 || m_nCoordOriginQuadrant==3 ||
+        m_nCoordOriginQuadrant==0 )
         dX = -1.0 * (nX + m_XDispl) / m_XScale;
     else
         dX = (nX - m_XDispl) / m_XScale;
 
-    if (m_nCoordOriginQuadrant==3 || m_nCoordOriginQuadrant==4)
+    if (m_nCoordOriginQuadrant==3 || m_nCoordOriginQuadrant==4||
+        m_nCoordOriginQuadrant==0)
         dY = -1.0 * (nY + m_YDispl) / m_YScale;
     else
         dY = (nY - m_YDispl) / m_YScale;
@@ -353,13 +373,18 @@ int TABMAPHeaderBlock::Coordsys2Int(double dX, double dY,
 
     // For some obscure reason, some guy decided that it would be 
     // more fun to be able to define our own origin quadrant!
+    //
+    // In version 100 .tab files (version 400 .map), it is possible to have 
+    // a quadrant 0 and it should be treated the same way as quadrant 3
 
-    if (m_nCoordOriginQuadrant==2 || m_nCoordOriginQuadrant==3)
+    if (m_nCoordOriginQuadrant==2 || m_nCoordOriginQuadrant==3 ||
+        m_nCoordOriginQuadrant==0 )
         nX = (GInt32)(-1.0*dX*m_XScale - m_XDispl);
     else
         nX = (GInt32)(dX*m_XScale + m_XDispl);
 
-    if (m_nCoordOriginQuadrant==3 || m_nCoordOriginQuadrant==4)
+    if (m_nCoordOriginQuadrant==3 || m_nCoordOriginQuadrant==4 ||
+        m_nCoordOriginQuadrant==0 )
         nY = (GInt32)(-1.0*dY*m_YScale - m_YDispl);
     else
         nY = (GInt32)(dY*m_YScale + m_YDispl);
