@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tiffcomp.h,v 1.3 2000/11/13 14:23:53 warmerda Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tiffcomp.h,v 1.4 2003/10/12 08:46:11 dron Exp $ */
 
 /*
  * Copyright (c) 1990-1997 Sam Leffler
@@ -119,11 +119,17 @@
  * then define BSDTYPES in your Makefile.
  */
 #if defined(BSDTYPES)
+# ifndef _BSDTYPES_DEFINED
+#  ifndef __u_char_defined
 typedef	unsigned char u_char;
 typedef	unsigned short u_short;
 typedef	unsigned int u_int;
 typedef	unsigned long u_long;
-#endif
+#   define __u_char_defined
+#  endif /* __u_char_defined */
+#  define _BSDTYPES_DEFINED
+# endif /* _BSDTYPES_DEFINED */
+#endif /* BSDTYPES */
 
 /*
  * dblparam_t is the type that a double precision
