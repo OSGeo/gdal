@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2000/12/05 23:10:34  warmerda
+ * Added cassini support
+ *
  * Revision 1.13  2000/12/05 17:46:16  warmerda
  * Use +R_A for VanDerGrinten and miller
  *
@@ -194,6 +197,14 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
     {
     }
     
+    else if( EQUAL(pszProj,"cass") )
+    {
+        SetCS( OSR_GDV( papszNV, "lat_0", 0.0 ), 
+               OSR_GDV( papszNV, "lon_0", 0.0 ), 
+               OSR_GDV( papszNV, "x_0", 0.0 ), 
+               OSR_GDV( papszNV, "y_0", 0.0 ) );
+    }
+
     else if( EQUAL(pszProj,"cea") )
     {
         SetCEA( OSR_GDV( papszNV, "lat_ts", 0.0 ), 
@@ -539,6 +550,16 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 )
            "+proj=cea +lon_0=%.9f +lat_ts=%.9f +x_0=%.3f +y_0=%.3f ",
                  GetProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
                  GetProjParm(SRS_PP_STANDARD_PARALLEL_1,0.0),
+                 GetProjParm(SRS_PP_FALSE_EASTING,0.0),
+                 GetProjParm(SRS_PP_FALSE_NORTHING,0.0) );
+    }
+
+    else if( EQUAL(pszProjection,SRS_PT_CASSINI_SOLDNER) )
+    {
+        sprintf( szProj4+strlen(szProj4),
+           "+proj=cass +lat_0=%.9f +lon_0=%.9f +x_0=%.3f +y_0=%.3f ",
+                 GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
+                 GetProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
                  GetProjParm(SRS_PP_FALSE_EASTING,0.0),
                  GetProjParm(SRS_PP_FALSE_NORTHING,0.0) );
     }

@@ -1,5 +1,10 @@
 2000-12-05  Frank Warmerdam  <warmerdam@pobox.com>
 
+	* Added better error testing, especially for CE_Failure in 
+	parts of OGR to avoid being defeated by a mere warning.
+
+	* Added Cassini support in gdal/ogr/ogr_srs_proj4.cpp
+
 	* Check for png_set_IHDR in configure so avoid using old png libraries.
 
 	* Added support for all readable projections in write code for
