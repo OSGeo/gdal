@@ -10,7 +10,7 @@
 GDAL supports NOAA Polar Orbiter Level 1b Data Set format for reading. Now it can
 read NOAA-9(F) --- NOAA-17(M) datasets. NOTE: only AVHRR instrument supported
 now, if you want read data from other instruments, write to me (Andrey Kiselev, 
-<a href=mailto:a_kissel@eudoramail.com>a_kissel@eudoramail.com</a>). AVHRR
+<a href=mailto:dron@at1895.spb.edu>dron@at1895.spb.edu</a>). AVHRR
 LAC/HRPT (1 km resolution) and GAC (4 km resolution) should be processed
 correctly.
 
@@ -40,8 +40,8 @@ In case of NOAA-10 in channel 5 you will get repeated channel 4 data.
 <br>
 AVHRR/3 instrument (NOAA-15 -- NOAA-17) is a six channel radiometer, but only
 five channels are transmitted to the ground at any given time. Channels 3A and
-3B cannot operate simultaneously. Look at <b>BANDn</b> metadata record to
-determine what kind of channel contained in processed file.
+3B cannot operate simultaneously. Look at channel description field reported
+by <tt>gdalinfo</tt> to determine what kind of channel contained in processed file.
 
 <h2>Metadata</h2>
 
@@ -72,9 +72,6 @@ millisecond of day).<p>
 <li> <b>LOCATION</b>: AVHRR Earth location indication. Will be <b>Ascending</b>
 when satellite moves from low latitudes to high latitudes and <b>Descending</b>
 in other case.<p>
-
-<li> <b>BAND1</b>--<b>BAND5</b>: Band descriptions contained in the Level 1b
-file.
 
 </ul>
 

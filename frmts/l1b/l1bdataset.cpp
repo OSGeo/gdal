@@ -3,7 +3,7 @@
  *
  * Project:  NOAA Polar Orbiter Level 1b Dataset Reader (AVHRR)
  * Purpose:  Can read NOAA-9(F)-NOAA-17(M) AVHRR datasets
- * Author:   Andrey Kiselev, a_kissel@eudoramail.com
+ * Author:   Andrey Kiselev, dron@at1895.spb.edu
  *
  ******************************************************************************
  * Copyright (c) 2002, Andrey Kiselev <a_kissel@eudoramail.com>
@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.10  2002/08/28 15:16:31  dron
+ * Band descriptions added
+ *
  * Revision 1.9  2002/06/26 12:28:36  dron
  * 8-bit selective extract subsets supported
  *
@@ -1142,7 +1145,52 @@ GDALDataset *L1BDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
     for( i = 1; i <= poDS->nBands; i++ )
+    {
         poDS->SetBand( i, new L1BRasterBand( poDS, i ));
+        
+	// Channels descriptions
+        if ( poDS->iSpacecraftID >= NOAA6 && poDS->iSpacecraftID <= NOAA17 )
+        {
+	    switch( i )
+	    {
+	    case 1:
+                if ( poDS->iChannels & 0x01 )
+	            poDS->GetRasterBand(i)->SetDescription( paszChannelsDesc[0] );
+	    break;
+	    case 2:
+	        if ( poDS->iChannels & 0x02 )
+	            poDS->GetRasterBand(i)->SetDescription( paszChannelsDesc[1] );
+	    break;
+	    case 3:
+	        if ( poDS->iChannels & 0x04 )
+	            if (poDS->iSpacecraftID >= NOAA15 && poDS->iSpacecraftID <= NOAA17)
+                        if (poDS->iInstrumentStatus & 0x0400)
+		            poDS->GetRasterBand(i)->SetDescription( paszChannelsDesc[7] );
+		        else
+		            poDS->GetRasterBand(i)->SetDescription( paszChannelsDesc[6] );
+	            else    
+	                poDS->GetRasterBand(i)->SetDescription( paszChannelsDesc[2] );
+	    break;
+	    case 4:
+	        if ( poDS->iChannels & 0x08 )
+	            poDS->GetRasterBand(i)->SetDescription( paszChannelsDesc[3] );
+	    break;
+	    case 5:
+	        if ( poDS->iChannels & 0x0F )
+		    if (poDS->iSpacecraftID == NOAA13)	 		// 5 NOAA-13
+		        poDS->GetRasterBand(i)->SetDescription( paszChannelsDesc[5] );
+	            else if (poDS->iSpacecraftID == NOAA6 ||
+		            poDS->iSpacecraftID == NOAA8 ||
+			    poDS->iSpacecraftID == NOAA10)	 	// 4 NOAA-6,-8,-10
+		        poDS->GetRasterBand(i)->SetDescription( paszChannelsDesc[3] );
+		else
+	            poDS->GetRasterBand(i)->SetDescription( paszChannelsDesc[4] );
+	    break;
+	    default:
+	    break;
+	    }
+        }
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Do we have GCPs?		                                */
@@ -1279,34 +1327,6 @@ GDALDataset *L1BDataset::Open( GDALOpenInfo * poOpenInfo )
 	default:
 	poDS->SetMetadataItem( "LOCATION", "Descending" );
 	break;
-    }
-    // Channels descriptions
-    i = 1;
-    if ( poDS->iSpacecraftID >= NOAA6 && poDS->iSpacecraftID <= NOAA17 )
-    {
-        if (poDS->iChannels & 0x01)
-	    poDS->SetMetadataItem(CPLSPrintf("BAND%1d", i++), paszChannelsDesc[0] );	//1
-	if (poDS->iChannels & 0x02)
-	    poDS->SetMetadataItem(CPLSPrintf("BAND%1d", i++), paszChannelsDesc[1]);	//2
-	if (poDS->iChannels & 0x04)
-	    if (poDS->iSpacecraftID >= NOAA15 && poDS->iSpacecraftID <= NOAA17)
-                if (poDS->iInstrumentStatus & 0x0400)
-		    poDS->SetMetadataItem(CPLSPrintf("BAND%1d", i++), paszChannelsDesc[7]);//3B
-		else
-		    poDS->SetMetadataItem(CPLSPrintf("BAND%1d", i++), paszChannelsDesc[6]);//3A
-	    else    
-	        poDS->SetMetadataItem(CPLSPrintf("BAND%1d", i++), paszChannelsDesc[2]);	//3
-	if (poDS->iChannels & 0x08)
-	    poDS->SetMetadataItem(CPLSPrintf("BAND%1d", i++), paszChannelsDesc[3]);	//4
-	if (poDS->iChannels & 0x0F)
-		if (poDS->iSpacecraftID == NOAA13)	 // 5 NOAA-13
-		    poDS->SetMetadataItem(CPLSPrintf("BAND%1d", i++), paszChannelsDesc[5]);
-	        else if (poDS->iSpacecraftID == NOAA6 ||
-		        poDS->iSpacecraftID == NOAA8 ||
-			poDS->iSpacecraftID == NOAA10)	 // 4 NOAA-6,-8,-10
-		    poDS->SetMetadataItem(CPLSPrintf("BAND%1d", i++), paszChannelsDesc[3]);
-		else
-	            poDS->SetMetadataItem(CPLSPrintf("BAND%1d", i++), paszChannelsDesc[4]);//5
     }
 
     return( poDS );
