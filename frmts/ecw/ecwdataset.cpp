@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.26  2004/12/20 05:02:43  fwarmerdam
+ * moved list reader into ECWGetCSList()
+ *
  * Revision 1.25  2004/12/17 14:50:30  fwarmerdam
  * implement AdviseRead API
  *
@@ -124,6 +127,10 @@ static unsigned char jp2_header[] =
 
 static int    gnTriedCSFile = FALSE;
 static char **gpapszCSLookup = NULL;
+
+CPL_C_START
+char **ECWGetCSList(void);
+CPL_C_END
 
 /************************************************************************/
 /* ==================================================================== */
@@ -515,8 +522,27 @@ CPLErr ECWDataset::AdviseRead( int nXOff, int nYOff, int nXSize, int nYSize,
                                char **papszOptions )
 
 {
-    printf( "ECWDataset::AdviseRead(%d,%d,%d,%d->%d,%d)\n",
-            nXOff, nYOff, nXSize, nYSize, nBufXSize, nBufYSize );
+    int *panAdjustedBandList = NULL;
+
+    CPLDebug( "ECW",
+              "ECWDataset::AdviseRead(%d,%d,%d,%d->%d,%d)\n",
+              nXOff, nYOff, nXSize, nYSize, nBufXSize, nBufYSize );
+
+    if( nBufXSize > nXSize || nBufYSize > nYSize )
+    {
+        CPLError( CE_Warning, CPLE_AppDefined, 
+                  "Supersampling not directly supported by ECW toolkit,\n"
+                  "ignoring AdviseRead() request." );
+        return CE_Warning; 
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Adjust band numbers to be zero based.                           */
+/* -------------------------------------------------------------------- */
+    panAdjustedBandList = (int *) 
+        CPLMalloc(sizeof(int) * nBandCount );
+    for( int ii= 0; ii < nBandCount; ii++ )
+        panAdjustedBandList[ii] = panBandList[ii] - 1;
 
 /* -------------------------------------------------------------------- */
 /*      Cleanup old window cache information.                           */
@@ -528,11 +554,12 @@ CPLErr ECWDataset::AdviseRead( int nXOff, int nYOff, int nXSize, int nYSize,
 /* -------------------------------------------------------------------- */
     CNCSError oErr;
     
-    oErr = poFileView->SetView( nBandCount, (UINT32 *) panBandList, 
+    oErr = poFileView->SetView( nBandCount, (UINT32 *) panAdjustedBandList, 
                                 nXOff, nYOff, 
                                 nXOff + nXSize-1, nYOff + nYSize-1,
                                 nBufXSize, nBufYSize );
-    
+
+    CPLFree( panAdjustedBandList );
     if( oErr.GetErrorNumber() != NCS_SUCCESS )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
@@ -1014,6 +1041,31 @@ CPLErr ECWDataset::GetGeoTransform( double * padfTransform )
 }
 
 /************************************************************************/
+/*                            ECWGetCSList()                            */
+/************************************************************************/
+
+char **ECWGetCSList()
+
+{
+/* -------------------------------------------------------------------- */
+/*      Load the supporting data file with the coordinate system        */
+/*      translations if we don't already have it loaded.  Note,         */
+/*      currently we never unload the file, even if the driver is       */
+/*      destroyed ... but we should.                                    */
+/* -------------------------------------------------------------------- */
+    if( !gnTriedCSFile )
+    {
+        const char *pszFilename = CPLFindFile( "data", "ecw_cs.dat" );
+        
+        gnTriedCSFile = TRUE;
+        if( pszFilename != NULL )
+            gpapszCSLookup = CSLLoad( pszFilename );
+    }
+
+    return gpapszCSLookup;
+}
+
+/************************************************************************/
 /*                         ECW2WKTProjection()                          */
 /*                                                                      */
 /*      Set the dataset pszProjection string in OGC WKT format by       */
@@ -1035,25 +1087,8 @@ void ECWDataset::ECW2WKTProjection()
     CPLDebug( "ECW", "projection=%s, datum=%s",
               psFileInfo->szProjection, psFileInfo->szDatum );
 
-    if( gnTriedCSFile && gpapszCSLookup == NULL )
+    if( ECWGetCSList() == NULL )
         return;
-
-/* -------------------------------------------------------------------- */
-/*      Load the supporting data file with the coordinate system        */
-/*      translations if we don't already have it loaded.  Note,         */
-/*      currently we never unload the file, even if the driver is       */
-/*      destroyed ... but we should.                                    */
-/* -------------------------------------------------------------------- */
-    if( !gnTriedCSFile )
-    {
-        const char *pszFilename = CPLFindFile( "data", "ecw_cs.dat" );
-        
-        gnTriedCSFile = TRUE;
-        if( pszFilename != NULL )
-            gpapszCSLookup = CSLLoad( pszFilename );
-        if( gpapszCSLookup == NULL )
-            return;
-    }
 
 /* -------------------------------------------------------------------- */
 /*      Set projection if we have it.                                   */
