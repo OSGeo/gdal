@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2001/11/09 19:05:34  warmerda
+ * added debuggin
+ *
  * Revision 1.6  2001/11/01 16:46:15  warmerda
  * use default CPLLoggingErrorHandler now
  *
@@ -69,6 +72,7 @@ BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID /*lpReserved*/)
         CPLDebug( "OGR_OLEDB", "DllMain" );
         _Module.Init(ObjectMap, hInstance, &LIBID_SFLib);
         DisableThreadLibraryCalls(hInstance);
+        CPLDebug( "OGR_OLEDB", "DllMain complete." );
     }
     else if (dwReason == DLL_PROCESS_DETACH)
         _Module.Term();
