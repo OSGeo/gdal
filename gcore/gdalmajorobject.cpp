@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2002/09/11 14:17:38  warmerda
+ * added C GDALSetDescription()
+ *
  * Revision 1.4  2001/09/25 15:56:37  warmerda
  * implemented rest of C entry points for metadata, document C++ methods
  *
@@ -77,8 +80,10 @@ GDALMajorObject::~GDALMajorObject()
  * Fetch object description. 
  *
  * The semantics of the returned description are specific to the derived
- * type.  For GDALDatasets it is the dataset name, as could be (or perhaps
- * was) used with GDALOpen(). 
+ * type.  For GDALDatasets it is the dataset name.  For GDALRasterBands
+ * it is actually a description (if supported) or "".
+ *
+ * This method is the same as the C function GDALGetDescription().
  * 
  * @return pointer to internal description string.
  */
@@ -106,11 +111,34 @@ const char *GDALGetDescription( GDALMajorObjectH hObject )
 /*                           SetDescription()                           */
 /************************************************************************/
 
+/**
+ * Set object description. 
+ *
+ * The semantics of the description are specific to the derived
+ * type.  For GDALDatasets it is the dataset name.  For GDALRasterBands
+ * it is actually a description (if supported) or "".
+ *
+ * Normally application code should not set the "description" for 
+ * GDALDatasets.  It is handled internally.  
+ *
+ * This method is the same as the C function GDALSetDescription().
+ */
+
 void GDALMajorObject::SetDescription( const char * pszNewDesc ) 
 
 {
     CPLFree( pszDescription );
     pszDescription = CPLStrdup( pszNewDesc );
+}
+
+/************************************************************************/
+/*                         GDALSetDescription()                         */
+/************************************************************************/
+
+void GDALSetDescription( GDALMajorObjectH hObject, const char *pszNewDesc )
+
+{
+    ((GDALMajorObject *) hObject)->SetDescription( pszNewDesc );
 }
 
 /************************************************************************/

@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.54  2002/09/11 14:17:38  warmerda
+ * added C GDALSetDescription()
+ *
  * Revision 1.53  2002/09/06 01:29:55  warmerda
  * added C entry points for GetAccess() and GetOpenDatasets()
  *
@@ -413,6 +416,7 @@ CPLErr CPL_DLL  GDALSetMetadataItem( GDALMajorObjectH,
                                      const char *, const char *,
                                      const char * );
 const char CPL_DLL *GDALGetDescription( GDALMajorObjectH );
+void       CPL_DLL  GDALSetDescription( GDALMajorObjectH, const char * );
 
 /* ==================================================================== */
 /*      GDALDataset class ... normally this represents one file.        */
