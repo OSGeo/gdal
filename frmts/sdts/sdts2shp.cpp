@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2000/08/24 18:49:04  warmerda
+ * More error checking.
+ *
  * Revision 1.11  2000/08/24 18:44:40  warmerda
  * Made a little less case sensitive.
  *
@@ -184,7 +187,16 @@ int main( int nArgc, char ** papszArgv )
         }
         printf( "\n" );
     }
-        
+
+/* -------------------------------------------------------------------- */
+/*      Check that module exists.                                       */
+/* -------------------------------------------------------------------- */
+    if( oTransfer.FindLayer( pszMODN ) == -1 )
+    {
+        fprintf( stderr, "Unable to identify module: %s\n", pszMODN );
+        exit( 1 );
+    }
+
 /* -------------------------------------------------------------------- */
 /*      If the module is an LE module, write it to an Arc file.         */
 /* -------------------------------------------------------------------- */
@@ -219,7 +231,7 @@ int main( int nArgc, char ** papszArgv )
 
     else
     {
-        printf( "Unrecognised module name: %s\n", pszMODN );
+        fprintf( stderr, "Unrecognised module name: %s\n", pszMODN );
     }
 
     CPLFree( pszShapefile );
