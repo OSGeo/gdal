@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2004/12/31 02:02:31  fwarmerdam
+ * added check of HAVE_FLOAT_H and HAVE_VALUES_H
+ *
  * Revision 1.2  2004/12/26 16:12:21  fwarmerdam
  * thin plate spline support now implemented
  *
@@ -41,9 +44,9 @@
 
 #include "thinplatespline.h"
 
-#ifdef WIN32
+#ifdef HAVE_FLOAT_H
 #  include <float.h>
-#else
+#elif defined(HAVE_VALUES_H)
 #  include <values.h>
 #endif
 
