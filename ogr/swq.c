@@ -19,6 +19,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.24  2005/03/17 04:59:20  fwarmerdam
+ * added local FORCE_CDECL definition
+ *
  * Revision 1.23  2005/03/17 04:21:25  fwarmerdam
  * use FORCE_CDECL for args to qsort()
  *
@@ -100,6 +103,12 @@
 #ifndef SWQ_MALLOC
 #define SWQ_MALLOC(x) malloc(x)
 #define SWQ_FREE(x) free(x)
+#endif
+
+#ifdef _MSC_VER
+#  define FORCE_CDECL  __cdecl
+#else
+#  define FORCE_CDECL 
 #endif
 
 #ifndef TRUE
