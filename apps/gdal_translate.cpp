@@ -28,6 +28,9 @@
  * ****************************************************************************
  *
  * $Log$
+ * Revision 1.4  2002/08/27 16:49:28  dron
+ * Check for subdatasets in input file.
+ *
  * Revision 1.3  2002/08/07 02:17:10  warmerda
  * Fixed -projwin messages.
  *
@@ -286,6 +289,13 @@ int main( int argc, char ** argv )
         fprintf( stderr,
                  "GDALOpen failed - %d\n%s\n",
                  CPLGetLastErrorNo(), CPLGetLastErrorMsg() );
+        exit( 1 );
+    }
+
+    if( CSLCount(GDALGetMetadata( hDataset, "SUBDATASETS" )) > 0 )
+    {
+        fprintf( stderr,
+            "Input file contains subdatasets. Please, select one of them for reading.\n" );
         exit( 1 );
     }
 
