@@ -26,6 +26,9 @@
  * driver specific function pointers.
  * 
  * $Log$
+ * Revision 1.2  1998/12/06 22:17:32  warmerda
+ * Add stub Create() method
+ *
  * Revision 1.1  1998/12/03 18:32:01  warmerda
  * New
  *
@@ -53,4 +56,16 @@ GDALDriver::GDALDriver()
 GDALDriver::~GDALDriver()
 
 {
+}
+
+/************************************************************************/
+/*                               Create()                               */
+/************************************************************************/
+
+GDALDataset * GDALDriver::Create( const char * pszFilename,
+                                  int nXSize, int nYSize, int nBands,
+                                  GDALDataType eType, char ** papszParmList )
+
+{
+    return NULL;
 }
