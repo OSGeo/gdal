@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2003/09/13 03:47:24  warmerda
+ * Added paeInd to BindScalar
+ *
  * Revision 1.18  2003/05/21 03:54:01  warmerda
  * expand tabs
  *
@@ -197,7 +200,8 @@ class CPL_DLL OGROCIStatement {
 
     OCIStmt     *GetStatement() { return hStatement; }
     CPLErr       BindScalar( const char *pszPlaceName, 
-                             void *pData, int nDataLen, int nSQLType );
+                             void *pData, int nDataLen, int nSQLType,
+                             sb2 *paeInd = NULL );
     CPLErr       BindObject( const char *pszPlaceName, void *pahObject,
                              OCIType *hTDO, void **papIndicators );
 

@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2003/09/13 03:47:24  warmerda
+ * Added paeInd to BindScalar
+ *
  * Revision 1.11  2003/05/21 03:54:01  warmerda
  * expand tabs
  *
@@ -219,7 +222,7 @@ CPLErr OGROCIStatement::BindObject( const char *pszPlaceName,
 
 CPLErr OGROCIStatement::BindScalar( const char *pszPlaceName, 
                                     void *pData, int nDataLen,
-                                    int nSQLType )
+                                    int nSQLType, sb2 *paeInd )
 
 {
     OCIBind *hBindOrd = NULL;
@@ -228,7 +231,7 @@ CPLErr OGROCIStatement::BindScalar( const char *pszPlaceName,
             OCIBindByName( hStatement, &hBindOrd, poSession->hError,
                            (text *) pszPlaceName, (sb4) strlen(pszPlaceName), 
                            (dvoid *) pData, (sb4) nDataLen, 
-                           nSQLType, (dvoid *)0, (ub2 *)0, 
+                           (ub2) nSQLType, (dvoid *)paeInd, (ub2 *)0, 
                            (ub2 *)0, (ub4)0, (ub4 *)0, 
                            (ub4)OCI_DEFAULT),
             "OCIBindByName()") )
