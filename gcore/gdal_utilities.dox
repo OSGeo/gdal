@@ -265,8 +265,8 @@ gdalwarp [--version] [--formats]
     [-s_srs srs_def] [-t_srs srs_def] [-order n] [-et err_threshold]
     [-te xmin ymin xmax ymax] [-tr xres yres] [-ts width height]
 	[-wo "NAME=VALUE"] [-ot Byte/Int16/...] [-wt Byte/Int16]
-    [-rn] [-rb] [-rc] [-rcs] [-srcnodata value [value...]]
-    [-wm memory_in_mb] [-multi] [-q]
+    [-srcnodata value [value...]] [-dstnodata value [value...]]
+    [-rn] [-rb] [-rc] [-rcs] [-wm memory_in_mb] [-multi] [-q]
     [-of format] [-co "NAME=VALUE"]* srcfile dstfile
 \endverbatim
 
@@ -312,11 +312,12 @@ pixels and lines</dd>
 <dt> <b>-rc</b>:</dt><dd> Use cubic resampling.</dd>
 <dt> <b>-rcs</b>:</dt><dd> Use cubic spline resampling (slowest
 algorithm).</dd>
-<dt> <b>-srcnodata</b> <em>value [value...]</em>:</dt><dd> Set nodata masking values
- (several values may be specified). Masked values will not be used in
- interpolation.</dd>
-<dt> <b>-wm</b> <em>memory_in_mb</em>:</dt><dd> Set the amount of memory (in bytes)
- that the warp API is allowed to use for caching.</dd>
+<dt> <b>-srcnodata</b> <em>value [value...]</em>:</dt><dd> Set nodata masking values for input bands (different values can be supplied for each band). 
+ Masked values will not be used in interpolation.</dd>
+<dt> <b>-dstnodata</b> <em>value [value...]</em>:</dt><dd> Set nodata values for output bands (different values can be supplied for each band).  New files
+will be initialized to this value and if possible the nodata value will be
+recorded in the output file.</dd>
+<dt> <b>-wm</b> <em>memory_in_mb</em>:</dt><dd> Set the amount of memory (in megabytes) that the warp API is allowed to use for caching.</dd>
 <dt> <b>-multi</b>:</dt><dd> Use multithreaded warping implementation.
  Multiple threads will be used to process chunks of image and perform
  input/output operation simultaneously.</dd>
