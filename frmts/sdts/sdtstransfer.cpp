@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  1999/06/03 21:13:39  warmerda
+ * pass IREF to SDTSRasterReader
+ *
  * Revision 1.4  1999/06/03 14:03:10  warmerda
  * Added raster layer support
  *
@@ -300,7 +303,7 @@ SDTSRasterReader *SDTSTransfer::GetLayerRasterReader( int iEntry )
 
     poRasterReader = new SDTSRasterReader();
     
-    if( !poRasterReader->Open( &oCATD,
+    if( !poRasterReader->Open( &oCATD, &oIREF,
                          oCATD.GetEntryModule(panLayerCATDEntry[iEntry] ) ) )
     {
         delete poRasterReader;
