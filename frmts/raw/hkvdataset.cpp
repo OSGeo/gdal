@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2001/12/12 17:19:06  warmerda
+ * Use CPLStat for directories.
+ *
  * Revision 1.17  2001/12/08 04:45:59  warmerda
  * fixed south setting for UTM
  *
@@ -862,7 +865,7 @@ GDALDataset *HKVDataset::Create( const char * pszFilenameIn,
     else
         pszBaseDir = CPLStrdup(CPLGetPath(pszFilenameIn));
 
-    if( VSIStat( pszBaseDir, &sStat ) != 0 || !VSI_ISDIR( sStat.st_mode ) )
+    if( CPLStat( pszBaseDir, &sStat ) != 0 || !VSI_ISDIR( sStat.st_mode ) )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "Attempt to create HKV dataset under %s,\n"
@@ -980,7 +983,7 @@ CPLErr HKVDataset::Delete( const char * pszName )
     char        **papszFiles;
     int         i;
 
-    if( VSIStat( pszName, &sStat ) != 0 
+    if( CPLStat( pszName, &sStat ) != 0 
         || !VSI_ISDIR(sStat.st_mode) )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
