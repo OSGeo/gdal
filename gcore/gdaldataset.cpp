@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.43  2004/12/02 20:32:28  fwarmerdam
+ * added AdviseRead methods
+ *
  * Revision 1.42  2004/10/01 13:28:26  fwarmerdam
  * Fixed osr_tutorial link.
  *
@@ -1532,3 +1535,99 @@ int GDALGetAccess( GDALDatasetH hDS )
 {
     return ((GDALDataset *) hDS)->GetAccess();
 }
+
+/************************************************************************/
+/*                             AdviseRead()                             */
+/************************************************************************/
+
+/**
+ * Advise driver of upcoming read requests.
+ *
+ * Some GDAL drivers operate more efficiently if they know in advance what 
+ * set of upcoming read requests will be made.  The AdviseRead() method allows
+ * an application to notify the driver of the region and bands of interest, 
+ * and at what resolution the region will be read.  
+ *
+ * Many drivers just ignore the AdviseRead() call, but it can dramatically
+ * accelerate access via some drivers.  
+ *
+ * @param nXOff The pixel offset to the top left corner of the region
+ * of the band to be accessed.  This would be zero to start from the left side.
+ *
+ * @param nYOff The line offset to the top left corner of the region
+ * of the band to be accessed.  This would be zero to start from the top.
+ *
+ * @param nXSize The width of the region of the band to be accessed in pixels.
+ *
+ * @param nYSize The height of the region of the band to be accessed in lines.
+ *
+ * @param nBufXSize the width of the buffer image into which the desired region
+ * is to be read, or from which it is to be written.
+ *
+ * @param nBufYSize the height of the buffer image into which the desired
+ * region is to be read, or from which it is to be written.
+ *
+ * @param eBufType the type of the pixel values in the pData data buffer.  The
+ * pixel values will automatically be translated to/from the GDALRasterBand
+ * data type as needed.
+ *
+ * @param nBandCount the number of bands being read or written. 
+ *
+ * @param panBandMap the list of nBandCount band numbers being read/written.
+ * Note band numbers are 1 based.   This may be NULL to select the first 
+ * nBandCount bands.
+ *
+ * @param papszOptions a list of name=value strings with special control 
+ * options.  Normally this is NULL.
+ *
+ * @return CE_Failure if the request is invalid and CE_None if it works or
+ * is ignored. 
+ */
+
+CPLErr GDALDataset::AdviseRead( int nXOff, int nYOff, int nXSize, int nYSize,
+                                int nBufXSize, int nBufYSize, 
+                                GDALDataType eDT, 
+                                int nBandCount, int *panBandMap,
+                                char **papszOptions )
+
+{
+    int iBand;
+
+    for( iBand = 0; iBand < nBandCount; iBand++ )
+    {
+        CPLErr eErr;
+        GDALRasterBand *poBand;
+
+        if( panBandMap == NULL )
+            poBand = GetRasterBand(iBand+1);
+        else
+            poBand = GetRasterBand(panBandMap[iBand]);
+
+        eErr = poBand->AdviseRead( nXOff, nYOff, nXSize, nYSize,
+                                   nBufXSize, nBufYSize, eDT, papszOptions );
+
+        if( eErr != CE_None )
+            return eErr;
+    }
+    
+    return CE_None;
+}
+
+/************************************************************************/
+/*                       GDALDatasetAdviseRead()                        */
+/************************************************************************/
+
+CPLErr GDALDatasetAdviseRead( GDALDatasetH hDS, 
+                              int nXOff, int nYOff, int nXSize, int nYSize,
+                              int nBufXSize, int nBufYSize, 
+                              GDALDataType eDT, 
+                              int nBandCount, int *panBandMap,
+                              char **papszOptions )
+
+{
+    return ((GDALDataset *) hDS)->AdviseRead( nXOff, nYOff, nXSize, nYSize, 
+                                              nBufXSize, nBufYSize, eDT, 
+                                              nBandCount, panBandMap, 
+                                              papszOptions );
+}
+

@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.48  2004/12/02 20:32:03  fwarmerdam
+ * added AdviseRead methods
+ *
  * Revision 1.47  2004/04/06 19:22:25  dron
  * Removed GDALRasterBlock::IsCached(), added GDALRasterBand::IsBlockCached().
  *
@@ -321,7 +324,13 @@ class CPL_DLL GDALDataset : public GDALMajorObject
     virtual const GDAL_GCP *GetGCPs();
     virtual CPLErr SetGCPs( int nGCPCount, const GDAL_GCP *pasGCPList,
                             const char *pszGCPProjection );
- 
+
+    virtual CPLErr AdviseRead( int nXOff, int nYOff, int nXSize, int nYSize,
+                               int nBufXSize, int nBufYSize, 
+                               GDALDataType eDT, 
+                               int nBandCount, int *panBandList,
+                               char **papszOptions );
+
     CPLErr      RasterIO( GDALRWFlag, int, int, int, int,
                           void *, int, int, GDALDataType,
                           int, int *, int, int, int );
@@ -516,6 +525,10 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
     virtual GDALRasterBand *GetOverview(int);
     virtual CPLErr BuildOverviews( const char *, int, int *,
                                    GDALProgressFunc, void * );
+
+    virtual CPLErr AdviseRead( int nXOff, int nYOff, int nXSize, int nYSize,
+                               int nBufXSize, int nBufYSize, 
+                               GDALDataType eDT, char **papszOptions );
 
     CPLErr  GetHistogram( double dfMin, double dfMax,
                           int nBuckets, int * panHistogram,
