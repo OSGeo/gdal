@@ -33,8 +33,8 @@
  * and things like that.
  *
  * $Log$
- * Revision 1.7  2000/04/21 22:05:56  warmerda
- * updated metadata support
+ * Revision 1.8  2000/06/13 18:14:19  warmerda
+ * added control of the gdal raster cache
  *
  ************************************************************************/
 
@@ -2088,6 +2088,55 @@ static PyObject *_wrap_GDALDecToDMS(PyObject *self, PyObject *args) {
     return _resultobj;
 }
 
+static PyObject *_wrap_GDALSetCacheMax(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    int  _arg0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"i:GDALSetCacheMax",&_arg0)) 
+        return NULL;
+    GDALSetCacheMax(_arg0);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+    return _resultobj;
+}
+
+static PyObject *_wrap_GDALGetCacheMax(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    int  _result;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,":GDALGetCacheMax")) 
+        return NULL;
+    _result = (int )GDALGetCacheMax();
+    _resultobj = Py_BuildValue("i",_result);
+    return _resultobj;
+}
+
+static PyObject *_wrap_GDALGetCacheUsed(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    int  _result;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,":GDALGetCacheUsed")) 
+        return NULL;
+    _result = (int )GDALGetCacheUsed();
+    _resultobj = Py_BuildValue("i",_result);
+    return _resultobj;
+}
+
+static PyObject *_wrap_GDALFlushCacheBlock(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    int  _result;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,":GDALFlushCacheBlock")) 
+        return NULL;
+    _result = (int )GDALFlushCacheBlock();
+    _resultobj = Py_BuildValue("i",_result);
+    return _resultobj;
+}
+
 static PyObject *_wrap_OSRNewSpatialReference(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
     OGRSpatialReferenceH  _result;
@@ -2948,6 +2997,10 @@ static PyMethodDef _gdalMethods[] = {
 	 { "GDALGetGCPs", py_GDALGetGCPs, 1 },
 	 { "GDALWriteRaster", py_GDALWriteRaster, 1 },
 	 { "GDALReadRaster", py_GDALReadRaster, 1 },
+	 { "GDALFlushCacheBlock", _wrap_GDALFlushCacheBlock, 1 },
+	 { "GDALGetCacheUsed", _wrap_GDALGetCacheUsed, 1 },
+	 { "GDALGetCacheMax", _wrap_GDALGetCacheMax, 1 },
+	 { "GDALSetCacheMax", _wrap_GDALSetCacheMax, 1 },
 	 { "GDALDecToDMS", _wrap_GDALDecToDMS, 1 },
 	 { "GDALDestroyProjDef", _wrap_GDALDestroyProjDef, 1 },
 	 { "GDALReprojectFromLongLat", _wrap_GDALReprojectFromLongLat, 1 },

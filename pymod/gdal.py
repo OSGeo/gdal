@@ -29,6 +29,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.8  2000/06/13 18:14:19  warmerda
+# added control of the gdal raster cache
+#
 # Revision 1.7  2000/05/15 14:17:57  warmerda
 # fixed metadata handling
 #
@@ -45,6 +48,12 @@
 import _gdal
 from gdalconst import *
 
+def GetCacheMax():
+    return _gdal.GDALGetCacheMax()
+
+def SetCacheMax( new_max ):
+    _gdal.GDALSetCacheMax( new_max )
+    
 def GetDataTypeSize(type):
     return _gdal.GDALGetDataTypeSize(type)
 

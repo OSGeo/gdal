@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2000/06/13 18:14:19  warmerda
+ * added control of the gdal raster cache
+ *
  * Revision 1.7  2000/04/21 22:05:56  warmerda
  * updated metadata support
  *
@@ -183,6 +186,15 @@ CPLErr 	 GDALReprojectToLongLat( GDALProjDefH, double *, double * );
 CPLErr 	 GDALReprojectFromLongLat( GDALProjDefH, double *, double * );
 void     GDALDestroyProjDef( GDALProjDefH );
 const char *GDALDecToDMS( double, const char *, int );
+
+/* ==================================================================== */
+/*      GDAL Cache Management                                           */
+/* ==================================================================== */
+
+void  GDALSetCacheMax( int nBytes );
+int   GDALGetCacheMax();
+int   GDALGetCacheUsed();
+int   GDALFlushCacheBlock();
 
 /* ==================================================================== */
 /*      Special custom functions.                                       */
