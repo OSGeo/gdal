@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.25  2003/03/12 14:25:31  warmerda
+ * Fixed bug 294 re: quoting of axis directions
+ *
  * Revision 1.24  2003/01/08 18:14:28  warmerda
  * added FixupOrdering()
  *
@@ -437,6 +440,44 @@ OGR_SRSNode *OGR_SRSNode::Clone() const
 }
 
 /************************************************************************/
+/*                            NeedsQuoting()                            */
+/*                                                                      */
+/*      Does this node need to be quoted when it is exported to Wkt?    */
+/************************************************************************/
+
+int OGR_SRSNode::NeedsQuoting() const
+
+{
+    // non-terminals are never quoted.
+    if( GetChildCount() != 0 )
+        return FALSE;
+
+    // As per bugzilla bug 201, the OGC spec says the authority code
+    // needs to be quoted even though it appears well behaved.
+    if( poParent != NULL && EQUAL(poParent->GetValue(),"AUTHORITY") )
+        return TRUE;
+    
+    // As per bugzilla bug 294, the OGC spec says the direction
+    // values for the AXIS keywords should *not* be quoted.
+    if( poParent != NULL && EQUAL(poParent->GetValue(),"AXIS") 
+        && this != poParent->GetChild(0) )
+        return FALSE;
+
+    // Non-numeric tokens are generally quoted while clean numeric values
+    // are generally not. 
+    for( int i = 0; pszValue[i] != '\0'; i++ )
+    {
+        if( (pszValue[i] < '0' || pszValue[i] > '9')
+            && pszValue[i] != '.'
+            && pszValue[i] != '-' && pszValue[i] != '+'
+            && pszValue[i] != 'e' && pszValue[i] != 'E' )
+            return TRUE;
+    }
+
+    return FALSE;
+}
+
+/************************************************************************/
 /*                            exportToWkt()                             */
 /************************************************************************/
 
@@ -478,34 +519,11 @@ OGRErr OGR_SRSNode::exportToWkt( char ** ppszResult ) const
     *ppszResult[0] = '\0';
     
 /* -------------------------------------------------------------------- */
-/*      Do we need to quote this value?  Determine whether or not       */
-/*      this is a terminal string value.                                */
-/* -------------------------------------------------------------------- */
-    int         bNeedQuoting = FALSE;
-
-    if( GetChildCount() == 0 )
-    {
-        for( i = 0; pszValue[i] != '\0'; i++ )
-        {
-            if( (pszValue[i] < '0' || pszValue[i] > '9')
-                && pszValue[i] != '.'
-                && pszValue[i] != '-' && pszValue[i] != '+'
-                && pszValue[i] != 'e' && pszValue[i] != 'E' )
-                bNeedQuoting = TRUE;
-        }
-
-        // As per bugzilla bug 201, the OGC spec says the authority code
-        // needs to be quoted even though it appears well behaved.
-        if( poParent != NULL && EQUAL(poParent->GetValue(),"AUTHORITY") )
-            bNeedQuoting = TRUE;
-    }
-
-/* -------------------------------------------------------------------- */
 /*      Capture this nodes value.  We put it in double quotes if        */
 /*      this is a leaf node, otherwise we assume it is a well formed    */
 /*      node name.                                                      */
 /* -------------------------------------------------------------------- */
-    if( bNeedQuoting )
+    if( NeedsQuoting() )
     {
         strcat( *ppszResult, "\"" );
         strcat( *ppszResult, pszValue ); /* should we do quoting? */
@@ -564,34 +582,11 @@ OGRErr OGR_SRSNode::exportToPrettyWkt( char ** ppszResult, int nDepth ) const
     *ppszResult[0] = '\0';
     
 /* -------------------------------------------------------------------- */
-/*      Do we need to quote this value?  Determine whether or not       */
-/*      this is a terminal string value.                                */
-/* -------------------------------------------------------------------- */
-    int         bNeedQuoting = FALSE;
-
-    if( GetChildCount() == 0 )
-    {
-        for( i = 0; pszValue[i] != '\0'; i++ )
-        {
-            if( (pszValue[i] < '0' || pszValue[i] > '9')
-                && pszValue[i] != '.'
-                && pszValue[i] != '-' && pszValue[i] != '+'
-                && pszValue[i] != 'e' && pszValue[i] != 'E' )
-                bNeedQuoting = TRUE;
-        }
-
-        // As per bugzilla bug 201, the OGC spec says the authority code
-        // needs to be quoted even though it appears well behaved.
-        if( poParent != NULL && EQUAL(poParent->GetValue(),"AUTHORITY") )
-            bNeedQuoting = TRUE;
-    }
-
-/* -------------------------------------------------------------------- */
 /*      Capture this nodes value.  We put it in double quotes if        */
 /*      this is a leaf node, otherwise we assume it is a well formed    */
 /*      node name.                                                      */
 /* -------------------------------------------------------------------- */
-    if( bNeedQuoting )
+    if( NeedsQuoting() )
     {
         strcat( *ppszResult, "\"" );
         strcat( *ppszResult, pszValue ); /* should we do quoting? */
