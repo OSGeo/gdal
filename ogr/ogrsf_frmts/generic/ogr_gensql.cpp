@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2002/08/12 15:06:01  warmerda
+ * fix DISTINCT not working with FID (from Bruce)
+ *
+ * 
  * Revision 1.6  2002/04/29 19:35:50  warmerda
  * fixes for selecting FID
  *
@@ -311,10 +315,22 @@ int OGRGenSQLResultsLayer::PrepareSummary()
         {
             swq_col_def *psColDef = psSelectInfo->column_defs + iField;
 
-            pszError = 
-                swq_select_summarize( psSelectInfo, iField, 
-                                      poSrcFeature->GetFieldAsString( 
-                                          psColDef->field_index ) );
+            if(stricmp(psColDef->field_name,"FID") == 0)
+            {
+		// Special case where the column is "FID"
+                char szBuffer[255];
+                sprintf( szBuffer, "%d", poSrcFeature->GetFID() );
+                pszError = 
+                    swq_select_summarize( psSelectInfo, iField, szBuffer);
+            }
+            else
+            {
+                pszError = 
+                    swq_select_summarize( psSelectInfo, iField, 
+                                          poSrcFeature->GetFieldAsString( 
+                                              psColDef->field_index ) );
+            }
+            
             if( pszError != NULL )
             {
                 delete poSummaryFeature;
