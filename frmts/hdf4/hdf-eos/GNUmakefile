@@ -5,7 +5,6 @@ include $(GDAL_ROOT)/GDALmake.opt
 OBJ	= \
 	EHapi.o \
 	GDapi.o \
-	PTapi.o \
 	SWapi.o \
 	gctp_wrap.o
 
