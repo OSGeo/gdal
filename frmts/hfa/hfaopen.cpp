@@ -35,6 +35,9 @@
  * of the GDAL core, but dependent on the Common Portability Library.
  *
  * $Log$
+ * Revision 1.8  2000/10/12 20:23:58  warmerda
+ * Fixed dictinary writing.
+ *
  * Revision 1.7  2000/10/12 20:04:59  warmerda
  * split up long dictionary string
  *
@@ -1066,11 +1069,10 @@ HFAHandle HFACreateLL( const char * pszFilename )
     psInfo->pszDictionary[0] = '\0';
     
     for( iChunk = 0; aszDefaultDD[iChunk] != NULL; iChunk++ )
-    {
-        VSIFWrite( (void *) aszDefaultDD[iChunk], 1, 
-                   strlen(aszDefaultDD[iChunk])+1, fp );
         strcat( psInfo->pszDictionary, aszDefaultDD[iChunk] );
-    }
+
+    VSIFWrite( (void *) psInfo->pszDictionary, 1, 
+               strlen(psInfo->pszDictionary)+1, fp );
 
     psInfo->poDictionary = new HFADictionary( psInfo->pszDictionary );
 
