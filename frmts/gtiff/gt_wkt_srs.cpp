@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  1999/10/29 17:28:43  warmerda
+ * OGC to GeoTIFF conversion
+ *
  * Revision 1.5  1999/10/01 14:50:37  warmerda
  * added newzealandmapgrid and gridskewangle
  *
@@ -50,6 +53,7 @@
  */
 
 #include "cpl_port.h"
+#include "cpl_csv.h"
 #include "geo_normalize.h"
 #include "geovalues.h"
 #include "ogr_spatialref.h"
@@ -57,6 +61,7 @@
 
 CPL_C_START
 char *  GTIFGetOGISDefn( GTIFDefn * );
+int     GTIFSetFromOGISDefn( GTIF *, const char * );
 CPL_C_END
 
 static char *papszDatumEquiv[] =
@@ -165,11 +170,13 @@ char *GTIFGetOGISDefn( GTIFDefn * psDefn )
     GTIFGetDatumInfo( psDefn->Datum, &pszDatumName, NULL );
     GTIFGetPMInfo( psDefn->PM, &pszPMName, NULL );
     GTIFGetEllipsoidInfo( psDefn->Ellipsoid, &pszSpheroidName, NULL, NULL );
+    
     GTIFGetUOMAngleInfo( psDefn->UOMAngle, &pszAngularUnits, NULL );
     if( pszAngularUnits == NULL )
         pszAngularUnits = CPLStrdup("unknown");
 
-    WKTMassageDatum( &pszDatumName );
+    if( pszDatumName != NULL )
+        WKTMassageDatum( &pszDatumName );
 
     if( (psDefn->SemiMinor / psDefn->SemiMajor) < 0.99999999999999999
         || (psDefn->SemiMinor / psDefn->SemiMajor) > 1.00000000000000001 )
@@ -365,3 +372,175 @@ char *GTIFGetOGISDefn( GTIFDefn * psDefn )
         return NULL;
 }
 
+/************************************************************************/
+/*                     OGCDatumName2EPSGDatumCode()                     */
+/************************************************************************/
+
+static int OGCDatumName2EPSGDatumCode( const char * pszOGCName )
+
+{
+    FILE	*fp;
+    char	**papszTokens;
+    int		nReturn = KvUserDefined;
+    
+/* -------------------------------------------------------------------- */
+/*      Open the table if possible.                                     */
+/* -------------------------------------------------------------------- */
+    fp = VSIFOpen( CSVFilename("geod_datum.csv"), "r" );
+    if( fp == NULL )
+        return nReturn;
+
+/* -------------------------------------------------------------------- */
+/*	Discard the first line with field names.			*/
+/* -------------------------------------------------------------------- */
+    CSLDestroy( CSVReadParseLine( fp ) );
+
+/* -------------------------------------------------------------------- */
+/*      Read lines looking for our datum.                               */
+/* -------------------------------------------------------------------- */
+    for( papszTokens = CSVReadParseLine( fp );
+         CSLCount(papszTokens) > 2 && nReturn == KvUserDefined;
+         papszTokens = CSVReadParseLine( fp ) )
+    {
+        WKTMassageDatum( papszTokens + 1 );
+
+        if( EQUAL(papszTokens[1], pszOGCName) )
+            nReturn = atoi(papszTokens[9]);
+
+        CSLDestroy( papszTokens );
+    }
+
+    CSLDestroy( papszTokens );
+    VSIFClose( fp );
+
+    return nReturn;
+}
+
+/************************************************************************/
+/*                        GTIFSetFromOGISDefn()                         */
+/*                                                                      */
+/*      Write GeoTIFF projection tags from an OGC WKT definition.       */
+/************************************************************************/
+
+int GTIFSetFromOGISDefn( GTIF * psGTIF, const char *pszOGCWKT )
+
+{
+    OGRSpatialReference *poSRS;
+
+/* -------------------------------------------------------------------- */
+/*      Create an OGRSpatialReference object corresponding to the       */
+/*      string.                                                         */
+/* -------------------------------------------------------------------- */
+    poSRS = new OGRSpatialReference();
+
+    if( poSRS->importFromWkt((char **) &pszOGCWKT) != OGRERR_NONE )
+        return FALSE;
+
+/* -------------------------------------------------------------------- */
+/*      Handle the projection transformation.                           */
+/* -------------------------------------------------------------------- */
+    const char *pszProjection = poSRS->GetAttrValue( "PROJECTION" );
+
+    if( pszProjection == NULL )
+    {
+	GTIFKeySet(psGTIF, GTModelTypeGeoKey, TYPE_SHORT, 1,
+                   ModelTypeGeographic);
+    }
+
+    else if( EQUAL(pszProjection,SRS_PT_ALBERS_CONIC_EQUAL_AREA) )
+    {
+	GTIFKeySet(psGTIF, GTModelTypeGeoKey, TYPE_SHORT, 1,
+                   ModelTypeProjected);
+	GTIFKeySet(psGTIF, ProjectedCSTypeGeoKey, TYPE_SHORT, 1,
+                   KvUserDefined );
+	GTIFKeySet(psGTIF, ProjectionGeoKey, TYPE_SHORT, 1,
+                   KvUserDefined );
+
+	GTIFKeySet(psGTIF, ProjCoordTransGeoKey, TYPE_SHORT, 1, 
+		   CT_AlbersEqualArea );
+
+        GTIFKeySet(psGTIF, ProjStdParallelGeoKey, TYPE_DOUBLE, 1,
+                   poSRS->GetProjParm( SRS_PP_STANDARD_PARALLEL_1, 0.0 ) );
+
+        GTIFKeySet(psGTIF, ProjStdParallel2GeoKey, TYPE_DOUBLE, 1,
+                   poSRS->GetProjParm( SRS_PP_STANDARD_PARALLEL_2, 0.0 ) );
+
+        GTIFKeySet(psGTIF, ProjNatOriginLatGeoKey, TYPE_DOUBLE, 1,
+                   poSRS->GetProjParm( SRS_PP_LATITUDE_OF_CENTER, 0.0 ) );
+
+        GTIFKeySet(psGTIF, ProjNatOriginLongGeoKey, TYPE_DOUBLE, 1,
+                   poSRS->GetProjParm( SRS_PP_LONGITUDE_OF_CENTER, 0.0 ) );
+        
+        GTIFKeySet(psGTIF, ProjFalseEastingGeoKey, TYPE_DOUBLE, 1,
+                   poSRS->GetProjParm( SRS_PP_FALSE_EASTING, 0.0 ) );
+        
+        GTIFKeySet(psGTIF, ProjFalseNorthingGeoKey, TYPE_DOUBLE, 1,
+                   poSRS->GetProjParm( SRS_PP_FALSE_NORTHING, 0.0 ) );
+    }
+    
+    else if( EQUAL(pszProjection,SRS_PT_TRANSVERSE_MERCATOR) )
+    {
+	GTIFKeySet(psGTIF, GTModelTypeGeoKey, TYPE_SHORT, 1,
+                   ModelTypeProjected);
+	GTIFKeySet(psGTIF, ProjectedCSTypeGeoKey, TYPE_SHORT, 1,
+                   KvUserDefined );
+	GTIFKeySet(psGTIF, ProjectionGeoKey, TYPE_SHORT, 1,
+                   KvUserDefined );
+
+	GTIFKeySet(psGTIF, ProjCoordTransGeoKey, TYPE_SHORT, 1, 
+		   CT_TransverseMercator );
+
+        GTIFKeySet(psGTIF, ProjNatOriginLatGeoKey, TYPE_DOUBLE, 1,
+                   poSRS->GetProjParm( SRS_PP_LATITUDE_OF_ORIGIN, 0.0 ) );
+
+        GTIFKeySet(psGTIF, ProjNatOriginLongGeoKey, TYPE_DOUBLE, 1,
+                   poSRS->GetProjParm( SRS_PP_CENTRAL_MERIDIAN, 0.0 ) );
+        
+        GTIFKeySet(psGTIF, ProjScaleAtNatOriginGeoKey, TYPE_DOUBLE, 1,
+                   poSRS->GetProjParm( SRS_PP_SCALE_FACTOR, 1.0 ) );
+        
+        GTIFKeySet(psGTIF, ProjFalseEastingGeoKey, TYPE_DOUBLE, 1,
+                   poSRS->GetProjParm( SRS_PP_FALSE_EASTING, 0.0 ) );
+        
+        GTIFKeySet(psGTIF, ProjFalseNorthingGeoKey, TYPE_DOUBLE, 1,
+                   poSRS->GetProjParm( SRS_PP_FALSE_NORTHING, 0.0 ) );
+    }
+    
+    else
+    {
+	GTIFKeySet(psGTIF, GTModelTypeGeoKey, TYPE_SHORT, 1,
+                   KvUserDefined );
+    }
+    
+/* -------------------------------------------------------------------- */
+/*      Write linear units information.                                 */
+/* -------------------------------------------------------------------- */
+    
+    
+/* -------------------------------------------------------------------- */
+/*	Try to identify the datum, scanning the EPSG datum file for	*/
+/*	a match.							*/    
+/* -------------------------------------------------------------------- */
+    int		nDatum;
+
+    if( poSRS->GetAttrValue("DATUM") != NULL )
+        nDatum = OGCDatumName2EPSGDatumCode( poSRS->GetAttrValue("DATUM") );
+    else
+        nDatum = KvUserDefined;
+
+    if( nDatum != KvUserDefined )
+    {
+        GTIFKeySet( psGTIF, GeogGeodeticDatumGeoKey, TYPE_SHORT, 1, nDatum );
+    }
+    else
+    {
+        printf( "Couldn't translate `%s'.\n", poSRS->GetAttrValue("DATUM") );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Write the GCS information.                                      */
+/* -------------------------------------------------------------------- */
+    
+
+    return TRUE;
+}
