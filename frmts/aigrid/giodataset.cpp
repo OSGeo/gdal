@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.2  2000/01/10 17:36:07  warmerda
+ * avoid error message on first CPLGetSymbol()
+ *
  * Revision 1.1  2000/01/07 18:57:36  warmerda
  * New
  *
@@ -67,15 +70,16 @@ static int LoadGridIOFunctions()
 
 {
     static int      bInitialized = FALSE;
-    void            *pLibrary;
     
     if( bInitialized )
         return pfnGridIOSetup != NULL;
 
     bInitialized = TRUE;
 
+    CPLPushErrorHandler( CPLQuietErrorHandler );
     pfnGridIOSetup = (int (*)(void)) 
         CPLGetSymbol( "avgridio.dll", "GridIOSetup" );
+    CPLPopErrorHandler();
 
     if( pfnGridIOSetup == NULL )
         return FALSE;
