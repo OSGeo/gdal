@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/09/10 13:42:30  warmerda
+ * converted to adams new format, added comparitors
+ *
  * Revision 1.1  1999/09/09 13:55:43  warmerda
  * New
  *
@@ -41,11 +44,13 @@
 #include "xtiffio.h"
 #include "geo_normalize.h"
 #include "cpl_csv.h"
+#include "ogr_spatialref.h"
 
 
 static char *PCSToOGISDefn( int, int );
 static void ProcessAllPCSCodes();
 static void EmitWKTString( const char *, FILE * );
+static void WKTComparitor( const char *, const char * );
 
 CPL_C_START
 char *  GTIFGetOGISDefn( GTIFDefn * );
@@ -58,22 +63,12 @@ CPL_C_END
 int main( int argc, char ** argv )
 
 {
-#ifdef notdef
-    for( int iPCS = 4000; iPCS < 5000; iPCS++ )
+    if( argc == 3 )
     {
-        char	*pszWKT;
-
-        pszWKT = PCSToOGISDefn( iPCS );
-
-        if( pszWKT != NULL )
-        {
-            printf( "\nEPSG = %d\n%s\n", iPCS, pszWKT );
-            CPLFree( pszWKT );
-        }
+        WKTComparitor( argv[1], argv[2] );
     }
-#endif
-    
-    ProcessAllPCSCodes();
+    else
+        ProcessAllPCSCodes();
     
     exit( 0 );
 }
@@ -120,7 +115,7 @@ static void ProcessAllPCSCodes()
 
         if( pszWKT != NULL )
         {
-            printf( "\nEPSG = %d\n", nPCS );
+            printf( "EPSG=%d\n", nPCS );
             EmitWKTString( pszWKT, stdout );
             CPLFree( pszWKT );
         }
@@ -141,8 +136,8 @@ static void EmitWKTString( const char * pszWKT, FILE * fpOut )
     for( i = 0; pszWKT[i] != '\0'; i++ )
     {
         fputc( pszWKT[i], fpOut );
-        if( pszWKT[i] == ',' && pszWKT[i+1] >= 'A' && pszWKT[i+1] <= 'Z' )
-            fputc('\n', fpOut );
+//        if( pszWKT[i] == ',' && pszWKT[i+1] >= 'A' && pszWKT[i+1] <= 'Z' )
+//            fputc('\n', fpOut );
     }
     fputc('\n', fpOut );
 }
@@ -220,3 +215,133 @@ static char *PCSToOGISDefn( int nCode, int bIsGCS )
     else
         return NULL;
 }
+
+/************************************************************************/
+/*                              ReadWKT()                               */
+/*                                                                      */
+/*      Read EPSG code, and WKT from input file.                        */
+/************************************************************************/
+
+static OGRSpatialReference *ReadWKT( FILE * fp, int *pnEPSG )
+
+{
+    const char	*pszLine;
+
+    pszLine = CPLReadLine( fp );
+    if( pszLine == NULL || !EQUALN(pszLine,"EPSG=",5) )
+        return NULL;
+
+    *pnEPSG = atoi(pszLine+5);
+
+    pszLine = CPLReadLine( fp );
+    if( pszLine == NULL )
+        return NULL;
+    else
+        return new OGRSpatialReference( pszLine );
+}
+
+/************************************************************************/
+/*                           WKTCompareItem()                           */
+/************************************************************************/
+
+static int WKTCompareItem( const char * pszFile1,
+                           OGRSpatialReference * poSRS1,
+                           const char * pszFile2,
+                           OGRSpatialReference * poSRS2,
+                           const char * pszTargetItem, int nEPSG )
+
+{
+    if( poSRS1->GetAttrValue(pszTargetItem) == NULL
+        && poSRS1->GetAttrValue(pszTargetItem) == NULL )
+        return TRUE;
+    
+    if( poSRS1->GetAttrValue(pszTargetItem) == NULL )
+    {
+        printf( "File %s missing %s for EPSG %d\n",
+                pszFile1, pszTargetItem, nEPSG );
+        return FALSE;
+    }
+
+    if( poSRS2->GetAttrValue(pszTargetItem) == NULL )
+    {
+        printf( "File %s missing %s for EPSG %d\n",
+                pszFile1, pszTargetItem, nEPSG );
+        return FALSE;
+    }
+
+    if( !EQUAL(poSRS1->GetAttrValue(pszTargetItem),
+               poSRS2->GetAttrValue(pszTargetItem)) )
+    {
+        printf( "Datum mismatch for EPSG %d:\n"
+                "%s: %s\n"
+                "%s: %s\n",
+                nEPSG,
+                pszFile1, poSRS1->GetAttrValue(pszTargetItem),
+                pszFile2, poSRS2->GetAttrValue(pszTargetItem) );
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
+/************************************************************************/
+/*                           WKTComparitor()                            */
+/************************************************************************/
+
+static void WKTComparitor( const char * pszFile1, const char * pszFile2 )
+
+{
+    FILE	*fp1, *fp2;
+
+/* -------------------------------------------------------------------- */
+/*      Open files                                                      */
+/* -------------------------------------------------------------------- */
+    fp1 = VSIFOpen( pszFile1, "rt" );
+    if( fp1 == NULL )
+    {
+        fprintf( stderr, "Could not open %s.\n", pszFile1 );
+        return;
+    }
+
+    fp2 = VSIFOpen( pszFile2, "rt" );
+    if( fp2 == NULL )
+    {
+        fprintf( stderr, "Could not open %s.\n", pszFile2 );
+        return;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Read a code from each file.                                     */
+/* -------------------------------------------------------------------- */
+    OGRSpatialReference *poSRS1, *poSRS2;
+    int			nEPSG1, nEPSG2;
+    
+    while( (poSRS1 = ReadWKT(fp1,&nEPSG1)) != NULL )
+    {
+        poSRS2 = ReadWKT(fp2,&nEPSG2);
+
+        if( nEPSG1 != nEPSG2 )
+        {
+            printf( "EPSG codes (%d, %d) don't match, bailing out.\n",
+                    nEPSG1, nEPSG2 );
+            break;
+        }
+
+        WKTCompareItem( pszFile1, poSRS1, pszFile2, poSRS2,
+                        "DATUM", nEPSG1 );
+        
+        WKTCompareItem( pszFile1, poSRS1, pszFile2, poSRS2,
+                        "PROJECTION", nEPSG1 );
+        
+        delete poSRS1;
+        delete poSRS2;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Cleanup                                                         */
+/* -------------------------------------------------------------------- */
+    VSIFClose( fp2 );
+    VSIFClose( fp1 );
+}
+
+
