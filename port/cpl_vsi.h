@@ -32,6 +32,9 @@
  * specific checking, io redirection and so on. 
  * 
  * $Log$
+ * Revision 1.13  2002/06/15 02:13:13  aubin
+ * remove debug test for 64bit compile
+ *
  * Revision 1.12  2002/06/15 00:07:23  aubin
  * mods to enable 64bit file i/o
  *
@@ -171,7 +174,6 @@ typedef long vsi_l_offset;
 #ifdef VSI_LARGE_API_SUPPORTED
 typedef struct stat64 VSIStatBuf;
 #else
-#error "WRONG stat structure defined!  Not using 64bit"
 typedef struct stat VSIStatBuf;
 #endif
 
