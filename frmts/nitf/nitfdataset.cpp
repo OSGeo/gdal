@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2004/04/15 20:53:15  warmerda
+ * Added support for geocentric coordinates, and file level metadata
+ *
  * Revision 1.17  2004/04/02 20:44:37  warmerda
  * preserve APBB (actual bits per pixel) field as metadata
  *
@@ -532,7 +535,7 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     OGRSpatialReference oSRSWork;
 
-    if( psImage->chICORDS == 'G' )
+    if( psImage->chICORDS == 'G' || psImage->chICORDS == 'C' )
     {
         CPLFree( poDS->pszProjection );
         poDS->pszProjection = NULL;
@@ -685,6 +688,11 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->pszGCPProjection = CPLStrdup( poDS->pszProjection );
     }
                  
+/* -------------------------------------------------------------------- */
+/*      Do we have metadata.                                            */
+/* -------------------------------------------------------------------- */
+    poDS->SetMetadata( poDS->psFile->papszMetadata );
+    
 /* -------------------------------------------------------------------- */
 /*      Do we have RPC info.                                            */
 /* -------------------------------------------------------------------- */
