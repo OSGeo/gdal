@@ -4,7 +4,7 @@
  * Project:  Erdas Imagine (.img) Translator
  * Purpose:  Supporting functions for HFA (.img) ... main (C callable) API
  *           that is not dependent on GDAL (just CPL).
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 1999, Intergraph Corporation
@@ -35,6 +35,9 @@
  * of the GDAL core, but dependent on the Common Portability Library.
  *
  * $Log$
+ * Revision 1.27  2003/04/22 19:40:36  warmerda
+ * fixed email address
+ *
  * Revision 1.26  2003/04/04 16:10:24  dron
  * Use ULONG_MAX to determine maximum file size. Depends on <limits.h> now.
  *

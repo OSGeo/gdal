@@ -4,7 +4,7 @@
  * Project:  Erdas Imagine (.img) Translator
  * Purpose:  Implementation of the HFAField class for managing information
  *           about one field in a HFA dictionary type.  Managed by HFAType.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 1999, Intergraph Corporation
@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2003/04/22 19:40:36  warmerda
+ * fixed email address
+ *
  * Revision 1.11  2001/07/18 04:51:57  warmerda
  * added CPL_CVSID
  *

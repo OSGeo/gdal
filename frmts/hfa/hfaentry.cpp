@@ -4,7 +4,7 @@
  * Project:  Erdas Imagine (.img) Translator
  * Purpose:  Implementation of the HFAEntry class for reading and relating
  *           one node in the HFA object tree structure. 
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 1999, Intergraph Corporation
@@ -33,6 +33,9 @@
  * Implementation of the HFAEntry class.
  *
  * $Log$
+ * Revision 1.8  2003/04/22 19:40:36  warmerda
+ * fixed email address
+ *
  * Revision 1.7  2001/07/18 04:51:57  warmerda
  * added CPL_CVSID
  *
