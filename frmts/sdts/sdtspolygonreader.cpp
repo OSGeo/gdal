@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  1999/09/03 13:35:05  warmerda
+ * cleanup array in assemblerings
+ *
  * Revision 1.5  1999/09/03 13:01:39  warmerda
  * added docs
  *
@@ -288,6 +291,8 @@ int SDTSRawPolygon::AssembleRings()
             bSuccess = FALSE;
         
     } /* next ring */
+
+    CPLFree( panEdgeConsumed );
 
     return bSuccess;
 }
