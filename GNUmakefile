@@ -41,10 +41,22 @@ frmts-target:
 	(cd frmts; $(MAKE))
 
 ogr-all:
-	(cd ogr; $(MAKE))
+	(cd ogr; $(MAKE) all)
 
-apps-target:
+apps-target:	ogr-apps
 	(cd apps; $(MAKE))
+
+
+ifeq ($(OGR_ENABLED),yes)
+
+ogr-apps:
+	(cd ogr; $(MAKE) apps)
+
+else
+
+ogr-apps:
+
+endif
 
 #
 #	We only make python a default target if we think python is installed.
