@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2000/08/18 15:25:06  warmerda
+ * added cascading overview regeneration to speed up averaged overviews
+ *
  * Revision 1.3  2000/07/17 17:08:45  warmerda
  * added support for complex data
  *
@@ -253,6 +256,96 @@ GDALDownsampleChunkC32R( int nSrcWidth, int nSrcHeight,
     return CE_None;
 }
 
+/************************************************************************/
+/*                  GDALRegenerateCascadingOverviews()                  */
+/*                                                                      */
+/*      Generate a list of overviews in order from largest to           */
+/*      smallest, computing each from the next larger.                  */
+/************************************************************************/
+
+static CPLErr
+GDALRegenerateCascadingOverviews( 
+    GDALRasterBand *poSrcBand, int nOverviews, GDALRasterBand **papoOvrBands, 
+    const char * pszResampling, 
+    GDALProgressFunc pfnProgress, void * pProgressData )
+
+{
+/* -------------------------------------------------------------------- */
+/*      First, we must put the overviews in order from largest to       */
+/*      smallest.                                                       */
+/* -------------------------------------------------------------------- */
+    int   i, j;
+
+    for( i = 0; i < nOverviews-1; i++ )
+    {
+        for( j = 0; j < nOverviews - i - 1; j++ )
+        {
+
+            if( papoOvrBands[j]->GetXSize() 
+                * (float) papoOvrBands[j]->GetYSize() <
+                papoOvrBands[j+1]->GetXSize()
+                * (float) papoOvrBands[j+1]->GetYSize() )
+            {
+                GDALRasterBand * poTempBand;
+
+                poTempBand = papoOvrBands[j];
+                papoOvrBands[j] = papoOvrBands[j+1];
+                papoOvrBands[j+1] = poTempBand;
+            }
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Count total pixels so we can prepare appropriate scaled         */
+/*      progress functions.                                             */
+/* -------------------------------------------------------------------- */
+    double       dfTotalPixels = 0.0;
+
+    for( i = 0; i < nOverviews; i++ )
+    {
+        dfTotalPixels += papoOvrBands[i]->GetXSize()
+            * (double) papoOvrBands[i]->GetYSize();
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Generate all the bands.                                         */
+/* -------------------------------------------------------------------- */
+    double	dfPixelsProcessed = 0.0;
+
+    for( i = 0; i < nOverviews; i++ )
+    {
+        void	*pScaledProgressData;
+        double  dfPixels;
+        GDALRasterBand *poBaseBand;
+        CPLErr  eErr;
+
+        if( i == 0 )
+            poBaseBand = poSrcBand;
+        else
+            poBaseBand = papoOvrBands[i-1];
+
+        dfPixels = papoOvrBands[i]->GetXSize() 
+            * (double) papoOvrBands[i]->GetYSize();
+
+        pScaledProgressData = GDALCreateScaledProgress( 
+            dfPixelsProcessed / dfTotalPixels,
+            (dfPixelsProcessed + dfPixels) / dfTotalPixels, 
+            pfnProgress, pProgressData );
+
+        eErr = GDALRegenerateOverviews( poBaseBand, 1, papoOvrBands + i, 
+                                        pszResampling, 
+                                        GDALScaledProgress, 
+                                        pScaledProgressData );
+        GDALDestroyScaledProgress( pScaledProgressData );
+
+        if( eErr != CE_None )
+            return eErr;
+
+        dfPixelsProcessed += dfPixels;
+    }
+
+    return CE_None;
+}
 
 /************************************************************************/
 /*                      GDALRegenerateOverviews()                       */
@@ -267,6 +360,18 @@ GDALRegenerateOverviews( GDALRasterBand *poSrcBand,
     int    nFullResYChunk, nWidth;
     int    nFRXBlockSize, nFRYBlockSize;
     GDALDataType eType;
+
+/* -------------------------------------------------------------------- */
+/*      If we are operating on multiple overviews, and using            */
+/*      averaging, lets do them in cascading order to reduce the        */
+/*      amount of computation.                                          */
+/* -------------------------------------------------------------------- */
+    if( EQUALN(pszResampling,"AVER",4) && nOverviews > 1 )
+        return GDALRegenerateCascadingOverviews( poSrcBand, 
+                                                 nOverviews, papoOvrBands,
+                                                 pszResampling, 
+                                                 pfnProgress,
+                                                 pProgressData );
 
 /* -------------------------------------------------------------------- */
 /*      Setup one horizontal swath to read from the raw buffer.         */
