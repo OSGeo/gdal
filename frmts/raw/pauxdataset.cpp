@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2001/05/15 13:59:24  warmerda
+ * allow opening by selecting the .aux file
+ *
  * Revision 1.9  2000/10/06 15:29:27  warmerda
  * added PAuxRasterBand, implemented nodata support
  *
@@ -322,48 +325,63 @@ GDALDataset *PAuxDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
     int		i;
-    char	*pszHDRFilename;
+    char	*pszAuxFilename;
     char	**papszTokens;
+    char	*pszTarget;
     
-/* -------------------------------------------------------------------- */
-/*      We assume the user is pointing to the binary file.		*/
-/* -------------------------------------------------------------------- */
-    if( poOpenInfo->nHeaderBytes < 1 && poOpenInfo->fp != NULL )
+    if( poOpenInfo->nHeaderBytes < 1 || poOpenInfo->fp == NULL )
         return NULL;
+
+/* -------------------------------------------------------------------- */
+/*      If this is an .aux file, fetch out and form the name of the     */
+/*      file it references.                                             */
+/* -------------------------------------------------------------------- */
+
+    pszTarget = CPLStrdup( poOpenInfo->pszFilename );
+
+    if( EQUAL(CPLGetExtension( poOpenInfo->pszFilename ),"aux")
+        && EQUALN((const char *) poOpenInfo->pabyHeader,"AuxilaryTarget: ",16))
+    {
+        char	szAuxTarget[1024];
+        char    *pszPath;
+        const char *pszSrc = (const char *) poOpenInfo->pabyHeader+16;
+
+        for( i = 0; 
+             pszSrc[i] != 10 && pszSrc[i] != 13 && pszSrc[i] != '\0'
+                 && i < (int) sizeof(szAuxTarget)-1;
+             i++ )
+        {
+            szAuxTarget[i] = pszSrc[i];
+        }
+        szAuxTarget[i] = '\0';
+
+        CPLFree( pszTarget );
+
+        pszPath = CPLStrdup(CPLGetPath(poOpenInfo->pszFilename));
+        pszTarget = CPLStrdup(CPLFormFilename(pszPath, szAuxTarget, NULL));
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Now we need to tear apart the filename to form a .aux           */
 /*      filename.                                                       */
 /* -------------------------------------------------------------------- */
-    pszHDRFilename = (char *) CPLMalloc(strlen(poOpenInfo->pszFilename)+5);
-    strcpy( pszHDRFilename, poOpenInfo->pszFilename );;
-
-    for( i = strlen(pszHDRFilename)-1; i > 0; i-- )
-    {
-        if( pszHDRFilename[i] == '.' )
-        {
-            pszHDRFilename[i] = '\0';
-            break;
-        }
-    }
-
-    strcat( pszHDRFilename, ".aux" );
+    pszAuxFilename = CPLStrdup(CPLResetExtension(pszTarget,"aux"));
 
 /* -------------------------------------------------------------------- */
 /*      Do we have a .aux file?                                         */
 /* -------------------------------------------------------------------- */
     FILE	*fp;
 
-    fp = VSIFOpen( pszHDRFilename, "r" );
+    fp = VSIFOpen( pszAuxFilename, "r" );
     if( fp == NULL )
     {
-        strcpy( pszHDRFilename + strlen(pszHDRFilename)-4, ".aux" );
-        fp = VSIFOpen( pszHDRFilename, "r" );
+        strcpy( pszAuxFilename + strlen(pszAuxFilename)-4, ".aux" );
+        fp = VSIFOpen( pszAuxFilename, "r" );
     }
 
     if( fp == NULL )
     {
-        CPLFree( pszHDRFilename );
+        CPLFree( pszAuxFilename );
         return NULL;
     }
 
@@ -382,7 +400,7 @@ GDALDataset *PAuxDataset::Open( GDALOpenInfo * poOpenInfo )
 
     if( pszLine == NULL || !EQUALN(pszLine,"AuxilaryTarget",14) )
     {
-        CPLFree( pszHDRFilename );
+        CPLFree( pszAuxFilename );
         return NULL;
     }
     
@@ -399,8 +417,8 @@ GDALDataset *PAuxDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Load the .aux file into a string list suitable to be            */
 /*      searched with CSLFetchNameValue().                              */
 /* -------------------------------------------------------------------- */
-    poDS->papszAuxLines = CSLLoad( pszHDRFilename );
-    poDS->pszAuxFilename = pszHDRFilename;
+    poDS->papszAuxLines = CSLLoad( pszAuxFilename );
+    poDS->pszAuxFilename = pszAuxFilename;
     
 /* -------------------------------------------------------------------- */
 /*      Find the RawDefinition line to establish overall parameters.    */
@@ -425,24 +443,32 @@ GDALDataset *PAuxDataset::Open( GDALOpenInfo * poOpenInfo )
     CSLDestroy( papszTokens );
     
 /* -------------------------------------------------------------------- */
-/*      Assume ownership of the file handled from the GDALOpenInfo      */
-/*      if read access is requested, otherwise close this handle,       */
-/*      and open with write access.                                     */
+/*      Open the file.                                                  */
 /* -------------------------------------------------------------------- */
-    poDS->fpImage = poOpenInfo->fp;
-    poOpenInfo->fp = NULL;
-
     if( poOpenInfo->eAccess == GA_Update )
     {
-        VSIFClose( poDS->fpImage );
-        poDS->fpImage = VSIFOpen( poOpenInfo->pszFilename, "rb+" );
+        poDS->fpImage = VSIFOpen( pszTarget, "rb+" );
 
         if( poDS->fpImage == NULL )
         {
             CPLError( CE_Failure, CPLE_OpenFailed,
-                      "File %s is read-only, check permissions.",
-                      poOpenInfo->pszFilename );
+                      "File %s is missing or read-only, check permissions.",
+                      pszTarget );
+            
+            delete poDS;
+            return NULL;
+        }
+    }
+    else
+    {
+        poDS->fpImage = VSIFOpen( pszTarget, "rb" );
 
+        if( poDS->fpImage == NULL )
+        {
+            CPLError( CE_Failure, CPLE_OpenFailed,
+                      "File %s is missing or unreadable.",
+                      pszTarget );
+            
             delete poDS;
             return NULL;
         }
@@ -495,7 +521,9 @@ GDALDataset *PAuxDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Check for overviews.                                            */
 /* -------------------------------------------------------------------- */
-    poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
+    poDS->oOvManager.Initialize( poDS, pszTarget );
+
+    CPLFree( pszTarget );
 
     return( poDS );
 }
