@@ -216,6 +216,44 @@ if test "$FITS_SETTING" != "no" ; then
 fi
 
 dnl ---------------------------------------------------------------------------
+dnl Check if netcdf library is available.
+dnl ---------------------------------------------------------------------------
+
+AC_ARG_WITH(netcdf,[  --with-netcdf[=ARG]     Include netCDF support (ARG=no or netCDF tree prefix)],,)
+
+if test "$with_netcdf" = "no" ; then
+
+  NETCDF_SETTING=no
+
+  echo "netCDF support disabled."
+
+elif test "$with_netcdf" = "yes" -o "$with_netcdf" = "" ; then
+
+  AC_CHECK_LIB(netcdf,nc_open,NETCDF_SETTING=yes,NETCDF_SETTING=no,)
+
+  if test "$NETCDF_SETTING" = "yes" ; then   
+    LIBS="-lnetcdf $LIBS"
+    echo "using pre-installed libnetcdf."
+  else
+    echo "libnetcdf not found - netCDF support disabled"
+  fi
+
+else
+
+  NETCDF_SETTING=yes
+  LIBS="-L$with_netcdf -L$with_netcdf/lib -lnetcdf $LIBS"
+  EXTRA_INCLUDES="-I$with_netcdf -I$with_netcdf/include $EXTRA_INCLUDES"
+
+  echo "using libnetcdf from $with_netcdf."
+fi
+
+AC_SUBST(NETCDF_SETTING,$NETCDF_SETTING)
+
+if test "$NETCDF_SETTING" != "no" ; then
+  OPT_GDAL_FORMATS="netcdf $OPT_GDAL_FORMATS"
+fi
+
+dnl ---------------------------------------------------------------------------
 dnl Select a PNG Library to use, or disable driver.
 dnl ---------------------------------------------------------------------------
 
