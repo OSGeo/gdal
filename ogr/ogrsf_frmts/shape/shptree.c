@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: shptree.c,v 1.9 2003/01/28 15:53:41 warmerda Exp $
+ * $Id: shptree.c,v 1.10 2005/01/03 22:30:13 fwarmerdam Exp $
  *
  * Project:  Shapelib
  * Purpose:  Implementation of quadtree building and searching functions.
@@ -34,6 +34,9 @@
  ******************************************************************************
  *
  * $Log: shptree.c,v $
+ * Revision 1.10  2005/01/03 22:30:13  fwarmerdam
+ * added support for saved quadtrees
+ *
  * Revision 1.9  2003/01/28 15:53:41  warmerda
  * Avoid build warnings.
  *
@@ -70,7 +73,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-SHP_CVSID("$Id$")
+SHP_CVSID("$Id: shptree.c,v 1.10 2005/01/03 22:30:13 fwarmerdam Exp $")
 
 #ifndef TRUE
 #  define TRUE 1
