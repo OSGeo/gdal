@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2004/07/26 22:32:30  warmerda
+ * Support .OVR files as well as .ovr
+ *
  * Revision 1.9  2002/07/09 20:33:12  warmerda
  * expand tabs
  *
@@ -112,6 +115,8 @@ void GDALDefaultOverviews::Initialize( GDALDataset *poDSIn,
 /* -------------------------------------------------------------------- */
 /*      Open overview dataset if it exists.                             */
 /* -------------------------------------------------------------------- */
+    int bExists;
+
     poDS = poDSIn;
     
     if( pszBasename == NULL )
@@ -124,7 +129,19 @@ void GDALDefaultOverviews::Initialize( GDALDataset *poDSIn,
     else
         sprintf( pszOvrFilename, "%s.ovr", pszBasename );
 
-    if( VSIStat( pszOvrFilename, &sStatBuf ) == 0 )
+    bExists = VSIStat( pszOvrFilename, &sStatBuf ) == 0;
+
+#if !defined(WIN32)
+    if( !bNameIsOVR && !bExists )
+    {
+        sprintf( pszOvrFilename, "%s.OVR", pszBasename );
+        bExists = VSIStat( pszOvrFilename, &sStatBuf ) == 0;
+        if( !bExists )
+            sprintf( pszOvrFilename, "%s.ovr", pszBasename );
+    }
+#endif
+
+    if( bExists )
         poODS = (GDALDataset *) GDALOpen( pszOvrFilename, poDS->GetAccess() );
 }
 
