@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2004/04/02 17:33:22  warmerda
+ * added GDALGeneralCmdLineProcessor()
+ *
  * Revision 1.7  2002/04/16 14:00:25  warmerda
  * added GDALVersionInfo
  *
@@ -63,7 +66,7 @@ static void Usage()
 
 {
     printf( "Usage: gdaladdo [-r {nearest,average,average_mp,average_magphase,mode}]\n"
-            "                [--version] filename levels\n"
+            "                [--help-general] filename levels\n"
             "\n"
             "Example:\n"
             " %% gdaladdo -r average abc.tif 2 4 8 16\n" );
@@ -83,6 +86,12 @@ int main( int nArgc, char ** papszArgv )
     int          anLevels[1024];
     int          nLevelCount = 0;
 
+    GDALAllRegister();
+
+    nArgc = GDALGeneralCmdLineProcessor( nArgc, &papszArgv, 0 );
+    if( nArgc < 1 )
+        exit( -nArgc );
+
 /* -------------------------------------------------------------------- */
 /*      Parse commandline.                                              */
 /* -------------------------------------------------------------------- */
@@ -94,8 +103,6 @@ int main( int nArgc, char ** papszArgv )
             pszFilename = papszArgv[iArg];
         else if( atoi(papszArgv[iArg]) > 0 )
             anLevels[nLevelCount++] = atoi(papszArgv[iArg]);
-        else if( EQUAL(papszArgv[iArg],"--version") )
-            printf( "%s\n", GDALVersionInfo( "--version" ) );
         else
             Usage();
     }
@@ -106,8 +113,6 @@ int main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
 /*      Open data file.                                                 */
 /* -------------------------------------------------------------------- */
-    GDALAllRegister();
-
     poDataset = (GDALDataset *) GDALOpen( pszFilename, GA_Update );
 
     if( poDataset == NULL )

@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2004/04/02 17:33:22  warmerda
+ * added GDALGeneralCmdLineProcessor()
+ *
  * Revision 1.4  2004/04/01 19:51:18  warmerda
  * Added the -dstnodata commandline switch.
  *
@@ -103,7 +106,7 @@ static void Usage()
 
 {
     printf( 
-        "Usage: gdalwarp [--version] [--formats]\n"
+        "Usage: gdalwarp [--help-general] [--formats]\n"
         "    [-s_srs srs_def] [-t_srs srs_def] [-order n] [-et err_threshold]\n"
         "    [-te xmin ymin xmax ymax] [-tr xres yres] [-ts width height]\n"
         "    [-wo \"NAME=VALUE\"] [-ot Byte/Int16/...] [-wt Byte/Int16]\n"
@@ -167,34 +170,16 @@ int main( int argc, char ** argv )
     int                 bMulti = FALSE;
 
     GDALAllRegister();
+    argc = GDALGeneralCmdLineProcessor( argc, &argv, 0 );
+    if( argc < 1 )
+        exit( -argc );
 
 /* -------------------------------------------------------------------- */
 /*      Parse arguments.                                                */
 /* -------------------------------------------------------------------- */
     for( i = 1; i < argc; i++ )
     {
-        if( EQUAL(argv[i],"--version") )
-        {
-            printf( "%s\n", GDALVersionInfo( "--version" ) );
-            exit( 0 );
-        }
-        else if( EQUAL(argv[i],"--formats") )
-        {
-            int iDr;
-
-            printf( "Supported Formats:\n" );
-            for( iDr = 0; iDr < GDALGetDriverCount(); iDr++ )
-            {
-                GDALDriverH hDriver = GDALGetDriver(iDr);
-                
-                printf( "  %s: %s\n",
-                        GDALGetDriverShortName( hDriver ),
-                        GDALGetDriverLongName( hDriver ) );
-            }
-
-            exit( 0 );
-        }
-        else if( EQUAL(argv[i],"-co") && i < argc-1 )
+        if( EQUAL(argv[i],"-co") && i < argc-1 )
         {
             papszCreateOptions = CSLAddString( papszCreateOptions, argv[++i] );
             bCreateOutput = TRUE;

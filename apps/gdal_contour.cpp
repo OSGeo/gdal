@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2004/04/02 17:33:22  warmerda
+ * added GDALGeneralCmdLineProcessor()
+ *
  * Revision 1.7  2003/10/16 16:54:23  warmerda
  * added support for fixed levels
  *
@@ -95,17 +98,16 @@ int main( int argc, char ** argv )
     GDALAllRegister();
     OGRRegisterAll();
 
+    argc = GDALGeneralCmdLineProcessor( argc, &argv, 0 );
+    if( argc < 1 )
+        exit( -argc );
+
 /* -------------------------------------------------------------------- */
 /*      Parse arguments.                                                */
 /* -------------------------------------------------------------------- */
     for( i = 1; i < argc; i++ )
     {
-        if( EQUAL(argv[i],"--version") )
-        {
-            printf( "%s\n", GDALVersionInfo( "--version" ) );
-            exit( 0 );
-        }
-        else if( EQUAL(argv[i],"-a") && i < argc-1 )
+        if( EQUAL(argv[i],"-a") && i < argc-1 )
         {
             pszElevAttrib = argv[++i];
         }
@@ -120,7 +122,8 @@ int main( int argc, char ** argv )
         else if( EQUAL(argv[i],"-fl") && i < argc-1 )
         {
             while( i < argc-1 
-                   && nFixedLevelCount < sizeof(adfFixedLevels)/sizeof(double)
+                   && nFixedLevelCount 
+                             < (int)(sizeof(adfFixedLevels)/sizeof(double))
                    && atof(argv[i+1]) != 0 || EQUAL(argv[i+1],"0") )
                 adfFixedLevels[nFixedLevelCount++] = atof(argv[++i]);
         }

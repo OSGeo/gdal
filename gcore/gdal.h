@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.79  2004/04/02 17:32:40  warmerda
+ * added GDALGeneralCmdLineProcessor()
+ *
  * Revision 1.78  2004/03/28 16:01:46  warmerda
  * added GDALApplyGeoTransform()
  *
@@ -474,6 +477,8 @@ CPLErr GDALOverviewMagnitudeCorrection( GDALRasterBandH hBaseBand,
 /* -------------------------------------------------------------------- */
 /*      Helper functions.                                               */
 /* -------------------------------------------------------------------- */
+int CPL_DLL GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, 
+                                         int nOptions );
 void CPL_DLL GDALSwapWords( void *pData, int nWordSize, int nWordCount,
                             int nWordSkip );
 void CPL_DLL
