@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_mapfile.cpp,v 1.30 2004/06/30 20:29:04 dmorissette Exp $
+ * $Id: mitab_mapfile.cpp,v 1.31 2004/09/22 13:07:58 fwarmerdam Exp $
  *
  * Name:     mitab_mapfile.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -31,6 +31,9 @@
  **********************************************************************
  *
  * $Log: mitab_mapfile.cpp,v $
+ * Revision 1.31  2004/09/22 13:07:58  fwarmerdam
+ * fixed return value in LoadNextMatchingObjectBlock() per rso bug 615
+ *
  * Revision 1.30  2004/06/30 20:29:04  dmorissette
  * Fixed refs to old address danmo@videotron.ca
  *
@@ -560,7 +563,7 @@ int TABMAPFile::LoadNextMatchingObjectBlock( int bFirstObject )
         CPLAssert( m_poSpIndex == NULL && m_poSpIndexLeaf == NULL );
 
         if( PushBlock( m_poHeader->m_nFirstIndexBlock ) == NULL )
-            return -1;
+            return FALSE;
 
         if( m_poSpIndex == NULL )
         {
