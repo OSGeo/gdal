@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2003/03/05 16:46:54  warmerda
+ * Cast strchr() result for Sun (patch from Graeme).
+ *
  * Revision 1.20  2003/03/02 04:44:38  warmerda
  * added CPLStringToComplex
  *
@@ -534,7 +537,7 @@ double CPLDMSToDec( const char *is )
         ++s;
     }
     /* postfix sign */
-    if (*s && (p = strchr(sym, *s))) {
+    if (*s && (p = (char *) strchr(sym, *s))) {
         sign = (p - sym) >= 4 ? '-' : '+';
         ++s;
     }
