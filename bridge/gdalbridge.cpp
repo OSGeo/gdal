@@ -1,39 +1,5 @@
 /******************************************************************************
- * $Id$
- *
- * Project:  GDAL Bridge
- * Purpose:  Code for loading GDAL functions from a GDAL shared library,
- *           and place the function pointers into function pointer variables
- *           which can be used (syntactically) as if they were the real
- *           functions.
- * Author:   Frank Warmerdam, warmerda@home.com
- *
- ******************************************************************************
- * Copyright (c) 1999, Frank Warmerdam
- *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.1  1999/04/21 23:01:31  warmerda
- * New
- *
+ * $Id: gdalbridge.cpp,
  */
 
 /* ==================================================================== */
@@ -112,14 +78,14 @@ int GDALBridgeInitialize( const char * pszTargetDir )
     GDALAllRegister = (void (*)(void)) 
         GBGetSymbol( szPath, "GDALAllRegister" );
 
-    GDALCreate = (GDALDatasetH *(*)(GDALDriverH, const char *, int, int, int,
+    GDALCreate = (GDALDatasetH (*)(GDALDriverH, const char *, int, int, int,
                                     GDALDataType, char ** ))
         GBGetSymbol( szPath, "GDALCreate" );
 
-    GDALOpen = (GDALDatasetH *(*)(const char *, GDALAccess))
+    GDALOpen = (GDALDatasetH (*)(const char *, GDALAccess))
         GBGetSymbol( szPath, "GDALOpen" );
 
-    GDALGetDriverByName = (GDALDriverH *(*)(const char *))
+    GDALGetDriverByName = (GDALDriverH (*)(const char *))
         GBGetSymbol( szPath, "GDALGetDriverByName" );
 
     GDALClose = (void (*)(GDALDatasetH))
@@ -134,7 +100,7 @@ int GDALBridgeInitialize( const char * pszTargetDir )
     GDALGetRasterCount = (int (*)(GDALDatasetH))
         GBGetSymbol( szPath, "GDALGetRasterCount" );
 
-    GDALGetRasterBand = (GDALRasterBandH *(*)(GDALDatasetH, int))
+    GDALGetRasterBand = (GDALRasterBandH (*)(GDALDatasetH, int))
         GBGetSymbol( szPath, "GDALGetRasterBand" );
 
     GDALGetProjectionRef = (const char *(*)(GDALDatasetH))
@@ -168,7 +134,7 @@ int GDALBridgeInitialize( const char * pszTargetDir )
     GDALWriteBlock = (CPLErr (*)(GDALRasterBandH, int, int, void *))
         GBGetSymbol( szPath, "GDALWriteBlock" );
 
-    GDALCreateProjDef = (GDALProjDefH *(*)(const char *))
+    GDALCreateProjDef = (GDALProjDefH (*)(const char *))
         GBGetSymbol( szPath, "GDALCreateProjDef" );
 
     GDALReprojectToLongLat = (CPLErr (*)(GDALProjDefH, double *, double *))

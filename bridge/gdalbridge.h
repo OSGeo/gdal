@@ -1,40 +1,5 @@
 /******************************************************************************
- * $Id$
- *
- * Project:  GDAL Bridge
- * Purpose:  Defines structures and functions for use of GDAL Bridge.  GDAL
- *           Bridge is a lightweight approach to using the GDAL C API via
- *           demand loading from gdal*.so at runtime.  This include file, and
- *           gdalbridge.cpp would normally be copied into other packages and
- *           used to avoid direct dependence on the rest of GDAL. 
- * Author:   Frank Warmerdam, warmerda@home.com
- *
- ******************************************************************************
- * Copyright (c) 1999, Frank Warmerdam
- *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.1  1999/04/21 23:01:31  warmerda
- * New
- *
+ * $Id: gdalbridg
  */
 
 #ifndef GDALBRIDGE_H_INCLUDED
@@ -146,13 +111,13 @@ typedef void *GDALProjDefH;
 
 GDAL_ENTRY void (*GDALAllRegister)( void ) GDAL_NULL;
 
-GDAL_ENTRY GDALDatasetH *(*GDALCreate)( GDALDriverH hDriver, const char *,
+GDAL_ENTRY GDALDatasetH (*GDALCreate)( GDALDriverH hDriver, const char *,
                                         int, int, int, GDALDataType,
                                         char ** ) GDAL_NULL;
 
-GDAL_ENTRY GDALDatasetH *(*GDALOpen)( const char *, GDALAccess ) GDAL_NULL;
+GDAL_ENTRY GDALDatasetH (*GDALOpen)( const char *, GDALAccess ) GDAL_NULL;
 
-GDAL_ENTRY GDALDriverH *(*GDALGetDriverByName)( const char * ) GDAL_NULL;
+GDAL_ENTRY GDALDriverH (*GDALGetDriverByName)( const char * ) GDAL_NULL;
 
 /* ==================================================================== */
 /*      GDALDataset class ... normally this represents one file.        */
@@ -163,7 +128,7 @@ GDAL_ENTRY void (*GDALClose)( GDALDatasetH ) GDAL_NULL;
 GDAL_ENTRY int (*GDALGetRasterXSize)( GDALDatasetH ) GDAL_NULL;
 GDAL_ENTRY int (*GDALGetRasterYSize)( GDALDatasetH ) GDAL_NULL;
 GDAL_ENTRY int (*GDALGetRasterCount)( GDALDatasetH ) GDAL_NULL;
-GDAL_ENTRY GDALRasterBandH *(*GDALGetRasterBand)( GDALDatasetH, int) GDAL_NULL;
+GDAL_ENTRY GDALRasterBandH (*GDALGetRasterBand)( GDALDatasetH, int) GDAL_NULL;
 GDAL_ENTRY const char *(*GDALGetProjectionRef)( GDALDatasetH ) GDAL_NULL;
 GDAL_ENTRY CPLErr (*GDALSetProjection)( GDALDatasetH, const char * ) GDAL_NULL;
 GDAL_ENTRY CPLErr (*GDALGetGeoTransform)( GDALDatasetH, double * ) GDAL_NULL;
@@ -197,7 +162,7 @@ GDAL_ENTRY CPLErr (*GDALWriteBlock)( GDALRasterBandH,
 /*      Projections                                                     */
 /* ==================================================================== */
 
-GDAL_ENTRY GDALProjDefH *(*GDALCreateProjDef)( const char * ) GDAL_NULL;
+GDAL_ENTRY GDALProjDefH (*GDALCreateProjDef)( const char * ) GDAL_NULL;
 GDAL_ENTRY CPLErr (*GDALReprojectToLongLat)( GDALProjDefH,
                                              double *, double * ) GDAL_NULL;
 GDAL_ENTRY CPLErr (*GDALReprojectFromLongLat)( GDALProjDefH,
