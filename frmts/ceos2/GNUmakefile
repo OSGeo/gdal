@@ -6,7 +6,7 @@ OBJ	=	sar_ceosdataset.o \
 
 include $(GDAL_ROOT)/GDALmake.opt
 
-XTRAOPTS :=	$(CXXFLAGS) -I../raw
+XTRAOPTS :=	-I../raw
 
 default:	$(OBJ)
 
