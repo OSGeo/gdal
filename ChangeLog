@@ -1,3 +1,9 @@
+2003-06-27  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* Release 1.1.9 of GDAL/OGR.
+
+	* core: renamed directory to gcore, various related changes.
+
 2003-06-19  Frank Warmerdam  <warmerdam@pobox.com>
 
 	* frmts/ecw/ecwdataset.cpp: Added coordinate system reading (but not
