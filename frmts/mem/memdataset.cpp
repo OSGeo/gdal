@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2002/04/12 17:37:31  warmerda
+ * added colortable support
+ *
  * Revision 1.5  2002/03/01 16:45:53  warmerda
  * added support for retaining nodata value
  *
@@ -102,6 +105,10 @@ MEMRasterBand::MEMRasterBand( GDALDataset *poDS, int nBand,
     pabyData = pabyDataIn;
 
     bNoDataSet  = FALSE;
+
+    poColorTable = NULL;
+    
+    eColorInterp = GCI_Undefined;
 }
 
 /************************************************************************/
@@ -193,8 +200,6 @@ double MEMRasterBand::GetNoDataValue( int *pbSuccess )
     if( pbSuccess )
         *pbSuccess = bNoDataSet;
 
-    CPLDebug( "MEMRasterBand", "GetNoDataValue" );
-
     if( bNoDataSet )
         return dfNoData;
     else
@@ -209,7 +214,56 @@ CPLErr MEMRasterBand::SetNoDataValue( double dfNewValue )
     dfNoData = dfNewValue;
     bNoDataSet = TRUE;
 
-    CPLDebug( "MEMRasterBand", "SetNoDataValue" );
+    return CE_None;
+}
+
+/************************************************************************/
+/*                       GetColorInterpretation()                       */
+/************************************************************************/
+
+GDALColorInterp MEMRasterBand::GetColorInterpretation()
+
+{
+    if( poColorTable != NULL )
+        return GCI_PaletteIndex;
+    else
+        return eColorInterp;
+}
+
+/************************************************************************/
+/*                       SetColorInterpretation()                       */
+/************************************************************************/
+
+void MEMRasterBand::SetColorInterpretation( GDALColorInterp eGCI )
+
+{
+    eColorInterp = eGCI;
+}
+
+/************************************************************************/
+/*                           GetColorTable()                            */
+/************************************************************************/
+
+GDALColorTable *MEMRasterBand::GetColorTable()
+
+{
+    return poColorTable;
+}
+
+/************************************************************************/
+/*                           SetColorTable()                            */
+/************************************************************************/
+
+CPLErr MEMRasterBand::SetColorTable( GDALColorTable *poCT )
+
+{
+    if( poColorTable != NULL )
+        delete poColorTable;
+
+    if( poCT == NULL )
+        poColorTable = NULL;
+    else
+        poColorTable = poCT->Clone();
 
     return CE_None;
 }
