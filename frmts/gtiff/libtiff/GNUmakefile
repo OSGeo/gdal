@@ -57,14 +57,14 @@ clean:
 	rm -f $(O_OBJ) *.o *.a
 
 import:
-	@if test ! -d ~/osrs/geotiff ; then \
-	  echo reimport requires libgeotiff checked out ~/osrs/geotiff ; \
+	@if test ! -d ~/libtiff ; then \
+	  echo reimport requires libtiff checked out ~/libtiff ; \
 	  exit 1; \
 	fi
 
-	mv port.h port_safe.h
-	copymatch.sh ~/osrs/libtiff/libtiff *.c *.h
-	mv port_safe.h port.h
+	mv tif_config.h tif_config_safe.h
+	copymatch.sh ~/libtiff/libtiff *.c *.h
+	mv tif_config_safe.h tif_config.h
 
 	@echo
 	@echo 'Now do something like:'
