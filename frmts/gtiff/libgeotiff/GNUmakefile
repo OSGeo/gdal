@@ -38,3 +38,28 @@ install-obj:	$(O_OBJ)
 
 %.o:	%.c
 	$(CC) -c -I$(GDAL_ROOT)/port $(ALL_C_FLAGS) $*.c -o $*.o
+
+#
+# Updating to the latest libgeotiff involves copying all matching source
+# except for a few files that hook to GDALs own CPL services.
+#
+import:
+	@if test ! -d ~/osrs/geotiff ; then \
+	  echo reimport requires libgeotiff checked out ~/osrs/geotiff ; \
+	  exit 1; \
+	fi
+
+	rm -rf safe
+	mkdir safe
+	mv cpl_serv.h cpl_serv.h geo_config.h safe
+
+	copymatch.sh ~/osrs/geotiff/libgeotiff *.cpp *.c *.h *.inc
+	copymatch.sh ~/osrs/geotiff/libgeotiff/libxtiff xtiff.c xtiffio.h
+
+	mv safe/* .
+	rm -rf safe
+
+	@echo
+	@echo 'Now do something like:'
+	@echo '% cvs commit -m "updated to libgeotiff 1.1.x"'
+	@echo
