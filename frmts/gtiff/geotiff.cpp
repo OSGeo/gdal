@@ -25,6 +25,9 @@
  * The GeoTIFF driver implemenation.
  * 
  * $Log$
+ * Revision 1.7  1999/05/17 01:36:17  warmerda
+ * Added support for reading tiled tiff files.
+ *
  * Revision 1.6  1999/02/24 16:22:36  warmerda
  * Added use of geo_normalize
  *
@@ -76,12 +79,16 @@ class GTiffDataset : public GDALDataset
     uint16	nPlanarConfig;
     uint16	nSamplesPerPixel;
     uint16	nBitsPerSample;
-    uint32	nRowsPerStrip; 
-    int		nStripsPerBand;
+    uint32	nRowsPerStrip;
+    
+    int		nBlocksPerBand;
 
-    int		nLoadedStrip;
+    uint32      nBlockXSize;
+    uint32	nBlockYSize;
+
+    int		nLoadedBlock;		/* or tile */
     int		bLoadedStripDirty;
-    GByte	*pabyStripBuf;
+    GByte	*pabyBlockBuf;
 
     char	*pszProjection;
     double	adfGeoTransform[6];
@@ -143,10 +150,10 @@ GTiffRasterBand::GTiffRasterBand( GTiffDataset *poDS, int nBand )
         eDataType = GDT_Unknown;
 
 /* -------------------------------------------------------------------- */
-/*	Currently only works for strips 				*/
+/*	Establish block size for strip or tiles.			*/
 /* -------------------------------------------------------------------- */
-    nBlockXSize = poDS->GetRasterXSize();
-    nBlockYSize = poDS->nRowsPerStrip;
+    nBlockXSize = poDS->nBlockXSize;
+    nBlockYSize = poDS->nBlockYSize;
 }
 
 /************************************************************************/
@@ -158,26 +165,32 @@ CPLErr GTiffRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
 {
     GTiffDataset	*poGDS = (GTiffDataset *) poDS;
-    int			nStripBufSize, nStripId;
+    int			nBlockBufSize, nBlockId;
     CPLErr		eErr = CE_None;
 
-    CPLAssert( nBlockXOff == 0 );
-
-    nStripBufSize = TIFFStripSize( poGDS->hTIFF );
-
-    if( poGDS->nPlanarConfig == PLANARCONFIG_SEPARATE )
-        nStripId = nBlockYOff + (nBand-1) * poGDS->nStripsPerBand;
+    if( TIFFIsTiled(poGDS->hTIFF) )
+        nBlockBufSize = TIFFTileSize( poGDS->hTIFF );
     else
-        nStripId = nBlockYOff;
-    
+    {
+        CPLAssert( nBlockXOff == 0 );
+        nBlockBufSize = TIFFStripSize( poGDS->hTIFF );
+    }
+        
+    if( poGDS->nPlanarConfig == PLANARCONFIG_SEPARATE )
+        nBlockId = nBlockXOff + nBlockYOff * nBlocksPerRow
+                   + (nBand-1) * poGDS->nBlocksPerBand;
+    else
+        nBlockId = nBlockXOff + nBlockYOff * nBlocksPerRow;
+        
 /* -------------------------------------------------------------------- */
 /*	Handle the case of a strip in a writable file that doesn't	*/
 /*	exist yet, but that we want to read.  Just set to zeros and	*/
 /*	return.								*/
 /* -------------------------------------------------------------------- */
-    if( poGDS->eAccess == GA_Update
-        && (((int) poGDS->hTIFF->tif_dir.td_nstrips) <= nStripId
-            || poGDS->hTIFF->tif_dir.td_stripbytecount[nStripId] == 0) )
+    if( !TIFFIsTiled(poGDS->hTIFF)
+        && poGDS->eAccess == GA_Update
+        && (((int) poGDS->hTIFF->tif_dir.td_nstrips) <= nBlockId
+            || poGDS->hTIFF->tif_dir.td_stripbytecount[nBlockId] == 0) )
     {
         memset( pImage, 0,
                 nBlockXSize * nBlockYSize
@@ -193,14 +206,29 @@ CPLErr GTiffRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         && (poGDS->nBands == 1
             || poGDS->nPlanarConfig == PLANARCONFIG_SEPARATE) )
     {
-        if( TIFFReadEncodedStrip( poGDS->hTIFF, nStripId, pImage,
-                                  nStripBufSize ) == -1 )
+        if( TIFFIsTiled( poGDS->hTIFF ) )
         {
-            memset( pImage, 0, nStripBufSize );
-            CPLError( CE_Failure, CPLE_AppDefined,
-                      "TIFFReadEncodedStrip() failed.\n" );
-                      
-            eErr = CE_Failure;
+            if( TIFFReadEncodedTile( poGDS->hTIFF, nBlockId, pImage,
+                                     nBlockBufSize ) == -1 )
+            {
+                memset( pImage, 0, nBlockBufSize );
+                CPLError( CE_Failure, CPLE_AppDefined,
+                          "TIFFReadEncodedStrip() failed.\n" );
+                
+                eErr = CE_Failure;
+            }
+        }
+        else
+        {
+            if( TIFFReadEncodedStrip( poGDS->hTIFF, nBlockId, pImage,
+                                      nBlockBufSize ) == -1 )
+            {
+                memset( pImage, 0, nBlockBufSize );
+                CPLError( CE_Failure, CPLE_AppDefined,
+                          "TIFFReadEncodedStrip() failed.\n" );
+                
+                eErr = CE_Failure;
+            }
         }
 
         return eErr;
@@ -209,15 +237,15 @@ CPLErr GTiffRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /* -------------------------------------------------------------------- */
 /*      Allocate a temporary buffer for this strip.                     */
 /* -------------------------------------------------------------------- */
-    if( poGDS->pabyStripBuf == NULL )
+    if( poGDS->pabyBlockBuf == NULL )
     {
-        poGDS->pabyStripBuf = (GByte *) VSICalloc( 1, nStripBufSize );
-        if( poGDS->pabyStripBuf == NULL )
+        poGDS->pabyBlockBuf = (GByte *) VSICalloc( 1, nBlockBufSize );
+        if( poGDS->pabyBlockBuf == NULL )
         {
             CPLError( CE_Failure, CPLE_OutOfMemory,
                    "Unable to allocate %d bytes for a temporary strip buffer\n"
                       "in GeoTIFF driver.",
-                      nStripBufSize );
+                      nBlockBufSize );
             
             return( CE_Failure );
         }
@@ -226,32 +254,54 @@ CPLErr GTiffRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /* -------------------------------------------------------------------- */
 /*      Read the strip                                                  */
 /* -------------------------------------------------------------------- */
-    if( poGDS->nLoadedStrip != nStripId
-        && TIFFReadEncodedStrip(poGDS->hTIFF, nStripId, poGDS->pabyStripBuf,
-                                nStripBufSize) == -1 )
+    if( poGDS->nLoadedBlock != nBlockId )
     {
-        /* Once TIFFError() is properly hooked, this can go away */
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "TIFFReadEncodedStrip() failed." );
-
-        memset( poGDS->pabyStripBuf, 0, nStripBufSize );
-        
-        eErr = CE_Failure;
+        if( TIFFIsTiled( poGDS->hTIFF ) )
+        {
+            if( TIFFReadEncodedTile(poGDS->hTIFF, nBlockId,
+                                    poGDS->pabyBlockBuf,
+                                    nBlockBufSize) == -1 )
+            {
+                /* Once TIFFError() is properly hooked, this can go away */
+                CPLError( CE_Failure, CPLE_AppDefined,
+                          "TIFFReadEncodedStrip() failed." );
+                
+                memset( poGDS->pabyBlockBuf, 0, nBlockBufSize );
+                
+                eErr = CE_Failure;
+            }
+        }
+        else
+        {
+            if( TIFFReadEncodedStrip(poGDS->hTIFF, nBlockId,
+                                     poGDS->pabyBlockBuf,
+                                     nBlockBufSize) == -1 )
+            {
+                /* Once TIFFError() is properly hooked, this can go away */
+                CPLError( CE_Failure, CPLE_AppDefined,
+                          "TIFFReadEncodedStrip() failed." );
+                
+                memset( poGDS->pabyBlockBuf, 0, nBlockBufSize );
+                
+                eErr = CE_Failure;
+            }
+        }
     }
 
-    poGDS->nLoadedStrip = nStripId;
+    poGDS->nLoadedBlock = nBlockId;
                               
 /* -------------------------------------------------------------------- */
 /*      Handle simple case of eight bit data, and pixel interleaving.   */
 /* -------------------------------------------------------------------- */
     if( poGDS->nBitsPerSample == 8 )
     {
-        int	i;
+        int	i, nBlockPixels;
         GByte	*pabyImage;
         
-        pabyImage = poGDS->pabyStripBuf + nBand - 1;
-        
-        for( i = 0; i < (int) (poGDS->nRasterXSize*poGDS->nRowsPerStrip); i++ )
+        pabyImage = poGDS->pabyBlockBuf + nBand - 1;
+
+        nBlockPixels = nBlockXSize * nBlockYSize;
+        for( i = 0; i < nBlockPixels; i++ )
         {
             ((GByte *) pImage)[i] = *pabyImage;
             pabyImage += poGDS->nBands;
@@ -269,6 +319,8 @@ CPLErr GTiffRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
 /************************************************************************/
 /*                            IWriteBlock()                             */
+/*                                                                      */
+/*      This is still limited to writing stripped datasets.             */
 /************************************************************************/
 
 CPLErr GTiffRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
@@ -276,7 +328,7 @@ CPLErr GTiffRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
 
 {
     GTiffDataset	*poGDS = (GTiffDataset *) poDS;
-    int		nStripId, nStripBufSize;
+    int		nBlockId, nBlockBufSize;
 
     CPLAssert( poGDS != NULL
                && nBlockXOff == 0
@@ -286,10 +338,10 @@ CPLErr GTiffRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
     CPLAssert( nBlockXOff == 0 );
     CPLAssert( eDataType == GDT_Byte );
 
-    nStripBufSize = TIFFStripSize( poGDS->hTIFF );
-    nStripId = nBlockYOff + (nBand-1) * poGDS->nStripsPerBand;
+    nBlockBufSize = TIFFStripSize( poGDS->hTIFF );
+    nBlockId = nBlockYOff + (nBand-1) * poGDS->nBlocksPerBand;
     
-    TIFFWriteEncodedStrip( poGDS->hTIFF, nStripId, pImage, nStripBufSize );
+    TIFFWriteEncodedStrip( poGDS->hTIFF, nBlockId, pImage, nBlockBufSize );
     
     return CE_Failure;
 }
@@ -308,9 +360,9 @@ CPLErr GTiffRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
 GTiffDataset::GTiffDataset()
 
 {
-    nLoadedStrip = -1;
+    nLoadedBlock = -1;
     bLoadedStripDirty = FALSE;
-    pabyStripBuf = NULL;
+    pabyBlockBuf = NULL;
     hTIFF = NULL;
 }
 
@@ -346,9 +398,9 @@ void GTiffDataset::FlushCache()
         bLoadedStripDirty = FALSE;
     }
 
-    CPLFree( pabyStripBuf );
-    pabyStripBuf = NULL;
-    nLoadedStrip = -1;
+    CPLFree( pabyBlockBuf );
+    pabyBlockBuf = NULL;
+    nLoadedBlock = -1;
 }
 
 
@@ -422,10 +474,24 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Get strip layout (won't work for tiled images!)                 */
 /* -------------------------------------------------------------------- */
-    if( !TIFFGetField( hTIFF, TIFFTAG_ROWSPERSTRIP, &(poDS->nRowsPerStrip) ) )
-        poDS->nRowsPerStrip = 1; /* dummy value */
+    if( TIFFIsTiled(poDS->hTIFF) )
+    {
+        TIFFGetField( hTIFF, TIFFTAG_TILEWIDTH, &(poDS->nBlockXSize) );
+        TIFFGetField( hTIFF, TIFFTAG_TILELENGTH, &(poDS->nBlockYSize) );
+    }
+    else
+    {
+        if( !TIFFGetField( hTIFF, TIFFTAG_ROWSPERSTRIP,
+                           &(poDS->nRowsPerStrip) ) )
+            poDS->nRowsPerStrip = 1; /* dummy value */
 
-    poDS->nStripsPerBand = nYSize / poDS->nRowsPerStrip;
+        poDS->nBlockXSize = poDS->nRasterYSize;
+        poDS->nBlockYSize = poDS->nRowsPerStrip;
+    }
+        
+    poDS->nBlocksPerBand =
+        ((nYSize + poDS->nBlockYSize - 1) / poDS->nBlockYSize)
+      * ((nXSize + poDS->nBlockXSize  - 1) / poDS->nBlockXSize);
         
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
@@ -457,7 +523,7 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
         && nCount >= 2 )
     {
         poDS->adfGeoTransform[1] = padfScale[0];
-        poDS->adfGeoTransform[5] = padfScale[1];
+        poDS->adfGeoTransform[5] = - ABS(padfScale[1]);
     }
         
     if( TIFFGetField(hTIFF,TIFFTAG_GEOTIEPOINTS,&nCount,&padfTiePoints )
@@ -556,7 +622,11 @@ GDALDataset *GTiffDataset::Create( const char * pszFilename,
     poDS->nRowsPerStrip = TIFFDefaultStripSize(hTIFF,0);
     TIFFSetField( hTIFF, TIFFTAG_ROWSPERSTRIP, poDS->nRowsPerStrip );
     
-    poDS->nStripsPerBand = nYSize / poDS->nRowsPerStrip;
+    poDS->nBlocksPerBand =
+        ((nYSize + poDS->nRowsPerStrip - 1) / poDS->nRowsPerStrip);
+
+    poDS->nBlockXSize = nXSize;
+    poDS->nBlockYSize = poDS->nRowsPerStrip;
     
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
