@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.16  2002/11/05 03:19:29  warmerda
+ * remap nodata to 255, and only use byte type if max < 255
+ *
  * Revision 1.15  2002/09/04 06:50:36  warmerda
  * avoid static driver pointers
  *
@@ -148,7 +151,7 @@ AIGRasterBand::AIGRasterBand( AIGDataset *poDS, int nBand )
     nBlockYSize = poDS->psInfo->nBlockYSize;
 
     if( poDS->psInfo->nCellType == AIG_CELLTYPE_INT
-        && poDS->psInfo->dfMin >= 0.0 && poDS->psInfo->dfMax <= 255.0 )
+        && poDS->psInfo->dfMin >= 0.0 && poDS->psInfo->dfMax <= 254.0 )
     {
         eDataType = GDT_Byte;
     }
@@ -171,12 +174,12 @@ CPLErr AIGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
 {
     AIGDataset	*poODS = (AIGDataset *) poDS;
-    GUInt32	*panGridRaster;
+    GInt32	*panGridRaster;
     int		i;
 
     if( poODS->psInfo->nCellType == AIG_CELLTYPE_INT )
     {
-        panGridRaster = (GUInt32 *) CPLMalloc(4*nBlockXSize*nBlockYSize);
+        panGridRaster = (GInt32 *) CPLMalloc(4*nBlockXSize*nBlockYSize);
         if( AIGReadTile( poODS->psInfo, nBlockXOff, nBlockYOff, panGridRaster )
             != CE_None )
         {
@@ -187,7 +190,12 @@ CPLErr AIGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         if( eDataType == GDT_Byte )
         {
             for( i = 0; i < nBlockXSize * nBlockYSize; i++ )
-                ((GByte *) pImage)[i] = panGridRaster[i];
+            {
+                if( panGridRaster[i] == ESRI_GRID_NO_DATA )
+                    ((GByte *) pImage)[i] = 255;
+                else
+                    ((GByte *) pImage)[i] = panGridRaster[i];
+            }
         }
         else
         {
@@ -248,8 +256,10 @@ double AIGRasterBand::GetNoDataValue( int *pbSuccess )
 
     if( eDataType == GDT_Float32 )
         return ESRI_GRID_FLOAT_NO_DATA;
+    else if( eDataType == GDT_Byte )
+        return 255;
     else
-        return GRID_NO_DATA;
+        return ESRI_GRID_NO_DATA;
 }
 
 /************************************************************************/
