@@ -376,10 +376,13 @@ void GDALRegister_JDEM()
     {
         poJDEMDriver = poDriver = new GDALDriver();
         
-        poDriver->pszShortName = "JDEM";
-        poDriver->pszLongName = "Japanese DEM (.mem)";
-        poDriver->pszHelpTopic = "frmt_various.html#JDEM";
-        
+        poDriver->SetDescription( "JDEM" );
+        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
+                                   "Japanese DEM (.mem)" );
+        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
+                                   "frmt_various.html#JDEM" );
+        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "mem" );
+
         poDriver->pfnOpen = JDEMDataset::Open;
 
         GetGDALDriverManager()->RegisterDriver( poDriver );
@@ -393,16 +396,27 @@ pointer.  The following fields in the GDALDriver can be set before
 registering it with the GDALDriverManager().
 
 <ul>
-<li> pszShortName: A short unique name for this format, often used to identity
-the driver in scripts and commandline programs.  Normally 3-5 characters
-in length, and matching the prefix of the format classes. (manditory)
+<li> The description is the short name for the format.  This is a unique 
+name for this format, often used to identity the driver in scripts and 
+commandline programs.  Normally 3-5 characters in length, and matching the 
+prefix of the format classes. (manditory)
 
-<li> pszLongName: A longer descriptive name for the file format, often
-indicating the typical extension for the format. (manditory)
+<li> GDAL_DMD_LONGNAME: A longer descriptive name for the file format,
+but still no longer than 50-60 characters. (manditory)
 
-<li> pszHelpTopic: The name of a help topic to display for this driver, if
-any.  In this case JDEM format is contained within the various format 
+<li> GDAL_DMD_HELPTOPIC: The name of a help topic to display for this driver, 
+if any.  In this case JDEM format is contained within the various format 
 web page held in gdal/html.  (optional)
+
+<li> GDAL_DMD_EXTENSION: The extension used for files of this type.  If more
+than one pick the primary extension, or none at all. (optional)
+
+<li> GDAL_DMD_MIMETYPE: The standard mime type for this file format, such as
+"image/png". (optional)
+
+<li> GDAL_DMD_CREATIONOPTIONLIST: There is evolving work on mechanisms
+to describe creation options.  See the geotiff driver for an example of
+this.  (optional)
 
 <li> pfnOpen: The function to call to try opening files of this format. 
 (optional) 
@@ -426,7 +440,7 @@ when writing new drivers is to:
 
 <ol>
 <li> Add a driver directory under gdal/frmts, with the directory name the same
-as the pszShortName value. 
+as the short name.
 
 <li> Add a GNUmakefile and makefile.vc in that directory modelled on those
 from other similar directories (ie. the jdem directory). 
