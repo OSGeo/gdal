@@ -14,6 +14,9 @@ EXTRAFLAGS = 	-I..\..\zlib
 default:	$(OBJ)
 	copy *.obj ..\..\o
 
+libpng.lib:	$(OBJ)
+	LIB /OUT:libpng.lib $(OBJ)
+
 clean:
 	-del *.obj
 
