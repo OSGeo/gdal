@@ -196,6 +196,10 @@ The resulting table/layer will be saved to the output.</dd>
 <dt> <b>-dsco</b> <em>NAME=VALUE</em>:</dt><dd> Dataset creation option (format specific)</dd>
 <dt> <b>-lco</b><em>  NAME=VALUE</em>:</dt><dd> Layer creation option (format specific)</dd>
 <dt> <b>-nln</b><em> name</em>:</dt><dd> Assign an alternate name to the new layer</dd>
+<dt> <b>-nlt</b><em> type</em>:</dt><dd> Define the geometry type for the 
+created layer.  One of NONE, GEOMETRY, POINT, LINESTRING, POLYGON, 
+GEOMETRYCOLLECTION, MULTIPOINT, MULTILINE, MULTIPOLYGON or MULTILINESTRING. 
+Add "25D" to the name to get 2.5D versions.</dd>
 <dt> <b>-a_srs</b><em> srs_def</em>:</dt><dd> Assign an output SRS</dd>
 <dt> <b>-t_srs</b><em> srs_def</em>:</dt><dd> Reproject/transform to this SRS on output</dd>
 <dt> <b>-s_srs</b><em> srs_def</em>:</dt><dd> Override source SRS</dd>
