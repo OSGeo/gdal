@@ -29,6 +29,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.60  2004/03/26 17:12:31  warmerda
+# added fill wrapper
+#
 # Revision 1.59  2004/03/12 16:41:22  warmerda
 # Added some new cpl level functions
 #
@@ -660,6 +663,9 @@ class Band(MajorObject):
             ysize = self.YSize
 
         return _gdal.GDALChecksumImage( self._o, xoff, yoff, xsize, ysize )
+
+    def Fill( self, real_fill, imag_fill = 0.0 ):
+        return _gdal.GDALFillRaster( self._o, real_fill, imag_fill )
 
 ###############################################################################
 
