@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2000/07/13 14:41:36  warmerda
+ * fixed byte order
+ *
  * Revision 1.8  2000/06/12 15:24:24  warmerda
  * Fixed byte order handling.
  *
@@ -657,7 +660,7 @@ GDALDataset *SAR_CEOSDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->nRasterYSize = psImageDesc->Lines;
 
 #ifdef CPL_LSB
-    bNative = TRUE;
+    bNative = FALSE;
 #else
     bNative = TRUE;
 #endif
@@ -736,7 +739,7 @@ GDALDataset *SAR_CEOSDataset::Open( GDALOpenInfo * poOpenInfo )
                     new RawRasterBand( 
                         poDS, poDS->nBands+1, poOpenInfo->fp, 
                         nStartData, nPixelOffset, nLineOffset, 
-                        eType, !bNative ) );
+                        eType, bNative ) );
         }
     }
 
