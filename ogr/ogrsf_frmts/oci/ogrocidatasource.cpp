@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2003/01/10 16:40:33  warmerda
+ * initialize SRS table
+ *
  * Revision 1.7  2003/01/07 22:24:35  warmerda
  * added SRS support
  *
@@ -69,6 +72,8 @@ OGROCIDataSource::OGROCIDataSource()
     papoLayers = NULL;
     nLayers = 0;
     poSession = NULL;
+    papoSRS = NULL;
+    nKnownSRID = 0;
 }
 
 /************************************************************************/
