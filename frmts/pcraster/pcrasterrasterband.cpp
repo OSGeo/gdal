@@ -48,8 +48,6 @@
 //! Constructor.
 /*!
   \param     dataset The dataset we are a part of.
-  \todo      What about unknown data types?
-  \todo      Convert assertions to exceptions.
 */
 PCRasterRasterBand::PCRasterRasterBand(PCRasterDataset* dataset)
 
@@ -58,16 +56,9 @@ PCRasterRasterBand::PCRasterRasterBand(PCRasterDataset* dataset)
 {
   this->poDS = dataset;
   this->nBand = 1;
-
-  this->eDataType = PCRasterType2GDALType(dataset->cellRepresentation());
-  assert(eDataType != GDT_Unknown);
-
-  // This results in a buffer of one row.
+  this->eDataType = cellRepresentation2GDALType(dataset->cellRepresentation());
   this->nBlockXSize = dataset->GetRasterXSize();
   this->nBlockYSize = 1;
-
-  // CPLErr result = SetNoDataValue(dataset->missingValue());
-  // assert(result == CE_None);
 }
 
 
@@ -92,28 +83,94 @@ double PCRasterRasterBand::GetNoDataValue(int* success)
 
 
 
-//!
-/*!
-  \param     .
-  \return    .
-  \exception .
-  \warning   .
-  \sa        .
-  \todo      Convert assertions to exceptions.
-*/
+double PCRasterRasterBand::GetMinimum(int* success)
+{
+  double result;
+  int isValid;
+
+  switch(d_dataset->cellRepresentation()) {
+    case CR_UINT1: {
+      UINT1 min;
+      isValid = RgetMinVal(d_dataset->map(), &min);
+      result = static_cast<double>(min);
+      break;
+    }
+    case CR_INT4: {
+      INT4 min;
+      isValid = RgetMinVal(d_dataset->map(), &min);
+      result = static_cast<double>(min);
+      break;
+    }
+    case CR_REAL4: {
+      REAL4 min;
+      isValid = RgetMinVal(d_dataset->map(), &min);
+      result = static_cast<double>(min);
+      break;
+    }
+    default: {
+      result = 0.0;
+      isValid = 0;
+      break;
+    }
+  }
+
+  if(success) {
+    *success = isValid ? 1 : 0;
+  }
+
+  return result;
+}
+
+
+
+double PCRasterRasterBand::GetMaximum(int* success)
+{
+  double result;
+  int isValid;
+
+  switch(d_dataset->cellRepresentation()) {
+    case CR_UINT1: {
+      UINT1 max;
+      isValid = RgetMaxVal(d_dataset->map(), &max);
+      result = static_cast<double>(max);
+      break;
+    }
+    case CR_INT4: {
+      INT4 max;
+      isValid = RgetMaxVal(d_dataset->map(), &max);
+      result = static_cast<double>(max);
+      break;
+    }
+    case CR_REAL4: {
+      REAL4 max;
+      isValid = RgetMaxVal(d_dataset->map(), &max);
+      result = static_cast<double>(max);
+      break;
+    }
+    default: {
+      result = 0.0;
+      isValid = 0;
+      break;
+    }
+  }
+
+  if(success) {
+    *success = isValid ? 1 : 0;
+  }
+
+  return result;
+}
+
+
+
 CPLErr PCRasterRasterBand::IReadBlock(int nBlockXoff, int nBlockYoff,
          void* buffer)
 {
   PCRasterDataset* dataset = dynamic_cast<PCRasterDataset*>(this->poDS);
-
-  // We should be reading rows of data (see constructor).
-  assert(nBlockXoff == 0);
-
-  // Row number is in nBlockYoff.
   size_t nrCellsRead = RgetRow(dataset->map(), nBlockYoff, buffer);
-  assert(static_cast<int>(nrCellsRead) == this->nBlockXSize);
 
-  if(dataset->cellRepresentation() == CR_REAL4) {
+  if(dataset->cellRepresentation() == CR_REAL4 ||
+         dataset->cellRepresentation() == CR_REAL8) {
     // Missing value in the buffer is a NAN. Replace by valid value.
     alterFromStdMV(buffer, nrCellsRead, dataset->cellRepresentation(),
            d_dataset->missingValue());
