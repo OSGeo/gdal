@@ -28,6 +28,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.3  2002/01/23 20:45:06  warmerda
+ * handle <?...?> and comment elements
+ *
  * Revision 1.2  2001/12/06 18:13:49  warmerda
  * added CPLAddXMLChild and CPLCreateElmentAndValue
  *
@@ -47,7 +50,8 @@ typedef enum
 {
     CXT_Element = 0,
     CXT_Text = 1,
-    CXT_Attribute = 2
+    CXT_Attribute = 2,
+    CXT_Comment = 3
 } CPLXMLNodeType;
 
 typedef struct _CPLXMLNode

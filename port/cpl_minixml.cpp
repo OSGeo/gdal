@@ -28,6 +28,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.7  2002/01/23 20:45:05  warmerda
+ * handle <?...?> and comment elements
+ *
  * Revision 1.6  2002/01/22 18:54:48  warmerda
  * ensure text is property initialized when serializing
  *
@@ -62,7 +65,9 @@ typedef enum {
     TClose,
     TEqual,
     TToken,
-    TSlashClose
+    TSlashClose,
+    TQuestionClose,
+    TComment
 } TokenType;
 
 typedef struct {
@@ -162,9 +167,31 @@ static TokenType ReadToken( ParseContext *psContext )
         chNext = ReadChar( psContext );
 
 /* -------------------------------------------------------------------- */
+/*      Handle comments.                                                */
+/* -------------------------------------------------------------------- */
+    if( chNext == '<' 
+        && EQUALN(psContext->pszInput+psContext->nInputOffset,"!--",3) )
+    {
+        psContext->eTokenType = TComment;
+
+        // Skip "!--" characters
+        ReadChar(psContext);
+        ReadChar(psContext);
+        ReadChar(psContext);
+
+        while( !EQUALN(psContext->pszInput+psContext->nInputOffset,"-->",3)
+               && (chNext = ReadChar(psContext)) != '\0' )
+            AddToToken( psContext, chNext );
+
+        // Skip "-->" characters
+        ReadChar(psContext);
+        ReadChar(psContext);
+        ReadChar(psContext);
+    }
+/* -------------------------------------------------------------------- */
 /*      Simple single tokens of interest.                               */
 /* -------------------------------------------------------------------- */
-    if( chNext == '<' && !psContext->bInElement )
+    else if( chNext == '<' && !psContext->bInElement )
     {
         psContext->eTokenType = TOpen;
         psContext->bInElement = TRUE;
@@ -202,6 +229,27 @@ static TokenType ReadToken( ParseContext *psContext )
             psContext->bInElement = FALSE;
         }
     }
+/* -------------------------------------------------------------------- */
+/*      Handle the ?> token terminator.                                 */
+/* -------------------------------------------------------------------- */
+    else if( chNext == '?' && psContext->bInElement 
+             && psContext->pszInput[psContext->nInputOffset] == '>' )
+    {
+        chNext = ReadChar( psContext );
+        if( chNext != '>' )
+        {
+            psContext->eTokenType = TNone;
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                      "Parse error at '?' on line %d, expected '>'.", 
+                      psContext->nInputLine );
+        }
+        else
+        {
+            psContext->eTokenType = TQuestionClose;
+            psContext->bInElement = FALSE;
+        }
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Collect a quoted string.                                        */
 /* -------------------------------------------------------------------- */
@@ -278,7 +326,6 @@ static TokenType ReadToken( ParseContext *psContext )
 
         UnreadChar(psContext, chNext);
     }
-
     
     return psContext->eTokenType;
 }
@@ -486,6 +533,43 @@ CPLXMLNode *CPLParseXMLString( const char *pszString )
         }
 
 /* -------------------------------------------------------------------- */
+/*      Close the start section of a <?...?> element, and pop it        */
+/*      immediately.                                                    */
+/* -------------------------------------------------------------------- */
+        else if( sContext.eTokenType == TQuestionClose )
+        {
+            if( sContext.nStackSize == 0 )
+            {
+                CPLError( CE_Failure, CPLE_AppDefined, 
+                          "Line %d: Found unbalanced '?>'.",
+                          sContext.nInputLine );
+                break;
+            }
+            else if( sContext.papsStack[sContext.nStackSize-1]->pszValue[0] != '?' )
+            {
+                CPLError( CE_Failure, CPLE_AppDefined, 
+                          "Line %d: Found '?>' without matching '<?'.",
+                          sContext.nInputLine );
+                break;
+            }
+
+            sContext.nStackSize--;
+        }
+
+/* -------------------------------------------------------------------- */
+/*      Handle comments.  They are returned as a whole token with the     */
+/*      prefix and postfix omitted.  No processing of white space       */
+/*      will be done.                                                   */
+/* -------------------------------------------------------------------- */
+        else if( sContext.eTokenType == TComment )
+        {
+            CPLXMLNode *psValue;
+
+            psValue = CPLCreateXMLNode(NULL, CXT_Comment, sContext.pszToken);
+            AttachNode( &sContext, psValue );
+        }
+
+/* -------------------------------------------------------------------- */
 /*      Add a text value node as a child of the current element.        */
 /* -------------------------------------------------------------------- */
         else if( sContext.eTokenType == TString && !sContext.bInElement )
@@ -535,6 +619,21 @@ CPLXMLNode *CPLParseXMLString( const char *pszString )
 }
 
 /************************************************************************/
+/*                            _GrowBuffer()                             */
+/************************************************************************/
+
+static void _GrowBuffer( unsigned int nNeeded, 
+                         char **ppszText, unsigned int *pnMaxLength )
+
+{
+    if( nNeeded+1 >= *pnMaxLength )
+    {
+        *pnMaxLength = MAX(*pnMaxLength * 2,nNeeded+1);
+        *ppszText = (char *) CPLRealloc(*ppszText, *pnMaxLength);
+    }
+}
+
+/************************************************************************/
 /*                        CPLSerializeXMLNode()                         */
 /************************************************************************/
 
@@ -552,12 +651,9 @@ CPLSerializeXMLNode( CPLXMLNode *psNode, int nIndent,
 /*      string.                                                         */
 /* -------------------------------------------------------------------- */
     *pnLength += strlen(*ppszText + *pnLength);
-    if( strlen(psNode->pszValue) + *pnLength + 40 + nIndent*2 > *pnMaxLength )
-    {
-        *pnMaxLength = *pnMaxLength * 2 + strlen(psNode->pszValue) 
-            + nIndent*2 + 40;
-        *ppszText = (char *) CPLRealloc(*ppszText, *pnMaxLength);
-    }
+    if(strlen(psNode->pszValue) + *pnLength + 40 + nIndent > *pnMaxLength)
+        _GrowBuffer( strlen(psNode->pszValue) + *pnLength + 40 + nIndent, 
+                     ppszText, pnMaxLength );
     
 /* -------------------------------------------------------------------- */
 /*      Text is just directly emitted.                                  */
@@ -581,6 +677,22 @@ CPLSerializeXMLNode( CPLXMLNode *psNode, int nIndent,
         CPLSerializeXMLNode( psNode->psChild, 0, ppszText, 
                              pnLength, pnMaxLength );
         strcat( *ppszText + *pnLength, "\"" );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Attributes require a little formatting.                         */
+/* -------------------------------------------------------------------- */
+    else if( psNode->eType == CXT_Comment )
+    {
+        int	i;
+
+        CPLAssert( psNode->psChild == NULL );
+
+        for( i = 0; i < nIndent; i++ )
+            (*ppszText)[(*pnLength)++] = ' ';
+
+        sprintf( *ppszText + *pnLength, "<!--%s-->\n", 
+                 psNode->pszValue );
     }
 
 /* -------------------------------------------------------------------- */
@@ -608,7 +720,10 @@ CPLSerializeXMLNode( CPLXMLNode *psNode, int nIndent,
         
         if( psChild == NULL )
         {
-            strcat( *ppszText + *pnLength, "/>\n" );
+            if( psNode->pszValue[0] == '?' )
+                strcat( *ppszText + *pnLength, "?>\n" );
+            else
+                strcat( *ppszText + *pnLength, "/>\n" );
         }
         else
         {
@@ -628,6 +743,10 @@ CPLSerializeXMLNode( CPLXMLNode *psNode, int nIndent,
                                      pnMaxLength );
                 psChild = psChild->psNext;
             }
+
+            if( strlen(psNode->pszValue)+*pnLength+40+nIndent > *pnMaxLength)
+                _GrowBuffer( strlen(psNode->pszValue)+*pnLength+40+nIndent, 
+                             ppszText, pnMaxLength );
 
             if( !bJustText )
                 strcat( *ppszText + *pnLength, pszIndent );
@@ -649,11 +768,13 @@ char *CPLSerializeXMLTree( CPLXMLNode *psNode )
 {
     unsigned int nMaxLength = 10000, nLength = 0;
     char *pszText = NULL;
+    CPLXMLNode *psThis;
 
     pszText = (char *) CPLMalloc(nMaxLength);
     pszText[0] = '\0';
 
-    CPLSerializeXMLNode( psNode, 0, &pszText, &nLength, &nMaxLength );
+    for( psThis = psNode; psThis != NULL; psThis = psThis->psNext )
+        CPLSerializeXMLNode( psThis, 0, &pszText, &nLength, &nMaxLength );
 
     return pszText;
 }
