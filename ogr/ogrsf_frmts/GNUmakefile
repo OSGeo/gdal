@@ -14,6 +14,9 @@ default:
 ifeq ($(HAVE_OGDI),yes)
 	(cd ogdi; $(MAKE) $*)
 endif
+ifeq ($(HAVE_OCI),yes)
+	(cd oci; $(MAKE) $*)
+endif
 ifeq ($(HAVE_OGR_PG),yes)
 	(cd pg; $(MAKE) $*)
 endif
@@ -42,6 +45,9 @@ clean:
 	(cd gml; $(MAKE) clean)
 	(cd avc; $(MAKE) clean)
 ifeq ($(HAVE_OGDI),yes)
+	(cd ogdi; $(MAKE) clean)
+endif
+ifeq ($(HAVE_OCI),yes)
 	(cd ogdi; $(MAKE) clean)
 endif
 ifeq ($(HAVE_OGR_PG),yes)
