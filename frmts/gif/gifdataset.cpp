@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.13  2002/10/28 19:25:00  warmerda
+ * Ensure that MakeMapObject is called with sizes that are powers of 2.
+ *
  * Revision 1.12  2002/09/04 06:50:37  warmerda
  * avoid static driver pointers
  *
@@ -510,8 +513,12 @@ GIFCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     else
     {
         GDALColorTable	*poCT = poBand->GetColorTable();
+        int nFullCount = 1;
 
-        psGifCT = MakeMapObject( poCT->GetColorEntryCount(), NULL );
+        while( nFullCount < poCT->GetColorEntryCount() )
+            nFullCount = nFullCount * 2;
+
+        psGifCT = MakeMapObject( nFullCount, NULL );
         for( iColor = 0; iColor < poCT->GetColorEntryCount(); iColor++ )
         {
             GDALColorEntry	sEntry;
@@ -520,6 +527,12 @@ GIFCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             psGifCT->Colors[iColor].Red = sEntry.c1;
             psGifCT->Colors[iColor].Green = sEntry.c2;
             psGifCT->Colors[iColor].Blue = sEntry.c3;
+        }
+        for( ; iColor < nFullCount; iColor++ )
+        {
+            psGifCT->Colors[iColor].Red = 0;
+            psGifCT->Colors[iColor].Green = 0;
+            psGifCT->Colors[iColor].Blue = 0;
         }
     }
 
