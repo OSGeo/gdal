@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2003/01/09 14:59:47  warmerda
+ * fixed DGNGetLinkage() test for DMRS linkages as provided by Henk Jan Priester
+ *
  * Revision 1.12  2002/11/13 21:26:32  warmerda
  * added more documentation
  *
@@ -1047,8 +1050,8 @@ unsigned char *DGNGetLinkage( DGNHandle hDGN, DGNElemCore *psElement,
             CPLAssert( nLinkSize > 4 );
 
             if( psElement->attr_data[nAttrOffset+0] == 0x00
-                && (psElement->attr_data[nAttrOffset+0] == 0x00
-                    || psElement->attr_data[nAttrOffset+0] == 0x80) )
+                && (psElement->attr_data[nAttrOffset+1] == 0x00
+                    || psElement->attr_data[nAttrOffset+1] == 0x80) )
             {
                 nLinkageType = DGNLT_DMRS;
                 nEntityNum = psElement->attr_data[nAttrOffset+2] 

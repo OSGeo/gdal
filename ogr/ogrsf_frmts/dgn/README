@@ -31,6 +31,12 @@ Windows.
 Release Notes
 =============
 
+Release 1.6
+-----------
+
+ o Bug fix in DGNGetLinkage() for DMRS recognition from Henk Jan Priester.
+
+
 Release 1.5
 -----------
 
