@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2002/09/19 17:40:42  warmerda
+ * Make initial ResetReading() call to set full query expression in constructor.
+ *
  * Revision 1.4  2002/05/09 17:21:54  warmerda
  * Don't add trailing command if no fields to be inserted.
  *
@@ -72,6 +75,8 @@ OGRPGTableLayer::OGRPGTableLayer( OGRPGDataSource *poDSIn,
     nSRSId = nSRSIdIn;
 
     poFeatureDefn = ReadTableDefinition( pszTableName );
+    
+    ResetReading();
 }
 
 /************************************************************************/
