@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.35  2002/04/16 21:02:18  warmerda
+ * copy columninfo to CSFCommand from rowset after executing a command
+ *
  * Revision 1.34  2002/02/05 20:43:23  warmerda
  * moved SFIStream and VirtualArray classes into their own files
  *
@@ -149,6 +152,51 @@ static DBPROPOGISENUM   eFilterOp = DBPROP_OGIS_ENVELOPE_INTERSECTS;
 int g_nNextSFAccessorHandle = 1;
 
 /************************************************************************/
+/*                           CopyColumnInfo()                           */
+/*                                                                      */
+/*      Copy column info from one CSimpleArray<ATLCOLUMNINFO> to        */
+/*      another.  If the source is NULL, just cleanup the destination.  */
+/************************************************************************/
+
+static void CopyColumnInfo( CSimpleArray<ATLCOLUMNINFO> *paSource, 
+                            CSimpleArray<ATLCOLUMNINFO> *paDest )
+
+{
+    int   i;
+
+/* -------------------------------------------------------------------- */
+/*      Clear the destination array.                                    */
+/* -------------------------------------------------------------------- */
+    for( i = 0; i < paDest->GetSize(); i++)
+        SysFreeString( (*paDest)[i].pwszName );
+
+    paDest->RemoveAll();
+
+    if( paSource == NULL )
+        return;
+
+/* -------------------------------------------------------------------- */
+/*      Copy the source array.                                          */
+/* -------------------------------------------------------------------- */
+    for( i = 0; i < paSource->GetSize(); i++)
+    {
+        paDest->Add( (*paSource)[i] );
+        (*paDest)[i].pwszName = ::SysAllocString( (*paDest)[i].pwszName );
+    }
+}
+
+/************************************************************************/
+/*                      CSFCommand::FinalRelease()                      */
+/************************************************************************/
+void CSFCommand::FinalRelease()
+{
+    SFAccessorImpl<CSFCommand>::FinalRelease();
+    
+    // clear destination.
+    CopyColumnInfo( NULL, &m_paColInfo );
+}
+
+/************************************************************************/
 /*                         CSFComand::Execute()                         */
 /************************************************************************/
 
@@ -174,7 +222,10 @@ HRESULT CSFCommand::Execute(IUnknown * pUnkOuter, REFIID riid,
         OGRGeometryFactory::destroyGeometry( poGeometry );
         poGeometry = NULL;
     }
-    
+
+    // copy the column information from the rowset to the command.
+    CopyColumnInfo( &(pRowset->m_paColInfo), &m_paColInfo );
+
     return hr;
 }
 
@@ -416,9 +467,9 @@ CSFRowset::~CSFRowset()
 {
     int            i;
 
-    for( i = 0; i < m_paColInfo.GetSize(); i++)
-        SysFreeString( m_paColInfo[i].pwszName );
-    
+    // clear destination.
+    CopyColumnInfo( NULL, &m_paColInfo );
+
     CPLDebug( "OGR_OLEDB", "~CSFRowset()" );
 }
 

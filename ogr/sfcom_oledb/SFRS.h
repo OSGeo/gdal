@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2002/04/16 21:02:18  warmerda
+ * copy columninfo to CSFCommand from rowset after executing a command
+ *
  * Revision 1.13  2002/02/05 20:44:17  warmerda
  * added CheckRows() and feature caching to OGRVirtualArray
  *
@@ -210,13 +213,11 @@ public:
                 m_bHasParamaters = TRUE;
 		return CUtlProps<CSFCommand>::FInit();
 	}
-	void FinalRelease()
-	{
-		SFAccessorImpl<CSFCommand>::FinalRelease();
-	}
+ 
+	void FinalRelease();
         
         HRESULT ExtractSpatialQuery( DBPARAMS * );
-        
+
 	HRESULT WINAPI Execute(IUnknown * pUnkOuter, REFIID riid, DBPARAMS * pParams, 
 						  LONG * pcRowsAffected, IUnknown ** ppRowset);
 
