@@ -28,6 +28,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.31  2003/11/03 16:55:18  dron
+# Added missed 'scale' parameter to SetPS().
+#
 # Revision 1.30  2003/06/21 23:27:13  warmerda
 # added TOWGS84 and PROJ.4 import
 #
@@ -428,8 +431,8 @@ class SpatialReference:
     def SetPolyconic( self, clat, clong, fe, fn ):
 	return _gdal.OSRSetPolyconic( self._o, clat, clong, fe, fn )
 
-    def SetPS( self, clat, clong, fe, fn ):
-	return _gdal.OSRSetPS( self._o, clat, clong, fe, fn )
+    def SetPS( self, clat, clong, scale, fe, fn ):
+	return _gdal.OSRSetPS( self._o, clat, clong, scale, fe, fn )
 
     def SetRobinson( self, clong, fe, fn ):
 	return _gdal.OSRSetRobinson( self._o, clong, fe, fn )
