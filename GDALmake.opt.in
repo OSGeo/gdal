@@ -6,25 +6,29 @@ C_OPTFLAGS =	@CFLAGS@
 CXX_DBGFLAGS =	-g -DDEBUG
 C_DBGFLAGS =	-g -DDEBUG
 
+LIBS	=	@LIBS@ -lm
+
 #
 #	Whether we use debug flags, or optimization is determined by
 #	the CFG environment variable.  Set to debug for debug builds.
 #	This is similar to the OGDI builds. 
 #
 ifeq ($(CFG),debug)
-C_ODFLAGS =	$(CXX_DBGFLAGS)
-CXX_ODFLAGS =	$(C_DBGFLAGS)
+C_ODFLAGS 	= $(CXX_DBGFLAGS)
+CXX_ODFLAGS 	= $(C_DBGFLAGS)
 endif
 
 ifeq ($(CFG),gprof)
 C_ODFLAGS =	-pg
 CXX_ODFLAGS =	-pg
 LNK_FLAGS =	-pg
+LIBS		:= $(filter-out -ldbmalloc,$(LIBS))
 endif
 
 ifeq ($(CFG),)
 C_ODFLAGS =	$(C_OPTFLAGS)
 CXX_ODFLAGS =	$(CXX_OPTFLAGS)
+LIBS		:= $(filter-out -ldbmalloc,$(LIBS))
 endif
 
 CFLAGS		=	@C_WFLAGS@ $(C_ODFLAGS)
@@ -35,8 +39,6 @@ GDAL_INCLUDE	=	-I$(GDAL_ROOT) -I$(GDAL_ROOT)/port -I$(GDAL_ROOT)/core
 GDAL_VER	=	1.0
 GDAL_LIB	= 	$(GDAL_ROOT)/gdal.a
 GDAL_SLIB	=	$(GDAL_ROOT)/gdal.$(GDAL_VER).so
-
-LIBS		=	@LIBS@ -lm
 
 ifneq ($(TOPDIR),)
 OGDI_LIBS	=	-L$(TOPDIR)/bin/linux -logdi -lzlib
