@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2001/05/28 19:34:41  warmerda
+ * override error handler
+ *
  * Revision 1.3  2000/01/31 16:26:21  warmerda
  * added header
  *
@@ -48,6 +51,40 @@ BEGIN_OBJECT_MAP(ObjectMap)
 OBJECT_ENTRY(CLSID_SF, CSFSource)
 END_OBJECT_MAP()
 
+/************************************************************************/
+/*                       CPLDefaultErrorHandler()                       */
+/************************************************************************/
+
+static void OGR_OLEDBErrorHandler( CPLErr eErrClass, int nError, 
+                                   const char * pszErrorMsg )
+
+{
+    static int       bLogInit = FALSE;
+    static FILE *    fpLog = stderr;
+
+    if( !bLogInit )
+    {
+        bLogInit = TRUE;
+
+        fpLog = stderr;
+        if( getenv( "CPL_LOG" ) != NULL )
+        {
+            fpLog = fopen( "D:\\temp\\ogr_oledb.log", "wt" );
+            if( fpLog == NULL )
+                fpLog = stderr;
+        }
+    }
+
+    if( eErrClass == CE_Debug )
+        fprintf( fpLog, "%s\n", pszErrorMsg );
+    else if( eErrClass == CE_Warning )
+        fprintf( fpLog, "Warning %d: %s\n", nError, pszErrorMsg );
+    else
+        fprintf( fpLog, "ERROR %d: %s\n", nError, pszErrorMsg );
+
+    fflush( fpLog );
+}
+
 /////////////////////////////////////////////////////////////////////////////
 // DLL Entry Point
 
@@ -56,6 +93,8 @@ BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID /*lpReserved*/)
 {
     if (dwReason == DLL_PROCESS_ATTACH)
     {
+        CPLSetErrorHandler( OGR_OLEDBErrorHandler );
+        CPLDebug( "OGR_OLEDB", "DllMain" );
         _Module.Init(ObjectMap, hInstance, &LIBID_SFLib);
         DisableThreadLibraryCalls(hInstance);
     }
