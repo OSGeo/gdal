@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.63  2005/01/05 21:02:33  fwarmerdam
+ * added Goode Homolosine
+ *
  * Revision 1.62  2004/11/11 18:28:45  fwarmerdam
  * added Bonne projection support
  *
@@ -342,6 +345,10 @@ class CPL_DLL OGRSpatialReference
     /** Equirectangular */
     OGRErr      SetEquirectangular(double dfCenterLat, double dfCenterLong,
                             double dfFalseEasting, double dfFalseNorthing );
+
+    /** Goode Homolosine */
+    OGRErr      SetGH( double dfCentralMeridian, 
+                       double dfFalseEasting, double dfFalseNorthing );
 
     /** Gall Stereograpic */
     OGRErr      SetGS( double dfCentralMeridian,

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.89  2005/01/05 21:02:33  fwarmerdam
+ * added Goode Homolosine
+ *
  * Revision 1.88  2004/11/11 18:28:45  fwarmerdam
  * added Bonne projection support
  *
@@ -2812,6 +2815,38 @@ OGRErr OSRSetGS( OGRSpatialReferenceH hSRS,
 
 {
     return ((OGRSpatialReference *) hSRS)->SetGS( 
+        dfCentralMeridian,
+        dfFalseEasting, dfFalseNorthing );
+}
+
+/************************************************************************/
+/*                               SetGH()                                */
+/************************************************************************/
+
+OGRErr OGRSpatialReference::SetGH( double dfCentralMeridian,
+                                   double dfFalseEasting,
+                                   double dfFalseNorthing )
+
+{
+    SetProjection( SRS_PT_GOODE_HOMOLOSINE );
+    SetNormProjParm( SRS_PP_CENTRAL_MERIDIAN, dfCentralMeridian );
+    SetNormProjParm( SRS_PP_FALSE_EASTING, dfFalseEasting );
+    SetNormProjParm( SRS_PP_FALSE_NORTHING, dfFalseNorthing );
+
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                              OSRSetGH()                              */
+/************************************************************************/
+
+OGRErr OSRSetGH( OGRSpatialReferenceH hSRS, 
+                 double dfCentralMeridian,
+                 double dfFalseEasting,
+                 double dfFalseNorthing )
+
+{
+    return ((OGRSpatialReference *) hSRS)->SetGH( 
         dfCentralMeridian,
         dfFalseEasting, dfFalseNorthing );
 }
