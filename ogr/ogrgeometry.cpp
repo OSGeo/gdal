@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2002/05/03 14:16:23  warmerda
+ * improve 3D geometry names
+ *
  * Revision 1.11  2001/11/01 17:20:33  warmerda
  * added DISABLE_OGRGEOM_TRANSFORM macro
  *
@@ -487,19 +490,33 @@ const char *OGRGeometryTypeToName( OGRwkbGeometryType eType )
       case wkbMultiPoint:
         return "Multi Point";
 
+      case wkbMultiPoint25D:
+        return "3D Multi Point";
+
       case wkbMultiLineString:
         return "Multi Line String";
+
+      case wkbMultiLineString25D:
+        return "3D Multi Line String";
 
       case wkbMultiPolygon:
         return "Multi Polygon";
 
+      case wkbMultiPolygon25D:
+        return "3D Multi Polygon";
+
       case wkbGeometryCollection:
         return "Geometry Collection";
+
+      case wkbGeometryCollection25D:
+        return "3D Geometry Collection";
 
       case wkbNone:
         return "None";
 
       default:
-        return NULL;
+        static char szWorkName[33];
+        sprintf( szWorkName, "Unrecognised: %d", (int) eType );
+        return szWorkName;
     }
 }
