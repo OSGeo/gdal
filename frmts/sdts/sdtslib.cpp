@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  1999/08/16 20:59:50  warmerda
+ * added szOBRP support for SDTSModId
+ *
  * Revision 1.5  1999/08/10 02:52:13  warmerda
  * introduce use of SDTSApplyModIdList to capture multi-attributes
  *
@@ -105,6 +108,25 @@ int SDTSModId::Set( DDFField *poField )
     szModule[4] = '\0';
 
     nRecord = atoi( pachData + 4 );
+
+    if( poField->GetFieldDefn()->GetSubfieldCount() == 3 )
+    {
+        DDFSubfieldDefn 	*poSF;
+
+        poSF = poField->GetFieldDefn()->FindSubfieldDefn( "OBRP" );
+        if( poSF != NULL )
+        {
+            int		nBytesRemaining;
+            const char  *pachData;
+
+            pachData = poField->GetSubfieldData(poSF, &nBytesRemaining);
+            strncpy( szOBRP, 
+                     poSF->ExtractStringData( pachData, nBytesRemaining, NULL),
+                     sizeof(szOBRP) );
+            
+            szOBRP[sizeof(szOBRP)-1] = '\0';
+        }
+    }
 
     return FALSE;
 }

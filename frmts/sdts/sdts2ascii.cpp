@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  1999/08/16 21:00:02  warmerda
+ * added szOBRP support for SDTSModId
+ *
  * Revision 1.7  1999/08/16 15:45:46  warmerda
  * added IsSecondary()
  *
@@ -124,7 +127,7 @@ int main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
 /*      Dump the first polygon                                          */
 /* -------------------------------------------------------------------- */
-#ifdef notdef    
+#ifndef notdef    
     SDTSPolygonReader oPolyReader;
 
     if( oPolyReader.Open( oCATD.GetModuleFilePath( "PC01" ) ) )
@@ -136,8 +139,9 @@ int main( int nArgc, char ** papszArgv )
 
         while( (poRawPoly = oPolyReader.GetNextPolygon()) != NULL )
         {
-            printf( "PolyId:%s nAttributes=%d  AreaId=%s\n",
+            printf( "PolyId:%s/%s nAttributes=%d  AreaId=%s\n",
                     poRawPoly->oPolyId.GetName(),
+                    poRawPoly->oPolyId.szOBRP,
                     poRawPoly->nAttributes,
                     poRawPoly->oAreaId.GetName() );
             delete poRawPoly;
@@ -150,7 +154,7 @@ int main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
 /*	Dump all modules of type "Primary Attribute" in the catalog.	*/
 /* -------------------------------------------------------------------- */
-#ifndef notdef    
+#ifdef notdef    
     SDTSAttrReader oAttrReader( &oIREF );
 
     for( i = 0; i < oCATD.GetEntryCount(); i++ )

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  1999/08/16 20:59:28  warmerda
+ * added szOBRP support for SDTSModId
+ *
  * Revision 1.11  1999/08/16 19:24:45  warmerda
  * upped ATID limits, added polyreader method
  *
@@ -203,13 +206,16 @@ class SDTSLineReader
 class SDTSModId
 {
   public:
-    		SDTSModId() { szModule[0] = '\0'; nRecord = -1; }
+    		SDTSModId() { szModule[0] = '\0';
+                              nRecord = -1;
+                	      szOBRP[0] = '\0'; }
 
     int		Set( DDFField * );
     const char *GetName();
     
     char	szModule[8];
     long	nRecord;
+    char	szOBRP[8]; 
 };
 
 /************************************************************************/
