@@ -15,6 +15,8 @@ This is a preliminary source distribution, and I have not gone to any
 pains to make it easy to configure and build.  To build please do the 
 following:
 
+== Unix:
+
 1. Update cpl_config.h to represent your platform accurately.  Generally all
 that matters is to #define WORDS_BIGENDIAN on big endian platforms.  The
 rest can likely be ignored.<p>
@@ -27,6 +29,19 @@ like:
 It is left as an excercise to the reader to figure out how to handle it on
 Windows.
 
+== Windows:
+
+1. Ensure you have Microsoft Visual C++ 6.x or later installed.
+
+2. Ensure the commandline VC++ environment is setup properly.  You may need
+   to run the VCVARS32.BAT script from within the VC++ tree. 
+
+3. Compile the code, and build statically linked executables for the sample
+   programs and DLL using the following command.
+
+   nmake /f makefile.vc
+
+
 
 Release Notes
 =============
@@ -35,6 +50,11 @@ Release 1.6
 -----------
 
  o Bug fix in DGNGetLinkage() for DMRS recognition from Henk Jan Priester.
+
+ o Added DGNCreateCellHeaderFromGroup() and DGNCreateCellHeaderElem() 
+   functions in the write API.
+
+ o Added a Microsoft VC++ makefile (Makefile.vc). 
 
 
 Release 1.5
