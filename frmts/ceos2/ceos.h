@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2003/12/11 22:11:35  warmerda
+ * clean up recipes when dataset destroyed to avoid memory noise
+ *
  * Revision 1.6  2003/02/28 18:45:20  gpotts
  * Prefixed CreateLink with ceos2 since there are multiple symbol conflict on static build under mac. Garrett Potts (gpotts@imagelinks.com)
  *
@@ -319,6 +322,7 @@ void GetCeosSAREmbeddedInfo(CeosSARVolume_t *volume, CeosRecord_t *processed_dat
 void DeleteCeosSARVolume(CeosSARVolume_t *volume);
 
 void RegisterRecipes(void);
+void FreeRecipes();
 
 void AddRecipe( int ( *function )( CeosSARVolume_t *volume, void *token ),
 		void *token );
