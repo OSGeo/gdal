@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2001/06/01 14:40:35  warmerda
+ * fixup windows builds
+ *
  * Revision 1.3  2001/04/17 21:41:02  warmerda
  * Added use of cln_GetLayerCapabilities() to query list of available layers.
  * Restructured OGROGDIDataSource and OGROGDILayer classes somewhat to
@@ -47,7 +50,10 @@
 #ifndef _OGDOGDI_H_INCLUDED
 #define _OGDOGDI_H_INLLUDED
 
+#include <math.h>
+extern "C" {
 #include "ecs.h"
+}
 #include "ogrsf_frmts.h"
 
 
