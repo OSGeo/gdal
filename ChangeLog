@@ -1,3 +1,9 @@
+2004-02-20  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* Const correctness improvements to OGRPoint methods as per
+	bug 289.  This makes GDAL/OGR 1.2.0 C++ API incompatible with
+	older versions. 
+
 2004-02-19  Frank Warmerdam  <warmerdam@pobox.com>
 
 	* Prepare 1.2.0 alpha release. 
