@@ -9,6 +9,10 @@
 
  *
  * $Log$
+ * Revision 1.5  2005/02/15 16:52:41  kruland
+ * Added a swig macro for handling fixed length double array arguments.  Used
+ * for Band::ComputeMinMax( double[2] ), and Dataset::?etGeoTransform() methods.
+ *
  * Revision 1.4  2005/02/15 06:00:28  kruland
  * Fixed critical bug in %typemap(in) std::vector<double>.  Used incorrect python
  * parse call.
@@ -23,8 +27,82 @@
 */
 
 /*
-*  Typemap for counted arrays of ints <- PySequence
-*/
+ * SWIG macro to define fixed length array typemaps
+ *
+ * defines the following:
+ *
+ * typemap(in,numinputs=0) double_size *var_name
+ * typemap(out) double_size *var_name
+ *
+ * which matches decls like:  Dataset::GetGeoTransform( double_6 *c_transform )
+ * where c_transform is a returned argument.
+ *
+ * typemap(in) double_size var_name
+ *
+ * which matches decls like: Dataset::SetGeoTransform( double_6 c_transform )
+ * where c_transform is an input variable.
+ *
+ * The actual typedef for these new types needs to be in gdal.i in the %{..%} block
+ * like this:
+ *
+ * %{
+ *   ....
+ *   typedef double_6[6];
+ * %}
+ */
+
+%define ARRAY_TYPEMAP(var_name, size)
+%typemap(in,numinputs=0) ( double_ ## size *var_name) (double_ ## size var_name)
+{
+  /* %typemap(in,numinputs=0) (double_size *var_name) */
+  $1 = &var_name;
+}
+%typemap(argout) ( double_ ## size *var_name)
+{
+  /* %typemap(argout) (double_size *var_name) */
+  Py_DECREF( $result );
+  $result = PyTuple_New( size );
+  for( unsigned int i=0; i<size; i++ ) {
+    PyObject *val = PyFloat_FromDouble( (*$1)[i] );
+    PyTuple_SetItem( $result, i, val );
+  }
+}
+%typemap(in) (double_ ## size var_name)
+{
+  /* %typemap(in) (double_size var_name) */
+  if (! PySequence_Check($input) ) {
+    PyErr_SetString(PyExc_TypeError, "not a sequence");
+    SWIG_fail;
+  }
+  int seq_size = PySequence_Size($input);
+  if ( seq_size != size ) {
+    PyErr_SetString(PyExc_TypeError, "sequence must have length ##size");
+    SWIG_fail;
+  }
+  for (unsigned int i=0; i<size; i++) {
+    PyObject *o = PySequence_GetItem($input,i);
+    double val;
+    PyArg_Parse(o, "d", &val );
+    $1[i] =  val;
+  }
+}
+%enddef
+
+/*
+ * Typemap for double c_minmax[2]. 
+ * Used in Band::ComputeMinMax()
+ */
+ARRAY_TYPEMAP(c_minmax, 2);
+
+/*
+ * Typemap for double c_transform[6]
+ * Dsed in Dataset::GetGeoTransform(), Dataset::SetGeoTransform().
+ */
+ARRAY_TYPEMAP(c_transform, 6);
+
+/*
+ *  Typemap for counted arrays of ints <- PySequence
+ */
 
 %typemap(in,numargs=1) (int nList, int* pList)
 {
@@ -50,37 +128,10 @@
     free((void*) $2);
   }
 }
-/*
-* Typemap for vector<double> <-> PyTuple.
-*/
-%typemap(out) std::vector<double>
-{
-   // %typemap(out) std::vector<double>
-   $result = PyTuple_New($1.size());
-   for (unsigned int i=0; i<$1.size(); i++) {
-      PyTuple_SetItem($result,i, PyFloat_FromDouble((($1_type &)$1)[i]));
-   }
-}
-
-%typemap(in) std::vector<double>
-{
-   /* %typemap(in) std::vector<double> */
-   if (! PySequence_Check($input) ) {
-     PyErr_SetString(PyExc_TypeError, "not a sequence");
-     SWIG_fail;
-   }
-   int size = PySequence_Size($input);
-   for (unsigned int i=0; i<size; i++) {
-     PyObject *o = PySequence_GetItem($input,i);
-     double val;
-     PyArg_Parse(o, "d", &val );
-     $1.push_back( val );
-   }
-}
 
 /*
-* Typemap argout of GDAL_GCP* used in Dataset::GetGCPs( )
-*/
+ * Typemap argout of GDAL_GCP* used in Dataset::GetGCPs( )
+ */
 %typemap(in,numinputs=0) (int *nGCPs, GDAL_GCP const **pGCPs ) (int nGCPs, GDAL_GCP *pGCPs )
 {
   /* %typemap(in,numinputs=0) (int *nGCPs, GDAL_GCP const **pGCPs ) */
@@ -107,8 +158,8 @@
 }
 
 /*
-* Typemap for GDALColorEntry* <-> tuple
-*/
+ * Typemap for GDALColorEntry* <-> tuple
+ */
 %typemap(out) GDALColorEntry*
 {
   /*  %typemap(out) GDALColorEntry* */
@@ -130,8 +181,8 @@
 }
 
 /*
-* Typemap char ** -> dict
-*/
+ * Typemap char ** -> dict
+ */
 %typemap(out) char **dict
 {
   /* %typemap(out) char ** -> to hash */
@@ -149,8 +200,8 @@
 }
 
 /*
-* Typemap char **<- dict
-*/
+ * Typemap char **<- dict
+ */
 %typemap(in) char **dict
 {
   /* %typemap(in) char **dict */
@@ -178,8 +229,8 @@
 }
 
 /*
-* Typemap maps char** arguments from Python Sequence Object
-*/
+ * Typemap maps char** arguments from Python Sequence Object
+ */
 %typemap(in) char **options
 {
   /* %typemap(in) char **options */
