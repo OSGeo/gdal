@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.8  2002/06/25 18:11:26  dron
+ * Added support for 16-bit selective extract subsets
+ *
  * Revision 1.7  2002/06/12 21:12:25  warmerda
  * update to metadata based driver info
  *
@@ -279,10 +282,10 @@ CPLErr L1BRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                       void * pImage )
 {
     L1BDataset *poGDS = (L1BDataset *) poDS;
-    GUInt32 *iscan;		// Packed scanline buffer
     GUInt32 iword, jword;
+    GUInt32 *iRawScan = NULL;			// Packed scanline buffer
+    GUInt16 *iScan1 = NULL, *iScan2 = NULL;	// Unpacked scanline buffers
     int iDataOffset, i, j;
-    GUInt16 *scan = NULL;
 	    
 /* -------------------------------------------------------------------- */
 /*      Seek to data.                                                   */
@@ -296,58 +299,64 @@ CPLErr L1BRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /* -------------------------------------------------------------------- */
 /*      Read data into the buffer.					*/
 /* -------------------------------------------------------------------- */
-    // Read packed scanline
-    int nBlockSize = nBlockXSize * nBlockYSize;
-    iscan = (GUInt32 *)CPLMalloc(poGDS->nRecordSize);
-    VSIFRead(iscan, 1, poGDS->nRecordSize, poGDS->fp);
     switch (poGDS->iDataFormat)
     {
         case PACKED10BIT:
-        scan = (GUInt16 *)CPLMalloc(poGDS->nBufferSize);
+        // Read packed scanline
+        iRawScan = (GUInt32 *)CPLMalloc(poGDS->nRecordSize);
+        VSIFRead(iRawScan, 1, poGDS->nRecordSize, poGDS->fp);
+        iScan1 = (GUInt16 *)CPLMalloc(poGDS->nBufferSize);
         j = 0;
-        for(i = poGDS->nRecordDataStart / (int)sizeof(iscan[0]);
-	    i < poGDS->nRecordDataEnd / (int)sizeof(iscan[0]); i++)
+        for(i = poGDS->nRecordDataStart / (int)sizeof(iRawScan[0]);
+	    i < poGDS->nRecordDataEnd / (int)sizeof(iRawScan[0]); i++)
         {
-            iword = iscan[i];
+            iword = iRawScan[i];
 #ifdef CPL_LSB
             CPL_SWAP32PTR(&iword);
 #endif
             jword = iword & 0x3FF00000;
-            scan[j++] = jword >> 20;
+            iScan1[j++] = jword >> 20;
             jword = iword & 0x000FFC00;
-            scan[j++] = jword >> 10;
-            scan[j++] = iword & 0x000003FF;
+            iScan1[j++] = jword >> 10;
+            iScan1[j++] = iword & 0x000003FF;
         }
-        CPLFree(iscan);
-        CPLFree(scan);
+        CPLFree(iRawScan);
 	break;
-	case UNPACKED16BIT: // FIXME: Not implemented yet, need a sample image
-	scan = (GUInt16 *)(iscan + poGDS->nRecordDataStart);
-	for (i = 0; i < poGDS->GetRasterXSize() * poGDS->nBands; i++)
+	case UNPACKED16BIT:
+	iScan1 = (GUInt16 *)CPLMalloc(poGDS->GetRasterXSize()
+			              * poGDS->nBands * sizeof(GUInt16));
+	iScan2 = (GUInt16 *)CPLMalloc(poGDS->nRecordSize);
+	VSIFRead(iScan2, 1, poGDS->nRecordSize, poGDS->fp);
+        for (i = 0; i < poGDS->GetRasterXSize() * poGDS->nBands; i++)
 	{
+	    iScan1[i] = iScan2[poGDS->nRecordDataStart / (int)sizeof(iScan2[0]) + i];
 #ifdef CPL_LSB
-            CPL_SWAP32PTR(&scan[i]);
+	    CPL_SWAP16PTR(&iScan1[i]);
 #endif
 	}
-	CPLFree(iscan);
+	CPLFree(iScan2);
 	break;
-        default:
+	case UNPACKED8BIT:
+	break;
+        default: // Should never be here
 	break;
     }
     
+    int nBlockSize = nBlockXSize * nBlockYSize;
     if (poGDS->iLocationIndicator == DESCEND)
         for( i = 0, j = 0; i < nBlockSize; i++ )
         {
-            ((GUInt16 *) pImage)[i] = scan[j + nBand - 1];
+            ((GUInt16 *) pImage)[i] = iScan1[j + nBand - 1];
             j += poGDS->nBands;
         }
     else
 	for ( i = nBlockSize - 1, j = 0; i >= 0; i-- )
         {
-            ((GUInt16 *) pImage)[i] = scan[j + nBand - 1];
+            ((GUInt16 *) pImage)[i] = iScan1[j + nBand - 1];
             j += poGDS->nBands;
         }
-
+    
+    CPLFree(iScan1);
     return CE_None;
 }
 
@@ -842,23 +851,130 @@ GDALDataset *L1BDataset::Open( GDALOpenInfo * poOpenInfo )
 	    poDS->nGCPPerLine = 51;
 	    if (poDS->iSpacecraftID <= NOAA14)
 	    {
-                poDS->nDataStartOffset = 14922;
-		poDS->nRecordSize = 14800;
+		if (poDS->iDataFormat == PACKED10BIT)
+		{
+		    poDS->nRecordSize = 14800;
+                    poDS->nRecordDataEnd = 14104;
+		}
+                else if (poDS->iDataFormat == UNPACKED16BIT)
+		{
+		    switch(poDS->nBands)
+		    {
+			case 1:
+			poDS->nRecordSize = 4544;
+                        poDS->nRecordDataEnd = 4544;
+			break;
+			case 2:
+			poDS->nRecordSize = 8640;
+                        poDS->nRecordDataEnd = 8640;
+			break;
+			case 3:
+		        poDS->nRecordSize = 12736;
+		        poDS->nRecordDataEnd = 12736;
+			break;
+			case 4:
+			poDS->nRecordSize = 16832;
+                        poDS->nRecordDataEnd = 16832;
+			break;
+			case 5:
+			poDS->nRecordSize = 20928;
+                        poDS->nRecordDataEnd = 20928;
+			break;
+		    }
+		}
+		else // UNPACKED8BIT
+		{
+		    switch(poDS->nBands)
+		    {
+			case 1:
+			poDS->nRecordSize = 2496;
+                        poDS->nRecordDataEnd = 2496;
+			break;
+			case 2:
+			poDS->nRecordSize = 4544;
+                        poDS->nRecordDataEnd = 4544;
+			break;
+			case 3:
+		        poDS->nRecordSize = 6592;
+		        poDS->nRecordDataEnd = 6592;
+			break;
+			case 4:
+			poDS->nRecordSize = 8640;
+                        poDS->nRecordDataEnd = 8640;
+			break;
+			case 5:
+			poDS->nRecordSize = 10688;
+                        poDS->nRecordDataEnd = 10688;
+			break;
+		    }
+		}
+                poDS->nDataStartOffset = poDS->nRecordSize + 122;
 	        poDS->nRecordDataStart = 448;
-	        poDS->nRecordDataEnd = 14104;
 		poDS->iGCPCodeOffset = 53;
-	poDS->iGCPOffset = 104;
+	        poDS->iGCPOffset = 104;
 	    }
 	    else if (poDS->iSpacecraftID <= NOAA17)
 	    {
-		poDS->nDataStartOffset = 16384;
 		if (poDS->iDataFormat == PACKED10BIT)
-                    poDS->nRecordSize = 15872;
-                else
-		    poDS->nRecordSize = 14336;
-	        poDS->nRecordDataStart = 1264;
-	        poDS->nRecordDataEnd = 14920;
-		poDS->iGCPCodeOffset = 0; // XXX: not exist for NOAA15?
+		{
+		    poDS->nRecordSize = 15872;
+                    poDS->nRecordDataEnd = 14920;
+		}
+                else if (poDS->iDataFormat == UNPACKED16BIT)
+		{
+		    switch(poDS->nBands)
+		    {
+			case 1:
+			poDS->nRecordSize = 6144;
+                        poDS->nRecordDataEnd = 5360;
+			break;
+			case 2:
+			poDS->nRecordSize = 10240;
+                        poDS->nRecordDataEnd = 9456;
+			break;
+			case 3:
+		        poDS->nRecordSize = 14336;
+		        poDS->nRecordDataEnd = 13552;
+			break;
+			case 4:
+			poDS->nRecordSize = 18432;
+                        poDS->nRecordDataEnd = 17648;
+			break;
+			case 5:
+			poDS->nRecordSize = 22528;
+                        poDS->nRecordDataEnd = 21744;
+			break;
+		    }
+		}
+		else // UNPACKED8BIT
+		{
+		    switch(poDS->nBands)
+		    {
+			case 1:
+			poDS->nRecordSize = 4096;
+                        poDS->nRecordDataEnd = 3312;
+			break;
+			case 2:
+			poDS->nRecordSize = 6144;
+                        poDS->nRecordDataEnd = 5360;
+			break;
+			case 3:
+		        poDS->nRecordSize = 8192;
+		        poDS->nRecordDataEnd = 7408;
+			break;
+			case 4:
+			poDS->nRecordSize = 10240;
+                        poDS->nRecordDataEnd = 9456;
+			break;
+			case 5:
+			poDS->nRecordSize = 12288;
+                        poDS->nRecordDataEnd = 11504;
+			break;
+		    }
+		}
+	        poDS->nDataStartOffset = poDS->nRecordSize + 512;
+		poDS->nRecordDataStart = 1264;
+	        		poDS->iGCPCodeOffset = 0; // XXX: not exists for NOAA15?
                 poDS->iGCPOffset = 640;
 	    }
 	    else
@@ -872,23 +988,128 @@ GDALDataset *L1BDataset::Open( GDALOpenInfo * poOpenInfo )
 	    poDS->nGCPPerLine = 51;
 	    if (poDS->iSpacecraftID <= NOAA14)
 	    {
-	        poDS->nDataStartOffset = 6562;
                 if (poDS->iDataFormat == PACKED10BIT)
+		{
 		    poDS->nRecordSize = 3220;
-		else
-		    poDS->nRecordSize = 2904;
+	            poDS->nRecordDataEnd = 3176;
+		}
+		else if (poDS->iDataFormat == UNPACKED16BIT)
+		    switch(poDS->nBands)
+		    {
+			case 1:
+			poDS->nRecordSize = 1268;
+                        poDS->nRecordDataEnd = 1266;
+			break;
+			case 2:
+			poDS->nRecordSize = 2084;
+                        poDS->nRecordDataEnd = 2084;
+			break;
+			case 3:
+		        poDS->nRecordSize = 2904;
+		        poDS->nRecordDataEnd = 2902;
+			break;
+			case 4:
+			poDS->nRecordSize = 3720;
+                        poDS->nRecordDataEnd = 3720;
+			break;
+			case 5:
+			poDS->nRecordSize = 4540;
+                        poDS->nRecordDataEnd = 4538;
+			break;
+		    }
+		else // UNPACKED8BIT
+		{
+		    switch(poDS->nBands)
+		    {
+			case 1:
+			poDS->nRecordSize = 860;
+                        poDS->nRecordDataEnd = 858;
+			break;
+			case 2:
+			poDS->nRecordSize = 1268;
+                        poDS->nRecordDataEnd = 1266;
+			break;
+			case 3:
+		        poDS->nRecordSize = 1676;
+		        poDS->nRecordDataEnd = 1676;
+			break;
+			case 4:
+			poDS->nRecordSize = 2084;
+                        poDS->nRecordDataEnd = 2084;
+			break;
+			case 5:
+			poDS->nRecordSize = 2496;
+                        poDS->nRecordDataEnd = 2494;
+			break;
+		    }
+		}
+	        poDS->nDataStartOffset = poDS->nRecordSize * 2 + 122;
 	        poDS->nRecordDataStart = 448;
-	        poDS->nRecordDataEnd = 3176;
 		poDS->iGCPCodeOffset = 53;
 		poDS->iGCPOffset = 104;
 	    }
 	    else if (poDS->iSpacecraftID <= NOAA17)
 	    {
-		poDS->nDataStartOffset = 9728;
-                poDS->nRecordSize = 4608;
+		if (poDS->iDataFormat == PACKED10BIT)
+		{
+		    poDS->nRecordSize = 4608;
+                    poDS->nRecordDataEnd = 3992;
+		}
+                else if (poDS->iDataFormat == UNPACKED16BIT)
+		{
+		    switch(poDS->nBands)
+		    {
+			case 1:
+			poDS->nRecordSize = 2360;
+                        poDS->nRecordDataEnd = 2082;
+			break;
+			case 2:
+			poDS->nRecordSize = 3176;
+                        poDS->nRecordDataEnd = 2900;
+			break;
+			case 3:
+		        poDS->nRecordSize = 3992;
+		        poDS->nRecordDataEnd = 3718;
+			break;
+			case 4:
+			poDS->nRecordSize = 4816;
+                        poDS->nRecordDataEnd = 4536;
+			break;
+			case 5:
+			poDS->nRecordSize = 5632;
+                        poDS->nRecordDataEnd = 5354;
+			break;
+		    }
+		}
+		else // UNPACKED8BIT
+		{
+		    switch(poDS->nBands)
+		    {
+			case 1:
+			poDS->nRecordSize = 1952;
+                        poDS->nRecordDataEnd = 1673;
+			break;
+			case 2:
+			poDS->nRecordSize = 2360;
+                        poDS->nRecordDataEnd = 2082;
+			break;
+			case 3:
+		        poDS->nRecordSize = 2768;
+		        poDS->nRecordDataEnd = 2491;
+			break;
+			case 4:
+			poDS->nRecordSize = 3176;
+                        poDS->nRecordDataEnd = 2900;
+			break;
+			case 5:
+			poDS->nRecordSize = 3584;
+                        poDS->nRecordDataEnd = 3309;
+			break;
+		    }
+		}
+		poDS->nDataStartOffset = poDS->nRecordSize + 512;
 	        poDS->nRecordDataStart = 1264;
-	        poDS->nRecordDataEnd = 3992;
-		poDS->iGCPCodeOffset = 0; // XXX: not exist for NOAA15?
+		poDS->iGCPCodeOffset = 0; // XXX: not exists for NOAA15?
                 poDS->iGCPOffset = 640;
 	    }
 	    else
