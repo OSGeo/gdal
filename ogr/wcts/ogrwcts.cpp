@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2003/03/12 20:51:39  warmerda
+ * integrated special handling for bounding box
+ *
  * Revision 1.6  2003/03/11 21:48:38  warmerda
  * Fixed test/xml to be text/xml.
  *
@@ -507,6 +510,7 @@ int WCTSIsGeometryElement( CPLXMLNode *psNode )
         || EQUAL(pszElement,"MultiLineString") 
         || EQUAL(pszElement,"GeometryCollection") 
         || EQUAL(pszElement,"Point") 
+        || EQUAL(pszElement,"Box")
         || EQUAL(pszElement,"LineString");
 }
     
@@ -566,7 +570,11 @@ void WCTSRecurseAndTransform( CPLXMLNode *psTree,
 /* -------------------------------------------------------------------- */
     CPLXMLNode *psAltered, sTempCopy;
 
-    psAltered = OGR_G_ExportToGMLTree( (OGRGeometryH) poGeometry );
+    if( strstr(psTree->pszValue,"Box") == NULL )
+        psAltered = OGR_G_ExportToGMLTree( (OGRGeometryH) poGeometry );
+    else
+        psAltered = OGR_G_ExportEnvelopeToGMLTree( (OGRGeometryH) poGeometry );
+
     OGRGeometryFactory::destroyGeometry( poGeometry );
     
 /* -------------------------------------------------------------------- */
