@@ -49,25 +49,25 @@ ogroledb.lib:	$(OBJ_OLEDB)
 	lib /out:ogroledb.lib $(OBJ_OLEDB)
 
 sfcdump.exe:	geometryidl.h sfcdump.obj ogr.lib ogroledb.lib
-	cl /Zi sfcdump.obj ogroledb.lib ogr.lib $(ALL_LIBS)
+	cl sfcdump.obj ogroledb.lib ogr.lib $(ALL_LIBS)
 
 test1.exe:	test1.obj $(OBJ_OGR) 
 	cl test1.obj $(OBJ_OGR) $(ALL_LIBS)
 
 test2.exe:	test2.obj $(OBJ_OGR)
-	cl /Zi test2.obj $(OBJ_OGR) ogrsf_frmts\ogrsf_frmts.lib \
+	cl test2.obj $(OBJ_OGR) ogrsf_frmts\ogrsf_frmts.lib \
 			$(ALL_LIBS)
 
 test3.exe:      test3.obj $(OBJ_OGR)
-        cl /Zi test3.obj $(OBJ_OGR) ogrsf_frmts\ogrsf_frmts.lib \
+        cl test3.obj $(OBJ_OGR) ogrsf_frmts\ogrsf_frmts.lib \
 			$(ALL_LIBS)
 
 test_ogrsf.exe:      test_ogrsf.obj $(OBJ_OGR)
-        cl /Zi test_ogrsf.obj $(OBJ_OGR) ogrsf_frmts\ogrsf_frmts.lib \
+        cl test_ogrsf.obj $(OBJ_OGR) ogrsf_frmts\ogrsf_frmts.lib \
 			$(ALL_LIBS)
 
 ogrinfo.exe:      ogrinfo.obj $(OBJ_OGR)
-        cl /Zi ogrinfo.obj $(OBJ_OGR) ogrsf_frmts\ogrsf_frmts.lib \
+        cl ogrinfo.obj $(OBJ_OGR) ogrsf_frmts\ogrsf_frmts.lib \
 			$(ALL_LIBS)
 
 clean:
