@@ -28,6 +28,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.27  2004/07/12 15:10:56  warmerda
+# Fix error case in CreateLayer().
+#
 # Revision 1.26  2004/07/10 07:08:39  warmerda
 # added new GEOS methods
 #
@@ -346,7 +349,7 @@ class DataSource:
         md_c = _gdal.ListToStringList( options )
         obj = _gdal.OGR_DS_CreateLayer( self._o, name, srs_o, geom_type, md_c)
         _gdal.CSLDestroy(md_c)
-        if obj is None and obj != 'NULL':
+        if obj is None or obj == 'NULL':
             raise ValueError, gdal.GetLastErrorMsg()
         else:
             return Layer( obj = obj )
@@ -736,7 +739,7 @@ def CreateGeometryFromGML( string ):
         raise ValueError, _gdal.CPLGetLastErrorMsg()
 
 class Geometry:
-    def __init__(self, type=None, obj=None):
+    def __init__(self, type=None, obj=None, wkt=None):
         if obj is not None:
             self._o = obj
         elif type is not None:
