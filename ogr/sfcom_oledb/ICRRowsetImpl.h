@@ -1,7 +1,52 @@
+/******************************************************************************
+ * $Id$
+ *
+ * Project:  OpenGIS Simple Features Reference Implementation
+ * Purpose:  IAccessor implementation that doesn't suffer IAccessorImpl's
+ *           problem with confusion of accessor handle ids. 
+ * Author:   Frank Warmerdam <warmerdam@pobox.com>
+ *
+ * This code is closely derived from the code in ATLDB.H for IRowsetImpl.
+ * It basically modifies the CRowsetImpl to call GetRCDBStatus() on the
+ * derived class from the GetDBStatus() method, allowing a field to be marked
+ * as DBSTATUS_S_ISNULL.  Also, there are some changes to handle null field
+ * status properly.
+ *
+ ******************************************************************************
+ * Copyright (c) 2001, Frank Warmerdam
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ ******************************************************************************
+ *
+ * $Log$
+ * Revision 1.2  2001/10/15 15:21:07  warmerda
+ * pass raw data points to GetRCDBStatus
+ *
+ */
+
+#ifndef _ICRRowsetImpl_INCLUDED
+#define _ICRRowsetImpl_INCLUDED
+
 // ICRRowsetImpl
 template <class T, class RowsetInterface,
-		  class RowClass = CSimpleRow,
-		  class MapClass = CSimpleMap < RowClass::KeyType, RowClass* > >
+	  class RowClass = CSimpleRow,
+	  class MapClass = CSimpleMap < RowClass::KeyType, RowClass* > >
 class ATL_NO_VTABLE ICRRowsetImpl : public RowsetInterface
 {
     public:
@@ -86,11 +131,12 @@ class ATL_NO_VTABLE ICRRowsetImpl : public RowsetInterface
         return S_OK;
         return RefRows(cRows, rghRows, rgRefCounts, rgRowStatus, TRUE);
     }
-    virtual DBSTATUS GetDBStatus(RowClass* poRC, ATLCOLUMNINFO*poColInfo)
+    virtual DBSTATUS GetDBStatus(RowClass* poRC, ATLCOLUMNINFO*poColInfo,
+                                 void *pSrcData )
     {
         T* pT = (T*) this;
 
-        return pT->GetRCDBStatus(poRC, poColInfo);
+        return pT->GetRCDBStatus(poRC, poColInfo, pSrcData);
         
         //return DBSTATUS_S_OK;
     }
@@ -144,7 +190,7 @@ class ATL_NO_VTABLE ICRRowsetImpl : public RowsetInterface
             // Ordinal found at iColInfo
             BOOL bProvOwn = pBindCur->dwMemOwner == DBMEMOWNER_PROVIDEROWNED;
             bProvOwn;
-            DBSTATUS dbStat = GetDBStatus(pRow, pColCur);
+            DBSTATUS dbStat = GetDBStatus(pRow, pColCur, pSrcData);
 
             // If the provider's field is NULL, we can optimize this situation,
             // set the fields to 0 and continue.
@@ -363,3 +409,4 @@ class ATL_NO_VTABLE ICRRowsetImpl : public RowsetInterface
     unsigned  m_bReset:1;
 };
 
+#endif // ifndef _ICRRowsetImpl_INCLUDED

@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2001/10/15 15:21:07  warmerda
+ * pass raw data points to GetRCDBStatus
+ *
  * Revision 1.3  2001/05/31 02:55:30  warmerda
  * return NULL values for OGC IColumnRowset fields on non-spatial fields
  *
@@ -151,7 +154,8 @@ class ATL_NO_VTABLE IColumnsRowsetImpl : public IColumnsRowset
           public:
 
             DBSTATUS GetRCDBStatus(CSimpleRow* poRC,
-                                   ATLCOLUMNINFO*poColInfo)
+                                   ATLCOLUMNINFO*poColInfo,
+                                   void *)
             {
                 T* pT = (T*) this;
                 ULONG      row_id = poRC->m_iRowset;
