@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.31  2003/03/04 05:47:23  warmerda
+ * added indexing support
+ *
  * Revision 1.30  2003/03/03 05:06:08  warmerda
  * added support for DeleteDataSource and DeleteLayer
  *
@@ -132,6 +135,8 @@
  * Classes related to registration of format support, and opening datasets.
  */
 
+class OGRLayerAttrIndex;
+
 /************************************************************************/
 /*                               OGRLayer                               */
 /************************************************************************/
@@ -179,9 +184,14 @@ class CPL_DLL OGRLayer
     virtual OGRErr       CommitTransaction();
     virtual OGRErr       RollbackTransaction();
 
+    /* consider these private */
+    OGRErr               InitializeIndexSupport( const char * );
+    OGRLayerAttrIndex   *GetIndex() { return m_poAttrIndex; }
+
  protected:
-    OGRStyleTable *m_poStyleTable;
-    OGRFeatureQuery *m_poAttrQuery;
+    OGRStyleTable       *m_poStyleTable;
+    OGRFeatureQuery     *m_poAttrQuery;
+    OGRLayerAttrIndex   *m_poAttrIndex;
 };
 
 
@@ -226,6 +236,8 @@ class CPL_DLL OGRDataSource
     virtual void        ReleaseResultSet( OGRLayer * poLayer );
     
   protected:
+
+    OGRErr              ProcessSQLCreateIndex( const char * );
     OGRStyleTable *m_poStyleTable;
 };
 
