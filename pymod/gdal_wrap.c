@@ -33,8 +33,8 @@
  * and things like that.
  *
  * $Log$
- * Revision 1.78  2003/12/05 18:01:08  warmerda
- * Added ptrptr functions
+ * Revision 1.79  2004/02/04 21:26:11  warmerda
+ * added optimization loading into numpy array
  *
  ************************************************************************/
 
@@ -1602,20 +1602,19 @@ py_GDALReadRaster(PyObject *self, PyObject *args) {
     }
 	
     result_size = _arg5 * _arg6 * (GDALGetDataTypeSize(_arg7)/8);
-    result_string = (char *) malloc(result_size+1);
+    result = PyString_FromStringAndSize(NULL,result_size);
+    if( !result )
+	return NULL;
+    result_string = PyString_AsString(result);
 
     if( GDALRasterIO(_arg0, GF_Read, _arg1, _arg2, _arg3, _arg4, 
 		     (void *) result_string, 
 		     _arg5, _arg6, _arg7, 0, 0 ) != CE_None )
     {
-	free( result_string );
+        Py_XDECREF(result);
 	PyErr_SetString(PyExc_TypeError,CPLGetLastErrorMsg());
 	return NULL;
     }
-
-    result = PyString_FromStringAndSize(result_string,result_size);
-
-    free( result_string );
 
     return result;
 }
@@ -2042,6 +2041,56 @@ py_OSRImportFromESRI(PyObject *self, PyObject *args) {
 }
 
 /************************************************************************/
+/*                          OSRImportFromPCI()                          */
+/************************************************************************/
+static PyObject *
+py_OSRImportFromPCI(PyObject *self, PyObject *args) {
+
+    OGRSpatialReferenceH _arg0;
+    char    *_argc0 = NULL;
+    int     err;
+    PyObject *py_parms = NULL;
+    char    *proj, *units = NULL;
+    double  *parms = NULL;
+    int     i;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"ss|sO!:OSRImportFromPCI",
+	&_argc0, &proj, &units, &PyTuple_Type, &py_parms) )
+        return NULL;
+
+    if (_argc0) {
+        if (SWIG_GetPtr_2(_argc0,(void **) &_arg0,_OGRSpatialReferenceH)) {
+            PyErr_SetString(PyExc_TypeError,
+                            "Type error in argument 1 of OSRImportFromPCI."
+                            "  Expected _OGRSpatialReferenceH.");
+            return NULL;
+        }
+    }
+
+    if (py_parms)
+    {
+        parms = CPLMalloc(17 * sizeof(double));
+        for( i = 0; i < PyTuple_Size(py_parms); i++ )
+        {
+            if( !PyArg_Parse( PyTuple_GET_ITEM(py_parms,i), "d", &parms[i] ) )
+            {
+                PyErr_SetString(PyExc_TypeError,
+                                "Type error in argument 4 of OSRImportFromPCI."
+                                "  Expected tuple of floats.");
+                return NULL;
+            }
+        }
+    }
+
+    err = OSRImportFromPCI( _arg0, proj, units, parms );
+
+    if (parms)
+        CPLFree(parms);
+    return Py_BuildValue( "i", err );
+}
+
+/************************************************************************/
 /*                          OSRImportFromWkt()                          */
 /************************************************************************/
 static PyObject *
@@ -2068,6 +2117,51 @@ py_OSRImportFromWkt(PyObject *self, PyObject *args) {
     err = OSRImportFromWkt( _arg0, &wkt );
 
     return Py_BuildValue( "i", err );
+}
+
+/************************************************************************/
+/*                          OSRExportToPCI()                            */
+/************************************************************************/
+static PyObject *
+py_OSRExportToPCI(PyObject *self, PyObject *args) {
+
+    OGRSpatialReferenceH _arg0;
+    char *_argc0 = NULL;
+    char *proj = NULL, *units = NULL;
+    double *parms;
+    int err;
+    PyObject *ret;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"s:OSRExportToPCI",&_argc0) )
+        return NULL;
+
+    if (_argc0) {
+        if (SWIG_GetPtr_2(_argc0,(void **) &_arg0,_OGRSpatialReferenceH)) {
+            PyErr_SetString(PyExc_TypeError,
+                            "Type error in argument 1 of OSRExportToPCI."
+                            "  Expected _OGRSpatialReferenceH.");
+            return NULL;
+        }
+    }
+	
+    err = OSRExportToPCI( _arg0, &proj, &units, &parms );
+    if( err != OGRERR_NONE )
+    {
+        PyErr_SetString(PyExc_TypeError,
+                        "Failed to export given SpatialReference.");
+        return NULL;
+    }
+
+    ret = Py_BuildValue( "(ss(ddddddddddddddddd))", proj, units,
+                         parms[0], parms[1], parms[2], parms[3], parms[4],
+                         parms[5], parms[6], parms[7], parms[8], parms[9],
+                         parms[10], parms[11], parms[12], parms[13],
+                         parms[14], parms[15], parms[16] );
+    CPLFree( proj );
+    CPLFree( units );
+    CPLFree( parms );
+    return ret;
 }
 
 /************************************************************************/
@@ -3165,6 +3259,19 @@ static PyObject *_wrap_GDALGetDataTypeSize(PyObject *self, PyObject *args) {
     return _resultobj;
 }
 
+static PyObject *_wrap_GDALDataTypeIsComplex(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    int  _result;
+    GDALDataType  _arg0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"i:GDALDataTypeIsComplex",&_arg0)) 
+        return NULL;
+    _result = (int )GDALDataTypeIsComplex(_arg0);
+    _resultobj = Py_BuildValue("i",_result);
+    return _resultobj;
+}
+
 static PyObject *_wrap_GDALGetDataTypeName(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
     char * _result;
@@ -3175,6 +3282,19 @@ static PyObject *_wrap_GDALGetDataTypeName(PyObject *self, PyObject *args) {
         return NULL;
     _result = (char *)GDALGetDataTypeName(_arg0);
     _resultobj = Py_BuildValue("s", _result);
+    return _resultobj;
+}
+
+static PyObject *_wrap_GDALGetDataTypeByName(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    GDALDataType  _result;
+    char * _arg0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"s:GDALGetDataTypeByName",&_arg0)) 
+        return NULL;
+    _result = (GDALDataType )GDALGetDataTypeByName(_arg0);
+    _resultobj = Py_BuildValue("i",_result);
     return _resultobj;
 }
 
@@ -9241,7 +9361,7 @@ static PyObject *_wrap_OGROpen(PyObject *self, PyObject *args) {
     OGRDataSourceH  _result;
     char * _arg0;
     int  _arg1;
-    OGRSFDriverH * _arg2;
+    void * _arg2;
     char * _argc2 = 0;
     char _ptemp[128];
 
@@ -9250,7 +9370,7 @@ static PyObject *_wrap_OGROpen(PyObject *self, PyObject *args) {
         return NULL;
     if (_argc2) {
         if (SWIG_GetPtr(_argc2,(void **) &_arg2,(char *) 0 )) {
-            PyErr_SetString(PyExc_TypeError,"Type error in argument 3 of OGROpen. Expected _OGRSFDriverH_p.");
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 3 of OGROpen. Expected _void_p.");
         return NULL;
         }
     }
@@ -9743,7 +9863,9 @@ static PyMethodDef _gdalMethods[] = {
 	 { "OSRExportToPrettyWkt", py_OSRExportToPrettyWkt, 1 },
 	 { "OSRExportToWkt", py_OSRExportToWkt, 1 },
 	 { "OSRExportToProj4", py_OSRExportToProj4, 1 },
+	 { "OSRExportToPCI", py_OSRExportToPCI, 1 },
 	 { "OSRImportFromWkt", py_OSRImportFromWkt, 1 },
+	 { "OSRImportFromPCI", py_OSRImportFromPCI, 1 },
 	 { "OSRImportFromESRI", py_OSRImportFromESRI, 1 },
 	 { "OSRSetVDG", _wrap_OSRSetVDG, 1 },
 	 { "OSRSetTMSO", _wrap_OSRSetTMSO, 1 },
@@ -9894,7 +10016,9 @@ static PyMethodDef _gdalMethods[] = {
 	 { "GDALDecToDMS", _wrap_GDALDecToDMS, 1 },
 	 { "GDALGetPaletteInterpretationName", _wrap_GDALGetPaletteInterpretationName, 1 },
 	 { "GDALGetColorInterpretationName", _wrap_GDALGetColorInterpretationName, 1 },
+	 { "GDALGetDataTypeByName", _wrap_GDALGetDataTypeByName, 1 },
 	 { "GDALGetDataTypeName", _wrap_GDALGetDataTypeName, 1 },
+	 { "GDALDataTypeIsComplex", _wrap_GDALDataTypeIsComplex, 1 },
 	 { "GDALGetDataTypeSize", _wrap_GDALGetDataTypeSize, 1 },
 	 { "CSLDestroy", _wrap_CSLDestroy, 1 },
 	 { "CPLGetLastErrorMsg", _wrap_CPLGetLastErrorMsg, 1 },
