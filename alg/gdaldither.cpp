@@ -46,6 +46,9 @@
  *					    Lou Steinberg
  *
  * $Log$
+ * Revision 1.6  2004/04/27 13:38:07  warmerda
+ * Fixed typo in docs.
+ *
  * Revision 1.5  2003/07/08 15:27:47  warmerda
  * avoid warnings
  *
@@ -80,7 +83,7 @@ static void FindNearestColor( int nColors, int *panPCT, GByte *pabyColorMap );
 /**
  * 24bit to 8bit conversion with dithering.
  *
- * This functions utilizes Floyd-Steinbert dithering in the process of 
+ * This functions utilizes Floyd-Steinberg dithering in the process of 
  * converting a 24bit RGB image into a pseudocolored 8bit image using a
  * provided color table.  
  *
