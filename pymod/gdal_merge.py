@@ -26,6 +26,9 @@
 ###############################################################################
 # 
 #  $Log$
+#  Revision 1.7  2003/01/28 15:00:13  warmerda
+#  applied patch for multi-band support from Ken Boss
+#
 #  Revision 1.6  2003/01/20 22:19:08  warmerda
 #  added nodata support
 #
@@ -345,7 +348,8 @@ if __name__ == '__main__':
         if separate != 0:
             bands = len(file_infos)
         else:
-            bands = 1
+            # bands = 1
+            bands = file_infos[0].bands
 
         t_fh = Driver.Create( out_file, xsize, ysize, bands,
                               file_infos[0].band_type )
@@ -362,7 +366,8 @@ if __name__ == '__main__':
             fi.report()
 
         if separate == 0 :
-            fi.copy_into( t_fh, 1, 1, nodata )
+            for band in range(1, bands+1):
+                fi.copy_into( t_fh, band, band, nodata )
         else:
             fi.copy_into( t_fh, 1, t_band, nodata )
             t_band = t_band+1
