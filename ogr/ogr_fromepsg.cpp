@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.34  2004/04/28 00:27:58  warmerda
+ * Added Albers Conic Area Area translation (method=9822).
+ *
  * Revision 1.33  2004/04/24 15:47:19  warmerda
  * Added uom 9122 improvements.
  *
@@ -1350,7 +1353,25 @@ static OGRErr SetEPSGProjCS( OGRSpatialReference * poSRS, int nPCSCode )
                         OGR_FP( FalseEasting ), OGR_FP( FalseNorthing ) );
         break;
 
+      case 9822: /* Albers (Conic) Equal Area */
+        poSRS->SetACEA( OGR_FP( StdParallel1Lat ), 
+                        OGR_FP( StdParallel2Lat ), 
+                        OGR_FP( FalseOriginLat ),
+                        OGR_FP( FalseOriginLong ),
+                        OGR_FP( FalseOriginEasting ),
+                        OGR_FP( FalseOriginNorthing ) );
+        break;
+
+#ifdef notdef
+      case 9823: /* Equidistant Cylindrical / Plate Carre */
+        poSRS->SetACEA( OGR_FP( NatOriginLat ),
+                        OGR_FP( NatOriginLong ) );
+        break;
+#endif
+
       default:
+        CPLDebug( "EPSG", "No WKT support for projection method %d.",
+                  nProjMethod );
         return OGRERR_UNSUPPORTED_SRS;
     }
 
