@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.35  2005/02/24 15:11:23  fwarmerdam
+ * fixed improper j2kdataset cleanup in ~NITFDataset
+ *
  * Revision 1.34  2005/02/22 08:20:58  fwarmerdam
  * ensure we can capture color interp on jpeg2000 streams
  *
@@ -596,7 +599,7 @@ NITFDataset::~NITFDataset()
 /*      color interpretations were set.  If so, apply the settings      */
 /*      to the NITF file.                                               */
 /* -------------------------------------------------------------------- */
-    if( poJ2KDataset != NULL )
+    if( poJ2KDataset != NULL && bJP2Writing )
     {
         int i;
 
@@ -773,6 +776,7 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo )
         {
             poDS->poJ2KDataset = (GDALDataset *) 
                 GDALOpen( pszDSName, GA_ReadOnly );
+            CPLFree( pszDSName );
         }
 
         if( poDS->poJ2KDataset == NULL )
@@ -1448,9 +1452,10 @@ NITFDatasetCreate( const char *pszFilename, int nXSize, int nYSize, int nBands,
         poWritableJ2KDataset = 
             poJ2KDriver->Create( pszDSName, nXSize, nYSize, nBands, eType, 
                                  NITFJP2Options( papszOptions ) );
+        CPLFree( pszDSName );
+
         if( poWritableJ2KDataset == NULL )
             return NULL;
-
     }
 
 /* -------------------------------------------------------------------- */
@@ -1682,6 +1687,7 @@ NITFDataset::NITFCreateCopy(
             poJ2KDriver->CreateCopy( pszDSName, poSrcDS, FALSE,
                                      NITFJP2Options(papszOptions),
                                      pfnProgress, pProgressData );
+        CPLFree( pszDSName );
         if( poJ2KDataset == NULL )
             return NULL;
 
@@ -1695,6 +1701,7 @@ NITFDataset::NITFCreateCopy(
         NITFPatchImageLength( pszFilename, nImageOffset, nPixelCount );
 
         poDstDS = (GDALDataset *) GDALOpen( pszFilename, GA_Update );
+
         if( poDstDS == NULL )
             return NULL;
     }
