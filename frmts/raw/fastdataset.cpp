@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.15  2004/04/27 14:25:41  warmerda
+ * Cast to avoid warning on Solaris.
+ *
  * Revision 1.14  2004/03/16 18:27:39  dron
  * Fixes in projection parameters parsing code.
  *
@@ -386,7 +389,7 @@ FILE *FASTDataset::FOpenChannel( char *pszFilename, int iBand )
 static char *GetValue( const char *pszString, const char *pszName,
                        int iValueSize, int iNormalize )
 {
-    char    *pszTemp = strstr( pszString, pszName );
+    char    *pszTemp = strstr( (char *) pszString, pszName );
 
     if ( pszTemp )
     {
