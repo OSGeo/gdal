@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  1999/09/17 03:18:08  warmerda
+ * change to search for a list of GDAL .so/.dll files
+ *
  * Revision 1.5  1999/05/07 14:08:49  warmerda
  * change .so name
  *
@@ -52,11 +55,17 @@
 #include <stdlib.h>
 
 #ifdef _WIN32
-static const char	*pszSOFilename = "gdal.1.0.dll";
-#define PATH_SEP	'\\'
+#define PATH_SEP '\\'
+static const char *papszSOFilenames[] = {
+	 "gdal.1.0.dll"
+	, NULL };
 #else
-static const char	*pszSOFilename = "gdal.1.0.so";
-#define PATH_SEP	'/'
+#define PATH_SEP '/'
+static const char *papszSOFilenames[] = {
+	 "gdal.1.0.so"
+	,"gdal.so.1.0"
+	,"libgdal.so.1"
+	, NULL };
 #endif
 
 
@@ -69,28 +78,35 @@ int GDALBridgeInitialize( const char * pszTargetDir )
 {
     char	szPath[2048];
     void	*pfnTest = NULL;
+    int		iSOFile;
     
 /* -------------------------------------------------------------------- */
 /*      The first phase is to try and find the shared library.          */
 /* -------------------------------------------------------------------- */
-    if( pszTargetDir != NULL )
+    for( iSOFile = 0;
+         papszSOFilenames[iSOFile] != NULL && pfnTest == NULL;
+         iSOFile++ )
     {
-        sprintf( szPath, "%s%c%s", pszTargetDir, PATH_SEP, pszSOFilename );
-        pfnTest = GBGetSymbol( szPath, "GDALOpen" );
-    }
+        if( pszTargetDir != NULL )
+        {
+            sprintf( szPath, "%s%c%s",
+                     pszTargetDir, PATH_SEP, papszSOFilenames[iSOFile] );
+            pfnTest = GBGetSymbol( szPath, "GDALOpen" );
+        }
 
-    if( pfnTest == NULL && getenv( "GDAL_HOME" ) != NULL )
-    {
-        sprintf( szPath,
-                 "%s%c%s", getenv("GDAL_HOME"),
-                 PATH_SEP, pszSOFilename );
-        pfnTest = GBGetSymbol( szPath, "GDALOpen" );
-    }
+        if( pfnTest == NULL && getenv( "GDAL_HOME" ) != NULL )
+        {
+            sprintf( szPath,
+                     "%s%c%s", getenv("GDAL_HOME"),
+                     PATH_SEP, papszSOFilenames[iSOFile] );
+            pfnTest = GBGetSymbol( szPath, "GDALOpen" );
+        }
 
-    if( pfnTest == NULL )
-    {
-        sprintf( szPath, pszSOFilename );
-        pfnTest = GBGetSymbol( szPath, "GDALOpen" );
+        if( pfnTest == NULL )
+        {
+            sprintf( szPath, papszSOFilenames[iSOFile] );
+            pfnTest = GBGetSymbol( szPath, "GDALOpen" );
+        }
     }
 
     if( pfnTest == NULL )
@@ -107,7 +123,7 @@ int GDALBridgeInitialize( const char * pszTargetDir )
         GBGetSymbol( szPath, "GDALAllRegister" );
 
     GDALCreate = (GDALDatasetH (*)(GDALDriverH, const char *, int, int, int,
-                                    GDALDataType, char ** ))
+                                   GDALDataType, char ** ))
         GBGetSymbol( szPath, "GDALCreate" );
 
     GDALOpen = (GDALDatasetH (*)(const char *, GDALAccess))
