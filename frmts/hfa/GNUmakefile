@@ -61,6 +61,7 @@ img2tif-dist:
 	rm -rf img2tif_dist
 	mkdir img2tif_dist
 	cp img2tif_build.sh img2tif_dist/build.sh
+	cp buildwin.bat img2tif_dist
 	cp hfaopen.cpp hfaentry.cpp hfadictionary.cpp hfafield.cpp \
 	   hfatype.cpp hfaband.cpp img2tif.cpp imggeotiff.c geoextra.c \
 	   hfa.h hfa_p.h ../gtiff/tif_overview.cpp ../gtiff/rawblocked* \
