@@ -28,12 +28,32 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************
  *
- * $Log: 
+ * $Log$
+ * Revision 1.2  1999/03/12 17:29:34  warmerda
+ * Use _WIN32 rather than WIN32.
+ *
  */
 
-#include "rawblockedimage.h"
-#include "cpl_vsi.h"
+#include <assert.h>
+#include <string.h>
 
+#include <stdlib.h>
+
+#ifndef _WIN32
+#  include <unistd.h>
+#endif
+
+#include "rawblockedimage.h"
+
+#ifndef FALSE
+#  define FALSE 0
+#  define TRUE 1
+#endif
+
+#ifndef MAX
+#  define MIN(a,b)      ((a<b) ? a : b)
+#  define MAX(a,b)      ((a>b) ? a : b)
+#endif
 
 /************************************************************************/
 /*                          RawBlockedImage()                           */
@@ -63,14 +83,15 @@ RawBlockedImage::RawBlockedImage( int nXSizeIn, int nYSizeIn,
     fp = NULL;
     while( fp == NULL )
     {
-        VSIStatBuf	sStat;
-        
         sprintf( szFilename, "temp_%d.rbi", nTempCounter++ );
-        if( VSIStat( szFilename, &sStat ) != 0 )
-            fp = VSIFOpen( szFilename, "w+b" );
+        fp = fopen( szFilename, "r" );
+        if( fp != NULL )
+            fclose( fp );
+        else
+            fp = fopen( szFilename, "w+b" );
     }
 
-    pszFilename = CPLStrdup( szFilename );
+    pszFilename = strdup( szFilename );
     nCurFileSize = 0;
 
 /* -------------------------------------------------------------------- */
@@ -84,7 +105,7 @@ RawBlockedImage::RawBlockedImage( int nXSizeIn, int nYSizeIn,
     nBlocksInCache = 0;
     nMaxBlocksInCache = MIN(nBlocks, 2*nBlocksPerRow);
 
-    papoBlocks = (RawBlock **) CPLCalloc(sizeof(RawBlock*),nBlocks);
+    papoBlocks = (RawBlock **) calloc(sizeof(RawBlock*),nBlocks);
 
     poLRUHead = NULL;
     poLRUTail = NULL;
@@ -103,18 +124,21 @@ RawBlockedImage::~RawBlockedImage()
     {
         if( papoBlocks[i] != NULL )
         {
-            CPLFree( papoBlocks[i]->pabyData );
+            if( papoBlocks[i]->pabyData != NULL )
+                free( papoBlocks[i]->pabyData );
+
             delete papoBlocks[i];
         }
     }
 
-    CPLFree( papoBlocks );
+    if( papoBlocks != NULL)
+        free( papoBlocks );
 
-    VSIFClose( fp );
+    fclose( fp );
 
     unlink( pszFilename );	/* wrap this? */
-    
-    CPLFree( pszFilename );
+
+    free( pszFilename );
 }
 
 /************************************************************************/
@@ -234,22 +258,22 @@ void RawBlockedImage::FlushBlock( RawBlock * poBlock )
             poBlock->nPositionInFile = nCurFileSize;
 
         nCurFileSize += nBytesPerBlock;
-        if( VSIFSeek( fp, poBlock->nPositionInFile, SEEK_SET ) != 0 )
+        if( fseek( fp, poBlock->nPositionInFile, SEEK_SET ) != 0 )
         {
-            CPLError( CE_Fatal, CPLE_FileIO,
-                      "Seek to %d in overview spill file %s failed.\n",
-                      poBlock->nPositionInFile, pszFilename );
-            CPLAssert( FALSE );
+            fprintf( stderr,
+                     "Seek to %d in overview spill file %s failed.\n",
+                     poBlock->nPositionInFile, pszFilename );
+            exit( 1 );
         }
 
-        if( VSIFWrite( poBlock->pabyData, 1, nBytesPerBlock, fp )
+        if( fwrite( poBlock->pabyData, 1, nBytesPerBlock, fp )
             != (size_t) nBytesPerBlock )
         {
-            CPLError( CE_Fatal, CPLE_FileIO,
-                      "Write of %d bytes at %d in overview spill file %s.\n"
-                      "Is the disk full?\n",
-                      nBytesPerBlock, poBlock->nPositionInFile, pszFilename );
-            CPLAssert( FALSE );
+            fprintf( stderr, 
+                     "Write of %d bytes at %d in overview spill file %s.\n"
+                     "Is the disk full?\n",
+                     nBytesPerBlock, poBlock->nPositionInFile, pszFilename );
+            exit( 1 );
         }
         
         poBlock->nDirty = FALSE;
@@ -259,7 +283,8 @@ void RawBlockedImage::FlushBlock( RawBlock * poBlock )
 /*      Free the data block, and decrement used count.                  */
 /* -------------------------------------------------------------------- */
     nBlocksInCache--;
-    CPLFree( poBlock->pabyData );
+    if( poBlock->pabyData != NULL )
+        free( poBlock->pabyData );
     poBlock->pabyData = NULL;
 }
 
@@ -274,7 +299,7 @@ RawBlock *RawBlockedImage::GetRawBlock( int nXOff, int nYOff )
     int		nBlock = nXOff + nYOff * nBlocksPerRow;
     RawBlock	*poBlock;
 
-    CPLAssert( nBlock >= 0 && nBlock < nBlocks );
+    assert( nBlock >= 0 && nBlock < nBlocks );
 
 /* -------------------------------------------------------------------- */
 /*      Is this the first request?  If so, create the block object,     */
@@ -287,8 +312,15 @@ RawBlock *RawBlockedImage::GetRawBlock( int nXOff, int nYOff )
         poBlock->nDirty = FALSE;
         poBlock->poPrevLRU = poBlock->poNextLRU = NULL;
         poBlock->nPositionInFile = -1;
-        poBlock->pabyData = (GByte *) CPLCalloc(1,nBytesPerBlock);
+        poBlock->pabyData = (unsigned char *) calloc(1,nBytesPerBlock);
         nBlocksInCache++;
+
+        if( poBlock->pabyData == NULL )
+        {
+            fprintf( stderr,
+                     "RawBlockedImage::GetRawBlock() - out of memory\n" );
+            exit( 1 );
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -297,9 +329,9 @@ RawBlock *RawBlockedImage::GetRawBlock( int nXOff, int nYOff )
     else if( poBlock->nPositionInFile >= 0 && poBlock->pabyData == NULL )
     {
         nBlocksInCache++;
-        poBlock->pabyData = (GByte *) CPLCalloc(1,nBytesPerBlock);
-        VSIFSeek( fp, poBlock->nPositionInFile, SEEK_SET );
-        VSIFRead( poBlock->pabyData, nBytesPerBlock, 1, fp );
+        poBlock->pabyData = (unsigned char *) calloc(1,nBytesPerBlock);
+        fseek( fp, poBlock->nPositionInFile, SEEK_SET );
+        fread( poBlock->pabyData, nBytesPerBlock, 1, fp );
     }
 
 /* -------------------------------------------------------------------- */
@@ -307,7 +339,13 @@ RawBlock *RawBlockedImage::GetRawBlock( int nXOff, int nYOff )
 /* -------------------------------------------------------------------- */
     else if( poBlock->pabyData == NULL )
     {
-        poBlock->pabyData = (GByte *) CPLCalloc(1,nBytesPerBlock);
+        poBlock->pabyData = (unsigned char *) calloc(1,nBytesPerBlock);
+        if( poBlock->pabyData == NULL )
+        {
+            fprintf( stderr,
+                     "RawBlockedImage::GetRawBlock() - out of memory\n" );
+            exit( 1 );
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -329,7 +367,7 @@ RawBlock *RawBlockedImage::GetRawBlock( int nXOff, int nYOff )
 /*                              GetTile()                               */
 /************************************************************************/
 
-GByte *RawBlockedImage::GetTile( int nXOff, int nYOff )
+unsigned char *RawBlockedImage::GetTile( int nXOff, int nYOff )
 
 {
     RawBlock	*poBlock;
@@ -345,7 +383,7 @@ GByte *RawBlockedImage::GetTile( int nXOff, int nYOff )
 /*                          GetTileForUpdate()                          */
 /************************************************************************/
 
-GByte *RawBlockedImage::GetTileForUpdate( int nXOff, int nYOff )
+unsigned char *RawBlockedImage::GetTileForUpdate( int nXOff, int nYOff )
 
 {
     RawBlock	*poBlock;
