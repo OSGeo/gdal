@@ -1,4 +1,4 @@
-/* $Id: /cvsroot/osrs/libtiff/libtiff/tif_open.c,v 1.18 2004/05/20 19:15:54 dron Exp $ */
+/* $Id: tif_open.c,v 1.20 2004/09/08 18:01:29 dron Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -422,6 +422,17 @@ TIFFFileName(TIFF* tif)
 }
 
 /*
+ * Set the file name.
+ */
+const char *
+TIFFSetFileName(TIFF* tif, const char *name)
+{
+	const char* old_name = tif->tif_name;
+	tif->tif_name = (char *)name;
+	return (old_name);
+}
+
+/*
  * Return open file's I/O descriptor.
  */
 int
@@ -431,12 +442,54 @@ TIFFFileno(TIFF* tif)
 }
 
 /*
+ * Set open file's I/O descriptor, and return previous value.
+ */
+int
+TIFFSetFileno(TIFF* tif, int fd)
+{
+        int old_fd = tif->tif_fd;
+	tif->tif_fd = fd;
+	return old_fd;
+}
+
+/*
+ * Return open file's clientdata.
+ */
+thandle_t
+TIFFClientdata(TIFF* tif)
+{
+	return (tif->tif_clientdata);
+}
+
+/*
+ * Set open file's clientdata, and return previous value.
+ */
+thandle_t
+TIFFSetClientdata(TIFF* tif, thandle_t newvalue)
+{
+	thandle_t m = tif->tif_clientdata;
+	tif->tif_clientdata = newvalue;
+	return m;
+}
+
+/*
  * Return read/write mode.
  */
 int
 TIFFGetMode(TIFF* tif)
 {
 	return (tif->tif_mode);
+}
+
+/*
+ * Return read/write mode.
+ */
+int
+TIFFSetMode(TIFF* tif, int mode)
+{
+	int old_mode = tif->tif_mode;
+	tif->tif_mode = mode;
+	return (old_mode);
 }
 
 /*
@@ -521,3 +574,67 @@ TIFFIsBigEndian(TIFF* tif)
 	return (tif->tif_header.tiff_magic == TIFF_BIGENDIAN);
 }
 
+/*
+ * Return pointer to file read method.
+ */
+TIFFReadWriteProc
+TIFFGetReadProc(TIFF* tif)
+{
+	return (tif->tif_readproc);
+}
+
+/*
+ * Return pointer to file write method.
+ */
+TIFFReadWriteProc
+TIFFGetWriteProc(TIFF* tif)
+{
+	return (tif->tif_writeproc);
+}
+
+/*
+ * Return pointer to file seek method.
+ */
+TIFFSeekProc
+TIFFGetSeekProc(TIFF* tif)
+{
+	return (tif->tif_seekproc);
+}
+
+/*
+ * Return pointer to file close method.
+ */
+TIFFCloseProc
+TIFFGetCloseProc(TIFF* tif)
+{
+	return (tif->tif_closeproc);
+}
+
+/*
+ * Return pointer to file size requesting method.
+ */
+TIFFSizeProc
+TIFFGetSizeProc(TIFF* tif)
+{
+	return (tif->tif_sizeproc);
+}
+
+/*
+ * Return pointer to memory mapping method.
+ */
+TIFFMapFileProc
+TIFFGetMapFileProc(TIFF* tif)
+{
+	return (tif->tif_mapproc);
+}
+
+/*
+ * Return pointer to memory unmapping method.
+ */
+TIFFUnmapFileProc
+TIFFGetUnmapFileProc(TIFF* tif)
+{
+	return (tif->tif_unmapproc);
+}
+
+/* vim: set ts=8 sts=8 sw=8 noet: */
