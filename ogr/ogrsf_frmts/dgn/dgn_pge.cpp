@@ -13,6 +13,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2002/03/15 20:13:23  warmerda
+ * added error reporting.
+ *
  * Revision 1.3  2002/03/15 16:08:42  warmerda
  * update to use strings lists for read/write function args
  *
@@ -210,7 +213,7 @@ int DGNWriteTags( const char *pszFilename, int nTagScheme,
                   char **papszTagValues )
     
 {
-    int  iTag, i;
+    int  iTag, i, bResult = TRUE;
 
 /* -------------------------------------------------------------------- */
 /*      open the file in update mode, and index it.                     */
@@ -266,6 +269,9 @@ int DGNWriteTags( const char *pszFilename, int nTagScheme,
 
         if( !DGNGotoElement( hDGN, iElem ) )
         {
+            CPLError( CE_Warning, CPLE_AppDefined, 
+                      "DGNGotoElement(%d) failed - skipping", iElem );
+            bResult = FALSE;
             continue;
         }
 
@@ -301,7 +307,10 @@ int DGNWriteTags( const char *pszFilename, int nTagScheme,
 
         if( nTagId == -1 )
         {
-            //notdef: we must record an error for this tag. 
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                      "Failed to find tagset %s:%s", 
+                      papszTagSets[iTag], papszTagNames[iTag] );
+            bResult = FALSE;
             continue;
         }
 
@@ -315,7 +324,10 @@ int DGNWriteTags( const char *pszFilename, int nTagScheme,
 
         if( i == nTagValueCount )
         {
-            //notdef: we must record an error for this tag. 
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                      "Failed to find tag for %s:%s",
+                      papszTagSets[iTag], papszTagNames[iTag] );
+            bResult = FALSE;
             continue;
         }
 
@@ -323,13 +335,13 @@ int DGNWriteTags( const char *pszFilename, int nTagScheme,
         if( !DGNUpdateTagValue( hDGN, papsTagValues[i], 
                                 papszTagValues[iTag] ) )
         {
-            // notdef - should indicate error.
+            bResult = FALSE;
         }
     }
 
     DGNClose( hDGN );
 
-    return TRUE;
+    return bResult;
 }
 
 /************************************************************************/
@@ -341,7 +353,11 @@ int DGNUpdateTagValue( DGNHandle hDGN, DGNElemTagValue *psTag,
 
 {
     if( psTag->core.raw_data == NULL )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "core.raw_data is NULL." );
         return FALSE;
+    }
 
     if( psTag->tagType == 1 )
     {
@@ -369,11 +385,11 @@ int DGNUpdateTagValue( DGNHandle hDGN, DGNElemTagValue *psTag,
     }
     else if( psTag->tagType == 4 )
     {
-        CPLAssert( FALSE );
-
-        // How do we transform IEEE double to vax floating point?
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Currently writing floating point tags not supported." );
         return FALSE;
     }
 
     return DGNWriteElement( hDGN, (DGNElemCore *) psTag );
 }
+
