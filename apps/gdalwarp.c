@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2002/12/13 04:57:15  warmerda
+ * implementing remaining commandline options
+ *
  * Revision 1.4  2002/12/09 16:08:57  warmerda
  * added approximating transformer
  *
@@ -53,7 +56,12 @@ CPL_CVSID("$Id$");
 static GDALDatasetH 
 GDALWarpCreateOutput( GDALDatasetH hSrcDS, const char *pszFilename, 
                       const char *pszFormat, const char *pszSourceSRS, 
-                      const char *pszTargetSRS, int nOrder );
+                      const char *pszTargetSRS, int nOrder, 
+                      char **papszCreateOptions );
+
+static double	       dfMinX=0.0, dfMinY=0.0, dfMaxX=0.0, dfMaxY=0.0;
+static double	       dfXRes=0.0, dfYRes=0.0;
+static int             nForcePixels=0, nForceLines=0;
 
 /************************************************************************/
 /*                               Usage()                                */
@@ -106,6 +114,7 @@ int main( int argc, char ** argv )
     char               **papszWarpOptions = NULL;
     double             dfErrorThreshold = 0.125;
     GDALTransformerFunc pfnTransformer = NULL;
+    char                **papszCreateOptions = NULL;
 
     GDALAllRegister();
 
@@ -135,6 +144,11 @@ int main( int argc, char ** argv )
 
             exit( 0 );
         }
+        else if( EQUAL(argv[i],"-co") && i < argc-1 )
+        {
+            papszCreateOptions = CSLAddString( papszCreateOptions, argv[++i] );
+            bCreateOutput = TRUE;
+        }   
         else if( EQUAL(argv[i],"-of") && i < argc-1 )
         {
             pszFormat = argv[++i];
@@ -155,6 +169,26 @@ int main( int argc, char ** argv )
         else if( EQUAL(argv[i],"-et") && i < argc-1 )
         {
             dfErrorThreshold = atof(argv[++i]);
+        }
+        else if( EQUAL(argv[i],"-tr") && i < argc-2 )
+        {
+            dfXRes = atof(argv[++i]);
+            dfYRes = fabs(atof(argv[++i]));
+            bCreateOutput = TRUE;
+        }
+        else if( EQUAL(argv[i],"-ts") && i < argc-2 )
+        {
+            nForcePixels = atoi(argv[++i]);
+            nForceLines = atoi(argv[++i]);
+            bCreateOutput = TRUE;
+        }
+        else if( EQUAL(argv[i],"-te") && i < argc-4 )
+        {
+            dfMinX = atof(argv[++i]);
+            dfMinY = atof(argv[++i]);
+            dfMaxX = atof(argv[++i]);
+            dfMaxY = atof(argv[++i]);
+            bCreateOutput = TRUE;
         }
         else if( argv[i][0] == '-' )
             Usage();
@@ -206,8 +240,11 @@ int main( int argc, char ** argv )
     if( hDstDS == NULL )
     {
         hDstDS = GDALWarpCreateOutput( hSrcDS, pszDstFilename, pszFormat, 
-                                       pszSourceSRS, pszTargetSRS, nOrder );
+                                       pszSourceSRS, pszTargetSRS, nOrder,
+                                       papszCreateOptions );
         papszWarpOptions = CSLSetNameValue( papszWarpOptions, "INIT", "0" );
+        CSLDestroy( papszCreateOptions );
+        papszCreateOptions = NULL;
     }
 
     if( hDstDS == NULL )
@@ -277,7 +314,8 @@ int main( int argc, char ** argv )
 static GDALDatasetH 
 GDALWarpCreateOutput( GDALDatasetH hSrcDS, const char *pszFilename, 
                       const char *pszFormat, const char *pszSourceSRS, 
-                      const char *pszTargetSRS, int nOrder )
+                      const char *pszTargetSRS, int nOrder,
+                      char **papszCreateOptions )
 
 {
     GDALDriverH hDriver;
@@ -339,6 +377,62 @@ GDALWarpCreateOutput( GDALDatasetH hSrcDS, const char *pszFilename,
     GDALDestroyGenImgProjTransformer( hTransformArg );
 
 /* -------------------------------------------------------------------- */
+/*      Did the user override some parameters?                          */
+/* -------------------------------------------------------------------- */
+    if( dfXRes != 0.0 && dfYRes != 0.0 )
+    {
+        CPLAssert( nPixels == 0 && nLines == 0 );
+        if( dfMinX == 0.0 && dfMinY == 0.0 && dfMaxX == 0.0 && dfMaxY == 0.0 )
+        {
+            dfMinX = adfDstGeoTransform[0];
+            dfMaxX = adfDstGeoTransform[0] + adfDstGeoTransform[1] * nPixels;
+            dfMaxY = adfDstGeoTransform[3];
+            dfMinY = adfDstGeoTransform[3] + adfDstGeoTransform[5] * nLines;
+        }
+
+        nPixels = (int) ((dfMaxX - dfMinX + (dfXRes/2.0)) / dfXRes);
+        nLines = (int) ((dfMaxY - dfMinY + (dfYRes/2.0)) / dfYRes);
+        adfDstGeoTransform[0] = dfMinX;
+        adfDstGeoTransform[3] = dfMaxY;
+        adfDstGeoTransform[1] = dfXRes;
+        adfDstGeoTransform[5] = -dfYRes;
+    }
+
+    else if( nForcePixels != 0 && nForceLines != 0 )
+    {
+        if( dfMinX == 0.0 && dfMinY == 0.0 && dfMaxX == 0.0 && dfMaxY == 0.0 )
+        {
+            dfMinX = adfDstGeoTransform[0];
+            dfMaxX = adfDstGeoTransform[0] + adfDstGeoTransform[1] * nPixels;
+            dfMaxY = adfDstGeoTransform[3];
+            dfMinY = adfDstGeoTransform[3] + adfDstGeoTransform[5] * nLines;
+        }
+
+        dfXRes = (dfMaxX - dfMinX) / nForcePixels;
+        dfYRes = (dfMaxY - dfMinY) / nForceLines;
+
+        adfDstGeoTransform[0] = dfMinX;
+        adfDstGeoTransform[3] = dfMaxY;
+        adfDstGeoTransform[1] = dfXRes;
+        adfDstGeoTransform[5] = -dfYRes;
+
+        nPixels = nForcePixels;
+        nLines = nForceLines;
+    }
+
+    else if( dfMinX != 0.0 || dfMinY != 0.0 || dfMaxX != 0.0 || dfMaxY != 0.0 )
+    {
+        dfXRes = adfDstGeoTransform[1];
+        dfYRes = fabs(adfDstGeoTransform[5]);
+
+        nPixels = (int) ((dfMaxX - dfMinX + (dfXRes/2.0)) / dfXRes);
+        nLines = (int) ((dfMaxY - dfMinY + (dfYRes/2.0)) / dfYRes);
+
+        adfDstGeoTransform[0] = dfMinX;
+        adfDstGeoTransform[3] = dfMaxY;
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Create the output file.                                         */
 /* -------------------------------------------------------------------- */
     printf( "Creating output file is that %dP x %dL.\n", nPixels, nLines );
@@ -346,7 +440,7 @@ GDALWarpCreateOutput( GDALDatasetH hSrcDS, const char *pszFilename,
     hDstDS = GDALCreate( hDriver, pszFilename, nPixels, nLines, 
                          GDALGetRasterCount(hSrcDS),
                          GDALGetRasterDataType(GDALGetRasterBand(hSrcDS,1)),
-                         NULL );
+                         papszCreateOptions );
 
     if( hDstDS == NULL )
         return NULL;
