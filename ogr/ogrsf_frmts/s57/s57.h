@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2001/12/14 19:40:18  warmerda
+ * added optimized feature counting, and extents collection
+ *
  * Revision 1.14  2001/09/12 17:03:21  warmerda
  * auto update support
  *
@@ -304,6 +307,8 @@ class S57Reader
 
     OGRFeatureDefn  *GenerateGeomFeatureDefn( OGRwkbGeometryType );
     OGRFeatureDefn  *GenerateObjectClassDefn( S57ClassRegistrar *, int );
+
+    OGRErr              GetExtent( OGREnvelope *psExtent, int bForce );
 };
 
 #endif /* ndef _S57_H_INCLUDED */

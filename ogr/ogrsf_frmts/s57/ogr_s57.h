@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2001/12/14 19:40:18  warmerda
+ * added optimized feature counting, and extents collection
+ *
  * Revision 1.3  1999/11/18 19:01:25  warmerda
  * expanded tabs
  *
@@ -64,10 +67,11 @@ class OGRS57Layer : public OGRLayer
 
     int                 nCurrentModule;
     int                 nNextFEIndex;
+    int			nFeatureCount;
 
   public:
                         OGRS57Layer( OGRS57DataSource * poDS,
-                                     OGRFeatureDefn * );
+                                     OGRFeatureDefn *, int nFeatureCount = -1);
     virtual             ~OGRS57Layer();
 
     OGRGeometry *       GetSpatialFilter() { return poFilterGeom; }
@@ -77,6 +81,9 @@ class OGRS57Layer : public OGRLayer
     OGRFeature *        GetNextFeature();
     OGRFeature *        GetNextUnfilteredFeature();
     
+    virtual int         GetFeatureCount( int bForce = TRUE );
+    virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce = TRUE);
+
     OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
 
     int                 TestCapability( const char * );
@@ -103,6 +110,12 @@ class OGRS57DataSource : public OGRDataSource
     S57Reader           **papoModules;
 
     static S57ClassRegistrar *poRegistrar;
+
+    int                 bClassCountSet;
+    int                 anClassCount[MAX_CLASSES];
+
+    int                 bExtentsSet;
+    OGREnvelope         oExtents;
     
   public:
                         OGRS57DataSource();
@@ -123,6 +136,10 @@ class OGRS57DataSource : public OGRDataSource
 
     int                 GetModuleCount() { return nModules; }
     S57Reader          *GetModule( int );
+
+    S57ClassRegistrar  *GetS57Registrar() { return poRegistrar; }
+
+    OGRErr      GetDSExtent(OGREnvelope *psExtent, int bForce = TRUE);
 };
 
 /************************************************************************/
