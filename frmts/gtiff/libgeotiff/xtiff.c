@@ -16,6 +16,7 @@
  
 #include "xtiffio.h"
 #include <stdio.h>
+#include "cpl_serv.h"
 
 /*  Tiff info structure.
  *
