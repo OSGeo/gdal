@@ -11,7 +11,8 @@ include GDALmake.opt
 endif
 
 OBJ	=	cpl_conv.o cpl_error.o cpl_string.o cpl_vsisimple.o \
-		cplgetsymbol.o cpl_dir.o cpl_path.o cpl_csv.o cpl_findfile.o
+		cplgetsymbol.o cpl_dir.o cpl_path.o cpl_csv.o cpl_findfile.o \
+		cpl_vsil_unix_stdio_64.o
 
 LIB	=	cpl.a
 

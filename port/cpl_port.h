@@ -42,6 +42,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.26  2001/06/21 21:17:26  warmerda
+ * added irix 64bit file api support
+ *
  * Revision 1.25  2001/04/30 18:18:38  warmerda
  * added macos support, standard header
  *
@@ -162,6 +165,11 @@ typedef int             GBool;
 #define VSI_LARGE_API_SUPPORTED
 typedef __int64          GIntBig;
 typedef unsigned __int64 GUIntBig;
+
+#elif HAVE_LONG_LONG
+
+typedef long long        GIntBig;
+typedef unsigned long long GUIntBig;
 
 #else
 

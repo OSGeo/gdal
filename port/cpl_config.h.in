@@ -25,3 +25,13 @@
 #undef HAVE_LIBDBMALLOC
 #undef WORDS_BIGENDIAN
 
+/* Define if you have ftell64 and fseek64 */
+#undef UNIX_STDIO_64
+
+/* Define if you have 64 bit long long type */
+#undef HAVE_LONG_LONG
+
+/* Define if large file api should be enabled, normally with UNIX_STDIO_64 */
+#undef VSI_LARGE_API_SUPPORTED
+
+
