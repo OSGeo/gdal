@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.24  2003/08/31 14:48:05  dron
+ * Added CPLScanLong() and CPLScanDouble().
+ *
  * Revision 1.23  2003/08/25 20:01:58  dron
  * Added CPLFGets() helper function.
  *
@@ -351,6 +354,7 @@ char *CPLFGets( char *pszBuffer, int nBufferSize, FILE * fp )
  * be called with a NULL FILE * at any time to free this working buffer.
  *
  * @param fp file pointer opened with VSIFOpen().
+ *
  * @return pointer to an internal buffer containing a line of text read
  * from the file or NULL if the end of file was encountered.
  */
@@ -414,6 +418,90 @@ const char *CPLReadLine( FILE * fp )
              && pszRLBuffer[nRLBufferSize-2] != 10 );
 
     return( pszRLBuffer );
+}
+
+/************************************************************************/
+/*                             CPLScanLong()                            */
+/************************************************************************/
+
+/**
+ * Scan up to a maximum number of characters from a string and convert
+ * the result to a long.
+ *
+ * @param pszString String containing characters to be scanned. It may be
+ * terminated with a null character.
+ *
+ * @param nMaxLength The maximum number of character to consider as part
+ * of the number. Less characters will be considered if a null character
+ * is encountered.
+ * 
+ * @return Long value, converted from its ASCII form.
+ */
+
+long CPLScanLong( char *pszString, int nMaxLength )
+{
+    char    szTemp[32];
+    int     i;
+    double  dfValue;
+
+/* -------------------------------------------------------------------- */
+/*	Compute string into local buffer, and terminate it.		*/
+/* -------------------------------------------------------------------- */
+    strncpy( szTemp, pszString, nMaxLength );
+    szTemp[nMaxLength] = '\0';
+
+/* -------------------------------------------------------------------- */
+/*	Use atol() to fetch out the result                              */
+/* -------------------------------------------------------------------- */
+    dfValue = atol( szTemp );
+
+    return dfValue;
+}
+
+/************************************************************************/
+/*                             CPLScanDouble()                          */
+/************************************************************************/
+
+/**
+ * Scan up to a maximum number of characters from a string and convert
+ * the result to a double.
+ *
+ * @param pszString String containing characters to be scanned. It may be
+ * terminated with a null character.
+ *
+ * @param nMaxLength The maximum number of character to consider as part
+ * of the number. Less characters will be considered if a null character
+ * is encountered.
+ * 
+ * @return Double value, converted from its ASCII form.
+ */
+
+
+double CPLScanDouble( char *pszString, int nMaxLength )
+{
+    char    szTemp[64];
+    int     i;
+    double  dfValue;
+
+/* -------------------------------------------------------------------- */
+/*	Compute string into local buffer, and terminate it.		*/
+/* -------------------------------------------------------------------- */
+    strncpy( szTemp, pszString, nMaxLength );
+    szTemp[nMaxLength] = '\0';
+
+/* -------------------------------------------------------------------- */
+/*	Make a pass through converting 'D's to 'E's.			*/
+/* -------------------------------------------------------------------- */
+    for( i = 0; i < nMaxLength; i++ )
+        if ( szTemp[i] == 'd' || szTemp[i] == 'D' )
+            szTemp[i] = 'E';
+
+/* -------------------------------------------------------------------- */
+/*	Use atof() to fetch out the result                              */
+/* -------------------------------------------------------------------- */
+    dfValue = atof( szTemp );
+
+    return dfValue;
 }
 
 /************************************************************************/
