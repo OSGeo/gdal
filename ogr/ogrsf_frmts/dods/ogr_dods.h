@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2004/03/12 22:13:07  warmerda
+ * major upgrade with normalized sequen nested sequence support
+ *
  * Revision 1.6  2004/02/19 13:58:26  warmerda
  * complete extra_containers support for grids
  *
@@ -94,8 +97,10 @@ public:
     OGRDODSFieldDefn();
     ~OGRDODSFieldDefn();
     
-    int Initialize( AttrTable * );
-    int Initialize( const char *, const char * = "das" );
+    int Initialize( AttrTable *, 
+                    BaseType *poTarget = NULL, BaseType *poSuperSeq = NULL );
+    int Initialize( const char *, const char * = "das",
+                    BaseType *poTarget = NULL, BaseType *poSuperSeq = NULL );
 
     int  bValid;
     char *pszFieldName;
@@ -103,6 +108,9 @@ public:
     int  iFieldIndex;
     char *pszFieldValue;
     char *pszPathToSequence;
+
+    int  bRelativeToSuperSequence;
+    int  bRelativeToSequence;
 };
 
 /************************************************************************/
@@ -178,12 +186,27 @@ private:
     OGRDODSFieldDefn    oYField;
     OGRDODSFieldDefn    oZField;
 
+    char               *pszSubSeqPath;
+
+    Sequence           *poSuperSeq;
+
+    int                 iLastSuperSeq;
+
+    int                 nRecordCount; /* -1 if not yet known */
+    int                 nSuperSeqCount; 
+    int                *panSubSeqSize;
+
     double              GetFieldValueAsDouble( OGRDODSFieldDefn *, int );
     BaseType           *GetFieldValue( OGRDODSFieldDefn *, int,
                                        Sequence * );
     
     int                 BuildFields( BaseType *, const char *, 
                                      const char * );
+
+    Sequence           *FindSuperSequence( BaseType * );
+
+protected:
+    virtual int         ProvideDataDDS();
 
 public:
                         OGRDODSSequenceLayer( OGRDODSDataSource *poDS, 
@@ -335,6 +358,8 @@ class OGRDODSDriver : public OGRSFDriver
     int                 TestCapability( const char * );
 };
 
+string OGRDODSGetVarPath( BaseType * );
+int  OGRDODSGetVarIndex( Sequence *poParent, string oVarName );
 
 #endif /* ndef _OGR_DODS_H_INCLUDED */
 

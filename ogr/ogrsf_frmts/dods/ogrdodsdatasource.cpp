@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2004/03/12 22:13:07  warmerda
+ * major upgrade with normalized sequen nested sequence support
+ *
  * Revision 1.6  2004/02/19 13:57:49  warmerda
  * support grids defined via ogr_layer_info
  *
@@ -133,6 +136,30 @@ int OGRDODSDataSource::Open( const char * pszNewName )
         
     oBaseURL = pszWrkURL;
     CPLFree( pszWrkURL );
+
+/* -------------------------------------------------------------------- */
+/*      Do we want to override the .dodsrc file setting?  Only do       */
+/*      the putenv() if there isn't already a DODS_CONF in the          */
+/*      environment.                                                    */
+/* -------------------------------------------------------------------- */
+    if( CPLGetConfigOption( "DODS_CONF", NULL ) != NULL 
+        && getenv("DODS_CONF") == NULL )
+    {
+        static char szDODS_CONF[1000];
+
+        sprintf( szDODS_CONF, "DODS_CONF=%.980s", 
+                 CPLGetConfigOption( "DODS_CONF", "" ) );
+        putenv( szDODS_CONF );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      If we have a overridding AIS file location, apply it now.       */
+/* -------------------------------------------------------------------- */
+    if( CPLGetConfigOption( "DODS_AIS_FILE", NULL ) != NULL )
+    {
+        string oAISFile = CPLGetConfigOption( "DODS_AIS_FILE", "" );
+        RCReader::instance()->set_ais_database( oAISFile );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Connect to the server.                                          */

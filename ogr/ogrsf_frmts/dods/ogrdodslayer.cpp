@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2004/03/12 22:13:07  warmerda
+ * major upgrade with normalized sequen nested sequence support
+ *
  * Revision 1.4  2004/02/19 13:56:53  warmerda
  * implement spatial and attribute filtering in GetNextFeature
  *
@@ -110,6 +113,16 @@ OGRDODSLayer::OGRDODSLayer( OGRDODSDataSource *poDSIn,
         }
 
     }
+
+/* ==================================================================== */
+/*      Are we actually referencing a nested subsequence?  If so, we    */
+/*      need to find the super sequence so we can do the layered        */
+/*      stepping.                                                       */
+/* ==================================================================== */
+    
+    
+    
+
 }
 
 /************************************************************************/

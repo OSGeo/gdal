@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2004/03/12 22:13:07  warmerda
+ * major upgrade with normalized sequen nested sequence support
+ *
  * Revision 1.2  2004/01/29 21:01:03  warmerda
  * added sequences within sequences support
  *
@@ -55,6 +58,8 @@ OGRDODSFieldDefn::OGRDODSFieldDefn()
     pszFieldValue = NULL;
     bValid = FALSE;
     pszPathToSequence = NULL;
+    bRelativeToSuperSequence = FALSE;
+    bRelativeToSequence = FALSE;
 }
 
 /************************************************************************/
@@ -79,23 +84,17 @@ OGRDODSFieldDefn::~OGRDODSFieldDefn()
 /*      entry.                                                          */
 /************************************************************************/
 
-int OGRDODSFieldDefn::Initialize( AttrTable *poEntry )
+int OGRDODSFieldDefn::Initialize( AttrTable *poEntry,
+                                  BaseType *poTarget, 
+                                  BaseType *poSuperSeq )
 
 {
-    string o;
+    const char *pszFieldScope = poEntry->get_attr("scope").c_str();
+    if( pszFieldScope == NULL )
+        pszFieldScope = "dds";
 
-    pszFieldName = CPLStrdup(poEntry->get_attr("name").c_str());
-    pszFieldScope = CPLStrdup(poEntry->get_attr("scope").c_str());
-
-    if( EQUAL(pszFieldScope,"") )
-    {
-        CPLFree( pszFieldScope );
-        pszFieldScope = CPLStrdup("dds");
-    }
-
-    bValid = EQUAL(pszFieldScope,"dds") || EQUAL(pszFieldScope,"das");
-
-    return bValid;
+    return Initialize( poEntry->get_attr("name").c_str(), pszFieldScope,
+                       poTarget, poSuperSeq );
 }
 
 /************************************************************************/
@@ -103,12 +102,90 @@ int OGRDODSFieldDefn::Initialize( AttrTable *poEntry )
 /************************************************************************/
 
 int OGRDODSFieldDefn::Initialize( const char *pszFieldNameIn, 
-                                  const char *pszFieldScopeIn )
+                                  const char *pszFieldScopeIn,
+                                  BaseType *poTarget, 
+                                  BaseType *poSuperSeq )
 
 {
-    pszFieldName = CPLStrdup( pszFieldNameIn );
     pszFieldScope = CPLStrdup( pszFieldScopeIn );
+    pszFieldName = CPLStrdup( pszFieldNameIn );
+
+    if( poTarget != NULL && EQUAL(pszFieldScope,"dds") )
+    {
+        string oTargPath = OGRDODSGetVarPath( poTarget );
+        int    nTargPathLen = strlen(oTargPath.c_str());
+
+        if( EQUALN(oTargPath.c_str(),pszFieldNameIn,nTargPathLen) 
+            && pszFieldNameIn[nTargPathLen] == '.' )
+        {
+            CPLFree( pszFieldName );
+            pszFieldName = CPLStrdup( pszFieldNameIn + nTargPathLen + 1 );
+
+            bRelativeToSequence = TRUE;
+            iFieldIndex = OGRDODSGetVarIndex( 
+                dynamic_cast<Sequence *>( poTarget ), pszFieldName );
+        }
+        else if( poSuperSeq != NULL  )
+        {
+            string oTargPath = OGRDODSGetVarPath( poSuperSeq );
+            int    nTargPathLen = strlen(oTargPath.c_str());
+
+            if( EQUALN(oTargPath.c_str(),pszFieldNameIn,nTargPathLen) 
+                && pszFieldNameIn[nTargPathLen] == '.' )
+            {
+                CPLFree( pszFieldName );
+                pszFieldName = CPLStrdup( pszFieldNameIn + nTargPathLen + 1 );
+
+                bRelativeToSuperSequence = TRUE;
+                iFieldIndex = OGRDODSGetVarIndex( 
+                    dynamic_cast<Sequence *>( poSuperSeq ), pszFieldName );
+            }
+        }
+    }
+
     bValid = TRUE;
 
     return TRUE;
+}
+
+/************************************************************************/
+/*                         OGRDODSGetVarPath()                          */
+/*                                                                      */
+/*      Return the full path to a variable.                             */
+/************************************************************************/
+
+string OGRDODSGetVarPath( BaseType *poTarget )
+
+{
+    string oFullName;
+
+    oFullName = poTarget->name();
+
+    while( (poTarget = poTarget->get_parent()) != NULL )
+    {
+        oFullName = poTarget->name() + "." + oFullName;
+    }
+
+    return oFullName;
+}
+
+/************************************************************************/
+/*                         OGRDODSGetVarIndex()                         */
+/************************************************************************/
+
+int  OGRDODSGetVarIndex( Sequence *poParent, string oVarName )
+
+{
+    Sequence::Vars_iter v_i;
+    int                 i;
+
+    for( v_i = poParent->var_begin(), i=0; 
+         v_i != poParent->var_end(); 
+         v_i++, i++ )
+    {
+        if( EQUAL((*v_i)->name().c_str(),oVarName.c_str()) )
+            return i;
+    }
+
+    return -1;
 }

@@ -22,4 +22,9 @@
 
     <ancillary url="/home/warmerda/dods/C0101.met.raw.nc.das"/>
   </entry>
+  <entry>
+    <primary regexp="http://www.epic.noaa.gov:10100/dods/wod2001/natl_prof_bot.cdp*"/>
+
+    <ancillary url="/home/warmerda/dods/natl_prof_bot.cdp.das"/>
+  </entry>
 </ais>
