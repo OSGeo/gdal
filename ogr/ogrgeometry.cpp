@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2003/03/06 20:59:41  warmerda
+ * Added exportToGML() implementation.
+ *
  * Revision 1.15  2003/02/08 00:37:15  warmerda
  * try to improve documentation
  *
@@ -815,3 +818,25 @@ void OGR_G_FlattenTo2D( OGRGeometryH hGeom )
     ((OGRGeometry *) hGeom)->flattenTo2D();
 }
 
+/************************************************************************/
+/*                            exportToGML()                             */
+/************************************************************************/
+
+/**
+ * \fn char *OGRGeometry::exportToGML() const;
+ *
+ * Convert a geometry into GML format.
+ *
+ * The GML geometry is expressed directly in terms of GML basic data
+ * types assuming the this is available in the gml namespace.  The returned
+ * string should be freed with CPLFree() when no longer required.
+ *
+ * This method is the same as the C function OGR_G_ExportToGML().
+ *
+ * @return A GML fragment or NULL in case of error.
+ */
+
+char *OGRGeometry::exportToGML() const
+{
+    return OGR_G_ExportToGML( (OGRGeometryH) this );
+}
