@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.90  2004/03/12 16:41:21  warmerda
+ * Added some new cpl level functions
+ *
  * Revision 1.89  2004/02/25 09:04:33  dron
  * Added wrappers for GDALPackedDMSToDec() and GDALDecToPackedDMS().
  *
@@ -527,6 +530,14 @@ int CPLGetLastErrorNo();
 const char *CPLGetLastErrorMsg();
 
 void CSLDestroy(stringList);
+
+const char *CPLGetConfigOption( const char *, const char * );
+void        CPLSetConfigOption( const char *, const char * );
+
+void         CPLPushFinderLocation( const char * );
+void         CPLPopFinderLocation();
+void         CPLFinderClean();
+const char  *CPLFindFile(const char *pszClass, const char *pszBasename);
 
 /* -------------------------------------------------------------------- */
 /*      General GDAL stuff.                                             */
