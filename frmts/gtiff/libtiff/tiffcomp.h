@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tiffcomp.h,v 1.1.1.1 1999/07/27 21:50:27 mike Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tiffcomp.h,v 1.2 2000/09/25 21:02:44 warmerda Exp $ */
 
 /*
  * Copyright (c) 1990-1997 Sam Leffler
@@ -83,7 +83,7 @@
 #include <stdlib.h>
 #define	BSDTYPES
 #define	HAVE_UNISTD_H	0
-#elif defined(_WINDOWS) || defined(__WIN32__) || defined(_Windows)
+#elif (defined(_WINDOWS) || defined(__WIN32__) || defined(_Windows)) && !defined(unix)
 #define	BSDTYPES
 #elif defined(OS2_16) || defined(OS2_32)
 #define	BSDTYPES
