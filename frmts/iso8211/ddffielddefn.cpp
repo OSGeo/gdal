@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2000/06/16 18:05:02  warmerda
+ * expanded tabs
+ *
  * Revision 1.4  2000/01/31 18:03:38  warmerda
  * completely rewrote format expansion to make more general
  *
@@ -342,8 +345,8 @@ int DDFFieldDefn::BuildSubfields()
 char *DDFFieldDefn::ExtractSubstring( const char * pszSrc )
 
 {
-    int		nBracket=0, i;
-    char	*pszReturn;
+    int         nBracket=0, i;
+    char        *pszReturn;
 
     for( i = 0;
          pszSrc[i] != '\0' && (nBracket > 0 || pszSrc[i] != ',');
@@ -376,9 +379,9 @@ char *DDFFieldDefn::ExtractSubstring( const char * pszSrc )
 char *DDFFieldDefn::ExpandFormat( const char * pszSrc )
 
 {
-    char	szDest[400];
-    int		iSrc, iDst;
-    int		nRepeat = 0;
+    char        szDest[400];
+    int         iSrc, iDst;
+    int         nRepeat = 0;
 
     iSrc = 0;
     iDst = 0;
@@ -490,7 +493,7 @@ int DDFFieldDefn::ApplyFormats()
 /* -------------------------------------------------------------------- */
 /*      Apply the format items to subfields.                            */
 /* -------------------------------------------------------------------- */
-    int	iFormatItem;
+    int iFormatItem;
     
     for( iFormatItem = 0;
          papszFormatItems[iFormatItem] != NULL;
