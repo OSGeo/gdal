@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.43  2002/10/24 16:51:17  warmerda
+ * added lots of OGRGeometryH support
+ *
  * Revision 1.42  2002/09/26 18:14:22  warmerda
  * added preliminary OGR support
  *
@@ -1907,6 +1910,234 @@ typedef int OGRErr;
 typedef int OGRwkbGeometryType;
 typedef int OGRFieldType;
 typedef int OGRJustification;
+
+/************************************************************************/
+/* -------------------------------------------------------------------- */
+/*      Geometry related functions (ogr_geometry.h)                     */
+/* -------------------------------------------------------------------- */
+/************************************************************************/
+
+/* From base OGRGeometry class */
+
+void   OGR_G_DestroyGeometry( OGRGeometryH );
+OGRGeometryH OGR_G_CreateGeometry( OGRwkbGeometryType );
+
+int    OGR_G_GetDimension( OGRGeometryH );
+int    OGR_G_GetCoordinateDimension( OGRGeometryH );
+OGRGeometryH OGR_G_Clone( OGRGeometryH );
+void   OGR_G_GetEnvelope( OGRGeometryH, OGREnvelope * );
+int    OGR_G_WkbSize( OGRGeometryH hGeom );
+OGRwkbGeometryType OGR_G_GetGeometryType( OGRGeometryH );
+const char *OGR_G_GetGeometryName( OGRGeometryH );
+void   OGR_G_FlattenTo2D( OGRGeometryH );
+
+void   OGR_G_AssignSpatialReference( OGRGeometryH, OGRSpatialReferenceH );
+OGRSpatialReferenceH OGR_G_GetSpatialReference( OGRGeometryH );
+OGRErr OGR_G_Transform( OGRGeometryH, OGRCoordinateTransformationH );
+OGRErr OGR_G_TransformTo( OGRGeometryH, OGRSpatialReferenceH );
+
+int    OGR_G_Intersect( OGRGeometryH, OGRGeometryH );
+int    OGR_G_Equal( OGRGeometryH, OGRGeometryH );
+void   OGR_G_Empty( OGRGeometryH );
+
+/* Methods for getting/setting vertices in points, line strings and rings */
+int    OGR_G_GetPointCount( OGRGeometryH );
+double OGR_G_GetX( OGRGeometryH, int );
+double OGR_G_GetY( OGRGeometryH, int );
+double OGR_G_GetZ( OGRGeometryH, int );
+void   OGR_G_SetPoint( OGRGeometryH, int iPoint, 
+                               double, double, double );
+void   OGR_G_AddPoint( OGRGeometryH, double, double, double );
+
+/* Methods for getting/setting rings and members collections */
+
+int    OGR_G_GetGeometryCount( OGRGeometryH );
+OGRGeometryH OGR_G_GetGeometryRef( OGRGeometryH, int );
+OGRErr OGR_G_AddGeometry( OGRGeometryH, OGRGeometryH );
+OGRErr OGR_G_AddGeometryDirectly( OGRGeometryH, OGRGeometryH );
+
+%{
+/************************************************************************/
+/*                         OGR_G_CreateFromWkb()			*/
+/* 									*/
+/*	Operates as:							*/
+/*	  OGRGeometryH OGR_G_CreateFromWkb( bin_string, 		*/
+/*					    OGRSpatialReferenceH ); 	*/
+/************************************************************************/
+static PyObject *
+py_OGR_G_CreateFromWkb(PyObject *self, PyObject *args) {
+
+    char *wkb_in = NULL, *srs_in = NULL;
+    OGRSpatialReferenceH hSRS = NULL;
+    OGRErr eErr;
+    OGRGeometryH hGeom = NULL;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"zs:OGR_G_CreateFromWkb", &wkb_in, 
+                         &srs_in))
+        return NULL;
+
+    if( srs_in ) {
+        if (SWIG_GetPtr_2(srs_in,
+			  (void **) &hSRS,_OGRSpatialReferenceH)) {
+            PyErr_SetString(PyExc_TypeError,
+                            "Type error in argument 2 of OGR_G_CreateFromWkb."
+                            "  Expected _OGRSpatialReferenceH.");
+            return NULL;
+        }
+    }
+
+    eErr = OGR_G_CreateFromWkb( wkb_in, hSRS, &hGeom );
+
+    if( eErr != CE_None )
+        return NULL;
+    else
+    {
+	char _ptemp[128];
+        SWIG_MakePtr(_ptemp, (char *) hGeom,"_OGRGeometryH");
+        return Py_BuildValue("s",_ptemp);
+    }
+}
+%}
+
+%native(OGR_G_CreateFromWkb) py_OGR_G_CreateFromWkb;
+
+%{
+/************************************************************************/
+/*                        OGR_G_CreateFromWkt()                         */
+/*                                                                      */
+/*      Operates as:                                                    */
+/*        OGRGeometryH OGR_G_CreateFromWkt( string,                     */
+/*                                          OGRSpatialReferenceH );     */
+/************************************************************************/
+static PyObject *
+py_OGR_G_CreateFromWkt(PyObject *self, PyObject *args) {
+
+    char *wkt_in = NULL, *srs_in = NULL;
+    OGRSpatialReferenceH hSRS = NULL;
+    OGRErr eErr;
+    OGRGeometryH hGeom = NULL;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"ss:OGR_G_CreateFromWkt", &wkt_in, 
+                         &srs_in))
+        return NULL;
+
+    if( srs_in ) {
+        if (SWIG_GetPtr_2(srs_in,
+			  (void **) &hSRS,_OGRSpatialReferenceH)) {
+            PyErr_SetString(PyExc_TypeError,
+                            "Type error in argument 2 of OGR_G_CreateFromWkt."
+                            "  Expected _OGRSpatialReferenceH.");
+            return NULL;
+        }
+    }
+
+    eErr = OGR_G_CreateFromWkt( &wkt_in, hSRS, &hGeom );
+
+    if( eErr != CE_None )
+        return NULL;
+    else
+    {
+	char _ptemp[128];
+        SWIG_MakePtr(_ptemp, (char *) hGeom,"_OGRGeometryH");
+        return Py_BuildValue("s",_ptemp);
+    }
+}
+%}
+
+%native(OGR_G_CreateFromWkt) py_OGR_G_CreateFromWkt;
+
+%{
+/************************************************************************/
+/*                        OGR_G_ExportToWkb()                           */
+/************************************************************************/
+static PyObject *
+py_OGR_G_ExportToWkb(PyObject *self, PyObject *args) {
+
+    char *geom_in = NULL;
+    OGRGeometryH hGeom;
+    unsigned char *pabyWkb = NULL;
+    int            nWkbSize = 0, byte_order;
+    OGRErr eErr;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"si:OGR_G_ExportToWkb", &geom_in, &byte_order))
+        return NULL;
+
+    if( geom_in ) {
+        if (SWIG_GetPtr_2(geom_in,
+			  (void **) &hGeom,_OGRGeometryH)) {
+            PyErr_SetString(PyExc_TypeError,
+                            "Type error in argument 1 of OGR_G_ExportToWkb."
+                            "  Expected _OGRGeometryH.");
+            return NULL;
+        }
+    }
+
+    nWkbSize = OGR_G_WkbSize( hGeom );
+    pabyWkb = (unsigned char *) CPLMalloc( nWkbSize );
+    eErr = OGR_G_ExportToWkb( hGeom, (OGRwkbByteOrder) byte_order, pabyWkb );
+
+    if( eErr != CE_None )
+    {
+	CPLFree( pabyWkb );
+        return NULL;
+    }
+    else
+    {
+        PyObject *result = NULL;
+	result = PyString_FromStringAndSize( pabyWkb, nWkbSize );
+        CPLFree( pabyWkb );
+        return result;
+    }
+}
+%}
+
+%native(OGR_G_ExportToWkb) py_OGR_G_ExportToWkb;
+
+%{
+/************************************************************************/
+/*                         OGR_G_ExportToWkt()                          */
+/************************************************************************/
+static PyObject *
+py_OGR_G_ExportToWkt(PyObject *self, PyObject *args) {
+
+    char *geom_in = NULL;
+    OGRGeometryH hGeom;
+    char         *pszWkt;
+    OGRErr eErr;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"s:OGR_G_ExportToWkt", &geom_in))
+        return NULL;
+
+    if( geom_in ) {
+        if (SWIG_GetPtr_2(geom_in,
+			  (void **) &hGeom,_OGRGeometryH)) {
+            PyErr_SetString(PyExc_TypeError,
+                            "Type error in argument 1 of OGR_G_ExportToWkb."
+                            "  Expected _OGRGeometryH.");
+            return NULL;
+        }
+    }
+
+    eErr = OGR_G_ExportToWkt( hGeom, &pszWkt );
+
+    if( eErr != CE_None )
+        return NULL;
+    else
+    {
+        PyObject *result = NULL;
+
+	result = Py_BuildValue( "s", pszWkt );
+	CPLFree( pszWkt );
+        return result;
+    }
+}
+%}
+
+%native(OGR_G_ExportToWkt) py_OGR_G_ExportToWkt;
 
 /* OGRFieldDefn */
 

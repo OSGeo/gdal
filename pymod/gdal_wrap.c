@@ -1892,6 +1892,173 @@ py_CPLDebug(PyObject *self, PyObject *args) {
     Py_INCREF(Py_None);
     return Py_None;
 }
+
+/************************************************************************/
+/*                         OGR_G_CreateFromWkb()			*/
+/* 									*/
+/*	Operates as:							*/
+/*	  OGRGeometryH OGR_G_CreateFromWkb( bin_string, 		*/
+/*					    OGRSpatialReferenceH ); 	*/
+/************************************************************************/
+static PyObject *
+py_OGR_G_CreateFromWkb(PyObject *self, PyObject *args) {
+
+    char *wkb_in = NULL, *srs_in = NULL;
+    OGRSpatialReferenceH hSRS = NULL;
+    OGRErr eErr;
+    OGRGeometryH hGeom = NULL;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"zs:OGR_G_CreateFromWkb", &wkb_in, 
+                         &srs_in))
+        return NULL;
+
+    if( srs_in ) {
+        if (SWIG_GetPtr_2(srs_in,
+			  (void **) &hSRS,_OGRSpatialReferenceH)) {
+            PyErr_SetString(PyExc_TypeError,
+                            "Type error in argument 2 of OGR_G_CreateFromWkb."
+                            "  Expected _OGRSpatialReferenceH.");
+            return NULL;
+        }
+    }
+
+    eErr = OGR_G_CreateFromWkb( wkb_in, hSRS, &hGeom );
+
+    if( eErr != CE_None )
+        return NULL;
+    else
+    {
+	char _ptemp[128];
+        SWIG_MakePtr(_ptemp, (char *) hGeom,"_OGRGeometryH");
+        return Py_BuildValue("s",_ptemp);
+    }
+}
+
+/************************************************************************/
+/*                        OGR_G_CreateFromWkt()                         */
+/*                                                                      */
+/*      Operates as:                                                    */
+/*        OGRGeometryH OGR_G_CreateFromWkt( string,                     */
+/*                                          OGRSpatialReferenceH );     */
+/************************************************************************/
+static PyObject *
+py_OGR_G_CreateFromWkt(PyObject *self, PyObject *args) {
+
+    char *wkt_in = NULL, *srs_in = NULL;
+    OGRSpatialReferenceH hSRS = NULL;
+    OGRErr eErr;
+    OGRGeometryH hGeom = NULL;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"ss:OGR_G_CreateFromWkt", &wkt_in, 
+                         &srs_in))
+        return NULL;
+
+    if( srs_in ) {
+        if (SWIG_GetPtr_2(srs_in,
+			  (void **) &hSRS,_OGRSpatialReferenceH)) {
+            PyErr_SetString(PyExc_TypeError,
+                            "Type error in argument 2 of OGR_G_CreateFromWkt."
+                            "  Expected _OGRSpatialReferenceH.");
+            return NULL;
+        }
+    }
+
+    eErr = OGR_G_CreateFromWkt( &wkt_in, hSRS, &hGeom );
+
+    if( eErr != CE_None )
+        return NULL;
+    else
+    {
+	char _ptemp[128];
+        SWIG_MakePtr(_ptemp, (char *) hGeom,"_OGRGeometryH");
+        return Py_BuildValue("s",_ptemp);
+    }
+}
+
+/************************************************************************/
+/*                        OGR_G_ExportToWkb()                           */
+/************************************************************************/
+static PyObject *
+py_OGR_G_ExportToWkb(PyObject *self, PyObject *args) {
+
+    char *geom_in = NULL;
+    OGRGeometryH hGeom;
+    unsigned char *pabyWkb = NULL;
+    int            nWkbSize = 0, byte_order;
+    OGRErr eErr;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"si:OGR_G_ExportToWkb", &geom_in, &byte_order))
+        return NULL;
+
+    if( geom_in ) {
+        if (SWIG_GetPtr_2(geom_in,
+			  (void **) &hGeom,_OGRGeometryH)) {
+            PyErr_SetString(PyExc_TypeError,
+                            "Type error in argument 1 of OGR_G_ExportToWkb."
+                            "  Expected _OGRGeometryH.");
+            return NULL;
+        }
+    }
+
+    nWkbSize = OGR_G_WkbSize( hGeom );
+    pabyWkb = (unsigned char *) CPLMalloc( nWkbSize );
+    eErr = OGR_G_ExportToWkb( hGeom, (OGRwkbByteOrder) byte_order, pabyWkb );
+
+    if( eErr != CE_None )
+    {
+	CPLFree( pabyWkb );
+        return NULL;
+    }
+    else
+    {
+        PyObject *result = NULL;
+	result = PyString_FromStringAndSize( pabyWkb, nWkbSize );
+        CPLFree( pabyWkb );
+        return result;
+    }
+}
+
+/************************************************************************/
+/*                         OGR_G_ExportToWkt()                          */
+/************************************************************************/
+static PyObject *
+py_OGR_G_ExportToWkt(PyObject *self, PyObject *args) {
+
+    char *geom_in = NULL;
+    OGRGeometryH hGeom;
+    char         *pszWkt;
+    OGRErr eErr;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"s:OGR_G_ExportToWkt", &geom_in))
+        return NULL;
+
+    if( geom_in ) {
+        if (SWIG_GetPtr_2(geom_in,
+			  (void **) &hGeom,_OGRGeometryH)) {
+            PyErr_SetString(PyExc_TypeError,
+                            "Type error in argument 1 of OGR_G_ExportToWkb."
+                            "  Expected _OGRGeometryH.");
+            return NULL;
+        }
+    }
+
+    eErr = OGR_G_ExportToWkt( hGeom, &pszWkt );
+
+    if( eErr != CE_None )
+        return NULL;
+    else
+    {
+        PyObject *result = NULL;
+
+	result = Py_BuildValue( "s", pszWkt );
+	CPLFree( pszWkt );
+        return result;
+    }
+}
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -3807,6 +3974,676 @@ static PyObject *_wrap_OCTDestroyCoordinateTransformation(PyObject *self, PyObje
     OCTDestroyCoordinateTransformation(_arg0);
     Py_INCREF(Py_None);
     _resultobj = Py_None;
+    return _resultobj;
+}
+
+static PyObject *_wrap_OGR_G_DestroyGeometry(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    OGRGeometryH  _arg0;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:OGR_G_DestroyGeometry",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OGR_G_DestroyGeometry. Expected _OGRGeometryH.");
+        return NULL;
+        }
+    }
+    OGR_G_DestroyGeometry(_arg0);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+    return _resultobj;
+}
+
+static PyObject *_wrap_OGR_G_CreateGeometry(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    OGRGeometryH  _result;
+    OGRwkbGeometryType  _arg0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"i:OGR_G_CreateGeometry",&_arg0)) 
+        return NULL;
+    _result = (OGRGeometryH )OGR_G_CreateGeometry(_arg0);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_OGRGeometryH");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+    return _resultobj;
+}
+
+static PyObject *_wrap_OGR_G_GetDimension(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    int  _result;
+    OGRGeometryH  _arg0;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:OGR_G_GetDimension",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OGR_G_GetDimension. Expected _OGRGeometryH.");
+        return NULL;
+        }
+    }
+    _result = (int )OGR_G_GetDimension(_arg0);
+    _resultobj = Py_BuildValue("i",_result);
+    return _resultobj;
+}
+
+static PyObject *_wrap_OGR_G_GetCoordinateDimension(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    int  _result;
+    OGRGeometryH  _arg0;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:OGR_G_GetCoordinateDimension",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OGR_G_GetCoordinateDimension. Expected _OGRGeometryH.");
+        return NULL;
+        }
+    }
+    _result = (int )OGR_G_GetCoordinateDimension(_arg0);
+    _resultobj = Py_BuildValue("i",_result);
+    return _resultobj;
+}
+
+static PyObject *_wrap_OGR_G_Clone(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    OGRGeometryH  _result;
+    OGRGeometryH  _arg0;
+    PyObject * _argo0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:OGR_G_Clone",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OGR_G_Clone. Expected _OGRGeometryH.");
+        return NULL;
+        }
+    }
+    _result = (OGRGeometryH )OGR_G_Clone(_arg0);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_OGRGeometryH");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+    return _resultobj;
+}
+
+static PyObject *_wrap_OGR_G_GetEnvelope(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    OGRGeometryH  _arg0;
+    OGREnvelope * _arg1;
+    PyObject * _argo0 = 0;
+    PyObject * _argo1 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OO:OGR_G_GetEnvelope",&_argo0,&_argo1)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OGR_G_GetEnvelope. Expected _OGRGeometryH.");
+        return NULL;
+        }
+    }
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,"_OGREnvelope_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of OGR_G_GetEnvelope. Expected _OGREnvelope_p.");
+        return NULL;
+        }
+    }
+    OGR_G_GetEnvelope(_arg0,_arg1);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+    return _resultobj;
+}
+
+static PyObject *_wrap_OGR_G_WkbSize(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    int  _result;
+    OGRGeometryH  _arg0;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:OGR_G_WkbSize",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OGR_G_WkbSize. Expected _OGRGeometryH.");
+        return NULL;
+        }
+    }
+    _result = (int )OGR_G_WkbSize(_arg0);
+    _resultobj = Py_BuildValue("i",_result);
+    return _resultobj;
+}
+
+static PyObject *_wrap_OGR_G_GetGeometryType(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    OGRwkbGeometryType  _result;
+    OGRGeometryH  _arg0;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:OGR_G_GetGeometryType",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OGR_G_GetGeometryType. Expected _OGRGeometryH.");
+        return NULL;
+        }
+    }
+    _result = (OGRwkbGeometryType )OGR_G_GetGeometryType(_arg0);
+    _resultobj = Py_BuildValue("i",_result);
+    return _resultobj;
+}
+
+static PyObject *_wrap_OGR_G_GetGeometryName(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    char * _result;
+    OGRGeometryH  _arg0;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:OGR_G_GetGeometryName",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OGR_G_GetGeometryName. Expected _OGRGeometryH.");
+        return NULL;
+        }
+    }
+    _result = (char *)OGR_G_GetGeometryName(_arg0);
+    _resultobj = Py_BuildValue("s", _result);
+    return _resultobj;
+}
+
+static PyObject *_wrap_OGR_G_FlattenTo2D(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    OGRGeometryH  _arg0;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:OGR_G_FlattenTo2D",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OGR_G_FlattenTo2D. Expected _OGRGeometryH.");
+        return NULL;
+        }
+    }
+    OGR_G_FlattenTo2D(_arg0);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+    return _resultobj;
+}
+
+static PyObject *_wrap_OGR_G_AssignSpatialReference(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    OGRGeometryH  _arg0;
+    OGRSpatialReferenceH  _arg1;
+    PyObject * _argo0 = 0;
+    PyObject * _argo1 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OO:OGR_G_AssignSpatialReference",&_argo0,&_argo1)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OGR_G_AssignSpatialReference. Expected _OGRGeometryH.");
+        return NULL;
+        }
+    }
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of OGR_G_AssignSpatialReference. Expected _OGRSpatialReferenceH.");
+        return NULL;
+        }
+    }
+    OGR_G_AssignSpatialReference(_arg0,_arg1);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+    return _resultobj;
+}
+
+static PyObject *_wrap_OGR_G_GetSpatialReference(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    OGRSpatialReferenceH  _result;
+    OGRGeometryH  _arg0;
+    PyObject * _argo0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:OGR_G_GetSpatialReference",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OGR_G_GetSpatialReference. Expected _OGRGeometryH.");
+        return NULL;
+        }
+    }
+    _result = (OGRSpatialReferenceH )OGR_G_GetSpatialReference(_arg0);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_OGRSpatialReferenceH");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+    return _resultobj;
+}
+
+static PyObject *_wrap_OGR_G_Transform(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    OGRErr  _result;
+    OGRGeometryH  _arg0;
+    OGRCoordinateTransformationH  _arg1;
+    PyObject * _argo0 = 0;
+    PyObject * _argo1 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OO:OGR_G_Transform",&_argo0,&_argo1)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OGR_G_Transform. Expected _OGRGeometryH.");
+        return NULL;
+        }
+    }
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of OGR_G_Transform. Expected _OGRCoordinateTransformationH.");
+        return NULL;
+        }
+    }
+    _result = (OGRErr )OGR_G_Transform(_arg0,_arg1);
+    _resultobj = Py_BuildValue("i",_result);
+    return _resultobj;
+}
+
+static PyObject *_wrap_OGR_G_TransformTo(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    OGRErr  _result;
+    OGRGeometryH  _arg0;
+    OGRSpatialReferenceH  _arg1;
+    PyObject * _argo0 = 0;
+    PyObject * _argo1 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OO:OGR_G_TransformTo",&_argo0,&_argo1)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OGR_G_TransformTo. Expected _OGRGeometryH.");
+        return NULL;
+        }
+    }
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of OGR_G_TransformTo. Expected _OGRSpatialReferenceH.");
+        return NULL;
+        }
+    }
+    _result = (OGRErr )OGR_G_TransformTo(_arg0,_arg1);
+    _resultobj = Py_BuildValue("i",_result);
+    return _resultobj;
+}
+
+static PyObject *_wrap_OGR_G_Intersect(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    int  _result;
+    OGRGeometryH  _arg0;
+    OGRGeometryH  _arg1;
+    PyObject * _argo0 = 0;
+    PyObject * _argo1 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OO:OGR_G_Intersect",&_argo0,&_argo1)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OGR_G_Intersect. Expected _OGRGeometryH.");
+        return NULL;
+        }
+    }
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of OGR_G_Intersect. Expected _OGRGeometryH.");
+        return NULL;
+        }
+    }
+    _result = (int )OGR_G_Intersect(_arg0,_arg1);
+    _resultobj = Py_BuildValue("i",_result);
+    return _resultobj;
+}
+
+static PyObject *_wrap_OGR_G_Equal(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    int  _result;
+    OGRGeometryH  _arg0;
+    OGRGeometryH  _arg1;
+    PyObject * _argo0 = 0;
+    PyObject * _argo1 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OO:OGR_G_Equal",&_argo0,&_argo1)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OGR_G_Equal. Expected _OGRGeometryH.");
+        return NULL;
+        }
+    }
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of OGR_G_Equal. Expected _OGRGeometryH.");
+        return NULL;
+        }
+    }
+    _result = (int )OGR_G_Equal(_arg0,_arg1);
+    _resultobj = Py_BuildValue("i",_result);
+    return _resultobj;
+}
+
+static PyObject *_wrap_OGR_G_Empty(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    OGRGeometryH  _arg0;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:OGR_G_Empty",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OGR_G_Empty. Expected _OGRGeometryH.");
+        return NULL;
+        }
+    }
+    OGR_G_Empty(_arg0);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+    return _resultobj;
+}
+
+static PyObject *_wrap_OGR_G_GetPointCount(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    int  _result;
+    OGRGeometryH  _arg0;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:OGR_G_GetPointCount",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OGR_G_GetPointCount. Expected _OGRGeometryH.");
+        return NULL;
+        }
+    }
+    _result = (int )OGR_G_GetPointCount(_arg0);
+    _resultobj = Py_BuildValue("i",_result);
+    return _resultobj;
+}
+
+static PyObject *_wrap_OGR_G_GetX(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    double  _result;
+    OGRGeometryH  _arg0;
+    int  _arg1;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"Oi:OGR_G_GetX",&_argo0,&_arg1)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OGR_G_GetX. Expected _OGRGeometryH.");
+        return NULL;
+        }
+    }
+    _result = (double )OGR_G_GetX(_arg0,_arg1);
+    _resultobj = Py_BuildValue("d",_result);
+    return _resultobj;
+}
+
+static PyObject *_wrap_OGR_G_GetY(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    double  _result;
+    OGRGeometryH  _arg0;
+    int  _arg1;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"Oi:OGR_G_GetY",&_argo0,&_arg1)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OGR_G_GetY. Expected _OGRGeometryH.");
+        return NULL;
+        }
+    }
+    _result = (double )OGR_G_GetY(_arg0,_arg1);
+    _resultobj = Py_BuildValue("d",_result);
+    return _resultobj;
+}
+
+static PyObject *_wrap_OGR_G_GetZ(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    double  _result;
+    OGRGeometryH  _arg0;
+    int  _arg1;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"Oi:OGR_G_GetZ",&_argo0,&_arg1)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OGR_G_GetZ. Expected _OGRGeometryH.");
+        return NULL;
+        }
+    }
+    _result = (double )OGR_G_GetZ(_arg0,_arg1);
+    _resultobj = Py_BuildValue("d",_result);
+    return _resultobj;
+}
+
+static PyObject *_wrap_OGR_G_SetPoint(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    OGRGeometryH  _arg0;
+    int  _arg1;
+    double  _arg2;
+    double  _arg3;
+    double  _arg4;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"Oiddd:OGR_G_SetPoint",&_argo0,&_arg1,&_arg2,&_arg3,&_arg4)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OGR_G_SetPoint. Expected _OGRGeometryH.");
+        return NULL;
+        }
+    }
+    OGR_G_SetPoint(_arg0,_arg1,_arg2,_arg3,_arg4);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+    return _resultobj;
+}
+
+static PyObject *_wrap_OGR_G_AddPoint(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    OGRGeometryH  _arg0;
+    double  _arg1;
+    double  _arg2;
+    double  _arg3;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"Oddd:OGR_G_AddPoint",&_argo0,&_arg1,&_arg2,&_arg3)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OGR_G_AddPoint. Expected _OGRGeometryH.");
+        return NULL;
+        }
+    }
+    OGR_G_AddPoint(_arg0,_arg1,_arg2,_arg3);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+    return _resultobj;
+}
+
+static PyObject *_wrap_OGR_G_GetGeometryCount(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    int  _result;
+    OGRGeometryH  _arg0;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:OGR_G_GetGeometryCount",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OGR_G_GetGeometryCount. Expected _OGRGeometryH.");
+        return NULL;
+        }
+    }
+    _result = (int )OGR_G_GetGeometryCount(_arg0);
+    _resultobj = Py_BuildValue("i",_result);
+    return _resultobj;
+}
+
+static PyObject *_wrap_OGR_G_GetGeometryRef(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    OGRGeometryH  _result;
+    OGRGeometryH  _arg0;
+    int  _arg1;
+    PyObject * _argo0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"Oi:OGR_G_GetGeometryRef",&_argo0,&_arg1)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OGR_G_GetGeometryRef. Expected _OGRGeometryH.");
+        return NULL;
+        }
+    }
+    _result = (OGRGeometryH )OGR_G_GetGeometryRef(_arg0,_arg1);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_OGRGeometryH");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+    return _resultobj;
+}
+
+static PyObject *_wrap_OGR_G_AddGeometry(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    OGRErr  _result;
+    OGRGeometryH  _arg0;
+    OGRGeometryH  _arg1;
+    PyObject * _argo0 = 0;
+    PyObject * _argo1 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OO:OGR_G_AddGeometry",&_argo0,&_argo1)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OGR_G_AddGeometry. Expected _OGRGeometryH.");
+        return NULL;
+        }
+    }
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of OGR_G_AddGeometry. Expected _OGRGeometryH.");
+        return NULL;
+        }
+    }
+    _result = (OGRErr )OGR_G_AddGeometry(_arg0,_arg1);
+    _resultobj = Py_BuildValue("i",_result);
+    return _resultobj;
+}
+
+static PyObject *_wrap_OGR_G_AddGeometryDirectly(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    OGRErr  _result;
+    OGRGeometryH  _arg0;
+    OGRGeometryH  _arg1;
+    PyObject * _argo0 = 0;
+    PyObject * _argo1 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OO:OGR_G_AddGeometryDirectly",&_argo0,&_argo1)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OGR_G_AddGeometryDirectly. Expected _OGRGeometryH.");
+        return NULL;
+        }
+    }
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of OGR_G_AddGeometryDirectly. Expected _OGRGeometryH.");
+        return NULL;
+        }
+    }
+    _result = (OGRErr )OGR_G_AddGeometryDirectly(_arg0,_arg1);
+    _resultobj = Py_BuildValue("i",_result);
     return _resultobj;
 }
 
@@ -6545,6 +7382,37 @@ static PyMethodDef _gdalMethods[] = {
 	 { "OGR_Fld_SetName", _wrap_OGR_Fld_SetName, METH_VARARGS },
 	 { "OGR_Fld_Destroy", _wrap_OGR_Fld_Destroy, METH_VARARGS },
 	 { "OGR_Fld_Create", _wrap_OGR_Fld_Create, METH_VARARGS },
+	 { "OGR_G_ExportToWkt", py_OGR_G_ExportToWkt, METH_VARARGS },
+	 { "OGR_G_ExportToWkb", py_OGR_G_ExportToWkb, METH_VARARGS },
+	 { "OGR_G_CreateFromWkt", py_OGR_G_CreateFromWkt, METH_VARARGS },
+	 { "OGR_G_CreateFromWkb", py_OGR_G_CreateFromWkb, METH_VARARGS },
+	 { "OGR_G_AddGeometryDirectly", _wrap_OGR_G_AddGeometryDirectly, METH_VARARGS },
+	 { "OGR_G_AddGeometry", _wrap_OGR_G_AddGeometry, METH_VARARGS },
+	 { "OGR_G_GetGeometryRef", _wrap_OGR_G_GetGeometryRef, METH_VARARGS },
+	 { "OGR_G_GetGeometryCount", _wrap_OGR_G_GetGeometryCount, METH_VARARGS },
+	 { "OGR_G_AddPoint", _wrap_OGR_G_AddPoint, METH_VARARGS },
+	 { "OGR_G_SetPoint", _wrap_OGR_G_SetPoint, METH_VARARGS },
+	 { "OGR_G_GetZ", _wrap_OGR_G_GetZ, METH_VARARGS },
+	 { "OGR_G_GetY", _wrap_OGR_G_GetY, METH_VARARGS },
+	 { "OGR_G_GetX", _wrap_OGR_G_GetX, METH_VARARGS },
+	 { "OGR_G_GetPointCount", _wrap_OGR_G_GetPointCount, METH_VARARGS },
+	 { "OGR_G_Empty", _wrap_OGR_G_Empty, METH_VARARGS },
+	 { "OGR_G_Equal", _wrap_OGR_G_Equal, METH_VARARGS },
+	 { "OGR_G_Intersect", _wrap_OGR_G_Intersect, METH_VARARGS },
+	 { "OGR_G_TransformTo", _wrap_OGR_G_TransformTo, METH_VARARGS },
+	 { "OGR_G_Transform", _wrap_OGR_G_Transform, METH_VARARGS },
+	 { "OGR_G_GetSpatialReference", _wrap_OGR_G_GetSpatialReference, METH_VARARGS },
+	 { "OGR_G_AssignSpatialReference", _wrap_OGR_G_AssignSpatialReference, METH_VARARGS },
+	 { "OGR_G_FlattenTo2D", _wrap_OGR_G_FlattenTo2D, METH_VARARGS },
+	 { "OGR_G_GetGeometryName", _wrap_OGR_G_GetGeometryName, METH_VARARGS },
+	 { "OGR_G_GetGeometryType", _wrap_OGR_G_GetGeometryType, METH_VARARGS },
+	 { "OGR_G_WkbSize", _wrap_OGR_G_WkbSize, METH_VARARGS },
+	 { "OGR_G_GetEnvelope", _wrap_OGR_G_GetEnvelope, METH_VARARGS },
+	 { "OGR_G_Clone", _wrap_OGR_G_Clone, METH_VARARGS },
+	 { "OGR_G_GetCoordinateDimension", _wrap_OGR_G_GetCoordinateDimension, METH_VARARGS },
+	 { "OGR_G_GetDimension", _wrap_OGR_G_GetDimension, METH_VARARGS },
+	 { "OGR_G_CreateGeometry", _wrap_OGR_G_CreateGeometry, METH_VARARGS },
+	 { "OGR_G_DestroyGeometry", _wrap_OGR_G_DestroyGeometry, METH_VARARGS },
 	 { "CPLDebug", py_CPLDebug, METH_VARARGS },
 	 { "CPLSerializeXMLTree", py_CPLSerializeXMLTree, METH_VARARGS },
 	 { "CPLParseXMLString", py_CPLParseXMLString, METH_VARARGS },
