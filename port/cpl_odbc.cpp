@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2003/11/10 20:08:12  warmerda
+ * added GetTables() implementation
+ *
  * Revision 1.7  2003/10/29 17:56:57  warmerda
  * Added PrimaryKeys() support
  *
@@ -986,6 +989,44 @@ int CPLODBCStatement::GetPrimaryKeys( const char *pszTable,
                                 (SQLCHAR *) pszCatalog, SQL_NTS,
                                 (SQLCHAR *) pszSchema, SQL_NTS,
                                 (SQLCHAR *) pszTable, SQL_NTS ) ) )
+        return FALSE;
+    else
+        return CollectResultsInfo();
+}
+
+/************************************************************************/
+/*                             GetTables()                              */
+/************************************************************************/
+
+/**
+ * Fetch tables in database.
+ *
+ * The SQLTables() function is used to fetch a list tables in the
+ * database.    The result is returned as a result set matching
+ * the SQLTables() function result set.  The 3rd column in the result
+ * set is the table name.  Only tables of type "TABLE" are returned. 
+ *
+ * @param pszCatalog the catalog to find the table in, use NULL (the
+ * default) if no catalog is available. 
+ *
+ * @param pszSchema the schema to find the table in, use NULL (the
+ * default) if no schema is available. 
+ *
+ * @return TRUE on success or FALSE on failure. 
+ */
+
+int CPLODBCStatement::GetTables( const char *pszCatalog,
+                                 const char *pszSchema )
+
+{
+/* -------------------------------------------------------------------- */
+/*      Fetch columns resultset for this table.                         */
+/* -------------------------------------------------------------------- */
+    if( Failed( SQLTables( m_hStmt, 
+                           (SQLCHAR *) pszCatalog, SQL_NTS,
+                           (SQLCHAR *) pszSchema, SQL_NTS,
+                           (SQLCHAR *) NULL, SQL_NTS,
+                           (SQLCHAR *) "TABLES", SQL_NTS ) ) )
         return FALSE;
     else
         return CollectResultsInfo();
