@@ -322,6 +322,10 @@ indexed on the key field being used.
 <li> Joined fields may not be used in WHERE clauses, or ORDER BY clauses
 at this time.  The join is essentially evaluated after all primary table 
 subsetting is complete, and after the ORDER BY pass.
+<li> Joined fields may not be used as keys in later joins.  So you could not
+use the province id in a city to lookup the province record, and then use a
+nation id from the province id to lookup the nation record.  This is a sensible
+thing to want and could be implemented, but is not currently supported.
 <li> Datasource names for joined tables are evaluated relative to the 
 current processes working directory, not the path to the primary datasource.
 <li> These are not true LEFT or RIGHT joins in the RDBMS sense.  Whether
@@ -355,7 +359,28 @@ the nation_id field of the nation table a command like this would be used:
 CREATE INDEX ON nation USING nation_id
 \endcode
 
+<h3>Index Limitations</h3>
+
+<ol>
+<li> Indexes are not maintained dynamically when new features are added to or
+removed from a layer.
+<li> Very long strings (longer than 256 characters?) cannot currently be
+indexed.
+<li> To recreate an index it is necessary to drop all indexes on a layer and
+then recreate all the indexes. 
+<li> Indexes are not used in any complex queries.   Currently the only
+query the will accelerate is a simple "field = value" query.
+</ol>
+
 <h2>DROP INDEX</h2>
+
+The OGR SQL DROP INDEX command can be used to drop all indexes on a particular
+table, or just the index for a particular column. 
+
+\code
+DROP INDEX ON nation USING nation_id
+DROP INDEX ON nation
+\endcode
 
 <h2>ExecuteSQL()</h2>
 
