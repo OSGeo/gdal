@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2004/07/12 20:50:46  warmerda
+ * table/database creation now implemented
+ *
  * Revision 1.1  2004/07/09 06:25:04  warmerda
  * New
  *
@@ -69,7 +72,30 @@ OGRDataSource *OGRSQLiteDriver::Open( const char * pszFilename,
 
     poDS = new OGRSQLiteDataSource();
 
-    if( !poDS->Open( pszFilename, bUpdate, TRUE ) )
+/* -------------------------------------------------------------------- */
+/*      Verify that the target is a real file, and has an               */
+/*      appropriate magic string at the beginning.                      */
+/* -------------------------------------------------------------------- */
+    FILE *fpDB;
+    char szHeader[16];
+    
+    fpDB = VSIFOpen( pszFilename, "rb" );
+    if( fpDB == NULL )
+        return NULL;
+    
+    if( VSIFRead( szHeader, 1, 16, fpDB ) != 16 )
+        memset( szHeader, 0, 16 );
+    
+    VSIFClose( fpDB );
+    
+    if( strncmp( szHeader, "SQLite format 3", 15 ) != 0 )
+        return NULL;
+
+/* -------------------------------------------------------------------- */
+/*      We think this is really an SQLite database, go ahead and try    */
+/*      and open it.                                                    */
+/* -------------------------------------------------------------------- */
+    if( !poDS->Open( pszFilename ) )
     {
         delete poDS;
         return NULL;
@@ -86,16 +112,30 @@ OGRDataSource *OGRSQLiteDriver::CreateDataSource( const char * pszName,
                                                   char ** /* papszOptions */ )
 
 {
+/* -------------------------------------------------------------------- */
+/*      First, ensure there isn't any such file yet.                    */
+/* -------------------------------------------------------------------- */
+    VSIStatBuf sStatBuf;
+
+    if( VSIStat( pszName, &sStatBuf ) == 0 )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "It seems a file system object called '%s' already exists.",
+                  pszName );
+
+        return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Create the datasource.                                          */
+/* -------------------------------------------------------------------- */
     OGRSQLiteDataSource     *poDS;
 
     poDS = new OGRSQLiteDataSource();
 
-    if( !poDS->Open( pszName, TRUE, TRUE ) )
+    if( !poDS->Open( pszName ) )
     {
         delete poDS;
-        CPLError( CE_Failure, CPLE_AppDefined, 
-         "SQLite driver doesn't currently support database creation.\n"
-                  "Please create database with the `createdb' command." );
         return NULL;
     }
 

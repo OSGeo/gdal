@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2004/07/12 20:50:46  warmerda
+ * table/database creation now implemented
+ *
  * Revision 1.2  2004/07/11 19:23:51  warmerda
  * read implementation working well
  *
@@ -41,7 +44,7 @@
 
 CPL_CVSID("$Id$");
 /************************************************************************/
-/*                         OGRSQLiteDataSource()                          */
+/*                        OGRSQLiteDataSource()                         */
 /************************************************************************/
 
 OGRSQLiteDataSource::OGRSQLiteDataSource()
@@ -57,7 +60,7 @@ OGRSQLiteDataSource::OGRSQLiteDataSource()
 }
 
 /************************************************************************/
-/*                         ~OGRSQLiteDataSource()                         */
+/*                        ~OGRSQLiteDataSource()                        */
 /************************************************************************/
 
 OGRSQLiteDataSource::~OGRSQLiteDataSource()
@@ -83,37 +86,17 @@ OGRSQLiteDataSource::~OGRSQLiteDataSource()
 
 /************************************************************************/
 /*                                Open()                                */
+/*                                                                      */
+/*      Note, the Open() will implicitly create the database if it      */
+/*      does not already exist.                                         */
 /************************************************************************/
 
-int OGRSQLiteDataSource::Open( const char * pszNewName, int bUpdate,
-                              int bTestOpen )
+int OGRSQLiteDataSource::Open( const char * pszNewName )
 
 {
     CPLAssert( nLayers == 0 );
 
     pszName = CPLStrdup( pszNewName );
-
-/* -------------------------------------------------------------------- */
-/*      Verify that the target is a real file, and has an               */
-/*      appropriate magic string at the beginning.                      */
-/* -------------------------------------------------------------------- */
-    if( bTestOpen )
-    {
-        FILE *fpDB;
-        char szHeader[16];
-
-        fpDB = VSIFOpen( pszNewName, "rb" );
-        if( fpDB == NULL )
-            return FALSE;
-
-        if( VSIFRead( szHeader, 1, 16, fpDB ) != 16 )
-            memset( szHeader, 0, 16 );
-
-        VSIFClose( fpDB );
-        
-        if( strncmp( szHeader, "SQLite format 3", 15 ) != 0 )
-            return FALSE;
-    }
 
 /* -------------------------------------------------------------------- */
 /*      Try to open the sqlite database properly now.                   */
@@ -151,7 +134,7 @@ int OGRSQLiteDataSource::Open( const char * pszNewName, int bUpdate,
         {
             char **papszRow = papszResult + iRow * 3 + 3;
 
-            OpenTable( papszRow[0], papszRow[1], bUpdate );
+            OpenTable( papszRow[0], papszRow[1] );
         }
 
         sqlite3_free_table(papszResult);
@@ -186,7 +169,7 @@ int OGRSQLiteDataSource::Open( const char * pszNewName, int bUpdate,
 
     for( iRow = 0; iRow < nRowCount; iRow++ )
     {
-        OpenTable( papszResult[iRow+1], NULL, bUpdate );
+        OpenTable( papszResult[iRow+1], NULL );
     }
     
     sqlite3_free_table(papszResult);
@@ -199,8 +182,7 @@ int OGRSQLiteDataSource::Open( const char * pszNewName, int bUpdate,
 /************************************************************************/
 
 int OGRSQLiteDataSource::OpenTable( const char *pszNewName, 
-                                  const char *pszGeomCol,
-                                  int bUpdate )
+                                  const char *pszGeomCol )
 
 {
 /* -------------------------------------------------------------------- */
@@ -267,6 +249,20 @@ OGRLayer * OGRSQLiteDataSource::ExecuteSQL( const char *pszSQLCommand,
                                           pszDialect );
 
 /* -------------------------------------------------------------------- */
+/*      Special case DELLAYER: command.                                 */
+/* -------------------------------------------------------------------- */
+    if( EQUALN(pszSQLCommand,"DELLAYER:",9) )
+    {
+        const char *pszLayerName = pszSQLCommand + 9;
+
+        while( *pszLayerName == ' ' )
+            pszLayerName++;
+
+        DeleteLayer( pszLayerName );
+        return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Prepare statement.                                              */
 /* -------------------------------------------------------------------- */
     int rc;
@@ -277,7 +273,8 @@ OGRLayer * OGRSQLiteDataSource::ExecuteSQL( const char *pszSQLCommand,
 
     if( rc != SQLITE_OK )
     {
-        sqlite3_finalize( hSQLStmt );
+        if( hSQLStmt != NULL )
+            sqlite3_finalize( hSQLStmt );
 
         return NULL;
     }
@@ -314,3 +311,281 @@ void OGRSQLiteDataSource::ReleaseResultSet( OGRLayer * poLayer )
 {
     delete poLayer;
 }
+
+/************************************************************************/
+/*                            CreateLayer()                             */
+/************************************************************************/
+
+OGRLayer *
+OGRSQLiteDataSource::CreateLayer( const char * pszLayerNameIn,
+                                  OGRSpatialReference *poSRS,
+                                  OGRwkbGeometryType eType,
+                                  char ** papszOptions )
+
+{
+    char                szCommand[1024];
+    char                *pszLayerName;
+
+    if( CSLFetchBoolean(papszOptions,"LAUNDER",TRUE) )
+        pszLayerName = LaunderName( pszLayerNameIn );
+    else
+        pszLayerName = CPLStrdup( pszLayerNameIn );
+
+/* -------------------------------------------------------------------- */
+/*      Do we already have this layer?  If so, should we blow it        */
+/*      away?                                                           */
+/* -------------------------------------------------------------------- */
+    int iLayer;
+
+    for( iLayer = 0; iLayer < nLayers; iLayer++ )
+    {
+        if( EQUAL(pszLayerName,papoLayers[iLayer]->GetLayerDefn()->GetName()) )
+        {
+            if( CSLFetchNameValue( papszOptions, "OVERWRITE" ) != NULL
+                && !EQUAL(CSLFetchNameValue(papszOptions,"OVERWRITE"),"NO") )
+            {
+                DeleteLayer( pszLayerName );
+            }
+            else
+            {
+                CPLError( CE_Failure, CPLE_AppDefined, 
+                          "Layer %s already exists, CreateLayer failed.\n"
+                          "Use the layer creation option OVERWRITE=YES to "
+                          "replace it.",
+                          pszLayerName );
+                CPLFree( pszLayerName );
+                return NULL;
+            }
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Try to get the SRS Id of this spatial reference system,         */
+/*      adding tot the srs table if needed.                             */
+/* -------------------------------------------------------------------- */
+#ifdef notdef
+    int nSRSId = -1;
+
+    if( poSRS != NULL )
+        nSRSId = FetchSRSId( poSRS );
+#endif
+
+/* -------------------------------------------------------------------- */
+/*      Create a basic table with the FID.  Also include the            */
+/*      geometry if this is not a PostGIS enabled table.                */
+/* -------------------------------------------------------------------- */
+    int rc;
+    char *pszErrMsg;
+    const char *pszGeomCol = NULL;
+
+    if( eType == wkbNone )
+        sprintf( szCommand, 
+                 "CREATE TABLE \"%s\" ( OGC_FID INTEGER PRIMARY KEY )", 
+                 pszLayerName );
+    else
+    {
+        sprintf( szCommand, 
+                 "CREATE TABLE \"%s\" ( "
+                 "  OGC_FID INTEGER PRIMARY KEY,"
+                 "  WKT_GEOMETRY VARCHAR )", 
+                 pszLayerName );
+        pszGeomCol = "WKT_GEOMETRY";
+    }
+
+    CPLDebug( "OGR_SQLITE", "exec(%s)", szCommand );
+
+    rc = sqlite3_exec( hDB, szCommand, NULL, NULL, &pszErrMsg );
+    if( rc != SQLITE_OK )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Unable to create table %s: %s",
+                  pszLayerName, pszErrMsg );
+        sqlite3_free( pszErrMsg );
+        return FALSE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Eventually we should be adding this table to a table of         */
+/*      "geometric layers", capturing the WKT projection, and           */
+/*      perhaps some other housekeeping.                                */
+/* -------------------------------------------------------------------- */
+#ifdef notdef
+    if( bHavePostGIS )
+    {
+        const char *pszGeometryType;
+
+        /* Sometimes there is an old cruft entry in the geometry_columns
+         * table if things were not properly cleaned up before.  We make
+         * an effort to clean out such cruft.
+         */
+        sprintf( szCommand, 
+                 "DELETE FROM geometry_columns WHERE f_table_name = '%s'", 
+                 pszLayerName );
+                 
+        CPLDebug( "OGR_PG", "PQexec(%s)", szCommand );
+        hResult = PQexec(hPGConn, szCommand);
+        PQclear( hResult );
+
+        switch( wkbFlatten(eType) )
+        {
+          case wkbPoint:
+            pszGeometryType = "POINT";
+            break;
+
+          case wkbLineString:
+            pszGeometryType = "LINESTRING";
+            break;
+
+          case wkbPolygon:
+            pszGeometryType = "POLYGON";
+            break;
+
+          case wkbMultiPoint:
+            pszGeometryType = "MULTIPOINT";
+            break;
+
+          case wkbMultiLineString:
+            pszGeometryType = "MULTILINESTRING";
+            break;
+
+          case wkbMultiPolygon:
+            pszGeometryType = "MULTIPOLYGON";
+            break;
+
+          case wkbGeometryCollection:
+            pszGeometryType = "GEOMETRYCOLLECTION";
+            break;
+
+          default:
+            pszGeometryType = "GEOMETRY";
+            break;
+
+        }
+
+        sprintf( szCommand, 
+                 "select AddGeometryColumn('%s','%s','wkb_geometry',%d,'%s',%d)",
+                 pszDBName, pszLayerName, nSRSId, pszGeometryType, 3 );
+
+        CPLDebug( "OGR_PG", "PQexec(%s)", szCommand );
+        hResult = PQexec(hPGConn, szCommand);
+
+        if( !hResult 
+            || PQresultStatus(hResult) != PGRES_TUPLES_OK )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                      "AddGeometryColumn failed for layer %s, layer creation has failed.",
+                      pszLayerName );
+            
+            CPLFree( pszLayerName );
+
+            PQclear( hResult );
+
+            hResult = PQexec(hPGConn, "ROLLBACK");
+            PQclear( hResult );
+
+            return NULL;
+        }
+    }
+#endif
+
+/* -------------------------------------------------------------------- */
+/*      Create the layer object.                                        */
+/* -------------------------------------------------------------------- */
+    OGRSQLiteTableLayer     *poLayer;
+
+    poLayer = new OGRSQLiteTableLayer( this );
+
+    poLayer->Initialize( pszLayerName, pszGeomCol );
+
+    poLayer->SetLaunderFlag( CSLFetchBoolean(papszOptions,"LAUNDER",TRUE) );
+
+/* -------------------------------------------------------------------- */
+/*      Add layer to data source layer list.                            */
+/* -------------------------------------------------------------------- */
+    papoLayers = (OGRSQLiteLayer **)
+        CPLRealloc( papoLayers,  sizeof(OGRSQLiteLayer *) * (nLayers+1) );
+    
+    papoLayers[nLayers++] = poLayer;
+
+    CPLFree( pszLayerName );
+
+    return poLayer;
+}
+
+/************************************************************************/
+/*                            LaunderName()                             */
+/************************************************************************/
+
+char *OGRSQLiteDataSource::LaunderName( const char *pszSrcName )
+
+{
+    char    *pszSafeName = CPLStrdup( pszSrcName );
+    int     i;
+
+    for( i = 0; pszSafeName[i] != '\0'; i++ )
+    {
+        pszSafeName[i] = (char) tolower( pszSafeName[i] );
+        if( pszSafeName[i] == '-' || pszSafeName[i] == '#' )
+            pszSafeName[i] = '_';
+    }
+
+    return pszSafeName;
+}
+
+/************************************************************************/
+/*                            DeleteLayer()                             */
+/************************************************************************/
+
+void OGRSQLiteDataSource::DeleteLayer( const char *pszLayerName )
+
+{
+    int iLayer;
+
+/* -------------------------------------------------------------------- */
+/*      Try to find layer.                                              */
+/* -------------------------------------------------------------------- */
+    for( iLayer = 0; iLayer < nLayers; iLayer++ )
+    {
+        if( EQUAL(pszLayerName,papoLayers[iLayer]->GetLayerDefn()->GetName()) )
+            break;
+    }
+
+    if( iLayer == nLayers )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Attempt to delete layer '%s', but this layer is not known to OGR.", 
+                  pszLayerName );
+        return;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Blow away our OGR structures related to the layer.  This is     */
+/*      pretty dangerous if anything has a reference to this layer!     */
+/* -------------------------------------------------------------------- */
+    CPLDebug( "OGR_PG", "DeleteLayer(%s)", pszLayerName );
+
+    delete papoLayers[iLayer];
+    memmove( papoLayers + iLayer, papoLayers + iLayer + 1, 
+             sizeof(void *) * (nLayers - iLayer - 1) );
+    nLayers--;
+
+/* -------------------------------------------------------------------- */
+/*      Remove from the database.                                       */
+/* -------------------------------------------------------------------- */
+    int rc;
+    char *pszErrMsg;
+
+    rc = sqlite3_exec( hDB, CPLSPrintf( "DROP TABLE \"%s\"", pszLayerName ),
+                       NULL, NULL, &pszErrMsg );
+    if( rc != SQLITE_OK )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Unable to drop table %s: %s",
+                  pszLayerName, pszErrMsg );
+        sqlite3_free( pszErrMsg );
+        return;
+    }
+
+    /* We may need to drop the column from GEOMETRY_COLUMNS in the future. */
+}
+

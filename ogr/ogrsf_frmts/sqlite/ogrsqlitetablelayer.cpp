@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2004/07/12 20:50:46  warmerda
+ * table/database creation now implemented
+ *
  * Revision 1.2  2004/07/11 19:23:51  warmerda
  * read implementation working well
  *
@@ -39,6 +42,7 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 #include "ogr_sqlite.h"
+#include <string>
 
 CPL_CVSID("$Id$");
 
@@ -78,7 +82,7 @@ OGRSQLiteTableLayer::~OGRSQLiteTableLayer()
 /************************************************************************/
 
 CPLErr OGRSQLiteTableLayer::Initialize( const char *pszTableName, 
-                                      const char *pszGeomCol )
+                                        const char *pszGeomCol )
 
 {
     sqlite3 *hDB = poDS->GetDB();
@@ -125,6 +129,7 @@ CPLErr OGRSQLiteTableLayer::Initialize( const char *pszTableName,
     if( eErr != CE_None )
         return eErr;
 
+#ifdef notdef
     if( poFeatureDefn->GetFieldCount() == 0 )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
@@ -132,6 +137,7 @@ CPLErr OGRSQLiteTableLayer::Initialize( const char *pszTableName,
                   pszTableName );
         return CE_Failure;
     }
+#endif
 
     sqlite3_finalize( hColStmt );
 
@@ -166,6 +172,7 @@ void OGRSQLiteTableLayer::ClearStatement()
 {
     if( hStmt != NULL )
     {
+        CPLDebug( "OGR_SQLITE", "finalize %p", hStmt );
 	sqlite3_finalize( hStmt );
         hStmt = NULL;
     }
@@ -209,11 +216,19 @@ OGRErr OGRSQLiteTableLayer::ResetStatement()
     rc = sqlite3_prepare( poDS->GetDB(), pszSQL, strlen(pszSQL), 
 	    	          &hStmt, NULL );
 
+    CPLDebug( "OGR_SQLITE", "prepare(%s) -> %p", pszSQL, hStmt );
     if( rc == SQLITE_OK )
+    {
+        CPLFree( pszSQL );
     	return OGRERR_NONE;
+    }
     else
     {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "sqlite3_prepare(%s):\n  %s", 
+                  pszSQL, sqlite3_errmsg(poDS->GetDB()) );
         hStmt = NULL;
+        CPLFree( pszSQL );
         return OGRERR_FAILURE;
     }
 }
@@ -269,7 +284,7 @@ OGRFeature *OGRSQLiteTableLayer::GetFeature( long nFeatureId )
     if( rc == SQLITE_OK )
         poFeature = GetNextRawFeature();
 
-    ClearStatement();
+    ResetReading();
 
     return poFeature;
 }
@@ -287,7 +302,10 @@ OGRErr OGRSQLiteTableLayer::SetAttributeFilter( const char *pszQuery )
         return OGRERR_NONE;
 
     CPLFree( this->pszQuery );
-    this->pszQuery = CPLStrdup( pszQuery );
+    if( pszQuery == NULL || strlen(pszQuery) == 0 )
+        this->pszQuery = NULL;
+    else
+        this->pszQuery = CPLStrdup( pszQuery );
 
     ClearStatement();
 
@@ -400,3 +418,344 @@ OGRSpatialReference *OGRSQLiteTableLayer::GetSpatialRef()
 
     return OGRSQLiteLayer::GetSpatialRef();
 }
+
+/************************************************************************/
+/*                            CreateField()                             */
+/************************************************************************/
+
+OGRErr OGRSQLiteTableLayer::CreateField( OGRFieldDefn *poFieldIn, 
+                                         int bApproxOK )
+
+{
+    char                szFieldType[256];
+    OGRFieldDefn        oField( poFieldIn );
+
+    ResetReading();
+
+/* -------------------------------------------------------------------- */
+/*      Do we want to "launder" the column names into Postgres          */
+/*      friendly format?                                                */
+/* -------------------------------------------------------------------- */
+    if( bLaunderColumnNames )
+    {
+        char    *pszSafeName = poDS->LaunderName( oField.GetNameRef() );
+
+        oField.SetName( pszSafeName );
+        CPLFree( pszSafeName );
+    }
+    
+/* -------------------------------------------------------------------- */
+/*      Work out the PostgreSQL type.                                   */
+/* -------------------------------------------------------------------- */
+    if( oField.GetType() == OFTInteger )
+    {
+        strcpy( szFieldType, "INTEGER" );
+    }
+    else if( oField.GetType() == OFTReal )
+    {
+        strcpy( szFieldType, "FLOAT" );
+    }
+    else
+    {
+        strcpy( szFieldType, "VARCHAR" );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      How much space do we need for the list of fields.               */
+/* -------------------------------------------------------------------- */
+    int iField, nFieldListLen = 100;
+    char *pszOldFieldList, *pszNewFieldList;
+
+    for( iField = 0; iField < poFeatureDefn->GetFieldCount(); iField++ )
+    {
+        nFieldListLen += 
+            strlen(poFeatureDefn->GetFieldDefn(iField)->GetNameRef()) + 50;
+    }
+
+    nFieldListLen += strlen( oField.GetNameRef() );
+
+    pszOldFieldList = (char *) CPLCalloc(1,nFieldListLen);
+    pszNewFieldList = (char *) CPLCalloc(1,nFieldListLen);
+
+/* -------------------------------------------------------------------- */
+/*      Build list of old fields, and the list of new fields.           */
+/* -------------------------------------------------------------------- */
+    const char *pszType;
+    sprintf( pszOldFieldList, "%s", "OGC_FID" );
+    sprintf( pszNewFieldList, "%s", "OGC_FID INTEGER PRIMARY KEY" );
+    
+    int iNextOrdinal = 3; /* _rowid_ is 1, OGC_FID is 2 */
+
+    if( poFeatureDefn->GetGeomType() != wkbNone )
+    {
+        strcat( pszOldFieldList, ", WKT_GEOMETRY" );
+        strcat( pszNewFieldList, ", WKT_GEOMETRY VARCHAR" );
+        iNextOrdinal++;
+    }
+
+    for( iField = 0; iField < poFeatureDefn->GetFieldCount(); iField++ )
+    {
+        OGRFieldDefn *poFldDefn = poFeatureDefn->GetFieldDefn(iField);
+
+        // we already added OGC_FID so don't do it again
+        if( EQUAL(poFldDefn->GetNameRef(),"OGC_FID") )
+            continue;
+
+        if( poFldDefn->GetType() == OFTInteger )
+            pszType = "INTEGER";
+        else if( poFldDefn->GetType() == OFTReal )
+            pszType = "FLOAT";
+        else
+            pszType = "VARCHAR";
+        
+        sprintf( pszOldFieldList+strlen(pszOldFieldList), 
+                 ", %s", poFldDefn->GetNameRef() );
+
+        sprintf( pszNewFieldList+strlen(pszNewFieldList), 
+                 ", %s %s", poFldDefn->GetNameRef(), pszType );
+
+        iNextOrdinal++;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Add the new field.                                              */
+/* -------------------------------------------------------------------- */
+    if( oField.GetType() == OFTInteger )
+        pszType = "INTEGER";
+    else if( oField.GetType() == OFTReal )
+        pszType = "FLOAT";
+    else
+        pszType = "VARCHAR";
+    
+    sprintf( pszNewFieldList+strlen(pszNewFieldList), 
+             ", %s %s", oField.GetNameRef(), pszType );
+
+/* ==================================================================== */
+/*      Backup, destroy, recreate and repopulate the table.  SQLite     */
+/*      has no ALTER TABLE so we have to do all this to add a           */
+/*      column.                                                         */
+/* ==================================================================== */
+
+/* -------------------------------------------------------------------- */
+/*      Do this all in a transaction.                                   */
+/* -------------------------------------------------------------------- */
+    int rc;
+    char *pszErrMsg = NULL;
+    sqlite3 *hDB = poDS->GetDB();
+    
+    rc = sqlite3_exec( hDB, "BEGIN", NULL, NULL, &pszErrMsg );
+
+/* -------------------------------------------------------------------- */
+/*      Make a backup of the table.                                     */
+/* -------------------------------------------------------------------- */
+
+    if( rc == SQLITE_OK )
+        rc = sqlite3_exec( hDB, 
+                           CPLSPrintf( "CREATE TEMPORARY TABLE t1_back(%s)",
+                                       pszOldFieldList ),
+                           NULL, NULL, &pszErrMsg );
+
+    if( rc == SQLITE_OK )
+        rc = sqlite3_exec( hDB, 
+                           CPLSPrintf( "INSERT INTO t1_back SELECT %s FROM %s",
+                                       pszOldFieldList, 
+                                       poFeatureDefn->GetName() ),
+                           NULL, NULL, &pszErrMsg );
+
+
+/* -------------------------------------------------------------------- */
+/*      Drop the original table, and recreate with new field.           */
+/* -------------------------------------------------------------------- */
+    if( rc == SQLITE_OK )
+        rc = sqlite3_exec( hDB, 
+                           CPLSPrintf( "DROP TABLE %s", 
+                                       poFeatureDefn->GetName() ),
+                           NULL, NULL, &pszErrMsg );
+
+    if( rc == SQLITE_OK )
+        rc = sqlite3_exec( hDB, 
+                           CPLSPrintf( "CREATE TABLE %s(%s)", 
+                                       poFeatureDefn->GetName(),
+                                       pszNewFieldList ),
+                           NULL, NULL, &pszErrMsg );
+
+/* -------------------------------------------------------------------- */
+/*      Copy backup field values into new table.                        */
+/* -------------------------------------------------------------------- */
+    
+    if( rc == SQLITE_OK )
+        rc = sqlite3_exec( hDB, 
+                           CPLSPrintf( "INSERT INTO %s SELECT %s, NULL FROM t1_back",
+                                       poFeatureDefn->GetName(),
+                                       pszOldFieldList ),
+                           NULL, NULL, &pszErrMsg );
+
+
+/* -------------------------------------------------------------------- */
+/*      Cleanup backup table.                                           */
+/* -------------------------------------------------------------------- */
+    
+    if( rc == SQLITE_OK )
+        rc = sqlite3_exec( hDB, 
+                           CPLSPrintf( "DROP TABLE t1_back" ),
+                           NULL, NULL, &pszErrMsg );
+
+/* -------------------------------------------------------------------- */
+/*      COMMIT on success or ROLLBACK on failuire.                      */
+/* -------------------------------------------------------------------- */
+    if( rc == SQLITE_OK )
+    {
+        rc = sqlite3_exec( hDB, "COMMIT", NULL, NULL, &pszErrMsg );
+    }
+    else
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Failed to add field %s to table %s:\n %s",
+                  oField.GetNameRef(), poFeatureDefn->GetName(), 
+                  pszErrMsg );
+        sqlite3_free( pszErrMsg );
+
+        rc = sqlite3_exec( hDB, "ROLLBACK", NULL, NULL, &pszErrMsg );
+        return OGRERR_FAILURE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Add the field to the OGRFeatureDefn.                            */
+/* -------------------------------------------------------------------- */
+    int iNewField;
+
+    poFeatureDefn->AddFieldDefn( &oField );
+
+    iNewField = poFeatureDefn->GetFieldCount() - 1;
+    panFieldOrdinals = (int *) 
+        CPLRealloc(panFieldOrdinals, (iNewField+1) * sizeof(int) );
+    panFieldOrdinals[iNewField] = iNextOrdinal;
+
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                             SetFeature()                             */
+/************************************************************************/
+
+OGRErr OGRSQLiteTableLayer::SetFeature( OGRFeature *poFeature )
+
+{
+    return OGRERR_FAILURE;
+}
+
+/************************************************************************/
+/*                           CreateFeature()                            */
+/************************************************************************/
+
+OGRErr OGRSQLiteTableLayer::CreateFeature( OGRFeature *poFeature )
+
+{
+    std::string    oCommand;
+    std::string    oValues;
+    int            bNeedComma = FALSE;
+
+    ResetReading();
+
+/* -------------------------------------------------------------------- */
+/*      Form the INSERT command.                                        */
+/* -------------------------------------------------------------------- */
+    oCommand += CPLSPrintf( "INSERT INTO \"%s\" (", poFeatureDefn->GetName() );
+
+/* -------------------------------------------------------------------- */
+/*      Add FID if we have a cleartext FID column.                      */
+/* -------------------------------------------------------------------- */
+    if( pszFIDColumn != NULL && !EQUAL(pszFIDColumn,"OGC_FID") 
+        && poFeature->GetFID() != OGRNullFID )
+    {
+        oCommand += pszFIDColumn;
+        oValues += CPLSPrintf( "%d", poFeature->GetFID() );
+        bNeedComma = TRUE;
+
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Add geometry.                                                   */
+/* -------------------------------------------------------------------- */
+    if( pszGeomColumn != NULL && poFeature->GetGeometryRef() != NULL )
+    {
+        char *pszWKT = NULL;
+
+        if( bNeedComma )
+        {
+            oCommand += ",";
+            oValues += ",";
+        }
+
+        oCommand += pszGeomColumn;
+
+        poFeature->GetGeometryRef()->exportToWkt( &pszWKT );
+        oValues += "\"";
+        oValues += pszWKT;
+        oValues += "\"";
+        CPLFree( pszWKT );
+
+        bNeedComma = TRUE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Add field values.                                               */
+/* -------------------------------------------------------------------- */
+    int iField;
+
+    for( iField = 0; iField < poFeatureDefn->GetFieldCount(); iField++ )
+    {
+        if( !poFeature->IsFieldSet( iField ) )
+            continue;
+
+        if( bNeedComma )
+        {
+            oCommand += ",";
+            oValues += ",";
+        }
+
+        oCommand += "\"";
+        oCommand +=poFeatureDefn->GetFieldDefn(iField)->GetNameRef();
+        oCommand += "\"";
+
+        oValues += "\"";
+        oValues += poFeature->GetFieldAsString( iField );
+        oValues += "\"";
+
+        bNeedComma = TRUE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Merge final command.                                            */
+/* -------------------------------------------------------------------- */
+    oCommand += ") VALUES (";
+    oCommand += oValues;
+    oCommand += ")";
+
+/* -------------------------------------------------------------------- */
+/*      Execute the insert.                                             */
+/* -------------------------------------------------------------------- */
+    int rc;
+    char *pszErrMsg = NULL;
+
+    rc = sqlite3_exec( poDS->GetDB(), oCommand.c_str(), 
+                       NULL, NULL, &pszErrMsg );
+
+    if( rc != SQLITE_OK )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "CreateFeature() failed: %s",
+                  pszErrMsg );
+        sqlite3_free( pszErrMsg );
+        return OGRERR_FAILURE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      We likely ought to consider fetching the rowid/fid and          */
+/*      putting it back in the feature.                                 */
+/* -------------------------------------------------------------------- */
+    // todo 
+
+    return OGRERR_NONE;
+}
+

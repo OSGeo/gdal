@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2004/07/12 20:50:46  warmerda
+ * table/database creation now implemented
+ *
  * Revision 1.2  2004/07/11 19:23:51  warmerda
  * read implementation working well
  *
@@ -102,6 +105,7 @@ class OGRSQLiteLayer : public OGRLayer
 class OGRSQLiteTableLayer : public OGRSQLiteLayer
 {
     int                 bUpdateAccess;
+    int                 bLaunderColumnNames;
 
     char                *pszQuery;
 
@@ -124,26 +128,20 @@ class OGRSQLiteTableLayer : public OGRSQLiteLayer
     virtual void        SetSpatialFilter( OGRGeometry * );
 
     virtual OGRErr      SetAttributeFilter( const char * );
-#ifdef notdef
     virtual OGRErr      SetFeature( OGRFeature *poFeature );
     virtual OGRErr      CreateFeature( OGRFeature *poFeature );
-    
+
     virtual OGRErr      CreateField( OGRFieldDefn *poField,
                                      int bApproxOK = TRUE );
-#endif    
     virtual OGRFeature *GetFeature( long nFeatureId );
     
     virtual OGRSpatialReference *GetSpatialRef();
 
     virtual int         TestCapability( const char * );
 
-#ifdef notdef
     // follow methods are not base class overrides
     void                SetLaunderFlag( int bFlag ) 
                                 { bLaunderColumnNames = bFlag; }
-    void                SetPrecisionFlag( int bFlag ) 
-                                { bPreservePrecision = bFlag; }
-#endif
 };
 
 /************************************************************************/
@@ -184,7 +182,6 @@ class OGRSQLiteDataSource : public OGRDataSource
     
     char               *pszName;
 
-    int                 bDSUpdate;
     sqlite3             *hDB;
 
     // We maintain a list of known SRID to reduce the number of trips to
@@ -193,18 +190,24 @@ class OGRSQLiteDataSource : public OGRDataSource
     int                *panSRID;
     OGRSpatialReference **papoSRS;
     
+    virtual void        DeleteLayer( const char *pszLayer );
+
   public:
                         OGRSQLiteDataSource();
                         ~OGRSQLiteDataSource();
 
-    int                 Open( const char *, int bUpdate, int bTestOpen );
+    int                 Open( const char * );
     int                 OpenTable( const char *pszTableName, 
-                                   const char *pszGeomCol,
-                                   int bUpdate );
+                                   const char *pszGeomCol );
 
     const char          *GetName() { return pszName; }
     int                 GetLayerCount() { return nLayers; }
     OGRLayer            *GetLayer( int );
+    
+    virtual OGRLayer    *CreateLayer( const char *pszLayerName, 
+                                      OGRSpatialReference *poSRS, 
+                                      OGRwkbGeometryType eType, 
+                                      char **papszOptions );
 
     int                 TestCapability( const char * );
 
@@ -214,6 +217,8 @@ class OGRSQLiteDataSource : public OGRDataSource
     virtual void        ReleaseResultSet( OGRLayer * poLayer );
 
     sqlite3            *GetDB() { return hDB; }
+
+    char               *LaunderName( const char * );
 };
 
 /************************************************************************/
