@@ -28,6 +28,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.38  2004/05/06 14:11:54  dron
+# Added projection names.
+#
 # Revision 1.37  2004/02/25 08:13:40  dron
 # Added wrapper for OSRExportToUSGS() function.
 #
@@ -97,53 +100,54 @@
 # Revision 1.15  2002/11/30 20:53:51  warmerda
 # added SetFromUserInput
 #
-# Revision 1.14  2002/11/25 16:11:39  warmerda
-# added GetAuthorityCode/Name
-#
-# Revision 1.13  2001/10/23 18:52:43  warmerda
-# modify initializer for Peppers
-#
-# Revision 1.12  2001/10/19 14:46:16  warmerda
-# added SetGeogCS() and __str__
-#
-# Revision 1.11  2001/10/10 20:47:49  warmerda
-# added some OSR methods
-#
-# Revision 1.10  2001/03/14 21:00:41  warmerda
-# Fixed bug in Get/SetAttrValue().
-#
-# Revision 1.9  2000/11/17 17:16:13  warmerda
-# added ImportFromESRI()
-#
-# Revision 1.8  2000/10/20 04:20:59  warmerda
-# added SetStatePlane
-#
-# Revision 1.7  2000/09/14 21:06:49  warmerda
-# added GetWellKnownGeogCSAsWKT
-#
-# Revision 1.6  2000/08/30 20:31:25  warmerda
-# added some more methods
-#
-# Revision 1.5  2000/08/30 20:06:14  warmerda
-# added projection method list functions
-#
-# Revision 1.4  2000/07/13 17:37:32  warmerda
-# added CloneGeogCS
-#
-# Revision 1.3  2000/07/11 01:02:06  warmerda
-# added ExportToProj4()
-#
-# Revision 1.2  2000/07/09 20:56:38  warmerda
-# added exportToPrettyWkt
-#
-# Revision 1.1  2000/03/22 01:10:49  warmerda
-# New
-#
-#
 
 import _gdal
 import gdal
 from _gdal import ptrcreate, ptrfree, ptrvalue, ptrset, ptrcast, ptradd, ptrmap
+
+SRS_PT_ALBERS_CONIC_EQUAL_AREA	= "Albers_Conic_Equal_Area"
+SRS_PT_AZIMUTHAL_EQUIDISTANT	= "Azimuthal_Equidistant"
+SRS_PT_CASSINI_SOLDNER		= "Cassini_Soldner"
+SRS_PT_CYLINDRICAL_EQUAL_AREA	= "Cylindrical_Equal_Area"
+SRS_PT_ECKERT_IV		= "Eckert_IV"
+SRS_PT_ECKERT_VI		= "Eckert_VI"
+SRS_PT_EQUIDISTANT_CONIC	= "Equidistant_Conic"
+SRS_PT_EQUIRECTANGULAR		= "Equirectangular"
+SRS_PT_GALL_STEREOGRAPHIC	= "Gall_Stereographic"
+SRS_PT_GNOMONIC			= "Gnomonic"
+SRS_PT_HOTINE_OBLIQUE_MERCATOR	= "Hotine_Oblique_Mercator"
+SRS_PT_HOTINE_OBLIQUE_MERCATOR_TWO_POINT_NATURAL_ORIGIN = \
+    "Hotine_Oblique_Mercator_Two_Point_Natural_Origin"
+SRS_PT_LABORDE_OBLIQUE_MERCATOR	= "Laborde_Oblique_Mercator"
+SRS_PT_LAMBERT_CONFORMAL_CONIC_1SP = "Lambert_Conformal_Conic_1SP"
+SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP = "Lambert_Conformal_Conic_2SP"
+SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP_BELGIUM = \
+    "Lambert_Conformal_Conic_2SP_Belgium)"
+SRS_PT_LAMBERT_AZIMUTHAL_EQUAL_AREA = \
+    "Lambert_Azimuthal_Equal_Area"
+SRS_PT_MERCATOR_1SP		= "Mercator_1SP"
+SRS_PT_MERCATOR_2SP		= "Mercator_2SP"
+SRS_PT_MILLER_CYLINDRICAL	= "Miller_Cylindrical"
+SRS_PT_MOLLWEIDE		= "Mollweide"
+SRS_PT_NEW_ZEALAND_MAP_GRID     = "New_Zealand_Map_Grid"
+SRS_PT_OBLIQUE_STEREOGRAPHIC    = "Oblique_Stereographic"
+SRS_PT_ORTHOGRAPHIC		= "Orthographic"
+SRS_PT_POLAR_STEREOGRAPHIC      = "Polar_Stereographic"
+SRS_PT_POLYCONIC		= "Polyconic"
+SRS_PT_ROBINSON			= "Robinson"
+SRS_PT_SINUSOIDAL		= "Sinusoidal"
+SRS_PT_STEREOGRAPHIC		= "Stereographic"
+SRS_PT_SWISS_OBLIQUE_CYLINDRICAL= "Swiss_Oblique_Cylindrical"
+SRS_PT_TRANSVERSE_MERCATOR      = "Transverse_Mercator"
+SRS_PT_TRANSVERSE_MERCATOR_SOUTH_ORIENTED = \
+    "Transverse_Mercator_South_Orientated"
+SRS_PT_TRANSVERSE_MERCATOR_MI_22= "Transverse_Mercator_MapInfo_22"
+SRS_PT_TRANSVERSE_MERCATOR_MI_23= "Transverse_Mercator_MapInfo_23"
+SRS_PT_TRANSVERSE_MERCATOR_MI_24= "Transverse_Mercator_MapInfo_24"
+SRS_PT_TRANSVERSE_MERCATOR_MI_25= "Transverse_Mercator_MapInfo_25"
+SRS_PT_TUNISIA_MINING_GRID	= "Tunisia_Mining_Grid"
+SRS_PT_VANDERGRINTEN		= "VanDerGrinten"
+SRS_PT_KROVAK			= "Krovak"
 
 SRS_PP_CENTRAL_MERIDIAN         = "central_meridian"
 SRS_PP_SCALE_FACTOR             = "scale_factor"
