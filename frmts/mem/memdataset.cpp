@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2003/02/03 16:28:35  warmerda
+ * fixed fatal bug with nWordSize for unpacked arrays in read/write block
+ *
  * Revision 1.13  2002/12/21 21:13:04  warmerda
  * fixed memory leak of colortable
  *
@@ -157,7 +160,7 @@ CPLErr MEMRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                    void * pImage )
 
 {
-    int     nWordSize = GDALGetDataTypeSize( eDataType );
+    int     nWordSize = GDALGetDataTypeSize( eDataType ) / 8;
     CPLAssert( nBlockXOff == 0 );
 
     if( nPixelOffset*8 == nWordSize )
@@ -189,7 +192,7 @@ CPLErr MEMRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
                                      void * pImage )
 
 {
-    int     nWordSize = GDALGetDataTypeSize( eDataType );
+    int     nWordSize = GDALGetDataTypeSize( eDataType ) / 8;
     CPLAssert( nBlockXOff == 0 );
 
     if( nPixelOffset*8 == nWordSize )
