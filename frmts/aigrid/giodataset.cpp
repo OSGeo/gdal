@@ -28,6 +28,10 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.14  2001/09/18 18:52:13  warmerda
+ * Added support for treating int grids as GInt32.  Added support for nodata
+ * values.  Changes contributed by Andrew Loughhead.
+ *
  * Revision 1.13  2001/07/18 04:51:56  warmerda
  * added CPL_CVSID
  *
@@ -80,6 +84,8 @@ CPL_CVSID("$Id$");
 #define	CELLINT		1		/* 32 bit signed integers */
 #define	CELLFLOAT	2		/* 32 bit floating point numbers*/
 
+#define	MISSINGINT	-2147483647	/* CELLMIN - 1 */
+
 CPL_C_START
 void	GDALRegister_AIGrid2(void);
 
@@ -96,6 +102,8 @@ static int      (*pfnCellLayerClose)(int) = NULL;
 static int      (*pfnCellLayerCreate)(char *, int, int, int, double, 
                                       double*) = NULL;
 static int      (*pfnGridDelete)(char *) = NULL;
+static void     (*pfnGetMissingFloat)(float *) = NULL;
+static int      (*pfnGetWindowRow)(int, int, float *) = NULL; 
 CPL_C_END
 
 /************************************************************************/
@@ -140,10 +148,15 @@ static int LoadGridIOFunctions()
         CPLGetSymbol( "avgridio.dll", "CellLayerClose" );
     pfnGridDelete = (int (*)(char*))
         CPLGetSymbol( "avgridio.dll", "GridDelete" );
+    pfnGetMissingFloat = (void (*)(float *))
+        CPLGetSymbol( "avgridio.dll", "GetMissingFloat" );
+    pfnGetWindowRow = (int (*)(int, int, float*))
+        CPLGetSymbol( "avgridio.dll", "GetWindowRow" ); 
 
     if( pfnCellLayerOpen == NULL || pfnDescribeGridDbl == NULL
         || pfnAccessWindowSet == NULL || pfnGetWindowRowFloat == NULL
-        || pfnCellLayerClose == NULL || pfnGridDelete == NULL )
+        || pfnCellLayerClose == NULL || pfnGridDelete == NULL 
+        || pfnGetMissingFloat == NULL || pfnGetWindowRow == NULL )
         pfnGridIOSetup = NULL;
 
     return pfnGridIOSetup != NULL;
@@ -202,6 +215,7 @@ class GIORasterBand : public GDALRasterBand
 
     virtual CPLErr IReadBlock( int, int, void * );
     virtual CPLErr IWriteBlock( int, int, void * );
+     virtual double GetNoDataValue( int *pbSuccess ); 
 
 };
 
@@ -220,7 +234,11 @@ GIORasterBand::GIORasterBand( GIODataset *poDS, int nBand )
     nBlockXSize = poDS->nRasterXSize;
     nBlockYSize = 1;
 
-    eDataType = GDT_Float32;
+    /* An ESRI grid can be either 4 byte float or 4 byte signed integer */
+    if ( poDS->nCellType == CELLFLOAT )
+        eDataType = GDT_Float32;
+    else if ( poDS->nCellType == CELLINT )
+        eDataType = GDT_Int32; 
 }
 
 /************************************************************************/
@@ -245,7 +263,7 @@ CPLErr GIORasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     if( poODS->bCreated )
         memset( pImage, sizeof(float) * poODS->nRasterXSize, 0 );
     else
-        pfnGetWindowRowFloat( poODS->nGridChannel, nBlockYOff, (float*)pImage);
+        pfnGetWindowRow( poODS->nGridChannel, nBlockYOff, (float *) pImage);
 
     return CE_None;
 }
@@ -259,10 +277,31 @@ CPLErr GIORasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
 
 {
     GIODataset	*poODS = (GIODataset *) poDS;
-    
+
     pfnPutWindowRow( poODS->nGridChannel, nBlockYOff, (float *) pImage);
     
     return CE_None;
+}
+
+/************************************************************************/
+/*                           GetNoDataValue()                           */
+/************************************************************************/
+
+double GIORasterBand::GetNoDataValue( int *pbSuccess )
+
+{
+    if( pbSuccess != NULL )
+        *pbSuccess = TRUE;
+
+    if ( eDataType == GDT_Float32 ) 
+    {
+        float fNoDataVal; 
+
+        pfnGetMissingFloat( &fNoDataVal ); 
+        return (double) fNoDataVal; 
+    }
+
+    return (double) MISSINGINT; 
 }
 
 /************************************************************************/
