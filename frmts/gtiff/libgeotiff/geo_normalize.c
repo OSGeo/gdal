@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: geo_normalize.c,v 1.34 2003/01/15 03:37:40 warmerda Exp $
+ * $Id: geo_normalize.c,v 1.35 2003/01/15 04:39:16 warmerda Exp $
  *
  * Project:  libgeotiff
  * Purpose:  Code to normalize PCS and other composite codes in a GeoTIFF file.
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log: geo_normalize.c,v $
+ * Revision 1.35  2003/01/15 04:39:16  warmerda
+ * Added GTIFDeaccessCSV
+ *
  * Revision 1.34  2003/01/15 03:37:40  warmerda
  * added GTIFFreeMemory()
  *
@@ -2306,4 +2309,16 @@ void GTIFFreeMemory( char * pMemory )
 {
     if( pMemory != NULL )
         VSIFree( pMemory );
+}
+
+/************************************************************************/
+/*                          GTIFDeaccessCSV()                           */
+/*                                                                      */
+/*      Free all cached CSV info.                                       */
+/************************************************************************/
+
+void GTIFDeaccessCSV()
+
+{
+    CSVDeaccess( NULL );
 }
