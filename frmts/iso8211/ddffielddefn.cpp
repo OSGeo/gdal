@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2000/11/30 20:33:18  warmerda
+ * make having more formats than data items a warning, not an error
+ *
  * Revision 1.5  2000/06/16 18:05:02  warmerda
  * expanded tabs
  *
@@ -513,10 +516,10 @@ int DDFFieldDefn::ApplyFormats()
         
         if( iFormatItem >= nSubfieldCount )
         {
-            CPLError( CE_Failure, CPLE_AppDefined,
+            CPLError( CE_Warning, CPLE_AppDefined,
                       "Got more formats than subfields for field `%s'.\n",
                       pszTag );
-            return FALSE;
+            break;
         }
         
         if( !paoSubfields[iFormatItem].SetFormat(pszPastPrefix) )
