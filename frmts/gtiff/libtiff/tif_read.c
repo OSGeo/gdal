@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_read.c,v 1.4 2000/01/28 21:07:40 warmerda Exp $ */
+/* $Header: /cvsroot/osrs/gdal/frmts/gtiff/libtiff/tif_read.c,v 1.3 2000/04/03 21:30:12 warmerda Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -122,6 +122,7 @@ TIFFReadEncodedStrip(TIFF* tif, tstrip_t strip, tdata_t buf, tsize_t size)
 	TIFFDirectory *td = &tif->tif_dir;
 	uint32 nrows;
 	tsize_t stripsize;
+        tstrip_t sep_strip, strips_per_sep;
 
 	if (!TIFFCheckRead(tif, 0))
 		return (-1);
@@ -132,11 +133,17 @@ TIFFReadEncodedStrip(TIFF* tif, tstrip_t strip, tdata_t buf, tsize_t size)
 	}
 	/*
 	 * Calculate the strip size according to the number of
-	 * rows in the strip (check for truncated last strip).
+	 * rows in the strip (check for truncated last strip on any
+         * of the separations).
 	 */
-	if (strip != td->td_nstrips-1 ||
+        strips_per_sep = (td->td_imagelength+td->td_rowsperstrip-1)
+            / td->td_rowsperstrip;
+        sep_strip = strip % strips_per_sep;
+
+	if (sep_strip != strips_per_sep-1 ||
 	    (nrows = td->td_imagelength % td->td_rowsperstrip) == 0)
 		nrows = td->td_rowsperstrip;
+
 	stripsize = TIFFVStripSize(tif, nrows);
 	if (size == (tsize_t) -1)
 		size = stripsize;
