@@ -76,7 +76,7 @@ JPEG_SUPPORTED = 1
 #JASPER_INCLUDE = -I$(JASPER_DIR)\src\libjasper\include -DJAS_WIN_MSVC_BUILD
 #JASPER_LIB = $(JASPER_DIR)\src\msvc\Win32_Release\libjasper.lib
 
-# Uncommment if you have Frank's modified Kakadu build.
+# Uncommment if you have Kakadu 4.0 or newer
 #KAKDIR =	D:\warmerda\jp2\kakadu
 
 # Uncomment the following and update to enable NCSA HDF Release 4 support.
