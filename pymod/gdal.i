@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.84  2004/02/05 17:08:57  dron
+ * Added wrapper for OSRSetHOM2PNO().
+ *
  * Revision 1.83  2004/02/04 21:26:11  warmerda
  * added optimization loading into numpy array
  *
@@ -1527,11 +1530,19 @@ int OSRSetGnomonic(OGRSpatialReferenceH hSRS,
 		      double dfCenterLat, double dfCenterLong,
                       double dfFalseEasting, double dfFalseNorthing );
 
-/** Hotine Oblique Mercator */
-int OSRSetHOM( OGRSpatialReferenceH hSRS, double dfCenterLat, double dfCenterLong,
-                        double dfAzimuth, double dfRectToSkew,
-                        double dfScale,
-                        double dfFalseEasting, double dfFalseNorthing );
+/** Hotine Oblique Mercator  using azimuth angle */
+int OSRSetHOM( OGRSpatialReferenceH hSRS,
+               double dfCenterLat, double dfCenterLong,
+               double dfAzimuth, double dfRectToSkew,
+               double dfScale,
+               double dfFalseEasting, double dfFalseNorthing );
+
+/** Hotine Oblique Mercator using two points on centerline */
+OGRErr OSRSetHOM2PNO( OGRSpatialReferenceH hSRS, double dfCenterLat,
+                      double dfLat1, double dfLong1,
+                      double dfLat2, double dfLong2,
+                      double dfScale,
+                      double dfFalseEasting, double dfFalseNorthing );
 
 /** Krovak Oblique Conic Conformal */
 int OSRSetKrovak( OGRSpatialReferenceH hSRS, double dfCenterLat, double dfCenterLong,

@@ -28,6 +28,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.35  2004/02/05 17:08:57  dron
+# Added wrapper for OSRSetHOM2PNO().
+#
 # Revision 1.34  2004/01/31 09:54:28  dron
 # Fixed projection parameters number mismatch in PCI import/export functions.
 #
@@ -428,7 +431,33 @@ class SpatialReference:
 	return _gdal.OSRSetGnomic( self._o, clat, clong, fe, fn )
 
     def SetHOM( self, clat, clong, azi, recttoskew, scale, fe, fn ):
-	return _gdal.OSRSetHOM( self._o, clat, clong, azi, recttoskew, scale, fe, fn )
+	"""Set a Hotine Oblique Mercator projection using azimuth angle.
+	
+	clat --- Latitude of the projection origin.
+	clong --- Longitude of the projection origin.
+	azi --- Azimuth, measured clockwise from North, of the projection
+	centerline.
+	recttoskew --- ?
+	scale --- Scale factor applies to the projection origin.
+	fe --- False easting.
+	fn --- False northing."""
+	return _gdal.OSRSetHOM( self._o, \
+	    clat, clong, azi, recttoskew, scale, fe, fn )
+
+    def SetHOM2PNO( self, clat, lat1, long1, lat2, long2, scale, fe, fn ):
+	"""Set a Hotine Oblique Mercator projection using two points
+	on projection centerline.
+	
+	clat --- Latitude of the projection origin.
+	lat1 --- Latitude of the first point on center line.
+	long1 --- Longitude of the first point on center line.
+	lat2 --- Latitude of the second point on center line.
+	long2 --- Longitude of the second point on center line.
+	scale --- Scale factor applies to the projection origin.
+	fe --- False easting.
+	fn --- False northing."""
+	return _gdal.OSRSetHOM2PNO( self._o, \
+	    clat, lat1, long1, lat2, long2, scale, fe, fn )
 
     def SetKrovak( self, clat, clong, azi, pstdparlat, scale, fe, fn ):
 	return _gdal.OSRSetKrovak( self._o, clat, clong, azi, pstdparlat, scale, fe, fn )
