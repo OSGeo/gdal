@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2000/10/11 16:06:51  warmerda
+ * added read support for GCPn and NUM_GCPs keywords
+ *
  * Revision 1.13  2000/09/25 21:20:13  warmerda
  * avoid initialization warnings
  *
@@ -297,9 +300,13 @@ void MFFDataset::ScanForGCPs()
 
 {
     int     nCorner;
+    int	    NUM_GCPS = 0;
+    
+    if( CSLFetchNameValue(papszHdrLines, "NUM_GCPS") != NULL )
+        NUM_GCPS = atoi(CSLFetchNameValue(papszHdrLines, "NUM_GCPS"));
 
     nGCPCount = 0;
-    pasGCPList = (GDAL_GCP *) CPLCalloc(sizeof(GDAL_GCP),5);
+    pasGCPList = (GDAL_GCP *) CPLCalloc(sizeof(GDAL_GCP),5+NUM_GCPS);
 
     for( nCorner = 0; nCorner < 5; nCorner++ )
     {
@@ -358,6 +365,43 @@ void MFFDataset::ScanForGCPs()
 
             pasGCPList[nGCPCount].dfGCPPixel = dfRasterX;
             pasGCPList[nGCPCount].dfGCPLine = dfRasterY;
+
+            nGCPCount++;
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Collect standalone GCPs.  They look like:                       */
+/*                                                                      */
+/*      GCPn = row, col, lat, long                                      */
+/*      GCP1 = 1, 1, 45.0, -75.0                                        */
+/* -------------------------------------------------------------------- */
+    int i;
+
+    for( i = 0; i < NUM_GCPS; i++ )
+    {
+        char	szName[25];
+        char    **papszTokens;
+
+        sprintf( szName, "GCP%d", i+1 );
+        if( CSLFetchNameValue( papszHdrLines, szName ) == NULL )
+            continue;
+
+        papszTokens = CSLTokenizeStringComplex( 
+            CSLFetchNameValue( papszHdrLines, szName ), 
+            ",", FALSE, FALSE );
+        if( CSLCount(papszTokens) == 4 )
+        {
+            GDALInitGCPs( 1, pasGCPList + nGCPCount );
+
+            CPLFree( pasGCPList[nGCPCount].pszId );
+            pasGCPList[nGCPCount].pszId = CPLStrdup( szName );
+
+            pasGCPList[nGCPCount].dfGCPX = atof(papszTokens[3]);
+            pasGCPList[nGCPCount].dfGCPY = atof(papszTokens[2]);
+            pasGCPList[nGCPCount].dfGCPZ = 0.0;
+            pasGCPList[nGCPCount].dfGCPPixel = atof(papszTokens[1]);
+            pasGCPList[nGCPCount].dfGCPLine = atof(papszTokens[0]);
 
             nGCPCount++;
         }
