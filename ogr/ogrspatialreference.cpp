@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  1999/09/29 16:37:05  warmerda
+ * added several new projection set methods
+ *
  * Revision 1.5  1999/09/17 16:15:15  warmerda
  * Added angular units to SetGeogCS().  Use OGRPrintDouble(). Added SetLCC1SP().
  *
@@ -1135,6 +1138,24 @@ OGRErr OGRSpatialReference::SetAE( double dfCenterLat, double dfCenterLong,
 }
 
 /************************************************************************/
+/*                               SetCEA()                               */
+/************************************************************************/
+
+OGRErr OGRSpatialReference::SetCEA( double dfStdP1, double dfCentralMeridian,
+                                    double dfFalseEasting,
+                                    double dfFalseNorthing )
+
+{
+    SetProjection( SRS_PT_CYLINDRICAL_EQUAL_AREA );
+    SetProjParm( SRS_PP_STANDARD_PARALLEL_1, dfStdP1 );
+    SetProjParm( SRS_PP_CENTRAL_MERIDIAN, dfCentralMeridian );
+    SetProjParm( SRS_PP_FALSE_EASTING, dfFalseEasting );
+    SetProjParm( SRS_PP_FALSE_NORTHING, dfFalseNorthing );
+
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
 /*                               SetCS()                                */
 /************************************************************************/
 
@@ -1174,6 +1195,40 @@ OGRErr OGRSpatialReference::SetEC( double dfStdP1, double dfStdP2,
 }
 
 /************************************************************************/
+/*                            SetEckertIV()                             */
+/************************************************************************/
+
+OGRErr OGRSpatialReference::SetEckertIV( double dfCentralMeridian,
+                                         double dfFalseEasting,
+                                         double dfFalseNorthing )
+
+{
+    SetProjection( SRS_PT_ECKERT_IV );
+    SetProjParm( SRS_PP_CENTRAL_MERIDIAN, dfCentralMeridian );
+    SetProjParm( SRS_PP_FALSE_EASTING, dfFalseEasting );
+    SetProjParm( SRS_PP_FALSE_NORTHING, dfFalseNorthing );
+
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                            SetEckertVI()                             */
+/************************************************************************/
+
+OGRErr OGRSpatialReference::SetEckertVI( double dfCentralMeridian,
+                                         double dfFalseEasting,
+                                         double dfFalseNorthing )
+
+{
+    SetProjection( SRS_PT_ECKERT_VI );
+    SetProjParm( SRS_PP_CENTRAL_MERIDIAN, dfCentralMeridian );
+    SetProjParm( SRS_PP_FALSE_EASTING, dfFalseEasting );
+    SetProjParm( SRS_PP_FALSE_NORTHING, dfFalseNorthing );
+
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
 /*                         SetEquirectangular()                         */
 /************************************************************************/
 
@@ -1186,6 +1241,23 @@ OGRErr OGRSpatialReference::SetEquirectangular(
     SetProjection( SRS_PT_EQUIRECTANGULAR );
     SetProjParm( SRS_PP_LATITUDE_OF_ORIGIN, dfCenterLat );
     SetProjParm( SRS_PP_CENTRAL_MERIDIAN, dfCenterLong );
+    SetProjParm( SRS_PP_FALSE_EASTING, dfFalseEasting );
+    SetProjParm( SRS_PP_FALSE_NORTHING, dfFalseNorthing );
+
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                               SetGS()                                */
+/************************************************************************/
+
+OGRErr OGRSpatialReference::SetGS( double dfCentralMeridian,
+                                   double dfFalseEasting,
+                                   double dfFalseNorthing )
+
+{
+    SetProjection( SRS_PT_GALL_STEREOGRAPHIC );
+    SetProjParm( SRS_PP_CENTRAL_MERIDIAN, dfCentralMeridian );
     SetProjParm( SRS_PP_FALSE_EASTING, dfFalseEasting );
     SetProjParm( SRS_PP_FALSE_NORTHING, dfFalseNorthing );
 
@@ -1353,6 +1425,23 @@ OGRErr OGRSpatialReference::SetMercator( double dfCenterLat, double dfCenterLong
 }
 
 /************************************************************************/
+/*                            SetMollweide()                            */
+/************************************************************************/
+
+OGRErr OGRSpatialReference::SetMollweide( double dfCentralMeridian,
+                                          double dfFalseEasting,
+                                          double dfFalseNorthing )
+
+{
+    SetProjection( SRS_PT_MOLLWEIDE );
+    SetProjParm( SRS_PP_CENTRAL_MERIDIAN, dfCentralMeridian );
+    SetProjParm( SRS_PP_FALSE_EASTING, dfFalseEasting );
+    SetProjParm( SRS_PP_FALSE_NORTHING, dfFalseNorthing );
+
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
 /*                              SetNZMG()                               */
 /************************************************************************/
 
@@ -1417,6 +1506,9 @@ OGRErr OGRSpatialReference::SetPolyconic(
                                 double dfFalseEasting, double dfFalseNorthing )
 
 {
+    // note: it seems that by some definitions this should include a
+    //       scale_factor parameter.
+    
     SetProjection( SRS_PT_POLYCONIC );
     SetProjParm( SRS_PP_LATITUDE_OF_ORIGIN, dfCenterLat );
     SetProjParm( SRS_PP_CENTRAL_MERIDIAN, dfCenterLong );
