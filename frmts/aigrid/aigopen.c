@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2000/02/18 14:47:12  warmerda
+ * Avoid warnings.
+ *
  * Revision 1.7  2000/02/18 04:55:02  warmerda
  * Set bHasWarned flag.
  *
@@ -62,6 +65,8 @@ AIGInfo_t *AIGOpen( const char * pszInputName, const char * pszAccess )
     AIGInfo_t	*psInfo;
     char	*pszHDRFilename;
     char        *pszCoverName;
+
+    (void) pszAccess;
 
 /* -------------------------------------------------------------------- */
 /*      If the pass name ends in .adf assume a file within the          */
