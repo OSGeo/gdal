@@ -31,12 +31,16 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2004/12/26 16:12:21  fwarmerdam
+ * thin plate spline support now implemented
+ *
  * Revision 1.1  2004/11/14 04:16:44  fwarmerdam
  * New
  *
  */
 
 #include "gdal_alg.h"
+#include "cpl_conv.h"
 
 typedef enum
 {
@@ -51,111 +55,136 @@ typedef enum
 
 } vizGeorefInterType;
 
-#define VIZ_GEOREF_SPLINE_MAX_POINTS 40
+//#define VIZ_GEOREF_SPLINE_MAX_POINTS 40
 #define VIZGEOREF_MAX_VARS 2
 
 class VizGeorefSpline2D
 {
- public:
+  public:
 
-	VizGeorefSpline2D(int nof_vars = 1){
-		_tx = _ty = 0.0;		
-		_ta = 10.0;
-		_nof_points = 0;
-		_nof_vars = nof_vars;
-		_AA = NULL;
-		_Ainv = NULL;
-		for ( int v = 0; v < _nof_vars; v++ )
-			for ( int i = 0; i < 3; i++ )
-				rhs[i][v] = 0.0;
-		type = VIZ_GEOREF_SPLINE_ZERO_POINTS;
-	}
+    VizGeorefSpline2D(int nof_vars = 1){
+        x = y = u = NULL;
+        unused = index = NULL;
+        for( int i = 0; i < nof_vars; i++ )
+        {
+            rhs[i] = NULL;
+            coef[i] = NULL;
+        }
+          
+        _tx = _ty = 0.0;		
+        _ta = 10.0;
+        _nof_points = 0;
+        _nof_vars = nof_vars;
+        _max_nof_points = 0;
+        _AA = NULL;
+        _Ainv = NULL;
+        grow_points();
+        for ( int v = 0; v < _nof_vars; v++ )
+            for ( int i = 0; i < 3; i++ )
+                rhs[i][v] = 0.0;
+        type = VIZ_GEOREF_SPLINE_ZERO_POINTS;
+    }
 
-	~VizGeorefSpline2D(){
-		if ( _AA )
-			delete _AA;
-		if ( _Ainv )
-			delete _Ainv;
-	}
+    ~VizGeorefSpline2D(){
+        if ( _AA )
+            delete _AA;
+        if ( _Ainv )
+            delete _Ainv;
 
-	int get_nof_points(){
-		return _nof_points;
-	}
+        CPLFree( x );
+        CPLFree( y );
+        CPLFree( u );
+        CPLFree( unused );
+        CPLFree( index );
+        for( int i = 0; i < _nof_vars; i++ )
+        {
+            CPLFree( rhs[i] );
+            CPLFree( coef[i] );
+        }
+    }
 
-	void set_toler( float tx, float ty ){
-		_tx = tx;
-		_ty = ty;
-	}
+    int get_nof_points(){
+        return _nof_points;
+    }
 
-	void get_toler( float& tx, float& ty) {
-		tx = _tx;
-		ty = _ty;
-	}
+    void set_toler( double tx, double ty ){
+        _tx = tx;
+        _ty = ty;
+    }
 
-	vizGeorefInterType get_interpolation_type ( ){
-		return type;
-	}
+    void get_toler( double& tx, double& ty) {
+        tx = _tx;
+        ty = _ty;
+    }
 
-	void dump_data_points()
+    vizGeorefInterType get_interpolation_type ( ){
+        return type;
+    }
+
+    void dump_data_points()
 	{
-		for ( int i = 0; i < _nof_points; i++ )
-		{
-			fprintf(stderr, "X = %f Y = %f Vars = ", x[i], y[i]);
-			for ( int v = 0; v < _nof_vars; v++ )
-				fprintf(stderr, "%f ", rhs[i+3][v]);
-			fprintf(stderr, "\n");
-		}
+            for ( int i = 0; i < _nof_points; i++ )
+            {
+                fprintf(stderr, "X = %f Y = %f Vars = ", x[i], y[i]);
+                for ( int v = 0; v < _nof_vars; v++ )
+                    fprintf(stderr, "%f ", rhs[i+3][v]);
+                fprintf(stderr, "\n");
+            }
 	}
-	int delete_list()
+    int delete_list()
 	{
-		_nof_points = 0;
-		type = VIZ_GEOREF_SPLINE_ZERO_POINTS;
-		if ( _AA )
-		{
-			delete _AA;
-			_AA = NULL;
-		}
-		if ( _Ainv )
-		{
-			delete _Ainv;
-			_Ainv = NULL;
-		}
-		return _nof_points;
+            _nof_points = 0;
+            type = VIZ_GEOREF_SPLINE_ZERO_POINTS;
+            if ( _AA )
+            {
+                delete _AA;
+                _AA = NULL;
+            }
+            if ( _Ainv )
+            {
+                delete _Ainv;
+                _Ainv = NULL;
+            }
+            return _nof_points;
 	}
 
-	int add_point( const float Px, const float Py, const float *Pvars );
-	int delete_point(const float Px, const float Py );
-	int get_point( const float Px, const float Py, float *Pvars );
-	bool get_xy(int index, float& x, float& y);
-	bool change_point(int index, float x, float y, float* Pvars);
-	void reset(void) { _nof_points = 0; }
-	int solve(void);
+    void grow_points();
+    int add_point( const double Px, const double Py, const double *Pvars );
+    int delete_point(const double Px, const double Py );
+    int get_point( const double Px, const double Py, double *Pvars );
+    bool get_xy(int index, double& x, double& y);
+    bool change_point(int index, double x, double y, double* Pvars);
+    void reset(void) { _nof_points = 0; }
+    int solve(void);
 
-private:	
-	float base_func( const float x1, const float y1,
-					 const float x2, const float y2 );
+  private:	
+    double base_func( const double x1, const double y1,
+                      const double x2, const double y2 );
 
-	vizGeorefInterType type;
+    vizGeorefInterType type;
 
-	int _nof_vars;
-	int _nof_points;
-	int _nof_eqs;
+    int _nof_vars;
+    int _nof_points;
+    int _max_nof_points;
+    int _nof_eqs;
 
-	float _tx, _ty;
-	float _ta;
-	float _dx, _dy;
+    double _tx, _ty;
+    double _ta;
+    double _dx, _dy;
 
-	float x[VIZ_GEOREF_SPLINE_MAX_POINTS+3];
-	float y[VIZ_GEOREF_SPLINE_MAX_POINTS+3];
+    double *x; // [VIZ_GEOREF_SPLINE_MAX_POINTS+3];
+    double *y; // [VIZ_GEOREF_SPLINE_MAX_POINTS+3];
 
-	float rhs[VIZ_GEOREF_SPLINE_MAX_POINTS+3][VIZGEOREF_MAX_VARS];
-	float coef[VIZ_GEOREF_SPLINE_MAX_POINTS+3][VIZGEOREF_MAX_VARS];
+//    double rhs[VIZ_GEOREF_SPLINE_MAX_POINTS+3][VIZGEOREF_MAX_VARS];
+//    double coef[VIZ_GEOREF_SPLINE_MAX_POINTS+3][VIZGEOREF_MAX_VARS];
+    double *rhs[VIZGEOREF_MAX_VARS];
+    double *coef[VIZGEOREF_MAX_VARS];
 
-	float u[VIZ_GEOREF_SPLINE_MAX_POINTS];
-	int unused[VIZ_GEOREF_SPLINE_MAX_POINTS];
-	int index[VIZ_GEOREF_SPLINE_MAX_POINTS];
+    double *u; // [VIZ_GEOREF_SPLINE_MAX_POINTS];
+    int *unused; // [VIZ_GEOREF_SPLINE_MAX_POINTS];
+    int *index; // [VIZ_GEOREF_SPLINE_MAX_POINTS];
 	
-	float *_AA, *_Ainv;
+    double *_AA, *_Ainv;
 };
 
 

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2004/12/26 16:12:21  fwarmerdam
+ * thin plate spline support now implemented
+ *
  * Revision 1.18  2004/08/11 19:00:06  warmerda
  * added GDALSetGenImgProjTransformerDstGeoTransform
  *
@@ -127,6 +130,15 @@ typedef int
                         int bDstToSrc, int nPointCount, 
                         double *x, double *y, double *z, int *panSuccess );
 
+typedef struct {
+    char szSignature[4];
+    char *pszClassName;
+    GDALTransformerFunc pfnTransform;
+    void (*pfnCleanup)( void * );
+    CPLXMLNode *(*pfnSerialize)( void * );
+} GDALTransformerInfo;
+
+
 /* High level transformer for going from image coordinates on one file
    to image coordiantes on another, potentially doing reprojection, 
    utilizing GCPs or using the geotransform. */
@@ -158,6 +170,16 @@ GDALCreateGCPTransformer( int nGCPCount, const GDAL_GCP *pasGCPList,
                           int nReqOrder, int bReversed );
 void CPL_DLL GDALDestroyGCPTransformer( void *pTransformArg );
 int CPL_DLL GDALGCPTransform( 
+    void *pTransformArg, int bDstToSrc, int nPointCount,
+    double *x, double *y, double *z, int *panSuccess );
+
+/* Thin Plate Spine transformer ... forward is to georef coordinates */
+
+void CPL_DLL *
+GDALCreateTPSTransformer( int nGCPCount, const GDAL_GCP *pasGCPList, 
+                          int bReversed );
+void CPL_DLL GDALDestroyTPSTransformer( void *pTransformArg );
+int CPL_DLL GDALTPSTransform( 
     void *pTransformArg, int bDstToSrc, int nPointCount,
     double *x, double *y, double *z, int *panSuccess );
 
