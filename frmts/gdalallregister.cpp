@@ -25,6 +25,9 @@
  * Main format registration function.
  * 
  * $Log$
+ * Revision 1.38  2001/11/27 14:39:41  warmerda
+ * added usgsdem
+ *
  * Revision 1.37  2001/11/16 21:13:47  warmerda
  * added VRT dataset
  *
@@ -279,10 +282,13 @@ void GDALAllRegister()
 #endif
 
 /* -------------------------------------------------------------------- */
-/*      Our "test" to see if the file is GXF is weak, so we leave it    */
-/*      after most other "safe" formats.                                */
+/*      Our test for the following is weak or expensive so we try       */
+/*      them last.                                                      */
 /* -------------------------------------------------------------------- */
-  
+#ifdef FRMT_usgsdem
+    GDALRegister_USGSDEM();
+#endif
+
 #ifdef FRMT_gxf
     GDALRegister_GXF();
 #endif    
