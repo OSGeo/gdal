@@ -44,6 +44,9 @@ ogrinfo:	ogrinfo.o $(OGR_LIB) $(FRMTS_LIB)
 ogr2ogr:	ogr2ogr.o $(OGR_LIB) $(FRMTS_LIB)
 	$(CXX) $(LNK_FLAGS) ogr2ogr.o $(FRMTS_LIB) $(LIBS) -o ogr2ogr
 
+sdts2mi:	sdts2mi.o $(OGR_LIB) $(FRMTS_LIB)
+	$(CXX) $(LNK_FLAGS) sdts2mi.o $(FRMTS_LIB) $(LIBS) -o sdts2mi
+
 $(FRMTS_LIB):
 	(cd ogrsf_frmts; $(MAKE))
 
