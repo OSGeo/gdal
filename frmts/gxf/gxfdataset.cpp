@@ -25,6 +25,9 @@
  * The GXF driver, and dataset implementation.
  * 
  * $Log$
+ * Revision 1.2  1998/12/15 19:06:49  warmerda
+ * IReadBlock(), and GXFGetRawInfo()
+ *
  * Revision 1.1  1998/12/06 02:53:22  warmerda
  * New
  *
@@ -71,8 +74,7 @@ class GXFRasterBand : public GDALRasterBand
 
     		GXFRasterBand( GXFDataset *, int );
     
-    virtual CPLErr ReadBlock( int, int, void * );
-    virtual CPLErr WriteBlock( int, int, void * ); 
+    virtual CPLErr IReadBlock( int, int, void * );
 };
 
 
@@ -93,11 +95,11 @@ GXFRasterBand::GXFRasterBand( GXFDataset *poDS, int nBand )
 }
 
 /************************************************************************/
-/*                             ReadBlock()                              */
+/*                             IReadBlock()                             */
 /************************************************************************/
 
-CPLErr GXFRasterBand::ReadBlock( int nBlockXOff, int nBlockYOff,
-                                 void * pImage )
+CPLErr GXFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
+                                  void * pImage )
 
 {
     GXFDataset	*poGXF_DS = (GXFDataset *) poDS;
@@ -117,16 +119,6 @@ CPLErr GXFRasterBand::ReadBlock( int nBlockXOff, int nBlockYOff,
     CPLFree( padfBuffer );
     
     return eErr;
-}
-
-/************************************************************************/
-/*                             WriteBlock()                             */
-/************************************************************************/
-
-CPLErr GXFRasterBand::WriteBlock( int, int, void * )
-
-{
-    return CE_Failure;
 }
 
 /************************************************************************/
@@ -159,7 +151,8 @@ GDALDataset *GXFDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Capture some information from the file that is of interest.     */
 /* -------------------------------------------------------------------- */
-    GXFGetInfo( hGXF, &(poDS->nRasterXSize), &(poDS->nRasterYSize), NULL );
+    GXFGetRawInfo( hGXF, &(poDS->nRasterXSize), &(poDS->nRasterYSize), NULL,
+                   NULL, NULL, NULL );
     
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
