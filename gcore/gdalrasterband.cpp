@@ -28,6 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************
  * $Log$
+ * Revision 1.32  2002/09/15 15:32:50  dron
+ * Added InitBlockInfo() call to ReadBlock() and WriteBlock() functions.
+ *
  * Revision 1.31  2002/08/14 12:33:34  warmerda
  * Validate eRWFlag.
  *
@@ -434,6 +437,8 @@ CPLErr GDALRasterBand::ReadBlock( int nXBlockOff, int nYBlockOff,
         return( CE_Failure );
     }
     
+    InitBlockInfo();
+
 /* -------------------------------------------------------------------- */
 /*      Invoke underlying implementation method.                        */
 /* -------------------------------------------------------------------- */
@@ -542,6 +547,8 @@ CPLErr GDALRasterBand::WriteBlock( int nXBlockOff, int nYBlockOff,
 
         return( CE_Failure );
     }
+
+    InitBlockInfo();
     
 /* -------------------------------------------------------------------- */
 /*      Invoke underlying implementation method.                        */
