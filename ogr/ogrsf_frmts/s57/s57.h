@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.23  2003/09/05 19:12:05  warmerda
+ * added RETURN_PRIMITIVES support to get low level prims
+ *
  * Revision 1.22  2003/08/21 21:25:30  warmerda
  * Rodney Jensen: Addd FindRecordByObjl()
  *
@@ -118,6 +121,7 @@ char **S57FileCollector( const char * pszDataset );
 #define S57O_SPLIT_MULTIPOINT "SPLIT_MULTIPOINT"
 #define S57O_ADD_SOUNDG_DEPTH "ADD_SOUNDG_DEPTH"
 #define S57O_PRESERVE_EMPTY_NUMBERS "PRESERVE_EMPTY_NUMBERS"
+#define S57O_RETURN_PRIMITIVES "RETURN_PRIMITIVES"
 
 /* -------------------------------------------------------------------- */
 /*      RCNM values.                                                    */
@@ -129,6 +133,11 @@ char **S57FileCollector( const char * pszDataset );
 #define RCNM_VC         120     /* Connected Node */
 #define RCNM_VE         130     /* Edge */
 #define RCNM_VF         140     /* Face */
+
+#define OGRN_VI         "IsolatedNode"
+#define OGRN_VC         "ConnectedNode"
+#define OGRN_VE         "Edge"
+#define OGRN_VF         "Face"
 
 /* -------------------------------------------------------------------- */
 /*      FRID PRIM values.                                               */
@@ -284,12 +293,18 @@ class S57Reader
     DDFRecordIndex      oVE_Index;
     DDFRecordIndex      oVF_Index;
 
+    int                 nNextVIIndex;
+    int                 nNextVCIndex;
+    int                 nNextVEIndex;
+    int                 nNextVFIndex;
+
     int                 nNextFEIndex;
     DDFRecordIndex      oFE_Index;
 
     char                **papszOptions;
     int                 bGenerateLNAM;
 
+    int                 bReturnPrimitives;
     int                 bSplitMultiPoint;
     int                 bAddSOUNDGDepth;
     int                 iPointOffset;
@@ -343,9 +358,10 @@ class S57Reader
     void                Rewind();
     OGRFeature          *ReadNextFeature( OGRFeatureDefn * = NULL );
     OGRFeature          *ReadFeature( int nFID, OGRFeatureDefn * = NULL );
+    OGRFeature          *ReadVector( int nFID, int nRCNM );
 
-    int                 GetNextFEIndex() { return nNextFEIndex; }
-    void                SetNextFEIndex( int );
+    int                 GetNextFEIndex( int nRCNM = 100 );
+    void                SetNextFEIndex( int nNewIndex, int nRCNM = 100 );
 
     void                AddFeatureDefn( OGRFeatureDefn * );
 
@@ -353,6 +369,7 @@ class S57Reader
 
     OGRFeatureDefn  *GenerateGeomFeatureDefn( OGRwkbGeometryType );
     OGRFeatureDefn  *GenerateObjectClassDefn( S57ClassRegistrar *, int );
+    OGRFeatureDefn  *GenerateVectorPrimitiveFeatureDefn( int );
 
     OGRErr              GetExtent( OGREnvelope *psExtent, int bForce );
 };

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2003/09/05 19:12:05  warmerda
+ * added RETURN_PRIMITIVES support to get low level prims
+ *
  * Revision 1.20  2002/09/09 18:38:58  warmerda
  * Initialize module list.
  *
@@ -123,11 +126,11 @@ OGRS57DataSource::OGRS57DataSource()
 /* -------------------------------------------------------------------- */
     papszOptions = NULL;
 
-    if( getenv("OGR_S57_OPTIONS") != NULL )
+    if( CPLGetConfigOption("OGR_S57_OPTIONS",NULL) != NULL )
     {
         papszOptions = 
-            CSLTokenizeStringComplex( getenv("OGR_S57_OPTIONS"), ",",
-                                      FALSE, FALSE );
+            CSLTokenizeStringComplex( CPLGetConfigOption("OGR_S57_OPTIONS",""),
+                                      ",", FALSE, FALSE );
     }
 }
 
@@ -254,6 +257,11 @@ int OGRS57DataSource::Open( const char * pszFilename, int bTestOpen )
             CSLSetNameValue( papszReaderOptions, S57O_PRESERVE_EMPTY_NUMBERS,
                              GetOption(S57O_PRESERVE_EMPTY_NUMBERS) );
                                               
+    if( GetOption(S57O_RETURN_PRIMITIVES) != NULL )
+        papszReaderOptions = 
+            CSLSetNameValue( papszReaderOptions, S57O_RETURN_PRIMITIVES,
+                             GetOption(S57O_RETURN_PRIMITIVES) );
+                                              
     poModule->SetOptions( papszReaderOptions );
     CSLDestroy( papszReaderOptions );
 
@@ -286,6 +294,26 @@ int OGRS57DataSource::Open( const char * pszFilename, int bTestOpen )
             delete poRegistrar;
             poRegistrar = NULL;
         }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Add the primitive layers if they are called for.                */
+/* -------------------------------------------------------------------- */
+    if( GetOption( S57O_RETURN_PRIMITIVES ) != NULL )
+    {
+        OGRFeatureDefn  *poDefn;
+
+        poDefn = poModule->GenerateVectorPrimitiveFeatureDefn( RCNM_VI );
+        AddLayer( new OGRS57Layer( this, poDefn ) );
+
+        poDefn = poModule->GenerateVectorPrimitiveFeatureDefn( RCNM_VC );
+        AddLayer( new OGRS57Layer( this, poDefn ) );
+
+        poDefn = poModule->GenerateVectorPrimitiveFeatureDefn( RCNM_VE );
+        AddLayer( new OGRS57Layer( this, poDefn ) );
+
+        poDefn = poModule->GenerateVectorPrimitiveFeatureDefn( RCNM_VF );
+        AddLayer( new OGRS57Layer( this, poDefn ) );
     }
 
 /* -------------------------------------------------------------------- */

@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2003/09/05 19:12:05  warmerda
+ * added RETURN_PRIMITIVES support to get low level prims
+ *
  * Revision 1.6  2002/03/05 14:25:43  warmerda
  * expanded tabs
  *
@@ -72,6 +75,7 @@ class OGRS57Layer : public OGRLayer
     OGRFeatureDefn     *poFeatureDefn;
 
     int                 nCurrentModule;
+    int                 nRCNM;
     int                 nNextFEIndex;
     int                 nFeatureCount;
 

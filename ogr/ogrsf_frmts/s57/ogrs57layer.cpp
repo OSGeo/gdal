@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2003/09/05 19:12:05  warmerda
+ * added RETURN_PRIMITIVES support to get low level prims
+ *
  * Revision 1.9  2002/03/05 14:25:43  warmerda
  * expanded tabs
  *
@@ -85,6 +88,17 @@ OGRS57Layer::OGRS57Layer( OGRS57DataSource *poDSIn,
 
     nNextFEIndex = 0;
     nCurrentModule = -1;
+
+    if( EQUAL(poDefnIn->GetName(),OGRN_VI) )
+        nRCNM = RCNM_VI;
+    else if( EQUAL(poDefnIn->GetName(),OGRN_VC) )
+        nRCNM = RCNM_VC;
+    else if( EQUAL(poDefnIn->GetName(),OGRN_VE) )
+        nRCNM = RCNM_VE;
+    else if( EQUAL(poDefnIn->GetName(),OGRN_VF) )
+        nRCNM = RCNM_VF;
+    else 
+        nRCNM = 100;
 }
 
 /************************************************************************/
@@ -154,9 +168,9 @@ OGRFeature *OGRS57Layer::GetNextUnfilteredFeature()
     
     if( poReader != NULL )
     {
-        poReader->SetNextFEIndex( nNextFEIndex );
+        poReader->SetNextFEIndex( nNextFEIndex, nRCNM );
         poFeature = poReader->ReadNextFeature( poFeatureDefn );
-        nNextFEIndex = poReader->GetNextFEIndex();
+        nNextFEIndex = poReader->GetNextFEIndex( nRCNM );
     }
 
 /* -------------------------------------------------------------------- */
