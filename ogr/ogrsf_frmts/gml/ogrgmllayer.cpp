@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2003/12/02 18:43:03  warmerda
+ * Removed unused variable.
+ *
  * Revision 1.9  2003/05/21 03:48:35  warmerda
  * Expand tabs
  *
@@ -334,8 +337,6 @@ int OGRGMLLayer::TestCapability( const char * pszCap )
 OGRErr OGRGMLLayer::CreateField( OGRFieldDefn *poField, int bApproxOK )
 
 {
-    int         iNewField;
-
     if( !bWriter || iNextGMLId != 0 )
         return OGRERR_FAILURE;
 
