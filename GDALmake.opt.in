@@ -16,12 +16,14 @@ NUMPY_FLAG = @NUMPY_FLAG@
 HAVE_OGDI = @HAVE_OGDI@
 OGR_ENABLED = @OGR_ENABLED@
 
-INST_PREFIX	=	@INST_PREFIX@
-INST_INCLUDE	=	@INST_INCLUDE@
-INST_LIB	=	@INST_LIB@
-INST_BIN	=	@INST_BIN@
+prefix		=	@prefix@
+exec_prefix	=	@exec_prefix@
+INST_PREFIX	=	@exec_prefix@
+INST_INCLUDE	=	@exec_prefix@/include
+INST_DATA 	=	@exec_prefix@/share/gdal
+INST_LIB	=	@libdir@
+INST_BIN	=	@bindir@
 INST_PYMOD      =       @pyexecdir@
-INST_DATA 	=	@INST_DATA@
 
 #
 #	Whether we use debug flags, or optimization is determined by
@@ -87,8 +89,10 @@ endif
 PNG_SETTING	=	@PNG_SETTING@
 JPEG_SETTING	=	@JPEG_SETTING@
 TIFF_SETTING	=	@TIFF_SETTING@
+GEOTIFF_SETTING	=	@GEOTIFF_SETTING@
 
-GDAL_LIBS	=	$(GDAL_LIB) $(OGR_LIB) $(GDAL_ROOT)/frmts/o/*.a \
+GDAL_LIBS	=	$(GDAL_LIB) $(OGR_LIB) \
+			$(wildcard $(GDAL_ROOT)/frmts/o/*.a) \
 			$(GDAL_LIB) $(CPL_LIB) $(OGDI_LIBS)
 GDAL_OBJ	=	$(GDAL_ROOT)/frmts/o/*.o \
 			$(GDAL_ROOT)/core/*.o \

@@ -212,13 +212,57 @@ elif test "$with_libtiff" = "internal" ; then
 else
 
   TIFF_SETTING=external
-  LIBS="-L$with_libtiff -L$with_libtiff/lib -ltiff $LIBS"
-  EXTRA_INCLUDES="-I$with_libtiff -I$with_libtiff/include $EXTRA_INCLUDES"
+  if test -r $with_libtiff/tiff.h ; then
+    LIBS="-L$with_libtiff -ltiff $LIBS"
+    EXTRA_INCLUDES="-I$with_libtiff $EXTRA_INCLUDES"
+  else
+    LIBS="-L$with_libtiff/lib -ltiff $LIBS"
+    EXTRA_INCLUDES="-I$with_libtiff/include $EXTRA_INCLUDES"
+  fi
 
   echo "using libtiff from $with_libtiff."
 fi
 
 AC_SUBST(TIFF_SETTING,$TIFF_SETTING)
+
+dnl ---------------------------------------------------------------------------
+dnl Select a libgeotiff library to use.
+dnl ---------------------------------------------------------------------------
+
+AC_ARG_WITH(geotiff,[  --with-geotiff=ARG         Libgeotiff library to use (ARG=internal, yes or path)],,)
+
+if test "$with_geotiff" = "yes" -o "$with_geotiff" = "" ; then
+
+  AC_CHECK_LIB(geotiff,GTIFGetDefn,GEOTIFF_SETTING=external,GEOTIFF_SETTING=internal,)
+
+  if test "$GEOTIFF_SETTING" = "external" ; then   
+    LIBS="-lgeotiff $LIBS"
+    echo "using pre-installed libgeotiff."
+  else
+    echo "using internal GeoTIFF code."
+  fi
+
+elif test "$with_geotiff" = "internal" ; then
+
+  GEOTIFF_SETTING=internal
+
+  echo "using internal GeoTIFF code."
+
+else
+
+  GEOTIFF_SETTING=external
+  if test -r $with_geotiff/libgeotiff.a ; then
+    LIBS="-L$with_geotiff -lgeotiff $LIBS"
+    EXTRA_INCLUDES="-I$with_libtiff $EXTRA_INCLUDES"
+  else
+    LIBS="-L$with_geotiff/lib -lgeotiff $LIBS"
+    EXTRA_INCLUDES="-I$with_libtiff/include $EXTRA_INCLUDES"
+  fi
+
+  echo "using libgeotiff from $with_geotiff."
+fi
+
+AC_SUBST(GEOTIFF_SETTING,$GEOTIFF_SETTING)
 
 dnl ---------------------------------------------------------------------------
 
@@ -227,19 +271,6 @@ AC_SUBST(EXTRA_INCLUDES,$EXTRA_INCLUDES)
 
 dnl ---------------------------------------------------------------------------
 
-INST_PREFIX=/usr/local
-INST_INCLUDE=$INST_PREFIX/include
-INST_LIB=$INST_PREFIX/lib
-INST_BIN=$INST_PREFIX/bin
-INST_DATA=$INST_PREFIX/share/gdal
-
-AC_SUBST(INST_PREFIX,$INST_PREFIX)
-AC_SUBST(INST_INCLUDE,$INST_INCLUDE)
-AC_SUBST(INST_LIB,$INST_LIB)
-AC_SUBST(INST_BIN,$INST_BIN)
-AC_SUBST(INST_DATA,$INST_DATA)
-
-dnl ---------------------------------------------------------------------------
 AC_ARG_WITH(ogr,[  --with-ogr              Build OGR into shared library],,)
 
 if test "$with_ogr" = yes ; then
