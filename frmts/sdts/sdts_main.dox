@@ -1,0 +1,161 @@
+/*! \page SDTS_AL_main
+
+<center>
+<title>SDTS Abstraction Library</title>
+</center>
+
+<h2>Introduction</h2>
+
+SDTS_AL, the SDTS Abstraction Library, is intended to be an relatively
+easy to use library for reading vector from SDTS TVP (Topological Vector
+Profile) files, primary DLG data from the USGS.  It also include support
+for reading raster data such as USGS DEMs in SDTS format.   It consists
+of open source, easy to compile and integrate C++ code.<p>
+
+<h2>SDTS Background</h2>
+The USGS SDTS Page at 
+<a href="http://mcmcweb.er.usgs.gov/sdts/">http://mcmcweb.er.usgs.gov/sdts</a>
+is the definative source of information on the SDTS format.  The SDTS
+format is based on the 
+<a href="http://starship.skyport.net/crew/tibs/iso8211/faq.html">ISO 8211</a>
+encoding scheme for the underlying files, and the SDTS Abstraction Library
+uses 
+<a href="http://gdal.velocet.ca/projects/iso8211/index.html">ISO8211Lib</a>
+library to decode them.  All references to DDF* classes are from ISO8211Lib.<p>
+
+An SDTS Transfer is a grouping of ISO8211 encoded files (ending in the
+.DDF extension), normally with part of the basename in common.  For instance
+a USGS DLG SDTS transfer might consists of many files matching the 
+SC01????.DDF pattern.  The key file in an SDTS transfer is the catalog
+file, such as SC01CATD.DDF.<p>
+
+<h2>Development Information</h2>
+
+The <a href="class_sdtstransfer-include.html">sdts_al.h</a> 
+include file contains the definitions for all public 
+SDTS classes, enumerations and other services.<p>
+
+The SDTSTransfer class is used to access a transfer as a whole.  The 
+SDTSTransfer::Open() method is passed the name of the catalog file,
+such as SC01CATD.DDF, to open.<p>
+
+The SDTSTransfer analyses the catalog, and some other aspects of the
+transfer, and builds a list of feature layers.  This list can be
+accessed using the SDTSTransfer::GetLayerCount(), SDTSTransfer::GetLayerType(),
+and SDTSTransfer::GetLayerIndexedReader() methods.  A typical TVP (Topological
+Vector Profile) transfer might include three point layers (of type 
+SLTPoint), a line layer (of type SLTLine), a polygon layer (of type SLTPoly)
+as well as some additional attribute layers (of type SLTAttr).  the
+SDTSTransfer::GetLayerIndexedReader() method can be used to instantiate a 
+reader object for reading a particular layer. (NOTE: raster layers are
+handled differently).<p>
+
+Each type of SDTSIndexedReader (SDTSPointReader, SDTSLineReader, 
+SDTSPolygonReader, and SDTSAttrReader) returns specific subclasses of
+SDTSIndexedFeature from the SDTSIndexedReader::GetNextFeature() method.
+These classes are SDTSRawPoint, SDTSRawLine, SDTSRawPolygon and 
+SDTSAttrRecord.  These classes can be investigated for details on the
+data available for each.<p>
+
+See the <a href="sdts_al_tut.html">SDTS_AL Tutorial</a> for more information
+on how to use this library.<p>
+
+<h2>Building the Source</h2>
+
+<ol>
+
+<li> First, fetch the source.  The most recent source should be accessable at
+an url such as 
+<a href="http://gdal.velocet.ca/projects/sdts/sdts-1.0.tar.gz">
+http://gdal.velocet.ca/projects/sdts/sdts-1.0.tar.gz</a>, or
+by ftp from 
+<a href="ftp://gdal.velocet.ca/pub/outgoing/sdts-1.0.tar.gz">
+ftp://gdal.velocet.ca/pub/outgoing/sdts-1.0.tar.gz</a>.<p>
+
+
+<li> Untar the source.<p>
+<code>
+% gzip -d sdts-1.0.tar.gz
+% tar xzvf sdts-1.0.tar.gz
+</code>
+
+If for some reason you don't have gzip, or tar (perhaps you work on Windows)
+just <a href="mailto:warmerda@home.com">let me know</a>, 
+and I will prepare a zip or similar archive of the source.<p>
+
+<li> On unix you can now type ``configure'' to establish configuration 
+options.<p>
+
+<li> On unix you can now type make to build sdts_al.a, and the sample
+mainline sdts2shp.<p>
+
+</ol>
+
+Windows developers will have to create their own makefile/project but
+can base it on the very simple Makefile.in provided.  As well, you would
+need to copy cpl_config.h.in to cpl_config.h, and modify as needed.  The
+default will likely work OK, but may result in some compiler warnings.  
+Let me know if you are having difficulties, and I will prepare a VC++ 
+makefile.<p>
+
+See the <a href="sdts_al_tut.html">SDTS_AL Tutorial</a> for more information
+on how to use this library.<p>
+
+<h2>Licensing</h2>
+
+This library is offered as <a href="http://www.opensource.org">Open Source</a>.
+In particular, it is offered under the X Consortium license which doesn't
+attempt to impose any copyleft, or credit requirements on users of the code.<p>
+
+The precise license text is:<p>
+
+<em>
+ Copyright (c) 1999, Frank Warmerdam
+<p>
+ Permission is hereby granted, free of charge, to any person obtaining a
+ copy of this software and associated documentation files (the "Software"),
+ to deal in the Software without restriction, including without limitation
+ the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ and/or sell copies of the Software, and to permit persons to whom the
+ Software is furnished to do so, subject to the following conditions:
+<p>
+ The above copyright notice and this permission notice shall be included
+ in all copies or substantial portions of the Software.
+<p>
+ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ DEALINGS IN THE SOFTWARE.
+<p>
+</em>
+
+<h2>Author and Acknowledgements</h2>
+
+The primary author of SDTS_AL is <a href="http://members.home.com/warmerda">
+Frank Warmerdam</a>, and I can be reached at 
+<a href="mailto:warmerda@home.com">warmerda@home.com</a>.  I am eager to 
+receive bug reports, and also open to praise or suggestions.<p>
+
+I would like to thank:<p>
+
+<ul>
+<li> <a href="http://www.safe.com/">Safe Software</a>
+who funded development of this library, and agreed for it to be Open Source.<p>
+
+<li> Mark Colletti, a primary author of 
+<a href="http://mcmcweb.er.usgs.gov/sdts/sdtsxx/index.html">SDTS++</a> from
+which I derived most of what I know about SDTS and ISO8211 and who was very 
+supportive, answering a variety of questions.<p>
+
+</ul>
+
+I would also like to dedicate this library to the memory of Sol Katz.  
+Sol released a variety of SDTS translators, at substantial
+personal effort, to the GIS community along with the many other generous 
+contributions he made to the community.  His example has been an inspiration
+to me, and I hope similar efforts on my part will contribute to his memory.<p>
+
+*/
