@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/07/12 15:39:18  warmerda
+ * added setting of shape geometry
+ *
  * Revision 1.1  1999/07/05 18:58:07  warmerda
  * New
  *
@@ -212,6 +215,33 @@ OGRFeatureDefn *SHPReadOGRFeatureDefn( SHPHandle hSHP, DBFHandle hDBF )
             oField.SetType( OFTReal );
 
         poDefn->AddFieldDefn( &oField );
+    }
+
+    switch( hSHP->nShapeType )
+    {
+      case SHPT_POINT:
+      case SHPT_POINTZ:
+      case SHPT_POINTM:
+        poDefn->SetGeomType( wkbPoint );
+        break;
+
+      case SHPT_ARC:
+      case SHPT_ARCZ:
+      case SHPT_ARCM:
+        poDefn->SetGeomType( wkbLineString );
+        break;
+
+      case SHPT_MULTIPOINT:
+      case SHPT_MULTIPOINTZ:
+      case SHPT_MULTIPOINTM:
+        poDefn->SetGeomType( wkbMultiPoint );
+        break;
+
+      case SHPT_POLYGON:
+      case SHPT_POLYGONZ:
+      case SHPT_POLYGONM:
+        poDefn->SetGeomType( wkbPolygon );
+        break;
     }
 
     return poDefn;
