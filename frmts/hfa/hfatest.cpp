@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2003/09/15 20:48:40  warmerda
+ * added demonstration of direct access
+ *
  * Revision 1.8  2003/05/13 19:32:10  warmerda
  * support for reading and writing opacity provided by Diana Esch-Mosher
  *
@@ -180,6 +183,26 @@ int main( int argc, char ** argv )
 			    padfBlue[j], padfAlpha[j]);
                 }
             }
+
+/* -------------------------------------------------------------------- */
+/*      Report statistics.  We need to dig directly into the C++ API.   */
+/* -------------------------------------------------------------------- */
+            HFABand *poBand = hHFA->papoBand[i-1];
+            HFAEntry *poStats = poBand->poNode->GetNamedChild( "Statistics" );
+
+            if( poStats != NULL )
+            {
+                printf( "  Min: %g   Max: %g   Mean: %g\n",
+                        poStats->GetDoubleField( "minimum" ),
+                        poStats->GetDoubleField( "maximum" ),
+                        poStats->GetDoubleField( "mean" ) );
+                printf( "  Median: %g   Mode: %g   Stddev: %g\n",
+                        poStats->GetDoubleField( "median" ),
+                        poStats->GetDoubleField( "mode" ),
+                        poStats->GetDoubleField( "stddev" ) );
+            }
+            else
+                printf( "   No Statistics found.\n" );
         }
 
 /* -------------------------------------------------------------------- */
@@ -199,6 +222,7 @@ int main( int argc, char ** argv )
         {
             printf( "No Map Info found\n" );
         }
+
     }
     
     psProParameters = HFAGetProParameters( hHFA );
