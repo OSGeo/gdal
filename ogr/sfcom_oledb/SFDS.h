@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2002/08/13 13:44:10  warmerda
+ * removed custom MEDC property pages
+ *
  * Revision 1.18  2002/08/12 18:06:32  warmerda
  * added IDataSourceKey support from Autodesk
  *
@@ -88,18 +91,6 @@
 #include "resource.h"       // main symbols
 #include "SFRS.h"
 //#include "IDataSourceKey.h"
-
-//20020315 - ryan
-// {E3023100-F731-46E2-AF00-C3E835F0C68E}
-DEFINE_GUID(CLSID_OSFCustomConnectionTab, 
-0xe3023100, 0xf731, 0x46e2, 0xaf, 0x00, 0xc3, 0xe8, 0x35, 0xf0, 0xc6, 0x8e);
-
-// {E3023200-F731-46E2-AF00-C3E835F0C68E}
-DEFINE_GUID(CLSID_OSFCustomAdvancedTab, 
-0xe3023200, 0xf731, 0x46e2, 0xaf, 0x00, 0xc3, 0xe8, 0x35, 0xf0, 0xc6, 0x8e);
-
-DEFINE_GUID(SVC_DSLPropertyPages, 
-0x51740c02, 0x7e8e, 0x11d2, 0xa0, 0x2d, 0x00, 0xc0, 0x4f, 0xa3, 0x73, 0x48);
 
 // IDBInitializeImpl
 template <class T>
@@ -263,16 +254,6 @@ BEGIN_COM_MAP(CSFSource)
     COM_INTERFACE_ENTRY(IDataSourceKey)
 END_COM_MAP()
 
-//20020315 - ryan
-BEGIN_SERVICE_MAP(CSFSource)
- SERVICE_ENTRY(SVC_DSLPropertyPages)
-END_SERVICE_MAP()
-
-BEGIN_PROP_MAP(CSFSource)
- PROP_PAGE(CLSID_OSFCustomConnectionTab)
- PROP_PAGE(CLSID_OSFCustomAdvancedTab)
-END_PROP_MAP()
-    
 public:
  
 };
