@@ -37,7 +37,7 @@ $(GDAL_SLIB):	$(GDAL_OBJ)
 		-o $(GDAL_SLIB)
 
 $(LIBGDAL):	$(GDAL_OBJ:.o=.lo)
-	$(LD) $(LIBS) -o $@ $^ \
+	$(LD) $(LIBS) -o $@ $(GDAL_OBJ:.o=.lo) \
 	    -rpath $(INST_LIB) \
 	    -no-undefined \
 	    -version-info $(LIBGDAL_CURRENT):$(LIBGDAL_REVISION):$(LIBGDAL_AGE)
