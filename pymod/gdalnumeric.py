@@ -29,6 +29,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.14  2004/03/23 21:11:27  warmerda
+# some Numeric distributions dont have NumericInt, but NumericInteger instead
+#
 # Revision 1.13  2004/03/21 17:21:52  dron
 # Handle unsigned integer types in type code conversion routines.
 #
@@ -74,6 +77,9 @@ import _gdal
 from gdalconst import *
 from Numeric import *
 
+UnsignedInteger = 'u'
+UnsignedInt = 'u'
+    
 def OpenArray( array, prototype_ds = None ):
     ds = gdal.Open( GetArrayFilename(array) )
     if ds is not None and prototype_ds is not None:
@@ -218,7 +224,7 @@ def NumericTypeCodeToGDALTypeCode( numeric_code ):
         return GDT_UInt32
     elif numeric_code == Int:
         return GDT_Int32
-    elif numeric_code == UnsignedInt:
+    elif numeric_code == UnsignedInteger:
         return GDT_UInt32
     elif numeric_code == Float32:
         return GDT_Float32
@@ -239,3 +245,5 @@ def CopyDatasetInfo( src, dst ):
     dst.SetProjection( src.GetProjection() )
     dst.SetMetadata( src.GetMetadata() )
 
+
+        
