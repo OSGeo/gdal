@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2004/12/30 21:18:12  fwarmerdam
+ * Updated credits.
+ *
  * Revision 1.4  2004/12/30 20:29:43  fwarmerdam
  * Added a credit.
  *
@@ -90,7 +93,9 @@ typedef struct
  * TPS Transformers are serializable. 
  *
  * The GDAL Thin Plate Spline transformer is based on code provided by
- * Gilad Ronnen on behalf of VIZRT Inc.  
+ * Gilad Ronnen on behalf of VIZRT Inc (http://www.visrt.com).  Incorporation 
+ * of the algorithm into GDAL was supported by the Centro di Ecologia Alpina 
+ * (http://www.cealp.it). 
  *
  * @param nGCPCount the number of GCPs in pasGCPList.
  * @param pasGCPList an array of GCPs to be used as input.
