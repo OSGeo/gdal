@@ -30,6 +30,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.5  2002/07/19 13:39:17  dron
+ * Lists supported in HDF-EOS attributes.
+ *
  * Revision 1.4  2002/07/17 16:24:31  dron
  * MODIS support improved a bit.
  *
@@ -231,7 +234,7 @@ char *SPrintArray(GIntBig *piaDataArray, int nValues, char * pszDelimiter)
     char *pszString, *pszField;
     int i, iFieldSize, iStringSize;
     
-    iFieldSize = 11 + strlen( pszDelimiter ); //FIXME
+    iFieldSize = 21 + strlen( pszDelimiter );
     pszField = (char *)CPLMalloc( iFieldSize + 1 );
     iStringSize = nValues * iFieldSize + 1;
     pszString = (char *)CPLMalloc( iStringSize );
@@ -250,7 +253,7 @@ char *SPrintArray(GUIntBig *piaDataArray, int nValues, char * pszDelimiter)
     char *pszString, *pszField;
     int i, iFieldSize, iStringSize;
     
-    iFieldSize = 11 + strlen( pszDelimiter ); //FIXME
+    iFieldSize = 21 + strlen( pszDelimiter );
     pszField = (char *)CPLMalloc( iFieldSize + 1 );
     iStringSize = nValues * iFieldSize + 1;
     pszString = (char *)CPLMalloc( iStringSize );
@@ -352,6 +355,95 @@ const char *HDF4Dataset::GetDataTypeName( int32 iNumType )
 }
 	
 /************************************************************************/
+/*         Tokenize HDF-EOS attributes.                                 */
+/************************************************************************/
+char ** SLTokenizeHDFEOSAttrs( const char * pszString )
+
+{
+    const char  *pszDelimiters = " \t\n\r";
+    char        **papszRetList = NULL;
+    char        *pszToken;
+    int         nTokenMax, nTokenLen;
+
+    pszToken = (char *) CPLCalloc( 10, 1 );
+    nTokenMax = 10;
+    
+    while( pszString != NULL && *pszString != '\0' )
+    {
+        int     bInString = FALSE, bInBraket = FALSE;
+
+        nTokenLen = 0;
+        
+        /* Try to find the next delimeter, marking end of token */
+        for( ; *pszString != '\0'; pszString++ )
+        {
+
+            /* End if this is a delimeter skip it and break. */
+            if( !bInBraket && !bInString && strchr(pszDelimiters, *pszString) != NULL )
+            {
+                pszString++;
+                break;
+            }
+            
+            if ( *pszString == '"' )
+            {
+                if ( bInString )
+                {
+                    bInString = FALSE;
+                    continue;
+                }
+                else
+                {
+                    bInString = TRUE;
+                    continue;
+                }
+            }
+            else if ( *pszString == '(' )
+	    {
+                bInBraket = TRUE;
+		continue;
+	    }
+	    else if ( *pszString == ')' )
+	    {
+		bInBraket = FALSE;
+		continue;
+	    }
+
+	    if( nTokenLen >= nTokenMax-2 )
+            {
+                nTokenMax = nTokenMax * 2 + 10;
+                pszToken = (char *) CPLRealloc( pszToken, nTokenMax );
+            }
+
+            pszToken[nTokenLen] = *pszString;
+            nTokenLen++;
+        }
+
+        pszToken[nTokenLen] = '\0';
+
+        if( pszToken[0] != '\0' )
+        {
+            papszRetList = CSLAddString( papszRetList, pszToken );
+        }
+
+        /* If the last token is an empty token, then we have to catch
+         * it now, otherwise we won't reenter the loop and it will be lost. 
+         */
+        if ( *pszString == '\0' && strchr(pszDelimiters, *(pszString-1)) )
+        {
+            papszRetList = CSLAddString( papszRetList, "" );
+        }
+    }
+
+    if( papszRetList == NULL )
+        papszRetList = (char **) CPLCalloc(sizeof(char *),1);
+
+    CPLFree( pszToken );
+
+    return papszRetList;
+}
+
+/************************************************************************/
 /*         Translate HDF4-EOS attributes in GDAL metadata items         */
 /************************************************************************/
 void HDF4Dataset::TranslateHDF4EOSAttributes( int32 iHandle, int32 iAttribute, int32 nValues )
@@ -402,12 +494,11 @@ void HDF4Dataset::TranslateHDF4EOSAttributes( int32 iHandle, int32 iAttribute, i
     //
     // We are interested in OBJECTS structures only.
 
-    char *pszDelimiters = " \t\n\r";
     char *pszAttrName, *pszAttrValue;
     char **papszAttrList;
     int iCount, i, j;
     
-    papszAttrList = CSLTokenizeString2( pszData, pszDelimiters, CSLT_HONOURSTRINGS );
+    papszAttrList = SLTokenizeHDFEOSAttrs( pszData );
     iCount = CSLCount( papszAttrList );
     for ( i = 0; i < iCount - 2; i++ )
     {
@@ -421,7 +512,6 @@ void HDF4Dataset::TranslateHDF4EOSAttributes( int32 iHandle, int32 iAttribute, i
 	            break;
 	        else if ( EQUAL( papszAttrList[i + j], "VALUE" ) )
 	        {
-                    // TODO: Lists processing
 		    i += j;
 		    i += 2;
 	            pszAttrValue = papszAttrList[i];
