@@ -1,3 +1,9 @@
+2001-03-13  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* frmts/gtiff/geotiff.cpp: Don't try to handle all MINISWHITE
+	images through RGBA interface.  Check with TIFFRGBAImageOK() before
+	using RGBA interface.
+
 2001-03-12  Frank Warmerdam  <warmerdam@pobox.com>
 
 	* pymod/numpydataset.cpp captures and holds projection and

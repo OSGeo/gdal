@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.44  2001/03/13 19:16:46  warmerda
+ * don't try to handle MINISWHITE through RGBA interface, test before using RGBA
+ *
  * Revision 1.43  2001/02/12 22:16:22  warmerda
  * added TFW write support
  *
@@ -1345,13 +1348,21 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, uint32 nDirOffsetIn,
 /* -------------------------------------------------------------------- */
     if( nPhotometric == PHOTOMETRIC_YCBCR
         || nPhotometric == PHOTOMETRIC_CIELAB
-        || nPhotometric == PHOTOMETRIC_MINISWHITE
         || nPhotometric == PHOTOMETRIC_LOGL
         || nPhotometric == PHOTOMETRIC_LOGLUV
         || nBitsPerSample < 8 )
     {
-        bTreatAsRGBA = TRUE;
-        nBands = 4;
+        char	szMessage[1024];
+
+        if( TIFFRGBAImageOK( hTIFF, szMessage ) == 1 )
+        {
+            bTreatAsRGBA = TRUE;
+            nBands = 4;
+        }
+        else
+        {
+            CPLDebug( "GTiff", "TIFFRGBAImageOK says:\n%s", szMessage );
+        }
     }
         
 /* -------------------------------------------------------------------- */
