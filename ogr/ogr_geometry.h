@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.42  2003/03/06 20:29:27  warmerda
+ * added GML import/export entry points
+ *
  * Revision 1.41  2003/01/14 22:13:35  warmerda
  * added isClockwise() method on OGRLinearRing
  *
@@ -226,6 +229,7 @@ class CPL_DLL OGRGeometry
     virtual const char *getGeometryName() = 0;
     virtual void   dumpReadable( FILE *, const char * = NULL );
     virtual void   flattenTo2D() = 0;
+    virtual char * exportToGML() const;
 
     void    assignSpatialReference( OGRSpatialReference * poSR );
     OGRSpatialReference *getSpatialReference( void ) { return poSRS; }
@@ -669,14 +673,14 @@ class CPL_DLL OGRGeometryFactory
                                  OGRGeometry **, int = -1 );
     static OGRErr createFromWkt( char **, OGRSpatialReference *,
                                  OGRGeometry ** );
+    static OGRGeometry *createFromGML( const char * );
 
     static void   destroyGeometry( OGRGeometry * );
     static OGRGeometry *createGeometry( OGRwkbGeometryType );
 
     static OGRGeometry * forceToPolygon( OGRGeometry * );
     static OGRGeometry * forceToMultiPolygon( OGRGeometry * );
+
 };
-
-
 
 #endif /* ndef _OGR_GEOMETRY_H_INCLUDED */
