@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2003/03/05 22:11:10  warmerda
+ * implement istransformable
+ *
  * Revision 1.1  2003/03/05 21:07:31  warmerda
  * New
  *
@@ -201,10 +204,140 @@ void WCTSGetCapabilities( CPLXMLNode *psOperation )
     VSIFRead( pszDoc, 1, nLen, fp );
     VSIFClose( fp );
 
+    printf( "Content-type: test/xml%c%c", 10, 10 );
+
     VSIFWrite( pszDoc, 1, nLen, stdout );
     fflush( stdout );
 
     exit( 0 );
+}
+
+/************************************************************************/
+/*                WCTSImportCoordinateReferenceSystem()                 */
+/*                                                                      */
+/*      This is a place holder. Eventually this will use                */
+/*      OGRSpatialReference.importFromXML() when that has been          */
+/*      updated to the GML 3.0 CRS formats.                             */
+/************************************************************************/
+
+OGRSpatialReference *
+WCTSImportCoordinateReferenceSystem( CPLXMLNode *psXMLCRS )
+
+{
+    int nEPSGCode;
+
+/* -------------------------------------------------------------------- */
+/*      Get the EPSG code, and verify that it is in the EPSG            */
+/*      codeSpace.                                                      */
+/* -------------------------------------------------------------------- */
+    if( !EQUAL(CPLGetXMLValue( psXMLCRS, "Identifier.codeSpace", "" ), "EPSG"))
+    {
+        WCTSEmitServiceException( "Failed to decode CoordinateReferenceSystem with missing,\n"
+                                  "or non-EPSG Identifier.codeSpace" );
+    }	
+
+    nEPSGCode = atoi(CPLGetXMLValue( psXMLCRS, "Identifier.code", "0" ));
+
+    if( nEPSGCode == 0 )
+    {
+        WCTSEmitServiceException( "Failed to decode CoordinateReferenceSystem with missing,\n"
+                                  "or zero Identifier.code" );
+    }								
+
+/* -------------------------------------------------------------------- */
+/*      Translate into EPSG format.                                     */
+/* -------------------------------------------------------------------- */
+    OGRSpatialReference oSRS;
+
+    CPLErrorReset();
+    if( oSRS.importFromEPSG( nEPSGCode ) != OGRERR_NONE )
+    {
+        if( strlen(CPLGetLastErrorMsg()) > 0 )
+            WCTSEmitServiceException( CPLGetLastErrorMsg() );
+        else
+            WCTSEmitServiceException( 
+                CPLSPrintf( "OGRSpatialReference::importFromEPSG(%d) failed.  Is this a defined EPSG code?", 
+                            nEPSGCode ) );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Return SRS.                                                     */
+/* -------------------------------------------------------------------- */
+    return oSRS.Clone();
+}
+
+/************************************************************************/
+/*                        WCTSIsTransformable()                         */
+/************************************************************************/
+
+void WCTSIsTransformable( CPLXMLNode *psOperation )
+
+{
+    OGRSpatialReference *poSrcCRS, *poDstCRS;
+    CPLXMLNode *psSrcXMLCRS, *psDstXMLCRS;
+
+/* -------------------------------------------------------------------- */
+/*      Translate the source CRS.                                       */
+/* -------------------------------------------------------------------- */
+    psSrcXMLCRS = CPLGetXMLNode( psOperation, 
+                                 "SourceCRS.CoordinateReferenceSystem" );
+
+    if( psSrcXMLCRS == NULL )
+        WCTSEmitServiceException( "Unable to identify SourceCRS.CoordinateReferenceSystem" );
+
+    poSrcCRS = WCTSImportCoordinateReferenceSystem( psSrcXMLCRS );
+
+/* -------------------------------------------------------------------- */
+/*      Translate the destination CRS.                                  */
+/* -------------------------------------------------------------------- */
+    psDstXMLCRS = CPLGetXMLNode( psOperation, 
+                                 "DestinationCRS.CoordinateReferenceSystem" );
+
+    if( psDstXMLCRS == NULL )
+        WCTSEmitServiceException( "Unable to identify DestinationCRS.CoordinateReferenceSystem" );
+
+    poDstCRS = WCTSImportCoordinateReferenceSystem( psDstXMLCRS );
+
+/* -------------------------------------------------------------------- */
+/*      Create a transformation object between the coordinate           */
+/*      systems as an added step of verification that they are          */
+/*      supported.                                                      */
+/* -------------------------------------------------------------------- */
+    OGRCoordinateTransformation *poCT;
+    const char *pszResult;
+
+    poCT = OGRCreateCoordinateTransformation( poSrcCRS, poDstCRS );
+    if( poCT == NULL )
+        pszResult = "false";
+    else
+    {
+        delete poCT;
+        pszResult = "true";
+    }
+
+    delete poSrcCRS;
+    delete poDstCRS;
+
+/* -------------------------------------------------------------------- */
+/*      Return the answer.                                              */
+/* -------------------------------------------------------------------- */
+    printf( "Content-type: text/xml%c%c", 10, 10 );
+
+    printf( "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" );
+    printf( "<TransformableResponse xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:noNamespaceSchemaLocation=\"http://www.deegree.org/xml/schemas/wcts/transformableResponse.xsd\" transformable=\"%s\"/>\n", 
+            pszResult );
+
+    exit( 0 );
+}
+
+/************************************************************************/
+/*                           WCTSTransform()                            */
+/************************************************************************/
+
+void WCTSTransform( CPLXMLNode *psOperation )
+
+{
+    
 }
 
 /************************************************************************/
@@ -238,6 +371,23 @@ int main( int nArgc, char ** papszArgv )
         {
             WCTSGetCapabilities( psOperation );
             assert( FALSE );
+        }
+        else if( psOperation->eType == CXT_Element
+            && EQUAL(psOperation->pszValue,"Transformable") )
+        {
+            WCTSIsTransformable( psOperation );
+            assert( FALSE );
+        }
+        else if( psOperation->eType == CXT_Element
+            && EQUAL(psOperation->pszValue,"Transform") )
+        {
+            WCTSTransform( psOperation );
+            assert( FALSE );
+        }
+        else if( psOperation->eType == CXT_Element
+            && EQUAL(psOperation->pszValue,"DescribeTransformation") )
+        {
+            WCTSEmitServiceException( "This server does not support the DescribeTransformation operation." );
         }
     }
 
