@@ -28,6 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************
  * $Log$
+ * Revision 1.15  2000/03/31 13:42:27  warmerda
+ * added metadata support
+ *
  * Revision 1.14  2000/03/24 00:09:05  warmerda
  * rewrote cache management
  *
@@ -72,6 +75,7 @@
  */
 
 #include "gdal_priv.h"
+#include "cpl_string.h"
 
 /************************************************************************/
 /*                           GDALRasterBand()                           */
@@ -93,6 +97,8 @@ GDALRasterBand::GDALRasterBand()
     nBlocksPerColumn = 0;
 
     papoBlocks = NULL;
+
+    papszMetadata = NULL;
 }
 
 /************************************************************************/
@@ -108,6 +114,7 @@ GDALRasterBand::~GDALRasterBand()
     FlushCache();
     
     CPLFree( papoBlocks );
+    CSLDestroy( papszMetadata );
 }
 
 /************************************************************************/
@@ -1552,3 +1559,37 @@ CPLErr GDALGetRasterHistogram( GDALRasterBandH hBand,
                       pfnProgress, pProgressData );
 }
                                
+/************************************************************************/
+/*                            GetMetadata()                             */
+/************************************************************************/
+
+/**
+ * Fetch raster band specific metadata.
+ *
+ * The returned string list is owned by the GDALRasterBand, and may change at
+ * any time.  It is formated as a "Name=value" list with the last pointer
+ * value being NULL.  Use the the CPL StringList functions such as 
+ * CSLFetchNameValue() to manipulate it. 
+ *
+ * Note that relatively few formats return any metadata at this time. 
+ *
+ * This method does the same thing as the C function GDALGetRasterMetadata().
+ * 
+ * @return NULL or a string list. 
+ */
+
+char **GDALRasterBand::GetMetadata()
+
+{
+    return papszMetadata;
+}
+
+/************************************************************************/
+/*                       GDALGetRasterMetadata()                        */
+/************************************************************************/
+
+char **GDALGetRasterMetadata( GDALRasterBandH hBand )
+
+{
+    return ((GDALRasterBand *) hBand)->GetMetadata();
+}
