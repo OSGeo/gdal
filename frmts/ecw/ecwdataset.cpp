@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.39  2005/03/03 17:05:40  fwarmerdam
+ * fixed up serious problems with non-8bit data in ECWDataset::IRasterIO
+ *
  * Revision 1.38  2005/02/25 15:17:00  fwarmerdam
  * Try to ensure that we do a multi-band adviseread in IRasterIO()
  * for line by line access.  This should dramatically improve pixel
@@ -919,7 +922,8 @@ CPLErr ECWDataset::IRasterIO( GDALRWFlag eRWFlag,
 /*      sequential reads.                                               */
 /* -------------------------------------------------------------------- */
     if( nXSize < nBufXSize || nYSize < nBufYSize || nYSize == 1 
-        || nBandCount > 100 || nBandCount == 1 || nBufYSize == 1 )
+        || nBandCount > 100 || nBandCount == 1 || nBufYSize == 1 
+        || nBandCount > GetRasterCount() )
     {
         return 
             GDALDataset::IRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
@@ -964,11 +968,13 @@ CPLErr ECWDataset::IRasterIO( GDALRWFlag eRWFlag,
 /* -------------------------------------------------------------------- */
 /*      Setup working scanline, and the pointers into it.               */
 /* -------------------------------------------------------------------- */
-    GByte *pabyBILScanline = (GByte *) CPLMalloc(nBufXSize * nBandCount);
+    int nDataTypeSize = (GDALGetDataTypeSize(eRasterDataType) / 8);
+    GByte *pabyBILScanline = (GByte *) CPLMalloc(nBufXSize * nDataTypeSize *
+                                                 nBandCount);
     GByte **papabyBIL = (GByte **) CPLMalloc(nBandCount * sizeof(void*));
 
     for( i = 0; i < nBandCount; i++ )
-        papabyBIL[i] = pabyBILScanline + i * nBufXSize;
+        papabyBIL[i] = pabyBILScanline + i * nBufXSize * nDataTypeSize;
 
 /* -------------------------------------------------------------------- */
 /*      Read back all the data for the requested view.                  */
@@ -976,26 +982,25 @@ CPLErr ECWDataset::IRasterIO( GDALRWFlag eRWFlag,
     for( int iScanline = 0; iScanline < nBufYSize; iScanline++ )
     {
         NCSEcwReadStatus  eRStatus;
-        int  iX;
 
-        eRStatus = poFileView->ReadLineBIL( eNCSRequestDataType, nBandCount, 
+        eRStatus = poFileView->ReadLineBIL( eNCSRequestDataType, nBandCount,
                                             (void **) papabyBIL );
         if( eRStatus != NCSECW_READ_OK )
         {
             CPLFree( pabyBILScanline );
-            CPLError( CE_Failure, CPLE_AppDefined, 
+            CPLError( CE_Failure, CPLE_AppDefined,
                       "NCScbmReadViewLineBIL failed." );
             return CE_Failure;
         }
 
-
         for( i = 0; i < nBandCount; i++ )
         {
-            GByte *pabyThisLine = ((GByte *)pData) + nLineSpace * iScanline + nBandSpace * i;
-            
-            for( iX = 0; iX < nBufXSize; iX++ )
-                pabyThisLine[iX * nPixelSpace] = 
-                    pabyBILScanline[i * nBufXSize + iX];
+            GDALCopyWords( 
+                pabyBILScanline + i * nDataTypeSize * nBufXSize,
+                eRasterDataType, nDataTypeSize, 
+                ((GByte *) pData) + nLineSpace * iScanline + nBandSpace * i, 
+                eBufType, nPixelSpace, 
+                nBufXSize );
         }
     }
 
