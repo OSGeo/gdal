@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2002/11/23 18:54:47  warmerda
+ * added setnodatavalue
+ *
  * Revision 1.14  2002/02/07 15:14:59  warmerda
  * ensure that no more bytes are read or written than necessary
  *
@@ -413,6 +416,18 @@ void RawRasterBand::StoreNoDataValue( double dfValue )
 {
     bNoDataSet = TRUE;
     dfNoDataValue = dfValue;
+}
+
+/************************************************************************/
+/*                           SetNoDataValue()                           */
+/************************************************************************/
+
+CPLErr RawRasterBand::SetNoDataValue( double dfValue )
+
+{
+    bNoDataSet = TRUE;
+    dfNoDataValue = dfValue;
+    return CE_None;
 }
 
 /************************************************************************/
