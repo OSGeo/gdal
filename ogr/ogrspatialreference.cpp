@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.41  2001/11/15 16:26:03  warmerda
+ * added check in StripCTParms
+ *
  * Revision 1.40  2001/11/09 21:05:07  warmerda
  * fixed local_cs stripping
  *
@@ -2480,6 +2483,9 @@ OGRErr OGRSpatialReference::StripCTParms( OGR_SRSNode * poCurrent )
 {
     if( poCurrent == NULL )
         poCurrent = GetRoot();
+
+    if( poCurrent == NULL )
+        return OGRERR_NONE;
 
     if( poCurrent == GetRoot() && EQUAL(poCurrent->GetValue(),"LOCAL_CS") )
     {
