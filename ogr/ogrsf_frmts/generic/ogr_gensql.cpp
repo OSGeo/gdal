@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2002/10/25 15:00:41  warmerda
+ * Fixed int/long type mismatch.
+ *
  * Revision 1.8  2002/08/12 16:40:56  dron
  * stricmp() function replaced by EQUALN() macro
  *
@@ -320,9 +323,9 @@ int OGRGenSQLResultsLayer::PrepareSummary()
 
             if( EQUALN(psColDef->field_name, "FID", 3) )
             {
-		// Special case where the column is "FID"
+                // Special case where the column is "FID"
                 char szBuffer[255];
-                sprintf( szBuffer, "%d", poSrcFeature->GetFID() );
+                sprintf( szBuffer, "%ld", poSrcFeature->GetFID() );
                 pszError = 
                     swq_select_summarize( psSelectInfo, iField, szBuffer);
             }
