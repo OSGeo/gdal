@@ -22,6 +22,7 @@ SHR_OBJ =	..\ogrgeometryfactory.obj ..\ogrpoint.obj ..\ogrcurve.obj \
 		..\ogrmultilinestring.obj ..\ogrmultipoint.obj \
 		..\..\frmts\shapelib\dbfopen.obj \
 		..\..\frmts\shapelib\shpopen.obj \
+                ..\shape2ogr.obj \
 		..\..\port\*.obj
 
 default:	SF.dll
