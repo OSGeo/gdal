@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2002/11/27 19:09:40  warmerda
+ * implement in-memory caching of whole CSV file
+ *
  * Revision 1.4  2002/09/04 06:16:32  warmerda
  * added CPLReadLine(NULL) to cleanup
  *
@@ -69,6 +72,14 @@ typedef struct ctb {
     char        **papszFieldNames;
 
     char        **papszRecFields;
+
+    int         iLastLine;
+
+    /* Cache for whole file */
+    int         nLineCount;
+    char        **papszLines;
+    int         *panLineIndex;
+    char        *pszRawData;
 } CSVTable;
 
 static CSVTable *psCSVTableList = NULL;
@@ -109,7 +120,7 @@ static CSVTable *CSVAccess( const char * pszFilename )
 /* -------------------------------------------------------------------- */
 /*      If not, try to open it.                                         */
 /* -------------------------------------------------------------------- */
-    fp = VSIFOpen( pszFilename, "r" );
+    fp = VSIFOpen( pszFilename, "rb" );
     if( fp == NULL )
         return NULL;
 
@@ -181,15 +192,145 @@ void CSVDeaccess( const char * pszFilename )
 /* -------------------------------------------------------------------- */
 /*      Free the table.                                                 */
 /* -------------------------------------------------------------------- */
-    VSIFClose( psTable->fp );
+    if( psTable->fp != NULL )
+        VSIFClose( psTable->fp );
 
     CSLDestroy( psTable->papszFieldNames );
     CSLDestroy( psTable->papszRecFields );
     CPLFree( psTable->pszFilename );
+    CPLFree( psTable->panLineIndex );
+    CPLFree( psTable->pszRawData );
+    CPLFree( psTable->papszLines );
 
     CPLFree( psTable );
 
     CPLReadLine( NULL );
+}
+
+/************************************************************************/
+/*                          CSVFindNextLine()                           */
+/*                                                                      */
+/*      Find the start of the next line, while at the same time zero    */
+/*      terminating this line.  Take into account that there may be     */
+/*      newline indicators within quoted strings, and that quotes       */
+/*      can be escaped with a backslash.                                */
+/************************************************************************/
+
+static char *CSVFindNextLine( char *pszThisLine )
+
+{
+    int  nQuoteCount = 0, i;
+
+    for( i = 0; pszThisLine[i] != '\0'; i++ )
+    {
+        if( pszThisLine[i] == '\"'
+            && (i == 0 || pszThisLine[i-1] != '\\') )
+            nQuoteCount++;
+
+        if( (pszThisLine[i] == 10 || pszThisLine[i] == 13)
+            && (nQuoteCount % 2) == 0 )
+            break;
+    }
+
+    while( pszThisLine[i] == 10 || pszThisLine[i] == 13 )
+        pszThisLine[i++] = '\0';
+
+    if( pszThisLine[i] == '\0' )
+        return NULL;
+    else
+        return pszThisLine + i;
+}
+
+/************************************************************************/
+/*                             CSVIngest()                              */
+/*                                                                      */
+/*      Load entire file into memory and setup index if possible.       */
+/************************************************************************/
+
+static void CSVIngest( const char *pszFilename )
+
+{
+    CSVTable *psTable = CSVAccess( pszFilename );
+    int       nFileLen, i, nMaxLineCount, iLine = 0;
+    char *pszThisLine;
+
+    if( psTable->pszRawData != NULL )
+        return;
+
+/* -------------------------------------------------------------------- */
+/*      Ingest whole file.                                              */
+/* -------------------------------------------------------------------- */
+    VSIFSeek( psTable->fp, 0, SEEK_END );
+    nFileLen = VSIFTell( psTable->fp );
+    VSIRewind( psTable->fp );
+
+    psTable->pszRawData = (char *) CPLMalloc(nFileLen+1);
+    if( (int) VSIFRead( psTable->pszRawData, 1, nFileLen, psTable->fp ) 
+        != nFileLen )
+    {
+        CPLFree( psTable->pszRawData );
+        psTable->pszRawData = NULL;
+
+        CPLError( CE_Failure, CPLE_FileIO, "Read of file %s failed.", 
+                  psTable->pszFilename );
+        return;
+    }
+
+    psTable->pszRawData[nFileLen] = '\0';
+
+/* -------------------------------------------------------------------- */
+/*      Get count of newlines so we can allocate line array.            */
+/* -------------------------------------------------------------------- */
+    nMaxLineCount = 0;
+    for( i = 0; i < nFileLen; i++ )
+    {
+        if( psTable->pszRawData[i] == 10 )
+            nMaxLineCount++;
+    }
+
+    psTable->papszLines = (char **) CPLCalloc(sizeof(char*),nMaxLineCount);
+    
+/* -------------------------------------------------------------------- */
+/*      Build a list of record pointers into the raw data buffer        */
+/*      based on line terminators.  Zero terminate the line             */
+/*      strings.                                                        */
+/* -------------------------------------------------------------------- */
+    /* skip header line */
+    pszThisLine = CSVFindNextLine( psTable->pszRawData );
+
+    while( pszThisLine != NULL && iLine < nMaxLineCount )
+    {
+        psTable->papszLines[iLine++] = pszThisLine;
+        pszThisLine = CSVFindNextLine( pszThisLine );
+    }
+
+    psTable->nLineCount = iLine;
+
+/* -------------------------------------------------------------------- */
+/*      Allocate and populate index array.  Ensure they are in          */
+/*      ascending order so that binary searches can be done on the      */
+/*      array.                                                          */
+/* -------------------------------------------------------------------- */
+    psTable->panLineIndex = (int *) CPLMalloc(sizeof(int)*psTable->nLineCount);
+    for( i = 0; i < psTable->nLineCount; i++ )
+    {
+        psTable->panLineIndex[i] = atoi(psTable->papszLines[i]);
+
+        if( i > 0 && psTable->panLineIndex[i] < psTable->panLineIndex[i-1] )
+        {
+            CPLFree( psTable->panLineIndex );
+            psTable->panLineIndex = NULL;
+            break;
+        }
+    }
+
+    psTable->iLastLine = -1;
+
+/* -------------------------------------------------------------------- */
+/*      We should never need the file handle against, so close it.      */
+/* -------------------------------------------------------------------- */
+    VSIFClose( psTable->fp );
+    psTable->fp = NULL;
 }
 
 /************************************************************************/
@@ -337,6 +478,117 @@ char **CSVScanLines( FILE *fp, int iKeyField, const char * pszValue,
 }
 
 /************************************************************************/
+/*                        CSVScanLinesIndexed()                         */
+/*                                                                      */
+/*      Read the file scanline for lines where the key field equals     */
+/*      the indicated value with the suggested comparison criteria.     */
+/*      Return the first matching line split into fields.               */
+/************************************************************************/
+
+static char **
+CSVScanLinesIndexed( CSVTable *psTable, int nKeyValue )
+
+{
+    int         iTop, iBottom, iMiddle, iResult = -1;
+
+    CPLAssert( psTable->panLineIndex != NULL );
+
+/* -------------------------------------------------------------------- */
+/*      Find target record with binary search.                          */
+/* -------------------------------------------------------------------- */
+    iTop = psTable->nLineCount-1;
+    iBottom = 0;
+
+    while( iTop >= iBottom )
+    {
+        iMiddle = (iTop + iBottom) / 2;
+        if( psTable->panLineIndex[iMiddle] > nKeyValue )
+            iTop = iMiddle - 1;
+        else if( psTable->panLineIndex[iMiddle] < nKeyValue )
+            iBottom = iMiddle + 1;
+        else
+        {
+            iResult = iMiddle;
+            break;
+        }
+    }
+
+    if( iResult == -1 )
+        return NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Parse target line, and update iLastLine indicator.              */
+/* -------------------------------------------------------------------- */
+    psTable->iLastLine = iResult;
+    
+    return 
+        CSLTokenizeStringComplex( psTable->papszLines[iResult], ",", 
+                                  TRUE, TRUE );
+}
+
+/************************************************************************/
+/*                        CSVScanLinesIngested()                        */
+/*                                                                      */
+/*      Read the file scanline for lines where the key field equals     */
+/*      the indicated value with the suggested comparison criteria.     */
+/*      Return the first matching line split into fields.               */
+/************************************************************************/
+
+static char **
+CSVScanLinesIngested( CSVTable *psTable, int iKeyField, const char * pszValue,
+                      CSVCompareCriteria eCriteria )
+
+{
+    char        **papszFields = NULL;
+    int         bSelected = FALSE, nTestValue;
+
+    CPLAssert( pszValue != NULL );
+    CPLAssert( iKeyField >= 0 );
+
+    nTestValue = atoi(pszValue);
+    
+/* -------------------------------------------------------------------- */
+/*      Short cut for indexed files.                                    */
+/* -------------------------------------------------------------------- */
+    if( iKeyField == 0 && eCriteria == CC_Integer 
+        && psTable->panLineIndex != NULL )
+        return CSVScanLinesIndexed( psTable, nTestValue );
+    
+/* -------------------------------------------------------------------- */
+/*      Scan from in-core lines.                                        */
+/* -------------------------------------------------------------------- */
+    while( !bSelected && psTable->iLastLine+1 < psTable->nLineCount ) {
+        psTable->iLastLine++;
+        papszFields = 
+            CSLTokenizeStringComplex( psTable->papszLines[psTable->iLastLine],
+                                      ",", TRUE, TRUE );
+
+        if( CSLCount( papszFields ) < iKeyField+1 )
+        {
+            /* not selected */
+        }
+        else if( eCriteria == CC_Integer
+                 && atoi(papszFields[iKeyField]) == nTestValue )
+        {
+            bSelected = TRUE;
+        }
+        else
+        {
+            bSelected = CSVCompare( papszFields[iKeyField], pszValue,
+                                    eCriteria );
+        }
+
+        if( !bSelected )
+        {
+            CSLDestroy( papszFields );
+            papszFields = NULL;
+        }
+    }
+    
+    return( papszFields );
+}
+
+/************************************************************************/
 /*                            CSVScanFile()                             */
 /*                                                                      */
 /*      Scan a whole file using criteria similar to above, but also     */
@@ -360,6 +612,8 @@ char **CSVScanFile( const char * pszFilename, int iKeyField,
     psTable = CSVAccess( pszFilename );
     if( psTable == NULL )
         return NULL;
+    
+    CSVIngest( pszFilename );
 
 /* -------------------------------------------------------------------- */
 /*      Does the current record match the criteria?  If so, just        */
@@ -376,12 +630,20 @@ char **CSVScanFile( const char * pszFilename, int iKeyField,
 /*      Scan the file from the beginning, replacing the ``current       */
 /*      record'' in our structure with the one that is found.           */
 /* -------------------------------------------------------------------- */
-    VSIRewind( psTable->fp );
-    CPLReadLine( psTable->fp );         /* throw away the header line */
-    
+    psTable->iLastLine = -1;
     CSLDestroy( psTable->papszRecFields );
-    psTable->papszRecFields =
-        CSVScanLines( psTable->fp, iKeyField, pszValue, eCriteria );
+
+    if( psTable->pszRawData != NULL )
+        psTable->papszRecFields = 
+            CSVScanLinesIngested( psTable, iKeyField, pszValue, eCriteria );
+    else
+    {
+        VSIRewind( psTable->fp );
+        CPLReadLine( psTable->fp );         /* throw away the header line */
+    
+        psTable->papszRecFields =
+            CSVScanLines( psTable->fp, iKeyField, pszValue, eCriteria );
+    }
 
     return( psTable->papszRecFields );
 }
