@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.10  2003/06/12 15:07:34  dron
+ * Value for MODIS Level 2 added.
+ *
  * Revision 1.9  2003/06/10 09:33:48  dron
  * Added support for MODIS Level 3 products.
  *
@@ -79,7 +82,7 @@ typedef enum			// Types of data products:
     AST14DEM,			// ASTER DEM
     MODIS_L1B,                  // MODIS Level 1B
     MODIS_L3,                   // MODIS Level 3
-    MOD02QKM_L1B,
+    MODIS_L2,                   // MODIS Level 2
     MODIS_UNK,
     UNKNOWN
 } HDF4Datatype;
