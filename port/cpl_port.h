@@ -38,6 +38,9 @@
  *   GUInt16, and GByte are defined.
  *
  * $Log$
+ * Revision 1.4  1998/12/15 19:05:30  warmerda
+ * added errno.h
+ *
  * Revision 1.3  1998/12/14 04:50:07  warmerda
  * Added DBMALLOC support
  *
@@ -75,6 +78,7 @@ typedef int		GBool;
 #include <math.h>
 #include <stdarg.h>
 #include <string.h>
+#include <errno.h>
 
 #ifdef DBMALLOC
 #include <dbmalloc.h>
