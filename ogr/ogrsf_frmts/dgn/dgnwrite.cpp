@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2004/03/23 16:17:12  warmerda
+ * Corrected level setting of cell header groups, and also fixed total length
+ * of cell groups.
+ *
  * Revision 1.19  2004/03/23 16:06:27  warmerda
  * Fixed up complex header attribute handling as complained about by EDG.
  *
@@ -1998,11 +2002,12 @@ DGNCreateCellHeaderFromGroup( DGNHandle hDGN, const char *pszName,
                               double dfRotation )
 
 {
-    int         nTotalLength = 5;
+    int         nTotalLength;
     int         i, nLevel;
     DGNElemCore *psCH;
     DGNPoint    sMin={0.0,0.0,0.0}, sMax={0.0,0.0,0.0};
     unsigned char abyLevelsOccuring[8] = {0,0,0,0,0,0,0,0};
+    DGNInfo *psInfo = (DGNInfo *) hDGN;
 
     DGNLoadTCB( hDGN );
 
@@ -2012,6 +2017,11 @@ DGNCreateCellHeaderFromGroup( DGNHandle hDGN, const char *pszName,
                   "Need at least one element to form a cell." );
         return NULL;
     }
+
+    if( psInfo->dimension == 2 )
+        nTotalLength = 27;
+    else
+        nTotalLength = 43;
 
 /* -------------------------------------------------------------------- */
 /*      Collect the total size, and bounds.                             */
@@ -2031,7 +2041,7 @@ DGNCreateCellHeaderFromGroup( DGNHandle hDGN, const char *pszName,
 
         /* establish level */
         nLevel = papsElems[i]->level;
-        abyLevelsOccuring[nLevel >> 3] |= (0x1 << (nLevel&0x7));
+        abyLevelsOccuring[nLevel >> 3] |= (0x1 << ((nLevel-1)&0x7));
         
         DGNGetElementExtents( hDGN, papsElems[i], &sThisMin, &sThisMax );
         if( i == 0 )
