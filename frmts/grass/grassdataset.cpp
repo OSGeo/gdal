@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2000/09/20 17:03:21  warmerda
+ * Added colortable support.
+ *
  * Revision 1.2  2000/09/14 21:07:33  warmerda
  * modified to use new G_check_cell() function
  *
@@ -79,12 +82,17 @@ class GRASSRasterBand : public GDALRasterBand
     int		hCell;
     int         nGRSType;
 
+    GDALColorTable *poCT;
+
   public:
 
                    GRASSRasterBand( GRASSDataset *, int, 
                                     const char *, const char * );
+    virtual        ~GRASSRasterBand();
 
     virtual CPLErr IReadBlock( int, int, void * );
+    virtual GDALColorInterp GetColorInterpretation();
+    virtual GDALColorTable *GetColorTable();
 };
 
 
@@ -120,7 +128,60 @@ GRASSRasterBand::GRASSRasterBand( GRASSDataset *poDS, int nBand,
     nBlockYSize = 1;
 
     hCell = G_open_cell_old((char *) pszCellName, (char *) pszMapset);
+
+/* -------------------------------------------------------------------- */
+/*      Do we have a color table?                                       */
+/* -------------------------------------------------------------------- */
+    struct Colors sGrassColors;
+
+    poCT = NULL;
+    if( G_read_colors( (char *) pszCellName, (char *) pszMapset, 
+                       &sGrassColors ) == 1 )
+    {
+        poCT = new GDALColorTable();
+        for( int iColor = 0; iColor < 256; iColor++ )
+        {
+            int	nRed, nGreen, nBlue;
+            GDALColorEntry    sColor;
+
+            if( G_get_color( iColor, &nRed, &nGreen, &nBlue, &sGrassColors ) )
+            {
+                sColor.c1 = nRed;
+                sColor.c2 = nGreen;
+                sColor.c3 = nBlue;
+                sColor.c4 = 255;
+
+                poCT->SetColorEntry( iColor, &sColor );
+            }
+            else
+            {
+                sColor.c1 = 0;
+                sColor.c2 = 0;
+                sColor.c3 = 0;
+                sColor.c4 = 0;
+
+                poCT->SetColorEntry( iColor, &sColor );
+            }
+        }
+
+        G_free_colors( &sGrassColors );
+    }
 }
+
+/************************************************************************/
+/*                          ~GRASSRasterBand()                          */
+/************************************************************************/
+
+GRASSRasterBand::~GRASSRasterBand()
+
+{
+    if( poCT != NULL )
+        delete poCT;
+
+    if( hCell >= 0 )
+        G_close_cell( hCell );
+}
+
 
 /************************************************************************/
 /*                             IReadBlock()                             */
@@ -146,6 +207,29 @@ CPLErr GRASSRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     }
 
     return CE_None;
+}
+
+/************************************************************************/
+/*                       GetColorInterpretation()                       */
+/************************************************************************/
+
+GDALColorInterp GRASSRasterBand::GetColorInterpretation()
+
+{
+    if( poCT != NULL )
+        return GCI_PaletteIndex;
+    else
+        return GCI_GrayIndex;
+}
+
+/************************************************************************/
+/*                           GetColorTable()                            */
+/************************************************************************/
+
+GDALColorTable *GRASSRasterBand::GetColorTable()
+
+{
+    return poCT;
 }
 
 /************************************************************************/
