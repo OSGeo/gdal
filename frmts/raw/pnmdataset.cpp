@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2004/02/04 21:47:31  warmerda
+ * use VSIFClose() to close openinfo file, not VSIFCloseL()
+ *
  * Revision 1.15  2003/10/24 14:22:49  warmerda
  * Added worldfile read support (but not write/export).
  *
@@ -246,7 +249,7 @@ GDALDataset *PNMDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Assume ownership of the file handled from the GDALOpenInfo.     */
 /* -------------------------------------------------------------------- */
-    VSIFCloseL( poOpenInfo->fp );
+    VSIFClose( poOpenInfo->fp );
     poOpenInfo->fp = NULL;
 
     if( poOpenInfo->eAccess == GA_Update )
