@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2001/11/01 17:20:33  warmerda
+ * added DISABLE_OGRGEOM_TRANSFORM macro
+ *
  * Revision 1.13  2001/09/21 16:24:20  warmerda
  * added transform() and transformTo() methods
  *
@@ -680,6 +683,9 @@ OGRBoolean OGRGeometryCollection::Equal( OGRGeometry * poOther )
 OGRErr OGRGeometryCollection::transform( OGRCoordinateTransformation *poCT )
 
 {
+#ifdef DISABLE_OGRGEOM_TRANSFORM
+    return OGRERR_FAILURE;
+#else
     for( int iGeom = 0; iGeom < nGeomCount; iGeom++ )
     {
         OGRErr	eErr;
@@ -704,5 +710,6 @@ OGRErr OGRGeometryCollection::transform( OGRCoordinateTransformation *poCT )
     assignSpatialReference( poCT->GetTargetCS() );
 
     return OGRERR_NONE;
+#endif
 }
 

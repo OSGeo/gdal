@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.23  2001/11/01 17:20:33  warmerda
+ * added DISABLE_OGRGEOM_TRANSFORM macro
+ *
  * Revision 1.22  2001/11/01 17:01:28  warmerda
  * pass output buffer into OGRMakeWktCoordinate
  *
@@ -1013,6 +1016,9 @@ OGRBoolean OGRLineString::Equal( OGRGeometry * poOther )
 OGRErr OGRLineString::transform( OGRCoordinateTransformation *poCT )
 
 {
+#ifdef DISABLE_OGRGEOM_TRANSFORM
+    return OGRERR_FAILURE;
+#else
     double	*xyz;
     int		i;
 
@@ -1053,4 +1059,5 @@ OGRErr OGRLineString::transform( OGRCoordinateTransformation *poCT )
 
         return OGRERR_NONE;
     }
+#endif
 }

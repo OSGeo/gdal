@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2001/11/01 17:20:33  warmerda
+ * added DISABLE_OGRGEOM_TRANSFORM macro
+ *
  * Revision 1.14  2001/09/21 16:24:20  warmerda
  * added transform() and transformTo() methods
  *
@@ -761,6 +764,9 @@ OGRBoolean OGRPolygon::Equal( OGRGeometry * poOther )
 OGRErr OGRPolygon::transform( OGRCoordinateTransformation *poCT )
 
 {
+#ifdef DISABLE_OGRGEOM_TRANSFORM
+    return OGRERR_FAILURE;
+#else
     for( int iRing = 0; iRing < nRingCount; iRing++ )
     {
         OGRErr	eErr;
@@ -785,6 +791,7 @@ OGRErr OGRPolygon::transform( OGRCoordinateTransformation *poCT )
     assignSpatialReference( poCT->GetTargetCS() );
 
     return OGRERR_NONE;
+#endif
 }
 
 

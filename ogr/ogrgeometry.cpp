@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2001/11/01 17:20:33  warmerda
+ * added DISABLE_OGRGEOM_TRANSFORM macro
+ *
  * Revision 1.10  2001/09/21 16:24:20  warmerda
  * added transform() and transformTo() methods
  *
@@ -206,6 +209,9 @@ OGRBoolean OGRGeometry::Intersect( OGRGeometry *poOtherGeom )
 OGRErr OGRGeometry::transformTo( OGRSpatialReference *poSR )
 
 {
+#ifdef DISABLE_OGRGEOM_TRANSFORM
+    return OGRERR_FAILURE;
+#else
     OGRCoordinateTransformation *poCT;
     OGRErr eErr;
 
@@ -221,6 +227,7 @@ OGRErr OGRGeometry::transformTo( OGRSpatialReference *poSR )
     delete poCT;
 
     return eErr;
+#endif
 }
 
 /**

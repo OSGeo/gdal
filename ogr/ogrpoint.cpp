@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2001/11/01 17:20:33  warmerda
+ * added DISABLE_OGRGEOM_TRANSFORM macro
+ *
  * Revision 1.16  2001/11/01 17:01:28  warmerda
  * pass output buffer into OGRMakeWktCoordinate
  *
@@ -516,6 +519,9 @@ OGRBoolean OGRPoint::Equal( OGRGeometry * poOther )
 OGRErr OGRPoint::transform( OGRCoordinateTransformation *poCT )
 
 {
+#ifdef DISABLE_OGRGEOM_TRANSFORM
+    return OGRERR_FAILURE;
+#else
     if( poCT->Transform( 1, &x, &y, &z ) )
     {
         assignSpatialReference( poCT->GetTargetCS() );
@@ -523,4 +529,5 @@ OGRErr OGRPoint::transform( OGRCoordinateTransformation *poCT )
     }
     else
         return OGRERR_FAILURE;
+#endif
 }
