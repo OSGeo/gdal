@@ -1,3 +1,13 @@
+2001-03-08  Simon Perkins  <simes@genie.lanl.gov>
+
+	* Added support for reading and	writing metadata to FITS files.
+	Upon opening a FITS file, all non trivial headers are read from
+	the file and stored in the metadata store. Upon closing the FITS
+	file, any metadata associated with a name that is 8 characters or
+	less long, is written to the FITS file. The driver attempts to
+	guess the type of the metadata (double, long, logical or string)
+	and calls the appropriate fits update functions.
+
 2001-03-06  Simon Perkins  <simes@genie.lanl.gov>
 
 	* frmts/fits/fitsdataset.cpp: Fixed bug in situation where we

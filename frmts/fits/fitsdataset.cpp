@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2001/03/09 01:57:48  sperkins
+ * Added support for reading and writing metadata to FITS files.
+ *
  * Revision 1.2  2001/03/06 23:06:01  sperkins
  * Fixed bug in situation where we attempt to read from a newly created band.
  *
@@ -39,6 +42,7 @@
 
 
 #include "gdal_priv.h"
+#include "cpl_string.h"
 #include <string.h>
 
 static GDALDriver* poFITSDriver = NULL;
@@ -209,13 +213,51 @@ CPLErr FITSRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff,
 /* ==================================================================== */
 /************************************************************************/
 
+// Some useful utility functions
+static int guessFITSHeaderDataType(fitsfile* hFITS, const char* key,
+				   const char* value) {
+  // For now we just look at the value and decide its type based on that
+  // in theory we could also look at the FITS file and see what type the
+  // existing key has if present.
+  char* endPtr;
+  // Test for int
+  strtol(value, &endPtr, 10);
+  if (endPtr - value == int(strlen(value)))
+    return TLONG;
+  // Test for double
+  strtod(value, &endPtr);
+  if (endPtr - value == int(strlen(value)))
+    return TDOUBLE;
+  // Test for logical
+  if (!strcmp(value, "T") || !strcmp(value, "F"))
+    return TLOGICAL;
+  // Otherwise assume string
+  return TSTRING;
+}
+
+// Simple static function to determine if FITS header keyword should
+// be saved in meta data.
+static const int ignorableHeaderCount = 17;
+static char* ignorableFITSHeaders[ignorableHeaderCount] = {
+  "SIMPLE", "BITPIX", "NAXIS", "NAXIS1", "NAXIS2", "NAXIS3", "END",
+  "XTENSION", "PCOUNT", "GCOUNT", "EXTEND", "BSCALE", "BZERO", "CONTINUE",
+  "COMMENT", "", "LONGSTRN"
+};
+static bool isIgnorableFITSHeader(const char* name) {
+  for (int i = 0; i < ignorableHeaderCount; ++i) {
+    if (strcmp(name, ignorableFITSHeaders[i]) == 0)
+      return true;
+  }
+  return false;
+}
+
 
 /************************************************************************/
 /*                            FITSDataset()                            */
 /************************************************************************/
 
 FITSDataset::FITSDataset() {
-  // Nothing needed here
+  hFITS = 0;
 }
 
 /************************************************************************/
@@ -223,15 +265,70 @@ FITSDataset::FITSDataset() {
 /************************************************************************/
 
 FITSDataset::~FITSDataset() {
-  // Make sure we flush the raster cache before we close the file!
-  FlushCache();
-  // Close the FITS handle - ignore the error status
-  int status = 0;
-  fits_close_file(hFITS, &status);
+  if (hFITS) {   // Only do this if we've successfully opened the file...
+    // Write any meta data to the file that's compatible with FITS
+    int status = 0;
+    fits_movabs_hdu(hFITS, 1, 0, &status);
+    fits_write_key_longwarn(hFITS, &status);
+    if (status) {
+      CPLError(CE_Warning, CPLE_AppDefined,
+	       "Couldn't move to first HDU in FITS file %s (%d).\n", 
+	       GetDescription(), status);
+    }
+    char** metaData = GetMetadata();
+    int count = CSLCount(metaData);
+    for (int i = 0; i < count; ++i) {
+      const char* field = CSLGetField(metaData, i);
+      if (strlen(field) == 0)
+	continue;
+      else {
+	char* key;
+	const char* value = CPLParseNameValue(field, &key);
+	// FITS keys must be less than 8 chars
+	if (strlen(key) <= 8 && !isIgnorableFITSHeader(key)) {
+	  int dataType = guessFITSHeaderDataType(hFITS, key, value);
+	  if (dataType == TDOUBLE) {
+	    double dblValue = atof(value);
+	    fits_update_key_dbl(hFITS, key, dblValue, 10, 0, &status);
+	  }
+	  else if (dataType == TLONG) {
+	    long longValue = atoi(value);
+	    fits_update_key_lng(hFITS, key, longValue, 0, &status);
+	  }
+	  else if (dataType == TLOGICAL) {
+	    int logicValue = !strcmp(value, "T") ? 1 : 0;
+	    fits_update_key_log(hFITS, key, logicValue, 0, &status);
+	  }
+	  else {  // Assume it's a string
+	    // Avoid warning by copying const string to non const one...
+	    char* valueCpy = strdup(value);
+	    fits_update_key_longstr(hFITS, key, valueCpy, 0, &status);
+	    free(valueCpy);
+	  }
+	  // Check for errors
+	  if (status) {
+	    CPLError(CE_Warning, CPLE_AppDefined,
+		     "Couldn't update key %s in FITS file %s (%d).", 
+		     key, GetDescription(), status);
+	    return;
+	  }
+	}
+	// Must free up key
+	CPLFree(key);
+      }
+    }
+
+    // Make sure we flush the raster cache before we close the file!
+    FlushCache();
+
+    // Close the FITS handle - ignore the error status
+    fits_close_file(hFITS, &status);
+  }
 }
 
+
 /************************************************************************/
-/*                           FITSDataset::Init()                        */
+/*                           Init()                                     */
 /************************************************************************/
 
 CPLErr FITSDataset::Init(fitsfile* hFITS_, bool isExistingFile_) {
@@ -310,6 +407,56 @@ CPLErr FITSDataset::Init(fitsfile* hFITS_, bool isExistingFile_) {
   }
 
   // Read header information from file and use it to set metadata
+  // This process understands the CONTINUE standard for long strings.
+  // We don't bother to capture header names that duplicate information
+  // already captured elsewhere (e.g. image dimensions and type)
+  int keyNum = 1;
+  char key[100];
+  char value[100];
+  bool endReached = false;
+  do {
+    fits_read_keyn(hFITS, keyNum, key, value, 0, &status);
+    if (status) {
+      CPLError(CE_Failure, CPLE_AppDefined,
+	       "Error while reading key %d from FITS file %s (%d)", 
+	       keyNum, GetDescription(), status);
+      return CE_Failure;
+    }
+    // What we do next depends upon the key and the value
+    if (strcmp(key, "END") == 0) {
+      endReached = true;
+    }
+    else if (isIgnorableFITSHeader(key)) {
+      // Ignore it!
+    }
+    else {   // Going to store something, but check for long strings etc
+      // Strip off leading and trailing quote if present
+      char* newValue = value;
+      if (value[0] == '\'' && value[strlen(value) - 1] == '\'') {
+	newValue = value + 1;
+	value[strlen(value) - 1] = '\0';
+      }
+      // Check for long string
+      if (rindex(newValue, '&') == newValue + strlen(newValue) - 1) {
+	// Value string ends in "&", so use long string conventions
+	char* longString = 0;
+	fits_read_key_longstr(hFITS, key, &longString, 0, &status);
+	// Note that read_key_longst already strips quotes
+	if (status) {
+	  CPLError(CE_Failure, CPLE_AppDefined,
+		   "Error while reading long string for key %s from "
+		   "FITS file %s (%d)", key, GetDescription(), status);
+	  return CE_Failure;
+	}
+	SetMetadataItem(key, longString);
+	free(longString);
+      }
+      else {  // Normal keyword
+	SetMetadataItem(key, newValue);
+      }
+    }
+    ++keyNum;
+  } while (!endReached);
   
   // Create the bands
   for (int i = 0; i < nBands; ++i)
@@ -377,6 +524,10 @@ GDALDataset *FITSDataset::Create(const char* pszFilename,
   int status = 0;
   
   // Currently we don't have any creation options for FITS
+  // but we should add an option for bscaling float data as bytes.
+  // We also need some way of reading this stuff back again - perhaps
+  // something special in IReadBlock, etc.
+  // TODO: add bscale/bzero stuff
 
   // Create the file - to force creation, we prepend the name with '!'
   char* extFilename = new char[strlen(pszFilename) + 10];  // 10 for margin!
