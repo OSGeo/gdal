@@ -1,7 +1,7 @@
 /******************************************************************************
  * $Id$
  *
- * Project:  PCI .aux Driver
+ * Project:  GView
  * Purpose:  Implementation of Atlantis MFF Support
  * Author:   Frank Warmerdam, warmerda@home.com
  *
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2000/03/06 21:51:32  warmerda
+ * fixed docs
+ *
  * Revision 1.1  2000/03/06 19:23:20  warmerda
  * New
  *
