@@ -26,6 +26,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2005/02/02 20:54:27  fwarmerdam
+ * track m_nFeaturesRead
+ *
  * Revision 1.1  2002/05/24 06:23:57  warmerda
  * New
  *
@@ -172,7 +175,7 @@ OGRFeature *OGRFMELayerDB::GetNextFeature()
                   GetLayerDefn()->GetName() );
 
     poFeature->SetFID( ++nPreviousFeature );
-
+    m_nFeaturesRead++;
 
     poDS->ReleaseSession();
 

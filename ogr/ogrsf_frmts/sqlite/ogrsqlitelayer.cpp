@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2005/02/02 20:54:27  fwarmerdam
+ * track m_nFeaturesRead
+ *
  * Revision 1.6  2004/10/30 05:12:52  fwarmerdam
  * fixed memory leaks
  *
@@ -86,6 +89,13 @@ OGRSQLiteLayer::OGRSQLiteLayer()
 OGRSQLiteLayer::~OGRSQLiteLayer()
 
 {
+    if( m_nFeaturesRead > 0 && poFeatureDefn != NULL )
+    {
+        CPLDebug( "SQLite", "%d features read on layer '%s'.",
+                  (int) m_nFeaturesRead, 
+                  poFeatureDefn->GetName() );
+    }
+
     if( hStmt != NULL )
     {
         sqlite3_finalize( hStmt );
@@ -279,6 +289,8 @@ OGRFeature *OGRSQLiteLayer::GetNextRawFeature()
         poFeature->SetFID( iNextShapeId );
 
     iNextShapeId++;
+
+    m_nFeaturesRead++;
 
 /* -------------------------------------------------------------------- */
 /*      Process Geometry if we have a column.                           */

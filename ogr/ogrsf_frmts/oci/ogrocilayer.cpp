@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2005/02/02 20:54:27  fwarmerdam
+ * track m_nFeaturesRead
+ *
  * Revision 1.10  2004/11/22 19:24:15  fwarmerdam
  * added support for a list of tables in the datasource name
  *
@@ -98,6 +101,13 @@ OGROCILayer::OGROCILayer()
 OGROCILayer::~OGROCILayer()
 
 {
+    if( m_nFeaturesRead > 0 && poFeatureDefn != NULL )
+    {
+        CPLDebug( "OCI", "%d features read on layer '%s'.",
+                  (int) m_nFeaturesRead, 
+                  poFeatureDefn->GetName() );
+    }
+
     ResetReading();
 
     CPLFree( pszGeomName );
@@ -202,6 +212,7 @@ OGRFeature *OGROCILayer::GetNextRawFeature()
 
     poFeature->SetFID( iNextShapeId );
     iNextShapeId++;
+    m_nFeaturesRead++;
 
     if( iFIDColumn != -1 && papszResult[iFIDColumn] != NULL )
         poFeature->SetFID( atoi(papszResult[iFIDColumn]) );

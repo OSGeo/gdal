@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2005/02/02 20:54:27  fwarmerdam
+ * track m_nFeaturesRead
+ *
  * Revision 1.7  2003/08/11 14:17:22  warmerda
  * Trim leading spaces from attributes values.  Attributes from OGDI
  * that were quoted (such as { FA001 } from NOAMER/VRF) were exceeding the
@@ -104,6 +107,13 @@ OGROGDILayer::OGROGDILayer( OGROGDIDataSource *poODS,
 OGROGDILayer::~OGROGDILayer()
 
 {
+    if( m_nFeaturesRead > 0 && m_poFeatureDefn != NULL )
+    {
+        CPLDebug( "OGDI", "%d features read on layer '%s'.",
+                  (int) m_nFeaturesRead, 
+                  m_poFeatureDefn->GetName() );
+    }
+
     if (m_poFeatureDefn)
         delete m_poFeatureDefn;
 
@@ -209,6 +219,7 @@ OGRFeature *OGROGDILayer::GetNextFeature()
     poFeature = new OGRFeature(m_poFeatureDefn);
 
     poFeature->SetFID( m_iNextShapeId++ );
+    m_nFeaturesRead++;
 
 /* -------------------------------------------------------------------- */
 /*      Process geometry                                                */

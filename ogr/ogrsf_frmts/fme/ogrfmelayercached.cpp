@@ -25,6 +25,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2005/02/02 20:54:26  fwarmerdam
+ * track m_nFeaturesRead
+ *
  * Revision 1.2  2002/11/08 21:20:58  warmerda
  * ensure a query is issued if resetreading never called
  *
@@ -189,6 +192,7 @@ OGRFeature *OGRFMELayerCached::ReadNextIndexFeature()
         if( poOGRFeature != NULL )
         {
             poOGRFeature->SetFID( ++nPreviousFeature );
+            m_nFeaturesRead++;
         }
     }
 

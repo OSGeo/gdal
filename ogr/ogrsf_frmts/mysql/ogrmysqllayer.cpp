@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2005/02/02 20:54:27  fwarmerdam
+ * track m_nFeaturesRead
+ *
  * Revision 1.1  2004/10/07 20:56:15  fwarmerdam
  * New
  *
@@ -74,6 +77,13 @@ OGRMySQLLayer::OGRMySQLLayer()
 OGRMySQLLayer::~OGRMySQLLayer()
 
 {
+    if( m_nFeaturesRead > 0 && poFeatureDefn != NULL )
+    {
+        CPLDebug( "MySQL", "%d features read on layer '%s'.",
+                  (int) m_nFeaturesRead, 
+                  poFeatureDefn->GetName() );
+    }
+
     ResetReading();
 
     CPLFree( pszGeomColumn );
@@ -152,6 +162,7 @@ OGRFeature *OGRMySQLLayer::RecordToFeature( char **papszRow )
     OGRFeature *poFeature = new OGRFeature( poFeatureDefn );
 
     poFeature->SetFID( iNextShapeId );
+    m_nFeaturesRead++;
 
 /* ==================================================================== */
 /*      Transfer all result fields we can.                              */

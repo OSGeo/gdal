@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2005/02/02 20:54:27  fwarmerdam
+ * track m_nFeaturesRead
+ *
  * Revision 1.6  2004/03/04 17:16:05  warmerda
  * Cleanup featuredefn on exit.
  *
@@ -85,6 +88,13 @@ OGRODBCLayer::OGRODBCLayer()
 OGRODBCLayer::~OGRODBCLayer()
 
 {
+    if( m_nFeaturesRead > 0 && poFeatureDefn != NULL )
+    {
+        CPLDebug( "ODBC", "%d features read on layer '%s'.",
+                  (int) m_nFeaturesRead, 
+                  poFeatureDefn->GetName() );
+    }
+
     if( poStmt != NULL )
     {
         delete poStmt;
@@ -230,6 +240,7 @@ OGRFeature *OGRODBCLayer::GetNextRawFeature()
         poFeature->SetFID( iNextShapeId );
 
     iNextShapeId++;
+    m_nFeaturesRead++;
 
 /* -------------------------------------------------------------------- */
 /*      Set the fields.                                                 */

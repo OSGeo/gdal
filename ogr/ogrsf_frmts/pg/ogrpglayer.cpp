@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2005/02/02 20:54:27  fwarmerdam
+ * track m_nFeaturesRead
+ *
  * Revision 1.15  2004/07/10 04:46:24  warmerda
  * initialize nResultOffset, use soft transactions
  *
@@ -133,6 +136,13 @@ OGRPGLayer::OGRPGLayer()
 OGRPGLayer::~OGRPGLayer()
 
 {
+    if( m_nFeaturesRead > 0 && poFeatureDefn != NULL )
+    {
+        CPLDebug( "PG", "%d features read on layer '%s'.",
+                  (int) m_nFeaturesRead, 
+                  poFeatureDefn->GetName() );
+    }
+
     ResetReading();
 
     CPLFree( pszGeomColumn );
@@ -222,6 +232,7 @@ OGRFeature *OGRPGLayer::RecordToFeature( int iRecord )
     OGRFeature *poFeature = new OGRFeature( poFeatureDefn );
 
     poFeature->SetFID( iNextShapeId );
+    m_nFeaturesRead++;
 
 /* ==================================================================== */
 /*      Transfer all result fields we can.                              */
