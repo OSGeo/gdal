@@ -28,6 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************
  * $Log$
+ * Revision 1.9  2000/03/06 02:22:01  warmerda
+ * added overviews, colour tables, and many other methods
+ *
  * Revision 1.8  2000/02/28 16:34:28  warmerda
  * added arg window check in RasterIO()
  *
@@ -193,6 +196,22 @@ CPLErr GDALRasterBand::RasterIO( GDALRWFlag eRWFlag,
                   "(%d,%d) of size %dx%d on raster of %dx%d.\n",
                   nXOff, nYOff, nXSize, nYSize, nRasterXSize, nRasterYSize );
         return CE_Failure;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Some size values are "noop".  Lets just return to avoid         */
+/*      stressing lower level functions.                                */
+/* -------------------------------------------------------------------- */
+    if( nXSize < 1 || nYSize < 1 || nBufXSize < 1 || nBufYSize < 1 )
+    {
+        CPLDebug( "GDAL", 
+                  "RasterIO() skipped for odd window or buffer size.\n"
+                  "  Window = (%d,%d)x%dx%d\n"
+                  "  Buffer = %dx%d\n",
+                  nXOff, nYOff, nXSize, nYSize, 
+                  nBufXSize, nBufYSize );
+
+        return CE_None;
     }
     
 /* -------------------------------------------------------------------- */
@@ -823,4 +842,463 @@ GDALAccess GDALRasterBand::GetAccess()
 
 {
     return eAccess;
+}
+
+/************************************************************************/
+/*                          GetCategoryNames()                          */
+/************************************************************************/
+
+/**
+ * Fetch the list of category names for this raster.
+ *
+ * The return list is a "StringList" in the sense of the CPL functions.
+ * That is a NULL terminated array of strings.  Raster values without 
+ * associated names will have an empty string in the returned list.  The
+ * first entry in the list is for raster values of zero, and so on. 
+ *
+ * The returned stringlist should not be altered or freed by the application.
+ * It may change on the next GDAL call, so please copy it if it is needed
+ * for any period of time. 
+ * 
+ * @return list of names, or NULL if none.
+ */
+
+char **GDALRasterBand::GetCategoryNames()
+
+{
+    return NULL;
+}
+
+/************************************************************************/
+/*                           GetNoDataValue()                           */
+/************************************************************************/
+
+/**
+ * Fetch the no data value for this band.
+ * 
+ * If there is no out of data value, an out of range value will generally
+ * be returned.  The no data value for a band is generally a special marker
+ * value used to mark pixels that are not valid data.  Such pixels should
+ * generally not be displayed, nor contribute to analysis operations.
+ *
+ * @param pbSuccess pointer to a boolean to use to indicate if a value
+ * is actually associated with this layer.  May be NULL (default).
+ *
+ * @return the nodata value for this band.
+ */
+
+double GDALRasterBand::GetNoDataValue( int *pbSuccess )
+
+{
+    if( pbSuccess != NULL )
+        *pbSuccess = FALSE;
+    
+    return -1e10;
+}
+
+/************************************************************************/
+/*                             GetMaximum()                             */
+/************************************************************************/
+
+/**
+ * Fetch the maximum value for this band.
+ * 
+ * For file formats that don't know this intrinsically, the maximum supported
+ * value for the data type will generally be returned.  
+ *
+ * @param pbSuccess pointer to a boolean to use to indicate if the
+ * returned value is a tight maximum or not.  May be NULL (default).
+ *
+ * @return the maximum raster value (excluding no data pixels)
+ */
+
+double GDALRasterBand::GetMaximum( int *pbSuccess )
+
+{
+    if( pbSuccess != NULL )
+        *pbSuccess = FALSE;
+
+    switch( eDataType )
+    {
+      case GDT_Byte:
+        return 255;
+
+      case GDT_UInt16:
+        return 65535;
+
+      case GDT_Int16:
+        return 32767;
+
+      case GDT_Int32:
+        return 2147483647.0;
+
+      case GDT_UInt32:
+        return 4294967295.0;
+
+      case GDT_Float32:
+        return 4294967295.0; /* not actually accurate */
+
+      case GDT_Float64:
+        return 4294967295.0; /* not actually accurate */
+
+      default:
+        return 4294967295.0; /* not actually accurate */
+    }
+}
+
+/************************************************************************/
+/*                             GetMinimum()                             */
+/************************************************************************/
+
+/**
+ * Fetch the minimum value for this band.
+ * 
+ * For file formats that don't know this intrinsically, the minimum supported
+ * value for the data type will generally be returned.  
+ *
+ * @param pbSuccess pointer to a boolean to use to indicate if the
+ * returned value is a tight minimum or not.  May be NULL (default).
+ *
+ * @return the minimum raster value (excluding no data pixels)
+ */
+
+double GDALRasterBand::GetMinimum( int *pbSuccess )
+
+{
+    if( pbSuccess != NULL )
+        *pbSuccess = FALSE;
+
+    switch( eDataType )
+    {
+      case GDT_Byte:
+        return 0;
+
+      case GDT_UInt16:
+        return 0;
+
+      case GDT_Int16:
+        return -32768;
+
+      case GDT_Int32:
+        return -2147483648.0;
+
+      case GDT_UInt32:
+        return 0;
+
+      case GDT_Float32:
+        return -4294967295.0; /* not actually accurate */
+
+      case GDT_Float64:
+        return -4294967295.0; /* not actually accurate */
+
+      default:
+        return -4294967295.0; /* not actually accurate */
+    }
+}
+
+/************************************************************************/
+/*                       GetColorInterpretation()                       */
+/************************************************************************/
+
+/**
+ * How should this band be interpreted as color?
+ *
+ * CV_Undefined is returned when the format doesn't know anything
+ * about the color interpretation. 
+ *
+ * This method is the same as the C function 
+ * GDALGetRasterColorInterpretation().
+ *
+ * @return color interpretation value for band.
+ */
+
+GDALColorInterp GDALRasterBand::GetColorInterpretation()
+
+{
+    return GCI_Undefined;
+}
+
+/************************************************************************/
+/*                  GDALGetRasterColorInterpretation()                  */
+/************************************************************************/
+
+GDALColorInterp GDALGetRasterColorInterpretation( GDALRasterBandH hBand )
+
+{
+    return ((GDALRasterBand *) hBand)->GetColorInterpretation();
+}
+
+/************************************************************************/
+/*                           GetColorTable()                            */
+/************************************************************************/
+
+/**
+ * Fetch the color table associated with band.
+ *
+ * If there is no associated color table, the return result is NULL.  The
+ * returned color table remains owned by the GDALRasterBand, and can't
+ * be depended on for long, nor should it ever be modified by the caller.
+ *
+ * This method is the same as the C function GDALGetRasterColorTable().
+ *
+ * @return internal color table, or NULL.
+ */
+
+GDALColorTable *GDALRasterBand::GetColorTable()
+
+{
+    return NULL;
+}
+
+/************************************************************************/
+/*                      GDALGetRasterColorTable()                       */
+/************************************************************************/
+
+GDALColorTableH GDALGetRasterColorTable( GDALRasterBandH hBand )
+
+{
+    return (GDALColorTableH) ((GDALRasterBand *) hBand)->GetColorTable();
+}
+
+/************************************************************************/
+/*                       HasArbitraryOverviews()                        */
+/************************************************************************/
+
+/**
+ * Check for arbitrary overviews.
+ *
+ * This returns TRUE if the underlying datastore can compute arbitrary 
+ * overviews efficiently, such as is the case with OGDI over a network. 
+ * Datastores with arbitrary overviews don't generally have any fixed
+ * overviews, but the RasterIO() method can be used in downsampling mode
+ * to get overview data efficiently.
+ *
+ * @return TRUE if arbitrary overviews available (efficiently), otherwise
+ * FALSE. 
+ */
+
+int GDALRasterBand::HasArbitraryOverviews()
+
+{
+    return FALSE;
+}
+
+/************************************************************************/
+/*                          GetOverviewCount()                          */
+/************************************************************************/
+
+/**
+ * Return the number of overview layers available.
+ *
+ * This method is the same as the C function GDALGetOverviewCount();
+ *
+ * @return overview count, zero if none.
+ */
+
+int GDALRasterBand::GetOverviewCount()
+
+{
+    return 0;
+}
+
+/************************************************************************/
+/*                        GDALGetOverviewCount()                        */
+/************************************************************************/
+
+int GDALGetOverviewCount( GDALRasterBandH hBand )
+
+{
+    return ((GDALRasterBand *) hBand)->GetOverviewCount();
+}
+
+
+/************************************************************************/
+/*                            GetOverview()                             */
+/************************************************************************/
+
+/**
+ * Fetch overview raster band object.
+ *
+ * This function is the same as the C function GDALGetOverview().
+ * 
+ * @param i overview index between 0 and GetOverviewCount()-1.
+ * 
+ * @return overview GDALRasterBand.
+ */
+
+GDALRasterBand * GDALRasterBand::GetOverview( int i )
+
+{
+    (void) i;
+
+    return NULL;
+}
+
+/************************************************************************/
+/*                          GDALGetOverview()                           */
+/************************************************************************/
+
+GDALRasterBandH GDALGetOverview( GDALRasterBandH hBand, int i )
+
+{
+    return (GDALRasterBandH) ((GDALRasterBand *) hBand)->GetOverview(i);
+}
+
+
+/************************************************************************/
+/*                             GetOffset()                              */
+/************************************************************************/
+
+/**
+ * Fetch the raster value offset.
+ *
+ * This value (in combination with the GetScale() value) is used to
+ * transform raw pixel values into the units returned by GetUnits().  
+ * For example this might be used to store elevations in GUInt16 bands
+ * with a precision of 0.1, and starting from -100. 
+ * 
+ * Units value = (raw value * scale) + offset
+ * 
+ * For file formats that don't know this intrinsically a value of zero
+ * is returned. 
+ *
+ * @param pbSuccess pointer to a boolean to use to indicate if the
+ * returned value is meaningful or not.  May be NULL (default).
+ *
+ * @return the raster offset.
+ */
+
+double GDALRasterBand::GetOffset( int *pbSuccess )
+
+{
+    if( pbSuccess != NULL )
+        *pbSuccess = FALSE;
+
+    return 0.0;
+}
+
+/************************************************************************/
+/*                              GetScale()                              */
+/************************************************************************/
+
+/**
+ * Fetch the raster value scale.
+ *
+ * This value (in combination with the GetOffset() value) is used to
+ * transform raw pixel values into the units returned by GetUnits().  
+ * For example this might be used to store elevations in GUInt16 bands
+ * with a precision of 0.1, and starting from -100. 
+ * 
+ * Units value = (raw value * scale) + offset
+ * 
+ * For file formats that don't know this intrinsically a value of one
+ * is returned. 
+ *
+ * @param pbSuccess pointer to a boolean to use to indicate if the
+ * returned value is meaningful or not.  May be NULL (default).
+ *
+ * @return the raster scale.
+ */
+
+double GDALRasterBand::GetScale( int *pbSuccess )
+
+{
+    if( pbSuccess != NULL )
+        *pbSuccess = FALSE;
+
+    return 1.0;
+}
+
+/************************************************************************/
+/*                           GetDescription()                           */
+/************************************************************************/
+
+/**
+ * Return a description of this band.
+ *
+ * @return internal description string, or "" if none is available.
+ */
+
+const char *GDALRasterBand::GetDescription()
+
+{
+    return "";
+}
+
+
+/************************************************************************/
+/*                            GetUnitType()                             */
+/************************************************************************/
+
+/**
+ * Return raster unit type.
+ *
+ * Return a name for the units of this raster's values.  For instance, it
+ * might be "m" for an elevation model in meters.  If no units are available,
+ * a value of "" will be returned.  The returned string should not be
+ * modified, nor freed by the calling application.
+ *
+ * @return unit name string.
+ */
+
+const char *GDALRasterBand::GetUnitType()
+
+{
+    return "";
+}
+
+/************************************************************************/
+/*                              GetXSize()                              */
+/************************************************************************/
+
+/**
+ * Fetch XSize of raster. 
+ *
+ * This method is the same as the C function GDALGetRasterBandXSize(). 
+ *
+ * @return the width in pixels of this band.
+ */
+
+int GDALRasterBand::GetXSize()
+
+{
+    return nRasterXSize;
+}
+
+/************************************************************************/
+/*                       GDALGetRasterBandXSize()                       */
+/************************************************************************/
+
+int GDALGetRasterBandXSize( GDALRasterBandH hBand )
+
+{
+    return ((GDALRasterBand *) hBand)->GetXSize();
+}
+
+/************************************************************************/
+/*                              GetYSize()                              */
+/************************************************************************/
+
+/**
+ * Fetch YSize of raster. 
+ *
+ * This method is the same as the C function GDALGetRasterBandYSize(). 
+ *
+ * @return the height in pixels of this band.
+ */
+
+int GDALRasterBand::GetYSize()
+
+{
+    return nRasterYSize;
+}
+
+/************************************************************************/
+/*                       GDALGetRasterBandYSize()                       */
+/************************************************************************/
+
+int GDALGetRasterBandYSize( GDALRasterBandH hBand )
+
+{
+    return ((GDALRasterBand *) hBand)->GetYSize();
 }
