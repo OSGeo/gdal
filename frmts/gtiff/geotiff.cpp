@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.79  2002/12/09 16:09:52  warmerda
+ * ensure parent extender is invoked
+ *
  * Revision 1.78  2002/12/05 19:05:29  warmerda
  * Fixed recent bug with geotiff projection.
  *
@@ -3058,6 +3061,9 @@ static void GTiffTagExtender(TIFF *tif)
         { TIFFTAG_GDAL_METADATA,	-1,-1, TIFF_ASCII,	FIELD_CUSTOM,
           TRUE,	FALSE,	"GDALMetadata" }
     };
+
+    if (_ParentExtender) 
+        (*_ParentExtender)(tif);
 
     TIFFMergeFieldInfo(tif, xtiffFieldInfo, 1);
 }
