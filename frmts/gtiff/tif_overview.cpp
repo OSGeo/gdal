@@ -48,6 +48,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/02/11 18:37:43  warmerda
+ * Removed debugging malloc stuff.
+ *
  * Revision 1.1  1999/02/11 18:12:30  warmerda
  * New
  *
@@ -361,7 +364,6 @@ void TIFF_BuildOverviews( const char * pszTIFFFilename,
                 /*
                  * Perform the downsampling.
                  */
-                malloc_chain_check(1);
                 TIFF_DownSample( pabySrcTile, nBlockXSize, nBlockYSize,
                                  nBitsPerPixel,
                                  pabyOTile,
@@ -369,7 +371,6 @@ void TIFF_BuildOverviews( const char * pszTIFFFilename,
                                  poRBI->GetBlockYSize(),
                                  nTXOff, nTYOff,
                                  nOMult );
-                malloc_chain_check(1);
             }
         }
     }
