@@ -9,6 +9,7 @@ PY_INST_DIR = $(GDAL_HOME)\pymod
 LIBDIR = $(GDAL_HOME)\lib
 INCDIR = $(GDAL_HOME)\include
 DATADIR = $(GDAL_HOME)\data
+HTMLDIR = $(GDAL_HOME)\html
 
 # Set this to the installed directory containing python.  If you don't
 # have python just let it point to a directory that does not exist (as now). 
@@ -180,5 +181,16 @@ EXTERNAL_LIBS =	$(OGDILIB) $(XERCES_LIB) $(OCI_LIB) $(PG_LIB) $(ODBCLIB) \
 
 .cpp.obj:	
 	$(CC) $(CFLAGS) /c $*.cpp
+
+
+
+
+
+
+
+
+
+
+
 
 
