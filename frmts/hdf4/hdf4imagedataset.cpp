@@ -29,6 +29,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.32  2003/10/25 10:34:39  dron
+ * Disable GCP collecting for MODIS_L1B datasets.
+ *
  * Revision 1.31  2003/09/28 05:45:02  dron
  * More logic to distinguish dimesions.
  *
@@ -1114,9 +1117,6 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
     char            szName[VSNAMELENMAX + 1];
     int32	    aiDimSizes[MAX_VAR_DIMS];
     int32           iStart[MAX_NC_DIMS], iEdges[MAX_NC_DIMS];
-    GInt16          iHeightNoData;
-    int             bLatNoDataSet = FALSE, bLongNoDataSet = FALSE;
-    int             bHeightNoDataSet = FALSE;
 
     const char      *pszValue;
 
@@ -1826,10 +1826,15 @@ CleanupAndBreakAsterL2:
 
 /* -------------------------------------------------------------------- */
 /*      Read geolocation points.                                        */
+/*  XXX: disabled. Needs too much memory and generally useless.         */
 /* -------------------------------------------------------------------- */
+#if 0
             float           *pfLat = NULL, *pfLong = NULL;
             GInt16          *piHeight = NULL;
             float           fLatNoData, fLongNoData;
+            GInt16          iHeightNoData;
+            int             bLatNoDataSet = FALSE, bLongNoDataSet = FALSE;
+            int             bHeightNoDataSet = FALSE;
 
             nXPoints = nYPoints = 0;
             for ( i = 0; i < poDS->nDatasets; i++ )
@@ -2017,6 +2022,7 @@ CleanupAndBreakAsterL2:
                 CPLFree( pfLong );
             if ( piHeight )
                 CPLFree( piHeight );
+#endif
         }
         break;
 
