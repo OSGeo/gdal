@@ -201,6 +201,9 @@ supportive, answering a variety of questions.<p>
 a number of questions, and collected a variety of very useful information.
 <p>
 
+<li> Rodney Jenson, for a detailed bug report related to repeating variable
+length fields (from S-57).<p>
+
 </ul>
 
 I would also like to dedicate this library to the memory of Sol Katz.  
