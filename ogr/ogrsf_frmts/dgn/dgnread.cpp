@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2000/12/14 17:10:57  warmerda
+ * implemented TCB, Ellipse, TEXT
+ *
  * Revision 1.1  2000/11/28 19:03:47  warmerda
  * New
  *
@@ -50,6 +53,12 @@ DGNElemCore *DGNReadElement( DGNHandle hDGN )
 /*      count.                                                          */
 /* -------------------------------------------------------------------- */
     int		nType, nWords, nLevel;
+
+#ifdef DGN_DEBUG
+    GUInt32     nOffset;
+
+    nOffset = VSIFTell( psDGN->fp );
+#endif
 
     if( VSIFRead( psDGN->abyElem, 1, 4, psDGN->fp ) != 4 )
         return NULL;
@@ -80,13 +89,16 @@ DGNElemCore *DGNReadElement( DGNHandle hDGN )
           psLine = (DGNElemMultiPoint *) 
               CPLCalloc(sizeof(DGNElemMultiPoint),1);
           psElement = (DGNElemCore *) psLine;
+          psElement->stype = DGNST_MULTIPOINT;
           DGNParseCore( psDGN, psElement );
 
           psLine->num_vertices = 2;
           psLine->vertices[0].x = DGN_INT32( psDGN->abyElem + 36 );
           psLine->vertices[0].y = DGN_INT32( psDGN->abyElem + 40 );
+          DGNTransformPoint( psDGN, psLine->vertices + 0 );
           psLine->vertices[1].x = DGN_INT32( psDGN->abyElem + 44 );
           psLine->vertices[1].y = DGN_INT32( psDGN->abyElem + 48 );
+          DGNTransformPoint( psDGN, psLine->vertices + 1 );
       }
       break;
 
@@ -102,13 +114,24 @@ DGNElemCore *DGNReadElement( DGNHandle hDGN )
           psLine = (DGNElemMultiPoint *) 
              CPLCalloc(sizeof(DGNElemMultiPoint)+(count-2)*sizeof(DGNPoint),1);
           psElement = (DGNElemCore *) psLine;
+          psElement->stype = DGNST_MULTIPOINT;
           DGNParseCore( psDGN, psElement );
 
+          if( psDGN->nElemBytes < 38 + count * 8 )
+          {
+              CPLError( CE_Warning, CPLE_AppDefined, 
+                        "Trimming multipoint vertices to %d from %d because\n"
+                        "element is short.\n", 
+                        (psDGN->nElemBytes - 38) / 8,
+                        count );
+              count = (psDGN->nElemBytes - 38) / 8;
+          }
           psLine->num_vertices = count;
           for( i = 0; i < psLine->num_vertices; i++ )
           {
               psLine->vertices[i].x = DGN_INT32( psDGN->abyElem + 38 + i*8 );
               psLine->vertices[i].y = DGN_INT32( psDGN->abyElem + 42 + i*8 );
+              DGNTransformPoint( psDGN, psLine->vertices + i );
           }
       }
       break;
@@ -121,6 +144,7 @@ DGNElemCore *DGNReadElement( DGNHandle hDGN )
             psColorTable = (DGNElemColorTable *) 
                 CPLCalloc(sizeof(DGNElemColorTable),1);
             psElement = (DGNElemCore *) psColorTable;
+            psElement->stype = DGNST_COLORTABLE;
 
             DGNParseCore( psDGN, psElement );
 
@@ -132,17 +156,127 @@ DGNElemCore *DGNReadElement( DGNHandle hDGN )
         else
         {
             psElement = (DGNElemCore *) CPLCalloc(sizeof(DGNElemCore),1);
+            psElement->stype = DGNST_CORE;
             DGNParseCore( psDGN, psElement );
         }
         break;
 
+      case DGNT_ELLIPSE:
+      {
+          DGNElemEllipse *psEllipse;
+
+          psEllipse = (DGNElemEllipse *) CPLCalloc(sizeof(DGNElemEllipse),1);
+          psElement = (DGNElemCore *) psEllipse;
+          psElement->stype = DGNST_ELLIPSE;
+          DGNParseCore( psDGN, psElement );
+
+          memcpy( &(psEllipse->primary_axis), psDGN->abyElem + 36, 8 );
+          DGN2IEEEDouble( &(psEllipse->primary_axis) );
+          psEllipse->primary_axis *= psDGN->scale;
+
+          memcpy( &(psEllipse->secondary_axis), psDGN->abyElem + 44, 8 );
+          DGN2IEEEDouble( &(psEllipse->secondary_axis) );
+          psEllipse->secondary_axis *= psDGN->scale;
+          
+          psEllipse->rotation = DGN_INT32( psDGN->abyElem + 52 );
+          psEllipse->rotation = psEllipse->rotation / 360000.0;
+          
+          memcpy( &(psEllipse->origin.x), psDGN->abyElem + 56, 8 );
+          DGN2IEEEDouble( &(psEllipse->origin.x) );
+
+          memcpy( &(psEllipse->origin.y), psDGN->abyElem + 64, 8 );
+          DGN2IEEEDouble( &(psEllipse->origin.y) );
+
+          DGNTransformPoint( psDGN, &(psEllipse->origin) );
+      }
+      break;
+
+      case DGNT_TEXT:
+      {
+          DGNElemText *psText;
+          int	      num_chars;
+
+          num_chars = psDGN->abyElem[58];
+
+          psText = (DGNElemText *) CPLCalloc(sizeof(DGNElemText)+num_chars,1);
+          psElement = (DGNElemCore *) psText;
+          psElement->stype = DGNST_TEXT;
+          DGNParseCore( psDGN, psElement );
+
+          psText->font_id = psDGN->abyElem[36];
+          psText->justification = psDGN->abyElem[37];
+          psText->length_mult = DGN_INT32( psDGN->abyElem + 38 );
+          psText->height_mult = DGN_INT32( psDGN->abyElem + 42 );
+
+          psText->rotation = DGN_INT32( psDGN->abyElem + 46 );
+          psText->rotation = psText->rotation / 360000.0;
+
+          psText->origin.x = DGN_INT32( psDGN->abyElem + 50 );
+          psText->origin.y = DGN_INT32( psDGN->abyElem + 54 );
+          DGNTransformPoint( psDGN, &(psText->origin) );
+
+          memcpy( psText->string, psDGN->abyElem + 60, num_chars );
+          psText->string[num_chars] = '\0';
+      }
+      break;
+
+      case DGNT_TCB:
+      {
+          DGNElemTCB *psTCB;
+
+          psTCB = (DGNElemTCB *) CPLCalloc(sizeof(DGNElemTCB),1);
+          psElement = (DGNElemCore *) psTCB;
+          psElement->stype = DGNST_TCB;
+          DGNParseCore( psDGN, psElement );
+
+          if( psDGN->abyElem[1214] & 0x40 )
+              psTCB->dimension = 3;
+          else
+              psTCB->dimension = 2;
+          
+          psTCB->subunits_per_master = DGN_INT32( psDGN->abyElem + 1112 );
+
+          psTCB->master_units[0] = (char) psDGN->abyElem[1120];
+          psTCB->master_units[1] = (char) psDGN->abyElem[1121];
+          psTCB->master_units[2] = '\0';
+
+          psTCB->uor_per_subunit = DGN_INT32( psDGN->abyElem + 1116 );
+
+          psTCB->sub_units[0] = (char) psDGN->abyElem[1122];
+          psTCB->sub_units[1] = (char) psDGN->abyElem[1123];
+          psTCB->sub_units[2] = '\0';
+
+          /* NOTDEF: Add origin extraction later */
+          if( !psDGN->got_tcb )
+          {
+              psDGN->got_tcb = TRUE;
+              psDGN->dimension = psTCB->dimension;
+              psDGN->origin_x = psTCB->origin_x;
+              psDGN->origin_y = psTCB->origin_y;
+              psDGN->origin_z = psTCB->origin_z;
+
+              if( psTCB->uor_per_subunit != 0
+                  && psTCB->subunits_per_master != 0 )
+                  psDGN->scale = 1.0 
+                      / (psTCB->uor_per_subunit * psTCB->subunits_per_master);
+          }
+          
+      }
+      break;
+
       default:
       {
           psElement = (DGNElemCore *) CPLCalloc(sizeof(DGNElemCore),1);
+          psElement->stype = DGNST_CORE;
           DGNParseCore( psDGN, psElement );
       }
       break;
     }
+
+#ifdef DGN_DEBUG
+    psElement->offset = nOffset;
+    psElement->size = psDGN->nElemBytes;
+#endif
 
     return psElement;
 }
@@ -208,10 +342,16 @@ void DGNDumpElement( DGNHandle hDGN, DGNElemCore *psElement, FILE *fp )
     fprintf( fp, "Element:%-12s Level:%2d ",
              DGNTypeToName( psElement->type ),
              psElement->level );
+
     if( psElement->complex )
         fprintf( fp, "(Complex) " );
 
     fprintf( fp, "\n" );
+
+#ifdef DGN_DEBUG
+    fprintf( fp, "  offset=%d  size=%d bytes\n", 
+             psElement->offset, psElement->size );
+#endif    
 
     fprintf( fp, 
              "  graphic_group:%-3d properties:%04x color:%d weight:%d style:%d\n", 
@@ -221,42 +361,87 @@ void DGNDumpElement( DGNHandle hDGN, DGNElemCore *psElement, FILE *fp )
              psElement->weight,
              psElement->style );
 
-    switch( psElement->type )
+    switch( psElement->stype )
     {
-      case DGNT_LINE:
-      case DGNT_LINE_STRING:
-      case DGNT_SHAPE:
-      case DGNT_CURVE:
-      case DGNT_BSPLINE:
+      case DGNST_MULTIPOINT:
       {
           DGNElemMultiPoint	*psLine = (DGNElemMultiPoint *) psElement;
           int			i;
           
           for( i=0; i < psLine->num_vertices; i++ )
-              fprintf( fp, "  (%g,%g,%g)\n", 
+              fprintf( fp, "  (%.6f,%.6f,%.6f)\n", 
                        psLine->vertices[i].x, 
                        psLine->vertices[i].y, 
                        psLine->vertices[i].z );
       }
       break;
 
-      case DGNT_GROUP_DATA:
-        if( psElement->level == DGN_GDL_COLOR_TABLE )
-        {
-            DGNElemColorTable *psCT = (DGNElemColorTable *) psElement;
-            int			i;
+      case DGNST_ELLIPSE:
+      {
+          DGNElemEllipse	*psEllipse = (DGNElemEllipse *) psElement;
 
-            fprintf( fp, "  screen_flag: %d\n", psCT->screen_flag );
-            for( i = 0; i < 256; i++ )
-            {
-                fprintf( fp, "  %3d: (%3d,%3d,%3d)\n",
-                         i, 
-                         psCT->color_info[i][0], 
-                         psCT->color_info[i][1], 
-                         psCT->color_info[i][2] );
-            }
-        }
-        break;
+          fprintf( fp, 
+                   "  origin=(%.5f,%.5f), rotation=%f\n"
+                   "  axes=(%.5f,%.5f)\n", 
+                   psEllipse->origin.x, 
+                   psEllipse->origin.y, 
+                   psEllipse->rotation,
+                   psEllipse->primary_axis,
+                   psEllipse->secondary_axis );
+      }
+      break;
+
+      case DGNST_TEXT:
+      {
+          DGNElemText	*psText = (DGNElemText *) psElement;
+
+          fprintf( fp, 
+                   "  origin=(%.5f,%.5f), rotation=%f\n"
+                   "  font=%d, just=%d, length_mult=%ld, height_mult=%ld\n"
+                   "  string = \"%s\"\n",
+                   psText->origin.x, 
+                   psText->origin.y, 
+                   psText->rotation,
+                   psText->font_id,
+                   psText->justification,
+                   psText->length_mult,
+                   psText->height_mult,
+                   psText->string );
+      }
+      break;
+
+      case DGNST_COLORTABLE:
+      {
+          DGNElemColorTable *psCT = (DGNElemColorTable *) psElement;
+          int			i;
+
+          fprintf( fp, "  screen_flag: %d\n", psCT->screen_flag );
+          for( i = 0; i < 256; i++ )
+          {
+              fprintf( fp, "  %3d: (%3d,%3d,%3d)\n",
+                       i, 
+                       psCT->color_info[i][0], 
+                       psCT->color_info[i][1], 
+                       psCT->color_info[i][2] );
+          }
+      }
+      break;
+
+      case DGNST_TCB:
+      {
+          DGNElemTCB *psTCB = (DGNElemTCB *) psElement;
+
+          fprintf( fp, "  dimension = %d\n", psTCB->dimension );
+          fprintf( fp, "  uor_per_subunit = %ld, subunits = `%s'\n",
+                   psTCB->uor_per_subunit, psTCB->sub_units );
+          fprintf( fp, "  subunits_per_master = %ld, master units = `%s'\n",
+                   psTCB->subunits_per_master, psTCB->master_units );
+          fprintf( fp, "  origin = (%.5f,%.5f,%.5f)\n", 
+                   psTCB->origin_x,
+                   psTCB->origin_y,
+                   psTCB->origin_z );
+      }
+      break;
 
       default:
         break;
@@ -329,4 +514,16 @@ const char *DGNTypeToName( int nType )
         sprintf( szNumericResult, "%d", nType );
         return szNumericResult;
     }
+}
+
+/************************************************************************/
+/*                         DGNTransformPoint()                          */
+/************************************************************************/
+
+void DGNTransformPoint( DGNInfo *psDGN, DGNPoint *psPoint )
+
+{
+    psPoint->x = psPoint->x * psDGN->scale + psDGN->origin_x;
+    psPoint->y = psPoint->y * psDGN->scale + psDGN->origin_y;
+    psPoint->z = psPoint->z * psDGN->scale + psDGN->origin_z;
 }

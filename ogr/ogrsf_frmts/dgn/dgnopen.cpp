@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2000/12/14 17:10:57  warmerda
+ * implemented TCB, Ellipse, TEXT
+ *
  * Revision 1.1  2000/11/28 19:03:47  warmerda
  * New
  *
@@ -63,6 +66,13 @@ DGNHandle DGNOpen( const char * pszFilename )
     psDGN->fp = fp;
     psDGN->nElementOffset = 0;
 
+    psDGN->got_tcb = FALSE;
+    psDGN->dimension = 2;
+    psDGN->scale = 1.0;
+    psDGN->origin_x = 0.0;
+    psDGN->origin_y = 0.0;
+    psDGN->origin_z = 0.0;
+
     return (DGNHandle) psDGN;
 }
 
@@ -78,3 +88,4 @@ void DGNClose( DGNHandle hDGN )
     VSIFClose( psDGN->fp );
     CPLFree( psDGN );
 }
+

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2000/12/14 17:10:57  warmerda
+ * implemented TCB, Ellipse, TEXT
+ *
  * Revision 1.1  2000/11/28 19:03:47  warmerda
  * New
  *
@@ -39,6 +42,8 @@
 #include "cpl_conv.h"
 
 CPL_C_START
+
+#define DGN_DEBUG
 
 /**
  * \file dgnlib.h
@@ -59,6 +64,12 @@ typedef struct {
 /** Core element structure. */
 
 typedef struct {
+#ifdef DGN_DEBUG
+    GUInt32     offset;
+    GUInt32     size;
+#endif
+
+    int         stype;          /** Structure type: (DGNST_*) */
     int		level;		/** Element Level: 0-63 */
     int		type;		/** Element type (DGNT_) */
     int		complex;	/** Is element complex? */
@@ -73,6 +84,8 @@ typedef struct {
 /** 
  * Multipoint element 
  *
+ * The core.stype code is DGNST_MULTIPOINT.
+ *
  * Used for: DGNT_LINE(3), DGNT_LINE_STRING(4), DGNT_SHAPE(6), DGNT_CURVE(11),
  * DGNT_BSPLINE(21)
  */
@@ -86,7 +99,52 @@ typedef struct {
 } DGNElemMultiPoint;    
 
 /** 
+ * Ellipse element 
+ *
+ * The core.stype code is DGNST_ELLIPSE.
+ *
+ * Used for: DGNT_ELLIPSE(15).
+ */
+
+typedef struct {
+  DGNElemCore 	core;
+
+  DGNPoint	origin;		/** Origin of ellipse */
+
+  double	primary_axis;	/** Primary axis length */
+  double        secondary_axis; /** Secondary axis length */
+
+  double	rotation;       /** Counterclockwise rotation in degrees */
+  long          quat[4];
+
+} DGNElemEllipse;
+
+/** 
+ * Text element 
+ *
+ * The core.stype code is DGNST_TEXT.
+ *
+ * NOTE: Currently we are not capturing the "editable fields" information.
+ *
+ * Used for: DGNT_TEXT(17).
+ */
+
+typedef struct {
+    DGNElemCore core;
+    
+    int		font_id;
+    int		justification;
+    long        length_mult;
+    long        height_mult;
+    double	rotation;
+    DGNPoint	origin;
+    char	string[1];
+} DGNElemText;
+
+/** 
  * Color table.
+ *
+ * The core.stype code is DGNST_COLORTABLE.
  *
  * Returned for DGNT_GROUP_DATA(5) elements, with a level number of 
  * DGN_GDL_COLOR_TABLE(1).
@@ -98,6 +156,40 @@ typedef struct {
   int           screen_flag;
   GByte         color_info[256][3];
 } DGNElemColorTable;
+
+/** 
+ * Terminal Control Block (header).
+ *
+ * The core.stype code is DGNST_TCB.
+ *
+ * Returned for DGNT_TCB(9).
+ */
+
+typedef struct {
+    DGNElemCore core;
+
+    int		dimension;
+
+    double	origin_x;
+    double      origin_y;
+    double      origin_z;
+    
+    long	uor_per_subunit;
+    char	sub_units[3];
+    long        subunits_per_master;
+    char        master_units[3];
+
+} DGNElemTCB;
+
+/* -------------------------------------------------------------------- */
+/*      Structure types                                                 */
+/* -------------------------------------------------------------------- */
+#define DGNST_CORE		   1
+#define DGNST_MULTIPOINT	   2
+#define DGNST_COLORTABLE           3
+#define DGNST_TCB                  4
+#define DGNST_ELLIPSE              5
+#define DGNST_TEXT                 6
 
 /* -------------------------------------------------------------------- */
 /*      Element types                                                   */

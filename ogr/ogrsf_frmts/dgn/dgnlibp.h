@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2000/12/14 17:10:57  warmerda
+ * implemented TCB, Ellipse, TEXT
+ *
  * Revision 1.1  2000/11/28 19:03:47  warmerda
  * New
  *
@@ -45,6 +48,13 @@ typedef struct {
 
     int         nElemBytes;
     GByte	abyElem[65540];
+
+    int         got_tcb;
+    int         dimension;
+    double	scale;
+    double	origin_x;
+    double	origin_y;
+    double	origin_z;
 } DGNInfo;
 
 #define DGN_INT32( p )	((p)[2] \
@@ -53,5 +63,7 @@ typedef struct {
                         + (p)[0]*65536)
 
 int DGNParseCore( DGNInfo *, DGNElemCore * );
+void DGNTransformPoint( DGNInfo *, DGNPoint * );
+void DGN2IEEEDouble( void * );
 
 #endif /* ndef _DGNLIBP_H_INCLUDED */
