@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2003/10/29 17:47:38  warmerda
+ * Added FIDcolumn (based on primary key) support
+ *
  * Revision 1.1  2003/09/25 17:08:37  warmerda
  * New
  *
@@ -126,6 +129,8 @@ class OGRODBCTableLayer : public OGRODBCLayer
     virtual OGRErr      CreateField( OGRFieldDefn *poField,
                                      int bApproxOK = TRUE );
 #endif    
+    virtual OGRFeature *GetFeature( long nFeatureId );
+    
     virtual OGRSpatialReference *GetSpatialRef();
 
     virtual int         TestCapability( const char * );
