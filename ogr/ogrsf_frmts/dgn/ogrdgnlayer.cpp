@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2001/11/09 18:14:36  warmerda
+ * added size info for LABELs
+ *
  * Revision 1.10  2001/11/09 15:59:23  warmerda
  * set style information for text, drop _gv_ogrfs
  *
@@ -306,20 +309,29 @@ OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement )
           poFeature->SetGeometryDirectly( poPoint );
 
           pszOgrFS = (char *) CPLMalloc(strlen(psText->string) + 150);
+
+          // setup the basic label.
+          sprintf( pszOgrFS, "LABEL(t:\"%s\"",  psText->string );
+
+          // set the color if we have it. 
           if( DGNLookupColor( hDGN, psElement->color, 
                               &gv_red, &gv_green, &gv_blue ) )
-          {
-              sprintf( pszOgrFS, 
-                       "LABEL(t:\"%s\",c:#%02x%02x%02x)", 
-                       psText->string,
+              sprintf( pszOgrFS+strlen(pszOgrFS), 
+                       ",c:#%02x%02x%02x", 
                        gv_red, gv_green, gv_blue );
-          }
+
+          // Add the size info in ground units.
+          if( ABS(psText->height_mult) >= 6.0 )
+              sprintf( pszOgrFS+strlen(pszOgrFS), ",s:%dg", 
+                       (int) psText->height_mult );
+          else if( ABS(psText->height_mult) > 0.1 )
+              sprintf( pszOgrFS+strlen(pszOgrFS), ",s:%.3fg", 
+                       psText->height_mult );
           else
-          {
-              sprintf( pszOgrFS, 
-                       "LABEL(t:\"%s\")", 
-                       psText->string );
-          }
+              sprintf( pszOgrFS+strlen(pszOgrFS), ",s:%.12f", 
+                       psText->height_mult );
+
+          strcat( pszOgrFS, ")" );
 
           poFeature->SetStyleString( pszOgrFS );
           CPLFree( pszOgrFS );
