@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2001/08/27 19:09:00  warmerda
+ * added GetInstanceData() method on DDFField
+ *
  * Revision 1.12  2001/07/18 04:51:57  warmerda
  * added CPL_CVSID
  *
@@ -289,3 +292,67 @@ int DDFField::GetRepeatCount()
     }
 }
 
+/************************************************************************/
+/*                          GetInstanceData()                           */
+/************************************************************************/
+
+/**
+ * Get field instance data and size.
+ *
+ * The returned data pointer and size values are suitable for use with
+ * DDFRecord::SetFieldRaw(). 
+ *
+ * @param nInstance a value from 0 to GetRepeatCount()-1.  
+ * @param pnInstanceSize a location to put the size (in bytes) of the
+ * field instance data returned.  This size will include the unit terminator
+ * (if any), but not the field terminator.  This size pointer may be NULL
+ * if not needed.
+ *
+ * @return the data pointer, or NULL on error. 
+ */
+
+const char *DDFField::GetInstanceData( int nInstance, 
+                                       int *pnInstanceSize )
+
+{
+    int	nRepeatCount = GetRepeatCount();
+
+    if( nInstance < 0 || nInstance >= nRepeatCount )
+        return NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Get a pointer to the start of the existing data for this        */
+/*      iteration of the field.                                         */
+/* -------------------------------------------------------------------- */
+    int		nBytesRemaining1, nBytesRemaining2;
+    const char *pachData;
+    DDFSubfieldDefn *poFirstSubfield;
+
+    poFirstSubfield = poDefn->GetSubfield(0);
+
+    pachData = GetSubfieldData(poFirstSubfield, &nBytesRemaining1,
+                               nInstance);
+
+/* -------------------------------------------------------------------- */
+/*      Figure out the size of the entire field instance, including     */
+/*      unit terminators, but not any trailing field terminator.        */
+/* -------------------------------------------------------------------- */
+    if( pnInstanceSize != NULL )
+    {
+        DDFSubfieldDefn *poLastSubfield;
+        int              nLastSubfieldWidth;
+        const char	    *pachLastData;
+        
+        poLastSubfield = poDefn->GetSubfield(poDefn->GetSubfieldCount()-1);
+        
+        pachLastData = GetSubfieldData( poLastSubfield, &nBytesRemaining2, 
+                                        nInstance );
+        poLastSubfield->GetDataLength( pachLastData, nBytesRemaining2, 
+                                       &nLastSubfieldWidth );
+        
+        *pnInstanceSize = 
+            nBytesRemaining1 - (nBytesRemaining2 - nLastSubfieldWidth);
+    }
+
+    return pachData;
+}

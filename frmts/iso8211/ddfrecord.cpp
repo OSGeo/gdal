@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2001/08/27 19:09:00  warmerda
+ * added GetInstanceData() method on DDFField
+ *
  * Revision 1.12  2001/08/24 19:41:19  warmerda
  * fixed cloning problems
  *
@@ -1011,34 +1014,10 @@ DDFRecord::SetFieldRaw( DDFField *poField, int iIndexWithinField,
 /*      Get a pointer to the start of the existing data for this        */
 /*      iteration of the field.                                         */
 /* -------------------------------------------------------------------- */
-    int		nBytesRemaining1, nBytesRemaining2, nInstanceSize;
     const char *pachData;
-    DDFSubfieldDefn *poFirstSubfield;
+    int	        nInstanceSize;
 
-    poFirstSubfield = poField->GetFieldDefn()->GetSubfield(0);
-
-    pachData = 
-        poField->GetSubfieldData(poFirstSubfield, &nBytesRemaining1,
-                                 iIndexWithinField);
-
-/* -------------------------------------------------------------------- */
-/*      Figure out the size of the entire field instance, including     */
-/*      unit terminators, but not any trailing field terminator.        */
-/* -------------------------------------------------------------------- */
-    DDFSubfieldDefn *poLastSubfield;
-    int              nLastSubfieldWidth;
-    const char	    *pachLastData;
-
-    poLastSubfield = poField->GetFieldDefn()->GetSubfield(
-        poField->GetFieldDefn()->GetSubfieldCount()-1);
-    
-    pachLastData = 
-        poField->GetSubfieldData( poLastSubfield, &nBytesRemaining2, 
-                                  iIndexWithinField );
-    poLastSubfield->GetDataLength( pachLastData, nBytesRemaining2, 
-                                   &nLastSubfieldWidth );
-    
-    nInstanceSize = nBytesRemaining1 - (nBytesRemaining2 - nLastSubfieldWidth);
+    pachData = poField->GetInstanceData( iIndexWithinField, &nInstanceSize );
 
 /* -------------------------------------------------------------------- */
 /*      Create new image of this whole field.                           */
