@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.111  2004/04/29 19:58:43  warmerda
+ * export GTIFGetOGISDefn, and GTIFSetFromOGISDefn
+ *
  * Revision 1.110  2004/04/21 14:00:18  warmerda
  * pass GTIF pointer into GTIFGetOGISDefn
  *
@@ -212,9 +215,8 @@
 CPL_CVSID("$Id$");
 
 CPL_C_START
-void	GDALRegister_GTiff(void);
-char *  GTIFGetOGISDefn( GTIF *, GTIFDefn * );
-int     GTIFSetFromOGISDefn( GTIF *, const char * );
+char CPL_DLL *  GTIFGetOGISDefn( GTIF *, GTIFDefn * );
+int  CPL_DLL   GTIFSetFromOGISDefn( GTIF *, const char * );
 const char * GDALDefaultCSVFilename( const char *pszBasename );
 CPL_C_END
 
