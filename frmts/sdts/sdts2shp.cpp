@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  1999/09/03 13:34:12  warmerda
+ * cleanup properly
+ *
  * Revision 1.4  1999/09/03 13:01:16  warmerda
  * rewrote attribute writing to simplify
  *
@@ -195,6 +198,8 @@ int main( int nArgc, char ** papszArgv )
     {
         WritePolygonShapefile( pszShapefile, &oTransfer, pszMODN );
     }
+
+    CPLFree( pszShapefile );
 }    
 #ifdef DBMALLOC
     malloc_dump(1);
@@ -765,7 +770,9 @@ AddPrimaryAttrToDBFSchema( DBFHandle hDBF, SDTSTransfer *poTransfer,
                 break;
             }
         }
-    }    
+        if( !poAttrReader->IsIndexed() )
+            delete poAttrFeature;
+    } /* next module */
 }
 
 /************************************************************************/
