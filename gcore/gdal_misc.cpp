@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.64  2005/03/21 16:11:32  fwarmerdam
+ * Added special case for simple 4 corners, non-rotated case in
+ * GDALGCPsToGeoTransform().
+ *
  * Revision 1.63  2005/02/10 04:30:29  fwarmerdam
  * added support for YCbCr color space
  *
@@ -1684,6 +1688,12 @@ double GDALDecToPackedDMS( double dfDec )
  * Generate Geotransform from GCPs. 
  *
  * Given a set of GCPs perform first order fit as a geotransform. 
+ *
+ * Due to imprecision in the calculations the fit algorithm will often 
+ * return non-zero rotational coefficients even if given perfectly non-rotated
+ * inputs.  A special case has been implemented for corner corner coordinates
+ * given in TL, TR, BR, BL order.  So when using this to get a geotransform
+ * from 4 corner coordinates, pass them in this order. 
  * 
  * @param nGCPCount the number of GCPs being passed in.
  * @param pasGCPs the list of GCP structures. 
@@ -1735,8 +1745,42 @@ int GDALGCPsToGeoTransform( int nGCPCount, const GDAL_GCP *pasGCPs,
     }
 
 /* -------------------------------------------------------------------- */
+/*      Special case of 4 corner coordinates of a non-rotated           */
+/*      image.  The points must be in TL-TR-BR-BL order for now.        */
+/*      This case helps avoid some imprecision in the general           */
+/*      calcuations.                                                    */
+/* -------------------------------------------------------------------- */
+    if( nGCPCount == 4 
+        && pasGCPs[0].dfGCPLine == pasGCPs[1].dfGCPLine
+        && pasGCPs[2].dfGCPLine == pasGCPs[3].dfGCPLine
+        && pasGCPs[0].dfGCPPixel == pasGCPs[3].dfGCPPixel
+        && pasGCPs[1].dfGCPPixel == pasGCPs[2].dfGCPPixel
+        && pasGCPs[0].dfGCPLine != pasGCPs[2].dfGCPLine
+        && pasGCPs[0].dfGCPPixel != pasGCPs[1].dfGCPPixel 
+        && pasGCPs[0].dfGCPY == pasGCPs[1].dfGCPY
+        && pasGCPs[2].dfGCPY == pasGCPs[3].dfGCPY
+        && pasGCPs[0].dfGCPX == pasGCPs[3].dfGCPX
+        && pasGCPs[1].dfGCPX == pasGCPs[2].dfGCPX
+        && pasGCPs[0].dfGCPY != pasGCPs[2].dfGCPY
+        && pasGCPs[0].dfGCPX != pasGCPs[1].dfGCPX )
+    {
+        padfGeoTransform[1] = (pasGCPs[1].dfGCPX - pasGCPs[0].dfGCPX)
+            / (pasGCPs[1].dfGCPPixel - pasGCPs[0].dfGCPPixel);
+        padfGeoTransform[2] = 0.0;
+        padfGeoTransform[4] = 0.0;
+        padfGeoTransform[5] = (pasGCPs[2].dfGCPY - pasGCPs[1].dfGCPY)
+            / (pasGCPs[2].dfGCPLine - pasGCPs[1].dfGCPLine);
+
+        padfGeoTransform[0] = 
+            pasGCPs[0].dfGCPX - pasGCPs[0].dfGCPPixel * padfGeoTransform[1];
+        padfGeoTransform[3] = 
+            pasGCPs[0].dfGCPY - pasGCPs[0].dfGCPLine * padfGeoTransform[5];
+        return TRUE;
+    }
+
+/* -------------------------------------------------------------------- */
 /* In the general case, do a least squares error approximation by       */
-/* solving the equation Sum[(A - B*x + C*y - Lon)^2] = minimum			*/
+/* solving the equation Sum[(A - B*x + C*y - Lon)^2] = minimum		*/
 /* -------------------------------------------------------------------- */
 	
     double sum_x = 0.0, sum_y = 0.0, sum_xy = 0.0, sum_xx = 0.0, sum_yy = 0.0;
