@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.14  2003/02/14 11:26:04  dron
+ * Colour interpretation improved.
+ *
  * Revision 1.13  2003/02/13 21:59:24  dron
  * Fixed problem with cleaning formats before using.
  *
@@ -270,6 +273,7 @@ class JPEG2000RasterBand : public GDALRasterBand
     		~JPEG2000RasterBand();
 		
     virtual CPLErr IReadBlock( int, int, void * );
+    virtual GDALColorInterp GetColorInterpretation();
 };
 
 
@@ -316,13 +320,22 @@ JPEG2000RasterBand::JPEG2000RasterBand( JPEG2000Dataset *poDS, int nBand,
 }
 
 /************************************************************************/
+/*                         ~JPEG2000RasterBand()                        */
+/************************************************************************/
+
+JPEG2000RasterBand::~JPEG2000RasterBand()
+{
+    jas_matrix_destroy( psMatrix );
+}
+
+/************************************************************************/
 /*                             IReadBlock()                             */
 /************************************************************************/
 
 CPLErr JPEG2000RasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                       void * pImage )
 {
-    int i, j;
+    int		    i, j;
     JPEG2000Dataset *poGDS = (JPEG2000Dataset *) poDS;
 
     // Decode image from the stream, if not yet
@@ -394,15 +407,46 @@ CPLErr JPEG2000RasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 }
 
 /************************************************************************/
-/*                         ~JPEG2000RasterBand()                        */
+/*                       GetColorInterpretation()                       */
 /************************************************************************/
 
-JPEG2000RasterBand::~JPEG2000RasterBand()
-
+GDALColorInterp JPEG2000RasterBand::GetColorInterpretation()
 {
-    jas_matrix_destroy( psMatrix );
-}
+    JPEG2000Dataset *poGDS = (JPEG2000Dataset *) poDS;
 
+    // Decode image from the stream, if not yet
+    if ( !poGDS->psImage )
+    {
+	if ( !( poGDS->psImage =
+	        jas_image_decode(poGDS->psStream, poGDS->iFormat, 0) ) )
+	{
+	    CPLDebug( "JPEG2000", "Unable to decode image. Format: %s, %d",
+		      jas_image_fmttostr( poGDS->iFormat ), poGDS->iFormat );
+	    return GCI_Undefined;
+	}
+    }
+    
+    if ( jas_image_colorspace( poGDS->psImage ) == JAS_IMAGE_CS_GRAY )
+	return GCI_GrayIndex;
+    else if ( jas_image_colorspace( poGDS->psImage ) == JAS_IMAGE_CS_RGB )
+    {
+	switch ( jas_image_cmpttype( poGDS->psImage, nBand - 1 ) )
+	{
+	    case JAS_IMAGE_CT_RGB_R:
+		return GCI_RedBand;
+	    case JAS_IMAGE_CT_RGB_G:
+		return GCI_GreenBand;
+	    case JAS_IMAGE_CT_RGB_B:
+		return GCI_BlueBand;
+	    case JAS_IMAGE_CT_OPACITY:
+		return GCI_AlphaBand;
+	    default:
+		return GCI_Undefined;
+	}
+    }
+    else
+	return GCI_Undefined;
+}
 
 /************************************************************************/
 /* ==================================================================== */
@@ -411,7 +455,7 @@ JPEG2000RasterBand::~JPEG2000RasterBand()
 /************************************************************************/
 
 /************************************************************************/
-/*                           JPEG2000Dataset()                           */
+/*                           JPEG2000Dataset()                          */
 /************************************************************************/
 
 JPEG2000Dataset::JPEG2000Dataset()
@@ -552,9 +596,7 @@ GDALDataset *JPEG2000Dataset::Open( GDALOpenInfo * poOpenInfo )
         CPLDebug( "JPEG2000", "JasPer reports file is format type `%s'.", 
                   pszFormatName );
         jas_stream_close( sS );
-	// XXX: Memory leak. But if the following line will be enablet it
-	// results in bad side effects.
-	//jas_image_clearfmts();
+	jas_image_clearfmts();
         return NULL;
     }
 
@@ -905,11 +947,43 @@ JPEG2000CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     CPLDebug( "JPEG2000", "Parameters, delivered to the JasPer library:" );
     CPLDebug( "JPEG2000", "%s", pszOptionBuf );
 
-    // FIXME: Improve colormodel handling
-    //jas_image_setcolorspace( psImage, JAS_IMAGE_CS_UNKNOWN );
-    for ( i = 0; i < nBands; i++ )
-	//
-	psImage->cmpts_[i]->type_ = JAS_IMAGE_CT_UNKNOWN;
+    if ( nBands == 1 )			    // Grayscale
+    {
+	jas_image_setcolorspace( psImage, JAS_IMAGE_CS_GRAY );
+	jas_image_setcmpttype( psImage, 0, JAS_IMAGE_CT_GRAY_Y );
+    }
+    else if ( nBands == 3 || nBands == 4 )  // Assume as RGB(A)
+    {
+	jas_image_setcolorspace( psImage, JAS_IMAGE_CS_RGB );
+	for ( iBand = 0; iBand < nBands; iBand++ )
+	{
+	    poBand = poSrcDS->GetRasterBand( iBand + 1);
+	    switch ( poBand->GetColorInterpretation() )
+	    {
+		case GCI_RedBand:
+		jas_image_setcmpttype( psImage, iBand, JAS_IMAGE_CT_RGB_R );
+		break;
+		case GCI_GreenBand:
+		jas_image_setcmpttype( psImage, iBand, JAS_IMAGE_CT_RGB_G );
+		break;
+		case GCI_BlueBand:
+		jas_image_setcmpttype( psImage, iBand, JAS_IMAGE_CT_RGB_B );
+		break;
+		case GCI_AlphaBand:
+		jas_image_setcmpttype( psImage, iBand, JAS_IMAGE_CT_OPACITY );
+		break;
+		default:
+		jas_image_setcmpttype( psImage, iBand, JAS_IMAGE_CT_UNKNOWN );
+		break;
+	    }
+	}
+    }
+    else				    // Unknown
+    {
+	jas_image_setcolorspace( psImage, JAS_IMAGE_CS_UNKNOWN );
+	for ( iBand = 0; iBand < nBands; iBand++ )
+	    jas_image_setcmpttype( psImage, iBand, JAS_IMAGE_CT_UNKNOWN );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Set the GeoTIFF box if georeferencing is available, and this    */
