@@ -11,7 +11,7 @@ GDAL_ROOT = 	..
 OLE_LIBS =	oledb.lib ole32.lib oleaut32.lib 
 
 ALL_LIBS =	$(OLE_LIBS) $(GDAL_ROOT)/port/cpl.lib $(OGDILIB) \
-		$(XERCES_LIB) $(OCI_LIB) $(LIBS)
+		$(XERCES_LIB) $(OCI_LIB) $(PG_LIB) $(LIBS)
 
 OGR_FRMTS =	ogrsf_frmts\ogrsf_frmts.lib ogrsf_frmts\ogrsf_frmts_sup.lib
 OBJ_OGR	=	ogrgeometryfactory.obj ogrpoint.obj ogrcurve.obj ogr_api.obj \
