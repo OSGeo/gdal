@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2000/02/28 16:35:05  warmerda
+ * added raster x/ysize to GDALRasterBand
+ *
  * Revision 1.12  2000/01/31 15:00:25  warmerda
  * added some documentation
  *
@@ -225,6 +228,8 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
   protected:
     GDALDataset	*poDS;
     int		nBand; /* 1 based */
+    int		nRasterXSize;
+    int		nRasterYSize;
     
     GDALDataType eDataType;
     GDALAccess	eAccess;
