@@ -27,7 +27,17 @@
  * DEALINGS IN THE SOFTWARE.
  *****************************************************************************
  *
+ * Security Audit 2003/03/28 warmerda:
+ *   Completed security audit.  I believe that this module may be safely used 
+ *   to generate GML from arbitrary but well fromed OGRGeomety objects that
+ *   come from a potentially hostile source, but through a trusted OGR importer
+ *   without compromising the system.
+ *
  * $Log$
+ * Revision 1.5  2003/03/28 06:00:14  warmerda
+ * Completed security audit.  Fixed issue with very large coordinate values
+ * potentially causing a buffer overrun.
+ *
  * Revision 1.4  2003/03/18 17:13:03  warmerda
  * Improve precision (and use %g) for latlong coordinates.
  *
@@ -78,6 +88,8 @@ static void MakeGMLCoordinate( char *pszTarget,
             sprintf( pszTarget, "%d,%d", (int) x, (int) y );
         else if( fabs(x) < 370 && fabs(y) < 370 )
             sprintf( pszTarget, "%.16g,%.16g", x, y );
+        else if( fabs(x) > 100000000.0 || fabs(y) > 100000000.0 )
+            sprintf( pszTarget, "%.16g,%.16g", x, y );
         else
             sprintf( pszTarget, "%.3f,%.3f", x, y );
     }
@@ -87,6 +99,9 @@ static void MakeGMLCoordinate( char *pszTarget,
             sprintf( pszTarget, "%d,%d,%d", (int) x, (int) y, (int) z );
         else if( fabs(x) < 370 && fabs(y) < 370 )
             sprintf( pszTarget, "%.16g,%.16g,%.16g", x, y, z );
+        else if( fabs(x) > 100000000.0 || fabs(y) > 100000000.0 
+                 || fabs(z) > 100000000.0 )
+            sprintf( pszTarget, "%.16g,%.16g", x, y );
         else
             sprintf( pszTarget, "%.3f,%.3f,%.3f", x, y, z );
     }
@@ -204,7 +219,7 @@ static int OGR2GMLGeometryAppend( OGRGeometry *poGeometry,
                            poPoint->getX(), poPoint->getY(), poPoint->getZ(), 
                            TRUE );
                            
-        _GrowBuffer( *pnLength + strlen(szCoordinate) + 60, 
+        _GrowBuffer( *pnLength + strlen(szCoordinate) + 70, 
                      ppszText, pnMaxLength );
 
         sprintf( *ppszText + *pnLength, 
