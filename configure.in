@@ -470,7 +470,7 @@ if test "$PG_CONFIG" = "no" ; then
 else
 
   HAVE_PG=yes
-  PG_LIB="-L`$PG_CONFIG --libdir`"
+  PG_LIB="-L`$PG_CONFIG --libdir` -lpq"
   PG_INC="-I`$PG_CONFIG --includedir`"
 
   AC_MSG_RESULT([yes])
