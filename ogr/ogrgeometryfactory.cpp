@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2004/07/10 04:54:01  warmerda
+ * added GEOS methods
+ *
  * Revision 1.20  2003/06/09 13:48:54  warmerda
  * added DB2 V7.2 byte order hack
  *
@@ -97,6 +100,7 @@
 #include "ogr_api.h"
 #include "ogr_p.h"
 #include <assert.h>
+#include "ogr_geos.h"
 
 CPL_CVSID("$Id$");
 
@@ -785,3 +789,45 @@ OGRGeometry *OGRGeometryFactory::createFromGML( const char *pszData )
     return (OGRGeometry *) hGeom;
 }
 
+/************************************************************************/
+/*                           createFromGEOS()                           */
+/************************************************************************/
+
+OGRGeometry *
+OGRGeometryFactory::createFromGEOS( const geos::Geometry *geosGeom )
+
+{
+#ifndef HAVE_GEOS 
+
+    CPLError( CE_Failure, CPLE_NotSupported, 
+              "GEOS support not enabled." );
+    return NULL;
+
+#else
+
+    geos::WKTWriter oWKTWriter;
+    string oWKT;
+
+    try 
+    {
+        oWKT = oWKTWriter.write( geosGeom );
+    }
+    catch( geos::GEOSException &e )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "GEOSException: %s", 
+                  e.toString().c_str() );
+
+        return NULL;
+    }
+
+    OGRGeometry *poGeom = NULL;
+    char *pszWKT = (char *) oWKT.c_str();
+
+    if( createFromWkt( &pszWKT, NULL, &poGeom ) != OGRERR_NONE )
+        return NULL;
+    else
+        return poGeom;
+
+#endif /* HAVE_GEOS */
+}
