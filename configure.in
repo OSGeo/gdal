@@ -1257,7 +1257,7 @@ fi
 if test "$GEOS_CONFIG" != "no" ; then
 
   LIBS="`$GEOS_CONFIG --libs` $LIBS"
-  GEOS_INC="`$GEOS_CONFIG --includes`"
+  GEOS_INC=-I"`$GEOS_CONFIG --includes`"
   HAVE_GEOS=yes
 
 else
