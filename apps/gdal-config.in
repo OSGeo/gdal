@@ -6,6 +6,8 @@ Options:
 	[--prefix[=DIR]]
 	[--libs]
 	[--cflags]
+	[--version]
+	[--ogr-enabled]
 EOF
 	exit $1
 }
@@ -25,6 +27,14 @@ case $1 in
 
   --prefix)
     echo $CONFIG_PREFIX
+    ;;
+
+  --version)
+    echo $CONFIG_VERSION
+    ;;
+
+  --ogr-enabled)
+    echo $CONFIG_OGR_ENABLED
     ;;
 
   *)

@@ -43,21 +43,25 @@ $(DEP_LIBS):
 	$(CXX) $(INCLUDE) -c $(CFLAGS) $*.cpp -o $*.o
 
 
-gdal-config:	gdal-config.in ../GDALmake.opt ./GNUmakefile
+gdal-config:	gdal-config.in ../GDALmake.opt ./GNUmakefile ../VERSION
 	rm -f gdal-config
 	echo '#!/bin/sh' > gdal-config
 	echo 'CONFIG_LIBS="$(GDAL_SLIB_LINK)"' >> gdal-config
 	echo 'CONFIG_PREFIX="$(GDAL_HOME)"' >> gdal-config
 	echo 'CONFIG_CFLAGS="-I$(GDAL_HOME)/cpl -I$(GDAL_HOME)/core"' >> gdal-config
+	echo 'CONFIG_VERSION="'`cat ../VERSION`'"' >> gdal-config
+	echo 'CONFIG_OGR_ENABLED=$(OGR_ENABLED)' >> gdal-config
 	cat gdal-config.in >> gdal-config
 	chmod a+x gdal-config
 
-gdal-config-inst:	gdal-config.in ../GDALmake.opt ./GNUmakefile
+gdal-config-inst:	gdal-config.in ../GDALmake.opt ./GNUmakefile ../VERSION
 	rm -f gdal-config-inst
 	echo '#!/bin/sh' > gdal-config-inst
 	echo 'CONFIG_LIBS="-L$(INST_LIB) -lgdal.$(GDAL_VER)"' >> gdal-config-inst
 	echo 'CONFIG_PREFIX="$(INST_PREFIX)"' >> gdal-config-inst
 	echo 'CONFIG_CFLAGS="-I$(INST_INCLUDE)"' >> gdal-config-inst
+	echo 'CONFIG_VERSION="'`cat ../VERSION`'"' >> gdal-config-inst
+	echo 'CONFIG_OGR_ENABLED=$(OGR_ENABLED)' >> gdal-config-inst
 	cat gdal-config.in >> gdal-config-inst
 	chmod a+x gdal-config-inst
 
