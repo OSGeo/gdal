@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2002/05/09 16:03:19  warmerda
+ * major upgrade to support SRS better and add ExecuteSQL
+ *
  * Revision 1.11  2002/03/01 20:42:00  warmerda
  * fixed parsing of connect string, see bug 107
  *
@@ -85,6 +88,10 @@ OGRPGDataSource::OGRPGDataSource()
     hPGConn = NULL;
     bHavePostGIS = FALSE;
     nSoftTransactionLevel = 0;
+
+    nKnownSRID = 0;
+    panSRID = NULL;
+    papoSRS = NULL;
 }
 
 /************************************************************************/
@@ -94,18 +101,28 @@ OGRPGDataSource::OGRPGDataSource()
 OGRPGDataSource::~OGRPGDataSource()
 
 {
+    int         i;
+
     FlushSoftTransaction();
 
     CPLFree( pszName );
     CPLFree( pszDBName );
 
-    for( int i = 0; i < nLayers; i++ )
+    for( i = 0; i < nLayers; i++ )
         delete papoLayers[i];
     
     CPLFree( papoLayers );
 
     if( hPGConn != NULL )
         PQfinish( hPGConn );
+
+    for( i = 0; i < nKnownSRID; i++ )
+    {
+        if( papoSRS[i] != NULL && papoSRS[i]->Dereference() == 0 )
+            delete papoSRS[i];
+    }
+    CPLFree( panSRID );
+    CPLFree( papoSRS );
 }
 
 /************************************************************************/
@@ -200,7 +217,10 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
         && PQntuples(hResult) > 0 )
     {
         bHavePostGIS = TRUE;
+        nGeometryOID = atoi(PQgetvalue(hResult,0,0));
     }
+    else
+        nGeometryOID = (Oid) 0;
 
     if( hResult )
         PQclear( hResult );
@@ -247,6 +267,12 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
 
     for( iRecord = 0; iRecord < PQntuples(hResult); iRecord++ )
     {
+        const char *pszTable = PQgetvalue(hResult, iRecord, 0);
+
+        if( EQUAL(pszTable,"spatial_ref_sys")
+            || EQUAL(pszTable,"geometry_columns") )
+            continue;
+
         papszTableNames = CSLAddString(papszTableNames, 
                                        PQgetvalue(hResult, iRecord, 0));
     }
@@ -290,7 +316,7 @@ int OGRPGDataSource::OpenTable( const char *pszNewName, int bUpdate,
 /* -------------------------------------------------------------------- */
     OGRPGLayer	*poLayer;
 
-    poLayer = new OGRPGLayer( this, pszNewName, bUpdate );
+    poLayer = new OGRPGTableLayer( this, pszNewName, bUpdate );
 
 /* -------------------------------------------------------------------- */
 /*      Add layer to data source layer list.                            */
@@ -479,7 +505,7 @@ OGRPGDataSource::CreateLayer( const char * pszLayerName,
     {
         const char *pszGeometryType;
 
-        switch( eType & (0x7fff) )
+        switch( wkbFlatten(eType) )
         {
           case wkbPoint:
             pszGeometryType = "POINT";
@@ -549,7 +575,7 @@ OGRPGDataSource::CreateLayer( const char * pszLayerName,
 /* -------------------------------------------------------------------- */
     OGRPGLayer	*poLayer;
 
-    poLayer = new OGRPGLayer( this, pszLayerName, TRUE );
+    poLayer = new OGRPGTableLayer( this, pszLayerName, TRUE, nSRSId );
 
 /* -------------------------------------------------------------------- */
 /*      Add layer to data source layer list.                            */
@@ -623,8 +649,63 @@ OGRErr OGRPGDataSource::InitializeMetadataTables()
 OGRSpatialReference *OGRPGDataSource::FetchSRS( int nId )
 
 {
-    // implement later.
-    return NULL;
+    if( nId < 0 )
+        return NULL;
+
+/* -------------------------------------------------------------------- */
+/*      First, we look through our SRID cache, is it there?             */
+/* -------------------------------------------------------------------- */
+    int  i;
+
+    for( i = 0; i < nKnownSRID; i++ )
+    {
+        if( panSRID[i] == nId )
+            return papoSRS[i];
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Try looking up in spatial_ref_sys table.                        */
+/* -------------------------------------------------------------------- */
+    PGresult        *hResult;
+    char	    szCommand[1024];
+    OGRSpatialReference *poSRS;
+        
+    SoftStartTransaction();
+
+    sprintf( szCommand, 
+             "SELECT srtext FROM spatial_ref_sys "
+             "WHERE srid = %d", 
+             nId );
+    hResult = PQexec(hPGConn, szCommand );
+
+    if( hResult 
+        && PQresultStatus(hResult) == PGRES_TUPLES_OK 
+        && PQntuples(hResult) == 1 )
+    {
+        char *pszWKT;
+
+        pszWKT = PQgetvalue(hResult,0,0);
+        poSRS = new OGRSpatialReference();
+        if( poSRS->importFromWkt( &pszWKT ) != OGRERR_NONE )
+        {
+            delete poSRS;
+            poSRS = NULL;
+        }
+    }
+
+    PQclear( hResult );
+    SoftCommit();
+
+/* -------------------------------------------------------------------- */
+/*      Add to the cache.                                               */
+/* -------------------------------------------------------------------- */
+    panSRID = (int *) CPLRealloc(panSRID,sizeof(int) * (nKnownSRID+1) );
+    papoSRS = (OGRSpatialReference **) 
+        CPLRealloc(papoSRS, sizeof(void*) * (nKnownSRID + 1) );
+    panSRID[nKnownSRID] = nId;
+    papoSRS[nKnownSRID] = poSRS;
+
+    return poSRS;
 }
 
 /************************************************************************/
@@ -686,7 +767,7 @@ int OGRPGDataSource::FetchSRSId( OGRSpatialReference * poSRS )
     int		bTableMissing;
 
     bTableMissing = 
-        hResult == NULL || PQresultStatus(hResult) != PGRES_COMMAND_OK;
+        hResult == NULL || PQresultStatus(hResult) == PGRES_NONFATAL_ERROR;
 
     hResult = PQexec(hPGConn, "COMMIT");
     PQclear( hResult );
@@ -703,13 +784,15 @@ int OGRPGDataSource::FetchSRSId( OGRSpatialReference * poSRS )
     hResult = PQexec(hPGConn, "BEGIN");
     PQclear( hResult );
 
-    hResult = PQexec(hPGConn, "SELECT MAX(ogc_fid) FROM spatial_ref_sys" );
+    hResult = PQexec(hPGConn, "SELECT MAX(srid) FROM spatial_ref_sys" );
 
-    if( hResult && PQresultStatus(hResult) != PGRES_TUPLES_OK )
+    if( hResult && PQresultStatus(hResult) == PGRES_TUPLES_OK )
     {
         nSRSId = atoi(PQgetvalue(hResult,0,0)) + 1;
         PQclear( hResult );
     }
+    else
+        nSRSId = 1;
     
 /* -------------------------------------------------------------------- */
 /*      Try adding the SRS to the SRS table.                            */
@@ -837,4 +920,78 @@ OGRErr OGRPGDataSource::FlushSoftTransaction()
     nSoftTransactionLevel = 1;
 
     return SoftCommit();
+}
+
+/************************************************************************/
+/*                             ExecuteSQL()                             */
+/************************************************************************/
+
+OGRLayer * OGRPGDataSource::ExecuteSQL( const char *pszSQLCommand,
+                                        OGRGeometry *poSpatialFilter,
+                                        const char *pszDialect )
+
+{
+    if( poSpatialFilter != NULL )
+    {
+        CPLDebug( "OGR_PG", 
+          "Spatial filter ignored for now in OGRPGDataSource::ExecuteSQL()" );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Execute the statement.                                          */
+/* -------------------------------------------------------------------- */
+    PGresult            *hResult;
+    
+    hResult = PQexec(hPGConn, "BEGIN");
+
+    if( hResult && PQresultStatus(hResult) == PGRES_COMMAND_OK )
+    {
+        PQclear( hResult );
+
+        hResult = PQexec(hPGConn, pszSQLCommand );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Do we have a tuple result? If so, instantiate a results         */
+/*      layer for it.                                                   */
+/* -------------------------------------------------------------------- */
+
+    if( hResult && PQresultStatus(hResult) == PGRES_TUPLES_OK 
+        && PQntuples(hResult) > 0 )
+    {
+        OGRPGResultLayer *poLayer = NULL;
+
+        poLayer = new OGRPGResultLayer( this, pszSQLCommand, hResult );
+        
+        return poLayer;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Generate an error report if an error occured.                   */
+/* -------------------------------------------------------------------- */
+    if( hResult && 
+        (PQresultStatus(hResult) == PGRES_NONFATAL_ERROR
+         || PQresultStatus(hResult) == PGRES_FATAL_ERROR ) )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "%s", PQresultErrorMessage( hResult ) );
+    }
+
+    if( hResult )
+        PQclear( hResult );
+
+    hResult = PQexec(hPGConn, "COMMIT");
+    PQclear( hResult );
+
+    return NULL;
+}
+
+/************************************************************************/
+/*                          ReleaseResultSet()                          */
+/************************************************************************/
+
+void OGRPGDataSource::ReleaseResultSet( OGRLayer * poLayer )
+
+{
+    delete poLayer;
 }

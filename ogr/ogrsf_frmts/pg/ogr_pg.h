@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2002/05/09 16:03:19  warmerda
+ * major upgrade to support SRS better and add ExecuteSQL
+ *
  * Revision 1.8  2002/01/13 16:23:16  warmerda
  * capture dbname= parameter for use in AddGeometryColumn() call
  *
@@ -68,22 +71,30 @@ class OGRPGDataSource;
     
 class OGRPGLayer : public OGRLayer
 {
+  protected:
     OGRFeatureDefn     *poFeatureDefn;
-    OGRGeometry		*poFilterGeom;
-    int			iNextShapeId;
 
-    int			bUpdateAccess;
+    // Layer spatial reference system, and srid.
+    OGRSpatialReference *poSRS;
+    int                 nSRSId;
+
+    OGRGeometry		*poFilterGeom;
+
+    int			iNextShapeId;
 
     char               *GeometryToBYTEA( OGRGeometry * );
     OGRGeometry        *BYTEAToGeometry( const char * );
     Oid                 GeometryToOID( OGRGeometry * );
     OGRGeometry        *OIDToGeometry( Oid );
 
-    OGRFeatureDefn     *ReadTableDefinition(const char *);
     OGRPGDataSource    *poDS;
+
+    char               *pszQueryStatement;
 
     char	       *pszCursorName;
     PGresult	       *hCursorResult;
+    int                 bCursorActive;
+
     int                 nResultOffset;
 
     int			bHasWkb;
@@ -92,43 +103,96 @@ class OGRPGLayer : public OGRLayer
     int			bHasPostGISGeometry;
     char		*pszGeomColumn;
 
+  public:
+    			OGRPGLayer();
+    virtual             ~OGRPGLayer();
+
+    virtual void	ResetReading();
+    virtual OGRFeature *GetNextRawFeature();
+    virtual OGRFeature *GetNextFeature();
+
+    virtual OGRFeature *GetFeature( long nFeatureId );
+    
+    OGRFeatureDefn *	GetLayerDefn() { return poFeatureDefn; }
+
+    virtual OGRErr      StartTransaction();
+    virtual OGRErr      CommitTransaction();
+    virtual OGRErr      RollbackTransaction();
+
+    virtual OGRSpatialReference *GetSpatialRef();
+
+    virtual int         TestCapability( const char * );
+};
+
+/************************************************************************/
+/*                           OGRPGTableLayer                            */
+/************************************************************************/
+
+class OGRPGTableLayer : public OGRPGLayer
+{
+    int			bUpdateAccess;
+
+    OGRFeatureDefn     *ReadTableDefinition(const char *);
+
     void		BuildWhere(void);
     char 	       *BuildFields(void);
+    void                BuildFullQueryStatement(void);
 
     char	        *pszQuery;
     char		*pszWHERE;
-
+    
   public:
-    			OGRPGLayer( OGRPGDataSource *,
-                                    const char * pszName,
-                                    int bUpdate );
-    			~OGRPGLayer();
+    			OGRPGTableLayer( OGRPGDataSource *,
+                                         const char * pszName,
+                                         int bUpdate, int nSRSId = -2 );
+    			~OGRPGTableLayer();
+
+    virtual void	ResetReading();
+    virtual int         GetFeatureCount( int );
 
     OGRGeometry *	GetSpatialFilter() { return poFilterGeom; }
     void		SetSpatialFilter( OGRGeometry * );
 
     virtual OGRErr      SetAttributeFilter( const char * );
 
-    void		ResetReading();
-    OGRFeature *	GetNextRawFeature();
-    OGRFeature *	GetNextFeature();
-
-    OGRFeature         *GetFeature( long nFeatureId );
     OGRErr              SetFeature( OGRFeature *poFeature );
     OGRErr              CreateFeature( OGRFeature *poFeature );
     
-    OGRFeatureDefn *	GetLayerDefn() { return poFeatureDefn; }
-
-    int                 GetFeatureCount( int );
-
     virtual OGRErr      CreateField( OGRFieldDefn *poField,
                                      int bApproxOK = TRUE );
     
-    virtual OGRErr       StartTransaction();
-    virtual OGRErr       CommitTransaction();
-    virtual OGRErr       RollbackTransaction();
+    virtual OGRSpatialReference *GetSpatialRef();
 
     int                 TestCapability( const char * );
+};
+
+/************************************************************************/
+/*                           OGRPGResultLayer                           */
+/************************************************************************/
+
+class OGRPGResultLayer : public OGRPGLayer
+{
+    void                BuildFullQueryStatement(void);
+
+    char		*pszRawStatement;
+
+    PGresult            *hInitialResult;
+
+    int                 nFeatureCount;
+
+  public:
+    			OGRPGResultLayer( OGRPGDataSource *,
+                                          const char * pszRawStatement,
+                                          PGresult *hInitialResult );
+    virtual             ~OGRPGResultLayer();
+
+    OGRGeometry *	GetSpatialFilter() { return poFilterGeom; }
+    void		SetSpatialFilter( OGRGeometry * ) {}
+
+    OGRFeatureDefn     *ReadResultDefinition();
+
+    virtual void	ResetReading();
+    virtual int         GetFeatureCount( int );
 };
 
 /************************************************************************/
@@ -150,6 +214,14 @@ class OGRPGDataSource : public OGRDataSource
     PGconn		*hPGConn;
 
     void		DeleteLayer( const char *pszLayerName );
+
+    Oid                 nGeometryOID;
+
+    // We maintain a list of known SRID to reduce the number of trips to
+    // the database to get SRSes. 
+    int                 nKnownSRID;
+    int                *panSRID;
+    OGRSpatialReference **papoSRS;
     
   public:
     			OGRPGDataSource();
@@ -180,6 +252,13 @@ class OGRPGDataSource : public OGRDataSource
     OGRErr              SoftRollback();
     
     OGRErr              FlushSoftTransaction();
+
+    Oid                 GetGeometryOID() { return nGeometryOID; }
+
+    virtual OGRLayer *  ExecuteSQL( const char *pszSQLCommand,
+                                    OGRGeometry *poSpatialFilter,
+                                    const char *pszDialect );
+    virtual void        ReleaseResultSet( OGRLayer * poLayer );
 };
 
 /************************************************************************/

@@ -2,8 +2,10 @@
  * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
- * Purpose:  Implements OGRPGLayer class.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Purpose:  Implements OGRPGLayer class  which implements shared handling
+ *           of feature geometry and so forth needed by OGRPGResultLayer and
+ *           OGRPGTableLayer.
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 2000, Frank Warmerdam
@@ -28,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2002/05/09 16:03:19  warmerda
+ * major upgrade to support SRS better and add ExecuteSQL
+ *
  * Revision 1.9  2001/11/15 21:19:47  warmerda
  * added soft transaction semantics, handle null fields properly
  *
@@ -69,29 +74,28 @@ CPL_CVSID("$Id$");
 /*                           OGRPGLayer()                               */
 /************************************************************************/
 
-OGRPGLayer::OGRPGLayer( OGRPGDataSource *poDSIn, const char * pszTableName,
-                        int bUpdate )
+OGRPGLayer::OGRPGLayer()
 
 {
-    poDS = poDSIn;
+    poDS = NULL;
 
     poFilterGeom = NULL;
-    pszQuery = NULL;
-    pszWHERE = CPLStrdup( "" );
-    
-    bUpdateAccess = bUpdate;
+
     bHasWkb = FALSE;
     bWkbAsOid = FALSE;
     bHasPostGISGeometry = FALSE;
     pszGeomColumn = NULL;
+    pszQueryStatement = NULL;
 
     iNextShapeId = 0;
+
+    poSRS = NULL;
+    nSRSId = -2; // we haven't even queried the database for it yet. 
 
     /* Eventually we may need to make these a unique name */
     pszCursorName = "OGRPGLayerReader";
     hCursorResult = NULL;
-
-    poFeatureDefn = ReadTableDefinition( pszTableName );
+    bCursorActive = FALSE;
 }
 
 /************************************************************************/
@@ -103,253 +107,14 @@ OGRPGLayer::~OGRPGLayer()
 {
     ResetReading();
 
-    delete poFeatureDefn;
-
-    if( poFilterGeom != NULL )
-        delete poFilterGeom;
-
     if( pszGeomColumn != NULL )
         CPLFree( pszGeomColumn );
 
-    CPLFree( pszQuery );
-    CPLFree( pszWHERE );
-}
-
-/************************************************************************/
-/*                        ReadTableDefinition()                         */
-/************************************************************************/
-
-OGRFeatureDefn *OGRPGLayer::ReadTableDefinition( const char * pszTable )
-
-{
-    PGresult            *hResult;
-    char		szCommand[1024];
-    PGconn		*hPGConn = poDS->GetPGConn();
-    
-/* -------------------------------------------------------------------- */
-/*      Fire off commands to get back the schema of the table.          */
-/* -------------------------------------------------------------------- */
-    poDS->FlushSoftTransaction();
-    hResult = PQexec(hPGConn, "BEGIN");
-
-    if( hResult && PQresultStatus(hResult) == PGRES_COMMAND_OK )
-    {
-        PQclear( hResult );
-        sprintf( szCommand, 
-                 "DECLARE mycursor CURSOR for "
-                 "SELECT a.attname, t.typname, a.attlen "
-                 "FROM pg_class c, pg_attribute a, pg_type t "
-                 "WHERE c.relname = '%s' "
-                 "AND a.attnum > 0 AND a.attrelid = c.oid "
-                 "AND a.atttypid = t.oid", 
-                 pszTable );
-
-        hResult = PQexec(hPGConn, szCommand );
-    }
-
-    if( hResult && PQresultStatus(hResult) == PGRES_COMMAND_OK )
-    {
-        PQclear( hResult );
-        hResult = PQexec(hPGConn, "FETCH ALL in mycursor" );
-    }
-
-    if( !hResult || PQresultStatus(hResult) != PGRES_TUPLES_OK )
-    {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "%s", PQerrorMessage(hPGConn) );
-        return NULL;
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Parse the returned table information.                           */
-/* -------------------------------------------------------------------- */
-    OGRFeatureDefn *poDefn = new OGRFeatureDefn( pszTable );
-    int		   iRecord;
-
-    for( iRecord = 0; iRecord < PQntuples(hResult); iRecord++ )
-    {
-        const char	*pszType;
-        OGRFieldDefn    oField( PQgetvalue( hResult, iRecord, 0 ), OFTString);
-
-        pszType = PQgetvalue(hResult, iRecord, 1 );
-        
-        if( EQUAL(oField.GetNameRef(),"ogc_fid") )
-        {
-            bHasFid = TRUE;
-            continue;
-        }
-        else if( EQUAL(pszType,"geometry") )
-        {
-            bHasPostGISGeometry = TRUE;
-            pszGeomColumn = CPLStrdup( oField.GetNameRef());
-            continue;
-        }
-        else if( EQUAL(oField.GetNameRef(),"WKB_GEOMETRY") )
-        {
-            bHasWkb = TRUE;
-            if( EQUAL(pszType,"OID") )
-                bWkbAsOid = TRUE;
-            continue;
-        }
-
-        if( EQUAL(pszType,"varchar") )
-        {
-            oField.SetType( OFTString );
-        }
-        else if( EQUALN(pszType,"int",3) )
-        {
-            oField.SetType( OFTInteger );
-        }
-        else if( EQUALN(pszType, "float", 5) ) 
-        {
-            oField.SetType( OFTReal );
-        }
-        else
-        {
-            oField.SetWidth( atoi(PQgetvalue(hResult,iRecord,2)) );
-        }
-        
-        poDefn->AddFieldDefn( &oField );
-    }
-
-    PQclear( hResult );
-
-    hResult = PQexec(hPGConn, "CLOSE mycursor");
-    PQclear( hResult );
-
-    hResult = PQexec(hPGConn, "COMMIT");
-    PQclear( hResult );
-
-    return poDefn;
-}
-
-/************************************************************************/
-/*                          SetSpatialFilter()                          */
-/************************************************************************/
-
-void OGRPGLayer::SetSpatialFilter( OGRGeometry * poGeomIn )
-
-{
     if( poFilterGeom != NULL )
-    {
         delete poFilterGeom;
-        poFilterGeom = NULL;
-    }
 
-    if( poGeomIn != NULL )
-        poFilterGeom = poGeomIn->clone();
-
-    BuildWhere();
-
-    ResetReading();
-}
-
-/************************************************************************/
-/*                             BuildWhere()                             */
-/*                                                                      */
-/*      Build the WHERE statement appropriate to the current set of     */
-/*      criteria (spatial and attribute queries).                       */
-/************************************************************************/
-
-void OGRPGLayer::BuildWhere()
-
-{
-    char	szWHERE[4096];
-
-    CPLFree( pszWHERE );
-    pszWHERE = NULL;
-
-    szWHERE[0] = '\0';
-
-    if( poFilterGeom != NULL && bHasPostGISGeometry )
-    {
-        OGREnvelope  sEnvelope;
-
-        poFilterGeom->getEnvelope( &sEnvelope );
-        sprintf( szWHERE, 
-                 "WHERE %s && 'BOX3D(%.12f %.12f, %.12f %.12f)'::box3d ",
-                 pszGeomColumn, 
-                 sEnvelope.MinX, sEnvelope.MinY, 
-                 sEnvelope.MaxX, sEnvelope.MaxY );
-    }
-
-    if( pszQuery != NULL )
-    {
-        if( strlen(szWHERE) == 0 )
-            sprintf( szWHERE, "WHERE %s ", pszQuery  );
-        else
-            sprintf( szWHERE+strlen(szWHERE), "AND %s ", pszQuery );
-    }
-
-    pszWHERE = CPLStrdup(szWHERE);
-}
-
-/************************************************************************/
-/*                            BuildFields()                             */
-/*                                                                      */
-/*      Build list of fields to fetch, performing any required          */
-/*      transformations (such as on geometry).                          */
-/************************************************************************/
-
-char *OGRPGLayer::BuildFields()
-
-{
-    int		i, nSize;
-    char	*pszFieldList;
-
-    nSize = 25;
-    if( pszGeomColumn )
-        nSize += strlen(pszGeomColumn);
-
-    for( i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
-        nSize += strlen(poFeatureDefn->GetFieldDefn(i)->GetNameRef()) + 2;
-
-    pszFieldList = (char *) CPLMalloc(nSize);
-
-    if( pszGeomColumn )
-    {
-        if( bHasPostGISGeometry )
-        {
-            sprintf( pszFieldList, "AsText(%s)", pszGeomColumn );
-        }
-        else
-        {
-            sprintf( pszFieldList, "%s", pszGeomColumn );
-        }
-    }
-    else
-        pszFieldList[0] = '\0';
-
-    for( i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
-    {
-        const char *pszName = poFeatureDefn->GetFieldDefn(i)->GetNameRef();
-
-        if( strlen(pszFieldList) > 0 )
-            strcat( pszFieldList, ", " );
-
-        strcat( pszFieldList, pszName );
-    }
-
-    CPLAssert( (int) strlen(pszFieldList) < nSize );
-
-    return pszFieldList;
-}
-
-/************************************************************************/
-/*                         SetAttributeFilter()                         */
-/************************************************************************/
-
-OGRErr OGRPGLayer::SetAttributeFilter( const char *pszQuery )
-
-{
-    CPLFree( this->pszQuery );
-    this->pszQuery = CPLStrdup( pszQuery );
-
-    BuildWhere();
-
-    ResetReading();
-
-    return OGRERR_NONE;
+    if( poSRS != NULL )
+        poSRS->Dereference();
 }
 
 /************************************************************************/
@@ -368,10 +133,13 @@ void OGRPGLayer::ResetReading()
     {
         PQclear( hCursorResult );
 
-        sprintf( szCommand, "CLOSE %s", pszCursorName );
-
-        hCursorResult = PQexec(hPGConn, szCommand);
-        PQclear( hCursorResult );
+        if( bCursorActive )
+        {
+            sprintf( szCommand, "CLOSE %s", pszCursorName );
+            
+            hCursorResult = PQexec(hPGConn, szCommand);
+            PQclear( hCursorResult );
+        }
 
         hCursorResult = PQexec(hPGConn, "COMMIT" );
         PQclear( hCursorResult );
@@ -420,31 +188,26 @@ OGRFeature *OGRPGLayer::GetNextRawFeature()
 /* -------------------------------------------------------------------- */
 /*      Do we need to establish an initial query?                       */
 /* -------------------------------------------------------------------- */
-    if( iNextShapeId == 0 )
+    if( iNextShapeId == 0 && hCursorResult == NULL )
     {
-        char	*pszFields = BuildFields();
+        CPLAssert( pszQueryStatement != NULL );
 
         poDS->FlushSoftTransaction();
         hCursorResult = PQexec(hPGConn, "BEGIN");
         PQclear( hCursorResult );
 
-        sprintf( szCommand, 
-                 "DECLARE %s CURSOR for "
-                 "SELECT %s FROM %s "
-                 "%s", 
-                 pszCursorName, pszFields, 
-                 poFeatureDefn->GetName(), pszWHERE );
+        sprintf( szCommand, "DECLARE %s CURSOR for %s",
+                 pszCursorName, pszQueryStatement );
 
-        CPLFree( pszFields );
-
-        CPLDebug( "OGR_PG", "PQexec(%s)\n", 
-                  szCommand );
+        CPLDebug( "OGR_PG", "PQexec(%s)", szCommand );
 
         hCursorResult = PQexec(hPGConn, szCommand );
         PQclear( hCursorResult );
 
         sprintf( szCommand, "FETCH %d in %s", CURSOR_PAGE, pszCursorName );
         hCursorResult = PQexec(hPGConn, szCommand );
+
+        bCursorActive = TRUE;
 
         nResultOffset = 0;
     }
@@ -462,7 +225,8 @@ OGRFeature *OGRPGLayer::GetNextRawFeature()
 /* -------------------------------------------------------------------- */
 /*      Do we need to fetch more records?                               */
 /* -------------------------------------------------------------------- */
-    if( nResultOffset >= PQntuples(hCursorResult) )
+    if( nResultOffset >= PQntuples(hCursorResult) 
+        && bCursorActive )
     {
         PQclear( hCursorResult );
 
@@ -480,15 +244,19 @@ OGRFeature *OGRPGLayer::GetNextRawFeature()
     {
         PQclear( hCursorResult );
 
-        sprintf( szCommand, "CLOSE %s", pszCursorName );
-
-        hCursorResult = PQexec(hPGConn, szCommand);
-        PQclear( hCursorResult );
+        if( bCursorActive )
+        {
+            sprintf( szCommand, "CLOSE %s", pszCursorName );
+            
+            hCursorResult = PQexec(hPGConn, szCommand);
+            PQclear( hCursorResult );
+        }
 
         hCursorResult = PQexec(hPGConn, "COMMIT" );
         PQclear( hCursorResult );
 
         hCursorResult = NULL;
+        bCursorActive = FALSE;
 
         iNextShapeId = MAX(1,iNextShapeId);
 
@@ -521,10 +289,24 @@ OGRFeature *OGRPGLayer::GetNextRawFeature()
                 || EQUAL(PQfname(hCursorResult,iField),"astext") ) )
         {
             char	*pszWKT;
+            char        *pszPostSRID;
             OGRGeometry *poGeometry = NULL;
             
             pszWKT = PQgetvalue( hCursorResult, nResultOffset, iField );
-            OGRGeometryFactory::createFromWkt( &pszWKT, NULL, &poGeometry );
+            pszPostSRID = pszWKT;
+
+            // optionally strip off PostGIS SRID identifier.  This
+            // happens if we got a raw geometry field.
+            if( EQUALN(pszPostSRID,"SRID=",5) )
+            {
+                while( *pszPostSRID != '\0' && *pszPostSRID != ';' )
+                    pszPostSRID++;
+                if( *pszPostSRID == ';' )
+                    pszPostSRID++;
+            }
+
+            OGRGeometryFactory::createFromWkt( &pszPostSRID, NULL, 
+                                               &poGeometry );
             if( poGeometry != NULL )
                 poFeature->SetGeometryDirectly( poGeometry );
 
@@ -555,9 +337,10 @@ OGRFeature *OGRPGLayer::GetNextRawFeature()
         if( iOGRField < 0 )
             continue;
 
-        poFeature->SetField( iOGRField, 
-                             PQgetvalue( hCursorResult, 
-                                         nResultOffset, iField ) );
+        if( !PQgetisnull( hCursorResult, nResultOffset, iField ) )
+            poFeature->SetField( iOGRField, 
+                                 PQgetvalue( hCursorResult, 
+                                             nResultOffset, iField ) );
     }
 
     nResultOffset++;
@@ -572,17 +355,9 @@ OGRFeature *OGRPGLayer::GetNextRawFeature()
 OGRFeature *OGRPGLayer::GetFeature( long nFeatureId )
 
 {
+    /* This should be implemented! */
+
     return NULL;
-}
-
-/************************************************************************/
-/*                             SetFeature()                             */
-/************************************************************************/
-
-OGRErr OGRPGLayer::SetFeature( OGRFeature *poFeature )
-
-{
-    return OGRERR_FAILURE;
 }
 
 /************************************************************************/
@@ -738,261 +513,6 @@ Oid OGRPGLayer::GeometryToOID( OGRGeometry * poGeometry )
 }
 
 /************************************************************************/
-/*                           CreateFeature()                            */
-/************************************************************************/
-
-OGRErr OGRPGLayer::CreateFeature( OGRFeature *poFeature )
-
-{
-    PGconn		*hPGConn = poDS->GetPGConn();
-    PGresult            *hResult;
-    char		*pszCommand;
-    int                 i, bNeedComma;
-    unsigned int        nCommandBufSize;;
-    OGRErr              eErr;
-
-    eErr = poDS->SoftStartTransaction();
-    if( eErr != OGRERR_NONE )
-        return eErr;
-
-    nCommandBufSize = 40000;
-    pszCommand = (char *) CPLMalloc(nCommandBufSize);
-
-/* -------------------------------------------------------------------- */
-/*      Form the INSERT command.  					*/
-/* -------------------------------------------------------------------- */
-    sprintf( pszCommand, "INSERT INTO %s (", poFeatureDefn->GetName() );
-
-    if( bHasWkb && poFeature->GetGeometryRef() != NULL )
-        strcat( pszCommand, "WKB_GEOMETRY, " );
-    
-    if( bHasPostGISGeometry && poFeature->GetGeometryRef() != NULL )
-    {
-        strcat( pszCommand, pszGeomColumn );
-        strcat( pszCommand, ", " );
-    }
-    
-    bNeedComma = FALSE;
-    for( i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
-    {
-        if( !poFeature->IsFieldSet( i ) )
-            continue;
-
-        if( !bNeedComma )
-            bNeedComma = TRUE;
-        else
-            strcat( pszCommand, ", " );
-
-        strcat( pszCommand, poFeatureDefn->GetFieldDefn(i)->GetNameRef() );
-    }
-
-    strcat( pszCommand, ") VALUES (" );
-
-    /* Set the geometry */
-    if( bHasPostGISGeometry )
-    {
-        char	*pszWKT = NULL;
-
-        poFeature->GetGeometryRef()->exportToWkt( &pszWKT );
-        
-        if( pszWKT != NULL 
-            && strlen(pszCommand) + strlen(pszWKT) > nCommandBufSize - 10000 )
-        {
-            nCommandBufSize = strlen(pszCommand) + strlen(pszWKT) + 10000;
-            pszCommand = (char *) CPLRealloc(pszCommand, nCommandBufSize );
-        }
-
-        if( pszWKT != NULL )
-        {
-            sprintf( pszCommand + strlen(pszCommand), 
-                     "GeometryFromText('%s'::TEXT,-1), ", pszWKT );
-            OGRFree( pszWKT );
-        }
-        else
-            strcat( pszCommand, "''," );
-    }
-    else if( bHasWkb && !bWkbAsOid && poFeature->GetGeometryRef() != NULL )
-    {
-        char	*pszBytea = GeometryToBYTEA( poFeature->GetGeometryRef() );
-
-        if( strlen(pszCommand) + strlen(pszBytea) > nCommandBufSize - 10000 )
-        {
-            nCommandBufSize = strlen(pszCommand) + strlen(pszBytea) + 10000;
-            pszCommand = (char *) CPLRealloc(pszCommand, nCommandBufSize );
-        }
-
-        if( pszBytea != NULL )
-        {
-            sprintf( pszCommand + strlen(pszCommand), 
-                     "'%s', ", pszBytea );
-            CPLFree( pszBytea );
-        }
-        else
-            strcat( pszCommand, "''," );
-    }
-    else if( bHasWkb && bWkbAsOid && poFeature->GetGeometryRef() != NULL )
-    {
-        Oid	oid = GeometryToOID( poFeature->GetGeometryRef() );
-
-        if( oid != 0 )
-        {
-            sprintf( pszCommand + strlen(pszCommand), 
-                     "'%d', ", oid );
-        }
-        else
-            strcat( pszCommand, "''," );
-    }
-
-    /* Set the other fields */
-    int nOffset = strlen(pszCommand);
-
-    bNeedComma = FALSE;
-    for( i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
-    {
-        const char *pszStrValue = poFeature->GetFieldAsString(i);
-
-        if( !poFeature->IsFieldSet( i ) )
-            continue;
-
-        if( bNeedComma )
-            strcat( pszCommand+nOffset, ", " );
-        else
-            bNeedComma = TRUE;
-
-        if( strlen(pszStrValue) + strlen(pszCommand+nOffset) + nOffset 
-            > nCommandBufSize-50 )
-        {
-            nCommandBufSize = strlen(pszCommand) + strlen(pszStrValue) + 10000;
-            pszCommand = (char *) CPLRealloc(pszCommand, nCommandBufSize );
-        }
-        
-        if( poFeatureDefn->GetFieldDefn(i)->GetType() == OFTString )
-        {
-            int		iChar;
-
-            /* We need to quote and escape string fields. */
-            strcat( pszCommand+nOffset, "'" );
-
-            nOffset += strlen(pszCommand+nOffset);
-            
-            for( iChar = 0; pszStrValue[iChar] != '\0'; iChar++ )
-            {
-                if( pszStrValue[iChar] == '\\' 
-                    || pszStrValue[iChar] == '\'' )
-                {
-                    pszCommand[nOffset++] = '\\';
-                    pszCommand[nOffset++] = pszStrValue[iChar];
-                }
-                else
-                    pszCommand[nOffset++] = pszStrValue[iChar];
-            }
-            pszCommand[nOffset] = '\0';
-            
-            strcat( pszCommand+nOffset, "'" );
-        }
-        else
-        {
-            strcat( pszCommand+nOffset, pszStrValue );
-        }
-    }
-
-    strcat( pszCommand+nOffset, ")" );
-
-/* -------------------------------------------------------------------- */
-/*      Execute the insert.                                             */
-/* -------------------------------------------------------------------- */
-    hResult = PQexec(hPGConn, pszCommand);
-    if( PQresultStatus(hResult) != PGRES_COMMAND_OK )
-    {
-        CPLDebug( "OGR_PG", "PQexec(%s)\n", pszCommand );
-        CPLFree( pszCommand );
-
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "INSERT command for new feature failed.\n%s", 
-                  PQerrorMessage(hPGConn) );
-
-        PQclear( hResult );
-        
-        poDS->SoftRollback();
-
-        return OGRERR_FAILURE;
-    }
-    CPLFree( pszCommand );
-
-#ifdef notdef
-    /* Should we use this oid to get back the FID and assign back to the
-       feature?  I think we are supposed to. */
-    Oid	nNewOID = PQoidValue( hResult );
-    printf( "nNewOID = %d\n", (int) nNewOID );
-#endif
-    PQclear( hResult );
-
-    return poDS->SoftCommit();
-}
-
-/************************************************************************/
-/*                          GetFeatureCount()                           */
-/*                                                                      */
-/*      If a spatial filter is in effect, we turn control over to       */
-/*      the generic counter.  Otherwise we return the total count.      */
-/*      Eventually we should consider implementing a more efficient     */
-/*      way of counting features matching a spatial query.              */
-/************************************************************************/
-
-int OGRPGLayer::GetFeatureCount( int bForce )
-
-{
-/* -------------------------------------------------------------------- */
-/*      Use a more brute force mechanism if we have a spatial query     */
-/*      in play.                                                        */
-/* -------------------------------------------------------------------- */
-    if( poFilterGeom != NULL && !bHasPostGISGeometry )
-        return OGRLayer::GetFeatureCount( bForce );
-
-/* -------------------------------------------------------------------- */
-/*      In theory it might be wise to cache this result, but it         */
-/*      won't be trivial to work out the lifetime of the value.         */
-/*      After all someone else could be adding records from another     */
-/*      application when working against a database.                    */
-/* -------------------------------------------------------------------- */
-    PGconn		*hPGConn = poDS->GetPGConn();
-    PGresult            *hResult;
-    char		szCommand[4096];
-    int			nCount = 0;
-
-    poDS->FlushSoftTransaction();
-    hResult = PQexec(hPGConn, "BEGIN");
-    PQclear( hResult );
-
-    sprintf( szCommand, 
-             "DECLARE countCursor CURSOR for "
-             "SELECT count(*) FROM %s "
-             "%s",
-             poFeatureDefn->GetName(), pszWHERE );
-
-    CPLDebug( "OGR_PG", "PQexec(%s)\n", 
-              szCommand );
-
-    hResult = PQexec(hPGConn, szCommand);
-    PQclear( hResult );
-
-    hResult = PQexec(hPGConn, "FETCH ALL in countCursor");
-    if( hResult != NULL && PQresultStatus(hResult) == PGRES_TUPLES_OK )
-        nCount = atoi(PQgetvalue(hResult,0,0));
-    else
-        CPLDebug( "OGR_PG", "%s; failed.", szCommand );
-    PQclear( hResult );
-
-    hResult = PQexec(hPGConn, "CLOSE countCursor");
-    PQclear( hResult );
-
-    hResult = PQexec(hPGConn, "COMMIT");
-    PQclear( hResult );
-    
-    return nCount;
-}
-
-/************************************************************************/
 /*                           TestCapability()                           */
 /************************************************************************/
 
@@ -1002,17 +522,10 @@ int OGRPGLayer::TestCapability( const char * pszCap )
     if( EQUAL(pszCap,OLCRandomRead) )
         return TRUE;
 
-    else if( EQUAL(pszCap,OLCSequentialWrite) 
-             || EQUAL(pszCap,OLCRandomWrite) )
-        return bUpdateAccess;
-
     else if( EQUAL(pszCap,OLCFastFeatureCount) )
         return poFilterGeom == NULL || bHasPostGISGeometry;
 
     else if( EQUAL(pszCap,OLCFastSpatialFilter) )
-        return TRUE;
-
-    else if( EQUAL(pszCap,OLCCreateField) )
         return TRUE;
 
     else if( EQUAL(pszCap,OLCTransactions) )
@@ -1020,77 +533,6 @@ int OGRPGLayer::TestCapability( const char * pszCap )
 
     else 
         return FALSE;
-}
-
-/************************************************************************/
-/*                            CreateField()                             */
-/************************************************************************/
-
-OGRErr OGRPGLayer::CreateField( OGRFieldDefn *poField, int bApproxOK )
-
-{
-    PGconn		*hPGConn = poDS->GetPGConn();
-    PGresult            *hResult;
-    char		szCommand[1024];
-    char		szFieldType[256];
-
-/* -------------------------------------------------------------------- */
-/*      Work out the PostgreSQL type.                                   */
-/* -------------------------------------------------------------------- */
-    if( poField->GetType() == OFTInteger )
-    {
-        strcpy( szFieldType, "INTEGER" );
-    }
-    else if( poField->GetType() == OFTReal )
-    {
-        strcpy( szFieldType, "FLOAT8" );
-    }
-    else if( poField->GetType() == OFTString )
-    {
-        if( poField->GetWidth() == 0 )
-            strcpy( szFieldType, "VARCHAR" );
-        else
-            sprintf( szFieldType, "CHAR(%d)", poField->GetWidth() );
-    }
-    else
-    {
-        CPLError( CE_Failure, CPLE_NotSupported,
-                  "Can't create fields of type %s on PostgreSQL layers.\n",
-                  OGRFieldDefn::GetFieldTypeName(poField->GetType()) );
-
-        return OGRERR_FAILURE;
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Create the new field.                                           */
-/* -------------------------------------------------------------------- */
-    poDS->FlushSoftTransaction();
-    hResult = PQexec(hPGConn, "BEGIN");
-    PQclear( hResult );
-
-    sprintf( szCommand, "ALTER TABLE %s ADD COLUMN %s %s", 
-             poFeatureDefn->GetName(), poField->GetNameRef(), szFieldType );
-    hResult = PQexec(hPGConn, szCommand);
-    if( PQresultStatus(hResult) != PGRES_COMMAND_OK )
-    {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "%s\n%s", szCommand, PQerrorMessage(hPGConn) );
-
-        PQclear( hResult );
-        hResult = PQexec( hPGConn, "ROLLBACK" );
-        PQclear( hResult );
-
-        return OGRERR_FAILURE;
-    }
-
-    PQclear( hResult );
-
-    hResult = PQexec(hPGConn, "COMMIT");
-    PQclear( hResult );
-
-    poFeatureDefn->AddFieldDefn( poField );
-
-    return OGRERR_NONE;
 }
 
 /************************************************************************/
@@ -1121,4 +563,23 @@ OGRErr OGRPGLayer::RollbackTransaction()
 
 {
     return poDS->SoftRollback();
+}
+
+/************************************************************************/
+/*                           GetSpatialRef()                            */
+/************************************************************************/
+
+OGRSpatialReference *OGRPGLayer::GetSpatialRef()
+
+{
+    if( poSRS == NULL && nSRSId > -1 )
+    {
+        poSRS = poDS->FetchSRS( nSRSId );
+        if( poSRS != NULL )
+            poSRS->Reference();
+        else
+            nSRSId = -1;
+    }
+
+    return poSRS;
 }
