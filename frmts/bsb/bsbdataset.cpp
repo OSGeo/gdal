@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.5  2002/07/11 13:09:43  warmerda
+ * Added support for GCP to Geotransform conversion.
+ *
  * Revision 1.4  2002/06/12 21:12:24  warmerda
  * update to metadata based driver info
  *
@@ -68,6 +71,9 @@ class BSBDataset : public GDALDataset
     GDAL_GCP    *pasGCPList;
     char        *pszGCPProjection;
 
+    double      adfGeoTransform[6];
+    int         bGeoTransformSet;
+
     void        ScanForGCPs();
   public:
                 BSBDataset();
@@ -81,10 +87,8 @@ class BSBDataset : public GDALDataset
     virtual const char *GetGCPProjection();
     virtual const GDAL_GCP *GetGCPs();
 
-#ifdef notdef
     CPLErr 	GetGeoTransform( double * padfTransform );
     const char *GetProjectionRef();
-#endif
 };
 
 /************************************************************************/
@@ -185,9 +189,19 @@ BSBDataset::BSBDataset()
 {
     psInfo = NULL;
 
+    bGeoTransformSet = FALSE;
+
     nGCPCount = 0;
     pasGCPList = NULL;
     pszGCPProjection = "GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",7030]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY[\"EPSG\",6326]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",8901]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",9108]],AXIS[\"Lat\",NORTH],AXIS[\"Long\",EAST],AUTHORITY[\"EPSG\",4326]]";
+
+    adfGeoTransform[0] = 0.0;     /* X Origin (top left corner) */
+    adfGeoTransform[1] = 1.0;     /* X Pixel size */
+    adfGeoTransform[2] = 0.0;
+    adfGeoTransform[3] = 0.0;     /* Y Origin (top left corner) */
+    adfGeoTransform[4] = 0.0;     
+    adfGeoTransform[5] = 1.0;     /* Y Pixel Size */
+
 }
 
 /************************************************************************/
@@ -205,7 +219,6 @@ BSBDataset::~BSBDataset()
 }
 
 
-#ifdef notdef
 /************************************************************************/
 /*                          GetGeoTransform()                           */
 /************************************************************************/
@@ -214,7 +227,11 @@ CPLErr BSBDataset::GetGeoTransform( double * padfTransform )
 
 {
     memcpy( padfTransform, adfGeoTransform, sizeof(double) * 6 );
-    return CE_None;
+    
+    if( bGeoTransformSet )
+        return CE_None;
+    else
+        return CE_Failure;
 }
 
 /************************************************************************/
@@ -224,9 +241,11 @@ CPLErr BSBDataset::GetGeoTransform( double * padfTransform )
 const char *BSBDataset::GetProjectionRef()
 
 {
-    return pszProjection;
+    if( bGeoTransformSet )
+        return pszGCPProjection;
+    else
+        return "";
 }
-#endif
 
 /************************************************************************/
 /*                            ScanForGCPs()                             */
@@ -282,6 +301,15 @@ void BSBDataset::ScanForGCPs()
 
             nGCPCount++;
         }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Attempt to prepare a geotransform from the GCPs.                */
+/* -------------------------------------------------------------------- */
+    if( GDALGCPsToGeoTransform( nGCPCount, pasGCPList, adfGeoTransform, 
+                                FALSE ) )
+    {
+        bGeoTransformSet = TRUE;
     }
 }
 
