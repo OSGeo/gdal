@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2004/03/16 18:34:35  warmerda
+ * added support for relativeToVRT attribute on SourceFilename
+ *
  * Revision 1.11  2003/09/11 23:00:04  aamici
  * add class constructors and destructors where needed in order to
  * let the mingw/cygwin binutils produce sensible partially linked objet files
@@ -98,14 +101,14 @@ public:
                               GDALDataType eBufType, 
                               int nPixelSpace, int nLineSpace ) = 0;
 
-    virtual CPLErr  XMLInit( CPLXMLNode *psTree ) = 0;
+    virtual CPLErr  XMLInit( CPLXMLNode *psTree, const char * ) = 0;
     virtual CPLXMLNode *SerializeToXML() = 0;
 };
 
-typedef VRTSource *(*VRTSourceParser)(CPLXMLNode *);
+typedef VRTSource *(*VRTSourceParser)(CPLXMLNode *, const char *);
 
-VRTSource *VRTParseCoreSources( CPLXMLNode *psTree );
-VRTSource *VRTParseFilterSources( CPLXMLNode *psTree );
+VRTSource *VRTParseCoreSources( CPLXMLNode *psTree, const char * );
+VRTSource *VRTParseFilterSources( CPLXMLNode *psTree, const char * );
 
 /************************************************************************/
 /*                              VRTDataset                              */
@@ -123,6 +126,8 @@ class CPL_DLL VRTDataset : public GDALDataset
     char          *pszGCPProjection;
 
     int            bNeedsFlush;
+    
+    char          *pszVRTPath;
 
   public:
                  VRTDataset(int nXSize, int nYSize);
@@ -148,7 +153,7 @@ class CPL_DLL VRTDataset : public GDALDataset
     CPLXMLNode *   SerializeToXML(void);
  
     static GDALDataset *Open( GDALOpenInfo * );
-    static GDALDataset *OpenXML( const char * );
+    static GDALDataset *OpenXML( const char *, const char * );
     static GDALDataset *Create( const char * pszName,
                                 int nXSize, int nYSize, int nBands,
                                 GDALDataType eType, char ** papszOptions );
@@ -187,7 +192,7 @@ class CPL_DLL VRTRasterBand : public GDALRasterBand
                                   int nXSize, int nYSize );
     virtual        ~VRTRasterBand();
 
-    CPLErr         XMLInit( CPLXMLNode * );
+    CPLErr         XMLInit( CPLXMLNode *, const char * );
     CPLXMLNode *   SerializeToXML(void);
 
 #define VRT_NODATA_UNSET -1234.56
@@ -245,7 +250,7 @@ class VRTDriver : public GDALDriver
     virtual CPLErr      SetMetadata( char ** papszMetadata,
                                      const char * pszDomain = "" );
 
-    VRTSource   *ParseSource( CPLXMLNode *psSrc );
+    VRTSource   *ParseSource( CPLXMLNode *psSrc, const char *pszVRTPath );
     void         AddSourceParser( const char *pszElementName, 
                                   VRTSourceParser pfnParser );
 };
@@ -276,7 +281,7 @@ public:
             VRTSimpleSource();
     virtual ~VRTSimpleSource();
 
-    virtual CPLErr  XMLInit( CPLXMLNode *psTree );
+    virtual CPLErr  XMLInit( CPLXMLNode *psTree, const char * );
     virtual CPLXMLNode *SerializeToXML();
 
     void           SetSrcBand( GDALRasterBand * );
@@ -330,7 +335,7 @@ public:
                              GDALDataType eBufType, 
                              int nPixelSpace, int nLineSpace );
     virtual CPLXMLNode *SerializeToXML();
-    virtual CPLErr XMLInit( CPLXMLNode * );
+    virtual CPLErr XMLInit( CPLXMLNode *, const char * );
 
     int		   bDoScaling;
     double	   dfScaleOff;
@@ -386,7 +391,7 @@ public:
             VRTKernelFilteredSource();
     virtual ~VRTKernelFilteredSource();
 
-    virtual CPLErr  XMLInit( CPLXMLNode *psTree );
+    virtual CPLErr  XMLInit( CPLXMLNode *psTree, const char * );
     virtual CPLXMLNode *SerializeToXML();
 
     virtual CPLErr  FilterData( int nXSize, int nYSize, GDALDataType eType, 
@@ -406,7 +411,7 @@ public:
             VRTAverageFilteredSource( int nKernelSize );
     virtual ~VRTAverageFilteredSource();
 
-    virtual CPLErr  XMLInit( CPLXMLNode *psTree );
+    virtual CPLErr  XMLInit( CPLXMLNode *psTree, const char * );
     virtual CPLXMLNode *SerializeToXML();
 };
 
@@ -419,7 +424,7 @@ public:
             VRTFuncSource();
     virtual ~VRTFuncSource();
 
-    virtual CPLErr  XMLInit( CPLXMLNode * ) { return CE_Failure; }
+    virtual CPLErr  XMLInit( CPLXMLNode *, const char *) { return CE_Failure; }
     virtual CPLXMLNode *SerializeToXML();
 
     virtual CPLErr  RasterIO( int nXOff, int nYOff, int nXSize, int nYSize, 

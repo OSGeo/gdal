@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2004/03/16 18:34:35  warmerda
+ * added support for relativeToVRT attribute on SourceFilename
+ *
  * Revision 1.2  2003/09/11 23:00:04  aamici
  * add class constructors and destructors where needed in order to
  * let the mingw/cygwin binutils produce sensible partially linked objet files
@@ -201,15 +204,16 @@ CPLXMLNode *VRTSimpleSource::SerializeToXML()
 /*                              XMLInit()                               */
 /************************************************************************/
 
-CPLErr VRTSimpleSource::XMLInit( CPLXMLNode *psSrc )
+CPLErr VRTSimpleSource::XMLInit( CPLXMLNode *psSrc, const char *pszVRTPath )
 
 {
 /* -------------------------------------------------------------------- */
-/*      Get the raster band.                                            */
+/*      Prepare filename.                                               */
 /* -------------------------------------------------------------------- */
+    char *pszSrcDSName = NULL;
     const char *pszFilename = 
         CPLGetXMLValue(psSrc, "SourceFilename", NULL);
-    
+
     if( pszFilename == NULL )
     {
         CPLError( CE_Warning, CPLE_AppDefined, 
@@ -217,15 +221,32 @@ CPLErr VRTSimpleSource::XMLInit( CPLXMLNode *psSrc )
         return CE_Failure;
     }
     
-    int nSrcBand = atoi(CPLGetXMLValue(psSrc,"SourceBand","1"));
-    
+    if( atoi(CPLGetXMLValue( psSrc, "SourceFilename.relativetoVRT", "0")) )
+    {
+        pszSrcDSName = CPLStrdup(
+            CPLProjectRelativeFilename( pszVRTPath, pszFilename ) );
+    }
+    else
+        pszSrcDSName = CPLStrdup( pszFilename );
+        
+/* -------------------------------------------------------------------- */
+/*      Open the file (shared).                                         */
+/* -------------------------------------------------------------------- */
     GDALDataset *poSrcDS = (GDALDataset *) 
-        GDALOpenShared( pszFilename, GA_ReadOnly );
+        GDALOpenShared( pszSrcDSName, GA_ReadOnly );
+    CPLFree( pszSrcDSName );
     
-    if( poSrcDS == NULL || poSrcDS->GetRasterBand(nSrcBand) == NULL )
+    if( poSrcDS == NULL )
         return CE_Failure;
 
+/* -------------------------------------------------------------------- */
+/*      Get the raster band.                                            */
+/* -------------------------------------------------------------------- */
+    int nSrcBand = atoi(CPLGetXMLValue(psSrc,"SourceBand","1"));
+    
     poRasterBand = poSrcDS->GetRasterBand(nSrcBand);
+    if( poRasterBand == NULL )
+        return CE_Failure;
     
 /* -------------------------------------------------------------------- */
 /*      Set characteristics.                                            */
@@ -677,7 +698,7 @@ CPLXMLNode *VRTComplexSource::SerializeToXML()
 /*                              XMLInit()                               */
 /************************************************************************/
 
-CPLErr VRTComplexSource::XMLInit( CPLXMLNode *psSrc )
+CPLErr VRTComplexSource::XMLInit( CPLXMLNode *psSrc, const char *pszVRTPath )
 
 {
     CPLErr eErr;
@@ -685,7 +706,7 @@ CPLErr VRTComplexSource::XMLInit( CPLXMLNode *psSrc )
 /* -------------------------------------------------------------------- */
 /*      Do base initialization.                                         */
 /* -------------------------------------------------------------------- */
-    eErr = VRTSimpleSource::XMLInit( psSrc );
+    eErr = VRTSimpleSource::XMLInit( psSrc, pszVRTPath );
     if( eErr != CE_None )
         return eErr;
 
@@ -863,7 +884,7 @@ VRTFuncSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
 /*                        VRTParseCoreSources()                         */
 /************************************************************************/
 
-VRTSource *VRTParseCoreSources( CPLXMLNode *psChild )
+VRTSource *VRTParseCoreSources( CPLXMLNode *psChild, const char *pszVRTPath )
 
 {
     if( EQUAL(psChild->pszValue,"AveragedSource") 
@@ -872,19 +893,19 @@ VRTSource *VRTParseCoreSources( CPLXMLNode *psChild )
                       "Aver",4)) )
     {
         VRTSource * poSource = new VRTAveragedSource();
-        if ( poSource->XMLInit( psChild ) == CE_None )
+        if ( poSource->XMLInit( psChild, pszVRTPath ) == CE_None )
             return poSource;
     }
     else if( EQUAL(psChild->pszValue,"SimpleSource") )
     {
         VRTSource * poSource = new VRTSimpleSource();
-        if ( poSource->XMLInit( psChild ) == CE_None )
+        if ( poSource->XMLInit( psChild, pszVRTPath ) == CE_None )
             return poSource;
     }
     else if( EQUAL(psChild->pszValue,"ComplexSource") )
     {
         VRTSource * poSource = new VRTComplexSource();
-        if ( poSource->XMLInit( psChild ) == CE_None )
+        if ( poSource->XMLInit( psChild, pszVRTPath ) == CE_None )
             return poSource;
     }
 
