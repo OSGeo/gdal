@@ -38,6 +38,9 @@
  *   GUInt16, and GByte are defined.
  *
  * $Log$
+ * Revision 1.10  1999/03/02 21:08:11  warmerda
+ * autoconf switch
+ *
  * Revision 1.9  1999/02/17 01:41:17  warmerda
  * Added NULL.
  *
@@ -81,6 +84,8 @@
 /*	Standard include files.						*/
 /* ==================================================================== */
 
+#include "cpl_config.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -88,8 +93,9 @@
 #include <string.h>
 #include <errno.h>
 
-#ifdef DBMALLOC
-#include <dbmalloc.h>
+#if defined(HAVE_LIB_DBMALLOC) && defined(HAVE_DBMALLOC_H)
+#  define DBMALLOC
+#  include <dbmalloc.h>
 #endif
 
 /* ==================================================================== */
@@ -171,6 +177,10 @@ typedef int             GBool;
  * This should be defined in the Makefile, but if it is not then
  * the default is CPL_LSB (Intel ordering, LSB first).
  *--------------------------------------------------------------------*/
+#if defined(WORDS_BIGENDIAN) && !defined(CPL_MSB) && !defined(CPL_LSB)
+#  define CPL_MSB
+#endif
+
 #if ! ( defined(CPL_LSB) || defined(CPL_MSB) )
 #define CPL_LSB
 #endif

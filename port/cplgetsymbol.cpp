@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  1999/03/02 21:08:11  warmerda
+ * autoconf switch
+ *
  * Revision 1.3  1999/01/28 18:35:44  warmerda
  * minor windows cleanup.
  *
@@ -45,7 +48,7 @@
 /* ==================================================================== */
 /*                  Unix Implementation                                 */
 /* ==================================================================== */
-#ifdef __unix__
+#if defined(__unix__) && defined(HAVE_LIBDL)
 
 #include <dlfcn.h>
 
@@ -88,7 +91,7 @@ void *CPLGetSymbol( const char * pszLibrary, const char * pszSymbolName )
     return( pSymbol );
 }
 
-#endif /* def __unix__ */
+#endif /* def __unix__ && defined(HAVE_LIBDL) */
 
 /* ==================================================================== */
 /*                 Windows Implementation                               */
