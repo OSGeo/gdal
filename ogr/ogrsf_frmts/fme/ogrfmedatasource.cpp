@@ -23,6 +23,12 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2002/08/14 21:15:25  warmerda
+ * improved error recovery logic if session doesnt initialize
+ *
+ * Revision 1.33  2002/08/13 13:38:53  warmerda
+ * updated
+ *
  * Revision 1.5  2002/08/13 13:41:54  warmerda
  * removed MEDC stuff
  *
@@ -305,6 +311,9 @@ OGRFMEDataSource::~OGRFMEDataSource()
 
 {
     CPLDebug( kPROVIDERNAME, "~OGRFMEDataSource(): %p", this );
+
+    if( poSharedSession == NULL )
+        return;
 
     AcquireSession();
 
@@ -1572,6 +1581,7 @@ IFMESession *OGRFMEDataSource::AcquireSession()
 #endif
         if( err )
         {
+            poSharedSession = NULL;
             CPLReleaseMutex( hSessionMutex );
             CPLError( CE_Failure, CPLE_AppDefined,
                       "Failed to create FMESession." );
@@ -1593,10 +1603,23 @@ IFMESession *OGRFMEDataSource::AcquireSession()
 
         if( err )
         {
-            CPLReleaseMutex( hSessionMutex );
             CPLError( CE_Failure, CPLE_AppDefined,
                       "Failed to initialize FMESession.\n%s",
                       poSharedSession->getLastErrorMsg());
+
+#ifdef SUPPORT_INDIRECT_FMEDLL
+            int (*pfnFME_destroySession)(void *);
+
+            pfnFME_destroySession = (int (*)(void*)) 
+                CPLGetSymbol(FMEDLL_NAME, "FME_DestroySession" );
+            if( pfnFME_destroySession != NULL )
+                pfnFME_destroySession( (void *) (&poSharedSession) );
+#else
+            FME_destroySession( poSharedSession );
+#endif // def SUPPORT_INDIRECT_FMEDLL
+
+            poSharedSession = NULL;
+            CPLReleaseMutex( hSessionMutex );
             return NULL;
         }
     }
