@@ -1,0 +1,65 @@
+<html>
+<head>
+<title>L1B -- NOAA Polar Orbiter Level 1b Data Set (AVHRR)</title>
+</head>
+
+<body bgcolor="#ffffff">
+
+<h1>L1B -- NOAA Polar Orbiter Level 1b Data Set (AVHRR)</h1>
+
+GDAL supports NOAA Polar Orbiter Level 1b Data Set format for reading. Now it can
+read NOAA-9(F) --- NOAA-17(M) datasets. NOTE: only AVHRR instrument supported
+now, if you want read data from other instruments, write to me (Andrey Kiselev, 
+<a href=mailto:a_kissel@eudoramail.com>a_kissel@eudoramail.com</a>). AVHRR
+LAC/HRPT (1 km resolution) and GAC (4 km resolution) should be processed
+correctly.
+
+<h2>Metadata</h2>
+
+Several parameters, obtained from the dataset stored as metadata records. <p>
+
+Metadata records:<p>
+
+<ul>
+
+<li> <b>SATELLITE</b>: Satellite name<p>
+
+<li> <b>DATA_TYPE</b>: Type of the data, stored in the Level 1b dataset (AVHRR
+HRPT/LAC/GAC). <p>
+
+<li> <b>REVOLUTION</b>: Orbit number. Note that it can be 1 to 2 off the
+correct orbit number (according documentation).<p>
+
+<li> <b>SOURCE</b>: Receiving station name.<p>
+
+<li> <b>PROCESSING_CENTER</b>: Name of data processing center.<p>
+
+<li> <b>START</b>: Time of first scanline acquisition (year, day of year,
+millisecond of day).<p>
+
+<li> <b>STOP</b>: Time of last scanline acquisition (year, day of year,
+millisecond of day).<p>
+
+</ul>
+
+See Also:<p>
+
+<ul>
+<li> Implemented as <tt>gdal/frmts/l1b/l1bdataset.cpp</tt>.<p>
+
+<li>  NOAA Polar Orbiter Level 1b Data Set documented in the ``POD User's
+Guide'' (TIROS-N -- NOAA-14 satellites) and in the ``NOAA KLM User's Guide''
+(NOAA-15 -- NOAA-16 satellites). You can find this manuals at
+<a href="http://www2.ncdc.noaa.gov/docs/intro.htm">
+NOAA Technical Documentation Introduction Page
+</a><p>
+
+<li> NOAA data can be downloaded from the 
+<a href="http://www.saa.noaa.gov/">Satellite Active Archive (SAA)</a>. 
+Actually it is only source of Level 1b datasets for me, so my implementation
+tested with that files only. <p>
+
+</ul>
+
+</body>
+</html>
