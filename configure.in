@@ -126,7 +126,7 @@ if test "$with_libz" = "external" -o "$with_libz" = "" -o "$with_libz" = "yes" ;
 
 elif test "$with_libz" != "no" -a "$with_libz" != "internal" ; then
 
-  LIBS="-L$with_libz $LIBS"
+  LIBS="-L$with_libz -L$with_libz/lib $LIBS"
   LIBZ_SETTING=external
   AC_MSG_RESULT([using libz library from $with_libz])
 
