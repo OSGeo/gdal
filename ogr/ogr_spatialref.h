@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.55  2003/10/07 04:20:50  warmerda
+ * added WMS AUTO: support
+ *
  * Revision 1.54  2003/09/09 07:49:19  dron
  * Added exportToPCI() method.
  *
@@ -331,6 +334,7 @@ class CPL_DLL OGRSpatialReference
     OGRErr      importFromPCI( const char *pszProj,
                                const char *pszUnits = NULL,
                                double *padfPrjParams = NULL );
+    OGRErr      importFromWMSAUTO( const char *pszAutoDef );
     OGRErr      importFromXML( const char * );
 
     OGRErr      morphToESRI();
