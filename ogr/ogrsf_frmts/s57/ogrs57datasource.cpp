@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.24  2003/11/12 21:24:12  warmerda
+ * updates to new featuredefn generators
+ *
  * Revision 1.23  2003/09/15 20:52:12  warmerda
  * added RETURN_LINKAGES
  *
@@ -315,16 +318,16 @@ int OGRS57DataSource::Open( const char * pszFilename, int bTestOpen )
     {
         OGRFeatureDefn  *poDefn;
 
-        poDefn = poModule->GenerateVectorPrimitiveFeatureDefn( RCNM_VI );
+        poDefn = S57GenerateVectorPrimitiveFeatureDefn( RCNM_VI, poModule->GetOptionFlags());
         AddLayer( new OGRS57Layer( this, poDefn ) );
 
-        poDefn = poModule->GenerateVectorPrimitiveFeatureDefn( RCNM_VC );
+        poDefn = S57GenerateVectorPrimitiveFeatureDefn( RCNM_VC, poModule->GetOptionFlags());
         AddLayer( new OGRS57Layer( this, poDefn ) );
 
-        poDefn = poModule->GenerateVectorPrimitiveFeatureDefn( RCNM_VE );
+        poDefn = S57GenerateVectorPrimitiveFeatureDefn( RCNM_VE, poModule->GetOptionFlags());
         AddLayer( new OGRS57Layer( this, poDefn ) );
 
-        poDefn = poModule->GenerateVectorPrimitiveFeatureDefn( RCNM_VF );
+        poDefn = S57GenerateVectorPrimitiveFeatureDefn( RCNM_VF, poModule->GetOptionFlags());
         AddLayer( new OGRS57Layer( this, poDefn ) );
     }
 
@@ -336,16 +339,20 @@ int OGRS57DataSource::Open( const char * pszFilename, int bTestOpen )
     {
         OGRFeatureDefn  *poDefn;
 
-        poDefn = poModule->GenerateGeomFeatureDefn( wkbPoint );
+        poDefn = S57GenerateGeomFeatureDefn( wkbPoint, 
+                                             poModule->GetOptionFlags() );
         AddLayer( new OGRS57Layer( this, poDefn ) );
     
-        poDefn = poModule->GenerateGeomFeatureDefn( wkbLineString );
+        poDefn = S57GenerateGeomFeatureDefn( wkbLineString, 
+                                             poModule->GetOptionFlags() );
         AddLayer( new OGRS57Layer( this, poDefn ) );
     
-        poDefn = poModule->GenerateGeomFeatureDefn( wkbPolygon );
+        poDefn = S57GenerateGeomFeatureDefn( wkbPolygon, 
+                                             poModule->GetOptionFlags() );
         AddLayer( new OGRS57Layer( this, poDefn ) );
     
-        poDefn = poModule->GenerateGeomFeatureDefn( wkbNone );
+        poDefn = S57GenerateGeomFeatureDefn( wkbNone, 
+                                             poModule->GetOptionFlags() );
         AddLayer( new OGRS57Layer( this, poDefn ) );
     }
 
@@ -373,8 +380,10 @@ int OGRS57DataSource::Open( const char * pszFilename, int bTestOpen )
         {
             if( panClassCount[iClass] > 0 )
             {
-                poDefn = poModule->GenerateObjectClassDefn( poRegistrar,
-                                                            iClass );
+                poDefn = 
+                    S57GenerateObjectClassDefn( poRegistrar, iClass, 
+                                                poModule->GetOptionFlags() );
+
                 if( poDefn != NULL )
                     AddLayer( new OGRS57Layer( this, poDefn, 
                                                panClassCount[iClass] ) );
@@ -390,7 +399,8 @@ int OGRS57DataSource::Open( const char * pszFilename, int bTestOpen )
 
         if( bGeneric )
         {
-            poDefn = poModule->GenerateGeomFeatureDefn( wkbUnknown );
+            poDefn = S57GenerateGeomFeatureDefn( wkbUnknown, 
+                                                 poModule->GetOptionFlags() );
             AddLayer( new OGRS57Layer( this, poDefn ) );
         }
             

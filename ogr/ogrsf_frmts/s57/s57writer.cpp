@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2003/11/12 21:23:40  warmerda
+ * updates to new featuredefn generators
+ *
  * Revision 1.3  2003/09/17 21:13:44  warmerda
  * write ATTF ahead of FSPT, dont write explicit FIELD_TERMINATOR
  *
@@ -490,9 +493,9 @@ int S57Writer::WriteDSID( const char *pszDSNM, const char *pszISDT,
     poRec->SetIntSubfield   ( "DSSI", 0, "NALL", 0, 1 );
     poRec->SetIntSubfield   ( "DSSI", 0, "NOMR", 0, 0 );
     poRec->SetIntSubfield   ( "DSSI", 0, "NOCR", 0, 0 );
-    poRec->SetIntSubfield   ( "DSSI", 0, "NOGR", 0, 0 );
+    poRec->SetIntSubfield   ( "DSSI", 0, "NOGR", 0, 3 );
     poRec->SetIntSubfield   ( "DSSI", 0, "NOLR", 0, 0 );
-    poRec->SetIntSubfield   ( "DSSI", 0, "NOIN", 0, 0 );
+    poRec->SetIntSubfield   ( "DSSI", 0, "NOIN", 0, 3 );
     poRec->SetIntSubfield   ( "DSSI", 0, "NOCN", 0, 0 );
     poRec->SetIntSubfield   ( "DSSI", 0, "NOED", 0, 0 );
     poRec->SetIntSubfield   ( "DSSI", 0, "NOFA", 0, 0 );
