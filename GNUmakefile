@@ -43,7 +43,7 @@ ogr-target:
 endif
 
 core-target:
-	(cd core; $(MAKE))
+	(cd gcore; $(MAKE))
 	(cd alg; $(MAKE))
 
 frmts-target:
@@ -79,7 +79,7 @@ endif
 clean:	lclean
 	(cd port; $(MAKE) clean)
 	(cd ogr; $(MAKE) clean)
-	(cd core; $(MAKE) clean)
+	(cd gcore; $(MAKE) clean)
 	(cd frmts; $(MAKE) clean)
 	(cd alg; $(MAKE) clean)
 	(cd apps; $(MAKE) clean)
@@ -132,7 +132,7 @@ install-actions:
 	$(INSTALL_DIR) $(INST_LIB)
 	$(INSTALL_DIR) $(INST_INCLUDE)
 	(cd port; $(MAKE) install)
-	(cd core; $(MAKE) install)
+	(cd gcore; $(MAKE) install)
 	(cd frmts; $(MAKE) install)
 	(cd alg; $(MAKE) install)
 	(cd ogr; $(MAKE) install)

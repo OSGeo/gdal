@@ -73,7 +73,7 @@ else
 HAVE_LD_SHARED  =	yes
 endif
 
-GDAL_INCLUDE	=	-I$(GDAL_ROOT) -I$(GDAL_ROOT)/port -I$(GDAL_ROOT)/core\
+GDAL_INCLUDE	=	-I$(GDAL_ROOT) -I$(GDAL_ROOT)/port -I$(GDAL_ROOT)/gcore\
 			-I$(GDAL_ROOT)/ogr
 
 GDAL_VER	=	1.1
@@ -163,7 +163,7 @@ GDAL_LIBS	=	$(GDAL_LIB) $(OGR_LIB) \
 			$(GDAL_LIB) $(CPL_LIB)
 GDALA_DEP	=	$(OGR_LIB)
 GDAL_OBJ	=	$(GDAL_ROOT)/frmts/o/*.o \
-			$(GDAL_ROOT)/core/*.o \
+			$(GDAL_ROOT)/gcore/*.o \
 			$(GDAL_ROOT)/port/*.o \
 			$(GDAL_ROOT)/alg/*.o \
 			$(GDAL_ROOT)/ogr/ogrct.o \
