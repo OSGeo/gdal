@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  1999/09/02 03:10:01  warmerda
+ * fixed subtle problem with rewinding modules with reusable headers
+ *
  * Revision 1.7  1999/08/16 15:44:29  warmerda
  * Fixed bug in FindFieldDefn().
  *
@@ -542,4 +545,8 @@ void DDFModule::Rewind( long nOffset )
         return;
     
     VSIFSeek( fpDDF, nOffset, SEEK_SET );
+
+    if( nOffset == nFirstRecordOffset && poRecord != NULL )
+        poRecord->Clear();
+        
 }

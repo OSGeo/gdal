@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  1999/09/02 03:10:01  warmerda
+ * fixed subtle problem with rewinding modules with reusable headers
+ *
  * Revision 1.5  1999/05/08 20:16:20  warmerda
  * added some record validity testing
  *
@@ -185,6 +188,7 @@ void DDFRecord::Clear()
 
     pachData = NULL;
     nDataSize = 0;
+    nReuseHeader = FALSE;
 }
 
 /************************************************************************/
