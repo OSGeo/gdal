@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.3  2002/04/16 17:46:47  warmerda
+ * changed path to memdataset.h
+ *
  * Revision 1.2  2002/04/16 16:12:53  warmerda
  * Fixed help topic.
  *
@@ -38,7 +41,7 @@
 
 #include "gdal_priv.h"
 #include "cpl_string.h"
-#include "frmts/mem/memdataset.h"
+#include "../mem/memdataset.h"
 #include "gdal_frmts.h"						      
 
 
