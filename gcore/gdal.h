@@ -26,6 +26,9 @@
  * that calls the GDAL library.
  * 
  * $Log$
+ * Revision 1.10  1999/07/23 19:35:22  warmerda
+ * added GDALSwapWords(), GDALCopyWords()
+ *
  * Revision 1.9  1999/05/23 02:46:26  warmerda
  * Added documentation short description.
  *
@@ -80,10 +83,12 @@ typedef enum {
     GDT_UInt32 = 4,
     GDT_Int32 = 5,
     GDT_Float32 = 6,
-    GDT_Float64 = 7
+    GDT_Float64 = 7,
+    GDT_TypeCount = 8		/* maximum type # + 1 */
 } GDALDataType;
 
 int CPL_DLL GDALGetDataTypeSize( GDALDataType );
+const char *CPL_DLL GDALGetDataTypeName( GDALDataType );
 
 typedef enum {
     GA_ReadOnly = 0,
@@ -171,6 +176,15 @@ CPLErr CPL_DLL GDALReadBlock( GDALRasterBandH, int, int, void * );
 CPLErr CPL_DLL GDALWriteBlock( GDALRasterBandH, int, int, void * );
 
 /* need to add functions related to block cache */
+
+/* helper functions */
+void CPL_DLL GDALSwapWords( void *pData, int nWordSize, int nWordCount,
+                            int nWordSkip );
+void CPL_DLL
+    GDALCopyWords( void * pSrcData, GDALDataType eSrcType, int nSrcPixelOffset,
+                   void * pDstData, GDALDataType eDstType, int nDstPixelOffset,
+                   int nWordCount );
+
 
 /* ==================================================================== */
 /*      Projections                                                     */
