@@ -28,6 +28,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.24  2004/11/09 02:49:12  fwarmerdam
+ * Don't add user_sdo_geom_metadata record till finalize (layer load complete)
+ * time as that is when we have all the diminfo details.  Inserts of metadata
+ * records with NULL diminfos fails in Oracle 10 due to new constraints.
+ *
  * Revision 1.23  2004/07/09 07:07:39  warmerda
  * Added OGRSQL dialect support.
  *
@@ -503,19 +508,6 @@ OGROCIDataSource::CreateLayer( const char * pszLayerName,
         CPLFree( pszSafeLayerName );
         return NULL;
     }
-
-/* -------------------------------------------------------------------- */
-/*      Add the table to the user_sdo_geom_metadata table without       */
-/*      setting the dimension information.  Do that later when          */
-/*      requesting an index to be built.                                */
-/* -------------------------------------------------------------------- */
-
-    sprintf( szCommand, 
-             "INSERT INTO USER_SDO_GEOM_METADATA VALUES "
-             "( '%s', '%s', NULL, %s )", 
-             pszSafeLayerName, "ORA_GEOMETRY", szSRSId );
-
-    oStatement.Execute( szCommand );
 
 /* -------------------------------------------------------------------- */
 /*      Create the layer object.                                        */
