@@ -38,6 +38,9 @@
  *   GUInt16, and GByte are defined.
  *
  * $Log$
+ * Revision 1.22  2001/01/03 16:18:07  warmerda
+ * added GUIntBig
+ *
  * Revision 1.21  2000/10/20 04:20:33  warmerda
  * added SWAP16PTR macros
  *
@@ -177,6 +180,22 @@ typedef unsigned short  GUInt16;
 typedef unsigned char   GByte;
 typedef int             GBool;
 
+/* -------------------------------------------------------------------- */
+/*      64bit support                                                   */
+/* -------------------------------------------------------------------- */
+
+#ifdef WIN32
+
+#define VSI_LARGE_API_SUPPORTED
+typedef __int64          GIntBig;
+typedef unsigned __int64 GUIntBig;
+
+#else
+
+typedef long             GIntBig;
+typedef unsigned long    GUIntBig;
+
+#endif
 
 /* ==================================================================== */
 /*      Other standard services.                                        */
