@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.7  2002/03/07 22:36:51  warmerda
+ * fixed bounds computation
+ *
  * Revision 1.6  2002/03/06 20:08:02  warmerda
  * added tracking of extents, feature count and extrainfo
  *
@@ -53,7 +56,7 @@
 #define SUPPORT_GEOMETRY
 
 #ifdef SUPPORT_GEOMETRY
-#  include "ogr_gml.h"
+#  include "ogr_gml_geom.h"
 #endif
 
 /************************************************************************/
@@ -734,9 +737,9 @@ int GMLReader::PrescanForSchema( int bGetExtents )
                 if( poClass->GetExtents(&dfXMin, &dfXMax, &dfYMin, &dfYMax) )
                 {
                     dfXMin = MIN(dfXMin,sEnvelope.MinX);
-                    dfXMax = MIN(dfXMax,sEnvelope.MaxX);
+                    dfXMax = MAX(dfXMax,sEnvelope.MaxX);
                     dfYMin = MIN(dfYMin,sEnvelope.MinY);
-                    dfYMax = MIN(dfYMax,sEnvelope.MaxY);
+                    dfYMax = MAX(dfYMax,sEnvelope.MaxY);
                 }
                 else
                 {
