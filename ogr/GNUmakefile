@@ -29,9 +29,11 @@ CFLAGS   :=	$(CFLAGS) -DOGDI_ENABLED
 CXXFLAGS :=	$(CXXFLAGS) -DOGDI_ENABLED
 endif
 
-default:	$(OGR_LIB)
+default:	lib ogrinfo ogr2ogr
 
 all:	sublibs test1 test2 test_ogrsf ogrinfo ogr2ogr docs
+
+apps:	ogrinfo ogr2ogr
 
 clean:
 	rm -f *.o test1 test2 
