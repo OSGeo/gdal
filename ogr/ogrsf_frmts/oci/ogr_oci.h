@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2003/01/07 21:12:59  warmerda
+ * Move GetFeature() to OGROCITableLayer
+ *
  * Revision 1.3  2003/01/06 17:57:44  warmerda
  * lots of updates
  *
@@ -217,7 +220,7 @@ class OGROCILayer : public OGRLayer
 
     OGROCIStatement    *poStatement;
 
-    int                 ExecuteQuery();
+    int                 ExecuteQuery( const char * );
 
     SDO_GEOMETRY_TYPE  *hLastGeom;
     SDO_GEOMETRY_ind   *hLastGeomInd;
@@ -248,8 +251,6 @@ class OGROCILayer : public OGRLayer
 
     virtual OGRGeometry *GetSpatialFilter() { return poFilterGeom; }
     virtual void	SetSpatialFilter( OGRGeometry * );
-
-    virtual OGRFeature *GetFeature( long nFeatureId );
 
     OGRFeatureDefn *	GetLayerDefn() { return poFeatureDefn; }
 
@@ -303,7 +304,7 @@ class OGROCITableLayer : public OGROCILayer
     virtual OGRErr      SetAttributeFilter( const char * );
 
     virtual OGRFeature *GetNextFeature();
-    
+    virtual OGRFeature *GetFeature( long nFeatureId );
 
     virtual OGRErr      SetFeature( OGRFeature *poFeature );
     virtual OGRErr      CreateFeature( OGRFeature *poFeature );
