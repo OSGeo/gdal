@@ -38,10 +38,6 @@ gdal_contour.exe:	gdal_contour.cpp $(GDALLIB) $(XTRAOBJ)
 	$(CC) $(CFLAGS) $(XTRAFLAGS) gdal_contour.cpp $(XTRAOBJ) $(LIBS) \
 		/link $(LINKER_FLAGS)
 	
-gdal2raw.exe:	gdal2raw.c $(GDALLIB) $(XTRAOBJ)
-	$(CC) $(CFLAGS) $(XTRAFLAGS) gdal2raw.c $(XTRAOBJ) $(LIBS) \
-		/link $(LINKER_FLAGS)
-	
 gdaltindex.exe:	gdaltindex.c $(GDALLIB) $(XTRAOBJ)
 	$(CC) /I$(GDAL_ROOT) $(CFLAGS) $(XTRAFLAGS) gdaltindex.c \
 		../ogr/ogrsf_frmts/shape/shpopen.c \

@@ -32,16 +32,9 @@ gdaladdo$(EXE):	gdaladdo.o  $(DEP_LIBS)
 	$(LD) $(LNK_FLAGS) gdaladdo.o $(XTRAOBJ) \
 		$(CONFIG_LIBS) -o gdaladdo$(EXE)
 
-gdal2raw$(EXE):	gdal2raw.o $(DEP_LIBS)
-	$(LD) $(LNK_FLAGS) gdal2raw.o $(XTRAOBJ) $(CONFIG_LIBS) \
-		-o gdal2raw$(EXE)
-
 gdalwarp$(EXE): gdalwarp.o $(DEP_LIBS)
 	$(LD) $(LNK_FLAGS) gdalwarp.o $(XTRAOBJ) \
 		$(CONFIG_LIBS) -o gdalwarp$(EXE)
-
-gdal_chksum$(EXE):	gdal_chksum.o $(DEP_LIBS)
-	$(LD) $(LNK_FLAGS) gdal_chksum.o $(CONFIG_LIBS) -o gdal_chksum$(EXE)
 
 gdal_contour$(EXE):	gdal_contour.o $(DEP_LIBS)
 	$(LD) $(LNK_FLAGS) gdal_contour.o $(CONFIG_LIBS) -o gdal_contour$(EXE)
