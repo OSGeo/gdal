@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2003/07/08 15:33:04  warmerda
+ * avoid warnings
+ *
  * Revision 1.6  2003/02/24 17:30:58  warmerda
  * added REMAP support
  *
@@ -374,7 +377,7 @@ GDALSimpleWarpRemapping( int nBandCount, GByte **papabySrcData,
             while( nPixelCount != 0 )
             {
                 if( *pabyData == nFromValue )
-                    *pabyData = nToValue;
+                    *pabyData = (GByte) nToValue;
 
                 pabyData++;
                 nPixelCount--;
@@ -445,7 +448,7 @@ GDALSimpleWarpRemapping( int nBandCount, GByte **papabySrcData,
                 continue;
 
             for( iBand = 0; iBand < nMapBandCount; iBand++ )
-                papabySrcData[iBand][iPixel] = panToValue[iBand];
+                papabySrcData[iBand][iPixel] = (GByte) panToValue[iBand];
         }
 
         CPLFree( panFromValue );

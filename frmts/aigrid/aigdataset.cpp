@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.21  2003/07/08 15:35:22  warmerda
+ * avoid warnings
+ *
  * Revision 1.20  2003/04/09 13:45:12  warmerda
  * added limited colortable support
  *
@@ -218,7 +221,7 @@ CPLErr AIGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                 if( panGridRaster[i] == ESRI_GRID_NO_DATA )
                     ((GByte *) pImage)[i] = 255;
                 else
-                    ((GByte *) pImage)[i] = panGridRaster[i];
+                    ((GByte *) pImage)[i] = (GByte) panGridRaster[i];
             }
         }
         else if( eDataType == GDT_Int16 )
@@ -228,7 +231,7 @@ CPLErr AIGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                 if( panGridRaster[i] == ESRI_GRID_NO_DATA )
                     ((GInt16 *) pImage)[i] = -32768;
                 else
-                    ((GInt16 *) pImage)[i] = panGridRaster[i];
+                    ((GInt16 *) pImage)[i] = (GInt16) panGridRaster[i];
             }
         }
         else
@@ -506,9 +509,9 @@ void AIGDataset::TranslateColorTable( const char *pszClrFilename )
             GDALColorEntry sEntry;
 
             nIndex = atoi(papszTokens[0]);
-            sEntry.c1 = atoi(papszTokens[1]);
-            sEntry.c2 = atoi(papszTokens[2]);
-            sEntry.c3 = atoi(papszTokens[3]);
+            sEntry.c1 = (short) atoi(papszTokens[1]);
+            sEntry.c2 = (short) atoi(papszTokens[2]);
+            sEntry.c3 = (short) atoi(papszTokens[3]);
             sEntry.c4 = 255;
 
             if( (nIndex < 0 || nIndex > 33000) 

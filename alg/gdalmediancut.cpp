@@ -35,6 +35,9 @@
  *      Heckbert, SIGGRAPH proceedings, 1982, pp. 297-307.
  * 
  * $Log$
+ * Revision 1.5  2003/07/08 15:28:32  warmerda
+ * avoid warnings
+ *
  * Revision 1.4  2003/02/06 04:56:35  warmerda
  * added documentation
  *
@@ -285,9 +288,9 @@ int GDALComputeMedianCutPCT( GDALRasterBandH hRed,
     {
         GDALColorEntry	sEntry;
 
-        sEntry.c1 = ((ptr->rmin + ptr->rmax) << COLOR_SHIFT) / 2;
-        sEntry.c2 = ((ptr->gmin + ptr->gmax) << COLOR_SHIFT) / 2;
-        sEntry.c3 = ((ptr->bmin + ptr->bmax) << COLOR_SHIFT) / 2;
+        sEntry.c1 = (GByte) (((ptr->rmin + ptr->rmax) << COLOR_SHIFT) / 2);
+        sEntry.c2 = (GByte) (((ptr->gmin + ptr->gmax) << COLOR_SHIFT) / 2);
+        sEntry.c3 = (GByte) (((ptr->bmin + ptr->bmax) << COLOR_SHIFT) / 2);
         GDALSetColorEntry( hColorTable, i, &sEntry );
     }
     
