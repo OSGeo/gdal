@@ -14,21 +14,104 @@ The following utility programs are distributed with GDAL.
 <li> <a href="#gdalwarp">gdalwarp</a> - Warp an image into a new coordinate system.
 <li> <a href="#gdaltindex">gdaltindex</a> - Build a MapServer raster tileindex.
 <li> <a href="#rgb2pct">rgb2pct.py</a> - Convert a 24bit RGB image to 8bit paletted.
-<li> <a href="#pct2rgb">rgb2pct.py</a> - Convert an 8bit palatted image to 24bit RGB.
+<li> <a href="#pct2rgb">pct2rgb.py</a> - Convert an 8bit palatted image to 24bit RGB.
 <li> <a href="#gdal_merge">gdal_merge.py</a> - Build a quick mosaic from a set of images.
 <li> <a href="#gdal-config">gdal-config</a> - Get options required to build 
 software using GDAL.
 against GDAL.
 </ul>
 
-All GDAL 
-commandline utility programs support the following "general" options.<p>
+<!-- ====================================================================== -->
+
+<h2>Creating New Files</h2>
+
+Access an existing file to read it is generally quite simple.  Just
+indicate the name of the file or dataset on the commandline.  However, 
+creating a file is more complicated.  It may be necessary to indicate the
+the format to create, various creation options affecting how it will
+be created and perhaps a coordinate system to be assigned.  Many of 
+these options are handled similarly by different GDAL utilities, and are
+introduced here. <p>
 
 <dl>
-<dt> <b>--version</b></dt><dd> Report the version of GDAL.</dd>
+<dt> <b>-of</b> <i>format</i></dt><dd> 
+Select the format to create the new file as.  The formats are assigned short 
+names such as GTiff (for GeoTIFF) or HFA (for Erdas Imagine).  The list of 
+all format codes can be listed with the <b>--formats</b> switch.  Only
+formats list as "(rw)" (read-write) can be written.<p>
+Many utilities default
+to creating GeoTIFF files if a format is not specified.  File extentions
+are not used to guess output format, nor are extentions generally added
+by GDAL if not indicated in the filename by the user. 
+</dd>
+
+<dt> <b>-co</b> <i>NAME=VALUE</i></dt><dd> 
+Many formats have one or more optional creation options that can be used
+to control particulars about the file created.  For instance, the GeoTIFF
+driver supports creation options to control compression, and whether the file
+should be tiled.<p>
+The creation options available vary by format driver, and some simple 
+formats have no creation options at all.  A list of options supported
+for a format can be listed with the "--format <format>" commandline
+option but the web page for the format is the defininative source of 
+information on driver creation options.<p>
+</dd>
+
+<dt> <b>-a_srs</b> <i>SRS</i></dt><dd> 
+Several utilities, (gdal_translate and gdalwarp) include the ability
+to specify coordinate systems with commandline options like
+<b>-a_srs</b> (assign SRS to output), <b>-s_srs</b> (source SRS) and
+<b>-t_srs</b> (target SRS).<p>
+These utilities allow the coordinate system (SRS = spatial reference system)
+to be assigned in a variety of formats.<p>
+
+<ul>
+<li> <b>NAD27</b>/<b>NAD83</b>/<b>WGS84</b>/<b>WGS72</b>: 
+These common geographic (lat/long) coordinate
+systems can be used directly by these names. 
+
+<li> <b>EPSG:</b><i>n</i>: Coordinate systems (projected or geographic) can
+be selected based on their EPSG codes, for instance EPSG:27700 is the British
+National Grid.  A list of EPSG coordinate systems can be found in the GDAL 
+data files gcs.csv and pcs.csv. 
+
+<li> <b>EPSG:</b><i>n</i>: Coordinate systems (projected or geographic) can
+be selected based on their EPSG codes, for instance EPSG:27700 is the British
+National Grid.  A list of EPSG coordinate systems can be found in the GDAL 
+data files gcs.csv and pcs.csv.<p>
+
+<li> <i>PROJ.4 Definitions</i>: A PROJ.4 definition string can be used
+as a coordinate system.  For instance "+proj=utm +zone=11 +datum=WGS84".  
+Take care to keep the proj.4 string together as a single argument to the
+command (usually by double quoting). <p>
+
+<li> <i>OpenGIS Well Known Text</i>: The Open GIS Consortium has defined
+a textual format for describing coordinate systems as part of the Simple
+Features specifications.  This format is the internal working format
+for coordinate systems used in GDAL.  The name of a file containing a 
+WKT coordinate system definition may be used a coordinate system argument,
+or the entire coordinate system itself may be used as a commandline
+option (though escaping all the quotes in WKT is quite challenging). <p>
+
+<li> <i>ESRI Well Known Text</i>: ESRI uses a slight variation on OGC WKT
+format in their ArcGIS product (ArcGIS .prj files), and these may be used
+in a similar manner to WKT files, but the filename should be prefixed with
+<b>ESRI::</b>.  For example <b>"ESRI::NAD 1927 StatePlane Wyoming West FIPS 4904.prj"</b>. <p>
+</ul>
+</dd>
+</dl>
+
+<!-- ====================================================================== -->
+
+<h2>General Command Line Switches</h2>
+All GDAL command line utility programs support the following 
+"general" options.<p>
+
+<dl>
+<dt> <b>--version</b></dt><dd> Report the version of GDAL and exit.</dd>
 
 <dt> <b>--formats</b></dt><dd> List all raster formats supported by this
-GDAL build (readonly and read-write)</dd>
+GDAL build (readonly and read-write) and exit.</dd>
 
 <dt> <b>--format</b> <i>format</i></dt><dd>
 List detailed information about a single format driver.  The <i>format</i> 
@@ -56,12 +139,14 @@ messages.  Another value will select only debug messages containing that
 string in the debug prefix code. 
 </dd>
 
-<dt> <b>--help-generalg</b></dt><dd>
-Gives a brief usage message for the generic GDAL commandline options.
+<dt> <b>--help-general</b></dt><dd>
+Gives a brief usage message for the generic GDAL commandline options 
+and exit.
 </dd>
 
 </dl>
 
+<!-- ====================================================================== -->
 
 \if man
 lists information about a raster dataset
@@ -154,6 +239,7 @@ Center      (  456080.000, 3735960.000) (117d28'27.39"W, 33d45'52.46"N)
 Band 1 Block=512x16 Type=Byte, ColorInterp=Gray
 \endverbatim
 
+<!-- ====================================================================== -->
 
 \if man
 \section author AUTHOR
@@ -245,6 +331,7 @@ Example:
 gdal_translate -of GTiff -co "TILED=YES" utm.tif utm_tiled.tif
 \endverbatim
 
+<!-- ====================================================================== -->
 
 \if man
 \section tauthor AUTHOR
@@ -305,6 +392,8 @@ Example:
 \verbatim
 gdaladdo -r average abc.tif 2 4 8 16
 \endverbatim
+
+<!-- ====================================================================== -->
 
 \if man
 \section aauthor AUTHOR
@@ -418,6 +507,8 @@ projection with a command like this:<p>
 gdalwarp HDF4_SDS:ASTER_L1B:"pg-PR1B0000-2002031402_100_001":2 pg-PR1B0000-2002031402_100_001_2.tif
 \endverbatim
 
+<!-- ====================================================================== -->
+
 \if man
 \section wauthor AUTHOR
 Frank Warmerdam <warmerdam@pobox.com>
@@ -466,6 +557,8 @@ Example:
 gdaltindex doq_index.shp doq/*.tif
 \endverbatim
 
+<!-- ====================================================================== -->
+
 \if man
 \section iauthor AUTHOR
 Frank Warmerdam <warmerdam@pobox.com>
@@ -507,6 +600,8 @@ created.</dd>
 NOTE: rgb2pct.py is a Python script, and will only work if GDAL was built
 with Python support.  It is also not installed by default. It is found
 at $GDAL_HOME/pymod.
+
+<!-- ====================================================================== -->
 
 \if man
 \section rauthor AUTHOR
@@ -552,6 +647,8 @@ done.</dd>
 NOTE: gdal_merge.py is a Python script, and will only work if GDAL was built
 with Python support.  It is also not installed by default. It is found
 at $GDAL_HOME/pymod.
+
+<!-- ====================================================================== -->
 
 \if man
 \section mauthor AUTHOR
