@@ -28,6 +28,11 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.6  2001/07/12 18:59:36  warmerda
+ * Avoid strings.h and bzero() -- not on NT.  Use memset() instead.
+ * Some odd problem with initializing i in a for loop in a case statement avoided.
+ * Don't use LL suffix to indicate long long constants ... doesn't work on NT.
+ *
  * Revision 1.5  2001/07/10 02:12:40  nemec
  * Fixed writing of files whose dimensions aren't exact multiples of the page size
  *
@@ -44,8 +49,6 @@
  *
  *
  */
-
-#include <strings.h> // for bzero
 
 #include "fit.h"
 #include "gstEndian.h"
@@ -281,20 +284,22 @@ CPLErr FITRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     }
 
 #ifdef swapping
+    unsigned long i = 0;
+
     switch(bytesPerComponent) {
     case 1:
         // do nothing
         break;
     case 2:
-        for(unsigned long i=0; i < recordSize; i+= bytesPerPixel)
+        for(i=0; i < recordSize; i+= bytesPerPixel)
             swap16(p + i);
         break;
     case 4:
-        for(unsigned long i=0; i < recordSize; i+= bytesPerPixel)
+        for(i=0; i < recordSize; i+= bytesPerPixel)
             swap32(p + i);
         break;
     case 8:
-        for(unsigned long i=0; i < recordSize; i+= bytesPerPixel)
+        for(i=0; i < recordSize; i+= bytesPerPixel)
             swap64(p + i);
         break;
     default:
@@ -918,7 +923,7 @@ GDALDataset *FITDataset::Open( GDALOpenInfo * poOpenInfo )
     // 0xffffffff80000000LL // anything about 31 bits
 
 //     if (maxseek & 0xffffffff00000000LL) // anything about 32 bits
-    if (maxseek & 0xffffffff80000000LL) // signed long
+    if (maxseek & 0xffffffff80000000) // signed long
 #ifdef VSI_LARGE_API_SUPPORTED
         CPLDebug("FIT", "Using 64 bit version of fseek");
 #else
@@ -1131,7 +1136,7 @@ static GDALDataset *FITCreateCopy(const char * pszFilename,
             }
 
             // clean out image sinnce only doing partial reads
-            bzero(output, pageBytes);
+            memset( output, 0, pageBytes );
 
             for( int iBand = 0; iBand < nBands; iBand++ ) {
                 GDALRasterBand * poBand = poSrcDS->GetRasterBand( iBand+1 );
@@ -1156,20 +1161,21 @@ static GDALDataset *FITCreateCopy(const char * pszFilename,
 
 #ifdef swapping
             char *p = output;
+            unsigned long i;
             switch(bytesPerComponent) {
             case 1:
                 // do nothing
                 break;
             case 2:
-                for(unsigned long i=0; i < pageBytes; i+= bytesPerComponent)
+                for(i=0; i < pageBytes; i+= bytesPerComponent)
                     swap16(p + i);
                 break;
             case 4:
-                for(unsigned long i=0; i < pageBytes; i+= bytesPerComponent)
+                for(i=0; i < pageBytes; i+= bytesPerComponent)
                     swap32(p + i);
                 break;
             case 8:
-                for(unsigned long i=0; i < pageBytes; i+= bytesPerComponent)
+                for(i=0; i < pageBytes; i+= bytesPerComponent)
                     swap64(p + i);
                 break;
             default:
