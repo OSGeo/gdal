@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2001/06/15 17:15:29  warmerda
+ * use CPL_MSBWORD32 instead of CPL_SWAP32 to be cross platform
+ *
  * Revision 1.3  2001/02/28 21:58:45  warmerda
  * added GCP collection
  *
@@ -188,7 +191,7 @@ void EnvisatDataset::ScanForGCPs()
             continue;
 
         memcpy( &unValue, abyRecord + 13, 4 );
-        nRange = CPL_SWAP32( unValue );
+        nRange = CPL_MSBWORD32( unValue );
 
         for( iGCP = 0; iGCP < 11; iGCP++ )
         {
@@ -202,13 +205,13 @@ void EnvisatDataset::ScanForGCPs()
             pasGCPList[nGCPCount].pszId = CPLStrdup( szId );
 
             memcpy( &unValue, abyRecord + 25 + iGCP*4, 4 );
-            nSample = CPL_SWAP32(unValue);
+            nSample = CPL_MSBWORD32(unValue);
 
             memcpy( &unValue, abyRecord + 25 + 176 + iGCP*4, 4 );
-            pasGCPList[nGCPCount].dfGCPX = ((int)CPL_SWAP32(unValue))*0.000001;
+            pasGCPList[nGCPCount].dfGCPX = ((int)CPL_MSBWORD32(unValue))*0.000001;
 
             memcpy( &unValue, abyRecord + 25 + 132 + iGCP*4, 4 );
-            pasGCPList[nGCPCount].dfGCPY = ((int)CPL_SWAP32(unValue))*0.000001;
+            pasGCPList[nGCPCount].dfGCPY = ((int)CPL_MSBWORD32(unValue))*0.000001;
 
             pasGCPList[nGCPCount].dfGCPZ = 0.0;
 
@@ -223,7 +226,7 @@ void EnvisatDataset::ScanForGCPs()
 /*      We also collect the bottom GCPs from the last granule.          */
 /* -------------------------------------------------------------------- */
     memcpy( &unValue, abyRecord + 17, 4 );
-    nRange = nRange + CPL_SWAP32( unValue ) - 1;
+    nRange = nRange + CPL_MSBWORD32( unValue ) - 1;
 
     for( iGCP = 0; iGCP < 11; iGCP++ )
     {
@@ -237,13 +240,13 @@ void EnvisatDataset::ScanForGCPs()
         pasGCPList[nGCPCount].pszId = CPLStrdup( szId );
 
         memcpy( &unValue, abyRecord + 279 + iGCP*4, 4 );
-        nSample = CPL_SWAP32(unValue);
+        nSample = CPL_MSBWORD32(unValue);
 
         memcpy( &unValue, abyRecord + 279 + 176 + iGCP*4, 4 );
-        pasGCPList[nGCPCount].dfGCPX = ((int)CPL_SWAP32(unValue))*0.000001;
+        pasGCPList[nGCPCount].dfGCPX = ((int)CPL_MSBWORD32(unValue))*0.000001;
 
         memcpy( &unValue, abyRecord + 279 + 132 + iGCP*4, 4 );
-        pasGCPList[nGCPCount].dfGCPY = ((int)CPL_SWAP32(unValue))*0.000001;
+        pasGCPList[nGCPCount].dfGCPY = ((int)CPL_MSBWORD32(unValue))*0.000001;
 
         pasGCPList[nGCPCount].dfGCPZ = 0.0;
 
