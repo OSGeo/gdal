@@ -226,10 +226,15 @@ endif
 
 endif # HAVE_LIBTOOL
 
+
 #
 # generic library rules
 #
 
+#
+# gdal and ogr low level drivers use the following default rules in order to
+# populate the ../o/ directory with all object and library object files
+#
 
 O_OBJ =	$(foreach file,$(OBJ),../o/$(file))
 
@@ -238,6 +243,10 @@ O_OBJ =	$(foreach file,$(OBJ),../o/$(file))
 
 ../o/%.o:	%.cpp
 	$(CC) $(CPPFLAGS) $(CFLAGS) -c -o $@ $<
+
+#
+# default rules for handling subdirectories
+#
 
 %-target:
 	$(MAKE) -C $*
