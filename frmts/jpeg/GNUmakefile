@@ -14,6 +14,7 @@ OBJ	=	\
         jquant2.o jutils.o jmemmgr.o jmemansi.o \
 	\
 	jpgdataset.o
+XTRA_OPT	=	-Ilibjpeg
 else
 OBJ	=	jpgdataset.o
 endif
@@ -26,13 +27,13 @@ clean:
 	rm -f *.o
 
 %.o:	%.c
-	$(CC) -c $(GDAL_INCLUDE) $(CFLAGS) $(XTRA_OPT) $*.c -o $*.o
+	$(CC) -c $(XTRA_OPT) $(GDAL_INCLUDE) $(CFLAGS) $*.c -o $*.o
 
 %.o:	libjpeg/%.c
-	$(CC) -c $(GDAL_INCLUDE) $(CFLAGS) $(XTRA_OPT) libjpeg/$*.c -o $*.o
+	$(CC) -c $(XTRA_OPT) $(GDAL_INCLUDE) $(CFLAGS) libjpeg/$*.c -o $*.o
 
 %.o:	%.cpp
-	$(CXX) -c $(GDAL_INCLUDE) $(CXXFLAGS) $(XTRA_OPT) $*.cpp -o $*.o
+	$(CXX) -c $(XTRA_OPT) $(GDAL_INCLUDE) $(CXXFLAGS) $*.cpp -o $*.o
 
 
 all:	$(OBJ)
