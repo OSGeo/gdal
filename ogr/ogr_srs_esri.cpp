@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2002/03/12 18:11:38  warmerda
+ * ESRI WKT false easting/northing not necessariliy in meters
+ *
  * Revision 1.11  2002/03/05 14:25:14  warmerda
  * expand tabs
  *
@@ -414,6 +417,22 @@ OGRErr OGRSpatialReference::morphToESRI()
                               apszDatumMapping+1, apszDatumMapping, 2 );
 
 /* -------------------------------------------------------------------- */
+/*      Translate false easting/northing to linear units.               */
+/* -------------------------------------------------------------------- */
+    double dfLinearUnits = GetLinearUnits();
+
+    if( dfLinearUnits != 1.0 && dfLinearUnits != 0.0 && IsProjected() )
+    {
+        if( GetProjParm( SRS_PP_FALSE_EASTING, 0.0 ) != 0.0 )
+            SetProjParm( SRS_PP_FALSE_EASTING, 
+                  GetProjParm( SRS_PP_FALSE_EASTING, 0.0 ) / dfLinearUnits );
+
+        if( GetProjParm( SRS_PP_FALSE_NORTHING, 0.0 ) != 0.0 )
+            SetProjParm( SRS_PP_FALSE_NORTHING, 
+                  GetProjParm( SRS_PP_FALSE_NORTHING, 0.0 ) / dfLinearUnits );
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Try to insert a D_ in front of the datum name.                  */
 /* -------------------------------------------------------------------- */
     OGR_SRSNode *poDatum;
@@ -494,6 +513,22 @@ OGRErr OGRSpatialReference::morphFromESRI()
             poDatum->SetValue( pszNewValue );
             CPLFree( pszNewValue );
         }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Try to convert any false easting or northing to meters.		*/
+/* -------------------------------------------------------------------- */
+    double dfLinearUnits = GetLinearUnits();
+
+    if( dfLinearUnits != 1.0 && dfLinearUnits != 0.0 && IsProjected() )
+    {
+        if( GetProjParm( SRS_PP_FALSE_EASTING, 0.0 ) != 0.0 )
+            SetProjParm( SRS_PP_FALSE_EASTING, 
+                  GetProjParm( SRS_PP_FALSE_EASTING, 0.0 ) * dfLinearUnits );
+
+        if( GetProjParm( SRS_PP_FALSE_NORTHING, 0.0 ) != 0.0 )
+            SetProjParm( SRS_PP_FALSE_NORTHING, 
+                  GetProjParm( SRS_PP_FALSE_NORTHING, 0.0 ) * dfLinearUnits );
     }
 
 /* -------------------------------------------------------------------- */
