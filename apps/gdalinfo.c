@@ -26,6 +26,9 @@
  * serves as an early test harnass.
  *
  * $Log$
+ * Revision 1.30  2003/11/24 17:46:58  warmerda
+ * Report full geotransform when image is not northup.
+ *
  * Revision 1.29  2003/05/01 13:16:37  warmerda
  * dont generate error reports if instantiating coordinate transform fails
  *
@@ -258,11 +261,24 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
     if( GDALGetGeoTransform( hDataset, adfGeoTransform ) == CE_None )
     {
-        printf( "Origin = (%.6f,%.6f)\n",
-                adfGeoTransform[0], adfGeoTransform[3] );
+        if( adfGeoTransform[2] == 0.0 && adfGeoTransform[4] == 0.0 )
+        {
+            printf( "Origin = (%.6f,%.6f)\n",
+                    adfGeoTransform[0], adfGeoTransform[3] );
 
-        printf( "Pixel Size = (%.6f,%.6f)\n",
-                adfGeoTransform[1], adfGeoTransform[5] );
+            printf( "Pixel Size = (%.8f,%.8f)\n",
+                    adfGeoTransform[1], adfGeoTransform[5] );
+        }
+        else
+            printf( "GeoTransform =\n"
+                    "  %.16g, %.16g, %.16g\n"
+                    "  %.16g, %.16g, %.16g\n", 
+                    adfGeoTransform[0],
+                    adfGeoTransform[1],
+                    adfGeoTransform[2],
+                    adfGeoTransform[3],
+                    adfGeoTransform[4],
+                    adfGeoTransform[5] );
     }
 
 /* -------------------------------------------------------------------- */
