@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_mapheaderblock.cpp,v 1.23 2002/04/25 16:05:24 julien Exp $
+ * $Id: mitab_mapheaderblock.cpp,v 1.24 2002/06/28 18:32:37 julien Exp $
  *
  * Name:     mitab_mapheaderblock.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -31,6 +31,10 @@
  **********************************************************************
  *
  * $Log: mitab_mapheaderblock.cpp,v $
+ * Revision 1.24  2002/06/28 18:32:37  julien
+ * Add SetSpatialFilter() in TABSeamless class (Bug 164, MapServer)
+ * Use double for comparison in Coordsys2Int() in mitab_mapheaderblock.cpp
+ *
  * Revision 1.23  2002/04/25 16:05:24  julien
  * Disabled the overflow warning in SetCoordFilter() by adding bIgnoreOverflow
  * variable in Coordsys2Int of the TABMAPFile class and TABMAPHeaderBlock class
@@ -399,17 +403,23 @@ int TABMAPHeaderBlock::Coordsys2Int(double dX, double dY,
     // In version 100 .tab files (version 400 .map), it is possible to have 
     // a quadrant 0 and it should be treated the same way as quadrant 3
 
+    /*-----------------------------------------------------------------
+     * NOTE: double value must be use here, the limit of integer value 
+     * have been reach some times due to the very big number used here.
+     *----------------------------------------------------------------*/
+    double dTempX, dTempY;
+
     if (m_nCoordOriginQuadrant==2 || m_nCoordOriginQuadrant==3 ||
         m_nCoordOriginQuadrant==0 )
-        nX = (GInt32)((-1.0*dX*m_XScale - m_XDispl)+0.5);
+        dTempX = (double)((-1.0*dX*m_XScale - m_XDispl)+0.5);
     else
-        nX = (GInt32)((dX*m_XScale + m_XDispl)+0.5);
+        dTempX = (double)((dX*m_XScale + m_XDispl)+0.5);
 
     if (m_nCoordOriginQuadrant==3 || m_nCoordOriginQuadrant==4 ||
         m_nCoordOriginQuadrant==0 )
-        nY = (GInt32)((-1.0*dY*m_YScale - m_YDispl)+0.5);
+        dTempY = (double)((-1.0*dY*m_YScale - m_YDispl)+0.5);
     else
-        nY = (GInt32)((dY*m_YScale + m_YDispl)+0.5);
+        dTempY = (double)((dY*m_YScale + m_YDispl)+0.5);
 
 //printf("Coordsys2Int: (%10g, %10g) -> (%d, %d)\n", dX, dY, nX, nY);
 
@@ -419,26 +429,30 @@ int TABMAPHeaderBlock::Coordsys2Int(double dX, double dY,
      * Integer coordinates outside of that range will confuse MapInfo.
      *----------------------------------------------------------------*/
     GBool bIntBoundsOverflow = FALSE;
-    if (nX < -1000000000)
+    if (dTempX < -1000000000)
     {
-        nX = -1000000000;
+        dTempX = -1000000000;
         bIntBoundsOverflow = TRUE;
     }
-    if (nX > 1000000000)
+    if (dTempX > 1000000000)
     {
-        nX = 1000000000;
+        dTempX = 1000000000;
         bIntBoundsOverflow = TRUE;
     }
-    if (nY < -1000000000)
+    if (dTempY < -1000000000)
     {
-        nY = -1000000000;
+        dTempY = -1000000000;
         bIntBoundsOverflow = TRUE;
     }
-    if (nY > 1000000000)
+    if (dTempY > 1000000000)
     {
-        nY = 1000000000;
+        dTempY = 1000000000;
         bIntBoundsOverflow = TRUE;
     }
+
+    nX = (GInt32) dTempX;
+    nY = (GInt32) dTempY;
+
     if (bIntBoundsOverflow && !bIgnoreOverflow)
     {
         m_bIntBoundsOverflow = TRUE;

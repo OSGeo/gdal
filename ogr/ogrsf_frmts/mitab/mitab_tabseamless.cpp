@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_tabseamless.cpp,v 1.3 2001/09/19 14:21:36 daniel Exp $
+ * $Id: mitab_tabseamless.cpp,v 1.4 2002/06/28 18:32:37 julien Exp $
  *
  * Name:     mitab_tabseamless.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -31,6 +31,10 @@
  **********************************************************************
  *
  * $Log: mitab_tabseamless.cpp,v $
+ * Revision 1.4  2002/06/28 18:32:37  julien
+ * Add SetSpatialFilter() in TABSeamless class (Bug 164, MapServer)
+ * Use double for comparison in Coordsys2Int() in mitab_mapheaderblock.cpp
+ *
  * Revision 1.3  2001/09/19 14:21:36  daniel
  * On Unix: replace '\\' in file path read from tab index with '/'
  *
@@ -407,6 +411,12 @@ int TABSeamless::OpenBaseTable(TABFeature *poIndexFeature,
         delete m_poCurBaseTable;
         m_poCurBaseTable = NULL;
         return -1;
+    }
+
+    // Set the spatial filter to the new table 
+    if( m_poFilterGeom != NULL &&  m_poCurBaseTable )
+    {
+        m_poCurBaseTable->SetSpatialFilter( m_poFilterGeom );
     }
 
     m_nCurBaseTableId = nTableId;
@@ -790,6 +800,26 @@ OGRSpatialReference *TABSeamless::GetSpatialRef()
     }
 
     return m_poIndexTable->GetSpatialRef();
+}
+
+
+
+/**********************************************************************
+ *                   IMapInfoFile::SetSpatialFilter()
+ *
+ * Standard OGR SetSpatialFiltere implementation.  This methode is used
+ * to set a SpatialFilter for this OGRLayer
+ **********************************************************************/
+void TABSeamless::SetSpatialFilter (OGRGeometry * poGeomIn )
+
+{
+    IMapInfoFile::SetSpatialFilter( poGeomIn );
+
+    if( m_poIndexTable )
+        m_poIndexTable->SetSpatialFilter( poGeomIn );
+
+    if( m_poCurBaseTable )
+        m_poCurBaseTable->SetSpatialFilter( poGeomIn );
 }
 
 

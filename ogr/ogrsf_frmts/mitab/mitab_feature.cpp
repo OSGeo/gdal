@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_feature.cpp,v 1.46 2002/03/26 03:17:13 daniel Exp $
+ * $Id: mitab_feature.cpp,v 1.47 2002/06/17 15:00:30 julien Exp $
  *
  * Name:     mitab_feature.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log: mitab_feature.cpp,v $
+ * Revision 1.47  2002/06/17 15:00:30  julien
+ * Add IsInteriorRing() function in TABRegion to validate if a ring is internal
+ *
  * Revision 1.46  2002/03/26 03:17:13  daniel
  * Added Get/SetCenter() to MultiPoint
  *
@@ -3058,6 +3061,69 @@ OGRLinearRing *TABRegion::GetRingRef(int nRequestedRingIndex)
     }
 
     return poRing;
+}
+
+/**********************************************************************
+ *                   TABRegion::RingIsHole()
+ *
+ * Return false if the requested ring index is the first of a polygon
+ **********************************************************************/
+GBool TABRegion::IsInteriorRing(int nRequestedRingIndex)
+{
+    OGRGeometry     *poGeom;
+    OGRLinearRing   *poRing = NULL;
+
+    poGeom = GetGeometryRef();
+
+    if (poGeom && (poGeom->getGeometryType() == wkbPolygon ||
+                   poGeom->getGeometryType() == wkbMultiPolygon))
+    {
+        /*-------------------------------------------------------------
+         * Establish number of polygons based on geometry type
+         *------------------------------------------------------------*/
+        OGRPolygon      *poPolygon=NULL;
+        OGRMultiPolygon *poMultiPolygon = NULL;
+        int             iCurRing = 0;
+        int             numOGRPolygons = 0;
+
+        if (poGeom->getGeometryType() == wkbMultiPolygon)
+        {
+            poMultiPolygon = (OGRMultiPolygon *)poGeom;
+            numOGRPolygons = poMultiPolygon->getNumGeometries();
+        }
+        else
+        {
+            poPolygon = (OGRPolygon*)poGeom;
+            numOGRPolygons = 1;
+        }
+
+        /*-------------------------------------------------------------
+         * Loop through polygons until we find the requested ring.
+         *------------------------------------------------------------*/
+        iCurRing = 0;
+        for(int iPoly=0; poRing == NULL && iPoly < numOGRPolygons; iPoly++)
+        {
+            if (poMultiPolygon)
+                poPolygon = (OGRPolygon*)poMultiPolygon->getGeometryRef(iPoly);
+            else
+                poPolygon = (OGRPolygon*)poGeom;
+
+            int numIntRings = poPolygon->getNumInteriorRings();
+
+            if (iCurRing == nRequestedRingIndex)
+            {
+                return false;
+            }
+            else if (nRequestedRingIndex > iCurRing &&
+                     nRequestedRingIndex-(iCurRing+1) < numIntRings)
+           {
+                return true;
+            }
+            iCurRing += numIntRings+1;
+        }
+    }
+
+    return false;
 }
 
 /**********************************************************************

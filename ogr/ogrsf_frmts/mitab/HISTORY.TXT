@@ -5,6 +5,47 @@ MITAB Library - Revision History
 CHANGES - Current Version:
 --------------------------
 
+- In mitab_mapheaderblock.cpp, the Coordsys2Int() function used integer value 
+  to check for overflow. However, in some case, integer was to small and bug
+  applications. So, this function now use double for comparison, but still 
+  return and receive integer.
+
+- Add SetSpatialFilter function in the TABSeamless class, to use seamless layer
+  in the right way. Now, the filter is apply on each data file and on the index
+  file. (Bug 164 (MapServer))
+
+- Treat Region as MultiPolygon in mitab_c_set_point() to support Regions
+  with multiple islands and holes. Passing a part number <= 0 (second 
+  parameter in mitab_c_set_point()) will result in adding a new island 
+  (i.e. polygon).  By default, parts > 1 are treated as holes in the
+  last island (polygon) that was created.
+
+- Added IsInteriorRing() function in the TABRegion class to validate if a ring 
+  in a polygon is an external or an internal ring. The function return true if 
+  the specified ring is an interior ring. The function 
+  mitab_c_is_interior_ring() in mitab_capi.c have been created too to  call 
+  IsInteriorRing() if the feature is a region.
+
+
+Version 1.2.1 - (2002-05-08)
+----------------------------
+
+- Implement SetMIFCoordSys in the MIFFile class. The coordsys was not 
+  written when calling mitab_c_create for MIF files because 
+  MIFFile::SetMIFCoordSys always returned -1 (Bug 984).
+
+- Added support for TABFC_FontPoint and TABFC_CustomPoint in
+  mitab_c_create_feature(), mitab_c_set_points(), mitab_c_set_font() and 
+  mitab_c_get_font().
+
+- mitab_capi.h: Use stdcall by default for all public mitab.dll functions
+  instead of cdecl.  Should still work fine for C/C++ users, and will
+  allow VB/Delphi users to use the same DLL with Bo T.'s interface files.
+
+
+Version 1.2.0 - (2002-05-03)
+----------------------------
+
 - Made changes in TABRelation to avoid an infinite loop. The m_poCurFeature
   object have been deleted and the function GetFeatureRef() have been replace
   by GetFeature(). This new function return a TABFeature object that must be 
@@ -61,6 +102,11 @@ CHANGES - Current Version:
 
 - Add EOF validation in MIDDATAFile::GetLastLine() to fix EOF problems
   while reading some MIF/MID files (Bug 819, JSL)
+
+- New VB, Pascal, and MapBasic interfaces contributed by Bo Thomsen.
+  See contrib/README_VB.TXT
+
+- Added to C API: mitab_c_get_field_width(), mitab_c_get_field_precision()
 
 
 Version 1.1.3 - (2001-11-02)
@@ -402,5 +448,5 @@ Version 0.1 - (1999-12-04)
 
 
 ------------
-$Id: HISTORY.TXT,v 1.83 2002/04/26 14:16:49 julien Exp $
+$Id: HISTORY.TXT,v 1.92 2002/06/28 18:32:37 julien Exp $
 ------------
