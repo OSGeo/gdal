@@ -39,6 +39,10 @@ clean:
 dgndump:	dgndump.c $(OBJ)
 	$(CXX) $(ALL_C_FLAGS) dgndump.c $(OBJ) $(CPL_LIB) -ldl -lm -o dgndump 
 
+dgnwritetest:	dgnwritetest.c $(OBJ)
+	$(CXX) $(ALL_C_FLAGS) dgnwritetest.c $(OBJ) $(CPL_LIB) -ldl -lm \
+	-o dgnwritetest
+
 docs:
 	doxygen
 
