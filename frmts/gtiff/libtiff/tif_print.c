@@ -1,4 +1,4 @@
-/* $Id: /cvsroot/osrs/libtiff/libtiff/tif_print.c,v 1.14 2004/05/19 15:23:54 warmerda Exp $ */
+/* $Id: tif_print.c,v 1.17 2004/09/21 10:18:22 dron Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -72,7 +72,8 @@ TIFFPrintDirectory(TIFF* tif, FILE* fd, long flags)
 	uint16 i;
 	long l, n;
 
-	fprintf(fd, "TIFF Directory at offset 0x%lx\n", tif->tif_diroff);
+	fprintf(fd, "TIFF Directory at offset 0x%lx\n",
+		(unsigned int)tif->tif_diroff);
 	td = &tif->tif_dir;
 	if (TIFFFieldSet(tif,FIELD_SUBFILETYPE)) {
 		fprintf(fd, "  Subfile Type:");
@@ -92,10 +93,10 @@ TIFFPrintDirectory(TIFF* tif, FILE* fd, long flags)
 	}
 	if (TIFFFieldSet(tif,FIELD_IMAGEDIMENSIONS)) {
 		fprintf(fd, "  Image Width: %lu Image Length: %lu",
-		    (u_long) td->td_imagewidth, (u_long) td->td_imagelength);
+		    (unsigned long) td->td_imagewidth, (unsigned long) td->td_imagelength);
 		if (TIFFFieldSet(tif,FIELD_IMAGEDEPTH))
 			fprintf(fd, " Image Depth: %lu",
-			    (u_long) td->td_imagedepth);
+			    (unsigned long) td->td_imagedepth);
 		fprintf(fd, "\n");
 	}
 
@@ -103,8 +104,8 @@ TIFFPrintDirectory(TIFF* tif, FILE* fd, long flags)
  	if (TIFFFieldSet(tif,FIELD_IMAGEFULLWIDTH) ||
  	    TIFFFieldSet(tif,FIELD_IMAGEFULLLENGTH)) {
 	  fprintf(fd, "  Pixar Full Image Width: %lu Full Image Length: %lu\n",
-		  (u_long) td->td_imagefullwidth,
-		  (u_long) td->td_imagefulllength);
+		  (unsigned long) td->td_imagefullwidth,
+		  (unsigned long) td->td_imagefulllength);
  	}
  	if (TIFFFieldSet(tif,FIELD_TEXTUREFORMAT))
 	  _TIFFprintAsciiTag(fd, "Texture Format", td->td_textureformat);
@@ -136,10 +137,10 @@ TIFFPrintDirectory(TIFF* tif, FILE* fd, long flags)
 	
 	if (TIFFFieldSet(tif,FIELD_TILEDIMENSIONS)) {
 		fprintf(fd, "  Tile Width: %lu Tile Length: %lu",
-		    (u_long) td->td_tilewidth, (u_long) td->td_tilelength);
+		    (unsigned long) td->td_tilewidth, (unsigned long) td->td_tilelength);
 		if (TIFFFieldSet(tif,FIELD_TILEDEPTH))
 			fprintf(fd, " Tile Depth: %lu",
-			    (u_long) td->td_tiledepth);
+			    (unsigned long) td->td_tiledepth);
 		fprintf(fd, "\n");
 	}
 	if (TIFFFieldSet(tif,FIELD_RESOLUTION)) {
@@ -270,13 +271,14 @@ TIFFPrintDirectory(TIFF* tif, FILE* fd, long flags)
 		i = td->td_samplesperpixel;
 		sep = "";
 		for (cp = td->td_inknames; i > 0; cp = strchr(cp,'\0')+1, i--) {
-			fprintf(fd, "%s", sep);
+			fputs(sep, fd);
 			_TIFFprintAscii(fd, cp);
 			sep = ", ";
 		}
+                fputs("\n", fd);
 	}
 	if (TIFFFieldSet(tif,FIELD_NUMBEROFINKS))
-		fprintf(fd, " Number of Inks: %u\n", td->td_ninks);
+		fprintf(fd, "  Number of Inks: %u\n", td->td_ninks);
 	if (TIFFFieldSet(tif,FIELD_DOTRANGE))
 		fprintf(fd, "  Dot Range: %u-%u\n",
 		    td->td_dotrange[0], td->td_dotrange[1]);
@@ -383,7 +385,7 @@ TIFFPrintDirectory(TIFF* tif, FILE* fd, long flags)
 		if (td->td_rowsperstrip == (uint32) -1)
 			fprintf(fd, "(infinite)\n");
 		else
-			fprintf(fd, "%lu\n", (u_long) td->td_rowsperstrip);
+			fprintf(fd, "%lu\n", (unsigned long) td->td_rowsperstrip);
 	}
 	if (TIFFFieldSet(tif,FIELD_MINSAMPLEVALUE))
 		fprintf(fd, "  Min Sample Value: %u\n", td->td_minsamplevalue);
@@ -463,13 +465,13 @@ TIFFPrintDirectory(TIFF* tif, FILE* fd, long flags)
 	}
 	if (TIFFFieldSet(tif,FIELD_ICCPROFILE))
 		fprintf(fd, "  ICC Profile: <present>, %lu bytes\n",
-		    (u_long) td->td_profileLength);
+		    (unsigned long) td->td_profileLength);
  	if (TIFFFieldSet(tif,FIELD_PHOTOSHOP))
  		fprintf(fd, "  Photoshop Data: <present>, %lu bytes\n",
- 		    (u_long) td->td_photoshopLength);
+ 		    (unsigned long) td->td_photoshopLength);
  	if (TIFFFieldSet(tif,FIELD_RICHTIFFIPTC))
  		fprintf(fd, "  RichTIFFIPTC Data: <present>, %lu bytes\n",
- 		    (u_long) td->td_richtiffiptcLength);
+ 		    (unsigned long) td->td_richtiffiptcLength);
 	if (TIFFFieldSet(tif, FIELD_SUBIFD)) {
 		fprintf(fd, "  SubIFD Offsets:");
 		for (i = 0; i < td->td_nsubifd; i++)
@@ -573,9 +575,9 @@ TIFFPrintDirectory(TIFF* tif, FILE* fd, long flags)
 		    isTiled(tif) ? "Tiles" : "Strips");
 		for (s = 0; s < td->td_nstrips; s++)
 			fprintf(fd, "    %3lu: [%8lu, %8lu]\n",
-			    (u_long) s,
-			    (u_long) td->td_stripoffset[s],
-			    (u_long) td->td_stripbytecount[s]);
+			    (unsigned long) s,
+			    (unsigned long) td->td_stripoffset[s],
+			    (unsigned long) td->td_stripbytecount[s]);
 	}
 }
 
@@ -585,7 +587,7 @@ _TIFFprintAscii(FILE* fd, const char* cp)
 	for (; *cp != '\0'; cp++) {
 		const char* tp;
 
-		if (isprint(*cp)) {
+		if (isprint((int)*cp)) {
 			fputc(*cp, fd);
 			continue;
 		}
@@ -606,3 +608,5 @@ _TIFFprintAsciiTag(FILE* fd, const char* name, const char* value)
 	_TIFFprintAscii(fd, value);
 	fprintf(fd, "\"\n");
 }
+
+/* vim: set ts=8 sts=8 sw=8 noet: */

@@ -1,4 +1,4 @@
-/* $Id: /cvsroot/osrs/libtiff/libtiff/tif_jpeg.c,v 1.20 2004/04/20 14:21:58 dron Exp $ */
+/* $Id: tif_jpeg.c,v 1.21 2004/09/14 06:50:22 dron Exp $ */
 
 /*
  * Copyright (c) 1994-1997 Sam Leffler
@@ -794,7 +794,7 @@ JPEGPreDecode(TIFF* tif, tsample_t s)
  * Decode a chunk of pixels.
  * "Standard" case: returned data is not downsampled.
  */
-static int
+/*ARGSUSED*/ static int
 JPEGDecode(TIFF* tif, tidata_t buf, tsize_t cc, tsample_t s)
 {
     JPEGState *sp = JState(tif);
@@ -829,7 +829,7 @@ JPEGDecode(TIFF* tif, tidata_t buf, tsize_t cc, tsample_t s)
  * Decode a chunk of pixels.
  * Returned data is downsampled per sampling factors.
  */
-static int
+/*ARGSUSED*/ static int
 JPEGDecodeRaw(TIFF* tif, tidata_t buf, tsize_t cc, tsample_t s)
 {
 	JPEGState *sp = JState(tif);
@@ -1487,9 +1487,10 @@ JPEGVGetField(TIFF* tif, ttag_t tag, va_list ap)
 
 	switch (tag) {
 	case TIFFTAG_JPEGTABLES:
-		/* u_short is bogus --- should be uint32 ??? */
+		/* unsigned short is bogus --- should be uint32 ??? */
 		/* TIFFWriteNormalTag needs fixed  XXX */
-		*va_arg(ap, u_short*) = (u_short) sp->jpegtables_length;
+		*va_arg(ap, unsigned short*) =
+                        (unsigned short) sp->jpegtables_length;
 		*va_arg(ap, void**) = sp->jpegtables;
 		break;
 	case TIFFTAG_JPEGQUALITY:
@@ -1519,7 +1520,7 @@ JPEGPrintDir(TIFF* tif, FILE* fd, long flags)
 	(void) flags;
 	if (TIFFFieldSet(tif,FIELD_JPEGTABLES))
 		fprintf(fd, "  JPEG Tables: (%lu bytes)\n",
-			(u_long) sp->jpegtables_length);
+			(unsigned long) sp->jpegtables_length);
 }
 
 static uint32
@@ -1684,3 +1685,5 @@ TIFFInitJPEG(TIFF* tif, int scheme)
 	return (1);
 }
 #endif /* JPEG_SUPPORT */
+
+/* vim: set ts=8 sts=8 sw=8 noet: */

@@ -1,4 +1,4 @@
-/* $Id: tif_dirwrite.c,v 1.22 2004/06/06 10:20:12 dron Exp $ */
+/* $Id: tif_dirwrite.c,v 1.23 2004/09/14 06:50:22 dron Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -95,7 +95,7 @@ _TIFFWriteDirectory(TIFF* tif, int done)
 	char* data;
 	TIFFDirEntry* dir;
 	TIFFDirectory* td;
-	u_long b, fields[FIELD_SETLONGS];
+	unsigned long b, fields[FIELD_SETLONGS];
 	int fi, nfi;
 
 	if (tif->tif_mode == O_RDONLY)
@@ -425,11 +425,11 @@ TIFFCheckpointDirectory(TIFF* tif)
 static int
 TIFFWriteNormalTag(TIFF* tif, TIFFDirEntry* dir, const TIFFFieldInfo* fip)
 {
-	u_short wc = (u_short) fip->field_writecount;
+	unsigned short wc = (unsigned short) fip->field_writecount;
 	uint32 wc2;
 
 	dir->tdir_tag = (uint16) fip->field_tag;
-	dir->tdir_type = (u_short) fip->field_type;
+	dir->tdir_type = (unsigned short) fip->field_type;
 	dir->tdir_count = wc;
 #define	WRITEF(x,y)	x(tif, fip->field_type, fip->field_tag, dir, wc, y)
 	switch (fip->field_type) {
@@ -437,7 +437,7 @@ TIFFWriteNormalTag(TIFF* tif, TIFFDirEntry* dir, const TIFFFieldInfo* fip)
 	case TIFF_SSHORT:
 		if (wc > 1) {
 			uint16* wp;
-			if (wc == (u_short) TIFF_VARIABLE
+			if (wc == (unsigned short) TIFF_VARIABLE
 			    || fip->field_passcount)
 				TIFFGetField(tif, fip->field_tag, &wc, &wp);
 			else
@@ -463,7 +463,7 @@ TIFFWriteNormalTag(TIFF* tif, TIFFDirEntry* dir, const TIFFFieldInfo* fip)
 	case TIFF_IFD:
 		if (wc > 1) {
 			uint32* lp;
-			if (wc == (u_short) TIFF_VARIABLE
+			if (wc == (unsigned short) TIFF_VARIABLE
 			    || fip->field_passcount)
 				TIFFGetField(tif, fip->field_tag, &wc, &lp);
 			else
@@ -487,7 +487,7 @@ TIFFWriteNormalTag(TIFF* tif, TIFFDirEntry* dir, const TIFFFieldInfo* fip)
 	case TIFF_SRATIONAL:
 		if (wc > 1) {
 			float* fp;
-			if (wc == (u_short) TIFF_VARIABLE
+			if (wc == (unsigned short) TIFF_VARIABLE
 			    || fip->field_passcount)
 				TIFFGetField(tif, fip->field_tag, &wc, &fp);
 			else
@@ -511,7 +511,7 @@ TIFFWriteNormalTag(TIFF* tif, TIFFDirEntry* dir, const TIFFFieldInfo* fip)
 	case TIFF_FLOAT:
 		if (wc > 1) {
 			float* fp;
-			if (wc == (u_short) TIFF_VARIABLE
+			if (wc == (unsigned short) TIFF_VARIABLE
 			    || fip->field_passcount)
 				TIFFGetField(tif, fip->field_tag, &wc, &fp);
 			else
@@ -535,7 +535,7 @@ TIFFWriteNormalTag(TIFF* tif, TIFFDirEntry* dir, const TIFFFieldInfo* fip)
 	case TIFF_DOUBLE:
 		if (wc > 1) {
 			double* dp;
-			if (wc == (u_short) TIFF_VARIABLE
+			if (wc == (unsigned short) TIFF_VARIABLE
 			    || fip->field_passcount)
 				TIFFGetField(tif, fip->field_tag, &wc, &dp);
 			else
@@ -576,11 +576,11 @@ TIFFWriteNormalTag(TIFF* tif, TIFFDirEntry* dir, const TIFFFieldInfo* fip)
         case TIFF_SBYTE:          
 		if (wc > 1) {
 			char* cp;
-			if (wc == (u_short) TIFF_VARIABLE
+			if (wc == (unsigned short) TIFF_VARIABLE
 			    || fip->field_passcount) {
 				TIFFGetField(tif, fip->field_tag, &wc, &cp);
 				dir->tdir_count = wc;
-			} else if (wc == (u_short) TIFF_VARIABLE2) {
+			} else if (wc == (unsigned short) TIFF_VARIABLE2) {
 				TIFFGetField(tif, fip->field_tag, &wc2, &cp);
 				dir->tdir_count = wc2;
 			} else
@@ -605,10 +605,10 @@ TIFFWriteNormalTag(TIFF* tif, TIFFDirEntry* dir, const TIFFFieldInfo* fip)
 
 	case TIFF_UNDEFINED:
 		{ char* cp;
-		  if (wc == (u_short) TIFF_VARIABLE) {
+		  if (wc == (unsigned short) TIFF_VARIABLE) {
 			TIFFGetField(tif, fip->field_tag, &wc, &cp);
 			dir->tdir_count = wc;
-		  } else if (wc == (u_short) TIFF_VARIABLE2) {
+		  } else if (wc == (unsigned short) TIFF_VARIABLE2) {
 			TIFFGetField(tif, fip->field_tag, &wc2, &cp);
 			dir->tdir_count = wc2;
 		  } else 
@@ -1218,3 +1218,5 @@ TIFFLinkDirectory(TIFF* tif)
 	}
 	return (1);
 }
+
+/* vim: set ts=8 sts=8 sw=8 noet: */

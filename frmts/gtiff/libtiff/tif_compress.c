@@ -1,4 +1,4 @@
-/* $Id: tif_compress.c,v 1.6 2004/09/02 13:27:38 dron Exp $ */
+/* $Id: tif_compress.c,v 1.7 2004/09/24 15:18:57 dron Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -223,6 +223,44 @@ TIFFUnRegisterCODEC(TIFFCodec* c)
 		}
 	TIFFError("TIFFUnRegisterCODEC",
 	    "Cannot remove compression scheme %s; not registered", c->name);
+}
+
+/************************************************************************/
+/*                       TIFFGetConfisuredCODECs()                      */
+/************************************************************************/
+
+/**
+ * Get list of configured codecs, both built-in and registered by user.
+ * Caller is responsible to free these structure.
+ * 
+ * @return returns array of TIFFCodec records, the last record should be NULL.
+ */
+
+TIFFCodec*
+TIFFGetConfiguredCODECs()
+{
+	int		i = 1;
+        codec_t		*cd;
+        const TIFFCodec	*c;
+	TIFFCodec	*codecs = NULL;
+
+        for (cd = registeredCODECS; cd; cd = cd->next) {
+                codecs = _TIFFrealloc(codecs, i * sizeof(TIFFCodec));
+		_TIFFmemcpy(codecs + i - 1, cd->next, sizeof(TIFFCodec));
+		i++;
+	}
+        for (c = _TIFFBuiltinCODECS; c->name; c++) {
+                if (TIFFIsCODECConfigured(c->scheme)) {
+                        codecs = _TIFFrealloc(codecs, i * sizeof(TIFFCodec));
+			_TIFFmemcpy(codecs + i - 1, (const tdata_t)c, sizeof(TIFFCodec));
+			i++;
+		}
+	}
+
+	codecs = _TIFFrealloc(codecs, i * sizeof(TIFFCodec));
+	_TIFFmemset(codecs + i - 1, 0, sizeof(TIFFCodec));
+
+        return codecs;
 }
 
 /* vim: set ts=8 sts=8 sw=8 noet: */

@@ -1,4 +1,4 @@
-/* $Id: tif_dir.c,v 1.35 2004/08/23 12:57:52 dron Exp $ */
+/* $Id: tif_dir.c,v 1.37 2004/09/21 14:44:06 dron Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -954,7 +954,7 @@ _TIFFVGetField(TIFF* tif, ttag_t tag, va_list ap)
                 
                 if( fip->field_passcount )
                 {
-                    *va_arg(ap, u_short *) = (u_short) tv->count;
+                    *va_arg(ap, unsigned short *) = (unsigned short) tv->count;
                     *va_arg(ap, void **) = tv->value;
                     ret_val = 1;
                     break;
@@ -1021,54 +1021,53 @@ TIFFVGetField(TIFF* tif, ttag_t tag, va_list ap)
 void
 TIFFFreeDirectory(TIFF* tif)
 {
-    TIFFDirectory *td = &tif->tif_dir;
-    int            i;
+	TIFFDirectory *td = &tif->tif_dir;
+	int            i;
 
-    CleanupField(td_colormap[0]);
-    CleanupField(td_colormap[1]);
-    CleanupField(td_colormap[2]);
-    CleanupField(td_documentname);
-    CleanupField(td_artist);
-    CleanupField(td_datetime);
-    CleanupField(td_hostcomputer);
-    CleanupField(td_imagedescription);
-    CleanupField(td_make);
-    CleanupField(td_model);
-    CleanupField(td_copyright);
-    CleanupField(td_pagename);
-    CleanupField(td_sampleinfo);
-    CleanupField(td_subifd);
-    CleanupField(td_ycbcrcoeffs);
-    CleanupField(td_inknames);
-    CleanupField(td_targetprinter);
-    CleanupField(td_whitepoint);
-    CleanupField(td_primarychromas);
-    CleanupField(td_refblackwhite);
-    CleanupField(td_transferfunction[0]);
-    CleanupField(td_transferfunction[1]);
-    CleanupField(td_transferfunction[2]);
-    CleanupField(td_profileData);
-    CleanupField(td_photoshopData);
-    CleanupField(td_richtiffiptcData);
-    CleanupField(td_xmlpacketData);
-    CleanupField(td_stripoffset);
-    CleanupField(td_stripbytecount);
-    /* Begin Pixar Tags */
-    CleanupField(td_textureformat);
-    CleanupField(td_wrapmodes);
-    CleanupField(td_matrixWorldToScreen);
-    CleanupField(td_matrixWorldToCamera);
-    /* End Pixar Tags */
+	CleanupField(td_colormap[0]);
+	CleanupField(td_colormap[1]);
+	CleanupField(td_colormap[2]);
+	CleanupField(td_documentname);
+	CleanupField(td_artist);
+	CleanupField(td_datetime);
+	CleanupField(td_hostcomputer);
+	CleanupField(td_imagedescription);
+	CleanupField(td_make);
+	CleanupField(td_model);
+	CleanupField(td_copyright);
+	CleanupField(td_pagename);
+	CleanupField(td_sampleinfo);
+	CleanupField(td_subifd);
+	CleanupField(td_ycbcrcoeffs);
+	CleanupField(td_inknames);
+	CleanupField(td_targetprinter);
+	CleanupField(td_whitepoint);
+	CleanupField(td_primarychromas);
+	CleanupField(td_refblackwhite);
+	CleanupField(td_transferfunction[0]);
+	CleanupField(td_transferfunction[1]);
+	CleanupField(td_transferfunction[2]);
+	CleanupField(td_profileData);
+	CleanupField(td_photoshopData);
+	CleanupField(td_richtiffiptcData);
+	CleanupField(td_xmlpacketData);
+	CleanupField(td_stripoffset);
+	CleanupField(td_stripbytecount);
+	/* Begin Pixar Tags */
+	CleanupField(td_textureformat);
+	CleanupField(td_wrapmodes);
+	CleanupField(td_matrixWorldToScreen);
+	CleanupField(td_matrixWorldToCamera);
+	/* End Pixar Tags */
 
-    /* Cleanup custom tag values */
-    for( i = 0; i < td->td_customValueCount; i++ )
-        _TIFFfree( td->td_customValues[i].value );
+	/* Cleanup custom tag values */
+	for( i = 0; i < td->td_customValueCount; i++ ) {
+		if (td->td_customValues[i].value)
+			_TIFFfree(td->td_customValues[i].value);
+	}
 
-    td->td_customValueCount = 0;
-
-    if( td->td_customValues != NULL )
-        _TIFFfree( td->td_customValues );
-          
+	td->td_customValueCount = 0;
+	CleanupField(td_customValues);
 }
 #undef CleanupField
 
@@ -1424,3 +1423,4 @@ TIFFReassignTagToIgnore (enum TIFFIgnoreSense task, int TIFFtagID)
     return (FALSE);
 }
 
+/* vim: set ts=8 sts=8 sw=8 noet: */

@@ -1,4 +1,4 @@
-/* $Id: tif_packbits.c,v 1.8 2004/06/06 10:20:12 dron Exp $ */
+/* $Id: tif_packbits.c,v 1.9 2004/09/14 06:32:19 dron Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -31,20 +31,29 @@
  *
  * PackBits Compression Algorithm Support
  */
-#include <assert.h>
 #include <stdio.h>
 
 static int
 PackBitsPreEncode(TIFF* tif, tsample_t s)
 {
 	(void) s;
+
+        tif->tif_data = _TIFFmalloc(sizeof(tsize_t));
 	/*
 	 * Calculate the scanline/tile-width size in bytes.
 	 */
 	if (isTiled(tif))
-		tif->tif_data = (tidata_t) TIFFTileRowSize(tif);
+		*(tsize_t*)tif->tif_data = TIFFTileRowSize(tif);
 	else
-		tif->tif_data = (tidata_t) TIFFScanlineSize(tif);
+		*(tsize_t*)tif->tif_data = TIFFScanlineSize(tif);
+	return (1);
+}
+
+static int
+PackBitsPostEncode(TIFF* tif)
+{
+        if (tif->tif_data)
+            _TIFFfree(tif->tif_data);
 	return (1);
 }
 
@@ -61,7 +70,7 @@ typedef unsigned char tidata;
 static int
 PackBitsEncode(TIFF* tif, tidata_t buf, tsize_t cc, tsample_t s)
 {
-	u_char* bp = (u_char*) buf;
+	unsigned char* bp = (unsigned char*) buf;
 	tidata_t op, ep, lastliteral;
 	long n, slop;
 	int b;
@@ -188,16 +197,7 @@ PackBitsEncode(TIFF* tif, tidata_t buf, tsize_t cc, tsample_t s)
 static int
 PackBitsEncodeChunk(TIFF* tif, tidata_t bp, tsize_t cc, tsample_t s)
 {
-	tsize_t rowsize = (tsize_t)(uint32) tif->tif_data;
-
-	/* 
-	 * YCBCR data isn't really separable into rows, so we
-	 * might as well encode the whole tile/strip as one chunk.
-         *
-         * XXX: This code does nothing: why those lines here?
-	 */
-	/*if( tif->tif_dir.td_photometric == PHOTOMETRIC_YCBCR )
-		rowsize = (tsize_t)(uint32) tif->tif_data;*/
+	tsize_t rowsize = *(tsize_t*)tif->tif_data;
 
 	while ((long)cc > 0) {
 		int	chunk = rowsize;
@@ -281,9 +281,12 @@ TIFFInitPackBits(TIFF* tif, int scheme)
 	tif->tif_decodestrip = PackBitsDecode;
 	tif->tif_decodetile = PackBitsDecode;
 	tif->tif_preencode = PackBitsPreEncode;
+        tif->tif_postencode = PackBitsPostEncode;
 	tif->tif_encoderow = PackBitsEncode;
 	tif->tif_encodestrip = PackBitsEncodeChunk;
 	tif->tif_encodetile = PackBitsEncodeChunk;
 	return (1);
 }
 #endif /* PACKBITS_SUPPORT */
+
+/* vim: set ts=8 sts=8 sw=8 noet: */

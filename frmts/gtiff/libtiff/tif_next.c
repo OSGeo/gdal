@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_next.c,v 1.3 2003/07/08 16:40:46 warmerda Exp $ */
+/* $Id: tif_next.c,v 1.4 2004/09/19 10:08:38 dron Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -87,7 +87,7 @@ NeXTDecode(TIFF* tif, tidata_t buf, tsize_t occ, tsample_t s)
 			 */
 			off = (bp[0] * 256) + bp[1];
 			n = (bp[2] * 256) + bp[3];
-			if (cc < 4+n)
+			if (cc < 4+n || off+n > scanline)
 				goto bad;
 			_TIFFmemcpy(row+off, bp+4, n);
 			bp += 4+n;
@@ -140,3 +140,5 @@ TIFFInitNeXT(TIFF* tif, int scheme)
 	return (1);
 }
 #endif /* NEXT_SUPPORT */
+
+/* vim: set ts=8 sts=8 sw=8 noet: */

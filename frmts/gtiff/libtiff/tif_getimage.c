@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_getimage.c,v 1.37 2004/04/20 14:22:21 dron Exp $ */
+/* $Id: tif_getimage.c,v 1.39 2004/09/21 18:27:21 dron Exp $ */
 
 /*
  * Copyright (c) 1991-1997 Sam Leffler
@@ -555,12 +555,13 @@ gtTileContig(TIFFRGBAImage* img, uint32* raster, uint32 w, uint32 h)
     uint32 col, row, y, rowstoread;
     uint32 pos;
     uint32 tw, th;
-    u_char* buf;
+    unsigned char* buf;
     int32 fromskew, toskew;
     uint32 nrow;
     int ret = 1, flip;
 
-    buf = (u_char*) _TIFFmalloc(TIFFTileSize(tif));
+    buf = (unsigned char*) _TIFFmalloc(TIFFTileSize(tif));
+    memset(buf, 0, TIFFTileSize(tif));
     if (buf == 0) {
 	TIFFError(TIFFFileName(tif), "No space for tile buffer");
 	return (0);
@@ -647,11 +648,11 @@ gtTileSeparate(TIFFRGBAImage* img, uint32* raster, uint32 w, uint32 h)
     uint32 col, row, y, rowstoread;
     uint32 pos;
     uint32 tw, th;
-    u_char* buf;
-    u_char* r;
-    u_char* g;
-    u_char* b;
-    u_char* a;
+    unsigned char* buf;
+    unsigned char* r;
+    unsigned char* g;
+    unsigned char* b;
+    unsigned char* a;
     tsize_t tilesize;
     int32 fromskew, toskew;
     int alpha = img->alpha;
@@ -659,7 +660,8 @@ gtTileSeparate(TIFFRGBAImage* img, uint32* raster, uint32 w, uint32 h)
     int ret = 1, flip;
 
     tilesize = TIFFTileSize(tif);
-    buf = (u_char*) _TIFFmalloc(4*tilesize);
+    buf = (unsigned char*) _TIFFmalloc(4*tilesize);
+    memset(buf, 0, 4*tilesize);
     if (buf == 0) {
 	TIFFError(TIFFFileName(tif), "No space for tile buffer");
 	return (0);
@@ -727,9 +729,7 @@ gtTileSeparate(TIFFRGBAImage* img, uint32* raster, uint32 w, uint32 h)
                 (*put)(img, raster+y*w+col, col, y,
                        npix, nrow, fromskew, toskew + fromskew, 
                        r + pos, g + pos, b + pos, a + pos);
-            } 
-            else 
-            {
+            } else {
                 (*put)(img, raster+y*w+col, col, y,
                        tw, nrow, 0, toskew, r + pos, g + pos, b + pos, a + pos);
             }
@@ -771,14 +771,15 @@ gtStripContig(TIFFRGBAImage* img, uint32* raster, uint32 w, uint32 h)
     tileContigRoutine put = img->put.contig;
     uint32 row, y, nrow, rowstoread;
     uint32 pos;
-    u_char* buf;
+    unsigned char* buf;
     uint32 rowsperstrip;
     uint32 imagewidth = img->width;
     tsize_t scanline;
     int32 fromskew, toskew;
     int ret = 1, flip;
 
-    buf = (u_char*) _TIFFmalloc(TIFFStripSize(tif));
+    buf = (unsigned char*) _TIFFmalloc(TIFFStripSize(tif));
+    memset(buf, 0, TIFFStripSize(tif));
     if (buf == 0) {
 	TIFFError(TIFFFileName(tif), "No space for strip buffer");
 	return (0);
@@ -788,8 +789,7 @@ gtStripContig(TIFFRGBAImage* img, uint32* raster, uint32 w, uint32 h)
     if (flip & FLIP_VERTICALLY) {
 	    y = h - 1;
 	    toskew = -(int32)(w + w);
-    }
-    else {
+    } else {
 	    y = 0;
 	    toskew = -(int32)(w - w);
     }
@@ -847,8 +847,8 @@ gtStripSeparate(TIFFRGBAImage* img, uint32* raster, uint32 w, uint32 h)
 {
     TIFF* tif = img->tif;
     tileSeparateRoutine put = img->put.separate;
-    u_char *buf;
-    u_char *r, *g, *b, *a;
+    unsigned char *buf;
+    unsigned char *r, *g, *b, *a;
     uint32 row, y, nrow, rowstoread;
     uint32 pos;
     tsize_t scanline;
@@ -860,7 +860,8 @@ gtStripSeparate(TIFFRGBAImage* img, uint32* raster, uint32 w, uint32 h)
     int	ret = 1, flip;
 
     stripsize = TIFFStripSize(tif);
-    r = buf = (u_char *)_TIFFmalloc(4*stripsize);
+    r = buf = (unsigned char *)_TIFFmalloc(4*stripsize);
+    memset(buf, 0, 4*stripsize);
     if (buf == 0) {
 	TIFFError(TIFFFileName(tif), "No space for tile buffer");
 	return (0);
@@ -1022,7 +1023,7 @@ static void name(\
     uint32 x, uint32 y, \
     uint32 w, uint32 h, \
     int32 fromskew, int32 toskew, \
-    u_char* pp \
+    unsigned char* pp \
 )
 
 /*
@@ -1408,7 +1409,7 @@ static void name(\
     uint32 x, uint32 y, \
     uint32 w, uint32 h,\
     int32 fromskew, int32 toskew,\
-    u_char* r, u_char* g, u_char* b, u_char* a\
+    unsigned char* r, unsigned char* g, unsigned char* b, unsigned char* a\
 )
 
 /*
@@ -1555,7 +1556,7 @@ DECLAREContigPutFunc(putcontig8bitCIELab)
 	while (h-- > 0) {
 		for (x = w; x-- > 0;) {
 			TIFFCIELabToXYZ(img->cielab,
-					(u_char)pp[0],
+					(unsigned char)pp[0],
 					(signed char)pp[1],
 					(signed char)pp[2],
 					&X, &Y, &Z);
@@ -1593,7 +1594,7 @@ static void putcontig8bitYCbCrGenericTile(
     uint32 x, uint32 y, 
     uint32 w, uint32 h, 
     int32 fromskew, int32 toskew, 
-    u_char* pp,
+    unsigned char* pp,
     int h_group, 
     int v_group )
 
@@ -1610,7 +1611,7 @@ static void putcontig8bitYCbCrGenericTile(
 
     for( yy = 0; yy < h; yy++ )
     {
-        u_char *pp_line;
+        unsigned char *pp_line;
         int     y_line_group = yy / v_group;
         int     y_remainder = yy - y_line_group * v_group;
 
@@ -2582,3 +2583,5 @@ TIFFReadRGBATile(TIFF* tif, uint32 col, uint32 row, uint32 * raster)
 
     return (ok);
 }
+
+/* vim: set ts=8 sts=8 sw=8 noet: */

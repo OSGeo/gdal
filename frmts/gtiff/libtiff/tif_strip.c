@@ -1,4 +1,4 @@
-/* $Id: tif_strip.c,v 1.5 2004/07/10 20:04:47 dron Exp $ */
+/* $Id: tif_strip.c,v 1.7 2004/09/22 13:49:08 dron Exp $ */
 
 /*
  * Copyright (c) 1991-1997 Sam Leffler
@@ -45,7 +45,7 @@ TIFFComputeStrip(TIFF* tif, uint32 row, tsample_t sample)
 		if (sample >= td->td_samplesperpixel) {
 			TIFFError(tif->tif_name,
 			    "%lu: Sample out of range, max %lu",
-			    (u_long) sample, (u_long) td->td_samplesperpixel);
+			    (unsigned long) sample, (unsigned long) td->td_samplesperpixel);
 			return ((tstrip_t) 0);
 		}
 		strip += sample*td->td_stripsperimage;
@@ -123,7 +123,7 @@ TIFFRawStripSize(TIFF* tif, tstrip_t strip)
 	if (bytecount <= 0) {
 		TIFFError(tif->tif_name,
 			  "%lu: Invalid strip byte count, strip %lu",
-			  (u_long) bytecount, (u_long) strip);
+			  (unsigned long) bytecount, (unsigned long) strip);
 		bytecount = (tsize_t) -1;
 	}
 
@@ -191,7 +191,7 @@ TIFFScanlineSize(TIFF* tif)
 	scanline = td->td_bitspersample * td->td_imagewidth;
 	if (td->td_planarconfig == PLANARCONFIG_CONTIG)
 		scanline *= td->td_samplesperpixel;
-	return ((tsize_t) TIFFhowmany(scanline, 8));
+	return ((tsize_t) TIFFhowmany8(scanline));
 }
 
 /*
@@ -209,8 +209,10 @@ TIFFRasterScanlineSize(TIFF* tif)
 	scanline = td->td_bitspersample * td->td_imagewidth;
 	if (td->td_planarconfig == PLANARCONFIG_CONTIG) {
 		scanline *= td->td_samplesperpixel;
-		return ((tsize_t) TIFFhowmany(scanline, 8));
+		return ((tsize_t) TIFFhowmany8(scanline));
 	} else
 		return ((tsize_t)
-		    TIFFhowmany(scanline, 8)*td->td_samplesperpixel);
+		    TIFFhowmany8(scanline)*td->td_samplesperpixel);
 }
+
+/* vim: set ts=8 sts=8 sw=8 noet: */

@@ -1,4 +1,4 @@
-/* $Id: tif_dir.h,v 1.13 2004/06/05 08:09:28 dron Exp $ */
+/* $Id: tif_dir.h,v 1.14 2004/09/14 06:58:04 dron Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -36,7 +36,7 @@
 typedef	struct {
 #define	FIELD_SETLONGS	4
 	/* bit vector of fields that are set */
-	u_long	td_fieldsset[FIELD_SETLONGS];
+	unsigned long	td_fieldsset[FIELD_SETLONGS];
 
 	uint32	td_imagewidth, td_imagelength, td_imagedepth;
 	uint32	td_tilewidth, td_tilelength, td_tiledepth;
@@ -228,7 +228,7 @@ typedef	struct {
 	(v) & (tif)->tif_typemask[type]))
 
 
-#define BITn(n)				(((u_long)1L)<<((n)&0x1f)) 
+#define BITn(n)				(((unsigned long)1L)<<((n)&0x1f)) 
 #define BITFIELDn(tif, n)		((tif)->tif_dir.td_fieldsset[(n)/32]) 
 #define TIFFFieldSet(tif, field)	(BITFIELDn(tif, field) & BITn(field)) 
 #define TIFFSetFieldBit(tif, field)	(BITFIELDn(tif, field) |= BITn(field))
@@ -259,3 +259,5 @@ extern  TIFFFieldInfo* _TIFFCreateAnonFieldInfo( TIFF *tif, ttag_t tag,
 }
 #endif
 #endif /* _TIFFDIR_ */
+
+/* vim: set ts=8 sts=8 sw=8 noet: */

@@ -1,4 +1,4 @@
-/* $Id: tif_tile.c,v 1.3 2004/07/10 20:04:47 dron Exp $ */
+/* $Id: tif_tile.c,v 1.4 2004/09/14 06:58:04 dron Exp $ */
 
 /*
  * Copyright (c) 1991-1997 Sam Leffler
@@ -78,23 +78,23 @@ TIFFCheckTile(TIFF* tif, uint32 x, uint32 y, uint32 z, tsample_t s)
 
 	if (x >= td->td_imagewidth) {
 		TIFFError(tif->tif_name, "%lu: Col out of range, max %lu",
-		    (u_long) x, (u_long) td->td_imagewidth);
+		    (unsigned long) x, (unsigned long) td->td_imagewidth);
 		return (0);
 	}
 	if (y >= td->td_imagelength) {
 		TIFFError(tif->tif_name, "%lu: Row out of range, max %lu",
-		    (u_long) y, (u_long) td->td_imagelength);
+		    (unsigned long) y, (unsigned long) td->td_imagelength);
 		return (0);
 	}
 	if (z >= td->td_imagedepth) {
 		TIFFError(tif->tif_name, "%lu: Depth out of range, max %lu",
-		    (u_long) z, (u_long) td->td_imagedepth);
+		    (unsigned long) z, (unsigned long) td->td_imagedepth);
 		return (0);
 	}
 	if (td->td_planarconfig == PLANARCONFIG_SEPARATE &&
 	    s >= td->td_samplesperpixel) {
 		TIFFError(tif->tif_name, "%lu: Sample out of range, max %lu",
-		    (u_long) s, (u_long) td->td_samplesperpixel);
+		    (unsigned long) s, (unsigned long) td->td_samplesperpixel);
 		return (0);
 	}
 	return (1);
@@ -217,3 +217,5 @@ _TIFFDefaultTileSize(TIFF* tif, uint32* tw, uint32* th)
 	if (*th & 0xf)
 		*th = TIFFroundup(*th, 16);
 }
+
+/* vim: set ts=8 sts=8 sw=8 noet: */
