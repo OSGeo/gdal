@@ -30,6 +30,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2000/12/23 05:10:35  warmerda
+ * Segregate referenced collections in BL2000 collections into the COLL_ID_REFS field.
+ * Improve error handling if MAX_LINKS exceeded.  Raise MAX_LINKS to 5000.
+ *
  * Revision 1.9  2000/12/06 19:31:16  warmerda
  * added BL2000 support
  *
@@ -64,7 +68,7 @@
 #include "ntf.h"
 #include "cpl_string.h"
 
-#define MAX_LINK	400
+#define MAX_LINK	5000
 
 /************************************************************************/
 /*                         TranslateCodePoint()                         */
@@ -532,7 +536,11 @@ static OGRFeature *TranslateBoundarylineCollection( NTFFileReader *poReader,
     int		nNumLinks = atoi(papoGroup[0]->GetField( 9, 12 ));
     
     if( nNumLinks > MAX_LINK )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "MAX_LINK exceeded in ntf_estlayers.cpp." );
         return poFeature;
+    }
     
     poFeature->SetField( 1, nNumLinks );
 
@@ -580,7 +588,11 @@ static OGRFeature *TranslateBoundarylinePoly( NTFFileReader *poReader,
         int		nNumLinks = atoi(papoGroup[2]->GetField( 9, 12 ));
     
         if( nNumLinks > MAX_LINK )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                      "MAX_LINK exceeded in ntf_estlayers.cpp." );
             return poFeature;
+        }
     
         poFeature->SetField( 4, nNumLinks );
 
@@ -671,6 +683,9 @@ static OGRFeature *TranslateBoundarylinePoly( NTFFileReader *poReader,
 
         if( nNumLink == MAX_LINK*2 )
         {
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                      "MAX_LINK exceeded in ntf_estlayers.cpp." );
+
             delete poFeature;
             return NULL;
         }
@@ -767,7 +782,12 @@ static OGRFeature *TranslateBL2000Poly( NTFFileReader *poReader,
         int		nNumLinks = atoi(papoGroup[2]->GetField( 9, 12 ));
     
         if( nNumLinks > MAX_LINK )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                      "MAX_LINK exceeded in ntf_estlayers.cpp." );
+
             return poFeature;
+        }
     
         poFeature->SetField( 3, nNumLinks );
 
@@ -853,6 +873,9 @@ static OGRFeature *TranslateBL2000Poly( NTFFileReader *poReader,
 
         if( nNumLink == MAX_LINK*2 )
         {
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                      "MAX_LINK exceeded in ntf_estlayers.cpp." );
+
             delete poFeature;
             return NULL;
         }
@@ -945,17 +968,31 @@ static OGRFeature *TranslateBL2000Collection( NTFFileReader *poReader,
     int		nNumLinks = atoi(papoGroup[0]->GetField( 9, 12 ));
     
     if( nNumLinks > MAX_LINK )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "MAX_LINK exceeded in ntf_estlayers.cpp." );
+
         return poFeature;
+    }
     
     poFeature->SetField( 1, nNumLinks );
 
-    // POLY_ID
-    int		i, anList[MAX_LINK];
+    // POLY_ID / COLL_ID_REFS
+    int		i, anList[MAX_LINK], anCollList[MAX_LINK];
+    int         nPolys=0, nCollections=0;
 
     for( i = 0; i < nNumLinks; i++ )
-        anList[i] = atoi(papoGroup[0]->GetField( 15+i*8, 20+i*8 ));
+    {
+        if( atoi(papoGroup[0]->GetField( 13+i*8, 14+i*8 )) == 34 )
+            anCollList[nCollections++] = 
+                atoi(papoGroup[0]->GetField( 15+i*8, 20+i*8 ));
+        else
+            anList[nPolys++] = 
+                atoi(papoGroup[0]->GetField( 15+i*8, 20+i*8 ));
+    }
 
-    poFeature->SetField( 2, nNumLinks, anList );
+    poFeature->SetField( 2, nPolys, anList );
+    poFeature->SetField( 10, nCollections, anCollList );
 
     // Attributes
     poReader->ApplyAttributeValues( poFeature, papoGroup,
@@ -1069,7 +1106,12 @@ static OGRFeature *TranslateStrategiNode( NTFFileReader *poReader,
     int		nNumLinks = atoi(papoGroup[0]->GetField( 15, 18 ));
     
     if( nNumLinks > MAX_LINK )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "MAX_LINK exceeded in ntf_estlayers.cpp." );
+
         return poFeature;
+    }
     
     poFeature->SetField( 2, nNumLinks );
 
@@ -1932,6 +1974,7 @@ void NTFFileReader::EstablishLayers()
                         "AREA_CODE", OFTString, 3, 0,
                         "NON_TYPE_CODE", OFTString, 3, 0,
                         "NON_INLAND_AREA", OFTReal, 12, 3,
+                        "COLL_ID_REFS", OFTIntegerList, 6, 0,
                         NULL );
     }
     else if( GetProductId() == NPC_BASEDATA )
