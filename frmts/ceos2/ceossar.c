@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2000/09/25 21:17:04  warmerda
+ * Avoid warnings.
+ *
  * Revision 1.2  2000/03/31 13:34:43  warmerda
  * ported to GDAL, replace headers
  *
@@ -59,7 +62,7 @@ void InitCeosSARVolume(CeosSARVolume_t *volume, int32 file_name_convention)
 void CalcCeosSARImageFilePosition(CeosSARVolume_t *volume, int channel, int line, int *record, int *file_offset)
 {
     struct CeosSARImageDesc *ImageDesc;
-    int TotalRecords, TotalBytes;
+    int TotalRecords=0, TotalBytes=0;
 
     if(record)
 	*record = 0;
