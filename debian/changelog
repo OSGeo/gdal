@@ -1,9 +1,33 @@
+gdal (1.2.1-1) unstable; urgency=low
+
+  * New upstream release (Closes: #258367)
+  * Added flag -V'libgdal1 (>=1.2.0) to solve incompatibility between
+    libgdal1-1.2.x and libgdal-1.2+cvs031111 (Closes: #254344)
+  * Add support for jpeg2000 (jasper), netcdf and sqlite.
+  * Move tiff support to external library (finally added to debian!)(Thanks
+    Alessandro for your hint!)
+
+ -- Silke Reimer <Silke.Reimer@intevation.de>  Mon,  9 Aug 2004 11:26:28 +0200
+
 gdal (1.2.0-1) unstable; urgency=low
 
-  * New upstream release.
-  * use upstream man pages.
+  * New upstream release
+  * Use manpages from upstream
+  * Changed package requirements for libgdal1-dev: added virtual package
+    libgdal-dev, added dependency on libc6-dev and unixodbc-dev
 
- -- Alessandro Amici (devel) <alexamici@tiscali.it>  Tue,  2 Mar 2004 20:39:46 +0100
+ -- Silke Reimer (MoinMoin) <silke@intevation.de>  Mon,  8 Mar 2004 18:05:58 +0100
+
+gdal (1.2+cvs.031111-1) unstable; urgency=low
+
+  * New upstream cvs snapshot. This should fix the building failure 
+    on arm, powerpc, mipsel and s390 due to "invalid conversion from 
+    `int8*' to `const char*'"
+  * add odbc support to debian package.
+  * switch on xerces support.
+
+
+ -- Silke Reimer (MoinMoin) <silke@intevation.de>  Wed, 12 Nov 2003 10:21:13 +0100
 
 gdal (1.2+cvs.031016-1) unstable; urgency=low
 
@@ -16,7 +40,7 @@ gdal (1.2+cvs.031016-1) unstable; urgency=low
 
  -- Silke Reimer (MoinMoin) <silke@intevation.de>  Fri, 17 Oct 2003 11:14:34 +0200
 
-gdal (1.2.0-0pre1) unstable; urgency=low
+gdal (1.2+0pre1) unstable; urgency=low
 
   * New upstream cvs snapshot with proper soname versioning.
     Getting ready for the upcoming 1.2.0.
