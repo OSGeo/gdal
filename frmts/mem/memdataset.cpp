@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2003/02/03 17:57:30  warmerda
+ * Fix for last fix.
+ *
  * Revision 1.14  2003/02/03 16:28:35  warmerda
  * fixed fatal bug with nWordSize for unpacked arrays in read/write block
  *
@@ -163,7 +166,7 @@ CPLErr MEMRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     int     nWordSize = GDALGetDataTypeSize( eDataType ) / 8;
     CPLAssert( nBlockXOff == 0 );
 
-    if( nPixelOffset*8 == nWordSize )
+    if( nPixelOffset == nWordSize )
     {
         memcpy( pImage, 
                 pabyData+nLineOffset*nBlockYOff, 
@@ -195,7 +198,7 @@ CPLErr MEMRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
     int     nWordSize = GDALGetDataTypeSize( eDataType ) / 8;
     CPLAssert( nBlockXOff == 0 );
 
-    if( nPixelOffset*8 == nWordSize )
+    if( nPixelOffset == nWordSize )
     {
         memcpy( pabyData+nLineOffset*nBlockYOff, 
                 pImage, 
