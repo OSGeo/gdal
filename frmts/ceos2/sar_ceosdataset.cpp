@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.41  2005/02/17 02:29:03  gwalter
+ * Check for more extensions.
+ *
  * Revision 1.40  2004/11/15 19:56:06  gwalter
  * Updated PALSAR band reading.
  *
@@ -184,6 +187,7 @@ char *CeosExtension[][6] = {
 { "vol", "lea", "img", "trl", "nul", "ext" },
 { "vol", "led", "img", "tra", "nul", "ext" },
 { "vol", "lea", "img", "tra", "nul", "ext" },
+{ "vdf", "slf", "sdf", "stf", "nvd", "ext" },
 
 { "vdf", "ldr", "img", "tra", "nul", "ext2" },
 
