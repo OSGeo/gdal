@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.38  2000/09/25 15:43:21  warmerda
+ * Added support for odd TIFF files (such as 1bit, and YCbCr) via the
+ * RGBA interface.
+ *
  * Revision 1.37  2000/08/14 18:33:49  warmerda
  * added support for writing palettes to overviews
  *
@@ -109,12 +113,6 @@ char *  GTIFGetOGISDefn( GTIFDefn * );
 int     GTIFSetFromOGISDefn( GTIF *, const char * );
 CPL_C_END
 
-/* Local Atlantis Extension: hopefully add to libtiff eventually */
-
-#define	SAMPLEFORMAT_COMPLEXINT		5 /* !signed complex integer data */
-#define	SAMPLEFORMAT_COMPLEXIEEEFP	6 /* !complex IEEE floating point */
-
-
 /************************************************************************/
 /* ==================================================================== */
 /*				GTiffDataset				*/
@@ -122,10 +120,12 @@ CPL_C_END
 /************************************************************************/
 
 class GTiffRasterBand;
+class GTiffRGBABand;
 
 class GTiffDataset : public GDALDataset
 {
     friend	GTiffRasterBand;
+    friend	GTiffRGBABand;
     
     TIFF	*hTIFF;
 
@@ -153,6 +153,7 @@ class GTiffDataset : public GDALDataset
     int		bGeoTransformValid;
 
     int		bNewDataset;            /* product of Create() */
+    int         bTreatAsRGBA;
 
     GDALColorTable *poColorTable;
 
@@ -215,7 +216,6 @@ class GTiffRasterBand : public GDALRasterBand
     virtual int    GetOverviewCount();
     virtual GDALRasterBand *GetOverview( int );
 };
-
 
 /************************************************************************/
 /*                           GTiffRasterBand()                            */
@@ -553,11 +553,162 @@ GDALRasterBand *GTiffRasterBand::GetOverview( int i )
         return poGDS->papoOverviewDS[i]->GetRasterBand(nBand);
 }
 
+/************************************************************************/
+/* ==================================================================== */
+/*                             GTiffRGBABand                            */
+/* ==================================================================== */
+/************************************************************************/
+
+class GTiffRGBABand : public GDALRasterBand
+{
+    friend	GTiffDataset;
+
+  public:
+
+                   GTiffRGBABand( GTiffDataset *, int );
+
+    virtual CPLErr IReadBlock( int, int, void * );
+
+    virtual GDALColorInterp GetColorInterpretation();
+};
 
 
 /************************************************************************/
+/*                           GTiffRGBABand()                            */
+/************************************************************************/
+
+GTiffRGBABand::GTiffRGBABand( GTiffDataset *poDS, int nBand )
+
+{
+    this->poDS = poDS;
+    this->nBand = nBand;
+
+    eDataType = GDT_Byte;
+
+    nBlockXSize = poDS->nBlockXSize;
+    nBlockYSize = poDS->nBlockYSize;
+}
+
+/************************************************************************/
+/*                             IReadBlock()                             */
+/************************************************************************/
+
+CPLErr GTiffRGBABand::IReadBlock( int nBlockXOff, int nBlockYOff,
+                                    void * pImage )
+
+{
+    GTiffDataset	*poGDS = (GTiffDataset *) poDS;
+    int			nBlockBufSize, nBlockId;
+    CPLErr		eErr = CE_None;
+
+    poGDS->SetDirectory();
+
+    nBlockBufSize = 4 * nBlockXSize * nBlockYSize;
+    nBlockId = nBlockXOff + nBlockYOff * nBlocksPerRow;
+        
+/* -------------------------------------------------------------------- */
+/*      Allocate a temporary buffer for this strip.                     */
+/* -------------------------------------------------------------------- */
+    if( poGDS->pabyBlockBuf == NULL )
+    {
+        poGDS->pabyBlockBuf = (GByte *) VSICalloc( 1, nBlockBufSize );
+        if( poGDS->pabyBlockBuf == NULL )
+        {
+            CPLError( CE_Failure, CPLE_OutOfMemory,
+                   "Unable to allocate %d bytes for a temporary strip buffer\n"
+                      "in GeoTIFF driver.",
+                      nBlockBufSize );
+            
+            return( CE_Failure );
+        }
+    }
+    
+/* -------------------------------------------------------------------- */
+/*      Read the strip                                                  */
+/* -------------------------------------------------------------------- */
+    if( poGDS->nLoadedBlock != nBlockId )
+    {
+        if( TIFFIsTiled( poGDS->hTIFF ) )
+        {
+            if( TIFFReadRGBATile(poGDS->hTIFF, 
+                                 nBlockXOff * nBlockXSize, 
+                                 nBlockYOff * nBlockYSize,
+                                 (uint32 *) poGDS->pabyBlockBuf) == -1 )
+            {
+                /* Once TIFFError() is properly hooked, this can go away */
+                CPLError( CE_Failure, CPLE_AppDefined,
+                          "TIFFReadRGBATile() failed." );
+                
+                memset( poGDS->pabyBlockBuf, 0, nBlockBufSize );
+                
+                eErr = CE_Failure;
+            }
+        }
+        else
+        {
+            if( TIFFReadRGBAStrip(poGDS->hTIFF, 
+                                  nBlockId * nBlockYSize,
+                                  (uint32 *) poGDS->pabyBlockBuf) == -1 )
+            {
+                /* Once TIFFError() is properly hooked, this can go away */
+                CPLError( CE_Failure, CPLE_AppDefined,
+                          "TIFFReadRGBAStrip() failed." );
+                
+                memset( poGDS->pabyBlockBuf, 0, nBlockBufSize );
+                
+                eErr = CE_Failure;
+            }
+        }
+    }
+
+    poGDS->nLoadedBlock = nBlockId;
+                              
+/* -------------------------------------------------------------------- */
+/*      Handle simple case of eight bit data, and pixel interleaving.   */
+/* -------------------------------------------------------------------- */
+    int   iDestLine;
+    int   nThisBlockYSize;
+
+    if( (nBlockYOff+1) * nBlockYSize > GetYSize()
+        && !TIFFIsTiled( poGDS->hTIFF ) )
+        nThisBlockYSize = GetYSize() - nBlockYOff * nBlockYSize;
+    else
+        nThisBlockYSize = nBlockYSize;
+
+    for( iDestLine = 0; iDestLine < nThisBlockYSize; iDestLine++ )
+    {
+        int	nSrcOffset;
+
+        nSrcOffset = (nThisBlockYSize - iDestLine - 1) * nBlockXSize * 4;
+
+        GDALCopyWords( poGDS->pabyBlockBuf + nBand-1 + nSrcOffset, GDT_Byte, 4,
+                       ((GByte *) pImage)+iDestLine*nBlockXSize, GDT_Byte, 1, 
+                       nBlockXSize );
+    }
+
+    return eErr;
+}
+
+/************************************************************************/
+/*                       GetColorInterpretation()                       */
+/************************************************************************/
+
+GDALColorInterp GTiffRGBABand::GetColorInterpretation()
+
+{
+    if( nBand == 1 )
+        return GCI_RedBand;
+    else if( nBand == 2 )
+        return GCI_GreenBand;
+    else if( nBand == 3 )
+        return GCI_BlueBand;
+    else
+        return GCI_AlphaBand;
+}
+
+/************************************************************************/
 /* ==================================================================== */
-/*      GTiffDataset                                                    */
+/*                            GTiffDataset                              */
 /* ==================================================================== */
 /************************************************************************/
 
@@ -577,6 +728,7 @@ GTiffDataset::GTiffDataset()
     poColorTable = NULL;
     pszProjection = NULL;
     bBase = TRUE;
+    bTreatAsRGBA = FALSE;
     nOverviewCount = 0;
     papoOverviewDS = NULL;
     nDirOffset = 0;
@@ -1041,13 +1193,30 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, uint32 nDirOffsetIn,
     nBlocksPerBand =
         ((nYSize + nBlockYSize - 1) / nBlockYSize)
       * ((nXSize + nBlockXSize  - 1) / nBlockXSize);
+
+/* -------------------------------------------------------------------- */
+/*      Should we treat this via the RGBA interface?                    */
+/* -------------------------------------------------------------------- */
+    if( nPhotometric == PHOTOMETRIC_YCBCR
+        || nPhotometric == PHOTOMETRIC_CIELAB
+        || nPhotometric == PHOTOMETRIC_MINISWHITE
+        || nPhotometric == PHOTOMETRIC_LOGL
+        || nPhotometric == PHOTOMETRIC_LOGLUV
+        || nBitsPerSample < 8 )
+    {
+        bTreatAsRGBA = TRUE;
+        nBands = 4;
+    }
         
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
     for( int iBand = 0; iBand < nBands; iBand++ )
     {
-        SetBand( iBand+1, new GTiffRasterBand( this, iBand+1 ) );
+        if( bTreatAsRGBA )
+            SetBand( iBand+1, new GTiffRGBABand( this, iBand+1 ) );
+        else
+            SetBand( iBand+1, new GTiffRasterBand( this, iBand+1 ) );
     }
 
 /* -------------------------------------------------------------------- */
@@ -1109,6 +1278,7 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, uint32 nDirOffsetIn,
     unsigned short	*panRed, *panGreen, *panBlue;
 
     if( nPhotometric != PHOTOMETRIC_PALETTE 
+        || bTreatAsRGBA 
         || TIFFGetField( hTIFF, TIFFTAG_COLORMAP, 
                          &panRed, &panGreen, &panBlue) == 0 )
     {
@@ -1175,7 +1345,7 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, uint32 nDirOffsetIn,
 /*      If this is a "base" raster, we should scan for any              */
 /*      associated overviews.                                           */
 /* -------------------------------------------------------------------- */
-    if( bBase )
+    if( bBase && !bTreatAsRGBA )
     {
         while( TIFFReadDirectory( hTIFF ) != 0 )
         {
