@@ -8,7 +8,7 @@ OBJ	=	rawdataset.o ehdrdataset.o pauxdataset.o doq1dataset.o \
 		fujibasdataset.o envidataset.o gscdataset.o fastdataset.o \
 		atlsci_spheroid.o btdataset.o
 
-CPPFLAGS	+=	$(GDAL_INCLUDE)
+CPPFLAGS	:=	$(GDAL_INCLUDE) $(CPPFLAGS)
 
 default:	$(OBJ)
 
