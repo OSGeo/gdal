@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2003/05/20 18:34:56  warmerda
+ * added error reporting if SRS import fails
+ *
  * Revision 1.7  2003/03/18 17:33:00  warmerda
  * Copy colortable if there is one on the source file.
  *
@@ -94,10 +97,19 @@ char *SanitizeSRS( const char *pszUserInput )
     OGRSpatialReferenceH hSRS;
     char *pszResult = NULL;
 
+    CPLErrorReset();
+    
     hSRS = OSRNewSpatialReference( NULL );
     if( OSRSetFromUserInput( hSRS, pszUserInput ) == OGRERR_NONE )
         OSRExportToWkt( hSRS, &pszResult );
-
+    else
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Translating source or target SRS failed:\n%s",
+                  pszUserInput );
+        exit( 1 );
+    }
+    
     OSRDestroySpatialReference( hSRS );
 
     return pszResult;
