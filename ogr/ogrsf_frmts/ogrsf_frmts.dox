@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2003/10/17 17:45:41  danmo
+ * Added documentation on GetLayerByName() method and OGR_DS_GetLayerByName() function. (Normand Savard)
+ *
  * Revision 1.19  2003/10/09 15:28:07  warmerda
  * added OGRLayer::DeleteFeature() support
  *
@@ -563,6 +566,38 @@ success.
  @param iLayer a layer number between 0 and OGR_DS_GetLayerCount()-1.
 
  @return an handle to the layer, or NULL if iLayer is out of range
+ or an error occurs.
+
+*/
+
+/**
+ \fn OGRLayer *OGRDataSource::GetLayerByName(const char *pszLayerName);
+
+ Fetch a layer by name.  The returned layer remains owned by the 
+ OGRDataSource and should not be deleted by the application.
+
+ This method is the same as the C function OGR_DS_GetLayerByName().
+
+ @param pszLayerName the layer name of the layer to fetch.
+
+ @return the layer, or NULL if Layer is not found or an error occurs.
+
+*/
+
+
+/**
+ \fn OGRLayerH OGR_DS_GetLayerByName(OGRDataSourceH hDS, 
+                                     const char *pszLayerName );
+
+ Fetch a layer by name.  The returned layer remains owned by the 
+ OGRDataSource and should not be deleted by the application.
+
+ This function is the same as the C++ method OGRDataSource::GetLayerByName().
+
+ @param hDS handle to the data source from which to get the layer.
+ @param psz Layer the layer name of the layer to fetch.
+
+ @return an handle to the layer, or NULL if the layer is not found
  or an error occurs.
 
 */
