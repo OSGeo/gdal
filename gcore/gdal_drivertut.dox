@@ -411,6 +411,15 @@ than one pick the primary extension, or none at all. (optional)
 to describe creation options.  See the geotiff driver for an example of
 this.  (optional)
 
+<li> GDAL_DMD_CREATIONDATATYPES: A list of space separated data types
+supported by this create when creating new datasets.  If a Create() method
+exists, these will be will supported.  If a CreateCopy() method exists, this
+will be a list of types that can be losslessly exported but it may include
+weaker datatypes than the type eventually written.  For instance, a format
+with a CreateCopy() method, and that always writes Float32 might also list
+Byte, Int16, and UInt16 since they can losslessly translated to Float32.  An
+example value might be "Byte Int16 UInt16". (required - if creation supported)
+
 <li> pfnOpen: The function to call to try opening files of this format. 
 (optional) 
 
