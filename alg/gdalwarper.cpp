@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2003/05/06 18:31:35  warmerda
+ * added WRITE_FLUSH comment
+ *
  * Revision 1.6  2003/04/22 19:41:24  dron
  * Fixed problem in GDALWarpNoDataMasker(): missed breaks in switch.
  *
@@ -495,6 +498,13 @@ GDALWarpNoDataMasker( void *pMaskFuncArg, int nBandCount, GDALDataType eType,
  * or indicates that it should be initialized to the NO_DATA value in
  * padfDstNoDataReal/padfDstNoDataImag.  If this value isn't set the
  * destination image will be read and overlayed.  
+ *
+ * - WRITE_FLUSH=YES/NO: This option forces a flush to disk of data after
+ * each chunk is processed.  In some cases this helps ensure a serial 
+ * writing of the output data otherwise a block of data may be written to disk
+ * each time a block of data is read for the input buffer resulting in alot
+ * of extra seeking around the disk, and reduced IO throughput.  The default
+ * at this time is NO.
  *
  */
 
