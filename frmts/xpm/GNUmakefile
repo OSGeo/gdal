@@ -1,9 +1,10 @@
 GDAL_ROOT	=	../..
 
-include $(GDAL_ROOT)/GDALmake.opt
-
 OBJ	=	xpmdataset.o
 
+include $(GDAL_ROOT)/GDALmake.opt
+
+XTRAOPTS = -I../mem
 
 default:	$(OBJ)
 
@@ -11,10 +12,10 @@ clean:
 	rm -f *.o
 
 %.o:	%.c
-	$(CC) -c $(GDAL_INCLUDE) $(CFLAGS) $*.c -o $*.o
+	$(CC) -c $(GDAL_INCLUDE) $(XTRAOPTS) $(CFLAGS) $*.c -o $*.o
 
 %.o:	%.cpp
-	$(CXX) -c $(GDAL_INCLUDE) $(CXXFLAGS) $*.cpp -o $*.o
+	$(CXX) -c $(GDAL_INCLUDE) $(XTRAOPTS) $(CXXFLAGS) $*.cpp -o $*.o
 
 
 install-obj:	$(foreach file,$(OBJ),../o/$(file))

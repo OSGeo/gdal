@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.6  2002/06/12 21:12:25  warmerda
+ * update to metadata based driver info
+ *
  * Revision 1.5  2001/11/11 23:51:00  warmerda
  * added required class keyword to friend declarations
  *
@@ -315,10 +318,13 @@ void GDALRegister_JDEM()
     {
         poJDEMDriver = poDriver = new GDALDriver();
         
-        poDriver->pszShortName = "JDEM";
-        poDriver->pszLongName = "Japanese DEM (.mem)";
-        poDriver->pszHelpTopic = "frmt_various.html#JDEM";
-        
+        poDriver->SetDescription( "JDEM" );
+        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
+                                   "Japanese DEM (.mem)" );
+        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
+                                   "frmt_various.html#JDEM" );
+        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "mem" );
+
         poDriver->pfnOpen = JDEMDataset::Open;
 
         GetGDALDriverManager()->RegisterDriver( poDriver );

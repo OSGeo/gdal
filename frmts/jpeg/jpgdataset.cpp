@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.10  2002/06/12 21:12:25  warmerda
+ * update to metadata based driver info
+ *
  * Revision 1.9  2001/12/11 16:50:16  warmerda
  * try to push green and blue values into cache when reading red
  *
@@ -596,9 +599,20 @@ void GDALRegister_JPEG()
     {
         poJPGDriver = poDriver = new GDALDriver();
         
-        poDriver->pszShortName = "JPEG";
-        poDriver->pszLongName = "JPEG JFIF";
-        
+        poDriver->SetDescription( "JPEG" );
+        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
+                                   "JPEG JFIF" );
+        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
+                                   "frmt_jpeg.html" );
+        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "jpg" );
+        poDriver->SetMetadataItem( GDAL_DMD_MIMETYPE, "image/jpeg" );
+
+        poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, "
+<CreationOptionList>
+   <Option name='PROGRESSIVE' type='boolean'/>
+   <Option name='QUALITY' type='int' description='good=100, bad=0, default=75'/>
+</CreationOptionList>" );
+
         poDriver->pfnOpen = JPGDataset::Open;
         poDriver->pfnCreateCopy = JPEGCreateCopy;
 

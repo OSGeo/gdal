@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2002/06/12 21:12:25  warmerda
+ * update to metadata based driver info
+ *
  * Revision 1.2  2002/05/11 16:22:01  warmerda
  * Also search for .hdr appended to full filename, not just .hdr replacing
  * the existing extension - as per Bugzilla bug 127 from Alessandro Amici.
@@ -787,10 +790,13 @@ void GDALRegister_ENVI()
     {
         poENVIDriver = poDriver = new GDALDriver();
         
-        poDriver->pszShortName = "ENVI";
-        poDriver->pszLongName = "ENVI .hdr Labelled";
-        poDriver->pszHelpTopic = "frmt_various.html#ENVI";
-        
+        poDriver->SetDescription( "ENVI" );
+        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
+                                   "ENVI .hdr Labelled" );
+        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
+                                   "frmt_various.html#ENVI" );
+        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "" );
+
         poDriver->pfnOpen = ENVIDataset::Open;
 
         GetGDALDriverManager()->RegisterDriver( poDriver );

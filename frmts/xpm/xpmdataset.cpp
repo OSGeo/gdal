@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.4  2002/06/12 21:12:25  warmerda
+ * update to metadata based driver info
+ *
  * Revision 1.3  2002/04/16 17:46:47  warmerda
  * changed path to memdataset.h
  *
@@ -41,7 +44,7 @@
 
 #include "gdal_priv.h"
 #include "cpl_string.h"
-#include "../mem/memdataset.h"
+#include "memdataset.h"
 #include "gdal_frmts.h"						      
 
 
@@ -414,10 +417,14 @@ void GDALRegister_XPM()
     {
         poXPMDriver = poDriver = new GDALDriver();
         
-        poDriver->pszShortName = "XPM";
-        poDriver->pszLongName = "X11 PixMap Format (.xpm)";
-        poDriver->pszHelpTopic = "frmt_various.html#XPM";
-        
+        poDriver->SetDescription( "XPM" );
+        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
+                                   "X11 PixMap Format" );
+        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
+                                   "frmt_various.html#XPM" );
+        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "xpm" );
+        poDriver->SetMetadataItem( GDAL_DMD_MIMETYPE, "image/x-xpixmap" );
+
         poDriver->pfnOpen = XPMDataset::Open;
         poDriver->pfnCreateCopy = XPMCreateCopy;
 

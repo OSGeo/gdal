@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2002/06/12 21:12:24  warmerda
+ * update to metadata based driver info
+ *
  * Revision 1.8  2002/03/05 14:26:01  warmerda
  * expanded tabs
  *
@@ -398,8 +401,11 @@ void GDALRegister_DTED()
     {
         poDTEDDriver = poDriver = new GDALDriver();
         
-        poDriver->pszShortName = "DTED";
-        poDriver->pszLongName = "DTED Elevation Raster";
+        poDriver->SetDescription( "DTED" );
+        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
+                                   "DTED Elevation Raster" );
+        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
+                                   "frmt_various.html#DTED" );
         
         poDriver->pfnOpen = DTEDDataset::Open;
         poDriver->pfnCreateCopy = DTEDCreateCopy;

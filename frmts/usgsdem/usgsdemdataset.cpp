@@ -31,6 +31,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.4  2002/06/12 21:12:25  warmerda
+ * update to metadata based driver info
+ *
  * Revision 1.3  2001/11/27 16:09:26  warmerda
  * Added credit notes
  *
@@ -583,9 +586,11 @@ void GDALRegister_USGSDEM()
     {
         poUSGSDEMDriver = poDriver = new GDALDriver();
         
-        poDriver->pszShortName = "USGSDEM";
-        poDriver->pszLongName = "USGS Optional ASCII DEM";
-        poDriver->pszHelpTopic = "frmt_various.html#USGSDEM";
+        poDriver->SetDescription( "USGSDEM" );
+        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
+                                   "USGS Optional ASCII DEM" );
+        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
+                                   "frmt_various.html#USGSDEM" );
         
         poDriver->pfnOpen = USGSDEMDataset::Open;
 

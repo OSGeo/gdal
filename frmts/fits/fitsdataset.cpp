@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2002/06/12 21:12:25  warmerda
+ * update to metadata based driver info
+ *
  * Revision 1.10  2002/01/22 02:12:17  sperkins
  * Minor formatting change.
  *
@@ -699,21 +702,23 @@ GDALDataset *FITSDataset::Create(const char* pszFilename,
 
 void GDALRegister_FITS() {
 
-  GDALDriver* poDriver;
+    GDALDriver* poDriver;
 
-  if(poFITSDriver == NULL) {
-    poFITSDriver = poDriver = new GDALDriver();
+    if(poFITSDriver == NULL) {
+        poFITSDriver = poDriver = new GDALDriver();
         
-    poDriver->pszShortName = "FITS";
-    poDriver->pszLongName = "Flexible Image Transport System";
-    poDriver->pszHelpTopic = "frmt_various.html#FITS";
+        poDriver->SetDescription( "FITS" );
+        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
+                                   "Flexible Image Transport System" );
+        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
+                                   "frmt_various.html#FITS" );
         
-    poDriver->pfnOpen = FITSDataset::Open;
-    poDriver->pfnCreate = FITSDataset::Create;
-    poDriver->pfnCreateCopy = NULL;
+        poDriver->pfnOpen = FITSDataset::Open;
+        poDriver->pfnCreate = FITSDataset::Create;
+        poDriver->pfnCreateCopy = NULL;
 
-    GetGDALDriverManager()->RegisterDriver(poDriver);
-  }
+        GetGDALDriverManager()->RegisterDriver(poDriver);
+    }
 }
 
 

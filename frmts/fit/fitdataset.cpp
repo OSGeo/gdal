@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.12  2002/06/12 21:12:25  warmerda
+ * update to metadata based driver info
+ *
  * Revision 1.11  2001/11/11 23:50:59  warmerda
  * added required class keyword to friend declarations
  *
@@ -1284,9 +1287,13 @@ void GDALRegister_FIT()
     {
         poFITDriver = poDriver = new GDALDriver();
         
-        poDriver->pszShortName = "FIT";
-        poDriver->pszLongName = "FIT image";
-        
+        poDriver->SetDescription( "FIT" );
+        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
+                                   "FIT Image" );
+        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
+                                   "frmt_various.html#" );
+        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "" );
+
         poDriver->pfnOpen = FITDataset::Open;
 #ifdef FIT_WRITE
         poDriver->pfnCreateCopy = FITCreateCopy;

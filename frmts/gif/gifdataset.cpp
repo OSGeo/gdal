@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.10  2002/06/12 21:12:25  warmerda
+ * update to metadata based driver info
+ *
  * Revision 1.9  2001/11/11 23:50:59  warmerda
  * added required class keyword to friend declarations
  *
@@ -602,10 +605,14 @@ void GDALRegister_GIF()
     {
         poGIFDriver = poDriver = new GDALDriver();
         
-        poDriver->pszShortName = "GIF";
-        poDriver->pszLongName = "Graphics Interchange Format (.gif)";
-        poDriver->pszHelpTopic = "frmt_gif.tml";
-        
+        poDriver->SetDescription( "GIF" );
+        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
+                                   "Graphics Interchange Format (.gif)" );
+        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
+                                   "frmt_gif.html" );
+        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "gif" );
+        poDriver->SetMetadataItem( GDAL_DMD_MIMETYPE, "image/gif" );
+
         poDriver->pfnOpen = GIFDataset::Open;
         poDriver->pfnCreateCopy = GIFCreateCopy;
 

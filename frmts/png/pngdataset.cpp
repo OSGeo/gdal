@@ -43,6 +43,9 @@
  *    application termination. 
  * 
  * $Log$
+ * Revision 1.15  2002/06/12 21:12:25  warmerda
+ * update to metadata based driver info
+ *
  * Revision 1.14  2002/04/20 10:12:05  dron
  * Added support for GDALWriteWolrldFile()
  * New option WORLDFILE=YES
@@ -974,10 +977,19 @@ void GDALRegister_PNG()
     {
         poPNGDriver = poDriver = new GDALDriver();
         
-        poDriver->pszShortName = "PNG";
-        poDriver->pszLongName = "Portable Network Graphics";
-        poDriver->pszHelpTopic = "frmt_various.html#PNG";
-        
+        poDriver->SetDescription( "PNG" );
+        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
+                                   "Portable Network Graphics" );
+        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
+                                   "frmt_various.html#PNG" );
+        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "png" );
+        poDriver->SetMetadataItem( GDAL_DMD_MIMETYPE, "image/png" );
+
+        poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, "
+<CreationOptionList>
+   <Option name='WORLDFILE' type='boolean' description='Generate world file'/>
+</CreationOptionList>" );
+
         poDriver->pfnOpen = PNGDataset::Open;
         poDriver->pfnCreateCopy = PNGCreateCopy;
 

@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.11  2002/06/12 21:12:24  warmerda
+ * update to metadata based driver info
+ *
  * Revision 1.10  2002/06/11 13:13:02  dron
  * Write support implemented with CreateCopy() function
  *
@@ -554,10 +557,13 @@ void GDALRegister_AAIGrid()
     {
         poAAIGDriver = poDriver = new GDALDriver();
         
-        poDriver->pszShortName = "AAIGrid";
-        poDriver->pszLongName = "Arc/Info ASCII Grid";
-        poDriver->pszHelpTopic = "frmt_various.html#AAIGrid";
-        
+        poDriver->SetDescription( "AAIGrid" );
+        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
+                                   "Arc/Info ASCII Grid" );
+        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
+                                   "frmt_various.html#AAIGrid" );
+        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "asc" );
+
         poDriver->pfnOpen = AAIGDataset::Open;
         poDriver->pfnCreateCopy = AAIGCreateCopy;
 	

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2002/06/12 21:12:25  warmerda
+ * update to metadata based driver info
+ *
  * Revision 1.17  2002/02/01 20:20:40  warmerda
  * Added delete support.
  *
@@ -1090,9 +1093,12 @@ void GDALRegister_PAux()
     {
         poPAuxDriver = poDriver = new GDALDriver();
         
-        poDriver->pszShortName = "PAux";
-        poDriver->pszLongName = "PCI .aux Labelled";
-        
+        poDriver->SetDescription( "PAux" );
+        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
+                                   "PCI .aux Labelled" );
+        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
+                                   "frmt_various.html#PAux" );
+
         poDriver->pfnOpen = PAuxDataset::Open;
         poDriver->pfnCreate = PAuxDataset::Create;
         poDriver->pfnDelete = PAuxDelete;

@@ -29,6 +29,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.20  2002/06/12 21:12:25  warmerda
+ * update to metadata based driver info
+ *
  * Revision 1.19  2002/05/21 15:09:12  warmerda
  * read/write support for GDAL_MetaData table now supported
  *
@@ -1805,10 +1808,13 @@ void GDALRegister_HFA()
     {
         poHFADriver = poDriver = new GDALDriver();
         
-        poDriver->pszShortName = "HFA";
-        poDriver->pszLongName = "Erdas Imagine Images (.img)";
-        poDriver->pszHelpTopic = "frmt_hfa.html";
-        
+        poDriver->SetDescription( "HFA" );
+        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
+                                   "Erdas Imagine Images (.img)" );
+        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
+                                   "frmt_hfa.html" );
+        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "img" );
+
         poDriver->pfnOpen = HFADataset::Open;
         poDriver->pfnCreate = HFADataset::Create;
         poDriver->pfnCreateCopy = HFADataset::CreateCopy;

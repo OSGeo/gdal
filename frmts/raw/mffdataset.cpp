@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2002/06/12 21:12:25  warmerda
+ * update to metadata based driver info
+ *
  * Revision 1.18  2001/11/11 23:51:00  warmerda
  * added required class keyword to friend declarations
  *
@@ -873,10 +876,13 @@ void GDALRegister_MFF()
     {
         poMFFDriver = poDriver = new GDALDriver();
         
-        poDriver->pszShortName = "MFF";
-        poDriver->pszLongName = "Atlantis MFF Raster";
-        poDriver->pszHelpTopic = "frmt_various.html#MFF";
-        
+        poDriver->SetDescription( "MFF" );
+        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
+                                   "Atlantis MFF Raster" );
+        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
+                                   "frmt_various.html#MFF" );
+        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "hdr" );
+
         poDriver->pfnOpen = MFFDataset::Open;
         poDriver->pfnCreate = MFFDataset::Create;
 

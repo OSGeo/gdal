@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2002/06/12 21:12:25  warmerda
+ * update to metadata based driver info
+ *
  * Revision 1.6  2001/11/11 23:50:59  warmerda
  * added required class keyword to friend declarations
  *
@@ -652,8 +655,9 @@ void GDALRegister_ELAS()
     {
         poELASDriver = poDriver = new GDALDriver();
         
-        poDriver->pszShortName = "ELAS";
-        poDriver->pszLongName = "ELAS";
+        poDriver->SetDescription( "ELAS" );
+        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
+                                   "ELAS" );
         
         poDriver->pfnOpen = ELASDataset::Open;
         poDriver->pfnCreate = ELASDataset::Create;

@@ -29,6 +29,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.16  2002/06/12 21:12:25  warmerda
+ * update to metadata based driver info
+ *
  * Revision 1.15  2002/01/13 01:44:44  warmerda
  * cleanup debugs a bit
  *
@@ -863,9 +866,12 @@ void GDALRegister_OGDI()
     {
         poOGDIDriver = poDriver = new GDALDriver();
         
-        poDriver->pszShortName = "OGDI";
-        poDriver->pszLongName = "OGDI Bridge";
-        
+        poDriver->SetDescription( "OGDI" );
+        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
+                                   "OGDI Bridge" );
+        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
+                                   "frmt_ogdi.html" );
+
         poDriver->pfnOpen = OGDIDataset::Open;
 
         GetGDALDriverManager()->RegisterDriver( poDriver );

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2002/06/12 21:12:25  warmerda
+ * update to metadata based driver info
+ *
  * Revision 1.4  2001/07/18 04:51:57  warmerda
  * added CPL_CVSID
  *
@@ -231,9 +234,11 @@ void GDALRegister_EFF()
     {
         poEFFDriver = poDriver = new GDALDriver();
         
-        poDriver->pszShortName = "EFF";
-        poDriver->pszLongName = "Eosat Fast Format";
-        poDriver->pszHelpTopic = "frmt_various.html#EFF";
+        poDriver->SetDescription( "EFF" );
+        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
+                                   "Eosat Fast Format" );
+        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
+                                   "frmt_various.html#EFF" );
         
         poDriver->pfnOpen = EFFDataset::Open;
 
