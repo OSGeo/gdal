@@ -1,48 +1,113 @@
-/* port/cpl_config.h.in.  Generated automatically from configure.in by autoheader.  */
+/* port/cpl_config.h.in.  Generated from configure.in by autoheader.  */
 
-/* Define if you don't have vprintf but do have _doprnt.  */
+/* Define to 1 if you have the <dbmalloc.h> header file. */
+#undef HAVE_DBMALLOC_H
+
+/* Define to 1 if you have the <dlfcn.h> header file. */
+#undef HAVE_DLFCN_H
+
+/* Define to 1 if you don't have `vprintf' but do have `_doprnt.' */
 #undef HAVE_DOPRNT
 
-/* Define if you have the vprintf function.  */
-#undef HAVE_VPRINTF
-
-/* Define if you have the vsnprintf function.  */
-#undef HAVE_VSNPRINTF
-
-/* Define if you have the ANSI C header files.  */
-#undef STDC_HEADERS
-
-/* Define if you have the <fcntl.h> header file.  */
+/* Define to 1 if you have the <fcntl.h> header file. */
 #undef HAVE_FCNTL_H
 
-/* Define if you have the <unistd.h> header file.  */
-#undef HAVE_UNISTD_H
+/* Define to 1 if you have the `gmtime_r' function. */
+#undef HAVE_GMTIME_R
 
-/* Define if you have the <stdint.h> header file.  */
-#undef HAVE_STDINT_H
+/* Define to 1 if you have the <inttypes.h> header file. */
+#undef HAVE_INTTYPES_H
 
-#undef HAVE_LIBDL 
+/* Define to 1 if you have the <jpeglib.h> header file. */
+#undef HAVE_JPEGLIB_H
 
-#undef HAVE_DLFCN_H
-#undef HAVE_DBMALLOC_H
+/* Define to 1 if you have the `dbmalloc' library (-ldbmalloc). */
 #undef HAVE_LIBDBMALLOC
-#undef WORDS_BIGENDIAN
 
-/* Define if you have ftell64 and fseek64 */
-#undef UNIX_STDIO_64
+/* Define to 1 if you have the `dl' library (-ldl). */
+#undef HAVE_LIBDL
 
-/* What 64bit stdio api entry points to use */
-#undef VSI_FTELL64
-#undef VSI_FSEEK64
+/* Define to 1 if you have the `m' library (-lm). */
+#undef HAVE_LIBM
 
-/* Define if you have 64 bit long long type */
+/* Define to 1 if you have the <limits.h> header file. */
+#undef HAVE_LIMITS_H
+
+/* Define to 1 if you have the `localtime_r' function. */
+#undef HAVE_LOCALTIME_R
+
+/* Define to 1, if your compiler supports long long data type */
 #undef HAVE_LONG_LONG
 
-/* Define if large file api should be enabled, normally with UNIX_STDIO_64 */
+/* Define to 1 if you have the <memory.h> header file. */
+#undef HAVE_MEMORY_H
+
+/* Define to 1 if you have the <png.h> header file. */
+#undef HAVE_PNG_H
+
+/* Define to 1 if you have the <stdint.h> header file. */
+#undef HAVE_STDINT_H
+
+/* Define to 1 if you have the <stdlib.h> header file. */
+#undef HAVE_STDLIB_H
+
+/* Define to 1 if you have the <strings.h> header file. */
+#undef HAVE_STRINGS_H
+
+/* Define to 1 if you have the <string.h> header file. */
+#undef HAVE_STRING_H
+
+/* Define to 1 if you have the <sys/stat.h> header file. */
+#undef HAVE_SYS_STAT_H
+
+/* Define to 1 if you have the <sys/types.h> header file. */
+#undef HAVE_SYS_TYPES_H
+
+/* Define to 1 if you have the <unistd.h> header file. */
+#undef HAVE_UNISTD_H
+
+/* Define to 1 if you have the `vprintf' function. */
+#undef HAVE_VPRINTF
+
+/* Define to 1 if you have the `vsnprintf' function. */
+#undef HAVE_VSNPRINTF
+
+/* Define to the address where bug reports for this package should be sent. */
+#undef PACKAGE_BUGREPORT
+
+/* Define to the full name of this package. */
+#undef PACKAGE_NAME
+
+/* Define to the full name and version of this package. */
+#undef PACKAGE_STRING
+
+/* Define to the one symbol short name of this package. */
+#undef PACKAGE_TARNAME
+
+/* Define to the version of this package. */
+#undef PACKAGE_VERSION
+
+/* Define to 1 if you have the ANSI C header files. */
+#undef STDC_HEADERS
+
+/* Define to 1 if you have fseek64, ftell64 */
+#undef UNIX_STDIO_64
+
+/* Define to 1, if you have GNU C compiler */
+#undef USE_GNUCC
+
+/* Define to 1, if you have fseek64 */
+#undef VSI_FSEEK64
+
+/* Define to 1, if you have ftell64 */
+#undef VSI_FTELL64
+
+/* Define to 1, if you have 64 bit STDIO API */
 #undef VSI_LARGE_API_SUPPORTED
 
-/* Define if _LARGEFILE64_SOURCE needs to be defined. */
+/* Define to 1, if you have LARGEFILE64_SOURCE */
 #undef VSI_NEED_LARGEFILE64_SOURCE
 
-
-
+/* Define to 1 if your processor stores words with the most significant byte
+   first (like Motorola and SPARC, unlike Intel and VAX). */
+#undef WORDS_BIGENDIAN
