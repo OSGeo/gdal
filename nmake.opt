@@ -81,7 +81,7 @@ JPEG_SUPPORTED = 1
 
 # Uncomment the following and update to enable NCSA HDF Release 4 support.
 #HDF4_DIR =	D:\warmerda\HDF41r5
-#HDF4_LIB =	/LIBPATH:$(HDF4_DIR)\lib
+#HDF4_LIB =	/LIBPATH:$(HDF4_DIR)\lib Ws2_32.lib
 
 # Uncomment the following for MrSID support.
 # You will likely require /MD and /EHsc in OPTFLAGS. 
