@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.11  2000/03/30 05:38:48  warmerda
+ * added CPLParseNameValue
+ *
  * Revision 1.10  1999/06/26 14:05:10  warmerda
  * Added CSLFindString().
  *
@@ -709,6 +712,65 @@ const char *CSLFetchNameValue(char **papszStrList, const char *pszName)
         }
         papszStrList++;
     }
+    return NULL;
+}
+
+/**********************************************************************
+ *                       CPLParseNameValue()
+ **********************************************************************/
+
+/**
+ * Parse NAME=VALUE string into name and value components.
+ *
+ * Note that if ppszKey is non-NULL, the key (or name) portion will be
+ * allocated using VSIMalloc(), and returned in that pointer.  It is the
+ * applications responsibility to free this string, but the application should
+ * not modify or free the returned value portion. 
+ *
+ * This function also support "NAME:VALUE" strings and will strip white
+ * space from around the delimeter when forming name and value strings.
+ *
+ * Eventually CSLFetchNameValue() and friends may be modified to use 
+ * CPLParseNameValue(). 
+ * 
+ * @param pszNameValue string in "NAME=VALUE" format. 
+ * @param ppszKey optional pointer though which to really the name
+ * portion. 
+ * @return the value portion (pointing into original string). 
+ */
+
+const char *CPLParseNameValue(const char *pszNameValue, char **ppszKey )
+
+{
+    int  i;
+    const char *pszValue;
+
+    for( i = 0; pszNameValue[i] != '\0'; i++ )
+    {
+        if( pszNameValue[i] == '=' || pszNameValue[i] == ':' )
+        {
+            pszValue = pszNameValue + i + 1;
+            while( *pszValue == ' ' || *pszValue == '\t' )
+                pszValue++;
+
+            if( ppszKey != NULL )
+            {
+                *ppszKey = (char *) CPLMalloc(i+1);
+                strncpy( *ppszKey, pszNameValue, i );
+                (*ppszKey)[i] = '\0';
+                while( i > 0 && 
+                       ( (*ppszKey)[i] == ' ' || (*ppszKey)[i] == '\t') )
+                {
+                    (*ppszKey)[i] = '\0';
+                    i--;
+                }
+            }
+
+            return pszValue;
+        }
+
+    }
+
     return NULL;
 }
 

@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.5  2000/03/30 05:38:48  warmerda
+ * added CPLParseNameValue
+ *
  * Revision 1.4  1999/06/26 14:05:19  warmerda
  * Added CSLFindString().
  *
@@ -81,6 +84,7 @@ int	CSLFindString( char **, const char * );
 const char *CPLSPrintf(char *fmt, ...);
 char  **CSLAppendPrintf(char **papszStrList, char *fmt, ...);
 
+const char *CPLParseNameValue(const char *pszNameValue, char **ppszKey );
 const char *CSLFetchNameValue(char **papszStrList, const char *pszName);
 char  **CSLFetchNameValueMultiple(char **papszStrList, const char *pszName);
 char  **CSLAddNameValue(char **papszStrList, 
