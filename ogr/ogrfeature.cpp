@@ -1,8 +1,8 @@
 /******************************************************************************
  * $Id$
- *
+ * 
  * Project:  OpenGIS Simple Features Reference Implementation
- * Purpose:  The OGRFeature class implementation.
+ * Purpose:  The OGRFeature class implementation. 
  * Author:   Frank Warmerdam, warmerda@home.com
  *
  ******************************************************************************
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2000/08/18 21:26:53  svillene
+ * Add representation
+ *
  * Revision 1.13  2000/06/09 21:15:39  warmerda
  * fixed field copying
  *
@@ -91,6 +94,7 @@
 OGRFeature::OGRFeature( OGRFeatureDefn * poDefnIn )
 
 {
+    m_pszStyleString = NULL;
     poDefnIn->Reference();
     poDefn = poDefnIn;
 
@@ -152,6 +156,8 @@ OGRFeature::~OGRFeature()
     }
     
     CPLFree( pauFields );
+    CPLFree(m_pszStyleString);
+    
 }
 
 /************************************************************************/
@@ -268,6 +274,8 @@ OGRFeature *OGRFeature::Clone()
     {
         poNew->SetField( i, pauFields + i );
     }
+
+    poNew->SetStyleString(GetStyleString());
 
     return poNew;
 }
@@ -1317,4 +1325,48 @@ OGRErr OGRFeature::SetFrom( OGRFeature * poSrcFeature, int bForgiving )
 
 
 
+/************************************************************************/
+/*                             GetStyleString()                         */
+/************************************************************************/
 
+/**
+ * \fn const char *OGRFeature::GetStyleString();
+ *
+ * representation to use for this Feature
+ *
+ * @return a reference to a representation in string format
+ */
+
+const char *OGRFeature::GetStyleString()
+{
+    if (m_pszStyleString)
+      return m_pszStyleString;
+    else
+      return NULL;
+}
+
+/************************************************************************/
+/*                             SetStyleString()                         */
+/************************************************************************/
+
+/**
+ * \fn const char *OGRFeature::SetStyleString();
+ *
+ * representation to use for this Feature
+ *
+ * @Set a string representation to the feature
+ */
+
+void OGRFeature::SetStyleString(const char *pszString)
+{
+    if (m_pszStyleString)
+      CPLFree(m_pszStyleString);
+    
+    m_pszStyleString = CPLStrdup(pszString);
+    
+}
+
+void OGRFeature::SetStyleTable(OGRStyleTable *poStyleTable)
+{
+    m_poStyleTable = poStyleTable;
+}

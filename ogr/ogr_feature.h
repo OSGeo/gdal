@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2000/08/18 21:26:53  svillene
+ * Add representation
+ *
  * Revision 1.11  1999/11/26 03:05:38  warmerda
  * added unset field support
  *
@@ -69,6 +72,8 @@
 #define _OGR_FEATURE_H_INCLUDED
 
 #include "ogr_geometry.h"
+
+class OGRStyleTable;
 
 /**
  * \file ogr_feature.h
@@ -259,6 +264,8 @@ class OGRFeatureDefn
  * A simple feature, including geometry and attributes.
  */
 
+
+
 class OGRFeature
 {
   private:
@@ -267,6 +274,11 @@ class OGRFeature
     OGRFeatureDefn      *poDefn;
     OGRGeometry         *poGeometry;
     OGRField            *pauFields;
+    char *              m_pszStyleString;
+
+   protected: 
+    OGRStyleTable       *m_poStyleTable;
+    
     
   public:
                         OGRFeature( OGRFeatureDefn * );
@@ -352,6 +364,10 @@ class OGRFeature
     void                DumpReadable( FILE * );
 
     OGRErr              SetFrom( OGRFeature *, int = TRUE);
+    const char *        GetStyleString();
+    void                SetStyleString(const char *);
+    void                SetStyleTable(OGRStyleTable *poStyleTable);
+     //{m_poStyleTable = poStyleTable);
 };
 
 #endif /* ndef _OGR_FEATURE_H_INCLUDED */
