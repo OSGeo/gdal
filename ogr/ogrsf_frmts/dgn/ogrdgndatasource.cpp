@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2001/03/18 16:54:39  warmerda
+ * added use of DGNTestOpen, remove extention test
+ *
  * Revision 1.2  2000/12/28 21:27:11  warmerda
  * updated email address
  *
@@ -84,10 +87,22 @@ int OGRDGNDataSource::Open( const char * pszNewName, int bTestOpen )
 /*      extension.  Eventually we will implement a more                 */
 /*      sophisticated test to see if it is a dgn file.                  */
 /* -------------------------------------------------------------------- */
-    if( bTestOpen 
-        && strstr(pszNewName,".dgn") == NULL
-        && strstr(pszNewName,".DGN") == NULL )
-        return FALSE;
+    if( bTestOpen )
+    {
+        FILE	*fp;
+        GByte	abyHeader[512];
+
+        fp = VSIFOpen( pszNewName, "rb" );
+        if( fp == NULL )
+            return FALSE;
+
+        VSIFRead( abyHeader, 1, sizeof(abyHeader), fp );
+
+        VSIFClose( fp );
+
+        if( !DGNTestOpen( abyHeader, sizeof(abyHeader) ) )
+            return FALSE;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Try to open the file as a DGN file.                             */

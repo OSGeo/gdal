@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2001/03/18 16:54:39  warmerda
+ * added use of DGNTestOpen, remove extention test
+ *
  * Revision 1.5  2001/03/07 13:56:44  warmerda
  * updated copyright to be held by Avenza Systems
  *
@@ -46,6 +49,32 @@
  */
 
 #include "dgnlibp.h"
+
+/************************************************************************/
+/*                            DGNTestOpen()                             */
+/************************************************************************/
+
+/** 
+ * Test if header is DGN.
+ *
+ * @param pabyHeader block of header data from beginning of file.
+ * @param nByteCount number of bytes in pabyHeader. 
+ *
+ * @return TRUE if the header appears to be from a DGN file, otherwise FALSE.
+ */
+
+int DGNTestOpen( GByte *pabyHeader, int nByteCount )
+
+{
+    if( nByteCount < 4 )
+        return TRUE;
+
+    if( pabyHeader[0] != 0x08 || pabyHeader[1] != 0x09
+        || pabyHeader[2] != 0xFE || pabyHeader[3] != 0x02 )
+        return FALSE;
+
+    return TRUE;
+}
 
 /************************************************************************/
 /*                              DGNOpen()                               */
@@ -94,11 +123,10 @@ DGNHandle DGNOpen( const char * pszFilename )
 /* -------------------------------------------------------------------- */
 /*      Verify the format ... add later.                                */
 /* -------------------------------------------------------------------- */
-    GByte	abyHeader[4];
+    GByte	abyHeader[512];
 
-    VSIFRead( abyHeader, 1, 4, fp );
-    if( abyHeader[0] != 0x08 || abyHeader[1] != 0x09
-        || abyHeader[2] != 0xFE || abyHeader[3] != 0x02 )
+    VSIFRead( abyHeader, 1, sizeof(abyHeader), fp );
+    if( !DGNTestOpen( abyHeader, sizeof(abyHeader) ) )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "File `%s' does not have expected DGN header.\n", 

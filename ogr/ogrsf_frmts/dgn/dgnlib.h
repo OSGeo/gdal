@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2001/03/18 16:54:39  warmerda
+ * added use of DGNTestOpen, remove extention test
+ *
  * Revision 1.10  2001/03/07 19:29:46  warmerda
  * added support for stroking curves
  *
@@ -361,6 +364,7 @@ typedef struct {
 typedef void *DGNHandle;
 
 DGNHandle CPL_DLL    DGNOpen( const char * );
+int CPL_DLL          DGNTestOpen( GByte *, int );
 const DGNElementInfo CPL_DLL *DGNGetElementIndex( DGNHandle, int * );
 int CPL_DLL          DGNGetExtents( DGNHandle, double * );
 DGNElemCore CPL_DLL *DGNReadElement( DGNHandle );
