@@ -18,6 +18,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2002/04/19 20:46:06  warmerda
+ * added [NOT] IN, [NOT] LIKE and IS [NOT] NULL support
+ *
  * Revision 1.2  2001/07/19 18:25:07  warmerda
  * expanded tabs
  *
@@ -39,6 +42,12 @@ typedef enum {
     SWQ_LE,
     SWQ_LT,
     SWQ_GT,
+    SWQ_LIKE,
+    SWQ_NOTLIKE,
+    SWQ_ISNULL,
+    SWQ_ISNOTNULL,
+    SWQ_IN,
+    SWQ_NOTIN,
     SWQ_UNKNOWN
 } swq_op;
 
@@ -87,6 +96,8 @@ int swq_expr_evaluate( swq_expr *expr, swq_op_evaluator fn_evaluator,
                        void *record_handle );
 
 void swq_expr_free( swq_expr * );
+
+int swq_test_like( const char *input, const char *pattern );
 
 #endif /* def _SWQ_H_INCLUDED_ */
 
