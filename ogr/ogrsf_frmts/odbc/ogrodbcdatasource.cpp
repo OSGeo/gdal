@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2003/11/10 20:08:50  warmerda
+ * support explicit tables list, or GetTables() fallback
+ *
  * Revision 1.2  2003/10/06 19:18:30  warmerda
  * Added userid/password support
  *
@@ -93,6 +96,20 @@ int OGRODBCDataSource::Open( const char * pszNewName, int bUpdate,
     CPLAssert( nLayers == 0 );
 
 /* -------------------------------------------------------------------- */
+/*      Strip off any comma delimeted set of tables names to access     */
+/*      from the end of the string first.                               */
+/* -------------------------------------------------------------------- */
+    char *pszWrkName = CPLStrdup( pszNewName );
+    char **papszTables = NULL;
+    char *pszComma;
+
+    while( (pszComma = strrchr( pszWrkName, ',' )) != NULL )
+    {
+        papszTables = CSLAddString( papszTables, pszComma + 1 );
+        *pszComma = '\0';
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Split out userid, password and DSN.  The general form is        */
 /*      user/password@dsn.  But if there are no @ characters the        */
 /*      whole thing is assumed to be a DSN.                             */
@@ -101,24 +118,24 @@ int OGRODBCDataSource::Open( const char * pszNewName, int bUpdate,
     char *pszPassword = NULL;
     char *pszDSN = NULL;
 
-    if( strstr(pszNewName+5,"@") == NULL )
+    if( strstr(pszWrkName+5,"@") == NULL )
     {
-        pszDSN = CPLStrdup(pszNewName+5);
+        pszDSN = CPLStrdup(pszWrkName+5);
     }
     else
     {
         char *pszTarget;
 
-        pszDSN = CPLStrdup(strstr(pszNewName+5,"@")+1);
-        if( pszNewName[5] == '/' )
+        pszDSN = CPLStrdup(strstr(pszWrkName+5,"@")+1);
+        if( pszWrkName[5] == '/' )
         {
-            pszPassword = CPLStrdup(pszNewName + 6);
+            pszPassword = CPLStrdup(pszWrkName + 6);
             pszTarget = strstr(pszPassword,"@");
             *pszTarget = '\0';
         }
         else
         {
-            pszUserid = CPLStrdup(pszNewName+5);
+            pszUserid = CPLStrdup(pszWrkName+5);
             pszTarget = strstr(pszUserid,"@");
             *pszTarget = '\0';
 
@@ -130,6 +147,8 @@ int OGRODBCDataSource::Open( const char * pszNewName, int bUpdate,
             }
         }
     }
+
+    CPLFree( pszWrkName );
 
 /* -------------------------------------------------------------------- */
 /*      Initialize based on the DSN.                                    */
@@ -158,6 +177,17 @@ int OGRODBCDataSource::Open( const char * pszNewName, int bUpdate,
     bDSUpdate = bUpdate;
 
 /* -------------------------------------------------------------------- */
+/*      If we have an explicit list of requested tables, use them       */
+/*      (non-spatial).                                                  */
+/* -------------------------------------------------------------------- */
+    if( papszTables != NULL )
+    {
+        for( int iTable = 0; papszTables[iTable] != NULL; iTable++ )
+            OpenTable( papszTables[iTable], NULL, bUpdate );
+        return TRUE;
+    }
+
+/* -------------------------------------------------------------------- */
 /*      If we have a GEOMETRY_COLUMN tables, initialize on the basis    */
 /*      of that.                                                        */
 /* -------------------------------------------------------------------- */
@@ -171,8 +201,24 @@ int OGRODBCDataSource::Open( const char * pszNewName, int bUpdate,
         {
             OpenTable( oStmt.GetColData(0), oStmt.GetColData(1), bUpdate );
         }
+
+        return TRUE;
     }
 
+/* -------------------------------------------------------------------- */
+/*      Otherwise our final resort is to return all tables as           */
+/*      non-spatial tables.                                             */
+/* -------------------------------------------------------------------- */
+    CPLODBCStatement oTableList( &oSession );
+    
+    if( oTableList.GetTables() )
+    {
+        while( oTableList.Fetch() )
+        {
+            OpenTable( oTableList.GetColData(2), NULL, bUpdate );
+        }
+    }
+    
     return TRUE;
 }
 
