@@ -28,6 +28,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.4  2003/01/02 21:41:07  warmerda
+# added GetField(), and BuildPolygonFromEdges methods
+#
 # Revision 1.3  2002/10/24 20:37:18  warmerda
 # fixed srs support in CreateFrom functions
 #
@@ -124,6 +127,13 @@ class DataSource:
             return Layer( l_obj )
         else:
             return None
+
+    def GetLayerByName(self,name):
+        layer_count = self.GetLayerCount()
+        for i in range(layer_count):
+            if self.GetLayer(i).GetName() == name:
+                return self.GetLayer(i)
+        return None
 
     def CreateLayer(self, name, srs = None, geom_type = wkbUnknown,
                     options = [] ):
@@ -279,8 +289,14 @@ class Feature:
     def GetFieldAsString( self, fld_index ):
         return _gdal.OGR_F_GetFieldAsString( self._o, fld_index )
 
+    def GetFieldAsInteger( self, fld_index ):
+        return _gdal.OGR_F_GetFieldAsInteger( self._o, fld_index )
+
+    def GetFieldAsDouble( self, fld_index ):
+        return _gdal.OGR_F_GetFieldAsDouble( self._o, fld_index )
+
     def GetField( self, fld_index ):
-        raise ValueError, 'No yet implemented.'
+        return _gdal.OGR_F_GetField( self._o, fld_index )
 
     def GetFID( self ):
         return _gdal.OGR_F_GetFID( self._o )
@@ -437,8 +453,10 @@ class Geometry:
         return _gdal.OGR_G_AddGeometryDirectly( self._o, subgeom._o )
 
 
-    
-
-    
-                  
-        
+def BuildPolygonFromEdges( edges, bBestEffort=0, bAutoClose=0, Tolerance=0 ):
+    _o = _gdal.OGRBuildPolygonFromEdges( edges._o, bBestEffort, bAutoClose,
+                                         Tolerance )
+    if _o is not None:
+        return Geometry( obj = _o )
+    else:
+        return None;
