@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2005/01/27 16:57:24  fwarmerdam
+ * provide fallback if EPSG lookup fails
+ *
  * Revision 1.4  2004/02/25 08:14:55  dron
  * Fixed datum setting in exportToUSGS().
  *
@@ -793,6 +796,10 @@ OGRErr OGRSpatialReference::importFromUSGS( long iProjSys, long iZone,
                 else
                     dfInvFlattening = 0.0;
 
+                SetGeogCS( "Unknown datum based upon the custom spheroid",
+                           "Not specified (based on custom spheroid)",
+                           "Custom spheroid", padfPrjParams[0], dfInvFlattening,
+                           NULL, 0, NULL, 0 );
             }
             else if ( padfPrjParams[1] > 0.0 )  // Clarke 1866
             {
@@ -821,22 +828,28 @@ OGRErr OGRSpatialReference::importFromUSGS( long iProjSys, long iZone,
                 SetAuthority( "SPHEROID", "EPSG", 7047 );
             }
 
-            SetGeogCS( "Unknown datum based upon the custom spheroid",
-                       "Not specified (based on custom spheroid)",
-                       "Custom spheroid", padfPrjParams[0], dfInvFlattening,
-                       NULL, 0, NULL, 0 );
         }
         else if ( iDatum < NUMBER_OF_ELLIPSOIDS && aoEllips[iDatum] )
         {
-            USGSGetEllipsoidInfo( aoEllips[iDatum], &pszName,
-                                 &dfSemiMajor, &dfInvFlattening );
-            SetGeogCS( CPLSPrintf("Unknown datum based upon the %s ellipsoid",
-                                  pszName ),
-                       CPLSPrintf( "Not specified (based on %s spheroid)",
-                                   pszName ),
-                       pszName, dfSemiMajor, dfInvFlattening,
-                       NULL, 0.0, NULL, 0.0 );
-            SetAuthority( "SPHEROID", "EPSG", aoEllips[iDatum] );
+            if( USGSGetEllipsoidInfo( aoEllips[iDatum], &pszName,
+                                       &dfSemiMajor, &dfInvFlattening ) )
+            {
+                SetGeogCS( CPLSPrintf("Unknown datum based upon the %s ellipsoid",
+                                      pszName ),
+                           CPLSPrintf( "Not specified (based on %s spheroid)",
+                                       pszName ),
+                           pszName, dfSemiMajor, dfInvFlattening,
+                           NULL, 0.0, NULL, 0.0 );
+                SetAuthority( "SPHEROID", "EPSG", aoEllips[iDatum] );
+            }
+            else
+            {
+                CPLError( CE_Warning, CPLE_AppDefined,
+                          "Failed to lookup datum code %d, likely due to missing GDAL gcs.csv\n"
+                          " file.  Falling back to use WGS84.", 
+                          iDatum );
+                SetWellKnownGeogCS("WGS84" );
+            }
         }
         else
         {
