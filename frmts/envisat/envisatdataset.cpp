@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2001/02/28 21:58:45  warmerda
+ * added GCP collection
+ *
  * Revision 1.2  2001/02/15 22:32:03  warmerda
  * Added FLT32 support.
  *
@@ -60,10 +63,19 @@ class EnvisatDataset : public RawDataset
     EnvisatFile *hEnvisatFile;
     FILE	*fpImage;
 
+    int         nGCPCount;
+    GDAL_GCP    *pasGCPList;
+
+    void        ScanForGCPs();
+
   public:
     		EnvisatDataset();
     	        ~EnvisatDataset();
     
+    virtual int    GetGCPCount();
+    virtual const char *GetGCPProjection();
+    virtual const GDAL_GCP *GetGCPs();
+
     static GDALDataset *Open( GDALOpenInfo * );
 };
 
@@ -80,6 +92,8 @@ class EnvisatDataset : public RawDataset
 EnvisatDataset::EnvisatDataset()
 {
     hEnvisatFile = NULL;
+    nGCPCount = 0;
+    pasGCPList = NULL;
 }
 
 /************************************************************************/
@@ -91,6 +105,153 @@ EnvisatDataset::~EnvisatDataset()
 {
     if( hEnvisatFile != NULL )
         EnvisatFile_Close( hEnvisatFile );
+
+    if( nGCPCount > 0 )
+    {
+        GDALDeinitGCPs( nGCPCount, pasGCPList );
+        CPLFree( pasGCPList );
+    }
+}
+
+/************************************************************************/
+/*                            GetGCPCount()                             */
+/************************************************************************/
+
+int EnvisatDataset::GetGCPCount()
+
+{
+    return nGCPCount;
+}
+
+/************************************************************************/
+/*                          GetGCPProjection()                          */
+/************************************************************************/
+
+const char *EnvisatDataset::GetGCPProjection()
+
+{
+    if( nGCPCount > 0 )
+        return "GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",7030]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY[\"EPSG\",6326]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",8901]],UNIT[\"DMSH\",0.0174532925199433,AUTHORITY[\"EPSG\",9108]],AXIS[\"Lat\",NORTH],AXIS[\"Long\",EAST],AUTHORITY[\"EPSG\",4326]]";
+    else
+        return "";
+}
+
+/************************************************************************/
+/*                               GetGCP()                               */
+/************************************************************************/
+
+const GDAL_GCP *EnvisatDataset::GetGCPs()
+
+{
+    return pasGCPList;
+}
+
+/************************************************************************/
+/*                            ScanForGCPs()                             */
+/************************************************************************/
+
+void EnvisatDataset::ScanForGCPs()
+
+{
+    int		nDatasetIndex, nNumDSR, nDSRSize, iRecord;
+
+/* -------------------------------------------------------------------- */
+/*      Do we have a meaningful geolocation grid?                       */
+/* -------------------------------------------------------------------- */
+    nDatasetIndex = EnvisatFile_GetDatasetIndex( hEnvisatFile, 
+                                                 "GEOLOCATION GRID ADS" );
+    if( nDatasetIndex == -1 )
+        return;
+
+    if( EnvisatFile_GetDatasetInfo( hEnvisatFile, nDatasetIndex, 
+                                    NULL, NULL, NULL, NULL, NULL, 
+                                    &nNumDSR, &nDSRSize ) != SUCCESS )
+        return;
+
+    if( nNumDSR == 0 || nDSRSize != 521 )
+        return;
+
+/* -------------------------------------------------------------------- */
+/*      Collect the first GCP set from each record.			*/
+/* -------------------------------------------------------------------- */
+    GByte	abyRecord[521];
+    int  	nRange, nSample, iGCP;
+    GUInt32 	unValue;
+
+    nGCPCount = 0;
+    pasGCPList = (GDAL_GCP *) CPLCalloc(sizeof(GDAL_GCP),(nNumDSR+1) * 11);
+
+    for( iRecord = 0; iRecord < nNumDSR; iRecord++ )
+    {
+        if( EnvisatFile_ReadDatasetRecord( hEnvisatFile, nDatasetIndex, 
+                                           iRecord, abyRecord ) != SUCCESS )
+            continue;
+
+        memcpy( &unValue, abyRecord + 13, 4 );
+        nRange = CPL_SWAP32( unValue );
+
+        for( iGCP = 0; iGCP < 11; iGCP++ )
+        {
+            char	szId[128];
+
+            GDALInitGCPs( 1, pasGCPList + nGCPCount );
+
+            CPLFree( pasGCPList[nGCPCount].pszId );
+            
+            sprintf( szId, "%d", nGCPCount+1 );
+            pasGCPList[nGCPCount].pszId = CPLStrdup( szId );
+
+            memcpy( &unValue, abyRecord + 25 + iGCP*4, 4 );
+            nSample = CPL_SWAP32(unValue);
+
+            memcpy( &unValue, abyRecord + 25 + 176 + iGCP*4, 4 );
+            pasGCPList[nGCPCount].dfGCPX = ((int)CPL_SWAP32(unValue))*0.000001;
+
+            memcpy( &unValue, abyRecord + 25 + 132 + iGCP*4, 4 );
+            pasGCPList[nGCPCount].dfGCPY = ((int)CPL_SWAP32(unValue))*0.000001;
+
+            pasGCPList[nGCPCount].dfGCPZ = 0.0;
+
+            pasGCPList[nGCPCount].dfGCPLine = nRange - 0.5;
+            pasGCPList[nGCPCount].dfGCPPixel = nSample - 0.5;
+            
+            nGCPCount++;
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      We also collect the bottom GCPs from the last granule.          */
+/* -------------------------------------------------------------------- */
+    memcpy( &unValue, abyRecord + 17, 4 );
+    nRange = nRange + CPL_SWAP32( unValue ) - 1;
+
+    for( iGCP = 0; iGCP < 11; iGCP++ )
+    {
+        char	szId[128];
+
+        GDALInitGCPs( 1, pasGCPList + nGCPCount );
+
+        CPLFree( pasGCPList[nGCPCount].pszId );
+            
+        sprintf( szId, "%d", nGCPCount+1 );
+        pasGCPList[nGCPCount].pszId = CPLStrdup( szId );
+
+        memcpy( &unValue, abyRecord + 279 + iGCP*4, 4 );
+        nSample = CPL_SWAP32(unValue);
+
+        memcpy( &unValue, abyRecord + 279 + 176 + iGCP*4, 4 );
+        pasGCPList[nGCPCount].dfGCPX = ((int)CPL_SWAP32(unValue))*0.000001;
+
+        memcpy( &unValue, abyRecord + 279 + 132 + iGCP*4, 4 );
+        pasGCPList[nGCPCount].dfGCPY = ((int)CPL_SWAP32(unValue))*0.000001;
+
+        pasGCPList[nGCPCount].dfGCPZ = 0.0;
+
+        pasGCPList[nGCPCount].dfGCPLine = nRange - 0.5;
+        pasGCPList[nGCPCount].dfGCPPixel = nSample - 0.5;
+            
+        nGCPCount++;
+    }
 }
 
 /************************************************************************/
@@ -183,6 +344,11 @@ GDALDataset *EnvisatDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     poDS->fpImage = poOpenInfo->fp;
     poOpenInfo->fp = NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Try to collect GCPs.                                            */
+/* -------------------------------------------------------------------- */
+    poDS->ScanForGCPs();
 
 /* -------------------------------------------------------------------- */
 /*      Collect raw definitions of each channel and create              */
