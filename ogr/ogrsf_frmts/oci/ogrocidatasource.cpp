@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2002/12/29 19:43:59  warmerda
+ * avoid some warnings
+ *
  * Revision 1.3  2002/12/29 03:19:48  warmerda
  * fixed extraction of database name
  *
@@ -133,7 +136,7 @@ int OGROCIDataSource::Open( const char * pszNewName, int bUpdate,
 
     poSession = OGRGetOCISession( pszUserid, pszPassword, pszDatabase );
     if( poSession == NULL )
-        return NULL;
+        return FALSE;
 
     pszName = CPLStrdup( pszNewName );
     
