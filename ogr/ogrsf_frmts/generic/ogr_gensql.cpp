@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2002/04/29 18:13:36  warmerda
+ * Fix serious bug with datasets with sparse FID sets.
+ *
  * Revision 1.4  2002/04/25 21:03:07  warmerda
  * avoid strcasecmp
  *
@@ -544,6 +547,7 @@ void OGRGenSQLResultsLayer::CreateOrderByIndex()
     swq_select *psSelectInfo = (swq_select *) pSelectInfo;
     OGRField *pasIndexFields;
     int      i, nOrderItems = psSelectInfo->order_specs;
+    long     *panFIDList;
 
     if( nOrderItems == 0 )
         return;
@@ -558,6 +562,7 @@ void OGRGenSQLResultsLayer::CreateOrderByIndex()
     pasIndexFields = (OGRField *) 
         CPLCalloc(sizeof(OGRField), nOrderItems * nIndexSize);
     panFIDIndex = (long *) CPLCalloc(sizeof(long),nIndexSize);
+    panFIDList = (long *) CPLCalloc(sizeof(long),nIndexSize);
 
     for( i = 0; i < nIndexSize; i++ )
         panFIDIndex[i] = i;
@@ -596,13 +601,26 @@ void OGRGenSQLResultsLayer::CreateOrderByIndex()
             }
         }
 
+        panFIDList[iFeature] = poSrcFeat->GetFID();
+        delete poSrcFeat;
+
         iFeature++;
     }
+
+    CPLAssert( nIndexSize == iFeature );
 
 /* -------------------------------------------------------------------- */
 /*      Quick sort the records.                                         */
 /* -------------------------------------------------------------------- */
     SortIndexSection( pasIndexFields, 0, nIndexSize );
+
+/* -------------------------------------------------------------------- */
+/*      Rework the FID map to map to real FIDs.                         */
+/* -------------------------------------------------------------------- */
+    for( i = 0; i < nIndexSize; i++ )
+        panFIDIndex[i] = panFIDList[panFIDIndex[i]];
+
+    CPLFree( panFIDList );
 
 /* -------------------------------------------------------------------- */
 /*      Free the key field values.                                      */
