@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2003/04/04 06:18:08  warmerda
+ * first pass implementation of loader support
+ *
  * Revision 1.11  2003/02/06 21:14:21  warmerda
  * handle element info indirectly
  *
@@ -291,13 +294,110 @@ class OGROCILayer : public OGRLayer
 };
 
 /************************************************************************/
+/*                         OGROCIWritableLayer                          */
+/************************************************************************/
+
+class OGROCIWritableLayer : public OGROCILayer
+{
+protected:
+    int                 nDimension;
+    int                 nSRID;
+
+    int                 nOrdinalCount;
+    int                 nOrdinalMax;
+    double             *padfOrdinals;
+
+    int                 nElemInfoCount;
+    int                 nElemInfoMax;
+    int                *panElemInfo;
+
+    void                PushOrdinal( double );
+    void                PushElemInfo( int, int, int );
+
+    OGRErr              TranslateToSDOGeometry( OGRGeometry *,
+                                                int *pnGType );
+    OGRErr              TranslateElementGroup( OGRGeometry *poGeometry );
+
+    int			bLaunderColumnNames;
+    int			bPreservePrecision;
+
+    OGRSpatialReference *poSRS;
+
+    char              **papszOptions;
+
+    int                 bTruncationReported;
+    void                ReportTruncation( OGRFieldDefn * );
+
+    void                ParseDIMINFO( const char *, double *, double *,
+                                      double * );
+
+                        OGROCIWritableLayer();
+    virtual            ~OGROCIWritableLayer();
+public:
+
+    virtual OGRSpatialReference *GetSpatialRef() { return poSRS; }
+    virtual OGRErr      CreateField( OGRFieldDefn *poField,
+                                     int bApproxOK = TRUE );
+
+    // following methods are not base class overrides
+    void                SetOptions( char ** );
+
+    void                SetDimension( int );
+    void		SetLaunderFlag( int bFlag ) 
+				{ bLaunderColumnNames = bFlag; }
+    void		SetPrecisionFlag( int bFlag ) 
+				{ bPreservePrecision = bFlag; }
+};
+
+/************************************************************************/
+/*                          OGROCILoaderLayer                           */
+/************************************************************************/
+
+class OGROCILoaderLayer : public OGROCIWritableLayer
+{
+    OGREnvelope         sExtent;
+    int                 iNextFIDToWrite;
+
+    FILE		*fpLoader;
+    int                 bHeaderWritten;
+
+    void 		WriteLoaderHeader();
+    void                FinalizeNewLayer();
+
+  public:
+    			OGROCILoaderLayer( OGROCIDataSource *,
+                                           const char * pszName,
+                                           const char *pszGeomCol, 
+                                           int nSRID, 
+                                           const char *pszLoaderFile );
+    			~OGROCILoaderLayer();
+
+    virtual void	ResetReading();
+    virtual int         GetFeatureCount( int );
+
+    virtual OGRGeometry *GetSpatialFilter() { return NULL; }
+    virtual void	SetSpatialFilter( OGRGeometry * ) {}
+
+    virtual OGRErr      SetAttributeFilter( const char * ) 
+				{ return OGRERR_UNSUPPORTED_OPERATION; }
+
+    virtual OGRFeature *GetNextFeature();
+
+    virtual OGRErr      CreateFeature( OGRFeature *poFeature );
+    
+    virtual OGRSpatialReference *GetSpatialRef() { return poSRS; }
+
+    virtual int         TestCapability( const char * );
+
+};
+
+/************************************************************************/
 /*                           OGROCITableLayer                            */
 /************************************************************************/
 
-class OGROCITableLayer : public OGROCILayer
+class OGROCITableLayer : public OGROCIWritableLayer
 {
     int			bUpdateAccess;
-    int                 nDimension;
     int                 bNewLayer;
     OGREnvelope         sExtent;
     int                 iNextFIDToWrite;
@@ -312,37 +412,11 @@ class OGROCITableLayer : public OGROCILayer
     char	        *pszQuery;
     char		*pszWHERE;
 
-    int			bLaunderColumnNames;
-    int			bPreservePrecision;
     int                 bValidTable;
-
-    OGRSpatialReference *poSRS;
-    int                 nSRID;
-
-    int                 nOrdinalCount;
-    int                 nOrdinalMax;
-    double             *padfOrdinals;
-
-    int                 nElemInfoCount;
-    int                 nElemInfoMax;
-    int                *panElemInfo;
 
     OCIArray           *hOrdVARRAY;
     OCIArray           *hElemInfoVARRAY;
 
-    char              **papszOptions;
-
-    int                 bTruncationReported;
-    void                ReportTruncation( OGRFieldDefn * );
-
-    void                PushOrdinal( double );
-    void                PushElemInfo( int, int, int );
-
-    char               *TranslateToSDOGeometry( OGRGeometry * );
-    OGRErr              TranslateElementGroup( OGRGeometry *poGeometry );
-
-    void                ParseDIMINFO( const char *, double *, double *,
-                                      double * );
     void                FinalizeNewLayer();
 
     void                TestForSpatialIndex( const char * );
@@ -368,22 +442,10 @@ class OGROCITableLayer : public OGROCILayer
     virtual OGRErr      SetFeature( OGRFeature *poFeature );
     virtual OGRErr      CreateFeature( OGRFeature *poFeature );
     
-    virtual OGRErr      CreateField( OGRFieldDefn *poField,
-                                     int bApproxOK = TRUE );
-
-    virtual OGRSpatialReference *GetSpatialRef() { return poSRS; }
-
     virtual int         TestCapability( const char * );
 
     // following methods are not base class overrides
-    void                SetOptions( char ** );
-
     int                 IsValid() { return bValidTable; }
-    void                SetDimension( int );
-    void		SetLaunderFlag( int bFlag ) 
-				{ bLaunderColumnNames = bFlag; }
-    void		SetPrecisionFlag( int bFlag ) 
-				{ bPreservePrecision = bFlag; }
 };
 
 /************************************************************************/
