@@ -46,6 +46,9 @@
  *					    Lou Steinberg
  *
  * $Log$
+ * Revision 1.4  2003/03/02 05:24:53  warmerda
+ * fixed comment
+ *
  * Revision 1.3  2003/02/06 04:56:35  warmerda
  * added documentation
  *
@@ -68,7 +71,7 @@ CPL_CVSID("$Id$");
 static void FindNearestColor( int nColors, int *panPCT, GByte *pabyColorMap );
 
 /************************************************************************/
-/*                      GDALComputeMedianCutPCT()                       */
+/*                         GDALDitherRGB2PCT()                          */
 /************************************************************************/
 
 /**
