@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.21  2002/04/26 14:55:26  warmerda
+ * Added CPLEscapeString() and CPLUnescapeString() (unescape untested)
+ *
  * Revision 1.20  2002/03/05 14:26:57  warmerda
  * expanded tabs
  *
@@ -1018,4 +1021,116 @@ void CSLSetNameValueSeparator( char ** papszList, const char *pszSeparator )
         CPLFree( papszList[iLine] );
         papszList[iLine] = pszNewLine;
     }
+}
+
+/************************************************************************/
+/*                          CPLEscapeString()                           */
+/************************************************************************/
+
+/**
+ * Apply escaping to string to preserve special characters.
+ *
+ * This function will "escape" a variety of special characters
+ * to make the string suitable to embed within a string constant
+ * or to write within a text stream but in a form that can be
+ * reconstitued to it's original form.  The escaping will even preserve
+ * zero bytes allowing preservation of raw binary data.
+ *
+ * @param pszString the string to escape.  
+ * @param nLength The number of bytes of data to preserve.  If this is -1
+ * the strlen(pszString) function will be used to compute the length.
+ * @param nScheme the encoding scheme to use.  Currently the default 
+ * (CPLES_BackslashQuoteable=0) is the only scheme supported.
+ *
+ * @return an escaped, zero terminated string that should be freed with 
+ * CPLFree() when no longer needed.
+ */
+
+char *CPLEscapeString( const char *pszInput, int nLength, 
+                       int nScheme )
+
+{
+    char	*pszOutput;
+    char        *pszShortOutput;
+
+    if( nLength == -1 )
+        nLength = strlen(pszInput);
+
+    pszOutput = (char *) CPLMalloc(nLength * 5 + 50);
+    
+    if( nScheme == CPLES_BackslashQuotable )
+    {
+        int iOut = 0, iIn;
+
+        for( iIn = 0; iIn < nLength; iIn++ )
+        {
+            if( pszInput[iIn] == '\0' )
+            {
+                pszOutput[iOut++] = '\\';
+                pszOutput[iOut++] = '0';
+            }
+            else if( pszInput[iIn] == '"' )
+            {
+                pszOutput[iOut++] = '\\';
+                pszOutput[iOut++] = 'n';
+            }
+            else if( pszInput[iIn] == '\\' )
+            {
+                pszOutput[iOut++] = '\\';
+                pszOutput[iOut++] = '\\';
+            }
+            else
+                pszOutput[iOut++] = pszInput[iIn];
+        }
+        pszOutput[iOut] = '\0';
+    }
+    else
+    {
+        strcpy( pszOutput, "Unrecognised Escaping Scheme" );
+    }
+
+    pszShortOutput = CPLStrdup( pszOutput );
+    CPLFree( pszOutput );
+
+    return pszShortOutput;
+}
+
+/************************************************************************/
+/*                         CPLUnescapeString()                          */
+/************************************************************************/
+
+char *CPLUnescapeString( const char *pszInput, int *pnLength, int nScheme )
+
+{
+    char *pszOutput;
+    int	iOut=0, iIn;
+
+    pszOutput = (char *) CPLMalloc(strlen(pszInput)+1);
+    pszOutput[0] = '\0';
+
+    /* if( nScheme == CPLES_BackslashQuoteable ) */
+    {
+        for( iIn = 0; pszInput[iIn] != '\0'; iIn++ )
+        {
+            if( pszInput[iIn] == '\\' )
+            {
+                iIn++;
+                if( pszInput[iIn] == 'n' )
+                    pszOutput[iOut++] = '\n';
+                else 
+                    pszOutput[iOut++] = pszInput[iIn];
+            }
+            else
+            {
+                pszOutput[iOut++] = pszInput[iIn];
+            }
+        }
+    }
+
+    pszOutput[iOut] = '\0';
+
+    if( pnLength != NULL )
+        *pnLength = iOut;
+
+    return pszOutput;
 }

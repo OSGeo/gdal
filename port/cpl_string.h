@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.10  2002/04/26 14:55:26  warmerda
+ * Added CPLEscapeString() and CPLUnescapeString() (unescape untested)
+ *
  * Revision 1.9  2002/03/05 14:26:57  warmerda
  * expanded tabs
  *
@@ -118,6 +121,13 @@ char CPL_DLL **
                       const char *pszName, const char *pszValue);
 void CPL_DLL CSLSetNameValueSeparator( char ** papszStrList, 
                                        const char *pszSeparator );
+
+#define CPLES_BackslashQuotable 0
+
+char CPL_DLL *CPLEscapeString( const char *pszString, int nLength, 
+                               int nScheme );
+char CPL_DLL *CPLUnescapeString( const char *pszString, int *pnLength,
+                                 int nScheme );
 
 CPL_C_END
 
