@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2003/01/20 20:06:55  warmerda
+ * added cell header creation
+ *
  * Revision 1.5  2002/11/13 21:26:32  warmerda
  * added more documentation
  *
@@ -48,6 +51,9 @@
 #include "dgnlibp.h"
 
 CPL_CVSID("$Id$");
+
+static void DGNPointToInt( DGNInfo *psDGN, DGNPoint *psPoint, 
+                           unsigned char *pabyTarget );
 
 /************************************************************************/
 /*                          DGNResizeElement()                          */
@@ -1405,6 +1411,285 @@ DGNCreateComplexHeaderFromGroup( DGNHandle hDGN, int nType,
     DGNWriteBounds( (DGNInfo *) hDGN, psCH, &sMin, &sMax );
     
     return psCH;
+}
+
+/************************************************************************/
+/*                      DGNCreateCellHeaderElem()                       */
+/************************************************************************/
+
+DGNElemCore CPL_DLL  *
+DGNCreateCellHeaderElem( DGNHandle hDGN, int nTotLength, const char *pszName, 
+                         short nClass, short *panLevels, 
+                         DGNPoint *psRangeLow, DGNPoint *psRangeHigh, 
+                         DGNPoint *psOrigin, double dfXScale, double dfYScale,
+                         double dfRotation )
+
+/**
+ * Create cell header.
+ *
+ * The newly created element will still need to be written to file using
+ * DGNWriteElement(). Also the level and other core values will be defaulted.
+ * Use DGNUpdateElemCore() on the element before writing to set these values.
+ *
+ * Generally speaking the function DGNCreateCellHeaderFromGroup() should
+ * be used instead of this function.
+ *
+ * @param hDGN the file handle on which the element is to be written.
+ * @param nTotLength total length of cell in words not including the 38 bytes
+ * of the cell header that occur before the totlength indicator. 
+ * @param nClass the class value for the cell. 
+ * @param panLevels an array of shorts holding the bit mask of levels in
+ * effect for this cell.  This array should contain 4 shorts (64 bits). 
+ * @param psRangeLow the cell diagonal origin in original cell file 
+ * coordinates.
+ * @param psRangeHigh the cell diagonal top left corner in original cell file 
+ * coordinates.
+ * @param psOrigin the origin of the cell in output file coordinates. 
+ * @param dfXScale the amount of scaling applied in the X dimension in 
+ * mapping from cell file coordinates to output file coordinates.
+ * @param dfYScale the amount of scaling applied in the Y dimension in 
+ * mapping from cell file coordinates to output file coordinates.
+ * @param dfRotation the amount of rotation (degrees counterclockwise) in 
+ * mapping from cell coordinates to output file coordinates. 
+ *
+ * @return the new element (DGNElemCellHeader) or NULL on failure. 
+ */
+
+{
+    DGNElemCellHeader *psCH;
+    DGNElemCore *psCore;
+    DGNInfo *psInfo = (DGNInfo *) hDGN;
+
+/* -------------------------------------------------------------------- */
+/*      Allocate element.                                               */
+/* -------------------------------------------------------------------- */
+    psCH = (DGNElemCellHeader *) CPLCalloc( sizeof(DGNElemCellHeader), 1 );
+    psCore = &(psCH->core);
+
+    DGNInitializeElemCore( hDGN, psCore );
+    psCore->stype = DGNST_CELL_HEADER;
+    psCore->type = DGNT_CELL_HEADER;
+
+/* -------------------------------------------------------------------- */
+/*      Set complex header specific information in the structure.       */
+/* -------------------------------------------------------------------- */
+    psCH->totlength = nTotLength;
+
+/* -------------------------------------------------------------------- */
+/*      Setup Raw data for the cell header specific portion.            */
+/* -------------------------------------------------------------------- */
+    psCore->raw_bytes = 92;
+    psCore->raw_data = (unsigned char*) CPLCalloc(psCore->raw_bytes,1);
+
+    psCore->raw_data[36] = nTotLength % 256;
+    psCore->raw_data[37] = nTotLength / 256;
+    
+    DGNAsciiToRad50( pszName, (unsigned short *) (psCore->raw_data + 38) );
+    if( strlen(pszName) > 3 )
+        DGNAsciiToRad50( pszName+3, (unsigned short *) (psCore->raw_data+40) );
+
+    psCore->raw_data[42] = nClass % 256;
+    psCore->raw_data[43] = nClass / 256;
+
+    memcpy( psCore->raw_data + 44, panLevels, 8 );
+
+    DGNPointToInt( psInfo, psRangeLow, psCore->raw_data + 52 );
+    DGNPointToInt( psInfo, psRangeHigh, psCore->raw_data+ 60 );
+
+    DGNInverseTransformPointToInt( psInfo, psOrigin, psCore->raw_data + 84 );
+
+/* -------------------------------------------------------------------- */
+/*      Produce a transformation matrix that approximates the           */
+/*      requested scaling and rotation.                                 */
+/* -------------------------------------------------------------------- */
+    long anTrans[4];
+    double cos_a = cos(-dfRotation * PI / 180.0);
+    double sin_a = sin(-dfRotation * PI / 180.0);
+
+    anTrans[0] = (long) (cos_a * dfXScale * 214748);
+    anTrans[1] = (long) (sin_a * dfYScale * 214748);
+    anTrans[2] = (long)(-sin_a * dfXScale * 214748);
+    anTrans[3] = (long) (cos_a * dfYScale * 214748);
+
+    DGN_WRITE_INT32( anTrans[0], psCore->raw_data + 68 );
+    DGN_WRITE_INT32( anTrans[1], psCore->raw_data + 72 );
+    DGN_WRITE_INT32( anTrans[2], psCore->raw_data + 76 );
+    DGN_WRITE_INT32( anTrans[3], psCore->raw_data + 80 );
+
+/* -------------------------------------------------------------------- */
+/*      Set the core raw data.                                          */
+/* -------------------------------------------------------------------- */
+    DGNUpdateElemCoreExtended( hDGN, psCore );
+    
+    return psCore;
+}
+
+/************************************************************************/
+/*                           DGNPointToInt()                            */
+/*                                                                      */
+/*      Convert a point directly to integer coordinates and write to    */
+/*      the indicate memory location.  Intended to be used for the      */
+/*      range section of the CELL HEADER.                               */
+/************************************************************************/
+
+static void DGNPointToInt( DGNInfo *psDGN, DGNPoint *psPoint, 
+                           unsigned char *pabyTarget )
+
+{
+    double     adfCT[3];
+    int        i;
+
+    adfCT[0] = psPoint->x;
+    adfCT[1] = psPoint->y;
+    adfCT[2] = psPoint->z;
+
+    for( i = 0; i < psDGN->dimension; i++ )
+    {
+        GInt32 nCTI;
+        unsigned char *pabyCTI = (unsigned char *) &nCTI;
+
+        nCTI = (GInt32) MAX(-2147483647,MIN(2147483647,adfCT[i]));
+        
+#ifdef WORDS_BIGENDIAN 
+        pabyTarget[i*4+0] = pabyCTI[1];
+        pabyTarget[i*4+1] = pabyCTI[0];
+        pabyTarget[i*4+2] = pabyCTI[3];
+        pabyTarget[i*4+3] = pabyCTI[2];
+#else
+        pabyTarget[i*4+3] = pabyCTI[1];
+        pabyTarget[i*4+2] = pabyCTI[0];
+        pabyTarget[i*4+1] = pabyCTI[3];
+        pabyTarget[i*4+0] = pabyCTI[2];
+#endif        
+    }
+}
+
+/************************************************************************/
+/*                    DGNCreateCellHeaderFromGroup()                    */
+/************************************************************************/
+
+/**
+ * Create cell header from a group of elements.
+ *
+ * The newly created element will still need to be written to file using
+ * DGNWriteElement(). Also the level and other core values will be defaulted.
+ * Use DGNUpdateElemCore() on the element before writing to set these values.
+ *
+ * This function will compute the total length, bounding box, and diagonal
+ * range values from the set of provided elements.  Note that the proper
+ * diagonal range values will only be written if 1.0 is used for the x and y
+ * scale values, and 0.0 for the rotation.  Use of other values will result
+ * in incorrect scaling handles being presented to the user in Microstation
+ * when they select the element.  
+ *
+ * @param hDGN the file handle on which the element is to be written.
+ * @param nClass the class value for the cell. 
+ * @param panLevels an array of shorts holding the bit mask of levels in
+ * effect for this cell.  This array should contain 4 shorts (64 bits). 
+ * This array would normally be passed in as NULL, and the function will
+ * build a mask from the passed list of elements. 
+ * @param psOrigin the origin of the cell in output file coordinates. 
+ * @param dfXScale the amount of scaling applied in the X dimension in 
+ * mapping from cell file coordinates to output file coordinates.
+ * @param dfYScale the amount of scaling applied in the Y dimension in 
+ * mapping from cell file coordinates to output file coordinates.
+ * @param dfRotation the amount of rotation (degrees counterclockwise) in 
+ * mapping from cell coordinates to output file coordinates. 
+ *
+ * @return the new element (DGNElemCellHeader) or NULL on failure. 
+ */
+
+DGNElemCore *
+DGNCreateCellHeaderFromGroup( DGNHandle hDGN, const char *pszName, 
+                              short nClass, short *panLevels, 
+                              int nNumElems, DGNElemCore **papsElems,
+                              DGNPoint *psOrigin, 
+                              double dfXScale, double dfYScale,
+                              double dfRotation )
+
+{
+    int		nTotalLength = 5;
+    int         i, nLevel;
+    DGNElemCore *psCH;
+    DGNPoint    sMin, sMax;
+    unsigned char abyLevelsOccuring[8] = {0,0,0,0,0,0,0,0};
+
+    if( nNumElems < 1 || papsElems == NULL )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Need at least one element to form a cell." );
+        return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Collect the total size, and bounds.                             */
+/* -------------------------------------------------------------------- */
+    nLevel = papsElems[0]->level;
+
+    for( i = 0; i < nNumElems; i++ )
+    {
+        DGNPoint sThisMin, sThisMax;
+        int  nLevel;
+
+        nTotalLength += papsElems[i]->raw_bytes / 2;
+
+        /* mark as complex */
+        papsElems[i]->complex = TRUE;
+        papsElems[i]->raw_data[0] |= 0x80;
+
+        /* establish level */
+        nLevel = papsElems[i]->level;
+        abyLevelsOccuring[nLevel >> 3] |= (0x1 << (nLevel&0x7));
+        
+        DGNGetElementExtents( hDGN, papsElems[i], &sThisMin, &sThisMax );
+        if( i == 0 )
+        {
+            sMin = sThisMin;
+            sMax = sThisMax;
+        }
+        else
+        {
+            sMin.x = MIN(sMin.x,sThisMin.x);
+            sMin.y = MIN(sMin.y,sThisMin.y);
+            sMin.z = MIN(sMin.z,sThisMin.z);
+            sMax.x = MAX(sMax.x,sThisMax.x);
+            sMax.y = MAX(sMax.y,sThisMax.y);
+            sMax.z = MAX(sMax.z,sThisMax.z);
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      It seems that the range needs to be adjusted according to       */
+/*      the rotation and scaling.                                       */
+/* -------------------------------------------------------------------- */
+    sMin.x -= psOrigin->x;
+    sMin.y -= psOrigin->y;
+    sMin.z -= psOrigin->z;
+    sMax.x -= psOrigin->x;
+    sMax.y -= psOrigin->y;
+    sMax.z -= psOrigin->z;
+
+    sMin.x /= ((DGNInfo *) hDGN)->scale;
+    sMin.y /= ((DGNInfo *) hDGN)->scale;
+    sMin.z /= ((DGNInfo *) hDGN)->scale;
+    sMax.x /= ((DGNInfo *) hDGN)->scale;
+    sMax.y /= ((DGNInfo *) hDGN)->scale;
+    sMax.z /= ((DGNInfo *) hDGN)->scale;
+
+/* -------------------------------------------------------------------- */
+/*      Create the corresponding cell header.                           */
+/* -------------------------------------------------------------------- */
+    if( panLevels == NULL )
+        panLevels = (short *) abyLevelsOccuring + 0;
+
+    psCH = DGNCreateCellHeaderElem( hDGN, nTotalLength, pszName, 
+                                    nClass, panLevels, 
+                                    &sMin, &sMax, psOrigin, 
+                                    dfXScale, dfYScale, dfRotation );
+    DGNWriteBounds( (DGNInfo *) hDGN, psCH, &sMin, &sMax );
+    
+    return psCH;
+    
 }
 
 /************************************************************************/
