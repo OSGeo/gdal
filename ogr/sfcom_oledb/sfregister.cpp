@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/09/07 14:11:21  warmerda
+ * Added registration of NTF format support.
+ *
  * Revision 1.1  1999/07/23 19:20:27  kshih
  * Modifications for errors etc...
  *
@@ -37,20 +40,19 @@
 
 
 /************************************************************************/
-/*                      SFRegisterOGRFormats()                          */
+/*                        SFRegisterOGRFormats()                        */
 /*                                                                      */
-/*      Register all the OGR formats we wish to expose through the SFCOM*/
-/*      provider.														*/
+/*      Register all the OGR formats we wish to expose through the      */
+/*      SFCOM provider.                                                 */
 /************************************************************************/
 void	SFRegisterOGRFormats()
 {
-		static bool	bRegistered = false;
-		if (bRegistered)
-			return;
-		bRegistered = true;
+    static bool	bRegistered = false;
+    if (bRegistered)
+        return;
+    bRegistered = true;
 
-
-
-		// Add formats to be registered here.
-		RegisterOGRShape();
+    // Add formats to be registered here.
+    RegisterOGRShape();
+    RegisterOGRNTF();
 }
