@@ -25,6 +25,9 @@
  * Main format registration function.
  * 
  * $Log$
+ * Revision 1.52  2002/12/03 04:42:35  warmerda
+ * added NITF
+ *
  * Revision 1.51  2002/11/05 06:20:07  warmerda
  * hacks for JP2KAK support
  *
@@ -236,6 +239,10 @@ void GDALAllRegister()
 #ifdef FRMT_gtiff    
     GDALRegister_GTiff();
 #endif    
+
+#ifdef FRMT_nitf
+    GDALRegister_NITF();
+#endif
 
 #ifdef FRMT_hfa
     GDALRegister_HFA();
