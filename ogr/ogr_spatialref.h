@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.54  2003/09/09 07:49:19  dron
+ * Added exportToPCI() method.
+ *
  * Revision 1.53  2003/08/31 14:51:30  dron
  * Added importFromPCI() method.
  *
@@ -319,6 +322,8 @@ class CPL_DLL OGRSpatialReference
     OGRErr      exportToWkt( char ** );
     OGRErr      exportToPrettyWkt( char **, int = FALSE) const;
     OGRErr      exportToProj4( char ** ) const;
+    OGRErr      exportToPCI( char **, char **, double ** ) const;
+
     OGRErr      exportToXML( char **, const char * = NULL ) const;
     OGRErr      importFromProj4( const char * );
     OGRErr      importFromEPSG( int );
