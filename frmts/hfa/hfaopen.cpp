@@ -35,6 +35,9 @@
  * of the GDAL core, but dependent on the Common Portability Library.
  *
  * $Log$
+ * Revision 1.19  2003/02/23 15:50:20  dron
+ * Spill file creation now really works for single band datasets.
+ *
  * Revision 1.18  2003/02/22 07:23:02  dron
  * Fixes i spill file writing.
  *
@@ -1312,6 +1315,7 @@ HFAHandle HFACreate( const char * pszFilename,
     HFAHandle	psInfo;
     int		nBlockSize = 64;
     int		bCreateLargeRaster = FALSE;
+    char	*pszFullFilename = NULL, *pszRawFilename = NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Create the low level structure.                                 */
@@ -1324,13 +1328,24 @@ HFAHandle HFACreate( const char * pszFilename,
 /*      Work out some details about the tiling scheme.                  */
 /* -------------------------------------------------------------------- */
     int	nBlocksPerRow, nBlocksPerColumn, nBlocks, nBytesPerBlock;
+    int	nBytesPerRow, nBlockMapSize, iHeaderSize, iFlagsSize;
+    GUIntBig iRasterSize;
     
     nBlocksPerRow = (nXSize + nBlockSize - 1) / nBlockSize;
     nBlocksPerColumn = (nYSize + nBlockSize - 1) / nBlockSize;
     nBlocks = nBlocksPerRow * nBlocksPerColumn;
-
     nBytesPerBlock = (nBlockSize * nBlockSize 
 	* HFAGetDataTypeBits(nDataType) + 7) / 8;
+
+    CPLDebug( "HFACreate", "Blocks per row %d, blocks per column %d, "
+	      "total number of blocks %d, bytes per block %d.",
+	      nBlocksPerRow, nBlocksPerColumn, nBlocks, nBytesPerBlock );
+
+    nBytesPerRow = ( nBlocksPerRow + 7 ) / 8;
+    nBlockMapSize = nBytesPerRow * nBlocksPerColumn;
+    iHeaderSize = 49;
+    iFlagsSize = nBlockMapSize + 20;
+    iRasterSize = (GUIntBig)nBytesPerBlock * (GUIntBig)nBlocks;
 
 /* -------------------------------------------------------------------- */
 /*      Check whether we should create external large file with image.  */
@@ -1351,13 +1366,14 @@ HFAHandle HFACreate( const char * pszFilename,
 /* ==================================================================== */
 /*      Create each band (layer)                                        */
 /* ==================================================================== */
-    
-    for( int iBand = 0; iBand < nBands; iBand++ )
+    int		iBand;
+
+    for( iBand = 0; iBand < nBands; iBand++ )
     {
 	HFAEntry	*poEimg_Layer;
         char		szName[128];
 
-        sprintf( szName, "Layer_%d", iBand+1 );
+        sprintf( szName, "Layer_%d", iBand + 1 );
 
 /* -------------------------------------------------------------------- */
 /*      Create the Eimg_Layer for the band.                             */
@@ -1498,27 +1514,18 @@ HFAHandle HFACreate( const char * pszFilename,
 
 	    VSIFSeekL( psInfo->fp, nLDict, SEEK_SET );
 	    VSIFWriteL( (void *) szLDict, strlen(szLDict) + 1, 1, psInfo->fp );
-
 	}
 	else
 	{
-	    int	nBytesPerRow = ( nBlocksPerRow + 7 ) / 8;
-	    int	iBlockMapSize = nBytesPerRow * nBlocksPerColumn;
-	    int	iHeaderSize = 49;
-	    int	iFlagsSize = iBlockMapSize + 20;
-	    GUIntBig iRasterSize = (GUIntBig)nBytesPerBlock * (GUIntBig)nBlocks;
-
-	    char  *pszFullFilename =
-		CPLStrdup( CPLResetExtension( pszFilename, "ige" ) );
-	    char  *pszRawFilename = 
-		CPLStrdup( CPLGetFilename( pszFullFilename ) );
-	    char  *pszMagick = "ERDAS_IMG_EXTERNAL_RASTER";
-
 /* -------------------------------------------------------------------- */
 /*      Create ExternalRasterDMS object.                                */
 /* -------------------------------------------------------------------- */
 	    HFAEntry *poEdms_State;
 
+	    pszFullFilename =
+		CPLStrdup( CPLResetExtension( pszFilename, "ige" ) );
+	    pszRawFilename =
+		CPLStrdup( CPLGetFilename( pszFullFilename ) );
 	    poEdms_State = 
 		new HFAEntry( psInfo, "ExternalRasterDMS",
 			      "ImgExternalRaster", poEimg_Layer );
@@ -1533,7 +1540,7 @@ HFAHandle HFACreate( const char * pszFilename,
 
 	    poEdms_State->SetIntField( "layerStackDataOffset[0]",
 				       iHeaderSize + iFlagsSize +
-				       iBand * (iFlagsSize + iRasterSize));
+				       iBand * (iFlagsSize + iRasterSize) );
 	    poEdms_State->SetIntField( "layerStackDataOffset[1]", 0 );
 	    poEdms_State->SetIntField( "layerStackCount", nBands );
 	    poEdms_State->SetIntField( "layerStackIndex", iBand );
@@ -1590,57 +1597,60 @@ HFAHandle HFACreate( const char * pszFilename,
 
 	    VSIFSeekL( psInfo->fp, nLDict, SEEK_SET );
 	    VSIFWriteL( (void *) szLDict, strlen(szLDict) + 1, 1, psInfo->fp );
+	}
+    }
 
+    if ( bCreateLargeRaster )
+    {
 /* -------------------------------------------------------------------- */
-/*      Open external file and fill it with values.                     */
+/*      Create external file and write its header.                      */
 /* -------------------------------------------------------------------- */
-	    FILE	    *fpExternal;
+	GByte	    bUnknown;
+	GInt32	    nValue32;
+	FILE	    *fpExternal;
+	char	    *pszMagick = "ERDAS_IMG_EXTERNAL_RASTER";
 
-	    fpExternal = VSIFOpenL( pszFullFilename, "wb" );
-	    if( fpExternal == NULL )
-	    {
-		CPLError( CE_Failure, CPLE_OpenFailed, 
-			  "Unable to create external data file: %s\n", 
-			  pszFullFilename );
-		CPLFree( pszRawFilename );
-		CPLFree( pszFullFilename );
-		return NULL;
-	    }
+	fpExternal = VSIFOpenL( pszFullFilename, "wb" );
+	if( fpExternal == NULL )
+	{
+	    CPLError( CE_Failure, CPLE_OpenFailed, 
+		      "Unable to create external data file: %s\n", 
+		      pszFullFilename );
+	    CPLFree( pszRawFilename );
+	    CPLFree( pszFullFilename );
+	    return NULL;
+	}
 
-/* -------------------------------------------------------------------- */
-/*      Write out header section.                                       */
-/* -------------------------------------------------------------------- */
-	    GInt32	    nValue32;
-	    GByte	    bUnknown;
-
-	    VSIFWriteL( pszMagick, 1, 26, fpExternal );
-	    bUnknown = 1;
-	    VSIFWriteL( &bUnknown, 1, 1, fpExternal );
-	    nValue32 = nBands;
-	    HFAStandard( 4, &nValue32 );
-	    VSIFWriteL( &nValue32, 4, 1, fpExternal );
-	    nValue32 = nXSize;
-	    HFAStandard( 4, &nValue32 );
-	    VSIFWriteL( &nValue32, 4, 1, fpExternal );
-	    nValue32 = nYSize;
-	    HFAStandard( 4, &nValue32 );
-	    VSIFWriteL( &nValue32, 4, 1, fpExternal );
-	    nValue32 = nBlockSize;
-	    HFAStandard( 4, &nValue32 );
-	    VSIFWriteL( &nValue32, 4, 1, fpExternal );
-	    VSIFWriteL( &nValue32, 4, 1, fpExternal );
-	    bUnknown = 3;
-	    VSIFWriteL( &bUnknown, 1, 1, fpExternal );
-	    bUnknown = 0;
-	    VSIFWriteL( &bUnknown, 1, 1, fpExternal );
+	VSIFWriteL( pszMagick, 1, 26, fpExternal );
+	bUnknown = 1;
+	VSIFWriteL( &bUnknown, 1, 1, fpExternal );
+	nValue32 = nBands;
+	HFAStandard( 4, &nValue32 );
+	VSIFWriteL( &nValue32, 4, 1, fpExternal );
+	nValue32 = nXSize;
+	HFAStandard( 4, &nValue32 );
+	VSIFWriteL( &nValue32, 4, 1, fpExternal );
+	nValue32 = nYSize;
+	HFAStandard( 4, &nValue32 );
+	VSIFWriteL( &nValue32, 4, 1, fpExternal );
+	nValue32 = nBlockSize;
+	HFAStandard( 4, &nValue32 );
+	VSIFWriteL( &nValue32, 4, 1, fpExternal );
+	VSIFWriteL( &nValue32, 4, 1, fpExternal );
+	bUnknown = 3;
+	VSIFWriteL( &bUnknown, 1, 1, fpExternal );
+	bUnknown = 0;
+	VSIFWriteL( &bUnknown, 1, 1, fpExternal );
 
 /* -------------------------------------------------------------------- */
 /*      Write out ValidFlags section(s).                                */
 /* -------------------------------------------------------------------- */
-	    unsigned char *pabyBlockMap;
-	    int	    i, iRemainder;
+	for ( iBand = 0; iBand < nBands; iBand++ )
+	{
+	    unsigned char   *pabyBlockMap;
+	    int		    i, iRemainder;
 
-	    nValue32 = nBlocks;
+	    nValue32 = iBand + 1;
 	    HFAStandard( 4, &nValue32 );
 	    VSIFWriteL( &nValue32, 4, 1, fpExternal );
 	    nValue32 = 0;	// Unknown
@@ -1654,28 +1664,34 @@ HFAHandle HFACreate( const char * pszFilename,
 	    nValue32 = 0;	// Unknown
 	    VSIFWriteL( &nValue32, 4, 1, fpExternal );
 
-	    pabyBlockMap = (unsigned char *) CPLMalloc( iBlockMapSize );
-	    memset( pabyBlockMap, 0xff, iBlockMapSize );
+	    pabyBlockMap = (unsigned char *) CPLMalloc( nBlockMapSize );
+	    memset( pabyBlockMap, 0xff, nBlockMapSize );
 	    iRemainder = nBlocksPerRow % 8;
+	    CPLDebug( "HFACreate",
+		      "Block map size %d, bytes per row %d, remainder %d.",
+		      nBlockMapSize, nBytesPerRow, iRemainder );
 	    if ( iRemainder )
 	    {
-		for ( i = nBytesPerRow - 1; i <= iBlockMapSize; i+=nBytesPerRow )
+		for ( i = nBytesPerRow - 1; i < nBlockMapSize; i+=nBytesPerRow )
 		    pabyBlockMap[i] = (1<<iRemainder) - 1;
 	    }
-	    for ( i = 0; i < nBands; i++ )
-	    {
-		VSIFWriteL( pabyBlockMap, 1, iBlockMapSize, fpExternal );
-		VSIFSeekL( fpExternal, iRasterSize - 1, SEEK_CUR);
-		VSIFWriteL( &bUnknown, 1, 1, fpExternal );
-	    }
 
-	    VSIFCloseL( fpExternal );
-	    CPLFree( pabyBlockMap );
-	    CPLFree( pszRawFilename );
-	    CPLFree( pszFullFilename );
+	    VSIFWriteL( pabyBlockMap, 1, nBlockMapSize, fpExternal );
+	    VSIFSeekL( fpExternal, iRasterSize - 1, SEEK_CUR );
+	    VSIFWriteL( &bUnknown, 1, 1, fpExternal );
+	    CPLDebug( "HFACreate", "Raster size %ld.", iRasterSize );
+	    if ( pabyBlockMap )
+		CPLFree( pabyBlockMap );
 	}
-    }
 
+    VSIFCloseL( fpExternal );
+
+    if ( pszRawFilename )
+	CPLFree( pszRawFilename );
+    if ( pszFullFilename )
+	CPLFree( pszFullFilename );
+    }
+    
 /* -------------------------------------------------------------------- */
 /*      Initialize the band information.                                */
 /* -------------------------------------------------------------------- */
