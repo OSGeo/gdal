@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.36  2005/04/04 15:23:31  fwarmerdam
+ * some functions now CPL_STDCALL
+ *
  * Revision 1.35  2004/11/17 22:57:21  fwarmerdam
  * added CPLScanPointer() and CPLPrintPointer()
  *
@@ -127,9 +130,10 @@ CPL_C_START
 
 void CPL_DLL CPLVerifyConfiguration();
 
-const char CPL_DLL *CPLGetConfigOption( const char *, const char * );
-void CPL_DLL        CPLSetConfigOption( const char *, const char * );
-void CPL_DLL        CPLFreeConfig();
+const char CPL_DLL * CPL_STDCALL
+CPLGetConfigOption( const char *, const char * );
+void CPL_DLL CPL_STDCALL CPLSetConfigOption( const char *, const char * );
+void CPL_DLL CPL_STDCALL CPLFreeConfig();
 
 /* -------------------------------------------------------------------- */
 /*      Safe malloc() API.  Thin cover over VSI functions with fatal    */

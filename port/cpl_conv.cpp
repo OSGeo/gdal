@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.43  2005/04/04 15:23:30  fwarmerdam
+ * some functions now CPL_STDCALL
+ *
  * Revision 1.42  2004/11/17 22:57:21  fwarmerdam
  * added CPLScanPointer() and CPLPrintPointer()
  *
@@ -1205,7 +1208,8 @@ void CPLVerifyConfiguration()
 /*                         CPLGetConfigOption()                         */
 /************************************************************************/
 
-const char *CPLGetConfigOption( const char *pszKey, const char *pszDefault )
+const char * CPL_STDCALL
+CPLGetConfigOption( const char *pszKey, const char *pszDefault )
 
 {
     const char *pszResult = CSLFetchNameValue( papszConfigOptions, pszKey );
@@ -1223,7 +1227,8 @@ const char *CPLGetConfigOption( const char *pszKey, const char *pszDefault )
 /*                         CPLSetConfigOption()                         */
 /************************************************************************/
 
-void CPLSetConfigOption( const char *pszKey, const char *pszValue )
+void CPL_STDCALL 
+CPLSetConfigOption( const char *pszKey, const char *pszValue )
 
 {
     papszConfigOptions = 
@@ -1234,7 +1239,7 @@ void CPLSetConfigOption( const char *pszKey, const char *pszValue )
 /*                           CPLFreeConfig()                            */
 /************************************************************************/
 
-void CPLFreeConfig()
+void CPL_STDCALL CPLFreeConfig()
 
 {
     CSLDestroy(papszConfigOptions);

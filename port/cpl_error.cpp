@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.28  2005/04/04 15:23:31  fwarmerdam
+ * some functions now CPL_STDCALL
+ *
  * Revision 1.27  2003/05/27 20:44:16  warmerda
  * use VSI time services
  *
@@ -338,7 +341,7 @@ void CPLDebug( const char * pszCategory, const char * pszFormat, ... )
  * from does not appear to be still in play with high level functions.
  */
 
-void    CPLErrorReset()
+void CPL_STDCALL CPLErrorReset()
 {
     gnCPLLastErrNo = CPLE_None;
     gszCPLLastErrMsg[0] = '\0';
@@ -359,7 +362,7 @@ void    CPLErrorReset()
  * if there are no posted errors.
  */
 
-int     CPLGetLastErrorNo()
+int CPL_STDCALL CPLGetLastErrorNo()
 {
     return gnCPLLastErrNo;
 }
@@ -377,7 +380,7 @@ int     CPLGetLastErrorNo()
  * if there are no posted errors.
  */
 
-CPLErr CPLGetLastErrorType()
+CPLErr CPL_STDCALL CPLGetLastErrorType()
 {
     return geCPLLastErrType;
 }
@@ -397,7 +400,7 @@ CPLErr CPLGetLastErrorType()
  * message.
  */
 
-const char* CPLGetLastErrorMsg()
+const char* CPL_STDCALL CPLGetLastErrorMsg()
 {
     return gszCPLLastErrMsg;
 }
@@ -406,7 +409,7 @@ const char* CPLGetLastErrorMsg()
 /*                       CPLDefaultErrorHandler()                       */
 /************************************************************************/
 
-void CPLDefaultErrorHandler( CPLErr eErrClass, int nError, 
+void CPL_STDCALL CPLDefaultErrorHandler( CPLErr eErrClass, int nError, 
                              const char * pszErrorMsg )
 
 {
@@ -440,7 +443,7 @@ void CPLDefaultErrorHandler( CPLErr eErrClass, int nError,
 /*                        CPLQuietErrorHandler()                        */
 /************************************************************************/
 
-void CPLQuietErrorHandler( CPLErr eErrClass , int nError, 
+void CPL_STDCALL CPLQuietErrorHandler( CPLErr eErrClass , int nError, 
                            const char * pszErrorMsg )
 
 {
@@ -452,7 +455,7 @@ void CPLQuietErrorHandler( CPLErr eErrClass , int nError,
 /*                       CPLLoggingErrorHandler()                       */
 /************************************************************************/
 
-void CPLLoggingErrorHandler( CPLErr eErrClass, int nError, 
+void CPL_STDCALL CPLLoggingErrorHandler( CPLErr eErrClass, int nError, 
                              const char * pszErrorMsg )
 
 {
@@ -555,7 +558,8 @@ void CPLLoggingErrorHandler( CPLErr eErrClass, int nError,
  * @return returns the previously installed error handler.
  */ 
 
-CPLErrorHandler CPLSetErrorHandler( CPLErrorHandler pfnErrorHandler )
+CPLErrorHandler CPL_STDCALL 
+CPLSetErrorHandler( CPLErrorHandler pfnErrorHandler )
 {
     CPLErrorHandler     pfnOldHandler = gpfnCPLErrorHandler;
     
@@ -581,7 +585,7 @@ CPLErrorHandler CPLSetErrorHandler( CPLErrorHandler pfnErrorHandler )
  * @param pfnErrorHandler new error handler function.
  */
 
-void CPLPushErrorHandler( CPLErrorHandler pfnErrorHandler )
+void CPL_STDCALL CPLPushErrorHandler( CPLErrorHandler pfnErrorHandler )
 
 {
     CPLErrorHandlerNode         *psNode;
@@ -606,7 +610,7 @@ void CPLPushErrorHandler( CPLErrorHandler pfnErrorHandler )
  * the last CPLPushErrorHandler() call.
  */ 
 
-void CPLPopErrorHandler()
+void CPL_STDCALL CPLPopErrorHandler()
 
 {
     if( psHandlerStack != NULL )
@@ -637,7 +641,7 @@ void CPLPopErrorHandler()
  * There is no reason for application code to call _CPLAssert() directly.
  */
 
-void _CPLAssert( const char * pszExpression, const char * pszFile,
+void CPL_STDCALL _CPLAssert( const char * pszExpression, const char * pszFile,
                  int iLine )
 
 {
