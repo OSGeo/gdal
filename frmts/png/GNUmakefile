@@ -3,7 +3,7 @@ GDAL_ROOT	=	../..
 include $(GDAL_ROOT)/GDALmake.opt
 
 ifeq ($(PNG_SETTING),internal)
-XTRA_OPT =	-Ilibpng
+XTRA_OPT =	-DPNG_NO_GLOBAL_ARRAYS -Ilibpng
 OBJ	=	png.o pngerror.o pnggccrd.o pngget.o pngmem.o \
 		pngpread.o pngread.o pngrio.o pngrtran.o pngrutil.o \
 		pngset.o pngtrans.o pngvcrd.o pngwio.o pngwrite.o \
