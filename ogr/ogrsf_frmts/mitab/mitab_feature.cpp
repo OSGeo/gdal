@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_feature.cpp,v 1.52 2004/10/11 20:18:27 dmorissette Exp $
+ * $Id: mitab_feature.cpp,v 1.53 2004/10/19 14:21:11 jlacroix Exp $
  *
  * Name:     mitab_feature.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log: mitab_feature.cpp,v $
+ * Revision 1.53  2004/10/19 14:21:11  jlacroix
+ * Support pen width bigger than 7 with GetStyleString. (Bug 683)
+ *
  * Revision 1.52  2004/10/11 20:18:27  dmorissette
  * Do not output a BG color in style string for transparent brushes (bug 693)
  *
@@ -6351,17 +6354,35 @@ const char *ITABFeaturePen::GetPenStyleString()
         nOGRStyle = 0;
         break;
     }
-    
+
     if (strlen(szPattern) != 0)
-      pszStyle =CPLSPrintf("PEN(w:%dpx,c:#%6.6x,id:\"mapinfo-pen-%d."
-                           "ogr-pen-%d\",p:\"%spx\")",
-                           GetPenWidthPixel(),
-                           m_sPenDef.rgbColor,GetPenPattern(),nOGRStyle,
-                           szPattern);
+    {
+      if(m_sPenDef.nPointWidth > 0)
+        pszStyle =CPLSPrintf("PEN(w:%dpt,c:#%6.6x,id:\"mapinfo-pen-%d."
+                             "ogr-pen-%d\",p:\"%spx\")",
+                             ((int)GetPenWidthPoint()),
+                             m_sPenDef.rgbColor,GetPenPattern(),nOGRStyle,
+                             szPattern);
+      else
+        pszStyle =CPLSPrintf("PEN(w:%dpx,c:#%6.6x,id:\"mapinfo-pen-%d."
+                             "ogr-pen-%d\",p:\"%spx\")",
+                             GetPenWidthPixel(),
+                             m_sPenDef.rgbColor,GetPenPattern(),nOGRStyle,
+                             szPattern);
+    }
     else
-      pszStyle =CPLSPrintf("PEN(w:%dpx,c:#%6.6x,id:\"mapinfo-pen-%d.ogr-pen-%d\")",
-                           GetPenWidthPixel(),
-                           m_sPenDef.rgbColor,GetPenPattern(),nOGRStyle);
+    {
+      if(m_sPenDef.nPointWidth > 0)
+        pszStyle =CPLSPrintf("PEN(w:%dpt,c:#%6.6x,id:\""
+                             "mapinfo-pen-%d.ogr-pen-%d\")",
+                             ((int)GetPenWidthPoint()),
+                             m_sPenDef.rgbColor,GetPenPattern(),nOGRStyle);
+      else
+        pszStyle =CPLSPrintf("PEN(w:%dpx,c:#%6.6x,id:\""
+                             "mapinfo-pen-%d.ogr-pen-%d\")",
+                             GetPenWidthPixel(),
+                             m_sPenDef.rgbColor,GetPenPattern(),nOGRStyle);
+    }
 
     return pszStyle;
 }
