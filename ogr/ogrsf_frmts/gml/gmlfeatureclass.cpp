@@ -28,6 +28,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.5  2003/09/11 20:01:21  warmerda
+ * removed unused variable
+ *
  * Revision 1.4  2003/05/21 03:48:35  warmerda
  * Expand tabs
  *
@@ -365,7 +368,7 @@ int GMLFeatureClass::InitializeFromXML( CPLXMLNode *psRoot )
 CPLXMLNode *GMLFeatureClass::SerializeToXML()
 
 {
-    CPLXMLNode  *psRoot, *psName;
+    CPLXMLNode  *psRoot;
     int         iProperty;
 
 /* -------------------------------------------------------------------- */
