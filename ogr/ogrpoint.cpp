@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.25  2004/01/16 21:20:00  warmerda
+ * Added EMPTY support
+ *
  * Revision 1.24  2003/08/27 15:40:37  warmerda
  * added support for generating DB2 V7.2 compatible WKB
  *
@@ -385,6 +388,30 @@ OGRErr OGRPoint::importFromWkt( char ** ppszInput )
 
     if( !EQUAL(szToken,"POINT") )
         return OGRERR_CORRUPT_DATA;
+
+/* -------------------------------------------------------------------- */
+/*      Check for EMPTY ... but treat like a point at 0,0.              */
+/* -------------------------------------------------------------------- */
+    const char *pszPreScan;
+
+    pszPreScan = OGRWktReadToken( pszInput, szToken );
+    if( EQUAL(szToken,",") )
+        return OGRERR_CORRUPT_DATA;
+
+    pszPreScan = OGRWktReadToken( pszPreScan, szToken );
+    if( EQUAL(szToken,"EMPTY") )
+    {
+        pszInput = OGRWktReadToken( pszPreScan, szToken );
+        pszInput = OGRWktReadToken( pszInput, szToken );
+        
+        if( !EQUAL(szToken,")") )
+            return OGRERR_CORRUPT_DATA;
+        else
+        {
+            empty();
+            return OGRERR_NONE;
+        }
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Read the point list which should consist of exactly one point.  */

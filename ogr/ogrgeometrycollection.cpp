@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.24  2004/01/16 21:20:00  warmerda
+ * Added EMPTY support
+ *
  * Revision 1.23  2003/08/27 15:40:37  warmerda
  * added support for generating DB2 V7.2 compatible WKB
  *
@@ -638,6 +641,22 @@ OGRErr OGRGeometryCollection::importFromWkt( char ** ppszInput )
     if( szToken[0] != '(' )
         return OGRERR_CORRUPT_DATA;
 
+/* -------------------------------------------------------------------- */
+/*      If the next token is EMPTY, then verify that we have proper     */
+/*      EMPTY format will a trailing closing bracket.                   */
+/* -------------------------------------------------------------------- */
+    OGRWktReadToken( pszInput, szToken );
+    if( EQUAL(szToken,"EMPTY") )
+    {
+        pszInput = OGRWktReadToken( pszInput, szToken );
+        pszInput = OGRWktReadToken( pszInput, szToken );
+        
+        if( !EQUAL(szToken,")") )
+            return OGRERR_CORRUPT_DATA;
+        else
+            return OGRERR_NONE;
+    }
+
 /* ==================================================================== */
 /*      Read each subgeometry in turn.                                  */
 /* ==================================================================== */
@@ -645,7 +664,7 @@ OGRErr OGRGeometryCollection::importFromWkt( char ** ppszInput )
     {
         OGRGeometry *poGeom = NULL;
         OGRErr      eErr;
-    
+
         eErr = OGRGeometryFactory::createFromWkt( (char **) &pszInput,
                                                   NULL, &poGeom );
         if( eErr != OGRERR_NONE )
@@ -685,6 +704,12 @@ OGRErr OGRGeometryCollection::exportToWkt( char ** ppszDstText )
     char        **papszGeoms;
     int         iGeom, nCumulativeLength = 0;
     OGRErr      eErr;
+
+    if( getNumGeometries() == 0 )
+    {
+        *ppszDstText = CPLStrdup("GEOMETRYCOLLECTION(EMPTY)");
+        return OGRERR_NONE;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Build a list of strings containing the stuff for each Geom.     */

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.40  2004/01/16 21:20:00  warmerda
+ * Added EMPTY support
+ *
  * Revision 1.39  2003/08/27 15:40:37  warmerda
  * added support for generating DB2 V7.2 compatible WKB
  *
@@ -829,6 +832,27 @@ OGRErr OGRLineString::importFromWkt( char ** ppszInput )
         return OGRERR_CORRUPT_DATA;
 
 /* -------------------------------------------------------------------- */
+/*      Check for EMPTY ... but treat like a point at 0,0.              */
+/* -------------------------------------------------------------------- */
+    const char *pszPreScan;
+
+    pszPreScan = OGRWktReadToken( pszInput, szToken );
+    if( !EQUAL(szToken,"(") )
+        return OGRERR_CORRUPT_DATA;
+    
+    pszPreScan = OGRWktReadToken( pszPreScan, szToken );
+    if( EQUAL(szToken,"EMPTY") )
+    {
+        pszInput = OGRWktReadToken( pszPreScan, szToken );
+        pszInput = OGRWktReadToken( pszInput, szToken );
+        
+        if( !EQUAL(szToken,")") )
+            return OGRERR_CORRUPT_DATA;
+        else
+            return OGRERR_NONE;
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Read the point list.                                            */
 /* -------------------------------------------------------------------- */
     int                 nMaxPoint = 0;
@@ -858,6 +882,18 @@ OGRErr OGRLineString::exportToWkt( char ** ppszDstText )
     int         nMaxString = nPointCount * 20 * 3 + 20;
     int         nRetLen = 0;
 
+/* -------------------------------------------------------------------- */
+/*      Handle special empty case.                                      */
+/* -------------------------------------------------------------------- */
+    if( nPointCount == 0 )
+    {
+        *ppszDstText = CPLStrdup("LINESTRING(EMPTY)");
+        return OGRERR_NONE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      General case.                                                   */
+/* -------------------------------------------------------------------- */
     *ppszDstText = (char *) VSIMalloc( nMaxString );
     if( *ppszDstText == NULL )
         return OGRERR_NOT_ENOUGH_MEMORY;
