@@ -66,10 +66,10 @@ the maintainer.  The CVS tree can be
 <a href="http://www.remotesensing.org/cgi-bin/cvsweb.cgi/osrs/gdal/">browsed
 on the web</a>, and <a href="ftp://ftp.remotesensing.org/gdal/daily">daily
 CVS snapshots</a> are available.  The last full source release is available as
-<a href="ftp://ftp.remotesensing.org/pub/gdal/gdal119.zip">gdal119.zip</a>
+<a href="ftp://ftp.remotesensing.org/pub/gdal/gdal120.zip">gdal120.zip</a>
 or 
-<a href="ftp://ftp.remotesensing.org/pub/gdal/gdal-1.1.9.tar.gz">
-gdal-1.1.9.tar.gz</a>.  <a href="gdal_building.html">Build instructions</a>
+<a href="ftp://ftp.remotesensing.org/pub/gdal/gdal-1.2.0.tar.gz">
+gdal-1.2.0.tar.gz</a>.  <a href="gdal_building.html">Build instructions</a>
 are also available.<p>
 
 <h2>Key Documentation Entry Points</h2>
