@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.115  2005/04/05 20:42:35  fwarmerdam
+ * error handler is CPL_STDCALL
+ *
  * Revision 1.114  2005/04/05 19:57:58  fwarmerdam
  * added STDCALL on PyProgressProxy
  *
@@ -2717,7 +2720,8 @@ static PyErrorHandlerData *psPyHandlerStack = NULL;
 /*                        PyErrorHandlerProxy()                         */
 /************************************************************************/
 
-void PyErrorHandlerProxy( CPLErr eErrType, int nErrorCode, const char *pszMsg )
+void CPL_STDCALL
+PyErrorHandlerProxy( CPLErr eErrType, int nErrorCode, const char *pszMsg )
 
 {
     PyObject *psArgs;
