@@ -17,8 +17,7 @@ LIBS	:=	$(OGR_LIB) $(CPL_LIB) $(LIBS)
 
 FRMTS_LIB = 	ogrsf_frmts/ogrsf_frmts.a
 
-LINCLUDE =	-Iogrsf_frmts -I. -I$(GDAL_ROOT)/port \
-		-I$(GDAL_ROOT)/frmts/gtiff/libgeotiff
+LINCLUDE =	-Iogrsf_frmts -I. -I$(GDAL_ROOT)/port 
 
 default:	$(OGR_LIB)
 
@@ -50,7 +49,7 @@ sdts2mi:	sdts2mi.o $(OGR_LIB) $(FRMTS_LIB)
 	$(CXX) $(LNK_FLAGS) sdts2mi.o $(FRMTS_LIB) $(LIBS) -o sdts2mi
 
 testepsg:	testepsg.o $(OGR_LIB) $(FRMTS_LIB)
-	$(CXX) $(LNK_FLAGS) testepsg.o $(GDAL_LIBS) $(FRMTS_LIB) $(LIBS) -o testepsg
+	$(CXX) $(LNK_FLAGS) testepsg.o $(FRMTS_LIB) $(LIBS) -o testepsg
 
 $(FRMTS_LIB):
 	(cd ogrsf_frmts; $(MAKE))
