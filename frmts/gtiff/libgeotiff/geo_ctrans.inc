@@ -38,15 +38,18 @@ ValuePair(CT_Sinusoidal,	24)
 ValuePair(CT_VanDerGrinten,	25)
 ValuePair(CT_NewZealandMapGrid,	26)
 /* Added for 1.0 */
-ValuePair(CT_TransvMercator_SouthOriented, 27)
+ValuePair(CT_TransvMercator_SouthOrientated, 27)
 
 
 /* Aliases */
 
-ValuePair(CT_SouthOrientedGaussConformal,CT_TransvMercator_SouthOriented)
+ValuePair(CT_SouthOrientedGaussConformal,CT_TransvMercator_SouthOrientated)
 ValuePair(CT_AlaskaConformal,	CT_TransvMercator_Modified_Alaska)
 ValuePair(CT_TransvEquidistCylindrical,	CT_CassiniSoldner)
 ValuePair(CT_ObliqueMercator_Hotine,	CT_ObliqueMercator)
 ValuePair(CT_SwissObliqueCylindrical,	CT_ObliqueMercator_Rosenmund)
 ValuePair(CT_GaussBoaga,	CT_TransverseMercator)
 ValuePair(CT_GaussKruger,	CT_TransverseMercator)
+ValuePair(CT_TransvMercator_SouthOriented, CT_TransvMercator_SouthOrientated)
+
+

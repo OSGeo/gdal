@@ -47,6 +47,15 @@ ValuePair(GCSE_OSU91A,	4033)
 ValuePair(GCSE_Clarke1880,	4034)
 ValuePair(GCSE_Sphere,	4035)
 
+/* New GCS */
+ValuePair(GCS_Greek,4120)
+ValuePair(GCS_GGRS87,4121)
+ValuePair(GCS_KKJ,4123)
+ValuePair(GCS_RT90,4124)
+ValuePair(GCS_EST92,4133)
+ValuePair(GCS_Dealul_Piscului_1970,4317)
+ValuePair(GCS_Greek_Athens,4815)
+
 /* Standard GCS */
 ValuePair(GCS_Adindan,	4201)
 ValuePair(GCS_AGD66,	4202)

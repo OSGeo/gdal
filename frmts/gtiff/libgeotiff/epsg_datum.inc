@@ -10,6 +10,9 @@
 #include old_datum.inc
 #endif /* OLD Codes */
 
+/* New datums */
+ValuePair(Datum_Dealul_Piscului_1970,6317)
+
 /* Datums for which only the ellipsoid is known */
 ValuePair(DatumE_Airy1830,	6001)
 ValuePair(DatumE_AiryModified1849,	6002)

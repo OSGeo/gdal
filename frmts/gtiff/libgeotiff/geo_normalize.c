@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: geo_normalize.c,v 1.22 2000/10/13 14:30:57 warmerda Exp $
+ * $Id: geo_normalize.c,v 1.28 2002/01/03 21:28:25 warmerda Exp $
  *
  * Project:  libgeotiff
  * Purpose:  Code to normalize PCS and other composite codes in a GeoTIFF file.
@@ -28,6 +28,24 @@
  ******************************************************************************
  *
  * $Log: geo_normalize.c,v $
+ * Revision 1.28  2002/01/03 21:28:25  warmerda
+ * call CSVDeaccess(NULL) at end of GTIFPrintDefn()
+ *
+ * Revision 1.27  2001/04/17 13:41:10  warmerda
+ * fix memory leaks in GTIFPrintDefn()
+ *
+ * Revision 1.26  2001/04/17 13:23:07  warmerda
+ * added support for reading custom ellipsoid definitions
+ *
+ * Revision 1.25  2001/03/05 04:55:26  warmerda
+ * CVSDeaccess at end of GTIFGetDefn to avoid file leak
+ *
+ * Revision 1.24  2001/03/05 03:26:29  warmerda
+ * fixed memory leaks in GTIFPrintDefn()
+ *
+ * Revision 1.23  2001/02/23 13:49:48  warmerda
+ * Fixed GTIFPrintDefn() to use fprintf( fp ), instead of printf().
+ *
  * Revision 1.22  2000/10/13 14:30:57  warmerda
  * fixed LCC parm order when parameters read directly from geotiff file
  *
@@ -119,8 +137,7 @@
  */
  
 #include "cpl_csv.h"
-#include "geotiff.h"
-#include "xtiffio.h"
+#include "geo_tiffp.h"
 #include "geovalues.h"
 #include "geo_normalize.h"
 
@@ -1630,6 +1647,7 @@ int GTIFGetDefn( GTIF * psGTIF, GTIFDefn * psDefn )
 {
     int		i;
     short	nGeogUOMLinear;
+    double	dfInvFlattening;
     
 /* -------------------------------------------------------------------- */
 /*      Initially we default all the information we can.                */
@@ -1780,6 +1798,22 @@ int GTIFGetDefn( GTIF * psGTIF, GTIFDefn * psDefn )
         GTIFGetEllipsoidInfo( psDefn->Ellipsoid, NULL,
                               &(psDefn->SemiMajor), &(psDefn->SemiMinor) );
     }
+
+/* -------------------------------------------------------------------- */
+/*      Check for overridden ellipsoid parameters.  It would be nice    */
+/*      to warn if they conflict with provided information, but for     */
+/*      now we just override.                                           */
+/* -------------------------------------------------------------------- */
+    GTIFKeyGet(psGTIF, GeogSemiMajorAxisGeoKey, &(psDefn->SemiMajor), 0, 1 );
+    GTIFKeyGet(psGTIF, GeogSemiMinorAxisGeoKey, &(psDefn->SemiMinor), 0, 1 );
+    
+    if( GTIFKeyGet(psGTIF, GeogInvFlatteningGeoKey, &dfInvFlattening, 
+                   0, 1 ) == 1 )
+    {
+        if( dfInvFlattening != 0.0 )
+            psDefn->SemiMinor = 
+                psDefn->SemiMajor * (1 - 1.0/dfInvFlattening);
+    }
     
 /* -------------------------------------------------------------------- */
 /*      Get the prime meridian info.                                    */
@@ -1859,6 +1893,13 @@ int GTIFGetDefn( GTIF * psGTIF, GTIFDefn * psDefn )
             psDefn->ProjParm[6] = 10000000.0;
     }
 
+/* -------------------------------------------------------------------- */
+/*      For now we forceable deaccess all CSV files to reduce the       */
+/*      chance of "leakage".  Really, this should be application        */
+/*      controlled.                                                     */
+/* -------------------------------------------------------------------- */
+    CSVDeaccess( NULL );
+
     return TRUE;
 }
 
@@ -1920,10 +1961,14 @@ void GTIFPrintDefn( GTIFDefn * psDefn, FILE * fp )
 /* -------------------------------------------------------------------- */
     if( psDefn->PCS != KvUserDefined )
     {
-        char	*pszPCSName = "name unknown";
+        char	*pszPCSName = NULL;
     
         GTIFGetPCSInfo( psDefn->PCS, &pszPCSName, NULL, NULL, NULL, NULL );
+        if( pszPCSName == NULL )
+            pszPCSName = CPLStrdup("name unknown");
+        
         fprintf( fp, "PCS = %d (%s)\n", psDefn->PCS, pszPCSName );
+        CPLFree( pszPCSName );
     }
 
 /* -------------------------------------------------------------------- */
@@ -1931,11 +1976,16 @@ void GTIFPrintDefn( GTIFDefn * psDefn, FILE * fp )
 /* -------------------------------------------------------------------- */
     if( psDefn->ProjCode != KvUserDefined )
     {
-        char	*pszTRFName = "";
+        char	*pszTRFName = NULL;
 
         GTIFGetProjTRFInfo( psDefn->ProjCode, &pszTRFName, NULL, NULL );
+        if( pszTRFName == NULL )
+            pszTRFName = CPLStrdup("");
+                
         fprintf( fp, "Projection = %d (%s)\n",
                  psDefn->ProjCode, pszTRFName );
+
+        CPLFree( pszTRFName );
     }
 
 /* -------------------------------------------------------------------- */
@@ -1950,8 +2000,8 @@ void GTIFPrintDefn( GTIFDefn * psDefn, FILE * fp )
         if( pszName == NULL )
             pszName = "(unknown)";
             
-        printf( "Projection Method: %s\n", pszName );
-                
+        fprintf( fp, "Projection Method: %s\n", pszName );
+
         for( i = 0; i < psDefn->nParms; i++ )
         {
             if( psDefn->ProjParmId[i] == 0 )
@@ -1972,14 +2022,14 @@ void GTIFPrintDefn( GTIFDefn * psDefn, FILE * fp )
                 else
                     pszAxisName = "?";
                 
-                printf( "   %s: %f (%s)\n",
-                        pszName, psDefn->ProjParm[i],
-                        GTIFDecToDMS( psDefn->ProjParm[i], pszAxisName, 2 ) );
+                fprintf( fp, "   %s: %f (%s)\n",
+                         pszName, psDefn->ProjParm[i],
+                         GTIFDecToDMS( psDefn->ProjParm[i], pszAxisName, 2 ) );
             }
             else if( i == 4 )
-                printf( "   %s: %f\n", pszName, psDefn->ProjParm[i] );
+                fprintf( fp, "   %s: %f\n", pszName, psDefn->ProjParm[i] );
             else
-                printf( "   %s: %f m\n", pszName, psDefn->ProjParm[i] );
+                fprintf( fp, "   %s: %f m\n", pszName, psDefn->ProjParm[i] );
         }
     }
 
@@ -1988,10 +2038,14 @@ void GTIFPrintDefn( GTIFDefn * psDefn, FILE * fp )
 /* -------------------------------------------------------------------- */
     if( psDefn->GCS != KvUserDefined )
     {
-        char	*pszName = "(unknown)";
+        char	*pszName = NULL;
 
         GTIFGetGCSInfo( psDefn->GCS, &pszName, NULL, NULL, NULL );
-        printf( "GCS: %d/%s\n", psDefn->GCS, pszName );
+        if( pszName == NULL )
+            pszName = CPLStrdup("(unknown)");
+        
+        fprintf( fp, "GCS: %d/%s\n", psDefn->GCS, pszName );
+        CPLFree( pszName );
     }
 
 /* -------------------------------------------------------------------- */
@@ -1999,10 +2053,14 @@ void GTIFPrintDefn( GTIFDefn * psDefn, FILE * fp )
 /* -------------------------------------------------------------------- */
     if( psDefn->Datum != KvUserDefined )
     {
-        char	*pszName = "(unknown)";
+        char	*pszName = NULL;
 
         GTIFGetDatumInfo( psDefn->Datum, &pszName, NULL );
-        printf( "Datum: %d/%s\n", psDefn->Datum, pszName );
+        if( pszName == NULL )
+            pszName = CPLStrdup("(unknown)");
+        
+        fprintf( fp, "Datum: %d/%s\n", psDefn->Datum, pszName );
+        CPLFree( pszName );
     }
 
 /* -------------------------------------------------------------------- */
@@ -2010,12 +2068,16 @@ void GTIFPrintDefn( GTIFDefn * psDefn, FILE * fp )
 /* -------------------------------------------------------------------- */
     if( psDefn->Ellipsoid != KvUserDefined )
     {
-        char	*pszName = "(unknown)";
+        char	*pszName = NULL;
 
         GTIFGetEllipsoidInfo( psDefn->Ellipsoid, &pszName, NULL, NULL );
-        printf( "Ellipsoid: %d/%s (%.2f,%.2f)\n",
-                psDefn->Ellipsoid, pszName,
-                psDefn->SemiMajor, psDefn->SemiMinor );
+        if( pszName == NULL )
+            pszName = CPLStrdup("(unknown)");
+        
+        fprintf( fp, "Ellipsoid: %d/%s (%.2f,%.2f)\n",
+                 psDefn->Ellipsoid, pszName,
+                 psDefn->SemiMajor, psDefn->SemiMinor );
+        CPLFree( pszName );
     }
     
 /* -------------------------------------------------------------------- */
@@ -2026,10 +2088,15 @@ void GTIFPrintDefn( GTIFDefn * psDefn, FILE * fp )
         char	*pszName = NULL;
 
         GTIFGetPMInfo( psDefn->PM, &pszName, NULL );
-        printf( "Prime Meridian: %d/%s (%f/%s)\n",
-                psDefn->PM, pszName,
-                psDefn->PMLongToGreenwich,
-                GTIFDecToDMS( psDefn->PMLongToGreenwich, "Long", 2 ) );
+
+        if( pszName == NULL )
+            pszName = CPLStrdup("(unknown)");
+        
+        fprintf( fp, "Prime Meridian: %d/%s (%f/%s)\n",
+                 psDefn->PM, pszName,
+                 psDefn->PMLongToGreenwich,
+                 GTIFDecToDMS( psDefn->PMLongToGreenwich, "Long", 2 ) );
+        CPLFree( pszName );
     }
 
 /* -------------------------------------------------------------------- */
@@ -2041,8 +2108,13 @@ void GTIFPrintDefn( GTIFDefn * psDefn, FILE * fp )
         char	*pszName = NULL;
 
         GTIFGetUOMLengthInfo( psDefn->UOMLength, &pszName, NULL );
-        printf( "Projection Linear Units: %d/%s (%fm)\n",
-                psDefn->UOMLength, pszName, psDefn->UOMLengthInMeters );
+        if( pszName == NULL )
+            pszName = CPLStrdup( "(unknown)" );
+        
+        fprintf( fp, "Projection Linear Units: %d/%s (%fm)\n",
+                 psDefn->UOMLength, pszName, psDefn->UOMLengthInMeters );
+        CPLFree( pszName );
     }
-}
 
+    CSVDeaccess( NULL );
+}
