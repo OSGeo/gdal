@@ -112,6 +112,7 @@ MRSID_HOME =	@MRSID_HOME@
 ifneq ($(MRSID_HOME),)
 MRSID_INCLUDE =	-I$(MRSID_HOME)/include
 MRSID_LIB =	-L$(MRSID_HOME)/bin/lib -lMrSIDDecode -llt_xTrans
+LIBS	:=	$(MRSID_LIB) $(LIBS) 
 endif
 
 #
@@ -171,7 +172,7 @@ GDAL_OBJ	=	$(GDAL_ROOT)/frmts/o/*.o \
 			$(GDAL_ROOT)/ogr/ogr_api.o
 
 ifeq ($(OGR_ENABLED),yes)
-GDAL_LIBS := $(OGRFRMTS_LIB) $(PG_LIB) $(OCI_LIB) $(MRSID_LIB) $(GDAL_LIBS)
+GDAL_LIBS := $(OGRFRMTS_LIB) $(PG_LIB) $(OCI_LIB) $(GDAL_LIBS)
 GDALA_DEP := $(GDALA_DEP) $(OGRFRMTS_LIB)
 
 GDAL_OBJ := $(GDAL_OBJ) $(GDAL_ROOT)/ogr/ogrsf_frmts/generic/ogrregisterall.o \
