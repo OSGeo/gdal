@@ -9,6 +9,13 @@
 
  *
  * $Log$
+ * Revision 1.4  2005/02/18 16:18:27  kruland
+ * Added %feature("compactdefaultargs") to fix problem with ImportFromPCI,
+ * ImportFromUSGS and the fact that %typemap (char**ignorechange) has no
+ * %typecheck.
+ *
+ * Fixed bug in new_CoordinateTransformation().  It wasn't returning a value.
+ *
  * Revision 1.3  2005/02/17 21:12:06  kruland
  * More complete implementation of SpatialReference and CoordinateTransformation.
  * Satisfies the osr gdalautotests with 1 exception.
@@ -130,6 +137,8 @@ typedef double * double_15;
 typedef double * double_17;
 
 %}
+
+%feature("compactdefaultargs");
 
 %import gdal_typemaps.i
 
@@ -505,6 +514,7 @@ public:
     if (obj == 0 ) {
       throw "Failed to create coordinate transformation";
     }
+    return obj;
   }
 
   ~CoordinateTransformation() {
