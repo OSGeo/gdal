@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2002/08/14 23:27:25  warmerda
+ * Fixed reading of Z coordinate for SHPT_ARCZ type.
+ *
  * Revision 1.19  2002/04/17 21:49:02  warmerda
  * Fixed a bug writing arcs with Z coordinates.
  *
@@ -169,7 +172,7 @@ OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape )
         OGRLineString *poOGRLine = new OGRLineString();
 
         poOGRLine->setPoints( psShape->nVertices,
-                              psShape->padfX, psShape->padfY );
+                              psShape->padfX, psShape->padfY, psShape->padfZ );
         
         poOGR = poOGRLine;
     }
