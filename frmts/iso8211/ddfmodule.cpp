@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2004/02/18 14:09:42  warmerda
+ * doc fixups
+ *
  * Revision 1.14  2003/07/03 15:38:46  warmerda
  * some write capabilities added
  *
@@ -196,6 +199,8 @@ void DDFModule::Close()
  * read, and all the field and subfield definitions will be available.
  *
  * @param pszFilename   The name of the file to open.
+ * @param bFailQuietly If FALSE a CPL Error is issued for non-8211 files, 
+ * otherwise quietly return NULL.
  *
  * @return FALSE if the open fails or TRUE if it succeeds.  Errors messages
  * are issued internally with CPLError().

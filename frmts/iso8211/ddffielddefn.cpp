@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2004/02/18 14:10:07  warmerda
+ * doc fixups
+ *
  * Revision 1.20  2004/01/06 18:59:18  warmerda
  * make enum identifiers more unique
  *
@@ -810,7 +813,7 @@ int DDFFieldDefn::ApplyFormats()
 /**
  * Find a subfield definition by it's mnemonic tag.  
  *
- * @param The name of the field.
+ * @param pszMnemonic The name of the field.
  *
  * @return The subfield pointer, or NULL if there isn't any such subfield.
  */
@@ -837,7 +840,7 @@ DDFSubfieldDefn *DDFFieldDefn::FindSubfieldDefn( const char * pszMnemonic )
 /**
  * Fetch a subfield by index.
  *
- * @param The index subfield index. (Between 0 and GetSubfieldCount()-1)
+ * @param i The index subfield index. (Between 0 and GetSubfieldCount()-1)
  *
  * @return The subfield pointer, or NULL if the index is out of range.
  */
