@@ -29,8 +29,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2003/09/19 17:52:21  warmerda
+ * removed planned -gcp option
+ *
  * Revision 1.1  2003/09/19 17:40:46  warmerda
- * New
+ * Renamed from gdalwarptest.cpp to gdalwarp.cpp, replacing old gdalwarp. 
  *
  * Revision 1.12  2003/07/04 11:53:14  dron
  * Added `-rcs' option to select bicubic B-spline resampling.
@@ -97,7 +100,6 @@ static void Usage()
         "Usage: gdalwarp [--version] [--formats]\n"
         "    [-s_srs srs_def] [-t_srs srs_def] [-order n] [-et err_threshold]\n"
         "    [-te xmin ymin xmax ymax] [-tr xres yres] [-ts width height]\n"
-        "    [-gcp pixel line easting northing]*\n" 
         "    [-wo \"NAME=VALUE\"] [-ot Byte/Int16/...] [-wt Byte/Int16]\n"
         "    [-rn] [-rb] [-rc] [-rcs] [-srcnodata value [value...]]\n" 
         "    [-wm memory_in_mb] [-multi] [-q]\n"
@@ -530,6 +532,7 @@ GDALWarpCreateOutput( GDALDatasetH hSrcDS, const char *pszFilename,
                       const char *pszFormat, const char *pszSourceSRS, 
                       const char *pszTargetSRS, int nOrder,
                       char **papszCreateOptions, GDALDataType eDT )
+
 
 {
     GDALDriverH hDriver;
