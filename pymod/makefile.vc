@@ -11,9 +11,12 @@ EXTRAFLAGS =	-I$(PYDIR)/include
 default:	$(PYGDAL_DLL)
 
 $(PYGDAL_DLL):	$(OBJ)
-	link /dll /def:_gdal.def $(OBJ) $(GDALLIB) /LIBPATH:$(PYDIR)/libs \
+	link /dll /def:_gdal.def $(OBJ) ../gdal_i.lib /LIBPATH:$(PYDIR)/libs \
 		/out:$(PYGDAL_DLL)
 	
 clean:
 	del *.obj *.dll *.lib
 
+install:	$(PYGDAL_DLL)
+	copy *.py $(PY_INST_DIR)
+	copy $(PYGDAL_DLL) $(PY_INST_DIR)
