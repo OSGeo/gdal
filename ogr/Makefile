@@ -1,7 +1,7 @@
 
 MSDASDK =	F:\MSDASDK
 
-CFLAGS	=	-I$(MSDASDK)\include\oledb
+CFLAGS	=	/Zi -I$(MSDASDK)\include\oledb
 
 OLE_LIBS =	$(MSDASDK)\lib\oledb\oledb.lib ole32.lib oleaut32.lib 
 
@@ -51,7 +51,7 @@ oledbsuprowset.obj:	oledbsuprowset.cpp
 	$(CC) /c $(CFLAGS) oledbsuprowset.cpp
 
 sfdump.exe:	sfdump.obj $(OBJ_OLEDB) $(OBJ_OGR) 
-	cl sfdump.obj $(OBJ_OLEDB) $(OBJ_OGR) $(OLE_LIBS)
+	cl /Zi sfdump.obj $(OBJ_OLEDB) $(OBJ_OGR) $(OLE_LIBS)
 
 test1.exe:	test1.obj $(OBJ_OGR) 
 	cl test1.obj $(OBJ_OGR) $(LIBS)
