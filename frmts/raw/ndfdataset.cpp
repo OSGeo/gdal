@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2005/03/05 17:07:30  fwarmerdam
+ * Fixed up an off-by-half-a-pixel error in geotransform.
+ *
  * Revision 1.1  2005/01/06 20:27:22  fwarmerdam
  * New
  *
@@ -290,12 +293,16 @@ GDALDataset *NDFDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         poDS->adfGeoTransform[0] = atof(papszUL[2]);
         poDS->adfGeoTransform[1] = 
-            (atof(papszLR[2]) - atof(papszUL[2])) / poDS->nRasterXSize;
+            (atof(papszLR[2]) - atof(papszUL[2])) / (poDS->nRasterXSize-1);
         poDS->adfGeoTransform[2] = 0;
         poDS->adfGeoTransform[3] = atof(papszUL[3]);
         poDS->adfGeoTransform[4] = 0.0;
         poDS->adfGeoTransform[5] = 
-            (atof(papszLR[3]) - atof(papszUL[3])) / poDS->nRasterYSize;
+            (atof(papszLR[3]) - atof(papszUL[3])) / (poDS->nRasterYSize-1);
+
+        // Move origin up-left half a pixel.
+        poDS->adfGeoTransform[0] -=  poDS->adfGeoTransform[1] * 0.5;
+        poDS->adfGeoTransform[3] -=  poDS->adfGeoTransform[5] * 0.5;
     }
 
     CSLDestroy( papszUL );
