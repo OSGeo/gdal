@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2002/01/21 20:36:35  warmerda
+ * Don't mention warning about not supporting update if open fails.
+ *
  * Revision 1.4  2001/11/21 14:35:25  warmerda
  * dont do open if update requested
  *
@@ -75,18 +78,19 @@ OGRDataSource *OGRS57Driver::Open( const char * pszFilename, int bUpdate )
 {
     OGRS57DataSource    *poDS;
 
-    if( bUpdate )
-    {
-        CPLError( CE_Failure, CPLE_OpenFailed,
-                  "S57 Driver doesn't support update." );
-        return NULL;
-    }
-
     poDS = new OGRS57DataSource;
     if( !poDS->Open( pszFilename, TRUE ) )
     {
         delete poDS;
         poDS = NULL;
+    }
+
+    if( poDS && bUpdate )
+    {
+        delete poDS;
+        CPLError( CE_Failure, CPLE_OpenFailed,
+                  "S57 Driver doesn't support update." );
+        return NULL;
     }
 
     return poDS;
