@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.6  1999/06/26 02:46:11  warmerda
+ * Fixed initialization of debug messages.
+ *
  * Revision 1.5  1999/05/20 14:59:05  warmerda
  * added CPLDebug()
  *
@@ -160,7 +163,7 @@ void CPLDebug( const char * pszCategory, const char * pszFormat, ... )
     if( pszMessage == NULL )
         return;
         
-    strcat( pszMessage, pszCategory );
+    strcpy( pszMessage, pszCategory );
     strcat( pszMessage, ": " );
     
     va_start(args, pszFormat);
