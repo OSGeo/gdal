@@ -1,3 +1,78 @@
+GDAL 1.1.9 - Overview of Changes
+--------------------------------
+
+ o MrSID Driver: New for 1.1.9, read-only, includes good coordiante system
+   support, and should be high performance. 
+
+ o ECW Driver: Now reads coordinate system information (but doesn't write). 
+
+ o HDF Driver: Added support for Hyperion Level 1, Aster Level 1A/1B/2, MODIS 
+   Level 1B(earth-view)/2/3, SeaWIFS Level 3. 
+
+ o L1B Driver: Now reads GCPs for georeferencing.
+
+ o NITF Driver: Support for reading RPC, variety of bugs fixes for reading and
+   writing.  Also some general RPC infrastructure added to GDAL.
+
+ o JP2KAK Driver: Can be used with Kakadu 4.0.2 now.  Compatibility fixes
+   for internal geotiff to improve compatibility with Mapping Science tools.
+   Added palette support. 
+
+ o HFA (Imagine) Driver: Added read/write support for color table opacity.
+   Added write support for large (spill) files. 
+
+ o "core" directory renamed to "gcore" to avoid confusing configure script.
+
+ o Added support for GDAL_DATA environment variable to point to GDAL support
+   data files (those in gdal/data directory).
+
+ o Added GDALDataset::RasterIO() for more efficient reading of multiple bands
+   in one request (in some cases anyways). 
+
+ o High performance warp api considered to be complete now, and substantially
+   optimized.
+
+ o gdal_merge.py: supported multiple bands, copying PCT. 
+
+
+OGR 1.1.9 - Overview of Changes
+-------------------------------
+
+ o Oracle Spatial: New generic read/write, and implemented highly optimized
+   loading support. 
+
+ o Tiger driver: added support for TIGER/Line 2002 product.
+
+ o GML driver:  now supports Xerces versions from 1.6 up to 2.3.  Lots of
+   bugs fixes and improvements.   GML Geometry now in OGR core. 
+
+ o Improved support for translating to and from ESRI WKT, including a complete
+   mapping between EPSG related ESRI datum names and OGR's expected names. 
+
+ o Improved support for alternate prime meridians in coordinate system code.
+
+ o Shapefiles: Can write features with NULL geometry, 
+
+ o DGN: added 3d write support. 
+
+ o Implemented generic attribute indexing support (only used for shapefile
+   at this point).  Use in SQL where clauses and ExecuteSQL(). 
+
+ o WKT MULTIPOINT in/out formatting fixed.
+
+ o Added SynToDisk() method on OGRDataset and OGRLayer. 
+
+ o Implemented "Web Coordinate Transformation Service" (ogr/wcts). 
+
+ o Implemented "in memory" format driver. 
+
+ o C API documented.
+
+
+
+
+ ==============================================================================
+
 GDAL 1.1.8 - Overview of Changes
 --------------------------------
 
