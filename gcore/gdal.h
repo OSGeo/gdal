@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.86  2004/11/05 18:00:04  fwarmerdam
+ * Updated to 1.2.4.0.
+ *
  * Revision 1.85  2004/10/18 17:22:07  fwarmerdam
  * added GCI_Max
  *
@@ -175,13 +178,13 @@
 /*      GDAL Version Information.                                       */
 /* -------------------------------------------------------------------- */
 #ifndef GDAL_VERSION_NUM
-#  define GDAL_VERSION_NUM      1230
+#  define GDAL_VERSION_NUM      1240
 #endif
 #ifndef GDAL_RELEASE_DATE
-#  define GDAL_RELEASE_DATE     20040825
+#  define GDAL_RELEASE_DATE     20041105
 #endif
 #ifndef GDAL_RELEASE_NAME
-#  define GDAL_RELEASE_NAME     "1.2.3.0"
+#  define GDAL_RELEASE_NAME     "1.2.4.0"
 #endif
 
 /* -------------------------------------------------------------------- */
