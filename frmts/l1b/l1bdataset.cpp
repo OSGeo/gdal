@@ -30,6 +30,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.24  2005/02/07 20:19:11  fwarmerdam
+ * Parametrized sampling rates.
+ *
  * Revision 1.23  2005/02/07 19:22:35  fwarmerdam
  * Patched problem in parsing negative lat and long values in GCP handling.
  *
@@ -180,6 +183,9 @@ const char *paszChannelsDesc[] =                            // AVHRR band widths
 };
 
 #define TBM_HEADER_SIZE 122
+
+#define DESIRED_GCPS_PER_LINE 11
+#define DESIRED_LINES_OF_GCPS 20
 
 /************************************************************************/
 /* ==================================================================== */
@@ -641,7 +647,7 @@ void L1BDataset::ProcessRecordHeaders()
 /*      worth of GCPs.  That should give respectible coverage on all    */
 /*      but the longest swaths.                                         */
 /* -------------------------------------------------------------------- */
-    int nTargetLines = 20;
+    int nTargetLines = DESIRED_LINES_OF_GCPS;
     int nLineSkip = GetRasterYSize() / (nTargetLines-1);
     
 /* -------------------------------------------------------------------- */
@@ -681,7 +687,7 @@ void L1BDataset::ProcessRecordHeaders()
 /* -------------------------------------------------------------------- */
         int iGCP;
         int nGCPsOnThisLine = nGCPCount - nOrigGCPs;
-        int nDesiredGCPsPerLine = MIN(11,nGCPsOnThisLine);
+        int nDesiredGCPsPerLine = MIN(DESIRED_GCPS_PER_LINE,nGCPsOnThisLine);
         int nGCPStep = (nGCPsOnThisLine - 1) / (nDesiredGCPsPerLine-1);
 
         if( nGCPStep == 0 )
