@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2004/10/17 04:22:19  fwarmerdam
+ * Slightly improve error message.
+ *
  * Revision 1.7  2004/08/17 21:08:27  warmerda
  * Avoid calling OpenTable() while still processing a transaction to get
  * a list of tables.  As suggested by John Erik Ekberg (cowi.dk).
@@ -173,7 +176,7 @@ int OGRODBCDataSource::Open( const char * pszNewName, int bUpdate,
     if( !oSession.EstablishSession( pszDSN, pszUserid, pszPassword ) )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
-                  "Unable to initialize ODBC connection to DSN %s,\n"
+                  "Unable to initialize ODBC connection to DSN for %s,\n"
                   "%s", 
                   pszNewName+5, oSession.GetLastError() );
         CPLFree( pszDSN );
