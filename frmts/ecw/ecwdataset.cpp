@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.7  2002/07/23 14:05:35  warmerda
+ * Avoid warnings.
+ *
  * Revision 1.6  2002/06/12 21:12:25  warmerda
  * update to metadata based driver info
  *
@@ -52,7 +55,7 @@
 #include "ogr_spatialref.h"
 #include "cpl_string.h"
 #include <NCSECWClient.h>
-#include <NCSEcwCompressClient.h>
+#include <NCSECWCompressClient.h>
 #include <NCSErrors.h>
 
 CPL_CVSID("$Id$");
@@ -165,7 +168,6 @@ CPLErr ECWRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 {
     ECWDataset	*poODS = (ECWDataset *) poDS;
     NCSError     eNCSErr;
-    CPLErr       eErr;
     int          iBand, bDirect;
     GByte        *pabyWorkBuffer = NULL;
 
@@ -364,7 +366,7 @@ static BOOLEAN ECWCompressReadCB( struct NCSEcwCompressClient *psClient,
 
     psCompressInfo = (ECWCompressInfo *) psClient->pClientData;
 
-    for( iBand = 0; iBand < psClient->nInputBands; iBand++ )
+    for( iBand = 0; iBand < (int) psClient->nInputBands; iBand++ )
     {
         GDALRasterBand      *poBand;
 
