@@ -13,7 +13,7 @@ CPPFLAGS	:=	$(GDAL_INCLUDE) $(CPPFLAGS)
 default:	$(OBJ)
 
 clean:
-	rm -f *.o
+	rm -f *.o $(O_OBJ)
 
 nitfdump:	nitfdump.o $(NITFLIB_OBJ)
 	$(CXX) nitfdump.o $(NITFLIB_OBJ) $(GDAL_LIB) -o nitfdump
