@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2003/12/02 16:54:18  warmerda
+ * fixed include paths now that shapelib is gone
+ *
  * Revision 1.4  2003/10/24 13:33:38  warmerda
  * Changed include path again, so it will work on unix and windows.
  *
@@ -42,7 +45,7 @@
  *
  */
 
-#include "shapelib/shapefil.h"
+#include "ogrsf_frmts/shape/shapefil.h"
 #include "gdal.h"
 
 CPL_CVSID("$Id$");
