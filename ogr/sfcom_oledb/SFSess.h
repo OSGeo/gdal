@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2001/11/09 19:07:33  warmerda
+ * added debugging
+ *
  * Revision 1.15  2001/10/22 21:29:24  warmerda
  * added some debugging statements
  *
@@ -111,6 +114,11 @@ class ATL_NO_VTABLE CSFSession :
 public:
 	CSFSession()
 	{
+            CPLDebug( "OGR_OLEDB", "CSFSession() constructor" );
+	}
+	virtual ~CSFSession()
+	{
+            CPLDebug( "OGR_OLEDB", "~CSFSession()" );
 	}
 	HRESULT FinalConstruct()
 	{
