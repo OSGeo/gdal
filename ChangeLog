@@ -1,5 +1,8 @@
 2001-09-24  Frank Warmerdam  <warmerdam@pobox.com>
 
+	* frmts/envisat/envisatdataset.cpp: added MDS2 (as band 2) and metadata
+	support (all values from the MPH and SPH).
+
 	* frmts/gtiff/libtiff/tif_vsi.c: fixed implementation of SizeProc. 
 
 2001-09-21  Frank Warmerdam  <warmerdam@pobox.com>
