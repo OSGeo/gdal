@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_feature_mif.cpp,v 1.22 2002/04/26 14:16:49 julien Exp $
+ * $Id: mitab_feature_mif.cpp,v 1.23 2002/10/29 21:09:20 warmerda Exp $
  *
  * Name:     mitab_feature.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -31,6 +31,10 @@
  **********************************************************************
  *
  * $Log: mitab_feature_mif.cpp,v $
+ * Revision 1.23  2002/10/29 21:09:20  warmerda
+ * Ensure that a blank line in a mid file is treated as one field containing
+ * an empty string.
+ *
  * Revision 1.22  2002/04/26 14:16:49  julien
  * Finishing the implementation of Multipoint (support for MIF)
  *
@@ -137,6 +141,9 @@ int TABFeature::ReadRecordFromMIDFile(MIDDATAFile *fp)
 
     papszToken = CSLTokenizeStringComplex(pszLine,
                                           fp->GetDelimiter(),TRUE,TRUE); 
+    if( nFields == 1 && CSLCount(papszToken) == 0 && pszLine[0] == '\0' )
+        papszToken = CSLAddString(papszToken,"");
+
     if (CSLCount(papszToken) != nFields)
     {
         CSLDestroy(papszToken);
