@@ -26,6 +26,9 @@
  * serves as an early test harnass.
  *
  * $Log$
+ * Revision 1.17  2001/06/28 19:40:12  warmerda
+ * added subdatset reporting
+ *
  * Revision 1.16  2000/11/29 20:52:53  warmerda
  * Add pretty printing of projection.
  *
@@ -197,6 +200,19 @@ int main( int argc, char ** argv )
     if( CSLCount(papszMetadata) > 0 )
     {
         printf( "Metadata:\n" );
+        for( i = 0; papszMetadata[i] != NULL; i++ )
+        {
+            printf( "  %s\n", papszMetadata[i] );
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Report subdatasets.                                             */
+/* -------------------------------------------------------------------- */
+    papszMetadata = GDALGetMetadata( hDataset, "SUBDATASETS" );
+    if( CSLCount(papszMetadata) > 0 )
+    {
+        printf( "Subdatasets:\n" );
         for( i = 0; papszMetadata[i] != NULL; i++ )
         {
             printf( "  %s\n", papszMetadata[i] );
