@@ -25,6 +25,9 @@
  * Main format registration function.
  * 
  * $Log$
+ * Revision 1.69  2004/10/22 14:15:23  fwarmerdam
+ * Added PCRaster support.
+ *
  * Revision 1.68  2004/10/21 20:04:46  fwarmerdam
  * added Register_RS2
  *
@@ -380,6 +383,10 @@ void GDALAllRegister()
 
 #ifdef FRMT_pcidsk
     GDALRegister_PCIDSK();
+#endif
+
+#ifdef FRMT_pcraster
+    GDALRegister_PCRaster();
 #endif
 
 #ifdef FRMT_netcdf
