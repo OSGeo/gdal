@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2003/01/02 21:50:31  warmerda
+ * various fixes
+ *
  * Revision 1.3  2002/12/29 03:20:50  warmerda
  * initialize new fields
  *
@@ -167,12 +170,30 @@ CPLErr OGROCIStatement::Execute( const char *pszSQLStatement,
                         poSession->hError, (ub4)bSelect ? 0 : 1, (ub4)0, 
                         (OCISnapshot *)NULL, (OCISnapshot *)NULL, 
                         (ub4) (bSelect ? OCI_DEFAULT : OCI_COMMIT_ON_SUCCESS)),
-        "OCIStmtExecute" ) )
+        pszSQLStatement ) )
         return CE_Failure;
 
     if( !bSelect )
         return CE_None;
 
+/* -------------------------------------------------------------------- */
+/*      Count the columns.                                              */
+/* -------------------------------------------------------------------- */
+    for( nRawColumnCount = 0; TRUE; nRawColumnCount++ )
+    {								
+        OCIParam     *hParmDesc;
+
+        if( OCIParamGet( hStatement, OCI_HTYPE_STMT, poSession->hError, 
+                         (dvoid**)&hParmDesc, 
+                         (ub4) nRawColumnCount+1 ) != OCI_SUCCESS )
+            break;
+    }
+    
+    panFieldMap = (int *) CPLCalloc(sizeof(int),nRawColumnCount);
+    
+    papszCurColumn = (char **) CPLCalloc(sizeof(char*),nRawColumnCount+1);
+    panCurColumnInd = (sb2 *) CPLCalloc(sizeof(sb2),nRawColumnCount+1);
+        
 /* ==================================================================== */
 /*      Establish result column definitions, and setup parameter        */
 /*      defines.                                                        */
@@ -180,27 +201,22 @@ CPLErr OGROCIStatement::Execute( const char *pszSQLStatement,
     poDefn = new OGRFeatureDefn( pszSQLStatement );
     poDefn->Reference();
 
-    for( int iParm = 0; TRUE; iParm++ )
+    for( int iParm = 0; iParm < nRawColumnCount; iParm++ )
     {								
         OGRFieldDefn oField( "", OFTString );
-        int          nStatus;
         OCIParam     *hParmDesc;
         ub2          nOCIType;
         ub4          nOCILen;
 
-        panFieldMap = (int *) CPLRealloc(panFieldMap, sizeof(int)*(iParm+1));
-
 /* -------------------------------------------------------------------- */
 /*      Get parameter definition.                                       */
 /* -------------------------------------------------------------------- */
-        nStatus = 
+        if( poSession->Failed( 
             OCIParamGet( hStatement, OCI_HTYPE_STMT, poSession->hError, 
-                         (dvoid**)&hParmDesc, (ub4) iParm+1 );
+                         (dvoid**)&hParmDesc, (ub4) iParm+1 ),
+            "OCIParamGet") )
+            return CE_Failure;
 
-        if( nStatus == OCI_ERROR )
-            break;
-
-        nRawColumnCount++;
         if( poSession->GetParmInfo( hParmDesc, &oField, &nOCIType, &nOCILen )
             != CE_None )
             return CE_Failure;
@@ -221,17 +237,15 @@ CPLErr OGROCIStatement::Execute( const char *pszSQLStatement,
         OCIDefine *hDefn = NULL;
 
         if( oField.GetWidth() > 0 )
-            nBufWidth = oField.GetWidth();
-        
-        papszCurColumn = (char **) 
-            CPLRealloc(papszCurColumn, sizeof(char*)*(nOGRField+2));
-        papszCurColumn[nOGRField+1] = NULL;
+            nBufWidth = oField.GetWidth() + 2;
+        else if( oField.GetType() == OFTInteger )
+            nBufWidth = 20;
+        else if( oField.GetType() == OFTReal )
+            nBufWidth = 32;
 
-        papszCurColumn[nOGRField] = (char *) CPLCalloc(1,nBufWidth+1);
+        papszCurColumn[nOGRField] = (char *) CPLMalloc(nBufWidth+2);
+        CPLAssert( ((long) papszCurColumn[nOGRField]) % 2 == 0 );
 
-        panCurColumnInd = (sb2 *) 
-            CPLRealloc(panCurColumnInd,sizeof(sb2) * (nOGRField+1));
-        
         if( poSession->Failed(
             OCIDefineByPos( hStatement, &hDefn, poSession->hError,
                             iParm+1, 
