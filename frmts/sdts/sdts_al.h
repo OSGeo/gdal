@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/03/23 15:58:01  warmerda
+ * some const fixes, and attr record fixes
+ *
  * Revision 1.1  1999/03/23 13:56:14  warmerda
  * New
  *
@@ -70,7 +73,7 @@ class SDTS_IREF
     		SDTS_IREF();
 		~SDTS_IREF();
 
-    int         Read( string osFilename );
+    int         Read( const string osFilename );
 
     string	osXAxisName;			/* XLBL */
     string	osYAxisName;			/* YLBL */
@@ -100,9 +103,13 @@ class SDTS_CATD
     		SDTS_CATD();
                 ~SDTS_CATD();
 
-    int         Read( string osFilename );
+    int         Read( const string osFilename );
 
-    string	getModuleFilePath( string osModule );
+    string	getModuleFilePath( const string &osModule );
+
+    int		getEntryCount() { return nEntries; }
+    const string &getEntryModule(int);
+    const string &getEntryType(int);
 };
 
 /************************************************************************/
@@ -127,7 +134,7 @@ class SDTSLineReader
     		SDTSLineReader( SDTS_IREF * );
                 ~SDTSLineReader();
 
-    int         Open( string );
+    int         Open( const string );
     SDTSRawLine *GetNextLine( void );
     void	Close();
 };
@@ -198,11 +205,11 @@ class SDTSAttrReader
     SDTS_IREF	*poIREF;
     
   public:
-    		SDTSLineReader( SDTS_IREF * );
-                ~SDTSLineReader();
+    		SDTSAttrReader( SDTS_IREF * );
+                ~SDTSAttrReader();
 
-    int         Open( string );
-    SDTSAttrRecord *GetNextLine( void );
+    int         Open( const string );
+    SDTSAttrRecord *GetNextRecord( void );
     void	Close();
 };
 
@@ -219,7 +226,7 @@ class SDTSAttrReader
 class SDTSAttrRecord
 {
     scal_Record		oRecord;
-    sc_Field		*poATTP;
+    const sc_Field	*poATTP;
 
     friend class SDTSAttrReader;
     
@@ -227,7 +234,9 @@ class SDTSAttrRecord
     			SDTSAttrRecord();
                         ~SDTSAttrRecord();
 
-    sc_Field		*GetSubfieldList();
+    SDTSModId		oRecordId;
+    
+    const sc_Field	*GetSubfieldList() { return poATTP; }
 };
 
 #endif /* ndef SDTS_AL_H_INCLUDED */
