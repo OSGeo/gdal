@@ -22,7 +22,7 @@ OBJ_OGR	=	ogrgeometryfactory.obj ogrpoint.obj ogrcurve.obj \
 OBJ_OLEDB =	oledb_sup.obj \
 		sfcenumerator.obj sfcdatasource.obj sfctable.obj
 
-default:        test1.exe sfcdump.exe test2.exe
+default:        test1.exe sfcdump.exe test2.exe ogrinfo.exe test_ogrsf.exe
 
 frmts:
 	cd ogrsf_frmts
@@ -64,6 +64,10 @@ test3.exe:      test3.obj $(OBJ_OGR)
 
 test_ogrsf.exe:      test_ogrsf.obj $(OBJ_OGR)
         cl /Zi test_ogrsf.obj $(OBJ_OGR) ogrsf_frmts\ogrsf_frmts.lib \
+			$(ALL_LIBS)
+
+ogrinfo.exe:      ogrinfo.obj $(OBJ_OGR)
+        cl /Zi ogrinfo.obj $(OBJ_OGR) ogrsf_frmts\ogrsf_frmts.lib \
 			$(ALL_LIBS)
 
 clean:
