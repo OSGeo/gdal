@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.4  2005/02/07 22:53:54  fwarmerdam
+ * added preliminary Create support for JP2ECW driver
+ *
  * Revision 1.3  2004/12/21 16:11:11  fwarmerdam
  * hacked Read() method error reporting to avoid NPJE issue
  *
@@ -58,9 +61,7 @@
 #include <NCSJP2FileView.h>
 
 /* As of July 2002 only uncompress support is available on Unix */
-#ifdef WIN32
 #define HAVE_COMPRESS
-#endif
 
 #ifdef HAVE_COMPRESS
 GDALDataset *
@@ -71,6 +72,13 @@ GDALDataset *
 ECWCreateCopyJPEG2000( const char * pszFilename, GDALDataset *poSrcDS, 
                  int bStrict, char ** papszOptions, 
                  GDALProgressFunc pfnProgress, void * pProgressData );
+
+GDALDataset *
+ECWCreateECW( const char * pszFilename, int nXSize, int nYSize, int nBands, 
+              GDALDataType eType, char **papszOptions );
+GDALDataset *
+ECWCreateJPEG2000(const char *pszFilename, int nXSize, int nYSize, int nBands, 
+                  GDALDataType eType, char **papszOptions );
 #endif
 
 CPL_C_START
