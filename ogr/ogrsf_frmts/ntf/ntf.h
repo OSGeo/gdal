@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.23  2003/01/07 16:46:28  warmerda
+ * Added support for forming polygons by caching line geometries
+ *
  * Revision 1.22  2002/11/17 05:16:49  warmerda
  * added meridian 2 support
  *
@@ -349,6 +352,10 @@ class NTFFileReader
 
     long             *panColumnOffset;
 
+    int               bCacheLines;
+    int               nLineCacheSize;
+    OGRGeometry     **papoLineCache;
+
   public:
                       NTFFileReader( OGRNTFDataSource * );
                       ~NTFFileReader();
@@ -413,6 +420,14 @@ class NTFFileReader
     void              DestroyIndex();
     NTFRecord        *GetIndexedRecord( int, int );
     NTFRecord       **GetNextIndexedRecordGroup( NTFRecord ** );
+
+    // Line geometry cache
+    OGRGeometry      *CacheGetByGeomId( int );
+    void              CacheAddByGeomId( int, OGRGeometry * );
+    void              CacheClean();
+    void              CacheLineGeometryInGroup( NTFRecord ** );
+
+    int               FormPolygonFromCache( OGRFeature * );
 
     // just for use of OGRNTFDatasource
     void              EstablishLayer( const char *, OGRwkbGeometryType,
