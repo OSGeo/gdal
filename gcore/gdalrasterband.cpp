@@ -28,6 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************
  * $Log$
+ * Revision 1.50  2004/09/28 12:53:33  fwarmerdam
+ * Fixed example.
+ *
  * Revision 1.49  2004/09/02 16:03:57  warmerda
  * Fixed another bug in the GetBlock() example.
  *
@@ -396,7 +399,7 @@ CPLErr GDALRasterIO( GDALRasterBandH hBand, GDALRWFlag eRWFlag,
                  nYValid = nYBlockSize;
 
              // Collect the histogram counts.
-             for( int iY = 0; iY < nXValid; iY++ )
+             for( int iY = 0; iY < nYValid; iY++ )
              {
                  for( int iX = 0; iX < nXValid; iX++ )
                  {
