@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2002/05/02 19:44:53  warmerda
+ * fixed 3D binary support for polygon/linearring
+ *
  * Revision 1.16  2002/03/05 14:25:14  warmerda
  * expand tabs
  *
@@ -175,7 +178,26 @@ int OGRPolygon::getDimension()
 int OGRPolygon::getCoordinateDimension()
 
 {
-    return 2;
+    int  nDimension = 2;
+
+    for( int iRing = 0; iRing < nRingCount; iRing++ )
+    {
+        if( papoRings[iRing]->getCoordinateDimension() == 3 )
+            nDimension = 3;
+    }
+
+    return nDimension;
+}
+
+/************************************************************************/
+/*                            flattenTo2D()                             */
+/************************************************************************/
+
+void OGRPolygon::flattenTo2D()
+
+{
+    for( int iRing = 0; iRing < nRingCount; iRing++ )
+        papoRings[iRing]->flattenTo2D();
 }
 
 /************************************************************************/
@@ -333,10 +355,11 @@ int OGRPolygon::WkbSize()
 
 {
     int         nSize = 9;
+    int         b3D = getCoordinateDimension() == 3;
 
     for( int i = 0; i < nRingCount; i++ )
     {
-        nSize += papoRings[i]->_WkbSize();
+        nSize += papoRings[i]->_WkbSize( b3D );
     }
 
     return nSize;
@@ -354,7 +377,7 @@ OGRErr OGRPolygon::importFromWkb( unsigned char * pabyData,
 
 {
     OGRwkbByteOrder     eByteOrder;
-    int                 nDataOffset;
+    int                 nDataOffset, b3D;
     
     if( nBytesAvailable < 21 && nBytesAvailable != -1 )
         return OGRERR_NOT_ENOUGH_DATA;
@@ -380,6 +403,14 @@ OGRErr OGRPolygon::importFromWkb( unsigned char * pabyData,
 
     CPLAssert( eGeometryType == wkbPolygon );
 #endif    
+
+    if( eByteOrder == wkbNDR )
+        b3D = pabyData[2];
+    else
+        b3D = pabyData[3];
+
+    if( b3D )
+        CPLDebug( "OGRPolygon", "importFromWkb() - 3D Mode" );
 
 /* -------------------------------------------------------------------- */
 /*      Do we already have some rings?                                  */
@@ -415,7 +446,7 @@ OGRErr OGRPolygon::importFromWkb( unsigned char * pabyData,
         OGRErr  eErr;
         
         papoRings[iRing] = new OGRLinearRing();
-        eErr = papoRings[iRing]->_importFromWkb( eByteOrder,
+        eErr = papoRings[iRing]->_importFromWkb( eByteOrder, b3D,
                                                  pabyData + nDataOffset,
                                                  nBytesAvailable );
         if( eErr != OGRERR_NONE )
@@ -425,9 +456,9 @@ OGRErr OGRPolygon::importFromWkb( unsigned char * pabyData,
         }
 
         if( nBytesAvailable != -1 )
-            nBytesAvailable -= papoRings[iRing]->_WkbSize();
+            nBytesAvailable -= papoRings[iRing]->_WkbSize( b3D );
 
-        nDataOffset += papoRings[iRing]->_WkbSize();
+        nDataOffset += papoRings[iRing]->_WkbSize( b3D );
     }
     
     return OGRERR_NONE;
@@ -444,7 +475,11 @@ OGRErr  OGRPolygon::exportToWkb( OGRwkbByteOrder eByteOrder,
 
 {
     int         nOffset;
+    int         b3D = getCoordinateDimension() == 3;
     
+    if( b3D )
+        CPLDebug( "OGRPolygon", "exportToWkb() - 3D Mode" );
+
 /* -------------------------------------------------------------------- */
 /*      Set the byte order.                                             */
 /* -------------------------------------------------------------------- */
@@ -456,7 +491,7 @@ OGRErr  OGRPolygon::exportToWkb( OGRwkbByteOrder eByteOrder,
     if( eByteOrder == wkbNDR )
     {
         pabyData[1] = wkbPolygon;
-        pabyData[2] = 0;
+        pabyData[2] = b3D ? 0x80 : 0;
         pabyData[3] = 0;
         pabyData[4] = 0;
     }
@@ -464,7 +499,7 @@ OGRErr  OGRPolygon::exportToWkb( OGRwkbByteOrder eByteOrder,
     {
         pabyData[1] = 0;
         pabyData[2] = 0;
-        pabyData[3] = 0;
+        pabyData[3] = b3D ? 0x80 : 0;
         pabyData[4] = wkbPolygon;
     }
     
@@ -490,10 +525,10 @@ OGRErr  OGRPolygon::exportToWkb( OGRwkbByteOrder eByteOrder,
 /* ==================================================================== */
     for( int iRing = 0; iRing < nRingCount; iRing++ )
     {
-        papoRings[iRing]->_exportToWkb( eByteOrder,
+        papoRings[iRing]->_exportToWkb( eByteOrder, b3D,
                                         pabyData + nOffset );
 
-        nOffset += papoRings[iRing]->_WkbSize();
+        nOffset += papoRings[iRing]->_WkbSize(b3D);
     }
     
     return OGRERR_NONE;
