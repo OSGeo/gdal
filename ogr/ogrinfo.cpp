@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.24  2004/10/12 19:27:17  fwarmerdam
+ * avoid passing local stdout into GDAL library
+ *
  * Revision 1.23  2004/07/10 04:45:20  warmerda
  * added dialect option
  *
@@ -438,7 +441,7 @@ static void ReportOnLayer( OGRLayer * poLayer, const char *pszWHERE,
     {
         while( (poFeature = poLayer->GetNextFeature()) != NULL )
         {
-            poFeature->DumpReadable( stdout );
+            poFeature->DumpReadable( NULL );
             delete poFeature;
         }
     }
@@ -452,7 +455,7 @@ static void ReportOnLayer( OGRLayer * poLayer, const char *pszWHERE,
         }
         else
         {
-            poFeature->DumpReadable( stdout );
+            poFeature->DumpReadable( NULL );
             delete poFeature;
         }
     }
