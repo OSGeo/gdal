@@ -38,6 +38,9 @@
  *   GUInt16, and GByte are defined.
  *
  * $Log$
+ * Revision 1.12  1999/05/14 20:35:03  warmerda
+ * added some more swapping macros
+ *
  * Revision 1.11  1999/05/13 19:19:06  warmerda
  * Only use dbmalloc if DEBUG is set.
  *
@@ -204,6 +207,37 @@ typedef int             GBool;
             (((GUInt32)(x) & (GUInt32)0x00ff0000UL) >>  8) | \
             (((GUInt32)(x) & (GUInt32)0xff000000UL) >> 24) ))
 
+#define CPL_SWAP32PTR(x) \
+{								\
+    GByte	byTemp, *pabyData = (GByte *) (x);		\
+								\
+    byTemp = pabyData[0];					\
+    pabyData[0] = pabyData[3];					\
+    pabyData[3] = byTemp;					\
+    byTemp = pabyData[1];					\
+    pabyData[1] = pabyData[2];					\
+    pabyData[2] = byTemp;					\
+}                                                                    
+                                                            
+#define CPL_SWAP64PTR(x) \
+{								\
+    GByte	byTemp, *pabyData = (GByte *) (x);		\
+								\
+    byTemp = pabyData[0];					\
+    pabyData[0] = pabyData[7];					\
+    pabyData[7] = byTemp;					\
+    byTemp = pabyData[1];					\
+    pabyData[1] = pabyData[6];					\
+    pabyData[6] = byTemp;					\
+    byTemp = pabyData[2];					\
+    pabyData[2] = pabyData[5];					\
+    pabyData[5] = byTemp;					\
+    byTemp = pabyData[3];					\
+    pabyData[3] = pabyData[4];					\
+    pabyData[4] = byTemp;					\
+}                                                                    
+                                                            
+
 /* Until we have a safe 64 bits integer data type defined, we'll replace
 m * this version of the CPL_SWAP64() macro with a less efficient one.
  */
@@ -237,11 +271,15 @@ m * this version of the CPL_SWAP64() macro with a less efficient one.
 #  define CPL_LSBWORD16(x)	CPL_SWAP16(x)
 #  define CPL_MSBWORD32(x)	(x)
 #  define CPL_LSBWORD32(x)	CPL_SWAP32(x)
+#  define CPL_MSBPTR32(x)	
+#  define CPL_LSBPTR32(x)	CPL_SWAP32PTR(x)
 #else
 #  define CPL_LSBWORD16(x)	(x)
 #  define CPL_MSBWORD16(x)	CPL_SWAP16(x)
 #  define CPL_LSBWORD32(x)	(x)
 #  define CPL_MSBWORD32(x)	CPL_SWAP32(x)
+#  define CPL_LSBPTR32(x)	
+#  define CPL_MSBPTR32(x)	CPL_SWAP32PTR(x)
 #endif
 
 #endif /* ndef CPL_BASE_H_INCLUDED */
