@@ -28,6 +28,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.33  2003/08/19 20:15:53  warmerda
+ * Added support for Cone (23), 3D surface (18) and 3D solid (19) elements.
+ * Added functions DGNQuaternionToMatrix() and DGNCreateConeElem().
+ *   Marius Kintel
+ *
  * Revision 1.32  2003/05/21 03:42:01  warmerda
  * Expanded tabs
  *
@@ -275,7 +280,8 @@ typedef struct {
  *
  * The core.stype code is DGNST_COMPLEX_HEADER.
  *
- * Used for: DGNT_COMPLEX_CHAIN_HEADER(12), DGNT_COMPLEX_SHAPE_HEADER(14).
+ * Used for: DGNT_COMPLEX_CHAIN_HEADER(12), DGNT_COMPLEX_SHAPE_HEADER(14),
+ *   DGNT_3DSURFACE_HEADER(18) and DGNT_3DSOLID_HEADER(19).
  */
 
 typedef struct {
@@ -283,6 +289,7 @@ typedef struct {
     
     int         totlength;     /*!< Total length of surface */
     int         numelems;      /*!< # of elements in surface */
+    int         surftype;      /*!< surface/solid type (only used for 3D surface/solid). One of  DGNSUT_* or DGNSOT_*. */
 } DGNElemComplexHeader;
 
 /** 
@@ -454,6 +461,25 @@ typedef struct {
 
 } DGNElemTagSet;
 
+/** 
+ * Cone element 
+ *
+ * The core.stype code is DGNST_CONE.
+ *
+ * Used for: DGNT_CONE(23)
+ */
+typedef struct {
+  DGNElemCore core;
+
+  short unknown;     /*!< Unknown data */
+  int quat[4];      /*!< Orientation quaternion */
+  DGNPoint center_1; /*!< center of first circle */
+  double radius_1;   /*!< radius of first circle */
+  DGNPoint center_2; /*!< center of second circle */
+  double radius_2;   /*!< radius of second circle */
+
+} DGNElemCone;
+
 /* -------------------------------------------------------------------- */
 /*      Structure types                                                 */
 /* -------------------------------------------------------------------- */
@@ -491,6 +517,9 @@ typedef struct {
 /** DGNElemCore style: Element uses DGNElemCellLibrary structure */
 #define DGNST_CELL_LIBRARY        11
 
+/** DGNElemCore style: Element uses DGNElemCone structure */
+#define DGNST_CONE                12
+
 /* -------------------------------------------------------------------- */
 /*      Element types                                                   */
 /* -------------------------------------------------------------------- */
@@ -510,7 +539,10 @@ typedef struct {
 #define DGNT_ELLIPSE              15
 #define DGNT_ARC                  16
 #define DGNT_TEXT                 17
+#define DGNT_3DSURFACE_HEADER     18
+#define DGNT_3DSOLID_HEADER       19
 #define DGNT_BSPLINE              21
+#define DGNT_CONE                 23
 #define DGNT_SHARED_CELL_DEFN     34
 #define DGNT_SHARED_CELL_ELEM     35
 #define DGNT_TAG_VALUE            37
@@ -527,6 +559,28 @@ typedef struct {
 #define DGNS_SHORT_DASH         5
 #define DGNS_DASH_DOUBLE_DOT    6
 #define DGNS_LONG_DASH_SHORT_DASH 7
+
+/* -------------------------------------------------------------------- */
+/*      3D Surface Types                                                */
+/* -------------------------------------------------------------------- */
+#define DGNSUT_SOLID                    0
+#define DGNSUT_BOUNDED_PLANE            1
+#define DGNSUT_BOUNDED_PLANE2           2
+#define DGNSUT_RIGHT_CIRCULAR_CYLINDER  3
+#define DGNSUT_RIGHT_CIRCULAR_CONE      4
+#define DGNSUT_TABULATED_CYLINDER       5
+#define DGNSUT_TABULATED_CONE           6
+#define DGNSUT_CONVOLUTE                7
+#define DGNSUT_SURFACE_OF_REVOLUTION    8
+#define DGNSUT_WARPED_SURFACE           9
+
+/* -------------------------------------------------------------------- */
+/*      3D Solid Types                                                  */
+/* -------------------------------------------------------------------- */
+#define DGNSOT_VOLUME_OF_PROJECTION     0
+#define DGNSOT_VOLUME_OF_REVOLUTION     1
+#define DGNSOT_BOUNDED_VOLUME           2
+
 
 /* -------------------------------------------------------------------- */
 /*      Class                                                           */
@@ -641,6 +695,7 @@ void CPL_DLL         DGNDumpElement( DGNHandle, DGNElemCore *, FILE * );
 const char CPL_DLL  *DGNTypeToName( int );
 
 void CPL_DLL  DGNRotationToQuaternion( double, int * );
+void CPL_DLL  DGNQuaternionToMatrix( int *, float * );
 int CPL_DLL   DGNStrokeArc( DGNHandle, DGNElemArc *, int, DGNPoint * );
 int CPL_DLL   DGNStrokeCurve( DGNHandle, DGNElemMultiPoint*, int, DGNPoint * );
 void CPL_DLL  DGNSetSpatialFilter( DGNHandle hDGN, 
@@ -687,6 +742,14 @@ DGNElemCore CPL_DLL  *
                                 double dfPrimaryAxis, double dfSecondaryAxis,
                                 double dfStartAngle, double dfSweepAngle,
                                 double dfRotation, int *panQuaternion );
+
+DGNElemCore CPL_DLL  *
+              DGNCreateConeElem( DGNHandle hDGN,
+                                 double center_1X, double center_1Y,
+                                 double center_1Z, double radius_1,
+                                 double center_2X, double center_2Y,
+                                 double center_2Z, double radius_2,
+                                 int *panQuaternion );
 
 DGNElemCore CPL_DLL *
              DGNCreateTextElem( DGNHandle hDGN, const char *pszText, 
