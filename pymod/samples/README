@@ -13,3 +13,5 @@ val_repl.py		Script to replace specified values from the input
 gdal2grd.py		Script to write out ASCII GRD rasters (used in Golden
 			Software Surfer) from any source supported by GDAL.
 
+assemblepoly.py         Script demonstrates how to assemble polygons from
+			arcs.  Demonstrates various aspects of OGR Python API.
