@@ -28,6 +28,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2003/12/01 16:58:13  warmerda
+ * Replaced DGNRad50ToAscii() with new implementation from Armin Berg.
+ * This one correctly decodes values with embedded spaces, though I am
+ * not certain it always trims spaces (assuming that is desirable).
+ *
  * Revision 1.20  2003/09/11 20:00:28  warmerda
  * avoid casting warning in Quat to Matrix func
  *
@@ -494,46 +499,36 @@ int DGNGetAssocID( DGNHandle hDGN, DGNElemCore *psElem )
 /*      Convert one 16-bits Radix-50 to ASCII (3 chars).                */
 /************************************************************************/
 
-void DGNRad50ToAscii(unsigned short rad50, char *str )
+void DGNRad50ToAscii(unsigned short sRad50, char *str )
 {
-    unsigned char cTimes;
-    unsigned short value;
-    unsigned short temp;
-    char ch = '\0';
+    unsigned short sValue;
+    char           ch = '\0';
+    unsigned short saQuots[3] = {1600,40,1};
+    int i;
 
-    while (rad50 > 0)
+    for ( i=0; i<3; i++)
     {
-        value = rad50;
-        cTimes = 0;
-        while (value >= 40)
-        {
-            value /= 40;
-            cTimes ++;
-        }
-
+        sValue = sRad50;
+        sValue /= saQuots[i];
         /* Map 0..39 to ASCII */
-        if (value==0)                      
+        if (sValue==0)                     
             ch = ' ';          /* space */
-        else if (value >= 1 && value <= 26)  
-            ch = (char) (value-1+'A');/* printable alpha A..Z */
-        else if (value == 27)              
+        else if (sValue >= 1 && sValue <= 26) 
+            ch = (char) (sValue-1+'A');/* printable alpha A..Z */
+        else if (sValue == 27)             
             ch = '$';          /* dollar */
-        else if (value == 28)              
+        else if (sValue == 28)             
             ch = '.';          /* period */
-        else if (value == 29)              
+        else if (sValue == 29)             
             ch = ' ';          /* unused char, emit a space instead */
-        else if (value >= 30 && value <= 39) 
-            ch = (char) (value-30+'0');   /* digit 0..9 */
-
+        else if (sValue >= 30 && sValue <= 39)
+            ch = (char) (sValue-30+'0');   /* digit 0..9 */
         *str = ch;
         str++;
 
-        temp = 1;
-        while (cTimes-- > 0)
-            temp *= 40;
-
-        rad50-=value*temp;
+        sRad50-=(sValue*saQuots[i]);
     }
+
     /* Do zero-terminate */
     *str = '\0';
 }
