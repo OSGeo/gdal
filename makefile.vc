@@ -20,8 +20,7 @@ VB6_TARGET = vb6_dir
 #		/INCLUDE:_OPTGetProjectionMethods@0 \
 #		/INCLUDE:_OGR_G_GetPointCount@4
 
-OGR_BASE_INCLUDE = /INCLUDE:_OCTNewCoordinateTransformation \
-		/INCLUDE:_OGRFeatureStylePuller \
+OGR_BASE_INCLUDE = /INCLUDE:_OGRFeatureStylePuller \
 		/INCLUDE:_OSRValidate \
 		/INCLUDE:_OPTGetProjectionMethods \
 		/INCLUDE:_OGR_G_GetPointCount 
@@ -29,11 +28,13 @@ OGR_BASE_INCLUDE = /INCLUDE:_OCTNewCoordinateTransformation \
 
 !IFDEF INCLUDE_OGR_FRMTS
 OGR_OBJ = ogr\ogrsf_frmts\ogrsf_frmts.lib ogr\ogr.lib
-OGR_INCLUDE = $(OGR_BASE_INCLUDE) /INCLUDE:_OGRRegisterAll
+OGR_INCLUDE = $(OGR_BASE_INCLUDE) \
+		/INCLUDE:_OGRRegisterAll
 
 !ELSE
 OGR_OBJ = ogr\ogr.lib
-OGR_INCLUDE =	$(OGR_BASE_INCLUDE) 
+OGR_INCLUDE =	$(OGR_BASE_INCLUDE) \
+		
 !ENDIF
 
 !IFDEF STDCALL
@@ -41,12 +42,14 @@ BASE_INCLUDE =	/INCLUDE:_GDALSimpleImageWarp@36 \
 		/INCLUDE:_GDALReprojectImage@48 \
 		/INCLUDE:_GDALComputeMedianCutPCT@32 \
 		/INCLUDE:_GDALDitherRGB2PCT@28 \
-		/INCLUDE:_vbSafeArrayToPtr@16  
+		/INCLUDE:_vbSafeArrayToPtr@16 \
+		/INCLUDE:_OCTNewCoordinateTransformation@8
 !ELSE
 BASE_INCLUDE =	/INCLUDE:_GDALSimpleImageWarp \
 		/INCLUDE:_GDALReprojectImage \
 		/INCLUDE:_GDALComputeMedianCutPCT \
-		/INCLUDE:_GDALDitherRGB2PCT
+		/INCLUDE:_GDALDitherRGB2PCT \
+		/INCLUDE:_OCTNewCoordinateTransformation@8
 !ENDIF
 
 LIBOBJ = port\*.obj gcore\*.obj alg\*.obj frmts\o\*.obj $(OGR_OBJ) $(VB6_OBJ)
