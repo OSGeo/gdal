@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2001/01/16 18:12:02  warmerda
+ * added arc support, color lookup
+ *
  * Revision 1.4  2001/01/10 16:11:33  warmerda
  * added lots of documentation, and extents api
  *
@@ -107,6 +110,7 @@ typedef struct {
     int		level;		/*!< Element Level: 0-63 */
     int		type;		/*!< Element type (DGNT_) */
     int		complex;	/*!< Is element complex? */
+    int		deleted;	/*!< Is element deleted? */
 
     int		graphic_group;  /*!< Graphic group number */
     int		properties;     /*!< Properties: ORing of DGNP_ flags */
@@ -138,9 +142,9 @@ typedef struct {
 /** 
  * Ellipse element 
  *
- * The core.stype code is DGNST_ELLIPSE.
+ * The core.stype code is DGNST_ARC.
  *
- * Used for: DGNT_ELLIPSE(15).
+ * Used for: DGNT_ELLIPSE(15), DGNT_ARC(16)
  */
 
 typedef struct {
@@ -154,7 +158,10 @@ typedef struct {
   double	rotation;       /*!< Counterclockwise rotation in degrees */
   long          quat[4];
 
-} DGNElemEllipse;
+  double	startang;       /*!< Start angle (degrees counterclockwise of primary axis) */
+  double	sweepang;       /*!< Sweep angle (degrees) */
+
+} DGNElemArc;
 
 /** 
  * Text element 
@@ -240,8 +247,8 @@ typedef struct {
 /** DGNElemCore style: Element uses DGNElemTCB structure */
 #define DGNST_TCB                  4 
 
-/** DGNElemCore style: Element uses DGNElemEllipse structure */
-#define DGNST_ELLIPSE              5 
+/** DGNElemCore style: Element uses DGNElemArc structure */
+#define DGNST_ARC                  5 
 
 /** DGNElemCore style: Element uses DGNElemText structure */
 #define DGNST_TEXT                 6 
@@ -281,6 +288,17 @@ typedef struct {
 #define DGNS_LONG_DASH_SHORT_DASH 7
 
 /* -------------------------------------------------------------------- */
+/*      Class                                                           */
+/* -------------------------------------------------------------------- */
+#define DGNC_PRIMARY			0
+#define DGNC_PATTERN_COMPONENT		1
+#define DGNC_CONSTRUCTION_ELEMENT	2
+#define DGNC_DIMENSION_ELEMENT	        3
+#define DGNC_PRIMARY_RULE_ELEMENT       4
+#define DGNC_LINEAR_PATTERNED_ELEMENT   5
+#define DGNC_CONSTRUCTION_RULE_ELEMENT  6
+
+/* -------------------------------------------------------------------- */
 /*      Group Data level numbers.                                       */
 /*                                                                      */
 /*      These are symbolic values for the typ 5 (DGNT_GROUP_DATA)       */
@@ -301,6 +319,7 @@ typedef struct {
 #define DGNPF_MODIFIED     0x0400
 #define DGNPF_NEW          0x0200
 #define DGNPF_LOCKED       0x0100
+#define DGNPF_CLASS        0x000f
 
 /* -------------------------------------------------------------------- */
 /*      API                                                             */
@@ -316,9 +335,12 @@ void CPL_DLL         DGNFreeElement( DGNHandle, DGNElemCore * );
 void CPL_DLL         DGNRewind( DGNHandle );
 int  CPL_DLL         DGNGotoElement( DGNHandle, int );
 void CPL_DLL         DGNClose( DGNHandle );
+int  CPL_DLL         DGNLookupColor( DGNHandle, int, int *, int *, int * );
 
 void CPL_DLL         DGNDumpElement( DGNHandle, DGNElemCore *, FILE * );
 const char CPL_DLL  *DGNTypeToName( int );
+
+int CPL_DLL          DGNStrokeArc( DGNHandle, DGNElemArc *, int, DGNPoint * );
 
 
 CPL_C_END
