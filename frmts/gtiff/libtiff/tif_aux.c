@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_aux.c,v 1.6 2003/12/06 15:55:41 dron Exp $ */
+/* $Header: /cvs/maptools/cvsroot/libtiff/libtiff/tif_aux.c,v 1.7 2004/10/02 13:29:41 dron Exp $ */
 
 /*
  * Copyright (c) 1991-1997 Sam Leffler
@@ -33,36 +33,59 @@
 #include "tif_predict.h"
 #include <math.h>
 
-static void
+static int
 TIFFDefaultTransferFunction(TIFFDirectory* td)
 {
 	uint16 **tf = td->td_transferfunction;
-	long i, n = 1<<td->td_bitspersample;
+	tsize_t i, n, nbytes;
 
-	tf[0] = (uint16 *)_TIFFmalloc(n * sizeof (uint16));
+	tf[0] = tf[1] = tf[2] = 0;
+	if (td->td_bitspersample >= sizeof(tsize_t) * 8 - 2)
+		return 0;
+
+	n = 1<<td->td_bitspersample;
+	nbytes = n * sizeof (uint16);
+	if (!(tf[0] = (uint16 *)_TIFFmalloc(nbytes)))
+		return 0;
 	tf[0][0] = 0;
 	for (i = 1; i < n; i++) {
 		double t = (double)i/((double) n-1.);
 		tf[0][i] = (uint16)floor(65535.*pow(t, 2.2) + .5);
 	}
+
 	if (td->td_samplesperpixel - td->td_extrasamples > 1) {
-		tf[1] = (uint16 *)_TIFFmalloc(n * sizeof (uint16));
-		_TIFFmemcpy(tf[1], tf[0], n * sizeof (uint16));
-		tf[2] = (uint16 *)_TIFFmalloc(n * sizeof (uint16));
-		_TIFFmemcpy(tf[2], tf[0], n * sizeof (uint16));
+		if (!(tf[1] = (uint16 *)_TIFFmalloc(nbytes)))
+			goto bad;
+		_TIFFmemcpy(tf[1], tf[0], nbytes);
+		if (!(tf[2] = (uint16 *)_TIFFmalloc(nbytes)))
+			goto bad;
+		_TIFFmemcpy(tf[2], tf[0], nbytes);
 	}
+	return 1;
+
+bad:
+	if (tf[0])
+		_TIFFfree(tf[0]);
+	if (tf[1])
+		_TIFFfree(tf[1]);
+	if (tf[2])
+		_TIFFfree(tf[2]);
+	tf[0] = tf[1] = tf[2] = 0;
+	return 0;
 }
 
-static void
+static int
 TIFFDefaultRefBlackWhite(TIFFDirectory* td)
 {
 	int i;
 
-	td->td_refblackwhite = (float *)_TIFFmalloc(6*sizeof (float));
+	if (!(td->td_refblackwhite = (float *)_TIFFmalloc(6*sizeof (float))))
+		return 0;
 	for (i = 0; i < 3; i++) {
 	    td->td_refblackwhite[2*i+0] = 0;
 	    td->td_refblackwhite[2*i+1] = (float)((1L<<td->td_bitspersample)-1L);
 	}
+	return 1;
 }
 
 /*
@@ -155,6 +178,8 @@ TIFFVGetFieldDefaulted(TIFF* tif, ttag_t tag, va_list ap)
 		if (!td->td_ycbcrcoeffs) {
 			td->td_ycbcrcoeffs = (float *)
 			    _TIFFmalloc(3*sizeof (float));
+			if (!td->td_ycbcrcoeffs)
+				return (0);
 			/* defaults are from CCIR Recommendation 601-1 */
 			td->td_ycbcrcoeffs[0] = 0.299f;
 			td->td_ycbcrcoeffs[1] = 0.587f;
@@ -173,6 +198,8 @@ TIFFVGetFieldDefaulted(TIFF* tif, ttag_t tag, va_list ap)
 		if (!td->td_whitepoint) {
 			td->td_whitepoint = (float *)
 				_TIFFmalloc(2 * sizeof (float));
+			if (!td->td_whitepoint)
+				return (0);
 			/* TIFF 6.0 specification says that it is no default
 			   value for the WhitePoint, but AdobePhotoshop TIFF
 			   Technical Note tells that it should be CIE D50. */
@@ -184,8 +211,11 @@ TIFFVGetFieldDefaulted(TIFF* tif, ttag_t tag, va_list ap)
 		*va_arg(ap, float **) = td->td_whitepoint;
 		return (1);
 	case TIFFTAG_TRANSFERFUNCTION:
-		if (!td->td_transferfunction[0])
-			TIFFDefaultTransferFunction(td);
+		if (!td->td_transferfunction[0] &&
+		    !TIFFDefaultTransferFunction(td)) {
+			TIFFError(tif->tif_name, "No space for \"TransferFunction\" tag");
+			return (0);
+		}
 		*va_arg(ap, uint16 **) = td->td_transferfunction[0];
 		if (td->td_samplesperpixel - td->td_extrasamples > 1) {
 			*va_arg(ap, uint16 **) = td->td_transferfunction[1];
@@ -193,8 +223,8 @@ TIFFVGetFieldDefaulted(TIFF* tif, ttag_t tag, va_list ap)
 		}
 		return (1);
 	case TIFFTAG_REFERENCEBLACKWHITE:
-		if (!td->td_refblackwhite)
-			TIFFDefaultRefBlackWhite(td);
+		if (!td->td_refblackwhite && !TIFFDefaultRefBlackWhite(td))
+			return (0);
 		*va_arg(ap, float **) = td->td_refblackwhite;
 		return (1);
 	}

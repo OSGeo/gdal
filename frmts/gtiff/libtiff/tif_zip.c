@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_zip.c,v 1.4 2003/07/08 20:37:31 warmerda Exp $ */
+/* $Id: tif_zip.c,v 1.5 2004/10/02 13:29:41 dron Exp $ */
 
 /*
  * Copyright (c) 1995-1997 Sam Leffler
@@ -50,7 +50,6 @@
 #include "zlib.h"
 
 #include <stdio.h>
-#include <assert.h>
 
 /*
  * Sigh, ZLIB_VERSION is defined as a string so there's no
@@ -366,3 +365,5 @@ bad:
 	return (0);
 }
 #endif /* ZIP_SUPORT */
+
+/* vim: set ts=8 sts=8 sw=8 noet: */

@@ -1,4 +1,4 @@
-/* $Id: tif_dirwrite.c,v 1.23 2004/09/14 06:50:22 dron Exp $ */
+/* $Id: tif_dirwrite.c,v 1.24 2004/10/02 13:29:41 dron Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -683,8 +683,14 @@ TIFFWritePerSampleShorts(TIFF* tif, ttag_t tag, TIFFDirEntry* dir)
 	uint16* w = buf;
 	int i, status, samples = tif->tif_dir.td_samplesperpixel;
 
-	if (samples > NITEMS(buf))
+	if (samples > NITEMS(buf)) {
 		w = (uint16*) _TIFFmalloc(samples * sizeof (uint16));
+		if (w == NULL) {
+			TIFFError(tif->tif_name,
+			    "No space to write per-sample shorts");
+			return (0);
+		}
+	}
 	TIFFGetField(tif, tag, &v);
 	for (i = 0; i < samples; i++)
 		w[i] = v;
@@ -708,8 +714,14 @@ TIFFWritePerSampleAnys(TIFF* tif,
 	int i, status;
 	int samples = (int) tif->tif_dir.td_samplesperpixel;
 
-	if (samples > NITEMS(buf))
+	if (samples > NITEMS(buf)) {
 		w = (double*) _TIFFmalloc(samples * sizeof (double));
+		if (w == NULL) {
+			TIFFError(tif->tif_name,
+			    "No space to write per-sample values");
+			return (0);
+		}
+	}
 	TIFFGetField(tif, tag, &v);
 	for (i = 0; i < samples; i++)
 		w[i] = v;
@@ -831,6 +843,11 @@ TIFFWriteRationalArray(TIFF* tif,
 	dir->tdir_type = (short) type;
 	dir->tdir_count = n;
 	t = (uint32*) _TIFFmalloc(2*n * sizeof (uint32));
+	if (t == NULL) {
+		TIFFError(tif->tif_name,
+		    "No space to write RATIONAL array");
+		return (0);
+	}
 	for (i = 0; i < n; i++) {
 		float fv = v[i];
 		int sign = 1;
@@ -901,8 +918,14 @@ TIFFWriteAnyArray(TIFF* tif,
 	char* w = buf;
 	int i, status = 0;
 
-	if (n * TIFFDataWidth(type) > sizeof buf)
+	if (n * TIFFDataWidth(type) > sizeof buf) {
 		w = (char*) _TIFFmalloc(n * TIFFDataWidth(type));
+		if (w == NULL) {
+			TIFFError(tif->tif_name,
+			    "No space to write array");
+			return (0);
+		}
+	}
 	switch (type) {
 	case TIFF_BYTE:
 		{ uint8* bp = (uint8*) w;

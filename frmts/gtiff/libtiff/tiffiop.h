@@ -1,4 +1,4 @@
-/* $Id: tiffiop.h,v 1.27 2004/09/24 08:10:18 dron Exp $ */
+/* $Id: tiffiop.h,v 1.28 2004/10/02 13:31:30 dron Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -42,6 +42,10 @@
 
 #if HAVE_STRING_H
 # include <string.h>
+#endif
+
+#if HAVE_ASSERT_H
+# include <assert.h>
 #endif
 
 #include "tiffio.h"

@@ -1,4 +1,4 @@
-/* $Id: tif_getimage.c,v 1.39 2004/09/21 18:27:21 dron Exp $ */
+/* $Id: tif_getimage.c,v 1.41 2004/10/02 13:29:41 dron Exp $ */
 
 /*
  * Copyright (c) 1991-1997 Sam Leffler
@@ -30,7 +30,6 @@
  * Read and return a packed RGBA image.
  */
 #include "tiffiop.h"
-#include <assert.h>
 #include <stdio.h>
 
 static	int gtTileContig(TIFFRGBAImage*, uint32*, uint32, uint32);
@@ -312,9 +311,9 @@ TIFFRGBAImageBegin(TIFFRGBAImage* img, TIFF* tif, int stop, char emsg[1024])
 	    return (0);
         }
 
-        memcpy( img->redcmap, red_orig, n_color * 2 );
-        memcpy( img->greencmap, green_orig, n_color * 2 );
-        memcpy( img->bluecmap, blue_orig, n_color * 2 );
+        _TIFFmemcpy( img->redcmap, red_orig, n_color * 2 );
+        _TIFFmemcpy( img->greencmap, green_orig, n_color * 2 );
+        _TIFFmemcpy( img->bluecmap, blue_orig, n_color * 2 );
         
 	/* fall thru... */
     case PHOTOMETRIC_MINISWHITE:
@@ -561,11 +560,11 @@ gtTileContig(TIFFRGBAImage* img, uint32* raster, uint32 w, uint32 h)
     int ret = 1, flip;
 
     buf = (unsigned char*) _TIFFmalloc(TIFFTileSize(tif));
-    memset(buf, 0, TIFFTileSize(tif));
     if (buf == 0) {
 	TIFFError(TIFFFileName(tif), "No space for tile buffer");
 	return (0);
     }
+    _TIFFmemset(buf, 0, TIFFTileSize(tif));
     TIFFGetField(tif, TIFFTAG_TILEWIDTH, &tw);
     TIFFGetField(tif, TIFFTAG_TILELENGTH, &th);
 
@@ -661,17 +660,17 @@ gtTileSeparate(TIFFRGBAImage* img, uint32* raster, uint32 w, uint32 h)
 
     tilesize = TIFFTileSize(tif);
     buf = (unsigned char*) _TIFFmalloc(4*tilesize);
-    memset(buf, 0, 4*tilesize);
     if (buf == 0) {
 	TIFFError(TIFFFileName(tif), "No space for tile buffer");
 	return (0);
     }
+    _TIFFmemset(buf, 0, 4*tilesize);
     r = buf;
     g = r + tilesize;
     b = g + tilesize;
     a = b + tilesize;
     if (!alpha)
-	memset(a, 0xff, tilesize);
+	_TIFFmemset(a, 0xff, tilesize);
     TIFFGetField(tif, TIFFTAG_TILEWIDTH, &tw);
     TIFFGetField(tif, TIFFTAG_TILELENGTH, &th);
 
@@ -779,11 +778,11 @@ gtStripContig(TIFFRGBAImage* img, uint32* raster, uint32 w, uint32 h)
     int ret = 1, flip;
 
     buf = (unsigned char*) _TIFFmalloc(TIFFStripSize(tif));
-    memset(buf, 0, TIFFStripSize(tif));
     if (buf == 0) {
 	TIFFError(TIFFFileName(tif), "No space for strip buffer");
 	return (0);
     }
+    _TIFFmemset(buf, 0, TIFFStripSize(tif));
 
     flip = setorientation(img);
     if (flip & FLIP_VERTICALLY) {
@@ -861,16 +860,16 @@ gtStripSeparate(TIFFRGBAImage* img, uint32* raster, uint32 w, uint32 h)
 
     stripsize = TIFFStripSize(tif);
     r = buf = (unsigned char *)_TIFFmalloc(4*stripsize);
-    memset(buf, 0, 4*stripsize);
     if (buf == 0) {
 	TIFFError(TIFFFileName(tif), "No space for tile buffer");
 	return (0);
     }
+    _TIFFmemset(buf, 0, 4*stripsize);
     g = r + stripsize;
     b = g + stripsize;
     a = b + stripsize;
     if (!alpha)
-	memset(a, 0xff, stripsize);
+	_TIFFmemset(a, 0xff, stripsize);
 
     flip = setorientation(img);
     if (flip & FLIP_VERTICALLY) {

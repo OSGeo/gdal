@@ -1,4 +1,4 @@
-/* $Id: tif_predict.c,v 1.5 2004/09/14 06:38:49 dron Exp $ */
+/* $Id: tif_predict.c,v 1.6 2004/10/02 13:29:41 dron Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -31,8 +31,6 @@
  */
 #include "tiffiop.h"
 #include "tif_predict.h"
-
-#include <assert.h>
 
 #define	PredictorState(tif)	((TIFFPredictorState*) (tif)->tif_data)
 

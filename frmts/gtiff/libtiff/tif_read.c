@@ -1,4 +1,4 @@
-/* $Id: tif_read.c,v 1.10 2004/09/14 06:38:49 dron Exp $ */
+/* $Id: tif_read.c,v 1.11 2004/10/02 13:29:41 dron Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -30,7 +30,6 @@
  */
 #include "tiffiop.h"
 #include <stdio.h>
-#include <assert.h>
 
 	int TIFFFillStrip(TIFF*, tstrip_t);
 	int TIFFFillTile(TIFF*, ttile_t);

@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_flush.c,v 1.3 2000/09/15 20:52:42 warmerda Exp $ */
+/* $Header: /cvs/maptools/cvsroot/libtiff/libtiff/tif_flush.c,v 1.3 2000/09/15 20:52:42 warmerda Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
