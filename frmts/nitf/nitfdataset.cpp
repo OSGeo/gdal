@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.26  2004/12/20 22:32:06  fwarmerdam
+ * use JP2ECW driver not ECW driver for jpeg2000 output
+ *
  * Revision 1.25  2004/12/10 21:35:00  fwarmerdam
  * preliminary support for writing JPEG2000 compressed data
  *
@@ -1213,7 +1216,7 @@ NITFCreateCopy( const char *pszFilename, GDALDataset *poSrcDS,
         else if( EQUAL(CSLFetchNameValue( papszOptions, "IC" ),"C8") )
         {
             poJ2KDriver = 
-                GetGDALDriverManager()->GetDriverByName( "ECW" );
+                GetGDALDriverManager()->GetDriverByName( "JP2ECW" );
             if( poJ2KDriver == NULL )
             {
                 CPLError( 
