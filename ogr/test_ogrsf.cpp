@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  1999/11/04 21:07:35  warmerda
+ * Changed to use OGRRegisterAll().
+ *
  * Revision 1.6  1999/09/29 16:36:41  warmerda
  * added srs reporting
  *
@@ -69,10 +72,8 @@ int main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
 /*      Register format(s).                                             */
 /* -------------------------------------------------------------------- */
-    RegisterOGRShape();
-    RegisterOGRNTF();
-    RegisterOGRSDTS();
-
+    OGRRegisterAll();
+    
 /* -------------------------------------------------------------------- */
 /*      Processing command line arguments.                              */
 /* -------------------------------------------------------------------- */
