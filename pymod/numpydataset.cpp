@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2003/09/26 15:59:51  warmerda
+ * warn if opening an array with internal definitions
+ *
  * Revision 1.8  2002/09/04 06:59:44  warmerda
  * get rid of static driver pointer
  *
@@ -262,6 +265,20 @@ GDALDataset *NUMPYDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
 /* -------------------------------------------------------------------- */
+/*      If we likely have corrupt definitions of the NUMPY stuff,       */
+/*      then warn now.                                                  */
+/* -------------------------------------------------------------------- */
+#ifdef NUMPY_DEFS_WRONG
+    CPLError( CE_Warning, CPLE_AppDefined, 
+              "It would appear you have built GDAL without having it use\n"
+              "the Numeric python include files.  Old definitions have\n"
+              "been used instead at build time, and it is quite possible that\n"
+              "the things will shortly fail or crash if they are wrong.\n"
+              "Consider installing Numeric, and rebuilding with HAVE_NUMPY\n"
+              "enabled in gdal\nmake.opt." );
+#endif
+
+/* -------------------------------------------------------------------- */
 /*      Is this a directly mappable Python array?  Verify rank, and     */
 /*      data type.                                                      */
 /* -------------------------------------------------------------------- */
@@ -387,7 +404,7 @@ void GDALRegister_NUMPY()
         
         poDriver->SetDescription( "NUMPY" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
-                                   "NumPy Array" );
+                                   "Numeric Python Array" );
         
         poDriver->pfnOpen = NUMPYDataset::Open;
 
