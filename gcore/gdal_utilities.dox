@@ -7,7 +7,7 @@
 
 The following utility programs are distributed with GDAL.
 
-<h2>gdalinfo</h2>
+<h2><a name="gdalinfo">gdalinfo</a></h2>
 
 The gdalinfo program lists various information about a GDAL supported
 raster dataset. 
@@ -72,7 +72,7 @@ Center      (  456080.000, 3735960.000) (117d28'27.39"W, 33d45'52.46"N)
 Band 1 Block=512x16 Type=Byte, ColorInterp=Gray
 \endverbatim
 
-<h2>gdal_translate</h2>
+<h2><a name="gdal_translate">gdal_translate</a></h2>
 
 The gdal_translate utility can be used to convert raster data between 
 different formats, potentially peforming some operations like subsettings, 
@@ -127,7 +127,7 @@ Example:
 % gdal_translate -of GTiff -co "TILED=YES" utm.tif utm_tiled.tif
 \endverbatim
 
-<h2>gdaladdo</h2>
+<h2><a name="gdaladdo">gdaladdo</a></h2>
 
 The gdaladdo utility can be used to build or rebuild overview images for
 most supported file formats with one over several downsampling algorithms. 
@@ -160,9 +160,76 @@ be recomputed and rewritten in place.
 
 Some format drivers do not support overviews at all.  Many format drivers
 store overviews in a secondary file with the extension .ovr.  The GeoTIFF
-driver stores overviews internally to the file operated on.
+driver stores overviews internally to the file operated on.<p>
 
-<h2>gdaltindex</h2>
+<h2><a name="gdalwarp">gdalwarp</a></h2>
+
+<p>
+The gdalwarp utility is a simple image reprojection and warping
+      utility. The program can reproject to any support projection,
+      and can also apply GCPs stored with the image if the image is "raw"
+with control information.
+
+<p>
+\verbatim
+Usage: gdalwarp [--version] [--formats]
+    [-s_srs srs_def] [-t_srs srs_def] [-order n] [-et err_threshold]
+    [-te xmin ymin xmax ymax] [-tr xres yres] [-ts width height]
+    [-of format] [-co "NAME=VALUE"]* srcfile dstfile
+\endverbatim
+
+<p>
+<ul>
+<li> <b>-s_srs</b> <em>srs def</em>: source spatial reference
+ set. The coordinate systems that can be passed are anything supported
+ by the OGRSpatialReference.SetFromUserInput() call, which includes
+ EPSG PCS and GCSes (ie. EPSG:4296), PROJ.4 declarations (as above),
+ or the name of a .prf file containing well known text.
+<li> <b>-t_srs</b> <em>srs_def</em>: target spatial reference set. The
+coordinate systems that can be passed are anything supported by the
+OGRSpatialReference.SetFromUserInput() call, which includes EPSG PCS
+and GCSes (ie. EPSG:4296), PROJ.4 declarations (as above), or the name
+of a .prf file containing well known text.
+<li> <b>-s_srs</b> <em>srs_def</em>: Overrides input projection, mostly useful
+for input files with incorrect or incomplete coordinate system information.
+<li> <b>-order</b> <em>n</em>: order of polynom used for warping (1 to 3) 
+<li> <b>-et</b> <em>err_threshold</em>: error threshold for transformation
+approximation (in pixel units - defaults to 0.125).
+<li> <b>-te</b> <em>xmin ymin xmax ymax</em>: set georeferenced extents of 
+output file to be created.
+<li> <b>-tr</b> <em>xres yres</em>: set output file resolution (in target
+georeferenced units)
+<li> <b>-ts</b> <em>width height</em>: set output file size in pixels and lines
+<li> <b>-of</b> <em>format</em>: Select the output format. The default is
+GeoTIFF (GTiff). Use the short format name. 
+<li> <b>-co</b> <em>"NAME=VALUE"</em>: passes a creation
+option to the output format driver. Multiple <b>-co</b> options may be
+listed. See format specific documentation for legal creation options
+for each format. 
+<li> <em>srcfile</em>: The source file name. 
+<li> <em>dstfile</em>: The destination file name. 
+</ul>
+
+Mosaicing into an existing output file is supported if the output file 
+already exists. 
+
+It currently has the following limitations:
+<ul>
+<li>Only 8 bit data is can be warped.
+<li>The entire source image is held in memory.
+<li>Only nearest neighbour resampling is available.
+</ul>
+
+<p>
+Example: For instance, an eight bit spot scene stored in GeoTIFF with
+control points mapping the corners to lat/long could be warped to a UTM
+projection with a command like this:<p>
+
+\verbatim
+% gdalwarp -t_srs '+proj=utm +zone=11 +datum=WGS84' raw_spot.tif utm11.tif
+\endverbatim
+
+<h2><a name="gdaltindex">gdaltindex</a></h2>
 
 This program builds a shapefile with a record for each input raster file, 
 an attribute containing the filename, and a polygon geometry outlining the
@@ -185,7 +252,7 @@ on the commandline.
 coordinate system as the rasters.
 </ul>
 
-<h2>rgb2pct.py</h2>
+<h2><a name="rgb2pct">rgb2pct.py</a></h2>
 
 This utility will compute an optimal pseudo-color table for a given RGB image
 using a median cut algorithm on a downsampled RGB histogram.   Then it 
@@ -211,7 +278,7 @@ NOTE: rgb2pct.py is a Python script, and will only work if GDAL was built
 with Python support.  It is also not installed by default. It is found
 at $GDAL_HOME/pymod.
 
-<h2>gdal_merge.py</h2>
+<h2><a name="gdal_merge">gdal_merge.py</a></h2>
 
 This utility will automatically mosaic a set of images.  All the images must
 be in the same coordinate system and have a matching number of bands, but 
@@ -239,7 +306,7 @@ NOTE: gdal_merge.py is a Python script, and will only work if GDAL was built
 with Python support.  It is also not installed by default. It is found
 at $GDAL_HOME/pymod.
 
-<h2>gdal-config</h2>
+<h2><a name="gdal-config">gdal-config</a></h2>
 
 This utility script (available on Unix systems) can be used to determine
 various information about a GDAL installation.  It is normally just used
