@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2003/04/23 05:18:57  warmerda
+ * added multithread support
+ *
  * Revision 1.5  2003/03/02 05:25:59  warmerda
  * added some source nodata support
  *
@@ -47,6 +50,7 @@
 
 #include "gdalwarper.h"
 #include "cpl_string.h"
+#include "cpl_multiproc.h"
 
 CPL_CVSID("$Id$");
 
@@ -135,6 +139,15 @@ GDALWarpOperation::GDALWarpOperation()
 
     dfProgressBase = 0.0;
     dfProgressScale = 1.0;
+
+    hThread1Mutex = NULL;
+    hThread2Mutex = NULL;
+    hIOMutex = NULL;
+    hWarpMutex = NULL;
+
+    nChunkListCount = 0;
+    nChunkListMax = 0;
+    panChunkList = NULL;
 }
 
 /************************************************************************/
@@ -145,6 +158,16 @@ GDALWarpOperation::~GDALWarpOperation()
 
 {
     WipeOptions();
+
+    if( hThread1Mutex != NULL )
+    {
+        CPLDestroyMutex( hThread1Mutex );
+        CPLDestroyMutex( hThread2Mutex );
+        CPLDestroyMutex( hIOMutex );
+        CPLDestroyMutex( hWarpMutex );
+    }
+
+    WipeChunkList();
 }
 
 /************************************************************************/
@@ -438,6 +461,212 @@ CPLErr GDALWarpOperation::ChunkAndWarpImage(
 
 {
 /* -------------------------------------------------------------------- */
+/*      Collect the list of chunks to operate on.                       */
+/* -------------------------------------------------------------------- */
+    WipeChunkList();
+    CollectChunkList( nDstXOff, nDstYOff, nDstXSize, nDstYSize );
+
+/* -------------------------------------------------------------------- */
+/*      Process them one at a time, updating the progress               */
+/*      information for each region.                                    */
+/* -------------------------------------------------------------------- */
+    int iChunk;
+    double dfPixelsProcessed=0.0, dfTotalPixels = nDstXSize*(double)nDstYSize;
+
+    for( iChunk = 0; iChunk < nChunkListCount; iChunk++ )
+    {
+        int *panThisChunk = panChunkList + iChunk*8;
+        double dfChunkPixels = panThisChunk[2] * (double) panThisChunk[3];
+        CPLErr eErr;
+
+        dfProgressBase = dfPixelsProcessed / dfTotalPixels;
+        dfProgressScale = dfChunkPixels / dfTotalPixels;
+
+        eErr = WarpRegion( panThisChunk[0], panThisChunk[1], 
+                           panThisChunk[2], panThisChunk[3],
+                           panThisChunk[4], panThisChunk[5],
+                           panThisChunk[6], panThisChunk[7] );
+
+        if( eErr != CE_None )
+            return eErr;
+
+        dfPixelsProcessed += dfChunkPixels;
+    }
+
+    WipeChunkList();
+
+    return CE_None;
+}
+
+/************************************************************************/
+/*                          ChunkThreadMain()                           */
+/************************************************************************/
+
+static void ChunkThreadMain( void *pThreadData )
+
+{
+    void *hThreadMutex = ((void **) pThreadData)[0];
+    GDALWarpOperation *poOperation = 
+        (GDALWarpOperation *) (((void **) pThreadData)[1]);
+    int *panChunkInfo = (int *) (((void **) pThreadData)[2]);
+
+    if( !CPLAcquireMutex( hThreadMutex, 2.0 ) )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Failed to acquire thread mutex in ChunkThreadMain()." );
+        return;
+    }
+
+    CPLErr eErr;
+
+    eErr = 
+        poOperation->WarpRegion( panChunkInfo[0], panChunkInfo[1], 
+                                 panChunkInfo[2], panChunkInfo[3], 
+                                 panChunkInfo[4], panChunkInfo[5], 
+                                 panChunkInfo[6], panChunkInfo[7] );
+
+    /* Return error. */
+    ((void **) pThreadData)[2] = (void *) (long) eErr;
+
+    /* Marks that we are done. */
+    ((void **) pThreadData)[1] = NULL;
+
+    /* Release mutex so parent knows we are done. */
+    CPLReleaseMutex( hThreadMutex );
+}
+
+/************************************************************************/
+/*                         ChunkAndWarpMulti()                          */
+/************************************************************************/
+
+/**
+ * \fn CPLErr GDALWarpOperation::ChunkAndWarpMulti(
+                int nDstXOff, int nDstYOff,  int nDstXSize, int nDstYSize );
+ *
+ * This method does a complete warp of the source image to the destination
+ * image for the indicated region with the current warp options in effect.  
+ * Progress is reported to the installed progress monitor, if any.  
+ *
+ * Externally this method operates the same as ChunkAndWarpImage(), but
+ * internally this method uses multiple threads to interleave input/output
+ * for one region while the processing is being done for another.
+ *
+ * @param nDstXOff X offset to window of destination data to be produced.
+ * @param nDstYOff Y offset to window of destination data to be produced.
+ * @param nDstXSize Width of output window on destination file to be produced.
+ * @param nDstYSize Height of output window on destination file to be produced.
+ *
+ * @return CE_None on success or CE_Failure if an error occurs.
+ */
+
+CPLErr GDALWarpOperation::ChunkAndWarpMulti( 
+    int nDstXOff, int nDstYOff,  int nDstXSize, int nDstYSize )
+
+{
+    hThread1Mutex = CPLCreateMutex();
+    hThread2Mutex = CPLCreateMutex();
+    hIOMutex = CPLCreateMutex();
+    hWarpMutex = CPLCreateMutex();
+
+/* -------------------------------------------------------------------- */
+/*      Collect the list of chunks to operate on.                       */
+/* -------------------------------------------------------------------- */
+    WipeChunkList();
+    CollectChunkList( nDstXOff, nDstYOff, nDstXSize, nDstYSize );
+
+/* -------------------------------------------------------------------- */
+/*      Process them one at a time, updating the progress               */
+/*      information for each region.                                    */
+/* -------------------------------------------------------------------- */
+    void * volatile papThreadDataList[6] = { hThread1Mutex, NULL, NULL, 
+                                            hThread2Mutex, NULL, NULL };
+    int iChunk;
+    double dfPixelsProcessed=0.0, dfTotalPixels = nDstXSize*(double)nDstYSize;
+
+    for( iChunk = 0; iChunk < nChunkListCount+1; iChunk++ )
+    {
+        int    iThread = iChunk % 2;
+
+/* -------------------------------------------------------------------- */
+/*      Launch thread for this chunk.                                   */
+/* -------------------------------------------------------------------- */
+        if( iChunk < nChunkListCount )
+        {
+            int *panThisChunk = panChunkList + iChunk*8;
+            double dfChunkPixels = panThisChunk[2] * (double) panThisChunk[3];
+
+            dfProgressBase = dfPixelsProcessed / dfTotalPixels;
+            dfProgressScale = dfChunkPixels / dfTotalPixels;
+            
+            papThreadDataList[iThread*3+1] = (void *) this;
+            papThreadDataList[iThread*3+2] = (void *) panThisChunk;
+
+            CPLDebug( "GDAL", "Start chunk %d.", iChunk );
+            if( CPLCreateThread( ChunkThreadMain, 
+                          (void *) (papThreadDataList + iThread*3)) == -1 )
+            {
+                CPLError( CE_Failure, CPLE_AppDefined, 
+                          "CPLCreateThread() failed in ChunkAndWarpMulti()" );
+                return CE_Failure;
+            }
+
+            /* Eventually we need a mechanism to ensure we wait for this 
+               thread to acquire the IO mutex before proceeding. */
+            if( iChunk == 0 )
+                CPLSleep( 0.25 );
+        }
+
+        
+/* -------------------------------------------------------------------- */
+/*      Wait for previous chunks thread to complete.                    */
+/* -------------------------------------------------------------------- */
+        if( iChunk > 0 )
+        {
+            iThread = (iChunk-1) % 2;
+            
+            /* Wait for thread to finish. */
+            while( papThreadDataList[iThread*3+1] != NULL )
+            {
+                if( CPLAcquireMutex( papThreadDataList[iThread*3+0], 1.0 ) )
+                    CPLReleaseMutex( papThreadDataList[iThread*3+0] );
+            }
+
+            CPLDebug( "GDAL", "Finished chunk %d.", iChunk-1 );
+
+            CPLErr eErr = (CPLErr) (long) papThreadDataList[iThread*3+2];
+
+            if( eErr != CE_None )
+                return eErr;
+        }            
+    }
+
+    WipeChunkList();
+
+    return CE_None;
+}
+
+/************************************************************************/
+/*                           WipeChunkList()                            */
+/************************************************************************/
+
+void GDALWarpOperation::WipeChunkList()
+
+{
+    CPLFree( panChunkList );
+    panChunkList = NULL;
+    nChunkListCount = 0;
+    nChunkListMax = 0;
+}
+
+/************************************************************************/
+/*                          CollectChunkList()                          */
+/************************************************************************/
+
+CPLErr GDALWarpOperation::CollectChunkList( 
+    int nDstXOff, int nDstYOff,  int nDstXSize, int nDstYSize )
+
+{
+/* -------------------------------------------------------------------- */
 /*      Compute the bounds of the input area corresponding to the       */
 /*      output area.                                                    */
 /* -------------------------------------------------------------------- */
@@ -500,24 +729,18 @@ CPLErr GDALWarpOperation::ChunkAndWarpImage(
     if( dfTotalMemoryUse > psOptions->dfWarpMemoryLimit 
         && (nDstXSize > 2 || nDstYSize > 2) )
     {
-        double dfSaveBase = dfProgressBase;
-        double dfSaveScale = dfProgressScale;
-
-        dfProgressScale *= 0.5;
-
         if( nDstXSize > nDstYSize )
         {
             int nChunk1 = nDstXSize / 2;
             int nChunk2 = nDstXSize - nChunk1;
 
-            eErr = ChunkAndWarpImage( nDstXOff, nDstYOff, 
-                                      nChunk1, nDstYSize );
+            eErr = CollectChunkList( nDstXOff, nDstYOff, 
+                                     nChunk1, nDstYSize );
 
             if( eErr == CE_None )
             {
-                dfProgressBase += dfProgressScale;
-                eErr = ChunkAndWarpImage( nDstXOff+nChunk1, nDstYOff, 
-                                          nChunk2, nDstYSize );
+                eErr = CollectChunkList( nDstXOff+nChunk1, nDstYOff, 
+                                         nChunk2, nDstYSize );
             }
         }
         else
@@ -525,29 +748,41 @@ CPLErr GDALWarpOperation::ChunkAndWarpImage(
             int nChunk1 = nDstYSize / 2;
             int nChunk2 = nDstYSize - nChunk1;
 
-            eErr = ChunkAndWarpImage( nDstXOff, nDstYOff, 
-                                      nDstXSize, nChunk1 );
+            eErr = CollectChunkList( nDstXOff, nDstYOff, 
+                                     nDstXSize, nChunk1 );
 
             if( eErr == CE_None )
             {
-                dfProgressBase += dfProgressScale;
-                eErr = ChunkAndWarpImage( nDstXOff, nDstYOff+nChunk1, 
-                                          nDstXSize, nChunk2 );
+                eErr = CollectChunkList( nDstXOff, nDstYOff+nChunk1, 
+                                         nDstXSize, nChunk2 );
             }
         }
-
-        dfProgressBase = dfSaveBase;
-        dfProgressScale = dfSaveScale;
 
         return eErr;
     }
 
 /* -------------------------------------------------------------------- */
-/*      OK, everything fits, so proceed to handle this whole chunk      */
-/*      "in mmeory".                                                    */
+/*      OK, everything fits, so add to the chunk list.                  */
 /* -------------------------------------------------------------------- */
-    return WarpRegion( nDstXOff, nDstYOff, nDstXSize, nDstYSize, 
-                       nSrcXOff, nSrcYOff, nSrcXSize, nSrcYSize );
+    if( nChunkListCount == nChunkListMax )
+    {
+        nChunkListMax = nChunkListMax * 2 + 1;
+        panChunkList = (int *) 
+            CPLRealloc(panChunkList,sizeof(int)*nChunkListMax*8 );
+    }
+
+    panChunkList[nChunkListCount*8+0] = nDstXOff;
+    panChunkList[nChunkListCount*8+1] = nDstYOff;
+    panChunkList[nChunkListCount*8+2] = nDstXSize;
+    panChunkList[nChunkListCount*8+3] = nDstYSize;
+    panChunkList[nChunkListCount*8+4] = nSrcXOff;
+    panChunkList[nChunkListCount*8+5] = nSrcYOff;
+    panChunkList[nChunkListCount*8+6] = nSrcXSize;
+    panChunkList[nChunkListCount*8+7] = nSrcYSize;
+
+    nChunkListCount++;
+
+    return CE_None;
 }
 
 
@@ -590,6 +825,19 @@ CPLErr GDALWarpOperation::WarpRegion( int nDstXOff, int nDstYOff,
     CPLErr eErr;
     int   iBand;
 
+/* -------------------------------------------------------------------- */
+/*      Acquire IO mutex.                                               */
+/* -------------------------------------------------------------------- */
+    if( hIOMutex != NULL )
+    {
+        if( !CPLAcquireMutex( hIOMutex, 600.0 ) )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                      "Failed to acquire IOMutex in WarpRegion()." );
+            return CE_Failure;
+        }
+    }
+        
 /* -------------------------------------------------------------------- */
 /*      Allocate the output buffer.                                     */
 /* -------------------------------------------------------------------- */
@@ -719,6 +967,9 @@ CPLErr GDALWarpOperation::WarpRegion( int nDstXOff, int nDstYOff,
 /* -------------------------------------------------------------------- */
     VSIFree( pDstBuffer );
     
+    if( hIOMutex != NULL )
+        CPLReleaseMutex( hIOMutex );
+
     return eErr;
 }
 
@@ -890,11 +1141,39 @@ CPLErr GDALWarpOperation::WarpRegionToBuffer(
     }
 
 /* -------------------------------------------------------------------- */
+/*      Release IO Mutex, and acquire warper mutex.                     */
+/* -------------------------------------------------------------------- */
+    if( hIOMutex != NULL )
+    {
+        CPLReleaseMutex( hIOMutex );
+        if( !CPLAcquireMutex( hWarpMutex, 600.0 ) )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                      "Failed to acquire WarpMutex in WarpRegion()." );
+            return CE_Failure;
+        }
+    }
+        
+/* -------------------------------------------------------------------- */
 /*      Perform the warp.                                               */
 /* -------------------------------------------------------------------- */
     if( eErr == CE_None )
         eErr = oWK.PerformWarp();
 
+/* -------------------------------------------------------------------- */
+/*      Release Warp Mutex, and acquire io mutex.                       */
+/* -------------------------------------------------------------------- */
+    if( hIOMutex != NULL )
+    {
+        CPLReleaseMutex( hWarpMutex );
+        if( !CPLAcquireMutex( hIOMutex, 600.0 ) )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                      "Failed to acquire IOMutex in WarpRegion()." );
+            return CE_Failure;
+        }
+    }
+        
 /* -------------------------------------------------------------------- */
 /*      Cleanup.                                                        */
 /* -------------------------------------------------------------------- */

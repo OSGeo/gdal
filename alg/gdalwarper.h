@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2003/04/23 05:18:57  warmerda
+ * added multithread support
+ *
  * Revision 1.5  2003/03/02 05:25:59  warmerda
  * added some source nodata support
  *
@@ -266,6 +269,19 @@ private:
     CPLErr          CreateKernelMask( GDALWarpKernel *, int iBand, 
                                       const char *pszType );
 
+    void            *hThread1Mutex;
+    void            *hThread2Mutex;
+    void            *hIOMutex;
+    void            *hWarpMutex;
+
+    int             nChunkListCount;
+    int             nChunkListMax;
+    int            *panChunkList;
+
+    void            WipeChunkList();
+    CPLErr          CollectChunkList( int nDstXOff, int nDstYOff, 
+                                      int nDstXSize, int nDstYSize );
+
 public:
                     GDALWarpOperation();
     virtual        ~GDALWarpOperation();
@@ -275,6 +291,8 @@ public:
     const GDALWarpOptions         *GetOptions();
 
     CPLErr          ChunkAndWarpImage( int nDstXOff, int nDstYOff, 
+                                       int nDstXSize, int nDstYSize );
+    CPLErr          ChunkAndWarpMulti( int nDstXOff, int nDstYOff, 
                                        int nDstXSize, int nDstYSize );
     CPLErr          WarpRegion( int nDstXOff, int nDstYOff, 
                                 int nDstXSize, int nDstYSize,
