@@ -26,6 +26,9 @@
  * serves as an early test harnass.
  *
  * $Log$
+ * Revision 1.12  2000/04/21 21:57:33  warmerda
+ * updated the way metadata is handled
+ *
  * Revision 1.11  2000/03/31 13:43:21  warmerda
  * added code to report all corners and gcps
  *
@@ -77,7 +80,6 @@ int main( int argc, char ** argv )
     GDALRasterBandH	hBand;
     int			i;
     double		adfGeoTransform[6];
-    GDALProjDefH	hProjDef;
     GDALDriverH		hDriver;
     char		**papszMetadata;
 
@@ -155,7 +157,7 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
 /*      Report metadata.                                                */
 /* -------------------------------------------------------------------- */
-    papszMetadata = GDALGetDatasetMetadata( hDataset );
+    papszMetadata = GDALGetMetadata( hDataset, NULL );
     if( CSLCount(papszMetadata) > 0 )
     {
         printf( "Metadata:\n" );
@@ -228,7 +230,7 @@ int main( int argc, char ** argv )
             printf( "\n" );
         }
 
-        papszMetadata = GDALGetRasterMetadata( hBand );
+        papszMetadata = GDALGetMetadata( hBand, NULL );
         if( CSLCount(papszMetadata) > 0 )
         {
             printf( "Metadata:\n" );
