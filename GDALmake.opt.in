@@ -62,11 +62,25 @@ GDAL_SLIB_LINK	=	-L$(GDAL_ROOT) -lgdal.$(GDAL_VER)
 OGR_LIB		=	$(GDAL_ROOT)/ogr/ogr.a
 CPL_LIB		=	$(GDAL_ROOT)/port/cpl.a
 
+#
+# OGDI Parameters
+#
 ifeq ($(HAVE_OGDI),yes)
 OGDI_LIBS	=	@OGDI_LIBS@
 OGDI_INCLUDE	=	@OGDI_INCLUDE@
 OGDI_FLAG	=	ENABLED
 OGDI_FRMT	=	ogdi
+endif
+
+#
+# OGR/PostgreSQL support.
+#
+HAVE_OGR_PG     = no
+
+ifeq ($(HAVE_OGR_PG),yes)
+PG_HOME =	/usr/local/pgsql
+PG_LIB	=	-L$(PG_HOME)/lib -lpq
+PG_INC	=	-I$(PG_HOME)/include
 endif
 
 
@@ -84,7 +98,8 @@ GDAL_OBJ	=	$(GDAL_ROOT)/frmts/o/*.o \
 			$(GDAL_ROOT)/ogr/ogr_srs_proj4.o
 
 ifeq ($(OGR_ENABLED),yes)
-GDAL_LIBS := $(GDAL_ROOT)/ogr/ogrsf_frmts/ogrsf_frmts.a $(GDAL_LIBS) 
+GDAL_LIBS := $(GDAL_ROOT)/ogr/ogrsf_frmts/ogrsf_frmts.a \
+		$(PG_LIB) $(GDAL_LIBS) 
 GDAL_OBJ := $(GDAL_OBJ) $(GDAL_ROOT)/ogr/ogrsf_frmts/generic/ogrregisterall.o
 endif
 
