@@ -75,11 +75,13 @@ class DODSDataset : public GDALDataset
 private:
     /** This struct is used to parse the bracket expression which tells the
 	driver how to interpret the raster's different dimensions. It is
-	private to the DODSDataset class. */
+	private to the DODSDataset class. Each of the bracketed
+	sub-expressions has a corresponding instance of dim_spec. */
     struct dim_spec {
+	/// What kind of sub-expr is this?
 	enum { unknown, index, range, lat, lon } type;
-	int start;
-	int stop;
+	int start;		///< start band num, ones-based indexing
+	int stop;		///< end band num, ones-based indexing
 
 	dim_spec() : type(unknown), start(-1), stop(-1) {}
 
@@ -97,14 +99,14 @@ private:
 		type = lon;
 		DBG(cerr << "Found lon" << endl);
 	    }
-	    else if (e.find(':') != string::npos) {
+	    else if (e.find('-') != string::npos) {
 		// A range expression?
 		istringstream iss(e);
 		iss >> start;
 		char c;
 		iss >> c;
 		iss >> stop;
-		if (!(iss.eof() && c == ':' && start > -1 && stop > start)) 
+		if (!(iss.eof() && c == '-' && start > -1 && stop > start)) 
 		    throw Error(string("Malformed range sub-expression: ") 
 				+ e);
 		type = range;
@@ -146,19 +148,42 @@ private:
     void get_var_info(DAS &das, DDS &dds) throw(Error);
     /// Extract projection info and build WKT string
     void get_geo_info(DAS &das, DDS &dds) throw(Error);
+    /// How many of the first bands are sequential?
+    int contiguous_bands(int iStart, int nBandCount, int *panBandMap) 
+	throw(InternalErr);
 
     /// Build a constraint for a DAP 3.x server.
-    string BuildConstraint(int iXOffset, int iYOffset, int iXSize, int iYSize,
-			   int iBandNum) throw(Error, InternalErr);
+    string build_constraint(int iXOffset, int iYOffset, int iXSize, int iYSize,
+			   int iStartBandNum, int iEndBandNum) 
+	throw(Error, InternalErr);
 
-    /// Get raw rater data
-    void GetRaster(int iXOffset, int iYOffset, int iXSize, int iYSize,
-		   int iBandNum, void *pImage) throw(Error, InternalErr);
+    /// Get raw rater data.
+    void get_raster(int iXOffset, int iYOffset, int iXSize, int iYSize,
+		   int iStartBandNum, int iEndBandNum, void *pImage) 
+	throw(Error, InternalErr);
+
+    /// Help function for the IRasterIO() method.
+    void irasterio_helper(GDALRWFlag eRWFlag,
+			 int nXOff, int nYOff, int nXSize, int nYSize,
+			 GDALDataType eDataType,
+			 void * pData, int nBufXSize, int nBufYSize,
+			 GDALDataType eBufType,
+			 int iStartBandNum, int iEndBandNum,
+			 int nPixelSpace, int nLineSpace) throw(Error);
 
     // Simplify testing, make the unit tests a friend class.
     friend class DODSDatasetTest;
     friend class DODSRasterBand;
 
+protected:
+    /// Specialization; Read a raster.
+    virtual CPLErr IRasterIO(GDALRWFlag eRWFlag,
+			     int nXOff, int nYOff, int nXSize, int nYSize,
+			     void * pData, int nBufXSize, int nBufYSize,
+			     GDALDataType eBufType, 
+			     int nBandCount, int *panBandMap,
+			     int nPixelSpace, int nLineSpace, int nBandSpace);
+    
 public:
     /// Open is not a method in GDALDataset; it's the driver.
     static GDALDataset *Open(GDALOpenInfo *);
@@ -175,16 +200,6 @@ public:
     /// Return the GDAL data type for the variable
     GDALDataType GetDatatype() { return d_eDatatype; }
 
-#if 0
-    /// Specialization; Read a raster.
-    virtual CPLErr IRasterIO(GDALRWFlag eRWFlag,
-			     int nXOff, int nYOff, int nXSize, int nYSize,
-			     void * pData, int nBufXSize, int nBufYSize,
-			     GDALDataType eBufType, 
-			     int nBandCount, int *panBandMap,
-			     int nPixelSpace, int nLineSpace, int nBandSpace);
-#endif
-    
     /// Get the geographic transform info
     CPLErr GetGeoTransform(double *padfTransform);
     /// Return the OGC/WKT projection string
@@ -200,9 +215,7 @@ private:
     friend class DODSDatasetTest;
     friend class DODSDataset;
 
-public:
-    /// Build an instance
-    DODSRasterBand(DODSDataset *, int);
+protected:
     /// Read a raster
     virtual CPLErr IRasterIO(GDALRWFlag eRWFlag,
 			     int nXOff, int nYOff, int nXSize, int nYSize,
@@ -211,23 +224,34 @@ public:
 			     int nPixelSpace, int nLineSpace);
     /// Read the entire raster.
     virtual CPLErr IReadBlock(int, int, void *);
+
+public:
+    /// Build an instance
+    DODSRasterBand(DODSDataset *, int);
 };
 
 // $Log$
+// Revision 1.4  2004/01/29 22:56:18  jimg
+// Second major attempt to optimize the driver. This implementation provides a
+// specialization of GDALDataset::IRasterIO() which recognizes when the caller
+// has requests several band which are contiguous (or groups of bands which are
+// themselves contiguous) and uses just one OPeNDAP request (or one per group)
+// to get the data for those bands.
+//
 // Revision 1.3  2004/01/21 21:52:16  jimg
-// Removed the unused method BuildConstraint(int). GDAL uses ones indexing
+// Removed the unused method build_constraint(int). GDAL uses ones indexing
 // for Bands while this driver was using zero-based indexing. I changed
 // the code so the driver now also uses ones-based indexing for bands.
 //
 // Revision 1.2  2004/01/20 16:36:15  jimg
-// This version of the OPeNDAP driver uses GDALRasterBand::IRasterIO() to read
-// from the remote servers. Using this protected method, it is possible to read
-// portions of an entire raster (the previous version used IReadBlock() which
-// could read only the entire raster). Note that both IRasterIO() and
-// IReadBlock() are specializations of the protected methods from in
-// GDALRasterBand. A better version of this driver would move the implementation
-// into the class DODSDataset so that it could read several bands with one
-// remote access.
+// This version of the OPeNDAP driver uses GDALRasterBand::IRasterIO() to
+// read from the remote servers. Using this protected method, it is possible
+// to read portions of an entire raster (the previous version used
+// IReadBlock() which could read only the entire raster). Note that both
+// IRasterIO() and IReadBlock() are specializations of the protected methods
+// from in GDALRasterBand. A better version of this driver would move the
+// implementation into the class DODSDataset so that it could read several
+// bands with one remote access.
 //
 // Revision 1.1  2003/12/12 23:28:17  jimg
 // Added.
@@ -237,3 +261,4 @@ public:
 //
 
 #endif // _dodsdataset_h
+
