@@ -1,3 +1,112 @@
+GDAL 1.2.6 - Overview of Changes
+--------------------------------
+
+gdal_translate: 
+ - Added -sds switch to copy all subdatasets. 
+
+gdalwarp: 
+ - Added Thin Plate Spline support (-tps switch). 
+
+GDALRasterBand:
+ - Now uses two level block cache allowing efficient access to files
+   with a very large number of tiles. 
+ - Added support for YCbCr color space for raster band color interpretations.
+ - Added AdviseRead() method - currently only used by ECW driver and OGDI 
+   drivers. 
+
+ILWIS Driver:
+ - New driver for the raster format of the ILWIS software. 
+
+ECW Driver:
+ - Updated to use ECW SDK 3.1 (older ECW SDK no longer supported!)
+
+ECWJP2 Driver:
+ - Added JPEG2000 support driver based on ECW/JPEG2000 SDK with a variety
+   of features. 
+
+NITF Driver: 
+ - Added support for reading *and* writing JPEG2000 compressed NITF files 
+   using the ECW/JPEG2000 SDK. 
+ - Added ICHIPB support. 
+
+HDF Driver:
+ - Add support for georeferencing from some additional metadata formats. 
+ - Fixed bug with multi-band HDF-EOS datasets. 
+
+MrSID Driver:
+ - Driver can now be built as a plugin on win32. 
+ - Split out MrSID 3.x SDK support - not readily buildable now. 
+ - Implemented accelerated IO cases for MrSID 4.x SDK. 
+ - Support for writing MrSID files added (improved?)
+
+Imagine Driver: 
+ - Fixed bug reading some large multiband Imagine files. 
+ - Added support for writing compressed files. 
+
+Win32 Builds:
+ - Added versioning information to GDAL DLL.
+
+L1B Driver:
+ - Only return a reduced grid of control points. 
+
+IDA (WinDisp4) Driver:
+ - New read/write driver for the Image Display and Analysis raster format 
+   used by WinDisp 4. 
+
+GTiff Driver:
+ - Added support for offset/scale being saved and loaded (special metadata). 
+
+
+OGR 1.2.6 - Overview of Changes
+-------------------------------
+
+OGRSFDriverRegistrar:
+ - Added support for autoloading plugin drivers from ogr_<driver>.so. 
+
+ogr.py:
+ - Geometry, and Feature now take care of their own reference counting and
+   will delete themselves when unreferenced.  Care must still be taken to
+   unreference all features before destroying the corresponding 
+   layer/datasource.
+ - ogr.Feature fields can now be fetched and set directly as attributes. 
+ - Geometry contructor can now take various formats (wkt, gml, and wkb). 
+ - Added docstrings. 
+ - Added better __str__ methods on several objects. 
+ - Various other improvements. 
+
+OGRLayer:
+ - Re-wrote generic spatial search support to be faster in case of rectangular
+   filters. 
+ - Intersects() method now really uses GEOS.  This also affects all OGR 
+   layer spatial filtering (with non-rectangular filters). 
+ - Added SetNextByIndex() method on OGRLayer.  
+
+OGRSpatialReference:
+ - Automatically generate +towgs84 from EPSG tables when translating to
+   PROJ.4 if available and TOWGS84 not specified in source WKT. 
+ - Updated GML CRS translation to follow OGC 05-011 more closely.  Still
+   incomplete but operational for some projections. 
+ - Added support for FIPSZONE State Plane processing for old ESRI .prjs. 
+ - Added Goode Homolosine support. 
+ - Added GEOS (Geostationary Satellite) support.
+
+OCI (Oracle) Driver:
+ - Added GEOMETRY_NAME creation option to control the name of the field to
+   hold the geometry.
+
+PostGIS Driver:
+ - Fixed some problems with truncation for integer and float list fields. 
+
+Shapefile Driver: 
+ - Added support for MapServer style spatial index (.qix). 
+
+GML Driver: 
+ - Improved support for 3L0 (GML 3 - Level 0 profile) reading and writing. 
+   On read we can now use the .xsd instead of needing to build a .gfs file. 
+
+
+===============================================================================
+
 GDAL 1.2.5 - Overview of Changes
 --------------------------------
 
