@@ -9,6 +9,10 @@
 
  *
  * $Log$
+ * Revision 1.9  2005/02/15 22:02:16  kruland
+ * Previous revision introduced a problem.  Put the #defines CPL_* back in
+ * until the cpl specific code is cleaned up.
+ *
  * Revision 1.8  2005/02/15 21:40:00  kruland
  * Stripped out all the extras by no longer including gdal.h or gdal_priv.h.
  * Added CreateShared() method.
@@ -66,7 +70,6 @@ typedef int GDALAccess;
 
 %rename (AllRegister) GDALAllRegister;
 void GDALAllRegister();
-
 
 //
 // CPL
@@ -162,6 +165,11 @@ py_CPLPushErrorHandler(PyObject *self, PyObject *args) {
 %native(CPLPushErrorHandler) py_CPLPushErrorHandler;
 
 %ignore CPLPushErrorHandler;
+
+#define CPL_DLL
+#define CPL_C_START extern "C" {
+#define CPL_C_END }
+
 %include "port/cpl_error.h"
 %include "port/cpl_conv.h"
 
