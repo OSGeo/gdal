@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2001/11/18 00:48:24  warmerda
+ * substantial upgrade
+ *
  * Revision 1.11  2001/09/06 14:03:21  warmerda
  * upgrade bridge error reporting
  *
@@ -195,6 +198,29 @@ typedef int OGRErr;
 #define OGRERR_UNSUPPORTED_SRS     7
 
 /* -------------------------------------------------------------------- */
+/*      Important CPL Functions.                                        */
+/* -------------------------------------------------------------------- */
+typedef void (*CPLErrorHandler)(CPLErr, int, const char*);
+
+GDAL_ENTRY void (*pfnCPLErrorReset)() GDAL_NULL;
+#define CPLErrorReset pfnCPLErrorReset
+
+GDAL_ENTRY int (*pfnCPLGetLastErrorNo)() GDAL_NULL;
+#define CPLGetLastErrorNo pfnCPLGetLastErrorNo
+
+GDAL_ENTRY CPLErr (*pfnCPLGetLastErrorType)() GDAL_NULL;
+#define CPLGetLastErrorType pfnCPLGetLastErrorType
+
+GDAL_ENTRY const char *(*pfnCPLGetLastErrorMsg)() GDAL_NULL;
+#define CPLGetLastErrorMsg pfnCPLGetLastErrorMsg 
+
+GDAL_ENTRY void (*pfnCPLPushErrorHandler)( CPLErrorHandler ) GDAL_NULL;
+#define CPLPushErrorHandler pfnCPLPushErrorHandler
+
+GDAL_ENTRY void (*pfnCPLPopErrorHandler)() GDAL_NULL;
+#define CPLPopErrorHandler pfnCPLPopErrorHandler
+
+/* -------------------------------------------------------------------- */
 /*      Define handle types related to various internal classes.        */
 /* -------------------------------------------------------------------- */
 
@@ -202,9 +228,9 @@ typedef void *GDALMajorObjectH;
 typedef void *GDALDatasetH;
 typedef void *GDALRasterBandH;
 typedef void *GDALDriverH;
-typedef void *GDALProjDefH;
 typedef void *GDALColorTableH;
 typedef void *OGRSpatialReferenceH;
+typedef void *OGRCoordinateTransformationH;
 
 /* ==================================================================== */
 /*      GDAL_GCP                                                        */
@@ -253,12 +279,45 @@ GDAL_ENTRY GDALDatasetH (*pfnGDALOpen)( const char *, GDALAccess ) GDAL_NULL;
 GDAL_ENTRY GDALDriverH (*pfnGDALGetDriverByName)( const char * ) GDAL_NULL;
 #define GDALGetDriverByName pfnGDALGetDriverByName
 
+GDAL_ENTRY const char *(*pfnGDALGetDriverShortName)(GDALDriverH) GDAL_NULL;
+#define GDALGetDriverShortName pfnGDALGetDriverShortName
+
+GDAL_ENTRY const char *(*pfnGDALGetDriverLongName)(GDALDriverH) GDAL_NULL;
+#define GDALGetDriverLongName pfnGDALGetDriverLongName
+
+/* ==================================================================== */
+/*      GDALMajorObject                                                 */
+/* ==================================================================== */
+
+GDAL_ENTRY char **(*pfnGDALGetMetadata)( GDALMajorObjectH, 
+                                         const char * ) GDAL_NULL;
+#define GDALGetMetadata pfnGDALGetMetadata
+
+GDAL_ENTRY CPLErr (*pfnGDALSetMetadata)( GDALMajorObjectH, char **,
+                                         const char * ) GDAL_NULL;
+#define GDALSetMetadata pfnGDALSetMetadata
+
+GDAL_ENTRY const char *(*pfnGDALGetMetadataItem)( GDALMajorObjectH, 
+                                      const char *, const char * ) GDAL_NULL;
+#define GDALGetMetadataItem pfnGDALGetMetadataItem 
+
+GDAL_ENTRY CPLErr (*pfnGDALSetMetadataItem)( GDALMajorObjectH,
+                                             const char *, const char *,
+                                             const char * ) GDAL_NULL;
+#define GDALSetMetadataItem pfnGDALSetMetadataItem
+
+GDAL_ENTRY const char *(*pfnGDALGetDescription)( GDALMajorObjectH ) GDAL_NULL;
+#define GDALGetDescription pfnGDALGetDescription
+
 /* ==================================================================== */
 /*      GDALDataset class ... normally this represents one file.        */
 /* ==================================================================== */
 
 GDAL_ENTRY void (*pfnGDALClose)( GDALDatasetH ) GDAL_NULL;
 #define GDALClose pfnGDALClose
+
+GDAL_ENTRY GDALDriverH (*pfnGDALGetDatasetDriver)( GDALDatasetH ) GDAL_NULL;
+#define GDALGetDatasetDriver pfnGDALGetDatasetDriver
 
 GDAL_ENTRY int (*pfnGDALGetRasterXSize)( GDALDatasetH ) GDAL_NULL;
 #define GDALGetRasterXSize pfnGDALGetRasterXSize
@@ -340,6 +399,16 @@ GDAL_ENTRY CPLErr (*pGDALSetRasterNoDataValue)( GDALRasterBandH, double )
     GDAL_NULL;
 #define GDALSetRasterNoDataValue pGDALSetRasterNoDataValue
 
+GDAL_ENTRY double (*pGDALGetRasterMinimum)( GDALRasterBandH, int * ) GDAL_NULL;
+#define GDALGetRasterMinimum pGDALGetRasterMinimum
+
+GDAL_ENTRY double (*pGDALGetRasterMaximum)( GDALRasterBandH, int * ) GDAL_NULL;
+#define GDALGetRasterMaximum pGDALGetRasterMaximum
+
+GDAL_ENTRY void (*pGDALComputeRasterMinMax)( GDALRasterBandH, int, 
+                                             double * ) GDAL_NULL;
+#define GDALComputeRasterMinMax pGDALComputeRasterMinMax
+
 GDAL_ENTRY GDALColorInterp (*pGDALGetRasterColorInterpretation)
 						( GDALRasterBandH ) GDAL_NULL;
 #define GDALGetRasterColorInterpretation pGDALGetRasterColorInterpretation
@@ -398,20 +467,6 @@ GDAL_ENTRY void (*pGDALSetColorEntry)( GDALColorTableH, int,
 /* ==================================================================== */
 /*      Projections                                                     */
 /* ==================================================================== */
-
-GDAL_ENTRY GDALProjDefH (*pGDALCreateProjDef)( const char * ) GDAL_NULL;
-#define GDALCreateProjDef pGDALCreateProjDef
-
-GDAL_ENTRY CPLErr (*pGDALReprojectToLongLat)( GDALProjDefH,
-                                              double *, double * ) GDAL_NULL;
-#define GDALReprojectToLongLat pGDALReprojectToLongLat
-
-GDAL_ENTRY CPLErr (*pGDALReprojectFromLongLat)( GDALProjDefH,
-                                                double *, double * ) GDAL_NULL;
-#define GDALReprojectFromLongLat pGDALReprojectFromLongLat
-
-GDAL_ENTRY void (*pGDALDestroyProjDef)( GDALProjDefH ) GDAL_NULL;
-#define GDALDestroyProjDef pGDALDestroyProjDef
 
 GDAL_ENTRY const char *(*pGDALDecToDMS)( double, const char *, int ) GDAL_NULL;
 #define GDALDecToDMS pGDALDecToDMS
@@ -547,6 +602,20 @@ GDAL_ENTRY OGRErr (*pOSRSetUTM)( OGRSpatialReferenceH hSRS,
 GDAL_ENTRY int (*pOSRGetUTMZone)( OGRSpatialReferenceH hSRS, 
                                   int *pbNorth ) GDAL_NULL;
 #define OSRGetUTMZone pOSRGetUTMZone
+
+GDAL_ENTRY OGRCoordinateTransformationH (*pOCTNewCoordinateTransformation)
+    			( OGRSpatialReferenceH hSourceSRS,
+                          OGRSpatialReferenceH hTargetSRS ) GDAL_NULL;
+#define OCTNewCoordinateTransformation pOCTNewCoordinateTransformation
+
+GDAL_ENTRY void (*pOCTDestroyCoordinateTransformation)
+			( OGRCoordinateTransformationH ) GDAL_NULL;
+#define OCTDestroyCoordinateTransformation pOCTDestroyCoordinateTransformation
+
+GDAL_ENTRY int (*pOCTTransform)( OGRCoordinateTransformationH hCT,
+                                 int nCount, double *x, double *y, 
+                                 double *z ) GDAL_NULL;
+#define OCTTransform pOCTTransform 
 
 /* ==================================================================== */
 /*      Some "standard" strings.                                        */

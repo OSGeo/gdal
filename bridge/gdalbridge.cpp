@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2001/11/18 00:48:24  warmerda
+ * substantial upgrade
+ *
  * Revision 1.13  2001/09/06 14:03:21  warmerda
  * upgrade bridge error reporting
  *
@@ -243,6 +246,15 @@ int GDALBridgeInitialize( const char * pszTargetDir, FILE *fpReportFailure )
     GDALGetDriverByName = (GDALDriverH (*)(const char *))
         GBGetSymbolCheck( szPath, "GDALGetDriverByName", apszFailed );
 
+    GDALGetDriverShortName = (const char *(*)(GDALDriverH))
+        GBGetSymbolCheck( szPath, "GDALGetDriverShortName", apszFailed );
+
+    GDALGetDriverLongName = (const char *(*)(GDALDriverH))
+        GBGetSymbolCheck( szPath, "GDALGetDriverLongName", apszFailed );
+
+    GDALGetDatasetDriver = (GDALDriverH (*)(GDALDatasetH))
+        GBGetSymbolCheck( szPath, "GDALGetDatasetDriver", apszFailed );
+
     GDALClose = (void (*)(GDALDatasetH))
         GBGetSymbolCheck( szPath, "GDALClose", apszFailed );
 
@@ -316,6 +328,15 @@ int GDALBridgeInitialize( const char * pszTargetDir, FILE *fpReportFailure )
     GDALSetRasterNoDataValue = (CPLErr (*)(GDALRasterBandH, double))
         GBGetSymbolCheck( szPath, "GDALSetRasterNoDataValue", apszFailed );
 
+    GDALGetRasterMinimum = (double (*)(GDALRasterBandH, int *))
+        GBGetSymbolCheck( szPath, "GDALGetRasterMinimum", apszFailed );
+        
+    GDALGetRasterMaximum = (double (*)(GDALRasterBandH, int *))
+        GBGetSymbolCheck( szPath, "GDALGetRasterMaximum", apszFailed );
+        
+    GDALComputeRasterMinMax = (void (*)(GDALRasterBandH, int, double *))
+        GBGetSymbolCheck( szPath, "GDALComputeRasterMinMax", apszFailed );
+        
     GDALGetRasterColorInterpretation = (GDALColorInterp (*)(GDALRasterBandH))
         GBGetSymbolCheck( szPath, "GDALGetRasterColorInterpretation", apszFailed );
 
@@ -324,18 +345,6 @@ int GDALBridgeInitialize( const char * pszTargetDir, FILE *fpReportFailure )
 
     GDALGetRasterColorTable = (GDALColorTableH (*)(GDALRasterBandH))
         GBGetSymbolCheck( szPath, "GDALGetRasterColorTable", apszFailed );
-
-    GDALCreateProjDef = (GDALProjDefH (*)(const char *))
-        GBGetSymbolCheck( szPath, "GDALCreateProjDef", apszFailed );
-
-    GDALReprojectToLongLat = (CPLErr (*)(GDALProjDefH, double *, double *))
-        GBGetSymbolCheck( szPath, "GDALReprojectToLongLat", apszFailed );
-    
-    GDALReprojectFromLongLat = (CPLErr (*)(GDALProjDefH, double *, double *))
-        GBGetSymbolCheck( szPath, "GDALReprojectFromLongLat", apszFailed );
-
-    GDALDestroyProjDef = (void (*)(GDALProjDefH))
-        GBGetSymbolCheck( szPath, "GDALDestroyProjDef", apszFailed );
 
     GDALDecToDMS = (const char *(*)(double, const char *, int ))
         GBGetSymbolCheck( szPath, "GDALDecToDMS", apszFailed );
@@ -358,6 +367,44 @@ int GDALBridgeInitialize( const char * pszTargetDir, FILE *fpReportFailure )
     
     GDALSetColorEntry = (void (*)(GDALColorTableH, int, const GDALColorEntry*))
         GBGetSymbolCheck( szPath, "GDALSetColorEntry", apszFailed );
+
+/* -------------------------------------------------------------------- */
+/*      GDALMajorObject                                                 */
+/* -------------------------------------------------------------------- */
+    GDALGetMetadata = (char **(*)(GDALMajorObjectH, const char *))
+        GBGetSymbolCheck( szPath, "GDALGetMetadata", apszFailed );
+    
+    GDALSetMetadata = (CPLErr(*)(GDALMajorObjectH, char **, const char *))
+        GBGetSymbolCheck( szPath, "GDALSetMetadata", apszFailed );
+    
+    GDALGetMetadataItem = (const char *(*)(GDALMajorObjectH, const char *,
+                                           const char *))
+        GBGetSymbolCheck( szPath, "GDALGetMetadataItem", apszFailed );
+
+    GDALSetMetadataItem = (CPLErr (*)(GDALMajorObjectH, const char *, 
+                                      const char *, const char *))
+        GBGetSymbolCheck( szPath, "GDALSetMetadataItem", apszFailed );
+    
+/* -------------------------------------------------------------------- */
+/*      CPL                                                             */
+/* -------------------------------------------------------------------- */
+    CPLErrorReset = (void (*)())
+        GBGetSymbolCheck( szPath, "CPLErrorReset", apszFailed );
+
+    CPLGetLastErrorNo = (int (*)())
+        GBGetSymbolCheck( szPath, "CPLGetLastErrorNo", apszFailed );
+
+    CPLGetLastErrorType = (CPLErr (*)())
+        GBGetSymbolCheck( szPath, "CPLGetLastErrorType", apszFailed );
+
+    CPLGetLastErrorMsg = (const char *(*)())
+        GBGetSymbolCheck( szPath, "CPLGetLastErrorMsg", apszFailed );
+
+    CPLPushErrorHandler = (void (*)(CPLErrorHandler))
+        GBGetSymbolCheck( szPath, "CPLPushErrorHandler", apszFailed );
+
+    CPLPopErrorHandler = (void (*)())
+        GBGetSymbolCheck( szPath, "CPLPopErrorHandler", apszFailed );
 
 /* -------------------------------------------------------------------- */
 /*      OSR API                                                         */
@@ -462,6 +509,19 @@ int GDALBridgeInitialize( const char * pszTargetDir, FILE *fpReportFailure )
 
     OSRGetUTMZone = (int (*)(OGRSpatialReferenceH, int *))
         GBGetSymbolCheck( szPath, "OSRGetUTMZone", apszFailed );
+
+    OCTNewCoordinateTransformation = (OGRCoordinateTransformationH 
+                     (*)(OGRSpatialReferenceH, OGRSpatialReferenceH))
+        GBGetSymbolCheck( szPath, "OCTNewCoordinateTransformation",apszFailed);
+
+    OCTDestroyCoordinateTransformation = 
+        (void (*)(OGRCoordinateTransformationH))
+        GBGetSymbolCheck( szPath, "OCTDestroyCoordinateTransformation",
+                          apszFailed );
+
+    OCTTransform = (int (*)(OGRCoordinateTransformationH, int, 
+                            double *, double *, double *))
+        GBGetSymbolCheck( szPath, "OCTTransform", apszFailed );
 
 /* -------------------------------------------------------------------- */
 /*      Did we fail to find any entry points?                           */
