@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.102  2004/01/07 20:51:22  warmerda
+ * Added Float64 to supported data types.
+ *
  * Revision 1.101  2004/01/01 19:49:50  dron
  * Use uint16 insted of int16 for the count of tie points.
  *
@@ -3594,7 +3597,7 @@ void GDALRegister_GTiff()
         poDriver->SetMetadataItem( GDAL_DMD_MIMETYPE, "image/tiff" );
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "tif" );
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
-                                   "Byte UInt16 Int16 UInt32 Int32 Float32 CInt16 CInt32 CFloat32 CFloat64" );
+                                   "Byte UInt16 Int16 UInt32 Int32 Float32 Float64 CInt16 CInt32 CFloat32 CFloat64" );
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, 
 "<CreationOptionList>"
 "   <Option name='COMPRESS' type='string-select'>"
