@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_tabfile.cpp,v 1.45 2001/09/14 19:14:43 warmerda Exp $
+ * $Id: mitab_tabfile.cpp,v 1.48 2001/11/19 15:08:50 daniel Exp $
  *
  * Name:     mitab_tabfile.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -32,6 +32,17 @@
  **********************************************************************
  *
  * $Log: mitab_tabfile.cpp,v $
+ * Revision 1.48  2001/11/19 15:08:50  daniel
+ * Handle the case of TAB_GEOM_NONE with the new TABMAPObjHdr classes.
+ *
+ * Revision 1.47  2001/11/17 21:54:06  daniel
+ * Made several changes in order to support writing objects in 16 bits 
+ * coordinate format. New TABMAPObjHdr-derived classes are used to hold 
+ * object info in mem until block is full.
+ *
+ * Revision 1.46  2001/09/19 21:39:31  warmerda
+ * improved capabilities logic
+ *
  * Revision 1.45  2001/09/14 19:14:43  warmerda
  * added attribute query support
  *
@@ -1083,6 +1094,8 @@ int TABFile::GetNextFeatureId(int nPrevId)
             return -1;
         }
 
+// __TODO__ Add a test here to check if object is deleted, 
+// i.e. 0x40 set on object_id in object block
         if (m_poMAPFile->GetCurObjType() != TAB_GEOM_NONE ||
             m_poDATFile->IsCurrentRecordDeleted() == FALSE)
         {
@@ -1274,12 +1287,22 @@ TABFeature *TABFile::GetFeatureRef(int nFeatureId)
      * Read geometry from the .MAP file
      * MoveToObjId() has already been called above...
      *----------------------------------------------------------------*/
-    if (m_poCurFeature->ReadGeometryFromMAPFile(m_poMAPFile) != 0)
+    TABMAPObjHdr *poObjHdr = 
+        TABMAPObjHdr::NewObj(m_poMAPFile->GetCurObjType(), 
+                             m_poMAPFile->GetCurObjId());
+    // Note that poObjHdr==NULL is a valid case if geometry type is NONE
+
+    if ((poObjHdr && poObjHdr->ReadObj(m_poMAPFile->GetCurObjBlock()) != 0) ||
+        m_poCurFeature->ReadGeometryFromMAPFile(m_poMAPFile, poObjHdr) != 0)
     {
         delete m_poCurFeature;
         m_poCurFeature = NULL;
+        if (poObjHdr) 
+            delete poObjHdr;
         return NULL;
     }
+    if (poObjHdr)       // May be NULL if feature geometry type is NONE
+        delete poObjHdr; 
 
     m_nCurFeatureId = nFeatureId;
     m_poCurFeature->SetFID(m_nCurFeatureId);
@@ -1374,10 +1397,16 @@ int TABFile::SetFeature(TABFeature *poFeature, int nFeatureId /*=-1*/)
      * Write geometry to the .MAP file
      * The call to PrepareNewObj() takes care of the .ID file.
      *----------------------------------------------------------------*/
-    if (m_poMAPFile == NULL ||
-        m_poMAPFile->PrepareNewObj(nFeatureId,
-                                   poFeature->ValidateMapInfoType()) != 0 ||
-        poFeature->WriteGeometryToMAPFile(m_poMAPFile) != 0)
+    TABMAPObjHdr *poObjHdr = 
+        TABMAPObjHdr::NewObj(poFeature->ValidateMapInfoType(m_poMAPFile),
+                             nFeatureId);
+    TABMAPObjectBlock *poObjBlock = NULL;
+
+    if ( poObjHdr == NULL || m_poMAPFile == NULL ||
+        m_poMAPFile->PrepareNewObj(nFeatureId, poObjHdr->m_nType) != 0 ||
+        poFeature->WriteGeometryToMAPFile(m_poMAPFile, poObjHdr) != 0 ||
+         ( (poObjBlock = m_poMAPFile->GetCurObjBlock()) != NULL &&
+           poObjBlock->AddObject(poObjHdr) != 0 )  )
     {
         CPLError(CE_Failure, CPLE_FileIO,
                  "Failed writing geometry for feature id %d in %s",
@@ -2166,10 +2195,11 @@ int TABFile::TestCapability( const char * pszCap )
         return FALSE;
 
     else if( EQUAL(pszCap,OLCFastFeatureCount) )
-        return m_poFilterGeom == NULL;
+        return m_poFilterGeom == NULL
+            && m_poAttrQuery == NULL;
 
     else if( EQUAL(pszCap,OLCFastSpatialFilter) )
-        return FALSE;
+        return TRUE;
 
     else if( EQUAL(pszCap,OLCFastGetExtent) )
         return TRUE;

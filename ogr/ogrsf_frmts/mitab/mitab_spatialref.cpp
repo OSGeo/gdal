@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_spatialref.cpp,v 1.31 2001/08/10 21:25:59 warmerda Exp $
+ * $Id: mitab_spatialref.cpp,v 1.32 2001/10/25 16:13:41 warmerda Exp $
  *
  * Name:     mitab_spatialref.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log: mitab_spatialref.cpp,v $
+ * Revision 1.32  2001/10/25 16:13:41  warmerda
+ * Added OGC string for datum 12
+ *
  * Revision 1.31  2001/08/10 21:25:59  warmerda
  * SetSpatialRef() now makes a clone of the srs instead of taking a ref to it
  *
@@ -153,7 +156,7 @@ MapInfoDatumInfo asDatumInfoList[] =
 {9, "", 4, 114, -116, -333, 0, 0, 0, 0, 0},
 {10, "", 4, -320, 550, -494, 0, 0, 0, 0, 0},
 {11, "", 4, 124, -234, -25, 0, 0, 0, 0, 0},
-{12, "", 2, -133, -48, 148, 0, 0, 0, 0, 0},
+{12, "Australian_Geodetic_Datum_1966", 2, -133, -48, 148, 0, 0, 0, 0, 0},
 {13, "", 2, -134, -48, 149, 0, 0, 0, 0, 0},
 {14, "", 4, -127, -769, 472, 0, 0, 0, 0, 0},
 {15, "Bermuda_1957", 7, -73, 213, 296, 0, 0, 0, 0, 0},

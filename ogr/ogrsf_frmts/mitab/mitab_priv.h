@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_priv.h,v 1.27 2001/09/18 20:33:52 warmerda Exp $
+ * $Id: mitab_priv.h,v 1.29 2001/11/19 15:07:54 daniel Exp $
  *
  * Name:     mitab_priv.h
  * Project:  MapInfo TAB Read/Write library
@@ -30,6 +30,14 @@
  **********************************************************************
  *
  * $Log: mitab_priv.h,v $
+ * Revision 1.29  2001/11/19 15:07:54  daniel
+ * Added TABMAPObjNone to handle the case of TAB_GEOM_NONE
+ *
+ * Revision 1.28  2001/11/17 21:54:06  daniel
+ * Made several changes in order to support writing objects in 16 bits 
+ * coordinate format. New TABMAPObjHdr-derived classes are used to hold 
+ * object info in mem until block is full.
+ *
  * Revision 1.27  2001/09/18 20:33:52  warmerda
  * fixed case of spatial search on file with just one object block
  *
@@ -342,7 +350,228 @@ class TABToolDefTable
     int         GetMinVersionNumber();
 };
 
+/*=====================================================================
+          Classes to handle Object Headers inside TABMAPObjectBlocks
+ =====================================================================*/
 
+class TABMAPObjectBlock;
+class TABMAPHeaderBlock;
+
+class TABMAPObjHdr
+{
+  public:
+    GByte       m_nType;
+    GInt32      m_nId;
+    GInt32      m_nMinX;  /* Object MBR */
+    GInt32      m_nMinY;
+    GInt32      m_nMaxX;
+    GInt32      m_nMaxY;
+
+    TABMAPObjHdr() {};
+    virtual ~TABMAPObjHdr() {};
+
+    static TABMAPObjHdr *NewObj(GByte nNewObjType, GInt32 nId=0);
+    static TABMAPObjHdr *ReadNextObj(TABMAPObjectBlock *poObjBlock,
+                                     TABMAPHeaderBlock *poHeader);
+
+    GBool       IsCompressedType();
+    int         WriteObjTypeAndId(TABMAPObjectBlock *);
+    void        SetMBR(GInt32 nMinX, GInt32 nMinY, GInt32 nMaxX, GInt32 mMaxY);
+
+    virtual int WriteObj(TABMAPObjectBlock *) {return -1;};
+
+//  protected:
+    virtual int ReadObj(TABMAPObjectBlock *) {return -1;};
+};
+
+class TABMAPObjHdrWithCoord: public TABMAPObjHdr
+{
+  public:
+    GInt32      m_nCoordBlockPtr;
+    GInt32      m_nCoordDataSize;
+
+    /* Eventually this class may have methods to help maintaining refs to
+     * coord. blocks when splitting object blocks.
+     */
+};
+
+
+class TABMAPObjNone: public TABMAPObjHdr
+{
+  public:
+
+    TABMAPObjNone() {};
+    virtual ~TABMAPObjNone() {};
+
+    virtual int WriteObj(TABMAPObjectBlock *) {return 0;};
+
+//  protected:
+    virtual int ReadObj(TABMAPObjectBlock *) {return 0;};
+};
+
+
+class TABMAPObjPoint: public TABMAPObjHdr
+{
+  public:
+    GInt32      m_nX;
+    GInt32      m_nY;
+    GByte       m_nSymbolId;
+
+    TABMAPObjPoint() {};
+    virtual ~TABMAPObjPoint() {};
+
+    virtual int WriteObj(TABMAPObjectBlock *);
+
+//  protected:
+    virtual int ReadObj(TABMAPObjectBlock *);
+};
+
+class TABMAPObjFontPoint: public TABMAPObjPoint
+{
+  public:
+    GByte       m_nPointSize;
+    GInt16      m_nFontStyle;
+    GByte       m_nR;
+    GByte       m_nG;
+    GByte       m_nB;
+    GInt16      m_nAngle;  /* In tenths of degree */
+    GByte       m_nFontId;
+
+    TABMAPObjFontPoint() {};
+    virtual ~TABMAPObjFontPoint() {};
+
+    virtual int WriteObj(TABMAPObjectBlock *);
+
+//  protected:
+    virtual int ReadObj(TABMAPObjectBlock *);
+};
+
+class TABMAPObjCustomPoint: public TABMAPObjPoint
+{
+  public:
+    GByte m_nUnknown_;
+    GByte m_nCustomStyle;
+    GByte m_nFontId;
+
+    TABMAPObjCustomPoint() {};
+    virtual ~TABMAPObjCustomPoint() {};
+
+    virtual int WriteObj(TABMAPObjectBlock *);
+
+//  protected:
+    virtual int ReadObj(TABMAPObjectBlock *);
+};
+
+
+class TABMAPObjLine: public TABMAPObjHdr
+{
+  public:
+    GInt32      m_nX1;
+    GInt32      m_nY1;
+    GInt32      m_nX2;
+    GInt32      m_nY2;
+    GByte       m_nPenId;
+
+    TABMAPObjLine() {};
+    virtual ~TABMAPObjLine() {};
+
+    virtual int WriteObj(TABMAPObjectBlock *);
+
+//  protected:
+    virtual int ReadObj(TABMAPObjectBlock *);
+};
+
+class TABMAPObjPLine: public TABMAPObjHdrWithCoord
+{
+  public:
+    GInt16      m_numLineSections;  /* MULTIPLINE/REGION only. Not in PLINE */
+    GInt32      m_nLabelX;      /* Centroid/label location */
+    GInt32      m_nLabelY;
+    GInt32      m_nComprOrgX;   /* Present only in compressed coord. case */
+    GInt32      m_nComprOrgY;
+    GByte       m_nPenId;
+    GByte       m_nBrushId;
+    GBool       m_bSmooth;      /* TRUE if (m_nCoordDataSize & 0x80000000) */
+
+    TABMAPObjPLine() {};
+    virtual ~TABMAPObjPLine() {};
+
+    virtual int WriteObj(TABMAPObjectBlock *);
+
+//  protected:
+    virtual int ReadObj(TABMAPObjectBlock *);
+};
+
+class TABMAPObjRectEllipse: public TABMAPObjHdr
+{
+  public:
+    GInt32      m_nCornerWidth;   /* For rounded rect only */
+    GInt32      m_nCornerHeight;
+    GByte       m_nPenId;
+    GByte       m_nBrushId;
+
+    TABMAPObjRectEllipse() {};
+    virtual ~TABMAPObjRectEllipse() {};
+
+    virtual int WriteObj(TABMAPObjectBlock *);
+
+//  protected:
+    virtual int ReadObj(TABMAPObjectBlock *);
+};
+
+class TABMAPObjArc: public TABMAPObjHdr
+{
+  public:
+    GInt32      m_nStartAngle;
+    GInt32      m_nEndAngle;
+    GInt32      m_nArcEllipseMinX;  /* MBR of the arc defining ellipse */
+    GInt32      m_nArcEllipseMinY;  /* Only present in arcs            */
+    GInt32      m_nArcEllipseMaxX;
+    GInt32      m_nArcEllipseMaxY;
+    GByte       m_nPenId;
+
+    TABMAPObjArc() {};
+    virtual ~TABMAPObjArc() {};
+
+    virtual int WriteObj(TABMAPObjectBlock *);
+
+//  protected:
+    virtual int ReadObj(TABMAPObjectBlock *);
+};
+
+
+class TABMAPObjText: public TABMAPObjHdrWithCoord
+{
+  public:
+    /* String and its len stored in the nCoordPtr and nCoordSize */
+
+    GInt16      m_nTextAlignment;
+    GInt32      m_nAngle;
+    GInt16      m_nFontStyle;
+
+    GByte       m_nFGColorR;
+    GByte       m_nFGColorG;
+    GByte       m_nFGColorB;
+    GByte       m_nBGColorR;
+    GByte       m_nBGColorG;
+    GByte       m_nBGColorB;
+
+    GInt32      m_nLineEndX;
+    GInt32      m_nLineEndY;
+
+    GInt32      m_nHeight;
+    GByte       m_nFontId;
+
+    GByte       m_nPenId;
+
+    TABMAPObjText() {};
+    virtual ~TABMAPObjText() {};
+
+    virtual int WriteObj(TABMAPObjectBlock *);
+
+//  protected:
+    virtual int ReadObj(TABMAPObjectBlock *);
+};
 
 /*=====================================================================
           Classes to handle .MAP files low-level blocks
@@ -510,6 +739,8 @@ class TABMAPHeaderBlock: public TABRawBinBlock
     GInt32      m_nYMin;
     GInt32      m_nXMax;
     GInt32      m_nYMax;
+    GBool       m_bIntBoundsOverflow;  // Set to TRUE if coordinates 
+                                       // outside of bounds were written
 
     GInt32      m_nFirstIndexBlock;
     GInt32      m_nFirstGarbageBlock;
@@ -641,6 +872,12 @@ class TABMAPObjectBlock: public TABRawBinBlock
     int         m_nCurObjectId;     // -1 if there is no current object.
     int         m_nCurObjectType;   // -1 if there is no current object.
 
+    // Array of object headers held in memory until CommitToFile() is called
+    TABMAPObjHdr **m_papoObjHdr;
+    int         m_numObjects;
+
+    void        FreeObjectArray();
+    
   public:
     TABMAPObjectBlock(TABAccess eAccessMode = TABRead);
     ~TABMAPObjectBlock();
@@ -654,10 +891,13 @@ class TABMAPObjectBlock: public TABRawBinBlock
     virtual int GetBlockClass() { return TABMAP_OBJECT_BLOCK; };
 
     virtual int ReadIntCoord(GBool bCompressed, GInt32 &nX, GInt32 &nY);
-    int         WriteIntCoord(GInt32 nX, GInt32 nY, GBool bUpdateMBR=TRUE);
+    int         WriteIntCoord(GInt32 nX, GInt32 nY, GBool bCompressed);
     int         WriteIntMBRCoord(GInt32 nXMin, GInt32 nYMin,
                                  GInt32 nXMax, GInt32 nYMax,
-                                 GBool bUpdateMBR =TRUE);
+                                 GBool bCompressed);
+    int         UpdateMBR(GInt32 nX, GInt32 nY);
+
+    int         AddObject(TABMAPObjHdr *poObjHdr);
 
     void        AddCoordBlockRef(GInt32 nCoordBlockAddress);
 
@@ -670,7 +910,8 @@ class TABMAPObjectBlock: public TABRawBinBlock
     int		GetCurObjectType() { return m_nCurObjectType; }
 
 #ifdef DEBUG
-    virtual void Dump(FILE *fpOut = NULL);
+    virtual void Dump(FILE *fpOut = NULL) { Dump(fpOut, FALSE); };
+    void Dump(FILE *fpOut, GBool bDetails);
 #endif
 
 };
@@ -688,8 +929,8 @@ class TABMAPCoordBlock: public TABRawBinBlock
     GInt32      m_nNextCoordBlock;
     int         m_numBlocksInChain;
 
-    GInt32      m_nCenterX;
-    GInt32      m_nCenterY;
+    GInt32      m_nComprOrgX;
+    GInt32      m_nComprOrgY;
 
     // In order to compute block center, we need to keep track of MBR
     GInt32      m_nMinX;
@@ -729,10 +970,12 @@ class TABMAPCoordBlock: public TABRawBinBlock
                                  int numSections, TABMAPCoordSecHdr *pasHdrs,
                                  GInt32    &numVerticesTotal);
     int         WriteCoordSecHdrs(GBool bV450Hdr, int numSections,
-                                  TABMAPCoordSecHdr *pasHdrs );
+                                  TABMAPCoordSecHdr *pasHdrs,
+                                  GBool bCompressed);
 
     void        SetNextCoordBlock(GInt32 nNextCoordBlockAddress);
-    int         WriteIntCoord(GInt32 nX, GInt32 nY, GBool bUpdateMBR=TRUE);
+
+    int         WriteIntCoord(GInt32 nX, GInt32 nY, GBool bCompressed);
 
     int         GetNumBlocksInChain() { return m_numBlocksInChain; };
 
@@ -741,6 +984,7 @@ class TABMAPCoordBlock: public TABRawBinBlock
 
     void        StartNewFeature();
     int         GetFeatureDataSize() {return m_nFeatureDataSize;};
+//__TODO__ Can we flush GetFeatureMBR() and all MBR tracking in this class???
     void        GetFeatureMBR(GInt32 &nXMin, GInt32 &nYMin, 
                               GInt32 &nXMax, GInt32 &nYMax);
 

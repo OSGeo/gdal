@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_feature_mif.cpp,v 1.19 2001/06/25 01:50:42 daniel Exp $
+ * $Id: mitab_feature_mif.cpp,v 1.20 2002/01/23 20:31:21 daniel Exp $
  *
  * Name:     mitab_feature.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -9,7 +9,7 @@
  * Author:   Stephane Villeneuve, stephane.v@videotron.ca
  *
  **********************************************************************
- * Copyright (c) 1999-2001, Stephane Villeneuve
+ * Copyright (c) 1999-2002, Stephane Villeneuve
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -31,6 +31,9 @@
  **********************************************************************
  *
  * $Log: mitab_feature_mif.cpp,v $
+ * Revision 1.20  2002/01/23 20:31:21  daniel
+ * Fixed warning produced by CPLAssert() in non-DEBUG mode.
+ *
  * Revision 1.19  2001/06/25 01:50:42  daniel
  * Fixed MIF Text object output: negative text angles were lost.  Also use
  * TABText::SetTextAngle() when reading MIF instead of setting class members
@@ -600,11 +603,14 @@ int TABPolyline::ReadGeometryFromMIFFile(MIDDATAFile *fp)
                                      fp->GetYTrans(atof(papszToken[1])));
                 }
                 if (poMultiLine->addGeometryDirectly(poLine) != OGRERR_NONE)
+                {
                     CPLAssert(FALSE); // Just in case OGR is modified
-                
-            } 
+                }
+            }
             if (SetGeometryDirectly(poMultiLine) != OGRERR_NONE)
+            {
                 CPLAssert(FALSE); // Just in case OGR is modified
+            }
             poMultiLine->getEnvelope(&sEnvelope);
             SetMBR(sEnvelope.MinX, sEnvelope.MinY,
                    sEnvelope.MaxX,sEnvelope.MaxY);

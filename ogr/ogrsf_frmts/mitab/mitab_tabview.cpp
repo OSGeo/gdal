@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_tabview.cpp,v 1.9 2001/06/27 19:52:26 warmerda Exp $
+ * $Id: mitab_tabview.cpp,v 1.11 2002/01/10 05:13:22 daniel Exp $
  *
  * Name:     mitab_tabfile.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -10,7 +10,7 @@
  * Author:   Daniel Morissette, danmo@videotron.ca
  *
  **********************************************************************
- * Copyright (c) 1999, 2000, Daniel Morissette
+ * Copyright (c) 1999-2002, Daniel Morissette
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -32,6 +32,12 @@
  **********************************************************************
  *
  * $Log: mitab_tabview.cpp,v $
+ * Revision 1.11  2002/01/10 05:13:22  daniel
+ * Prevent crash if .IND file is deleted (but 703)
+ *
+ * Revision 1.10  2002/01/10 04:52:58  daniel
+ * Support 'select * ...' syntax + 'open table..." directives with/without .tab
+ *
  * Revision 1.9  2001/06/27 19:52:26  warmerda
  * use VSIUnlink() instead of unlink()
  *
@@ -504,6 +510,11 @@ int TABView::ParseTABFile(const char *pszDatasetPath,
                  EQUAL(papszTok[1], "table") &&
                  CSLCount(papszTok) >= 3)
         {
+            // Source table name may be either "filename" or "filename.tab"
+            int nLen = strlen(papszTok[2]);
+            if (nLen > 4 && EQUAL(papszTok[2]+nLen-4, ".tab"))
+                papszTok[2][nLen-4] = '\0';
+
             m_papszTABFnames = CSLAppendPrintf(m_papszTABFnames, 
                                                "%s%s.tab", 
                                                pszDatasetPath, papszTok[2]);
@@ -1305,6 +1316,14 @@ int  TABRelation::Init(const char *pszViewName,
         m_nRelFieldNo = poRelDefn->GetFieldIndex(pszRelFieldName);
         m_nRelFieldIndexNo = poRelTable->GetFieldIndexNumber(m_nRelFieldNo);
         m_poRelINDFileRef = poRelTable->GetINDFileRef();
+
+        if (m_nRelFieldIndexNo >= 0 && m_poRelINDFileRef == NULL)
+        {
+            CPLError(CE_Failure, CPLE_FileIO,
+                     "Field %s is indexed but the .IND file is missing.",
+                     pszRelFieldName);
+            return -1;
+        }
     }
 
     /*-----------------------------------------------------------------
@@ -1322,6 +1341,37 @@ int  TABRelation::Init(const char *pszViewName,
     m_panRelTableFieldMap = (int*)CPLMalloc((numFields2+1)*sizeof(int));
     for(i=0; i<numFields2; i++)
         m_panRelTableFieldMap[i] = -1;
+
+    /*-----------------------------------------------------------------
+     * If selectedFields = "*" then select all fields from both tables
+     *----------------------------------------------------------------*/
+    if (CSLCount(papszSelectedFields) == 1 && 
+        EQUAL(papszSelectedFields[0], "*") )
+    {
+        CSLDestroy(papszSelectedFields);
+        papszSelectedFields = NULL;
+
+        for(i=0; i<numFields1; i++)
+        {
+            OGRFieldDefn *poFieldDefn = poMainDefn->GetFieldDefn(i);
+
+            papszSelectedFields = CSLAddString(papszSelectedFields, 
+                                               poFieldDefn->GetNameRef());
+        }
+
+        for(i=0; i<numFields2; i++)
+        {
+            OGRFieldDefn *poFieldDefn = poRelDefn->GetFieldDefn(i);
+
+            if (CSLFindString(papszSelectedFields, 
+                              poFieldDefn->GetNameRef()) != -1)
+                continue;  // Avoid duplicate field name in view
+
+            papszSelectedFields = CSLAddString(papszSelectedFields, 
+                                               poFieldDefn->GetNameRef());
+        }
+
+    }
 
     /*-----------------------------------------------------------------
      * Create new FeatureDefn and copy selected fields definitions

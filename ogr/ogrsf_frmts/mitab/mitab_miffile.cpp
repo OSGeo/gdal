@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_miffile.cpp,v 1.30 2001/09/19 14:31:22 warmerda Exp $
+ * $Id: mitab_miffile.cpp,v 1.31 2001/09/19 21:39:15 warmerda Exp $
  *
  * Name:     mitab_miffile.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -32,6 +32,9 @@
  **********************************************************************
  *
  * $Log: mitab_miffile.cpp,v $
+ * Revision 1.31  2001/09/19 21:39:15  warmerda
+ * get extents efficiently
+ *
  * Revision 1.30  2001/09/19 14:31:22  warmerda
  * added m_nPreloadedId to keep track of preloaded line
  *
@@ -150,6 +153,8 @@ MIFFile::MIFFile()
     m_nAttribut = 0;
     m_bHeaderWrote = FALSE;
     m_nPoints = m_nLines = m_nRegions = m_nTexts = 0;
+
+    m_bExtentsSet = FALSE;
 }
 
 /**********************************************************************
@@ -759,7 +764,7 @@ void MIFFile::PreParseFile()
             m_nPoints++;
             if (CSLCount(papszToken) == 3)
             {
-                UpdateBounds(m_poMIFFile->GetXTrans(atof(papszToken[1])),
+                UpdateExtents(m_poMIFFile->GetXTrans(atof(papszToken[1])),
                              m_poMIFFile->GetYTrans(atof(papszToken[2])));
             }
               
@@ -773,9 +778,9 @@ void MIFFile::PreParseFile()
             if (CSLCount(papszToken) == 5)
             {
                 m_nLines++;
-                UpdateBounds(m_poMIFFile->GetXTrans(atof(papszToken[1])), 
+                UpdateExtents(m_poMIFFile->GetXTrans(atof(papszToken[1])), 
                              m_poMIFFile->GetYTrans(atof(papszToken[2])));
-                UpdateBounds(m_poMIFFile->GetXTrans(atof(papszToken[3])), 
+                UpdateExtents(m_poMIFFile->GetXTrans(atof(papszToken[3])), 
                              m_poMIFFile->GetYTrans(atof(papszToken[4])));
             }
         }
@@ -799,7 +804,7 @@ void MIFFile::PreParseFile()
             if (CSLCount(papszToken) == 2 &&
                 strchr("-.0123456789", papszToken[0][0]) != NULL)
             {
-                UpdateBounds( m_poMIFFile->GetXTrans(atof(papszToken[0])),
+                UpdateExtents( m_poMIFFile->GetXTrans(atof(papszToken[0])),
                               m_poMIFFile->GetYTrans(atof(papszToken[1])));
             }
         }
@@ -808,9 +813,9 @@ void MIFFile::PreParseFile()
            if (CSLCount(papszToken) == 4 &&
                 strchr("-.0123456789", papszToken[0][0]) != NULL)
             {
-                UpdateBounds(m_poMIFFile->GetXTrans(atof(papszToken[0])),
+                UpdateExtents(m_poMIFFile->GetXTrans(atof(papszToken[0])),
                              m_poMIFFile->GetYTrans(atof(papszToken[1])));
-                UpdateBounds(m_poMIFFile->GetXTrans(atof(papszToken[2])),
+                UpdateExtents(m_poMIFFile->GetXTrans(atof(papszToken[2])),
                              m_poMIFFile->GetYTrans(atof(papszToken[3])));
             } 
         }
@@ -1140,7 +1145,7 @@ GBool MIFFile::NextFeature()
 TABFeature *MIFFile::GetFeatureRef(int nFeatureId)
 {
     const char *pszLine;
-    
+
     if (m_eAccessMode != TABRead)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
@@ -1756,30 +1761,29 @@ OGRSpatialReference *MIFFile::GetSpatialRef()
 }
 
 /**********************************************************************
- *                   MIFFile::UpdateBounds()
+ *                   MIFFile::UpdateExtents()
  *
- * Private Methode used to update the Bounds values
+ * Private Methode used to update the dataset extents
  **********************************************************************/
-void MIFFile::UpdateBounds(double dfX, double dfY)
+void MIFFile::UpdateExtents(double dfX, double dfY)
 {
-    if (m_bBoundsSet == FALSE)
+    if (m_bExtentsSet == FALSE)
     {
-        m_bBoundsSet = TRUE;
-        m_dXMin = m_dXMax = dfX;
-        m_dYMin = m_dYMax = dfY;
+        m_bExtentsSet = TRUE;
+        m_sExtents.MinX = m_sExtents.MaxX = dfX;
+        m_sExtents.MinY = m_sExtents.MaxY = dfY;
     }
     else
     {
-        if (dfX < m_dXMin)
-          m_dXMin = dfX;
-        if (dfX > m_dXMax)
-          m_dXMax = dfX;
-        if (dfY < m_dYMin)
-          m_dYMin = dfY;
-        if (dfY > m_dYMax)
-          m_dYMax = dfY;
+        if (dfX < m_sExtents.MinX)
+            m_sExtents.MinX = dfX;
+        if (dfX > m_sExtents.MaxX)
+          m_sExtents.MaxX = dfX;
+        if (dfY < m_sExtents.MinY)
+          m_sExtents.MinY = dfY;
+        if (dfY > m_sExtents.MaxY)
+          m_sExtents.MaxY = dfY;
     }
-
 }
 
 /**********************************************************************
@@ -1888,19 +1892,26 @@ int MIFFile::GetBounds(double &dXMin, double &dYMin,
 /**********************************************************************
  *                   MIFFile::GetExtent()
  *
- * Fetch extent of the data currently stored in the dataset.
+ * Fetch extent of the data currently stored in the dataset.  We collect
+ * this information while preparsing the file ... often already done for
+ * other reasons, and if not it is still faster than fully reading all
+ * the features just to count them.
  *
  * Returns OGRERR_NONE/OGRRERR_FAILURE.
  **********************************************************************/
 OGRErr MIFFile::GetExtent (OGREnvelope *psExtent, int bForce)
 {
-    // We cannot return the bounds since they may be bigger than the actual 
-    // extent of the data... so we'll have to scan the whole file.
+    if (bForce == TRUE)
+        PreParseFile();
 
-    return OGRLayer::GetExtent(psExtent, bForce);
+    if (m_bPreParsed)
+    {
+        *psExtent = m_sExtents;
+        return OGRERR_NONE;
+    }
+    else
+        return OGRERR_FAILURE;
 }
-
-
 
 /************************************************************************/
 /*                           TestCapability()                           */
@@ -1919,13 +1930,13 @@ int MIFFile::TestCapability( const char * pszCap )
         return FALSE;
 
     else if( EQUAL(pszCap,OLCFastFeatureCount) )
-        return FALSE;
+        return m_bPreParsed;
 
     else if( EQUAL(pszCap,OLCFastSpatialFilter) )
         return FALSE;
 
     else if( EQUAL(pszCap,OLCFastGetExtent) )
-        return FALSE;
+        return m_bPreParsed;
 
     else 
         return FALSE;

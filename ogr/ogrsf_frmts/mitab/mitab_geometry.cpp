@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_geometry.cpp,v 1.3 2001/01/22 16:03:58 warmerda Exp $
+ * $Id: mitab_geometry.cpp,v 1.4 2001/12/18 23:42:28 daniel Exp $
  *
  * Name:     mitab_geometry.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -9,7 +9,7 @@
  *           Based on functions from mapprimitive.c/mapsearch.c in the source
  *           of UMN MapServer by Stephen Lime (http://mapserver.gis.umn.edu/)
  **********************************************************************
- * Copyright (c) 1999, 2000, Daniel Morissette
+ * Copyright (c) 1999-2001, Daniel Morissette
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -31,6 +31,10 @@
  **********************************************************************
  *
  * $Log: mitab_geometry.cpp,v $
+ * Revision 1.4  2001/12/18 23:42:28  daniel
+ * Added a test in OGRPolygonLabelPoint() to prevent returning a point
+ * outside of the polygon MBR (bug 673).
+ *
  * Revision 1.3  2001/01/22 16:03:58  warmerda
  * expanded tabs
  *
@@ -276,6 +280,26 @@ int OGRPolygonLabelPoint(OGRPolygon *poPoly, OGRPoint *poLabelPoint)
     }
 
     free(xintersect);
+
+    /* __TODO__ Bug 673
+     * There seem to be some polygons for which the label is returned
+     * completely outside of the polygon's MBR and this messes the 
+     * file bounds, etc.
+     * Until we find the source of the problem, we'll at least validate
+     * the label point to make sure that it overlaps the polygon MBR.
+     */
+    if( poLabelPoint->getX() < oEnv.MinX
+        || poLabelPoint->getY() < oEnv.MinY
+        || poLabelPoint->getX() > oEnv.MaxX
+        || poLabelPoint->getY() > oEnv.MaxY )
+    {
+        // Reset label coordinates to center of MBR, just in case
+        poLabelPoint->setX((oEnv.MaxX + oEnv.MinX)/2.0);
+        poLabelPoint->setY((oEnv.MaxY + oEnv.MinY)/2.0);
+
+        // And return an error
+        return OGRERR_FAILURE;
+    }
 
     if(max_len > 0)
         return OGRERR_NONE;

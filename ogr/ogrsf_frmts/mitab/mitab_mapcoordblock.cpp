@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_mapcoordblock.cpp,v 1.10 2001/05/09 17:45:12 daniel Exp $
+ * $Id: mitab_mapcoordblock.cpp,v 1.11 2001/11/17 21:54:06 daniel Exp $
  *
  * Name:     mitab_mapcoordblock.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -31,6 +31,10 @@
  **********************************************************************
  *
  * $Log: mitab_mapcoordblock.cpp,v $
+ * Revision 1.11  2001/11/17 21:54:06  daniel
+ * Made several changes in order to support writing objects in 16 bits coordinate format.
+ * New TABMAPObjHdr-derived classes are used to hold object info in mem until block is full.
+ *
  * Revision 1.10  2001/05/09 17:45:12  daniel
  * Support reading and writing data blocks > 512 bytes (for text objects).
  *
@@ -79,7 +83,7 @@
 TABMAPCoordBlock::TABMAPCoordBlock(TABAccess eAccessMode /*= TABRead*/):
     TABRawBinBlock(eAccessMode, TRUE)
 {
-    m_nCenterX = m_nCenterY = m_nNextCoordBlock = m_numDataBytes = 0;
+    m_nComprOrgX = m_nComprOrgY = m_nNextCoordBlock = m_numDataBytes = 0;
 
     m_numBlocksInChain = 1;  // Current block counts as 1
  
@@ -229,10 +233,12 @@ int     TABMAPCoordBlock::InitNewBlock(FILE *fpSrc, int nBlockSize,
 
     /*-----------------------------------------------------------------
      * And then set default values for the block header.
+     *
+     * IMPORTANT: Do not reset m_nComprOrg here because its value needs to be
+     * maintained between blocks in the same chain.
      *----------------------------------------------------------------*/
     m_nNextCoordBlock = 0;
  
-    m_nCenterX = m_nCenterY = 0;
     m_numDataBytes = 0;
 
     // m_nMin/Max are used to keep track of current block MBR
@@ -278,8 +284,8 @@ void     TABMAPCoordBlock::SetNextCoordBlock(GInt32 nNextCoordBlockAddress)
  **********************************************************************/
 void     TABMAPCoordBlock::SetComprCoordOrigin(GInt32 nX, GInt32 nY)
 {
-    m_nCenterX = nX;
-    m_nCenterY = nY;
+    m_nComprOrgX = nX;
+    m_nComprOrgY = nY;
 }
 
 /**********************************************************************
@@ -300,8 +306,8 @@ int     TABMAPCoordBlock::ReadIntCoord(GBool bCompressed,
 {
     if (bCompressed)
     {   
-        nX = m_nCenterX + ReadInt16();
-        nY = m_nCenterY + ReadInt16();
+        nX = m_nComprOrgX + ReadInt16();
+        nY = m_nComprOrgY + ReadInt16();
     }
     else
     {
@@ -341,8 +347,8 @@ int     TABMAPCoordBlock::ReadIntCoords(GBool bCompressed, int numCoordPairs,
     {   
         for(i=0; i<numValues; i+=2)
         {
-            panXY[i]   = m_nCenterX + ReadInt16();
-            panXY[i+1] = m_nCenterY + ReadInt16();
+            panXY[i]   = m_nComprOrgX + ReadInt16();
+            panXY[i+1] = m_nComprOrgY + ReadInt16();
             if (CPLGetLastErrorNo() != 0)
                 return -1;
         }
@@ -435,7 +441,19 @@ int     TABMAPCoordBlock::ReadCoordSecHdrs(GBool bCompressed,
 
         pasHdrs[i].nVertexOffset = (pasHdrs[i].nDataOffset - 
                                     nTotalHdrSizeUncompressed ) / 8;
-
+#ifdef TABDUMP
+        printf("pasHdrs[%d] = { numVertices = %d, numHoles = %d, \n"
+               "                nXMin=%d, nYMin=%d, nXMax=%d, nYMax=%d,\n"
+               "                nDataOffset=%d, nVertexOffset=%d }\n",
+               i, pasHdrs[i].numVertices, pasHdrs[i].numHoles, 
+               pasHdrs[i].nXMin, pasHdrs[i].nYMin, pasHdrs[i].nXMax, 
+               pasHdrs[i].nYMax, pasHdrs[i].nDataOffset, 
+               pasHdrs[i].nVertexOffset);
+        printf("                dX = %d, dY = %d  (center = %d , %d)\n",
+               pasHdrs[i].nXMax - pasHdrs[i].nXMin,
+               pasHdrs[i].nYMax - pasHdrs[i].nYMin,
+               m_nComprOrgX, m_nComprOrgY);
+#endif
     }
 
     for(i=0; i<numSections; i++)
@@ -476,7 +494,8 @@ int     TABMAPCoordBlock::ReadCoordSecHdrs(GBool bCompressed,
  **********************************************************************/
 int     TABMAPCoordBlock::WriteCoordSecHdrs(GBool bV450Hdr,
                                             int numSections,
-                                            TABMAPCoordSecHdr *pasHdrs)
+                                            TABMAPCoordSecHdr *pasHdrs,
+                                            GBool bCompressed /*=FALSE*/)
 {
     int i;
 
@@ -490,8 +509,8 @@ int     TABMAPCoordBlock::WriteCoordSecHdrs(GBool bV450Hdr,
         else
             WriteInt16(pasHdrs[i].numVertices);
         WriteInt16(pasHdrs[i].numHoles);
-        WriteIntCoord(pasHdrs[i].nXMin, pasHdrs[i].nYMin);
-        WriteIntCoord(pasHdrs[i].nXMax, pasHdrs[i].nYMax);
+        WriteIntCoord(pasHdrs[i].nXMin, pasHdrs[i].nYMin, bCompressed);
+        WriteIntCoord(pasHdrs[i].nXMax, pasHdrs[i].nYMax, bCompressed);
         WriteInt32(pasHdrs[i].nDataOffset);
 
         if (CPLGetLastErrorNo() != 0)
@@ -506,53 +525,49 @@ int     TABMAPCoordBlock::WriteCoordSecHdrs(GBool bV450Hdr,
  *                   TABMAPCoordBlock::WriteIntCoord()
  *
  * Write a pair of integer coordinates values to the current position in the
- * the block.  For now, compressed integer coordinates are NOT supported.
+ * the block.
  *
  * Returns 0 if succesful or -1 if an error happened, in which case 
  * CPLError() will have been called.
  **********************************************************************/
+
 int     TABMAPCoordBlock::WriteIntCoord(GInt32 nX, GInt32 nY,
-                                        GBool bUpdateMBR /*=TRUE*/)
+                                        GBool bCompressed /*=FALSE*/)
 {
 
-    if (WriteInt32(nX) != 0 ||
-        WriteInt32(nY) != 0 )
+    if ((!bCompressed && (WriteInt32(nX) != 0 || WriteInt32(nY) != 0 ) ) ||
+        (bCompressed && (WriteInt16(nX - m_nComprOrgX) != 0 ||
+                         WriteInt16(nY - m_nComprOrgY) != 0) ) )
     {
         return -1;
     }
 
     /*-----------------------------------------------------------------
-     * Update MBR and block center unless explicitly requested not to do so.
+     * Update block MBR
      *----------------------------------------------------------------*/
-    if (bUpdateMBR)
-    {
-        if (nX < m_nMinX)
-            m_nMinX = nX;
-        if (nX > m_nMaxX)
-            m_nMaxX = nX;
-
-        if (nY < m_nMinY)
-            m_nMinY = nY;
-        if (nY > m_nMaxY)
-            m_nMaxY = nY;
+    //__TODO__ Do we still need to track the block MBR???
+    if (nX < m_nMinX)
+        m_nMinX = nX;
+    if (nX > m_nMaxX)
+        m_nMaxX = nX;
     
-        m_nCenterX = (m_nMinX + m_nMaxX) /2;
-        m_nCenterY = (m_nMinY + m_nMaxY) /2;
+    if (nY < m_nMinY)
+        m_nMinY = nY;
+    if (nY > m_nMaxY)
+        m_nMaxY = nY;
+    
+    /*-------------------------------------------------------------
+     * Also keep track of current feature MBR.
+     *------------------------------------------------------------*/
+    if (nX < m_nFeatureXMin)
+        m_nFeatureXMin = nX;
+    if (nX > m_nFeatureXMax)
+        m_nFeatureXMax = nX;
 
-        /*-------------------------------------------------------------
-         * Also keep track of current feature MBR.
-         *------------------------------------------------------------*/
-        if (nX < m_nFeatureXMin)
-            m_nFeatureXMin = nX;
-        if (nX > m_nFeatureXMax)
-            m_nFeatureXMax = nX;
-
-        if (nY < m_nFeatureYMin)
-            m_nFeatureYMin = nY;
-        if (nY > m_nFeatureYMax)
-            m_nFeatureYMax = nY;
-
-    }
+    if (nY < m_nFeatureYMin)
+        m_nFeatureYMin = nY;
+    if (nY > m_nFeatureYMax)
+        m_nFeatureYMax = nY;
 
     return 0;
 }

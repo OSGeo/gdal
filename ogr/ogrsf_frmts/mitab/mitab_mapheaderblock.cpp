@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_mapheaderblock.cpp,v 1.18 2000/12/07 03:58:20 daniel Exp $
+ * $Id: mitab_mapheaderblock.cpp,v 1.21 2001/12/05 22:23:06 daniel Exp $
  *
  * Name:     mitab_mapheaderblock.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -9,7 +9,7 @@
  * Author:   Daniel Morissette, danmo@videotron.ca
  *
  **********************************************************************
- * Copyright (c) 1999, 2000, Daniel Morissette
+ * Copyright (c) 1999-2001, Daniel Morissette
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -31,6 +31,15 @@
  **********************************************************************
  *
  * $Log: mitab_mapheaderblock.cpp,v $
+ * Revision 1.21  2001/12/05 22:23:06  daniel
+ * Can't use rint() on Windows... replace rint() with (int)(val+0.5)
+ *
+ * Revision 1.20  2001/12/05 21:56:15  daniel
+ * Mod. CoordSys2Int() to use rint() for double to integer coord. conversion.
+ *
+ * Revision 1.19  2001/11/19 15:05:42  daniel
+ * Prevent writing of coordinates outside of the +/-1e9 integer bounds.
+ *
  * Revision 1.18  2000/12/07 03:58:20  daniel
  * Pass first arg of pow() as double
  *
@@ -140,6 +149,7 @@ TABMAPHeaderBlock::TABMAPHeaderBlock(TABAccess eAccessMode /*= TABRead*/):
     m_nYMin = -1000000000;
     m_nXMax = 1000000000;
     m_nYMax = 1000000000;
+    m_bIntBoundsOverflow = FALSE;
 
     m_nFirstIndexBlock = 0;
     m_nFirstGarbageBlock = 0;
@@ -382,17 +392,53 @@ int TABMAPHeaderBlock::Coordsys2Int(double dX, double dY,
 
     if (m_nCoordOriginQuadrant==2 || m_nCoordOriginQuadrant==3 ||
         m_nCoordOriginQuadrant==0 )
-        nX = (GInt32)(-1.0*dX*m_XScale - m_XDispl);
+        nX = (GInt32)((-1.0*dX*m_XScale - m_XDispl)+0.5);
     else
-        nX = (GInt32)(dX*m_XScale + m_XDispl);
+        nX = (GInt32)((dX*m_XScale + m_XDispl)+0.5);
 
     if (m_nCoordOriginQuadrant==3 || m_nCoordOriginQuadrant==4 ||
         m_nCoordOriginQuadrant==0 )
-        nY = (GInt32)(-1.0*dY*m_YScale - m_YDispl);
+        nY = (GInt32)((-1.0*dY*m_YScale - m_YDispl)+0.5);
     else
-        nY = (GInt32)(dY*m_YScale + m_YDispl);
+        nY = (GInt32)((dY*m_YScale + m_YDispl)+0.5);
 
 //printf("Coordsys2Int: (%10g, %10g) -> (%d, %d)\n", dX, dY, nX, nY);
+
+    /*-----------------------------------------------------------------
+     * Make sure we'll never output coordinates outside of the valid
+     * integer coordinates range: (-1e9, -1e9) - (1e9, 1e9)
+     * Integer coordinates outside of that range will confuse MapInfo.
+     *----------------------------------------------------------------*/
+    GBool bIntBoundsOverflow = FALSE;
+    if (nX < -1000000000)
+    {
+        nX = -1000000000;
+        bIntBoundsOverflow = TRUE;
+    }
+    if (nX > 1000000000)
+    {
+        nX = 1000000000;
+        bIntBoundsOverflow = TRUE;
+    }
+    if (nY < -1000000000)
+    {
+        nY = -1000000000;
+        bIntBoundsOverflow = TRUE;
+    }
+    if (nY > 1000000000)
+    {
+        nY = 1000000000;
+        bIntBoundsOverflow = TRUE;
+    }
+    if (bIntBoundsOverflow)
+    {
+        m_bIntBoundsOverflow = TRUE;
+#ifdef DEBUG
+        CPLError(CE_Warning, TAB_WarningBoundsOverflow, 
+                 "Integer bounds overflow: (%f, %f) -> (%d, %d)\n",
+                 dX, dY, nX, nY);
+#endif
+    }
 
     return 0;
 }
