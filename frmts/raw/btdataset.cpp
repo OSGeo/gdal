@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2004/03/01 17:55:10  warmerda
+ * rewrote to *not* use raw layer
+ *
  * Revision 1.3  2004/01/08 20:13:33  warmerda
  * Fixed bugs with georeferencing (on read), and with imagery access
  * (was diagonally flipped).  Note, that BT imagery is column organized,
@@ -53,11 +56,175 @@ CPL_C_END
 
 /************************************************************************/
 /* ==================================================================== */
+/*                            BTRasterBand                              */
+/* ==================================================================== */
+/************************************************************************/
+
+class BTRasterBand : public GDALRasterBand
+{
+    FILE          *fpImage;
+
+  public:
+
+                   BTRasterBand( GDALDataset * poDS, FILE * fp,
+                                 GDALDataType eType );
+
+    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IWriteBlock( int, int, void * );
+};
+
+
+/************************************************************************/
+/*                           BTRasterBand()                             */
+/************************************************************************/
+
+BTRasterBand::BTRasterBand( GDALDataset *poDS, FILE *fp, GDALDataType eType )
+
+{
+    this->poDS = poDS;
+    this->nBand = 1;
+    this->eDataType = eType;
+    this->fpImage = fp;
+
+    nBlockXSize = 1;
+    nBlockYSize = poDS->GetRasterYSize();
+}
+
+/************************************************************************/
+/*                             IReadBlock()                             */
+/************************************************************************/
+
+CPLErr BTRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
+                                  void * pImage )
+
+{
+    int nDataSize = GDALGetDataTypeSize( eDataType ) / 8;
+    int i;
+
+    CPLAssert( nBlockYOff == 0  );
+
+/* -------------------------------------------------------------------- */
+/*      Seek to profile.                                                */
+/* -------------------------------------------------------------------- */
+    if( VSIFSeekL( fpImage, 
+                   256 + nBlockXOff * nDataSize * nRasterYSize, 
+                   SEEK_SET ) != 0 )
+    {
+        CPLError( CE_Failure, CPLE_FileIO, 
+                  ".bt Seek failed:%s", VSIStrerror( errno ) );
+        return CE_Failure;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Read the profile.                                               */
+/* -------------------------------------------------------------------- */
+    if( VSIFReadL( pImage, nDataSize, nRasterYSize, fpImage ) != 
+        (size_t) nRasterYSize )
+    {
+        CPLError( CE_Failure, CPLE_FileIO, 
+                  ".bt Read failed:%s", VSIStrerror( errno ) );
+        return CE_Failure;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Swap on MSB platforms.                                          */
+/* -------------------------------------------------------------------- */
+#ifdef CPL_MSB 
+    GDALSwapWords( pImage, nDataSize, nRasterYSize, nWordSize );
+#endif    
+
+/* -------------------------------------------------------------------- */
+/*      Vertical flip, since GDAL expects values from top to bottom,    */
+/*      but in .bt they are bottom to top.                              */
+/* -------------------------------------------------------------------- */
+    for( i = 0; i < nRasterYSize / 2; i++ )
+    {
+        GByte abyWrk[8];
+
+        memcpy( abyWrk, ((GByte *) pImage) + i * nDataSize, nDataSize );
+        memcpy( ((GByte *) pImage) + i * nDataSize, 
+                ((GByte *) pImage) + (nRasterYSize - i - 1) * nDataSize, 
+                nDataSize );
+        memcpy( ((GByte *) pImage) + (nRasterYSize - i - 1) * nDataSize, 
+                abyWrk, nDataSize );
+    }
+
+    return CE_None;
+}
+
+/************************************************************************/
+/*                            IWriteBlock()                             */
+/************************************************************************/
+
+CPLErr BTRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
+                                  void * pImage )
+
+{
+    int nDataSize = GDALGetDataTypeSize( eDataType ) / 8;
+    GByte *pabyWrkBlock;
+    int i;
+
+    CPLAssert( nBlockYOff == 0  );
+
+/* -------------------------------------------------------------------- */
+/*      Seek to profile.                                                */
+/* -------------------------------------------------------------------- */
+    if( VSIFSeekL( fpImage, 
+                   256 + nBlockXOff * nDataSize * nRasterYSize, 
+                   SEEK_SET ) != 0 )
+    {
+        CPLError( CE_Failure, CPLE_FileIO, 
+                  ".bt Seek failed:%s", VSIStrerror( errno ) );
+        return CE_Failure;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Allocate working buffer.                                        */
+/* -------------------------------------------------------------------- */
+    pabyWrkBlock = (GByte *) CPLMalloc(nDataSize * nRasterYSize);
+
+/* -------------------------------------------------------------------- */
+/*      Vertical flip data into work buffer, since GDAL expects         */
+/*      values from top to bottom, but in .bt they are bottom to        */
+/*      top.                                                            */
+/* -------------------------------------------------------------------- */
+    for( i = 0; i < nRasterYSize; i++ )
+    {
+        memcpy( pabyWrkBlock + (nRasterYSize - i - 1) * nDataSize, 
+                ((GByte *) pImage) + i * nDataSize, nDataSize );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Swap on MSB platforms.                                          */
+/* -------------------------------------------------------------------- */
+#ifdef CPL_MSB 
+    GDALSwapWords( pabyWrkBlock, nDataSize, nRasterYSize, nWordSize );
+#endif    
+
+/* -------------------------------------------------------------------- */
+/*      Read the profile.                                               */
+/* -------------------------------------------------------------------- */
+    if( VSIFWriteL( pabyWrkBlock, nDataSize, nRasterYSize, fpImage ) != 
+        (size_t) nRasterYSize )
+    {
+        CPLFree( pabyWrkBlock );
+        CPLError( CE_Failure, CPLE_FileIO, 
+                  ".bt Write failed:%s", VSIStrerror( errno ) );
+        return CE_Failure;
+    }
+
+    CPLFree( pabyWrkBlock );
+
+    return CE_None;
+}
+
+/************************************************************************/
+/* ==================================================================== */
 /*                              BTDataset                               */
 /* ==================================================================== */
 /************************************************************************/
 
-class BTDataset : public RawDataset
+class BTDataset : public GDALDataset
 {
     FILE        *fpImage;       // image data file.
 
@@ -509,7 +676,7 @@ GDALDataset *BTDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Re-open the file with the desired access.                       */
 /* -------------------------------------------------------------------- */
-    VSIFCloseL( poOpenInfo->fp );
+    VSIFClose( poOpenInfo->fp );
     poOpenInfo->fp = NULL;
 
     if( poOpenInfo->eAccess == GA_Update )
@@ -528,11 +695,7 @@ GDALDataset *BTDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create band information objects                                 */
 /* -------------------------------------------------------------------- */
-    poDS->SetBand(
-        1, new RawRasterBand( poDS, 1, poDS->fpImage, 
-                              256 + nDataSize * (poDS->nRasterXSize-1), 
-                              nDataSize * poDS->nRasterXSize, 
-                              -nDataSize, eType, CPL_IS_LSB, TRUE ) );
+    poDS->SetBand( 1, new BTRasterBand( poDS, poDS->fpImage, eType ) );
 
 /* -------------------------------------------------------------------- */
 /*      Check for overviews.                                            */
@@ -656,6 +819,19 @@ GDALDataset *BTDataset::Create( const char * pszFilename,
 /*      Write to disk.                                                  */
 /* -------------------------------------------------------------------- */
     VSIFWriteL( (void *) abyHeader, 256, 1, fp );
+    if( VSIFSeekL( fp, (GDALGetDataTypeSize(eType)/8) * nXSize * nYSize - 1, 
+                   SEEK_CUR ) != 0 
+        || VSIFWriteL( abyHeader+255, 1, 1, fp ) != 1 )
+    {
+        CPLError( CE_Failure, CPLE_FileIO, 
+                  "Failed to extent file to its full size, out of disk space?"
+                  );
+
+        VSIFCloseL( fp );
+        VSIUnlink( pszFilename );
+        return NULL;
+    }
+
     VSIFCloseL( fp );
 
     return (GDALDataset *) GDALOpen( pszFilename, GA_Update );
