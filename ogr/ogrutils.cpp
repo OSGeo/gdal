@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2001/05/24 18:05:36  warmerda
+ * fixed support for negative coordinte parsing
+ *
  * Revision 1.3  1999/11/18 19:02:19  warmerda
  * expanded tabs
  *
@@ -121,7 +124,9 @@ const char *OGRWktReadToken( const char * pszInput, char * pszToken )
                && ((*pszInput >= 'a' && *pszInput <= 'z')
                    || (*pszInput >= 'A' && *pszInput <= 'Z')
                    || (*pszInput >= '0' && *pszInput <= '9')
-                   || *pszInput == '.') )
+                   || *pszInput == '.' 
+                   || *pszInput == '+' 
+                   || *pszInput == '-') )
         {
             pszToken[iChar++] = *(pszInput++);
         }
@@ -193,7 +198,8 @@ const char * OGRWktReadPoints( const char * pszInput,
         pszInput = OGRWktReadToken( pszInput, szTokenX );
         pszInput = OGRWktReadToken( pszInput, szTokenY );
 
-        if( !isdigit(szTokenX[0]) || !isdigit(szTokenY[0]) )
+        if( (!isdigit(szTokenX[0]) && szTokenX[0] != '-')
+            || (!isdigit(szTokenY[0]) && szTokenY[0] != '-') )
             return NULL;
 
 /* -------------------------------------------------------------------- */
