@@ -8,6 +8,10 @@ PY_INST_DIR = D:\bin\pymod
 VCDIR   = 	D:\Software\VStudio\VC98
 PYDIR   =	D:\Software\Python20
 
+# Uncomment the following to link OGR utilities against main GDAL DLL
+# instead of statically linking against OGR libraries.
+DLLBUILD=1
+
 # Enable all OGR formats, or only raster formats?  Comment out to disable
 # vector formats. 
 INCLUDE_OGR_FRMTS = YES
