@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2002/01/13 01:41:46  warmerda
+ * add proper support for restrictions
+ *
  * Revision 1.17  2001/11/09 20:48:19  warmerda
  * use SFGetLayerWKT() to cleanup WKT
  *
@@ -165,44 +168,63 @@ END_SCHEMA_MAP()
 class CSFSessionTRSchemaRowset : 
 	public CRowsetImpl< CSFSessionTRSchemaRowset, CTABLESRow, CSFSession>
 {
-public:
-	HRESULT Execute(LONG* pcRowsAffected, ULONG, const VARIANT*)
-	{
-		USES_CONVERSION;
-
-		CTABLESRow		trData;
-		int				iLayer;
-		IUnknown		*pIU;
-		OGRDataSource	*poDS;
-		OGRLayer		*pLayer;
-		OGRFeatureDefn	*poDefn;
-
-                CPLDebug( "OGR_OLEDB",
-                          "CSFSessionTRSchemaRowset::Execute()." );
+  public:
+    HRESULT Execute(LONG* pcRowsAffected,
+                    ULONG cRestrictions,
+                    const VARIANT*rgRestrictions)
+    {
+        USES_CONVERSION;
+        
+        CTABLESRow		trData;
+        int				iLayer;
+        IUnknown		*pIU;
+        OGRDataSource	*poDS;
+        OGRLayer		*pLayer;
+        OGRFeatureDefn	*poDefn;
+        const char      *pszTableRestriction = NULL;
+        
+        CPLDebug( "OGR_OLEDB",
+                  "CSFSessionTRSchemaRowset::Execute()." );
                 
-		QueryInterface(IID_IUnknown,(void **) &pIU);
-		poDS = SFGetOGRDataSource(pIU);
+        if( cRestrictions >= 3
+            && rgRestrictions[2].vt == VT_BSTR )
+        {
+            pszTableRestriction = OLE2A(rgRestrictions[2].bstrVal);
+            if( strlen(pszTableRestriction) == 0 )
+                pszTableRestriction = NULL;
+            else
+                CPLDebug( "OGR_OLEDB", "TABLE_NAME restriction = %s",
+                          pszTableRestriction );
+        }
 
-		if (!poDS)
-		{
-			// Prep errors as well
-			return S_FALSE;
-		}
+        QueryInterface(IID_IUnknown,(void **) &pIU);
+        poDS = SFGetOGRDataSource(pIU);
 
-		for (iLayer = 0; iLayer < poDS->GetLayerCount(); iLayer++)
-		{
-			pLayer = poDS->GetLayer(iLayer);
-			poDefn = pLayer->GetLayerDefn();
-			lstrcpyW(trData.m_szType, OLESTR("TABLE"));
-			lstrcpyW(trData.m_szTable,A2OLE(poDefn->GetName()));
-			if (!m_rgRowData.Add(trData))
-				return E_OUTOFMEMORY;
-		}
+        if (!poDS)
+        {
+            // Prep errors as well
+            return S_FALSE;
+        }
+        
+        for (iLayer = 0; iLayer < poDS->GetLayerCount(); iLayer++)
+        {
+            pLayer = poDS->GetLayer(iLayer);
+            poDefn = pLayer->GetLayerDefn();
 
-		*pcRowsAffected = poDS->GetLayerCount();
-		
-		return S_OK;
-	}
+            if( pszTableRestriction != NULL
+                && !EQUAL(pszTableRestriction,poDefn->GetName()) )
+                continue;
+            
+            lstrcpyW(trData.m_szType, OLESTR("TABLE"));
+            lstrcpyW(trData.m_szTable,A2OLE(poDefn->GetName()));
+            if (!m_rgRowData.Add(trData))
+                return E_OUTOFMEMORY;
+        }
+        
+        *pcRowsAffected = poDS->GetLayerCount();
+        
+        return S_OK;
+    }
 };
  
 	
@@ -212,7 +234,9 @@ class CSFSessionColSchemaRowset :
 	public CRowsetImpl< CSFSessionColSchemaRowset, CCOLUMNSRow, CSFSession>
 {
   public:
-    HRESULT Execute(LONG* pcRowsAffected, ULONG, const VARIANT*)
+    HRESULT Execute(LONG* pcRowsAffected,
+                    ULONG cRestrictions,
+                    const VARIANT*rgRestrictions)
     {
         USES_CONVERSION;
         int				i;
@@ -222,10 +246,33 @@ class CSFSessionColSchemaRowset :
         OGRLayer		*pLayer;
         OGRFeatureDefn	*poDefn;
         OGRFieldDefn	*poField;
+        const char      *pszTableRestriction = NULL;
+        const char      *pszColumnRestriction = NULL;
 
         CPLDebug( "OGR_OLEDB",
                   "CSFSessionColSchemaRowset::Execute(%p).",
                   pcRowsAffected );
+
+        if( cRestrictions >= 3
+            && rgRestrictions[2].vt == VT_BSTR )
+        {
+            pszTableRestriction = OLE2A(rgRestrictions[2].bstrVal);
+            if( strlen(pszTableRestriction) == 0 )
+                pszTableRestriction = NULL;
+            else
+                CPLDebug( "OGR_OLEDB", "TABLE_NAME restriction = %s",
+                          pszTableRestriction );
+        }
+        if( cRestrictions >= 4
+            && rgRestrictions[3].vt == VT_BSTR )
+        {
+            pszColumnRestriction = OLE2A(rgRestrictions[3].bstrVal);
+            if( strlen(pszColumnRestriction) == 0 )
+                pszColumnRestriction = NULL;
+            else
+                CPLDebug( "OGR_OLEDB", "COLUMN_NAME restriction = %s",
+                          pszColumnRestriction );
+        }
 
         *pcRowsAffected = 0;
         
@@ -244,6 +291,11 @@ class CSFSessionColSchemaRowset :
             
             pLayer = poDS->GetLayer(iLayer);
             poDefn = pLayer->GetLayerDefn();
+
+            if( pszTableRestriction != NULL
+                && !EQUAL(pszTableRestriction,poDefn->GetName()) )
+                continue;
+            
             LPOLESTR	pszLayerName = A2OLE(poDefn->GetName());
 
             memset( &trData, 0, sizeof(trData) );
@@ -259,6 +311,10 @@ class CSFSessionColSchemaRowset :
             for (i=0; i < poDefn->GetFieldCount(); i++)
             {
                 poField = poDefn->GetFieldDefn(i);
+
+                if( pszColumnRestriction != NULL
+                    && !EQUAL(pszColumnRestriction,poField->GetNameRef()) )
+                    continue;
 
                 memset( &trData, 0, sizeof(trData) );
                 switch(poField->GetType())
