@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2003/02/06 20:27:09  dron
+ * More PNM standard complience in header reading.
+ *
  * Revision 1.9  2003/02/03 11:14:24  dron
  * Added support for reading and writing 16-bit images.
  *
@@ -122,7 +125,11 @@ GDALDataset *PNMDataset::Open( GDALOpenInfo * poOpenInfo )
     if( poOpenInfo->nHeaderBytes < 10 || poOpenInfo->fp == NULL )
         return NULL;
 
-    if( poOpenInfo->pabyHeader[0] != 'P' || poOpenInfo->pabyHeader[2] != 10 )
+    if( poOpenInfo->pabyHeader[0] != 'P'  &&
+	(poOpenInfo->pabyHeader[2] != ' '  ||    // XXX: Magick number
+	 poOpenInfo->pabyHeader[2] != '\t' ||    // may be followed
+	 poOpenInfo->pabyHeader[2] != '\n' ||    // any of the blank
+	 poOpenInfo->pabyHeader[2] != '\r') )    // characters
         return NULL;
 
     if( poOpenInfo->pabyHeader[1] != '5' 
