@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.55  2002/10/24 14:18:29  warmerda
+ * intermediate version update
+ *
  * Revision 1.54  2002/09/11 14:17:38  warmerda
  * added C GDALSetDescription()
  *
@@ -209,13 +212,13 @@
 /*      GDAL Version Information.                                       */
 /* -------------------------------------------------------------------- */
 #ifndef GDAL_VERSION_NUM
-#  define GDAL_VERSION_NUM      1171
+#  define GDAL_VERSION_NUM      1174
 #endif
 #ifndef GDAL_RELEASE_DATE
-#  define GDAL_RELEASE_DATE     20020416                                
+#  define GDAL_RELEASE_DATE     20021024
 #endif
 #ifndef GDAL_RELEASE_NAME
-#  define GDAL_RELEASE_NAME     "1.1.7"
+#  define GDAL_RELEASE_NAME     "1.1.7.4"
 #endif
 
 /* -------------------------------------------------------------------- */
