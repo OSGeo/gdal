@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2001/02/06 16:16:28  warmerda
+ * fixed numpydataset.cpp to use sscanf to parse pointer
+ *
  * Revision 1.1  2000/07/20 00:33:37  warmerda
  * New
  *
@@ -92,7 +95,8 @@ GDALDataset *NUMPYDataset::Open( GDALOpenInfo * poOpenInfo )
         || poOpenInfo->fp != NULL )
         return NULL;
 
-    psArray = (PyArrayObject *) strtol(poOpenInfo->pszFilename+8, NULL, 0 );
+    psArray = NULL;
+    sscanf( poOpenInfo->pszFilename+8, "%p", &psArray );
     if( psArray == NULL )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
