@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2004/08/17 14:58:01  warmerda
+ * preserve newlines in CSVReadParseLine()
+ *
  * Revision 1.10  2004/04/27 14:28:49  warmerda
  * Avoid Solaris C++ problems with SetCSVFilenameHook().
  *
@@ -486,7 +489,8 @@ char **CSVReadParseLine( FILE * fp )
 
         pszWorkLine = (char *)
             CPLRealloc(pszWorkLine,
-                       strlen(pszWorkLine) + strlen(pszLine) + 1);
+                       strlen(pszWorkLine) + strlen(pszLine) + 2);
+        strcat( pszWorkLine, "\n" ); // This gets lost in CPLReadLine().
         strcat( pszWorkLine, pszLine );
     }
     
