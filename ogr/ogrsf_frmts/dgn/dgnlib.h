@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.25  2002/11/11 20:36:51  warmerda
+ * fix justification list, added create related definitions
+ *
  * Revision 1.24  2002/10/20 01:50:20  warmerda
  * added new write prototypes
  *
@@ -110,6 +113,9 @@
 #include "cpl_conv.h"
 
 CPL_C_START
+
+#define CPLE_DGN_ERROR_BASE
+#define CPLE_ElementToBig      		CPLE_DGN_ERROR_BASE+1
 
 /**
  * \file dgnlib.h
@@ -246,7 +252,7 @@ typedef struct {
 /** 
  * Complex header element 
  *
- * The core.stype code is DGNST_COMPLEXHEADER.
+ * The core.stype code is DGNST_COMPLEX_HEADER.
  *
  * Used for: DGNT_COMPLEX_CHAIN_HEADER(12), DGNT_COMPLEX_SHAPE_HEADER(14).
  */
@@ -526,12 +532,18 @@ typedef struct {
 #define DGNJ_LEFT_TOP		0
 #define DGNJ_LEFT_CENTER	1
 #define DGNJ_LEFT_BOTTOM	2
-#define DGNJ_CENTER_TOP		3
-#define DGNJ_CENTER_CENTER	4
-#define DGNJ_CENTER_BOTTOM	5
-#define DGNJ_RIGHT_TOP		6
-#define DGNJ_RIGHT_CENTER	7
-#define DGNJ_RIGHT_BOTTOM	8
+#define DGNJ_LEFTMARGIN_TOP	3    /* text node header only */
+#define DGNJ_LEFTMARGIN_CENTER	4    /* text node header only */
+#define DGNJ_LEFTMARGIN_BOTTOM	5    /* text node header only */
+#define DGNJ_CENTER_TOP		6
+#define DGNJ_CENTER_CENTER	6
+#define DGNJ_CENTER_BOTTOM	8
+#define DGNJ_RIGHTMARGIN_TOP	9    /* text node header only */
+#define DGNJ_RIGHTMARGIN_CENTER	10   /* text node header only */
+#define DGNJ_RIGHTMARGIN_BOTTOM	11   /* text node header only */
+#define DGNJ_RIGHT_TOP		12
+#define DGNJ_RIGHT_CENTER	13
+#define DGNJ_RIGHT_BOTTOM	14
 
 /* -------------------------------------------------------------------- */
 /*      DGN file reading options.                                       */
@@ -552,6 +564,15 @@ typedef struct {
 #define DGNLT_ASSOC_ID          0x7D2F
 
 /* -------------------------------------------------------------------- */
+/*      File creation options.                                          */
+/* -------------------------------------------------------------------- */
+
+#define DGNCF_USE_SEED_UNITS   		  0x01
+#define DGNCF_USE_SEED_ORIGIN		  0x02
+#define DGNCF_COPY_SEED_FILE_COLOR_TABLE  0x04
+#define DGNCF_COPY_WHOLE_SEED_FILE        0x08
+
+/* -------------------------------------------------------------------- */
 /*      API                                                             */
 /* -------------------------------------------------------------------- */
 /** Opaque handle representing DGN file, used with DGN API. */
@@ -570,6 +591,8 @@ void CPL_DLL         DGNClose( DGNHandle );
 int  CPL_DLL         DGNLookupColor( DGNHandle, int, int *, int *, int * );
 int  CPL_DLL         DGNGetShapeFillInfo( DGNHandle, DGNElemCore *, int * );
 int  CPL_DLL         DGNGetAssocID( DGNHandle, DGNElemCore * );
+int  CPL_DLL         DGNGetElementExtents( DGNHandle, DGNElemCore *, 
+                                           DGNPoint *, DGNPoint * );
 
 void CPL_DLL         DGNDumpElement( DGNHandle, DGNElemCore *, FILE * );
 const char CPL_DLL  *DGNTypeToName( int );
@@ -636,8 +659,8 @@ int CPL_DLL DGNAddMSLink( DGNHandle hDGN, DGNElemCore *psElement,
 int CPL_DLL DGNAddRawAttrLink( DGNHandle hDGN, DGNElemCore *psElement, 
                                int nLinkSize, unsigned char *pabyRawLinkData );
 
-int CPL_DLL DGNAddFShapeFillInfo( DGNHandle hDGN, DGNElemCore *psElement, 
-                                  int nColor );
+int CPL_DLL DGNAddShapeFillInfo( DGNHandle hDGN, DGNElemCore *psElement, 
+                                 int nColor );
 
 CPL_C_END
 
