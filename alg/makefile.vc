@@ -1,16 +1,21 @@
+
 #
 # Algorithms
 #
-
-OBJ =	gdaldither.obj gdalmediancut.obj gdal_crs.obj gdaltransformer.obj \
-	gdalsimplewarp.obj gdalwarper.obj gdalwarpkernel.obj \
-	gdalwarpoperation.obj gdalchecksum.obj gdal_rpc.obj contour.obj
 
 GDAL_ROOT	=	..
 
 !INCLUDE ..\nmake.opt
 
-default:	$(OBJ)
+!IFDEF INCLUDE_OGR_FRMTS
+OGR_OGR_RELATED =	contour.obj
+!ENDIF
+
+OBJ =	gdaldither.obj gdalmediancut.obj gdal_crs.obj gdaltransformer.obj \
+	gdalsimplewarp.obj gdalwarper.obj gdalwarpkernel.obj \
+	gdalwarpoperation.obj gdalchecksum.obj gdal_rpc.obj $(OBJ_OGR_RELATED)
+
+default:	$(OBJ) 
 
 clean:
 	-del *.obj
