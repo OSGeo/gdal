@@ -532,7 +532,7 @@ DODSDataset::get_geo_info(DAS &das, DDS &dds) throw(Error)
     {
         DBG(cerr << spatial_ref << ": " << value << endl);
         
-        oSRS.SetFromUserInput( value );
+        oSRS.SetFromUserInput( value.c_str() );
     }
 
     char *pszWKT = NULL;
@@ -1341,6 +1341,9 @@ DODSRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
 }
 
 // $Log$
+// Revision 1.13  2004/09/16 16:02:24  fwarmerdam
+// Another fix to spatial_ref code.
+//
 // Revision 1.12  2004/09/15 12:26:29  fwarmerdam
 // Fixed up last change.
 //
