@@ -52,7 +52,7 @@ int main()
     if( oStatement.BindScalar( ":field_2", szField2, 4, SQLT_STR ) != CE_None )
         exit( 1 );
         
-    if( oStatement.BindVARRAY( ":field_3", apoGeomMap,
+    if( oStatement.BindObject( ":field_3", apoGeomMap,
                                oSession.hGeometryTDO ) != CE_None )
         exit( 1 );
     
