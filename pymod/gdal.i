@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.35  2002/05/10 02:58:58  warmerda
+ * added GDALGCPsToGeoTransform
+ *
  * Revision 1.34  2001/11/17 21:18:26  warmerda
  * removed GDALProjDefH
  *
@@ -681,7 +684,7 @@ py_GDALSetGCPs(PyObject *self, PyObject *args) {
     CPLErr eErr;
 
     self = self;
-    if(!PyArg_ParseTuple(args,"sO!s:GDALGetGCPs",
+    if(!PyArg_ParseTuple(args,"sO!s:GDALSetGCPs",
 			&_argc0, &PyList_Type, &psList, &pszProjection))
         return NULL;
 
@@ -737,6 +740,78 @@ py_GDALSetGCPs(PyObject *self, PyObject *args) {
 %}
 
 %native(GDALSetGCPs) py_GDALSetGCPs;
+
+%{
+/************************************************************************/
+/*                         GDALGCPsToGeoTransform()                     */
+/************************************************************************/
+static PyObject *
+py_GDALGCPsToGeoTransform(PyObject *self, PyObject *args) {
+
+    GDAL_GCP * pasGCPList;
+    PyObject *psList;
+    int iGCP, nGCPCount;
+    int    bSuccess;
+    int    bApproxOK = TRUE;
+    double adfGeoTransform[6];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O!i:GDALGCPsToGeoTransform",
+			&PyList_Type, &psList, &bApproxOK))
+        return NULL;
+
+    nGCPCount = PyList_Size(psList);
+    pasGCPList = (GDAL_GCP *) CPLCalloc(sizeof(GDAL_GCP),nGCPCount);
+    GDALInitGCPs( nGCPCount, pasGCPList );
+
+    for( iGCP = 0; iGCP < nGCPCount; iGCP++ )
+    {
+        char *pszId = NULL, *pszInfo = NULL;
+
+	if( !PyArg_Parse( PyList_GET_ITEM(psList,iGCP), "(ssddddd)", 
+	                  &pszId, &pszInfo, 
+	                  &(pasGCPList[iGCP].dfGCPPixel),
+	                  &(pasGCPList[iGCP].dfGCPLine),
+	                  &(pasGCPList[iGCP].dfGCPX),
+	                  &(pasGCPList[iGCP].dfGCPY),
+	                  &(pasGCPList[iGCP].dfGCPZ) ) )
+        {
+	    PyErr_SetString(PyExc_ValueError, "improper GCP tuple");
+	    return NULL;
+        }
+
+        CPLFree( pasGCPList[iGCP].pszId );
+	pasGCPList[iGCP].pszId = CPLStrdup(pszId);
+        CPLFree( pasGCPList[iGCP].pszInfo );
+	pasGCPList[iGCP].pszInfo = CPLStrdup(pszInfo);
+    }
+   
+    bSuccess = GDALGCPsToGeoTransform( nGCPCount, pasGCPList, adfGeoTransform,
+                                       bApproxOK );
+	
+    GDALDeinitGCPs( nGCPCount, pasGCPList );
+    CPLFree( pasGCPList );    
+
+    if( bSuccess )
+    {	
+        return Py_BuildValue( "dddddd", 
+	                      adfGeoTransform[0],
+	                      adfGeoTransform[1],
+	                      adfGeoTransform[2],
+	                      adfGeoTransform[3],
+	                      adfGeoTransform[4],
+	                      adfGeoTransform[5] );
+    }
+    else
+    {
+        Py_INCREF(Py_None);
+        return Py_None;
+    }
+}
+
+%}
+
+%native(GDALGCPsToGeoTransform) py_GDALGCPsToGeoTransform;
 
 %{
 /************************************************************************/
