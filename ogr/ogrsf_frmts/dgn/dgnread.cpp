@@ -6,7 +6,7 @@
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
- * Copyright (c) 2000, Frank Warmerdam (warmerdam@pobox.com)
+ * Copyright (c) 2000, Avenza Systems Inc, http://www.avenza.com/
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2001/03/07 13:56:44  warmerda
+ * updated copyright to be held by Avenza Systems
+ *
  * Revision 1.9  2001/03/07 13:52:15  warmerda
  * Don't include deleted elements in the total extents.
  * Capture attribute data.
