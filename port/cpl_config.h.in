@@ -19,5 +19,6 @@
 
 #undef HAVE_DLFCN_H
 #undef HAVE_DBMALLOC_H
+#undef HAVE_LIBDBMALLOC
 #undef WORDS_BIGENDIAN
 
