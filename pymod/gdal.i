@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.103  2004/10/04 17:26:01  fwarmerdam
+ * Added hack for SWIGTYPENULL for SWIG 1.3.
+ *
  * Revision 1.102  2004/09/17 15:07:57  fwarmerdam
  * added getArea
  *
@@ -296,6 +299,15 @@
 #include "gdalwarper.h"
 
 CPL_CVSID("$Id$");
+
+/*
+** this seems to be required for SWIG 1.3 because of my hacky SWIG_GetPtr_2 
+** macro
+*/
+
+#ifdef SWIGTYPE_GDALDatasetH
+#define SWIGTYPENULL NULL
+#endif
 
 #ifdef SWIGTYPE_GDALDatasetH
 #  define SWIG_GetPtr_2(s,d,t)  SWIG_ConvertPtr( s, d,(SWIGTYPE##t),1)
@@ -2790,6 +2802,7 @@ OGRGeometryH OGR_G_SymmetricDifference( OGRGeometryH, OGRGeometryH );
 double OGR_G_Distance( OGRGeometryH, OGRGeometryH );
 
 double OGR_G_GetArea( OGRGeometryH );
+int    OGR_G_Centroid( OGRGeometryH, OGRGeometryH );
 
 void   OGR_G_Empty( OGRGeometryH );
 
