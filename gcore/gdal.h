@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.85  2004/10/18 17:22:07  fwarmerdam
+ * added GCI_Max
+ *
  * Revision 1.84  2004/09/25 05:51:03  fwarmerdam
  * updated to version 1.2.3
  *
@@ -238,7 +241,8 @@ typedef enum
     /*! Cyan band of CMYK image */                        GCI_CyanBand=10,
     /*! Magenta band of CMYK image */                     GCI_MagentaBand=11,
     /*! Yellow band of CMYK image */                      GCI_YellowBand=12,
-    /*! Black band of CMLY image */                       GCI_BlackBand=13
+    /*! Black band of CMLY image */                       GCI_BlackBand=13,
+    /*! Max current value */                              GCI_Max=13
 } GDALColorInterp;
 
 /*! Translate a GDALColorInterp into a user displayable string. */
