@@ -5,7 +5,7 @@ CFLAGS	=	-I$(MSDASDK)\include\oledb -I..
 
 OLE_LIBS =	$(MSDASDK)\lib\oledb\oledb.lib ole32.lib oleaut32.lib 
 
-LOC_OBJ	=	ogrcomgeometry.obj ogrcomgeometryfactory.obj \
+LOC_OBJ	=	ogrcomgeometryfactory.obj \
 		ogrcomclassfactory.obj ogrcomgeom_server.obj \
 		ogrcompoint.obj 
 
@@ -25,8 +25,8 @@ ogrcomclassfactory.obj:	ogrcomclassfactory.cpp
 ogrcomgeometryfactory.obj:	ogrcomgeometryfactory.cpp
 	$(CC) /c $(CFLAGS) ogrcomgeometryfactory.cpp
 
-ogrcomgeometry.obj:	ogrcomgeometry.cpp
-	$(CC) /c $(CFLAGS) ogrcomgeometry.cpp
+ogrcomgeometrytmpl.obj:	ogrcomgeometrytmpl.cpp
+	$(CC) /c $(CFLAGS) ogrcomgeometrytmpl.cpp
 
 ogrcompoint.obj:	ogrcompoint.cpp
 	$(CC) /c $(CFLAGS) ogrcompoint.cpp

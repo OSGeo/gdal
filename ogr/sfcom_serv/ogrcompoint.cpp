@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  1999/05/14 14:08:39  warmerda
+ * OGRComGeometry converted to template OGRComGeometryTmpl
+ *
  * Revision 1.2  1999/05/14 13:28:38  warmerda
  * client and service now working for IPoint
  *
@@ -37,16 +40,16 @@
  */
 
 #include "ogrcomgeometry.h"
+#include "ogrcomgeometrytmpl.h"
 
 /************************************************************************/
 /*                            OGRComPoint()                             */
 /************************************************************************/
 
 OGRComPoint::OGRComPoint( OGRPoint * poPointIn ) 
+        : OGRComGeometryTmpl<OGRPoint>( poPointIn )
 
 {
-    poPoint = poPointIn;
-    m_cRef = 0;
 }
 
 // =======================================================================
@@ -85,166 +88,6 @@ STDMETHODIMP OGRComPoint::QueryInterface(REFIID rIID,
    return NOERROR;
 }
 
-/************************************************************************/
-/*                               AddRef()                               */
-/************************************************************************/
-
-STDMETHODIMP_(ULONG) OGRComPoint::AddRef()
-{
-   // Increment the reference count
-   m_cRef++;
-
-   return m_cRef;
-}
-
-/************************************************************************/
-/*                              Release()                               */
-/************************************************************************/
-
-STDMETHODIMP_(ULONG) OGRComPoint::Release()
-{
-   // Decrement the reference count
-   m_cRef--;
-
-   // Is this the last reference to the object?
-   if (m_cRef)
-      return m_cRef;
-
-   // Decrement the server object count
-//   Counters::DecObjectCount();
-
-   // self destruct 
-   // Does this make sense in the case of an object that is just 
-   // aggregated in other objects?
-   delete this;
-
-   return 0;
-}
-
-// =======================================================================
-// IGeometry methods
-// =======================================================================
-
-/************************************************************************/
-/*                           get_Dimension()                            */
-/************************************************************************/
-
-STDMETHODIMP OGRComPoint::get_Dimension( long * dimension )
-
-{
-    *dimension = poPoint->getDimension();
-
-    return ResultFromScode( S_OK );
-}
-
-/************************************************************************/
-/*                        get_SpatialReference()                        */
-/************************************************************************/
-
-STDMETHODIMP OGRComPoint::get_SpatialReference( ISpatialReference ** sRef )
-
-{
-    *sRef = NULL;      // none available for now. 
-
-    return ResultFromScode( S_OK );
-}
-
-/************************************************************************/
-/*                      putref_SpatialReference()                       */
-/************************************************************************/
-
-STDMETHODIMP OGRComPoint::putref_SpatialReference( ISpatialReference * sRef )
-
-{
-    // we should eventually do something. 
-
-    return ResultFromScode( S_OK );
-}
-
-/************************************************************************/
-/*                            get_IsEmpty()                             */
-/************************************************************************/
-
-STDMETHODIMP OGRComPoint::get_IsEmpty( VARIANT_BOOL* isEmpty )
-
-{
-    VarBoolFromUI1( (BYTE) poPoint->IsEmpty(), isEmpty );
-
-    return ResultFromScode( S_OK );
-}
-
-/************************************************************************/
-/*                              SetEmpty()                              */
-/************************************************************************/
-
-STDMETHODIMP OGRComPoint::SetEmpty(void)
-
-{
-    // notdef ... how will we do this?
-
-    return ResultFromScode( S_OK );
-}
-
-/************************************************************************/
-/*                            get_IsSimple()                            */
-/************************************************************************/
-
-STDMETHODIMP OGRComPoint::get_IsSimple( VARIANT_BOOL * isEmpty )
-
-{
-    VarBoolFromUI1( (BYTE) poPoint->IsSimple(), isEmpty );
-
-    return ResultFromScode( S_OK );
-}
-
-/************************************************************************/
-/*                              Envelope()                              */
-/************************************************************************/
-
-STDMETHODIMP OGRComPoint::Envelope( IGeometry ** envelope )
-
-{
-    return E_FAIL;
-}
-
-/************************************************************************/
-/*                               Clone()                                */
-/************************************************************************/
-
-STDMETHODIMP OGRComPoint::Clone( IGeometry ** newShape )
-
-{
-    // notdef
-    *newShape = NULL;
-
-    return E_FAIL;
-}
-
-/************************************************************************/
-/*                              Project()                               */
-/************************************************************************/
-
-STDMETHODIMP OGRComPoint::Project( ISpatialReference * newSystem,
-                                      IGeometry ** result )
-
-{
-    // notdef
-    *result = NULL;
-
-    return E_FAIL;
-}
-
-/************************************************************************/
-/*                              Extent2D()                              */
-/************************************************************************/
-
-STDMETHODIMP OGRComPoint::Extent2D( double * minX, double *minY,
-                                       double * maxX, double *maxY )
-
-{
-    return E_FAIL;
-}
-
 // =======================================================================
 // IPoint methods
 // =======================================================================
@@ -256,8 +99,8 @@ STDMETHODIMP OGRComPoint::Extent2D( double * minX, double *minY,
 STDMETHODIMP OGRComPoint::Coords( double * x, double * y )
 
 {
-    *x = poPoint->getX();
-    *y = poPoint->getY();
+    *x = poGeometry->getX();
+    *y = poGeometry->getY();
 
     return ResultFromScode( S_OK );
 }
@@ -269,7 +112,7 @@ STDMETHODIMP OGRComPoint::Coords( double * x, double * y )
 STDMETHODIMP OGRComPoint::get_X( double * x )
 
 {
-    *x = poPoint->getX();
+    *x = poGeometry->getX();
 
     return ResultFromScode( S_OK );
 }
@@ -281,9 +124,8 @@ STDMETHODIMP OGRComPoint::get_X( double * x )
 STDMETHODIMP OGRComPoint::get_Y( double * y )
 
 {
-    *y = poPoint->getY();
+    *y = poGeometry->getY();
 
     return ResultFromScode( S_OK );
 }
-
 
