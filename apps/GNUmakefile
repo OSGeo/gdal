@@ -6,6 +6,15 @@ INCLUDE		=	$(GDAL_INCLUDE) -I$(GDAL_ROOT)/frmts
 DEP_LIBS	=	$(GDAL_LIB) $(CPL_LIB) $(XTRAOBJ)
 BIN_LIST	=	gdalinfo gdal_translate gdaladdo
 
+ifeq ($(HAVE_LD_SHARED),yes)					
+CONFIG_LIBS	=	$(GDAL_SLIB_LINK)
+CONFIG_LIBS_INS	=	-L$(INST_LIB) -lgdal.$(GDAL_VER)
+else
+CONFIG_LIBS	=	$(GDAL_LIBS) $(LIBS)
+CONFIG_LIBS_INS	=	$(foreach LF,$(GDAL_LIBS),$(INST_LIB)/$(notdir $(LF)))\
+			 $(LIBS)
+endif
+
 default:	gdal-config-inst gdal-config $(BIN_LIST)
 
 lib-depend:
@@ -18,26 +27,26 @@ gdalinfo:	gdalinfo.o $(DEP_LIBS)
 
 gdal_translate:	gdal_translate.o  $(DEP_LIBS)
 	$(CXX) $(LNK_FLAGS) gdal_translate.o $(XTRAOBJ) \
-		$(GDAL_SLIB_LINK) $(LIBS) -o gdal_translate
+		$(CONFIG_LIBS) -o gdal_translate
 
 gdaladdo:	gdaladdo.o  $(DEP_LIBS)
 	$(CXX) $(LNK_FLAGS) gdaladdo.o $(XTRAOBJ) \
-		$(GDAL_SLIB_LINK) $(LIBS) -o gdaladdo
+		$(CONFIG_LIBS) -o gdaladdo
 
 gdal2raw:	gdal2raw.o $(DEP_LIBS)
-	$(CXX) $(LNK_FLAGS) gdal2raw.o $(XTRAOBJ) $(GDAL_LIBS) $(LIBS) \
+	$(CXX) $(LNK_FLAGS) gdal2raw.o $(XTRAOBJ) $(CONFIG_LIBS) \
 		-o gdal2raw
 
 gdal_chksum:	gdal_chksum.o $(DEP_LIBS)
-	$(CXX) $(LNK_FLAGS) gdal_chksum.o $(GDAL_LIBS) $(LIBS) -o gdal_chksum
+	$(CXX) $(LNK_FLAGS) gdal_chksum.o $(CONFIG_LIBS) -o gdal_chksum
 
 gdaltindex:	gdaltindex.o $(DEP_LIBS)
-	$(CXX) $(LNK_FLAGS) gdaltindex.o $(XTRAOBJ) \
-		$(GDAL_SLIB_LINK) $(LIBS) -o gdaltindex
+	$(CXX) $(LNK_FLAGS) gdaltindex.o $(XTRAOBJ) $(CONFIG_LIBS) \
+		-o gdaltindex
 
 test1:	test1.o $(DEP_LIBS)
-	$(CXX) $(LNK_FLAGS) test1.o $(XTRAOBJ) \
-		$(GDAL_SLIB_LINK) $(LIBS) -o test1
+	$(CXX) $(LNK_FLAGS) test1.o $(XTRAOBJ) $(CONFIG_LIBS) \
+		 -o test1
 
 clean:
 	rm -f *.o gdalinfo core
@@ -54,7 +63,7 @@ $(DEP_LIBS):
 gdal-config:	gdal-config.in ../GDALmake.opt ./GNUmakefile ../VERSION
 	rm -f gdal-config
 	echo '#!/bin/sh' > gdal-config
-	echo 'CONFIG_LIBS="$(GDAL_SLIB_LINK)"' >> gdal-config
+	echo 'CONFIG_LIBS="$(CONFIG_LIBS)"' >> gdal-config
 	echo 'CONFIG_PREFIX="$(GDAL_ROOT)"' >> gdal-config
 	echo 'CONFIG_CFLAGS="-I$(GDAL_ROOT)/port -I$(GDAL_ROOT)/core -I$(GDAL_ROOT)/ogr -I$(GDAL_ROOT)/ogr/ogrsf_frmts"' >> gdal-config
 	echo 'CONFIG_VERSION="'`cat ../VERSION`'"' >> gdal-config
@@ -66,7 +75,7 @@ gdal-config:	gdal-config.in ../GDALmake.opt ./GNUmakefile ../VERSION
 gdal-config-inst:	gdal-config.in ../GDALmake.opt ./GNUmakefile ../VERSION
 	rm -f gdal-config-inst
 	echo '#!/bin/sh' > gdal-config-inst
-	echo 'CONFIG_LIBS="-L$(INST_LIB) -lgdal.$(GDAL_VER)"' >> gdal-config-inst
+	echo 'CONFIG_LIBS="$(CONFIG_LIBS_INS)"' >> gdal-config-inst
 	echo 'CONFIG_PREFIX="$(INST_PREFIX)"' >> gdal-config-inst
 	echo 'CONFIG_CFLAGS="-I$(INST_INCLUDE)"' >> gdal-config-inst
 	echo 'CONFIG_VERSION="'`cat ../VERSION`'"' >> gdal-config-inst
