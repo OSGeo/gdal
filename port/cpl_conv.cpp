@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.33  2004/02/01 08:37:55  dron
+ * Added CPLPackedDMSToDec().
+ *
  * Revision 1.32  2003/12/28 17:24:43  warmerda
  * added CPLFreeConfig
  *
@@ -504,7 +507,7 @@ const char *CPLReadLine( FILE * fp )
 
 /**
  * Scan up to a maximum number of characters from a given string,
- * allocate abuffer for a new string and fill it with scanned characters.
+ * allocate a buffer for a new string and fill it with scanned characters.
  *
  * @param pszString String containing characters to be scanned. It may be
  * terminated with a null character.
@@ -1204,6 +1207,69 @@ const char *CPLDecToDMS( double dfAngle, const char * pszAxis,
     sprintf( szBuffer, szFormat, nDegrees, nMinutes, dfSeconds );
 
     return( szBuffer );
+}
+
+/************************************************************************/
+/*                         CPLPackedDMSToDec()                          */
+/************************************************************************/
+/**
+ * Convert a packed DMS value (DDDMMMSSS.SS) into decimal degrees.
+ * 
+ * This function converts a packed DMS angle to seconds. The standard
+ * packed DMS format is:
+ *
+ *  degrees * 1000000 + minutes * 1000 + seconds
+ *
+ * Example:	ang = 120025045.25 yields
+ *              deg = 120
+ *              min = 25
+ *              sec = 45.25
+ * 
+ * The algorithm used for the conversion is as follows:
+ *
+ * 1.  The absolute value of the angle is used.
+ *
+ * 2.  The degrees are separated out:
+ *     deg = ang/1000000                    (fractional portion truncated)
+ *
+ * 3.  The minutes are separated out:
+ *     min = (ang - deg * 1000000) / 1000   (fractional portion truncated)
+ *
+ * 4.  The seconds are then computed:
+ *     sec = ang - deg * 1000000 - min * 1000
+ *
+ * 5.  The total angle in seconds is computed:
+ *     sec = deg * 3600.0 + min * 60.0 + sec
+ *
+ * 6.  The sign of sec is set to that of the input angle.
+ *
+ * Packed DMS values used by the USGS GCTP package and probably by other
+ * software.
+ *
+ * NOTE: This code does not validate input value. If you will give the wrong
+ * value, you will get the wrong result.
+ *
+ * @param dfPacked Angle in packed DMS format.
+ *
+ * @return Angle in decimal degrees.
+ * 
+ */
+
+double CPLPackedDMSToDec( double dfPacked )
+{
+    double  dfDegrees, dfMinutes, dfSeconds, dfSign;
+
+    dfSign = ( dfPacked < 0.0 )? -1 : 1;
+        
+    dfSeconds = fabs( dfPacked );
+    dfDegrees = dfSeconds / 1000000.0;
+    dfSeconds = dfSeconds - dfDegrees * 1000000.0;
+    dfMinutes = dfSeconds / 1000.0;
+    dfSeconds = dfSeconds - dfMinutes * 1000.0;
+    dfSeconds = dfSign * ( dfDegrees * 3600.0 + dfMinutes * 60.0 + dfSeconds);
+    dfDegrees = dfSeconds / 3600.0;
+
+    return dfDegrees;
 }
 
 /************************************************************************/

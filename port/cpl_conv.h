@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.28  2004/02/01 08:37:55  dron
+ * Added CPLPackedDMSToDec().
+ *
  * Revision 1.27  2003/12/28 17:24:43  warmerda
  * added CPLFreeConfig
  *
@@ -198,6 +201,7 @@ int CPL_DLL     CPLStat( const char *, VSIStatBuf * );
 double CPL_DLL CPLDMSToDec( const char *is );
 const char CPL_DLL *CPLDecToDMS( double dfAngle, const char * pszAxis,
                                  int nPrecision );
+double CPL_DLL CPLPackedDMSToDec( double );
 
 void CPL_DLL CPLStringToComplex( const char *pszString, 
                                  double *pdfReal, double *pdfImag );
