@@ -687,6 +687,32 @@ if test "$ECW_SETTING" != "no" ; then
 fi
 
 dnl ---------------------------------------------------------------------------
+dnl Select Kakadu library or disable driver.
+dnl ---------------------------------------------------------------------------
+
+AC_MSG_CHECKING([for Kakadu JPEG2000 support])
+
+AC_ARG_WITH(kakadu,[  --with-kakadu[=ARG]     Include Kakadu/JPEG2000 support],,)
+
+if test "$with_kakadu" = "no" -o "$with_kakadu" = "" ; then
+  KAKDIR=
+  AC_MSG_RESULT([not requested.])
+elif test "$with_kakadu" = "yes" ; then
+  AC_MSG_ERROR([
+For JPEG2000 support using Kakadu you need provide the path to the Kakadu 
+build directory.  Also, Kakadu requires specific patches available from 
+Frank Warmerdam (against Kakadu 3.4).  Note that Kakadu is *not* free 
+software.])
+else
+  KAKDIR=$with_kakadu
+  OPT_GDAL_FORMATS="jp2kak $OPT_GDAL_FORMATS"
+  LIBS="$LIBS -lkdu"
+  AC_MSG_RESULT([requested.])
+fi
+
+AC_SUBST(KAKDIR,$KAKDIR)
+
+dnl ---------------------------------------------------------------------------
 
 AC_SUBST(OPT_GDAL_FORMATS,$OPT_GDAL_FORMATS)
 AC_SUBST(EXTRA_INCLUDES,$EXTRA_INCLUDES)
