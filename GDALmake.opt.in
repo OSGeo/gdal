@@ -49,8 +49,8 @@ CXX_ODFLAGS =	$(CXX_OPTFLAGS)
 LIBS		:= $(filter-out -ldbmalloc,$(LIBS))
 endif
 
-CFLAGS		= @C_WFLAGS@ @C_PIC@ $(C_ODFLAGS) @EXTRA_INCLUDES@ @CPPFLAGS@ \
-		  $(USER_DEFS)
+CFLAGS		= @C_WFLAGS@ @C_PIC@ $(C_ODFLAGS) @EXTRA_INCLUDES@ \
+                  @CPPFLAGS@ $(USER_DEFS)
 CXXFLAGS	= @CXX_WFLAGS@ @CXX_PIC@ $(CXX_ODFLAGS) \
 		  @EXTRA_INCLUDES@ @CPPFLAGS@ $(USER_DEFS)
 
@@ -89,6 +89,11 @@ PG_INC	=	@PG_INC@
 #
 HAVE_HDF4     = @HAVE_HDF4@
 HDF4_INCLUDE  = @HDF4_INCLUDE@
+
+#
+# JPEG-2000 Support (via JasPer library).
+#
+HAVE_JASPER     = @HAVE_JASPER@
 
 #
 # Xerces C++ XML Parser for GML.
@@ -143,7 +148,7 @@ endif
 #
 GDAL_FORMATS = 	gxf gtiff hfa aigrid aaigrid ceos ceos2 iso8211 bsb xpm \
 		sdts raw dted mem jdem envisat elas fit vrt usgsdem l1b \
-		fast \
+		fast jpeg2000 \
 		@OPT_GDAL_FORMATS@
 
 #

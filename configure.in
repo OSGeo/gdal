@@ -23,7 +23,7 @@ AC_CHECK_LIB(m,main,,,)
 
 dnl Checks for header files.
 AC_HEADER_STDC
-AC_CHECK_HEADERS(fcntl.h unistd.h dbmalloc.h dlfcn.h)
+AC_CHECK_HEADERS(fcntl.h unistd.h dbmalloc.h dlfcn.h stdint.h)
 
 dnl Checks for library functions.
 MY_TEST_BIGENDIAN
@@ -462,7 +462,7 @@ elif test "$with_hdf4" = "yes" -o "$with_hdf4" = "" ; then
     LIBS="-lmfhdf $LIBS"
   fi
 
-  # Some Linux dists install hdf include files here. 
+  # Some Linux distros install hdf include files here. 
   if test "$HAVE_HDF4" = "yes" -a -r /usr/include/hdf/hdf.h ; then
     HDF4_INCLUDE="-I/usr/include/hdf"
   fi
@@ -516,6 +516,42 @@ AC_SUBST(HDF4_INCLUDE,$HDF4_INCLUDE)
 
 if test "$HAVE_HDF4" != "no" ; then
   OPT_GDAL_FORMATS="hdf4 $OPT_GDAL_FORMATS"
+fi
+
+dnl ---------------------------------------------------------------------------
+dnl Select a JasPer Library to use, or disable driver.
+dnl ---------------------------------------------------------------------------
+
+AC_ARG_WITH(jasper,[  --with-jasper[=ARG]        Include JPEG-2000 support via JasPer library (ARG=path)],,)
+
+if test "$with_jpeg2000" = "no" ; then
+
+  HAVE_JASPER=no
+
+  echo "jpeg2000 support disabled."
+
+elif test "$with_jpeg2000" = "yes" -o "$with_jpeg2000" = "" ; then
+
+  AC_CHECK_LIB(jasper,jpc_decode,HAVE_JASPER=yes,HAVE_JASPER=no,)
+  AC_CHECK_LIB(jasper,jp2_decode,HAVE_JASPER=yes,HAVE_JASPER=no,)
+  AC_CHECK_LIB(jasper,pgx_decode,HAVE_JASPER=yes,HAVE_JASPER=no,)
+
+  if test "$HAVE_JASPER" = "yes" ; then   
+    LIBS="-ljasper $LIBS"
+  fi
+else
+
+  HAVE_JASPER=yes
+  LIBS="-L$with_jpeg2000 -L$with_jpeg2000/lib -ljasper $LIBS"
+  EXTRA_INCLUDES="-I$with_jpeg2000 -I$with_jpeg2000/include $EXTRA_INCLUDES"
+
+  echo "using JasPer library from $with_jpeg2000."
+fi
+
+AC_SUBST(HAVE_JASPER,$HAVE_JASPER)
+
+if test "$HAVE_JASPER" != "no" ; then
+  OPT_GDAL_FORMATS="jpeg2000 $OPT_GDAL_FORMATS"
 fi
 
 dnl ---------------------------------------------------------------------------
@@ -718,3 +754,4 @@ AM_CHECK_NUMPY
 rm -f conftest*
 
 AC_OUTPUT(GDALmake.opt)
+
