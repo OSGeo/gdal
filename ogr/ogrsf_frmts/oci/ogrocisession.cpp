@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2003/01/09 21:19:12  warmerda
+ * improved data type support, get/set precision
+ *
  * Revision 1.2  2002/12/28 04:38:36  warmerda
  * converted to unix file conventions
  *
@@ -317,18 +320,21 @@ OGROCISession::GetParmInfo( OCIParam *hParmDesc, OGRFieldDefn *poOGRDefn,
                 "OCIAttrGet(Scale)") )
                 return CE_Failure;
 
-//            CPLDebug( "OCI", "%s: Scale=%d, Precision=%d", 
-//                      szTermColName, nScale, byPrecision );
+            CPLDebug( "OCI", "%s: Scale=%d, Precision=%d", 
+                      szTermColName, nScale, byPrecision );
 
-            if( nScale == -127 && byPrecision > 0 )
+            if( nScale < 0 )
                 poOGRDefn->SetType( OFTReal );
-            else if( byPrecision > 0 )
+            else if( nScale > 0 )
             {
                 poOGRDefn->SetType( OFTReal );
-#ifdef notdef
-                ofield.SetWidth( nScale );
-                ofield.SetPrecision( byPrecision );
-#endif
+                poOGRDefn->SetWidth( byPrecision );
+                poOGRDefn->SetPrecision( nScale );
+            }
+            else if( byPrecision < 38 )
+            {
+                poOGRDefn->SetType( OFTInteger );
+                poOGRDefn->SetWidth( byPrecision );
             }
             else
             {
