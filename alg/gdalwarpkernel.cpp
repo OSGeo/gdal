@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2003/07/24 18:47:00  dron
+ * Add 0.5 to the double values before casting to integers in all resamplers.
+ *
  * Revision 1.14  2003/07/08 19:46:30  dron
  * Few typos fixed.
  *
@@ -1209,7 +1212,7 @@ static int GWKBilinearResampleNoMasksByte( GDALWarpKernel *poWK, int iBand,
     else if ( dfValue > 255.0 )
         *pbValue = 255;
     else
-        *pbValue = (GByte)dfValue;
+        *pbValue = (GByte)(0.5 + dfValue);
     
     return TRUE;
 }
@@ -1284,7 +1287,7 @@ static int GWKBilinearResampleNoMasksShort( GDALWarpKernel *poWK, int iBand,
 /* -------------------------------------------------------------------- */
     if( dfAccumulatorDivisor == 1.0 )
     {
-        *piValue = (GInt16)dfAccumulator;
+        *piValue = (GInt16)(0.5 + dfAccumulator);
         return TRUE;
     }
     else if( dfAccumulatorDivisor < 0.00001 )
@@ -1294,7 +1297,7 @@ static int GWKBilinearResampleNoMasksShort( GDALWarpKernel *poWK, int iBand,
     }
     else
     {
-        *piValue = (GInt16)(dfAccumulator / dfAccumulatorDivisor);
+        *piValue = (GInt16)(0.5 + dfAccumulator / dfAccumulatorDivisor);
         return TRUE;
     }
 }
@@ -1485,7 +1488,7 @@ static int GWKCubicResampleNoMasksByte( GDALWarpKernel *poWK, int iBand,
     else if ( dfValue > 255.0 )
         *pbValue = 255;
     else
-        *pbValue = (GByte)dfValue;
+        *pbValue = (GByte)(0.5 + dfValue);
     
     return TRUE;
 }
@@ -1543,7 +1546,7 @@ static int GWKCubicResampleNoMasksShort( GDALWarpKernel *poWK, int iBand,
     dfA3 = - dfD0 / 6.0 - dfD2 / 2.0 + dfD3 / 6.0;
     
     *piValue =
-        (GInt16)(dfA0 + dfA1 * dfDeltaY + dfA2 * dfDeltaY2 + dfA3 * dfDeltaY3);
+        (GInt16)(0.5 + dfA0 + dfA1 * dfDeltaY + dfA2 * dfDeltaY2 + dfA3 * dfDeltaY3);
     
     return TRUE;
 }
@@ -1645,7 +1648,7 @@ static int GWKCubicSplineResampleNoMasksByte( GDALWarpKernel *poWK, int iBand,
     else if ( dfAccumulator > 255.0 )
         *pbValue = 255;
     else
-        *pbValue = (GByte)dfAccumulator;
+        *pbValue = (GByte)(0.5 + dfAccumulator);
      
     return TRUE;
 }
@@ -1683,7 +1686,7 @@ static int GWKCubicSplineResampleNoMasksShort( GDALWarpKernel *poWK, int iBand,
         }
     }
     
-    *piValue = (GInt16)dfAccumulator;
+    *piValue = (GInt16)(0.5 + dfAccumulator);
     
     return TRUE;
 }
