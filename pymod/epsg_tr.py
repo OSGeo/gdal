@@ -30,6 +30,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.9  2004/04/29 13:47:33  warmerda
+# improve handling of untranslatable codes
+#
 # Revision 1.8  2004/03/10 19:08:42  warmerda
 # added -list to usage
 #
@@ -71,11 +74,16 @@ def Usage():
 def trHandleCode(code, gen_dict_line, report_error, output_format):
 
     import time
-    if prj_srs.ImportFromEPSG( code ) != 0:
-        if report_error:
-            print 'Unable to lookup ',code,', either not a valid EPSG'
-            print 'code, or it the EPSG csv files are not accessable.'
-            sys.exit(2)
+
+    try:
+        err = prj_srs.ImportFromEPSG( code )
+    except:
+        err = 1
+
+    if err != 0 and report_error:
+        print 'Unable to lookup ',code,', either not a valid EPSG'
+        print 'code, or it the EPSG csv files are not accessable.'
+        sys.exit(2)
     else:
         if output_format == '-pretty_wkt':
             if gen_dict_line:
@@ -101,7 +109,7 @@ def trHandleCode(code, gen_dict_line, report_error, output_format):
 
             print '# '+name
             
-            if string.find(out_string,'+proj=') > -1:
+            if err == 0 and string.find(out_string,'+proj=') > -1:
                 print '<%s> %s no_defs <>' % (str(code), out_string)
             elif report_error:
                 print '# Unable to translate coordinate system into PROJ.4 format.'
@@ -110,15 +118,22 @@ def trHandleCode(code, gen_dict_line, report_error, output_format):
             name = prj_srs.GetAttrValue('PROJCS')
             if name is None:
                 name = prj_srs.GetAttrValue('GEOGCS')
-                
-            proj4text = prj_srs.ExportToProj4()
+
+            try:
+                proj4text = prj_srs.ExportToProj4()
+            except:
+                err = 1
             wkt = prj_srs.ExportToWkt()
             
             print '---'
             print '--- EPSG : %s' % name
             print '---'
-            print 'INSERT INTO "spatial_ref_sys" ("srid","auth_name","auth_srid","srtext","proj4text") VALUES (%s,\'EPSG\',%s,\'%s\',\'%s\');' % \
-                  (str(code),str(code),wkt,proj4text)
+
+            if err:
+                print '-- (unable to translate)'
+            else:
+                print 'INSERT INTO "spatial_ref_sys" ("srid","auth_name","auth_srid","srtext","proj4text") VALUES (%s,\'EPSG\',%s,\'%s\',\'%s\');' % \
+                      (str(code),str(code),wkt,proj4text)
             
 # =============================================================================
 
@@ -128,6 +143,7 @@ if __name__ == '__main__':
     end_code = -1
     list_file = None
     output_format = '-pretty_wkt'
+    report_error = 1
     
     # Parse command line arguments.
     
@@ -139,6 +155,9 @@ if __name__ == '__main__':
            or arg == '-postgis' or arg == '-xml':
             output_format = arg
 
+        elif arg[:5] == '-skip':
+            report_error = 0
+            
         elif arg == '-list' and i < len(sys.argv)-1:
             i = i + 1
             list_file = sys.argv[i]
@@ -174,7 +193,6 @@ if __name__ == '__main__':
     prj_srs = osr.SpatialReference()
 
     if start_code != -1:
-        report_error = start_code == end_code
         for code in range(start_code,end_code+1):
             trHandleCode(code, gen_dict_line, report_error, output_format)
 
@@ -195,7 +213,7 @@ if __name__ == '__main__':
                 code = -1
 
             if code <> -1:
-                trHandleCode(code, gen_dict_line, 1, output_format)
+                trHandleCode(code, gen_dict_line, report_error, output_format)
                 
             line = list_fd.readline()
 
