@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  1999/11/22 18:25:58  warmerda
+ * spatial reference table generation is now working fairly well.  I
+ * should still try and boil out duplicate rows.
+ *
  * Revision 1.9  1999/11/22 17:15:12  warmerda
  * reformat
  *
@@ -403,44 +407,54 @@ END_PROVIDER_COLUMN_MAP()
 class CSFSessionSchemaOGISGeoColumns:
 public CRowsetImpl<CSFSessionSchemaOGISGeoColumns,OGISGeometry_Row,CSFSession>
 {
-public:
-	HRESULT Execute(LONG* pcRowsAffected, ULONG, const VARIANT*)
+  public:
+    HRESULT Execute(LONG* pcRowsAffected, ULONG, const VARIANT*)
 	{
-		USES_CONVERSION;
+            USES_CONVERSION;
 
-		int				iLayer;
-		IUnknown		*pIU;
-		OGRDataSource	*poDS;
-		OGRLayer		*pLayer;
-		OGRFeatureDefn	*poDefn;
+            int				iLayer;
+            IUnknown		*pIU;
+            OGRDataSource	*poDS;
+            OGRLayer		*pLayer;
+            OGRFeatureDefn	*poDefn;
 
-		QueryInterface(IID_IUnknown,(void **) &pIU);
-		poDS = SFGetOGRDataSource(pIU);
+            QueryInterface(IID_IUnknown,(void **) &pIU);
+            poDS = SFGetOGRDataSource(pIU);
 
-		if (!poDS)
-		{
-			// Prep errors as well
-			return S_FALSE;
-		}
+            if (!poDS)
+            {
+                // Prep errors as well
+                return S_FALSE;
+            }
 
-		for (iLayer = 0; iLayer < poDS->GetLayerCount(); iLayer++)
-		{
-			OGISGeometry_Row trData;
+            for (iLayer = 0; iLayer < poDS->GetLayerCount(); iLayer++)
+            {
+                OGISGeometry_Row trData;
+                char             *pszWKT = NULL;
 
-			pLayer = poDS->GetLayer(iLayer);
-			poDefn = pLayer->GetLayerDefn();
+                pLayer = poDS->GetLayer(iLayer);
+                poDefn = pLayer->GetLayerDefn();
 
-			lstrcpyW(trData.m_szTableName,A2OLE(poDefn->GetName()));
-			lstrcpyW(trData.m_szColumnName,A2OLE("OGIS_GEOMETRY"));
-			trData.m_nSpatialRefId = 2; // CHECK this!!!!!
-			trData.m_nGeomType = poDefn->GetGeomType();
+                lstrcpyW(trData.m_szTableName,A2OLE(poDefn->GetName()));
+                lstrcpyW(trData.m_szColumnName,A2OLE("OGIS_GEOMETRY"));
+                trData.m_nGeomType = poDefn->GetGeomType();
+                if( pLayer->GetSpatialRef() != NULL )
+                    pLayer->GetSpatialRef()->exportToWkt( &pszWKT );
 
-			m_rgRowData.Add(trData);
-		}
+                if( pszWKT != NULL )
+                {
+                    OGRFree( pszWKT );
+                    trData.m_nSpatialRefId = iLayer+1;
+                }
+                else
+                    trData.m_nSpatialRefId = poDS->GetLayerCount() + 1;
 
-		*pcRowsAffected = poDS->GetLayerCount();
+                m_rgRowData.Add(trData);
+            }
 
-		return S_OK;
+            *pcRowsAffected = poDS->GetLayerCount();
+
+            return S_OK;
 	}
 };
 
@@ -451,27 +465,26 @@ public:
 // Note quite sure what to do with this yet!
 class OGISSpat_Row
 {
-public:
-	int		m_nSpatialRefId;
-	WCHAR	m_szAuthorityName[129];
-	WCHAR	m_nAuthorityId;
-	WCHAR	m_pszSpatialRefSystem[10240];
+  public:
+    int		m_nSpatialRefId;
+    WCHAR	m_szAuthorityName[129];
+    WCHAR	m_nAuthorityId;
+    WCHAR	m_pszSpatialRefSystem[10240];
 
-	OGISSpat_Row()
+    OGISSpat_Row()
 	{
-		m_nSpatialRefId = 0;
-		m_szAuthorityName[0] = NULL;
-		m_nAuthorityId = 0;
-		lstrcpyW(m_pszSpatialRefSystem,
-                         L"GEOGCS[\"Latitude/Longitude.WGS 84\",DATUM[\"WGS 84\",SPHEROID[\"anon\",6378137,298.25722356049]],PRIMEM[\"Greenwich\",0],UNIT[\"Degree\",0.0174532925199433]]" );
+            m_nSpatialRefId = 0;
+            m_szAuthorityName[0] = NULL;
+            m_nAuthorityId = 0;
+            lstrcpyW(m_pszSpatialRefSystem,L"PROJCS[\"unknown\"]" );
 	}
 
-BEGIN_PROVIDER_COLUMN_MAP(OGISSpat_Row)
+    BEGIN_PROVIDER_COLUMN_MAP(OGISSpat_Row)
 	PROVIDER_COLUMN_ENTRY("SPATIAL_REF_SYSTEM_ID",1,m_nSpatialRefId)
 	PROVIDER_COLUMN_ENTRY("AUTHORITY_NAME",2,m_szAuthorityName)
 	PROVIDER_COLUMN_ENTRY("AUTHORITY_ID",3,m_nAuthorityId)
 	PROVIDER_COLUMN_ENTRY_WSTR("SPATIAL_REF_SYSTEM_WKT",4,m_pszSpatialRefSystem)
-END_PROVIDER_COLUMN_MAP()
+        END_PROVIDER_COLUMN_MAP()
 };
 
 
@@ -515,10 +528,11 @@ public CRowsetImpl<CSFSessionSchemaSpatRef,OGISSpat_Row,CSFSession>
 				
                     if (pszSpatRef)
                     {
-                        // This should be verified!!!!!
-                        trData.m_nAuthorityId = NULL;
-                        trData.m_nSpatialRefId = NULL;
-                        lstrcpyW(trData.m_pszSpatialRefSystem,A2OLE(pszSpatRef));
+                        lstrcpyW(trData.m_szAuthorityName,A2OLE("EPSG"));
+                        trData.m_nAuthorityId = 1;
+                        trData.m_nSpatialRefId = iLayer+1;
+                        lstrcpyW(trData.m_pszSpatialRefSystem,
+                                 A2OLE(pszSpatRef));
                         OGRFree(pszSpatRef);
 					
                         m_rgRowData.Add(trData);
@@ -537,9 +551,12 @@ public CRowsetImpl<CSFSessionSchemaSpatRef,OGISSpat_Row,CSFSession>
             if (bAddDefault)
             {
                 OGISSpat_Row trData;
+
                 trData.m_nAuthorityId = 1;
-                trData.m_nSpatialRefId = 2;
-                lstrcpyW(trData.m_szAuthorityName,A2OLE("USGS"));
+                trData.m_nSpatialRefId = poDS->GetLayerCount() + 1;
+                lstrcpyW(trData.m_szAuthorityName,A2OLE("EPSG"));
+		lstrcpyW(trData.m_pszSpatialRefSystem,
+                         L"PROJCS[\"unknown\"]" );
 			
                 m_rgRowData.Add(trData);	
             }
