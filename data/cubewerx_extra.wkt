@@ -4,11 +4,14 @@
 #
 #  OGC-defined "AUTO" codes
 #  http://www.digitalearth.gov/wmt/auto.html
+# 
+# Hmm, not really much point to including these as they require extra
+# substitutions.  See the importFromWMSAUTO() if you need these. 
 #
-42001,PROJCS["WGS 84 / Auto UTM%s",GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS_1984",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["Decimal_Degree",0.0174532925199433]],PROJECTION["Transverse_Mercator"],PARAMETER["central_meridian","%.16g"],PARAMETER["latitude_of_origin",0],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing","%.16g"],UNIT["Meter",1],AUTHORITY["EPSG","42001"]]
-42002,PROJCS["WGS 84 / Auto Tr. Mercator",GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS_1984",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["Decimal_Degree",0.0174532925199433]],PROJECTION["Transverse_Mercator"],PARAMETER["central_meridian","%.16g"],PARAMETER["latitude_of_origin",0],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing","%.16g"],UNIT["Meter",1],AUTHORITY["EPSG","42002"]]
-42003,PROJCS["WGS 84 / Auto Orthographic",GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS_1984",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["Decimal_Degree",0.0174532925199433]],PROJECTION["Orthographic"],PARAMETER["central_meridian","%.16g"],PARAMETER["latitude_of_origin","%.16g"],UNIT["Meter",1],AUTHORITY["EPSG","42003"]]
-42004,PROJCS["WGS 84 / Auto Equirectangular",GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS_1984",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["Decimal_Degree",0.0174532925199433]],PROJECTION["Equirectangular"],PARAMETER["central_meridian",0],PARAMETER["latitude_of_origin",0],PARAMETER["standard_parallel_1","%.16g"],UNIT["Meter",1],AUTHORITY["EPSG","42004"]]
+#42001,PROJCS["WGS 84 / Auto UTM%s",GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS_1984",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["Decimal_Degree",0.0174532925199433]],PROJECTION["Transverse_Mercator"],PARAMETER["central_meridian","%.16g"],PARAMETER["latitude_of_origin",0],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing","%.16g"],UNIT["Meter",1],AUTHORITY["EPSG","42001"]]
+#42002,PROJCS["WGS 84 / Auto Tr. Mercator",GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS_1984",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["Decimal_Degree",0.0174532925199433]],PROJECTION["Transverse_Mercator"],PARAMETER["central_meridian","%.16g"],PARAMETER["latitude_of_origin",0],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing","%.16g"],UNIT["Meter",1],AUTHORITY["EPSG","42002"]]
+#42003,PROJCS["WGS 84 / Auto Orthographic",GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS_1984",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["Decimal_Degree",0.0174532925199433]],PROJECTION["Orthographic"],PARAMETER["central_meridian","%.16g"],PARAMETER["latitude_of_origin","%.16g"],UNIT["Meter",1],AUTHORITY["EPSG","42003"]]
+#42004,PROJCS["WGS 84 / Auto Equirectangular",GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS_1984",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["Decimal_Degree",0.0174532925199433]],PROJECTION["Equirectangular"],PARAMETER["central_meridian",0],PARAMETER["latitude_of_origin",0],PARAMETER["standard_parallel_1","%.16g"],UNIT["Meter",1],AUTHORITY["EPSG","42004"]]
 #
 #  OGC-defined extended codes  (41000--41999)
 #  see http://www.digitalearth.gov/wmt/auto.html
