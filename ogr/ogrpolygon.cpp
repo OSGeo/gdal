@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.28  2004/09/17 15:05:36  fwarmerdam
+ * added get_Area() support
+ *
  * Revision 1.27  2004/07/10 04:51:42  warmerda
  * added closeRings
  *
@@ -763,18 +766,6 @@ OGRErr OGRPolygon::exportToWkt( char ** ppszDstText ) const
 }
 
 /************************************************************************/
-/*                              get_Area()                              */
-/************************************************************************/
-
-double OGRPolygon::get_Area() const
-
-{
-    // notdef ... correct later.
-    
-    return 0.0;
-}
-
-/************************************************************************/
 /*                              Centroid()                              */
 /************************************************************************/
 
@@ -906,4 +897,35 @@ void OGRPolygon::closeRings()
 {
     for( int iRing = 0; iRing < nRingCount; iRing++ )
         papoRings[iRing]->closeRings();
+}
+
+/************************************************************************/
+/*                              get_Area()                              */
+/************************************************************************/
+
+/**
+ * Compute area of polygon.
+ *
+ * The area is computed as the area of the outer ring less the area of all
+ * internal rings. 
+ *
+ * @return computed area.
+ */
+
+double OGRPolygon::get_Area() const
+
+{
+    double dfArea = 0.0;
+
+    if( getExteriorRing() != NULL )
+    {
+        int iRing;
+
+        dfArea = getExteriorRing()->get_Area();
+
+        for( iRing = 0; iRing < getNumInteriorRings(); iRing++ )
+            dfArea -= getInteriorRing( iRing )->get_Area();
+    }
+
+    return dfArea;
 }

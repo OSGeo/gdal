@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2004/09/17 15:05:36  fwarmerdam
+ * added get_Area() support
+ *
  * Revision 1.6  2003/05/28 19:16:42  warmerda
  * fixed up argument names and stuff for docs
  *
@@ -551,6 +554,45 @@ OGRErr OGR_G_RemoveGeometry( OGRGeometryH hGeom, int iGeom, int bDelete )
 
       default:
         return OGRERR_UNSUPPORTED_OPERATION;
+    }
+}
+
+/************************************************************************/
+/*                           OGR_G_GetArea()                            */
+/************************************************************************/
+
+/**
+ * Compute geometry area.
+ *
+ * Computes the area for an OGRLinearRing, OGRPolygon or OGRMultiPolygon.
+ * Undefined for all other geometry types (returns zero). 
+ *
+ * This function utilizes the C++ get_Area() methods such as
+ * OGRPolygon::get_Area(). 
+ *
+ * @param hGeom the geometry to operate on. 
+ * @return the area or 0.0 for unsupported geometry types.
+ */
+
+double OGR_G_GetArea( OGRGeometryH hGeom )
+
+{
+    switch( wkbFlatten(((OGRGeometry *) hGeom)->getGeometryType()) )
+    {
+      case wkbPolygon:
+        return ((OGRPolygon *) hGeom)->get_Area();
+        break;
+
+      case wkbMultiPolygon:
+        return ((OGRMultiPolygon *) hGeom)->get_Area();
+        break;
+
+      case wkbLinearRing:
+        return ((OGRLinearRing *) hGeom)->get_Area();
+        break;
+        
+      default:
+        return 0.0;
     }
 }
 

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2004/09/17 15:05:36  fwarmerdam
+ * added get_Area() support
+ *
  * Revision 1.17  2004/07/10 04:51:42  warmerda
  * added closeRings
  *
@@ -389,4 +392,37 @@ void OGRLinearRing::closeRings()
     {
         addPoint( getX(0), getY(0), getZ(0) );
     }
+}
+
+/************************************************************************/
+/*                              get_Area()                              */
+/************************************************************************/
+
+/**
+ * Compute area of ring.
+ *
+ * The area is computed according to Green's Theorem:  
+ *
+ * Area is "Sum(x(i)*y(i+1) - x(i+1)*y(i))/2" for i = 0 to pointCount-1, 
+ * assuming the last point is a duplicate of the first. 
+ *
+ * @return computed area.
+ */
+
+double OGRLinearRing::get_Area() const
+
+{
+    double dfAreaSum = 0.0;
+    int i;
+
+    for( i = 0; i < nPointCount-1; i++ )
+    {
+        dfAreaSum += 0.5 * ( paoPoints[i].x * paoPoints[i+1].y 
+                             - paoPoints[i+1].x * paoPoints[i].y );
+    }
+
+    dfAreaSum += 0.5 * ( paoPoints[nPointCount-1].x * paoPoints[0].y 
+                         - paoPoints[0].x * paoPoints[nPointCount-1].y );
+
+    return fabs(dfAreaSum);
 }
