@@ -26,6 +26,9 @@
  * serves as an early test harnass.
  *
  * $Log$
+ * Revision 1.20  2001/11/02 22:21:36  warmerda
+ * fixed memory leak
+ *
  * Revision 1.19  2001/07/18 05:05:12  warmerda
  * added CPL_CSVID
  *
@@ -414,6 +417,9 @@ GDALInfoReportCorner( GDALDatasetH hDataset,
         printf( "(%s,", GDALDecToDMS( dfGeoX, "Long", 2 ) );
         printf( "%s)", GDALDecToDMS( dfGeoY, "Lat", 2 ) );
     }
+
+    if( hProj != NULL )
+        GDALDestroyProjDef( hProj );
 
     printf( "\n" );
 
