@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2004/10/21 18:15:25  gwalter
+ * Added gcp id's- the lack of them
+ * was causing weird export problems.
+ *
  * Revision 1.3  2004/10/20 23:27:45  gwalter
  * Added geocoding.
  *
@@ -111,6 +115,17 @@ CPGDataset::~CPGDataset()
         if( afpImage[iBand] != NULL )
             VSIFClose( afpImage[iBand] );
     }
+
+    if( nGCPCount > 0 )
+    {
+        for( int i = 0; i < nGCPCount; i++ )
+            CPLFree( pasGCPList[i].pszId );
+
+        CPLFree( pasGCPList );
+    }
+
+    CPLFree( pszGCPProjection );
+
 }
 
 /************************************************************************/
@@ -337,6 +352,9 @@ GDALDataset *CPGDataset::Open( GDALOpenInfo * poOpenInfo )
 
         for( ngcp = 0; ngcp < 16; ngcp ++ )
         {
+            char szID[32];
+
+            sprintf(szID,"%d",ngcp+1);
             if (itransposed == 1)
             {
                 if (ngcp < 4)
@@ -380,6 +398,10 @@ GDALDataset *CPGDataset::Open( GDALOpenInfo * poOpenInfo )
 
             poDS->pasGCPList[ngcp].dfGCPPixel = dfgcpPixel;
             poDS->pasGCPList[ngcp].dfGCPLine = dfgcpLine;
+
+            poDS->pasGCPList[ngcp].pszId = CPLStrdup( szID );
+            poDS->pasGCPList[ngcp].pszInfo = "";
+
         }
         poDS->pszGCPProjection = (char *) CPLStrdup("LOCAL_CS[\"Ground range view / unreferenced meters\",UNIT[\"Meter\",1.0]]"); 
 
