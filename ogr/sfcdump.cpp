@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2001/11/01 17:04:13  warmerda
+ * various changes, including multithread support
+ *
  * Revision 1.9  1999/09/07 14:03:47  warmerda
  * improved usage message, default to dumpfeat
  *
@@ -73,12 +76,21 @@ static int      bVerbose = TRUE;
 
 static void SFCDumpProviders();
 static SFCDataSource * SFCOpenDataSource( const char * pszProvider, 
-                                          const char * pszDataStore );
+                                          const char * pszDataStore,
+                                          const char * pszProviderString );
 static void SFCDumpTableSchema( SFCTable * );
 static void SFCDumpTableGeometry( SFCTable * );
 static void SFCDumpTables( SFCDataSource * );
 static void SFCDumpSFTables( SFCDataSource * );
 static void SFCDumpTableFeatures( SFCTable * poTable );
+static DWORD WINAPI main_thread( LPVOID );
+static int SFCDump(  int nArgc, char ** papszArgv );
+
+OGRGeometry      *poSpatialFilter = NULL;
+DBPROPOGISENUM   eSpatialOperator = DBPROP_OGIS_ENVELOPE_INTERSECTS;
+
+static int g_nArgc;
+static char ** g_papszArgv;
 
 /************************************************************************/
 /*                               Usage()                                */
@@ -89,6 +101,7 @@ static void Usage()
 {
     printf(
       "Usage: sfcdump [-provider classname] [-ds datasource] [-table tablename]\n"
+      "           [-cmd 'sql statement'] [-region top bottom left right]\n"
       "           [-action {dumpprov, dumptables, dumpsftables,\n"
       "                     dumpgeom, dumpfeat, dumpschema}]\n"
       "           [-quiet]\n"
@@ -108,13 +121,17 @@ static void Usage()
 /*                                main()                                */
 /************************************************************************/
 
-void main( int nArgc, char ** papszArgv )
+int main( int nArgc, char ** papszArgv )
 {
-    const char *pszProvider = "Microsoft.Jet.OLEDB.3.51";
-    const char *pszDataSource = "f:\\opengis\\SFData\\World.mdb";
-    const char *pszTable = "worldmif_geometry";
-    const char *pszAction = "dumpfeat";
-   
+/* -------------------------------------------------------------------- */
+/*      Are we run as a CGI-BIN?                                        */
+/* -------------------------------------------------------------------- */
+    if( getenv("SERVER_NAME") != NULL )
+    {
+        printf( "Content-type: text/html\n\n" );
+        printf( "<h1>SFCDUMP</h1><pre>\n" );
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Initialize OLE                                                  */
 /* -------------------------------------------------------------------- */
@@ -122,6 +139,74 @@ void main( int nArgc, char ** papszArgv )
     {
         exit( 1 );
     }
+
+/* -------------------------------------------------------------------- */
+/*      Are we run in multi-threaded mode?                              */
+/* -------------------------------------------------------------------- */
+    if( nArgc > 2 && EQUAL(papszArgv[1],"-mt") )
+    {
+        int            nThreadCount = atoi(papszArgv[2]);
+        int            iThread;
+        HANDLE         ahThreadHandles[1000];
+
+        assert( nThreadCount <= 1000 );
+
+        g_nArgc = nArgc - 2;
+        g_papszArgv = papszArgv + 2;
+
+        CPLSetErrorHandler( CPLLoggingErrorHandler );
+        for( iThread = 0; iThread < nThreadCount; iThread++ )
+        {
+            DWORD  nThreadId;
+
+            ahThreadHandles[iThread] = 
+                CreateThread( NULL, 0, main_thread, NULL, 0, &nThreadId );
+            CPLDebug( "OGR_SFC", "Created thread %d", nThreadId );
+        }
+
+        WaitForMultipleObjects( nThreadCount, ahThreadHandles, TRUE, 
+                                INFINITE );
+        CPLDebug( "OGR_SFC", "All threads completed." );
+    }
+    else
+        SFCDump( nArgc, papszArgv );
+   
+/* -------------------------------------------------------------------- */
+/*      Cleanup and exit.                                               */
+/* -------------------------------------------------------------------- */
+    OleSupUninitialize();
+
+    return 0;
+}
+
+/************************************************************************/
+/*                              SFCDump()                               */
+/*                                                                      */
+/*      Thread ready "mainline" for sfcdump.                            */
+/************************************************************************/
+
+int SFCDump( int nArgc, char ** papszArgv )
+
+{
+    const char *pszCommand = NULL;
+    const char *pszProvider = "Softmap.SF.Shape";
+    const char *pszDataSource = "E:\\data\\esri\\shape\\eg_data\\polygon.shp";
+    const char *pszProviderString = NULL;
+    const char *pszTable = "polygon";
+    const char *pszAction = "dumpfeat";
+#ifdef notdef
+    const char *pszProvider = "Microsoft.Jet.OLEDB.3.51";
+    const char *pszDataSource = "f:\\opengis\\SFData\\World.mdb";
+    const char *pszTable = "worldmif_geometry";
+    const char *pszAction = "dumpfeat";
+#endif
+
+#ifdef notdef
+    pszProvider = "ESRI GeoDatabase OLE DB Provider";
+    pszDataSource = "D:\\data";
+    pszProviderString = "workspacetype=esriCore.ShapefileWorkspaceFactory.1;Geometry=WKB";
+    pszTable = "polygon";
+#endif
 
 /* -------------------------------------------------------------------- */
 /*      Process commandline switches                                    */
@@ -134,6 +219,11 @@ void main( int nArgc, char ** papszArgv )
             pszProvider = papszArgv[iArg];
         }
 
+        else if( iArg < nArgc-1 && stricmp( papszArgv[iArg],"-ps") == 0 )
+        {
+            pszProviderString = papszArgv[++iArg];
+        }
+
         else if( iArg < nArgc-1 && stricmp( papszArgv[iArg],"-ds") == 0 )
         {
             pszDataSource = papszArgv[++iArg];
@@ -142,6 +232,34 @@ void main( int nArgc, char ** papszArgv )
         else if( iArg < nArgc-1 && stricmp( papszArgv[iArg],"-table") == 0 )
         {
             pszTable = papszArgv[++iArg];
+        }
+
+        else if( iArg < nArgc-1 && stricmp( papszArgv[iArg],"-cmd") == 0 )
+        {
+            pszCommand = papszArgv[++iArg];
+        }
+        else if( iArg < nArgc-4 && stricmp( papszArgv[iArg],"-region") == 0 )
+        {
+            OGRLinearRing  oRing;
+            OGRPolygon     *poPoly;
+            
+            double         dfNorth = atof( papszArgv[iArg+1]);
+            double         dfSouth = atof( papszArgv[iArg+2]);
+            double         dfEast = atof( papszArgv[iArg+3]);
+            double         dfWest = atof( papszArgv[iArg+4]);
+
+            oRing.addPoint( dfWest, dfNorth );
+            oRing.addPoint( dfEast, dfNorth );
+            oRing.addPoint( dfEast, dfSouth );
+            oRing.addPoint( dfWest, dfSouth );
+            oRing.addPoint( dfWest, dfNorth );
+            
+            poPoly = new OGRPolygon();
+            poPoly->addRing( &oRing );
+            
+            poSpatialFilter = poPoly;
+
+            iArg += 4;
         }
 #ifdef notdef
         else if( iArg < nArgc-1 && stricmp( papszArgv[iArg],"-column") == 0 )
@@ -174,7 +292,7 @@ void main( int nArgc, char ** papszArgv )
     if( EQUAL(pszAction,"dumpprov") )
     {
         SFCDumpProviders();
-        goto CleanupAndExit;
+        return 0;
     }
 
 /* -------------------------------------------------------------------- */
@@ -182,9 +300,9 @@ void main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
     SFCDataSource      *poDS;
 
-    poDS = SFCOpenDataSource( pszProvider, pszDataSource );
+    poDS = SFCOpenDataSource( pszProvider, pszDataSource, pszProviderString );
     if( poDS == NULL )
-        goto CleanupAndExit;
+        return 0;
 
 /* -------------------------------------------------------------------- */
 /*      If the action is to dump tables, do it now, without trying      */
@@ -193,7 +311,7 @@ void main( int nArgc, char ** papszArgv )
     if( EQUAL(pszAction,"dumptables") )
     {
         SFCDumpTables( poDS );
-        goto CleanupAndExit;
+        return 0;
     }
 
 /* -------------------------------------------------------------------- */
@@ -203,7 +321,7 @@ void main( int nArgc, char ** papszArgv )
     if( EQUAL(pszAction,"dumpsftables") )
     {
         SFCDumpSFTables( poDS );
-        goto CleanupAndExit;
+        return 0;
     }
 
 /* -------------------------------------------------------------------- */
@@ -211,12 +329,24 @@ void main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
     SFCTable      *poTable;
 
-    poTable = poDS->CreateSFCTable( pszTable );
-
-    if( poTable == NULL )
+    if( pszCommand == NULL )
     {
-        printf( "Failed to open table %s.\n",  pszTable );
-        goto CleanupAndExit;
+        poTable = poDS->CreateSFCTable( pszTable );
+        if( poTable == NULL )
+        {
+            printf( "Failed to open table %s.\n",  pszTable );
+            return 1;
+        }
+    }
+    else
+    {
+        poTable = poDS->Execute( pszCommand, poSpatialFilter, 
+                                 eSpatialOperator );
+        if( poTable == NULL )
+        {
+            printf( "Failed to execute %s.\n",  pszCommand );
+            return 1;
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -246,11 +376,7 @@ void main( int nArgc, char ** papszArgv )
 
     delete poTable;
 
-/* -------------------------------------------------------------------- */
-/*      Cleanup and exit.                                               */
-/* -------------------------------------------------------------------- */
-  CleanupAndExit:
-    OleSupUninitialize();
+    return 0;
 }
 
 /************************************************************************/
@@ -288,7 +414,7 @@ static void SFCDumpTableGeometry( SFCTable * poTable )
         else
         {
             poGeom->dumpReadable( stdout ); 
-            delete poGeom;
+            OGRGeometryFactory::destroyGeometry( poGeom );
         }
     }
 }
@@ -314,7 +440,7 @@ static void SFCDumpTableFeatures( SFCTable * poTable )
         else
         {
             poFeature->DumpReadable( stdout ); 
-            delete poFeature;
+            OGRFeature::DestroyFeature( poFeature );
         }
     }
 }
@@ -326,7 +452,8 @@ static void SFCDumpTableFeatures( SFCTable * poTable )
 /************************************************************************/
 
 static SFCDataSource * SFCOpenDataSource( const char * pszProvider, 
-                                          const char * pszDataSource )
+                                          const char * pszDataSource,
+                                          const char * pszProviderString )
 
 {
     SFCEnumerator      oEnumerator;
@@ -371,10 +498,15 @@ static SFCDataSource * SFCOpenDataSource( const char * pszProvider,
 /*      Attempt to initialize access to the data store.                 */
 /* -------------------------------------------------------------------- */
     SFCDataSource *poDS;
+    CDBPropSet    oPropSet(DBPROPSET_DBINIT);
 
     poDS = new SFCDataSource;
+    oPropSet.AddProperty( DBPROP_INIT_DATASOURCE, pszDataSource );
 
-    if( FAILED(poDS->Open( oEnumerator, pszDataSource  )) )
+    if( pszProviderString != NULL )
+        oPropSet.AddProperty( DBPROP_INIT_PROVIDERSTRING, pszProviderString );
+
+    if( FAILED(poDS->Open( oEnumerator, &oPropSet )) )
     {
         delete poDS;
         printf( "Attempt to access datasource %s failed.\n", 
@@ -463,4 +595,21 @@ static void SFCDumpSFTables( SFCDataSource * poDS )
     {
         printf( "%s\n", poDS->GetSFTableName( i ) );
     }
+}
+
+/************************************************************************/
+/*                            main_thread()                             */
+/*                                                                      */
+/*      Entry point for threads.  Just calls main() again.              */
+/************************************************************************/
+
+static DWORD WINAPI main_thread( LPVOID )
+
+{
+    int      nRetVal = main( g_nArgc, g_papszArgv );
+    int      nThreadId = (int) GetCurrentThreadId();
+
+    CPLDebug( "OGR_SFC", "Thread %d complete.", nThreadId );
+
+    return nRetVal;
 }
