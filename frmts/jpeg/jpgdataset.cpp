@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.17  2003/10/31 00:58:55  warmerda
+ * Added support for .jpgw as per request from Markus.
+ *
  * Revision 1.16  2003/04/04 13:45:12  warmerda
  * Made casting to JSAMPLE explicit.
  *
@@ -454,6 +457,8 @@ GDALDataset *JPGDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->bGeoTransformValid = 
         GDALReadWorldFile( poOpenInfo->pszFilename, ".jgw", 
                            poDS->adfGeoTransform )
+        || GDALReadWorldFile( poOpenInfo->pszFilename, ".jpgw", 
+                              poDS->adfGeoTransform )
         || GDALReadWorldFile( poOpenInfo->pszFilename, ".wld", 
                               poDS->adfGeoTransform );
 
