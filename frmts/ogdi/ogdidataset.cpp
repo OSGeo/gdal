@@ -29,6 +29,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.14  2001/11/02 22:21:25  warmerda
+ * fixed memory leaks
+ *
  * Revision 1.13  2001/07/18 04:51:57  warmerda
  * added CPL_CVSID
  *
@@ -436,6 +439,7 @@ OGDIDataset::~OGDIDataset()
 {
     cln_DestroyClient( nClientID );
     CSLDestroy( papszSubDatasets );
+    CPLFree( pszProjection );
 }
 
 /************************************************************************/
@@ -710,6 +714,9 @@ GDALDataset *OGDIDataset::Open( GDALOpenInfo * poOpenInfo )
                                                papszImages[i], Image, 3 ));
         }
     }
+
+    CSLDestroy( papszMatrices );
+    CSLDestroy( papszImages );
 
     return( poDS );
 }
