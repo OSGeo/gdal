@@ -4,20 +4,18 @@ include ../GDALmake.opt
 
 OBJ	=	gdalopen.o gdaldrivermanager.o gdaldriver.o gdaldataset.o \
 		gdalrasterband.o gdal_misc.o rasterio.o gdalrasterblock.o \
-		gdalprojdef.o
+		gdalprojdef.o gdalcolortable.o
 
 default:	$(OBJ)
 
 clean:
 	rm -f *.o
 
-%.o:	%.c
-	$(CC) -c $(GDAL_INCLUDE) $(CFLAGS) $*.c -o $*.o
-
-%.o:	%.cpp
-	$(CXX) -c $(GDAL_INCLUDE) $(CFLAGS) $*.cpp -o $*.o
-
 docs:	
 	(cd ..; $(MAKE) docs)
 
+%.o:	%.c
+	$(CC) -c $(CFLAGS) $(GDAL_INCLUDE) $*.c -o $*.o
 
+%.o:	%.cpp
+	$(CXX) -c $(CXXFLAGS) $(GDAL_INCLUDE) $*.cpp -o $*.o
