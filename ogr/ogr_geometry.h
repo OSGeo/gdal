@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  1999/07/07 04:23:07  danmo
+ * Fixed typo in  #define _OGR_..._H_INCLUDED  line
+ *
  * Revision 1.11  1999/07/06 21:36:46  warmerda
  * tenatively added getEnvelope() and Intersect()
  *
@@ -67,7 +70,7 @@
  */
 
 #ifndef _OGR_GEOMETRY_H_INCLUDED
-#define _OGR_GEOMETRY_H_INLLUDED
+#define _OGR_GEOMETRY_H_INCLUDED
 
 #include "ogr_core.h"
 #include "ogr_spatialref.h"

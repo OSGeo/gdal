@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  1999/07/07 04:23:07  danmo
+ * Fixed typo in  #define _OGR_..._H_INCLUDED  line
+ *
  * Revision 1.3  1999/07/05 17:18:39  warmerda
  * added docs
  *
@@ -40,7 +43,7 @@
  */
 
 #ifndef _OGR_FEATURE_H_INCLUDED
-#define _OGR_FEATURE_H_INLLUDED
+#define _OGR_FEATURE_H_INCLUDED
 
 #include "ogr_geometry.h"
 

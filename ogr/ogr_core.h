@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  1999/07/07 04:23:07  danmo
+ * Fixed typo in  #define _OGR_..._H_INCLUDED  line
+ *
  * Revision 1.4  1999/07/05 18:56:52  warmerda
  * now includes cpl_port.h
  *
@@ -43,7 +46,7 @@
  */
 
 #ifndef _OGR_CORE_H_INCLUDED
-#define _OGR_CORE_H_INLLUDED
+#define _OGR_CORE_H_INCLUDED
 
 #include "cpl_port.h"
 

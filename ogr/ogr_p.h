@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  1999/07/07 04:23:07  danmo
+ * Fixed typo in  #define _OGR_..._H_INCLUDED  line
+ *
  * Revision 1.2  1999/05/20 14:36:04  warmerda
  * added well known text parsing prototypes
  *
@@ -37,7 +40,7 @@
  */
 
 #ifndef _OGR_P_H_INCLUDED
-#define _OGR_P_H_INLLUDED
+#define _OGR_P_H_INCLUDED
 
 /* -------------------------------------------------------------------- */
 /*      Include the common portability library ... lets us do lots      */
