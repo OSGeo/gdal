@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2002/06/25 14:57:43  warmerda
+ * Added overview support.
+ *
  * Revision 1.9  2002/06/12 21:12:25  warmerda
  * update to metadata based driver info
  *
@@ -348,6 +351,11 @@ GDALDataset *DOQ1Dataset::Open( GDALOpenInfo * poOpenInfo )
 
     poDS->dfULX -= poDS->dfXPixelSize / 2;
     poDS->dfULY += poDS->dfYPixelSize / 2;
+
+/* -------------------------------------------------------------------- */
+/*      Check for overviews.                                            */
+/* -------------------------------------------------------------------- */
+    poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
 
     return( poDS );
 }
