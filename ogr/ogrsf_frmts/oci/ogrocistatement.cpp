@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2002/12/29 03:20:50  warmerda
+ * initialize new fields
+ *
  * Revision 1.2  2002/12/28 04:38:36  warmerda
  * converted to unix file conventions
  *
@@ -55,6 +58,8 @@ OGROCIStatement::OGROCIStatement( OGROCISession *poSessionIn )
 
     nRawColumnCount = 0;
     papszCurColumn = NULL;
+    papszCurImage = NULL;
+    panCurColumnInd = NULL;
     panFieldMap = NULL;
 }
 
