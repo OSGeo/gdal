@@ -1,3 +1,9 @@
+2002-11-07  Andrey Kiselev  <dron@remotesensing.org>
+	
+	* /gdal/frmts/hdf4/hdf4dataset.cpp, hdf4imagedataset.cpp,
+	* hdf4dataset.h, frmts_hdf4.html:
+	Writing support for NCSA HDF4 datasets via CreateCopy() function.
+
 2002-11-06  Frank Warmerdam  <warmerdam@pobox.com>
 
 	* gdal/apps/gdal_translate.cpp: added -a_srs option.
