@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2003/11/28 20:45:36  dron
+ * Warn user if dataset contain no raster bands.
+ *
  * Revision 1.8  2003/10/29 16:38:56  warmerda
  * set default extension
  *
@@ -653,6 +656,7 @@ GDALDataset *PCIDSKDataset::Open( GDALOpenInfo * poOpenInfo )
                     if ( !EQUAL(pszFilename, "") )
                     {
                         CPLDebug( "PCIDSK", "pszFilename=%s", pszFilename );
+
                         if( poOpenInfo->eAccess == GA_ReadOnly )
                             fp = VSIFOpenL( pszFilename, "rb" );
                         else
@@ -759,6 +763,9 @@ GDALDataset *PCIDSKDataset::Open( GDALOpenInfo * poOpenInfo )
                 break;
         }
     }
+
+    if (!poDS->GetRasterCount())
+        CPLError(CE_Warning, CPLE_None, "Dataset contain no raster bands.");
    
 /* ==================================================================== */
 /*   Read Segment Pointers.                                             */
