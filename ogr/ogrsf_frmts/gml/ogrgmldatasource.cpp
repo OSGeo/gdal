@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2002/01/25 20:54:23  warmerda
+ * fixed last fix
+ *
  * Revision 1.2  2002/01/25 20:46:26  warmerda
  * recover if CreateGMLReader() fails
  *
@@ -136,7 +139,7 @@ int OGRGMLDataSource::Open( const char * pszNewName, int bTestOpen )
                   "be instantiated, likely because Xerces support wasn't\n"
                   "configured in.", 
                   pszNewName );
-        return NULL;
+        return FALSE;
     }
 
     poReader->SetSourceFile( pszNewName );
