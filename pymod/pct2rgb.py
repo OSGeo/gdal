@@ -30,6 +30,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.2  2003/05/28 19:47:34  warmerda
+# upgrade progress reporting
+#
 # Revision 1.1  2003/05/28 16:19:45  warmerda
 # New
 #
@@ -39,9 +42,6 @@ import gdal
 import sys
 import Numeric
 import os.path
-
-def progress_cb( complete, message, cb_data ):
-    print '%s %3d%%' % (cb_data, int(complete*100.0))
 
 def Usage():
     print 'Usage: pct2rgb.py [-of format] [-b <band>] source_file dest_file'
@@ -144,6 +144,7 @@ tif_ds.SetGeoTransform( src_ds.GetGeoTransform() )
 # ----------------------------------------------------------------------------
 # Do the processing one scanline at a time. 
 
+gdal.TermProgress( 0.0 )
 for iY in range(src_ds.RasterYSize):
     src_data = src_band.ReadAsArray(0,iY,src_ds.RasterXSize,1)
 
@@ -152,6 +153,9 @@ for iY in range(src_ds.RasterYSize):
 
         dst_data = Numeric.take(band_lookup,src_data)
         tif_ds.GetRasterBand(iBand+1).WriteArray(dst_data,0,iY)
+
+    gdal.TermProgress( (iY+1.0) / src_ds.RasterYSize )
+    
 
 tif_ds = None
 
