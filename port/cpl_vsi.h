@@ -32,6 +32,9 @@
  * specific checking, io redirection and so on. 
  * 
  * $Log$
+ * Revision 1.16  2003/05/27 20:44:40  warmerda
+ * added VSI io debugging macros
+ *
  * Revision 1.15  2002/06/17 14:10:14  warmerda
  * no stat64 on Win32
  *
@@ -221,6 +224,32 @@ char CPL_DLL   *VSIStrdup( const char * );
 int CPL_DLL VSIMkdir( const char * pathname, long mode );
 int CPL_DLL VSIRmdir( const char * pathname );
 int CPL_DLL VSIUnlink( const char * pathname );
+
+unsigned long CPL_DLL VSITime( unsigned long * );
+const char CPL_DLL *VSICTime( unsigned long );
+
+/* -------------------------------------------------------------------- */
+/*      the following can be turned on for detailed logging of          */
+/*      almost all IO calls.                                            */
+/* -------------------------------------------------------------------- */
+#ifdef VSI_DEBUG
+
+#ifndef DEBUG
+#  define DEBUG
+#endif
+
+#include "cpl_error.h"
+
+#define VSIDebug4(f,a1,a2,a3,a4)   CPLDebug( "VSI", f, a1, a2, a3, a4 );
+#define VSIDebug3( f, a1, a2, a3 ) CPLDebug( "VSI", f, a1, a2, a3 );
+#define VSIDebug2( f, a1, a2 )     CPLDebug( "VSI", f, a1, a2 );
+#define VSIDebug1( f, a1 )         CPLDebug( "VSI", f, a1 );
+#else
+#define VSIDebug4( f, a1, a2, a3, a4 ) {}
+#define VSIDebug3( f, a1, a2, a3 ) {}
+#define VSIDebug2( f, a1, a2 )     {}
+#define VSIDebug1( f, a1 )         {}
+#endif
 
 CPL_C_END
 
