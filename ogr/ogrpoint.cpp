@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2001/09/21 16:24:20  warmerda
+ * added transform() and transformTo() methods
+ *
  * Revision 1.14  2001/07/18 05:03:05  warmerda
  * added CPL_CVSID
  *
@@ -499,4 +502,20 @@ OGRBoolean OGRPoint::Equal( OGRGeometry * poOther )
         return FALSE;
     else
         return TRUE;
+}
+
+/************************************************************************/
+/*                             transform()                              */
+/************************************************************************/
+
+OGRErr OGRPoint::transform( OGRCoordinateTransformation *poCT )
+
+{
+    if( poCT->Transform( 1, &x, &y, &z ) )
+    {
+        assignSpatialReference( poCT->GetTargetCS() );
+        return OGRERR_NONE;
+    }
+    else
+        return OGRERR_FAILURE;
 }

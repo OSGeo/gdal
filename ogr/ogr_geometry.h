@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.28  2001/09/21 16:24:20  warmerda
+ * added transform() and transformTo() methods
+ *
  * Revision 1.27  2001/09/04 14:48:34  warmerda
  * added some more 2.5D geometry types
  *
@@ -229,6 +232,9 @@ class CPL_DLL OGRGeometry
     void    assignSpatialReference( OGRSpatialReference * poSR );
     OGRSpatialReference *getSpatialReference( void ) { return poSRS; }
 
+    virtual OGRErr  transform( OGRCoordinateTransformation *poCT ) = 0;
+    OGRErr  transformTo( OGRSpatialReference *poSR );
+
     // ISpatialRelation
     virtual OGRBoolean  Intersect( OGRGeometry * );
     virtual OGRBoolean  Equal( OGRGeometry * ) = 0;
@@ -308,6 +314,8 @@ class CPL_DLL OGRPoint : public OGRGeometry
     // Non standard from OGRGeometry
     virtual const char *getGeometryName();
     virtual OGRwkbGeometryType getGeometryType();
+    virtual OGRErr  transform( OGRCoordinateTransformation *poCT );
+
 };
 
 /************************************************************************/
@@ -395,7 +403,8 @@ class CPL_DLL OGRLineString : public OGRCurve
     // non-standard from OGRGeometry
     virtual OGRwkbGeometryType getGeometryType();
     virtual const char *getGeometryName();
-   
+    virtual OGRErr  transform( OGRCoordinateTransformation *poCT );
+
 };
 
 /************************************************************************/
@@ -481,6 +490,7 @@ class CPL_DLL OGRPolygon : public OGRSurface
     virtual OGRwkbGeometryType getGeometryType();
     virtual OGRGeometry *clone();
     virtual void empty();
+    virtual OGRErr  transform( OGRCoordinateTransformation *poCT );
     
     // ISurface Interface
     virtual double      get_Area();
@@ -538,6 +548,7 @@ class CPL_DLL OGRGeometryCollection : public OGRGeometry
     virtual OGRwkbGeometryType getGeometryType();
     virtual OGRGeometry *clone();
     virtual void empty();
+    virtual OGRErr  transform( OGRCoordinateTransformation *poCT );
     
     // IWks Interface
     virtual int WkbSize();
