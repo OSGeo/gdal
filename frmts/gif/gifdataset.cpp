@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.8  2001/08/22 20:53:01  warmerda
+ * added support for reading transparent value
+ *
  * Revision 1.7  2001/08/22 17:12:49  warmerda
  * added world file support
  *
@@ -110,6 +113,8 @@ class GIFRasterBand : public GDALRasterBand
     
     GDALColorTable *poColorTable;
 
+    int		nTransparentColor;
+
   public:
 
                    GIFRasterBand( GIFDataset *, int, SavedImage * );
@@ -117,6 +122,7 @@ class GIFRasterBand : public GDALRasterBand
 
     virtual CPLErr IReadBlock( int, int, void * );
 
+    virtual double GetNoDataValue( int *pbSuccess = NULL );
     virtual GDALColorInterp GetColorInterpretation();
     virtual GDALColorTable *GetColorTable();
 };
@@ -140,25 +146,6 @@ GIFRasterBand::GIFRasterBand( GIFDataset *poDS, int nBand,
     psImage = psSavedImage;
 
 /* -------------------------------------------------------------------- */
-/*      Setup colormap.                                                 */
-/* -------------------------------------------------------------------- */
-    ColorMapObject 	*psGifCT = psImage->ImageDesc.ColorMap;
-    if( psGifCT == NULL )
-        psGifCT = poDS->hGifFile->SColorMap;
-
-    poColorTable = new GDALColorTable();
-    for( int iColor = 0; iColor < psGifCT->ColorCount; iColor++ )
-    {
-        GDALColorEntry	oEntry;
-        
-        oEntry.c1 = psGifCT->Colors[iColor].Red;
-        oEntry.c2 = psGifCT->Colors[iColor].Green;
-        oEntry.c3 = psGifCT->Colors[iColor].Blue;
-        oEntry.c4 = 255;
-        poColorTable->SetColorEntry( iColor, &oEntry );
-    }
-
-/* -------------------------------------------------------------------- */
 /*      Setup interlacing map if required.                              */
 /* -------------------------------------------------------------------- */
     panInterlaceMap = NULL;
@@ -175,6 +162,53 @@ GIFRasterBand::GIFRasterBand( GIFDataset *poDS, int nBand,
                  j += InterlacedJumps[i]) 
                 panInterlaceMap[j] = iLine++;
         }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Check for transparency.  We just take the first graphic         */
+/*      control extension block we find, if any.                        */
+/* -------------------------------------------------------------------- */
+    int	iExtBlock;
+
+    nTransparentColor = -1;
+    for( iExtBlock = 0; iExtBlock < psImage->ExtensionBlockCount; iExtBlock++ )
+    {
+        unsigned char *pExtData;
+
+        if( psImage->ExtensionBlocks[iExtBlock].Function != 0xf9 )
+            continue;
+
+        pExtData = (unsigned char *) psImage->ExtensionBlocks[iExtBlock].Bytes;
+
+        /* check if transparent color flag is set */
+        if( !(pExtData[0] & 0x1) )
+            continue;
+
+        nTransparentColor = pExtData[3];
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Setup colormap.                                                 */
+/* -------------------------------------------------------------------- */
+    ColorMapObject 	*psGifCT = psImage->ImageDesc.ColorMap;
+    if( psGifCT == NULL )
+        psGifCT = poDS->hGifFile->SColorMap;
+
+    poColorTable = new GDALColorTable();
+    for( int iColor = 0; iColor < psGifCT->ColorCount; iColor++ )
+    {
+        GDALColorEntry	oEntry;
+
+        oEntry.c1 = psGifCT->Colors[iColor].Red;
+        oEntry.c2 = psGifCT->Colors[iColor].Green;
+        oEntry.c3 = psGifCT->Colors[iColor].Blue;
+
+        if( iColor == nTransparentColor )
+            oEntry.c4 = 0;
+        else
+            oEntry.c4 = 255;
+
+        poColorTable->SetColorEntry( iColor, &oEntry );
     }
 }
 
@@ -228,6 +262,19 @@ GDALColorTable *GIFRasterBand::GetColorTable()
 
 {
     return poColorTable;
+}
+
+/************************************************************************/
+/*                           GetNoDataValue()                           */
+/************************************************************************/
+
+double GIFRasterBand::GetNoDataValue( int *pbSuccess )
+
+{
+    if( pbSuccess != NULL )
+        *pbSuccess = nTransparentColor != -1;
+
+    return nTransparentColor;
 }
 
 /************************************************************************/
