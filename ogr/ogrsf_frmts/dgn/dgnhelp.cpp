@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2002/11/12 19:44:17  warmerda
+ * added view display
+ *
  * Revision 1.10  2002/10/07 13:14:18  warmerda
  * added association id support
  *
@@ -740,6 +743,7 @@ void DGNDumpElement( DGNHandle hDGN, DGNElemCore *psElement, FILE *fp )
       case DGNST_TCB:
       {
           DGNElemTCB *psTCB = (DGNElemTCB *) psElement;
+          int iView;
 
           fprintf( fp, "  dimension = %d\n", psTCB->dimension );
           fprintf( fp, "  uor_per_subunit = %ld, subunits = `%s'\n",
@@ -750,6 +754,28 @@ void DGNDumpElement( DGNHandle hDGN, DGNElemCore *psElement, FILE *fp )
                    psTCB->origin_x,
                    psTCB->origin_y,
                    psTCB->origin_z );
+
+          for( iView = 0; iView < 8; iView++ )
+          {
+              DGNViewInfo *psView = psTCB->views + iView;
+              
+              fprintf(fp, 
+                      "  View%d: flags=%04X, levels=%02X%02X%02X%02X%02X%02X%02X%02X\n",
+                      iView,
+                      psView->flags, 
+                      psView->levels[0],
+                      psView->levels[1],
+                      psView->levels[2],
+                      psView->levels[3],
+                      psView->levels[4],
+                      psView->levels[5],
+                      psView->levels[6],
+                      psView->levels[7] );
+              fprintf(fp, 
+                      "        origin=(%g,%g,%g)\n        delta=(%g,%g,%g)\n", 
+                      psView->origin.x, psView->origin.y, psView->origin.z,
+                      psView->delta.x, psView->delta.y, psView->delta.z );
+          }
       }
       break;
 
