@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  1999/12/22 15:36:45  warmerda
+ * RegisterOGRMIF no longer exists
+ *
  * Revision 1.2  1999/11/14 18:10:44  svillene
  * add RegisterOGRMIF RegisterOGRTAB
  *
@@ -51,6 +54,5 @@ void OGRRegisterAll()
     RegisterOGRTiger();
     RegisterOGRS57();
     RegisterOGRTAB();
-    RegisterOGRMIF();
 }
 
