@@ -25,7 +25,7 @@ default:	$(SDTSLIB) sdtsdataset.o
 all:	sdts2ascii sdts2shp
 
 clean:
-	rm -f *.o sdts2ascii 8211dump
+	rm -rf *.o sdts2ascii 8211dump $(DISTDIR) html man $(DISTDIR).tar.gz
 
 %.o:	%.cpp
 	$(CXX) -c $(ALL_CXX_FLAGS) -I$(GDAL_ROOT)/core -I$(GDAL_ROOT)/port \
