@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.43  2001/02/12 22:16:22  warmerda
+ * added TFW write support
+ *
  * Revision 1.42  2001/01/23 15:26:27  warmerda
  * Removed debugging printf.
  *
@@ -158,12 +161,13 @@ class GTiffDataset : public GDALDataset
     uint32	nBlockYSize;
 
     int		nLoadedBlock;		/* or tile */
-    int		bLoadedStripDirty;
     GByte	*pabyBlockBuf;
 
     char	*pszProjection;
     double	adfGeoTransform[6];
     int		bGeoTransformValid;
+
+    char	*pszTFWFilename;
 
     int		bNewDataset;            /* product of Create() */
     int         bTreatAsRGBA;
@@ -175,6 +179,7 @@ class GTiffDataset : public GDALDataset
 
     void	WriteGeoTIFFInfo();
     int		SetDirectory( uint32 nDirOffset = 0 );
+    void        SetupTFW(const char *pszBasename);
 
     int		nOverviewCount;
     GTiffDataset **papoOverviewDS;
@@ -792,7 +797,6 @@ GTiffDataset::GTiffDataset()
 
 {
     nLoadedBlock = -1;
-    bLoadedStripDirty = FALSE;
     pabyBlockBuf = NULL;
     hTIFF = NULL;
     bNewDataset = FALSE;
@@ -804,6 +808,8 @@ GTiffDataset::GTiffDataset()
     nOverviewCount = 0;
     papoOverviewDS = NULL;
     nDirOffset = 0;
+
+    pszTFWFilename = NULL;
 
     bGeoTransformValid = FALSE;
     adfGeoTransform[0] = 0.0;
@@ -857,6 +863,9 @@ GTiffDataset::~GTiffDataset()
 
         CPLFree( pasGCPList );
     }
+
+    if( pszTFWFilename != NULL )
+        CPLFree( pszTFWFilename );
 }
 
 /************************************************************************/
@@ -892,13 +901,6 @@ void GTiffDataset::FlushCache()
 
 {
     GDALDataset::FlushCache();
-
-    if( bLoadedStripDirty )
-    {
-        
-        
-        bLoadedStripDirty = FALSE;
-    }
 
     CPLFree( pabyBlockBuf );
     pabyBlockBuf = NULL;
@@ -1162,6 +1164,29 @@ void GTiffDataset::WriteGeoTIFFInfo()
         GTIFWriteKeys( psGTIF );
         GTIFFree( psGTIF );
     }
+
+/* -------------------------------------------------------------------- */
+/*      Are we maintaining a .tfw file?                                 */
+/* -------------------------------------------------------------------- */
+    if( pszTFWFilename != NULL )
+    {
+        FILE	*fp;
+
+        fp = VSIFOpen( pszTFWFilename, "wt" );
+        
+        fprintf( fp, "%.10f\n", adfGeoTransform[1] );
+        fprintf( fp, "%.10f\n", adfGeoTransform[4] );
+        fprintf( fp, "%.10f\n", adfGeoTransform[2] );
+        fprintf( fp, "%.10f\n", adfGeoTransform[5] );
+        fprintf( fp, "%.10f\n", adfGeoTransform[0] 
+                 + 0.5 * adfGeoTransform[1]
+                 + 0.5 * adfGeoTransform[2] );
+        fprintf( fp, "%.10f\n", adfGeoTransform[3]
+                 + 0.5 * adfGeoTransform[4]
+                 + 0.5 * adfGeoTransform[5] );
+        VSIFClose( fp );
+    }
+
 }
 
 /************************************************************************/
@@ -1461,6 +1486,7 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, uint32 nDirOffsetIn,
                 bGeoTransformValid = TRUE;
             }
             CSLDestroy(papszLines);
+            pszTFWFilename = CPLStrdup(pszTFW);
         }
 
         CPLFree( pszTFW );
@@ -1575,6 +1601,25 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, uint32 nDirOffsetIn,
     }
 
     return( CE_None );
+}
+
+/************************************************************************/
+/*                              SetupTFW()                              */
+/************************************************************************/
+
+void GTiffDataset::SetupTFW( const char *pszTIFFilename )
+
+{
+    char	*pszPath;
+    char	*pszBasename;
+    
+    pszPath = CPLStrdup( CPLGetPath(pszTIFFilename) );
+    pszBasename = CPLStrdup( CPLGetBasename(pszTIFFilename) );
+
+    pszTFWFilename = CPLStrdup( CPLFormFilename(pszPath,pszBasename,"tfw") );
+    
+    CPLFree( pszPath );
+    CPLFree( pszBasename );
 }
 
 /************************************************************************/
@@ -1766,6 +1811,13 @@ GDALDataset *GTiffDataset::Create( const char * pszFilename,
         * ((nXSize + poDS->nBlockXSize - 1) / poDS->nBlockXSize);
 
 /* -------------------------------------------------------------------- */
+/*      Do we need a TFW file?                                          */
+/* -------------------------------------------------------------------- */
+    if( CSLFetchNameValue(papszParmList,"TFW")  != NULL
+        || CSLFindString( papszParmList, "TFW") != -1 )
+        poDS->SetupTFW( pszFilename );
+
+/* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
     int		iBand;
@@ -1903,6 +1955,42 @@ GTiffCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         }
             
         pszProjection = poSrcDS->GetProjectionRef();
+
+/* -------------------------------------------------------------------- */
+/*      Do we need a TFW file?                                          */
+/* -------------------------------------------------------------------- */
+        if( CSLFetchNameValue(papszOptions,"TFW")  != NULL 
+            || CSLFindString( papszOptions, "TFW") != -1 )
+        {
+            char	*pszPath, *pszTFWFilename;
+            char	*pszBasename;
+            FILE	*fp;
+
+            pszPath = CPLStrdup( CPLGetPath(pszFilename) );
+            pszBasename = CPLStrdup( CPLGetBasename(pszFilename) );
+        
+            pszTFWFilename = 
+                CPLStrdup( CPLFormFilename(pszPath,pszBasename,"tfw") );
+        
+            CPLFree( pszPath );
+            CPLFree( pszBasename );
+
+            fp = VSIFOpen( pszTFWFilename, "wt" );
+        
+            fprintf( fp, "%.10f\n", adfGeoTransform[1] );
+            fprintf( fp, "%.10f\n", adfGeoTransform[4] );
+            fprintf( fp, "%.10f\n", adfGeoTransform[2] );
+            fprintf( fp, "%.10f\n", adfGeoTransform[5] );
+            fprintf( fp, "%.10f\n", adfGeoTransform[0] 
+                     + 0.5 * adfGeoTransform[1]
+                     + 0.5 * adfGeoTransform[2] );
+            fprintf( fp, "%.10f\n", adfGeoTransform[3]
+                     + 0.5 * adfGeoTransform[4]
+                     + 0.5 * adfGeoTransform[5] );
+            VSIFClose( fp );
+
+            CPLFree( pszTFWFilename );
+        }
     }
 
 /* -------------------------------------------------------------------- */
