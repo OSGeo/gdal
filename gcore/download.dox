@@ -73,7 +73,7 @@ server:
 <pre>
 % export CVSROOT=:pserver:cvsanon@cvs.maptools.org:/cvs/maptools/cvsroot
 % cvs login
-Password: <just hit enter>
+Password: *enter*
 % cvs checkout gdal
 </pre>
 
