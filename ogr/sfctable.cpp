@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  1999/07/09 13:05:01  warmerda
+ * figure out geometry column before building OGRFeatureDefn
+ *
  * Revision 1.8  1999/07/08 20:27:25  warmerda
  * Implemented creation on an OGRFeatureDefn for the layer, and
  * implemented GetOGRFeature().
@@ -178,6 +181,21 @@ int SFCTable::ReadSchemaInfo( CDataSource * poDS )
 
 {
 /* -------------------------------------------------------------------- */
+/*      Read the geometry column information.                           */
+/* -------------------------------------------------------------------- */
+    CSession      oSession;
+    int           bSuccess = TRUE;
+
+    if( FAILED(oSession.Open( *poDS ) ) )
+        bSuccess = FALSE;
+    else if( !FetchDefGeomColumn( &oSession ) )
+        bSuccess = FALSE;
+    else
+        bSuccess = ReadOGISColumnInfo( &oSession );
+
+    HasGeometry();
+
+/* -------------------------------------------------------------------- */
 /*      Prepare a definition for the columns of this table as an        */
 /*      OGRFeatureDefn.                                                 */
 /* -------------------------------------------------------------------- */
@@ -190,7 +208,7 @@ int SFCTable::ReadSchemaInfo( CDataSource * poDS )
         OGRFieldDefn      oField( "", OFTInteger );
         char              *pszName = NULL;
 
-        if( iColumn == iGeomColumn )
+        if( psCInfo->iOrdinal == (ULONG) iGeomColumn )
             continue;
 
         UnicodeToAnsi( psCInfo->pwszName, &pszName );
@@ -233,18 +251,7 @@ int SFCTable::ReadSchemaInfo( CDataSource * poDS )
         panColOrdinal[poDefn->GetFieldCount()-1] = psCInfo->iOrdinal;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Read the geometry column information.                           */
-/* -------------------------------------------------------------------- */
-    CSession      oSession;
-
-    if( FAILED(oSession.Open( *poDS ) ) )
-        return FALSE;
-
-    if( !FetchDefGeomColumn( &oSession ) )
-        return FALSE;
-
-    return ReadOGISColumnInfo( &oSession );
+    return bSuccess;
 }
 
 /************************************************************************/
