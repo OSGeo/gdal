@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.34  2002/12/03 03:32:06  warmerda
+ * fixed GTIFGetPCSInfo arguments
+ *
  * Revision 1.33  2002/11/30 17:36:41  warmerda
  * added support for writing ellipsoid and citation
  *
@@ -253,7 +256,7 @@ char *GTIFGetOGISDefn( GTIFDefn * psDefn )
         {
             char	*pszPCSName = "unnamed";
 
-            GTIFGetPCSInfo( psDefn->PCS, &pszPCSName, NULL, NULL, NULL, NULL );
+            GTIFGetPCSInfo( psDefn->PCS, &pszPCSName, NULL, NULL, NULL );
             oSRS.SetNode( "PROJCS", pszPCSName );
             if( !EQUAL(pszPCSName,"unnamed") )
                 CPLFree( pszPCSName );
