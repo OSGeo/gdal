@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2001/12/19 22:44:14  warmerda
+ * fixed bug in conversion to WKT
+ *
  * Revision 1.8  2001/11/01 17:01:28  warmerda
  * pass output buffer into OGRMakeWktCoordinate
  *
@@ -146,6 +149,8 @@ OGRErr OGRMultiPoint::exportToWkt( char ** ppszReturn )
         if( i > 0 )
             strcat( *ppszReturn + nRetLen, "," );
 
+        nRetLen += strlen(*ppszReturn + nRetLen);
+
         if( poPoint->getCoordinateDimension() == 3 )
             OGRMakeWktCoordinate( *ppszReturn + nRetLen,
                                   poPoint->getX(), 
@@ -156,8 +161,6 @@ OGRErr OGRMultiPoint::exportToWkt( char ** ppszReturn )
                                   poPoint->getX(), 
                                   poPoint->getY(),
                                   0.0 );
-
-        nRetLen += strlen(*ppszReturn + nRetLen);
     }
 
     strcat( *ppszReturn+nRetLen, ")" );
