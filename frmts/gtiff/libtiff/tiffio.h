@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tiffio.h,v 1.15 2002/09/12 12:33:30 dron Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tiffio.h,v 1.27 2003/12/22 21:06:04 dron Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -114,10 +114,72 @@ typedef	void* thandle_t;	/* client data handle */
 #define	TIFFPRINT_JPEGACTABLES	0x200		/* JPEG AC tables */
 #define	TIFFPRINT_JPEGDCTABLES	0x200		/* JPEG DC tables */
 
+/* 
+ * Colour conversion stuff
+ */
+
+/* reference white */
+#define D65_X0 (95.0470F)
+#define D65_Y0 (100.0F)
+#define D65_Z0 (108.8827F)
+
+#define D50_X0 (96.4250F)
+#define D50_Y0 (100.0F)
+#define D50_Z0 (82.4680F)
+
+/* Structure for holding information about a display device. */
+
+typedef	unsigned char TIFFRGBValue;		/* 8-bit samples */
+
+typedef struct {
+	float d_mat[3][3]; 		/* XYZ -> luminance matrix */
+	float d_YCR;			/* Light o/p for reference white */
+	float d_YCG;
+	float d_YCB;
+	uint32 d_Vrwr;			/* Pixel values for ref. white */
+	uint32 d_Vrwg;
+	uint32 d_Vrwb;
+	float d_Y0R;			/* Residual light for black pixel */
+	float d_Y0G;
+	float d_Y0B;
+	float d_gammaR;			/* Gamma values for the three guns */
+	float d_gammaG;
+	float d_gammaB;
+} TIFFDisplay;
+
+typedef struct {				/* YCbCr->RGB support */
+	TIFFRGBValue* clamptab;			/* range clamping table */
+	int*	Cr_r_tab;
+	int*	Cb_b_tab;
+	int32*	Cr_g_tab;
+	int32*	Cb_g_tab;
+        int32*  Y_tab;
+} TIFFYCbCrToRGB;
+
+typedef struct {				/* CIE Lab 1976->RGB support */
+	int	range;				/* Size of conversion table */
+#define CIELABTORGB_TABLE_RANGE 1500
+	float	rstep, gstep, bstep;
+	float	X0, Y0, Z0;			/* Reference white point */
+	TIFFDisplay display;
+	float	Yr2r[CIELABTORGB_TABLE_RANGE + 1];  /* Conversion of Yr to r */
+	float	Yg2g[CIELABTORGB_TABLE_RANGE + 1];  /* Conversion of Yg to g */
+	float	Yb2b[CIELABTORGB_TABLE_RANGE + 1];  /* Conversion of Yb to b */
+} TIFFCIELabToRGB;
+
+extern int TIFFCIELabToRGBInit(TIFFCIELabToRGB*, TIFFDisplay *, float*);
+extern void TIFFCIELabToXYZ(TIFFCIELabToRGB *, uint32, int32, int32,
+			    float *, float *, float *);
+extern void TIFFXYZToRGB(TIFFCIELabToRGB *, float, float, float,
+			 uint32 *, uint32 *, uint32 *);
+
+extern int TIFFYCbCrToRGBInit(TIFFYCbCrToRGB*, float*, float*);
+extern void TIFFYCbCrtoRGB(TIFFYCbCrToRGB *, uint32, int32, int32,
+			   uint32 *, uint32 *, uint32 *);
+
 /*
  * RGBA-style image support.
  */
-typedef	unsigned char TIFFRGBValue;		/* 8-bit samples */
 typedef struct _TIFFRGBAImage TIFFRGBAImage;
 /*
  * The image reading and conversion routines invoke
@@ -138,15 +200,6 @@ typedef void (*tileSeparateRoutine)
 /*
  * RGBA-reader state.
  */
-typedef struct {				/* YCbCr->RGB support */
-	TIFFRGBValue* clamptab;			/* range clamping table */
-	int*	Cr_r_tab;
-	int*	Cb_b_tab;
-	int32*	Cr_g_tab;
-	int32*	Cb_g_tab;
-	float	coeffs[3];			/* cached for repeated use */
-} TIFFYCbCrToRGB;
-
 struct _TIFFRGBAImage {
 	TIFF*	tif;				/* image handle */
 	int	stoponerr;			/* stop on read error */
@@ -157,6 +210,7 @@ struct _TIFFRGBAImage {
 	uint16	bitspersample;			/* image bits/sample */
 	uint16	samplesperpixel;		/* image samples/pixel */
 	uint16	orientation;			/* image orientation */
+	uint16	req_orientation;		/* requested orientation */
 	uint16	photometric;			/* image photometric interp */
 	uint16*	redcmap;			/* colormap pallete */
 	uint16*	greencmap;
@@ -172,6 +226,7 @@ struct _TIFFRGBAImage {
 	uint32** BWmap;				/* black&white map */
 	uint32** PALmap;			/* palette image map */
 	TIFFYCbCrToRGB* ycbcr;			/* YCbCr conversion state */
+        TIFFCIELabToRGB* cielab;		/* CIE L*a*b conversion state */
 
         int	row_offset;
         int     col_offset;
@@ -225,6 +280,7 @@ extern	const char* TIFFGetVersion(void);
 extern	const TIFFCodec* TIFFFindCODEC(uint16);
 extern	TIFFCodec* TIFFRegisterCODEC(uint16, const char*, TIFFInitMethod);
 extern	void TIFFUnRegisterCODEC(TIFFCodec*);
+extern  int TIFFIsCODECConfigured(uint16);
 
 extern	tdata_t _TIFFmalloc(tsize_t);
 extern	tdata_t _TIFFrealloc(tdata_t, tsize_t);
@@ -244,6 +300,7 @@ extern	int TIFFReadDirectory(TIFF*);
 extern	tsize_t TIFFScanlineSize(TIFF*);
 extern	tsize_t TIFFRasterScanlineSize(TIFF*);
 extern	tsize_t TIFFStripSize(TIFF*);
+extern	tsize_t TIFFRawStripSize(TIFF*, tstrip_t);
 extern	tsize_t TIFFVStripSize(TIFF*, uint32);
 extern	tsize_t TIFFTileRowSize(TIFF*);
 extern	tsize_t TIFFTileSize(TIFF*);
@@ -283,11 +340,14 @@ extern	void TIFFPrintDirectory(TIFF*, FILE*, long = 0);
 extern	int TIFFReadScanline(TIFF*, tdata_t, uint32, tsample_t = 0);
 extern	int TIFFWriteScanline(TIFF*, tdata_t, uint32, tsample_t = 0);
 extern	int TIFFReadRGBAImage(TIFF*, uint32, uint32, uint32*, int = 0);
+extern	int TIFFReadRGBAImageOriented(TIFF*, uint32, uint32, uint32*,
+				      int = ORIENTATION_BOTLEFT, int = 0);
 #else
 extern	void TIFFPrintDirectory(TIFF*, FILE*, long);
 extern	int TIFFReadScanline(TIFF*, tdata_t, uint32, tsample_t);
 extern	int TIFFWriteScanline(TIFF*, tdata_t, uint32, tsample_t);
 extern	int TIFFReadRGBAImage(TIFF*, uint32, uint32, uint32*, int);
+extern	int TIFFReadRGBAImageOriented(TIFF*, uint32, uint32, uint32*, int, int);
 #endif
 
 extern	int TIFFReadRGBAStrip(TIFF*, tstrip_t, uint32 * );
@@ -327,7 +387,7 @@ extern	tsize_t TIFFWriteEncodedStrip(TIFF*, tstrip_t, tdata_t, tsize_t);
 extern	tsize_t TIFFWriteRawStrip(TIFF*, tstrip_t, tdata_t, tsize_t);
 extern	tsize_t TIFFWriteEncodedTile(TIFF*, ttile_t, tdata_t, tsize_t);
 extern	tsize_t TIFFWriteRawTile(TIFF*, ttile_t, tdata_t, tsize_t);
-extern	int TIFFDataWidth(TIFFDataType);	/* table of tag datatype widths */
+extern	int TIFFDataWidth(TIFFDataType);    /* table of tag datatype widths */
 extern	void TIFFSetWriteOffset(TIFF*, toff_t);
 extern	void TIFFSwabShort(uint16*);
 extern	void TIFFSwabLong(uint32*);

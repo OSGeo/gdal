@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_dirread.c,v 1.21 2003/09/23 06:23:39 dron Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_dirread.c,v 1.27 2004/01/11 15:30:19 dron Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -97,6 +97,27 @@ TIFFReadDirectory(TIFF* tif)
 	tif->tif_diroff = tif->tif_nextdiroff;
 	if (tif->tif_diroff == 0)		/* no more directories */
 		return (0);
+
+	/*
+	 * XXX: Trick to prevent IFD looping. The one can create TIFF file
+	 * with looped directory pointers. We will maintain a list of already
+	 * seen directories and check every IFD offset against this list.
+	 */
+	for (n = 0; n < tif->tif_dirnumber; n++) {
+		if (tif->tif_dirlist[n] == tif->tif_diroff)
+			return (0);
+	}
+	tif->tif_dirnumber++;
+	tif->tif_dirlist = _TIFFrealloc(tif->tif_dirlist,
+					tif->tif_dirnumber * sizeof(toff_t));
+	if (!tif->tif_dirlist) {
+		TIFFError(module,
+			  "%.1000s: Failed to allocate space for IFD list",
+			  tif->tif_name);
+		return (0);
+	}
+	tif->tif_dirlist[tif->tif_dirnumber - 1] = tif->tif_diroff;
+
 	/*
 	 * Cleanup any previous compression state.
 	 */
@@ -227,9 +248,9 @@ TIFFReadDirectory(TIFF* tif)
 		if( TIFFReassignTagToIgnore(TIS_EXTRACT, dp->tdir_tag) )
                     dp->tdir_tag = IGNORE;
 
-		if (dp->tdir_tag == IGNORE)
-                    continue;
-                
+		if (fix >= tif->tif_nfields || dp->tdir_tag == IGNORE)
+			continue;
+               
 		/*
 		 * Silicon Beach (at least) writes unordered
 		 * directory tags (violating the spec).  Handle
@@ -245,9 +266,9 @@ TIFFReadDirectory(TIFF* tif)
 			fix = 0;			/* O(n^2) */
 		}
 		while (fix < tif->tif_nfields &&
-		    tif->tif_fieldinfo[fix]->field_tag < dp->tdir_tag)
+		       tif->tif_fieldinfo[fix]->field_tag < dp->tdir_tag)
 			fix++;
-		if (fix == tif->tif_nfields ||
+		if (fix >= tif->tif_nfields ||
 		    tif->tif_fieldinfo[fix]->field_tag != dp->tdir_tag) {
 
                     TIFFWarning(module,
@@ -256,13 +277,13 @@ TIFFReadDirectory(TIFF* tif)
 
                     TIFFMergeFieldInfo( tif,
                                         _TIFFCreateAnonFieldInfo( tif,
-                                              dp->tdir_tag, dp->tdir_type ),
+                                              dp->tdir_tag,
+					      (TIFFDataType) dp->tdir_type ),
                                         1 );
                     fix = 0;
                     while (fix < tif->tif_nfields &&
                            tif->tif_fieldinfo[fix]->field_tag < dp->tdir_tag)
 			fix++;
-		    dp->tdir_tag = IGNORE;
 		}
 		/*
 		 * Null out old tags that we ignore.
@@ -284,7 +305,8 @@ TIFFReadDirectory(TIFF* tif)
 			    fip->field_tag != dp->tdir_tag) {
 				TIFFWarning(module,
 			"%.1000s: wrong data type %d for \"%s\"; tag ignored",
-				    tif->tif_name, dp->tdir_type, fip[-1].field_name);
+					    tif->tif_name, dp->tdir_type,
+					    fip[-1].field_name);
 				goto ignore;
 			}
 		}
@@ -613,7 +635,7 @@ EstimateStripByteCounts(TIFF* tif, TIFFDirEntry* dir, uint16 dircount)
 		/* calculate amount of space used by indirect values */
 		for (dp = dir, n = dircount; n > 0; n--, dp++)
 		{
-			uint32 cc = TIFFDataWidth(dp->tdir_type);
+			uint32 cc = TIFFDataWidth((TIFFDataType) dp->tdir_type);
 			if (cc == 0) {
 				TIFFError(module,
 			"%.1000s: Cannot determine size of unknown tag type %d",
@@ -688,7 +710,7 @@ CheckDirCount(TIFF* tif, TIFFDirEntry* dir, uint32 count)
 static tsize_t
 TIFFFetchData(TIFF* tif, TIFFDirEntry* dir, char* cp)
 {
-	int w = TIFFDataWidth(dir->tdir_type);
+	int w = TIFFDataWidth((TIFFDataType) dir->tdir_type);
 	tsize_t cc = dir->tdir_count * w;
 
 	if (!isMapped(tif)) {
@@ -909,7 +931,7 @@ TIFFFetchRationalArray(TIFF* tif, TIFFDirEntry* dir, float* v)
 	uint32* l;
 
 	l = (uint32*)CheckMalloc(tif,
-	    dir->tdir_count*TIFFDataWidth(dir->tdir_type),
+	    dir->tdir_count*TIFFDataWidth((TIFFDataType) dir->tdir_type),
 	    "to fetch array of rationals");
 	if (l) {
 		if (TIFFFetchData(tif, dir, (char *)l)) {
@@ -1176,8 +1198,11 @@ TIFFFetchNormalTag(TIFF* tif, TIFFDirEntry* dp)
 		case TIFF_ASCII:
 		case TIFF_UNDEFINED:		/* bit of a cheat... */
 			{ char c[2];
-			  if( (ok = (TIFFFetchString(tif, dp, c) != 0)) != 0 ){
+			  if( (ok = (TIFFFetchString(tif, dp, c) != 0)) != 0 ) {
 				c[1] = '\0';		/* XXX paranoid */
+				ok = (fip->field_passcount ?
+					TIFFSetField(tif, dp->tdir_tag, 1, c)
+				      : TIFFSetField(tif, dp->tdir_tag, c));
 				ok = TIFFSetField(tif, dp->tdir_tag, c);
 			  }
 			}

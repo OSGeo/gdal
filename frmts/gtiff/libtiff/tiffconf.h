@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tiffconf.h,v 1.7 2002/07/31 20:55:12 warmerda Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tiffconf.h,v 1.8 2003/12/26 10:20:03 dron Exp $ */
 /*
  * Copyright (c) 1988-1997 Sam Leffler
  * Copyright (c) 1991-1997 Silicon Graphics, Inc.
@@ -33,7 +33,7 @@
  * #defines on the command line, this file can be edited to
  * configure the library.  Otherwise, one can override portability
  * and configuration-related definitions from a Makefile or command
- * line by defining FEATURE_SUPPORT and COMPRESSION_SUPPORT (see below).
+ * line by defining COMPRESSION_SUPPORT (see below).
  */
 
 /*
@@ -67,25 +67,6 @@
 #ifndef USE_64BIT_API
 #  define USE_64BIT_API	0
 #endif
-
-#ifndef FEATURE_SUPPORT
-/*
- * Feature support definitions:
- *
- *    COLORIMETRY_SUPPORT enable support for 6.0 colorimetry tags
- *    YCBCR_SUPPORT	enable support for 6.0 YCbCr tags
- *    CMYK_SUPPORT	enable support for 6.0 CMYK tags
- *    ICC_SUPPORT	enable support for ICC profile tag
- *    PHOTOSHOP_SUPPORT enable support for PHOTOSHOP resource tag
- *    IPTC_SUPPORT  enable support for RichTIFF IPTC tag
- */
-#define	COLORIMETRY_SUPPORT
-#define	YCBCR_SUPPORT
-#define	CMYK_SUPPORT
-#define	ICC_SUPPORT
-#define PHOTOSHOP_SUPPORT
-#define IPTC_SUPPORT
-#endif /* FEATURE_SUPPORT */
 
 #ifndef COMPRESSION_SUPPORT
 /*
@@ -156,5 +137,17 @@
 #ifndef CHECK_JPEG_YCBCR_SUBSAMPLING
 #define CHECK_JPEG_YCBCR_SUBSAMPLING 1
 #endif
+
+/*
+ * Feature support definitions.
+ * XXX: These macros are obsoleted. Don't use them in your apps!
+ * Macros stays here for backward compatibility and should be always defined.
+ */
+#define	COLORIMETRY_SUPPORT
+#define	YCBCR_SUPPORT
+#define	CMYK_SUPPORT
+#define	ICC_SUPPORT
+#define PHOTOSHOP_SUPPORT
+#define IPTC_SUPPORT
 
 #endif /* _TIFFCONF_ */

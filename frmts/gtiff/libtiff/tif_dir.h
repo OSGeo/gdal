@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_dir.h,v 1.10 2002/09/12 12:33:30 dron Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_dir.h,v 1.11 2003/11/18 15:45:43 dron Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -251,8 +251,9 @@ extern "C" {
 extern	void _TIFFSetupFieldInfo(TIFF*);
 extern	void _TIFFPrintFieldInfo(TIFF*, FILE*);
 extern	TIFFDataType _TIFFSampleToTagType(TIFF*);
-extern  const TIFFFieldInfo* _TIFFFindOrRegisterInfo( TIFF *tif, ttag_t tag,
-                                                      TIFFDataType dt );
+extern  const TIFFFieldInfo* _TIFFFindOrRegisterFieldInfo( TIFF *tif,
+							   ttag_t tag,
+							   TIFFDataType dt );
 extern  TIFFFieldInfo* _TIFFCreateAnonFieldInfo( TIFF *tif, ttag_t tag,
                                                  TIFFDataType dt );
 

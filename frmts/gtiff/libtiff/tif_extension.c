@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_extension.c,v 1.2 2003/07/08 16:40:46 warmerda Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_extension.c,v 1.3 2003/12/19 18:29:49 dron Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -99,10 +99,10 @@ void TIFFSetClientInfo( TIFF *tif, void *data, const char *name )
     ** Create a new link.
     */
 
-    link = _TIFFmalloc(sizeof(TIFFClientInfoLink));
+    link = (TIFFClientInfoLink *) _TIFFmalloc(sizeof(TIFFClientInfoLink));
     link->next = tif->tif_clientinfo;
-    link->name = _TIFFmalloc(strlen(name)+1);
-    strcpy( link->name, name );
+    link->name = (char *) _TIFFmalloc(strlen(name)+1);
+    strcpy(link->name, name);
     link->data = data;
 
     tif->tif_clientinfo = link;

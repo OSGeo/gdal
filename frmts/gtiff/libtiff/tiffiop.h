@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tiffiop.h,v 1.5 2002/04/08 15:32:05 dron Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tiffiop.h,v 1.9 2003/12/24 22:07:23 dron Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -92,6 +92,9 @@ struct tiff {
 #define	TIFF_STRIPCHOP		0x8000	/* enable strip chopping support */
 	toff_t		tif_diroff;	/* file offset of current directory */
 	toff_t		tif_nextdiroff;	/* file offset of following directory */
+	toff_t*		tif_dirlist;	/* list of offsets to already seen */
+					/* directories to prevent IFD looping */
+	uint16		tif_dirnumber;  /* number of already seen directories */
 	TIFFDirectory	tif_dir;	/* internal rep of current directory */
 	TIFFHeader	tif_header;	/* file's header block */
 	const int*	tif_typeshift;	/* data type shift counts */
@@ -197,6 +200,9 @@ struct tiff {
 /* NB: the uint32 casts are to silence certain ANSI-C compilers */
 #define	TIFFhowmany(x, y) ((((uint32)(x))+(((uint32)(y))-1))/((uint32)(y)))
 #define	TIFFroundup(x, y) (TIFFhowmany(x,y)*((uint32)(y)))
+
+#define TIFFmax(A,B) ((A)>(B)?(A):(B))
+#define TIFFmin(A,B) ((A)<(B)?(A):(B))
 
 #if defined(__cplusplus)
 extern "C" {

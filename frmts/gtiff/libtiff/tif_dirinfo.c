@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_dirinfo.c,v 1.21 2003/06/30 18:22:28 dron Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_dirinfo.c,v 1.24 2003/12/19 18:29:49 dron Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -140,10 +140,8 @@ const TIFFFieldInfo tiffFieldInfo[] = {
       TRUE,	FALSE,	"PageNumber" },
     { TIFFTAG_COLORRESPONSEUNIT, 1, 1, TIFF_SHORT,	FIELD_IGNORE,
       TRUE,	FALSE,	"ColorResponseUnit" },
-#ifdef COLORIMETRY_SUPPORT
     { TIFFTAG_TRANSFERFUNCTION,	-1,-1, TIFF_SHORT,	FIELD_TRANSFERFUNCTION,
       TRUE,	FALSE,	"TransferFunction" },
-#endif
     { TIFFTAG_SOFTWARE,		-1,-1, TIFF_ASCII,	FIELD_CUSTOM,
       TRUE,	FALSE,	"Software" },
     { TIFFTAG_DATETIME,		20,20, TIFF_ASCII,	FIELD_DATETIME,
@@ -152,12 +150,10 @@ const TIFFFieldInfo tiffFieldInfo[] = {
       TRUE,	FALSE,	"Artist" },
     { TIFFTAG_HOSTCOMPUTER,	-1,-1, TIFF_ASCII,	FIELD_HOSTCOMPUTER,
       TRUE,	FALSE,	"HostComputer" },
-#ifdef COLORIMETRY_SUPPORT
     { TIFFTAG_WHITEPOINT,	 2, 2, TIFF_RATIONAL,FIELD_WHITEPOINT,
       TRUE,	FALSE,	"WhitePoint" },
     { TIFFTAG_PRIMARYCHROMATICITIES,6,6,TIFF_RATIONAL,FIELD_PRIMARYCHROMAS,
       TRUE,	FALSE,	"PrimaryChromaticities" },
-#endif
     { TIFFTAG_COLORMAP,		-1,-1, TIFF_SHORT,	FIELD_COLORMAP,
       TRUE,	FALSE,	"ColorMap" },
     { TIFFTAG_HALFTONEHINTS,	 2, 2, TIFF_SHORT,	FIELD_HALFTONEHINTS,
@@ -176,11 +172,8 @@ const TIFFFieldInfo tiffFieldInfo[] = {
       FALSE,	FALSE,	"TileByteCounts" },
     { TIFFTAG_TILEBYTECOUNTS,	-1, 1, TIFF_SHORT,	FIELD_STRIPBYTECOUNTS,
       FALSE,	FALSE,	"TileByteCounts" },
-#ifdef TIFFTAG_SUBIFD
     { TIFFTAG_SUBIFD,		-1,-1, TIFF_LONG,	FIELD_SUBIFD,
       TRUE,	TRUE,	"SubIFD" },
-#endif
-#ifdef CMYK_SUPPORT		/* 6.0 CMYK tags */
     { TIFFTAG_INKSET,		 1, 1, TIFF_SHORT,	FIELD_INKSET,
       FALSE,	FALSE,	"InkSet" },
     { TIFFTAG_INKNAMES,		-1,-1, TIFF_ASCII,	FIELD_INKNAMES,
@@ -193,7 +186,6 @@ const TIFFFieldInfo tiffFieldInfo[] = {
       FALSE,	FALSE,	"DotRange" },
     { TIFFTAG_TARGETPRINTER,	-1,-1, TIFF_ASCII,	FIELD_TARGETPRINTER,
       TRUE,	FALSE,	"TargetPrinter" },
-#endif
     { TIFFTAG_EXTRASAMPLES,	-1,-1, TIFF_SHORT,	FIELD_EXTRASAMPLES,
       FALSE,	FALSE,	"ExtraSamples" },
 /* XXX for bogus Adobe Photoshop v2.5 files */
@@ -205,21 +197,17 @@ const TIFFFieldInfo tiffFieldInfo[] = {
       TRUE,	FALSE,	"SMinSampleValue" },
     { TIFFTAG_SMAXSAMPLEVALUE,	-2,-1, TIFF_ANY,	FIELD_SMAXSAMPLEVALUE,
       TRUE,	FALSE,	"SMaxSampleValue" },
-#ifdef YCBCR_SUPPORT		/* 6.0 YCbCr tags */
     { TIFFTAG_YCBCRCOEFFICIENTS, 3, 3, TIFF_RATIONAL,	FIELD_YCBCRCOEFFICIENTS,
       FALSE,	FALSE,	"YCbCrCoefficients" },
     { TIFFTAG_YCBCRSUBSAMPLING,	 2, 2, TIFF_SHORT,	FIELD_YCBCRSUBSAMPLING,
       FALSE,	FALSE,	"YCbCrSubsampling" },
     { TIFFTAG_YCBCRPOSITIONING,	 1, 1, TIFF_SHORT,	FIELD_YCBCRPOSITIONING,
       FALSE,	FALSE,	"YCbCrPositioning" },
-#endif
-#ifdef COLORIMETRY_SUPPORT
     { TIFFTAG_REFERENCEBLACKWHITE,6,6,TIFF_RATIONAL,	FIELD_REFBLACKWHITE,
       TRUE,	FALSE,	"ReferenceBlackWhite" },
 /* XXX temporarily accept LONG for backwards compatibility */
     { TIFFTAG_REFERENCEBLACKWHITE,6,6,TIFF_LONG,	FIELD_REFBLACKWHITE,
       TRUE,	FALSE,	"ReferenceBlackWhite" },
-#endif
     { TIFFTAG_XMLPACKET,	-1,-3, TIFF_UNDEFINED,	FIELD_XMLPACKET,
       FALSE,	TRUE,	"XMLPacket" },
 /* begin SGI tags */
@@ -263,14 +251,10 @@ const TIFFFieldInfo tiffFieldInfo[] = {
       FALSE,    TRUE,   "RichTIFFIPTC" },
 #endif
 #endif
-#ifdef PHOTOSHOP_SUPPORT
     { TIFFTAG_PHOTOSHOP,    -1,-3, TIFF_BYTE,   FIELD_PHOTOSHOP, 
       FALSE,    TRUE,   "Photoshop" },
-#endif
-#ifdef ICC_SUPPORT
     { TIFFTAG_ICCPROFILE,	-1,-3, TIFF_UNDEFINED,	FIELD_ICCPROFILE,
       FALSE,	TRUE,	"ICC Profile" },
-#endif
     { TIFFTAG_STONITS,		 1, 1, TIFF_DOUBLE,	FIELD_STONITS,
       FALSE,	FALSE,	"StoNits" },
 };
@@ -280,18 +264,18 @@ void
 _TIFFSetupFieldInfo(TIFF* tif)
 {
 	if (tif->tif_fieldinfo) {
-        	int  i;
+		int  i;
 
-        	for (i = 0; i < tif->tif_nfields; i++) 
+		for (i = 0; i < tif->tif_nfields; i++) 
 		{
-	    		TIFFFieldInfo *fld = tif->tif_fieldinfo[i];
- 	    		if (fld->field_bit == FIELD_CUSTOM && 
+			TIFFFieldInfo *fld = tif->tif_fieldinfo[i];
+			if (fld->field_bit == FIELD_CUSTOM && 
 				strncmp("Tag ", fld->field_name, 4) == 0) 
-	    			{
+				{
 				_TIFFfree(fld->field_name);
-                		_TIFFfree(fld);
-	    			}
-        	}   
+				_TIFFfree(fld);
+				}
+		}   
       
 		_TIFFfree(tif->tif_fieldinfo);
 		tif->tif_nfields = 0;
@@ -308,7 +292,7 @@ tagCompare(const void* a, const void* b)
 	if (ta->field_tag != tb->field_tag)
 		return (ta->field_tag < tb->field_tag ? -1 : 1);
 	else
-		return (tb->field_type < ta->field_type ? -1 : 1);
+		return ((int)tb->field_type - (int)ta->field_type);
 }
 
 void
@@ -375,6 +359,7 @@ TIFFDataWidth(TIFFDataType type)
 	case 4:  /* TIFF_LONG */
 	case 9:  /* TIFF_SLONG */
 	case 11: /* TIFF_FLOAT */
+        case 13: /* TIFF_IFD */
 		return 4;
 	case 5:  /* TIFF_RATIONAL */
 	case 10: /* TIFF_SRATIONAL */
@@ -419,7 +404,16 @@ _TIFFFindFieldInfo(TIFF* tif, ttag_t tag, TIFFDataType dt)
 	    (dt == TIFF_ANY || dt == last->field_type))
 		return (last);
 	/* NB: if table gets big, use sorted search (e.g. binary search) */
-	for (i = 0, n = tif->tif_nfields; i < n; i++) {
+	if(dt != TIFF_ANY) {
+            TIFFFieldInfo key = {0, 0, 0, 0, 0, 0, 0, 0};
+            key.field_tag = tag;
+            key.field_type = dt;
+            return((const TIFFFieldInfo *) bsearch(&key, 
+						   tif->tif_fieldinfo, 
+						   tif->tif_nfields,
+						   sizeof(TIFFFieldInfo), 
+						   tagCompare));
+        } else for (i = 0, n = tif->tif_nfields; i < n; i++) {
 		const TIFFFieldInfo* fip = tif->tif_fieldinfo[i];
 		if (fip->field_tag == tag &&
 		    (dt == TIFF_ANY || fip->field_type == dt))
@@ -465,7 +459,7 @@ _TIFFCreateAnonFieldInfo(TIFF *tif, ttag_t tag, TIFFDataType field_type)
 {
     TIFFFieldInfo *fld;
 
-    fld = _TIFFmalloc(sizeof (TIFFFieldInfo));
+    fld = (TIFFFieldInfo *) _TIFFmalloc(sizeof (TIFFFieldInfo));
     _TIFFmemset( fld, 0, sizeof(TIFFFieldInfo) );
 
     fld->field_tag = tag;

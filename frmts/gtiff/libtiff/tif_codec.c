@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_codec.c,v 1.4 2003/07/08 16:40:46 warmerda Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_codec.c,v 1.7 2003/12/05 14:10:58 rossf Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -119,3 +119,32 @@ NotConfigured(TIFF* tif, int scheme)
     tif->tif_setupencode = _notConfigured;
     return (1);
 }
+
+/************************************************************************/
+/*                       TIFFIsCODECConfigured()                        */
+/************************************************************************/
+
+/**
+ * Check whether we have working codec for the specific coding scheme.
+ * 
+ * @return returns 1 if the codec is configured and working. Otherwise
+ * 0 will be returned.
+ */
+
+int
+TIFFIsCODECConfigured(uint16 scheme)
+{
+	const TIFFCodec* codec = TIFFFindCODEC(scheme);
+
+	if(codec == NULL) {
+            return 0;
+        }
+        if(codec->init == NULL) {
+            return 0;
+        }
+	if(codec->init != NotConfigured){
+            return 1;
+        }
+	return 0;
+}
+

@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_dirwrite.c,v 1.17 2003/08/12 07:50:37 dron Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_dirwrite.c,v 1.19 2003/12/20 13:40:09 dron Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -474,6 +474,7 @@ TIFFWriteNormalTag(TIFF* tif, TIFFDirEntry* dir, const TIFFFieldInfo* fip)
 		break;
 	case TIFF_LONG:
 	case TIFF_SLONG:
+	case TIFF_IFD:
 		if (wc > 1) {
 			uint32* lp;
 			if (wc == (u_short) TIFF_VARIABLE
@@ -1058,7 +1059,7 @@ TIFFWriteData(TIFF* tif, TIFFDirEntry* dir, char* cp)
 		}
 	}
 	dir->tdir_offset = tif->tif_dataoff;
-	cc = dir->tdir_count * TIFFDataWidth(dir->tdir_type);
+	cc = dir->tdir_count * TIFFDataWidth((TIFFDataType) dir->tdir_type);
 	if (SeekOK(tif, dir->tdir_offset) &&
 	    WriteOK(tif, cp, cc)) {
 		tif->tif_dataoff += (cc + 1) & ~1;

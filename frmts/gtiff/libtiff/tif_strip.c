@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_strip.c,v 1.2 2002/07/31 21:05:57 warmerda Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_strip.c,v 1.3 2003/11/07 11:26:38 dron Exp $ */
 
 /*
  * Copyright (c) 1991-1997 Sam Leffler
@@ -109,6 +109,26 @@ TIFFVStripSize(TIFF* tif, uint32 nrows)
 	} else
 #endif
 		return ((tsize_t)(nrows * TIFFScanlineSize(tif)));
+}
+
+
+/*
+ * Compute the # bytes in a raw strip.
+ */
+tsize_t
+TIFFRawStripSize(TIFF* tif, tstrip_t strip)
+{
+	TIFFDirectory* td = &tif->tif_dir;
+	tsize_t bytecount = td->td_stripbytecount[strip];
+
+	if (bytecount <= 0) {
+		TIFFError(tif->tif_name,
+			  "%lu: Invalid strip byte count, strip %lu",
+			  (u_long) bytecount, (u_long) strip);
+		bytecount = (tsize_t) -1;
+	}
+
+	return bytecount;
 }
 
 /*
