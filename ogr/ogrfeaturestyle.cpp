@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2003/09/29 15:12:20  warmerda
+ * Fixed memory leaks in the pszValue's of the m_pasStyleValue lists.
+ *
  * Revision 1.9  2002/06/25 14:47:31  warmerda
  * CPL_DLL export style api
  *
@@ -430,21 +433,24 @@ OGRStyleTool *OGRStyleMgr::CreateStyleToolFromStyleString(const char *
                                            CSLT_HONOURSTRINGS
                                            | CSLT_PRESERVEQUOTES
                                            | CSLT_PRESERVEESCAPES );
+    OGRStyleTool   *poStyleTool;
         
     if (CSLCount(papszToken) <2)
-      return NULL;
-    
-    if (EQUAL(papszToken[0],"PEN"))
-      return new OGRStylePen();
+        poStyleTool = NULL;
+    else if (EQUAL(papszToken[0],"PEN"))
+        poStyleTool = new OGRStylePen();
     else if (EQUAL(papszToken[0],"BRUSH"))
-      return new OGRStyleBrush();
+        poStyleTool = new OGRStyleBrush();
     else if (EQUAL(papszToken[0],"SYMBOL"))
-      return new OGRStyleSymbol();
+        poStyleTool = new OGRStyleSymbol();
     else if (EQUAL(papszToken[0],"LABEL"))
-      return new OGRStyleLabel();
+        poStyleTool = new OGRStyleLabel();
     else 
-      return NULL;
+        poStyleTool = NULL;
 
+    CSLDestroy( papszToken );
+
+    return poStyleTool;
 }
 
 /* ======================================================================== */
@@ -1392,8 +1398,16 @@ OGRStylePen::OGRStylePen() : OGRStyleTool(OGRSTCPen)
 /****************************************************************************/
 OGRStylePen::~OGRStylePen()
 {
-    CPLFree(m_pasStyleValue);
+    for (int i = 0; i < OGRSTPenLast; i++)
+    {
+        if (m_pasStyleValue[i].pszValue != NULL)
+        {
+            CPLFree(m_pasStyleValue[i].pszValue);
+            m_pasStyleValue[i].pszValue = NULL;
+        }
+    }
 
+    CPLFree(m_pasStyleValue);
 }
 
 /****************************************************************************/
@@ -1412,8 +1426,16 @@ OGRStyleBrush::OGRStyleBrush() : OGRStyleTool(OGRSTCBrush)
 /****************************************************************************/
 OGRStyleBrush::~OGRStyleBrush() 
 {
-    CPLFree(m_pasStyleValue);
+    for (int i = 0; i < OGRSTBrushLast; i++)
+    {
+        if (m_pasStyleValue[i].pszValue != NULL)
+        {
+            CPLFree(m_pasStyleValue[i].pszValue);
+            m_pasStyleValue[i].pszValue = NULL;
+        }
+    }
 
+    CPLFree(m_pasStyleValue);
 }
 
 /****************************************************************************/
@@ -1432,8 +1454,16 @@ OGRStyleSymbol::OGRStyleSymbol() : OGRStyleTool(OGRSTCSymbol)
 /****************************************************************************/
 OGRStyleSymbol::~OGRStyleSymbol()
 {
-    CPLFree(m_pasStyleValue);
+    for (int i = 0; i < OGRSTSymbolLast; i++)
+    {
+        if (m_pasStyleValue[i].pszValue != NULL)
+        {
+            CPLFree(m_pasStyleValue[i].pszValue);
+            m_pasStyleValue[i].pszValue = NULL;
+        }
+    }
 
+    CPLFree(m_pasStyleValue);
 }
 
 /****************************************************************************/
@@ -1452,7 +1482,15 @@ OGRStyleLabel::OGRStyleLabel() : OGRStyleTool(OGRSTCLabel)
 /****************************************************************************/
 OGRStyleLabel::~OGRStyleLabel()
 {
-    CPLFree(m_pasStyleValue);
+    for (int i = 0; i < OGRSTLabelLast; i++)
+    {
+        if (m_pasStyleValue[i].pszValue != NULL)
+        {
+            CPLFree(m_pasStyleValue[i].pszValue);
+            m_pasStyleValue[i].pszValue = NULL;
+        }
+    }
 
+    CPLFree(m_pasStyleValue);
 }
  
