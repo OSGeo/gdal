@@ -29,6 +29,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  1999/11/30 21:44:33  warmerda
+ * Test for "Line" not "Line ".  TYPE is not always padded, for instance
+ * coming out of Arc/Info's SDTSEXPORT command.
+ *
  * Revision 1.8  1999/08/16 13:58:30  warmerda
  * added support for secondary attribute modules
  *
@@ -304,7 +308,7 @@ SDTSLayerType SDTS_CATD::GetEntryType( int iEntry )
     else if( EQUALN(papoEntries[iEntry]->pszType,"Attribute Secondary",17) )
         return SLTAttr;
     
-    else if( EQUALN(papoEntries[iEntry]->pszType,"Line ",5) )
+    else if( EQUALN(papoEntries[iEntry]->pszType,"Line",4) )
         return SLTLine;
     
     else if( EQUALN(papoEntries[iEntry]->pszType,"Point-Node",10) )
