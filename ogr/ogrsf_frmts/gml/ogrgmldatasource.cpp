@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2003/05/21 03:48:35  warmerda
+ * Expand tabs
+ *
  * Revision 1.12  2003/04/03 16:23:49  warmerda
  * Added support for XSISCHEMA creation option which may be INTERNAL, EXTERNAL
  * or OFF.  EXTERNAL (write an associated .xsd file) is the default.
@@ -143,8 +146,8 @@ OGRGMLDataSource::~OGRGMLDataSource()
 int OGRGMLDataSource::Open( const char * pszNewName, int bTestOpen )
 
 {
-    FILE	*fp;
-    char	szHeader[1000];
+    FILE        *fp;
+    char        szHeader[1000];
 
 /* -------------------------------------------------------------------- */
 /*      Open the source file.                                           */
@@ -203,7 +206,7 @@ int OGRGMLDataSource::Open( const char * pszNewName, int bTestOpen )
 /* -------------------------------------------------------------------- */
     const char *pszGFSFilename;
     VSIStatBuf sGFSStatBuf, sGMLStatBuf;
-    int	       bHaveSchema = FALSE;
+    int        bHaveSchema = FALSE;
 
     pszGFSFilename = CPLResetExtension( pszNewName, "gfs" );
     if( CPLStat( pszGFSFilename, &sGFSStatBuf ) == 0 )
@@ -240,7 +243,7 @@ int OGRGMLDataSource::Open( const char * pszNewName, int bTestOpen )
 /* -------------------------------------------------------------------- */
     if( !bHaveSchema )
     {
-        FILE	*fp = NULL;
+        FILE    *fp = NULL;
 
         pszGFSFilename = CPLResetExtension( pszNewName, "gfs" );
         if( CPLStat( pszGFSFilename, &sGFSStatBuf ) != 0 
@@ -429,7 +432,7 @@ OGRGMLDataSource::CreateLayer( const char * pszLayerName,
 /* -------------------------------------------------------------------- */
 /*      Create the layer object.                                        */
 /* -------------------------------------------------------------------- */
-    OGRGMLLayer	*poLayer;
+    OGRGMLLayer *poLayer;
 
     poLayer = new OGRGMLLayer( pszLayerName, poSRS, TRUE, eType, this );
 
@@ -491,7 +494,7 @@ void OGRGMLDataSource::GrowExtents( OGREnvelope *psGeomBounds )
 void OGRGMLDataSource::InsertHeader()
 
 {
-    FILE 	*fpSchema;
+    FILE        *fpSchema;
     int         nSchemaStart;
 
     if( fpOutput == NULL || fpOutput == stdout )
@@ -528,7 +531,7 @@ void OGRGMLDataSource::InsertHeader()
         nSchemaStart = VSIFTell( fpOutput );
         fpSchema = fpOutput;
     }
-    else							       
+    else                                                               
         return;
 
 /* ==================================================================== */

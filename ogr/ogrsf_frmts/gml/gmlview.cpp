@@ -47,7 +47,7 @@ static void DumpFile( IGMLReader *poReader, int bNoDump )
 int main( int nArgc, char **papszArgv )
 
 {
-    IGMLReader	*poReader;
+    IGMLReader  *poReader;
     int         bNoDump = FALSE;
 
     if( nArgc < 2 )

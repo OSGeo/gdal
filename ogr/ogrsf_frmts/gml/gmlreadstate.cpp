@@ -28,6 +28,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.3  2003/05/21 03:48:35  warmerda
+ * Expand tabs
+ *
  * Revision 1.2  2002/01/24 17:38:11  warmerda
  * added MatchPath
  *
@@ -106,7 +109,7 @@ void GMLReadState::PopPath()
 void GMLReadState::RebuildPath()
 
 {
-    int	  nLength=0, i;
+    int   nLength=0, i;
 
     for( i = 0; i < m_nPathLength; i++ )
         nLength += strlen(m_papszPathComponents[i]) + 1;
@@ -152,7 +155,7 @@ const char *GMLReadState::GetLastComponent() const
 int GMLReadState::MatchPath( const char *pszPathIn )
 
 {
-    int	iOffset;
+    int iOffset;
     int nInputLength = strlen(pszPathIn);
     int nInternalLength = strlen(m_pszPath);
 
