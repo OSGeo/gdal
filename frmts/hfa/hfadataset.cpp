@@ -29,6 +29,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.51  2005/03/06 19:54:12  fwarmerdam
+ * Make sure a fuller UTM projcs name gets set.
+ *
  * Revision 1.50  2005/02/17 22:21:27  fwarmerdam
  * avoid memory leak of bin values
  *
@@ -1628,6 +1631,9 @@ CPLErr HFADataset::ReadProjection()
         break;
 
       case EPRJ_UTM:
+        // We change this to unnamed so that SetUTM will set the long
+        // UTM description.
+        oSRS.SetProjCS( "unnamed" );
         oSRS.SetUTM( psPro->proZone, psPro->proParams[3] >= 0.0 );
         break;
 
