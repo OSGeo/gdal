@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2002/07/19 20:32:57  warmerda
+ * added nVersion to structure.
+ *
  * Revision 1.2  2001/12/08 21:58:32  warmerda
  * save header
  *
@@ -57,6 +60,8 @@ typedef struct {
     int		*panLineOffset;
 
     int         nColorSize;
+
+    int		nVersion; /* times 100 */
 } BSBInfo;
 
 BSBInfo CPL_DLL *BSBOpen( const char *pszFilename );
