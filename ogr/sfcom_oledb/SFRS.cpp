@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.42  2002/07/12 12:31:42  warmerda
+ * removed redundent code
+ *
  * Revision 1.41  2002/05/06 15:12:39  warmerda
  * improve IErrorInfo support
  *
@@ -341,27 +344,8 @@ HRESULT CSFCommand::ExtractSpatialQuery( DBPARAMS *pParams )
     pVariant = (VARIANT *) (((unsigned char *) pParams->pData) 
                             + rgBindings[0].obValue);
 
-    if( rgBindings[0].wType == DBTYPE_BYTES )
-    {
-        int      nLength;
-        OGRErr   eErr;
-
-        if( rgBindings[0].dwPart & DBPART_LENGTH )
-            nLength = *((int *) (((unsigned char *) pParams->pData) 
-                                 + rgBindings[0].obLength));
-        else
-            nLength = rgBindings[0].cbMaxLen;
-
-        eErr = OGRGeometryFactory::createFromWkb(                       
-            ((unsigned char *) pParams->pData) + rgBindings[0].obValue,
-            NULL, &poGeometry, nLength );
-        if( eErr != OGRERR_NONE )
-            CPLDebug( "OGR_OLEDB", 
-                      "Corrupt DBTYPE_BYTES WKB in ExtractSpatialQuery()." );
-    }
-
-    else if( rgBindings[0].wType == DBTYPE_VARIANT 
-             && pVariant->vt == (VT_UI1|VT_ARRAY) )
+    if( rgBindings[0].wType == DBTYPE_VARIANT 
+        && pVariant->vt == (VT_UI1|VT_ARRAY) )
     {
         int      nLength;
         SAFEARRAY *pArray;
