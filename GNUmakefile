@@ -39,6 +39,7 @@ $(GDAL_SLIB):	$(GDAL_OBJ)
 $(LIBGDAL):	$(GDAL_OBJ:.o=.lo)
 	$(LD) $(LIBS) -o $@ $^ \
 	    -rpath $(INST_LIB) \
+	    -no-undefined \
 	    -version-info $(LIBGDAL_CURRENT):$(LIBGDAL_REVISION):$(LIBGDAL_AGE)
 
 check-lib:	port-target core-target frmts-target ogr-target
