@@ -1,3 +1,10 @@
+2003-01-31  Andrey Kiselev  <dron@remotesensing.org>
+	
+	* /gdal/frmts/jpeg2000/jpeg2000dataset.cpp: Added support for reading
+	and writing GeoJP2 information into UUID box in JP2 files. Modified
+	JasPer library required for this feature:
+	ftp://ftp.remotesensing.org/gdal/jasper-1.600.0.uuid.tar.gz
+
 2003-01-30  Frank Warmerdam  <warmerdam@pobox.com>
 
 	* added --with-kakadu switch to configure, moved jp2kakdataset into
