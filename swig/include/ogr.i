@@ -9,6 +9,10 @@
 
  *
  * $Log$
+ * Revision 1.8  2005/02/18 20:41:19  hobu
+ * it compiles and it doesn't blow up.  IMO this is a
+ * good stopping point :)
+ *
  * Revision 1.7  2005/02/18 18:42:07  kruland
  * Added %feature("autodoc");
  *
@@ -115,6 +119,7 @@ ODsCDeleteLayer        = "DeleteLayer"
 ODrCCreateDataSource   = "CreateDataSource"
 ODrCDeleteDataSource   = "DeleteDataSource"
 
+have_geos=0
 %}
 
 %{
@@ -243,23 +248,68 @@ public:
   OGRErr DeleteLayer(int index){
     return OGR_DS_DeleteLayer(self, index);
   }
+
+  %newobject CreateLayer;
+  %feature( "kwargs" ) CreateLayer;
+  OGRLayerH *CreateLayer(const char* name, 
+              SpatialReference* reference,
+              OGRwkbGeometryType geom_type=wkbUnknown,
+              char** options=0) {
+    OGRLayerH* layer = (OGRLayerH*) OGR_DS_CreateLayer( self,
+                                                        name,
+                                                        reference,
+                                                        geom_type,
+                                                        options);
+    return layer;
+  }
+
+  %newobject CopyLayer;
+  %feature( "kwargs" ) CopyLayer;
+  OGRLayerH *CopyLayer(OGRLayerH src_layer,
+            const char* new_name,
+            char** options=0) {
+    OGRLayerH* layer = (OGRLayerH*) OGR_DS_CopyLayer( self,
+                                                      src_layer,
+                                                      new_name,
+                                                      options);
+    return layer;
+  }
   
-%newobject GetLayerByIndex;
-%feature( "kwargs" ) GetLayerByIndex;
+  %newobject GetLayerByIndex;
+  %feature( "kwargs" ) GetLayerByIndex;
   OGRLayerH *GetLayerByIndex( int index=0) {
     OGRLayerH* layer = (OGRLayerH*) OGR_DS_GetLayer(self, index);
-
-      return layer;
+    return layer;
   }
 
-%newobject GetLayerByName;
+  %newobject GetLayerByName;
   OGRLayerH *GetLayerByName( const char* layer_name) {
     OGRLayerH* layer = (OGRLayerH*) OGR_DS_GetLayerByName(self, layer_name);
-
-      return layer;
+    return layer;
   }
 
-%pythoncode {
+  int TestCapability(const char * cap) {
+    return OGR_DS_TestCapability(self, cap);
+  }
+
+  %newobject ExecuteSQL;
+  %feature( "kwargs" ) ExecuteSQL;
+  OGRLayerH *ExecuteSQL(const char* statement,
+                        OGRGeometryH geom=NULL,
+                        const char* dialect=NULL) {
+    OGRLayerH* layer = (OGRLayerH*) OGR_DS_ExecuteSQL(self,
+                                                      statement,
+                                                      geom,
+                                                      dialect);
+    return layer;
+  }
+  
+  void ReleaseResultSet(OGRLayerH layer){
+    OGR_DS_ReleaseResultSet(self, layer);
+  }
+
+  
+  %pythoncode {
     def __len__(self):
         """Returns the number of layers on the datasource"""
         return self.GetLayerCount()
@@ -379,11 +429,12 @@ char const *OGRDataSourceH_name_get( OGRDataSourceH *h ) {
  
 %}
 
+%feature( "kwargs" ) CreateGeometryFromWkt;
 %apply (char **ignorechange) { (char **) };
 %newobject CreateGeometryFromWkt;
 %inline %{
   OGRGeometryH CreateGeometryFromWkt( char **val, 
-                                      SpatialReference *reference ) {
+                                      SpatialReference *reference=NULL ) {
     OGRGeometryH geom;
     OGRErr err = OGR_G_CreateFromWkt(val,
                                       reference,
@@ -395,3 +446,35 @@ char const *OGRDataSourceH_name_get( OGRDataSourceH *h ) {
  
 %}
 %clear (char **);
+
+%newobject CreateGeometryFromGML;
+%inline %{
+  OGRGeometryH *CreateGeometryFromGML( const char * input_string ) {
+
+    OGRGeometryH* geom = (OGRGeometryH*)OGR_G_CreateFromGML(input_string);
+    return geom;
+  }
+ 
+%}
+
+%feature( "kwargs" ) Open;
+%newobject Open;
+%inline %{
+  OGRDataSourceH *Open( const char * filename, int update=0 ) {
+
+    OGRDataSourceH* ds = (OGRDataSourceH*)OGROpen(filename,update, NULL);
+    return ds;
+  }
+ 
+%}
+
+%feature( "kwargs" ) OpenShared;
+%newobject OpenShared;
+%inline %{
+  OGRDataSourceH *OpenShared( const char * filename, int update=0 ) {
+
+    OGRDataSourceH* ds = (OGRDataSourceH*)OGROpenShared(filename,update, NULL);
+    return ds;
+  }
+ 
+%}
