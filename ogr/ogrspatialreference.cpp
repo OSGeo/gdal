@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.56  2002/11/30 16:44:08  warmerda
+ * fixed some functions that claimed to use node paths, so they work
+ *
  * Revision 1.55  2002/11/30 15:45:49  warmerda
  * be more careful about how AUTHORITY is fetched, to not get wrong one
  *
@@ -2529,7 +2532,7 @@ OGRErr OGRSpatialReference::SetAuthority( const char *pszTargetKey,
 /* -------------------------------------------------------------------- */
 /*      Find the node below which the authority should be put.          */
 /* -------------------------------------------------------------------- */
-    OGR_SRSNode  *poNode = GetRoot()->GetNode( pszTargetKey );
+    OGR_SRSNode  *poNode = GetAttrNode( pszTargetKey );
 
     if( poNode == NULL )
         return OGRERR_FAILURE;
@@ -2600,7 +2603,7 @@ const char *OGRSpatialReference::GetAuthorityCode( const char *pszTargetKey )
 /* -------------------------------------------------------------------- */
 /*      Find the node below which the authority should be put.          */
 /* -------------------------------------------------------------------- */
-    OGR_SRSNode  *poNode = GetRoot()->GetNode( pszTargetKey );
+    OGR_SRSNode  *poNode = GetAttrNode( pszTargetKey );
 
     if( poNode == NULL )
         return NULL;
@@ -2660,7 +2663,7 @@ const char *OGRSpatialReference::GetAuthorityName( const char *pszTargetKey )
 /* -------------------------------------------------------------------- */
 /*      Find the node below which the authority should be put.          */
 /* -------------------------------------------------------------------- */
-    OGR_SRSNode  *poNode = GetRoot()->GetNode( pszTargetKey );
+    OGR_SRSNode  *poNode = GetAttrNode( pszTargetKey );
 
     if( poNode == NULL )
         return NULL;
