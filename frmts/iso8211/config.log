@@ -1,0 +1,40 @@
+This file contains any messages produced by compilers while
+running configure, to aid debugging if configure makes a mistake.
+
+configure:532: checking for c++
+configure:564: checking whether the C++ compiler (c++  ) works
+configure:580: c++ -o conftest    conftest.C  1>&5
+configure:606: checking whether the C++ compiler (c++  ) is a cross-compiler
+configure:611: checking whether we are using GNU C++
+configure:620: c++ -E conftest.C
+configure:639: checking whether c++ accepts -g
+configure:672: checking how to run the C preprocessor
+configure:693: cc -E  conftest.c >/dev/null 2>conftest.out
+configure:752: checking for ANSI C header files
+configure:765: cc -E  conftest.c >/dev/null 2>conftest.out
+configure:832: cc -o conftest    conftest.c  1>&5
+configure:859: checking for fcntl.h
+configure:869: cc -E  conftest.c >/dev/null 2>conftest.out
+configure:859: checking for unistd.h
+configure:869: cc -E  conftest.c >/dev/null 2>conftest.out
+configure:897: checking whether byte ordering is bigendian
+configure:915: cc -c   conftest.c 1>&5
+configure: In function `main':
+configure:910: `bogus' undeclared (first use this function)
+configure:910: (Each undeclared identifier is reported only once
+configure:910: for each function it appears in.)
+configure:910: parse error before `endian'
+configure: failed program was:
+#line 904 "configure"
+#include "confdefs.h"
+#include <sys/types.h>
+#include <sys/param.h>
+int main() {
+
+#if !BYTE_ORDER || !BIG_ENDIAN || !LITTLE_ENDIAN
+ bogus endian macros
+#endif
+; return 0; }
+configure:963: cc -o conftest    conftest.c  1>&5
+configure:987: checking for vprintf
+configure:1015: cc -o conftest    conftest.c  1>&5

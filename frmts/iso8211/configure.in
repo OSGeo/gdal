@@ -1,0 +1,18 @@
+dnl Process this file with autoconf to produce a configure script.
+AC_INIT(Makefile.in)
+AC_CONFIG_HEADER(cpl_config.h)
+
+dnl Checks for programs.
+AC_PROG_CXX
+
+dnl Checks for header files.
+AC_HEADER_STDC
+AC_CHECK_HEADERS(fcntl.h unistd.h)
+
+dnl Checks for library functions.
+AC_C_BIGENDIAN
+AC_FUNC_VPRINTF
+
+AC_COMPILER_WFLAGS
+
+AC_OUTPUT(Makefile)
