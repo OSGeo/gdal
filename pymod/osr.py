@@ -28,6 +28,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.33  2004/01/30 09:58:32  dron
+# Wrapper for OSRExportToPCI() function.
+#
 # Revision 1.32  2004/01/29 15:22:30  dron
 # Added wrapper for OSRImportFromPCI().
 #
@@ -195,7 +198,16 @@ class SpatialReference:
     def ImportFromESRI( self, prj_lines ):
         return _gdal.OSRImportFromESRI( self._o, prj_lines )
 
-    def ImportFromPCI( self, proj, units = "METER", proj_parms = None ):
+    def ImportFromPCI( self, proj, units = "METRE", proj_parms = None ):
+	"""Imports PCI styled projection definition.
+	
+	proj --- string	representing projection definition in PCI format,
+	units --- grid units code ("DEGREE" or "METRE", later is default),
+	proj_parms --- tuple of 16 coordinate system parameters (double
+	precition floating point values). None by default (i.e., all values
+	zeroed). See OGRSpatialReference::importFromPCI() C++ function for
+	details.
+	"""
 	if proj_parms is None:
 	    return _gdal.OSRImportFromPCI( self._o, proj, units )
 	else:
@@ -212,6 +224,17 @@ class SpatialReference:
 
     def ExportToProj4(self):
         return _gdal.OSRExportToProj4( self._o )
+
+    def ExportToPCI(self):
+	"""Return PCI styled projection definition.
+	
+	Returns tuple (proj, units, (proj_parms)) where proj is a string
+	representing projection definition in PCI format, units is a string
+	containing grid units code ("METRE" or "DEGREE") and (proj_parms)
+	is a tuple of 16 double precition floating point values with
+	projection parameters. See description of
+	OGRSpatialReference::exportToPCI() C++ function for details."""
+        return _gdal.OSRExportToPCI( self._o )
 
     def ExportToXML( self, dialect = '' ):
         return _gdal.OSRExportToXML( self._o, dialect )
