@@ -30,7 +30,7 @@ clean:	lclean
 	(cd viewer; $(MAKE) clean)
 
 lclean:
-	rm *.a *.so
+	rm -f *.a *.so
 
 dist-clean:	clean
 	rm configure GDALmake.opt.in port/cpl_config.h
