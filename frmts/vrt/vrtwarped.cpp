@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2004/08/24 20:30:28  warmerda
+ * fixed size passed into GDALCopyWords() - irvine.pix bug
+ *
  * Revision 1.4  2004/08/13 16:15:08  warmerda
  * added some docs
  *
@@ -838,7 +841,8 @@ CPLErr VRTWarpedDataset::ProcessBlock( int iBlockX, int iBlockY )
         GDALCopyWords( pabyDstBuffer + iBand*nBlockXSize*nBlockYSize*nWordSize,
                        psWO->eWorkingDataType, nWordSize, 
                        poBlock->GetDataRef(), 
-                       poBlock->GetDataType(), nWordSize,
+                       poBlock->GetDataType(), 
+                       GDALGetDataTypeSize(poBlock->GetDataType())/8,
                        nBlockXSize * nBlockYSize );
     }
     
