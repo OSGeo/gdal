@@ -1,5 +1,6 @@
 
-OBJ	=	vrtdataset.obj vrtrasterband.obj
+OBJ	=	vrtdataset.obj vrtrasterband.obj vrtdriver.obj \
+		vrtsources.obj vrtfilters.obj
 
 GDAL_ROOT	=	..\..
 
