@@ -496,6 +496,10 @@ elif test "$with_geotiff" = "internal" ; then
 else
 
   GEOTIFF_SETTING=external
+
+  dnl We now require libgeotiff 1.2.1 (for XTIFFClientOpen). 
+  AC_CHECK_LIB(geotiff,XTIFFClientOpen,GEOTIFF_SETTING=external,AC_MSG_ERROR([We require at least GeoTIFF 1.2.1. Consider using the one supplied with GDAL]))
+
   if test -r $with_geotiff/libgeotiff.a ; then
     LIBS="-L$with_geotiff -lgeotiff $LIBS"
     EXTRA_INCLUDES="-I$with_geotiff $EXTRA_INCLUDES"
