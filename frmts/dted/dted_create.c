@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2002/01/28 18:19:42  warmerda
+ * fix setting of metadata fields
+ *
  * Revision 1.3  2001/11/21 19:55:01  warmerda
  * initialize data portion of new records
  *
@@ -44,7 +47,7 @@
 
 CPL_CVSID("$Id$");
 
-#define DTED_ABS_VERT_ACC 200
+#define DTED_ABS_VERT_ACC "NA  "
 #define DTED_SECURITY     "U"
 #define DTED_EDITION      1
 
@@ -183,7 +186,7 @@ const char *DTEDCreate( const char *pszFilename, int nLevel,
     DTEDFormat( achRecord + 20, "%04d", (3600 / (nXSize-1)) * 10 );
     DTEDFormat( achRecord + 24, "%04d", (3600 / (nYSize-1)) * 10 );
 
-    DTEDFormat( achRecord + 28, "%04d", DTED_ABS_VERT_ACC );
+    DTEDFormat( achRecord + 28, "%4s", DTED_ABS_VERT_ACC );
     DTEDFormat( achRecord + 32, "%-3s", DTED_SECURITY );
     DTEDFormat( achRecord + 47, "%04d", nXSize );
     DTEDFormat( achRecord + 51, "%04d", nYSize );
@@ -206,7 +209,7 @@ const char *DTEDCreate( const char *pszFilename, int nLevel,
     DTEDFormat( achRecord + 89, "%c", 'A' );
     DTEDFormat( achRecord + 90, "%04d", 0 );
     DTEDFormat( achRecord + 94, "%04d", 0 );
-    DTEDFormat( achRecord + 99, "%04d", 0 );
+    DTEDFormat( achRecord + 98, "%04d", 0 );
     DTEDFormat( achRecord + 141, "MSL" );
     DTEDFormat( achRecord + 144, "WGS84" );
 
