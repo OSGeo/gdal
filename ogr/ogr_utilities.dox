@@ -8,6 +8,8 @@ The following utilities are distributed as part of the OGR Simple Features
 toolkit.
 
 \if man
+*/
+/*! \page ogrinfo
 
 lists information about an OGR supported data source
 \section synopsis SYNOPSIS
@@ -137,8 +139,11 @@ OGRFeature(BL2000_LINK):2
 \endverbatim
 
 \if man
-\section author AUTHOR
+\section author AUTHORS
 Frank Warmerdam <warmerdam@pobox.com>
+Silke Reimer <silke@intevation.de>
+*/
+/*! \page ogr2ogr
 
 converts simple features data between file formats
 \section synopsis SYNOPSIS
@@ -202,7 +207,9 @@ fields from input layer to copy to the new layer (defaults to all)</dd>
 \if man
 \section author AUTHOR
 Frank Warmerdam <warmerdam@pobox.com>
-
+Silke Reimer <silke@intevation.de>
+*/
+/*! \page ogrtindex
 creates a tileindex
 \section synopsis SYNOPSIS
 \endif
@@ -260,8 +267,9 @@ of the BL2000_LINK layers in all the NTF files in the wrk directory:
 \endverbatim
 
 \if man
-\section author AUTHOR
+\section author AUTHORS
 Frank Warmerdam <warmerdam@pobox.com>
+Silke Reimer <silke@intevation.de>
 
 \endif
 
