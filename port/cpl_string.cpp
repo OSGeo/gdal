@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.14  2000/10/06 15:19:03  warmerda
+ * added CPLSetNameValueSeparator
+ *
  * Revision 1.13  2000/08/22 17:47:50  warmerda
  * Fixed declaration of gnCPLSPrintfBuffer.
  *
@@ -906,4 +909,51 @@ char **CSLSetNameValue(char **papszList,
      */
     return CSLAddString(papszList, 
                            CPLSPrintf("%s=%s", pszName, pszValue));
+}
+
+/************************************************************************/
+/*                      CSLSetNameValueSeparator()                      */
+/************************************************************************/
+
+/**
+ * Replace the default separator (":" or "=") with the passed separator
+ * in the given name/value list. 
+ *
+ * Note that if a separator other than ":" or "=" is used, the resulting
+ * list will not be manipulatable by the CSL name/value functions any more.
+ *
+ * The CPLParseNameValue() function is used to break the existing lines, 
+ * and it also strips white space from around the existing delimiter, thus
+ * the old separator, and any white space will be replaced by the new
+ * separator.  For formatting purposes it may be desireable to include some
+ * white space in the new separator.  eg. ": " or " = ".
+ * 
+ * @param papszList the list to update.  Component strings may be freed
+ * but the list array will remain at the same location.
+ *
+ * @param pszSeparator the new separator string to insert.  
+ *
+ */
+
+void CSLSetNameValueSeparator( char ** papszList, const char *pszSeparator )
+
+{
+    int		nLines = CSLCount(papszList), iLine;
+
+    for( iLine = 0; iLine < nLines; iLine++ )
+    {
+        char	*pszKey = NULL;
+        const char *pszValue;
+        char	*pszNewLine;
+
+        pszValue = CPLParseNameValue( papszList[iLine], &pszKey );
+        
+        pszNewLine = (char *) CPLMalloc(strlen(pszValue)+strlen(pszKey)
+                                        +strlen(pszSeparator)+1);
+        strcpy( pszNewLine, pszKey );
+        strcat( pszNewLine, pszSeparator );
+        strcat( pszNewLine, pszValue );
+        CPLFree( papszList[iLine] );
+        papszList[iLine] = pszNewLine;
+    }
 }

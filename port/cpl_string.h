@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.7  2000/10/06 15:19:03  warmerda
+ * added CPLSetNameValueSeparator
+ *
  * Revision 1.6  2000/04/26 18:25:10  warmerda
  * implement CPL_DLL
  *
@@ -99,6 +102,8 @@ char CPL_DLL **
 char CPL_DLL **
       CSLSetNameValue(char **papszStrList, 
                       const char *pszName, const char *pszValue);
+void CPL_DLL CSLSetNameValueSeparator( char ** papszStrList, 
+                                       const char *pszSeparator );
 
 CPL_C_END
 
