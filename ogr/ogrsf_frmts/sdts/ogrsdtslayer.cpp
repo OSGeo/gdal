@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/09/29 16:48:02  warmerda
+ * added (perhaps incomplete) attribute handling.
+ *
  * Revision 1.1  1999/09/22 13:32:16  warmerda
  * New
  *
@@ -35,6 +38,7 @@
 
 #include "ogr_sdts.h"
 #include "cpl_conv.h"
+#include "cpl_string.h"
 
 /************************************************************************/
 /*                            OGRSDTSLayer()                            */
@@ -54,7 +58,7 @@ OGRSDTSLayer::OGRSDTSLayer( SDTSTransfer * poTransferIn, int iLayerIn )
     poReader = poTransfer->GetLayerIndexedReader( iLayer );
 
 /* -------------------------------------------------------------------- */
-/*      Define the schema.                                              */
+/*      Define the feature.                                             */
 /* -------------------------------------------------------------------- */
     int		iCATDEntry = poTransfer->GetLayerCATDEntry( iLayer );
     
@@ -80,6 +84,98 @@ OGRSDTSLayer::OGRSDTSLayer( SDTSTransfer * poTransferIn, int iLayerIn )
     {
         poFeatureDefn->SetGeomType( wkbNone );
     }
+
+/* -------------------------------------------------------------------- */
+/*      Add schema from referenced attribute records.                   */
+/* -------------------------------------------------------------------- */
+    char	**papszATIDRefs = NULL;
+    
+    if( poTransfer->GetLayerType(iLayer) != SLTAttr )
+        papszATIDRefs = poReader->ScanModuleReferences();
+
+    for( int iTable = 0;
+         papszATIDRefs != NULL && papszATIDRefs[iTable] != NULL;
+         iTable++ )
+    {
+        SDTSAttrReader	*poAttrReader;
+        DDFFieldDefn 	*poFDefn;
+        
+/* -------------------------------------------------------------------- */
+/*      Get the attribute table reader, and the associated user         */
+/*      attribute field.                                                */
+/* -------------------------------------------------------------------- */
+        poAttrReader = (SDTSAttrReader *)
+            poTransfer->GetLayerIndexedReader(
+                poTransfer->FindLayer( papszATIDRefs[iTable] ) );
+
+        if( poAttrReader == NULL )
+            continue;
+
+        poFDefn = poAttrReader->GetModule()->FindFieldDefn( "ATTP" );
+        if( poFDefn == NULL )
+            continue;
+        
+/* -------------------------------------------------------------------- */
+/*      Process each user subfield on the attribute table into an       */
+/*      OGR field definition.                                           */
+/* -------------------------------------------------------------------- */
+        for( int iSF=0; iSF < poFDefn->GetSubfieldCount(); iSF++ )
+        {
+            DDFSubfieldDefn	*poSFDefn = poFDefn->GetSubfield( iSF );
+            int			nWidth = poSFDefn->GetWidth();
+            char		*pszFieldName;
+
+            if( poFeatureDefn->GetFieldIndex( poSFDefn->GetName() ) != -1 )
+                pszFieldName = CPLStrdup( CPLSPrintf( "%s_%s",
+                                                      papszATIDRefs[iTable],
+                                                      poSFDefn->GetName() ) );
+            else
+                pszFieldName = CPLStrdup( poSFDefn->GetName() );
+            
+            switch( poSFDefn->GetType() )
+            {
+              case DDFString:
+              {
+                  OGRFieldDefn	oStrField( pszFieldName, OFTString );
+
+                  if( nWidth != 0 )
+                      oStrField.SetWidth( nWidth );
+
+                  poFeatureDefn->AddFieldDefn( &oStrField );
+              }
+              break;
+
+              case DDFInt:
+              {
+                  OGRFieldDefn	oIntField( pszFieldName, OFTInteger );
+
+                  if( nWidth != 0 )
+                      oIntField.SetWidth( nWidth );
+
+                  poFeatureDefn->AddFieldDefn( &oIntField );
+              }
+              break;
+
+              case DDFFloat:
+              {
+                  OGRFieldDefn	oRealField( pszFieldName, OFTReal );
+
+                  // We don't have a precision in DDF files, so we never even
+                  // use the width.  Otherwise with a precision of zero the
+                  // result would look like an integer.
+
+                  poFeatureDefn->AddFieldDefn( &oRealField );
+              }
+              break;
+
+              default:
+                break;
+            }
+
+            CPLFree( pszFieldName );
+            
+        } /* next iSF (subfield) */
+    } /* next iTable */
 }
 
 /************************************************************************/
