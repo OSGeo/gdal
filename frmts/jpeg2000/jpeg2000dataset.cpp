@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.12  2003/02/03 19:37:45  dron
+ * Fixed problem with component type determining.
+ *
  * Revision 1.11  2003/02/03 15:13:53  warmerda
  * avoid warning
  *
@@ -581,7 +584,7 @@ GDALDataset *JPEG2000Dataset::Open( GDALOpenInfo * poOpenInfo )
 			  "IHDR box found. Dump: "
 			  "width=%d, height=%d, numcmpts=%d, bpp=%d\n",
 			  box->data.ihdr.width, box->data.ihdr.height,
-			  box->data.ihdr.numcmpts, box->data.ihdr.bpc );
+			  box->data.ihdr.numcmpts, (box->data.ihdr.bpc & 0x7F) + 1 );
 		if ( box->data.ihdr.bpc )
 		{
 		    paiDepth = (int *)
@@ -590,7 +593,7 @@ GDALDataset *JPEG2000Dataset::Open( GDALOpenInfo * poOpenInfo )
 			CPLMalloc(box->data.bpcc.numcmpts * sizeof(int));
 		    for ( iBand = 0; iBand < poDS->nBands; iBand++ )
 		    {
-			paiDepth[iBand] = box->data.ihdr.bpc && 0x7F;
+			paiDepth[iBand] = (box->data.ihdr.bpc & 0x7F) + 1;
 			pabSignedness[iBand] = box->data.ihdr.bpc >> 7;
 			CPLDebug( "JPEG2000",
 				  "Component %d: bpp=%d, signedness=%d",
