@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2000/07/05 17:53:33  warmerda
+ * Removed unused code related to nXCheck.
+ *
  * Revision 1.16  2000/06/27 17:21:26  warmerda
  * added GDALGetRasterSampleOverview
  *
@@ -609,7 +612,7 @@ int GDALGetRandomRasterSample( GDALRasterBandH hBand, int nSamples,
          iSampleBlock += nSampleRate )
     {
         double dfValue = 0.0;
-        int  iXBlock, iYBlock, nXCheck, nYCheck, iOffset;
+        int  iXBlock, iYBlock, nYCheck, iOffset;
         GDALRasterBlock *poBlock;
 
         iYBlock = iSampleBlock / nBlocksPerRow;
@@ -617,11 +620,6 @@ int GDALGetRandomRasterSample( GDALRasterBandH hBand, int nSamples,
 
         poBlock = poBand->GetBlockRef( iXBlock, iYBlock );
         
-        if( (iXBlock+1) * nBlockXSize > poBand->GetXSize() )
-            nXCheck = poBand->GetXSize() - iXBlock * nBlockXSize;
-        else
-            nXCheck = nBlockXSize;
-
         if( (iYBlock+1) * nBlockYSize > poBand->GetYSize() )
             nYCheck = poBand->GetYSize() - iYBlock * nBlockYSize;
         else
