@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.29  2001/05/07 14:50:44  warmerda
+ * added python access to GDALComputeRasterMinMax
+ *
  * Revision 1.28  2001/03/15 03:20:03  warmerda
  * fixed return type for OGRErr to be in
  *
@@ -779,6 +782,39 @@ py_GDALGetRasterHistogram(PyObject *self, PyObject *args) {
 %}
 
 %native(GDALGetRasterHistogram) py_GDALGetRasterHistogram;
+
+%{
+/************************************************************************/
+/*                        GDALComputeRasterMinMax()                     */
+/************************************************************************/
+static PyObject *
+py_GDALComputeRasterMinMax(PyObject *self, PyObject *args) {
+
+    GDALRasterBandH  hBand;
+    char *_argc0 = NULL;
+    int bApproxOK = 0;
+    double adfMinMax[2];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"s|i:GDALGetRasterMinMax",&_argc0,&bApproxOK))
+        return NULL;
+
+    if (_argc0) {
+        if (SWIG_GetPtr_2(_argc0,(void **) &hBand,_GDALRasterBandH)) {
+            PyErr_SetString(PyExc_TypeError,
+                          "Type error in argument 1 of GDALGetRasterMinMax."
+                          "  Expected _GDALRasterBandH.");
+            return NULL;
+        }
+    }
+
+    GDALComputeRasterMinMax( hBand, bApproxOK, adfMinMax );
+
+    return Py_BuildValue("dd", adfMinMax[0], adfMinMax[1] );
+}
+%}
+
+%native(GDALComputeRasterMinMax) py_GDALComputeRasterMinMax;
 
 %{
 /************************************************************************/

@@ -33,8 +33,8 @@
  * and things like that.
  *
  * $Log$
- * Revision 1.27  2001/03/15 03:20:03  warmerda
- * fixed return type for OGRErr to be in
+ * Revision 1.28  2001/05/07 14:50:44  warmerda
+ * added python access to GDALComputeRasterMinMax
  *
  ************************************************************************/
 
@@ -1090,6 +1090,35 @@ py_GDALGetRasterHistogram(PyObject *self, PyObject *args) {
     CPLFree( panHistogram );
 
     return psList;
+}
+
+/************************************************************************/
+/*                        GDALComputeRasterMinMax()                     */
+/************************************************************************/
+static PyObject *
+py_GDALComputeRasterMinMax(PyObject *self, PyObject *args) {
+
+    GDALRasterBandH  hBand;
+    char *_argc0 = NULL;
+    int bApproxOK = 1;
+    double adfMinMax[2];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"s|i:GDALGetRasterMinMax",&_argc0,&bApproxOK))
+        return NULL;
+
+    if (_argc0) {
+        if (SWIG_GetPtr_2(_argc0,(void **) &hBand,_GDALRasterBandH)) {
+            PyErr_SetString(PyExc_TypeError,
+                          "Type error in argument 1 of GDALGetRasterMinMax."
+                          "  Expected _GDALRasterBandH.");
+            return NULL;
+        }
+    }
+
+    GDALComputeRasterMinMax( hBand, bApproxOK, adfMinMax );
+
+    return Py_BuildValue("dd", adfMinMax[0], adfMinMax[1] );
 }
 
 /************************************************************************/
@@ -3633,6 +3662,7 @@ static PyMethodDef _gdalMethods[] = {
 	 { "GDALGetRasterNoDataValue", py_GDALGetRasterNoDataValue, 1 },
 	 { "GDALGetDescription", py_GDALGetDescription, 1 },
 	 { "GDALGetMetadata", py_GDALGetMetadata, 1 },
+	 { "GDALComputeRasterMinMax", py_GDALComputeRasterMinMax, 1 },
 	 { "GDALGetRasterHistogram", py_GDALGetRasterHistogram, 1 },
 	 { "GDALSetGeoTransform", py_GDALSetGeoTransform, 1 },
 	 { "GDALGetGeoTransform", py_GDALGetGeoTransform, 1 },

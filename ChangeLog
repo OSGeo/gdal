@@ -1,3 +1,7 @@
+2001-05-07  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* pymod/gdal.py, gdal.i: added GDALComputeRasterMinMax() bindings.
+
 2001-05-01  Frank Warmerdam  <warmerdam@pobox.com>
 
 	* frmts/gtiff/geotiff.cpp: added GTiffBitmapBand support.

@@ -29,6 +29,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.23  2001/05/07 14:50:44  warmerda
+# added python access to GDALComputeRasterMinMax
+#
 # Revision 1.22  2001/01/23 15:49:00  warmerda
 # added RGBFile2PCTFile
 #
@@ -389,6 +392,9 @@ class Band:
         return _gdal.GDALGetRasterHistogram(self._o, min, max, buckets,
                                             include_out_of_range, approx_ok)
 
+    def ComputeRasterMinMax(self, approx_ok = 0):
+        return _gdal.GDALComputeRasterMinMax(self._o, approx_ok )
+    
     def GetMetadata(self):
         return _gdal.GDALGetMetadata(self._o)
 
