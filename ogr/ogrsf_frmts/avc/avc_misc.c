@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: avc_misc.c,v 1.7 2001/11/25 21:38:01 daniel Exp $
+ * $Id: avc_misc.c,v 1.8 2004/08/31 21:00:20 warmerda Exp $
  *
  * Name:     avc_misc.c
  * Project:  Arc/Info vector coverage (AVC)  BIN<->E00 conversion library
@@ -30,6 +30,11 @@
  **********************************************************************
  *
  * $Log: avc_misc.c,v $
+ * Revision 1.8  2004/08/31 21:00:20  warmerda
+ * Applied Carl Anderson's patch to reduce the amount of stating while
+ * trying to discover filename "case" on Unix in AVCAdjustCaseSensitiveFilename.
+ * http://bugzilla.remotesensing.org/show_bug.cgi?id=314
+ *
  * Revision 1.7  2001/11/25 21:38:01  daniel
  * Remap '\\' to '/' in AVCAdjustCaseSensitiveFilename() on Unix.
  *
@@ -225,6 +230,13 @@ GBool AVCFileExists(const char *pszPath, const char *pszName)
  *
  * This function works on the original buffer and returns a reference to it.
  * It does nothing on Windows systems where filenames are not case sensitive.
+ *
+ * NFW: It seems like this could be made somewhat more efficient by
+ * getting a directory listing and doing a case insensitive search in 
+ * that list rather than all this stating that can be very expensive
+ * in some circumstances.  However, at least with Carl's fix this is
+ * somewhat faster.
+ * see: http://buzilla.remotesensing.org/show_bug.cgi?id=314
  **********************************************************************/
 char *AVCAdjustCaseSensitiveFilename(char *pszFname)
 {
@@ -261,12 +273,45 @@ char *AVCAdjustCaseSensitiveFilename(char *pszFname)
         return pszFname;
     }
 
+    pszTmpPath = CPLStrdup(pszFname);
+    nTotalLen = strlen(pszTmpPath);
+
+    /*-----------------------------------------------------------------
+     * Try all lower case, check if the filename is OK as that.
+     *----------------------------------------------------------------*/
+    for (iTmpPtr=0; iTmpPtr< nTotalLen; iTmpPtr++)
+    {
+        if ( pszTmpPath[iTmpPtr] >= 0x41 && pszTmpPath[iTmpPtr] <= 0x5a )
+            pszTmpPath[iTmpPtr] += 32;
+    }
+
+    if (VSIStat(pszTmpPath, &sStatBuf) == 0)
+    {
+        strcpy(pszFname, pszTmpPath);
+        CPLFree(pszTmpPath);
+        return pszFname;
+    }
+
+    /*-----------------------------------------------------------------
+     * Try all upper case, check if the filename is OK as that.
+     *----------------------------------------------------------------*/
+    for (iTmpPtr=0; iTmpPtr< nTotalLen; iTmpPtr++)
+    {
+        if ( pszTmpPath[iTmpPtr] >= 0x61 && pszTmpPath[iTmpPtr] <= 0x7a )
+            pszTmpPath[iTmpPtr] -= 32;
+    }
+
+    if (VSIStat(pszTmpPath, &sStatBuf) == 0)
+    {
+        strcpy(pszFname, pszTmpPath);
+        CPLFree(pszTmpPath);
+        return pszFname;
+    }
+
     /*-----------------------------------------------------------------
      * OK, file either does not exist or has the wrong cases... we'll
      * go backwards until we find a portion of the path that is valid.
      *----------------------------------------------------------------*/
-    pszTmpPath = CPLStrdup(pszFname);
-    nTotalLen = strlen(pszTmpPath);
     iTmpPtr = nTotalLen;
     bValidPath = FALSE;
 
