@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.32  2004/11/30 16:59:37  lichun
+ * Added ILWIS
+ *
  * Revision 1.31  2004/10/22 14:14:49  fwarmerdam
  * Added PCRaster.
  *
@@ -185,6 +188,7 @@ void CPL_DLL GDALRegister_LAN(void);
 void CPL_DLL GDALRegister_CPG(void);
 void CPL_DLL GDALRegister_AirSAR(void);
 void CPL_DLL GDALRegister_RS2(void);
+void CPL_DLL GDALRegister_ILWIS(void);
 void CPL_DLL GDALRegister_PCRaster(void);
 CPL_C_END
 
