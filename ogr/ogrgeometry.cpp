@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2003/04/03 23:39:11  danmo
+ * Small updates to C API docs (Normand S.)
+ *
  * Revision 1.17  2003/03/31 15:55:42  danmo
  * Added C API function docs
  *
@@ -648,7 +651,7 @@ void OGR_G_GetEnvelope( OGRGeometryH hGeom, OGREnvelope *psEnvelope )
  * 
  * This method relates to the SFCOM IWks::ImportFromWKB() method.
  *
- * This method is the same as the C function OGR_G_ImportFromWkb() method.
+ * This method is the same as the C function OGR_G_ImportFromWkb().
  *
  * @param pabyData the binary input data.
  * @param nSize the size of pabyData in bytes, or zero if not known.
