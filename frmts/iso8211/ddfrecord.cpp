@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.22  2003/12/02 16:50:21  warmerda
+ * fixed problems with writing some kinds of records
+ *
  * Revision 1.21  2003/11/12 21:21:55  warmerda
  * fixed to include field terminators when creating fields
  *
@@ -1249,12 +1252,13 @@ DDFRecord::SetFieldRaw( DDFField *poField, int iIndexWithinField,
 /*      Are we adding an instance?  This is easier and different        */
 /*      than replacing an existing instance.                            */
 /* -------------------------------------------------------------------- */
-    if( iIndexWithinField == nRepeatCount )
+    if( iIndexWithinField == nRepeatCount 
+        || !poField->GetFieldDefn()->IsRepeating() )
     {
         char    *pachFieldData;
         int     nOldSize;
 
-        if( !poField->GetFieldDefn()->IsRepeating() )
+        if( !poField->GetFieldDefn()->IsRepeating() && iIndexWithinField != 0 )
             return FALSE;
 
         nOldSize = poField->GetDataSize();
@@ -1520,13 +1524,6 @@ int DDFRecord::CreateDefaultFieldInstance( DDFField *poField,
     pachRawData = poField->GetFieldDefn()->GetDefaultValue( &nRawSize );
     if( pachRawData == NULL )
         return FALSE;
-
-    if( iIndexWithinField == 0 )
-    {
-        nRawSize++;
-        pachRawData = (char *) CPLRealloc(pachRawData,nRawSize);
-        pachRawData[nRawSize-1] = DDF_FIELD_TERMINATOR;
-    }
 
     nSuccess = SetFieldRaw( poField, iIndexWithinField, pachRawData, nRawSize);
 
