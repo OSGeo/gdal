@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2002/12/07 22:58:09  warmerda
+ * pass initialization warp option
+ *
  * Revision 1.2  2002/12/07 17:09:13  warmerda
  * added -order flag
  *
@@ -97,6 +100,7 @@ int main( int argc, char ** argv )
     const char         *pszSrcFilename = NULL, *pszDstFilename = NULL;
     int                 bCreateOutput = FALSE, i, nOrder = 0;
     void               *hTransformArg;
+    char               **papszWarpOptions = NULL;
 
     GDALAllRegister();
 
@@ -191,8 +195,11 @@ int main( int argc, char ** argv )
 /*      If not, we need to create it.                                   */
 /* -------------------------------------------------------------------- */
     if( hDstDS == NULL )
+    {
         hDstDS = GDALWarpCreateOutput( hSrcDS, pszDstFilename, pszFormat, 
                                        pszSourceSRS, pszTargetSRS, nOrder );
+        papszWarpOptions = CSLSetNameValue( papszWarpOptions, "INIT", "0" );
+    }
 
     if( hDstDS == NULL )
         exit( 1 );
@@ -214,7 +221,9 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
     GDALSimpleImageWarp( hSrcDS, hDstDS, 0, NULL, 
                          GDALGenImgProjTransform, hTransformArg,
-                         GDALTermProgress, NULL, NULL );
+                         GDALTermProgress, NULL, papszWarpOptions );
+
+    CSLDestroy( papszWarpOptions );
 
 /* -------------------------------------------------------------------- */
 /*      Cleanup.                                                        */
