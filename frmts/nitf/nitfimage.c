@@ -29,6 +29,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2003/06/06 13:48:13  warmerda
+ * Corrected problem with pixel interleaved (IMODE=P) images that include
+ * block maps like the v_3301f.ntf "stdset" file.
+ *
  * Revision 1.14  2003/05/29 19:50:57  warmerda
  * added TRE in image, and RPC00B support
  *
@@ -485,7 +489,9 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
     {
         GUInt32  nIMDATOFF;
         GUInt16  nBMRLNTH, nTMRLNTH, nTPXCDLNTH;
-        int nBlockCount = psImage->nBlocksPerRow * psImage->nBlocksPerColumn
+        int nBlockCount;
+
+        nBlockCount = psImage->nBlocksPerRow * psImage->nBlocksPerColumn
             * psImage->nBands;
 
         CPLAssert( psImage->szIC[0] == 'M' || psImage->szIC[1] == 'M' );
@@ -512,7 +518,38 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
         else
             VSIFSeek( psFile->fp, (nTPXCDLNTH+7)/8, SEEK_CUR );
 
-        if( nBMRLNTH == 4 )
+        if( nBMRLNTH == 4 && psImage->chIMODE == 'P' )
+        {
+            int nStoredBlocks = psImage->nBlocksPerRow 
+                * psImage->nBlocksPerColumn; 
+            int iBand;
+
+            VSIFRead( psImage->panBlockStart, 4, nStoredBlocks, psFile->fp );
+
+            for( i = 0; i < nStoredBlocks; i++ )
+            {
+                CPL_MSBPTR32( psImage->panBlockStart + i );
+                if( psImage->panBlockStart[i] != 0xffffffff )
+                {
+                    psImage->panBlockStart[i] 
+                        += psSegInfo->nSegmentStart + nIMDATOFF;
+
+                    for( iBand = 1; iBand < psImage->nBands; iBand++ )
+                    {
+                        psImage->panBlockStart[i + iBand * nStoredBlocks] = 
+                            psImage->panBlockStart[i] 
+                            + iBand * psImage->nBandOffset;
+                    }
+                }
+                else
+                {
+                    for( iBand = 1; iBand < psImage->nBands; iBand++ )
+                        psImage->panBlockStart[i + iBand * nStoredBlocks] = 
+                            0xffffffff;
+                }
+            }
+        }
+        else if( nBMRLNTH == 4 )
         {
             VSIFRead( psImage->panBlockStart, 4, nBlockCount, psFile->fp );
             for( i=0; i < nBlockCount; i++ )
@@ -663,15 +700,19 @@ int NITFReadImageBlock( NITFImage *psImage, int nBlockX, int nBlockY,
         + psImage->nPixelOffset * (psImage->nBlockWidth-1)
         + psImage->nWordSize;
 
+    if( psImage->panBlockStart[iFullBlock] == 0xffffffff )
+        return BLKREAD_NULL;
+
 /* -------------------------------------------------------------------- */
 /*      Can we do a direct read into our buffer?                        */
 /* -------------------------------------------------------------------- */
     if( psImage->nWordSize == psImage->nPixelOffset
         && psImage->nWordSize * psImage->nBlockWidth == psImage->nLineOffset 
-        && psImage->szIC[0] != 'C' && psImage->szIC[0] != 'M' )
+        && psImage->szIC[0] != 'C' && psImage->szIC[0] != 'M'
+        && psImage->chIMODE != 'P' )
     {
-
-        if( VSIFSeek( psImage->psFile->fp, psImage->panBlockStart[iFullBlock], 
+        if( VSIFSeek( psImage->psFile->fp, 
+                      psImage->panBlockStart[iFullBlock], 
                       SEEK_SET ) != 0 
             || VSIFRead( pData, 1, nWrkBufSize,
                          psImage->psFile->fp ) != nWrkBufSize )
@@ -749,9 +790,6 @@ int NITFReadImageBlock( NITFImage *psImage, int nBlockX, int nBlockY,
     else if( EQUAL(psImage->szIC,"C4") || EQUAL(psImage->szIC,"M4") )
     {
         GByte abyVQCoded[6144];
-
-        if( psImage->panBlockStart[iFullBlock] == 0xffffffff )
-            return BLKREAD_NULL;
 
         /* Read the codewords */
         if( VSIFSeek( psImage->psFile->fp, psImage->panBlockStart[iFullBlock], 
