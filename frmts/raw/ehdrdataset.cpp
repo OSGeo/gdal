@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.25  2005/02/25 19:40:27  fwarmerdam
+ * Support lower case byteorder values too.
+ *
  * Revision 1.24  2004/07/10 12:19:01  dron
  * Read color table, when available (.clr file).
  *
@@ -333,7 +336,7 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
         }
         else if( EQUAL(papszTokens[0],"byteorder") )
         {
-            chByteOrder = papszTokens[1][0];
+            chByteOrder = toupper(papszTokens[1][0]);
 
             /*
              * Use of LSBFIRST or MSBFIRST is considered an indication that
