@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.48  2004/07/10 04:54:23  warmerda
+ * added GEOS methods, and closeRings
+ *
  * Revision 1.47  2004/02/21 15:36:14  warmerda
  * const correctness updates for geometry: bug 289
  *
@@ -202,6 +205,9 @@ class OGRRawPoint
     double      y;
 };
 
+namespace geos { 
+    class Geometry;
+};
 
 /************************************************************************/
 /*                             OGRGeometry                              */
@@ -247,6 +253,8 @@ class CPL_DLL OGRGeometry
     virtual void   dumpReadable( FILE *, const char * = NULL );
     virtual void   flattenTo2D() = 0;
     virtual char * exportToGML() const;
+    virtual geos::Geometry *exportToGEOS() const;
+    virtual void closeRings();
 
     void    assignSpatialReference( OGRSpatialReference * poSR );
     OGRSpatialReference *getSpatialReference( void ) const { return poSRS; }
@@ -257,29 +265,22 @@ class CPL_DLL OGRGeometry
     // ISpatialRelation
     virtual OGRBoolean  Intersect( OGRGeometry * ) const;
     virtual OGRBoolean  Equal( OGRGeometry * ) const = 0;
-    
-#ifdef notdef
-    
-    // I presume all these should be virtual?  How many
-    // should be pure?
-    OGRGeometry *getBoundary();
+    virtual OGRBoolean  Disjoint( const OGRGeometry * ) const;
+    virtual OGRBoolean  Touches( const OGRGeometry * ) const;
+    virtual OGRBoolean  Crosses( const OGRGeometry * ) const;
+    virtual OGRBoolean  Within( const OGRGeometry * ) const;
+    virtual OGRBoolean  Contains( const OGRGeometry * ) const;
+    virtual OGRBoolean  Overlaps( const OGRGeometry * ) const;
+//    virtual OGRBoolean  Relate( const OGRGeometry *, const char * ) const;
 
-    OGRBoolean  Disjoint( OGRGeometry * );
-    OGRBoolean  Touch( OGRGeometry * );
-    OGRBoolean  Cross( OGRGeometry * );
-    OGRBoolean  Within( OGRGeometry * );
-    OGRBoolean  Contains( OGRGeometry * );
-    OGRBoolean  Overlap( OGRGeometry * );
-    OGRBoolean  Relate( OGRGeometry *, const char * );
-
-    double      Distance( OGRGeometry * );
-    OGRGeometry *Intersection(OGRGeometry *);
-    OGRGeometry *Buffer( double );
-    OGRGeometry *ConvexHull();
-    OGRGeometry *Union( OGRGeometry * );
-    OGRGeometry *Difference( OGRGeometry * );
-    OGRGeometry *SymmetricDifference( OGRGeometry * );
-#endif    
+    virtual OGRGeometry *getBoundary() const;
+    virtual double  Distance( const OGRGeometry * ) const;
+    virtual OGRGeometry *ConvexHull() const;
+    virtual OGRGeometry *Buffer( double dfDist, int nQuadSegs = 30 ) const;
+    virtual OGRGeometry *Intersection( const OGRGeometry *) const;
+    virtual OGRGeometry *Union( const OGRGeometry * ) const;
+    virtual OGRGeometry *Difference( const OGRGeometry * ) const;
+    virtual OGRGeometry *SymmetricDifference( const OGRGeometry * ) const;
 
     // Special HACK for DB2 7.2 support
     static int bGenerate_DB2_V72_BYTE_ORDER;
@@ -468,6 +469,7 @@ class CPL_DLL OGRLinearRing : public OGRLineString
     virtual const char *getGeometryName() const;
     virtual OGRGeometry *clone() const;
     virtual int isClockwise() const;
+    virtual void closeRings();
     
     // IWks Interface - Note this isnt really a first class object
     // for the purposes of WKB form.  These methods always fail since this
@@ -552,6 +554,8 @@ class CPL_DLL OGRPolygon : public OGRSurface
     int         getNumInteriorRings() const;
     OGRLinearRing *getInteriorRing( int );
     const OGRLinearRing *getInteriorRing( int ) const;
+
+    virtual void closeRings();
 };
 
 /************************************************************************/
@@ -608,6 +612,8 @@ class CPL_DLL OGRGeometryCollection : public OGRGeometry
     virtual OGRErr addGeometry( const OGRGeometry * );
     virtual OGRErr addGeometryDirectly( OGRGeometry * );
     virtual OGRErr removeGeometry( int iIndex, int bDelete = TRUE );
+
+    void closeRings();
 };
 
 /************************************************************************/
@@ -703,6 +709,7 @@ class CPL_DLL OGRGeometryFactory
     static OGRErr createFromWkt( char **, OGRSpatialReference *,
                                  OGRGeometry ** );
     static OGRGeometry *createFromGML( const char * );
+    static OGRGeometry *createFromGEOS( const geos::Geometry * );
 
     static void   destroyGeometry( OGRGeometry * );
     static OGRGeometry *createGeometry( OGRwkbGeometryType );
@@ -711,6 +718,7 @@ class CPL_DLL OGRGeometryFactory
     static OGRGeometry * forceToMultiPolygon( OGRGeometry * );
     static OGRGeometry * forceToMultiPoint( OGRGeometry * );
     static OGRGeometry * forceToMultiLineString( OGRGeometry * );
+
 };
 
 #endif /* ndef _OGR_GEOMETRY_H_INCLUDED */
