@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2003/09/15 20:53:06  warmerda
+ * fleshed out feature writing
+ *
  * Revision 1.14  2003/09/05 19:12:05  warmerda
  * added RETURN_PRIMITIVES support to get low level prims
  *
@@ -88,11 +91,12 @@ int main( int nArgc, char ** papszArgv )
     char        **papszOptions = NULL;
     int         bUpdate = TRUE;
     int         bReturnPrimitives = FALSE;
+    char       *pszDataPath = NULL;
     
     if( nArgc < 2 )
     {
         printf( "Usage: s57dump [-pen] [-split] [-lnam] [-return-prim] [-no-update]\n"
-                "               filename\n" );
+                "               [-return-link] [-data <dirpath>] filename\n" );
         exit( 1 );
     }
 
@@ -104,6 +108,8 @@ int main( int nArgc, char ** papszArgv )
         if( EQUAL(papszArgv[iArg],"-split") )
             papszOptions =
                 CSLSetNameValue( papszOptions, S57O_SPLIT_MULTIPOINT, "ON" );
+        else if( EQUAL(papszArgv[iArg],"-data") )
+            pszDataPath = papszArgv[++iArg];
         else if( EQUAL(papszArgv[iArg],"-no-update") )
             bUpdate = FALSE;
         else if( EQUAL(papszArgv[iArg],"-pen") )
@@ -120,6 +126,9 @@ int main( int nArgc, char ** papszArgv )
         else if( EQUALN(papszArgv[iArg],"-lnam",4) )
             papszOptions =
                 CSLSetNameValue( papszOptions, S57O_LNAM_REFS, "ON" );
+        else if( EQUALN(papszArgv[iArg],"-return-link",12) )
+            papszOptions =
+                CSLSetNameValue( papszOptions, S57O_RETURN_LINKAGES, "ON" );
     }
     
 /* -------------------------------------------------------------------- */
@@ -128,7 +137,7 @@ int main( int nArgc, char ** papszArgv )
     S57ClassRegistrar   oRegistrar;
     int                 bRegistrarLoaded;
 
-    bRegistrarLoaded = oRegistrar.LoadInfo( NULL, TRUE );
+    bRegistrarLoaded = oRegistrar.LoadInfo( pszDataPath, TRUE );
 
 /* -------------------------------------------------------------------- */
 /*      Get a list of candidate files.                                  */

@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.25  2003/09/15 20:53:06  warmerda
+ * fleshed out feature writing
+ *
  * Revision 1.24  2003/09/09 16:43:02  warmerda
  * added writer class
  *
@@ -125,6 +128,7 @@ char **S57FileCollector( const char * pszDataset );
 #define S57O_ADD_SOUNDG_DEPTH "ADD_SOUNDG_DEPTH"
 #define S57O_PRESERVE_EMPTY_NUMBERS "PRESERVE_EMPTY_NUMBERS"
 #define S57O_RETURN_PRIMITIVES "RETURN_PRIMITIVES"
+#define S57O_RETURN_LINKAGES "RETURN_LINKAGES"
 
 /* -------------------------------------------------------------------- */
 /*      RCNM values.                                                    */
@@ -308,6 +312,7 @@ class S57Reader
     int                 bGenerateLNAM;
 
     int                 bReturnPrimitives;
+    int                 bReturnLinkages;
     int                 bSplitMultiPoint;
     int                 bAddSOUNDGDepth;
     int                 iPointOffset;
@@ -323,6 +328,7 @@ class S57Reader
 
     void                ApplyObjectClassAttributes( DDFRecord *, OGRFeature *);
     void                GenerateLNAMAndRefs( DDFRecord *, OGRFeature * );
+    void                GenerateFSPTAttributes( DDFRecord *, OGRFeature * );
 
     void                AssembleSoundingGeometry( DDFRecord *, OGRFeature * );
     void                AssemblePointGeometry( DDFRecord *, OGRFeature * );
@@ -387,11 +393,13 @@ public:
                         S57Writer();
                         ~S57Writer();
 
+    void                SetClassBased( S57ClassRegistrar * );
     int                 CreateS57File( const char *pszFilename );
     int                 Close();
 
     int                 WriteGeometry( DDFRecord *, int, double *, double *,
                                        double * );
+    int                 WriteATTF( DDFRecord *, OGRFeature * );
     int                 WritePrimitive( OGRFeature *poFeature );
     int                 WriteCompleteFeature( OGRFeature *poFeature );
     int                 WriteDSID( const char *pszDSNM = NULL, 
