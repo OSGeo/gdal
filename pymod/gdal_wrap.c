@@ -33,8 +33,10 @@
  * and things like that.
  *
  * $Log$
- * Revision 1.100  2004/11/23 20:01:54  fwarmerdam
- * fixed a small init bug with pyprogressproxy stuff
+ * Revision 1.101  2004/12/02 19:53:02  fwarmerdam
+ * Added GDALComputeBandStats()
+ * Implement generic mechanism for progress callbacks, and use for
+ * ComputeBandStats, Create and CreateCopy().
  *
  ************************************************************************/
 
@@ -1375,6 +1377,33 @@ int PyProgressProxy( double dfComplete, const char *pszMessage, void *pData )
 
 
 /************************************************************************/
+/*                          MakeProgressInfo()                          */
+/************************************************************************/
+static PyObject *
+py_MakeProgressInfo(PyObject *self, PyObject *args) {
+
+    PyProgressData *psProgressInfo = NULL;
+    char szSwigTarget[128], szCBPtr[128];
+
+    self = self;
+
+    psProgressInfo = (PyProgressData *) CPLCalloc(1,sizeof(PyProgressData));
+    psProgressInfo->nLastReported = -1;
+    psProgressInfo->psPyCallback = NULL;
+    psProgressInfo->psPyCallbackData = NULL;
+
+    if(!PyArg_ParseTuple(args,"OO:MakeProgressInfo",	
+                         &(psProgressInfo->psPyCallback), 
+		         &(psProgressInfo->psPyCallbackData) ) )
+        return NULL;
+
+    SWIG_MakePtr( szCBPtr, PyProgressProxy, "_void_p" );	
+    SWIG_MakePtr( szSwigTarget, psProgressInfo, "_void_p" );	
+
+    return Py_BuildValue( "(ss)", szCBPtr, szSwigTarget );
+}
+
+/************************************************************************/
 /*                           GDALBuildOverviews()                       */
 /************************************************************************/
 static PyObject *
@@ -1425,156 +1454,6 @@ py_GDALBuildOverviews(PyObject *self, PyObject *args) {
     CPLFree( panOverviewList );
 
     return Py_BuildValue( "i", eErr );
-}
-
-
-/************************************************************************/
-/*                           GDALCreateCopy()                           */
-/************************************************************************/
-static PyObject *
-py_GDALCreateCopy(PyObject *self, PyObject *args) {
-
-    PyObject *poPyOptions=NULL;
-    char *pszSwigDriver=NULL, *pszFilename=NULL, *pszSwigSourceDS=NULL;
-    int  bStrict = FALSE;
-    GDALDriverH hDriver = NULL;
-    GDALDatasetH hSourceDS = NULL, hTargetDS = NULL;   
-    char **papszOptions = NULL;
-    PyProgressData sProgressInfo;
-
-    self = self;
-    sProgressInfo.nLastReported = -1;
-    sProgressInfo.psPyCallback = NULL;
-    sProgressInfo.psPyCallbackData = NULL;
-    if(!PyArg_ParseTuple(args,"sss|iO!OO:GDALCreateCopy",	
-			 &pszSwigDriver, &pszFilename, &pszSwigSourceDS, 
-			 &bStrict, &PyList_Type, &poPyOptions,
-			 &(sProgressInfo.psPyCallback), 
-		         &(sProgressInfo.psPyCallbackData)) )
-        return NULL;
-
-    if (SWIG_GetPtr_2(pszSwigDriver,(void **) &hDriver,_GDALDriverH)) {
-        PyErr_SetString(PyExc_TypeError,
-	   	        "Type error in argument 1 of GDALCreateCopy."
-			" Expected _GDALDriverH.");
-        return NULL;
-    }
-	
-    if (SWIG_GetPtr_2(pszSwigSourceDS,(void **) &hSourceDS, _GDALDatasetH )) {
-        PyErr_SetString(PyExc_TypeError,
-	   	        "Type error in argument 3 of GDALCreateCopy."
-			" Expected _GDALDatasetH.");
-        return NULL;
-    }
-
-    if( poPyOptions != NULL )
-    {
-        int i;
-
-	for( i = 0; i < PyList_Size(poPyOptions); i++ )
-        {
-            char *pszItem = NULL;
-
-	    if( !PyArg_Parse(PyList_GET_ITEM(poPyOptions,i), "s", 
-			     &pszItem) )
-            {
-	        PyErr_SetString(PyExc_ValueError, "bad option list item");
-	        return NULL;
-            }
-            papszOptions = CSLAddString( papszOptions, pszItem );
-        }
-    }
-
-    hTargetDS = GDALCreateCopy( hDriver, pszFilename, hSourceDS, bStrict, 
-			        papszOptions, PyProgressProxy, &sProgressInfo);
-	
-    CSLDestroy( papszOptions );
-
-    if( hTargetDS == NULL )
-    {
-        Py_INCREF(Py_None);
-	return Py_None;
-    }
-    else
-    {
-        char  szSwigTarget[48];
-
-#ifdef SWIGTYPE_GDALDatasetH
-	SWIG_MakePtr( szSwigTarget, hTargetDS, SWIGTYPE_GDALDatasetH );	
-#else
-	SWIG_MakePtr( szSwigTarget, hTargetDS, "_GDALDatasetH" );	
-#endif
-	return Py_BuildValue( "s", szSwigTarget );
-    }
-}
-
-
-/************************************************************************/
-/*                             GDALCreate()                             */
-/************************************************************************/
-static PyObject *
-py_GDALCreate(PyObject *self, PyObject *args) {
-
-    PyObject *poPyOptions=NULL;
-    char *pszSwigDriver=NULL, *pszFilename=NULL;
-    int  nXSize, nYSize, nBands, nDataType;
-    GDALDriverH hDriver = NULL;
-    GDALDatasetH hTargetDS = NULL;   
-    char **papszOptions = NULL;
-
-    self = self;
-    if(!PyArg_ParseTuple(args,"ssiiii|O!:GDALCreate",	
-			 &pszSwigDriver, &pszFilename, 
-			 &nXSize, &nYSize, &nBands, &nDataType,
-			 &PyList_Type, &poPyOptions ))
-        return NULL;
-
-    if (SWIG_GetPtr_2(pszSwigDriver,(void **) &hDriver, _GDALDriverH )) {
-        PyErr_SetString(PyExc_TypeError,
-	   	        "Type error in argument 1 of GDALCreate."
-			" Expected _GDALDriverH.");
-        return NULL;
-    }
-	
-    if( poPyOptions != NULL )
-    {
-        int i;
-
-	for( i = 0; i < PyList_Size(poPyOptions); i++ )
-        {
-            char *pszItem = NULL;
-
-	    if( !PyArg_Parse(PyList_GET_ITEM(poPyOptions,i), "s", 
-			     &pszItem) )
-            {
-	        PyErr_SetString(PyExc_ValueError, "bad option list item");
-	        return NULL;
-            }
-            papszOptions = CSLAddString( papszOptions, pszItem );
-        }
-    }
-
-    hTargetDS = GDALCreate( hDriver, pszFilename, nXSize, nYSize, nBands, 
-			    nDataType, papszOptions );
-	
-    CSLDestroy( papszOptions );
-
-    if( hTargetDS == NULL )
-    {
-        Py_INCREF(Py_None);
-	return Py_None;
-    }
-    else
-    {
-        char  szSwigTarget[48];
-
-#ifdef SWIGTYPE_GDALDatasetH
-	SWIG_MakePtr( szSwigTarget, hTargetDS, SWIGTYPE_GDALDatasetH );	
-#else
-	SWIG_MakePtr( szSwigTarget, hTargetDS, "_GDALDatasetH" );	
-#endif
-	return Py_BuildValue( "s", szSwigTarget );
-    }
 }
 
 
@@ -3698,13 +3577,12 @@ static PyObject *_wrap_GDALGetMetadata(PyObject *self, PyObject *args) {
 
 static PyObject *_wrap_GDALSetMetadata(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
-    CPLErr * _result;
+    int  _result;
     GDALMajorObjectH  _arg0;
     stringList  _arg1;
     char * _arg2;
     char * _argc0 = 0;
     char * _argc1 = 0;
-    char _ptemp[128];
 
     self = self;
     if(!PyArg_ParseTuple(args,"sss:GDALSetMetadata",&_argc0,&_argc1,&_arg2)) 
@@ -3721,10 +3599,8 @@ static PyObject *_wrap_GDALSetMetadata(PyObject *self, PyObject *args) {
         return NULL;
         }
     }
-    _result = (CPLErr *) malloc(sizeof(CPLErr ));
-    *(_result) = GDALSetMetadata(_arg0,_arg1,_arg2);
-    SWIG_MakePtr(_ptemp, (void *) _result,"_CPLErr_p");
-    _resultobj = Py_BuildValue("s",_ptemp);
+    _result = (int )GDALSetMetadata(_arg0,_arg1,_arg2);
+    _resultobj = Py_BuildValue("i",_result);
     return _resultobj;
 }
 
@@ -3820,6 +3696,97 @@ static PyObject *_wrap_GDALOpenShared(PyObject *self, PyObject *args) {
     if(!PyArg_ParseTuple(args,"si:GDALOpenShared",&_arg0,&_arg1)) 
         return NULL;
     _result = (GDALDatasetH )GDALOpenShared(_arg0,_arg1);
+    SWIG_MakePtr(_ptemp, (char *) _result,"_GDALDatasetH");
+    _resultobj = Py_BuildValue("s",_ptemp);
+    return _resultobj;
+}
+
+static PyObject *_wrap_GDALCreateCopy(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    GDALDatasetH  _result;
+    GDALDriverH  _arg0;
+    char * _arg1;
+    GDALDatasetH  _arg2;
+    int  _arg3;
+    stringList  _arg4;
+    void * _arg5;
+    void * _arg6;
+    char * _argc0 = 0;
+    char * _argc2 = 0;
+    char * _argc4 = 0;
+    char * _argc5 = 0;
+    char * _argc6 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"sssisss:GDALCreateCopy",&_argc0,&_arg1,&_argc2,&_arg3,&_argc4,&_argc5,&_argc6)) 
+        return NULL;
+    if (_argc0) {
+        if (SWIG_GetPtr(_argc0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of GDALCreateCopy. Expected _GDALDriverH.");
+        return NULL;
+        }
+    }
+    if (_argc2) {
+        if (SWIG_GetPtr(_argc2,(void **) &_arg2,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 3 of GDALCreateCopy. Expected _GDALDatasetH.");
+        return NULL;
+        }
+    }
+    if (_argc4) {
+        if (SWIG_GetPtr(_argc4,(void **) &_arg4,"_stringList")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 5 of GDALCreateCopy. Expected _stringList.");
+        return NULL;
+        }
+    }
+    if (_argc5) {
+        if (SWIG_GetPtr(_argc5,(void **) &_arg5,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 6 of GDALCreateCopy. Expected _void_p.");
+        return NULL;
+        }
+    }
+    if (_argc6) {
+        if (SWIG_GetPtr(_argc6,(void **) &_arg6,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 7 of GDALCreateCopy. Expected _void_p.");
+        return NULL;
+        }
+    }
+    _result = (GDALDatasetH )GDALCreateCopy(_arg0,_arg1,_arg2,_arg3,_arg4,_arg5,_arg6);
+    SWIG_MakePtr(_ptemp, (char *) _result,"_GDALDatasetH");
+    _resultobj = Py_BuildValue("s",_ptemp);
+    return _resultobj;
+}
+
+static PyObject *_wrap_GDALCreate(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    GDALDatasetH  _result;
+    GDALDriverH  _arg0;
+    char * _arg1;
+    int  _arg2;
+    int  _arg3;
+    int  _arg4;
+    int  _arg5;
+    stringList  _arg6;
+    char * _argc0 = 0;
+    char * _argc6 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"ssiiiis:GDALCreate",&_argc0,&_arg1,&_arg2,&_arg3,&_arg4,&_arg5,&_argc6)) 
+        return NULL;
+    if (_argc0) {
+        if (SWIG_GetPtr(_argc0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of GDALCreate. Expected _GDALDriverH.");
+        return NULL;
+        }
+    }
+    if (_argc6) {
+        if (SWIG_GetPtr(_argc6,(void **) &_arg6,"_stringList")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 7 of GDALCreate. Expected _stringList.");
+        return NULL;
+        }
+    }
+    _result = (GDALDatasetH )GDALCreate(_arg0,_arg1,_arg2,_arg3,_arg4,_arg5,_arg6);
     SWIG_MakePtr(_ptemp, (char *) _result,"_GDALDatasetH");
     _resultobj = Py_BuildValue("s",_ptemp);
     return _resultobj;
@@ -4339,6 +4306,50 @@ static PyObject *_wrap_GDALFlushCache(PyObject *self, PyObject *args) {
     return _resultobj;
 }
 
+static PyObject *_wrap_GDALDatasetAdviseRead(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    int  _result;
+    GDALDatasetH  _arg0;
+    int  _arg1;
+    int  _arg2;
+    int  _arg3;
+    int  _arg4;
+    int  _arg5;
+    int  _arg6;
+    GDALDataType  _arg7;
+    int  _arg8;
+    int * _arg9;
+    stringList  _arg10;
+    char * _argc0 = 0;
+    char * _argc9 = 0;
+    char * _argc10 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"siiiiiiiiss:GDALDatasetAdviseRead",&_argc0,&_arg1,&_arg2,&_arg3,&_arg4,&_arg5,&_arg6,&_arg7,&_arg8,&_argc9,&_argc10)) 
+        return NULL;
+    if (_argc0) {
+        if (SWIG_GetPtr(_argc0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of GDALDatasetAdviseRead. Expected _GDALDatasetH.");
+        return NULL;
+        }
+    }
+    if (_argc9) {
+        if (SWIG_GetPtr(_argc9,(void **) &_arg9,"_int_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 10 of GDALDatasetAdviseRead. Expected _int_p.");
+        return NULL;
+        }
+    }
+    if (_argc10) {
+        if (SWIG_GetPtr(_argc10,(void **) &_arg10,"_stringList")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 11 of GDALDatasetAdviseRead. Expected _stringList.");
+        return NULL;
+        }
+    }
+    _result = (int )GDALDatasetAdviseRead(_arg0,_arg1,_arg2,_arg3,_arg4,_arg5,_arg6,_arg7,_arg8,_arg9,_arg10);
+    _resultobj = Py_BuildValue("i",_result);
+    return _resultobj;
+}
+
 static PyObject *_wrap_GDALGetRasterDataType(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
     GDALDataType  _result;
@@ -4760,12 +4771,11 @@ static PyObject *_wrap_GDALFlushRasterCache(PyObject *self, PyObject *args) {
 
 static PyObject *_wrap_GDALFillRaster(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
-    CPLErr * _result;
+    int  _result;
     GDALRasterBandH  _arg0;
     double  _arg1;
     double  _arg2;
     char * _argc0 = 0;
-    char _ptemp[128];
 
     self = self;
     if(!PyArg_ParseTuple(args,"sdd:GDALFillRaster",&_argc0,&_arg1,&_arg2)) 
@@ -4776,10 +4786,96 @@ static PyObject *_wrap_GDALFillRaster(PyObject *self, PyObject *args) {
         return NULL;
         }
     }
-    _result = (CPLErr *) malloc(sizeof(CPLErr ));
-    *(_result) = GDALFillRaster(_arg0,_arg1,_arg2);
-    SWIG_MakePtr(_ptemp, (void *) _result,"_CPLErr_p");
-    _resultobj = Py_BuildValue("s",_ptemp);
+    _result = (int )GDALFillRaster(_arg0,_arg1,_arg2);
+    _resultobj = Py_BuildValue("i",_result);
+    return _resultobj;
+}
+
+static PyObject *_wrap_GDALRasterAdviseRead(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    int  _result;
+    GDALRasterBandH  _arg0;
+    int  _arg1;
+    int  _arg2;
+    int  _arg3;
+    int  _arg4;
+    int  _arg5;
+    int  _arg6;
+    GDALDataType  _arg7;
+    stringList  _arg8;
+    char * _argc0 = 0;
+    char * _argc8 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"siiiiiiis:GDALRasterAdviseRead",&_argc0,&_arg1,&_arg2,&_arg3,&_arg4,&_arg5,&_arg6,&_arg7,&_argc8)) 
+        return NULL;
+    if (_argc0) {
+        if (SWIG_GetPtr(_argc0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of GDALRasterAdviseRead. Expected _GDALRasterBandH.");
+        return NULL;
+        }
+    }
+    if (_argc8) {
+        if (SWIG_GetPtr(_argc8,(void **) &_arg8,"_stringList")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 9 of GDALRasterAdviseRead. Expected _stringList.");
+        return NULL;
+        }
+    }
+    _result = (int )GDALRasterAdviseRead(_arg0,_arg1,_arg2,_arg3,_arg4,_arg5,_arg6,_arg7,_arg8);
+    _resultobj = Py_BuildValue("i",_result);
+    return _resultobj;
+}
+
+static PyObject *_wrap_GDALComputeBandStats(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    int  _result;
+    GDALRasterBandH  _arg0;
+    int  _arg1;
+    double * _arg2;
+    double * _arg3;
+    void * _arg4;
+    void * _arg5;
+    char * _argc0 = 0;
+    char * _argc2 = 0;
+    char * _argc3 = 0;
+    char * _argc4 = 0;
+    char * _argc5 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"sissss:GDALComputeBandStats",&_argc0,&_arg1,&_argc2,&_argc3,&_argc4,&_argc5)) 
+        return NULL;
+    if (_argc0) {
+        if (SWIG_GetPtr(_argc0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of GDALComputeBandStats. Expected _GDALRasterBandH.");
+        return NULL;
+        }
+    }
+    if (_argc2) {
+        if (SWIG_GetPtr(_argc2,(void **) &_arg2,"_double_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 3 of GDALComputeBandStats. Expected _double_p.");
+        return NULL;
+        }
+    }
+    if (_argc3) {
+        if (SWIG_GetPtr(_argc3,(void **) &_arg3,"_double_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 4 of GDALComputeBandStats. Expected _double_p.");
+        return NULL;
+        }
+    }
+    if (_argc4) {
+        if (SWIG_GetPtr(_argc4,(void **) &_arg4,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 5 of GDALComputeBandStats. Expected _void_p.");
+        return NULL;
+        }
+    }
+    if (_argc5) {
+        if (SWIG_GetPtr(_argc5,(void **) &_arg5,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 6 of GDALComputeBandStats. Expected _void_p.");
+        return NULL;
+        }
+    }
+    _result = (int )GDALComputeBandStats(_arg0,_arg1,_arg2,_arg3,_arg4,_arg5);
+    _resultobj = Py_BuildValue("i",_result);
     return _resultobj;
 }
 
@@ -5012,7 +5108,7 @@ static PyObject *_wrap_GDALFlushCacheBlock(PyObject *self, PyObject *args) {
 
 static PyObject *_wrap_GDALReprojectImage(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
-    CPLErr * _result;
+    int  _result;
     GDALDatasetH  _arg0;
     NULLableString  _arg1;
     GDALDatasetH  _arg2;
@@ -5030,7 +5126,6 @@ static PyObject *_wrap_GDALReprojectImage(PyObject *self, PyObject *args) {
     char * _argc7 = 0;
     char * _argc8 = 0;
     char * _argc9 = 0;
-    char _ptemp[128];
 
     self = self;
     if(!PyArg_ParseTuple(args,"ssssiddsss:GDALReprojectImage",&_argc0,&_argc1,&_argc2,&_argc3,&_arg4,&_arg5,&_arg6,&_argc7,&_argc8,&_argc9)) 
@@ -5077,16 +5172,14 @@ static PyObject *_wrap_GDALReprojectImage(PyObject *self, PyObject *args) {
         return NULL;
         }
     }
-    _result = (CPLErr *) malloc(sizeof(CPLErr ));
-    *(_result) = GDALReprojectImage(_arg0,_arg1,_arg2,_arg3,_arg4,_arg5,_arg6,_arg7,_arg8,_arg9);
-    SWIG_MakePtr(_ptemp, (void *) _result,"_CPLErr_p");
-    _resultobj = Py_BuildValue("s",_ptemp);
+    _result = (int )GDALReprojectImage(_arg0,_arg1,_arg2,_arg3,_arg4,_arg5,_arg6,_arg7,_arg8,_arg9);
+    _resultobj = Py_BuildValue("i",_result);
     return _resultobj;
 }
 
 static PyObject *_wrap_GDALCreateAndReprojectImage(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
-    CPLErr * _result;
+    int  _result;
     GDALDatasetH  _arg0;
     char * _arg1;
     NULLableString  _arg2;
@@ -5107,7 +5200,6 @@ static PyObject *_wrap_GDALCreateAndReprojectImage(PyObject *self, PyObject *arg
     char * _argc9 = 0;
     char * _argc10 = 0;
     char * _argc11 = 0;
-    char _ptemp[128];
 
     self = self;
     if(!PyArg_ParseTuple(args,"ssssssiddsss:GDALCreateAndReprojectImage",&_argc0,&_arg1,&_argc2,&_argc3,&_argc4,&_argc5,&_arg6,&_arg7,&_arg8,&_argc9,&_argc10,&_argc11)) 
@@ -5160,10 +5252,8 @@ static PyObject *_wrap_GDALCreateAndReprojectImage(PyObject *self, PyObject *arg
         return NULL;
         }
     }
-    _result = (CPLErr *) malloc(sizeof(CPLErr ));
-    *(_result) = GDALCreateAndReprojectImage(_arg0,_arg1,_arg2,_arg3,_arg4,_arg5,_arg6,_arg7,_arg8,_arg9,_arg10,_arg11);
-    SWIG_MakePtr(_ptemp, (void *) _result,"_CPLErr_p");
-    _resultobj = Py_BuildValue("s",_ptemp);
+    _result = (int )GDALCreateAndReprojectImage(_arg0,_arg1,_arg2,_arg3,_arg4,_arg5,_arg6,_arg7,_arg8,_arg9,_arg10,_arg11);
+    _resultobj = Py_BuildValue("i",_result);
     return _resultobj;
 }
 
@@ -11233,9 +11323,8 @@ static PyMethodDef _gdalMethods[] = {
 	 { "GDALGetGCPs", py_GDALGetGCPs, 1 },
 	 { "GDALWriteRaster", py_GDALWriteRaster, 1 },
 	 { "GDALReadRaster", py_GDALReadRaster, 1 },
-	 { "GDALCreate", py_GDALCreate, 1 },
-	 { "GDALCreateCopy", py_GDALCreateCopy, 1 },
 	 { "GDALBuildOverviews", py_GDALBuildOverviews, 1 },
+	 { "MakeProgressInfo", py_MakeProgressInfo, 1 },
 	 { "GDALAutoCreateWarpedVRT", _wrap_GDALAutoCreateWarpedVRT, 1 },
 	 { "GDALCreateAndReprojectImage", _wrap_GDALCreateAndReprojectImage, 1 },
 	 { "GDALReprojectImage", _wrap_GDALReprojectImage, 1 },
@@ -11251,6 +11340,8 @@ static PyMethodDef _gdalMethods[] = {
 	 { "GDALCloneColorTable", _wrap_GDALCloneColorTable, 1 },
 	 { "GDALDestroyColorTable", _wrap_GDALDestroyColorTable, 1 },
 	 { "GDALCreateColorTable", _wrap_GDALCreateColorTable, 1 },
+	 { "GDALComputeBandStats", _wrap_GDALComputeBandStats, 1 },
+	 { "GDALRasterAdviseRead", _wrap_GDALRasterAdviseRead, 1 },
 	 { "GDALFillRaster", _wrap_GDALFillRaster, 1 },
 	 { "GDALFlushRasterCache", _wrap_GDALFlushRasterCache, 1 },
 	 { "GDALGetOverview", _wrap_GDALGetOverview, 1 },
@@ -11269,6 +11360,7 @@ static PyMethodDef _gdalMethods[] = {
 	 { "GDALGetRasterBandXSize", _wrap_GDALGetRasterBandXSize, 1 },
 	 { "GDALGetBlockSize", _wrap_GDALGetBlockSize, 1 },
 	 { "GDALGetRasterDataType", _wrap_GDALGetRasterDataType, 1 },
+	 { "GDALDatasetAdviseRead", _wrap_GDALDatasetAdviseRead, 1 },
 	 { "GDALFlushCache", _wrap_GDALFlushCache, 1 },
 	 { "GDALGetGCPProjection", _wrap_GDALGetGCPProjection, 1 },
 	 { "GDALGetGCPCount", _wrap_GDALGetGCPCount, 1 },
@@ -11294,6 +11386,8 @@ static PyMethodDef _gdalMethods[] = {
 	 { "GDALGetDriver", _wrap_GDALGetDriver, 1 },
 	 { "GDALGetDriverCount", _wrap_GDALGetDriverCount, 1 },
 	 { "GDALGetDriverByName", _wrap_GDALGetDriverByName, 1 },
+	 { "GDALCreate", _wrap_GDALCreate, 1 },
+	 { "GDALCreateCopy", _wrap_GDALCreateCopy, 1 },
 	 { "GDALOpenShared", _wrap_GDALOpenShared, 1 },
 	 { "GDALOpen", _wrap_GDALOpen, 1 },
 	 { "GDALRegister_NUMPY", _wrap_GDALRegister_NUMPY, 1 },

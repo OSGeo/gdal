@@ -29,6 +29,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.107  2004/12/02 19:53:02  fwarmerdam
+ * Added GDALComputeBandStats()
+ * Implement generic mechanism for progress callbacks, and use for
+ * ComputeBandStats, Create and CreateCopy().
+ *
  * Revision 1.106  2004/11/23 20:01:54  fwarmerdam
  * fixed a small init bug with pyprogressproxy stuff
  *
@@ -646,7 +651,7 @@ typedef void *GDALDriverH;
 typedef void *GDALColorTableH;
 
 stringList GDALGetMetadata( GDALMajorObjectH, const char * );
-CPLErr     GDALSetMetadata( GDALMajorObjectH, stringList, const char * );
+int        GDALSetMetadata( GDALMajorObjectH, stringList, const char * );
 
 const char *GDALGetDescription( GDALMajorObjectH );
 void        GDALSetDescription( GDALMajorObjectH, const char * );
@@ -660,6 +665,12 @@ void GDALRegister_NUMPY( void );
 
 GDALDatasetH  GDALOpen( const char *, GDALAccess );
 GDALDatasetH  GDALOpenShared( const char *, GDALAccess );
+
+GDALDatasetH  GDALCreateCopy( GDALDriverH, const char *, GDALDatasetH,
+                              int, stringList, void *, void * );
+GDALDatasetH  GDALCreate( GDALDriverH hDriver,
+                          const char *, int, int, int, int ,
+                          stringList );
 
 GDALDriverH  GDALGetDriverByName( const char * );
 int          GDALGetDriverCount();
@@ -694,6 +705,12 @@ int      GDALGetGCPCount( GDALDatasetH );
 const char *GDALGetGCPProjection( GDALDatasetH );
 void     GDALFlushCache( GDALDatasetH );
 
+int      GDALDatasetAdviseRead( GDALDatasetH hDS,
+    int nDSXOff, int nDSYOff, int nDSXSize, int nDSYSize,
+    int nBXSize, int nBYSize, GDALDataType eBDataType,
+    int nBandCount, int *panBandCount, stringList options );
+
+
 /* ==================================================================== */
 /*      GDALRasterBand ... one band/channel in a dataset.               */
 /* ==================================================================== */
@@ -724,8 +741,16 @@ void             GDALComputeRasterMinMax( GDALRasterBandH hBand, int bApproxOK,
 int              GDALGetOverviewCount( GDALRasterBandH );
 GDALRasterBandH  GDALGetOverview( GDALRasterBandH, int );
 int              GDALFlushRasterCache( GDALRasterBandH );
-CPLErr           GDALFillRaster( GDALRasterBandH hBand, double dfRealValue,
+int              GDALFillRaster( GDALRasterBandH hBand, double dfRealValue,
 		                 double dfImaginaryValue );
+
+int      GDALRasterAdviseRead( GDALRasterBandH hRB, 
+    int nDSXOff, int nDSYOff, int nDSXSize, int nDSYSize,
+    int nBXSize, int nBYSize, GDALDataType eBDataType, stringList options );
+
+int      GDALComputeBandStats( GDALRasterBandH hBand, int nSampleStep, 
+                             double *pdfMean, double *pdfStdDev, 
+                             void *pfnProgress, void *pProgressData );
 
 /* ==================================================================== */
 /*      Color tables.                                                   */
@@ -754,7 +779,7 @@ int   GDALFlushCacheBlock();
 /*      gdalwarper.h                                                    */
 /* ==================================================================== */
 
-CPLErr
+int
 GDALReprojectImage( GDALDatasetH hSrcDS, NULLableString pszSrcWKT, 
                     GDALDatasetH hDstDS, NULLableString pszDstWKT,
                     int eResampleAlg, double dfWarpMemoryLimit,
@@ -762,7 +787,7 @@ GDALReprojectImage( GDALDatasetH hSrcDS, NULLableString pszSrcWKT,
                     void *pfnProgress, void *pProgressArg, 
                     void *psOptions );
 
-CPLErr
+int
 GDALCreateAndReprojectImage( GDALDatasetH hSrcDS, const char *pszSrcWKT, 
                     NULLableString pszDstFilename, NULLableString pszDstWKT,
                     GDALDriverH hDstDriver, stringList papszCreateOptions,
@@ -844,6 +869,37 @@ int PyProgressProxy( double dfComplete, const char *pszMessage, void *pData )
 
 %}
 
+%{
+/************************************************************************/
+/*                          MakeProgressInfo()                          */
+/************************************************************************/
+static PyObject *
+py_MakeProgressInfo(PyObject *self, PyObject *args) {
+
+    PyProgressData *psProgressInfo = NULL;
+    char szSwigTarget[128], szCBPtr[128];
+
+    self = self;
+
+    psProgressInfo = (PyProgressData *) CPLCalloc(1,sizeof(PyProgressData));
+    psProgressInfo->nLastReported = -1;
+    psProgressInfo->psPyCallback = NULL;
+    psProgressInfo->psPyCallbackData = NULL;
+
+    if(!PyArg_ParseTuple(args,"OO:MakeProgressInfo",	
+                         &(psProgressInfo->psPyCallback), 
+		         &(psProgressInfo->psPyCallbackData) ) )
+        return NULL;
+
+    SWIG_MakePtr( szCBPtr, PyProgressProxy, "_void_p" );	
+    SWIG_MakePtr( szSwigTarget, psProgressInfo, "_void_p" );	
+
+    return Py_BuildValue( "(ss)", szCBPtr, szSwigTarget );
+}
+%}
+
+%native(MakeProgressInfo) py_MakeProgressInfo;
+
 /* ==================================================================== */
 /*      Special custom functions.                                       */
 /* ==================================================================== */
@@ -905,164 +961,6 @@ py_GDALBuildOverviews(PyObject *self, PyObject *args) {
 %}
 
 %native(GDALBuildOverviews) py_GDALBuildOverviews;
-
-%{
-/************************************************************************/
-/*                           GDALCreateCopy()                           */
-/************************************************************************/
-static PyObject *
-py_GDALCreateCopy(PyObject *self, PyObject *args) {
-
-    PyObject *poPyOptions=NULL;
-    char *pszSwigDriver=NULL, *pszFilename=NULL, *pszSwigSourceDS=NULL;
-    int  bStrict = FALSE;
-    GDALDriverH hDriver = NULL;
-    GDALDatasetH hSourceDS = NULL, hTargetDS = NULL;   
-    char **papszOptions = NULL;
-    PyProgressData sProgressInfo;
-
-    self = self;
-    sProgressInfo.nLastReported = -1;
-    sProgressInfo.psPyCallback = NULL;
-    sProgressInfo.psPyCallbackData = NULL;
-    if(!PyArg_ParseTuple(args,"sss|iO!OO:GDALCreateCopy",	
-			 &pszSwigDriver, &pszFilename, &pszSwigSourceDS, 
-			 &bStrict, &PyList_Type, &poPyOptions,
-			 &(sProgressInfo.psPyCallback), 
-		         &(sProgressInfo.psPyCallbackData)) )
-        return NULL;
-
-    if (SWIG_GetPtr_2(pszSwigDriver,(void **) &hDriver,_GDALDriverH)) {
-        PyErr_SetString(PyExc_TypeError,
-	   	        "Type error in argument 1 of GDALCreateCopy."
-			" Expected _GDALDriverH.");
-        return NULL;
-    }
-	
-    if (SWIG_GetPtr_2(pszSwigSourceDS,(void **) &hSourceDS, _GDALDatasetH )) {
-        PyErr_SetString(PyExc_TypeError,
-	   	        "Type error in argument 3 of GDALCreateCopy."
-			" Expected _GDALDatasetH.");
-        return NULL;
-    }
-
-    if( poPyOptions != NULL )
-    {
-        int i;
-
-	for( i = 0; i < PyList_Size(poPyOptions); i++ )
-        {
-            char *pszItem = NULL;
-
-	    if( !PyArg_Parse(PyList_GET_ITEM(poPyOptions,i), "s", 
-			     &pszItem) )
-            {
-	        PyErr_SetString(PyExc_ValueError, "bad option list item");
-	        return NULL;
-            }
-            papszOptions = CSLAddString( papszOptions, pszItem );
-        }
-    }
-
-    hTargetDS = GDALCreateCopy( hDriver, pszFilename, hSourceDS, bStrict, 
-			        papszOptions, PyProgressProxy, &sProgressInfo);
-	
-    CSLDestroy( papszOptions );
-
-    if( hTargetDS == NULL )
-    {
-        Py_INCREF(Py_None);
-	return Py_None;
-    }
-    else
-    {
-        char  szSwigTarget[48];
-
-#ifdef SWIGTYPE_GDALDatasetH
-	SWIG_MakePtr( szSwigTarget, hTargetDS, SWIGTYPE_GDALDatasetH );	
-#else
-	SWIG_MakePtr( szSwigTarget, hTargetDS, "_GDALDatasetH" );	
-#endif
-	return Py_BuildValue( "s", szSwigTarget );
-    }
-}
-
-%}
-
-%native(GDALCreateCopy) py_GDALCreateCopy;
-
-%{
-/************************************************************************/
-/*                             GDALCreate()                             */
-/************************************************************************/
-static PyObject *
-py_GDALCreate(PyObject *self, PyObject *args) {
-
-    PyObject *poPyOptions=NULL;
-    char *pszSwigDriver=NULL, *pszFilename=NULL;
-    int  nXSize, nYSize, nBands, nDataType;
-    GDALDriverH hDriver = NULL;
-    GDALDatasetH hTargetDS = NULL;   
-    char **papszOptions = NULL;
-
-    self = self;
-    if(!PyArg_ParseTuple(args,"ssiiii|O!:GDALCreate",	
-			 &pszSwigDriver, &pszFilename, 
-			 &nXSize, &nYSize, &nBands, &nDataType,
-			 &PyList_Type, &poPyOptions ))
-        return NULL;
-
-    if (SWIG_GetPtr_2(pszSwigDriver,(void **) &hDriver, _GDALDriverH )) {
-        PyErr_SetString(PyExc_TypeError,
-	   	        "Type error in argument 1 of GDALCreate."
-			" Expected _GDALDriverH.");
-        return NULL;
-    }
-	
-    if( poPyOptions != NULL )
-    {
-        int i;
-
-	for( i = 0; i < PyList_Size(poPyOptions); i++ )
-        {
-            char *pszItem = NULL;
-
-	    if( !PyArg_Parse(PyList_GET_ITEM(poPyOptions,i), "s", 
-			     &pszItem) )
-            {
-	        PyErr_SetString(PyExc_ValueError, "bad option list item");
-	        return NULL;
-            }
-            papszOptions = CSLAddString( papszOptions, pszItem );
-        }
-    }
-
-    hTargetDS = GDALCreate( hDriver, pszFilename, nXSize, nYSize, nBands, 
-			    nDataType, papszOptions );
-	
-    CSLDestroy( papszOptions );
-
-    if( hTargetDS == NULL )
-    {
-        Py_INCREF(Py_None);
-	return Py_None;
-    }
-    else
-    {
-        char  szSwigTarget[48];
-
-#ifdef SWIGTYPE_GDALDatasetH
-	SWIG_MakePtr( szSwigTarget, hTargetDS, SWIGTYPE_GDALDatasetH );	
-#else
-	SWIG_MakePtr( szSwigTarget, hTargetDS, "_GDALDatasetH" );	
-#endif
-	return Py_BuildValue( "s", szSwigTarget );
-    }
-}
-
-%}
-
-%native(GDALCreate) py_GDALCreate;
 
 %{
 /************************************************************************/
