@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2003/03/07 21:28:56  warmerda
+ * support 0x8000 style 3D WKB flags
+ *
  * Revision 1.20  2003/02/08 00:37:14  warmerda
  * try to improve documentation
  *
@@ -265,12 +268,12 @@ OGRErr OGRPoint::importFromWkb( unsigned char * pabyData,
     if( eByteOrder == wkbNDR )
     {
         eGeometryType = (OGRwkbGeometryType) pabyData[1];
-        bIs3D = pabyData[4] & 0x80;
+        bIs3D = pabyData[4] & 0x80 || pabyData[2] & 0x80;
     }
     else
     {
         eGeometryType = (OGRwkbGeometryType) pabyData[4];
-        bIs3D = pabyData[1] & 0x80;
+        bIs3D = pabyData[1] & 0x80 || pabyData[3] & 0x80;
     }
 
     assert( eGeometryType == wkbPoint );

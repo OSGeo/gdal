@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2003/03/07 21:28:56  warmerda
+ * support 0x8000 style 3D WKB flags
+ *
  * Revision 1.18  2002/09/11 13:47:17  warmerda
  * preliminary set of fixes for 3D WKB enum
  *
@@ -409,9 +412,9 @@ OGRErr OGRPolygon::importFromWkb( unsigned char * pabyData,
 #endif    
 
     if( eByteOrder == wkbNDR )
-        b3D = pabyData[4];
+        b3D = pabyData[4] & 0x80 || pabyData[2] & 0x80;
     else
-        b3D = pabyData[1];
+        b3D = pabyData[1] & 0x80 || pabyData[3] & 0x80;
 
 /* -------------------------------------------------------------------- */
 /*      Do we already have some rings?                                  */
@@ -478,9 +481,6 @@ OGRErr  OGRPolygon::exportToWkb( OGRwkbByteOrder eByteOrder,
     int         nOffset;
     int         b3D = getCoordinateDimension() == 3;
     
-    if( b3D )
-        CPLDebug( "OGRPolygon", "exportToWkb() - 3D Mode" );
-
 /* -------------------------------------------------------------------- */
 /*      Set the byte order.                                             */
 /* -------------------------------------------------------------------- */
