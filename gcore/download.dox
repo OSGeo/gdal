@@ -30,9 +30,6 @@ Intel Linux system.<p>
 
 <ol>
 
-<li> GDAL 1.2.0 Binaries for Win32 systems are available from 
-<a href="http://vterrain.org/dist/gdal-120-ntbin.zip">http://vterrain.org/dist/gdal-120-ntbin.zip</a>.<p>
-
 <li> GDAL is also a component of the FreeGIS CDs available 
 from <a href="http://www.freegis.org/">www.freegis.org</a> in RPM format.<p>
 
