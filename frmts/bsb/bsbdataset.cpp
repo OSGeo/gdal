@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.8  2002/11/04 04:26:45  warmerda
+ * preliminary work on write support
+ *
  * Revision 1.7  2002/09/04 06:50:36  warmerda
  * avoid static driver pointers
  *
@@ -419,6 +422,122 @@ const GDAL_GCP *BSBDataset::GetGCPs()
 }
 
 /************************************************************************/
+/*                           BSBCreateCopy()                            */
+/************************************************************************/
+
+static GDALDataset *
+BSBCreateCopy( const char * pszFilename, GDALDataset *poSrcDS, 
+               int bStrict, char ** papszOptions, 
+               GDALProgressFunc pfnProgress, void * pProgressData )
+
+{
+    int  nBands = poSrcDS->GetRasterCount();
+    int  nXSize = poSrcDS->GetRasterXSize();
+    int  nYSize = poSrcDS->GetRasterYSize();
+
+/* -------------------------------------------------------------------- */
+/*      Some some rudimentary checks                                    */
+/* -------------------------------------------------------------------- */
+    if( nBands != 1 )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported, 
+                  "BSB driver only supports one band images.\n" );
+
+        return NULL;
+    }
+
+    if( poSrcDS->GetRasterBand(1)->GetRasterDataType() != GDT_Byte 
+        && bStrict )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported, 
+                  "BSB driver doesn't support data type %s. "
+                  "Only eight bit bands supported.\n", 
+                  GDALGetDataTypeName( 
+                      poSrcDS->GetRasterBand(1)->GetRasterDataType()) );
+
+        return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Open the output file.                                           */
+/* -------------------------------------------------------------------- */
+    BSBInfo *psBSB;
+
+    psBSB = BSBCreate( pszFilename, 0, 200, nXSize, nYSize );
+    if( psBSB == NULL )
+        return NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Prepare colortable.                                             */
+/* -------------------------------------------------------------------- */
+    GDALRasterBand	*poBand = poSrcDS->GetRasterBand(1);
+    int			iColor;
+    unsigned char       abyPCT[768];
+    int                 nPCTSize;
+
+    if( poBand->GetColorTable() == NULL )
+    {
+        for( iColor = 0; iColor < 256; iColor++ )
+        {
+            abyPCT[iColor*3 + 0] = iColor;
+            abyPCT[iColor*3 + 1] = iColor;
+            abyPCT[iColor*3 + 2] = iColor;
+        }
+        nPCTSize = 256;
+    }
+    else
+    {
+        GDALColorTable	*poCT = poBand->GetColorTable();
+
+        nPCTSize = poCT->GetColorEntryCount();
+        for( iColor = 0; iColor < nPCTSize; iColor++ )
+        {
+            GDALColorEntry	sEntry;
+
+            poCT->GetColorEntryAsRGB( iColor, &sEntry );
+            
+            abyPCT[iColor*3 + 0] = sEntry.c1;
+            abyPCT[iColor*3 + 1] = sEntry.c2;
+            abyPCT[iColor*3 + 2] = sEntry.c3;
+        }
+    }
+
+    BSBWritePCT( psBSB, nPCTSize, abyPCT );
+
+/* -------------------------------------------------------------------- */
+/*      Loop over image, copying image data.                            */
+/* -------------------------------------------------------------------- */
+    GByte 	*pabyScanline;
+    CPLErr      eErr = CE_None;
+
+    pabyScanline = (GByte *) CPLMalloc( nXSize );
+
+    for( int iLine = 0; iLine < nYSize && eErr == CE_None; iLine++ )
+    {
+        eErr = poBand->RasterIO( GF_Read, 0, iLine, nXSize, 1, 
+                                 pabyScanline, nXSize, 1, GDT_Byte,
+                                 nBands, nBands * nXSize );
+        if( eErr == CE_None && !BSBWriteScanline( psBSB, pabyScanline ) )
+            eErr = CE_Failure;
+    }
+
+    CPLFree( pabyScanline );
+
+/* -------------------------------------------------------------------- */
+/*      cleanup                                                         */
+/* -------------------------------------------------------------------- */
+    BSBClose( psBSB );
+
+    if( eErr != CE_None )
+    {
+        VSIUnlink( pszFilename );
+        return NULL;
+    }
+    else
+        return (GDALDataset *) GDALOpen( pszFilename, GA_ReadOnly );
+}
+
+/************************************************************************/
 /*                        GDALRegister_BSB()                            */
 /************************************************************************/
 
@@ -437,7 +556,13 @@ void GDALRegister_BSB()
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
                                    "frmt_various.html#BSB" );
 
+        poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, 
+"<CreationOptionList>\n"
+"   <Option name='NA' type='string'/>\n"
+"</CreationOptionList>\n" );
+
         poDriver->pfnOpen = BSBDataset::Open;
+        poDriver->pfnCreateCopy = BSBCreateCopy;
 
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
