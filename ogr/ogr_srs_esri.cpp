@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2002/12/16 17:07:42  warmerda
+ * dont alter projection parameter units ... ESRI was right!
+ *
  * Revision 1.17  2002/12/01 21:16:21  warmerda
  * added logic to correct angular projection parameter units when needed
  *
@@ -647,56 +650,6 @@ OGRErr OGRSpatialReference::morphToESRI()
                               apszDatumMapping+1, apszDatumMapping, 2 );
 
 /* -------------------------------------------------------------------- */
-/*      Translate false easting/northing to linear units.               */
-/* -------------------------------------------------------------------- */
-    double dfLinearUnits = GetLinearUnits();
-
-    if( dfLinearUnits != 1.0 && dfLinearUnits != 0.0 && IsProjected() )
-    {
-        if( GetProjParm( SRS_PP_FALSE_EASTING, 0.0 ) != 0.0 )
-            SetProjParm( SRS_PP_FALSE_EASTING, 
-                  GetProjParm( SRS_PP_FALSE_EASTING, 0.0 ) / dfLinearUnits );
-
-        if( GetProjParm( SRS_PP_FALSE_NORTHING, 0.0 ) != 0.0 )
-            SetProjParm( SRS_PP_FALSE_NORTHING, 
-                  GetProjParm( SRS_PP_FALSE_NORTHING, 0.0 ) / dfLinearUnits );
-    }
-
-/* -------------------------------------------------------------------- */
-/*      If the GEOGCS units are other than degree, then translate       */
-/*      all the angular projection parameters from degrees to that	*/
-/*      unit.								*/
-/* -------------------------------------------------------------------- */
-    double dfAngularUnits = GetAngularUnits();
-    double dfDegreeToRadian = atof(SRS_UA_DEGREE_CONV);
-
-    if( fabs(dfAngularUnits-dfDegreeToRadian) > 0.000000001 
-        && dfAngularUnits != 0.0
-        && IsProjected() )
-    {
-        OGR_SRSNode *poPROJCS = GetAttrNode( "PROJCS" );
-        
-        for( int iChild = 0; iChild < poPROJCS->GetChildCount(); iChild++ )
-        {
-            OGR_SRSNode *poPARAMETER = poPROJCS->GetChild( iChild );
-            const char  *pszParameterName;
-
-            if( !EQUAL(poPARAMETER->GetValue(),"PARAMETER") 
-                || poPARAMETER->GetChildCount() < 2 )
-                continue;
-
-            pszParameterName = poPARAMETER->GetChild(0)->GetValue();
-
-            if( !IsAngularParameter( pszParameterName ) )
-                continue;
-            
-            SetProjParm( pszParameterName, 
-                         GetProjParm( pszParameterName, 0.0 )
-                         * dfDegreeToRadian / dfAngularUnits );
-        }
-    }
-
-/* -------------------------------------------------------------------- */
 /*      Try to insert a D_ in front of the datum name.                  */
 /* -------------------------------------------------------------------- */
     OGR_SRSNode *poDatum;
@@ -776,56 +729,6 @@ OGRErr OGRSpatialReference::morphFromESRI()
             char *pszNewValue = CPLStrdup( poDatum->GetValue() + 2 );
             poDatum->SetValue( pszNewValue );
             CPLFree( pszNewValue );
-        }
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Try to convert any false easting or northing to meters.         */
-/* -------------------------------------------------------------------- */
-    double dfLinearUnits = GetLinearUnits();
-
-    if( dfLinearUnits != 1.0 && dfLinearUnits != 0.0 && IsProjected() )
-    {
-        if( GetProjParm( SRS_PP_FALSE_EASTING, 0.0 ) != 0.0 )
-            SetProjParm( SRS_PP_FALSE_EASTING, 
-                  GetProjParm( SRS_PP_FALSE_EASTING, 0.0 ) * dfLinearUnits );
-
-        if( GetProjParm( SRS_PP_FALSE_NORTHING, 0.0 ) != 0.0 )
-            SetProjParm( SRS_PP_FALSE_NORTHING, 
-                  GetProjParm( SRS_PP_FALSE_NORTHING, 0.0 ) * dfLinearUnits );
-    }
-
-/* -------------------------------------------------------------------- */
-/*      If the GEOGCS units are other than degree, then translate       */
-/*      all the angular projection parameters from that unit to         */
-/*      degrees.                                                        */
-/* -------------------------------------------------------------------- */
-    double dfAngularUnits = GetAngularUnits();
-    double dfDegreeToRadian = atof(SRS_UA_DEGREE_CONV);
-
-    if( fabs(dfAngularUnits-dfDegreeToRadian) > 0.000000001 
-        && dfAngularUnits != 0.0
-        && IsProjected() )
-    {
-        OGR_SRSNode *poPROJCS = GetAttrNode( "PROJCS" );
-        
-        for( int iChild = 0; iChild < poPROJCS->GetChildCount(); iChild++ )
-        {
-            OGR_SRSNode *poPARAMETER = poPROJCS->GetChild( iChild );
-            const char  *pszParameterName;
-
-            if( !EQUAL(poPARAMETER->GetValue(),"PARAMETER") 
-                || poPARAMETER->GetChildCount() < 2 )
-                continue;
-
-            pszParameterName = poPARAMETER->GetChild(0)->GetValue();
-
-            if( !IsAngularParameter( pszParameterName ) )
-                continue;
-            
-            SetProjParm( pszParameterName, 
-                         GetProjParm( pszParameterName, 0.0 )
-                         * dfAngularUnits / dfDegreeToRadian );
         }
     }
 
