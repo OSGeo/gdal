@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2004/08/12 08:24:26  warmerda
+ * added overview support
+ *
  * Revision 1.17  2004/08/11 18:51:48  warmerda
  * added warped dataset support
  *
@@ -189,11 +192,18 @@ class CPL_DLL VRTWarpedDataset : public VRTDataset
     GDALWarpOperation *poWarper;
 
 public:
+    int               nOverviewCount;
+    VRTWarpedDataset  **papoOverviews;
+
+public:
                       VRTWarpedDataset( int nXSize, int nYSize );
                      ~VRTWarpedDataset();
 
     CPLErr            Initialize( /* GDALWarpOptions */ void * );
 
+    virtual CPLErr IBuildOverviews( const char *, int, int *,
+                                    int, int *, GDALProgressFunc, void * );
+    
     virtual CPLXMLNode *SerializeToXML( const char *pszVRTPath );
     virtual CPLErr    XMLInit( CPLXMLNode *, const char * );
 
@@ -335,6 +345,9 @@ class CPL_DLL VRTWarpedRasterBand : public VRTRasterBand
     virtual CPLXMLNode *   SerializeToXML( const char *pszVRTPath );
 
     virtual CPLErr IReadBlock( int, int, void * );
+
+    virtual int GetOverviewCount();
+    virtual GDALRasterBand *GetOverview(int);
 };
 
 /************************************************************************/
