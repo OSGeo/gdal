@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.42  2002/12/10 04:04:38  warmerda
+ * added parent pointer to OGR_SRSNode
+ *
  * Revision 1.41  2002/12/09 16:11:02  warmerda
  * fixed constness of get authority calls
  *
@@ -187,6 +190,8 @@ class CPL_DLL OGR_SRSNode
 
     int         nChildren;
     OGR_SRSNode **papoChildNodes;
+
+    OGR_SRSNode *poParent;
 
     void        ClearChildren();
     
