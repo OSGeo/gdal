@@ -26,6 +26,9 @@
 ###############################################################################
 # 
 #  $Log$
+#  Revision 1.9  2003/04/22 13:30:05  warmerda
+#  Added -co flag.
+#
 #  Revision 1.8  2003/03/07 16:26:39  warmerda
 #  fixed up for ungeoreferenced files, supress extra error
 #
@@ -248,8 +251,8 @@ class file_info:
 
 # =============================================================================
 def Usage():
-    print 'Usage: gdal_merge.py [-o out_filename] [-f out_format] [-v] [-pct]'
-    print '                     [-ps pixelsize_x pixelsize_y] [-separate]'
+    print 'Usage: gdal_merge.py [-o out_filename] [-f out_format] [-co NAME=VALUE]*'
+    print '                     [-ps pixelsize_x pixelsize_y] [-separate] [-v] [-pct]'
     print '                     [-ul_lr ulx uly lrx lry] [-n nodata_value]'
     print '                     input_files'
     print
@@ -270,6 +273,7 @@ if __name__ == '__main__':
     separate = 0
     copy_pct = 0
     nodata = None
+    create_options = []
 
     # Parse command line arguments.
     i = 1
@@ -296,6 +300,10 @@ if __name__ == '__main__':
         elif arg == '-f':
             i = i + 1
             format = sys.argv[i]
+
+        elif arg == '-co':
+            i = i + 1
+            create_options.append( sys.argv[i] )
 
         elif arg == '-ps':
             psize_x = float(sys.argv[i+1])
@@ -365,7 +373,7 @@ if __name__ == '__main__':
             bands = file_infos[0].bands
 
         t_fh = Driver.Create( out_file, xsize, ysize, bands,
-                              file_infos[0].band_type )
+                              file_infos[0].band_type, create_options )
         t_fh.SetGeoTransform( geotransform )
 
         if copy_pct:
@@ -375,8 +383,6 @@ if __name__ == '__main__':
             bands = len(file_infos)
         else:
             bands = min(file_infos[0].bands,t_fh.RasterCount)
-
-        
 
     # Copy data from source files into output file.
     t_band = 1
