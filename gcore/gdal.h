@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.34  2001/01/30 22:32:42  warmerda
+ * added AVERAGE_MP (magnitude preserving averaging) overview resampling type
+ *
  * Revision 1.33  2000/10/06 18:30:01  warmerda
  * Fixed CPL_DLL position for GDALGetRasterCategoryNames().
  *
@@ -386,6 +389,16 @@ CPLErr CPL_DLL GDALGetRasterHistogram( GDALRasterBandH hBand,
                                        void * pProgressData );
 int CPL_DLL GDALGetRandomRasterSample( GDALRasterBandH, int, float * );
 GDALRasterBandH CPL_DLL GDALGetRasterSampleOverview( GDALRasterBandH, int );
+
+CPLErr GDALComputeBandStats( GDALRasterBandH hBand, int nSampleStep, 
+                             double *pdfMean, double *pdfStdDev, 
+                             GDALProgressFunc pfnProgress,
+                             void *pProgressData );
+CPLErr GDALOverviewMagnitudeCorrection( GDALRasterBandH hBaseBand, 
+                                        int nOverviewCount, 
+                                        GDALRasterBandH *pahOverviews, 
+                                        GDALProgressFunc pfnProgress, 
+                                        void *pProgressData );
 
 /* need to add functions related to block cache */
 

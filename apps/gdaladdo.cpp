@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2001/01/30 22:32:42  warmerda
+ * added AVERAGE_MP (magnitude preserving averaging) overview resampling type
+ *
  * Revision 1.3  2000/08/18 15:24:32  warmerda
  * use terminal progress monitor
  *
@@ -48,7 +51,8 @@
 static void Usage()
 
 {
-    printf( "Usage: gdaladdo [-r {nearest,average,mode}] filename levels\n"
+    printf( "Usage: gdaladdo [-r {nearest,average,average_mp,mode}]\n"
+            "                filename levels\n"
             "\n"
             "Example:\n"
             " %% gdaladdo -r average abc.tif 2 4 8 16\n" );

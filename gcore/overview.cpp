@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2001/01/30 22:32:42  warmerda
+ * added AVERAGE_MP (magnitude preserving averaging) overview resampling type
+ *
  * Revision 1.5  2000/11/22 18:41:45  warmerda
  * fixed bug in complex overview generation
  *
@@ -122,7 +125,7 @@ GDALDownsampleChunk32R( int nSrcWidth, int nSrcHeight,
                 int    nCount = 0, iX, iY;
 
                 for( iY = nSrcYOff; iY < nSrcYOff2; iY++ )
-                {
+                 {
                     for( iX = nSrcXOff; iX < nSrcXOff2; iX++ )
                     {
                         dfTotal += pafSrcScanline[iX+(iY-nSrcYOff)*nSrcWidth];
@@ -445,12 +448,250 @@ GDALRegenerateOverviews( GDALRasterBand *poSrcBand,
     VSIFree( pafChunk );
     
 /* -------------------------------------------------------------------- */
+/*      Renormalized overview mean / stddev if needed.                  */
+/* -------------------------------------------------------------------- */
+    if( EQUAL(pszResampling,"AVERAGE_MP") )
+    {
+        GDALOverviewMagnitudeCorrection( (GDALRasterBandH) poSrcBand, 
+                                         nOverviews, 
+                                         (GDALRasterBandH *) papoOvrBands,
+                                         GDALDummyProgress, NULL );
+    }
+
+/* -------------------------------------------------------------------- */
 /*      It can be important to flush out data to overviews.             */
 /* -------------------------------------------------------------------- */
     for( int iOverview = 0; iOverview < nOverviews; iOverview++ )
         papoOvrBands[iOverview]->FlushCache();
 
     pfnProgress( 1.0, NULL, pProgressData );
+
+    return CE_None;
+}
+
+/************************************************************************/
+/*                        GDALComputeBandStats()                        */
+/************************************************************************/
+
+CPLErr
+GDALComputeBandStats( GDALRasterBandH hSrcBand,
+                      int nSampleStep,
+                      double *pdfMean, double *pdfStdDev, 
+                      GDALProgressFunc pfnProgress, 
+                      void *pProgressData )
+
+{
+    GDALRasterBand *poSrcBand = (GDALRasterBand *) hSrcBand;
+    int		iLine, nWidth, nHeight;
+    GDALDataType eType = poSrcBand->GetRasterDataType();
+    GDALDataType eWrkType;
+    int		bComplex;
+    float	*pafData;
+    double	dfSum=0.0, dfSum2=0.0;
+    int		nSamples = 0;
+
+    nWidth = poSrcBand->GetXSize();
+    nHeight = poSrcBand->GetYSize();
+
+    if( nSampleStep >= nHeight )
+        nSampleStep = 1;
+
+    bComplex = GDALDataTypeIsComplex(eType);
+    if( bComplex )
+    {
+        pafData = (float *) CPLMalloc(nWidth * 2 * sizeof(float));
+        eWrkType = GDT_CFloat32;
+    }
+    else
+    {
+        pafData = (float *) CPLMalloc(nWidth * sizeof(float));
+        eWrkType = GDT_Float32;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Loop over all sample lines.                                     */
+/* -------------------------------------------------------------------- */
+    for( iLine = 0; iLine < nHeight; iLine += nSampleStep )
+    {
+        int	iPixel;
+
+        if( !pfnProgress( iLine / (double) nHeight,
+                          NULL, pProgressData ) )
+        {
+            CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
+            CPLFree( pafData );
+            return CE_Failure;
+        }
+
+        poSrcBand->RasterIO( GF_Read, 0, iLine, nWidth, 1,
+                             pafData, nWidth, 1, eWrkType,
+                             0, 0 );
+
+        for( iPixel = 0; iPixel < nWidth; iPixel++ )
+        {
+            float	fValue;
+
+            if( bComplex )
+            {
+                // Compute the magnitude of the complex value.
+
+                fValue = sqrt(pafData[iPixel*2  ] * pafData[iPixel*2  ]
+                            + pafData[iPixel*2+1] * pafData[iPixel*2+1]);
+            }
+            else
+            {
+                fValue = pafData[iPixel];
+            }
+
+            dfSum  += fValue;
+            dfSum2 += fValue * fValue;
+        }
+
+        nSamples += nWidth;
+    }
+
+    if( !pfnProgress( 1.0, NULL, pProgressData ) )
+    {
+        CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
+        CPLFree( pafData );
+        return CE_Failure;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Produce the result values.                                      */
+/* -------------------------------------------------------------------- */
+    if( pdfMean != NULL )
+        *pdfMean = dfSum / nSamples;
+
+    if( pdfStdDev != NULL )
+    {
+        double	dfMean = dfSum / nSamples;
+
+        *pdfStdDev = sqrt((dfSum2 / nSamples) - (dfMean * dfMean));
+    }
+
+    CPLFree( pafData );
+
+    return CE_None;
+}
+
+/************************************************************************/
+/*                  GDALOverviewMagnitudeCorrection()                   */
+/*                                                                      */
+/*      Correct the mean and standard deviation of the overviews of     */
+/*      the given band to match the base layer approximately.           */
+/************************************************************************/
+
+CPLErr
+GDALOverviewMagnitudeCorrection( GDALRasterBandH hBaseBand, 
+                                 int nOverviewCount,
+                                 GDALRasterBandH *pahOverviews,
+                                 GDALProgressFunc pfnProgress, 
+                                 void *pProgressData )
+
+{
+    CPLErr	eErr;
+    double	dfOrigMean, dfOrigStdDev;
+
+/* -------------------------------------------------------------------- */
+/*      Compute mean/stddev for source raster.                          */
+/* -------------------------------------------------------------------- */
+    eErr = GDALComputeBandStats( hBaseBand, 2, &dfOrigMean, &dfOrigStdDev, 
+                                 pfnProgress, pProgressData );
+
+    if( eErr != CE_None )
+        return eErr;
+    
+/* -------------------------------------------------------------------- */
+/*      Loop on overview bands.                                         */
+/* -------------------------------------------------------------------- */
+    int		iOverview;
+
+    for( iOverview = 0; iOverview < nOverviewCount; iOverview++ )
+    {
+        GDALRasterBand *poOverview = (GDALRasterBand *)pahOverviews[iOverview];
+        double	dfOverviewMean, dfOverviewStdDev;
+        double	dfGain;
+
+        eErr = GDALComputeBandStats( pahOverviews[iOverview], 1, 
+                                     &dfOverviewMean, &dfOverviewStdDev, 
+                                     pfnProgress, pProgressData );
+
+        if( eErr != CE_None )
+            return eErr;
+
+        if( dfOrigStdDev < 0.0001 )
+            dfGain = 1.0;
+        else
+            dfGain = dfOrigStdDev / dfOverviewStdDev;
+
+/* -------------------------------------------------------------------- */
+/*      Apply gain and offset.                                          */
+/* -------------------------------------------------------------------- */
+        GDALDataType	eWrkType, eType = poOverview->GetRasterDataType();
+        int		iLine, nWidth, nHeight, bComplex;
+        float		*pafData;
+
+        nWidth = poOverview->GetXSize();
+        nHeight = poOverview->GetYSize();
+
+        bComplex = GDALDataTypeIsComplex(eType);
+        if( bComplex )
+        {
+            pafData = (float *) CPLMalloc(nWidth * 2 * sizeof(float));
+            eWrkType = GDT_CFloat32;
+        }
+        else
+        {
+            pafData = (float *) CPLMalloc(nWidth * sizeof(float));
+            eWrkType = GDT_Float32;
+        }
+
+        for( iLine = 0; iLine < nHeight; iLine++ )
+        {
+            int	iPixel;
+            
+            if( !pfnProgress( iLine / (double) nHeight,
+                              NULL, pProgressData ) )
+            {
+                CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
+                CPLFree( pafData );
+                return CE_Failure;
+            }
+
+            poOverview->RasterIO( GF_Read, 0, iLine, nWidth, 1,
+                                  pafData, nWidth, 1, eWrkType,
+                                  0, 0 );
+            
+            for( iPixel = 0; iPixel < nWidth; iPixel++ )
+            {
+                if( bComplex )
+                {
+                    pafData[iPixel*2] *= dfGain;
+                    pafData[iPixel*2+1] *= dfGain;
+                }
+                else
+                {
+                    pafData[iPixel] = (pafData[iPixel]-dfOverviewMean)*dfGain 
+                        + dfOrigMean;
+
+                }
+            }
+
+            poOverview->RasterIO( GF_Write, 0, iLine, nWidth, 1,
+                                  pafData, nWidth, 1, eWrkType,
+                                  0, 0 );
+        }
+
+        if( !pfnProgress( 1.0, NULL, pProgressData ) )
+        {
+            CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
+            CPLFree( pafData );
+            return CE_Failure;
+        }
+        
+        CPLFree( pafData );
+    }
 
     return CE_None;
 }
