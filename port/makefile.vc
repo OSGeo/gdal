@@ -1,0 +1,23 @@
+#
+# CPL (Common Portability Library) makefile
+#
+
+OBJ	=	cpl_conv.obj \
+		cpl_error.obj \
+		cpl_string.obj \
+		cpl_vsisimple.obj \
+		cplgetsymbol.obj \
+		cpl_dir.obj
+
+LIB	=	cpl.lib
+
+!INCLUDE ..\nmake.opt
+
+default:	$(LIB)
+
+$(LIB):	$(OBJ)
+	lib /out:cpl.lib *.obj
+
+clean:
+	del *.obj *.lib
+
