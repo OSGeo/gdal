@@ -25,6 +25,9 @@
  * The GDALDriverManager class from gdal_priv.h.
  * 
  * $Log$
+ * Revision 1.19  2004/04/29 19:14:27  warmerda
+ * Avoid extra newline when autoregistering.
+ *
  * Revision 1.18  2004/04/16 06:23:46  warmerda
  * Use CPLGetConfigOption() instead of getenv().
  *
@@ -596,7 +599,7 @@ void GDALDriverManager::AutoLoadDrivers()
             
             if( pRegister != NULL )
             {
-                CPLDebug( "GDAL", "Auto register %s using %s\n", 
+                CPLDebug( "GDAL", "Auto register %s using %s.", 
                           pszFilename, pszFuncName );
 
                 ((void (*)()) pRegister)();
