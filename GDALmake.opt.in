@@ -98,9 +98,9 @@ GDAL_INCLUDE	=	-I$(GDAL_ROOT)/port -I$(GDAL_ROOT)/gcore \
 
 # libtool targets and help variables
 LIBGDAL	:=	$(GDAL_ROOT)/libgdal.la
-LIBGDAL_CURRENT	:=	4
+LIBGDAL_CURRENT	:=	5
 LIBGDAL_REVISION	:=	0
-LIBGDAL_AGE	:=	3
+LIBGDAL_AGE	:=	4
 
 # native build targets and variables
 GDAL_VER	=	@GDAL_VER@
@@ -224,7 +224,7 @@ endif
 #
 GDAL_FORMATS = 	gxf gtiff hfa aigrid aaigrid ceos ceos2 iso8211 xpm \
 		sdts raw dted mem jdem envisat elas fit vrt usgsdem l1b \
-		nitf bmp pcidsk \
+		nitf bmp pcidsk airsar \
 		@OPT_GDAL_FORMATS@
 
 #
