@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2003/09/17 22:20:48  gwalter
+ * Added CreateCopy() function.
+ *
  * Revision 1.2  2003/09/11 20:07:36  warmerda
  * avoid casting warning
  *
@@ -87,6 +90,12 @@ class PCIDSKDataset : public RawDataset
     static GDALDataset  *Create( const char * pszFilename,
                                  int nXSize, int nYSize, int nBands,
                                  GDALDataType eType, char **papszParmList );
+    static GDALDataset *CreateCopy( const char * pszFilename, 
+                                    GDALDataset *poSrcDS, 
+                                    int bStrict, char ** papszOptions, 
+                                    GDALProgressFunc pfnProgress, 
+                                    void * pProgressData );
+
     virtual void        FlushCache( void );
 
     CPLErr              GetGeoTransform( double * padfTransform );
@@ -1025,6 +1034,152 @@ GDALDataset *PCIDSKDataset::Create( const char * pszFilename,
     return (GDALDataset *) GDALOpen( pszFilename, GA_Update );
 }
 
+
+
+/************************************************************************/
+/*                             CreateCopy()                             */
+/************************************************************************/
+
+GDALDataset *
+PCIDSKDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS, 
+                        int bStrict, char ** papszOptions, 
+                        GDALProgressFunc pfnProgress, void * pProgressData )
+
+{
+    PCIDSKDataset	*poDS;
+    GDALDataType eType = poSrcDS->GetRasterBand(1)->GetRasterDataType();
+    int          iBand;
+
+    if( !pfnProgress( 0.0, NULL, pProgressData ) )
+        return NULL;
+
+    /* check that other bands match type- sets type */
+    /* to unknown if they differ.                  */
+    for( iBand = 1; iBand < poSrcDS->GetRasterCount(); iBand++ )
+     {
+         GDALRasterBand *poBand = poSrcDS->GetRasterBand( iBand+1 );
+         eType = GDALDataTypeUnion( eType, poBand->GetRasterDataType() );
+     }
+
+    poDS = (PCIDSKDataset *) Create( pszFilename, 
+                                  poSrcDS->GetRasterXSize(), 
+                                  poSrcDS->GetRasterYSize(), 
+                                  poSrcDS->GetRasterCount(), 
+                                  eType, papszOptions );
+
+   /* Check that Create worked- return Null if it didn't */
+    if (poDS == NULL)
+        return NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Copy the image data.                                            */
+/* -------------------------------------------------------------------- */
+    int         nXSize = poDS->GetRasterXSize();
+    int         nYSize = poDS->GetRasterYSize();
+    int  	nBlockXSize, nBlockYSize, nBlockTotal, nBlocksDone;
+
+    poDS->GetRasterBand(1)->GetBlockSize( &nBlockXSize, &nBlockYSize );
+
+    nBlockTotal = ((nXSize + nBlockXSize - 1) / nBlockXSize)
+        * ((nYSize + nBlockYSize - 1) / nBlockYSize)
+        * poSrcDS->GetRasterCount();
+
+    nBlocksDone = 0;
+    for( iBand = 0; iBand < poSrcDS->GetRasterCount(); iBand++ )
+    {
+        GDALRasterBand *poSrcBand = poSrcDS->GetRasterBand( iBand+1 );
+        GDALRasterBand *poDstBand = poDS->GetRasterBand( iBand+1 );
+        int	       iYOffset, iXOffset;
+        void           *pData;
+        CPLErr  eErr;
+
+
+        pData = CPLMalloc(nBlockXSize * nBlockYSize
+                          * GDALGetDataTypeSize(eType) / 8);
+
+        for( iYOffset = 0; iYOffset < nYSize; iYOffset += nBlockYSize )
+        {
+            for( iXOffset = 0; iXOffset < nXSize; iXOffset += nBlockXSize )
+            {
+                int	nTBXSize, nTBYSize;
+
+                if( !pfnProgress( (nBlocksDone++) / (float) nBlockTotal,
+                                  NULL, pProgressData ) )
+                {
+                    CPLError( CE_Failure, CPLE_UserInterrupt, 
+                              "User terminated" );
+                    delete poDS;
+
+                    GDALDriver *poPCIDSKDriver = 
+                        (GDALDriver *) GDALGetDriverByName( "PCIDSK" );
+                    poPCIDSKDriver->Delete( pszFilename );
+                    return NULL;
+                }
+
+                nTBXSize = MIN(nBlockXSize,nXSize-iXOffset);
+                nTBYSize = MIN(nBlockYSize,nYSize-iYOffset);
+
+                eErr = poSrcBand->RasterIO( GF_Read, 
+                                            iXOffset, iYOffset, 
+                                            nTBXSize, nTBYSize,
+                                            pData, nTBXSize, nTBYSize,
+                                            eType, 0, 0 );
+                if( eErr != CE_None )
+                {
+                    return NULL;
+                }
+            
+                eErr = poDstBand->RasterIO( GF_Write, 
+                                            iXOffset, iYOffset, 
+                                            nTBXSize, nTBYSize,
+                                            pData, nTBXSize, nTBYSize,
+                                            eType, 0, 0 );
+
+                if( eErr != CE_None )
+                {
+                    return NULL;
+                }
+            }
+        }
+
+        CPLFree( pData );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Copy georeferencing information, if enough is available.        */
+/* -------------------------------------------------------------------- */
+
+    double *tempGeoTransform=NULL; 
+
+    tempGeoTransform = (double *) CPLMalloc(6*sizeof(double));
+
+    if (( poSrcDS->GetGeoTransform( tempGeoTransform ) == CE_None)
+        && (tempGeoTransform[0] != 0.0 || tempGeoTransform[1] != 1.0
+        || tempGeoTransform[2] != 0.0 || tempGeoTransform[3] != 0.0
+        || tempGeoTransform[4] != 0.0 || ABS(tempGeoTransform[5]) != 1.0 ))
+    {
+          poDS->SetProjection(poSrcDS->GetProjectionRef());
+          poDS->SetGeoTransform(tempGeoTransform);
+    }
+    CPLFree(tempGeoTransform);
+        
+   
+    poDS->FlushCache();
+
+    if( !pfnProgress( 1.0, NULL, pProgressData ) )
+    {
+        CPLError( CE_Failure, CPLE_UserInterrupt, 
+                  "User terminated" );
+        delete poDS;
+
+        GDALDriver *poPCIDSKDriver = 
+            (GDALDriver *) GDALGetDriverByName( "PCIDSK" );
+        poPCIDSKDriver->Delete( pszFilename );
+        return NULL;
+    }
+
+    return poDS;
+}
 /************************************************************************/
 /*                        GDALRegister_PCIDSK()                         */
 /************************************************************************/
@@ -1049,10 +1204,11 @@ void GDALRegister_PCIDSK()
 "   <Option name='FILEDESC1' type='string' description='The first line of descriptive text'/>"
 "   <Option name='FILEDESC2' type='string' description='The second line of descriptive text'/>"
 "   <Option name='BANDDESCn' type='string' description='Text describing contents of the specified band'/>"
-"</CreationOptionList>" );
+"</CreationOptionList>" ); 
 
         poDriver->pfnOpen = PCIDSKDataset::Open;
         poDriver->pfnCreate = PCIDSKDataset::Create;
+        poDriver->pfnCreateCopy = PCIDSKDataset::CreateCopy;
 
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
