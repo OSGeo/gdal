@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.90  2005/02/23 14:53:43  fwarmerdam
+ * moved version info into gdal_version.h
+ *
  * Revision 1.89  2005/02/10 04:30:29  fwarmerdam
  * added support for YCbCr color space
  *
@@ -180,21 +183,9 @@
  * Public (C callable) GDAL entry points.
  */
 
+#include "gdal_version.h"
 #include "cpl_port.h"
 #include "cpl_error.h"
-
-/* -------------------------------------------------------------------- */
-/*      GDAL Version Information.                                       */
-/* -------------------------------------------------------------------- */
-#ifndef GDAL_VERSION_NUM
-#  define GDAL_VERSION_NUM      1250
-#endif
-#ifndef GDAL_RELEASE_DATE
-#  define GDAL_RELEASE_DATE     20041122
-#endif
-#ifndef GDAL_RELEASE_NAME
-#  define GDAL_RELEASE_NAME     "1.2.5.0"
-#endif
 
 /* -------------------------------------------------------------------- */
 /*      Significant constants.                                          */
