@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.36  2003/08/31 14:51:01  dron
+ * Added OSRImportFromPCI().
+ *
  * Revision 1.35  2003/08/18 13:26:01  warmerda
  * added SetTMVariant() and related definitions
  *
@@ -335,6 +338,8 @@ OGRErr CPL_DLL OSRImportFromEPSG( OGRSpatialReferenceH, int );
 OGRErr CPL_DLL OSRImportFromWkt( OGRSpatialReferenceH, char ** );
 OGRErr CPL_DLL OSRImportFromProj4( OGRSpatialReferenceH, const char *);
 OGRErr CPL_DLL OSRImportFromESRI( OGRSpatialReferenceH, char **);
+OGRErr OSRImportFromPCI( OGRSpatialReferenceH hSRS, const char *,
+                         const char *, double * );
 OGRErr CPL_DLL OSRImportFromXML( OGRSpatialReferenceH, const char * );
 OGRErr CPL_DLL OSRExportToWkt( OGRSpatialReferenceH, char ** );
 OGRErr CPL_DLL OSRExportToPrettyWkt( OGRSpatialReferenceH, char **, int);
