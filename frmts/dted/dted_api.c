@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2003/08/04 18:23:07  warmerda
+ * added warning when twos complement hack applied
+ *
  * Revision 1.12  2003/05/30 16:17:21  warmerda
  * fix warnings with casting and unused parameters
  *
@@ -319,8 +322,19 @@ int DTEDReadProfile( DTEDInfo * psDInfo, int nColumnOffset,
             // in twos complement.  eg. w_069_s50.dt0
             if( panData[i] < -16000 )
             {
+                static int bWarned = FALSE;
+
                 memcpy( panData + i, pabyRecord + 8+i*2, 2 );
                 panData[i] = CPL_MSBWORD16( panData[i] );
+
+                if( !bWarned )
+                {
+                    bWarned = TRUE;
+                    CPLError( CE_Warning, CPLE_AppDefined,
+                              "The DTED driver found values less than -16000, and has adjusted\n"
+                              "them assuming they are improperly two-complemented.  No more warnings\n"
+                              "will be issued in this session about this operation." );
+                }
             }
         }
     }
