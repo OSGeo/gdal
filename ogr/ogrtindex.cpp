@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2002/04/25 20:56:29  warmerda
+ * expanded tabs
+ *
  * Revision 1.1  2002/03/27 18:34:43  warmerda
  * New
  *
@@ -207,7 +210,7 @@ int main( int nArgc, char ** papszArgv )
 
         for( iLayer = 0; iLayer < poDS->GetLayerCount(); iLayer++ )
         {
-            int	bRequested = bLayersWildcarded;
+            int bRequested = bLayersWildcarded;
             OGRLayer *poLayer = poDS->GetLayer(iLayer);
 
             for( iArg = 1; iArg < nArgc && !bRequested; iArg++ )
