@@ -28,6 +28,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.3  2003/04/23 04:36:54  warmerda
+ * pthreads based implementation
+ *
  * Revision 1.2  2002/07/11 19:36:34  warmerda
  * CPLCreateMutex() should implicitly acquire it, fix stub version
  *
@@ -52,6 +55,16 @@ CPL_CVSID("$Id$");
 /*      creation doesn't work.  The PID is always just one.             */
 /* ==================================================================== */
 /************************************************************************/
+
+/************************************************************************/
+/*                        CPLGetThreadingModel()                        */
+/************************************************************************/
+
+const char *CPLGetThreadingModel()
+
+{
+    return "stub";
+}
 
 /************************************************************************/
 /*                           CPLCreateMutex()                           */
@@ -259,6 +272,16 @@ void CPLSleep( double dfWaitInSeconds )
 
 
 /************************************************************************/
+/*                        CPLGetThreadingModel()                        */
+/************************************************************************/
+
+const char *CPLGetThreadingModel()
+
+{
+    return "win32";
+}
+
+/************************************************************************/
 /*                           CPLCreateMutex()                           */
 /************************************************************************/
 
@@ -439,4 +462,178 @@ void CPLSleep( double dfWaitInSeconds )
 }
 
 #endif /* def CPL_MULTIPROC_WIN32 */
+
+#ifdef CPL_MULTIPROC_PTHREAD
+#include <pthread.h>
+#include <time.h>
+
+  /************************************************************************/
+  /* ==================================================================== */
+  /*                        CPL_MULTIPROC_PTHREAD                         */
+  /*                                                                      */
+  /*    PTHREAD Implementation of multiprocessing functions.              */
+  /* ==================================================================== */
+  /************************************************************************/
+
+
+/************************************************************************/
+/*                        CPLGetThreadingModel()                        */
+/************************************************************************/
+
+const char *CPLGetThreadingModel()
+
+{
+    return "pthread";
+}
+
+/************************************************************************/
+/*                           CPLCreateMutex()                           */
+/************************************************************************/
+
+void *CPLCreateMutex()
+
+{
+    pthread_mutex_t *hMutex;
+    pthread_mutex_t hMutexSrc = PTHREAD_MUTEX_INITIALIZER;
+
+    hMutex = (pthread_mutex_t *) malloc(sizeof(pthread_mutex_t));
+    *hMutex = hMutexSrc;
+
+    return (void *) hMutex;
+}
+
+/************************************************************************/
+/*                          CPLAcquireMutex()                           */
+/************************************************************************/
+
+int CPLAcquireMutex( void *hMutexIn, double dfWaitInSeconds )
+
+{
+    /* we need to add timeout support */
+    pthread_mutex_lock( (pthread_mutex_t *) hMutexIn );
+
+    return TRUE;
+}
+
+/************************************************************************/
+/*                          CPLReleaseMutex()                           */
+/************************************************************************/
+
+void CPLReleaseMutex( void *hMutexIn )
+
+{
+    pthread_mutex_unlock( (pthread_mutex_t *) hMutexIn );
+}
+
+/************************************************************************/
+/*                          CPLDestroyMutex()                           */
+/************************************************************************/
+
+void CPLDestroyMutex( void *hMutexIn )
+
+{
+    pthread_mutex_destroy( (pthread_mutex_t *) hMutexIn );
+    CPLFree( hMutexIn );
+}
+
+/************************************************************************/
+/*                            CPLLockFile()                             */
+/************************************************************************/
+
+void *CPLLockFile( const char *pszPath, double dfWaitInSeconds )
+
+{
+    CPLError( CE_Failure, CPLE_NotSupported, 
+              "PThreads CPLLockFile() not implemented yet." );
+
+    return NULL;
+}
+
+/************************************************************************/
+/*                           CPLUnlockFile()                            */
+/************************************************************************/
+
+void CPLUnlockFile( void *hLock )
+
+{
+}
+
+/************************************************************************/
+/*                             CPLGetPID()                              */
+/************************************************************************/
+
+int CPLGetPID()
+
+{
+    return (int) pthread_self();
+}
+
+/************************************************************************/
+/*                       CPLStdCallThreadJacket()                       */
+/************************************************************************/
+
+typedef struct {
+    void *pAppData;
+    void (*pfnMain)(void *);
+    pthread_t hThread;
+} CPLStdCallThreadInfo;
+
+static void *CPLStdCallThreadJacket( void *pData )
+
+{
+    CPLStdCallThreadInfo *psInfo = (CPLStdCallThreadInfo *) pData;
+
+    psInfo->pfnMain( psInfo->pAppData );
+
+    CPLFree( psInfo );
+
+    return NULL;
+}
+
+/************************************************************************/
+/*                          CPLCreateThread()                           */
+/*                                                                      */
+/*      The WIN32 CreateThread() call requires an entry point that      */
+/*      has __stdcall conventions, so we provide a jacket function      */
+/*      to supply that.                                                 */
+/************************************************************************/
+
+int CPLCreateThread( void (*pfnMain)(void *), void *pThreadArg )
+
+{
+    
+    CPLStdCallThreadInfo *psInfo;
+    pthread_attr_t hThreadAttr;
+
+    psInfo = (CPLStdCallThreadInfo*) CPLCalloc(sizeof(CPLStdCallThreadInfo),1);
+    psInfo->pAppData = pThreadArg;
+    psInfo->pfnMain = pfnMain;
+
+    pthread_attr_init( &hThreadAttr );
+    pthread_attr_setdetachstate( &hThreadAttr, PTHREAD_CREATE_DETACHED );
+    if( pthread_create( &(psInfo->hThread), &hThreadAttr, 
+                        CPLStdCallThreadJacket, (void *) psInfo ) != 0 )
+    {
+        CPLFree( psInfo );
+        return -1;
+    }
+
+    return 1; /* can we return the actual thread pid? */
+}
+
+/************************************************************************/
+/*                              CPLSleep()                              */
+/************************************************************************/
+
+void CPLSleep( double dfWaitInSeconds )
+
+{
+    struct timespec sRequest, sRemain;
+
+    sRequest.tv_sec = (int) floor(dfWaitInSeconds);
+    sRequest.tv_nsec = (int) ((dfWaitInSeconds - sRequest.tv_sec)*1000000000);
+    nanosleep( &sRequest, &sRemain );
+}
+
+#endif /* def CPL_MULTIPROC_PTHREAD */
 

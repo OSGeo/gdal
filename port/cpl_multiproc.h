@@ -28,6 +28,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.3  2003/04/23 04:36:55  warmerda
+ * pthreads based implementation
+ *
  * Revision 1.2  2002/05/24 04:09:24  warmerda
  * fixed CPL_DLL declarations
  *
@@ -68,6 +71,8 @@ void  CPL_DLL CPLDestroyMutex( void *hMutex );
 int   CPL_DLL CPLGetPID();
 int   CPL_DLL CPLCreateThread( void (*pfnMain)(void *), void *pArg );
 void  CPL_DLL CPLSleep( double dfWaitInSeconds );
+
+const char CPL_DLL *CPLGetThreadingModel();
 
 CPL_C_END
 
