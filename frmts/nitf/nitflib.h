@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2004/04/28 15:19:00  warmerda
+ * added geocentric to geodetic conversion
+ *
  * Revision 1.11  2004/04/16 15:26:04  warmerda
  * completed metadata support
  *
@@ -293,6 +296,9 @@ typedef struct  {
 int CPL_DLL NITFReadRPC00B( NITFImage *psImage, NITFRPC00BInfo * );
 int CPL_DLL NITFRPCGeoToImage(NITFRPC00BInfo *, double, double, double,
                               double *, double *);
+
+double CPL_DLL 
+        NITF_WGS84_Geocentric_Latitude_To_Geodetic_Latitude( double dfLat );
 
 CPL_C_END
 

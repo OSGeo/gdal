@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2004/04/28 15:19:00  warmerda
+ * added geocentric to geodetic conversion
+ *
  * Revision 1.19  2004/04/16 15:26:04  warmerda
  * completed metadata support
  *
@@ -538,13 +541,36 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     OGRSpatialReference oSRSWork;
 
-    if( psImage->chICORDS == 'G' || psImage->chICORDS == 'C' )
+    if( psImage->chICORDS == 'G'  )
     {
         CPLFree( poDS->pszProjection );
         poDS->pszProjection = NULL;
         
         oSRSWork.SetWellKnownGeogCS( "WGS84" );
         oSRSWork.exportToWkt( &(poDS->pszProjection) );
+    }
+    else if( psImage->chICORDS == 'C' )
+    {
+        CPLFree( poDS->pszProjection );
+        poDS->pszProjection = NULL;
+        
+        oSRSWork.SetWellKnownGeogCS( "WGS84" );
+        oSRSWork.exportToWkt( &(poDS->pszProjection) );
+
+        /* convert latitudes from geocentric to geodetic form. */
+        
+        psImage->dfULY = 
+            NITF_WGS84_Geocentric_Latitude_To_Geodetic_Latitude( 
+                psImage->dfULY );
+        psImage->dfLLY = 
+            NITF_WGS84_Geocentric_Latitude_To_Geodetic_Latitude( 
+                psImage->dfLLY );
+        psImage->dfURY = 
+            NITF_WGS84_Geocentric_Latitude_To_Geodetic_Latitude( 
+                psImage->dfURY );
+        psImage->dfLRY = 
+            NITF_WGS84_Geocentric_Latitude_To_Geodetic_Latitude( 
+                psImage->dfLRY );
     }
     else if( psImage->chICORDS == 'S' || psImage->chICORDS == 'N' )
     {
