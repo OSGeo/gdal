@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.4  2001/07/07 01:03:35  nemec
+ * Fixed math on check if 64 bit seek is needed
+ *
  * Revision 1.3  2001/07/06 22:02:55  nemec
  * Fixed some bugs related to large files (fseek64 when available, trap otherwise)
  * Better support for different file layouts (upper left, lower left, etc.)
@@ -906,8 +909,11 @@ GDALDataset *FITDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     uint64 maxseek = head->cSize * head->xSize * head->ySize *
         GDALGetDataTypeSize(fitDataType(poDS->info->dtype));
-//     if (maxseek & 0xffff0000) // unsigned long
-    if (maxseek & 0xffff8000) // signed long
+    // 
+    // 0xffffffff80000000LL // anything about 31 bits
+
+//     if (maxseek & 0xffffffff00000000LL) // anything about 32 bits
+    if (maxseek & 0xffffffff80000000LL) // signed long
 #ifdef VSI_LARGE_API_SUPPORTED
         CPLDebug("FIT", "Using 64 bit version of fseek");
 #else
