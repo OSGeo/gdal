@@ -30,6 +30,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.29  2004/11/09 02:49:12  fwarmerdam
+ * Don't add user_sdo_geom_metadata record till finalize (layer load complete)
+ * time as that is when we have all the diminfo details.  Inserts of metadata
+ * records with NULL diminfos fails in Oracle 10 due to new constraints.
+ *
  * Revision 1.28  2004/09/28 17:19:25  fwarmerdam
  * Added untested support for OCI_FID config variable for FID column name.
  *
@@ -1230,9 +1235,12 @@ void OGROCITableLayer::FinalizeNewLayer()
 /* -------------------------------------------------------------------- */
 /*      Prepare dimension update statement.                             */
 /* -------------------------------------------------------------------- */
-    sDimUpdate.Append( "UPDATE USER_SDO_GEOM_METADATA SET DIMINFO = " );
-    sDimUpdate.Append( "MDSYS.SDO_DIM_ARRAY(" );
+    sDimUpdate.Append( "INSERT INTO USER_SDO_GEOM_METADATA VALUES " );
+    sDimUpdate.Appendf( strlen(poFeatureDefn->GetName()) + 100,
+                        "('%s', 'ORA_GEOMETRY', ",
+                        poFeatureDefn->GetName() );
 
+    sDimUpdate.Append( "MDSYS.SDO_DIM_ARRAY(" );
     sDimUpdate.Appendf(200,
                        "MDSYS.SDO_DIM_ELEMENT('X',%.16g,%.16g,%.12g)",
                        dfXMin, dfXMax, dfXRes );
@@ -1247,11 +1255,10 @@ void OGROCITableLayer::FinalizeNewLayer()
                            dfZMin, dfZMax, dfZRes );
     }
 
-    sDimUpdate.Append( ")" );
-
-    sDimUpdate.Appendf( strlen(poFeatureDefn->GetName()) + 100,
-                        " WHERE table_name = '%s'", 
-                        poFeatureDefn->GetName() );
+    if( nSRID == -1 )
+        sDimUpdate.Append( "), NULL)" );
+    else
+        sDimUpdate.Appendf( 100, "), %d)", nSRID );
 
 /* -------------------------------------------------------------------- */
 /*      Execute the metadata update.                                    */
