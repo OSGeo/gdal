@@ -119,7 +119,7 @@ FULL_PATH_NAMES = NO
 # directories like "/usr/src/myproject". Separate the files or directories 
 # with spaces.
 
-INPUT            =	port gcore frmts/gdalallregister.cpp alg
+INPUT            =	port gcore frmts/gdalallregister.cpp alg frmts/vrt
 
 
 # If the value of the INPUT tag contains directories, you can use the 
