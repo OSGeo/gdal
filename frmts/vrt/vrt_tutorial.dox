@@ -1,0 +1,154 @@
+/*!
+
+\page gdal_vrttut
+
+<center>
+<title>GDAL Virtual Format Tutorial</title>
+</center>
+
+<h2>Introduction</h2>
+
+The VRT driver is a format driver for GDAL that allows a virtual GDAL dataset
+to be composed from other GDAL datasets with repositioning, and algorithms
+potentially applied as well as various kinds of metadata altered or added.
+VRT descriptions of datasets can be saved in an XML format normally given the
+extension .vrt.<p>
+
+An example of a simple .vrt file referring to a 512x512 dataset with one band
+loaded from utm.tif might look like this:
+
+\code
+<VRTDataset rasterXSize="512" rasterYSize="512">
+  <GeoTransform>  4.4072000000000000e+05,  6.0000000000000000e+01,  0.0000000000000000e+00,  3.7513200000000000e+06,  0.0000000000000000e+00, -6.0000000000000000e+01</GeoTransform>
+  <VRTRasterBand dataType="Byte" band="1">
+    <ColorInterp>Gray</ColorInterp>
+    <SimpleSource>
+      <SourceFilename>utm.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SrcRect xOff="0" yOff="0" xSize="512" ySize="512"/>
+      <DstRect xOff="0" yOff="0" xSize="512" ySize="512"/>
+    </SimpleSource>
+  </VRTRasterBand>
+</VRTDataset>
+\endcode
+
+VRT files can be produced by translating to VRT format.  The resulting file can
+then be edited to modify mappings, add metadata or other purposes.  VRT files
+can also be produced programmatically by various means.<p>
+
+This tutorial will cover the .vrt file format (suitable for users editing 
+.vrt files), and how .vrt files may be created an manipulated programmatically
+for developers. <p>
+
+<h2>.vrt Format</h2>
+
+Virtual files stored on disk are kept in an XML format with the following
+elements.<p>
+
+<ul>
+<li> 
+<b><VRTDataset></b>: This is the root element for the whole GDAL dataset. 
+It must have the attributes rasterXSize and rasterYSize describing the width 
+and height of the dataset in pixels.  It may have SRS, GeoTransform, 
+GCPList, Metadata, and VRTRasterBand subelements.
+
+\code
+<VRTDataset rasterXSize="512" rasterYSize="512">
+\endcode
+
+<li> <b><SRS></b>: This element contains the spatial reference system (coordinate 
+system) in OGC WKT format.  Note that this must be appropriately escaped for
+XML, so items like quotes will have the ampersand escape sequences substituted.
+
+\code
+  <SRS>PROJCS[&quot;NAD27 / UTM zone 11N&quot;,GEOGCS[&quot;NAD27&quot;,DATUM[&quot;North_American_Datum_1927&quot;,SPHEROID[&quot;Clarke 1866&quot;,6378206.4,294.9786982139006,AUTHORITY[&quot;EPSG&quot;,&quot;7008&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;6267&quot;]],PRIMEM[&quot;Greenwich&quot;,0],UNIT[&quot;degree&quot;,0.0174532925199433],AUTHORITY[&quot;EPSG&quot;,&quot;4267&quot;]],PROJECTION[&quot;Transverse_Mercator&quot;],PARAMETER[&quot;latitude_of_origin&quot;,0],PARAMETER[&quot;central_meridian&quot;,-117],PARAMETER[&quot;scale_factor&quot;,0.9996],PARAMETER[&quot;false_easting&quot;,500000],PARAMETER[&quot;false_northing&quot;,0],UNIT[&quot;metre&quot;,1,AUTHORITY[&quot;EPSG&quot;,&quot;9001&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;26711&quot;]]</SRS>
+\endcode
+
+<li> <b><GeoTransform></b>: This element contains a six value affine 
+geotransformation for the dataset, mapping between pixel/line coordinates 
+and georeferenced coordinates.  The list of values is the data of the SRS 
+element, and the values are separated by commas.
+
+\code
+  <GeoTransform>440720.0,  60,  0.0,  3751320.0,  0.0, -60.0</GeoTransform>
+\endcode
+
+<li> <b><Metadata></b>: This element contains a list of metadata name/value 
+pairs associated with the VRTDataset as a whole, or a VRTRasterBand.   It has
+<MDI> (metadata item) subelements which have a "key" attribute and the value
+as the data of the element.  
+
+\code
+  <Metadata>
+    <MDI key="md_key">Metadata value</MDI>
+  </Metadata>
+\endcode
+
+<li> <b><VRTRasterBand></b>: This represents one band of a dataset.  It will
+have a dataType attribute with the type of the pixel data associated with
+this band (use names Byte, UInt16, Int16, UInt32, Int32, Float32, Float64, 
+CInt16, CInt32, CFloat32 or CFloat64) and the band this element represents
+(1 based).  This element may have Metadata, ColorInterp, NoDataValue, 
+ColorTable, and Description subelements as well as the various kinds of 
+source elements such as SimpleSource.  A raster band may have many "sources"
+indicating where the actual raster data should be fetched from, and how it
+should be mapped into the raster bands pixel space. 
+
+<li> <b><ColorInterp></b>: The data of this element should be the name of
+a color interpretation type.  One of Gray, Palette, Red, Green, Blue, Alpha,
+Hue, Saturation, Lightness, Cyan, Magenta, Yellow, Black, or Unknown.<p>
+
+\code
+  <ColorInterp>Gray</ColorInterp>: 
+\endcode
+
+<li> <b><NoDataValue></b>: If this element exists a raster band has a 
+nodata value associated with, of the value given as data in the element.
+
+\code
+  <NoDataValue>-100.0</NoDataValue>
+\endcode
+
+<li> <b><ColorTable></b>: This element is parent to a set of Entry 
+elements defining the entries in a color table.  Currently only RGBA
+color tables are supported with c1 being red, c2 being green, c3 being
+blue and c4 being alpha.  The entries are ordered and will be assumed
+to start from color table entry 0. 
+
+\code
+    <ColorTable>
+      <Entry c1="0" c2="0" c3="0" c4="255"/>
+      <Entry c1="145" c2="78" c3="224" c4="255"/>
+    </ColorTable>
+\endcode
+
+<li> <b><Description></b>: This element contains the optional description
+of a raster band as it's text value.
+
+\code									-
+  <Description>Crop Classification Layer</Description>
+\endcode
+
+<li> <b><SimpleSource></b>: The SimpleSource indicates that raster data
+should be read from a separate dataset, indicating the dataset, and band to be
+read from, and how the data should map into this bands raster space.  
+The SimpleSource may have the SourceFilename, SourceBand, SrcRect, and DstRect
+subelements.  The SrcRect element will indicate what rectangle on the indicated
+source file should be read, and the DstRect element indicates how that 
+rectangle of source data should be mapped into the VRTRasterBands space.  
+
+\code
+    <SimpleSource>
+      <SourceFilename>utm.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SrcRect xOff="0" yOff="0" xSize="512" ySize="512"/>
+      <DstRect xOff="0" yOff="0" xSize="512" ySize="512"/>
+    </SimpleSource>
+\endcode
+
+<li> 
+
+</ul>
+
+*/
+
