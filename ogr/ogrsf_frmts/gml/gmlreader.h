@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2002/03/06 20:08:02  warmerda
+ * added tracking of extents, feature count and extrainfo
+ *
  * Revision 1.5  2002/01/25 21:23:21  warmerda
  * handle IGMLReader destructor properly in gmlreader.cpp
  *
@@ -89,10 +92,20 @@ class CPL_DLL GMLFeatureClass
     char        *m_pszName;
     char        *m_pszElementName;
     char	*m_pszGeometryElement;
-    int          m_nPropertyCount;
+    int         m_nPropertyCount;
     GMLPropertyDefn **m_papoProperty;
 
-    int          m_bSchemaLocked;
+    int         m_bSchemaLocked;
+
+    int         m_nFeatureCount;
+
+    char        *m_pszExtraInfo;
+
+    int		m_bHaveExtents;
+    double      m_dfXMin;
+    double      m_dfXMax;
+    double      m_dfYMin;
+    double      m_dfYMax;
 
 public:
 	    GMLFeatureClass( const char *pszName = "" );
@@ -115,6 +128,17 @@ public:
 
     int         IsSchemaLocked() const { return m_bSchemaLocked; }
     void        SetSchemaLocked( int bLock ) { m_bSchemaLocked = bLock; }
+
+    const char  *GetExtraInfo();
+    void        SetExtraInfo( const char * );
+
+    int         GetFeatureCount();
+    void        SetFeatureCount( int );
+
+    void        SetExtents( double dfXMin, double dfXMax, 
+                            double dFYMin, double dfYMax );
+    int         GetExtents( double *pdfXMin, double *pdfXMax, 
+                            double *pdFYMin, double *pdfYMax );
 
     CPLXMLNode *SerializeToXML();
     int         InitializeFromXML( CPLXMLNode * );
@@ -182,7 +206,7 @@ public:
     virtual int  LoadClasses( const char *pszFile = NULL ) = 0;
     virtual int  SaveClasses( const char *pszFile = NULL ) = 0;
 
-    virtual int PrescanForSchema() = 0;
+    virtual int PrescanForSchema( int bGetExtents = TRUE ) = 0;
 };
 
 IGMLReader *CreateGMLReader();

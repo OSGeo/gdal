@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.6  2002/03/06 20:08:02  warmerda
+ * added tracking of extents, feature count and extrainfo
+ *
  * Revision 1.5  2002/01/25 21:23:21  warmerda
  * handle IGMLReader destructor properly in gmlreader.cpp
  *
@@ -46,6 +49,12 @@
 
 #include "gmlreader.h"
 #include "cpl_error.h"
+
+#define SUPPORT_GEOMETRY
+
+#ifdef SUPPORT_GEOMETRY
+#  include "ogr_gml.h"
+#endif
 
 /************************************************************************/
 /*                            ~IGMLReader()                             */
@@ -689,7 +698,7 @@ int GMLReader::SaveClasses( const char *pszFile )
 /*      looking for schema information.                                 */
 /************************************************************************/
 
-int GMLReader::PrescanForSchema()
+int GMLReader::PrescanForSchema( int bGetExtents )
 
 {
     GMLFeature	*poFeature;
@@ -703,6 +712,45 @@ int GMLReader::PrescanForSchema()
 
     while( (poFeature = NextFeature()) != NULL )
     {
+        GMLFeatureClass *poClass = poFeature->GetClass();
+
+        if( poClass->GetFeatureCount() == -1 )
+            poClass->SetFeatureCount( 1 );
+        else
+            poClass->SetFeatureCount( poClass->GetFeatureCount() + 1 );
+
+#ifdef SUPPORT_GEOMETRY
+        if( bGetExtents )
+        {
+            OGRGeometry *poGeometry;
+
+            poGeometry = GML2OGRGeometry( poFeature->GetGeometry() );
+            if( poGeometry != NULL )
+            {
+                double	dfXMin, dfXMax, dfYMin, dfYMax;
+                OGREnvelope sEnvelope;
+
+                poGeometry->getEnvelope( &sEnvelope );
+                if( poClass->GetExtents(&dfXMin, &dfXMax, &dfYMin, &dfYMax) )
+                {
+                    dfXMin = MIN(dfXMin,sEnvelope.MinX);
+                    dfXMax = MIN(dfXMax,sEnvelope.MaxX);
+                    dfYMin = MIN(dfYMin,sEnvelope.MinY);
+                    dfYMax = MIN(dfYMax,sEnvelope.MaxY);
+                }
+                else
+                {
+                    dfXMin = sEnvelope.MinX;
+                    dfXMax = sEnvelope.MaxX;
+                    dfYMin = sEnvelope.MinY;
+                    dfYMax = sEnvelope.MaxY;
+                }
+
+                poClass->SetExtents( dfXMin, dfXMax, dfYMin, dfYMax );
+            }
+#endif /* def SUPPORT_GEOMETRY */
+        }
+        
         delete poFeature;
     }
 

@@ -28,6 +28,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.3  2002/03/06 20:07:35  warmerda
+ * added tracking of extents, feature count and extrainfo
+ *
  * Revision 1.2  2002/01/24 17:37:33  warmerda
  * added to/from XML support
  *
@@ -53,6 +56,10 @@ GMLFeatureClass::GMLFeatureClass( const char *pszName )
     m_nPropertyCount = 0;
     m_papoProperty = NULL;
     m_bSchemaLocked = FALSE;
+
+    m_pszExtraInfo = NULL;
+    m_bHaveExtents = FALSE;
+    m_nFeatureCount = -1; // unknown
 }
 
 /************************************************************************/
@@ -152,6 +159,85 @@ void GMLFeatureClass::SetGeometryElement( const char *pszElement )
 }
 
 /************************************************************************/
+/*                          GetFeatureCount()                           */
+/************************************************************************/
+
+int GMLFeatureClass::GetFeatureCount()
+
+{
+    return m_nFeatureCount;
+}
+
+/************************************************************************/
+/*                          SetFeatureCount()                           */
+/************************************************************************/
+
+void GMLFeatureClass::SetFeatureCount( int nNewCount )
+
+{
+    m_nFeatureCount = nNewCount;
+}
+
+/************************************************************************/
+/*                            GetExtraInfo()                            */
+/************************************************************************/
+
+const char *GMLFeatureClass::GetExtraInfo()
+
+{
+    return m_pszExtraInfo;
+}
+
+/************************************************************************/
+/*                            SetExtraInfo()                            */
+/************************************************************************/
+
+void GMLFeatureClass::SetExtraInfo( const char *pszExtraInfo )
+
+{
+    CPLFree( m_pszExtraInfo );
+    m_pszExtraInfo = NULL;
+
+    if( pszExtraInfo != NULL )
+        m_pszExtraInfo = CPLStrdup( pszExtraInfo );
+}
+
+/************************************************************************/
+/*                             SetExtents()                             */
+/************************************************************************/
+
+void GMLFeatureClass::SetExtents( double dfXMin, double dfXMax, 
+                                  double dfYMin, double dfYMax )
+
+{
+    m_dfXMin = dfXMin;
+    m_dfXMax = dfXMax;
+    m_dfYMin = dfYMin;
+    m_dfYMax = dfYMax;
+
+    m_bHaveExtents = TRUE;
+}
+
+/************************************************************************/
+/*                             GetExtents()                             */
+/************************************************************************/
+
+int GMLFeatureClass::GetExtents( double *pdfXMin, double *pdfXMax, 
+                                 double *pdfYMin, double *pdfYMax )
+
+{
+    if( m_bHaveExtents )
+    {
+        *pdfXMin = m_dfXMin;
+        *pdfXMax = m_dfXMax;
+        *pdfYMin = m_dfYMin;
+        *pdfYMax = m_dfYMax;
+    }
+
+    return m_bHaveExtents;
+}
+
+/************************************************************************/
 /*                         InitializeFromXML()                          */
 /************************************************************************/
 
@@ -192,6 +278,35 @@ int GMLFeatureClass::InitializeFromXML( CPLXMLNode *psRoot )
     if( strlen( pszGPath ) > 0 )
         SetGeometryElement( pszGPath );
 
+/* -------------------------------------------------------------------- */
+/*      Collect dataset specific info.                                  */
+/* -------------------------------------------------------------------- */
+    CPLXMLNode *psDSI = CPLGetXMLNode( psRoot, "DatasetSpecificInfo" );
+    if( psDSI != NULL )
+    {
+        const char *pszValue;
+
+        pszValue = CPLGetXMLValue( psDSI, "FeatureCount", NULL );
+        if( pszValue != NULL )
+            SetFeatureCount( atoi(pszValue) );
+
+        // Eventually we should support XML subtrees.
+        pszValue = CPLGetXMLValue( psDSI, "ExtraInfo", NULL );
+        if( pszValue != NULL )
+            SetExtraInfo( pszValue );
+
+        if( CPLGetXMLValue( psDSI, "ExtentXMin", NULL ) != NULL 
+            && CPLGetXMLValue( psDSI, "ExtentXMax", NULL ) != NULL
+            && CPLGetXMLValue( psDSI, "ExtentYMin", NULL ) != NULL
+            && CPLGetXMLValue( psDSI, "ExtentYMax", NULL ) != NULL )
+        {
+            SetExtents( atof(CPLGetXMLValue( psDSI, "ExtentXMin", "0.0" )),
+                        atof(CPLGetXMLValue( psDSI, "ExtentXMax", "0.0" )),
+                        atof(CPLGetXMLValue( psDSI, "ExtentYMin", "0.0" )),
+                        atof(CPLGetXMLValue( psDSI, "ExtentYMax", "0.0" )) );
+        }
+    }
+    
 /* -------------------------------------------------------------------- */
 /*      Collect property definitions.                                   */
 /* -------------------------------------------------------------------- */
@@ -250,6 +365,9 @@ CPLXMLNode *GMLFeatureClass::SerializeToXML()
     CPLXMLNode	*psRoot, *psName;
     int		iProperty;
 
+/* -------------------------------------------------------------------- */
+/*      Set feature class and core information.                         */
+/* -------------------------------------------------------------------- */
     psRoot = CPLCreateXMLNode( NULL, CXT_Element, "GMLFeatureClass" );
 
     CPLCreateXMLElementAndValue( psRoot, "Name", GetName() );
@@ -257,7 +375,48 @@ CPLXMLNode *GMLFeatureClass::SerializeToXML()
     if( GetGeometryElement() != NULL && strlen(GetGeometryElement()) > 0 )
         CPLCreateXMLElementAndValue( psRoot, "GeometryElementPath", 
                                      GetGeometryElement() );
+
+/* -------------------------------------------------------------------- */
+/*      Write out dataset specific information.                         */
+/* -------------------------------------------------------------------- */
+    CPLXMLNode *psDSI;
+
+    if( m_bHaveExtents || m_nFeatureCount != -1 || m_pszExtraInfo != NULL )
+    {
+        psDSI = CPLCreateXMLNode( psRoot, CXT_Element, "DatasetSpecificInfo" );
+
+        if( m_nFeatureCount != -1 )
+        {
+            char szValue[128];
+
+            sprintf( szValue, "%d", m_nFeatureCount );
+            CPLCreateXMLElementAndValue( psDSI, "FeatureCount", szValue );
+        }
+
+        if( m_bHaveExtents )
+        {
+            char szValue[128];
+
+            sprintf( szValue, "%.5f", m_dfXMin );
+            CPLCreateXMLElementAndValue( psDSI, "ExtentXMin", szValue );
+
+            sprintf( szValue, "%.5f", m_dfXMax );
+            CPLCreateXMLElementAndValue( psDSI, "ExtentXMax", szValue );
+
+            sprintf( szValue, "%.5f", m_dfYMin );
+            CPLCreateXMLElementAndValue( psDSI, "ExtentYMin", szValue );
+
+            sprintf( szValue, "%.5f", m_dfYMax );
+            CPLCreateXMLElementAndValue( psDSI, "ExtentYMax", szValue );
+        }
+
+        if( m_pszExtraInfo )
+            CPLCreateXMLElementAndValue( psDSI, "ExtraInfo", m_pszExtraInfo );
+    }
     
+/* -------------------------------------------------------------------- */
+/*      emit property information.                                      */
+/* -------------------------------------------------------------------- */
     for( iProperty = 0; iProperty < GetPropertyCount(); iProperty++ )
     {
         GMLPropertyDefn *poPDefn = GetProperty( iProperty );
