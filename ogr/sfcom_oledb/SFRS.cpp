@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  1999/11/23 15:14:29  warmerda
+ * Avoid some casting warnings.
+ *
  * Revision 1.17  1999/09/13 02:07:01  warmerda
  * reduced STRING_BUFFER_SIZE
  *
@@ -173,13 +176,13 @@ struct SFIStream : IStream
             switch(dwOrigin)
             {
 		case STREAM_SEEK_SET:
-                    nNewPos = dlibMove.QuadPart;
+                    nNewPos = (unsigned long) dlibMove.QuadPart;
                     break;
 		case STREAM_SEEK_CUR:
-                    nNewPos = dlibMove.QuadPart + m_nSeekPos;
+                    nNewPos = (unsigned long) (dlibMove.QuadPart + m_nSeekPos);
                     break;
 		case STREAM_SEEK_END:
-                    nNewPos = m_nSize - dlibMove.QuadPart;
+                    nNewPos = (unsigned long) (m_nSize - dlibMove.QuadPart);
                     break;
 		default:
                     return STG_E_INVALIDFUNCTION; 
