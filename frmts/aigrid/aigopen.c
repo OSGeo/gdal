@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2000/09/13 14:42:38  warmerda
+ * Improved casting thanks for Ian Macleod (Geosoft).
+ *
  * Revision 1.8  2000/02/18 14:47:12  warmerda
  * Avoid warnings.
  *
@@ -167,9 +170,9 @@ AIGInfo_t *AIGOpen( const char * pszInputName, const char * pszAccess )
 /*      Compute the number of pixels and lines.                         */
 /* -------------------------------------------------------------------- */
     psInfo->nPixels = (int)
-        (psInfo->dfURX - psInfo->dfLLX) / psInfo->dfCellSizeX;
+        ((psInfo->dfURX - psInfo->dfLLX) / psInfo->dfCellSizeX);
     psInfo->nLines = (int)
-        (psInfo->dfURY - psInfo->dfLLY) / psInfo->dfCellSizeY;
+        ((psInfo->dfURY - psInfo->dfLLY) / psInfo->dfCellSizeY);
     
     return( psInfo );
 }
@@ -243,7 +246,7 @@ CPLErr AIGReadFloatTile( AIGInfo_t * psInfo, int nBlockXOff, int nBlockYOff,
 
         for( i = 0; i < nPixels; i++ )
         {
-            pafData[i] = panData[i];
+            pafData[i] = (float) panData[i];
         }
     }
 
