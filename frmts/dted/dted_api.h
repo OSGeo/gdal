@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2001/11/13 15:43:41  warmerda
+ * preliminary dted creation working
+ *
  * Revision 1.2  2000/07/07 14:20:57  warmerda
  * fixed AVOID_CPL support
  *
@@ -110,7 +113,7 @@ typedef struct {
   char          *pachACCRecord;
 
   int		nDataOffset;
-  
+
 } DTEDInfo;
 
 /* -------------------------------------------------------------------- */
@@ -122,8 +125,12 @@ DTEDInfo *DTEDOpen( const char * pszFilename, const char * pszAccess,
 
 int DTEDReadProfile( DTEDInfo * psDInfo, int nColumnOffset,
                      GInt16 * panData );
+int DTEDWriteProfile( DTEDInfo *psDInfo, int nColumnOffset, GInt16 *panData);
 
 void DTEDClose( DTEDInfo * );
+
+const char *DTEDCreate( const char *pszFilename, 
+                        int nLevel, int nLLOriginLat, int nLLOriginLong );
 
 CPL_C_END
 
