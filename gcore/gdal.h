@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.56  2002/11/23 18:07:41  warmerda
+ * added DMD_CREATIONDATATYPES
+ *
  * Revision 1.55  2002/10/24 14:18:29  warmerda
  * intermediate version update
  *
@@ -342,6 +345,7 @@ typedef struct {
 #define GDAL_DMD_MIMETYPE "DMD_MIMETYPE"
 #define GDAL_DMD_EXTENSION "DMD_EXTENSION"
 #define GDAL_DMD_CREATIONOPTIONLIST "DMD_CREATIONOPTIONLIST" 
+#define GDAL_DMD_CREATIONDATATYPES "DMD_CREATIONDATATYPES" 
 
 #define GDAL_DCAP_CREATE     "DCAP_CREATE"
 #define GDAL_DCAP_CREATECOPY "DCAP_CREATECOPY"
