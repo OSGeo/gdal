@@ -30,6 +30,9 @@
  *    instance validation of access strings to fopen().
  * 
  * $Log$
+ * Revision 1.14  2003/05/21 04:20:30  warmerda
+ * avoid warnings
+ *
  * Revision 1.13  2002/06/17 14:00:16  warmerda
  * segregate VSIStatL() and VSIStatBufL.
  *
@@ -320,6 +323,7 @@ int VSIMkdir( const char *pszPathname, long mode )
 
 {
 #ifdef WIN32
+    (void) mode;
     return mkdir( pszPathname );
 #elif defined(macos_pre10)
     return -1;

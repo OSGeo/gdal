@@ -44,6 +44,9 @@
  *   without vsnprintf(). 
  *
  * $Log$
+ * Revision 1.33  2003/05/21 04:20:30  warmerda
+ * avoid warnings
+ *
  * Revision 1.32  2003/04/04 14:57:38  dron
  * _vsnprintf() hack moved to the cpl_config.h.vc.
  *
@@ -1377,7 +1380,7 @@ char *CPLUnescapeString( const char *pszInput, int *pnLength, int nScheme )
                               "Error unescaping CPLES_URL text, percent not "
                               "followed by two hex digits." );
 
-                pszOutput[iOut++] = nHexChar;
+                pszOutput[iOut++] = (char) nHexChar;
                 iIn += 2;
             }
             else if( pszInput[iIn] == '+' )
