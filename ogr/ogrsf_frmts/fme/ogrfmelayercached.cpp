@@ -25,6 +25,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2002/11/08 21:20:58  warmerda
+ * ensure a query is issued if resetreading never called
+ *
  * Revision 1.1  2002/05/24 06:23:57  warmerda
  * New
  *
@@ -71,6 +74,8 @@ OGRFMELayerCached::OGRFMELayerCached( OGRFMEDataSource *poDSIn )
     poIndex = NULL;
 
     memset( &sExtents, 0, sizeof(sExtents) );
+
+    bQueryActive = FALSE;
 }
 
 /************************************************************************/
@@ -171,6 +176,9 @@ OGRFeature *OGRFMELayerCached::ReadNextIndexFeature()
     if( poIndex == NULL )
         return NULL;
 
+    if( !bQueryActive )
+        ResetReading();
+
     poDS->AcquireSession();
 
     if( poIndex->fetch( *poFMEFeature, endOfQuery ) == 0
@@ -254,6 +262,8 @@ void OGRFMELayerCached::ResetReading()
             
         poIndex->queryEnvelope( *poFMEFeature );
     }
+
+    bQueryActive = TRUE;
 
     poDS->ReleaseSession();
 }

@@ -23,6 +23,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2002/11/08 21:20:58  warmerda
+ * ensure a query is issued if resetreading never called
+ *
  * Revision 1.3  2002/09/04 18:44:48  warmerda
  * try to make aggregates into multipolygons
  *
@@ -162,6 +165,8 @@ class OGRFMELayerCached : public OGRFMELayer
     OGRFeature *        ReadNextIndexFeature();
 
     OGREnvelope         sExtents;
+
+    int                 bQueryActive;
     
   public:
                        OGRFMELayerCached( OGRFMEDataSource * );
