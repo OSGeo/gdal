@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2004/05/26 18:19:15  warmerda
+ * Implement
+ *
  * Revision 1.1  2004/05/26 17:45:16  warmerda
  * New
  *
@@ -97,6 +100,8 @@ class LANDataset : public RawDataset
     	        ~LANDataset();
     
     virtual CPLErr GetGeoTransform( double * padfTransform );
+    virtual const char *GetProjectionRef();
+
     static GDALDataset *Open( GDALOpenInfo * );
 };
 
@@ -107,6 +112,7 @@ class LANDataset : public RawDataset
 LANDataset::LANDataset()
 {
     fpImage = NULL;
+    pszProjection = NULL;
 }
 
 /************************************************************************/
@@ -118,6 +124,8 @@ LANDataset::~LANDataset()
 {
     if( fpImage != NULL )
         VSIFClose( fpImage );
+
+    CPLFree( pszProjection );
 }
 
 /************************************************************************/
@@ -215,6 +223,12 @@ GDALDataset *LANDataset::Open( GDALOpenInfo * poOpenInfo )
     }
     else
     {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Unsupported pixel type (%d).", 
+                  *((GInt16 *) (poDS->pachHeader + 6)) );
+                  
+        delete poDS;
+        return NULL;
     }
 
     nBandCount = *((GInt16 *) (poDS->pachHeader + 8));
@@ -251,16 +265,29 @@ GDALDataset *LANDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->adfGeoTransform[3] -= poDS->adfGeoTransform[5] * 0.5;
 
 /* -------------------------------------------------------------------- */
-/*      Look for a world file.                                          */
+/*      Try to come up with something for the coordinate system.        */
 /* -------------------------------------------------------------------- */
-#ifdef notdef
-    poDS->bGeoTransformValid = 
-        GDALReadWorldFile( poOpenInfo->pszFilename, ".wld", 
-                           poDS->adfGeoTransform );
-    if( !poDS->bGeoTransformValid )
-	GDALReadWorldFile( poOpenInfo->pszFilename, ".lnw", 
-                           poDS->adfGeoTransform );
-#endif
+    int nCoordSys = *((GInt16 *) (poDS->pachHeader + 88));
+
+    if( nCoordSys == 0 )
+    {
+        poDS->pszProjection = CPLStrdup("GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9108\"]],AXIS[\"Lat\",NORTH],AXIS[\"Long\",EAST],AUTHORITY[\"EPSG\",\"4326\"]]");
+            
+    }
+    else if( nCoordSys == 1 )
+    {
+        poDS->pszProjection = 
+            CPLStrdup("LOCAL_CS[\"UTM - Zone Unknown\",UNIT[\"Meter\",1]]");
+    }
+    else if( nCoordSys == 2 )
+    {
+        poDS->pszProjection = CPLStrdup("LOCAL_CS[\"State Plane - Zone Unknown\",UNIT[\"US survey foot\",0.3048006096012192]]");
+    }
+    else 
+    {
+        poDS->pszProjection = 
+            CPLStrdup("LOCAL_CS[\"Unknown\",UNIT[\"Meter\",1]]");
+    }
 
     return( poDS );
 }
@@ -274,6 +301,19 @@ CPLErr LANDataset::GetGeoTransform( double * padfTransform )
 {
     memcpy( padfTransform, adfGeoTransform, sizeof(double)*6 );
     return CE_None;
+}
+
+/************************************************************************/
+/*                          GetProjectionRef()                          */
+/************************************************************************/
+
+const char *LANDataset::GetProjectionRef()
+
+{
+    if( pszProjection == NULL )
+        return "";
+    else
+        return pszProjection;
 }
 
 /************************************************************************/
