@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.49  2002/03/12 18:06:09  warmerda
+ * added ESRI:: style support to SetFromUserInput()
+ *
  * Revision 1.48  2002/03/08 16:38:11  warmerda
  * ensure SetProjParm() will replace an existing node if available
  *
@@ -1226,6 +1229,15 @@ OGRErr OSRSetWellKnownGeogCS( OGRSpatialReferenceH hSRS, const char *pszName )
 OGRErr OGRSpatialReference::SetFromUserInput( const char * pszDefinition )
 
 {
+    int	    bESRI = FALSE;
+    OGRErr  err;
+
+    if( EQUALN(pszDefinition,"ESRI::",6) )
+    {
+        bESRI = TRUE;
+        pszDefinition += 6;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Is it a recognised syntax?                                      */
 /* -------------------------------------------------------------------- */
@@ -1233,7 +1245,11 @@ OGRErr OGRSpatialReference::SetFromUserInput( const char * pszDefinition )
         || EQUALN(pszDefinition,"GEOGCS",6)
         || EQUALN(pszDefinition,"LOCAL_CS",8) )
     {
-        return importFromWkt( (char **) &pszDefinition );
+        err = importFromWkt( (char **) &pszDefinition );
+        if( err == OGRERR_NONE && bESRI )
+            err = morphFromESRI();
+
+        return err;
     }
 
     if( EQUALN(pszDefinition,"EPSG:",5) )
@@ -1289,7 +1305,13 @@ OGRErr OGRSpatialReference::SetFromUserInput( const char * pszDefinition )
              || strstr(szBuffer,"+init") != NULL )
         return importFromProj4( pszBufPtr );
     else
-        return importFromWkt( &pszBufPtr );
+    {
+        err = importFromWkt( &pszBufPtr );
+        if( err == OGRERR_NONE && bESRI )
+            err = morphFromESRI();
+
+        return err;
+    }
 }
 
 /************************************************************************/
