@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2004/07/13 15:11:19  warmerda
+ * implemented SetFeature, transaction support
+ *
  * Revision 1.3  2004/07/12 20:50:46  warmerda
  * table/database creation now implemented
  *
@@ -96,6 +99,10 @@ class OGRSQLiteLayer : public OGRLayer
     virtual int         TestCapability( const char * );
 
     virtual sqlite3_stmt        *GetStatement() { return hStmt; }
+
+    virtual OGRErr       StartTransaction();
+    virtual OGRErr       CommitTransaction();
+    virtual OGRErr       RollbackTransaction();
 };
 
 /************************************************************************/
@@ -177,12 +184,14 @@ class OGRSQLiteSelectLayer : public OGRSQLiteLayer
 
 class OGRSQLiteDataSource : public OGRDataSource
 {
-    OGRSQLiteLayer        **papoLayers;
+    OGRSQLiteLayer    **papoLayers;
     int                 nLayers;
     
     char               *pszName;
 
     sqlite3             *hDB;
+
+    int                 nSoftTransactionLevel;
 
     // We maintain a list of known SRID to reduce the number of trips to
     // the database to get SRSes. 
@@ -215,6 +224,12 @@ class OGRSQLiteDataSource : public OGRDataSource
                                     OGRGeometry *poSpatialFilter,
                                     const char *pszDialect );
     virtual void        ReleaseResultSet( OGRLayer * poLayer );
+
+    OGRErr              SoftStartTransaction();
+    OGRErr              SoftCommit();
+    OGRErr              SoftRollback();
+    
+    OGRErr              FlushSoftTransaction();
 
     sqlite3            *GetDB() { return hDB; }
 

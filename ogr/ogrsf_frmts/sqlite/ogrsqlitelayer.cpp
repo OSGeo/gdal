@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2004/07/13 15:11:19  warmerda
+ * implemented SetFeature, transaction support
+ *
  * Revision 1.3  2004/07/12 20:50:46  warmerda
  * table/database creation now implemented
  *
@@ -365,8 +368,6 @@ OGRFeature *OGRSQLiteLayer::GetNextRawFeature()
 OGRFeature *OGRSQLiteLayer::GetFeature( long nFeatureId )
 
 {
-    /* This should be implemented directly! */
-
     return OGRLayer::GetFeature( nFeatureId );
 }
 
@@ -402,3 +403,34 @@ OGRSpatialReference *OGRSQLiteLayer::GetSpatialRef()
 {
     return poSRS;
 }
+
+/************************************************************************/
+/*                          StartTransaction()                          */
+/************************************************************************/
+
+OGRErr OGRSQLiteLayer::StartTransaction()
+
+{
+    return poDS->SoftStartTransaction();
+}
+
+/************************************************************************/
+/*                         CommitTransaction()                          */
+/************************************************************************/
+
+OGRErr OGRSQLiteLayer::CommitTransaction()
+
+{
+    return poDS->SoftCommit();
+}
+
+/************************************************************************/
+/*                        RollbackTransaction()                         */
+/************************************************************************/
+
+OGRErr OGRSQLiteLayer::RollbackTransaction()
+
+{
+    return poDS->SoftRollback();
+}
+

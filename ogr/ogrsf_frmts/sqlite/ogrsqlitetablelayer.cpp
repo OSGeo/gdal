@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2004/07/13 15:11:19  warmerda
+ * implemented SetFeature, transaction support
+ *
  * Revision 1.4  2004/07/12 21:50:59  warmerda
  * fixed up SQL escaping
  *
@@ -543,21 +546,19 @@ OGRErr OGRSQLiteTableLayer::CreateField( OGRFieldDefn *poFieldIn,
 /* -------------------------------------------------------------------- */
 /*      Do this all in a transaction.                                   */
 /* -------------------------------------------------------------------- */
-    int rc;
-    char *pszErrMsg = NULL;
-    sqlite3 *hDB = poDS->GetDB();
-    
-    rc = sqlite3_exec( hDB, "BEGIN", NULL, NULL, &pszErrMsg );
+    poDS->SoftStartTransaction();
 
 /* -------------------------------------------------------------------- */
 /*      Make a backup of the table.                                     */
 /* -------------------------------------------------------------------- */
-
-    if( rc == SQLITE_OK )
-        rc = sqlite3_exec( hDB, 
-                           CPLSPrintf( "CREATE TEMPORARY TABLE t1_back(%s)",
-                                       pszOldFieldList ),
-                           NULL, NULL, &pszErrMsg );
+    int rc;
+    char *pszErrMsg = NULL;
+    sqlite3 *hDB = poDS->GetDB();
+    
+    rc = sqlite3_exec( hDB, 
+                       CPLSPrintf( "CREATE TEMPORARY TABLE t1_back(%s)",
+                                   pszOldFieldList ),
+                       NULL, NULL, &pszErrMsg );
 
     if( rc == SQLITE_OK )
         rc = sqlite3_exec( hDB, 
@@ -614,7 +615,7 @@ OGRErr OGRSQLiteTableLayer::CreateField( OGRFieldDefn *poFieldIn,
 /* -------------------------------------------------------------------- */
     if( rc == SQLITE_OK )
     {
-        rc = sqlite3_exec( hDB, "COMMIT", NULL, NULL, &pszErrMsg );
+        poDS->SoftCommit();
     }
     else
     {
@@ -624,7 +625,8 @@ OGRErr OGRSQLiteTableLayer::CreateField( OGRFieldDefn *poFieldIn,
                   pszErrMsg );
         sqlite3_free( pszErrMsg );
 
-        rc = sqlite3_exec( hDB, "ROLLBACK", NULL, NULL, &pszErrMsg );
+        poDS->SoftRollback();
+
         return OGRERR_FAILURE;
     }
 
@@ -650,7 +652,37 @@ OGRErr OGRSQLiteTableLayer::CreateField( OGRFieldDefn *poFieldIn,
 OGRErr OGRSQLiteTableLayer::SetFeature( OGRFeature *poFeature )
 
 {
-    return OGRERR_FAILURE;
+    CPLAssert( pszFIDColumn != NULL );
+    
+    if( poFeature->GetFID() == OGRNullFID )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "SetFeature() with unset FID fails." );
+        return OGRERR_FAILURE;
+    }
+/* -------------------------------------------------------------------- */
+/*      Drop the record with this FID.                                  */
+/* -------------------------------------------------------------------- */
+    int rc;
+    char *pszErrMsg = NULL;
+    
+    rc = sqlite3_exec( poDS->GetDB(), 
+                       CPLSPrintf( "DELETE FROM '%s' WHERE '%s' = %d", 
+                                   poFeature->GetFID() ),
+                       NULL, NULL, &pszErrMsg );
+    
+    if( rc != SQLITE_OK )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Attempt to delete old feature with FID %d failed.\n%s", 
+                  poFeature->GetFID(), pszErrMsg );
+        return OGRERR_FAILURE;
+    }
+    
+/* -------------------------------------------------------------------- */
+/*      Recreate the feature.                                           */
+/* -------------------------------------------------------------------- */
+    return CreateFeature( poFeature );
 }
 
 /************************************************************************/
@@ -678,9 +710,9 @@ OGRErr OGRSQLiteTableLayer::CreateFeature( OGRFeature *poFeature )
         && poFeature->GetFID() != OGRNullFID )
     {
         oCommand += pszFIDColumn;
+
         oValues += CPLSPrintf( "%d", poFeature->GetFID() );
         bNeedComma = TRUE;
-
     }
 
 /* -------------------------------------------------------------------- */
