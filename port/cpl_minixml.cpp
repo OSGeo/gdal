@@ -28,6 +28,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.3  2001/11/16 21:20:16  warmerda
+ * fixed typo
+ *
  * Revision 1.2  2001/11/16 20:29:58  warmerda
  * fixed lost char in normal CString tokens
  *
@@ -379,7 +382,7 @@ CPLXMLNode *CPLParseXMLString( const char *pszString )
                 }
                 else
                 {
-                    if( !ReadToken(&sContext) == TClose )
+                    if( ReadToken(&sContext) != TClose )
                     {
                         CPLError( CE_Failure, CPLE_AppDefined, 
                                   "Line %d: Missing close angle bracket after <%s.",
