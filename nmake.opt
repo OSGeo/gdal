@@ -26,6 +26,11 @@ INCLUDE_OGR_FRMTS = YES
 #OGDILIB =	$(OGDIDIR)\lib\$(TARGET)\ogdi$(OGDIVER).lib \
 #		$(OGDIDIR)\lib\$(TARGET)\zlib_ogdi$(OGDIVER).lib
 
+# Uncomment for Xerces based GML support.
+#XERCES_DIR =	d:\warmerda\iii\drivers\gml\xerces-c1_7_0-win32
+#XERCES_INCLUDE = -I$(XERCES_DIR)/include -I$(XERCES_DIR)/include/xercesc
+#XERCES_LIB = $(XERCES_DIR)/lib/xerces-c_1.lib
+
 ########### END OF STUFF THAT NORMALLY NEEDS TO BE UPDATED ##################
 
 # Location of MS Data Access SDK 
