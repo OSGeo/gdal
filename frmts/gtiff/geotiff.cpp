@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.41  2001/01/22 22:33:09  warmerda
+ * implement SetColorTable(), Crystalize() ... may be buggy
+ *
  * Revision 1.40  2000/12/15 14:46:27  warmerda
  * Added read support for .tfw files.
  * Added read/write support for GEOTRANSMATRIX in GeoTIFF.
@@ -161,6 +164,9 @@ class GTiffDataset : public GDALDataset
 
     int		bNewDataset;            /* product of Create() */
     int         bTreatAsRGBA;
+    int         bCrystalized;
+
+    void	Crystalize();
 
     GDALColorTable *poColorTable;
 
@@ -219,6 +225,7 @@ class GTiffRasterBand : public GDALRasterBand
 
     virtual GDALColorInterp GetColorInterpretation();
     virtual GDALColorTable *GetColorTable();
+    virtual CPLErr          SetColorTable( GDALColorTable * );
 
     virtual int    GetOverviewCount();
     virtual GDALRasterBand *GetOverview( int );
@@ -461,6 +468,7 @@ CPLErr GTiffRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
     GTiffDataset	*poGDS = (GTiffDataset *) poDS;
     int		nBlockId, nBlockBufSize;
 
+    poGDS->Crystalize();
     poGDS->SetDirectory();
 
     CPLAssert( poGDS != NULL
@@ -531,6 +539,61 @@ GDALColorTable *GTiffRasterBand::GetColorTable()
         return poGDS->poColorTable;
     else
         return NULL;
+}
+
+/************************************************************************/
+/*                           SetColorTable()                            */
+/************************************************************************/
+
+CPLErr GTiffRasterBand::SetColorTable( GDALColorTable * poCT )
+
+{
+    GTiffDataset	*poGDS = (GTiffDataset *) poDS;
+
+/* -------------------------------------------------------------------- */
+/*      Check if this is even a candidate for applying a PCT.           */
+/* -------------------------------------------------------------------- */
+    if( poGDS->bCrystalized || poGDS->nSamplesPerPixel != 1 )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported, 
+                  "SetColorTable() not supported for existing TIFF files." );
+        return CE_Failure;
+    }
+        
+/* -------------------------------------------------------------------- */
+/*      Write out the colortable, and update the configuration.         */
+/* -------------------------------------------------------------------- */
+    unsigned short	anTRed[256], anTGreen[256], anTBlue[256];
+
+    printf( "Write color table\n" );
+
+    for( int iColor = 0; iColor < 256; iColor++ )
+    {
+        if( iColor < poCT->GetColorEntryCount() )
+        {
+            GDALColorEntry  sRGB;
+            
+            poCT->GetColorEntryAsRGB( iColor, &sRGB );
+            
+            anTRed[iColor] = (unsigned short) (256 * sRGB.c1);
+            anTGreen[iColor] = (unsigned short) (256 * sRGB.c2);
+            anTBlue[iColor] = (unsigned short) (256 * sRGB.c3);
+        }
+        else
+        {
+            anTRed[iColor] = anTGreen[iColor] = anTBlue[iColor] = 0;
+        }
+    }
+
+    TIFFSetField( poGDS->hTIFF, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_PALETTE );
+    TIFFSetField( poGDS->hTIFF, TIFFTAG_COLORMAP, anTRed, anTGreen, anTBlue );
+
+    if( poGDS->poColorTable )
+        delete poGDS->poColorTable;
+
+    poGDS->poColorTable = poCT->Clone();
+
+    return CE_None;
 }
 
 /************************************************************************/
@@ -732,6 +795,7 @@ GTiffDataset::GTiffDataset()
     pabyBlockBuf = NULL;
     hTIFF = NULL;
     bNewDataset = FALSE;
+    bCrystalized = TRUE;
     poColorTable = NULL;
     pszProjection = NULL;
     bBase = TRUE;
@@ -759,6 +823,8 @@ GTiffDataset::GTiffDataset()
 GTiffDataset::~GTiffDataset()
 
 {
+    Crystalize();
+
     FlushCache();
 
     if( bBase )
@@ -789,6 +855,28 @@ GTiffDataset::~GTiffDataset()
             CPLFree( pasGCPList[i].pszId );
 
         CPLFree( pasGCPList );
+    }
+}
+
+/************************************************************************/
+/*                             Crystalize()                             */
+/*                                                                      */
+/*      Make sure that the directory information is written out for     */
+/*      a new file, require before writing any imagery data.            */
+/************************************************************************/
+
+void GTiffDataset::Crystalize()
+
+{
+    if( !bCrystalized )
+    {
+        bCrystalized = TRUE;
+
+        TIFFWriteCheck( hTIFF, TIFFIsTiled(hTIFF), "GTiffDataset::Crystalize");
+        TIFFWriteDirectory( hTIFF );
+
+        TIFFSetDirectory( hTIFF, 0 );
+        nDirOffset = TIFFCurrentDirOffset( hTIFF );
     }
 }
 
@@ -836,6 +924,8 @@ CPLErr GTiffDataset::IBuildOverviews(
         CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
         return CE_Failure;
     }
+
+    Crystalize();
 
     TIFFFlush( hTIFF );
 
@@ -1080,6 +1170,8 @@ void GTiffDataset::WriteGeoTIFFInfo()
 int GTiffDataset::SetDirectory( uint32 nNewOffset )
 
 {
+    Crystalize();
+
     if( nNewOffset == 0 )
         nNewOffset = nDirOffset;
 
@@ -1644,6 +1736,7 @@ GDALDataset *GTiffDataset::Create( const char * pszFilename,
     poDS->nRasterYSize = nYSize;
     poDS->eAccess = GA_Update;
     poDS->bNewDataset = TRUE;
+    poDS->bCrystalized = FALSE;
     poDS->pszProjection = CPLStrdup("");
     poDS->nSamplesPerPixel = nBands;
 
@@ -1680,12 +1773,6 @@ GDALDataset *GTiffDataset::Create( const char * pszFilename,
     {
         poDS->SetBand( iBand+1, new GTiffRasterBand( poDS, iBand+1 ) );
     }
-
-    TIFFWriteCheck( hTIFF, TIFFIsTiled(hTIFF), "GTiffDataset::Create" );
-    TIFFWriteDirectory( hTIFF );
-
-    TIFFSetDirectory( hTIFF, 0 );
-    poDS->nDirOffset = TIFFCurrentDirOffset( hTIFF );
 
     return( poDS );
 }
