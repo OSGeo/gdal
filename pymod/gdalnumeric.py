@@ -29,6 +29,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.2  2000/07/25 13:06:43  warmerda
+# Allow optional specification of window in LoadFile().
+#
 # Revision 1.1  2000/07/19 19:42:54  warmerda
 # New
 #
@@ -46,12 +49,12 @@ def GetArrayFilename( array ):
     _gdal.GDALRegister_NUMPY()
     return _gdal.NumPyArrayToGDALFilename( array )
 
-def LoadFile( filename ):
+def LoadFile( filename, xoff=0, yoff=0, xsize=None, ysize=None ):
     ds = gdal.Open( filename )
     if ds is None:
         raise ValueError, "Can't open "+filename
 
-    return DatasetReadAsArray( ds )
+    return DatasetReadAsArray( ds, xoff, yoff, xsize, ysize )
 
 def SaveArray( src_array, filename, format = "GTiff" ):
     driver = gdal.GetDriverByName( format )
