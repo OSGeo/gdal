@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2002/04/12 17:37:31  warmerda
+ * added colortable support
+ *
  * Revision 1.5  2002/03/01 16:45:53  warmerda
  * added support for retaining nodata value
  *
@@ -80,6 +83,8 @@ class CPL_DLL MEMDataset : public GDALDataset
 
 class CPL_DLL MEMRasterBand : public GDALRasterBand
 {
+  protected:
+
     GByte      *pabyData;
     int         nPixelOffset;
     int         nLineOffset;
@@ -87,6 +92,9 @@ class CPL_DLL MEMRasterBand : public GDALRasterBand
 
     int         bNoDataSet;
     double      dfNoData;
+
+    GDALColorTable *poColorTable;
+    GDALColorInterp eColorInterp;
 
   public:
 
@@ -103,6 +111,14 @@ class CPL_DLL MEMRasterBand : public GDALRasterBand
 
     virtual double GetNoDataValue( int *pbSuccess = NULL );
     virtual CPLErr SetNoDataValue( double );
+
+    virtual GDALColorInterp GetColorInterpretation();
+    virtual GDALColorTable *GetColorTable();
+    virtual CPLErr SetColorTable( GDALColorTable * ); 
+
+    // Helper methods to setup band properly.
+
+    void SetColorInterpretation( GDALColorInterp );
 };
 
 #endif /* ndef MEMDATASET_H_INCLUDED */
