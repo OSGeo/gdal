@@ -1,5 +1,6 @@
 
-OBJ     =       shape2ogr.obj shpopen.obj dbfopen.obj 
+OBJ     =       shape2ogr.obj shpopen.obj dbfopen.obj ogrshapedriver.obj \
+		ogrshapedatasource.obj ogrshapelayer.obj 
 EXTRAFLAGS =	-I.. -I..\..
 
 GDAL_ROOT	=	..\..\..
