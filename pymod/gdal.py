@@ -29,6 +29,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.7  2000/05/15 14:17:57  warmerda
+# fixed metadata handling
+#
 # Revision 1.6  2000/04/03 19:42:07  warmerda
 # fixed up handling of band properties
 #
@@ -114,7 +117,7 @@ class Dataset:
         return _gdal.GDALGetProjectionRef(self._o)
 
     def GetMetadata(self):
-        return _gdal.GDALGetDatasetMetadata(self._o)
+        return _gdal.GDALGetMetadata(self._o)
 
     def GetGCPCount(self):
         return _gdal.GDALGetGCPCount(self._o)
@@ -196,6 +199,6 @@ class Band:
                                             include_out_of_range, approx_ok)
 
     def GetMetadata(self):
-        return _gdal.GDALGetRasterMetadata(self._o)
+        return _gdal.GDALGetMetadata(self._o)
 
 
