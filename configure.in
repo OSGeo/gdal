@@ -1178,11 +1178,11 @@ if test -z "$with_sqlite" -o "$with_sqlite" = "no"; then
     AC_MSG_RESULT(disabled)
 else
     if test "$with_sqlite" = "yes" ; then 
-        LIBS="$LIBS -lsqlite"
+        LIBS="$LIBS -lsqlite3"
         SQLITE_INC=""
         AC_MSG_RESULT(enabled)
     else
-        LIBS="$LIBS -L$with_sqlite/lib -lsqlite"
+        LIBS="$LIBS -L$with_sqlite/lib -lsqlite3"
         SQLITE_INC="-I$with_sqlite/include"
         AC_MSG_RESULT(setting DODS root directory to $with_sqlite)_
     fi
