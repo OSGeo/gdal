@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2003/02/06 04:53:53  warmerda
+ * fixed handling of empty fields to avoid emitting debug warning
+ *
  * Revision 1.20  2003/02/05 17:14:11  warmerda
  * work around a bug in EPSG 6.2.2 with scale factor units for PCS 2935/2936
  *
@@ -850,6 +853,10 @@ EPSGGetProjTRFInfo( int nPCS, int * pnProjMethod,
             if( !EPSGGetUOMLengthInfo( nUOM, NULL, &dfInMeters ) )
                 dfInMeters = 1.0;
             adfProjParms[i] = atof(pszValue) * dfInMeters;
+        }
+        else if( EQUAL(pszValue,"") ) /* null field */
+        {
+            adfProjParms[i] = 0.0;
         }
         else /* really we should consider looking up other scaling factors */
         {
