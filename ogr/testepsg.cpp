@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2002/11/29 22:11:05  warmerda
+ * added ESRIified reporting, and ifdef out xml for now
+ *
  * Revision 1.6  2002/01/25 20:47:36  warmerda
  * added simplified WKT output
  *
@@ -141,7 +144,18 @@ int main( int nArgc, char ** papszArgv )
                 printf( "Old Style WKT[%s] = %s\n", 
                         papszArgv[i], pszWKT );
                 CPLFree( pszWKT );
+                delete poSRS2;
 
+                poSRS2 = oSRS.Clone();
+                poSRS2->morphToESRI();
+                poSRS2->exportToPrettyWkt( &pszWKT, FALSE );
+                printf( "ESRI'ified WKT[%s] = \n%s\n", 
+                        papszArgv[i], pszWKT );
+                CPLFree( pszWKT );
+                delete poSRS2;
+
+
+#ifdef notdef
                 char       *pszRawXML;
                 printf( "\n------------------------\n\n" );
                 if( oSRS.exportToXML(&pszRawXML) == OGRERR_NONE )
@@ -154,7 +168,7 @@ int main( int nArgc, char ** papszArgv )
                 {
                     printf( "XML translation failed\n" );
                 }
-
+#endif
                 printf( "\n" );
             }
         }
