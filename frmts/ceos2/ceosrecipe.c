@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2001/08/22 16:54:08  warmerda
+ * fixed use of prefix field.  Zero prefix bytes(ie ERS-SLC) now believed.
+ *
  * Revision 1.6  2001/07/18 04:51:56  warmerda
  * added CPL_CVSID
  *
@@ -259,15 +262,17 @@ int CeosDefaultRecipe( CeosSARVolume_t *volume, void *token )
 		    break;
 		case __CEOS_REC_IDS:
 		    DoExtractInt( ImageDesc->ImageDataStart );
-		    if( ImageDesc->ImageDataStart == 180 )
-		    {
-			/* Probably 192, set manually */
-			/* Issue warning */
-			ImageDesc->ImageDataStart = 192;
-		    }
-
-                    if( ImageDesc->ImageDataStart == 0 )
-                        ImageDesc->ImageDataStart = 192;
+                    /* 
+                    ** This is really reading the quantity of prefix data
+                    ** per data record.  We want the offset from the very
+                    ** beginning of the record to the data, so we add another
+                    ** 12 to that.  I think some products incorrectly indicate
+                    ** 192 (prefix+12) instead of 180 so if we see 192 assume
+                    ** the 12 bytes of record start data has already been
+                    ** added.  Frank Warmerdam.
+                    */
+		    if( ImageDesc->ImageDataStart != 192 )
+                        ImageDesc->ImageDataStart += 12;
 		    break;
 		case __CEOS_REC_SUFFIX_SIZE:
 		    DoExtractInt( ImageDesc->ImageSuffixData );
