@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2002/08/09 21:31:54  warmerda
+ * short circuit a case where the cache is already loaded in CheckRows
+ *
  * Revision 1.6  2002/05/08 20:34:24  warmerda
  * don't increment lastfeature when GetFeature() fails
  *
@@ -463,6 +466,10 @@ int OGRVirtualArray::CheckRows( int nStart, int nRequestCount )
 {
     CPLDebug( "OGR_OLEDB", "OGRVirtualArray::CheckRows( %d, %d )", 
               nStart, nRequestCount );
+
+    if( nStart >= m_nFeatureCacheBase
+        && nStart+nRequestCount <= m_nFeatureCacheBase + m_nFeatureCacheSize )
+        return nRequestCount;
 
     // Reset the m_papoFeatureCache stuff to a clean new cache with
     // nRequestCount entries. 
