@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2003/01/10 22:31:06  warmerda
+ * use OGROCISession::CleanName() to fixup names
+ *
  * Revision 1.9  2003/01/10 19:30:14  warmerda
  * Another related initialization fix.
  *
@@ -198,10 +201,16 @@ int OGROCIDataSource::OpenTable( const char *pszNewName,
 /* -------------------------------------------------------------------- */
 /*      Create the layer object.                                        */
 /* -------------------------------------------------------------------- */
-    OGROCILayer	*poLayer;
+    OGROCITableLayer	*poLayer;
 
     poLayer = new OGROCITableLayer( this, pszNewName, pszGeomCol, nSRID, 
                                     bUpdate, FALSE );
+
+    if( !poLayer->IsValid() )
+    {
+        delete poLayer;
+        return FALSE;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Add layer to data source layer list.                            */
@@ -273,10 +282,8 @@ OGROCIDataSource::CreateLayer( const char * pszLayerName,
 {
     char		szCommand[1024];
     char               *pszSafeLayerName = CPLStrdup(pszLayerName);
-    int                 i;
-    
-    for( i = 0; pszSafeLayerName[i] != '\0'; i++ )
-        pszSafeLayerName[i] = toupper(pszSafeLayerName[i]);
+
+    poSession->CleanName( pszSafeLayerName );
 
 /* -------------------------------------------------------------------- */
 /*      Do we already have this layer?  If so, should we blow it        */
@@ -286,7 +293,8 @@ OGROCIDataSource::CreateLayer( const char * pszLayerName,
 
     for( iLayer = 0; iLayer < nLayers; iLayer++ )
     {
-        if( EQUAL(pszLayerName,papoLayers[iLayer]->GetLayerDefn()->GetName()) )
+        if( EQUAL(pszSafeLayerName,
+                  papoLayers[iLayer]->GetLayerDefn()->GetName()) )
         {
             if( CSLFetchNameValue( papszOptions, "OVERWRITE" ) != NULL
                 && !EQUAL(CSLFetchNameValue(papszOptions,"OVERWRITE"),"NO") )
@@ -299,7 +307,7 @@ OGROCIDataSource::CreateLayer( const char * pszLayerName,
                           "Layer %s already exists, CreateLayer failed.\n"
                           "Use the layer creation option OVERWRITE=YES to "
                           "replace it.",
-                          pszLayerName );
+                          pszSafeLayerName );
                 CPLFree( pszSafeLayerName );
                 return NULL;
             }
@@ -508,6 +516,8 @@ OGRSpatialReference *OGROCIDataSource::FetchSRS( int nId )
         CPLRealloc(papoSRS, sizeof(void*) * (nKnownSRID + 1) );
     panSRID[nKnownSRID] = nId;
     papoSRS[nKnownSRID] = poSRS;
+
+    nKnownSRID++;
 
     return poSRS;
 }
