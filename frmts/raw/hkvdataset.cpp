@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.27  2003/03/13 18:34:02  gwalter
+ * Fix data type determination in CreateCopy.
+ *
  * Revision 1.26  2003/03/11 21:00:30  gwalter
  * More georeferencing-related updates.
  *
@@ -1630,22 +1633,29 @@ HKVDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
 {
     HKVDataset	*poDS;
-    GDALDataType eType = GDT_Byte;
+    GDALDataType eType = poSrcDS->GetRasterBand(1)->GetRasterDataType();
     int          iBand;
    
     if( !pfnProgress( 0.0, NULL, pProgressData ) )
         return NULL;
-    for( iBand = 0; iBand < poSrcDS->GetRasterCount(); iBand++ )
-    {
-        GDALRasterBand *poBand = poSrcDS->GetRasterBand( iBand+1 );
-        eType = GDALDataTypeUnion( eType, poBand->GetRasterDataType() );
-    }    
+
+    /* check that other bands match type- sets type */
+    /* to unknown if they differ.                  */
+    for( iBand = 1; iBand < poSrcDS->GetRasterCount(); iBand++ )
+     {
+         GDALRasterBand *poBand = poSrcDS->GetRasterBand( iBand+1 );
+         eType = GDALDataTypeUnion( eType, poBand->GetRasterDataType() );
+     }
 
     poDS = (HKVDataset *) Create( pszFilename, 
                                   poSrcDS->GetRasterXSize(), 
                                   poSrcDS->GetRasterYSize(), 
                                   poSrcDS->GetRasterCount(), 
                                   eType, papszOptions );
+
+   /* Check that Create worked- return Null if it didn't */
+    if (poDS == NULL)
+        return NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Copy the image data.                                            */
