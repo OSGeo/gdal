@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2003/09/18 21:31:34  warmerda
+ * Fixed docs for GetGeomType().
+ *
  * Revision 1.11  2003/05/28 19:16:42  warmerda
  * fixed up argument names and stuff for docs
  *
@@ -363,7 +366,16 @@ void OGR_FD_AddFieldDefn( OGRFeatureDefnH hDefn, OGRFieldDefnH hNewField )
 /************************************************************************/
 
 /**
+ * \fn OGRwkbGeometryType OGRFeatureDefn::GetGeomType();
+ *
  * Fetch the geometry base type.
+ *
+ * Note that some drivers are unable to determine a specific geometry
+ * type for a layer, in which case wkbUnknown is returned.  A value of
+ * wkbNone indicates no geometry is available for the layer at all.
+ * Many drivers do not properly mark the geometry
+ * type as 25D even if some or all geometries are in fact 25D.  A few (broken)
+ * drivers return wkbPolygon for layers that also include wkbMultiPolygon.  
  *
  * This method is the same as the C function OGR_FD_GetGeomType().
  *
