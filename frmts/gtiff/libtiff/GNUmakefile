@@ -37,6 +37,8 @@ OBJ	= \
 	tif_write.o \
 	tif_zip.o
 
+O_OBJ	=	$(foreach file,$(OBJ),../../o/$(file))
+
 ALL_C_FLAGS	=	$(CFLAGS) -DZIP_SUPPORT -I../../zlib
 
 ifneq ($(JPEG_SETTING),no)
@@ -47,14 +49,15 @@ ifeq ($(JPEG_SETTING),internal)
 ALL_C_FLAGS 	:=	$(ALL_C_FLAGS) -I../../jpeg
 endif
 
-default:	libtiff.a
+default:	$(OBJ)
 
 clean:
-	rm -f *.o *.a
+	rm -f $(O_OBJ) *.o *.a
+
+install-obj:	$(O_OBJ)
+
+../../o/%.o:	%.o
+	cp $*.o ../../o
 
 %.o:	%.c
 	$(CC) -c $(ALL_C_FLAGS) -I$(GDAL_ROOT)/port $*.c -o $*.o
-
-libtiff.a:	$(OBJ)
-	ar r libtiff.a $(OBJ)
-

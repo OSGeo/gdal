@@ -9,14 +9,14 @@ TIFF_OPTS	=	-Ilibgeotiff -Ilibtiff
 SUBLIBS 	=
 
 ifeq ($(TIFF_SETTING),internal)
-SUBLIBS	:= ../o/libtiff.a $(SUBLIBS) 
+SUBLIBS	:= lib-tiff $(SUBLIBS) 
 endif
 
 ifeq ($(GEOTIFF_SETTING),internal)
-SUBLIBS	:= ../o/libgeotiff.a $(SUBLIBS) 
+SUBLIBS	:= lib-geotiff $(SUBLIBS) 
 endif
 
-default:	$(OBJ)
+default:	$(OBJ) $(SUBLIBS)
 
 clean:
 	rm -f *.o
@@ -44,25 +44,13 @@ epsg_to_wkt:	epsg_to_wkt.o gt_wkt_srs.o
 	    $(OGR_LIB) $(CPL_LIB) $(LIBS) -o epsg_to_wkt
 
 lib-tiff:
-	(cd libtiff; $(MAKE))
+	(cd libtiff; $(MAKE) install-obj)
 
 lib-geotiff:
-	(cd libgeotiff; $(MAKE))
-
-all:	lib-tiff lib-geotiff
+	(cd libgeotiff; $(MAKE) install-obj)
 
 install-obj:	$(SUBLIBS) \
 		$(foreach file,$(OBJ),../o/$(file))
 
 ../o/%.o:	%.o
 	cp $*.o ../o
-
-../o/libtiff.a:	libtiff/libtiff.a
-	cp libtiff/libtiff.a ../o
-
-libtiff/libtiff.a:	lib-tiff
-
-../o/libgeotiff.a:	libgeotiff/libgeotiff.a
-	cp libgeotiff/libgeotiff.a ../o
-
-libgeotiff/libgeotiff.a:	lib-geotiff
