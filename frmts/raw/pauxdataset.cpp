@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.28  2004/03/24 09:02:07  dron
+ * Use CPL* functions for large integers parsing/printing.
+ *
  * Revision 1.27  2004/03/23 15:03:25  dron
  * Fixed problems with large (>4GB) multiband datasets.
  *
@@ -896,7 +899,6 @@ GDALDataset *PAuxDataset::Open( GDALOpenInfo * poOpenInfo )
     for( i = 0; i < poDS->nBands; i++ )
     {
         char	szDefnName[32];
-	vsi_l_offset nImgOffset;
         GDALDataType eType;
         int	bNative = TRUE;
 
@@ -929,16 +931,10 @@ GDALDataset *PAuxDataset::Open( GDALOpenInfo * poOpenInfo )
 #endif
         }
 
-#if defined(WIN32) && defined(_MSC_VER)
-	nImgOffset = _atoi64( papszTokens[1] );
-# elif HAVE_ATOLL
-	nImgOffset = atoll( papszTokens[1] );
-#else
-	nImgOffset = atol( papszTokens[1] );
-#endif
         poDS->SetBand( i+1, 
             new PAuxRasterBand( poDS, i+1, poDS->fpImage,
-                                nImgOffset,
+                                CPLScanUIntBig(papszTokens[1],
+                                               strlen(papszTokens[1])),
                                 atoi(papszTokens[2]),
                                 atoi(papszTokens[3]), eType, bNative ) );
 
@@ -1077,9 +1073,9 @@ GDALDataset *PAuxDataset::Create( const char * pszFilename,
     
     for( int iBand = 0; iBand < nBands; iBand++ )
     {
-        const char  *pszTypeName, *pszFormatString;
-        int         nPixelOffset;
-        int         nLineOffset;
+        const char  *pszTypeName;
+        char        szImgOffset[64];
+        int         nPixelOffset, nLineOffset, nChars;
 
         nPixelOffset = GDALGetDataTypeSize(eType)/8;
         nLineOffset = nXSize * nPixelOffset;
@@ -1093,16 +1089,12 @@ GDALDataset *PAuxDataset::Create( const char * pszFilename,
         else
             pszTypeName = "8U";
 
-#if defined(WIN32) && defined(_MSC_VER)
-        pszFormatString = "ChanDefinition-%d: %s %I64d %d %d %s\n";
-# elif HAVE_LONG_LONG
-        pszFormatString = "ChanDefinition-%d: %s %Ld %d %d %s\n";
-#else
-        pszFormatString = "ChanDefinition-%d: %s %ld %d %d %s\n";
-#endif
+        nChars = CPLPrintUIntBig( szImgOffset, nImgOffset, 63 );
+        szImgOffset[nChars] = '\0';
 
-        VSIFPrintf( fp, pszFormatString, iBand+1, pszTypeName,
-                    nImgOffset, nPixelOffset, nLineOffset,
+        VSIFPrintf( fp, "ChanDefinition-%d: %s %s %d %d %s\n", iBand+1,
+                    pszTypeName, strpbrk(szImgOffset, "-.0123456789"),
+                    nPixelOffset, nLineOffset,
 #ifdef CPL_LSB
                     "Swapped"
 #else
