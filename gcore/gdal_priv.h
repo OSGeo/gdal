@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.34  2002/06/19 18:19:59  warmerda
+ * GDALOpenInfo: added bIsDirecory flag, removed VSIStatBuf
+ *
  * Revision 1.33  2002/06/12 21:13:27  warmerda
  * use metadata based driver info
  *
@@ -483,9 +486,9 @@ class CPL_DLL GDALOpenInfo
 
     GDALAccess	eAccess;
 
-    GBool	bStatOK;
-    VSIStatBuf	sStat;
-    
+    int         bStatOK;
+    int         bIsDirectory;
+
     FILE	*fp;
 
     int		nHeaderBytes;
