@@ -1,5 +1,5 @@
 
-OBJ	=	dted_api.obj dteddataset.obj
+OBJ	=	dted_api.obj dteddataset.obj dted_create.obj
 
 GDAL_ROOT	=	..\..
 
