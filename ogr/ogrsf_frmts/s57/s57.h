@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.29  2004/06/01 14:51:19  warmerda
+ * expand tabs
+ *
  * Revision 1.28  2004/05/11 18:17:34  warmerda
  * export various classes
  *
@@ -139,13 +142,13 @@ char **S57FileCollector( const char * pszDataset );
 #define S57O_RETURN_PRIMITIVES "RETURN_PRIMITIVES"
 #define S57O_RETURN_LINKAGES "RETURN_LINKAGES"
 
-#define S57M_UPDATES 			0x01
-#define S57M_LNAM_REFS 			0x02
+#define S57M_UPDATES                    0x01
+#define S57M_LNAM_REFS                  0x02
 #define S57M_SPLIT_MULTIPOINT           0x04
-#define S57M_ADD_SOUNDG_DEPTH		0x08
-#define S57M_PRESERVE_EMPTY_NUMBERS	0x10
-#define S57M_RETURN_PRIMITIVES		0x20
-#define S57M_RETURN_LINKAGES		0x40
+#define S57M_ADD_SOUNDG_DEPTH           0x08
+#define S57M_PRESERVE_EMPTY_NUMBERS     0x10
+#define S57M_RETURN_PRIMITIVES          0x20
+#define S57M_RETURN_LINKAGES            0x40
 
 /* -------------------------------------------------------------------- */
 /*      RCNM values.                                                    */
@@ -417,7 +420,7 @@ public:
     int                 WriteDSPM( int nScale = 0 );
 
 private:
-    DDFModule 		*poModule;
+    DDFModule           *poModule;
     S57ClassRegistrar   *poRegistrar;
 
     int                 nNext0001Index;

@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2004/06/01 14:51:19  warmerda
+ * expand tabs
+ *
  * Revision 1.7  2003/08/21 21:25:30  warmerda
  * Rodney Jensen: Addd FindRecordByObjl()
  *
@@ -188,20 +191,20 @@ DDFRecord * DDFRecordIndex::FindRecordByObjl( int nObjl )
 /*      Do a linear search based on the nObjl to find the desired record. */
 /* -------------------------------------------------------------------- */
     int nMinIndex = 0;
-	if (nLastObjl != nObjl) nLastObjlPos=0;
+        if (nLastObjl != nObjl) nLastObjlPos=0;
 
-	 for (nMinIndex = nLastObjlPos; nMinIndex < nRecordCount; nMinIndex++)
-	 {
-		if (nObjl == pasRecords[nMinIndex].poRecord->GetIntSubfield( "FRID", 0, "OBJL", 0 ) )
-		{
-			nLastObjlPos=nMinIndex+1;  /* add 1, don't want to look at same again */
-			nLastObjl=nObjl;
-			return pasRecords[nMinIndex].poRecord;
-		}
-	 }
+         for (nMinIndex = nLastObjlPos; nMinIndex < nRecordCount; nMinIndex++)
+         {
+                if (nObjl == pasRecords[nMinIndex].poRecord->GetIntSubfield( "FRID", 0, "OBJL", 0 ) )
+                {
+                        nLastObjlPos=nMinIndex+1;  /* add 1, don't want to look at same again */
+                        nLastObjl=nObjl;
+                        return pasRecords[nMinIndex].poRecord;
+                }
+         }
 
-	 nLastObjlPos=0;
-	 nLastObjl=0;
+         nLastObjlPos=0;
+         nLastObjl=0;
     return NULL;
 }
 
