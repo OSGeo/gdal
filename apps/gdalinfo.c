@@ -26,6 +26,9 @@
  * serves as an early test harnass.
  *
  * $Log$
+ * Revision 1.16  2000/11/29 20:52:53  warmerda
+ * Add pretty printing of projection.
+ *
  * Revision 1.15  2000/08/25 14:26:02  warmerda
  * added nodata, and arbitrary overview reporting
  *
@@ -71,6 +74,7 @@
  */
 
 #include "gdal.h"
+#include "ogr_srs_api.h"
 #include "cpl_string.h"
 
 static int 
@@ -134,8 +138,24 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
     if( GDALGetProjectionRef( hDataset ) != NULL )
     {
-        printf( "Projection is `%s'\n",
-                GDALGetProjectionRef( hDataset ) );
+        OGRSpatialReferenceH  hSRS;
+        char		      *pszProjection;
+
+        pszProjection = (char *) GDALGetProjectionRef( hDataset );
+
+        hSRS = OSRNewSpatialReference(NULL);
+        if( OSRImportFromWkt( hSRS, &pszProjection ) == CE_None )
+        {
+            char	*pszPrettyWkt = NULL;
+
+            OSRExportToPrettyWkt( hSRS, &pszPrettyWkt, FALSE );
+            printf( "Coordinate System is:\n%s\n", pszPrettyWkt );
+        }
+        else
+            printf( "Coordinate System is `%s'\n",
+                    GDALGetProjectionRef( hDataset ) );
+
+        OSRDestroySpatialReference( hSRS );
     }
 
 /* -------------------------------------------------------------------- */
