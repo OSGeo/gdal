@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.5  2002/03/11 22:34:08  warmerda
+ * Avoid multiple defining iMember.
+ *
  * Revision 1.4  2002/03/11 17:29:04  warmerda
  * added multipolygon support
  *
@@ -278,7 +281,7 @@ static int OGR2GMLGeometryAppend( OGRGeometry *poGeometry,
         AppendString( ppszText, pnLength, pnMaxLength,
                       "<gml:MultiPolygon>" );
 
-        for( int iMember = 0; iMember < poMPoly->getNumGeometries(); iMember++)
+        for( iMember = 0; iMember < poMPoly->getNumGeometries(); iMember++)
         {
             OGRGeometry *poMember = poMPoly->getGeometryRef( iMember );
 
