@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_feature.cpp,v 1.48 2002/08/27 17:17:33 warmerda Exp $
+ * $Id: mitab_feature.cpp,v 1.49 2003/03/28 14:01:14 warmerda Exp $
  *
  * Name:     mitab_feature.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log: mitab_feature.cpp,v $
+ * Revision 1.49  2003/03/28 14:01:14  warmerda
+ * use TRUE/FALSE in place of true/false
+ *
  * Revision 1.48  2002/08/27 17:17:33  warmerda
  * handle errors better, auto-add FID column if there aren't any columns
  *
@@ -3125,18 +3128,18 @@ GBool TABRegion::IsInteriorRing(int nRequestedRingIndex)
 
             if (iCurRing == nRequestedRingIndex)
             {
-                return false;
+                return FALSE;
             }
             else if (nRequestedRingIndex > iCurRing &&
                      nRequestedRingIndex-(iCurRing+1) < numIntRings)
            {
-                return true;
+                return TRUE;
             }
             iCurRing += numIntRings+1;
         }
     }
 
-    return false;
+    return FALSE;
 }
 
 /**********************************************************************
