@@ -28,9 +28,12 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2003/03/03 05:06:46  warmerda
+ * implemented DeleteDataSource
+ *
  * Revision 1.5  2002/03/27 21:04:38  warmerda
  * Added support for reading, and creating lone .dbf files for wkbNone geometry
- * layers.  Added support for creating a single .shp file instead of a directory
+ * layers. Added support for creating a single .shp file instead of a directory
  * if a path ending in .shp is passed to the data source create method.
  *
  * Revision 1.4  2001/12/12 17:24:08  warmerda
@@ -49,6 +52,7 @@
 
 #include "ogrshape.h"
 #include "cpl_conv.h"
+#include "cpl_string.h"
 
 CPL_CVSID("$Id$");
 
@@ -161,6 +165,67 @@ OGRDataSource *OGRShapeDriver::CreateDataSource( const char * pszName,
 }
 
 /************************************************************************/
+/*                          DeleteDataSource()                          */
+/************************************************************************/
+
+OGRErr OGRShapeDriver::DeleteDataSource( const char *pszDataSource )
+
+{
+    int iExt;
+    VSIStatBuf sStatBuf;
+    static const char *apszExtensions[] = 
+        { "shp", "shx", "dbf", "sbn", "sbx", "prj", NULL };
+
+    if( VSIStat( pszDataSource, &sStatBuf ) != 0 )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "%s does not appear to be a file or directory.",
+                  pszDataSource );
+
+        return OGRERR_FAILURE;
+    }
+
+    if( VSI_ISREG(sStatBuf.st_mode) 
+        && (EQUAL(CPLGetExtension(pszDataSource),"shp")
+            || EQUAL(CPLGetExtension(pszDataSource),"shx")
+            || EQUAL(CPLGetExtension(pszDataSource),"dbf")) )
+    {
+        for( iExt=0; apszExtensions[iExt] != NULL; iExt++ )
+        {
+            const char *pszFile = CPLResetExtension(pszDataSource,
+                                                    apszExtensions[iExt] );
+            if( VSIStat( pszFile, &sStatBuf ) == 0 )
+                VSIUnlink( pszFile );
+        }
+    }
+    else if( VSI_ISDIR(sStatBuf.st_mode) )
+    {
+        char **papszDirEntries = CPLReadDir( pszDataSource );
+        int  iFile;
+
+        for( iFile = 0; 
+             papszDirEntries != NULL && papszDirEntries[iFile] != NULL;
+             iFile++ )
+        {
+            if( CSLFindString( (char **) apszExtensions, 
+                               CPLGetExtension(papszDirEntries[iFile])) != -1)
+            {
+                VSIUnlink( CPLFormFilename( pszDataSource, 
+                                            papszDirEntries[iFile], 
+                                            NULL ) );
+            }
+        }
+
+        CSLDestroy( papszDirEntries );
+
+        VSIRmdir( pszDataSource );
+    }
+
+    return OGRERR_NONE;
+}
+
+
+/************************************************************************/
 /*                           TestCapability()                           */
 /************************************************************************/
 
@@ -168,6 +233,8 @@ int OGRShapeDriver::TestCapability( const char * pszCap )
 
 {
     if( EQUAL(pszCap,ODrCCreateDataSource) )
+        return TRUE;
+    else if( EQUAL(pszCap,ODrCDeleteDataSource) )
         return TRUE;
     else
         return FALSE;
