@@ -1,6 +1,6 @@
 /*! \mainpage GDAL - Geospatial Data Abstraction Library
 
-<img src="gdalicon.png"> 
+<img src="gdalicon.png" alt="GDAL"> 
 is a translator library for raster geospatial data formats
 that is released under an <a href="faq.html#license">X/MIT</a> style 
 <a href="http://www.opensource.org/">
