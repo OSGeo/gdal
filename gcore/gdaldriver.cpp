@@ -26,6 +26,9 @@
  * driver specific function pointers.
  * 
  * $Log$
+ * Revision 1.3  1998/12/31 18:54:53  warmerda
+ * Flesh out create method.
+ *
  * Revision 1.2  1998/12/06 22:17:32  warmerda
  * Add stub Create() method
  *
@@ -67,5 +70,19 @@ GDALDataset * GDALDriver::Create( const char * pszFilename,
                                   GDALDataType eType, char ** papszParmList )
 
 {
-    return NULL;
+    /* notdef: should add a bunch of error checking here */
+    
+    if( pfnCreate == NULL )
+    {
+        CPLError( CE_Fatal, CPLE_NotSupported,
+                  "GDALDriver::Create() ... not create method implemented"
+                  " for this format.\n" );
+        
+        return NULL;
+    }
+    else
+    {
+        return( pfnCreate( pszFilename, nXSize, nYSize, nBands, eType,
+                           papszParmList ) );
+    }
 }
