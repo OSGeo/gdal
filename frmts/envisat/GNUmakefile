@@ -4,8 +4,6 @@ include $(GDAL_ROOT)/GDALmake.opt
 
 OBJ	=	EnvisatFile.o envisatdataset.o
 
-XTRA_OPT	=	-DGDAL_BUILD
-
 default:	$(OBJ)
 
 clean:
