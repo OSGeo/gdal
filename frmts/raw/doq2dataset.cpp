@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2001/09/21 16:40:08  warmerda
+ * fixed case with one band
+ *
  * Revision 1.10  2001/09/19 20:56:19  warmerda
  * handle multiple BAND_CONTENT fields, improve metadata handling
  *
@@ -383,7 +386,7 @@ GDALDataset *DOQ2Dataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Compute layout of data.                                         */
 /* -------------------------------------------------------------------- */
     if( nBandCount < 2 )
-        nBandCount = nBytesPerPixel / 8;
+        nBandCount = nBytesPerPixel;
     else
         nBytesPerPixel *= nBandCount;
 
