@@ -1,5 +1,6 @@
 
-OBJ	=	ogrsfdriverregistrar.obj ogrlayer.obj
+OBJ	=	ogrsfdriverregistrar.obj ogrlayer.obj \
+		ogrdatasource.obj ogrsfdriver.obj ogrregisterall.obj
 
 EXTRAFLAGS =	-I.. -I..\..
 
