@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.32  2005/03/16 11:01:10  lichun
+ * in CreateCopy() the category names are copied as well
+ *
  * Revision 1.31  2005/01/15 16:10:10  fwarmerdam
  * added offset, scale and colorinterp to default createcopy
  *
@@ -316,6 +319,7 @@ GDALDataset *GDALDriver::CreateCopy( const char * pszFilename,
 /*      Do we need to copy a colortable or other metadata?              */
 /* -------------------------------------------------------------------- */
         GDALColorTable *poCT;
+        char** catNames;
         int bSuccess;
         double dfValue;
 
@@ -342,6 +346,10 @@ GDALDataset *GDALDriver::CreateCopy( const char * pszFilename,
         if( poSrcBand->GetColorInterpretation() != GCI_Undefined )
             poDstBand->SetColorInterpretation( 
                 poSrcBand->GetColorInterpretation() );
+
+        catNames = poSrcBand->GetCategoryNames();
+        if (0 != catNames)
+            poDstBand->SetCategoryNames(catNames);
 
         if( !bStrict )
             CPLPopErrorHandler();
