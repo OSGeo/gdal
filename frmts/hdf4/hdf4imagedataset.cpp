@@ -29,6 +29,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.15  2002/11/13 06:43:36  warmerda
+ * honour quoted strings when tokenizing filename
+ *
  * Revision 1.14  2002/11/12 09:16:52  dron
  * Added rank choosing in Create() method.
  *
@@ -671,7 +674,8 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
     poOpenInfo->fp = NULL;
 
     poDS->papszSubdatasetName =
-	        CSLTokenizeString2( poOpenInfo->pszFilename, ":", 0 );
+	        CSLTokenizeString2( poOpenInfo->pszFilename, ":", 
+                                    CSLT_HONOURSTRINGS );
     poDS->pszFilename = poDS->papszSubdatasetName[2];
 
     if( EQUAL( poDS->papszSubdatasetName[0], "HDF4_SDS" ) )
