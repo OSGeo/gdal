@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2000/03/20 23:08:18  warmerda
+ * Added docs.
+ *
  * Revision 1.2  2000/03/20 22:40:23  warmerda
  * Added C API.
  *
@@ -145,6 +148,19 @@ void OCTDestroyCoordinateTransformation( OGRCoordinateTransformationH hCT )
 /************************************************************************/
 /*                 OGRCreateCoordinateTransformation()                  */
 /************************************************************************/
+
+/**
+ * Create transformation object.
+ *
+ * This is the same as the C function OCTNewCoordinateTransformation().
+ *
+ * The delete operator, or OCTDestroyCoordinateTransformation() should
+ * be used to destroy transformation objects. 
+ *
+ * @param poSource source spatial reference system. 
+ * @param poTarget target spatial reference system. 
+ * @return NULL on failure or a ready to use transformation object.
+ */
 
 OGRCoordinateTransformation*
 OGRCreateCoordinateTransformation( OGRSpatialReference *poSource, 

@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2000/03/20 23:08:05  warmerda
+ * Added docs.
+ *
  * Revision 1.16  2000/03/20 22:59:36  warmerda
  * Added some documentation.
  *
@@ -367,6 +370,8 @@ class OGRSpatialReference
 
 /**
  * Object for transforming between coordinate systems.
+ *
+ * See also: OGRCreateSpatialReference.
  */
  
 class OGRCoordinateTransformation
