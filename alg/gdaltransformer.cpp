@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2003/06/03 19:42:54  warmerda
+ * added partial support for RPC in GenImgProjTransformer
+ *
  * Revision 1.9  2003/02/06 04:56:35  warmerda
  * added documentation
  *
@@ -117,13 +120,13 @@ points may have failed) or FALSE if the overall transformation fails.
 */
 
 /************************************************************************/
-/*                          InvGeoTransform()                           */
+/*                        GDALInvGeoTransform()                         */
 /*                                                                      */
 /*      Invert a standard 3x2 "GeoTransform" style matrix with an       */
 /*      implicit [1 0 0] final row.                                     */
 /************************************************************************/
 
-static int InvGeoTransform( double *gt_in, double *gt_out )
+int GDALInvGeoTransform( double *gt_in, double *gt_out )
 
 {
     double	det, inv_det;
@@ -348,6 +351,7 @@ typedef struct {
     double   adfSrcInvGeoTransform[6];
 
     void     *pSrcGCPTransformArg;
+    void     *pSrcRPCTransformArg;
 
     void     *pReprojectArg;
 
@@ -415,6 +419,8 @@ GDALCreateGenImgProjTransformer( GDALDatasetH hSrcDS, const char *pszSrcWKT,
 
 {
     GDALGenImgProjTransformInfo *psInfo;
+    char **papszMD;
+    GDALRPCInfo sRPCInfo;
 
 /* -------------------------------------------------------------------- */
 /*      Initialize the transform info.                                  */
@@ -433,9 +439,10 @@ GDALCreateGenImgProjTransformer( GDALDatasetH hSrcDS, const char *pszSrcWKT,
             || psInfo->adfSrcGeoTransform[4] != 0.0
             || ABS(psInfo->adfSrcGeoTransform[5]) != 1.0) )
     {
-        InvGeoTransform( psInfo->adfSrcGeoTransform, 
-                         psInfo->adfSrcInvGeoTransform );
+        GDALInvGeoTransform( psInfo->adfSrcGeoTransform, 
+                             psInfo->adfSrcInvGeoTransform );
     }
+
     else if( bGCPUseOK && GDALGetGCPCount( hSrcDS ) > 0 )
     {
         psInfo->pSrcGCPTransformArg = 
@@ -447,6 +454,19 @@ GDALCreateGenImgProjTransformer( GDALDatasetH hSrcDS, const char *pszSrcWKT,
             return NULL;
         }
     }
+
+    else if( bGCPUseOK && (papszMD = GDALGetMetadata( hSrcDS, "" )) != NULL
+             && GDALExtractRPCInfo( papszMD, &sRPCInfo ) )
+    {
+        psInfo->pSrcRPCTransformArg = 
+            GDALCreateRPCTransformer( &sRPCInfo, FALSE, 0.1 );
+        if( psInfo->pSrcRPCTransformArg == NULL )
+        {
+            GDALDestroyGenImgProjTransformer( psInfo );
+            return NULL;
+        }
+    }
+
     else
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
@@ -476,8 +496,8 @@ GDALCreateGenImgProjTransformer( GDALDatasetH hSrcDS, const char *pszSrcWKT,
     if( hDstDS )
     {
         GDALGetGeoTransform( hDstDS, psInfo->adfDstGeoTransform );
-        InvGeoTransform( psInfo->adfDstGeoTransform, 
-                         psInfo->adfDstInvGeoTransform );
+        GDALInvGeoTransform( psInfo->adfDstGeoTransform, 
+                             psInfo->adfDstInvGeoTransform );
     }
     else
     {
@@ -549,6 +569,7 @@ int GDALGenImgProjTransform( void *pTransformArg, int bDstToSrc,
     int   i;
     double *padfGeoTransform;
     void *pGCPTransformArg;
+    void *pRPCTransformArg;
 
 /* -------------------------------------------------------------------- */
 /*      Convert from src (dst) pixel/line to src (dst)                  */
@@ -558,14 +579,16 @@ int GDALGenImgProjTransform( void *pTransformArg, int bDstToSrc,
     {
         padfGeoTransform = psInfo->adfDstGeoTransform;
         pGCPTransformArg = psInfo->pDstGCPTransformArg;
+        pRPCTransformArg = NULL;
     }
     else
     {
         padfGeoTransform = psInfo->adfSrcGeoTransform;
         pGCPTransformArg = psInfo->pSrcGCPTransformArg;
+        pRPCTransformArg = psInfo->pSrcRPCTransformArg;
     }
-        
-    if( pGCPTransformArg == NULL )
+
+    if( pGCPTransformArg == NULL && pRPCTransformArg == NULL )
     {
         for( i = 0; i < nPointCount; i++ )
         {
@@ -582,9 +605,16 @@ int GDALGenImgProjTransform( void *pTransformArg, int bDstToSrc,
             padfY[i] = dfNewY;
         }
     }
-    else
+    else if( pGCPTransformArg != NULL )
     {
         if( !GDALGCPTransform( pGCPTransformArg, FALSE, 
+                               nPointCount, padfX, padfY, padfZ,
+                               panSuccess ) )
+            return FALSE;
+    }
+    else if( pRPCTransformArg != NULL )
+    {
+        if( !GDALRPCTransform( pRPCTransformArg, FALSE, 
                                nPointCount, padfX, padfY, padfZ,
                                panSuccess ) )
             return FALSE;
@@ -613,14 +643,16 @@ int GDALGenImgProjTransform( void *pTransformArg, int bDstToSrc,
     {
         padfGeoTransform = psInfo->adfSrcInvGeoTransform;
         pGCPTransformArg = psInfo->pSrcGCPTransformArg;
+        pRPCTransformArg = psInfo->pSrcRPCTransformArg;
     }
     else
     {
         padfGeoTransform = psInfo->adfDstInvGeoTransform;
         pGCPTransformArg = psInfo->pDstGCPTransformArg;
+        pRPCTransformArg = NULL;
     }
         
-    if( pGCPTransformArg == NULL )
+    if( pGCPTransformArg == NULL && pRPCTransformArg == NULL )
     {
         for( i = 0; i < nPointCount; i++ )
         {
@@ -637,9 +669,16 @@ int GDALGenImgProjTransform( void *pTransformArg, int bDstToSrc,
             padfY[i] = dfNewY;
         }
     }
-    else
+    else if( pGCPTransformArg != NULL )
     {
         if( !GDALGCPTransform( pGCPTransformArg, TRUE,
+                               nPointCount, padfX, padfY, padfZ,
+                               panSuccess ) )
+            return FALSE;
+    }
+    else if( pRPCTransformArg != NULL )
+    {
+        if( !GDALRPCTransform( pRPCTransformArg, TRUE,
                                nPointCount, padfX, padfY, padfZ,
                                panSuccess ) )
             return FALSE;
@@ -980,7 +1019,11 @@ int GDALApproxTransform( void *pCBData, int bDstToSrc, int nPoints,
     }
 
 /* -------------------------------------------------------------------- */
-/*      Error is OK, linearly interpolate all points along line.        */
+/*      Error is OK since this is just used to compute output bounds    */
+/*      of newly created file for gdalwarper.  So just use affine       */
+/*      approximation of the reverse transform.  Eventually we          */
+/*      should implement iterative searching to find a result within    */
+/*      our error threshold.                                            */
 /* -------------------------------------------------------------------- */
     for( i = nPoints-1; i >= 0; i-- )
     {
