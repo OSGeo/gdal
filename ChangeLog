@@ -1,3 +1,7 @@
+2001-01-26  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* ogr/ogr_srs_esri.cpp: added Transverse Mercator .prj support.
+
 2001-01-24  Frank Warmerdam  <warmerdam@pobox.com>
 
 	* Added support for files with scanlines split across records in the

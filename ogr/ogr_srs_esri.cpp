@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2001/01/26 14:56:11  warmerda
+ * added Transverse Mercator .prj support
+ *
  * Revision 1.3  2001/01/19 21:10:46  warmerda
  * replaced tabs
  *
@@ -242,6 +245,15 @@ OGRErr OGRSpatialReference::importFromESRI( char **papszPrj )
                    OSR_GDV( papszPrj, "PARAM_5", 0.0 ), 
                    OSR_GDV( papszPrj, "PARAM_7", 0.0 ) );
         }
+    }
+
+    else if( EQUAL(pszProj,"TRANSVERSE") )
+    {
+        SetTM( OSR_GDV( papszPrj, "PARAM_2", 0.0 ), 
+               OSR_GDV( papszPrj, "PARAM_3", 0.0 ), 
+               OSR_GDV( papszPrj, "PARAM_1", 0.0 ), 
+               OSR_GDV( papszPrj, "PARAM_4", 0.0 ), 
+               OSR_GDV( papszPrj, "PARAM_5", 0.0 ) );
     }
 
     else
