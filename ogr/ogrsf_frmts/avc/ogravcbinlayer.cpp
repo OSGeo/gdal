@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2003/01/03 15:43:29  warmerda
+ * completed OGRBuildPolygonFromEdges() changes
+ *
  * Revision 1.6  2003/01/02 21:45:23  warmerda
  * move OGRBuildPolygonsFromEdges into C API
  *
@@ -333,7 +336,9 @@ int OGRAVCBinLayer::FormPolygonGeometry( OGRFeature *poFeature,
     OGRErr  eErr;
     OGRPolygon *poPolygon;
 
-    poPolygon = OGRBuildPolygonFromEdges( &oArcs, TRUE, FALSE, 0.0, &eErr );
+    poPolygon = (OGRPolygon *) 
+        OGRBuildPolygonFromEdges( (OGRGeometryH) &oArcs, TRUE, FALSE,  
+                                  0.0, &eErr );
     if( poPolygon != NULL )
         poFeature->SetGeometryDirectly( poPolygon );
 
