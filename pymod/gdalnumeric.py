@@ -29,6 +29,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.11  2003/01/29 19:55:31  warmerda
+# Added prototype to SaveArray() call
+#
 # Revision 1.10  2003/01/20 22:19:28  warmerda
 # added buffer size option in ReadAsArray
 #
@@ -68,7 +71,11 @@ from Numeric import *
 def OpenArray( array, prototype_ds = None ):
     ds = gdal.Open( GetArrayFilename(array) )
     if ds is not None and prototype_ds is not None:
-        CopyDatasetInfo( prototype_ds, ds )
+        if type(prototype_ds).__name__ == 'str':
+            prototype_ds = gdal.Open( prototype_ds )
+        if prototype_ds is not None:
+            CopyDatasetInfo( prototype_ds, ds )
+            
     return ds
 
 def GetArrayFilename( array ):
@@ -82,12 +89,12 @@ def LoadFile( filename, xoff=0, yoff=0, xsize=None, ysize=None ):
 
     return DatasetReadAsArray( ds, xoff, yoff, xsize, ysize )
 
-def SaveArray( src_array, filename, format = "GTiff" ):
+def SaveArray( src_array, filename, format = "GTiff", prototype = None ):
     driver = gdal.GetDriverByName( format )
     if driver is None:
         raise ValueError, "Can't find driver "+format
 
-    return driver.CreateCopy( filename, OpenArray(src_array) )
+    return driver.CreateCopy( filename, OpenArray(src_array,prototype) )
 
 def DatasetReadAsArray( ds, xoff=0, yoff=0, xsize=None, ysize=None ):
 
