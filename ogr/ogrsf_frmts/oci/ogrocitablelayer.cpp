@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2003/01/14 16:59:03  warmerda
+ * added field truncation support
+ *
  * Revision 1.15  2003/01/14 15:31:08  warmerda
  * added fallback support if no spatial index available
  *
@@ -119,6 +122,7 @@ OGROCITableLayer::OGROCITableLayer( OGROCIDataSource *poDSIn,
     nDimension = 3;
 
     bValidTable = FALSE;
+    bTruncationReported = FALSE;
     if( bNewLayerIn )
         bHaveSpatialIndex = FALSE;
     else
@@ -888,6 +892,25 @@ char *OGROCITableLayer::TranslateToSDOGeometry( OGRGeometry * poGeometry )
 }
 
 /************************************************************************/
+/*                          ReportTruncation()                          */
+/************************************************************************/
+
+void OGROCITableLayer::ReportTruncation( OGRFieldDefn * psFldDefn )
+
+{
+    if( bTruncationReported )
+        return;
+
+    CPLError( CE_Warning, CPLE_AppDefined,
+              "The value for the field %s is being truncated to fit the\n"
+              "declared width/precision of the field.  No more truncations\n"
+              "for table %s will be reported.", 
+              psFldDefn->GetNameRef(), poFeatureDefn->GetName() );
+
+    bTruncationReported = TRUE;
+}
+
+/************************************************************************/
 /*                           CreateFeature()                            */
 /************************************************************************/
 
@@ -1014,10 +1037,11 @@ OGRErr OGROCITableLayer::CreateFeature( OGRFeature *poFeature )
 /* -------------------------------------------------------------------- */
     for( i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
     {
-        const char *pszStrValue = poFeature->GetFieldAsString(i);
-
         if( !poFeature->IsFieldSet( i ) )
             continue;
+
+        OGRFieldDefn *poFldDefn = poFeatureDefn->GetFieldDefn(i);
+        const char *pszStrValue = poFeature->GetFieldAsString(i);
 
         if( bNeedComma )
             strcat( pszCommand+nOffset, ", " );
@@ -1031,8 +1055,19 @@ OGRErr OGROCITableLayer::CreateFeature( OGRFeature *poFeature )
             pszCommand = (char *) CPLRealloc(pszCommand, nCommandBufSize );
         }
         
-        if( poFeatureDefn->GetFieldDefn(i)->GetType() != OFTInteger
-            && poFeatureDefn->GetFieldDefn(i)->GetType() != OFTReal )
+        if( poFldDefn->GetType() == OFTInteger 
+            || poFldDefn->GetType() == OFTReal )
+        {
+            if( poFldDefn->GetWidth() > 0 && bPreservePrecision
+                && (int) strlen(pszStrValue) > poFldDefn->GetWidth() )
+            {
+                strcat( pszCommand+nOffset, "NULL" );
+                ReportTruncation( poFldDefn );
+            }
+            else
+                strcat( pszCommand+nOffset, pszStrValue );
+        }
+        else 
         {
             int		iChar;
 
@@ -1043,6 +1078,13 @@ OGRErr OGROCITableLayer::CreateFeature( OGRFeature *poFeature )
             
             for( iChar = 0; pszStrValue[iChar] != '\0'; iChar++ )
             {
+                if( poFldDefn->GetWidth() != 0 && bPreservePrecision
+                    && iChar >= poFldDefn->GetWidth() )
+                {
+                    ReportTruncation( poFldDefn );
+                    break;
+                }
+
                 if( pszStrValue[iChar] == '\'' )
                 {
                     pszCommand[nOffset++] = '\'';
@@ -1054,10 +1096,6 @@ OGRErr OGROCITableLayer::CreateFeature( OGRFeature *poFeature )
             pszCommand[nOffset] = '\0';
             
             strcat( pszCommand+nOffset, "'" );
-        }
-        else
-        {
-            strcat( pszCommand+nOffset, pszStrValue );
         }
         nOffset += strlen(pszCommand+nOffset);
     }
@@ -1216,7 +1254,7 @@ OGRErr OGROCITableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK )
     else if( oField.GetType() == OFTString )
     {
         if( oField.GetWidth() == 0 || !bPreservePrecision )
-            strcpy( szFieldType, "VARCHAR(2048)" );
+            strcpy( szFieldType, "VARCHAR(4000)" );
         else
             sprintf( szFieldType, "CHAR(%d)", oField.GetWidth() );
     }
@@ -1226,7 +1264,7 @@ OGRErr OGROCITableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK )
                   "Can't create field %s with type %s on Oracle layers.  Creating as VARCHAR.",
                   oField.GetNameRef(),
                   OGRFieldDefn::GetFieldTypeName(oField.GetType()) );
-        strcpy( szFieldType, "VARCHAR(2048)" );
+        strcpy( szFieldType, "VARCHAR(4000)" );
     }
     else
     {

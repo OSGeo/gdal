@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2003/01/14 16:59:03  warmerda
+ * added field truncation support
+ *
  * Revision 1.8  2003/01/14 15:31:08  warmerda
  * added fallback support if no spatial index available
  *
@@ -313,6 +316,9 @@ class OGROCITableLayer : public OGROCILayer
     OCIArray           *hOrdVARRAY;
 
     char              **papszOptions;
+
+    int                 bTruncationReported;
+    void                ReportTruncation( OGRFieldDefn * );
 
     void                PushOrdinal( double );
 
