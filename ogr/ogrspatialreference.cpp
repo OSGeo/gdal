@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.30  2001/07/16 03:34:55  warmerda
+ * various fixes, and improvements suggested by Ben Driscoe on gdal list
+ *
  * Revision 1.29  2001/07/13 12:33:10  warmerda
  * Fixed crash on OGRSpatialReference if PROJECTION missing.
  *
@@ -253,6 +256,21 @@ OGRSpatialReferenceH OSRNewSpatialReference( const char *pszWKT )
     return poSRS;
 }
 
+/************************************************************************/
+/*                        OGRSpatialReference()                         */
+/*                                                                      */
+/*      Simple copy constructor.  See also Clone().                     */
+/************************************************************************/
+
+OGRSpatialReference::OGRSpatialReference(const OGRSpatialReference &oOther)
+
+{
+    nRefCount = 1;
+    poRoot = NULL;
+
+    if( oOther.poRoot != NULL )
+        poRoot = oOther.poRoot->Clone();
+}
 
 /************************************************************************/
 /*                        ~OGRSpatialReference()                        */
@@ -280,6 +298,26 @@ void OSRDestroySpatialReference( OGRSpatialReferenceH hSRS )
 
 {
     delete ((OGRSpatialReference *) hSRS);
+}
+
+/************************************************************************/
+/*                             operator=()                              */
+/************************************************************************/
+
+OGRSpatialReference &
+OGRSpatialReference::operator=(const OGRSpatialReference &oSource)
+
+{
+    if( poRoot != NULL )
+    {
+        delete poRoot;
+        poRoot = NULL;
+    }
+    
+    if( oSource.poRoot != NULL )
+        poRoot = oSource.poRoot->Clone();
+
+    return *this;
 }
 
 /************************************************************************/
@@ -734,7 +772,8 @@ OGRSpatialReference *OGRSpatialReference::Clone()
 
     poNewRef = new OGRSpatialReference();
 
-    poNewRef->poRoot = poRoot->Clone();
+    if( poRoot != NULL )
+        poNewRef->poRoot = poRoot->Clone();
 
     return poNewRef;
 }
@@ -1558,9 +1597,8 @@ OGRErr OSRSetLocalCS( OGRSpatialReferenceH hSRS, const char * pszName )
  * This method is the same as the C function OSRSetProjCS(). 
  *
  * This method is will ensure a PROJCS node is created as the root, 
- * and set the provided name on it.  It must be used before SetGeogCS()
- * or SetWellKnownGeogCS() can be used in creation of a projected coordinate
- * system.  
+ * and set the provided name on it.  If used on a GEOGCS coordinate system, 
+ * the GEOGCS node will be demoted to be a child of the new PROJCS root.
  *
  * @param pszName the user visible name to assign.  Not used as a key.
  * 
@@ -1570,7 +1608,14 @@ OGRErr OSRSetLocalCS( OGRSpatialReferenceH hSRS, const char * pszName )
 OGRErr OGRSpatialReference::SetProjCS( const char * pszName )
 
 {
+    OGR_SRSNode	*poGeogCS = NULL;
     OGR_SRSNode *poProjCS = GetAttrNode( "PROJCS" );
+
+    if( poRoot != NULL && EQUAL(poRoot->GetValue(),"GEOGCS") )
+    {
+        poGeogCS = poRoot;
+        poRoot = NULL;
+    }
 
     if( poProjCS == NULL && GetRoot() != NULL )
     {
@@ -1580,11 +1625,13 @@ OGRErr OGRSpatialReference::SetProjCS( const char * pszName )
                   GetRoot()->GetValue() );
         return OGRERR_FAILURE;
     }
-    else
-    {
-        SetNode( "PROJCS", pszName );
-        return OGRERR_NONE;
-    }
+
+    SetNode( "PROJCS", pszName );
+
+    if( poGeogCS != NULL )
+        poRoot->InsertChild( poGeogCS, 1 );
+
+    return OGRERR_NONE;
 }
 
 /************************************************************************/
@@ -1604,12 +1651,28 @@ OGRErr OSRSetProjCS( OGRSpatialReferenceH hSRS, const char * pszName )
 OGRErr OGRSpatialReference::SetProjection( const char * pszProjection )
 
 {
+    OGR_SRSNode	*poGeogCS = NULL;
+    OGRErr eErr;
+
+    if( poRoot != NULL && EQUAL(poRoot->GetValue(),"GEOGCS") )
+    {
+        poGeogCS = poRoot;
+        poRoot = NULL;
+    }
+
     if( !GetAttrNode( "PROJCS" ) )
     {
         SetNode( "PROJCS", "unnamed" );
     }
 
-    return SetNode( "PROJCS|PROJECTION", pszProjection );
+    eErr = SetNode( "PROJCS|PROJECTION", pszProjection );
+    if( eErr != OGRERR_NONE )
+        return eErr;
+
+    if( poGeogCS != NULL )
+        poRoot->InsertChild( poGeogCS, 1 );
+
+    return OGRERR_NONE;
 }
 
 /************************************************************************/

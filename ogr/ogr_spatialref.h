@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.30  2001/07/16 03:34:55  warmerda
+ * various fixes, and improvements suggested by Ben Driscoe on gdal list
+ *
  * Revision 1.29  2001/05/24 21:02:42  warmerda
  * moved OGRCoordinateTransform destructor defn
  *
@@ -205,12 +208,15 @@ class CPL_DLL OGRSpatialReference
     int         nRefCount;
 
     OGR_SRSNode *poRoot;
-    
+
   public:
+    		OGRSpatialReference(const OGRSpatialReference&);
                 OGRSpatialReference(const char * = NULL);
                 
     virtual    ~OGRSpatialReference();
                 
+    OGRSpatialReference &operator=(const OGRSpatialReference&);
+
     int         Reference();
     int         Dereference();
     int         GetReferenceCount() { return nRefCount; }
@@ -468,7 +474,7 @@ public:
 
 };
 
-OGRCoordinateTransformation*
+OGRCoordinateTransformation CPL_DLL *
 OGRCreateCoordinateTransformation( OGRSpatialReference *poSource, 
                                    OGRSpatialReference *poTarget );
 
