@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2003/05/20 19:07:03  warmerda
+ * added GDAL_DATA support, use CPLGetConfigOption
+ *
  * Revision 1.12  2003/04/08 21:23:33  warmerda
  * added OGRGetDriverByName
  *
@@ -104,7 +107,11 @@ OGRSFDriverRegistrar::OGRSFDriverRegistrar()
 /*      other mechanisms such as environment variables will have        */
 /*      been employed.                                                  */
 /* -------------------------------------------------------------------- */
-    if( pszUpdatableINST_DATA[19] != ' ' )
+    if( CPLGetConfigOption( "GDAL_DATA", NULL ) != NULL )
+    {
+        CPLPushFinderLocation( CPLGetConfigOption( "GDAL_DATA", NULL ) );
+    }
+    else if( pszUpdatableINST_DATA[19] != ' ' )
     {
         CPLPushFinderLocation( pszUpdatableINST_DATA + 19 );
     }
