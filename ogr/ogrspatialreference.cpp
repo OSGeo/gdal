@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.72  2003/03/28 17:42:05  warmerda
+ * fixed reference/dereference problem
+ *
  * Revision 1.71  2003/02/25 04:55:41  warmerda
  * Added SetGeogCSFrom() method. Modified SetWellKnownGeogCS() to use it.
  * Modfied SetGeogCS() to replace an existing GEOGCS node if there is one.
@@ -338,7 +341,7 @@ int OGRSpatialReference::Dereference()
 int OSRDereference( OGRSpatialReferenceH hSRS )
 
 {
-    return ((OGRSpatialReference *) hSRS)->Reference();
+    return ((OGRSpatialReference *) hSRS)->Dereference();
 }
 
 /************************************************************************/
