@@ -9,6 +9,11 @@
 
  *
  * $Log$
+ * Revision 1.5  2005/02/18 18:13:05  kruland
+ * Now using the THROW_OGR_ERROR tyepmap for all methods.  Changed those
+ * which should return OGRErr to return OGRErr since the typemap is friendly
+ * to return arguments.
+ *
  * Revision 1.4  2005/02/18 16:18:27  kruland
  * Added %feature("compactdefaultargs") to fix problem with ImportFromPCI,
  * ImportFromUSGS and the fact that %typemap (char**ignorechange) has no
@@ -144,6 +149,8 @@ typedef double * double_17;
 
 typedef int OGRErr;
 
+%apply (THROW_OGR_ERROR) { OGRErr };
+
 /******************************************************************************
  *
  *  Global methods
@@ -230,6 +237,7 @@ public:
   }
 
   double GetAngularUnits() {
+    // Return code ignored.
     return OSRGetAngularUnits( self, 0 );
   }
 
@@ -238,6 +246,7 @@ public:
   }
 
   double GetLinearUnits() {
+    // Return code ignored.
     return OSRGetLinearUnits( self, 0 );
   }
 
@@ -353,9 +362,8 @@ public:
     return OSRSetTOWGS84( self, p1, p2, p3, p4, p5, p6, p7 );
   }
 
-  // This really should trap the return code from OSRGetTOWGS84
-  void GetTOWGS84( double_7 argout ) {
-    OSRGetTOWGS84( self, argout, 7 );
+  OGRErr GetTOWGS84( double_7 argout ) {
+    return OSRGetTOWGS84( self, argout, 7 );
   }
 
   OGRErr SetGeogCS( const char * pszGeogName,
@@ -410,50 +418,52 @@ public:
     return OSRImportFromXML( self, xmlString );
   }
 
-  void ExportToWkt( char **argout ) {
-    OSRExportToWkt( self, argout );
+  OGRErr ExportToWkt( char **argout ) {
+    return OSRExportToWkt( self, argout );
   }
 
-  void  ExportToPrettyWkt( char **argout, int simplify = 0 ) {
-    OSRExportToPrettyWkt( self, argout, simplify );
+  OGRErr ExportToPrettyWkt( char **argout, int simplify = 0 ) {
+    return OSRExportToPrettyWkt( self, argout, simplify );
   }
 
-  void ExportToProj4( char **argout ) {
-    OSRExportToProj4( self, argout );
+  OGRErr ExportToProj4( char **argout ) {
+    return OSRExportToProj4( self, argout );
   }
 
 %apply (char **argout) { (char **) };
 %apply (double_17 argout) { (double_17 parms ) };
-  void ExportToPCI( char **proj, char **units, double_17 parms ) {
+  OGRErr ExportToPCI( char **proj, char **units, double_17 parms ) {
     double *parmptr = 0;
-    if ( OSRExportToPCI( self, proj, units, &parmptr ) != 0 ) {
-      // throw something?
+    if ( OGRErr rc = OSRExportToPCI( self, proj, units, &parmptr ) != 0 ) {
+      return rc;
     }
     double *tmpptr = parmptr;
     for(int i=0;i<17;i++)
       *(parms++) = *(parmptr++);
     CPLFree( tmpptr );
+    return 0;
   }
 %clear (char **);
 %clear (double_17 parms);
 
 %apply (long *OUTPUT) { (long*) };
 %apply (double_15 argout) { (double_15 parms) }
-  void ExportToUSGS( long *code, long *zone, double_15 parms, long *datum ) {
+  OGRErr ExportToUSGS( long *code, long *zone, double_15 parms, long *datum ) {
     double *parmptr = 0;
-    if ( OSRExportToUSGS( self, code, zone, &parmptr, datum ) != 0 ) {
-      // throw something?
+    if ( OGRErr rc = OSRExportToUSGS( self, code, zone, &parmptr, datum ) != 0 ) {
+      return rc;
     }
     double *tmpptr = parmptr;
     for(int i=0;i<15;i++)
       *(parms++) = *(parmptr++);
     CPLFree( tmpptr );
+    return 0;
   }
 %clear (long*);
 %clear (double_15 parms);
 
-  void ExportToXML( char **argout, const char *dialect = "" ) {
-    OSRExportToXML( self, argout, dialect );
+  OGRErr ExportToXML( char **argout, const char *dialect = "" ) {
+    return OSRExportToXML( self, argout, dialect );
   }
 
 %newobject CloneGeogCS;
