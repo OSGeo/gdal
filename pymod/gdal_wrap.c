@@ -33,8 +33,8 @@
  * and things like that.
  *
  * $Log$
- * Revision 1.19  2000/08/30 20:06:14  warmerda
- * added projection method list functions
+ * Revision 1.20  2000/10/06 15:31:34  warmerda
+ * added nodata support
  *
  ************************************************************************/
 
@@ -1131,10 +1131,9 @@ py_GDALGetDescription(PyObject *self, PyObject *args) {
 
     GDALMajorObjectH  hObject;
     char *_argc0 = NULL;
-    char *pszDomain = NULL;
 
     self = self;
-    if(!PyArg_ParseTuple(args,"s:GDALGetDescription",&_argc0, &pszDomain))
+    if(!PyArg_ParseTuple(args,"s:GDALGetDescription",&_argc0))
         return NULL;
 
     if (_argc0) {
@@ -1147,6 +1146,31 @@ py_GDALGetDescription(PyObject *self, PyObject *args) {
     }
 
     return Py_BuildValue("s", GDALGetDescription(hObject) );
+}
+
+/************************************************************************/
+/*                         GDALGetNoDataValue()                         */
+/************************************************************************/
+static PyObject *
+py_GDALGetNoDataValue(PyObject *self, PyObject *args) {
+
+    GDALRasterBandH  hObject;
+    char *_argc0 = NULL;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"s:GDALGetNoDataValue",&_argc0))
+        return NULL;
+
+    if (_argc0) {
+        if (SWIG_GetPtr(_argc0,(void **) &hObject,"_GDALRasterBandH" )) {
+            PyErr_SetString(PyExc_TypeError,
+                          "Type error in argument 1 of GDALGetNoDataValue."
+                          "  Expected _GDALRasterBandH.");
+            return NULL;
+        }
+    }
+
+    return Py_BuildValue("d", GDALGetRasterNoDataValue(hObject,NULL) );
 }
 
 /************************************************************************/
@@ -2062,6 +2086,55 @@ static PyObject *_wrap_GDALGetRasterColorTable(PyObject *self, PyObject *args) {
     _result = (GDALColorTableH )GDALGetRasterColorTable(_arg0);
     SWIG_MakePtr(_ptemp, (char *) _result,"_GDALColorTableH");
     _resultobj = Py_BuildValue("s",_ptemp);
+    return _resultobj;
+}
+
+static PyObject *_wrap_GDALSetRasterColorTable(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    int  _result;
+    GDALRasterBandH  _arg0;
+    GDALColorTableH  _arg1;
+    char * _argc0 = 0;
+    char * _argc1 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"ss:GDALSetRasterColorTable",&_argc0,&_argc1)) 
+        return NULL;
+    if (_argc0) {
+        if (SWIG_GetPtr(_argc0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of GDALSetRasterColorTable. Expected _GDALRasterBandH.");
+        return NULL;
+        }
+    }
+    if (_argc1) {
+        if (SWIG_GetPtr(_argc1,(void **) &_arg1,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of GDALSetRasterColorTable. Expected _GDALColorTableH.");
+        return NULL;
+        }
+    }
+    _result = (int )GDALSetRasterColorTable(_arg0,_arg1);
+    _resultobj = Py_BuildValue("i",_result);
+    return _resultobj;
+}
+
+static PyObject *_wrap_GDALSetRasterNoDataValue(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    int  _result;
+    GDALRasterBandH  _arg0;
+    double  _arg1;
+    char * _argc0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"sd:GDALSetRasterNoDataValue",&_argc0,&_arg1)) 
+        return NULL;
+    if (_argc0) {
+        if (SWIG_GetPtr(_argc0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of GDALSetRasterNoDataValue. Expected _GDALRasterBandH.");
+        return NULL;
+        }
+    }
+    _result = (int )GDALSetRasterNoDataValue(_arg0,_arg1);
+    _resultobj = Py_BuildValue("i",_result);
     return _resultobj;
 }
 
@@ -3365,6 +3438,7 @@ static PyMethodDef _gdalMethods[] = {
 	 { "OSRReference", _wrap_OSRReference, 1 },
 	 { "OSRDestroySpatialReference", _wrap_OSRDestroySpatialReference, 1 },
 	 { "OSRNewSpatialReference", _wrap_OSRNewSpatialReference, 1 },
+	 { "GDALGetNoDataValue", py_GDALGetNoDataValue, 1 },
 	 { "GDALGetDescription", py_GDALGetDescription, 1 },
 	 { "GDALGetMetadata", py_GDALGetMetadata, 1 },
 	 { "GDALGetRasterHistogram", py_GDALGetRasterHistogram, 1 },
@@ -3396,6 +3470,8 @@ static PyMethodDef _gdalMethods[] = {
 	 { "GDALFlushRasterCache", _wrap_GDALFlushRasterCache, 1 },
 	 { "GDALGetOverview", _wrap_GDALGetOverview, 1 },
 	 { "GDALGetOverviewCount", _wrap_GDALGetOverviewCount, 1 },
+	 { "GDALSetRasterNoDataValue", _wrap_GDALSetRasterNoDataValue, 1 },
+	 { "GDALSetRasterColorTable", _wrap_GDALSetRasterColorTable, 1 },
 	 { "GDALGetRasterColorTable", _wrap_GDALGetRasterColorTable, 1 },
 	 { "GDALGetRasterColorInterpretation", _wrap_GDALGetRasterColorInterpretation, 1 },
 	 { "GDALGetRasterBandYSize", _wrap_GDALGetRasterBandYSize, 1 },

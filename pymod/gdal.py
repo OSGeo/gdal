@@ -29,6 +29,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.17  2000/10/06 15:31:34  warmerda
+# added nodata support
+#
 # Revision 1.16  2000/07/27 21:34:08  warmerda
 # added description, and driver access
 #
@@ -315,5 +318,11 @@ class Band:
 
     def GetMetadata(self):
         return _gdal.GDALGetMetadata(self._o)
+
+    def GetNoDataValue(self):
+        return _gdal.GDALGetRasterNoDataValue(self._o)
+
+    def SetNoDataValue(self,value):
+        return _gdal.GDALSetRasterNoDataValue(self._o,value)
 
 

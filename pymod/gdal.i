@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2000/10/06 15:31:34  warmerda
+ * added nodata support
+ *
  * Revision 1.19  2000/08/30 20:06:14  warmerda
  * added projection method list functions
  *
@@ -178,6 +181,12 @@ int  GDALGetRasterBandYSize( GDALRasterBandH );
 
 GDALColorInterp  GDALGetRasterColorInterpretation( GDALRasterBandH );
 GDALColorTableH  GDALGetRasterColorTable( GDALRasterBandH );
+int              GDALSetRasterColorTable( GDALRasterBandH, GDALColorTableH );
+
+int              GDALSetRasterNoDataValue( GDALRasterBandH, double );
+
+/* category names missing ... needs special binding */
+
 int              GDALGetOverviewCount( GDALRasterBandH );
 GDALRasterBandH  GDALGetOverview( GDALRasterBandH, int );
 CPLErr           GDALFlushRasterCache( GDALRasterBandH );
@@ -843,10 +852,9 @@ py_GDALGetDescription(PyObject *self, PyObject *args) {
 
     GDALMajorObjectH  hObject;
     char *_argc0 = NULL;
-    char *pszDomain = NULL;
 
     self = self;
-    if(!PyArg_ParseTuple(args,"s:GDALGetDescription",&_argc0, &pszDomain))
+    if(!PyArg_ParseTuple(args,"s:GDALGetDescription",&_argc0))
         return NULL;
 
     if (_argc0) {
@@ -863,6 +871,35 @@ py_GDALGetDescription(PyObject *self, PyObject *args) {
 %}
 
 %native(GDALGetDescription) py_GDALGetDescription;
+
+%{
+/************************************************************************/
+/*                         GDALGetNoDataValue()                         */
+/************************************************************************/
+static PyObject *
+py_GDALGetNoDataValue(PyObject *self, PyObject *args) {
+
+    GDALRasterBandH  hObject;
+    char *_argc0 = NULL;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"s:GDALGetNoDataValue",&_argc0))
+        return NULL;
+
+    if (_argc0) {
+        if (SWIG_GetPtr(_argc0,(void **) &hObject,"_GDALRasterBandH" )) {
+            PyErr_SetString(PyExc_TypeError,
+                          "Type error in argument 1 of GDALGetNoDataValue."
+                          "  Expected _GDALRasterBandH.");
+            return NULL;
+        }
+    }
+
+    return Py_BuildValue("d", GDALGetRasterNoDataValue(hObject,NULL) );
+}
+%}
+
+%native(GDALGetNoDataValue) py_GDALGetNoDataValue;
 
 /* -------------------------------------------------------------------- */
 /*      OGRSpatialReference stuff.                                      */
