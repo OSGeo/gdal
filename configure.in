@@ -33,6 +33,18 @@ OPT_GDAL_FORMATS=
 EXTRA_INCLUDES=
 
 dnl ---------------------------------------------------------------------------
+dnl switch between libtool and native build system
+dnl ---------------------------------------------------------------------------
+
+AC_ARG_WITH(libtool, [  --with-libtool          Use libtool for building the library],,)
+
+if test "$with_libtool" != "no" -a "$with_libtool" != ""; then
+  AC_PROG_LIBTOOL
+else
+  AC_COMPILER_PIC
+fi
+
+dnl ---------------------------------------------------------------------------
 dnl Check if user requests /usr/local to be included.
 dnl ---------------------------------------------------------------------------
 
@@ -898,7 +910,6 @@ AC_SUBST(XERCES_INCLUDE,$XERCES_INCLUDE)
 dnl ---------------------------------------------------------------------------
 
 AC_COMPILER_WFLAGS
-AC_COMPILER_PIC
 AC_LD_SHARED
 
 dnl ---------------------------------------------------------------------------
