@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2004/08/11 20:42:05  warmerda
+ * dont declare static funcs in CPL_C area
+ *
  * Revision 1.16  2004/08/11 19:00:37  warmerda
  * added GDALSetGenImgProjTransformerDstGeoTransform
  *
@@ -93,13 +96,13 @@ CPL_CVSID("$Id$");
 CPL_C_START
 CPLXMLNode *GDALSerializeGCPTransformer( void *pTransformArg );
 void *GDALDeserializeGCPTransformer( CPLXMLNode *psTree );
+CPL_C_END
 
 static CPLXMLNode *GDALSerializeReprojectionTransformer( void *pTransformArg );
 static void *GDALDeserializeReprojectionTransformer( CPLXMLNode *psTree );
 
 static CPLXMLNode *GDALSerializeGenImgProjTransformer( void *pTransformArg );
 static void *GDALDeserializeGenImgProjTransformer( CPLXMLNode *psTree );
-CPL_C_END
 
 /************************************************************************/
 /*                          GDALTransformFunc                           */
