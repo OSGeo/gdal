@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.26  2003/11/05 18:41:07  warmerda
+ * added TIGER_VERSION setting to override file type on read
+ *
  * Revision 1.25  2003/10/15 19:04:44  warmerda
  * fix a couple memory leaks
  *
@@ -498,6 +501,50 @@ int OGRTigerDataSource::Open( const char * pszFilename, int bTestOpen,
         }
 
         return FALSE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Do we have a user provided version override?                    */
+/* -------------------------------------------------------------------- */
+    if( CPLGetConfigOption( "TIGER_VERSION", NULL ) != NULL )
+    {
+        const char *pszRequestedVersion = 
+            CPLGetConfigOption( "TIGER_VERSION", NULL );
+
+        if( EQUALN(pszRequestedVersion,"TIGER_",6) )
+        {
+            int iCode;
+
+            for( iCode = 1; iCode < TIGER_Unknown; iCode++ )
+            {
+                if( EQUAL(TigerVersionString((TigerVersion)iCode),
+                          pszRequestedVersion) )
+                {
+                    nVersion = (TigerVersion) iCode;
+                    break;
+                }
+            }
+
+            if( iCode == TIGER_Unknown )
+            {
+                CPLError( CE_Failure, CPLE_AppDefined, 
+                          "Failed to recognise TIGER_VERSION setting: %s", 
+                          pszRequestedVersion );
+                return FALSE;
+            }                          
+
+            CPLDebug( "OGR", "OVERRIDE Tiger Version %s ", 
+                      TigerVersionString(nVersion) );
+        }
+        else
+        {
+            nVersionCode = atoi(pszRequestedVersion);
+            nVersion = TigerClassifyVersion( nVersionCode );
+
+            CPLDebug( "OGR", 
+                      "OVERRIDE Tiger Version Code=%d, Classified as %s ", 
+                      nVersionCode, TigerVersionString(nVersion) );
+        }
     }
 
 /* -------------------------------------------------------------------- */
