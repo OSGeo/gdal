@@ -25,6 +25,9 @@
  * Main format registration function.
  * 
  * $Log$
+ * Revision 1.41  2002/04/12 20:19:25  warmerda
+ * added xpm
+ *
  * Revision 1.40  2002/03/04 21:54:20  warmerda
  * added envi format
  *
@@ -269,6 +272,10 @@ void GDALAllRegister()
 
 #ifdef FRMT_bsb
     GDALRegister_BSB();
+#endif
+
+#ifdef FRMT_xpm
+    GDALRegister_XPM();
 #endif
 
 #ifdef FRMT_ecw
