@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2004/07/20 17:32:03  warmerda
+ * restructure GetNextFeature() to apply spatial and attribute queries
+ *
  * Revision 1.12  2004/01/29 15:30:40  warmerda
  * cleanup layer and field names
  *
@@ -160,51 +163,95 @@ void OGRGMLLayer::ResetReading()
 OGRFeature *OGRGMLLayer::GetNextFeature()
 
 {
-    GMLFeature  *poGMLFeature;
+    GMLFeature  *poGMLFeature = NULL;
+    OGRGeometry *poGeom = NULL;
 
     if( iNextGMLId == 0 )
         ResetReading();
 
-/* -------------------------------------------------------------------- */
-/*      Get the next GML feature of our class.                          */
-/* -------------------------------------------------------------------- */
-    poGMLFeature = poDS->GetReader()->NextFeature();
-
-    while( poGMLFeature != NULL && poGMLFeature->GetClass() != poFClass )
+/* ==================================================================== */
+/*      Loop till we find and translate a feature meeting all our       */
+/*      requirements.                                                   */
+/* ==================================================================== */
+    while( TRUE )
     {
-        delete poGMLFeature;
+/* -------------------------------------------------------------------- */
+/*      Cleanup last feature, and get a new raw gml feature.            */
+/* -------------------------------------------------------------------- */
+        if( poGMLFeature != NULL )
+            delete poGMLFeature;
+
+        if( poGeom != NULL )
+            delete poGeom;
+
         poGMLFeature = poDS->GetReader()->NextFeature();
+        if( poGMLFeature == NULL )
+            return NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Is it of the proper feature class?                              */
+/* -------------------------------------------------------------------- */
+        if( poGMLFeature->GetClass() != poFClass )
+            continue;
+
+        iNextGMLId++;
+
+/* -------------------------------------------------------------------- */
+/*      Does it satisfy the spatial query, if there is one?             */
+/* -------------------------------------------------------------------- */
+
+        if( poGMLFeature->GetGeometry() != NULL )
+        {
+            poGeom = OGRGeometryFactory::createFromGML( poGMLFeature->GetGeometry() );
+            // We assume the createFromGML() function would have already
+            // reported the error. 
+            if( poGeom == NULL )
+            {
+                delete poGMLFeature;
+                return NULL;
+            }
+            
+            if( poFilterGeom != NULL && !poFilterGeom->Intersect( poGeom ) )
+                continue;
+        }
+        
+/* -------------------------------------------------------------------- */
+/*      Convert the whole feature into an OGRFeature.                   */
+/* -------------------------------------------------------------------- */
+        int iField;
+        OGRFeature *poOGRFeature = new OGRFeature( GetLayerDefn() );
+
+        poOGRFeature->SetFID( iNextGMLId );
+
+        for( iField = 0; iField < poFClass->GetPropertyCount(); iField++ )
+        {
+            const char *pszProperty = poGMLFeature->GetProperty( iField );
+            
+            if( pszProperty != NULL )
+                poOGRFeature->SetField( iField, pszProperty );
+        }
+
+/* -------------------------------------------------------------------- */
+/*      Test against the attribute query.                               */
+/* -------------------------------------------------------------------- */
+        if( m_poAttrQuery != NULL
+            && !m_poAttrQuery->Evaluate( poOGRFeature ) )
+        {
+            delete poOGRFeature;
+            continue;
+        }
+
+/* -------------------------------------------------------------------- */
+/*      Wow, we got our desired feature. Return it.                     */
+/* -------------------------------------------------------------------- */
+        delete poGMLFeature;
+
+        poOGRFeature->SetGeometryDirectly( poGeom );
+
+        return poOGRFeature;
     }
-    
-    if( poGMLFeature == NULL )
-        return NULL;
-    
-/* -------------------------------------------------------------------- */
-/*      Create a corresponding OGR feature.                             */
-/* -------------------------------------------------------------------- */
-    OGRFeature *poOGRFeature = new OGRFeature( GetLayerDefn() );
-    int iField;
 
-    poOGRFeature->SetFID( iNextGMLId++ );
-
-    if( poGMLFeature->GetGeometry() != NULL )
-        poOGRFeature->SetGeometryDirectly( 
-            OGRGeometryFactory::createFromGML( poGMLFeature->GetGeometry() ) );
-
-    for( iField = 0; iField < poFClass->GetPropertyCount(); iField++ )
-    {
-        const char *pszProperty = poGMLFeature->GetProperty( iField );
-
-        if( pszProperty != NULL )
-            poOGRFeature->SetField( iField, pszProperty );
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Cleanup and return.                                             */
-/* -------------------------------------------------------------------- */
-    delete poGMLFeature;
-
-    return poOGRFeature;
+    return NULL;
 }
 
 /************************************************************************/
