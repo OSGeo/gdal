@@ -3,7 +3,7 @@ GDAL_ROOT	=	../../..
 
 include $(GDAL_ROOT)/GDALmake.opt
 
-OBJ	=	dgnopen.o dgnread.o dgnfloat.o
+OBJ	=	dgnopen.o dgnread.o dgnfloat.o dgnhelp.o
 OBJ_OGR =	ogrdgndriver.o ogrdgndatasource.o ogrdgnlayer.o \
 		dgnstroke.o
 
