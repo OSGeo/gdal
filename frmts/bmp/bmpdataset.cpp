@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.5  2002/12/06 20:50:13  warmerda
+ * fixed type warning
+ *
  * Revision 1.4  2002/12/06 18:37:05  dron
  * Create() method, added, 1- and 4-bpp images readed now.
  *
@@ -1052,7 +1055,7 @@ BMPCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 		pabyOutput[iOutPixel] = pabyInput[iInPixel];
 	    }
 	}
-	if ( VSIFWrite( pabyOutput, 1, nScanSize, fpImage ) < nScanSize )
+	if ( (int)VSIFWrite( pabyOutput, 1, nScanSize, fpImage ) < nScanSize )
 	{
 	    eErr = CE_Failure;
 	    CPLError( CE_Failure, CPLE_FileIO,
