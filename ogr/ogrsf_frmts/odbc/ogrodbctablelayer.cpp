@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2003/12/29 22:48:45  warmerda
+ * added error check on whether any columns found
+ *
  * Revision 1.3  2003/10/29 17:47:38  warmerda
  * Added FIDcolumn (based on primary key) support
  *
@@ -121,6 +124,14 @@ CPLErr OGRODBCTableLayer::Initialize( const char *pszTableName,
     eErr = BuildFeatureDefn( pszTableName, &oGetCol );
     if( eErr != CE_None )
         return eErr;
+
+    if( poFeatureDefn->GetFieldCount() == 0 )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "No column definitions found for table '%s', layer not usable.", 
+                  pszTableName );
+        return CE_Failure;
+    }
 
     return CE_None;
 }
