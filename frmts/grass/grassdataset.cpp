@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2002/01/23 14:56:27  warmerda
+ * Added link to help.
+ *
  * Revision 1.8  2001/11/11 23:50:59  warmerda
  * added required class keyword to friend declarations
  *
@@ -466,9 +469,7 @@ void GDALRegister_GRASS()
         
         poDriver->pszShortName = "GRASS";
         poDriver->pszLongName = "GRASS Database Rasters";
-#ifdef notdef
-        poDriver->pszHelpTopic = "frmt_various.html#GRASS";
-#endif
+        poDriver->pszHelpTopic = "frmt_grass.html";
         
         poDriver->pfnOpen = GRASSDataset::Open;
 
