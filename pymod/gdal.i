@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2000/03/22 01:10:42  warmerda
+ * added OSR and OCT wrappers for coordinate systems
+ *
  * Revision 1.4  2000/03/10 13:55:33  warmerda
  * removed constants, added gethistogram
  *
@@ -48,6 +51,7 @@
 %{
 #include "gdal.h"
 #include "cpl_conv.h"
+#include "ogr_srs_api.h"
 %}
 
 typedef int GDALDataType;
@@ -412,3 +416,206 @@ py_GDALGetRasterHistogram(PyObject *self, PyObject *args) {
 %}
 
 %native(GDALGetRasterHistogram) py_GDALGetRasterHistogram;
+
+/* -------------------------------------------------------------------- */
+/*      OGRSpatialReference stuff.                                      */
+/* -------------------------------------------------------------------- */
+typedef void *OGRSpatialReferenceH;                               
+typedef void *OGRCoordinateTransformationH;
+
+OGRSpatialReferenceH OSRNewSpatialReference( const char * /* = NULL */);
+void    OSRDestroySpatialReference( OGRSpatialReferenceH );
+
+int     OSRReference( OGRSpatialReferenceH );
+int     OSRDereference( OGRSpatialReferenceH );
+
+OGRErr  OSRImportFromEPSG( OGRSpatialReferenceH, int );
+
+OGRErr  OSRSetAttrValue( OGRSpatialReferenceH hSRS, const char * pszNodePath,
+                         const char * pszNewNodeValue );
+const char *OSRGetAttrValue( OGRSpatialReferenceH hSRS,
+                             const char * pszName, int iChild /* = 0 */ );
+
+OGRErr  OSRSetLinearUnits( OGRSpatialReferenceH, const char *, double );
+double  OSRGetLinearUnits( OGRSpatialReferenceH, char ** );
+
+int     OSRIsGeographic( OGRSpatialReferenceH );
+int     OSRIsProjected( OGRSpatialReferenceH );
+int     OSRIsSameGeogCS( OGRSpatialReferenceH, OGRSpatialReferenceH );
+int     OSRIsSame( OGRSpatialReferenceH, OGRSpatialReferenceH );
+
+OGRErr  OSRSetProjCS( OGRSpatialReferenceH, const char * );
+OGRErr  OSRSetWellKnownGeogCS( OGRSpatialReferenceH, const char * );
+
+OGRErr  OSRSetGeogCS( OGRSpatialReferenceH hSRS,
+                      const char * pszGeogName,
+                      const char * pszDatumName,
+                      const char * pszEllipsoidName,
+                      double dfSemiMajor, double dfInvFlattening,
+                      const char * pszPMName /* = NULL */,
+                      double dfPMOffset /* = 0.0 */,
+                      const char * pszUnits /* = NULL */,
+                      double dfConvertToRadians /* = 0.0 */ );
+
+double  OSRGetSemiMajor( OGRSpatialReferenceH, OGRErr * /* = NULL */ );
+double  OSRGetSemiMinor( OGRSpatialReferenceH, OGRErr * /* = NULL */ );
+double  OSRGetInvFlattening( OGRSpatialReferenceH, OGRErr * /* = NULL */ );
+
+OGRErr  OSRSetAuthority( OGRSpatialReferenceH hSRS,
+                         const char * pszTargetKey,
+                         const char * pszAuthority,
+                         int nCode );
+OGRErr  OSRSetProjParm( OGRSpatialReferenceH, const char *, double );
+double  OSRGetProjParm( OGRSpatialReferenceH hSRS,
+                        const char * pszParmName, 
+                        double dfDefault /* = 0.0 */,
+                        OGRErr * /* = NULL */ );
+
+OGRErr  OSRSetUTM( OGRSpatialReferenceH hSRS, int nZone, int bNorth );
+int     OSRGetUTMZone( OGRSpatialReferenceH hSRS, int *pbNorth );
+
+%{
+/************************************************************************/
+/*                          OSRImportFromWkt()                          */
+/************************************************************************/
+static PyObject *
+py_OSRImportFromWkt(PyObject *self, PyObject *args) {
+
+    OGRSpatialReferenceH _arg0;
+    char *_argc0 = NULL;
+    char *wkt;
+    OGRErr err;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"ss:OSRImportFromWkt",&_argc0,&wkt) )
+        return NULL;
+
+    if (_argc0) {
+        if (SWIG_GetPtr(_argc0,(void **) &_arg0,"_OGRSpatialReferenceH" )) {
+            PyErr_SetString(PyExc_TypeError,
+                            "Type error in argument 1 of OSRImportFromWkt."
+                            "  Expected _OGRSpatialReferenceH.");
+            return NULL;
+        }
+    }
+	
+    err = OSRImportFromWkt( _arg0, &wkt );
+
+    return Py_BuildValue( "d", err );
+}
+%}
+
+%native(OSRImportFromWkt) py_OSRImportFromWkt;
+
+%{
+/************************************************************************/
+/*                           OSRExportToWkt()                           */
+/************************************************************************/
+static PyObject *
+py_OSRExportToWkt(PyObject *self, PyObject *args) {
+
+    OGRSpatialReferenceH _arg0;
+    char *_argc0 = NULL;
+    char *wkt = NULL;
+    OGRErr err;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"s:OSRExportToWkt",&_argc0) )
+        return NULL;
+
+    if (_argc0) {
+        if (SWIG_GetPtr(_argc0,(void **) &_arg0,"_OGRSpatialReferenceH" )) {
+            PyErr_SetString(PyExc_TypeError,
+                            "Type error in argument 1 of OSRExportToWkt."
+                            "  Expected _OGRSpatialReferenceH.");
+            return NULL;
+        }
+    }
+	
+    err = OSRExportToWkt( _arg0, &wkt );
+    if( wkt == NULL )
+	wkt = "";
+
+    return Py_BuildValue( "s", wkt );
+}
+%}
+
+%native(OSRExportToWkt) py_OSRExportToWkt;
+
+/* -------------------------------------------------------------------- */
+/*      OGRCoordinateTransform C API.                                   */
+/* -------------------------------------------------------------------- */
+OGRCoordinateTransformationH
+OCTNewCoordinateTransformation( OGRSpatialReferenceH hSourceSRS,
+                                OGRSpatialReferenceH hTargetSRS );
+void OCTDestroyCoordinateTransformation( OGRCoordinateTransformationH );
+
+%{
+/************************************************************************/
+/*                             OCTTransform                             */
+/************************************************************************/
+static PyObject *
+py_OCTTransform(PyObject *self, PyObject *args) {
+
+    OGRCoordinateTransformationH _arg0;
+    PyObject *pnts;
+    char *_argc0 = NULL;
+    double *x, *y, *z;
+    int    pnt_count, i;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"sO!:OCTTransform",&_argc0, &PyList_Type, &pnts))
+        return NULL;
+
+    if (_argc0) {
+        if (SWIG_GetPtr(_argc0,(void **) &_arg0,
+		        "_OGRCoordinateTransformationH" )) {
+            PyErr_SetString(PyExc_TypeError,
+                            "Type error in argument 1 of OCTTransform."
+                            "  Expected _OGRCoordinateTransformationH.");
+            return NULL;
+        }
+    }
+
+    pnt_count = PyList_Size(pnts);
+    x = (double *) CPLCalloc(sizeof(double),pnt_count);
+    y = (double *) CPLCalloc(sizeof(double),pnt_count);
+    z = (double *) CPLCalloc(sizeof(double),pnt_count);
+    for( i = 0; i < pnt_count; i++ )
+    {
+	if( !PyArg_ParseTuple(PyList_GET_ITEM(pnts,i), "dd|d", x+i, y+i, z+i) )
+        {
+	    CPLFree( x );
+	    CPLFree( y );
+	    CPLFree( z );
+	    return NULL;
+        }
+    }  	
+
+    /* perform the transformation */
+    if( !OCTTransform( _arg0, pnt_count, x, y, z ) )
+    {
+        CPLFree( x );
+        CPLFree( y );
+        CPLFree( z );
+
+        PyErr_SetString(PyExc_TypeError,"OCTTransform failed.");
+	return NULL;
+    }
+
+    /* make a new points list */
+    pnts = PyList_New(pnt_count);
+    for( i = 0; i < pnt_count; i++ )
+    {
+	PyList_SetItem(pnts, i, Py_BuildValue("(ddd)", x[i], y[i], z[i] ) );
+    }
+
+    CPLFree( x );
+    CPLFree( y );
+    CPLFree( z );
+
+    return pnts;
+}
+%}
+
+%native(OCTTransform) py_OCTTransform;
