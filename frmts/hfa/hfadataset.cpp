@@ -29,6 +29,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.4  2000/02/28 16:32:20  warmerda
+ * use SetBand method
+ *
  * Revision 1.3  1999/01/27 18:48:12  warmerda
  * Declare constructor and destructor for HFADataset.
  *
@@ -222,12 +225,8 @@ GDALDataset *HFADataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
-    poDS->papoBands = (GDALRasterBand **)VSICalloc(sizeof(GDALRasterBand *),
-                                                   poDS->nBands);
     for( i = 0; i < poDS->nBands; i++ )
-    {
-        poDS->papoBands[i] = new HFARasterBand( poDS, i+1 );
-    }
+        poDS->SetBand( i+1, new HFARasterBand( poDS, i+1 ) );
 
     return( poDS );
 }

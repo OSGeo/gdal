@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2000/02/28 16:32:20  warmerda
+ * use SetBand method
+ *
  * Revision 1.5  2000/01/24 05:54:00  shadow
  * fix minor logic bug
  *
@@ -177,9 +180,9 @@ GDALDataset *DOQ2Dataset::Open( GDALOpenInfo * poOpenInfo )
     int		nBytesPerPixel;
     const char *pszDatumLong, *pszDatumShort;
     const char *pszUnits;
-    const char *pszQuadname = NULL;
-    const char *pszQuadquad = NULL;
-    const char *pszState = NULL;
+    char *pszQuadname = NULL;
+    char *pszQuadquad = NULL;
+    char *pszState = NULL;
     int	        nZone, nProjType;
     int		nSkipBytes, nBytesPerLine, i;
     double      dfULXMap=0.0, dfULYMap = 0.0;
@@ -368,15 +371,12 @@ GDALDataset *DOQ2Dataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
     poDS->nBands = nBytesPerPixel;
-    poDS->papoBands = (GDALRasterBand **)
-        VSICalloc(sizeof(GDALRasterBand *),poDS->nBands);
-
     for( i = 0; i < poDS->nBands; i++ )
     {
-        poDS->papoBands[i] =
+        poDS->SetBand( i+1, 
             new RawRasterBand( poDS, i+1, poDS->fpImage,
                                nSkipBytes + i, nBytesPerPixel, nBytesPerLine,
-                               GDT_Byte, TRUE );
+                               GDT_Byte, TRUE ) );
     }
 
     if (nProjType == 1)

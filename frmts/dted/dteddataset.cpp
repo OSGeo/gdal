@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2000/02/28 16:32:20  warmerda
+ * use SetBand method
+ *
  * Revision 1.2  2000/01/12 19:43:17  warmerda
  * Don't open dataset twice in Open().
  *
@@ -188,11 +191,8 @@ GDALDataset *DTEDDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
     poDS->nBands = 1;;
-    poDS->papoBands = (GDALRasterBand **)
-        VSICalloc(sizeof(GDALRasterBand *),poDS->nBands);
-
     for( i = 0; i < poDS->nBands; i++ )
-        poDS->papoBands[i] = new DTEDRasterBand( poDS, i+1 );
+        poDS->SetBand( i+1, new DTEDRasterBand( poDS, i+1 ) );
 
     return( poDS );
 }

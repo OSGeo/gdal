@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2000/02/28 16:32:20  warmerda
+ * use SetBand method
+ *
  * Revision 1.2  1999/08/12 18:23:33  warmerda
  * Added the ability to handle the NBITS and BYTEORDER flags.
  *
@@ -278,19 +281,16 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
     poDS->nBands = nBands;;
-    poDS->papoBands = (GDALRasterBand **)
-        VSICalloc(sizeof(GDALRasterBand *),poDS->nBands);
-
     for( i = 0; i < poDS->nBands; i++ )
     {
-        poDS->papoBands[i] =
+        poDS->SetBand( i+1, 
             new RawRasterBand( poDS, i+1, poDS->fpImage,
                                nSkipBytes, GDALGetDataTypeSize(eDataType)/8,
                                nLineOffset, eDataType,
 #ifdef CPL_LSB                               
-                               chByteOrder == 'I' );
+                               chByteOrder == 'I' ));
 #else
-                               chByteOrder == 'M' );
+                               chByteOrder == 'M' ));
 #endif        
     }
 

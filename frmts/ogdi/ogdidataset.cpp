@@ -29,6 +29,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.2  2000/02/28 16:32:20  warmerda
+ * use SetBand method
+ *
  * Revision 1.1  1999/01/11 15:29:16  warmerda
  * New
  *
@@ -238,8 +241,7 @@ GDALDataset *OGDIDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
-    poDS->papoBands = (GDALRasterBand **)VSICalloc(sizeof(GDALRasterBand *),1);
-    poDS->papoBands[0] = new OGDIRasterBand( poDS, 1 );
+    poDS->SetBand( 1, new OGDIRasterBand( poDS, 1 ) );
 
     return( poDS );
 }

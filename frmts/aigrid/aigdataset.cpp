@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.5  2000/02/28 16:32:19  warmerda
+ * use SetBand method
+ *
  * Revision 1.4  1999/08/13 03:27:50  warmerda
  * added support for GDT_Int32 and GDT_Float32 access
  *
@@ -237,9 +240,7 @@ GDALDataset *AIGDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
-    poDS->papoBands = (GDALRasterBand **)VSICalloc(sizeof(GDALRasterBand *),
-                                                   poDS->nBands);
-    poDS->papoBands[0] = new AIGRasterBand( poDS, 1 );
+    poDS->SetBand( 1, new AIGRasterBand( poDS, 1 ) );
 
     return( poDS );
 }

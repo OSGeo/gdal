@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2000/02/28 16:32:20  warmerda
+ * use SetBand method
+ *
  * Revision 1.3  2000/01/06 14:39:30  warmerda
  * Improved error reporting.
  *
@@ -230,9 +233,6 @@ GDALDataset *PAuxDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Collect raw definitions of each channel and create              */
 /*      corresponding bands.                                            */
 /* -------------------------------------------------------------------- */
-    poDS->papoBands = (GDALRasterBand **)
-        VSICalloc(sizeof(GDALRasterBand *),poDS->nBands);
-
     for( i = 0; i < poDS->nBands; i++ )
     {
         char	szDefnName[32];
@@ -264,11 +264,11 @@ GDALDataset *PAuxDataset::Open( GDALOpenInfo * poOpenInfo )
 #endif
         }
         
-        poDS->papoBands[i] =
+        poDS->SetBand( i+1, 
             new RawRasterBand( poDS, i+1, poDS->fpImage,
                                atoi(papszTokens[1]),
                                atoi(papszTokens[2]),
-                               atoi(papszTokens[3]), eType, bNative );
+                               atoi(papszTokens[3]), eType, bNative ) );
 
         CSLDestroy( papszTokens );
     }

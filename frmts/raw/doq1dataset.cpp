@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2000/02/28 16:32:20  warmerda
+ * use SetBand method
+ *
  * Revision 1.4  2000/01/24 03:08:16  shadow
  * add description reading
  *
@@ -239,15 +242,12 @@ GDALDataset *DOQ1Dataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
     poDS->nBands = nBytesPerPixel;
-    poDS->papoBands = (GDALRasterBand **)
-        VSICalloc(sizeof(GDALRasterBand *),poDS->nBands);
-
     for( i = 0; i < poDS->nBands; i++ )
     {
-        poDS->papoBands[i] =
+        poDS->SetBand( i+1, 
             new RawRasterBand( poDS, i+1, poDS->fpImage,
                                nSkipBytes + i, nBytesPerPixel, nBytesPerLine,
-                               GDT_Byte, TRUE );
+                               GDT_Byte, TRUE ) );
     }
 
     poDS->pszDescription = DOQGetDescription(poOpenInfo->pabyHeader);

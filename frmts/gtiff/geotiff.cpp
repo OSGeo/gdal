@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2000/02/28 16:32:20  warmerda
+ * use SetBand method
+ *
  * Revision 1.15  2000/01/06 14:55:53  warmerda
  * Removed testing printf.
  *
@@ -601,14 +604,9 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
-    int		iBand;
-
-    poDS->papoBands = (GDALRasterBand **) VSICalloc(sizeof(GDALRasterBand *),
-                                                    poDS->nBands);
-
-    for( iBand = 0; iBand < poDS->nBands; iBand++ )
+    for( int iBand = 0; iBand < poDS->nBands; iBand++ )
     {
-        poDS->papoBands[iBand] = new GTiffRasterBand( poDS, iBand+1 );
+        poDS->SetBand( iBand+1, new GTiffRasterBand( poDS, iBand+1 ) );
     }
 
 /* -------------------------------------------------------------------- */

@@ -25,6 +25,9 @@
  * The GDB driver implemenation is the GDAL Driver for GeoGateway.
  * 
  * $Log$
+ * Revision 1.2  2000/02/28 16:32:20  warmerda
+ * use SetBand method
+ *
  * Revision 1.1  1998/11/29 22:39:49  warmerda
  * New
  *
@@ -198,12 +201,9 @@ GDALDataset *GDBDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     int		iBand;
 
-    poDS->papoBands = (GDALRasterBand **) VSICalloc(sizeof(GDALRasterBand *),
-                                                    poDS->nBands);
-
     for( iBand = 0; iBand < GDBChanNum(fp); iBand++ )
     {
-        poDS->papoBands[iBand] = new GDBRasterBand( poDS, iBand+1 );
+        poDS->SetBand( iBand+1, new GDBRasterBand( poDS, iBand+1 ) );
     }
 
     return( poDS );

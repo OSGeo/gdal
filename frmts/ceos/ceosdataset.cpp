@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2000/02/28 16:32:20  warmerda
+ * use SetBand method
+ *
  * Revision 1.2  1999/05/17 01:52:55  warmerda
  * Removed unused variable.
  *
@@ -163,11 +166,9 @@ GDALDataset *CEOSDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
     poDS->nBands = psCEOS->nBands;;
-    poDS->papoBands = (GDALRasterBand **)
-        VSICalloc(sizeof(GDALRasterBand *),poDS->nBands);
 
     for( i = 0; i < poDS->nBands; i++ )
-        poDS->papoBands[i] = new CEOSRasterBand( poDS, i+1 );
+        poDS->SetBand( i+1, new CEOSRasterBand( poDS, i+1 ) );
 
     return( poDS );
 }

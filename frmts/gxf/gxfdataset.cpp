@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.7  2000/02/28 16:33:49  warmerda
+ * use SetBand method
+ *
  * Revision 1.6  2000/02/14 16:24:57  warmerda
  * Fixed comment.
  *
@@ -271,9 +274,7 @@ GDALDataset *GXFDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
     poDS->nBands = 1;
-    poDS->papoBands = (GDALRasterBand **)VSICalloc(sizeof(GDALRasterBand *),1);
-
-    poDS->papoBands[0] = new GXFRasterBand( poDS, 1 );
+    poDS->SetBand( 1, new GXFRasterBand( poDS, 1 ));
 
     return( poDS );
 }

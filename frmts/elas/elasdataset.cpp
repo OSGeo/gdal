@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2000/02/28 16:32:20  warmerda
+ * use SetBand method
+ *
  * Revision 1.3  1999/05/17 17:18:14  warmerda
  * Use CPL_MSBPTR32() instead of CPL_SWAPPTR32().
  *
@@ -394,12 +397,9 @@ GDALDataset *ELASDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     int		iBand;
 
-    poDS->papoBands = (GDALRasterBand **) VSICalloc(sizeof(GDALRasterBand *),
-                                                    poDS->nBands);
-
     for( iBand = 0; iBand < poDS->nBands; iBand++ )
     {
-        poDS->papoBands[iBand] = new ELASRasterBand( poDS, iBand+1 );
+        poDS->SetBand( iBand+1, new ELASRasterBand( poDS, iBand+1 ) );
     }
 
 /* -------------------------------------------------------------------- */
