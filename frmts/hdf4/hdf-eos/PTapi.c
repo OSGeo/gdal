@@ -6100,7 +6100,7 @@ PTclose(int32 fid)
 
 /* HDF types used in FORTRAN bindings */
 
-#if defined(DEC_ALPHA) || defined(IRIX) || defined(UNICOS)
+#if defined(DEC_ALPHA) || defined(IRIX) || defined(UNICOS) || defined(LINUX64) || defined(IA64) || defined(MACINTOSH) || defined(IBM6000)
 
 #define INT32  INT
 #define INT32V INTV

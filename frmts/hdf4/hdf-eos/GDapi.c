@@ -85,7 +85,7 @@ Jun  05, 2003 Bruce Beaumont / Abe Taaheri
 
 #define	GDIDOFFSET 4194304
 #define SQUARE(x)       ((x) * (x))   /* x**2 */
-#define M_PI		3.14159265358979323846
+#define M_PI1		3.14159265358979323846
 
 int32 GDXSDcomb[512*5];
 char  GDXSDname[HDFE_NAMBUFSIZE];
@@ -7022,8 +7022,12 @@ GDll2ij(int32 projcode, int32 zonecode, float64 projparm[],
 	        /*allow map to span dateline */
 	        lonrad0 = EHconvAng(upleftpt[0], HDFE_DMS_RAD);
 	        lonrad1 = EHconvAng(lowrightpt[0], HDFE_DMS_RAD);
-		if (lonrad < lonrad0) lonrad += 2.0 * M_PI;
-		if (lonrad > lonrad1) lonrad -= 2.0 * M_PI;
+		/* if time-line is paased */
+		if(lonrad < lonrad1)
+		  {
+		    if (lonrad < lonrad0) lonrad += 2.0 * M_PI1;
+		    if (lonrad > lonrad1) lonrad -= 2.0 * M_PI1;
+		  }
 
 		/* Compute scaled distance to point from origin */
 		/* -------------------------------------------- */
@@ -7654,13 +7658,13 @@ GDrs2ll(int32 projcode, float64 projparm[],
 		{
 		  errorcode = inv_trans[projcode] (xMtr, 0.0,
 						   &lonrad, &latrad);
-		  latrad = - M_PI/2;
+		  latrad = - M_PI1/2;
 		}
 	      else if( beta >= 1)
 		{
 		  errorcode = inv_trans[projcode] (xMtr, 0.0,
 						   &lonrad, &latrad);
-		  latrad = M_PI/2;
+		  latrad = M_PI1/2;
 		}
 	      else
 		{
@@ -12174,7 +12178,7 @@ intn GDmm2ll_cea(int32 projcode,int32 zonecode, int32 spherecode,
 
 /* HDF types used in FORTRAN bindings */
 
-#if defined(DEC_ALPHA) || defined(IRIX) || defined(UNICOS)
+#if defined(DEC_ALPHA) || defined(IRIX) || defined(UNICOS) || defined(LINUX64) || defined(IA64) || defined(MACINTOSH) || defined(IBM6000)
 
 #define INT32  INT
 #define INT32V INTV
