@@ -20,8 +20,6 @@ subdirs:
 	$(MAKE) /f makefile.vc
 	cd ..\gtiff
 	$(MAKE) /f makefile.vc
-	cd ..\ceos
-	$(MAKE) /f makefile.vc
 	cd ..\iso8211
 	$(MAKE) /f makefile.vc
 	cd ..\sdts
@@ -45,8 +43,6 @@ clean:
 	cd ..\hfa
 	$(MAKE) /f makefile.vc clean
 	cd ..\gtiff
-	$(MAKE) /f makefile.vc clean
-	cd ..\ceos
 	$(MAKE) /f makefile.vc clean
 	cd ..\iso8211
 	$(MAKE) /f makefile.vc clean 
