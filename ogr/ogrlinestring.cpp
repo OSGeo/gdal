@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2000/01/26 21:20:47  warmerda
+ * fixed crash assigning 2D points when already 3D
+ *
  * Revision 1.15  1999/12/23 14:47:16  warmerda
  * improved 2D/3D handling to avoid 3D unless padfZ != 0.0
  *
@@ -467,8 +470,11 @@ void OGRLineString::setPoints( int nPointsIn, OGRRawPoint * paoPointsIn,
             padfZ = NULL;
     }
 
-    if( padfZ == NULL && this->padfZ != NULL )
-        Make2D();
+    if( padfZ == NULL )
+    {
+        if( this->padfZ != NULL )
+            Make2D();
+    }
     else
     {
         Make3D();
