@@ -31,6 +31,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  1999/09/15 20:33:33  warmerda
+ * Handle UOMAngle properly.  Translate PM and angular projection parms back
+ * into the UOMAngle units from degrees.
+ *
  * Revision 1.3  1999/09/10 13:41:34  warmerda
  * Handle OGC datum name exceptions, and massage projparm into proj units
  *
@@ -151,12 +155,16 @@ char *GTIFGetOGISDefn( GTIFDefn * psDefn )
     char	*pszDatumName = NULL;
     char	*pszPMName = NULL;
     char	*pszSpheroidName = NULL;
+    char	*pszAngularUnits = NULL;
     double	dfInvFlattening;
     
-    GTIFGetGCSInfo( psDefn->GCS, &pszGeogName, NULL, NULL );
+    GTIFGetGCSInfo( psDefn->GCS, &pszGeogName, NULL, NULL, NULL );
     GTIFGetDatumInfo( psDefn->Datum, &pszDatumName, NULL );
     GTIFGetPMInfo( psDefn->PM, &pszPMName, NULL );
     GTIFGetEllipsoidInfo( psDefn->Ellipsoid, &pszSpheroidName, NULL, NULL );
+    GTIFGetUOMAngleInfo( psDefn->UOMAngle, &pszAngularUnits, NULL );
+    if( pszAngularUnits == NULL )
+        pszAngularUnits = CPLStrdup("unknown");
 
     WKTMassageDatum( &pszDatumName );
 
@@ -164,16 +172,20 @@ char *GTIFGetOGISDefn( GTIFDefn * psDefn )
         || (psDefn->SemiMinor / psDefn->SemiMajor) > 1.00000000000000001 )
         dfInvFlattening = -1.0 / (psDefn->SemiMinor/psDefn->SemiMajor - 1.0);
     else
-        dfInvFlattening = 100000.0; /* nearly a sphere */
+        dfInvFlattening = 0.0; /* special flag for infinity */
     
     oSRS.SetGeogCS( pszGeogName, pszDatumName, pszSpheroidName,
                     psDefn->SemiMajor, dfInvFlattening,
-                    pszPMName, psDefn->PMLongToGreenwich );
+                    pszPMName,
+                    psDefn->PMLongToGreenwich / psDefn->UOMAngleInDegrees,
+                    pszAngularUnits,
+                    psDefn->UOMAngleInDegrees * 0.0174532925199433 );
 
     CPLFree( pszGeogName );
     CPLFree( pszDatumName );
     CPLFree( pszPMName );
     CPLFree( pszSpheroidName );
+    CPLFree( pszAngularUnits );
         
 /* ==================================================================== */
 /*      Handle projection parameters.                                   */
@@ -191,6 +203,11 @@ char *GTIFGetOGISDefn( GTIFDefn * psDefn )
         for( i = 0; i < MIN(10,psDefn->nParms); i++ )
             adfParm[i] = psDefn->ProjParm[i];
 
+        adfParm[0] /= psDefn->UOMAngleInDegrees;
+        adfParm[1] /= psDefn->UOMAngleInDegrees;
+        adfParm[2] /= psDefn->UOMAngleInDegrees;
+        adfParm[3] /= psDefn->UOMAngleInDegrees;
+        
         adfParm[5] /= psDefn->UOMLengthInMeters;
         adfParm[6] /= psDefn->UOMLengthInMeters;
         
@@ -301,6 +318,12 @@ char *GTIFGetOGISDefn( GTIFDefn * psDefn )
             oSRS.SetLCC( adfParm[0], adfParm[1],
                          adfParm[2], adfParm[3],
                          adfParm[5], adfParm[6] );
+            break;
+
+          case CT_LambertConfConic_1SP:
+            oSRS.SetLCC1SP( adfParm[0], adfParm[1],
+                            adfParm[4],
+                            adfParm[5], adfParm[6] );
             break;
         
           case CT_AlbersEqualArea:
