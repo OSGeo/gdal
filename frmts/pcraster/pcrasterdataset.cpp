@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2004/11/13 12:08:44  kdejong
+ * Reading files with other cell representations than UINT1, INT4 or REAL4 will keep their original cell representation in memory.
+ *
  * Revision 1.4  2004/11/11 15:50:36  kdejong
  * Added write support, docs, improvements.
  *
@@ -151,17 +154,17 @@ GDALDataset* PCRasterDataset::createCopy(char const* filename,
   size_t nrCols = raster->GetXSize();
   std::string string;
 
-  CSF_CR mapCellRepresentation = GDALType2PCRasterCellRepresentation(
+  CSF_CR fileCellRepresentation = GDALType2PCRasterCellRepresentation(
          raster->GetRasterDataType(), false);
 
-  if(mapCellRepresentation == CR_UNDEFINED) {
+  if(fileCellRepresentation == CR_UNDEFINED) {
     CPLError(CE_Failure, CPLE_NotSupported,
          "PCRaster driver: Cannot determine a valid cell representation");
     return 0;
   }
 
-  assert(mapCellRepresentation == CR_UINT1 || mapCellRepresentation == CR_INT4
-         || mapCellRepresentation == CR_REAL4);
+  assert(fileCellRepresentation == CR_UINT1 || fileCellRepresentation == CR_INT4
+         || fileCellRepresentation == CR_REAL4);
 
   CSF_VS valueScale = VS_UNDEFINED;
   if(source->GetMetadataItem("PCRASTER_VALUESCALE")) {
@@ -213,7 +216,7 @@ GDALDataset* PCRasterDataset::createCopy(char const* filename,
   valueScale = fitValueScale(valueScale, appCellRepresentation);
 
   // Create a raster with the in file cell representation.
-  MAP* map = Rcreate(filename, nrRows, nrCols, mapCellRepresentation,
+  MAP* map = Rcreate(filename, nrRows, nrCols, fileCellRepresentation,
                  valueScale, projection, left, top, angle, cellSize);
 
   if(!map) {
