@@ -11,7 +11,13 @@ OBJ_OLEDB =	oledb_sup.obj oledbsuprowset.obj oledb_sf.obj
 
 default:	test1.exe sfdump.exe
 
-sfdump.obj:	sfdump.cpp sfclsid.h
+geometryidl.h: geometryidl.idl spatialreferenceidl.h
+	midl geometryidl.idl
+
+spatialreferenceidl.h: spatialreferenceidl.idl
+	midl spatialreferenceidl.idl
+
+sfdump.obj:	sfdump.cpp sfclsid.h geometryidl.h
 	$(CC) /c $(CFLAGS) sfdump.cpp
 
 test1.obj:	test1.cpp
