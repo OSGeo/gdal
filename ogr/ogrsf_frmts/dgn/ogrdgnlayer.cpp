@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2002/01/21 20:55:10  warmerda
+ * use dgnlib spatial filtering support
+ *
  * Revision 1.14  2002/01/18 18:52:21  warmerda
  * set rotation angle for labels
  *
@@ -184,7 +187,24 @@ void OGRDGNLayer::SetSpatialFilter( OGRGeometry * poGeomIn )
     }
 
     if( poGeomIn != NULL )
+    {
+        OGREnvelope	oEnvelope;
+        
         poFilterGeom = poGeomIn->clone();
+
+        poGeomIn->getEnvelope( &oEnvelope );
+        DGNSetSpatialFilter( hDGN, 
+                             oEnvelope.MinX, 
+                             oEnvelope.MinY, 
+                             oEnvelope.MaxX, 
+                             oEnvelope.MaxY );
+    }
+    else
+    {
+        DGNSetSpatialFilter( hDGN, 0.0, 0.0, 0.0, 0.0 );
+    }
+
+    ResetReading();
 }
 
 /************************************************************************/
@@ -466,10 +486,8 @@ OGRFeature *OGRDGNLayer::GetNextFeature()
             continue;
         }
 
-        if( (poFilterGeom == NULL
-            || poFilterGeom->Intersect( poFeature->GetGeometryRef() ) )
-            && (m_poAttrQuery == NULL
-                || m_poAttrQuery->Evaluate( poFeature )) )
+        if( m_poAttrQuery == NULL
+            || m_poAttrQuery->Evaluate( poFeature ) )
             return poFeature;
 
         delete poFeature;
