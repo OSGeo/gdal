@@ -28,6 +28,9 @@
  * ****************************************************************************
  *
  * $Log$
+ * Revision 1.22  2001/12/12 21:01:01  warmerda
+ * fixed bug in windowing logic
+ *
  * Revision 1.21  2001/09/24 15:55:11  warmerda
  * added cleanup percent done
  *
@@ -418,7 +421,7 @@ int main( int argc, char ** argv )
             {
                 iSrcYOff = (iBlockY / (double) nOYSize) * anSrcWin[3]
                     + anSrcWin[1];
-                iSrcYOff = MAX(0,MIN(anSrcWin[3]-1,iSrcYOff));
+                iSrcYOff = MAX(0,MIN(anSrcWin[1]+anSrcWin[3]-1,iSrcYOff));
             }
 
             GDALRasterIO( hBand, GF_Read,
