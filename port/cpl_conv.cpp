@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.35  2004/02/21 10:08:54  dron
+ * Fixes in various string handling functions.
+ *
  * Revision 1.34  2004/02/07 14:03:30  dron
  * CPLDecToPackedDMS() added.
  *
@@ -586,18 +589,22 @@ char *CPLScanString( char *pszString, int nMaxLength,
 
 long CPLScanLong( char *pszString, int nMaxLength )
 {
-    char    szTemp[32];
+    long    iValue;
+    char    *pszValue = (char *)CPLMalloc( nMaxLength + 1);
 
 /* -------------------------------------------------------------------- */
 /*	Compute string into local buffer, and terminate it.		*/
 /* -------------------------------------------------------------------- */
-    strncpy( szTemp, pszString, nMaxLength );
-    szTemp[nMaxLength] = '\0';
+    strncpy( pszValue, pszString, nMaxLength );
+    pszValue[nMaxLength] = '\0';
 
 /* -------------------------------------------------------------------- */
 /*	Use atol() to fetch out the result                              */
 /* -------------------------------------------------------------------- */
-    return atol( szTemp );
+    iValue = atol( pszValue );
+
+    CPLFree( pszValue );
+    return iValue;
 }
 
 /************************************************************************/
@@ -628,22 +635,22 @@ long CPLScanLong( char *pszString, int nMaxLength )
 
 double CPLScanDouble( char *pszString, int nMaxLength, char *pszLocale )
 {
-    char    szTemp[64];
     int     i;
     double  dfValue;
+    char    *pszValue = (char *)CPLMalloc( nMaxLength + 1);
 
 /* -------------------------------------------------------------------- */
 /*	Compute string into local buffer, and terminate it.		*/
 /* -------------------------------------------------------------------- */
-    strncpy( szTemp, pszString, nMaxLength );
-    szTemp[nMaxLength] = '\0';
+    strncpy( pszValue, pszString, nMaxLength );
+    pszValue[nMaxLength] = '\0';
 
 /* -------------------------------------------------------------------- */
 /*	Make a pass through converting 'D's to 'E's.			*/
 /* -------------------------------------------------------------------- */
     for( i = 0; i < nMaxLength; i++ )
-        if ( szTemp[i] == 'd' || szTemp[i] == 'D' )
-            szTemp[i] = 'E';
+        if ( pszValue[i] == 'd' || pszValue[i] == 'D' )
+            pszValue[i] = 'E';
 
 /* -------------------------------------------------------------------- */
 /*	Use atof() to fetch out the result                              */
@@ -660,7 +667,7 @@ double CPLScanDouble( char *pszString, int nMaxLength, char *pszLocale )
     }
 #endif
 
-    dfValue = atof( szTemp );
+    dfValue = atof( pszValue );
 
 #if defined(HAVE_LOCALE_H) && defined(HAVE_SETLOCALE)
     // Restore stored locale back
@@ -668,6 +675,7 @@ double CPLScanDouble( char *pszString, int nMaxLength, char *pszLocale )
         setlocale(LC_ALL, pszCurLocale );
 #endif
 
+    CPLFree( pszValue );
     return dfValue;
 }
 
@@ -868,7 +876,10 @@ char *CPLPrintUIntBig( char *pszBuffer, GUIntBig iValue, int nMaxLen )
 char *CPLPrintDouble( char *pszBuffer, const char *pszFormat,
                       double dfValue, char *pszLocale )
 {
-    char        szTemp[64];
+
+#define DOUBLE_BUFFER_SIZE 64
+
+    char        szTemp[DOUBLE_BUFFER_SIZE];
     int         i;
 
     if ( !pszBuffer )
@@ -886,7 +897,12 @@ char *CPLPrintDouble( char *pszBuffer, const char *pszFormat,
     }
 #endif
 
+#if defined(HAVE_SNPRINTF)
+    snprintf( szTemp, DOUBLE_BUFFER_SIZE, pszFormat, dfValue );
+#else
     sprintf( szTemp, pszFormat, dfValue );
+#endif
+    szTemp[DOUBLE_BUFFER_SIZE - 1] = '\0';
 
     for( i = 0; szTemp[i] != '\0'; i++ )
     {
@@ -901,6 +917,9 @@ char *CPLPrintDouble( char *pszBuffer, const char *pszFormat,
 #endif
 
     return CPLPrintString( pszBuffer, szTemp, 64 );
+
+#undef DOUBLE_BUFFER_SIZE
+
 }
 
 /************************************************************************/
@@ -1063,7 +1082,7 @@ int CPLStat( const char *pszPath, VSIStatBuf *psStatBuf )
     {
         char    szAltPath[10];
         
-        strcpy( szAltPath, pszPath );
+        strncpy( szAltPath, pszPath, 10 );
         strcat( szAltPath, "\\" );
         return VSIStat( szAltPath, psStatBuf );
     }
