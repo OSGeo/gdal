@@ -3,7 +3,7 @@
  *
  * Project:  GDAL Core
  * Purpose:  Base class for objects with metadata, etc.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 2000, Frank Warmerdam
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2003/04/30 17:13:48  warmerda
+ * added docs for many C functions
+ *
  * Revision 1.5  2002/09/11 14:17:38  warmerda
  * added C GDALSetDescription()
  *
@@ -101,6 +104,10 @@ const char *GDALMajorObject::GetDescription() const
 /*                         GDALGetDescription()                         */
 /************************************************************************/
 
+/**
+ * @see GDALMajorObject::GetDescription()
+ */ 
+
 const char *GDALGetDescription( GDALMajorObjectH hObject )
 
 {
@@ -134,6 +141,10 @@ void GDALMajorObject::SetDescription( const char * pszNewDesc )
 /************************************************************************/
 /*                         GDALSetDescription()                         */
 /************************************************************************/
+
+/**
+ * @see GDALMajorObject::SetDescription()
+ */ 
 
 void GDALSetDescription( GDALMajorObjectH hObject, const char *pszNewDesc )
 
@@ -175,6 +186,10 @@ char **GDALMajorObject::GetMetadata( const char * pszDomain )
 /************************************************************************/
 /*                          GDALGetMetadata()                           */
 /************************************************************************/
+
+/**
+ * @see GDALMajorObject::GetMetadata()
+ */ 
 
 char **GDALGetMetadata( GDALMajorObjectH hObject, const char * pszDomain )
 
@@ -221,6 +236,10 @@ CPLErr GDALMajorObject::SetMetadata( char ** papszMetadataIn,
 /*                          GDALSetMetadata()                           */
 /************************************************************************/
 
+/**
+ * @see GDALMajorObject::SetMetadata()
+ */ 
+
 CPLErr GDALSetMetadata( GDALMajorObjectH hObject, char **papszMD, 
                         const char *pszDomain )
 
@@ -257,6 +276,10 @@ const char *GDALMajorObject::GetMetadataItem( const char * pszName,
 /************************************************************************/
 /*                        GDALGetMetadataItem()                         */
 /************************************************************************/
+
+/**
+ * @see GDALMajorObject::GetMetadataItem()
+ */ 
 
 const char *GDALGetMetadataItem( GDALMajorObjectH hObject, 
                                  const char *pszName, 
@@ -302,6 +325,10 @@ CPLErr GDALMajorObject::SetMetadataItem( const char * pszName,
 /************************************************************************/
 /*                        GDALSetMetadataItem()                         */
 /************************************************************************/
+
+/**
+ * @see GDALMajorObject::SetMetadataItem()
+ */ 
 
 CPLErr GDALSetMetadataItem( GDALMajorObjectH hObject, 
                             const char *pszName, const char *pszValue, 

@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.65  2003/04/30 17:13:48  warmerda
+ * added docs for many C functions
+ *
  * Revision 1.64  2003/04/30 15:48:31  warmerda
  * Fixed email address, trimmed log messages.
  *
@@ -254,7 +257,7 @@ GDALDatasetH CPL_DLL GDALCreate( GDALDriverH hDriver,
 GDALDatasetH CPL_DLL GDALCreateCopy( GDALDriverH, const char *, GDALDatasetH,
                                      int, char **, GDALProgressFunc, void * );
 
-GDALDatasetH CPL_DLL GDALOpen( const char *, GDALAccess );
+GDALDatasetH CPL_DLL GDALOpen( const char *pszFilename, GDALAccess eAccess );
 GDALDatasetH CPL_DLL GDALOpenShared( const char *, GDALAccess );
 int          CPL_DLL GDALDumpOpenDatasets( FILE * );
 
@@ -336,7 +339,7 @@ CPLErr CPL_DLL  GDALAddBand( GDALDatasetH hDS, GDALDataType eType,
                              char **papszOptions );
 
 CPLErr CPL_DLL GDALDatasetRasterIO( 
-    GDALRasterBandH hRBand, GDALRWFlag eRWFlag,
+    GDALDatasetH hDS, GDALRWFlag eRWFlag,
     int nDSXOff, int nDSYOff, int nDSXSize, int nDSYSize,
     void * pBuffer, int nBXSize, int nBYSize, GDALDataType eBDataType,
     int nBandCount, int *panBandCount, 

@@ -3,7 +3,7 @@
  *
  * Project:  GDAL Core
  * Purpose:  Implementation of GDALDriver class (and C wrappers)
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 1998, 2000, Frank Warmerdam
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.29  2003/04/30 17:13:48  warmerda
+ * added docs for many C functions
+ *
  * Revision 1.28  2002/09/11 14:17:23  warmerda
  * copy ct/metadata/description for bands in CreateCopy()
  *
@@ -60,58 +63,6 @@
  *
  * Revision 1.18  2001/02/15 16:30:34  warmerda
  * added create debug message
- *
- * Revision 1.17  2000/10/06 15:26:49  warmerda
- * make buffer size for copying image data the exact size, fixing bug with complex data
- *
- * Revision 1.16  2000/07/13 17:34:11  warmerda
- * Set description for CopyCreate() method.
- *
- * Revision 1.15  2000/07/13 17:27:48  warmerda
- * added SetDescription after create
- *
- * Revision 1.14  2000/06/27 16:47:28  warmerda
- * added cancel support for CopyCreate progress func
- *
- * Revision 1.13  2000/06/26 18:47:14  warmerda
- * Ensure pszHelpTopic is initialized
- *
- * Revision 1.12  2000/04/30 23:22:16  warmerda
- * added CreateCopy support
- *
- * Revision 1.11  2000/03/06 02:21:15  warmerda
- * Added help topic C function
- *
- * Revision 1.10  2000/01/31 16:24:01  warmerda
- * use failure, not fatal
- *
- * Revision 1.9  2000/01/31 15:00:25  warmerda
- * added some documentation
- *
- * Revision 1.8  2000/01/31 14:24:36  warmerda
- * implemented dataset delete
- *
- * Revision 1.7  2000/01/13 04:13:10  pgs
- * added initialization of pfnCreate = NULL to prevent run-time crash when format doesn't support creating a file
- *
- * Revision 1.6  1999/12/08 14:40:50  warmerda
- * Fixed error message.
- *
- * Revision 1.5  1999/10/21 13:22:10  warmerda
- * Added GDALGetDriverShort/LongName().
- *
- * Revision 1.4  1999/01/11 15:36:50  warmerda
- * Added GDALCreate()
- *
- * Revision 1.3  1998/12/31 18:54:53  warmerda
- * Flesh out create method.
- *
- * Revision 1.2  1998/12/06 22:17:32  warmerda
- * Add stub Create() method
- *
- * Revision 1.1  1998/12/03 18:32:01  warmerda
- * New
- *
  */
 
 #include "gdal_priv.h"
@@ -210,6 +161,10 @@ GDALDataset * GDALDriver::Create( const char * pszFilename,
 /************************************************************************/
 /*                             GDALCreate()                             */
 /************************************************************************/
+
+/**
+ * @see GDALDriver::Create()
+ */
 
 GDALDatasetH CPL_DLL GDALCreate( GDALDriverH hDriver,
                                  const char * pszFilename,
@@ -408,6 +363,10 @@ GDALDataset *GDALDriver::CreateCopy( const char * pszFilename,
 /*                           GDALCreateCopy()                           */
 /************************************************************************/
 
+/**
+ * @see GDALDriver::CreateCopy()
+ */
+
 GDALDatasetH GDALCreateCopy( GDALDriverH hDriver, 
                              const char * pszFilename, 
                              GDALDatasetH hSrcDS, 
@@ -478,6 +437,10 @@ CPLErr GDALDriver::Delete( const char * pszFilename )
 /************************************************************************/
 /*                             GDALDelete()                             */
 /************************************************************************/
+
+/**
+ * @see GDALDriver::Delete()
+ */
 
 CPLErr GDALDeleteDataset( GDALDriverH hDriver, const char * pszFilename )
 
