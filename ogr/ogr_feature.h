@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.27  2003/04/08 20:57:28  warmerda
+ * added RemapFields on OGRFeature
+ *
  * Revision 1.26  2003/03/04 05:46:31  warmerda
  * added EvaluateAgainstIndices for OGRFeatureQuery
  *
@@ -220,6 +223,8 @@ class CPL_DLL OGRFeatureDefn
     OGRwkbGeometryType GetGeomType() { return eGeomType; }
     void        SetGeomType( OGRwkbGeometryType );
 
+    OGRFeatureDefn *Clone();
+
     int         Reference() { return ++nRefCount; }
     int         Dereference() { return --nRefCount; }
     int         GetReferenceCount() { return nRefCount; }
@@ -335,6 +340,9 @@ class CPL_DLL OGRFeature
     void                DumpReadable( FILE * );
 
     OGRErr              SetFrom( OGRFeature *, int = TRUE);
+
+    OGRErr              RemapFields( OGRFeatureDefn *poNewDefn, 
+                                     int *panRemapSource );
 
     virtual const char *GetStyleString();
     virtual void        SetStyleString(const char *);
