@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2004/01/22 21:16:06  warmerda
+ * fixed up auto-lat/lon support
+ *
  * Revision 1.1  2004/01/21 20:08:29  warmerda
  * New
  *
@@ -99,8 +102,8 @@ OGRDODSSequenceLayer::OGRDODSSequenceLayer( OGRDODSDataSource *poDSIn,
         
         if( poDS->oDDS.var( x ) != NULL && poDS->oDDS.var( y ) != NULL )
         {
-            oXField.Initialize( x.c_str(), "dds" );
-            oYField.Initialize( y.c_str(), "dds" );
+            oXField.Initialize( "lon", "dds" );
+            oYField.Initialize( "lat", "dds" );
         }
     }
 
