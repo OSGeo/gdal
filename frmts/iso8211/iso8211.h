@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2000/06/16 18:02:08  warmerda
+ * added SetRepeatingFlag hack support
+ *
  * Revision 1.9  2000/01/31 18:03:39  warmerda
  * completely rewrote format expansion to make more general
  *
@@ -227,6 +230,9 @@ class DDFFieldDefn
                  mixed_data_type } data_type_code;
 
     static char       *ExpandFormat( const char * );
+
+    /** this is just for an S-57 hack for swedish data */
+    void SetRepeatingFlag( int n ) { bRepeatingSubfields = n; }
     
   private:
 

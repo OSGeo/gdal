@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2000/06/16 18:02:08  warmerda
+ * added SetRepeatingFlag hack support
+ *
  * Revision 1.4  1999/11/18 19:03:04  warmerda
  * expanded tabs
  *
@@ -58,11 +61,18 @@ int main( int nArgc, char ** papszArgv )
 
 {
     DDFModule   oModule;
-    const char  *pszFilename;
+    const char  *pszFilename = NULL;
+    int         bFSPTHack = FALSE;
 
-    if( nArgc > 1 )
-        pszFilename = papszArgv[1];
-    else
+    for( int iArg = 1; iArg < nArgc; iArg++ )
+    {
+        if( EQUAL(papszArgv[iArg],"-fspt_repeating") )
+            bFSPTHack = TRUE;
+        else
+            pszFilename = papszArgv[iArg];
+    }
+
+    if( pszFilename == NULL )
     {
         printf( "Usage: 8211view filename\n" );
         exit( 1 );
@@ -75,6 +85,17 @@ int main( int nArgc, char ** papszArgv )
     if( !oModule.Open( pszFilename ) )
     {
         exit( 1 );
+    }
+
+    if( bFSPTHack )
+    {
+        DDFFieldDefn *poFSPT = oModule.FindFieldDefn( "FSPT" );
+
+        if( poFSPT == NULL )
+            fprintf( stderr, 
+                     "unable to find FSPT field to set repeating flag.\n" );
+        else
+            poFSPT->SetRepeatingFlag( TRUE );
     }
 
 /* -------------------------------------------------------------------- */

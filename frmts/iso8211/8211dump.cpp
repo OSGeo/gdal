@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2000/06/16 18:02:08  warmerda
+ * added SetRepeatingFlag hack support
+ *
  * Revision 1.3  1999/11/18 19:03:04  warmerda
  * expanded tabs
  *
@@ -50,22 +53,56 @@ int main( int nArgc, char ** papszArgv )
 
 {
     DDFModule   oModule;
-    const char  *pszFilename = "SC01CATD.DDF";
+    const char  *pszFilename = NULL;
+    int         bFSPTHack = FALSE;
 
-    if( nArgc > 1 )
-        pszFilename = papszArgv[1];
-
-    if( oModule.Open( pszFilename ) )
+/* -------------------------------------------------------------------- */
+/*      Check arguments.                                                */
+/* -------------------------------------------------------------------- */
+    for( int iArg = 1; iArg < nArgc; iArg++ )
     {
-        DDFRecord       *poRecord;
-        
-        oModule.Dump( stdout );
+        if( EQUAL(papszArgv[iArg],"-fspt_repeating") )
+            bFSPTHack = TRUE;
+        else
+            pszFilename = papszArgv[iArg];
+    }
 
-        for( poRecord = oModule.ReadRecord();
-             poRecord != NULL; poRecord = oModule.ReadRecord() )
-        {
-            poRecord->Dump( stdout );
-        }
+    if( pszFilename == NULL )
+    {
+        printf( "Usage: 8211dump filename\n" );
+        exit( 1 );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Open file.                                                      */
+/* -------------------------------------------------------------------- */
+    if( !oModule.Open( pszFilename ) )
+        exit( 1 );
+
+/* -------------------------------------------------------------------- */
+/*      Apply FSPT hack if required.                                    */
+/* -------------------------------------------------------------------- */
+    if( bFSPTHack )
+    {
+        DDFFieldDefn *poFSPT = oModule.FindFieldDefn( "FSPT" );
+
+        if( poFSPT == NULL )
+            fprintf( stderr, 
+                     "unable to find FSPT field to set repeating flag.\n" );
+        else
+            poFSPT->SetRepeatingFlag( TRUE );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Dump header, and all recodrs.                                   */
+/* -------------------------------------------------------------------- */
+    DDFRecord       *poRecord;
+    oModule.Dump( stdout );
+
+    for( poRecord = oModule.ReadRecord();
+         poRecord != NULL; poRecord = oModule.ReadRecord() )
+    {
+        poRecord->Dump( stdout );
     }
 
     oModule.Close();
