@@ -3,10 +3,10 @@
  *
  * Project:  ISO 8211 Access
  * Purpose:  Main declarations for ISO 8211.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
- * Copyright (c) 1999, Frank Warmerdam
+ * Copyright (c) 1999, Frank Warmerdam <warmerdam@pobox.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2003/07/03 15:38:46  warmerda
+ * some write capabilities added
+ *
  * Revision 1.14  2001/08/29 17:47:33  warmerda
  * added GetInstanceData
  *
@@ -128,7 +131,18 @@ class DDFModule
                 ~DDFModule();
                 
     int         Open( const char * pszFilename, int bFailQuietly = FALSE );
+    int         Create( const char *pszFilename );
     void        Close();
+
+    int         Initialize( char chInterchangeLevel = '3',
+                            char chLeaderIden = 'L', 
+                            char chCodeExtensionIndicator = 'E',
+                            char chVersionNumber = '1',
+                            char chAppIndicator = ' ',
+                            const char *pszExtendedCharSet = " ! ",
+                            int nSizeFieldLength = 3,
+                            int nSizeFieldPos = 4,
+                            int nSizeFieldTag = 4 );
 
     void        Dump( FILE * fp );
 
@@ -141,6 +155,7 @@ class DDFModule
 
     int         GetFieldCount() { return nFieldDefnCount; }
     DDFFieldDefn *GetField(int);
+    void        AddField( DDFFieldDefn *poNewFDefn );
     
     // This is really just for internal use.
     int         GetFieldControlLength() { return _fieldControlLength; }
@@ -152,6 +167,7 @@ class DDFModule
     
   private:
     FILE        *fpDDF;
+    int         bReadOnly;
     long        nFirstRecordOffset;
 
     char        _interchangeLevel;
@@ -170,7 +186,7 @@ class DDFModule
 
     // One DirEntry per field.  
     int         nFieldDefnCount;
-    DDFFieldDefn *paoFieldDefns;
+    DDFFieldDefn **papoFieldDefns;
 
     DDFRecord   *poRecord;
 
@@ -196,6 +212,25 @@ class DDFFieldDefn
                 DDFFieldDefn();
                 ~DDFFieldDefn();
 
+  typedef enum { elementary, vector, array, concatenated } data_struct_code;
+  typedef enum { char_string, 
+                 implicit_point, 
+                 explicit_point, 
+                 explicit_point_scaled, 
+                 char_bit_string, 
+                 bit_string, 
+                 mixed_data_type } data_type_code;
+
+    int         Create( const char *pszTag, const char *pszFieldName,
+                        const char *pszDescription,
+                        DDFFieldDefn::data_struct_code eDataStructCode,
+                        DDFFieldDefn::data_type_code   eDataTypeCode,
+                        const char *pszFormat = NULL );
+    void        AddSubfield( DDFSubfieldDefn *poNewSFDefn,
+                             int bDontAddToFormat = FALSE );
+    void        AddSubfield( const char *pszName, const char *pszFormat );
+    int         GenerateDDREntry( char **ppachData, int *pnLength ); 
+                            
     int         Initialize( DDFModule * poModule, const char *pszTag,
                             int nSize, const char * pachRecord );
     
@@ -233,15 +268,6 @@ class DDFFieldDefn
      */
     int         IsRepeating() { return bRepeatingSubfields; }
 
-  typedef enum { elementary, vector, array, concatenated } data_struct_code;
-  typedef enum { char_string, 
-                 implicit_point, 
-                 explicit_point, 
-                 explicit_point_scaled, 
-                 char_bit_string, 
-                 bit_string, 
-                 mixed_data_type } data_type_code;
-
     static char       *ExpandFormat( const char * );
 
     /** this is just for an S-57 hack for swedish data */
@@ -269,7 +295,7 @@ class DDFFieldDefn
     DDFFieldDefn::data_type_code   _data_type_code;
 
     int         nSubfieldCount;
-    DDFSubfieldDefn *paoSubfields;
+    DDFSubfieldDefn **papoSubfields;
 };
 
 /************************************************************************/
@@ -424,9 +450,12 @@ class DDFRecord
     int SetFieldRaw( DDFField *poField, int iIndexWithinField, 
                      const char *pachRawData, int nRawDataSize );
 
+    int         Write();
+    
     // This is really just for the DDFModule class.
     int         Read();
     void        Clear();
+    int         ResetDirectory();
     
   private:
 
@@ -437,6 +466,10 @@ class DDFRecord
     int         nReuseHeader;   
 
     int         nFieldOffset;   // field data area, not dir entries.
+
+    int         _sizeFieldTag;
+    int         _sizeFieldPos;
+    int         _sizeFieldLength;
 
     int         nDataSize;      // Whole record except leader with header
     char        *pachData;

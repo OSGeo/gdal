@@ -3,7 +3,7 @@
  *
  * Project:  ISO 8211 Access
  * Purpose:  Implements the DDFModule class.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 1999, Frank Warmerdam
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2003/07/03 15:38:46  warmerda
+ * some write capabilities added
+ *
  * Revision 1.13  2001/07/18 04:51:57  warmerda
  * added CPL_CVSID
  *
@@ -86,13 +89,28 @@ DDFModule::DDFModule()
 
 {
     nFieldDefnCount = 0;
-    paoFieldDefns = NULL;
+    papoFieldDefns = NULL;
     poRecord = NULL;
 
     papoClones = NULL;
     nCloneCount = nMaxCloneCount = 0;
 
     fpDDF = NULL;
+    bReadOnly = TRUE;
+
+    _interchangeLevel = '\0';
+    _inlineCodeExtensionIndicator = '\0';
+    _versionNumber = '\0';
+    _appIndicator = '\0';
+    _fieldControlLength = '\0';
+    strcpy( _extendedCharSet, " ! " );
+
+    _recLength = 0;
+    _leaderIden = 'L';
+    _fieldAreaStart = 0;
+    _sizeFieldLength = 0;
+    _sizeFieldPos = 0;
+    _sizeFieldTag = 0;
 }
 
 /************************************************************************/
@@ -155,13 +173,13 @@ void DDFModule::Close()
 /* -------------------------------------------------------------------- */
 /*      Cleanup the field definitions.                                  */
 /* -------------------------------------------------------------------- */
-    nFieldDefnCount = 0;
-    if( paoFieldDefns != NULL )
-    {
-        delete[] paoFieldDefns;
-        paoFieldDefns = NULL;
-    }
+    int i;
 
+    for( i = 0; i < nFieldDefnCount; i++ )
+        delete papoFieldDefns[i];
+    CPLFree( papoFieldDefns );
+    papoFieldDefns = NULL;
+    nFieldDefnCount = 0;
 }
 
 /************************************************************************/
@@ -314,29 +332,27 @@ int DDFModule::Open( const char * pszFilename, int bFailQuietly )
 /* -------------------------------------------------------------------- */
 /*      First make a pass counting the directory entries.               */
 /* -------------------------------------------------------------------- */
-    int         nFieldEntryWidth;
+    int         nFieldEntryWidth, nFDCount = 0;
 
     nFieldEntryWidth = _sizeFieldLength + _sizeFieldPos + _sizeFieldTag;
 
-    nFieldDefnCount = 0;
     for( i = nLeaderSize; i < _recLength; i += nFieldEntryWidth )
     {
         if( pachRecord[i] == DDF_FIELD_TERMINATOR )
             break;
 
-        nFieldDefnCount++;
+        nFDCount++;
     }
 
 /* -------------------------------------------------------------------- */
 /*      Allocate, and read field definitions.                           */
 /* -------------------------------------------------------------------- */
-    paoFieldDefns = new DDFFieldDefn[nFieldDefnCount];
-    
-    for( i = 0; i < nFieldDefnCount; i++ )
+    for( i = 0; i < nFDCount; i++ )
     {
         char    szTag[128];
         int     nEntryOffset = nLeaderSize + i*nFieldEntryWidth;
         int     nFieldLength, nFieldPos;
+        DDFFieldDefn *poFDefn;
         
         strncpy( szTag, pachRecord+nEntryOffset, _sizeFieldTag );
         szTag[_sizeFieldTag] = '\0';
@@ -347,8 +363,10 @@ int DDFModule::Open( const char * pszFilename, int bFailQuietly )
         nEntryOffset += _sizeFieldLength;
         nFieldPos = DDFScanInt( pachRecord+nEntryOffset, _sizeFieldPos );
         
-        paoFieldDefns[i].Initialize( this, szTag, nFieldLength,
-                                     pachRecord+_fieldAreaStart+nFieldPos );
+        poFDefn = new DDFFieldDefn();
+        poFDefn->Initialize( this, szTag, nFieldLength,
+                             pachRecord+_fieldAreaStart+nFieldPos );
+        AddField( poFDefn );
     }
 
     CPLFree( pachRecord );
@@ -358,6 +376,136 @@ int DDFModule::Open( const char * pszFilename, int bFailQuietly )
 /*      data record.                                                    */
 /* -------------------------------------------------------------------- */
     nFirstRecordOffset = VSIFTell( fpDDF );
+    
+    return TRUE;
+}
+
+/************************************************************************/
+/*                             Initialize()                             */
+/************************************************************************/
+
+int DDFModule::Initialize( char chInterchangeLevel,
+                           char chLeaderIden, 
+                           char chCodeExtensionIndicator,
+                           char chVersionNumber,
+                           char chAppIndicator,
+                           const char *pszExtendedCharSet,
+                           int nSizeFieldLength,
+                           int nSizeFieldPos,
+                           int nSizeFieldTag )
+
+{
+    _interchangeLevel = chInterchangeLevel;
+    _leaderIden = chLeaderIden;
+    _inlineCodeExtensionIndicator = chCodeExtensionIndicator;
+    _versionNumber = chVersionNumber;
+    _appIndicator = chAppIndicator;
+    strcpy( _extendedCharSet, pszExtendedCharSet );
+    _sizeFieldLength = nSizeFieldLength;
+    _sizeFieldPos = nSizeFieldPos;
+    _sizeFieldTag = nSizeFieldTag;
+
+    return TRUE;
+}
+
+/************************************************************************/
+/*                               Create()                               */
+/************************************************************************/
+
+int DDFModule::Create( const char *pszFilename )
+
+{
+    CPLAssert( fpDDF == NULL );
+    
+/* -------------------------------------------------------------------- */
+/*      Create the file on disk.                                        */
+/* -------------------------------------------------------------------- */
+    fpDDF = VSIFOpen( pszFilename, "wb+" );
+    if( fpDDF == NULL )
+    {
+        CPLError( CE_Failure, CPLE_OpenFailed, 
+                  "Failed to create file %s, check path and permissions.",
+                  pszFilename );
+        return FALSE;
+    }
+    
+    bReadOnly = FALSE;
+
+/* -------------------------------------------------------------------- */
+/*      Prepare all the field definition information.                   */
+/* -------------------------------------------------------------------- */
+    int iField;
+
+    _fieldControlLength = 9;
+    _recLength = 24 
+        + nFieldDefnCount * (_sizeFieldLength+_sizeFieldPos+_sizeFieldTag) 
+        + 1;
+    
+    _fieldAreaStart = _recLength;
+
+    for( iField=0; iField < nFieldDefnCount; iField++ )
+    {
+        int nLength;
+
+        papoFieldDefns[iField]->GenerateDDREntry( NULL, &nLength );
+        _recLength += nLength;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Setup 24 byte leader.                                           */
+/* -------------------------------------------------------------------- */
+    char achLeader[25];
+
+    sprintf( achLeader+0, "%05d", (int) _recLength );
+    achLeader[5] = _interchangeLevel;
+    achLeader[6] = _leaderIden;
+    achLeader[7] = _inlineCodeExtensionIndicator;
+    achLeader[8] = _versionNumber;
+    achLeader[9] = _appIndicator;
+    sprintf( achLeader+10, "%02d", (int) _fieldControlLength );
+    sprintf( achLeader+12, "%05d", (int) _fieldAreaStart );
+    strncpy( achLeader+17, _extendedCharSet, 3 );
+    sprintf( achLeader+20, "%1d", (int) _sizeFieldLength );
+    sprintf( achLeader+21, "%1d", (int) _sizeFieldPos );
+    achLeader[22] = '0';
+    sprintf( achLeader+23, "%1d", (int) _sizeFieldTag );
+    VSIFWrite( achLeader, 24, 1, fpDDF );
+
+/* -------------------------------------------------------------------- */
+/*      Write out directory entries.                                    */
+/* -------------------------------------------------------------------- */
+    int nOffset = 0;
+    for( iField=0; iField < nFieldDefnCount; iField++ )
+    {
+        char achDirEntry[12];
+        int nLength;
+
+        papoFieldDefns[iField]->GenerateDDREntry( NULL, &nLength );
+
+        strcpy( achDirEntry, papoFieldDefns[iField]->GetName() );
+        sprintf( achDirEntry + _sizeFieldTag, "%03d", nLength );
+        sprintf( achDirEntry + _sizeFieldTag + _sizeFieldLength, 
+                 "%04d", nOffset );
+        nOffset += nLength;
+
+        VSIFWrite( achDirEntry, 11, 1, fpDDF );
+    }
+
+    char chUT = DDF_FIELD_TERMINATOR;
+    VSIFWrite( &chUT, 1, 1, fpDDF );
+
+/* -------------------------------------------------------------------- */
+/*      Write out the field descriptions themselves.                    */
+/* -------------------------------------------------------------------- */
+    for( iField=0; iField < nFieldDefnCount; iField++ )
+    {
+        char *pachData;
+        int nLength;
+
+        papoFieldDefns[iField]->GenerateDDREntry( &pachData, &nLength );
+        VSIFWrite( pachData, nLength, 1, fpDDF );
+        CPLFree( pachData );
+    }
     
     return TRUE;
 }
@@ -396,7 +544,7 @@ void DDFModule::Dump( FILE * fp )
 
     for( int i = 0; i < nFieldDefnCount; i++ )
     {
-        paoFieldDefns[i].Dump( fp );
+        papoFieldDefns[i]->Dump( fp );
     }
 }
 
@@ -429,11 +577,11 @@ DDFFieldDefn *DDFModule::FindFieldDefn( const char *pszFieldName )
 /* -------------------------------------------------------------------- */
     for( i = 0; i < nFieldDefnCount; i++ )
     {
-        const char *pszThisName = paoFieldDefns[i].GetName();
+        const char *pszThisName = papoFieldDefns[i]->GetName();
         
         if( *pszThisName == *pszFieldName
             && strcmp( pszFieldName+1, pszThisName+1) == 0 )
-            return paoFieldDefns + i;
+            return papoFieldDefns[i];
     }
 
 /* -------------------------------------------------------------------- */
@@ -442,8 +590,8 @@ DDFFieldDefn *DDFModule::FindFieldDefn( const char *pszFieldName )
 /* -------------------------------------------------------------------- */
     for( i = 0; i < nFieldDefnCount; i++ )
     {
-        if( EQUAL(pszFieldName, paoFieldDefns[i].GetName()) )
-            return paoFieldDefns + i;
+        if( EQUAL(pszFieldName, papoFieldDefns[i]->GetName()) )
+            return papoFieldDefns[i];
     }
 
     return NULL;
@@ -480,6 +628,29 @@ DDFRecord *DDFModule::ReadRecord()
 }
 
 /************************************************************************/
+/*                              AddField()                              */
+/************************************************************************/
+
+/**
+ * Add new field definition.
+ *
+ * Field definitions may only be added to DDFModules being used for 
+ * writing, not those being used for reading.  Ownership of the 
+ * DDFFieldDefn object is taken by the DDFModule.
+ *
+ * @param poNewFDefn definition to be added to the module. 
+ */
+
+void DDFModule::AddField( DDFFieldDefn *poNewFDefn )
+
+{
+    nFieldDefnCount++;
+    papoFieldDefns = (DDFFieldDefn **) 
+        CPLRealloc(papoFieldDefns, sizeof(void*)*nFieldDefnCount);
+    papoFieldDefns[nFieldDefnCount-1] = poNewFDefn;
+}
+
+/************************************************************************/
 /*                              GetField()                              */
 /************************************************************************/
 
@@ -496,7 +667,7 @@ DDFFieldDefn *DDFModule::GetField(int i)
     if( i < 0 || i >= nFieldDefnCount )
         return NULL;
     else
-        return paoFieldDefns + i;
+        return papoFieldDefns[i];
 }
     
 /************************************************************************/

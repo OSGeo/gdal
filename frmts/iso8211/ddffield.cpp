@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2003/07/03 15:38:46  warmerda
+ * some write capabilities added
+ *
  * Revision 1.15  2001/08/30 21:08:19  warmerda
  * expand tabs
  *
@@ -327,21 +330,33 @@ const char *DDFField::GetInstanceData( int nInstance,
 
 {
     int nRepeatCount = GetRepeatCount();
+    const char *pachWrkData;
 
     if( nInstance < 0 || nInstance >= nRepeatCount )
         return NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Special case for fields without subfields (like "0001").  We    */
+/*      don't currently handle repeating simple fields.                 */
+/* -------------------------------------------------------------------- */
+    if( poDefn->GetSubfieldCount() == 0 )
+    {
+        pachWrkData = GetData();
+        if( pnInstanceSize != 0 )
+            *pnInstanceSize = GetDataSize();
+        return pachWrkData;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Get a pointer to the start of the existing data for this        */
 /*      iteration of the field.                                         */
 /* -------------------------------------------------------------------- */
     int         nBytesRemaining1, nBytesRemaining2;
-    const char *pachData;
     DDFSubfieldDefn *poFirstSubfield;
 
     poFirstSubfield = poDefn->GetSubfield(0);
 
-    pachData = GetSubfieldData(poFirstSubfield, &nBytesRemaining1,
+    pachWrkData = GetSubfieldData(poFirstSubfield, &nBytesRemaining1,
                                nInstance);
 
 /* -------------------------------------------------------------------- */
@@ -365,5 +380,5 @@ const char *DDFField::GetInstanceData( int nInstance,
             nBytesRemaining1 - (nBytesRemaining2 - nLastSubfieldWidth);
     }
 
-    return pachData;
+    return pachWrkData;
 }

@@ -3,7 +3,7 @@
  *
  * Project:  ISO 8211 Access
  * Purpose:  Implements the DDFRecord class.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 1999, Frank Warmerdam
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2003/07/03 15:38:46  warmerda
+ * some write capabilities added
+ *
  * Revision 1.15  2002/08/08 12:39:18  warmerda
  * Added support for variable length records as per bugzilla bug 181.
  *
@@ -80,6 +83,8 @@
 
 CPL_CVSID("$Id$");
 
+static const size_t nLeaderSize = 24;
+
 /************************************************************************/
 /*                             DDFRecord()                              */
 /************************************************************************/
@@ -91,7 +96,7 @@ DDFRecord::DDFRecord( DDFModule * poModuleIn )
 
     nReuseHeader = FALSE;
 
-    nFieldOffset = -1;
+    nFieldOffset = 0;
 
     nDataSize = 0;
     pachData = NULL;
@@ -100,6 +105,10 @@ DDFRecord::DDFRecord( DDFModule * poModuleIn )
     paoFields = NULL;
 
     bIsClone = FALSE;
+
+    _sizeFieldTag = 4;
+    _sizeFieldPos = 0;
+    _sizeFieldLength = 0;
 }
 
 /************************************************************************/
@@ -135,6 +144,9 @@ void DDFRecord::Dump( FILE * fp )
     fprintf( fp, "DDFRecord:\n" );
     fprintf( fp, "    nReuseHeader = %d\n", nReuseHeader );
     fprintf( fp, "    nDataSize = %d\n", nDataSize );
+    fprintf( fp, 
+             "    _sizeFieldLength=%d, _sizeFieldPos=%d, _sizeFieldTag=%d\n",
+             _sizeFieldLength, _sizeFieldPos, _sizeFieldTag );
 
     for( int i = 0; i < nFieldCount; i++ )
     {
@@ -197,6 +209,49 @@ int DDFRecord::Read()
 }
 
 /************************************************************************/
+/*                               Write()                                */
+/************************************************************************/
+
+int DDFRecord::Write()
+
+{
+    if( !ResetDirectory() )
+        return FALSE;
+    
+/* -------------------------------------------------------------------- */
+/*      Prepare leader.                                                 */
+/* -------------------------------------------------------------------- */
+    char szLeader[nLeaderSize+1];
+
+    memset( szLeader, ' ', nLeaderSize );
+
+    sprintf( szLeader+0, "%05d", nDataSize + nLeaderSize );
+    szLeader[5] = ' ';
+    szLeader[6] = 'D';
+    
+    sprintf( szLeader + 12, "%05d", nFieldOffset );
+    szLeader[17] = ' ';
+
+    szLeader[20] = '0' + _sizeFieldLength;
+    szLeader[21] = '0' + _sizeFieldPos;
+    szLeader[23] = '0' + _sizeFieldTag;
+
+    /* notdef: lots of stuff missing */
+
+/* -------------------------------------------------------------------- */
+/*      Write the leader.                                               */
+/* -------------------------------------------------------------------- */
+    VSIFWrite( szLeader, nLeaderSize, 1, poModule->GetFP() );
+
+/* -------------------------------------------------------------------- */
+/*      Write the remainder of the record.                              */
+/* -------------------------------------------------------------------- */
+    VSIFWrite( pachData, nDataSize, 1, poModule->GetFP() );
+    
+    return TRUE;
+}
+
+/************************************************************************/
 /*                               Clear()                                */
 /*                                                                      */
 /*      Clear any information associated with the last header in        */
@@ -231,8 +286,6 @@ void DDFRecord::Clear()
 int DDFRecord::ReadHeader()
 
 {
-    static const size_t nLeaderSize = 24;
-
 /* -------------------------------------------------------------------- */
 /*      Clear any existing information.                                 */
 /* -------------------------------------------------------------------- */
@@ -260,8 +313,7 @@ int DDFRecord::ReadHeader()
 /* -------------------------------------------------------------------- */
 /*      Extract information from leader.                                */
 /* -------------------------------------------------------------------- */
-    int         _recLength, _fieldAreaStart, _sizeFieldLength;
-    int         _sizeFieldPos, _sizeFieldTag;
+    int         _recLength, _fieldAreaStart;
     char        _leaderIden;
     
     _recLength                    = DDFScanInt( achLeader+0, 5 );
@@ -973,6 +1025,7 @@ int DDFRecord::ResizeField( DDFField *poField, int nNewDataSize )
 
 {
     int         iTarget, i;
+    int         nBytesToMove;
 
 /* -------------------------------------------------------------------- */
 /*      Find which field we are to resize.                              */
@@ -995,6 +1048,16 @@ int DDFRecord::ResizeField( DDFField *poField, int nNewDataSize )
     pachData = (char *) CPLRealloc(pachData, nDataSize + nBytesToAdd );
     nDataSize += nBytesToAdd;
 
+/* -------------------------------------------------------------------- */
+/*      Shift data after the target field on by the bytes added.        */
+/* -------------------------------------------------------------------- */
+    nBytesToMove = nDataSize 
+        - (poField->GetData()+poField->GetDataSize()-pachOldData+nBytesToAdd);
+
+    memmove( (char *)poField->GetData() + poField->GetDataSize() + nBytesToAdd,
+             (char *)poField->GetData() + poField->GetDataSize(), 
+             nBytesToMove );
+             
 /* -------------------------------------------------------------------- */
 /*      Update fields to point into newly allocated buffer.             */
 /* -------------------------------------------------------------------- */
@@ -1030,8 +1093,6 @@ int DDFRecord::ResizeField( DDFField *poField, int nNewDataSize )
             paoFields[i].Initialize( paoFields[i].GetFieldDefn(), 
                                      pszOldDataLocation + nBytesToAdd,
                                      paoFields[i].GetDataSize() ); 
-            memmove( (void *) paoFields[i].GetData(), pszOldDataLocation,
-                     paoFields[i].GetDataSize() );
         }
     }
     else
@@ -1045,8 +1106,6 @@ int DDFRecord::ResizeField( DDFField *poField, int nNewDataSize )
             paoFields[i].Initialize( paoFields[i].GetFieldDefn(), 
                                      pszOldDataLocation + nBytesToAdd,
                                      paoFields[i].GetDataSize() ); 
-            memmove( (void *) paoFields[i].GetData(), pszOldDataLocation,
-                     paoFields[i].GetDataSize() );
         }
     }
 
@@ -1077,9 +1136,6 @@ int DDFRecord::ResizeField( DDFField *poField, int nNewDataSize )
 DDFField *DDFRecord::AddField( DDFFieldDefn *poDefn )
 
 {
-    if( nFieldCount == 0 )
-        return FALSE;
-
 /* -------------------------------------------------------------------- */
 /*      Reallocate the fields array larger by one, and initialize       */
 /*      the new field.                                                  */
@@ -1087,19 +1143,36 @@ DDFField *DDFRecord::AddField( DDFFieldDefn *poDefn )
     DDFField    *paoNewFields;
 
     paoNewFields = new DDFField[nFieldCount+1];
-    memcpy( paoNewFields, paoFields, sizeof(DDFField) * nFieldCount );
-    delete[] paoFields;
+    if( nFieldCount > 0 )
+    {
+        memcpy( paoNewFields, paoFields, sizeof(DDFField) * nFieldCount );
+        delete[] paoFields;
+    }
     paoFields = paoNewFields;
     nFieldCount++;
 
 /* -------------------------------------------------------------------- */
 /*      Initialize the new field properly.                              */
 /* -------------------------------------------------------------------- */
-    paoFields[nFieldCount-1].Initialize( 
-        poDefn, 
-        paoFields[nFieldCount-2].GetData()
-        + paoFields[nFieldCount-2].GetDataSize(), 
-        0 );
+    if( nFieldCount == 1 )
+    {
+        paoFields[0].Initialize( poDefn, GetData(), 0 );
+    }
+    else
+    {
+        paoFields[nFieldCount-1].Initialize( 
+            poDefn, 
+            paoFields[nFieldCount-2].GetData()
+            + paoFields[nFieldCount-2].GetDataSize(), 
+            0 );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Insert field terminator.                                        */
+/* -------------------------------------------------------------------- */
+    char chFT = DDF_FIELD_TERMINATOR;
+
+    SetFieldRaw( paoFields+nFieldCount-1, 0, &chFT, 1 );
 
     return paoFields + (nFieldCount - 1);
 }
@@ -1176,10 +1249,11 @@ DDFRecord::SetFieldRaw( DDFField *poField, int iIndexWithinField,
 /*      Get a pointer to the start of the existing data for this        */
 /*      iteration of the field.                                         */
 /* -------------------------------------------------------------------- */
-    const char *pachData;
+    const char *pachWrkData;
     int         nInstanceSize;
 
-    pachData = poField->GetInstanceData( iIndexWithinField, &nInstanceSize );
+    pachWrkData = poField->GetInstanceData( iIndexWithinField, 
+                                            &nInstanceSize );
 
 /* -------------------------------------------------------------------- */
 /*      Create new image of this whole field.                           */
@@ -1191,7 +1265,7 @@ DDFRecord::SetFieldRaw( DDFField *poField, int iIndexWithinField,
 
     pachNewImage = (char *) CPLMalloc(nNewFieldSize);
 
-    nPreBytes = pachData - poField->GetData();
+    nPreBytes = pachWrkData - poField->GetData();
     nPostBytes = poField->GetDataSize() - nPreBytes - nInstanceSize;
 
     memcpy( pachNewImage, poField->GetData(), nPreBytes );
@@ -1211,4 +1285,83 @@ DDFRecord::SetFieldRaw( DDFField *poField, int iIndexWithinField,
     return TRUE;
 }
 
+/************************************************************************/
+/*                           ResetDirectory()                           */
+/*                                                                      */
+/*      Re-prepares the directory information for the record.           */
+/************************************************************************/
 
+int DDFRecord::ResetDirectory()
+
+{
+    int iField;
+
+/* -------------------------------------------------------------------- */
+/*      Eventually we should try to optimize the size of offset and     */
+/*      field length.  For now we will use 5 for each which is          */
+/*      pretty big.                                                     */
+/* -------------------------------------------------------------------- */
+    _sizeFieldPos = 5;
+    _sizeFieldLength = 5;
+
+/* -------------------------------------------------------------------- */
+/*      Compute how large the directory needs to be.                    */
+/* -------------------------------------------------------------------- */
+    int nEntrySize, nDirSize;
+
+    nEntrySize = _sizeFieldPos + _sizeFieldLength + _sizeFieldTag;
+    nDirSize = nEntrySize * nFieldCount + 1;
+
+/* -------------------------------------------------------------------- */
+/*      If the directory size is different than what is currently       */
+/*      reserved for it, we must resize.                                */
+/* -------------------------------------------------------------------- */
+    if( nDirSize != nFieldOffset )
+    {
+        char *pachNewData;
+        int  nNewDataSize;
+
+        nNewDataSize = nDataSize - nFieldOffset + nDirSize;
+        pachNewData = (char *) CPLMalloc(nNewDataSize);
+        memcpy( pachNewData + nDirSize, 
+                pachData + nFieldOffset, 
+                nNewDataSize - nDirSize );
+     
+        for( iField = 0; iField < nFieldCount; iField++ )
+        {
+            int nOffset;
+            DDFField *poField = GetField( iField );
+
+            nOffset = poField->GetData() - pachData - nFieldOffset + nDirSize;
+            poField->Initialize( poField->GetFieldDefn(), 
+                                 pachNewData + nOffset, 
+                                 poField->GetDataSize() );
+        }
+
+        CPLFree( pachData );
+        pachData = pachNewData;
+        nDataSize = nNewDataSize;
+        nFieldOffset = nDirSize;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Now set each directory entry.                                   */
+/* -------------------------------------------------------------------- */
+    for( iField = 0; iField < nFieldCount; iField++ )
+    {
+        DDFField *poField = GetField( iField );
+        DDFFieldDefn *poDefn = poField->GetFieldDefn();
+        char      szFormat[128];
+
+        sprintf( szFormat, "%%%ds%%0%dd%%0%dd", 
+                 _sizeFieldTag, _sizeFieldLength, _sizeFieldPos );
+
+        sprintf( pachData + nEntrySize * iField, szFormat, 
+                 poDefn->GetName(), poField->GetDataSize(),
+                 poField->GetData() - pachData - nFieldOffset );
+    }
+
+    pachData[nEntrySize * nFieldCount] = DDF_UNIT_TERMINATOR;
+        
+    return TRUE;
+}
