@@ -2,7 +2,7 @@
 # Algorithms
 #
 
-OBJ	=	gdaldither.obj gdalmediancut.obj
+OBJ =	gdaldither.obj gdalmediancut.obj
 
 GDAL_ROOT	=	..
 
