@@ -7,7 +7,7 @@ ISOLIB  =	$(ISODIR)/libiso8211.a
 include $(GDAL_ROOT)/GDALmake.opt
 
 OBJ	=	ogrs57driver.o ogrs57datasource.o ogrs57layer.o \
-		s57reader.o ddfrecordindex.o
+		s57reader.o ddfrecordindex.o assemblepolygon.o
 
 ALL_C_FLAGS	=	-I.. -I../.. -I$(GDAL_ROOT)/port -I$(ISODIR) $(CFLAGS)
 

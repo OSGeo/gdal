@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/11/04 21:19:13  warmerda
+ * added polygon support
+ *
  * Revision 1.1  1999/11/03 22:12:43  warmerda
  * New
  *
@@ -40,6 +43,9 @@
 
 #include "ogr_feature.h"
 #include "iso8211.h"
+
+OGRPolygon *OGRBuildPolygonFromEdges( OGRGeometryCollection * poLines,
+                                      int bBestEffort, OGRErr * peErr = NULL );
 
 /* -------------------------------------------------------------------- */
 /*      RCNM values.                                                    */

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/11/04 21:19:13  warmerda
+ * added polygon support
+ *
  * Revision 1.1  1999/11/03 22:12:43  warmerda
  * New
  *
@@ -315,6 +318,10 @@ OGRFeature *S57Reader::AssembleFeature( DDFRecord * poRecord,
     {
         AssembleLineGeometry( poRecord, poFeature );
     }
+    else if( nPRIM == PRIM_A )
+    {
+        AssembleAreaGeometry( poRecord, poFeature );
+    }
 
     return poFeature;
 }
@@ -530,6 +537,134 @@ void S57Reader::AssembleLineGeometry( DDFRecord * poFRecord,
 
     poFeature->SetGeometryDirectly( poLine );
     CPLAssert( poLine->getNumPoints() > 0 );
+}
+
+/************************************************************************/
+/*                        AssembleAreaGeometry()                        */
+/************************************************************************/
+
+void S57Reader::AssembleAreaGeometry( DDFRecord * poFRecord,
+                                         OGRFeature * poFeature )
+
+{
+    DDFField	*poFSPT;
+    int		nEdgeCount;
+    OGRGeometryCollection * poLines = new OGRGeometryCollection();
+
+/* -------------------------------------------------------------------- */
+/*      Find the FSPT field.                                            */
+/* -------------------------------------------------------------------- */
+    poFSPT = poFRecord->FindField( "FSPT" );
+    CPLAssert( poFSPT != NULL );
+
+    nEdgeCount = poFSPT->GetRepeatCount();
+
+/* ==================================================================== */
+/*      Loop collecting edges.                                          */
+/* ==================================================================== */
+    for( int iEdge = 0; iEdge < nEdgeCount; iEdge++ )
+    {
+        DDFRecord	*poSRecord;
+        int		nRCID;
+
+/* -------------------------------------------------------------------- */
+/*      Find the spatial record for this edge.                          */
+/* -------------------------------------------------------------------- */
+        nRCID = ParseName( poFSPT, iEdge );
+
+        poSRecord = oVE_Index.FindRecord( nRCID );
+        if( poSRecord == NULL )
+        {
+            printf( "Couldn't find spatial record %d.\n", nRCID );
+            continue;
+        }
+    
+/* -------------------------------------------------------------------- */
+/*      Establish the number of vertices, and whether we need to        */
+/*      reverse or not.                                                 */
+/* -------------------------------------------------------------------- */
+        OGRLineString *poLine = new OGRLineString();
+        
+        int		nVCount;
+        DDFField	*poSG2D = poSRecord->FindField( "SG2D" );
+        DDFSubfieldDefn *poXCOO, *poYCOO;
+
+        if( poSG2D != NULL )
+        {
+            poXCOO = poSG2D->GetFieldDefn()->FindSubfieldDefn("XCOO");
+            poYCOO = poSG2D->GetFieldDefn()->FindSubfieldDefn("YCOO");
+
+            nVCount = poSG2D->GetRepeatCount();
+        }
+        else
+            nVCount = 0;
+
+/* -------------------------------------------------------------------- */
+/*      Add the start node.                                             */
+/* -------------------------------------------------------------------- */
+        {
+            int		nVC_RCID;
+            double	dfX, dfY;
+            
+            nVC_RCID = ParseName( poSRecord->FindField( "VRPT" ), 0 );
+
+            if( FetchPoint( RCNM_VC, nVC_RCID, &dfX, &dfY ) )
+                poLine->addPoint( dfX, dfY );
+        }
+        
+/* -------------------------------------------------------------------- */
+/*      Collect the vertices.                                           */
+/* -------------------------------------------------------------------- */
+        int		nVBase = poLine->getNumPoints();
+        
+        poLine->setNumPoints( nVCount+nVBase );
+
+        for( int i = 0; i < nVCount; i++ )
+        {
+            double	dfX, dfY;
+            const char  *pachData;
+            int	    	nBytesRemaining;
+
+            pachData = poSG2D->GetSubfieldData(poXCOO,&nBytesRemaining,i);
+                
+            dfX = poXCOO->ExtractIntData(pachData,nBytesRemaining,NULL)
+                / (double) nCOMF;
+
+            pachData = poSG2D->GetSubfieldData(poYCOO,&nBytesRemaining,i);
+
+            dfY = poXCOO->ExtractIntData(pachData,nBytesRemaining,NULL)
+                / (double) nCOMF;
+                
+            poLine->setPoint( nVBase++, dfX, dfY );
+        }
+
+/* -------------------------------------------------------------------- */
+/*      Add the end node.                                               */
+/* -------------------------------------------------------------------- */
+        {
+            int		nVC_RCID;
+            double	dfX, dfY;
+            
+            nVC_RCID = ParseName( poSRecord->FindField( "VRPT" ), 1 );
+
+            if( FetchPoint( RCNM_VC, nVC_RCID, &dfX, &dfY ) )
+                poLine->addPoint( dfX, dfY );
+        }
+
+        poLines->addGeometryDirectly( poLine );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Build lines into a polygon.                                     */
+/* -------------------------------------------------------------------- */
+    OGRPolygon	*poPolygon;
+
+    poPolygon = OGRBuildPolygonFromEdges( poLines, TRUE );
+
+    delete poLines;
+
+    if( poPolygon != NULL )
+        poFeature->SetGeometryDirectly( poPolygon );
 }
 
 /************************************************************************/
