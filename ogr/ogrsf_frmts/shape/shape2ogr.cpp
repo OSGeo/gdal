@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2001/09/27 14:53:31  warmerda
+ * added proper 3D support for all element types
+ *
  * Revision 1.12  2001/09/04 15:39:07  warmerda
  * tightened up NULL attribute handling
  *
@@ -288,6 +291,7 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom )
             
             padfX[iPoint] = poPoint->getX();
             padfY[iPoint] = poPoint->getY();
+            padfZ[iPoint] = poPoint->getY();
         }
 
         psShape = SHPCreateSimpleObject( hSHP->nShapeType,
@@ -332,6 +336,7 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom )
         {
             padfX[iPoint] = poArc->getX( iPoint );
             padfY[iPoint] = poArc->getY( iPoint );
+            padfZ[iPoint] = poArc->getZ( iPoint );
         }
 
         psShape = SHPCreateSimpleObject( hSHP->nShapeType,
@@ -441,6 +446,7 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom )
             {
                 padfX[nVertex] = poRing->getX( iPoint );
                 padfY[nVertex] = poRing->getY( iPoint );
+                padfZ[nVertex] = poRing->getZ( iPoint );
                 nVertex++;
             }
         }
