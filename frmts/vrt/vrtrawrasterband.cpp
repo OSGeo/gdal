@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2004/09/29 13:25:12  fwarmerdam
+ * Don't use relative path ... handle in makefile.
+ *
  * Revision 1.2  2004/08/11 18:46:45  warmerda
  * pass pszVRTPath through serialize methods
  *
@@ -39,7 +42,7 @@
 #include "vrtdataset.h"
 #include "cpl_minixml.h"
 #include "cpl_string.h"
-#include "../frmts/raw/rawdataset.h"
+#include "rawdataset.h"
 
 CPL_CVSID("$Id$");
 
