@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.24  2002/11/12 19:42:41  warmerda
+ * copy style string in SetFrom()
+ *
  * Revision 1.23  2002/09/26 18:12:38  warmerda
  * added C support
  *
@@ -1687,6 +1690,12 @@ OGRErr OGRFeature::SetFrom( OGRFeature * poSrcFeature, int bForgiving )
     eErr = SetGeometry( poSrcFeature->GetGeometryRef() );
     if( eErr != OGRERR_NONE )
         return eErr;
+
+/* -------------------------------------------------------------------- */
+/*      Copy feature style string.                                      */
+/* -------------------------------------------------------------------- */
+    if( poSrcFeature->GetStyleString() != NULL )
+        SetStyleString( poSrcFeature->GetStyleString() );
 
 /* -------------------------------------------------------------------- */
 /*      Set the fields by name.                                         */
