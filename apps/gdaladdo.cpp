@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2000/07/07 15:19:30  warmerda
+ * try with read-only access if update fails
+ *
  * Revision 1.1  2000/04/21 21:57:21  warmerda
  * New
  *
@@ -86,6 +89,9 @@ int main( int nArgc, char ** papszArgv )
     GDALAllRegister();
 
     poDataset = (GDALDataset *) GDALOpen( pszFilename, GA_Update );
+
+    if( poDataset == NULL )
+        poDataset = (GDALDataset *) GDALOpen( pszFilename, GA_ReadOnly );
 
     if( poDataset == NULL )
         exit( 2 );
