@@ -29,6 +29,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.57  2004/02/08 09:13:56  aamici
+# optimize Band.ReadAsArray performance avoiding memory copy.
+#
 # Revision 1.56  2004/01/22 21:27:38  dron
 # Added wrapper for GDALDataTypeIsComplex() function.
 #
@@ -535,12 +538,12 @@ class Band(MajorObject):
                                    buf_string, buf_xsize, buf_ysize,buf_type)
 
     def ReadAsArray(self, xoff=0, yoff=0, win_xsize=None, win_ysize=None,
-                    buf_xsize=None,buf_ysize=None ):
+                    buf_xsize=None, buf_ysize=None, buf_obj=None):
         import gdalnumeric
 
         return gdalnumeric.BandReadAsArray( self, xoff, yoff,
                                             win_xsize, win_ysize,
-                                            buf_xsize, buf_ysize )
+                                            buf_xsize, buf_ysize, buf_obj )
     
     def WriteArray(self, array, xoff=0, yoff=0):
         import gdalnumeric
