@@ -1,7 +1,7 @@
 include ../GDALmake.opt
 
 
-OBJ	=	vsi_simple.o gbserror.o cpl_conv.o
+OBJ	=	cpl_conv.o cpl_error.o cpl_string.o cpl_vsisimple.o
 
 default:	$(OBJ)
 
