@@ -1137,8 +1137,9 @@ py_GDALSetMetadata(PyObject *self, PyObject *args) {
     PyObject *psDict;
     char **papszMetadata = NULL;
     char *pszDomain = NULL;
-    int nPos;
+    int nPos = 0;
     PyObject *psKey, *psValue;
+    CPLErr eErr;
 
     self = self;
     if(!PyArg_ParseTuple(args,"sO!|s:GDALSetMetadata",&_argc0, 
@@ -1171,14 +1172,22 @@ py_GDALSetMetadata(PyObject *self, PyObject *args) {
             return NULL;
         }
 
+	printf( "Set %s=%s\n", pszKey, pszValue );
         papszMetadata = CSLSetNameValue( papszMetadata, pszKey, pszValue );
     }
 
-    GDALSetMetadata( hObject, papszMetadata, pszDomain );
+    eErr = GDALSetMetadata( hObject, papszMetadata, pszDomain );
 
     CSLDestroy( papszMetadata );
 
-    return psDict;
+    if( eErr != CE_None )
+    {
+	PyErr_SetString(PyExc_TypeError,CPLGetLastErrorMsg());
+	return NULL;
+    }
+    
+    Py_INCREF(Py_None);
+    return Py_None;
 }
 
 /************************************************************************/

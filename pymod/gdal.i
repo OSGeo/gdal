@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.33  2001/10/19 16:05:31  warmerda
+ * fixed several bugs in SetMetadata impl
+ *
  * Revision 1.32  2001/10/19 15:43:52  warmerda
  * added SetGCPs, and SetMetadata support
  *
@@ -965,15 +968,15 @@ py_GDALSetMetadata(PyObject *self, PyObject *args) {
     GDALMajorObjectH  hObject;
     char *_argc0 = NULL;
     PyObject *psDict;
-    int i;
-    char **papszMetadata;
+    char **papszMetadata = NULL;
     char *pszDomain = NULL;
-    int nPos;
+    int nPos = 0;
     PyObject *psKey, *psValue;
+    CPLErr eErr;
 
     self = self;
     if(!PyArg_ParseTuple(args,"sO!|s:GDALSetMetadata",&_argc0, 
-			 &PyType_Dict, &psDict, &pszDomain))
+			 &PyDict_Type, &psDict, &pszDomain))
         return NULL;
 
     if (_argc0) {
@@ -994,22 +997,30 @@ py_GDALSetMetadata(PyObject *self, PyObject *args) {
     {
         char *pszKey, *pszValue;
         
-	if( !PyArg_Parse( psResult, "s", &pszKey )
-	    || !PyArg_Parse( psResult, "s", &pszValue ) )
+	if( !PyArg_Parse( psKey, "s", &pszKey )
+	    || !PyArg_Parse( psValue, "s", &pszValue ) )
         {
 	    PyErr_SetString(PyExc_TypeError,
                     "Metadata dictionary keys and values must be strings.");
             return NULL;
         }
 
+	printf( "Set %s=%s\n", pszKey, pszValue );
         papszMetadata = CSLSetNameValue( papszMetadata, pszKey, pszValue );
     }
 
-    GDALSetMetadata( hObject, papszMetadata, pszDomain );
+    eErr = GDALSetMetadata( hObject, papszMetadata, pszDomain );
 
     CSLDestroy( papszMetadata );
 
-    return psDict;
+    if( eErr != CE_None )
+    {
+	PyErr_SetString(PyExc_TypeError,CPLGetLastErrorMsg());
+	return NULL;
+    }
+    
+    Py_INCREF(Py_None);
+    return Py_None;
 }
 %}
 
