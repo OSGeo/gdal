@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2004/07/10 04:51:42  warmerda
+ * added closeRings
+ *
  * Revision 1.16  2004/02/21 15:36:14  warmerda
  * const correctness updates for geometry: bug 289
  *
@@ -370,3 +373,20 @@ int OGRLinearRing::isClockwise() const
     return dfSum < 0.0;
 }
 
+/************************************************************************/
+/*                             closeRing()                              */
+/************************************************************************/
+
+void OGRLinearRing::closeRings()
+
+{
+    if( nPointCount < 2 )
+        return;
+
+    if( getX(0) != getX(nPointCount-1) 
+        || getY(0) != getY(nPointCount-1)
+        || getZ(0) != getZ(nPointCount-1) )
+    {
+        addPoint( getX(0), getY(0), getZ(0) );
+    }
+}

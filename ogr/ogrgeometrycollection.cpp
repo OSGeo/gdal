@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.28  2004/07/10 04:51:22  warmerda
+ * added closeRings
+ *
  * Revision 1.27  2004/02/22 09:52:04  dron
  * Fix compirison casting problems in OGRGeometryCollection::Equal().
  *
@@ -870,3 +873,16 @@ OGRErr OGRGeometryCollection::transform( OGRCoordinateTransformation *poCT )
 #endif
 }
 
+/************************************************************************/
+/*                             closeRings()                             */
+/************************************************************************/
+
+void OGRGeometryCollection::closeRings()
+
+{
+    for( int iGeom = 0; iGeom < nGeomCount; iGeom++ )
+    {
+        if( wkbFlatten(papoGeoms[iGeom]->getGeometryType()) == wkbPolygon )
+            ((OGRPolygon *) papoGeoms[iGeom])->closeRings();
+    }
+}
