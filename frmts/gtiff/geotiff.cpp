@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2000/03/13 14:33:01  warmerda
+ * avoid ambiguity with Open
+ *
  * Revision 1.17  2000/03/06 02:23:08  warmerda
  * added overviews, and colour tables
  *
@@ -152,7 +155,7 @@ class GTiffDataset : public GDALDataset
     virtual CPLErr GetGeoTransform( double * );
     virtual CPLErr SetGeoTransform( double * );
 
-    CPLErr	   Open( TIFF *, uint32 nDirOffset, int );
+    CPLErr	   OpenOffset( TIFF *, uint32 nDirOffset, int );
 
     static GDALDataset *Open( GDALOpenInfo * );
     static GDALDataset *Create( const char * pszFilename,
@@ -692,7 +695,7 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
 
     poDS = new GTiffDataset();
 
-    if( poDS->Open( hTIFF, TIFFCurrentDirOffset(hTIFF), TRUE ) != CE_None )
+    if( poDS->OpenOffset(hTIFF,TIFFCurrentDirOffset(hTIFF), TRUE ) != CE_None )
     {
         delete poDS;
         return NULL;
@@ -702,14 +705,15 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
 }
 
 /************************************************************************/
-/*                                Open()                                */
+/*                             OpenOffset()                             */
 /*                                                                      */
 /*      Initialize the GTiffDataset based on a passed in file           */
 /*      handle, and directory offset to utilize.  This is called for    */
 /*      full res, and overview pages.                                   */
 /************************************************************************/
 
-CPLErr GTiffDataset::Open( TIFF *hTIFFIn, uint32 nDirOffsetIn, int bBaseIn )
+CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, uint32 nDirOffsetIn, 
+				 int bBaseIn )
 
 {
     uint32	nXSize, nYSize;
@@ -873,7 +877,7 @@ CPLErr GTiffDataset::Open( TIFF *hTIFFIn, uint32 nDirOffsetIn, int bBaseIn )
                 GTiffDataset	*poODS;
 
                 poODS = new GTiffDataset();
-                if( poODS->Open( hTIFF, nThisDir, FALSE ) != CE_None 
+                if( poODS->OpenOffset( hTIFF, nThisDir, FALSE ) != CE_None 
                     || poODS->GetRasterCount() != GetRasterCount() )
                 {
                     delete poODS;
