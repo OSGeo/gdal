@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2002/12/03 05:24:31  warmerda
+ * implement nodata support for all pixel types
+ *
  * Revision 1.12  2002/09/04 06:50:37  warmerda
  * avoid static driver pointers
  *
@@ -175,11 +178,20 @@ GRASSRasterBand::GRASSRasterBand( GRASSDataset *poDS, int nBand,
 
     dfNoData = 0.0;
     if( nGRSType == CELL_TYPE && sCellInfo.format == 0 )
+    {
         this->eDataType = GDT_Byte;
+        dfNoData = 0.0;
+    }
     else if( nGRSType == CELL_TYPE && sCellInfo.format == 1 )
+    {
         this->eDataType = GDT_UInt16;
+        dfNoData = 65535.0;
+    }
     else if( nGRSType == CELL_TYPE )
+    {
         this->eDataType = GDT_UInt32;
+        dfNoData = 12345.0;
+    }
     else if( nGRSType == FCELL_TYPE )
     {
         this->eDataType = GDT_Float32;
@@ -278,43 +290,50 @@ CPLErr GRASSRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                   void * pImage )
 
 {
+    char *pachNullBuf;
+    
+    pachNullBuf = (char *) CPLMalloc(nBlockXSize);
+    G_get_null_value_row( hCell, pachNullBuf, nBlockYOff );
+            
     if( eDataType == GDT_Float32 || eDataType == GDT_Float64 
         || eDataType == GDT_UInt32 )
     {
         G_get_raster_row( hCell, pImage, nBlockYOff, nGRSType  );
 
-        if( eDataType == GDT_Float32 || eDataType == GDT_Float64 )
+        for( int i = 0; i < nBlockXSize; i++ )
         {
-            char *pachNullBuf;
-
-            pachNullBuf = (char *) CPLMalloc(nBlockXSize);
-            G_get_null_value_row( hCell, pachNullBuf, nBlockYOff );
-            
-            for( int i = 0; i < nBlockXSize; i++ )
+            if( pachNullBuf[i] != 0 )
             {
-                if( pachNullBuf[i] != 0 )
-                {
-                    if( eDataType == GDT_Float32 )
-                        ((float *) pImage)[i] = dfNoData;
-                    else 
-                        ((double *) pImage)[i] = dfNoData;
-                }
+                if( eDataType == GDT_UInt32 )
+                    ((GUInt32 *) pImage)[i] = (GUInt32) dfNoData;
+                else if( eDataType == GDT_Float32 )
+                    ((float *) pImage)[i] = dfNoData;
+                else 
+                    ((double *) pImage)[i] = dfNoData;
             }
-
-            CPLFree( pachNullBuf );
         }
+        
     }
     else
     {
         GUInt32 *panRow = (GUInt32 *) CPLMalloc(4 * nBlockXSize);
         
         G_get_raster_row( hCell, panRow, nBlockYOff, nGRSType  );
+
+        for( int i = 0; i < nBlockXSize; i++ )
+        {
+            if( pachNullBuf[i] != 0 )
+                panRow[i] = (GUInt32) dfNoData;
+        }
+
         GDALCopyWords( panRow, GDT_UInt32, 4, 
                        pImage, eDataType, GDALGetDataTypeSize(eDataType)/8,
                        nBlockXSize );
 
         CPLFree( panRow );
     }
+
+    CPLFree( pachNullBuf );
 
     return CE_None;
 }
