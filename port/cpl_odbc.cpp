@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2004/08/17 21:51:16  warmerda
+ * Changed Fetch() to handle values longer than the working buffer
+ * properly ... do extra SQLGetData() calls till complete.
+ *
  * Revision 1.16  2004/08/17 20:15:56  warmerda
  * Allow column values up to 64K instead of limited to 8K.
  *
@@ -559,24 +563,67 @@ int CPLODBCStatement::Fetch( int nOrientation, int nOffset )
     
     for( iCol = 0; iCol < m_nColCount; iCol++ )
     {
-        char szWrkData[65536];
+        char szWrkData[64];
         SQLINTEGER cbDataLen;
+        int nRetCode;
 
         szWrkData[0] = '\0';
-        if( Failed( SQLGetData( m_hStmt, (SQLUSMALLINT) iCol+1, SQL_C_CHAR,
-                                szWrkData, sizeof(szWrkData)-1, 
-                                &cbDataLen ) ) )
+        szWrkData[sizeof(szWrkData)-1] = '\0';
+
+        nRetCode = SQLGetData( m_hStmt, (SQLUSMALLINT) iCol+1, SQL_C_CHAR,
+                               szWrkData, sizeof(szWrkData)-1, 
+                               &cbDataLen );
+        if( Failed( nRetCode ) )
             return FALSE;
 
         if( cbDataLen == SQL_NULL_DATA )
             m_papszColValues[iCol] = NULL;
+
+        // assume big result: should check for state=SQLSATE 01004.
+        else if( nRetCode == SQL_SUCCESS_WITH_INFO  ) 
+        {
+            m_papszColValues[iCol] = strdup(szWrkData);
+
+            while( TRUE )
+            {
+                int nChunkLen;
+
+                nRetCode = SQLGetData( m_hStmt, (SQLUSMALLINT) iCol+1, 
+                                       SQL_C_CHAR,
+                                       szWrkData, sizeof(szWrkData)-1, 
+                                       &cbDataLen );
+                if( nRetCode == SQL_NO_DATA )
+                    break;
+
+                if( Failed( nRetCode ) )
+                    return FALSE;
+
+                if( cbDataLen > (int) (sizeof(szWrkData) - 1)
+                    || cbDataLen == SQL_NO_TOTAL )
+                    nChunkLen = sizeof(szWrkData)-1;
+                else
+                    nChunkLen = cbDataLen;
+                szWrkData[nChunkLen] = '\0';
+
+                m_papszColValues[iCol] = (char *) 
+                    CPLRealloc( m_papszColValues[iCol], 
+                                strlen(m_papszColValues[iCol]) + nChunkLen+1 );
+                strcat( m_papszColValues[iCol], szWrkData );
+            }
+        }
         else
         {
-            szWrkData[cbDataLen] = '\0';
-            while( cbDataLen > 0 && szWrkData[cbDataLen-1] == ' ' )
-                szWrkData[--cbDataLen] = '\0';
-            
             m_papszColValues[iCol] = strdup( szWrkData );
+        }
+
+        // Trim white space off end, if there is any.
+        if( m_papszColValues[iCol] != NULL )
+        {
+            char *pszTarget = m_papszColValues[iCol];
+            int iEnd = strlen(pszTarget) - 1;
+
+            while( iEnd >= 0 && pszTarget[iEnd] == ' ' )
+                pszTarget[iEnd--] = '\0';
         }
     }
 
