@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2003/03/27 18:42:55  warmerda
+ * support GMLURL (FileURL) request
+ *
  * Revision 1.1  2003/03/27 18:34:23  warmerda
  * New
  *
@@ -217,6 +220,7 @@ int main( int nArgc, char ** papszArgv )
     const char *pszTargetCRS = CSLFetchNameValue(papszParmList,"TargetCRS");
     const char *pszInputX = CSLFetchNameValue(papszParmList,"InputX");
     const char *pszInputY = CSLFetchNameValue(papszParmList,"InputY");
+    const char *pszGMLURL = CSLFetchNameValue(papszParmList,"GMLURL");
     const char *pszServer = CSLFetchNameValue(papszParmList,"WCTSServer");
 
     if( pszRequest == NULL )
@@ -279,7 +283,55 @@ int main( int nArgc, char ** papszArgv )
     }
 
 /* ==================================================================== */
-/*      Handle DescribeTransformation request.                          */
+/*      Handle Transform request for a single point provided in the     */
+/*      form.                                                           */
+/* ==================================================================== */
+    if( EQUAL( pszRequest, "Transform" ) 
+        && pszGMLURL != NULL
+        && strlen(pszGMLURL) != NULL )
+    {
+/* -------------------------------------------------------------------- */
+/*      Prepare request.                                                */
+/* -------------------------------------------------------------------- */
+        char szReqDoc[10000];
+
+        sprintf( szReqDoc, 
+"<?xml version=\"1.0\" encoding=\"iso-8859-1\"?>\n"
+"<Transform xmlns=\"http://schemas.opengis.net/wcts\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:gml=\"http://www.opengis.net/gml\" version=\"0.1.0\">\n"
+"  <SourceCRS>\n"
+"    <crsID>\n"
+"      <gml:code>%s</gml:code>\n"
+"      <gml:codeSpace>EPSG</gml:codeSpace>\n"
+"    </crsID>\n"
+"  </SourceCRS>\n"
+"  <TargetCRS>\n"
+"    <crsID>\n"
+"      <gml:code>%s</gml:code>\n"
+"      <gml:codeSpace>EPSG</gml:codeSpace>\n"
+"    </crsID>\n"
+"  </TargetCRS>\n"
+"  <Data>\n"
+"    <FileURL>%s</FileURL>\n" 
+"  </Data>\n"
+"</Transform>\n",
+                 pszSourceCRS, pszTargetCRS, pszGMLURL );
+
+/* -------------------------------------------------------------------- */
+/*      Invoke Service.                                                 */
+/* -------------------------------------------------------------------- */
+        char *pszResultXML;
+
+        pszResultXML = WCTSClientHTTPFetch( pszServer, szReqDoc );
+
+/* -------------------------------------------------------------------- */
+/*      Display result.                                                 */
+/* -------------------------------------------------------------------- */
+        WCTSClientReturnXML( pszResultXML );
+    }
+
+/* ==================================================================== */
+/*      Handle Transform request for a single point provided in the     */
+/*      form.                                                           */
 /* ==================================================================== */
     if( EQUAL( pszRequest, "Transform" ) )
     {
