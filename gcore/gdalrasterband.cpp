@@ -28,6 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************
  * $Log$
+ * Revision 1.7  1999/11/17 16:18:10  warmerda
+ * fixed example code
+ *
  * Revision 1.6  1999/10/21 13:24:37  warmerda
  * Fixed some build breaking variable name differences.
  *
@@ -263,7 +266,7 @@ CPLErr GDALRasterIO( GDALRasterBandH hBand, GDALRWFlag eRWFlag,
 
      for( iYBlock = 0; iYBlock < nYBlocks; iYBlock++ )
      {
-         for( iXBlock = 0; iXBlock < nxBlocks; iXBlock++ )
+         for( iXBlock = 0; iXBlock < nXBlocks; iXBlock++ )
          {
              int	nXValid, nYValid;
              
