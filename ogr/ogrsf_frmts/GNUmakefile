@@ -17,6 +17,9 @@ endif
 ifeq ($(HAVE_OGR_PG),yes)
 	(cd pg; $(MAKE) $*)
 endif
+ifeq ($(HAVE_FME),yes)
+	(cd fme; $(MAKE) $*)
+endif
 	$(MAKE) ogrsf_frmts.a
 
 ogrsf_frmts.a:	last-ranlib 
@@ -43,6 +46,9 @@ ifeq ($(HAVE_OGDI),yes)
 endif
 ifeq ($(HAVE_OGR_PG),yes)
 	(cd pg; $(MAKE) clean)
+endif
+ifeq ($(HAVE_FME),yes)
+	(cd fme; $(MAKE) clean)
 endif
 
 
