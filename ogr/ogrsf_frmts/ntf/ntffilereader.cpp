@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  1999/10/03 03:43:43  warmerda
+ * Handle GType 7 "circle" geometries by producing a reasonable linear
+ * approximation.
+ *
  * Revision 1.9  1999/10/03 01:02:56  warmerda
  * added NAMEREC and COLLECT handling
  *
@@ -64,6 +68,10 @@
 
 static int DefaultNTFRecordGrouper( NTFFileReader *, NTFRecord **,
                                     NTFRecord * );
+
+#ifndef PI
+#  define PI 3.14159265358979323846
+#endif
 
 /************************************************************************/
 /*                            NTFFileReader                             */
@@ -444,7 +452,7 @@ int NTFFileReader::Open( const char * pszFilenameIn )
 /* -------------------------------------------------------------------- */
 /*      Setup scale and transformation factor for text height.          */
 /* -------------------------------------------------------------------- */
-    if( poRecord->GetLength() > 200 )
+    if( poRecord->GetLength() >= 187 )
         dfScale = atoi(poRecord->GetField(148+31,148+39));
     else if( nProduct == NPC_STRATEGI )
         dfScale = 250000;
@@ -465,7 +473,7 @@ int NTFFileReader::Open( const char * pszFilenameIn )
         dfScale = 10000;
     else
         dfScale = 10000;
-    
+
     if( dfScale != 0.0 )
         dfPaperToGround = dfScale / 1000.0;
     else
@@ -522,6 +530,9 @@ OGRGeometry *NTFFileReader::ProcessGeometry( NTFRecord * poRecord,
     if( pnGeomId != NULL )
         *pnGeomId = atoi(poRecord->GetField(3,8));     // GEOM_ID
 
+/* -------------------------------------------------------------------- */
+/*      Point                                                           */
+/* -------------------------------------------------------------------- */
     if( nGType == 1 )
     {
         double      dfX, dfY;
@@ -534,7 +545,10 @@ OGRGeometry *NTFFileReader::ProcessGeometry( NTFRecord * poRecord,
         poGeometry = new OGRPoint( dfX, dfY );
     }
     
-    else if( nGType == 2 )
+/* -------------------------------------------------------------------- */
+/*      Line (or arc)                                                   */
+/* -------------------------------------------------------------------- */
+    else if( nGType == 2 || nGType == 3 || nGType == 4 )
     {
         OGRLineString      *poLine = new OGRLineString;
         double             dfX, dfY, dfXLast, dfYLast;
@@ -567,6 +581,54 @@ OGRGeometry *NTFFileReader::ProcessGeometry( NTFRecord * poRecord,
             }
         }
         poLine->setNumPoints( nOutCount );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Circle                                                          */
+/* -------------------------------------------------------------------- */
+    else if( nGType == 7 )
+    {
+        double  dfCenterX, dfCenterY, dfArcX, dfArcY, dfRadius;
+        int	iCenterStart = 14, iPoint;
+        int	iArcStart = 14 + 2 * GetXYLen() + 1;
+        
+
+        dfCenterX = atoi(poRecord->GetField(iCenterStart,
+                                            iCenterStart+GetXYLen()-1))
+            * GetXYMult() + GetXOrigin();
+        dfCenterY = atoi(poRecord->GetField(iCenterStart+GetXYLen(),
+                                            iCenterStart+GetXYLen()*2-1))
+            * GetXYMult() + GetYOrigin();
+        
+        dfArcX = atoi(poRecord->GetField(iArcStart,
+                                         iArcStart+GetXYLen()-1))
+            * GetXYMult() + GetXOrigin();
+        dfArcY = atoi(poRecord->GetField(iArcStart+GetXYLen(),
+                                         iArcStart+GetXYLen()*2-1))
+            * GetXYMult() + GetYOrigin();
+
+        dfRadius = sqrt( (dfCenterX - dfArcX) * (dfCenterX - dfArcX)
+                         + (dfCenterY - dfArcY) * (dfCenterY - dfArcY) );
+
+        OGRLineString      *poLine = new OGRLineString;
+        
+        poGeometry = poLine;
+        poLine->setNumPoints( 72 );
+        
+        for( iPoint = 0; iPoint < 72; iPoint++ )
+        {
+            double	dfAngle = iPoint * (2*PI/72.0);
+            
+            dfArcX = dfCenterX + cos(dfAngle) * dfRadius;
+            dfArcY = dfCenterY + sin(dfAngle) * dfRadius;
+
+            poLine->setPoint( iPoint, dfArcX, dfArcY );
+        }
+    }
+
+    else
+    {
+        CPLAssert( FALSE );
     }
 
     if( poGeometry != NULL )
