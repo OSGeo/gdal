@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.23  2003/05/21 02:59:41  warmerda
+ * morphToEsri() now sets specific units constants for Foot_US and Degree.
+ * morphToEsri() converts albers parameters to match expected ESRI values.
+ *
  * Revision 1.22  2003/05/08 21:52:55  warmerda
  * fixed C morphToESRI func, added ESRI unit remapping
  *
@@ -116,6 +120,11 @@ char *apszProjMapping[] = {
     "Mercator", SRS_PT_MERCATOR_1SP,
     NULL, NULL }; 
  
+char *apszAlbersMapping[] = {
+    SRS_PP_CENTRAL_MERIDIAN, SRS_PP_LONGITUDE_OF_CENTER, 
+    SRS_PP_LATITUDE_OF_ORIGIN, SRS_PP_LATITUDE_OF_CENTER,
+    NULL, NULL };
+
 char *apszArgMapping[] = {
     
     NULL, NULL }; 
@@ -734,6 +743,40 @@ OGRErr OGRSpatialReference::morphToESRI()
                               apszUnitMapping+1, apszUnitMapping, 2 );
 
 /* -------------------------------------------------------------------- */
+/*      reset constants for decimal degrees to the exact string ESRI    */
+/*      expects when encountered to ensure a matchup.                   */
+/* -------------------------------------------------------------------- */
+    OGR_SRSNode *poUnit = GetAttrNode( "GEOGCS|UNIT" );
+    
+    if( poUnit != NULL && poUnit->GetChildCount() >= 2 
+        && ABS(GetAngularUnits()-0.0174532925199433) < 0.00000000001 )
+    {
+        poUnit->GetChild(0)->SetValue("Degree");
+        poUnit->GetChild(1)->SetValue("0.017453292519943295");
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Make sure we reproduce US Feet exactly too.                     */
+/* -------------------------------------------------------------------- */
+    poUnit = GetAttrNode( "PROJCS|UNIT" );
+    
+    if( poUnit != NULL && poUnit->GetChildCount() >= 2 
+        && ABS(GetLinearUnits()- 0.30480060960121924) < 0.000000000000001)
+    {
+        poUnit->GetChild(0)->SetValue("Foot_US");
+        poUnit->GetChild(1)->SetValue("0.30480060960121924");
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Remap parameters used for Albers.                               */
+/* -------------------------------------------------------------------- */
+    const char *pszProjection = GetAttrValue("PROJECTION");
+    
+    if( pszProjection != NULL && EQUAL(pszProjection,"Albers") )
+        GetRoot()->applyRemapper( 
+            "PARAMETER", apszAlbersMapping + 1, apszAlbersMapping + 0, 2 );
+
+/* -------------------------------------------------------------------- */
 /*      Try to insert a D_ in front of the datum name.                  */
 /* -------------------------------------------------------------------- */
     OGR_SRSNode *poDatum;
@@ -821,8 +864,10 @@ OGRErr OGRSpatialReference::morphFromESRI()
 /*                                                                      */
 /*      See bugzilla.remotesensing.org/show_bug.cgi?id=187              */
 /* -------------------------------------------------------------------- */
-    if( GetAttrValue("PROJECTION") != NULL
-        && EQUAL(GetAttrValue("PROJECTION"),"Lambert_Conformal_Conic") )
+    const char *pszProjection = GetAttrValue("PROJECTION");
+    
+    if( pszProjection != NULL
+        && EQUAL(pszProjection,"Lambert_Conformal_Conic") )
     {
         if( GetProjParm( "Scale_Factor", 2.0 ) == 2.0 )
             SetNode( "PROJCS|PROJECTION", 
@@ -831,6 +876,13 @@ OGRErr OGRSpatialReference::morphFromESRI()
             SetNode( "PROJCS|PROJECTION", 
                      SRS_PT_LAMBERT_CONFORMAL_CONIC_1SP );
     }
+
+/* -------------------------------------------------------------------- */
+/*      Remap albers parameters.                                        */
+/* -------------------------------------------------------------------- */
+    if( pszProjection != NULL && EQUAL(pszProjection,"Albers") )
+        GetRoot()->applyRemapper( 
+            "PARAMETER", apszAlbersMapping + 0, apszAlbersMapping + 1, 2 );
 
 /* -------------------------------------------------------------------- */
 /*      Translate PROJECTION keywords that are misnamed.                */
