@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.4  2001/01/10 15:36:44  warmerda
+ * implement interlacing support
+ *
  * Revision 1.3  2001/01/10 05:32:17  warmerda
  * Added GIFCreateCopy() implementation.
  *
@@ -40,6 +43,7 @@
  */
 
 #include "gdal_priv.h"
+#include "cpl_string.h"
 
 CPL_C_START
 #include "gif_lib.h"
@@ -51,6 +55,8 @@ CPL_C_START
 void	GDALRegister_GIF(void);
 CPL_C_END
 
+static int InterlacedOffset[] = { 0, 4, 2, 1 }; 
+static int InterlacedJumps[] = { 8, 8, 4, 2 };  
 
 /************************************************************************/
 /* ==================================================================== */
@@ -84,6 +90,8 @@ class GIFRasterBand : public GDALRasterBand
     friend	GIFDataset;
 
     SavedImage	*psImage;
+
+    int		*panInterlaceMap;
     
     GDALColorTable *poColorTable;
 
@@ -116,6 +124,9 @@ GIFRasterBand::GIFRasterBand( GIFDataset *poDS, int nBand,
 
     psImage = psSavedImage;
 
+/* -------------------------------------------------------------------- */
+/*      Setup colormap.                                                 */
+/* -------------------------------------------------------------------- */
     ColorMapObject 	*psGifCT = psImage->ImageDesc.ColorMap;
     if( psGifCT == NULL )
         psGifCT = poDS->hGifFile->SColorMap;
@@ -131,6 +142,25 @@ GIFRasterBand::GIFRasterBand( GIFDataset *poDS, int nBand,
         oEntry.c4 = 255;
         poColorTable->SetColorEntry( iColor, &oEntry );
     }
+
+/* -------------------------------------------------------------------- */
+/*      Setup interlacing map if required.                              */
+/* -------------------------------------------------------------------- */
+    panInterlaceMap = NULL;
+    if( psImage->ImageDesc.Interlace )
+    {
+        int	i, j, iLine = 0;
+
+        panInterlaceMap = (int *) CPLCalloc(poDS->nRasterYSize,sizeof(int));
+
+	for (i = 0; i < 4; i++)
+        {
+	    for (j = InterlacedOffset[i]; 
+                 j < poDS->nRasterYSize;
+                 j += InterlacedJumps[i]) 
+                panInterlaceMap[j] = iLine++;
+        }
+    }
 }
 
 /************************************************************************/
@@ -142,6 +172,8 @@ GIFRasterBand::~GIFRasterBand()
 {
     if( poColorTable != NULL )
         delete poColorTable;
+
+    CPLFree( panInterlaceMap );
 }
 
 /************************************************************************/
@@ -153,6 +185,9 @@ CPLErr GIFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
 {
     CPLAssert( nBlockXOff == 0 );
+
+    if( panInterlaceMap != NULL )
+        nBlockYOff = panInterlaceMap[nBlockYOff];
 
     memcpy( pImage, psImage->RasterBits + nBlockYOff * nBlockXSize, 
             nBlockXSize );
@@ -234,7 +269,7 @@ GDALDataset *GIFDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
 /* -------------------------------------------------------------------- */
-/*      Open the file.                                                  */
+/*      Open the file and ingest.                                       */
 /* -------------------------------------------------------------------- */
     GifFileType 	*hGifFile;
 
@@ -282,12 +317,12 @@ GDALDataset *GIFDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         SavedImage	*psImage = hGifFile->SavedImages + iImage;
 
-        if( psImage->ImageDesc.Width == poDS->nRasterXSize
-            && psImage->ImageDesc.Height == poDS->nRasterYSize )
-        {
-            poDS->SetBand( poDS->nBands+1, 
-                           new GIFRasterBand( poDS, poDS->nBands+1, psImage ));
-        }
+        if( psImage->ImageDesc.Width != poDS->nRasterXSize
+            || psImage->ImageDesc.Height != poDS->nRasterYSize )
+            continue;
+
+        poDS->SetBand( poDS->nBands+1, 
+                       new GIFRasterBand( poDS, poDS->nBands+1, psImage ));
     }
 
     return poDS;
@@ -307,6 +342,12 @@ GIFCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     int  nXSize = poSrcDS->GetRasterXSize();
     int  nYSize = poSrcDS->GetRasterYSize();
     int	 bInterlace = FALSE;
+
+/* -------------------------------------------------------------------- */
+/*      Check for interlaced option.                                    */
+/* -------------------------------------------------------------------- */
+    if( CSLFetchNameValue( papszOptions, "INTERLACING" ) != NULL )
+        bInterlace = TRUE;
 
 /* -------------------------------------------------------------------- */
 /*      Some some rudimentary checks                                    */
@@ -402,20 +443,38 @@ GIFCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
     pabyScanline = (GByte *) CPLMalloc( nXSize );
 
-    for( int iLine = 0; iLine < nYSize; iLine++ )
+    if( !bInterlace )
     {
-        for( int iBand = 0; iBand < nBands; iBand++ )
+        for( int iLine = 0; iLine < nYSize; iLine++ )
         {
             eErr = poBand->RasterIO( GF_Read, 0, iLine, nXSize, 1, 
                                      pabyScanline, nXSize, 1, GDT_Byte,
                                      nBands, nBands * nXSize );
+            
+            if( EGifPutLine( hGifFile, pabyScanline, nXSize ) == GIF_ERROR )
+            {
+                CPLError( CE_Failure, CPLE_AppDefined, 
+                          "Error writing gif file." );
+                return NULL;
+            }
         }
-        
-        if( EGifPutLine( hGifFile, pabyScanline, nXSize ) == GIF_ERROR )
+    }
+    else
+    {
+        int 	i, j;
+
+	/* Need to perform 4 passes on the images: */
+	for ( i = 0; i < 4; i++)
         {
-            CPLError( CE_Failure, CPLE_AppDefined, 
-                      "Error writing gif file." );
-            return NULL;
+	    for (j = InterlacedOffset[i]; j < nYSize; j += InterlacedJumps[i]) 
+            {
+                poBand->RasterIO( GF_Read, 0, j, nXSize, 1, 
+                                  pabyScanline, nXSize, 1, GDT_Byte,
+                                  1, nXSize );
+            
+		if (EGifPutLine(hGifFile, pabyScanline, nXSize)
+		    == GIF_ERROR) return GIF_ERROR;
+	    }
         }
     }
 
