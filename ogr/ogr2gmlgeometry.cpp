@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.4  2003/03/18 17:13:03  warmerda
+ * Improve precision (and use %g) for latlong coordinates.
+ *
  * Revision 1.3  2003/03/12 20:52:07  warmerda
  * implemented support for gml:Box
  *
@@ -74,7 +77,7 @@ static void MakeGMLCoordinate( char *pszTarget,
         if( x == (int) x && y == (int) y )
             sprintf( pszTarget, "%d,%d", (int) x, (int) y );
         else if( fabs(x) < 370 && fabs(y) < 370 )
-            sprintf( pszTarget, "%.8f,%.8f", x, y );
+            sprintf( pszTarget, "%.16g,%.16g", x, y );
         else
             sprintf( pszTarget, "%.3f,%.3f", x, y );
     }
@@ -83,7 +86,7 @@ static void MakeGMLCoordinate( char *pszTarget,
         if( x == (int) x && y == (int) y && z == (int) z )
             sprintf( pszTarget, "%d,%d,%d", (int) x, (int) y, (int) z );
         else if( fabs(x) < 370 && fabs(y) < 370 )
-            sprintf( pszTarget, "%.8f,%.8f,%.3f", x, y, z );
+            sprintf( pszTarget, "%.16g,%.16g,%.16g", x, y, z );
         else
             sprintf( pszTarget, "%.3f,%.3f,%.3f", x, y, z );
     }
