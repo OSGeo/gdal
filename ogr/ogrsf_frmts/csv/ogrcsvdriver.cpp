@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2004/07/20 20:53:26  warmerda
+ * added support for reading directories of CSV files
+ *
  * Revision 1.1  2004/07/20 19:18:23  warmerda
  * New
  *
@@ -45,16 +48,6 @@ CPL_CVSID("$Id$");
 OGRCSVDriver::~OGRCSVDriver()
 
 {
-}
-
-/************************************************************************/
-/*                           TestCapability()                           */
-/************************************************************************/
-
-int OGRCSVDriver::TestCapability( const char * )
-
-{
-    return FALSE;
 }
 
 /************************************************************************/
@@ -91,6 +84,61 @@ OGRDataSource *OGRCSVDriver::Open( const char * pszFilename, int bUpdate )
     }
     
     return poDS;
+}
+
+/************************************************************************/
+/*                          CreateDataSource()                          */
+/************************************************************************/
+
+OGRDataSource *OGRCSVDriver::CreateDataSource( const char * pszName,
+                                               char ** /* papszOptions */ )
+
+{
+/* -------------------------------------------------------------------- */
+/*      First, ensure there isn't any such file yet.                    */
+/* -------------------------------------------------------------------- */
+    VSIStatBuf sStatBuf;
+
+    if( VSIStat( pszName, &sStatBuf ) == 0 )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "It seems a file system object called '%s' already exists.",
+                  pszName );
+
+        return NULL;
+    }
+
+#ifdef notdef
+/* -------------------------------------------------------------------- */
+/*      Create the datasource.                                          */
+/* -------------------------------------------------------------------- */
+    OGRSQLiteDataSource     *poDS;
+
+    poDS = new OGRSQLiteDataSource();
+
+    if( !poDS->Open( pszName ) )
+    {
+        delete poDS;
+        return NULL;
+    }
+
+    return poDS;
+#else
+    return NULL;
+#endif
+}
+
+/************************************************************************/
+/*                           TestCapability()                           */
+/************************************************************************/
+
+int OGRCSVDriver::TestCapability( const char * pszCap )
+
+{
+    if( EQUAL(pszCap,ODrCCreateDataSource) )
+        return TRUE;
+    else
+        return FALSE;
 }
 
 /************************************************************************/

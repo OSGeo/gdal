@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2004/07/20 20:53:26  warmerda
+ * added support for reading directories of CSV files
+ *
  * Revision 1.1  2004/07/20 19:18:23  warmerda
  * New
  *
@@ -79,17 +82,21 @@ class OGRCSVDataSource : public OGRDataSource
 {
     char                *pszName;
 
-    OGRCSVLayer        *poLayer;
-
+    OGRCSVLayer       **papoLayers;
+    int                 nLayers;
+    
   public:
                         OGRCSVDataSource();
                         ~OGRCSVDataSource();
 
     int                 Open( const char * pszFilename );
+    int                 OpenTable( const char * pszFilename );
     
     const char          *GetName() { return pszName; }
-    int                 GetLayerCount() { return 1; }
+
+    int                 GetLayerCount() { return nLayers; }
     OGRLayer            *GetLayer( int );
+
     int                 TestCapability( const char * );
 };
 
@@ -104,7 +111,9 @@ class OGRCSVDriver : public OGRSFDriver
                 
     const char *GetName();
     OGRDataSource *Open( const char *, int );
+    OGRDataSource *CreateDataSource( const char *, char ** );
     int         TestCapability( const char * );
+    
 };
 
 
