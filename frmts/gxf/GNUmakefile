@@ -28,9 +28,6 @@ gxftest:	gxftest.o $(GXFOBJ)
 
 install-obj:	$(foreach file,$(OBJ),../o/$(file))
 
-../o/%.o:	%.o
-	cp $*.o ../o
-
 $(SHARED_LIB):	$(OBJ)
 	$(LD_SHARED) $(OBJ) $(GDAL_SLIB_LINK) $(LIBS) -o $(SHARED_LIB) 
 

@@ -25,8 +25,3 @@ clean:
 
 install-obj:	$(foreach file,$(OBJ),../o/$(file))
 	cp $(APPOBJ) ../o
-
-../o/%.o:	%.o
-	cp $*.o ../o
-
-

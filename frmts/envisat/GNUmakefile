@@ -22,9 +22,6 @@ all:	$(OBJ)
 
 install-obj:	$(foreach file,$(OBJ),../o/$(file))
 
-../o/%.o:	%.o
-	cp $*.o ../o
-
 envisat_dump:	envisat_dump.o EnvisatFile.o
 	$(CC) $(CFLAGS) envisat_dump.o EnvisatFile.o $(CPL_LIB) -ldl -lm -o envisat_dump
 

@@ -27,10 +27,6 @@ aigrid2tif:	aigrid2tif.o $(AIGOBJ)
 
 install-obj:	$(foreach file,$(OBJ),../o/$(file))
 
-../o/%.o:	%.o
-	cp $*.o ../o
-
-
 aitest-dist:
 	rm -rf aitest_dist
 	mkdir aitest_dist

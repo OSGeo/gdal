@@ -17,9 +17,3 @@ install-obj:	$(foreach file,$(OBJ),../o/$(file))
 
 %.o:	%.cpp
 	$(CXX) -c $(GDAL_INCLUDE) $(CXXFLAGS) $*.cpp -o $*.o
-
-
-../o/%.o:	%.o
-	cp $*.o ../o
-
-

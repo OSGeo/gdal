@@ -44,9 +44,6 @@ sdts2shp:	sdts2shp.cpp $(SDTSLIB)
 
 install-obj:	$(SDTSLIB) $(foreach file,$(OBJ),../o/$(file)) ../o/sdtsdataset.o
 
-../o/%.o:	%.o
-	cp $*.o ../o
-
 %.o:	%.cpp
 	$(CXX) -c $(ALL_CXX_FLAGS) $*.cpp -o $*.o
 

@@ -96,8 +96,3 @@ test:	8211dump
 
 
 install-obj:	$(ISOLIB) $(foreach file,$(OBJ),../o/$(file))
-
-../o/%.o:	%.o
-	cp $*.o ../o
-
-

@@ -21,7 +21,3 @@ clean:
 
 
 install-obj:	$(foreach file,$(OBJ),../o/$(file))
-
-../o/%.o:	%.o
-	cp $*.o ../o
-
