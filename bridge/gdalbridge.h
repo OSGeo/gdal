@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2001/08/23 03:37:33  warmerda
+ * added nodata api
+ *
  * Revision 1.8  2000/11/09 16:25:30  warmerda
  * added various srs defines
  *
@@ -289,6 +292,14 @@ GDAL_ENTRY int (*pGDALGetOverviewCount)( GDALRasterBandH ) GDAL_NULL;
 
 GDAL_ENTRY GDALRasterBandH (*pGDALGetOverview)( GDALRasterBandH, int ) GDAL_NULL;
 #define GDALGetOverview pGDALGetOverview
+
+GDAL_ENTRY double (*pGDALGetRasterNoDataValue)( GDALRasterBandH, int * ) 
+    GDAL_NULL;
+#define GDALGetRasterNoDataValue pGDALGetRasterNoDataValue
+
+GDAL_ENTRY CPLErr (*pGDALSetRasterNoDataValue)( GDALRasterBandH, double ) 
+    GDAL_NULL;
+#define GDALSetRasterNoDataValue pGDALSetRasterNoDataValue
 
 GDAL_ENTRY GDALColorInterp (*pGDALGetRasterColorInterpretation)
 						( GDALRasterBandH ) GDAL_NULL;
