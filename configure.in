@@ -884,8 +884,12 @@ else
   if test "$with_xerces_lib" != "" ; then
     LIBS="$with_xerces_lib $LIBS"
   else
-    LIBS="-lxerces-c1_6_0 -lpthread $LIBS"
-    if test -f /usr/local/lib/libxerces-c1_6_0.so ; then
+    if test -f /usr/local/lib/libxerces-c.so ; then
+      LIBS="-L/usr/local/lib -lxerces-c $LIBS"
+    elif test -f /usr/lib/libxerces-c.so ; then
+      LIBS="-lxerces-c $LIBS"
+    elif test -f /usr/local/lib/libxerces-c1_6_0.so ; then
+      LIBS="-lxerces-c1_6_0 -lpthread $LIBS"
       LIBS="-L/usr/local/lib $LIBS"
     fi
   fi
@@ -894,12 +898,17 @@ else
   else
     if test -d /usr/local/include/xercesc ; then 
       XERCES_INCLUDE="-I/usr/local/include/xercesc"
+    elif test -d /usr/include/xercesc ; then 
+      XERCES_INCLUDE="-I/usr/include/xercesc"
     else
       XERCES_INCLUDE=""
     fi
   fi
 
   echo '#include <util/PlatformUtils.hpp>' > conftest.cpp
+  echo '#ifdef XERCES_CPP_NAMESPACE_USE' >> conftest.cpp
+  echo 'XERCES_CPP_NAMESPACE_USE' >> conftest.cpp
+  echo '#endif' >> conftest.cpp
   echo 'int main() {  XMLPlatformUtils::Initialize(); }' >> conftest.cpp
   CMD="${CXX} ${XERCES_INCLUDE} ${CPPFLAGS} -o conftest conftest.cpp $LIBS"
 
