@@ -28,6 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************
  * $Log$
+ * Revision 1.40  2003/05/02 19:47:57  warmerda
+ * added C GetBandNumber and GetBandDataset entry points
+ *
  * Revision 1.39  2003/04/30 17:13:48  warmerda
  * added docs for many C functions
  *
@@ -1699,7 +1702,7 @@ int GDALGetRasterBandYSize( GDALRasterBandH hBand )
  * GDALRasterBand objects without an apparently relationship to a dataset,
  * such as GDALRasterBands serving as overviews.
  *
- * There is currently no C analog to this method.
+ * This method is the same as the C function GDALGetBandNumber().
  *
  * @return band number (1+) or 0 if the band number isn't known.
  */
@@ -1708,6 +1711,20 @@ int GDALRasterBand::GetBand()
 
 {
     return nBand;
+}
+
+/************************************************************************/
+/*                         GDALGetBandNumber()                          */
+/************************************************************************/
+
+/**
+ * @see GDALRasterBand::GetBand()
+ */
+
+int GDALGetBandNumber( GDALRasterBandH hBand )
+
+{
+    return ((GDALRasterBand *) hBand)->GetBand();
 }
 
 /************************************************************************/
@@ -1730,6 +1747,20 @@ GDALDataset *GDALRasterBand::GetDataset()
 
 {
     return poDS;
+}
+
+/************************************************************************/
+/*                         GDALGetBandDataset()                         */
+/************************************************************************/
+
+/**
+ * @see GDALRasterBand::GetDataset()
+ */
+
+GDALDatasetH GDALGetBandDataset( GDALRasterBandH hBand )
+
+{
+    return (GDALDatasetH) ((GDALRasterBand *) hBand)->GetDataset();
 }
 
 /************************************************************************/

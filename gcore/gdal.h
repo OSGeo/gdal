@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.66  2003/05/02 19:47:57  warmerda
+ * added C GetBandNumber and GetBandDataset entry points
+ *
  * Revision 1.65  2003/04/30 17:13:48  warmerda
  * added docs for many C functions
  *
@@ -386,6 +389,8 @@ int CPL_DLL GDALGetRasterBandXSize( GDALRasterBandH );
 int CPL_DLL GDALGetRasterBandYSize( GDALRasterBandH );
 char CPL_DLL  **GDALGetRasterMetadata( GDALRasterBandH );
 GDALAccess CPL_DLL GDALGetRasterAccess( GDALRasterBandH );
+int CPL_DLL GDALGetBandNumber( GDALRasterBandH );
+GDALDatasetH CPL_DLL GDALGetBandDataset( GDALRasterBandH );
 
 GDALColorInterp CPL_DLL GDALGetRasterColorInterpretation( GDALRasterBandH );
 CPLErr CPL_DLL GDALSetRasterColorInterpretation( GDALRasterBandH,
