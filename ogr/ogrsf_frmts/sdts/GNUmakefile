@@ -22,7 +22,6 @@ clean:
 
 %.o:	%.cpp
 	$(CXX) -c $(LINCLUDE) $(CXXFLAGS) $*.cpp -o $*.o
-	ar r ../ogrsf_frmts.a $*.o
 
 install-libs:	isolib-marker sdtslib-marker
 	@echo Done adding ISO8211 and SDTS libraries into $(FRMTSLIB)

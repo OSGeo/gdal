@@ -31,7 +31,7 @@ port-target:
 	(cd port; $(MAKE))
 
 ogr-target:
-	(cd ogr; $(MAKE) sublibs lib )
+	(cd ogr; $(MAKE) lib )
 
 core-target:
 	(cd gcore; $(MAKE))

@@ -19,11 +19,11 @@ INST_H_FILES	=	ogr_core.h ogr_feature.h ogr_geometry.h ogr_p.h \
 
 OGR_LIB  =	ogr.a
 
-FRMTS_LIB = 	ogrsf_frmts/ogrsf_frmts.a
+FRMTS_OBJ	= 	ogrsf_frmts/o/*.o
 
 LINCLUDE =	-Iogrsf_frmts -I. -I$(GDAL_ROOT)/port 
 
-default:	sublibs lib apps
+default:	lib apps
 
 all:	sublibs apps test_ogrsf$(EXE) docs
 
@@ -65,10 +65,8 @@ testepsg$(EXE):	testepsg.o  $(EXE_DEP_LIBS)
 ogrtindex$(EXE):	ogrtindex.o  $(EXE_DEP_LIBS)
 	$(CXX) $(LNK_FLAGS) ogrtindex.o $(CONFIG_LIBS) -o ogrtindex$(EXE)
 
-$(FRMTS_LIB):
-	(cd ogrsf_frmts; $(MAKE))
-
-lib:	$(OGR_LIB) 
+lib:	sublibs
+	$(MAKE) $(OGR_LIB) 
 
 ifeq ($(OGR_ENABLED),yes)
 
@@ -89,7 +87,7 @@ install-docs:
 	$(INSTALL_DIR) $(INST_DOCS)/ogr
 	cp html/* $(INST_DOCS)/ogr
 
-$(OGR_LIB):	$(OBJ)
+$(OGR_LIB):	$(OBJ) $(FRMTS_OBJ)
 	$(AR) r $(OGR_LIB) $?
 	$(RANLIB) $(OGR_LIB)
 
@@ -140,7 +138,6 @@ install-full:	apps
 	$(INSTALL) ogr2ogr $(INST_BIN)
 	$(INSTALL) ogrinfo $(INST_BIN)
 	$(INSTALL) ogrtindex $(INST_BIN)
-	$(INSTALL_DATA) $(OGRFRMTS_LIB) $(INST_LIB)
 else
 install-full:
 endif

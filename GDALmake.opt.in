@@ -84,7 +84,6 @@ GDAL_SLIB_LINK	=	-L$(GDAL_ROOT) -lgdal.$(GDAL_VER)
 
 OGR_LIB		=	$(GDAL_ROOT)/ogr/ogr.a
 CPL_LIB		=	$(GDAL_ROOT)/port/cpl.a
-OGRFRMTS_LIB	=	$(GDAL_ROOT)/ogr/ogrsf_frmts/ogrsf_frmts.a
 
 #
 # OGR/PostgreSQL support.
@@ -176,8 +175,8 @@ GDAL_OBJ	=	$(GDAL_ROOT)/frmts/o/*.o \
 			$(GDAL_ROOT)/ogr/ogr_api.o
 
 ifeq ($(OGR_ENABLED),yes)
-GDAL_LIBS := $(OGRFRMTS_LIB) $(PG_LIB) $(OCI_LIB) $(GDAL_LIBS)
-GDALA_DEP := $(GDALA_DEP) $(OGRFRMTS_LIB)
+GDAL_LIBS := $(OGR_LIB) $(PG_LIB) $(OCI_LIB) $(GDAL_LIBS)
+GDALA_DEP := $(GDALA_DEP) $(OGR_LIB)
 
 GDAL_OBJ := $(GDAL_OBJ) $(GDAL_ROOT)/ogr/ogrsf_frmts/generic/ogrregisterall.o \
 		$(GDAL_ROOT)/ogr/ogrfeaturestyle.o
