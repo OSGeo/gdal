@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2003/10/17 07:07:33  dron
+ * Use locale selection option in CPLScanDouble()/CPLPrintDouble().
+ *
  * Revision 1.6  2003/10/08 07:58:53  dron
  * Few fixes in WriteGeoSegment().
  *
@@ -318,8 +321,8 @@ void PCIDSKDataset::FlushCache()
 /* -------------------------------------------------------------------- */
 /*      Write out pixel size.                                           */
 /* -------------------------------------------------------------------- */
-        CPLPrintDouble( szTemp, "%16.9E", ABS(adfGeoTransform[1]) );
-        CPLPrintDouble( szTemp + 16, "%16.9E", ABS(adfGeoTransform[5]) );
+        CPLPrintDouble( szTemp, "%16.9E", ABS(adfGeoTransform[1]), "C" );
+        CPLPrintDouble( szTemp + 16, "%16.9E", ABS(adfGeoTransform[5]), "C" );
 
         VSIFSeekL( fp, 408, SEEK_SET );
         VSIFWriteL( (void *)szTemp, 1, 32, fp );
@@ -402,7 +405,7 @@ void PCIDSKDataset::WriteGeoSegment( )
         for ( i = 0; i < 16; i++ )
         {
             CPLPrintDouble( szTemp + 80 + 26 * i,
-                            "%26.18E", padfPrjParms[i] );
+                            "%26.18E", padfPrjParms[i], "C" );
         }
 
         CPLPrintStringFill( szTemp + 522, "", 936 );
@@ -429,12 +432,12 @@ void PCIDSKDataset::WriteGeoSegment( )
     for ( i = 0; i < 3; i++ )
     {
         CPLPrintDouble( szTemp + 1980 + 26 * i,
-                        "%26.18E", adfGeoTransform[i] );
+                        "%26.18E", adfGeoTransform[i], "C" );
     }
     for ( i = 0; i < 3; i++ )
     {
         CPLPrintDouble( szTemp + 2526 + 26 * i,
-                        "%26.18E", adfGeoTransform[i + 3] );
+                        "%26.18E", adfGeoTransform[i + 3], "C" );
     }
 
     VSIFWriteL( (void *)szTemp, 1, 3072, fp );
@@ -530,7 +533,9 @@ GDALDataset *PCIDSKDataset::Open( GDALOpenInfo * poOpenInfo )
 
     pszString = CPLScanString( szTemp + 272, 16, TRUE, TRUE );
     poDS->SetMetadataItem( "DATE_OF_CREATION", pszString );
-    poDS->pszCreatTime = pszString;
+    CPLFree( pszString );
+    // Store original creation time string for later use
+    poDS->pszCreatTime = CPLScanString( szTemp + 272, 16, TRUE, FALSE );
 
     pszString = CPLScanString( szTemp + 288, 16, TRUE, TRUE );
     poDS->SetMetadataItem( "DATE_OF_UPDATE", pszString );
@@ -835,14 +840,14 @@ GDALDataset *PCIDSKDataset::Open( GDALOpenInfo * poOpenInfo )
                         for ( j = 0; j < nXCoeffs; j++ )
                         {
                             poDS->adfGeoTransform[j] =
-                                CPLScanDouble( szTemp + 26 * j, 26 );
+                                CPLScanDouble( szTemp + 26 * j, 26, "C" );
                         }
                         VSIFSeekL( poDS->fp, nGeoDataOffset + 1642, SEEK_SET );
                         VSIFReadL( szTemp, 1, nYCoeffs * 26, poDS->fp );
                         for ( j = 0; j < nYCoeffs; j++ )
                         {
                             poDS->adfGeoTransform[j + 3] =
-                                CPLScanDouble( szTemp + 26 * j, 26 );
+                                CPLScanDouble( szTemp + 26 * j, 26, "C" );
                         }
 
                         oSRS.importFromPCI( szProj, NULL, NULL );
@@ -884,7 +889,7 @@ GDALDataset *PCIDSKDataset::Open( GDALOpenInfo * poOpenInfo )
                         for ( j = 0; j < 16; j++ )
                         {
                             adfProjParms[j] =
-                                CPLScanDouble( szTemp + 26 * j, 26 );
+                                CPLScanDouble( szTemp + 26 * j, 26, "C" );
                         }
 
                         // Read geotransform coefficients
@@ -893,14 +898,14 @@ GDALDataset *PCIDSKDataset::Open( GDALOpenInfo * poOpenInfo )
                         for ( j = 0; j < nXCoeffs; j++ )
                         {
                             poDS->adfGeoTransform[j] =
-                                CPLScanDouble( szTemp + 26 * j, 26 );;
+                                CPLScanDouble( szTemp + 26 * j, 26, "C" );;
                         }
                         VSIFSeekL( poDS->fp, nGeoDataOffset + 2526, SEEK_SET );
                         VSIFReadL( szTemp, 1, nYCoeffs * 26, poDS->fp );
                         for ( j = 0; j < nYCoeffs; j++ )
                         {
                             poDS->adfGeoTransform[j + 3] =
-                                CPLScanDouble( szTemp + 26 * j, 26 );
+                                CPLScanDouble( szTemp + 26 * j, 26, "C" );
                         }
 
                         oSRS.importFromPCI( szProj, szUnits, adfProjParms );
@@ -951,15 +956,15 @@ GDALDataset *PCIDSKDataset::Open( GDALOpenInfo * poOpenInfo )
                                        SEEK_SET );
                             VSIFReadL( szTemp, 1, 128, poDS->fp );
                             poDS->pasGCPList[j].dfGCPPixel =
-                                CPLScanDouble( szTemp + 6, 18 );
+                                CPLScanDouble( szTemp + 6, 18, "C" );
                             poDS->pasGCPList[j].dfGCPLine = 
-                                CPLScanDouble( szTemp + 24, 18 );
+                                CPLScanDouble( szTemp + 24, 18, "C" );
                             poDS->pasGCPList[j].dfGCPX = 
-                                CPLScanDouble( szTemp + 60, 18 );
+                                CPLScanDouble( szTemp + 60, 18, "C" );
                             poDS->pasGCPList[j].dfGCPY = 
-                                CPLScanDouble( szTemp + 78, 18 );
+                                CPLScanDouble( szTemp + 78, 18, "C" );
                             poDS->pasGCPList[j].dfGCPZ =
-                                CPLScanDouble( szTemp + 96, 18 ) / dfUnitConv;
+                                CPLScanDouble(szTemp + 96, 18, "C")/dfUnitConv;
                         }
                     }
                 }
