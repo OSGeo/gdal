@@ -5,8 +5,7 @@ include $(GDAL_ROOT)/GDALmake.opt
 
 CORE_OBJ =	gmlpropertydefn.o gmlfeatureclass.o gmlfeature.o gmlreader.o
 
-OGR_OBJ =	gml2ogrgeometry.o ogr2gmlgeometry.o \
-		ogrgmldriver.o ogrgmldatasource.o ogrgmllayer.o
+OGR_OBJ =	ogrgmldriver.o ogrgmldatasource.o ogrgmllayer.o
 
 ALL_C_FLAGS	=	$(XERCES_INCLUDE) -I.. -I../.. -I$(GDAL_ROOT)/port \
 	$(filter-out -Wall,$(CFLAGS))
