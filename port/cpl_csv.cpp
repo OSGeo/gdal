@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2004/11/22 16:01:05  fwarmerdam
+ * added GDAL_PREFIX
+ *
  * Revision 1.11  2004/08/17 14:58:01  warmerda
  * preserve newlines in CSVReadParseLine()
  *
@@ -932,7 +935,11 @@ const char * GDALDefaultCSVFilename( const char *pszBasename )
     }
     else
     {
+#ifdef GDAL_PREFIX
+        sprintf( szPath, GDAL_PREFIX "/share/epsg_csv/%s", pszBasename );
+#else
         sprintf( szPath, "/usr/local/share/epsg_csv/%s", pszBasename );
+#endif
         if( (fp = fopen( szPath, "rt" )) == NULL )
             strcpy( szPath, pszBasename );
     }
