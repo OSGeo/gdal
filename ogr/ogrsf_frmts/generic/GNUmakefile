@@ -27,6 +27,11 @@ CFLAGS   :=	$(CFLAGS) -DFME_ENABLED
 CXXFLAGS :=	$(CXXFLAGS) -DFME_ENABLED
 endif
 
+ifeq ($(ODBC_SETTING),yes)
+CFLAGS   :=	$(CFLAGS) -DODBC_ENABLED
+CXXFLAGS :=	$(CXXFLAGS) -DODBC_ENABLED
+endif
+
 CPPFLAGS	+=	-I.. -I../..
 
 # temporary work-around against topdir/GNUmakefile intrusion!
