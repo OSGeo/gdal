@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.50  2003/01/02 21:41:07  warmerda
+ * added GetField(), and BuildPolygonFromEdges methods
+ *
  * Revision 1.49  2002/12/18 18:33:01  warmerda
  * changed SetGCPs error to ValueError from TypeError
  *
@@ -2241,12 +2244,103 @@ const int  *OGR_F_GetFieldAsIntegerList( OGRFeatureH, int, int * );
 const double  *OGR_F_GetFieldAsDoubleList( OGRFeatureH, int, int * );
 char   **OGR_F_GetFieldAsStringList( OGRFeatureH, int );
 
+
 void    OGR_F_SetFieldInteger( OGRFeatureH, int, int );
 void    OGR_F_SetFieldDouble( OGRFeatureH, int, double );
 void    OGR_F_SetFieldString( OGRFeatureH, int, const char * );
 void    OGR_F_SetFieldIntegerList( OGRFeatureH, int, int, int * );
 void    OGR_F_SetFieldDoubleList( OGRFeatureH, int, int, double * );
 void    OGR_F_SetFieldStringList( OGRFeatureH, int, char ** );
+
+%{
+/************************************************************************/
+/*                           OGR_F_GetField()                           */
+/************************************************************************/
+static PyObject *
+py_OGR_F_GetField(PyObject *self, PyObject *args) {
+
+    OGRFeatureH  hFeat;
+    char  *feat_in = NULL;
+    int    iField;
+    PyObject *result = NULL;	
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"si:OGR_F_GetField", &feat_in, &iField))
+        return NULL;
+
+    if (SWIG_GetPtr_2(feat_in,(void **) &hFeat,_OGRFeatureH)) {
+        PyErr_SetString(PyExc_TypeError,
+                        "Type error in argument 1 of OGR_F_GetField."
+                        "  Expected _OGRFeatureH.");
+        return NULL;
+    }
+
+    if( !OGR_F_IsFieldSet( hFeat, iField ) )
+    {  
+         Py_INCREF( Py_None );
+         result = Py_None;
+    }
+    else
+    {
+        OGRFieldType eFType;
+	int          nCount, i;
+	const int   *panList = NULL;
+	const double  *padfList = NULL;
+        PyObject *psList;
+        char        **papszList;
+
+        eFType = OGR_Fld_GetType( OGR_F_GetFieldDefnRef( hFeat, iField ) );
+
+        switch( eFType ) 
+        {
+          case OFTInteger:
+            result = Py_BuildValue( "i", 
+                       OGR_F_GetFieldAsInteger( hFeat, iField ) );
+	    break;
+          case OFTReal:
+            result = Py_BuildValue( "d", 
+                       OGR_F_GetFieldAsDouble( hFeat, iField ) );
+	    break;
+          case OFTString:
+            result = Py_BuildValue( "s", 
+                       OGR_F_GetFieldAsString( hFeat, iField ) );
+	    break;
+          case OFTBinary:
+            result = PyString_FromStringAndSize("",0);
+            break;
+          case OFTIntegerList:
+            panList = OGR_F_GetFieldAsIntegerList(hFeat,iField,&nCount);
+            psList = PyList_New( nCount );
+            for( i=0; i < nCount; i++ )
+                PyList_SetItem(psList, i, Py_BuildValue("i", panList[i]));
+            result = psList;
+            break;
+          case OFTRealList:
+            padfList = OGR_F_GetFieldAsDoubleList(hFeat,iField,&nCount);
+            psList = PyList_New( nCount );
+            for( i=0; i < nCount; i++ )
+                PyList_SetItem(psList, i, Py_BuildValue("d", padfList[i]));
+            result = psList;
+            break;
+          case OFTStringList:
+            papszList = OGR_F_GetFieldAsStringList(hFeat,iField);
+            nCount = CSLCount(papszList);
+            psList = PyList_New( nCount );
+            for( i=0; i < nCount; i++ )
+                PyList_SetItem(psList, i, Py_BuildValue("s", papszList[i]));
+            result = psList;
+            break;
+          default:
+            CPLAssert( FALSE );
+            break;
+        }
+    }
+
+    return result;
+}
+%}
+
+%native(OGR_F_GetField) py_OGR_F_GetField;
 
 long    OGR_F_GetFID( OGRFeatureH );
 OGRErr  OGR_F_SetFID( OGRFeatureH, long );
@@ -2315,3 +2409,49 @@ OGRSFDriverH   OGRGetDriver( int );
 
 /* note: this is also declared in ogrsf_frmts.h */
 void  OGRRegisterAll();
+
+
+%{
+/************************************************************************/
+/*                      OGRBuildPolygonFromEdges()                      */
+/************************************************************************/
+static PyObject *
+py_OGRBuildPolygonFromEdges(PyObject *self, PyObject *args) {
+
+    OGRGeometryH  hLineCollection, hPolygon;
+    char  *lines_in = NULL;
+    int    bBestEffort, bAutoClose;
+    double dfTolerance;
+    OGRErr eErr;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"siid:OGRBuildPolygonFromEdges", &lines_in, 
+                         &bBestEffort, &bAutoClose, &dfTolerance ))
+        return NULL;
+
+    if (SWIG_GetPtr_2(lines_in,(void **) &hLineCollection,_OGRGeometryH)) {
+        PyErr_SetString(PyExc_TypeError,
+                        "Type error in argument 1 of OGRBuildPolygonFromEdges."
+                        "  Expected _OGRGeometryH.");
+        return NULL;
+    }
+
+    hPolygon = OGRBuildPolygonFromEdges( hLineCollection, bBestEffort, 
+                                         bAutoClose, dfTolerance, &eErr );
+
+    if( eErr != OGRERR_NONE )
+    {
+        PyErr_SetString(PyExc_ValueError,
+                        "Failed to assemble some or all edges into polygon rings." );
+	return NULL;
+    }
+
+    SWIG_MakePtr(_ptemp, (char *) hPolygon,"_OGRGeometryH");
+    return Py_BuildValue("s",_ptemp);
+}
+%}
+
+%native(OGRBuildPolygonFromEdges) py_OGRBuildPolygonFromEdges;
+
+
