@@ -823,6 +823,8 @@ EOF
 non_pic_object=none
 
 EOF
+      $show " cp $lobj $obj"
+      $run cp $lobj $obj
     fi
 
     $run $mv "${libobj}T" "${libobj}"
