@@ -5363,6 +5363,898 @@ static PyObject *_wrap_OSRSetStatePlaneWithUnits(PyObject *self, PyObject *args)
     return _resultobj;
 }
 
+static PyObject *_wrap_OGRSetACEA(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    OGRErr * _result;
+    OGRSpatialReferenceH  _arg0;
+    double  _arg1;
+    double  _arg2;
+    double  _arg3;
+    double  _arg4;
+    double  _arg5;
+    double  _arg6;
+    PyObject * _argo0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"Odddddd:OGRSetACEA",&_argo0,&_arg1,&_arg2,&_arg3,&_arg4,&_arg5,&_arg6)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OGRSetACEA. Expected _OGRSpatialReferenceH.");
+        return NULL;
+        }
+    }
+    _result = (OGRErr *) malloc(sizeof(OGRErr ));
+    *(_result) = OGRSetACEA(_arg0,_arg1,_arg2,_arg3,_arg4,_arg5,_arg6);
+    SWIG_MakePtr(_ptemp, (void *) _result,"_OGRErr_p");
+    _resultobj = Py_BuildValue("s",_ptemp);
+    return _resultobj;
+}
+
+static PyObject *_wrap_OSRSetAE(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    OGRErr * _result;
+    OGRSpatialReferenceH  _arg0;
+    double  _arg1;
+    double  _arg2;
+    double  _arg3;
+    double  _arg4;
+    PyObject * _argo0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"Odddd:OSRSetAE",&_argo0,&_arg1,&_arg2,&_arg3,&_arg4)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OSRSetAE. Expected _OGRSpatialReferenceH.");
+        return NULL;
+        }
+    }
+    _result = (OGRErr *) malloc(sizeof(OGRErr ));
+    *(_result) = OSRSetAE(_arg0,_arg1,_arg2,_arg3,_arg4);
+    SWIG_MakePtr(_ptemp, (void *) _result,"_OGRErr_p");
+    _resultobj = Py_BuildValue("s",_ptemp);
+    return _resultobj;
+}
+
+static PyObject *_wrap_OSRSetCEA(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    OGRErr * _result;
+    OGRSpatialReferenceH  _arg0;
+    double  _arg1;
+    double  _arg2;
+    double  _arg3;
+    double  _arg4;
+    PyObject * _argo0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"Odddd:OSRSetCEA",&_argo0,&_arg1,&_arg2,&_arg3,&_arg4)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OSRSetCEA. Expected _OGRSpatialReferenceH.");
+        return NULL;
+        }
+    }
+    _result = (OGRErr *) malloc(sizeof(OGRErr ));
+    *(_result) = OSRSetCEA(_arg0,_arg1,_arg2,_arg3,_arg4);
+    SWIG_MakePtr(_ptemp, (void *) _result,"_OGRErr_p");
+    _resultobj = Py_BuildValue("s",_ptemp);
+    return _resultobj;
+}
+
+static PyObject *_wrap_OSRSetCS(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    OGRErr * _result;
+    OGRSpatialReferenceH  _arg0;
+    double  _arg1;
+    double  _arg2;
+    double  _arg3;
+    double  _arg4;
+    PyObject * _argo0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"Odddd:OSRSetCS",&_argo0,&_arg1,&_arg2,&_arg3,&_arg4)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OSRSetCS. Expected _OGRSpatialReferenceH.");
+        return NULL;
+        }
+    }
+    _result = (OGRErr *) malloc(sizeof(OGRErr ));
+    *(_result) = OSRSetCS(_arg0,_arg1,_arg2,_arg3,_arg4);
+    SWIG_MakePtr(_ptemp, (void *) _result,"_OGRErr_p");
+    _resultobj = Py_BuildValue("s",_ptemp);
+    return _resultobj;
+}
+
+static PyObject *_wrap_OSRSetEC(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    OGRErr * _result;
+    OGRSpatialReferenceH  _arg0;
+    double  _arg1;
+    double  _arg2;
+    double  _arg3;
+    double  _arg4;
+    double  _arg5;
+    double  _arg6;
+    PyObject * _argo0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"Odddddd:OSRSetEC",&_argo0,&_arg1,&_arg2,&_arg3,&_arg4,&_arg5,&_arg6)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OSRSetEC. Expected _OGRSpatialReferenceH.");
+        return NULL;
+        }
+    }
+    _result = (OGRErr *) malloc(sizeof(OGRErr ));
+    *(_result) = OSRSetEC(_arg0,_arg1,_arg2,_arg3,_arg4,_arg5,_arg6);
+    SWIG_MakePtr(_ptemp, (void *) _result,"_OGRErr_p");
+    _resultobj = Py_BuildValue("s",_ptemp);
+    return _resultobj;
+}
+
+static PyObject *_wrap_OSRSetEckertIV(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    OGRErr * _result;
+    OGRSpatialReferenceH  _arg0;
+    double  _arg1;
+    double  _arg2;
+    double  _arg3;
+    PyObject * _argo0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"Oddd:OSRSetEckertIV",&_argo0,&_arg1,&_arg2,&_arg3)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OSRSetEckertIV. Expected _OGRSpatialReferenceH.");
+        return NULL;
+        }
+    }
+    _result = (OGRErr *) malloc(sizeof(OGRErr ));
+    *(_result) = OSRSetEckertIV(_arg0,_arg1,_arg2,_arg3);
+    SWIG_MakePtr(_ptemp, (void *) _result,"_OGRErr_p");
+    _resultobj = Py_BuildValue("s",_ptemp);
+    return _resultobj;
+}
+
+static PyObject *_wrap_OSRSetEckertVI(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    OGRErr * _result;
+    OGRSpatialReferenceH  _arg0;
+    double  _arg1;
+    double  _arg2;
+    double  _arg3;
+    PyObject * _argo0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"Oddd:OSRSetEckertVI",&_argo0,&_arg1,&_arg2,&_arg3)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OSRSetEckertVI. Expected _OGRSpatialReferenceH.");
+        return NULL;
+        }
+    }
+    _result = (OGRErr *) malloc(sizeof(OGRErr ));
+    *(_result) = OSRSetEckertVI(_arg0,_arg1,_arg2,_arg3);
+    SWIG_MakePtr(_ptemp, (void *) _result,"_OGRErr_p");
+    _resultobj = Py_BuildValue("s",_ptemp);
+    return _resultobj;
+}
+
+static PyObject *_wrap_OSRSetEquirectangular(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    OGRErr * _result;
+    double  _arg0;
+    double  _arg1;
+    double  _arg2;
+    double  _arg3;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"dddd:OSRSetEquirectangular",&_arg0,&_arg1,&_arg2,&_arg3)) 
+        return NULL;
+    _result = (OGRErr *) malloc(sizeof(OGRErr ));
+    *(_result) = OSRSetEquirectangular(_arg0,_arg1,_arg2,_arg3);
+    SWIG_MakePtr(_ptemp, (void *) _result,"_OGRErr_p");
+    _resultobj = Py_BuildValue("s",_ptemp);
+    return _resultobj;
+}
+
+static PyObject *_wrap_OSRSetGS(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    OGRErr * _result;
+    OGRSpatialReferenceH  _arg0;
+    double  _arg1;
+    double  _arg2;
+    double  _arg3;
+    PyObject * _argo0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"Oddd:OSRSetGS",&_argo0,&_arg1,&_arg2,&_arg3)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OSRSetGS. Expected _OGRSpatialReferenceH.");
+        return NULL;
+        }
+    }
+    _result = (OGRErr *) malloc(sizeof(OGRErr ));
+    *(_result) = OSRSetGS(_arg0,_arg1,_arg2,_arg3);
+    SWIG_MakePtr(_ptemp, (void *) _result,"_OGRErr_p");
+    _resultobj = Py_BuildValue("s",_ptemp);
+    return _resultobj;
+}
+
+static PyObject *_wrap_OSRSetGnomonic(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    OGRErr * _result;
+    double  _arg0;
+    double  _arg1;
+    double  _arg2;
+    double  _arg3;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"dddd:OSRSetGnomonic",&_arg0,&_arg1,&_arg2,&_arg3)) 
+        return NULL;
+    _result = (OGRErr *) malloc(sizeof(OGRErr ));
+    *(_result) = OSRSetGnomonic(_arg0,_arg1,_arg2,_arg3);
+    SWIG_MakePtr(_ptemp, (void *) _result,"_OGRErr_p");
+    _resultobj = Py_BuildValue("s",_ptemp);
+    return _resultobj;
+}
+
+static PyObject *_wrap_OSRSetHOM(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    OGRErr * _result;
+    OGRSpatialReferenceH  _arg0;
+    double  _arg1;
+    double  _arg2;
+    double  _arg3;
+    double  _arg4;
+    double  _arg5;
+    double  _arg6;
+    double  _arg7;
+    PyObject * _argo0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"Oddddddd:OSRSetHOM",&_argo0,&_arg1,&_arg2,&_arg3,&_arg4,&_arg5,&_arg6,&_arg7)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OSRSetHOM. Expected _OGRSpatialReferenceH.");
+        return NULL;
+        }
+    }
+    _result = (OGRErr *) malloc(sizeof(OGRErr ));
+    *(_result) = OSRSetHOM(_arg0,_arg1,_arg2,_arg3,_arg4,_arg5,_arg6,_arg7);
+    SWIG_MakePtr(_ptemp, (void *) _result,"_OGRErr_p");
+    _resultobj = Py_BuildValue("s",_ptemp);
+    return _resultobj;
+}
+
+static PyObject *_wrap_OSRSetKrovak(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    OGRErr * _result;
+    OGRSpatialReferenceH  _arg0;
+    double  _arg1;
+    double  _arg2;
+    double  _arg3;
+    double  _arg4;
+    double  _arg5;
+    double  _arg6;
+    double  _arg7;
+    PyObject * _argo0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"Oddddddd:OSRSetKrovak",&_argo0,&_arg1,&_arg2,&_arg3,&_arg4,&_arg5,&_arg6,&_arg7)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OSRSetKrovak. Expected _OGRSpatialReferenceH.");
+        return NULL;
+        }
+    }
+    _result = (OGRErr *) malloc(sizeof(OGRErr ));
+    *(_result) = OSRSetKrovak(_arg0,_arg1,_arg2,_arg3,_arg4,_arg5,_arg6,_arg7);
+    SWIG_MakePtr(_ptemp, (void *) _result,"_OGRErr_p");
+    _resultobj = Py_BuildValue("s",_ptemp);
+    return _resultobj;
+}
+
+static PyObject *_wrap_OSRSetLAEA(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    OGRErr * _result;
+    OGRSpatialReferenceH  _arg0;
+    double  _arg1;
+    double  _arg2;
+    double  _arg3;
+    double  _arg4;
+    PyObject * _argo0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"Odddd:OSRSetLAEA",&_argo0,&_arg1,&_arg2,&_arg3,&_arg4)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OSRSetLAEA. Expected _OGRSpatialReferenceH.");
+        return NULL;
+        }
+    }
+    _result = (OGRErr *) malloc(sizeof(OGRErr ));
+    *(_result) = OSRSetLAEA(_arg0,_arg1,_arg2,_arg3,_arg4);
+    SWIG_MakePtr(_ptemp, (void *) _result,"_OGRErr_p");
+    _resultobj = Py_BuildValue("s",_ptemp);
+    return _resultobj;
+}
+
+static PyObject *_wrap_OSRSetLCC(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    OGRErr * _result;
+    OGRSpatialReferenceH  _arg0;
+    double  _arg1;
+    double  _arg2;
+    double  _arg3;
+    double  _arg4;
+    double  _arg5;
+    double  _arg6;
+    PyObject * _argo0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"Odddddd:OSRSetLCC",&_argo0,&_arg1,&_arg2,&_arg3,&_arg4,&_arg5,&_arg6)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OSRSetLCC. Expected _OGRSpatialReferenceH.");
+        return NULL;
+        }
+    }
+    _result = (OGRErr *) malloc(sizeof(OGRErr ));
+    *(_result) = OSRSetLCC(_arg0,_arg1,_arg2,_arg3,_arg4,_arg5,_arg6);
+    SWIG_MakePtr(_ptemp, (void *) _result,"_OGRErr_p");
+    _resultobj = Py_BuildValue("s",_ptemp);
+    return _resultobj;
+}
+
+static PyObject *_wrap_OSRSetLCC1SP(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    OGRErr * _result;
+    OGRSpatialReferenceH  _arg0;
+    double  _arg1;
+    double  _arg2;
+    double  _arg3;
+    double  _arg4;
+    double  _arg5;
+    PyObject * _argo0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"Oddddd:OSRSetLCC1SP",&_argo0,&_arg1,&_arg2,&_arg3,&_arg4,&_arg5)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OSRSetLCC1SP. Expected _OGRSpatialReferenceH.");
+        return NULL;
+        }
+    }
+    _result = (OGRErr *) malloc(sizeof(OGRErr ));
+    *(_result) = OSRSetLCC1SP(_arg0,_arg1,_arg2,_arg3,_arg4,_arg5);
+    SWIG_MakePtr(_ptemp, (void *) _result,"_OGRErr_p");
+    _resultobj = Py_BuildValue("s",_ptemp);
+    return _resultobj;
+}
+
+static PyObject *_wrap_OSRSetLCCB(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    OGRErr * _result;
+    OGRSpatialReferenceH  _arg0;
+    double  _arg1;
+    double  _arg2;
+    double  _arg3;
+    double  _arg4;
+    double  _arg5;
+    double  _arg6;
+    PyObject * _argo0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"Odddddd:OSRSetLCCB",&_argo0,&_arg1,&_arg2,&_arg3,&_arg4,&_arg5,&_arg6)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OSRSetLCCB. Expected _OGRSpatialReferenceH.");
+        return NULL;
+        }
+    }
+    _result = (OGRErr *) malloc(sizeof(OGRErr ));
+    *(_result) = OSRSetLCCB(_arg0,_arg1,_arg2,_arg3,_arg4,_arg5,_arg6);
+    SWIG_MakePtr(_ptemp, (void *) _result,"_OGRErr_p");
+    _resultobj = Py_BuildValue("s",_ptemp);
+    return _resultobj;
+}
+
+static PyObject *_wrap_OSRSetMC(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    OGRErr * _result;
+    OGRSpatialReferenceH  _arg0;
+    double  _arg1;
+    double  _arg2;
+    double  _arg3;
+    double  _arg4;
+    PyObject * _argo0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"Odddd:OSRSetMC",&_argo0,&_arg1,&_arg2,&_arg3,&_arg4)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OSRSetMC. Expected _OGRSpatialReferenceH.");
+        return NULL;
+        }
+    }
+    _result = (OGRErr *) malloc(sizeof(OGRErr ));
+    *(_result) = OSRSetMC(_arg0,_arg1,_arg2,_arg3,_arg4);
+    SWIG_MakePtr(_ptemp, (void *) _result,"_OGRErr_p");
+    _resultobj = Py_BuildValue("s",_ptemp);
+    return _resultobj;
+}
+
+static PyObject *_wrap_OSRSetMercator(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    OGRErr * _result;
+    OGRSpatialReferenceH  _arg0;
+    double  _arg1;
+    double  _arg2;
+    double  _arg3;
+    double  _arg4;
+    double  _arg5;
+    PyObject * _argo0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"Oddddd:OSRSetMercator",&_argo0,&_arg1,&_arg2,&_arg3,&_arg4,&_arg5)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OSRSetMercator. Expected _OGRSpatialReferenceH.");
+        return NULL;
+        }
+    }
+    _result = (OGRErr *) malloc(sizeof(OGRErr ));
+    *(_result) = OSRSetMercator(_arg0,_arg1,_arg2,_arg3,_arg4,_arg5);
+    SWIG_MakePtr(_ptemp, (void *) _result,"_OGRErr_p");
+    _resultobj = Py_BuildValue("s",_ptemp);
+    return _resultobj;
+}
+
+static PyObject *_wrap_OSRSetMollweide(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    OGRErr * _result;
+    OGRSpatialReferenceH  _arg0;
+    double  _arg1;
+    double  _arg2;
+    double  _arg3;
+    PyObject * _argo0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"Oddd:OSRSetMollweide",&_argo0,&_arg1,&_arg2,&_arg3)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OSRSetMollweide. Expected _OGRSpatialReferenceH.");
+        return NULL;
+        }
+    }
+    _result = (OGRErr *) malloc(sizeof(OGRErr ));
+    *(_result) = OSRSetMollweide(_arg0,_arg1,_arg2,_arg3);
+    SWIG_MakePtr(_ptemp, (void *) _result,"_OGRErr_p");
+    _resultobj = Py_BuildValue("s",_ptemp);
+    return _resultobj;
+}
+
+static PyObject *_wrap_OSRSetNZMG(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    OGRErr * _result;
+    OGRSpatialReferenceH  _arg0;
+    double  _arg1;
+    double  _arg2;
+    double  _arg3;
+    double  _arg4;
+    PyObject * _argo0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"Odddd:OSRSetNZMG",&_argo0,&_arg1,&_arg2,&_arg3,&_arg4)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OSRSetNZMG. Expected _OGRSpatialReferenceH.");
+        return NULL;
+        }
+    }
+    _result = (OGRErr *) malloc(sizeof(OGRErr ));
+    *(_result) = OSRSetNZMG(_arg0,_arg1,_arg2,_arg3,_arg4);
+    SWIG_MakePtr(_ptemp, (void *) _result,"_OGRErr_p");
+    _resultobj = Py_BuildValue("s",_ptemp);
+    return _resultobj;
+}
+
+static PyObject *_wrap_OSRSetOS(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    OGRErr * _result;
+    OGRSpatialReferenceH  _arg0;
+    double  _arg1;
+    double  _arg2;
+    double  _arg3;
+    double  _arg4;
+    double  _arg5;
+    PyObject * _argo0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"Oddddd:OSRSetOS",&_argo0,&_arg1,&_arg2,&_arg3,&_arg4,&_arg5)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OSRSetOS. Expected _OGRSpatialReferenceH.");
+        return NULL;
+        }
+    }
+    _result = (OGRErr *) malloc(sizeof(OGRErr ));
+    *(_result) = OSRSetOS(_arg0,_arg1,_arg2,_arg3,_arg4,_arg5);
+    SWIG_MakePtr(_ptemp, (void *) _result,"_OGRErr_p");
+    _resultobj = Py_BuildValue("s",_ptemp);
+    return _resultobj;
+}
+
+static PyObject *_wrap_OSRSetOrthographic(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    OGRErr * _result;
+    OGRSpatialReferenceH  _arg0;
+    double  _arg1;
+    double  _arg2;
+    double  _arg3;
+    double  _arg4;
+    PyObject * _argo0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"Odddd:OSRSetOrthographic",&_argo0,&_arg1,&_arg2,&_arg3,&_arg4)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OSRSetOrthographic. Expected _OGRSpatialReferenceH.");
+        return NULL;
+        }
+    }
+    _result = (OGRErr *) malloc(sizeof(OGRErr ));
+    *(_result) = OSRSetOrthographic(_arg0,_arg1,_arg2,_arg3,_arg4);
+    SWIG_MakePtr(_ptemp, (void *) _result,"_OGRErr_p");
+    _resultobj = Py_BuildValue("s",_ptemp);
+    return _resultobj;
+}
+
+static PyObject *_wrap_OSRSetPolyconic(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    OGRErr * _result;
+    OGRSpatialReferenceH  _arg0;
+    double  _arg1;
+    double  _arg2;
+    double  _arg3;
+    double  _arg4;
+    PyObject * _argo0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"Odddd:OSRSetPolyconic",&_argo0,&_arg1,&_arg2,&_arg3,&_arg4)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OSRSetPolyconic. Expected _OGRSpatialReferenceH.");
+        return NULL;
+        }
+    }
+    _result = (OGRErr *) malloc(sizeof(OGRErr ));
+    *(_result) = OSRSetPolyconic(_arg0,_arg1,_arg2,_arg3,_arg4);
+    SWIG_MakePtr(_ptemp, (void *) _result,"_OGRErr_p");
+    _resultobj = Py_BuildValue("s",_ptemp);
+    return _resultobj;
+}
+
+static PyObject *_wrap_OSRSetPS(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    OGRErr * _result;
+    OGRSpatialReferenceH  _arg0;
+    double  _arg1;
+    double  _arg2;
+    double  _arg3;
+    double  _arg4;
+    double  _arg5;
+    PyObject * _argo0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"Oddddd:OSRSetPS",&_argo0,&_arg1,&_arg2,&_arg3,&_arg4,&_arg5)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OSRSetPS. Expected _OGRSpatialReferenceH.");
+        return NULL;
+        }
+    }
+    _result = (OGRErr *) malloc(sizeof(OGRErr ));
+    *(_result) = OSRSetPS(_arg0,_arg1,_arg2,_arg3,_arg4,_arg5);
+    SWIG_MakePtr(_ptemp, (void *) _result,"_OGRErr_p");
+    _resultobj = Py_BuildValue("s",_ptemp);
+    return _resultobj;
+}
+
+static PyObject *_wrap_OSRSetRobinson(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    OGRErr * _result;
+    OGRSpatialReferenceH  _arg0;
+    double  _arg1;
+    double  _arg2;
+    double  _arg3;
+    PyObject * _argo0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"Oddd:OSRSetRobinson",&_argo0,&_arg1,&_arg2,&_arg3)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OSRSetRobinson. Expected _OGRSpatialReferenceH.");
+        return NULL;
+        }
+    }
+    _result = (OGRErr *) malloc(sizeof(OGRErr ));
+    *(_result) = OSRSetRobinson(_arg0,_arg1,_arg2,_arg3);
+    SWIG_MakePtr(_ptemp, (void *) _result,"_OGRErr_p");
+    _resultobj = Py_BuildValue("s",_ptemp);
+    return _resultobj;
+}
+
+static PyObject *_wrap_OSRSetSinusoidal(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    OGRErr * _result;
+    OGRSpatialReferenceH  _arg0;
+    double  _arg1;
+    double  _arg2;
+    double  _arg3;
+    PyObject * _argo0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"Oddd:OSRSetSinusoidal",&_argo0,&_arg1,&_arg2,&_arg3)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OSRSetSinusoidal. Expected _OGRSpatialReferenceH.");
+        return NULL;
+        }
+    }
+    _result = (OGRErr *) malloc(sizeof(OGRErr ));
+    *(_result) = OSRSetSinusoidal(_arg0,_arg1,_arg2,_arg3);
+    SWIG_MakePtr(_ptemp, (void *) _result,"_OGRErr_p");
+    _resultobj = Py_BuildValue("s",_ptemp);
+    return _resultobj;
+}
+
+static PyObject *_wrap_OSRSetStereographic(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    OGRErr * _result;
+    OGRSpatialReferenceH  _arg0;
+    double  _arg1;
+    double  _arg2;
+    double  _arg3;
+    double  _arg4;
+    double  _arg5;
+    PyObject * _argo0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"Oddddd:OSRSetStereographic",&_argo0,&_arg1,&_arg2,&_arg3,&_arg4,&_arg5)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OSRSetStereographic. Expected _OGRSpatialReferenceH.");
+        return NULL;
+        }
+    }
+    _result = (OGRErr *) malloc(sizeof(OGRErr ));
+    *(_result) = OSRSetStereographic(_arg0,_arg1,_arg2,_arg3,_arg4,_arg5);
+    SWIG_MakePtr(_ptemp, (void *) _result,"_OGRErr_p");
+    _resultobj = Py_BuildValue("s",_ptemp);
+    return _resultobj;
+}
+
+static PyObject *_wrap_OSRSetSOC(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    OGRErr * _result;
+    OGRSpatialReferenceH  _arg0;
+    double  _arg1;
+    double  _arg2;
+    double  _arg3;
+    double  _arg4;
+    PyObject * _argo0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"Odddd:OSRSetSOC",&_argo0,&_arg1,&_arg2,&_arg3,&_arg4)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OSRSetSOC. Expected _OGRSpatialReferenceH.");
+        return NULL;
+        }
+    }
+    _result = (OGRErr *) malloc(sizeof(OGRErr ));
+    *(_result) = OSRSetSOC(_arg0,_arg1,_arg2,_arg3,_arg4);
+    SWIG_MakePtr(_ptemp, (void *) _result,"_OGRErr_p");
+    _resultobj = Py_BuildValue("s",_ptemp);
+    return _resultobj;
+}
+
+static PyObject *_wrap_OSRSetTM(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    OGRErr * _result;
+    OGRSpatialReferenceH  _arg0;
+    double  _arg1;
+    double  _arg2;
+    double  _arg3;
+    double  _arg4;
+    double  _arg5;
+    PyObject * _argo0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"Oddddd:OSRSetTM",&_argo0,&_arg1,&_arg2,&_arg3,&_arg4,&_arg5)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OSRSetTM. Expected _OGRSpatialReferenceH.");
+        return NULL;
+        }
+    }
+    _result = (OGRErr *) malloc(sizeof(OGRErr ));
+    *(_result) = OSRSetTM(_arg0,_arg1,_arg2,_arg3,_arg4,_arg5);
+    SWIG_MakePtr(_ptemp, (void *) _result,"_OGRErr_p");
+    _resultobj = Py_BuildValue("s",_ptemp);
+    return _resultobj;
+}
+
+static PyObject *_wrap_OSRSetTMG(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    OGRErr * _result;
+    OGRSpatialReferenceH  _arg0;
+    double  _arg1;
+    double  _arg2;
+    double  _arg3;
+    double  _arg4;
+    PyObject * _argo0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"Odddd:OSRSetTMG",&_argo0,&_arg1,&_arg2,&_arg3,&_arg4)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OSRSetTMG. Expected _OGRSpatialReferenceH.");
+        return NULL;
+        }
+    }
+    _result = (OGRErr *) malloc(sizeof(OGRErr ));
+    *(_result) = OSRSetTMG(_arg0,_arg1,_arg2,_arg3,_arg4);
+    SWIG_MakePtr(_ptemp, (void *) _result,"_OGRErr_p");
+    _resultobj = Py_BuildValue("s",_ptemp);
+    return _resultobj;
+}
+
+static PyObject *_wrap_OSRSetTMSO(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    OGRErr * _result;
+    OGRSpatialReferenceH  _arg0;
+    double  _arg1;
+    double  _arg2;
+    double  _arg3;
+    double  _arg4;
+    double  _arg5;
+    PyObject * _argo0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"Oddddd:OSRSetTMSO",&_argo0,&_arg1,&_arg2,&_arg3,&_arg4,&_arg5)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OSRSetTMSO. Expected _OGRSpatialReferenceH.");
+        return NULL;
+        }
+    }
+    _result = (OGRErr *) malloc(sizeof(OGRErr ));
+    *(_result) = OSRSetTMSO(_arg0,_arg1,_arg2,_arg3,_arg4,_arg5);
+    SWIG_MakePtr(_ptemp, (void *) _result,"_OGRErr_p");
+    _resultobj = Py_BuildValue("s",_ptemp);
+    return _resultobj;
+}
+
+static PyObject *_wrap_OSRSetVDG(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    OGRErr * _result;
+    OGRSpatialReferenceH  _arg0;
+    double  _arg1;
+    double  _arg2;
+    double  _arg3;
+    PyObject * _argo0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"Oddd:OSRSetVDG",&_argo0,&_arg1,&_arg2,&_arg3)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OSRSetVDG. Expected _OGRSpatialReferenceH.");
+        return NULL;
+        }
+    }
+    _result = (OGRErr *) malloc(sizeof(OGRErr ));
+    *(_result) = OSRSetVDG(_arg0,_arg1,_arg2,_arg3);
+    SWIG_MakePtr(_ptemp, (void *) _result,"_OGRErr_p");
+    _resultobj = Py_BuildValue("s",_ptemp);
+    return _resultobj;
+}
+
 static PyObject *_wrap_OCTNewCoordinateTransformation(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
     OGRCoordinateTransformationH  _result;
@@ -9318,6 +10210,38 @@ static PyMethodDef _gdalMethods[] = {
 	 { "OSRExportToProj4", py_OSRExportToProj4, METH_VARARGS },
 	 { "OSRImportFromWkt", py_OSRImportFromWkt, METH_VARARGS },
 	 { "OSRImportFromESRI", py_OSRImportFromESRI, METH_VARARGS },
+	 { "OSRSetVDG", _wrap_OSRSetVDG, METH_VARARGS },
+	 { "OSRSetTMSO", _wrap_OSRSetTMSO, METH_VARARGS },
+	 { "OSRSetTMG", _wrap_OSRSetTMG, METH_VARARGS },
+	 { "OSRSetTM", _wrap_OSRSetTM, METH_VARARGS },
+	 { "OSRSetSOC", _wrap_OSRSetSOC, METH_VARARGS },
+	 { "OSRSetStereographic", _wrap_OSRSetStereographic, METH_VARARGS },
+	 { "OSRSetSinusoidal", _wrap_OSRSetSinusoidal, METH_VARARGS },
+	 { "OSRSetRobinson", _wrap_OSRSetRobinson, METH_VARARGS },
+	 { "OSRSetPS", _wrap_OSRSetPS, METH_VARARGS },
+	 { "OSRSetPolyconic", _wrap_OSRSetPolyconic, METH_VARARGS },
+	 { "OSRSetOrthographic", _wrap_OSRSetOrthographic, METH_VARARGS },
+	 { "OSRSetOS", _wrap_OSRSetOS, METH_VARARGS },
+	 { "OSRSetNZMG", _wrap_OSRSetNZMG, METH_VARARGS },
+	 { "OSRSetMollweide", _wrap_OSRSetMollweide, METH_VARARGS },
+	 { "OSRSetMercator", _wrap_OSRSetMercator, METH_VARARGS },
+	 { "OSRSetMC", _wrap_OSRSetMC, METH_VARARGS },
+	 { "OSRSetLCCB", _wrap_OSRSetLCCB, METH_VARARGS },
+	 { "OSRSetLCC1SP", _wrap_OSRSetLCC1SP, METH_VARARGS },
+	 { "OSRSetLCC", _wrap_OSRSetLCC, METH_VARARGS },
+	 { "OSRSetLAEA", _wrap_OSRSetLAEA, METH_VARARGS },
+	 { "OSRSetKrovak", _wrap_OSRSetKrovak, METH_VARARGS },
+	 { "OSRSetHOM", _wrap_OSRSetHOM, METH_VARARGS },
+	 { "OSRSetGnomonic", _wrap_OSRSetGnomonic, METH_VARARGS },
+	 { "OSRSetGS", _wrap_OSRSetGS, METH_VARARGS },
+	 { "OSRSetEquirectangular", _wrap_OSRSetEquirectangular, METH_VARARGS },
+	 { "OSRSetEckertVI", _wrap_OSRSetEckertVI, METH_VARARGS },
+	 { "OSRSetEckertIV", _wrap_OSRSetEckertIV, METH_VARARGS },
+	 { "OSRSetEC", _wrap_OSRSetEC, METH_VARARGS },
+	 { "OSRSetCS", _wrap_OSRSetCS, METH_VARARGS },
+	 { "OSRSetCEA", _wrap_OSRSetCEA, METH_VARARGS },
+	 { "OSRSetAE", _wrap_OSRSetAE, METH_VARARGS },
+	 { "OGRSetACEA", _wrap_OGRSetACEA, METH_VARARGS },
 	 { "OSRSetStatePlaneWithUnits", _wrap_OSRSetStatePlaneWithUnits, METH_VARARGS },
 	 { "OSRGetUTMZone", _wrap_OSRGetUTMZone, METH_VARARGS },
 	 { "OSRSetUTM", _wrap_OSRSetUTM, METH_VARARGS },
