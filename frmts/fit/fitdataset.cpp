@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.16  2004/02/24 22:00:50  warmerda
+ * test commit
+ *
  * Revision 1.15  2002/11/23 18:54:17  warmerda
  * added CREATIONDATATYPES metadata for drivers
  *
@@ -90,6 +93,7 @@
 CPL_CVSID("$Id$");
 
 CPL_C_START
+ 
 void	GDALRegister_FIT(void);
 CPL_C_END
 
