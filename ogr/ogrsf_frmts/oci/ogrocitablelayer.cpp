@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2003/02/06 21:16:37  warmerda
+ * restructure to handle elem_info indirectly like ordinals
+ *
  * Revision 1.19  2003/01/15 05:47:06  warmerda
  * fleshed out SRID writing support in newly created geometries
  *
@@ -150,8 +153,12 @@ OGROCITableLayer::OGROCITableLayer( OGROCIDataSource *poDSIn,
     nOrdinalCount = 0;
     nOrdinalMax = 0;
     padfOrdinals = NULL;
-
     hOrdVARRAY = NULL;
+
+    nElemInfoCount = 0;
+    nElemInfoMax = 0;
+    panElemInfo = NULL;
+    hElemInfoVARRAY = NULL;
 
     ResetReading();
 }
@@ -174,6 +181,7 @@ OGROCITableLayer::~OGROCITableLayer()
         delete poSRS;
 
     CPLFree( padfOrdinals );
+    CPLFree( panElemInfo );
 }
 
 /************************************************************************/
@@ -391,6 +399,8 @@ void OGROCITableLayer::BuildFullQueryStatement()
     oCmd.Append( pszWHERE );
 
     pszQueryStatement = oCmd.StealString();
+
+    CPLFree( pszFields );
 }
 
 /************************************************************************/
@@ -654,6 +664,24 @@ void OGROCITableLayer::PushOrdinal( double dfOrd )
 }
 
 /************************************************************************/
+/*                            PushElemInfo()                            */
+/************************************************************************/
+
+void OGROCITableLayer::PushElemInfo( int nOffset, int nEType, int nInterp )
+
+{
+    if( nElemInfoCount+3 >= nElemInfoMax )
+    {
+        nElemInfoMax = nElemInfoMax * 2 + 100;
+        panElemInfo = (int *) CPLRealloc(panElemInfo,sizeof(int)*nElemInfoMax);
+    }
+    
+    panElemInfo[nElemInfoCount++] = nOffset;
+    panElemInfo[nElemInfoCount++] = nEType;
+    panElemInfo[nElemInfoCount++] = nInterp;
+}
+
+/************************************************************************/
 /*                       TranslateElementGroup()                        */
 /*                                                                      */
 /*      Append one or more element groups to the existing element       */
@@ -661,8 +689,7 @@ void OGROCITableLayer::PushOrdinal( double dfOrd )
 /************************************************************************/
 
 OGRErr 
-OGROCITableLayer::TranslateElementGroup( OGRGeometry *poGeometry, 
-                                         OGROCIStringBuf *poElemInfo )
+OGROCITableLayer::TranslateElementGroup( OGRGeometry *poGeometry )
 
 {
     switch( wkbFlatten(poGeometry->getGeometryType()) )
@@ -671,10 +698,7 @@ OGROCITableLayer::TranslateElementGroup( OGRGeometry *poGeometry,
       {
           OGRPoint *poPoint = (OGRPoint *) poGeometry;
 
-          if( poElemInfo->GetLast() != '(' )
-              poElemInfo->Append( "," );
-          
-          poElemInfo->Appendf( 32, "%d,1,1", nOrdinalCount+1 );
+          PushElemInfo( nOrdinalCount+1, 1, 1 );
 
           PushOrdinal( poPoint->getX() );
           PushOrdinal( poPoint->getY() );
@@ -689,13 +713,7 @@ OGROCITableLayer::TranslateElementGroup( OGRGeometry *poGeometry,
           OGRLineString *poLine = (OGRLineString *) poGeometry;
           int  iVert;
           
-          if( poElemInfo != NULL )
-          {
-              if( poElemInfo->GetLast() != '(' )
-                  poElemInfo->Append( "," );
-
-              poElemInfo->Appendf( 32, "%d,2,1", nOrdinalCount+1 );
-          }
+          PushElemInfo( nOrdinalCount+1, 2, 1 );
 
           for( iVert = 0; iVert < poLine->getNumPoints(); iVert++ )
           {
@@ -722,14 +740,10 @@ OGROCITableLayer::TranslateElementGroup( OGRGeometry *poGeometry,
               else
                   poRing = poPoly->getInteriorRing(iRing);
 
-              // take care of eleminfo here.
-              if( poElemInfo->GetLast() != '(' )
-                  poElemInfo->Append( "," );
-
               if( iRing == -1 )
-                  poElemInfo->Appendf( 20, "%d,1003,1", nOrdinalCount+1 );
+                  PushElemInfo( nOrdinalCount+1, 1003, 1 );
               else
-                  poElemInfo->Appendf( 20, "%d,2003,1", nOrdinalCount+1 );
+                  PushElemInfo( nOrdinalCount+1, 2003, 1 );
 
               if( (iRing == -1 && poRing->isClockwise())
                   || (iRing != -1 && !poRing->isClockwise()) )
@@ -774,6 +788,7 @@ char *OGROCITableLayer::TranslateToSDOGeometry( OGRGeometry * poGeometry )
     char szSRID[30];
 
     nOrdinalCount = 0;
+    nElemInfoCount = 0;
 
     if( poGeometry == NULL )
         return CPLStrdup("NULL");
@@ -810,15 +825,15 @@ char *OGROCITableLayer::TranslateToSDOGeometry( OGRGeometry * poGeometry )
 /* ==================================================================== */
     else if( wkbFlatten(poGeometry->getGeometryType()) == wkbLineString )
     {
-        OGROCIStringBuf oElemInfo;
+        char szResult[200];
 
-        oElemInfo.Appendf( 100, "%s(%d,%s,NULL,MDSYS.SDO_ELEM_INFO_ARRAY(",
-                           SDO_GEOMETRY, nDimension * 1000 + 2, szSRID );
+        sprintf( szResult, 
+                 "%s(%d,%s,NULL,:elem_info,:ordinates)",
+                 SDO_GEOMETRY, nDimension * 1000 + 2, szSRID );
 
-        TranslateElementGroup( poGeometry, &oElemInfo );
+        TranslateElementGroup( poGeometry );
 
-        oElemInfo.Append( "),:ordinates)" );
-        return oElemInfo.StealString();
+        return CPLStrdup(szResult);
     }
 
 /* ==================================================================== */
@@ -826,24 +841,17 @@ char *OGROCITableLayer::TranslateToSDOGeometry( OGRGeometry * poGeometry )
 /* ==================================================================== */
     else if( wkbFlatten(poGeometry->getGeometryType()) == wkbPolygon )
     {
-        OGROCIStringBuf oElemInfo;
+        char   szResult[200];
 
-/* -------------------------------------------------------------------- */
-/*      Prepare eleminfo section.                                       */
-/* -------------------------------------------------------------------- */
-	oElemInfo.Append( SDO_GEOMETRY );
-	oElemInfo.Appendf( 20, "(%d,", nDimension == 2 ? 2003 : 3003 );
-	oElemInfo.Append( szSRID );
-	oElemInfo.Append( ",NULL,MDSYS.SDO_ELEM_INFO_ARRAY(" );
+        sprintf( szResult, "%s(%d,%s,NULL,:elem_info,:ordinates)", 
+                 SDO_GEOMETRY, nDimension == 2 ? 2003 : 3003, szSRID );
 
 /* -------------------------------------------------------------------- */
 /*      Translate and return.                                           */
 /* -------------------------------------------------------------------- */
-        TranslateElementGroup( poGeometry, &oElemInfo );
+        TranslateElementGroup( poGeometry );
 
-        oElemInfo.Append( "),:ordinates)" );
-
-        return oElemInfo.StealString();
+        return CPLStrdup( szResult );
     }
 
 /* ==================================================================== */
@@ -880,7 +888,7 @@ char *OGROCITableLayer::TranslateToSDOGeometry( OGRGeometry * poGeometry )
 /* ==================================================================== */
     else
     {
-        OGROCIStringBuf oElemInfo, oOrdinates;
+        char szResult[128];
         int nGType;
 
 /* -------------------------------------------------------------------- */
@@ -905,9 +913,8 @@ char *OGROCITableLayer::TranslateToSDOGeometry( OGRGeometry * poGeometry )
 /* -------------------------------------------------------------------- */
 /*      Prepare eleminfo section.                                       */
 /* -------------------------------------------------------------------- */
-        oElemInfo.Appendf( 90, "%s(%d,%s,NULL,MDSYS.SDO_ELEM_INFO_ARRAY(",
+        sprintf( szResult, "%s(%d,%s,NULL,:elem_info,:ordinates)",
                            SDO_GEOMETRY, nGType, szSRID );
-        oOrdinates.Append( "),MDSYS.SDO_ORDINATE_ARRAY(" );
 
 /* -------------------------------------------------------------------- */
 /*      Translate each child in turn.                                   */
@@ -916,14 +923,9 @@ char *OGROCITableLayer::TranslateToSDOGeometry( OGRGeometry * poGeometry )
         int  iChild;
 
         for( iChild = 0; iChild < poGC->getNumGeometries(); iChild++ )
-            TranslateElementGroup( poGC->getGeometryRef(iChild), &oElemInfo );
+            TranslateElementGroup( poGC->getGeometryRef(iChild) );
 
-/* -------------------------------------------------------------------- */
-/*      Collect and return.                                             */
-/* -------------------------------------------------------------------- */
-        oElemInfo.Append( "),:ordinates)" );
-
-        return oElemInfo.StealString();
+        return CPLStrdup(szResult);
     }
 }
 
@@ -1139,10 +1141,11 @@ OGRErr OGROCITableLayer::CreateFeature( OGRFeature *poFeature )
     strcat( pszCommand+nOffset, ")" );
 
 /* -------------------------------------------------------------------- */
-/*      Bind and translate the ordinates if we have some.               */
+/*      Prepare statement.                                              */
 /* -------------------------------------------------------------------- */
     OGROCIStatement oInsert( poSession );
     int  bHaveOrdinates = strstr(pszCommand,":ordinates") != NULL;
+    int  bHaveElemInfo = strstr(pszCommand,":elem_info") != NULL;
 
     if( oInsert.Prepare( pszCommand ) != CE_None )
     {
@@ -1151,6 +1154,81 @@ OGRErr OGROCITableLayer::CreateFeature( OGRFeature *poFeature )
     }
 
     CPLFree( pszCommand );
+
+/* -------------------------------------------------------------------- */
+/*      Bind and translate the elem_info if we have some.               */
+/* -------------------------------------------------------------------- */
+    if( bHaveElemInfo )
+    {
+        OCIBind *hBindOrd = NULL;
+        int i;
+        OCINumber oci_number; 
+
+        // Create or clear VARRAY 
+        if( hElemInfoVARRAY == NULL )
+        {
+            if( poSession->Failed(
+                OCIObjectNew( poSession->hEnv, poSession->hError, 
+                              poSession->hSvcCtx, OCI_TYPECODE_VARRAY,
+                              poSession->hElemInfoTDO, (dvoid *)NULL, 
+                              OCI_DURATION_SESSION,
+                              FALSE, (dvoid **)&hElemInfoVARRAY),
+                "OCIObjectNew(hElemInfoVARRAY)") )
+                return OGRERR_FAILURE;
+        }
+        else
+        {
+            sb4  nOldCount;
+
+            OCICollSize( poSession->hEnv, poSession->hError, 
+                         hElemInfoVARRAY, &nOldCount );
+            OCICollTrim( poSession->hEnv, poSession->hError, 
+                         nOldCount, hElemInfoVARRAY );
+        }
+
+        // Prepare the VARRAY of ordinate values. 
+	for (i = 0; i < nElemInfoCount; i++)
+	{
+            if( poSession->Failed( 
+                OCINumberFromInt( poSession->hError, 
+                                  (dvoid *) (panElemInfo + i),
+                                  (uword)sizeof(int),
+                                  OCI_NUMBER_SIGNED,
+                                  &oci_number),
+                "OCINumberFromInt") )
+                return OGRERR_FAILURE;
+
+            if( poSession->Failed( 
+                OCICollAppend( poSession->hEnv, poSession->hError,
+                               (dvoid *) &oci_number,
+                               (dvoid *)0, hElemInfoVARRAY),
+                "OCICollAppend") )
+                return OGRERR_FAILURE;
+	}
+
+        // Do the binding.
+        if( poSession->Failed( 
+            OCIBindByName( oInsert.GetStatement(), &hBindOrd, 
+                           poSession->hError,
+                           (text *) ":elem_info", (sb4) -1, (dvoid *) 0, 
+                           (sb4) 0, SQLT_NTY, (dvoid *)0, (ub2 *)0, 
+                           (ub2 *)0, (ub4)0, (ub4 *)0, 
+                           (ub4)OCI_DEFAULT),
+            "OCIBindByName(:elem_info)") )
+            return OGRERR_FAILURE;
+
+        if( poSession->Failed(
+            OCIBindObject( hBindOrd, poSession->hError, 
+                           poSession->hElemInfoTDO,
+                           (dvoid **)&hElemInfoVARRAY, (ub4 *)0, 
+                           (dvoid **)0, (ub4 *)0),
+            "OCIBindObject(:elem_info)" ) )
+            return OGRERR_FAILURE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Bind and translate the ordinates if we have some.               */
+/* -------------------------------------------------------------------- */
     if( bHaveOrdinates )
     {
         OCIBind *hBindOrd = NULL;
