@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.45  2005/02/17 22:13:16  fwarmerdam
+ * added bForceCachedIO on dataset
+ *
  * Revision 1.44  2004/12/10 19:04:07  fwarmerdam
  * fix up docs a bit
  *
@@ -184,6 +187,12 @@ GDALDataset::GDALDataset()
     papoGDALDatasetList = (GDALDataset **) 
         CPLRealloc( papoGDALDatasetList, sizeof(void *) * nGDALDatasetCount );
     papoGDALDatasetList[nGDALDatasetCount-1] = this;
+
+/* -------------------------------------------------------------------- */
+/*      Set forced caching flag.                                        */
+/* -------------------------------------------------------------------- */
+    bForceCachedIO =  CSLTestBoolean( 
+        CPLGetConfigOption( "GDAL_FORCE_CACHING", "NO") );
 }
 
 /************************************************************************/
