@@ -5,7 +5,7 @@ GDAL_ROOT	=	$(shell (cd ..; pwd))
 
 include ../GDALmake.opt
 
-CPPFLAGS	:=	$(GDAL_INCLUDE) -I$(GDAL_ROOT)/frmts -I$(GDAL_ROOT)/alg $(CPPFLAGS)
+CPPFLAGS	:=	$(GDAL_INCLUDE) -I$(GDAL_ROOT)/frmts $(CPPFLAGS)
 DEP_LIBS	=	$(EXE_DEP_LIBS) $(XTRAOBJ)
 BIN_LIST	=	gdalinfo$(EXE) gdal_translate$(EXE) gdaladdo$(EXE) \
 			gdalwarp$(EXE)
