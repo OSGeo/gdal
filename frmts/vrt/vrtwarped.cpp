@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2005/04/04 15:25:59  fwarmerdam
+ * some functions now CPL_STDCALL
+ *
  * Revision 1.6  2004/09/29 13:21:08  fwarmerdam
  * Don't try and use relative include paths.
  *
@@ -100,12 +103,13 @@ CPL_CVSID("$Id$");
  * @return NULL on failure, or a new virtual dataset handle on success.
  */
 
-GDALDatasetH GDALAutoCreateWarpedVRT( GDALDatasetH hSrcDS, 
-                                      const char *pszSrcWKT,
-                                      const char *pszDstWKT,
-                                      GDALResampleAlg eResampleAlg, 
-                                      double dfMaxError, 
-                                      const GDALWarpOptions *psOptionsIn )
+GDALDatasetH CPL_STDCALL 
+GDALAutoCreateWarpedVRT( GDALDatasetH hSrcDS, 
+                         const char *pszSrcWKT,
+                         const char *pszDstWKT,
+                         GDALResampleAlg eResampleAlg, 
+                         double dfMaxError, 
+                         const GDALWarpOptions *psOptionsIn )
     
 {
     GDALWarpOptions *psWO;
@@ -223,7 +227,7 @@ GDALDatasetH GDALAutoCreateWarpedVRT( GDALDatasetH hSrcDS,
  * @return NULL on failure, or a new virtual dataset handle on success.
  */
 
-GDALDatasetH 
+GDALDatasetH CPL_STDCALL
 GDALCreateWarpedVRT( GDALDatasetH hSrcDS, 
                      int nPixels, int nLines, double *padfGeoTransform,
                      GDALWarpOptions *psOptions )
@@ -549,7 +553,8 @@ VRTWarpedDataset::IBuildOverviews( const char *pszResampling,
  * @return CE_None on success or CE_Failure if an error occurs. 
  */
 
-CPLErr GDALInitializeWarpedVRT( GDALDatasetH hDS, GDALWarpOptions *psWO )
+CPLErr CPL_STDCALL 
+GDALInitializeWarpedVRT( GDALDatasetH hDS, GDALWarpOptions *psWO )
 
 {
     return ((VRTWarpedDataset *) hDS)->Initialize( psWO );

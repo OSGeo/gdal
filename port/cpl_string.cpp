@@ -44,6 +44,9 @@
  *   without vsnprintf(). 
  *
  * $Log$
+ * Revision 1.42  2005/04/04 15:23:31  fwarmerdam
+ * some functions now CPL_STDCALL
+ *
  * Revision 1.41  2004/09/17 21:26:28  fwarmerdam
  * Yikes ... CPLEscapeString() was badly broken for BackslashEscapable.
  *
@@ -267,7 +270,7 @@ const char * CSLGetField( char ** papszStrList, int iField )
  *
  * Free all memory used by a StringList.
  **********************************************************************/
-void CSLDestroy(char **papszStrList)
+void CPL_STDCALL CSLDestroy(char **papszStrList)
 {
     char **papszPtr;
 
