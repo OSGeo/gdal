@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.113  2005/03/01 17:38:10  fwarmerdam
+ * fixed pszSrcWKT in GDALCreateAndReprojectImage
+ *
  * Revision 1.112  2005/02/21 04:10:32  fwarmerdam
  * added SetRasterColorInterpretation
  *
@@ -805,7 +808,7 @@ GDALReprojectImage( GDALDatasetH hSrcDS, NULLableString pszSrcWKT,
                     void *psOptions );
 
 int
-GDALCreateAndReprojectImage( GDALDatasetH hSrcDS, const char *pszSrcWKT, 
+GDALCreateAndReprojectImage( GDALDatasetH hSrcDS, NULLableString pszSrcWKT, 
                     NULLableString pszDstFilename, NULLableString pszDstWKT,
                     GDALDriverH hDstDriver, stringList papszCreateOptions,
                     int eResampleAlg, double dfWarpMemoryLimit,

@@ -33,8 +33,8 @@
  * and things like that.
  *
  * $Log$
- * Revision 1.106  2005/02/21 04:10:32  fwarmerdam
- * added SetRasterColorInterpretation
+ * Revision 1.107  2005/03/01 17:38:10  fwarmerdam
+ * fixed pszSrcWKT in GDALCreateAndReprojectImage
  *
  ************************************************************************/
 
@@ -5358,7 +5358,7 @@ static PyObject *_wrap_GDALCreateAndReprojectImage(PyObject *self, PyObject *arg
     PyObject * _resultobj;
     int  _result;
     GDALDatasetH  _arg0;
-    char * _arg1;
+    NULLableString  _arg1;
     NULLableString  _arg2;
     NULLableString  _arg3;
     GDALDriverH  _arg4;
@@ -5370,6 +5370,7 @@ static PyObject *_wrap_GDALCreateAndReprojectImage(PyObject *self, PyObject *arg
     void * _arg10;
     void * _arg11;
     char * _argc0 = 0;
+    char * _argc1 = 0;
     char * _argc2 = 0;
     char * _argc3 = 0;
     char * _argc4 = 0;
@@ -5379,11 +5380,17 @@ static PyObject *_wrap_GDALCreateAndReprojectImage(PyObject *self, PyObject *arg
     char * _argc11 = 0;
 
     self = self;
-    if(!PyArg_ParseTuple(args,"ssssssiddsss:GDALCreateAndReprojectImage",&_argc0,&_arg1,&_argc2,&_argc3,&_argc4,&_argc5,&_arg6,&_arg7,&_arg8,&_argc9,&_argc10,&_argc11)) 
+    if(!PyArg_ParseTuple(args,"ssssssiddsss:GDALCreateAndReprojectImage",&_argc0,&_argc1,&_argc2,&_argc3,&_argc4,&_argc5,&_arg6,&_arg7,&_arg8,&_argc9,&_argc10,&_argc11)) 
         return NULL;
     if (_argc0) {
         if (SWIG_GetPtr(_argc0,(void **) &_arg0,(char *) 0 )) {
             PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of GDALCreateAndReprojectImage. Expected _GDALDatasetH.");
+        return NULL;
+        }
+    }
+    if (_argc1) {
+        if (SWIG_GetPtr(_argc1,(void **) &_arg1,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of GDALCreateAndReprojectImage. Expected _NULLableString.");
         return NULL;
         }
     }
