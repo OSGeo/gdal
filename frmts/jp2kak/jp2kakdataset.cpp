@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.18  2003/12/05 21:28:45  warmerda
+ * Added Kakadu 4.1 support.
+ *
  * Revision 1.17  2003/10/14 17:46:15  warmerda
  * Added world file support.
  *
@@ -137,6 +140,10 @@
 
 #ifdef J2_INPUT_MAX_BUFFER_BYTES
 #  define KAKADU4
+
+#  ifdef JP2_COMPRESSION_TYPE_NONE
+#    define KAKADU41
+#  endif
 #endif									
 
 #if defined(KAKADU4) && defined(WIN32)
@@ -381,16 +388,29 @@ JP2KAKRasterBand::JP2KAKRasterBand( int nBand, int nDiscardLevels,
     if( oJP2Channels.exists() )
     {
         int nRedIndex=-1, nGreenIndex=-1, nBlueIndex=-1, nLutIndex;
+#ifdef KAKADU41
+        int nCSI;
+#endif
 
         if( oJP2Channels.get_num_colours() == 3 )
         {
+#ifdef KAKADU41 
+            oJP2Channels.get_colour_mapping( 0, nRedIndex, nLutIndex, nCSI );
+            oJP2Channels.get_colour_mapping( 1, nGreenIndex, nLutIndex, nCSI );
+            oJP2Channels.get_colour_mapping( 2, nBlueIndex, nLutIndex, nCSI );
+#else
             oJP2Channels.get_colour_mapping( 0, nRedIndex, nLutIndex );
             oJP2Channels.get_colour_mapping( 1, nGreenIndex, nLutIndex );
             oJP2Channels.get_colour_mapping( 2, nBlueIndex, nLutIndex );
+#endif
         }
         else
         {
+#ifdef KAKADU41 
+            oJP2Channels.get_colour_mapping( 0, nRedIndex, nLutIndex, nCSI );
+#else
             oJP2Channels.get_colour_mapping( 0, nRedIndex, nLutIndex );
+#endif
             eInterp = GCI_GrayIndex;
         }
 
@@ -419,6 +439,20 @@ JP2KAKRasterBand::JP2KAKRasterBand( int nBand, int nDiscardLevels,
             for( color_idx = 0; 
                  color_idx < oJP2Channels.get_num_colours(); color_idx++ )
             {
+#ifdef KAKADU41 
+                if( oJP2Channels.get_opacity_mapping( color_idx, opacity_idx,
+                                                      lut_idx, nCSI ) )
+                {
+                    if( opacity_idx == nBand - 1 )
+                        eInterp = GCI_AlphaBand;
+                }
+                if( oJP2Channels.get_premult_mapping( color_idx, opacity_idx,
+                                                      lut_idx, nCSI ) )
+                {
+                    if( opacity_idx == nBand - 1 )
+                        eInterp = GCI_AlphaBand;
+                }
+#else
                 if( oJP2Channels.get_opacity_mapping( color_idx, opacity_idx,
                                                       lut_idx ) )
                 {
@@ -431,6 +465,7 @@ JP2KAKRasterBand::JP2KAKRasterBand( int nBand, int nDiscardLevels,
                     if( opacity_idx == nBand - 1 )
                         eInterp = GCI_AlphaBand;
                 }
+#endif
             }
         }
     }
