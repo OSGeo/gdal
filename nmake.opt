@@ -30,7 +30,7 @@ VCDIR   = 	D:\Software\VStudio\VC98
 
 # Enable the following if VCDIR set properly, and you want the utility
 # programs to be able to expand wildcards. 
-#SETARGV =	$(VCDIR)\lib\setargv.obj
+#SETARGV =	"$(VCDIR)\lib\setargv.obj"
 
 # Comment out the following to disable JPEG support.
 JPEG_SUPPORTED = 1
