@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.73  2004/02/04 21:30:12  warmerda
+ * ensure GDALGetDataTypeByName is exported
+ *
  * Revision 1.72  2004/01/18 16:43:37  dron
  * Added GDALGetDataTypeByName() function.
  *
@@ -171,7 +174,7 @@ typedef enum {
 int CPL_DLL GDALGetDataTypeSize( GDALDataType );
 int CPL_DLL GDALDataTypeIsComplex( GDALDataType );
 const char CPL_DLL *GDALGetDataTypeName( GDALDataType );
-GDALDataType GDALGetDataTypeByName( const char * );
+GDALDataType CPL_DLL GDALGetDataTypeByName( const char * );
 GDALDataType CPL_DLL GDALDataTypeUnion( GDALDataType, GDALDataType );
 
 /*! Flag indicating read/write, or read-only access to data. */
