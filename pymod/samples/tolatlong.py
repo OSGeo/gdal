@@ -31,6 +31,9 @@
 ###############################################################################
 # 
 #  $Log$
+#  Revision 1.2  2003/09/01 15:04:43  dron
+#  More comments, report improved.
+#
 #  Revision 1.1  2003/07/03 10:27:23  dron
 #  New.
 #
@@ -45,8 +48,8 @@ import sys
 def Usage():
     print
     print 'Read coordinate system and geotransformation matrix from input'
-    print 'file and report latitude/longitude coordinates for the specified'
-    print 'pixel.'
+    print 'file and report latitude/longitude coordinates for the center'
+    print 'of the specified pixel.'
     print
     print 'Usage: tolatlong.py pixel line infile'
     print
@@ -86,19 +89,30 @@ if pixel is None:
 if line is None:
     Usage()
 
+# Open input dataset
 indataset = gdal.Open( infile, GA_ReadOnly )
 
+# Read geotransform matrix and calculate ground coordinates
 geomatrix = indataset.GetGeoTransform()
 X = geomatrix[0] + geomatrix[1] * pixel + geomatrix[2] * line
 Y = geomatrix[3] + geomatrix[4] * pixel + geomatrix[5] * line
 
+# Shift to the center of the pixel
+X += geomatrix[1] / 2.0
+Y += geomatrix[5] / 2.0
+
+# Build Spatial Reference object based on coordinate system, fecthed from the
+# opened dataset
 srs = osr.SpatialReference()
 srs.ImportFromWkt(indataset.GetProjection())
 
 srsLatLong = srs.CloneGeogCS()
 ct = osr.CoordinateTransformation(srs, srsLatLong)
-(long, lat, height) = ct.TransformPoint(X, Y)
+(lat, long, height) = ct.TransformPoint(X, Y)
 
-print 'pixel: %g, line: %g' % (pixel, line)
-print 'latitude: %g, longitude: %g (in degrees)' % (long, lat)
+# Report results
+print 'pixel: %g\t\t\tline: %g' % (pixel, line)
+print 'latitude: %fd\t\tlongitude: %fd' % (long, lat)
+print 'latitude: ', gdal.DecToDMS(long, 'Lat', 2), \
+    '\tlongitude: ', gdal.DecToDMS(lat, 'Long', 2)
 
