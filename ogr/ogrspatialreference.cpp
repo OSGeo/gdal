@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.34  2001/09/11 19:04:59  warmerda
+ * fixed logic in GetLinearUnits() to work on nodes with authority defn
+ *
  * Revision 1.33  2001/08/13 11:23:58  warmerda
  * improved IsSame() test
  *
@@ -1127,7 +1130,7 @@ double OGRSpatialReference::GetLinearUnits( char ** ppszName )
         OGR_SRSNode     *poChild = poCS->GetChild(iChild);
         
         if( EQUAL(poChild->GetValue(),"UNIT")
-            && poChild->GetChildCount() == 2 )
+            && poChild->GetChildCount() >= 2 )
         {
             if( ppszName != NULL )
                 *ppszName = (char *) poChild->GetChild(0)->GetValue();
