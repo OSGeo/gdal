@@ -344,10 +344,10 @@ else
   GEOTIFF_SETTING=external
   if test -r $with_geotiff/libgeotiff.a ; then
     LIBS="-L$with_geotiff -lgeotiff $LIBS"
-    EXTRA_INCLUDES="-I$with_libtiff $EXTRA_INCLUDES"
+    EXTRA_INCLUDES="-I$with_geotiff $EXTRA_INCLUDES"
   else
     LIBS="-L$with_geotiff/lib -lgeotiff $LIBS"
-    EXTRA_INCLUDES="-I$with_libtiff/include $EXTRA_INCLUDES"
+    EXTRA_INCLUDES="-I$with_geotiff/include $EXTRA_INCLUDES"
   fi
 
   echo "using libgeotiff from $with_geotiff."
@@ -1034,4 +1034,17 @@ AC_COMPILER_LOCALHACK
 rm -f conftest*
 
 AC_OUTPUT(GDALmake.opt)
+
+# Display configuration status
+
+LOC_MSG()
+LOC_MSG([GDAL is now configured for ${host}])
+LOC_MSG()
+LOC_MSG([  Installation directory:    ${prefix}/grass${NAME_VER}])
+LOC_MSG([  C compiler:                ${CC} ${CFLAGS}])
+LOC_MSG([  C++ compiler:              ${CXX} ${CXXFLAGS}])
+LOC_MSG()
+LOC_MSG_USE(LIBTOOL support,HAVE_LIBTOOL)
+LOC_MSG_USE(LIBZ support,LIBZ_SETTING)
+LOC_MSG()
 
