@@ -182,7 +182,7 @@ int main( int argc, char ** argv )
                     break;
                 }
 
-                if( panRaster[i+j*psInfo->nBlockXSize] == GRID_NO_DATA )
+                if( panRaster[i+j*psInfo->nBlockXSize] == ESRI_GRID_NO_DATA )
                     printf( "-*- " );
                 else if( psInfo->nCellType == AIG_CELLTYPE_FLOAT )
                     printf( "%f ",
