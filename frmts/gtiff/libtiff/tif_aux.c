@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_aux.c,v 1.3 2000/03/03 15:22:00 warmerda Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_aux.c,v 1.4 2003/05/06 18:52:49 dron Exp $ */
 
 /*
  * Copyright (c) 1991-1997 Sam Leffler
@@ -30,6 +30,7 @@
  * Auxiliary Support Routines.
  */
 #include "tiffiop.h"
+#include "tif_predict.h"
 
 #ifdef COLORIMETRY_SUPPORT
 #include <math.h>
@@ -116,6 +117,12 @@ TIFFVGetFieldDefaulted(TIFF* tif, ttag_t tag, va_list ap)
 	case TIFFTAG_RESOLUTIONUNIT:
 		*va_arg(ap, uint16 *) = td->td_resolutionunit;
 		return (1);
+	case TIFFTAG_PREDICTOR:
+                {
+			TIFFPredictorState* sp = (TIFFPredictorState*) tif->tif_data;
+			*va_arg(ap, uint16*) = sp->predictor;
+			return (1);
+                }
 #ifdef CMYK_SUPPORT
 	case TIFFTAG_DOTRANGE:
 		*va_arg(ap, uint16 *) = 0;

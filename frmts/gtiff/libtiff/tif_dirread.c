@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_dirread.c,v 1.14 2002/12/17 17:10:07 warmerda Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_dirread.c,v 1.16 2003/04/17 19:28:00 dron Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -78,6 +78,8 @@ CheckMalloc(TIFF* tif, tsize_t n, const char* what)
 int
 TIFFReadDirectory(TIFF* tif)
 {
+	static const char module[] = "TIFFReadDirectory";
+
 	register TIFFDirEntry* dp;
 	register int n;
 	register TIFFDirectory* td;
@@ -103,13 +105,15 @@ TIFFReadDirectory(TIFF* tif)
 	nextdiroff = 0;
 	if (!isMapped(tif)) {
 		if (!SeekOK(tif, tif->tif_diroff)) {
-			TIFFError(tif->tif_name,
-			    "Seek error accessing TIFF directory");
+			TIFFError(module,
+			    "%.1000s: Seek error accessing TIFF directory",
+                            tif->tif_name);
 			return (0);
 		}
 		if (!ReadOK(tif, &dircount, sizeof (uint16))) {
-			TIFFError(tif->tif_name,
-			    "Can not read TIFF directory count");
+			TIFFError(module,
+			    "%.1000s: Can not read TIFF directory count",
+                            tif->tif_name);
 			return (0);
 		}
 		if (tif->tif_flags & TIFF_SWAB)
@@ -119,7 +123,9 @@ TIFFReadDirectory(TIFF* tif)
 		if (dir == NULL)
 			return (0);
 		if (!ReadOK(tif, dir, dircount*sizeof (TIFFDirEntry))) {
-			TIFFError(tif->tif_name, "Can not read TIFF directory");
+			TIFFError(module,
+                                  "%.100s: Can not read TIFF directory",
+                                  tif->tif_name);
 			goto bad;
 		}
 		/*
@@ -130,8 +136,9 @@ TIFFReadDirectory(TIFF* tif)
 		toff_t off = tif->tif_diroff;
 
 		if (off + sizeof (uint16) > tif->tif_size) {
-			TIFFError(tif->tif_name,
-			    "Can not read TIFF directory count");
+			TIFFError(module,
+			    "%.1000s: Can not read TIFF directory count",
+                            tif->tif_name);
 			return (0);
 		} else
 			_TIFFmemcpy(&dircount, tif->tif_base + off, sizeof (uint16));
@@ -143,7 +150,9 @@ TIFFReadDirectory(TIFF* tif)
 		if (dir == NULL)
 			return (0);
 		if (off + dircount*sizeof (TIFFDirEntry) > tif->tif_size) {
-			TIFFError(tif->tif_name, "Can not read TIFF directory");
+			TIFFError(module,
+                                  "%.1000s: Can not read TIFF directory",
+                                  tif->tif_name);
 			goto bad;
 		} else
 			_TIFFmemcpy(dir, tif->tif_base + off,
@@ -228,8 +237,10 @@ TIFFReadDirectory(TIFF* tif)
 		 */
 		if (dp->tdir_tag < tif->tif_fieldinfo[fix]->field_tag) {
 			if (!diroutoforderwarning) {
-				TIFFWarning(tif->tif_name,
-	"invalid TIFF directory; tags are not sorted in ascending order");
+				TIFFWarning(module,
+	                                    "%.1000s: invalid TIFF directory; "
+                                            "tags are not sorted in ascending order",
+                                            tif->tif_name);
 				diroutoforderwarning = 1;
 			}
 			fix = 0;			/* O(n^2) */
@@ -240,9 +251,9 @@ TIFFReadDirectory(TIFF* tif)
 		if (fix == tif->tif_nfields ||
 		    tif->tif_fieldinfo[fix]->field_tag != dp->tdir_tag) {
 
-                    TIFFWarning(tif->tif_name,
-                                "unknown field with tag %d (0x%x) encountered",
-                                dp->tdir_tag,  dp->tdir_tag);
+                    TIFFWarning(module,
+                                "%.1000s: unknown field with tag %d (0x%x) encountered",
+                                tif->tif_name, dp->tdir_tag,  dp->tdir_tag);
 
                     TIFFMergeFieldInfo( tif,
                                         _TIFFCreateAnonFieldInfo( tif,
@@ -272,9 +283,9 @@ TIFFReadDirectory(TIFF* tif)
 			fip++, fix++;
 			if (fix == tif->tif_nfields ||
 			    fip->field_tag != dp->tdir_tag) {
-				TIFFWarning(tif->tif_name,
-				   "wrong data type %d for \"%s\"; tag ignored",
-				    dp->tdir_type, fip[-1].field_name);
+				TIFFWarning(module,
+				   "%.1000s: wrong data type %d for \"%s\"; tag ignored",
+				    tif->tif_name, dp->tdir_type, fip[-1].field_name);
 				goto ignore;
 			}
 		}
@@ -509,15 +520,23 @@ TIFFReadDirectory(TIFF* tif)
 		    MissingRequired(tif, "StripByteCounts");
 		    goto bad;
 		}
-		TIFFWarning(tif->tif_name,
-"TIFF directory is missing required \"%s\" field, calculating from imagelength",
-		    _TIFFFieldWithTag(tif,TIFFTAG_STRIPBYTECOUNTS)->field_name);
+		TIFFWarning(module,
+                            "%.1000s: TIFF directory is missing required "
+                            "\"%s\" field, calculating from imagelength",
+                            tif->tif_name,
+		            _TIFFFieldWithTag(tif,TIFFTAG_STRIPBYTECOUNTS)->field_name);
 		if (EstimateStripByteCounts(tif, dir, dircount) < 0)
 		    goto bad;
+/* 
+ * Assume we have wrong StripByteCount value (in case of single strip) in
+ * following cases:
+ *   - it is equal to zero along with StripOffset;
+ *   - it is larger than file itself (in case of uncompressed image).
+ */
 #define	BYTECOUNTLOOKSBAD \
-    ((td->td_stripbytecount[0] == 0 && td->td_stripoffset[0] != 0) || \
-    (td->td_compression == COMPRESSION_NONE && \
-     td->td_stripbytecount[0] > TIFFGetFileSize(tif) - td->td_stripoffset[0]))
+    ( (td->td_stripbytecount[0] == 0 && td->td_stripoffset[0] != 0) || \
+      (td->td_compression == COMPRESSION_NONE && \
+       td->td_stripbytecount[0] > TIFFGetFileSize(tif) - td->td_stripoffset[0]) )
 	} else if (td->td_nstrips == 1 && BYTECOUNTLOOKSBAD) {
 		/*
 		 * Plexus (and others) sometimes give a value
@@ -526,9 +545,11 @@ TIFFReadDirectory(TIFF* tif)
 		 * simple case of estimating the size of a one
 		 * strip image.
 		 */
-		TIFFWarning(tif->tif_name,
-	    "Bogus \"%s\" field, ignoring and calculating from imagelength",
-		    _TIFFFieldWithTag(tif,TIFFTAG_STRIPBYTECOUNTS)->field_name);
+		TIFFWarning(module,
+	                    "%.1000s: Bogus \"%s\" field, ignoring "
+                            "and calculating from imagelength",
+                            tif->tif_name,
+		            _TIFFFieldWithTag(tif,TIFFTAG_STRIPBYTECOUNTS)->field_name);
 		if(EstimateStripByteCounts(tif, dir, dircount) < 0)
 		    goto bad;
 	}
