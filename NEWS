@@ -1,3 +1,106 @@
+GDAL 1.1.8 - Overview of Changes
+--------------------------------
+
+ o Implemented HDF 4 read/write support. This includes HDF EOS reading.
+
+ o Implemented Windows BMP read/write support. 
+
+ o Implemented NITF read/write support. 
+
+ o Implemented NOAA Polar Orbiter L1B format driver. 
+
+ o Implemented EOSAT FAST format driver. 
+
+ o Implemented a JasPer based JPEG2000 driver (several limitations).
+
+ o Implemented a Kakadu based JPEG2000/GeoJP2(tm) driver (full featured, but 
+   Kakadu is not open source). 
+
+ o Implemented new 'gdalwarp' application for projection and GCP based image
+   warping.  See gdal/alg for underlying algorithms.  Currently gdalwarp only
+   supports 8 bit images and holds the whole source image in memory.
+
+ o Implemented write support for ESRI ASCII Grids. 
+
+ o Lots of improvements to GeoTIFF driver.  Metadata writing, update of
+   georeferencing, and support for writing PCS codes based on AUTHORITY fields
+   in WKT.  
+
+ o Implemented support for uncompressed 1bit data in Erdas Imagine files,
+   as well as generic metadata.
+
+ o Fixed 0xFF compression support in the Arc/Info Binary Grid (AIG) driver.
+
+ o Lots of improvements to BSB drive, including preliminary uncompressed 
+   output support, support for reading BSB 3.0 and GEO/NOS.
+
+ o Lots of work on VRT format.  
+
+ o ECW: Fixed bug with reading a more than full resultion.
+
+ o Envisat driver now supports AATSR TOA and MERIS data.
+
+ o Fixes for nodata support in GRASS driver.
+
+ o Added the --version and --formats options to many utility programs.
+
+ o gdal_translate: 
+    - added -projwin flag to copy a window specified in projection coordinates.
+    - added the -a_srs option to assign a user supplied SRS to output file.
+    - translation with subsetting to any format now support (uses VRT inside).
+
+ o Lots of metadata now attached to driver objects describing their 
+   capabilities. 
+
+ o Implemented GDALDestroyDriverManager() to ensure full memory cleanup of
+   GDAL related resources.
+
+ o Added a 'devinstall' target on Windows to support easy installation of
+   include files and stub libraries on Windows.  Also many other improvements
+   to Windows build.  Most options can be easily turned on and off from the
+   nmake.opt file now.
+
+
+OGR 1.1.8 - Overview of Changes
+-------------------------------
+
+ o Implemented support for writing 2D DGN files.   Added support for MSLINK
+   and Text values available as attributes.
+
+ o Implemented FMEObjects based read driver. 
+
+ o Implemented ExecuteSQL() method on OGRDataSource.  Generic code supports
+   fairly full featured SELECT statements. 
+
+ o Various fixes to 3D shapefile support. 
+
+ o Fixes to binary representation for 2.5D geometries.  Fixed MULTIPOINT WKT
+   geometry representation.
+
+ o Upgraded OGRSpatialReference.importFromEPSG() to use the new EPSG 6.2.2
+   tables instead of the old EPSG 4.x tables.
+
+ o Many fixes to PostGIS driver, including special creation options for
+   "laundering" field names to save tokens.
+
+ o Many improvements to standards conformance of OGRSpatialReference WKT
+   representation to the OGC Coordinate Transformations specification.  Still
+   some quirks related to prime meridians and coordinate systems with units
+   other than degrees.
+
+ o Implemented support for Meridian 2 NTF files in NTF driver.  Better
+   support for GENERIC_CPOLY geometries.
+
+ o  Added support for [NOT] IN, [NOT] LIKE and IS [NOT] NULL predicates in 
+   WHERE clauses.
+
+ o Implemented a C API for accessing OGR.
+
+ o Implemented support for building OLE DB Provider with Visual Studio.NET
+   (many changes in ATL templates).  Lots of other OLE DB improvements for
+   better MapGuide compatibility.
+
+
 GDAL 1.1.7 - Overview of Changes
 --------------------------------
 
