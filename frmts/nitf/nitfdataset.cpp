@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.24  2004/12/10 21:24:20  fwarmerdam
+ * fix RPC offset, added ichipb metadata
+ *
  * Revision 1.23  2004/09/22 19:35:06  fwarmerdam
  * Fixed bug with ysize being taken from xsize of input in CopyCreate().
  *
@@ -881,19 +884,95 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo )
                      sRPCInfo.SAMP_DEN_COEFF[i] );
         poDS->SetMetadataItem( "RPC_SAMP_DEN_COEFF", szValue );
 
-        sprintf( szValue, "%.16g", sRPCInfo.LONG_OFF );
+        sprintf( szValue, "%.16g", 
+                 sRPCInfo.LONG_OFF - ( sRPCInfo.LONG_SCALE / 2.0 ) );
         poDS->SetMetadataItem( "RPC_MIN_LONG", szValue );
 
-        sprintf( szValue, "%.16g", 
-                 sRPCInfo.LONG_OFF + 2 * sRPCInfo.LONG_SCALE );
+        sprintf( szValue, "%.16g",
+                 sRPCInfo.LONG_OFF + ( sRPCInfo.LONG_SCALE / 2.0 ) );
         poDS->SetMetadataItem( "RPC_MAX_LONG", szValue );
 
-        sprintf( szValue, "%.16g", sRPCInfo.LAT_OFF );
+        sprintf( szValue, "%.16g", 
+                 sRPCInfo.LAT_OFF - ( sRPCInfo.LAT_SCALE / 2.0 ) );
         poDS->SetMetadataItem( "RPC_MIN_LAT", szValue );
 
         sprintf( szValue, "%.16g", 
-                 sRPCInfo.LAT_OFF + 2 * sRPCInfo.LAT_SCALE );
+                 sRPCInfo.LAT_OFF + ( sRPCInfo.LAT_SCALE / 2.0 ) );
         poDS->SetMetadataItem( "RPC_MAX_LAT", szValue );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Do we have Chip info?                                            */
+/* -------------------------------------------------------------------- */
+    NITFICHIPBInfo sChipInfo;
+
+    if( NITFReadICHIPB( psImage, &sChipInfo ) && sChipInfo.XFRM_FLAG == 0 )
+    {
+        char szValue[1280];
+
+        sprintf( szValue, "%.16g", sChipInfo.SCALE_FACTOR );
+        poDS->SetMetadataItem( "ICHIP_SCALE_FACTOR", szValue );
+
+        sprintf( szValue, "%d", sChipInfo.ANAMORPH_CORR );
+        poDS->SetMetadataItem( "ICHIP_ANAMORPH_CORR", szValue );
+
+        sprintf( szValue, "%d", sChipInfo.SCANBLK_NUM );
+        poDS->SetMetadataItem( "ICHIP_SCANBLK_NUM", szValue );
+
+        sprintf( szValue, "%.16g", sChipInfo.OP_ROW_11 );
+        poDS->SetMetadataItem( "ICHIP_OP_ROW_11", szValue );
+
+        sprintf( szValue, "%.16g", sChipInfo.OP_COL_11 );
+        poDS->SetMetadataItem( "ICHIP_OP_COL_11", szValue );
+
+        sprintf( szValue, "%.16g", sChipInfo.OP_ROW_12 );
+        poDS->SetMetadataItem( "ICHIP_OP_ROW_12", szValue );
+
+        sprintf( szValue, "%.16g", sChipInfo.OP_COL_12 );
+        poDS->SetMetadataItem( "ICHIP_OP_COL_12", szValue );
+
+        sprintf( szValue, "%.16g", sChipInfo.OP_ROW_21 );
+        poDS->SetMetadataItem( "ICHIP_OP_ROW_21", szValue );
+
+        sprintf( szValue, "%.16g", sChipInfo.OP_COL_21 );
+        poDS->SetMetadataItem( "ICHIP_OP_COL_21", szValue );
+
+        sprintf( szValue, "%.16g", sChipInfo.OP_ROW_22 );
+        poDS->SetMetadataItem( "ICHIP_OP_ROW_22", szValue );
+
+        sprintf( szValue, "%.16g", sChipInfo.OP_COL_22 );
+        poDS->SetMetadataItem( "ICHIP_OP_COL_22", szValue );
+
+        sprintf( szValue, "%.16g", sChipInfo.FI_ROW_11 );
+        poDS->SetMetadataItem( "ICHIP_FI_ROW_11", szValue );
+
+        sprintf( szValue, "%.16g", sChipInfo.FI_COL_11 );
+        poDS->SetMetadataItem( "ICHIP_FI_COL_11", szValue );
+
+        sprintf( szValue, "%.16g", sChipInfo.FI_ROW_12 );
+        poDS->SetMetadataItem( "ICHIP_FI_ROW_12", szValue );
+
+        sprintf( szValue, "%.16g", sChipInfo.FI_COL_12 );
+        poDS->SetMetadataItem( "ICHIP_FI_COL_12", szValue );
+
+        sprintf( szValue, "%.16g", sChipInfo.FI_ROW_21 );
+        poDS->SetMetadataItem( "ICHIP_FI_ROW_21", szValue );
+
+        sprintf( szValue, "%.16g", sChipInfo.FI_COL_21 );
+        poDS->SetMetadataItem( "ICHIP_FI_COL_21", szValue );
+
+        sprintf( szValue, "%.16g", sChipInfo.FI_ROW_22 );
+        poDS->SetMetadataItem( "ICHIP_FI_ROW_22", szValue );
+
+        sprintf( szValue, "%.16g", sChipInfo.FI_COL_22 );
+        poDS->SetMetadataItem( "ICHIP_FI_COL_22", szValue );
+
+        sprintf( szValue, "%d", sChipInfo.FI_ROW );
+        poDS->SetMetadataItem( "ICHIP_FI_ROW", szValue );
+
+        sprintf( szValue, "%d", sChipInfo.FI_COL );
+        poDS->SetMetadataItem( "ICHIP_FI_COL", szValue );
+
     }
 
 /* -------------------------------------------------------------------- */
