@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2002/03/01 16:45:53  warmerda
+ * added support for retaining nodata value
+ *
  * Revision 1.4  2001/10/26 20:03:28  warmerda
  * added C entry point for creating MEMRasterBand
  *
@@ -97,6 +100,8 @@ MEMRasterBand::MEMRasterBand( GDALDataset *poDS, int nBand,
     bOwnData = bAssumeOwnership;
 
     pabyData = pabyDataIn;
+
+    bNoDataSet  = FALSE;
 }
 
 /************************************************************************/
@@ -175,6 +180,36 @@ CPLErr MEMRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
                     nWordSize );
         }
     }
+
+    return CE_None;
+}
+
+/************************************************************************/
+/*                            GetNoDataValue()                          */
+/************************************************************************/
+double MEMRasterBand::GetNoDataValue( int *pbSuccess )
+
+{
+    if( pbSuccess )
+        *pbSuccess = bNoDataSet;
+
+    CPLDebug( "MEMRasterBand", "GetNoDataValue" );
+
+    if( bNoDataSet )
+        return dfNoData;
+    else
+        return 0.0;
+}
+
+/************************************************************************/
+/*                            SetNoDataValue()                          */
+/************************************************************************/
+CPLErr MEMRasterBand::SetNoDataValue( double dfNewValue )
+{
+    dfNoData = dfNewValue;
+    bNoDataSet = TRUE;
+
+    CPLDebug( "MEMRasterBand", "SetNoDataValue" );
 
     return CE_None;
 }
