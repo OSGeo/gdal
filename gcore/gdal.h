@@ -26,6 +26,9 @@
  * that calls the GDAL library.
  * 
  * $Log$
+ * Revision 1.12  1999/10/21 13:23:28  warmerda
+ * Added C callable driver related functions.
+ *
  * Revision 1.11  1999/10/01 14:44:02  warmerda
  * added documentation
  *
@@ -136,6 +139,15 @@ GDALDatasetH CPL_DLL GDALCreate( GDALDriverH hDriver,
 GDALDatasetH CPL_DLL GDALOpen( const char *, GDALAccess );
 
 GDALDriverH CPL_DLL GDALGetDriverByName( const char * );
+int CPL_DLL         GDALGetDriverCount();
+GDALDriverH CPL_DLL GDALGetDriver( int );
+int         CPL_DLL GDALRegisterDriver( GDALDriverH );
+void        CPL_DLL GDALDeregisterDriver( GDALDriverH );
+void        CPL_DLL GDALMoveDriver( GDALDriverH, int );
+
+const char CPL_DLL *GDALGetDriverShortName( GDALDriverH );
+const char CPL_DLL *GDALGetDriverLongName( GDALDriverH );
+const char CPL_DLL *GDALGetDriverHelpTopic( GDALDriverH );
 
 /* ==================================================================== */
 /*      GDALDataset class ... normally this represents one file.        */
