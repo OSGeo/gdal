@@ -31,6 +31,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.14  2004/09/01 19:10:32  warmerda
+ * added UTM support care of Hunter Blanks (newwireless.com)
+ *
  * Revision 1.13  2004/05/11 00:40:45  warmerda
  * fixed single precision resolution fields
  *
@@ -94,6 +97,9 @@ typedef struct
     double      dfULX, dfULY;  // corner pixels, and in decimal degrees.
     double      dfURX, dfURY;
     double      dfLRX, dfLRY;
+
+    int         utmzone;
+    char        horizdatum[2];
 
     double      dfHorizStepSize;
     double      dfVertStepSize;
@@ -357,10 +363,16 @@ static int USGSDEMWriteARecord( USGSDEMWriteInfo *psWInfo )
 /* -------------------------------------------------------------------- */
 /*      SW Geographic Corner - SDDDMMSS.SSSS - longitude then latitude  */
 /* -------------------------------------------------------------------- */
-    TextFill( achARec + 109, 13, 
-              USGSDEMDecToPackedDMS( psWInfo->dfLLX ) ); // longitude
-    TextFill( achARec + 122, 13, 
-              USGSDEMDecToPackedDMS( psWInfo->dfLLY ) ); // latitude
+    if ( ! psWInfo->utmzone )
+    {
+        TextFill( achARec + 109, 13, 
+            USGSDEMDecToPackedDMS( psWInfo->dfLLX ) ); // longitude
+        TextFill( achARec + 122, 13, 
+            USGSDEMDecToPackedDMS( psWInfo->dfLLY ) ); // latitude
+    }
+    /* this may not be best according to the spec.  But for now,
+     * we won't try to convert the UTM coordinates to lat/lon
+     */
 
 /* -------------------------------------------------------------------- */
 /*      Process code.                                                   */
@@ -404,7 +416,10 @@ static int USGSDEMWriteARecord( USGSDEMWriteInfo *psWInfo )
         TextFillR( achARec + 144, 6, pszOption );  // 1, 2 or 3.
         
     else if( pszTemplate == NULL )
-        TextFillR( achARec + 144, 6, "" );  // 1, 2 or 3.
+        TextFillR( achARec + 144, 6, "1" );  // 1, 2 or 3.
+        /* some DEM readers require a value, 1 seems to be a
+         * default
+         */
     
 /* -------------------------------------------------------------------- */
 /*      Elevation Pattern                                               */
@@ -418,13 +433,28 @@ static int USGSDEMWriteARecord( USGSDEMWriteInfo *psWInfo )
 /*      1 = UTM                                                         */
 /*      2 = Stateplane                                                  */
 /* -------------------------------------------------------------------- */
-    TextFillR( achARec + 156, 6, "0" );
+    if ( ! psWInfo->utmzone )
+    {
+        TextFillR( achARec + 156, 6, "0" );
+    }
+    else
+    {
+        TextFillR( achARec + 156, 6, "1" );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      UTM / State Plane zone.                                         */
 /* -------------------------------------------------------------------- */
-    TextFillR( achARec + 162, 6, "0" );
-
+    if ( ! psWInfo->utmzone )
+    {
+        TextFillR( achARec + 162, 6, "0");
+    }
+    else
+    {
+        TextFillR( achARec + 162, 6,
+            CPLSPrintf( "%02d", psWInfo->utmzone) );
+    } 
+    
 /* -------------------------------------------------------------------- */
 /*      Map Projection Parameters (all 0.0).                            */
 /* -------------------------------------------------------------------- */
@@ -438,7 +468,14 @@ static int USGSDEMWriteARecord( USGSDEMWriteInfo *psWInfo )
 /*      2 = meters                                                      */
 /*      3 = arc seconds                                                 */
 /* -------------------------------------------------------------------- */
-    TextFillR( achARec + 528, 6, "3" );
+    if ( ! psWInfo->utmzone )
+    {
+        TextFillR( achARec + 528, 6, "3" );
+    }
+    else
+    {
+        TextFillR( achARec + 528, 6, "2" );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Vertical unit of measure.                                       */
@@ -456,25 +493,50 @@ static int USGSDEMWriteARecord( USGSDEMWriteInfo *psWInfo )
 /*      4 corner coordinates: SW, NW, NE, SE                            */
 /*      Corners are in 24.15 format in arc seconds.                     */
 /* -------------------------------------------------------------------- */
-    // SW - longitude
-    USGSDEMPrintDouble( achARec + 546, psWInfo->dfLLX * 3600.0 );
-    // SW - latitude
-    USGSDEMPrintDouble( achARec + 570, psWInfo->dfLLY * 3600.0 );
+    if ( ! psWInfo->utmzone )
+    {
+        // SW - longitude
+        USGSDEMPrintDouble( achARec + 546, psWInfo->dfLLX * 3600.0 );
+        // SW - latitude
+        USGSDEMPrintDouble( achARec + 570, psWInfo->dfLLY * 3600.0 );
 
-    // NW - longitude
-    USGSDEMPrintDouble( achARec + 594, psWInfo->dfULX * 3600.0 );
-    // NW - latitude
-    USGSDEMPrintDouble( achARec + 618, psWInfo->dfULY * 3600.0 );
+        // NW - longitude
+        USGSDEMPrintDouble( achARec + 594, psWInfo->dfULX * 3600.0 );
+        // NW - latitude
+        USGSDEMPrintDouble( achARec + 618, psWInfo->dfULY * 3600.0 );
 
-    // NE - longitude
-    USGSDEMPrintDouble( achARec + 642, psWInfo->dfURX * 3600.0 );
-    // NE - latitude
-    USGSDEMPrintDouble( achARec + 666, psWInfo->dfURY * 3600.0 );
+        // NE - longitude
+        USGSDEMPrintDouble( achARec + 642, psWInfo->dfURX * 3600.0 );
+        // NE - latitude
+        USGSDEMPrintDouble( achARec + 666, psWInfo->dfURY * 3600.0 );
 
-    // SE - longitude
-    USGSDEMPrintDouble( achARec + 690, psWInfo->dfLRX * 3600.0 );
-    // SE - latitude
-    USGSDEMPrintDouble( achARec + 714, psWInfo->dfLRY * 3600.0 );
+        // SE - longitude
+        USGSDEMPrintDouble( achARec + 690, psWInfo->dfLRX * 3600.0 );
+        // SE - latitude
+        USGSDEMPrintDouble( achARec + 714, psWInfo->dfLRY * 3600.0 );
+    }
+    else
+    {
+        // SW - easting
+        USGSDEMPrintDouble( achARec + 546, psWInfo->dfLLX );
+        // SW - northing
+        USGSDEMPrintDouble( achARec + 570, psWInfo->dfLLY );
+
+        // NW - easting
+        USGSDEMPrintDouble( achARec + 594, psWInfo->dfULX );
+        // NW - northing
+        USGSDEMPrintDouble( achARec + 618, psWInfo->dfULY );
+
+        // NE - easting
+        USGSDEMPrintDouble( achARec + 642, psWInfo->dfURX );
+        // NE - northing
+        USGSDEMPrintDouble( achARec + 666, psWInfo->dfURY );
+
+        // SE - easting
+        USGSDEMPrintDouble( achARec + 690, psWInfo->dfLRX );
+        // SE - northing
+        USGSDEMPrintDouble( achARec + 714, psWInfo->dfLRY );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Minimum and Maximum elevations for this cell.                   */
@@ -518,9 +580,23 @@ static int USGSDEMWriteARecord( USGSDEMWriteInfo *psWInfo )
 /* -------------------------------------------------------------------- */
 /*      Spatial Resolution (x, y and z).   12.6 format.                 */
 /* -------------------------------------------------------------------- */
-    USGSDEMPrintSingle( achARec + 816, psWInfo->dfHorizStepSize*3600.0 );
-    USGSDEMPrintSingle( achARec + 828, psWInfo->dfVertStepSize*3600.0 );
-    USGSDEMPrintSingle( achARec + 840, 1.0 );
+    if ( ! psWInfo->utmzone )
+    {
+        USGSDEMPrintSingle( achARec + 816,
+            psWInfo->dfHorizStepSize*3600.0 );
+        USGSDEMPrintSingle( achARec + 828,
+            psWInfo->dfVertStepSize*3600.0 );
+        USGSDEMPrintSingle( achARec + 840, 1.0 );
+    }
+    else
+    {
+        USGSDEMPrintSingle( achARec + 816,
+            psWInfo->dfHorizStepSize );
+        USGSDEMPrintSingle( achARec + 828,
+            psWInfo->dfVertStepSize );
+        USGSDEMPrintSingle( achARec + 840, 1.0 );
+    }
+
 
 /* -------------------------------------------------------------------- */
 /*      Rows and Columns of profiles.                                   */
@@ -600,8 +676,15 @@ static int USGSDEMWriteARecord( USGSDEMWriteInfo *psWInfo )
 /*      3 = WGS84                                                       */
 /*      4 = NAD83                                                       */
 /* -------------------------------------------------------------------- */
-    if( pszTemplate == NULL )
-        TextFillR( achARec + 890, 2, "4" );
+    if( strlen( psWInfo->horizdatum ) == 0) {
+        if( pszTemplate == NULL )
+            TextFillR( achARec + 890, 2, "4" );
+    }
+    else
+    {
+        if( pszTemplate == NULL )
+            TextFillR( achARec + 890, 2, psWInfo->horizdatum );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Data edition/version, specification edition/version.            */
@@ -682,15 +765,30 @@ static int USGSDEMWriteProfile( USGSDEMWriteInfo *psWInfo, int iProfile )
 
 /* -------------------------------------------------------------------- */
 /*      Location of center of bottom most sample in profile.            */
-/*      Format D24.15.  In arc-seconds.                                 */
+/*      Format D24.15.  In arc-seconds if geographic, meters            */
+/*      if UTM.                                                         */
 /* -------------------------------------------------------------------- */
-    // longitude
-    USGSDEMPrintDouble( achBuffer +  24, 
+    if( ! psWInfo->utmzone )
+    {
+        // longitude
+        USGSDEMPrintDouble( achBuffer +  24, 
                         3600 * (psWInfo->dfLLX 
                                 + iProfile * psWInfo->dfHorizStepSize) );
 
-    // latitude
-    USGSDEMPrintDouble( achBuffer +  48, psWInfo->dfLLY * 3600.0 );
+        // latitude
+        USGSDEMPrintDouble( achBuffer +  48, psWInfo->dfLLY * 3600.0 );
+    }
+    else
+    {
+        // easting
+        USGSDEMPrintDouble( achBuffer +  24, 
+                        (psWInfo->dfLLX 
+                            + iProfile * psWInfo->dfHorizStepSize) );
+
+        // northing
+        USGSDEMPrintDouble( achBuffer +  48, psWInfo->dfLLY );
+    }
+
 
 /* -------------------------------------------------------------------- */
 /*      Local vertical datum offset.                                    */
@@ -1046,6 +1144,7 @@ static int USGSDEMProductSetup_CDED50K( USGSDEMWriteInfo *psWInfo )
 /* -------------------------------------------------------------------- */
     OGRSpatialReference oSRS;
     oSRS.SetWellKnownGeogCS( "NAD83" );
+    strncpy( psWInfo->horizdatum, "4", 2 );  //USGS DEM code for NAD83
 
     oSRS.exportToWkt( &(psWInfo->pszDstSRS) );
 
@@ -1054,6 +1153,95 @@ static int USGSDEMProductSetup_CDED50K( USGSDEMWriteInfo *psWInfo )
 /* -------------------------------------------------------------------- */
     CPLReadLine( NULL );
 
+    return TRUE;
+}
+
+/************************************************************************/
+/*                    USGSDEMProductSetup_DEFAULT()                     */
+/*                                                                      */
+/*      Sets up the new DEM dataset parameters, using the source        */
+/*      dataset's parameters.  If the source dataset uses UTM or        */
+/*      geographic coordinates, the coordinate system is carried over   */
+/*      to the new DEM file's parameters.  If the source dataset has a  */
+/*      DEM compatible horizontal datum, the datum is carried over.     */
+/*      Otherwise, the DEM dataset is configured to use geographic      */
+/*      coordinates and a default datum.                                */
+/*      (Hunter Blanks, 8/31/04, hblanks@artifex.org)                   */
+/************************************************************************/
+
+static int USGSDEMProductSetup_DEFAULT( USGSDEMWriteInfo *psWInfo )
+
+{
+
+/* -------------------------------------------------------------------- */
+/*      Set the destination coordinate system.                          */
+/* -------------------------------------------------------------------- */
+    OGRSpatialReference DstoSRS;
+    OGRSpatialReference SrcoSRS;
+    char                *sourceWkt;
+    int                 bNorth = TRUE;
+        /* XXX here we are assume (!) northern hemisphere UTM datasets  */
+    char                **readSourceWkt;
+    int                 i;
+    int                 numdatums = 4;
+    const char          DatumCodes[4][2] = { "1", "2", "3", "4" };
+    char                Datums[4][6] = { "NAD27", "WGS72", "WGS84",
+                                            "NAD83" };
+
+    /* get the source dataset's projection */
+    sourceWkt = (char *) psWInfo->poSrcDS->GetProjectionRef();
+    readSourceWkt = &sourceWkt;
+    if (SrcoSRS.importFromWkt(readSourceWkt) != OGRERR_NONE)
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+            "DEM Default Setup: Importing source dataset projection failed" );
+        return FALSE;
+    }
+    
+    /* Set the destination dataset's projection.  If the source datum
+     * used is DEM compatible, just use it.  Otherwise, default to the
+     * last datum in the Datums array.
+     */
+    for( i=0; i < numdatums; i++ )
+    {
+        if (DstoSRS.SetWellKnownGeogCS(Datums[i]) != OGRERR_NONE)
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                "DEM Default Setup: Failed to set datum of destination" );
+            return FALSE;
+        }
+        /* XXX Hopefully it's ok, to just keep changing the projection
+         * of our destination.  If not, we'll want to reinitialize the
+         * OGRSpatialReference each time.
+         */
+        if ( DstoSRS.IsSameGeogCS( &SrcoSRS ) )
+        {
+            break;
+        }
+    }
+    strncpy( psWInfo->horizdatum, DatumCodes[i], 2 );
+    
+    /* get the UTM zone, if any */
+    psWInfo->utmzone = SrcoSRS.GetUTMZone(&bNorth);
+    if (psWInfo->utmzone)
+    {
+        if (DstoSRS.SetUTM(psWInfo->utmzone) != OGRERR_NONE)
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, 
+              "DEM Default Setup: Failed to set utm zone of destination" );
+            /* SetUTM isn't documented to return OGRERR_NONE
+             * on success, but it does, so, we'll check for it.
+             */
+            return FALSE;
+        }
+    }
+    
+    /* export the projection to sWInfo */
+    if (DstoSRS.exportToWkt( &(psWInfo->pszDstSRS) ) != OGRERR_NONE)
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+            "UTMDEM: Failed to export destination Wkt to psWInfo" );
+    }
     return TRUE;
 }
 
@@ -1214,6 +1402,8 @@ USGSDEMCreateCopy( const char *pszFilename, GDALDataset *poSrcDS,
     sWInfo.nYSize = poSrcDS->GetRasterYSize();
     sWInfo.papszOptions = CSLDuplicate( papszOptions );
     sWInfo.bStrict = bStrict;
+    sWInfo.utmzone = 0;
+    strncpy( sWInfo.horizdatum, "", 1 );
 
 /* -------------------------------------------------------------------- */
 /*      Work out corner coordinates.                                    */
@@ -1248,7 +1438,10 @@ USGSDEMCreateCopy( const char *pszFilename, GDALDataset *poSrcDS,
                                                 "PRODUCT" );
 
     if( pszProduct == NULL || EQUAL(pszProduct,"DEFAULT") )
-        /* default */;
+    {
+        if ( !USGSDEMProductSetup_DEFAULT( &sWInfo ) )
+            return NULL;
+    }
     else if( EQUAL(pszProduct,"CDED50K") )
     {
         if( !USGSDEMProductSetup_CDED50K( &sWInfo ) )
