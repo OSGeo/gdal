@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_tabfile.cpp,v 1.55 2004/06/30 20:29:04 dmorissette Exp $
+ * $Id: mitab_tabfile.cpp,v 1.56 2004/09/17 19:26:23 fwarmerdam Exp $
  *
  * Name:     mitab_tabfile.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -32,6 +32,10 @@
  **********************************************************************
  *
  * $Log: mitab_tabfile.cpp,v $
+ * Revision 1.56  2004/09/17 19:26:23  fwarmerdam
+ * Several fixes in error/failure cases in TABFile::Open() care of
+ * Stephen Cheesman of GeoSoft.
+ *
  * Revision 1.55  2004/06/30 20:29:04  dmorissette
  * Fixed refs to old address danmo@videotron.ca
  *
@@ -356,7 +360,10 @@ int TABFile::Open(const char *pszFname, const char *pszAccess,
                          "Failed opening %s.", m_pszFname);
             }
             CPLFree(m_pszFname);
+            m_pszFname = NULL;
             CSLDestroy(m_papszTABFile);
+            m_papszTABFile = NULL;
+            CPLFree( pszTmpFname );
             return -1;
         }
 
@@ -371,7 +378,10 @@ int TABFile::Open(const char *pszFname, const char *pszAccess,
             // necessary... just cleanup and exit.
 
             CPLFree(m_pszFname);
+            m_pszFname = NULL;
             CSLDestroy(m_papszTABFile);
+            m_papszTABFile = NULL;
+            CPLFree( pszTmpFname );
 
             return -1;
         }
