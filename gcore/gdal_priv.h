@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.23  2001/02/06 16:30:21  warmerda
+ * Added gdal_frmts.h
+ *
  * Revision 1.22  2000/10/06 15:26:08  warmerda
  * added SetNoDataValue, SetCategoryNames
  *
@@ -113,6 +116,7 @@ class GDALDriver;
 /* -------------------------------------------------------------------- */
 
 #include "gdal.h"
+#include "gdal_frmts.h"
 #include "cpl_vsi.h"
 #include "cpl_conv.h"
 
