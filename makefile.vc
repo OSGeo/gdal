@@ -24,7 +24,7 @@ LIBOBJ = port\*.obj core\*.obj alg\*.obj frmts\o\*.obj $(OGR_OBJ)
 DISTDIR	=	gdal_$(VERSION)
 
 default:	port_dir ogr_dir core_dir frmts_dir $(GDAL_DLL) \
-		apps_dir pymod_dir
+		apps_dir pymod_dir ogr_apps
 
 lib:
 	if exist gdal.lib del gdal.lib
@@ -95,9 +95,16 @@ ogr_dir:      port_dir
 	$(MAKE) /f makefile.vc
 	cd ..\..\ogr
 !IFDEF INCLUDE_OGR_FRMTS
-	$(MAKE) default
+	$(MAKE) ogr.lib frmts
 !ELSE
 	$(MAKE) ogr.lib
+!ENDIF
+	cd ..
+
+ogr_apps:
+	cd ogr
+!IFDEF INCLUDE_OGR_FRMTS
+	$(MAKE) default
 !ENDIF
 	cd ..
 
