@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2004/03/02 15:14:07  warmerda
+ * Fixed CPL_MSB case.
+ *
  * Revision 1.4  2004/03/01 17:55:10  warmerda
  * rewrote to *not* use raw layer
  *
@@ -130,7 +133,7 @@ CPLErr BTRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /*      Swap on MSB platforms.                                          */
 /* -------------------------------------------------------------------- */
 #ifdef CPL_MSB 
-    GDALSwapWords( pImage, nDataSize, nRasterYSize, nWordSize );
+    GDALSwapWords( pImage, nDataSize, nRasterYSize, nDataSize );
 #endif    
 
 /* -------------------------------------------------------------------- */
@@ -198,7 +201,7 @@ CPLErr BTRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
 /*      Swap on MSB platforms.                                          */
 /* -------------------------------------------------------------------- */
 #ifdef CPL_MSB 
-    GDALSwapWords( pabyWrkBlock, nDataSize, nRasterYSize, nWordSize );
+    GDALSwapWords( pabyWrkBlock, nDataSize, nRasterYSize, nDataSize );
 #endif    
 
 /* -------------------------------------------------------------------- */
