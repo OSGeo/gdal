@@ -28,6 +28,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.9  2002/03/07 22:19:20  warmerda
+ * don't do operations within CPLAssert(), in UnreadChar()
+ *
  * Revision 1.8  2002/03/05 14:26:57  warmerda
  * expanded tabs
  *
@@ -124,7 +127,10 @@ static void UnreadChar( ParseContext *psContext, char chToUnread )
     else
     {
         CPLAssert( chToUnread 
-                   == psContext->pszInput[--psContext->nInputOffset] );
+                   == psContext->pszInput[psContext->nInputOffset-1] );
+
+        psContext->nInputOffset--;
+
         if( chToUnread == 10 )
             psContext->nInputLine--;
     }
