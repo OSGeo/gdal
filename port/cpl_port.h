@@ -42,6 +42,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.39  2005/03/01 21:22:07  fwarmerdam
+ * added CPLIsFinite()
+ *
  * Revision 1.38  2005/03/01 20:44:38  fwarmerdam
  * Check for _MSC_VER instead of WIN32.
  *
@@ -283,10 +286,12 @@ char * strdup (char *instr);
 
 #ifdef _MSC_VER
 #  define CPLIsNan(x) _isnan(x)
-#  define CPLIsInf(x) _isinf(x)
+#  define CPLIsInf(x) (!_isnan(x) && !_finite(x))
+#  define CPLIsFinite(x) _finite(x)
 #else
 #  define CPLIsNan(x) isnan(x)
 #  define CPLIsInf(x) isinf(x)
+#  define CPLIsFinite(x) (!isnan(x) && !isinf(x))
 #endif
 
 /*---------------------------------------------------------------------
