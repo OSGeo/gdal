@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.29  2003/06/23 14:48:42  warmerda
+ * make OGREPSTDatumNameMassage() public
+ *
  * Revision 1.28  2003/05/30 18:35:15  warmerda
  * fixed stateplane.csv error msg and clear() before SetLocalCS call
  *
@@ -140,13 +143,13 @@ static const char *papszDatumEquiv[] =
 };
 
 /************************************************************************/
-/*                          WKTMassageDatum()                           */
+/*                      OGREPSGDatumNameMassage()                       */
 /*                                                                      */
 /*      Massage an EPSG datum name into WMT format.  Also transform     */
 /*      specific exception cases into WKT versions.                     */
 /************************************************************************/
 
-static void WKTMassageDatum( char ** ppszDatum )
+void OGREPSGDatumNameMassage( char ** ppszDatum )
 
 {
     int         i, j;
@@ -1038,7 +1041,7 @@ static OGRErr SetEPSGGeogCS( OGRSpatialReference * poSRS, int nGeogCS )
     if( !EPSGGetPMInfo( nPMCode, &pszPMName, &dfPMOffset ) )
         return OGRERR_UNSUPPORTED_SRS;
 
-    WKTMassageDatum( &pszDatumName );
+    OGREPSGDatumNameMassage( &pszDatumName );
 
     if( !EPSGGetEllipsoidInfo( nEllipsoidCode, &pszEllipsoidName, 
                                &dfSemiMajor, &dfInvFlattening ) )
