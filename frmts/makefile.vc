@@ -1,60 +1,32 @@
 
 GDAL_ROOT = ..
 
-
 EXTRAFLAGS =	-DFRMT_ceos -DFRMT_aigrid -DFRMT_elas -DFRMT_hfa -DFRMT_gtiff\
 		-DFRMT_sdts -DFRMT_raw -DFRMT_gxf -DFRMT_ceos2 -DFRMT_png \
 		-DFRMT_jpeg -DFRMT_dted -DFRMT_mem -DFRMT_jdem -DFRMT_gif \
-		-DFRMT_envisat -DFRMT_aaigrid $(ECWDEF)
+		-DFRMT_envisat -DFRMT_aaigrid $(ECWDEF) $(OGDIDEF) $(ZLIBDEF)
+
+DIRLIST =	$(EXTRAFLAGS:-DFRMT_=)
 
 !INCLUDE $(GDAL_ROOT)/nmake.opt
 
+!IFDEF OGDIDIR
+OGDIDEF	=	-DFRMT_ogdi
+!ELSE
+ZLIBDEF =	-DFRMT_zlib
+!ENDIF
+
+!IFDEF ECWDIR
+ECWDEF	=	-DFRMT_ecw
+!ENDIF
+
 default:	o\gdalallregister.obj subdirs
 
+list:
+	echo $(DIRLIST)
+
 subdirs:
-	cd ceos
-	$(MAKE) /f makefile.vc
-	cd ..\aigrid
-	$(MAKE) /f makefile.vc
-	cd ..\aaigrid
-	$(MAKE) /f makefile.vc
-	cd ..\elas
-	$(MAKE) /f makefile.vc
-	cd ..\hfa
-	$(MAKE) /f makefile.vc
-	cd ..\gtiff
-	$(MAKE) /f makefile.vc
-	cd ..\iso8211
-	$(MAKE) /f makefile.vc
-	cd ..\sdts
-	$(MAKE) /f makefile.vc
-	cd ..\raw
-	$(MAKE) /f makefile.vc
-	cd ..\ceos
-	$(MAKE) /f makefile.vc
-	cd ..\ceos2
-	$(MAKE) /f makefile.vc
-	cd ..\gxf
-	$(MAKE) /f makefile.vc
-	cd ..\dted
-	$(MAKE) /f makefile.vc
-	cd ..\jdem
-	$(MAKE) /f makefile.vc
-	cd ..\zlib
-	$(MAKE) /f makefile.vc
-	cd ..\jpeg
-	$(MAKE) /f makefile.vc
-	cd ..\png
-	$(MAKE) /f makefile.vc
-	cd ..\mem
-	$(MAKE) /f makefile.vc
-	cd ..\envisat
-	$(MAKE) /f makefile.vc
-	cd ..\gif
-	$(MAKE) /f makefile.vc
-	cd ..\ecw
-	$(MAKE) /f makefile.vc
-	cd ..
+	for %d in ( $(DIRLIST) ) do ..\submake.bat %d
 
 o\gdalallregister.obj:	gdalallregister.cpp
 	$(CC) $(CFLAGS) /c gdalallregister.cpp
@@ -62,47 +34,5 @@ o\gdalallregister.obj:	gdalallregister.cpp
 
 clean:
 	-del o\*.obj *.obj
-	cd ceos
-	$(MAKE) /f makefile.vc clean
-	cd ..\aigrid
-	$(MAKE) /f makefile.vc clean
-	cd ..\aaigrid
-	$(MAKE) /f makefile.vc clean
-	cd ..\elas
-	$(MAKE) /f makefile.vc clean
-	cd ..\hfa
-	$(MAKE) /f makefile.vc clean
-	cd ..\gtiff
-	$(MAKE) /f makefile.vc clean
-	cd ..\iso8211
-	$(MAKE) /f makefile.vc clean 
-	cd ..\sdts
-	$(MAKE) /f makefile.vc clean
-	cd ..\gxf
-	$(MAKE) /f makefile.vc clean
-	cd ..\dted
-	$(MAKE) /f makefile.vc clean
-	cd ..\jdem
-	$(MAKE) /f makefile.vc clean
-	cd ..\raw
-	$(MAKE) /f makefile.vc clean
-	cd ..\ceos2
-	$(MAKE) /f makefile.vc clean
-	cd ..\ceos
-	$(MAKE) /f makefile.vc clean
-	cd ..\zlib
-	$(MAKE) /f makefile.vc clean
-	cd ..\jpeg
-	$(MAKE) /f makefile.vc clean
-	cd ..\png
-	$(MAKE) /f makefile.vc clean
-	cd ..\mem
-	$(MAKE) /f makefile.vc clean
-	cd ..\envisat
-	$(MAKE) /f makefile.vc clean
-	cd ..\gif
-	$(MAKE) /f makefile.vc clean
-	cd ..\ecw
-	$(MAKE) /f makefile.vc clean
-	cd ..
+	for %d in ( $(DIRLIST) ) do ..\submake.bat %d clean
 
