@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.12  2000/08/18 21:20:54  svillene
+ * *** empty log message ***
+ *
  * Revision 1.11  2000/03/30 05:38:48  warmerda
  * added CPLParseNameValue
  *
@@ -638,7 +641,7 @@ char ** CSLTokenizeStringComplex( const char * pszString,
 /**********************************************************************
  *                       CPLSPrintf()
  *
- * My own version of CPLSPrintf() that works with a static buffer.
+ * My own version of CPLSPrintf() that works with 10 static buffer.
  *
  * It returns a ref. to a static buffer that should not be freed and
  * is valid only until the next call to CPLSPrintf().
@@ -648,17 +651,24 @@ char ** CSLTokenizeStringComplex( const char * pszString,
 /* For now, assume that a 8000 chars buffer will be enough.
  */
 #define CPLSPrintf_BUF_SIZE 8000
-static char gszCPLSPrintfBuffer[CPLSPrintf_BUF_SIZE];
+#define CPLSPrintf_BUF_Count 10
+static char gszCPLSPrintfBuffer[CPLSPrintf_BUF_Count][CPLSPrintf_BUF_SIZE];
+static gnCPLSPrintfBuffer = 0;
 
 const char *CPLSPrintf(char *fmt, ...)
 {
     va_list args;
 
     va_start(args, fmt);
-    vsprintf(gszCPLSPrintfBuffer, fmt, args);
+    vsprintf(gszCPLSPrintfBuffer[gnCPLSPrintfBuffer], fmt, args);
     va_end(args);
+    
+   int nCurrent = gnCPLSPrintfBuffer;
 
-    return gszCPLSPrintfBuffer;
+    if (++gnCPLSPrintfBuffer == CPLSPrintf_BUF_Count)
+      gnCPLSPrintfBuffer = 0;
+
+    return gszCPLSPrintfBuffer[nCurrent];
 }
 
 /**********************************************************************
@@ -673,10 +683,15 @@ char **CSLAppendPrintf(char **papszStrList, char *fmt, ...)
     va_list args;
 
     va_start(args, fmt);
-    vsprintf(gszCPLSPrintfBuffer, fmt, args);
+    vsprintf(gszCPLSPrintfBuffer[gnCPLSPrintfBuffer], fmt, args);
     va_end(args);
 
-    return CSLAddString(papszStrList, gszCPLSPrintfBuffer);
+    int nCurrent = gnCPLSPrintfBuffer;
+
+    if (++gnCPLSPrintfBuffer == CPLSPrintf_BUF_Count)
+      gnCPLSPrintfBuffer = 0;
+
+    return CSLAddString(papszStrList, gszCPLSPrintfBuffer[nCurrent]);
 }
 
 
