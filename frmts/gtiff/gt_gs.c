@@ -23,6 +23,9 @@
  * gt_gs.c: GeoTIFF to Geosoft GXF.
  *
  * $Log$
+ * Revision 1.2  1999/01/11 15:31:22  warmerda
+ * Fixed polygonic args
+ *
  * Revision 1.1  1999/01/05 16:51:55  warmerda
  * New
  *
@@ -395,7 +398,9 @@ int GeoTIFFToGXFProj( TIFF * hTIFF,
         char	szProjMethod[256];
         
         sprintf( szProjMethod, "*Unknown" );
-        
+
+        /* notdef: Need to transform false easting/northing values
+           to meters if they are not */
         if( EQUAL(papszRecord[3],"Transverse Mercator") )
         {
             sprintf( szProjMethod, "\"%s\",%.7f,%.7f,%s,%s,%s",
@@ -1371,8 +1376,8 @@ int GXFProjToGeoTIFF( TIFF * hTIFF,
 
             GTIFKeySet(hGTiff, ProjCoordTransGeoKey, TYPE_SHORT, 1,
                        CT_Polyconic );
-            GTIFKeySet(hGTiff, ProjNatOriginLatGeoKey, TYPE_DOUBLE,1, dfP1 );
-            GTIFKeySet(hGTiff, ProjNatOriginLongGeoKey, TYPE_DOUBLE,1, dfP2 );
+            GTIFKeySet(hGTiff, ProjCenterLatGeoKey, TYPE_DOUBLE,1, dfP1 );
+            GTIFKeySet(hGTiff, ProjCenterLongGeoKey, TYPE_DOUBLE,1, dfP2 );
             GTIFKeySet(hGTiff, ProjScaleAtNatOriginGeoKey,TYPE_DOUBLE,1, dfP3);
             GTIFKeySet(hGTiff, ProjFalseEastingGeoKey, TYPE_DOUBLE,1, dfP4 );
             GTIFKeySet(hGTiff, ProjFalseNorthingGeoKey, TYPE_DOUBLE,1, dfP5 );
