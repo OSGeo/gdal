@@ -31,6 +31,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.3  2004/03/28 21:23:06  warmerda
+ * minor nodata item
+ *
  * Revision 1.2  2004/03/28 19:30:05  warmerda
  * implement CDED50K product specs, use warper
  *
@@ -328,7 +331,7 @@ static int USGSDEMWriteARecord( USGSDEMWriteInfo *psWInfo )
     {
         if( psWInfo->panData[i] != DEM_NODATA )
         {
-            if( nMin == -32767 )
+            if( nMin == DEM_NODATA )
             {
                 nMin = nMax = psWInfo->panData[i];
             }
