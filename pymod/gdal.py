@@ -29,6 +29,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.64  2004/06/08 05:21:56  warmerda
+# Use builtin GDALGetDriverByName() - fixed case sensitivity bug.
+#
 # Revision 1.63  2004/05/21 18:38:02  warmerda
 # added GetMinimum, GetMaximum, GetOffset and GetScale methods
 #
@@ -279,12 +282,11 @@ def GetDriverList():
 
 def GetDriverByName(name):
     _gdal.GDALAllRegister()
-    driver_count = _gdal.GDALGetDriverCount()
-    for iDriver in range(driver_count):
-        driver_o = _gdal.GDALGetDriver( iDriver )
-        if _gdal.GDALGetDriverShortName(driver_o) == name:
-            return Driver(driver_o)
-    return None
+    driver_o = _gdal.GDALGetDriverByName( name )
+    if driver_o is None or driver_o == "NULL":
+        return None
+    else:
+        return Driver( driver_o )
     
 def Open(file,access=GA_ReadOnly):
     _gdal.GDALAllRegister()
