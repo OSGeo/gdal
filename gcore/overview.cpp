@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2001/07/16 15:21:46  warmerda
+ * added AVERAGE_MAGPHASE option for complex images
+ *
  * Revision 1.6  2001/01/30 22:32:42  warmerda
  * added AVERAGE_MP (magnitude preserving averaging) overview resampling type
  *
@@ -222,6 +225,49 @@ GDALDownsampleChunkC32R( int nSrcWidth, int nSrcHeight,
             {
                 pafDstScanline[iDstPixel*2] = pafSrcScanline[nSrcXOff*2];
                 pafDstScanline[iDstPixel*2+1] = pafSrcScanline[nSrcXOff*2+1];
+            }
+            else if( EQUAL(pszResampling,"AVERAGE_MAGPHASE") )
+            {
+                double dfTotalR = 0.0, dfTotalI = 0.0, dfTotalM = 0.0;
+                int    nCount = 0, iX, iY;
+
+                for( iY = nSrcYOff; iY < nSrcYOff2; iY++ )
+                {
+                    for( iX = nSrcXOff; iX < nSrcXOff2; iX++ )
+                    {
+                        double	dfR, dfI;
+
+                        dfR = pafSrcScanline[iX*2+(iY-nSrcYOff)*nSrcWidth*2];
+                        dfI = pafSrcScanline[iX*2+(iY-nSrcYOff)*nSrcWidth*2+1];
+                        dfTotalR += dfR;
+                        dfTotalI += dfI;
+                        dfTotalM += sqrt( dfR*dfR + dfI*dfI );
+                        nCount++;
+                    }
+                }
+                
+                CPLAssert( nCount > 0 );
+                if( nCount == 0 )
+                {
+                    pafDstScanline[iDstPixel*2] = 0.0;
+                    pafDstScanline[iDstPixel*2+1] = 0.0;
+                }
+                else
+                {
+                    double	dfM, dfDesiredM, dfRatio;
+
+                    pafDstScanline[iDstPixel*2  ] = dfTotalR / nCount;
+                    pafDstScanline[iDstPixel*2+1] = dfTotalI / nCount;
+                    
+                    dfM = sqrt(pafDstScanline[iDstPixel*2  ]*pafDstScanline[iDstPixel*2  ]
+                             + pafDstScanline[iDstPixel*2+1]*pafDstScanline[iDstPixel*2+1]);
+                    dfDesiredM = dfTotalM / nCount;
+                    if( dfM != 0.0 )
+                        dfRatio = dfDesiredM / dfM;
+
+                    pafDstScanline[iDstPixel*2  ] *= dfRatio;
+                    pafDstScanline[iDstPixel*2+1] *= dfRatio;
+                }
             }
             else if( EQUALN(pszResampling,"AVER",4) )
             {
