@@ -32,7 +32,7 @@ frmts:
 	$(MAKE) 
 	cd ..
 
-oledb:
+oledb:	ogroledb.lib 
 	cd sfcom_oledb
 	$(MAKE)
 	cd ..
