@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  1999/09/09 13:53:47  warmerda
+ * use lower case for degree and radian
+ *
  * Revision 1.5  1999/07/29 17:29:45  warmerda
  * added various help methods for projections
  *
@@ -355,9 +358,9 @@ class OGRSpatialReference
 #define SRS_UL_ROD		"Rod"		/* based on US Foot */
 #define SRS_UL_ROD_CONV                     "5.02921005842012"
 
-#define SRS_UA_DEGREE		"Degree"
+#define SRS_UA_DEGREE		"degree"
 #define SRS_UA_DEGREE_CONV                  "0.0174532925199433"
-#define SRS_UA_RADIAN		"Radian"
+#define SRS_UA_RADIAN		"radian"
 
 #define SRS_PM_GREENWICH	"Greenwich"
 
