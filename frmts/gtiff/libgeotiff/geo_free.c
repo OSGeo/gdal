@@ -36,18 +36,18 @@ called on the corresponding TIFF file handle.<p>
 
 void GTIFFree(GTIF* gtif)
 {
-	int     i;
+    int     i;
 	
-	if (!gtif) return;
+    if (!gtif) return;
 	
-	/* Free parameter arrays */
-	if (gtif->gt_double) _GTIFFree (gtif->gt_double);
-	if (gtif->gt_short) _GTIFFree (gtif->gt_short);
+    /* Free parameter arrays */
+    if (gtif->gt_double) _GTIFFree (gtif->gt_double);
+    if (gtif->gt_short) _GTIFFree (gtif->gt_short);
 	
-	/* Free GeoKey arrays */
-	if (gtif->gt_keys)
+    /* Free GeoKey arrays */
+    if (gtif->gt_keys)
     {
-        for (i = 0; i < gtif->gt_num_keys + MAX_KEYS; i++)
+        for (i = 0; i < MAX_KEYS; i++)
         {
             if (gtif->gt_keys[i].gk_type == TYPE_ASCII)
             {
@@ -56,7 +56,7 @@ void GTIFFree(GTIF* gtif)
         }
         _GTIFFree (gtif->gt_keys);
     }
-	if (gtif->gt_keyindex) _GTIFFree (gtif->gt_keyindex);
+    if (gtif->gt_keyindex) _GTIFFree (gtif->gt_keyindex);
 	
-	_GTIFFree (gtif);
+    _GTIFFree (gtif);
 }

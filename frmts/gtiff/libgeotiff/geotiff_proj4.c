@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: geotiff_proj4.c,v 1.18 2002/07/09 14:47:53 warmerda Exp $
+ * $Id: geotiff_proj4.c,v 1.19 2002/11/29 20:57:09 warmerda Exp $
  *
  * Project:  libgeotiff
  * Purpose:  Code to convert a normalized GeoTIFF definition into a PROJ.4
@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log: geotiff_proj4.c,v $
+ * Revision 1.19  2002/11/29 20:57:09  warmerda
+ * added LCC1SP mapping
+ *
  * Revision 1.18  2002/07/09 14:47:53  warmerda
  * fixed translation of polar stereographic
  *
@@ -445,13 +448,15 @@ char * GTIFGetProj4Defn( GTIFDefn * psDefn )
 /* -------------------------------------------------------------------- */
     else if( psDefn->CTProjection == CT_LambertConfConic_1SP )
     {
-        /* this appears to be an unsupported formulation with PROJ.4 */
-
-        /* to at least some degree this can be treated similarly to
-         * the 2SP case.
-         *
-         * See http://www.mentorsoftwareinc.com/CC/asknorm/ASK0699.HTM#Q2
-         */
+        sprintf( szProjection+strlen(szProjection),
+                 "+proj=lcc +lat_0=%.9f +lat_1=%.9f +lon_0=%.9f"
+                 " +k_0=%.9f +x_0=%.3f +y_0=%.3f ",
+                 psDefn->ProjParm[0],
+                 psDefn->ProjParm[0],
+                 psDefn->ProjParm[1],
+                 psDefn->ProjParm[4],
+                 psDefn->ProjParm[5],
+                 psDefn->ProjParm[6] );
     }
     
 /* -------------------------------------------------------------------- */
