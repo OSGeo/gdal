@@ -28,6 +28,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.39  2003/08/19 20:16:56  warmerda
+ * Added support for reading Cone (23), 3D surface (18) and 3D solid (19)
+ * elements.  Added code to read transformation matrices for Cell headers
+ * Marius Kintel
+ *
  * Revision 1.38  2003/06/27 14:38:26  warmerda
  * avoid warnings
  *
@@ -270,6 +275,9 @@ DGNGetRawExtents( DGNInfo *psDGN, int nType, unsigned char *pabyRawData,
       case DGNT_TEXT:
       case DGNT_COMPLEX_CHAIN_HEADER:
       case DGNT_COMPLEX_SHAPE_HEADER:
+      case DGNT_CONE:
+      case DGNT_3DSURFACE_HEADER:
+      case DGNT_3DSOLID_HEADER:
         *pnXMin = DGN_INT32( pabyRawData + 4 );
         *pnYMin = DGN_INT32( pabyRawData + 8 );
         if( pnZMin != NULL )
@@ -414,6 +422,15 @@ static DGNElemCore *DGNProcessElement( DGNInfo *psDGN, int nType, int nLevel )
               psCell->rnghigh.x = DGN_INT32( psDGN->abyElem + 60 );
               psCell->rnghigh.y = DGN_INT32( psDGN->abyElem + 64 );
 
+              psCell->trans[0] =
+                1.0 * DGN_INT32( psDGN->abyElem + 68 ) / (1<<31);
+              psCell->trans[1] = 
+                1.0 * DGN_INT32( psDGN->abyElem + 72 ) / (1<<31);
+              psCell->trans[2] = 
+                1.0 * DGN_INT32( psDGN->abyElem + 76 ) / (1<<31);
+              psCell->trans[3] = 
+                1.0 * DGN_INT32( psDGN->abyElem + 80 ) / (1<<31);
+
               psCell->origin.x = DGN_INT32( psDGN->abyElem + 84 );
               psCell->origin.y = DGN_INT32( psDGN->abyElem + 88 );
 
@@ -443,6 +460,25 @@ static DGNElemCore *DGNProcessElement( DGNInfo *psDGN, int nType, int nLevel )
               psCell->rnghigh.x = DGN_INT32( psDGN->abyElem + 64 );
               psCell->rnghigh.y = DGN_INT32( psDGN->abyElem + 68 );
               psCell->rnghigh.z = DGN_INT32( psDGN->abyElem + 72 );
+
+              psCell->trans[0] =
+                1.0 * DGN_INT32( psDGN->abyElem + 76 ) / (1<<31);
+              psCell->trans[1] = 
+                1.0 * DGN_INT32( psDGN->abyElem + 80 ) / (1<<31);
+              psCell->trans[2] = 
+                1.0 * DGN_INT32( psDGN->abyElem + 84 ) / (1<<31);
+              psCell->trans[3] = 
+                1.0 * DGN_INT32( psDGN->abyElem + 88 ) / (1<<31);
+              psCell->trans[4] = 
+                1.0 * DGN_INT32( psDGN->abyElem + 92 ) / (1<<31);
+              psCell->trans[5] = 
+                1.0 * DGN_INT32( psDGN->abyElem + 96 ) / (1<<31);
+              psCell->trans[6] = 
+                1.0 * DGN_INT32( psDGN->abyElem + 100 ) / (1<<31);
+              psCell->trans[7] = 
+                1.0 * DGN_INT32( psDGN->abyElem + 104 ) / (1<<31);
+              psCell->trans[8] = 
+                1.0 * DGN_INT32( psDGN->abyElem + 108 ) / (1<<31);
 
               psCell->origin.x = DGN_INT32( psDGN->abyElem + 112 );
               psCell->origin.y = DGN_INT32( psDGN->abyElem + 116 );
@@ -845,6 +881,65 @@ static DGNElemCore *DGNProcessElement( DGNInfo *psDGN, int nType, int nLevel )
             psElement = (DGNElemCore *) CPLCalloc(sizeof(DGNElemCore),1);
             psElement->stype = DGNST_CORE;
             DGNParseCore( psDGN, psElement );
+        }
+        break;
+
+      case DGNT_CONE:
+        {
+          DGNElemCone *psCone;
+
+          psCone = (DGNElemCone *) CPLCalloc(sizeof(DGNElemCone),1);
+          psElement = (DGNElemCore *) psCone;
+          psElement->stype = DGNST_CONE;
+          DGNParseCore( psDGN, psElement );
+
+          CPLAssert( psDGN->dimension == 3 );
+          psCone->unknown = psDGN->abyElem[36] + psDGN->abyElem[37] * 256;
+          psCone->quat[0] = DGN_INT32( psDGN->abyElem + 38 );
+          psCone->quat[1] = DGN_INT32( psDGN->abyElem + 42 );
+          psCone->quat[2] = DGN_INT32( psDGN->abyElem + 46 );
+          psCone->quat[3] = DGN_INT32( psDGN->abyElem + 50 );
+ 
+          memcpy( &(psCone->center_1.x), psDGN->abyElem + 54, 8 );
+          DGN2IEEEDouble( &(psCone->center_1.x) );
+          memcpy( &(psCone->center_1.y), psDGN->abyElem + 62, 8 );
+          DGN2IEEEDouble( &(psCone->center_1.y) );
+          memcpy( &(psCone->center_1.z), psDGN->abyElem + 70, 8 );
+          DGN2IEEEDouble( &(psCone->center_1.z) );
+          memcpy( &(psCone->radius_1), psDGN->abyElem + 78, 8 );
+          DGN2IEEEDouble( &(psCone->radius_1) );
+
+          memcpy( &(psCone->center_2.x), psDGN->abyElem + 86, 8 );
+          DGN2IEEEDouble( &(psCone->center_2.x) );
+          memcpy( &(psCone->center_2.y), psDGN->abyElem + 94, 8 );
+          DGN2IEEEDouble( &(psCone->center_2.y) );
+          memcpy( &(psCone->center_2.z), psDGN->abyElem + 102, 8 );
+          DGN2IEEEDouble( &(psCone->center_2.z) );
+          memcpy( &(psCone->radius_2), psDGN->abyElem + 110, 8 );
+          DGN2IEEEDouble( &(psCone->radius_2) );
+
+          psCone->radius_1 *= psDGN->scale;
+          psCone->radius_2 *= psDGN->scale;
+          DGNTransformPoint( psDGN, &psCone->center_1 );
+          DGNTransformPoint( psDGN, &psCone->center_2 );
+        }
+        break;
+
+      case DGNT_3DSURFACE_HEADER:
+      case DGNT_3DSOLID_HEADER:
+        {
+          DGNElemComplexHeader *psShape;
+
+          psShape = 
+            (DGNElemComplexHeader *) CPLCalloc(sizeof(DGNElemComplexHeader),1);
+          psElement = (DGNElemCore *) psShape;
+          psElement->stype = DGNST_COMPLEX_HEADER;
+          DGNParseCore( psDGN, psElement );
+
+          // Read complex header
+          psShape->totlength = psDGN->abyElem[36] + psDGN->abyElem[37] * 256;
+          psShape->numelems = psDGN->abyElem[38] + psDGN->abyElem[39] * 256;
+          psShape->surftype = psDGN->abyElem[40] + psDGN->abyElem[41] * 256;
         }
         break;
 
@@ -1546,7 +1641,9 @@ void DGNBuildIndex( DGNInfo *psDGN )
             psEI->stype = DGNST_ARC;
         
         else if( nType == DGNT_COMPLEX_SHAPE_HEADER 
-                 || nType == DGNT_COMPLEX_CHAIN_HEADER )
+                 || nType == DGNT_COMPLEX_CHAIN_HEADER
+                 || nType == DGNT_3DSURFACE_HEADER
+                 || nType == DGNT_3DSOLID_HEADER)
             psEI->stype = DGNST_COMPLEX_HEADER;
         
         else if( nType == DGNT_TEXT )
@@ -1568,6 +1665,8 @@ void DGNBuildIndex( DGNInfo *psDGN )
             DGNFreeElement( (DGNHandle) psDGN, psTCB );
             psEI->stype = DGNST_TCB;
         }
+        else if( nType == DGNT_CONE )
+            psEI->stype = DGNST_CONE;
         else
             psEI->stype = DGNST_CORE;
 
