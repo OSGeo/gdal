@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2000/08/28 20:13:23  warmerda
+ * added importFromProj4
+ *
  * Revision 1.9  2000/07/11 01:02:06  warmerda
  * added ExportToProj4()
  *
@@ -53,6 +56,440 @@
 
 #include "ogr_spatialref.h"
 #include "ogr_p.h"
+
+/* -------------------------------------------------------------------- */
+/*      The following list comes from osrs/proj/src/pj_ellps.c          */
+/*      ... please update from time to time.                            */
+/* -------------------------------------------------------------------- */
+static const char *ogr_pj_ellps[] = {
+"MERIT",	"a=6378137.0", "rf=298.257", "MERIT 1983",
+"SGS85",	"a=6378136.0", "rf=298.257",  "Soviet Geodetic System 85",
+"GRS80",	"a=6378137.0", "rf=298.257222101", "GRS 1980(IUGG, 1980)",
+"IAU76",	"a=6378140.0", "rf=298.257", "IAU 1976",
+"airy",		"a=6377563.396", "b=6356256.910", "Airy 1830",
+"APL4.9",	"a=6378137.0.",  "rf=298.25", "Appl. Physics. 1965",
+"NWL9D",	"a=6378145.0.",  "rf=298.25", "Naval Weapons Lab., 1965",
+"mod_airy",	"a=6377340.189", "b=6356034.446", "Modified Airy",
+"andrae",	"a=6377104.43",  "rf=300.0", 	"Andrae 1876 (Den., Iclnd.)",
+"aust_SA",	"a=6378160.0", "rf=298.25", "Australian Natl & S. Amer. 1969",
+"GRS67",	"a=6378160.0", "rf=298.2471674270", "GRS 67(IUGG 1967)",
+"bessel",	"a=6377397.155", "rf=299.1528128", "Bessel 1841",
+"bess_nam",	"a=6377483.865", "rf=299.1528128", "Bessel 1841 (Namibia)",
+"clrk66",	"a=6378206.4", "b=6356583.8", "Clarke 1866",
+"clrk80",	"a=6378249.145", "rf=293.4663", "Clarke 1880 mod.",
+"CPM",  	"a=6375738.7", "rf=334.29", "Comm. des Poids et Mesures 1799",
+"delmbr",	"a=6376428.",  "rf=311.5", "Delambre 1810 (Belgium)",
+"engelis",	"a=6378136.05", "rf=298.2566", "Engelis 1985",
+"evrst30",  "a=6377276.345", "rf=300.8017",  "Everest 1830",
+"evrst48",  "a=6377304.063", "rf=300.8017",  "Everest 1948",
+"evrst56",  "a=6377301.243", "rf=300.8017",  "Everest 1956",
+"evrst69",  "a=6377295.664", "rf=300.8017",  "Everest 1969",
+"evrstSS",  "a=6377298.556", "rf=300.8017",  "Everest (Sabah & Sarawak)",
+"fschr60",  "a=6378166.",   "rf=298.3", "Fischer (Mercury Datum) 1960",
+"fschr60m", "a=6378155.",   "rf=298.3", "Modified Fischer 1960",
+"fschr68",  "a=6378150.",   "rf=298.3", "Fischer 1968",
+"helmert",  "a=6378200.",   "rf=298.3", "Helmert 1906",
+"hough",	"a=6378270.0", "rf=297.", "Hough",
+"intl",		"a=6378388.0", "rf=297.", "International 1909 (Hayford)",
+"krass",	"a=6378245.0", "rf=298.3", "Krassovsky, 1942",
+"kaula",	"a=6378163.",  "rf=298.24", "Kaula 1961",
+"lerch",	"a=6378139.",  "rf=298.257", "Lerch 1979",
+"mprts",	"a=6397300.",  "rf=191.", "Maupertius 1738",
+"new_intl",	"a=6378157.5", "b=6356772.2", "New International 1967",
+"plessis",	"a=6376523.",  "b=6355863.", "Plessis 1817 (France)",
+"SEasia",	"a=6378155.0", "b=6356773.3205", "Southeast Asia",
+"walbeck",	"a=6376896.0", "b=6355834.8467", "Walbeck",
+"WGS60",    "a=6378165.0",  "rf=298.3", "WGS 60",
+"WGS66",	"a=6378145.0", "rf=298.25", "WGS 66",
+"WGS72",	"a=6378135.0", "rf=298.26", "WGS 72",
+"WGS84",    "a=6378137.0",  "rf=298.257223563", "WGS 84",
+0, 0, 0, 0,
+};
+
+/************************************************************************/
+/*                         OSRImportFromProj4()                         */
+/************************************************************************/
+
+OGRErr OSRImportFromProj4( OGRSpatialReferenceH hSRS, const char *pszProj4 )
+
+{
+    return ((OGRSpatialReference *) hSRS)->importFromProj4( pszProj4 );
+}
+
+/************************************************************************/
+/*                              OSR_GDV()                               */
+/*                                                                      */
+/*      Fetch a particular parameter out of the parameter list, or      */
+/*      the indicated default if it isn't available.  This is a         */
+/*      helper function for importFromProj4().                          */
+/************************************************************************/
+
+static double OSR_GDV( char **papszNV, const char * pszField, 
+                       double dfDefaultValue )
+
+{
+    const char * pszValue;
+
+    pszValue = CSLFetchNameValue( papszNV, pszField );
+    if( pszValue == NULL )
+        return dfDefaultValue;
+    else
+        return atof(pszValue);
+}
+
+/************************************************************************/
+/*                          importFromProj4()                           */
+/************************************************************************/
+
+OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
+
+{
+    char **papszNV = NULL;
+    char **papszTokens;
+    int  i;
+
+/* -------------------------------------------------------------------- */
+/*      Parse the PROJ.4 string into a cpl_string.h style name/value    */
+/*      list.                                                           */
+/* -------------------------------------------------------------------- */
+    papszTokens = CSLTokenizeStringComplex( pszProj4, "+ ", TRUE, FALSE );
+    
+    for( i = 0; papszTokens != NULL && papszTokens[i] != NULL; i++ )
+    {
+        char *pszEqual = strstr(papszTokens[i],"=");
+
+        if( pszEqual == NULL )
+            papszNV = CSLAddNameValue(papszNV, papszTokens[i], "" );
+        else
+        {
+            pszEqual[0] = '\0';
+            papszNV = CSLAddNameValue( papszNV, papszTokens[i], pszEqual+1 );
+        }
+    }
+
+    CSLDestroy( papszTokens );
+
+/* -------------------------------------------------------------------- */
+/*      Operate on the basis of the projection name.                    */
+/* -------------------------------------------------------------------- */
+    const char *pszProj = CSLFetchNameValue(papszNV,"proj");
+
+    if( pszProj == NULL )
+    {
+        CPLDebug( "OGR_PROJ4", "Can't find +proj= in:\n%s", pszProj4 );
+        return OGRERR_CORRUPT_DATA;
+    }
+
+    else if( EQUAL(pszProj,"longlat") || EQUAL(pszProj,"latlong") )
+    {
+    }
+    
+    else if( EQUAL(pszProj,"cea") )
+    {
+        SetCEA( OSR_GDV( papszNV, "lat_ts", 0.0 ), 
+                OSR_GDV( papszNV, "lon_0", 0.0 ), 
+                OSR_GDV( papszNV, "x_0", 0.0 ), 
+                OSR_GDV( papszNV, "y_0", 0.0 ) );
+    }
+
+    else if( EQUAL(pszProj,"tmerc") )
+    {
+        SetTM( OSR_GDV( papszNV, "lat_0", 0.0 ), 
+               OSR_GDV( papszNV, "lon_0", 0.0 ), 
+               OSR_GDV( papszNV, "k", 1.0 ), 
+               OSR_GDV( papszNV, "x_0", 0.0 ), 
+               OSR_GDV( papszNV, "y_0", 0.0 ) );
+    }
+
+    else if( EQUAL(pszProj,"utm") )
+    {
+        SetUTM( (int) OSR_GDV( papszNV, "zone", 0.0 ),
+                (int) OSR_GDV( papszNV, "south", 1.0 ) );
+    }
+
+    else if( EQUAL(pszProj,"merc") )
+    {
+        SetMercator( OSR_GDV( papszNV, "lat_ts", 0.0 ), 
+                     OSR_GDV( papszNV, "lon_0", 0.0 ), 
+                     OSR_GDV( papszNV, "k", 1.0 ), 
+                     OSR_GDV( papszNV, "x_0", 0.0 ), 
+                     OSR_GDV( papszNV, "y_0", 0.0 ) );
+    }
+
+    else if( EQUAL(pszProj,"stere") 
+             && CSLFetchNameValue(papszNV,"k") != NULL )
+    {
+        SetOS( OSR_GDV( papszNV, "lat_0", 0.0 ), 
+               OSR_GDV( papszNV, "lon_0", 0.0 ), 
+               OSR_GDV( papszNV, "k", 1.0 ), 
+               OSR_GDV( papszNV, "x_0", 0.0 ), 
+               OSR_GDV( papszNV, "y_0", 0.0 ) );
+    }
+
+    else if( EQUAL(pszProj,"stere") )
+    {
+        /* Should we be able to distinguish polar stereographic? */
+        SetStereographic( OSR_GDV( papszNV, "lat_0", 0.0 ), 
+                          OSR_GDV( papszNV, "lon_0", 0.0 ), 
+                          1.0, 
+                          OSR_GDV( papszNV, "x_0", 0.0 ), 
+                          OSR_GDV( papszNV, "y_0", 0.0 ) );
+    }
+
+    else if( EQUAL(pszProj,"eqc") )
+    {
+        SetEquirectangular( OSR_GDV( papszNV, "lat_ts", 0.0 ), 
+                            OSR_GDV( papszNV, "lon_0", 0.0 ), 
+                            OSR_GDV( papszNV, "x_0", 0.0 ), 
+                            OSR_GDV( papszNV, "y_0", 0.0 ) );
+    }
+
+    else if( EQUAL(pszProj,"gnom") )
+    {
+        SetGnomonic( OSR_GDV( papszNV, "lat_0", 0.0 ), 
+                     OSR_GDV( papszNV, "lon_0", 0.0 ), 
+                     OSR_GDV( papszNV, "x_0", 0.0 ), 
+                     OSR_GDV( papszNV, "y_0", 0.0 ) );
+    }
+
+    else if( EQUAL(pszProj,"ortho") )
+    {
+        SetOrthographic( OSR_GDV( papszNV, "lat_0", 0.0 ), 
+                         OSR_GDV( papszNV, "lon_0", 0.0 ), 
+                         OSR_GDV( papszNV, "x_0", 0.0 ), 
+                         OSR_GDV( papszNV, "y_0", 0.0 ) );
+    }
+
+    else if( EQUAL(pszProj,"laea") )
+    {
+        SetLAEA( OSR_GDV( papszNV, "lat_0", 0.0 ), 
+                 OSR_GDV( papszNV, "lon_0", 0.0 ), 
+                 OSR_GDV( papszNV, "x_0", 0.0 ), 
+                 OSR_GDV( papszNV, "y_0", 0.0 ) );
+    }
+
+    else if( EQUAL(pszProj,"aeqd") )
+    {
+        SetAE( OSR_GDV( papszNV, "lat_0", 0.0 ), 
+               OSR_GDV( papszNV, "lon_0", 0.0 ), 
+               OSR_GDV( papszNV, "x_0", 0.0 ), 
+               OSR_GDV( papszNV, "y_0", 0.0 ) );
+    }
+
+    else if( EQUAL(pszProj,"eqdc") )
+    {
+        SetEC( OSR_GDV( papszNV, "lat_1", 0.0 ), 
+               OSR_GDV( papszNV, "lat_2", 0.0 ), 
+               OSR_GDV( papszNV, "lat_0", 0.0 ), 
+               OSR_GDV( papszNV, "lon_0", 0.0 ), 
+               OSR_GDV( papszNV, "x_0", 0.0 ), 
+               OSR_GDV( papszNV, "y_0", 0.0 ) );
+    }
+
+    else if( EQUAL(pszProj,"mill") )
+    {
+        SetMC( OSR_GDV( papszNV, "lat_0", 0.0 ), 
+               OSR_GDV( papszNV, "lon_0", 0.0 ), 
+               OSR_GDV( papszNV, "x_0", 0.0 ), 
+               OSR_GDV( papszNV, "y_0", 0.0 ) );
+    }
+
+    else if( EQUAL(pszProj,"moll") )
+    {
+        SetMollweide( OSR_GDV( papszNV, "lon_0", 0.0 ), 
+                      OSR_GDV( papszNV, "x_0", 0.0 ), 
+                      OSR_GDV( papszNV, "y_0", 0.0 ) );
+    }
+
+    else if( EQUAL(pszProj,"eck4") )
+    {
+        SetEckertIV( OSR_GDV( papszNV, "lon_0", 0.0 ), 
+                     OSR_GDV( papszNV, "x_0", 0.0 ), 
+                     OSR_GDV( papszNV, "y_0", 0.0 ) );
+    }
+
+    else if( EQUAL(pszProj,"eck6") )
+    {
+        SetEckertVI( OSR_GDV( papszNV, "lon_0", 0.0 ), 
+                     OSR_GDV( papszNV, "x_0", 0.0 ), 
+                     OSR_GDV( papszNV, "y_0", 0.0 ) );
+    }
+
+    else if( EQUAL(pszProj,"poly") )
+    {
+        SetPolyconic( OSR_GDV( papszNV, "lat_0", 0.0 ), 
+                      OSR_GDV( papszNV, "lon_0", 0.0 ), 
+                      OSR_GDV( papszNV, "x_0", 0.0 ), 
+                      OSR_GDV( papszNV, "y_0", 0.0 ) );
+    }
+
+    else if( EQUAL(pszProj,"aea") )
+    {
+        SetACEA( OSR_GDV( papszNV, "lat_1", 0.0 ), 
+                 OSR_GDV( papszNV, "lat_2", 0.0 ), 
+                 OSR_GDV( papszNV, "lat_0", 0.0 ), 
+                 OSR_GDV( papszNV, "lon_0", 0.0 ), 
+                 OSR_GDV( papszNV, "x_0", 0.0 ), 
+                 OSR_GDV( papszNV, "y_0", 0.0 ) );
+    }
+
+    else if( EQUAL(pszProj,"robin") )
+    {
+        SetRobinson( OSR_GDV( papszNV, "lon_0", 0.0 ), 
+                     OSR_GDV( papszNV, "x_0", 0.0 ), 
+                     OSR_GDV( papszNV, "y_0", 0.0 ) );
+    }
+
+    else if( EQUAL(pszProj,"vandg") )
+    {
+        SetVDG( OSR_GDV( papszNV, "lon_0", 0.0 ), 
+                OSR_GDV( papszNV, "x_0", 0.0 ), 
+                OSR_GDV( papszNV, "y_0", 0.0 ) );
+    }
+
+    else if( EQUAL(pszProj,"sinu") )
+    {
+        SetSinusoidal( OSR_GDV( papszNV, "lon_0", 0.0 ), 
+                       OSR_GDV( papszNV, "x_0", 0.0 ), 
+                       OSR_GDV( papszNV, "y_0", 0.0 ) );
+    }
+
+    else if( EQUAL(pszProj,"gall") )
+    {
+        SetSinusoidal( OSR_GDV( papszNV, "lon_0", 0.0 ), 
+                       OSR_GDV( papszNV, "x_0", 0.0 ), 
+                       OSR_GDV( papszNV, "y_0", 0.0 ) );
+    }
+
+    else if( EQUAL(pszProj,"lcc") ) /* 2SP form */
+    {
+        SetLCC( OSR_GDV( papszNV, "lat_1", 0.0 ), 
+                OSR_GDV( papszNV, "lat_2", 0.0 ), 
+                OSR_GDV( papszNV, "lat_0", 0.0 ), 
+                OSR_GDV( papszNV, "lon_0", 0.0 ), 
+                OSR_GDV( papszNV, "x_0", 0.0 ), 
+                OSR_GDV( papszNV, "y_0", 0.0 ) );
+    }
+
+    else if( EQUAL(pszProj,"omerc") )
+    {
+        SetHOM( OSR_GDV( papszNV, "lat_0", 0.0 ), 
+                OSR_GDV( papszNV, "lonc", 0.0 ), 
+                OSR_GDV( papszNV, "alpha", 0.0 ), 
+                0.0, /* ??? */
+                OSR_GDV( papszNV, "k", 1.0 ), 
+                OSR_GDV( papszNV, "x_0", 0.0 ), 
+                OSR_GDV( papszNV, "y_0", 0.0 ) );
+    }
+
+    else
+    {
+        CPLDebug( "OGR_PROJ4", "Unsupported projection: %s", pszProj );
+        return OGRERR_CORRUPT_DATA;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Try to translate the datum.                                     */
+/* -------------------------------------------------------------------- */
+    const char *pszValue;
+    int  bFullyDefined = FALSE;
+
+    pszValue = CSLFetchNameValue(papszNV, "datum");
+    if( pszValue == NULL )
+    {
+        /* do nothing */
+    }
+    else if( EQUAL(pszValue,"NAD27") || EQUAL(pszValue,"NAD83")
+             || EQUAL(pszValue,"WGS84") || EQUAL(pszValue,"WGS72") )
+    {
+        SetWellKnownGeogCS( pszValue );
+        bFullyDefined = TRUE;
+    }
+    else
+    {
+        /* we don't recognise the datum, and ignore it */
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Set the ellipsoid information.				         */
+/* -------------------------------------------------------------------- */
+    double dfSemiMajor, dfInvFlattening, dfSemiMinor;
+
+    pszValue = CSLFetchNameValue(papszNV, "ellps");
+    if( pszValue != NULL && !bFullyDefined )
+    {
+        for( i = 0; ogr_pj_ellps[i] != NULL; i += 4 )
+        {
+
+            if( !EQUAL(ogr_pj_ellps[i],pszValue) )
+                continue;
+
+            CPLAssert( EQUALN(ogr_pj_ellps[i+1],"a=",2) );
+            
+            dfSemiMajor = atof(ogr_pj_ellps[i+1]+2);
+            if( EQUALN(ogr_pj_ellps[i+2],"rf=",3) )
+                dfInvFlattening = atof(ogr_pj_ellps[i+2]+3);
+            else
+            {
+                CPLAssert( EQUALN(ogr_pj_ellps[i+2],"b=",2) );
+                dfSemiMinor = atof(ogr_pj_ellps[i+2]+2);
+                
+                if( ABS(dfSemiMajor/dfSemiMinor) - 1.0 < 0.0000000000001 )
+                    dfInvFlattening = 0.0;
+                else
+                    dfInvFlattening = -1.0 / (dfSemiMinor/dfSemiMajor - 1.0);
+            }
+            
+            SetGeogCS( ogr_pj_ellps[i+3], "unknown", ogr_pj_ellps[i], 
+                       dfSemiMajor, dfInvFlattening );
+
+            bFullyDefined = TRUE;
+            break;
+        }
+    }
+
+    if( !bFullyDefined )
+    {
+        dfSemiMajor = OSR_GDV( papszNV, "a", 0.0 );
+        if( dfSemiMajor == 0.0 )
+        {
+            CPLDebug( "OGR_PROJ4", "Can't find ellipse definition in:\n%s", 
+                      pszProj4 );
+            return OGRERR_UNSUPPORTED_SRS;
+        }
+        
+        dfSemiMinor = OSR_GDV( papszNV, "b", -1.0 );
+        dfInvFlattening = OSR_GDV( papszNV, "rf", -1.0 );
+        
+        if( dfSemiMinor == -1.0 && dfInvFlattening == -1.0 )
+        {
+            CPLDebug( "OGR_PROJ4", "Can't find ellipse definition in:\n%s", 
+                      pszProj4 );
+            return OGRERR_UNSUPPORTED_SRS;
+        }
+
+        if( dfInvFlattening == -1.0 )
+        {
+            if( ABS(dfSemiMajor/dfSemiMinor) - 1.0 < 0.0000000000001 )
+                dfInvFlattening = 0.0;
+            else
+                dfInvFlattening = -1.0 / (dfSemiMinor/dfSemiMajor - 1.0);
+        }
+        
+        SetGeogCS( "unnamed ellipse", "unknown", "unnamed",
+                   dfSemiMajor, dfInvFlattening );
+        
+        bFullyDefined = TRUE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Linear units translation                                        */
+/* -------------------------------------------------------------------- */
+    /* add here */
+    
+    return OGRERR_NONE;
+}
+
 
 /************************************************************************/
 /*                          OSRExportToProj4()                          */
@@ -98,10 +535,24 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 )
 
     else if( EQUAL(pszProjection,SRS_PT_TRANSVERSE_MERCATOR) )
     {
-        sprintf( szProj4+strlen(szProj4),
-           "+proj=tmerc +lat_0=%.9f +lon_0=%.9f +k=%f +x_0=%.3f +y_0=%.3f ",
+        int bNorth;
+        int nZone = GetUTMZone( &bNorth );
+
+        if( nZone != 0 )
+        {
+            if( bNorth )
+                sprintf( szProj4+strlen(szProj4), "+proj=utm +zone=%d ", 
+                         nZone );
+            else
+                sprintf( szProj4+strlen(szProj4),"+proj=utm +zone=%d +south ", 
+                         nZone );
+        }            
+        else
+            sprintf( szProj4+strlen(szProj4),
+             "+proj=tmerc +lat_0=%.9f +lon_0=%.9f +k=%f +x_0=%.3f +y_0=%.3f ",
                  GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
                  GetProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
+
                  GetProjParm(SRS_PP_SCALE_FACTOR,1.0),
                  GetProjParm(SRS_PP_FALSE_EASTING,0.0),
                  GetProjParm(SRS_PP_FALSE_NORTHING,0.0) );

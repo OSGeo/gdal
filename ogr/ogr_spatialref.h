@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.22  2000/08/28 20:13:23  warmerda
+ * added importFromProj4
+ *
  * Revision 1.21  2000/07/09 20:48:02  warmerda
  * added exportToPrettyWkt
  *
@@ -198,6 +201,7 @@ class OGRSpatialReference
     OGRErr      exportToWkt( char ** );
     OGRErr      exportToPrettyWkt( char **, int = FALSE);
     OGRErr      exportToProj4( char ** );
+    OGRErr      importFromProj4( const char * );
     OGRErr      importFromEPSG( int );
 
     OGRErr      Validate();
