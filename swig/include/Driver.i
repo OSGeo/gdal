@@ -1,8 +1,29 @@
-//************************************************************************
-//
-// Define the extensions for Driver (nee GDALDriver)
-//
-//************************************************************************
+/******************************************************************************
+ * $Id$
+ *
+ * Name:     Driver.i
+ * Project:  GDAL Python Interface
+ * Purpose:  GDAL Core SWIG Interface declarations.
+ * Author:   Kevin Ruland, kruland@ku.edu
+ *
+
+ *
+ * $Log$
+ * Revision 1.2  2005/02/14 23:58:46  hobu
+ * Added log info and C99-style comments
+ *
+ * Revision 1.4  2005/02/14 23:50:16  hobu
+ * Added log info
+ *
+*/
+
+/*************************************************************************
+*
+*  Define the extensions for Driver (nee GDALDriver)
+*
+*************************************************************************/
+
+
 %rename (Driver) GDALDriver;
 %newobject GDALDriver::Create;
 %feature( "kwargs" ) GDALDriver::Create;
