@@ -25,6 +25,9 @@
  * The GeoTIFF driver implemenation.
  * 
  * $Log$
+ * Revision 1.2  1998/12/03 18:37:58  warmerda
+ * Use CPLErr, not GBSErr.
+ *
  * Revision 1.1  1998/11/29 22:41:12  warmerda
  * New
  *
@@ -35,9 +38,9 @@
 
 static GDALDriver	*poGTiffDriver = NULL;
 
-GDAL_C_START
+CPL_C_START
 void	GDALRegister_GTiff(void);
-GDAL_C_END
+CPL_C_END
 
 
 /************************************************************************/
@@ -78,8 +81,8 @@ class GTiffRasterBand : public GDALRasterBand
     
     // should override RasterIO eventually.
     
-    virtual GBSErr ReadBlock( int, int, void * );
-    virtual GBSErr WriteBlock( int, int, void * ); 
+    virtual CPLErr ReadBlock( int, int, void * );
+    virtual CPLErr WriteBlock( int, int, void * ); 
 };
 
 
@@ -115,7 +118,7 @@ GTiffRasterBand::GTiffRasterBand( GTiffDataset *poDS, int nBand )
 /*                             ReadBlock()                              */
 /************************************************************************/
 
-GBSErr GTiffRasterBand::ReadBlock( int nBlockXOff, int nBlockYOff,
+CPLErr GTiffRasterBand::ReadBlock( int nBlockXOff, int nBlockYOff,
                                  void * pImage )
 
 {
@@ -123,14 +126,14 @@ GBSErr GTiffRasterBand::ReadBlock( int nBlockXOff, int nBlockYOff,
 
     
 
-    return GE_None;
+    return CE_None;
 }
 
 /************************************************************************/
 /*                             WriteBlock()                             */
 /************************************************************************/
 
-GBSErr GTiffRasterBand::WriteBlock( int nBlockXOff, int nBlockYOff,
+CPLErr GTiffRasterBand::WriteBlock( int nBlockXOff, int nBlockYOff,
                                  void * pImage )
 
 {
@@ -138,7 +141,7 @@ GBSErr GTiffRasterBand::WriteBlock( int nBlockXOff, int nBlockYOff,
 
     
 
-    return GE_None;
+    return CE_None;
 }
 
 /************************************************************************/
