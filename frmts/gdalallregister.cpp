@@ -25,6 +25,9 @@
  * Main format registration function.
  * 
  * $Log$
+ * Revision 1.68  2004/10/21 20:04:46  fwarmerdam
+ * added Register_RS2
+ *
  * Revision 1.67  2004/10/16 14:58:01  fwarmerdam
  * added GMT
  *
@@ -369,6 +372,10 @@ void GDALAllRegister()
 
 #ifdef FRMT_airsar
     GDALRegister_AirSAR();
+#endif
+
+#ifdef FRMT_rs2
+    GDALRegister_RS2();
 #endif
 
 #ifdef FRMT_pcidsk
