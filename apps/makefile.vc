@@ -9,11 +9,11 @@ XTRAOBJ =	$(SETARGV)
 
 LIBS	=	$(GDAL_ROOT)\gdal_i.lib
 
-XTRAFLAGS =	-I..\frmts
+XTRAFLAGS =	-I..\frmts -I..\alg
 
 !INCLUDE ..\nmake.opt
 
-default:	gdal_translate.exe gdalinfo.exe gdaladdo.exe
+default:	gdal_translate.exe gdalinfo.exe gdaladdo.exe gdalwarp.exe
 
 gdalinfo.exe:	gdalinfo.c $(GDALLIB) $(XTRAOBJ) 
 	$(CC) $(CFLAGS) $(XTRAFLAGS) gdalinfo.c $(XTRAOBJ) $(LIBS) \
@@ -25,6 +25,10 @@ gdal_translate.exe:	gdal_translate.cpp $(GDALLIB) $(XTRAOBJ)
 	
 gdaladdo.exe:	gdaladdo.cpp $(GDALLIB) $(XTRAOBJ)
 	$(CC) $(CFLAGS) $(XTRAFLAGS) gdaladdo.cpp $(XTRAOBJ) $(LIBS) \
+		/link $(LINKER_FLAGS)
+	
+gdalwarp.exe:	gdalwarp.c $(GDALLIB) $(XTRAOBJ) 
+	$(CC) $(CFLAGS) $(XTRAFLAGS) gdalwarp.c $(XTRAOBJ) $(LIBS) \
 		/link $(LINKER_FLAGS)
 	
 gdal2raw.exe:	gdal2raw.c $(GDALLIB) $(XTRAOBJ)
