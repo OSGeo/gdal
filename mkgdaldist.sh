@@ -29,7 +29,7 @@ rm -rf dist_wrk
 mkdir dist_wrk
 cd dist_wrk
 
-export CVSROOT=:pserver:anonymous@cvs.remotesensing.org:/cvsroot
+export CVSROOT=:pserver:anonymous@cvs.remotesensing.org:/cvs
 
 if test "$2" = "-nologin" -o "$3" = "-nologin" ; then
   echo "Skipping login"
