@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.29  2001/09/12 17:09:44  warmerda
+ * add auto-update support
+ *
  * Revision 1.28  2001/09/04 16:21:11  warmerda
  * improved handling of corrupt line geometries
  *
@@ -141,6 +144,7 @@ S57Reader::S57Reader( const char * pszFilename )
 
     poRegistrar = NULL;
     bFileIngested = FALSE;
+    bAutoReadUpdates = TRUE;
 
     nNextFEIndex = 0;
 
@@ -309,6 +313,12 @@ void S57Reader::SetOptions( char ** papszOptionsIn )
         bGenerateLNAM = TRUE;
     else
         bGenerateLNAM = FALSE;
+
+    pszOptionValue = CSLFetchNameValue( papszOptions, "UPDATES" );
+    if( pszOptionValue != NULL && !EQUAL(pszOptionValue,"APPLY") )
+        bAutoReadUpdates = FALSE;
+    else
+        bAutoReadUpdates = TRUE;
 }
 
 /************************************************************************/
@@ -347,6 +357,10 @@ void S57Reader::Ingest()
     if( poModule == NULL || bFileIngested )
         return;
 
+/* -------------------------------------------------------------------- */
+/*      Read all the records in the module, and place them in           */
+/*      appropriate indexes.                                            */
+/* -------------------------------------------------------------------- */
     while( (poRecord = poModule->ReadRecord()) != NULL )
     {
         DDFField        *poKeyField = poRecord->GetField(1);
@@ -409,6 +423,12 @@ void S57Reader::Ingest()
     }
 
     bFileIngested = TRUE;
+
+/* -------------------------------------------------------------------- */
+/*      If update support is enabled, read and apply them.              */
+/* -------------------------------------------------------------------- */
+    if( bAutoReadUpdates )
+        FindAndApplyUpdates();
 }
 
 /************************************************************************/
@@ -1040,6 +1060,8 @@ void S57Reader::AssembleLineGeometry( DDFRecord * poFRecord,
 
     if( poLine->getNumPoints() >= 2 )
         poFeature->SetGeometryDirectly( poLine );
+    else
+        delete poLine;
 }
 
 /************************************************************************/
@@ -1973,6 +1995,9 @@ int S57Reader::FindAndApplyUpdates( const char * pszPath )
 {
     int         iUpdate;
     int         bSuccess = TRUE;
+
+    if( pszPath == NULL )
+        pszPath = pszModuleName;
 
     if( !EQUAL(CPLGetExtension(pszPath),"000") )
     {
