@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  1999/05/07 14:11:22  warmerda
+ * added subfield value fetches on record, and other odds and ends.
+ *
  * Revision 1.3  1999/05/06 14:23:32  warmerda
  * added DDFBinaryString
  *
@@ -109,7 +112,9 @@ class DDFModule
     
     // This is really just for internal use.
     int		GetFieldControlLength() { return _fieldControlLength; }
-
+    void	AddCloneRecord( DDFRecord * );
+    void	RemoveCloneRecord( DDFRecord * );
+    
     // This is just for DDFRecord.
     FILE	*GetFP() { return fpDDF; }
     
@@ -134,6 +139,10 @@ class DDFModule
     DDFFieldDefn *paoFieldDefns;
 
     DDFRecord	*poRecord;
+
+    int		nCloneCount;
+    int		nMaxCloneCount;
+    DDFRecord   **papoClones;
 };
 
 /************************************************************************/
@@ -333,13 +342,22 @@ class DDFRecord
     		DDFRecord( DDFModule * );
     		~DDFRecord();
 
+    DDFRecord  *Clone();
+    
     void	Dump( FILE * );
 
     /** Get the number of DDFFields on this record. */
     int		GetFieldCount() { return nFieldCount; }
 
-    DDFField	*FindField( const char * );
+    DDFField	*FindField( const char *, int = 0 );
     DDFField    *GetField( int );
+
+    int		GetIntSubfield( const char *, int, const char *, int,
+                                int * = NULL );
+    double	GetFloatSubfield( const char *, int, const char *, int,
+                                  int * = NULL );
+    const char *GetStringSubfield( const char *, int, const char *, int,
+                                   int * = NULL );
 
     /** Fetch size of records raw data (GetData()) in bytes. */
     int		GetDataSize() { return nDataSize; }
@@ -350,6 +368,12 @@ class DDFRecord
      * GetDataSize().
      */
     const char  *GetData() { return pachData; }
+
+    /**
+     * Fetch the DDFModule with which this record is associated.
+     */
+
+    DDFModule * GetModule() { return poModule; }
 
     // This is really just for the DDFModule class.
     int		Read();
@@ -370,6 +394,8 @@ class DDFRecord
 
     int		nFieldCount;
     DDFField	*paoFields;
+
+    int		bIsClone;
 };
 
 /************************************************************************/
@@ -395,7 +421,8 @@ class DDFField
 
     void		Dump( FILE * fp );
 
-    const char         *GetSubfieldData( DDFSubfieldDefn * );
+    const char         *GetSubfieldData( DDFSubfieldDefn *,
+                                         int * = NULL, int = 0 );
 
     /**
      * Return the pointer to the entire data block for this record. This
