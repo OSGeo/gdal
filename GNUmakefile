@@ -144,4 +144,5 @@ endif
 ifeq ($(HAVE_LD_SHARED),yes)
 	$(INSTALL) $(GDAL_SLIB) $(INST_LIB)
 endif
-	for f in data/*.csv data/stateplane.txt ; do $(INSTALL) -m 0644 $$f $(INST_DATA) ; done
+	for f in data/*.* ; do $(INSTALL) -m 0644 $$f $(INST_DATA) ; done
+
