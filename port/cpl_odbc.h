@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2003/10/06 17:16:18  warmerda
+ * added windows.h for windows, and fixed m_panColSize type
+ *
  * Revision 1.4  2003/09/26 20:02:41  warmerda
  * update GetColData()
  *
@@ -46,6 +49,10 @@
 #define CPL_ODBC_H_INCLUDED
 
 #include "cpl_port.h"
+
+#ifdef WIN32
+#  include <windows.h>
+#endif
 
 #include <sql.h>
 #include <sqlext.h>
@@ -104,7 +111,7 @@ class CPL_DLL CPLODBCStatement {
     short          m_nColCount;
     char         **m_papszColNames;
     short         *m_panColType;
-    SQLULEN       *m_panColSize;
+    SQLUINTEGER   *m_panColSize;
     short         *m_panColPrecision;
     short         *m_panColNullable;
 
