@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.10  2002/12/03 04:24:21  warmerda
+ * Fixed leak of geometry in PrescanForSchema() ... fix from Duncan.
+ *
  * Revision 1.9  2002/04/01 17:51:59  warmerda
  * allow featureMember with or without gml: namespace tag
  *
@@ -745,6 +748,7 @@ int GMLReader::PrescanForSchema( int bGetExtents )
                 OGREnvelope sEnvelope;
 
                 poGeometry->getEnvelope( &sEnvelope );
+                delete poGeometry;
                 if( poClass->GetExtents(&dfXMin, &dfXMax, &dfYMin, &dfYMax) )
                 {
                     dfXMin = MIN(dfXMin,sEnvelope.MinX);
