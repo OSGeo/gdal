@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2001/02/02 22:20:15  warmerda
+ * document DGNElemText, length/height_mult now double
+ *
  * Revision 1.6  2001/01/16 21:17:28  warmerda
  * added justification enum
  *
@@ -179,13 +182,13 @@ typedef struct {
 typedef struct {
     DGNElemCore core;
     
-    int		font_id;
-    int		justification;
-    long        length_mult;
-    long        height_mult;
-    double	rotation;
-    DGNPoint	origin;
-    char	string[1];
+    int		font_id;       /*!< Microstation font id, no list available*/
+    int		justification; /*!< Justification, see DGNJ_* */
+    double      length_mult;   /*!< Char width in master (if square) */
+    double      height_mult;   /*!< Char height in master units */
+    double	rotation;      /*!< Counterclockwise rotation in degrees */
+    DGNPoint	origin;        /*!< Bottom left corner of text. */
+    char	string[1];     /*!< Actual text (length varies, \0 terminated*/
 } DGNElemText;
 
 /** 
