@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.54  2003/03/02 17:11:27  warmerda
+ * added error handling support
+ *
  * Revision 1.53  2003/02/25 04:57:37  warmerda
  * added CopyGeogCSFrom()
  *
@@ -1367,6 +1370,8 @@ py_GDALDitherRGB2PCT(PyObject *self, PyObject *args) {
 
 %native(GDALDitherRGB2PCT) py_GDALDitherRGB2PCT;
 
+int     GDALChecksumImage( GDALRasterBandH, int, int, int, int );
+
 /* -------------------------------------------------------------------- */
 /*      OGRSpatialReference stuff.                                      */
 /* -------------------------------------------------------------------- */
@@ -1929,6 +1934,157 @@ py_CPLDebug(PyObject *self, PyObject *args) {
 %}
 
 %native(CPLDebug) py_CPLDebug;
+
+%{
+
+/************************************************************************/
+/*                              CPLError()                              */
+/************************************************************************/
+static PyObject *
+py_CPLError(PyObject *self, PyObject *args) {
+
+    char *pszText = NULL;
+    int  nErrClass, nErrCode;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"iis:CPLError", &nErrClass, &nErrCode, &pszText))
+        return NULL;
+
+    CPLError( nErrClass, nErrCode, "%s", pszText );
+
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+%}
+
+%native(CPLError) py_CPLError;
+
+/* ==================================================================== */
+/*      Support function for error reporting callbacks to python.       */
+/* ==================================================================== */
+
+%{
+
+typedef struct _PyErrorHandlerData {
+    PyObject *psPyErrorHandler;
+    struct _PyErrorHandlerData *psPrevious;
+} PyErrorHandlerData;
+
+static PyErrorHandlerData *psPyHandlerStack = NULL;
+
+/************************************************************************/
+/*                        PyErrorHandlerProxy()                         */
+/************************************************************************/
+
+void PyErrorHandlerProxy( CPLErr eErrType, int nErrorCode, const char *pszMsg )
+
+{
+    PyObject *psArgs;
+    PyObject *psResult;
+
+    assert( psPyHandlerStack != NULL );
+    if( psPyHandlerStack == NULL )
+        return;
+
+    psArgs = Py_BuildValue("(iis)", (int) eErrType, nErrorCode, pszMsg );
+
+    psResult = PyEval_CallObject( psPyHandlerStack->psPyErrorHandler, psArgs);
+    Py_XDECREF(psArgs);
+
+    if( psResult != NULL )
+    {
+        Py_XDECREF( psResult );
+    }
+}
+
+/************************************************************************/
+/*                        CPLPushErrorHandler()                         */
+/************************************************************************/
+static PyObject *
+py_CPLPushErrorHandler(PyObject *self, PyObject *args) {
+
+    PyObject *psPyCallback = NULL;
+    PyErrorHandlerData *psCBData = NULL;
+    char *pszCallbackName = NULL;
+    CPLErrorHandler pfnHandler = NULL;
+
+    self = self;
+
+    if(!PyArg_ParseTuple(args,"O:CPLPushErrorHandler",	&psPyCallback ) )
+        return NULL;
+
+    psCBData = (PyErrorHandlerData *) CPLCalloc(sizeof(PyErrorHandlerData),1);
+    psCBData->psPrevious = psPyHandlerStack;
+    psPyHandlerStack = psCBData;
+
+    if( PyArg_Parse( psPyCallback, "s", &pszCallbackName ) )
+    {
+        if( EQUAL(pszCallbackName,"CPLQuietErrorHandler") )
+	    pfnHandler = CPLQuietErrorHandler;
+        else if( EQUAL(pszCallbackName,"CPLDefaultErrorHandler") )
+	    pfnHandler = CPLDefaultErrorHandler;
+        else if( EQUAL(pszCallbackName,"CPLLoggingErrorHandler") )
+            pfnHandler = CPLLoggingErrorHandler;
+        else
+        {
+	    PyErr_SetString(PyExc_ValueError,
+   	            "Unsupported callback name in CPLPushErrorHandler");
+            return NULL;
+        }
+    }
+    else
+    {
+	PyErr_Clear();
+	pfnHandler = PyErrorHandlerProxy;
+        psCBData->psPyErrorHandler = psPyCallback;
+        Py_INCREF( psPyCallback );
+    }
+
+    CPLPushErrorHandler( pfnHandler );
+
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+
+%}
+
+%native(CPLPushErrorHandler) py_CPLPushErrorHandler;
+
+%{
+
+/************************************************************************/
+/*                         CPLPopErrorHandler()                         */
+/************************************************************************/
+
+static PyObject *
+py_CPLPopErrorHandler(PyObject *self, PyObject *args) 
+{
+    self = self;
+    PyErrorHandlerData *psCBData = NULL;
+
+    if(!PyArg_ParseTuple(args,":CPLPopErrorHandler" ) )
+        return NULL;
+
+    CPLPopErrorHandler();
+
+    if( psPyHandlerStack != NULL )
+    {								
+	psCBData = psPyHandlerStack;
+        psPyHandlerStack = psCBData->psPrevious;
+
+        if( psCBData->psPyErrorHandler != NULL )
+        {
+            Py_XDECREF( psCBData->psPyErrorHandler );
+        }
+        CPLFree( psCBData );	
+    }
+
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+%}
+
+%native(CPLPopErrorHandler) py_CPLPopErrorHandler;
 
 /* -------------------------------------------------------------------- */
 /*      OGR_API Stuff.							*/

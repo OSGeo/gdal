@@ -29,6 +29,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.40  2003/03/02 17:11:27  warmerda
+# added error handling support
+#
 # Revision 1.39  2003/01/20 22:19:28  warmerda
 # added buffer size option in ReadAsArray
 #
@@ -144,6 +147,9 @@ from gdalconst import *
 def Debug(msg_class, message):
     _gdal.CPLDebug( msg_class, message )
 
+def Error(err_class = 3, err_code = 1, msg = 'error' ):
+    _gdal.CPLError( err_class, err_code, msg )
+
 def ErrorReset():
     _gdal.CPLErrorReset()
 
@@ -152,6 +158,12 @@ def GetLastErrorNo():
     
 def GetLastErrorMsg():
     return _gdal.CPLGetLastErrorMsg()
+
+def PushErrorHandler( handler = "CPLQuietErrorHandler" ):
+    _gdal.CPLPushErrorHandler( handler )
+
+def PopErrorHandler():
+    _gdal.CPLPopErrorHandler()
 
 def ParseXMLString( text ):
     return _gdal.CPLParseXMLString( text )
@@ -577,6 +589,15 @@ class Band:
             return None
         else:
             return Band( _obj = _o )
+
+    def Checksum( self, xoff=0, yoff=0, xsize=None, ysize=None ):
+        if xsize is None:
+            xsize = self.XSize
+
+        if ysize is None:
+            ysize = self.YSize
+
+        return _gdal.GDALChecksumImage( self._o, xoff, yoff, xsize, ysize )
 
 class ColorTable:
     def __init__(self, _obj = None):
