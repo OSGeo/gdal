@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2004/04/28 16:43:23  warmerda
+ * added simplified geocentric to geodetic cvonersion
+ *
  * Revision 1.16  2004/04/16 15:26:04  warmerda
  * completed metadata support
  *
@@ -871,3 +874,41 @@ void NITFExtractMetadata( char ***ppapszMetadata, const char *pachHeader,
     *ppapszMetadata = CSLSetNameValue( *ppapszMetadata, pszName, szWork );
 }
                           
+/************************************************************************/
+/*        NITF_WGS84_Geocentric_Latitude_To_Geodetic_Latitude()         */
+/*                                                                      */
+/*      The input is a geocentric latitude in degrees.  The output      */
+/*      is a geodetic latitude in degrees.                              */
+/************************************************************************/
+
+/*
+ * "The angle L' is called "geocentric latitude" and is defined as the
+ * angle between the equatorial plane and the radius from the geocenter.
+ * 
+ * The angle L is called "geodetic latitude" and is defined as the angle
+ * between the equatorial plane and the normal to the surface of the
+ * ellipsoid.  The word "latitude" usually means geodetic latitude.  This
+ * is the basis for most of the maps and charts we use.  The normal to the
+ * surface is the direction that a plumb bob would hang were it not for
+ * local anomalies in the earth's gravitational field."
+ */
+
+double NITF_WGS84_Geocentric_Latitude_To_Geodetic_Latitude( double dfLat )
+
+{
+    /* WGS84 Ellipsoid */
+    double a = 6378137.0;
+    double b = 6356752.3142;
+    double dfPI = 3.14159265358979323;
+
+    /* convert to radians */
+    dfLat = dfLat * dfPI / 180.0;
+
+    /* convert to geodetic */
+    dfLat = atan( ((a*a)/(b*b)) * tan(dfLat) );
+
+    /* convert back to degrees */
+    dfLat = dfLat * 180.0 / dfPI;
+
+    return dfLat;
+}
