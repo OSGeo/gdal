@@ -29,15 +29,17 @@ Assorted Complexities:
 
 Not doing:
 
- o Not reading offsets or vertical information from IREF module. No support
-   for Z yet. 
+ o According to the general SDTS specification SADR subfields can include
+   a Z coordinate, and may be any of a variety of types.  Should add a flag
+   for the SADR extract stuff so that it will go back to general purpose
+   code if the SADR isn't X(BI32),Y(BI32). 
 
  o Not really using the IREF HFMT value ... still just hardcoded to use
    BI32 for X and Y even though I carry the IREF object to the require
    code (ie. SDTSLineReader). 
 
- o SDTSLineReader only keeps that last attribute record link encountered.
-   In practice there are often two, and in theory perhaps many more. 
+ o Not reading offsets or vertical information from IREF module. No support
+   for Z yet. 
 
  o sdts2shp assumes that the first two letters of a module name is 
    the object representation code (OBRP) which may be true for DLG or
