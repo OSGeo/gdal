@@ -9,6 +9,10 @@
 
  *
  * $Log$
+ * Revision 1.10  2005/02/24 16:45:17  kruland
+ * Commented missing methods.
+ * Added first cut at a proxy for ProjectionMethods.
+ *
  * Revision 1.9  2005/02/23 17:44:37  kruland
  * Change SpatialReference constructor to have keyword argument "wkt".
  *
@@ -144,6 +148,7 @@
 #include <iostream>
 using namespace std;
 
+#include "cpl_string.h"
 #include "cpl_conv.h"
 
 #include "ogr_srs_api.h"
@@ -174,8 +179,70 @@ typedef int OGRErr;
  */
 
 // NEEDED GLOBALS 
-// GetProjectionMethods 
 // GetWellKnowGeogCSAsWKT 
+
+/******************************************************************************
+ *
+ *  Projection Methods pseudo object.
+ *
+ */
+
+/*
+ * The previous gdal.i interface defined a list with the following structure:
+ *
+ * ProjectionMethod = ( MethodName (string),
+                        UserMethodName (string),
+                        ParameterList [
+                          ( ParameterName (string),
+                            UserParamName (string),
+                            Type (string),
+                            Default (double ) )
+                          ....
+                         ]
+                       )
+  *
+  * MethodName is returned by OPTGetProjectionMethods().
+  *
+  * papszparameters = OPTGetParameterList( MethodName, &UserMethodName ).
+  *
+  * ParameterName is an entry in papszparameters (char **)
+  * 
+  * OPTGetParameterInfo ( MethodName, ParameterName, &UserParamName, &Type, &Default )
+  */
+
+%inline %{
+struct ProjectionMethod {
+  char *MethodName;
+  char *UserMethodName;
+  char **papszParameters;
+
+  ProjectionMethod( char const *MethodName ) {
+    this->MethodName = CPLStrdup( MethodName );
+    this->papszParameters = OPTGetParameterList( MethodName, &this->UserMethodName );
+  }
+
+  ~ProjectionMethod() {
+    CPLFree( this->MethodName );
+    CPLFree( this->UserMethodName );
+    CSLDestroy( this->papszParameters );
+  }
+}; /* struct ProjectionMethod */
+%} /* %inline */
+
+%extend ProjectionMethod {
+%immutable;
+  char *MethodName;
+  char *UserMethodName;
+%pythoncode {
+  def __str__(self):
+    return "%s(%s)" % (self.MethodName, self.UserMethodName)
+}  /* %pythoncode */
+}  /* %extend */
+
+%rename (GetProjectionMethods) OPTGetProjectionMethods;
+%apply (char **options) { (char **) };
+char ** OPTGetProjectionMethods();
+%clear (char **);
 
 /******************************************************************************
  *
@@ -188,6 +255,38 @@ class OSRSpatialReferenceShadow {
 private:
 public:
 %extend {
+
+// NEEDED
+// Reference
+// Dereference
+// SetAuthority
+// SetGH
+// SetGnomonic
+// SetHOM
+//SetHOM2PNO
+// SetKrovak
+// SetLAEA
+// SetLCC
+// SetLCCB
+// SetLCC1SP
+// SetMC
+// SetMercator
+// SetMollweide
+// SetNZMG
+// SetOS
+// SetOrthographic
+// SetPolyconic
+// SetPS
+// SetRobinson
+// SetSinusoidal
+// SetStereographic
+// SetSOC
+// SetTM
+// SetTMSO
+// SetTMG
+// SetVDG
+
+
   %feature("kwargs") OSRSpatialReferenceShadow;
   OSRSpatialReferenceShadow( char const * wkt = "" ) {
     OSRSpatialReferenceShadow *sr = (OSRSpatialReferenceShadow*) OSRNewSpatialReference(wkt);
@@ -515,6 +614,10 @@ public:
  *  CoordinateTransformation Object
  *
  */
+
+// NEEDED
+// Custom python __init__ which takes a tuple.
+// TransformPoints which takes list of 3-tuples
 
 %rename (CoordinateTransformation) OSRCoordinateTransformationShadow;
 class OSRCoordinateTransformationShadow {
