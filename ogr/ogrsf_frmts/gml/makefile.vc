@@ -23,6 +23,8 @@ clean:
 	-del *.lib
 	-del *.obj *.pdb
 
-
-
+gmlview.exe:	$(LL_OBJ) gmlview.obj
+	cl /Zi gmlview.obj $(LL_OBJ) \
+		../../ogr.lib ../ogrsf_frmts.lib ../ogrsf_frmts_sup.lib \
+		$(GDAL_ROOT)/port/cpl.lib $(XERCES_LIB) $(LIBS)
 
