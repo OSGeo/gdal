@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.86  2004/02/09 06:06:19  warmerda
+ * fix warning
+ *
  * Revision 1.85  2004/02/08 09:13:56  aamici
  * optimize Band.ReadAsArray performance avoiding memory copy.
  *
@@ -977,7 +980,7 @@ py_GDALReadRaster(PyObject *self, PyObject *args) {
      * allocate a suitable string object */
     if( result && result != Py_None )
     {
-	if( PyObject_AsWriteBuffer(result, &result_string, &result_size) )
+	if( PyObject_AsWriteBuffer(result, (void**) &result_string, &result_size) )
 	{
 	    PyErr_SetString(PyExc_TypeError, "No writable buffer from object");
 	    return NULL;
