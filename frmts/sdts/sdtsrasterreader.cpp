@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  1999/09/21 17:25:04  warmerda
+ * Read raster data type from DDSH
+ *
  * Revision 1.3  1999/09/03 13:01:39  warmerda
  * added docs
  *
@@ -168,7 +171,7 @@ int SDTSRasterReader::Open( SDTS_CATD * poCATD, SDTS_IREF * poIREF,
     DDFModule	oRSDF;
 
 /* -------------------------------------------------------------------- */
-/*      Open the LDEF module, and report failure if it is missing.      */
+/*      Open the RSDF module, and report failure if it is missing.      */
 /* -------------------------------------------------------------------- */
     if( poCATD->GetModuleFilePath("RSDF") == NULL )
     {
@@ -210,11 +213,8 @@ int SDTSRasterReader::Open( SDTS_CATD * poCATD, SDTS_IREF * poIREF,
         return FALSE;
     }
     
-    SDTSGetSADR( poIREF, poRecord->FindField( "SADR" ), 1,
-                 adfTransform + 0, adfTransform + 3, &dfZ );
-
-    adfTransform[0] += poIREF->dfXOffset;
-    adfTransform[3] += poIREF->dfYOffset;
+    poIREF->GetSADR( poRecord->FindField( "SADR" ), 1,
+                     adfTransform + 0, adfTransform + 3, &dfZ );
 
     adfTransform[1] = poIREF->dfXRes;
     adfTransform[2] = 0.0;
@@ -253,7 +253,7 @@ int SDTSRasterReader::Open( SDTS_CATD * poCATD, SDTS_IREF * poIREF,
                   "Georef coordinates will likely be incorrect.\n",
                   pszString );
     }
-    
+
     oRSDF.Close();
     
 /* -------------------------------------------------------------------- */
@@ -266,6 +266,50 @@ int SDTSRasterReader::Open( SDTS_CATD * poCATD, SDTS_IREF * poIREF,
     nXBlockSize = nXSize;
     nYBlockSize = 1;
 
+/* ==================================================================== */
+/*      Fetch the data type used for the raster, and the units from     */
+/*      the data dictionary/schema record (DDSH).                       */
+/* ==================================================================== */
+    DDFModule	oDDSH;
+
+/* -------------------------------------------------------------------- */
+/*      Open the DDSH module, and report failure if it is missing.      */
+/* -------------------------------------------------------------------- */
+    if( poCATD->GetModuleFilePath("DDSH") == NULL )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Can't find DDSH entry in CATD module ... "
+                  "can't treat as raster.\n" );
+        return FALSE;
+    }
+    
+    if( !oDDSH.Open( poCATD->GetModuleFilePath("DDSH") ) )
+        return FALSE;
+
+/* -------------------------------------------------------------------- */
+/*      Read each record, till we find what we want.                    */
+/* -------------------------------------------------------------------- */
+    while( (poRecord = oDDSH.ReadRecord() ) != NULL )
+    {
+        if( EQUAL(poRecord->GetStringSubfield("DDSH",0,"NAME",0),pszModule) )
+            break;
+    }
+
+    if( poRecord == NULL )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Can't find DDSH record for %s.\n",
+                  pszModule );
+        return FALSE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Get some values we are interested in.                           */
+/* -------------------------------------------------------------------- */
+    strcpy( szFMT, poRecord->GetStringSubfield("DDSH",0,"FMT",0) );
+    strcpy( szUNITS, poRecord->GetStringSubfield("DDSH",0,"UNIT",0) );
+    strcpy( szLabel, poRecord->GetStringSubfield("DDSH",0,"ATLB",0) );
+    
 /* -------------------------------------------------------------------- */
 /*      Open the cell file.                                             */
 /* -------------------------------------------------------------------- */
@@ -303,9 +347,19 @@ int SDTSRasterReader::GetBlock( int nXOffset, int nYOffset, void * pData )
 
 {
     DDFRecord   *poRecord;
+    int		nBytesPerValue;
     
     CPLAssert( nXOffset == 0 );
-    CPLAssert( GetRasterType() == 1 ); /* int16 */
+
+/* -------------------------------------------------------------------- */
+/*      Analyse the datatype.                                           */
+/* -------------------------------------------------------------------- */
+    CPLAssert( EQUAL(szFMT,"BI16") || EQUAL(szFMT,"BFP32") );
+
+    if( EQUAL(szFMT,"BI16") )
+        nBytesPerValue = 2;
+    else
+        nBytesPerValue = 4;
 
 /* -------------------------------------------------------------------- */
 /*      Read through till we find the desired record.                   */
@@ -350,8 +404,8 @@ int SDTSRasterReader::GetBlock( int nXOffset, int nYOffset, void * pData )
 /* -------------------------------------------------------------------- */
 /*      Does the CVLS field consist of exactly 1 B(16) field?           */
 /* -------------------------------------------------------------------- */
-    if( poCVLS->GetDataSize() < 2 * nXSize
-        || poCVLS->GetDataSize() > 2 * nXSize + 1 )
+    if( poCVLS->GetDataSize() < nBytesPerValue * nXSize
+        || poCVLS->GetDataSize() > nBytesPerValue * nXSize + 1 )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Cell record is not of expected format.  Raster access "
@@ -364,22 +418,25 @@ int SDTSRasterReader::GetBlock( int nXOffset, int nYOffset, void * pData )
 /*      Copy the data to the application buffer, and byte swap if       */
 /*      required.                                                       */
 /* -------------------------------------------------------------------- */
-#ifdef CPL_LSB
-    {
-        GByte	*pabySrc = (GByte *) poCVLS->GetData();
-        GByte	*pabyDst = (GByte *) pData;
-        int	i;
+    memcpy( pData, poCVLS->GetData(), nXSize * nBytesPerValue );
 
-        for( i = 0; i < nXSize; i++ )
+#ifdef CPL_LSB
+    if( nBytesPerValue == 2 )
+    {
+        for( int i = 0; i < nXSize; i++ )
         {
-            pabyDst[i*2] = pabySrc[i*2+1];
-            pabyDst[i*2+1] = pabySrc[i*2];
+            ((GInt16 *) pData)[i] = CPL_MSBWORD16(((GInt16 *) pData)[i]);
         }
     }
-#else    
-    memcpy( pData, poCVLS->GetData(), nXSize * 2 );
-#endif    
-
+    else
+    {
+        for( int i = 0; i < nXSize; i++ )
+        {
+            CPL_MSBPTR32( ((GByte *)pData) + i*4 );
+        }
+    }
+#endif
+    
     return TRUE;
 }
 
@@ -418,4 +475,17 @@ int SDTSRasterReader::GetTransform( double * padfTransformOut )
     memcpy( padfTransformOut, adfTransform, sizeof(double)*6 );
 
     return TRUE;
+}
+
+/************************************************************************/
+/*                           GetRasterType()                            */
+/************************************************************************/
+
+int SDTSRasterReader::GetRasterType()
+
+{
+    if( EQUAL(szFMT,"BFP32") )
+        return 6;
+    else
+        return 1;
 }
