@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.24  2003/06/17 14:39:00  warmerda
+ * Translate Equirectangular to/from Equidistant_Cylindrical
+ *
  * Revision 1.23  2003/05/21 02:59:41  warmerda
  * morphToEsri() now sets specific units constants for Foot_US and Degree.
  * morphToEsri() converts albers parameters to match expected ESRI values.
@@ -118,6 +121,7 @@ char *apszProjMapping[] = {
     SRS_PT_TRANSVERSE_MERCATOR, SRS_PT_TRANSVERSE_MERCATOR,
     "Gauss_Kruger", SRS_PT_TRANSVERSE_MERCATOR,
     "Mercator", SRS_PT_MERCATOR_1SP,
+    "Equidistant_Cylindrical", SRS_PT_EQUIRECTANGULAR,
     NULL, NULL }; 
  
 char *apszAlbersMapping[] = {
