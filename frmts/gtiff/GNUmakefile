@@ -2,7 +2,7 @@ GDAL_ROOT	=	../..
 
 include $(GDAL_ROOT)/GDALmake.opt
 
-OBJ	=	geotiff.o
+OBJ	=	geotiff.o gt_wkt_srs.o
 
 ALL_C_FLAGS	=	-Ilibgeotiff -Ilibtiff $(GDAL_INCLUDE) $(CFLAGS)
 
@@ -51,8 +51,8 @@ lib-geotiff:
 
 all:	lib-tiff lib-geotiff
 
-install-obj:	../o/libtiff.a ../o/libgeotiff.a ../o/geotiff.o
-
+install-obj:	../o/libtiff.a ../o/libgeotiff.a \
+		$(foreach file,$(OBJ),../o/$(file))
 
 ../o/%.o:	%.o
 	cp $*.o ../o
