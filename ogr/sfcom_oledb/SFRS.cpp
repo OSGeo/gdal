@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  1999/09/07 12:39:02  warmerda
+ * removed oledbsup_sf.h
+ *
  * Revision 1.14  1999/07/23 19:20:27  kshih
  * Modifications for errors etc...
  *
@@ -59,12 +62,12 @@
  *
  */
 
+#include <assert.h>
 #include "stdafx.h"
 #include "SF.h"
 #include "SFRS.h"
 #include "SFSess.h"
 #include "ogr_geometry.h"
-#include "oledb_sf.h"
 #include "sfutil.h"
 
 #define		STRING_BUFFER_SIZE	10240
