@@ -6,12 +6,16 @@ OBJ	=	ogrsfdriverregistrar.obj ogrlayer.obj ogr_gensql.obj \
 
 GDAL_ROOT	=	..\..\..
 
-EXTRAFLAGS =	-I.. -I..\.. $(OGDIDEF) $(FMEDEF) $(OCIDEF) $(PGDEF)
+EXTRAFLAGS =	-I.. -I..\.. $(OGDIDEF) $(FMEDEF) $(OCIDEF) $(PGDEF) $(ODBCDEF)
 
 !INCLUDE $(GDAL_ROOT)\nmake.opt
 
 !IFDEF OGDIDIR
 OGDIDEF	=	-DOGDI_ENABLED
+!ENDIF
+
+!IFDEF ODBC_SUPPORTED
+ODBCDEF	=	-DODBC_ENABLED
 !ENDIF
 
 !IFDEF PG_LIB
