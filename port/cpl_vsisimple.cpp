@@ -30,6 +30,9 @@
  *    instance validation of access strings to fopen().
  * 
  * $Log$
+ * Revision 1.5  2000/01/26 19:06:29  warmerda
+ * fix up mkdir/unlink for windows
+ *
  * Revision 1.4  2000/01/25 03:11:03  warmerda
  * added unlink and mkdir
  *
@@ -50,6 +53,10 @@
 
 #ifndef WIN32
 #  include <unistd.h>
+#else
+#  include <io.h>
+#  include <fcntl.h>
+#  include <direct.h>
 #endif
 #include <sys/stat.h>
 
@@ -272,12 +279,16 @@ int VSIStat( const char * pszFilename, VSIStatBuf * pStatBuf )
 int VSIMkdir( const char *pszPathname, long mode )
 
 {
+#ifdef WIN32
+    return mkdir( pszPathname );
+#else
     return mkdir( pszPathname, mode );
+#endif
 }
 
 /************************************************************************/
 /*                             VSIUnlink()                              */
-/************************************************************************/
+/*************************a***********************************************/
 
 int VSIUnlink( const char * pszFilename )
 
