@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.29  2004/10/16 14:39:04  fwarmerdam
+ * added GMT format
+ *
  * Revision 1.28  2004/09/16 18:23:42  fwarmerdam
  * added airsar
  *
@@ -170,6 +173,7 @@ void CPL_DLL GDALRegister_MrSID(void);
 void CPL_DLL GDALRegister_PCIDSK(void);
 void CPL_DLL GDALRegister_BT(void);
 void CPL_DLL GDALRegister_DODS(void);
+void CPL_DLL GDALRegister_GMT(void);
 void CPL_DLL GDALRegister_netCDF(void);
 void CPL_DLL GDALRegister_LAN(void);
 void CPL_DLL GDALRegister_CPG(void);
