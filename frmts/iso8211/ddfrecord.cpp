@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.27  2004/06/24 00:35:59  warmerda
+ * fixed bug in my last 'fix' for resizing records
+ *
  * Revision 1.26  2004/06/23 19:03:59  warmerda
  * fixed some serious problems in ResizeField(), especially with shrinking
  *
@@ -1133,12 +1136,8 @@ int DDFRecord::ResizeField( DDFField *poField, int nNewDataSize )
 /* -------------------------------------------------------------------- */
 /*      How much data needs to be shifted up or down after this field?  */
 /* -------------------------------------------------------------------- */
-    if( nBytesToAdd > 0 )
-        nBytesToMove = nDataSize 
-            - (poField->GetData()+poField->GetDataSize()-pachOldData+nBytesToAdd);
-    else
-        nBytesToMove = nDataSize 
-            - (poField->GetData()+poField->GetDataSize()-pachOldData);
+    nBytesToMove = nDataSize 
+        - (poField->GetData()+poField->GetDataSize()-pachOldData+nBytesToAdd);
 
 /* -------------------------------------------------------------------- */
 /*      Update fields to point into newly allocated buffer.             */
