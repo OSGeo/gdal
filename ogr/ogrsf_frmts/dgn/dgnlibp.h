@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2003/01/20 20:07:19  warmerda
+ * added ascii to rad50 prototype
+ *
  * Revision 1.15  2002/11/12 19:44:51  warmerda
  * fixed up DGN_WRITE_INT32 macro
  *
@@ -153,6 +156,7 @@ void DGN2IEEEDouble( void * );
 void IEEE2DGNDouble( void * );
 void DGNBuildIndex( DGNInfo * );
 void DGNRad50ToAscii( unsigned short rad50, char *str );
+void DGNAsciiToRad50( const char *str, unsigned short *rad50 );
 void DGNSpatialFilterToUOR( DGNInfo *);
 int  DGNLoadRawElement( DGNInfo *psDGN, int *pnType, int *pnLevel );
 
