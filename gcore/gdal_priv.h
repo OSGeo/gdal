@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  1999/10/21 13:23:45  warmerda
+ * Added a bit of driver related documentation.
+ *
  * Revision 1.8  1999/10/21 12:04:11  warmerda
  * Reorganized header.
  *
@@ -298,9 +301,14 @@ class CPL_DLL GDALDriver
   public:
     			GDALDriver();
                         ~GDALDriver();
-                        
+
+    /** Short (symbolic) format name. */
     char		*pszShortName;
+
+    /** Long format name */
     char		*pszLongName;
+
+    /** Help mechanism yet to be defined. */
     char		*pszHelpTopic;
     
     GDALDataset 	*(*pfnOpen)( GDALOpenInfo * );
@@ -318,6 +326,13 @@ class CPL_DLL GDALDriver
 /* ******************************************************************** */
 /*                          GDALDriverManager                           */
 /* ******************************************************************** */
+
+/**
+ * Class for managing the registration of file format drivers.
+ *
+ * Use GetGDALDriverManager() to fetch the global singleton instance of
+ * this class.
+ */
 
 class CPL_DLL GDALDriverManager
 {
