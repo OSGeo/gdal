@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.29  2003/11/27 14:15:20  warmerda
+ * added surface type in createcomplexheaderfromgroup call
+ *
  * Revision 1.28  2003/09/29 14:25:30  warmerda
  * Fixed memory leak as reported by Steve Brooks.
  *
@@ -836,7 +839,7 @@ DGNElemCore **OGRDGNLayer::LineStringToElementGroup( OGRLineString *poLS,
             nGroupType = DGNT_COMPLEX_CHAIN_HEADER;
         
         papsGroup[0] = 
-            DGNCreateComplexHeaderFromGroup( hDGN, nGroupType, 
+            DGNCreateComplexHeaderFromGroup( hDGN, nGroupType, 0,
                                              iGeom, papsGroup + 1 );
     }
 
