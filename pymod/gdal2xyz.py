@@ -27,6 +27,9 @@
 ###############################################################################
 # 
 #  $Log$
+#  Revision 1.2  2002/09/04 18:11:17  warmerda
+#  fixed to emit center of pixel
+#
 #  Revision 1.1  2002/09/04 17:58:07  warmerda
 #  New
 #
@@ -133,8 +136,8 @@ if __name__ == '__main__':
 
             x = x_i + srcwin[0]
 
-            geo_x = gt[0] + x * gt[1] + y * gt[2]
-            geo_y = gt[3] + x * gt[4] + y * gt[5]
+            geo_x = gt[0] + (x+0.5) * gt[1] + (y+0.5) * gt[2]
+            geo_y = gt[3] + (x+0.5) * gt[4] + (y+0.5) * gt[5]
 
             line = format % (float(geo_x),float(geo_y),data[x_i])
 
