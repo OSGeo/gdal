@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.23  2003/07/13 23:06:28  warmerda
+ * Added case for wkbMultiPoint25D to SHPT_MULTIPOINTZ.
+ *
  * Revision 1.22  2003/05/27 21:39:53  warmerda
  * added support for writing MULTILINESTRINGs as ARCs
  *
@@ -452,6 +455,8 @@ OGRShapeDataSource::CreateLayer( const char * pszLayerName,
         nShapeType = SHPT_POLYGONZ;
     else if( eType == wkbMultiPolygon25D )
         nShapeType = SHPT_POLYGONZ;
+    else if( eType == wkbMultiPoint25D )
+        nShapeType = SHPT_MULTIPOINTZ;
     else if( eType == wkbNone )
         nShapeType = SHPT_NULL;
     else
