@@ -2,12 +2,13 @@ GDAL_ROOT	=	..
 
 include ../GDALmake.opt
 
-OBJ	=	ogrgeometryfactory.o ogrpoint.o ogrcurve.o ogrlinestring.o
+OBJ	=	ogrgeometryfactory.o ogrpoint.o ogrcurve.o ogrlinestring.o \
+		ogrlinearring.o ogrpolygon.o
 
 default:	$(OBJ)
 
 clean:
-	rm -f *.o
+	rm -f *.o test1
 
 %.o:	%.c
 	$(CC) -c $(GDAL_INCLUDE) $(CFLAGS) $*.c -o $*.o
