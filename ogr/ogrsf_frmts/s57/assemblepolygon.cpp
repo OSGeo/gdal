@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2001/12/19 22:07:17  warmerda
+ * avoid warnings by initializing variables
+ *
  * Revision 1.6  2001/07/18 04:55:16  warmerda
  * added CPL_CSVID
  *
@@ -69,7 +72,7 @@ static void AddEdgeToRing( OGRLinearRing * poRing, OGRLineString * poLine,
 /* -------------------------------------------------------------------- */
 /*      Establish order and range of traverse.                          */
 /* -------------------------------------------------------------------- */
-    int         iStart, iEnd, iStep;
+    int         iStart=0, iEnd=0, iStep=0;
     int         nVertToAdd = poLine->getNumPoints();
 
     if( bDropVertex && bReverse )
