@@ -3,13 +3,19 @@ GDAL_ROOT	=	../..
 
 include $(GDAL_ROOT)/GDALmake.opt
 
-OBJ	=	grassdataset.o
+#OBJ	=	grassdataset.o
 
-CPPFLAGS	:=	$(GDAL_INCLUDE) $(CPPFLAGS)
+ifeq ($(GRASS_SETTING),libgrass)
+OBJ	=	grassdataset.o
+else
+OBJ	=	grass57dataset.o
+endif
+
+CPPFLAGS	:=	$(GRASS_INCLUDE) $(GDAL_INCLUDE) $(CPPFLAGS)
 
 default:	$(OBJ)
 
 clean:
-	rm -f *.o
+	rm -f *.o $(O_OBJ)
 
 install-obj:	$(O_OBJ)
