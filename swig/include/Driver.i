@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.5  2005/02/16 17:11:27  kruland
+ * Added r/o data members for LongName, ShortName, and HelpTopic.
+ *
  * Revision 1.4  2005/02/15 06:24:31  kruland
  * Added out typemap for GetMetadata.  (Removed extra log from comments)
  *
@@ -32,7 +35,14 @@
 
 class GDALDriver {
 public:
-  %extend {
+%extend {
+
+%immutable;
+  char const *ShortName;
+  char const *LongName;
+  char const *HelpTopic;
+%mutable;
+
     
 %newobject Create;
 %feature( "kwargs" ) Create;
@@ -62,6 +72,18 @@ public:
     return GDALGetMetadata( self, pszDomain );
   }
 %clear char **;
+
 }
 };
 
+%{
+char const *GDALDriver_ShortName_get( GDALDriver *h ) {
+  return GDALGetDriverShortName( h );
+}
+char const *GDALDriver_LongName_get( GDALDriver *h ) {
+  return GDALGetDriverLongName( h );
+}
+char const *GDALDriver_HelpTopic_get( GDALDriver *h ) {
+  return GDALGetDriverHelpTopic( h );
+}
+%}
