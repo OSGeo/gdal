@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.29  2003/03/27 21:32:08  warmerda
+ * Fixed bug with escaped spaces.
+ *
  * Revision 1.28  2003/03/11 21:33:02  warmerda
  * added URL encode/decode support, untested
  *
@@ -1330,7 +1333,6 @@ char *CPLUnescapeString( const char *pszInput, int *pnLength, int nScheme )
             else if( pszInput[iIn] == '+' )
             {
                 pszOutput[iOut++] = ' ';
-                iIn++;
             }   
             else
             {
