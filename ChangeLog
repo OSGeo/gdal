@@ -1,3 +1,7 @@
+2001-03-18  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* ogr/ogrsf_frmts/dgn: removed requirement for .dgn extention.
+
 2001-03-16  Frank Warmerdam  <warmerdam@pobox.com>
 
 	* OGR Shapefile driver: added support for reading and writing 
