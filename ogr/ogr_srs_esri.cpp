@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2002/11/25 03:28:16  warmerda
+ * added/improved documentation
+ *
  * Revision 1.14  2002/11/12 19:42:08  warmerda
  * added state plane and BNG support
  *
@@ -395,6 +398,33 @@ static const char*OSR_GDS( char **papszNV, const char * pszField,
 /*                          importFromESRI()                            */
 /************************************************************************/
 
+/**
+ * Import coordinate system from ESRI .prj format(s).
+ *
+ * This function will read the text loaded from an ESRI .prj file, and
+ * translate it into an OGRSpatialReference definition.  This should support
+ * many (but by no means all) old style (Arc/Info 7.x) .prj files, as well
+ * as the newer pseudo-OGC WKT .prj files.  Note that new style .prj files
+ * are in OGC WKT format, but require some manipulation to correct datum
+ * names, and units on some projection parameters.  This is addressed within
+ * importFromESRI() by an automatical call to morphFromESRI(). 
+ *
+ * Currently only GEOGRAPHIC, UTM, STATEPLANE, GREATBRITIAN_GRID, ALBERS, 
+ * EQUIDISTANT_CONIC, and TRANSVERSE (mercator) projections are supported
+ * from old style files. 
+ *
+ * At this time there is no equivelent exportToESRI() method.  Writing old
+ * style .prj files is not supported by OGRSpatialReference. However the
+ * morphToESRI() and exportToWkt() methods can be used to generate output
+ * suitable to write to new style (Arc 8) .prj files. 
+ *
+ * This function is the equilvelent of the C function OSRImportFromESRI().
+ *
+ * @param papszPrj NULL terminated list of strings containing the definition.
+ *
+ * @return OGRERR_NONE on success or an error code in case of failure. 
+ */
+
 OGRErr OGRSpatialReference::importFromESRI( char **papszPrj )
 
 {
@@ -566,9 +596,6 @@ OGRErr OGRSpatialReference::importFromESRI( char **papszPrj )
 
 /************************************************************************/
 /*                            morphToESRI()                             */
-/*                                                                      */
-/*      Modify this definition to fit better with the ESRI concept      */
-/*      of WKT format.                                                  */
 /************************************************************************/
 
 /**
