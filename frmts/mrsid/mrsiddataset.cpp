@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2004/08/07 10:25:12  dron
+ * Added support for overviews in new version; fixed problem with the last
+ * strip decoding; support for DSDK 4.0.9.713.
+ *
  * Revision 1.12  2004/07/04 06:26:30  dron
  * Added support for decoding JPEG2000 format using MrSID DSDK.
  *
@@ -1212,8 +1216,8 @@ GDALDataset *MrSIDDataset::Open( GDALOpenInfo * poOpenInfo )
 #include "lt_fileSpec.h"
 #include "lti_geoCoord.h"
 #include "lti_pixel.h"
-#include "lti_scene.h"
-#include "lti_bufferData.h"
+#include "lti_navigator.h"
+#include "lti_sceneBuffer.h"
 #include "lti_metadataDatabase.h"
 #include "lti_metadataRecord.h"
 #include "MrSIDImageReader.h"
@@ -1232,17 +1236,26 @@ class MrSIDDataset : public GDALDataset
     friend class MrSIDRasterBand;
 
     LTIImageReader      *poImageReader;
+    LTINavigator        *poLTINav;
     LTIMetadataDatabase *poMetadata;
 
     LTIDataType         eSampleType;
     GDALDataType        eDataType;
     LTIColorSpace       eColorSpace;
 
+    int                 nCurrentZoomLevel;
+    double              dfCurrentMag;
+
     int                 bHasGeoTransfom;
     double              adfGeoTransform[6];
     char                *pszProjection;
     GTIFDefn            *psDefn;
 
+    int                 bIsOverview;
+    int                 nOverviewCount;
+    MrSIDDataset        **papoOverviewDS;
+
+    CPLErr              OpenZoomLevel( int iZoom );
     char                *SerializeMetadataRec( const LTIMetadataRecord* );
     int                 GetMetadataElement( const char *, void *, int );
     void                FetchProjParms();
@@ -1285,6 +1298,8 @@ class MrSIDRasterBand : public GDALRasterBand
     virtual CPLErr          IReadBlock( int, int, void * );
     virtual GDALColorInterp GetColorInterpretation();
     virtual double	    GetNoDataValue( int * );
+    virtual int             GetOverviewCount();
+    virtual GDALRasterBand  *GetOverview( int );
 };
 
 /************************************************************************/
@@ -1340,16 +1355,20 @@ CPLErr MrSIDRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                     void * pImage )
 {
     MrSIDDataset    *poGDS = (MrSIDDataset *)poDS;
-    const LTIScene  oScene( nBlockXOff * nBlockXSize,
-		            nBlockYOff * nBlockYSize,
-		            nBlockXSize, nBlockYSize, 1.0 );
+    GInt32          nLine = nBlockYOff * nBlockYSize;
+
+    // XXX: The scene, passed to LTIImageStage::read() call must be
+    // inside the image boundaries. So we should detect the last strip and
+    // form the scene properly.
+    poGDS->poLTINav->setSceneAsULWH(nBlockXOff * nBlockXSize, nLine,
+                                    nBlockXSize,
+                                    (nLine+nBlockYSize>poGDS->GetRasterYSize())?
+                                    (poGDS->GetRasterYSize()-nLine):nBlockYSize,
+                                    poGDS->dfCurrentMag);
     poBuffer = new LTISceneBuffer( *poPixel, nBlockXSize, nBlockYSize, NULL );
 
-    try 
-    {
-	    poGDS->poImageReader->read( oScene, *poBuffer );
-    }
-    catch ( ... )
+    if(!LT_SUCCESS(poGDS->poImageReader->read(poGDS->poLTINav->getScene(),
+                                              *poBuffer)))
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "MrSIDRasterBand::IReadBlock(): Failed to load image." );
@@ -1426,6 +1445,33 @@ double MrSIDRasterBand::GetNoDataValue( int * pbSuccess )
 }
 
 /************************************************************************/
+/*                          GetOverviewCount()                          */
+/************************************************************************/
+
+int MrSIDRasterBand::GetOverviewCount()
+
+{
+    MrSIDDataset        *poGDS = (MrSIDDataset *) poDS;
+
+    return poGDS->nOverviewCount;
+}
+
+/************************************************************************/
+/*                            GetOverview()                             */
+/************************************************************************/
+
+GDALRasterBand *MrSIDRasterBand::GetOverview( int i )
+
+{
+    MrSIDDataset        *poGDS = (MrSIDDataset *) poDS;
+
+    if( i < 0 || i >= poGDS->nOverviewCount )
+        return NULL;
+    else
+        return poGDS->papoOverviewDS[i]->GetRasterBand( nBand );
+}
+
+/************************************************************************/
 /*                           MrSIDDataset()                             */
 /************************************************************************/
 
@@ -1445,6 +1491,11 @@ MrSIDDataset::MrSIDDataset()
     adfGeoTransform[4] = 0.0;
     adfGeoTransform[5] = 1.0;
     psDefn = NULL;
+    nCurrentZoomLevel = 0;
+    dfCurrentMag = 1.0;
+    bIsOverview = FALSE;
+    nOverviewCount = 0;
+    papoOverviewDS = NULL;
 }
 
 /************************************************************************/
@@ -1453,14 +1504,22 @@ MrSIDDataset::MrSIDDataset()
 
 MrSIDDataset::~MrSIDDataset()
 {
-    if ( poImageReader )
+    if ( poImageReader && !bIsOverview )
         delete poImageReader;
+    if ( poLTINav )
+        delete poLTINav;
     if ( poMetadata )
         delete poMetadata;
     if ( pszProjection )
         CPLFree( pszProjection );
     if ( psDefn )
         delete psDefn;
+    if ( papoOverviewDS )
+    {
+        for( int i = 0; i < nOverviewCount; i++ )
+            delete papoOverviewDS[i];
+        CPLFree( papoOverviewDS );
+    }
 }
 
 /************************************************************************/
@@ -1605,6 +1664,104 @@ int MrSIDDataset::GetMetadataElement( const char *pszKey, void *pValue,
 }
 
 /************************************************************************/
+/*                             OpenZoomLevel()                          */
+/************************************************************************/
+
+CPLErr MrSIDDataset::OpenZoomLevel( int iZoom )
+{
+/* -------------------------------------------------------------------- */
+/*      Take image geometry.                                            */
+/* -------------------------------------------------------------------- */
+    nRasterXSize = poImageReader->getWidth();
+    nRasterYSize = poImageReader->getHeight();
+    nBands = poImageReader->getNumBands();
+
+    nCurrentZoomLevel = iZoom;
+    dfCurrentMag = 1.0;
+    if ( iZoom != 0 )
+    {
+        unsigned int u32_w, u32_h;
+	dfCurrentMag /= pow( 2, iZoom );
+        poImageReader->getDimsAtMag( dfCurrentMag, u32_w, u32_h );
+	nRasterXSize = (int) u32_w;
+	nRasterYSize = (int) u32_h;
+    }
+
+    CPLDebug( "MrSID", "Opened zoom level %d with size %dx%d.\n",
+              iZoom, nRasterXSize, nRasterYSize );
+
+    try
+    {
+        poLTINav = new LTINavigator( *poImageReader );
+    }
+    catch ( ... )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "MrSIDDataset::OpenZoomLevel(): "
+                  "Failed to create LTINavigator object." );
+        return CE_Failure;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Handle sample type and color space.                             */
+/* -------------------------------------------------------------------- */
+    eColorSpace = poImageReader->getColorSpace();
+    eSampleType = poImageReader->getDataType();
+    switch ( eSampleType )
+    {
+        case LTI_DATATYPE_UINT16:
+            eDataType = GDT_UInt16;
+            break;
+        case LTI_DATATYPE_SINT16:
+            eDataType = GDT_Int16;
+            break;
+        case LTI_DATATYPE_UINT32:
+            eDataType = GDT_UInt32;
+            break;
+        case LTI_DATATYPE_SINT32:
+            eDataType = GDT_Int32;
+            break;
+        case LTI_DATATYPE_FLOAT32:
+            eDataType = GDT_Float32;
+            break;
+        case LTI_DATATYPE_FLOAT64:
+            eDataType = GDT_Float64;
+            break;
+        case LTI_DATATYPE_UINT8:
+        case LTI_DATATYPE_SINT8:
+        default:
+            eDataType = GDT_Byte;
+            break;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Take georeferencing.                                            */
+/* -------------------------------------------------------------------- */
+    if ( !poImageReader->isGeoCoordImplicit() )
+    {
+        const LTIGeoCoord& oGeo = poImageReader->getGeoCoord();
+        oGeo.get( adfGeoTransform[0], adfGeoTransform[3],
+	          adfGeoTransform[1], adfGeoTransform[5],
+	          adfGeoTransform[2], adfGeoTransform[4] );
+        
+	adfGeoTransform[5] = - adfGeoTransform[5];
+        adfGeoTransform[0] = adfGeoTransform[0] - adfGeoTransform[1] / 2;
+        adfGeoTransform[3] = adfGeoTransform[3] - adfGeoTransform[5] / 2;
+	bHasGeoTransfom = TRUE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Create band information objects.                                */
+/* -------------------------------------------------------------------- */
+    int             iBand;
+
+    for( iBand = 1; iBand <= nBands; iBand++ )
+        SetBand( iBand, new MrSIDRasterBand( this, iBand ) );
+
+    return CE_None;
+}
+
+/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
@@ -1675,72 +1832,40 @@ GDALDataset *MrSIDDataset::Open( GDALOpenInfo * poOpenInfo )
             CPLFree( pszKey );
 	}
     }
+
+    poDS->GetGTIFDefn();
     
 /* -------------------------------------------------------------------- */
-/*      Handle sample type and color space.                             */
+/*  Take number of resolution levels (we will use them as overviews).   */
 /* -------------------------------------------------------------------- */
-    poDS->eColorSpace = poDS->poImageReader->getColorSpace();
-    poDS->eSampleType = poDS->poImageReader->getDataType();
-    switch ( poDS->eSampleType )
+    if ( bIsJP2 )
+        poDS->nOverviewCount
+	  = ((J2KImageReader *) (poDS->poImageReader))->getNumLevels() - 1;
+    else
+        poDS->nOverviewCount
+	  = ((MrSIDImageReader *) (poDS->poImageReader))->getNumLevels() - 1;
+
+    if ( poDS->nOverviewCount > 0 )
     {
-        case LTI_DATATYPE_UINT16:
-            poDS->eDataType = GDT_UInt16;
-            break;
-        case LTI_DATATYPE_SINT16:
-            poDS->eDataType = GDT_Int16;
-            break;
-        case LTI_DATATYPE_UINT32:
-            poDS->eDataType = GDT_UInt32;
-            break;
-        case LTI_DATATYPE_SINT32:
-            poDS->eDataType = GDT_Int32;
-            break;
-        case LTI_DATATYPE_FLOAT32:
-            poDS->eDataType = GDT_Float32;
-            break;
-        case LTI_DATATYPE_FLOAT64:
-            poDS->eDataType = GDT_Float64;
-            break;
-        case LTI_DATATYPE_UINT8:
-        case LTI_DATATYPE_SINT8:
-        default:
-            poDS->eDataType = GDT_Byte;
-            break;
+        int         i;
+
+        poDS->papoOverviewDS = (MrSIDDataset **)
+            CPLMalloc( poDS->nOverviewCount * (sizeof(void*)) );
+
+        for ( i = 0; i < poDS->nOverviewCount; i++ )
+        {
+            poDS->papoOverviewDS[i] = new MrSIDDataset();
+            poDS->papoOverviewDS[i]->poImageReader = poDS->poImageReader;
+            poDS->papoOverviewDS[i]->OpenZoomLevel( i + 1 );
+            poDS->papoOverviewDS[i]->bIsOverview = TRUE;
+            
+        }
     }
 
 /* -------------------------------------------------------------------- */
-/*      Take image geometry.                                            */
+/*  Create object for the whole image.                                  */
 /* -------------------------------------------------------------------- */
-    poDS->nRasterXSize = poDS->poImageReader->getWidth();
-    poDS->nRasterYSize = poDS->poImageReader->getHeight();
-    poDS->nBands = poDS->poImageReader->getNumBands();
-
-/* -------------------------------------------------------------------- */
-/*      Take georeferencing.                                            */
-/* -------------------------------------------------------------------- */
-    poDS->GetGTIFDefn();
-    if ( !poDS->poImageReader->isGeoCoordImplicit() )
-    {
-        const LTIGeoCoord& oGeo = poDS->poImageReader->getGeoCoord();
-        oGeo.get( poDS->adfGeoTransform[0], poDS->adfGeoTransform[3],
-	          poDS->adfGeoTransform[1], poDS->adfGeoTransform[5],
-	          poDS->adfGeoTransform[2], poDS->adfGeoTransform[4] );
-        
-	poDS->adfGeoTransform[5] = - poDS->adfGeoTransform[5];
-        poDS->adfGeoTransform[0] =
-	    poDS->adfGeoTransform[0] - poDS->adfGeoTransform[1] / 2;
-        poDS->adfGeoTransform[3] =
-	    poDS->adfGeoTransform[3] - poDS->adfGeoTransform[5] / 2;
-	poDS->bHasGeoTransfom = TRUE;
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Create band information objects.                                */
-/* -------------------------------------------------------------------- */
-    int             iBand;
-
-    for( iBand = 1; iBand <= poDS->nBands; iBand++ )
-        poDS->SetBand( iBand, new MrSIDRasterBand( poDS, iBand ) );
+    poDS->OpenZoomLevel( 0 );
 
     CPLDebug( "MrSID",
               "Opened image: width %d, height %d, bands %d",
