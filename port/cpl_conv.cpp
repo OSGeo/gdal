@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.27  2003/09/08 11:09:53  dron
+ * Added CPLPrintDouble() and CPLPrintTime().
+ *
  * Revision 1.26  2003/09/07 14:38:43  dron
  * Added CPLPrintString(), CPLPrintStringFill(), CPLPrintInt32(), CPLPrintUIntBig().
  *
@@ -671,6 +674,111 @@ char *CPLPrintUIntBig( char *pszBuffer, GUIntBig iValue, int nMaxLen )
 #endif
 
     return CPLPrintString( pszBuffer, szTemp, nMaxLen );
+}
+
+/************************************************************************/
+/*                          CPLPrintDouble()                            */
+/************************************************************************/
+
+/**
+ * Print double value into specified string buffer. Exponential character
+ * flag 'E' (or 'e') will be replaced with 'D', as in Fortran. Resulting
+ * string will not to be NULL-terminated.
+ *
+ * @param Pointer to the destination string buffer. Should be
+ * large enough to hold the resulting string. Note, that the string will
+ * not be NULL-terminated, so user should do this himself, if needed.
+ *
+ * @param Format specifier (for example, "%16.9E").
+ *
+ * @param dfValue Numerical value to print.
+ * 
+ * @return Pointer to the destination string buffer.
+ */
+
+char *CPLPrintDouble( char *pszBuffer, const char *pszFormat,
+                      double dfValue )
+{
+    char        szTemp[64];
+    int         i;
+
+    if ( !pszBuffer )
+        return NULL;
+
+    sprintf( szTemp, pszFormat, dfValue );
+
+    for( i = 0; szTemp[i] != '\0', i < 64 ; i++ )
+    {
+        if( szTemp[i] == 'E' || szTemp[i] == 'e' )
+            szTemp[i] = 'D';
+    }
+
+    return CPLPrintString( pszBuffer, szTemp, 64 );
+}
+
+/************************************************************************/
+/*                            CPLPrintTime()                            */
+/************************************************************************/
+
+/**
+ * Print specified time value accordingly to the format options and
+ * specified locale name. This function does following:
+ * 
+ *  - if locale parameter is not NULL, the current locale setting will be
+ *  stored and replaced with the specified one;
+ *  - format time value with the strftime(3) function;
+ *  - restore back current locale, if was saved.
+ * 
+ * @param pszBuffer Pointer to the destination string buffer. Should be
+ * large enough to hold the resulting string. Note, that the string will
+ * not be NULL-terminated, so user should do this himself, if needed.
+ *
+ * @param nMaxLen Maximum length of the resulting string. If string length is
+ * greater than nMaxLen, it will be truncated.
+ * 
+ * @param pszFormat Controls the output format. Options are the same as
+ * for strftime(3) function.
+ *
+ * @param poBrokenTime Pointer to the broken-down time structure. May be
+ * requested with the VSIGMTime() and VSILocalTime() functions.
+ *
+ * @param pszLocale Pointer to a character string containing locale name
+ * ("C", "POSIX", "us_US", "ru_RU.KOI8-R" etc.).
+ *
+ * @return Pointer to the destination not NULL terminated buffer.
+ */
+
+char *CPLPrintTime( char *pszBuffer, int nMaxLen, const char *pszFormat,
+                    const struct tm *poBrokenTime, char *pszLocale )
+{
+    char        *pszTemp = (char *)CPLMalloc( (nMaxLen + 1) * sizeof(char) );
+
+#if defined(HAVE_LOCALE_H) && defined(HAVE_SETLOCALE)
+    char        *pszCurLocale = NULL;
+
+    if ( pszLocale || EQUAL( pszLocale, "" ) )
+    {
+        // Save the current locale
+        pszCurLocale = setlocale(LC_ALL, NULL );
+        // Set locale to the specified value
+        setlocale(LC_ALL, pszLocale );
+    }
+#endif
+    
+    if ( !strftime( pszTemp, nMaxLen + 1, pszFormat, poBrokenTime ) )
+        memset( pszTemp, 0, nMaxLen + 1);
+
+#if defined(HAVE_LOCALE_H) && defined(HAVE_SETLOCALE)
+    // Restore stored locale back
+    if ( pszCurLocale )
+        setlocale(LC_ALL, pszCurLocale );
+#endif
+
+    CPLPrintString( pszBuffer, pszTemp, nMaxLen );
+
+    CPLFree( pszTemp );
+
+    return pszBuffer;
 }
 
 /************************************************************************/
