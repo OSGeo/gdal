@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.13  2003/07/08 19:12:41  warmerda
+ * JPIP support now working ... at least sometimes
+ *
  * Revision 1.12  2003/07/04 18:00:42  warmerda
  * first crack at JPIP client side support.
  *
@@ -471,7 +474,9 @@ CPLErr JP2KAKRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             window.region = dims_roi;
             window.resolution.x = nRasterXSize;
             window.resolution.y = nRasterYSize;
-            window.add_component( nBand - 1 );
+            window.set_num_components(1);
+            window.components[0] = nBand - 1;
+            window.max_layers = 0;
 
             jpip_client->post_window( &window );
 
@@ -901,18 +906,22 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      extensions are supported for JPC files since the standard       */
 /*      prefix is so short (two bytes).                                 */
 /* -------------------------------------------------------------------- */
-    if( memcmp( poOpenInfo->pabyHeader, jp2_header, sizeof(jp2_header) ) == 0 )
-        pszExtension = "jp2";
-    else if( memcmp( poOpenInfo->pabyHeader, jpc_header, sizeof(jpc_header) ) == 0 )
+    if( !bIsJPIP )
     {
-        pszExtension = CPLGetExtension( poOpenInfo->pszFilename );
-        if( !EQUAL(pszExtension,"jpc") && !EQUAL(pszExtension,"j2k") 
-            && !EQUAL(pszExtension,"jp2") && !EQUAL(pszExtension,"jpx") 
-            && !EQUAL(pszExtension,"j2c") )
+        if( memcmp(poOpenInfo->pabyHeader,jp2_header,sizeof(jp2_header)) == 0 )
+            pszExtension = "jp2";
+        else if( memcmp( poOpenInfo->pabyHeader, jpc_header, 
+                         sizeof(jpc_header) ) == 0 )
+        {
+            pszExtension = CPLGetExtension( poOpenInfo->pszFilename );
+            if( !EQUAL(pszExtension,"jpc") && !EQUAL(pszExtension,"j2k") 
+                && !EQUAL(pszExtension,"jp2") && !EQUAL(pszExtension,"jpx") 
+                && !EQUAL(pszExtension,"j2c") )
+                return NULL;
+        }
+        else
             return NULL;
     }
-    else
-        return NULL;
         
 /* -------------------------------------------------------------------- */
 /*      Initialize Kakadu warning/error reporting subsystem.            */
@@ -932,7 +941,7 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Try to open the file in a manner depending on the extension.    */
 /* -------------------------------------------------------------------- */
     kdu_client      *jpip_client = NULL;
-    kdu_compressed_source *poInput;
+    kdu_compressed_source *poInput = NULL;
     jp2_palette oJP2Palette;
 
 #ifdef KAKADU4
@@ -950,14 +959,30 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
      
             if( pszRequest == NULL )
             {
+                CPLDebug( "JP2KAK", 
+                          "Failed to parse JPIP server and request." );
                 CPLFree( pszWrk );
                 return NULL;
             }
 
             *(pszRequest++) = '\0';
-            
+
+            CPLDebug( "JP2KAK", "server=%s, request=%s", 
+                      pszWrk, pszRequest );
+
+            CPLSleep( 15.0 );
             jpip_client = new kdu_client;
-            jpip_client->connect( pszWrk, NULL, pszRequest, "http-tcp", NULL );
+            jpip_client->connect( pszWrk, NULL, pszRequest, "http-tcp", 
+                                  "" );
+            
+            CPLDebug( "JP2KAK", "After connect()" );
+
+            bool bin0_complete = false;
+
+            while( jpip_client->get_databin_length(KDU_META_DATABIN,0,0,
+                                                   &bin0_complete) <= 0 
+                   || !bin0_complete )
+                CPLSleep( 0.25 );
 
             family = new jp2_family_src;
             family->open( jpip_client );
@@ -977,6 +1002,7 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
                 return NULL;
             }
 
+            poInput = jp2_src;
 #else
             CPLError( CE_Failure, CPLE_OpenFailed, 
                       "JPIP Protocol not supported by GDAL with Kakadu 3.4 or on Unix." );
@@ -1009,6 +1035,7 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
     }
     catch( ... )
     {
+        CPLDebug( "JP2KAK", "Trapped Kakadu exception." );
         return NULL;
     }
 
@@ -1103,31 +1130,36 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
         int		nGTDataSize = 0;
         jp2_input_box   oBox;
 
-#ifdef KAKADU4
-        for( family == NULL || oBox.open( family ); 
-             oBox.exists(); oBox.open_next() )
-#else
-        VSIFSeek( poOpenInfo->fp, 0, SEEK_SET );
-        while( oBox.open(poOpenInfo->fp).exists() 
-               && oBox.get_remaining_bytes() != -1 )
-#endif
+        if( !bIsJPIP )
         {
-            if( oBox.get_box_type() == 0x75756964 /* UUID */ )
+#ifdef KAKADU4
+            CPLDebug( "JP2KAK", "Just before oBox.open()" );
+            for( family == NULL || oBox.open( family ); 
+                 oBox.exists(); oBox.open_next() )
+                CPLDebug( "JP2KAK", "Just after oBox.open()" );
+#else
+            VSIFSeek( poOpenInfo->fp, 0, SEEK_SET );
+            while( oBox.open(poOpenInfo->fp).exists() 
+                   && oBox.get_remaining_bytes() != -1 )
+#endif
             {
-                unsigned char uuid2[16];
-                oBox.read( uuid2, 16 );
-                if( memcmp( uuid2, msi_uuid2, 16 ) == 0 )
+                if( oBox.get_box_type() == 0x75756964 /* UUID */ )
                 {
-                    nGTDataSize = (int) oBox.get_remaining_bytes();
-
-                    pabyGTData = (unsigned char *) CPLMalloc(nGTDataSize);
-                    oBox.read( pabyGTData, nGTDataSize );
+                    unsigned char uuid2[16];
+                    oBox.read( uuid2, 16 );
+                    if( memcmp( uuid2, msi_uuid2, 16 ) == 0 )
+                    {
+                        nGTDataSize = (int) oBox.get_remaining_bytes();
+                        
+                        pabyGTData = (unsigned char *) CPLMalloc(nGTDataSize);
+                        oBox.read( pabyGTData, nGTDataSize );
+                    }
                 }
+                oBox.close();
             }
+            
             oBox.close();
         }
-
-        oBox.close();
 
 /* -------------------------------------------------------------------- */
 /*      Try to turn the geotiff block into projection and geotransform. */
