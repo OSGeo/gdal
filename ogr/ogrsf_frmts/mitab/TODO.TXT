@@ -10,9 +10,6 @@ MITAB Library - ToDo, Open Questions:
 
  - Support MetaData in .TAB header
 
- - Can we do anything for optimized spatial searches in TAB files?
-   (i.e. See SetSpatialFilter())
-
  - TABView support:
      - Complete and tested only for cases in which 2 tables
        are linked with a many-to-1 relation through an integer field.  
@@ -39,6 +36,9 @@ MITAB Library - ToDo, Open Questions:
    reported that some regions may not be filled properly when viewed in
    MapInfo Versions 5.0 and up when the inside/outside ring relationship
    is not properly written.
+
+ - It would be nice to use attribute indices for accelerated attribute
+   queries.
 
 
 ------------
