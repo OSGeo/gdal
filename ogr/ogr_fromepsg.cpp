@@ -4,7 +4,7 @@
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Generate an OGRSpatialReference object based on an EPSG
  *           PROJCS, or GEOGCS code.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 2000, Frank Warmerdam
@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2002/12/16 17:06:32  warmerda
+ * ensure that prime meridian offsets are applied to angular proj parms
+ *
  * Revision 1.17  2002/12/14 22:59:14  warmerda
  * added Krovak in ESRI compatible way
  *
@@ -287,6 +290,11 @@ int EPSGGetUOMAngleInfo( int nUOMAngleCode,
         if( nUOMAngleCode == 9102 || nUOMAngleCode == 9107
             || nUOMAngleCode == 9108 || nUOMAngleCode == 9110 )
             pszUOMName = "degree";
+
+        // For some reason, (FactorB) is not very precise in EPSG, use
+        // a more exact form for grads.
+        if( nUOMAngleCode == 9105 )
+            dfInDegrees = 180.0 / 200.0;
     }
 
 /* -------------------------------------------------------------------- */
@@ -770,11 +778,7 @@ EPSGGetProjTRFInfo( int nPCS, int * pnProjMethod,
     }
 
 /* -------------------------------------------------------------------- */
-/*      Get the parameters for this projection.  For the time being     */
-/*      I am assuming the first four parameters are angles, the         */
-/*      fifth is unitless (normally scale), and the remainder are       */
-/*      linear measures.  This works fine for the existing              */
-/*      projections, but is a pretty fragile approach.                  */
+/*      Get the parameters for this projection.                         */
 /* -------------------------------------------------------------------- */
 
     for( i = 0; i < 7; i++ )
@@ -1045,33 +1049,65 @@ static OGRErr SetEPSGGeogCS( OGRSpatialReference * poSRS, int nGeogCS )
 /************************************************************************/
 
 static double OGR_FetchParm( double *padfProjParms, int *panParmIds, 
-                             int nTargetId )
+                             int nTargetId, double dfFromGreenwich )
 
 {
     int i;
+    double dfResult;
 
-    for( i = 0; i < 7; i++ )
-    {
-        if( panParmIds[i] == nTargetId )
-            return padfProjParms[i];
-    }
-    
+/* -------------------------------------------------------------------- */
+/*      Set default in meters/degrees.                                  */
+/* -------------------------------------------------------------------- */
     switch( nTargetId )
     {
       case NatOriginScaleFactor:
       case InitialLineScaleFactor:
       case PseudoStdParallelScaleFactor:
-        return 1.0;
+        dfResult = 1.0;
+        break;
         
       case AngleRectifiedToSkewedGrid:
-        return 90.0;
+        dfResult = 90.0;
+        break;
 
       default:
-        return 0.0;
+        dfResult = 0.0;
     }
+
+/* -------------------------------------------------------------------- */
+/*      Try to find actual value in parameter list.                     */
+/* -------------------------------------------------------------------- */
+    for( i = 0; i < 7; i++ )
+    {
+        if( panParmIds[i] == nTargetId )
+        {
+            dfResult = padfProjParms[i];
+            break;
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Correct longitude to be relative to greenwich                   */
+/* -------------------------------------------------------------------- */
+    switch( nTargetId )
+    {
+      case NatOriginLong:
+      case ProjCenterLong:
+      case FalseOriginLong:
+      case SphericalOriginLong:
+      case InitialLongitude:
+        dfResult = dfResult + dfFromGreenwich;
+        break;
+
+      default:
+        ;
+    }
+
+    return dfResult;
 }
 
-#define OGR_FP(x) OGR_FetchParm( adfProjParms, anParmIds, (x) )
+#define OGR_FP(x) OGR_FetchParm( adfProjParms, anParmIds, (x), \
+                                 dfFromGreenwich )
 
 /************************************************************************/
 /*                           SetEPSGProjCS()                            */
@@ -1083,7 +1119,7 @@ static OGRErr SetEPSGProjCS( OGRSpatialReference * poSRS, int nPCSCode )
     int         nGCSCode, nUOMAngleCode, nUOMLength, nTRFCode, nProjMethod;
     int         anParmIds[7];
     char        *pszPCSName = NULL, *pszUOMLengthName = NULL;
-    double      adfProjParms[7], dfInMeters;
+    double      adfProjParms[7], dfInMeters, dfFromGreenwich;
     OGRErr      nErr;
     OGR_SRSNode *poNode;
 
@@ -1093,10 +1129,30 @@ static OGRErr SetEPSGProjCS( OGRSpatialReference * poSRS, int nPCSCode )
 
     poSRS->SetNode( "PROJCS", pszPCSName );
     
+/* -------------------------------------------------------------------- */
+/*      Set GEOGCS.                                                     */
+/* -------------------------------------------------------------------- */
     nErr = SetEPSGGeogCS( poSRS, nGCSCode );
     if( nErr != OGRERR_NONE )
         return nErr;
 
+    dfFromGreenwich = poSRS->GetPrimeMeridian();
+
+/* -------------------------------------------------------------------- */
+/*      Set linear units.                                               */
+/* -------------------------------------------------------------------- */
+    if( !EPSGGetUOMLengthInfo( nUOMLength, &pszUOMLengthName, &dfInMeters ) )
+        return OGRERR_UNSUPPORTED_SRS;
+
+    poSRS->SetLinearUnits( pszUOMLengthName, dfInMeters );
+    poSRS->SetAuthority( "PROJCS|UNIT", "EPSG", nUOMLength );
+
+    CPLFree( pszUOMLengthName );
+    CPLFree( pszPCSName );
+
+/* -------------------------------------------------------------------- */
+/*      Set projection and parameters.                                  */
+/* -------------------------------------------------------------------- */
     if( !EPSGGetProjTRFInfo( nPCSCode, &nProjMethod, anParmIds, adfProjParms ))
         return OGRERR_UNSUPPORTED_SRS;
 
@@ -1211,16 +1267,10 @@ static OGRErr SetEPSGProjCS( OGRSpatialReference * poSRS, int nPCSCode )
         return OGRERR_UNSUPPORTED_SRS;
     }
 
-    if( !EPSGGetUOMLengthInfo( nUOMLength, &pszUOMLengthName, &dfInMeters ) )
-        return OGRERR_UNSUPPORTED_SRS;
-
-    poSRS->SetLinearUnits( pszUOMLengthName, dfInMeters );
-    poSRS->SetAuthority( "PROJCS|UNIT", "EPSG", nUOMLength );
-
+/* -------------------------------------------------------------------- */
+/*      Set overall PCS authority code.                                 */
+/* -------------------------------------------------------------------- */
     poSRS->SetAuthority( "PROJCS", "EPSG", nPCSCode );
-
-    CPLFree( pszUOMLengthName );
-    CPLFree( pszPCSName );
 
     return OGRERR_NONE;
 }
@@ -1246,6 +1296,8 @@ static OGRErr SetEPSGProjCS( OGRSpatialReference * poSRS, int nPCSCode )
 OGRErr OGRSpatialReference::importFromEPSG( int nCode )
 
 {
+    bNormInfoSet = FALSE;
+
 /* -------------------------------------------------------------------- */
 /*      Clear any existing definition.                                  */
 /* -------------------------------------------------------------------- */
