@@ -53,14 +53,16 @@ GDALDataset::~GDALDataset()
 {
     int		i;
 
-    for( i = 0; i < nBands; i++ )
+/* -------------------------------------------------------------------- */
+/*      Destroy the raster bands if they exist.                         */
+/* -------------------------------------------------------------------- */
+    for( i = 0; i < nBands && papoBands != NULL; i++ )
     {
         if( papoBands[i] != NULL )
             delete papoBands[i];
     }
 
-    if( papoBands != NULL )
-        VSIFree( papoBands );
+    CPLFree( papoBands );
 }
 
 /************************************************************************/
@@ -71,6 +73,24 @@ void GDALClose( GDALDatasetH hDS )
 
 {
     delete ((GDALDataset *) hDS);
+}
+
+/************************************************************************/
+/*                             FlushCache()                             */
+/*                                                                      */
+/*      Flush all write caches to disk.                                 */
+/************************************************************************/
+
+void GDALDataset::FlushCache()
+
+{
+    int		i;
+
+    for( i = 0; i < nBands; i++ )
+    {
+        if( papoBands[i] != NULL )
+            papoBands[i]->FlushCache();
+    }
 }
 
 /************************************************************************/
@@ -213,4 +233,120 @@ int GDALGetRasterCount( GDALDatasetH hDS )
 
 {
     return( ((GDALDataset *) hDS)->GetRasterCount() );
+}
+
+/************************************************************************/
+/*                          GetProjectionRef()                          */
+/************************************************************************/
+
+const char *GDALDataset::GetProjectionRef()
+
+{
+    return( "" );
+}
+
+/************************************************************************/
+/*                        GDALGetProjectionRef()                        */
+/************************************************************************/
+
+const char *GDALGetProjectionRef( GDALDatasetH hDS )
+
+{
+    return( ((GDALDataset *) hDS)->GetProjectionRef() );
+}
+
+/************************************************************************/
+/*                           SetProjection()                            */
+/************************************************************************/
+
+CPLErr GDALDataset::SetProjection( const char * )
+
+{
+    CPLError( CE_Failure, CPLE_NotSupported,
+              "SetProjection() not supported for this dataset." );
+    
+    return CE_Failure;
+}
+
+/************************************************************************/
+/*                         GDALSetProjection()                          */
+/************************************************************************/
+
+CPLErr GDALSetProjection( GDALDatasetH hDS, const char * pszProjection )
+
+{
+    return( ((GDALDataset *) hDS)->SetProjection(pszProjection) );
+}
+
+/************************************************************************/
+/*                          GetGeoTransform()                           */
+/************************************************************************/
+
+CPLErr GDALDataset::GetGeoTransform( double * padfTransform )
+
+{
+    CPLAssert( padfTransform != NULL );
+        
+    padfTransform[0] = 0.0;	/* X Origin (top left corner) */
+    padfTransform[1] = 1.0;	/* X Pixel size */
+    padfTransform[2] = 0.0;
+
+    padfTransform[3] = 0.0;	/* Y Origin (top left corner) */
+    padfTransform[4] = 0.0;	
+    padfTransform[5] = -1.0;	/* Y Pixel Size */
+
+    return( CE_Failure );
+}
+
+/************************************************************************/
+/*                        GDALGetGeoTransform()                         */
+/************************************************************************/
+
+CPLErr GDALGetGeoTransform( GDALDatasetH hDS, double * padfTransform )
+
+{
+    return( ((GDALDataset *) hDS)->GetGeoTransform(padfTransform) );
+}
+
+/************************************************************************/
+/*                          SetGeoTransform()                           */
+/************************************************************************/
+
+CPLErr GDALDataset::SetGeoTransform( double * )
+
+{
+    CPLError( CE_Failure, CPLE_NotSupported,
+              "SetGeoTransform() not supported for this dataset." );
+    
+    return( CE_Failure );
+}
+
+/************************************************************************/
+/*                        GDALSetGeoTransform()                         */
+/************************************************************************/
+
+CPLErr GDALSetGeoTransform( GDALDatasetH hDS, double * padfTransform )
+
+{
+    return( ((GDALDataset *) hDS)->GetGeoTransform(padfTransform) );
+}
+
+/************************************************************************/
+/*                         GetInternalHandle()                          */
+/************************************************************************/
+
+void *GDALDataset::GetInternalHandle( const char * )
+
+{
+    return( NULL );
+}
+
+/************************************************************************/
+/*                       GDALGetInternalHandle()                        */
+/************************************************************************/
+
+void *GDALGetInternalHandle( GDALDatasetH hDS, const char * pszRequest )
+
+{
+    return( ((GDALDataset *) hDS)->GetInternalHandle(pszRequest) );
 }
