@@ -26,6 +26,9 @@
  * serves as an early test harnass.
  *
  * $Log$
+ * Revision 1.25  2002/05/29 15:53:14  warmerda
+ * added GDALDumpOpenDatasets
+ *
  * Revision 1.24  2002/04/16 14:00:25  warmerda
  * added GDALVersionInfo
  *
@@ -398,6 +401,8 @@ int main( int argc, char ** argv )
     }
 
     GDALClose( hDataset );
+
+    GDALDumpOpenDatasets( stderr );
     
     exit( 0 );
 }
