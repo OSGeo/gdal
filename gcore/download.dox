@@ -1,0 +1,74 @@
+/*!
+\page download
+
+<title>GDAL Downloads</title>
+
+<h2>Binary Packages</h2>
+
+<h3>OpenEV_FW</h3>
+
+The OpenEV_FW binary releases for Linux and Windows systems include the
+full set of GDAL libraries, utilities, python support and documentation 
+along with lots of other stuff (includig the OpenEV viewer).  It can be
+downloaded from:
+
+<a href="ftp://ftp.remotesensing.org/pub/gdal/openev/">ftp://ftp.remotesensing.org/pub/gdal/openev</a><p>
+
+or
+
+<a href="http://gdal.maptools.org/dl/openev">http://gdal.maptools.org/dl/openev</a><p>
+
+Note, the regular OpenEV releases (also mirror in these locations) do not
+include the full suite of GDAL utilities nor as many built-in format drivers.
+The OpenEV_FW releases normally include development versions of GDAL, not
+the most release stable release.<P>
+
+The OpenEV_FW binaries for Linux should work on pretty much any modern
+Intel Linux system.<p>
+
+<h3>Other Binary Packages</h3>
+
+<ol>
+<li> GDAL is also a component of the FreeGIS CDs available 
+from <a href="http://www.freegis.org/">www.freegis.org</a> in RPM format.<p>
+<li> Packages for Debian users are available in the official repository
+<a href="http://packages.debian.org/libgdal1">http://packages.debian.org/libgdal1</a>.<p>
+<li> Packages for MacOS X are available via Fink from the <a href="http://fink.sourceforge.net/pdb/package.php/gdal">Fink repository</a>.
+</ol>
+
+<h2>Source</h2>
+
+GDAL source releases are available in tar.gz and zip from from the
+GDAL primary ftp site, and http mirror site:<p>
+
+<a href="ftp://ftp.remotesensing.org/gdal">ftp://ftp.remotesensing.org/gdal</a><p>
+<a href="http://gdal.maptools.org/dl/">http://gdal.maptools.org/dl</a><p>
+
+Late each night a development snapshot is captured from CVS and made available.
+These snapshots are not stable releases, and might (on a bad night) not even
+build.  However, they do contain essentially the latest code.  They can be
+downloaded from:
+
+<a href="ftp://ftp.remotesensing.org/gdal/daily">ftp://ftp.remotesensing.org/gdal/daily</a><p>
+
+Refer to the <a href="gdal_building.html">build instructions</a> for how to
+build GDAL from source.<p>
+
+<h3>CVS</h3>
+
+The GDAL source is available by anonymous CVS from the cvs.remotesensing.org
+server:<p>
+
+<pre>
+% export CVSROOT=:pserver:anonymous@cvs.remotesensing.org:/cvsroot
+% cvs login
+Password: anonymous
+% cvs checkout gdal
+</pre>
+
+Update access to the CVS repository can be obtained by arrangement with
+the maintainer.<p>
+
+*/
+
+
