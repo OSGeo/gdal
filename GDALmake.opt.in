@@ -108,6 +108,7 @@ GDAL_LIB	= 	$(GDAL_ROOT)/libgdal.a
 GDAL_SLIB	=	$(GDAL_ROOT)/libgdal.$(GDAL_VER).$(SO_EXT)
 GDAL_SLIB_LINK	=	-L$(GDAL_ROOT) -lgdal.$(GDAL_VER)
 #GDAL_SLIB_SONAME = 	-Wl,-soname,libgdal.so.$(sover)
+GDALMODULE	=	_gdalmodule
 
 #
 # OGR/PostgreSQL support.
@@ -209,6 +210,7 @@ ifeq ($(HAVE_LIBTOOL), yes)
 CONFIG_LIBS	=	$(LIBGDAL)
 CONFIG_LIBS_INS	=	-L$(INST_LIB) -lgdal
 EXE_DEP_LIBS	=	$(LIBGDAL)
+SO_EXT		=	la
 else
 
 ifeq ($(HAVE_LD_SHARED),yes)
