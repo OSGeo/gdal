@@ -3,7 +3,7 @@
  *
  * Project:  GDAL Core
  * Purpose:  Free standing functions for GDAL.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 1999, Frank Warmerdam
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.46  2003/05/23 15:52:54  warmerda
+ * Cosmetic changes made.
+ *
  * Revision 1.45  2003/05/21 04:31:53  warmerda
  * avoid warnings
  *
@@ -98,73 +101,6 @@
  *
  * Revision 1.23  2001/05/01 18:09:25  warmerda
  * added GDALReadWorldFile()
- *
- * Revision 1.22  2000/12/04 20:45:14  warmerda
- * removed unused variable.
- *
- * Revision 1.21  2000/10/06 15:22:49  warmerda
- * added GDALDataTypeUnion
- *
- * Revision 1.20  2000/08/18 15:24:48  warmerda
- * added GDALTermProgress
- *
- * Revision 1.19  2000/08/09 16:25:42  warmerda
- * don't crash if block is null
- *
- * Revision 1.18  2000/07/11 14:35:43  warmerda
- * added documentation
- *
- * Revision 1.17  2000/07/05 17:53:33  warmerda
- * Removed unused code related to nXCheck.
- *
- * Revision 1.16  2000/06/27 17:21:26  warmerda
- * added GDALGetRasterSampleOverview
- *
- * Revision 1.15  2000/06/26 22:17:49  warmerda
- * added scaled progress support
- *
- * Revision 1.14  2000/06/05 17:24:05  warmerda
- * added real complex support
- *
- * Revision 1.13  2000/04/21 21:55:32  warmerda
- * made more robust if block read fails
- *
- * Revision 1.12  2000/04/17 20:59:40  warmerda
- * Removed printf.
- *
- * Revision 1.11  2000/04/17 20:59:14  warmerda
- * fixed sampling bug
- *
- * Revision 1.10  2000/03/31 13:41:45  warmerda
- * added gcp support functions
- *
- * Revision 1.9  2000/03/24 00:09:19  warmerda
- * added sort-of random sampling
- *
- * Revision 1.8  2000/03/23 16:53:21  warmerda
- * use overviews for approximate min/max
- *
- * Revision 1.7  2000/03/09 23:21:44  warmerda
- * added GDALDummyProgress
- *
- * Revision 1.6  2000/03/06 21:59:44  warmerda
- * added min/max calculate
- *
- * Revision 1.5  2000/03/06 02:20:15  warmerda
- * added getname functions for colour interpretations
- *
- * Revision 1.4  1999/07/23 19:35:47  warmerda
- * added GDALGetDataTypeName
- *
- * Revision 1.3  1999/05/17 02:00:45  vgough
- * made pure_virtual C linkage
- *
- * Revision 1.2  1999/05/16 19:32:13  warmerda
- * Added __pure_virtual.
- *
- * Revision 1.1  1998/12/06 02:50:16  warmerda
- * New
- *
  */
 
 #include "gdal_priv.h"
@@ -1432,29 +1368,29 @@ int GDALWriteWorldFile( const char * pszBaseFilename, const char *pszExtension,
 
 {
     const char  *pszTFW;
-        FILE    *fpTFW;
+    FILE    *fpTFW;
 
-        pszTFW = CPLResetExtension( pszBaseFilename, pszExtension );
-        fpTFW = VSIFOpen( pszTFW, "wt" );
-        if( fpTFW == NULL )
+    pszTFW = CPLResetExtension( pszBaseFilename, pszExtension );
+    fpTFW = VSIFOpen( pszTFW, "wt" );
+    if( fpTFW == NULL )
         return FALSE;
 
 /* -------------------------------------------------------------------- */
-/*      We open the file, now fill it with the world data.                        */
+/*      We open the file, now fill it with the world data.              */
 /* -------------------------------------------------------------------- */
-        fprintf( fpTFW, "%.10f\n", padfGeoTransform[1] );
-        fprintf( fpTFW, "%.10f\n", padfGeoTransform[4] );
-        fprintf( fpTFW, "%.10f\n", padfGeoTransform[2] );
-        fprintf( fpTFW, "%.10f\n", padfGeoTransform[5] );
-        fprintf( fpTFW, "%.10f\n", padfGeoTransform[0] 
-                 + 0.5 * padfGeoTransform[1]
-                 + 0.5 * padfGeoTransform[2] );
-        fprintf( fpTFW, "%.10f\n", padfGeoTransform[3]
-                 + 0.5 * padfGeoTransform[4]
-                 + 0.5 * padfGeoTransform[5] );
+    fprintf( fpTFW, "%.10f\n", padfGeoTransform[1] );
+    fprintf( fpTFW, "%.10f\n", padfGeoTransform[4] );
+    fprintf( fpTFW, "%.10f\n", padfGeoTransform[2] );
+    fprintf( fpTFW, "%.10f\n", padfGeoTransform[5] );
+    fprintf( fpTFW, "%.10f\n", padfGeoTransform[0] 
+             + 0.5 * padfGeoTransform[1]
+             + 0.5 * padfGeoTransform[2] );
+    fprintf( fpTFW, "%.10f\n", padfGeoTransform[3]
+             + 0.5 * padfGeoTransform[4]
+             + 0.5 * padfGeoTransform[5] );
 
-        VSIFClose( fpTFW );
-        return TRUE;
+    VSIFClose( fpTFW );
+    return TRUE;
 }
 
 /************************************************************************/
