@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2000/04/21 21:59:04  warmerda
+ * added overview support, updated metadata handling
+ *
  * Revision 1.4  2000/04/17 21:51:42  warmerda
  * added metadata support
  *
@@ -222,9 +225,7 @@ void SAR_CEOSDataset::ScanForMetadata()
 
         GetCeosField( record, 61, "A16", szVolId );
 
-        papszMetadata = 
-            CSLSetNameValue( papszMetadata, "CEOS_LOGICAL_VOLUME_ID", 
-                             szVolId );
+        SetMetadataItem( "CEOS_LOGICAL_VOLUME_ID", szVolId );
 
 /* -------------------------------------------------------------------- */
 /*      Processing facility                                             */
@@ -235,9 +236,7 @@ void SAR_CEOSDataset::ScanForMetadata()
         GetCeosField( record, 149, "A12", szField );
 
         if( !EQUALN(szField,"            ",12) )
-            papszMetadata = 
-                CSLSetNameValue( papszMetadata, "CEOS_PROCESSING_FACILITY", 
-                                 szField );
+            SetMetadataItem( "CEOS_PROCESSING_FACILITY", szField );
 
 /* -------------------------------------------------------------------- */
 /*      Agency                                                          */
@@ -247,9 +246,7 @@ void SAR_CEOSDataset::ScanForMetadata()
         GetCeosField( record, 141, "A8", szField );
 
         if( !EQUALN(szField,"            ",8) )
-            papszMetadata = 
-                CSLSetNameValue( papszMetadata, "CEOS_PROCESSING_AGENCY", 
-                                 szField );
+            SetMetadataItem( "CEOS_PROCESSING_AGENCY", szField );
 
 /* -------------------------------------------------------------------- */
 /*      Country                                                         */
@@ -259,9 +256,8 @@ void SAR_CEOSDataset::ScanForMetadata()
         GetCeosField( record, 129, "A12", szField );
 
         if( !EQUALN(szField,"            ",12) )
-            papszMetadata = 
-                CSLSetNameValue( papszMetadata, "CEOS_PROCESSING_COUNTRY", 
-                                 szField );
+            SetMetadataItem( "CEOS_PROCESSING_COUNTRY", szField );
+
 /* -------------------------------------------------------------------- */
 /*      software id.                                                    */
 /* -------------------------------------------------------------------- */
@@ -270,9 +266,7 @@ void SAR_CEOSDataset::ScanForMetadata()
         GetCeosField( record, 33, "A12", szField );
 
         if( !EQUALN(szField,"            ",12) )
-            papszMetadata = 
-                CSLSetNameValue( papszMetadata, "CEOS_SOFTWARE_ID", 
-                                 szField );
+            SetMetadataItem( "CEOS_SOFTWARE_ID", szField );
     }
 
 /* ==================================================================== */
@@ -295,8 +289,7 @@ void SAR_CEOSDataset::ScanForMetadata()
 
         GetCeosField( record, 69, "A32", szField );
 
-        papszMetadata = 
-            CSLSetNameValue( papszMetadata, "CEOS_ACQUISITION_TIME", szField );
+        SetMetadataItem( "CEOS_ACQUISITION_TIME", szField );
 
 /* -------------------------------------------------------------------- */
 /*      Look Angle.                                                     */
@@ -305,9 +298,7 @@ void SAR_CEOSDataset::ScanForMetadata()
         szField[8] = '\0';
 
         if( !EQUALN(szField,"        ",8 ) )
-            papszMetadata = 
-                CSLSetNameValue( papszMetadata, "CEOS_SENSOR_CLOCK_ANGLE", 
-                                 szField );
+            SetMetadataItem( "CEOS_SENSOR_CLOCK_ANGLE", szField );
 
 /* -------------------------------------------------------------------- */
 /*      Ascending/Descending                                            */
@@ -317,9 +308,7 @@ void SAR_CEOSDataset::ScanForMetadata()
 
         if( strstr(szVolId,"RSAT") != NULL 
             && !EQUALN(szField,"                ",16 ) )
-            papszMetadata = 
-                CSLSetNameValue( papszMetadata, "CEOS_ASC_DES", 
-                                 szField );
+            SetMetadataItem( "CEOS_ASC_DES", szField );
 
 /* -------------------------------------------------------------------- */
 /*      Ellipsoid                                                       */
@@ -328,8 +317,7 @@ void SAR_CEOSDataset::ScanForMetadata()
         szField[16] = '\0';
 
         if( !EQUALN(szField,"                ",16 ) )
-            papszMetadata = 
-                CSLSetNameValue( papszMetadata, "CEOS_ELLIPSOID", szField );
+            SetMetadataItem( "CEOS_ELLIPSOID", szField );
 
 /* -------------------------------------------------------------------- */
 /*      Semimajor, semiminor axis                                       */
@@ -338,15 +326,13 @@ void SAR_CEOSDataset::ScanForMetadata()
         szField[16] = '\0';
 
         if( !EQUALN(szField,"                ",16 ) )
-            papszMetadata = 
-                CSLSetNameValue( papszMetadata, "CEOS_SEMI_MAJOR", szField );
+            SetMetadataItem( "CEOS_SEMI_MAJOR", szField );
 
         GetCeosField( record, 197, "A16", szField );
         szField[16] = '\0';
 
         if( !EQUALN(szField,"                ",16 ) )
-            papszMetadata = 
-                CSLSetNameValue( papszMetadata, "CEOS_SEMI_MINOR", szField );
+            SetMetadataItem( "CEOS_SEMI_MINOR", szField );
     }
 
 /* -------------------------------------------------------------------- */
@@ -772,6 +758,11 @@ GDALDataset *SAR_CEOSDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     poDS->ScanForGCPs();
     
+/* -------------------------------------------------------------------- */
+/*      Open overviews.                                                 */
+/* -------------------------------------------------------------------- */
+    poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
+
     return( poDS );
 }
 
