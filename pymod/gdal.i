@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2000/07/11 01:02:06  warmerda
+ * added ExportToProj4()
+ *
  * Revision 1.13  2000/07/09 20:56:38  warmerda
  * added exportToPrettyWkt
  *
@@ -843,6 +846,44 @@ py_OSRImportFromWkt(PyObject *self, PyObject *args) {
 %}
 
 %native(OSRImportFromWkt) py_OSRImportFromWkt;
+
+%{
+/************************************************************************/
+/*                          OSRExportToProj4()                          */
+/************************************************************************/
+static PyObject *
+py_OSRExportToProj4(PyObject *self, PyObject *args) {
+
+    OGRSpatialReferenceH _arg0;
+    char *_argc0 = NULL;
+    char *wkt = NULL;
+    OGRErr err;
+    PyObject *ret;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"s:OSRExportToProj4",&_argc0) )
+        return NULL;
+
+    if (_argc0) {
+        if (SWIG_GetPtr(_argc0,(void **) &_arg0,"_OGRSpatialReferenceH" )) {
+            PyErr_SetString(PyExc_TypeError,
+                            "Type error in argument 1 of OSRExportToProj4."
+                            "  Expected _OGRSpatialReferenceH.");
+            return NULL;
+        }
+    }
+	
+    err = OSRExportToProj4( _arg0, &wkt );
+    if( wkt == NULL )
+	wkt = "";
+
+    ret = Py_BuildValue( "s", wkt );
+    OGRFree( wkt );
+    return ret;
+}
+%}
+
+%native(OSRExportToProj4) py_OSRExportToProj4;
 
 %{
 /************************************************************************/

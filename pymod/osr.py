@@ -28,6 +28,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.3  2000/07/11 01:02:06  warmerda
+# added ExportToProj4()
+#
 # Revision 1.2  2000/07/09 20:56:38  warmerda
 # added exportToPrettyWkt
 #
@@ -59,6 +62,9 @@ class SpatialReference:
 
     def ExportToPrettyWkt(self,simplify=0):
         return _gdal.OSRExportToPrettyWkt( self._o, simplify )
+
+    def ExportToProj4(self):
+        return _gdal.OSRExportToProj4( self._o )
 
     def ImportFromEPSG(self,code):
         return _gdal.OSRImportFromEPSG( self._o, code )

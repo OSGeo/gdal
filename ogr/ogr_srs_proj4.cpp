@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2000/07/11 01:02:06  warmerda
+ * added ExportToProj4()
+ *
  * Revision 1.8  2000/07/09 20:49:21  warmerda
  * added +datum support
  *
@@ -50,6 +53,18 @@
 
 #include "ogr_spatialref.h"
 #include "ogr_p.h"
+
+/************************************************************************/
+/*                          OSRExportToProj4()                          */
+/************************************************************************/
+
+OGRErr OSRExportToProj4( OGRSpatialReferenceH hSRS, char ** ppszReturn )
+
+{
+    *ppszReturn = NULL;
+
+    return ((OGRSpatialReference *) hSRS)->exportToProj4( ppszReturn );
+}
 
 /************************************************************************/
 /*                           exportToProj4()                            */

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2000/07/11 01:02:06  warmerda
+ * added ExportToProj4()
+ *
  * Revision 1.7  2000/07/09 20:48:02  warmerda
  * added exportToPrettyWkt
  *
@@ -226,6 +229,7 @@ OGRErr CPL_DLL OSRImportFromEPSG( OGRSpatialReferenceH, int );
 OGRErr CPL_DLL OSRImportFromWkt( OGRSpatialReferenceH, char ** );
 OGRErr CPL_DLL OSRExportToWkt( OGRSpatialReferenceH, char ** );
 OGRErr CPL_DLL OSRExportToPrettyWkt( OGRSpatialReferenceH, char **, int);
+OGRErr CPL_DLL OSRExportToProj4( OGRSpatialReferenceH, char **);
 
 OGRErr CPL_DLL OSRSetAttrValue( OGRSpatialReferenceH hSRS,
                                 const char * pszNodePath,
