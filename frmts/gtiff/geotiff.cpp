@@ -28,6 +28,12 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.106  2004/02/12 14:29:55  warmerda
+ * Fiddled with rules when reading georeferencing information.  Now if there
+ * are tiepoints and a transformation matrix, we will build a geotransform
+ * *and* attached tiepoints.  Related to:
+ * http://bugzilla.remotesensing.org/show_bug.cgi?id=489
+ *
  * Revision 1.105  2004/01/15 10:18:35  dron
  * PHOTOMETRIC option flag added. Few improvements in option parsing.
  *
@@ -2303,27 +2309,6 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, uint32 nDirOffsetIn,
             }
         }
 
-        else if( TIFFGetField(hTIFF,TIFFTAG_GEOTIEPOINTS,&nCount,&padfTiePoints )
-                 && nCount >= 6 )
-        {
-            nGCPCount = nCount / 6;
-            pasGCPList = (GDAL_GCP *) CPLCalloc(sizeof(GDAL_GCP),nGCPCount);
-        
-            for( int iGCP = 0; iGCP < nGCPCount; iGCP++ )
-            {
-                char	szID[32];
-
-                sprintf( szID, "%d", iGCP+1 );
-                pasGCPList[iGCP].pszId = CPLStrdup( szID );
-                pasGCPList[iGCP].pszInfo = "";
-                pasGCPList[iGCP].dfGCPPixel = padfTiePoints[iGCP*6+0];
-                pasGCPList[iGCP].dfGCPLine = padfTiePoints[iGCP*6+1];
-                pasGCPList[iGCP].dfGCPX = padfTiePoints[iGCP*6+3];
-                pasGCPList[iGCP].dfGCPY = padfTiePoints[iGCP*6+4];
-                pasGCPList[iGCP].dfGCPZ = padfTiePoints[iGCP*6+5];
-            }
-        }
-
         else if( TIFFGetField(hTIFF,TIFFTAG_GEOTRANSMATRIX,&nCount,&padfMatrix ) 
                  && nCount == 16 )
         {
@@ -2362,6 +2347,31 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, uint32 nDirOffsetIn,
 
                 if( bTabFileOK && nGCPCount == 0 )
                     bGeoTransformValid = TRUE;
+            }
+        }
+
+/* -------------------------------------------------------------------- */
+/*      Check for GCPs.  Note, we will allow there to be GCPs and a     */
+/*      transform in some circumstances.                                */
+/* -------------------------------------------------------------------- */
+        if( TIFFGetField(hTIFF,TIFFTAG_GEOTIEPOINTS,&nCount,&padfTiePoints )
+                 && nCount > 6 )
+        {
+            nGCPCount = nCount / 6;
+            pasGCPList = (GDAL_GCP *) CPLCalloc(sizeof(GDAL_GCP),nGCPCount);
+        
+            for( int iGCP = 0; iGCP < nGCPCount; iGCP++ )
+            {
+                char	szID[32];
+
+                sprintf( szID, "%d", iGCP+1 );
+                pasGCPList[iGCP].pszId = CPLStrdup( szID );
+                pasGCPList[iGCP].pszInfo = "";
+                pasGCPList[iGCP].dfGCPPixel = padfTiePoints[iGCP*6+0];
+                pasGCPList[iGCP].dfGCPLine = padfTiePoints[iGCP*6+1];
+                pasGCPList[iGCP].dfGCPX = padfTiePoints[iGCP*6+3];
+                pasGCPList[iGCP].dfGCPY = padfTiePoints[iGCP*6+4];
+                pasGCPList[iGCP].dfGCPZ = padfTiePoints[iGCP*6+5];
             }
         }
 
