@@ -28,6 +28,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.22  2004/02/25 15:14:59  warmerda
+# added GetEnvelope() method on Geometry
+#
 # Revision 1.21  2004/01/06 18:18:53  warmerda
 # improved error checking in geometry creation methods
 #
@@ -435,7 +438,7 @@ class Layer:
         return _gdal.OGR_L_GetFeatureCount( self._o, force )
 
     def GetExtent( self, force = 1 ):
-        extents = _gdal.ptrcreate( 'double', '', 4 )
+        extents = _gdal.ptrcreate( 'double', 0.0, 4 )
         res = _gdal.OGR_L_GetExtent( self._o,
                   _gdal.ptrcast(extents,'OGREnvelope_p'), force )
         if res != 0:
@@ -763,6 +766,17 @@ class Geometry:
     def GetGeometryName( self ):
         return _gdal.OGR_G_GetGeometryName( self._o )
     
+    def GetEnvelope( self ):
+        extents = _gdal.ptrcreate( 'double', 0.0, 4 )
+        _gdal.OGR_G_GetEnvelope( self._o, _gdal.ptrcast(extents,'OGREnvelope_p') )
+        ret_extents = ( _gdal.ptrvalue( extents, 0 ),
+                        _gdal.ptrvalue( extents, 1 ),
+                        _gdal.ptrvalue( extents, 2 ),
+                        _gdal.ptrvalue( extents, 3 ) )
+        _gdal.ptrfree( extents )
+        
+        return ret_extents
+
     def FlattenTo2D( self ):
         _gdal.OGR_G_FlattenTo2D( self._o )
     
