@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.35  2003/01/08 18:24:03  warmerda
+ * ensure order is fixed up
+ *
  * Revision 1.34  2002/12/03 03:32:06  warmerda
  * fixed GTIFGetPCSInfo arguments
  *
@@ -503,6 +506,8 @@ char *GTIFGetOGISDefn( GTIFDefn * psDefn )
 /*      Return the WKT serialization of the object.                     */
 /* -------------------------------------------------------------------- */
     char	*pszWKT;
+
+    oSRS.FixupOrdering();
 
     if( oSRS.exportToWkt( &pszWKT ) == OGRERR_NONE )
         return pszWKT;
