@@ -10,7 +10,8 @@ OBJ	=	cpl_conv.obj \
 		cpl_dir.obj \
 		cpl_path.obj \
 		cpl_csv.obj \
-		cpl_findfile.obj
+		cpl_findfile.obj \
+		cpl_vsil_win32.obj
 
 LIB	=	cpl.lib
 
