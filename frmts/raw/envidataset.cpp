@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2004/01/27 22:38:37  aamici
+ * Remove CInt* data types from GDAL_DMD_CREATIONDATATYPES since they are
+ * no supported by this driver.
+ *
  * Revision 1.16  2003/07/24 18:29:35  warmerda
  * added oSRS.Fixup() to insert meter as linear units (bug 370)
  *
@@ -1124,8 +1128,8 @@ void GDALRegister_ENVI()
                                    "frmt_various.html#ENVI" );
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "" );
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
-                                   "Byte Int16 UInt16 Int32 UInt32 Float32"
-				   "Float64 CInt16 CInt32 CFloat32 CFloat64" );
+                                   "Byte Int16 UInt16 Int32 UInt32"
+                                   "Float32 Float64 CFloat32 CFloat64" );
 
         poDriver->pfnOpen = ENVIDataset::Open;
         poDriver->pfnCreate = ENVIDataset::Create;
