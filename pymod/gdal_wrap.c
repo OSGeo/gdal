@@ -33,8 +33,8 @@
  * and things like that.
  *
  * $Log$
- * Revision 1.108  2005/04/05 20:05:43  fwarmerdam
- * updated
+ * Revision 1.109  2005/04/05 20:42:35  fwarmerdam
+ * error handler is CPL_STDCALL
  *
  ************************************************************************/
 
@@ -2813,7 +2813,8 @@ static PyErrorHandlerData *psPyHandlerStack = NULL;
 /*                        PyErrorHandlerProxy()                         */
 /************************************************************************/
 
-void PyErrorHandlerProxy( CPLErr eErrType, int nErrorCode, const char *pszMsg )
+void CPL_STDCALL
+PyErrorHandlerProxy( CPLErr eErrType, int nErrorCode, const char *pszMsg )
 
 {
     PyObject *psArgs;
