@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2002/08/29 19:01:43  warmerda
+ * cleaned some cruft, added SFGetCSFSource, SFGetSRSIDFromWKT
+ *
  * Revision 1.10  2002/08/09 21:33:52  warmerda
  * prepare some .net compatibility macros
  *
@@ -71,13 +74,14 @@
 #  define GET_SIZE_MACRO GetSize
 #endif
 
+class CSFSource;
+
 OGRDataSource  *SFGetOGRDataSource(IUnknown *pUnk);
-void		SFSetOGRDataSource(IUnknown *pUnk,OGRDataSource *pOGR,void *);
-void		SFClearOGRDataSource(void *);
-void		SFGetFilenames(const char *,char **,char **);
+CSFSource      *SFGetCSFSource(IUnknown *pUnk);
 char	       *SFGetInitDataSource(IUnknown *pIUnknownIn);
 char          **SFGetProviderOptions( IUnknown *);
 char           *SFGetLayerWKT( OGRLayer *, IUnknown * );
+int             SFGetSRSIDFromWKT( const char *, IUnknown * );
 HRESULT	     	SFReportError(HRESULT passed_hr, IID iid, DWORD providerCode,
                               char *pszText, ...);
 void		SFRegisterOGRFormats();

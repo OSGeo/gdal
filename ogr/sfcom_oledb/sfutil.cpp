@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.23  2002/08/29 19:01:43  warmerda
+ * cleaned some cruft, added SFGetCSFSource, SFGetSRSIDFromWKT
+ *
  * Revision 1.22  2002/08/13 14:38:41  warmerda
  * add some debugging
  *
@@ -100,6 +103,8 @@
 #include "sftraceback.h"
 #include "sfutil.h"
 #include "SF.h"
+#include "SFSess.h"
+#include "SFDS.h"
 
 
 #include "cpl_error.h"
@@ -240,7 +245,8 @@ OGRDataSource *SFGetOGRDataSource(IUnknown *pUnk)
             ULONG ulVal = 0;
             if (SUCCEEDED(pIKey->GetKey(&ulVal)) && ulVal != 0)
             {
-                pOGR = (OGRDataSource*) (ulVal);
+                CSFSource *poCSFSource = (CSFSource *) (ulVal);
+                pOGR = poCSFSource->GetDataSource();
             }
             else
             {
@@ -257,6 +263,50 @@ OGRDataSource *SFGetOGRDataSource(IUnknown *pUnk)
         CPLDebug( "OLEDB", "SFGetOGRDataSource, pIDB == NULL." );
 
     return pOGR;
+}
+
+/************************************************************************/
+/*                           SFGetCSFSource()                           */
+/*                                                                      */
+/*      Get the CSFSource from an IUknown pointer that is somehow       */
+/*      related.  Much like SFGetOGRDataSource(), the IUnknown will     */
+/*      be dereferenced by this call.                                   */
+/************************************************************************/
+
+CSFSource *SFGetCSFSource(IUnknown *pUnk)
+
+{
+    IDBProperties    *pIDB  = NULL;
+    CSFSource        *poCSFSource = NULL;
+
+    if (pUnk)
+        pIDB = SFGetDataSourceProperties(pUnk);
+    else
+        CPLDebug( "OLEDB", "SFGetCSFSource, pUnk == NULL." );
+
+    if (pIDB)
+    {
+        IDataSourceKey* pIKey = NULL;
+        HRESULT hr = pIDB->QueryInterface(IID_IDataSourceKey, 
+                                          (void**) &pIKey);
+        if (SUCCEEDED(hr) && pIKey != NULL)
+        {
+            if( !SUCCEEDED(pIKey->GetKey((ULONG *) &poCSFSource) )
+                           || poCSFSource == NULL )
+            {
+                CPLDebug( "OLEDB", 
+                   "SFGetCSFSource(), GetKey failed, or returned NULL." );
+            }
+
+            pIKey->Release();
+        }
+
+        pIDB->Release();
+    }
+    else
+        CPLDebug( "OLEDB", "SFGetCSFSource, pIDB == NULL." );
+
+    return poCSFSource;
 }
 
 /************************************************************************/
@@ -336,7 +386,11 @@ char **SFGetProviderOptions(IUnknown *pIUnknownIn)
     pIDBProp = SFGetDataSourceProperties(pIUnknownIn);
     
     if (pIDBProp == NULL)
+    {
+        CPLDebug( "OGR_OLEDB", "SFGetProviderOptions(%p) - pIDBProp == NULL",
+                  pIUnknownIn );
         return NULL;
+    }
 
     DBPROPIDSET sPropIdSets[1];
     DBPROPID    rgPropIds[1];
@@ -423,6 +477,35 @@ char *SFGetLayerWKT( OGRLayer *poLayer, IUnknown *pIUnknown )
     CSLDestroy( papszOptions );
 
     return pszWKT;
+}
+
+/************************************************************************/
+/*                         SFGetSRSIDFromWKT()                          */
+/*                                                                      */
+/*      This method is really just masqarading access to the            */
+/*      CSFSource, so that it doesn't have to be #included in places    */
+/*      like IColumnsRowsetImpl.h.                                      */
+/*                                                                      */
+/*      Unlike some other methods, this call does not dereference       */
+/*      the passed in IUnknown.                                         */
+/************************************************************************/
+
+int SFGetSRSIDFromWKT( const char *pszWKT, IUnknown *pIUnknownIn )
+
+{
+    CSFSource *poCSFSource = NULL;
+    IUnknown  *pIUnknown;
+
+    pIUnknownIn->QueryInterface(IID_IUnknown,(void **) &pIUnknown);
+    poCSFSource = SFGetCSFSource( pIUnknown );
+    if( poCSFSource == NULL )
+    {
+        CPLDebug( "OGR_OLEDB", "failed to get CSFSource from %p.",
+                  pIUnknownIn );
+        return -1;
+    }
+
+    return poCSFSource->GetSRSID( pszWKT );
 }
 
 /************************************************************************/
