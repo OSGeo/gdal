@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.48  2001/05/31 13:51:56  warmerda
+ * Improved magic number testing.
+ *
  * Revision 1.47  2001/05/01 19:00:14  warmerda
  * added special support for 1bit bitmaps
  *
@@ -1452,9 +1455,10 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
 
     if( (poOpenInfo->pabyHeader[0] != 'I' || poOpenInfo->pabyHeader[1] != 'I')
      && (poOpenInfo->pabyHeader[0] != 'M' || poOpenInfo->pabyHeader[1] != 'M'))
-    {
         return NULL;
-    }
+
+    if( poOpenInfo->pabyHeader[2] != 0x2A || poOpenInfo->pabyHeader[3] != 0 )
+        return NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Try opening the dataset.                                        */
