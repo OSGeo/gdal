@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_getimage.c,v 1.25 2003/05/05 19:20:11 dron Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_getimage.c,v 1.26 2003/07/08 16:40:46 warmerda Exp $ */
 
 /*
  * Copyright (c) 1991-1997 Sam Leffler
@@ -1859,7 +1859,7 @@ TIFFYCbCrToRGBInit(TIFFYCbCrToRGB* ycbcr, TIFF* tif)
     _TIFFmemset(clamptab, 0, 256);		/* v < 0 => 0 */
     ycbcr->clamptab = (clamptab += 256);
     for (i = 0; i < 256; i++)
-	clamptab[i] = i;
+	clamptab[i] = (TIFFRGBValue) i;
     _TIFFmemset(clamptab+256, 255, 2*256);	/* v > 255 => 255 */
     TIFFGetFieldDefaulted(tif, TIFFTAG_YCBCRCOEFFICIENTS, &coeffs);
     _TIFFmemcpy(ycbcr->coeffs, coeffs, 3*sizeof (float));
@@ -2106,7 +2106,7 @@ makecmap(TIFFRGBAImage* img)
     for (i = 0; i < 256; i++) {
 	TIFFRGBValue c;
 	img->PALmap[i] = p;
-#define	CMAP(x)	c = x; *p++ = PACK(r[c]&0xff, g[c]&0xff, b[c]&0xff);
+#define	CMAP(x)	c = (TIFFRGBValue) x; *p++ = PACK(r[c]&0xff, g[c]&0xff, b[c]&0xff);
 	switch (bitspersample) {
 	case 1:
 	    CMAP(i>>7);

@@ -10,6 +10,9 @@
  *  notice accompanies any products derived therefrom.
  *
  * $Log: geo_set.c,v $
+ * Revision 1.10  2003/07/08 17:31:30  warmerda
+ * cleanup various warnings
+ *
  * Revision 1.9  2003/01/15 03:37:19  warmerda
  * avoid warning
  *
@@ -106,7 +109,7 @@ int GTIFKeySet(GTIF *gtif, geokey_t keyID, tagtype_t type, int count,...)
     int newvalues = 0;
     GeoKey *key;
     char *data = NULL;
-    char *val;
+    char *val = NULL;
     pinfo_t sval;
     double dval;
 
@@ -147,7 +150,7 @@ int GTIFKeySet(GTIF *gtif, geokey_t keyID, tagtype_t type, int count,...)
     }
     else switch (type)
     {
-        case TYPE_SHORT:  sval=va_arg(ap, int); val=(char *)&sval;     break;
+        case TYPE_SHORT:  sval=(pinfo_t) va_arg(ap, int); val=(char *)&sval;     break;
         case TYPE_DOUBLE: dval=va_arg(ap, dblparam_t); val=(char *)&dval;  break;
         case TYPE_ASCII: 
             val=va_arg(ap, char*);

@@ -18,6 +18,9 @@
  *    29  Sep,  1995      NDR                  Fixed matrix printing.
  *
  * $Log: geo_print.c,v $
+ * Revision 1.5  2003/07/08 17:31:30  warmerda
+ * cleanup various warnings
+ *
  * Revision 1.4  2002/05/31 14:27:26  warmerda
  * added escaping in metadata for string key values
  *
@@ -330,7 +333,7 @@ static int ReadTag(GTIF *gt,GTIFReadMethod scan,void *aux)
             SKIPWHITE(vptr);
         }
     }	
-    (gt->gt_methods.set)(gt->gt_tif, tag, count, data );	
+    (gt->gt_methods.set)(gt->gt_tif, (pinfo_t) tag, count, data );	
 
     return 1;
 }
@@ -449,7 +452,7 @@ static int ReadKey(GTIF *gt, GTIFReadMethod scan, void *aux)
         {
             icode = GTIFValueCode(key,vptr);
             if (icode < 0) return StringError(vptr);
-            code = icode;
+            code = (pinfo_t) icode;
             GTIFKeySet(gt,key,ktype,count,code);
         }
         else  /* multi-valued short - no such thing yet */
@@ -465,7 +468,7 @@ static int ReadKey(GTIF *gt, GTIFReadMethod scan, void *aux)
 
                     /* note: FMT_SHORT (%11hd) not supported on IRIX */
                     sscanf(message,"%11d",&work_int);
-                    *sptr = work_int;
+                    *sptr = (short) work_int;
                     scan(message,aux);
                 }
                 if (vals_now<count)

@@ -210,7 +210,7 @@ LogL16Decode(TIFF* tif, tidata_t op, tsize_t occ, tsample_t s)
 		for (i = 0; i < npixels && cc > 0; )
 			if (*bp >= 128) {		/* run */
 				rc = *bp++ + (2-128);
-				b = (int16)*bp++ << shft;
+				b = (int16)(*bp++ << shft);
 				cc -= 2;
 				while (rc--)
 					tp[i++] |= b;
@@ -405,7 +405,7 @@ LogL16Encode(TIFF* tif, tidata_t bp, tsize_t cc, tsample_t s)
 			}
 			mask = 0xff << shft;		/* find next run */
 			for (beg = i; beg < npixels; beg += rc) {
-				b = tp[beg] & mask;
+				b = (int16) (tp[beg] & mask);
 				rc = 1;
 				while (rc < 127+2 && beg+rc < npixels &&
 						(tp[beg+rc] & mask) == b)
@@ -414,36 +414,36 @@ LogL16Encode(TIFF* tif, tidata_t bp, tsize_t cc, tsample_t s)
 					break;		/* long enough */
 			}
 			if (beg-i > 1 && beg-i < MINRUN) {
-				b = tp[i] & mask;	/* check short run */
+				b = (int16) (tp[i] & mask);/*check short run */
 				j = i+1;
 				while ((tp[j++] & mask) == b)
-					if (j == beg) {
-						*op++ = 128-2+j-i;
-						*op++ = b >> shft;
-						occ -= 2;
-						i = beg;
-						break;
-					}
+                                    if (j == beg) {
+                                        *op++ = (tidataval_t)(128-2+j-i);
+                                        *op++ = (tidataval_t) (b >> shft);
+                                        occ -= 2;
+                                        i = beg;
+                                        break;
+                                    }
 			}
 			while (i < beg) {		/* write out non-run */
 				if ((j = beg-i) > 127) j = 127;
 				if (occ < j+3) {
-					tif->tif_rawcp = op;
-					tif->tif_rawcc = tif->tif_rawdatasize - occ;
-					if (!TIFFFlushData1(tif))
-						return (-1);
-					op = tif->tif_rawcp;
-					occ = tif->tif_rawdatasize - tif->tif_rawcc;
+                                    tif->tif_rawcp = op;
+                                    tif->tif_rawcc = tif->tif_rawdatasize - occ;
+                                    if (!TIFFFlushData1(tif))
+                                        return (-1);
+                                    op = tif->tif_rawcp;
+                                    occ = tif->tif_rawdatasize - tif->tif_rawcc;
 				}
-				*op++ = j; occ--;
+				*op++ = (tidataval_t) j; occ--;
 				while (j--) {
-					*op++ = tp[i++] >> shft & 0xff;
+					*op++ = (tidataval_t) (tp[i++] >> shft & 0xff);
 					occ--;
 				}
 			}
 			if (rc >= MINRUN) {		/* write out run */
-				*op++ = 128-2+rc;
-				*op++ = tp[beg] >> shft & 0xff;
+				*op++ = (tidataval_t) (128-2+rc);
+				*op++ = (tidataval_t) (tp[beg] >> shft & 0xff);
 				occ -= 2;
 			} else
 				rc = 0;
@@ -569,14 +569,14 @@ LogLuvEncode32(TIFF* tif, tidata_t bp, tsize_t cc, tsample_t s)
 					op = tif->tif_rawcp;
 					occ = tif->tif_rawdatasize - tif->tif_rawcc;
 				}
-				*op++ = j; occ--;
+				*op++ = (tidataval_t) j; occ--;
 				while (j--) {
 					*op++ = (tidataval_t)(tp[i++] >> shft & 0xff);
 					occ--;
 				}
 			}
 			if (rc >= MINRUN) {		/* write out run */
-				*op++ = 128-2+rc;
+				*op++ = (tidataval_t) (128-2+rc);
 				*op++ = (tidataval_t)(tp[beg] >> shft & 0xff);
 				occ -= 2;
 			} else
@@ -693,7 +693,7 @@ L16toGry(LogLuvState* sp, tidata_t op, int n)
 
 	while (n-- > 0) {
 		double Y = LogL16toY(*l16++);
-		*gp++ = (Y <= 0.) ? 0 : (Y >= 1.) ? 255 : (int)(256.*sqrt(Y));
+		*gp++ = (uint8) ((Y <= 0.) ? 0 : (Y >= 1.) ? 255 : (int)(256.*sqrt(Y)));
 	}
 }
 
@@ -704,7 +704,7 @@ L16fromY(LogLuvState* sp, tidata_t op, int n)
 	float* yp = (float*) op;
 
 	while (n-- > 0)
-		*l16++ = LogL16fromY(*yp++, sp->encode_meth);
+		*l16++ = (int16) (LogL16fromY(*yp++, sp->encode_meth));
 }
 
 #if !LOGLUV_PUBLIC
@@ -720,9 +720,9 @@ XYZtoRGB24(float xyz[3], uint8 rgb[3])
 	b =  0.061*xyz[0] + -0.224*xyz[1] +  1.163*xyz[2];
 					/* assume 2.0 gamma for speed */
 	/* could use integer sqrt approx., but this is probably faster */
-	rgb[0] = (r <= 0.) ? 0 : (r >= 1.) ? 255 : (int)(256.*sqrt(r));
-	rgb[1] = (g <= 0.) ? 0 : (g >= 1.) ? 255 : (int)(256.*sqrt(g));
-	rgb[2] = (b <= 0.) ? 0 : (b >= 1.) ? 255 : (int)(256.*sqrt(b));
+	rgb[0] = (uint8)((r<=0.) ? 0 : (r >= 1.) ? 255 : (int)(256.*sqrt(r)));
+	rgb[1] = (uint8)((g<=0.) ? 0 : (g >= 1.) ? 255 : (int)(256.*sqrt(g)));
+	rgb[2] = (uint8)((b<=0.) ? 0 : (b >= 1.) ? 255 : (int)(256.*sqrt(b)));
 }
 
 #if !LOGLUV_PUBLIC

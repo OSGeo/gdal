@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_dirwrite.c,v 1.14 2002/04/09 19:36:12 dron Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_dirwrite.c,v 1.15 2003/06/30 14:42:32 dron Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -1046,7 +1046,11 @@ TIFFRewriteDirectory( TIFF *tif )
         tif->tif_header.tiff_diroff = 0;
         tif->tif_diroff = 0;
 
+#if defined(__hpux) && defined(__LP64__)
+#define HDROFF(f) ((toff_t)(unsigned long) &(((TIFFHeader*) 0)->f))
+#else
 #define	HDROFF(f)	((toff_t) &(((TIFFHeader*) 0)->f))
+#endif
         TIFFSeekFile(tif, HDROFF(tiff_diroff), SEEK_SET);
         if (!WriteOK(tif, &(tif->tif_header.tiff_diroff), 
                      sizeof (tif->tif_diroff))) 

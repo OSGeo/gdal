@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_aux.c,v 1.4 2003/05/06 18:52:49 dron Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_aux.c,v 1.5 2003/07/08 15:51:57 warmerda Exp $ */
 
 /*
  * Copyright (c) 1991-1997 Sam Leffler
@@ -120,7 +120,7 @@ TIFFVGetFieldDefaulted(TIFF* tif, ttag_t tag, va_list ap)
 	case TIFFTAG_PREDICTOR:
                 {
 			TIFFPredictorState* sp = (TIFFPredictorState*) tif->tif_data;
-			*va_arg(ap, uint16*) = sp->predictor;
+			*va_arg(ap, uint16*) = (uint16) sp->predictor;
 			return (1);
                 }
 #ifdef CMYK_SUPPORT

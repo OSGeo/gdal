@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_packbits.c,v 1.5 2001/09/06 19:28:45 warmerda Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_packbits.c,v 1.7 2003/07/08 16:40:46 warmerda Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -109,16 +109,16 @@ PackBitsEncode(TIFF* tif, tidata_t buf, tsize_t cc, tsample_t s)
 				state = RUN;
 				if (n > 128) {
 					*op++ = (tidata) -127;
-					*op++ = b;
+					*op++ = (tidataval_t) b;
 					n -= 128;
 					goto again;
 				}
 				*op++ = (tidataval_t)(-(n-1));
-				*op++ = b;
+				*op++ = (tidataval_t) b;
 			} else {
 				lastliteral = op;
 				*op++ = 0;
-				*op++ = b;
+				*op++ = (tidataval_t) b;
 				state = LITERAL;
 			}
 			break;
@@ -127,32 +127,32 @@ PackBitsEncode(TIFF* tif, tidata_t buf, tsize_t cc, tsample_t s)
 				state = LITERAL_RUN;
 				if (n > 128) {
 					*op++ = (tidata) -127;
-					*op++ = b;
+					*op++ = (tidataval_t) b;
 					n -= 128;
 					goto again;
 				}
 				*op++ = (tidataval_t)(-(n-1));	/* encode run */
-				*op++ = b;
+				*op++ = (tidataval_t) b;
 			} else {			/* extend literal */
 				if (++(*lastliteral) == 127)
 					state = BASE;
-				*op++ = b;
+				*op++ = (tidataval_t) b;
 			}
 			break;
 		case RUN:		/* last object was run */
 			if (n > 1) {
 				if (n > 128) {
 					*op++ = (tidata) -127;
-					*op++ = b;
+					*op++ = (tidataval_t) b;
 					n -= 128;
 					goto again;
 				}
 				*op++ = (tidataval_t)(-(n-1));
-				*op++ = b;
+				*op++ = (tidataval_t) b;
 			} else {
 				lastliteral = op;
 				*op++ = 0;
-				*op++ = b;
+				*op++ = (tidataval_t) b;
 				state = LITERAL;
 			}
 			break;
@@ -188,31 +188,40 @@ PackBitsEncode(TIFF* tif, tidata_t buf, tsize_t cc, tsample_t s)
 static int
 PackBitsEncodeChunk(TIFF* tif, tidata_t bp, tsize_t cc, tsample_t s)
 {
-    tsize_t rowsize = (tsize_t) tif->tif_data;
-
-    assert(rowsize > 0);
-    
-#ifdef YCBCR_SUPPORT
-    /* 
-     * YCBCR data isn't really separable into rows, so we
-     * might as well encode the whole tile/strip as one chunk.
-     */
-    if( tif->tif_dir.td_photometric == PHOTOMETRIC_YCBCR )
-        rowsize = (tsize_t) tif->tif_data;
+#if defined(__hpux) && defined(__LP64__)
+	tsize_t rowsize = (tsize_t)(unsigned long) tif->tif_data;
+#else
+	tsize_t rowsize = (tsize_t) tif->tif_data;
 #endif
 
-    while ((long)cc > 0) {
-        int	chunk = rowsize;
-        
-        if( cc < chunk )
-            chunk = cc;
+	assert(rowsize > 0);
+    
+#ifdef YCBCR_SUPPORT
+	/* 
+	 * YCBCR data isn't really separable into rows, so we
+	 * might as well encode the whole tile/strip as one chunk.
+	 */
+	if( tif->tif_dir.td_photometric == PHOTOMETRIC_YCBCR ) {
+#if defined(__hpux) && defined(__LP64__)
+		rowsize = (tsize_t)(unsigned long) tif->tif_data;
+#else
+		rowsize = (tsize_t) tif->tif_data;
+#endif
+	}
+#endif
 
-        if (PackBitsEncode(tif, bp, chunk, s) < 0)
-            return (-1);
-        bp += chunk;
-        cc -= chunk;
-    }
-    return (1);
+	while ((long)cc > 0) {
+		int	chunk = rowsize;
+		
+		if( cc < chunk )
+		    chunk = cc;
+
+		if (PackBitsEncode(tif, bp, chunk, s) < 0)
+		    return (-1);
+		bp += chunk;
+		cc -= chunk;
+	}
+	return (1);
 }
 
 static int
@@ -249,7 +258,7 @@ PackBitsDecode(TIFF* tif, tidata_t op, tsize_t occ, tsample_t s)
 			occ -= n;
 			b = *bp++, cc--;
 			while (n-- > 0)
-				*op++ = b;
+				*op++ = (tidataval_t) b;
 		} else {		/* copy next n+1 bytes literally */
 			if (occ < n + 1)
                         {

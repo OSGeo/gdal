@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: geotiff_proj4.c,v 1.19 2002/11/29 20:57:09 warmerda Exp $
+ * $Id: geotiff_proj4.c,v 1.20 2003/07/08 17:31:30 warmerda Exp $
  *
  * Project:  libgeotiff
  * Purpose:  Code to convert a normalized GeoTIFF definition into a PROJ.4
@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log: geotiff_proj4.c,v $
+ * Revision 1.20  2003/07/08 17:31:30  warmerda
+ * cleanup various warnings
+ *
  * Revision 1.19  2002/11/29 20:57:09  warmerda
  * added LCC1SP mapping
  *
@@ -527,6 +530,10 @@ char * GTIFGetProj4Defn( GTIFDefn * psDefn )
 int GTIFProj4ToLatLong( GTIFDefn * psDefn, int nPoints,
                         double *padfX, double *padfY )
 {
+    (void) psDefn;
+    (void) nPoints;
+    (void) padfX;
+    (void) padfY;
 #ifdef DEBUG    
     fprintf( stderr,
              "GTIFProj4ToLatLong() - PROJ.4 support not compiled in.\n" );
@@ -537,6 +544,10 @@ int GTIFProj4ToLatLong( GTIFDefn * psDefn, int nPoints,
 int GTIFProj4FromLatLong( GTIFDefn * psDefn, int nPoints,
                           double *padfX, double *padfY )
 {
+    (void) psDefn;
+    (void) nPoints;
+    (void) padfX;
+    (void) padfY;
 #ifdef DEBUG    
     fprintf( stderr,
              "GTIFProj4FromLatLong() - PROJ.4 support not compiled in.\n" );
