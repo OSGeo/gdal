@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2000/12/23 05:12:17  warmerda
+ * improve error reporting if MAX_REC_GROUP exceeded
+ *
  * Revision 1.13  2000/12/06 19:31:16  warmerda
  * added BL2000 support
  *
@@ -1304,8 +1307,14 @@ NTFRecord **NTFFileReader::ReadRecordGroup()
 /* -------------------------------------------------------------------- */
    while( (poRecord = ReadRecord()) != NULL && poRecord->GetType() != NRT_VTR )
    {
+       CPLAssert( nRecordCount < MAX_REC_GROUP);
        if( nRecordCount >= MAX_REC_GROUP )
+       {
+           CPLError( CE_Failure, CPLE_AppDefined, 
+                     "Maximum record group size (%d) exceeded.\n", 
+                     MAX_REC_GROUP );
            break;
+       }
 
        if( !pfnRecordGrouper( this, apoCGroup, poRecord ) )
            break;
