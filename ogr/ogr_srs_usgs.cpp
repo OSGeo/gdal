@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2004/02/25 08:14:55  dron
+ * Fixed datum setting in exportToUSGS().
+ *
  * Revision 1.3  2004/02/22 10:22:26  dron
  * Few fixes.
  *
@@ -1228,7 +1231,7 @@ OGRErr OGRSpatialReference::exportToUSGS( long *piProjSys, long *piZone,
             if( ABS( dfSemiMajor - dfSM ) < 0.01
                 && ABS( dfInvFlattening - dfIF ) < 0.0001 )
             {
-                *piDatum = aoEllips[i];
+                *piDatum = i;
                 break;
             }
         }
