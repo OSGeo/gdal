@@ -132,11 +132,13 @@ $(GDAL_DLL):	lib
 		 /out:$(GDAL_DLL) /implib:gdal_i.lib $(LINKER_FLAGS)
 
 install: $(GDAL_DLL) apps_dir pymod_dir
-	copy $(GDAL_DLL) $(BINDIR)
+	xcopy /y /r /d /f $(GDAL_DLL) $(BINDIR)
 	cd apps
 	$(MAKE) /f makefile.vc install
 	cd ..\pymod
 	if exist $(PYDIR)\python.exe $(MAKE) /f makefile.vc install
+	cd ..
+	xcopy /y /r /d /f data\*.* $(DATADIR)
 !IFDEF INCLUDE_OGR_FRMTS
 	cd ..\ogr
 	$(MAKE) install
