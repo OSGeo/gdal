@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.3  2005/02/15 18:56:52  kruland
+ * Added support for WriteRaster().
+ *
  * Revision 1.2  2005/02/15 16:56:46  kruland
  * Remove use of vector<double> in ComputeRasterMinMax.  Use double_2 instead.
  *
@@ -25,9 +28,10 @@
 //
 //************************************************************************
 %{
-char *py_ReadRaster( GDALRasterBand *obj,
-                     int xoff, int yoff, int xsize, int ysize,
-                     int buf_xsize, int buf_ysize, GDALDataType buf_type )
+static
+char *ReadRaster_internal( GDALRasterBand *obj,
+                           int xoff, int yoff, int xsize, int ysize,
+                           int buf_xsize, int buf_ysize, GDALDataType buf_type )
 {
 
   int result_size = buf_xsize * buf_ysize * GDALGetDataTypeSize( buf_type ) / 8;
@@ -38,6 +42,15 @@ char *py_ReadRaster( GDALRasterBand *obj,
     result = 0;
   }
   return (char*)result;
+}
+
+static
+CPLErr WriteRaster_internal( GDALRasterBand *obj,
+                             int xoff, int yoff, int xsize, int ysize,
+                             char *buffer, int buf_xsize, int buf_ysize, GDALDataType buf_type )
+{
+    return GDALRasterIO( obj, GF_Write, xoff, yoff, xsize, ysize, 
+		        (void *) buffer, buf_xsize, buf_ysize, buf_type, 0, 0 );
 }
 %}
 
@@ -88,19 +101,37 @@ public:
 %newobject ReadRaster;
   char *ReadRaster( int xoff, int yoff, int xsize, int ysize,
                     int buf_xsize, int buf_ysize, GDALDataType buf_type ) {
-    return py_ReadRaster( self, xoff, yoff, xsize, ysize,
+    return ReadRaster_internal( self, xoff, yoff, xsize, ysize,
                            buf_xsize, buf_ysize, buf_type );
   }
 
   char *ReadRaster( int xoff, int yoff, int xsize, int ysize,
                     int buf_xsize, int buf_ysize ) {
-    return py_ReadRaster( self, xoff, yoff, xsize, ysize,
+    return ReadRaster_internal( self, xoff, yoff, xsize, ysize,
                            buf_xsize, buf_ysize, GDALGetRasterDataType(self) );
   }
 
   char *ReadRaster( int xoff, int yoff, int xsize, int ysize ) {
-    return py_ReadRaster( self, xoff, yoff, xsize, ysize,
+    return ReadRaster_internal( self, xoff, yoff, xsize, ysize,
                            xsize, ysize, GDALGetRasterDataType(self) );
+  }
+
+  CPLErr WriteRaster( int xoff, int yoff, int xsize, int ysize,
+                     char *buf_string, int buf_xsize, int buf_ysize, GDALDataType buf_type ) {
+    return WriteRaster_internal( self, xoff, yoff, xsize, ysize,
+                                 buf_string, buf_xsize, buf_ysize, buf_type );
+  }
+
+  CPLErr WriteRaster( int xoff, int yoff, int xsize, int ysize,
+                      char *buf_string, int buf_xsize, int buf_ysize ) {
+    return WriteRaster_internal( self, xoff, yoff, xsize, ysize,
+                                 buf_string, buf_xsize, buf_ysize, GDALGetRasterDataType(self) );
+  }
+
+  CPLErr WriteRaster( int xoff, int yoff, int xsize, int ysize,
+                      char *buf_string ) {
+    return WriteRaster_internal( self, xoff, yoff, xsize, ysize,
+                                 buf_string, xsize, ysize, GDALGetRasterDataType(self) );
   }
 
 }
