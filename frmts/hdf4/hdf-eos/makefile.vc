@@ -1,18 +1,16 @@
 
-OBJ	= \
-	EHapi.obj \
-	GDapi.obj \
-	PTapi.obj \
-	SWapi.obj \
-	gctp_wrap.obj
+OBJ	=	\
+	SWapi.obj GDapi.obj EHapi.obj gctp_wrap.obj
 
 GDAL_ROOT	=	..\..\..
 
 !INCLUDE $(GDAL_ROOT)\nmake.opt
 
+EXTRAFLAGS = 	-I$(HDF4_DIR)\include -I.\ -DFRMT_hdf4 -DWIN32
+
 default:	$(OBJ)
 	copy *.obj ..\..\o
 
 clean:
-	del *.obj
+	-del *.obj
 
