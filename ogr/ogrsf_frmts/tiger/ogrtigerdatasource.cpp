@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.28  2004/02/12 06:39:16  warmerda
+ * added preliminary support for some GDT quirks
+ *
  * Revision 1.27  2003/11/05 20:57:19  warmerda
  * Added special hack mapping versioncodde 9999 to UA2000 for FME
  * bug 7625.
@@ -398,7 +401,8 @@ int OGRTigerDataSource::Open( const char * pszFilename, int bTestOpen,
             }
             
             if( (EQUALN(candidateFileList[i],"TGR",3)
-                 || EQUALN(candidateFileList[i],"TST",3))
+                 || EQUALN(candidateFileList[i],"TST",3)
+                 || EQUALN(candidateFileList[i],"D",1))
                 && candidateFileList[i][strlen(candidateFileList[i])-4] == '.'
                 && candidateFileList[i][strlen(candidateFileList[i])-1] == '1')
             {
@@ -440,9 +444,9 @@ int OGRTigerDataSource::Open( const char * pszFilename, int bTestOpen,
     {
         if( bTestOpen || i == 0 )
         {
-            char        szHeader[80];
+            char        szHeader[500];
             FILE        *fp;
-            char        *pszFilename;
+            char        *pszFilename, *pszRecStart = NULL;
 
             pszFilename = BuildFilename( papszFileList[i], "1" );
 
@@ -451,22 +455,37 @@ int OGRTigerDataSource::Open( const char * pszFilename, int bTestOpen,
             if( fp == NULL )
                 continue;
             
-            if( VSIFRead( szHeader, 80, 1, fp ) < 1 )
+            if( VSIFRead( szHeader, sizeof(szHeader)-1, 1, fp ) < 1 )
             {
                 VSIFClose( fp );
                 continue;
             }
 
             VSIFClose( fp );
+
+            pszRecStart = szHeader;
+            szHeader[sizeof(szHeader)-1] = '\0';
+
+            if( EQUALN(pszRecStart,"Copyright (C)",13) 
+                && strstr(pszRecStart,"Geographic Data Tech") != NULL )
+            {
+                while( *pszRecStart != '\0' 
+                       && *pszRecStart != 10 
+                       && *pszRecStart != 13 )
+                    pszRecStart++;
+
+                while( *pszRecStart == 10 || *pszRecStart == 13 )
+                    pszRecStart++;
+            }
             
-            if( szHeader[0] != '1' )
+            if( pszRecStart[0] != '1' )
                 continue;
 
-            if( !isdigit(szHeader[1]) || !isdigit(szHeader[2])
-                || !isdigit(szHeader[3]) || !isdigit(szHeader[4]) )
+            if( !isdigit(pszRecStart[1]) || !isdigit(pszRecStart[2])
+                || !isdigit(pszRecStart[3]) || !isdigit(pszRecStart[4]) )
                 continue;
 
-            nVersionCode = atoi(TigerFileBase::GetField( szHeader, 2, 5 ));
+            nVersionCode = atoi(TigerFileBase::GetField( pszRecStart, 2, 5 ));
             nVersion = TigerClassifyVersion( nVersionCode );
 
             CPLDebug( "OGR", "Tiger Version Code=%d, Classified as %s ", 
@@ -478,8 +497,8 @@ int OGRTigerDataSource::Open( const char * pszFilename, int bTestOpen,
                 && nVersionCode !=  5
                 && nVersionCode != 21 
                 && nVersionCode != 24
-                && szHeader[3]  != '9'
-                && szHeader[3]  != '0' )
+                && pszRecStart[3]  != '9'
+                && pszRecStart[3]  != '0' )
                 continue;
 
             // we could (and should) add a bunch more validation here.
