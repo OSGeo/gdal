@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.24  2005/03/25 15:02:22  kmelero
+ * Removed misplaced < character.  Was causing compiler error. (kmelero@sanz.com)
+ *
  * Revision 1.23  2005/02/17 22:17:36  fwarmerdam
  * some adjustments to deciding whether to use direct io or not
  *
@@ -1278,7 +1281,7 @@ LT_STATUS MrSIDDummyImageReader::initialize()
 
 /************************************************************************/
 /*                             decodeStrip()                            */
-</************************************************************************/
+/************************************************************************/
 
 LT_STATUS MrSIDDummyImageReader::decodeStrip(LTISceneBuffer& stripData,
                                              const LTIScene& stripScene)
