@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2002/10/07 19:27:02  warmerda
+ * Fixed small memory leak in ::Open().
+ *
  * Revision 1.20  2002/09/11 14:18:17  warmerda
  * added channel description support
  *
@@ -775,6 +778,7 @@ GDALDataset *PAuxDataset::Open( GDALOpenInfo * poOpenInfo )
 
     if( fp == NULL )
     {
+        CPLFree( pszTarget );
         CPLFree( pszAuxFilename );
         return NULL;
     }
