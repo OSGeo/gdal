@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.19  2004/01/20 16:23:44  dron
+ * Don't close streams before deleting the JPEG2000Dataset object.
+ *
  * Revision 1.18  2003/05/13 14:00:44  warmerda
  * added mimetype and extension
  *
@@ -349,8 +352,8 @@ CPLErr JPEG2000RasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     // Decode image from the stream, if not yet
     if ( !poGDS->psImage )
     {
-        if ( !( poGDS->psImage =
-                jas_image_decode(poGDS->psStream, poGDS->iFormat, 0) ) )
+        poGDS->psImage = jas_image_decode(poGDS->psStream, poGDS->iFormat, 0);
+        if ( !poGDS->psImage )
         {
             CPLDebug( "JPEG2000", "Unable to decode image. Format: %s, %d",
                       jas_image_fmttostr( poGDS->iFormat ), poGDS->iFormat );
@@ -728,14 +731,12 @@ GDALDataset *JPEG2000Dataset::Open( GDALOpenInfo * poOpenInfo )
         }
 	if( !paiDepth || !pabSignedness )
 	{
-	    jas_stream_close( sS );
 	    delete poDS;
 	    CPLDebug( "JPEG2000", "Unable to read JP2 header boxes.\n" );
 	    return NULL;
 	}
         if ( jas_stream_rewind( poDS->psStream ) < 0 )
         {
-            jas_stream_close( sS );
             delete poDS;
             CPLDebug( "JPEG2000", "Unable to rewind input stream.\n" );
             return NULL;
@@ -743,9 +744,9 @@ GDALDataset *JPEG2000Dataset::Open( GDALOpenInfo * poOpenInfo )
     }
     else
     {
-        if ( !(poDS->psImage = jas_image_decode(poDS->psStream, poDS->iFormat, 0)) )
+        poDS->psImage = jas_image_decode(poDS->psStream, poDS->iFormat, 0);
+        if ( !poDS->psImage )
         {
-            jas_stream_close( sS );
             delete poDS;
             CPLDebug( "JPEG2000", "Unable to decode image %s. Format: %s, %d",
                       poOpenInfo->pszFilename,
