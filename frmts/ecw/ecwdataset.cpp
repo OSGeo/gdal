@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.35  2005/02/10 04:49:53  fwarmerdam
+ * added SetColorInterpretation
+ *
  * Revision 1.34  2005/02/10 04:31:55  fwarmerdam
  * added support to preserve YCbCr images, added GetColorInterpretation()
  *
@@ -240,6 +243,7 @@ class ECWRasterBand : public GDALRasterBand
     virtual CPLErr IReadBlock( int, int, void * );
     virtual int    HasArbitraryOverviews() { return TRUE; }
     virtual GDALColorInterp GetColorInterpretation();
+    virtual CPLErr SetColorInterpretation( GDALColorInterp );
 
     virtual CPLErr AdviseRead( int nXOff, int nYOff, int nXSize, int nYSize,
                                int nBufXSize, int nBufYSize, 
@@ -328,6 +332,23 @@ GDALColorInterp ECWRasterBand::GetColorInterpretation()
 
 {
     return eBandInterp;
+}
+
+/************************************************************************/
+/*                       SetColorInterpretation()                       */
+/*                                                                      */
+/*      This would normally just be used by folks using the ECW code    */
+/*      to read JP2 streams in other formats (such as NITF) and         */
+/*      providing their own color interpretation regardless of what     */
+/*      ECW might think the stream itself says.                         */
+/************************************************************************/
+
+CPLErr ECWRasterBand::SetColorInterpretation( GDALColorInterp eNewInterp )
+
+{
+    eBandInterp = eNewInterp;
+
+    return CE_None;
 }
 
 /************************************************************************/
