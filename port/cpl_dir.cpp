@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.3  2000/09/25 19:59:03  warmerda
+ * look for WIN32 not _WIN32
+ *
  * Revision 1.2  1999/05/20 02:54:38  warmerda
  * Added API documentation
  *
@@ -41,7 +44,7 @@
 #include "cpl_string.h"
 
 
-#ifdef _WIN32
+#ifdef WIN32
 
 /*=====================================================================
                    WIN32 / MSVC++ implementation

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2000/09/25 19:59:03  warmerda
+ * look for WIN32 not _WIN32
+ *
  * Revision 1.8  1999/05/20 02:54:38  warmerda
  * Added API documentation
  *
@@ -133,7 +136,7 @@ void *CPLGetSymbol( const char * pszLibrary, const char * pszSymbolName )
 /* ==================================================================== */
 /*                 Windows Implementation                               */
 /* ==================================================================== */
-#ifdef _WIN32
+#ifdef WIN32
 
 #define GOT_GETSYMBOL
 
