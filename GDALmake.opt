@@ -1,4 +1,12 @@
+#
+#	Default compiler is gcc, 
+#	but for Redhat 5 systems, we must use EGCS for C++
+#
+ifneq ($(wildcard /usr/bin/egc?),)
+CC	=	egcs --no-rtti -fno-exceptions
+else
 CC	=	gcc
+endif
 
 OPTFLAGS =	-O
 DBGFLAGS =	-g -DDEBUG
