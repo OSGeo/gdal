@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2002/01/25 20:37:43  warmerda
+ * added prescan and resetreading methods
+ *
  * Revision 1.2  2002/01/24 17:38:37  warmerda
  * Converted TrString to C funcs, added various methods
  *
@@ -168,6 +171,9 @@ public:
 
     int              LoadClasses( const char *pszFile = NULL );
     int              SaveClasses( const char *pszFile = NULL );
+
+    int 	     PrescanForSchema();
+    void             ResetReading();
 
 // --- 
 

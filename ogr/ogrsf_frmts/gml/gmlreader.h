@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2002/01/25 20:38:01  warmerda
+ * added prescan and resetreading methods
+ *
  * Revision 1.2  2002/01/24 17:39:08  warmerda
  * added xml serialization and geometry support
  *
@@ -168,9 +171,12 @@ public:
     virtual void       ClearClasses() = 0;
 
     virtual GMLFeature *NextFeature() = 0;
+    virtual void       ResetReading() = 0;
 
     virtual int  LoadClasses( const char *pszFile = NULL ) = 0;
     virtual int  SaveClasses( const char *pszFile = NULL ) = 0;
+
+    virtual int PrescanForSchema() = 0;
 };
 
 IGMLReader *CreateGMLReader();
