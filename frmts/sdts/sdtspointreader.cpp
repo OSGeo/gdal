@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  1999/09/21 17:26:31  warmerda
+ * generalized SADR reading
+ *
  * Revision 1.6  1999/09/03 13:01:39  warmerda
  * added docs
  *
@@ -113,7 +116,7 @@ int SDTSRawPoint::Read( SDTS_IREF * poIREF, DDFRecord * poRecord )
         }
         else if( EQUAL(pszFieldName,"SADR") )
         {
-            SDTSGetSADR( poIREF, poField, 1, &dfX, &dfY, &dfZ );
+            poIREF->GetSADR( poField, 1, &dfX, &dfY, &dfZ );
         }
     }
 

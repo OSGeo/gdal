@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  1999/09/21 17:26:31  warmerda
+ * generalized SADR reading
+ *
  * Revision 1.3  1999/06/03 14:03:34  warmerda
  * Added offset/res info from iref
  *
@@ -128,5 +131,171 @@ int SDTS_IREF::Read( const char * pszFilename )
     dfXRes = poRecord->GetFloatSubfield( "IREF", 0, "XHRS", 0 );
     dfYRes = poRecord->GetFloatSubfield( "IREF", 0, "YHRS", 0 );
 
+    nDefaultSADRFormat = EQUAL(pszCoordinateFormat,"BI32");
+
     return TRUE;
 }
+
+/************************************************************************/
+/*                            GetSADRCount()                            */
+/*                                                                      */
+/*      Return the number of SADR'es in the passed field.               */
+/************************************************************************/
+
+int SDTS_IREF::GetSADRCount( DDFField * poField )
+
+{
+    if( nDefaultSADRFormat )
+        return poField->GetDataSize() / SDTS_SIZEOF_SADR;
+    else
+        return poField->GetRepeatCount();
+}
+
+/************************************************************************/
+/*                              GetSADR()                               */
+/************************************************************************/
+
+int SDTS_IREF::GetSADR( DDFField * poField, int nVertices,
+                        double *padfX, double * padfY, double * padfZ )
+
+{
+/* -------------------------------------------------------------------- */
+/*      For the sake of efficiency we depend on our knowledge that      */
+/*      the SADR field is a series of bigendian int32's and decode      */
+/*      them directly.                                                  */
+/* -------------------------------------------------------------------- */
+    if( nDefaultSADRFormat
+        && poField->GetFieldDefn()->GetSubfieldCount() == 2 )
+    {
+        GInt32		anXY[2];
+        const char	*pachRawData = poField->GetData();
+        
+        CPLAssert( poField->GetDataSize() >= nVertices * SDTS_SIZEOF_SADR );
+
+        for( int iVertex = 0; iVertex < nVertices; iVertex++ )
+        {
+            // we copy to a temp buffer to ensure it is world aligned.
+            memcpy( anXY, pachRawData, 8 );
+            pachRawData += 8;
+            
+            // possibly byte swap, and always apply scale factor
+            padfX[iVertex] = dfXOffset
+                + dfXScale * ((int) CPL_MSBWORD32( anXY[0] ));
+            padfY[iVertex] = dfYOffset
+                + dfYScale * ((int) CPL_MSBWORD32( anXY[1] ));
+            
+            padfZ[iVertex] = 0.0;
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      This is the generic case.  We assume either two or three        */
+/*      subfields, and treat these as X, Y and Z regardless of          */
+/*      name.                                                           */
+/* -------------------------------------------------------------------- */
+    else
+    {
+        DDFFieldDefn	*poFieldDefn = poField->GetFieldDefn();
+        int		nBytesRemaining = poField->GetDataSize();
+        const char     *pachFieldData = poField->GetData();
+        int		iVertex;
+            
+        CPLAssert( poFieldDefn->GetSubfieldCount() == 2
+                   || poFieldDefn->GetSubfieldCount() == 3 );
+        
+        for( iVertex = 0; iVertex < nVertices; iVertex++ )
+        {
+            double	adfXYZ[3];
+            GByte	*pabyBString;
+
+            adfXYZ[2] = 0.0;
+
+            for( int iEntry = 0;
+                 iEntry < poFieldDefn->GetSubfieldCount();
+                 iEntry++ )
+            {
+                int	nBytesConsumed;
+                DDFSubfieldDefn *poSF = poFieldDefn->GetSubfield(iEntry);
+
+                switch( poSF->GetType() )
+                {
+                  case DDFInt:
+                    adfXYZ[iEntry] =
+                        poSF->ExtractIntData( pachFieldData,
+                                              nBytesRemaining,
+                                              &nBytesConsumed );
+                    break;
+                    
+                  case DDFFloat:
+                    adfXYZ[iEntry] =
+                        poSF->ExtractFloatData( pachFieldData,
+                                                nBytesRemaining,
+                                                &nBytesConsumed );
+                    break;
+                    
+                  case DDFBinaryString:
+                    pabyBString = (GByte *) 
+                        poSF->ExtractStringData( pachFieldData,
+                                                 nBytesRemaining,
+                                                 &nBytesConsumed );
+
+                    if( EQUAL(pszCoordinateFormat,"BI32") )
+                    {
+                        GInt32	nValue;
+                        memcpy( &nValue, pabyBString, 4 );
+                        adfXYZ[iEntry] = ((int) CPL_MSBWORD32( nValue ));
+                    }
+                    else if( EQUAL(pszCoordinateFormat,"BI16") )
+                    {
+                        GInt16	nValue;
+                        memcpy( &nValue, pabyBString, 2 );
+                        adfXYZ[iEntry] = ((int) CPL_MSBWORD16( nValue ));
+                    }
+                    else if( EQUAL(pszCoordinateFormat,"BU32") )
+                    {
+                        GUInt32	nValue;
+                        memcpy( &nValue, pabyBString, 4 );
+                        adfXYZ[iEntry] = ((GUInt32) CPL_MSBWORD32( nValue ));
+                    }
+                    else if( EQUAL(pszCoordinateFormat,"BU16") )
+                    {
+                        GUInt16	nValue;
+                        memcpy( &nValue, pabyBString, 2 );
+                        adfXYZ[iEntry] = ((GUInt16) CPL_MSBWORD16( nValue ));
+                    }
+                    else if( EQUAL(pszCoordinateFormat,"BFP32") )
+                    {
+                        float	fValue;
+                        
+                        memcpy( &fValue, pabyBString, 4 );
+                        CPL_MSBPTR32( &fValue );
+                        adfXYZ[iEntry] = fValue;
+                    }
+                    else if( EQUAL(pszCoordinateFormat,"BFP64") )
+                    {
+                        double	dfValue;
+                        
+                        memcpy( &dfValue, pabyBString, 8 );
+                        CPL_MSBPTR64( &dfValue );
+                        adfXYZ[iEntry] = dfValue;
+                    }
+                    break;
+
+                  default:
+                    adfXYZ[iEntry] = 0.0;
+                    break;
+                }
+
+                pachFieldData += nBytesConsumed;
+                nBytesRemaining -= nBytesConsumed;
+            } /* next iEntry */
+
+            padfX[iVertex] = dfXOffset + adfXYZ[0] * dfXScale;
+            padfY[iVertex] = dfYOffset + adfXYZ[1] * dfYScale;
+            padfZ[iVertex] = adfXYZ[2];
+        } /* next iVertex */
+    }
+    
+    return TRUE;
+}
+

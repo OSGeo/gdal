@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  1999/09/21 17:26:31  warmerda
+ * generalized SADR reading
+ *
  * Revision 1.9  1999/09/03 13:01:39  warmerda
  * added docs
  *
@@ -137,13 +140,13 @@ int SDTSRawLine::Read( SDTS_IREF * poIREF, DDFRecord * poRecord )
 
         else if( EQUAL(pszFieldName,"SADR") )
         {
-            nVertices = poField->GetDataSize() / SDTS_SIZEOF_SADR;
-
-            padfX = (double *) CPLRealloc(padfX, sizeof(double)*nVertices*3);
+            nVertices = poIREF->GetSADRCount( poField );
+            
+            padfX = (double*) CPLRealloc(padfX,sizeof(double)*nVertices*3);
             padfY = padfX + nVertices;
             padfZ = padfX + 2*nVertices;
-
-            SDTSGetSADR( poIREF, poField, nVertices, padfX, padfY, padfZ );
+            
+            poIREF->GetSADR( poField, nVertices, padfX, padfY, padfZ );
         }
     }
 

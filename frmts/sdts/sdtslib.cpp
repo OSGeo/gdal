@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  1999/09/21 17:26:31  warmerda
+ * generalized SADR reading
+ *
  * Revision 1.8  1999/09/12 23:42:23  warmerda
  * treat coords as signed
  *
@@ -139,47 +142,6 @@ int SDTSModId::Set( DDFField *poField )
     }
 
     return FALSE;
-}
-
-/************************************************************************/
-/*                            SDTSGetSADR()                             */
-/*                                                                      */
-/*      Extract the contents of a Spatial Address field.  Eventually    */
-/*      this code should also apply the scaling according to the        */
-/*      internal reference file ... it will have to be passed in        */
-/*      then.                                                           */
-/************************************************************************/
-
-int SDTSGetSADR( SDTS_IREF *poIREF, DDFField * poField, int nVertices,
-                 double *pdfX, double * pdfY, double * pdfZ )
-
-{
-    double	dfXScale = poIREF->dfXScale;
-    double	dfYScale = poIREF->dfYScale;
-    
-    CPLAssert( poField->GetDataSize() >= nVertices * SDTS_SIZEOF_SADR );
-
-/* -------------------------------------------------------------------- */
-/*      For the sake of efficiency we depend on our knowledge that      */
-/*      the SADR field is a series of bigendian int32's and decode      */
-/*      them directly.                                                  */
-/* -------------------------------------------------------------------- */
-    GInt32	anXY[2];
-    const char	*pachRawData = poField->GetData();
-
-    for( int iVertex = 0; iVertex < nVertices; iVertex++ )
-    {
-        // we copy to a temp buffer to ensure it is world aligned.
-        memcpy( anXY, pachRawData, 8 );
-        pachRawData += 8;
-
-        // possibly byte swap, and always apply scale factor
-        pdfX[iVertex] = dfXScale * ((int) CPL_MSBWORD32( anXY[0] ));
-        pdfY[iVertex] = dfYScale * ((int) CPL_MSBWORD32( anXY[1] ));
-        pdfZ[iVertex] = 0.0;
-    }
-    
-    return TRUE;
 }
 
 /************************************************************************/
