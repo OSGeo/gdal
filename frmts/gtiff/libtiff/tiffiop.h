@@ -1,4 +1,4 @@
-/* $Id: tiffiop.h,v 1.29 2004/10/30 04:49:27 fwarmerdam Exp $ */
+/* $Id: tiffiop.h,v 1.30 2005/03/17 14:41:46 dron Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -243,6 +243,7 @@ extern	int TIFFSetCompressionScheme(TIFF*, int);
 extern	int TIFFSetDefaultCompressionState(TIFF*);
 extern	uint32 _TIFFDefaultStripSize(TIFF*, uint32);
 extern	void _TIFFDefaultTileSize(TIFF*, uint32*, uint32*);
+extern	int _TIFFDataSize(TIFFDataType);
 
 extern	void _TIFFsetByteArray(void**, void*, long);
 extern	void _TIFFsetString(char**, char*);

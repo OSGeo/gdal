@@ -1,4 +1,4 @@
-/* $Id: tif_dirinfo.c,v 1.38 2004/11/11 11:22:04 dron Exp $ */
+/* $Id: tif_dirinfo.c,v 1.40 2005/03/18 14:27:30 dron Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -232,9 +232,9 @@ const TIFFFieldInfo tiffFieldInfo[] = {
       TRUE,	FALSE,	"ImageFullWidth" },
     { TIFFTAG_PIXAR_IMAGEFULLLENGTH, 1, 1, TIFF_LONG,	FIELD_IMAGEFULLLENGTH,
       TRUE,	FALSE,	"ImageFullLength" },
-    { TIFFTAG_PIXAR_TEXTUREFORMAT,  -1,-1, TIFF_ASCII,	FIELD_TEXTUREFORMAT,
+    { TIFFTAG_PIXAR_TEXTUREFORMAT,  -1, -1, TIFF_ASCII,	FIELD_TEXTUREFORMAT,
       TRUE,	FALSE,	"TextureFormat" },
-    { TIFFTAG_PIXAR_WRAPMODES,	    -1,-1, TIFF_ASCII,	FIELD_WRAPMODES,
+    { TIFFTAG_PIXAR_WRAPMODES,	    -1, -1, TIFF_ASCII,	FIELD_WRAPMODES,
       TRUE,	FALSE,	"TextureWrapModes" },
     { TIFFTAG_PIXAR_FOVCOT,	     1, 1, TIFF_FLOAT,	FIELD_FOVCOT,
       TRUE,	FALSE,	"FieldOfViewCotan" },
@@ -242,17 +242,145 @@ const TIFFFieldInfo tiffFieldInfo[] = {
       FIELD_MATRIX_WORLDTOSCREEN,	TRUE,	FALSE,	"MatrixWorldToScreen" },
     { TIFFTAG_PIXAR_MATRIX_WORLDTOCAMERA,	16,16,	TIFF_FLOAT,
        FIELD_MATRIX_WORLDTOCAMERA,	TRUE,	FALSE,	"MatrixWorldToCamera" },
-    { TIFFTAG_COPYRIGHT,	-1,-1, TIFF_ASCII,	FIELD_COPYRIGHT,
+    { TIFFTAG_COPYRIGHT,	-1, -1, TIFF_ASCII,	FIELD_COPYRIGHT,
       TRUE,	FALSE,	"Copyright" },
 /* end Pixar tags */
-    { TIFFTAG_RICHTIFFIPTC, -1,-3, TIFF_LONG,   FIELD_RICHTIFFIPTC, 
+    { TIFFTAG_RICHTIFFIPTC, -1, -3, TIFF_LONG,   FIELD_RICHTIFFIPTC, 
       FALSE,    TRUE,   "RichTIFFIPTC" },
-    { TIFFTAG_PHOTOSHOP,    -1,-3, TIFF_BYTE,   FIELD_PHOTOSHOP, 
+/* begin EXIF tags */
+    { TIFFTAG_EXIFIFD,		1, 1,	TIFF_LONG,	FIELD_CUSTOM,
+      FALSE,	FALSE,	"EXIFIFDOffset" },
+    { TIFFTAG_GPSIFD,		1, 1,	TIFF_LONG,	FIELD_CUSTOM,
+      FALSE,	FALSE,	"GPSIFDOffset" },
+    { TIFFTAG_INTEROPERABILITYIFD,	1, 1,	TIFF_LONG,	FIELD_CUSTOM,
+      FALSE,	FALSE,	"InteroperabilityIFDOffset" },
+/* end EXIF tags */
+    { TIFFTAG_PHOTOSHOP,    -1, -3, TIFF_BYTE,   FIELD_PHOTOSHOP, 
       FALSE,    TRUE,   "Photoshop" },
-    { TIFFTAG_ICCPROFILE,	-1,-3, TIFF_UNDEFINED,	FIELD_ICCPROFILE,
+    { TIFFTAG_ICCPROFILE,	-1, -3, TIFF_UNDEFINED,	FIELD_ICCPROFILE,
       FALSE,	TRUE,	"ICC Profile" },
     { TIFFTAG_STONITS,		 1, 1, TIFF_DOUBLE,	FIELD_STONITS,
       FALSE,	FALSE,	"StoNits" },
+/* begin DNG tags */
+    { TIFFTAG_DNGVERSION,	4, 4,	TIFF_BYTE,	FIELD_CUSTOM, 
+      FALSE,	FALSE,	"DNGVersion" },
+    { TIFFTAG_DNGBACKWARDVERSION,	4, 4,	TIFF_BYTE,	FIELD_CUSTOM, 
+      FALSE,	FALSE,	"DNGBackwardVersion" },
+    { TIFFTAG_UNIQUECAMERAMODEL,    -1, -1, TIFF_ASCII,	FIELD_CUSTOM,
+      TRUE,	FALSE,	"UniqueCameraModel" },
+    { TIFFTAG_LOCALIZEDCAMERAMODEL,    -1, -1, TIFF_ASCII,	FIELD_CUSTOM,
+      TRUE,	FALSE,	"LocalizedCameraModel" },
+    { TIFFTAG_LOCALIZEDCAMERAMODEL,    -1, -1, TIFF_BYTE,	FIELD_CUSTOM,
+      TRUE,	TRUE,	"LocalizedCameraModel" },
+    { TIFFTAG_CFAPLANECOLOR,	-1, -1,	TIFF_BYTE,	FIELD_CUSTOM, 
+      FALSE,	TRUE,	"CFAPlaneColor" },
+    { TIFFTAG_CFALAYOUT,	1, 1,	TIFF_SHORT,	FIELD_CUSTOM, 
+      FALSE,	FALSE,	"CFALayout" },
+    { TIFFTAG_LINEARIZATIONTABLE,	-1, -1,	TIFF_SHORT,	FIELD_CUSTOM, 
+      FALSE,	TRUE,	"LinearizationTable" },
+    { TIFFTAG_BLACKLEVELREPEATDIM,	2, 2,	TIFF_SHORT,	FIELD_CUSTOM, 
+      FALSE,	FALSE,	"BlackLevelRepeatDim" },
+    { TIFFTAG_BLACKLEVEL,	-1, -1,	TIFF_LONG,	FIELD_CUSTOM, 
+      FALSE,	TRUE,	"BlackLevel" },
+    { TIFFTAG_BLACKLEVEL,	-1, -1,	TIFF_SHORT,	FIELD_CUSTOM, 
+      FALSE,	TRUE,	"BlackLevel" },
+    { TIFFTAG_BLACKLEVEL,	-1, -1,	TIFF_RATIONAL,	FIELD_CUSTOM, 
+      FALSE,	TRUE,	"BlackLevel" },
+    { TIFFTAG_BLACKLEVELDELTAH,	-1, -1,	TIFF_SRATIONAL,	FIELD_CUSTOM, 
+      FALSE,	TRUE,	"BlackLevelDeltaH" },
+    { TIFFTAG_BLACKLEVELDELTAV,	-1, -1,	TIFF_SRATIONAL,	FIELD_CUSTOM, 
+      FALSE,	TRUE,	"BlackLevelDeltaV" },
+    { TIFFTAG_WHITELEVEL,	-2, -2,	TIFF_LONG,	FIELD_CUSTOM, 
+      FALSE,	FALSE,	"WhiteLevel" },
+    { TIFFTAG_WHITELEVEL,	-2, -2,	TIFF_SHORT,	FIELD_CUSTOM, 
+      FALSE,	FALSE,	"WhiteLevel" },
+    { TIFFTAG_DEFAULTSCALE,	2, 2,	TIFF_RATIONAL,	FIELD_CUSTOM, 
+      FALSE,	FALSE,	"DefaultScale" },
+    { TIFFTAG_BESTQUALITYSCALE,	1, 1,	TIFF_RATIONAL,	FIELD_CUSTOM, 
+      FALSE,	FALSE,	"BestQualityScale" },
+    { TIFFTAG_DEFAULTCROPORIGIN,	2, 2,	TIFF_LONG,	FIELD_CUSTOM, 
+      FALSE,	FALSE,	"DefaultCropOrigin" },
+    { TIFFTAG_DEFAULTCROPORIGIN,	2, 2,	TIFF_SHORT,	FIELD_CUSTOM, 
+      FALSE,	FALSE,	"DefaultCropOrigin" },
+    { TIFFTAG_DEFAULTCROPORIGIN,	2, 2,	TIFF_RATIONAL,	FIELD_CUSTOM, 
+      FALSE,	FALSE,	"DefaultCropOrigin" },
+    { TIFFTAG_DEFAULTCROPSIZE,	2, 2,	TIFF_LONG,	FIELD_CUSTOM, 
+      FALSE,	FALSE,	"DefaultCropSize" },
+    { TIFFTAG_DEFAULTCROPSIZE,	2, 2,	TIFF_SHORT,	FIELD_CUSTOM, 
+      FALSE,	FALSE,	"DefaultCropSize" },
+    { TIFFTAG_DEFAULTCROPSIZE,	2, 2,	TIFF_RATIONAL,	FIELD_CUSTOM, 
+      FALSE,	FALSE,	"DefaultCropSize" },
+    { TIFFTAG_COLORMATRIX1,	-1, -1,	TIFF_SRATIONAL,	FIELD_CUSTOM, 
+      FALSE,	TRUE,	"ColorMatrix1" },
+    { TIFFTAG_COLORMATRIX2,	-1, -1,	TIFF_SRATIONAL,	FIELD_CUSTOM, 
+      FALSE,	TRUE,	"ColorMatrix2" },
+    { TIFFTAG_CAMERACALIBRATION1,	-1, -1,	TIFF_SRATIONAL,	FIELD_CUSTOM, 
+      FALSE,	TRUE,	"CameraCalibration1" },
+    { TIFFTAG_CAMERACALIBRATION2,	-1, -1,	TIFF_SRATIONAL,	FIELD_CUSTOM, 
+      FALSE,	TRUE,	"CameraCalibration2" },
+    { TIFFTAG_REDUCTIONMATRIX1,	-1, -1,	TIFF_SRATIONAL,	FIELD_CUSTOM, 
+      FALSE,	TRUE,	"ReductionMatrix1" },
+    { TIFFTAG_REDUCTIONMATRIX2,	-1, -1,	TIFF_SRATIONAL,	FIELD_CUSTOM, 
+      FALSE,	TRUE,	"ReductionMatrix2" },
+    { TIFFTAG_ANALOGBALANCE,	-1, -1,	TIFF_RATIONAL,	FIELD_CUSTOM, 
+      FALSE,	TRUE,	"AnalogBalance" },
+    { TIFFTAG_ASSHOTNEUTRAL,	-1, -1,	TIFF_SHORT,	FIELD_CUSTOM, 
+      FALSE,	TRUE,	"AsShotNeutral" },
+    { TIFFTAG_ASSHOTNEUTRAL,	-1, -1,	TIFF_RATIONAL,	FIELD_CUSTOM, 
+      FALSE,	TRUE,	"AsShotNeutral" },
+    { TIFFTAG_ASSHOTWHITEXY,	2, 2,	TIFF_RATIONAL,	FIELD_CUSTOM, 
+      FALSE,	FALSE,	"AsShotWhiteXY" },
+    { TIFFTAG_BASELINEEXPOSURE,	1, 1,	TIFF_SRATIONAL,	FIELD_CUSTOM, 
+      FALSE,	FALSE,	"BaselineExposure" },
+    { TIFFTAG_BASELINENOISE,	1, 1,	TIFF_RATIONAL,	FIELD_CUSTOM, 
+      FALSE,	FALSE,	"BaselineNoise" },
+    { TIFFTAG_BASELINESHARPNESS,	1, 1,	TIFF_RATIONAL,	FIELD_CUSTOM, 
+      FALSE,	FALSE,	"BaselineSharpness" },
+    { TIFFTAG_BAYERGREENSPLIT,	1, 1,	TIFF_LONG,	FIELD_CUSTOM, 
+      FALSE,	FALSE,	"BayerGreenSplit" },
+    { TIFFTAG_LINEARRESPONSELIMIT,	1, 1,	TIFF_RATIONAL,	FIELD_CUSTOM, 
+      FALSE,	FALSE,	"LinearResponseLimit" },
+    { TIFFTAG_CAMERASERIALNUMBER,    -1, -1, TIFF_ASCII,	FIELD_CUSTOM,
+      TRUE,	FALSE,	"CameraSerialNumber" },
+    { TIFFTAG_LENSINFO,	4, 4,	TIFF_RATIONAL,	FIELD_CUSTOM, 
+      FALSE,	FALSE,	"LensInfo" },
+    { TIFFTAG_CHROMABLURRADIUS,	1, 1,	TIFF_RATIONAL,	FIELD_CUSTOM, 
+      FALSE,	FALSE,	"ChromaBlurRadius" },
+    { TIFFTAG_ANTIALIASSTRENGTH,	1, 1,	TIFF_RATIONAL,	FIELD_CUSTOM, 
+      FALSE,	FALSE,	"AntiAliasStrength" },
+    { TIFFTAG_SHADOWSCALE,	1, 1,	TIFF_RATIONAL,	FIELD_CUSTOM, 
+      FALSE,	FALSE,	"ShadowScale" },
+    { TIFFTAG_DNGPRIVATEDATA,    -1, -1, TIFF_BYTE,	FIELD_CUSTOM,
+      FALSE,	TRUE,	"DNGPrivateData" },
+    { TIFFTAG_MAKERNOTESAFETY,	1, 1,	TIFF_SHORT,	FIELD_CUSTOM, 
+      FALSE,	FALSE,	"MakerNoteSafety" },
+    { TIFFTAG_CALIBRATIONILLUMINANT1,	1, 1,	TIFF_SHORT,	FIELD_CUSTOM, 
+      FALSE,	FALSE,	"CalibrationIlluminant1" },
+    { TIFFTAG_CALIBRATIONILLUMINANT2,	1, 1,	TIFF_SHORT,	FIELD_CUSTOM, 
+      FALSE,	FALSE,	"CalibrationIlluminant2" },
+    { TIFFTAG_RAWDATAUNIQUEID,	16, 16,	TIFF_BYTE,	FIELD_CUSTOM, 
+      FALSE,	FALSE,	"RawDataUniqueID" },
+    { TIFFTAG_ORIGINALRAWFILENAME,    -1, -1, TIFF_ASCII,	FIELD_CUSTOM,
+      TRUE,	FALSE,	"OriginalRawFileName" },
+    { TIFFTAG_ORIGINALRAWFILENAME,    -1, -1, TIFF_BYTE,	FIELD_CUSTOM,
+      TRUE,	TRUE,	"OriginalRawFileName" },
+    { TIFFTAG_ORIGINALRAWFILEDATA,    -1, -1, TIFF_UNDEFINED,	FIELD_CUSTOM,
+      FALSE,	TRUE,	"OriginalRawFileData" },
+    { TIFFTAG_ACTIVEAREA,	4, 4,	TIFF_LONG,	FIELD_CUSTOM, 
+      FALSE,	FALSE,	"ActiveArea" },
+    { TIFFTAG_ACTIVEAREA,	4, 4,	TIFF_SHORT,	FIELD_CUSTOM, 
+      FALSE,	FALSE,	"ActiveArea" },
+    { TIFFTAG_MASKEDAREAS,	-1, -1,	TIFF_LONG,	FIELD_CUSTOM, 
+      FALSE,	TRUE,	"MaskedAreas" },
+    { TIFFTAG_ASSHOTICCPROFILE,    -1, -1, TIFF_UNDEFINED,	FIELD_CUSTOM,
+      FALSE,	TRUE,	"AsShotICCProfile" },
+    { TIFFTAG_ASSHOTPREPROFILEMATRIX,	-1, -1,	TIFF_SRATIONAL,	FIELD_CUSTOM, 
+      FALSE,	TRUE,	"AsShotPreProfileMatrix" },
+    { TIFFTAG_CURRENTICCPROFILE,    -1, -1, TIFF_UNDEFINED,	FIELD_CUSTOM,
+      FALSE,	TRUE,	"CurrentICCProfile" },
+    { TIFFTAG_CURRENTPREPROFILEMATRIX,	-1, -1,	TIFF_SRATIONAL,	FIELD_CUSTOM, 
+      FALSE,	TRUE,	"CurrentPreProfileMatrix" },
+/* end DNG tags */
 };
 #define	N(a)	(sizeof (a) / sizeof (a[0]))
 
@@ -375,6 +503,39 @@ TIFFDataWidth(TIFFDataType type)
 		return 8;
 	default:
 		return 0; /* will return 0 for unknown types */
+	}
+}
+
+/*
+ * Return size of TIFFDataType in bytes.
+ *
+ * XXX: We need a separate function to determine the space needed
+ * to store the value. For TIFF_RATIONAL values TIFFDataWidth() returns 8,
+ * but we use 4-byte float to represent rationals.
+ */
+int
+_TIFFDataSize(TIFFDataType type)
+{
+	switch (type) {
+		case TIFF_BYTE:
+		case TIFF_ASCII:
+		case TIFF_SBYTE:
+		case TIFF_UNDEFINED:
+		    return 1;
+		case TIFF_SHORT:
+		case TIFF_SSHORT:
+		    return 2;
+		case TIFF_LONG:
+		case TIFF_SLONG:
+		case TIFF_FLOAT:
+		case TIFF_IFD:
+		case TIFF_RATIONAL:
+		case TIFF_SRATIONAL:
+		    return 4;
+		case TIFF_DOUBLE:
+		    return 8;
+		default:
+		    return 0;
 	}
 }
 

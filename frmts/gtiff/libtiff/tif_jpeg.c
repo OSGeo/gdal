@@ -1,4 +1,4 @@
-/* $Id: tif_jpeg.c,v 1.30 2005/03/05 10:04:02 dron Exp $ */
+/* $Id: tif_jpeg.c,v 1.31 2005/03/22 18:55:55 fwarmerdam Exp $ */
 
 /*
  * Copyright (c) 1994-1997 Sam Leffler
@@ -26,6 +26,7 @@
 
 #include "tiffiop.h"
 #ifdef JPEG_SUPPORT
+
 /*
  * TIFF Library
  *
@@ -723,10 +724,19 @@ JPEGPreDecode(TIFF* tif, tsample_t s)
 		TIFFError(module, "Improper JPEG component count");
 		return (0);
 	}
-	if (sp->cinfo.d.data_precision != td->td_bitspersample) {
-		TIFFError(module, "Improper JPEG data precision");
-		return (0);
+#ifdef JPEG_LIB_MK1
+	if (12 != td->td_bitspersample && 8 != td->td_bitspersample) {
+            TIFFError(module, "Improper JPEG data precision");
+            return (0);
 	}
+        sp->cinfo.d.data_precision = td->td_bitspersample;
+        sp->cinfo.d.bits_in_jsample = td->td_bitspersample;
+#else
+	if (sp->cinfo.d.data_precision != td->td_bitspersample) {
+            TIFFError(module, "Improper JPEG data precision");
+            return (0);
+	}
+#endif
 	if (td->td_planarconfig == PLANARCONFIG_CONTIG) {
 		/* Component 0 should have expected sampling factors */
 		if (sp->cinfo.d.comp_info[0].h_samp_factor != sp->h_sampling ||
@@ -836,16 +846,86 @@ JPEGDecode(TIFF* tif, tidata_t buf, tsize_t cc, tsample_t s)
     /* data is expected to be read in multiples of a scanline */
     if (nrows)
     {
-        do {
-            JSAMPROW bufptr = (JSAMPROW)buf;
+        JSAMPROW line_work_buf = NULL;
 
-            if (TIFFjpeg_read_scanlines(sp, &bufptr, 1) != 1)
-                return (0);
+        /*
+        ** For 6B, only use temporary buffer for 12 bit imagery. 
+        ** For Mk1 always use it. 
+        */
+#if !defined(JPEG_LIB_MK1)        
+        if( sp->cinfo.d.data_precision == 12 )
+#endif
+        {
+            line_work_buf = (JSAMPROW) 
+                _TIFFmalloc(sizeof(short) * sp->cinfo.d.output_width 
+                            * sp->cinfo.d.num_components );
+        }
+
+        do {
+            if( line_work_buf != NULL )
+            {
+                /* 
+                ** In the MK1 case, we aways read into a 16bit buffer, and then
+                ** pack down to 12bit or 8bit.  In 6B case we only read into 16
+                ** bit buffer for 12bit data, which we need to repack. 
+                */
+                JSAMPROW bufptr = line_work_buf;
+
+                if (TIFFjpeg_read_scanlines(sp, &line_work_buf, 1) != 1)
+                    return (0);
+
+                if( sp->cinfo.d.data_precision == 12 )
+                {
+                    int value_pairs = (sp->cinfo.d.output_width 
+                                       * sp->cinfo.d.num_components) / 2;
+                    int iPair;
+
+                    for( iPair = 0; iPair < value_pairs; iPair++ )
+                    {
+                        unsigned char *out_ptr = 
+                            ((unsigned char *) buf) + iPair * 3;
+                        JSAMPLE *in_ptr = line_work_buf + iPair * 2;
+
+                        out_ptr[0] = (in_ptr[0] & 0xff0) >> 4;
+                        out_ptr[1] = ((in_ptr[0] & 0xf) << 4)
+                            | ((in_ptr[1] & 0xf00) >> 8);
+                        out_ptr[2] = ((in_ptr[1] & 0xff) >> 0);
+                    }
+                }
+                else if( sp->cinfo.d.data_precision == 8 )
+                {
+                    int value_count = (sp->cinfo.d.output_width 
+                                       * sp->cinfo.d.num_components);
+                    int iValue;
+
+                    for( iValue = 0; iValue < value_count; iValue++ )
+                    {
+                        ((unsigned char *) buf)[iValue] = 
+                            line_work_buf[iValue] & 0xff;
+                    }
+                }
+            }
+            else
+            {
+                /*
+                ** In the libjpeg6b 8bit case.  We read directly into the 
+                ** TIFF buffer.
+                */
+                JSAMPROW bufptr = (JSAMPROW)buf;
+  
+                if (TIFFjpeg_read_scanlines(sp, &bufptr, 1) != 1)
+                    return (0);
+            }
+
             ++tif->tif_row;
             buf += sp->bytesperline;
             cc -= sp->bytesperline;
         } while (--nrows > 0);
+
+        if( line_work_buf != NULL )
+            _TIFFfree( line_work_buf );
     }
+
     /* Close down the decompressor if we've finished the strip or tile. */
     return sp->cinfo.d.output_scanline < sp->cinfo.d.output_height
         || TIFFjpeg_finish_decompress(sp);
@@ -874,7 +954,6 @@ JPEGDecodeRaw(TIFF* tif, tidata_t buf, tsize_t cc, tsample_t s)
 			/* Reload downsampled-data buffer if needed */
 			if (sp->scancount >= DCTSIZE) {
 				int n = sp->cinfo.d.max_v_samp_factor * DCTSIZE;
-
 				if (TIFFjpeg_read_raw_data(sp, sp->ds_buffer, n)
 					!= n)
 					return (0);
@@ -1051,12 +1130,21 @@ JPEGSetupEncode(TIFF* tif)
 	 * depths for different components, or if libjpeg ever supports
 	 * run-time selection of depth.  Neither is imminent.
 	 */
-	if (td->td_bitspersample != BITS_IN_JSAMPLE) {
+#ifdef JPEG_LIB_MK1
+        /* BITS_IN_JSAMPLE now permits 8 and 12 --- dgilbert */
+	if (td->td_bitspersample != 8 && td->td_bitspersample != 12) 
+#else
+	if (td->td_bitspersample != BITS_IN_JSAMPLE ) 
+#endif
+        {
 		TIFFError(module, "BitsPerSample %d not allowed for JPEG",
 			  (int) td->td_bitspersample);
 		return (0);
 	}
 	sp->cinfo.c.data_precision = td->td_bitspersample;
+#ifdef JPEG_LIB_MK1
+        sp->cinfo.c.bits_in_jsample = td->td_bitspersample;
+#endif
 	if (isTiled(tif)) {
 		if ((td->td_tilelength % (sp->v_sampling * DCTSIZE)) != 0) {
 			TIFFError(module,
