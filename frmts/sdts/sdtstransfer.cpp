@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  1999/09/03 19:04:38  warmerda
+ * added more help
+ *
  * Revision 1.8  1999/09/03 13:01:39  warmerda
  * added docs
  *
@@ -228,6 +231,17 @@ SDTSLayerType SDTSTransfer::GetLayerType( int iEntry )
 /************************************************************************/
 /*                         GetLayerCATDEntry()                          */
 /************************************************************************/
+
+/**
+  Fetch the CATD module index for a layer.   This can be used to fetch
+  details about the layer/module from the SDTS_CATD object, such as it's
+  filename, and description.
+
+  @param iEntry the layer index from 0 to GetLayerCount()-1.
+
+  @return the module index suitable for use with the various SDTS_CATD
+  methods.
+ */
 
 int SDTSTransfer::GetLayerCATDEntry( int iEntry )
 
@@ -502,6 +516,15 @@ SDTSIndexedReader *SDTSTransfer::GetLayerIndexedReader( int iEntry )
 /************************************************************************/
 /*                             FindLayer()                              */
 /************************************************************************/
+
+/**
+  Fetch the SDTSTransfer layer number corresponding to a module name.
+
+  @param pszModule the name of the module to search for, such as "PC01".
+
+  @return the layer number (between 0 and GetLayerCount()-1 corresponding to
+  the module, or -1 if it doesn't correspond to a layer.
+  */
 
 int SDTSTransfer::FindLayer( const char * pszModule )
 
