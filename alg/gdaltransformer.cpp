@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2005/04/04 15:24:16  fwarmerdam
+ * added CPL_STDCALL to some functions
+ *
  * Revision 1.20  2004/12/26 16:12:21  fwarmerdam
  * thin plate spline support now implemented
  *
@@ -212,11 +215,12 @@ points may have failed) or FALSE if the overall transformation fails.
  */
 
 
-CPLErr GDALSuggestedWarpOutput( GDALDatasetH hSrcDS, 
-                                GDALTransformerFunc pfnTransformer, 
-                                void *pTransformArg, 
-                                double *padfGeoTransformOut, 
-                                int *pnPixels, int *pnLines )
+CPLErr CPL_STDCALL
+GDALSuggestedWarpOutput( GDALDatasetH hSrcDS, 
+                         GDALTransformerFunc pfnTransformer, 
+                         void *pTransformArg, 
+                         double *padfGeoTransformOut, 
+                         int *pnPixels, int *pnLines )
 
 {
 /* -------------------------------------------------------------------- */
@@ -1593,7 +1597,7 @@ GDALDeserializeApproxTransformer( CPLXMLNode *psTree )
  * @param *pdfGeoY output location where GeoX (northing/latitude) location is placed.
  */
 
-void GDALApplyGeoTransform( double *padfGeoTransform, 
+void CPL_STDCALL GDALApplyGeoTransform( double *padfGeoTransform, 
                             double dfPixel, double dfLine, 
                             double *pdfGeoX, double *pdfGeoY )
 {
@@ -1619,7 +1623,7 @@ void GDALApplyGeoTransform( double *padfGeoTransform,
  * @return TRUE on success or FALSE if the equation is uninvertable. 
  */
 
-int GDALInvGeoTransform( double *gt_in, double *gt_out )
+int CPL_STDCALL GDALInvGeoTransform( double *gt_in, double *gt_out )
 
 {
     double	det, inv_det;

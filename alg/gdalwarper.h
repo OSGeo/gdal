@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2005/04/04 15:24:16  fwarmerdam
+ * added CPL_STDCALL to some functions
+ *
  * Revision 1.16  2004/11/14 04:16:30  fwarmerdam
  * fixup src alpha support
  *
@@ -215,18 +218,21 @@ typedef struct {
 
 } GDALWarpOptions;
 
-GDALWarpOptions CPL_DLL *GDALCreateWarpOptions();
-void CPL_DLL GDALDestroyWarpOptions( GDALWarpOptions * );
-GDALWarpOptions CPL_DLL *GDALCloneWarpOptions( const GDALWarpOptions * );
+GDALWarpOptions CPL_DLL * CPL_STDCALL GDALCreateWarpOptions();
+void CPL_DLL CPL_STDCALL GDALDestroyWarpOptions( GDALWarpOptions * );
+GDALWarpOptions CPL_DLL * CPL_STDCALL
+GDALCloneWarpOptions( const GDALWarpOptions * );
 
-CPLXMLNode CPL_DLL *GDALSerializeWarpOptions( const GDALWarpOptions * );
-GDALWarpOptions CPL_DLL *GDALDeserializeWarpOptions( CPLXMLNode * );
+CPLXMLNode CPL_DLL * CPL_STDCALL
+      GDALSerializeWarpOptions( const GDALWarpOptions * );
+GDALWarpOptions CPL_DLL * CPL_STDCALL
+      GDALDeserializeWarpOptions( CPLXMLNode * );
 
 /************************************************************************/
 /*                         GDALReprojectImage()                         */
 /************************************************************************/
 
-CPLErr CPL_DLL 
+CPLErr CPL_DLL CPL_STDCALL
 GDALReprojectImage( GDALDatasetH hSrcDS, const char *pszSrcWKT, 
                     GDALDatasetH hDstDS, const char *pszDstWKT,
                     GDALResampleAlg eResampleAlg, double dfWarpMemoryLimit,
@@ -234,7 +240,7 @@ GDALReprojectImage( GDALDatasetH hSrcDS, const char *pszSrcWKT,
                     GDALProgressFunc pfnProgress, void *pProgressArg, 
                     GDALWarpOptions *psOptions );
 
-CPLErr CPL_DLL 
+CPLErr CPL_DLL CPL_STDCALL
 GDALCreateAndReprojectImage( GDALDatasetH hSrcDS, const char *pszSrcWKT, 
                     const char *pszDstFilename, const char *pszDstWKT,
                     GDALDriverH hDstDriver, char **papszCreateOptions,
@@ -247,19 +253,20 @@ GDALCreateAndReprojectImage( GDALDatasetH hSrcDS, const char *pszSrcWKT,
 /*                           VRTWarpedDataset                           */
 /************************************************************************/
 
-GDALDatasetH CPL_DLL 
+GDALDatasetH CPL_DLL CPL_STDCALL
 GDALAutoCreateWarpedVRT( GDALDatasetH hSrcDS, 
                          const char *pszSrcWKT, const char *pszDstWKT, 
                          GDALResampleAlg eResampleAlg, 
                          double dfMaxError, const GDALWarpOptions *psOptions );
 
-GDALDatasetH CPL_DLL 
+GDALDatasetH CPL_DLL CPL_STDCALL 
 GDALCreateWarpedVRT( GDALDatasetH hSrcDS, 
                      int nPixels, int nLines, double *padfGeoTransform,
                      GDALWarpOptions *psOptions );
 
-CPLErr CPL_DLL GDALInitializeWarpedVRT( GDALDatasetH hDS, 
-                                        GDALWarpOptions *psWO );
+CPLErr CPL_DLL CPL_STDCALL
+GDALInitializeWarpedVRT( GDALDatasetH hDS, 
+                         GDALWarpOptions *psWO );
 
 CPL_C_END
 

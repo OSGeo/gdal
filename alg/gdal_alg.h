@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2005/04/04 15:24:16  fwarmerdam
+ * added CPL_STDCALL to some functions
+ *
  * Revision 1.19  2004/12/26 16:12:21  fwarmerdam
  * thin plate spline support now implemented
  *
@@ -100,7 +103,7 @@
 
 CPL_C_START
 
-int CPL_DLL GDALComputeMedianCutPCT( GDALRasterBandH hRed, 
+int CPL_DLL CPL_STDCALL GDALComputeMedianCutPCT( GDALRasterBandH hRed, 
                              GDALRasterBandH hGreen, 
                              GDALRasterBandH hBlue, 
                              int (*pfnIncludePixel)(int,int,void*),
@@ -109,7 +112,7 @@ int CPL_DLL GDALComputeMedianCutPCT( GDALRasterBandH hRed,
                              GDALProgressFunc pfnProgress, 
                              void * pProgressArg );
 
-int CPL_DLL GDALDitherRGB2PCT( GDALRasterBandH hRed, 
+int CPL_DLL CPL_STDCALL GDALDitherRGB2PCT( GDALRasterBandH hRed, 
                        GDALRasterBandH hGreen, 
                        GDALRasterBandH hBlue, 
                        GDALRasterBandH hTarget, 
@@ -117,7 +120,7 @@ int CPL_DLL GDALDitherRGB2PCT( GDALRasterBandH hRed,
                        GDALProgressFunc pfnProgress, 
                        void * pProgressArg );
 
-int CPL_DLL GDALChecksumImage( GDALRasterBandH hBand, 
+int CPL_DLL CPL_STDCALL GDALChecksumImage( GDALRasterBandH hBand, 
                                int nXOff, int nYOff, int nXSize, int nYSize );
                                
 
@@ -205,16 +208,17 @@ int  CPL_DLL GDALApproxTransform(
                       
 
 
-int CPL_DLL GDALSimpleImageWarp( GDALDatasetH hSrcDS, 
-                                 GDALDatasetH hDstDS, 
-                                 int nBandCount, int *panBandList,
-                                 GDALTransformerFunc pfnTransform,
-                                 void *pTransformArg,
-                                 GDALProgressFunc pfnProgress, 
-                                 void *pProgressArg, 
-                                 char **papszWarpOptions );
+int CPL_DLL CPL_STDCALL
+GDALSimpleImageWarp( GDALDatasetH hSrcDS, 
+                     GDALDatasetH hDstDS, 
+                     int nBandCount, int *panBandList,
+                     GDALTransformerFunc pfnTransform,
+                     void *pTransformArg,
+                     GDALProgressFunc pfnProgress, 
+                     void *pProgressArg, 
+                     char **papszWarpOptions );
 
-CPLErr CPL_DLL
+CPLErr CPL_DLL CPL_STDCALL
 GDALSuggestedWarpOutput( GDALDatasetH hSrcDS, 
                          GDALTransformerFunc pfnTransformer,
                          void *pTransformArg,

@@ -35,6 +35,9 @@
  *      Heckbert, SIGGRAPH proceedings, 1982, pp. 297-307.
  * 
  * $Log$
+ * Revision 1.6  2005/04/04 15:24:16  fwarmerdam
+ * added CPL_STDCALL to some functions
+ *
  * Revision 1.5  2003/07/08 15:28:32  warmerda
  * avoid warnings
  *
@@ -127,14 +130,15 @@ static	Colorbox* largest_box(void);
  * @return returns CE_None on success or CE_Failure if an error occurs. 
  */
 
-int GDALComputeMedianCutPCT( GDALRasterBandH hRed, 
-                             GDALRasterBandH hGreen, 
-                             GDALRasterBandH hBlue, 
-                             int (*pfnIncludePixel)(int,int,void*),
-                             int nColors, 
-                             GDALColorTableH hColorTable,
-                             GDALProgressFunc pfnProgress, 
-                             void * pProgressArg )
+int CPL_STDCALL
+GDALComputeMedianCutPCT( GDALRasterBandH hRed, 
+                         GDALRasterBandH hGreen, 
+                         GDALRasterBandH hBlue, 
+                         int (*pfnIncludePixel)(int,int,void*),
+                         int nColors, 
+                         GDALColorTableH hColorTable,
+                         GDALProgressFunc pfnProgress, 
+                         void * pProgressArg )
 
 {
     int		nXSize, nYSize;

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2005/04/04 15:24:16  fwarmerdam
+ * added CPL_STDCALL to some functions
+ *
  * Revision 1.4  2004/12/30 20:40:54  fwarmerdam
  * Added documentation.
  *
@@ -68,8 +71,9 @@ CPL_CVSID("$Id$");
  * @return Checksum value. 
  */
 
-int GDALChecksumImage( GDALRasterBandH hBand, 
-                       int nXOff, int nYOff, int nXSize, int nYSize )
+int CPL_STDCALL 
+GDALChecksumImage( GDALRasterBandH hBand, 
+                   int nXOff, int nYOff, int nXSize, int nYSize )
 
 {
     const static int anPrimes[11] = 
