@@ -15,5 +15,5 @@ $(PYGDAL_DLL):	$(OBJ)
 		/out:$(PYGDAL_DLL)
 	
 clean:
-	del *.obj *.exe *.dll *.lib
+	del *.obj *.dll *.lib
 
