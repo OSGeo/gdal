@@ -1,18 +1,21 @@
 GDAL_ROOT = .
 
-# Uncomment the following two declarations to include all of OGR 
-# in the GDAL DLL. 
+##############################################################################
+# The following determines whether we are linking all the OGR formats 
+# into the DLL, or only the minimum spatial reference related stuff required
+# for a raster-gdal build.
+
+!IFDEF INCLUDE_OGR_FRMTS
 OGR_OBJ = ogr\ogrsf_frmts\ogrsf_frmts.lib ogr\ogr.lib
 OGR_INCLUDE = /INCLUDE:_OCTNewCoordinateTransformation \
 		/INCLUDE:_OGRRegisterAll \
 		/INCLUDE:_OSRValidate \
 		/INCLUDE:_OPTGetProjectionMethods
-
-# Uncomment the following (instead of the above) to include only the
-# coordinate transform services in GDAL DLL, not all of OGR.
-#OGR_OBJ = ogr\ogr.lib
-#OGR_INCLUDE =	/INCLUDE:_OCTNewCoordinateTransformation /INCLUDE:_OGRFree \
-#		/INCLUDE:_OPTGetParameterList
+!ELSE
+OGR_OBJ = ogr\ogr.lib
+OGR_INCLUDE =	/INCLUDE:_OCTNewCoordinateTransformation /INCLUDE:_OGRFree \
+		/INCLUDE:_OPTGetParameterList
+!ENDIF
 
 LIBOBJ = port\*.obj core\*.obj alg\*.obj frmts\o\*.obj $(OGR_OBJ)
 	
@@ -91,7 +94,11 @@ ogr_dir:      port_dir
 	cd ..\sdts	
 	$(MAKE) /f makefile.vc
 	cd ..\..\ogr
+!IFDEF INCLUDE_OGR_FRMTS
 	$(MAKE) frmts ogr.lib
+!ELSE
+	$(MAKE) ogr.lib
+!ENDIF
 	cd ..
 
 lib_dist:	default
