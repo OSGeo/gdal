@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2002/01/26 05:51:40  warmerda
+ * added metadata read/write support
+ *
  * Revision 1.6  2001/11/13 15:43:41  warmerda
  * preliminary dted creation working
  *
@@ -176,16 +179,21 @@ DTEDInfo * DTEDOpen( const char * pszFilename,
     psDInfo = (DTEDInfo *) CPLCalloc(1,sizeof(DTEDInfo));
 
     psDInfo->fp = fp;
+
+    psDInfo->bUpdate = EQUAL(pszAccess,"r+b");
     
     psDInfo->nXSize = atoi(DTEDGetField(achRecord,48,4));
     psDInfo->nYSize = atoi(DTEDGetField(achRecord,52,4));
 
+    psDInfo->nUHLOffset = VSIFTell( fp ) - sizeof(DTED_UHL_SIZE);
     psDInfo->pachUHLRecord = (char *) CPLMalloc(DTED_UHL_SIZE);
     memcpy( psDInfo->pachUHLRecord, achRecord, DTED_UHL_SIZE );
 
+    psDInfo->nDSIOffset = VSIFTell( fp );
     psDInfo->pachDSIRecord = (char *) CPLMalloc(DTED_DSI_SIZE);
     VSIFRead( psDInfo->pachDSIRecord, 1, DTED_DSI_SIZE, fp );
     
+    psDInfo->nACCOffset = VSIFTell( fp );
     psDInfo->pachACCRecord = (char *) CPLMalloc(DTED_ACC_SIZE);
     VSIFRead( psDInfo->pachACCRecord, 1, DTED_ACC_SIZE, fp );
 
@@ -367,6 +375,108 @@ int DTEDWriteProfile( DTEDInfo * psDInfo, int nColumnOffset,
     
 }
 
+/************************************************************************/
+/*                      DTEDGetMetadataLocation()                       */
+/************************************************************************/
+
+static void DTEDGetMetadataLocation( DTEDInfo *psDInfo, 
+                                     DTEDMetaDataCode eCode, 
+                                     char **ppszLocation, int *pnLength )
+{
+    switch( eCode )
+    {
+      case DTEDMD_VERTACCURACY:
+        *ppszLocation = psDInfo->pachUHLRecord + 28;
+        *pnLength = 4;
+        break;
+
+      case DTEDMD_SECURITYCODE:
+        *ppszLocation = psDInfo->pachUHLRecord + 32;
+        *pnLength = 3;
+        break;
+
+      case DTEDMD_PRODUCER:
+        *ppszLocation = psDInfo->pachDSIRecord + 102;
+        *pnLength = 8;
+        break;
+
+      case DTEDMD_COMPILATION_DATE:
+        *ppszLocation = psDInfo->pachDSIRecord + 159;
+        *pnLength = 4;
+        break;
+
+      default:
+        *ppszLocation = NULL;
+        *pnLength = 0;
+    }
+}
+                                         
+
+
+/************************************************************************/
+/*                          DTEDGetMetadata()                           */
+/************************************************************************/
+
+char *DTEDGetMetadata( DTEDInfo *psDInfo, DTEDMetaDataCode eCode )
+
+{
+    int	nFieldLen;
+    char *pszFieldSrc;
+    char *pszResult;
+
+    DTEDGetMetadataLocation( psDInfo, eCode, &pszFieldSrc, &nFieldLen );
+    if( pszFieldSrc == NULL )
+        return VSIStrdup( "" );
+
+    pszResult = (char *) malloc(nFieldLen+1);
+    strncpy( pszResult, pszFieldSrc, nFieldLen );
+    pszResult[nFieldLen] = '\0';
+
+    return pszResult;
+}
+
+/************************************************************************/
+/*                          DTEDSetMetadata()                           */
+/************************************************************************/
+
+int DTEDSetMetadata( DTEDInfo *psDInfo, DTEDMetaDataCode eCode, 
+                     const char *pszNewValue )
+
+{
+    int	nFieldLen;
+    char *pszFieldSrc;
+
+    if( !psDInfo->bUpdate )
+        return FALSE;
+
+/* -------------------------------------------------------------------- */
+/*      Get the location in the headers to update.                      */
+/* -------------------------------------------------------------------- */
+    DTEDGetMetadataLocation( psDInfo, eCode, &pszFieldSrc, &nFieldLen );
+    if( pszFieldSrc == NULL )
+        return FALSE;
+
+/* -------------------------------------------------------------------- */
+/*      Update it, padding with spaces.                                 */
+/* -------------------------------------------------------------------- */
+    memset( pszFieldSrc, ' ', nFieldLen );
+    strncpy( pszFieldSrc, pszNewValue, 
+             MIN(strlen(pszFieldSrc),strlen(pszNewValue)) );
+
+/* -------------------------------------------------------------------- */
+/*      Write all headers back to disk.                                 */
+/* -------------------------------------------------------------------- */
+    VSIFSeek( psDInfo->fp, psDInfo->nUHLOffset, SEEK_SET );
+    VSIFWrite( psDInfo->pachUHLRecord, 1, DTED_UHL_SIZE, psDInfo->fp );
+
+    VSIFSeek( psDInfo->fp, psDInfo->nDSIOffset, SEEK_SET );
+    VSIFWrite( psDInfo->pachDSIRecord, 1, DTED_DSI_SIZE, psDInfo->fp );
+
+    VSIFSeek( psDInfo->fp, psDInfo->nACCOffset, SEEK_SET );
+    VSIFWrite( psDInfo->pachACCRecord, 1, DTED_ACC_SIZE, psDInfo->fp );
+
+    return TRUE;
+}
 
 /************************************************************************/
 /*                             DTEDClose()                              */

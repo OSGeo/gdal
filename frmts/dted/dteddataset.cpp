@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2002/01/26 05:51:40  warmerda
+ * added metadata read/write support
+ *
  * Revision 1.6  2001/11/13 15:43:41  warmerda
  * preliminary dted creation working
  *
@@ -205,6 +208,27 @@ GDALDataset *DTEDDataset::Open( GDALOpenInfo * poOpenInfo )
     for( i = 0; i < poDS->nBands; i++ )
         poDS->SetBand( i+1, new DTEDRasterBand( poDS, i+1 ) );
 
+/* -------------------------------------------------------------------- */
+/*      Collect any metadata available.                                 */
+/* -------------------------------------------------------------------- */
+    char *pszValue;
+
+    pszValue = DTEDGetMetadata( psDTED, DTEDMD_VERTACCURACY );
+    poDS->SetMetadataItem( "DTED_VerticalAccuracy", pszValue );
+    CPLFree( pszValue );
+
+    pszValue = DTEDGetMetadata( psDTED, DTEDMD_SECURITYCODE );
+    poDS->SetMetadataItem( "DTED_SecurityCode", pszValue );
+    CPLFree( pszValue );
+
+    pszValue = DTEDGetMetadata( psDTED, DTEDMD_PRODUCER );
+    poDS->SetMetadataItem( "DTED_Producer", pszValue );
+    CPLFree( pszValue );
+
+    pszValue = DTEDGetMetadata( psDTED, DTEDMD_COMPILATION_DATE );
+    poDS->SetMetadataItem( "DTED_CompilationDate", pszValue );
+    CPLFree( pszValue );
+    
     return( poDS );
 }
 
@@ -330,6 +354,25 @@ DTEDCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     }
 
     CPLFree( panData );
+
+/* -------------------------------------------------------------------- */
+/*      Try to copy any matching available metadata.                    */
+/* -------------------------------------------------------------------- */
+    if( poSrcDS->GetMetadataItem( "DTED_VerticalAccuracy" ) != NULL )
+        DTEDSetMetadata( psDTED, DTEDMD_VERTACCURACY, 
+                         poSrcDS->GetMetadataItem( "DTED_VerticalAccuracy" ) );
+
+    if( poSrcDS->GetMetadataItem( "DTED_SecurityCode" ) != NULL )
+        DTEDSetMetadata( psDTED, DTEDMD_SECURITYCODE, 
+                         poSrcDS->GetMetadataItem( "DTED_SecurityCode" ) );
+
+    if( poSrcDS->GetMetadataItem( "DTED_Producer" ) != NULL )
+        DTEDSetMetadata( psDTED, DTEDMD_PRODUCER, 
+                         poSrcDS->GetMetadataItem( "DTED_Producer" ) );
+
+    if( poSrcDS->GetMetadataItem( "DTED_CompilationDate" ) != NULL )
+        DTEDSetMetadata( psDTED, DTEDMD_COMPILATION_DATE, 
+                         poSrcDS->GetMetadataItem( "DTED_CompilationDate" ) );
 
 /* -------------------------------------------------------------------- */
 /*      Try to open the resulting DTED file.                            */
