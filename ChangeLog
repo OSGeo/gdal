@@ -1,3 +1,8 @@
+2000-12-05  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* Modified ogr_srs_proj4.cpp to use +R_A for VanDerGrinten and
+	Miller Cylindrical.
+
 2000-11-29  Frank Warmerdam  <warmerdam@pobox.com>
 
 	* Added limited SetGeoTransform() support for HKV Blob format.

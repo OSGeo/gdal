@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2000/12/05 17:46:16  warmerda
+ * Use +R_A for VanDerGrinten and miller
+ *
  * Revision 1.12  2000/09/25 20:22:21  warmerda
  * ensure pszPROJ4Units is initialized
  *
@@ -675,7 +678,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 )
     else if( EQUAL(pszProjection,SRS_PT_MILLER_CYLINDRICAL) )
     {
         sprintf( szProj4+strlen(szProj4),
-                 "+proj=mill +lat_0=%.9f +lon_0=%.9f +x_0=%.3f +y_0=%.3f ",
+                "+proj=mill +lat_0=%.9f +lon_0=%.9f +x_0=%.3f +y_0=%.3f +R_A ",
                  GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
                  GetProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
                  GetProjParm(SRS_PP_FALSE_EASTING,0.0),
@@ -744,7 +747,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 )
     else if( EQUAL(pszProjection,SRS_PT_VANDERGRINTEN) )
     {
         sprintf( szProj4+strlen(szProj4),
-                 "+proj=vandg +lon_0=%.9f +x_0=%.3f +y_0=%.3f ",
+                 "+proj=vandg +lon_0=%.9f +x_0=%.3f +y_0=%.3f +R_A ",
                  GetProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
                  GetProjParm(SRS_PP_FALSE_EASTING,0.0),
                  GetProjParm(SRS_PP_FALSE_NORTHING,0.0) );
