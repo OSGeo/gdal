@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2003/06/03 19:42:20  warmerda
+ * modified rpc api
+ *
  * Revision 1.11  2003/06/03 17:36:47  warmerda
  * Added RPC entry points
  *
@@ -140,7 +143,8 @@ int CPL_DLL GDALGCPTransform(
 /* RPC based transformer ... src is pixel/line/elev, dst is long/lat/elev */
 
 void CPL_DLL *
-GDALCreateRPCTransformer( char **papszRPCMetadata, int bReversed );
+GDALCreateRPCTransformer( GDALRPCInfo *psRPC, int bReversed, 
+                          double dfPixErrThreshold );
 void CPL_DLL GDALDestroyRPCTransformer( void *pTransformArg );
 int CPL_DLL GDALRPCTransform( 
     void *pTransformArg, int bDstToSrc, int nPointCount,
