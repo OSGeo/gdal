@@ -28,6 +28,11 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.5  2004/10/16 14:57:31  fwarmerdam
+ * Substantial rewrite by Radim to sometimes handle COARDS style datasets
+ * but really only under some circumstances.   CreateCopy() removed since
+ * no COARDS implementation is available.
+ *
  * Revision 1.4  2004/10/14 14:51:31  fwarmerdam
  * Fixed last fix.
  *
@@ -58,7 +63,6 @@ class netCDFRasterBand;
 
 class netCDFDataset : public GDALDataset
 {
-    int         z_id;
     double      adfGeoTransform[6];
 
   public:
@@ -81,10 +85,11 @@ class netCDFRasterBand : public GDALRasterBand
 {
     nc_type nc_datatype;
     int         nZId;
+    int		nLevel;
 
   public:
 
-    		netCDFRasterBand( netCDFDataset *poDS, int nZId, int nBand );
+    netCDFRasterBand( netCDFDataset *poDS, int nZId, int nLevel, int nBand );
     
     virtual CPLErr IReadBlock( int, int, void * );
 };
@@ -94,12 +99,13 @@ class netCDFRasterBand : public GDALRasterBand
 /*                          netCDFRasterBand()                          */
 /************************************************************************/
 
-netCDFRasterBand::netCDFRasterBand( netCDFDataset *poDS, int nZId, int nBand )
+netCDFRasterBand::netCDFRasterBand( netCDFDataset *poDS, int nZId, int nLevel, int nBand )
 
 {
     this->poDS = poDS;
     this->nBand = nBand;
     this->nZId = nZId;
+    this->nLevel = nLevel;
     
     nBlockXSize = poDS->GetRasterXSize();
     nBlockYSize = 1;
@@ -143,12 +149,24 @@ CPLErr netCDFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                   void * pImage )
 
 {
-    size_t start[2], edge[2];
     int    nErr;
     int    cdfid = ((netCDFDataset *) poDS)->cdfid;
+    size_t start[3], edge[3];
 
-    start[0] = nBlockYOff * nBlockXSize;
-    edge[0] = nBlockXSize;
+    int nd;
+    nc_inq_varndims ( cdfid, nZId, &nd );
+
+    start[nd-1] = 0;          // x
+    start[nd-2] = nBlockYOff; // y
+        
+    edge[nd-1] = nBlockXSize; 
+    edge[nd-2] = 1;
+
+    if( nd == 3 )
+    {
+        start[nd-3] = nLevel;     // z
+        edge[nd-3] = 1;
+    }
 
     if( eDataType == GDT_Byte )
         nErr = nc_get_vara_uchar( cdfid, nZId, start, edge, 
@@ -196,6 +214,7 @@ CPLErr netCDFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 netCDFDataset::~netCDFDataset()
 
 {
+    nc_close (cdfid);
 }
 
 
@@ -232,26 +251,21 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Try opening the dataset.                                        */
 /* -------------------------------------------------------------------- */
-    int cdfid, nm_id, dim_count, z_id;
+    int cdfid, dim_count, var_count;
 
     if( nc_open( poOpenInfo->pszFilename, NC_NOWRITE, &cdfid ) != NC_NOERR )
         return NULL;
 
-    if( nc_inq_varid( cdfid, "dimension", &nm_id ) != NC_NOERR 
-        || nc_inq_varid( cdfid, "z", &z_id ) != NC_NOERR )
+    if( nc_inq_ndims( cdfid, &dim_count ) != NC_NOERR || dim_count < 2 )
     {
         CPLError( CE_Warning, CPLE_AppDefined, 
                   "%s is a netCDF file, but not in GMT configuration.",
                   poOpenInfo->pszFilename );
-        nc_close( cdfid );
-        return NULL;
-    }
 
-    if( nc_inq_ndims( cdfid, &dim_count ) != NC_NOERR || dim_count < 2 )
-    {
         nc_close( cdfid );
         return NULL;
     }
+    CPLDebug( "GDAL_netCDF", "dim_count = %d\n", dim_count );
 
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
@@ -261,26 +275,23 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS = new netCDFDataset();
 
     poDS->cdfid = cdfid;
-    poDS->z_id = z_id;
     
 /* -------------------------------------------------------------------- */
 /*      Get dimensions.  If we can't find this, then this is a          */
 /*      netCDF file, but not a normal grid product.                     */
 /* -------------------------------------------------------------------- */
-    size_t start[2], edge[2];
-    int    nm[2];
-
-    start[0] = 0;
-    edge[0] = 2;
-
-    nc_get_vara_int(cdfid, nm_id, start, edge, nm);
+    size_t xdim, ydim;
     
-    poDS->nRasterXSize = nm[0];
-    poDS->nRasterYSize = nm[1];
+    nc_inq_dimlen ( cdfid, 0, &xdim );
+    nc_inq_dimlen ( cdfid, 1, &ydim );
+    
+    poDS->nRasterXSize = xdim;
+    poDS->nRasterYSize = ydim;
 
 /* -------------------------------------------------------------------- */
 /*      Get x/y range information.                                      */
 /* -------------------------------------------------------------------- */
+    size_t start[2], edge[2];
     int x_range_id, y_range_id;
 
     if( nc_inq_varid (cdfid, "x_range", &x_range_id) == NC_NOERR 
@@ -313,210 +324,40 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
-    poDS->nBands = 1;
-    poDS->SetBand( 1, new netCDFRasterBand( poDS, z_id, 1 ));
+    if ( nc_inq_nvars ( cdfid, &var_count) != NC_NOERR )
+	return NULL;
+    
+    CPLDebug( "GDAL_netCDF", "var_count = %d\n", var_count );
 
+    // Add new band for each variable - 3. dimension level
+    int i = 0;
+    //printf ( "var_count = %d\n", var_count );
+    for ( int var = 0; var < var_count; var++ ) {
+	int nd;
+	
+	nc_inq_varndims ( cdfid, var, &nd );
+	if ( nd < 2 ) 
+	    continue;
+    
+	//printf ( "var = %d nd = %d\n", var, nd );
+
+	// Number of leves in 3. dimension
+	size_t lev_count = 1;
+	if ( dim_count > 2 ) {
+	    nc_inq_dimlen ( cdfid, 2, &lev_count );
+	}
+        //printf ( "lev_count = %d\n", lev_count );
+		
+	for ( int lev = 0; lev < (int) lev_count; lev++ ) {
+	    //printf ( "lev = %d\n", lev );
+            poDS->SetBand( i+1, new netCDFRasterBand( poDS, var, lev, i+1 ));
+	    i++;
+	}
+    }
+    poDS->nBands = i;
+        
     return( poDS );
 }
-
-/************************************************************************/
-/*                          netCDFCreateCopy()                          */
-/*                                                                      */
-/*      This code mostly cribbed from GMT's "gmt_cdf.c" module.         */
-/************************************************************************/
-
-static GDALDataset *
-netCDFCreateCopy( const char * pszFilename, GDALDataset *poSrcDS, 
-                  int bStrict, char ** papszOptions, 
-                  GDALProgressFunc pfnProgress, void * pProgressData )
-
-{
-/* -------------------------------------------------------------------- */
-/*      Figure out general characteristics.                             */
-/* -------------------------------------------------------------------- */
-    nc_type nc_datatype;
-    GDALRasterBand *poBand = poSrcDS->GetRasterBand(1);
-    int nXSize, nYSize;
-
-    if( poSrcDS->GetRasterCount() != 1 || poBand == NULL )
-    {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "Currently netCDF export only supports 1 band datasets." );
-        return NULL;
-    }
-
-    nXSize = poSrcDS->GetRasterXSize();
-    nYSize = poSrcDS->GetRasterYSize();
-    
-    if( poBand->GetRasterDataType() == GDT_Int16 )
-        nc_datatype = NC_SHORT;
-    else if( poBand->GetRasterDataType() == GDT_Int32 )
-        nc_datatype = NC_INT;
-    else if( poBand->GetRasterDataType() == GDT_Float32 )
-        nc_datatype = NC_FLOAT;
-    else if( poBand->GetRasterDataType() == GDT_Float64 )
-        nc_datatype = NC_DOUBLE;
-    else if( bStrict )
-    {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "Band data type %s not supported in netCDF, giving up.",
-                  GDALGetDataTypeName( poBand->GetRasterDataType() ) );
-        return NULL;
-    }
-    else if( poBand->GetRasterDataType() == GDT_Byte )
-        nc_datatype = NC_SHORT;
-    else if( poBand->GetRasterDataType() == GDT_UInt16 )
-        nc_datatype = NC_INT;
-    else if( poBand->GetRasterDataType() == GDT_UInt32 )
-        nc_datatype = NC_INT;
-    else 
-        nc_datatype = NC_FLOAT;
-    
-/* -------------------------------------------------------------------- */
-/*      Establish bounds from geotransform.                             */
-/* -------------------------------------------------------------------- */
-    double adfGeoTransform[6];
-    double dfXMax, dfYMin;
-
-    poSrcDS->GetGeoTransform( adfGeoTransform );
-    
-    if( adfGeoTransform[2] != 0.0 || adfGeoTransform[4] != 0.0 )
-    {
-        CPLError( bStrict ? CE_Failure : CE_Warning, CPLE_AppDefined, 
-                  "Geotransform has rotational coefficients not supported in netCDF." );
-        if( bStrict )
-            return NULL;
-    }
-
-    dfXMax = adfGeoTransform[0] + adfGeoTransform[1] * nXSize;
-    dfYMin = adfGeoTransform[3] + adfGeoTransform[5] * nYSize;
-    
-/* -------------------------------------------------------------------- */
-/*      Create base file.                                               */
-/* -------------------------------------------------------------------- */
-    int cdfid, err;
-
-    err = nc_create (pszFilename, NC_CLOBBER,&cdfid);
-    if( err != NC_NOERR )
-    {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "nc_create(%s): %s", 
-                  pszFilename, nc_strerror( err ) );
-        return NULL;
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Define the dimensions and so forth.                             */
-/* -------------------------------------------------------------------- */
-    int side_dim, xysize_dim, dims[1];
-    int x_range_id, y_range_id, z_range_id, inc_id, nm_id, z_id;
-
-    nc_def_dim(cdfid, "side", 2, &side_dim);
-    nc_def_dim(cdfid, "xysize", (int) (nXSize * nYSize), &xysize_dim);
-
-    dims[0]		= side_dim;
-    nc_def_var (cdfid, "x_range", NC_DOUBLE, 1, dims, &x_range_id);
-    nc_def_var (cdfid, "y_range", NC_DOUBLE, 1, dims, &y_range_id);
-    nc_def_var (cdfid, "z_range", NC_DOUBLE, 1, dims, &z_range_id);
-    nc_def_var (cdfid, "spacing", NC_DOUBLE, 1, dims, &inc_id);
-    nc_def_var (cdfid, "dimension", NC_LONG, 1, dims, &nm_id);
-
-    dims[0]		= xysize_dim;
-    nc_def_var (cdfid, "z", nc_datatype, 1, dims, &z_id);
-
-/* -------------------------------------------------------------------- */
-/*      Assign attributes.                                              */
-/* -------------------------------------------------------------------- */
-    double default_scale = 1.0;
-    double default_offset = 0.0;
-    int default_node_offset = 0;
-
-    nc_put_att_text (cdfid, x_range_id, "units", 7, "meters");
-    nc_put_att_text (cdfid, y_range_id, "units", 7, "meters");
-    nc_put_att_text (cdfid, z_range_id, "units", 7, "meters");
-
-    nc_put_att_double (cdfid, z_id, "scale_factor", NC_DOUBLE, 1, 
-                       &default_scale );
-    nc_put_att_double (cdfid, z_id, "add_offset", NC_DOUBLE, 1, 
-                       &default_offset );
-
-    nc_put_att_int (cdfid, z_id, "node_offset", NC_LONG, 1, 
-                    &default_node_offset );
-    nc_put_att_text (cdfid, NC_GLOBAL, "title", 1, "");
-    nc_put_att_text (cdfid, NC_GLOBAL, "source", 1, "");
-	
-    /* leave define mode */
-    nc_enddef (cdfid);
-
-/* -------------------------------------------------------------------- */
-/*      Get raster min/max.                                             */
-/* -------------------------------------------------------------------- */
-    double adfMinMax[2];
-    GDALComputeRasterMinMax( (GDALRasterBandH) poBand, FALSE, adfMinMax );
-	
-/* -------------------------------------------------------------------- */
-/*      Set range variables.                                            */
-/* -------------------------------------------------------------------- */
-    size_t start[2], edge[2];
-    double dummy[2];
-    int nm[2];
-	
-    start[0] = 0;
-    edge[0] = 2;
-    dummy[0] = adfGeoTransform[0];
-    dummy[1] = dfXMax;
-    nc_put_vara_double(cdfid, x_range_id, start, edge, dummy);
-
-    dummy[0] = dfYMin;
-    dummy[1] = adfGeoTransform[3];
-    nc_put_vara_double(cdfid, y_range_id, start, edge, dummy);
-
-    dummy[0] = adfGeoTransform[1];
-    dummy[1] = -adfGeoTransform[5];
-    nc_put_vara_double(cdfid, inc_id, start, edge, dummy);
-
-    nm[0] = nXSize;
-    nm[1] = nYSize;
-    nc_put_vara_int(cdfid, nm_id, start, edge, nm);
-
-    nc_put_vara_double(cdfid, z_range_id, start, edge, adfMinMax);
-
-/* -------------------------------------------------------------------- */
-/*      Write out the image one scanline at a time.                     */
-/* -------------------------------------------------------------------- */
-    double *padfData;
-    int  iLine;
-
-    padfData = (double *) CPLMalloc( sizeof(double) * nXSize );
-
-    edge[0] = nXSize;
-    for( iLine = 0; iLine < nYSize; iLine++ )
-    {
-        start[0] = iLine * nXSize;
-        poBand->RasterIO( GF_Read, 0, iLine, nXSize, 1, 
-                          padfData, nXSize, 1, GDT_Float64, 0, 0 );
-        err = nc_put_vara_double( cdfid, z_id, start, edge, padfData );
-        if( err != NC_NOERR )
-        {
-            CPLError( CE_Failure, CPLE_AppDefined, 
-                      "nc_put_vara_double(%s): %s", 
-                      pszFilename, nc_strerror( err ) );
-            nc_close (cdfid);
-            return( NULL );
-        }
-    }
-    
-    CPLFree( padfData );
-
-/* -------------------------------------------------------------------- */
-/*      Close file, and reopen.                                         */
-/* -------------------------------------------------------------------- */
-    nc_close (cdfid);
-
-    return (GDALDataset *) GDALOpen( pszFilename, GA_Update);
-    
-}
-
 /************************************************************************/
 /*                          GDALRegister_netCDF()                          */
 /************************************************************************/
@@ -537,11 +378,7 @@ void GDALRegister_netCDF()
                                    "frmt_various.html#netCDF" );
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "nc" );
 
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
-                                   "Int16 Int32 Float32 Float64" );
-
         poDriver->pfnOpen = netCDFDataset::Open;
-        poDriver->pfnCreateCopy = netCDFCreateCopy;
 
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
