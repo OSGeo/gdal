@@ -28,6 +28,11 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.15  2002/11/26 02:36:38  warmerda
+ * Use first saved image to set the width and height.  One sample image
+ * (wmt.cgi.gif) has a disagreement between this value and the "screen" size.
+ * See http://mapserver.gis.umn.edu/bugs/show_bug.cgi?id=235
+ *
  * Revision 1.14  2002/11/23 18:54:17  warmerda
  * added CREATIONDATATYPES metadata for drivers
  *
@@ -409,8 +414,8 @@ GDALDataset *GIFDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Capture some information from the file that is of interest.     */
 /* -------------------------------------------------------------------- */
-    poDS->nRasterXSize = hGifFile->SWidth;
-    poDS->nRasterYSize = hGifFile->SHeight;
+    poDS->nRasterXSize = hGifFile->SavedImages[0].ImageDesc.Width;
+    poDS->nRasterYSize = hGifFile->SavedImages[0].ImageDesc.Height;
 
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
