@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2005/01/15 16:11:12  fwarmerdam
+ * lots of work on create support
+ *
  * Revision 1.4  2005/01/04 22:14:33  fwarmerdam
  * Nailed down open checking fairly closely.
  *
@@ -43,6 +46,7 @@
  */
 
 #include "rawdataset.h"
+#include "ogr_spatialref.h"
 
 CPL_CVSID("$Id$");
 
@@ -54,7 +58,7 @@ CPL_C_END
 static double tp2c(GByte *r);
 
 // convert a double into a Turbo Pascal real
-//static tpReal c2tp(double n);
+static void c2tp(double n, GByte *r);
 
 /************************************************************************/
 /* ==================================================================== */
@@ -64,6 +68,8 @@ static double tp2c(GByte *r);
 
 class IDADataset : public RawDataset
 {
+    friend class IDARasterBand;
+
     int         nImageType;
     int         nProjection;
     char        szTitle[81];
@@ -83,12 +89,32 @@ class IDADataset : public RawDataset
     int         nDecimals;
 
     FILE       *fpRaw;
+
+    char       *pszProjection;
+    double      adfGeoTransform[6];
+
+    void        ProcessGeoref();
+
+    GByte       abyHeader[512];
+    int         bHeaderDirty;
     
   public:
     		IDADataset();
     	        ~IDADataset();
     
+    virtual void FlushCache();
+    virtual const char *GetProjectionRef(void);
+//    virtual CPLErr SetProjection( const char * );
+
+    virtual CPLErr GetGeoTransform( double * );
+    virtual CPLErr SetGeoTransform( double * );
+
     static GDALDataset *Open( GDALOpenInfo * );
+    static GDALDataset *Create( const char * pszFilename,
+                                int nXSize, int nYSize, int nBands,
+                                GDALDataType eType,
+                                char ** /* papszParmList */ );
+
 };
 
 /************************************************************************/
@@ -99,11 +125,17 @@ class IDADataset : public RawDataset
 
 class IDARasterBand : public RawRasterBand
 {
+    friend class IDADataset;
+
   public:
     		IDARasterBand( IDADataset *poDSIn, FILE *fpRaw, int nXSize );
     virtual     ~IDARasterBand();
-    
-    static GDALDataset *Open( GDALOpenInfo * );
+
+    virtual double GetOffset( int *pbSuccess = NULL );
+    virtual CPLErr SetOffset( double dfNewValue );
+    virtual double GetScale( int *pbSuccess = NULL );
+    virtual CPLErr SetScale( double dfNewValue );
+    virtual double GetNoDataValue( int *pbSuccess = NULL );
 };
 
 /************************************************************************/
@@ -128,6 +160,94 @@ IDARasterBand::~IDARasterBand()
 }
 
 /************************************************************************/
+/*                           GetNoDataValue()                           */
+/************************************************************************/
+
+double IDARasterBand::GetNoDataValue( int *pbSuccess )
+
+{
+    if( pbSuccess != NULL )
+        *pbSuccess = TRUE;
+    return ((IDADataset *) poDS)->nMissing;
+}
+
+/************************************************************************/
+/*                             GetOffset()                              */
+/************************************************************************/
+
+double IDARasterBand::GetOffset( int *pbSuccess )
+
+{
+    if( pbSuccess != NULL )
+        *pbSuccess = TRUE;
+    return ((IDADataset *) poDS)->dfB;
+}
+
+/************************************************************************/
+/*                             SetOffset()                              */
+/************************************************************************/
+
+CPLErr IDARasterBand::SetOffset( double dfNewValue )
+
+{
+    IDADataset *poIDS = (IDADataset *) poDS;
+
+    if( dfNewValue == poIDS->dfB )
+        return CE_None;
+
+    if( poIDS->nImageType != 200 )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Setting explicit offset only support for image type 200.");
+        return CE_Failure;
+    }
+
+    poIDS->dfB = dfNewValue;
+    c2tp( dfNewValue, poIDS->abyHeader + 178 );
+    poIDS->bHeaderDirty = TRUE;
+
+    return CE_None;
+}
+
+/************************************************************************/
+/*                              GetScale()                              */
+/************************************************************************/
+
+double IDARasterBand::GetScale( int *pbSuccess )
+
+{
+    if( pbSuccess != NULL )
+        *pbSuccess = TRUE;
+    return ((IDADataset *) poDS)->dfM;
+}
+
+/************************************************************************/
+/*                              SetScale()                              */
+/************************************************************************/
+
+CPLErr IDARasterBand::SetScale( double dfNewValue )
+
+{
+    IDADataset *poIDS = (IDADataset *) poDS;
+
+    if( dfNewValue == poIDS->dfM )
+        return CE_None;
+
+    if( poIDS->nImageType != 200 )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Setting explicit scale only support for image type 200.");
+        return CE_Failure;
+    }
+
+    poIDS->dfM = dfNewValue;
+    c2tp( dfNewValue, poIDS->abyHeader + 172 );
+    poIDS->bHeaderDirty = TRUE;
+
+    return CE_None;
+}
+
+/************************************************************************/
 /* ==================================================================== */
 /*				IDADataset				*/
 /* ==================================================================== */
@@ -140,6 +260,16 @@ IDARasterBand::~IDARasterBand()
 IDADataset::IDADataset()
 {
     fpRaw = NULL;
+    pszProjection = NULL;
+
+    adfGeoTransform[0] = 0.0;
+    adfGeoTransform[1] = 1.0;
+    adfGeoTransform[2] = 0.0;
+    adfGeoTransform[3] = 0.0;
+    adfGeoTransform[4] = 0.0;
+    adfGeoTransform[5] = 1.0;
+
+    bHeaderDirty = FALSE;
 }
 
 /************************************************************************/
@@ -149,8 +279,146 @@ IDADataset::IDADataset()
 IDADataset::~IDADataset()
 
 {
+    FlushCache();
+
     if( fpRaw != NULL )
         VSIFClose( fpRaw );
+    CPLFree( pszProjection );
+}
+
+/************************************************************************/
+/*                           ProcessGeoref()                            */
+/************************************************************************/
+
+void IDADataset::ProcessGeoref()
+
+{
+    OGRSpatialReference oSRS;
+
+    if( nProjection == 3 ) 
+    {
+        oSRS.SetWellKnownGeogCS( "WGS84" );
+    }
+    else if( nProjection == 4 ) 
+    {
+        oSRS.SetLCC( dfParallel1, dfParallel2, 
+                     dfLatCenter, dfLongCenter, 
+                     0.0, 0.0 );
+        oSRS.SetGeogCS( "Clarke 1866", "Clarke 1866", "Clarke 1866", 
+                        6378206.4, 293.97869821389662 );
+    }
+    else if( nProjection == 6 ) 
+    {
+        oSRS.SetLAEA( dfLatCenter, dfLongCenter, 0.0, 0.0 );
+        oSRS.SetGeogCS( "Sphere", "Sphere", "Sphere", 
+                        6370997.0, 0.0 );
+    }
+    else if( nProjection == 8 )
+    {
+        oSRS.SetACEA( dfParallel1, dfParallel2, 
+                      dfLatCenter, dfLongCenter, 
+                      0.0, 0.0 );
+        oSRS.SetGeogCS( "Clarke 1866", "Clarke 1866", "Clarke 1866", 
+                        6378206.4, 293.97869821389662 );
+    }
+    else if( nProjection == 9 ) 
+    {
+        oSRS.SetGH( dfLongCenter, 0.0, 0.0 );
+        oSRS.SetGeogCS( "Sphere", "Sphere", "Sphere", 
+                        6370997.0, 0.0 );
+    }
+
+    if( oSRS.GetRoot() != NULL )
+    {
+        CPLFree( pszProjection );
+        pszProjection = NULL;
+
+        oSRS.exportToWkt( &pszProjection );
+    }
+
+    adfGeoTransform[0] = 0 - dfDX * dfXCenter;
+    adfGeoTransform[1] = dfDX;
+    adfGeoTransform[2] = 0.0;
+    adfGeoTransform[3] =  dfDY * dfYCenter;
+    adfGeoTransform[4] = 0.0;
+    adfGeoTransform[5] = -dfDY;
+
+    if( nProjection == 3 )
+    {
+        adfGeoTransform[0] += dfLongCenter;
+        adfGeoTransform[3] += dfLatCenter;
+    }
+}
+
+/************************************************************************/
+/*                             FlushCache()                             */
+/************************************************************************/
+
+void IDADataset::FlushCache()
+
+{
+    RawDataset::FlushCache();
+    
+    if( bHeaderDirty )
+    {
+        VSIFSeek( fpRaw, 0, SEEK_SET );
+        VSIFWrite( abyHeader, 512, 1, fpRaw );
+        bHeaderDirty = FALSE;
+    }
+}
+
+/************************************************************************/
+/*                          GetGeoTransform()                           */
+/************************************************************************/
+
+CPLErr IDADataset::GetGeoTransform( double *padfGeoTransform )
+
+{
+    memcpy( padfGeoTransform, adfGeoTransform, sizeof(double) * 6 );
+    return CE_None;
+}
+
+/************************************************************************/
+/*                          SetGeoTransform()                           */
+/************************************************************************/
+
+CPLErr IDADataset::SetGeoTransform( double *padfGeoTransform )
+
+{
+    if( padfGeoTransform[2] != 0.0 || padfGeoTransform[4] != 0.0 )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "IDA Format does not support rotated images, SetGeoTransform() failed." );
+        return CE_Failure;
+    }
+
+    memcpy( adfGeoTransform, padfGeoTransform, sizeof(double) * 6 );
+    bHeaderDirty = TRUE;
+
+    dfDX = adfGeoTransform[1];
+    dfDY = -adfGeoTransform[5];
+    dfXCenter = -adfGeoTransform[0] / dfDX;
+    dfYCenter = adfGeoTransform[3] / dfDY;
+
+    c2tp( dfDX, abyHeader + 144 );
+    c2tp( dfDY, abyHeader + 150 );
+    c2tp( dfXCenter, abyHeader + 132 );
+    c2tp( dfYCenter, abyHeader + 138 );
+
+    return CE_None;
+}
+
+/************************************************************************/
+/*                          GetProjectionRef()                          */
+/************************************************************************/
+
+const char *IDADataset::GetProjectionRef()
+
+{
+    if( pszProjection )
+        return pszProjection;
+    else
+        return "";
 }
 
 /************************************************************************/
@@ -192,15 +460,17 @@ GDALDataset *IDADataset::Open( GDALOpenInfo * poOpenInfo )
     VSIFSeek( poOpenInfo->fp, 0, SEEK_END );
     nActualFileSize = VSIFTell( poOpenInfo->fp );
     VSIRewind( poOpenInfo->fp );
-
+    
     if( nActualFileSize != nExpectedFileSize )
         return NULL;
-
+    
 /* -------------------------------------------------------------------- */
 /*      Create the dataset.                                             */
 /* -------------------------------------------------------------------- */
-    IDADataset *poDS = new IDADataset();
+    IDADataset *poDS = new IDADataset();				
 
+    memcpy( poDS->abyHeader, poOpenInfo->pabyHeader, 512 );
+        
 /* -------------------------------------------------------------------- */
 /*      Parse various values out of the header.                         */
 /* -------------------------------------------------------------------- */
@@ -215,6 +485,13 @@ GDALDataset *IDADataset::Open( GDALOpenInfo * poOpenInfo )
     strncpy( poDS->szTitle, (const char *) poOpenInfo->pabyHeader+38, 80 );
     poDS->szTitle[80] = '\0';
 
+    int nLastTitleChar = strlen(poDS->szTitle)-1;
+    while( nLastTitleChar > -1 
+           && (poDS->szTitle[nLastTitleChar] == 10 
+               || poDS->szTitle[nLastTitleChar] == 13 
+               || poDS->szTitle[nLastTitleChar] == ' ') ) 
+        poDS->szTitle[nLastTitleChar--] = '\0';
+
     poDS->dfLatCenter = tp2c( poOpenInfo->pabyHeader + 120 );
     poDS->dfLongCenter = tp2c( poOpenInfo->pabyHeader + 126 );
     poDS->dfXCenter = tp2c( poOpenInfo->pabyHeader + 132 );
@@ -224,12 +501,160 @@ GDALDataset *IDADataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->dfParallel1 = tp2c( poOpenInfo->pabyHeader + 156 );
     poDS->dfParallel2 = tp2c( poOpenInfo->pabyHeader + 162 );
 
+    poDS->ProcessGeoref();
+
+    poDS->SetMetadataItem( "TITLE", poDS->szTitle );
+
+/* -------------------------------------------------------------------- */
+/*      Handle various image types.                                     */
+/* -------------------------------------------------------------------- */
+
+/*
+GENERIC = 0
+FEW S NDVI = 1
+EROS NDVI = 6
+ARTEMIS CUTOFF = 10
+ARTEMIS RECODE = 11
+ARTEMIS NDVI = 12
+ARTEMIS FEWS = 13
+ARTEMIS NEWNASA = 14
+GENERIC DIFF = 100
+FEW S NDVI DIFF = 101
+EROS NDVI DIFF = 106
+ARTEMIS CUTOFF DIFF = 110
+ARTEMIS RECODE DIFF = 111
+ARTEMIS NDVI DIFF = 112
+ARTEMIS FEWS DIFF = 113
+ARTEMIS NEWNASA DIFF = 114
+CALCULATED =200
+*/
+ 
+    poDS->nMissing = 0;
+
+    switch( poDS->nImageType )
+    {
+      case 1:
+        poDS->SetMetadataItem( "IMAGETYPE", "1, FEWS NDVI" );
+        poDS->dfM = 1/256.0;
+        poDS->dfB = -82/256.0;
+        break;
+
+      case 6:
+        poDS->SetMetadataItem( "IMAGETYPE", "6, EROS NDVI" );
+        poDS->dfM = 1/100.0;
+        poDS->dfB = -100/100.0;
+        break;
+
+      case 10:
+        poDS->SetMetadataItem( "IMAGETYPE", "10, ARTEMIS CUTOFF" );
+        poDS->dfM = 1.0;
+        poDS->dfB = 0.0;
+        poDS->nMissing = 254;
+        break;
+
+      case 11:
+        poDS->SetMetadataItem( "IMAGETYPE", "11, ARTEMIS RECODE" );
+        poDS->dfM = 4.0;
+        poDS->dfB = 0.0;
+        poDS->nMissing = 254;
+        break;
+
+      case 12: /* ANDVI */
+        poDS->SetMetadataItem( "IMAGETYPE", "12, ARTEMIS NDVI" );
+        poDS->dfM = 4/500.0;
+        poDS->dfB = -3/500.0 - 1.0;
+        poDS->nMissing = 254;
+        break;
+
+      case 13: /* AFEWS */
+        poDS->SetMetadataItem( "IMAGETYPE", "13, ARTEMIS FEWS" );
+        poDS->dfM = 1/256.0;
+        poDS->dfB = -82/256.0;
+        poDS->nMissing = 254;
+        break;
+
+      case 14: /* NEWNASA */
+        poDS->SetMetadataItem( "IMAGETYPE", "13, ARTEMIS NEWNASA" );
+        poDS->dfM = 0.75/250.0;
+        poDS->dfB = 0.0;
+        poDS->nMissing = 254;
+        break;
+
+      case 101: /* NDVI_DIFF (FEW S) */
+        poDS->dfM = 1/128.0;
+        poDS->dfB = -1.0;
+        poDS->nMissing = 0;
+        break;
+
+      case 106: /* EROS_DIFF */
+        poDS->dfM = 1/50.0;
+        poDS->dfB = -128/50.0;
+        poDS->nMissing = 0;
+        break;
+
+      case 110: /* CUTOFF_DIFF */
+        poDS->dfM = 2.0;
+        poDS->dfB = -128*2;
+        poDS->nMissing = 254;
+        break;
+
+      case 111: /* RECODE_DIFF */
+        poDS->dfM = 8;
+        poDS->dfB = -128*8;
+        poDS->nMissing = 254;
+        break;
+
+      case 112: /* ANDVI_DIFF */
+        poDS->dfM = 8/1000.0;
+        poDS->dfB = (-128*8)/1000.0;
+        poDS->nMissing = 254;
+        break;
+
+      case 113: /* AFEWS_DIFF */
+        poDS->dfM = 1/128.0;
+        poDS->dfB = -1;
+        poDS->nMissing = 254;
+        break;
+
+      case 114: /* NEWNASA_DIFF */
+        poDS->dfM = 0.75/125.0;
+        poDS->dfB = -128*poDS->dfM;
+        poDS->nMissing = 254;
+        break;
+
+      case 200:
+        /* we use the values from the header */
+        poDS->dfM = tp2c( poOpenInfo->pabyHeader + 171 );
+        poDS->dfB = tp2c( poOpenInfo->pabyHeader + 177 );
+        poDS->nMissing = poOpenInfo->pabyHeader[170];
+        break;
+
+      default:
+        poDS->dfM = 1.0;
+        poDS->dfB = 0.0;
+        break;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Create the band.                                                */
 /* -------------------------------------------------------------------- */
-
-    poDS->fpRaw = poOpenInfo->fp;
-    poOpenInfo->fp = NULL;
+    if( poOpenInfo->eAccess == GA_ReadOnly )
+    {
+        poDS->fpRaw = poOpenInfo->fp;
+        poOpenInfo->fp = NULL;
+    }
+    else
+    {
+        poDS->fpRaw = VSIFOpen( poOpenInfo->pszFilename, "rb+" );
+        poDS->eAccess = GA_Update;
+        if( poDS->fpRaw == NULL )
+        {
+            CPLError( CE_Failure, CPLE_OpenFailed, 
+                      "Failed to open %s for write access.", 
+                      poOpenInfo->pszFilename );
+            return NULL;
+        }
+    }
 
     poDS->SetBand( 1, new IDARasterBand( poDS, poDS->fpRaw, 
                                          poDS->nRasterXSize ) );
@@ -273,25 +698,24 @@ static double tp2c(GByte *r)
   return sign * ldexp(mant, exp);
 }
 
-#ifdef notdef
 /************************************************************************/
 /*                                c2tp()                                */
 /*                                                                      */
 /*      convert a double into a Turbo Pascal real                       */
 /************************************************************************/
 
-static tpReal c2tp(double x)
+static void c2tp(double x, GByte *r)
 {
   double mant, temp;
   int negative, exp, i;
-  tpReal r;
 
   // handle 0 case
   if (x == 0.0)
   {
-    for (i = 0; i < 6; r.b[i++] = 0);
-    return r;
+    for (i = 0; i < 6; r[i++] = 0);
+    return;
   }
+
   // compute mantissa, sign and exponent
   mant = frexp(x, &exp) * 2 - 1;
   exp--;
@@ -303,22 +727,108 @@ static tpReal c2tp(double x)
   }
   // stuff mantissa into Turbo Pascal real
   mant = modf(mant * 128, &temp);
-  r.b[5] = temp;
+  r[5] = (unsigned char) temp;
   for (i = 4; i >= 1; i--)
   {
     mant = modf(mant * 256, &temp);
-    r.b[i] = temp;
+    r[i] = (unsigned char) temp;
   }
   // add sign
   if (negative)
-    r.b[5] |= 0x80;
+    r[5] |= 0x80;
 
   // put exponent
-  r.b[0] = exp + 129;
-
-  return r;
+  r[0] = exp + 129;
 }
-#endif
+
+/************************************************************************/
+/*                               Create()                               */
+/************************************************************************/
+
+GDALDataset *IDADataset::Create( const char * pszFilename,
+                                 int nXSize, int nYSize, int nBands,
+                                 GDALDataType eType,
+                                 char ** /* papszParmList */ )
+
+{
+/* -------------------------------------------------------------------- */
+/*      Verify input options.                                           */
+/* -------------------------------------------------------------------- */
+    if( eType != GDT_Byte || nBands != 1 )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Only 1 band, Byte datasets supported for IDA format." );
+
+        return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Try to create the file.                                         */
+/* -------------------------------------------------------------------- */
+    FILE	*fp;
+
+    fp = VSIFOpen( pszFilename, "wb" );
+
+    if( fp == NULL )
+    {
+        CPLError( CE_Failure, CPLE_OpenFailed,
+                  "Attempt to create file `%s' failed.\n",
+                  pszFilename );
+        return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Prepare formatted header.                                       */
+/* -------------------------------------------------------------------- */
+    GByte abyHeader[512];
+    
+    memset( abyHeader, 0, sizeof(abyHeader) );
+    
+    abyHeader[22] = 200; /* image type - CALCULATED */
+    abyHeader[23] = 0; /* projection - NONE */
+    abyHeader[30] = nYSize % 256;
+    abyHeader[31] = nYSize / 256;
+    abyHeader[32] = nXSize % 256;
+    abyHeader[33] = nXSize / 256;
+
+    abyHeader[170] = 255; /* missing = 255 */
+    c2tp( 1.0, abyHeader + 171 ); /* slope = 1.0 */
+    c2tp( 0.0, abyHeader + 177 ); /* offset = 0 */
+    abyHeader[168] = 0; // lower limit
+    abyHeader[169] = 254; // upper limit
+
+    // pixel size = 1.0
+    c2tp( 1.0, abyHeader + 144 );
+    c2tp( 1.0, abyHeader + 150 );
+
+    if( VSIFWrite( abyHeader, 1, 512, fp ) != 512 )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "IO error writing %s.\n%s", 
+                  VSIStrerror( errno ) );
+        VSIFClose( fp );
+        return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Now we need to extend the file to just the right number of      */
+/*      bytes for the data we have to ensure it will open again         */
+/*      properly.                                                       */
+/* -------------------------------------------------------------------- */
+    if( VSIFSeek( fp, nXSize * nYSize - 1, SEEK_CUR ) != 0
+        || VSIFWrite( abyHeader, 1, 1, fp ) != 1 )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "IO error writing %s.\n%s", 
+                  VSIStrerror( errno ) );
+        VSIFClose( fp );
+        return NULL;
+    }
+
+    VSIFClose( fp );
+
+    return (GDALDataset *) GDALOpen( pszFilename, GA_Update );
+}
 
 /************************************************************************/
 /*                         GDALRegister_IDA()                          */
@@ -339,6 +849,7 @@ void GDALRegister_IDA()
 //        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_IDA.html" );
 
         poDriver->pfnOpen = IDADataset::Open;
+        poDriver->pfnCreate = IDADataset::Create;
 
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
