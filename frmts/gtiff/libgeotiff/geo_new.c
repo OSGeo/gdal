@@ -13,6 +13,9 @@
  *    7 July,  1995      Greg Martin             Fix index
  *
  * $Log: geo_new.c,v $
+ * Revision 1.10  2003/09/02 13:52:17  warmerda
+ * various hacks to support improperly terminated asciiparms
+ *
  * Revision 1.9  2003/06/19 20:04:11  warmerda
  * fix memory underwrite if ascii parameter string is zero length
  *
@@ -204,13 +207,25 @@ static int ReadKey(GTIF* gt, TempKeyData* tempData,
                 gt->gt_ndoubles = offset+count;
             break;
         case GTIFF_ASCIIPARAMS:
-            if (offset + count > tempData->tk_asciiParamsLength)
+            if( offset + count == tempData->tk_asciiParamsLength + 1 
+                && count > 0 )
+            {
+                /* some vendors seem to feel they should not use the 
+                   terminating '|' char, but do include a terminating '\0'
+                   which we lose in the low level reading code.  
+                   If this is the case, drop the extra character */
+                count--;
+            }
+            else if (offset + count > tempData->tk_asciiParamsLength)
                 return (0);
 
-            keyptr->gk_data = (char *) _GTIFcalloc (MAX(1,count));
+            keyptr->gk_data = (char *) _GTIFcalloc (MAX(1,count+1));
             _GTIFmemcpy (keyptr->gk_data,
                          tempData->tk_asciiParams + offset, count);
-            keyptr->gk_data[MAX(0,count-1)] = '\0';
+            if( keyptr->gk_data[MAX(0,count-1)] == '|' )
+                keyptr->gk_data[MAX(0,count-1)] = '\0';
+            else
+                keyptr->gk_data[MAX(0,count)] = '\0';
             break;
         default:
             return 0; /* failure */
