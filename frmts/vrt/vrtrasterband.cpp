@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2004/04/15 18:54:38  warmerda
+ * added UnitType, Offset, Scale and CategoryNames support
+ *
  * Revision 1.17  2004/03/16 18:34:35  warmerda
  * added support for relativeToVRT attribute on SourceFilename
  *
@@ -167,8 +170,12 @@ void VRTRasterBand::Initialize( int nXSize, int nYSize )
     dfNoDataValue = -10000.0;
     poColorTable = NULL;
     eColorInterp = GCI_Undefined;
-}
 
+    pszUnitType = NULL;
+    papszCategoryNames = NULL;
+    dfOffset = 0.0;
+    dfScale = 1.0;
+}
 
 /************************************************************************/
 /*                           ~VRTRasterBand()                           */
@@ -177,6 +184,8 @@ void VRTRasterBand::Initialize( int nXSize, int nYSize )
 VRTRasterBand::~VRTRasterBand()
 
 {
+    CPLFree( pszUnitType );
+
     for( int i = 0; i < nSources; i++ )
         delete papoSources[i];
 
@@ -185,6 +194,109 @@ VRTRasterBand::~VRTRasterBand()
 
     if( poColorTable != NULL )
         delete poColorTable;
+
+    CSLDestroy( papszCategoryNames );
+}
+
+/************************************************************************/
+/*                            GetUnitType()                             */
+/************************************************************************/
+
+const char *VRTRasterBand::GetUnitType()
+
+{
+    if( pszUnitType == NULL )
+        return "";
+    else
+        return pszUnitType;
+}
+
+/************************************************************************/
+/*                            SetUnitType()                             */
+/************************************************************************/
+
+CPLErr VRTRasterBand::SetUnitType( const char *pszNewValue )
+
+{
+    CPLFree( pszUnitType );
+    
+    if( pszNewValue == NULL )
+        pszUnitType = NULL;
+    else
+        pszUnitType = CPLStrdup(pszNewValue);
+
+    return CE_None;
+}
+
+/************************************************************************/
+/*                             GetOffset()                              */
+/************************************************************************/
+
+double VRTRasterBand::GetOffset( int *pbSuccess )
+
+{
+    if( pbSuccess != NULL )
+        *pbSuccess = TRUE;
+
+    return dfOffset;
+}
+
+/************************************************************************/
+/*                             SetOffset()                              */
+/************************************************************************/
+
+CPLErr VRTRasterBand::SetOffset( double dfNewOffset )
+
+{
+    dfOffset = dfNewOffset;
+    return CE_None;
+}
+
+/************************************************************************/
+/*                              GetScale()                              */
+/************************************************************************/
+
+double VRTRasterBand::GetScale( int *pbSuccess )
+
+{
+    if( pbSuccess != NULL )
+        *pbSuccess = TRUE;
+
+    return dfScale;
+}
+
+/************************************************************************/
+/*                              SetScale()                              */
+/************************************************************************/
+
+CPLErr VRTRasterBand::SetScale( double dfNewScale )
+
+{
+    dfScale = dfNewScale;
+    return CE_None;
+}
+
+/************************************************************************/
+/*                          GetCategoryNames()                          */
+/************************************************************************/
+
+char **VRTRasterBand::GetCategoryNames()
+
+{
+    return papszCategoryNames;
+}
+
+/************************************************************************/
+/*                          SetCategoryNames()                          */
+/************************************************************************/
+
+CPLErr VRTRasterBand::SetCategoryNames( char ** papszNewNames )
+
+{
+    CSLDestroy( papszCategoryNames );
+    papszCategoryNames = CSLDuplicate( papszNewNames );
+
+    return CE_None;
 }
 
 /************************************************************************/
@@ -347,6 +459,11 @@ CPLErr VRTRasterBand::XMLInit( CPLXMLNode * psTree,
     if( CPLGetXMLValue( psTree, "NoDataValue", NULL ) != NULL )
         SetNoDataValue( atof(CPLGetXMLValue( psTree, "NoDataValue", "0" )) );
 
+    SetUnitType( CPLGetXMLValue( psTree, "UnitType", NULL ) );
+
+    SetOffset( atof(CPLGetXMLValue( psTree, "Offset", "0.0" )) );
+    SetScale( atof(CPLGetXMLValue( psTree, "Scale", "1.0" )) );
+
     if( CPLGetXMLValue( psTree, "ColorInterp", NULL ) != NULL )
     {
         const char *pszInterp = CPLGetXMLValue( psTree, "ColorInterp", NULL );
@@ -362,6 +479,30 @@ CPLErr VRTRasterBand::XMLInit( CPLXMLNode * psTree,
                 SetColorInterpretation( (GDALColorInterp) iInterp );
                 break;
             }
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Category names.                                                 */
+/* -------------------------------------------------------------------- */
+    if( CPLGetXMLNode( psTree, "CategoryNames" ) != NULL )
+    {
+        CPLXMLNode *psEntry;
+
+        CSLDestroy( papszCategoryNames );
+        papszCategoryNames = NULL;
+
+        for( psEntry = CPLGetXMLNode( psTree, "CategoryNames" )->psChild;
+             psEntry != NULL; psEntry = psEntry->psNext )
+        {
+            if( psEntry->eType != CXT_Element 
+                || !EQUAL(psEntry->pszValue,"Category") 
+                || psEntry->psChild == NULL 
+                || psEntry->psChild->eType != CXT_Text )
+                continue;
+            
+            papszCategoryNames = CSLAddString( papszCategoryNames, 
+                                               psEntry->psChild->pszValue );
         }
     }
 
@@ -452,9 +593,35 @@ CPLXMLNode *VRTRasterBand::SerializeToXML()
         CPLSetXMLValue( psTree, "NoDataValue", 
                         CPLSPrintf( "%.14E", dfNoDataValue ) );
 
+    if( pszUnitType != NULL )
+        CPLSetXMLValue( psTree, "UnitType", pszUnitType );
+
+    if( dfOffset != 0.0 )
+        CPLSetXMLValue( psTree, "Offset", 
+                        CPLSPrintf( "%.16g", dfOffset ) );
+
+    if( dfScale != 1.0 )
+        CPLSetXMLValue( psTree, "Scale", 
+                        CPLSPrintf( "%.16g", dfScale ) );
+
     if( eColorInterp != GCI_Undefined )
         CPLSetXMLValue( psTree, "ColorInterp", 
                         GDALGetColorInterpretationName( eColorInterp ) );
+
+/* -------------------------------------------------------------------- */
+/*      Category names.                                                 */
+/* -------------------------------------------------------------------- */
+    if( papszCategoryNames != NULL )
+    {
+        CPLXMLNode *psCT_XML = CPLCreateXMLNode( psTree, CXT_Element, 
+                                                 "CategoryNames" );
+
+        for( int iEntry=0; papszCategoryNames[iEntry] != NULL; iEntry++ )
+        {
+            CPLCreateXMLElementAndValue( psCT_XML, "Category", 
+                                         papszCategoryNames[iEntry] );
+        }
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Color Table.                                                    */

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2004/04/15 18:54:10  warmerda
+ * added UnitType, Offset, Scale and CategoryNames support
+ *
  * Revision 1.16  2003/04/16 14:37:54  warmerda
  * Comment out debug messages ... too noisy.
  *
@@ -137,6 +140,11 @@ MEMRasterBand::MEMRasterBand( GDALDataset *poDS, int nBand,
     poColorTable = NULL;
     
     eColorInterp = GCI_Undefined;
+
+    papszCategoryNames = NULL;
+    dfOffset = 0.0;
+    dfScale = 1.0;
+    pszUnitType = NULL;
 }
 
 /************************************************************************/
@@ -155,6 +163,9 @@ MEMRasterBand::~MEMRasterBand()
 
     if( poColorTable != NULL )
         delete poColorTable;
+
+    CPLFree( pszUnitType );
+    CSLDestroy( papszCategoryNames );
 }
 
 
@@ -297,6 +308,107 @@ CPLErr MEMRasterBand::SetColorTable( GDALColorTable *poCT )
         poColorTable = NULL;
     else
         poColorTable = poCT->Clone();
+
+    return CE_None;
+}
+
+/************************************************************************/
+/*                            GetUnitType()                             */
+/************************************************************************/
+
+const char *MEMRasterBand::GetUnitType()
+
+{
+    if( pszUnitType == NULL )
+        return "";
+    else
+        return pszUnitType;
+}
+
+/************************************************************************/
+/*                            SetUnitType()                             */
+/************************************************************************/
+
+CPLErr MEMRasterBand::SetUnitType( const char *pszNewValue )
+
+{
+    CPLFree( pszUnitType );
+    
+    if( pszNewValue == NULL )
+        pszUnitType = NULL;
+    else
+        pszUnitType = CPLStrdup(pszNewValue);
+
+    return CE_None;
+}
+
+/************************************************************************/
+/*                             GetOffset()                              */
+/************************************************************************/
+
+double MEMRasterBand::GetOffset( int *pbSuccess )
+
+{
+    if( pbSuccess != NULL )
+        *pbSuccess = TRUE;
+
+    return dfOffset;
+}
+
+/************************************************************************/
+/*                             SetOffset()                              */
+/************************************************************************/
+
+CPLErr MEMRasterBand::SetOffset( double dfNewOffset )
+
+{
+    dfOffset = dfNewOffset;
+    return CE_None;
+}
+
+/************************************************************************/
+/*                              GetScale()                              */
+/************************************************************************/
+
+double MEMRasterBand::GetScale( int *pbSuccess )
+
+{
+    if( pbSuccess != NULL )
+        *pbSuccess = TRUE;
+
+    return dfScale;
+}
+
+/************************************************************************/
+/*                              SetScale()                              */
+/************************************************************************/
+
+CPLErr MEMRasterBand::SetScale( double dfNewScale )
+
+{
+    dfScale = dfNewScale;
+    return CE_None;
+}
+
+/************************************************************************/
+/*                          GetCategoryNames()                          */
+/************************************************************************/
+
+char **MEMRasterBand::GetCategoryNames()
+
+{
+    return papszCategoryNames;
+}
+
+/************************************************************************/
+/*                          SetCategoryNames()                          */
+/************************************************************************/
+
+CPLErr MEMRasterBand::SetCategoryNames( char ** papszNewNames )
+
+{
+    CSLDestroy( papszCategoryNames );
+    papszCategoryNames = CSLDuplicate( papszNewNames );
 
     return CE_None;
 }
@@ -652,3 +764,4 @@ void GDALRegister_MEM()
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
 }
+

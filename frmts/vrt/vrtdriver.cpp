@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2004/04/15 18:54:38  warmerda
+ * added UnitType, Offset, Scale and CategoryNames support
+ *
  * Revision 1.4  2004/04/02 17:20:06  warmerda
  * Added defaulte extension, and point help topic to VRT tutorial.
  *
@@ -253,6 +256,13 @@ VRTCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
         poVRTBand->SetColorTable( poSrcBand->GetColorTable() );
         poVRTBand->SetColorInterpretation(poSrcBand->GetColorInterpretation());
+
+        if( !EQUAL(poSrcBand->GetUnitType(),"") )
+            poVRTBand->SetUnitType( poSrcBand->GetUnitType() );
+
+        poVRTBand->SetOffset( poSrcBand->GetOffset() );
+        poVRTBand->SetScale( poSrcBand->GetScale() );
+        poVRTBand->SetCategoryNames( poSrcBand->GetCategoryNames() );
 
         int bSuccess;
 
