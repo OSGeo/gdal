@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.44  2003/06/27 19:02:04  warmerda
+ * added OSRProj4Tokenize(), fixes plus related tokenizing bug in bug 355
+ *
  * Revision 1.43  2003/06/27 17:54:12  warmerda
  * allow k_0 in place of k parsing proj4, bug 355
  *
@@ -211,6 +214,60 @@ static const char *ogr_pj_ellps[] = {
 };
 
 /************************************************************************/
+/*                          OSRProj4Tokenize()                          */
+/*                                                                      */
+/*      Custom tokenizing function for PROJ.4 strings.  The main        */
+/*      reason we can't just use CSLTokenizeString is to handle         */
+/*      strings with a + sign in the exponents of parameter values.     */
+/************************************************************************/
+
+char **OSRProj4Tokenize( const char *pszFull )
+
+{
+    char *pszStart = NULL;
+    char *pszFullWrk;
+    char **papszTokens = NULL;
+    int  i;
+
+    if( pszFull == NULL )
+        return NULL;
+
+    pszFullWrk = CPLStrdup( pszFull );
+
+    for( i=0; pszFullWrk[i] != '\0'; i++ )
+    {
+        switch( pszFullWrk[i] )
+        {
+          case '+':
+            if( i == 0 || pszFullWrk[i-1] == '\0' )
+            {
+                if( pszStart != NULL )
+                    papszTokens = CSLAddString( papszTokens, pszStart );
+                pszStart = pszFullWrk + i + 1;
+            }
+            break;
+
+          case ' ':
+          case '\t':
+          case '\n':
+            pszFullWrk[i] = '\0';
+            break;
+
+          default:
+            break;
+        }
+    }
+
+    if( pszStart != NULL && strlen(pszStart) > 0 )
+        papszTokens = CSLAddString( papszTokens, pszStart );
+
+    CPLFree( pszFullWrk );
+
+    return papszTokens;
+}
+
+
+/************************************************************************/
 /*                         OSRImportFromProj4()                         */
 /************************************************************************/
 
@@ -320,7 +377,7 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
 /*      Parse the PROJ.4 string into a cpl_string.h style name/value    */
 /*      list.                                                           */
 /* -------------------------------------------------------------------- */
-    papszTokens = CSLTokenizeStringComplex( pszNormalized, "+ ", TRUE, FALSE );
+    papszTokens = OSRProj4Tokenize( pszNormalized );
     CPLFree( pszNormalized );
     
     for( i = 0; papszTokens != NULL && papszTokens[i] != NULL; i++ )
