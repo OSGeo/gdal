@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2003/07/08 15:23:58  warmerda
+ * avoid casting warning
+ *
  * Revision 1.12  2003/04/14 14:14:40  warmerda
  * fixed problem with Y origin for Landranger DTM
  *
@@ -253,8 +256,7 @@ CPLErr NTFFileReader::ReadRasterColumn( int iColumn, float *pafElev )
         for( int iPixel = 0; iPixel < nRasterXSize; iPixel++ )
         {
             pafElev[iPixel] = (float) 
-                atoi(poRecord->GetField(19+iPixel*5,23+iPixel*5))
-                * GetZMult();
+           (atoi(poRecord->GetField(19+iPixel*5,23+iPixel*5)) * GetZMult());
         }
     }
     
