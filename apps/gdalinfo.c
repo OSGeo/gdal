@@ -1,4 +1,4 @@
-/******************************************************************************
+/* ****************************************************************************
  * Copyright (c) 1998, Frank Warmerdam
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -18,7 +18,7 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
+ * ****************************************************************************
  *
  * gdalinfo.c
  *
@@ -26,6 +26,9 @@
  * serves as an early test harnass.
  *
  * $Log$
+ * Revision 1.4  1999/10/01 14:45:14  warmerda
+ * prettied up
+ *
  * Revision 1.3  1999/03/02 21:12:01  warmerda
  * add DMS reporting of lat/long
  *
