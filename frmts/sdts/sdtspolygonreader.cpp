@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  1999/09/21 02:23:25  warmerda
+ * added logic to put outer ring first, and set ring direction
+ *
  * Revision 1.6  1999/09/03 13:35:05  warmerda
  * cleanup array in assemblerings
  *
@@ -142,7 +145,10 @@ void SDTSRawPolygon::AddEdge( SDTSRawLine * poNewLine )
 /*                           AddEdgeToRing()                            */
 /************************************************************************/
 
-void SDTSRawPolygon::AddEdgeToRing( SDTSRawLine * poLine,
+void SDTSRawPolygon::AddEdgeToRing( int nVertToAdd,
+                                    double * padfXToAdd,
+                                    double * padfYToAdd,
+                                    double * padfZToAdd,
                                     int bReverse, int bDropVertex )
 
 {
@@ -150,29 +156,34 @@ void SDTSRawPolygon::AddEdgeToRing( SDTSRawLine * poLine,
 
     if( bDropVertex && bReverse )
     {
-        iStart = poLine->nVertices - 2;
+        iStart = nVertToAdd - 2;
         iEnd = 0;
         iStep = -1;
     }
     else if( bDropVertex && !bReverse )
     {
         iStart = 1;
-        iEnd = poLine->nVertices - 1;
+        iEnd = nVertToAdd - 1;
         iStep = 1;
     }
-    else 
+    else if( !bDropVertex && !bReverse )
     {
-        CPLAssert( !bDropVertex && !bReverse );
         iStart = 0;
-        iEnd = poLine->nVertices - 1;
+        iEnd = nVertToAdd - 1;
         iStep = 1;
+    }
+    else if( !bDropVertex && bReverse )
+    {
+        iStart = nVertToAdd - 1;
+        iEnd = 0;
+        iStep = -1;
     }
 
     for( int i = iStart; i != (iEnd+iStep); i += iStep )
     {
-        padfX[nVertices] = poLine->padfX[i];
-        padfY[nVertices] = poLine->padfY[i];
-        padfZ[nVertices] = poLine->padfZ[i];
+        padfX[nVertices] = padfXToAdd[i];
+        padfY[nVertices] = padfYToAdd[i];
+        padfZ[nVertices] = padfZToAdd[i];
 
         nVertices++;
     }
@@ -237,7 +248,9 @@ int SDTSRawPolygon::AssembleRings()
 /* -------------------------------------------------------------------- */
         panRingStart[nRings++] = nVertices;
 
-        AddEdgeToRing( poEdge, FALSE, FALSE );
+        AddEdgeToRing( poEdge->nVertices,
+                       poEdge->padfX, poEdge->padfY, poEdge->padfZ,
+                       FALSE, FALSE );
 
         panEdgeConsumed[iEdge] = TRUE;
         nRemainingEdges--;
@@ -265,12 +278,16 @@ int SDTSRawPolygon::AssembleRings()
                 poEdge = papoEdges[iEdge];
                 if( poEdge->oStartNode.nRecord == nLinkNode )
                 {
-                    AddEdgeToRing( poEdge, FALSE, TRUE );
+                    AddEdgeToRing( poEdge->nVertices,
+                                   poEdge->padfX, poEdge->padfY, poEdge->padfZ,
+                                   FALSE, TRUE );
                     nLinkNode = poEdge->oEndNode.nRecord;
                 }
                 else if( poEdge->oEndNode.nRecord == nLinkNode )
                 {
-                    AddEdgeToRing( poEdge, TRUE, TRUE );
+                    AddEdgeToRing( poEdge->nVertices,
+                                   poEdge->padfX, poEdge->padfY, poEdge->padfZ,
+                                   TRUE, TRUE );
                     nLinkNode = poEdge->oStartNode.nRecord;
                 }
                 else
@@ -294,7 +311,114 @@ int SDTSRawPolygon::AssembleRings()
 
     CPLFree( panEdgeConsumed );
 
-    return bSuccess;
+    if( !bSuccess )
+        return bSuccess;
+
+/* ==================================================================== */
+/*      Compute the area of each ring.  The sign will be positive       */
+/*      for counter clockwise rings, otherwise negative.                */
+/*                                                                      */
+/*	The algorithm used in this function was taken from _Graphics	*/
+/*	Gems II_, James Arvo, 1991, Academic Press, Inc., section 1.1,	*/
+/*	"The Area of a Simple Polygon", Jon Rokne, pp. 5-6.		*/
+/* ==================================================================== */
+    double	*padfRingArea, dfMaxArea = 0.0;
+    int		iRing, iBiggestRing = -1;
+
+    padfRingArea = (double *) CPLCalloc(sizeof(double),nRings);
+
+    for( iRing = 0; iRing < nRings; iRing++ )
+    {
+        double	dfSum1 = 0.0, dfSum2 = 0.0;
+        int	i, nRingVertices;
+
+        if( iRing == nRings - 1 )
+            nRingVertices = nVertices - panRingStart[iRing];
+        else
+            nRingVertices = panRingStart[iRing+1] - panRingStart[iRing];
+        
+	for( i = panRingStart[iRing];
+             i < panRingStart[iRing] + nRingVertices - 1;
+             i++)
+	{
+	    dfSum1 += padfX[i] * padfY[i+1];
+	    dfSum2 += padfY[i] * padfX[i+1];
+	}
+
+	padfRingArea[iRing] = (dfSum1 - dfSum2) / 2;
+
+        if( ABS(padfRingArea[iRing]) > dfMaxArea )
+        {
+            dfMaxArea = ABS(padfRingArea[iRing]);
+            iBiggestRing = iRing;
+        }
+    }
+
+/* ==================================================================== */
+/*      Make a new set of vertices, and copy the largest ring into      */
+/*      it, adjusting the direction if necessary to ensure that this    */
+/*      outer ring is counter clockwise.                                */
+/* ==================================================================== */
+    double	*padfXRaw = padfX;
+    double	*padfYRaw = padfY;
+    double	*padfZRaw = padfZ;
+    int		*panRawRingStart = panRingStart;
+    int		nRawVertices = nVertices;
+    int		nRawRings = nRings;
+    int		nRingVertices;
+
+    padfX = (double *) CPLMalloc(sizeof(double) * nVertices);
+    padfY = (double *) CPLMalloc(sizeof(double) * nVertices);
+    padfZ = (double *) CPLMalloc(sizeof(double) * nVertices);
+    panRingStart = (int *) CPLMalloc(sizeof(int) * nRawRings);
+    nVertices = 0;
+    nRings = 0;
+    
+    if( iBiggestRing == nRawRings - 1 )
+        nRingVertices = nRawVertices - panRawRingStart[iBiggestRing];
+    else
+        nRingVertices =
+            panRawRingStart[iBiggestRing+1] - panRawRingStart[iBiggestRing];
+
+    panRingStart[nRings++] = 0;
+    AddEdgeToRing( nRingVertices,
+                   padfXRaw + panRawRingStart[iBiggestRing],
+                   padfYRaw + panRawRingStart[iBiggestRing],
+                   padfZRaw + panRawRingStart[iBiggestRing],
+                   padfRingArea[iBiggestRing] < 0.0, FALSE );
+
+/* ==================================================================== */
+/*      Add the rest of the rings, which must be holes, in clockwise    */
+/*      order.                                                          */
+/* ==================================================================== */
+    for( iRing = 0; iRing < nRawRings; iRing++ )
+    {
+        if( iRing == iBiggestRing )
+            continue;
+        
+        if( iRing == nRawRings - 1 )
+            nRingVertices = nRawVertices - panRawRingStart[iRing];
+        else
+            nRingVertices = panRawRingStart[iRing+1] - panRawRingStart[iRing];
+
+        panRingStart[nRings++] = nVertices;
+        AddEdgeToRing( nRingVertices,
+                       padfXRaw + panRawRingStart[iRing],
+                       padfYRaw + panRawRingStart[iRing],
+                       padfZRaw + panRawRingStart[iRing],
+                       padfRingArea[iRing] > 0.0, FALSE );
+    }
+    
+/* -------------------------------------------------------------------- */
+/*      Cleanup                                                         */
+/* -------------------------------------------------------------------- */
+    CPLFree( padfXRaw );
+    CPLFree( padfYRaw );
+    CPLFree( padfZRaw );
+    CPLFree( padfRingArea );
+    CPLFree( panRawRingStart );
+
+    return TRUE;
 }
 
 /************************************************************************/

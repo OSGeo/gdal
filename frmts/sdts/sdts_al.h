@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  1999/09/21 02:23:25  warmerda
+ * added logic to put outer ring first, and set ring direction
+ *
  * Revision 1.16  1999/09/03 19:03:45  warmerda
  * fixed up help
  *
@@ -515,7 +518,7 @@ class SDTSPointReader : public SDTSIndexedReader
 
 class SDTSRawPolygon : public SDTSFeature
 {
-    void        AddEdgeToRing( SDTSRawLine *, int, int );
+    void        AddEdgeToRing( int, double *, double *, double *, int, int );
     
   public:
     		SDTSRawPolygon();
