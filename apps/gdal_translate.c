@@ -28,6 +28,9 @@
  * ****************************************************************************
  *
  * $Log$
+ * Revision 1.10  2000/03/23 18:48:19  warmerda
+ * Added support for creation options.
+ *
  * Revision 1.9  2000/03/06 02:18:42  warmerda
  * added -outsize option
  *
@@ -61,6 +64,7 @@
 #include "gdal.h"
 #include "cpl_vsi.h"
 #include "cpl_conv.h"
+#include "cpl_string.h"
 
 /*  ******************************************************************* */
 /*                               Usage()                                */
@@ -72,6 +76,7 @@ static void Usage()
     printf( "Usage: gdal_translate [-ot {Byte/UInt16/UInt32/Int32/Float32/Float64}]\n"
             "                      [-of format] [-b band]\n"
             "			   [-outsize xsize ysize]\n"
+            "                      [-co "NAME=VALUE"]*
             "                      src_dataset dst_dataset\n" );
 }
 
@@ -92,6 +97,7 @@ int main( int argc, char ** argv )
     double		adfGeoTransform[6];
     GDALDataType	eOutputType = GDT_Unknown;
     int			nOXSize = 0, nOYSize = 0;
+    char                **papszCreateOptions = NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Handle command line arguments.                                  */
@@ -126,6 +132,11 @@ int main( int argc, char ** argv )
         else if( EQUAL(argv[i],"-b") && i < argc-1 )
             nSrcBand = atoi(argv[++i]);
             
+        else if( EQUAL(argv[i],"-co") && i < argc-1 )
+        {
+            papszCreateOptions = CSLAddString( papszCreateOptions, argv[++i] );
+        }   
+
         else if( EQUAL(argv[i],"-outsize") && i < argc-2 )
         {
             nOXSize = atoi(argv[++i]);
@@ -240,7 +251,7 @@ int main( int argc, char ** argv )
 /*      Create the output database.                                     */
 /* -------------------------------------------------------------------- */
     hOutDS = GDALCreate( hDriver, pszDest, nOXSize, nOYSize, 
-                         nBandCount, eOutputType, NULL );
+                         nBandCount, eOutputType, papszCreateOptions );
     if( hOutDS == NULL )
     {
         printf( "GDALCreate() failed.\n" );
