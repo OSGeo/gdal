@@ -28,6 +28,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.5  2002/05/24 04:09:10  warmerda
+ * added clone and SetXMLValue functions
+ *
  * Revision 1.4  2002/03/05 14:26:57  warmerda
  * expanded tabs
  *
@@ -84,6 +87,9 @@ void       CPL_DLL  CPLAddXMLChild( CPLXMLNode *psParent,
 CPLXMLNode CPL_DLL *CPLCreateXMLElementAndValue( CPLXMLNode *psParent,
                                                  const char *pszName,
                                                  const char *pszValue );
+CPLXMLNode CPL_DLL *CPLCloneXMLTree( CPLXMLNode *psTree );
+int        CPL_DLL CPLSetXMLValue( CPLXMLNode *psRoot,  const char *pszPath,
+                                   const char *pszValue );
 
 CPL_C_END
 
