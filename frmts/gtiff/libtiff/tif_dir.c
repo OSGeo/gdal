@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_dir.c,v 1.23 2002/06/14 11:13:14 dron Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_dir.c,v 1.25 2002/11/30 20:42:14 warmerda Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -480,7 +480,7 @@ _TIFFVSetField(TIFF* tif, ttag_t tag, va_list ap)
         default: {
             const TIFFFieldInfo* fip = _TIFFFindFieldInfo(tif, tag, TIFF_ANY);
             TIFFTagValue *tv;
-            int           tv_size;
+            int           tv_size, iCustom;
 
             /*
              * This can happen if multiple images are open with
@@ -504,45 +504,68 @@ _TIFFVSetField(TIFF* tif, ttag_t tag, va_list ap)
             }
 
             /*
-             * Custom flags must be added to the directory in the
-             * custom value list.
-             *
-             * NOTDEF: Should add support for replacing an existing value.
+             * Find the existing entry for this custom value.
              */
-            td->td_customValueCount++;
-            if( td->td_customValueCount != 0 )
-                td->td_customValues = (TIFFTagValue *)
-                    _TIFFrealloc(td->td_customValues,
-                             sizeof(TIFFTagValue) * td->td_customValueCount);
-            else
-                td->td_customValues = (TIFFTagValue *)
-                    _TIFFmalloc(sizeof(TIFFTagValue));
+            tv = NULL;
+            for( iCustom = 0; iCustom < td->td_customValueCount; iCustom++ )
+            {
+                if( td->td_customValues[iCustom].info == fip )
+                {
+                    tv = td->td_customValues + iCustom;
+                    if( tv->value != NULL )
+                        _TIFFfree( tv->value );
+                    break;
+                }
+            }
 
+            /*
+             * Grow the custom list if the entry was not found.
+             */
+            if( tv == NULL )
+            {
+                td->td_customValueCount++;
+                if( td->td_customValueCount != 0 )
+                    td->td_customValues = (TIFFTagValue *)
+                        _TIFFrealloc(td->td_customValues,
+                                     sizeof(TIFFTagValue) * td->td_customValueCount);
+                else
+                    td->td_customValues = (TIFFTagValue *)
+                        _TIFFmalloc(sizeof(TIFFTagValue));
+
+                tv = td->td_customValues + (td->td_customValueCount-1);
+                tv->info = fip;
+                tv->value = NULL;
+                tv->count = 0;
+            }
+
+            /*
+             * Set custom value ... save a copy of the custom tag value.
+             */
             tv_size = TIFFDataWidth(fip->field_type);
-            tv = td->td_customValues + (td->td_customValueCount - 1);
-            tv->info = fip;
             if( fip->field_passcount )
                 tv->count = (int) va_arg(ap, int);
             else
                 tv->count = 1;
-            tv->value = _TIFFmalloc(tv_size * tv->count);
             if( fip->field_passcount )
             {
+                tv->value = _TIFFmalloc(tv_size * tv->count);
                 _TIFFmemcpy( tv->value, (void *) va_arg(ap,void*),
                              tv->count * tv_size );
             }
             else if( fip->field_type == TIFF_ASCII )
             {
                 const char *value = (const char *) va_arg(ap,const char *);
-                _TIFFfree( tv->value );
                 tv->count = strlen(value)+1;
                 tv->value = _TIFFmalloc(tv->count);
                 strcpy( tv->value, value );
             }
             else
             {
-                printf( "TIFFVSetField ... pass by value not imp.\n" );
                 /* not supporting "pass by value" types yet */
+
+                printf( "TIFFVSetField ... pass by value not imp.\n" );
+
+                tv->value = _TIFFmalloc(tv_size * tv->count);
                 _TIFFmemset( tv->value, 0, tv->count * tv_size );
                 status = 0;
             }
@@ -943,6 +966,7 @@ _TIFFVGetField(TIFF* tif, ttag_t tag, va_list ap)
                 {
                     *va_arg(ap, void **) = tv->value;
                     ret_val = 1;
+                    break;
                 }
                 else
                 {
