@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2004/08/17 15:40:40  warmerda
+ * track capabilities and update mode better
+ *
  * Revision 1.2  2004/08/16 21:29:48  warmerda
  * added output support
  *
@@ -51,12 +54,14 @@ CPL_CVSID("$Id$");
 /************************************************************************/
 
 OGRCSVLayer::OGRCSVLayer( const char *pszLayerNameIn, 
-                          FILE * fp, int bNew )
+                          FILE * fp, int bNew, int bInWriteMode )
 
 {
     fpCSV = fp;
 
-    bInWriteMode = bNew;
+    this->bInWriteMode = bInWriteMode;
+    this->bNew = bNew;
+
     bUseCRLF = FALSE;
     bNeedRewind = FALSE;
 
@@ -93,7 +98,7 @@ OGRCSVLayer::OGRCSVLayer( const char *pszLayerNameIn,
     char **papszTokens = NULL;
     int nFieldCount=0, iField;
 
-    if( !bInWriteMode )
+    if( !bNew )
     {
         papszTokens = CSVReadParseLine( fpCSV );
         nFieldCount = CSLCount( papszTokens );
@@ -268,7 +273,12 @@ OGRFeature *OGRCSVLayer::GetNextFeature()
 int OGRCSVLayer::TestCapability( const char * pszCap )
 
 {
-    return FALSE;
+    if( EQUAL(pszCap,OLCSequentialWrite) )
+        return bInWriteMode;
+    else if( EQUAL(pszCap,OLCCreateField) )
+        return bNew && !bHasFieldNames;
+    else
+        return FALSE;
 }
 
 /************************************************************************/
@@ -282,7 +292,7 @@ OGRErr OGRCSVLayer::CreateField( OGRFieldDefn *poNewField, int bApproxOK )
 /*      If we have already written our field names, then we are not     */
 /*      allowed to add new fields.                                      */
 /* -------------------------------------------------------------------- */
-    if( bHasFieldNames )
+    if( bHasFieldNames || !bNew )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "Unable to create new fields after first feature written.");
@@ -416,3 +426,4 @@ void OGRCSVLayer::SetCRLF( int bNewValue )
 {
     bUseCRLF = bNewValue;
 }
+

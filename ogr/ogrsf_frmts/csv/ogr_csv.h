@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2004/08/17 15:40:40  warmerda
+ * track capabilities and update mode better
+ *
  * Revision 1.4  2004/08/16 21:29:48  warmerda
  * added output support
  *
@@ -65,12 +68,14 @@ class OGRCSVLayer : public OGRLayer
 
     OGRFeature *        GetNextUnfilteredFeature();
 
+    int                 bNew;
     int                 bInWriteMode;
     int                 bUseCRLF;
     int                 bNeedRewind;
 
   public:
-                        OGRCSVLayer( const char *pszName, FILE *fp, int bNew );
+                        OGRCSVLayer( const char *pszName, FILE *fp, 
+                                     int bNew, int bInWriteMode );
                         ~OGRCSVLayer();
 
     void                ResetReading();
