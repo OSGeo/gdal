@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2003/05/29 19:50:39  warmerda
+ * added improved TRE handling
+ *
  * Revision 1.8  2003/05/05 17:57:54  warmerda
  * added blocked writing support
  *
@@ -586,15 +589,17 @@ static void NITFLoadLocationTable( NITFFile *psFile )
     GUInt32  nLocTableOffset;
     GUInt16  nLocCount;
     int      iLoc;
+    const char *pszTRE;
 
 /* -------------------------------------------------------------------- */
 /*      Get the location table position from within the RPFHDR TRE      */
 /*      structure.                                                      */
 /* -------------------------------------------------------------------- */
-    if( psFile->pachTRE == NULL || !EQUALN(psFile->pachTRE,"RPFHDR",6) )
+    pszTRE= NITFFindTRE( psFile->pachTRE, psFile->nTREBytes, "RPFHDR", NULL );
+    if( pszTRE == NULL )
         return;
 
-    memcpy( &nLocTableOffset, psFile->pachTRE + 55, 4 );
+    memcpy( &nLocTableOffset, pszTRE + 44, 4 );
     nLocTableOffset = CPL_MSBWORD32( nLocTableOffset );
     
     if( nLocTableOffset == 0 )
@@ -698,3 +703,31 @@ char *NITFGetField( char *pszTarget, const char *pszSource,
     return pszTarget;
 }
 
+/************************************************************************/
+/*                            NITFFindTRE()                             */
+/************************************************************************/
+
+const char *NITFFindTRE( const char *pszTREData, int nTREBytes,
+                         const char *pszTag, int *pnFoundTRESize )
+
+{
+    char szTemp[100];
+
+    while( nTREBytes >= 11 )
+    {
+        int nThisTRESize = atoi(NITFGetField(szTemp, pszTREData, 6, 5 ));
+
+        if( EQUALN(pszTREData,pszTag,6) )
+        {
+            if( pnFoundTRESize != NULL )
+                *pnFoundTRESize = nThisTRESize;
+
+            return pszTREData + 11;
+        }
+
+        nTREBytes -= (nThisTRESize + 11);
+        pszTREData += (nThisTRESize + 11);
+    }
+
+    return NULL;
+}
