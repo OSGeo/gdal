@@ -29,6 +29,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.3  2005/02/23 14:37:03  fwarmerdam
+# fixed band selection logic
+#
 # Revision 1.2  2004/04/02 17:40:44  warmerda
 # added GDALGeneralCmdLineProcessor() support
 #
@@ -64,6 +67,7 @@ while i < len(argv):
     arg = argv[i]
 
     if arg == '-b':
+        i = i + 1
         bands.append( int(argv[i]) )
 
     elif arg == '-srcwin':
