@@ -24,7 +24,6 @@ OBJ =	ogrgeometryfactory.o \
 	ogr_opt.o \
 	ogr_srs_esri.o \
 	ogr_srs_pci.o \
-	ogrfeaturequery.o \
 	swq.o \
 	ogr_srs_validate.o \
 	ogr_srs_xml.o \

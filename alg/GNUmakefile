@@ -4,7 +4,12 @@ include ../GDALmake.opt
 
 OBJ	=	gdalmediancut.o gdaldither.o gdal_crs.o gdaltransformer.o \
 		gdalsimplewarp.o gdalwarper.o gdalwarpkernel.o \
-		gdalwarpoperation.o gdalchecksum.o gdal_rpc.o contour.o
+		gdalwarpoperation.o gdalchecksum.o gdal_rpc.o
+
+ifeq ($(OGR_ENABLED),yes)
+OBJ = $(OBJ) contour.o
+endif
+
 
 CPPFLAGS	+=	$(GDAL_INCLUDE)
 
