@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2004/02/09 05:04:41  warmerda
+ * added ICORDS=U (MGRS) support
+ *
  * Revision 1.13  2003/09/12 22:52:25  gwalter
  * Added recognition of header file in absence of other useable georeferencing
  * information.
@@ -514,6 +517,15 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo )
         oSRSWork.exportToWkt( &(poDS->pszProjection) );
     }
     else if( psImage->chICORDS == 'S' || psImage->chICORDS == 'N' )
+    {
+        CPLFree( poDS->pszProjection );
+        poDS->pszProjection = NULL;
+
+        oSRSWork.SetUTM( psImage->nZone, psImage->chICORDS == 'N' );
+        oSRSWork.SetWellKnownGeogCS( "WGS84" );
+        oSRSWork.exportToWkt( &(poDS->pszProjection) );
+    }
+    else if( psImage->chICORDS == 'U' && psImage->nZone > 0 )
     {
         CPLFree( poDS->pszProjection );
         poDS->pszProjection = NULL;

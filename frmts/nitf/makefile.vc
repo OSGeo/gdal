@@ -1,6 +1,6 @@
 
 GDAL_OBJ	=	nitfdataset.obj
-NITFLIB_OBJ	=	nitffile.obj nitfimage.obj
+NITFLIB_OBJ	=	nitffile.obj nitfimage.obj mgrs.obj
 
 OBJ = $(GDAL_OBJ) $(NITFLIB_OBJ)
 
