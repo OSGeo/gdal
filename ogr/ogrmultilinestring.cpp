@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2004/02/21 15:36:14  warmerda
+ * const correctness updates for geometry: bug 289
+ *
  * Revision 1.12  2004/01/16 21:57:16  warmerda
  * fixed up EMPTY support
  *
@@ -93,7 +96,7 @@ OGRMultiLineString::~OGRMultiLineString()
 /*                          getGeometryType()                           */
 /************************************************************************/
 
-OGRwkbGeometryType OGRMultiLineString::getGeometryType()
+OGRwkbGeometryType OGRMultiLineString::getGeometryType() const
 
 {
     if( getCoordinateDimension() == 3 )
@@ -106,7 +109,7 @@ OGRwkbGeometryType OGRMultiLineString::getGeometryType()
 /*                          getGeometryName()                           */
 /************************************************************************/
 
-const char * OGRMultiLineString::getGeometryName()
+const char * OGRMultiLineString::getGeometryName() const
 
 {
     return "MULTILINESTRING";
@@ -130,7 +133,7 @@ OGRErr OGRMultiLineString::addGeometryDirectly( OGRGeometry * poNewGeom )
 /*                               clone()                                */
 /************************************************************************/
 
-OGRGeometry *OGRMultiLineString::clone()
+OGRGeometry *OGRMultiLineString::clone() const
 
 {
     OGRMultiLineString  *poNewGC;
@@ -264,7 +267,7 @@ OGRErr OGRMultiLineString::importFromWkt( char ** ppszInput )
 /*      equivelent.  This could be made alot more CPU efficient!        */
 /************************************************************************/
 
-OGRErr OGRMultiLineString::exportToWkt( char ** ppszDstText )
+OGRErr OGRMultiLineString::exportToWkt( char ** ppszDstText ) const
 
 {
     char        **papszLines;

@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.47  2004/02/21 15:36:14  warmerda
+ * const correctness updates for geometry: bug 289
+ *
  * Revision 1.46  2003/09/11 22:47:54  aamici
  * add class constructors and destructors where needed in order to
  * let the mingw/cygwin binutils produce sensible partially linked objet files
@@ -223,37 +226,37 @@ class CPL_DLL OGRGeometry
     virtual     ~OGRGeometry();
                         
     // standard IGeometry
-    virtual int getDimension() = 0;
-    virtual int getCoordinateDimension() = 0;
-    virtual OGRBoolean  IsEmpty() { return 0; } 
-    virtual OGRBoolean  IsSimple() { return 1; }
+    virtual int getDimension() const = 0;
+    virtual int getCoordinateDimension() const = 0;
+    virtual OGRBoolean  IsEmpty() const { return 0; } 
+    virtual OGRBoolean  IsSimple() const { return 1; }
     virtual void        empty() = 0;
-    virtual OGRGeometry *clone() = 0;
-    virtual void getEnvelope( OGREnvelope * psEnvelope ) = 0;
+    virtual OGRGeometry *clone() const = 0;
+    virtual void getEnvelope( OGREnvelope * psEnvelope ) const = 0;
 
     // IWks Interface
-    virtual int WkbSize() = 0;
+    virtual int WkbSize() const = 0;
     virtual OGRErr importFromWkb( unsigned char *, int=-1 )=0;
-    virtual OGRErr exportToWkb( OGRwkbByteOrder, unsigned char * ) = 0;
+    virtual OGRErr exportToWkb( OGRwkbByteOrder, unsigned char * ) const = 0;
     virtual OGRErr importFromWkt( char ** ppszInput ) = 0;
-    virtual OGRErr exportToWkt( char ** ppszDstText ) = 0;
+    virtual OGRErr exportToWkt( char ** ppszDstText ) const = 0;
     
     // non-standard
-    virtual OGRwkbGeometryType getGeometryType() = 0;
-    virtual const char *getGeometryName() = 0;
+    virtual OGRwkbGeometryType getGeometryType() const = 0;
+    virtual const char *getGeometryName() const = 0;
     virtual void   dumpReadable( FILE *, const char * = NULL );
     virtual void   flattenTo2D() = 0;
     virtual char * exportToGML() const;
 
     void    assignSpatialReference( OGRSpatialReference * poSR );
-    OGRSpatialReference *getSpatialReference( void ) { return poSRS; }
+    OGRSpatialReference *getSpatialReference( void ) const { return poSRS; }
 
     virtual OGRErr  transform( OGRCoordinateTransformation *poCT ) = 0;
     OGRErr  transformTo( OGRSpatialReference *poSR );
 
     // ISpatialRelation
-    virtual OGRBoolean  Intersect( OGRGeometry * );
-    virtual OGRBoolean  Equal( OGRGeometry * ) = 0;
+    virtual OGRBoolean  Intersect( OGRGeometry * ) const;
+    virtual OGRBoolean  Equal( OGRGeometry * ) const = 0;
     
 #ifdef notdef
     
@@ -304,23 +307,23 @@ class CPL_DLL OGRPoint : public OGRGeometry
     virtual     ~OGRPoint();
 
     // IWks Interface
-    virtual int WkbSize();
+    virtual int WkbSize() const;
     virtual OGRErr importFromWkb( unsigned char *, int=-1 );
-    virtual OGRErr exportToWkb( OGRwkbByteOrder, unsigned char * );
+    virtual OGRErr exportToWkb( OGRwkbByteOrder, unsigned char * ) const;
     virtual OGRErr importFromWkt( char ** );
-    virtual OGRErr exportToWkt( char ** ppszDstText );
+    virtual OGRErr exportToWkt( char ** ppszDstText ) const;
     
     // IGeometry
-    virtual int getDimension();
-    virtual int getCoordinateDimension();
-    virtual OGRGeometry *clone();
+    virtual int getDimension() const;
+    virtual int getCoordinateDimension() const;
+    virtual OGRGeometry *clone() const;
     virtual void empty();
-    virtual void getEnvelope( OGREnvelope * psEnvelope );
+    virtual void getEnvelope( OGREnvelope * psEnvelope ) const;
 
     // IPoint
-    double      getX() { return x; }
-    double      getY() { return y; }
-    double      getZ() { return z; }
+    double      getX() const { return x; } 
+    double      getY() const { return y; }
+    double      getZ() const { return z; }
 
     // Non standard
     void        setX( double xIn ) { x = xIn; }
@@ -328,11 +331,11 @@ class CPL_DLL OGRPoint : public OGRGeometry
     void        setZ( double zIn ) { z = zIn; }
 
     // ISpatialRelation
-    virtual OGRBoolean  Equal( OGRGeometry * );
+    virtual OGRBoolean  Equal( OGRGeometry * ) const;
     
     // Non standard from OGRGeometry
-    virtual const char *getGeometryName();
-    virtual OGRwkbGeometryType getGeometryType();
+    virtual const char *getGeometryName() const;
+    virtual OGRwkbGeometryType getGeometryType() const;
     virtual OGRErr  transform( OGRCoordinateTransformation *poCT );
     virtual void flattenTo2D();
 
@@ -352,11 +355,11 @@ class CPL_DLL OGRCurve : public OGRGeometry
             OGRCurve();
     virtual ~OGRCurve();
     // ICurve methods
-    virtual double get_Length() = 0;
-    virtual void StartPoint(OGRPoint *) = 0;
-    virtual void EndPoint(OGRPoint *) = 0;
-    virtual int  get_IsClosed();
-    virtual void Value( double, OGRPoint * ) = 0;
+    virtual double get_Length() const = 0;
+    virtual void StartPoint(OGRPoint *) const = 0;
+    virtual void EndPoint(OGRPoint *) const = 0;
+    virtual int  get_IsClosed() const;
+    virtual void Value( double, OGRPoint * ) const = 0;
 
 };
 
@@ -383,34 +386,34 @@ class CPL_DLL OGRLineString : public OGRCurve
     virtual     ~OGRLineString();
 
     // IWks Interface
-    virtual int WkbSize();
+    virtual int WkbSize() const;
     virtual OGRErr importFromWkb( unsigned char *, int = -1 );
-    virtual OGRErr exportToWkb( OGRwkbByteOrder, unsigned char * );
+    virtual OGRErr exportToWkb( OGRwkbByteOrder, unsigned char * ) const;
     virtual OGRErr importFromWkt( char ** );
-    virtual OGRErr exportToWkt( char ** ppszDstText );
+    virtual OGRErr exportToWkt( char ** ppszDstText ) const;
 
     // IGeometry interface
-    virtual int getDimension();
-    virtual int getCoordinateDimension();
-    virtual OGRGeometry *clone();
+    virtual int getDimension() const;
+    virtual int getCoordinateDimension() const;
+    virtual OGRGeometry *clone() const;
     virtual void empty();
-    virtual void getEnvelope( OGREnvelope * psEnvelope );
+    virtual void getEnvelope( OGREnvelope * psEnvelope ) const;
 
     // ICurve methods
-    virtual double get_Length();
-    virtual void StartPoint(OGRPoint *);
-    virtual void EndPoint(OGRPoint *);
-    virtual void Value( double, OGRPoint * );
+    virtual double get_Length() const;
+    virtual void StartPoint(OGRPoint *) const;
+    virtual void EndPoint(OGRPoint *) const;
+    virtual void Value( double, OGRPoint * ) const;
     
     // ILineString methods
-    int         getNumPoints() { return nPointCount; }
-    void        getPoint( int, OGRPoint * );
-    double      getX( int i ) { return paoPoints[i].x; }
-    double      getY( int i ) { return paoPoints[i].y; }
-    double      getZ( int i );
+    int         getNumPoints() const { return nPointCount; }
+    void        getPoint( int, OGRPoint * ) const;
+    double      getX( int i ) const { return paoPoints[i].x; }
+    double      getY( int i ) const { return paoPoints[i].y; }
+    double      getZ( int i ) const;
 
     // ISpatialRelation
-    virtual OGRBoolean  Equal( OGRGeometry * );
+    virtual OGRBoolean  Equal( OGRGeometry * ) const;
     
     // non standard.
     void        setNumPoints( int );
@@ -423,8 +426,8 @@ class CPL_DLL OGRLineString : public OGRCurve
     void        addPoint( double, double, double = 0.0 );
 
     // non-standard from OGRGeometry
-    virtual OGRwkbGeometryType getGeometryType();
-    virtual const char *getGeometryName();
+    virtual OGRwkbGeometryType getGeometryType() const;
+    virtual const char *getGeometryName() const;
     virtual OGRErr  transform( OGRCoordinateTransformation *poCT );
     virtual void flattenTo2D();
 
@@ -450,10 +453,11 @@ class CPL_DLL OGRLinearRing : public OGRLineString
     friend class OGRPolygon; 
     
     // These are not IWks compatible ... just a convenience for OGRPolygon.
-    virtual int _WkbSize( int b3D );
+    virtual int _WkbSize( int b3D ) const;
     virtual OGRErr _importFromWkb( OGRwkbByteOrder, int b3D,
                                    unsigned char *, int=-1 );
-    virtual OGRErr _exportToWkb( OGRwkbByteOrder, int b3D, unsigned char * );
+    virtual OGRErr _exportToWkb( OGRwkbByteOrder, int b3D, 
+                                 unsigned char * ) const;
     
   public:
                         OGRLinearRing();
@@ -461,16 +465,16 @@ class CPL_DLL OGRLinearRing : public OGRLineString
                         ~OGRLinearRing();
 
     // Non standard.
-    virtual const char *getGeometryName();
-    virtual OGRGeometry *clone();
-    virtual int isClockwise();
+    virtual const char *getGeometryName() const;
+    virtual OGRGeometry *clone() const;
+    virtual int isClockwise() const;
     
     // IWks Interface - Note this isnt really a first class object
     // for the purposes of WKB form.  These methods always fail since this
     // object cant be serialized on its own. 
-    virtual int WkbSize();
+    virtual int WkbSize() const;
     virtual OGRErr importFromWkb( unsigned char *, int=-1 );
-    virtual OGRErr exportToWkb( OGRwkbByteOrder, unsigned char * );
+    virtual OGRErr exportToWkb( OGRwkbByteOrder, unsigned char * ) const;
 };
 
 /************************************************************************/
@@ -484,9 +488,9 @@ class CPL_DLL OGRLinearRing : public OGRLineString
 class CPL_DLL OGRSurface : public OGRGeometry
 {
   public:
-    virtual double      get_Area() = 0;
-    virtual OGRErr      Centroid( OGRPoint * poPoint ) = 0;
-    virtual OGRErr      PointOnSurface( OGRPoint * poPoint ) = 0;
+    virtual double      get_Area() const = 0;
+    virtual OGRErr      Centroid( OGRPoint * poPoint ) const = 0;
+    virtual OGRErr      PointOnSurface( OGRPoint * poPoint ) const = 0;
 };
 
 /************************************************************************/
@@ -512,42 +516,42 @@ class CPL_DLL OGRPolygon : public OGRSurface
     virtual     ~OGRPolygon();
 
     // Non standard (OGRGeometry).
-    virtual const char *getGeometryName();
-    virtual OGRwkbGeometryType getGeometryType();
-    virtual OGRGeometry *clone();
+    virtual const char *getGeometryName() const;
+    virtual OGRwkbGeometryType getGeometryType() const;
+    virtual OGRGeometry *clone() const;
     virtual void empty();
     virtual OGRErr  transform( OGRCoordinateTransformation *poCT );
     virtual void flattenTo2D();
     
     // ISurface Interface
-    virtual double      get_Area();
-    virtual int         Centroid( OGRPoint * poPoint );
-    virtual int         PointOnSurface( OGRPoint * poPoint );
+    virtual double      get_Area() const;
+    virtual int         Centroid( OGRPoint * poPoint ) const;
+    virtual int         PointOnSurface( OGRPoint * poPoint ) const;
     
     // IWks Interface
-    virtual int WkbSize();
+    virtual int WkbSize() const;
     virtual OGRErr importFromWkb( unsigned char *, int = -1 );
-    virtual OGRErr exportToWkb( OGRwkbByteOrder, unsigned char * );
+    virtual OGRErr exportToWkb( OGRwkbByteOrder, unsigned char * ) const;
     virtual OGRErr importFromWkt( char ** );
-    virtual OGRErr exportToWkt( char ** ppszDstText );
+    virtual OGRErr exportToWkt( char ** ppszDstText ) const;
 
     // IGeometry
-    virtual int getDimension();
-    virtual int getCoordinateDimension();
-    virtual void getEnvelope( OGREnvelope * psEnvelope );
+    virtual int getDimension() const;
+    virtual int getCoordinateDimension() const;
+    virtual void getEnvelope( OGREnvelope * psEnvelope ) const;
 
     // ISpatialRelation
-    virtual OGRBoolean  Equal( OGRGeometry * );
+    virtual OGRBoolean  Equal( OGRGeometry * ) const;
     
     // Non standard
     void        addRing( OGRLinearRing * );
     void        addRingDirectly( OGRLinearRing * );
 
     OGRLinearRing *getExteriorRing();
-    int         getNumInteriorRings();
+    const OGRLinearRing *getExteriorRing() const;
+    int         getNumInteriorRings() const;
     OGRLinearRing *getInteriorRing( int );
-        
-
+    const OGRLinearRing *getInteriorRing( int ) const;
 };
 
 /************************************************************************/
@@ -573,34 +577,35 @@ class CPL_DLL OGRGeometryCollection : public OGRGeometry
     virtual     ~OGRGeometryCollection();
 
     // Non standard (OGRGeometry).
-    virtual const char *getGeometryName();
-    virtual OGRwkbGeometryType getGeometryType();
-    virtual OGRGeometry *clone();
+    virtual const char *getGeometryName() const;
+    virtual OGRwkbGeometryType getGeometryType() const;
+    virtual OGRGeometry *clone() const;
     virtual void empty();
     virtual OGRErr  transform( OGRCoordinateTransformation *poCT );
     virtual void flattenTo2D();
     
     // IWks Interface
-    virtual int WkbSize();
+    virtual int WkbSize() const;
     virtual OGRErr importFromWkb( unsigned char *, int = -1 );
-    virtual OGRErr exportToWkb( OGRwkbByteOrder, unsigned char * );
+    virtual OGRErr exportToWkb( OGRwkbByteOrder, unsigned char * ) const;
     virtual OGRErr importFromWkt( char ** );
-    virtual OGRErr exportToWkt( char ** ppszDstText );
+    virtual OGRErr exportToWkt( char ** ppszDstText ) const;
 
     // IGeometry methods
-    virtual int getDimension();
-    virtual int getCoordinateDimension();
-    virtual void getEnvelope( OGREnvelope * psEnvelope );
+    virtual int getDimension() const;
+    virtual int getCoordinateDimension() const;
+    virtual void getEnvelope( OGREnvelope * psEnvelope ) const;
 
     // IGeometryCollection
-    int         getNumGeometries();
+    int         getNumGeometries() const;
     OGRGeometry *getGeometryRef( int );
+    const OGRGeometry *getGeometryRef( int ) const;
 
     // ISpatialRelation
-    virtual OGRBoolean  Equal( OGRGeometry * );
+    virtual OGRBoolean  Equal( OGRGeometry * ) const;
     
     // Non standard
-    virtual OGRErr addGeometry( OGRGeometry * );
+    virtual OGRErr addGeometry( const OGRGeometry * );
     virtual OGRErr addGeometryDirectly( OGRGeometry * );
     virtual OGRErr removeGeometry( int iIndex, int bDelete = TRUE );
 };
@@ -621,11 +626,11 @@ class CPL_DLL OGRMultiPolygon : public OGRGeometryCollection
   public:
             OGRMultiPolygon();
     // Non standard (OGRGeometry).
-    virtual const char *getGeometryName();
-    virtual OGRwkbGeometryType getGeometryType();
-    virtual OGRGeometry *clone();
+    virtual const char *getGeometryName() const;
+    virtual OGRwkbGeometryType getGeometryType() const;
+    virtual OGRGeometry *clone() const;
     virtual OGRErr importFromWkt( char ** );
-    virtual OGRErr exportToWkt( char ** );
+    virtual OGRErr exportToWkt( char ** ) const;
     
     // Non standard
     virtual OGRErr addGeometryDirectly( OGRGeometry * );
@@ -647,11 +652,11 @@ class CPL_DLL OGRMultiPoint : public OGRGeometryCollection
   public:
             OGRMultiPoint();
     // Non standard (OGRGeometry).
-    virtual const char *getGeometryName();
-    virtual OGRwkbGeometryType getGeometryType();
-    virtual OGRGeometry *clone();
+    virtual const char *getGeometryName() const;
+    virtual OGRwkbGeometryType getGeometryType() const;
+    virtual OGRGeometry *clone() const;
     virtual OGRErr importFromWkt( char ** );
-    virtual OGRErr exportToWkt( char ** );
+    virtual OGRErr exportToWkt( char ** ) const;
     
     // Non standard
     virtual OGRErr addGeometryDirectly( OGRGeometry * );
@@ -671,11 +676,11 @@ class CPL_DLL OGRMultiLineString : public OGRGeometryCollection
             OGRMultiLineString();
             ~OGRMultiLineString();
     // Non standard (OGRGeometry).
-    virtual const char *getGeometryName();
-    virtual OGRwkbGeometryType getGeometryType();
-    virtual OGRGeometry *clone();
+    virtual const char *getGeometryName() const;
+    virtual OGRwkbGeometryType getGeometryType() const;
+    virtual OGRGeometry *clone() const;
     virtual OGRErr importFromWkt( char ** );
-    virtual OGRErr exportToWkt( char ** );
+    virtual OGRErr exportToWkt( char ** ) const;
     
     // Non standard
     virtual OGRErr addGeometryDirectly( OGRGeometry * );

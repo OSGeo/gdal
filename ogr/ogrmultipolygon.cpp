@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2004/02/21 15:36:14  warmerda
+ * const correctness updates for geometry: bug 289
+ *
  * Revision 1.11  2004/01/16 21:57:17  warmerda
  * fixed up EMPTY support
  *
@@ -82,7 +85,7 @@ OGRMultiPolygon::OGRMultiPolygon()
 /*                          getGeometryType()                           */
 /************************************************************************/
 
-OGRwkbGeometryType OGRMultiPolygon::getGeometryType()
+OGRwkbGeometryType OGRMultiPolygon::getGeometryType() const
 
 {
     if( getCoordinateDimension() == 3 )
@@ -95,7 +98,7 @@ OGRwkbGeometryType OGRMultiPolygon::getGeometryType()
 /*                          getGeometryName()                           */
 /************************************************************************/
 
-const char * OGRMultiPolygon::getGeometryName()
+const char * OGRMultiPolygon::getGeometryName() const
 
 {
     return "MULTIPOLYGON";
@@ -119,7 +122,7 @@ OGRErr OGRMultiPolygon::addGeometryDirectly( OGRGeometry * poNewGeom )
 /*                               clone()                                */
 /************************************************************************/
 
-OGRGeometry *OGRMultiPolygon::clone()
+OGRGeometry *OGRMultiPolygon::clone() const
 
 {
     OGRMultiPolygon     *poNewGC;
@@ -290,7 +293,7 @@ OGRErr OGRMultiPolygon::importFromWkt( char ** ppszInput )
 /*      equivelent.  This could be made alot more CPU efficient!        */
 /************************************************************************/
 
-OGRErr OGRMultiPolygon::exportToWkt( char ** ppszDstText )
+OGRErr OGRMultiPolygon::exportToWkt( char ** ppszDstText ) const
 
 {
     char        **papszLines;

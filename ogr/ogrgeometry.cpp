@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.23  2004/02/21 15:36:14  warmerda
+ * const correctness updates for geometry: bug 289
+ *
  * Revision 1.22  2004/01/06 19:07:45  warmerda
  * Added braces within case with variable declarations.
  *
@@ -259,7 +262,7 @@ void OGR_G_AssignSpatialReference( OGRGeometryH hGeom,
  * @return TRUE if the geometries intersect, otherwise FALSE.
  */
 
-OGRBoolean OGRGeometry::Intersect( OGRGeometry *poOtherGeom )
+OGRBoolean OGRGeometry::Intersect( OGRGeometry *poOtherGeom ) const
 
 {
     OGREnvelope         oEnv1, oEnv2;

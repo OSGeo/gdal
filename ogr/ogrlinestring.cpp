@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.43  2004/02/21 15:36:14  warmerda
+ * const correctness updates for geometry: bug 289
+ *
  * Revision 1.42  2004/02/20 18:03:36  warmerda
  * Applied new Value() implementation to deal with duplicate points.
  * http://bugzilla.remotesensing.org/show_bug.cgi?id=384
@@ -198,7 +201,7 @@ OGRLineString::~OGRLineString()
 /*                          getGeometryType()                           */
 /************************************************************************/
 
-OGRwkbGeometryType OGRLineString::getGeometryType()
+OGRwkbGeometryType OGRLineString::getGeometryType() const
 
 {
     if( getCoordinateDimension() == 3 )
@@ -221,7 +224,7 @@ void OGRLineString::flattenTo2D()
 /*                          getGeometryName()                           */
 /************************************************************************/
 
-const char * OGRLineString::getGeometryName()
+const char * OGRLineString::getGeometryName() const
 
 {
     return "LINESTRING";
@@ -231,7 +234,7 @@ const char * OGRLineString::getGeometryName()
 /*                               clone()                                */
 /************************************************************************/
 
-OGRGeometry *OGRLineString::clone()
+OGRGeometry *OGRLineString::clone() const
 
 {
     OGRLineString       *poNewLineString;
@@ -261,7 +264,7 @@ void OGRLineString::empty()
 /*                            getDimension()                            */
 /************************************************************************/
 
-int OGRLineString::getDimension()
+int OGRLineString::getDimension() const
 
 {
     return 1;
@@ -271,7 +274,7 @@ int OGRLineString::getDimension()
 /*                       getCoordinateDimension()                       */
 /************************************************************************/
 
-int OGRLineString::getCoordinateDimension()
+int OGRLineString::getCoordinateDimension() const
 
 {
     if( padfZ != NULL )
@@ -287,7 +290,7 @@ int OGRLineString::getCoordinateDimension()
 /*      representation including the byte order, and type information.  */
 /************************************************************************/
 
-int OGRLineString::WkbSize()
+int OGRLineString::WkbSize() const
 
 {
     return 5 + 4 + 8 * nPointCount * getCoordinateDimension();
@@ -336,7 +339,7 @@ void OGRLineString::Make3D()
  * @param poPoint a point to initialize with the fetched point.
  */
 
-void    OGRLineString::getPoint( int i, OGRPoint * poPoint )
+void    OGRLineString::getPoint( int i, OGRPoint * poPoint ) const
 
 {
     assert( i >= 0 );
@@ -354,7 +357,7 @@ void    OGRLineString::getPoint( int i, OGRPoint * poPoint )
 /*                                getZ()                                */
 /************************************************************************/
 
-double OGRLineString::getZ( int i )
+double OGRLineString::getZ( int i ) const
 
 {
     if( padfZ != NULL && i >= 0 && i < nPointCount )
@@ -746,7 +749,7 @@ OGRErr OGRLineString::importFromWkb( unsigned char * pabyData,
 /************************************************************************/
 
 OGRErr  OGRLineString::exportToWkb( OGRwkbByteOrder eByteOrder,
-                               unsigned char * pabyData )
+                               unsigned char * pabyData ) const
 
 {
 /* -------------------------------------------------------------------- */
@@ -884,7 +887,7 @@ OGRErr OGRLineString::importFromWkt( char ** ppszInput )
 /*      equivelent.  This could be made alot more CPU efficient!        */
 /************************************************************************/
 
-OGRErr OGRLineString::exportToWkt( char ** ppszDstText )
+OGRErr OGRLineString::exportToWkt( char ** ppszDstText ) const
 
 {
     int         nMaxString = nPointCount * 20 * 3 + 20;
@@ -952,7 +955,7 @@ OGRErr OGRLineString::exportToWkt( char ** ppszDstText )
 /*      For now we return a simple euclidian 2D distance.               */
 /************************************************************************/
 
-double OGRLineString::get_Length()
+double OGRLineString::get_Length() const
 
 {
     double      dfLength = 0;
@@ -974,7 +977,7 @@ double OGRLineString::get_Length()
 /*                             StartPoint()                             */
 /************************************************************************/
 
-void OGRLineString::StartPoint( OGRPoint * poPoint )
+void OGRLineString::StartPoint( OGRPoint * poPoint ) const
 
 {
     getPoint( 0, poPoint );
@@ -984,7 +987,7 @@ void OGRLineString::StartPoint( OGRPoint * poPoint )
 /*                              EndPoint()                              */
 /************************************************************************/
 
-void OGRLineString::EndPoint( OGRPoint * poPoint )
+void OGRLineString::EndPoint( OGRPoint * poPoint ) const
 
 {
     getPoint( nPointCount-1, poPoint );
@@ -996,7 +999,7 @@ void OGRLineString::EndPoint( OGRPoint * poPoint )
 /*      Get an interpolated point at some distance along the curve.     */
 /************************************************************************/
 
-void OGRLineString::Value( double dfDistance, OGRPoint * poPoint )
+void OGRLineString::Value( double dfDistance, OGRPoint * poPoint ) const
 
 {
     double      dfLength = 0;
@@ -1048,7 +1051,7 @@ void OGRLineString::Value( double dfDistance, OGRPoint * poPoint )
 /*                            getEnvelope()                             */
 /************************************************************************/
 
-void OGRLineString::getEnvelope( OGREnvelope * psEnvelope )
+void OGRLineString::getEnvelope( OGREnvelope * psEnvelope ) const
 
 {
     double      dfMinX, dfMinY, dfMaxX, dfMaxY;
@@ -1081,7 +1084,7 @@ void OGRLineString::getEnvelope( OGREnvelope * psEnvelope )
 /*                               Equal()                                */
 /************************************************************************/
 
-OGRBoolean OGRLineString::Equal( OGRGeometry * poOther )
+OGRBoolean OGRLineString::Equal( OGRGeometry * poOther ) const
 
 {
     OGRLineString       *poOLine = (OGRLineString *) poOther;

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2004/02/21 15:36:14  warmerda
+ * const correctness updates for geometry: bug 289
+ *
  * Revision 1.15  2003/09/11 22:47:54  aamici
  * add class constructors and destructors where needed in order to
  * let the mingw/cygwin binutils produce sensible partially linked objet files
@@ -128,7 +131,7 @@ OGRLinearRing::OGRLinearRing( OGRLinearRing * poSrcRing )
 /*                          getGeometryName()                           */
 /************************************************************************/
 
-const char * OGRLinearRing::getGeometryName()
+const char * OGRLinearRing::getGeometryName() const 
 
 {
     return "LINEARRING";
@@ -140,7 +143,7 @@ const char * OGRLinearRing::getGeometryName()
 /*      Disable this method.                                            */
 /************************************************************************/
 
-int OGRLinearRing::WkbSize()
+int OGRLinearRing::WkbSize() const
 
 {
     return 0;
@@ -152,7 +155,7 @@ int OGRLinearRing::WkbSize()
 /*      Disable method for this class.                                  */
 /************************************************************************/
 
-OGRErr OGRLinearRing::importFromWkb( unsigned char *pabyData, int nSize )
+OGRErr OGRLinearRing::importFromWkb( unsigned char *pabyData, int nSize ) 
 
 {
     (void) pabyData;
@@ -168,7 +171,7 @@ OGRErr OGRLinearRing::importFromWkb( unsigned char *pabyData, int nSize )
 /************************************************************************/
 
 OGRErr OGRLinearRing::exportToWkb( OGRwkbByteOrder eByteOrder, 
-                                   unsigned char * pabyData )
+                                   unsigned char * pabyData ) const
 
 {
     (void) eByteOrder;
@@ -186,7 +189,7 @@ OGRErr OGRLinearRing::exportToWkb( OGRwkbByteOrder eByteOrder,
 
 OGRErr OGRLinearRing::_importFromWkb( OGRwkbByteOrder eByteOrder, int b3D, 
                                       unsigned char * pabyData,
-                                      int nBytesAvailable )
+                                      int nBytesAvailable ) 
 
 {
     if( nBytesAvailable < 4 && nBytesAvailable != -1 )
@@ -253,9 +256,8 @@ OGRErr OGRLinearRing::_importFromWkb( OGRwkbByteOrder eByteOrder, int b3D,
 /*      exportToWkb() METHOD!                                           */
 /************************************************************************/
 
-OGRErr  OGRLinearRing::_exportToWkb( OGRwkbByteOrder eByteOrder,
-                                     int b3D,
-                                     unsigned char * pabyData )
+OGRErr  OGRLinearRing::_exportToWkb( OGRwkbByteOrder eByteOrder, int b3D,
+                                     unsigned char * pabyData ) const
 
 {
     int   i, nWords;
@@ -312,7 +314,7 @@ OGRErr  OGRLinearRing::_exportToWkb( OGRwkbByteOrder eByteOrder,
 /*      Helper method for OGRPolygon.  NOT THE NORMAL WkbSize() METHOD! */
 /************************************************************************/
 
-int OGRLinearRing::_WkbSize( int b3D )
+int OGRLinearRing::_WkbSize( int b3D ) const
 
 {
     if( b3D )
@@ -328,7 +330,7 @@ int OGRLinearRing::_WkbSize( int b3D )
 /*      correct virtual table.                                          */
 /************************************************************************/
 
-OGRGeometry *OGRLinearRing::clone()
+OGRGeometry *OGRLinearRing::clone() const
 
 {
     OGRLinearRing       *poNewLinearRing;
@@ -351,7 +353,7 @@ OGRGeometry *OGRLinearRing::clone()
  * @return TRUE if clockwise otherwise FALSE.
  */
 
-int OGRLinearRing::isClockwise()
+int OGRLinearRing::isClockwise() const
 
 {
     double dfSum = 0.0;
