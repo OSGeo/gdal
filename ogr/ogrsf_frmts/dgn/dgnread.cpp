@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2001/01/16 18:12:52  warmerda
+ * Added arc support, DGNLookupColor
+ *
  * Revision 1.4  2001/01/10 16:13:45  warmerda
  * added docs and extents api
  *
@@ -241,7 +244,12 @@ DGNElemCore *DGNReadElement( DGNHandle hDGN )
             psColorTable->screen_flag = 
                 psDGN->abyElem[36] + psDGN->abyElem[37] * 256;
 
-            memcpy( psColorTable->color_info, psDGN->abyElem+38, 768 );	
+            memcpy( psColorTable->color_info, psDGN->abyElem+41, 768 );	
+            if( !psDGN->got_color_table )
+            {
+                memcpy( psDGN->color_table, psColorTable->color_info, 768 );
+                psDGN->got_color_table = 1;
+            }
         }
         else
         {
@@ -253,11 +261,11 @@ DGNElemCore *DGNReadElement( DGNHandle hDGN )
 
       case DGNT_ELLIPSE:
       {
-          DGNElemEllipse *psEllipse;
+          DGNElemArc *psEllipse;
 
-          psEllipse = (DGNElemEllipse *) CPLCalloc(sizeof(DGNElemEllipse),1);
+          psEllipse = (DGNElemArc *) CPLCalloc(sizeof(DGNElemArc),1);
           psElement = (DGNElemCore *) psEllipse;
-          psElement->stype = DGNST_ELLIPSE;
+          psElement->stype = DGNST_ARC;
           DGNParseCore( psDGN, psElement );
 
           memcpy( &(psEllipse->primary_axis), psDGN->abyElem + 36, 8 );
@@ -278,6 +286,52 @@ DGNElemCore *DGNReadElement( DGNHandle hDGN )
           DGN2IEEEDouble( &(psEllipse->origin.y) );
 
           DGNTransformPoint( psDGN, &(psEllipse->origin) );
+
+          psEllipse->startang = 0.0;
+          psEllipse->sweepang = 360.0;
+      }
+      break;
+
+      case DGNT_ARC:
+      {
+          DGNElemArc *psEllipse;
+          GInt32     nSweepVal;
+
+          psEllipse = (DGNElemArc *) CPLCalloc(sizeof(DGNElemArc),1);
+          psElement = (DGNElemCore *) psEllipse;
+          psElement->stype = DGNST_ARC;
+          DGNParseCore( psDGN, psElement );
+
+          psEllipse->startang = DGN_INT32( psDGN->abyElem + 36 );
+          psEllipse->startang = psEllipse->startang / 360000.0;
+
+          nSweepVal = DGN_INT32( psDGN->abyElem + 40 );
+          if( nSweepVal & 0x80000000 ) 
+              psEllipse->sweepang = - (nSweepVal & 0x7fffffff)/360000.0;
+          else if( nSweepVal  == 0 )
+              psEllipse->sweepang = 360.0;
+          else
+              psEllipse->sweepang = nSweepVal / 360000.0;
+          
+          memcpy( &(psEllipse->primary_axis), psDGN->abyElem + 44, 8 );
+          DGN2IEEEDouble( &(psEllipse->primary_axis) );
+          psEllipse->primary_axis *= psDGN->scale;
+
+          memcpy( &(psEllipse->secondary_axis), psDGN->abyElem + 52, 8 );
+          DGN2IEEEDouble( &(psEllipse->secondary_axis) );
+          psEllipse->secondary_axis *= psDGN->scale;
+          
+          psEllipse->rotation = DGN_INT32( psDGN->abyElem + 60 );
+          psEllipse->rotation = psEllipse->rotation / 360000.0;
+          
+          memcpy( &(psEllipse->origin.x), psDGN->abyElem + 64, 8 );
+          DGN2IEEEDouble( &(psEllipse->origin.x) );
+
+          memcpy( &(psEllipse->origin.y), psDGN->abyElem + 72, 8 );
+          DGN2IEEEDouble( &(psEllipse->origin.y) );
+
+          DGNTransformPoint( psDGN, &(psEllipse->origin) );
+
       }
       break;
 
@@ -387,6 +441,7 @@ int DGNParseCore( DGNInfo *psDGN, DGNElemCore *psElement )
 
     psElement->level = psData[0] & 0x3f;
     psElement->complex = psData[0] & 0x80;
+    psElement->deleted = psData[1] & 0x80;
     psElement->type = psData[1] & 0x7f;
 
     if( psDGN->nElemBytes >= 36 )
@@ -475,6 +530,9 @@ void DGNDumpElement( DGNHandle hDGN, DGNElemCore *psElement, FILE *fp )
     if( psElement->complex )
         fprintf( fp, "(Complex) " );
 
+    if( psElement->deleted )
+        fprintf( fp, "(DELETED) " );
+
     fprintf( fp, "\n" );
 
 #ifdef DGN_DEBUG
@@ -491,6 +549,8 @@ void DGNDumpElement( DGNHandle hDGN, DGNElemCore *psElement, FILE *fp )
 
     if( psElement->properties != 0 )
     {
+        int	nClass;
+
         fprintf( fp, "  properties=%d", psElement->properties );
         if( psElement->properties & DGNPF_HOLE )
             fprintf( fp, ",HOLE" );
@@ -508,6 +568,21 @@ void DGNDumpElement( DGNHandle hDGN, DGNElemCore *psElement, FILE *fp )
             fprintf( fp, ",NEW" );
         if( psElement->properties & DGNPF_LOCKED )
             fprintf( fp, ",LOCKED" );
+
+        nClass = psElement->properties & DGNPF_CLASS;
+        if( nClass == DGNC_PATTERN_COMPONENT )
+            fprintf( fp, ",PATTERN_COMPONENT" );
+        else if( nClass == DGNC_CONSTRUCTION_ELEMENT )
+            fprintf( fp, ",CONSTRUCTION ELEMENT" );
+        else if( nClass == DGNC_DIMENSION_ELEMENT )
+            fprintf( fp, ",DIMENSION ELEMENT" );
+        else if( nClass == DGNC_PRIMARY_RULE_ELEMENT )
+            fprintf( fp, ",PRIMARY RULE ELEMENT" );
+        else if( nClass == DGNC_LINEAR_PATTERNED_ELEMENT )
+            fprintf( fp, ",LINEAR PATTERNED ELEMENT" );
+        else if( nClass == DGNC_CONSTRUCTION_RULE_ELEMENT )
+            fprintf( fp, ",CONSTRUCTION_RULE_ELEMENT" );
+            
         fprintf( fp, "\n" );
     }
 
@@ -526,18 +601,20 @@ void DGNDumpElement( DGNHandle hDGN, DGNElemCore *psElement, FILE *fp )
       }
       break;
 
-      case DGNST_ELLIPSE:
+      case DGNST_ARC:
       {
-          DGNElemEllipse	*psEllipse = (DGNElemEllipse *) psElement;
+          DGNElemArc	*psArc = (DGNElemArc *) psElement;
 
           fprintf( fp, 
                    "  origin=(%.5f,%.5f), rotation=%f\n"
-                   "  axes=(%.5f,%.5f)\n", 
-                   psEllipse->origin.x, 
-                   psEllipse->origin.y, 
-                   psEllipse->rotation,
-                   psEllipse->primary_axis,
-                   psEllipse->secondary_axis );
+                   "  axes=(%.5f,%.5f), start angle=%f, sweep=%f\n", 
+                   psArc->origin.x, 
+                   psArc->origin.y, 
+                   psArc->rotation,
+                   psArc->primary_axis,
+                   psArc->secondary_axis,
+                   psArc->startang,
+                   psArc->sweepang );                   
       }
       break;
 
@@ -833,8 +910,8 @@ void DGNBuildIndex( DGNInfo *psDGN )
         else if( nType == DGNT_GROUP_DATA && nLevel == DGN_GDL_COLOR_TABLE )
             psEI->stype = DGNST_COLORTABLE;
         
-        else if( nType == DGNT_ELLIPSE )
-            psEI->stype = DGNST_ELLIPSE;
+        else if( nType == DGNT_ELLIPSE || nType == DGNT_ARC )
+            psEI->stype = DGNST_ARC;
         
         else if( nType == DGNT_TEXT )
             psEI->stype = DGNST_TEXT;
@@ -846,7 +923,7 @@ void DGNBuildIndex( DGNInfo *psDGN )
             psEI->stype = DGNST_CORE;
 
         if( psEI->stype == DGNST_MULTIPOINT 
-            || psEI->stype == DGNST_ELLIPSE
+            || psEI->stype == DGNST_ARC
             || psEI->stype == DGNST_TEXT )
         {
             GUInt32	anRegion[6];
@@ -889,4 +966,37 @@ void DGNBuildIndex( DGNInfo *psDGN )
     }
 
     DGNRewind( psDGN );
+}
+
+/************************************************************************/
+/*                           DGNLookupColor()                           */
+/************************************************************************/
+
+/**
+ * Translate color index into RGB values.
+ *
+ * @param hDGN the file.
+ * @param color_index the color index to lookup.
+ * @param red location to put red component.
+ * @param green location to put green component.
+ * @param blue location to put blue component.
+ *
+ * @return TRUE on success or FALSE on failure.  May fail if color_index is
+ * out of range, or if a color table has not been read yet. 
+ */
+
+int DGNLookupColor( DGNHandle hDGN, int color_index, 
+                    int * red, int * green, int * blue )
+
+{
+    DGNInfo	*psDGN = (DGNInfo *) hDGN;
+
+    if( color_index < 0 || color_index > 255 || !psDGN->got_color_table )
+        return FALSE;
+
+    *red = psDGN->color_table[color_index][0];
+    *green = psDGN->color_table[color_index][1];
+    *blue = psDGN->color_table[color_index][2];
+
+    return TRUE;
 }
