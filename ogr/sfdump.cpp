@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  1999/05/24 01:08:08  warmerda
+ * Added "SF" provider for Kens new provider.
+ *
  * Revision 1.11  1999/05/21 02:37:35  warmerda
  * use IWks::exportToWKT() to report geometry info
  *
@@ -110,6 +113,8 @@ void main( int nArgc, char ** papszArgv )
             iArg++;
             if( stricmp(papszArgv[iArg],"Cadcorp") == 0 )
                 hProviderCLSID = CLSID_CadcorpSFProvider;
+            else if( stricmp(papszArgv[iArg],"SF") == 0 )
+                hProviderCLSID = CLSID_SFProvider;
             else
                 /* need generic translator */;
         }
