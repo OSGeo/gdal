@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.17  2005/02/18 17:59:20  kruland
+ * Added nicely worded OGR exception mapping mechanism.
+ *
  * Revision 1.16  2005/02/18 17:28:07  kruland
  * Fixed bugs in THROW_OGR_ERROR typemap.  When no error is found, and no
  * argouts, return None.
@@ -127,14 +130,35 @@
  * and no other argout typemaps create a return value,
  * then it will return 0.
  */
-%typemap(out) THROW_OGR_ERROR
+%fragment("OGRErrMessages","header") %{
+static char const *
+OGRErrMessages( int rc ) {
+  switch( rc ) {
+  case0:
+    return "OGR Error %d: None";
+  case 1:
+    return "OGR Error %d: Not enough data";
+  case 2:
+    return "OGR Error %d: Unsupported geometry type";
+  case 3:
+    return "OGR Error %d: Unsupported operation";
+  case 4:
+    return "OGR Error %d: Corrupt data";
+  case 5:
+    return "OGR Error %d: General Error";
+  case 6:
+    return "OGR Error %d: Unsupported SRS";
+  default:
+    return "OGR Error %d: Unknown";
+  }
+}
+%}
+%typemap(out,fragment="OGRErrMessages") THROW_OGR_ERROR
 {
   /* %typemap(out) THROW_OGR_ERROR */
   resultobj = 0;
   if ( result != 0) {
-    char errMsg[13];
-    sprintf(errMsg,"OGR Error %02d",result);
-    PyErr_SetString( PyExc_RuntimeError, errMsg );
+    PyErr_Format( PyExc_RuntimeError, OGRErrMessages(result), result );
     SWIG_fail;
   }
 }
