@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2002/09/04 19:08:26  warmerda
+ * removed unused variable
+ *
  * Revision 1.3  2002/09/04 14:13:34  warmerda
  * convert to unix text mode
  *
@@ -344,7 +347,6 @@ HRESULT CSFSessionSchemaSpatRef::Execute(LONG* pcRowsAffected,
     // See if we can get the Spatial reference system for each layer.
     // It is unclear at the current time what the valid authority id and spatial
     // ref ids are.  
-    int                iLayer;
     IUnknown        *pIU;
     CSFSource       *poCSFSource;
     LONG lSRSIDRestriction = -1;
