@@ -28,6 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************
  * $Log$
+ * Revision 1.6  1999/10/21 13:24:37  warmerda
+ * Fixed some build breaking variable name differences.
+ *
  * Revision 1.5  1999/10/01 14:44:02  warmerda
  * added documentation
  *
@@ -733,22 +736,22 @@ GDALRasterBlock * GDALRasterBand::GetBlockRef( int nXBlockOff,
 /* -------------------------------------------------------------------- */
 /*      Validate the request                                            */
 /* -------------------------------------------------------------------- */
-    if( nBlockXOff < 0 || nBlockXOff >= nBlocksPerRow )
+    if( nXBlockOff < 0 || nXBlockOff >= nBlocksPerRow )
     {
         CPLError( CE_Failure, CPLE_IllegalArg,
                   "Illegal nBlockXOff value (%d) in "
                   	"GDALRasterBand::GetBlockRef()\n",
-                  nBlockXOff );
+                  nXBlockOff );
 
         return( NULL );
     }
 
-    if( nBlockYOff < 0 || nBlockYOff >= nBlocksPerColumn )
+    if( nYBlockOff < 0 || nYBlockOff >= nBlocksPerColumn )
     {
         CPLError( CE_Failure, CPLE_IllegalArg,
                   "Illegal nBlockYOff value (%d) in "
                   	"GDALRasterBand::GetBlockRef()\n",
-                  nBlockYOff );
+                  nYBlockOff );
 
         return( NULL );
     }
@@ -758,7 +761,7 @@ GDALRasterBlock * GDALRasterBand::GetBlockRef( int nXBlockOff,
 /*      create it, read into it, and adopt it.  Adopting it may         */
 /*      flush an old tile from the cache.                               */
 /* -------------------------------------------------------------------- */
-    nBlockIndex = nBlockXOff + nBlockYOff * nBlocksPerRow;
+    nBlockIndex = nXBlockOff + nYBlockOff * nBlocksPerRow;
     
     if( papoBlocks[nBlockIndex] == NULL )
     {
@@ -775,13 +778,13 @@ GDALRasterBlock * GDALRasterBand::GetBlockRef( int nXBlockOff,
             return( NULL );
         }
 
-        if( IReadBlock(nBlockXOff,nBlockYOff,poBlock->GetDataRef()) != CE_None)
+        if( IReadBlock(nXBlockOff,nYBlockOff,poBlock->GetDataRef()) != CE_None)
         {
             delete poBlock;
             return( NULL );
         }
 
-        AdoptBlock( nBlockXOff, nBlockYOff, poBlock );
+        AdoptBlock( nXBlockOff, nYBlockOff, poBlock );
     }
 
 /* -------------------------------------------------------------------- */
