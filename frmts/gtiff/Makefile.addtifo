@@ -1,0 +1,39 @@
+#
+# CPL_MSB for Sun/SGI, Mac and CPL_LSB for Intel, Alpha
+#
+BYTEORDER = 	-DCPL_LSB
+#BYTEORDER = 	-DCPL_MSB
+#
+CC	=	gcc
+CPPC	=	gcc
+CFLAGS	=	-O -I../libtiff $(BYTEORDER)
+LIBS	=	../libtiff/libtiff.a -lm
+
+CPL_OBJ	=	cpl_error.o cpl_vsisimple.o cpl_conv.o
+
+addtifo:	addtifo.o tif_overview.o rawblockedimage.o $(CPL_OBJ)
+	$(CC) $(CFLAGS) addtifo.o tif_overview.o rawblockedimage.o $(CPL_OBJ) \
+		$(LIBS) -o addtifo 
+
+
+addtifo.o:	addtifo.c
+	$(CC) -c $(CFLAGS) addtifo.c
+
+tif_overview.o:	tif_overview.cpp
+	$(CPPC) -c $(CFLAGS) tif_overview.cpp
+
+rawblockedimage.o:	rawblockedimage.cpp
+	$(CPPC) -c $(CFLAGS) rawblockedimage.cpp
+
+cpl_error.o:	cpl_error.cpp
+	$(CPPC) -c $(CFLAGS) cpl_error.cpp
+
+cpl_conv.o:	cpl_conv.cpp
+	$(CPPC) -c $(CFLAGS) cpl_conv.cpp
+
+cpl_vsisimple.o:	cpl_vsisimple.cpp
+	$(CPPC) -c $(CFLAGS) cpl_vsisimple.cpp
+
+
+clean:
+	rm *.o addtifo
