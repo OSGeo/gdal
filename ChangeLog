@@ -1,3 +1,8 @@
+2003-02-21  Andrey Kiselev  <dron@remotesensing.org>
+	
+	* /gdal/frmts/hfa/{hfaopen.cpp, hfatype.cpp, hfaband.cpp, hfa_p.h}:
+	Added support for writing large (>4 GB) Erdas Imagine files.
+
 2003-02-19  Andrey Kiselev  <dron@remotesensing.org>
 	
 	* /gdal/frmts/raw/effdataset.cpp: Removed. FAST driver now should work
