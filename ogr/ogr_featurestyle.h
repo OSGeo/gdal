@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2000/08/28 20:26:18  svillene
+ * Add missing virtual ~()
+ *
  * Revision 1.1  2000/08/18 21:26:01  svillene
  * OGR Representation
  *
@@ -230,7 +233,7 @@ public:
     OGRSTClassId m_eClassId;
     OGRStyleTool(){}
     OGRStyleTool(OGRSTClassId eClassId);
-    ~OGRStyleTool();
+    virtual ~OGRStyleTool();
 
     GBool GetRGBFromString(const char *pszColor, int &nRed, int &nGreen, 
 			   int &nBlue, int &nTransparence);
@@ -305,7 +308,7 @@ public:
     OGRStyleValue    *m_pasStyleValue;
 
     OGRStylePen();
-    ~OGRStylePen(); 
+    virtual ~OGRStylePen(); 
 
     /**********************************************************************/
     /* Explicite fct for all parameters defined in the Drawing tools  Pen */
@@ -376,7 +379,7 @@ public:
     OGRStyleValue    *m_pasStyleValue;
 
     OGRStyleBrush();
-    ~OGRStyleBrush();
+    virtual ~OGRStyleBrush();
 
     /*a Explicite fct for all parameters defined in the Drawing tools Brush */
 
@@ -447,7 +450,7 @@ public:
     OGRStyleValue    *m_pasStyleValue;
 
     OGRStyleSymbol();
-    ~OGRStyleSymbol();
+    virtual ~OGRStyleSymbol();
 
     /*****************************************************************/
     /* Explicite fct for all parameters defined in the Drawing tools */
@@ -525,7 +528,7 @@ public:
     OGRStyleValue    *m_pasStyleValue;
 
     OGRStyleLabel();
-    ~OGRStyleLabel();
+    virtual ~OGRStyleLabel();
 
     /*****************************************************************/
     /* Explicite fct for all parameters defined in the Drawing tools */
