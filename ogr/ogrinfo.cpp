@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2000/03/14 21:37:49  warmerda
+ * report layer geometry type
+ *
  * Revision 1.6  1999/11/18 19:02:19  warmerda
  * expanded tabs
  *
@@ -163,9 +166,15 @@ int main( int nArgc, char ** papszArgv )
 
         if( CSLCount(papszLayers) == 0 )
         {
-            printf( "%d: %s\n",
+            printf( "%d: %s",
                     iLayer+1,
                     poLayer->GetLayerDefn()->GetName() );
+            if( poLayer->GetLayerDefn()->GetGeomType() != wkbUnknown )
+                printf( " (%s)", 
+                        OGRGeometryTypeToName( 
+                            poLayer->GetLayerDefn()->GetGeomType() ) );
+
+            printf( "\n" );
         }
         else if( CSLFindString( papszLayers,
                                 poLayer->GetLayerDefn()->GetName() ) != -1 )
@@ -209,6 +218,9 @@ static void ReportOnLayer( OGRLayer * poLayer )
     printf( "\n" );
     
     printf( "Layer name: %s\n", poDefn->GetName() );
+
+    printf( "Geometry: %s\n", 
+            OGRGeometryTypeToName( poDefn->GetGeomType() ) );
 
     printf( "Feature Count: %d\n", poLayer->GetFeatureCount() );
 
