@@ -21,7 +21,7 @@ docs:
 	$(CXX) -c $(GDAL_INCLUDE) $(CXXFLAGS) $*.cpp -o $*.o
 
 install:
-	for f in *.h ; do $(INSTALL) $$f $(INST_INCLUDE) ; done
+	for f in *.h ; do $(INSTALL_DATA) $$f $(INST_INCLUDE) ; done
 
 lib:	$(OBJ)
 	(cd .. ; $(MAKE) force-lib)

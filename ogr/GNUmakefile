@@ -33,6 +33,7 @@ clean:
 	rm -f *.o ogrinfo$(EXE) ogr2ogr$(EXE) ogrtindex$(EXE) 
 	rm -f sdts2mi$(EXE) testepsg$(EXE)
 	rm -f test_ogrsf$(EXE) $(OGR_LIB)
+	rm -f html/*
 	(cd ogrsf_frmts; $(MAKE) clean)
 
 very-clean: clean
@@ -67,6 +68,10 @@ sublibs:
 docs:
 	rm -rf html/*
 	doxygen
+
+install-docs:
+	$(INSTALL_DIR) $(INST_DOCS)/ogr
+	cp html/* $(INST_DOCS)/ogr
 
 $(OGR_LIB):	$(OBJ)
 	$(AR) r $(OGR_LIB) $?
@@ -119,13 +124,15 @@ install-full:	apps
 	$(INSTALL) ogr2ogr $(INST_BIN)
 	$(INSTALL) ogrinfo $(INST_BIN)
 	$(INSTALL) ogrtindex $(INST_BIN)
-	$(INSTALL) $(OGRFRMTS_LIB) $(INST_LIB)
+	$(INSTALL_DATA) $(OGRFRMTS_LIB) $(INST_LIB)
 else
 install-full:
 endif
 
 install:	$(OGR_LIB) install-full
-	for f in $(INST_H_FILES) ; do $(INSTALL) $$f $(INST_INCLUDE) ; done
-	$(INSTALL) $(OGR_LIB) $(INST_LIB)
+	for f in $(INST_H_FILES) ; \
+	    do $(INSTALL_DATA) $$f $(INST_INCLUDE) ; \
+	done
+	$(INSTALL_DATA) $(OGR_LIB) $(INST_LIB)
 
 

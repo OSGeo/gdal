@@ -106,6 +106,7 @@ GDALmake.opt:	GDALmake.opt.in config.status
 	./config.status
 
 docs:
+	(cd ogr; $(MAKE) docs)
 	(cd html; rm -f *.*)
 	doxygen
 	cp data/gdalicon.png html
@@ -113,9 +114,10 @@ docs:
 
 all:	default ogr-all
 
-install-docs:	
-	$(INSTALL_DIR) $(INST_DOCS)
-	cp html/*.* $(INST_DOCS)
+install-docs:
+	(cd ogr; $(MAKE) install-docs)
+	$(INSTALL_DIR) $(INST_DOCS)/gdal
+	cp html/*.* $(INST_DOCS)/gdal
 
 web-update:	docs
 	rm -rf /u/www/gdal/html
@@ -138,9 +140,9 @@ install-actions:
 ifneq ($(PYTHON),no)
 	(cd pymod; $(MAKE) install)
 endif
-	$(INSTALL) $(GDAL_LIB) $(INST_LIB)
+	$(INSTALL_DATA) $(GDAL_LIB) $(INST_LIB)
 ifeq ($(HAVE_LD_SHARED),yes)
-	$(INSTALL) $(GDAL_SLIB) $(INST_LIB)
+	$(INSTALL_DATA) $(GDAL_SLIB) $(INST_LIB)
 endif
-	for f in data/*.* ; do $(INSTALL) -m 0644 $$f $(INST_DATA) ; done
+	for f in data/*.* ; do $(INSTALL_DATA) $$f $(INST_DATA) ; done
 
