@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2003/01/20 20:05:01  warmerda
+ * added DGNAsciiToRad50()
+ *
  * Revision 1.13  2003/01/09 14:59:47  warmerda
  * fixed DGNGetLinkage() test for DMRS linkages as provided by Henk Jan Priester
  *
@@ -514,6 +517,48 @@ void DGNRad50ToAscii(unsigned short rad50, char *str )
     /* Do zero-terminate */
     *str = '\0';
 }
+
+/************************************************************************/
+/*                          DGNAsciiToRad50()                           */
+/************************************************************************/
+
+void DGNAsciiToRad50( const char *str, unsigned short *pRad50 )
+
+{
+    unsigned short rad50 = 0;
+    int  i;
+
+    for( i = 0; i < 3; i++ )
+    {
+        unsigned short value;
+
+        if( i >= (int) strlen(str) )
+        {
+            rad50 = rad50 * 40;
+            continue;
+        }
+
+        if( str[i] == '$' )
+            value = 27;
+        else if( str[i] == '.' )
+            value = 28;
+        else if( str[i] == ' ' )
+            value = 29;
+        else if( str[i] >= '0' && str[i] <= '9' )
+            value = str[i] - '0' + 30;
+        else if( str[i] >= 'a' && str[i] <= 'z' )
+            value = str[i] - 'a' + 1;
+        else if( str[i] >= 'A' && str[i] <= 'Z' )
+            value = str[i] - 'A' + 1;
+        else
+            value = 0;
+
+        rad50 = rad50 * 40 + value;
+    }
+
+    *pRad50 = rad50;
+}
+
 
 /************************************************************************/
 /*                        DGNGetLineStyleName()                         */
