@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.90  2003/03/13 15:49:28  warmerda
+ * Fixed CFloat64 support.
+ *
  * Revision 1.89  2003/03/13 14:36:03  warmerda
  * added support for CInt32 and CFloat64
  *
@@ -335,7 +338,7 @@ GTiffRasterBand::GTiffRasterBand( GTiffDataset *poDS, int nBand )
     }
     else if( poDS->nBitsPerSample == 128 )
     {
-        if( nSampleFormat == SAMPLEFORMAT_IEEEFP )
+        if( nSampleFormat == SAMPLEFORMAT_COMPLEXIEEEFP )
             eDataType = GDT_CFloat64;
     }
 
