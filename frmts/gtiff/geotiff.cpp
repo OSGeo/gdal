@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.63  2002/06/11 03:43:04  warmerda
+ * Allow CreateCopy() to return a GA_ReadOnly dataset if opening the created
+ * file with GA_Update fails.  This is the case with compressed files.
+ *
  * Revision 1.62  2002/05/29 03:10:40  warmerda
  * CopyCreate now writes metadata items
  *
@@ -2898,7 +2902,13 @@ GTiffCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         return NULL;
     }
 
-    return (GDALDataset *) GDALOpen( pszFilename, GA_Update );
+    GDALDataset *poDS;
+
+    poDS = (GDALDataset *) GDALOpen( pszFilename, GA_Update );
+    if( poDS == NULL )
+        poDS = (GDALDataset *) GDALOpen( pszFilename, GA_ReadOnly );
+    
+    return poDS;
 }
 
 /************************************************************************/
