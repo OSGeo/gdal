@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2001/12/19 22:04:48  warmerda
+ * ensure setting spatial filter resets reading
+ *
  * Revision 1.7  2001/12/17 22:36:35  warmerda
  * implement GetFeature() method
  *
@@ -109,6 +112,9 @@ void OGRS57Layer::SetSpatialFilter( OGRGeometry * poGeomIn )
 
     if( poGeomIn != NULL )
         poFilterGeom = poGeomIn->clone();
+
+    if( nNextFEIndex != 0 || nCurrentModule != -1 )
+        ResetReading();
 }
 
 /************************************************************************/
