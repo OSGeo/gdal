@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/11/08 22:23:00  warmerda
+ * added object class support
+ *
  * Revision 1.1  1999/11/03 22:12:43  warmerda
  * New
  *
@@ -95,6 +98,8 @@ class OGRS57DataSource : public OGRDataSource
     
     int			nModules;
     S57Reader		**papoModules;
+
+    static S57ClassRegistrar *poRegistrar;
     
   public:
     			OGRS57DataSource();

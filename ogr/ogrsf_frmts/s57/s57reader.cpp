@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  1999/11/08 22:23:00  warmerda
+ * added object class support
+ *
  * Revision 1.2  1999/11/04 21:19:13  warmerda
  * added polygon support
  *
@@ -38,6 +41,7 @@
 
 #include "s57.h"
 #include "cpl_conv.h"
+#include "cpl_string.h"
 
 /************************************************************************/
 /*                             S57Reader()                              */
@@ -56,7 +60,7 @@ S57Reader::S57Reader( const char * pszFilename )
     nCOMF = 1000000;
     nSOMF = 10;
 
-    bClassBased = FALSE;
+    poRegistrar = NULL;
     bFileIngested = FALSE;
 
     nNextFEIndex = 0;
@@ -138,6 +142,16 @@ void S57Reader::Close()
 }
 
 /************************************************************************/
+/*                           SetClassBased()                            */
+/************************************************************************/
+
+void S57Reader::SetClassBased( S57ClassRegistrar * poReg )
+
+{
+    poRegistrar = poReg;
+}
+
+/************************************************************************/
 /*                               Rewind()                               */
 /************************************************************************/
 
@@ -210,8 +224,9 @@ void S57Reader::Ingest()
 
         else
         {
-            printf( "Skipping %s record in S57Reader::Ingest().\n",
-                    poKeyField->GetFieldDefn()->GetName() );
+            CPLDebug( "S57",
+                      "Skipping %s record in S57Reader::Ingest().\n",
+                      poKeyField->GetFieldDefn()->GetName() );
         }
     }
 
@@ -305,6 +320,12 @@ OGRFeature *S57Reader::AssembleFeature( DDFRecord * poRecord,
                          poRecord->GetIntSubfield( "FOID", 0, "FIDS", 0 ));
 
 /* -------------------------------------------------------------------- */
+/*	Apply object class specific attributes, if supported.		*/
+/* -------------------------------------------------------------------- */
+    if( poRegistrar != NULL )
+        ApplyObjectClassAttributes( poRecord, poFeature );
+
+/* -------------------------------------------------------------------- */
 /*      Find and assign spatial component.                              */
 /* -------------------------------------------------------------------- */
     nPRIM = poRecord->GetIntSubfield( "FRID", 0, "PRIM", 0 );
@@ -324,6 +345,30 @@ OGRFeature *S57Reader::AssembleFeature( DDFRecord * poRecord,
     }
 
     return poFeature;
+}
+
+/************************************************************************/
+/*                     ApplyObjectClassAttributes()                     */
+/************************************************************************/
+
+void S57Reader::ApplyObjectClassAttributes( DDFRecord * poRecord,
+                                            OGRFeature * poFeature )
+
+{
+    DDFField	*poATTF = poRecord->FindField( "ATTF" );
+    int		nAttrCount, iAttr;
+
+    if( poATTF == NULL )
+        return;
+
+    nAttrCount = poATTF->GetRepeatCount();
+    for( iAttr = 0; iAttr < nAttrCount; iAttr++ )
+    {
+        int	nAttrId = poRecord->GetIntSubfield("ATTF",0,"ATTL",iAttr);
+        
+        poFeature->SetField( poRegistrar->GetAttrAcronym(nAttrId),
+                          poRecord->GetStringSubfield("ATTF",0,"ATVL",iAttr) );
+    }
 }
 
 /************************************************************************/
@@ -678,9 +723,20 @@ void S57Reader::AssembleAreaGeometry( DDFRecord * poFRecord,
 OGRFeatureDefn * S57Reader::FindFDefn( DDFRecord * poRecord )
 
 {
-    if( bClassBased )
+    if( poRegistrar != NULL )
     {
-        // notdef
+        int	nOBJL = poRecord->GetIntSubfield( "FRID", 0, "OBJL", 0 );
+
+        if( !poRegistrar->SelectClass( nOBJL ) )
+            return NULL;
+
+        for( int i = 0; i < nFDefnCount; i++ )
+        {
+            if( EQUAL(papoFDefnList[i]->GetName(),
+                      poRegistrar->GetAcronym()) )
+                return papoFDefnList[i];
+        }
+        
         return NULL;
     }
     else
@@ -830,4 +886,161 @@ OGRFeatureDefn *S57Reader::GenerateGeomFeatureDefn( OGRwkbGeometryType eGType )
     GenerateStandardAttributes( poFDefn );
 
     return poFDefn;
+}
+
+/************************************************************************/
+/*                      GenerateObjectClassDefn()                       */
+/************************************************************************/
+
+OGRFeatureDefn *S57Reader::GenerateObjectClassDefn( S57ClassRegistrar *poCR,
+                                                    int nOBJL )
+
+{
+    OGRFeatureDefn	*poFDefn = NULL;
+    char	       **papszGeomPrim;
+
+    if( !poCR->SelectClass( nOBJL ) )
+        return NULL;
+    
+/* -------------------------------------------------------------------- */
+/*      Create the feature definition based on the object class         */
+/*      acronym.                                                        */
+/* -------------------------------------------------------------------- */
+    poFDefn = new OGRFeatureDefn( poCR->GetAcronym() );
+
+/* -------------------------------------------------------------------- */
+/*      Try and establish the geometry type.  If more than one          */
+/*      geometry type is allowed we just fall back to wkbUnknown.       */
+/* -------------------------------------------------------------------- */
+    papszGeomPrim = poCR->GetPrimitives();
+    if( CSLCount(papszGeomPrim) == 0 )
+    {
+        poFDefn->SetGeomType( wkbNone );
+    }
+    else if( CSLCount(papszGeomPrim) > 1 )
+    {
+        // leave as unknown geometry type.
+    }
+    else if( EQUAL(papszGeomPrim[0],"Point") )
+    {
+        poFDefn->SetGeomType( wkbPoint );
+    }
+    else if( EQUAL(papszGeomPrim[0],"Area") )
+    {
+        poFDefn->SetGeomType( wkbPolygon );
+    }
+    else if( EQUAL(papszGeomPrim[0],"Line") )
+    {
+        poFDefn->SetGeomType( wkbLineString );
+    }
+    
+/* -------------------------------------------------------------------- */
+/*      Add the standard attributes.                                    */
+/* -------------------------------------------------------------------- */
+    GenerateStandardAttributes( poFDefn );
+
+/* -------------------------------------------------------------------- */
+/*      Add the attributes specific to this object class.               */
+/* -------------------------------------------------------------------- */
+    char	**papszAttrList = poCR->GetAttributeList();
+
+    for( int iAttr = 0;
+         papszAttrList != NULL && papszAttrList[iAttr] != NULL;
+         iAttr++ )
+    {
+        int	iAttrIndex = poCR->FindAttrByAcronym( papszAttrList[iAttr] );
+
+        if( iAttrIndex == -1 )
+        {
+            CPLDebug( "S57", "Can't find attribute %s from class %s:%s.\n",
+                      papszAttrList[iAttr],
+                      poCR->GetAcronym(),
+                      poCR->GetDescription() );
+            continue;
+        }
+
+        OGRFieldDefn	oField( papszAttrList[iAttr], OFTInteger );
+        
+        switch( poCR->GetAttrType( iAttrIndex ) )
+        {
+          case SAT_ENUM:
+          case SAT_INT:
+            oField.SetType( OFTInteger );
+            break;
+
+          case SAT_FLOAT:
+            oField.SetType( OFTReal );
+            break;
+
+          case SAT_CODE_STRING:
+          case SAT_FREE_TEXT:
+            oField.SetType( OFTString );
+            break;
+
+          case SAT_LIST:
+            // what to do?
+            break;
+        }
+
+        poFDefn->AddFieldDefn( &oField );
+    }
+
+    return poFDefn;
+}
+
+/************************************************************************/
+/*                          CollectClassList()                          */
+/*                                                                      */
+/*      Establish the list of classes (unique OBJL values) that         */
+/*      occur in this dataset.                                          */
+/************************************************************************/
+
+int * S57Reader::CollectClassList()
+
+{
+    int		*panClassList, nClasses;
+
+    if( !bFileIngested )
+        Ingest();
+
+    nClasses = 0;
+    panClassList = (int  *) CPLMalloc(sizeof(int) * MAX_CLASSES);
+
+    for( int iFEIndex = 0; iFEIndex < oFE_Index.GetCount(); iFEIndex++ )
+    {
+        DDFRecord *poRecord = oFE_Index.GetByIndex( iFEIndex );
+        int	nOBJL = poRecord->GetIntSubfield( "FRID", 0, "OBJL", 0 );
+        int	iClass;
+
+/* -------------------------------------------------------------------- */
+/*      Search for the class in the list.                               */
+/* -------------------------------------------------------------------- */
+        for( iClass = 0;
+             iClass < nClasses && panClassList[iClass] != nOBJL;
+             iClass++ ) {}
+
+/* -------------------------------------------------------------------- */
+/*      Add to the end, if not found.                                   */
+/* -------------------------------------------------------------------- */
+        if( iClass == nClasses )
+        {
+            panClassList[nClasses++] = nOBJL;
+        }
+        
+/* -------------------------------------------------------------------- */
+/*      Promote to the beginning of the list for faster future searching.*/
+/* -------------------------------------------------------------------- */
+        if( iClass != 0 )
+        {
+            memmove( panClassList + 1, panClassList, iClass*sizeof(int) );
+            panClassList[0] = nOBJL;
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Mark the end of list, and return list.                          */
+/* -------------------------------------------------------------------- */
+    panClassList[nClasses] = -1;
+    
+    return panClassList;
 }

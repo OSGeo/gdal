@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/11/08 22:23:00  warmerda
+ * added object class support
+ *
  * Revision 1.1  1999/11/03 22:12:43  warmerda
  * New
  *
@@ -36,6 +39,8 @@
 #include "ogr_s57.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
+
+S57ClassRegistrar *OGRS57DataSource::poRegistrar = NULL;
 
 /************************************************************************/
 /*                          OGRS57DataSource()                          */
@@ -162,28 +167,67 @@ int OGRS57DataSource::Open( const char * pszFilename, int bTestOpen )
     papoModules[0] = poModule;
     
 /* -------------------------------------------------------------------- */
+/*	Instantiate the class registrar if possible.			*/
+/* -------------------------------------------------------------------- */
+    if( poRegistrar == NULL )
+    {
+        poRegistrar = new S57ClassRegistrar();
+
+        if( !poRegistrar->LoadInfo( "/home/warmerda/data/s57", FALSE ) )
+        {
+            delete poRegistrar;
+            poRegistrar = NULL;
+        }
+    }
+
+/* -------------------------------------------------------------------- */
 /*	Initialize a layer for each type of geometry.  Eventually	*/
 /*	we will do this by object class.				*/
 /* -------------------------------------------------------------------- */
-    OGRFeatureDefn	*poDefn;
+    if( poRegistrar == NULL )
+    {
+        OGRFeatureDefn	*poDefn;
 
-    poDefn = S57Reader::GenerateGeomFeatureDefn( wkbPoint );
-    AddLayer( new OGRS57Layer( this, poDefn ) );
+        poDefn = S57Reader::GenerateGeomFeatureDefn( wkbPoint );
+        AddLayer( new OGRS57Layer( this, poDefn ) );
     
-    poDefn = S57Reader::GenerateGeomFeatureDefn( wkbLineString );
-    AddLayer( new OGRS57Layer( this, poDefn ) );
+        poDefn = S57Reader::GenerateGeomFeatureDefn( wkbLineString );
+        AddLayer( new OGRS57Layer( this, poDefn ) );
     
-    poDefn = S57Reader::GenerateGeomFeatureDefn( wkbPolygon );
-    AddLayer( new OGRS57Layer( this, poDefn ) );
+        poDefn = S57Reader::GenerateGeomFeatureDefn( wkbPolygon );
+        AddLayer( new OGRS57Layer( this, poDefn ) );
     
-    poDefn = S57Reader::GenerateGeomFeatureDefn( wkbNone );
-    AddLayer( new OGRS57Layer( this, poDefn ) );
+        poDefn = S57Reader::GenerateGeomFeatureDefn( wkbNone );
+        AddLayer( new OGRS57Layer( this, poDefn ) );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Initialize a feature definition for each class that actually    */
+/*      occurs in the dataset.                                          */
+/* -------------------------------------------------------------------- */
+    else
+    {
+        OGRFeatureDefn	*poDefn;
+        int	*panClasses = papoModules[0]->CollectClassList();
+        int	iClass;
+
+        for( iClass = 0; panClasses[iClass] != -1; iClass++ )
+        {
+            poDefn = S57Reader::GenerateObjectClassDefn( poRegistrar,
+                                                         panClasses[iClass] );
+            if( poDefn != NULL )
+                AddLayer( new OGRS57Layer( this, poDefn ) );
+        }
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Attach the layer definitions to each of the readers.            */
 /* -------------------------------------------------------------------- */
     for( int iModule = 0; iModule < nModules; iModule++ )
     {
+        if( poRegistrar != NULL )
+            papoModules[iModule]->SetClassBased( poRegistrar );
+        
         for( int iLayer = 0; iLayer < nLayers; iLayer++ )
         {
             papoModules[iModule]->AddFeatureDefn(

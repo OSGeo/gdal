@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/11/08 22:23:00  warmerda
+ * added object class support
+ *
  * Revision 1.1  1999/11/03 22:12:43  warmerda
  * New
  *
@@ -37,7 +40,7 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 
-/***************************************************g*********************/
+/************************************************************************/
 /*                                main()                                */
 /************************************************************************/
 
@@ -50,19 +53,46 @@ int main( int nArgc, char ** papszArgv )
         exit( 1 );
     }
     
+    S57ClassRegistrar	oRegistrar;
     S57Reader  	oReader( papszArgv[1] );
 
     if( !oReader.Open( FALSE ) )
         exit( 1 );
 
-    oReader.AddFeatureDefn(
-        S57Reader::GenerateGeomFeatureDefn( wkbPoint ) );
-    oReader.AddFeatureDefn(
-        S57Reader::GenerateGeomFeatureDefn( wkbLineString ) );
-    oReader.AddFeatureDefn(
-        S57Reader::GenerateGeomFeatureDefn( wkbPolygon ) );
-    oReader.AddFeatureDefn(
-        S57Reader::GenerateGeomFeatureDefn( wkbNone ) );
+
+    if( oRegistrar.LoadInfo( "/home/warmerda/data/s57", TRUE ) )
+    {
+        int	i, *panClassList = oReader.CollectClassList();
+
+        oReader.SetClassBased( &oRegistrar );
+
+        printf( "Classes found:\n" );
+        for( i = 0; panClassList[i] != -1; i++ )
+        {
+            oRegistrar.SelectClass( panClassList[i] );
+            printf( "%d: %s/%s\n",
+                    panClassList[i],
+                    oRegistrar.GetAcronym(),
+                    oRegistrar.GetDescription() );
+            
+            oReader.AddFeatureDefn(
+                S57Reader::GenerateObjectClassDefn( &oRegistrar,
+                                                    panClassList[i] ) );
+        }
+
+        CPLFree( panClassList );
+    }
+    else
+    {
+        oReader.AddFeatureDefn(
+            S57Reader::GenerateGeomFeatureDefn( wkbPoint ) );
+        oReader.AddFeatureDefn(
+            S57Reader::GenerateGeomFeatureDefn( wkbLineString ) );
+        oReader.AddFeatureDefn(
+            S57Reader::GenerateGeomFeatureDefn( wkbPolygon ) );
+        oReader.AddFeatureDefn(
+            S57Reader::GenerateGeomFeatureDefn( wkbNone ) );
+    }
     
     OGRFeature	*poFeature;
     while( (poFeature = oReader.ReadNextFeature()) != NULL )

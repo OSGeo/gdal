@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  1999/11/08 22:23:00  warmerda
+ * added object class support
+ *
  * Revision 1.2  1999/11/04 21:19:13  warmerda
  * added polygon support
  *
@@ -65,6 +68,78 @@ OGRPolygon *OGRBuildPolygonFromEdges( OGRGeometryCollection * poLines,
 #define PRIM_L		2	/* line feature */
 #define PRIM_A		3	/* area feature */
 #define PRIM_N		4	/* non-spatial feature  */
+
+/************************************************************************/
+/*                          S57ClassRegistrar                           */
+/************************************************************************/
+
+#define MAX_CLASSES 500
+#define MAX_ATTRIBUTES 500
+    
+class S57ClassRegistrar
+{
+    // Class information:
+    int		nClasses;
+    char      **papszClassesInfo;
+
+    int		iCurrentClass;
+
+    char      **papszCurrentFields;
+
+    char      **papszTempResult;
+
+    // Attribute Information:
+    int		nAttrMax;
+    int		nAttrCount;
+    char      **papszAttrNames;
+    char      **papszAttrAcronym;
+    char     ***papapszAttrValues;
+    char       *pachAttrType;
+    char       *pachAttrClass;
+    int        *panAttrIndex; // sorted by acronym.
+
+public:
+    		S57ClassRegistrar();
+    	       ~S57ClassRegistrar();
+
+    int		LoadInfo( const char *, int );
+
+    // class table methods.
+    int		SelectClassByIndex( int );
+    int		SelectClass( int );
+    int		SelectClass( const char * );
+
+    int		Rewind() { return SelectClassByIndex(0); }
+    int		NextClass() { return SelectClassByIndex(iCurrentClass+1); }
+
+    int		GetOBJL();
+    const char *GetDescription();
+    const char *GetAcronym();
+
+    char      **GetAttributeList( const char * = NULL );
+
+    char	GetClassCode();
+    char      **GetPrimitives();
+
+    // attribute table methods.
+    int		GetMaxAttrIndex() { return nAttrMax; }
+    const char *GetAttrName( int i ) { return papszAttrNames[i]; }
+    const char *GetAttrAcronym( int i ) { return papszAttrAcronym[i]; }
+    char      **GetAttrValues( int i ) { return papapszAttrValues[i]; }
+    char        GetAttrType( int i ) { return pachAttrType[i]; }
+#define SAT_ENUM	'E'
+#define SAT_LIST        'L'
+#define SAT_FLOAT       'F'
+#define SAT_INT         'I'
+#define SAT_CODE_STRING 'A'
+#define SAT_FREE_TEXT   'S'
+    
+    char        GetAttrClass( int i ) { return pachAttrClass[i]; }
+    int         FindAttrByAcronym( const char * );
+
+};
+
+
 
 /************************************************************************/
 /*                            DDFRecordIndex                            */
@@ -103,7 +178,7 @@ public:
 
 class S57Reader
 {
-    int			bClassBased;
+    S57ClassRegistrar  *poRegistrar;
 
     int			nFDefnCount;
     OGRFeatureDefn	**papoFDefnList;
@@ -123,8 +198,11 @@ class S57Reader
 
     int			nNextFEIndex;
     DDFRecordIndex	oFE_Index;
-    
+
     OGRFeature         *AssembleFeature( DDFRecord  *, OGRFeatureDefn * );
+
+    void		ApplyObjectClassAttributes( DDFRecord *, OGRFeature *);
+    
     void                AssemblePointGeometry( DDFRecord *, OGRFeature * );
     void                AssembleLineGeometry( DDFRecord *, OGRFeature * );
     void                AssembleAreaGeometry( DDFRecord *, OGRFeature * );
@@ -141,6 +219,8 @@ static void		GenerateStandardAttributes( OGRFeatureDefn * );
     			S57Reader( const char * );
     		       ~S57Reader();
 
+    void		SetClassBased( S57ClassRegistrar * );
+
     int			Open( int bTestOpen );
     void		Close();
     DDFModule		*GetModule() { return poModule; }
@@ -155,7 +235,10 @@ static void		GenerateStandardAttributes( OGRFeatureDefn * );
 
     void		AddFeatureDefn( OGRFeatureDefn * );
 
+    int		       *CollectClassList();
+
 static OGRFeatureDefn  *GenerateGeomFeatureDefn( OGRwkbGeometryType );
+static OGRFeatureDefn  *GenerateObjectClassDefn( S57ClassRegistrar *, int );
 };
 
 #endif /* ndef _S57_H_INCLUDED */
