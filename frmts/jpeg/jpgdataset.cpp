@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.6  2001/07/18 04:51:57  warmerda
+ * added CPL_CVSID
+ *
  * Revision 1.5  2001/06/01 14:13:12  warmerda
  * Improved magic number testing.
  *
@@ -47,6 +50,8 @@
 
 #include "gdal_priv.h"
 #include "cpl_string.h"
+
+CPL_CVSID("$Id$");
 
 CPL_C_START
 #include "jpeglib.h"

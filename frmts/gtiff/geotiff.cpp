@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.50  2001/07/18 04:51:56  warmerda
+ * added CPL_CVSID
+ *
  * Revision 1.49  2001/06/29 03:11:30  warmerda
  * Fixed handling of RGBA band ordering on big endian systems.
  *
@@ -138,6 +141,8 @@
 #include "geo_normalize.h"
 #include "tif_ovrcache.h"
 #include "cpl_string.h"
+
+CPL_CVSID("$Id$");
 
 static GDALDriver	*poGTiffDriver = NULL;
 

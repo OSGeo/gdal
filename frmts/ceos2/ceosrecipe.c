@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2001/07/18 04:51:56  warmerda
+ * added CPL_CVSID
+ *
  * Revision 1.5  2001/06/27 20:50:22  warmerda
  * added UI2 and UI1 data types
  *
@@ -43,6 +46,8 @@
  */
 
 #include "ceos.h"
+
+CPL_CVSID("$Id$");
 
 /* Array of Datatypes and their names/values */
 

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2001/07/18 04:51:57  warmerda
+ * added CPL_CVSID
+ *
  * Revision 1.7  2000/09/25 21:20:13  warmerda
  * avoid initialization warnings
  *
@@ -52,6 +55,8 @@
 
 #include "rawdataset.h"
 #include "cpl_string.h"
+
+CPL_CVSID("$Id$");
 
 static GDALDriver	*poDOQ1Driver = NULL;
 

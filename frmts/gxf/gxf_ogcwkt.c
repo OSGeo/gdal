@@ -28,12 +28,17 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2001/07/18 04:51:57  warmerda
+ * added CPL_CVSID
+ *
  * Revision 1.1  1999/10/29 17:26:48  warmerda
  * New
  *
  */
 
 #include "gxfopen.h"
+
+CPL_CVSID("$Id$");
 
 /* -------------------------------------------------------------------- */
 /* the following #defines come from ogr_spatialref.h in the GDAL/OGR	*/

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2001/07/18 04:51:57  warmerda
+ * added CPL_CVSID
+ *
  * Revision 1.17  2001/07/11 15:31:26  warmerda
  * fixed problems with multi-band large spill files
  *
@@ -85,6 +88,8 @@
 
 #include "hfa_p.h"
 #include "cpl_conv.h"
+
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                              HFABand()                               */

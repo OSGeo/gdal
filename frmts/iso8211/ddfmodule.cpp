@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2001/07/18 04:51:57  warmerda
+ * added CPL_CVSID
+ *
  * Revision 1.12  2000/09/19 14:08:51  warmerda
  * keep and report _extendedCharSet
  *
@@ -68,6 +71,8 @@
 
 #include "iso8211.h"
 #include "cpl_conv.h"
+
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                             DDFModule()                              */

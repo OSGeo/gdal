@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2001/07/18 04:51:56  warmerda
+ * added CPL_CVSID
+ *
  * Revision 1.4  2001/03/11 22:31:03  sperkins
  * Added FITS support for "byte scaled" files.
  *
@@ -47,6 +50,8 @@
 #include "gdal_priv.h"
 #include "cpl_string.h"
 #include <string.h>
+
+CPL_CVSID("$Id$");
 
 static GDALDriver* poFITSDriver = NULL;
 

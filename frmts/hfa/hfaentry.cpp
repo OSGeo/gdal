@@ -33,6 +33,9 @@
  * Implementation of the HFAEntry class.
  *
  * $Log$
+ * Revision 1.7  2001/07/18 04:51:57  warmerda
+ * added CPL_CVSID
+ *
  * Revision 1.6  2001/01/03 16:20:10  warmerda
  * Converted to large file API
  *
@@ -55,6 +58,8 @@
 
 #include "hfa_p.h"
 #include "cpl_conv.h"
+
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                              HFAEntry()                              */

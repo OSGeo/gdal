@@ -43,6 +43,9 @@
  *    application termination. 
  * 
  * $Log$
+ * Revision 1.7  2001/07/18 04:51:57  warmerda
+ * added CPL_CVSID
+ *
  * Revision 1.6  2000/08/15 19:28:26  warmerda
  * added help topic
  *
@@ -65,6 +68,8 @@
 #include "gdal_priv.h"
 #include "png.h"
 #include "cpl_string.h"
+
+CPL_CVSID("$Id$");
 
 static GDALDriver	*poPNGDriver = NULL;
 

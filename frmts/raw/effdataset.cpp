@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2001/07/18 04:51:57  warmerda
+ * added CPL_CVSID
+ *
  * Revision 1.3  2000/08/30 18:53:24  warmerda
  * Removed unused variables.
  *
@@ -41,6 +44,8 @@
 
 #include "rawdataset.h"
 #include "cpl_string.h"
+
+CPL_CVSID("$Id$");
 
 static GDALDriver	*poEFFDriver = NULL;
 

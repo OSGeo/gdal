@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2001/07/18 04:51:57  warmerda
+ * added CPL_CVSID
+ *
  * Revision 1.15  1999/12/30 02:41:21  warmerda
  * Added support for generating TIFF files of other than 1 or 3 bands.
  *
@@ -77,6 +80,8 @@
 #include "xtiffio.h"
 #include <ctype.h>
 #include <assert.h>
+
+CPL_CVSID("$Id$");
 
 CPL_C_START
 CPLErr ImagineToGeoTIFFProjection( HFAHandle hHFA, TIFF * hTIFF );

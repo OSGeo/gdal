@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2001/07/18 04:51:57  warmerda
+ * added CPL_CVSID
+ *
  * Revision 1.10  2000/12/29 16:37:32  warmerda
  * Use GUInt32 for all file offsets
  *
@@ -62,6 +65,8 @@
  */
 
 #include "hfa_p.h"
+
+CPL_CVSID("$Id$");
 
 #define MAX_ENTRY_REPORT   16
                            

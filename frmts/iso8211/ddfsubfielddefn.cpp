@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2001/07/18 04:51:57  warmerda
+ * added CPL_CVSID
+ *
  * Revision 1.7  2000/09/19 14:09:34  warmerda
  * avoid checking for field terminators in multi-byte strings
  *
@@ -53,6 +56,8 @@
 
 #include "iso8211.h"
 #include "cpl_conv.h"
+
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                          DDFSubfieldDefn()                           */

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2001/07/18 04:51:57  warmerda
+ * added CPL_CVSID
+ *
  * Revision 1.2  2000/07/19 19:07:04  warmerda
  * break linkage between MEMDataset and MEMRasterBand
  *
@@ -38,6 +41,8 @@
 
 #include "memdataset.h"
 #include "cpl_string.h"
+
+CPL_CVSID("$Id$");
 
 static GDALDriver	*poMEMDriver = NULL;
 

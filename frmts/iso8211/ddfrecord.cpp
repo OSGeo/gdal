@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2001/07/18 04:51:57  warmerda
+ * added CPL_CVSID
+ *
  * Revision 1.9  2000/02/15 17:55:53  warmerda
  * Improved error message for corrupt DDF files.
  *
@@ -59,6 +62,8 @@
 
 #include "iso8211.h"
 #include "cpl_conv.h"
+
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                             DDFRecord()                              */

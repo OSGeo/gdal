@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2001/07/18 04:51:57  warmerda
+ * added CPL_CVSID
+ *
  * Revision 1.10  2001/07/10 17:40:26  warmerda
  * Accept tab as separator.  Assume signed 16 and 32bit values.
  *
@@ -65,6 +68,8 @@
 #include "rawdataset.h"
 #include "ogr_spatialref.h"
 #include "cpl_string.h"
+
+CPL_CVSID("$Id$");
 
 static GDALDriver	*poEHdrDriver = NULL;
 

@@ -29,6 +29,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.13  2001/07/18 04:51:57  warmerda
+ * added CPL_CVSID
+ *
  * Revision 1.12  2001/06/29 18:29:30  warmerda
  * don't refree pszURL when failing with non-raster datastores.
  *
@@ -70,6 +73,8 @@
 #include "ogdidataset.h"
 #include "cpl_string.h"
 #include "ogr_spatialref.h"
+
+CPL_CVSID("$Id$");
 
 static GDALDriver	*poOGDIDriver = NULL;
 

@@ -25,6 +25,9 @@
  * Main format registration function.
  * 
  * $Log$
+ * Revision 1.35  2001/07/18 04:51:56  warmerda
+ * added CPL_CVSID
+ *
  * Revision 1.34  2001/07/05 23:53:53  nemec
  * Add FIT file format
  *
@@ -131,6 +134,8 @@
 
 #include "gdal_priv.h"
 #include "gdal_frmts.h"
+
+CPL_CVSID("$Id$");
 
 #ifdef notdef
 // we may have a use for this some day

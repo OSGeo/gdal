@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.13  2001/07/18 04:51:56  warmerda
+ * added CPL_CVSID
+ *
  * Revision 1.12  2001/03/13 19:39:51  warmerda
  * changed short name to GIO, added help link
  *
@@ -67,6 +70,8 @@
  */
 
 #include "gdal_priv.h"
+
+CPL_CVSID("$Id$");
 
 #define	READONLY	1
 #define	READWRITE	2

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2001/07/18 04:51:56  warmerda
+ * added CPL_CVSID
+ *
  * Revision 1.4  2001/06/15 17:15:29  warmerda
  * use CPL_MSBWORD32 instead of CPL_SWAP32 to be cross platform
  *
@@ -44,6 +47,8 @@
 
 #include "frmts/raw/rawdataset.h"
 #include "cpl_string.h"
+
+CPL_CVSID("$Id$");
 
 CPL_C_START
 #include "EnvisatFile.h"

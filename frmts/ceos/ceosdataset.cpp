@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2001/07/18 04:51:56  warmerda
+ * added CPL_CVSID
+ *
  * Revision 1.5  2000/08/15 19:28:26  warmerda
  * added help topic
  *
@@ -47,6 +50,8 @@
 
 #include "ceosopen.h"
 #include "gdal_priv.h"
+
+CPL_CVSID("$Id$");
 
 static GDALDriver	*poCEOSDriver = NULL;
 

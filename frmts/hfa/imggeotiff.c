@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2001/07/18 04:51:57  warmerda
+ * added CPL_CVSID
+ *
  * Revision 1.4  1999/06/01 12:29:51  warmerda
  * Ensure ImagineToGeoTIFFProjection() has C linkaged even if compiled with c++.
  *
@@ -50,6 +53,8 @@
 #include "geo_tiffp.h"
 #include "geo_keyp.h"
 #include "geovalues.h"
+
+CPL_CVSID("$Id$");
 
 #ifndef PI
 #  define PI 3.14159265358979323846

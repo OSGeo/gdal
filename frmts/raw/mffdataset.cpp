@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2001/07/18 04:51:57  warmerda
+ * added CPL_CVSID
+ *
  * Revision 1.16  2001/07/11 18:08:14  warmerda
  * Fixed pixel interpretation again.  TOP_LEFT is really 0.0,0.0 but
  * BOTTOM_RIGHT is the top left corner of the bottom right pixel!
@@ -82,6 +85,8 @@
 #include "rawdataset.h"
 #include "cpl_string.h"
 #include <ctype.h>
+
+CPL_CVSID("$Id$");
 
 static GDALDriver	*poMFFDriver = NULL;
 

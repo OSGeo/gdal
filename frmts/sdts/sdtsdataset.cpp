@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2001/07/18 04:51:57  warmerda
+ * added CPL_CVSID
+ *
  * Revision 1.8  2001/07/09 18:14:45  warmerda
  * upgraded projection support to use WKT
  *
@@ -57,6 +60,8 @@
 #include "sdts_al.h"
 #include "gdal_priv.h"
 #include "ogr_spatialref.h"
+
+CPL_CVSID("$Id$");
 
 /**
  \file sdtsdataset.cpp

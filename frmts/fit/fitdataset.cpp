@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.8  2001/07/18 04:51:56  warmerda
+ * added CPL_CVSID
+ *
  * Revision 1.7  2001/07/12 22:08:13  nemec
  * Change check if 64-bit seek is needed.  Should work on all systems (no longer
  * comparing to a 64 bit constant).
@@ -60,6 +63,8 @@
 #include "gstEndian.h"
 #include "gdal_priv.h"
 #include "cpl_string.h"
+
+CPL_CVSID("$Id$");
 
 static GDALDriver	*poFITDriver = NULL;
 

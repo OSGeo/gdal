@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2001/07/18 04:51:56  warmerda
+ * added CPL_CVSID
+ *
  * Revision 1.14  2000/07/18 13:58:58  warmerda
  * no RTileType for float tiles
  *
@@ -74,6 +77,8 @@
  */
 
 #include "aigrid.h"
+
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                    AIGProcessRaw32bitFloatBlock()                    */

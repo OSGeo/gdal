@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2001/07/18 04:51:56  warmerda
+ * added CPL_CVSID
+ *
  * Revision 1.3  2000/09/25 21:17:04  warmerda
  * Avoid warnings.
  *
@@ -38,6 +41,7 @@
 
 #include "ceos.h"
 
+CPL_CVSID("$Id$");
 
 extern Link_t *RecipeFunctions;
 

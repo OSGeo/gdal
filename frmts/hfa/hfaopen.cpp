@@ -35,6 +35,9 @@
  * of the GDAL core, but dependent on the Common Portability Library.
  *
  * $Log$
+ * Revision 1.14  2001/07/18 04:51:57  warmerda
+ * added CPL_CVSID
+ *
  * Revision 1.13  2001/01/08 14:17:27  warmerda
  * Use nDictMax for CPLMalloc().
  *
@@ -78,6 +81,8 @@
 
 #include "hfa_p.h"
 #include "cpl_conv.h"
+
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                          HFAGetDictionary()                          */

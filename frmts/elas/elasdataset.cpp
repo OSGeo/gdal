@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2001/07/18 04:51:56  warmerda
+ * added CPL_CVSID
+ *
  * Revision 1.4  2000/02/28 16:32:20  warmerda
  * use SetBand method
  *
@@ -43,6 +46,8 @@
  */
 
 #include "gdal_priv.h"
+
+CPL_CVSID("$Id$");
 
 static GDALDriver	*poELASDriver = NULL;
 

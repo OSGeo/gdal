@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.5  2001/07/18 04:51:56  warmerda
+ * added CPL_CVSID
+ *
  * Revision 1.4  2001/03/24 20:58:30  warmerda
  * Fixed typo.
  *
@@ -46,6 +49,8 @@
 #include "gdal_priv.h"
 #include "cpl_string.h"
 #include "ogr_spatialref.h"
+
+CPL_CVSID("$Id$");
 
 CPL_C_START
 void	GDALRegister_AAIGrid(void);

@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.4  2001/07/18 04:51:57  warmerda
+ * added CPL_CVSID
+ *
  * Revision 1.3  2001/06/21 19:59:51  warmerda
  * added help link
  *
@@ -40,6 +43,8 @@
  */
 
 #include "gdal_priv.h"
+
+CPL_CVSID("$Id$");
 
 static GDALDriver	*poJDEMDriver = NULL;
 

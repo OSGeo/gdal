@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2001/07/18 04:51:56  warmerda
+ * added CPL_CVSID
+ *
  * Revision 1.18  2000/12/15 14:48:18  warmerda
  * fixed handling of nongeographic/projected model types
  *
@@ -94,6 +97,8 @@
 #include "geovalues.h"
 #include "ogr_spatialref.h"
 #include "cpl_serv.h"
+
+CPL_CVSID("$Id$");
 
 CPL_C_START
 char *  GTIFGetOGISDefn( GTIFDefn * );

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2001/07/18 04:51:57  warmerda
+ * added CPL_CVSID
+ *
  * Revision 1.9  2001/03/26 18:31:55  warmerda
  * Fixed nodata handling in first constructor.
  *
@@ -58,6 +61,8 @@
  */
 
 #include "rawdataset.h"
+
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                           RawRasterBand()                            */

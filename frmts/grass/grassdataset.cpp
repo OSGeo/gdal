@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2001/07/18 04:51:56  warmerda
+ * added CPL_CVSID
+ *
  * Revision 1.6  2000/09/26 20:30:04  warmerda
  * added support for imagery groups
  *
@@ -53,6 +56,8 @@
 #include "gdal_priv.h"
 #include "cpl_string.h"
 #include "ogr_spatialref.h"
+
+CPL_CVSID("$Id$");
 
 static GDALDriver *poGRASSDriver = NULL;
 

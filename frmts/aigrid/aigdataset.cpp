@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.9  2001/07/18 04:51:56  warmerda
+ * added CPL_CVSID
+ *
  * Revision 1.8  2001/03/13 19:39:24  warmerda
  * changed short name to AIG, added help link
  *
@@ -58,6 +61,8 @@
 #include "cpl_string.h"
 #include "ogr_spatialref.h"
 #include "aigrid.h"
+
+CPL_CVSID("$Id$");
 
 CPL_C_START
 void	GDALRegister_AIGrid(void);

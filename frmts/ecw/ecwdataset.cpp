@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.3  2001/07/18 04:51:56  warmerda
+ * added CPL_CVSID
+ *
  * Revision 1.2  2001/04/20 03:06:07  warmerda
  * addec compression support
  *
@@ -42,6 +45,8 @@
 #include <NCSECWClient.h>
 #include <NCSEcwCompressClient.h>
 #include <NCSErrors.h>
+
+CPL_CVSID("$Id$");
 
 static GDALDriver	*poECWDriver = NULL;
 

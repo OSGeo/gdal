@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2001/07/18 04:51:57  warmerda
+ * added CPL_CVSID
+ *
  * Revision 1.12  2001/02/24 01:54:52  warmerda
  * use CPLFormCIFilename so case mixups in CATD filenames will be fixed up
  *
@@ -69,6 +72,8 @@
  */
 
 #include "sdts_al.h"
+
+CPL_CVSID("$Id$");
 
 
 /************************************************************************/

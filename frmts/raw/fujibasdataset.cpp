@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2001/07/18 04:51:57  warmerda
+ * added CPL_CVSID
+ *
  * Revision 1.1  2001/05/15 13:20:45  warmerda
  * New
  *
@@ -35,6 +38,8 @@
 
 #include "rawdataset.h"
 #include "cpl_string.h"
+
+CPL_CVSID("$Id$");
 
 static GDALDriver	*poFujiBASDriver = NULL;
 

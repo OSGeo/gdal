@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2001/07/18 04:51:56  warmerda
+ * added CPL_CVSID
+ *
  * Revision 1.4  2001/03/26 18:44:03  warmerda
  * removed debugging statements
  *
@@ -45,6 +48,9 @@
 #ifdef GDAL_BUILD
 #  include "cpl_conv.h"
 #  include "EnvisatFile.h"
+
+CPL_CVSID("$Id$");
+
 #else
 #  include "APP/app.h"
 #  include "util/Files/EnvisatFile.h"

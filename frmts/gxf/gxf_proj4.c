@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2001/07/18 04:51:57  warmerda
+ * added CPL_CVSID
+ *
  * Revision 1.2  1999/10/29 17:30:03  warmerda
  * added documentation
  *
@@ -38,6 +41,8 @@
  */
 
 #include "gxfopen.h"
+
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                     GXFGetMapProjectionAsPROJ4()                     */

@@ -29,6 +29,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.16  2001/07/18 04:51:57  warmerda
+ * added CPL_CVSID
+ *
  * Revision 1.15  2000/10/31 18:02:47  warmerda
  * fixed unkonwn and external projections
  *
@@ -79,6 +82,8 @@
 #include "gdal_priv.h"
 #include "hfa.h"
 #include "ogr_spatialref.h"
+
+CPL_CVSID("$Id$");
 
 CPL_C_START
 void	GDALRegister_HFA(void);

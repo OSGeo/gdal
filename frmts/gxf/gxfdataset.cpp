@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.9  2001/07/18 04:51:57  warmerda
+ * added CPL_CVSID
+ *
  * Revision 1.8  2000/11/16 14:56:16  warmerda
  * fail testopen on zero char, reduce min header size
  *
@@ -56,6 +59,8 @@
 
 #include "gxfopen.h"
 #include "gdal_priv.h"
+
+CPL_CVSID("$Id$");
 
 #ifndef PI
 #  define PI 3.14159265358979323846

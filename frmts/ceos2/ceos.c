@@ -28,12 +28,17 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2001/07/18 04:51:56  warmerda
+ * added CPL_CVSID
+ *
  * Revision 1.2  2000/03/31 13:33:34  warmerda
  * ported to GDAL, replace headers
  *
  */
 
 #include "ceos.h"
+
+CPL_CVSID("$Id$");
 
 /* Function implementations of functions described in ceos.h */
 

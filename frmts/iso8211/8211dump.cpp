@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2001/07/18 04:51:57  warmerda
+ * added CPL_CVSID
+ *
  * Revision 1.4  2000/06/16 18:02:08  warmerda
  * added SetRepeatingFlag hack support
  *
@@ -47,6 +50,8 @@
 
 #include <stdio.h>
 #include "iso8211.h"
+
+CPL_CVSID("$Id$");
 
 
 int main( int nArgc, char ** papszArgv )

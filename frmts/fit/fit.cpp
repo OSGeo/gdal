@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.4  2001/07/18 04:51:56  warmerda
+ * added CPL_CVSID
+ *
  * Revision 1.3  2001/07/12 00:49:18  nemec
  * Convert unknown colorInterp based on number of bands for happier .fit files
  *
@@ -39,6 +42,8 @@
 
 #include <limits.h>
 #include "fit.h"
+
+CPL_CVSID("$Id$");
 
 GDALDataType fitDataType(int dtype) {
     switch (dtype) {

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2001/07/18 04:51:56  warmerda
+ * added CPL_CVSID
+ *
  * Revision 1.3  2000/02/28 16:32:20  warmerda
  * use SetBand method
  *
@@ -41,6 +44,8 @@
 
 #include "dted_api.h"
 #include "gdal_priv.h"
+
+CPL_CVSID("$Id$");
 
 static GDALDriver	*poDTEDDriver = NULL;
 

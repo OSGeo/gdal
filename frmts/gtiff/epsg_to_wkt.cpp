@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2001/07/18 04:51:56  warmerda
+ * added CPL_CVSID
+ *
  * Revision 1.2  1999/09/10 13:42:30  warmerda
  * converted to adams new format, added comparitors
  *
@@ -46,6 +49,7 @@
 #include "cpl_csv.h"
 #include "ogr_spatialref.h"
 
+CPL_CVSID("$Id$");
 
 static char *PCSToOGISDefn( int, int );
 static void ProcessAllPCSCodes();

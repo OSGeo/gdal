@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2001/07/18 04:51:56  warmerda
+ * added CPL_CVSID
+ *
  * Revision 1.7  2001/06/25 14:44:15  warmerda
  * Fixed to return success if no bands requested to be processed.
  *
@@ -57,6 +60,8 @@
 #include "geotiff.h"
 #include "gdal_priv.h"
 #include "tif_ovrcache.h"
+
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                        GTIFFBuildOverviews()                         */

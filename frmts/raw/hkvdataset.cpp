@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2001/07/18 04:51:57  warmerda
+ * added CPL_CVSID
+ *
  * Revision 1.14  2001/07/11 18:09:06  warmerda
  * Correct corner GCPs. BOTTOM_RIGHT actually refers to the top left corner of
  * the bottom right pixel!
@@ -77,6 +80,8 @@
 #include "cpl_string.h"
 #include <ctype.h>
 #include "ogr_spatialref.h"
+
+CPL_CVSID("$Id$");
 
 static GDALDriver	*poHKVDriver = NULL;
 

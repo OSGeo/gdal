@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2001/07/18 04:51:57  warmerda
+ * added CPL_CVSID
+ *
  * Revision 1.9  2000/11/16 14:55:55  warmerda
  * ensure correct operation if no title available
  *
@@ -63,6 +66,8 @@
 
 #include <ctype.h>
 #include "gxfopen.h"
+
+CPL_CVSID("$Id$");
 
 
 /* this is also defined in gdal.h which we avoid in this separable component */

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2001/07/18 04:51:57  warmerda
+ * added CPL_CVSID
+ *
  * Revision 1.13  2001/01/19 21:20:29  warmerda
  * expanded tabs
  *
@@ -72,6 +75,8 @@
 #include "sdts_al.h"
 #include "shapefil.h"
 #include "cpl_string.h"
+
+CPL_CVSID("$Id$");
 
 static int  bVerbose = FALSE;
 

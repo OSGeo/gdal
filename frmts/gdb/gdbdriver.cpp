@@ -25,6 +25,9 @@
  * The GDB driver implemenation is the GDAL Driver for GeoGateway.
  * 
  * $Log$
+ * Revision 1.3  2001/07/18 04:51:56  warmerda
+ * added CPL_CVSID
+ *
  * Revision 1.2  2000/02/28 16:32:20  warmerda
  * use SetBand method
  *
@@ -36,6 +39,8 @@
 #include "gdb.h"		// from PCI distribution.
 
 #include "gdal_priv.h"
+
+CPL_CVSID("$Id$");
 
 static GDALDriver	*poGDBDriver = NULL;
 

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2001/07/18 04:51:57  warmerda
+ * added CPL_CVSID
+ *
  * Revision 1.11  2001/07/12 14:46:00  warmerda
  * added limited gcp and projection read support
  *
@@ -66,6 +69,8 @@
 #include "rawdataset.h"
 #include "cpl_string.h"
 #include "ogr_spatialref.h"
+
+CPL_CVSID("$Id$");
 
 static GDALDriver	*poPAuxDriver = NULL;
 

@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: tif_overview.c,v 1.3 2000/04/18 22:48:31 warmerda Exp $
+ * tif_overview.c,v 1.1 2000/11/24 18:13:43 warmerda Exp
  *
  * Project:  TIFF Overview Builder
  * Purpose:  Library function for building overviews in a TIFF file.
@@ -44,7 +44,10 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************
  *
- * $Log: tif_overview.c,v $
+ * tif_overview.c,v
+ * Revision 1.1  2000/11/24 18:13:43  warmerda
+ * New
+ *
  * Revision 1.3  2000/04/18 22:48:31  warmerda
  * Added support for averaging resampling
  *
@@ -64,6 +67,9 @@
 #include "tiffio.h"
 #include "tif_ovrcache.h"
 
+#include "cpl_port.h"
+
+CPL_CVSID("$Id: cpl_path.cpp,v 1.8 2001/07/18 04:00:49 warmerda Exp $");
 
 #ifndef FALSE
 #  define FALSE 0

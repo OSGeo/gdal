@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2001/07/18 04:51:56  warmerda
+ * added CPL_CVSID
+ *
  * Revision 1.13  2001/07/16 16:42:32  warmerda
  * Added radiometric data record type code.
  *
@@ -72,6 +75,8 @@
 #include "gdal_priv.h"
 #include "../raw/rawdataset.h"
 #include "cpl_string.h"
+
+CPL_CVSID("$Id$");
 
 static GDALDriver	*poCEOSDriver = NULL;
 
