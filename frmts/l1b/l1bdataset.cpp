@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.17  2003/04/17 12:54:21  dron
+ * Fixed small memory leak.
+ *
  * Revision 1.16  2003/04/05 15:16:29  dron
  * Simplified process of georeference determination.
  *
@@ -226,7 +229,6 @@ class L1BDataset : public GDALDataset
     GUInt16     iInstrumentStatus;
     GUInt32     iChannels;
 
-    double      adfGeoTransform[6];
     char        *pszGCPProjection;
 
     FILE        *fp;
@@ -246,9 +248,6 @@ class L1BDataset : public GDALDataset
     virtual const char *GetGCPProjection();
     virtual const GDAL_GCP *GetGCPs();
     static GDALDataset *Open( GDALOpenInfo * );
-
-    CPLErr      GetGeoTransform( double * padfTransform );
-    const char *GetProjectionRef();
 
 };
 
@@ -391,9 +390,6 @@ L1BDataset::L1BDataset()
     nGCPCount = 0;
     pasGCPList = NULL;
     pszGCPProjection = CPLStrdup( "GEOGCS[\"WGS 72\",DATUM[\"WGS_1972\",SPHEROID[\"WGS 72\",6378135,298.26,AUTHORITY[\"EPSG\",7043]],TOWGS84[0,0,4.5,0,0,0.554,0.2263],AUTHORITY[\"EPSG\",6322]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",8901]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",9108]],AXIS[\"Lat\",\"NORTH\"],AXIS[\"Long\",\"EAST\"],AUTHORITY[\"EPSG\",4322]]" );
-    adfGeoTransform[0] = adfGeoTransform[2] =
-        adfGeoTransform[3] = adfGeoTransform[4] = 0.0;
-    adfGeoTransform[1] = adfGeoTransform[5] = 1.0;
     nBands = 0;
     iLocationIndicator = DESCEND; // XXX: should be initialised
     iChannels = 0;
@@ -410,8 +406,12 @@ L1BDataset::~L1BDataset()
     if( nGCPCount > 0 )
     {
         for( int i = 0; i < nGCPCount; i++ )
+        {
             if ( pasGCPList[i].pszId )
                 CPLFree( pasGCPList[i].pszId );
+            if ( pasGCPList[i].pszInfo )
+                CPLFree( pasGCPList[i].pszInfo );
+        }
 
         CPLFree( pasGCPList );
     }
@@ -419,29 +419,6 @@ L1BDataset::~L1BDataset()
         CPLFree( pszGCPProjection );
     if( fp != NULL )
         VSIFClose( fp );
-}
-
-/************************************************************************/
-/*                          GetGeoTransform()                           */
-/************************************************************************/
-
-CPLErr L1BDataset::GetGeoTransform( double * padfTransform )
-
-{
-    memcpy( padfTransform, adfGeoTransform, sizeof(double) * 6 );
-    return CE_None;
-}
-
-/************************************************************************/
-/*                          GetProjectionRef()                          */
-/*    Projection will be determined using GCPs, so report empty         */
-/*    string here.                                                      */
-/************************************************************************/
-
-const char *L1BDataset::GetProjectionRef()
-
-{
-    return "";
 }
 
 /************************************************************************/
@@ -480,7 +457,8 @@ const GDAL_GCP *L1BDataset::GetGCPs()
 /*      Fetch timecode from the record header (NOAA9-NOAA14 version)    */
 /************************************************************************/
 
-void L1BDataset::FetchNOAA9TimeCode(TimeCode *psTime, GByte *piRecordHeader, int *iLocInd)
+void L1BDataset::FetchNOAA9TimeCode( TimeCode *psTime, GByte *piRecordHeader,
+                                     int *iLocInd )
 {
     GUInt32 lTemp;
 
@@ -497,7 +475,8 @@ void L1BDataset::FetchNOAA9TimeCode(TimeCode *psTime, GByte *piRecordHeader, int
 /*      Fetch timecode from the record header (NOAA15-NOAA17 version)   */
 /************************************************************************/
 
-void L1BDataset::FetchNOAA15TimeCode(TimeCode *psTime, GUInt16 *piRecordHeader, int *iLocInd)
+void L1BDataset::FetchNOAA15TimeCode( TimeCode *psTime,
+                                      GUInt16 *piRecordHeader, int *iLocInd )
 {
     GUInt16 iTemp;
     GUInt32 lTemp;
@@ -548,7 +527,6 @@ void L1BDataset::FetchNOAA9GCPs(GDAL_GCP *pasGCPList, GInt16 *piRecordHeader, in
         if (pasGCPList[nGCPCount].dfGCPX < -180 || pasGCPList[nGCPCount].dfGCPX > 180 ||
             pasGCPList[nGCPCount].dfGCPY < -90 || pasGCPList[nGCPCount].dfGCPY > 90)
             continue;
-        pasGCPList[nGCPCount].pszId = NULL;
         pasGCPList[nGCPCount].dfGCPZ = 0.0;
         pasGCPList[nGCPCount].dfGCPPixel = dfPixel;
         dfPixel += (iLocationIndicator == DESCEND)?dfGCPStep:-dfGCPStep;
@@ -585,7 +563,6 @@ void L1BDataset::FetchNOAA15GCPs(GDAL_GCP *pasGCPList, GInt32 *piRecordHeader, i
         if (pasGCPList[nGCPCount].dfGCPX < -180 || pasGCPList[nGCPCount].dfGCPX > 180 ||
             pasGCPList[nGCPCount].dfGCPY < -90 || pasGCPList[nGCPCount].dfGCPY > 90)
             continue;
-        pasGCPList[nGCPCount].pszId = NULL;
         pasGCPList[nGCPCount].dfGCPZ = 0.0;
         pasGCPList[nGCPCount].dfGCPPixel = dfPixel;
         dfPixel += (iLocationIndicator == DESCEND)?dfGCPStep:-dfGCPStep;
@@ -596,7 +573,7 @@ void L1BDataset::FetchNOAA15GCPs(GDAL_GCP *pasGCPList, GInt32 *piRecordHeader, i
 }
 
 /************************************************************************/
-/*                      ProcessRecordHeaders()                                  */
+/*                      ProcessRecordHeaders()                          */
 /************************************************************************/
 
 void L1BDataset::ProcessRecordHeaders()
