@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.68  2003/02/06 04:53:12  warmerda
+ * added Fixup() method
+ *
  * Revision 1.67  2003/01/31 02:27:08  warmerda
  * modified SetFromUserInput() to avoid large buffer on stack
  *
@@ -2127,7 +2130,8 @@ OGRErr OGRSpatialReference::SetNormProjParm( const char * pszName,
 {
     GetNormInfo();
 
-    if( dfToDegrees != 1.0 && IsAngularParameter(pszName) )
+    if( (dfToDegrees != 1.0 || dfFromGreenwich != 0.0) 
+        && IsAngularParameter(pszName) )
     {
         if( dfFromGreenwich != 0.0 && IsLongitudeParameter( pszName ) )
             dfValue -= dfFromGreenwich;
@@ -3697,3 +3701,67 @@ OGRErr OSRFixupOrdering( OGRSpatialReferenceH hSRS )
 {
     return ((OGRSpatialReference *) hSRS)->FixupOrdering();
 }
+
+/************************************************************************/
+/*                               Fixup()                                */
+/************************************************************************/
+
+/**
+ * Fixup as needed.
+ *
+ * Some mechanisms to create WKT using OGRSpatialReference, and some
+ * imported WKT, are not valid according to the OGC CT specification.  This
+ * method attempts to fill in any missing defaults that are required, and
+ * fixup ordering problems (using OSRFixupOrdering()) so that the resulting
+ * WKT is valid. 
+ *
+ * This method should be expected to evolve over time to as problems are
+ * discovered.  The following are amoung the fixup actions this method will
+ * take:
+ *
+ * - Fixup the ordering of nodes to match the BNF WKT ordering, using
+ * the FixupOrdering() method. 
+ *
+ * - Add missing linear or angular units nodes.  
+ *
+ * This method is the same as the C function OSRFixup().
+ *
+ * @return OGRERR_NONE on success or an error code if something goes 
+ * wrong.  
+ */
+
+OGRErr OGRSpatialReference::Fixup()
+
+{
+/* -------------------------------------------------------------------- */
+/*      Ensure linear units defaulted to METER if missing for PROJCS    */
+/*      or LOCAL_CS.                                                    */
+/* -------------------------------------------------------------------- */
+    const OGR_SRSNode *poCS = GetAttrNode( "PROJCS" );
+
+    if( poCS == NULL )
+        poCS = GetAttrNode( "LOCAL_CS" );
+
+    if( poCS != NULL && poCS->FindChild( "UNIT" ) == -1 )
+        SetLinearUnits( SRS_UL_METER, 1.0 );
+
+/* -------------------------------------------------------------------- */
+/*      Ensure angular units defaulted to degrees on the GEOGCS.        */
+/* -------------------------------------------------------------------- */
+    poCS = GetAttrNode( "GEOGCS" );
+    if( poCS != NULL && poCS->FindChild( "UNIT" ) == -1 )
+        SetAngularUnits( SRS_UA_DEGREE, atof(SRS_UA_DEGREE_CONV) );
+
+    return FixupOrdering();
+}
+
+/************************************************************************/
+/*                              OSRFixup()                              */
+/************************************************************************/
+
+OGRErr OSRFixup( OGRSpatialReferenceH hSRS )
+
+{
+    return ((OGRSpatialReference *) hSRS)->Fixup();
+}
+

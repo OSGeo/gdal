@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.47  2003/02/06 04:53:12  warmerda
+ * added Fixup() method
+ *
  * Revision 1.46  2003/01/08 18:14:28  warmerda
  * added FixupOrdering()
  *
@@ -309,6 +312,7 @@ class CPL_DLL OGRSpatialReference
     OGRErr      Validate();
     OGRErr      StripCTParms( OGR_SRSNode * = NULL );
     OGRErr      FixupOrdering();
+    OGRErr      Fixup();
 
     // Machinary for accessing parse nodes
     OGR_SRSNode *GetRoot() { return poRoot; }
