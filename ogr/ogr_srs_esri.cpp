@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.26  2003/08/03 01:30:34  warmerda
+ * Added mapping for EUR datum as per:
+ * http://bugzilla.remotesensing.org/show_bug.cgi?id=371
+ *
  * Revision 1.25  2003/06/23 14:49:17  warmerda
  * added InitDatumMappingTable, and use of gdal_datum.csv file
  *
@@ -133,10 +137,6 @@ static char *apszAlbersMapping[] = {
     SRS_PP_LATITUDE_OF_ORIGIN, SRS_PP_LATITUDE_OF_CENTER,
     NULL, NULL };
 
-static char *apszArgMapping[] = {
-    
-    NULL, NULL }; 
- 
 static char **papszDatumMapping = NULL;
  
 static char *apszUnitMapping[] = {
@@ -735,6 +735,10 @@ OGRErr OGRSpatialReference::importFromESRI( char **papszPrj )
             || EQUAL(pszDatum,"WGS84") || EQUAL(pszDatum,"WGS72") )
         {
             SetWellKnownGeogCS( pszDatum );
+        }
+        else if( EQUAL( pszDatum, "EUR" ) )
+        {
+            SetWellKnownGeogCS( "EPSG:4230" );
         }
         else
         {
