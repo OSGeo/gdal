@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2004/01/29 15:21:46  dron
+ * More datums added.
+ *
  * Revision 1.4  2003/10/08 07:59:39  dron
  * More datums and ellipsoids added.
  *
@@ -60,8 +63,21 @@ static PCIDatums aoDatums[] =
     { "D-03", 4267 },   // NAD27 (Canada, NTv1)
     { "D-02", 4269 },   // NAD83 (USA, NADCON)
     { "D-04", 4269 },   // NAD83 (Canada, NTv1)
-    { "D000", 6326 },   // WGS 1984
-    { "D001", 6322 },   // WGS 1972
+    { "D000", 4326 },   // WGS 1984
+    { "D001", 4322 },   // WGS 1972
+    { "D008", 4296 },   // Sudan
+    { "D013", 4601 },   // Antigua Island Astro 1943
+    { "D029", 4202 },   // Australian Geodetic 1966
+    { "D030", 4203 },   // Australian Geodetic 1984
+    { "D033", 4216 },   // Bermuda 1957
+    { "D034", 4165 },   // Bissau
+    { "D036", 4219 },   // Bukit Rimpah
+    { "D038", 4221 },   // Campo Inchauspe
+    { "D040", 4222 },   // Cape
+    { "D042", 4223 },   // Carthage
+    { "D044", 4224 },   // Chua Astro
+    { "D045", 4225 },   // Corrego Alegre
+    { "D046", 4155 },   // Dabola (Guinea)
     { NULL, 0 }
 };
 
