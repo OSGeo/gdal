@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  1999/11/04 22:52:53  warmerda
+ * added dynamic ATID support
+ *
  * Revision 1.20  1999/10/01 14:49:42  warmerda
  * added Getmodule()
  *
@@ -259,18 +262,18 @@ class SDTSFeature
 {
 public:
 
+    		        SDTSFeature();
     virtual            ~SDTSFeature();
 
     /** Unique identifier for this record/feature within transfer. */
     SDTSModId		oModId;
 
-#define MAX_ATID	4
     /** Number of attribute links (aoATID[]) on this feature. */
     int		nAttributes;
 
     /** List of nAttributes attribute record identifiers related to this
         feature.  */
-    SDTSModId	aoATID[MAX_ATID];
+    SDTSModId	*paoATID;
 
     void        ApplyATID( DDFField * );
 

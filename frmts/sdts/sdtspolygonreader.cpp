@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  1999/11/04 22:52:53  warmerda
+ * added dynamic ATID support
+ *
  * Revision 1.8  1999/09/22 13:35:31  warmerda
  * added SDTSPolygonReader::AssembleRings()
  *
@@ -483,7 +486,7 @@ void SDTSRawPolygon::Dump( FILE * fp )
     fprintf( fp, "SDTSRawPolygon %s: ", oModId.GetName() );
 
     for( i = 0; i < nAttributes; i++ )
-        fprintf( fp, "  ATID[%d]=%s", i, aoATID[i].GetName() );
+        fprintf( fp, "  ATID[%d]=%s", i, paoATID[i].GetName() );
 
     fprintf( fp, "\n" );
 }

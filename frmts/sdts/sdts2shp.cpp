@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  1999/11/04 22:52:52  warmerda
+ * added dynamic ATID support
+ *
  * Revision 1.9  1999/09/22 13:34:51  warmerda
  * use new SDTSPolygonReader::AssembleRings() method
  *
@@ -781,7 +784,7 @@ WritePrimaryAttrToDBF( DBFHandle hDBF, int iRecord,
     {
         DDFField	*poSR;
 
-        poSR = poTransfer->GetAttr( poFeature->aoATID+iAttrRecord );
+        poSR = poTransfer->GetAttr( poFeature->paoATID+iAttrRecord );
           
         WriteAttrRecordToDBF( hDBF, iRecord, poTransfer, poSR );
     }

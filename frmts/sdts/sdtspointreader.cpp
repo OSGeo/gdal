@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  1999/11/04 22:52:53  warmerda
+ * added dynamic ATID support
+ *
  * Revision 1.7  1999/09/21 17:26:31  warmerda
  * generalized SADR reading
  *
@@ -138,7 +141,7 @@ void SDTSRawPoint::Dump( FILE * fp )
         fprintf( fp, " AreaId=%s", oAreaId.GetName() );
 
     for( i = 0; i < nAttributes; i++ )
-        fprintf( fp, "  ATID[%d]=%s", i, aoATID[i].GetName() );
+        fprintf( fp, "  ATID[%d]=%s", i, paoATID[i].GetName() );
     
     fprintf( fp, "  Vertex = (%.2f,%.2f,%.2f)\n", dfX, dfY, dfZ );
 }

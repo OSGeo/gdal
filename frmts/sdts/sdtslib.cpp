@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  1999/11/04 22:52:52  warmerda
+ * added dynamic ATID support
+ *
  * Revision 1.9  1999/09/21 17:26:31  warmerda
  * generalized SADR reading
  *
@@ -62,6 +65,17 @@
 #include "cpl_string.h"
 
 /************************************************************************/
+/*                            SDTSFeature()                             */
+/************************************************************************/
+
+SDTSFeature::SDTSFeature()
+
+{
+    nAttributes = 0;
+    paoATID = NULL;
+}
+
+/************************************************************************/
 /*                       SDTSFeature::ApplyATID()                       */
 /************************************************************************/
 
@@ -80,19 +94,20 @@ void SDTSFeature::ApplyATID( DDFField * poField )
 
     for( int iRepeat = 0; iRepeat < nRepeatCount; iRepeat++ )
     {
-        if( nAttributes < MAX_ATID )
-        {
-            const char * pabyData;
-            SDTSModId *poModId = aoATID + nAttributes;
+        paoATID = (SDTSModId *) CPLRealloc(paoATID,
+                                           sizeof(SDTSModId)*(nAttributes+1));
 
-            pabyData = poField->GetSubfieldData( poMODN, NULL, iRepeat );
+        const char * pabyData;
+        SDTSModId *poModId = paoATID + nAttributes;
+
+        pabyData = poField->GetSubfieldData( poMODN, NULL, iRepeat );
             
-            memcpy( poModId->szModule, pabyData, 4 );
-            poModId->szModule[4] = '\0';
-            poModId->nRecord = atoi(pabyData + 4);
-
-            nAttributes++;
-        }
+        memcpy( poModId->szModule, pabyData, 4 );
+        poModId->szModule[4] = '\0';
+        poModId->nRecord = atoi(pabyData + 4);
+        poModId->szOBRP[0] = '\0';
+        
+        nAttributes++;
     }
 }
 
@@ -103,6 +118,8 @@ void SDTSFeature::ApplyATID( DDFField * poField )
 SDTSFeature::~SDTSFeature()
 
 {
+    CPLFree( paoATID );
+    paoATID = NULL;
 }
 
 /************************************************************************/

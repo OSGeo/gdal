@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  1999/11/04 22:52:53  warmerda
+ * added dynamic ATID support
+ *
  * Revision 1.10  1999/09/21 17:26:31  warmerda
  * generalized SADR reading
  *
@@ -181,7 +184,7 @@ void SDTSRawLine::Dump( FILE * fp )
                  oEndNode.szModule, oEndNode.nRecord );
     for( i = 0; i < nAttributes; i++ )
         fprintf( fp, "  Attribute (Module=%s, Record=%ld)\n", 
-                 aoATID[i].szModule, aoATID[i].nRecord );
+                 paoATID[i].szModule, paoATID[i].nRecord );
 
     for( i = 0; i < nVertices; i++ )
     {
