@@ -7,10 +7,11 @@ from distutils.core import setup, Extension
 
 # Function needed to make unique lists.
 def unique(list):
-  dict = {}
-  for item in list:
-    dict[item] = ''
-  return dict.keys()
+    """Stolen from MapScript setup script"""
+    dict = {}
+    for item in list:
+        dict[item] = ''
+    return dict.keys()
 
 
 include_dirs = ['../../port',
@@ -72,11 +73,18 @@ osr_module = Extension('_osr',
                     include_dirs = include_dirs,
                     libraries = libraries,
                     library_dirs = library_dirs)
+ogr_module = Extension('_ogr',
+                    sources=['ogr_wrap.cpp'],
+                    include_dirs = include_dirs,
+                    libraries = libraries,
+                    library_dirs = library_dirs)
 
 
 setup( name = 'Gdal Wrapper',
        version = 'ng using swig 1.3',
        description = 'Swig 1.3 wrapper over gdal',
-       py_modules = ['gdal', 'osr'],
+       py_modules = ['gdal', 'osr', 'ogr'],
        url="http://www.gdal.org",
-       ext_modules = [gdal_module, osr_module] )
+       ext_modules = [gdal_module,
+                      osr_module,
+                      ogr_module] )
