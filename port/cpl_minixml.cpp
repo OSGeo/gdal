@@ -28,6 +28,10 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.19  2003/03/27 18:12:41  warmerda
+ * Added NULL pszNameSpace support in namespace stripper (all namespaces).
+ * Added XML file read/write functions.
+ *
  * Revision 1.18  2003/03/24 16:47:30  warmerda
  * Added CPLStripXMLNamespace().
  * CPLAddXMLChild() will now ensure that attributes are inserted before
@@ -1223,14 +1227,34 @@ void CPLStripXMLNamespace( CPLXMLNode *psRoot,
     if( psRoot == NULL )
         return;
 
-    if( psRoot->eType == CXT_Element 
-        && EQUALN(pszNamespace,psRoot->pszValue,strlen(pszNamespace)) 
-        && psRoot->pszValue[strlen(pszNamespace)] == ':' )
+    if( pszNamespace != NULL )
     {
-        char *pszNewValue = CPLStrdup(psRoot->pszValue+strlen(pszNamespace)+1);
+        if( psRoot->eType == CXT_Element 
+            && EQUALN(pszNamespace,psRoot->pszValue,strlen(pszNamespace)) 
+            && psRoot->pszValue[strlen(pszNamespace)] == ':' )
+        {
+            char *pszNewValue = 
+                CPLStrdup(psRoot->pszValue+strlen(pszNamespace)+1);
+            
+            CPLFree( psRoot->pszValue );
+            psRoot->pszValue = pszNewValue;
+        }
+    }
+    else
+    {
+        const char *pszCheck;
 
-        CPLFree( psRoot->pszValue );
-        psRoot->pszValue = pszNewValue;
+        for( pszCheck = psRoot->pszValue; *pszCheck != '\0'; pszCheck++ )
+        {
+            if( *pszCheck == ':' )
+            {
+                char *pszNewValue = CPLStrdup( pszCheck+1 );
+            
+                CPLFree( psRoot->pszValue );
+                psRoot->pszValue = pszNewValue;
+                break;
+            }
+        }
     }
 
     if( bRecurse )
@@ -1241,3 +1265,100 @@ void CPLStripXMLNamespace( CPLXMLNode *psRoot,
             CPLStripXMLNamespace( psRoot->psNext, pszNamespace, 1 );
     }
 }
+
+/************************************************************************/
+/*                          CPLParseXMLFile()                           */
+/************************************************************************/
+
+CPLXMLNode *CPLParseXMLFile( const char *pszFilename )
+
+{
+    FILE 	*fp;
+    int nLen;
+    char *pszDoc;
+    CPLXMLNode *psTree;
+
+/* -------------------------------------------------------------------- */
+/*      Read the file.                                                  */
+/* -------------------------------------------------------------------- */
+    fp = VSIFOpen( pszFilename, "rb" );
+    if( fp == NULL )
+    {
+        CPLError( CE_Failure, CPLE_OpenFailed, 
+                  "Failed to open %s to read.", pszFilename );
+        return NULL;
+    }
+
+    VSIFSeek( fp, 0, SEEK_END );
+    nLen = VSIFTell( fp );
+    VSIFSeek( fp, 0, SEEK_SET );
+    
+    pszDoc = (char *) CPLMalloc(nLen+1);
+    VSIFRead( pszDoc, 1, nLen, fp );
+    VSIFClose( fp );
+
+    pszDoc[nLen] = '\0';
+
+/* -------------------------------------------------------------------- */
+/*      Parse it.                                                       */
+/* -------------------------------------------------------------------- */
+    psTree = CPLParseXMLString( pszDoc );
+    CPLFree( pszDoc );
+
+    return psTree;
+}
+
+/************************************************************************/
+/*                     CPLSerializeXMLTreeToFile()                      */
+/************************************************************************/
+
+int CPLSerializeXMLTreeToFile( CPLXMLNode *psTree, const char *pszFilename )
+
+{
+    char *pszDoc;
+    FILE *fp;
+    int  nLength;
+
+/* -------------------------------------------------------------------- */
+/*      Serialize document.                                             */
+/* -------------------------------------------------------------------- */
+    pszDoc = CPLSerializeXMLTree( psTree );
+    if( pszDoc == NULL )
+        return FALSE;
+
+    nLength = strlen(pszDoc);
+
+/* -------------------------------------------------------------------- */
+/*      Create file.                                                    */
+/* -------------------------------------------------------------------- */
+    fp = VSIFOpen( pszFilename, "wt" );
+    if( fp == NULL )
+    {
+        CPLError( CE_Failure, CPLE_OpenFailed, 
+                  "Failed to open %s to write.", pszFilename );
+        return FALSE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Write file.                                                     */
+/* -------------------------------------------------------------------- */
+    if( (int) VSIFWrite( pszDoc, 1, nLength, fp ) != nLength )
+    {
+        CPLError( CE_Failure, CPLE_FileIO, 
+                  "Failed to write whole XML document (%s).",
+                  pszFilename );
+        VSIFClose( fp );
+        CPLFree( pszDoc );
+        return FALSE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Cleanup                                                         */
+/* -------------------------------------------------------------------- */
+    VSIFClose( fp );
+    CPLFree( pszDoc );
+
+    return TRUE;
+}
+
+

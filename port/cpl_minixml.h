@@ -28,6 +28,10 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.8  2003/03/27 18:12:41  warmerda
+ * Added NULL pszNameSpace support in namespace stripper (all namespaces).
+ * Added XML file read/write functions.
+ *
  * Revision 1.7  2003/03/24 16:46:48  warmerda
  * added CPLStripXMLNamespace
  *
@@ -100,6 +104,10 @@ int        CPL_DLL CPLSetXMLValue( CPLXMLNode *psRoot,  const char *pszPath,
 void       CPL_DLL CPLStripXMLNamespace( CPLXMLNode *psRoot, 
                                          const char *pszNameSpace, 
                                          int bRecurse );
+
+CPLXMLNode CPL_DLL *CPLParseXMLFile( const char *pszFilename );
+int        CPL_DLL CPLSerializeXMLTreeToFile( CPLXMLNode *psTree, 
+                                              const char *pszFilename );
 
 CPL_C_END
 
