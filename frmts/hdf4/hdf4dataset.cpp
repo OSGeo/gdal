@@ -30,6 +30,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.15  2002/11/13 06:43:15  warmerda
+ * quote filename in case it contains a drive indicator
+ *
  * Revision 1.14  2002/11/13 06:00:04  warmerda
  * avoid use of long long type as it doesn't exist perse on windows
  *
@@ -894,7 +897,7 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
 	// We will use SDS index as an identificator, because SDS names
 	// are not unique. Filename also needed for further file opening
         poDS->papszSubDatasets = CSLSetNameValue(poDS->papszSubDatasets, szTemp, 
-              CPLSPrintf("HDF4_SDS:%s:%s:%d", poDS->pszDataType,
+              CPLSPrintf("HDF4_SDS:%s:\"%s\":%d", poDS->pszDataType,
 			 poOpenInfo->pszFilename, i));
         sprintf( szTemp, "SUBDATASET_%d_DESC", nCount + 1 );
 	pszString = SPrintArray( (GInt32 *)aiDimSizes, iRank, "x" );
@@ -931,7 +934,7 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
         nCount = CSLCount( poDS->papszSubDatasets ) / 2;
         sprintf( szTemp, "SUBDATASET_%d_NAME", nCount + 1 );
         poDS->papszSubDatasets = CSLSetNameValue(poDS->papszSubDatasets, szTemp,
-              CPLSPrintf( "HDF4_GR:UNKNOWN:%s:%d", poOpenInfo->pszFilename, i));
+              CPLSPrintf( "HDF4_GR:UNKNOWN:\"%s\":%d", poOpenInfo->pszFilename, i));
         sprintf( szTemp, "SUBDATASET_%d_DESC", nCount + 1 );
 	pszString = SPrintArray( (GInt32 *)aiDimSizes, 2, "x" );
         poDS->papszSubDatasets = CSLSetNameValue(poDS->papszSubDatasets, szTemp,
