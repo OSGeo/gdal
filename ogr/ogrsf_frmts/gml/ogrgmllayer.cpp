@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2002/01/25 21:00:31  warmerda
+ * fix some small bugs found by MS VC++
+ *
  * Revision 1.1  2002/01/25 20:37:02  warmerda
  * New
  *
@@ -152,7 +155,7 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
         poOGRFeature->SetGeometryDirectly( 
             GML2OGRGeometry( poGMLFeature->GetGeometry() ) );
 
-    for( int iField = 0; iField < poFClass->GetPropertyCount(); iField++ )
+    for( iField = 0; iField < poFClass->GetPropertyCount(); iField++ )
     {
         const char *pszProperty = poGMLFeature->GetProperty( iField );
 
