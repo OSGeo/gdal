@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2003/04/21 19:03:20  warmerda
+ * added SyncToDisk support
+ *
  * Revision 1.12  2003/03/04 05:49:05  warmerda
  * added attribute indexing support
  *
@@ -110,6 +113,8 @@ class OGRShapeLayer : public OGRLayer
     long               *panMatchingFIDs;
     int                 iMatchingFID;
 
+    int                 bHeaderDirty;
+
   public:
     			OGRShapeLayer( const char * pszName,
                                        SHPHandle hSHP, DBFHandle hDBF,
@@ -127,6 +132,7 @@ class OGRShapeLayer : public OGRLayer
     OGRFeature         *GetFeature( long nFeatureId );
     OGRErr              SetFeature( OGRFeature *poFeature );
     OGRErr              CreateFeature( OGRFeature *poFeature );
+    OGRErr              SyncToDisk();
     
     OGRFeatureDefn *	GetLayerDefn() { return poFeatureDefn; }
 
