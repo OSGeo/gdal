@@ -1,3 +1,10 @@
+2001-05-15  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* frmts/raw/fujibasdataset.cpp: added new Fuji BAS format.
+
+	* frmts/raw/pauxdataset.cpp: added support for opening by selecting
+	the .aux file.
+
 2001-05-07  Frank Warmerdam  <warmerdam@pobox.com>
 
 	* pymod/gdal.py, gdal.i: added GDALComputeRasterMinMax() bindings.
