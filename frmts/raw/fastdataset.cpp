@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.14  2004/03/16 18:27:39  dron
+ * Fixes in projection parameters parsing code.
+ *
  * Revision 1.13  2004/02/18 20:22:10  dron
  * Create RawRasterBand objects in "large" mode; more datums and ellipsoids.
  *
@@ -369,7 +372,7 @@ FILE *FASTDataset::FOpenChannel( char *pszFilename, int iBand )
 	break;
     }
     
-    CPLDebug( "FAST", "Band %d filename: %s", iBand + 1, pszChannelFilename);
+    CPLDebug( "FAST", "Band %d filename=%s", iBand + 1, pszChannelFilename);
 
     CPLFree( pszPrefix );
     CPLFree( pszSuffix );
@@ -674,8 +677,13 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
         {
             pszTemp = strpbrk( pszTemp, "-.0123456789" );
             if ( pszTemp )
+            {
                 adfProjParms[i] = CPLScanDouble( pszTemp, VALUE_SIZE, "C" );
-            pszTemp += VALUE_SIZE;
+#if DEBUG
+                CPLDebug("FAST", "USGS parameter %2d=%f.", i, adfProjParms[i]);
+#endif
+            }
+            pszTemp = strpbrk( pszTemp, " \t" );
         }
     }
 
