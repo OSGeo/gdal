@@ -21,6 +21,10 @@
 #include <sys/stat.h>
 #endif /* __MSDOS__ */
 
+#ifdef unix
+#include <unistd.h>
+#endif
+
 #ifndef __MSDOS__
 #include <stdlib.h>
 #endif
@@ -34,10 +38,6 @@
 #define GIF_STAMP	"GIFVER"	 /* First chars in file - GIF stamp. */
 #define GIF_STAMP_LEN	sizeof(GIF_STAMP) - 1
 #define GIF_VERSION_POS	3		/* Version first character in stamp. */
-
-#define FILE_STATE_READ		0x01/* 1 write, 0 read - EGIF_LIB compatible.*/
-
-#define IS_READABLE(Private)	(!(Private->FileState & FILE_STATE_READ))
 
 /* avoid extra function call in case we use fread (TVT) */
 #define READ(_gif,_buf,_len)                                     \
@@ -62,6 +62,7 @@ static int DGifBufferedInput(GifFileType *GifFile, GifByteType *Buf,
 GifFileType *DGifOpenFileName(const char *FileName)
 {
     int FileHandle;
+    GifFileType *GifFile;
 
     if ((FileHandle = open(FileName, O_RDONLY
 #ifdef O_BINARY
@@ -72,13 +73,16 @@ GifFileType *DGifOpenFileName(const char *FileName)
 	return NULL;
     }
 
-    return DGifOpenFileHandle(FileHandle);
+    GifFile = DGifOpenFileHandle(FileHandle);
+    if (GifFile == (GifFileType *)NULL)
+        close(FileHandle);
+    return GifFile;
 }
 
 /******************************************************************************
-*   Update a new gif file, given its file handle.			      *
+*   Update a new gif file, given its file handle.                             *
 *   Returns GifFileType pointer dynamically allocated which serves as the gif *
-* info record. _GifError is cleared if succesfull.			      *
+*   info record. _GifError is cleared if succesfull.                          *
 ******************************************************************************/
 GifFileType *DGifOpenFileHandle(int FileHandle)
 {
@@ -87,56 +91,60 @@ GifFileType *DGifOpenFileHandle(int FileHandle)
     GifFilePrivateType *Private;
     FILE *f;
 
-#ifdef __MSDOS__
-    setmode(FileHandle, O_BINARY);	  /* Make sure it is in binary mode. */
-    f = fdopen(FileHandle, "rb");		   /* Make it into a stream: */
-    setvbuf(f, NULL, _IOFBF, GIF_FILE_BUFFER_SIZE);/* And inc. stream buffer.*/
-#else
-    f = fdopen(FileHandle, "r");		   /* Make it into a stream: */
-#endif /* __MSDOS__ */
-
     if ((GifFile = (GifFileType *) malloc(sizeof(GifFileType))) == NULL) {
-	_GifError = D_GIF_ERR_NOT_ENOUGH_MEM;
-	return NULL;
+        _GifError = D_GIF_ERR_NOT_ENOUGH_MEM;
+        return NULL;
     }
 
     memset(GifFile, '\0', sizeof(GifFileType));
 
     if ((Private = (GifFilePrivateType *) malloc(sizeof(GifFilePrivateType)))
-	== NULL) {
-	_GifError = D_GIF_ERR_NOT_ENOUGH_MEM;
-	free((char *) GifFile);
-	return NULL;
+    == NULL) {
+        _GifError = D_GIF_ERR_NOT_ENOUGH_MEM;
+        free((char *) GifFile);
+        return NULL;
     }
+
+#if defined(__MSDOS__) || defined(WIN32)
+    setmode(FileHandle, O_BINARY);      /* Make sure it is in binary mode. */
+    f = fdopen(FileHandle, "rb");           /* Make it into a stream: */
+    setvbuf(f, NULL, _IOFBF, GIF_FILE_BUFFER_SIZE);/* And inc. stream buffer.*/
+#else
+    f = fdopen(FileHandle, "rb");           /* Make it into a stream: */
+#endif /* __MSDOS__ */
+
     GifFile->Private = (VoidPtr) Private;
     Private->FileHandle = FileHandle;
     Private->File = f;
-    Private->FileState = 0;   /* Make sure bit 0 = 0 (File open for read). */
-	Private->Read     = 0;  /* don't use alternate input method (TVT) */
-	GifFile->UserData = 0;  /* TVT */
+    Private->FileState = FILE_STATE_READ;
+    Private->Read     = 0;  /* don't use alternate input method (TVT) */
+    GifFile->UserData = 0;  /* TVT */
 
     /* Lets see if this is a GIF file: */
     if (READ(GifFile,Buf, GIF_STAMP_LEN) != GIF_STAMP_LEN) {
-	_GifError = D_GIF_ERR_READ_FAILED;
-	free((char *) Private);
-	free((char *) GifFile);
-	return NULL;
+        _GifError = D_GIF_ERR_READ_FAILED;
+        fclose(f);
+        free((char *) Private);
+        free((char *) GifFile);
+        return NULL;
     }
 
     /* The GIF Version number is ignored at this time. Maybe we should do    */
-    /* something more useful with it.					     */
+    /* something more useful with it.                         */
     Buf[GIF_STAMP_LEN] = 0;
     if (strncmp(GIF_STAMP, Buf, GIF_VERSION_POS) != 0) {
-	_GifError = D_GIF_ERR_NOT_GIF_FILE;
-	free((char *) Private);
-	free((char *) GifFile);
-	return NULL;
+        _GifError = D_GIF_ERR_NOT_GIF_FILE;
+        fclose(f);
+        free((char *) Private);
+        free((char *) GifFile);
+        return NULL;
     }
 
     if (DGifGetScreenDesc(GifFile) == GIF_ERROR) {
-	free((char *) Private);
-	free((char *) GifFile);
-	return NULL;
+        fclose(f);
+        free((char *) Private);
+        free((char *) GifFile);
+        return NULL;
     }
 
     _GifError = 0;
@@ -171,7 +179,7 @@ GifFileType *DGifOpen( void* userData, InputFunc readFunc )
     GifFile->Private = (VoidPtr) Private;
     Private->FileHandle = 0;
     Private->File = 0;
-    Private->FileState = 0;   /* Make sure bit 0 = 0 (File open for read). */
+    Private->FileState = FILE_STATE_READ;
 
 	Private->Read     = readFunc;  /* TVT */
 	GifFile->UserData = userData;    /* TVT */

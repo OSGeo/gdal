@@ -96,6 +96,10 @@ typedef enum {
 /* func type to read gif data from arbitrary sources (TVT) */
 typedef int (*InputFunc)(GifFileType*,GifByteType*,int);
 
+/* func type to write gif data ro arbitrary targets.
+ * Returns count of bytes written. (MRB)
+ */
+typedef int (*OutputFunc)(GifFileType *, const GifByteType *, int);
 /******************************************************************************
 *  GIF89 extension function codes                                             *
 ******************************************************************************/
@@ -112,6 +116,7 @@ typedef int (*InputFunc)(GifFileType*,GifByteType*,int);
 
 GifFileType *EGifOpenFileName(char *GifFileName, int GifTestExistance);
 GifFileType *EGifOpenFileHandle(int GifFileHandle);
+GifFileType *EgifOpen(void *userPtr, OutputFunc writeFunc);
 int EGifSpew(GifFileType *GifFile);
 void EGifSetGifVersion(char *Version);
 int EGifPutScreenDesc(GifFileType *GifFile,

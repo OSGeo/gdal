@@ -12,6 +12,15 @@
 #define FIRST_CODE		4097    /* Impossible code, to signal first. */
 #define NO_SUCH_CODE		4098    /* Impossible code, to signal empty. */
 
+#define FILE_STATE_WRITE    0x01
+#define FILE_STATE_SCREEN   0x02
+#define FILE_STATE_IMAGE    0x04
+#define FILE_STATE_READ     0x08
+
+#define IS_READABLE(Private)    (Private->FileState & FILE_STATE_READ)
+#define IS_WRITEABLE(Private)   (Private->FileState & FILE_STATE_WRITE)
+
+
 typedef struct GifFilePrivateType {
     int FileState,
 	FileHandle,			     /* Where all this data goes to! */
@@ -28,7 +37,8 @@ typedef struct GifFilePrivateType {
     unsigned long CrntShiftDWord;     /* For bytes decomposition into codes. */
     unsigned long PixelCount;		       /* Number of pixels in image. */
     FILE *File;						  /* File as stream. */
-    InputFunc Read;                /* function to read gif input (TVT) */
+    InputFunc Read;                 /* function to read gif input (TVT) */
+    OutputFunc Write;               /* function to write gif output (MRB) */
     GifByteType Buf[256];	       /* Compressed input is buffered here. */
     GifByteType Stack[LZ_MAX_CODE];	 /* Decoded pixels are stacked here. */
     GifByteType Suffix[LZ_MAX_CODE+1];	       /* So we can trace the codes. */
@@ -36,20 +46,5 @@ typedef struct GifFilePrivateType {
 } GifFilePrivateType;
 
 extern int _GifError;
-
-#ifdef SYSV
-static char *VersionStr =
-        "Gif library module,\t\tGershon Elber\n\
-	(C) Copyright 1989 Gershon Elber, Non commercial use only.\n";
-#else
-static char *VersionStr =
-	PROGRAM_NAME
-	"	IBMPC "
-	GIF_LIB_VERSION
-	"	Gershon Elber,	"
-	__DATE__ ",   " __TIME__ "\n"
-	"(C) Copyright 1989 Gershon Elber, Non commercial use only.\n";
-#endif /* SYSV */
-static char *vs_aw() { return( vs_aw() ? ((char *) NULL ) : VersionStr ); }
 
 #endif /* GIF_LIB_PRIVATE_H */
