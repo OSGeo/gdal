@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2000/02/14 20:21:08  warmerda
+ * avoid reporting error for unknown datum
+ *
  * Revision 1.9  2000/01/31 16:25:17  warmerda
  * handle zero semimajor gracefully
  *
@@ -597,7 +600,7 @@ int GTIFSetFromOGISDefn( GTIF * psGTIF, const char *pszOGCWKT )
             GTIFKeySet( psGTIF, GeogGeodeticDatumGeoKey, TYPE_SHORT,
                         1, nDatum );
         }
-        else
+        else if( !EQUAL(poSRS->GetAttrValue("DATUM"),"unknown") )
         {
             CPLError( CE_Warning, CPLE_AppDefined,
                       "Couldn't translate `%s' to a GeoTIFF datum.\n",
