@@ -147,11 +147,7 @@ private:
     /// Extract projection info and build WKT string
     void get_geo_info(DAS &das, DDS &dds) throw(Error);
 
-    /// Build a constraint for the whole raster
-    string BuildConstraint(int iBandNum) throw(Error, InternalErr);
-    // Use this when GDALRasterBand::IRasterIO() is implemented for this
-    // driver. 11/06/03 jhrg
-    /// Build a sub-sampled constraint
+    /// Build a constraint for a DAP 3.x server.
     string BuildConstraint(int iXOffset, int iYOffset, int iXSize, int iYSize,
 			   int iBandNum) throw(Error, InternalErr);
 
@@ -218,6 +214,11 @@ public:
 };
 
 // $Log$
+// Revision 1.3  2004/01/21 21:52:16  jimg
+// Removed the unused method BuildConstraint(int). GDAL uses ones indexing
+// for Bands while this driver was using zero-based indexing. I changed
+// the code so the driver now also uses ones-based indexing for bands.
+//
 // Revision 1.2  2004/01/20 16:36:15  jimg
 // This version of the OPeNDAP driver uses GDALRasterBand::IRasterIO() to read
 // from the remote servers. Using this protected method, it is possible to read

@@ -38,7 +38,7 @@
 
 #include "dods-datatypes.h"
 
-// #define DODS_DEBUG
+#define DODS_DEBUG
 #include "dodsdataset.h"
 
 CPL_CVSID("$Id$");
@@ -54,7 +54,7 @@ private:
 public:
     DODSDatasetTest() : 
 	url_1("http://localhost/dods-test/nph-dods/data/nc/fnoc1.nc?u[0][lat][lon]"),
-	url_2("http://localhost/dods-test/nph-dods/data/nc/fnoc1.nc?v[0:15][lat][lon]")
+	url_2("http://localhost/dods-test/nph-dods/data/nc/fnoc1.nc?v[1:16][lat][lon]")
     {
 	// Register all the GDAL drivers. If you only want one driver
 	// registered, look at gdalallregister.cpp. 
@@ -129,10 +129,10 @@ public:
 	CPPUNIT_ASSERT(poDS->d_oVarName == "bogus");
 	CPPUNIT_ASSERT(poDS->d_oBandExpr == "[lat][lon]");
 
-	poDS->parse_input(string("http://localhost/fnoc1.nc?bogus[0][10:20][lat][lon]"));
+	poDS->parse_input(string("http://localhost/fnoc1.nc?bogus[0][11:21][lat][lon]"));
 	CPPUNIT_ASSERT(poDS->d_oURL == "http://localhost/fnoc1.nc");
 	CPPUNIT_ASSERT(poDS->d_oVarName == "bogus");
-	CPPUNIT_ASSERT(poDS->d_oBandExpr == "[0][10:20][lat][lon]");
+	CPPUNIT_ASSERT(poDS->d_oBandExpr == "[0][11:21][lat][lon]");
 
 	// Try invalid input. All should throw Error.
 	try {
@@ -285,9 +285,12 @@ public:
 	DBG(cerr << "C2: " << c2 <<endl);
 	CPPUNIT_ASSERT(c2 == "u[5][5:10][4:7]");
 
+#if 0
+	// I removed the one-param version of BuildConstraint. 01/21/04 jhrg
 	string c3 = poDS->BuildConstraint(4);
 	DBG(cerr << "C3: " << c3 <<endl);
 	CPPUNIT_ASSERT(c3 == "u[5][0:16][0:20]");
+#endif
     }
 
     void get_raster_test() {
@@ -308,7 +311,7 @@ public:
 							    GA_ReadOnly));
 	    pImage = new dods_int16[21 * 17];
 	    // x size == 21, y size == 17 (0..20, 0..16)
-	    poDataset->GetRaster(0, 0, 21, 17, 11, static_cast<void*>(pImage));
+	    poDataset->GetRaster(0, 0, 21, 17, 10, static_cast<void*>(pImage));
 	    // I got these values (-514, -157) by looking at the ASCII
 	    // output for the variable 'v': http://localhost/dods-test/nph-dods/data/nc/fnoc1.nc.ascii?v[10:1:10][0:1:16][0:1:20]
 	    DBG(cerr << "Element 20,16: " << pImage[20+(16*21)] << endl);
@@ -318,7 +321,7 @@ public:
 
 	    pImage = new dods_int16[5 * 5];
 	    // x size == 5, y size == 5 (0..4, 0..4)
-	    poDataset->GetRaster(9, 9, 5, 5, 11, static_cast<void*>(pImage));
+	    poDataset->GetRaster(9, 9, 5, 5, 10, static_cast<void*>(pImage));
 	    // I got these values (-334, -827) by looking at the ASCII
 	    // output for the variable 'v': http://localhost/dods-test/nph-dods/data/nc/fnoc1.nc.ascii?v[10:1:10][9:1:13][9:1:13]
 	    DBG(cerr << "Element 4,4: " << pImage[4+(4*5)] << endl);
@@ -365,7 +368,7 @@ public:
 	    // Get part of V
 	    poDataset = static_cast<DODSDataset *>(GDALOpen(url_2.c_str(), 
 							    GA_ReadOnly));
-	    poBand = dynamic_cast<DODSRasterBand*>(poDataset->GetRasterBand(11));
+	    poBand = dynamic_cast<DODSRasterBand*>(poDataset->GetRasterBand(10));
 	    // I know the size and type because I looked at the URL. See above.
 	    pasData = new dods_int16[5 * 5];
 	    nLineSpace = nPixelSpace * 5; // nBufXSize == 5!
@@ -528,6 +531,11 @@ main( int argc, char* argv[] )
 }
 
 // $Log$
+// Revision 1.3  2004/01/21 21:52:16  jimg
+// Removed the unused method BuildConstraint(int). GDAL uses ones indexing
+// for Bands while this driver was using zero-based indexing. I changed
+// the code so the driver now also uses ones-based indexing for bands.
+//
 // Revision 1.2  2004/01/20 16:37:07  jimg
 // Added tests for the IRasterIO() implementation.
 //
