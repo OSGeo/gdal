@@ -31,6 +31,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.10  2004/02/14 23:26:45  warmerda
+ * Added extension metadata.
+ *
  * Revision 1.9  2003/09/19 19:19:37  warmerda
  * Fixed nodata value (-32767), and avoid transforming nodata with fVRes.
  *
@@ -602,6 +605,8 @@ void GDALRegister_USGSDEM()
         poDriver = new GDALDriver();
         
         poDriver->SetDescription( "USGSDEM" );
+        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, 
+                                   "dem" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
                                    "USGS Optional ASCII DEM" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
