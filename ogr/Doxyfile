@@ -115,14 +115,14 @@ FULL_PATH_NAMES = NO
 # directories like "/usr/src/myproject". Separate the files or directories 
 # with spaces.
 
-INPUT            =	.
+INPUT            =	. ogrsf_frmts ogrsf_frmts/generic
 
 # If the value of the INPUT tag contains directories, you can use the 
 # FILE_PATTERNS tag to specify one or more wildcard patterns (like *.cpp 
 # and *.h) to filter out the source-files in the directories. If left 
 # blank all files are included.
 
-FILE_PATTERNS    =	*.h *.cpp *.c *.dox
+FILE_PATTERNS    =	*.h *.cpp *.c *.dox 
 
 # The EXAMPLE_PATH tag can be used to specify one or more files or 
 # directories that contain example code fragments that are included (see 
