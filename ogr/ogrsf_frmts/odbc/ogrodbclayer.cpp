@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2003/09/26 20:03:03  warmerda
+ * initialize pszFIDColumn
+ *
  * Revision 1.1  2003/09/25 17:08:37  warmerda
  * New
  *
@@ -53,6 +56,7 @@ OGRODBCLayer::OGRODBCLayer()
     poFilterGeom = NULL;
 
     pszGeomColumn = NULL;
+    pszFIDColumn = NULL;
 
     poStmt = NULL;
 
