@@ -25,6 +25,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2002/10/29 03:28:34  warmerda
+ * fixed 2.5D flag value
+ *
  * Revision 1.1  2002/05/24 06:23:57  warmerda
  * New
  *
@@ -319,7 +322,7 @@ int OGRFMELayer::Initialize( IFMEFeature * poSchemaFeature,
 /*      Assign the geometry type ... try to apply 3D-ness as well.      */
 /* -------------------------------------------------------------------- */
     if( poSchemaFeature->getDimension() == FME_THREE_D )
-        eGeomType = (OGRwkbGeometryType) (((int)eGeomType) | 0x8000);
+        eGeomType = (OGRwkbGeometryType) (((int)eGeomType) | wkb25DBit);
 
     poFeatureDefn->SetGeomType( eGeomType );
 
