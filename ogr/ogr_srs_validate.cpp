@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2001/11/23 17:02:04  warmerda
+ * add CT support to PROJCS children
+ *
  * Revision 1.2  2001/11/21 03:43:00  warmerda
  * a variety of fixes to validate to allow for CT style parms
  *
@@ -418,7 +421,8 @@ OGRErr OGRSpatialReference::Validate()
             }
             else if( EQUAL(poNode->GetValue(),"UNIT") )
             {
-                if( poNode->GetChildCount() != 2 )
+                if( poNode->GetChildCount() != 2 
+                    && poNode->GetChildCount() != 3 )
                 {
                     CPLDebug( "OGRSpatialReference::Validate",
                            "UNIT has wrong number of children (%d), not 2.\n",
@@ -485,6 +489,16 @@ OGRErr OGRSpatialReference::Validate()
                               poNode->GetChild(0)->GetValue() );
                     
                     return OGRERR_UNSUPPORTED_SRS;
+                }
+            }
+            else if( EQUAL(poNode->GetValue(),"AUTHORITY") )
+            {
+                if( poNode->GetChildCount() != 2 )
+                {
+                    CPLDebug( "OGRSpatialReference::Validate",
+                       "AUTHORITY has wrong number of children (%d), not 2.\n",
+                              poNode->GetChildCount() );
+                    return OGRERR_CORRUPT_DATA;
                 }
             }
             else
