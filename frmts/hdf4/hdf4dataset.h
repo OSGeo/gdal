@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.6  2002/11/06 15:47:14  dron
+ * Added support for 3D datasets creation
+ *
  * Revision 1.5  2002/10/25 14:28:54  dron
  * Initial support for HDF4 creation.
  *
@@ -46,6 +49,9 @@
  *
  */
 
+#ifndef _HDF4DATASET_H_INCLUDED_
+#define _HDF4DATASET_H_INCLUDED_
+
 typedef enum			// Types of subdatasets:
 {
     HDF4_SDS,			// Scientific Dataset
@@ -55,6 +61,7 @@ typedef enum			// Types of subdatasets:
 
 typedef enum			// Types of data products:
 {
+    GDAL_HDF4,			// HDF written by GDAL
     SEAWIFS_L1A,		// SeaWiFS Level-1A Data
     SEAWIFS_L2,			// SeaWiFS Level-2 Data
     SEAWIFS_L3,			// SeaWiFS Level-3 Standard Mapped Image
@@ -102,5 +109,5 @@ class HDF4Dataset : public GDALDataset
 
 };
 
-
+#endif /* _HDF4DATASET_H_INCLUDED_ */
 

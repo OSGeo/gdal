@@ -29,6 +29,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.10  2002/11/06 15:47:14  dron
+ * Added support for 3D datasets creation
+ *
  * Revision 1.9  2002/10/25 14:28:54  dron
  * Initial support for HDF4 creation.
  *
@@ -75,6 +78,10 @@ CPL_CVSID("$Id$");
 CPL_C_START
 void	GDALRegister_HDF4(void);
 CPL_C_END
+
+// Signature to recognize files written by GDAL
+const char	*pszGDALSignature =
+	"Created with GDAL (http://www.remotesensing.org/gdal/)";
 
 /************************************************************************/
 /* ==================================================================== */
@@ -534,7 +541,9 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
     else
 	poDS->iSubdatasetType = HDF4_UNKNOWN;
     
-    if( EQUAL( poDS->papszSubdatasetName[1], "SEAWIFS_L1A" ) )
+    if( EQUAL( poDS->papszSubdatasetName[1], "GDAL_HDF4" ) )
+        poDS->iDataType = GDAL_HDF4;
+    else if( EQUAL( poDS->papszSubdatasetName[1], "SEAWIFS_L1A" ) )
         poDS->iDataType = SEAWIFS_L1A;
     else if( EQUAL( poDS->papszSubdatasetName[1], "ASTER_L1B" ) )
         poDS->iDataType = ASTER_L1B;
@@ -673,20 +682,34 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Read projection information                                     */
 /* -------------------------------------------------------------------- */
-    /*char 	**papszProjParmList;*/
     int		iUTMZone;
     double	dfULX, dfULY, dfURX, dfURY, dfLLX, dfLLY, dfLRX, dfLRY;
     double	dfCenterX, dfCenterY;
+    const char	*pszTemp;
     OGRSpatialReference oSRS;
     poDS->adfGeoTransform[0] = poDS->adfGeoTransform[2] =
-        poDS->adfGeoTransform[3] = poDS->adfGeoTransform[4] = 0.0;
+	poDS->adfGeoTransform[3] = poDS->adfGeoTransform[4] = 0.0;
     poDS->adfGeoTransform[1] = poDS->adfGeoTransform[5] = 1.0;
+    
     switch ( poDS->iDataType )
     {
-        case ASTER_L1B:
-        /*papszProjParmList = CSLTokenizeString2(
-			poDS->GetMetadataItem( CPLSPrintf("PROJECTIONPARAMETERS%c%c",
-			poDS->szName[9], poDS->szName[10]), 0 ),", " , 0 );*/
+	case GDAL_HDF4:
+	if ( (pszTemp =
+	      CSLFetchNameValue(poDS->papszGlobalMetadata, "Projection")) )
+	    poDS->SetProjection( pszTemp );
+	if ( (pszTemp =
+	      CSLFetchNameValue(poDS->papszGlobalMetadata, "TransformationMatrix")) )
+	{
+	    int i = 0;
+	    char *pszString = (char *) pszTemp; 
+	    while ( *pszTemp && i < 5 )
+	    {
+		poDS->adfGeoTransform[i++] = strtod( pszString, &pszString );
+		pszString++;
+	    }
+	}
+	break;
+	case ASTER_L1B:
 	if ( strlen( poDS->szName ) >= 10 &&
 	     EQUAL( CSLFetchNameValue( poDS->papszGlobalMetadata,
 		CPLSPrintf("MPMETHOD%s", &poDS->szName[9]) ), "UTM" ) )
@@ -706,12 +729,6 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 		poDS->papszGlobalMetadata, "SCENECENTER" ),
 		                &dfCenterY, &dfCenterX );
 	    
-	    /*oProj.SetGeogCS( "ASTER_PROJ", "ASTER_DATUM", "ASTER_SPHEROID",
-			    atof(papszProjParmList[0]), // Semi-major axis
-			    1/(atof(papszProjParmList[0])/atof(papszProjParmList[1]) - 1.0), // Inverse Flattening
-			    NULL,
-			    0,
-			    );*/
 	    iUTMZone = atoi( CSLFetchNameValue( poDS->papszGlobalMetadata,
 			    CPLSPrintf("UTMZONECODE%s", &poDS->szName[9]) ) );
 	    if( iUTMZone > 0 )
@@ -811,95 +828,219 @@ HDF4ImageCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         return NULL;
 
 /* -------------------------------------------------------------------- */
+/*      Choose rank for the created dataset. We will write 3D dataset   */
+/*      by default (if all bands has equal bit depths) and set of       */
+/*      2D datasets by user request.                                    */
+/* -------------------------------------------------------------------- */
+    int32	    iRank = 3;
+    int		    iBand;
+    GDALRasterBand  *poBand;
+    GDALDataType    iNumType;
+
+    if ( CSLFetchNameValue( papszOptions, "RANK" ) != NULL &&
+	 EQUAL( CSLFetchNameValue( papszOptions, "RANK" ), "2" ) )
+	iRank = 2;
+
+    if ( iRank == 3 )
+    {
+	iBand = 1;
+	poBand = poSrcDS->GetRasterBand( iBand );
+	iNumType = poBand->GetRasterDataType();
+	while( iBand <= nBands )
+	{
+	    poBand = poSrcDS->GetRasterBand( iBand++ );
+	    if ( iNumType != poBand->GetRasterDataType() )
+	    {
+		CPLDebug("HDF4Image", "Can't create 3D SDS because of different"
+			 "band depths. Set of 2D SDSs will be created");
+		iRank = 2;
+		break;
+	    }
+	}
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Create the dataset.                                             */
 /* -------------------------------------------------------------------- */
-    GDALRasterBand  *poBand;
-    int32	    hSD, iSDS, iRank = 2;
+    int32	    hSD, iSDS;
     int32	    iStart[MAX_DIMS], iEdges[MAX_DIMS];
     int		    iXDim = 1, iYDim = 0, iBandDim = 2;
     int		    nBlockXSize, nBlockYSize;
-    int		    iBand, iXBlock, iYBlock;
-    GDALDataType    iNumType;
+    int		    iXBlock, iYBlock;
+    int		    nXBlocks, nYBlocks;
     CPLErr	    eErr = CE_None;
     GByte	    *pabyData;
+    const char	    *pszSDSName;
     int32	    aiDimSizes[MAX_VAR_DIMS];
 
     hSD = SDstart( pszFilename, DFACC_CREATE );
     aiDimSizes[iXDim] = nXSize;
     aiDimSizes[iYDim] = nYSize;
-    //aiDimSizes[iBandDim] = nBands;
+    aiDimSizes[iBandDim] = nBands;
 
-    for( iBand = 0; iBand < nBands; iBand++ )
+    if ( iRank == 2 )
     {
-	poBand = poSrcDS->GetRasterBand( iBand + 1);
-	poBand->GetBlockSize( &nBlockXSize, &nBlockYSize );
-	iNumType = poBand->GetRasterDataType();
-	pabyData = (GByte *) CPLMalloc( nBlockXSize * nBlockYSize *
-					GDALGetDataTypeSize( iNumType ) / 8 );
-	
+	for( iBand = 0; iBand < nBands; iBand++ )
+	{
+	    poBand = poSrcDS->GetRasterBand( iBand + 1);
+	    poBand->GetBlockSize( &nBlockXSize, &nBlockYSize );
+	    nXBlocks = (poBand->GetXSize() + nBlockXSize - 1) / nBlockXSize;
+	    nYBlocks = (poBand->GetYSize() + nBlockYSize - 1) / nBlockYSize;
+	    iNumType = poBand->GetRasterDataType();
+	    pabyData = (GByte *) CPLMalloc( nBlockXSize * nBlockYSize *
+					    GDALGetDataTypeSize( iNumType ) / 8 );
+	    pszSDSName = poBand->GetDescription();
+	    
+	    switch ( iNumType )
+	    {
+		case GDT_Float64:
+		iSDS = SDcreate( hSD, pszSDSName, DFNT_FLOAT64, iRank, aiDimSizes );
+		break;
+		case GDT_Float32:
+		iSDS = SDcreate( hSD, pszSDSName, DFNT_FLOAT32, iRank, aiDimSizes );
+		break;
+		case GDT_UInt32:
+		iSDS = SDcreate( hSD, pszSDSName, DFNT_UINT32, iRank, aiDimSizes );
+		break;
+		case GDT_UInt16:
+		iSDS = SDcreate( hSD, pszSDSName, DFNT_UINT16, iRank, aiDimSizes );
+		break;
+		case GDT_Int32:
+		iSDS = SDcreate( hSD, pszSDSName, DFNT_INT32, iRank, aiDimSizes );
+		break;
+		case GDT_Int16:
+		iSDS = SDcreate( hSD, pszSDSName, DFNT_INT16, iRank, aiDimSizes );
+		break;
+		case GDT_Byte:
+		default:
+		iSDS = SDcreate( hSD, pszSDSName, DFNT_UCHAR8, iRank, aiDimSizes );
+		break;
+	    }
+	    
+	    for( iYBlock = 0; iYBlock < nYBlocks; iYBlock++ )
+	    {
+		for( iXBlock = 0; iXBlock < nXBlocks; iXBlock++ )
+		{
+		    eErr = poBand->ReadBlock( iXBlock, iYBlock, pabyData );
+		
+		    iStart[iYDim] = iYBlock;
+		    iEdges[iYDim] = nBlockYSize;
+		
+		    iStart[iXDim] = iXBlock;
+		    iEdges[iXDim] = nBlockXSize;
+		    
+		    SDwritedata( iSDS, iStart, NULL, iEdges, (VOIDP)pabyData );
+		}
+		
+		if( eErr == CE_None &&
+		!pfnProgress( (iYBlock + 1 + iBand * nYBlocks) / ((double) nYBlocks * nBands),
+			     NULL, pProgressData) )
+		{
+		    eErr = CE_Failure;
+		    CPLError( CE_Failure, CPLE_UserInterrupt, 
+			  "User terminated CreateCopy()" );
+		}
+	    }
+	    
+	    CPLFree( pabyData );
+	}
+    }
+    else if ( iRank == 3 )
+    {
+	pszSDSName = "3-dimensional Scientific Dataset";
 	switch ( iNumType )
 	{
 	    case GDT_Float64:
-	    iSDS = SDcreate( hSD, poBand->GetDescription(), DFNT_FLOAT64, iRank, aiDimSizes );
+	    iSDS = SDcreate( hSD, pszSDSName, DFNT_FLOAT64, iRank, aiDimSizes );
 	    break;
 	    case GDT_Float32:
-	    iSDS = SDcreate( hSD, poBand->GetDescription(), DFNT_FLOAT32, iRank, aiDimSizes );
+	    iSDS = SDcreate( hSD, pszSDSName, DFNT_FLOAT32, iRank, aiDimSizes );
 	    break;
 	    case GDT_UInt32:
-	    iSDS = SDcreate( hSD, poBand->GetDescription(), DFNT_UINT32, iRank, aiDimSizes );
+	    iSDS = SDcreate( hSD, pszSDSName, DFNT_UINT32, iRank, aiDimSizes );
 	    break;
 	    case GDT_UInt16:
-	    iSDS = SDcreate( hSD, poBand->GetDescription(), DFNT_UINT16, iRank, aiDimSizes );
+	    iSDS = SDcreate( hSD, pszSDSName, DFNT_UINT16, iRank, aiDimSizes );
 	    break;
 	    case GDT_Int32:
-	    iSDS = SDcreate( hSD, poBand->GetDescription(), DFNT_INT32, iRank, aiDimSizes );
+	    iSDS = SDcreate( hSD, pszSDSName, DFNT_INT32, iRank, aiDimSizes );
 	    break;
 	    case GDT_Int16:
-	    iSDS = SDcreate( hSD, poBand->GetDescription(), DFNT_INT16, iRank, aiDimSizes );
+	    iSDS = SDcreate( hSD, pszSDSName, DFNT_INT16, iRank, aiDimSizes );
 	    break;
 	    case GDT_Byte:
 	    default:
-	    iSDS = SDcreate( hSD, poBand->GetDescription(), DFNT_UCHAR8, iRank, aiDimSizes );
+	    iSDS = SDcreate( hSD, pszSDSName, DFNT_UCHAR8, iRank, aiDimSizes );
 	    break;
 	}
-	
-	for( iYBlock = 0; iYBlock < nYSize; iYBlock += nBlockYSize )
+
+	for( iBand = 0; iBand < nBands; iBand++ )
 	{
-	    for( iXBlock = 0; iXBlock < nXSize; iXBlock += nBlockXSize )
+	    poBand = poSrcDS->GetRasterBand( iBand + 1);
+	    poBand->GetBlockSize( &nBlockXSize, &nBlockYSize );
+	    nXBlocks = (poBand->GetXSize() + nBlockXSize - 1) / nBlockXSize;
+	    nYBlocks = (poBand->GetYSize() + nBlockYSize - 1) / nBlockYSize;
+	    pabyData = (GByte *) CPLMalloc( nBlockXSize * nBlockYSize *
+					    GDALGetDataTypeSize( iNumType ) / 8 );
+	    
+	    for( iYBlock = 0; iYBlock < nYBlocks; iYBlock++ )
 	    {
-		eErr = poBand->ReadBlock( iXBlock, iYBlock, pabyData );
+		for( iXBlock = 0; iXBlock < nXBlocks; iXBlock++ )
+		{
+		    eErr = poBand->ReadBlock( iXBlock, iYBlock, pabyData );
+		    
+		    iStart[iBandDim] = iBand;
+		    iEdges[iBandDim] = 1;
 		
-		iStart[iBandDim] = iBand;
-		iEdges[iBandDim] = 1;
-	    
-		iStart[iYDim] = iYBlock;
-		iEdges[iYDim] = nBlockYSize;
-	    
-		iStart[iXDim] = iXBlock;
-		iEdges[iXDim] = nBlockXSize;
+		    iStart[iYDim] = iYBlock;
+		    iEdges[iYDim] = nBlockYSize;
 		
-		SDwritedata( iSDS, iStart, NULL, iEdges, (VOIDP)pabyData );
+		    iStart[iXDim] = iXBlock;
+		    iEdges[iXDim] = nBlockXSize;
+		    
+		    SDwritedata( iSDS, iStart, NULL, iEdges, (VOIDP)pabyData );
+		}
+		
+		if( eErr == CE_None &&
+		!pfnProgress( (iYBlock + 1 + iBand * nYBlocks) /
+			      ((double) nYBlocks * nBands),
+			     NULL, pProgressData) )
+		{
+		    eErr = CE_Failure;
+		    CPLError( CE_Failure, CPLE_UserInterrupt, 
+			  "User terminated CreateCopy()" );
+		}
 	    }
 	    
-            if( eErr == CE_None &&
-            !pfnProgress( (iYBlock + 1 + iBand * nYSize) / ((double) nYSize * nBands),
-			 NULL, pProgressData) )
-            {
-                eErr = CE_Failure;
-                CPLError( CE_Failure, CPLE_UserInterrupt, 
-                      "User terminated CreateCopy()" );
-            }
+	    CPLFree( pabyData );
 	}
-	
-	CPLFree( pabyData );
     }
+    else					    // Should never happen
+	return NULL;
+
 /* -------------------------------------------------------------------- */
 /*      Set global attributes.                                          */
 /* -------------------------------------------------------------------- */
-    const char *pszSignature =
-	"Created with GDAL (http://www.remotesensing.org/gdal/)";
+    const char	*pszTemp;
+    double	adfGeoTransform[6];
     
-    SDsetattr( hSD, "Signature", DFNT_CHAR8, strlen(pszSignature), pszSignature );
+    SDsetattr( hSD, "Signature", DFNT_CHAR8, strlen(pszGDALSignature),
+	       pszGDALSignature );
+
+    pszTemp = poSrcDS->GetProjectionRef();
+    /*if ( pszTemp != NULL || pszTemp != "" )
+	SDsetattr( hSD, "Projection", DFNT_CHAR8, strlen(pszTemp), pszTemp );
+
+    pszTemp = poSrcDS->GetGCPProjection();
+    if ( pszTemp != NULL || pszTemp != "" )
+	SDsetattr( hSD, "GCPProjection", DFNT_CHAR8, strlen(pszTemp), pszTemp );*/
+
+    poSrcDS->GetGeoTransform( adfGeoTransform );
+    pszTemp = CPLSPrintf( "%f, %f, %f, %f, %f, %f",
+			  adfGeoTransform[0], adfGeoTransform[1],
+			  adfGeoTransform[2], adfGeoTransform[3],
+			  adfGeoTransform[4], adfGeoTransform[5] );
+    SDsetattr( hSD, "TransformationMatrix", DFNT_CHAR8, strlen(pszTemp), pszTemp );
     
 /* -------------------------------------------------------------------- */
 /*      That's all, folks.                                              */
