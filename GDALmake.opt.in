@@ -1,6 +1,20 @@
-CC	=	@CC@
-CXX	=	@CXX@
-INSTALL = 	$(GDAL_ROOT)/install-sh -c
+top_builddir	=	$(GDAL_ROOT)
+
+#
+# the library can be built by the native build or with the help of libtool
+#
+LIBTOOL	=	@LIBTOOL@
+ifneq ($(LIBTOOL),)
+HAVE_LIBTOOL	=	yes
+LIBTOOL_COMPILE	=	$(LIBTOOL) --mode=compile
+LIBTOOL_LINK	=	$(LIBTOOL) --mode=link
+LIBTOOL_INSTALL	=	$(LIBTOOL) --mode=install
+endif
+
+CC	=	$(LIBTOOL_COMPILE) @CC@
+CXX	=	$(LIBTOOL_COMPILE) @CXX@
+LD	=	$(LIBTOOL_LINK)	@CXX@
+INSTALL = 	$(LIBTOOL_INSTALL) $(GDAL_ROOT)/install-sh -c
 INSTALL_DATA = 	$(GDAL_ROOT)/install-sh -c -m 0644
 INSTALL_DIR = 	$(GDAL_ROOT)/install-sh -d
 
@@ -76,6 +90,13 @@ endif
 GDAL_INCLUDE	=	-I$(GDAL_ROOT)/port -I$(GDAL_ROOT)/gcore \
 			-I$(GDAL_ROOT)/ogr
 
+# libtool targets and help variables
+LIBGDAL	:=	$(GDAL_ROOT)/libgdal.la
+LIBGDAL_CURRENT	:=	2
+LIBGDAL_REVISION	:=	9
+LIBGDAL_AGE	:=	1
+
+# native build targets and variables
 GDAL_VER	=	1.1
 GDAL_LIB	= 	$(GDAL_ROOT)/libgdal.a
 GDAL_SLIB	=	$(GDAL_ROOT)/libgdal.$(GDAL_VER).$(SO_EXT)

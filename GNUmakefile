@@ -13,6 +13,11 @@ GDAL_OBJ	=	$(GDAL_ROOT)/frmts/o/*.o \
 include ./ogr/file.lst
 GDAL_OBJ += $(addprefix ./ogr/,$(OBJ))
 
+LIBGDAL-yes	:=	$(GDAL_LIB)
+LIBGDAL-$(HAVE_LD_SHARED)	+=	$(GDAL_SLIB)
+# override if we are using libtool
+LIBGDAL-$(HAVE_LIBTOOL)	:= $(LIBGDAL)
+
 default:	lib-target py-target apps-target
 
 lib-target:	check-lib;
@@ -31,11 +36,13 @@ $(GDAL_SLIB):	$(GDAL_OBJ)
 	$(LD_SHARED) $(GDAL_SLIB_SONAME) $(GDAL_OBJ) $(GDAL_LIBS) $(LIBS) \
 		-o $(GDAL_SLIB)
 
+$(LIBGDAL):	$(GDAL_OBJ:.o=.lo)
+	$(LD) $(LIBS) -o $@ $^ \
+	    -rpath $(INST_LIB) \
+	    -version-info $(LIBGDAL_CURRENT):$(LIBGDAL_REVISION):$(LIBGDAL_AGE)
+
 check-lib:	port-target core-target frmts-target ogr-target
-	$(MAKE) $(GDAL_LIB)
-ifeq ($(HAVE_LD_SHARED),yes)
-	$(MAKE) $(GDAL_SLIB)
-endif
+	$(MAKE) $(LIBGDAL-yes)
 
 port-target:
 	(cd port; $(MAKE))
@@ -88,6 +95,8 @@ distclean:	dist-clean
 
 dist-clean:	clean
 	rm -f GDALmake.opt port/cpl_config.h config.cache config.status
+	find . -name "*.lo" -exec rm -f '{}' ';'
+	find . -name .libs -exec rm -rf '{}' ';'
 
 config:	configure
 	./configure
