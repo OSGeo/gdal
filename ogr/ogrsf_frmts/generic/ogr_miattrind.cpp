@@ -29,6 +29,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2003/12/02 19:59:39  warmerda
+ * Support adding only specific fields to the index when re-indexing all
+ * features.
+ *
  * Revision 1.3  2003/05/21 04:54:29  warmerda
  * avoid warnings about unused formal parameters and possibly uninit variables
  *
@@ -105,9 +109,9 @@ public:
     OGRErr      Initialize( const char *pszIndexPath, OGRLayer * );
     OGRErr      CreateIndex( int iField );
     OGRErr      DropIndex( int iField );
-    OGRErr      IndexAllFeatures( int iField );
+    OGRErr      IndexAllFeatures( int iField = -1 );
 
-    OGRErr      AddToIndex( OGRFeature *poFeature );
+    OGRErr      AddToIndex( OGRFeature *poFeature, int iField = -1 );
     OGRErr      RemoveFromIndex( OGRFeature *poFeature );
 
     OGRAttrIndex *GetFieldIndex( int iField );
@@ -350,7 +354,7 @@ OGRErr OGRMILayerAttrIndex::SaveConfigToXML()
 /*                          IndexAllFeatures()                          */
 /************************************************************************/
 
-OGRErr OGRMILayerAttrIndex::IndexAllFeatures( int /* iField */ )
+OGRErr OGRMILayerAttrIndex::IndexAllFeatures( int iField )
 
 {
     OGRFeature *poFeature;
@@ -359,7 +363,7 @@ OGRErr OGRMILayerAttrIndex::IndexAllFeatures( int /* iField */ )
     
     while( (poFeature = poLayer->GetNextFeature()) != NULL )
     {
-        OGRErr eErr = AddToIndex( poFeature );
+        OGRErr eErr = AddToIndex( poFeature, iField );
         
         delete poFeature;
 
@@ -565,7 +569,8 @@ OGRAttrIndex *OGRMILayerAttrIndex::GetFieldIndex( int iField )
 /*                             AddToIndex()                             */
 /************************************************************************/
 
-OGRErr OGRMILayerAttrIndex::AddToIndex( OGRFeature *poFeature )
+OGRErr OGRMILayerAttrIndex::AddToIndex( OGRFeature *poFeature,
+                                        int iTargetField )
 
 {
     OGRErr eErr = OGRERR_NONE;
@@ -580,6 +585,9 @@ OGRErr OGRMILayerAttrIndex::AddToIndex( OGRFeature *poFeature )
     for( int i = 0; i < nIndexCount && eErr == OGRERR_NONE; i++ )
     {
         int iField = papoIndexList[i]->iField;
+
+        if( iTargetField != -1 && iTargetField != iField )
+            continue;
 
         if( !poFeature->IsFieldSet( iField ) )
             continue;
