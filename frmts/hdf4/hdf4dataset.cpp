@@ -30,6 +30,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.25  2003/11/05 17:05:02  warmerda
+ * Fixed type casting problem (bug 431).
+ *
  * Revision 1.24  2003/06/26 20:42:31  dron
  * Support for Hyperion Level 1 data product.
  *
@@ -760,10 +763,12 @@ char** HDF4Dataset::TranslateHDF4Attributes( int32 iHandle,
     switch (iNumType)
     {
         case DFNT_CHAR8: // The same as DFNT_CHAR
-        papszMetadata = CSLAddNameValue( papszMetadata, pszAttrName, pbData );
+        papszMetadata = CSLAddNameValue( papszMetadata, pszAttrName, 
+                                         (const char *) pbData );
 	break;
 	case DFNT_UCHAR8: // The same as DFNT_UCHAR
-        papszMetadata = CSLAddNameValue( papszMetadata, pszAttrName, pbData );
+        papszMetadata = CSLAddNameValue( papszMetadata, pszAttrName, 
+                                         (const char *) pbData );
 	break;
         case DFNT_INT8:
 	pszTemp = SPrintArray( (signed char *)pbData, nValues, ", " );
