@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.45  2003/05/21 04:31:53  warmerda
+ * avoid warnings
+ *
  * Revision 1.44  2003/04/30 17:13:48  warmerda
  * added docs for many C functions
  *
@@ -887,6 +890,8 @@ int GDALTermProgress( double dfComplete, const char *pszMessage,
 {
     static double dfLastComplete = -1.0;
 
+    (void) pProgressArg;
+
     if( dfLastComplete > dfComplete )
     {
         if( dfLastComplete >= 1.0 )
@@ -1110,7 +1115,7 @@ int GDALGetRandomRasterSample( GDALRasterBandH hBand, int nSamples,
                     continue;
 
                 if( nActualSamples < nSamples )
-                    pafSampleBuf[nActualSamples++] = dfValue;
+                    pafSampleBuf[nActualSamples++] = (float) dfValue;
             }
 
             iRemainder = iX - iXValid;
@@ -1356,8 +1361,8 @@ int GDALReadWorldFile( const char * pszBaseFilename, const char *pszExtension,
 
     for( i = 0; szExtUpper[i] != '\0' && i < 32; i++ )
     {
-        szExtUpper[i] = toupper(szExtUpper[i]);
-        szExtLower[i] = tolower(szExtLower[i]);
+        szExtUpper[i] = (char) toupper(szExtUpper[i]);
+        szExtLower[i] = (char) tolower(szExtLower[i]);
     }
 
 /* -------------------------------------------------------------------- */
@@ -1686,25 +1691,25 @@ int GDALGCPsToGeoTransform( int nGCPCount, const GDAL_GCP *pasGCPs,
 
 CPL_C_START
 
-void *GDALCreateProjDef( const char * pszDef )
+void *GDALCreateProjDef( const char * )
 {
     CPLDebug( "GDAL", "GDALCreateProjDef no longer supported." );
     return NULL;
 }
 
-CPLErr GDALReprojectToLongLat( void *pDef, double *, double * )
+CPLErr GDALReprojectToLongLat( void *, double *, double * )
 {
     CPLDebug( "GDAL", "GDALReprojectToLatLong no longer supported." );
     return CE_Failure;
 }
 
-CPLErr GDALReprojectFromLongLat( void *pDef, double *, double * )
+CPLErr GDALReprojectFromLongLat( void *, double *, double * )
 {
     CPLDebug( "GDAL", "GDALReprojectFromLatLong no longer supported." );
     return CE_Failure;
 }
 
-void GDALDestroyProjDef( void *pDef )
+void GDALDestroyProjDef( void * )
 
 {
     CPLDebug( "GDAL", "GDALDestroyProjDef no longer supported." );
