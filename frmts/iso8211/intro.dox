@@ -142,7 +142,50 @@ The precise license text is:<p>
 <p>
 </em>
 
-<h2>Acknowledgements</h2>
+<h2>Building the Source</h2>
+
+<ol>
+
+<li> First, fetch the source.  The most recent source should be accessable at
+an url such as 
+<a href="http://gdal.velocet.ca/projects/iso8211/iso8211lib-0.1.tar.gz">
+http://gdal.velocet.ca/projects/iso8211/iso8211lib-0.1.tar.gz</a>, or
+by ftp from 
+<a href="ftp://gdal.velocet.ca/pub/outgoing/iso8211lib-0.1.tar.gz">
+ftp://gdal.velocet.ca/pub/outgoing/iso8211lib-0.1.tar.gz</a>.<p>
+
+
+<li> Untar the source.<p>
+<code>
+% gzip -d iso8211lib-0.1.tar.gz
+% tar xzvf iso8211lib-0.1.tar.gz
+</code>
+
+If for some reason you don't have gzip, or tar (perhaps you work on Windows)
+just <a href="mailto:warmerda@home.com">let me know</a>, 
+and I will prepare a zip or similar archive of the source.<p>
+
+<li> On unix you can now type ``configure'' to establish configuration 
+options.<p>
+
+<li> On unix you can now type make to build libiso8211.a, and the sample
+mainline 8211view.<p>
+
+</ol>
+
+Windows developers will have to create their own makefile/project but
+can base it on the very simple Makefile.in provided.  As well, you would
+need to copy cpl_config.h.in to cpl_config.h, and modify as needed.  The
+default will likely work OK, but may result in some compiler warnings.  
+Let me know if you are having difficulties, and I will prepare a VC++ 
+makefile.<p>
+
+<h2>Author and Acknowledgements</h2>
+
+The primary author of ISO8211Lib is <a href="http://members.home.com/warmerda">
+Frank Warmerdam</a>, and I can be reached at 
+<a href="mailto:warmerda@home.com">warmerda@home.com</a>.  I am eager to 
+receive bug reports, and also open to praise or suggestions.<p>
 
 I would like to thank:<p>
 
