@@ -23,6 +23,9 @@
  * gt_gs.c: GeoTIFF to Geosoft GXF.
  *
  * $Log$
+ * Revision 1.3  1999/01/27 18:39:45  warmerda
+ * Ensure false easting/northing converted to meters.  Some other fixes.
+ *
  * Revision 1.2  1999/01/11 15:31:22  warmerda
  * Fixed polygonic args
  *
@@ -101,6 +104,49 @@ static double AngleToDD( const char * pszAngle, const char * pszUnits )
 
     return( dfAngle );
 }
+
+/************************************************************************/
+/*                          DistanceToMeters()                          */
+/*                                                                      */
+/*      Convert the passed in distance to meters, if it is in a unit    */
+/*      other than meters.  This is mainly used for the false           */
+/*      easting and northing values for stuff like state plane.         */
+/************************************************************************/
+
+static double
+DistanceToMeters( const char * pszUnits, const char * pszDistance )
+
+{
+    char	**papszUnitsRecord;
+    double	dfValue = atof(pszDistance);
+
+/* -------------------------------------------------------------------- */
+/*      We short cut meter to save work in the most common case.        */
+/* -------------------------------------------------------------------- */
+    if( EQUAL(pszUnits,"m") )
+        return( dfValue );
+
+/* -------------------------------------------------------------------- */
+/*      Search the units database for this unit.                        */
+/* -------------------------------------------------------------------- */
+    papszUnitsRecord = CSVScanFile( CSVFilename( "units.csv" ),
+                                    0, pszUnits, CC_ExactString );
+
+    if( CSLCount( papszUnitsRecord ) > 1 )
+    {
+        dfValue = dfValue * atof(papszUnitsRecord[3]);
+    }
+    else
+    {
+        /* units not found! */
+        CPLAssert( FALSE );
+    }
+    
+    CSLDestroy( papszUnitsRecord );
+
+    return( dfValue );
+}
+
 
 /************************************************************************/
 /*                           PCSToProjGCS()                             */
@@ -309,11 +355,22 @@ int GeoTIFFToGXFProj( TIFF * hTIFF,
         GCSToDatumPMEllipsoid( nGCS, &nDatum, &dfPM, &nEllipsoid );
 
 /* -------------------------------------------------------------------- */
+/*      Is there a supplied ellipsoid?  If so use it.                   */
+/* -------------------------------------------------------------------- */
+    if( nEllipsoid == KvUserDefined )
+        GTIFKeyGet(hGTiff, GeogEllipsoidGeoKey, &nEllipsoid, 0, 1 );
+        
+/* -------------------------------------------------------------------- */
 /*      Is there a directly supplied datum?  If so, use that, even      */
 /*      overriding what was supplied with the PCS.                      */
 /* -------------------------------------------------------------------- */
     GTIFKeyGet(hGTiff, GeogGeodeticDatumGeoKey, &nDatum, 0, 1 );
 
+/* -------------------------------------------------------------------- */
+/*      Is there a supplied prime meridian?                             */
+/* -------------------------------------------------------------------- */
+    GTIFKeyGet( hGTiff, GeogPrimeMeridianGeoKey, &dfPM, 0, 1 );
+    
 /* -------------------------------------------------------------------- */
 /*      Get the name of the PCS if possible.                            */
 /* -------------------------------------------------------------------- */
@@ -362,11 +419,7 @@ int GeoTIFFToGXFProj( TIFF * hTIFF,
     else
         papszRecord = NULL;
                                
-    if( CSLCount( papszRecord ) < 2 )
-    {
-        papszMapProjection = CSLAddString( papszMapProjection, "*Unknown" );
-    }
-    else
+    if( CSLCount( papszRecord ) > 1 )
     {
         char	szEllipseDefn[256];
 
@@ -374,6 +427,44 @@ int GeoTIFFToGXFProj( TIFF * hTIFF,
                  papszRecord[0], papszRecord[2], papszRecord[3],
                  dfPM );
         papszMapProjection = CSLAddString( papszMapProjection, szEllipseDefn );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Otherwise, we look for ellipsoid parameters in the file.        */
+/* -------------------------------------------------------------------- */
+    else
+    {
+        double	dfSemiMajor=0.0, dfSemiMinor=0.0, dfInvFlattening=0.0;
+        
+        GTIFKeyGet(hGTiff, GeogSemiMajorAxisGeoKey, &dfSemiMajor, 0, 1 );
+        GTIFKeyGet(hGTiff, GeogSemiMinorAxisGeoKey, &dfSemiMinor, 0, 1 );
+        if( GTIFKeyGet(hGTiff, GeogInvFlatteningGeoKey,
+                       &dfInvFlattening, 0, 1 ) != 0
+            && dfInvFlattening != 0.0 )
+        {
+            dfSemiMinor = dfSemiMajor / (1/dfInvFlattening + 1);
+        }
+
+        if( dfSemiMajor != 0.0 && dfSemiMinor != 0.0 )
+        {
+            double	dfEccentricity;
+            double	dfFlattening;
+            char	szEllipseDefn[256];
+
+            dfFlattening = (dfSemiMajor - dfSemiMinor) / dfSemiMajor;
+            dfEccentricity =
+                pow( 2*dfFlattening - dfFlattening*dfFlattening, 0.5 );
+
+            sprintf( szEllipseDefn, "\"%s\",%.2f,%.12f,%.7f",
+                     "*Unknown", dfSemiMajor, dfEccentricity, dfPM );
+            papszMapProjection = CSLAddString( papszMapProjection,
+                                               szEllipseDefn );
+        }
+        else
+        {
+            papszMapProjection = CSLAddString( papszMapProjection,
+                                               "*Unknown" );
+        }
     }
 
     CSLDestroy( papszRecord );
@@ -399,55 +490,60 @@ int GeoTIFFToGXFProj( TIFF * hTIFF,
         
         sprintf( szProjMethod, "*Unknown" );
 
-        /* notdef: Need to transform false easting/northing values
-           to meters if they are not */
         if( EQUAL(papszRecord[3],"Transverse Mercator") )
         {
-            sprintf( szProjMethod, "\"%s\",%.7f,%.7f,%s,%s,%s",
+            sprintf( szProjMethod, "\"%s\",%.7f,%.7f,%s,%.1f,%.1f",
                      papszRecord[3],
                      AngleToDD(papszRecord[6],papszRecord[5]),
                      AngleToDD(papszRecord[7],papszRecord[5]),
                      papszRecord[10],
-                     papszRecord[11], papszRecord[12] );
+                     DistanceToMeters(papszRecord[4],papszRecord[11]),
+                     DistanceToMeters(papszRecord[4],papszRecord[12]) );
         }
         else if( EQUAL(papszRecord[3],"Lambert Conic Conformal (2SP)") )
         {
-            sprintf( szProjMethod, "\"%s\",%.7f,%.7f,%.7f,%.7f,%s,%s",
+            sprintf( szProjMethod, "\"%s\",%.7f,%.7f,%.7f,%.7f,%.1f,%.1f",
                      papszRecord[3],
                      AngleToDD(papszRecord[6],papszRecord[5]),
                      AngleToDD(papszRecord[7],papszRecord[5]),
                      AngleToDD(papszRecord[8],papszRecord[5]),
                      AngleToDD(papszRecord[9],papszRecord[5]),
-                     papszRecord[11], papszRecord[12] );
+                     DistanceToMeters(papszRecord[4],papszRecord[11]),
+                     DistanceToMeters(papszRecord[4],papszRecord[12]) );
         }
         else if( EQUAL(papszRecord[3],"Lambert Conic Conformal (1SP)") )
         {
-            sprintf( szProjMethod, "\"%s\",%.7f,%.7f,%s,%s,%s",
+            sprintf( szProjMethod, "\"%s\",%.7f,%.7f,%s,%.1f,%.1f",
                      papszRecord[3],
                      AngleToDD(papszRecord[6],papszRecord[5]),
                      AngleToDD(papszRecord[7],papszRecord[5]),
                      papszRecord[10],
-                     papszRecord[11], papszRecord[12] );
+                     DistanceToMeters(papszRecord[4],papszRecord[11]),
+                     DistanceToMeters(papszRecord[4],papszRecord[12]) );
         }
         else if( EQUAL(papszRecord[3],"Polar Stereographic") )
         {
-            sprintf( szProjMethod, "\"%s\",%.7f,%.7f,%s,%s,%s",
+            sprintf( szProjMethod, "\"%s\",%.7f,%.7f,%s,%.1f,%.1f",
                      papszRecord[3],
                      AngleToDD(papszRecord[6],papszRecord[5]),
                      AngleToDD(papszRecord[7],papszRecord[5]),
-                     papszRecord[10], papszRecord[11], papszRecord[12] );
+                     papszRecord[10],
+                     DistanceToMeters(papszRecord[4],papszRecord[11]),
+                     DistanceToMeters(papszRecord[4],papszRecord[12]) );
         }
         else if( EQUAL(papszRecord[3],"Hotine Oblique Mercator") )
         {
             /* notdef: are Azimuth, and other angle in decimal degrees,
                or the existing angular units? */
             
-            sprintf( szProjMethod, "\"%s\",%.7f,%.7f,%s,%s,%s,%s,%s",
+            sprintf( szProjMethod, "\"%s\",%.7f,%.7f,%s,%s,%s,%.1f,%.1f",
                      papszRecord[3],
                      AngleToDD(papszRecord[6],papszRecord[5]),
                      AngleToDD(papszRecord[7],papszRecord[5]),
                      papszRecord[8], papszRecord[9], 
-                     papszRecord[10], papszRecord[11], papszRecord[12] );
+                     papszRecord[10],
+                     DistanceToMeters(papszRecord[4],papszRecord[11]),
+                     DistanceToMeters(papszRecord[4],papszRecord[12]) );
         }
 
         papszMapProjection = CSLAddString( papszMapProjection, szProjMethod );
@@ -829,7 +925,7 @@ int GeoTIFFToGXFProj( TIFF * hTIFF,
             sprintf( szProjMethod, "\"%s\",%.7f,%.7f,%f,%f,%f,%f,%f",
                      "Hotine Oblique Mercator",
                      dfCenterLat, dfCenterLong,
-                     dfAzimuth, 0.0, dfScale,
+                     dfAzimuth, dfAngle, dfScale,
                      dfFalseEasting, dfFalseNorthing );
         }
         
@@ -1047,6 +1143,7 @@ int GXFProjToGeoTIFF( TIFF * hTIFF,
     char	*pszCitation, *pszStr;
     int		nProjected = TRUE;
     int		bSuccess = FALSE;
+    int		bSetDatum = FALSE;
     
     hGTiff = GTIFNew( hTIFF );
 
@@ -1172,12 +1269,65 @@ int GXFProjToGeoTIFF( TIFF * hTIFF,
         {
             GTIFKeySet(hGTiff, GeographicTypeGeoKey, TYPE_SHORT,  1,
                        atoi(papszFields[1]) );
+            bSetDatum = TRUE;
         }
 
         CSLDestroy( papszFields );
     }
     
     CSLDestroy( papszTokens );
+    
+
+/* -------------------------------------------------------------------- */
+/*      If we couldn't even find a valid datum, see if we can write     */
+/*      out an  ellipsoid identifier and/or parameters.                 */
+/* -------------------------------------------------------------------- */
+    if( !bSetDatum && nPCS == KvUserDefined && pszEllipse != NULL )
+    {
+        papszTokens = CSLTokenizeStringComplex( pszEllipse, ",", TRUE, TRUE );
+
+        if( CSLCount( papszTokens ) > 0 )
+            papszFields = CSVScanFile( CSVFilename( "ellipsoid.csv" ), 0,
+                                       papszTokens[0], CC_ExactString );
+        else
+            papszFields = NULL;
+
+        if( CSLCount(papszFields) > 1 && atoi(papszFields[1]) > 0 )
+        {
+            GTIFKeySet( hGTiff, GeogEllipsoidGeoKey, TYPE_SHORT, 1,
+                        atoi(papszFields[1]) );
+        }
+        else
+        {
+            GTIFKeySet( hGTiff, GeogEllipsoidGeoKey, TYPE_SHORT, 1,
+                        KvUserDefined );
+        }
+
+        CSLDestroy( papszFields );
+
+        if( CSLCount( papszTokens ) > 2 )
+        {
+            double	dfSemiMinor;
+            double	dfSemiMajor = atof(papszTokens[1]);
+            double	dfEccentricity = atof(papszTokens[2]);
+
+            dfSemiMinor = dfSemiMajor *
+                pow( 1.0 - dfEccentricity*dfEccentricity, 0.5 );
+            
+            GTIFKeySet( hGTiff, GeogSemiMajorAxisGeoKey, TYPE_DOUBLE, 1,
+                        dfSemiMajor );
+            GTIFKeySet( hGTiff, GeogSemiMinorAxisGeoKey, TYPE_DOUBLE, 1,
+                        dfSemiMinor );
+        }
+
+        if( CSLCount( papszTokens ) > 3 && atof(papszTokens[3]) != 0.0 )
+        {
+            GTIFKeySet( hGTiff, GeogPrimeMeridianGeoKey, TYPE_DOUBLE, 1,
+                        atof(papszTokens[3]) );
+        }
+
+        CSLDestroy( papszTokens );
+    }
     
 /* ==================================================================== */
 /*	If we had no PCS, and the data is projected, try to work 	*/
@@ -1466,7 +1616,6 @@ int GXFProjToGeoTIFF( TIFF * hTIFF,
             GTIFKeySet(hGTiff, ProjectedCSTypeGeoKey, TYPE_SHORT,  1,
                        KvUserDefined );	
         }
-
     }
 
     CSLDestroy( papszTokens );
@@ -1476,4 +1625,3 @@ int GXFProjToGeoTIFF( TIFF * hTIFF,
 
     return bSuccess;
 }
-
