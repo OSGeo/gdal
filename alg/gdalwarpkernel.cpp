@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2003/07/04 12:34:16  dron
+ * Fixed casting to byte in GWKCubicNoMasksByte().
+ *
  * Revision 1.12  2003/07/04 11:49:41  dron
  * Bicubic interpolation implemented as GRA_Cubic; B-spline one renamed in
  * GRA_CubicSpline.
@@ -1440,9 +1443,9 @@ static int GWKCubicResampleNoMasksByte( GDALWarpKernel *poWK, int iBand,
 
         dfA0 = (double)poWK->papabySrcImage[iBand][iOffset];
 
-        dfD0 = (double)(poWK->papabySrcImage[iBand][iOffset - 1] - dfA0);
-        dfD2 = (double)(poWK->papabySrcImage[iBand][iOffset + 1] - dfA0);
-        dfD3 = (double)(poWK->papabySrcImage[iBand][iOffset + 2] - dfA0);
+        dfD0 = (double)poWK->papabySrcImage[iBand][iOffset - 1] - dfA0;
+        dfD2 = (double)poWK->papabySrcImage[iBand][iOffset + 1] - dfA0;
+        dfD3 = (double)poWK->papabySrcImage[iBand][iOffset + 2] - dfA0;
 
         dfA1 = - dfD0 / 3.0 + dfD2 - dfD3 / 6.0;
         dfA2 = (dfD0 + dfD2) / 2.0;
@@ -1462,8 +1465,14 @@ static int GWKCubicResampleNoMasksByte( GDALWarpKernel *poWK, int iBand,
     dfA2 = (dfD0 + dfD2) / 2.0;
     dfA3 = - dfD0 / 6.0 - dfD2 / 2.0 + dfD3 / 6.0;
     
-    *pbValue =
-        (GByte)(dfA0 + dfA1 * dfDeltaY + dfA2 * dfDeltaY2 + dfA3 * dfDeltaY3);
+    double v = (dfA0 + dfA1 * dfDeltaY + dfA2 * dfDeltaY2 + dfA3 * dfDeltaY3);
+
+    if ( v < 0.0 )
+        *pbValue = 0;
+    else if ( v > 255.0 )
+        *pbValue = 255;
+    else
+        *pbValue = (GByte)v;
     
     return TRUE;
 }
@@ -1498,9 +1507,9 @@ static int GWKCubicResampleNoMasksShort( GDALWarpKernel *poWK, int iBand,
 
         dfA0 = (double)((GInt16 *)poWK->papabySrcImage[iBand])[iOffset];
 
-        dfD0 = (double)(((GInt16 *)poWK->papabySrcImage[iBand])[iOffset - 1] - dfA0);
-        dfD2 = (double)(((GInt16 *)poWK->papabySrcImage[iBand])[iOffset + 1] - dfA0);
-        dfD3 = (double)(((GInt16 *)poWK->papabySrcImage[iBand])[iOffset + 2] - dfA0);
+        dfD0 = (double)((GInt16 *)poWK->papabySrcImage[iBand])[iOffset - 1] - dfA0;
+        dfD2 = (double)((GInt16 *)poWK->papabySrcImage[iBand])[iOffset + 1] - dfA0;
+        dfD3 = (double)((GInt16 *)poWK->papabySrcImage[iBand])[iOffset + 2] - dfA0;
 
         dfA1 = - dfD0 / 3.0 + dfD2 - dfD3 / 6.0;
         dfA2 = (dfD0 + dfD2) / 2.0;
