@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.6  2002/06/07 18:02:41  warmerda
+ * don't redeclare i
+ *
  * Revision 1.5  2002/06/04 16:02:28  dron
  * Fixes in georeferencing, metadata, NOAA-K/L/M support.
  * Many thanks to Markus Neteler for intensive testing.
@@ -807,7 +810,7 @@ GDALDataset *L1BDataset::Open( GDALOpenInfo * poOpenInfo )
 
     // Determine number of bands and data format
     // (10-bit packed or 16-bit unpacked)
-    for ( int i = 97; i < 117; i++ )
+    for ( i = 97; i < 117; i++ )
         if (poDS->pabyTBMHeader[i] == 1 || poDS->pabyTBMHeader[i] == 'Y')
 	{
 	    poDS->nBands++;
