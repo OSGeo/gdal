@@ -35,6 +35,9 @@
  * of the GDAL core, but dependent on the Common Portability Library.
  *
  * $Log$
+ * Revision 1.9  2000/10/13 20:59:05  warmerda
+ * fixed writing of RasterDMS dictionary types
+ *
  * Revision 1.8  2000/10/12 20:23:58  warmerda
  * Fixed dictinary writing.
  *
@@ -967,8 +970,6 @@ void HFAStandard( int nBytes, void * pData )
 /*      file.                                                           */
 /* ==================================================================== */
 
-static char szLDict[] = "{4096:Cdata,}RasterDMS,.";
-
 static const char *aszDefaultDD[] = {
 "{1:lversion,1:LfreeList,1:LrootEntryPtr,1:sentryHeaderLength,1:LdictionaryPtr,}Ehfa_File,{1:Lnext,1:Lprev,1:Lparent,1:Lchild,1:Ldata,1:ldataSize,64:cname,32:ctype,1:tmodTime,}Ehfa_Entry,{16:clabel,1:LheaderPtr,}Ehfa_HeaderTag,{1:LfreeList,1:lfreeSize,}Ehfa_FreeListNode,{1:lsize,1:Lptr,}Ehfa_Data,{1:lwidth,1:lheight,1:e3:thematic,athematic,fft of real-valued data,layerType,",
 "1:e13:u1,u2,u4,u8,s8,u16,s16,u32,s32,f32,f64,c64,c128,pixelType,1:lblockWidth,1:lblockHeight,}Eimg_Layer,{1:lwidth,1:lheight,1:e3:thematic,athematic,fft of real-valued data,layerType,1:e13:u1,u2,u4,u8,s8,u16,s16,u32,s32,f32,f64,c64,c128,pixelType,1:lblockWidth,1:lblockHeight,}Eimg_Layer_SubSample,{1:e2:raster,vector,type,1:LdictionaryPtr,}Ehfa_Layer,{1:sfileCode,1:Loffset,1:lsize,1:e2:false,true,logvalid,",
@@ -1282,6 +1283,41 @@ HFAHandle HFACreate( const char * pszFilename,
 /* -------------------------------------------------------------------- */
         HFAEntry *poEhfa_Layer;
         GUInt32  nLDict;
+        char     szLDict[128], chBandType;
+
+        if( nDataType == EPT_u1 )
+            chBandType = '1';
+        else if( nDataType == EPT_u2 )
+            chBandType = '2';
+        else if( nDataType == EPT_u4 )
+            chBandType = '4';
+        else if( nDataType == EPT_u8 )
+            chBandType = 'c';
+        else if( nDataType == EPT_s8 )
+            chBandType = 'C';
+        else if( nDataType == EPT_u16 )
+            chBandType = 's';
+        else if( nDataType == EPT_s16 )
+            chBandType = 'S';
+        else if( nDataType == EPT_u32 )
+            chBandType = 'I';
+        else if( nDataType == EPT_s32 )
+            chBandType = 'L';
+        else if( nDataType == EPT_f32 )
+            chBandType = 'f';
+        else if( nDataType == EPT_f64 )
+            chBandType = 'd';
+        else if( nDataType == EPT_c64 )
+            chBandType = 'm';
+        else if( nDataType == EPT_c128 )
+            chBandType = 'M';
+        else
+        {
+            CPLAssert( FALSE );
+            chBandType = 'c';
+        }
+        
+        sprintf( szLDict, "{4096:%cdata,}RasterDMS,.", chBandType );
 
         poEhfa_Layer = new HFAEntry( psInfo, "Ehfa_Layer", "Ehfa_Layer", 
                                      poEimg_Layer );
