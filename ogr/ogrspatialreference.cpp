@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2000/03/24 14:49:56  warmerda
+ * added WGS84 related methods
+ *
  * Revision 1.15  2000/03/22 01:09:43  warmerda
  * added SetProjCS and SetWellKnownTextCS
  *
@@ -2643,4 +2646,137 @@ int OSRIsSame( OGRSpatialReferenceH hSRS1, OGRSpatialReferenceH hSRS2 )
 {
     return ((OGRSpatialReference *) hSRS1)->IsSame( 
         (OGRSpatialReference *) hSRS2 );
+}
+
+/************************************************************************/
+/*                             SetTOWGS84()                             */
+/************************************************************************/
+
+/**
+ * Set the Bursa-Wolf conversion to WGS84. 
+ * 
+ * This will create the TOWGS84 node as a child of the DATUM.  It will fail
+ * if there is no existing DATUM node.  Unlike most OGRSpatialReference
+ * methods it will insert itself in the appropriate order, and will replace
+ * an existing TOWGS84 node if there is one. 
+ * 
+ * This method is the same as the C function OSRSetTOWGS84().
+ * 
+ * @param dfDX X child in meters.
+ * @param dfDY Y child in meters.
+ * @param dfDZ Z child in meters.
+ * @param dfEX X rotation in radians (optional, defaults to zero).
+ * @param dfEY Y rotation in radians (optional, defaults to zero).
+ * @param dfEZ Z rotation in radians (optional, defaults to zero).
+ * @param dfPPM scaling factor.
+ * 
+ * @return OGRERR_NONE on success. 
+ */ 
+
+OGRErr OGRSpatialReference::SetTOWGS84( double dfDX, double dfDY, double dfDZ,
+                                        double dfEX, double dfEY, double dfEZ, 
+                                        double dfPPM )
+
+{
+    OGR_SRSNode     *poDatum, *poTOWGS84;
+    int             iPosition;
+    char            szValue[64];
+
+    poDatum = GetAttrNode( "DATUM" );
+    if( poDatum == NULL )
+        return OGRERR_FAILURE;
+    
+    if( poDatum->FindChild( "TOWGS84" ) != -1 )
+        poDatum->DestroyChild( poDatum->FindChild( "TOWGS84" ) );
+
+    iPosition = poDatum->GetChildCount();
+    if( poDatum->FindChild("AUTHORITY") != -1 )
+    {
+        iPosition = poDatum->FindChild("AUTHORITY");
+    }
+
+    poTOWGS84 = new OGR_SRSNode("TOWGS84");
+
+    OGRPrintDouble( szValue, dfDX );
+    poTOWGS84->AddChild( new OGR_SRSNode( szValue ) );
+
+    OGRPrintDouble( szValue, dfDY );
+    poTOWGS84->AddChild( new OGR_SRSNode( szValue ) );
+
+    OGRPrintDouble( szValue, dfDZ );
+    poTOWGS84->AddChild( new OGR_SRSNode( szValue ) );
+
+    OGRPrintDouble( szValue, dfEX );
+    poTOWGS84->AddChild( new OGR_SRSNode( szValue ) );
+
+    OGRPrintDouble( szValue, dfEY );
+    poTOWGS84->AddChild( new OGR_SRSNode( szValue ) );
+
+    OGRPrintDouble( szValue, dfEZ );
+    poTOWGS84->AddChild( new OGR_SRSNode( szValue ) );
+
+    OGRPrintDouble( szValue, dfPPM );
+    poTOWGS84->AddChild( new OGR_SRSNode( szValue ) );
+
+    poDatum->InsertChild( poTOWGS84, iPosition );
+
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                           OSRSetTOWGS84()                            */
+/************************************************************************/
+
+OGRErr OSRSetTOWGS84( OGRSpatialReferenceH hSRS, 
+                      double dfDX, double dfDY, double dfDZ, 
+                      double dfEX, double dfEY, double dfEZ, 
+                      double dfPPM )
+
+{
+    return ((OGRSpatialReference *) hSRS)->SetTOWGS84( dfDX, dfDY, dfDZ, 
+                                                       dfEX, dfEY, dfEZ, 
+                                                       dfPPM );
+}
+
+/************************************************************************/
+/*                             GetTOWGS84()                             */
+/************************************************************************/
+
+/**
+ * Fetch TOWGS84 parameters, if available. 
+ * 
+ * @param padfCoeff array into which up to 7 coefficients are placed.
+ * @param nCoeffCount size of padfCoeff - defaults to 7.
+ * 
+ * @return OGRERR_NONE on success, or OGRERR_FAILURE if there is no
+ * TOWGS84 node available. 
+ */
+
+OGRErr OGRSpatialReference::GetTOWGS84( double * padfCoeff, int nCoeffCount )
+
+{
+    OGR_SRSNode   *poNode = GetAttrNode( "TOWGS84" );
+
+    memset( padfCoeff, 0, sizeof(double) * nCoeffCount );
+
+    if( poNode == NULL )
+        return OGRERR_FAILURE;
+
+    for( int i = 0; i < nCoeffCount && i < poNode->GetChildCount(); i++ )
+    {
+        padfCoeff[i] = atof(poNode->GetChild(i)->GetValue());
+    }
+
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                           OSRGetTOWGS84()                            */
+/************************************************************************/
+
+OGRErr OSRGetTOWGS84( OGRSpatialReferenceH hSRS, 
+                      double * padfCoeff, int nCoeffCount )
+
+{
+    return ((OGRSpatialReference *) hSRS)->GetTOWGS84( padfCoeff, nCoeffCount);
 }

@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2000/03/24 14:49:56  warmerda
+ * added WGS84 related methods
+ *
  * Revision 1.19  2000/03/22 01:09:43  warmerda
  * added SetProjCS and SetWellKnownTextCS
  *
@@ -225,6 +228,11 @@ class OGRSpatialReference
                            const char * pszUnits = NULL,
                            double dfConvertToRadians = 0.0 );
     OGRErr      SetWellKnownGeogCS( const char * );
+
+    OGRErr      SetTOWGS84( double, double, double,
+                            double = 0.0, double = 0.0, double = 0.0,
+                            double = 0.0 );
+    OGRErr      GetTOWGS84( double *padfCoef, int nCoeff = 7 );
     
     double      GetSemiMajor( OGRErr * = NULL );
     double      GetSemiMinor( OGRErr * = NULL );
