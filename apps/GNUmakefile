@@ -6,15 +6,6 @@ INCLUDE		=	$(GDAL_INCLUDE) -I$(GDAL_ROOT)/frmts
 DEP_LIBS	=	$(GDAL_LIB) $(CPL_LIB) $(XTRAOBJ)
 BIN_LIST	=	gdalinfo$(EXE) gdal_translate$(EXE) gdaladdo$(EXE)
 
-ifeq ($(HAVE_LD_SHARED),yes)					
-CONFIG_LIBS	=	$(GDAL_SLIB_LINK)
-CONFIG_LIBS_INS	=	-L$(INST_LIB) -lgdal.$(GDAL_VER)
-else
-CONFIG_LIBS	=	$(GDAL_LIBS) $(LIBS)
-CONFIG_LIBS_INS	=	$(foreach LF,$(GDAL_LIBS),$(INST_LIB)/$(notdir $(LF)))\
-			 $(LIBS)
-endif
-
 default:	gdal-config-inst gdal-config $(BIN_LIST)
 
 lib-depend:
