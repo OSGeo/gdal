@@ -26,6 +26,9 @@
  * serves as an early test harnass.
  *
  * $Log$
+ * Revision 1.11  2000/03/31 13:43:21  warmerda
+ * added code to report all corners and gcps
+ *
  * Revision 1.10  2000/03/29 15:33:32  warmerda
  * added block size
  *
@@ -56,6 +59,16 @@
  */
 
 #include "gdal.h"
+#include "cpl_string.h"
+
+static int 
+GDALInfoReportCorner( GDALDatasetH hDataset, 
+                      const char * corner_name,
+                      double x, double y );
+
+/************************************************************************/
+/*                                main()                                */
+/************************************************************************/
 
 int main( int argc, char ** argv )
 
@@ -66,6 +79,7 @@ int main( int argc, char ** argv )
     double		adfGeoTransform[6];
     GDALProjDefH	hProjDef;
     GDALDriverH		hDriver;
+    char		**papszMetadata;
 
     if( argc < 2 )
     {
@@ -85,6 +99,9 @@ int main( int argc, char ** argv )
         exit( 1 );
     }
     
+/* -------------------------------------------------------------------- */
+/*      Report general info.                                            */
+/* -------------------------------------------------------------------- */
     hDriver = GDALGetDatasetDriver( hDataset );
     printf( "Driver: %s/%s\n",
             GDALGetDriverShortName( hDriver ),
@@ -94,39 +111,80 @@ int main( int argc, char ** argv )
             GDALGetRasterXSize( hDataset ), 
             GDALGetRasterYSize( hDataset ) );
 
-    printf( "Projection is `%s'\n",
-            GDALGetProjectionRef( hDataset ) );
-
-    GDALGetGeoTransform( hDataset, adfGeoTransform );
-    printf( "Origin = (%.6f,%.6f)\n",
-            adfGeoTransform[0], adfGeoTransform[3] );
-    
-    GDALGetGeoTransform( hDataset, adfGeoTransform );
-    printf( "Pixel Size = (%.6f,%.6f)\n",
-            adfGeoTransform[1], adfGeoTransform[5] );
-
-    hProjDef = GDALCreateProjDef( GDALGetProjectionRef( hDataset ) );
-    if( hProjDef != NULL )
+/* -------------------------------------------------------------------- */
+/*      Report projection.                                              */
+/* -------------------------------------------------------------------- */
+    if( GDALGetProjectionRef( hDataset ) != NULL )
     {
-        if( GDALReprojectToLongLat( hProjDef,
-                                    adfGeoTransform + 0,
-                                    adfGeoTransform + 3 ) == CE_None )
-        {
-            printf( "Origin (long/lat) = (%g,%g)",
-                    adfGeoTransform[0], adfGeoTransform[3] );
-
-            printf( " (%s,",  GDALDecToDMS( adfGeoTransform[0], "Long", 2 ) );
-            printf( " %s)\n",  GDALDecToDMS( adfGeoTransform[3], "Lat", 2 ) );
-        }
-        else
-        {
-            printf( "GDALReprojectToLongLat(): %s\n",
-                    CPLGetLastErrorMsg() );
-        }
-
-        GDALDestroyProjDef( hProjDef );
+        printf( "Projection is `%s'\n",
+                GDALGetProjectionRef( hDataset ) );
     }
 
+/* -------------------------------------------------------------------- */
+/*      Report Geotransform.                                            */
+/* -------------------------------------------------------------------- */
+    if( GDALGetGeoTransform( hDataset, adfGeoTransform ) == CE_None )
+    {
+        printf( "Origin = (%.6f,%.6f)\n",
+                adfGeoTransform[0], adfGeoTransform[3] );
+
+        printf( "Pixel Size = (%.6f,%.6f)\n",
+                adfGeoTransform[1], adfGeoTransform[5] );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Report GCPs.                                                    */
+/* -------------------------------------------------------------------- */
+    if( GDALGetGCPCount( hDataset ) > 0 )
+    {
+        printf( "GCP Projection = %s\n", GDALGetGCPProjection(hDataset) );
+        for( i = 0; i < GDALGetGCPCount(hDataset); i++ )
+        {
+            const GDAL_GCP	*psGCP;
+            
+            psGCP = GDALGetGCPs( hDataset ) + i;
+
+            printf( "GCP[%3d]: Id=%s, Info=%s\n"
+                    "          (%g,%g) -> (%g,%g,%g)\n", 
+                    i, psGCP->pszId, psGCP->pszInfo, 
+                    psGCP->dfGCPPixel, psGCP->dfGCPLine, 
+                    psGCP->dfGCPX, psGCP->dfGCPY, psGCP->dfGCPZ );
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Report metadata.                                                */
+/* -------------------------------------------------------------------- */
+    papszMetadata = GDALGetDatasetMetadata( hDataset );
+    if( CSLCount(papszMetadata) > 0 )
+    {
+        printf( "Metadata:\n" );
+        for( i = 0; papszMetadata[i] != NULL; i++ )
+        {
+            printf( "  %s\n", papszMetadata[i] );
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Report corners.                                                 */
+/* -------------------------------------------------------------------- */
+    printf( "Corner Coordinates:\n" );
+    GDALInfoReportCorner( hDataset, "Upper Left", 
+                          0.0, 0.0 );
+    GDALInfoReportCorner( hDataset, "Lower Left", 
+                          0.0, GDALGetRasterYSize(hDataset));
+    GDALInfoReportCorner( hDataset, "Upper Right", 
+                          GDALGetRasterXSize(hDataset), 0.0 );
+    GDALInfoReportCorner( hDataset, "Lower Right", 
+                          GDALGetRasterXSize(hDataset), 
+                          GDALGetRasterYSize(hDataset) );
+    GDALInfoReportCorner( hDataset, "Center", 
+                          GDALGetRasterXSize(hDataset)/2.0, 
+                          GDALGetRasterYSize(hDataset)/2.0 );
+
+/* ==================================================================== */
+/*      Loop over bands.                                                */
+/* ==================================================================== */
     for( i = 0; i < GDALGetRasterCount( hDataset ); i++ )
     {
         double      dfMin, dfMax, adfCMinMax[2];
@@ -148,6 +206,38 @@ int main( int argc, char ** argv )
         printf( "Min=%.3f/%d, Max=%.3f/%d, Computed Min/Max=%.3f,%.3f\n", 
                 dfMin, bGotMin, dfMax, bGotMax, adfCMinMax[0], adfCMinMax[1] );
         
+        if( GDALGetOverviewCount(hBand) > 0 )
+        {
+            int		iOverview;
+
+            printf( "  Overviews: " );
+            for( iOverview = 0; 
+                 iOverview < GDALGetOverviewCount(hBand);
+                 iOverview++ )
+            {
+                GDALRasterBandH	hOverview;
+
+                if( iOverview != 0 )
+                    printf( ", " );
+
+                hOverview = GDALGetOverview( hBand, iOverview );
+                printf( "%dx%d", 
+                        GDALGetRasterBandXSize( hOverview ),
+                        GDALGetRasterBandYSize( hOverview ) );
+            }
+            printf( "\n" );
+        }
+
+        papszMetadata = GDALGetRasterMetadata( hBand );
+        if( CSLCount(papszMetadata) > 0 )
+        {
+            printf( "Metadata:\n" );
+            for( i = 0; papszMetadata[i] != NULL; i++ )
+            {
+                printf( "  %s\n", papszMetadata[i] );
+            }
+        }
+
         if( GDALGetRasterColorInterpretation(hBand) == GCI_PaletteIndex )
         {
             GDALColorTableH	hTable;
@@ -172,31 +262,77 @@ int main( int argc, char ** argv )
                         sEntry.c4 );
             }
         }
-
-        if( GDALGetOverviewCount(hBand) > 0 )
-        {
-            int		iOverview;
-
-            printf( "  Overviews: " );
-            for( iOverview = 0; 
-                 iOverview < GDALGetOverviewCount(hBand);
-                 iOverview++ )
-            {
-                GDALRasterBandH	hOverview;
-
-                if( iOverview != 0 )
-                    printf( ", " );
-
-                hOverview = GDALGetOverview( hBand, iOverview );
-                printf( "%dx%d", 
-                        GDALGetRasterBandXSize( hOverview ),
-                        GDALGetRasterBandYSize( hOverview ) );
-            }
-            printf( "\n" );
-        }
     }
 
     GDALClose( hDataset );
     
     exit( 0 );
 }
+
+/************************************************************************/
+/*                        GDALInfoReportCorner()                        */
+/************************************************************************/
+
+static int 
+GDALInfoReportCorner( GDALDatasetH hDataset, 
+                      const char * corner_name,
+                      double x, double y )
+
+{
+    double	dfGeoX, dfGeoY;
+    const char  *pszProjection;
+    GDALProjDefH hProj;
+    double	adfGeoTransform[6];
+        
+    printf( "%-11s ", corner_name );
+    
+/* -------------------------------------------------------------------- */
+/*      Transform the point into georeferenced coordinates.             */
+/* -------------------------------------------------------------------- */
+    if( GDALGetGeoTransform( hDataset, adfGeoTransform ) == CE_None )
+    {
+        pszProjection = GDALGetProjectionRef(hDataset);
+
+        dfGeoX = adfGeoTransform[0] + adfGeoTransform[1] * x
+            + adfGeoTransform[2] * y;
+        dfGeoY = adfGeoTransform[3] + adfGeoTransform[4] * x
+            + adfGeoTransform[5] * y;
+    }
+
+    else
+    {
+        printf( "(%7.1f,%7.1f)\n", x, y );
+        return FALSE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Report the georeferenced coordinates.                           */
+/* -------------------------------------------------------------------- */
+    if( ABS(dfGeoX) < 181 && ABS(dfGeoY) < 91 )
+    {
+        printf( "(%12.7f,%12.7f) ", dfGeoX, dfGeoY );
+
+    }
+    else
+    {
+        printf( "(%12.3f,%12.3f) ", dfGeoX, dfGeoY );
+    }
+
+    if( pszProjection != NULL && strlen(pszProjection) > 0 )
+        hProj = GDALCreateProjDef( pszProjection );
+    else
+        hProj = NULL;
+
+    if( hProj != NULL 
+        && GDALReprojectToLongLat( hProj, &dfGeoX, &dfGeoY ) == CE_None )
+    {
+        
+        printf( "(%s,", GDALDecToDMS( dfGeoX, "Long", 2 ) );
+        printf( "%s)", GDALDecToDMS( dfGeoY, "Lat", 2 ) );
+    }
+
+    printf( "\n" );
+
+    return TRUE;
+}
+
