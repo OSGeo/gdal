@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.38  2004/03/28 16:22:02  warmerda
+ * const correctness changes in scan functions
+ *
  * Revision 1.37  2004/03/24 09:01:17  dron
  * Added CPLPrintUIntBig().
  *
@@ -537,7 +540,7 @@ const char *CPLReadLine( FILE * fp )
  * this buffer with CPLFree().
  */
 
-char *CPLScanString( char *pszString, int nMaxLength,
+char *CPLScanString( const char *pszString, int nMaxLength,
                      int bTrimSpaces, int bNormalize )
 {
     char    *pszBuffer;
@@ -593,7 +596,7 @@ char *CPLScanString( char *pszString, int nMaxLength,
  * @return Long value, converted from its ASCII form.
  */
 
-long CPLScanLong( char *pszString, int nMaxLength )
+long CPLScanLong( const char *pszString, int nMaxLength )
 {
     long    iValue;
     char    *pszValue = (char *)CPLMalloc( nMaxLength + 1);
@@ -618,8 +621,10 @@ long CPLScanLong( char *pszString, int nMaxLength )
 /************************************************************************/
 
 /**
+ * Extract big integer from string.
+ *
  * Scan up to a maximum number of characters from a string and convert
- * the result to a GUIntBig.
+ * the result to a GUIntBig. 
  *
  * @param pszString String containing characters to be scanned. It may be
  * terminated with a null character.
@@ -631,7 +636,7 @@ long CPLScanLong( char *pszString, int nMaxLength )
  * @return GUIntBig value, converted from its ASCII form.
  */
 
-GUIntBig CPLScanUIntBig( char *pszString, int nMaxLength )
+GUIntBig CPLScanUIntBig( const char *pszString, int nMaxLength )
 {
     GUIntBig    iValue;
     char        *pszValue = (char *)CPLMalloc( nMaxLength + 1);
@@ -683,7 +688,7 @@ GUIntBig CPLScanUIntBig( char *pszString, int nMaxLength )
  * @return Double value, converted from its ASCII form.
  */
 
-double CPLScanDouble( char *pszString, int nMaxLength, char *pszLocale )
+double CPLScanDouble( const char *pszString, int nMaxLength, char *pszLocale )
 {
     int     i;
     double  dfValue;
@@ -795,7 +800,6 @@ int CPLPrintString( char *pszDest, const char *pszSrc, int nMaxLen )
 int CPLPrintStringFill( char *pszDest, const char *pszSrc, int nMaxLen )
 {
     char    *pszTemp = pszDest;
-    int     nChars = 0;
 
     if ( !pszDest )
         return 0;
