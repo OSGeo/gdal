@@ -25,6 +25,9 @@
  * Main format registration function.
  * 
  * $Log$
+ * Revision 1.54  2003/02/14 11:27:16  dron
+ * GDALRegister_JPEG2000() moved behind of PNM and other JasPer formats.
+ *
  * Revision 1.53  2002/12/03 19:03:08  dron
  * Added BMP driver.
  *
@@ -328,25 +331,6 @@ void GDALAllRegister()
     GDALRegister_ECW();
 #endif
 
-#ifdef FRMT_jp2kak
-// JPEG2000 support using Kakadu toolkit
-    GDALRegister_JP2KAK();
-#endif
-
-#ifdef FRMT_jpeg2000
-// JPEG2000 support using JasPer toolkit
-    GDALRegister_JPEG2000();
-#endif
-
-#ifdef FRMT_hdf4
-    GDALRegister_HDF4();
-    GDALRegister_HDF4Image();
-#endif
-
-#ifdef FRMT_l1b
-    GDALRegister_L1B();
-#endif
-
 #ifdef FRMT_raw
     GDALRegister_PNM();
     GDALRegister_DOQ1();
@@ -360,6 +344,27 @@ void GDALAllRegister()
     GDALRegister_FujiBAS();
     GDALRegister_GSC();
     GDALRegister_FAST();
+#endif
+
+#ifdef FRMT_jp2kak
+// JPEG2000 support using Kakadu toolkit
+    GDALRegister_JP2KAK();
+#endif
+
+#ifdef FRMT_jpeg2000
+// JPEG2000 support using JasPer toolkit
+// This one should always be placed after other JasPer supported formats,
+// such as BMP or PNM. In other case we will get bad side effects.
+    GDALRegister_JPEG2000();
+#endif
+
+#ifdef FRMT_hdf4
+    GDALRegister_HDF4();
+    GDALRegister_HDF4Image();
+#endif
+
+#ifdef FRMT_l1b
+    GDALRegister_L1B();
 #endif
 
 #ifdef FRMT_fit
