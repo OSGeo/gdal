@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.40  2003/05/21 03:05:47  warmerda
+ * remove unused variable
+ *
  * Revision 1.39  2003/05/14 08:53:10  dron
  * Fixed mistake in RasterIO() description.
  *
@@ -282,7 +285,7 @@ void GDALFlushCache( GDALDatasetH hDS )
 void GDALDataset::BlockBasedFlushCache()
 
 {
-    GDALRasterBand *poBand1, *poBand;
+    GDALRasterBand *poBand1;
     int  nBlockXSize, nBlockYSize, iBand;
     
     poBand1 = GetRasterBand( 1 );
