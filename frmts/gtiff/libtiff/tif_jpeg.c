@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_jpeg.c,v 1.2 1999/11/27 21:33:38 warmerda Exp $ */
+/* $Header: /usr/cvsroot/gdal/frmts/gtiff/libtiff/tif_jpeg.c,v 1.3 2000/04/03 21:30:12 warmerda Exp $ */
 
 /*
  * Copyright (c) 1994-1997 Sam Leffler
@@ -46,6 +46,10 @@
 
 #ifdef FAR
 #undef FAR
+#endif
+
+#ifdef WIN32
+#define HAVE_BOOLEAN
 #endif
 
 #include "jpeglib.h"
