@@ -11,6 +11,6 @@ CPPFLAGS	:=	$(GDAL_INCLUDE) $(XTRAOPTS) $(CPPFLAGS)
 default:	$(OBJ)
 
 clean:
-	rm -f *.o
+	rm -f *.o $(O_OBJ)
 
 install-obj:	$(O_OBJ)
