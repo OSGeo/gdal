@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.40  2003/01/08 22:04:11  warmerda
+ * added forceToPolygon and forceToMultiPolygon methods
+ *
  * Revision 1.39  2003/01/07 16:44:27  warmerda
  * added removeGeometry
  *
@@ -665,6 +668,11 @@ class CPL_DLL OGRGeometryFactory
 
     static void   destroyGeometry( OGRGeometry * );
     static OGRGeometry *createGeometry( OGRwkbGeometryType );
+
+    static OGRGeometry * forceToPolygon( OGRGeometry * );
+    static OGRGeometry * forceToMultiPolygon( OGRGeometry * );
 };
+
+
 
 #endif /* ndef _OGR_GEOMETRY_H_INCLUDED */
