@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.21  2004/04/02 17:26:46  warmerda
+ * Added creation options.
+ *
  * Revision 1.20  2004/01/15 21:21:04  warmerda
  * added lossless compression of 16bit values
  *
@@ -2107,6 +2110,21 @@ void GDALRegister_JP2KAK()
                                    "Byte Int16 UInt16" );
         poDriver->SetMetadataItem( GDAL_DMD_MIMETYPE, "image/jp2" );
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "jp2" );
+
+        poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, 
+"<CreationOptionList>"
+"   <Option name='QUALITY' type='integer' description='1-100, 100 is lossless'/>"
+"   <Option name='LAYERS' type='integer'/>"
+"   <Option name='ROI' type='string'/>"
+"   <Option name='Corder' type='string'/>"
+"   <Option name='Cprecincts' type='string'/>"
+"   <Option name='ORGgen_plt' type='string'/>"
+"   <Option name='Cmodes' type='string'/>"
+"   <Option name='Clevels' type='string'/>"
+"   <Option name='Rshift' type='string'/>"
+"   <Option name='Rlevels' type='string'/>"
+"   <Option name='Rweight' type='string'/>"
+"</CreationOptionList>" );
 
         poDriver->pfnOpen = JP2KAKDataset::Open;
         poDriver->pfnCreateCopy = JP2KAKCreateCopy;
