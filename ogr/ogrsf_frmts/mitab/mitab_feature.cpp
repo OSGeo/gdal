@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_feature.cpp,v 1.34 2001/01/22 16:03:58 warmerda Exp $
+ * $Id: mitab_feature.cpp,v 1.35 2001/02/28 07:15:08 daniel Exp $
  *
  * Name:     mitab_feature.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log: mitab_feature.cpp,v $
+ * Revision 1.35  2001/02/28 07:15:08  daniel
+ * Added support for text label line end point
+ *
  * Revision 1.34  2001/01/22 16:03:58  warmerda
  * expanded tabs
  *
@@ -4283,7 +4286,8 @@ TABText::TABText(OGRFeatureDefn *poDefnIn):
     m_pszString = NULL;
 
     m_dAngle = m_dHeight = 0.0;
-    m_dfLineX = m_dfLineY = 0.0;
+    m_dfLineEndX = m_dfLineEndY = 0.0;
+    m_bLineEndSet = FALSE;
 
     m_rgbForeground = 0x000000;
     m_rgbBackground = 0xffffff;
@@ -4443,6 +4447,8 @@ int TABText::ReadGeometryFromMAPFile(TABMAPFile *poMapFile)
                           poObjBlock->ReadByte();
 
         poObjBlock->ReadIntCoord(bComprCoord, nX, nY);    // arrow endpoint
+        poMapFile->Int2Coordsys(nX, nY, m_dfLineEndX, m_dfLineEndY);
+        m_bLineEndSet = TRUE;
 
         // Text Height
         nY = bComprCoord? poObjBlock->ReadInt16():poObjBlock->ReadInt32();
@@ -4674,10 +4680,15 @@ int TABText::WriteGeometryToMAPFile(TABMAPFile *poMapFile)
     poMapFile->Coordsys2Int(dXMin, dYMin, nXMin, nYMin);
     poMapFile->Coordsys2Int(dXMax, dYMax, nXMax, nYMax);
 
-    // Line/arrow endpoint... default to bounding box center
-    poObjBlock->WriteIntCoord((nXMin+nXMax)/2, (nYMin+nYMax)/2);
+    // Label line end point
+    GInt32 nLineEndX, nLineEndY;
+    double dX, dY;
+    GetTextLineEndPoint(dX, dY); // Make sure a default line end point is set
+    poMapFile->Coordsys2Int(m_dfLineEndX, m_dfLineEndY, 
+                            nLineEndX, nLineEndY);
+    poObjBlock->WriteIntCoord(nLineEndX, nLineEndY);
 
-        // Text Height
+    // Text Height
     poMapFile->Coordsys2IntDist(0.0, m_dHeight, nX, nY);
     poObjBlock->WriteInt32(nY);
 
@@ -4788,6 +4799,37 @@ void TABText::SetTextBoxWidth(double dWidth)
 {
     m_dWidth = dWidth;
     UpdateTextMBR();
+}
+
+/**********************************************************************
+ *                   TABText::GetTextLineEndPoint()
+ *
+ * Return X,Y coordinates of the text label line end point.
+ * Default is the center of the text MBR.
+ **********************************************************************/
+void TABText::GetTextLineEndPoint(double &dX, double &dY)
+{
+    if (!m_bLineEndSet)
+    {
+        // Set default location at center of text MBR
+        double dXMin, dYMin, dXMax, dYMax;
+        UpdateTextMBR();
+        GetMBR(dXMin, dYMin, dXMax, dYMax);
+        m_dfLineEndX = (dXMin + dXMax) /2.0;
+        m_dfLineEndY = (dYMin + dYMax) /2.0;
+        m_bLineEndSet = TRUE;
+    }
+
+    // Return values
+    dX = m_dfLineEndX;
+    dY = m_dfLineEndY;
+}
+
+void TABText::SetTextLineEndPoint(double dX, double dY)
+{
+    m_dfLineEndX = dX;
+    m_dfLineEndY = dY;
+    m_bLineEndSet = TRUE;
 }
 
 /**********************************************************************

@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_imapinfofile.cpp,v 1.13 2001/02/27 19:59:05 daniel Exp $
+ * $Id: mitab_imapinfofile.cpp,v 1.14 2001/03/09 04:16:02 daniel Exp $
  *
  * Name:     mitab_imapinfo
  * Project:  MapInfo mid/mif Tab Read/Write library
@@ -31,6 +31,9 @@
  **********************************************************************
  *
  * $Log: mitab_imapinfofile.cpp,v $
+ * Revision 1.14  2001/03/09 04:16:02  daniel
+ * Added TABSeamless for reading seamless TAB files
+ *
  * Revision 1.13  2001/02/27 19:59:05  daniel
  * Enabled spatial filter in IMapInfoFile::GetNextFeature(), and avoid
  * unnecessary feature cloning in GetNextFeature() and GetFeature()
@@ -150,17 +153,27 @@ IMapInfoFile *IMapInfoFile::SmartOpen(const char *pszFname,
         FILE *fp;
         const char *pszLine;
         char *pszAdjFname = CPLStrdup(pszFname);
+        GBool bFoundFields = FALSE, bFoundView=FALSE, bFoundSeamless=FALSE;
 
         TABAdjustFilenameExtension(pszAdjFname);
         fp = VSIFOpen(pszAdjFname, "r");
-        while(poFile == NULL && fp && (pszLine = CPLReadLine(fp)) != NULL)
+        while(fp && (pszLine = CPLReadLine(fp)) != NULL)
         {
             while (isspace(*pszLine))  pszLine++;
             if (EQUALN(pszLine, "Fields", 6))
-                poFile = new TABFile;
+                bFoundFields = TRUE;
             else if (EQUALN(pszLine, "create view", 11))
-                poFile = new TABView;
+                bFoundView = TRUE;
+            else if (EQUALN(pszLine, "\"\\IsSeamless\" = \"TRUE\"", 21))
+                bFoundSeamless = TRUE;
         }
+
+        if (bFoundView)
+            poFile = new TABView;
+        else if (bFoundFields && bFoundSeamless)
+            poFile = new TABSeamless;
+        else if (bFoundFields)
+            poFile = new TABFile;
 
         if (fp)
             VSIFClose(fp);

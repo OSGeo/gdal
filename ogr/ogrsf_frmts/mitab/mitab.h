@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab.h,v 1.48 2001/02/27 19:59:05 daniel Exp $
+ * $Id: mitab.h,v 1.50 2001/03/09 04:16:02 daniel Exp $
  *
  * Name:     mitab.h
  * Project:  MapInfo MIF Read/Write library
@@ -30,6 +30,12 @@
  **********************************************************************
  *
  * $Log: mitab.h,v $
+ * Revision 1.50  2001/03/09 04:16:02  daniel
+ * Added TABSeamless for reading seamless TAB files
+ *
+ * Revision 1.49  2001/02/28 07:15:08  daniel
+ * Added support for text label line end point
+ *
  * Revision 1.48  2001/02/27 19:59:05  daniel
  * Enabled spatial filter in IMapInfoFile::GetNextFeature(), and avoid
  * unnecessary feature cloning in GetNextFeature() and GetFeature()
@@ -99,7 +105,7 @@
 /*---------------------------------------------------------------------
  * Current version of the MITAB library... always useful!
  *--------------------------------------------------------------------*/
-#define MITAB_VERSION "1.0.4 (2001-02-27)"
+#define MITAB_VERSION "1.1.0 (2001-03-08)"
 
 #ifndef PI
 #  define PI 3.14159265358979323846
@@ -119,6 +125,7 @@ typedef enum
     TABFC_IMapInfoFile = 0,
     TABFC_TABFile,
     TABFC_TABView,
+    TABFC_TABSeamless,
     TABFC_MIFFile
 } TABFileClass;
 
@@ -341,8 +348,6 @@ class TABFile: public IMapInfoFile
  * composed of a number of .TAB datasets linked through some indexed 
  * fields.
  *
- * TABViews are supported for read access only.
- *
  * NOTE: The current implementation supports only TABViews composed
  *       of 2 TABFiles linked through an indexed field of integer type.
  *       It is unclear if any other type of views could exist anyways.
@@ -455,6 +460,115 @@ class TABView: public IMapInfoFile
 #endif
 };
 
+
+/*---------------------------------------------------------------------
+ *                      class TABSeamless
+ *
+ * TABSeamless is used to handle seamless .TAB files that are
+ * composed of a main .TAB file in which each feature is the MBR of
+ * a base table.
+ *
+ * TABSeamless are supported for read access only.
+ *--------------------------------------------------------------------*/
+class TABSeamless: public IMapInfoFile
+{
+  private:
+    char        *m_pszFname;
+    char        *m_pszPath;
+    TABAccess   m_eAccessMode;
+    OGRFeatureDefn *m_poFeatureDefnRef;
+
+    TABFile     *m_poIndexTable;
+    int         m_nTableNameField;
+    int         m_nCurBaseTableId;
+    TABFile     *m_poCurBaseTable;
+    GBool       m_bEOF;
+
+    ///////////////
+    // Private Read access specific stuff
+    //
+    int         OpenForRead(const char *pszFname, 
+                            GBool bTestOpenNoError = FALSE );
+    int         OpenBaseTable(TABFeature *poIndexFeature,
+                              GBool bTestOpenNoError = FALSE);
+    int         OpenBaseTable(int nTableId, GBool bTestOpenNoError = FALSE);
+    int         OpenNextBaseTable(GBool bTestOpenNoError =FALSE);
+    int         EncodeFeatureId(int nTableId, int nBaseFeatureId);
+    int         ExtractBaseTableId(int nEncodedFeatureId);
+    int         ExtractBaseFeatureId(int nEncodedFeatureId);
+
+  public:
+    TABSeamless();
+    virtual ~TABSeamless();
+
+    virtual TABFileClass GetFileClass() {return TABFC_TABSeamless;}
+
+    virtual int Open(const char *pszFname, const char *pszAccess,
+                     GBool bTestOpenNoError = FALSE );
+    virtual int Close();
+
+    virtual const char *GetTableName()
+           {return m_poFeatureDefnRef?m_poFeatureDefnRef->GetName():"";};
+
+    void                ResetReading();
+    int                 TestCapability( const char * pszCap );
+    int                 GetFeatureCount (int bForce);
+    
+    ///////////////
+    // Read access specific stuff
+    //
+
+    virtual int GetNextFeatureId(int nPrevId);
+    virtual TABFeature *GetFeatureRef(int nFeatureId);
+    virtual OGRFeatureDefn *GetLayerDefn();
+
+    virtual TABFieldType GetNativeFieldType(int nFieldId);
+
+    virtual int GetBounds(double &dXMin, double &dYMin, 
+                          double &dXMax, double &dYMax,
+                          GBool bForce = TRUE );
+    
+    virtual OGRSpatialReference *GetSpatialRef();
+
+    virtual int GetFeatureCountByType(int &numPoints, int &numLines,
+                                      int &numRegions, int &numTexts,
+                                      GBool bForce = TRUE);
+
+    virtual GBool IsFieldIndexed(int nFieldId);
+    virtual GBool IsFieldUnique(int nFieldId);
+
+    ///////////////
+    // Write access specific stuff
+    //
+    virtual int SetBounds(double dXMin, double dYMin, 
+                          double dXMax, double dYMax)   {return -1;}
+    virtual int SetFeatureDefn(OGRFeatureDefn *poFeatureDefn,
+                               TABFieldType *paeMapInfoNativeFieldTypes=NULL)
+                                                        {return -1;}
+    virtual int AddFieldNative(const char *pszName,
+                               TABFieldType eMapInfoType,
+                               int nWidth=0, int nPrecision=0,
+                               GBool bIndexed=FALSE, 
+                               GBool bUnique=FALSE)     {return -1;}
+
+    virtual int SetSpatialRef(OGRSpatialReference *poSpatialRef) {return -1;}
+
+    virtual int SetFeature(TABFeature *poFeature, 
+                           int nFeatureId = -1) {return -1;}
+
+    virtual int SetFieldIndexed(int nFieldId)   {return -1;}
+
+    ///////////////
+    // semi-private.
+    virtual int  GetProjInfo(TABProjInfo *poPI)
+            { return m_poIndexTable?m_poIndexTable->GetProjInfo(poPI):-1; }
+    virtual int  SetProjInfo(TABProjInfo *poPI)         { return -1; }
+    virtual int  SetMIFCoordSys(const char * /*pszMIFCoordSys*/) {return -1;};
+
+#ifdef DEBUG
+    virtual void Dump(FILE *fpOut = NULL);
+#endif
+};
 
 
 /*---------------------------------------------------------------------
@@ -1355,8 +1469,9 @@ class TABText: public TABFeature,
     double      m_dAngle;
     double      m_dHeight;
     double      m_dWidth;
-    double      m_dfLineX;
-    double      m_dfLineY;
+    double      m_dfLineEndX;
+    double      m_dfLineEndY;
+    GBool       m_bLineEndSet;
     void        UpdateTextMBR();
 
     GInt32      m_rgbForeground;
@@ -1392,6 +1507,7 @@ class TABText: public TABFeature,
     double      GetTextBoxWidth();
     GInt32      GetFontFGColor();
     GInt32      GetFontBGColor();
+    void        GetTextLineEndPoint(double &dX, double &dY);
 
     TABTextJust GetTextJustification();
     TABTextSpacing  GetTextSpacing();
@@ -1404,6 +1520,7 @@ class TABText: public TABFeature,
     void        SetTextBoxWidth(double dWidth);
     void        SetFontFGColor(GInt32 rgbColor);
     void        SetFontBGColor(GInt32 rgbColor);
+    void        SetTextLineEndPoint(double dX, double dY);
 
     void        SetTextJustification(TABTextJust eJust);
     void        SetTextSpacing(TABTextSpacing eSpacing);

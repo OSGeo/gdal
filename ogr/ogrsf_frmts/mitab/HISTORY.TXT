@@ -1,51 +1,13 @@
 MITAB Library - Revision History
 ================================
 
-ToDo - Open Questions:
-----------------------
-
- - API Documentation
-
- - MIF output: bounds are missing in Coordsys NonEarth
-
- - ??? Produce a Warning when bounds not set on first SetFeature()
-
- - Support MetaData in .TAB header
-
- - Can we do anything for optimized spatial searches in TAB files?
-   (i.e. See SetSpatialFilter())
-
- - TABView support:
-     - Complete and tested only for cases in which 2 tables
-       are linked with a many-to-1 relation through an integer field.  
-     - The merge operation involves 3 features in memory and cloning the
-       geometry... this could perhaps be optimized but would require changes
-       at the lower-level in the lib.
-     - What is the proper behavior when no record in RelTable for a feature
-       from MainTable?  For now we leave fields unset
-
- - TABMAPObjBlocks could be split during write when they're full in order to
-   optimize spatial index.  Files are still usable even without this kind 
-   of optimization.
-
- - "Table Type DBF" are supported for reading, but no charset conversion
-   is done... however, when the same datasets are exported to MIF by MapInfo
-   it apparently converts the DBF file's charset (e.g. CodePage863) to 
-   the dataset charset (e.g. WindowsLatin1)
-
- - Will we ever want to support Table Type ACCESS?
-
- - When regions with multiple rings are read from MIF, the inside/outside
-   ring relationship is not reconstructed.  This may cause display problems
-   when MIF files containing regions are converted to TAB: it has been 
-   reported that some regions may not be filled properly when viewed in
-   MapInfo Versions 5.0 and up when the inside/outside ring relationship
-   is not properly written.
-
-
 
 CHANGES - Current Version:
 --------------------------
+
+
+Version 1.1.0 - (2001-03-08)
+----------------------------
 
 - Modified mitab_imapinfofile.cpp so that variable width fields (nWidth=0)
   is translated to 254 characters, instead of 255 so it will actually be
@@ -85,6 +47,16 @@ CHANGES - Current Version:
 
 - Avoid unnecessary cloning of features in IMapInfoFile::GetNextFeature() and
   IMapInfoFile::GetFeature().
+
+- Added TABText::Get/SetTextLineEndPoint() and properly read/write label
+  line end point in TAB files.
+
+- Fixed writing MIF header: for decimal fields, an extra field of type 
+  logical with same name was always added because of a missing break; (Kieron)
+
+- Added support for reading seamless TAB files (TABSeamless class)
+
+- Fixed problem creating new files with mixed case extensions (e.g. ".Tab")
 
 
 Version 1.0.4 - (2000-11-14)
@@ -275,5 +247,5 @@ Version 0.1 - (1999-12-04)
 
 
 ------------
-$Id: HISTORY.TXT,v 1.46 2001/02/27 19:59:05 daniel Exp $
+$Id: HISTORY.TXT,v 1.48 2001/03/09 04:16:16 daniel Exp $
 ------------

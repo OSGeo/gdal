@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_miffile.cpp,v 1.24 2001/02/27 19:59:05 daniel Exp $
+ * $Id: mitab_miffile.cpp,v 1.26 2001/03/09 04:14:19 daniel Exp $
  *
  * Name:     mitab_miffile.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -32,6 +32,12 @@
  **********************************************************************
  *
  * $Log: mitab_miffile.cpp,v $
+ * Revision 1.26  2001/03/09 04:14:19  daniel
+ * Fixed problem creating new files with mixed case extensions (e.g. ".Tab")
+ *
+ * Revision 1.25  2001/03/09 03:51:48  daniel
+ * Fixed writing MIF header: missing break; for decimal fields
+ *
  * Revision 1.24  2001/02/27 19:59:05  daniel
  * Enabled spatial filter in IMapInfoFile::GetNextFeature(), and avoid
  * unnecessary feature cloning in GetNextFeature() and GetFeature()
@@ -196,8 +202,8 @@ int MIFFile::Open(const char *pszFname, const char *pszAccess,
     if (nFnameLen > 4 && (strcmp(m_pszFname+nFnameLen-4, ".MID")==0 ||
                      strcmp(m_pszFname+nFnameLen-4, ".MIF")==0 ) )
         strcpy(m_pszFname+nFnameLen-4, ".MIF");
-    else if (nFnameLen > 4 && (strcmp(m_pszFname+nFnameLen-4, ".mid")==0 ||
-                          strcmp(m_pszFname+nFnameLen-4, ".mif")==0 ) )
+    else if (nFnameLen > 4 && (EQUAL(m_pszFname+nFnameLen-4, ".mid") ||
+                               EQUAL(m_pszFname+nFnameLen-4, ".mif") ) )
         strcpy(m_pszFname+nFnameLen-4, ".mif");
     else
     {
@@ -919,6 +925,7 @@ int MIFFile::WriteMIFHeader()
                                    poFieldDefn->GetNameRef(),
                                    poFieldDefn->GetWidth(),
                                    poFieldDefn->GetPrecision());
+            break;
           case TABFLogical:
             m_poMIFFile->WriteLine("  %s Logical\n",
                                    poFieldDefn->GetNameRef());

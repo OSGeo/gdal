@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_feature_mif.cpp,v 1.17 2001/01/22 16:03:58 warmerda Exp $
+ * $Id: mitab_feature_mif.cpp,v 1.18 2001/02/28 07:15:09 daniel Exp $
  *
  * Name:     mitab_feature.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -31,6 +31,9 @@
  **********************************************************************
  *
  * $Log: mitab_feature_mif.cpp,v $
+ * Revision 1.18  2001/02/28 07:15:09  daniel
+ * Added support for text label line end point
+ *
  * Revision 1.17  2001/01/22 16:03:58  warmerda
  * expanded tabs
  *
@@ -1566,14 +1569,14 @@ int TABText::ReadGeometryFromMIFFile(MIDDATAFile *fp)
                         if (EQUALN(papszToken[4],"simple",6))
                         {
                             SetTextLineType(TABTLSimple);
-                            m_dfLineX = fp->GetXTrans(atof(papszToken[5]));
-                            m_dfLineY = fp->GetYTrans(atof(papszToken[6]));
+                            SetTextLineEndPoint(fp->GetXTrans(atof(papszToken[5])),
+                                                fp->GetYTrans(atof(papszToken[6])));
                         }
                         else if (EQUALN(papszToken[4],"arrow", 5))
                         {
                             SetTextLineType(TABTLArrow);
-                            m_dfLineX = fp->GetXTrans(atof(papszToken[5]));
-                            m_dfLineY = fp->GetYTrans(atof(papszToken[6]));
+                            SetTextLineEndPoint(fp->GetXTrans(atof(papszToken[5])),
+                                                fp->GetYTrans(atof(papszToken[6])));
                         }
                     }
                 }               
@@ -1611,14 +1614,14 @@ int TABText::ReadGeometryFromMIFFile(MIDDATAFile *fp)
                     if (EQUALN(papszToken[2],"simple",6))
                     {
                         SetTextLineType(TABTLSimple);
-                        m_dfLineX = fp->GetXTrans(atof(papszToken[3]));
-                        m_dfLineY = fp->GetYTrans(atof(papszToken[4]));
+                        SetTextLineEndPoint(fp->GetXTrans(atof(papszToken[3])),
+                                           fp->GetYTrans(atof(papszToken[4])));
                     }
                     else if (EQUALN(papszToken[2],"arrow", 5))
                     {
                         SetTextLineType(TABTLArrow);
-                        m_dfLineX = fp->GetXTrans(atof(papszToken[3]));
-                        m_dfLineY = fp->GetYTrans(atof(papszToken[4]));
+                        SetTextLineEndPoint(fp->GetXTrans(atof(papszToken[3])),
+                                           fp->GetYTrans(atof(papszToken[4])));
                     }
                 }
                 
@@ -1755,12 +1758,14 @@ int TABText::WriteGeometryToMIFFile(MIDDATAFile *fp)
     switch (GetTextLineType())
     {
       case TABTLSimple:
-        fp->WriteLine("    Label Line Simple %.16g %.16g \n",
-                      m_dfLineX,m_dfLineY );
+        if (m_bLineEndSet)
+            fp->WriteLine("    Label Line Simple %.16g %.16g \n",
+                          m_dfLineEndX, m_dfLineEndY );
         break;
       case TABTLArrow:
-        fp->WriteLine("    Label Line Arrow %.16g %.16g \n",
-                      m_dfLineX,m_dfLineY );
+        if (m_bLineEndSet)
+            fp->WriteLine("    Label Line Arrow %.16g %.16g \n",
+                          m_dfLineEndX, m_dfLineEndY );
         break;
       case TABTLNoLine:
       default:

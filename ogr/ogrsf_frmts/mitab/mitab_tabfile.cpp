@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_tabfile.cpp,v 1.41 2001/01/23 21:23:42 daniel Exp $
+ * $Id: mitab_tabfile.cpp,v 1.42 2001/03/09 04:14:19 daniel Exp $
  *
  * Name:     mitab_tabfile.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -32,6 +32,9 @@
  **********************************************************************
  *
  * $Log: mitab_tabfile.cpp,v $
+ * Revision 1.42  2001/03/09 04:14:19  daniel
+ * Fixed problem creating new files with mixed case extensions (e.g. ".Tab")
+ *
  * Revision 1.41  2001/01/23 21:23:42  daniel
  * Added projection bounds lookup table, called from TABFile::SetProjInfo()
  *
@@ -219,9 +222,9 @@ int TABFile::Open(const char *pszFname, const char *pszAccess,
                      strcmp(m_pszFname+nFnameLen-4, ".MAP")==0 ||
                      strcmp(m_pszFname+nFnameLen-4, ".DAT")==0 ) )
         strcpy(m_pszFname+nFnameLen-4, ".TAB");
-    else if (nFnameLen > 4 && (strcmp(m_pszFname+nFnameLen-4, ".tab")==0 ||
-                          strcmp(m_pszFname+nFnameLen-4, ".map")==0 ||
-                          strcmp(m_pszFname+nFnameLen-4, ".dat")==0 ) )
+    else if (nFnameLen > 4 && (EQUAL(m_pszFname+nFnameLen-4, ".tab") ||
+                               EQUAL(m_pszFname+nFnameLen-4, ".map") ||
+                               EQUAL(m_pszFname+nFnameLen-4, ".dat") ) )
         strcpy(m_pszFname+nFnameLen-4, ".tab");
     else
     {
