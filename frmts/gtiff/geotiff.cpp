@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.66  2002/06/17 14:53:58  warmerda
+ * fixed byte line alignment bug with 1bit files
+ *
  * Revision 1.65  2002/06/12 21:12:25  warmerda
  * update to metadata based driver info
  *
@@ -988,16 +991,22 @@ CPLErr GTiffBitmapBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /* -------------------------------------------------------------------- */
 /*      Translate 1bit data to eight bit.                               */
 /* -------------------------------------------------------------------- */
-    int	  iOffset, iMaxOffset;
+    int	  iDstOffset=0, iLine;
     register GByte *pabyBlockBuf = poGDS->pabyBlockBuf;
 
-    iMaxOffset = nBlockXSize * nBlockYSize;
-    for( iOffset = 0; iOffset < iMaxOffset; iOffset++ )
+    for( iLine = 0; iLine < nBlockYSize; iLine++ )
     {
-        if( pabyBlockBuf[iOffset >>3] & (0x80 >> (iOffset & 0x7)) )
-            ((GByte *) pImage)[iOffset] = 1;
-        else
-            ((GByte *) pImage)[iOffset] = 0;
+        int iSrcOffset, iPixel;
+
+        iSrcOffset = ((nBlockXSize+7) >> 3) * 8 * iLine;
+
+        for( iPixel = 0; iPixel < nBlockXSize; iPixel++, iSrcOffset++ )
+        {
+            if( pabyBlockBuf[iSrcOffset >>3] & (0x80 >> (iSrcOffset & 0x7)) )
+                ((GByte *) pImage)[iDstOffset++] = 1;
+            else
+                ((GByte *) pImage)[iDstOffset++] = 0;
+        }
     }
     
     return CE_None;
