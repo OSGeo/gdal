@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2004/10/07 13:10:59  fwarmerdam
+ * added OGR_G_Centroid
+ *
  * Revision 1.20  2004/09/17 15:05:36  fwarmerdam
  * added get_Area() support
  *
@@ -179,6 +182,7 @@ OGRGeometryH CPL_DLL OGR_G_SymmetricDifference( OGRGeometryH, OGRGeometryH );
 double CPL_DLL OGR_G_Distance( OGRGeometryH, OGRGeometryH );
 
 double CPL_DLL OGR_G_GetArea( OGRGeometryH );
+int    CPL_DLL OGR_G_Centroid( OGRGeometryH, OGRGeometryH );
 
 void   CPL_DLL OGR_G_Empty( OGRGeometryH );
 
