@@ -74,6 +74,13 @@ option can be used to force creation of tiled TIFF files.<p>
 to use.  JPEG should only be used with Byte data.  LZW is normally 
 unavailable.  None is the default.<p>
 
+<li> <b>PROFILE=[GDALGeoTIFF/GeoTIFF/BASELINE]</b>: Control what non-baseline
+tags are emitted by GDAL.  With <tt>GDALGeoTIFF</tt> (the default) various 
+GDAL custom tags may be written.  With <tt>GeoTIFF</tt> only GeoTIFF tags
+will be added to the baseline.  With <tt>BASELINE</tt> no GDAL or GeoTIFF
+tags will be written.  BASELINE is occationally useful when writing files to
+be read by applications intolerant of unrecognised tags.<p>
+
 <li>
 <b>PHOTOMETRIC=[MINISBLACK/MINISWHITE/RGB/CMYK/YCBCR/CIELAB/ICCLAB/ITULAB]</b>: 
 Set the photometric interpretation tag. Default is MINISBLACK, but if the
