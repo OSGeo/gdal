@@ -7,7 +7,8 @@ OBJ	=	cpl_conv.obj \
 		cpl_string.obj \
 		cpl_vsisimple.obj \
 		cplgetsymbol.obj \
-		cpl_dir.obj
+		cpl_dir.obj \
+		cpl_path.obj
 
 LIB	=	cpl.lib
 
