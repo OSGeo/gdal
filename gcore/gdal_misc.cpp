@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.56  2004/04/02 18:42:48  warmerda
+ * Added rw/ro flag in --formats list.
+ *
  * Revision 1.55  2004/04/02 18:01:35  warmerda
  * Finished docs for commandline processor function.
  *
@@ -1899,9 +1902,17 @@ int GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
             for( iDr = 0; iDr < GDALGetDriverCount(); iDr++ )
             {
                 GDALDriverH hDriver = GDALGetDriver(iDr);
+                const char *pszRWFlag;
                 
-                printf( "  %s: %s\n",
+                if( GDALGetMetadataItem( hDriver, GDAL_DCAP_CREATECOPY, NULL )
+                    || GDALGetMetadataItem( hDriver, GDAL_DCAP_CREATE, NULL ) )
+                    pszRWFlag = "rw";
+                else
+                    pszRWFlag = "ro";
+                
+                printf( "  %s (%s): %s\n",
                         GDALGetDriverShortName( hDriver ),
+                        pszRWFlag,
                         GDALGetDriverLongName( hDriver ) );
             }
 
