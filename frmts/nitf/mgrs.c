@@ -7,6 +7,9 @@
  *
  ***************************************************************************
  * $Log$
+ * Revision 1.2  2004/02/20 01:39:05  warmerda
+ * Avoid warnings.
+ *
  * Revision 1.1  2004/02/09 05:04:00  warmerda
  * New
  *
@@ -410,12 +413,12 @@ long Make_MGRS_String (char* MGRS,
   if (Easting >= 99999.5)
     Easting = 99999.0;
   east = (long)(Easting/divisor);
-  i += sprintf (MGRS+i, "%*.*ld", Precision, Precision, east);
+  i += sprintf (MGRS+i, "%*.*ld", (int) Precision, (int) Precision, east);
   Northing = fmod (Northing, 100000.0);
   if (Northing >= 99999.5)
     Northing = 99999.0;
   north = (long)(Northing/divisor);
-  i += sprintf (MGRS+i, "%*.*ld", Precision, Precision, north);
+  i += sprintf (MGRS+i, "%*.*ld", (int) Precision, (int) Precision, north);
   return (error_code);
 } /* Make_MGRS_String */
 
@@ -882,7 +885,7 @@ long Convert_MGRS_To_UTM (char   *MGRS,
                 }
               }
             }
-#endif notdef
+#endif /* notdef */
           }
         }
       }
