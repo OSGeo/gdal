@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2002/10/07 13:14:18  warmerda
+ * added association id support
+ *
  * Revision 1.9  2002/05/31 03:40:22  warmerda
  * added improved support for parsing attribute linkages
  *
@@ -407,6 +410,48 @@ int DGNGetShapeFillInfo( DGNHandle hDGN, DGNElemCore *psElem, int *pnColor )
         {
             *pnColor = pabyData[8];
             return TRUE;
+        }
+    }
+}
+
+/************************************************************************/
+/*                        DGNGetAssocID()                               */
+/************************************************************************/
+
+/**
+ * Fetch association id for an element.
+ *
+ * This method will check if an element has an association id, and if so
+ * returns it, otherwise returning -1.  Association ids are kept as a
+ * user attribute linkage where present.
+ *
+ * @param hDGN the file.
+ * @param psElem the element.
+ *
+ * @return The id or -1 on failure.
+ */
+
+int DGNGetAssocID( DGNHandle hDGN, DGNElemCore *psElem )
+
+{
+    int iLink;
+    
+    for( iLink = 0; TRUE; iLink++ )
+    {
+        int nLinkType, nLinkSize;
+        unsigned char *pabyData;
+
+        pabyData = DGNGetLinkage( hDGN, psElem, iLink, &nLinkType, 
+                                  NULL, NULL, &nLinkSize );
+        if( pabyData == NULL )
+            return -1;
+
+        if( nLinkType == DGNLT_ASSOC_ID && nLinkSize >= 8 )
+        {
+            return pabyData[4] 
+                + pabyData[5] * 256 
+                + pabyData[6]*256*256
+                + pabyData[7] * 256*256*256;
         }
     }
 }
