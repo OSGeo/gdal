@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2003/06/10 19:58:35  warmerda
+ * added support for AddFuncSource in AddBand() method for Imagine
+ *
  * Revision 1.11  2002/12/05 22:17:19  warmerda
  * added support for opening directly from XML
  *
@@ -628,9 +631,39 @@ GDALDataset *VRTDataset::OpenXML( const char *pszXML )
 CPLErr VRTDataset::AddBand( GDALDataType eType, char **papszOptions )
 
 {
-    SetBand( GetRasterCount() + 1, 
-             new VRTRasterBand( this, GetRasterCount() + 1, eType, 
-                                GetRasterXSize(), GetRasterYSize() ) );
+    int i;
+    VRTRasterBand *poBand = 
+        new VRTRasterBand( this, GetRasterCount() + 1, eType, 
+                           GetRasterXSize(), GetRasterYSize() );
+
+    SetBand( GetRasterCount() + 1, poBand );
+
+    for( i=0; papszOptions != NULL && papszOptions[i] != NULL; i++ )
+    {
+        if( EQUALN(papszOptions[i],"AddFuncSource=", 14) )
+        {
+            VRTImageReadFunc pfnReadFunc = NULL;
+            void             *pCBData = NULL;
+            double           dfNoDataValue = VRT_NODATA_UNSET;
+
+            char **papszTokens = CSLTokenizeStringComplex( papszOptions[i]+14,
+                                                           ",", TRUE, FALSE );
+
+            if( CSLCount(papszTokens) < 1 )
+            {
+                CPLError( CE_Failure, CPLE_AppDefined, 
+                          "AddFuncSource() ... required argument missing." );
+            }
+
+            sscanf( papszTokens[0], "%p", &pfnReadFunc );
+            if( CSLCount(papszTokens) > 1 )
+                sscanf( papszTokens[1], "%p", &pCBData );
+            if( CSLCount(papszTokens) > 2 )
+                dfNoDataValue = atof( papszTokens[2] );
+
+            poBand->AddFuncSource( pfnReadFunc, pCBData, dfNoDataValue );
+        }
+    }
 
     return CE_None;
 }
@@ -647,6 +680,8 @@ VRTDataset::Create( const char * pszName,
 {
     VRTDataset *poDS;
     int        iBand;
+
+    (void) papszOptions;
 
     if( EQUALN(pszName,"<VRTDataset",11) )
     {
@@ -679,6 +714,9 @@ VRTCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
 {
     VRTDataset *poVRTDS;
+
+    (void) bStrict;
+    (void) papszOptions;
 
 /* -------------------------------------------------------------------- */
 /*      If the source dataset is a virtual dataset then just write      */
