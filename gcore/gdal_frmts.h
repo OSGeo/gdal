@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2001/09/19 15:26:14  warmerda
+ * added doq2
+ *
  * Revision 1.6  2001/07/05 23:53:53  nemec
  * Add FIT file format
  *
@@ -70,6 +73,7 @@ void CPL_DLL GDALRegister_EHdr(void);
 void CPL_DLL GDALRegister_PAux(void);
 void CPL_DLL GDALRegister_EFF(void);
 void CPL_DLL GDALRegister_DOQ1(void);
+void CPL_DLL GDALRegister_DOQ2(void);
 void CPL_DLL GDALRegister_DTED(void);
 void CPL_DLL GDALRegister_MFF(void);
 void CPL_DLL GDALRegister_HKV(void);
