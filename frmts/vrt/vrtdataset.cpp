@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2004/07/27 21:59:48  warmerda
+ * Enable .ovr support.
+ *
  * Revision 1.14  2004/03/16 18:34:35  warmerda
  * added support for relativeToVRT attribute on SourceFilename
  *
@@ -475,6 +478,12 @@ GDALDataset *VRTDataset::Open( GDALOpenInfo * poOpenInfo )
 
     CPLFree( pszXML );
 
+/* -------------------------------------------------------------------- */
+/*      Open overviews.                                                 */
+/* -------------------------------------------------------------------- */
+    if( poOpenInfo->fp != NULL )
+        poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
+
     return poDS;
 }
 
@@ -619,7 +628,7 @@ GDALDataset *VRTDataset::OpenXML( const char *pszXML, const char *pszVRTPath )
         {
             VRTRasterBand  *poBand;
 
-            poBand = new VRTRasterBand( poDS, nBands+1 );
+            poBand = new VRTSourcedRasterBand( poDS, nBands+1 );
             if( poBand->XMLInit( psChild, poDS->pszVRTPath ) == CE_None )
             {
                 poDS->SetBand( ++nBands, poBand );
@@ -650,9 +659,9 @@ CPLErr VRTDataset::AddBand( GDALDataType eType, char **papszOptions )
 
 {
     int i;
-    VRTRasterBand *poBand = 
-        new VRTRasterBand( this, GetRasterCount() + 1, eType, 
-                           GetRasterXSize(), GetRasterYSize() );
+    VRTSourcedRasterBand *poBand = 
+        new VRTSourcedRasterBand( this, GetRasterCount() + 1, eType, 
+                                  GetRasterXSize(), GetRasterYSize() );
 
     SetBand( GetRasterCount() + 1, poBand );
 
