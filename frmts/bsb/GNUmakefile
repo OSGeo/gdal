@@ -1,6 +1,6 @@
 GDAL_ROOT	=	../..
 
-VERSION =	1.1
+VERSION =	1.2
 
 include $(GDAL_ROOT)/GDALmake.opt
 
@@ -34,6 +34,7 @@ dist:
 	cp *.cpp *.c *.h $(DISTDIR)
 	rm $(DISTDIR)/bsbdataset.cpp
 	cp Makefile.dist $(DISTDIR)/Makefile
+	cp README.dist $(DISTDIR)/README
 	cp $(GDAL_ROOT)/port/{cpl_error*,cpl_port*,cpl_string*} $(DISTDIR)
 	cp $(GDAL_ROOT)/port/{cpl_vsisimple.cpp,cpl_config.h.in} $(DISTDIR)
 	cp $(GDAL_ROOT)/port/{cpl_vsi.h,cpl_conv.*,cpl_path.cpp} $(DISTDIR)
