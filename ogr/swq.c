@@ -18,6 +18,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2002/04/25 20:45:57  warmerda
+ * fixed some bugs with WHERE processing
+ *
  * Revision 1.10  2002/04/25 19:33:23  warmerda
  * avoid warning
  *
@@ -1156,6 +1159,9 @@ const char *swq_select_preparse( const char *select_statement,
     if( token != NULL && strcasecmp(token,"WHERE") == 0 )
     {
         const char *where_base = input;
+
+        while( *where_base == ' ' )
+            where_base++;
         
         SWQ_FREE( token );
         
@@ -1175,11 +1181,14 @@ const char *swq_select_preparse( const char *select_statement,
             }
         }
 
-        if( token != NULL )
+        select_info->whole_where_clause = swq_strdup(where_base);
+
+        if( input != NULL )
         {
-            select_info->whole_where_clause = swq_strdup(where_base);
-            if( input != NULL )
-                select_info->whole_where_clause[input - where_base - 5] = '\0';
+            if( token != NULL )
+                select_info->whole_where_clause[input - where_base - strlen(token)] = '\0';
+            else
+                select_info->whole_where_clause[input - where_base] = '\0';
         }
     }
 
@@ -1772,7 +1781,8 @@ const char *swq_reform_command( swq_select *select_info )
         else
         {
             CHECK_COMMAND( strlen(def->field_name) + 15 );
-            sprintf( command + cmd_size, "%s%s", distinct, def->field_name );
+            sprintf( command + cmd_size, "%s\"%s\"", 
+                     distinct, def->field_name );
         }
     }
 
@@ -1780,7 +1790,7 @@ const char *swq_reform_command( swq_select *select_info )
 /*      Handle the FROM tablename.                                      */
 /* -------------------------------------------------------------------- */
     CHECK_COMMAND( 10 + strlen(select_info->from_table) );
-    sprintf( command + cmd_size, " FROM %s", select_info->from_table );
+    sprintf( command + cmd_size, " FROM \"%s\"", select_info->from_table );
 
 /* -------------------------------------------------------------------- */
 /*      Add WHERE statement if it exists.                               */
@@ -1811,7 +1821,7 @@ const char *swq_reform_command( swq_select *select_info )
         }
 
         CHECK_COMMAND( strlen(def->field_name)+1 );
-        strcat( command + cmd_size, def->field_name );
+        sprintf( command + cmd_size, "\"%s\"", def->field_name );
 
         CHECK_COMMAND( 6 );
         if( def->ascending_flag )
