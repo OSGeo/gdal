@@ -28,12 +28,16 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2004/10/08 20:50:48  fwarmerdam
+ * avoid leak in GetFeatureCount()
+ *
  * Revision 1.1  2004/10/07 20:56:15  fwarmerdam
  * New
  *
  */
 
 #include "cpl_conv.h"
+#include "cpl_string.h"
 #include "ogr_mysql.h"
 
 CPL_CVSID("$Id$");
@@ -478,13 +482,10 @@ int OGRMySQLTableLayer::GetFeatureCount( int bForce )
 /*      Issue the appropriate select command.                           */
 /* -------------------------------------------------------------------- */
     MYSQL_RES    *hResult;
-    char         *pszCommand;
+    const char         *pszCommand;
 
-    pszCommand = (char *) CPLMalloc(strlen(poFeatureDefn->GetName()) 
-                                    + strlen(pszWHERE) + 100);
-
-    sprintf( pszCommand, "SELECT COUNT(*) FROM %s %s", 
-             poFeatureDefn->GetName(), pszWHERE );
+    pszCommand = CPLSPrintf( "SELECT COUNT(*) FROM %s %s", 
+                             poFeatureDefn->GetName(), pszWHERE );
 
     if( mysql_query( poDS->GetConn(), pszCommand ) )
     {
