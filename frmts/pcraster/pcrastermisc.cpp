@@ -39,6 +39,8 @@ void GDALRegister_PCRaster()
     driver->SetDescription("PCRaster");
     driver->SetMetadataItem(GDAL_DMD_LONGNAME, "PCRaster Raster File");
     driver->SetMetadataItem(GDAL_DMD_CREATIONDATATYPES, "Byte Int32 Float32");
+    driver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "frmt_various.html#PCRaster");
+    driver->SetMetadataItem( GDAL_DMD_EXTENSION, "map" );
 
     driver->pfnOpen = PCRasterDataset::open;
     driver->pfnCreateCopy = PCRasterDataset::createCopy;
