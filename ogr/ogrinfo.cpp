@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2002/04/25 03:40:41  warmerda
+ * fixed to pass spatial query
+ *
  * Revision 1.14  2002/04/24 20:00:43  warmerda
  * added the -sql command line switch
  *
@@ -224,7 +227,8 @@ int main( int nArgc, char ** papszArgv )
         if( CSLCount(papszLayers) > 0 )
             printf( "layer names ignored in combination with -sql.\n" );
         
-        poResultSet = poDS->ExecuteSQL( pszSQLStatement, NULL, NULL );
+        poResultSet = poDS->ExecuteSQL( pszSQLStatement, poSpatialFilter, 
+                                        NULL );
 
         if( poResultSet != NULL )
         {
