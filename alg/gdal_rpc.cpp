@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2003/06/03 19:41:58  warmerda
+ * working implmentation, but inverse is still not iteratively solved
+ *
  * Revision 1.1  2003/06/03 17:36:43  warmerda
  * New
  *
@@ -38,78 +41,6 @@
 #include "ogr_spatialref.h"
 
 CPL_CVSID("$Id$");
-
-/************************************************************************/
-/* ==================================================================== */
-/*			     GDALRPCTransformer                         */
-/* ==================================================================== */
-/************************************************************************/
-
-typedef struct {
-
-    double      LINE_OFF;
-    double      SAMP_OFF;
-    double      LAT_OFF;
-    double      LONG_OFF;
-    double      HEIGHT_OFF;
-
-    double      LINE_SCALE;
-    double      SAMP_SCALE;
-    double      LAT_SCALE;
-    double      LONG_SCALE;
-    double      HEIGHT_SCALE;
-
-    double      LINE_NUM_COEFF[20];
-    double      LINE_DEN_COEFF[20];
-    double      SAMP_NUM_COEFF[20];
-    double      SAMP_DEN_COEFF[20];
-
-    int         bReversed;
-
-} GDALRPCTransformInfo;
-
-/************************************************************************/
-/*                      GDALCreateRPCTransformer()                      */
-/************************************************************************/
-
-void *GDALCreateRPCTransformer( char **papszRPCMetadata, int bReversed )
-
-{
-/* -------------------------------------------------------------------- */
-/*      Create a structure to hold the transform info, and also         */
-/*      build reverse transform.  We assume that if the forward         */
-/*      transform can be created, then so can the reverse one.          */
-/* -------------------------------------------------------------------- */
-    GDALReprojectionTransformInfo *psInfo;
-
-    psInfo = (GDALReprojectionTransformInfo *) 
-        CPLCalloc(sizeof(GDALReprojectionTransformInfo),1);
-
-    psInfo->poForwardTransform = poForwardTransform;
-    psInfo->poReverseTransform = 
-        OGRCreateCoordinateTransformation(&oDstSRS,&oSrcSRS);
-
-    return psInfo;
-}
-
-/************************************************************************/
-/*                 GDALDestroyReprojectionTransformer()                 */
-/************************************************************************/
-
-void GDALDestroyRPCTransformer( void *pTransformAlg )
-
-{
-    GDALReprojectionTransformInfo *psInfo = 
-        (GDALReprojectionTransformInfo *) pTransformAlg;		
-
-    if( psInfo->poForwardTransform )
-        delete psInfo->poForwardTransform;
-
-    if( psInfo->poReverseTransform )
-    delete psInfo->poReverseTransform;
-
-    CPLFree( psInfo );
-}
 
 /************************************************************************/
 /*                          RPCComputeTerms()                           */
@@ -146,7 +77,7 @@ static void RPCComputeTerms( double dfLong, double dfLat, double dfHeight,
 /*                            RPCEvaluate()                             */
 /************************************************************************/
 
-static double RPCEvaluate( double *padfTerms, *padfCoefs )
+static double RPCEvaluate( double *padfTerms, double *padfCoefs )
 
 {
     double dfSum = 0.0;
@@ -158,6 +89,119 @@ static double RPCEvaluate( double *padfTerms, *padfCoefs )
     return dfSum;
 }
 
+/************************************************************************/
+/*                         RPCTransformPoint()                          */
+/************************************************************************/
+
+static void RPCTransformPoint( GDALRPCInfo *psRPC, 
+                               double dfLong, double dfLat, double dfHeight, 
+                               double *pdfPixel, double *pdfLine )
+
+{
+    double dfResultX, dfResultY;
+    double adfTerms[20];
+   
+    RPCComputeTerms( 
+        (dfLong   - psRPC->dfLONG_OFF) / psRPC->dfLONG_SCALE, 
+        (dfLat    - psRPC->dfLAT_OFF) / psRPC->dfLAT_SCALE, 
+        (dfHeight - psRPC->dfHEIGHT_OFF) / psRPC->dfHEIGHT_SCALE,
+        adfTerms );
+    
+    dfResultX = RPCEvaluate( adfTerms, psRPC->adfSAMP_NUM_COEFF )
+        / RPCEvaluate( adfTerms, psRPC->adfSAMP_DEN_COEFF );
+    
+    dfResultY = RPCEvaluate( adfTerms, psRPC->adfLINE_NUM_COEFF )
+        / RPCEvaluate( adfTerms, psRPC->adfLINE_DEN_COEFF );
+    
+    *pdfPixel = dfResultX * psRPC->dfSAMP_SCALE + psRPC->dfSAMP_OFF;
+    *pdfLine = dfResultY * psRPC->dfLINE_SCALE + psRPC->dfLINE_OFF;
+}
+
+/************************************************************************/
+/* ==================================================================== */
+/*			     GDALRPCTransformer                         */
+/* ==================================================================== */
+/************************************************************************/
+
+typedef struct {
+
+    GDALRPCInfo sRPC;
+
+    double      adfPLToLatLongGeoTransform[6];
+
+    int         bReversed;
+
+    double      dfPixErrThreshold;
+
+} GDALRPCTransformInfo;
+
+/************************************************************************/
+/*                      GDALCreateRPCTransformer()                      */
+/************************************************************************/
+
+void *GDALCreateRPCTransformer( GDALRPCInfo *psRPCInfo, int bReversed, 
+                                double dfPixErrThreshold )
+
+{
+    GDALRPCTransformInfo *psTransform;
+
+/* -------------------------------------------------------------------- */
+/*      Initialize core info.                                           */
+/* -------------------------------------------------------------------- */
+    psTransform = (GDALRPCTransformInfo *) 
+        CPLCalloc(sizeof(GDALRPCTransformInfo),1);
+
+    memcpy( &(psTransform->sRPC), psRPCInfo, sizeof(GDALRPCInfo) );
+    psTransform->bReversed = bReversed;
+    psTransform->dfPixErrThreshold = dfPixErrThreshold;
+
+/* -------------------------------------------------------------------- */
+/*      Establish a reference point for calcualating an affine          */
+/*      geotransform approximate transformation.                        */
+/* -------------------------------------------------------------------- */
+    double adfGTFromLL[6], dfRefPixel, dfRefLine;
+
+    double dfRefLong = (psRPCInfo->dfMIN_LONG + psRPCInfo->dfMAX_LONG) * 0.5;
+    double dfRefLat  = (psRPCInfo->dfMIN_LAT  + psRPCInfo->dfMAX_LAT ) * 0.5;
+
+    RPCTransformPoint( psRPCInfo, dfRefLong, dfRefLat, 0.0, 
+                       &dfRefPixel, &dfRefLine );
+
+/* -------------------------------------------------------------------- */
+/*      Transform nearby locations to establish affine direction        */
+/*      vectors.                                                        */
+/* -------------------------------------------------------------------- */
+    double dfRefPixelDelta, dfRefLineDelta, dfLLDelta = 0.0001;
+    
+    RPCTransformPoint( psRPCInfo, dfRefLong+dfLLDelta, dfRefLat, 0.0, 
+                       &dfRefPixelDelta, &dfRefLineDelta );
+    adfGTFromLL[1] = (dfRefPixelDelta - dfRefPixel) / dfLLDelta;
+    adfGTFromLL[2] = (dfRefLineDelta - dfRefLine) / dfLLDelta;
+    
+    RPCTransformPoint( psRPCInfo, dfRefLong, dfRefLat+dfLLDelta, 0.0, 
+                       &dfRefPixelDelta, &dfRefLineDelta );
+    adfGTFromLL[4] = (dfRefPixelDelta - dfRefPixel) / dfLLDelta;
+    adfGTFromLL[5] = (dfRefLineDelta - dfRefLine) / dfLLDelta;
+
+    adfGTFromLL[0] = dfRefPixel 
+        - adfGTFromLL[1] * dfRefLong - adfGTFromLL[2] * dfRefLat;
+    adfGTFromLL[3] = dfRefLine 
+        - adfGTFromLL[4] * dfRefLong - adfGTFromLL[5] * dfRefLat;
+
+    GDALInvGeoTransform( adfGTFromLL, psTransform->adfPLToLatLongGeoTransform);
+    
+    return psTransform;
+}
+
+/************************************************************************/
+/*                 GDALDestroyReprojectionTransformer()                 */
+/************************************************************************/
+
+void GDALDestroyRPCTransformer( void *pTransformAlg )
+
+{
+    CPLFree( pTransformAlg );
+}
 
 /************************************************************************/
 /*                          GDALRPCTransform()                          */
@@ -169,11 +213,11 @@ int GDALRPCTransform( void *pTransformArg, int bDstToSrc,
                       int *panSuccess )
 
 {
-    GDALRPCTransformInfo *psRPC = (GDALRPCTransformInfo *) pTransformArg;
+    GDALRPCTransformInfo *psTransform = (GDALRPCTransformInfo *) pTransformArg;
+    GDALRPCInfo *psRPC = &(psTransform->sRPC);
     int i;
-    double adfTerms[20];
 
-    if( psRPC->bReverse )
+    if( psTransform->bReversed )
         bDstToSrc = !bDstToSrc;
 
 /* -------------------------------------------------------------------- */
@@ -184,21 +228,8 @@ int GDALRPCTransform( void *pTransformArg, int bDstToSrc,
     {
         for( i = 0; i < nPointCount; i++ )
         {
-            double dfResultX, dfResultY;
-
-            RPCComputeTerms( (padfX[i]-psRPC->LONG_OFF) / psRPC->LONG_SCALE, 
-                             (padfY[i]-psRPC->LAT_OFF) / psRPC->LAT_SCALE, 
-                             (padfZ[i]-psRPC->HEIGHT_OFF)/psRPC->HEIGHT_SCALE,
-                             adfTerms );
-
-            dfResultX = RPCEvaluate( adfTerms, psRPC->SAMP_NUM_COEFFS )
-                / RPCEvaluate( adfTerms, psRPC->SAMP_DEN_COEFFS );
-            
-            dfResultY = RPCEvaluate( adfTerms, psRPC->LINE_NUM_COEFFS )
-                / RPCEvaluate( adfTerms, psRPC->LINE_DEN_COEFFS );
-            
-            padfX[i] = dfResultX * psRPC->SAMP_SCALE + psRPC->SAMP_OFF;
-            padfY[i] = dfResultY * psRPC->LINE_SCALE + psRPC->LINE_OFF;
+            RPCTransformPoint( psRPC, padfX[i], padfY[i], padfZ[i], 
+                               padfX + i, padfY + i );
             panSuccess[i] = TRUE;
         }
 
@@ -211,7 +242,23 @@ int GDALRPCTransform( void *pTransformArg, int bDstToSrc,
 /*      image warping, this direction is only used to pick bound for    */
 /*      the newly created output file anyways.                          */
 /* -------------------------------------------------------------------- */
-    
+    for( i = 0; i < nPointCount; i++ )
+    {
+        double dfResultX, dfResultY;
 
-    return bSuccess;
+        dfResultX = psTransform->adfPLToLatLongGeoTransform[0]
+            + psTransform->adfPLToLatLongGeoTransform[1] * padfX[i]
+            + psTransform->adfPLToLatLongGeoTransform[2] * padfY[i];
+
+        dfResultY = psTransform->adfPLToLatLongGeoTransform[3]
+            + psTransform->adfPLToLatLongGeoTransform[4] * padfX[i]
+            + psTransform->adfPLToLatLongGeoTransform[5] * padfY[i];
+
+        padfX[i] = dfResultX;
+        padfY[i] = dfResultY;
+
+        panSuccess[i] = TRUE;
+    }
+
+    return TRUE;
 }
