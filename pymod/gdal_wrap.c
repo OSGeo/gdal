@@ -1754,6 +1754,21 @@ static PyObject *_wrap_GDALGetPaletteInterpretationName(PyObject *self, PyObject
     return _resultobj;
 }
 
+static PyObject *_wrap_GDALDecToDMS(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    char * _result;
+    double  _arg0;
+    char * _arg1;
+    int  _arg2;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"dsi:GDALDecToDMS",&_arg0,&_arg1,&_arg2)) 
+        return NULL;
+    _result = (char *)GDALDecToDMS(_arg0,_arg1,_arg2);
+    _resultobj = Py_BuildValue("s", _result);
+    return _resultobj;
+}
+
 static PyObject *_wrap_GDALAllRegister(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
 
@@ -2719,140 +2734,6 @@ static PyObject *_wrap_GDALSetColorEntry(PyObject *self, PyObject *args) {
     GDALSetColorEntry(_arg0,_arg1,_arg2);
     Py_INCREF(Py_None);
     _resultobj = Py_None;
-    return _resultobj;
-}
-
-static PyObject *_wrap_GDALCreateProjDef(PyObject *self, PyObject *args) {
-    PyObject * _resultobj;
-    GDALProjDefH  _result;
-    char * _arg0;
-    char _ptemp[128];
-
-    self = self;
-    if(!PyArg_ParseTuple(args,"s:GDALCreateProjDef",&_arg0)) 
-        return NULL;
-    _result = (GDALProjDefH )GDALCreateProjDef(_arg0);
-    if (_result) {
-        SWIG_MakePtr(_ptemp, (char *) _result,"_GDALProjDefH");
-        _resultobj = Py_BuildValue("s",_ptemp);
-    } else {
-        Py_INCREF(Py_None);
-        _resultobj = Py_None;
-    }
-    return _resultobj;
-}
-
-static PyObject *_wrap_GDALReprojectToLongLat(PyObject *self, PyObject *args) {
-    PyObject * _resultobj;
-    int  _result;
-    GDALProjDefH  _arg0;
-    double * _arg1;
-    double * _arg2;
-    PyObject * _argo0 = 0;
-    PyObject * _argo1 = 0;
-    PyObject * _argo2 = 0;
-
-    self = self;
-    if(!PyArg_ParseTuple(args,"OOO:GDALReprojectToLongLat",&_argo0,&_argo1,&_argo2)) 
-        return NULL;
-    if (_argo0) {
-        if (_argo0 == Py_None) { _arg0 = NULL; }
-        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,(char *) 0 )) {
-            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of GDALReprojectToLongLat. Expected _GDALProjDefH.");
-        return NULL;
-        }
-    }
-    if (_argo1) {
-        if (_argo1 == Py_None) { _arg1 = NULL; }
-        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,"_double_p")) {
-            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of GDALReprojectToLongLat. Expected _double_p.");
-        return NULL;
-        }
-    }
-    if (_argo2) {
-        if (_argo2 == Py_None) { _arg2 = NULL; }
-        else if (SWIG_GetPtrObj(_argo2,(void **) &_arg2,"_double_p")) {
-            PyErr_SetString(PyExc_TypeError,"Type error in argument 3 of GDALReprojectToLongLat. Expected _double_p.");
-        return NULL;
-        }
-    }
-    _result = (int )GDALReprojectToLongLat(_arg0,_arg1,_arg2);
-    _resultobj = Py_BuildValue("i",_result);
-    return _resultobj;
-}
-
-static PyObject *_wrap_GDALReprojectFromLongLat(PyObject *self, PyObject *args) {
-    PyObject * _resultobj;
-    int  _result;
-    GDALProjDefH  _arg0;
-    double * _arg1;
-    double * _arg2;
-    PyObject * _argo0 = 0;
-    PyObject * _argo1 = 0;
-    PyObject * _argo2 = 0;
-
-    self = self;
-    if(!PyArg_ParseTuple(args,"OOO:GDALReprojectFromLongLat",&_argo0,&_argo1,&_argo2)) 
-        return NULL;
-    if (_argo0) {
-        if (_argo0 == Py_None) { _arg0 = NULL; }
-        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,(char *) 0 )) {
-            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of GDALReprojectFromLongLat. Expected _GDALProjDefH.");
-        return NULL;
-        }
-    }
-    if (_argo1) {
-        if (_argo1 == Py_None) { _arg1 = NULL; }
-        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,"_double_p")) {
-            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of GDALReprojectFromLongLat. Expected _double_p.");
-        return NULL;
-        }
-    }
-    if (_argo2) {
-        if (_argo2 == Py_None) { _arg2 = NULL; }
-        else if (SWIG_GetPtrObj(_argo2,(void **) &_arg2,"_double_p")) {
-            PyErr_SetString(PyExc_TypeError,"Type error in argument 3 of GDALReprojectFromLongLat. Expected _double_p.");
-        return NULL;
-        }
-    }
-    _result = (int )GDALReprojectFromLongLat(_arg0,_arg1,_arg2);
-    _resultobj = Py_BuildValue("i",_result);
-    return _resultobj;
-}
-
-static PyObject *_wrap_GDALDestroyProjDef(PyObject *self, PyObject *args) {
-    PyObject * _resultobj;
-    GDALProjDefH  _arg0;
-    PyObject * _argo0 = 0;
-
-    self = self;
-    if(!PyArg_ParseTuple(args,"O:GDALDestroyProjDef",&_argo0)) 
-        return NULL;
-    if (_argo0) {
-        if (_argo0 == Py_None) { _arg0 = NULL; }
-        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,(char *) 0 )) {
-            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of GDALDestroyProjDef. Expected _GDALProjDefH.");
-        return NULL;
-        }
-    }
-    GDALDestroyProjDef(_arg0);
-    Py_INCREF(Py_None);
-    _resultobj = Py_None;
-    return _resultobj;
-}
-
-static PyObject *_wrap_GDALDecToDMS(PyObject *self, PyObject *args) {
-    PyObject * _resultobj;
-    char * _result;
-    double  _arg0;
-    char * _arg1;
-    int  _arg2;
-
-    self = self;
-    if(!PyArg_ParseTuple(args,"dsi:GDALDecToDMS",&_arg0,&_arg1,&_arg2)) 
-        return NULL;
-    _result = (char *)GDALDecToDMS(_arg0,_arg1,_arg2);
-    _resultobj = Py_BuildValue("s", _result);
     return _resultobj;
 }
 
@@ -3927,11 +3808,6 @@ static PyMethodDef _gdalMethods[] = {
 	 { "GDALGetCacheUsed", _wrap_GDALGetCacheUsed, METH_VARARGS },
 	 { "GDALGetCacheMax", _wrap_GDALGetCacheMax, METH_VARARGS },
 	 { "GDALSetCacheMax", _wrap_GDALSetCacheMax, METH_VARARGS },
-	 { "GDALDecToDMS", _wrap_GDALDecToDMS, METH_VARARGS },
-	 { "GDALDestroyProjDef", _wrap_GDALDestroyProjDef, METH_VARARGS },
-	 { "GDALReprojectFromLongLat", _wrap_GDALReprojectFromLongLat, METH_VARARGS },
-	 { "GDALReprojectToLongLat", _wrap_GDALReprojectToLongLat, METH_VARARGS },
-	 { "GDALCreateProjDef", _wrap_GDALCreateProjDef, METH_VARARGS },
 	 { "GDALSetColorEntry", _wrap_GDALSetColorEntry, METH_VARARGS },
 	 { "GDALGetColorEntryAsRGB", _wrap_GDALGetColorEntryAsRGB, METH_VARARGS },
 	 { "GDALGetColorEntry", _wrap_GDALGetColorEntry, METH_VARARGS },
@@ -3975,6 +3851,7 @@ static PyMethodDef _gdalMethods[] = {
 	 { "GDALOpen", _wrap_GDALOpen, METH_VARARGS },
 	 { "GDALRegister_NUMPY", _wrap_GDALRegister_NUMPY, METH_VARARGS },
 	 { "GDALAllRegister", _wrap_GDALAllRegister, METH_VARARGS },
+	 { "GDALDecToDMS", _wrap_GDALDecToDMS, METH_VARARGS },
 	 { "GDALGetPaletteInterpretationName", _wrap_GDALGetPaletteInterpretationName, METH_VARARGS },
 	 { "GDALGetColorInterpretationName", _wrap_GDALGetColorInterpretationName, METH_VARARGS },
 	 { "GDALGetDataTypeName", _wrap_GDALGetDataTypeName, METH_VARARGS },

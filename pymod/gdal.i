@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.34  2001/11/17 21:18:26  warmerda
+ * removed GDALProjDefH
+ *
  * Revision 1.33  2001/10/19 16:05:31  warmerda
  * fixed several bugs in SetMetadata impl
  *
@@ -116,6 +119,8 @@ const char *GDALGetColorInterpretationName( GDALColorInterp );
 /*! Translate a GDALPaletteInterp into a user displayable string. */
 const char *GDALGetPaletteInterpretationName( GDALPaletteInterp );
 
+const char *GDALDecToDMS( double, const char *, int );
+
 /* -------------------------------------------------------------------- */
 /*      Define handle types related to various internal classes.        */
 /* -------------------------------------------------------------------- */
@@ -124,7 +129,6 @@ typedef void *GDALMajorObjectH;
 typedef void *GDALDatasetH;
 typedef void *GDALRasterBandH;
 typedef void *GDALDriverH;
-typedef void *GDALProjDefH;
 typedef void *GDALColorTableH;
 
 /* ==================================================================== */
@@ -207,16 +211,6 @@ int              GDALGetColorEntryCount( GDALColorTableH );
 const GDALColorEntry  *GDALGetColorEntry( GDALColorTableH, int );
 int  GDALGetColorEntryAsRGB( GDALColorTableH, int, GDALColorEntry *);
 void  GDALSetColorEntry( GDALColorTableH, int, const GDALColorEntry * );
-
-/* ==================================================================== */
-/*      Projections                                                     */
-/* ==================================================================== */
-
-GDALProjDefH  GDALCreateProjDef( const char * );
-int    	 GDALReprojectToLongLat( GDALProjDefH, double *, double * );
-int    	 GDALReprojectFromLongLat( GDALProjDefH, double *, double * );
-void     GDALDestroyProjDef( GDALProjDefH );
-const char *GDALDecToDMS( double, const char *, int );
 
 /* ==================================================================== */
 /*      GDAL Cache Management                                           */
