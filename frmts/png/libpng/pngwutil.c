@@ -1,7 +1,7 @@
 
 /* pngwutil.c - utilities to write a PNG file
  *
- * libpng version 1.2.6 - August 15, 2004
+ * libpng version 1.2.8 - December 3, 2004
  * For conditions of distribution and use, see copyright notice in png.h
  * Copyright (c) 1998-2004 Glenn Randers-Pehrson
  * (Version 0.96 Copyright (c) 1996, 1997 Andreas Dilger)
@@ -219,7 +219,7 @@ png_text_compress(png_structp png_ptr,
             png_error(png_ptr, "zlib error");
       }
       /* check to see if we need more room */
-      if (!png_ptr->zstream.avail_out && png_ptr->zstream.avail_in)
+      if (!(png_ptr->zstream.avail_out))
       {
          /* make sure the output array has room */
          if (comp->num_output_ptr >= comp->max_output_ptr)
@@ -357,9 +357,9 @@ png_write_compressed_data_out(png_structp png_ptr, compression_state *comp)
       png_write_chunk_data(png_ptr, png_ptr->zbuf,
          png_ptr->zbuf_size - png_ptr->zstream.avail_out);
 
-   /* reset zlib for another zTXt/iTXt or the image data */
+   /* reset zlib for another zTXt/iTXt or image data */
    deflateReset(&png_ptr->zstream);
-
+   png_ptr->zstream.data_type = Z_BINARY;
 }
 #endif
 
@@ -523,6 +523,9 @@ png_write_IHDR(png_structp png_ptr, png_uint_32 width, png_uint_32 height,
       png_ptr->zlib_mem_level, png_ptr->zlib_strategy);
    png_ptr->zstream.next_out = png_ptr->zbuf;
    png_ptr->zstream.avail_out = (uInt)png_ptr->zbuf_size;
+   /* libpng is not interested in zstream.data_type */
+   /* set it to a predefined value, to avoid its evaluation inside zlib */
+   png_ptr->zstream.data_type = Z_BINARY;
 
    png_ptr->mode = PNG_HAVE_IHDR;
 }
@@ -617,8 +620,8 @@ png_write_IDAT(png_structp png_ptr, png_bytep data, png_size_t length)
              png_ptr->height < 16384 && png_ptr->width < 16384)
          {
             png_uint_32 uncompressed_idat_size = png_ptr->height *
-               (PNG_ROWBYTES(png_ptr->channels*png_ptr->bit_depth,
-                  png_ptr->channels * png_ptr->bit_depth + 15) >> 3);
+               ((png_ptr->width *
+               png_ptr->channels * png_ptr->bit_depth + 15) >> 3);
             unsigned int z_cinfo = z_cmf >> 4;
             unsigned int half_z_window_size = 1 << (z_cinfo + 7);
             while (uncompressed_idat_size <= half_z_window_size &&
@@ -1556,6 +1559,7 @@ png_write_sCAL(png_structp png_ptr, int unit, double width,double height)
 #endif
    png_size_t total_len;
    char wbuf[32], hbuf[32];
+   png_byte bunit = unit;
 
    png_debug(1, "in png_write_sCAL\n");
 
@@ -1576,7 +1580,7 @@ png_write_sCAL(png_structp png_ptr, int unit, double width,double height)
 
    png_debug1(3, "sCAL total length = %d\n", (int)total_len);
    png_write_chunk_start(png_ptr, (png_bytep)png_sCAL, (png_uint_32)total_len);
-   png_write_chunk_data(png_ptr, (png_bytep)&unit, 1);
+   png_write_chunk_data(png_ptr, (png_bytep)&bunit, 1);
    png_write_chunk_data(png_ptr, (png_bytep)wbuf, png_strlen(wbuf)+1);
    png_write_chunk_data(png_ptr, (png_bytep)hbuf, png_strlen(hbuf));
 
@@ -1593,6 +1597,7 @@ png_write_sCAL_s(png_structp png_ptr, int unit, png_charp width,
 #endif
    png_size_t total_len;
    char wbuf[32], hbuf[32];
+   png_byte bunit = unit;
 
    png_debug(1, "in png_write_sCAL_s\n");
 
@@ -1602,7 +1607,7 @@ png_write_sCAL_s(png_structp png_ptr, int unit, png_charp width,
 
    png_debug1(3, "sCAL total length = %d\n", total_len);
    png_write_chunk_start(png_ptr, (png_bytep)png_sCAL, (png_uint_32)total_len);
-   png_write_chunk_data(png_ptr, (png_bytep)&unit, 1);
+   png_write_chunk_data(png_ptr, (png_bytep)&bunit, 1);
    png_write_chunk_data(png_ptr, (png_bytep)wbuf, png_strlen(wbuf)+1);
    png_write_chunk_data(png_ptr, (png_bytep)hbuf, png_strlen(hbuf));
 
@@ -1869,6 +1874,7 @@ png_write_finish_row(png_structp png_ptr)
    }
 
    deflateReset(&png_ptr->zstream);
+   png_ptr->zstream.data_type = Z_BINARY;
 }
 
 #if defined(PNG_WRITE_INTERLACING_SUPPORTED)
@@ -2046,7 +2052,7 @@ png_do_write_interlace(png_row_infop row_info, png_bytep row, int pass)
  * been specified by the application, and then writes the row out with the
  * chosen filter.
  */
-#define PNG_MAXSUM (~((png_uint_32)0) >> 1)
+#define PNG_MAXSUM (((png_uint_32)(-1)) >> 1)
 #define PNG_HISHIFT 10
 #define PNG_LOMASK ((png_uint_32)0xffffL)
 #define PNG_HIMASK ((png_uint_32)(~PNG_LOMASK >> PNG_HISHIFT))

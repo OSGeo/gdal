@@ -1,7 +1,7 @@
 
 /* pngrtran.c - transforms the data in a row for PNG readers
  *
- * libpng version 1.2.6 - August 15, 2004
+ * libpng version  1.2.8 - December 3, 2004
  * For conditions of distribution and use, see copyright notice in png.h
  * Copyright (c) 1998-2004 Glenn Randers-Pehrson
  * (Version 0.96 Copyright (c) 1996, 1997 Andreas Dilger)
@@ -119,7 +119,7 @@ void PNGAPI
 png_set_strip_alpha(png_structp png_ptr)
 {
    png_debug(1, "in png_set_strip_alpha\n");
-   png_ptr->transformations |= PNG_STRIP_ALPHA;
+   png_ptr->flags |= PNG_FLAG_STRIP_ALPHA;
 }
 #endif
 
@@ -1121,7 +1121,7 @@ png_read_transform_info(png_structp png_ptr, png_infop info_ptr)
       info_ptr->channels = 1;
 
 #if defined(PNG_READ_STRIP_ALPHA_SUPPORTED)
-   if (png_ptr->transformations & PNG_STRIP_ALPHA)
+   if (png_ptr->flags & PNG_FLAG_STRIP_ALPHA)
       info_ptr->color_type &= ~PNG_COLOR_MASK_ALPHA;
 #endif
 
@@ -1135,8 +1135,10 @@ png_read_transform_info(png_structp png_ptr, png_infop info_ptr)
        (info_ptr->color_type == PNG_COLOR_TYPE_GRAY)))
    {
       info_ptr->channels++;
-#if 0 /* if adding a true alpha channel not just filler */
-      info_ptr->color_type |= PNG_COLOR_MASK_ALPHA;
+      /* if adding a true alpha channel not just filler */
+#if !defined(PNG_1_0_X)
+      if (png_ptr->transformations & PNG_ADD_ALPHA)
+        info_ptr->color_type |= PNG_COLOR_MASK_ALPHA;
 #endif
    }
 #endif
@@ -1207,9 +1209,9 @@ png_do_read_transformations(png_structp png_ptr)
 #endif
 
 #if defined(PNG_READ_STRIP_ALPHA_SUPPORTED)
-   if (png_ptr->transformations & PNG_STRIP_ALPHA)
+   if (png_ptr->flags & PNG_FLAG_STRIP_ALPHA)
       png_do_strip_filler(&(png_ptr->row_info), png_ptr->row_buf + 1,
-         PNG_FLAG_FILLER_AFTER);
+         PNG_FLAG_FILLER_AFTER | (png_ptr->flags & PNG_FLAG_STRIP_ALPHA));
 #endif
 
 #if defined(PNG_READ_RGB_TO_GRAY_SUPPORTED)
@@ -1927,7 +1929,6 @@ png_do_read_filler(png_row_infop row_info, png_bytep row,
             row_info->rowbytes = row_width * 4;
          }
       }
-      row_info->color_type |= PNG_COLOR_MASK_ALPHA;
    } /* COLOR_TYPE == GRAY */
    else if (row_info->color_type == PNG_COLOR_TYPE_RGB)
    {
@@ -2012,7 +2013,6 @@ png_do_read_filler(png_row_infop row_info, png_bytep row,
             row_info->rowbytes = row_width * 8;
          }
       }
-      row_info->color_type |= PNG_COLOR_MASK_ALPHA;
    } /* COLOR_TYPE == RGB */
 }
 #endif
@@ -2104,7 +2104,7 @@ png_do_gray_to_rgb(png_row_infop row_info, png_bytep row)
 /* reduce RGB files to grayscale, with or without alpha
  * using the equation given in Poynton's ColorFAQ at
  * <http://www.inforamp.net/~poynton/>
- * Copyright (c) 1998-01-04 Charles Poynton poynton@inforamp.net
+ * Copyright (c) 1998-01-04 Charles Poynton poynton at inforamp.net
  *
  *     Y = 0.212671 * R + 0.715160 * G + 0.072169 * B
  *

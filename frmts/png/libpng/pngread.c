@@ -1,7 +1,7 @@
 
 /* pngread.c - read a PNG file
  *
- * libpng 1.2.6 - August 15, 2004
+ * libpng 1.2.8 - December 3, 2004
  * For conditions of distribution and use, see copyright notice in png.h
  * Copyright (c) 1998-2004 Glenn Randers-Pehrson
  * (Version 0.96 Copyright (c) 1996, 1997 Andreas Dilger)
@@ -172,6 +172,7 @@ png_create_read_struct_2(png_const_charp user_png_ver, png_voidp error_ptr,
 /* Initialize PNG structure for reading, and allocate any memory needed.
    This interface is deprecated in favour of the png_create_read_struct(),
    and it will eventually disappear. */
+#if defined(PNG_1_0_X) || defined (PNG_1_2_X)
 #undef png_read_init
 void PNGAPI
 png_read_init(png_structp png_ptr)
@@ -179,6 +180,7 @@ png_read_init(png_structp png_ptr)
    /* We only come here via pre-1.0.7-compiled applications */
    png_read_init_2(png_ptr, "1.0.6 or earlier", 0, 0);
 }
+#endif
 
 void PNGAPI
 png_read_init_2(png_structp png_ptr, png_const_charp user_png_ver,
@@ -393,7 +395,7 @@ png_read_info(png_structp png_ptr, png_infop info_ptr)
 #if defined(PNG_READ_zTXt_SUPPORTED)
       PNG_zTXt;
 #endif
-#endif /* PNG_GLOBAL_ARRAYS */
+#endif /* PNG_USE_LOCAL_ARRAYS */
       png_byte chunk_length[4];
       png_uint_32 length;
 
@@ -744,7 +746,8 @@ png_read_row(png_structp png_ptr, png_bytep row, png_bytep dsp_row)
    }
 #endif
 
-   if (png_ptr->transformations)
+
+   if (png_ptr->transformations || (png_ptr->flags&PNG_FLAG_STRIP_ALPHA))
       png_do_read_transformations(png_ptr);
 
 #if defined(PNG_READ_INTERLACING_SUPPORTED)
@@ -803,7 +806,7 @@ png_read_row(png_structp png_ptr, png_bytep row, png_bytep dsp_row)
  * not called png_set_interlace_handling(), the display_row buffer will
  * be ignored, so pass NULL to it.
  *
- * [*] png_handle_alpha() does not exist yet, as of libpng version 1.2.6
+ * [*] png_handle_alpha() does not exist yet, as of libpng version 1.2.8
  */
 
 void PNGAPI
@@ -853,7 +856,7 @@ png_read_rows(png_structp png_ptr, png_bytepp row,
  * only call this function once.  If you desire to have an image for
  * each pass of a interlaced image, use png_read_rows() instead.
  *
- * [*] png_handle_alpha() does not exist yet, as of libpng version 1.2.6
+ * [*] png_handle_alpha() does not exist yet, as of libpng version 1.2.8
  */
 void PNGAPI
 png_read_image(png_structp png_ptr, png_bytepp image)
@@ -961,7 +964,7 @@ png_read_end(png_structp png_ptr, png_infop info_ptr)
 #if defined(PNG_READ_zTXt_SUPPORTED)
       PNG_zTXt;
 #endif
-#endif /* PNG_GLOBAL_ARRAYS */
+#endif /* PNG_USE_LOCAL_ARRAYS */
 
       png_read_data(png_ptr, chunk_length, 4);
       length = png_get_uint_31(png_ptr,chunk_length);

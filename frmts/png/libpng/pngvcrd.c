@@ -2,7 +2,7 @@
  *
  * For Intel x86 CPU and Microsoft Visual C++ compiler
  *
- * libpng version 1.2.6 - August 15, 2004
+ * libpng version 1.2.8 - December 3, 2004
  * For conditions of distribution and use, see copyright notice in png.h
  * Copyright (c) 1998-2004 Glenn Randers-Pehrson
  * Copyright (c) 1998, Intel Corporation
@@ -3632,7 +3632,7 @@ duploop:
       jz dupend
 
 
-      // 2 lines added by lcreeve@netins.net
+      // 2 lines added by lcreeve at netins.net
       // (mail 11 Jul 98 in png-implement list)
       cmp edx, 8 //test for less than 8 bytes
       jb duplt8

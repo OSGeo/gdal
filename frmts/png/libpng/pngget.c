@@ -1,7 +1,7 @@
 
 /* pngget.c - retrieval of values from info struct
  *
- * libpng 1.2.6 - August 15, 2004
+ * libpng 1.2.8 - December 3, 2004
  * For conditions of distribution and use, see copyright notice in png.h
  * Copyright (c) 1998-2004 Glenn Randers-Pehrson
  * (Version 0.96 Copyright (c) 1996, 1997 Andreas Dilger)
@@ -557,9 +557,9 @@ png_get_IHDR(png_structp png_ptr, png_infop info_ptr,
          *interlace_type = info_ptr->interlace_type;
 
       /* check for potential overflow of rowbytes */
-      if (width == 0 || *width > PNG_UINT_31_MAX)
+      if (*width == 0 || *width > PNG_UINT_31_MAX)
         png_error(png_ptr, "Invalid image width");
-      if (height == 0 || *height > PNG_UINT_31_MAX)
+      if (*height == 0 || *height > PNG_UINT_31_MAX)
         png_error(png_ptr, "Invalid image height");
       if (info_ptr->width > (PNG_UINT_32_MAX
                  >> 3)      /* 8-byte RGBA pixels */
