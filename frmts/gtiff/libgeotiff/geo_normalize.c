@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: geo_normalize.c,v 1.35 2003/01/15 04:39:16 warmerda Exp $
+ * $Id: geo_normalize.c,v 1.36 2003/01/28 18:31:58 warmerda Exp $
  *
  * Project:  libgeotiff
  * Purpose:  Code to normalize PCS and other composite codes in a GeoTIFF file.
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log: geo_normalize.c,v $
+ * Revision 1.36  2003/01/28 18:31:58  warmerda
+ * Default dfInDegrees in GTIFAngleToDD().
+ *
  * Revision 1.35  2003/01/15 04:39:16  warmerda
  * Added GTIFDeaccessCSV
  *
@@ -302,7 +305,7 @@ double GTIFAngleToDD( double dfAngle, int nUOMAngle )
     }
     else
     {
-        double		dfInDegrees;
+        double		dfInDegrees = 1.0;
         
         GTIFGetUOMAngleInfo( nUOMAngle, NULL, &dfInDegrees );
         dfAngle = dfAngle * dfInDegrees;
