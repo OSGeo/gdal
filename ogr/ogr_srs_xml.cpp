@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2002/04/18 14:22:45  warmerda
+ * made OGRSpatialReference and co 'const correct'
+ *
  * Revision 1.1  2001/12/06 18:16:17  warmerda
  * new
  *
@@ -79,12 +82,12 @@ static CPLXMLNode *addAuthority( CPLXMLNode *psParent,
 /*                        exportAuthorityToXML()                        */
 /************************************************************************/
 
-static CPLXMLNode *exportAuthorityToXML( OGR_SRSNode *poAuthParent,
+static CPLXMLNode *exportAuthorityToXML( const OGR_SRSNode *poAuthParent,
                                          CPLXMLNode *psXMLParent )
 
 {
     CPLXMLNode *psIdentification, *psNode;
-    OGR_SRSNode *poAuthority;
+    const OGR_SRSNode *poAuthority;
 
 /* -------------------------------------------------------------------- */
 /*      Get authority node from parent.                                 */
@@ -151,13 +154,13 @@ static void addRadianUnit( CPLXMLNode *psParent )
 /*                          exportUnitToXML()                           */
 /************************************************************************/
 
-static CPLXMLNode *exportUnitToXML( OGR_SRSNode *poParent,
+static CPLXMLNode *exportUnitToXML( const OGR_SRSNode *poParent,
                                     CPLXMLNode *psXMLParent,
                                     int bLinearUnit )
     
 {
     CPLXMLNode *psUnitXML, *psNode;
-    OGR_SRSNode *poUNIT;
+    const OGR_SRSNode *poUNIT;
 
 /* -------------------------------------------------------------------- */
 /*      Get authority node from parent.                                 */
@@ -204,7 +207,7 @@ static CPLXMLNode *exportUnitToXML( OGR_SRSNode *poParent,
 /*                             addProjArg()                             */
 /************************************************************************/
 
-static void addProjArg( OGRSpatialReference *poSRS, CPLXMLNode *psBase, 
+static void addProjArg( const OGRSpatialReference *poSRS, CPLXMLNode *psBase, 
                         const char *pszMeasureType, const char *pszValue, 
                         const char *pszXMLName, const char *pszWKTName )
 
@@ -228,11 +231,11 @@ static void addProjArg( OGRSpatialReference *poSRS, CPLXMLNode *psBase,
 /*                         exportGeogCSToXML()                          */
 /************************************************************************/
 
-static CPLXMLNode *exportGeogCSToXML( OGRSpatialReference *poSRS )
+static CPLXMLNode *exportGeogCSToXML( const OGRSpatialReference *poSRS )
 
 {
     CPLXMLNode  *psGCS_XML;
-    OGR_SRSNode *poGeogCS = poSRS->GetAttrNode( "GEOGCS" );
+    const OGR_SRSNode *poGeogCS = poSRS->GetAttrNode( "GEOGCS" );
 
     if( poGeogCS == NULL )
         return NULL;
@@ -264,7 +267,7 @@ static CPLXMLNode *exportGeogCSToXML( OGRSpatialReference *poSRS )
 /* -------------------------------------------------------------------- */
 /*      Start with the datum.                                           */
 /* -------------------------------------------------------------------- */
-    OGR_SRSNode    *poDatum = poGeogCS->GetNode( "DATUM" );
+    const OGR_SRSNode    *poDatum = poGeogCS->GetNode( "DATUM" );
     CPLXMLNode     *psDatumXML;
 
     if( poDatum == NULL )
@@ -284,7 +287,7 @@ static CPLXMLNode *exportGeogCSToXML( OGRSpatialReference *poSRS )
 /* -------------------------------------------------------------------- */
 /*      Translate the ellipsoid.                                        */
 /* -------------------------------------------------------------------- */
-    OGR_SRSNode *poEllipsoid = poDatum->GetNode( "SPHEROID" );
+    const OGR_SRSNode *poEllipsoid = poDatum->GetNode( "SPHEROID" );
 
     if( poEllipsoid != NULL )
     {
@@ -313,7 +316,7 @@ static CPLXMLNode *exportGeogCSToXML( OGRSpatialReference *poSRS )
 /* -------------------------------------------------------------------- */
 /*      Add the prime meridian to the datum.                            */
 /* -------------------------------------------------------------------- */
-    OGR_SRSNode *poPRIMEM = poGeogCS->GetNode( "PRIMEM" );
+    const OGR_SRSNode *poPRIMEM = poGeogCS->GetNode( "PRIMEM" );
         
     if( poPRIMEM != NULL )
     {
@@ -377,10 +380,10 @@ static CPLXMLNode *exportGeogCSToXML( OGRSpatialReference *poSRS )
 /*                         exportProjCSToXML()                          */
 /************************************************************************/
 
-static CPLXMLNode *exportProjCSToXML( OGRSpatialReference *poSRS )
+static CPLXMLNode *exportProjCSToXML( const OGRSpatialReference *poSRS )
 
 {
-    OGR_SRSNode *poProjCS = poSRS->GetAttrNode( "PROJCS" );
+    const OGR_SRSNode *poProjCS = poSRS->GetAttrNode( "PROJCS" );
 
     if( poProjCS == NULL )
         return NULL;
@@ -524,7 +527,7 @@ static CPLXMLNode *exportProjCSToXML( OGRSpatialReference *poSRS )
 /************************************************************************/
 
 OGRErr OGRSpatialReference::exportToXML( char **ppszRawXML, 
-                                         const char * )
+                                         const char * ) const
 
 {
     CPLXMLNode *psXMLTree = NULL;

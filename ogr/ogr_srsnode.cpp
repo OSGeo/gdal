@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2002/04/18 14:22:45  warmerda
+ * made OGRSpatialReference and co 'const correct'
+ *
  * Revision 1.20  2002/03/05 14:25:14  warmerda
  * expand tabs
  *
@@ -182,6 +185,15 @@ OGR_SRSNode *OGR_SRSNode::GetChild( int iChild )
         return papoChildNodes[iChild];
 }
 
+const OGR_SRSNode *OGR_SRSNode::GetChild( int iChild ) const
+
+{
+    if( iChild < 0 || iChild >= nChildren )
+        return NULL;
+    else
+        return papoChildNodes[iChild];
+}
+
 /************************************************************************/
 /*                              GetNode()                               */
 /************************************************************************/
@@ -238,6 +250,12 @@ OGR_SRSNode *OGR_SRSNode::GetNode( const char * pszName )
     }
 
     return NULL;
+}
+
+const OGR_SRSNode *OGR_SRSNode::GetNode( const char * pszName ) const
+
+{
+    return ((OGR_SRSNode *) this)->GetNode( pszName );
 }
 
 /************************************************************************/
@@ -337,7 +355,7 @@ void OGR_SRSNode::DestroyChild( int iChild )
  * @return the child index, or -1 on failure. 
  */
 
-int OGR_SRSNode::FindChild( const char * pszValue )
+int OGR_SRSNode::FindChild( const char * pszValue ) const
 
 {
     for( int i = 0; i < nChildren; i++ )
@@ -390,7 +408,7 @@ void OGR_SRSNode::SetValue( const char * pszNewValue )
  * @return a new node tree, which becomes the responsiblity of the caller.
  */
 
-OGR_SRSNode *OGR_SRSNode::Clone()
+OGR_SRSNode *OGR_SRSNode::Clone() const
 
 {
     OGR_SRSNode *poNew;
@@ -422,7 +440,7 @@ OGR_SRSNode *OGR_SRSNode::Clone()
  */
  
 
-OGRErr OGR_SRSNode::exportToWkt( char ** ppszResult )
+OGRErr OGR_SRSNode::exportToWkt( char ** ppszResult ) const
 
 {
     char        **papszChildrenWkt = NULL;
@@ -502,7 +520,7 @@ OGRErr OGR_SRSNode::exportToWkt( char ** ppszResult )
 /*                         exportToPrettyWkt()                          */
 /************************************************************************/
 
-OGRErr OGR_SRSNode::exportToPrettyWkt( char ** ppszResult, int nDepth )
+OGRErr OGR_SRSNode::exportToPrettyWkt( char ** ppszResult, int nDepth ) const
 
 {
     char        **papszChildrenWkt = NULL;

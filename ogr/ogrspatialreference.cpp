@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.50  2002/04/18 14:22:45  warmerda
+ * made OGRSpatialReference and co 'const correct'
+ *
  * Revision 1.49  2002/03/12 18:06:09  warmerda
  * added ESRI:: style support to SetFromUserInput()
  *
@@ -463,6 +466,17 @@ OGR_SRSNode *OGRSpatialReference::GetAttrNode( const char * pszNodePath )
     return poNode;
 }
 
+const OGR_SRSNode *
+OGRSpatialReference::GetAttrNode( const char * pszNodePath ) const
+
+{
+    OGR_SRSNode *poNode;
+
+    poNode = ((OGRSpatialReference *) this)->GetAttrNode(pszNodePath);
+
+    return poNode;
+}
+
 /************************************************************************/
 /*                            GetAttrValue()                            */
 /************************************************************************/
@@ -484,10 +498,10 @@ OGR_SRSNode *OGRSpatialReference::GetAttrNode( const char * pszNodePath )
  */
 
 const char *OGRSpatialReference::GetAttrValue( const char * pszNodeName,
-                                               int iAttr )
+                                               int iAttr ) const
 
 {
-    OGR_SRSNode *poNode;
+    const OGR_SRSNode *poNode;
 
     poNode = GetAttrNode( pszNodeName );
     if( poNode == NULL )
@@ -522,7 +536,7 @@ const char *OSRGetAttrValue( OGRSpatialReferenceH hSRS,
  * @return a new SRS, which becomes the responsibility of the caller.
  */
 
-OGRSpatialReference *OGRSpatialReference::Clone()
+OGRSpatialReference *OGRSpatialReference::Clone() const
 
 {
     OGRSpatialReference *poNewRef;
@@ -553,7 +567,7 @@ OGRSpatialReferenceH OSRClone( OGRSpatialReferenceH hSRS )
 /************************************************************************/
 
 OGRErr OGRSpatialReference::exportToPrettyWkt( char ** ppszResult, 
-                                               int bSimplify )
+                                               int bSimplify ) const
 
 {
     if( bSimplify )
@@ -876,10 +890,10 @@ OGRErr OSRSetLinearUnits( OGRSpatialReferenceH hSRS,
  * meters.
  */
 
-double OGRSpatialReference::GetLinearUnits( char ** ppszName )
+double OGRSpatialReference::GetLinearUnits( char ** ppszName ) const
 
 {
-    OGR_SRSNode *poCS = GetAttrNode( "PROJCS" );
+    const OGR_SRSNode *poCS = GetAttrNode( "PROJCS" );
 
     if( poCS == NULL )
         poCS = GetAttrNode( "LOCAL_CS" );
@@ -892,7 +906,7 @@ double OGRSpatialReference::GetLinearUnits( char ** ppszName )
 
     for( int iChild = 0; iChild < poCS->GetChildCount(); iChild++ )
     {
-        OGR_SRSNode     *poChild = poCS->GetChild(iChild);
+        const OGR_SRSNode     *poChild = poCS->GetChild(iChild);
         
         if( EQUAL(poChild->GetValue(),"UNIT")
             && poChild->GetChildCount() >= 2 )
@@ -1339,10 +1353,10 @@ OGRErr OSRSetFromUserInput( OGRSpatialReferenceH hSRS, const char *pszDef )
  * @return semi-major axis, or SRS_WGS84_SEMIMAJOR if it can't be found.
  */
 
-double OGRSpatialReference::GetSemiMajor( OGRErr * pnErr )
+double OGRSpatialReference::GetSemiMajor( OGRErr * pnErr ) const
 
 {
-    OGR_SRSNode *poSpheroid = GetAttrNode( "SPHEROID" );
+    const OGR_SRSNode *poSpheroid = GetAttrNode( "SPHEROID" );
     
     if( pnErr != NULL )
         *pnErr = OGRERR_NONE;
@@ -1385,10 +1399,10 @@ double OSRGetSemiMajor( OGRSpatialReferenceH hSRS, OGRErr *pnErr )
  * @return inverse flattening, or SRS_WGS84_INVFLATTENING if it can't be found.
  */
 
-double OGRSpatialReference::GetInvFlattening( OGRErr * pnErr )
+double OGRSpatialReference::GetInvFlattening( OGRErr * pnErr ) const
 
 {
-    OGR_SRSNode *poSpheroid = GetAttrNode( "SPHEROID" );
+    const OGR_SRSNode *poSpheroid = GetAttrNode( "SPHEROID" );
     
     if( pnErr != NULL )
         *pnErr = OGRERR_NONE;
@@ -1431,7 +1445,7 @@ double OSRGetInvFlattening( OGRSpatialReferenceH hSRS, OGRErr *pnErr )
  * @return semi-minor axis, or WGS84 semi minor if it can't be found.
  */
 
-double OGRSpatialReference::GetSemiMinor( OGRErr * pnErr )
+double OGRSpatialReference::GetSemiMinor( OGRErr * pnErr ) const
 
 {
     double      dfInvFlattening, dfSemiMajor;
@@ -1689,11 +1703,11 @@ OGRErr OSRSetProjParm( OGRSpatialReferenceH hSRS,
 
 double OGRSpatialReference::GetProjParm( const char * pszName,
                                          double dfDefaultValue,
-                                         OGRErr *pnErr )
+                                         OGRErr *pnErr ) const
 
 {
-    OGR_SRSNode *poPROJCS = GetAttrNode( "PROJCS" );
-    OGR_SRSNode *poParameter = NULL;
+    const OGR_SRSNode *poPROJCS = GetAttrNode( "PROJCS" );
+    const OGR_SRSNode *poParameter = NULL;
 
     if( pnErr != NULL )
         *pnErr = OGRERR_NONE;
@@ -2426,7 +2440,7 @@ OGRErr OSRSetUTM( OGRSpatialReferenceH hSRS, int nZone, int bNorth )
  * @return UTM zone number or zero if this isn't a UTM definition. 
  */
 
-int OGRSpatialReference::GetUTMZone( int * pbNorth )
+int OGRSpatialReference::GetUTMZone( int * pbNorth ) const
 
 {
     const char  *pszProjection = GetAttrValue( "PROJECTION" );
@@ -2600,7 +2614,7 @@ OGRErr OGRSpatialReference::StripCTParms( OGR_SRSNode * poCurrent )
  * projected coordinate system. 
  */
 
-int OGRSpatialReference::IsProjected() 
+int OGRSpatialReference::IsProjected() const
 
 {
     return GetAttrNode("PROJCS") != NULL;
@@ -2610,7 +2624,7 @@ int OGRSpatialReference::IsProjected()
 /*                           OSRIsProjected()                           */
 /************************************************************************/
 
-int OSRIsProjected( OGRSpatialReferenceH hSRS )
+int OSRIsProjected( OGRSpatialReferenceH hSRS ) 
 
 {
     return ((OGRSpatialReference *) hSRS)->IsProjected();
@@ -2629,7 +2643,7 @@ int OSRIsProjected( OGRSpatialReferenceH hSRS )
  * root is a GEOGCS node. 
  */
 
-int OGRSpatialReference::IsGeographic() 
+int OGRSpatialReference::IsGeographic() const
 
 {
     if( GetRoot() == NULL )
@@ -2661,7 +2675,7 @@ int OSRIsGeographic( OGRSpatialReferenceH hSRS )
  * root is a LOCAL_CS node. 
  */
 
-int OGRSpatialReference::IsLocal() 
+int OGRSpatialReference::IsLocal() const
 
 {
     if( GetRoot() == NULL )
@@ -2684,10 +2698,10 @@ int OSRIsLocal( OGRSpatialReferenceH hSRS )
 /*                            CloneGeogCS()                             */
 /************************************************************************/
 
-OGRSpatialReference *OGRSpatialReference::CloneGeogCS()
+OGRSpatialReference *OGRSpatialReference::CloneGeogCS() const
 
 {
-    OGR_SRSNode *poGeogCS;
+    const OGR_SRSNode *poGeogCS;
     OGRSpatialReference * poNewSRS;
 
     poGeogCS = GetAttrNode( "GEOGCS" );
@@ -2725,7 +2739,7 @@ OGRSpatialReferenceH OSRCloneGeogCS( OGRSpatialReferenceH hSource )
  * @return TRUE if they are the same or FALSE otherwise. 
  */
 
-int OGRSpatialReference::IsSameGeogCS( OGRSpatialReference *poOther )
+int OGRSpatialReference::IsSameGeogCS( const OGRSpatialReference *poOther ) const
 
 {
     const char *pszThisValue, *pszOtherValue;
@@ -2811,7 +2825,7 @@ int OSRIsSameGeogCS( OGRSpatialReferenceH hSRS1, OGRSpatialReferenceH hSRS2 )
  * @return TRUE if equivelent or FALSE otherwise. 
  */
 
-int OGRSpatialReference::IsSame( OGRSpatialReference * poOtherSRS )
+int OGRSpatialReference::IsSame( const OGRSpatialReference * poOtherSRS ) const
 
 {
     if( GetRoot() == NULL && poOtherSRS->GetRoot() == NULL )
@@ -2838,7 +2852,7 @@ int OGRSpatialReference::IsSame( OGRSpatialReference * poOtherSRS )
     if( IsProjected() )
     {
         const char *pszValue1, *pszValue2;
-        OGR_SRSNode *poPROJCS = GetAttrNode( "PROJCS" );
+        const OGR_SRSNode *poPROJCS = GetAttrNode( "PROJCS" );
 
         pszValue1 = this->GetAttrValue( "PROJECTION" );
         pszValue2 = poOtherSRS->GetAttrValue( "PROJECTION" );
@@ -2848,7 +2862,7 @@ int OGRSpatialReference::IsSame( OGRSpatialReference * poOtherSRS )
 
         for( int iChild = 0; iChild < poPROJCS->GetChildCount(); iChild++ )
         {
-            OGR_SRSNode    *poNode;
+            const OGR_SRSNode    *poNode;
 
             poNode = poPROJCS->GetChild( iChild );
             if( !EQUAL(poNode->GetValue(),"PARAMETER") 
@@ -2998,10 +3012,11 @@ OGRErr OSRSetTOWGS84( OGRSpatialReferenceH hSRS,
  * TOWGS84 node available. 
  */
 
-OGRErr OGRSpatialReference::GetTOWGS84( double * padfCoeff, int nCoeffCount )
+OGRErr OGRSpatialReference::GetTOWGS84( double * padfCoeff, 
+                                        int nCoeffCount ) const
 
 {
-    OGR_SRSNode   *poNode = GetAttrNode( "TOWGS84" );
+    const OGR_SRSNode   *poNode = GetAttrNode( "TOWGS84" );
 
     memset( padfCoeff, 0, sizeof(double) * nCoeffCount );
 

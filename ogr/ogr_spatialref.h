@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.38  2002/04/18 14:22:45  warmerda
+ * made OGRSpatialReference and co 'const correct'
+ *
  * Revision 1.37  2002/03/05 14:25:14  warmerda
  * expand tabs
  *
@@ -182,29 +185,31 @@ class CPL_DLL OGR_SRSNode
                 OGR_SRSNode(const char * = NULL);
                 ~OGR_SRSNode();
 
-    int         IsLeafNode() { return nChildren == 0; }
+    int         IsLeafNode() const { return nChildren == 0; }
     
-    int         GetChildCount() { return nChildren; }
+    int         GetChildCount() const { return nChildren; }
     OGR_SRSNode *GetChild( int );
+    const OGR_SRSNode *GetChild( int ) const;
 
     OGR_SRSNode *GetNode( const char * );
+    const OGR_SRSNode *GetNode( const char * ) const;
 
     void        InsertChild( OGR_SRSNode *, int );
     void        AddChild( OGR_SRSNode * );
-    int         FindChild( const char * );
+    int         FindChild( const char * ) const;
     void        DestroyChild( int );
     void        StripNodes( const char * );
 
-    const char  *GetValue() { return pszValue; }
+    const char  *GetValue() const { return pszValue; }
     void        SetValue( const char * );
 
     void        MakeValueSafe();
 
-    OGR_SRSNode *Clone();
+    OGR_SRSNode *Clone() const;
 
     OGRErr      importFromWkt( char ** );
-    OGRErr      exportToWkt( char ** );
-    OGRErr      exportToPrettyWkt( char **, int = 1);
+    OGRErr      exportToWkt( char ** ) const;
+    OGRErr      exportToPrettyWkt( char **, int = 1) const;
     
     OGRErr      applyRemapper( const char *pszNode, 
                                char **papszSrcValues, 
@@ -250,16 +255,16 @@ class CPL_DLL OGRSpatialReference
 
     int         Reference();
     int         Dereference();
-    int         GetReferenceCount() { return nRefCount; }
+    int         GetReferenceCount() const { return nRefCount; }
 
-    OGRSpatialReference *Clone();
-    OGRSpatialReference *CloneGeogCS();
+    OGRSpatialReference *Clone() const;
+    OGRSpatialReference *CloneGeogCS() const;
 
     OGRErr      importFromWkt( char ** );
     OGRErr      exportToWkt( char ** );
-    OGRErr      exportToPrettyWkt( char **, int = FALSE);
-    OGRErr      exportToProj4( char ** );
-    OGRErr      exportToXML( char **, const char * = NULL );
+    OGRErr      exportToPrettyWkt( char **, int = FALSE) const;
+    OGRErr      exportToProj4( char ** ) const;
+    OGRErr      exportToXML( char **, const char * = NULL ) const;
     OGRErr      importFromProj4( const char * );
     OGRErr      importFromEPSG( int );
     OGRErr      importFromESRI( char ** );
@@ -273,23 +278,25 @@ class CPL_DLL OGRSpatialReference
 
     // Machinary for accessing parse nodes
     OGR_SRSNode *GetRoot() { return poRoot; }
+    const OGR_SRSNode *GetRoot() const { return poRoot; }
     void        SetRoot( OGR_SRSNode * );
     
     OGR_SRSNode *GetAttrNode(const char *);
-    const char  *GetAttrValue(const char *, int = 0);
+    const OGR_SRSNode *GetAttrNode(const char *) const;
+    const char  *GetAttrValue(const char *, int = 0) const;
 
     OGRErr      SetNode( const char *, const char * );
     OGRErr      SetNode( const char *, double );
 
     // Set/get geographic components
     OGRErr      SetLinearUnits( const char *pszName, double dfInMeters );
-    double      GetLinearUnits( char ** = NULL );
+    double      GetLinearUnits( char ** = NULL ) const;
 
-    int         IsGeographic();
-    int         IsProjected();
-    int         IsLocal();
-    int         IsSameGeogCS( OGRSpatialReference * );
-    int         IsSame( OGRSpatialReference * );
+    int         IsGeographic() const;
+    int         IsProjected() const;
+    int         IsLocal() const;
+    int         IsSameGeogCS( const OGRSpatialReference * ) const;
+    int         IsSame( const OGRSpatialReference * ) const;
 
     void        Clear();
     OGRErr      SetLocalCS( const char * );
@@ -310,18 +317,18 @@ class CPL_DLL OGRSpatialReference
     OGRErr      SetTOWGS84( double, double, double,
                             double = 0.0, double = 0.0, double = 0.0,
                             double = 0.0 );
-    OGRErr      GetTOWGS84( double *padfCoef, int nCoeff = 7 );
+    OGRErr      GetTOWGS84( double *padfCoef, int nCoeff = 7 ) const;
     
-    double      GetSemiMajor( OGRErr * = NULL );
-    double      GetSemiMinor( OGRErr * = NULL );
-    double      GetInvFlattening( OGRErr * = NULL );
+    double      GetSemiMajor( OGRErr * = NULL ) const;
+    double      GetSemiMinor( OGRErr * = NULL ) const;
+    double      GetInvFlattening( OGRErr * = NULL ) const;
 
     OGRErr      SetAuthority( const char * pszTargetKey, 
                               const char * pszAuthority, 
                               int nCode );
                            
     OGRErr      SetProjParm( const char *, double );
-    double      GetProjParm( const char *, double = 0.0, OGRErr * = NULL );
+    double      GetProjParm( const char *, double =0.0, OGRErr* = NULL ) const;
 
     /** Albers Conic Equal Area */
     OGRErr      SetACEA( double dfStdP1, double dfStdP2,
@@ -462,7 +469,7 @@ class CPL_DLL OGRSpatialReference
 
     /** Universal Transverse Mercator */
     OGRErr      SetUTM( int nZone, int bNorth = TRUE );
-    int         GetUTMZone( int *pbNorth = NULL );
+    int         GetUTMZone( int *pbNorth = NULL ) const;
 
     /** State Plane */
     OGRErr      SetStatePlane( int nZone, int bNAD83 = TRUE );
