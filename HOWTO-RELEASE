@@ -1,8 +1,7 @@
 	Notes on Preparing a GDAL Source Release
 	========================================
 
-1) Update the release date, and number information at the top of gcore/gdal.h.
-   Three macros: GDAL_VERSION_NUM, GDAL_RELEASE_DATE and GDAL_RELEASE_NAME.
+1) Update the release date, and number information in gcore/gdal_version.h.
 
 2) Update the VERSION file.
 
