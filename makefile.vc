@@ -63,6 +63,7 @@ clean:
 	if exist gdal.lib del gdal.lib
 	if exist $(GDAL_DLL) del $(GDAL_DLL)
 	if exist gdal_i.lib del gdal_i.*
+	-del *.ilk
 
 port_dir:
 	cd port
