@@ -29,6 +29,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.25  2003/02/20 14:43:14  warmerda
+ * fixed quirks in handling ungeoreferenced images
+ *
  * Revision 1.24  2002/11/23 18:54:17  warmerda
  * added CREATIONDATATYPES metadata for drivers
  *
@@ -1458,14 +1461,15 @@ GDALDataset *HFADataset::Open( GDALOpenInfo * poOpenInfo )
             - psMapinfo->pixelSize.width*0.5;
         poDS->adfGeoTransform[1] = psMapinfo->pixelSize.width;
         poDS->adfGeoTransform[2] = 0.0;
-        poDS->adfGeoTransform[3] = psMapinfo->upperLeftCenter.y
-            + psMapinfo->pixelSize.height*0.5;
-        poDS->adfGeoTransform[4] = 0.0;
-
         if( psMapinfo->upperLeftCenter.y > psMapinfo->lowerRightCenter.y )
             poDS->adfGeoTransform[5] = - psMapinfo->pixelSize.height;
         else
             poDS->adfGeoTransform[5] = psMapinfo->pixelSize.height;
+
+        poDS->adfGeoTransform[3] = psMapinfo->upperLeftCenter.y
+            - poDS->adfGeoTransform[5]*0.5;
+        poDS->adfGeoTransform[4] = 0.0;
+
     }
     
 /* -------------------------------------------------------------------- */
@@ -1757,7 +1761,10 @@ HFADataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     double	adfGeoTransform[6];
     const char  *pszProj;
 
-    if( poSrcDS->GetGeoTransform( adfGeoTransform ) == CE_None )
+    if( poSrcDS->GetGeoTransform( adfGeoTransform ) == CE_None 
+        && (adfGeoTransform[0] != 0.0 || adfGeoTransform[1] != 1.0
+            || adfGeoTransform[2] != 0.0 || adfGeoTransform[3] != 0.0
+            || adfGeoTransform[4] != 0.0 || fabs(adfGeoTransform[5]) != 1.0))
         poDS->SetGeoTransform( adfGeoTransform );
 
     pszProj = poSrcDS->GetProjectionRef();
