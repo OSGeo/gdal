@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.28  2003/03/27 15:51:40  dron
+ * Improvements in update state handling in GetRasterBlock().
+ *
  * Revision 1.27  2003/03/22 13:17:16  dron
  * Debugging messages enclosed with #ifdef statements.
  *
@@ -811,14 +814,18 @@ CPLErr HFABand::GetRasterBlock( int nXBlock, int nYBlock, void * pData )
     {
         // XXX: We will not report error here, because file just may be
 	// in update state and data for this block will be available later
-#ifdef DEBUG
-        CPLDebug( "HFABand", "Seek to %d failed.\n",
+        if ( psInfo->eAccess == HFA_Update )
+        {
+            memset( pData, 0, 
+                    HFAGetDataTypeBits(nDataType)*nBlockXSize*nBlockYSize/8 );
+            return CE_None;
+        }
+        else
+        {
+            CPLError( CE_Failure, CPLE_FileIO, "Seek to %d failed.\n",
 		  panBlockStart[iBlock] );
-#endif
-        memset( pData, 0, 
-                HFAGetDataTypeBits(nDataType)*nBlockXSize*nBlockYSize/8 );
-
-        return CE_None;
+            return CE_Failure;
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -834,16 +841,22 @@ CPLErr HFABand::GetRasterBlock( int nXBlock, int nYBlock, void * pData )
 
         if( VSIFReadL( pabyCData, panBlockSize[iBlock], 1, fpData ) != 1 )
         {
-	    // XXX: Suppose that file in update state
-	    memset( pData, 0, 
-                HFAGetDataTypeBits(nDataType)*nBlockXSize*nBlockYSize/8 );
-#ifdef DEBUG
-	    CPLDebug( "HFABand", "Read of %d bytes at %d failed.\n", 
-                      panBlockSize[iBlock],
-                      panBlockStart[iBlock] );
-#endif
+            CPLFree( pabyCData );
 
-            return CE_None;
+	    // XXX: Suppose that file in update state
+            if ( psInfo->eAccess == HFA_Update )
+            {
+                memset( pData, 0, 
+                    HFAGetDataTypeBits(nDataType)*nBlockXSize*nBlockYSize/8 );
+                return CE_None;
+            }
+            else
+            {
+                CPLError( CE_Failure, CPLE_FileIO,
+                          "Read of %d bytes at %d failed.\n", 
+                          panBlockSize[iBlock], panBlockStart[iBlock] );
+                return CE_Failure;
+            }
         }
 
         eErr = UncompressBlock( pabyCData, panBlockSize[iBlock],
