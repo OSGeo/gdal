@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.30  2004/03/24 09:01:17  dron
+ * Added CPLPrintUIntBig().
+ *
  * Revision 1.29  2004/02/07 14:03:30  dron
  * CPLDecToPackedDMS() added.
  *
@@ -136,17 +139,18 @@ const char CPL_DLL *CPLReadLine( FILE * );
 char CPL_DLL *CPLScanString( char *, int, int, int );
 double CPL_DLL CPLScanDouble( char *, int, char * );
 long CPL_DLL CPLScanLong( char *, int );
+GUIntBig CPL_DLL CPLScanUIntBig( char *, int );
 
 /* -------------------------------------------------------------------- */
 /*      Print a value to an ASCII character string.                     */
 /* -------------------------------------------------------------------- */
-char CPL_DLL *CPLPrintString( char *, const char *, int );
-char CPL_DLL *CPLPrintStringFill( char *, const char *, int );
-char CPL_DLL *CPLPrintInt32( char *, GInt32 , int );
-char CPL_DLL *CPLPrintUIntBig( char *, GUIntBig , int );
-char CPL_DLL *CPLPrintDouble( char *, const char *, double, char * );
-char CPL_DLL *CPLPrintTime( char *, int , const char *,
-                            const struct tm *, char * );
+int CPL_DLL CPLPrintString( char *, const char *, int );
+int CPL_DLL CPLPrintStringFill( char *, const char *, int );
+int CPL_DLL CPLPrintInt32( char *, GInt32 , int );
+int CPL_DLL CPLPrintUIntBig( char *, GUIntBig , int );
+int CPL_DLL CPLPrintDouble( char *, const char *, double, char * );
+int CPL_DLL CPLPrintTime( char *, int , const char *, const struct tm *,
+                          char * );
 
 /* -------------------------------------------------------------------- */
 /*      Fetch a function from DLL / so.                                 */
