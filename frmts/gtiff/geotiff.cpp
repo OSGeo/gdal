@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.42  2001/01/23 15:26:27  warmerda
+ * Removed debugging printf.
+ *
  * Revision 1.41  2001/01/22 22:33:09  warmerda
  * implement SetColorTable(), Crystalize() ... may be buggy
  *
@@ -564,8 +567,6 @@ CPLErr GTiffRasterBand::SetColorTable( GDALColorTable * poCT )
 /*      Write out the colortable, and update the configuration.         */
 /* -------------------------------------------------------------------- */
     unsigned short	anTRed[256], anTGreen[256], anTBlue[256];
-
-    printf( "Write color table\n" );
 
     for( int iColor = 0; iColor < 256; iColor++ )
     {
