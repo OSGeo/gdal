@@ -12,11 +12,11 @@ clean:
 
 %.o:	%.c
 	$(CC) -c  $(GDAL_INCLUDE) $(PYTHON_INCLUDES)\
-		$(CFLAGS) $(NUMPY_FLAG) $*.c -o $*.o
+		$(CFLAGS) $(PYTHON_CFLAGS) $*.c -o $*.o
 
 %.o:	%.cpp
 	$(CXX) -c $(GDAL_INCLUDE) $(PYTHON_INCLUDES) \
-		 $(CXXFLAGS) $(NUMPY_FLAG) $*.cpp -o $*.o
+		 $(CXXFLAGS) $(PYTHON_CFLAGS) $*.cpp -o $*.o
 
 
 gdal_wrap.c:	gdal.i
@@ -26,7 +26,7 @@ $(GDAL_SLIB):
 
 $(GDALMODULE):	$(OBJ) $(GDAL_LIB)
 	$(LD_SHARED) $(OBJ) \
-		$(GDAL_SLIB_LINK) $(LIBS) -o $(GDALMODULE)
+		$(GDAL_SLIB_LINK) $(PYTHON_LIBS) $(LIBS) -o $(GDALMODULE)
 
 
 install:	$(GDALMODULE)
