@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2003/03/03 05:05:54  warmerda
+ * added support for DeleteDataSource and DeleteLayer
+ *
  * Revision 1.6  2003/01/07 16:44:27  warmerda
  * added removeGeometry
  *
@@ -255,6 +258,7 @@ void   CPL_DLL OGR_DS_Destroy( OGRDataSourceH );
 const char CPL_DLL *OGR_DS_GetName( OGRDataSourceH );
 int    CPL_DLL OGR_DS_GetLayerCount( OGRDataSourceH );
 OGRLayerH CPL_DLL OGR_DS_GetLayer( OGRDataSourceH, int );
+OGRErr    CPL_DLL OGR_DS_DeleteLayer( OGRDataSourceH, int );
 OGRLayerH CPL_DLL OGR_DS_CreateLayer( OGRDataSourceH, const char *, 
                                       OGRSpatialReferenceH, OGRwkbGeometryType,
                                       char ** );
@@ -267,9 +271,10 @@ void   CPL_DLL OGR_DS_ReleaseResultSet( OGRDataSourceH, OGRLayerH );
 
 const char CPL_DLL *OGR_Dr_GetName( OGRSFDriverH );
 OGRDataSourceH CPL_DLL OGR_Dr_Open( OGRSFDriverH, const char *, int );
-int    CPL_DLL OGR_Dr_TestCapability( OGRSFDriverH, const char * );
+int CPL_DLL OGR_Dr_TestCapability( OGRSFDriverH, const char * );
 OGRDataSourceH CPL_DLL OGR_Dr_CreateDataSource( OGRSFDriverH, const char *,
                                                 char ** );
+OGRErr CPL_DLL OGR_Dr_DeleteDataSource( OGRSFDriverH, const char * );
 
 /* OGRSFDriverRegistrar */
 

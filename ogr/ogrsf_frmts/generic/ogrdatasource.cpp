@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2003/03/03 05:06:27  warmerda
+ * added support for DeleteDataSource and DeleteLayer
+ *
  * Revision 1.8  2002/09/26 18:16:19  warmerda
  * added C entry points
  *
@@ -105,7 +108,7 @@ OGRLayer *OGRDataSource::CreateLayer( const char * pszName,
 
 {
     CPLError( CE_Failure, CPLE_NotSupported,
-              "CreateLayer() not supported by this data source.\n" );
+              "CreateLayer() not supported by this data source." );
               
     return NULL;
 }
@@ -123,6 +126,29 @@ OGRLayerH OGR_DS_CreateLayer( OGRDataSourceH hDS,
 {
     return ((OGRDataSource *)hDS)->CreateLayer( 
         pszName, (OGRSpatialReference *) hSpatialRef, eType, papszOptions );
+}
+
+/************************************************************************/
+/*                            DeleteLayer()                             */
+/************************************************************************/
+
+OGRErr OGRDataSource::DeleteLayer( int iLayer )
+
+{
+    CPLError( CE_Failure, CPLE_NotSupported,
+              "DeleteLayer() not supported by this data source." );
+              
+    return OGRERR_UNSUPPORTED_OPERATION;
+}
+
+/************************************************************************/
+/*                         OGR_DS_DeleteLayer()                         */
+/************************************************************************/
+
+OGRErr OGR_DS_DeleteLayer( OGRDataSourceH hDS, int iLayer )
+
+{
+    return ((OGRDataSource *) hDS)->DeleteLayer( iLayer );
 }
 
 /************************************************************************/

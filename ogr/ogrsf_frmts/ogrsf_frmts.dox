@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2003/03/03 05:06:08  warmerda
+ * added support for DeleteDataSource and DeleteLayer
+ *
  * Revision 1.11  2003/02/08 00:37:23  warmerda
  * added CreateLayer() documentation
  *
@@ -210,8 +213,8 @@
  the capability is available for this object.
 
  <ul>
-
   <li> <b>ODrCCreateDataSource</b>: True if this driver can support creating data sources.<p>
+  <li> <b>ODrCDeleteDataSource</b>: True if this driver supports deleting data sources.<p>
  </ul>
 
  The #define macro forms of the capability names should be used in preference
@@ -222,8 +225,26 @@
  @param pszCapability the capability to test.
 
  @return TRUE if capability available otherwise FALSE.
-
 */ 
+
+/**
+ \fn OGRErr OGRSFDriver::DeleteDataSource( const charpszDataSource );
+
+ Destroy a datasource.
+
+ Destroy the named datasource.  Normally it would be safest if the
+ datasource was not open at the time. 
+
+ Whether this is a supported operation on this driver case be tested
+ using TestCapability() on ODrCDeleteDataSource.
+
+ This method is the same as the C function OGR_Dr_DeleteDataSource().
+
+ @param pszDataSource the name of the datasource to delete. 
+
+ @return OGRERR_NONE on success, and OGRERR_UNSUPPORTED_OPERATION if this
+ is not supported by this driver. 
+*/
 
 /************************************************************************/
 /*                            OGRDataSource                             */
@@ -266,6 +287,21 @@
  @param iLayer a layer number between 0 and GetLayerCount()-1.
 
  @return the layer, or NULL if iLayer is out of range or an error occurs.
+
+*/
+
+/**
+ \fn OGRErr OGRDataSource::DeleteLayer(int iLayer);
+
+ Delete the indicated layer from the datasource.  If this method is supported
+ the ODsCDeleteLayer capability will test TRUE on the OGRDataSource.
+
+ This method is the same as the C function OGR_DS_DeleteLayer().
+
+ @param iLayer the index of the layer to delete. 
+
+ @return OGRERR_NONE on success, or OGRERR_UNSUPPORTED_OPERATION if deleting
+ layers is not supported for this datasource.
 
 */
 

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2003/03/03 05:05:54  warmerda
+ * added support for DeleteDataSource and DeleteLayer
+ *
  * Revision 1.16  2003/02/19 02:57:49  warmerda
  * added wkbLinearRing support
  *
@@ -282,8 +285,10 @@ typedef union {
 #define OLCTransactions        "Transactions"
 
 #define ODsCCreateLayer        "CreateLayer"
+#define ODsCDeleteLayer        "DeleteLayer"
 
 #define ODrCCreateDataSource   "CreateDataSource"
+#define ODrCDeleteDataSource   "DeleteDataSource"
 
 CPL_C_END
 
