@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2001/09/24 15:58:27  warmerda
+ * improved progress reporting in createcopy
+ *
  * Revision 1.19  2001/07/18 04:04:30  warmerda
  * added CPL_CVSID
  *
@@ -327,7 +330,7 @@ GDALDataset *GDALDriver::CreateCopy( const char * pszFilename,
                 return NULL;
             }
 
-            if( !pfnProgress( (iBand + iLine / (double) nYSize)
+            if( !pfnProgress( (iBand + (iLine+1) / (double) nYSize)
                               / (double) poSrcDS->GetRasterCount(), 
                               NULL, pProgressData ) )
             {
