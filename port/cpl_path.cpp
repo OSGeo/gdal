@@ -28,6 +28,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.5  2001/02/24 01:53:57  warmerda
+ * Added CPLFormCIFilename()
+ *
  * Revision 1.4  2001/01/19 21:18:25  warmerda
  * expanded tabs
  *
@@ -297,4 +300,96 @@ const char *CPLFormFilename( const char * pszPath,
              pszAddedExtSep, pszExtension );
 
     return szStaticResult;
+}
+
+/************************************************************************/
+/*                          CPLFormCIFilename()                         */
+/************************************************************************/
+
+/**
+ * Case insensitive file searching, returing full path.
+ *
+ * This function tries to return the path to a file regardless of
+ * whether the file exactly matches the basename, and extension case, or
+ * is all upper case, or all lower case.  The path is treated as case 
+ * sensitive.  This function is equivelent to CPLFormFilename() on 
+ * case insensitive file systems (like Windows).
+ *
+ * @param pszPath directory path to the directory containing the file.  This
+ * may be relative or absolute, and may have a trailing path separator or
+ * not.  May be NULL.
+ *
+ * @param pszBasename file basename.  May optionally have path and/or
+ * extension.  May not be NULL. 
+ *
+ * @param pszExtension file extension, optionally including the period.  May
+ * be NULL.
+ *
+ * @return a fully formed filename in an internal static string.  Do not
+ * modify or free the returned string.  The string may be destroyed by the
+ * next CPL call.
+ */
+
+const char *CPLFormCIFilename( const char * pszPath,
+                               const char * pszBasename,
+                               const char * pszExtension )
+
+{
+#ifdef WIN32
+    return CPLFormFilename( pszPath, pszBasename, pszExtension );
+#else
+    const char  *pszAddedExtSep = "";
+    char	*pszFilename;
+    const char  *pszFullPath;
+    int		nLen = strlen(pszBasename)+2, i;
+    FILE	*fp;
+
+    if( pszExtension != NULL )
+        nLen += strlen(pszExtension);
+
+    pszFilename = (char *) CPLMalloc(nLen);
+
+    if( pszExtension == NULL )
+        pszExtension = "";
+    else if( pszExtension[0] != '.' && strlen(pszExtension) > 0 )
+        pszAddedExtSep = ".";
+
+    sprintf( pszFilename, "%s%s%s", 
+             pszBasename, pszAddedExtSep, pszExtension );
+
+    pszFullPath = CPLFormFilename( pszPath, pszFilename, NULL );
+    fp = VSIFOpen( pszFullPath, "r" );
+    if( fp == NULL )
+    {
+        for( i = 0; pszFilename[i] != '\0'; i++ )
+        {
+            if( pszFilename[i] >= 'a' && pszFilename[i] <= 'z' )
+                pszFilename[i] = pszFilename[i] + 'A' - 'a';
+        }
+
+        pszFullPath = CPLFormFilename( pszPath, pszFilename, NULL );
+        fp = VSIFOpen( pszFullPath, "r" );
+    }
+
+    if( fp == NULL )
+    {
+        for( i = 0; pszFilename[i] != '\0'; i++ )
+        {
+            if( pszFilename[i] >= 'A' && pszFilename[i] <= 'Z' )
+                pszFilename[i] = pszFilename[i] + 'a' - 'A';
+        }
+
+        pszFullPath = CPLFormFilename( pszPath, pszFilename, NULL );
+        fp = VSIFOpen( pszFullPath, "r" );
+    }
+
+    if( fp != NULL )
+        VSIFClose( fp );
+    else
+        pszFullPath = CPLFormFilename( pszPath, pszBasename, pszExtension );
+
+    CPLFree( pszFilename );
+
+    return pszFullPath;
+#endif
 }

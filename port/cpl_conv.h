@@ -88,6 +88,9 @@ const char CPL_DLL *CPLGetExtension( const char * );
 const char CPL_DLL *CPLFormFilename( const char *pszPath,
                                      const char *pszBasename,
                                      const char *pszExtension );
+const char CPL_DLL *CPLFormCIFilename( const char *pszPath,
+                                       const char *pszBasename,
+                                       const char *pszExtension );
 
 /* -------------------------------------------------------------------- */
 /*      Find File Function                                              */
