@@ -33,6 +33,16 @@ in tag names. These characters replaced in GDAL with `_' during translation.
 So if you are using other software to work with MrSID be ready that names
 of metadata keys will be shown differently in GDAL.<p>
 
+<h2>Georeference</h2>
+
+MrSID images may contain georeference and coordinate system information in
+form of GeoTIFF GeoKeys, translated in metadata records. All those GeoKeys
+properly extracted and used by the driver. Unfortunately, there is one
+caveat: old MrSID encoders has a bug which resulted in wrong GeoKeys, stored
+in MrSID files. This bug was fixed in MrSID software version 1.5, but if you
+have older encoders or files, created with older encoders, you cannot use
+georeference information from them.<p>
+
 <h2>See Also:</h2>
 
 <ul>
