@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.26  2001/10/23 21:35:25  warmerda
+ * try getting IStream if ISequentialStream is missing.
+ *
  * Revision 1.25  2001/10/22 21:29:50  warmerda
  * reworked to allow selecting a subset of fields
  *
@@ -121,7 +124,7 @@ void OGRComDebug( const char * pszDebugClass, const char * pszFormat, ... );
 // Define the following to get detailed debugging information from the stream
 // class.
 
-#undef SFISTREAM_DEBUG
+#define SFISTREAM_DEBUG
 
 // These global variables are a hack to transmit spatial query info from
 // the CSFCommand::Execute() method to the CSFRowset::Execute() method.
@@ -146,7 +149,7 @@ struct SFIStream : IStream
     SFIStream(void *pByte, int nStreamSize)
 	{
 #ifdef SFISTREAM_DEBUG
-            CPLDebug( "OGR_OLEDB", "SFIStream(%p,%d) -> %p\n", 
+            CPLDebug( "OGR_OLEDB", "SFIStream(%p,%d) -> %p", 
                       pByte, nStreamSize, this );
 #endif
             m_cRef   = 0;
@@ -158,7 +161,7 @@ struct SFIStream : IStream
     ~SFIStream()
 	{
 #ifdef SFISTREAM_DEBUG
-            CPLDebug( "OGR_OLEDB", "~SFIStream(%p)\n", this );
+            CPLDebug( "OGR_OLEDB", "~SFIStream(%p)", this );
 #endif
             free(m_pStream);	
 	}
@@ -186,14 +189,14 @@ struct SFIStream : IStream
     ULONG STDMETHODCALLTYPE		AddRef (void) 
         {
 #ifdef SFISTREAM_DEBUG
-            CPLDebug( "OGR_OLEDB", "SFIStream::AddRef(%p)\n", this );
+            CPLDebug( "OGR_OLEDB", "SFIStream::AddRef(%p)", this );
 #endif
             return ++m_cRef;
         };
     ULONG STDMETHODCALLTYPE		Release (void )
 	{
 #ifdef SFISTREAM_DEBUG
-            CPLDebug( "OGR_OLEDB", "SFIStream::Release(%p)\n", this );
+            CPLDebug( "OGR_OLEDB", "SFIStream::Release(%p)", this );
 #endif
             if (--m_cRef ==0)
             {
@@ -212,7 +215,7 @@ struct SFIStream : IStream
             ULONG pcbDiscardedResult;
 
 #ifdef SFISTREAM_DEBUG
-            CPLDebug( "OGR_OLEDB", "SFIStream::Read(%p,%d)\n", this, cbToRead);
+            CPLDebug( "OGR_OLEDB", "SFIStream::Read(%p,%d)", this, cbToRead);
 #endif
             if (!pcbActuallyRead)
                 pcbActuallyRead = &pcbDiscardedResult;
@@ -235,8 +238,8 @@ struct SFIStream : IStream
             ULONG nNewPos;
 
 #ifdef SFISTREAM_DEBUG
-            CPLDebug( "OGR_OLEDB", "SFIStream::Seek(%p,%d)\n", 
-                      this, dwOrigin);
+            CPLDebug( "OGR_OLEDB", "SFIStream::Seek(%p,%d,%d)", 
+                      this, (int) dwOrigin, (int) dlibMove.QuadPart);
 #endif
 
             switch(dwOrigin)
@@ -257,7 +260,14 @@ struct SFIStream : IStream
             if (nNewPos < 0 || nNewPos > m_nSize)
                 return STG_E_INVALIDPOINTER;
 
+            if( plibNewPos != NULL )
+                plibNewPos->QuadPart = nNewPos;
+
             m_nSeekPos = nNewPos;
+#ifdef SFISTREAM_DEBUG
+            CPLDebug( "OGR_OLEDB", "SFIStream::Seek(): m_nSeekPos=%d", 
+                      m_nSeekPos );
+#endif
             return S_OK;
 	}
 
@@ -275,7 +285,7 @@ struct SFIStream : IStream
     HRESULT STDMETHODCALLTYPE	Stat(STATSTG *poStat,DWORD fStatFlag) 
 	{
 #ifdef SFISTREAM_DEBUG
-            CPLDebug( "OGR_OLEDB", "SFIStream::Stat(%pd)\n", 
+            CPLDebug( "OGR_OLEDB", "SFIStream::Stat(%pd)", 
                       this);
 #endif
 
@@ -586,6 +596,9 @@ int CVirtualArray::FillGeometry( OGRGeometry *poGeom,
 /*      IUnknown geometry handling.                                     */
 /* -------------------------------------------------------------------- */
 #ifdef BLOB_IUNKNOWN
+    unsigned char	*pByte  = (unsigned char *) malloc(nSize);
+    poGeom->exportToWkb((OGRwkbByteOrder) 1, pByte);
+
 #ifdef SFISTREAM_DEBUG
     CPLDebug( "OGR_OLEDB", 
               "Push %d bytes into Stream: %2X%2X%2X%2X%2X%2X%2X%2X\n", 
@@ -599,9 +612,6 @@ int CVirtualArray::FillGeometry( OGRGeometry *poGeom,
               pByte[6], 
               pByte[7] );
 #endif
-
-    unsigned char	*pByte  = (unsigned char *) malloc(nSize);
-    poGeom->exportToWkb((OGRwkbByteOrder) 1, pByte);
 
     IStream	*pStream = new SFIStream(pByte,nSize);
     *((void **) (pabyBuffer + nOffset)) = pStream;
@@ -842,6 +852,14 @@ HRESULT CSFCommand::ExtractSpatialQuery( DBPARAMS *pParams )
         {
             hr = pIUnknown->QueryInterface( IID_ISequentialStream,
                                             (void**)&pIStream );
+            if( FAILED(hr) )
+            {
+                CPLDebug( "OGR_OLEDB", 
+                          "Failed to get ISequentialStream, try for IStream");
+                hr = pIUnknown->QueryInterface( IID_IStream,
+                                                (void**)&pIStream );
+            }
+
             if( FAILED(hr) )
                 pIStream = NULL;
         }
