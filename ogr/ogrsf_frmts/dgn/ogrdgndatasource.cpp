@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2004/08/17 21:00:21  warmerda
+ * Fixed last fix so that short files aren't even passed to DGNTestOpen().
+ *
  * Revision 1.10  2004/08/17 20:56:48  warmerda
  * Keep track of how many bytes we get when reading info for testopen.
  *
@@ -127,6 +130,9 @@ int OGRDGNDataSource::Open( const char * pszNewName,
         nHeaderBytes = (int) VSIFRead( abyHeader, 1, sizeof(abyHeader), fp );
 
         VSIFClose( fp );
+
+        if( nHeaderBytes < 512 )
+            return FALSE;
 
         if( !DGNTestOpen( abyHeader, nHeaderBytes ) )
             return FALSE;
