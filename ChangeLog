@@ -1,3 +1,11 @@
+2001-12-15  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* core/gdaldriver.cpp: try to ensure that poDriver gets set on 
+	datasets after creation.
+
+	* ogr/ogrsf_frmts/s57/*: implement fast feature counting and fetching
+	of extents boxes.
+
 2001-12-14  Frank Warmerdam  <warmerdam@pobox.com>
 
 	* frmts/aigrid/gridlib.c: fixed handling of RMin's sign for short
