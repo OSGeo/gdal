@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2003/10/31 11:21:33  dron
+ * Bicubic resampler improved.
+ *
  * Revision 1.15  2003/07/24 18:47:00  dron
  * Add 0.5 to the double values before casting to integers in all resamplers.
  *
@@ -1304,8 +1307,14 @@ static int GWKBilinearResampleNoMasksShort( GDALWarpKernel *poWK, int iBand,
 
 /************************************************************************/
 /*                        GWKCubicResample()                            */
-/*     Set of bicubic interpolators.                                    */
+/*     Set of bicubic interpolators using cubic convolution.            */
 /************************************************************************/
+
+#define CubicConvolution(distance1,distance2,distance3,f0,f1,f2,f3) \
+   (  (   -f0 +     f1 - f2 + f3) * distance3 \
+    + (2.0*(f0 - f1) + f2 - f3) * distance2 \
+    + (   -f0          + f2     ) * distance1 \
+    +               f1                         )
 
 static int GWKCubicResample( GDALWarpKernel *poWK, int iBand,
                              double dfSrcX, double dfSrcY,
@@ -1322,13 +1331,10 @@ static int GWKCubicResample( GDALWarpKernel *poWK, int iBand,
     double  dfDeltaY2 = dfDeltaY * dfDeltaY;
     double  dfDeltaX3 = dfDeltaX2 * dfDeltaX;
     double  dfDeltaY3 = dfDeltaY2 * dfDeltaY;
+    double  dfDensity0, dfDensity1, dfDensity2, dfDensity3;
+    double  dfReal0, dfReal1, dfReal2, dfReal3;
+    double  dfImag0, dfImag1, dfImag2, dfImag3;
     double  adfValueDens[4], adfValueReal[4], adfValueImag[4];
-    double  dfD0Dens, dfD2Dens, dfD3Dens,
-            dfA0Dens, dfA1Dens, dfA2Dens, dfA3Dens;
-    double  dfD0Real, dfD2Real, dfD3Real,
-            dfA0Real, dfA1Real, dfA2Real, dfA3Real;
-    double  dfD0Imag, dfD2Imag, dfD3Imag,
-            dfA0Imag, dfA1Imag, dfA2Imag, dfA3Imag;
     int     i;
 
     // Get the bilinear interpolation at the image borders
@@ -1341,89 +1347,39 @@ static int GWKCubicResample( GDALWarpKernel *poWK, int iBand,
     {
         int     iOffset = iSrcOffset + i * poWK->nSrcXSize;
 
-        if ( !GWKGetPixelValue( poWK, iBand, iOffset,
-                                pdfDensity, pdfReal, pdfImag ) )
-            return FALSE;
-
-        dfA0Dens = *pdfDensity;
-        dfA0Real = *pdfReal;
-        dfA0Imag = *pdfImag;
-
         if ( !GWKGetPixelValue( poWK, iBand, iOffset - 1,
-                                pdfDensity, pdfReal, pdfImag ) )
+                                &dfDensity0, &dfReal0, &dfImag0 ) )
             return FALSE;
 
-        dfD0Dens = *pdfDensity - dfA0Dens;
-        dfD0Real = *pdfReal - dfA0Real;
-        dfD0Imag = *pdfImag - dfA0Imag;
+        if ( !GWKGetPixelValue( poWK, iBand, iOffset,
+                                &dfDensity1, &dfReal1, &dfImag1 ) )
+            return FALSE;
 
         if ( !GWKGetPixelValue( poWK, iBand, iOffset + 1,
-                                pdfDensity, pdfReal, pdfImag ) )
+                                &dfDensity2, &dfReal2, &dfImag2 ) )
             return FALSE;
-
-        dfD2Dens = *pdfDensity - dfA0Dens;
-        dfD2Real = *pdfReal - dfA0Real;
-        dfD2Imag = *pdfImag - dfA0Imag;
 
         if ( !GWKGetPixelValue( poWK, iBand, iOffset + 2,
-                                pdfDensity, pdfReal, pdfImag ) )
+                                &dfDensity3, &dfReal3, &dfImag3 ) )
             return FALSE;
 
-        dfD3Dens = *pdfDensity - dfA0Dens;
-        dfD3Real = *pdfReal - dfA0Real;
-        dfD3Imag = *pdfImag - dfA0Imag;
-
-        dfA1Dens = - dfD0Dens / 3.0 + dfD2Dens - dfD3Dens / 6.0;
-        dfA1Real = - dfD0Real / 3.0 + dfD2Real - dfD3Real / 6.0;
-        dfA1Imag = - dfD0Imag / 3.0 + dfD2Imag - dfD3Imag / 6.0;
-        dfA2Dens = (dfD0Dens + dfD2Dens) / 2.0;
-        dfA2Real = (dfD0Real + dfD2Real) / 2.0;
-        dfA2Imag = (dfD0Imag + dfD2Imag) / 2.0;
-        dfA3Dens = - dfD0Dens / 3.0 - dfD2Dens / 2.0 + dfD3Dens / 3.0;
-        dfA3Real = - dfD0Real / 3.0 - dfD2Real / 2.0 + dfD3Real / 3.0;
-        dfA3Imag = - dfD0Imag / 3.0 - dfD2Imag / 2.0 + dfD3Imag / 3.0;
-
-        adfValueDens[i + 1] =
-            dfA0Dens + dfA1Dens * dfDeltaX +
-            dfA2Dens * dfDeltaX2 + dfA3Dens * dfDeltaX3;
-        adfValueReal[i + 1] =
-            dfA0Real + dfA1Real * dfDeltaX +
-            dfA2Real * dfDeltaX2 + dfA3Real * dfDeltaX3;
-        adfValueImag[i + 1] =
-            dfA0Imag + dfA1Imag * dfDeltaX +
-            dfA2Imag * dfDeltaX2 + dfA3Imag * dfDeltaX3;
+        adfValueDens[i + 1] = CubicConvolution(dfDeltaX, dfDeltaX2, dfDeltaX3,
+                            dfDensity0, dfDensity1, dfDensity2, dfDensity3);
+        adfValueReal[i + 1] = CubicConvolution(dfDeltaX, dfDeltaX2, dfDeltaX3,
+                            dfReal0, dfReal1, dfReal2, dfReal3);
+        adfValueImag[i + 1] = CubicConvolution(dfDeltaX, dfDeltaX2, dfDeltaX3,
+                        dfImag0, dfImag1, dfImag2, dfImag3);
     }
 
-    dfA0Dens = adfValueDens[1];
-    dfA0Real = adfValueReal[1];
-    dfA0Imag = adfValueImag[1];
-
-    dfD0Dens = adfValueDens[0] - dfA0Dens;
-    dfD0Real = adfValueReal[0] - dfA0Real;
-    dfD0Imag = adfValueImag[0] - dfA0Imag;
-    dfD2Dens = adfValueDens[2] - dfA0Dens;
-    dfD2Real = adfValueReal[2] - dfA0Real;
-    dfD2Imag = adfValueImag[2] - dfA0Imag;
-    dfD3Dens = adfValueDens[3] - dfA0Dens;
-    dfD3Real = adfValueReal[3] - dfA0Real;
-    dfD3Imag = adfValueImag[3] - dfA0Imag;
-
-    dfA1Dens = - dfD0Dens / 3.0 + dfD2Dens - dfD3Dens / 6.0;
-    dfA1Real = - dfD0Real / 3.0 + dfD2Real - dfD3Real / 6.0;
-    dfA1Imag = - dfD0Imag / 3.0 + dfD2Imag - dfD3Imag / 6.0;
-    dfA2Dens = (dfD0Dens + dfD2Dens) / 2.0;
-    dfA2Real = (dfD0Real + dfD2Real) / 2.0;
-    dfA2Imag = (dfD0Imag + dfD2Imag) / 2.0;
-    dfA3Dens = - dfD0Dens / 3.0 - dfD2Dens / 2.0 + dfD3Dens / 3.0;
-    dfA3Real = - dfD0Real / 3.0 - dfD2Real / 2.0 + dfD3Real / 3.0;
-    dfA3Imag = - dfD0Imag / 3.0 - dfD2Imag / 2.0 + dfD3Imag / 3.0;
-
-    *pdfDensity = dfA0Dens + dfA1Dens * dfDeltaY +
-        dfA2Dens * dfDeltaY2 + dfA3Dens * dfDeltaY3;
-    *pdfReal = dfA0Real + dfA1Real * dfDeltaY +
-        dfA2Real * dfDeltaY2 + dfA3Real * dfDeltaY3;
-    *pdfImag = dfA0Imag + dfA1Imag * dfDeltaY +
-        dfA2Imag * dfDeltaY2 + dfA3Imag * dfDeltaY3;
+    *pdfDensity = CubicConvolution(dfDeltaY, dfDeltaY2, dfDeltaY3,
+                                   adfValueDens[0], adfValueDens[1],
+                                   adfValueDens[2], adfValueDens[3]);
+    *pdfReal = CubicConvolution(dfDeltaY, dfDeltaY2, dfDeltaY3,
+                                   adfValueReal[0], adfValueReal[1],
+                                   adfValueReal[2], adfValueReal[3]);
+    *pdfImag = CubicConvolution(dfDeltaY, dfDeltaY2, dfDeltaY3,
+                                   adfValueImag[0], adfValueImag[1],
+                                   adfValueImag[2], adfValueImag[3]);
     
     return TRUE;
 }
@@ -1443,7 +1399,6 @@ static int GWKCubicResampleNoMasksByte( GDALWarpKernel *poWK, int iBand,
     double  dfDeltaX3 = dfDeltaX2 * dfDeltaX;
     double  dfDeltaY3 = dfDeltaY2 * dfDeltaY;
     double  adfValue[4];
-    double  dfD0, dfD2, dfD3, dfA0, dfA1, dfA2, dfA3;
     int     i;
 
     // Get the bilinear interpolation at the image borders
@@ -1456,32 +1411,15 @@ static int GWKCubicResampleNoMasksByte( GDALWarpKernel *poWK, int iBand,
     {
         int     iOffset = iSrcOffset + i * poWK->nSrcXSize;
 
-        dfA0 = (double)poWK->papabySrcImage[iBand][iOffset];
-
-        dfD0 = (double)poWK->papabySrcImage[iBand][iOffset - 1] - dfA0;
-        dfD2 = (double)poWK->papabySrcImage[iBand][iOffset + 1] - dfA0;
-        dfD3 = (double)poWK->papabySrcImage[iBand][iOffset + 2] - dfA0;
-
-        dfA1 = - dfD0 / 3.0 + dfD2 - dfD3 / 6.0;
-        dfA2 = (dfD0 + dfD2) / 2.0;
-        dfA3 = - dfD0 / 3.0 - dfD2 / 2.0 + dfD3 / 3.0;
-
-        adfValue[i + 1] =
-            dfA0 + dfA1 * dfDeltaX + dfA2 * dfDeltaX2 + dfA3 * dfDeltaX3;
+        adfValue[i + 1] = CubicConvolution(dfDeltaX, dfDeltaX2, dfDeltaX3,
+                            (double)poWK->papabySrcImage[iBand][iOffset - 1],
+                            (double)poWK->papabySrcImage[iBand][iOffset],
+                            (double)poWK->papabySrcImage[iBand][iOffset + 1],
+                            (double)poWK->papabySrcImage[iBand][iOffset + 2]);
     }
 
-    dfA0 = adfValue[1];
-
-    dfD0 = adfValue[0] - dfA0;
-    dfD2 = adfValue[2] - dfA0;
-    dfD3 = adfValue[3] - dfA0;
-
-    dfA1 = - dfD0 / 3.0 + dfD2 - dfD3 / 6.0;
-    dfA2 = (dfD0 + dfD2) / 2.0;
-    dfA3 = - dfD0 / 6.0 - dfD2 / 2.0 + dfD3 / 6.0;
-    
-    double dfValue =
-        (dfA0 + dfA1 * dfDeltaY + dfA2 * dfDeltaY2 + dfA3 * dfDeltaY3);
+    double dfValue = CubicConvolution(dfDeltaY, dfDeltaY2, dfDeltaY3,
+                        adfValue[0], adfValue[1], adfValue[2], adfValue[3]);
 
     if ( dfValue < 0.0 )
         *pbValue = 0;
@@ -1508,7 +1446,6 @@ static int GWKCubicResampleNoMasksShort( GDALWarpKernel *poWK, int iBand,
     double  dfDeltaX3 = dfDeltaX2 * dfDeltaX;
     double  dfDeltaY3 = dfDeltaY2 * dfDeltaY;
     double  adfValue[4];
-    double  dfD0, dfD2, dfD3, dfA0, dfA1, dfA2, dfA3;
     int     i;
 
     // Get the bilinear interpolation at the image borders
@@ -1521,32 +1458,15 @@ static int GWKCubicResampleNoMasksShort( GDALWarpKernel *poWK, int iBand,
     {
         int     iOffset = iSrcOffset + i * poWK->nSrcXSize;
 
-        dfA0 = (double)((GInt16 *)poWK->papabySrcImage[iBand])[iOffset];
-
-        dfD0 = (double)((GInt16 *)poWK->papabySrcImage[iBand])[iOffset - 1] - dfA0;
-        dfD2 = (double)((GInt16 *)poWK->papabySrcImage[iBand])[iOffset + 1] - dfA0;
-        dfD3 = (double)((GInt16 *)poWK->papabySrcImage[iBand])[iOffset + 2] - dfA0;
-
-        dfA1 = - dfD0 / 3.0 + dfD2 - dfD3 / 6.0;
-        dfA2 = (dfD0 + dfD2) / 2.0;
-        dfA3 = - dfD0 / 3.0 - dfD2 / 2.0 + dfD3 / 3.0;
-
-        adfValue[i + 1] =
-            dfA0 + dfA1 * dfDeltaX + dfA2 * dfDeltaX2 + dfA3 * dfDeltaX3;
+        adfValue[i + 1] =CubicConvolution(dfDeltaX, dfDeltaX2, dfDeltaX3,
+                (double)((GInt16 *)poWK->papabySrcImage[iBand])[iOffset - 1],
+                (double)((GInt16 *)poWK->papabySrcImage[iBand])[iOffset],
+                (double)((GInt16 *)poWK->papabySrcImage[iBand])[iOffset + 1],
+                (double)((GInt16 *)poWK->papabySrcImage[iBand])[iOffset + 2]);
     }
 
-    dfA0 = adfValue[1];
-
-    dfD0 = adfValue[0] - dfA0;
-    dfD2 = adfValue[2] - dfA0;
-    dfD3 = adfValue[3] - dfA0;
-
-    dfA1 = - dfD0 / 3.0 + dfD2 - dfD3 / 6.0;
-    dfA2 = (dfD0 + dfD2) / 2.0;
-    dfA3 = - dfD0 / 6.0 - dfD2 / 2.0 + dfD3 / 6.0;
-    
-    *piValue =
-        (GInt16)(0.5 + dfA0 + dfA1 * dfDeltaY + dfA2 * dfDeltaY2 + dfA3 * dfDeltaY3);
+    *piValue = (GInt16)CubicConvolution(dfDeltaY, dfDeltaY2, dfDeltaY3,
+                        adfValue[0], adfValue[1], adfValue[2], adfValue[3]);
     
     return TRUE;
 }
