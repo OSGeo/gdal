@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.38  2003/01/02 21:45:23  warmerda
+ * move OGRBuildPolygonsFromEdges into C API
+ *
  * Revision 1.37  2002/10/25 15:20:50  warmerda
  * fixed MULTIPOINT WKT format
  *
@@ -659,11 +662,5 @@ class CPL_DLL OGRGeometryFactory
     static void   destroyGeometry( OGRGeometry * );
     static OGRGeometry *createGeometry( OGRwkbGeometryType );
 };
-
-OGRPolygon *OGRBuildPolygonFromEdges( OGRGeometryCollection * poLines,
-                                      int bBestEffort, 
-                                      int bAutoClose, 
-                                      double dfTolerance,
-                                      OGRErr * peErr = NULL );
 
 #endif /* ndef _OGR_GEOMETRY_H_INCLUDED */

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2003/01/02 21:45:23  warmerda
+ * move OGRBuildPolygonsFromEdges into C API
+ *
  * Revision 1.3  2002/10/24 16:46:08  warmerda
  * removed bogus OGR_G_GetWkbSize()
  *
@@ -119,6 +122,11 @@ OGRGeometryH CPL_DLL OGR_G_GetGeometryRef( OGRGeometryH, int );
 OGRErr CPL_DLL OGR_G_AddGeometry( OGRGeometryH, OGRGeometryH );
 OGRErr CPL_DLL OGR_G_AddGeometryDirectly( OGRGeometryH, OGRGeometryH );
 
+OGRGeometryH OGRBuildPolygonFromEdges( OGRGeometryH hLinesAsCollection,
+                                       int bBestEffort, 
+                                       int bAutoClose, 
+                                       double dfTolerance,
+                                       OGRErr * peErr );
 
 /* -------------------------------------------------------------------- */
 /*      Feature related (ogr_feature.h)                                 */

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.37  2003/01/02 21:45:23  warmerda
+ * move OGRBuildPolygonsFromEdges into C API
+ *
  * Revision 1.36  2002/10/28 22:31:00  warmerda
  * allow wkbMultiPoint25D for SOUNDG
  *
@@ -140,6 +143,7 @@
  */
 
 #include "s57.h"
+#include "ogr_api.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
 
@@ -1288,7 +1292,9 @@ void S57Reader::AssembleAreaGeometry( DDFRecord * poFRecord,
     OGRPolygon  *poPolygon;
     OGRErr      eErr;
 
-    poPolygon = OGRBuildPolygonFromEdges( poLines, TRUE, FALSE, 0.0, &eErr );
+    poPolygon = (OGRPolygon *) 
+        OGRBuildPolygonFromEdges( (OGRGeometryH) poLines, 
+                                  TRUE, FALSE, 0.0, &eErr );
     if( eErr != OGRERR_NONE )
     {
         CPLError( CE_Warning, CPLE_AppDefined,
