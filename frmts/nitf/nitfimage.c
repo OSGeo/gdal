@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2004/02/09 05:18:07  warmerda
+ * fixed up north/south MGRS support
+ *
  * Revision 1.20  2004/02/09 05:03:42  warmerda
  * added ICORDS=U (MGRS) support
  *
@@ -241,11 +244,14 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
                 char chHemisphere;
                 NITFGetField( szTemp, pszCoordPair, 0, 15 );
                 
-                CPLDebug( "NITF", "IGEOLO = %15.15s\n", pszCoordPair );
+                CPLDebug( "NITF", "IGEOLO = %15.15s", pszCoordPair );
                 err = Convert_MGRS_To_UTM( szTemp, &nZone, &chHemisphere,
                                            pdfXY+0, pdfXY+1 );
 
-                if( psImage->nZone > 0 )
+                if( chHemisphere == 'S' )
+                    nZone = -1 * nZone;
+
+                if( psImage->nZone != 0 && psImage->nZone != -100 )
                 {
                     if( nZone != psImage->nZone )
                     {
@@ -253,7 +259,7 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
                                   "Some IGEOGLO points are in different UTM\n"
                                   "zones, but this configuration isn't currently\n"
                                   "supported by GDAL, ignoring IGEOLO." );
-                        psImage->nZone = -1;
+                        psImage->nZone = -100;
                     }
                 }
                 else if( psImage->nZone == 0 )
@@ -262,6 +268,9 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
                 }
             }
         }
+
+        if( psImage->nZone == -100 )
+            psImage->nZone = 0;
 
         nOffset += 60;
     }
