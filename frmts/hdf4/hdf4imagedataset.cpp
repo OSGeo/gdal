@@ -29,6 +29,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.44  2005/03/21 14:07:39  dron
+ * More fixes for geotransformation handling.
+ *
  * Revision 1.43  2005/03/21 11:05:02  dron
  * Added 1/2 pixel shift of origin of projected Grid datasets.
  *
@@ -1737,7 +1740,7 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
                             poDS->adfGeoTransform[0] =
                                 adfUpLeft[0] - poDS->adfGeoTransform[1] / 2;
                             poDS->adfGeoTransform[3] =
-                                adfUpLeft[1] + poDS->adfGeoTransform[5] / 2;
+                                adfUpLeft[1] - poDS->adfGeoTransform[5] / 2;
                         }
                         else
                         {
@@ -1753,7 +1756,7 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
                                 - poDS->adfGeoTransform[1] / 2;
                             poDS->adfGeoTransform[3] =
                                 CPLPackedDMSToDec(adfUpLeft[1])
-                                + poDS->adfGeoTransform[5] / 2;
+                                - poDS->adfGeoTransform[5] / 2;
                         }
                         poDS->adfGeoTransform[2] = 0.0;
                         poDS->adfGeoTransform[4] = 0.0;
