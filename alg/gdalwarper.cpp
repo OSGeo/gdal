@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2004/04/01 18:58:41  warmerda
+ * fixed GDALReprojectImage() -- pass on eResampleAlg
+ *
  * Revision 1.12  2004/03/28 21:20:39  warmerda
  * fixed initialization of nodata values
  *
@@ -152,6 +155,8 @@ CPLErr GDALReprojectImage( GDALDatasetH hSrcDS, const char *pszSrcWKT,
         psWOptions = GDALCreateWarpOptions();
     else
         psWOptions = GDALCloneWarpOptions( psOptions );
+
+    psWOptions->eResampleAlg = eResampleAlg;
 
 /* -------------------------------------------------------------------- */
 /*      Set transform.                                                  */
