@@ -14,22 +14,23 @@ LIBS	=	$(GDAL_ROOT)\gdal_i.lib
 default:	gdal_translate.exe gdalinfo.exe gdaladdo.exe
 
 gdalinfo.exe:	gdalinfo.c $(GDALLIB) $(XTRAOBJ) 
-	$(CC) $(CFLAGS) gdalinfo.c $(XTRAOBJ) $(LIBS) 
+	$(CC) $(CFLAGS) gdalinfo.c $(XTRAOBJ) $(LIBS) /link $(LINKER_FLAGS)
 	
 gdal_translate.exe:	gdal_translate.c $(GDALLIB) $(XTRAOBJ)
-	$(CC) $(CFLAGS) gdal_translate.c $(XTRAOBJ) $(LIBS) 
+	$(CC) $(CFLAGS) gdal_translate.c $(XTRAOBJ) $(LIBS) \
+		/link $(LINKER_FLAGS)
 	
 gdaladdo.exe:	gdaladdo.cpp $(GDALLIB) $(XTRAOBJ)
-	$(CC) $(CFLAGS) gdaladdo.cpp $(XTRAOBJ) $(LIBS) 
+	$(CC) $(CFLAGS) gdaladdo.cpp $(XTRAOBJ) $(LIBS) /link $(LINKER_FLAGS)
 	
 gdal2raw.exe:	gdal2raw.c $(GDALLIB) $(XTRAOBJ)
-	$(CC) $(CFLAGS) gdal2raw.c $(XTRAOBJ) $(LIBS) 
+	$(CC) $(CFLAGS) gdal2raw.c $(XTRAOBJ) $(LIBS) /link $(LINKER_FLAGS)
 	
 gdaltindex.exe:	gdaltindex.c $(GDALLIB) $(XTRAOBJ)
 	$(CC) /I$(GDAL_ROOT) $(CFLAGS) gdaltindex.c \
 		../frmts/shapelib/shpopen.c \
 		../frmts/shapelib/dbfopen.c \
-		$(XTRAOBJ) $(LIBS) 
+		$(XTRAOBJ) $(LIBS) /link $(LINKER_FLAGS)
 	
 clean:
 	-del *.obj *.exe

@@ -101,7 +101,7 @@ lib_dist:	default
 
 $(GDAL_DLL):	lib
 	link /dll /debug $(OGR_INCLUDE) $(LIBOBJ) $(ECWLIB) $(OGDILIB) \
-		 /out:$(GDAL_DLL) /implib:gdal_i.lib
+		 /out:$(GDAL_DLL) /implib:gdal_i.lib $(LINKER_FLAGS)
 
 install: $(GDAL_DLL) apps_dir pymod_dir
 	copy $(GDAL_DLL) $(BINDIR)
