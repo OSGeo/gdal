@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.22  2000/10/06 15:26:08  warmerda
+ * added SetNoDataValue, SetCategoryNames
+ *
  * Revision 1.21  2000/07/20 13:38:26  warmerda
  * make GetGDALDriverManager public with CPL_DLL
  *
@@ -417,6 +420,10 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
     virtual const char *GetUnitType();
     virtual GDALColorInterp GetColorInterpretation();
     virtual GDALColorTable *GetColorTable();
+
+    virtual CPLErr SetCategoryNames( char ** );
+    virtual CPLErr SetNoDataValue( double );
+    virtual CPLErr SetColorTable( GDALColorTable * ); 
 
     virtual int HasArbitraryOverviews();
     virtual int GetOverviewCount();
