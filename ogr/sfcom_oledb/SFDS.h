@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2002/04/25 17:38:28  warmerda
+ * added custom connection tabs
+ *
  * Revision 1.14  2001/11/09 19:06:07  warmerda
  * disable various DS properties, added debugging
  *
@@ -75,6 +78,18 @@
 
 #include "resource.h"       // main symbols
 #include "SFRS.h"
+
+//20020315 - ryan
+// {E3023100-F731-46E2-AF00-C3E835F0C68E}
+DEFINE_GUID(CLSID_OSFCustomConnectionTab, 
+0xe3023100, 0xf731, 0x46e2, 0xaf, 0x00, 0xc3, 0xe8, 0x35, 0xf0, 0xc6, 0x8e);
+
+// {E3023200-F731-46E2-AF00-C3E835F0C68E}
+DEFINE_GUID(CLSID_OSFCustomAdvancedTab, 
+0xe3023200, 0xf731, 0x46e2, 0xaf, 0x00, 0xc3, 0xe8, 0x35, 0xf0, 0xc6, 0x8e);
+
+DEFINE_GUID(SVC_DSLPropertyPages, 
+0x51740c02, 0x7e8e, 0x11d2, 0xa0, 0x2d, 0x00, 0xc0, 0x4f, 0xa3, 0x73, 0x48);
 
 // IDBInitializeImpl
 template <class T>
@@ -150,7 +165,9 @@ class ATL_NO_VTABLE CSFSource :
 	public IDBPropertiesImpl<CSFSource>,
 	public IPersistImpl<CSFSource>,
 	public IInternalConnectionImpl<CSFSource>,
-	public CDataSourceISupportErrorInfoImpl
+	public CDataSourceISupportErrorInfoImpl,
+        public IServiceProviderImpl<CSFSource>,
+        public ISpecifyPropertyPagesImpl<CSFSource>
 	{
 public:
 	HRESULT FinalConstruct()
@@ -201,14 +218,28 @@ BEGIN_PROPSET_MAP(CSFSource)
 	END_PROPERTY_SET(DBPROPSET_OGIS_SPATIAL_OPS)
 	CHAIN_PROPERTY_SET(CSFCommand)
 END_PROPSET_MAP()
+    
 BEGIN_COM_MAP(CSFSource)
-	COM_INTERFACE_ENTRY(IDBCreateSession)
-	COM_INTERFACE_ENTRY(IDBInitialize)
-	COM_INTERFACE_ENTRY(IDBProperties)
-	COM_INTERFACE_ENTRY(IPersist)
-	COM_INTERFACE_ENTRY(IInternalConnection)
-	COM_INTERFACE_ENTRY(ISupportErrorInfo)
+    COM_INTERFACE_ENTRY(IDBCreateSession)
+    COM_INTERFACE_ENTRY(IDBInitialize)
+    COM_INTERFACE_ENTRY(IDBProperties)
+    COM_INTERFACE_ENTRY(IPersist)
+    COM_INTERFACE_ENTRY(IInternalConnection)
+    COM_INTERFACE_ENTRY(ISupportErrorInfo)
+    COM_INTERFACE_ENTRY(IServiceProvider)     
+    COM_INTERFACE_ENTRY(ISpecifyPropertyPages)
 END_COM_MAP()
+
+//20020315 - ryan
+BEGIN_SERVICE_MAP(CSFSource)
+ SERVICE_ENTRY(SVC_DSLPropertyPages)
+END_SERVICE_MAP()
+
+BEGIN_PROP_MAP(CSFSource)
+ PROP_PAGE(CLSID_OSFCustomConnectionTab)
+ PROP_PAGE(CLSID_OSFCustomAdvancedTab)
+END_PROP_MAP()
+    
 public:
  
 };
