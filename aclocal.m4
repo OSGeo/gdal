@@ -56,11 +56,33 @@ AC_DEFUN(AC_UNIX_STDIO_64,
 
   AC_MSG_CHECKING([for 64bit file io])
 
+  if test "$with_unix_stdio_64" = "yes" ; then
+    VSI_FTELL64=ftell64
+    VSI_FSEEK64=fseek64
+  fi
+
   if test "$with_unix_stdio_64" = "" ; then
-    echo '#include <stdio.h>' > conftest.c
+    echo '#include <stdio.h>' > conftest.cpp
     echo 'int main() { long long off=0; fseek64(NULL, SEEK_SET, off); off = ftell64(NULL); return 0; }' >> conftest.c
     if test -z "`${CC} -o conftest conftest.c 2>&1`" ; then
       with_unix_stdio_64=yes
+      VSI_FTELL64=ftell64
+      VSI_FSEEK64=fseek64
+    fi
+    rm -f conftest*
+  fi
+
+  dnl I use CXX in this one, to ensure that the prototypes are available. 
+  dnl these functions seem to exist on Linux, but aren't normally defined
+  dnl by stdio.h.  With CXX (C++) this becomes a fatal error.
+
+  if test "$with_unix_stdio_64" = "" ; then
+    echo '#include <stdio.h>' > conftest.c
+    echo 'int main() { long long off=0; fseeko64(NULL, SEEK_SET, off); off = ftello64(NULL); return 0; }' >> conftest.c
+    if test -z "`${CXX} -o conftest conftest.c 2>&1`" ; then
+      with_unix_stdio_64=yes
+      VSI_FTELL64=ftello64
+      VSI_FSEEK64=fseeko64
     fi
     rm -f conftest*
   fi
@@ -70,6 +92,10 @@ AC_DEFUN(AC_UNIX_STDIO_64,
 
     AC_DEFINE(UNIX_STDIO_64)
     AC_DEFINE(VSI_LARGE_API_SUPPORTED)
+
+    export VSI_FTELL64 VSI_FSEEK64
+    AC_DEFINE_UNQUOTED(VSI_FTELL64,$VSI_FTELL64)
+    AC_DEFINE_UNQUOTED(VSI_FSEEK64,$VSI_FSEEK64)
   else
     AC_MSG_RESULT([no])
   fi
