@@ -1,4 +1,4 @@
-.TH "gdalwarp" 1 "16 Oct 2003" "Doxygen" \" -*- nroff -*-
+.TH "gdalwarp" 1 "1 Sep 2004" "Doxygen" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -9,13 +9,14 @@ gdalwarp \- simple image reprojection and warping utility
 .PP
 .nf
 
-gdalwarp [--version] [--formats]
+gdalwarp 
     [-s_srs srs_def] [-t_srs srs_def] [-order n] [-et err_threshold]
     [-te xmin ymin xmax ymax] [-tr xres yres] [-ts width height]
 	[-wo "NAME=VALUE"] [-ot Byte/Int16/...] [-wt Byte/Int16]
-    [-rn] [-rb] [-rc] [-rcs] [-srcnodata value [value...]]
-    [-wm memory_in_mb] [-multi] [-q]
+    [-srcnodata value [value...]] [-dstnodata value [value...]]
+    [-rn] [-rb] [-rc] [-rcs] [-wm memory_in_mb] [-multi] [-q]
     [-of format] [-co "NAME=VALUE"]* srcfile dstfile
+.fi
 .PP
 .SH "DESCRIPTION"
 .PP
@@ -26,7 +27,7 @@ source spatial reference set. The coordinate systems that can be passed are anyt
 .IP "\fB\fB-t_srs\fP \fIsrs_def\fP:\fP" 1c
 target spatial reference set. The coordinate systems that can be passed are anything supported by the OGRSpatialReference.SetFromUserInput() call, which includes EPSG PCS and GCSes (ie. EPSG:4296), PROJ.4 declarations (as above), or the name of a .prf file containing well known text. 
 .IP "\fB\fB-order\fP \fIn\fP:\fP" 1c
-order of polynom used for warping (1 to 3)  
+order of polynom used for warping (1 to 3). The default is to figure out the best order. 
 .IP "\fB\fB-et\fP \fIerr_threshold\fP:\fP" 1c
 error threshold for transformation approximation (in pixel units - defaults to 0.125). 
 .IP "\fB\fB-te\fP \fIxmin ymin xmax ymax\fP: set georeferenced extents of output file to be created. \fP" 1c
@@ -35,13 +36,13 @@ set output file resolution (in target georeferenced units)
 .IP "\fB\fB-ts\fP \fIwidth height\fP:\fP" 1c
 set output file size in pixels and lines 
 .IP "\fB\fB-wo\fP \fI'NAME=VALUE'\fP:\fP" 1c
-Set a lost of warp options. There is a \fClist\fP of available ones. Multiple \fB-wo\fP options may be listed. 
+Set a warp options. There is a \fClist\fP of available ones. Multiple \fB-wo\fP options may be listed. 
 .IP "\fB\fB-ot\fP \fItype\fP:\fP" 1c
 For the output bands to be of the indicated data type. 
 .IP "\fB\fB-wt\fP \fItype\fP:\fP" 1c
 Working pixel data type. The datatype of pixels in the source image and destination image buffers. 
 .IP "\fB\fB-rn\fP:\fP" 1c
-Use nearest neighbour resampling (fastest algorithm, worst interpolation quality). 
+Use nearest neighbour resampling (default, fastest algorithm, worst interpolation quality). 
 .IP "\fB\fB-rb\fP:\fP" 1c
 Use bilinear resampling. 
 .IP "\fB\fB-rc\fP:\fP" 1c
@@ -49,9 +50,11 @@ Use cubic resampling.
 .IP "\fB\fB-rcs\fP:\fP" 1c
 Use cubic spline resampling (slowest algorithm). 
 .IP "\fB\fB-srcnodata\fP \fIvalue [value...]\fP:\fP" 1c
-Set nodata masking values (several values may be specified). Masked values will not be used in interpolation. 
+Set nodata masking values for input bands (different values can be supplied for each band). Masked values will not be used in interpolation. 
+.IP "\fB\fB-dstnodata\fP \fIvalue [value...]\fP:\fP" 1c
+Set nodata values for output bands (different values can be supplied for each band). New files will be initialized to this value and if possible the nodata value will be recorded in the output file. 
 .IP "\fB\fB-wm\fP \fImemory_in_mb\fP:\fP" 1c
-Set the amount of memory (in bytes) that the warp API is allowed to use for caching. 
+Set the amount of memory (in megabytes) that the warp API is allowed to use for caching. 
 .IP "\fB\fB-multi\fP:\fP" 1c
 Use multithreaded warping implementation. Multiple threads will be used to process chunks of image and perform input/output operation simultaneously. 
 .IP "\fB\fB-q\fP:\fP" 1c
@@ -67,16 +70,6 @@ The destination file name.
 .PP
 .PP
 Mosaicing into an existing output file is supported if the output file already exists.
-.PP
-It currently has the following limitations: .PD 0
-
-.IP "\(bu" 2
-Only 8 bit data is can be warped. 
-.IP "\(bu" 2
-The entire source image is held in memory. 
-.IP "\(bu" 2
-Only nearest neighbour resampling is available. 
-.PP
 .SH "EXAMPLE"
 .PP
 .PP
@@ -85,7 +78,115 @@ For instance, an eight bit spot scene stored in GeoTIFF with control points mapp
 .PP
 .nf
 
-% gdalwarp -t_srs '+proj=utm +zone=11 +datum=WGS84' raw_spot.tif utm11.tif
+gdalwarp -t_srs '+proj=utm +zone=11 +datum=WGS84' raw_spot.tif utm11.tif
+.fi
+.PP
+.PP
+For instance, the second channel of an ASTER image stored in HDF with control points mapping the corners to lat/long could be warped to a UTM projection with a command like this:
+.PP
+.PP
+.nf
+
+gdalwarp HDF4_SDS:ASTER_L1B:"pg-PR1B0000-2002031402_100_001":2 pg-PR1B0000-2002031402_100_001_2.tif
+.fi
+.PP
+.SH "AUTHOR"
+.PP
+Frank Warmerdam <warmerdam@pobox.com>
+.PP
+builds a shapefile as a raster tileindex 
+.SH "SYNOPSIS"
+.PP
+.PP
+.PP
+.nf
+
+gdaltindex [-tileindex field_name] index_file [gdal_file]*
+.fi
+.PP
+.SH "DESCRIPTION"
+.PP
+This program builds a shapefile with a record for each input raster file, an attribute containing the filename, and a polygon geometry outlining the raster. This output is suitable for use with UMN MapServer as a raster tileindex.
+.PP
+.PD 0
+.IP "\(bu" 2
+The shapefile (index_file) will be created if it doesn't already exist. 
+.IP "\(bu" 2
+The default tile index field is 'location'. 
+.IP "\(bu" 2
+Raster filenames will be put in the file exactly as they are specified on the commandline. 
+.IP "\(bu" 2
+Simple rectangular polygons are generated in the same coordinate system as the rasters. 
+.PP
+.SH "EXAMPLE"
+.PP
+.PP
+.PP
+.nf
+
+gdaltindex doq_index.shp doq/*.tif
+.fi
+.PP
+.SH "AUTHOR"
+.PP
+Frank Warmerdam <warmerdam@pobox.com>
+.PP
+builds vector contour lines from a raster elevation model 
+.SH "SYNOPSIS"
+.PP
+.PP
+.PP
+.nf
+
+Usage: gdal_contour [-b <band>] [-a <attribute_name>] [-3d] [-inodata]
+                    [-snodata n] [-f <formatname>] [-i <interval>]
+                    [-off <offset>] [-fl <level> <level>...]
+                    <src_filename> <dst_filename> <interval>
+.fi
+.PP
+.SH "DESCRIPTION"
+.PP
+This program generates a vector contour file from the input raster elevation model (DEM).
+.PP
+.IP "\fB\fB-s_srs\fP \fIsrs def\fP:\fP" 1c
+source spatial reference set. The coordinate systems that can be passed are anything supported by the OGRSpatialReference.SetFromUserInput() call, which includes EPSG PCS and GCSes (ie. EPSG:4296), PROJ.4 declarations (as above), or the name of a .prf file containing well known text. </dl
+.PP
+.IP "\fB\fB-b\fP \fIband\fP:\fP" 1c
+picks a particular band to get the DEM from. Defaults to band 1.
+.PP
+.IP "\fB\fB-a\fP \fIname\fP:\fP" 1c
+provides a name for the attribute in which to put the elevation. If not provided no elevation attribute is attached.  
+.IP "\fB\fB-3d\fP: \fP" 1c
+Force production of 3D vectors instead of 2D. Includes elevation at every vertex.
+.PP
+.IP "\fB\fB-inodata\fP: \fP" 1c
+Ignore any nodata value implied in the dataset - treat all values as valid.
+.PP
+.IP "\fB\fB-snodata\fP \fIvalue\fP:\fP" 1c
+Input pixel value to treat as 'nodata'. 
+.PP
+.IP "\fB\fB-f\fP \fIformat\fP: \fP" 1c
+create output in a particular format, default is shapefiles.
+.PP
+.IP "\fB\fB-i\fP \fIinterval\fP:\fP" 1c
+elevation interval between contours.
+.PP
+.IP "\fB\fB-off\fP \fIoffset\fP:\fP" 1c
+Offset from zero relative to which to interpret intervals.
+.PP
+.IP "\fB\fB-fl\fP \fIlevel\fP: \fP" 1c
+Name one or more 'fixed levels' to extract. 
+.PP
+.SH "EXAMPLE"
+.PP
+.PP
+This would create 10meter contours from the DEM data in dem.tif and produce a shapefile in contour.shp/shx/dbf with the contour elevations in the 'elev' attribute.
+.PP
+.PP
+.nf
+
+gdal_contour -a elev dem.tif contour.shp 10.0
+.fi
 .PP
 .SH "AUTHORS"
 .PP
