@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2003/02/06 03:19:21  warmerda
+ * dont bomb if FMT, UNIT or ATLB missing
+ *
  * Revision 1.10  2001/11/30 05:00:17  warmerda
  * added error detection in GetBlock() to avoid infinite recursion
  *
@@ -327,9 +330,20 @@ int SDTSRasterReader::Open( SDTS_CATD * poCATD, SDTS_IREF * poIREF,
 /* -------------------------------------------------------------------- */
 /*      Get some values we are interested in.                           */
 /* -------------------------------------------------------------------- */
-    strcpy( szFMT, poRecord->GetStringSubfield("DDSH",0,"FMT",0) );
-    strcpy( szUNITS, poRecord->GetStringSubfield("DDSH",0,"UNIT",0) );
-    strcpy( szLabel, poRecord->GetStringSubfield("DDSH",0,"ATLB",0) );
+    if( poRecord->GetStringSubfield("DDSH",0,"FMT",0) != NULL )
+        strcpy( szFMT, poRecord->GetStringSubfield("DDSH",0,"FMT",0) );
+    else
+        strcpy( szFMT, "BUI16" );
+
+    if( poRecord->GetStringSubfield("DDSH",0,"UNIT",0) != NULL )
+        strcpy( szUNITS, poRecord->GetStringSubfield("DDSH",0,"UNIT",0) );
+    else
+        strcpy( szUNITS, "METERS" );
+
+    if( poRecord->GetStringSubfield("DDSH",0,"ATLB",0) != NULL )
+        strcpy( szLabel, poRecord->GetStringSubfield("DDSH",0,"ATLB",0) );
+    else
+        strcpy( szLabel, "" );
     
 /* -------------------------------------------------------------------- */
 /*      Open the cell file.                                             */
