@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: avc_rawbin.c,v 1.11 2000/09/22 19:45:21 daniel Exp $
+ * $Id: avc_rawbin.c,v 1.12 2004/08/19 23:41:04 warmerda Exp $
  *
  * Name:     avc_rawbin.c
  * Project:  Arc/Info vector coverage (AVC)  BIN->E00 conversion library
@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log: avc_rawbin.c,v $
+ * Revision 1.12  2004/08/19 23:41:04  warmerda
+ * fixed pointer aliasing optimization bug
+ *
  * Revision 1.11  2000/09/22 19:45:21  daniel
  * Switch to MIT-style license
  *
@@ -465,7 +468,7 @@ float   AVCRawBinReadFloat(AVCRawBinFile *psFile)
 
     if (psFile->eByteOrder != geSystemByteOrder)
     {
-        *(GUInt32*)(&fValue) = CPL_SWAP32(*(GUInt32*)(&fValue));
+        CPL_SWAP32PTR( &fValue );
     }
 
     return fValue;
@@ -556,7 +559,7 @@ void  AVCRawBinWriteFloat(AVCRawBinFile *psFile, float fValue)
 {
     if (psFile->eByteOrder != geSystemByteOrder)
     {
-        *(GUInt32*)(&fValue) = CPL_SWAP32(*(GUInt32*)(&fValue));
+        CPL_SWAP32PTR( &fValue );
     }
 
     AVCRawBinWriteBytes(psFile, 4, (GByte*)&fValue);

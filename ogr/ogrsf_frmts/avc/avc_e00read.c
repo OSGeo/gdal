@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: avc_e00read.c,v 1.15 2002/08/27 15:46:15 daniel Exp $
+ * $Id: avc_e00read.c,v 1.16 2004/07/14 18:49:50 daniel Exp $
  *
  * Name:     avc_e00read.c
  * Project:  Arc/Info vector coverage (AVC)  BIN->E00 conversion library
@@ -32,6 +32,9 @@
  **********************************************************************
  *
  * $Log: avc_e00read.c,v $
+ * Revision 1.16  2004/07/14 18:49:50  daniel
+ * Fixed leak when trying to open something that's not a coverage (bug513)
+ *
  * Revision 1.15  2002/08/27 15:46:15  daniel
  * Applied fix made in GDAL/OGR by 'aubin' (moved include ctype.h after avc.h)
  *
