@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.34  2002/11/12 23:11:52  warmerda
+ * fixed error with tags in DGNFreeElement()
+ *
  * Revision 1.33  2002/11/12 19:45:27  warmerda
  * added support to parse view infos in TCB
  *
@@ -1236,13 +1239,14 @@ void DGNFreeElement( DGNHandle hDGN, DGNElemCore *psElement )
             CPLFree( psTagSet->tagList[iTag].name );
             CPLFree( psTagSet->tagList[iTag].prompt );
 
-            if( psTagSet->tagList[iTag].type == 4 )
+            if( psTagSet->tagList[iTag].type == 1 )
                 CPLFree( psTagSet->tagList[iTag].defaultValue.string );
         }
+        CPLFree( psTagSet->tagList );
     }
     else if( psElement->stype == DGNST_TAG_VALUE )
     {
-        if( ((DGNElemTagValue *) psElement)->tagType == 4 )
+        if( ((DGNElemTagValue *) psElement)->tagType == 1 )
             CPLFree( ((DGNElemTagValue *) psElement)->tagValue.string );
     }
 
