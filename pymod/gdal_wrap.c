@@ -849,15 +849,18 @@ py_GDALGetGCPs(PyObject *self, PyObject *args) {
     psList = PyList_New(GDALGetGCPCount(_arg0));
     for( iGCP = 0; pasGCPList != NULL && iGCP < GDALGetGCPCount(_arg0); iGCP++)
     {
-	PyList_SetItem(psList, iGCP, 
-                       Py_BuildValue("(ssddddd)", 
-                                     pasGCPList[iGCP].pszId,
-                                     pasGCPList[iGCP].pszInfo,
-                                     pasGCPList[iGCP].dfGCPPixel,
-                                     pasGCPList[iGCP].dfGCPLine,
-                                     pasGCPList[iGCP].dfGCPX,
-                                     pasGCPList[iGCP].dfGCPY,
-                                     pasGCPList[iGCP].dfGCPZ ) );
+        PyObject *py_item;
+
+        py_item = Py_BuildValue("(ssddddd)", 
+                                pasGCPList[iGCP].pszId,
+                                pasGCPList[iGCP].pszInfo,
+                                pasGCPList[iGCP].dfGCPPixel,
+                                pasGCPList[iGCP].dfGCPLine,
+                                pasGCPList[iGCP].dfGCPX,
+                                pasGCPList[iGCP].dfGCPY,
+                                pasGCPList[iGCP].dfGCPZ );
+	PyList_SetItem(psList, iGCP, py_item );
+        Py_DECREF(py_item);
     }
 
     return psList;
