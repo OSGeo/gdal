@@ -26,6 +26,9 @@
 ###############################################################################
 # 
 #  $Log$
+#  Revision 1.18  2005/03/29 22:40:00  fwarmerdam
+#  Added -ot option.
+#
 #  Revision 1.17  2005/02/23 18:29:07  fwarmerdam
 #  Accept "either spelling" of separate.
 #
@@ -279,7 +282,7 @@ def Usage():
     print 'Usage: gdal_merge.py [-o out_filename] [-of out_format] [-co NAME=VALUE]*'
     print '                     [-ps pixelsize_x pixelsize_y] [-separate] [-v] [-pct]'
     print '                     [-ul_lr ulx uly lrx lry] [-n nodata_value] [-init value]'
-    print '                     input_files'
+    print '                     [-ot datatype] input_files'
     print
 
 # =============================================================================
@@ -300,6 +303,7 @@ if __name__ == '__main__':
     nodata = None
     create_options = []
     pre_init = None
+    band_type = None
 
     gdal.AllRegister()
     argv = gdal.GeneralCmdLineProcessor( sys.argv )
@@ -326,6 +330,13 @@ if __name__ == '__main__':
 
         elif arg == '-pct':
             copy_pct = 1
+
+        elif arg == '-ot':
+            i = i + 1
+            band_type = gdal.GetDataTypeByName( argv[i] )
+            if band_type == gdal.GDT_Unknown:
+                print 'Unknown GDAL data type: ', argv[i]
+                sys.exit( 1 )
 
         elif arg == '-init':
             i = i + 1
@@ -399,6 +410,9 @@ if __name__ == '__main__':
         psize_x = file_infos[0].geotransform[1]
         psize_y = file_infos[0].geotransform[5]
 
+    if band_type is None:
+        band_type = file_infos[0].band_type
+
     # Try opening as an existing file.
     gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
     t_fh = gdal.Open( out_file, gdal.GA_ReadOnly )
@@ -417,7 +431,7 @@ if __name__ == '__main__':
             bands = file_infos[0].bands
 
         t_fh = Driver.Create( out_file, xsize, ysize, bands,
-                              file_infos[0].band_type, create_options )
+                              band_type, create_options )
         t_fh.SetGeoTransform( geotransform )
         t_fh.SetProjection( file_infos[0].projection )
 
