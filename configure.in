@@ -1027,12 +1027,12 @@ else
     LIBS="$with_xerces_lib $LIBS"
   else
     if test -f $with_xerces/lib/libxerces-c.so ; then
-      LIBS="-L$with_xerces/lib -lxerces-c $LIBS"
+      LIBS="-L$with_xerces/lib -lxerces-c -lpthread $LIBS"
     elif test -f $with_xerces/lib/libxerces-c1_6_0.so ; then
       LIBS="-lxerces-c1_6_0 -lpthread $LIBS"
       LIBS="-L$with_xerces/lib $LIBS"
     else
-      LIBS="-L$with_xerces/lib -lxerces-c $LIBS"
+      LIBS="-L$with_xerces/lib -lxerces-c -lpthread $LIBS"
     fi
   fi
   if test "$with_xerces_inc" != "" ; then
