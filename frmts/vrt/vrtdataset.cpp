@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2004/10/03 16:52:45  fwarmerdam
+ * ensure overviews initialized in Create()
+ *
  * Revision 1.18  2004/08/11 20:34:52  warmerda
  * Allow "user input" for projection information in .vrt file.
  *
@@ -875,6 +878,8 @@ VRTDataset::Create( const char * pszName,
             poDS->AddBand( eType, NULL );
         
         poDS->bNeedsFlush = 1;
+
+        poDS->oOvManager.Initialize( poDS, pszName );
         
         return poDS;
     }
