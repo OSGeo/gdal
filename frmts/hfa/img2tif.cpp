@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  1999/03/11 20:56:34  warmerda
+ * Patched up Usage a bit.
+ *
  * Revision 1.8  1999/03/08 19:22:31  warmerda
  * Added support to set TIFFTAG_SAMPLEFORMAT.  Removed all byte swapping logic.
  *
@@ -87,11 +90,11 @@ void Usage()
 "    -o    <output base file name>\n"
 "          Output files will be named base_name1.tif ... base_nameN.tif,\n"
 "          where N = no. of bands.\n"
-"    -rgb  produce an RGB image file from the indicated red, green and blue\n"
-"          bands within an existing imagine file.\n"
-"    -c    [packbits compress flag (def=uncompressed)]\n"
-"    -v    [overview sampling increment(s) (0=single, 98=full set minus 2x,\n"
-"           99=full set, def=98)  Examples: -v 2 4 8   -v 0   -v 99]\n"
+"    -rgb  produce an RGB image file from the indicated band numbers\n"
+"          within an existing imagine file.\n"
+"    -c    packbits compress flag (def=uncompressed)\n"
+"    -v    overview sampling increment(s) (0=single, 98=full set minus 2x,\n"
+"          99=full set)  Examples: -v 2 4 8   -v 0   -v 99\n"
 "    -quiet Don't produce a translation report.\n"
 "    -?    Print explanation of command line arguments\n" );
     exit( 1 );
