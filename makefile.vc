@@ -12,7 +12,7 @@ OGR_INCLUDE = /INCLUDE:_OCTNewCoordinateTransformation \
 #OGR_OBJ = ogr\ogr.lib
 #OGR_INCLUDE =	/INCLUDE:_OCTNewCoordinateTransformation /INCLUDE:_OGRFree
 
-LIBOBJ = port\*.obj core\*.obj frmts\o\*.obj $(OGR_OBJ)
+LIBOBJ = port\*.obj core\*.obj alg\*.obj frmts\o\*.obj $(OGR_OBJ)
 	
 DISTDIR	=	gdal_$(VERSION)
 
@@ -59,6 +59,8 @@ ogr_min:
 
 core_dir:
 	cd core
+	$(MAKE) /f makefile.vc
+	cd ..\alg
 	$(MAKE) /f makefile.vc
 	cd ..
 
