@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2004/08/30 18:50:27  warmerda
+ * Fixed so that SetProjection() succeeds.
+ *
  * Revision 1.17  2004/04/15 18:54:10  warmerda
  * added UnitType, Offset, Scale and CategoryNames support
  *
@@ -471,7 +474,7 @@ CPLErr MEMDataset::SetProjection( const char *pszProjectionIn )
     CPLFree( pszProjection );
     pszProjection = CPLStrdup( pszProjectionIn );
 
-    return CE_Failure;
+    return CE_None;
 }
 
 /************************************************************************/
