@@ -29,6 +29,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.3  1999/01/27 18:48:12  warmerda
+ * Declare constructor and destructor for HFADataset.
+ *
  * Revision 1.2  1999/01/27 18:32:46  warmerda
  * compiles OK
  *
@@ -60,6 +63,9 @@ class CPL_DLL HFADataset : public GDALDataset
     HFAHandle	hHFA;
 
   public:
+                HFADataset();
+                ~HFADataset();
+
     static GDALDataset *Open( GDALOpenInfo * );
 
 #ifdef notdef    
