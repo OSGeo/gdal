@@ -1,7 +1,7 @@
 
 OBJ	=	mrsiddataset.obj
 
-EXTRAFLAGS = 	-I$(MRSID_INCLUDE) -I..\gtiff\libgeotiff $(MRSID_FLAGS)
+EXTRAFLAGS = 	$(MRSID_INCLUDE) -I..\gtiff\libgeotiff $(MRSID_FLAGS)
 
 GDAL_ROOT	=	..\..
 
