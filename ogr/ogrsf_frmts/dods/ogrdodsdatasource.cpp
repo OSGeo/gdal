@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2004/02/17 05:46:43  warmerda
+ * Added grid/array support
+ *
  * Revision 1.4  2004/01/29 21:01:03  warmerda
  * added sequences within sequences support
  *
@@ -218,6 +221,10 @@ int OGRDODSDataSource::Open( const char * pszNewName )
             if( poVar->type() == dods_sequence_c )
                 AddLayer( new OGRDODSSequenceLayer(this,poVar->name().c_str(),
                                                    NULL) );
+            else if( poVar->type() == dods_grid_c 
+                     || poVar->type() == dods_array_c )
+                AddLayer( new OGRDODSGridLayer(this,poVar->name().c_str(),
+                                               NULL) );
         }
     }
 
