@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2003/01/07 16:46:28  warmerda
+ * Added support for forming polygons by caching line geometries
+ *
  * Revision 1.16  2002/11/17 05:16:49  warmerda
  * added meridian 2 support
  *
@@ -646,6 +649,9 @@ static OGRFeature *TranslateBoundarylinePoly( NTFFileReader *poReader,
         poFeature->SetGeometryDirectly(
             poReader->ProcessGeometry(papoGroup[3]));
 
+        // Try to assemble polygon geometry.
+        poReader->FormPolygonFromCache( poFeature );
+
         return poFeature;
     }
 
@@ -742,6 +748,9 @@ static OGRFeature *TranslateBoundarylinePoly( NTFFileReader *poReader,
     poFeature->SetGeometryDirectly(
         poReader->ProcessGeometry(papoGroup[iRec+2]));
 
+    // Try to assemble polygon geometry.
+    poReader->FormPolygonFromCache( poFeature );
+
     return poFeature;
 }
 
@@ -837,6 +846,9 @@ static OGRFeature *TranslateBL2000Poly( NTFFileReader *poReader,
                                         "PI", 1, "HA", 2,
                                         NULL );
 
+        // Try to assemble polygon geometry.
+        poReader->FormPolygonFromCache( poFeature );
+
         return poFeature;
     }
 
@@ -927,6 +939,9 @@ static OGRFeature *TranslateBL2000Poly( NTFFileReader *poReader,
     poReader->ApplyAttributeValues( poFeature, papoGroup,
                                     "PI", 1, "HA", 2,
                                     NULL );
+
+    // Try to assemble polygon geometry.
+    poReader->FormPolygonFromCache( poFeature );
 
     return poFeature;
 }
@@ -2104,7 +2119,8 @@ void NTFFileReader::EstablishLayers()
                         "HWM_FLAG", OFTInteger, 1, 0, 
                         NULL );
 
-        EstablishLayer( "BOUNDARYLINE_POLY", wkbPoint,
+        EstablishLayer( "BOUNDARYLINE_POLY", 
+                        bCacheLines ? wkbPolygon : wkbPoint,
                         TranslateBoundarylinePoly, NRT_POLYGON, NULL,
                         "POLY_ID", OFTInteger, 6, 0,
                         "FEAT_CODE", OFTString, 4, 0,
@@ -2135,7 +2151,8 @@ void NTFFileReader::EstablishLayers()
                         "FEAT_CODE", OFTString, 4, 0,
                         "GLOBAL_LINK_ID", OFTInteger, 10, 0,
                         NULL );
-        EstablishLayer( "BL2000_POLY", wkbNone,
+        EstablishLayer( "BL2000_POLY", 
+                        bCacheLines ? wkbPolygon : wkbNone,
                         TranslateBL2000Poly, NRT_POLYGON, NULL,
                         "POLY_ID", OFTInteger, 6, 0,
                         "GLOBAL_SEED_ID", OFTInteger, 6, 0,

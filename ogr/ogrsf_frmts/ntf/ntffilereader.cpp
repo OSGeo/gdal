@@ -3,7 +3,7 @@
  *
  * Project:  NTF Translator
  * Purpose:  NTFFileReader class implementation.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 1999, Frank Warmerdam
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.30  2003/01/07 16:46:28  warmerda
+ * Added support for forming polygons by caching line geometries
+ *
  * Revision 1.29  2002/11/17 05:16:49  warmerda
  * added meridian 2 support
  *
@@ -125,6 +128,7 @@
 #include "ntf.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
+#include "ogr_api.h"
 
 CPL_CVSID("$Id$");
 
@@ -197,6 +201,15 @@ NTFFileReader::NTFFileReader( OGRNTFDataSource * poDataSource )
 
     bIndexBuilt = FALSE;
     bIndexNeeded = FALSE;
+
+    if( poDS->GetOption("CACHE_LINES") != NULL
+        && EQUAL(poDS->GetOption("CACHE_LINES"),"OFF") )
+        bCacheLines = FALSE;
+    else
+        bCacheLines = TRUE;
+
+    nLineCacheSize = 0;
+    papoLineCache = NULL;
 }
 
 /************************************************************************/
@@ -206,6 +219,7 @@ NTFFileReader::NTFFileReader( OGRNTFDataSource * poDataSource )
 NTFFileReader::~NTFFileReader()
 
 {
+    CacheClean();
     DestroyIndex();
     ClearDefs();
     CPLFree( pszFilename );
@@ -289,6 +303,8 @@ void NTFFileReader::Close()
         VSIFClose( fp );
         fp = NULL;
     }
+
+    CacheClean();
 }
 
 /************************************************************************/
@@ -534,6 +550,10 @@ int NTFFileReader::Open( const char * pszFilenameIn )
     if( poDS->GetOption("FORCE_GENERIC") != NULL
         && !EQUAL(poDS->GetOption("FORCE_GENERIC"),"OFF") )
         nProduct = NPC_UNKNOWN;
+
+    // No point in caching lines if there are no polygons.
+    if( nProduct != NPC_BOUNDARYLINE && nProduct != NPC_BL2000 )
+        bCacheLines = FALSE;
     
 /* -------------------------------------------------------------------- */
 /*      Handle the section header record.                               */
@@ -699,6 +719,8 @@ OGRGeometry *NTFFileReader::ProcessGeometry( NTFRecord * poRecord,
             }
         }
         poLine->setNumPoints( nOutCount );
+
+        CacheAddByGeomId( atoi(poRecord->GetField(3,8)), poLine );
     }
 
 /* -------------------------------------------------------------------- */
@@ -847,6 +869,8 @@ OGRGeometry *NTFFileReader::ProcessGeometry3D( NTFRecord * poRecord,
             }
         }
         poLine->setNumPoints( nOutCount );
+
+        CacheAddByGeomId( atoi(poRecord->GetField(3,8)), poLine );
     }
 
     if( poGeometry != NULL )
@@ -1552,6 +1576,7 @@ OGRFeature * NTFFileReader::ReadOGRFeature( OGRNTFLayer * poTargetLayer )
 
         if( poTargetLayer != NULL && poTargetLayer != poLayer )
         {
+            CacheLineGeometryInGroup( papoGroup );
             nSavedFeatureId++;
             continue;
         }
@@ -1652,6 +1677,7 @@ void NTFFileReader::IndexFile()
 
     bIndexNeeded = TRUE;
     bIndexBuilt = TRUE;
+    bCacheLines = FALSE;
 
 /* -------------------------------------------------------------------- */
 /*      Process all records after the section header, and before 99     */
@@ -2033,3 +2059,155 @@ void NTFFileReader::OverrideTileName( const char *pszNewName )
     pszTileName = CPLStrdup( pszNewName );
 }
 
+/************************************************************************/
+/*                          CacheAddByGeomId()                          */
+/*                                                                      */
+/*      Add a geometry to the geometry cache given it's GEOMID as       */
+/*      the index.                                                      */
+/************************************************************************/
+
+void NTFFileReader::CacheAddByGeomId( int nGeomId, OGRGeometry *poGeometry )
+
+{
+    if( !bCacheLines )
+        return;
+
+    CPLAssert( nGeomId >= 0 );
+
+/* -------------------------------------------------------------------- */
+/*      Grow the cache if it isn't large enough to hold the newly       */
+/*      requested geometry id.                                          */
+/* -------------------------------------------------------------------- */
+    if( nGeomId >= nLineCacheSize )
+    {
+        int	nNewSize = nGeomId + 100;
+
+        papoLineCache = (OGRGeometry **) 
+            CPLRealloc( papoLineCache, sizeof(void*) * nNewSize );
+        memset( papoLineCache + nLineCacheSize, 0, 
+                sizeof(void*) * (nNewSize - nLineCacheSize) );
+        nLineCacheSize = nNewSize;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Make a cloned copy of the geometry for the cache.               */
+/* -------------------------------------------------------------------- */
+    if( papoLineCache[nGeomId] != NULL )
+        return;
+
+    papoLineCache[nGeomId] = poGeometry->clone();
+}
+
+/************************************************************************/
+/*                          CacheGetByGeomId()                          */
+/************************************************************************/
+
+OGRGeometry *NTFFileReader::CacheGetByGeomId( int nGeomId )
+
+{
+    if( nGeomId < 0 || nGeomId >= nLineCacheSize )
+        return NULL;
+    else
+        return papoLineCache[nGeomId];
+}
+
+/************************************************************************/
+/*                             CacheClean()                             */
+/************************************************************************/
+
+void NTFFileReader::CacheClean()
+
+{
+    for( int i = 0; i < nLineCacheSize; i++ )
+    {
+        if( papoLineCache[i] != NULL )
+            delete papoLineCache[i];
+    }
+    if( papoLineCache != NULL )
+        CPLFree( papoLineCache );
+
+    nLineCacheSize = 0;
+    papoLineCache = NULL;
+}
+
+/************************************************************************/
+/*                      CacheLineGeometryInGroup()                      */
+/*                                                                      */
+/*      Run any line geometries in this group through the               */
+/*      ProcessGeometry() call just to ensure the line geometry will    */
+/*      be cached.                                                      */
+/************************************************************************/
+
+void NTFFileReader::CacheLineGeometryInGroup( NTFRecord **papoGroup )
+
+{
+    if( !bCacheLines )
+        return;
+
+    for( int iRec = 0; papoGroup[iRec] != NULL; iRec++ )
+    {
+        if( papoGroup[iRec]->GetType() == NRT_GEOMETRY
+            || papoGroup[iRec]->GetType() == NRT_GEOMETRY3D )
+        {
+            OGRGeometry *poGeom = ProcessGeometry( papoGroup[iRec], NULL );
+            if( poGeom != NULL )
+                delete poGeom;
+        }
+    }
+}
+
+/************************************************************************/
+/*                        FormPolygonFromCache()                        */
+/*                                                                      */
+/*      This method will attempt to find the line geometries            */
+/*      referenced by the GEOM_ID_OF_LINK ids of a feature in the       */
+/*      line cache (if available), and if so, assemble them into a      */
+/*      polygon.                                                        */
+/************************************************************************/
+
+int NTFFileReader::FormPolygonFromCache( OGRFeature * poFeature )
+
+{
+    if( !bCacheLines )
+        return FALSE;
+
+    OGRGeometryCollection oLines;
+    const int *panLinks;
+    int        nLinkCount, i;
+
+/* -------------------------------------------------------------------- */
+/*      Collect all the linked lines.                                   */
+/* -------------------------------------------------------------------- */
+    panLinks = poFeature->GetFieldAsIntegerList( "GEOM_ID_OF_LINK", 
+                                                 &nLinkCount );
+
+    if( panLinks == NULL )
+        return FALSE;
+
+    for( i = 0; i < nLinkCount; i++ )
+    {
+        OGRGeometry *poLine = CacheGetByGeomId( panLinks[i] );
+        if( poLine == NULL )
+        {
+            oLines.removeGeometry( -1, FALSE );
+            return FALSE;
+        }
+
+        oLines.addGeometryDirectly( poLine );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Assemble into a polygon geometry.                               */
+/* -------------------------------------------------------------------- */
+    OGRPolygon *poPoly;
+
+    poPoly = (OGRPolygon *) 
+        OGRBuildPolygonFromEdges( (OGRGeometryH) &oLines, FALSE, FALSE, 0.1, 
+                                  NULL );
+
+    poFeature->SetGeometryDirectly( poPoly );
+
+    oLines.removeGeometry( -1, FALSE );
+    
+    return poPoly != NULL;
+}
