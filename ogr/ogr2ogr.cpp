@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2003/01/08 22:03:17  warmerda
+ * Added code to force geometries to polygon or multipolygo if -nlt used
+ *
  * Revision 1.19  2002/10/24 02:22:56  warmerda
  * added the -nlt flag
  *
@@ -543,9 +546,16 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
     OGRLayer    *poDstLayer;
     OGRFeatureDefn *poFDefn;
     OGRErr      eErr;
+    int         bForceToPolygon = FALSE;
+    int         bForceToMultiPolygon = FALSE;
 
     if( pszNewLayerName == NULL )
         pszNewLayerName = poSrcLayer->GetLayerDefn()->GetName();
+
+    if( wkbFlatten(eGType) == wkbPolygon )
+        bForceToPolygon = TRUE;
+    else if( wkbFlatten(eGType) == wkbMultiPolygon )
+        bForceToMultiPolygon = TRUE;
 
 /* -------------------------------------------------------------------- */
 /*      Setup coordinate transformation if we need it.                  */
@@ -718,7 +728,21 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
                     return FALSE;
             }
         }
-        
+
+        if( poDstFeature->GetGeometryRef() != NULL && bForceToPolygon )
+        {
+            poDstFeature->SetGeometryDirectly( 
+                OGRGeometryFactory::forceToPolygon(
+                    poDstFeature->StealGeometry() ) );
+        }
+                    
+        if( poDstFeature->GetGeometryRef() != NULL && bForceToMultiPolygon )
+        {
+            poDstFeature->SetGeometryDirectly( 
+                OGRGeometryFactory::forceToMultiPolygon(
+                    poDstFeature->StealGeometry() ) );
+        }
+                    
         delete poFeature;
 
         CPLErrorReset();
