@@ -52,6 +52,17 @@ platforms with ArcView installed.<p>
 
 NOTE: Implemented as <tt>gdal/frmts/aigrid/aigdataset.cpp</tt>.<p>
 
+<h2><a name="BSB">BSB -- Maptech/NOAA BSB Nautical Chart Format</a></h2>
+
+Supported for read access, including reading the colour table and the
+reference points (as GCPs).  Note that the .BSB files cannot be selected
+directly.  Instead select the .KAP files. <p>
+
+This driver is based on work by Mike Higgins.  See the frmts/bsb/bsb_read.c
+files for details on patents affecting BSB format.<p>
+
+NOTE: Implemented as <tt>gdal/frmts/bsb/bsbdataset.cpp</tt>.<p>
+
 <h2><a name="CEOS">CEOS -- CEOS Image</a></h2>
 
 This is a simple, read-only reader for ceos image files.  To use, select
