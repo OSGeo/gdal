@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2001/10/10 20:42:43  warmerda
+ * added ESRI WKT morphing support
+ *
  * Revision 1.7  2001/07/19 18:25:07  warmerda
  * expanded tabs
  *
@@ -55,6 +58,23 @@
 #include "ogr_p.h"
 
 CPL_CVSID("$Id$");
+
+char *apszProjMapping[] = {
+    "Albers", SRS_PT_ALBERS_CONIC_EQUAL_AREA,
+    "Cassini", SRS_PT_CASSINI_SOLDNER,
+    "Hotine_Oblique_Mercator_Azimuth_Natural_Origin", 
+    					SRS_PT_HOTINE_OBLIQUE_MERCATOR,
+    "Lambert_Conformal_Conic", SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP,
+    "Van_der_Grinten_I", SRS_PT_VANDERGRINTEN,
+    SRS_PT_TRANSVERSE_MERCATOR, SRS_PT_TRANSVERSE_MERCATOR,
+    "Gauss_Kruger", SRS_PT_TRANSVERSE_MERCATOR,
+    "Mercator", SRS_PT_MERCATOR_1SP,
+    NULL, NULL }; 
+ 
+char *apszArgMapping[] = {
+    
+    NULL, NULL }; 
+ 
 
 /************************************************************************/
 /*                         OSRImportFromESRI()                          */
@@ -202,9 +222,13 @@ OGRErr OGRSpatialReference::importFromESRI( char **papszPrj )
         || EQUALN(papszPrj[0],"LOCAL_CS",8) )
     {
         char    *pszWKT;
+        OGRErr  eErr;
 
         pszWKT = papszPrj[0];
-        return importFromWkt( &pszWKT );
+        eErr = importFromWkt( &pszWKT );
+        if( eErr == OGRERR_NONE )
+            eErr = morphFromESRI();
+        return eErr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -326,3 +350,148 @@ OGRErr OGRSpatialReference::importFromESRI( char **papszPrj )
     
     return OGRERR_NONE;
 }
+
+/************************************************************************/
+/*                            morphToESRI()                             */
+/*                                                                      */
+/*      Modify this definition to fit better with the ESRI concept      */
+/*      of WKT format.                                                  */
+/************************************************************************/
+
+/**
+ * Convert in place from ESRI WKT format.
+ *
+ * The value notes of this coordinate system as modified in various manners
+ * to adhere more closely to the WKT standard.  This mostly involves
+ * translating a variety of ESRI names for projections, arguments and
+ * datums to "standard" names, as defined by Adam Gawne-Cain's reference
+ * translation of EPSG to WKT for the CT specification.
+ *
+ * This does the same as the C function OSRMorphToESRI().
+ *
+ * @return OGRERR_NONE unless something goes badly wrong.
+ */
+
+OGRErr OGRSpatialReference::morphToESRI()
+
+{
+    OGRErr	eErr;
+
+    if( GetRoot() == NULL )
+        return OGRERR_NONE;
+
+/* -------------------------------------------------------------------- */
+/*      Strip all CT parameters (AXIS, AUTHORITY, TOWGS84, etc).        */
+/* -------------------------------------------------------------------- */
+    eErr = StripCTParms();
+    if( eErr != OGRERR_NONE )
+        return eErr;
+
+/* -------------------------------------------------------------------- */
+/*      Try to insert a D_ in front of the datum name.                  */
+/* -------------------------------------------------------------------- */
+    OGR_SRSNode	*poDatum;
+
+    poDatum = GetAttrNode( "DATUM" );
+    if( poDatum != NULL )
+        poDatum = poDatum->GetChild(0);
+
+    if( poDatum != NULL )
+    {
+        if( !EQUALN(poDatum->GetValue(),"D_",2) )
+        {
+            char *pszNewValue;
+
+            pszNewValue = (char *) CPLMalloc(strlen(poDatum->GetValue())+3);
+            strcpy( pszNewValue, "D_" );
+            strcat( pszNewValue, poDatum->GetValue() );
+            poDatum->SetValue( pszNewValue );
+            CPLFree( pszNewValue );
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Translate PROJECTION keywords that are misnamed.                */
+/* -------------------------------------------------------------------- */
+    GetRoot()->applyRemapper( "PROJECTION", 
+                              apszProjMapping+1, apszProjMapping, 2 );
+
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                           OSRMorphToESRI()                           */
+/************************************************************************/
+
+OGRErr OSRMorphToESRI( OGRSpatialReferenceH hSRS )
+
+{
+    return ((OGRSpatialReference *) hSRS)->morphFromESRI();
+}
+
+/************************************************************************/
+/*                           morphFromESRI()                            */
+/*                                                                      */
+/*      modify this definition from the ESRI definition of WKT to       */
+/*      the "Standard" definition.                                      */
+/************************************************************************/
+
+/**
+ * Convert in place to ESRI WKT format.
+ *
+ * The value nodes of this coordinate system as modified in various manners
+ * more closely map onto the ESRI concept of WKT format.  This includes
+ * renaming a variety of projections and arguments, and stripping out 
+ * nodes note recognised by ESRI (like AUTHORITY and AXIS). 
+ *
+ * This does the same as the C function OSRMorphFromESRI().
+ *
+ * @return OGRERR_NONE unless something goes badly wrong.
+ */
+
+OGRErr OGRSpatialReference::morphFromESRI()
+
+{
+    OGRErr	eErr = OGRERR_NONE;
+
+    if( GetRoot() == NULL )
+        return OGRERR_NONE;
+
+/* -------------------------------------------------------------------- */
+/*      Try to remove any D_ in front of the datum name.                */
+/* -------------------------------------------------------------------- */
+    OGR_SRSNode	*poDatum;
+
+    poDatum = GetAttrNode( "DATUM" );
+    if( poDatum != NULL )
+        poDatum = poDatum->GetChild(0);
+
+    if( poDatum != NULL )
+    {
+        if( EQUALN(poDatum->GetValue(),"D_",2) )
+        {
+            char *pszNewValue = CPLStrdup( poDatum->GetValue() + 2 );
+            poDatum->SetValue( pszNewValue );
+            CPLFree( pszNewValue );
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Translate PROJECTION keywords that are misnamed.                */
+/* -------------------------------------------------------------------- */
+    GetRoot()->applyRemapper( "PROJECTION", 
+                              apszProjMapping, apszProjMapping+1, 2 );
+
+    return eErr;
+}
+
+/************************************************************************/
+/*                          OSRMorphFromESRI()                          */
+/************************************************************************/
+
+OGRErr OSRMorphFromESRI( OGRSpatialReferenceH hSRS )
+
+{
+    return ((OGRSpatialReference *) hSRS)->morphFromESRI();
+}
+

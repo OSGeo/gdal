@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.37  2001/10/10 20:42:43  warmerda
+ * added ESRI WKT morphing support
+ *
  * Revision 1.36  2001/09/21 16:29:21  warmerda
  * fixed typos in docs
  *
@@ -183,6 +186,8 @@ static char *papszProjectionSupported[] =
     SRS_PT_CASSINI_SOLDNER,
     SRS_PT_EQUIDISTANT_CONIC,
     SRS_PT_EQUIRECTANGULAR,
+    SRS_PT_ECKERT_IV,
+    SRS_PT_ECKERT_VI,
     SRS_PT_MERCATOR_1SP,
     SRS_PT_MERCATOR_2SP,
     SRS_PT_ROBINSON,
@@ -199,6 +204,7 @@ static char *papszProjectionSupported[] =
     SRS_PT_SWISS_OBLIQUE_CYLINDRICAL,
     SRS_PT_AZIMUTHAL_EQUIDISTANT,
     SRS_PT_MILLER_CYLINDRICAL,
+    SRS_PT_NEW_ZEALAND_MAP_GRID,
     SRS_PT_SINUSOIDAL,
     SRS_PT_STEREOGRAPHIC,
     SRS_PT_GNOMONIC,
@@ -556,6 +562,8 @@ const char *OSRGetAttrValue( OGRSpatialReferenceH hSRS,
  * well formed, and consists of known tokens.  The validation is not
  * comprehensive. 
  *
+ * This method is the same as the C function OSRValidate().
+ *
  * @return OGRERR_NONE if all is fine, OGRERR_CORRUPT_DATA if the SRS is
  * not well formed, and OGRERR_UNSUPPORTED_SRS if the SRS is well formed,
  * but contains non-standard PROJECTION[] values.
@@ -692,9 +700,9 @@ OGRErr OGRSpatialReference::Validate()
         OGR_SRSNode     *poNode;
         int             i;
 
-        for( i = 1; i < poRoot->GetChildCount(); i++ )
+        for( i = 1; i < poGEOGCS->GetChildCount(); i++ )
         {
-            poNode = poRoot->GetChild(i);
+            poNode = poGEOGCS->GetChild(i);
 
             if( EQUAL(poNode->GetValue(),"DATUM") )
             {
@@ -796,11 +804,23 @@ OGRErr OGRSpatialReference::Validate()
 }
 
 /************************************************************************/
+/*                            OSRValidate()                             */
+/************************************************************************/
+
+OGRErr OSRValidate( OGRSpatialReferenceH hSRS )
+
+{
+    return ((OGRSpatialReference *) hSRS)->Validate();
+}
+
+/************************************************************************/
 /*                               Clone()                                */
 /************************************************************************/
 
 /**
  * Make a duplicate of this OGRSpatialReference.
+ *
+ * This method is the same as the C function OSRClone().
  *
  * @return a new SRS, which becomes the responsibility of the caller.
  */
@@ -816,6 +836,16 @@ OGRSpatialReference *OGRSpatialReference::Clone()
         poNewRef->poRoot = poRoot->Clone();
 
     return poNewRef;
+}
+
+/************************************************************************/
+/*                              OSRClone()                              */
+/************************************************************************/
+
+OGRSpatialReferenceH OSRClone( OGRSpatialReferenceH hSRS )
+
+{
+    return (OGRSpatialReferenceH) ((OGRSpatialReference *) hSRS)->Clone();
 }
 
 /************************************************************************/

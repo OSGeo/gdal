@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2001/10/10 20:42:43  warmerda
+ * added ESRI WKT morphing support
+ *
  * Revision 1.15  2001/09/21 16:21:02  warmerda
  * added Clear(), and SetFromUserInput() methods
  *
@@ -241,10 +244,13 @@ typedef void *OGRCoordinateTransformationH;
 OGRSpatialReferenceH CPL_DLL
       OSRNewSpatialReference( const char * /* = NULL */);
 OGRSpatialReferenceH CPL_DLL OSRCloneGeogCS( OGRSpatialReferenceH );
+OGRSpatialReferenceH CPL_DLL OSRCloneCS( OGRSpatialReferenceH );
 void CPL_DLL OSRDestroySpatialReference( OGRSpatialReferenceH );
 
 int CPL_DLL OSRReference( OGRSpatialReferenceH );
 int CPL_DLL OSRDereference( OGRSpatialReferenceH );
+
+OGRErr CPL_DLL OSRValidate( OGRSpatialReferenceH );
 
 OGRErr CPL_DLL OSRImportFromEPSG( OGRSpatialReferenceH, int );
 OGRErr CPL_DLL OSRImportFromWkt( OGRSpatialReferenceH, char ** );
@@ -253,6 +259,9 @@ OGRErr CPL_DLL OSRImportFromESRI( OGRSpatialReferenceH, char **);
 OGRErr CPL_DLL OSRExportToWkt( OGRSpatialReferenceH, char ** );
 OGRErr CPL_DLL OSRExportToPrettyWkt( OGRSpatialReferenceH, char **, int);
 OGRErr CPL_DLL OSRExportToProj4( OGRSpatialReferenceH, char **);
+
+OGRErr CPL_DLL OSRMorphToESRI( OGRSpatialReferenceH );
+OGRErr CPL_DLL OSRMorphFromESRI( OGRSpatialReferenceH );
 
 OGRErr CPL_DLL OSRSetAttrValue( OGRSpatialReferenceH hSRS,
                                 const char * pszNodePath,
