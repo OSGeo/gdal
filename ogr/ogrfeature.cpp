@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2000/08/25 20:17:34  danmo
+ * Init m_poStyleTable=NULL in constructor
+ *
  * Revision 1.14  2000/08/18 21:26:53  svillene
  * Add representation
  *
@@ -95,6 +98,7 @@ OGRFeature::OGRFeature( OGRFeatureDefn * poDefnIn )
 
 {
     m_pszStyleString = NULL;
+    m_poStyleTable = NULL;
     poDefnIn->Reference();
     poDefn = poDefnIn;
 
