@@ -1,6 +1,19 @@
 /******************************************************************************
- * Copyright (c) 1998, Frank Warmerdam
+ * $Id: shpopen.c,v 1.27 2000/07/18 15:21:33 warmerda Exp $
  *
+ * Project:  Shapelib
+ * Purpose:  Implementation of core Shapefile read/write functions.
+ * Author:   Frank Warmerdam, warmerda@home.com
+ *
+ ******************************************************************************
+ * Copyright (c) 1999, Frank Warmerdam
+ *
+ * This software is available under the following "MIT Style" license,
+ * or at the option of the licensee under the LGPL (see LICENSE.LGPL).  This
+ * option is discussed in more detail in shapelib.html.
+ *
+ * --
+ * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
@@ -21,6 +34,19 @@
  ******************************************************************************
  *
  * $Log: shpopen.c,v $
+ * Revision 1.27  2000/07/18 15:21:33  warmerda
+ * added better enforcement of -1 for append in SHPWriteObject
+ *
+ * Revision 1.26  2000/02/16 16:03:51  warmerda
+ * added null shape support
+ *
+ * Revision 1.25  1999/12/15 13:47:07  warmerda
+ * Fixed record size settings in .shp file (was 4 words too long)
+ * Added stdlib.h.
+ *
+ * Revision 1.24  1999/11/05 14:12:04  warmerda
+ * updated license terms
+ *
  * Revision 1.23  1999/07/27 00:53:46  warmerda
  * added support for rewriting shapes
  *
@@ -97,13 +123,14 @@
  */
 
 static char rcsid[] = 
-  "$Id: shpopen.c,v 1.23 1999/07/27 00:53:46 warmerda Exp $";
+  "$Id: shpopen.c,v 1.27 2000/07/18 15:21:33 warmerda Exp $";
 
 #include "shapefil.h"
 
 #include <math.h>
 #include <limits.h>
 #include <assert.h>
+#include <stdlib.h>
 
 typedef unsigned char uchar;
 
@@ -830,6 +857,23 @@ int SHPWriteObject(SHPHandle psSHP, int nShapeId, SHPObject * psObject )
     psSHP->bUpdated = TRUE;
 
 /* -------------------------------------------------------------------- */
+/*      Ensure that shape object matches the type of the file it is     */
+/*      being written to.                                               */
+/* -------------------------------------------------------------------- */
+    assert( psObject->nSHPType == psSHP->nShapeType );
+
+/* -------------------------------------------------------------------- */
+/*      Ensure that -1 is used for appends.  Either blow an             */
+/*      assertion, or if they are disabled, set the shapeid to -1       */
+/*      for appends.                                                    */
+/* -------------------------------------------------------------------- */
+    assert( nShapeId == -1 
+            || (nShapeId >= 0 && nShapeId < psSHP->nRecords) );
+
+    if( nShapeId != -1 && nShapeId >= psSHP->nRecords )
+        nShapeId = -1;
+
+/* -------------------------------------------------------------------- */
 /*      Add the new entity to the in memory index.                      */
 /* -------------------------------------------------------------------- */
     if( nShapeId == -1 && psSHP->nRecords+1 > psSHP->nMaxRecords )
@@ -1097,7 +1141,7 @@ int SHPWriteObject(SHPHandle psSHP, int nShapeId, SHPObject * psObject )
     if( !bBigEndian ) SwapWord( 4, &i32 );
     ByteCopy( &i32, pabyRec, 4 );
 
-    i32 = nRecordSize/2;				/* record size */
+    i32 = (nRecordSize-8)/2;				/* record size */
     if( !bBigEndian ) SwapWord( 4, &i32 );
     ByteCopy( &i32, pabyRec + 4, 4 );
 
@@ -1182,17 +1226,19 @@ SHPObject *SHPReadObject( SHPHandle psSHP, int hEntity )
 /* -------------------------------------------------------------------- */
     psShape = (SHPObject *) calloc(1,sizeof(SHPObject));
     psShape->nShapeId = hEntity;
-    psShape->nSHPType = psSHP->nShapeType; /* should get from this shape */
+
+    memcpy( &psShape->nSHPType, pabyRec + 8, 4 );
+    if( bBigEndian ) SwapWord( 4, &(psShape->nSHPType) );
 
 /* ==================================================================== */
 /*  Extract vertices for a Polygon or Arc.				*/
 /* ==================================================================== */
-    if( psSHP->nShapeType == SHPT_POLYGON || psSHP->nShapeType == SHPT_ARC
-        || psSHP->nShapeType == SHPT_POLYGONZ
-        || psSHP->nShapeType == SHPT_POLYGONM
-        || psSHP->nShapeType == SHPT_ARCZ
-        || psSHP->nShapeType == SHPT_ARCM
-        || psSHP->nShapeType == SHPT_MULTIPATCH )
+    if( psShape->nSHPType == SHPT_POLYGON || psShape->nSHPType == SHPT_ARC
+        || psShape->nSHPType == SHPT_POLYGONZ
+        || psShape->nSHPType == SHPT_POLYGONM
+        || psShape->nSHPType == SHPT_ARCZ
+        || psShape->nSHPType == SHPT_ARCM
+        || psShape->nSHPType == SHPT_MULTIPATCH )
     {
 	int32		nPoints, nParts;
 	int    		i, nOffset;
@@ -1247,7 +1293,7 @@ SHPObject *SHPReadObject( SHPHandle psSHP, int hEntity )
 /* -------------------------------------------------------------------- */
 /*      If this is a multipatch, we will also have parts types.         */
 /* -------------------------------------------------------------------- */
-        if( psSHP->nShapeType == SHPT_MULTIPATCH )
+        if( psShape->nSHPType == SHPT_MULTIPATCH )
         {
             memcpy( psShape->panPartType, pabyRec + nOffset, 4*nParts );
             for( i = 0; i < nParts; i++ )
@@ -1280,9 +1326,9 @@ SHPObject *SHPReadObject( SHPHandle psSHP, int hEntity )
 /* -------------------------------------------------------------------- */
 /*      If we have a Z coordinate, collect that now.                    */
 /* -------------------------------------------------------------------- */
-        if( psSHP->nShapeType == SHPT_POLYGONZ
-            || psSHP->nShapeType == SHPT_ARCZ
-            || psSHP->nShapeType == SHPT_MULTIPATCH )
+        if( psShape->nSHPType == SHPT_POLYGONZ
+            || psShape->nSHPType == SHPT_ARCZ
+            || psShape->nSHPType == SHPT_MULTIPATCH )
         {
             memcpy( &(psShape->dfZMin), pabyRec + nOffset, 8 );
             memcpy( &(psShape->dfZMax), pabyRec + nOffset + 8, 8 );
@@ -1327,9 +1373,9 @@ SHPObject *SHPReadObject( SHPHandle psSHP, int hEntity )
 /* ==================================================================== */
 /*  Extract vertices for a MultiPoint.					*/
 /* ==================================================================== */
-    else if( psSHP->nShapeType == SHPT_MULTIPOINT
-             || psSHP->nShapeType == SHPT_MULTIPOINTM
-             || psSHP->nShapeType == SHPT_MULTIPOINTZ )
+    else if( psShape->nSHPType == SHPT_MULTIPOINT
+             || psShape->nSHPType == SHPT_MULTIPOINTM
+             || psShape->nSHPType == SHPT_MULTIPOINTZ )
     {
 	int32		nPoints;
 	int    		i, nOffset;
@@ -1370,7 +1416,7 @@ SHPObject *SHPReadObject( SHPHandle psSHP, int hEntity )
 /* -------------------------------------------------------------------- */
 /*      If we have a Z coordinate, collect that now.                    */
 /* -------------------------------------------------------------------- */
-        if( psSHP->nShapeType == SHPT_MULTIPOINTZ )
+        if( psShape->nSHPType == SHPT_MULTIPOINTZ )
         {
             memcpy( &(psShape->dfZMin), pabyRec + nOffset, 8 );
             memcpy( &(psShape->dfZMax), pabyRec + nOffset + 8, 8 );
@@ -1414,9 +1460,9 @@ SHPObject *SHPReadObject( SHPHandle psSHP, int hEntity )
 /* ==================================================================== */
 /*      Extract vertices for a point.                                   */
 /* ==================================================================== */
-    else if( psSHP->nShapeType == SHPT_POINT
-             || psSHP->nShapeType == SHPT_POINTM
-             || psSHP->nShapeType == SHPT_POINTZ )
+    else if( psShape->nSHPType == SHPT_POINT
+             || psShape->nSHPType == SHPT_POINTM
+             || psShape->nSHPType == SHPT_POINTZ )
     {
         int	nOffset;
         
@@ -1437,7 +1483,7 @@ SHPObject *SHPReadObject( SHPHandle psSHP, int hEntity )
 /* -------------------------------------------------------------------- */
 /*      If we have a Z coordinate, collect that now.                    */
 /* -------------------------------------------------------------------- */
-        if( psSHP->nShapeType == SHPT_POINTZ )
+        if( psShape->nSHPType == SHPT_POINTZ )
         {
             memcpy( psShape->padfZ, pabyRec + nOffset, 8 );
         
