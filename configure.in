@@ -1055,5 +1055,6 @@ LOC_MSG([  C++ compiler:              ${CXX} ${CXXFLAGS}])
 LOC_MSG()
 LOC_MSG_USE(LIBTOOL support,HAVE_LIBTOOL)
 LOC_MSG_USE(LIBZ support,LIBZ_SETTING)
+LOC_MSG_USE(enable OGR building, OGR_ENABLED)
 LOC_MSG()
 
