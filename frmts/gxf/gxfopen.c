@@ -26,6 +26,10 @@
  * Supporting routines for reading Geosoft GXF files.
  *
  * $Log$
+ * Revision 1.6  1999/01/22 05:27:28  warmerda
+ * Fixed some problems with oblique and polar stereographic projection
+ * support.
+ *
  * Revision 1.5  1999/01/11 15:32:54  warmerda
  * Added support for PROJ4 adjusted positions, and better proj support
  *
@@ -987,15 +991,41 @@ char *GXFGetMapProjectionAsPROJ4( GXFHandle hGXF )
         strcat( szPROJ4, papszMethods[4] );
     }
     
-    else if( (EQUAL(papszMethods[0],"Oblique Stereographic")
-              || EQUAL(papszMethods[0],"Polar Stereographic"))
+    else if( EQUAL(papszMethods[0],"Oblique Stereographic") 
              && CSLCount(papszMethods) > 5 )
     {
         /* there is an option to produce +lat_ts, which we ignore */
         
         strcat( szPROJ4, "+proj=stere" );
 
-        strcat( szPROJ4, " +lat_0=" );
+        strcat( szPROJ4, " +lat_0=45" );
+
+        strcat( szPROJ4, " +lat_ts=" );
+        strcat( szPROJ4, papszMethods[1] );
+        
+        strcat( szPROJ4, " +lon_0=" );
+        strcat( szPROJ4, papszMethods[2] );
+        
+        strcat( szPROJ4, " +k=" );
+        strcat( szPROJ4, papszMethods[3] );
+
+        strcat( szPROJ4, " +x_0=" );
+        strcat( szPROJ4, papszMethods[4] );
+
+        strcat( szPROJ4, " +y_0=" );
+        strcat( szPROJ4, papszMethods[5] );
+    }
+    
+    else if( EQUAL(papszMethods[0],"Polar Stereographic")
+             && CSLCount(papszMethods) > 5 )
+    {
+        /* there is an option to produce +lat_ts, which we ignore */
+        
+        strcat( szPROJ4, "+proj=stere" );
+
+        strcat( szPROJ4, " +lat_0=90" );
+
+        strcat( szPROJ4, " +lat_ts=" );
         strcat( szPROJ4, papszMethods[1] );
         
         strcat( szPROJ4, " +lon_0=" );
