@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/05/17 01:36:42  warmerda
+ * Added support for georeferencing values ... added ELASHeader.
+ *
  * Revision 1.1  1999/05/13 19:17:48  warmerda
  * New
  *
@@ -40,6 +43,39 @@ static GDALDriver	*poELASDriver = NULL;
 CPL_C_START
 void	GDALRegister_ELAS(void);
 CPL_C_END
+
+typedef struct {
+    GInt32	NBIH;	/* bytes in header, normaly 1024 */
+    GInt32      NBPR;	/* bytes per data record (all bands of scanline) */
+    GInt32	IL;	/* initial line - normally 1 */
+    GInt32	LL;	/* last line */
+    GInt32	IE;	/* initial element (pixel), normally 1 */
+    GInt32	LE;	/* last element (pixel) */
+    GInt32	NC;	/* number of channels (bands) */
+    GInt32	H4321;	/* header record identifier - always 4321. */
+    char	YLabel[4]; /* Should be "NOR" for UTM */
+    GInt32      YOffset;/* topleft pixel center northing */
+    char	XLabel[4]; /* Should be "EAS" for UTM */
+    GInt32      XOffset;/* topleft pixel center easting */
+    float	YPixSize;/* height of pixel in georef units */
+    float	XPixSize;/* width of pixel in georef units */
+    float	Matrix[4]; /* 2x2 transformation matrix.  Should be
+                              1,0,0,1 for pixel/line, or
+                              1,0,0,-1 for UTM */
+    GByte	IH19[4];/* data type, and size flags */
+    GInt32	IH20;	/* number of secondary headers */
+    char	unused1[8];
+    GInt32	LABL;	/* used by LABL module */
+    char	HEAD;	/* used by HEAD module */
+    char	Comment1[64];
+    char	Comment2[64];
+    char	Comment3[64];
+    char	Comment4[64];
+    char	Comment5[64];
+    char	Comment6[64];
+    GUInt16	ColorTable[256];  /* RGB packed with 4 bits each */
+    char	unused2[32];
+} ELASHeader;
 
 
 /************************************************************************/
@@ -56,7 +92,7 @@ class ELASDataset : public GDALDataset
 
     FILE	*fp;
 
-    GByte	abyHeader[1024];
+    ELASHeader  sHeader;
     int		bHeaderModified;
 
     GDALDataType eRasterDataType;
@@ -64,15 +100,14 @@ class ELASDataset : public GDALDataset
     int		nLineOffset;
     int		nBandOffset;     // within a line.
     
-    char	*pszProjection;
     double	adfGeoTransform[6];
 
   public:
                  ELASDataset();
                  ~ELASDataset();
 
-    virtual const char *GetProjectionRef(void);
     virtual CPLErr GetGeoTransform( double * );
+    virtual CPLErr SetGeoTransform( double * );
 
     static GDALDataset *Open( GDALOpenInfo * );
     static GDALDataset *Create( const char * pszFilename,
@@ -209,8 +244,6 @@ ELASDataset::ELASDataset()
     adfGeoTransform[3] = 0.0;
     adfGeoTransform[4] = 0.0;
     adfGeoTransform[5] = 1.0;
-
-    pszProjection = CPLStrdup("");
 }
 
 /************************************************************************/
@@ -224,8 +257,6 @@ ELASDataset::~ELASDataset()
 
     VSIFClose( fp );
     fp = NULL;
-
-    CPLFree( pszProjection );
 }
 
 /************************************************************************/
@@ -241,7 +272,8 @@ void ELASDataset::FlushCache()
 
     if( bHeaderModified )
     {
-        VSIFWrite( abyHeader, 1024, 1, fp );
+        VSIFSeek( fp, 0, SEEK_SET );
+        VSIFWrite( &sHeader, 1024, 1, fp );
         bHeaderModified = FALSE;
     }
 }
@@ -258,13 +290,11 @@ GDALDataset *ELASDataset::Open( GDALOpenInfo * poOpenInfo )
 /*	First we check to see if the file has the expected header	*/
 /*	bytes.								*/    
 /* -------------------------------------------------------------------- */
-    if( poOpenInfo->nHeaderBytes < 4 )
+    if( poOpenInfo->nHeaderBytes < 256 )
         return NULL;
 
-    if( poOpenInfo->pabyHeader[0] != 0
-        || poOpenInfo->pabyHeader[1] != 0
-        || poOpenInfo->pabyHeader[2] != 4
-        || poOpenInfo->pabyHeader[3] != 0 )
+    if( CPL_MSBWORD32(*((GInt32 *) (poOpenInfo->pabyHeader+0))) != 1024
+        || CPL_MSBWORD32(*((GInt32 *) (poOpenInfo->pabyHeader+28))) != 4321 )
     {
         return NULL;
     }
@@ -298,7 +328,7 @@ GDALDataset *ELASDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Read the header information.                                    */
 /* -------------------------------------------------------------------- */
     poDS->bHeaderModified = FALSE;
-    if( VSIFRead( poDS->abyHeader, 1024, 1, poDS->fp ) != 1 )
+    if( VSIFRead( &(poDS->sHeader), 1024, 1, poDS->fp ) != 1 )
     {
         CPLError( CE_Failure, CPLE_FileIO,
                   "Attempt to read 1024 byte header filed on file:\n", 
@@ -309,23 +339,22 @@ GDALDataset *ELASDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Extract information of interest from the header.                */
 /* -------------------------------------------------------------------- */
-    GInt32	*panHeader = (GInt32 *) poDS->abyHeader;
     int		nStart, nEnd, nELASDataType, nBytesPerSample;
     
-    poDS->nLineOffset = CPL_MSBWORD32( panHeader[1] );
+    poDS->nLineOffset = CPL_MSBWORD32( poDS->sHeader.NBPR );
 
-    nStart = CPL_MSBWORD32( panHeader[2] );
-    nEnd = CPL_MSBWORD32( panHeader[3] );
+    nStart = CPL_MSBWORD32( poDS->sHeader.IL );
+    nEnd = CPL_MSBWORD32( poDS->sHeader.LL );
     poDS->nRasterYSize = nEnd - nStart + 1;
 
-    nStart = CPL_MSBWORD32( panHeader[4] );
-    nEnd = CPL_MSBWORD32( panHeader[5] );
+    nStart = CPL_MSBWORD32( poDS->sHeader.IE );
+    nEnd = CPL_MSBWORD32( poDS->sHeader.LE );
     poDS->nRasterXSize = nEnd - nStart + 1;
 
-    poDS->nBands = CPL_MSBWORD32( panHeader[6] );
+    poDS->nBands = CPL_MSBWORD32( poDS->sHeader.NC );
 
-    nELASDataType = (poDS->abyHeader[74] & 0x7e) >> 2;
-    nBytesPerSample = poDS->abyHeader[75];
+    nELASDataType = (poDS->sHeader.IH19[2] & 0x7e) >> 2;
+    nBytesPerSample = poDS->sHeader.IH19[3];
     
     if( nELASDataType == 0 && nBytesPerSample == 1 )
         poDS->eRasterDataType = GDT_Byte;
@@ -370,6 +399,39 @@ GDALDataset *ELASDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->papoBands[iBand] = new ELASRasterBand( poDS, iBand+1 );
     }
 
+/* -------------------------------------------------------------------- */
+/*	Extract the projection coordinates, if present.			*/
+/* -------------------------------------------------------------------- */
+    if( poDS->sHeader.XOffset != 0 )
+    {
+        CPL_SWAP32PTR(&(poDS->sHeader.XPixSize));
+        CPL_SWAP32PTR(&(poDS->sHeader.YPixSize));
+
+        poDS->adfGeoTransform[0] =
+            (GInt32) CPL_MSBWORD32(poDS->sHeader.XOffset);
+        poDS->adfGeoTransform[1] = poDS->sHeader.XPixSize;
+        poDS->adfGeoTransform[2] = 0.0;
+        poDS->adfGeoTransform[3] =
+            (GInt32) CPL_MSBWORD32(poDS->sHeader.YOffset);
+        poDS->adfGeoTransform[4] = 0.0;
+        poDS->adfGeoTransform[5] = -1.0 * ABS(poDS->sHeader.YPixSize);
+
+        CPL_SWAP32PTR(&(poDS->sHeader.XPixSize));
+        CPL_SWAP32PTR(&(poDS->sHeader.YPixSize));
+
+        poDS->adfGeoTransform[0] -= poDS->adfGeoTransform[1] * 0.5;
+        poDS->adfGeoTransform[3] -= poDS->adfGeoTransform[5] * 0.5;
+    }
+    else
+    {
+        poDS->adfGeoTransform[0] = 0.0;
+        poDS->adfGeoTransform[1] = 1.0;
+        poDS->adfGeoTransform[2] = 0.0;
+        poDS->adfGeoTransform[3] = 0.0;
+        poDS->adfGeoTransform[4] = 0.0;
+        poDS->adfGeoTransform[5] = 1.0;
+    }
+    
     return( poDS );
 }
 
@@ -380,9 +442,9 @@ GDALDataset *ELASDataset::Open( GDALOpenInfo * poOpenInfo )
 /************************************************************************/
 
 GDALDataset *ELASDataset::Create( const char * pszFilename,
-                                   int nXSize, int nYSize, int nBands,
-                                   GDALDataType eType,
-                                   char ** /* notdef: papszParmList */ )
+                                  int nXSize, int nYSize, int nBands,
+                                  GDALDataType eType,
+                                  char ** /* notdef: papszParmList */ )
 
 {
     int		nBandOffset;
@@ -431,40 +493,39 @@ GDALDataset *ELASDataset::Create( const char * pszFilename,
 /*      Note that CPL_MSBWORD32() will swap little endian words to      */
 /*      big endian on little endian platforms.                          */
 /* -------------------------------------------------------------------- */
-    GByte	abyHeader[1024];
-    GInt32	*panHeader = (GInt32 *) abyHeader;
+    ELASHeader	sHeader;
 
-    memset( abyHeader, 0, 1024 );
+    memset( &sHeader, 0, 1024 );
 
-    abyHeader[2] = 4;
+    sHeader.NBIH = CPL_MSBWORD32(1024);
 
-    panHeader[1] = CPL_MSBWORD32(nBands * nBandOffset);
+    sHeader.NBPR = CPL_MSBWORD32(nBands * nBandOffset);
     
-    panHeader[2] = CPL_MSBWORD32(1);
-    panHeader[3] = CPL_MSBWORD32(nYSize);
+    sHeader.IL = CPL_MSBWORD32(1);
+    sHeader.LL = CPL_MSBWORD32(nYSize);
 
-    panHeader[4] = CPL_MSBWORD32(1);
-    panHeader[5] = CPL_MSBWORD32(nXSize);
+    sHeader.IE = CPL_MSBWORD32(1);
+    sHeader.LE = CPL_MSBWORD32(nXSize);
 
-    panHeader[6] = CPL_MSBWORD32(nBands);
+    sHeader.NC = CPL_MSBWORD32(nBands);
 
-    panHeader[7] = CPL_MSBWORD32(0x000010e1);
+    sHeader.H4321 = CPL_MSBWORD32(4321);
 
-    abyHeader[72] = 0x04;
-    abyHeader[73] = 0xd2;
-    abyHeader[75] = GDALGetDataTypeSize(eType) / 8;
+    sHeader.IH19[0] = 0x04;
+    sHeader.IH19[1] = 0xd2;
+    sHeader.IH19[3] = GDALGetDataTypeSize(eType) / 8;
 
     if( eType == GDT_Byte )
-        abyHeader[74] = 1 << 2;
+        sHeader.IH19[2] = 1 << 2;
     else if( eType == GDT_Float32 )
-        abyHeader[74] = 16 << 2;
+        sHeader.IH19[2] = 16 << 2;
     else if( eType == GDT_Float64 )
-        abyHeader[74] = 17 << 2;
+        sHeader.IH19[2] = 17 << 2;
 
 /* -------------------------------------------------------------------- */
 /*      Write the header data.                                          */
 /* -------------------------------------------------------------------- */
-    VSIFWrite( abyHeader, 1024, 1, fp );
+    VSIFWrite( &sHeader, 1024, 1, fp );
 
 /* -------------------------------------------------------------------- */
 /*      Now write out zero data for all the imagery.  This is           */
@@ -497,16 +558,6 @@ GDALDataset *ELASDataset::Create( const char * pszFilename,
 }
 
 /************************************************************************/
-/*                          GetProjectionRef()                          */
-/************************************************************************/
-
-const char *ELASDataset::GetProjectionRef()
-
-{
-    return( pszProjection );
-}
-
-/************************************************************************/
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
@@ -515,6 +566,64 @@ CPLErr ELASDataset::GetGeoTransform( double * padfTransform )
 {
     memcpy( padfTransform, adfGeoTransform, sizeof(double)*6 );
 
+    return( CE_None );
+}
+
+/************************************************************************/
+/*                          SetGeoTransform()                           */
+/************************************************************************/
+
+CPLErr ELASDataset::SetGeoTransform( double * padfTransform )
+
+{
+/* -------------------------------------------------------------------- */
+/*      I don't think it supports rotation, but perhaps it is possible  */
+/*      for us to use the 2x2 transform matrix to accomplish some       */
+/*      sort of rotation.                                               */
+/* -------------------------------------------------------------------- */
+    if( padfTransform[2] != 0.0 || padfTransform[4] != 0.0 )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Attempt to set rotated geotransform on ELAS file.\n"
+                  "ELAS does not support rotation.\n" );
+
+        return CE_Failure;
+    }
+    
+/* -------------------------------------------------------------------- */
+/*      Remember the new transform, and update the header.              */
+/* -------------------------------------------------------------------- */
+    int		nXOff, nYOff;
+    
+    memcpy( adfGeoTransform, padfTransform, sizeof(double)*6 );
+
+    bHeaderModified = TRUE;
+
+    nXOff = (int) (adfGeoTransform[0] + adfGeoTransform[1]*0.5);
+    nYOff = (int) (adfGeoTransform[3] + adfGeoTransform[5]*0.5);
+
+    sHeader.XOffset = CPL_MSBWORD32(nXOff);
+    sHeader.YOffset = CPL_MSBWORD32(nYOff);
+
+    sHeader.XPixSize = ABS(adfGeoTransform[1]);
+    sHeader.YPixSize = ABS(adfGeoTransform[5]);
+
+    CPL_SWAP32PTR(&(sHeader.XPixSize));
+    CPL_SWAP32PTR(&(sHeader.YPixSize));
+
+    strncpy( sHeader.YLabel, "NOR ", 4 );
+    strncpy( sHeader.XLabel, "EAS ", 4 );
+
+    sHeader.Matrix[0] = 1.0;
+    sHeader.Matrix[1] = 0.0;
+    sHeader.Matrix[2] = 0.0;
+    sHeader.Matrix[3] = -1.0;
+    
+    CPL_SWAP32PTR(&(sHeader.Matrix[0]));
+    CPL_SWAP32PTR(&(sHeader.Matrix[1]));
+    CPL_SWAP32PTR(&(sHeader.Matrix[2]));
+    CPL_SWAP32PTR(&(sHeader.Matrix[3]));
+    
     return( CE_None );
 }
 
