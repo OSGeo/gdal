@@ -28,6 +28,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2003/09/13 04:52:38  warmerda
+ * Added logic to mapping some EPSG codes to and from Oracle codes by table.
+ * Added logic to recognise an Oracle authority in WKT as a direct mapping
+ * request.  Return authority information from MDSYS.CS_SRS where available.
+ *
  * Revision 1.20  2003/05/21 03:54:01  warmerda
  * expand tabs
  *
@@ -95,6 +100,21 @@
 #include "cpl_string.h"
 
 CPL_CVSID("$Id$");
+
+static int anEPSGOracleMapping[] = 
+{
+    /* Oracle SRID, EPSG GCS/PCS Code */
+    
+    8192, 4326, // WGS84
+    8306, 4322, // WGS72
+    8267, 4269, // NAD83
+    8274, 4277, // OSGB 36
+         // NAD27 isn't easily mapped since there are many Oracle NAD27 codes.
+
+    81989, 27700, // UK National Grid
+
+    0, 0 // end marker
+};
 
 /************************************************************************/
 /*                          OGROCIDataSource()                          */
@@ -667,13 +687,13 @@ OGRSpatialReference *OGROCIDataSource::FetchSRS( int nId )
     OGROCIStatement oStatement( GetSession() );
     char            szSelect[200], **papszResult;
 
-    sprintf( szSelect, "SELECT WKTEXT FROM MDSYS.CS_SRS WHERE SRID = %d", nId );
+    sprintf( szSelect, "SELECT WKTEXT, AUTH_SRID, AUTH_NAME FROM MDSYS.CS_SRS WHERE SRID = %d", nId );
 
     if( oStatement.Execute( szSelect ) != CE_None )
         return NULL;
 
     papszResult = oStatement.SimpleFetchRow();
-    if( CSLCount(papszResult) != 1 )
+    if( CSLCount(papszResult) < 1 )
         return NULL;
 
 /* -------------------------------------------------------------------- */
@@ -687,6 +707,34 @@ OGRSpatialReference *OGROCIDataSource::FetchSRS( int nId )
     {
         delete poSRS;
         poSRS = NULL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      If we have a corresponding EPSG code for this SRID, use that    */
+/*      authority.                                                      */
+/* -------------------------------------------------------------------- */
+    int bGotEPSGMapping = FALSE;
+    for( i = 0; anEPSGOracleMapping[i] != 0; i += 2 )
+    {
+        if( anEPSGOracleMapping[i] == nId )
+        {
+            poSRS->SetAuthority( poSRS->GetRoot()->GetValue(), "EPSG",
+                                 anEPSGOracleMapping[i+1] );
+            bGotEPSGMapping = TRUE;
+            break;
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Insert authority information, if it is available.               */
+/* -------------------------------------------------------------------- */
+    if( papszResult[1] != NULL && atoi(papszResult[1]) != 0
+        && papszResult[2] != NULL && strlen(papszResult[1]) != 0 
+        && poSRS->GetRoot() != NULL 
+        && !bGotEPSGMapping )
+    {
+        poSRS->SetAuthority( poSRS->GetRoot()->GetValue(), 
+                             papszResult[2], atoi(papszResult[1]) );
     }
 
 /* -------------------------------------------------------------------- */
@@ -718,6 +766,48 @@ int OGROCIDataSource::FetchSRSId( OGRSpatialReference * poSRS )
 
     if( poSRS == NULL )
         return -1;
+
+/* ==================================================================== */
+/*      The first strategy is to see if we can identify it by           */
+/*      authority information within the SRS.  Either using ORACLE      */
+/*      authority values directly, or check if there is a known         */
+/*      translation for an EPSG authority code.                         */
+/* ==================================================================== */
+    const char *pszAuthName = NULL, *pszAuthCode = NULL;
+
+    if( poSRS->IsGeographic() )
+    {
+        pszAuthName = poSRS->GetAuthorityName( "GEOGCS" );
+        pszAuthCode = poSRS->GetAuthorityCode( "GEOGCS" );
+    }
+    else if( poSRS->IsProjected() )
+    {
+        pszAuthName = poSRS->GetAuthorityName( "PROJCS" );
+        pszAuthCode = poSRS->GetAuthorityCode( "PROJCS" );
+    }
+
+    if( pszAuthName != NULL && pszAuthCode != NULL )
+    {
+        if( EQUAL(pszAuthName,"Oracle") 
+            && atoi(pszAuthCode) != 0 )
+            return atoi(pszAuthCode);
+
+        if( EQUAL(pszAuthName,"EPSG") )
+        {
+            int i, nEPSGCode = atoi(pszAuthCode);
+
+            for( i = 0; anEPSGOracleMapping[i] != 0; i += 2 )
+            {
+                if( nEPSGCode == anEPSGOracleMapping[i+1] )
+                    return anEPSGOracleMapping[i];
+            }
+        }
+    }
+
+/* ==================================================================== */
+/*      We need to lookup the SRS in the existing Oracle CS_SRS         */
+/*      table.                                                          */
+/* ==================================================================== */
 
 /* -------------------------------------------------------------------- */
 /*      Convert SRS into old style format (SF-SQL 1.0).                 */
@@ -767,6 +857,11 @@ int OGROCIDataSource::FetchSRSId( OGRSpatialReference * poSRS )
         return atoi( papszResult[0] );
     }
     
+/* ==================================================================== */
+/*      We didn't find it, so we need to define it as a new SRID at     */
+/*      the end of the list of known values.                            */
+/* ==================================================================== */
+
 /* -------------------------------------------------------------------- */
 /*      Get the current maximum srid in the srs table.                  */
 /* -------------------------------------------------------------------- */
