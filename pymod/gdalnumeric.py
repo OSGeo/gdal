@@ -29,6 +29,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.6  2002/01/18 05:46:53  warmerda
+# added support for writing arrays to a GDAL band
+#
 # Revision 1.5  2001/10/19 15:45:34  warmerda
 # added CopyDatasetInfo
 #
@@ -126,6 +129,25 @@ def BandReadAsArray( band, xoff, yoff, xsize, ysize ):
 
     return m
 
+def BandWriteArray( band, array, xoff=0, yoff=0 ):
+    """Pure python implementation of writing a chunk of a GDAL file
+    from a numpy array.  Used by the gdal.Band.WriteAsArray method."""
+
+    xsize = array.shape[1]
+    ysize = array.shape[0]
+
+    if xsize + xoff > band.XSize or ysize + yoff > band.YSize:
+        raise ValueError, "array larger than output file, or offset off edge"
+
+    datatype = NumericTypeCodeToGDALTypeCode( array.typecode() )
+    if datatype == None:
+        raise ValueError, "array does not have corresponding GDAL data type"
+
+    result = band.WriteRaster( xoff, yoff, xsize, ysize,
+                               array.tostring(), xsize, ysize, datatype )
+
+    return result
+
 def GDALTypeCodeToNumericTypeCode( gdal_code ):
     from Numeric import *
     
@@ -162,6 +184,8 @@ def NumericTypeCodeToGDALTypeCode( numeric_code ):
     elif numeric_code == Int16:
         return GDT_Int16
     elif numeric_code == Int32:
+        return GDT_Int32
+    elif numeric_code == Int:
         return GDT_Int32
     elif numeric_code == Float32:
         return GDT_Float32

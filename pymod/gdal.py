@@ -29,6 +29,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.29  2002/01/18 05:46:52  warmerda
+# added support for writing arrays to a GDAL band
+#
 # Revision 1.28  2001/10/19 15:43:52  warmerda
 # added SetGCPs, and SetMetadata support
 #
@@ -425,6 +428,11 @@ class Band:
         import gdalnumeric
 
         return gdalnumeric.BandReadAsArray( self, xoff, yoff, xsize, ysize )
+    
+    def WriteArray(self, array, xoff=0, yoff=0):
+        import gdalnumeric
+
+        return gdalnumeric.BandWriteArray( self, array, xoff, yoff )
     
     def GetRasterColorInterpretation(self):
         return _gdal.GDALGetRasterColorInterpretation(self._o)
