@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.84  2003/01/10 16:05:18  dron
+ * Improved support for NoData.
+ *
  * Revision 1.83  2003/01/09 17:24:42  dron
  * Added NoData value handling via 42113 TIFF tag.
  *
@@ -203,6 +206,7 @@ class GTiffDataset : public GDALDataset
     int 	bMetadataChanged;
     int         bGeoTIFFInfoChanged;
     int         bNoDataSet;
+    int         bNoDataChanged;
     double      dfNoDataValue;
 
   public:
@@ -647,6 +651,7 @@ CPLErr GTiffRasterBand::SetNoDataValue( double dfNoData )
     GTiffDataset	*poGDS = (GTiffDataset *) poDS;
 
     poGDS->bNoDataSet = TRUE;
+    poGDS->bNoDataChanged = TRUE;
     poGDS->dfNoDataValue = dfNoData;
 
     return CE_None;
@@ -868,6 +873,7 @@ CPLErr GTiffRGBABand::SetNoDataValue( double dfNoData )
     GTiffDataset	*poGDS = (GTiffDataset *) poDS;
 
     poGDS->bNoDataSet = TRUE;
+    poGDS->bNoDataChanged = TRUE;
     poGDS->dfNoDataValue = dfNoData;
 
     return CE_None;
@@ -1089,6 +1095,7 @@ CPLErr GTiffBitmapBand::SetNoDataValue( double dfNoData )
     GTiffDataset	*poGDS = (GTiffDataset *) poDS;
 
     poGDS->bNoDataSet = TRUE;
+    poGDS->bNoDataChanged = TRUE;
     poGDS->dfNoDataValue = dfNoData;
 
     return CE_None;
@@ -1116,6 +1123,7 @@ GTiffDataset::GTiffDataset()
     bCrystalized = TRUE;
     poColorTable = NULL;
     bNoDataSet = FALSE;
+    bNoDataChanged = FALSE;
     dfNoDataValue = -9999.0;
     pszProjection = NULL;
     bBase = TRUE;
@@ -1171,10 +1179,10 @@ GTiffDataset::~GTiffDataset()
         if( bNewDataset || bGeoTIFFInfoChanged )
             WriteGeoTIFFInfo();
 
-	if( bNoDataSet )
+	if( bNoDataChanged )
             WriteNoDataValue( hTIFF, dfNoDataValue );
         
-        if( bNewDataset || bMetadataChanged || bGeoTIFFInfoChanged || bNoDataSet )
+        if( bNewDataset || bMetadataChanged || bGeoTIFFInfoChanged || bNoDataChanged )
         {
 #if defined(TIFFLIB_VERSION)
 #if  TIFFLIB_VERSION > 20010925 && TIFFLIB_VERSION != 20011807
@@ -2271,6 +2279,8 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, uint32 nDirOffsetIn,
 	    bNoDataSet = TRUE;
 	    dfNoDataValue = atof( pszText );
 	}
+
+	bNoDataChanged = FALSE;
     }
 
 /* -------------------------------------------------------------------- */
