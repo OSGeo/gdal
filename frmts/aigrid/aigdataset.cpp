@@ -28,6 +28,10 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.22  2004/02/02 15:34:05  warmerda
+ * Use CPLFormCIFilename() to get PRJ.ADF as well as prj.adf.
+ * http://bugzilla.remotesensing.org/show_bug.cgi?id=480
+ *
  * Revision 1.21  2003/07/08 15:35:22  warmerda
  * avoid warnings
  *
@@ -437,7 +441,7 @@ GDALDataset *AIGDataset::Open( GDALOpenInfo * poOpenInfo )
     const char	*pszPrjFilename;
     VSIStatBuf   sStatBuf;
 
-    pszPrjFilename = CPLFormFilename( psInfo->pszCoverName, "prj", "adf" );
+    pszPrjFilename = CPLFormCIFilename( psInfo->pszCoverName, "prj", "adf" );
     if( VSIStat( pszPrjFilename, &sStatBuf ) == 0 )
     {
         OGRSpatialReference	oSRS;
