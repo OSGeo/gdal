@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.23  2003/08/18 14:47:53  warmerda
+ * upgraded with *untested* TIGER 2003 support
+ *
  * Revision 1.22  2003/03/20 19:10:37  warmerda
  * fixed memory leak
  *
@@ -150,7 +153,8 @@ TigerVersion TigerClassifyVersion( int nVersionCode )
 ** 0203 to 0205   TIGER/Line Files, UA 2000
 ** ????    ????
 **
-** 0206 & higher  TIGER/Line Files, 2002
+** 0206 to 0299   TIGER/Line Files, 2002
+** 0300 and up    TIGER/Line Files, 2003
 ** ????
 */
 
@@ -187,8 +191,10 @@ TigerVersion TigerClassifyVersion( int nVersionCode )
         nVersion = TIGER_2000_Census;
     else if( nVersionCode >=  203 /*0203*/ && nVersionCode <=  205 /*0205*/ )
         nVersion = TIGER_UA2000;
-    else if( nVersionCode >=  206 /*0206*/ )
+    else if( nVersionCode >=  206 /*0206*/ && nVersionCode <= 300 /* 2003 */ )
         nVersion = TIGER_2002;
+    else if( nVersionCode >=  300 /*0300*/ )
+        nVersion = TIGER_2003;
 
     return nVersion;
 }
@@ -211,6 +217,7 @@ char * TigerVersionString( TigerVersion nVersion )
   if (nVersion == TIGER_2000_Redistricting) { return "TIGER_2000_Redistricting"; }
   if (nVersion == TIGER_UA2000) { return "TIGER_UA2000"; }
   if (nVersion == TIGER_2002) { return "TIGER_2002"; }
+  if (nVersion == TIGER_2003) { return "TIGER_2003"; }
   if (nVersion == TIGER_Unknown) { return "TIGER_Unknown"; }
   return "???";
 }
@@ -441,6 +448,9 @@ int OGRTigerDataSource::Open( const char * pszFilename, int bTestOpen,
 
             nVersionCode = atoi(TigerFileBase::GetField( szHeader, 2, 5 ));
             nVersion = TigerClassifyVersion( nVersionCode );
+
+            CPLDebug( "OGR", "Tiger Version Code=%d, Classified as %s ", 
+                      nVersionCode, TigerVersionString(nVersion) );
 
             if(    nVersionCode !=  0
                 && nVersionCode !=  2
