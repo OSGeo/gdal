@@ -387,6 +387,101 @@ NOTE: Implemented as <tt>gdal/frmts/raw/pauxdataset.cpp</tt>.<p>
 See Also: <a href="http://www.pcigeomatics.com/cgi-bin/pcihlp/GDB|Supported+File+Formats|Raw+Binary+Image+Format+(RAW)|Raw+.aux+Format">PCI's .aux Format
 Description</a><p>
 
+<h2><a name="PCRaster">PCRaster raster file format</a></h2>
+<p>GDAL includes support for reading and writing PCRaster raster files. PCRaster is a dynamic modelling system for distributed simulation models. The main applications of PCRaster are found in environmental modelling: geography, hydrology, ecology to name a few. Examples include rainfall-runoff models, vegetation competition models and slope stability models.</p>
+
+<p>The driver reads all types of PCRaster maps: booleans, nominal, ordinals, scalar, directional and ldd. The same cell representation used to store values in the file is used to store the values in memory.</p>
+
+<p>The driver determines automatically when the source of the GDAL raster is a PCRaster file. When such a raster is written to a file the value scale of the original raster will be used. The driver <b>always</b> writes values using UINT1, INT4 or REAL4 cell representations, depending on the value scale:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Value scale</th>
+      <th>Cell representation</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>VS_BOOLEAN</td>
+      <td>CR_UINT1</td>
+    </tr>
+    <tr>
+      <td>VS_NOMINAL</td>
+      <td>CR_INT4</td>
+    </tr>
+    <tr>
+      <td>VS_ORDINAL</td>
+      <td>CR_INT4</td>
+    </tr>
+    <tr>
+      <td>VS_SCALAR</td>
+      <td>CR_REAL4</td>
+    </tr>
+    <tr>
+      <td>VS_DIRECTION</td>
+      <td>CR_REAL4</td>
+    </tr>
+    <tr>
+      <td>VS_LDD</td>
+      <td>CR_UINT1</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>For rasters from other sources than a PCRaster raster file a value scale and cell representation is determined according to the folowing rules:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Source type</th>
+      <th>Target value scale</th>
+      <th>Target cell representation</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>GDT_Byte</td>
+      <td>VS_BOOLEAN</td>
+      <td>CR_UINT1</td>
+    </tr>
+    <tr>
+      <td>GDT_UInt16</td>
+      <td>VS_NOMINAL</td>
+      <td>CR_UINT1</td>
+    </tr>
+    <tr>
+      <td>GDT_UInt32</td>
+      <td>VS_NOMINAL</td>
+      <td>CR_UINT1</td>
+    </tr>
+    <tr>
+      <td>GDT_Int16</td>
+      <td>VS_NOMINAL</td>
+      <td>R_INT4</td>
+    </tr>
+    <tr>
+      <td>GDT_Int32</td>
+      <td>VS_NOMINAL</td>
+      <td>CR_INT4</td>
+    </tr>
+    <tr>
+      <td>GDT_Float32</td>
+      <td>VS_SCALAR</td>
+      <td>CR_REAL4</td>
+    </tr>
+    <tr>
+      <td>GDT_Float64</td>
+      <td>VS_SCALAR</td>
+      <td>CR_REAL4</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>NOTE: Implemented as <tt>gdal/frmts/pcraster/pcrasterdataset.cpp</tt>.</p>
+
+See also: <a href="http://pcraster.geog.uu.nl">PCRaster website at Utrecht University</a> and <a href="http://www.pcraster.nl">PCRaster Environmental Software company website</a>.
+
 <h2><a name="PNG">PNG -- Portable Network Graphics</a></h2>
 
 GDAL includes support for reading, and creating .png files.  Greyscale, 
