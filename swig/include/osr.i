@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.13  2005/02/24 20:33:58  kruland
+ * Back to import gdal_typemaps.i to prevent confusion.
+ *
  * Revision 1.12  2005/02/24 18:39:14  kruland
  * Using the GetProjectionMethods() custom code from old interface for the
  * python binding.  Defined access to plain C-api for other bindings.
@@ -174,7 +177,7 @@ typedef double * double_17;
 %feature("compactdefaultargs");
 %feature("autodoc");
 
-%import typemaps.i
+%import gdal_typemaps.i
 
 typedef int OGRErr;
 
