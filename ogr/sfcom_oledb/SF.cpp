@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2002/01/13 01:41:21  warmerda
+ * included date in startup debug
+ *
  * Revision 1.7  2001/11/09 19:05:34  warmerda
  * added debuggin
  *
@@ -69,7 +72,7 @@ BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID /*lpReserved*/)
     if (dwReason == DLL_PROCESS_ATTACH)
     {
         CPLSetErrorHandler( CPLLoggingErrorHandler );
-        CPLDebug( "OGR_OLEDB", "DllMain" );
+        CPLDebug( "OGR_OLEDB", "DllMain: " __DATE__ );
         _Module.Init(ObjectMap, hInstance, &LIBID_SFLib);
         DisableThreadLibraryCalls(hInstance);
         CPLDebug( "OGR_OLEDB", "DllMain complete." );
