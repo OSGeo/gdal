@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2004/02/09 05:03:42  warmerda
+ * added ICORDS=U (MGRS) support
+ *
  * Revision 1.19  2003/09/11 19:51:55  warmerda
  * avoid type casting warnings
  *
@@ -92,6 +95,7 @@
  */
 
 #include "nitflib.h"
+#include "mgrs.h"
 #include "cpl_vsi.h"
 #include "cpl_conv.h"
 
@@ -229,6 +233,33 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
 
                 if( pszCoordPair[14] == 'w' || pszCoordPair[14] == 'W' )
                     pdfXY[0] *= -1;
+            }
+            else if( psImage->chICORDS == 'U' )
+            {
+                int err;
+                long nZone;
+                char chHemisphere;
+                NITFGetField( szTemp, pszCoordPair, 0, 15 );
+                
+                CPLDebug( "NITF", "IGEOLO = %15.15s\n", pszCoordPair );
+                err = Convert_MGRS_To_UTM( szTemp, &nZone, &chHemisphere,
+                                           pdfXY+0, pdfXY+1 );
+
+                if( psImage->nZone > 0 )
+                {
+                    if( nZone != psImage->nZone )
+                    {
+                        CPLError( CE_Warning, CPLE_AppDefined,
+                                  "Some IGEOGLO points are in different UTM\n"
+                                  "zones, but this configuration isn't currently\n"
+                                  "supported by GDAL, ignoring IGEOLO." );
+                        psImage->nZone = -1;
+                    }
+                }
+                else if( psImage->nZone == 0 )
+                {
+                    psImage->nZone = nZone;
+                }
             }
         }
 
