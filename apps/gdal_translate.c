@@ -28,6 +28,9 @@
  * ****************************************************************************
  *
  * $Log$
+ * Revision 1.16  2001/02/19 15:12:17  warmerda
+ * fixed windowing problem with -srcwin
+ *
  * Revision 1.15  2000/08/25 14:23:06  warmerda
  * added progress counter
  *
@@ -341,9 +344,9 @@ int main( int argc, char ** argv )
     if( GDALGetGeoTransform( hDataset, adfGeoTransform ) == CE_None )
     {
         adfGeoTransform[0] += anSrcWin[0] * adfGeoTransform[1]
-                            + anSrcWin[1] * adfGeoTransform[4];
-        adfGeoTransform[1] += anSrcWin[0] * adfGeoTransform[2]
-                            + anSrcWin[1] * adfGeoTransform[5];
+                            + anSrcWin[1] * adfGeoTransform[2];
+        adfGeoTransform[3] += anSrcWin[2] * adfGeoTransform[4]
+                            + anSrcWin[3] * adfGeoTransform[5];
 
         adfGeoTransform[1] *= anSrcWin[2] / (double) nOXSize;
         adfGeoTransform[2] *= anSrcWin[3] / (double) nOYSize;
