@@ -14,13 +14,18 @@ OBJ	=	cpl_conv.obj \
 		cpl_vsil_win32.obj \
 		cpl_minixml.obj \
 		cpl_multiproc.obj \
-		cpl_list.obj
+		cpl_list.obj \
+		$(ODBC_OBJ)
 
 LIB	=	cpl.lib
 
 GDAL_ROOT = ..
 
 !INCLUDE ..\nmake.opt
+
+!IFDEF ODBC_SUPPORTED
+ODBC_OBJ = 	cpl_odbc.obj
+!ENDIF
 
 default:	cpl_config.h $(LIB)
 
