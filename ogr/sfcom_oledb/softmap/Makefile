@@ -7,10 +7,14 @@ PROJ	=	smsf
 DLLNAME	=	SoftmapSF.dll
 
 # Add -DATL_CPL_TRACE to get detailed ATL traces.
-EXTRAFLAGS =	-I$(SFOLEDB) \
-		-I$(MSDASDK)\include\oledb -I$(OGR) -I$(SFOLEDB) /W2 \
+# Remove SUPPORT_ATL_NET and change atl_net to atl_vc6 to work
+# with VC++ 6.x instead of VC++ .NET
+
+EXTRAFLAGS =	-I$(SFOLEDB)\atl_net -I$(SFOLEDB) \
+		-I$(MSDASDK)\include\oledb -I$(OGR) /W2 \
 		-I$(OGR)\ogrsf_frmts -I$(VCDIR)\ATL\Include \
-		-DSUPPORT_ADSK_GEOM_EXTENT
+		-DSUPPORT_ADSK_GEOM_EXTENT \
+		-DSUPPORT_ATL_NET \
 #		-DSUPPORT_2D_FLATTEN
 
 !INCLUDE $(GDAL_ROOT)/nmake.opt
@@ -27,7 +31,7 @@ OGR_LIBS =	$(OGR)\ogrsf_frmts\ogrsf_frmts.lib \
 !ENDIF
 
 LOC_OBJ =       SF.obj SFRS.obj sfutil.obj sftraceback.obj sfregister.obj \
-		ogrvirtualarray.obj swq.obj
+		ogrvirtualarray.obj swq.obj sfdscache.obj
 
 default:	$(DLLNAME)
 
@@ -70,5 +74,10 @@ SFRS.cpp:	$(SFOLEDB)\SFRS.cpp
 ogrvirtualarray.cpp:	$(SFOLEDB)\ogrvirtualarray.cpp
 	copy $(SFOLEDB)\ogrvirtualarray.cpp
 
+SFDSCache.cpp:	$(SFOLEDB)\SFDSCache.cpp
+	copy $(SFOLEDB)\SFDSCache.cpp
+
+swq.c:	..\..\swq.c
+	copy ..\..\swq.c
 
 
