@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.37  2000/08/14 18:33:49  warmerda
+ * added support for writing palettes to overviews
+ *
  * Revision 1.36  2000/07/17 17:40:41  warmerda
  * Implemented reading of non-eight bit interleaved files.
  *
@@ -691,6 +694,37 @@ CPLErr GTiffDataset::IBuildOverviews(
     }
 
 /* -------------------------------------------------------------------- */
+/*      Do we have a palette?  If so, create a TIFF compatible version. */
+/* -------------------------------------------------------------------- */
+    unsigned short	anTRed[256], anTGreen[256], anTBlue[256];
+    unsigned short      *panRed=NULL, *panGreen=NULL, *panBlue=NULL;
+
+    if( nPhotometric == PHOTOMETRIC_PALETTE && poColorTable != NULL )
+    {
+        for( int iColor = 0; iColor < 256; iColor++ )
+        {
+            if( iColor < poColorTable->GetColorEntryCount() )
+            {
+                GDALColorEntry  sRGB;
+
+                poColorTable->GetColorEntryAsRGB( iColor, &sRGB );
+
+                anTRed[iColor] = (unsigned short) (256 * sRGB.c1);
+                anTGreen[iColor] = (unsigned short) (256 * sRGB.c2);
+                anTBlue[iColor] = (unsigned short) (256 * sRGB.c3);
+            }
+            else
+            {
+                anTRed[iColor] = anTGreen[iColor] = anTBlue[iColor] = 0;
+            }
+        }
+
+        panRed = anTRed;
+        panGreen = anTGreen;
+        panBlue = anTBlue;
+    }
+        
+/* -------------------------------------------------------------------- */
 /*      Establish which of the overview levels we already have, and     */
 /*      which are new.  We assume that band 1 of the file is            */
 /*      representative.                                                 */
@@ -727,7 +761,7 @@ CPLErr GTiffDataset::IBuildOverviews(
                                     nBitsPerSample, nSamplesPerPixel, 
                                     128, 128, TRUE, COMPRESSION_NONE, 
                                     nPhotometric, nSampleFormat, 
-                                    NULL, NULL, NULL, FALSE );
+                                    panRed, panGreen, panBlue, FALSE );
 
             poODS = new GTiffDataset();
             if( poODS->OpenOffset( hTIFF, nOverviewOffset, FALSE, 
@@ -994,7 +1028,11 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, uint32 nDirOffsetIn,
     {
         if( !TIFFGetField( hTIFF, TIFFTAG_ROWSPERSTRIP,
                            &(nRowsPerStrip) ) )
-            nRowsPerStrip = 1; /* dummy value */
+        {
+            CPLError( CE_Warning, CPLE_AppDefined, 
+                      "RowsPerStrip not defined ... assuming all one strip." );
+            nRowsPerStrip = nYSize; /* dummy value */
+        }
 
         nBlockXSize = nRasterXSize;
         nBlockYSize = MIN(nRowsPerStrip,nYSize);
