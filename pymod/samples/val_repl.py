@@ -32,6 +32,9 @@
 ###############################################################################
 # 
 #  $Log$
+#  Revision 1.2  2004/04/24 16:21:05  warmerda
+#  Updated to use numeric operators to replace values.
+#
 #  Revision 1.1  2003/02/15 09:16:13  dron
 #  New
 #
@@ -138,8 +141,7 @@ for iBand in range(1, indataset.RasterCount + 1):
 
     for i in range(inband.YSize - 1, -1, -1):
 	scanline = inband.ReadAsArray(0, i, inband.XSize, 1, inband.XSize, 1)
-	for j in range(inband.XSize):
-	    if scanline[0, j] == inNoData:
-		scanline[0, j] = outNoData
+        scanline = Numeric.choose( Numeric.equal( scanline, inNoData),
+                                   (scanline, outNoData) )
 	outband.WriteArray(scanline, 0, i)
 
