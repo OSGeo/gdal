@@ -39,7 +39,8 @@ GDAL driver.
 <h2><a name="dataset">Implementing the Dataset</a></h2>
 
 We will start showing minimal implementation of a read-only driver for
-the Japanese DEM format (jdemdataset.cpp).  First we declare a format
+the Japanese DEM format (<a href="jdemdataset.cpp.html">jdemdataset.cpp</a>).  
+First we declare a format
 specific dataset class, JDEMDataset in this case.
 
 \code
@@ -514,6 +515,10 @@ const char *JDEMDataset::GetProjectionRef()
 	"AUTHORITY[\"EPSG\",4301]]" );
 }
 \endcode
+
+This completes explanation of the features of the JDEM driver.  The full
+source for <a href="jdemdataset.cpp.html">jdemdataset.cpp</a> can be reviewed 
+as needed.
 
 <h2><a name="overviews">Overviews</a></h2>
 
