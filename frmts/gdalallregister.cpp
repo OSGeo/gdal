@@ -25,6 +25,9 @@
  * Main format registration function.
  * 
  * $Log$
+ * Revision 1.70  2004/11/30 17:02:37  lichun
+ * Added ILWIS driver support
+ *
  * Revision 1.69  2004/10/22 14:15:23  fwarmerdam
  * Added PCRaster support.
  *
@@ -387,6 +390,10 @@ void GDALAllRegister()
 
 #ifdef FRMT_pcraster
     GDALRegister_PCRaster();
+#endif
+
+#ifdef FRMT_ilwis
+    GDALRegister_ILWIS();
 #endif
 
 #ifdef FRMT_netcdf
