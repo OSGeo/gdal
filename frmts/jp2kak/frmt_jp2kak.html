@@ -62,6 +62,13 @@ NOTE: QUALITY=100 will not be lossless for 16bit images.<p>
 sort of like resolution layers, but not exactly.  The default value is
 12 and this works well in most situations.<p>
 
+<li> <b>ROI=xoff,yoff,xsize,ysize</b>: Selects a region to be a region of
+interest to process with higher data quality.  The various "R" flags below may
+be used to control the amount better.  For example the settings 
+"ROI=0,0,100,100", "Rweight=7" would encode the top left 100x100 area of
+the image with considerable higher quality compared to the rest of the image.
+<p>
+
 </ul>
 
 The following creation options are tightly tied to the Kakadu library, and
@@ -74,6 +81,9 @@ to better understand their meaning.<p>
 <li> <b>ORGgen_plt</b>: Defaults to "yes". 
 <li> <b>Cmodes</b>: Kakadu library default used.
 <li> <b>Clevels</b>: Kakadu library default used.
+<li> <b>Rshift</b>: Kakadu library default used.
+<li> <b>Rlevels</b>: Kakadu library default used.
+<li> <b>Rweight</b>: Kakadu library default used.
 </ul>
 
 See Also:<p>
