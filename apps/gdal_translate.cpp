@@ -28,6 +28,9 @@
  * ****************************************************************************
  *
  * $Log$
+ * Revision 1.15  2003/07/27 12:31:14  dron
+ * Few memory leaks fixed.
+ *
  * Revision 1.14  2003/04/17 12:55:40  dron
  * Few memory leaks fixed.
  *
@@ -233,6 +236,7 @@ int main( int argc, char ** argv )
             {
                 printf( "Unknown output pixel type: %s\n", argv[i+1] );
                 Usage();
+                GDALDestroyDriverManager();
                 exit( 2 );
             }
             i++;
@@ -307,6 +311,7 @@ int main( int argc, char ** argv )
             {
                 fprintf( stderr, "Failed to process SRS definition: %s\n", 
                          argv[i+1] );
+                GDALDestroyDriverManager();
                 exit( 1 );
             }
 
@@ -319,6 +324,7 @@ int main( int argc, char ** argv )
             printf( "Option %s incomplete, or not recognised.\n\n", 
                     argv[i] );
             Usage();
+            GDALDestroyDriverManager();
             exit( 2 );
         }
         else if( pszSource == NULL )
@@ -331,6 +337,7 @@ int main( int argc, char ** argv )
         {
             printf( "Too many command options.\n\n" );
             Usage();
+            GDALDestroyDriverManager();
             exit( 2 );
         }
     }
@@ -338,6 +345,7 @@ int main( int argc, char ** argv )
     if( pszDest == NULL )
     {
         Usage();
+        GDALDestroyDriverManager();
         exit( 10 );
     }
 
@@ -352,6 +360,7 @@ int main( int argc, char ** argv )
         fprintf( stderr,
                  "GDALOpen failed - %d\n%s\n",
                  CPLGetLastErrorNo(), CPLGetLastErrorMsg() );
+        GDALDestroyDriverManager();
         exit( 1 );
     }
 
@@ -360,6 +369,7 @@ int main( int argc, char ** argv )
         fprintf( stderr,
                  "Input file contains subdatasets. Please, select one of them for reading.\n" );
         GDALClose( hDataset );
+        GDALDestroyDriverManager();
         exit( 1 );
     }
 
@@ -413,6 +423,7 @@ int main( int argc, char ** argv )
                      "rotated.  This configuration is not supported.\n" );
             GDALClose( hDataset );
             CPLFree( panBandList );
+            GDALDestroyDriverManager();
             exit( 1 );
         }
 
