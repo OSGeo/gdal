@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2001/01/17 16:07:33  warmerda
+ * ensure that TCB and ColorTable side effects occur on indexing pass too
+ *
  * Revision 1.5  2001/01/16 18:12:52  warmerda
  * Added arc support, DGNLookupColor
  *
@@ -46,6 +49,9 @@
  */
 
 #include "dgnlibp.h"
+
+static DGNElemCore *DGNParseTCB( DGNInfo * );
+static DGNElemCore *DGNParseColorTable( DGNInfo * );
 
 /************************************************************************/
 /*                           DGNGotoElement()                           */
@@ -232,24 +238,7 @@ DGNElemCore *DGNReadElement( DGNHandle hDGN )
       case DGNT_GROUP_DATA:
         if( nLevel == DGN_GDL_COLOR_TABLE )
         {
-            DGNElemColorTable  *psColorTable;
-            
-            psColorTable = (DGNElemColorTable *) 
-                CPLCalloc(sizeof(DGNElemColorTable),1);
-            psElement = (DGNElemCore *) psColorTable;
-            psElement->stype = DGNST_COLORTABLE;
-
-            DGNParseCore( psDGN, psElement );
-
-            psColorTable->screen_flag = 
-                psDGN->abyElem[36] + psDGN->abyElem[37] * 256;
-
-            memcpy( psColorTable->color_info, psDGN->abyElem+41, 768 );	
-            if( !psDGN->got_color_table )
-            {
-                memcpy( psDGN->color_table, psColorTable->color_info, 768 );
-                psDGN->got_color_table = 1;
-            }
+            psElement = DGNParseColorTable( psDGN );
         }
         else
         {
@@ -365,48 +354,8 @@ DGNElemCore *DGNReadElement( DGNHandle hDGN )
       break;
 
       case DGNT_TCB:
-      {
-          DGNElemTCB *psTCB;
-
-          psTCB = (DGNElemTCB *) CPLCalloc(sizeof(DGNElemTCB),1);
-          psElement = (DGNElemCore *) psTCB;
-          psElement->stype = DGNST_TCB;
-          DGNParseCore( psDGN, psElement );
-
-          if( psDGN->abyElem[1214] & 0x40 )
-              psTCB->dimension = 3;
-          else
-              psTCB->dimension = 2;
-          
-          psTCB->subunits_per_master = DGN_INT32( psDGN->abyElem + 1112 );
-
-          psTCB->master_units[0] = (char) psDGN->abyElem[1120];
-          psTCB->master_units[1] = (char) psDGN->abyElem[1121];
-          psTCB->master_units[2] = '\0';
-
-          psTCB->uor_per_subunit = DGN_INT32( psDGN->abyElem + 1116 );
-
-          psTCB->sub_units[0] = (char) psDGN->abyElem[1122];
-          psTCB->sub_units[1] = (char) psDGN->abyElem[1123];
-          psTCB->sub_units[2] = '\0';
-
-          /* NOTDEF: Add origin extraction later */
-          if( !psDGN->got_tcb )
-          {
-              psDGN->got_tcb = TRUE;
-              psDGN->dimension = psTCB->dimension;
-              psDGN->origin_x = psTCB->origin_x;
-              psDGN->origin_y = psTCB->origin_y;
-              psDGN->origin_z = psTCB->origin_z;
-
-              if( psTCB->uor_per_subunit != 0
-                  && psTCB->subunits_per_master != 0 )
-                  psDGN->scale = 1.0 
-                      / (psTCB->uor_per_subunit * psTCB->subunits_per_master);
-          }
-          
-      }
-      break;
+        psElement = DGNParseTCB( psDGN );
+        break;
 
       default:
       {
@@ -454,6 +403,86 @@ int DGNParseCore( DGNInfo *psDGN, DGNElemCore *psElement )
     }
     
     return TRUE;
+}
+
+/************************************************************************/
+/*                         DGNParseColorTable()                         */
+/************************************************************************/
+
+static DGNElemCore *DGNParseColorTable( DGNInfo * psDGN )
+
+{
+    DGNElemCore *psElement;
+    DGNElemColorTable  *psColorTable;
+            
+    psColorTable = (DGNElemColorTable *) 
+        CPLCalloc(sizeof(DGNElemColorTable),1);
+    psElement = (DGNElemCore *) psColorTable;
+    psElement->stype = DGNST_COLORTABLE;
+
+    DGNParseCore( psDGN, psElement );
+
+    psColorTable->screen_flag = 
+        psDGN->abyElem[36] + psDGN->abyElem[37] * 256;
+
+    memcpy( psColorTable->color_info, psDGN->abyElem+41, 768 );	
+    if( !psDGN->got_color_table )
+    {
+        memcpy( psDGN->color_table, psColorTable->color_info, 768 );
+        psDGN->got_color_table = 1;
+    }
+    
+    return psElement;
+}
+
+/************************************************************************/
+/*                            DGNParseTCB()                             */
+/************************************************************************/
+
+static DGNElemCore *DGNParseTCB( DGNInfo * psDGN )
+
+{
+    DGNElemTCB *psTCB;
+    DGNElemCore *psElement;
+
+    psTCB = (DGNElemTCB *) CPLCalloc(sizeof(DGNElemTCB),1);
+    psElement = (DGNElemCore *) psTCB;
+    psElement->stype = DGNST_TCB;
+    DGNParseCore( psDGN, psElement );
+
+    if( psDGN->abyElem[1214] & 0x40 )
+        psTCB->dimension = 3;
+    else
+        psTCB->dimension = 2;
+          
+    psTCB->subunits_per_master = DGN_INT32( psDGN->abyElem + 1112 );
+
+    psTCB->master_units[0] = (char) psDGN->abyElem[1120];
+    psTCB->master_units[1] = (char) psDGN->abyElem[1121];
+    psTCB->master_units[2] = '\0';
+
+    psTCB->uor_per_subunit = DGN_INT32( psDGN->abyElem + 1116 );
+
+    psTCB->sub_units[0] = (char) psDGN->abyElem[1122];
+    psTCB->sub_units[1] = (char) psDGN->abyElem[1123];
+    psTCB->sub_units[2] = '\0';
+
+    /* NOTDEF: Add origin extraction later */
+    if( !psDGN->got_tcb )
+    {
+        psDGN->got_tcb = TRUE;
+        psDGN->dimension = psTCB->dimension;
+        psDGN->origin_x = psTCB->origin_x;
+        psDGN->origin_y = psTCB->origin_y;
+        psDGN->origin_z = psTCB->origin_z;
+
+        if( psTCB->uor_per_subunit != 0
+            && psTCB->subunits_per_master != 0 )
+            psDGN->scale = 1.0 
+                / (psTCB->uor_per_subunit * psTCB->subunits_per_master);
+    }
+
+    return psElement;
 }
 
 /************************************************************************/
@@ -908,8 +937,11 @@ void DGNBuildIndex( DGNInfo *psDGN )
             psEI->stype = DGNST_MULTIPOINT;
 
         else if( nType == DGNT_GROUP_DATA && nLevel == DGN_GDL_COLOR_TABLE )
+        {
+            DGNElemCore	*psCT = DGNParseColorTable( psDGN );
+            DGNFreeElement( (DGNHandle) psDGN, psCT );
             psEI->stype = DGNST_COLORTABLE;
-        
+        }
         else if( nType == DGNT_ELLIPSE || nType == DGNT_ARC )
             psEI->stype = DGNST_ARC;
         
@@ -917,8 +949,12 @@ void DGNBuildIndex( DGNInfo *psDGN )
             psEI->stype = DGNST_TEXT;
 
         else if( nType == DGNT_TCB )
+        {
+            DGNElemCore	*psTCB = DGNParseTCB( psDGN );
+            DGNFreeElement( (DGNHandle) psDGN, psTCB );
             psEI->stype = DGNST_TCB;
-
+            
+        }
         else
             psEI->stype = DGNST_CORE;
 
