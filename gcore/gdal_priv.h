@@ -29,9 +29,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.44  2003/05/06 05:20:38  sperkins
+ * cleaned up comments
+ *
  * Revision 1.43  2003/05/06 05:13:36  sperkins
- * 	* core/gdalrasterband.cpp: Added C++ Fill() method and
- * 	corresponding C GDALFillRaster() method.
+ * added Fill() and GDALFillRaster()
  *
  * Revision 1.42  2003/04/25 19:47:57  warmerda
  * added RasterIO on GDALDataset, added lock count on blocks

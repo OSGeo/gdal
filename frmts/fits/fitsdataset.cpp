@@ -28,12 +28,14 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2003/05/06 05:20:38  sperkins
+ * cleaned up comments
+ *
  * Revision 1.17  2003/05/06 05:14:11  sperkins
  * Minor tidying up.
  *
  * Revision 1.16  2003/05/05 23:31:53  sperkins
- * 	* frmts/fits/fitsdataset.cpp: Removed dodgy "value type guessing"
- * 	code from FITS metadata write routine.
+ * Removed dodgy "value type guessing" code from FITS metadata write routine.
  *
  * Revision 1.15  2002/11/23 18:54:17  warmerda
  * added CREATIONDATATYPES metadata for drivers
