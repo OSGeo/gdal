@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.25  2004/07/10 06:57:53  warmerda
+ * Added C entry points and docs for GEOS geometry functions
+ *
  * Revision 1.24  2004/07/10 04:52:24  warmerda
  * Added lots of GEOS methods.
  * Added closeRings().
@@ -1274,6 +1277,23 @@ geos::Geometry *OGRGeometry::exportToGEOS() const
 /*                              Distance()                              */
 /************************************************************************/
 
+/**
+ * Compute distance between two geometries.
+ *
+ * Returns the shortest distance between the two geometries. 
+ *
+ * This method is the same as the C function OGR_G_Distance().
+ *
+ * This method is built on the GEOS library, check it for the definition
+ * of the geometry operation.
+ * If OGR is built without the GEOS library, this method will always fail, 
+ * issuing a CPLE_NotSupported error. 
+ *
+ * @param poOtherGeom the other geometry to compare against.
+ *
+ * @return the distance between the geometries or -1 if an error occurs.
+ */
+
 double OGRGeometry::Distance( const OGRGeometry *poOtherGeom ) const
 
 {
@@ -1310,8 +1330,34 @@ double OGRGeometry::Distance( const OGRGeometry *poOtherGeom ) const
 }
 
 /************************************************************************/
+/*                           OGR_G_Distance()                           */
+/************************************************************************/
+
+double OGR_G_Distance( OGRGeometryH hFirst, OGRGeometryH hOther )
+
+{
+    return ((OGRGeometry *) hFirst)->Distance( (OGRGeometry *) hOther );
+}
+
+/************************************************************************/
 /*                             ConvexHull()                             */
 /************************************************************************/
+
+/**
+ * Compute convex hull.
+ *
+ * A new geometry object is created and returned containing the convex
+ * hull of the geometry on which the method is invoked.  
+ *
+ * This method is the same as the C function OGR_G_ConvexHull().
+ *
+ * This method is built on the GEOS library, check it for the definition
+ * of the geometry operation.
+ * If OGR is built without the GEOS library, this method will always fail, 
+ * issuing a CPLE_NotSupported error. 
+ *
+ * @return a newly allocated geometry now owned by the caller, or NULL on failure.
+ */
 
 OGRGeometry *OGRGeometry::ConvexHull() const
 
@@ -1350,8 +1396,34 @@ OGRGeometry *OGRGeometry::ConvexHull() const
 }
 
 /************************************************************************/
+/*                          OGR_G_ConvexHull()                          */
+/************************************************************************/
+
+OGRGeometryH OGR_G_ConvexHull( OGRGeometryH hTarget )
+
+{
+    return (OGRGeometryH) ((OGRGeometry *) hTarget)->ConvexHull();
+}
+
+/************************************************************************/
 /*                            getBoundary()                             */
 /************************************************************************/
+
+/**
+ * Compute boundary.
+ *
+ * A new geometry object is created and returned containing the boundary
+ * of the geometry on which the method is invoked.  
+ *
+ * This method is the same as the C function OGR_G_GetBoundary().
+ *
+ * This method is built on the GEOS library, check it for the definition
+ * of the geometry operation.
+ * If OGR is built without the GEOS library, this method will always fail, 
+ * issuing a CPLE_NotSupported error. 
+ *
+ * @return a newly allocated geometry now owned by the caller, or NULL on failure.
+ */
 
 OGRGeometry *OGRGeometry::getBoundary() const
 
@@ -1389,8 +1461,48 @@ OGRGeometry *OGRGeometry::getBoundary() const
 }
 
 /************************************************************************/
+/*                         OGR_G_GetBoundary()                          */
+/************************************************************************/
+
+OGRGeometryH OGR_G_GetBoundary( OGRGeometryH hTarget )
+
+{
+    return (OGRGeometryH) ((OGRGeometry *) hTarget)->getBoundary();
+}
+
+
+/************************************************************************/
 /*                               Buffer()                               */
 /************************************************************************/
+
+/**
+ * Compute buffer of geometry.
+ *
+ * Builds a new geometry containing the buffer region around the geometry
+ * on which it is invoked.  The buffer is a polygon containing the region within
+ * the buffer distance of the original geometry.  
+ *
+ * Some buffer sections are properly described as curves, but are converted to
+ * approximate polygons.  The nQuadSegs parameter can be used to control how many
+ * segements should be used to define a 90 degree curve - a quadrant of a circle. 
+ * A value of 30 is a reasonable default.  Large values result in large numbers
+ * of vertices in the resulting buffer geometry while small numbers reduce the 
+ * accuracy of the result. 
+ *
+ * This method is the same as the C function OGR_G_Buffer().
+ *
+ * This method is built on the GEOS library, check it for the definition
+ * of the geometry operation.
+ * If OGR is built without the GEOS library, this method will always fail, 
+ * issuing a CPLE_NotSupported error. 
+ *
+ * @param dfDist the buffer distance to be applied. 
+ *
+ * @param nQuadSegs the number of segments used to approximate a 90 degree (quadrant) of
+ * curvature. 
+ *
+ * @return the newly created geometry, or NULL if an error occurs. 
+ */
 
 OGRGeometry *OGRGeometry::Buffer( double dfDist, int nQuadSegs ) const
 
@@ -1430,8 +1542,38 @@ OGRGeometry *OGRGeometry::Buffer( double dfDist, int nQuadSegs ) const
 }
 
 /************************************************************************/
+/*                            OGR_G_Buffer()                            */
+/************************************************************************/
+
+OGRGeometryH OGR_G_Buffer( OGRGeometryH hTarget, double dfDist, int nQuadSegs )
+
+{
+    return (OGRGeometryH) ((OGRGeometry *) hTarget)->Buffer( dfDist, nQuadSegs );
+}
+
+/************************************************************************/
 /*                            Intersection()                            */
 /************************************************************************/
+
+/**
+ * Compute intersection.
+ *
+ * Generates a new geometry which is the region of intersection of the
+ * two geometries operated on.  The Intersect() method can be used to test if
+ * two geometries intersect. 
+ *
+ * This method is the same as the C function OGR_G_Intersection().
+ *
+ * This method is built on the GEOS library, check it for the definition
+ * of the geometry operation.
+ * If OGR is built without the GEOS library, this method will always fail, 
+ * issuing a CPLE_NotSupported error. 
+ *
+ * @param poOtherGeom the other geometry intersected with "this" geometry.
+ *
+ * @return a new geometry representing the intersection or NULL if there is
+ * no intersection or an error occurs.
+ */
 
 OGRGeometry *OGRGeometry::Intersection( const OGRGeometry *poOtherGeom ) const
 
@@ -1471,8 +1613,37 @@ OGRGeometry *OGRGeometry::Intersection( const OGRGeometry *poOtherGeom ) const
 }
 
 /************************************************************************/
+/*                         OGR_G_Intersection()                         */
+/************************************************************************/
+
+OGRGeometryH OGR_G_Intersection( OGRGeometryH hThis, OGRGeometryH hOther )
+
+{
+    return (OGRGeometryH) 
+        ((OGRGeometry *) hThis)->Intersection( (OGRGeometry *) hOther );
+}
+
+/************************************************************************/
 /*                               Union()                                */
 /************************************************************************/
+
+/**
+ * Compute union.
+ *
+ * Generates a new geometry which is the region of union of the
+ * two geometries operated on.  
+ *
+ * This method is the same as the C function OGR_G_Union().
+ *
+ * This method is built on the GEOS library, check it for the definition
+ * of the geometry operation.
+ * If OGR is built without the GEOS library, this method will always fail, 
+ * issuing a CPLE_NotSupported error. 
+ *
+ * @param poOtherGeom the other geometry unioned with "this" geometry.
+ *
+ * @return a new geometry representing the union or NULL if an error occurs.
+ */
 
 OGRGeometry *OGRGeometry::Union( const OGRGeometry *poOtherGeom ) const
 
@@ -1512,8 +1683,38 @@ OGRGeometry *OGRGeometry::Union( const OGRGeometry *poOtherGeom ) const
 }
 
 /************************************************************************/
+/*                            OGR_G_Union()                             */
+/************************************************************************/
+
+OGRGeometryH OGR_G_Union( OGRGeometryH hThis, OGRGeometryH hOther )
+
+{
+    return (OGRGeometryH) 
+        ((OGRGeometry *) hThis)->Union( (OGRGeometry *) hOther );
+}
+
+/************************************************************************/
 /*                             Difference()                             */
 /************************************************************************/
+
+/**
+ * Compute difference.
+ *
+ * Generates a new geometry which is the region of this geometry with the
+ * region of the second geometry removed. 
+ *
+ * This method is the same as the C function OGR_G_Difference().
+ *
+ * This method is built on the GEOS library, check it for the definition
+ * of the geometry operation.
+ * If OGR is built without the GEOS library, this method will always fail, 
+ * issuing a CPLE_NotSupported error. 
+ *
+ * @param poOtherGeom the other geometry removed from "this" geometry.
+ *
+ * @return a new geometry representing the difference or NULL if the 
+ * difference is empty or an error occurs.
+ */
 
 OGRGeometry *OGRGeometry::Difference( const OGRGeometry *poOtherGeom ) const
 
@@ -1553,8 +1754,38 @@ OGRGeometry *OGRGeometry::Difference( const OGRGeometry *poOtherGeom ) const
 }
 
 /************************************************************************/
+/*                          OGR_G_Difference()                          */
+/************************************************************************/
+
+OGRGeometryH OGR_G_Difference( OGRGeometryH hThis, OGRGeometryH hOther )
+
+{
+    return (OGRGeometryH) 
+        ((OGRGeometry *) hThis)->Difference( (OGRGeometry *) hOther );
+}
+
+/************************************************************************/
 /*                        SymmetricDifference()                         */
 /************************************************************************/
+
+/**
+ * Compute symmetric difference.
+ *
+ * Generates a new geometry which is the symmetric difference of this
+ * geometry and the second geometry passed into the method.
+ *
+ * This method is the same as the C function OGR_G_SymmetricDifference().
+ *
+ * This method is built on the GEOS library, check it for the definition
+ * of the geometry operation.
+ * If OGR is built without the GEOS library, this method will always fail, 
+ * issuing a CPLE_NotSupported error. 
+ *
+ * @param poOtherGeom the other geometry.
+ *
+ * @return a new geometry representing the symmetric difference or NULL if the 
+ * difference is empty or an error occurs.
+ */
 
 OGRGeometry *
 OGRGeometry::SymmetricDifference( const OGRGeometry *poOtherGeom ) const
@@ -1595,8 +1826,36 @@ OGRGeometry::SymmetricDifference( const OGRGeometry *poOtherGeom ) const
 }
 
 /************************************************************************/
+/*                          OGR_G_Difference()                          */
+/************************************************************************/
+
+OGRGeometryH OGR_G_SymmetricDifference( OGRGeometryH hThis, OGRGeometryH hOther )
+
+{
+    return (OGRGeometryH) 
+        ((OGRGeometry *) hThis)->SymmetricDifference( (OGRGeometry *) hOther );
+}
+
+/************************************************************************/
 /*                              Disjoint()                              */
 /************************************************************************/
+
+/**
+ * Test for disjointness.
+ *
+ * Tests if this geometry and the other passed into the method are disjoint. 
+ *
+ * This method is the same as the C function OGR_G_Disjoint().
+ *
+ * This method is built on the GEOS library, check it for the definition
+ * of the geometry operation.
+ * If OGR is built without the GEOS library, this method will always fail, 
+ * issuing a CPLE_NotSupported error. 
+ *
+ * @param poOtherGeom the geometry to compare to this geometry.
+ *
+ * @return TRUE if they are disjoint, otherwise FALSE.  
+ */
 
 OGRBoolean
 OGRGeometry::Disjoint( const OGRGeometry *poOtherGeom ) const
@@ -1637,8 +1896,35 @@ OGRGeometry::Disjoint( const OGRGeometry *poOtherGeom ) const
 }
 
 /************************************************************************/
+/*                           OGR_G_Disjoint()                           */
+/************************************************************************/
+
+int OGR_G_Disjoint( OGRGeometryH hThis, OGRGeometryH hOther )
+
+{
+    return ((OGRGeometry *) hThis)->Disjoint( (OGRGeometry *) hOther );
+}
+
+/************************************************************************/
 /*                              Touches()                               */
 /************************************************************************/
+
+/**
+ * Test for touching.
+ *
+ * Tests if this geometry and the other passed into the method are touching.
+ *
+ * This method is the same as the C function OGR_G_Touches().
+ *
+ * This method is built on the GEOS library, check it for the definition
+ * of the geometry operation.
+ * If OGR is built without the GEOS library, this method will always fail, 
+ * issuing a CPLE_NotSupported error. 
+ *
+ * @param poOtherGeom the geometry to compare to this geometry.
+ *
+ * @return TRUE if they are touching, otherwise FALSE.  
+ */
 
 OGRBoolean
 OGRGeometry::Touches( const OGRGeometry *poOtherGeom ) const
@@ -1679,8 +1965,35 @@ OGRGeometry::Touches( const OGRGeometry *poOtherGeom ) const
 }
 
 /************************************************************************/
+/*                           OGR_G_Touches()                            */
+/************************************************************************/
+
+int OGR_G_Touches( OGRGeometryH hThis, OGRGeometryH hOther )
+
+{
+    return ((OGRGeometry *) hThis)->Touches( (OGRGeometry *) hOther );
+}
+
+/************************************************************************/
 /*                              Crosses()                               */
 /************************************************************************/
+
+/**
+ * Test for crossing.
+ *
+ * Tests if this geometry and the other passed into the method are crossing.
+ *
+ * This method is the same as the C function OGR_G_Crosses().
+ *
+ * This method is built on the GEOS library, check it for the definition
+ * of the geometry operation.
+ * If OGR is built without the GEOS library, this method will always fail, 
+ * issuing a CPLE_NotSupported error. 
+ *
+ * @param poOtherGeom the geometry to compare to this geometry.
+ *
+ * @return TRUE if they are crossing, otherwise FALSE.  
+ */
 
 OGRBoolean
 OGRGeometry::Crosses( const OGRGeometry *poOtherGeom ) const
@@ -1720,10 +2033,36 @@ OGRGeometry::Crosses( const OGRGeometry *poOtherGeom ) const
 #endif /* HAVE_GEOS */
 }
 
+/************************************************************************/
+/*                           OGR_G_Crosses()                            */
+/************************************************************************/
+
+int OGR_G_Crosses( OGRGeometryH hThis, OGRGeometryH hOther )
+
+{
+    return ((OGRGeometry *) hThis)->Crosses( (OGRGeometry *) hOther );
+}
 
 /************************************************************************/
 /*                               Within()                               */
 /************************************************************************/
+
+/**
+ * Test for containment.
+ *
+ * Tests if the passed in geometry is within the target geometry.
+ *
+ * This method is the same as the C function OGR_G_Within().
+ *
+ * This method is built on the GEOS library, check it for the definition
+ * of the geometry operation.
+ * If OGR is built without the GEOS library, this method will always fail, 
+ * issuing a CPLE_NotSupported error. 
+ *
+ * @param poOtherGeom the geometry to compare to this geometry.
+ *
+ * @return TRUE if poOtherGeom is within this geometry, otherwise FALSE.  
+ */
 
 OGRBoolean
 OGRGeometry::Within( const OGRGeometry *poOtherGeom ) const
@@ -1764,8 +2103,35 @@ OGRGeometry::Within( const OGRGeometry *poOtherGeom ) const
 }
 
 /************************************************************************/
+/*                            OGR_G_Within()                            */
+/************************************************************************/
+
+int OGR_G_Within( OGRGeometryH hThis, OGRGeometryH hOther )
+
+{
+    return ((OGRGeometry *) hThis)->Within( (OGRGeometry *) hOther );
+}
+
+/************************************************************************/
 /*                              Contains()                              */
 /************************************************************************/
+
+/**
+ * Test for containment.
+ *
+ * Tests if the passed in geometry contains the target geometry.
+ *
+ * This method is the same as the C function OGR_G_Contains().
+ *
+ * This method is built on the GEOS library, check it for the definition
+ * of the geometry operation.
+ * If OGR is built without the GEOS library, this method will always fail, 
+ * issuing a CPLE_NotSupported error. 
+ *
+ * @param poOtherGeom the geometry to compare to this geometry.
+ *
+ * @return TRUE if poOtherGeom contains this geometry, otherwise FALSE.  
+ */
 
 OGRBoolean
 OGRGeometry::Contains( const OGRGeometry *poOtherGeom ) const
@@ -1806,8 +2172,36 @@ OGRGeometry::Contains( const OGRGeometry *poOtherGeom ) const
 }
 
 /************************************************************************/
+/*                            OGR_G_Contains()                            */
+/************************************************************************/
+
+int OGR_G_Contains( OGRGeometryH hThis, OGRGeometryH hOther )
+
+{
+    return ((OGRGeometry *) hThis)->Contains( (OGRGeometry *) hOther );
+}
+
+/************************************************************************/
 /*                              Overlaps()                              */
 /************************************************************************/
+
+/**
+ * Test for overlap.
+ *
+ * Tests if this geometry and the other passed into the method overlap, that is
+ * their intersection has a non-zero area. 
+ *
+ * This method is the same as the C function OGR_G_Overlaps().
+ *
+ * This method is built on the GEOS library, check it for the definition
+ * of the geometry operation.
+ * If OGR is built without the GEOS library, this method will always fail, 
+ * issuing a CPLE_NotSupported error. 
+ *
+ * @param poOtherGeom the geometry to compare to this geometry.
+ *
+ * @return TRUE if they are overlapping, otherwise FALSE.  
+ */
 
 OGRBoolean
 OGRGeometry::Overlaps( const OGRGeometry *poOtherGeom ) const
@@ -1845,6 +2239,16 @@ OGRGeometry::Overlaps( const OGRGeometry *poOtherGeom ) const
     }
 
 #endif /* HAVE_GEOS */
+}
+
+/************************************************************************/
+/*                           OGR_G_Overlaps()                           */
+/************************************************************************/
+
+int OGR_G_Overlaps( OGRGeometryH hThis, OGRGeometryH hOther )
+
+{
+    return ((OGRGeometry *) hThis)->Overlaps( (OGRGeometry *) hOther );
 }
 
 /************************************************************************/
