@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2002/10/20 03:45:27  warmerda
+ * added debug on table create command
+ *
  * Revision 1.15  2002/10/09 18:30:10  warmerda
  * substantial upgrade to type handling, and preservations of width/precision
  *
@@ -490,6 +493,7 @@ OGRPGDataSource::CreateLayer( const char * pszLayerName,
                  "CREATE TABLE \"%s\" ( OGC_FID SERIAL )", 
                  pszLayerName );
 
+    CPLDebug( "OGR_PG", "PQexec(%s)", szCommand );
     hResult = PQexec(hPGConn, szCommand);
     if( PQresultStatus(hResult) != PGRES_COMMAND_OK )
     {
