@@ -5,7 +5,7 @@
  * Purpose:  Handle UK Ordnance Survey Raster DTM products.  Includes some
  *           raster related methods from NTFFileReader and the implementation
  *           of OGRNTFRasterLayer.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 1999, Frank Warmerdam
@@ -30,6 +30,14 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2003/02/27 21:09:47  warmerda
+ * Apply ZMult to LANDFORM_PROFILE_DTM data to scale to meters.
+ * adfGeoTransform[5] is left positive to correct coordinates ... the first
+ * entry in the first profile column is the *south* west corner, not the
+ * north west corner.  See also: FME bug RT3887.
+ * Note: adfGeoTransform[] change applied to LANDRANGER and LANDFORM products
+ * but only check on LANDFORM products.
+ *
  * Revision 1.10  2001/07/18 04:55:16  warmerda
  * added CPL_CSVID
  *
@@ -119,12 +127,14 @@ void NTFFileReader::EstablishRasterAccess()
         nRasterXSize = atoi(poRecord->GetField(13,16));
         nRasterYSize = atoi(poRecord->GetField(17,20));
 
+        // NOTE: unusual use of GeoTransform - the pixel origin is the
+        // bottom left corner!
         adfGeoTransform[0] = atoi(poRecord->GetField(25,34));
         adfGeoTransform[1] = 50;
         adfGeoTransform[2] = 0;
         adfGeoTransform[3] = atoi(poRecord->GetField(87,96));
         adfGeoTransform[4] = 0;
-        adfGeoTransform[5] = -50;
+        adfGeoTransform[5] = 50;
         
         nRasterDataType = 3; /* GDT_Int16 */
     }
@@ -137,6 +147,8 @@ void NTFFileReader::EstablishRasterAccess()
         nRasterXSize = atoi(poRecord->GetField(23,30));
         nRasterYSize = atoi(poRecord->GetField(31,38));
 
+        // NOTE: unusual use of GeoTransform - the pixel origin is the
+        // bottom left corner!
         adfGeoTransform[0] = atoi(poRecord->GetField(13,17))
                            + GetXOrigin();
         adfGeoTransform[1] = atoi(poRecord->GetField(39,42));
@@ -144,7 +156,7 @@ void NTFFileReader::EstablishRasterAccess()
         adfGeoTransform[3] = atoi(poRecord->GetField(18,22))
                            + GetYOrigin();
         adfGeoTransform[4] = 0;
-        adfGeoTransform[5] = -1 * atoi(poRecord->GetField(43,46));
+        adfGeoTransform[5] = atoi(poRecord->GetField(43,46));
         
         nRasterDataType = 3; /* GDT_Int16 */
     }
@@ -238,7 +250,8 @@ CPLErr NTFFileReader::ReadRasterColumn( int iColumn, float *pafElev )
         for( int iPixel = 0; iPixel < nRasterXSize; iPixel++ )
         {
             pafElev[iPixel] = (float) 
-                atoi(poRecord->GetField(19+iPixel*5,23+iPixel*5));
+                atoi(poRecord->GetField(19+iPixel*5,23+iPixel*5))
+                * GetZMult();
         }
     }
     
@@ -404,6 +417,9 @@ OGRFeature *OGRNTFRasterLayer::GetFeature( long nFeatureId )
     double      *padfGeoTransform = poReader->GetGeoTransform();
 
     poFeature->SetFID( nFeatureId );
+
+    // NOTE: unusual use of GeoTransform - the pixel origin is the
+    // bottom left corner!
     poFeature->SetGeometryDirectly(
         new OGRPoint( padfGeoTransform[0] + padfGeoTransform[1] * iReqColumn,
                       padfGeoTransform[3] + padfGeoTransform[5] * iReqRow,
