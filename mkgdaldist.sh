@@ -1,7 +1,7 @@
 #!/bin/sh
 
 if [ $# -lt 1 ] ; then
-  echo "Usage: mkgdaldist version [-install] [-nologin]"
+  echo "Usage: mkgdaldist version [-date date] [-install] [-nologin]"
   echo
   echo "Example: mkgdaldist 1.1.4"
   exit
@@ -15,6 +15,14 @@ if test "$GDAL_VERSION" != "`cat VERSION`" ; then
   echo "NOTE: local VERSION file (`cat VERSION`) does not match supplied version ($GDAL_VERSION)."
   echo "      Consider updating local VERSION file, and commiting to CVS." 
   echo
+fi
+
+if test "$2" = "-date" ; then 
+  forcedate=$3
+  shift
+  shift
+else
+  forcedate=no
 fi
   
 rm -rf dist_wrk  
@@ -37,6 +45,13 @@ if [ \! -d gdal ] ; then
   cd ..
   rm -rf dist_wrk
   exit
+fi
+
+if test "$forcedate" != "no" ; then
+  echo "Forcing Date To: $forcedate"
+  rm -f gdal/gcore/gdal_new.h  
+  sed -e "/define GDAL_RELEASE_DATE/s/20[0-9][0-9][0-9][0-9][0-9][0-9]/$forcedate/" gdal/gcore/gdal.h > gdal/gcore/gdal_new.h
+  mv gdal/gcore/gdal_new.h gdal/gcore/gdal.h
 fi
 
 find gdal -name CVS -exec rm -rf {} \;
