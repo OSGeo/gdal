@@ -9,15 +9,15 @@
 
  *
  * $Log$
+ * Revision 1.4  2005/02/15 06:24:31  kruland
+ * Added out typemap for GetMetadata.  (Removed extra log from comments)
+ *
  * Revision 1.3  2005/02/15 05:57:43  kruland
  * Moved the swig %newobject and %feature decls to immedately before the function
  * def.  Improves readability.
  *
  * Revision 1.2  2005/02/14 23:58:46  hobu
  * Added log info and C99-style comments
- *
- * Revision 1.4  2005/02/14 23:50:16  hobu
- * Added log info
  *
 */
 
@@ -57,9 +57,11 @@ public:
     return GDALDeleteDataset( self, name );
   }
 
+%apply (char **dict) { char ** };
   char **GetMetadata( const char * pszDomain = "" ) {
     return GDALGetMetadata( self, pszDomain );
   }
+%clear char **;
 }
 };
 
