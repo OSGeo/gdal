@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.35  2003/03/18 05:58:52  warmerda
+ * Added GDALFlushCache().
+ *
  * Revision 1.34  2003/02/13 16:18:58  warmerda
  * Fixed typo.
  *
@@ -236,6 +239,8 @@ GDALDataset::~GDALDataset()
  *
  * Any raster (or other GDAL) data written via GDAL calls, but buffered
  * internally will be written to disk.
+ *
+ * This method is the same as the C function GDALFlushCache().
  */
 
 void GDALDataset::FlushCache()
@@ -254,6 +259,16 @@ void GDALDataset::FlushCache()
         if( papoBands[i] != NULL )
             papoBands[i]->FlushCache();
     }
+}
+
+/************************************************************************/
+/*                           GDALFlushCache()                           */
+/************************************************************************/
+
+void GDALFlushCache( GDALDatasetH hDS )
+
+{
+    ((GDALDataset *) hDS)->FlushCache();
 }
 
 /************************************************************************/
