@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.46  2002/02/18 15:46:02  warmerda
+ * Fixed serious problems in IsSame() method.  Still a work in progress.
+ *
  * Revision 1.45  2002/01/24 16:22:18  warmerda
  * reworked StripCTParms and simplify support for prettywkt
  *
@@ -2773,6 +2776,8 @@ int OGRSpatialReference::IsSame( OGRSpatialReference * poOtherSRS )
 {
     if( GetRoot() == NULL && poOtherSRS->GetRoot() == NULL )
         return TRUE;
+    else if( GetRoot() == NULL || poOtherSRS->GetRoot() == NULL )
+        return FALSE;
 
 /* -------------------------------------------------------------------- */
 /*      Compare geographic coordinate system.                           */
@@ -2784,7 +2789,7 @@ int OGRSpatialReference::IsSame( OGRSpatialReference * poOtherSRS )
 /*      Do the have the same root types?  Ie. is one PROJCS and one     */
 /*      GEOGCS or perhaps LOCALCS?                                      */
 /* -------------------------------------------------------------------- */
-    if( EQUAL(GetRoot()->GetValue(),poOtherSRS->GetRoot()->GetValue()) )
+    if( !EQUAL(GetRoot()->GetValue(),poOtherSRS->GetRoot()->GetValue()) )
         return FALSE;
 
 /* -------------------------------------------------------------------- */
