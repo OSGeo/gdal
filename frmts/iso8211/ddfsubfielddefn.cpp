@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  1999/05/10 17:36:23  warmerda
+ * Strip trailing spaces off subfield names.
+ *
  * Revision 1.3  1999/05/06 15:15:07  warmerda
  * Removed extra break;
  *
@@ -82,9 +85,14 @@ DDFSubfieldDefn::~DDFSubfieldDefn()
 void DDFSubfieldDefn::SetName( const char * pszNewName )
 
 {
+    int		i;
+    
     CPLFree( pszName );
 
     pszName = CPLStrdup( pszNewName );
+
+    for( i = strlen(pszName)-1; i > 0 && pszName[i] == ' '; i-- )
+        pszName[i] = '\0';
 }
 
 /************************************************************************/
