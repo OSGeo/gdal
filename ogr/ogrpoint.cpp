@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.28  2004/02/22 10:03:40  dron
+ * Fix compirison casting problems in OGRPoint::Equal() method.
+ *
  * Revision 1.27  2004/02/21 15:36:14  warmerda
  * const correctness updates for geometry: bug 289
  *
@@ -544,7 +547,7 @@ OGRBoolean OGRPoint::Equal( OGRGeometry * poOther ) const
 {
     OGRPoint    *poOPoint = (OGRPoint *) poOther;
     
-    if( poOther == this )
+    if( poOPoint== this )
         return TRUE;
     
     if( poOther->getGeometryType() != getGeometryType() )
