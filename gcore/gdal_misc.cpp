@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.23  2001/05/01 18:09:25  warmerda
+ * added GDALReadWorldFile()
+ *
  * Revision 1.22  2000/12/04 20:45:14  warmerda
  * removed unused variable.
  *
@@ -97,6 +100,7 @@
  */
 
 #include "gdal_priv.h"
+#include "cpl_string.h"
 
 /************************************************************************/
 /*                           __pure_virtual()                           */
@@ -1001,3 +1005,93 @@ GDAL_GCP *GDALDuplicateGCPs( int nCount, const GDAL_GCP *pasGCPList )
     return pasReturn;
 }
                              
+/************************************************************************/
+/*                         GDALReadWorldFile()                          */
+/*                                                                      */
+/*      Helper function for translator implementators wanting           */
+/*      support for ESRI world files.                                   */
+/************************************************************************/
+
+int GDALReadWorldFile( const char * pszBaseFilename, const char *pszExtension,
+                       double *padfGeoTransform )
+
+{
+    const char	*pszTFW;
+    char	szExtUpper[32], szExtLower[32];
+    int		i;
+    FILE	*fpTFW;
+    char	**papszLines;
+
+    if( *pszExtension == '.' )
+        pszExtension++;
+
+/* -------------------------------------------------------------------- */
+/*      Generate upper and lower case versions of the extension.        */
+/* -------------------------------------------------------------------- */
+    strcpy( szExtUpper, pszExtension );
+    strcpy( szExtLower, pszExtension );
+
+    for( i = 0; szExtUpper[i] != '\0'; i++ )
+    {
+        if( szExtUpper[i] >= 'a' && szExtUpper[i] <= 'z' )
+            szExtUpper[i] = szExtUpper[i] - 'a' + 'A';
+        if( szExtLower[i] >= 'A' && szExtLower[i] <= 'Z' )
+            szExtLower[i] = szExtLower[i] - 'A' + 'a';
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Try lower case, then upper case.                                */
+/* -------------------------------------------------------------------- */
+    pszTFW = CPLResetExtension( pszBaseFilename, szExtLower );
+
+    fpTFW = VSIFOpen( pszTFW, "rt" );
+
+#ifndef WIN32
+    if( fpTFW == NULL )
+    {
+        pszTFW = CPLResetExtension( pszBaseFilename, szExtUpper );
+        fpTFW = VSIFOpen( pszTFW, "rt" );
+    }
+#endif
+    
+    if( fpTFW == NULL )
+        return FALSE;
+
+    VSIFClose( fpTFW );
+
+/* -------------------------------------------------------------------- */
+/*      We found the file, now load and parse it.                       */
+/* -------------------------------------------------------------------- */
+    papszLines = CSLLoad( pszTFW );
+    if( CSLCount(papszLines) >= 6 
+        && atof(papszLines[0]) != 0.0
+        && atof(papszLines[3]) != 0.0 )
+    {
+        padfGeoTransform[0] = atof(papszLines[4]);
+        padfGeoTransform[1] = atof(papszLines[0]);
+        padfGeoTransform[2] = atof(papszLines[2]);
+        padfGeoTransform[3] = atof(papszLines[5]);
+        padfGeoTransform[4] = atof(papszLines[1]);
+        padfGeoTransform[5] = atof(papszLines[3]);
+
+        // correct for center of pixel vs. top left of pixel
+        padfGeoTransform[0] -= 0.5 * padfGeoTransform[1];
+        padfGeoTransform[0] -= 0.5 * padfGeoTransform[2];
+        padfGeoTransform[3] -= 0.5 * padfGeoTransform[4];
+        padfGeoTransform[3] -= 0.5 * padfGeoTransform[5];
+
+        CSLDestroy(papszLines);
+
+        return TRUE;
+    }
+    else
+    {
+        CPLDebug( "GDAL", 
+                  "GDALReadWorldFile(%s) found file, but it was corrupt.",
+                  pszTFW );
+        CSLDestroy(papszLines);
+        return FALSE;
+    }
+}
+
+

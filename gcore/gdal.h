@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.35  2001/05/01 18:09:25  warmerda
+ * added GDALReadWorldFile()
+ *
  * Revision 1.34  2001/01/30 22:32:42  warmerda
  * added AVERAGE_MP (magnitude preserving averaging) overview resampling type
  *
@@ -400,9 +403,9 @@ CPLErr GDALOverviewMagnitudeCorrection( GDALRasterBandH hBaseBand,
                                         GDALProgressFunc pfnProgress, 
                                         void *pProgressData );
 
-/* need to add functions related to block cache */
-
-/* helper functions */
+/* -------------------------------------------------------------------- */
+/*      Helper functions.                                               */
+/* -------------------------------------------------------------------- */
 void CPL_DLL GDALSwapWords( void *pData, int nWordSize, int nWordCount,
                             int nWordSkip );
 void CPL_DLL
@@ -410,6 +413,9 @@ void CPL_DLL
                    void * pDstData, GDALDataType eDstType, int nDstPixelOffset,
                    int nWordCount );
 
+int GDALReadWorldFile( const char *pszBaseFilename, 
+                       const char *pszExtension, 
+                       double * padfGeoTransform );
 
 /* ==================================================================== */
 /*      Color tables.                                                   */
