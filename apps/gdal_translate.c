@@ -28,6 +28,9 @@
  * ****************************************************************************
  *
  * $Log$
+ * Revision 1.12  2000/03/31 13:43:42  warmerda
+ * added source window
+ *
  * Revision 1.11  2000/03/23 20:32:37  gdalanon
  * fix usage
  *
@@ -79,6 +82,7 @@ static void Usage()
     printf( "Usage: gdal_translate [-ot {Byte/UInt16/UInt32/Int32/Float32/Float64}]\n"
             "                      [-of format] [-b band]\n"
             "			   [-outsize xsize ysize]\n"
+            "                      [-srcwin xoff yoff xsize ysize]\n"
             "                      [-co \"NAME=VALUE.\"]*\n"
             "                      src_dataset dst_dataset\n" );
 }
@@ -101,6 +105,13 @@ int main( int argc, char ** argv )
     GDALDataType	eOutputType = GDT_Unknown;
     int			nOXSize = 0, nOYSize = 0;
     char                **papszCreateOptions = NULL;
+    int                 anSrcWin[4];
+    const char          *pszProjection;
+
+    anSrcWin[0] = 0;
+    anSrcWin[1] = 0;
+    anSrcWin[2] = 0;
+    anSrcWin[3] = 0;
 
 /* -------------------------------------------------------------------- */
 /*      Handle command line arguments.                                  */
@@ -144,6 +155,14 @@ int main( int argc, char ** argv )
         {
             nOXSize = atoi(argv[++i]);
             nOYSize = atoi(argv[++i]);
+        }   
+
+        else if( EQUAL(argv[i],"-srcwin") && i < argc-4 )
+        {
+            anSrcWin[0] = atoi(argv[++i]);
+            anSrcWin[1] = atoi(argv[++i]);
+            anSrcWin[2] = atoi(argv[++i]);
+            anSrcWin[3] = atoi(argv[++i]);
         }   
 
         else if( argv[i][0] == '-' )
@@ -197,6 +216,12 @@ int main( int argc, char ** argv )
     
     printf( "Size is %d, %d\n", nRasterXSize, nRasterYSize );
 
+    if( anSrcWin[2] == 0 && anSrcWin[3] == 0 )
+    {
+        anSrcWin[2] = nRasterXSize;
+        anSrcWin[3] = nRasterYSize;
+    }
+
 /* -------------------------------------------------------------------- */
 /*	Build band list to translate					*/
 /* -------------------------------------------------------------------- */
@@ -246,8 +271,8 @@ int main( int argc, char ** argv )
 
     if( nOXSize == 0 )
     {
-        nOXSize = nRasterXSize;
-        nOYSize = nRasterYSize;
+        nOXSize = anSrcWin[2];
+        nOYSize = anSrcWin[3];
     }
     
 /* -------------------------------------------------------------------- */
@@ -264,15 +289,28 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
 /*	Copy over projection, and geotransform information.		*/
 /* -------------------------------------------------------------------- */
-    GDALSetProjection( hOutDS, GDALGetProjectionRef( hDataset ) );
+    pszProjection = GDALGetProjectionRef( hDataset );
+    if( pszProjection != NULL && strlen(pszProjection) > 0 )
+        GDALSetProjection( hOutDS, pszProjection );
 
     if( GDALGetGeoTransform( hDataset, adfGeoTransform ) == CE_None )
+    {
+        adfGeoTransform[0] += anSrcWin[0] * adfGeoTransform[1]
+                            + anSrcWin[1] * adfGeoTransform[4];
+        adfGeoTransform[1] += anSrcWin[0] * adfGeoTransform[2]
+                            + anSrcWin[1] * adfGeoTransform[5];
+
+        adfGeoTransform[1] *= anSrcWin[2] / (double) nOXSize;
+        adfGeoTransform[2] *= anSrcWin[3] / (double) nOYSize;
+        adfGeoTransform[4] *= anSrcWin[2] / (double) nOXSize;
+        adfGeoTransform[5] *= anSrcWin[3] / (double) nOYSize;
+
         GDALSetGeoTransform( hOutDS, adfGeoTransform );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Loop copying bands.                                             */
 /* -------------------------------------------------------------------- */
-    
     for( i = 0; i < nBandCount; i++ )
     {
         GByte	*pabyBlock;
@@ -297,18 +335,21 @@ int main( int argc, char ** argv )
         {
             int		iSrcYOff;
 
-            if( nOYSize == nRasterYSize )
-                iSrcYOff = iBlockY;
+            if( nOYSize == anSrcWin[3] )
+                iSrcYOff = iBlockY + anSrcWin[1];
             else
             {
-                iSrcYOff = (iBlockY / (double) nOYSize) * nRasterYSize;
+                iSrcYOff = (iBlockY / (double) nOYSize) * anSrcWin[3]
+                    + anSrcWin[1];
+                iSrcYOff = MAX(0,MIN(anSrcWin[3]-1,iSrcYOff));
             }
 
             GDALRasterIO( hBand, GF_Read,
-                          0, iSrcYOff, nRasterXSize, 1,
+                          anSrcWin[0], iSrcYOff, anSrcWin[2], 1,
                           pabyBlock, nOXSize, 1,
                           GDALGetRasterDataType(hBand),
                           0, 0 );
+
             GDALRasterIO( hDstBand, GF_Write,
                           0, iBlockY, nOXSize, 1,
                           pabyBlock, nOXSize, 1,
