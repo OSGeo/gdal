@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.123  2004/10/26 23:47:28  fwarmerdam
+ * Added support for writing UInt16 colortables.
+ *
  * Revision 1.122  2004/10/21 15:51:06  fwarmerdam
  * Still write geotiff coordinate system info in WriteGeoTIFFInfo()
  * even if we don't have a geotransform.
@@ -775,19 +778,40 @@ CPLErr GTiffRasterBand::SetColorTable( GDALColorTable * poCT )
 /* -------------------------------------------------------------------- */
 /*      Check if this is even a candidate for applying a PCT.           */
 /* -------------------------------------------------------------------- */
-    if( poGDS->bCrystalized || poGDS->nSamplesPerPixel != 1 )
+    if( poGDS->bCrystalized )
     {
         CPLError( CE_Failure, CPLE_NotSupported, 
                   "SetColorTable() not supported for existing TIFF files." );
+        return CE_Failure;
+    }
+
+    if( poGDS->nSamplesPerPixel != 1 )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported, 
+                  "SetColorTable() not supported for multi-sample TIFF files." );
+        return CE_Failure;
+    }
+        
+    if( eDataType != GDT_Byte && eDataType != GDT_UInt16 )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported, 
+                  "SetColorTable() only supported for Byte or UInt16 bands in TIFF format." );
         return CE_Failure;
     }
         
 /* -------------------------------------------------------------------- */
 /*      Write out the colortable, and update the configuration.         */
 /* -------------------------------------------------------------------- */
-    unsigned short	anTRed[256], anTGreen[256], anTBlue[256];
+    int nColors;
 
-    for( int iColor = 0; iColor < 256; iColor++ )
+    if( eDataType == GDT_Byte )
+        nColors = 256;
+    else
+        nColors = 65536;
+
+    unsigned short	anTRed[nColors], anTGreen[nColors], anTBlue[nColors];
+
+    for( int iColor = 0; iColor < nColors; iColor++ )
     {
         if( iColor < poCT->GetColorEntryCount() )
         {
@@ -3149,10 +3173,40 @@ GTiffCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         TIFFSetField( hTIFF, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_PALETTE );
         TIFFSetField( hTIFF, TIFFTAG_COLORMAP, anTRed, anTGreen, anTBlue );
     }
+    else if( nBands == 1 
+             && poSrcDS->GetRasterBand(1)->GetColorTable() != NULL 
+             && eType == GDT_UInt16 )
+    {
+        unsigned short	anTRed[65536], anTGreen[65536], anTBlue[65536];
+        GDALColorTable *poCT;
+
+        poCT = poSrcDS->GetRasterBand(1)->GetColorTable();
+        
+        for( int iColor = 0; iColor < 65536; iColor++ )
+        {
+            if( iColor < poCT->GetColorEntryCount() )
+            {
+                GDALColorEntry  sRGB;
+
+                poCT->GetColorEntryAsRGB( iColor, &sRGB );
+
+                anTRed[iColor] = (unsigned short) (256 * sRGB.c1);
+                anTGreen[iColor] = (unsigned short) (256 * sRGB.c2);
+                anTBlue[iColor] = (unsigned short) (256 * sRGB.c3);
+            }
+            else
+            {
+                anTRed[iColor] = anTGreen[iColor] = anTBlue[iColor] = 0;
+            }
+        }
+
+        TIFFSetField( hTIFF, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_PALETTE );
+        TIFFSetField( hTIFF, TIFFTAG_COLORMAP, anTRed, anTGreen, anTBlue );
+    }
     else if( poSrcDS->GetRasterBand(1)->GetColorTable() != NULL )
         CPLError( CE_Warning, CPLE_AppDefined,
-                  "Unable to export color table to GeoTIFF file.  Color\n"
-                  "tables can only be written to 1 band 8bit GeoTIFF files." );
+                  "Unable to export color table to GeoTIFF file.  Color tables\n"
+                  "can only be written to 1 band Byte or UInt16 GeoTIFF files." );
 
 /* -------------------------------------------------------------------- */
 /* 	Transfer some TIFF specific metadata, if available.             */
