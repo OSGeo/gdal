@@ -33,8 +33,8 @@
  * and things like that.
  *
  * $Log$
- * Revision 1.92  2004/07/10 05:05:24  warmerda
- * added closerings
+ * Revision 1.93  2004/07/10 07:08:39  warmerda
+ * added new GEOS methods
  *
  ************************************************************************/
 
@@ -7332,6 +7332,390 @@ static PyObject *_wrap_OGR_G_Equal(PyObject *self, PyObject *args) {
     return _resultobj;
 }
 
+static PyObject *_wrap_OGR_G_Disjoint(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    int  _result;
+    OGRGeometryH  _arg0;
+    OGRGeometryH  _arg1;
+    char * _argc0 = 0;
+    char * _argc1 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"ss:OGR_G_Disjoint",&_argc0,&_argc1)) 
+        return NULL;
+    if (_argc0) {
+        if (SWIG_GetPtr(_argc0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OGR_G_Disjoint. Expected _OGRGeometryH.");
+        return NULL;
+        }
+    }
+    if (_argc1) {
+        if (SWIG_GetPtr(_argc1,(void **) &_arg1,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of OGR_G_Disjoint. Expected _OGRGeometryH.");
+        return NULL;
+        }
+    }
+    _result = (int )OGR_G_Disjoint(_arg0,_arg1);
+    _resultobj = Py_BuildValue("i",_result);
+    return _resultobj;
+}
+
+static PyObject *_wrap_OGR_G_Touches(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    int  _result;
+    OGRGeometryH  _arg0;
+    OGRGeometryH  _arg1;
+    char * _argc0 = 0;
+    char * _argc1 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"ss:OGR_G_Touches",&_argc0,&_argc1)) 
+        return NULL;
+    if (_argc0) {
+        if (SWIG_GetPtr(_argc0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OGR_G_Touches. Expected _OGRGeometryH.");
+        return NULL;
+        }
+    }
+    if (_argc1) {
+        if (SWIG_GetPtr(_argc1,(void **) &_arg1,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of OGR_G_Touches. Expected _OGRGeometryH.");
+        return NULL;
+        }
+    }
+    _result = (int )OGR_G_Touches(_arg0,_arg1);
+    _resultobj = Py_BuildValue("i",_result);
+    return _resultobj;
+}
+
+static PyObject *_wrap_OGR_G_Crosses(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    int  _result;
+    OGRGeometryH  _arg0;
+    OGRGeometryH  _arg1;
+    char * _argc0 = 0;
+    char * _argc1 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"ss:OGR_G_Crosses",&_argc0,&_argc1)) 
+        return NULL;
+    if (_argc0) {
+        if (SWIG_GetPtr(_argc0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OGR_G_Crosses. Expected _OGRGeometryH.");
+        return NULL;
+        }
+    }
+    if (_argc1) {
+        if (SWIG_GetPtr(_argc1,(void **) &_arg1,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of OGR_G_Crosses. Expected _OGRGeometryH.");
+        return NULL;
+        }
+    }
+    _result = (int )OGR_G_Crosses(_arg0,_arg1);
+    _resultobj = Py_BuildValue("i",_result);
+    return _resultobj;
+}
+
+static PyObject *_wrap_OGR_G_Within(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    int  _result;
+    OGRGeometryH  _arg0;
+    OGRGeometryH  _arg1;
+    char * _argc0 = 0;
+    char * _argc1 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"ss:OGR_G_Within",&_argc0,&_argc1)) 
+        return NULL;
+    if (_argc0) {
+        if (SWIG_GetPtr(_argc0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OGR_G_Within. Expected _OGRGeometryH.");
+        return NULL;
+        }
+    }
+    if (_argc1) {
+        if (SWIG_GetPtr(_argc1,(void **) &_arg1,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of OGR_G_Within. Expected _OGRGeometryH.");
+        return NULL;
+        }
+    }
+    _result = (int )OGR_G_Within(_arg0,_arg1);
+    _resultobj = Py_BuildValue("i",_result);
+    return _resultobj;
+}
+
+static PyObject *_wrap_OGR_G_Contains(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    int  _result;
+    OGRGeometryH  _arg0;
+    OGRGeometryH  _arg1;
+    char * _argc0 = 0;
+    char * _argc1 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"ss:OGR_G_Contains",&_argc0,&_argc1)) 
+        return NULL;
+    if (_argc0) {
+        if (SWIG_GetPtr(_argc0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OGR_G_Contains. Expected _OGRGeometryH.");
+        return NULL;
+        }
+    }
+    if (_argc1) {
+        if (SWIG_GetPtr(_argc1,(void **) &_arg1,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of OGR_G_Contains. Expected _OGRGeometryH.");
+        return NULL;
+        }
+    }
+    _result = (int )OGR_G_Contains(_arg0,_arg1);
+    _resultobj = Py_BuildValue("i",_result);
+    return _resultobj;
+}
+
+static PyObject *_wrap_OGR_G_Overlaps(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    int  _result;
+    OGRGeometryH  _arg0;
+    OGRGeometryH  _arg1;
+    char * _argc0 = 0;
+    char * _argc1 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"ss:OGR_G_Overlaps",&_argc0,&_argc1)) 
+        return NULL;
+    if (_argc0) {
+        if (SWIG_GetPtr(_argc0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OGR_G_Overlaps. Expected _OGRGeometryH.");
+        return NULL;
+        }
+    }
+    if (_argc1) {
+        if (SWIG_GetPtr(_argc1,(void **) &_arg1,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of OGR_G_Overlaps. Expected _OGRGeometryH.");
+        return NULL;
+        }
+    }
+    _result = (int )OGR_G_Overlaps(_arg0,_arg1);
+    _resultobj = Py_BuildValue("i",_result);
+    return _resultobj;
+}
+
+static PyObject *_wrap_OGR_G_GetBoundary(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    OGRGeometryH  _result;
+    OGRGeometryH  _arg0;
+    char * _argc0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"s:OGR_G_GetBoundary",&_argc0)) 
+        return NULL;
+    if (_argc0) {
+        if (SWIG_GetPtr(_argc0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OGR_G_GetBoundary. Expected _OGRGeometryH.");
+        return NULL;
+        }
+    }
+    _result = (OGRGeometryH )OGR_G_GetBoundary(_arg0);
+    SWIG_MakePtr(_ptemp, (char *) _result,"_OGRGeometryH");
+    _resultobj = Py_BuildValue("s",_ptemp);
+    return _resultobj;
+}
+
+static PyObject *_wrap_OGR_G_ConvexHull(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    OGRGeometryH  _result;
+    OGRGeometryH  _arg0;
+    char * _argc0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"s:OGR_G_ConvexHull",&_argc0)) 
+        return NULL;
+    if (_argc0) {
+        if (SWIG_GetPtr(_argc0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OGR_G_ConvexHull. Expected _OGRGeometryH.");
+        return NULL;
+        }
+    }
+    _result = (OGRGeometryH )OGR_G_ConvexHull(_arg0);
+    SWIG_MakePtr(_ptemp, (char *) _result,"_OGRGeometryH");
+    _resultobj = Py_BuildValue("s",_ptemp);
+    return _resultobj;
+}
+
+static PyObject *_wrap_OGR_G_Buffer(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    OGRGeometryH  _result;
+    OGRGeometryH  _arg0;
+    double  _arg1;
+    int  _arg2;
+    char * _argc0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"sdi:OGR_G_Buffer",&_argc0,&_arg1,&_arg2)) 
+        return NULL;
+    if (_argc0) {
+        if (SWIG_GetPtr(_argc0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OGR_G_Buffer. Expected _OGRGeometryH.");
+        return NULL;
+        }
+    }
+    _result = (OGRGeometryH )OGR_G_Buffer(_arg0,_arg1,_arg2);
+    SWIG_MakePtr(_ptemp, (char *) _result,"_OGRGeometryH");
+    _resultobj = Py_BuildValue("s",_ptemp);
+    return _resultobj;
+}
+
+static PyObject *_wrap_OGR_G_Intersection(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    OGRGeometryH  _result;
+    OGRGeometryH  _arg0;
+    OGRGeometryH  _arg1;
+    char * _argc0 = 0;
+    char * _argc1 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"ss:OGR_G_Intersection",&_argc0,&_argc1)) 
+        return NULL;
+    if (_argc0) {
+        if (SWIG_GetPtr(_argc0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OGR_G_Intersection. Expected _OGRGeometryH.");
+        return NULL;
+        }
+    }
+    if (_argc1) {
+        if (SWIG_GetPtr(_argc1,(void **) &_arg1,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of OGR_G_Intersection. Expected _OGRGeometryH.");
+        return NULL;
+        }
+    }
+    _result = (OGRGeometryH )OGR_G_Intersection(_arg0,_arg1);
+    SWIG_MakePtr(_ptemp, (char *) _result,"_OGRGeometryH");
+    _resultobj = Py_BuildValue("s",_ptemp);
+    return _resultobj;
+}
+
+static PyObject *_wrap_OGR_G_Union(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    OGRGeometryH  _result;
+    OGRGeometryH  _arg0;
+    OGRGeometryH  _arg1;
+    char * _argc0 = 0;
+    char * _argc1 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"ss:OGR_G_Union",&_argc0,&_argc1)) 
+        return NULL;
+    if (_argc0) {
+        if (SWIG_GetPtr(_argc0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OGR_G_Union. Expected _OGRGeometryH.");
+        return NULL;
+        }
+    }
+    if (_argc1) {
+        if (SWIG_GetPtr(_argc1,(void **) &_arg1,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of OGR_G_Union. Expected _OGRGeometryH.");
+        return NULL;
+        }
+    }
+    _result = (OGRGeometryH )OGR_G_Union(_arg0,_arg1);
+    SWIG_MakePtr(_ptemp, (char *) _result,"_OGRGeometryH");
+    _resultobj = Py_BuildValue("s",_ptemp);
+    return _resultobj;
+}
+
+static PyObject *_wrap_OGR_G_Difference(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    OGRGeometryH  _result;
+    OGRGeometryH  _arg0;
+    OGRGeometryH  _arg1;
+    char * _argc0 = 0;
+    char * _argc1 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"ss:OGR_G_Difference",&_argc0,&_argc1)) 
+        return NULL;
+    if (_argc0) {
+        if (SWIG_GetPtr(_argc0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OGR_G_Difference. Expected _OGRGeometryH.");
+        return NULL;
+        }
+    }
+    if (_argc1) {
+        if (SWIG_GetPtr(_argc1,(void **) &_arg1,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of OGR_G_Difference. Expected _OGRGeometryH.");
+        return NULL;
+        }
+    }
+    _result = (OGRGeometryH )OGR_G_Difference(_arg0,_arg1);
+    SWIG_MakePtr(_ptemp, (char *) _result,"_OGRGeometryH");
+    _resultobj = Py_BuildValue("s",_ptemp);
+    return _resultobj;
+}
+
+static PyObject *_wrap_OGR_G_SymmetricDifference(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    OGRGeometryH  _result;
+    OGRGeometryH  _arg0;
+    OGRGeometryH  _arg1;
+    char * _argc0 = 0;
+    char * _argc1 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"ss:OGR_G_SymmetricDifference",&_argc0,&_argc1)) 
+        return NULL;
+    if (_argc0) {
+        if (SWIG_GetPtr(_argc0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OGR_G_SymmetricDifference. Expected _OGRGeometryH.");
+        return NULL;
+        }
+    }
+    if (_argc1) {
+        if (SWIG_GetPtr(_argc1,(void **) &_arg1,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of OGR_G_SymmetricDifference. Expected _OGRGeometryH.");
+        return NULL;
+        }
+    }
+    _result = (OGRGeometryH )OGR_G_SymmetricDifference(_arg0,_arg1);
+    SWIG_MakePtr(_ptemp, (char *) _result,"_OGRGeometryH");
+    _resultobj = Py_BuildValue("s",_ptemp);
+    return _resultobj;
+}
+
+static PyObject *_wrap_OGR_G_Distance(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    double  _result;
+    OGRGeometryH  _arg0;
+    OGRGeometryH  _arg1;
+    char * _argc0 = 0;
+    char * _argc1 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"ss:OGR_G_Distance",&_argc0,&_argc1)) 
+        return NULL;
+    if (_argc0) {
+        if (SWIG_GetPtr(_argc0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OGR_G_Distance. Expected _OGRGeometryH.");
+        return NULL;
+        }
+    }
+    if (_argc1) {
+        if (SWIG_GetPtr(_argc1,(void **) &_arg1,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of OGR_G_Distance. Expected _OGRGeometryH.");
+        return NULL;
+        }
+    }
+    _result = (double )OGR_G_Distance(_arg0,_arg1);
+    _resultobj = Py_BuildValue("d",_result);
+    return _resultobj;
+}
+
 static PyObject *_wrap_OGR_G_Empty(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
     OGRGeometryH  _arg0;
@@ -10350,6 +10734,20 @@ static PyMethodDef _gdalMethods[] = {
 	 { "OGR_G_GetX", _wrap_OGR_G_GetX, 1 },
 	 { "OGR_G_GetPointCount", _wrap_OGR_G_GetPointCount, 1 },
 	 { "OGR_G_Empty", _wrap_OGR_G_Empty, 1 },
+	 { "OGR_G_Distance", _wrap_OGR_G_Distance, 1 },
+	 { "OGR_G_SymmetricDifference", _wrap_OGR_G_SymmetricDifference, 1 },
+	 { "OGR_G_Difference", _wrap_OGR_G_Difference, 1 },
+	 { "OGR_G_Union", _wrap_OGR_G_Union, 1 },
+	 { "OGR_G_Intersection", _wrap_OGR_G_Intersection, 1 },
+	 { "OGR_G_Buffer", _wrap_OGR_G_Buffer, 1 },
+	 { "OGR_G_ConvexHull", _wrap_OGR_G_ConvexHull, 1 },
+	 { "OGR_G_GetBoundary", _wrap_OGR_G_GetBoundary, 1 },
+	 { "OGR_G_Overlaps", _wrap_OGR_G_Overlaps, 1 },
+	 { "OGR_G_Contains", _wrap_OGR_G_Contains, 1 },
+	 { "OGR_G_Within", _wrap_OGR_G_Within, 1 },
+	 { "OGR_G_Crosses", _wrap_OGR_G_Crosses, 1 },
+	 { "OGR_G_Touches", _wrap_OGR_G_Touches, 1 },
+	 { "OGR_G_Disjoint", _wrap_OGR_G_Disjoint, 1 },
 	 { "OGR_G_Equal", _wrap_OGR_G_Equal, 1 },
 	 { "OGR_G_Intersect", _wrap_OGR_G_Intersect, 1 },
 	 { "OGR_G_TransformTo", _wrap_OGR_G_TransformTo, 1 },
