@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2001/11/15 21:19:47  warmerda
+ * added soft transaction semantics, handle null fields properly
+ *
  * Revision 1.8  2001/11/15 16:10:12  warmerda
  * fixed some escaping issues with string field values
  *
@@ -126,6 +129,7 @@ OGRFeatureDefn *OGRPGLayer::ReadTableDefinition( const char * pszTable )
 /* -------------------------------------------------------------------- */
 /*      Fire off commands to get back the schema of the table.          */
 /* -------------------------------------------------------------------- */
+    poDS->FlushSoftTransaction();
     hResult = PQexec(hPGConn, "BEGIN");
 
     if( hResult && PQresultStatus(hResult) == PGRES_COMMAND_OK )
@@ -420,6 +424,7 @@ OGRFeature *OGRPGLayer::GetNextRawFeature()
     {
         char	*pszFields = BuildFields();
 
+        poDS->FlushSoftTransaction();
         hCursorResult = PQexec(hPGConn, "BEGIN");
         PQclear( hCursorResult );
 
@@ -741,40 +746,47 @@ OGRErr OGRPGLayer::CreateFeature( OGRFeature *poFeature )
 {
     PGconn		*hPGConn = poDS->GetPGConn();
     PGresult            *hResult;
-    char		szCommand[800000];
+    char		*pszCommand;
     int                 i, bNeedComma;
+    unsigned int        nCommandBufSize;;
+    OGRErr              eErr;
 
-    hResult = PQexec(hPGConn, "BEGIN");
-    PQclear( hResult );
+    eErr = poDS->SoftStartTransaction();
+    if( eErr != OGRERR_NONE )
+        return eErr;
+
+    nCommandBufSize = 40000;
+    pszCommand = (char *) CPLMalloc(nCommandBufSize);
 
 /* -------------------------------------------------------------------- */
-/*      Form the INSERT command.  Note, we aren't watching for          */
-/*      command buffer overflow for the field list, and we don't        */
-/*      skip null fields the way we ought to.                           */
+/*      Form the INSERT command.  					*/
 /* -------------------------------------------------------------------- */
-    sprintf( szCommand, "INSERT INTO %s (", poFeatureDefn->GetName() );
+    sprintf( pszCommand, "INSERT INTO %s (", poFeatureDefn->GetName() );
 
     if( bHasWkb && poFeature->GetGeometryRef() != NULL )
-        strcat( szCommand, "WKB_GEOMETRY, " );
+        strcat( pszCommand, "WKB_GEOMETRY, " );
     
     if( bHasPostGISGeometry && poFeature->GetGeometryRef() != NULL )
     {
-        strcat( szCommand, pszGeomColumn );
-        strcat( szCommand, ", " );
+        strcat( pszCommand, pszGeomColumn );
+        strcat( pszCommand, ", " );
     }
     
     bNeedComma = FALSE;
     for( i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
     {
+        if( !poFeature->IsFieldSet( i ) )
+            continue;
+
         if( !bNeedComma )
             bNeedComma = TRUE;
         else
-            strcat( szCommand, ", " );
+            strcat( pszCommand, ", " );
 
-        strcat( szCommand, poFeatureDefn->GetFieldDefn(i)->GetNameRef() );
+        strcat( pszCommand, poFeatureDefn->GetFieldDefn(i)->GetNameRef() );
     }
 
-    strcat( szCommand, ") VALUES (" );
+    strcat( pszCommand, ") VALUES (" );
 
     /* Set the geometry */
     if( bHasPostGISGeometry )
@@ -784,43 +796,39 @@ OGRErr OGRPGLayer::CreateFeature( OGRFeature *poFeature )
         poFeature->GetGeometryRef()->exportToWkt( &pszWKT );
         
         if( pszWKT != NULL 
-            && strlen(szCommand) + strlen(pszWKT) > sizeof(szCommand)-50 )
+            && strlen(pszCommand) + strlen(pszWKT) > nCommandBufSize - 10000 )
         {
-            OGRFree( pszWKT );
-            CPLError( CE_Failure, CPLE_AppDefined, 
-                      "Internal command buffer to short for INSERT command." );
-            return OGRERR_FAILURE;
+            nCommandBufSize = strlen(pszCommand) + strlen(pszWKT) + 10000;
+            pszCommand = (char *) CPLRealloc(pszCommand, nCommandBufSize );
         }
 
         if( pszWKT != NULL )
         {
-            sprintf( szCommand + strlen(szCommand), 
+            sprintf( pszCommand + strlen(pszCommand), 
                      "GeometryFromText('%s'::TEXT,-1), ", pszWKT );
             OGRFree( pszWKT );
         }
         else
-            strcat( szCommand, "''," );
+            strcat( pszCommand, "''," );
     }
     else if( bHasWkb && !bWkbAsOid && poFeature->GetGeometryRef() != NULL )
     {
         char	*pszBytea = GeometryToBYTEA( poFeature->GetGeometryRef() );
 
-        if( strlen(szCommand) + strlen(pszBytea) > sizeof(szCommand)-50 )
+        if( strlen(pszCommand) + strlen(pszBytea) > nCommandBufSize - 10000 )
         {
-            CPLFree( pszBytea );
-            CPLError( CE_Failure, CPLE_AppDefined, 
-                      "Internal command buffer to short for INSERT command." );
-            return OGRERR_FAILURE;
+            nCommandBufSize = strlen(pszCommand) + strlen(pszBytea) + 10000;
+            pszCommand = (char *) CPLRealloc(pszCommand, nCommandBufSize );
         }
 
         if( pszBytea != NULL )
         {
-            sprintf( szCommand + strlen(szCommand), 
+            sprintf( pszCommand + strlen(pszCommand), 
                      "'%s', ", pszBytea );
             CPLFree( pszBytea );
         }
         else
-            strcat( szCommand, "''," );
+            strcat( pszCommand, "''," );
     }
     else if( bHasWkb && bWkbAsOid && poFeature->GetGeometryRef() != NULL )
     {
@@ -828,30 +836,34 @@ OGRErr OGRPGLayer::CreateFeature( OGRFeature *poFeature )
 
         if( oid != 0 )
         {
-            sprintf( szCommand + strlen(szCommand), 
+            sprintf( pszCommand + strlen(pszCommand), 
                      "'%d', ", oid );
         }
         else
-            strcat( szCommand, "''," );
+            strcat( pszCommand, "''," );
     }
 
     /* Set the other fields */
-    int nOffset = strlen(szCommand);
+    int nOffset = strlen(pszCommand);
 
-    bNeedComma = TRUE;
+    bNeedComma = FALSE;
     for( i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
     {
         const char *pszStrValue = poFeature->GetFieldAsString(i);
 
-        if( i > 0 )
-            strcat( szCommand+nOffset, ", " );
+        if( !poFeature->IsFieldSet( i ) )
+            continue;
 
-        if( strlen(pszStrValue) + strlen(szCommand+nOffset) + nOffset 
-            > sizeof(szCommand)-50)
+        if( bNeedComma )
+            strcat( pszCommand+nOffset, ", " );
+        else
+            bNeedComma = TRUE;
+
+        if( strlen(pszStrValue) + strlen(pszCommand+nOffset) + nOffset 
+            > nCommandBufSize-50 )
         {
-            CPLError( CE_Failure, CPLE_AppDefined, 
-                      "Internal command buffer to short for INSERT command." );
-            return OGRERR_FAILURE;
+            nCommandBufSize = strlen(pszCommand) + strlen(pszStrValue) + 10000;
+            pszCommand = (char *) CPLRealloc(pszCommand, nCommandBufSize );
         }
         
         if( poFeatureDefn->GetFieldDefn(i)->GetType() == OFTString )
@@ -859,50 +871,54 @@ OGRErr OGRPGLayer::CreateFeature( OGRFeature *poFeature )
             int		iChar;
 
             /* We need to quote and escape string fields. */
-            strcat( szCommand+nOffset, "'" );
+            strcat( pszCommand+nOffset, "'" );
 
-            nOffset += strlen(szCommand+nOffset);
+            nOffset += strlen(pszCommand+nOffset);
             
             for( iChar = 0; pszStrValue[iChar] != '\0'; iChar++ )
             {
                 if( pszStrValue[iChar] == '\\' 
                     || pszStrValue[iChar] == '\'' )
                 {
-                    szCommand[nOffset++] = '\\';
-                    szCommand[nOffset++] = pszStrValue[iChar];
+                    pszCommand[nOffset++] = '\\';
+                    pszCommand[nOffset++] = pszStrValue[iChar];
                 }
                 else
-                    szCommand[nOffset++] = pszStrValue[iChar];
+                    pszCommand[nOffset++] = pszStrValue[iChar];
             }
-            szCommand[nOffset] = '\0';
+            pszCommand[nOffset] = '\0';
             
-            strcat( szCommand+nOffset, "'" );
+            strcat( pszCommand+nOffset, "'" );
         }
         else
         {
-            strcat( szCommand+nOffset, pszStrValue );
+            strcat( pszCommand+nOffset, pszStrValue );
         }
     }
 
-    strcat( szCommand+nOffset, ")" );
+    strcat( pszCommand+nOffset, ")" );
 
 /* -------------------------------------------------------------------- */
 /*      Execute the insert.                                             */
 /* -------------------------------------------------------------------- */
-    hResult = PQexec(hPGConn, szCommand);
+    hResult = PQexec(hPGConn, pszCommand);
     if( PQresultStatus(hResult) != PGRES_COMMAND_OK )
     {
-        CPLDebug( "OGR_PG", "PQexec(%s)\n", szCommand );
+        CPLDebug( "OGR_PG", "PQexec(%s)\n", pszCommand );
+        CPLFree( pszCommand );
+
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "INSERT command for new feature failed.\n%s", 
                   PQerrorMessage(hPGConn) );
 
         PQclear( hResult );
-        hResult = PQexec( hPGConn, "ROLLBACK" );
-        PQclear( hResult );
+        
+        poDS->SoftRollback();
 
         return OGRERR_FAILURE;
     }
+    CPLFree( pszCommand );
+
 #ifdef notdef
     /* Should we use this oid to get back the FID and assign back to the
        feature?  I think we are supposed to. */
@@ -911,10 +927,7 @@ OGRErr OGRPGLayer::CreateFeature( OGRFeature *poFeature )
 #endif
     PQclear( hResult );
 
-    hResult = PQexec( hPGConn, "COMMIT" );
-    PQclear( hResult );
-
-    return OGRERR_NONE;
+    return poDS->SoftCommit();
 }
 
 /************************************************************************/
@@ -947,6 +960,7 @@ int OGRPGLayer::GetFeatureCount( int bForce )
     char		szCommand[4096];
     int			nCount = 0;
 
+    poDS->FlushSoftTransaction();
     hResult = PQexec(hPGConn, "BEGIN");
     PQclear( hResult );
 
@@ -1001,6 +1015,9 @@ int OGRPGLayer::TestCapability( const char * pszCap )
     else if( EQUAL(pszCap,OLCCreateField) )
         return TRUE;
 
+    else if( EQUAL(pszCap,OLCTransactions) )
+        return TRUE;
+
     else 
         return FALSE;
 }
@@ -1047,6 +1064,7 @@ OGRErr OGRPGLayer::CreateField( OGRFieldDefn *poField, int bApproxOK )
 /* -------------------------------------------------------------------- */
 /*      Create the new field.                                           */
 /* -------------------------------------------------------------------- */
+    poDS->FlushSoftTransaction();
     hResult = PQexec(hPGConn, "BEGIN");
     PQclear( hResult );
 
@@ -1073,4 +1091,34 @@ OGRErr OGRPGLayer::CreateField( OGRFieldDefn *poField, int bApproxOK )
     poFeatureDefn->AddFieldDefn( poField );
 
     return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                          StartTransaction()                          */
+/************************************************************************/
+
+OGRErr OGRPGLayer::StartTransaction()
+
+{
+    return poDS->SoftStartTransaction();
+}
+
+/************************************************************************/
+/*                         CommitTransaction()                          */
+/************************************************************************/
+
+OGRErr OGRPGLayer::CommitTransaction()
+
+{
+    return poDS->SoftCommit();
+}
+
+/************************************************************************/
+/*                        RollbackTransaction()                         */
+/************************************************************************/
+
+OGRErr OGRPGLayer::RollbackTransaction()
+
+{
+    return poDS->SoftRollback();
 }
