@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  1999/10/03 01:12:50  warmerda
+ * ensure generic translators are attached to all files in a set
+ *
  * Revision 1.2  1999/10/03 01:02:56  warmerda
  * added NAMEREC and COLLECT handling
  *
@@ -759,91 +762,97 @@ void OGRNTFDataSource::EstablishGenericLayers()
 /* -------------------------------------------------------------------- */
 /*      Pick an initial NTFFileReader to build the layers against.      */
 /* -------------------------------------------------------------------- */
-    NTFFileReader	*poPReader = NULL;
-    for( int iFile = 0; poPReader == NULL && iFile < nNTFFileCount; iFile++ )
+    for( int iFile = 0; iFile < nNTFFileCount; iFile++ )
     {
-        if( papoNTFFileReader[iFile]->GetProductId() == NPC_UNKNOWN )
-            poPReader = papoNTFFileReader[iFile];
-    }
-
-    if( poPReader == NULL )
-        return;
-    
+        NTFFileReader	*poPReader = NULL;
+        
+        poPReader = papoNTFFileReader[iFile];
+        if( poPReader->GetProductId() != NPC_UNKNOWN )
+            continue;
+        
 /* -------------------------------------------------------------------- */
 /*      Create layers for all recognised layer types with features.     */
 /* -------------------------------------------------------------------- */
-    for( iType = 0; iType < 99; iType++ )
-    {
-        NTFGenericClass	*poClass = aoGenericClass + iType;
+        for( iType = 0; iType < 99; iType++ )
+        {
+            NTFGenericClass	*poClass = aoGenericClass + iType;
         
-        if( poClass->nFeatureCount == 0 )
-            continue;
+            if( poClass->nFeatureCount == 0 )
+                continue;
 
-        if( iType == NRT_POINTREC )
-        {
-            poPReader->
-            EstablishLayer( "GENERIC_POINT", wkbPoint,
-                            TranslateGenericPoint, NRT_POINTREC, poClass,
-                            "POINT_ID", OFTInteger, 6, 0,
-                            NULL );
-        }
-        else if( iType == NRT_LINEREC )
-        {
-            poPReader->
-            EstablishLayer( "GENERIC_LINE", wkbLineString,
-                            TranslateGenericLine, NRT_LINEREC, poClass,
-                            "LINE_ID", OFTInteger, 6, 0,
-                            NULL );
-        }
-        else if( iType == NRT_TEXTREC )
-        {
-            poPReader->
-            EstablishLayer( "GENERIC_TEXT", wkbPoint,
-                            TranslateGenericText, NRT_TEXTREC, poClass,
-                            "TEXT_ID", OFTInteger, 6, 0,
-                            NULL );
-        }
-        else if( iType == NRT_NAMEREC )
-        {
-            poPReader->
-            EstablishLayer( "GENERIC_NAME", wkbPoint,
-                            TranslateGenericName, NRT_NAMEREC, poClass,
-                            "NAME_ID", OFTInteger, 6, 0,
-                            NULL );
-        }
-        else if( iType == NRT_NODEREC )
-        {
-            poPReader->
-            EstablishLayer( "GENERIC_NODE", wkbPoint,
-                            TranslateGenericNode, NRT_NODEREC, poClass,
-                            "NODE_ID", OFTInteger, 6, 0,
-                            "NUM_LINKS", OFTInteger, 4, 0,
-                            "GEOM_ID_OF_LINK", OFTIntegerList, 6, 0,
-                            "DIR", OFTIntegerList, 1, 0,
-                            NULL );
-        }
-        else if( iType == NRT_COLLECT )
-        {
-            poPReader->
-            EstablishLayer( "GENERIC_COLLECTION", wkbNone,
-                            TranslateGenericCollection, NRT_COLLECT, poClass,
-                            "COLL_ID", OFTInteger, 6, 0,
-                            "NUM_PARTS", OFTInteger, 4, 0,
-                            "TYPE", OFTIntegerList, 2, 0,
-                            "ID", OFTIntegerList, 6, 0,
-                            NULL );
-        }
-        else if( iType == NRT_POLYGON )
-        {
-            poPReader->
-            EstablishLayer( "GENERIC_POLY", wkbPoint,
-                            TranslateGenericPoly, NRT_POLYGON, poClass,
-                            "POLY_ID", OFTInteger, 6, 0,
-                            "NUM_PARTS", OFTInteger, 4, 0, 
-                            "DIR", OFTIntegerList, 1, 0,
-                            "GEOM_ID_OF_LINK", OFTIntegerList, 6, 0,
-                            "RingStart", OFTIntegerList, 6, 0,
-                            NULL );
+            if( iType == NRT_POINTREC )
+            {
+                poPReader->
+                    EstablishLayer( "GENERIC_POINT", wkbPoint,
+                                    TranslateGenericPoint,
+                                    NRT_POINTREC, poClass,
+                                    "POINT_ID", OFTInteger, 6, 0,
+                                    NULL );
+            }
+            else if( iType == NRT_LINEREC )
+            {
+                poPReader->
+                    EstablishLayer( "GENERIC_LINE", wkbLineString,
+                                    TranslateGenericLine,
+                                    NRT_LINEREC, poClass,
+                                    "LINE_ID", OFTInteger, 6, 0,
+                                    NULL );
+            }
+            else if( iType == NRT_TEXTREC )
+            {
+                poPReader->
+                    EstablishLayer( "GENERIC_TEXT", wkbPoint,
+                                    TranslateGenericText,
+                                    NRT_TEXTREC, poClass,
+                                    "TEXT_ID", OFTInteger, 6, 0,
+                                    NULL );
+            }
+            else if( iType == NRT_NAMEREC )
+            {
+                poPReader->
+                    EstablishLayer( "GENERIC_NAME", wkbPoint,
+                                    TranslateGenericName,
+                                    NRT_NAMEREC, poClass,
+                                    "NAME_ID", OFTInteger, 6, 0,
+                                    NULL );
+            }
+            else if( iType == NRT_NODEREC )
+            {
+                poPReader->
+                    EstablishLayer( "GENERIC_NODE", wkbPoint,
+                                    TranslateGenericNode,
+                                    NRT_NODEREC, poClass,
+                                    "NODE_ID", OFTInteger, 6, 0,
+                                    "NUM_LINKS", OFTInteger, 4, 0,
+                                    "GEOM_ID_OF_LINK", OFTIntegerList, 6, 0,
+                                    "DIR", OFTIntegerList, 1, 0,
+                                    NULL );
+            }
+            else if( iType == NRT_COLLECT )
+            {
+                poPReader->
+                    EstablishLayer( "GENERIC_COLLECTION", wkbNone,
+                                    TranslateGenericCollection,
+                                    NRT_COLLECT, poClass,
+                                    "COLL_ID", OFTInteger, 6, 0,
+                                    "NUM_PARTS", OFTInteger, 4, 0,
+                                    "TYPE", OFTIntegerList, 2, 0,
+                                    "ID", OFTIntegerList, 6, 0,
+                                    NULL );
+            }
+            else if( iType == NRT_POLYGON )
+            {
+                poPReader->
+                    EstablishLayer( "GENERIC_POLY", wkbPoint,
+                                    TranslateGenericPoly,
+                                    NRT_POLYGON, poClass,
+                                    "POLY_ID", OFTInteger, 6, 0,
+                                    "NUM_PARTS", OFTInteger, 4, 0, 
+                                    "DIR", OFTIntegerList, 1, 0,
+                                    "GEOM_ID_OF_LINK", OFTIntegerList, 6, 0,
+                                    "RingStart", OFTIntegerList, 6, 0,
+                                    NULL );
+            }
         }
     }
 }
