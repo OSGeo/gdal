@@ -28,8 +28,9 @@
  ******************************************************************************
  *
  * $Log$
- * Revision 1.11  2003/02/13 21:58:36  dron
- * Fixed problem with cleaning formats before using.
+ * Revision 1.12  2003/02/13 22:00:26  dron
+ * Added creation option MAXVAL.
+ *
  *
  * Revision 1.10  2003/02/06 20:27:09  dron
  * More PNM standard complience in header reading.
