@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.27  2003/09/18 15:32:59  warmerda
+ * Added view support as per bug 394
+ *
  * Revision 1.26  2003/09/17 16:36:33  warmerda
  * fixed setting of dimension for point objects
  *
@@ -253,8 +256,15 @@ OGRFeatureDefn *OGROCITableLayer::ReadTableDefinition( const char * pszTable )
                         (dvoid *) pszTable, strlen(pszTable), OCI_OTYPE_NAME, 
                         OCI_DEFAULT, OCI_PTYPE_TABLE, poSession->hDescribe );
     if( poSession->Failed( nStatus, "OCIDescribeAny" ) )
-        return poDefn;
-
+    {
+        nStatus =
+            OCIDescribeAny(poSession->hSvcCtx, poSession->hError,
+                           (dvoid *)pszTable, strlen(pszTable), OCI_OTYPE_NAME,
+                           OCI_DEFAULT, OCI_PTYPE_VIEW, poSession->hDescribe );
+        if( poSession->Failed( nStatus, "OCIDescribeAny" ) )
+            return poDefn;
+    }
+    
     if( poSession->Failed( 
         OCIAttrGet( poSession->hDescribe, OCI_HTYPE_DESCRIBE, 
                     &hAttrParam, 0, OCI_ATTR_PARAM, poSession->hError ),
