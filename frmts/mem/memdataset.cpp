@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2002/06/12 21:12:25  warmerda
+ * update to metadata based driver info
+ *
  * Revision 1.8  2002/06/10 21:31:57  warmerda
  * preserve projection and geotransform
  *
@@ -550,9 +553,10 @@ void GDALRegister_MEM()
     {
         poMEMDriver = poDriver = new GDALDriver();
         
-        poDriver->pszShortName = "MEM";
-        poDriver->pszLongName = "In Memory Raster";
-        
+        poDriver->SetDescription( "MEM" );
+        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
+                                   "In Memory Raster" );
+
         poDriver->pfnOpen = MEMDataset::Open;
         poDriver->pfnCreate = MEMDataset::Create;
 

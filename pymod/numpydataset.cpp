@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2002/06/12 21:08:28  warmerda
+ * update to metadata based driver info
+ *
  * Revision 1.6  2001/10/26 20:02:54  warmerda
  * use indirect allocation for MEMRasterBand
  *
@@ -382,8 +385,9 @@ void GDALRegister_NUMPY()
     {
         poNUMPYDriver = poDriver = new GDALDriver();
         
-        poDriver->pszShortName = "NUMPY";
-        poDriver->pszLongName = "NumPy Array";
+        poDriver->SetDescription( "NUMPY" );
+        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
+                                   "NumPy Array" );
         
         poDriver->pfnOpen = NUMPYDataset::Open;
 

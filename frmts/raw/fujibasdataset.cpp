@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2002/06/12 21:12:25  warmerda
+ * update to metadata based driver info
+ *
  * Revision 1.2  2001/07/18 04:51:57  warmerda
  * added CPL_CVSID
  *
@@ -222,9 +225,11 @@ void GDALRegister_FujiBAS()
     {
         poFujiBASDriver = poDriver = new GDALDriver();
         
-        poDriver->pszShortName = "FujiBAS";
-        poDriver->pszLongName = "Fuji BAS Scanner Image";
-        poDriver->pszHelpTopic = "frmt_various.html#FujiBAS";
+        poDriver->SetDescription( "FujiBAS" );
+        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
+                                   "Fuji BAS Scanner Image" );
+        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
+                                   "frmt_various.html#FujiBAS" );
         
         poDriver->pfnOpen = FujiBASDataset::Open;
 

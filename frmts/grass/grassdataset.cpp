@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2002/06/12 21:12:25  warmerda
+ * update to metadata based driver info
+ *
  * Revision 1.10  2002/01/24 15:50:23  warmerda
  * Improved nodata handling.  Still may be problems with integer cells
  * where all zeros will be considered to be nodata values.
@@ -585,15 +588,13 @@ void GDALRegister_GRASS()
     {
         poGRASSDriver = poDriver = new GDALDriver();
         
-        poDriver->pszShortName = "GRASS";
-        poDriver->pszLongName = "GRASS Database Rasters";
-        poDriver->pszHelpTopic = "frmt_grass.html";
+        poDriver->SetDescription( "GRASS" );
+        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
+                                   "GRASS Database Rasters" );
+        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
+                                   "frmt_grass.html" );
         
         poDriver->pfnOpen = GRASSDataset::Open;
-
-#ifdef notdef
-        poDriver->pfnCreateCopy = GRASSCreateCopy;
-#endif
 
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }

@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.13  2002/06/12 21:12:24  warmerda
+ * update to metadata based driver info
+ *
  * Revision 1.12  2002/02/21 15:38:32  warmerda
  * fixed nodata value for floats
  *
@@ -389,9 +392,11 @@ void GDALRegister_AIGrid()
     {
         poAIGDriver = poDriver = new GDALDriver();
         
-        poDriver->pszShortName = "AIG";
-        poDriver->pszLongName = "Arc/Info Binary Grid";
-        poDriver->pszHelpTopic = "frmt_various.html#AIG";
+        poDriver->SetDescription( "AIG" );
+        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
+                                   "Arc/Info Binary Grid" );
+        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
+                                   "frmt_various.html#AIG" );
         
         poDriver->pfnOpen = AIGDataset::Open;
 

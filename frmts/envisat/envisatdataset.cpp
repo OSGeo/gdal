@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2002/06/12 21:12:25  warmerda
+ * update to metadata based driver info
+ *
  * Revision 1.14  2002/06/07 14:21:55  warmerda
  * avoid paths in include directives
  *
@@ -778,9 +781,13 @@ void GDALRegister_Envisat()
     {
         poEnvisatDriver = poDriver = new GDALDriver();
         
-        poDriver->pszShortName = "ESAT";
-        poDriver->pszLongName = "Envisat Image Format (.N1)";
-        
+        poDriver->SetDescription( "ESAT" );
+        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
+                                   "Envisat Image Format" );
+        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
+                                   "frmt_various.html#Envisat" );
+        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "n1" );
+
         poDriver->pfnOpen = EnvisatDataset::Open;
 
         GetGDALDriverManager()->RegisterDriver( poDriver );

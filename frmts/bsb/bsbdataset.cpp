@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.4  2002/06/12 21:12:24  warmerda
+ * update to metadata based driver info
+ *
  * Revision 1.3  2002/05/07 13:59:08  warmerda
  * added support for NOS files
  *
@@ -393,10 +396,12 @@ void GDALRegister_BSB()
     {
         poBSBDriver = poDriver = new GDALDriver();
         
-        poDriver->pszShortName = "BSB";
-        poDriver->pszLongName = "Maptech BSB Nautical Charts";
-        poDriver->pszHelpTopic = "frmt_various.html#BSB";
-        
+        poDriver->SetDescription( "BSB" );
+        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
+                                   "Maptech BSB Nautical Charts" );
+        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
+                                   "frmt_various.html#BSB" );
+
         poDriver->pfnOpen = BSBDataset::Open;
 
         GetGDALDriverManager()->RegisterDriver( poDriver );

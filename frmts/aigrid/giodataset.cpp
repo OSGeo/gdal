@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.17  2002/06/12 21:12:24  warmerda
+ * update to metadata based driver info
+ *
  * Revision 1.16  2001/12/12 17:17:57  warmerda
  * Use CPLStat() for directories.
  *
@@ -721,9 +724,11 @@ void GDALRegister_AIGrid2()
         
         poGIODriver = poDriver = new GDALDriver();
         
-        poDriver->pszShortName = "GIO";
-        poDriver->pszLongName = "Arc/Info Binary Grid (avgridio.dll)";
-        poDriver->pszHelpTopic = "frmt_various.html#GIO";
+        poDriver->SetDescription( "GIO" );
+        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
+                                   "Arc/Info Binary Grid (avgridio.dll)" );
+        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
+                                   "frmt_various.html#GIO" );
         
         poDriver->pfnOpen = GIODataset::Open;
         poDriver->pfnCreate = GIODataset::Create;

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2002/06/12 21:12:24  warmerda
+ * update to metadata based driver info
+ *
  * Revision 1.7  2001/11/11 23:50:59  warmerda
  * added required class keyword to friend declarations
  *
@@ -205,9 +208,11 @@ void GDALRegister_CEOS()
     {
         poCEOSDriver = poDriver = new GDALDriver();
         
-        poDriver->pszShortName = "CEOS";
-        poDriver->pszLongName = "CEOS Image";
-        poDriver->pszHelpTopic = "frmt_various.html#CEOS";
+        poDriver->SetDescription( "CEOS" );
+        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
+                                   "CEOS Image" );
+        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
+                                   "frmt_various.html#CEOS" );
         
         poDriver->pfnOpen = CEOSDataset::Open;
 

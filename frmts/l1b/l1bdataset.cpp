@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.7  2002/06/12 21:12:25  warmerda
+ * update to metadata based driver info
+ *
  * Revision 1.6  2002/06/07 18:02:41  warmerda
  * don't redeclare i
  *
@@ -1095,10 +1098,12 @@ void GDALRegister_L1B()
     {
         poL1BDriver = poDriver = new GDALDriver();
         
-        poDriver->pszShortName = "L1B";
-        poDriver->pszLongName = "NOAA Polar Orbiter Level 1b Data Set (AVHRR)";
-        poDriver->pszHelpTopic = "frmt_l1b.html";
-        
+        poDriver->SetDescription( "L1B" );
+        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
+                                   "NOAA Polar Orbiter Level 1b Data Set" );
+        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
+                                   "frmt_l1b.html" );
+
         poDriver->pfnOpen = L1BDataset::Open;
 
         GetGDALDriverManager()->RegisterDriver( poDriver );

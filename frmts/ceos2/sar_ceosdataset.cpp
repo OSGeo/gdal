@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.27  2002/06/12 21:12:24  warmerda
+ * update to metadata based driver info
+ *
  * Revision 1.26  2002/06/07 14:19:07  warmerda
  * avoid paths in include directives
  *
@@ -1434,10 +1437,12 @@ void GDALRegister_SAR_CEOS()
     {
         poCEOSDriver = poDriver = new GDALDriver();
         
-        poDriver->pszShortName = "SAR_CEOS";
-        poDriver->pszLongName = "CEOS SAR Image";
-        poDriver->pszHelpTopic = "frmt_various.html#SAR_CEOS";
-        
+        poDriver->SetDescription( "SAR_CEOS" );
+        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
+                                   "CEOS SAR Image" );
+        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
+                                   "frmt_various.html#SAR_CEOS" );
+
         poDriver->pfnOpen = SAR_CEOSDataset::Open;
 
         GetGDALDriverManager()->RegisterDriver( poDriver );

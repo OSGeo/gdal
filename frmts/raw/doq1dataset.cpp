@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2002/06/12 21:12:25  warmerda
+ * update to metadata based driver info
+ *
  * Revision 1.8  2001/07/18 04:51:57  warmerda
  * added CPL_CVSID
  *
@@ -362,9 +365,11 @@ void GDALRegister_DOQ1()
     {
         poDOQ1Driver = poDriver = new GDALDriver();
         
-        poDriver->pszShortName = "DOQ1";
-        poDriver->pszLongName = "USGS DOQ (Old Style)";
-        poDriver->pszHelpTopic = "frmt_various.html#DOQ1";
+        poDriver->SetDescription( "DOQ1" );
+        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
+                                   "USGS DOQ (Old Style)" );
+        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
+                                   "frmt_various.html#DOQ1" );
         
         poDriver->pfnOpen = DOQ1Dataset::Open;
 

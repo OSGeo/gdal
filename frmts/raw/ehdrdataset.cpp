@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2002/06/12 21:12:25  warmerda
+ * update to metadata based driver info
+ *
  * Revision 1.13  2002/05/22 14:09:04  warmerda
  * Add support for the nbands value as per suggestion from Brent Fraser.
  *
@@ -451,10 +454,12 @@ void GDALRegister_EHdr()
     {
         poEHdrDriver = poDriver = new GDALDriver();
         
-        poDriver->pszShortName = "EHdr";
-        poDriver->pszLongName = "ESRI .hdr Labelled";
-        poDriver->pszHelpTopic = "frmt_various.html#EHdr";
-        
+        poDriver->SetDescription( "EHdr" );
+        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
+                                   "ESRI .hdr Labelled" );
+        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
+                                   "frmt_various.html#EHdr" );
+
         poDriver->pfnOpen = EHdrDataset::Open;
 
         GetGDALDriverManager()->RegisterDriver( poDriver );

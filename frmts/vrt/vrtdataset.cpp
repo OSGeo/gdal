@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2002/06/12 21:12:25  warmerda
+ * update to metadata based driver info
+ *
  * Revision 1.5  2002/05/29 16:40:18  warmerda
  * dont provide default value for method argumentsvrtdataset.cpp
  *
@@ -776,8 +779,9 @@ void GDALRegister_VRT()
     {
         poVRTDriver = poDriver = new GDALDriver();
         
-        poDriver->pszShortName = "VRT";
-        poDriver->pszLongName = "Virtual Raster";
+        poDriver->SetDescription( "VRT" );
+        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
+                                   "Virtual Raster" );
         
         poDriver->pfnOpen = VRTDataset::Open;
         poDriver->pfnCreateCopy = VRTCreateCopy;

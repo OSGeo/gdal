@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2002/06/12 21:12:25  warmerda
+ * update to metadata based driver info
+ *
  * Revision 1.11  2001/09/21 16:40:08  warmerda
  * fixed case with one band
  *
@@ -448,10 +451,12 @@ void GDALRegister_DOQ2()
     {
         poDOQ2Driver = poDriver = new GDALDriver();
         
-        poDriver->pszShortName = "DOQ2";
-        poDriver->pszLongName = "USGS DOQ (New Style)";
-        poDriver->pszHelpTopic = "frmt_various.html#DOQ2";
-        
+        poDriver->SetDescription( "DOQ2" );
+        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
+                                   "USGS DOQ (New Style)" );
+        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
+                                   "frmt_various.html#DOQ2" );
+
         poDriver->pfnOpen = DOQ2Dataset::Open;
 
         GetGDALDriverManager()->RegisterDriver( poDriver );

@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.6  2002/06/12 21:12:25  warmerda
+ * update to metadata based driver info
+ *
  * Revision 1.5  2002/01/22 14:48:19  warmerda
  * Fixed pabyWorkBuffer memory leak in IRasterIO().
  *
@@ -603,8 +606,12 @@ void GDALRegister_ECW()
     {
         poECWDriver = poDriver = new GDALDriver();
         
-        poDriver->pszShortName = "ECW";
-        poDriver->pszLongName = "ECW (ERMapper Compressed Wavelets)";
+        poDriver->SetDescription( "ECW" );
+        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
+                                   "ERMapper Compressed Wavelets" );
+        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
+                                   "frmt_ecw.html" );
+        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "ecw" );
         
         poDriver->pfnOpen = ECWDataset::Open;
         poDriver->pfnCreateCopy = ECWCreateCopy;

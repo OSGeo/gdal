@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2002/06/12 21:12:25  warmerda
+ * update to metadata based driver info
+ *
  * Revision 1.12  2002/04/12 20:20:29  warmerda
  * make vector sdts transfers just a warning
  *
@@ -377,10 +380,13 @@ void GDALRegister_SDTS()
     {
         poSDTSDriver = poDriver = new GDALDriver();
         
-        poDriver->pszShortName = "SDTS";
-        poDriver->pszLongName = "SDTS Raster";
-        poDriver->pszHelpTopic = "frmt_various.html#SDTS";
-        
+        poDriver->SetDescription( "SDTS" );
+        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
+                                   "SDTS Raster" );
+        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
+                                   "frmt_various.html#SDTS" );
+        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "ddf" );
+
         poDriver->pfnOpen = SDTSDataset::Open;
 
         GetGDALDriverManager()->RegisterDriver( poDriver );

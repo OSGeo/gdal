@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2002/06/12 21:12:25  warmerda
+ * update to metadata based driver info
+ *
  * Revision 1.4  2002/04/16 17:52:35  warmerda
  * Initialize variables.
  *
@@ -306,10 +309,15 @@ void GDALRegister_PNM()
     {
         poPNMDriver = poDriver = new GDALDriver();
         
-        poDriver->pszShortName = "PNM";
-        poDriver->pszLongName = "Portable Pixmap Format (netpbm)";
-        poDriver->pszHelpTopic = "frmt_various.html#PNM";
-        
+        poDriver->SetDescription( "PNM" );
+        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
+                                   "Portable Pixmap Format (netpbm)" );
+        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
+                                   "frmt_various.html#PNM" );
+        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "pnm" );
+        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, 
+                                   "image/x-portable-anymap" );
+
         poDriver->pfnOpen = PNMDataset::Open;
         poDriver->pfnCreate = PNMDataset::Create;
 

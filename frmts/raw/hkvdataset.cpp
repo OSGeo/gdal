@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2002/06/12 21:12:25  warmerda
+ * update to metadata based driver info
+ *
  * Revision 1.20  2002/04/24 19:27:00  warmerda
  * Added HKV nodata read support (pixel.no_data).
  *
@@ -1061,9 +1064,11 @@ void GDALRegister_HKV()
     {
         poHKVDriver = poDriver = new GDALDriver();
         
-        poDriver->pszShortName = "MFF2";
-        poDriver->pszLongName = "Atlantis MFF2 (HKV) Raster";
-        poDriver->pszHelpTopic = "frmt_various.html#MFF2";
+        poDriver->SetDescription( "MFF2" );
+        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
+                                   "Atlantis MFF2 (HKV) Raster" );
+        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
+                                   "frmt_various.html#MFF2" );
         
         poDriver->pfnOpen = HKVDataset::Open;
         poDriver->pfnCreate = HKVDataset::Create;
