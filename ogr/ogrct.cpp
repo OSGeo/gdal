@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.24  2004/09/21 00:15:29  fwarmerdam
+ * Fixed PJ_VERSION checking syntax (secondary issue in bug 614).
+ *
  * Revision 1.23  2004/01/24 09:35:00  warmerda
  * added TransformEx support to capture per point reprojection failure
  *
@@ -207,7 +210,7 @@ static int LoadProjLibrary()
     pfn_pj_get_errno_ref = pj_get_errno_ref;
     pfn_pj_strerrno = pj_strerrno;
     pfn_pj_dalloc = pj_dalloc;
-#ifdef PJ_VERSION >= 446
+#if PJ_VERSION >= 446
     pfn_pj_get_def = pj_get_def;
 #endif    
 #else
