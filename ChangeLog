@@ -1,3 +1,8 @@
+2001-09-17  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* frmts/gdalallregister.cpp: register doq2 format ... it seems to 
+	have been omitted.
+
 2001-09-15  Frank Warmerdam  <warmerdam@pobox.com>
 
 	* configure.in: modified --with-libz handling as per bug 75, to be
