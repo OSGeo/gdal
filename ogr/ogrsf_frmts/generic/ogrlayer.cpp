@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2001/06/19 15:53:49  warmerda
+ * Added attribute query support
+ *
  * Revision 1.5  2001/03/15 04:01:43  danmo
  * Added OGRLayer::GetExtent()
  *
@@ -47,6 +50,31 @@
 
 #include "ogrsf_frmts.h"
 #include "ogr_p.h"
+
+/************************************************************************/
+/*                              OGRLayer()                              */
+/************************************************************************/
+
+OGRLayer::OGRLayer()
+
+{
+    m_poStyleTable = NULL;
+    m_poAttrQuery = NULL;
+}
+
+/************************************************************************/
+/*                             ~OGRLayer()                              */
+/************************************************************************/
+
+OGRLayer::~OGRLayer()
+
+{
+    if( m_poAttrQuery != NULL )
+    {
+        delete m_poAttrQuery;
+        m_poAttrQuery = NULL;
+    }
+}
 
 /************************************************************************/
 /*                          GetFeatureCount()                           */
@@ -114,6 +142,28 @@ OGRErr OGRLayer::GetExtent(OGREnvelope *psExtent, int bForce )
     return (bExtentSet ? OGRERR_NONE : OGRERR_FAILURE);
 }
 
+/************************************************************************/
+/*                         SetAttributeFilter()                         */
+/************************************************************************/
+
+OGRErr OGRLayer::SetAttributeFilter( const char *pszQuery )
+
+{
+    OGRErr	eErr;
+
+    ResetReading();
+    if( !m_poAttrQuery )
+        m_poAttrQuery = new OGRFeatureQuery();
+
+    eErr = m_poAttrQuery->Compile( GetLayerDefn(), pszQuery );
+    if( eErr != OGRERR_NONE )
+    {
+        delete m_poAttrQuery;
+        m_poAttrQuery = NULL;
+    }
+
+    return eErr;
+}
 
 /************************************************************************/
 /*                             GetFeature()                             */
