@@ -34,6 +34,15 @@ VCDIR   = 	D:\Software\VStudio\VC98
 
 # Comment out the following to disable JPEG support.
 JPEG_SUPPORTED = 1
+#if using an external jpeg library uncomment the follwing lines
+#JPEG_EXTERNAL_LIB = 1
+#JPEGDIR = c:/projects/jpeg-6b
+#JPEG_LIB = $(JPEGDIR)/libjpeg.lib
+
+#if using an external png library uncomment the follwing lines
+#PNG_EXTERNAL_LIB = 1
+#PNGDIR = c:/projects/libpng-1.0.8
+#PNG_LIB = $(PNGDIR)/libpng.lib
 
 # Uncomment the following and update to enable ECW support.
 #ECWDIR  = 	D:\Software\ECW_SDK
