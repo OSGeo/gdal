@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2002/06/11 18:02:03  warmerda
+ * add PROJ.4 normalization and EPSG support
+ *
  * Revision 1.17  2001/10/11 19:27:12  warmerda
  * upgraded validation infrastructure
  *
@@ -328,6 +331,9 @@ void CPL_DLL
 
 int CPL_DLL OCTTransform( OGRCoordinateTransformationH hCT,
                   int nCount, double *x, double *y, double *z );
+
+/* this is really private to OGR. */
+char *OCTProj4Normalize( const char *pszProj4Src );
 
 /* -------------------------------------------------------------------- */
 /*      Projection transform dictionary query.                          */

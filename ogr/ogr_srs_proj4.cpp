@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.26  2002/06/11 18:02:03  warmerda
+ * add PROJ.4 normalization and EPSG support
+ *
  * Revision 1.25  2002/04/18 14:22:45  warmerda
  * made OGRSpatialReference and co 'const correct'
  *
@@ -211,11 +214,37 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
     }
 
 /* -------------------------------------------------------------------- */
+/*      Try to normalize the definition.  This should expand +init=     */
+/*      clauses and so forth.                                           */
+/* -------------------------------------------------------------------- */
+    char *pszNormalized;
+
+    pszNormalized = OCTProj4Normalize( pszCleanCopy );
+    CPLFree( pszCleanCopy );
+    
+/* -------------------------------------------------------------------- */
+/*      If we have an EPSG based init string, try to process it         */
+/*      directly to get the fullest possible EPSG definition.           */
+/* -------------------------------------------------------------------- */
+    if( strstr(pszNormalized,"init=epsg:") != NULL )
+    {
+        OGRErr eErr;
+        const char *pszNumber = strstr(pszNormalized,"init=epsg:") + 10;
+
+        eErr = importFromEPSG( atoi(pszNumber) );
+        if( eErr == OGRERR_NONE )
+        {
+            CPLFree( pszNormalized );
+            return eErr;
+        }
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Parse the PROJ.4 string into a cpl_string.h style name/value    */
 /*      list.                                                           */
 /* -------------------------------------------------------------------- */
-    papszTokens = CSLTokenizeStringComplex( pszCleanCopy, "+ ", TRUE, FALSE );
-    CPLFree( pszCleanCopy );
+    papszTokens = CSLTokenizeStringComplex( pszNormalized, "+ ", TRUE, FALSE );
+    CPLFree( pszNormalized );
     
     for( i = 0; papszTokens != NULL && papszTokens[i] != NULL; i++ )
     {
