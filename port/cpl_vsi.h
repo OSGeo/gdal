@@ -32,6 +32,9 @@
  * specific checking, io redirection and so on. 
  * 
  * $Log$
+ * Revision 1.18  2003/09/10 19:44:36  warmerda
+ * added VSIStrerrno()
+ *
  * Revision 1.17  2003/09/08 08:11:40  dron
  * Added VSIGMTime() and VSILocalTime().
  *
@@ -227,6 +230,7 @@ char CPL_DLL   *VSIStrdup( const char * );
 int CPL_DLL VSIMkdir( const char * pathname, long mode );
 int CPL_DLL VSIRmdir( const char * pathname );
 int CPL_DLL VSIUnlink( const char * pathname );
+char CPL_DLL *VSIStrerror( int );
 
 /* ==================================================================== */
 /*      Time quering.                                                   */
