@@ -1,0 +1,13 @@
+
+OBJ	=	dted_api.obj dteddataset.obj
+
+GDAL_ROOT	=	..\..
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+default:	$(OBJ)
+	copy *.obj ..\o
+
+clean:
+	del *.obj
+
