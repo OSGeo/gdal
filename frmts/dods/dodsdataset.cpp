@@ -100,9 +100,9 @@ GDALRegister_DODS()
         
         poDriver->SetDescription( "DODS" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "DAP 3.x servers" );
-#if 0
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
                                    "frmt_various.html#DODS" );
+#if 0
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "mem" );
 #endif
 
@@ -309,13 +309,13 @@ DODSDataset::get_var_info(DAS &das, DDS &dds) throw(Error)
 	break;
 
       default:
-	throw Error("The DODS GDAL driver only supports array variables.");
+	throw Error("The DODS GDAL driver only supports Array and Grid variables.");
     }
 
     // What is the rank of the Array/Grid?
     d_iVarRank = poA->dimensions();
 
-    // Verify that the layer specification is valid. This not only make sure
+    // Verify that the layer specification is valid. This not only makes sure
     // the layer spec matches the variable, it also simplifies processing for
     // the remaining code since it can assume the layer spec is valid. This
     // method throws Error if anything is wrong.
@@ -488,6 +488,7 @@ DODSDataset::get_geo_info(DAS &das, DDS &dds) throw(Error)
     the band number to build a constraint for the variable described in this
     instance of DODSDataset. 
 
+    // Bands ***
     This assumes Band Numbers use zero-indexing. Also, note that DAP Array
     index constraints use the starting and ending index numbers and that DAP
     arrays use zero-based indexing. An X offset of 4 and a X size of 4
@@ -532,41 +533,9 @@ DODSDataset::BuildConstraint(int iXOffset, int iYOffset,
 	  case dim_spec::index: 
 	    oss << "[" << i->start << "]";
 	    break;
-	  case dim_spec::range: 
-	    oss << "[" << i->start + iBandNum-1 << "]";
-	    break;
-	  case dim_spec::unknown: 
-	    throw InternalErr(__FILE__, __LINE__,
-			      string("In the layer specification: ") 
-			      + d_oBandExpr + " at least one of the\n\
-bracket sub-expressions could not be parsed."); break;
-	}
-    }
-
-    return oss.str();
-}
-
-/** A simpler constraint builder. This is used by
-    GDALRasterBand::IReadBlock() which reads the entire raster over in one
-    shot, not matter how much the GDAL client actually needs. */
-string
-DODSDataset::BuildConstraint(int iBandNum) throw(Error, InternalErr)
-{
-    ostringstream oss;
-    oss <<  d_oVarName;
-    vector<dim_spec>::iterator i;
-    for(i = d_oBandSpec.begin(); i != d_oBandSpec.end(); ++i) {
-	switch (i->type) {
-	  case dim_spec::lat: 
-	    oss << "[" << 0 << ":" << nRasterYSize-1 << "]";
-	    break;
-	  case dim_spec::lon:
-	    oss << "[" << 0 << ":" << nRasterXSize-1 << "]";
-	    break;
-	  case dim_spec::index: 
-	    oss << "[" << i->start << "]";
-	    break;
-	  case dim_spec::range: 
+	  case dim_spec::range:
+	    // use -2 below because bands use one-based indexing in GDAL
+	    // while the DAP uses zero-based indexing. 01/21/04 jhrg
 	    oss << "[" << i->start + iBandNum-1 << "]";
 	    break;
 	  case dim_spec::unknown: 
@@ -997,6 +966,11 @@ DODSRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
 }
 
 // $Log$
+// Revision 1.6  2004/01/21 21:52:16  jimg
+// Removed the unused method BuildConstraint(int). GDAL uses ones indexing
+// for Bands while this driver was using zero-based indexing. I changed
+// the code so the driver now also uses ones-based indexing for bands.
+//
 // Revision 1.5  2004/01/20 16:35:54  jimg
 // This version of the OPeNDAP driver uses GDALRasterBand::IRasterIO() to read
 // from the remote servers. Using this protected method, it is possible to read
