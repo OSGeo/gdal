@@ -33,8 +33,8 @@
  * and things like that.
  *
  * $Log$
- * Revision 1.107  2005/03/01 17:38:10  fwarmerdam
- * fixed pszSrcWKT in GDALCreateAndReprojectImage
+ * Revision 1.108  2005/04/05 20:05:43  fwarmerdam
+ * updated
  *
  ************************************************************************/
 
@@ -1324,7 +1324,8 @@ typedef struct {
 /*                          PyProgressProxy()                           */
 /************************************************************************/
 
-int PyProgressProxy( double dfComplete, const char *pszMessage, void *pData )
+int CPL_STDCALL
+PyProgressProxy( double dfComplete, const char *pszMessage, void *pData )
 
 {
     PyProgressData *psInfo = (PyProgressData *) pData;
