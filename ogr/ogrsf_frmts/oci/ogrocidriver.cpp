@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2002/12/29 03:20:25  warmerda
+ * CreateDataSource should test true now
+ *
  * Revision 1.2  2002/12/28 04:38:36  warmerda
  * converted to unix file conventions
  *
@@ -118,7 +121,10 @@ OGRDataSource *OGROCIDriver::CreateDataSource( const char * pszName,
 int OGROCIDriver::TestCapability( const char * pszCap )
 
 {
-    return FALSE;
+    if( EQUAL(pszCap,ODrCCreateDataSource) )
+        return TRUE;
+    else
+        return FALSE;
 }
 
 /************************************************************************/
