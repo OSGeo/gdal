@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.27  2003/11/05 20:57:19  warmerda
+ * Added special hack mapping versioncodde 9999 to UA2000 for FME
+ * bug 7625.
+ *
  * Revision 1.26  2003/11/05 18:41:07  warmerda
  * added TIGER_VERSION setting to override file type on read
  *
@@ -180,6 +184,9 @@ TigerVersion TigerClassifyVersion( int nVersionCode )
         nVersion = TIGER_1994;
     else if( nVersionCode == 24 )
         nVersion = TIGER_1995;
+
+    else if( nVersionCode == 9999 )  /* special hack, fme bug 7625 */
+        nVersion = TIGER_UA2000;
 
     nYear = nVersionCode % 100;
     nMonth = nVersionCode / 100;
