@@ -3,7 +3,7 @@ GDAL_ROOT	=	..
 include ../GDALmake.opt
 
 OBJ	=	gdalopen.o gdaldrivermanager.o gdaldriver.o gdaldataset.o \
-		gdalrasterband.o
+		gdalrasterband.o gdal_misc.o
 
 default:	$(OBJ)
 
