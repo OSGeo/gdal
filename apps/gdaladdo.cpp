@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2004/07/26 14:15:22  warmerda
+ * Avoid return type warning.
+ *
  * Revision 1.8  2004/04/02 17:33:22  warmerda
  * added GDALGeneralCmdLineProcessor()
  *
@@ -85,6 +88,7 @@ int main( int nArgc, char ** papszArgv )
     const char * pszFilename = NULL;
     int          anLevels[1024];
     int          nLevelCount = 0;
+    int          nResultStatus = 0;
 
     GDALAllRegister();
 
@@ -129,10 +133,13 @@ int main( int nArgc, char ** papszArgv )
                                    GDALTermProgress, NULL ) != CE_None )
     {
         printf( "Overview building failed.\n" );
+        nResultStatus = 100;
     }
 
 /* -------------------------------------------------------------------- */
 /*      Cleanup                                                         */
 /* -------------------------------------------------------------------- */
     delete poDataset;
+
+    exit( nResultStatus );
 }
