@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.26  2001/05/24 18:05:18  warmerda
+ * substantial fixes to WKT support for MULTIPOINT/LINE/POLYGON
+ *
  * Revision 1.25  2001/02/06 17:10:28  warmerda
  * export entry points from DLL
  *
@@ -573,9 +576,11 @@ class CPL_DLL OGRMultiPolygon : public OGRGeometryCollection
     virtual const char *getGeometryName();
     virtual OGRwkbGeometryType getGeometryType();
     virtual OGRGeometry *clone();
+    virtual OGRErr importFromWkt( char ** );
+    virtual OGRErr exportToWkt( char ** );
     
     // Non standard
-    virtual OGRErr addGeometry( OGRGeometry * );
+    virtual OGRErr addGeometryDirectly( OGRGeometry * );
 };
 
 /************************************************************************/
@@ -593,9 +598,11 @@ class CPL_DLL OGRMultiPoint : public OGRGeometryCollection
     virtual const char *getGeometryName();
     virtual OGRwkbGeometryType getGeometryType();
     virtual OGRGeometry *clone();
+    virtual OGRErr importFromWkt( char ** );
+    virtual OGRErr exportToWkt( char ** );
     
     // Non standard
-    virtual OGRErr addGeometry( OGRGeometry * );
+    virtual OGRErr addGeometryDirectly( OGRGeometry * );
 };
 
 /************************************************************************/
@@ -613,9 +620,11 @@ class CPL_DLL OGRMultiLineString : public OGRGeometryCollection
     virtual const char *getGeometryName();
     virtual OGRwkbGeometryType getGeometryType();
     virtual OGRGeometry *clone();
+    virtual OGRErr importFromWkt( char ** );
+    virtual OGRErr exportToWkt( char ** );
     
     // Non standard
-    virtual OGRErr addGeometry( OGRGeometry * );
+    virtual OGRErr addGeometryDirectly( OGRGeometry * );
 };
 
 

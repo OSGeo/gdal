@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2001/05/24 18:05:18  warmerda
+ * substantial fixes to WKT support for MULTIPOINT/LINE/POLYGON
+ *
  * Revision 1.4  1999/12/21 05:45:28  warmerda
  * Fixed to check for wkbLineString instead of wkbPoint.
  *
@@ -66,16 +69,17 @@ const char * OGRMultiLineString::getGeometryName()
 }
 
 /************************************************************************/
-/*                            addGeometry()                             */
+/*                        addGeometryDirectly()                         */
 /************************************************************************/
 
-OGRErr OGRMultiLineString::addGeometry( OGRGeometry * poNewGeom )
+OGRErr OGRMultiLineString::addGeometryDirectly( OGRGeometry * poNewGeom )
 
 {
-    if( poNewGeom->getGeometryType() != wkbLineString )
+    if( poNewGeom->getGeometryType() != wkbLineString 
+        && poNewGeom->getGeometryType() != wkbLineString25D ) 
         return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
 
-    return OGRGeometryCollection::addGeometry( poNewGeom );
+    return OGRGeometryCollection::addGeometryDirectly( poNewGeom );
 }
 
 /************************************************************************/
@@ -97,3 +101,156 @@ OGRGeometry *OGRMultiLineString::clone()
 
     return poNewGC;
 }
+
+/************************************************************************/
+/*                           importFromWkt()                            */
+/*                                                                      */
+/*      Instantiate from well known text format.  Currently this is     */
+/*      `MULTILINESTRING ((x y, x y, ...),(x y, ...),...)'.             */
+/************************************************************************/
+
+OGRErr OGRMultiLineString::importFromWkt( char ** ppszInput )
+
+{
+    char        szToken[OGR_WKT_TOKEN_MAX];
+    const char  *pszInput = *ppszInput;
+    OGRErr	eErr;
+
+/* -------------------------------------------------------------------- */
+/*      Clear existing rings.                                           */
+/* -------------------------------------------------------------------- */
+    empty();
+
+/* -------------------------------------------------------------------- */
+/*      Read and verify the ``MULTILINESTRING'' keyword token.          */
+/* -------------------------------------------------------------------- */
+    pszInput = OGRWktReadToken( pszInput, szToken );
+
+    if( !EQUAL(szToken,getGeometryName()) )
+        return OGRERR_CORRUPT_DATA;
+
+/* -------------------------------------------------------------------- */
+/*      The next character should be a ( indicating the start of the    */
+/*      list of linestrings.                                            */
+/* -------------------------------------------------------------------- */
+    pszInput = OGRWktReadToken( pszInput, szToken );
+    if( szToken[0] != '(' )
+        return OGRERR_CORRUPT_DATA;
+
+/* ==================================================================== */
+/*      Read each line in turn.  Note that we try to reuse the same     */
+/*      point list buffer from ring to ring to cut down on              */
+/*      allocate/deallocate overhead.                                   */
+/* ==================================================================== */
+    OGRRawPoint *paoPoints = NULL;
+    int         nMaxPoints = 0;
+    double      *padfZ = NULL;
+    
+    do
+    {
+        int     nPoints = 0;
+
+/* -------------------------------------------------------------------- */
+/*      Read points for one line from input.                            */
+/* -------------------------------------------------------------------- */
+        pszInput = OGRWktReadPoints( pszInput, &paoPoints, &padfZ, &nMaxPoints,
+                                     &nPoints );
+
+        if( pszInput == NULL )
+        {
+            eErr = OGRERR_CORRUPT_DATA;
+            break;
+        }
+        
+/* -------------------------------------------------------------------- */
+/*      Create the new line, and add to collection.			*/
+/* -------------------------------------------------------------------- */
+        OGRLineString	*poLine;
+
+        poLine = new OGRLineString();
+        poLine->setPoints( nPoints, paoPoints, padfZ );
+
+        eErr = addGeometryDirectly( poLine ); 
+
+/* -------------------------------------------------------------------- */
+/*      Read the delimeter following the ring.                          */
+/* -------------------------------------------------------------------- */
+        
+        pszInput = OGRWktReadToken( pszInput, szToken );
+    } while( szToken[0] == ',' && eErr == OGRERR_NONE );
+
+/* -------------------------------------------------------------------- */
+/*      freak if we don't get a closing bracket.                        */
+/* -------------------------------------------------------------------- */
+    CPLFree( paoPoints );
+    CPLFree( padfZ );
+   
+    if( eErr != OGRERR_NONE )
+        return eErr;
+
+    if( szToken[0] != ')' )
+        return OGRERR_CORRUPT_DATA;
+    
+    *ppszInput = (char *) pszInput;
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                            exportToWkt()                             */
+/*                                                                      */
+/*      Translate this structure into it's well known text format       */
+/*      equivelent.  This could be made alot more CPU efficient!        */
+/************************************************************************/
+
+OGRErr OGRMultiLineString::exportToWkt( char ** ppszReturn )
+
+{
+    char        **papszLines;
+    int         iLine, nCumulativeLength = 0;
+    OGRErr      eErr;
+
+/* -------------------------------------------------------------------- */
+/*      Build a list of strings containing the stuff for each ring.     */
+/* -------------------------------------------------------------------- */
+    papszLines = (char **) CPLCalloc(sizeof(char *),getNumGeometries());
+
+    for( iLine = 0; iLine < getNumGeometries(); iLine++ )
+    {
+        eErr = getGeometryRef(iLine)->exportToWkt( &(papszLines[iLine]) );
+        if( eErr != OGRERR_NONE )
+            return eErr;
+
+        CPLAssert( EQUALN(papszLines[iLine],"LINESTRING (", 12) );
+        nCumulativeLength += strlen(papszLines[iLine] + 11);
+    }
+    
+/* -------------------------------------------------------------------- */
+/*      Allocate exactly the right amount of space for the              */
+/*      aggregated string.                                              */
+/* -------------------------------------------------------------------- */
+    *ppszReturn = (char *) VSIMalloc(nCumulativeLength+getNumGeometries()+20);
+
+    if( *ppszReturn == NULL )
+        return OGRERR_NOT_ENOUGH_MEMORY;
+
+/* -------------------------------------------------------------------- */
+/*      Build up the string, freeing temporary strings as we go.        */
+/* -------------------------------------------------------------------- */
+    strcpy( *ppszReturn, "MULTILINESTRING (" );
+
+    for( iLine = 0; iLine < getNumGeometries(); iLine++ )
+    {                                                           
+        if( iLine > 0 )
+            strcat( *ppszReturn, "," );
+        
+        strcat( *ppszReturn, papszLines[iLine] + 11 );
+        VSIFree( papszLines[iLine] );
+    }
+
+    strcat( *ppszReturn, ")" );
+
+    CPLFree( papszLines );
+
+    return OGRERR_NONE;
+}
+
