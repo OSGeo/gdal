@@ -64,3 +64,8 @@ clean:
 		cd %d \
 		&& nmake /NOLOGO /f makefile.vc clean \
 		&& cd ..
+
+html-install:
+	copy *.html $(HTMLDIR)
+	-for %d in ( $(DIRLIST) ) do \
+		copy %d\drv_*.html $(HTMLDIR)
