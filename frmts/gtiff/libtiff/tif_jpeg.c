@@ -44,6 +44,10 @@
 
 /* We undefine FAR to avoid conflict with JPEG definition */
 
+#ifdef WIN32
+#define HAVE_BOOLEAN
+#endif
+
 #ifdef FAR
 #undef FAR
 #endif
