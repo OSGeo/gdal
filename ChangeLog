@@ -1,5 +1,8 @@
 2000-12-05  Frank Warmerdam  <warmerdam@pobox.com>
 
+	* Added support for all readable projections in write code for
+	GeoTIFF (gdal/frmts/gtiff/gt_wkt_srs.cpp).
+
 	* Modified ogr_srs_proj4.cpp to use +R_A for VanDerGrinten and
 	Miller Cylindrical.
 
