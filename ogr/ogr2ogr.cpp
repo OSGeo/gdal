@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2002/05/09 16:32:29  warmerda
+ * added -sql, -update and -append options
+ *
  * Revision 1.15  2002/03/05 14:25:14  warmerda
  * expand tabs
  *
@@ -91,7 +94,8 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
                            int bTransform, 
                            OGRSpatialReference *poOutputSRS,
                            OGRSpatialReference *poSourceSRS,
-                           char **papszSelFields );
+                           char **papszSelFields,
+                           int bAppend );
 
 static int bSkipFailures = FALSE;
 static int nGroupTransactions = 200;
@@ -109,6 +113,7 @@ int main( int nArgc, char ** papszArgv )
     char        **papszLayers = NULL;
     char        **papszDSCO = NULL, **papszLCO = NULL;
     int         bTransform = FALSE;
+    int         bAppend = FALSE, bUpdate = FALSE;
     const char  *pszOutputSRSDef = NULL;
     const char  *pszSourceSRSDef = NULL;
     OGRSpatialReference *poOutputSRS = NULL;
@@ -118,6 +123,7 @@ int main( int nArgc, char ** papszArgv )
     OGRGeometry *poSpatialFilter = NULL;
     const char  *pszSelect;
     char        **papszSelFields = NULL;
+    const char  *pszSQLStatement = NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Register format(s).                                             */
@@ -144,6 +150,18 @@ int main( int nArgc, char ** papszArgv )
         else if( EQUALN(papszArgv[iArg],"-skip",5) )
         {
             bSkipFailures = TRUE;
+        }
+        else if( EQUAL(papszArgv[iArg],"-append") )
+        {
+            bAppend = TRUE;
+        }
+        else if( EQUAL(papszArgv[iArg],"-update") )
+        {
+            bUpdate = TRUE;
+        }
+        else if( EQUAL(papszArgv[iArg],"-sql") && papszArgv[iArg+1] != NULL )
+        {
+            pszSQLStatement = papszArgv[++iArg];
         }
         else if( EQUAL(papszArgv[iArg],"-nln") && iArg < nArgc-1 )
         {
@@ -192,7 +210,7 @@ int main( int nArgc, char ** papszArgv )
         {
             pszSelect = papszArgv[++iArg];
             papszSelFields = CSLTokenizeStringComplex(pszSelect, " ,", 
-                                                           FALSE, FALSE );
+                                                      FALSE, FALSE );
         }
         else if( papszArgv[iArg][0] == '-' )
         {
@@ -213,7 +231,7 @@ int main( int nArgc, char ** papszArgv )
 /*      Open data source.                                               */
 /* -------------------------------------------------------------------- */
     OGRDataSource       *poDS;
-
+        
     poDS = OGRSFDriverRegistrar::Open( pszDataSource, FALSE );
 
 /* -------------------------------------------------------------------- */
@@ -236,39 +254,70 @@ int main( int nArgc, char ** papszArgv )
     }
 
 /* -------------------------------------------------------------------- */
+/*      Try opening the output datasource as an existing, writable      */
+/* -------------------------------------------------------------------- */
+    OGRDataSource       *poODS;
+    
+    if( bUpdate )
+    {
+        poODS = OGRSFDriverRegistrar::Open( pszDestDataSource, TRUE );
+        if( poODS == NULL )
+        {
+            printf( "FAILURE:\n"
+                    "Unable to open existing output datasource `%s'.\n",
+                    pszDestDataSource );
+            exit( 1 );
+        }
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Find the output driver.                                         */
 /* -------------------------------------------------------------------- */
-    OGRSFDriverRegistrar        *poR = OGRSFDriverRegistrar::GetRegistrar();
-    OGRSFDriver                 *poDriver = NULL;
-    int                         iDriver;
-
-    for( iDriver = 0;
-         iDriver < poR->GetDriverCount() && poDriver == NULL;
-         iDriver++ )
+    else
     {
-        if( EQUAL(poR->GetDriver(iDriver)->GetName(),pszFormat) )
+        OGRSFDriverRegistrar *poR = OGRSFDriverRegistrar::GetRegistrar();
+        OGRSFDriver          *poDriver = NULL;
+        int                  iDriver;
+
+        for( iDriver = 0;
+             iDriver < poR->GetDriverCount() && poDriver == NULL;
+             iDriver++ )
         {
-            poDriver = poR->GetDriver(iDriver);
+            if( EQUAL(poR->GetDriver(iDriver)->GetName(),pszFormat) )
+            {
+                poDriver = poR->GetDriver(iDriver);
+            }
         }
-    }
 
-    if( poDriver == NULL )
-    {
-        printf( "Unable to find driver `%s'.\n", pszFormat );
-        printf( "The following drivers are available:\n" );
+        if( poDriver == NULL )
+        {
+            printf( "Unable to find driver `%s'.\n", pszFormat );
+            printf( "The following drivers are available:\n" );
         
-        for( iDriver = 0; iDriver < poR->GetDriverCount(); iDriver++ )
-        {
-            printf( "  -> `%s'\n", poR->GetDriver(iDriver)->GetName() );
+            for( iDriver = 0; iDriver < poR->GetDriverCount(); iDriver++ )
+            {
+                printf( "  -> `%s'\n", poR->GetDriver(iDriver)->GetName() );
+            }
+            exit( 1 );
         }
-        exit( 1 );
-    }
 
-    if( !poDriver->TestCapability( ODrCCreateDataSource ) )
-    {
-        printf( "%s driver does not support data source creation.\n",
-                pszFormat );
-        exit( 1 );
+        if( !poDriver->TestCapability( ODrCCreateDataSource ) )
+        {
+            printf( "%s driver does not support data source creation.\n",
+                    pszFormat );
+            exit( 1 );
+        }
+
+/* -------------------------------------------------------------------- */
+/*      Create the output data source.                                  */
+/* -------------------------------------------------------------------- */
+        poODS = poDriver->CreateDataSource( pszDestDataSource, papszDSCO );
+        if( poODS == NULL )
+        {
+            printf( "%s driver failed to create %s\n", 
+                    pszFormat, pszDestDataSource );
+            exit( 1 );
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -300,22 +349,42 @@ int main( int nArgc, char ** papszArgv )
     }
 
 /* -------------------------------------------------------------------- */
-/*      Create the output data source.                                  */
+/*      Special case for -sql clause.  No source layers required.       */
 /* -------------------------------------------------------------------- */
-    OGRDataSource       *poODS;
-    
-    poODS = poDriver->CreateDataSource( pszDestDataSource, papszDSCO );
-    if( poODS == NULL )
+    if( pszSQLStatement != NULL )
     {
-        printf( "%s driver failed to create %s\n", 
-                pszFormat, pszDestDataSource );
-        exit( 1 );
+        OGRLayer *poResultSet;
+
+        if( pszWHERE != NULL )
+            printf( "-where clause ignored in combination with -sql.\n" );
+        if( CSLCount(papszLayers) > 0 )
+            printf( "layer names ignored in combination with -sql.\n" );
+        
+        poResultSet = poDS->ExecuteSQL( pszSQLStatement, poSpatialFilter, 
+                                        NULL );
+
+        if( poResultSet != NULL )
+        {
+            if( !TranslateLayer( poDS, poResultSet, poODS, papszLCO, 
+                                 pszNewLayerName, bTransform, poOutputSRS,
+                                 poSourceSRS, papszSelFields, bAppend ) )
+            {
+                CPLError( CE_Failure, CPLE_AppDefined, 
+                          "Terminating translation prematurely after failed\n"
+                          "translation from sql statement." );
+
+                exit( 1 );
+            }
+            poDS->ReleaseResultSet( poResultSet );
+        }
     }
 
 /* -------------------------------------------------------------------- */
 /*      Process each data source layer.                                 */
 /* -------------------------------------------------------------------- */
-    for( int iLayer = 0; iLayer < poDS->GetLayerCount(); iLayer++ )
+    for( int iLayer = 0; 
+         pszSQLStatement == NULL && iLayer < poDS->GetLayerCount(); 
+         iLayer++ )
     {
         OGRLayer        *poLayer = poDS->GetLayer(iLayer);
 
@@ -338,7 +407,7 @@ int main( int nArgc, char ** papszArgv )
             
             if( !TranslateLayer( poDS, poLayer, poODS, papszLCO, 
                                  pszNewLayerName, bTransform, poOutputSRS,
-                                 poSourceSRS, papszSelFields ) 
+                                 poSourceSRS, papszSelFields, bAppend ) 
                 && !bSkipFailures )
             {
                 CPLError( CE_Failure, CPLE_AppDefined, 
@@ -375,7 +444,7 @@ static void Usage()
 {
     OGRSFDriverRegistrar        *poR = OGRSFDriverRegistrar::GetRegistrar();
 
-    printf( "Usage: ogr2ogr [-skipfailures] [-f format_name]\n"
+    printf( "Usage: ogr2ogr [-skipfailures] [-append] [-update] [-f format_name]\n"
             "               [-select field_list] [-where restricted_where]\n"
             "               [-spat xmin ymin xmax ymax]\n"
             "               [-t_srs srs_def] [-a_srs srs_def]\n"
@@ -424,7 +493,8 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
                            int bTransform, 
                            OGRSpatialReference *poOutputSRS,
                            OGRSpatialReference *poSourceSRS,
-                           char **papszSelFields )
+                           char **papszSelFields,
+                           int bAppend)
 
 {
     OGRLayer    *poDstLayer;
@@ -469,23 +539,55 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
             exit( 1 );
         }
     }
-
+    
+/* -------------------------------------------------------------------- */
+/*      Get other info.                                                 */
+/* -------------------------------------------------------------------- */
+    poFDefn = poSrcLayer->GetLayerDefn();
+    
+    if( poOutputSRS == NULL )
+        poOutputSRS = poSrcLayer->GetSpatialRef();
+    
 /* -------------------------------------------------------------------- */
 /*      Create the layer.                                               */
 /* -------------------------------------------------------------------- */
-    CPLAssert( poDstDS->TestCapability( ODsCCreateLayer ) );
-    poFDefn = poSrcLayer->GetLayerDefn();
+    if( !bAppend )
+    {
+        CPLAssert( poDstDS->TestCapability( ODsCCreateLayer ) );
+        CPLErrorReset();
 
-    if( poOutputSRS == NULL )
-        poOutputSRS = poSrcLayer->GetSpatialRef();
+        poDstLayer = poDstDS->CreateLayer( pszNewLayerName, poOutputSRS,
+                                           poFDefn->GetGeomType(), papszLCO );
 
-    CPLErrorReset();
+        if( poDstLayer == NULL )
+            return FALSE;
+    }
+/* -------------------------------------------------------------------- */
+/*      Or find existing layer to append to.                            */
+/* -------------------------------------------------------------------- */
+    else
+    {
+        poDstLayer = NULL;
 
-    poDstLayer = poDstDS->CreateLayer( pszNewLayerName, poOutputSRS,
-                                       poFDefn->GetGeomType(), papszLCO );
+        for( int iLayer = 0; iLayer < poDstDS->GetLayerCount(); iLayer++ )
+        {
+            OGRLayer        *poLayer = poDstDS->GetLayer(iLayer);
 
-    if( poDstLayer == NULL )
-        return FALSE;
+            if( poLayer != NULL 
+                && EQUAL(poLayer->GetLayerDefn()->GetName(),pszNewLayerName) )
+            {
+                poDstLayer = poLayer;
+                break;
+            }
+        }
+
+        if( poDstLayer == NULL )
+        {
+            printf( "FAILED: To find existing layer `%s' on output dataset\n"
+                    "        to append new features to.\n",
+                    pszNewLayerName );
+        }
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Add fields.  Default to copy all field.                         */
@@ -494,7 +596,8 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
 /*      selected.                                                       */
 /* -------------------------------------------------------------------- */
     int         iField;
-    if (papszSelFields)
+
+    if (papszSelFields && !bAppend )
     {
         for( iField=0; papszSelFields[iField] != NULL; iField++)
         {
@@ -510,7 +613,7 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
             }
         }
     }
-    else
+    else if( !bAppend )
     {
         for( iField = 0; iField < poFDefn->GetFieldCount(); iField++ )
             poDstLayer->CreateField( poFDefn->GetFieldDefn(iField) );
