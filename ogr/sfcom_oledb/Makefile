@@ -1,6 +1,7 @@
 
 EXTRAFLAGS =	-I$(VCDIR)\ATL\Include \
 		-I$(MSDASDK)\include\oledb -I.. /W2 \
+		-I..\ogrsf_frmts \
 		-I..\ogrsf_frmts\shape
 
 GDAL_ROOT = 	..\..
