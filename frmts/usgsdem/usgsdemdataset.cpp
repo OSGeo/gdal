@@ -31,6 +31,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.15  2004/04/08 12:59:10  warmerda
+ * fixed sides of polygon fixed value
+ *
  * Revision 1.14  2004/04/01 21:03:40  warmerda
  * added new creation options to listing
  *
@@ -441,6 +444,8 @@ int USGSDEMDataset::LoadFromFile(FILE *InDem)
     // OLD format header ends at byte 864
     if (bNewFormat)
     {
+        char szHorzDatum[3];
+
         // year of data compilation
         VSIFSeek(InDem, 876, 0);
         fread(szDateBuffer, 4, 1, InDem);
@@ -455,7 +460,9 @@ int USGSDEMDataset::LoadFromFile(FILE *InDem)
         // 6=Puerto Rico Datum
         int datum;
         VSIFSeek(InDem, 890, 0);
-        fscanf(InDem, "%d", &datum);
+        VSIFRead( szHorzDatum, 1, 2, InDem );
+        szHorzDatum[2] = '\0';
+        datum = atoi(szHorzDatum);
         switch (datum)
         {
           case 1:
