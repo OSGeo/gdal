@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.22  2003/02/14 16:29:02  warmerda
+ * Added LAEA support
+ *
  * Revision 1.21  2003/02/06 04:53:53  warmerda
  * fixed handling of empty fields to avoid emitting debug warning
  *
@@ -1289,6 +1292,19 @@ static OGRErr SetEPSGProjCS( OGRSpatialReference * poSRS, int nPCSCode )
                           OGR_FP( PseudoStdParallelScaleFactor ),
                           OGR_FP( ProjCenterEasting ), 
                           OGR_FP( ProjCenterNorthing ) );
+        break;
+
+      case 9820:
+        poSRS->SetLAEA( OGR_FP( NatOriginLat ), OGR_FP( NatOriginLong ),
+                        OGR_FP( FalseEasting ), OGR_FP( FalseNorthing ) );
+        break;
+
+      case 9821: /* this is the spherical form, and really needs different
+                    equations which give different results but PROJ.4 doesn't
+                    seem to support the spherical form. */
+        poSRS->SetLAEA( OGR_FP( SphericalOriginLat ), 
+                        OGR_FP( SphericalOriginLong ),
+                        OGR_FP( FalseEasting ), OGR_FP( FalseNorthing ) );
         break;
 
       default:
