@@ -1,5 +1,5 @@
 
-GDAL_ROOT = 	f:\gdal
+GDAL_ROOT = 	..\..
 
 EXTRAFLAGS =	-GX -I$(VCDIR)\ATL\Include /W2 -I..
 
@@ -17,15 +17,18 @@ default:	Cover.dll
 Cover.res:	Cover.rc Cover.h
 	rc.exe /l 0x1009 /foCover.res /d _DEBUG Cover.rc
 
-Cover.dll:	Cover.h $(LOC_OBJ) Cover.res
+Cover.dll:	Cover.h CoverageIdl.h $(LOC_OBJ) Cover.res
 	link /debug /dll /def:Cover.def /out:Cover.dll \
 		$(LOC_OBJ) $(GDAL_LIB) $(OLE_LIBS) Cover.res
 
 clean:
-	rm -f *.obj *.exe Cover.dll Cover.h Cover_i.c Cover.tlb Cover.res
+	del *.obj *.exe Cover.dll Cover.h Cover_i.c Cover.tlb Cover.res
+	del CoverageIdl.h *.pdb *.ilk
 
 Cover.h:      Cover.idl
 	midl /tlb Cover.tlb /h Cover.h /IF:/opengis/coverage \
 		/Oicf /iid Cover_i.c Cover.idl
 
+CoverageIdl.h:	..\CoverageIdl.idl
+	midl /h CoverageIdl.h /I.. ..\CoverageIdl.idl
 
