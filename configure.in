@@ -201,12 +201,8 @@ AC_ARG_WITH(libtiff,[  --with-libtiff=ARG      Libtiff library to use (ARG=inter
 
 if test "$with_libtiff" = "yes" -o "$with_libtiff" = "" ; then
 
-  AC_CHECK_LIB(tiff,TIFFWriteCheck,TIFF_SETTING=external,TIFF_SETTING=internal,)
-  AC_CHECK_HEADERS(tiffiop.h)
-
-  if test "$ac_cv_header_tiffiop_h" = "no" ; then
-    TIFF_SETTING=internal
-  fi
+  # We now effectively require libtiff 3.6.0.
+  AC_CHECK_LIB(tiff,TIFFGetTagTagListCount,TIFF_SETTING=external,TIFF_SETTING=internal,)
 
   dnl Cygwin takes a somewhat restrictive view of what should be exported
   dnl from the dll, so don't use the external library if missing semi-private
