@@ -1,7 +1,7 @@
 
 OBJ     =       shape2ogr.obj shpopen.obj dbfopen.obj ogrshapedriver.obj \
 		ogrshapedatasource.obj ogrshapelayer.obj shptree.obj
-EXTRAFLAGS =	-I.. -I..\.. /DSHAPELIB_DLLEXPORT
+EXTRAFLAGS =	-I.. -I..\.. /DSHAPELIB_DLLEXPORT -DUSE_CPL
 
 GDAL_ROOT	=	..\..\..
 

@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: dbfopen.c,v 1.54 2004/09/15 16:26:10 fwarmerdam Exp $
+ * $Id: dbfopen.c,v 1.55 2004/09/26 20:23:46 fwarmerdam Exp $
  *
  * Project:  Shapelib
  * Purpose:  Implementation of .dbf access API documented in dbf_api.html.
@@ -34,6 +34,9 @@
  ******************************************************************************
  *
  * $Log: dbfopen.c,v $
+ * Revision 1.55  2004/09/26 20:23:46  fwarmerdam
+ * avoid warnings with rcsid and signed/unsigned stuff
+ *
  * Revision 1.54  2004/09/15 16:26:10  fwarmerdam
  * Treat all blank numeric fields as null too.
  *
@@ -200,15 +203,14 @@
  * Added header.
  */
 
-static char rcsid[] = 
-  "$Id: dbfopen.c,v 1.54 2004/09/15 16:26:10 fwarmerdam Exp $";
-
 #include "shapefil.h"
 
 #include <math.h>
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
+
+SHP_CVSID("$Id: dbfopen.c,v 1.55 2004/09/26 20:23:46 fwarmerdam Exp $")
 
 #ifndef FALSE
 #  define FALSE		0
@@ -1119,7 +1121,7 @@ static int DBFWriteAttribute(DBFHandle psDBF, int hEntity, int iField,
 	{
             int		nWidth = psDBF->panFieldSize[iField];
 
-            if( sizeof(szSField)-2 < nWidth )
+            if( (int) sizeof(szSField)-2 < nWidth )
                 nWidth = sizeof(szSField)-2;
 
 	    sprintf( szFormat, "%%%dd", nWidth );
@@ -1137,7 +1139,7 @@ static int DBFWriteAttribute(DBFHandle psDBF, int hEntity, int iField,
 	{
             int		nWidth = psDBF->panFieldSize[iField];
 
-            if( sizeof(szSField)-2 < nWidth )
+            if( (int) sizeof(szSField)-2 < nWidth )
                 nWidth = sizeof(szSField)-2;
 
 	    sprintf( szFormat, "%%%d.%df", 
