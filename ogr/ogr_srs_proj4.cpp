@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  1999/12/06 21:37:19  warmerda
+ * Set +proj=longlat if no projection set.
+ *
  * Revision 1.2  1999/11/18 19:02:19  warmerda
  * expanded tabs
  *
@@ -57,7 +60,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 )
 
     if( pszProjection == NULL )
     {
-        /* must be geographic? */
+        sprintf( szProj4+strlen(szProj4), "+proj=longlat " );
     }
     else if( EQUAL(pszProjection,SRS_PT_TRANSVERSE_MERCATOR) )
     {
