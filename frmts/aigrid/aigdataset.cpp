@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/06/26 21:00:38  warmerda
+ * Relax checking that filename is a directory ... AIGOpen() now handles.
+ *
  * Revision 1.1  1999/02/04 22:15:44  warmerda
  * New
  *
@@ -167,15 +170,6 @@ GDALDataset *AIGDataset::Open( GDALOpenInfo * poOpenInfo )
 {
     AIGInfo_t	*psInfo;
     
-/* -------------------------------------------------------------------- */
-/*      Verify that this is a AIG file.                                 */
-/* -------------------------------------------------------------------- */
-    if( !poOpenInfo->bStatOK )
-        return NULL;
-
-    if( !VSI_ISDIR( poOpenInfo->sStat.st_mode ) )
-        return NULL;
-
 /* -------------------------------------------------------------------- */
 /*      Open the file.                                                  */
 /* -------------------------------------------------------------------- */
