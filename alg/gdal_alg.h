@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2002/12/09 18:56:10  warmerda
+ * added missing CPL_DLL
+ *
  * Revision 1.8  2002/12/09 16:08:32  warmerda
  * added approximating transformer
  *
@@ -120,7 +123,7 @@ void CPL_DLL *
 GDALCreateGCPTransformer( int nGCPCount, const GDAL_GCP *pasGCPList, 
                           int nReqOrder, int bReversed );
 void CPL_DLL GDALDestroyGCPTransformer( void *pTransformArg );
-int GDALGCPTransform( 
+int CPL_DLL GDALGCPTransform( 
     void *pTransformArg, int bDstToSrc, int nPointCount,
     double *x, double *y, double *z, int *panSuccess );
 
