@@ -16,6 +16,12 @@ Compressed and missing tiles in Erdas files should be handled properly on read.
 Files between 2GB and 4GB in size should work on Windows NT, and may work
 on some Unix platforms.<p>
 
+Metadata reading and writing is supported at the dataset level, and for
+bands, but this is GDAL specific metadata - not metadata in an Imagine
+recognised form.  The metadata is stored in a table called GDAL_MetaData with
+each column being a metadata item.  The title is the key and the row 1 value
+is the value.<p>
+
 <h2>Creation Issues</h2>
 
 Erdas Imagine files can be created with any GDAL defined band type, including
