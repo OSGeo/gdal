@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2000/09/19 14:09:11  warmerda
+ * fixed dump of binary info
+ *
  * Revision 1.10  2000/06/13 13:38:39  warmerda
  * Improved reporting of binary data in Dump method.
  * Fixed GetRepeatCount() so that short field data can be properly detected.
@@ -107,7 +110,7 @@ void DDFField::Dump( FILE * fp )
     for( int i = 0; i < MIN(nDataSize,40); i++ )
     {
         if( pachData[i] < 32 || pachData[i] > 126 )
-            fprintf( fp, "\\%02X", pachData[i] );
+            fprintf( fp, "\\%02X", ((unsigned char *) pachData)[i] );
         else
             fprintf( fp, "%c", pachData[i] );
     }
