@@ -26,6 +26,9 @@
 ###############################################################################
 # 
 #  $Log$
+#  Revision 1.15  2004/09/02 22:06:24  warmerda
+#  Added a bit of commandline error reporting.
+#
 #  Revision 1.14  2004/08/23 15:05:27  warmerda
 #  Added projection setting for new files.
 #
@@ -349,6 +352,7 @@ if __name__ == '__main__':
             i = i + 4
 
         elif arg[:1] == '-':
+            print 'Unrecognised command option: ', arg
             Usage()
             sys.exit( 1 )
 
@@ -358,6 +362,7 @@ if __name__ == '__main__':
         i = i + 1
 
     if len(names) == 0:
+        print 'No input files selected.'
         Usage()
         sys.exit( 1 )
 
