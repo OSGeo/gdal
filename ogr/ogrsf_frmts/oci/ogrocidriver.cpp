@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2003/01/20 20:57:44  warmerda
+ * Create() now opens DB in update mode
+ *
  * Revision 1.3  2002/12/29 03:20:25  warmerda
  * CreateDataSource should test true now
  *
@@ -91,7 +94,6 @@ OGRDataSource *OGROCIDriver::CreateDataSource( const char * pszName,
                                                char ** /* papszOptions */ )
 
 {
-#ifdef notdef 
     OGROCIDataSource	*poDS;
 
     poDS = new OGROCIDataSource();
@@ -101,17 +103,12 @@ OGRDataSource *OGROCIDriver::CreateDataSource( const char * pszName,
     {
         delete poDS;
         CPLError( CE_Failure, CPLE_AppDefined, 
-         "PostgreSQL driver doesn't currently support database creation.\n"
-                  "Please create database with the `createdb' command." );
+         "Oracle driver doesn't currently support database creation.\n"
+                  "Please create database with Oracle tools before loading tables." );
         return NULL;
     }
 
     return poDS;
-#else
-    CPLError( CE_Failure, CPLE_AppDefined, 
-           "ORACLE OCI Driver does not currently support database creation.");
-    return NULL;
-#endif
 }
 
 /************************************************************************/
