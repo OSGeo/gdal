@@ -107,6 +107,22 @@ I frequently forget to update the Windows makefiles when I add new files,
 so if something comes up missing consider comparing the file lists in the
 appropriate makefile.vc against the GNUmakefile or just contact me. <p>
 
+<h2>GDAL Utility Programs</h2>
+
+The following GDAL utility programs exist current:
+
+<ul>
+<li> <b>gdal/apps/gdalinfo</b>: Dumps a variety of information about a
+dataset to the terminal. <p>
+
+<li> <b>gdal/apps/gdal_translate</b>: Translate between GDAL formats.  The 
+default output format is GeoTIFF.   Limited support for resizing images, 
+selecting subwindows, and converting between data types.  
+
+<li> <b>gdal/apps/gdaladdo</b>: Add overviews to an existing database.
+
+</ul>
+
 <h2>Related Information</h2>
 
 <ul>
