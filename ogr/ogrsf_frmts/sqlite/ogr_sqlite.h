@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2004/08/20 21:43:12  warmerda
+ * avoid doing alot of work in GetExtent() if we have no geometry
+ *
  * Revision 1.4  2004/07/13 15:11:19  warmerda
  * implemented SetFeature, transaction support
  *
@@ -171,8 +174,6 @@ class OGRSQLiteSelectLayer : public OGRSQLiteLayer
     virtual OGRErr      SetAttributeFilter( const char * );
     virtual OGRFeature *GetFeature( long nFeatureId );
     
-    virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce = TRUE);
-
     virtual int         TestCapability( const char * );
 
     virtual void	ClearStatement();
