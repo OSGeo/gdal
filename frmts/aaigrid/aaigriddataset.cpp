@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.28  2005/02/08 18:15:34  fwarmerdam
+ * Removed tail recursion in IReadBlock() to avoid stack overflows.
+ *
  * Revision 1.27  2005/02/08 17:06:27  fwarmerdam
  * Fixed up Delete() method to avoid error if there is no .prj.
  *
@@ -226,7 +229,13 @@ CPLErr AAIGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         return CE_Failure;
 
     if( panLineOffset[nBlockYOff] == 0 )
-        IReadBlock( nBlockXOff, nBlockYOff-1, NULL );
+    {
+        int iPrevLine;
+
+        for( iPrevLine = 1; iPrevLine <= nBlockYOff; iPrevLine++ )
+            if( panLineOffset[iPrevLine] == 0 )
+                IReadBlock( nBlockXOff, iPrevLine-1, NULL );
+    }
 
     if( panLineOffset[nBlockYOff] == 0 )
         return CE_Failure;
