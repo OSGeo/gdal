@@ -31,6 +31,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.14  2004/04/01 21:03:40  warmerda
+ * added new creation options to listing
+ *
  * Revision 1.13  2004/03/27 17:03:12  warmerda
  * added preliminary creation support
  *
@@ -621,9 +624,30 @@ void GDALRegister_USGSDEM()
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, 
                                    "dem" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
-                                   "USGS Optional ASCII DEM" );
+                                   "USGS Optional ASCII DEM (and CDED)" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
-                                   "frmt_various.html#USGSDEM" );
+                                   "frmt_usgsdem.html" );
+        poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, "Int16" );
+        poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, 
+"<CreationOptionList>"
+"   <Option name='PRODUCT' type='string-select' description='Specific Product Type'>"
+"       <Value>DEFAULT</Value>"
+"       <Value>CDED50</Value>"
+"   </Option>"
+"   <Option name='TOPLEFT' type='string' description='Top left product corner (ie. 117d15w,52d30n'/>"
+"   <Option name='RESAMPLE' type='string-select' description='Resampling kernel to use if resampled.'>"
+"       <Value>Nearest</Value>"
+"       <Value>Bilinear</Value>"
+"       <Value>Cubic</Value>"
+"       <Value>CubicSpline</Value>"
+"   </Option>"
+"   <Option name='TEMPLATE' type='string' description='File to default metadata from.'/>"
+"   <Option name='DEMLevelCode' type='int' description='DEM Level (1, 2 or 3 if set)'/>"
+"   <Option name='DataSpecVersion' type='int' description='Data and Specification version/revision (eg. 1020)'/>"
+"   <Option name='PRODUCER' type='string' description='Producer Agency (up to 60 characters)'/>"
+"   <Option name='OriginCode' type='string' description='Origin code (up to 4 characters, YT for Yukon)'/>"
+"   <Option name='ProcessCode' type='string' description='Processing Code (8=ANUDEM, 9=FME, A=TopoGrid)'/>"
+"</CreationOptionList>" );
         
         poDriver->pfnOpen = USGSDEMDataset::Open;
         poDriver->pfnCreateCopy = USGSDEMCreateCopy;
