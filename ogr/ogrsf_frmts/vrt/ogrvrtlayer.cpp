@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2003/12/30 18:34:57  warmerda
+ * Added support for SrcSQL instead of SrcLayer.
+ *
  * Revision 1.3  2003/11/10 20:11:55  warmerda
  * Allow any UserInput in LayerSYS
  *
@@ -179,21 +182,41 @@ int OGRVRTLayer::Initialize( CPLXMLNode *psLTree, const char *pszVRTDirectory )
     }
 
 /* -------------------------------------------------------------------- */
-/*      Find the layer.                                                 */
+/*      Is this layer derived from an SQL query result?                 */
 /* -------------------------------------------------------------------- */
-    const char *pszSrcLayerName = CPLGetXMLValue( psLTree, "SrcLayer", 
-                                                  pszLayerName );
+    const char *pszSQL = CPLGetXMLValue( psLTree, "SrcSQL", NULL );
 
-    poSrcLayer = poSrcDS->GetLayerByName( pszSrcLayerName );
-    if( poSrcLayer == NULL )
+    if( pszSQL != NULL )
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Failed to file layer '%s' on datasource '%s'.", 
-                  pszLayerName, pszSrcDSName );
-        CPLFree( pszSrcDSName );
-        return FALSE;
+        poSrcLayer = poSrcDS->ExecuteSQL( pszSQL, NULL, NULL );
+        if( poSrcLayer == NULL )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "SQL statement failed, or returned no layer result:\n%s",
+                      pszSQL );					      
+            return FALSE;
+        }
     }
 
+/* -------------------------------------------------------------------- */
+/*      Fetch the layer if it is a regular layer.                       */
+/* -------------------------------------------------------------------- */
+    if( poSrcLayer == NULL )
+    {
+        const char *pszSrcLayerName = CPLGetXMLValue( psLTree, "SrcLayer", 
+                                                      pszLayerName );
+        
+        poSrcLayer = poSrcDS->GetLayerByName( pszSrcLayerName );
+        if( poSrcLayer == NULL )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                  "Failed to file layer '%s' on datasource '%s'.", 
+                      pszLayerName, pszSrcDSName );
+            CPLFree( pszSrcDSName );
+            return FALSE;
+        }
+    }
+        
     CPLFree( pszSrcDSName );
 
 /* -------------------------------------------------------------------- */
