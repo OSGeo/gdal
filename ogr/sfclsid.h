@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  1999/05/14 13:32:50  warmerda
+ * added CLSID_OGRComClassFactory
+ *
  * Revision 1.3  1999/04/19 19:12:51  warmerda
  * added cadcorp spatial reference factory class
  *
@@ -49,7 +52,11 @@ DEFINE_GUID(CLSID_CadcorpSFProvider,
 
 DEFINE_GUID(CLSID_CadcorpSFGeometryFactory,
        0xa71279eb,0xac51,0x11d2,0x84,0xfa,0x00,0xc0,0x4f,0x72,0xee,0xf7);
+
 DEFINE_GUID(CLSID_CadcorpSFSpatialReferenceFactory,
        0x096f5734,0xb4d2,0x11d1,0xa6,0x23,0x00,0x40,0x95,0x24,0x50,0x6c);
+
+DEFINE_GUID(CLSID_OGRComClassFactory,
+            0xbc518ff0,0x08dd,0x11d3,0xb3,0xf9,0x00,0x80,0xc8,0xe6,0x25,0x64);
 
 #endif
