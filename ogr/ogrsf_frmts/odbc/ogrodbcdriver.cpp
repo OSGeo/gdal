@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2003/10/06 15:38:47  warmerda
+ * Improve testing of incoming name.
+ *
  * Revision 1.1  2003/09/25 17:08:37  warmerda
  * New
  *
@@ -66,6 +69,9 @@ OGRDataSource *OGRODBCDriver::Open( const char * pszFilename,
 
 {
     OGRODBCDataSource     *poDS;
+
+    if( !EQUALN(pszFilename,"ODBC:",5) )
+        return NULL;
 
     poDS = new OGRODBCDataSource();
 
