@@ -50,6 +50,11 @@ char CPL_DLL *CPLStrdup( const char * );
 
 #define CPLFree	VSIFree
 
+/* -------------------------------------------------------------------- */
+/*      Read a line from a text file, and strip of CR/LF.               */
+/* -------------------------------------------------------------------- */
+const char *CPLReadLine( FILE * );
+
 CPL_C_END
 
 #endif /* ndef CPL_CONV_H_INCLUDED */
