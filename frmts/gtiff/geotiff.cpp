@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.92  2003/05/20 20:15:06  warmerda
+ * dont use geopixelscale if it is zero, like in some IKONOS images
+ *
  * Revision 1.91  2003/04/28 20:55:02  warmerda
  * Use dataset level IO for createcopy stripped contig case
  *
@@ -2136,12 +2139,12 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, uint32 nDirOffsetIn,
         adfGeoTransform[5] = 1.0;
     
         if( TIFFGetField(hTIFF,TIFFTAG_GEOPIXELSCALE,&nCount,&padfScale )
-            && nCount >= 2 )
+            && nCount >= 2 
+            && padfScale[0] != 0.0 && padfScale[1] != 0.0 )
         {
             adfGeoTransform[1] = padfScale[0];
             adfGeoTransform[5] = - ABS(padfScale[1]);
 
-        
             if( TIFFGetField(hTIFF,TIFFTAG_GEOTIEPOINTS,&nCount,&padfTiePoints )
                 && nCount >= 6 )
             {
