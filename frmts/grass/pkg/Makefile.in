@@ -1,0 +1,35 @@
+CC	=	@CC@
+CXX	=	@CXX@
+LD	=	@CXX@
+
+CPPFLAGS	= @GDAL_INC@ @GRASS_INCLUDE@ @CPPFLAGS@ 
+CXXFLAGS	= @CXX_WFLAGS@ @CXX_PIC@
+
+RANLIB		=	@RANLIB@
+SO_EXT		=	@SO_EXT@
+LD_SHARED	=	@LD_SHARED@
+
+LIBS	=	@LIBS@
+
+AUTOLOAD_DIR	=	@AUTOLOAD_DIR@
+
+LIBNAME =	gdal_GRASS.so
+
+
+default:	$(LIBNAME)
+
+install:	$(LIBNAME)
+	cp $(LIBNAME) $(AUTOLOAD_DIR)
+
+clean:
+	rm -f $(LIBNAME) *.o 
+
+distclean: clean
+	rm -f Makefile config.status config.log autom*.cache
+
+
+$(LIBNAME):	grass57dataset.o
+	$(LD_SHARED) grass57dataset.o $(LIBS) -o $(LIBNAME)
+
+%.o:	%.cpp
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c -o $@ $<
