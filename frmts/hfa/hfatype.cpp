@@ -1,7 +1,6 @@
 /******************************************************************************
  * $Id$
  *
- * Name:     hfatype.cpp
  * Project:  Erdas Imagine (.img) Translator
  * Purpose:  Implementation of the HFAType class, for managing one type
  *           defined in the HFA data dictionary.  Managed by HFADictionary.
@@ -30,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/01/22 17:36:47  warmerda
+ * Added GetInstBytes(), track unknown sizes properly
+ *
  * Revision 1.1  1999/01/04 22:52:10  warmerda
  * New
  *
@@ -151,7 +153,10 @@ void HFAType::CompleteDefn( HFADictionary * poDict )
     for( i = 0; i < nFields; i++ )
     {
         papoFields[i]->CompleteDefn( poDict );
-        nBytes += papoFields[i]->nBytes;
+        if( papoFields[i]->nBytes < 0 || nBytes == -1 )
+            nBytes = -1;
+        else
+            nBytes += papoFields[i]->nBytes;
     }
 }
 
@@ -286,4 +291,35 @@ void HFAType::DumpInstValue( FILE * fpOut,
         nDataOffset += nInstBytes;
         nDataSize -= nInstBytes;
     }    
+}
+
+/************************************************************************/
+/*                            GetInstBytes()                            */
+/*                                                                      */
+/*      How many bytes in this particular instance of this type?        */
+/************************************************************************/
+
+int HFAType::GetInstBytes( GByte * pabyData )
+
+{
+    if( nBytes >= 0 )
+        return( nBytes );
+    else
+    {
+        int	nTotal = 0;
+        int	iField;
+    
+        for( iField = 0; iField < nFields; iField++ )
+        {
+            HFAField	*poField = papoFields[iField];
+            int		nInstBytes;
+
+            nInstBytes = poField->GetInstBytes( pabyData );
+
+            pabyData += nInstBytes;
+            nTotal += nInstBytes;
+        }
+
+        return( nTotal );
+    }
 }
