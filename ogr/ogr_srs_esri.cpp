@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.35  2004/09/23 16:20:40  fwarmerdam
+ * added clode to cleanup datum mapping table: bug 613
+ *
  * Revision 1.34  2004/09/10 21:03:55  fwarmerdam
  * Lots of changes to map Hotine_Oblique_Mercator_Azimuth_Center in ESRI format
  * to Hotine_Oblique_Mercator with a rectified_grid_angle of 90 (and back).
@@ -169,6 +172,11 @@ static char *apszAlbersMapping[] = {
 
 static char **papszDatumMapping = NULL;
  
+static char *apszDefaultDatumMapping[] = {
+    "6267", "North_American_1927", SRS_DN_NAD27,
+    "6269", "North_American_1983", SRS_DN_NAD83,
+    NULL, NULL, NULL }; 
+
 static char *apszUnitMapping[] = {
     "Meter", "meter",
     "Meter", "metre",
@@ -395,17 +403,31 @@ static void MorphNameToESRI( char ** ppszName )
 }
 
 /************************************************************************/
+/*                     CleanESRIDatumMappingTable()                     */
+/************************************************************************/
+
+CPL_C_START 
+void CleanupESRIDatumMappingTable()
+
+{
+    if( papszDatumMapping == NULL )
+        return;
+
+    if( papszDatumMapping != apszDefaultDatumMapping )
+    {
+        CSLDestroy( papszDatumMapping );
+        papszDatumMapping = NULL;
+    }
+}
+CPL_C_END
+
+/************************************************************************/
 /*                       InitDatumMappingTable()                        */
 /************************************************************************/
 
 static void InitDatumMappingTable()
 
 {
-    static char *apszDefaultDatumMapping[] = {
-        "6267", "North_American_1927", SRS_DN_NAD27,
-        "6269", "North_American_1983", SRS_DN_NAD83,
-        NULL, NULL, NULL }; 
-
     if( papszDatumMapping != NULL )
         return;
 
@@ -1007,6 +1029,7 @@ OGRErr OGRSpatialReference::morphToESRI()
         MorphNameToESRI( &pszNewValue );
 
         poSpheroid->SetValue( pszNewValue );
+        CPLFree( pszNewValue );
     }
     
 /* -------------------------------------------------------------------- */
