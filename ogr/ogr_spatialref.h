@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.31  2001/07/19 18:25:07  warmerda
+ * expanded tabs
+ *
  * Revision 1.30  2001/07/16 03:34:55  warmerda
  * various fixes, and improvements suggested by Ben Driscoe on gdal list
  *
@@ -210,7 +213,7 @@ class CPL_DLL OGRSpatialReference
     OGR_SRSNode *poRoot;
 
   public:
-    		OGRSpatialReference(const OGRSpatialReference&);
+                OGRSpatialReference(const OGRSpatialReference&);
                 OGRSpatialReference(const char * = NULL);
                 
     virtual    ~OGRSpatialReference();

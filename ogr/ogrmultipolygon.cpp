@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2001/07/19 18:25:07  warmerda
+ * expanded tabs
+ *
  * Revision 1.5  2001/07/18 05:03:05  warmerda
  * added CPL_CVSID
  *
@@ -116,7 +119,7 @@ OGRErr OGRMultiPolygon::importFromWkt( char ** ppszInput )
 {
     char        szToken[OGR_WKT_TOKEN_MAX];
     const char  *pszInput = *ppszInput;
-    OGRErr	eErr = OGRERR_NONE;
+    OGRErr      eErr = OGRERR_NONE;
 
 /* -------------------------------------------------------------------- */
 /*      Clear existing rings.                                           */
@@ -150,7 +153,7 @@ OGRErr OGRMultiPolygon::importFromWkt( char ** ppszInput )
     
     do
     {
-        OGRPolygon	*poPolygon = new OGRPolygon();
+        OGRPolygon      *poPolygon = new OGRPolygon();
 
 /* -------------------------------------------------------------------- */
 /*      The next character should be a ( indicating the start of the    */
@@ -183,9 +186,9 @@ OGRErr OGRMultiPolygon::importFromWkt( char ** ppszInput )
             }
         
 /* -------------------------------------------------------------------- */
-/*      Create the new line, and add to collection.			*/
+/*      Create the new line, and add to collection.                     */
 /* -------------------------------------------------------------------- */
-            OGRLinearRing	*poLine;
+            OGRLinearRing       *poLine;
 
             poLine = new OGRLinearRing();
             poLine->setPoints( nPoints, paoPoints, padfZ );

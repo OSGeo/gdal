@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2001/07/19 18:25:07  warmerda
+ * expanded tabs
+ *
  * Revision 1.6  2001/07/18 05:03:05  warmerda
  * added CPL_CVSID
  *
@@ -119,7 +122,7 @@ OGRErr OGRMultiLineString::importFromWkt( char ** ppszInput )
 {
     char        szToken[OGR_WKT_TOKEN_MAX];
     const char  *pszInput = *ppszInput;
-    OGRErr	eErr;
+    OGRErr      eErr;
 
 /* -------------------------------------------------------------------- */
 /*      Clear existing rings.                                           */
@@ -168,9 +171,9 @@ OGRErr OGRMultiLineString::importFromWkt( char ** ppszInput )
         }
         
 /* -------------------------------------------------------------------- */
-/*      Create the new line, and add to collection.			*/
+/*      Create the new line, and add to collection.                     */
 /* -------------------------------------------------------------------- */
-        OGRLineString	*poLine;
+        OGRLineString   *poLine;
 
         poLine = new OGRLineString();
         poLine->setPoints( nPoints, paoPoints, padfZ );

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.32  2001/07/19 18:25:07  warmerda
+ * expanded tabs
+ *
  * Revision 1.31  2001/07/18 05:03:05  warmerda
  * added CPL_CVSID
  *
@@ -1613,7 +1616,7 @@ OGRErr OSRSetLocalCS( OGRSpatialReferenceH hSRS, const char * pszName )
 OGRErr OGRSpatialReference::SetProjCS( const char * pszName )
 
 {
-    OGR_SRSNode	*poGeogCS = NULL;
+    OGR_SRSNode *poGeogCS = NULL;
     OGR_SRSNode *poProjCS = GetAttrNode( "PROJCS" );
 
     if( poRoot != NULL && EQUAL(poRoot->GetValue(),"GEOGCS") )
@@ -1656,7 +1659,7 @@ OGRErr OSRSetProjCS( OGRSpatialReferenceH hSRS, const char * pszName )
 OGRErr OGRSpatialReference::SetProjection( const char * pszProjection )
 
 {
-    OGR_SRSNode	*poGeogCS = NULL;
+    OGR_SRSNode *poGeogCS = NULL;
     OGRErr eErr;
 
     if( poRoot != NULL && EQUAL(poRoot->GetValue(),"GEOGCS") )

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2001/07/19 18:25:07  warmerda
+ * expanded tabs
+ *
  * Revision 1.6  2001/07/18 05:03:05  warmerda
  * added CPL_CVSID
  *
@@ -198,7 +201,7 @@ OGRErr OGRSpatialReference::importFromESRI( char **papszPrj )
         || EQUALN(papszPrj[0],"PROJCS",6)
         || EQUALN(papszPrj[0],"LOCAL_CS",8) )
     {
-        char	*pszWKT;
+        char    *pszWKT;
 
         pszWKT = papszPrj[0];
         return importFromWkt( &pszWKT );

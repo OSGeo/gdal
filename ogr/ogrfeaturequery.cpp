@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2001/07/19 18:25:07  warmerda
+ * expanded tabs
+ *
  * Revision 1.2  2001/07/18 05:03:05  warmerda
  * added CPL_CVSID
  *
@@ -86,9 +89,9 @@ OGRErr OGRFeatureQuery::Compile( OGRFeatureDefn *poDefn,
 /* -------------------------------------------------------------------- */
 /*      Build list of fields.                                           */
 /* -------------------------------------------------------------------- */
-    char	**papszFieldNames;
+    char        **papszFieldNames;
     swq_field_type *paeFieldTypes;
-    int		iField;
+    int         iField;
 
     papszFieldNames = (char **) 
         CPLMalloc(sizeof(char *) * poDefn->GetFieldCount() );
@@ -97,7 +100,7 @@ OGRErr OGRFeatureQuery::Compile( OGRFeatureDefn *poDefn,
 
     for( iField = 0; iField < poDefn->GetFieldCount(); iField++ )
     {
-        OGRFieldDefn	*poField = poDefn->GetFieldDefn( iField );
+        OGRFieldDefn    *poField = poDefn->GetFieldDefn( iField );
 
         papszFieldNames[iField] = (char *) poField->GetNameRef();
 
@@ -124,8 +127,8 @@ OGRErr OGRFeatureQuery::Compile( OGRFeatureDefn *poDefn,
 /* -------------------------------------------------------------------- */
 /*      Try to parse.                                                   */
 /* -------------------------------------------------------------------- */
-    const char	*pszError;
-    OGRErr	eErr = OGRERR_NONE;
+    const char  *pszError;
+    OGRErr      eErr = OGRERR_NONE;
 
     poTargetDefn = poDefn;
     pszError = swq_expr_compile( pszExpression, poDefn->GetFieldCount(),
@@ -152,7 +155,7 @@ OGRErr OGRFeatureQuery::Compile( OGRFeatureDefn *poDefn,
 static int OGRFeatureQueryEvaluator( swq_field_op *op, OGRFeature *poFeature )
 
 {
-    OGRField	*psField = poFeature->GetRawFieldRef( op->field_index );
+    OGRField    *psField = poFeature->GetRawFieldRef( op->field_index );
 
     switch( op->field_type )
     {

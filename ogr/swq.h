@@ -18,6 +18,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2001/07/19 18:25:07  warmerda
+ * expanded tabs
+ *
  * Revision 1.1  2001/06/19 15:46:30  warmerda
  * New
  *
@@ -55,11 +58,11 @@ typedef struct {
     struct swq_node_s  *second_sub_expr;
 
     /* only for binary field operations */
-    int 	field_index;
+    int         field_index;
     swq_field_type field_type;
-    char	*string_value;
-    int		int_value;
-    double	float_value;
+    char        *string_value;
+    int         int_value;
+    double      float_value;
 } swq_field_op;
 
 typedef swq_field_op swq_expr;

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2001/07/19 18:25:07  warmerda
+ * expanded tabs
+ *
  * Revision 1.19  2001/07/18 05:03:05  warmerda
  * added CPL_CVSID
  *
@@ -772,7 +775,7 @@ OGRErr OGRLineString::importFromWkt( char ** ppszInput )
         return OGRERR_CORRUPT_DATA;
 
 /* -------------------------------------------------------------------- */
-/*      Read the point list.						*/
+/*      Read the point list.                                            */
 /* -------------------------------------------------------------------- */
     int                 nMaxPoint = 0;
 

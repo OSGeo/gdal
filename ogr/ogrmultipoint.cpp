@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2001/07/19 18:25:07  warmerda
+ * expanded tabs
+ *
  * Revision 1.6  2001/07/18 05:03:05  warmerda
  * added CPL_CVSID
  *
@@ -133,7 +136,7 @@ OGRErr OGRMultiPoint::exportToWkt( char ** ppszReturn )
 
     for( int i = 0; i < getNumGeometries(); i++ )
     {
-        OGRPoint	*poPoint = (OGRPoint *) getGeometryRef( i );
+        OGRPoint        *poPoint = (OGRPoint *) getGeometryRef( i );
 
         assert( nMaxString > (int) strlen(*ppszReturn+nRetLen) + 32 + nRetLen);
         
@@ -170,7 +173,7 @@ OGRErr OGRMultiPoint::importFromWkt( char ** ppszInput )
     char        szToken[OGR_WKT_TOKEN_MAX];
     const char  *pszInput = *ppszInput;
     int         iGeom;
-    OGRErr	eErr = OGRERR_NONE;
+    OGRErr      eErr = OGRERR_NONE;
 
 /* -------------------------------------------------------------------- */
 /*      Clear existing Geoms.                                           */
@@ -190,9 +193,9 @@ OGRErr OGRMultiPoint::importFromWkt( char ** ppszInput )
 /*      Read the point list which should consist of exactly one point.  */
 /* -------------------------------------------------------------------- */
     int                 nMaxPoint = 0;
-    int			nPointCount = 0;
-    OGRRawPoint		*paoPoints = NULL;
-    double		*padfZ = NULL;
+    int                 nPointCount = 0;
+    OGRRawPoint         *paoPoints = NULL;
+    double              *padfZ = NULL;
 
     pszInput = OGRWktReadPoints( pszInput, &paoPoints, &padfZ, &nMaxPoint,
                                  &nPointCount );
@@ -204,7 +207,7 @@ OGRErr OGRMultiPoint::importFromWkt( char ** ppszInput )
 /* -------------------------------------------------------------------- */
     for( iGeom = 0; iGeom < nPointCount && eErr == OGRERR_NONE; iGeom++ )
     {
-        OGRGeometry	*poGeom;
+        OGRGeometry     *poGeom;
         if( padfZ )
             poGeom = new OGRPoint( paoPoints[iGeom].x, 
                                    paoPoints[iGeom].y, 

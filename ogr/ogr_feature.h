@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2001/07/19 18:25:07  warmerda
+ * expanded tabs
+ *
  * Revision 1.19  2001/06/19 15:48:36  warmerda
  * added feature attribute query support
  *
@@ -399,14 +402,14 @@ class CPL_DLL OGRFeatureQuery
 {
   private:
     OGRFeatureDefn *poTargetDefn;
-    void	   *pSWQExpr;
+    void           *pSWQExpr;
     
   public:
                 OGRFeatureQuery();
                 ~OGRFeatureQuery();
 
-    OGRErr	Compile( OGRFeatureDefn *, const char * );
-    int		Evaluate( OGRFeature * );
+    OGRErr      Compile( OGRFeatureDefn *, const char * );
+    int         Evaluate( OGRFeature * );
 };
 
 #endif /* ndef _OGR_FEATURE_H_INCLUDED */
