@@ -26,6 +26,9 @@
  * serves as an early test harnass.
  *
  * $Log$
+ * Revision 1.18  2001/07/05 13:12:40  warmerda
+ * added UnitType support
+ *
  * Revision 1.17  2001/06/28 19:40:12  warmerda
  * added subdatset reporting
  *
@@ -297,6 +300,11 @@ int main( int argc, char ** argv )
         if( GDALHasArbitraryOverviews( hBand ) )
         {
             printf( "  Overviews: arbitrary\n" );
+        }
+
+        if( strlen(GDALGetRasterUnitType(hBand)) > 0 )
+        {
+            printf( "  Unit Type: %s\n", GDALGetRasterUnitType(hBand) );
         }
 
         papszMetadata = GDALGetMetadata( hBand, NULL );

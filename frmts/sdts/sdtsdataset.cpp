@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2001/07/05 13:12:40  warmerda
+ * added UnitType support
+ *
  * Revision 1.6  2001/01/19 21:20:29  warmerda
  * expanded tabs
  *
@@ -102,6 +105,7 @@ class SDTSRasterBand : public GDALRasterBand
     virtual CPLErr IReadBlock( int, int, void * );
 
     virtual double GetNoDataValue( int *pbSuccess );
+    virtual const char *GetUnitType();
 };
 
 
@@ -326,6 +330,21 @@ double SDTSRasterBand::GetNoDataValue( int *pbSuccess )
         *pbSuccess = TRUE;
     
     return -32766.0;
+}
+
+/************************************************************************/
+/*                            GetUnitType()                             */
+/************************************************************************/
+
+const char *SDTSRasterBand::GetUnitType()
+
+{
+    if( EQUAL(poRL->szUNITS,"FEET") )
+        return "ft";
+    else if( EQUALN(poRL->szUNITS,"MET",3) )
+        return "m";
+    else
+        return poRL->szUNITS;
 }
 
 /************************************************************************/
