@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.36  2002/09/04 06:52:05  warmerda
+ * added unload driver support to GDALDriver
+ *
  * Revision 1.35  2002/07/09 20:33:12  warmerda
  * expand tabs
  *
@@ -550,6 +553,10 @@ class CPL_DLL GDALDriver : public GDALMajorObject
                                            int, char **,
                                            GDALProgressFunc pfnProgress, 
                                            void * pProgressData );
+
+    void                *pDriverData;
+
+    void                (*pfnUnloadDriver)(GDALDriver *);
 };
 
 /* ******************************************************************** */
