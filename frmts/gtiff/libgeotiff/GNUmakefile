@@ -13,7 +13,6 @@ OBJ	= \
 	geo_tiffp.o \
 	geo_write.o \
 	geo_normalize.o \
-	cpl_csv.o \
 	geotiff_proj4.o \
 	geo_extra.o \
 	geo_trans.o
