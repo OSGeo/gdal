@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2003/08/12 14:57:41  warmerda
+ * dont use CPLReadLine to preread the first line
+ *
  * Revision 1.17  2002/10/07 19:31:47  warmerda
  * Flush CPLReadLine() internal buffer.
  *
@@ -208,12 +211,12 @@ GDALDataset *DOQ2Dataset::Open( GDALOpenInfo * poOpenInfo )
     double      dfXDim=0.0, dfYDim=0.0;
     char	**papszMetadata = NULL;
 
-    pszLine = CPLReadLine( poOpenInfo->fp );
-    if(! EQUALN(pszLine,"BEGIN_USGS_DOQ_HEADER", 21) )
-    {
-        CPLReadLine( NULL );
+    if(! EQUALN((const char *) poOpenInfo->pabyHeader,
+                "BEGIN_USGS_DOQ_HEADER", 21) )
         return NULL;
-    }
+
+    /* read and discard the first line */
+    pszLine = CPLReadLine( poOpenInfo->fp );
 
     while( (pszLine = CPLReadLine( poOpenInfo->fp )) )
     {
