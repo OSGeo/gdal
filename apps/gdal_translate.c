@@ -28,6 +28,9 @@
  * ****************************************************************************
  *
  * $Log$
+ * Revision 1.26  2002/06/12 21:07:55  warmerda
+ * test create and createcopy capability
+ *
  * Revision 1.25  2002/04/16 17:17:18  warmerda
  * Ensure variables initialized.
  *
@@ -133,12 +136,19 @@ static void Usage()
             "       src_dataset dst_dataset\n\n" );
 
     printf( "%s\n\n", GDALVersionInfo( "--version" ) );
-    printf( "The following format drivers are configured:\n" );
+    printf( "The following format drivers are configured and support output:\n" );
     for( iDr = 0; iDr < GDALGetDriverCount(); iDr++ )
     {
-        printf( "  %s: %s\n",
-                GDALGetDriverShortName( GDALGetDriver(iDr) ),
-                GDALGetDriverLongName( GDALGetDriver(iDr) ) );
+        GDALDriverH hDriver = GDALGetDriver(iDr);
+        
+        if( GDALGetMetadataItem( hDriver, GDAL_DCAP_CREATE, NULL ) != NULL
+            || GDALGetMetadataItem( hDriver, GDAL_DCAP_CREATECOPY,
+                                    NULL ) != NULL )
+        {
+            printf( "  %s: %s\n",
+                    GDALGetDriverShortName( hDriver ),
+                    GDALGetDriverLongName( hDriver ) );
+        }
     }
 }
 
@@ -338,12 +348,19 @@ int main( int argc, char ** argv )
         int	iDr;
         
         printf( "Output driver `%s' not recognised.\n", pszFormat );
-        printf( "The following format drivers are configured:\n" );
+        printf( "The following format drivers are configured and support output:\n" );
         for( iDr = 0; iDr < GDALGetDriverCount(); iDr++ )
         {
-            printf( "  %s: %s\n",
-                    GDALGetDriverShortName( GDALGetDriver(iDr) ),
-                    GDALGetDriverLongName( GDALGetDriver(iDr) ) );
+            GDALDriverH hDriver = GDALGetDriver(iDr);
+
+            if( GDALGetMetadataItem( hDriver, GDAL_DCAP_CREATE, NULL ) != NULL
+              || GDALGetMetadataItem( hDriver, GDAL_DCAP_CREATECOPY,
+                                      NULL ) != NULL )
+            {
+                printf( "  %s: %s\n",
+                        GDALGetDriverShortName( hDriver  ),
+                        GDALGetDriverLongName( hDriver ) );
+            }
         }
         printf( "\n" );
         Usage();
@@ -379,12 +396,6 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
 /*      Establish some parameters.                                      */
 /* -------------------------------------------------------------------- */
-    if( eOutputType == GDT_Unknown )
-    {
-        hBand = GDALGetRasterBand( hDataset, panBandList[0] );
-        eOutputType = GDALGetRasterDataType(hBand);
-    }
-
     if( pszOXSize == NULL )
     {
         nOXSize = anSrcWin[2];
