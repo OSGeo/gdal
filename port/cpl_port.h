@@ -1,4 +1,25 @@
 /******************************************************************************
+ * $Id$
+ *
+ * Project:  CPL - Common Portability Library
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
+ * Purpose:  
+ * Include file providing low level portability services for CPL.  This
+ * should be the first include file for any CPL based code.  It provides the
+ * following:
+ *
+ * o Includes some standard system include files, such as stdio, and stdlib.
+ *
+ * o Defines CPL_C_START, CPL_C_END macros.
+ *
+ * o Ensures that some other standard macros like NULL are defined.
+ *
+ * o Defines some portability stuff like CPL_MSB, or CPL_LSB.
+ *
+ * o Ensures that core types such as GBool, GInt32, GInt16, GUInt32, 
+ *   GUInt16, and GByte are defined.
+ *
+ ******************************************************************************
  * Copyright (c) 1998, Frank Warmerdam
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -20,24 +41,10 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************
  *
- * cpl_port.h
- *
- * Include file providing low level portability services for CPL.  This
- * should be the first include file for any CPL based code.  It provides the
- * following:
- *
- * o Includes some standard system include files, such as stdio, and stdlib.
- *
- * o Defines CPL_C_START, CPL_C_END macros.
- *
- * o Ensures that some other standard macros like NULL are defined.
- *
- * o Defines some portability stuff like CPL_MSB, or CPL_LSB.
- *
- * o Ensures that core types such as GBool, GInt32, GInt16, GUInt32, 
- *   GUInt16, and GByte are defined.
- *
  * $Log$
+ * Revision 1.25  2001/04/30 18:18:38  warmerda
+ * added macos support, standard header
+ *
  * Revision 1.24  2001/01/19 21:16:41  warmerda
  * expanded tabs
  *
@@ -58,58 +65,6 @@
  *
  * Revision 1.18  2000/07/20 13:15:03  warmerda
  * don't redeclare CPL_DLL
- *
- * Revision 1.17  2000/07/06 20:30:03  warmerda
- * Removed extra NULL definition.
- *
- * Revision 1.16  2000/04/26 18:25:10  warmerda
- * implement CPL_DLL
- *
- * Revision 1.15  2000/01/29 22:31:02  warmerda
- * Define WIN32 if _WINDOWS is defined.
- *
- * Revision 1.14  1999/09/21 13:39:54  warmerda
- * Added some more swapping macros.
- *
- * Revision 1.13  1999/05/20 02:54:38  warmerda
- * Added API documentation
- *
- * Revision 1.12  1999/05/14 20:35:03  warmerda
- * added some more swapping macros
- *
- * Revision 1.11  1999/05/13 19:19:06  warmerda
- * Only use dbmalloc if DEBUG is set.
- *
- * Revision 1.10  1999/03/02 21:08:11  warmerda
- * autoconf switch
- *
- * Revision 1.9  1999/02/17 01:41:17  warmerda
- * Added NULL.
- *
- * Revision 1.8  1999/02/02 21:32:38  warmerda
- * Added CPL_{MSB,LSB}WORD{16,32} macros.
- *
- * Revision 1.7  1999/02/02 19:02:36  warmerda
- * Removed duplicates of base types, and CPL_LSB
- *
- * Revision 1.6  1999/01/28 18:36:06  warmerda
- * Ensure WIN32 is defined on Windows.
- *
- * Revision 1.5  1999/01/28 05:26:12  danmo
- * Added byte swapping macros.
- *
- * Revision 1.4  1998/12/15 19:05:30  warmerda
- * added errno.h
- *
- * Revision 1.3  1998/12/14 04:50:07  warmerda
- * Added DBMALLOC support
- *
- * Revision 1.2  1998/12/04 21:38:40  danmo
- * Changed str*casecmp() to str*icmp() for WIN32
- *
- * Revision 1.1  1998/12/03 18:26:02  warmerda
- * New
- *
  */
 
 #ifndef CPL_BASE_H_INCLUDED
@@ -121,6 +76,14 @@
  * Core portability definitions for CPL.
  *
  */
+
+/* ==================================================================== */
+/*      We will use macos_pre10 to indicate compilation with MacOS      */
+/*      versions before MacOS X.                                        */
+/* ==================================================================== */
+#ifdef macintosh
+#  define macos_pre10
+#endif
 
 /* ==================================================================== */
 /*      We will use WIN32 as a standard windows define.                 */
@@ -256,6 +219,12 @@ typedef unsigned long    GUIntBig;
 #  define EQUALN(a,b,n)           (strncasecmp(a,b,n)==0)
 #  define EQUAL(a,b)              (strcasecmp(a,b)==0)
 #endif
+#endif
+
+#ifdef macos_pre10
+int strcasecmp(char * str1, char * str2);
+int strncasecmp(char * str1, char * str2, int len);
+char * strdup (char *instr);
 #endif
 
 /*---------------------------------------------------------------------
