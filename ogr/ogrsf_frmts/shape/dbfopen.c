@@ -1,9 +1,9 @@
 /******************************************************************************
- * $Id: dbfopen.c,v 1.41 2002/01/15 14:31:49 warmerda Exp $
+ * $Id: dbfopen.c,v 1.46 2002/10/09 13:10:21 warmerda Exp $
  *
  * Project:  Shapelib
  * Purpose:  Implementation of .dbf access API documented in dbf_api.html.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 1999, Frank Warmerdam
@@ -34,6 +34,21 @@
  ******************************************************************************
  *
  * $Log: dbfopen.c,v $
+ * Revision 1.46  2002/10/09 13:10:21  warmerda
+ * Added check that width is positive.
+ *
+ * Revision 1.45  2002/09/29 00:00:08  warmerda
+ * added FTLogical and logical attribute read/write calls
+ *
+ * Revision 1.44  2002/05/07 13:46:11  warmerda
+ * Added DBFWriteAttributeDirectly().
+ *
+ * Revision 1.43  2002/02/13 19:39:21  warmerda
+ * Fix casting issues in DBFCloneEmpty().
+ *
+ * Revision 1.42  2002/01/15 14:36:07  warmerda
+ * updated email address
+ *
  * Revision 1.41  2002/01/15 14:31:49  warmerda
  * compute rather than copying nHeaderLength in DBFCloneEmpty()
  *
@@ -162,7 +177,7 @@
  */
 
 static char rcsid[] = 
-  "$Id: dbfopen.c,v 1.41 2002/01/15 14:31:49 warmerda Exp $";
+  "$Id: dbfopen.c,v 1.46 2002/10/09 13:10:21 warmerda Exp $";
 
 #include "shapefil.h"
 
@@ -580,6 +595,9 @@ DBFAddField(DBFHandle psDBF, const char * pszFieldName,
     if( eType != FTDouble && nDecimals != 0 )
         return( -1 );
 
+    if( nWidth < 1 )
+        return -1;
+
 /* -------------------------------------------------------------------- */
 /*      SfRealloc all the arrays larger to hold the additional field      */
 /*      information.                                                    */
@@ -606,7 +624,9 @@ DBFAddField(DBFHandle psDBF, const char * pszFieldName,
     psDBF->panFieldSize[psDBF->nFields-1] = nWidth;
     psDBF->panFieldDecimals[psDBF->nFields-1] = nDecimals;
 
-    if( eType == FTString )
+    if( eType == FTLogical )
+        psDBF->pachFieldType[psDBF->nFields-1] = 'L';
+    else if( eType == FTString )
         psDBF->pachFieldType[psDBF->nFields-1] = 'C';
     else
         psDBF->pachFieldType[psDBF->nFields-1] = 'N';
@@ -812,6 +832,19 @@ DBFReadStringAttribute( DBFHandle psDBF, int iRecord, int iField )
 }
 
 /************************************************************************/
+/*                        DBFReadLogicalAttribute()                     */
+/*                                                                      */
+/*      Read a logical attribute.                                       */
+/************************************************************************/
+
+const char SHPAPI_CALL1(*)
+DBFReadLogicalAttribute( DBFHandle psDBF, int iRecord, int iField )
+
+{
+    return( (const char *) DBFReadAttribute( psDBF, iRecord, iField, 'L' ) );
+}
+
+/************************************************************************/
 /*                         DBFIsAttributeNULL()                         */
 /*                                                                      */
 /*      Return TRUE if value for field is NULL.                         */
@@ -904,9 +937,12 @@ DBFGetFieldInfo( DBFHandle psDBF, int iField, char * pszFieldName,
 	    pszFieldName[i] = '\0';
     }
 
-    if( psDBF->pachFieldType[iField] == 'N' 
-        || psDBF->pachFieldType[iField] == 'F'
-        || psDBF->pachFieldType[iField] == 'D' )
+    if ( psDBF->pachFieldType[iField] == 'L' )
+	return( FTLogical);
+
+    else if( psDBF->pachFieldType[iField] == 'N' 
+             || psDBF->pachFieldType[iField] == 'F'
+             || psDBF->pachFieldType[iField] == 'D' )
     {
 	if( psDBF->panFieldDecimals[iField] > 0 )
 	    return( FTDouble );
@@ -1054,6 +1090,12 @@ static int DBFWriteAttribute(DBFHandle psDBF, int hEntity, int iField,
 	}
 	break;
 
+      case 'L':
+        if (psDBF->panFieldSize[iField] >= 1  && 
+            (*(char*)pValue == 'F' || *(char*)pValue == 'T'))
+            *(pabyRec+psDBF->panFieldOffset[iField]) = *(char*)pValue;
+        break;
+
       default:
 	if( (int) strlen((char *) pValue) > psDBF->panFieldSize[iField] )
 	    j = psDBF->panFieldSize[iField];
@@ -1068,6 +1110,83 @@ static int DBFWriteAttribute(DBFHandle psDBF, int hEntity, int iField,
 		(char *) pValue, j );
 	break;
     }
+
+    return( TRUE );
+}
+
+/************************************************************************/
+/*                     DBFWriteAttributeDirectly()                      */
+/*                                                                      */
+/*      Write an attribute record to the file, but without any          */
+/*      reformatting based on type.  The provided buffer is written     */
+/*      as is to the field position in the record.                      */
+/************************************************************************/
+
+int DBFWriteAttributeDirectly(DBFHandle psDBF, int hEntity, int iField,
+                              void * pValue )
+
+{
+    int	       	nRecordOffset, i, j;
+    unsigned char	*pabyRec;
+
+/* -------------------------------------------------------------------- */
+/*	Is this a valid record?						*/
+/* -------------------------------------------------------------------- */
+    if( hEntity < 0 || hEntity > psDBF->nRecords )
+        return( FALSE );
+
+    if( psDBF->bNoHeader )
+        DBFWriteHeader(psDBF);
+
+/* -------------------------------------------------------------------- */
+/*      Is this a brand new record?                                     */
+/* -------------------------------------------------------------------- */
+    if( hEntity == psDBF->nRecords )
+    {
+	DBFFlushRecord( psDBF );
+
+	psDBF->nRecords++;
+	for( i = 0; i < psDBF->nRecordLength; i++ )
+	    psDBF->pszCurrentRecord[i] = ' ';
+
+	psDBF->nCurrentRecord = hEntity;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Is this an existing record, but different than the last one     */
+/*      we accessed?                                                    */
+/* -------------------------------------------------------------------- */
+    if( psDBF->nCurrentRecord != hEntity )
+    {
+	DBFFlushRecord( psDBF );
+
+	nRecordOffset = psDBF->nRecordLength * hEntity + psDBF->nHeaderLength;
+
+	fseek( psDBF->fp, nRecordOffset, 0 );
+	fread( psDBF->pszCurrentRecord, psDBF->nRecordLength, 1, psDBF->fp );
+
+	psDBF->nCurrentRecord = hEntity;
+    }
+
+    pabyRec = (unsigned char *) psDBF->pszCurrentRecord;
+
+/* -------------------------------------------------------------------- */
+/*      Assign all the record fields.                                   */
+/* -------------------------------------------------------------------- */
+    if( (int)strlen((char *) pValue) > psDBF->panFieldSize[iField] )
+        j = psDBF->panFieldSize[iField];
+    else
+    {
+        memset( pabyRec+psDBF->panFieldOffset[iField], ' ',
+                psDBF->panFieldSize[iField] );
+        j = strlen((char *) pValue);
+    }
+
+    strncpy((char *) (pabyRec+psDBF->panFieldOffset[iField]),
+            (char *) pValue, j );
+
+    psDBF->bCurrentRecordModified = TRUE;
+    psDBF->bUpdated = TRUE;
 
     return( TRUE );
 }
@@ -1127,6 +1246,20 @@ DBFWriteNULLAttribute( DBFHandle psDBF, int iRecord, int iField )
 
 {
     return( DBFWriteAttribute( psDBF, iRecord, iField, NULL ) );
+}
+
+/************************************************************************/
+/*                      DBFWriteLogicalAttribute()                      */
+/*                                                                      */
+/*      Write a logical attribute.                                      */
+/************************************************************************/
+
+int SHPAPI_CALL
+DBFWriteLogicalAttribute( DBFHandle psDBF, int iRecord, int iField,
+		       const char lValue)
+
+{
+    return( DBFWriteAttribute( psDBF, iRecord, iField, (void *) (&lValue) ) );
 }
 
 /************************************************************************/
@@ -1251,20 +1384,20 @@ DBFCloneEmpty(DBFHandle psDBF, const char * pszFilename )
    newDBF = DBFCreate ( pszFilename );
    if ( newDBF == NULL ) return ( NULL ); 
    
-   newDBF->pszHeader = (void *) malloc ( 32 * psDBF->nFields );
+   newDBF->pszHeader = (char *) malloc ( 32 * psDBF->nFields );
    memcpy ( newDBF->pszHeader, psDBF->pszHeader, 32 * psDBF->nFields );
    
    newDBF->nFields = psDBF->nFields;
    newDBF->nRecordLength = psDBF->nRecordLength;
    newDBF->nHeaderLength = 32 * (psDBF->nFields+1);
     
-   newDBF->panFieldOffset = (void *) malloc ( sizeof(int) * psDBF->nFields ); 
+   newDBF->panFieldOffset = (int *) malloc ( sizeof(int) * psDBF->nFields ); 
    memcpy ( newDBF->panFieldOffset, psDBF->panFieldOffset, sizeof(int) * psDBF->nFields );
-   newDBF->panFieldSize = (void *) malloc ( sizeof(int) * psDBF->nFields );
+   newDBF->panFieldSize = (int *) malloc ( sizeof(int) * psDBF->nFields );
    memcpy ( newDBF->panFieldSize, psDBF->panFieldSize, sizeof(int) * psDBF->nFields );
-   newDBF->panFieldDecimals = (void *) malloc ( sizeof(int) * psDBF->nFields );
+   newDBF->panFieldDecimals = (int *) malloc ( sizeof(int) * psDBF->nFields );
    memcpy ( newDBF->panFieldDecimals, psDBF->panFieldDecimals, sizeof(int) * psDBF->nFields );
-   newDBF->pachFieldType = (void *) malloc ( sizeof(int) * psDBF->nFields );
+   newDBF->pachFieldType = (char *) malloc ( sizeof(int) * psDBF->nFields );
    memcpy ( newDBF->pachFieldType, psDBF->pachFieldType, sizeof(int) * psDBF->nFields );
 
    newDBF->bNoHeader = TRUE;
