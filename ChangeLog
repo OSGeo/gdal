@@ -1,3 +1,7 @@
+2001-09-28  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* frmts/png/pngdataset.cpp: fixed crash with colormapped png files.
+
 2001-09-27  Frank Warmerdam  <warmerdam@pobox.com>
 
 	* frmts/gtiff/geotiff.cpp: fixed bug 63 (writing geotiff files 
