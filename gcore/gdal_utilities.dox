@@ -372,7 +372,9 @@ be recomputed and rewritten in place.
 
 Some format drivers do not support overviews at all.  Many format drivers
 store overviews in a secondary file with the extension .ovr.  The GeoTIFF
-driver stores overviews internally to the file operated on.<p>
+driver stores overviews internally to the file operated on. That file may
+be compressed. It is controlled via the COMPRESS_OVERVIEW system option.
+All compression methods, supported by the GeoTIFF driver, available here.<p>
 
 \if man
 \section aexample EXAMPLE
@@ -382,8 +384,16 @@ driver stores overviews internally to the file operated on.<p>
 Example:
 \endhtmlonly
 
+Create overviews, embedded in the supplied TIFF file:
+
 \verbatim
 gdaladdo -r average abc.tif 2 4 8 16
+\endverbatim
+
+Create an external compressed GeoTIFF overview file from the ERDAS .IMG file:
+
+\verbatim
+gdaladdo --config COMPRESS_OVERVIEW DEFLATE erdas.img 2 4 8 16
 \endverbatim
 
 <!-- ====================================================================== -->
