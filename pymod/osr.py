@@ -28,6 +28,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.2  2000/07/09 20:56:38  warmerda
+# added exportToPrettyWkt
+#
 # Revision 1.1  2000/03/22 01:10:49  warmerda
 # New
 #
@@ -53,6 +56,9 @@ class SpatialReference:
 
     def ExportToWkt(self):
         return _gdal.OSRExportToWkt( self._o )
+
+    def ExportToPrettyWkt(self,simplify=0):
+        return _gdal.OSRExportToPrettyWkt( self._o, simplify )
 
     def ImportFromEPSG(self,code):
         return _gdal.OSRImportFromEPSG( self._o, code )
@@ -104,5 +110,4 @@ class CoordinateTransformation:
         return points_ret[0]
 
     def TransformPoints(self, points):
-        print points
         return _gdal.OCTTransform(self._o, points)

@@ -33,8 +33,8 @@
  * and things like that.
  *
  * $Log$
- * Revision 1.12  2000/06/27 16:48:57  warmerda
- * added progress func support
+ * Revision 1.13  2000/07/09 20:56:38  warmerda
+ * added exportToPrettyWkt
  *
  ************************************************************************/
 
@@ -1096,6 +1096,7 @@ py_OSRExportToWkt(PyObject *self, PyObject *args) {
     char *_argc0 = NULL;
     char *wkt = NULL;
     OGRErr err;
+    PyObject *ret;
 
     self = self;
     if(!PyArg_ParseTuple(args,"s:OSRExportToWkt",&_argc0) )
@@ -1114,7 +1115,44 @@ py_OSRExportToWkt(PyObject *self, PyObject *args) {
     if( wkt == NULL )
 	wkt = "";
 
-    return Py_BuildValue( "s", wkt );
+    ret = Py_BuildValue( "s", wkt );
+    OGRFree( wkt );
+    return ret;
+}
+
+/************************************************************************/
+/*                        OSRExportToPrettyWkt()                        */
+/************************************************************************/
+static PyObject *
+py_OSRExportToPrettyWkt(PyObject *self, PyObject *args) {
+
+    OGRSpatialReferenceH _arg0;
+    char *_argc0 = NULL;
+    char *wkt = NULL;
+    int  bSimplify = FALSE;
+    OGRErr err;
+    PyObject *ret;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"s|i:OSRExportToPrettyWkt",&_argc0, &bSimplify) )
+        return NULL;
+
+    if (_argc0) {
+        if (SWIG_GetPtr(_argc0,(void **) &_arg0,"_OGRSpatialReferenceH" )) {
+            PyErr_SetString(PyExc_TypeError,
+                            "Type error in argument 1 of OSRExportToWkt."
+                            "  Expected _OGRSpatialReferenceH.");
+            return NULL;
+        }
+    }
+	
+    err = OSRExportToPrettyWkt( _arg0, &wkt, bSimplify );
+    if( wkt == NULL )
+	wkt = "";
+
+    ret = Py_BuildValue( "s", wkt );
+    OGRFree( wkt );
+    return ret;
 }
 
 /************************************************************************/
@@ -3154,6 +3192,7 @@ static PyMethodDef _gdalMethods[] = {
 	 { "OCTTransform", py_OCTTransform, 1 },
 	 { "OCTDestroyCoordinateTransformation", _wrap_OCTDestroyCoordinateTransformation, 1 },
 	 { "OCTNewCoordinateTransformation", _wrap_OCTNewCoordinateTransformation, 1 },
+	 { "OSRExportToPrettyWkt", py_OSRExportToPrettyWkt, 1 },
 	 { "OSRExportToWkt", py_OSRExportToWkt, 1 },
 	 { "OSRImportFromWkt", py_OSRImportFromWkt, 1 },
 	 { "OSRGetUTMZone", _wrap_OSRGetUTMZone, 1 },
