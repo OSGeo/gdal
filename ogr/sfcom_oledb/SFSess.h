@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.28  2002/09/04 14:13:07  warmerda
+ * added SetRestriction() method on SFSess to fix restriction support
+ *
  * Revision 1.27  2002/08/29 18:56:08  warmerda
  * moved a bunch of stuff into SFSess.cpp
  *
@@ -187,6 +190,53 @@ public:
 		CSFRowset* pRowset;
 		return CreateRowset(pUnk, pTID, pInID, riid, cSets, rgSets, ppRowset, pRowset);
 	}
+
+	void SetRestrictions(ULONG cRestrictions, GUID* rguidSchema, ULONG* rgRestrictions)
+	{
+            memset(rgRestrictions, 0, sizeof(ULONG) * cRestrictions);
+            
+            if( InlineIsEqualGUID(*rguidSchema, DBSCHEMA_TABLES) )
+            {
+                CPLDebug( "OGR_OLEDB", "SetRestrictions() called on DBSCHEMA_TABLES" );
+
+                // We support only the 3rd restrictions.
+                rgRestrictions[0] = 0x00000004;
+            }
+            else if( InlineIsEqualGUID(*rguidSchema, DBSCHEMA_COLUMNS) )
+            {
+                CPLDebug( "OGR_OLEDB", "SetRestrictions() called on DBSCHEMA_COlUMNS" );
+
+                // We support only the 3rd and 4th restrictions.
+                rgRestrictions[0] = 0x0000000c;
+            }
+            else if( InlineIsEqualGUID(*rguidSchema,
+                                       DBSCHEMA_OGIS_FEATURE_TABLES) )
+            {
+                CPLDebug( "OGR_OLEDB",
+                          "SetRestrictions() called on DBSCHEMA_OGIS_FEATURE_TABLES" );
+
+                // We support only the 4th restriction.
+                rgRestrictions[0] = 0x00000008;
+            }
+            else if( InlineIsEqualGUID(*rguidSchema,
+            {
+                CPLDebug( "OGR_OLEDB",
+                          "SetRestrictions() called on DBSCHEMA_OGIS_GEOMETRY_COLUMNS" );
+
+                // We support only the 3rd and 4th restrictions.
+                rgRestrictions[0] = 0x0000000c;
+            }
+            else if( InlineIsEqualGUID(*rguidSchema,
+                                       DBSCHEMA_OGIS_SPATIAL_REF_SYSTEMS) )
+            {
+                CPLDebug( "OGR_OLEDB",
+                          "SetRestrictions() called on DBSCHEMA_OGIS_GEOMETRY_COLUMNS" );
+
+                // We support only the 1st restriction.
+                rgRestrictions[0] = 0x00000001;
+            }
+	}
+
 BEGIN_PROPSET_MAP(CSFSession)
 	BEGIN_PROPERTY_SET(DBPROPSET_SESSION)
 		PROPERTY_INFO_ENTRY(SESS_AUTOCOMMITISOLEVELS)
@@ -300,8 +350,8 @@ class CSFSessionColSchemaRowset :
         const char      *pszColumnRestriction = NULL;
 
         CPLDebug( "OGR_OLEDB",
-                  "CSFSessionColSchemaRowset::Execute(%p).",
-                  pcRowsAffected );
+                  "CSFSessionColSchemaRowset::Execute(%p), cRestrictions=%d.",
+                  pcRowsAffected, cRestrictions );
 
         if( cRestrictions >= 3
             && rgRestrictions[2].vt == VT_BSTR )
