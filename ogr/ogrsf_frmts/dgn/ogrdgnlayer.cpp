@@ -3,10 +3,10 @@
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Implements OGRDGNLayer class.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
- * Copyright (c) 2000, Frank Warmerdam (warmerda@home.com)
+ * Copyright (c) 2000, Frank Warmerdam (warmerdam@pobox.com)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2000/12/28 21:29:17  warmerda
+ * use stype field
+ *
  * Revision 1.1  2000/11/28 19:03:47  warmerda
  * New
  *
@@ -123,13 +126,9 @@ OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement )
     poFeature->SetField( "Type", psElement->type );
     poFeature->SetField( "Level", psElement->level );
 
-    switch( psElement->type )
+    switch( psElement->stype )
     {
-      case DGNT_LINE:
-      case DGNT_LINE_STRING:
-      case DGNT_SHAPE:
-      case DGNT_CURVE:
-      case DGNT_BSPLINE:
+      case DGNST_MULTIPOINT:
       {
           OGRLineString	*poLine = new OGRLineString();
           DGNElemMultiPoint *psEMP = (DGNElemMultiPoint *) psElement;
