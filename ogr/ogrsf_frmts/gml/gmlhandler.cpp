@@ -28,6 +28,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.3  2002/01/25 20:38:49  warmerda
+ * report fatal errors, add to geometry type list
+ *
  * Revision 1.2  2002/01/24 17:37:57  warmerda
  * added geometry support, rewrite TrString use
  *
@@ -275,6 +278,14 @@ void GMLHandler::characters(const XMLCh* const chars_in,
 void GMLHandler::fatalError( const SAXParseException &exception)
 
 {
+    char *pszErrorMessage;
+
+    pszErrorMessage = tr_strdup( exception.getMessage() );
+    CPLError( CE_Failure, CPLE_AppDefined, 
+              "XML Parsing Error: %s\n", 
+              pszErrorMessage );
+
+    CPLFree( pszErrorMessage );
 }
 
 /************************************************************************/
@@ -286,6 +297,9 @@ int GMLHandler::IsGeometryElement( const char *pszElement )
 {
     return EQUAL(pszElement,"gml:Polygon") 
         || EQUAL(pszElement,"gml:MultiPolygon") 
+        || EQUAL(pszElement,"gml:MultiPoint") 
+        || EQUAL(pszElement,"gml:MultiLineString") 
+        || EQUAL(pszElement,"gml:GeometryCollection") 
         || EQUAL(pszElement,"gml:Point") 
-        || EQUAL(pszElement,"gml:LinearString");
+        || EQUAL(pszElement,"gml:LineString");
 }
