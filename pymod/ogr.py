@@ -28,6 +28,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.44  2005/02/05 18:38:42  hobu
+# Added some more docstrings
+#
 # Revision 1.43  2005/02/05 18:11:53  hobu
 # Allow the Geometry constructor to take in
 # gml, wkt, wkb, and srs as keyword argmuments.  There
@@ -510,7 +513,7 @@ class Layer:
         self._o = obj
 
     def __len__(self):
-        """Returns the number of layers on the datasource"""
+        """Returns the number of features in the layer"""
         return self.GetFeatureCount()
 
     def __getitem__(self, value):
@@ -579,9 +582,11 @@ ds[0:4] would return a list of the first four features."""
         _gdal.OGR_L_ResetReading( self._o )
 
     def GetName( self ):
+        """Returns the name of the layer"""
         return _gdal.OGR_FD_GetName( _gdal.OGR_L_GetLayerDefn( self._o ) )
     
     def GetFeature( self, fid ):
+        """Returns a feature with a given feature id (fid)"""
         f_o = _gdal.OGR_L_GetFeature( self._o, fid )
         if f_o is None or f_o == 'NULL':
             return None
@@ -591,6 +596,7 @@ ds[0:4] would return a list of the first four features."""
             return newfeat
 
     def GetNextFeature( self ):
+        """Iterator that returns the next feature in the sequence"""
         f_o = _gdal.OGR_L_GetNextFeature( self._o )
         if f_o is None or f_o == 'NULL':
             return None
@@ -612,6 +618,7 @@ ds[0:4] would return a list of the first four features."""
         return _gdal.OGR_L_DeleteFeature( self._o, fid )
 
     def SyncToDisk( self ):
+        """Flushes the layer to disk"""
         return _gdal.OGR_L_SyncToDisk( self._o )
 
     def GetLayerDefn( self ):
@@ -621,6 +628,7 @@ ds[0:4] would return a list of the first four features."""
         return _gdal.OGR_L_GetFeatureCount( self._o, force )
 
     def GetExtent( self, force = 1 ):
+        """Returns the extent of the layer as a four-tuple"""
         extents = _gdal.ptrcreate( 'double', 0.0, 4 )
         res = _gdal.OGR_L_GetExtent( self._o,
                   _gdal.ptrcast(extents,'OGREnvelope_p'), force )
