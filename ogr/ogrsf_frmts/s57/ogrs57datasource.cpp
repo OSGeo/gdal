@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.23  2003/09/15 20:52:12  warmerda
+ * added RETURN_LINKAGES
+ *
  * Revision 1.22  2003/09/12 21:06:31  warmerda
  * use SetWellKnownGeogCS() to establish WGS84 SRS
  *
@@ -265,6 +268,11 @@ int OGRS57DataSource::Open( const char * pszFilename, int bTestOpen )
         papszReaderOptions = 
             CSLSetNameValue( papszReaderOptions, S57O_RETURN_PRIMITIVES,
                              GetOption(S57O_RETURN_PRIMITIVES) );
+                                              
+    if( GetOption(S57O_RETURN_LINKAGES) != NULL )
+        papszReaderOptions = 
+            CSLSetNameValue( papszReaderOptions, S57O_RETURN_LINKAGES,
+                             GetOption(S57O_RETURN_LINKAGES) );
                                               
     poModule->SetOptions( papszReaderOptions );
     CSLDestroy( papszReaderOptions );
