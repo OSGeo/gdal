@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2004/07/20 20:53:26  warmerda
+ * added support for reading directories of CSV files
+ *
  * Revision 1.1  2004/07/20 19:18:23  warmerda
  * New
  *
@@ -47,7 +50,8 @@ CPL_CVSID("$Id$");
 OGRCSVDataSource::OGRCSVDataSource()
 
 {
-    poLayer = NULL;
+    papoLayers = NULL;
+    nLayers = 0;
 
     pszName = NULL;
 }
@@ -59,8 +63,8 @@ OGRCSVDataSource::OGRCSVDataSource()
 OGRCSVDataSource::~OGRCSVDataSource()
 
 {
-    if( poLayer != NULL )
-        delete poLayer;
+    for( int i = 0; i < nLayers; i++ )
+        delete papoLayers[i];
 
     CPLFree( pszName );
 }
@@ -69,10 +73,13 @@ OGRCSVDataSource::~OGRCSVDataSource()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRCSVDataSource::TestCapability( const char * )
+int OGRCSVDataSource::TestCapability( const char * pszCap )
 
 {
-    return FALSE;
+    if( EQUAL(pszCap,ODsCCreateLayer) )
+        return TRUE;
+    else
+        return FALSE;
 }
 
 /************************************************************************/
@@ -82,10 +89,10 @@ int OGRCSVDataSource::TestCapability( const char * )
 OGRLayer *OGRCSVDataSource::GetLayer( int iLayer )
 
 {
-    if( iLayer == 0 )
-        return poLayer;
-    else
+    if( iLayer < 0 || iLayer >= nLayers )
         return NULL;
+    else
+        return papoLayers[iLayer];
 }
 
 /************************************************************************/
@@ -96,13 +103,71 @@ int OGRCSVDataSource::Open( const char * pszFilename )
 
 {
     pszName = CPLStrdup( pszFilename );
-    
+
 /* -------------------------------------------------------------------- */
-/*      Verify that the extension is CSV.                               */
+/*      Determine what sort of object this is.                          */
 /* -------------------------------------------------------------------- */
-    if( !EQUAL(pszFilename+strlen(pszFilename)-4,".csv") )
+    VSIStatBuf sStatBuf;
+
+    if( VSIStat( pszFilename, &sStatBuf ) != 0 )
         return FALSE;
-    
+
+/* -------------------------------------------------------------------- */
+/*      Is this a single CSV file?                                      */
+/* -------------------------------------------------------------------- */
+    if( VSI_ISREG(sStatBuf.st_mode)
+        && EQUAL(pszFilename+strlen(pszFilename)-4,".csv") )
+        return OpenTable( pszFilename );
+
+/* -------------------------------------------------------------------- */
+/*      Otherwise it has to be a directory.                             */
+/* -------------------------------------------------------------------- */
+    if( !VSI_ISDIR(sStatBuf.st_mode) )
+        return FALSE;
+
+/* -------------------------------------------------------------------- */
+/*      Scan through for entries ending in .csv.                        */
+/* -------------------------------------------------------------------- */
+    int nNotCSVCount = 0, i;
+    char **papszNames = CPLReadDir( pszFilename );
+
+    for( i = 0; papszNames != NULL && papszNames[i] != NULL; i++ )
+    {
+        const char *pszSubFilename = 
+            CPLFormFilename( pszFilename, papszNames[i], NULL );
+
+        if( EQUAL(papszNames[i],".") || EQUAL(papszNames[i],"..") )
+            continue;
+
+        if( VSIStat( pszSubFilename, &sStatBuf ) != 0 
+            || !VSI_ISREG(sStatBuf.st_mode) 
+            || !EQUAL(pszSubFilename+strlen(pszSubFilename)-4,".csv") )
+        {
+            nNotCSVCount++;
+            continue;
+        }
+
+        if( !OpenTable( pszSubFilename ) )
+        {
+            nNotCSVCount++;
+            return FALSE;
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      We presume that this is indeed intended to be a CSV             */
+/*      datasource if over half the files were .csv files.              */
+/* -------------------------------------------------------------------- */
+    return nNotCSVCount < nLayers;
+}
+
+/************************************************************************/
+/*                              OpenTable()                             */
+/************************************************************************/
+
+int OGRCSVDataSource::OpenTable( const char * pszFilename )
+
+{
 /* -------------------------------------------------------------------- */
 /*      Open the file.                                                  */
 /* -------------------------------------------------------------------- */
@@ -130,7 +195,11 @@ int OGRCSVDataSource::Open( const char * pszFilename )
 /* -------------------------------------------------------------------- */
 /*      Create a layer.                                                 */
 /* -------------------------------------------------------------------- */
-    poLayer = new OGRCSVLayer( CPLGetBasename(pszFilename), fp );
+    nLayers++;
+    papoLayers = (OGRCSVLayer **) CPLRealloc(papoLayers, 
+                                             sizeof(void*) * nLayers);
+    
+    papoLayers[nLayers-1] = new OGRCSVLayer( CPLGetBasename(pszFilename), fp );
 
     return TRUE;
 }
