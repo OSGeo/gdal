@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2003/07/11 13:28:08  warmerda
+ * added low level api
+ *
  * Revision 1.3  2003/05/21 04:00:36  warmerda
  * expand tabs
  *
@@ -45,6 +48,15 @@
 #include "ogrsf_frmts.h"
 
 class OGRRECDataSource;
+
+CPL_C_START
+int CPL_DLL RECGetFieldCount( FILE *fp);
+int CPL_DLL RECGetFieldDefinition( FILE *fp, char *pszFieldName, int *pnType, 
+                                   int *pnWidth, int *pnPrecision );
+int CPL_DLL RECReadRecord( FILE *fp, char *pszRecBuf, int nRecordLength  );
+const char CPL_DLL *RECGetField( const char *pszSrc, int nStart, int nWidth );
+CPL_C_END
+
 
 /************************************************************************/
 /*                             OGRRECLayer                              */
