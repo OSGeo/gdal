@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2002/04/17 20:03:27  warmerda
+ * Try to preserve Z values on read.
+ *
  * Revision 1.17  2002/04/17 20:01:39  warmerda
  * Ensure Z coordinate preserved on read.
  *
@@ -534,28 +537,41 @@ OGRFeatureDefn *SHPReadOGRFeatureDefn( const char * pszName,
         switch( hSHP->nShapeType )
         {
           case SHPT_POINT:
-          case SHPT_POINTZ:
           case SHPT_POINTM:
             poDefn->SetGeomType( wkbPoint );
             break;
 
+          case SHPT_POINTZ:
+            poDefn->SetGeomType( wkbPoint25D );
+            break;
+
           case SHPT_ARC:
-          case SHPT_ARCZ:
           case SHPT_ARCM:
             poDefn->SetGeomType( wkbLineString );
             break;
 
+          case SHPT_ARCZ:
+            poDefn->SetGeomType( wkbLineString25D );
+            break;
+
           case SHPT_MULTIPOINT:
-          case SHPT_MULTIPOINTZ:
           case SHPT_MULTIPOINTM:
             poDefn->SetGeomType( wkbMultiPoint );
             break;
 
+          case SHPT_MULTIPOINTZ:
+            poDefn->SetGeomType( wkbMultiPoint25D );
+            break;
+
           case SHPT_POLYGON:
-          case SHPT_POLYGONZ:
           case SHPT_POLYGONM:
             poDefn->SetGeomType( wkbPolygon );
             break;
+
+          case SHPT_POLYGONZ:
+            poDefn->SetGeomType( wkbPolygon25D );
+            break;
+            
         }
     }
 
