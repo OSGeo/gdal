@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2003/02/17 15:19:04  warmerda
+ * Fixed support for deleted records.
+ *
  * Revision 1.3  2003/02/04 21:40:38  warmerda
  * Fixed handling of Cntl-Z.
  *
@@ -215,9 +218,18 @@ OGRFeature * OGRRECLayer::GetNextUnfilteredFeature()
             return NULL;
         }
 
-        // Strip off end-of-line '!' marker. 
+        // If the end-of-line markers is '?' the record is deleted.
         iSegLen = strlen(pszLine);
-        if( pszLine[iSegLen-1] != '!' )
+        if( pszLine[iSegLen-1] == '?' )
+        {
+            pszRecord[0] = '\0';
+            nDataLen = 0;
+            continue;
+        }
+
+        // Strip off end-of-line '!' marker. 
+        if( pszLine[iSegLen-1] != '!' 
+            && pszLine[iSegLen-1] != '^' )
         {
             CPLError( CE_Failure, CPLE_AppDefined, 
                       "Apparent corrupt data line .. record FID=%d", 
@@ -292,11 +304,7 @@ OGRFeature *OGRRECLayer::GetNextFeature()
         if( poFeature == NULL )
             break;
 
-        if( /* (poFilterGeom == NULL
-               || poFeature->GetGeometryRef() == NULL 
-               || poFilterGeom->Intersect( poFeature->GetGeometryRef() ) ) 
-            && */ (m_poAttrQuery == NULL
-                || m_poAttrQuery->Evaluate( poFeature )) )
+        if( m_poAttrQuery == NULL || m_poAttrQuery->Evaluate( poFeature ) )
             break;
 
         delete poFeature;
