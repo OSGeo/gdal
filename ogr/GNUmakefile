@@ -11,7 +11,7 @@ OBJ	=	ogrgeometryfactory.o ogrpoint.o ogrcurve.o ogrlinestring.o \
 		ogrspatialreference.o ogr_srsnode.o ogr_srs_proj4.o \
 		ogr_fromepsg.o ogrct.o ogr_opt.o ogr_srs_esri.o \
 		ogrfeaturequery.o swq.o ogr_srs_validate.o ogr_srs_xml.o \
-		ograssemblepolygon.o
+		ograssemblepolygon.o ogr2gmlgeometry.o gml2ogrgeometry.o
 
 INST_H_FILES	=	ogr_core.h ogr_feature.h ogr_geometry.h ogr_p.h \
 		ogr_spatialref.h ogr_srs_api.h ogrsf_frmts/ogrsf_frmts.h \
