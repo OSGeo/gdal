@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2004/03/28 15:50:01  warmerda
+ * Added docs for GDALInvGeoTransform().
+ *
  * Revision 1.12  2004/01/24 09:33:33  warmerda
  * Added support for internal grid in GDALSuggestedWarpOutput() for cases
  * where alot of points around the edge fail to transform.
@@ -132,10 +135,19 @@ points may have failed) or FALSE if the overall transformation fails.
 
 /************************************************************************/
 /*                        GDALInvGeoTransform()                         */
-/*                                                                      */
-/*      Invert a standard 3x2 "GeoTransform" style matrix with an       */
-/*      implicit [1 0 0] final row.                                     */
 /************************************************************************/
+
+/**
+ * Invert Geotransform.
+ *
+ * This function will invert a standard 3x2 set of GeoTransform coefficients.
+ * This converts the equation from being pixel to geo to being geo to pixel. 
+ *
+ * @param gt_in Input geotransform (six doubles - unaltered).
+ * @param gt_out Output geotransform (six doubles - updated). 
+ *
+ * @return TRUE on success or FALSE if the equation is uninvertable. 
+ */
 
 int GDALInvGeoTransform( double *gt_in, double *gt_out )
 
