@@ -6,6 +6,11 @@ dnl Checks for programs.
 AC_PROG_CC
 AC_PROG_CXX
 
+dnl We always want to check /usr/local for stuff.
+LIBS="$LIBS -L/usr/local/lib"
+CFLAGS="$CFLAGS -I/usr/local/include"
+CPPFLAGS="$CPPFLAGS -I/usr/local/include"
+
 dnl Checks for libraries.
 AC_CHECK_LIB(dl,dlopen,,,)
 AC_CHECK_LIB(dbmalloc,malloc_chain_check,,,)
@@ -180,6 +185,40 @@ AC_SUBST(JPEG_SETTING,$JPEG_SETTING)
 if test "$JPEG_SETTING" != "no" ; then
   OPT_GDAL_FORMATS="jpeg $OPT_GDAL_FORMATS"
 fi
+
+dnl ---------------------------------------------------------------------------
+dnl Select a libtiff library to use.
+dnl ---------------------------------------------------------------------------
+
+AC_ARG_WITH(libtiff,[  --with-libtiff=ARG         Libtiff library to use (ARG=internal, yes or path)],,)
+
+if test "$with_libtiff" = "yes" -o "$with_libtiff" = "" ; then
+
+  AC_CHECK_LIB(tiff,TIFFReadRGBATile,TIFF_SETTING=external,TIFF_SETTING=internal,)
+
+  if test "$TIFF_SETTING" = "external" ; then   
+    LIBS="-ltiff $LIBS"
+    echo "using pre-installed libtiff."
+  else
+    echo "using internal TIFF code."
+  fi
+
+elif test "$with_libtiff" = "internal" ; then
+
+  TIFF_SETTING=internal
+
+  echo "using internal TIFF code."
+
+else
+
+  TIFF_SETTING=external
+  LIBS="-L$with_libtiff -L$with_libtiff/lib -ltiff $LIBS"
+  EXTRA_INCLUDES="-I$with_libtiff -I$with_libtiff/include $EXTRA_INCLUDES"
+
+  echo "using libtiff from $with_libtiff."
+fi
+
+AC_SUBST(TIFF_SETTING,$TIFF_SETTING)
 
 dnl ---------------------------------------------------------------------------
 
