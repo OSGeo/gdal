@@ -31,6 +31,9 @@ clean:
 	cd core
 	$(MAKE) /f makefile.vc clean
 	cd ..
+	cd alg
+	$(MAKE) /f makefile.vc clean
+	cd ..
 	cd frmts
 	$(MAKE) /f makefile.vc clean
 	cd ..
@@ -71,6 +74,12 @@ frmts_dir:
 
 apps_dir:
 	cd apps
+	$(MAKE) /f makefile.vc
+	cd ..
+	if exist $(PYDIR)/python.exe $(MAKE) /f makefile.vc pymod_dir
+
+pymod_dir:
+	cd pymod
 	$(MAKE) /f makefile.vc
 	cd ..
 
