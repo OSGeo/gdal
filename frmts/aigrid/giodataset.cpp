@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.23  2003/02/20 15:54:26  warmerda
+ * use CellLyrClose instead of CellLayerClose ... also in aigridio.dll
+ *
  * Revision 1.22  2003/02/13 19:24:12  warmerda
  * Added support for using aigridio.dll instead of avgridio.dll if found.
  * Apparently in ArcGIS 8, the DLL is called aigridio.dll.
@@ -177,7 +180,7 @@ static int LoadGridIOFunctions()
     pfnPutWindowRow = (int (*)(int,int,float*))
         CPLGetSymbol( pszDLL, "PutWindowRow" );
     pfnCellLayerClose = (int (*)(int))
-        CPLGetSymbol( pszDLL, "CellLayerClose" );
+        CPLGetSymbol( pszDLL, "CellLyrClose" );
     pfnGridDelete = (int (*)(char*))
         CPLGetSymbol( pszDLL, "GridDelete" );
     pfnGetMissingFloat = (void (*)(float *))
