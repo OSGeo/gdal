@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  1999/05/31 21:01:11  warmerda
+ * Changed createFromWkt() method.
+ *
  * Revision 1.6  1999/05/21 02:39:50  warmerda
  * Added IWks support
  *
@@ -245,13 +248,15 @@ OGRComGeometryFactory::CreateFromWKT( BSTR wrt,
     OGRGeometry      *poOGRGeometry = NULL;
     OGRErr           eErr = OGRERR_NONE;
     char             *pszANSIWkt = NULL;
+    char             *pszWktData;
 
     // notdef: not doing anything with spatial ref yet. 
     OGRComDebug( "info", "createFromWKT(%S)\n", wrt );
 
     UnicodeToAnsi( wrt, &pszANSIWkt );
-
-    eErr = OGRGeometryFactory::createFromWkt( pszANSIWkt, NULL,
+    
+    pszWktData = pszANSIWkt;
+    eErr = OGRGeometryFactory::createFromWkt( &pszWktData, NULL,
                                               &poOGRGeometry );
     
     CoTaskMemFree( pszANSIWkt );
