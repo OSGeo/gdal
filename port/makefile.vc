@@ -9,7 +9,8 @@ OBJ	=	cpl_conv.obj \
 		cplgetsymbol.obj \
 		cpl_dir.obj \
 		cpl_path.obj \
-		cpl_csv.obj
+		cpl_csv.obj \
+		cpl_findfile.obj
 
 LIB	=	cpl.lib
 

@@ -9,7 +9,7 @@ include GDALmake.opt
 endif
 
 OBJ	=	cpl_conv.o cpl_error.o cpl_string.o cpl_vsisimple.o \
-		cplgetsymbol.o cpl_dir.o cpl_path.o cpl_csv.o
+		cplgetsymbol.o cpl_dir.o cpl_path.o cpl_csv.o cpl_findfile.o
 
 LIB	=	cpl.a
 
@@ -29,5 +29,5 @@ $(LIB): $(OBJ)
 	$(AR) rc $(LIB) $(OBJ)
 
 install:	$(LIB)
-	cp *.h $(INST_INCLUDE)
-	cp cpl.a $(INST_LIB)
+	$(INSTALL) *.h $(INST_INCLUDE)
+	$(INSTALL) cpl.a $(INST_LIB)
