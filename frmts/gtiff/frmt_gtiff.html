@@ -30,9 +30,12 @@ be found at the location pointed to by the GEOTIFF_CSV environment variable.
 <p>
 
 Georeferencing from GeoTIFF is supported in the form of one tiepoint and
-pixel size, a transformation matrix, or a list of GCPs.  If not georeferencing
+pixel size, a transformation matrix, or a list of GCPs.<p>
+
+If no georeferencing
 information is available in the TIFF file itself, GDAL will also check for,
-and use an ESRI .tfw file. <P>
+and use an ESRI world file with the extention .tfw, .tiffw or .wld, as
+well as a MapInfo .tab file (only control points used, Coordsys ignored).<P>
 
 <h2>Creation Issues</h2>
 
