@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2002/11/29 22:10:15  warmerda
+ * added logic to map ESRI LCC to LCC1SP or LCC2SP in WKT and vice versa
+ *
  * Revision 1.15  2002/11/25 03:28:16  warmerda
  * added/improved documentation
  *
@@ -86,6 +89,7 @@ char *apszProjMapping[] = {
     "Hotine_Oblique_Mercator_Azimuth_Natural_Origin", 
                                         SRS_PT_HOTINE_OBLIQUE_MERCATOR,
     "Lambert_Conformal_Conic", SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP,
+    "Lambert_Conformal_Conic", SRS_PT_LAMBERT_CONFORMAL_CONIC_1SP,
     "Van_der_Grinten_I", SRS_PT_VANDERGRINTEN,
     SRS_PT_TRANSVERSE_MERCATOR, SRS_PT_TRANSVERSE_MERCATOR,
     "Gauss_Kruger", SRS_PT_TRANSVERSE_MERCATOR,
@@ -755,11 +759,27 @@ OGRErr OGRSpatialReference::morphFromESRI()
     }
 
 /* -------------------------------------------------------------------- */
+/*      Split Lambert_Conformal_Conic into 1SP or 2SP form.             */
+/*                                                                      */
+/*      See bugzilla.remotesensing.org/show_bug.cgi?id=187              */
+/* -------------------------------------------------------------------- */
+    if( GetAttrValue("PROJECTION") != NULL
+        && EQUAL(GetAttrValue("PROJECTION"),"Lambert_Conformal_Conic") )
+    {
+        if( GetProjParm( "Scale_Factor", 2.0 ) == 2.0 )
+            SetNode( "PROJCS|PROJECTION", 
+                     SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP );
+        else
+            SetNode( "PROJCS|PROJECTION", 
+                     SRS_PT_LAMBERT_CONFORMAL_CONIC_1SP );
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Translate PROJECTION keywords that are misnamed.                */
 /* -------------------------------------------------------------------- */
     GetRoot()->applyRemapper( "PROJECTION", 
                               apszProjMapping, apszProjMapping+1, 2 );
-
+    
 /* -------------------------------------------------------------------- */
 /*      Translate DATUM keywords that are misnamed.                     */
 /* -------------------------------------------------------------------- */
