@@ -1,20 +1,20 @@
 HKCR
 {
-	SF.SF.1 = s 'SF OLE DB Provider'
+	Softmap.SF.Shape.1 = s 'Softmap.SF.Shape'
 	{
 		CLSID = s '{C9BD5075-0D6D-11D3-94FF-00104B238935}'
 	}
-	SF.SF = s 'SF OLE DB Provider'
+	Softmap.SF.Shape = s 'Softmap.SF.Shape'
 	{
 		CLSID = s '{C9BD5075-0D6D-11D3-94FF-00104B238935}'
-		CurVer = s 'SF.SF.1'
+		CurVer = s 'Softmap.SF.Shape.1'
 	}
 	NoRemove CLSID
 	{
-		ForceRemove {C9BD5075-0D6D-11D3-94FF-00104B238935} = s 'SF OLE DB Provider'
+		ForceRemove {C9BD5075-0D6D-11D3-94FF-00104B238935} = s 'Softmap.SF.Shape'
 		{
-			ProgID = s 'SF.SF.1'
-			VersionIndependentProgID = s 'SF.SF'
+			ProgID = s 'Softmap.SF.Shape.1'
+			VersionIndependentProgID = s 'Softmap.SF.Shape'
 			InprocServer32 = s '%MODULE%'
 			{
 				val ThreadingModel = s 'Apartment'
@@ -25,7 +25,7 @@ HKCR
 				{
 				}
 			}
-			'OLE DB Provider' = s 'SF OLE DB Provider'
+			'OLE DB Provider' = s 'Softmap OLE DB Provider for OpenGIS Simple Features from Shapefiles'
 			OLEDB_SERVICES = d '4294967295'
 			'TypeLib' = s '{C9BD5066-0D6D-11D3-94FF-00104B238935}'
 		}
