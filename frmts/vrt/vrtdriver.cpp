@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2004/07/28 16:56:36  warmerda
+ * updated to use VRTSourcedRasterBand
+ *
  * Revision 1.5  2004/04/15 18:54:38  warmerda
  * added UnitType, Offset, Scale and CategoryNames support
  *
@@ -241,8 +244,8 @@ VRTCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
         poVRTDS->AddBand( poSrcBand->GetRasterDataType(), NULL );
 
-        VRTRasterBand *poVRTBand = 
-			(VRTRasterBand *) poVRTDS->GetRasterBand( iBand+1 );
+        VRTSourcedRasterBand *poVRTBand = 
+            (VRTSourcedRasterBand *) poVRTDS->GetRasterBand( iBand+1 );
 
 /* -------------------------------------------------------------------- */
 /*      Setup source mapping.                                           */
