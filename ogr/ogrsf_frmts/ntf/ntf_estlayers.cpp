@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2002/02/06 15:19:36  warmerda
+ * TEXT_CODE is 4 long, not 3
+ *
  * Revision 1.14  2001/08/23 14:47:31  warmerda
  * Added support for adding an _LIST attribute to the OGRFeatures in
  * cases of GENERIC features for which an attribute appears more than
@@ -1772,7 +1775,7 @@ void NTFFileReader::EstablishLayers()
         EstablishLayer( "LANDLINE_NAME", wkbPoint,
                         TranslateLandlineName, NRT_NAMEREC, NULL,
                         "NAME_ID", OFTInteger, 6, 0,
-                        "TEXT_CODE", OFTString, 3, 0,
+                        "TEXT_CODE", OFTString, 4, 0,
                         "TEXT", OFTString, 0, 0,
                         "FONT", OFTInteger, 4, 0,
                         "TEXT_HT", OFTReal, 4, 1,
@@ -1802,7 +1805,7 @@ void NTFFileReader::EstablishLayers()
         EstablishLayer( "LANDLINE99_NAME", wkbPoint,
                         TranslateLandlineName, NRT_NAMEREC, NULL,
                         "NAME_ID", OFTInteger, 6, 0,
-                        "TEXT_CODE", OFTString, 3, 0,
+                        "TEXT_CODE", OFTString, 4, 0,
                         "TEXT", OFTString, 0, 0,
                         "FONT", OFTInteger, 4, 0,
                         "TEXT_HT", OFTReal, 4, 1,
