@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.32  2002/12/03 15:38:10  warmerda
+ * dont write linear units to geograpic srs but avoid freaking out
+ *
  * Revision 1.31  2002/12/01 20:19:21  warmerda
  * use %.16g to preserve precision as per bug 184
  *
@@ -660,29 +663,31 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
 /* -------------------------------------------------------------------- */
 /*      Linear units translation                                        */
 /* -------------------------------------------------------------------- */
-    pszValue = CSLFetchNameValue(papszNV, "to_meter");
-
-    if( pszValue != NULL && atof(pszValue) > 0.0 )
+    if( IsProjected() || IsLocal() )
     {
-        CPLAssert( IsProjected() || IsLocal() );
-        SetLinearUnits( "unknown", atof(pszValue) );
-    }
-    else if( (pszValue = CSLFetchNameValue(papszNV, "units")) != NULL )
-    {
-        if( EQUAL(pszValue,"meter" ) )
-            SetLinearUnits( SRS_UL_METER, 1.0 );
-        else if( EQUAL(pszValue,"us-ft" ) )
-            SetLinearUnits( SRS_UL_US_FOOT, atof(SRS_UL_US_FOOT_CONV) );
-        else if( EQUAL(pszValue,"ft" ) )
-            SetLinearUnits( SRS_UL_FOOT, atof(SRS_UL_FOOT_CONV) );
-        else if( EQUAL(pszValue,"yd" ) )
-            SetLinearUnits( pszValue, 0.9144 );
-        else if( EQUAL(pszValue,"us-yd" ) )
-            SetLinearUnits( pszValue, 0.914401828803658 );
-        else // This case is untranslatable.  Should add all proj.4 unts
-            SetLinearUnits( pszValue, 1.0 );
-    }
+        pszValue = CSLFetchNameValue(papszNV, "to_meter");
 
+        if( pszValue != NULL && atof(pszValue) > 0.0 )
+        {
+            SetLinearUnits( "unknown", atof(pszValue) );
+        }
+        else if( (pszValue = CSLFetchNameValue(papszNV, "units")) != NULL )
+        {
+            if( EQUAL(pszValue,"meter" ) )
+                SetLinearUnits( SRS_UL_METER, 1.0 );
+            else if( EQUAL(pszValue,"us-ft" ) )
+                SetLinearUnits( SRS_UL_US_FOOT, atof(SRS_UL_US_FOOT_CONV) );
+            else if( EQUAL(pszValue,"ft" ) )
+                SetLinearUnits( SRS_UL_FOOT, atof(SRS_UL_FOOT_CONV) );
+            else if( EQUAL(pszValue,"yd" ) )
+                SetLinearUnits( pszValue, 0.9144 );
+            else if( EQUAL(pszValue,"us-yd" ) )
+                SetLinearUnits( pszValue, 0.914401828803658 );
+            else // This case is untranslatable.  Should add all proj.4 unts
+                SetLinearUnits( pszValue, 1.0 );
+        }
+    }
+        
     CSLDestroy( papszNV );
     
     return OGRERR_NONE;
