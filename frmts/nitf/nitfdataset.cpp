@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2002/12/21 18:12:10  warmerda
+ * added driver metadata
+ *
  * Revision 1.5  2002/12/18 20:15:43  warmerda
  * support writing IGEOLO
  *
@@ -798,6 +801,11 @@ void GDALRegister_NITF()
         poDriver->pfnOpen = NITFDataset::Open;
         poDriver->pfnCreate = NITFDatasetCreate;
         poDriver->pfnCreateCopy = NITFCreateCopy;
+
+        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_nitf.html" );
+        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "ntf" );
+        poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
+                                   "Byte UInt16 Int16 UInt32 Int32 Float32 CFloat32 CFloat64" );
 
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
