@@ -33,6 +33,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2002/03/19 20:58:24  warmerda
+ * Changes from Olle Soderholm that should allow for NOS files as well.
+ *
  * Revision 1.3  2001/12/08 21:58:32  warmerda
  * save header
  *
@@ -165,6 +168,11 @@ BSBInfo *BSBOpen( const char *pszFilename )
         if( achTestBlock[i+0] == 'B' && achTestBlock[i+1] == 'S' 
             && achTestBlock[i+2] == 'B' && achTestBlock[i+3] == '/' )
             break;
+
+        if( achTestBlock[i+0] == 'N' && achTestBlock[i+1] == 'O'
+            && achTestBlock[i+2] == 'S' && achTestBlock[i+3] == '/' )
+            break;
+
     }
 
     if( i == sizeof(achTestBlock) - 4 )
@@ -215,7 +223,22 @@ BSBInfo *BSBOpen( const char *pszFilename )
             psInfo->nXSize = atoi(papszTokens[nRAIndex+1]);
             psInfo->nYSize = atoi(papszTokens[nRAIndex+2]);
         }
-
+        else if( EQUALN(pszLine,"NOS/",4) )
+        {
+            int  nRAIndex;
+            
+            nRAIndex = CSLFindString(papszTokens, "RA" );
+            if( nRAIndex < 0 || nRAIndex > nCount - 2 )
+            {
+                CSLDestroy( papszTokens );
+                CPLError( CE_Failure, CPLE_AppDefined,
+                          "Failed to extract RA from NOS/ line." );
+                BSBClose( psInfo );
+                return NULL;
+            }
+            psInfo->nXSize = atoi(papszTokens[nRAIndex+3]);
+            psInfo->nYSize = atoi(papszTokens[nRAIndex+4]);
+        }
         else if( EQUALN(pszLine,"RGB/",4) && nCount >= 4 )
         {
             int	iPCT = atoi(papszTokens[0]);
