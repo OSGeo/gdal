@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2003/02/19 02:57:49  warmerda
+ * added wkbLinearRing support
+ *
  * Revision 1.14  2003/01/14 22:14:04  warmerda
  * added logic to force Geometry collection to multipolygon
  *
@@ -373,6 +376,9 @@ OGRGeometryFactory::createGeometry( OGRwkbGeometryType eGeometryType )
 
       case wkbMultiLineString:
           return new OGRMultiLineString();
+
+      case wkbLinearRing:
+          return new OGRLinearRing();
 
       default:
           return NULL;
