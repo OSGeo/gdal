@@ -4,6 +4,7 @@
 *.pdb
 *.ilk
 *.opt
+*.lo
 gdal_translate
 gdaladdo
 gdalinfo
