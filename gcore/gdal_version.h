@@ -18,6 +18,6 @@
 #  define GDAL_RELEASE_DATE     20050309
 #endif
 #ifndef GDAL_RELEASE_NAME
-#  define GDAL_RELEASE_NAME     "1.2.6.0 beta4"
+#  define GDAL_RELEASE_NAME     "1.2.6.0 beta5"
 #endif
 
