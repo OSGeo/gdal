@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.37  2003/03/18 18:33:37  warmerda
+ * fixed memory leaks
+ *
  * Revision 1.36  2003/02/18 16:39:31  warmerda
  * Ensure GeographicTypeGeoKey, GeogGeodeticDatumGeoKey and GeogEllipsoidKey
  * are written out as KvUserDefined when they are not know for compatibility
@@ -196,7 +199,16 @@ static void WKTMassageDatum( char ** ppszDatum )
 
 {
     int		i, j;
-    char	*pszDatum = *ppszDatum;
+    char	*pszDatum;
+
+/* -------------------------------------------------------------------- */
+/*      First copy string and allocate with our CPLStrdup() to so we    */
+/*      know when we are done this function we will have a CPL          */
+/*      string, not a GTIF one.                                         */
+/* -------------------------------------------------------------------- */
+    pszDatum = CPLStrdup(*ppszDatum);
+    GTIFFreeMemory( *ppszDatum );
+    *ppszDatum = pszDatum;
 
 /* -------------------------------------------------------------------- */
 /*      Translate non-alphanumeric values to underscores.               */
@@ -236,7 +248,7 @@ static void WKTMassageDatum( char ** ppszDatum )
         {
             CPLFree( *ppszDatum );
             *ppszDatum = CPLStrdup( papszDatumEquiv[i+1] );
-            break;
+            return;
         }
     }
 }
@@ -267,7 +279,7 @@ char *GTIFGetOGISDefn( GTIFDefn * psDefn )
             GTIFGetPCSInfo( psDefn->PCS, &pszPCSName, NULL, NULL, NULL );
             oSRS.SetNode( "PROJCS", pszPCSName );
             if( !EQUAL(pszPCSName,"unnamed") )
-                CPLFree( pszPCSName );
+                GTIFFreeMemory( pszPCSName );
 
             oSRS.SetAuthority( "PROJCS", "EPSG", psDefn->PCS );
         }
@@ -326,11 +338,11 @@ char *GTIFGetOGISDefn( GTIFDefn * psDefn )
     if( psDefn->Ellipsoid != KvUserDefined )
         oSRS.SetAuthority( "SPHEROID", "EPSG", psDefn->Ellipsoid );
 
-    CPLFree( pszGeogName );
+    GTIFFreeMemory( pszGeogName );
     CPLFree( pszDatumName );
-    CPLFree( pszPMName );
-    CPLFree( pszSpheroidName );
-    CPLFree( pszAngularUnits );
+    GTIFFreeMemory( pszPMName );
+    GTIFFreeMemory( pszSpheroidName );
+    GTIFFreeMemory( pszAngularUnits );
         
 /* ==================================================================== */
 /*      Handle projection parameters.                                   */
@@ -504,7 +516,7 @@ char *GTIFGetOGISDefn( GTIFDefn * psDefn )
         else
             oSRS.SetLinearUnits( "unknown", psDefn->UOMLengthInMeters );
 
-        CPLFree( pszUnitsName );
+        GTIFFreeMemory( pszUnitsName );
     }
     
 /* -------------------------------------------------------------------- */
