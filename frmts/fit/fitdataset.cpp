@@ -28,6 +28,12 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.7  2001/07/12 22:08:13  nemec
+ * Change check if 64-bit seek is needed.  Should work on all systems (no longer
+ * comparing to a 64 bit constant).
+ * Also improved calculation to account for files whose dimensions aren't exact
+ * multiples of the page size.
+ *
  * Revision 1.6  2001/07/12 18:59:36  warmerda
  * Avoid strings.h and bzero() -- not on NT.  Use memset() instead.
  * Some odd problem with initializing i in a for loop in a case statement avoided.
@@ -917,13 +923,21 @@ GDALDataset *FITDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Check if 64 bit seek is needed.                                 */
 /* -------------------------------------------------------------------- */
-    uint64 maxseek = head->cSize * head->xSize * head->ySize *
-        GDALGetDataTypeSize(fitDataType(poDS->info->dtype));
-    // 
-    // 0xffffffff80000000LL // anything about 31 bits
+    uint64 bytesPerComponent =
+        (GDALGetDataTypeSize(fitDataType(poDS->info->dtype)) / 8);
+    uint64 bytesPerPixel = head->cSize * bytesPerComponent;
+    uint64 recordSize = bytesPerPixel * head->xPageSize *
+        head->yPageSize;
+    uint64 numXBlocks =
+        (uint64) ceil((double) head->xSize / head->xPageSize);
+    uint64 numYBlocks =
+        (uint64) ceil((double) head->ySize / head->yPageSize);
 
-//     if (maxseek & 0xffffffff00000000LL) // anything about 32 bits
-    if (maxseek & 0xffffffff80000000) // signed long
+    uint64 maxseek = recordSize * numXBlocks * numYBlocks;
+
+//     CPLDebug("FIT", "(sizeof %i) max seek %llx ==> %llx\n", sizeof(uint64),
+//              maxseek, maxseek >> 31);
+    if (maxseek >> 31) // signed long
 #ifdef VSI_LARGE_API_SUPPORTED
         CPLDebug("FIT", "Using 64 bit version of fseek");
 #else
