@@ -101,7 +101,7 @@ pymod_dir:
 ogr_dir:      port_dir
 	cd frmts/iso8211
 	$(MAKE) /f makefile.vc
-	cd ..\sdts	
+	cd ..\sdts
 	$(MAKE) /f makefile.vc
 	cd ..\..\ogr
 !IFDEF INCLUDE_OGR_FRMTS
