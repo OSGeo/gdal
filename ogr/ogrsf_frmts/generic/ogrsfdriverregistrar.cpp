@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2002/05/14 21:38:00  warmerda
+ * make INST_DATA overidable with binary patch
+ *
  * Revision 1.6  2001/07/18 04:55:16  warmerda
  * added CPL_CSVID
  *
@@ -55,6 +58,8 @@ CPL_CVSID("$Id$");
 
 static OGRSFDriverRegistrar *poRegistrar = NULL;
 
+static char *pszUpdatableINST_DATA = 
+"__INST_DATA_TARGET:                                                                                                                                      ";
 /************************************************************************/
 /*                         OGRSFDriverRegistrar                         */
 /************************************************************************/
@@ -66,9 +71,28 @@ OGRSFDriverRegistrar::OGRSFDriverRegistrar()
     nDrivers = 0;
     papoDrivers = NULL;
 
+/* -------------------------------------------------------------------- */
+/*      We want to push a location to search for data files             */
+/*      supporting GDAL/OGR such as EPSG csv files, S-57 definition     */
+/*      files, and so forth.  The static pszUpdateableINST_DATA         */
+/*      string can be updated within the shared library or              */
+/*      executable during an install to point installed data            */
+/*      directory.  If it isn't burned in here then we use the          */
+/*      INST_DATA macro (setup at configure time) if                    */
+/*      available. Otherwise we don't push anything and we hope         */
+/*      other mechanisms such as environment variables will have        */
+/*      been employed.                                                  */
+/* -------------------------------------------------------------------- */
+    if( pszUpdatableINST_DATA[19] != ' ' )
+    {
+        CPLPushFinderLocation( pszUpdatableINST_DATA + 19 );
+    }
+    else
+    {
 #ifdef INST_DATA
-    CPLPushFinderLocation( INST_DATA );
+        CPLPushFinderLocation( INST_DATA );
 #endif
+    }
 }
 
 /************************************************************************/

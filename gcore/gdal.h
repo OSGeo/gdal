@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.48  2002/05/14 21:38:32  warmerda
+ * make INST_DATA overidable with binary patch
+ *
  * Revision 1.47  2002/05/06 21:37:29  warmerda
  * added GDALGCPsToGeoTransform
  *
@@ -187,9 +190,15 @@
 /* -------------------------------------------------------------------- */
 /*      GDAL Version Information.                                       */
 /* -------------------------------------------------------------------- */
-#define GDAL_VERSION_NUM	1170
-#define GDAL_RELEASE_DATE       20020416
-#define GDAL_RELEASE_NAME       "1.1.7"
+#ifndef GDAL_VERSION_NUM
+#  define GDAL_VERSION_NUM	1170
+#endif
+#ifndef GDAL_RELEASE_DATE
+#  define GDAL_RELEASE_DATE     20020416				
+#endif
+#ifndef GDAL_RELEASE_NAME
+#  define GDAL_RELEASE_NAME     "1.1.7"
+#endif
 
 /* -------------------------------------------------------------------- */
 /*      Significant constants.                                          */
