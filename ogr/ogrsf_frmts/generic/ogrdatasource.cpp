@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2003/04/23 16:27:15  warmerda
+ * (re) filled OGR_DS_GetName()
+ *
  * Revision 1.17  2003/04/22 19:36:04  warmerda
  * Added SyncToDisk
  *
@@ -893,7 +896,7 @@ OGRLayerH OGR_DS_GetLayer( OGRDataSourceH hDS, int iLayer )
 const char *OGR_DS_GetName( OGRDataSourceH hDS )
 
 {
-
+    return ((OGRDataSource*)hDS)->GetName();
 }
 
 /************************************************************************/
