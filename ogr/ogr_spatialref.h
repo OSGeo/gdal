@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.53  2003/08/31 14:51:30  dron
+ * Added importFromPCI() method.
+ *
  * Revision 1.52  2003/08/18 13:26:01  warmerda
  * added SetTMVariant() and related definitions
  *
@@ -320,6 +323,9 @@ class CPL_DLL OGRSpatialReference
     OGRErr      importFromProj4( const char * );
     OGRErr      importFromEPSG( int );
     OGRErr      importFromESRI( char ** );
+    OGRErr      importFromPCI( const char *pszProj,
+                               const char *pszUnits = NULL,
+                               double *padfPrjParams = NULL );
     OGRErr      importFromXML( const char * );
 
     OGRErr      morphToESRI();
