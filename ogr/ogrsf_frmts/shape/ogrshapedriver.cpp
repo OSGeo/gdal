@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2003/03/20 19:11:05  warmerda
+ * ensure delete cleans up indexes
+ *
  * Revision 1.6  2003/03/03 05:06:46  warmerda
  * implemented DeleteDataSource
  *
@@ -127,7 +130,8 @@ OGRDataSource *OGRShapeDriver::CreateDataSource( const char * pszName,
 /*      Does it end in the extension .shp indicating the user likely    */
 /*      wants to create a single file set?                              */
 /* -------------------------------------------------------------------- */
-    else if( EQUAL(CPLGetExtension(pszName),"shp") )
+    else if( EQUAL(CPLGetExtension(pszName),"shp") 
+             || EQUAL(CPLGetExtension(pszName),"dbf") )
     {
         bSingleNewFile = TRUE;
     }
@@ -174,7 +178,7 @@ OGRErr OGRShapeDriver::DeleteDataSource( const char *pszDataSource )
     int iExt;
     VSIStatBuf sStatBuf;
     static const char *apszExtensions[] = 
-        { "shp", "shx", "dbf", "sbn", "sbx", "prj", NULL };
+        { "shp", "shx", "dbf", "sbn", "sbx", "prj", "idm", "ind", NULL };
 
     if( VSIStat( pszDataSource, &sStatBuf ) != 0 )
     {
