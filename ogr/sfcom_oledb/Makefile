@@ -13,7 +13,7 @@ GDAL_ROOT = 	..\..
 #OLE_LIBS =	$(MSDASDK)\lib\oledb\oledb.lib ole32.lib oleaut32.lib 
 OLE_LIBS =	ole32.lib oleaut32.lib 
 
-LOC_OBJ =       SF.obj SFRS.obj ogrcomutils.obj sfutil.obj
+LOC_OBJ =       SF.obj SFRS.obj sfutil.obj
 
 SHR_OBJ =	..\ogrgeometryfactory.obj ..\ogrpoint.obj ..\ogrcurve.obj \
 		..\ogrlinestring.obj ..\ogrpolygon.obj ..\ogrlinearring.obj \
@@ -27,6 +27,8 @@ SHR_OBJ =	..\ogrgeometryfactory.obj ..\ogrpoint.obj ..\ogrcurve.obj \
 		..\..\port\*.obj
 
 default:	SF.dll
+
+SF.obj SFRS.obj: SF.h SFDS.h SFRS.h SFSess.h 
 
 SF.res:	SF.rc SF.h
 	rc.exe /l 0x1009 /foSF.res /d _DEBUG SF.rc
