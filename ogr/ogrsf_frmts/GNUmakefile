@@ -8,6 +8,7 @@ default:
 	(cd tiger; $(MAKE) $*)
 	(cd s57; $(MAKE) $*)
 	(cd mitab; $(MAKE) $*)
+	(cd dgn; $(MAKE) $*)
 ifeq ($(HAVE_OGDI),yes)
 	(cd ogdi; $(MAKE) $*)
 endif
@@ -24,6 +25,7 @@ clean:
 	(cd tiger; $(MAKE) clean)
 	(cd s57; $(MAKE) clean)
 	(cd mitab; $(MAKE) clean)
+	(cd dgn; $(MAKE) clean)
 ifeq ($(HAVE_OGDI),yes)
 	(cd ogdi; $(MAKE) clean)
 endif
