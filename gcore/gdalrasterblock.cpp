@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2005/04/04 15:24:48  fwarmerdam
+ * Most C entry points now CPL_STDCALL
+ *
  * Revision 1.16  2004/04/07 13:15:57  warmerda
  * Ensure that GDALSetCacheMax() keeps flushing till the new limit is
  * honoured. http://bugzilla.remotesensing.org/show_bug.cgi?id=542
@@ -107,7 +110,7 @@ static GDALRasterBlock   *poNewest = NULL;    /* head */
  * @param nNewSize the maximum number of bytes for caching.  Maximum is 2GB.
  */
 
-void GDALSetCacheMax( int nNewSize )
+void CPL_STDCALL GDALSetCacheMax( int nNewSize )
 
 {
     nCacheMax = nNewSize;
@@ -140,7 +143,7 @@ void GDALSetCacheMax( int nNewSize )
  * @return maximum in bytes. 
  */
 
-int GDALGetCacheMax()
+int CPL_STDCALL GDALGetCacheMax()
 {
     if( !bCacheMaxInitialized )
     {
@@ -167,7 +170,7 @@ int GDALGetCacheMax()
  * GDALRasterBlock memory caching.
  */
 
-int GDALGetCacheUsed()
+int CPL_STDCALL GDALGetCacheUsed()
 {
     return nCacheUsed;
 }
@@ -178,7 +181,7 @@ int GDALGetCacheUsed()
 /*      The workhorse of cache management!                              */
 /************************************************************************/
 
-int GDALFlushCacheBlock()
+int CPL_STDCALL GDALFlushCacheBlock()
 
 {
     return GDALRasterBlock::FlushCacheBlock();

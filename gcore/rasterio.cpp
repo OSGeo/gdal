@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.30  2005/04/04 15:24:48  fwarmerdam
+ * Most C entry points now CPL_STDCALL
+ *
  * Revision 1.29  2005/02/17 22:12:39  fwarmerdam
  * ensure that GDALDataset::BlockRasterIO() calls blocking band RasterIO
  *
@@ -458,8 +461,8 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
  * the next. For packed buffers this is the same as nWordSize. 
  */
 
-void GDALSwapWords( void *pData, int nWordSize, int nWordCount,
-                    int nWordSkip )
+void CPL_STDCALL GDALSwapWords( void *pData, int nWordSize, int nWordCount,
+                                int nWordSkip )
 
 {
     int         i;
@@ -561,7 +564,7 @@ void GDALSwapWords( void *pData, int nWordSize, int nWordCount,
  * 
  */ 
 
-void 
+void CPL_STDCALL 
 GDALCopyWords( void * pSrcData, GDALDataType eSrcType, int nSrcPixelOffset,
                void * pDstData, GDALDataType eDstType, int nDstPixelOffset,
                int nWordCount )

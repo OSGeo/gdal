@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2005/04/04 15:24:48  fwarmerdam
+ * Most C entry points now CPL_STDCALL
+ *
  * Revision 1.20  2004/03/10 18:06:11  warmerda
  * Avoid size_t casting warnings.
  *
@@ -211,7 +214,7 @@ GDALOpenInfo::~GDALOpenInfo()
  */
  
 
-GDALDatasetH GDALOpen( const char * pszFilename, GDALAccess eAccess )
+GDALDatasetH CPL_STDCALL GDALOpen( const char * pszFilename, GDALAccess eAccess )
 
 {
     int         iDriver;
@@ -282,7 +285,8 @@ GDALDatasetH GDALOpen( const char * pszFilename, GDALAccess eAccess )
  * this handle can be cast to a GDALDataset *. 
  */
  
-GDALDatasetH GDALOpenShared( const char *pszFilename, GDALAccess eAccess )
+GDALDatasetH CPL_STDCALL 
+GDALOpenShared( const char *pszFilename, GDALAccess eAccess )
 
 {
 /* -------------------------------------------------------------------- */
@@ -332,7 +336,7 @@ GDALDatasetH GDALOpenShared( const char *pszFilename, GDALAccess eAccess )
  * @param hDS The dataset to close.  May be cast from a "GDALDataset *". 
  */
 
-void GDALClose( GDALDatasetH hDS )
+void CPL_STDCALL GDALClose( GDALDatasetH hDS )
 
 {
     GDALDataset *poDS = (GDALDataset *) hDS;
@@ -377,7 +381,7 @@ void GDALClose( GDALDatasetH hDS )
  * shared status, driver name, size, and band count. 
  */
 
-int GDALDumpOpenDatasets( FILE *fp )
+int CPL_STDCALL GDALDumpOpenDatasets( FILE *fp )
    
 {
     int         i, nSharedDatasetCount;

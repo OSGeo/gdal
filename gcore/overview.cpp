@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2005/04/04 15:24:48  fwarmerdam
+ * Most C entry points now CPL_STDCALL
+ *
  * Revision 1.11  2003/05/21 04:24:38  warmerda
  * avoid warnings with cast
  *
@@ -531,7 +534,7 @@ GDALRegenerateOverviews( GDALRasterBand *poSrcBand,
 /*                        GDALComputeBandStats()                        */
 /************************************************************************/
 
-CPLErr
+CPLErr CPL_STDCALL 
 GDALComputeBandStats( GDALRasterBandH hSrcBand,
                       int nSampleStep,
                       double *pdfMean, double *pdfStdDev, 

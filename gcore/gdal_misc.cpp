@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.66  2005/04/04 15:24:48  fwarmerdam
+ * Most C entry points now CPL_STDCALL
+ *
  * Revision 1.65  2005/03/21 16:12:08  fwarmerdam
  * Trimmed log.
  *
@@ -123,7 +126,8 @@ void __pure_virtual()
  * @return a data type able to express eType1 and eType2.
  */
 
-GDALDataType GDALDataTypeUnion( GDALDataType eType1, GDALDataType eType2 )
+GDALDataType CPL_STDCALL 
+GDALDataTypeUnion( GDALDataType eType1, GDALDataType eType2 )
 
 {
     int         bFloating, bComplex, nBits, bSigned;
@@ -264,7 +268,7 @@ GDALDataType GDALDataTypeUnion( GDALDataType eType1, GDALDataType eType2 )
  * @return the number of bits or zero if it is not recognised.
  */
 
-int GDALGetDataTypeSize( GDALDataType eDataType )
+int CPL_STDCALL GDALGetDataTypeSize( GDALDataType eDataType )
 
 {
     switch( eDataType )
@@ -308,7 +312,7 @@ int GDALGetDataTypeSize( GDALDataType eDataType )
  * component. 
  */
 
-int GDALDataTypeIsComplex( GDALDataType eDataType )
+int CPL_STDCALL GDALDataTypeIsComplex( GDALDataType eDataType )
 
 {
     switch( eDataType )
@@ -341,7 +345,7 @@ int GDALDataTypeIsComplex( GDALDataType eDataType )
  * @return string corresponding to type.
  */
 
-const char *GDALGetDataTypeName( GDALDataType eDataType )
+const char * CPL_STDCALL GDALGetDataTypeName( GDALDataType eDataType )
 
 {
     switch( eDataType )
@@ -402,7 +406,7 @@ const char *GDALGetDataTypeName( GDALDataType eDataType )
  * @return GDAL data type.
  */
 
-GDALDataType GDALGetDataTypeByName( const char *pszName )
+GDALDataType CPL_STDCALL GDALGetDataTypeByName( const char *pszName )
 
 {
     int	iType;
@@ -532,8 +536,9 @@ const char *GDALGetColorInterpretationName( GDALColorInterp eInterp )
  * maximum (adfMinMax[1]) are returned.
  */
 
-void GDALComputeRasterMinMax( GDALRasterBandH hBand, int bApproxOK, 
-                              double adfMinMax[2] )
+void CPL_STDCALL 
+GDALComputeRasterMinMax( GDALRasterBandH hBand, int bApproxOK, 
+                         double adfMinMax[2] )
 
 {
     double       dfMin=0.0, dfMax=0.0;
@@ -692,7 +697,7 @@ void GDALComputeRasterMinMax( GDALRasterBandH hBand, int bApproxOK,
  * to use one of the other progress functions that actually do something.
  */
 
-int GDALDummyProgress( double, const char *, void * )
+int CPL_STDCALL GDALDummyProgress( double, const char *, void * )
 
 {
     return TRUE;
@@ -715,8 +720,8 @@ typedef struct {
  * callback data returned by GDALCreateScaledProgress().
  */
 
-int GDALScaledProgress( double dfComplete, const char *pszMessage, 
-                        void *pData )
+int CPL_STDCALL GDALScaledProgress( double dfComplete, const char *pszMessage, 
+                                    void *pData )
 
 {
     GDALScaledProgressInfo *psInfo = (GDALScaledProgressInfo *) pData;
@@ -774,7 +779,7 @@ int GDALScaledProgress( double dfComplete, const char *pszMessage,
  * \endcode
  */
 
-void *GDALCreateScaledProgress( double dfMin, double dfMax, 
+void * CPL_STDCALL GDALCreateScaledProgress( double dfMin, double dfMax, 
                                 GDALProgressFunc pfnProgress, 
                                 void * pData )
 
@@ -808,7 +813,7 @@ void *GDALCreateScaledProgress( double dfMin, double dfMax,
  * @param pData scaled progress handle returned by GDALCreateScaledProgress().
  */
 
-void GDALDestroyScaledProgress( void * pData )
+void CPL_STDCALL GDALDestroyScaledProgress( void * pData )
 
 {
     CPLFree( pData );
@@ -841,7 +846,7 @@ void GDALDestroyScaledProgress( void * pData )
  * @return Always returns TRUE indicating the process should continue.
  */
 
-int GDALTermProgress( double dfComplete, const char *pszMessage, 
+int CPL_STDCALL GDALTermProgress( double dfComplete, const char *pszMessage, 
                       void * pProgressArg )
 
 {
@@ -902,8 +907,9 @@ int GDALTermProgress( double dfComplete, const char *pszMessage,
  * @return optimal overview or hBand itself. 
  */
 
-GDALRasterBandH GDALGetRasterSampleOverview( GDALRasterBandH hBand, 
-                                             int nDesiredSamples )
+GDALRasterBandH CPL_STDCALL 
+GDALGetRasterSampleOverview( GDALRasterBandH hBand, 
+                             int nDesiredSamples )
 
 {
     int     nBestSamples; 
@@ -936,8 +942,9 @@ GDALRasterBandH GDALGetRasterSampleOverview( GDALRasterBandH hBand,
 /*                     GDALGetRandomRasterSample()                      */
 /************************************************************************/
 
-int GDALGetRandomRasterSample( GDALRasterBandH hBand, int nSamples, 
-                               float *pafSampleBuf )
+int CPL_STDCALL 
+GDALGetRandomRasterSample( GDALRasterBandH hBand, int nSamples, 
+                           float *pafSampleBuf )
 
 {
     GDALRasterBand *poBand;
@@ -1086,7 +1093,7 @@ int GDALGetRandomRasterSample( GDALRasterBandH hBand, int nSamples,
 /*                            GDALInitGCPs()                            */
 /************************************************************************/
 
-void GDALInitGCPs( int nCount, GDAL_GCP * psGCP )
+void CPL_STDCALL GDALInitGCPs( int nCount, GDAL_GCP * psGCP )
 
 {
     for( int iGCP = 0; iGCP < nCount; iGCP++ )
@@ -1102,7 +1109,7 @@ void GDALInitGCPs( int nCount, GDAL_GCP * psGCP )
 /*                           GDALDeinitGCPs()                           */
 /************************************************************************/
 
-void GDALDeinitGCPs( int nCount, GDAL_GCP * psGCP )
+void CPL_STDCALL GDALDeinitGCPs( int nCount, GDAL_GCP * psGCP )
 
 {
     for( int iGCP = 0; iGCP < nCount; iGCP++ )
@@ -1117,7 +1124,8 @@ void GDALDeinitGCPs( int nCount, GDAL_GCP * psGCP )
 /*                         GDALDuplicateGCPs()                          */
 /************************************************************************/
 
-GDAL_GCP *GDALDuplicateGCPs( int nCount, const GDAL_GCP *pasGCPList )
+GDAL_GCP * CPL_STDCALL 
+GDALDuplicateGCPs( int nCount, const GDAL_GCP *pasGCPList )
 
 {
     GDAL_GCP    *pasReturn;
@@ -1152,9 +1160,9 @@ GDAL_GCP *GDALDuplicateGCPs( int nCount, const GDAL_GCP *pasGCPList )
 
 #define MAX_GCP 256
  
-int GDALReadTabFile( const char * pszBaseFilename, 
-                     double *padfGeoTransform, char **ppszWKT, 
-                     int *pnGCPCount, GDAL_GCP **ppasGCPs )
+int CPL_STDCALL GDALReadTabFile( const char * pszBaseFilename, 
+                                 double *padfGeoTransform, char **ppszWKT, 
+                                 int *pnGCPCount, GDAL_GCP **ppasGCPs )
 
 
 {
@@ -1355,8 +1363,9 @@ int GDALReadTabFile( const char * pszBaseFilename,
  * @return TRUE on success or FALSE on failure.
  */
 
-int GDALReadWorldFile( const char * pszBaseFilename, const char *pszExtension,
-                       double *padfGeoTransform )
+int CPL_STDCALL 
+GDALReadWorldFile( const char * pszBaseFilename, const char *pszExtension,
+                   double *padfGeoTransform )
 
 {
     const char  *pszTFW;
@@ -1477,8 +1486,9 @@ int GDALReadWorldFile( const char * pszBaseFilename, const char *pszExtension,
 /*      support for ESRI world files.                                   */
 /************************************************************************/
 
-int GDALWriteWorldFile( const char * pszBaseFilename, const char *pszExtension,
-                       double *padfGeoTransform )
+int CPL_STDCALL 
+GDALWriteWorldFile( const char * pszBaseFilename, const char *pszExtension,
+                    double *padfGeoTransform )
 
 {
     const char  *pszTFW;
@@ -1529,7 +1539,7 @@ int GDALWriteWorldFile( const char * pszBaseFilename, const char *pszExtension,
  * @return an internal string containing the requested information.
  */
 
-const char *GDALVersionInfo( const char *pszRequest )
+const char * CPL_STDCALL GDALVersionInfo( const char *pszRequest )
 
 {
     static char szResult[128];
@@ -1558,7 +1568,7 @@ const char *GDALVersionInfo( const char *pszRequest )
 /*      hemisphere.                                                     */
 /************************************************************************/
 
-const char *GDALDecToDMS( double dfAngle, const char * pszAxis,
+const char * CPL_STDCALL GDALDecToDMS( double dfAngle, const char * pszAxis,
                           int nPrecision )
 
 {
@@ -1575,7 +1585,7 @@ const char *GDALDecToDMS( double dfAngle, const char * pszAxis,
  * See CPLPackedDMSToDec().
  */
 
-double GDALPackedDMSToDec( double dfPacked )
+double CPL_STDCALL GDALPackedDMSToDec( double dfPacked )
 
 {
     return CPLPackedDMSToDec( dfPacked );
@@ -1591,7 +1601,7 @@ double GDALPackedDMSToDec( double dfPacked )
  * See CPLDecToPackedDMS().
  */
 
-double GDALDecToPackedDMS( double dfDec )
+double CPL_STDCALL GDALDecToPackedDMS( double dfDec )
 
 {
     return CPLDecToPackedDMS( dfDec );
@@ -1624,8 +1634,9 @@ double GDALDecToPackedDMS( double dfDec )
  * and the fit is poor.
  */
 
-int GDALGCPsToGeoTransform( int nGCPCount, const GDAL_GCP *pasGCPs,
-                            double *padfGeoTransform, int bApproxOK )
+int CPL_STDCALL 
+GDALGCPsToGeoTransform( int nGCPCount, const GDAL_GCP *pasGCPs,
+                        double *padfGeoTransform, int bApproxOK )
 
 {
     int    i;
@@ -1842,7 +1853,8 @@ int GDALGCPsToGeoTransform( int nGCPCount, const GDAL_GCP *pasGCPs,
  * without error, return of -1 requests exit with error code.
  */
 
-int GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
+int CPL_STDCALL 
+GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
 
 {
     char **papszReturn = NULL;
@@ -2134,7 +2146,7 @@ static int _FetchDblFromMD( char **papszMD, const char *pszKey,
 /*                         GDALExtractRPCInfo()                         */
 /************************************************************************/
 
-int GDALExtractRPCInfo( char **papszMD, GDALRPCInfo *psRPC )
+int CPL_STDCALL GDALExtractRPCInfo( char **papszMD, GDALRPCInfo *psRPC )
 
 {
     if( CSLFetchNameValue( papszMD, "RPC_LINE_NUM_COEFF" ) == NULL )
@@ -2187,25 +2199,25 @@ int GDALExtractRPCInfo( char **papszMD, GDALRPCInfo *psRPC )
 
 CPL_C_START
 
-void *GDALCreateProjDef( const char * )
+void * CPL_STDCALL GDALCreateProjDef( const char * )
 {
     CPLDebug( "GDAL", "GDALCreateProjDef no longer supported." );
     return NULL;
 }
 
-CPLErr GDALReprojectToLongLat( void *, double *, double * )
+CPLErr CPL_STDCALL GDALReprojectToLongLat( void *, double *, double * )
 {
     CPLDebug( "GDAL", "GDALReprojectToLatLong no longer supported." );
     return CE_Failure;
 }
 
-CPLErr GDALReprojectFromLongLat( void *, double *, double * )
+CPLErr CPL_STDCALL GDALReprojectFromLongLat( void *, double *, double * )
 {
     CPLDebug( "GDAL", "GDALReprojectFromLatLong no longer supported." );
     return CE_Failure;
 }
 
-void GDALDestroyProjDef( void * )
+void CPL_STDCALL GDALDestroyProjDef( void * )
 
 {
     CPLDebug( "GDAL", "GDALDestroyProjDef no longer supported." );

@@ -25,6 +25,9 @@
  * The GDALDriverManager class from gdal_priv.h.
  * 
  * $Log$
+ * Revision 1.23  2005/04/04 15:24:48  fwarmerdam
+ * Most C entry points now CPL_STDCALL
+ *
  * Revision 1.22  2005/01/19 20:27:17  fwarmerdam
  * Search in lib/gdalplugins instead of directly in lib directory.
  * Only try files endning in .dll, .so or .dylib.  see bug 746
@@ -128,7 +131,7 @@ static GDALDriverManager        *poDM = NULL;
  * to fail.
  */
 
-GDALDriverManager *GetGDALDriverManager()
+GDALDriverManager * GetGDALDriverManager()
 
 {
     if( poDM == NULL )
@@ -254,7 +257,7 @@ int GDALDriverManager::GetDriverCount()
  * @see GDALDriverManager::GetDriverCount()
  */
 
-int GDALGetDriverCount()
+int CPL_STDCALL GDALGetDriverCount()
 
 {
     return GetGDALDriverManager()->GetDriverCount();
@@ -291,7 +294,7 @@ GDALDriver * GDALDriverManager::GetDriver( int iDriver )
  * @see GDALDriverManager::GetDriver()
  */
 
-GDALDriverH GDALGetDriver( int iDriver )
+GDALDriverH CPL_STDCALL GDALGetDriver( int iDriver )
 
 {
     return (GDALDriverH) GetGDALDriverManager()->GetDriver(iDriver);
@@ -366,7 +369,7 @@ int GDALDriverManager::RegisterDriver( GDALDriver * poDriver )
  * @see GDALDriverManager::GetRegisterDriver()
  */
 
-int GDALRegisterDriver( GDALDriverH hDriver )
+int CPL_STDCALL GDALRegisterDriver( GDALDriverH hDriver )
 
 {
     return GetGDALDriverManager()->RegisterDriver( (GDALDriver *) hDriver );
@@ -417,7 +420,7 @@ void GDALDriverManager::DeregisterDriver( GDALDriver * poDriver )
  * @see GDALDriverManager::GetDeregisterDriver()
  */
 
-void GDALDeregisterDriver( GDALDriverH hDriver )
+void CPL_STDCALL GDALDeregisterDriver( GDALDriverH hDriver )
 
 {
     GetGDALDriverManager()->DeregisterDriver( (GDALDriver *) hDriver );
@@ -460,7 +463,7 @@ GDALDriver * GDALDriverManager::GetDriverByName( const char * pszName )
  * @see GDALDriverManager::GetDriverByName()
  */
 
-GDALDriverH GDALGetDriverByName( const char * pszName )
+GDALDriverH CPL_STDCALL GDALGetDriverByName( const char * pszName )
 
 {
     return( GetGDALDriverManager()->GetDriverByName( pszName ) );
@@ -654,7 +657,7 @@ void GDALDriverManager::AutoLoadDrivers()
  * Incidently unloads all managed drivers.
  */
 
-void GDALDestroyDriverManager( void )
+void CPL_STDCALL GDALDestroyDriverManager( void )
 
 {
     if( poDM != NULL )

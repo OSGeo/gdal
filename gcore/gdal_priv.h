@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.52  2005/04/04 15:24:48  fwarmerdam
+ * Most C entry points now CPL_STDCALL
+ *
  * Revision 1.51  2005/02/17 22:16:12  fwarmerdam
  * changed to use two level block cache
  *
@@ -269,8 +272,8 @@ class CPL_DLL GDALDefaultOverviews
 
 class CPL_DLL GDALDataset : public GDALMajorObject
 {
-    friend GDALDatasetH GDALOpen( const char *, GDALAccess);
-    friend GDALDatasetH GDALOpenShared( const char *, GDALAccess);
+    friend GDALDatasetH CPL_STDCALL GDALOpen( const char *, GDALAccess);
+    friend GDALDatasetH CPL_STDCALL GDALOpenShared( const char *, GDALAccess);
     friend class GDALDriver;
 
   protected:
