@@ -15,7 +15,7 @@ OGR_FRMTS =	ogrsf_frmts\ogrsf_frmts.lib ogrsf_frmts\ogrsf_frmts_sup.lib
 OBJ_OGR	=	ogrgeometryfactory.obj ogrpoint.obj ogrcurve.obj \
 		ogrlinestring.obj ogrpolygon.obj ogrlinearring.obj \
 		ogrutils.obj ogrgeometry.obj ogrgeometrycollection.obj \
-		ogrmultipolygon.obj ogrmultilinestring.obj \
+		ogrmultipolygon.obj ogrmultilinestring.obj ogr_opt.obj \
                 ogrmultipoint.obj ogrfeature.obj ogrfeaturedefn.obj \
 		ogrfielddefn.obj ogr_srsnode.obj ogrspatialreference.obj \
 		ogr_srs_proj4.obj ogr_fromepsg.obj ogrct.obj ogrfeaturestyle.obj
