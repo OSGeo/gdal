@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2003/06/12 11:21:33  dron
+ * Few additional comments.
+ *
  * Revision 1.8  2003/05/27 20:49:25  warmerda
  * added REPORT_TIMINGS support
  *
@@ -143,7 +146,10 @@ typedef struct {
     /*! Callback argument to be passed to pfnProgress. */
     void               *pProgressArg;
 
+    /*! Type of spatial point transformer function */
     GDALTransformerFunc pfnTransformer;
+
+    /*! Handle to image transformer setup structure */
     void                *pTransformerArg;
 
     GDALMaskFunc       *papfnSrcPerBandValidityMaskFunc;
