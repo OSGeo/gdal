@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.12  2003/06/18 17:26:35  warmerda
+ * dont try ecwopen function if path isnt to a valid file
+ *
  * Revision 1.11  2002/11/23 18:54:17  warmerda
  * added CREATIONDATATYPES metadata for drivers
  *
@@ -398,7 +401,8 @@ GDALDataset *ECWDataset::Open( GDALOpenInfo * poOpenInfo )
     NCSError         eErr;
     int              i;
 
-    if( !EQUAL(CPLGetExtension(poOpenInfo->pszFilename),"ecw") )
+    if( !EQUAL(CPLGetExtension(poOpenInfo->pszFilename),"ecw")
+        || poOpenInfo->fp == NULL )
         return( NULL );
 
 /* -------------------------------------------------------------------- */
