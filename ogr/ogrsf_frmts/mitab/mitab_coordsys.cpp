@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_coordsys.cpp,v 1.20 2001/01/23 21:23:42 daniel Exp $
+ * $Id: mitab_coordsys.cpp,v 1.21 2001/04/04 21:43:19 warmerda Exp $
  *
  * Name:     mitab_coordsys.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -31,6 +31,9 @@
  **********************************************************************
  *
  * $Log: mitab_coordsys.cpp,v $
+ * Revision 1.21  2001/04/04 21:43:19  warmerda
+ * added code to set WGS84 values
+ *
  * Revision 1.20  2001/01/23 21:23:42  daniel
  * Added projection bounds lookup table, called from TABFile::SetProjInfo()
  *
@@ -630,6 +633,9 @@ OGRSpatialReference *MITABCoordSys2SpatialRef( const char * pszCoordSys )
                      SRS_UA_DEGREE,
                      atof(SRS_UA_DEGREE_CONV) );
 
+    poSR->SetTOWGS84( adfDatumParm[0], adfDatumParm[1], adfDatumParm[2],
+                      adfDatumParm[3], adfDatumParm[4], adfDatumParm[5], 
+                      adfDatumParm[6] );
 
 /* -------------------------------------------------------------------- */
 /*      Report on translation.                                          */
