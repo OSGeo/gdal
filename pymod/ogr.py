@@ -28,6 +28,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.12  2003/04/22 17:28:55  warmerda
+# added SyncToDisk, fix DumpReadable
+#
 # Revision 1.11  2003/04/08 22:13:00  warmerda
 # added new entry poins, and listtostringlist support
 #
@@ -362,6 +365,9 @@ class Layer:
     def CreateFeature( self, feat ):
         return _gdal.OGR_L_CreateFeature( self._o, feat._o )
 
+    def SyncToDisk( self ):
+        return _gdal.OGR_L_SyncToDisk( self._o )
+
     def GetLayerDefn( self ):
         return FeatureDefn( obj = _gdal.OGR_L_GetLayerDefn( self._o ) )
 
@@ -491,7 +497,7 @@ class Feature:
         return _gdal.OGR_F_SetFID( self._o, fid )
 
     def DumpReadable(self):
-        _gdal.OGR_F_DumpReadable( self._o, None )
+        _gdal.OGR_F_DumpReadable( self._o, 'NULL' )
         
     def SetFrom( self, other, be_forgiving = 1 ):
         return _gdal.OGR_F_SetFrom( self._o, other._o, be_forgiving )
