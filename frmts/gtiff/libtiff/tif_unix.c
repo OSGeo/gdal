@@ -144,10 +144,11 @@ TIFFOpen(const char* name, const char* mode)
 #ifdef _AM29K
 	fd = open(name, m);
 #else
-#if defined(WIN32) || defined(_WIN32)
+#  if defined(WIN32) || defined(_WIN32)
 	fd = open(name, m|O_BINARY, 0666);
-#endif
+#  else
 	fd = open(name, m, 0666);
+#  endif        
 #endif
 	if (fd < 0) {
 		TIFFError(module, "%s: Cannot open", name);
