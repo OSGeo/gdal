@@ -28,11 +28,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  1999/12/13 16:29:59  warmerda
+ * Added improved units, and ellipse support.
+ *
  * Revision 1.4  1999/12/08 16:34:05  warmerda
  * added five or six more projections
- *
- * Revision 1.5  1999/11/04 21:38:49  warmerda
- * reimported
  *
  * Revision 1.1  1999/07/29 17:29:15  warmerda
  * New
@@ -320,15 +320,169 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 )
 /*      Handle earth model.  For now we just always emit the user       */
 /*      defined ellipsoid parameters.                                   */
 /* -------------------------------------------------------------------- */
-    sprintf( szProj4+strlen(szProj4), "+a=%.3f +b=%.3f ",
-             GetSemiMajor(), GetSemiMinor() );
+    double	dfSemiMajor = GetSemiMajor();
+    double	dfInvFlattening = GetInvFlattening();
+    const char 	*pszPROJ4Ellipse = NULL;
+    const char  *pszDatum = GetAttrValue("DATUM");
 
+    if( ABS(dfSemiMajor-6378249.145) < 0.01
+        && ABS(dfInvFlattening-293.465) < 0.0001 )
+    {
+        pszPROJ4Ellipse = "clrk80";	/* Clark 1880 */
+    }
+    else if( ABS(dfSemiMajor-6378245.0) < 0.01
+             && ABS(dfInvFlattening-298.3) < 0.0001 )
+    {
+        pszPROJ4Ellipse = "krass";	/* Krassovsky */
+    }
+    else if( ABS(dfSemiMajor-6378388.0) < 0.01
+             && ABS(dfInvFlattening-297.0) < 0.0001 )
+    {
+        pszPROJ4Ellipse = "intl"; 	/* International 1924 */
+    }
+    else if( ABS(dfSemiMajor-6378160.0) < 0.01
+             && ABS(dfInvFlattening-298.25) < 0.0001 )
+    {
+        pszPROJ4Ellipse = "aust_SA"; 	/* Australian */
+    }
+    else if( ABS(dfSemiMajor-6377397.155) < 0.01
+             && ABS(dfInvFlattening-299.1528128) < 0.0001 )
+    {
+        pszPROJ4Ellipse = "bessel";	/* Bessel 1841 */
+    }
+    else if( ABS(dfSemiMajor-6377483.865) < 0.01
+             && ABS(dfInvFlattening-299.1528128) < 0.0001 )
+    {
+        pszPROJ4Ellipse = "bess_nam";	/* Bessel 1841 (Namibia / Schwarzeck)*/
+    }
+    else if( ABS(dfSemiMajor-6378160.0) < 0.01
+             && ABS(dfInvFlattening-298.247167427) < 0.0001 )
+    {
+        pszPROJ4Ellipse = "GRS67";	/* GRS 1967 */
+    }
+    else if( ABS(dfSemiMajor-6378137) < 0.01
+             && ABS(dfInvFlattening-298.257222101) < 0.0001 )
+    {
+        pszPROJ4Ellipse = "GRS80";	/* GRS 1980 */
+    }
+    else if( ABS(dfSemiMajor-6378206.4) < 0.01
+             && ABS(dfInvFlattening-294.9786982) < 0.0001 )
+    {
+        pszPROJ4Ellipse = "clrk66";	/* Clarke 1866 */
+    }
+    else if( ABS(dfSemiMajor-6378206.4) < 0.01
+             && ABS(dfInvFlattening-294.9786982) < 0.0001 )
+    {
+        pszPROJ4Ellipse = "mod_airy";	/* Modified Airy */
+    }
+    else if( ABS(dfSemiMajor-6377563.396) < 0.01
+             && ABS(dfInvFlattening-299.3249646) < 0.0001 )
+    {
+        pszPROJ4Ellipse = "airy";	/* Modified Airy */
+    }
+    else if( ABS(dfSemiMajor-6378200) < 0.01
+             && ABS(dfInvFlattening-298.3) < 0.0001 )
+    {
+        pszPROJ4Ellipse = "helmert";	/* Helmert 1906 */
+    }
+    else if( ABS(dfSemiMajor-6378155) < 0.01
+             && ABS(dfInvFlattening-298.3) < 0.0001 )
+    {
+        pszPROJ4Ellipse = "fschr60m";	/* Modified Fischer 1960 */
+    }
+    else if( ABS(dfSemiMajor-6377298.556) < 0.01
+             && ABS(dfInvFlattening-300.8017) < 0.0001 )
+    {
+        pszPROJ4Ellipse = "evrstSS";	/* Everest (Sabah & Sarawak) */
+    }
+    else if( ABS(dfSemiMajor-6378165.0) < 0.01
+             && ABS(dfInvFlattening-298.3) < 0.0001 )
+    {
+        pszPROJ4Ellipse = "WGS60";	
+    }
+    else if( ABS(dfSemiMajor-6378145.0) < 0.01
+             && ABS(dfInvFlattening-298.25) < 0.0001 )
+    {
+        pszPROJ4Ellipse = "WGS66";	
+    }
+    else if( ABS(dfSemiMajor-6378135.0) < 0.01
+             && ABS(dfInvFlattening-298.26) < 0.0001 )
+    {
+        pszPROJ4Ellipse = "WGS72";	
+    }
+    else if( ABS(dfSemiMajor-6378137.0) < 0.01
+             && ABS(dfInvFlattening-298.257223563) < 0.0001 )
+    {
+        pszPROJ4Ellipse = "WGS84";
+    }
+    else if( EQUAL(pszDatum,"North_Americian_Datum_1927") )
+    {
+        pszPROJ4Ellipse = "clrk66:+datum=nad27"; /* NAD 27 */
+    }
+    else if( EQUAL(pszDatum,"North_Americian_Datum_1983") )
+    {
+        pszPROJ4Ellipse = "GRS80:+datum=nad83";	/* NAD 83 */
+    }
+    
+    if( pszPROJ4Ellipse == NULL )
+        sprintf( szProj4+strlen(szProj4), "+a=%.3f +b=%.3f ",
+                 GetSemiMajor(), GetSemiMinor() );
+    else
+        sprintf( szProj4+strlen(szProj4), "+ellps=%s ",
+                 pszPROJ4Ellipse );
+    
 /* -------------------------------------------------------------------- */
 /*      Handle linear units.                                            */
 /* -------------------------------------------------------------------- */
-    if( GetLinearUnits() != 1.0 )
+    const char	*pszPROJ4Units;
+    char  	*pszLinearUnits = NULL;
+    double	dfLinearConv;
+
+    dfLinearConv = GetLinearUnits( &pszLinearUnits );
+        
+    if( strstr(szProj4,"longlat") != NULL )
+        pszPROJ4Units = NULL;
+    
+    else if( dfLinearConv == 1.0 )
+        pszPROJ4Units = "m";
+
+    else if( dfLinearConv == 1000.0 )
+        pszPROJ4Units = "km";
+    
+    else if( dfLinearConv == 0.0254 )
+        pszPROJ4Units = "in";
+    
+    else if( EQUAL(pszLinearUnits,SRS_UL_FOOT) )
+        pszPROJ4Units = "ft";
+    
+    else if( EQUAL(pszLinearUnits,"IYARD") || dfLinearConv == 0.9144 )
+        pszPROJ4Units = "yd";
+    
+    else if( dfLinearConv == 0.001 )
+        pszPROJ4Units = "mm";
+    
+    else if( dfLinearConv == 0.01 )
+        pszPROJ4Units = "cm";
+
+    else if( EQUAL(pszLinearUnits,SRS_UL_US_FOOT) )
+        pszPROJ4Units = "us-ft";
+
+    else if( EQUAL(pszLinearUnits,SRS_UL_NAUTICAL_MILE) )
+        pszPROJ4Units = "kmi";
+
+    else if( EQUAL(pszLinearUnits,"Mile") 
+             || EQUAL(pszLinearUnits,"IMILE") )
+        pszPROJ4Units = "mi";
+
+    else
+    {
         sprintf( szProj4+strlen(szProj4), "+to_meter=+%.10f ",
-                 GetLinearUnits() );
+                 dfLinearConv );
+    }
+
+    if( pszPROJ4Units != NULL )
+        sprintf( szProj4+strlen(szProj4), "+units=%s ",
+                 pszPROJ4Units );
 
     *ppszProj4 = CPLStrdup( szProj4 );
 
