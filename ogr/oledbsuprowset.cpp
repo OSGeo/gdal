@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/03/31 15:11:16  warmerda
+ * Use char * instead of LPWSTR, better multi-provider support
+ *
  * Revision 1.1  1999/03/30 19:02:07  warmerda
  * New
  *
@@ -101,7 +104,7 @@ OledbSupRowset::~OledbSupRowset()
 /************************************************************************/
 
 HRESULT OledbSupRowset::OpenTable( IOpenRowset * pIOpenRowset,
-                                   LPWSTR pwszTableName )
+                                   const char *pszTableName )
    
 {
    IColumnsInfo* 	pIColumnsInfo = NULL;
@@ -112,7 +115,7 @@ HRESULT OledbSupRowset::OpenTable( IOpenRowset * pIOpenRowset,
 /* -------------------------------------------------------------------- */
 /*      Get the rowset for the table.                                   */
 /* -------------------------------------------------------------------- */
-   hr = OledbSupGetTableRowset( pIOpenRowset, pwszTableName, &pIRowset );
+   hr = OledbSupGetTableRowset( pIOpenRowset, pszTableName, &pIRowset );
    if( FAILED( hr ) )
       return hr;
 
@@ -197,7 +200,7 @@ HRESULT OledbSupRowset::EstablishOneDefaultBinding(
    if( poColumnInfo->wType & DBTYPE_BYTES )
    {
       poBinding->wType = DBTYPE_BYTES;
-      poBinding->cbMaxLen  = 10000;
+      poBinding->cbMaxLen  = 150000;
    }
    else
    {
@@ -415,13 +418,13 @@ void *OledbSupRowset::GetFieldData( int iColumn,
 /* -------------------------------------------------------------------- */
 /*      Find the bound column that corresponds with ordinal iColumn.    */
 /* -------------------------------------------------------------------- */
-   for( iBind = 0; iBind < nBindings; iBind++ )
+   for( iBind = 0; iBind < (int) nBindings; iBind++ )
    {
-      if( paoBindings[iBind].iOrdinal == iColumn )
+      if( (int) paoBindings[iBind].iOrdinal == iColumn )
          break;
    }
 
-   if( iBind >= nBindings )
+   if( iBind >= (int) nBindings )
    {
       DumpErrorMsg( "GetFieldData() on unbound column." );
       return NULL;
@@ -463,8 +466,11 @@ int OledbSupRowset::GetColumnOrdinal( const char * pszName )
 
    AnsiToUnicode( pszName, &pwszName );
 
-   for( int i = 0; i < nColumns; i++ )
+   for( int i = 0; i < (int) nColumns; i++ )
    {
+      if( paoColumnInfo[i].pwszName == NULL )
+         continue;
+
       if( wcsicmp( pwszName, paoColumnInfo[i].pwszName ) == 0 )
       {
          iReturn = i;

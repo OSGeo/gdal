@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/03/31 15:11:16  warmerda
+ * Use char * instead of LPWSTR, better multi-provider support
+ *
  * Revision 1.1  1999/03/30 19:07:59  warmerda
  * New
  *
@@ -66,8 +69,8 @@ HRESULT UnicodeToAnsi(LPOLESTR ppszW, LPCSTR *pszA );
 int OleSupInitialize();
 int OleSupUninitialize();
 
-HRESULT OledbSupGetDataSource( REFCLSID, LPWSTR, IOpenRowset ** );
-HRESULT OledbSupGetTableRowset( IOpenRowset *, LPWSTR, IRowset ** );
+HRESULT OledbSupGetDataSource( REFCLSID, const char*, IOpenRowset ** );
+HRESULT OledbSupGetTableRowset( IOpenRowset *, const char*, IRowset ** );
 
 /************************************************************************/
 /*                         OledbSupRowset                               */
@@ -102,7 +105,7 @@ class OledbSupRowset
                  OledbSupRowset();
                 ~OledbSupRowset();
 
-    HRESULT      OpenTable( IOpenRowset *, LPWSTR );
+    HRESULT      OpenTable( IOpenRowset *, const char * );
 
     IRowset     *GetIRowset() { return pIRowset; }
 

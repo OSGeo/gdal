@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/03/31 15:11:16  warmerda
+ * Use char * instead of LPWSTR, better multi-provider support
+ *
  * Revision 1.1  1999/03/30 19:07:59  warmerda
  * New
  *
@@ -169,101 +172,118 @@ HRESULT AnsiToUnicode(LPCSTR pszA, LPOLESTR* ppszW)
 /************************************************************************/
 
 HRESULT OledbSupGetDataSource( REFCLSID phProviderCLSID, 
-                               LPWSTR pwszDataSource,
+                               const char *pszDataSource,
                                IOpenRowset **ppIOpenRowset )
 
 {
-   IDBCreateSession    *pIDBCreateSession = NULL;
-   IDBInitialize*	pIDBInit = NULL;
-   IDBProperties*	pIDBProperties = NULL;
-   DBPROPSET		dbPropSet[1];
-   DBPROP			dbProp[1];
+    IDBCreateSession    *pIDBCreateSession = NULL;
+    IDBInitialize*	pIDBInit = NULL;
+    IDBProperties*	pIDBProperties = NULL;
+    DBPROPSET		dbPropSet[1];
+    DBPROP		dbProp[1];
 
-   HRESULT	hr;
+    HRESULT	hr;
 
-   assert(ppIOpenRowset != NULL);
-   *ppIOpenRowset = NULL;
+    assert(ppIOpenRowset != NULL);
+    *ppIOpenRowset = NULL;
 
-   VariantInit(&(dbProp[0].vValue));
+    VariantInit(&(dbProp[0].vValue));
 
-   // Create an instance of the SampProv sample data provider
-   hr = CoCreateInstance( phProviderCLSID, NULL, CLSCTX_INPROC_SERVER, 
-                          IID_IDBInitialize, (void **)&pIDBInit ); 
-   if (FAILED(hr))
-   {
-      DumpErrorHResult( hr, "CoCreateInstance" );
-      goto error;
-   }
+    // Create an instance of the SampProv sample data provider
+    hr = CoCreateInstance( phProviderCLSID, NULL, CLSCTX_INPROC_SERVER, 
+                           IID_IDBInitialize, (void **)&pIDBInit ); 
+    if (FAILED(hr))
+    {
+        DumpErrorHResult( hr, "CoCreateInstance" );
+        goto error;
+    }
 
-   // Initialize this provider with the path to the customer.csv file
-   dbPropSet[0].rgProperties		= &dbProp[0];
-   dbPropSet[0].cProperties		= 1;
-   dbPropSet[0].guidPropertySet	= DBPROPSET_DBINIT;
-	
-   dbProp[0].dwPropertyID			= DBPROP_INIT_DATASOURCE;
-   dbProp[0].dwOptions				= DBPROPOPTIONS_REQUIRED;
-   dbProp[0].colid					= DB_NULLID;
-   V_VT(&(dbProp[0].vValue))		= VT_BSTR;
-   V_BSTR(&(dbProp[0].vValue))		= SysAllocString( pwszDataSource );
-   if ( NULL == V_BSTR(&(dbProp[0].vValue)) )
-   {
-      DumpErrorMsg( "SysAllocString failed\n" );
-      goto error;
-   }
+/* -------------------------------------------------------------------- */
+/*      Select the data source.  We don't need to do this for some      */
+/*      providers, it seems.                                            */
+/* -------------------------------------------------------------------- */
+    if( pszDataSource != NULL && strlen(pszDataSource) > 0 )
+    {
+        LPWSTR            pwszDataSource = NULL;
+        // Initialize this provider with the path to the customer.csv file
+        dbPropSet[0].rgProperties	= &dbProp[0];
+        dbPropSet[0].cProperties	= 1;
+        dbPropSet[0].guidPropertySet	= DBPROPSET_DBINIT;
+       
+        dbProp[0].dwPropertyID		= DBPROP_INIT_DATASOURCE;
+        dbProp[0].dwOptions		= DBPROPOPTIONS_REQUIRED;
+        dbProp[0].colid			= DB_NULLID;
 
-   hr = pIDBInit->QueryInterface( IID_IDBProperties, (void**)&pIDBProperties);
-   if (FAILED(hr))
-   {
-      DumpErrorHResult( hr, "IDBInitialize::QI for IDBProperties");
-      goto error;
-   }
+        AnsiToUnicode( pszDataSource, &pwszDataSource );
 
-   hr = pIDBProperties->SetProperties( 1, &dbPropSet[0]);
-   if (FAILED(hr))
-   {
-      DumpErrorHResult( hr, "IDBProperties::SetProperties" );
-      goto error;
-   }
-		
-   hr = pIDBInit->Initialize();
-   if (FAILED(hr))
-   {
-      DumpErrorHResult( hr, "IDBInitialize::Initialize" );
-      goto error;
-   }
+        V_VT(&(dbProp[0].vValue))	= VT_BSTR;
+        V_BSTR(&(dbProp[0].vValue))	= SysAllocString( pwszDataSource );
+        CoTaskMemFree( pwszDataSource );
 
-   hr = pIDBInit->QueryInterface( IID_IDBCreateSession, 
-                                  (void**)&pIDBCreateSession);
-   pIDBInit->Release();
-   pIDBInit = NULL;
+        if ( NULL == V_BSTR(&(dbProp[0].vValue)) )
+        {
+            DumpErrorMsg( "SysAllocString failed\n" );
+            goto error;
+        }
+
+        hr = pIDBInit->QueryInterface( IID_IDBProperties, 
+                                       (void**)&pIDBProperties);
+        if (FAILED(hr))
+        {
+            DumpErrorHResult( hr, "IDBInitialize::QI for IDBProperties");
+            goto error;
+        }
+
+        hr = pIDBProperties->SetProperties( 1, &dbPropSet[0]);
+        if (FAILED(hr))
+        {
+            DumpErrorHResult( hr, "IDBProperties::SetProperties" );
+            goto error;
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Initialize the database.                                        */
+/* -------------------------------------------------------------------- */
+    hr = pIDBInit->Initialize();
+    if (FAILED(hr))
+    {
+        DumpErrorHResult( hr, "IDBInitialize::Initialize" );
+        goto error;
+    }
+
+    hr = pIDBInit->QueryInterface( IID_IDBCreateSession, 
+                                   (void**)&pIDBCreateSession);
+    pIDBInit->Release();
+    pIDBInit = NULL;
         
-   if (FAILED(hr))
-   {
-      DumpErrorHResult( hr, "IDBInitialize::QI for IDBCreateSession");
-      goto error;
-   }
+    if (FAILED(hr))
+    {
+        DumpErrorHResult( hr, "IDBInitialize::QI for IDBCreateSession");
+        goto error;
+    }
 
-   hr = pIDBCreateSession->CreateSession( NULL, IID_IOpenRowset, 
-                                          (IUnknown**) ppIOpenRowset );    
+    hr = pIDBCreateSession->CreateSession( NULL, IID_IOpenRowset, 
+                                           (IUnknown**) ppIOpenRowset );    
 
-   pIDBCreateSession->Release();
-   pIDBCreateSession = NULL;
+    pIDBCreateSession->Release();
+    pIDBCreateSession = NULL;
      
-   if (FAILED(hr))
-   {
-      DumpErrorHResult( hr, "IDBCreateSession::CreateSession");
-      goto error;
-   }
+    if (FAILED(hr))
+    {
+        DumpErrorHResult( hr, "IDBCreateSession::CreateSession");
+        goto error;
+    }
 
-   hr = ResultFromScode( S_OK );
+    hr = ResultFromScode( S_OK );
 
   error:    
-   VariantClear( &(dbProp[0].vValue) );
+    VariantClear( &(dbProp[0].vValue) );
 
-   if( pIDBProperties )
-      pIDBProperties->Release();
+    if( pIDBProperties )
+        pIDBProperties->Release();
 
-   return hr;    
+    return hr;    
 }
 
 /************************************************************************/
@@ -273,7 +293,7 @@ HRESULT OledbSupGetDataSource( REFCLSID phProviderCLSID,
 /************************************************************************/
 
 HRESULT OledbSupGetTableRowset( IOpenRowset * pIOpenRowset, 
-                                LPWSTR pwszTableName, 
+                                const char *pszTableName, 
                                 IRowset ** ppIRowset )
 {
    DBID            dbcolid;
@@ -286,7 +306,7 @@ HRESULT OledbSupGetTableRowset( IOpenRowset * pIOpenRowset,
     
    // tell the provider which table to open
    dbcolid.eKind           = DBKIND_NAME;
-   dbcolid.uName.pwszName  = pwszTableName;
+   AnsiToUnicode( pszTableName, &(dbcolid.uName.pwszName) );
     
    hr = pIOpenRowset->OpenRowset
       ( NULL,                 // pUnkOuter - we are not aggregating
@@ -296,6 +316,8 @@ HRESULT OledbSupGetTableRowset( IOpenRowset * pIOpenRowset,
         0,                    // cProperties - we are niave about props for now
         NULL,                 // prgProperties[]
         (IUnknown**)ppIRowset );
+
+   CoTaskMemFree( dbcolid.uName.pwszName );
 
    if (FAILED(hr))
    {
