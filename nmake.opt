@@ -110,6 +110,10 @@ JPEG_SUPPORTED = 1
 #		lti_dsdk.lib advapi32.lib user32.lib
 #MRSID_FLAGS =	-DMRSID_DSDK_VERSION_40
 
+# PostGIS Libraries
+#PG_INC_DIR = n:\pkg\libpq_win32\include
+#PG_LIB = n:\pkg\libpq_win32\lib\libpqdll.lib wsock32.lib
+
 # Uncomment the following and update to enable FME support.
 #FME_DIR =	d:\Software\fme
 
