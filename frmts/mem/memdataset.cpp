@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2003/04/16 14:37:54  warmerda
+ * Comment out debug messages ... too noisy.
+ *
  * Revision 1.15  2003/02/03 17:57:30  warmerda
  * Fix for last fix.
  *
@@ -105,7 +108,7 @@ MEMRasterBand::MEMRasterBand( GDALDataset *poDS, int nBand,
                               int bAssumeOwnership )
 
 {
-    CPLDebug( "MEM", "MEMRasterBand(%p)", this );
+    //CPLDebug( "MEM", "MEMRasterBand(%p)", this );
 
     this->poDS = poDS;
     this->nBand = nBand;
@@ -143,10 +146,10 @@ MEMRasterBand::MEMRasterBand( GDALDataset *poDS, int nBand,
 MEMRasterBand::~MEMRasterBand()
 
 {
-    CPLDebug( "MEM", "~MEMRasterBand(%p)", this );
+    //CPLDebug( "MEM", "~MEMRasterBand(%p)", this );
     if( bOwnData )
     {
-        CPLDebug( "MEM", "~MEMRasterBand() - free raw data." );
+        //CPLDebug( "MEM", "~MEMRasterBand() - free raw data." );
         VSIFree( pabyData );
     }
 
