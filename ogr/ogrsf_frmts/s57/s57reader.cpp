@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2000/06/07 21:34:04  warmerda
+ * fixed problem with corrupt datasets with an ATTL value of zero
+ *
  * Revision 1.15  1999/12/22 15:37:05  warmerda
  * removed abort
  *
@@ -536,8 +539,29 @@ void S57Reader::ApplyObjectClassAttributes( DDFRecord * poRecord,
     for( iAttr = 0; iAttr < nAttrCount; iAttr++ )
     {
         int     nAttrId = poRecord->GetIntSubfield("ATTF",0,"ATTL",iAttr);
+        const char *pszAcronym;
         
-        poFeature->SetField( poRegistrar->GetAttrAcronym(nAttrId),
+        if( nAttrId < 1 || nAttrId > poRegistrar->GetMaxAttrIndex() 
+            || (pszAcronym = poRegistrar->GetAttrAcronym(nAttrId)) == NULL )
+        {
+            static int bAttrWarningIssued = FALSE;
+
+            if( !bAttrWarningIssued )
+            {
+                bAttrWarningIssued = TRUE;
+                CPLError( CE_Warning, CPLE_AppDefined,
+                        "Illegal feature attribute id (ATTF:ATTL[%d]) of %d\n"
+                        "on feature FIDN=%d, FIDS=%d.\n"
+                        "Skipping attribute, no more warnings will be issued.",
+                          iAttr, nAttrId, 
+                          poFeature->GetFieldAsInteger( "FIDN" ),
+                          poFeature->GetFieldAsInteger( "FIDS" ) );
+            }
+
+            continue;
+        }
+        
+        poFeature->SetField( pszAcronym,
                           poRecord->GetStringSubfield("ATTF",0,"ATVL",iAttr) );
     }
     
