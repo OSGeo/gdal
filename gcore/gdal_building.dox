@@ -178,4 +178,22 @@ These are:
 
 </ul>
 
+<a name="largefiles"><h2>Large File Support</h2></a>
+
+GDAL supports reading and writing large files (> 2GiB) if it is possible in your
+operating system. Notes about large file support in Linux available here: <a
+href="http://www.suse.de/~aj/linux_lfs.html">http://www.suse.de/~aj/linux_lfs.html</a>.
+In short: if you have kernel 2.4.x and glibc 2.2.x your are in luck. Maximum
+file size depends on cluster size. For ext2 filesystem with 1 KiB clusters it is 16448
+MiB, for ext2 with 4 KiB clusters it is 2048 GiB. Other filesystems can handle
+even larger files.<p>
+
+Information about large file support in Windows could be obtained at <a
+href="http://msdn.microsoft.com/library/default.asp?url=/library/en-us/fileio/base/supported_file_systems.asp">
+MSDN</a>. In short, maximum file size at NTFS is limited by (2^64 - 1) bytes, at
+FAT32 and FAT16 it is (2^32 - 1) bytes. So don't try to create files, larger
+than 4 GiB on FAT32. In some cases you will not get an error message during
+jumping over 4GiB barrier, but all your data will be lost. This is not GDAL
+bug, this is Windows problem.<p>
+
 */
