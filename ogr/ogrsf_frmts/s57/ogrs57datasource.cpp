@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2002/09/09 18:38:58  warmerda
+ * Initialize module list.
+ *
  * Revision 1.19  2002/09/09 18:20:58  warmerda
  * fixed serious leak ... S57Readers never destroyed!
  *
@@ -104,6 +107,9 @@ OGRS57DataSource::OGRS57DataSource()
 {
     nLayers = 0;
     papoLayers = NULL;
+
+    nModules = 0;
+    papoModules = NULL;
 
     pszName = NULL;
 
