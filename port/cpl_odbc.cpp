@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2003/09/26 20:02:41  warmerda
+ * update GetColData()
+ *
  * Revision 1.3  2003/09/26 13:51:02  warmerda
  * Add documentation
  *
@@ -100,7 +103,7 @@ int CPLODBCSession::Failed( int nRetCode, HSTMT hStmt )
 {
     SQLCHAR achSQLState[SQL_MAX_MESSAGE_LENGTH];
     SQLINTEGER nNativeError;
-    SQLSMALLINT nTextLength;
+    SQLSMALLINT nTextLength=0;
 
     m_szLastError[0] = '\0';
 
@@ -301,7 +304,7 @@ int CPLODBCStatement::CollectResultsInfo()
     m_papszColValues = (char **) calloc(sizeof(char *),(m_nColCount+1));
 
     m_panColType = (short *) calloc(sizeof(short),m_nColCount);
-    m_panColSize = (short *) calloc(sizeof(short),m_nColCount);
+    m_panColSize = (SQLULEN *) calloc(sizeof(SQLULEN),m_nColCount);
     m_panColPrecision = (short *) calloc(sizeof(short),m_nColCount);
     m_panColNullable = (short *) calloc(sizeof(short),m_nColCount);
 
@@ -542,16 +545,53 @@ int CPLODBCStatement::Fetch( int nOrientation, int nOffset )
  * 
  * @param iCol the zero based column to fetch. 
  *
+ * @param pszDefault the value to return if the column does not exist, or is
+ * NULL.  Defaults to NULL.
+ *
  * @return pointer to internal column data or NULL on failure.
  */
 
-const char *CPLODBCStatement::GetColData( int iCol )
+const char *CPLODBCStatement::GetColData( int iCol, const char *pszDefault )
 
 {
     if( iCol < 0 || iCol >= m_nColCount )
-        return NULL;
-    else 
+        return pszDefault;
+    else if( m_papszColValues[iCol] != NULL )
         return m_papszColValues[iCol];
+    else
+        return pszDefault;
+}
+
+/************************************************************************/
+/*                             GetColData()                             */
+/************************************************************************/
+
+/**
+ * Fetch column data. 
+ *
+ * Fetches the data contents of the requested column for the currently loaded
+ * row.  The result is returned as a string regardless of the column type.  
+ * NULL is returned if an illegal column is given, or if the actual column
+ * is "NULL". 
+ * 
+ * @param pszColName the name of the column requested.
+ *
+ * @param pszDefault the value to return if the column does not exist, or is
+ * NULL.  Defaults to NULL.
+ *
+ * @return pointer to internal column data or NULL on failure.
+ */
+
+const char *CPLODBCStatement::GetColData( const char *pszColName, 
+                                          const char *pszDefault )
+
+{
+    int iCol = GetColId( pszColName );
+
+    if( iCol == -1 )
+        return pszDefault;
+    else
+        return GetColData( iCol, pszDefault );
 }
 
 /************************************************************************/
@@ -806,7 +846,7 @@ int CPLODBCStatement::GetColumns( const char *pszTable,
     m_papszColValues = (char **) calloc(sizeof(char *),(m_nColCount+1));
 
     m_panColType = (short *) calloc(sizeof(short),m_nColCount);
-    m_panColSize = (short *) calloc(sizeof(short),m_nColCount);
+    m_panColSize = (SQLULEN *) calloc(sizeof(SQLULEN),m_nColCount);
     m_panColPrecision = (short *) calloc(sizeof(short),m_nColCount);
     m_panColNullable = (short *) calloc(sizeof(short),m_nColCount);
 

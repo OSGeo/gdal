@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2003/09/26 20:02:41  warmerda
+ * update GetColData()
+ *
  * Revision 1.3  2003/09/26 13:51:02  warmerda
  * Add documentation
  *
@@ -101,7 +104,7 @@ class CPL_DLL CPLODBCStatement {
     short          m_nColCount;
     char         **m_papszColNames;
     short         *m_panColType;
-    short         *m_panColSize;
+    SQLULEN       *m_panColSize;
     short         *m_panColPrecision;
     short         *m_panColNullable;
 
@@ -144,7 +147,8 @@ class CPL_DLL CPLODBCStatement {
     short          GetColNullable(int iCol);
 
     int            GetColId( const char * );
-    const char    *GetColData( int );
+    const char    *GetColData( int, const char * = NULL );
+    const char    *GetColData( const char *, const char * = NULL );
 
     // Fetch special metadata.
     int            GetColumns( const char *pszTable, 
