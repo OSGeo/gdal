@@ -29,6 +29,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.45  2004/11/05 04:08:01  fwarmerdam
+ * Don't crash if access to the histogram table files for some reason.
+ *
  * Revision 1.44  2004/10/27 18:06:45  fwarmerdam
  * Avoid use of auto-sized arrays ... not really C++ standard.
  *
@@ -711,7 +714,8 @@ void HFARasterBand::ReadAuxMetadata()
         int nOffset =  poEntry->GetIntField( "columnDataPtr" );
         const char * pszType =  poEntry->GetStringField( "dataType" );
         int nBinSize = 4;
-        if ( EQUALN( "real", pszType, 4 ) )
+        
+        if( pszType != NULL && EQUALN( "real", pszType, 4 ) )
         {
             nBinSize = 8;
         }
