@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2001/12/01 17:01:50  warmerda
+ * don't omit empty child nodes when exporting pretty wkt
+ *
  * Revision 1.15  2001/10/11 19:29:57  warmerda
  * fixed redeclaration of i
  *
@@ -560,9 +563,6 @@ OGRErr OGR_SRSNode::exportToPrettyWkt( char ** ppszResult, int bSimplify,
     
     for( i = 0; i < nChildren; i++ )
     {
-        if( strlen(papszChildrenWkt[i]) == 0 )
-            continue;
-
         if( papoChildNodes[i]->GetChildCount() > 0 )
         {
             int  j;
