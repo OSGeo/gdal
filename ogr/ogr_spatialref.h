@@ -4,7 +4,7 @@
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Classes for manipulating spatial reference systems in a
  *           platform non-specific manner.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 1999,  Les Technologies SoftMap Inc.
@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.35  2001/12/06 18:18:47  warmerda
+ * added preliminary xml srs support
+ *
  * Revision 1.34  2001/10/11 19:27:12  warmerda
  * upgraded validation infrastructure
  *
@@ -195,7 +198,7 @@ class CPL_DLL OGR_SRSNode
     OGRErr      importFromWkt( char ** );
     OGRErr      exportToWkt( char ** );
     OGRErr      exportToPrettyWkt( char **, int = FALSE, int = 1);
-
+    
     OGRErr      applyRemapper( const char *pszNode, 
                                char **papszSrcValues, 
                                char **papszDstValues, 
@@ -249,9 +252,11 @@ class CPL_DLL OGRSpatialReference
     OGRErr      exportToWkt( char ** );
     OGRErr      exportToPrettyWkt( char **, int = FALSE);
     OGRErr      exportToProj4( char ** );
+    OGRErr      exportToXML( char **, const char * = NULL );
     OGRErr      importFromProj4( const char * );
     OGRErr      importFromEPSG( int );
     OGRErr      importFromESRI( char ** );
+    OGRErr      importFromXML( const char * );
 
     OGRErr	morphToESRI();
     OGRErr	morphFromESRI();

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.42  2001/12/06 18:18:47  warmerda
+ * added preliminary xml srs support
+ *
  * Revision 1.41  2001/11/15 16:26:03  warmerda
  * added check in StripCTParms
  *
@@ -1220,12 +1223,12 @@ OGRErr OGRSpatialReference::SetFromUserInput( const char * pszDefinition )
 /*      Try to open it as a file.                                       */
 /* -------------------------------------------------------------------- */
     FILE	*fp;
-    char	szBuffer[40000], *pszBufPtr;
+    char	szBuffer[100000], *pszBufPtr;
     int		nBytes;
 
     fp = VSIFOpen( pszDefinition, "rt" );
     if( fp == NULL )
-        return OGRERR_NONE;
+        return OGRERR_CORRUPT_DATA;
 
     nBytes = VSIFRead( szBuffer, 1, sizeof(szBuffer), fp );
     VSIFClose( fp );
@@ -1239,9 +1242,16 @@ OGRErr OGRSpatialReference::SetFromUserInput( const char * pszDefinition )
         return OGRERR_FAILURE;
     }
 
-    pszBufPtr = szBuffer;
+    szBuffer[nBytes] = '\0';
 
-    return importFromWkt( &pszBufPtr );
+    pszBufPtr = szBuffer;
+    while( pszBufPtr[0] == ' ' || pszBufPtr[0] == '\n' )
+        pszBufPtr++;
+
+    if( szBuffer[0] == '<' )
+        return importFromXML( pszBufPtr );
+    else
+        return importFromWkt( &pszBufPtr );
 }
 
 /************************************************************************/

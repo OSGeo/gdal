@@ -3,7 +3,7 @@
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Test mainline for translating EPSG definitions into WKT.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 2000, Frank Warmerdam
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2001/12/06 18:18:47  warmerda
+ * added preliminary xml srs support
+ *
  * Revision 1.3  2001/01/19 21:10:47  warmerda
  * replaced tabs
  *
@@ -45,9 +48,12 @@
 void Usage()
 
 {
-    printf( "testepsg [-t src_csnum trg_csnum x y]* [csnum]*\n" );
+    printf( "testepsg [-t src_def trg_def x y]* [def]*\n" );
     printf( "  -t: transform a coordinate from source GCS/PCS to target GCS/PCS\n" );
-    printf( "  csnum's on their own are translated to WKT and printed.\n" );
+    printf( "\n" );
+    printf( "def's  on their own are translated to WKT & XML and printed.\n" );
+    printf( "def's may be of any user input format, a WKT def, an\n" ); 
+    printf( "EPSG:n definition or the name of a file containing WKT/XML.\n");
 }
 
 int main( int nArgc, char ** papszArgv )
@@ -64,8 +70,20 @@ int main( int nArgc, char ** papszArgv )
             OGRCoordinateTransformation *poCT;
             double                      x, y;
             
-            oSourceSRS.importFromEPSG( atoi(papszArgv[i+1]) );
-            oTargetSRS.importFromEPSG( atoi(papszArgv[i+2]) );
+            if( oSourceSRS.SetFromUserInput(papszArgv[i+1]) != OGRERR_NONE )
+            {
+                CPLError( CE_Failure, CPLE_AppDefined, 
+                          "SetFromUserInput(%s) failed.", 
+                          papszArgv[i+1] );
+                continue;
+            }
+            if( oTargetSRS.SetFromUserInput(papszArgv[i+2]) != OGRERR_NONE )
+            {
+                CPLError( CE_Failure, CPLE_AppDefined, 
+                          "SetFromUserInput(%s) failed.", 
+                          papszArgv[i+2] );
+                continue;
+            }
             
             poCT = OGRCreateCoordinateTransformation( &oSourceSRS,
                                                       &oTargetSRS );
@@ -84,26 +102,44 @@ int main( int nArgc, char ** papszArgv )
         }
         else 
         {
-            if( oSRS.importFromEPSG( atoi(papszArgv[i]) ) != OGRERR_NONE )
-                printf( "Error occured translating %s.\n", 
-                        papszArgv[i] );
+            if( oSRS.SetFromUserInput(papszArgv[i]) != OGRERR_NONE )
+                CPLError( CE_Failure, CPLE_AppDefined, 
+                          "Error occured translating %s.\n", 
+                          papszArgv[i] );
             else
             {
                 char  *pszWKT = NULL;
                 
-                oSRS.exportToWkt( &pszWKT );
-                printf( "WKT[%s] = %s\n", 
+                oSRS.exportToPrettyWkt( &pszWKT, FALSE );
+                printf( "WKT[%s] =\n%s\n", 
                         papszArgv[i], pszWKT );
                 CPLFree( pszWKT );
 
                 printf( "\n" );
 
-                oSRS.StripCTParms();
-                oSRS.exportToWkt( &pszWKT );
+                OGRSpatialReference *poSRS2;
+
+                poSRS2 = oSRS.Clone();
+                poSRS2->StripCTParms();
+                poSRS2->exportToWkt( &pszWKT );
                 printf( "Old Style WKT[%s] = %s\n", 
                         papszArgv[i], pszWKT );
                 CPLFree( pszWKT );
+
+                char       *pszRawXML;
                 printf( "\n------------------------\n\n" );
+                if( oSRS.exportToXML(&pszRawXML) == OGRERR_NONE )
+                {
+                    printf( "XML[%s] =\n%s\n", 
+                            papszArgv[i], pszRawXML );
+                    CPLFree( pszRawXML );
+                }
+                else
+                {
+                    printf( "XML translation failed\n" );
+                }
+
+                printf( "\n" );
             }
         }
     }
