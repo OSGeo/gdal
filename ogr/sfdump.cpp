@@ -1,3 +1,38 @@
+/******************************************************************************
+ * $Id$
+ *
+ * Project:  OpenGIS Simple Features Reference Implementation
+ * Purpose:  Mainline for dumping stuff from an SFCOM OLEDB provider.
+ * Author:   Frank Warmerdam, warmerda@home.com
+ *
+ ******************************************************************************
+ * Copyright (c) 1999, Frank Warmerdam
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ ******************************************************************************
+ *
+ * $Log$
+ * Revision 1.7  1999/04/19 19:13:08  warmerda
+ * added code to create a spatial reference
+ *
+ */
+
 #define INITGUID
 #define DBINITCONSTANTS
 
@@ -7,6 +42,7 @@
 #include "ogr_geometry.h"
 
 #include "geometryidl.h"
+#include "spatialreferenceidl.h"
 
 // Get various classid.
 #include "msdaguid.h"
@@ -16,6 +52,8 @@
 //const IID IID_IGeometry = {0x6A124031,0xFE38,0x11d0,{0xBE,0xCE,0x00,0x80,0x5F,0x7C,0x42,0x68}};
 
 const IID IID_IGeometryFactory = {0x6A124033,0xFE38,0x11d0,{0xBE,0xCE,0x00,0x80,0x5F,0x7C,0x42,0x68}};
+
+const IID IID_ISpatialReferenceFactory = {0x620600B1,0xFEA1,0x11d0,{0xB0,0x4B,0x00,0x80,0xC7,0xF7,0x94,0x81}};
 
 static HRESULT SFDumpGeomColumn( IOpenRowset*, const char *, const char * );
 static HRESULT SFDumpSchema( IOpenRowset*, const char * );
@@ -185,6 +223,55 @@ static HRESULT SFDumpGeomColumn( IOpenRowset* pIOpenRowset,
     }
 
 /* -------------------------------------------------------------------- */
+/*      If we got a geometry factory, try to make a spatial             */
+/*      reference factory.                                              */
+/* -------------------------------------------------------------------- */
+    ISpatialReference *pISR = NULL;
+
+    if( pIGeometryFactory != NULL )
+    {
+        ISpatialReferenceFactory *pISRFactory = NULL;
+
+        hr = CoCreateInstance( CLSID_CadcorpSFSpatialReferenceFactory, NULL, 
+                               CLSCTX_INPROC_SERVER, 
+                               IID_ISpatialReferenceFactory, 
+                               (void **)&pISRFactory); 
+        if( FAILED(hr) ) 
+        {
+            DumpErrorHResult( hr, 
+                              "CoCreateInstance of "
+                              "CLSID_CadcorpSFSpatialReferenceFactory" );
+
+            pISRFactory = NULL;
+        }
+
+/* -------------------------------------------------------------------- */
+/*      Now try to create a spatial reference object.                   */
+/* -------------------------------------------------------------------- */
+        if( pISRFactory != NULL )
+        {
+            BSTR sWKT = L"GEOGCS[\"Latitude/Longitude.WGS 84\",DATUM[\"WGS 84\",SPHEROID[\"anon\",6378137,298.25722356049]],PRIMEM[\"Greenwich\",0],UNIT[\"Degree\",0.0174532925199433]]";
+
+           hr = pISRFactory->CreateFromWKT( sWKT, &pISR );
+            if( FAILED(hr) )
+            {
+                DumpErrorHResult( hr, 
+                                  "CreateFromWKT failed." );
+                pISR = NULL;
+            }
+
+            pISRFactory->Release();
+            pISRFactory = NULL;
+        }
+
+        if( pISR == NULL )
+        {
+            pIGeometryFactory->Release();
+            pIGeometryFactory = NULL;
+        }
+    }
+
+/* -------------------------------------------------------------------- */
 /*      For now we just read through, counting records to verify        */
 /*      things are working.                                             */
 /* -------------------------------------------------------------------- */
@@ -231,25 +318,25 @@ static HRESULT SFDumpGeomColumn( IOpenRowset* pIOpenRowset,
             VARIANT        oVarData;
             SAFEARRAYBOUND aoBounds[1];
             SAFEARRAY      *pArray;
-			void		   *pSafeData;
+            void		   *pSafeData;
 
             aoBounds[0].lLbound = 0;
             aoBounds[0].cElements = nSize;
             
             pArray = SafeArrayCreate(VT_UI1,1,aoBounds);
 
-			hr = SafeArrayAccessData( pArray, &pSafeData );
-			if( !FAILED(hr) )
-			{
-				memcpy( pSafeData, pabyData, nSize );
-				SafeArrayUnaccessData( pArray );
-			}
+            hr = SafeArrayAccessData( pArray, &pSafeData );
+            if( !FAILED(hr) )
+            {
+                memcpy( pSafeData, pabyData, nSize );
+                SafeArrayUnaccessData( pArray );
+            }
 
             VariantInit( &oVarData );
             oVarData.vt = VT_UI1 | VT_ARRAY;
             oVarData.pparray = &pArray;
 
-            hr = pIGeometryFactory->CreateFromWKB( oVarData, NULL,
+            hr = pIGeometryFactory->CreateFromWKB( oVarData, pISR,
                                                    &pIGeometry );
 
             printf( "pIGeometry = %p\n", pIGeometry );
@@ -267,6 +354,9 @@ static HRESULT SFDumpGeomColumn( IOpenRowset* pIOpenRowset,
 
     if( pIGeometryFactory == NULL )
         pIGeometryFactory->Release();
+
+    if( pISR != NULL )
+        pISR->Release();
 
     return ResultFromScode( S_OK );
 }
