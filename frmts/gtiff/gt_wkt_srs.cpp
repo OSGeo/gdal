@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.47  2004/04/29 19:58:43  warmerda
+ * export GTIFGetOGISDefn, and GTIFSetFromOGISDefn
+ *
  * Revision 1.46  2004/04/29 18:10:35  warmerda
  * try not to crash if GTIF is NULL
  *
@@ -188,8 +191,8 @@
 CPL_CVSID("$Id$");
 
 CPL_C_START
-char *  GTIFGetOGISDefn( GTIF *, GTIFDefn * );
-int     GTIFSetFromOGISDefn( GTIF *, const char * );
+char CPL_DLL *  GTIFGetOGISDefn( GTIF *, GTIFDefn * );
+int  CPL_DLL   GTIFSetFromOGISDefn( GTIF *, const char * );
 
 CPLErr CPL_DLL GTIFMemBufFromWkt( const char *pszWKT, 
                                   const double *padfGeoTransform,
