@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2004/08/11 18:46:45  warmerda
+ * pass pszVRTPath through serialize methods
+ *
  * Revision 1.4  2004/03/16 18:36:02  warmerda
  * Don't use pszVRTPath if it is NULL.
  *
@@ -154,10 +157,12 @@ void VRTSimpleSource::SetNoDataValue( double dfNewNoDataValue )
 /*                           SerializeToXML()                           */
 /************************************************************************/
 
-CPLXMLNode *VRTSimpleSource::SerializeToXML()
+CPLXMLNode *VRTSimpleSource::SerializeToXML( const char *pszVRTPath )
 
 {
     CPLXMLNode      *psSrc;
+    int              bRelativeToVRT;
+    const char      *pszRelativePath;
 
     if( poRasterBand == NULL )
         return NULL;
@@ -169,7 +174,16 @@ CPLXMLNode *VRTSimpleSource::SerializeToXML()
 
     psSrc = CPLCreateXMLNode( NULL, CXT_Element, "SimpleSource" );
 
-    CPLSetXMLValue( psSrc, "SourceFilename", poDS->GetDescription() );
+    pszRelativePath = 
+        CPLExtractRelativePath( pszVRTPath, poDS->GetDescription(), 
+                                &bRelativeToVRT );
+    
+    CPLSetXMLValue( psSrc, "SourceFilename", pszRelativePath );
+    
+    CPLCreateXMLNode( 
+        CPLCreateXMLNode( CPLGetXMLNode( psSrc, "SourceFilename" ), 
+                          CXT_Attribute, "relativeToVRT" ), 
+        CXT_Text, bRelativeToVRT ? "1" : "0" );
 
     CPLSetXMLValue( psSrc, "SourceBand", 
                     CPLSPrintf("%d",poRasterBand->GetBand()) );
@@ -489,10 +503,10 @@ VRTAveragedSource::VRTAveragedSource()
 /*                           SerializeToXML()                           */
 /************************************************************************/
 
-CPLXMLNode *VRTAveragedSource::SerializeToXML()
+CPLXMLNode *VRTAveragedSource::SerializeToXML( const char *pszVRTPath )
 
 {
-    CPLXMLNode *psSrc = VRTSimpleSource::SerializeToXML();
+    CPLXMLNode *psSrc = VRTSimpleSource::SerializeToXML( pszVRTPath );
 
     if( psSrc == NULL )
         return NULL;
@@ -670,10 +684,10 @@ VRTComplexSource::~VRTComplexSource()
 /*                           SerializeToXML()                           */
 /************************************************************************/
 
-CPLXMLNode *VRTComplexSource::SerializeToXML()
+CPLXMLNode *VRTComplexSource::SerializeToXML( const char *pszVRTPath )
 
 {
-    CPLXMLNode *psSrc = VRTSimpleSource::SerializeToXML();
+    CPLXMLNode *psSrc = VRTSimpleSource::SerializeToXML( pszVRTPath );
 
     if( psSrc == NULL )
         return NULL;
@@ -844,7 +858,7 @@ VRTFuncSource::~VRTFuncSource()
 /*                           SerializeToXML()                           */
 /************************************************************************/
 
-CPLXMLNode *VRTFuncSource::SerializeToXML()
+CPLXMLNode *VRTFuncSource::SerializeToXML( const char * pszVRTPath )
 
 {
     return NULL;

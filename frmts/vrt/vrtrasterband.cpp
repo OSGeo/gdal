@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2004/08/11 18:46:45  warmerda
+ * pass pszVRTPath through serialize methods
+ *
  * Revision 1.19  2004/07/28 16:55:08  warmerda
  * split alot of functionality out into VRTSourcedRasterBand
  *
@@ -156,6 +159,37 @@ VRTRasterBand::~VRTRasterBand()
         delete poColorTable;
 
     CSLDestroy( papszCategoryNames );
+}
+
+/************************************************************************/
+/*                         CopyCommonInfoFrom()                         */
+/*                                                                      */
+/*      Copy common metadata, pixel descriptions, and color             */
+/*      interpretation from the provided source band.                   */
+/************************************************************************/
+
+CPLErr VRTRasterBand::CopyCommonInfoFrom( GDALRasterBand * poSrcBand )
+
+{
+    int bSuccess;
+    double dfNoData;
+
+    SetMetadata( poSrcBand->GetMetadata() );
+    SetColorTable( poSrcBand->GetColorTable() );
+    SetColorInterpretation(poSrcBand->GetColorInterpretation());
+    if( strlen(poSrcBand->GetDescription()) > 0 )
+        SetDescription( poSrcBand->GetDescription() );
+    dfNoData = poSrcBand->GetNoDataValue( &bSuccess );
+    if( bSuccess )
+        SetNoDataValue( dfNoData );
+
+    SetOffset( poSrcBand->GetOffset() );
+    SetScale( poSrcBand->GetScale() );
+    SetCategoryNames( poSrcBand->GetCategoryNames() );
+    if( !EQUAL(poSrcBand->GetUnitType(),"") )
+        SetUnitType( poSrcBand->GetUnitType() );
+
+    return CE_None;
 }
 
 /************************************************************************/
@@ -394,7 +428,7 @@ CPLErr VRTRasterBand::XMLInit( CPLXMLNode * psTree,
 /*                           SerializeToXML()                           */
 /************************************************************************/
 
-CPLXMLNode *VRTRasterBand::SerializeToXML()
+CPLXMLNode *VRTRasterBand::SerializeToXML( const char *pszVRTPath )
 
 {
     CPLXMLNode *psTree;

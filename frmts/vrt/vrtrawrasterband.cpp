@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2004/08/11 18:46:45  warmerda
+ * pass pszVRTPath through serialize methods
+ *
  * Revision 1.1  2004/07/30 21:50:24  warmerda
  * New
  *
@@ -330,12 +333,12 @@ CPLErr VRTRawRasterBand::XMLInit( CPLXMLNode * psTree,
 /*                           SerializeToXML()                           */
 /************************************************************************/
 
-CPLXMLNode *VRTRawRasterBand::SerializeToXML()
+CPLXMLNode *VRTRawRasterBand::SerializeToXML( const char *pszVRTPath )
 
 {
     CPLXMLNode *psTree;
 
-    psTree = VRTRasterBand::SerializeToXML();
+    psTree = VRTRasterBand::SerializeToXML( pszVRTPath );
 
 /* -------------------------------------------------------------------- */
 /*      Set subclass.                                                   */

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2004/08/11 18:46:45  warmerda
+ * pass pszVRTPath through serialize methods
+ *
  * Revision 1.1  2004/07/28 16:56:56  warmerda
  * New
  *
@@ -279,12 +282,12 @@ CPLErr VRTSourcedRasterBand::XMLInit( CPLXMLNode * psTree,
 /*                           SerializeToXML()                           */
 /************************************************************************/
 
-CPLXMLNode *VRTSourcedRasterBand::SerializeToXML()
+CPLXMLNode *VRTSourcedRasterBand::SerializeToXML( const char *pszVRTPath )
 
 {
     CPLXMLNode *psTree;
 
-    psTree = VRTRasterBand::SerializeToXML();
+    psTree = VRTRasterBand::SerializeToXML( pszVRTPath );
 
 /* -------------------------------------------------------------------- */
 /*      Process Sources.                                                */
@@ -293,7 +296,7 @@ CPLXMLNode *VRTSourcedRasterBand::SerializeToXML()
     {
         CPLXMLNode      *psXMLSrc;
 
-        psXMLSrc = papoSources[iSource]->SerializeToXML();
+        psXMLSrc = papoSources[iSource]->SerializeToXML( pszVRTPath );
         
         if( psXMLSrc != NULL )
             CPLAddXMLChild( psTree, psXMLSrc );
@@ -490,7 +493,7 @@ char **VRTSourcedRasterBand::GetMetadata( const char *pszDomain )
             CPLXMLNode      *psXMLSrc;
             char            *pszXML;
 
-            psXMLSrc = papoSources[iSource]->SerializeToXML();
+            psXMLSrc = papoSources[iSource]->SerializeToXML( NULL );
             if( psXMLSrc == NULL )
                 continue;
 
