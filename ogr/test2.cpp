@@ -29,4 +29,6 @@ int main( int argc, char ** argv )
     }
 
     delete poDS;
+
+    return 0;
 }
