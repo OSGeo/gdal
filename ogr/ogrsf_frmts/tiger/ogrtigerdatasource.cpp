@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2003/01/13 17:06:10  warmerda
+ * added support for a single county as a dataset
+ *
  * Revision 1.19  2003/01/11 15:29:55  warmerda
  * expanded tabs
  *
@@ -331,7 +334,14 @@ int OGRTigerDataSource::Open( const char * pszFilename, int bTestOpen,
 /* -------------------------------------------------------------------- */
     if( VSI_ISREG(stat.st_mode) )
     {
-        return FALSE;
+        char       szModule[128];
+
+        pszPath = CPLStrdup( CPLGetPath(pszFilename) );
+
+        strncpy( szModule, CPLGetFilename(pszFilename), sizeof(szModule)-1 );
+        szModule[strlen(szModule)-1] = '\0';
+
+        papszFileList = CSLAddString( papszFileList, szModule );
     }
     else
     {
@@ -442,7 +452,22 @@ int OGRTigerDataSource::Open( const char * pszFilename, int bTestOpen,
     nModules = CSLCount( papszModules );
 
     if( nModules == 0 )
+    {
+        if( !bTestOpen )
+        {
+            if( VSI_ISREG(stat.st_mode) )
+                CPLError( CE_Failure, CPLE_OpenFailed,
+                          "No TIGER/Line files (TGR*.RT1) found in\n"
+                          "directory: %s",
+                          pszFilename );
+            else
+                CPLError( CE_Failure, CPLE_OpenFailed,
+                          "File %s does not appear to be a TIGER/Line .RT1 file.",
+                          pszFilename );
+        }
+
         return FALSE;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Create the layers which appear to exist.                        */
