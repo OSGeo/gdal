@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/04/28 05:16:47  warmerda
+ * added usage
+ *
  * Revision 1.1  1999/04/27 22:09:30  warmerda
  * New
  *
@@ -49,10 +52,15 @@ int main( int nArgc, char ** papszArgv )
 
 {
     DDFModule	oModule;
-    const char	*pszFilename = "SC01CATD.DDF";
+    const char	*pszFilename;
 
     if( nArgc > 1 )
         pszFilename = papszArgv[1];
+    else
+    {
+        printf( "Usage: 8211view filename\n" );
+        exit( 1 );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Open the file.  Note that by default errors are reported to     */
