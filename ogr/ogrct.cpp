@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.22  2003/11/10 17:08:31  warmerda
+ * dont delete OGRSpatialReferences if they are still referenced
+ *
  * Revision 1.21  2003/06/27 19:02:50  warmerda
  * changed to use pj_init_plus instead of CSLTokenizeString
  *
@@ -378,10 +381,16 @@ OGRProj4CT::~OGRProj4CT()
 
 {
     if( poSRSSource != NULL )
-        delete poSRSSource;
+    {
+        if( poSRSSource->Dereference() <= 0 )
+            delete poSRSSource;
+    }
 
     if( poSRSTarget != NULL )
-        delete poSRSTarget;
+    {
+        if( poSRSTarget->Dereference() <= 0 )
+            delete poSRSTarget;
+    }
 
     if( psPJSource != NULL )
         pfn_pj_free( psPJSource );
