@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.2  2003/03/07 14:52:40  warmerda
+ * fixed type casting issing
+ *
  * Revision 1.1  2003/03/06 20:28:38  warmerda
  * Migrated to here (gdal/ogr) from gdal/ogr/ogrsf_frmts/gml.
  * Changed to implement the C API entry points (OGR_G_*).
@@ -459,10 +462,10 @@ static OGRGeometry *GML2OGRGeometry_XMLNode( CPLXMLNode *psNode )
 /*                      OGR_G_CreateFromGMLTree()                       */
 /************************************************************************/
 
-OGRGeometryH OGR_G_CreateFromGMLTree( CPLXMLNode *psTree )
+OGRGeometryH OGR_G_CreateFromGMLTree( const CPLXMLNode *psTree )
 
 {
-    return (OGRGeometryH) GML2OGRGeometry_XMLNode( psTree );
+    return (OGRGeometryH) GML2OGRGeometry_XMLNode( (CPLXMLNode *) psTree );
 }
 
 /************************************************************************/
