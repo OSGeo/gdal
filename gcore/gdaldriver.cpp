@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2000/06/26 18:47:14  warmerda
+ * Ensure pszHelpTopic is initialized
+ *
  * Revision 1.12  2000/04/30 23:22:16  warmerda
  * added CreateCopy support
  *
@@ -77,6 +80,7 @@ GDALDriver::GDALDriver()
 {
     pszShortName = NULL;
     pszLongName = NULL;
+    pszHelpTopic = NULL;
 
     pfnOpen = NULL;
     pfnCreate = NULL;
