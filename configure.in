@@ -123,14 +123,16 @@ INST_PREFIX=/usr/local
 INST_INCLUDE=$INST_PREFIX/include
 INST_LIB=$INST_PREFIX/lib
 INST_BIN=$INST_PREFIX/bin
+INST_DATA=$INST_PREFIX/share/gdal
 
 AC_SUBST(INST_PREFIX,$INST_PREFIX)
 AC_SUBST(INST_INCLUDE,$INST_INCLUDE)
 AC_SUBST(INST_LIB,$INST_LIB)
 AC_SUBST(INST_BIN,$INST_BIN)
+AC_SUBST(INST_DATA,$INST_DATA)
 
 dnl ---------------------------------------------------------------------------
-AC_ARG_WITH(ogr,[  --with-ogr        Build OGR into shared library],,)
+AC_ARG_WITH(ogr,[  --with-ogr              Build OGR into shared library],,)
 
 if test "$with_ogr" = yes ; then
   echo checking for OGR ... enabled by user
