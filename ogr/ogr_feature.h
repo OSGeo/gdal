@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2000/12/07 03:40:13  danmo
+ * Removed stray comma in OGRFieldType enum defn
+ *
  * Revision 1.14  2000/10/03 19:19:56  danmo
  * Made m_pszStyleString protected (was private)
  *
@@ -103,7 +106,7 @@ enum OGRFieldType
   /** Array of strings */                       OFTStringList = 5,
   /** Double byte string (unsupported) */       OFTWideString = 6,
   /** List of wide strings (unsupported) */     OFTWideStringList = 7,
-  /** Raw Binary data (unsupported) */          OFTBinary = 8,
+  /** Raw Binary data (unsupported) */          OFTBinary = 8
 };
 
 /**
