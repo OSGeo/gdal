@@ -43,6 +43,8 @@ from <a href="http://www.freegis.org/">www.freegis.org</a> in RPM format.<p>
 
 <li> <a href="http://hobu.stat.iastate.edu/gdal-1.1.9win32.exe">http://hobu.stat.iastate.edu/gdal-1.1.9win32.exe</a>: Python 2.3 GDAL 1.1.9 add-on including Oracle Spatial, ECW, netcdf, GML and PostGIS.<p>
 
+<li> <a href="http://hobu.stat.iastate.edu/gdal-1.2.0win32.exe">http://hobu.stat.iastate.edu/gdal-1.2.0win32.exe</a>: Python 2.3 GDAL 1.2.0 add-on including ECW, netcdf, GML and PostGIS.<p>
+
 </ol>
 
 <h2>Source</h2>
