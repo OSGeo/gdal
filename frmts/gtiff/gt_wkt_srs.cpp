@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.39  2003/06/19 19:39:09  warmerda
+ * when preparing a coordinate-system inmemory GeoTIFF also write image data
+ *
  * Revision 1.38  2003/03/26 22:13:53  warmerda
  * Changed geod_datum.csv to datum.csv.
  *
@@ -629,13 +632,13 @@ int GTIFSetFromOGISDefn( GTIF * psGTIF, const char *pszOGCWKT )
         && EQUAL(poSRS->GetAuthorityName("PROJCS|GEOGCS|DATUM|SPHEROID"),
                  "EPSG")) 
     {
-        nSpheroid = 
+        nSpheroid = (short)
             atoi(poSRS->GetAuthorityCode("PROJCS|GEOGCS|DATUM|SPHEROID"));
     }
     else if( poSRS->GetAuthorityName("GEOGCS|DATUM|SPHEROID") != NULL
             && EQUAL(poSRS->GetAuthorityName("GEOGCS|DATUM|SPHEROID"),"EPSG")) 
     {
-        nSpheroid = 
+        nSpheroid = (short)
             atoi(poSRS->GetAuthorityCode("GEOGCS|DATUM|SPHEROID"));
     }
     
@@ -1665,6 +1668,7 @@ CPLErr GTIFMemBufFromWkt( const char *pszWKT, const double *padfGeoTransform,
     TIFFSetField( hTIFF, TIFFTAG_IMAGELENGTH, 1 );
     TIFFSetField( hTIFF, TIFFTAG_BITSPERSAMPLE, 8 );
     TIFFSetField( hTIFF, TIFFTAG_SAMPLESPERPIXEL, 1 );
+    TIFFSetField( hTIFF, TIFFTAG_ROWSPERSTRIP, 1 );
     TIFFSetField( hTIFF, TIFFTAG_PLANARCONFIG, PLANARCONFIG_CONTIG );
     
 /* -------------------------------------------------------------------- */
@@ -1751,6 +1755,7 @@ CPLErr GTIFMemBufFromWkt( const char *pszWKT, const double *padfGeoTransform,
 /* -------------------------------------------------------------------- */
 /*      Cleanup and return the created memory buffer.                   */
 /* -------------------------------------------------------------------- */
+    TIFFWriteEncodedStrip( hTIFF, 0, "", 1 );
     TIFFWriteCheck( hTIFF, TIFFIsTiled(hTIFF), "GTIFMemBufFromWkt");
     TIFFWriteDirectory( hTIFF );
 
