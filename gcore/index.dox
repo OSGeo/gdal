@@ -9,12 +9,15 @@ Open Source</a> license.  As a library, it presents a
 model</a> to the calling application for all supported formats.
 The related <a href="ogr">OGR</a> 
 library (which lives within the GDAL source tree) provides
-a similar capability for simple features vector data.<P>
+a similar capability for simple features vector data.
+The <a href="NEWS.html">NEWS</a> page describes the April 2003 
+GDAL 1.2.0 release.<p>
 
 Master Page: <a href="http://www.remotesensing.org/gdal/index.html">
 http://www.remotesensing.org/gdal/index.html</a><br>
 Mirror: <a href="http://gdal.maptools.org">http://gdal.maptools.org/</a><br>
 Primary Maintainer: <a href="http://pobox.com/~warmerdam">Frank Warmerdam</a>.<p>
+
 
 <h2>User Oriented Documentation</h2>
 
