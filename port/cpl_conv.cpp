@@ -23,6 +23,9 @@
  * cpl_conv.c: Various CPL convenience functions (from cpl_conv.h).
  *
  * $Log$
+ * Revision 1.6  1999/06/25 04:38:03  warmerda
+ * Fixed CPLReadLine() to work for long lines.
+ *
  * Revision 1.5  1999/05/20 02:54:37  warmerda
  * Added API documentation
  *
@@ -220,9 +223,6 @@ char *CPLStrdup( const char * pszString )
  * The application shouldn't free it, or depend on it's value
  * past the next call to CPLReadLine().
  * 
- * TODO: Allow arbitrarily long lines ... currently limited to
- * 512 characters.
- *
  * Note that CPLReadLine() uses VSIFGets(), so any hooking of VSI file
  * services should apply to CPLReadLine() as well.
  *
@@ -236,23 +236,41 @@ const char *CPLReadLine( FILE * fp )
 {
     static char	*pszRLBuffer = NULL;
     static int	nRLBufferSize = 0;
-    int		nLength;
+    int		nLength, nReadSoFar = 0;
 
 /* -------------------------------------------------------------------- */
-/*      Allocate our working buffer.  Eventually this should grow as    */
-/*      needed ... we will implement that aspect later.                 */
+/*      Loop reading chunks of the line till we get to the end of       */
+/*      the line.                                                       */
 /* -------------------------------------------------------------------- */
-    if( nRLBufferSize < 512 )
-    {
-        nRLBufferSize = 512;
-        pszRLBuffer = (char *) CPLRealloc(pszRLBuffer, nRLBufferSize);
-    }
+    do {
+/* -------------------------------------------------------------------- */
+/*      Grow the working buffer if we have it nearly full.  Fail out    */
+/*      of read line if we can't reallocate it big enough (for          */
+/*      instance for a _very large_ file with no newlines).             */
+/* -------------------------------------------------------------------- */
+        if( nRLBufferSize-nReadSoFar < 128 )
+        {
+            nRLBufferSize = nRLBufferSize*2 + 128;
+            pszRLBuffer = (char *) VSIRealloc(pszRLBuffer, nRLBufferSize);
+            if( pszRLBuffer == NULL )
+            {
+                nRLBufferSize = 0;
+                return NULL;
+            }
+        }
 
 /* -------------------------------------------------------------------- */
 /*      Do the actual read.                                             */
 /* -------------------------------------------------------------------- */
-    if( VSIFGets( pszRLBuffer, nRLBufferSize, fp ) == NULL )
-        return NULL;
+        if( VSIFGets( pszRLBuffer+nReadSoFar, nRLBufferSize-nReadSoFar, fp )
+            == NULL )
+            return NULL;
+
+        nReadSoFar = strlen(pszRLBuffer);
+
+    } while( nReadSoFar == nRLBufferSize - 1
+             && pszRLBuffer[nRLBufferSize-2] != 13
+             && pszRLBuffer[nRLBufferSize-2] != 10 );
 
 /* -------------------------------------------------------------------- */
 /*      Clear CR and LF off the end.                                    */
