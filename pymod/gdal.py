@@ -29,6 +29,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.65  2004/07/30 21:09:49  warmerda
+# added AddBand(), and RefreshBandInfo()
+#
 # Revision 1.64  2004/06/08 05:21:56  warmerda
 # Use builtin GDALGetDriverByName() - fixed case sensitivity bug.
 #
@@ -460,12 +463,16 @@ class Dataset(MajorObject):
         _gdal.GDALReferenceDataset( _obj )
         self.RasterXSize = _gdal.GDALGetRasterXSize(self._o)
         self.RasterYSize = _gdal.GDALGetRasterYSize(self._o)
+
+        self.RefreshBandInfo()
+
+    def RefreshBandInfo( self ):
         self.RasterCount = _gdal.GDALGetRasterCount(self._o)
 
         self._band = []
         for i in range(self.RasterCount):
             self._band.append(Band(_gdal.GDALGetRasterBand(self._o,i+1)))
-
+        
     def __del__(self):
         if self._o:
             if _gdal.GDALDereferenceDataset(self._o) <= 0:
@@ -477,8 +484,13 @@ class Dataset(MajorObject):
     def GetRasterBand(self, i):
         if i > 0 and i <= self.RasterCount:
             return self._band[i-1]
+
+        self.RefreshBandInfo()
+
+        if i > 0 and i <= self.RasterCount:
+            return self._band[i-1]
         else:
-            return None
+            raise ValueError, 'Out of range band requested: %d' % i
 
     def GetGeoTransform(self):
         c_transform = _gdal.ptrcreate('double',0,6)
@@ -581,7 +593,15 @@ class Dataset(MajorObject):
 
     def FlushCache(self):
         _gdal.GDALFlushCache( self._o )
-    
+
+    def AddBand(self, datatype = GDT_Byte, options = [] ):
+
+        options_strlist = _gdal.ListToStringList( options )
+        result = _gdal.GDALAddBand( self._o, datatype, options_strlist )
+        _gdal.CSLDestroy( options_strlist )
+
+        return result
+
 ###############################################################################
 
 class Band(MajorObject):
