@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2000/08/24 18:44:40  warmerda
+ * Made a little less case sensitive.
+ *
  * Revision 1.10  1999/11/04 22:52:52  warmerda
  * added dynamic ATID support
  *
@@ -185,7 +188,7 @@ int main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
 /*      If the module is an LE module, write it to an Arc file.         */
 /* -------------------------------------------------------------------- */
-    if( pszMODN[0] == 'L' )
+    if( pszMODN[0] == 'L' || pszMODN[0] == 'l' )
     {
         WriteLineShapefile( pszShapefile, &oTransfer, pszMODN );
     }
@@ -193,7 +196,7 @@ int main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
 /*      If the module is an attribute primary one, dump to DBF.		*/
 /* -------------------------------------------------------------------- */
-    else if( pszMODN[0] == 'A' )
+    else if( pszMODN[0] == 'A' || pszMODN[0] == 'a' )
     {
         WriteAttributeDBF( pszShapefile, &oTransfer, pszMODN );
     }
@@ -201,7 +204,7 @@ int main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
 /*      If the module is a point one, dump to Shapefile.                */
 /* -------------------------------------------------------------------- */
-    else if( pszMODN[0] == 'N' )
+    else if( pszMODN[0] == 'N' || pszMODN[0] == 'N' )
     {
         WritePointShapefile( pszShapefile, &oTransfer, pszMODN );
     }
@@ -209,9 +212,14 @@ int main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
 /*      If the module is a polygon one, dump to Shapefile.              */
 /* -------------------------------------------------------------------- */
-    else if( pszMODN[0] == 'P' )
+    else if( pszMODN[0] == 'P' || pszMODN[0] == 'p' )
     {
         WritePolygonShapefile( pszShapefile, &oTransfer, pszMODN );
+    }
+
+    else
+    {
+        printf( "Unrecognised module name: %s\n", pszMODN );
     }
 
     CPLFree( pszShapefile );
