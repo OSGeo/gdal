@@ -37,6 +37,9 @@
  *   hostile source.
  *
  * $Log$
+ * Revision 1.34  2005/03/09 17:07:25  fwarmerdam
+ * added CPLSearchXMLNode
+ *
  * Revision 1.33  2005/01/17 17:01:56  fwarmerdam
  * ensure that namespace stripping apply to attributes
  *
@@ -1096,6 +1099,88 @@ void CPLDestroyXMLNode( CPLXMLNode *psNode )
 }
 
 /************************************************************************/
+/*                           CPLSearchXMLNode()                         */
+/************************************************************************/
+
+/**
+ * Search for a node in document.
+ *
+ * Searches the children (and potentially siblings) of the documented
+ * passed in for the named element or attribute.  To search following
+ * siblings as well as children, prefix the pszElement name with an equal
+ * sign.  This function does an in-order traversal of the document tree.
+ * So it will first match against the current node, then it's first child,
+ * that childs first child, and so on. 
+ *
+ * Use CPLGetXMLNode() to find a specific child, or along a specific
+ * node path. 
+ *
+ * @param psRoot the subtree to search.  This should be a node of type
+ * CXT_Element.  NULL is safe. 
+ *
+ * @param pszElement the name of the element or attribute to search for.
+ *
+ * @return The matching node or NULL on failure. 
+ */
+
+CPLXMLNode *CPLSearchXMLNode( CPLXMLNode *psRoot, const char *pszElement )
+
+{
+    int         bSideSearch = FALSE;
+    CPLXMLNode *psChild, *psResult;
+
+    if( psRoot == NULL || pszElement == NULL )
+        return NULL;
+
+    if( *pszElement == '=' )
+    {
+        bSideSearch = TRUE;
+        pszElement++;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Does this node match?                                           */
+/* -------------------------------------------------------------------- */
+    if( (psRoot->eType == CXT_Element 
+         || psRoot->eType == CXT_Attribute)
+        && EQUAL(pszElement,psRoot->pszValue) )
+        return psRoot;
+
+/* -------------------------------------------------------------------- */
+/*      Search children.                                                */
+/* -------------------------------------------------------------------- */
+    for( psChild = psRoot->psChild; psChild != NULL; psChild = psChild->psNext)
+    {
+        if( (psChild->eType == CXT_Element 
+             || psChild->eType == CXT_Attribute)
+            && EQUAL(pszElement,psChild->pszValue) )
+            return psChild;
+
+        if( psChild->psChild != NULL )
+        {
+            psResult = CPLSearchXMLNode( psChild, pszElement );
+            if( psResult != NULL )
+                return psResult;
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Search siblings if we are in side search mode.                  */
+/* -------------------------------------------------------------------- */
+    if( bSideSearch )
+    {
+        for( psRoot = psRoot->psNext; psRoot != NULL; psRoot = psRoot->psNext )
+        {
+            psResult = CPLSearchXMLNode( psRoot, pszElement );
+            if( psResult != NULL )
+                return psResult;
+        }
+    }
+    
+    return NULL;
+}
+
+/************************************************************************/
 /*                           CPLGetXMLNode()                            */
 /************************************************************************/
 
@@ -1554,32 +1639,34 @@ void CPLStripXMLNamespace( CPLXMLNode *psRoot,
     if( psRoot == NULL )
         return;
 
-    if( pszNamespace != NULL )
+    if( psRoot->eType == CXT_Element || psRoot->eType == CXT_Attribute )
     {
-        if( (psRoot->eType == CXT_Element || psRoot->eType == CXT_Attribute)
-            && EQUALN(pszNamespace,psRoot->pszValue,strlen(pszNamespace)) 
-            && psRoot->pszValue[strlen(pszNamespace)] == ':' )
+        if( pszNamespace != NULL )
         {
-            char *pszNewValue = 
-                CPLStrdup(psRoot->pszValue+strlen(pszNamespace)+1);
-            
-            CPLFree( psRoot->pszValue );
-            psRoot->pszValue = pszNewValue;
-        }
-    }
-    else
-    {
-        const char *pszCheck;
-
-        for( pszCheck = psRoot->pszValue; *pszCheck != '\0'; pszCheck++ )
-        {
-            if( *pszCheck == ':' )
+            if( EQUALN(pszNamespace,psRoot->pszValue,strlen(pszNamespace)) 
+                && psRoot->pszValue[strlen(pszNamespace)] == ':' )
             {
-                char *pszNewValue = CPLStrdup( pszCheck+1 );
-            
+                char *pszNewValue = 
+                    CPLStrdup(psRoot->pszValue+strlen(pszNamespace)+1);
+                
                 CPLFree( psRoot->pszValue );
                 psRoot->pszValue = pszNewValue;
-                break;
+            }
+        }
+        else
+        {
+            const char *pszCheck;
+            
+            for( pszCheck = psRoot->pszValue; *pszCheck != '\0'; pszCheck++ )
+            {
+                if( *pszCheck == ':' )
+                {
+                    char *pszNewValue = CPLStrdup( pszCheck+1 );
+                    
+                    CPLFree( psRoot->pszValue );
+                    psRoot->pszValue = pszNewValue;
+                    break;
+                }
             }
         }
     }

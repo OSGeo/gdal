@@ -28,6 +28,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.12  2005/03/09 17:07:25  fwarmerdam
+ * added CPLSearchXMLNode
+ *
  * Revision 1.11  2004/01/29 15:29:28  warmerda
  * Added CPLCleanXMLElementName
  *
@@ -159,6 +162,8 @@ CPLXMLNode CPL_DLL *CPLParseXMLString( const char * );
 void       CPL_DLL  CPLDestroyXMLNode( CPLXMLNode * );
 CPLXMLNode CPL_DLL *CPLGetXMLNode( CPLXMLNode *poRoot, 
                                    const char *pszPath );
+CPLXMLNode CPL_DLL *CPLSearchXMLNode( CPLXMLNode *poRoot, 
+                                      const char *pszTarget );
 const char CPL_DLL *CPLGetXMLValue( CPLXMLNode *poRoot, 
                                     const char *pszPath, 
                                     const char *pszDefault );
