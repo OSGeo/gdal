@@ -30,6 +30,9 @@
  *    instance validation of access strings to fopen().
  * 
  * $Log$
+ * Revision 1.13  2002/06/17 14:00:16  warmerda
+ * segregate VSIStatL() and VSIStatBufL.
+ *
  * Revision 1.12  2002/06/15 03:10:22  aubin
  * remove debug test for 64bit compile
  *
@@ -305,11 +308,7 @@ int VSIStat( const char * pszFilename, VSIStatBuf * pStatBuf )
 #if defined(macos_pre10)
     return -1;
 #else
-#ifdef VSI_LARGE_API_SUPPORTED
-    return( stat64( pszFilename, pStatBuf ) );
-#else
     return( stat( pszFilename, pStatBuf ) );
-#endif
 #endif
 }
 
