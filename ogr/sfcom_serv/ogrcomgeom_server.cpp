@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  1999/05/20 14:54:55  warmerda
+ * started work on automation
+ *
  * Revision 1.3  1999/05/17 14:43:10  warmerda
  * Added Polygon, linestring and curve support.  Changed IGeometryTmpl to
  * also include COM interface class as an argument.
@@ -65,11 +68,12 @@ DllGetClassObject(REFCLSID rClsId,
    HRESULT                  hResult;
    OGRComClassFactory       *pFactory;
 
-   printf("In DllGetClassObject\n");
+   OGRComDebug( "startup", "In DllGetClassObject\n" );
 
    // Make sure we're not being asked for a class factory that we don't know about
    if (rClsId != CLSID_OGRComClassFactory) {
-      printf("COM is requesting a class other than CLSID_OGRCOMClassFactory\n");
+       OGRComDebug("failure",
+           "COM is requesting a class other than CLSID_OGRCOMClassFactory\n");
       return E_FAIL;
    }
 

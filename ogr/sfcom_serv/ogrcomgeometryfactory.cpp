@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  1999/05/20 14:54:55  warmerda
+ * started work on automation
+ *
  * Revision 1.3  1999/05/17 14:43:10  warmerda
  * Added Polygon, linestring and curve support.  Changed IGeometryTmpl to
  * also include COM interface class as an argument.
@@ -50,6 +53,7 @@ OGRComGeometryFactory::OGRComGeometryFactory()
 
 {
     m_cRef = 0;
+    oDispatcher.SetOwner( this );
 }
 
 // =======================================================================
@@ -63,25 +67,31 @@ OGRComGeometryFactory::OGRComGeometryFactory()
 STDMETHODIMP OGRComGeometryFactory::QueryInterface(REFIID rIID,
                                             void** ppInterface)
 {
-   // Set the interface pointer
-   if (rIID == IID_IUnknown) {
-      *ppInterface = this;
-   }
+    // Set the interface pointer
+    OGRComDebug( "info", "OGRComGeometryFactory::QueryInterface()\n" );
 
-   else if (rIID == IID_IGeometryFactory) {
-      *ppInterface = this;
-   }
+    if (rIID == IID_IUnknown) {
+        *ppInterface = this;
+    }
 
-   // We don't support this interface
-   else {
-      *ppInterface = NULL;
-      return E_NOINTERFACE;
-   }
+    else if (rIID == IID_IGeometryFactory) {
+        *ppInterface = this;
+    }
 
-   // Bump up the reference count
-   ((LPUNKNOWN) *ppInterface)->AddRef();
+    // We don't support this interface
+    else {
+        OGRComDebug( "Failure",
+                     "E_NOINTERFACE from "
+                     "OGRComGeometryFactory::QueryInterface()\n" );
 
-   return NOERROR;
+        *ppInterface = NULL;
+        return E_NOINTERFACE;
+    }
+
+    // Bump up the reference count
+    ((LPUNKNOWN) *ppInterface)->AddRef();
+
+    return NOERROR;
 }
 
 /************************************************************************/
@@ -165,13 +175,15 @@ OGRComGeometryFactory::CreateFromWKB( VARIANT wkb,
         }
         else
         {
-            printf( "Didn't recognise type of OGRGeometry\n" );
+            OGRComDebug( "failure", 
+                         "Didn't recognise type of OGRGeometry\n" );
             eErr = OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
         }
     }
     else
     {
-        printf( "OGRGeometryFactory::createFromWkb() failed.\n" );
+        OGRComDebug( "failure",
+                     "OGRGeometryFactory::createFromWkb() failed.\n" );
     }
 
     if( eErr != OGRERR_NONE )
@@ -192,4 +204,76 @@ OGRComGeometryFactory::CreateFromWKT( BSTR wrt,
 {
     return E_FAIL;
 }
+
+/************************************************************************/
+/* ==================================================================== */
+/*                   OGRComGeometryFactoryDispatcher                    */
+/* ==================================================================== */
+/************************************************************************/
+
+/************************************************************************/
+/*                  OGRComGeometryFactoryDispatcher()                   */
+/************************************************************************/
+
+OGRComGeometryFactoryDispatcher::OGRComGeometryFactoryDispatcher()
+
+{
+    poOwner = NULL;
+}
+
+/************************************************************************/
+/*                              SetOwner()                              */
+/************************************************************************/
+
+void OGRComGeometryFactoryDispatcher::SetOwner( OGRComGeometryFactory * po )
+
+{
+    poOwner = po;
+}
+
+// =======================================================================
+//    IUnknown methods
+// =======================================================================
+
+/************************************************************************/
+/*                           QueryInterface()                           */
+/************************************************************************/
+
+STDMETHODIMP 
+OGRComGeometryFactoryDispatcher::QueryInterface(REFIID rIID,
+                                                void** ppInterface)
+{
+    return poOwner->QueryInterface( rIID, ppInterface );
+}
+
+/************************************************************************/
+/*                               AddRef()                               */
+/************************************************************************/
+
+STDMETHODIMP_(ULONG) 
+OGRComGeometryFactoryDispatcher::AddRef()
+{
+    return poOwner->AddRef();
+}
+
+/************************************************************************/
+/*                              Release()                               */
+/************************************************************************/
+
+STDMETHODIMP_(ULONG) 
+OGRComGeometryFactoryDispatcher::Release()
+{
+    return poOwner->Release();
+}
+
+// =======================================================================
+// IDispatch methods
+// =======================================================================
+
+
+
+
+
+
+
 

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  1999/05/20 14:54:55  warmerda
+ * started work on automation
+ *
  * Revision 1.4  1999/05/17 14:43:10  warmerda
  * Added Polygon, linestring and curve support.  Changed IGeometryTmpl to
  * also include COM interface class as an argument.
@@ -52,6 +55,8 @@
 #include "geometryidl.h"
 #include "ogr_geometry.h"
 #include "ocg_public.h"
+
+void OGRComDebug( const char *, const char *, ... );
 
 /************************************************************************/
 /*                          OGRComClassFactory                          */
@@ -81,6 +86,32 @@ protected:
 };
 
 /************************************************************************/
+/*                   OGRComGeometryFactoryDispatcher                    */
+/************************************************************************/
+
+class OGRComGeometryFactory;
+
+class OGRComGeometryFactoryDispatcher : public IDispatch
+{
+    OGRComGeometryFactory *poOwner;
+  public:
+                         OGRComGeometryFactoryDispatcher();
+    void                 SetOwner( OGRComGeometryFactory * );
+    
+    // IUnknown
+    STDMETHODIMP         QueryInterface(REFIID, void**);
+    STDMETHODIMP_(ULONG) AddRef();
+    STDMETHODIMP_(ULONG) Release();
+
+    // IDispatch
+    STDMETHOD(GetTypeInfoCount) (UINT *pctInfo);
+    STDMETHOD(GetTypeInfo)(UINT itinfo, LCID lcid, ITypeInfo ** ppt);
+    STDMETHOD(GetIDsOfNames)(REFIID, OLECHAR **, UINT, LCID, DISPID *);
+    STDMETHOD(Invoke)(DISPID, REFIID, LCID, unsigned short, DISPPARAMS*,
+                      VARIANT *, EXCEPINFO *, UINT * );
+};
+
+/************************************************************************/
 /*                        OGRComGeometryFactory                         */
 /************************************************************************/
 
@@ -102,7 +133,10 @@ class OGRComGeometryFactory : public IGeometryFactory
 
   protected:
     ULONG      m_cRef;
+    OGRComGeometryFactoryDispatcher oDispatcher;
 };
+
+
 
 /************************************************************************/
 /*                          OGRComGeometryTmpl                          */
