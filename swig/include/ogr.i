@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.4  2005/02/17 00:01:37  hobu
+ * quick start on the datasource/driver stuff
+ *
  * Revision 1.3  2005/02/16 21:55:02  hobu
  * started the OGRDriver class stuff.
  * CopyDataSource, CreateDataSource, and
@@ -120,13 +123,6 @@ public:
   char const *name;
 %mutable;
 
-/*
-const char  *OGR_Dr_GetName( OGRSFDriverH );
-OGRDataSourceH  OGR_Dr_Open( OGRSFDriverH, const char *, int );
-OGRDataSourceH OGR_Dr_CopyDataSource( OGRSFDriverH,  OGRDataSourceH, 
-	                              const char *, stringList );
-
-*/
 
     
 %newobject CreateDataSource;
@@ -155,20 +151,22 @@ OGRDataSourceH OGR_Dr_CopyDataSource( OGRSFDriverH,  OGRDataSourceH,
 %newobject Open;
 %feature( "kwargs" ) Open;
   OGRDataSourceH *Open( const char* name, 
-                        int update ) {
-    OGRDataSourceH *ds = (OGRDataSourceH*) OGR_Dr_Open(self, name, update);
-    if (ds != NULL) {
-      OGR_DS_Dereference(ds);
-    }
+                        int update=0 ) {
+    OGRDataSourceH* ds = (OGRDataSourceH*) OGR_Dr_Open(self, name, update);
+
       return ds;
   }
 
 
-  int Delete( const char *name ) {
+  int DeleteDataSource( const char *name ) {
     return OGR_Dr_DeleteDataSource( self, name );
   }
   int TestCapability (const char *cap) {
     return OGR_Dr_TestCapability(self, cap);
+  }
+  
+  const char * GetName() {
+    return OGR_Dr_GetName( self );
   }
 
 
@@ -182,4 +180,17 @@ char const *OGRSFDriverH_name_get( OGRSFDriverH *h ) {
 
 %}
 
+%rename (GetDriverCount) OGRGetDriverCount;
 
+%inline %{
+
+OGRSFDriverH* GetDriverByName( char const *name ) {
+  return (OGRSFDriverH*) OGRGetDriverByName( name );
+}
+
+int OGRGetDriverCount();
+
+OGRSFDriverH* GetDriver(int driver_number) {
+  return (OGRSFDriverH*) OGRGetDriver(driver_number);
+}
+%}
