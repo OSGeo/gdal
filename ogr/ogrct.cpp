@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.26  2004/12/16 16:58:29  fwarmerdam
+ * Use libproj.dylib on Apple
+ *
  * Revision 1.25  2004/09/23 15:05:27  fwarmerdam
  * cast pj_get_errno_ref in hopes of fixing Bug 614
  *
@@ -143,6 +146,8 @@ static void         (*pfn_pj_dalloc)(void *) = NULL;
 
 #ifdef WIN32
 #  define LIBNAME      "proj.dll"
+#elif defined(__APPLE__)
+#  define LIBNAME      "libproj.dylib"
 #else
 #  define LIBNAME      "libproj.so"
 #endif
