@@ -55,6 +55,13 @@ char CPL_DLL *CPLStrdup( const char * );
 /* -------------------------------------------------------------------- */
 const char *CPLReadLine( FILE * );
 
+/* -------------------------------------------------------------------- */
+/*      Fetch a function from DLL / so.                                 */
+/* -------------------------------------------------------------------- */
+
+void CPL_DLL *CPLGetSymbol( const char *, const char * );
+
+
 CPL_C_END
 
 #endif /* ndef CPL_CONV_H_INCLUDED */
