@@ -2,9 +2,15 @@ GDAL_ROOT	=	../..
 
 include $(GDAL_ROOT)/GDALmake.opt
 
-OBJ	=	geotiff.o gt_wkt_srs.o gt_overview.o
+OBJ	=	geotiff.o gt_wkt_srs.o gt_overview.o \
+		tif_ovrcache.o tif_overview.o 
 
 TIFF_OPTS	=	-Ilibgeotiff -Ilibtiff
+SUBLIBS 	=	../o/libgeotiff.a
+
+ifeq ($(TIFF_SETTING),internal)
+SUBLIBS	:= ../o/libtiff.a $(SUBLIBS) 
+endif
 
 default:	$(OBJ)
 
@@ -41,7 +47,7 @@ lib-geotiff:
 
 all:	lib-tiff lib-geotiff
 
-install-obj:	../o/libtiff.a ../o/libgeotiff.a \
+install-obj:	$(SUBLIBS) \
 		$(foreach file,$(OBJ),../o/$(file))
 
 ../o/%.o:	%.o
