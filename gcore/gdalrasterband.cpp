@@ -28,6 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************
  * $Log$
+ * Revision 1.21  2000/10/06 15:25:48  warmerda
+ * added setnodata, and some other methods
+ *
  * Revision 1.20  2000/08/25 14:26:51  warmerda
  * added GDALHasArbitraryOverviews
  *
@@ -876,6 +879,51 @@ char **GDALRasterBand::GetCategoryNames()
 }
 
 /************************************************************************/
+/*                     GDALGetRasterCategoryNames()                     */
+/************************************************************************/
+
+char **GDALGetRasterCategoryNames( GDALRasterBandH hBand )
+
+{
+    return ((GDALRasterBand *) hBand)->GetCategoryNames();
+}
+
+/************************************************************************/
+/*                          SetCategoryNames()                          */
+/************************************************************************/
+
+/**
+ * Set the category names for this band.
+ *
+ * See the GetCategoryNames() method for more on the interpretation of
+ * category names. 
+ *
+ * This method is the same as the C function GDALSetRasterCategoryNames().
+ *
+ * @param papszNames the NULL terminated StringList of category names.  May
+ * be NULL to just clear the existing list. 
+ *
+ * @return CE_None on success of CE_Failure on failure.  If unsupported
+ * by the driver CE_Failure is returned, but no error message is reported.
+ */
+
+CPLErr GDALRasterBand::SetCategoryNames( char ** )
+
+{
+    return CE_Failure;
+}
+
+/************************************************************************/
+/*                        GDALSetCategoryNames()                        */
+/************************************************************************/
+
+CPLErr GDALSetRasterCategoryNames( GDALRasterBandH hBand, char ** papszNames )
+
+{
+    return ((GDALRasterBand *) hBand)->SetCategoryNames( papszNames );
+}
+
+/************************************************************************/
 /*                           GetNoDataValue()                           */
 /************************************************************************/
 
@@ -912,6 +960,41 @@ double GDALGetRasterNoDataValue( GDALRasterBandH hBand, int *pbSuccess )
 
 {
     return ((GDALRasterBand *) hBand)->GetNoDataValue( pbSuccess );
+}
+
+/************************************************************************/
+/*                           SetNoDataValue()                           */
+/************************************************************************/
+
+/**
+ * Set the no data value for this band. 
+ *
+ * To clear the nodata value, just set it with an "out of range" value.
+ * Complex band no data values must have an imagery component of zero.
+ *
+ * This method is the same as the C function GDALSetRasterNoDataValue().
+ *
+ * @param dfNoData the value to set.
+ *
+ * @return CE_None on success, or CE_Failure on failure.  If unsupported
+ * by the driver, CE_Failure is returned by no error message will have
+ * been emitted.
+ */
+
+CPLErr GDALRasterBand::SetNoDataValue( double )
+
+{
+    return CE_Failure;
+}
+
+/************************************************************************/
+/*                         GDALSetRasterNoDataValue()                   */
+/************************************************************************/
+
+CPLErr GDALSetRasterNoDataValue( GDALRasterBandH hBand, double dfValue )
+
+{
+    return ((GDALRasterBand *) hBand)->SetNoDataValue( dfValue );
 }
 
 /************************************************************************/
@@ -1104,6 +1187,41 @@ GDALColorTableH GDALGetRasterColorTable( GDALRasterBandH hBand )
 
 {
     return (GDALColorTableH) ((GDALRasterBand *) hBand)->GetColorTable();
+}
+
+/************************************************************************/
+/*                           SetColorTable()                            */
+/************************************************************************/
+
+/**
+ * Set the raster color table. 
+ * 
+ * The driver will make a copy of all desired data in the colortable.  It
+ * remains owned by the caller after the call.
+ *
+ * This method is the same as the C function GDALSetRasterColorTable().
+ *
+ * @param poCT the color table to apply.
+ *
+ * @return CE_None on success, or CE_Failure on failure.  If the action is
+ * unsupported by the driver, a value of CE_Failure is returned, but no
+ * error is issued.
+ */
+
+CPLErr GDALRasterBand::SetColorTable( GDALColorTable * poCT )
+
+{
+    return CE_Failure;
+}
+
+/************************************************************************/
+/*                      GDALSetRasterColorTable()                       */
+/************************************************************************/
+
+CPLErr GDALSetRasterColorTable( GDALRasterBandH hBand, GDALColorTableH hCT )
+
+{
+    return ((GDALRasterBand *) hBand)->SetColorTable( (GDALColorTable *) hCT );
 }
 
 /************************************************************************/
