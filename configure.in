@@ -1194,6 +1194,52 @@ AC_SUBST(SQLITE_INC)
 AC_SUBST(HAVE_SQLITE)
 
 dnl ---------------------------------------------------------------------------
+dnl Check if geos library is available.
+dnl ---------------------------------------------------------------------------
+
+AC_MSG_CHECKING([for GEOS])
+
+AC_ARG_WITH(geos,[  --with-geos[=ARG]       Include GEOS support (ARG=yes, no or geos-config path)],,)
+
+if test "$with_geos" = "no" ; then
+
+  AC_MSG_RESULT([disabled])
+  GEOS_CONFIG=no
+
+elif test "$with_geos" = "yes" -o "$with_geos" = "" ; then
+  AC_PATH_PROG(GEOS_CONFIG, geos-config, no)
+
+  if test "$GEOS_CONFIG" != "no" ; then
+    AC_MSG_RESULT([found])
+  else
+    AC_MSG_RESULT([not found])
+  fi
+
+else
+
+  if test "`basename xx/$with_geos`" = "geos-config" ; then
+    AC_MSG_RESULT([provided])
+    GEOS_CONFIG="$with_geos"
+  else
+    AC_MSG_ERROR([provide yes, no or a path to geos-config])
+  fi
+
+fi
+
+if test "$GEOS_CONFIG" != "no" ; then
+
+  LIBS="`$GEOS_CONFIG --libs` $LIBS"
+  GEOS_INC="`$GEOS_CONFIG --includes`"
+  HAVE_GEOS=yes
+
+else
+  HAVE_GEOS=no
+fi
+
+AC_SUBST(HAVE_GEOS,$HAVE_GEOS)
+AC_SUBST(GEOS_INC,$GEOS_INC)
+
+dnl ---------------------------------------------------------------------------
 dnl PROJ.4 related stuff.
 dnl ---------------------------------------------------------------------------
 
@@ -1362,6 +1408,7 @@ LOC_MSG([  ODBC support:              ${ODBC_SETTING}])
 LOC_MSG([  OCI support:               ${HAVE_OCI}])
 LOC_MSG([  DODS support:              ${HAVE_DODS}])
 LOC_MSG([  SQLite support:            ${HAVE_SQLITE}])
+LOC_MSG([  GEOS support:              ${HAVE_GEOS}])
 LOC_MSG()
 LOC_MSG([  Statically link PROJ.4:    ${PROJ_STATIC}])
 LOC_MSG()
