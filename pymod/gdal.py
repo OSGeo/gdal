@@ -29,6 +29,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.27  2001/10/01 13:24:17  warmerda
+# Fixed last fix.
+#
 # Revision 1.26  2001/09/30 04:42:13  warmerda
 # _gdal.GDALOpen() returns None, not "NULL".
 #
@@ -138,7 +141,7 @@ def GetPaletteInterpretationName(type):
 def Open(file,access=GA_ReadOnly):
     _gdal.GDALAllRegister()
     _obj = _gdal.GDALOpen(file,access)
-    if _obj = None or _obj == "NULL" :
+    if _obj is None or _obj == "NULL" :
         return None;
     else:
         _gdal.GDALDereferenceDataset( _obj )
