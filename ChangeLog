@@ -1,3 +1,8 @@
+2001-01-24  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* Added support for files with scanlines split across records in the
+	ceos2 (SAR_CEOS) reader.
+
 2001-01-22  Frank Warmerdam  <warmerdam@pobox.com>
 
 	* Added alg directory, and GDALComputeMedianCutPCT(), and

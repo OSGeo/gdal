@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2001/01/24 22:35:34  warmerda
+ * multi-record scanline support added to ceos2
+ *
  * Revision 1.11  2000/11/22 19:14:16  warmerda
  * added CEOS_DM_* metadata items
  *
@@ -121,8 +124,12 @@ static CeosTypeCode_t QuadToTC( int a, int b, int c, int d )
 /* ==================================================================== */
 /************************************************************************/
 
+class SAR_CEOSRasterBand;
+
 class SAR_CEOSDataset : public GDALDataset
 {
+    friend	SAR_CEOSRasterBand;
+
     CeosSARVolume_t sVolume;
 
     FILE	*fpImage;
@@ -144,6 +151,125 @@ class SAR_CEOSDataset : public GDALDataset
 
     static GDALDataset *Open( GDALOpenInfo * );
 };
+
+/************************************************************************/
+/* ==================================================================== */
+/*                       SAR_CEOSRasterBand                             */
+/* ==================================================================== */
+/************************************************************************/
+
+class SAR_CEOSRasterBand : public GDALRasterBand
+{
+    friend	SAR_CEOSDataset;
+
+  public:
+                   SAR_CEOSRasterBand( SAR_CEOSDataset *, int, GDALDataType );
+
+    virtual CPLErr IReadBlock( int, int, void * );
+};
+
+/************************************************************************/
+/*                         SAR_CEOSRasterBand()                         */
+/************************************************************************/
+
+SAR_CEOSRasterBand::SAR_CEOSRasterBand( SAR_CEOSDataset *poGDS, int nBand,
+                                        GDALDataType eType )
+
+{
+    this->poDS = poGDS;
+    this->nBand = nBand;
+    
+    eDataType = eType;
+
+    nBlockXSize = poGDS->nRasterXSize;
+    nBlockYSize = 1;
+}
+
+/************************************************************************/
+/*                             IReadBlock()                             */
+/************************************************************************/
+
+CPLErr SAR_CEOSRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
+                                       void * pImage )
+
+{
+    struct CeosSARImageDesc *ImageDesc;
+    int	   offset;
+    GByte  *pabyRecord;
+    SAR_CEOSDataset *poGDS = (SAR_CEOSDataset *) poDS;
+
+    ImageDesc = &(poGDS->sVolume.ImageDesc);
+
+    CalcCeosSARImageFilePosition( &(poGDS->sVolume), nBand,
+                                  nBlockYOff + 1, NULL, &offset );
+
+    offset += ImageDesc->ImageDataStart;
+
+/* -------------------------------------------------------------------- */
+/*      Load all the pixel data associated with this scanline.          */
+/*      Ensure we handle multiple record scanlines properly.            */
+/* -------------------------------------------------------------------- */
+    int		iRecord, nPixelsRead = 0;
+
+    pabyRecord = (GByte *) CPLMalloc( ImageDesc->BytesPerPixel * nBlockXSize );
+    
+    for( iRecord = 0; iRecord < ImageDesc->RecordsPerLine; iRecord++ )
+    {
+        int	nPixelsToRead;
+
+        if( nPixelsRead + ImageDesc->PixelsPerRecord > nBlockXSize )
+            nPixelsToRead = nBlockXSize - nPixelsRead;
+        else
+            nPixelsToRead = ImageDesc->PixelsPerRecord;
+        
+        VSIFSeek( poGDS->fpImage, offset, SEEK_SET );
+        VSIFRead( pabyRecord + nPixelsRead * ImageDesc->BytesPerPixel, 
+                  1, nPixelsToRead * ImageDesc->BytesPerPixel, 
+                  poGDS->fpImage );
+
+        nPixelsRead += nPixelsToRead;
+        offset += ImageDesc->BytesPerRecord;
+    }
+    
+/* -------------------------------------------------------------------- */
+/*      Copy the desired band out based on the size of the type, and    */
+/*      the interleaving mode.                                          */
+/* -------------------------------------------------------------------- */
+    int		nBytesPerSample = GDALGetDataTypeSize( eDataType ) / 8;
+
+    if( ImageDesc->ChannelInterleaving == __CEOS_IL_PIXEL )
+    {
+        GDALCopyWords( pabyRecord + (nBand-1) * nBytesPerSample, 
+                       eDataType, ImageDesc->BytesPerPixel, 
+                       pImage, eDataType, nBytesPerSample, 
+                       nBlockXSize );
+    }
+    else if( ImageDesc->ChannelInterleaving == __CEOS_IL_LINE )
+    {
+        GDALCopyWords( pabyRecord + (nBand-1) * nBytesPerSample * nBlockXSize, 
+                       eDataType, nBytesPerSample, 
+                       pImage, eDataType, nBytesPerSample, 
+                       nBlockXSize );
+    }
+    else if( ImageDesc->ChannelInterleaving == __CEOS_IL_BAND )
+    {
+        memcpy( pImage, pabyRecord, nBytesPerSample * nBlockXSize );
+    }
+
+#ifdef CPL_LSB
+    GDALSwapWords( pImage, nBytesPerSample, nBlockXSize, nBytesPerSample );
+#endif    
+
+    CPLFree( pabyRecord );
+
+    return CE_None;
+}
+
+/************************************************************************/
+/* ==================================================================== */
+/*				SAR_CEOSDataset				*/
+/* ==================================================================== */
+/************************************************************************/
 
 /************************************************************************/
 /*                          SAR_CEOSDataset()                           */
@@ -688,7 +814,6 @@ GDALDataset *SAR_CEOSDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Establish image type.                                           */
 /* -------------------------------------------------------------------- */
     GDALDataType eType;
-    int		 StartData;
 
     switch( psImageDesc->DataType )
     {
@@ -710,14 +835,22 @@ GDALDataset *SAR_CEOSDataset::Open( GDALOpenInfo * poOpenInfo )
         break;
 
       case __CEOS_TYP_LONG:
+        eType = GDT_Int32;
+        break;
+
       case __CEOS_TYP_ULONG:
+        eType = GDT_UInt32;
+        break;
+
       case __CEOS_TYP_FLOAT:
-      case __CEOS_TYP_DOUBLE:
         eType = GDT_Float32;
         break;
 
+      case __CEOS_TYP_DOUBLE:
+        eType = GDT_Float64;
+        break;
+
       case __CEOS_TYP_COMPLEX_FLOAT:
-      case __CEOS_TYP_COMPLEX_LONG:
         eType = GDT_CFloat32;
         break;
 
@@ -728,12 +861,7 @@ GDALDataset *SAR_CEOSDataset::Open( GDALOpenInfo * poOpenInfo )
         delete poDS;
         return NULL;
     }
-
     
-    CalcCeosSARImageFilePosition( psVolume, 1, 1, NULL, &StartData );
-    
-    StartData += psImageDesc->ImageDataStart;
-
 /* -------------------------------------------------------------------- */
 /*      Capture some information from the file that is of interest.     */
 /* -------------------------------------------------------------------- */
@@ -755,13 +883,12 @@ GDALDataset *SAR_CEOSDataset::Open( GDALOpenInfo * poOpenInfo )
         || psImageDesc->DataType == __CEOS_TYP_ULONG
         || psImageDesc->DataType == __CEOS_TYP_DOUBLE )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "Support for ceos files with unusual data types, and\n"
-                  "scanlines split over multiple records not yet implemented.");
-
-        delete poDS;
-
-        return NULL;
+        for( int iBand = 0; iBand < psImageDesc->NumChannels; iBand++ )
+        {
+            poDS->SetBand( poDS->nBands+1, 
+                           new SAR_CEOSRasterBand( poDS, poDS->nBands+1, 
+                                                   eType ) );
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -769,7 +896,12 @@ GDALDataset *SAR_CEOSDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     else
     {
+        int	StartData;
         int	nLineSize, nLineSize2;
+
+        CalcCeosSARImageFilePosition( psVolume, 1, 1, NULL, &StartData );
+        
+        StartData += psImageDesc->ImageDataStart;
 
         CalcCeosSARImageFilePosition( psVolume, 1, 1, NULL, &nLineSize );
         CalcCeosSARImageFilePosition( psVolume, 1, 2, NULL, &nLineSize2 );
@@ -822,6 +954,7 @@ GDALDataset *SAR_CEOSDataset::Open( GDALOpenInfo * poOpenInfo )
                         nStartData, nPixelOffset, nLineOffset, 
                         eType, bNative ) );
         }
+        
     }
 
 /* -------------------------------------------------------------------- */
