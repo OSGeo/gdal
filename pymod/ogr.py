@@ -28,6 +28,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.31  2004/10/25 10:07:41  dron
+# Indentation problem fixed.
+#
 # Revision 1.30  2004/10/04 21:02:07  fwarmerdam
 # Added Centroid() method
 #
@@ -354,7 +357,7 @@ class DataSource:
         if srs is None:
             srs_o = 'NULL'
         else:
-	    srs_o = srs._o
+        srs_o = srs._o
         md_c = _gdal.ListToStringList( options )
         obj = _gdal.OGR_DS_CreateLayer( self._o, name, srs_o, geom_type, md_c)
         _gdal.CSLDestroy(md_c)
