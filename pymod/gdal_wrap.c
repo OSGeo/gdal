@@ -3807,6 +3807,50 @@ static PyObject *_wrap_OSRSetAuthority(PyObject *self, PyObject *args) {
     return _resultobj;
 }
 
+static PyObject *_wrap_OSRGetAuthorityCode(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    char * _result;
+    OGRSpatialReferenceH  _arg0;
+    char * _arg1;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"Os:OSRGetAuthorityCode",&_argo0,&_arg1)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OSRGetAuthorityCode. Expected _OGRSpatialReferenceH.");
+        return NULL;
+        }
+    }
+    _result = (char *)OSRGetAuthorityCode(_arg0,_arg1);
+    _resultobj = Py_BuildValue("s", _result);
+    return _resultobj;
+}
+
+static PyObject *_wrap_OSRGetAuthorityName(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    char * _result;
+    OGRSpatialReferenceH  _arg0;
+    char * _arg1;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"Os:OSRGetAuthorityName",&_argo0,&_arg1)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OSRGetAuthorityName. Expected _OGRSpatialReferenceH.");
+        return NULL;
+        }
+    }
+    _result = (char *)OSRGetAuthorityName(_arg0,_arg1);
+    _resultobj = Py_BuildValue("s", _result);
+    return _resultobj;
+}
+
 static PyObject *_wrap_OSRSetProjParm(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
     int  _result;
@@ -7449,6 +7493,8 @@ static PyMethodDef _gdalMethods[] = {
 	 { "OSRSetUTM", _wrap_OSRSetUTM, METH_VARARGS },
 	 { "OSRGetProjParm", _wrap_OSRGetProjParm, METH_VARARGS },
 	 { "OSRSetProjParm", _wrap_OSRSetProjParm, METH_VARARGS },
+	 { "OSRGetAuthorityName", _wrap_OSRGetAuthorityName, METH_VARARGS },
+	 { "OSRGetAuthorityCode", _wrap_OSRGetAuthorityCode, METH_VARARGS },
 	 { "OSRSetAuthority", _wrap_OSRSetAuthority, METH_VARARGS },
 	 { "OSRGetInvFlattening", _wrap_OSRGetInvFlattening, METH_VARARGS },
 	 { "OSRGetSemiMinor", _wrap_OSRGetSemiMinor, METH_VARARGS },

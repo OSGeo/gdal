@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2002/11/25 16:12:54  warmerda
+ * added GetAuthorityCode/Name
+ *
  * Revision 1.19  2002/09/26 18:13:25  warmerda
  * avoid double def
  *
@@ -317,6 +320,10 @@ OGRErr CPL_DLL OSRSetAuthority( OGRSpatialReferenceH hSRS,
                          const char * pszTargetKey,
                          const char * pszAuthority,
                          int nCode );
+const char CPL_DLL *OSRGetAuthorityCode( OGRSpatialReferenceH hSRS,
+                                         const char * pszTargetKey );
+const char CPL_DLL *OSRGetAuthorityName( OGRSpatialReferenceH hSRS,
+                                         const char * pszTargetKey );
 OGRErr CPL_DLL OSRSetProjParm( OGRSpatialReferenceH, const char *, double );
 double CPL_DLL OSRGetProjParm( OGRSpatialReferenceH hSRS,
                         const char * pszParmName, 

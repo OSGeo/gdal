@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.39  2002/11/25 16:12:54  warmerda
+ * added GetAuthorityCode/Name
+ *
  * Revision 1.38  2002/04/18 14:22:45  warmerda
  * made OGRSpatialReference and co 'const correct'
  *
@@ -326,6 +329,9 @@ class CPL_DLL OGRSpatialReference
     OGRErr      SetAuthority( const char * pszTargetKey, 
                               const char * pszAuthority, 
                               int nCode );
+
+    const char *GetAuthorityCode( const char * pszTargetKey );
+    const char *GetAuthorityName( const char * pszTargetKey );
                            
     OGRErr      SetProjParm( const char *, double );
     double      GetProjParm( const char *, double =0.0, OGRErr* = NULL ) const;
