@@ -29,6 +29,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.26  2001/09/30 04:42:13  warmerda
+# _gdal.GDALOpen() returns None, not "NULL".
+#
 # Revision 1.25  2001/08/23 03:37:59  warmerda
 # added GetCacheUsed() method
 #
@@ -135,7 +138,7 @@ def GetPaletteInterpretationName(type):
 def Open(file,access=GA_ReadOnly):
     _gdal.GDALAllRegister()
     _obj = _gdal.GDALOpen(file,access)
-    if _obj == "NULL":
+    if _obj = None or _obj == "NULL" :
         return None;
     else:
         _gdal.GDALDereferenceDataset( _obj )
