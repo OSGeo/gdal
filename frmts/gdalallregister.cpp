@@ -25,6 +25,9 @@
  * Main format registration function.
  * 
  * $Log$
+ * Revision 1.24  2000/11/16 14:48:53  warmerda
+ * moved GXF down in driver ordering
+ *
  * Revision 1.23  2000/09/11 13:32:26  warmerda
  * added grass
  *
@@ -169,10 +172,6 @@ void GDALAllRegister()
     GDALRegister_GTiff();
 #endif    
 
-#ifdef FRMT_gxf
-    GDALRegister_GXF();
-#endif    
-
 #ifdef FRMT_hfa
     GDALRegister_HFA();
 #endif
@@ -226,6 +225,15 @@ void GDALAllRegister()
     GDALRegister_HKV();
     GDALRegister_EFF();
 #endif
+
+/* -------------------------------------------------------------------- */
+/*      Our "test" to see if the file is GXF is weak, so we leave it    */
+/*      after most other "safe" formats.                                */
+/* -------------------------------------------------------------------- */
+  
+#ifdef FRMT_gxf
+    GDALRegister_GXF();
+#endif    
 
 #ifdef FRMT_grass
     GDALRegister_GRASS();
