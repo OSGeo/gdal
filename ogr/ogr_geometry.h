@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.29  2001/11/01 16:56:08  warmerda
+ * added createGeometry and destroyGeometry methods
+ *
  * Revision 1.28  2001/09/21 16:24:20  warmerda
  * added transform() and transformTo() methods
  *
@@ -659,6 +662,9 @@ class CPL_DLL OGRGeometryFactory
                                  OGRGeometry **, int = -1 );
     static OGRErr createFromWkt( char **, OGRSpatialReference *,
                                  OGRGeometry ** );
+
+    static void   destroyGeometry( OGRGeometry * );
+    static OGRGeometry *createGeometry( OGRwkbGeometryType );
 };
 
 #endif /* ndef _OGR_GEOMETRY_H_INCLUDED */

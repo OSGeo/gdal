@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2001/11/01 16:56:08  warmerda
+ * added createGeometry and destroyGeometry methods
+ *
  * Revision 1.9  2001/07/18 05:03:05  warmerda
  * added CPL_CVSID
  *
@@ -150,39 +153,10 @@ OGRErr OGRGeometryFactory::createFromWkb(unsigned char *pabyData,
 /*      Instantiate a geometry of the appropriate type, and             */
 /*      initialize from the input stream.                               */
 /* -------------------------------------------------------------------- */
-    switch( eGeometryType )
-    {
-      case wkbPoint:
-        poGeom = new OGRPoint();
-        break;
-
-      case wkbLineString:
-        poGeom = new OGRLineString();
-        break;
-
-      case wkbPolygon:
-        poGeom = new OGRPolygon();
-        break;
-
-      case wkbGeometryCollection:
-        poGeom = new OGRGeometryCollection();
-        break;
-
-      case wkbMultiPolygon:
-        poGeom = new OGRMultiPolygon();
-        break;
-
-      case wkbMultiPoint:
-        poGeom = new OGRMultiPoint();
-        break;
-
-      case wkbMultiLineString:
-        poGeom = new OGRMultiLineString();
-        break;
-
-      default:
+    poGeom = createGeometry( eGeometryType );
+    
+    if( poGeom == NULL )
         return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
-    }
 
 /* -------------------------------------------------------------------- */
 /*      Import from binary.                                             */
@@ -310,3 +284,71 @@ OGRErr OGRGeometryFactory::createFromWkt(char **ppszData,
     return eErr;
 }
 
+/************************************************************************/
+/*                           createGeometry()                           */
+/************************************************************************/
+
+/** 
+ * Create an empty geometry of desired type.
+ *
+ * This is equivelent to allocating the desired geometry with new, but
+ * the allocation is guaranteed to take place in the context of the 
+ * GDAL/OGR heap. 
+ *
+ * @param eGeometryType the type code of the geometry class to be instantiated.
+ *
+ * @return the newly create geometry or NULL on failure.
+ */
+
+OGRGeometry *
+OGRGeometryFactory::createGeometry( OGRwkbGeometryType eGeometryType )
+
+{
+    switch( eGeometryType )
+    {
+      case wkbPoint:
+          return new OGRPoint();
+
+      case wkbLineString:
+          return new OGRLineString();
+
+      case wkbPolygon:
+          return new OGRPolygon();
+
+      case wkbGeometryCollection:
+          return new OGRGeometryCollection();
+
+      case wkbMultiPolygon:
+          return new OGRMultiPolygon();
+
+      case wkbMultiPoint:
+          return new OGRMultiPoint();
+
+      case wkbMultiLineString:
+          return new OGRMultiLineString();
+
+      default:
+          return NULL;
+    }
+
+    return NULL;
+}
+
+/************************************************************************/
+/*                          destroyGeometry()                           */
+/************************************************************************/
+
+/**
+ * Destroy geometry object.
+ *
+ * Equivelent to invoking delete on a geometry, but it guaranteed to take 
+ * place within the context of the GDAL/OGR heap.
+ *
+ * @param poGeom the geometry to deallocate.
+ */
+
+void OGRGeometryFactory::destroyGeometry( OGRGeometry *poGeom )
+
+{
+    delete poGeom;
+}
