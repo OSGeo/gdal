@@ -28,6 +28,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.3  2000/01/26 17:53:36  warmerda
+ * Fixed CPLGetExtension() for filenames with no extension.
+ *
  * Revision 1.2  2000/01/24 19:32:59  warmerda
  * Fixed CPLGetExtension() to not include the dot.
  *
@@ -222,7 +225,7 @@ const char *CPLGetExtension( const char *pszFullFilename )
          iExtStart-- ) {}
 
     if( iExtStart == iFileStart )
-        iExtStart = strlen(pszFullFilename);
+        iExtStart = strlen(pszFullFilename)-1;
 
     strcpy( szStaticResult, pszFullFilename+iExtStart+1 );
 
