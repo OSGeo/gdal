@@ -1,6 +1,7 @@
 #ifndef _PORT_
 #define _PORT_ 1
 
+#define AVOID_WIN32_FILEIO
 #include "cpl_port.h"
     
 #ifdef __cplusplus
@@ -29,3 +30,6 @@ typedef double dblparam_t;
 }
 #endif
 #endif
+
+
+
