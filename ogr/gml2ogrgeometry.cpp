@@ -37,6 +37,9 @@
  *   compromising the system.
  *
  * $Log$
+ * Revision 1.9  2005/03/08 19:51:15  fwarmerdam
+ * added gml:pos support
+ *
  * Revision 1.8  2004/01/06 18:40:06  warmerda
  * do not crash if polygon fails to parse during multipolygon assembly
  *
@@ -81,6 +84,7 @@
 #include "ogr_geometry.h"
 #include "ogr_api.h"
 #include "cpl_error.h"
+#include "cpl_string.h"
 #include <ctype.h>
 
 /************************************************************************/
@@ -266,6 +270,44 @@ int ParseGMLCoordinates( CPLXMLNode *psGeomNode, OGRGeometry *poGeometry )
 
         return iCoord > 0;
     }
+
+/* -------------------------------------------------------------------- */
+/*      Is this a "pos"?  I think this is a GML 3 construct.            */
+/* -------------------------------------------------------------------- */
+    CPLXMLNode *psPos = FindBareXMLChild( psGeomNode, "pos" );
+    
+    if( psPos != NULL )
+    {
+        char **papszTokens = CSLTokenizeStringComplex( 
+            GetElementText( psPos ), " ,", FALSE, FALSE );
+        int bSuccess = FALSE;
+
+        if( CSLCount( papszTokens ) > 2 )
+        {
+            bSuccess = AddPoint( poGeometry, 
+                                 atof(papszTokens[0]), 
+                                 atof(papszTokens[1]),
+                                 atof(papszTokens[2]) );
+        }
+        else if( CSLCount( papszTokens ) > 1 )
+        {
+            bSuccess = AddPoint( poGeometry, 
+                                 atof(papszTokens[0]), 
+                                 atof(papszTokens[1]),
+                                 0.0 );
+        }
+        else
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Did not get 2+ values in <gml:pos>%s</gml:pos> tuple.",
+                      GetElementText( psPos ) );
+        }
+
+        CSLDestroy( papszTokens );
+
+        return bSuccess;
+    }
+    
 
 /* -------------------------------------------------------------------- */
 /*      Handle form with a list of <coord> items each with an <X>,      */
