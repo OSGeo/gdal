@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2002/01/18 04:49:17  warmerda
+ * report CPL errors if transform() fails
+ *
  * Revision 1.12  2001/12/11 17:37:24  warmerda
  * improved PROJ.4 error reporting.
  *
@@ -118,6 +121,8 @@ class OGRProj4CT : public OGRCoordinateTransformation
     OGRSpatialReference *poSRSTarget;
     void        *psPJTarget;
     int         bTargetLatLong;
+
+    int		nErrorCount;
 
 public:
                 OGRProj4CT();
@@ -274,6 +279,8 @@ OGRProj4CT::OGRProj4CT()
     poSRSTarget = NULL;
     psPJSource = NULL;
     psPJTarget = NULL;
+
+    nErrorCount = 0;
 }
 
 /************************************************************************/
@@ -400,6 +407,9 @@ int OGRProj4CT::Transform( int nCount, double *x, double *y, double *z )
 {
     int   err, i;
 
+/* -------------------------------------------------------------------- */
+/*      Potentially transform to radians.                               */
+/* -------------------------------------------------------------------- */
     if( bSourceLatLong )
     {
         for( i = 0; i < nCount; i++ )
@@ -409,14 +419,45 @@ int OGRProj4CT::Transform( int nCount, double *x, double *y, double *z )
         }
     }
 
+/* -------------------------------------------------------------------- */
+/*      Do the transformation using PROJ.4.                             */
+/* -------------------------------------------------------------------- */
     err = pfn_pj_transform( psPJSource, psPJTarget, nCount, 1, x, y, z );
 
+/* -------------------------------------------------------------------- */
+/*      Try to report an error through CPL.  Get proj.4 error string    */
+/*      if possible.  Try to avoid reporting thousands of error         */
+/*      ... supress further error reporting on this OGRProj4CT if we    */
+/*      have already reported 20 errors.                                */
+/* -------------------------------------------------------------------- */
     if( err != 0 )
     {
-        CPLDebug( "OGR", "pfn_pj_transform failed:%d.\n", err );
+        if( ++nErrorCount < 20 )
+        {
+            const char *pszError = NULL;
+            if( pfn_pj_strerrno != NULL )
+                pszError = pfn_pj_strerrno( err );
+            
+            if( pszError == NULL )
+                CPLError( CE_Failure, CPLE_AppDefined, 
+                          "Reprojection failed, err = %d", 
+                          err );
+            else
+                CPLError( CE_Failure, CPLE_AppDefined, "%s", pszError );
+        }
+        else if( nErrorCount == 20 )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                      "Reprojection failed, err = %d, further errors will be supressed on the transform object.", 
+                      err );
+        }
+
         return FALSE;
     }
 
+/* -------------------------------------------------------------------- */
+/*      Potentially transform back to degrees.                          */
+/* -------------------------------------------------------------------- */
     if( bTargetLatLong )
     {
         for( i = 0; i < nCount; i++ )
