@@ -435,6 +435,46 @@ if test "$HAVE_OGDI" != "no" ; then
 fi
 
 dnl ---------------------------------------------------------------------------
+dnl Select an HDF4 Library to use, or disable driver.
+dnl ---------------------------------------------------------------------------
+
+HDF4_INCLUDE=
+export HDF4_INCLUDE
+
+AC_ARG_WITH(hdf4,[  --with-hdf4[=ARG]       Include HDF4 support (ARG=path)],,)
+
+if test "$with_hdf4" = "no" ; then
+
+  HAVE_HDF4=no
+
+  echo "hdf4 support disabled."
+
+elif test "$with_hdf4" = "yes" -o "$with_hdf4" = "" ; then
+
+  AC_CHECK_LIB(mfhdf,SDreaddata,HAVE_HDF4=yes,HAVE_HDF4=no,)
+
+  if test "$HAVE_HDF4" = "yes" ; then   
+    LIBS="-lmfhdf $LIBS"
+  fi
+
+else
+
+  HAVE_HDF4=yes
+  LIBS="-L$with_hdf4 -L$with_hdf4/lib -lhdf4 $LIBS"
+  HDF4_INCLUDE="-I$with_hdf4 -I$with_hdf4/include"
+
+  echo "using libmfhdf from $with_hdf4."
+
+fi
+
+AC_SUBST(HAVE_HDF4,$HAVE_HDF4)
+AC_SUBST(HDF4_INCLUDE,$HDF4_INCLUDE)
+
+if test "$HAVE_HDF4" != "no" ; then
+  OPT_GDAL_FORMATS="hdf4 $OPT_GDAL_FORMATS"
+fi
+
+dnl ---------------------------------------------------------------------------
 
 AC_SUBST(OPT_GDAL_FORMATS,$OPT_GDAL_FORMATS)
 AC_SUBST(EXTRA_INCLUDES,$EXTRA_INCLUDES)
