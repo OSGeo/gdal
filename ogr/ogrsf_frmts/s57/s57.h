@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2001/12/17 22:35:16  warmerda
+ * added ReadFeature method
+ *
  * Revision 1.15  2001/12/14 19:40:18  warmerda
  * added optimized feature counting, and extents collection
  *
@@ -137,6 +140,12 @@ class S57ClassRegistrar
     char       *pachAttrType;
     char       *pachAttrClass;
     int        *panAttrIndex; // sorted by acronym.
+
+    int 	FindFile( const char *pszTarget, const char *pszDirectory, 
+                          int bReportErr, FILE **fp );
+
+    const char *ReadLine( FILE * fp );
+    char      **papszNextLine;
 
 public:
                 S57ClassRegistrar();
@@ -297,6 +306,7 @@ class S57Reader
 
     void                Rewind();
     OGRFeature          *ReadNextFeature( OGRFeatureDefn * = NULL );
+    OGRFeature          *ReadFeature( int nFID, OGRFeatureDefn * = NULL );
 
     int                 GetNextFEIndex() { return nNextFEIndex; }
     void                SetNextFEIndex( int );
