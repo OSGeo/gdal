@@ -37,7 +37,8 @@ all:	sublibs test1 test2 test_ogrsf ogrinfo ogr2ogr docs ogrtindex
 apps:	ogrinfo ogr2ogr
 
 clean:
-	rm -f *.o test1 test2 
+	rm -f *.o test1 test2 ogrinfo ogr2ogr ogrtindex sdts2mi testepsg 
+	rm -f test_ogrsf $(OGR_LIB)
 	(cd ogrsf_frmts; $(MAKE) clean)
 
 very-clean: clean
