@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.21  2005/02/22 18:43:31  hobu
+ * yank out debug refcount increments
+ *
  * Revision 1.20  2005/02/22 18:24:34  hobu
  * apply the double_4 typemap for Layer.GetExtent
  *
@@ -221,7 +224,6 @@ public:
   OGRDataSourceShadow *CreateDataSource( const char *name, 
                                     char **options = 0 ) {
     OGRDataSourceShadow *ds = (OGRDataSourceShadow*) OGR_Dr_CreateDataSource( self, name, options);
-    OGR_DS_Reference(ds);
     return ds;
   }
   
@@ -239,8 +241,6 @@ public:
   OGRDataSourceShadow *Open( const char* name, 
                         int update=0 ) {
     OGRDataSourceShadow* ds = (OGRDataSourceShadow*) OGR_Dr_Open(self, name, update);
-    OGR_DS_Reference(ds);
-    OGR_DS_Reference(ds);
     return ds;
   }
 
@@ -357,7 +357,7 @@ public:
   OGRLayerShadow *ExecuteSQL(const char* statement,
                         OGRGeometryShadow* geom=NULL,
                         const char* dialect="") {
-    OGRLayerShadow* layer = (OGRLayerShadow*) OGR_DS_ExecuteSQL(self,
+    OGRLayerShadow* layer = (OGRLayerShadow*) OGR_DS_ExecuteSQL((OGRDataSourceShadow*)self,
                                                       statement,
                                                       geom,
                                                       dialect);
