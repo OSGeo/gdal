@@ -38,6 +38,9 @@
  *   GUInt16, and GByte are defined.
  *
  * $Log$
+ * Revision 1.21  2000/10/20 04:20:33  warmerda
+ * added SWAP16PTR macros
+ *
  * Revision 1.20  2000/10/13 17:32:42  warmerda
  * check for unix instead of IGNORE_WIN32
  *
@@ -250,6 +253,15 @@ typedef int             GBool;
             (((GUInt16)(x) & 0x00ffU) << 8) | \
             (((GUInt16)(x) & 0xff00U) >> 8) ))
 
+#define CPL_SWAP16PTR(x) \
+{								\
+    GByte	byTemp, *pabyData = (GByte *) (x);		\
+								\
+    byTemp = pabyData[0];					\
+    pabyData[0] = pabyData[1];					\
+    pabyData[1] = byTemp;					\
+}                                                                    
+                                                            
 #define CPL_SWAP32(x) \
         ((GUInt32)( \
             (((GUInt32)(x) & (GUInt32)0x000000ffUL) << 24) | \
@@ -321,6 +333,8 @@ m * this version of the CPL_SWAP64() macro with a less efficient one.
 #  define CPL_LSBWORD16(x)	CPL_SWAP16(x)
 #  define CPL_MSBWORD32(x)	(x)
 #  define CPL_LSBWORD32(x)	CPL_SWAP32(x)
+#  define CPL_MSBPTR16(x)	
+#  define CPL_LSBPTR16(x)	CPL_SWAP16PTR(x)
 #  define CPL_MSBPTR32(x)	
 #  define CPL_LSBPTR32(x)	CPL_SWAP32PTR(x)
 #  define CPL_MSBPTR64(x)       
@@ -330,6 +344,8 @@ m * this version of the CPL_SWAP64() macro with a less efficient one.
 #  define CPL_MSBWORD16(x)	CPL_SWAP16(x)
 #  define CPL_LSBWORD32(x)	(x)
 #  define CPL_MSBWORD32(x)	CPL_SWAP32(x)
+#  define CPL_LSBPTR16(x)	
+#  define CPL_MSBPTR16(x)	CPL_SWAP16PTR(x)
 #  define CPL_LSBPTR32(x)	
 #  define CPL_MSBPTR32(x)	CPL_SWAP32PTR(x)
 #  define CPL_LSBPTR64(x)       
