@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2000/07/09 20:49:21  warmerda
+ * added +datum support
+ *
  * Revision 1.7  2000/03/06 02:23:54  warmerda
  * don't use +datum syntax
  *
@@ -422,12 +425,12 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 )
     {
         pszPROJ4Ellipse = "WGS84";
     }
-    else if( EQUAL(pszDatum,"North_Americian_Datum_1927") )
+    else if( EQUAL(pszDatum,"North_American_Datum_1927") )
     {
 //        pszPROJ4Ellipse = "clrk66:+datum=nad27"; /* NAD 27 */
         pszPROJ4Ellipse = "clrk66";
     }
-    else if( EQUAL(pszDatum,"North_Americian_Datum_1983") )
+    else if( EQUAL(pszDatum,"North_American_Datum_1983") )
     {
 //        pszPROJ4Ellipse = "GRS80:+datum=nad83";	/* NAD 83 */
         pszPROJ4Ellipse = "GRS80";
@@ -439,6 +442,60 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 )
     else
         sprintf( szProj4+strlen(szProj4), "+ellps=%s ",
                  pszPROJ4Ellipse );
+
+/* -------------------------------------------------------------------- */
+/*      Translate the datum.                                            */
+/* -------------------------------------------------------------------- */
+    const char *pszPROJ4Datum = NULL;
+    OGR_SRSNode *poTOWGS84 = GetAttrNode( "TOWGS84" );
+    char  szTOWGS84[256];
+
+    if( pszDatum == NULL )
+        /* nothing */;
+
+    else if( EQUAL(pszDatum,"North_American_Datum_1927") )
+        pszPROJ4Datum = "+datum=NAD27";
+
+    else if( EQUAL(pszDatum,"North_American_Datum_1983") )
+        pszPROJ4Datum = "+datum=NAD83";
+
+    else if( EQUAL(pszDatum,"WGS_1984") )
+        pszPROJ4Datum = "+datum=WGS84";
+
+    else if( poTOWGS84 != NULL )
+    {
+        if( poTOWGS84->GetChildCount() > 2
+            && (poTOWGS84->GetChildCount() < 6 
+                || EQUAL(poTOWGS84->GetChild(3)->GetValue(),"")
+                && EQUAL(poTOWGS84->GetChild(4)->GetValue(),"")
+                && EQUAL(poTOWGS84->GetChild(5)->GetValue(),"")
+                && EQUAL(poTOWGS84->GetChild(6)->GetValue(),"")) )
+        {
+            sprintf( szTOWGS84, "+towgs84=%s,%s,%s",
+                     poTOWGS84->GetChild(0)->GetValue(),
+                     poTOWGS84->GetChild(1)->GetValue(),
+                     poTOWGS84->GetChild(2)->GetValue() );
+            pszPROJ4Datum = szTOWGS84;
+        }
+        else if( poTOWGS84->GetChildCount() > 6 )
+        {
+            sprintf( szTOWGS84, "+towgs84=%s,%s,%s,%s,%s,%s,%s",
+                     poTOWGS84->GetChild(0)->GetValue(),
+                     poTOWGS84->GetChild(1)->GetValue(),
+                     poTOWGS84->GetChild(2)->GetValue(),
+                     poTOWGS84->GetChild(3)->GetValue(),
+                     poTOWGS84->GetChild(4)->GetValue(),
+                     poTOWGS84->GetChild(5)->GetValue(),
+                     poTOWGS84->GetChild(6)->GetValue() );
+            pszPROJ4Datum = szTOWGS84;
+        }
+    }
+    
+    if( pszPROJ4Datum != NULL )
+    {
+        strcat( szProj4, pszPROJ4Datum );
+        strcat( szProj4, " " );
+    }
     
 /* -------------------------------------------------------------------- */
 /*      Handle linear units.                                            */
