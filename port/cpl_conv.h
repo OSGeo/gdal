@@ -61,6 +61,11 @@ const char *CPLReadLine( FILE * );
 
 void CPL_DLL *CPLGetSymbol( const char *, const char * );
 
+/* -------------------------------------------------------------------- */
+/*      Read a directory  (cpl_dir.c)                                   */
+/* -------------------------------------------------------------------- */
+char CPL_DLL  **CPLReadDir( const char *pszPath );
+
 
 CPL_C_END
 
