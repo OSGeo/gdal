@@ -6,3 +6,5 @@ Changes:
 
  o Select only lib files needed.
  o Fix a few warnings about unused variables. 
+ o Hack private include file to avoid VersionString warnings.
+

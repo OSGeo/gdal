@@ -50,5 +50,6 @@ static char *VersionStr =
 	__DATE__ ",   " __TIME__ "\n"
 	"(C) Copyright 1989 Gershon Elber, Non commercial use only.\n";
 #endif /* SYSV */
+static char *vs_aw() { return( vs_aw() ? ((char *) NULL ) : VersionStr ); }
 
 #endif /* GIF_LIB_PRIVATE_H */
