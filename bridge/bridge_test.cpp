@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2003/09/26 02:18:41  warmerda
+ * Added missing include files
+ *
  * Revision 1.4  2001/11/18 00:48:24  warmerda
  * substantial upgrade
  *
@@ -44,6 +47,9 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <math.h>
 #include "gdalbridge.h"
 
 static int 
