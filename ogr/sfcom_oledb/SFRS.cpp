@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.24  2001/10/02 14:25:16  warmerda
+ * ensure attribute query is cleared when not in use
+ *
  * Revision 1.23  2001/09/06 03:25:55  warmerda
  * added debug report on spatial envelope, and g_nNextSFAccessorHandle
  *
@@ -993,18 +996,14 @@ HRESULT CSFRowset::Execute(DBPARAMS * pParams, LONG* pcRowsAffected)
     
     // Now that we have a layer set a filter if necessary.
     if (poGeometry)
-    {
         pLayer->SetSpatialFilter(poGeometry);
-    }
     else
-    { 
         pLayer->SetSpatialFilter(NULL);
-    }
 
     if( pszWHERE != NULL )
-    {
         pLayer->SetAttributeFilter( pszWHERE );
-    }
+    else
+        pLayer->SetAttributeFilter( NULL );
 	
     // Get count
     int      nTotalRows;
