@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2000/02/15 17:55:53  warmerda
+ * Improved error message for corrupt DDF files.
+ *
  * Revision 1.8  1999/11/18 19:03:04  warmerda
  * expanded tabs
  *
@@ -261,7 +264,9 @@ int DDFRecord::ReadHeader()
         || _fieldAreaStart < 24 || _fieldAreaStart > 100000 )
     {
         CPLError( CE_Failure, CPLE_FileIO, 
-                  "Data record appears to be corrupt on DDF file." );
+            "Data record appears to be corrupt on DDF file.\n"
+            " -- ensure that the files were uncompressed without modifying\n"
+            "carriage return/linefeeds (by default WINZIP does this)." );
         
         return FALSE;
     }
