@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.26  2003/05/27 21:39:53  warmerda
+ * added support for writing MULTILINESTRINGs as ARCs
+ *
  * Revision 1.25  2003/05/21 04:03:54  warmerda
  * expand tabs
  *
@@ -391,11 +394,12 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom )
     }
 
 /* ==================================================================== */
-/*      Arcs (we don't properly support multi part arcs).               */
+/*      Arcs from simple line strings.                                  */
 /* ==================================================================== */
-    else if( hSHP->nShapeType == SHPT_ARC
-             || hSHP->nShapeType == SHPT_ARCM
-             || hSHP->nShapeType == SHPT_ARCZ )
+    else if( (hSHP->nShapeType == SHPT_ARC
+              || hSHP->nShapeType == SHPT_ARCM
+              || hSHP->nShapeType == SHPT_ARCZ)
+             && wkbFlatten(poGeom->getGeometryType()) == wkbLineString )
     {
         OGRLineString   *poArc = (OGRLineString *) poGeom;
         double          *padfX, *padfY, *padfZ;
@@ -434,6 +438,74 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom )
         CPLFree( padfY );
         CPLFree( padfZ );
     }
+/* ==================================================================== */
+/*      Arcs - Try to treat as MultiLineString.                         */
+/* ==================================================================== */
+    else if( hSHP->nShapeType == SHPT_ARC
+             || hSHP->nShapeType == SHPT_ARCM
+             || hSHP->nShapeType == SHPT_ARCZ )
+    {
+        OGRMultiLineString *poML;
+        double          *padfX=NULL, *padfY=NULL, *padfZ=NULL;
+        int             iGeom, iPoint, nPointCount = 0;
+        SHPObject       *psShape;
+        int             *panRingStart;
+
+        poML = (OGRMultiLineString *) 
+            OGRGeometryFactory::forceToMultiLineString( poGeom->clone() );
+
+        if( wkbFlatten(poML->getGeometryType()) != wkbMultiLineString )
+        {
+            delete poML;
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Attempt to write non-linestring (%s) geometry to "
+                      "ARC type shapefile.",
+                      poGeom->getGeometryName() );
+
+            return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
+        }
+
+        panRingStart = (int *) 
+            CPLMalloc(sizeof(int) * poML->getNumGeometries());
+
+        for( iGeom = 0; iGeom < poML->getNumGeometries(); iGeom++ )
+        {
+            OGRLineString *poArc = (OGRLineString *)
+                poML->getGeometryRef(iGeom);
+            int nNewPoints = poArc->getNumPoints();
+
+            panRingStart[iGeom] = nPointCount;
+
+            padfX = (double *) 
+                CPLRealloc( padfX, sizeof(double)*(nNewPoints+nPointCount) );
+            padfY = (double *) 
+                CPLRealloc( padfY, sizeof(double)*(nNewPoints+nPointCount) );
+            padfZ = (double *) 
+                CPLRealloc( padfZ, sizeof(double)*(nNewPoints+nPointCount) );
+
+            for( iPoint = 0; iPoint < nNewPoints; iPoint++ )
+            {
+                padfX[nPointCount] = poArc->getX( iPoint );
+                padfY[nPointCount] = poArc->getY( iPoint );
+                padfZ[nPointCount] = poArc->getZ( iPoint );
+                nPointCount++;
+            }
+        }
+        
+        psShape = SHPCreateObject( hSHP->nShapeType, iShape, 
+                                   poML->getNumGeometries(), 
+                                   panRingStart, NULL,
+                                   nPointCount, padfX, padfY, padfZ, NULL);
+        SHPWriteObject( hSHP, iShape, psShape );
+        SHPDestroyObject( psShape );
+
+        CPLFree( padfX );
+        CPLFree( padfY );
+        CPLFree( padfZ );
+
+        delete poML;
+    }
+
 /* ==================================================================== */
 /*      Polygons/MultiPolygons                                          */
 /* ==================================================================== */

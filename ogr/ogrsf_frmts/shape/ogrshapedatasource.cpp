@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.22  2003/05/27 21:39:53  warmerda
+ * added support for writing MULTILINESTRINGs as ARCs
+ *
  * Revision 1.21  2003/05/21 04:03:54  warmerda
  * expand tabs
  *
@@ -303,6 +306,8 @@ int OGRShapeDataSource::OpenFile( const char *pszNewName, int bUpdate,
     DBFHandle   hDBF;
     const char *pszExtension = CPLGetExtension( pszNewName );
 
+    (void) bTestOpen;
+
     if( !EQUAL(pszExtension,"shp") && !EQUAL(pszExtension,"shx")
         && !EQUAL(pszExtension,"dbf") )
         return FALSE;
@@ -436,6 +441,10 @@ OGRShapeDataSource::CreateLayer( const char * pszLayerName,
     else if( eType == wkbPoint25D )
         nShapeType = SHPT_POINTZ;
     else if( eType == wkbLineString25D )
+        nShapeType = SHPT_ARCZ;
+    else if( eType == wkbMultiLineString )
+        nShapeType = SHPT_ARC;
+    else if( eType == wkbMultiLineString25D )
         nShapeType = SHPT_ARCZ;
     else if( eType == wkbPolygon25D )
         nShapeType = SHPT_POLYGONZ;
