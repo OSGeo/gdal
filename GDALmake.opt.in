@@ -56,6 +56,7 @@ CXXFLAGS	= @CXX_WFLAGS@ @CXX_PIC@ $(CXX_ODFLAGS) \
 RANLIB		=	@RANLIB@
 SO_EXT		=	@SO_EXT@
 LD_SHARED	=	@LD_SHARED@
+EXE		=       @EXE_EXT@
 
 ifeq ($(notdir $(LD_SHARED)),true)
 HAVE_LD_SHARED  =	no
