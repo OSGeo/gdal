@@ -26,19 +26,23 @@ clean:
 	$(CC) -c $(ALL_C_FLAGS) -I$(GDAL_ROOT)/core -I$(GDAL_ROOT)/port \
 		$*.c -o $*.o
 
+%.o:	addtiffo_src/%.cpp
+	$(CXX) -c $(ALL_C_FLAGS) -I$(GDAL_ROOT)/core -I$(GDAL_ROOT)/port \
+		addtiffo_src/$*.cpp -o $*.o
+
 
 hfatest:	hfatest.o $(HFAOBJ)
 	$(CXX) hfatest.o $(HFAOBJ) $(GDAL_ROOT)/port/*.o $(LIBS) -o hfatest
 
-img2tif:	img2tif.cpp imggeotiff.c geoextra.c $(HFAOBJ)
+img2tif:	img2tif.cpp imggeotiff.c geoextra.c \
+		tif_overview.o rawblockedimage.o $(HFAOBJ)
 	$(CXX) $(ALL_C_FLAGS) -I../gtiff/libtiff -I../gtiff/libgeotiff \
 		img2tif.cpp imggeotiff.c geoextra.c \
 		$(HFAOBJ) $(GDAL_ROOT)/port/*.o $(LIBS) \
-		../gtiff/tif_overview.o ../gtiff/rawblockedimage.o \
+		tif_overview.o rawblockedimage.o\
 		../gtiff/libgeotiff/libgeotiff.a \
 		../gtiff/libtiff/libtiff.a \
 		-o img2tif
-
 
 #	
 #	This test just dumps the Imagine data dictionary and node trees,
@@ -66,7 +70,8 @@ img2tif-dist:
 	cp buildwin.bat img2tif_dist
 	cp hfaopen.cpp hfaentry.cpp hfadictionary.cpp hfafield.cpp \
 	   hfatype.cpp hfaband.cpp img2tif.cpp imggeotiff.c geoextra.c \
-	   hfa.h hfa_p.h ../gtiff/tif_overview.cpp ../gtiff/rawblocked* \
+	   hfa.h hfa_p.h addtiffo_src/tif_overview.cpp \
+	   addtiffo_src/rawblocked* \
 	   img2tif_dist
 	mkdir img2tif_dist/port
 	cp $(GDAL_ROOT)/port/cpl_{conv.cpp,conv.h,error.cpp,error.h,port.h,string.cpp,string.h,vsi.h,vsisimple.cpp,config.h} img2tif_dist/port
