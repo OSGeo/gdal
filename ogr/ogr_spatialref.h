@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.62  2004/11/11 18:28:45  fwarmerdam
+ * added Bonne projection support
+ *
  * Revision 1.61  2004/05/10 17:05:14  warmerda
  * added AutoIdentifyEPSG()
  *
@@ -311,6 +314,10 @@ class CPL_DLL OGRSpatialReference
     OGRErr      SetAE( double dfCenterLat, double dfCenterLong,
                        double dfFalseEasting, double dfFalseNorthing );
 
+    /** Bonne */
+    OGRErr      SetBonne( double dfStdP1, double dfCentralMeridian,
+                          double dfFalseEasting, double dfFalseNorthing );
+    
     /** Cylindrical Equal Area */
     OGRErr      SetCEA( double dfStdP1, double dfCentralMeridian,
                         double dfFalseEasting, double dfFalseNorthing );

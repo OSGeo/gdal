@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.88  2004/11/11 18:28:45  fwarmerdam
+ * added Bonne projection support
+ *
  * Revision 1.87  2004/09/23 16:20:13  fwarmerdam
  * added OSRCleanup
  *
@@ -2544,6 +2547,39 @@ OGRErr OSRSetAE( OGRSpatialReferenceH hSRS,
 {
     return ((OGRSpatialReference *) hSRS)->SetAE( 
         dfCenterLat, dfCenterLong, 
+        dfFalseEasting, dfFalseNorthing );
+}
+
+/************************************************************************/
+/*                              SetBonne()                              */
+/************************************************************************/
+
+OGRErr OGRSpatialReference::SetBonne( 
+    double dfStdP1, double dfCentralMeridian,
+    double dfFalseEasting, double dfFalseNorthing )
+
+{
+    SetProjection( SRS_PT_BONNE );
+    SetNormProjParm( SRS_PP_STANDARD_PARALLEL_1, dfStdP1 );
+    SetNormProjParm( SRS_PP_CENTRAL_MERIDIAN, dfCentralMeridian );
+    SetNormProjParm( SRS_PP_FALSE_EASTING, dfFalseEasting );
+    SetNormProjParm( SRS_PP_FALSE_NORTHING, dfFalseNorthing );
+
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                            OSRSetBonne()                             */
+/************************************************************************/
+
+OGRErr OSRSetBonne( OGRSpatialReferenceH hSRS, 
+                    double dfStandardParallel, double dfCentralMeridian,
+                    double dfFalseEasting,
+                    double dfFalseNorthing )
+    
+{
+    return ((OGRSpatialReference *) hSRS)->SetAE( 
+        dfStandardParallel, dfCentralMeridian,
         dfFalseEasting, dfFalseNorthing );
 }
 

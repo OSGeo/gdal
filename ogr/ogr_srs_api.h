@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.47  2004/11/11 18:28:45  fwarmerdam
+ * added Bonne projection support
+ *
  * Revision 1.46  2004/09/23 16:20:13  fwarmerdam
  * added OSRCleanup
  *
@@ -229,6 +232,7 @@ typedef enum {
 #define SRS_PT_AZIMUTHAL_EQUIDISTANT "Azimuthal_Equidistant"
 #define SRS_PT_CASSINI_SOLDNER  "Cassini_Soldner"
 #define SRS_PT_CYLINDRICAL_EQUAL_AREA "Cylindrical_Equal_Area"
+#define SRS_PT_BONNE            "Bonne"
 #define SRS_PT_ECKERT_IV        "Eckert_IV"
 #define SRS_PT_ECKERT_VI        "Eckert_VI"
 #define SRS_PT_EQUIDISTANT_CONIC "Equidistant_Conic"
@@ -475,6 +479,11 @@ OGRErr CPL_DLL OSRSetACEA( OGRSpatialReferenceH hSRS, double dfStdP1, double dfS
 /** Azimuthal Equidistant */
 OGRErr CPL_DLL  OSRSetAE( OGRSpatialReferenceH hSRS, double dfCenterLat, double dfCenterLong,
                        double dfFalseEasting, double dfFalseNorthing );
+
+/** Bonne */
+OGRErr CPL_DLL OSRSetBonne(OGRSpatialReferenceH hSRS, 
+                           double dfStandardParallel, double dfCentralMeridian,
+                           double dfFalseEasting, double dfFalseNorthing );
 
 /** Cylindrical Equal Area */
 OGRErr CPL_DLL OSRSetCEA( OGRSpatialReferenceH hSRS, double dfStdP1, double dfCentralMeridian,
