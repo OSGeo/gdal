@@ -2,7 +2,7 @@
  * $Id$
  *
  * Project:  PNM Driver
- * Purpose:  Implementation of PNMDataset
+ * Purpose:  Portable anymap file format imlementation
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2003/03/25 13:52:18  dron
+ * CREATIONOPTIONLIST added, fixed problem with MIMETYPE.
+ *
  * Revision 1.12  2003/02/13 22:00:26  dron
  * Added creation option MAXVAL.
  *
@@ -375,10 +378,14 @@ void GDALRegister_PNM()
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
                                    "frmt_various.html#PNM" );
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "pnm" );
-        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, 
+        poDriver->SetMetadataItem( GDAL_DMD_MIMETYPE, 
                                    "image/x-portable-anymap" );
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
                                    "Byte UInt16" );
+        poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, 
+"<CreationOptionList>"
+"   <Option name='MAXVAL' type='unsigned int' description='Maximum color value'/>"
+"</CreationOptionList>" );
 
         poDriver->pfnOpen = PNMDataset::Open;
         poDriver->pfnCreate = PNMDataset::Create;
