@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.91  2005/03/16 19:21:35  fwarmerdam
+ * added methods for setting offset/scale
+ *
  * Revision 1.90  2005/02/23 14:53:43  fwarmerdam
  * moved version info into gdal_version.h
  *
@@ -486,7 +489,9 @@ double CPL_DLL GDALGetRasterMinimum( GDALRasterBandH, int *pbSuccess );
 double CPL_DLL GDALGetRasterMaximum( GDALRasterBandH, int *pbSuccess );
 const char CPL_DLL *GDALGetRasterUnitType( GDALRasterBandH );
 double CPL_DLL GDALGetRasterOffset( GDALRasterBandH, int *pbSuccess );
+CPLErr CPL_DLL GDALSetRasterOffset( GDALRasterBandH hBand, double dfNewOffset);
 double CPL_DLL GDALGetRasterScale( GDALRasterBandH, int *pbSuccess );
+CPLErr CPL_DLL GDALSetRasterScale( GDALRasterBandH hBand, double dfNewOffset );
 void CPL_DLL GDALComputeRasterMinMax( GDALRasterBandH hBand, int bApproxOK,
                                       double adfMinMax[2] );
 CPLErr CPL_DLL GDALFlushRasterCache( GDALRasterBandH hBand );
