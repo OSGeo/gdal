@@ -20,7 +20,7 @@ LINCLUDE =	-Iogrsf_frmts -I. -I$(GDAL_ROOT)/port
 
 default:	$(OGR_LIB)
 
-all:	sublibs test1 test2 test_ogrsf ogrinfo docs
+all:	sublibs test1 test2 test_ogrsf ogrinfo ogr2ogr docs
 
 clean:
 	rm -f *.o test1 test2 
@@ -40,6 +40,9 @@ test_ogrsf:	test_ogrsf.o $(OGR_LIB) $(FRMTS_LIB)
 
 ogrinfo:	ogrinfo.o $(OGR_LIB) $(FRMTS_LIB)
 	$(CXX) $(LNK_FLAGS) ogrinfo.o $(FRMTS_LIB) $(LIBS) -o ogrinfo
+
+ogr2ogr:	ogr2ogr.o $(OGR_LIB) $(FRMTS_LIB)
+	$(CXX) $(LNK_FLAGS) ogr2ogr.o $(FRMTS_LIB) $(LIBS) -o ogr2ogr
 
 $(FRMTS_LIB):
 	(cd ogrsf_frmts; $(MAKE))
@@ -63,3 +66,15 @@ $(OGR_LIB):	$(OBJ)
 
 web-update:	docs
 	cp html/* /u/www/projects/opengis/ogrhtml
+
+reg-test:
+	@rm -f s.out
+	@./reg_test.sh > s.out
+	@if test "`diff s.out reg_test.log`" = '' ; then \
+	    echo "******* Results Match Expected *********"; \
+	    grep FAILURE s.out; \
+	    rm s.out; \
+	else \
+	    echo "******* Results Don't Match Expected *********"; \
+	    diff s.out reg_test.log; \
+	fi
