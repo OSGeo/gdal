@@ -42,6 +42,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.34  2003/09/08 11:11:05  dron
+ * Include time.h and locale.h.
+ *
  * Revision 1.33  2003/05/12 14:52:56  warmerda
  * Use _MSC_VER to test for Microsoft Visual C++ compiler.
  *
@@ -146,6 +149,11 @@
 #include <string.h>
 #include <ctype.h>
 #include <errno.h>
+#include <time.h>
+
+#ifdef HAVE_LOCALE_H
+#  include <locale.h>
+#endif
 
 #ifdef _AIX
 #  include <strings.h>
