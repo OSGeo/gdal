@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.59  2002/12/21 17:28:35  warmerda
+ * actually, lets use 1.1.8.0
+ *
  * Revision 1.58  2002/12/21 17:26:43  warmerda
  * updated version to 1.1.7.5
  *
@@ -221,13 +224,13 @@
 /*      GDAL Version Information.                                       */
 /* -------------------------------------------------------------------- */
 #ifndef GDAL_VERSION_NUM
-#  define GDAL_VERSION_NUM      1175
+#  define GDAL_VERSION_NUM      1180
 #endif
 #ifndef GDAL_RELEASE_DATE
 #  define GDAL_RELEASE_DATE     20021221
 #endif
 #ifndef GDAL_RELEASE_NAME
-#  define GDAL_RELEASE_NAME     "1.1.7.5"
+#  define GDAL_RELEASE_NAME     "1.1.8.0"
 #endif
 
 /* -------------------------------------------------------------------- */
