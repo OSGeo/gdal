@@ -32,6 +32,9 @@
  * specific checking, io redirection and so on. 
  * 
  * $Log$
+ * Revision 1.2  1998/12/04 21:42:57  danmo
+ * Added #ifndef WIN32 arounf #include <unistd.h>
+ *
  * Revision 1.1  1998/12/03 18:26:02  warmerda
  * New
  *
@@ -45,7 +48,9 @@
 /* -------------------------------------------------------------------- */
 /*      We need access to ``struct stat''.                              */
 /* -------------------------------------------------------------------- */
-#include <unistd.h>
+#ifndef WIN32
+#  include <unistd.h>
+#endif
 #include <sys/stat.h>
 
 CPL_C_START

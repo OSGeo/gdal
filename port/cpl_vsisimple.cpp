@@ -30,6 +30,9 @@
  *    instance validation of access strings to fopen().
  * 
  * $Log$
+ * Revision 1.2  1998/12/04 21:42:57  danmo
+ * Added #ifndef WIN32 arounf #include <unistd.h>
+ *
  * Revision 1.1  1998/12/03 18:26:03  warmerda
  * New
  *
@@ -38,7 +41,9 @@
 #include "cpl_vsi.h"
 
 // for stat()
-#include <unistd.h>
+#ifndef WIN32
+#  include <unistd.h>
+#endif
 #include <sys/stat.h>
 
 /************************************************************************/
