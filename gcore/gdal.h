@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.41  2002/01/13 03:12:04  warmerda
+ * added version/release information
+ *
  * Revision 1.40  2001/12/10 17:43:22  warmerda
  * fixed GDALAddBand() prototype
  *
@@ -162,6 +165,13 @@
 
 #include "cpl_port.h"
 #include "cpl_error.h"
+
+/* -------------------------------------------------------------------- */
+/*      GDAL Version Information.                                       */
+/* -------------------------------------------------------------------- */
+#define GDAL_VERSION_NUM	1160
+#define GDAL_RELEASE_DATE       20020112
+#define GDAL_RELEASE_NAME       "1.1.6"
 
 /* -------------------------------------------------------------------- */
 /*      Significant constants.                                          */
