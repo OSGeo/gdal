@@ -93,10 +93,13 @@ JPEG_SUPPORTED = 1
 
 # Uncomment the following for MrSID support.
 # You will likely require /MD and /EHsc in OPTFLAGS. 
-#
-#MRSID_DIR =	C:\Software\MrSID
-#MRSID_LIB =	/LIBPATH:$(MRSID_DIR)\bin\lib_md \
+# If you have old MrSID DSDK version 3.1.x, uncomment MRSID_FLAGS option.
+# Otherwise it should stays commented out.
+#MRSID_DIR =	d:\projects\mrsid\
+#MRSID_INCLUDE = $(MRSID_DIR)\include
+#MRSID_LIB =	/LIBPATH:$(MRSID_DIR)\lib \
 #		MrSIDDecode_md.lib lt_xTrans_md.lib advapi32.lib user32.lib
+#MRSID_FLAGS =	-DMRSID_DSDK_VERSION_31
 
 # Uncomment the following and update to enable FME support.
 #FME_DIR =	d:\Software\fme
