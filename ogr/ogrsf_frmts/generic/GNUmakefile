@@ -32,7 +32,7 @@ CFLAGS   :=	$(CFLAGS) -DODBC_ENABLED
 CXXFLAGS :=	$(CXXFLAGS) -DODBC_ENABLED
 endif
 
-CPPFLAGS	+=	-I.. -I../..
+CPPFLAGS	:=	-I.. -I../.. $(GDAL_INCLUDE) $(CPPFLAGS)
 
 default:	$(O_OBJ)
 
