@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.30  2003/03/03 05:06:08  warmerda
+ * added support for DeleteDataSource and DeleteLayer
+ *
  * Revision 1.29  2003/02/03 21:16:49  warmerda
  * added .rec driver
  *
@@ -207,13 +210,14 @@ class CPL_DLL OGRDataSource
 
     virtual int         GetLayerCount() = 0;
     virtual OGRLayer    *GetLayer(int) = 0;
+    virtual OGRErr      DeleteLayer(int);
 
     virtual int         TestCapability( const char * ) = 0;
 
-    virtual OGRLayer    *CreateLayer( const char *, 
-                                      OGRSpatialReference * = NULL,
-                                      OGRwkbGeometryType = wkbUnknown,
-                                      char ** = NULL );
+    virtual OGRLayer   *CreateLayer( const char *, 
+                                     OGRSpatialReference * = NULL,
+                                     OGRwkbGeometryType = wkbUnknown,
+                                     char ** = NULL );
     OGRStyleTable       *GetStyleTable(){return m_poStyleTable;}
 
     virtual OGRLayer *  ExecuteSQL( const char *pszSQLCommand,
@@ -251,6 +255,7 @@ class CPL_DLL OGRSFDriver
 
     virtual OGRDataSource *CreateDataSource( const char *pszName,
                                              char ** = NULL );
+    virtual OGRErr      DeleteDataSource( const char *pszName );
 };
 
 
