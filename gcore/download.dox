@@ -68,7 +68,7 @@ build GDAL from source.<p>
 <h3>CVS</h3>
 
 The GDAL source is available by anonymous CVS from the cvs.remotesensing.org
-server:<p>
+server:
 
 <pre>
 % export CVSROOT=:pserver:anonymous@cvs.remotesensing.org:/cvs
