@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2000/07/27 21:34:08  warmerda
+ * added description, and driver access
+ *
  * Revision 1.17  2000/07/25 17:45:03  warmerda
  * added access to CPLDebug
  *
@@ -827,6 +830,39 @@ py_GDALGetMetadata(PyObject *self, PyObject *args) {
 %}
 
 %native(GDALGetMetadata) py_GDALGetMetadata;
+
+%{
+/************************************************************************/
+/*                         GDALGetDescription()                         */
+/************************************************************************/
+static PyObject *
+py_GDALGetDescription(PyObject *self, PyObject *args) {
+
+    GDALMajorObjectH  hObject;
+    char *_argc0 = NULL;
+    PyObject *psDict;
+    int i;
+    char **papszMetadata;
+    char *pszDomain = NULL;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"s:GDALGetDescription",&_argc0, &pszDomain))
+        return NULL;
+
+    if (_argc0) {
+        if (SWIG_GetPtr(_argc0,(void **) &hObject,NULL )) {
+            PyErr_SetString(PyExc_TypeError,
+                          "Type error in argument 1 of GDALGetDescription."
+                          "  Expected _GDALMajorObjectH.");
+            return NULL;
+        }
+    }
+
+    return Py_BuildValue("s", GDALGetDescription(hObject) );
+}
+%}
+
+%native(GDALGetDescription) py_GDALGetDescription;
 
 /* -------------------------------------------------------------------- */
 /*      OGRSpatialReference stuff.                                      */

@@ -33,8 +33,8 @@
  * and things like that.
  *
  * $Log$
- * Revision 1.17  2000/07/25 17:45:03  warmerda
- * added access to CPLDebug
+ * Revision 1.18  2000/07/27 21:34:08  warmerda
+ * added description, and driver access
  *
  ************************************************************************/
 
@@ -1121,6 +1121,31 @@ py_GDALGetMetadata(PyObject *self, PyObject *args) {
     }
 
     return psDict;
+}
+
+/************************************************************************/
+/*                         GDALGetDescription()                         */
+/************************************************************************/
+static PyObject *
+py_GDALGetDescription(PyObject *self, PyObject *args) {
+
+    GDALMajorObjectH  hObject;
+    char *_argc0 = NULL;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"s:GDALGetDescription",&_argc0))
+        return NULL;
+
+    if (_argc0) {
+        if (SWIG_GetPtr(_argc0,(void **) &hObject,NULL )) {
+            PyErr_SetString(PyExc_TypeError,
+                          "Type error in argument 1 of GDALGetDescription."
+                          "  Expected _GDALMajorObjectH.");
+            return NULL;
+        }
+    }
+
+    return Py_BuildValue("s", GDALGetDescription(hObject) );
 }
 
 /************************************************************************/
@@ -3278,6 +3303,7 @@ static PyMethodDef _gdalMethods[] = {
 	 { "OSRReference", _wrap_OSRReference, 1 },
 	 { "OSRDestroySpatialReference", _wrap_OSRDestroySpatialReference, 1 },
 	 { "OSRNewSpatialReference", _wrap_OSRNewSpatialReference, 1 },
+	 { "GDALGetDescription", py_GDALGetDescription, 1 },
 	 { "GDALGetMetadata", py_GDALGetMetadata, 1 },
 	 { "GDALGetRasterHistogram", py_GDALGetRasterHistogram, 1 },
 	 { "GDALSetGeoTransform", py_GDALSetGeoTransform, 1 },

@@ -29,6 +29,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.16  2000/07/27 21:34:08  warmerda
+# added description, and driver access
+#
 # Revision 1.15  2000/07/25 17:45:03  warmerda
 # added access to CPLDebug
 #
@@ -174,6 +177,12 @@ class Dataset:
             if _gdal.GDALDereferenceDataset(self._o) <= 0:
                 _gdal.GDALClose(self._o)
 
+    def GetDriver(self):
+        return Driver(_obj= _gdal.GDALGetDatasetDriver(self._o))
+
+    def GetDescription(self):
+        return _gdal.GDALGetDescription( self._o )
+    
     def GetRasterBand(self, i):
         if i > 0 & i <= self.RasterCount:
             return self._band[i-1]
@@ -247,6 +256,9 @@ class Band:
         self.XSize = _gdal.GDALGetRasterBandXSize(self._o)
         self.YSize = _gdal.GDALGetRasterBandYSize(self._o)
         
+    def GetDescription(self):
+        return _gdal.GDALGetDescription( self._o )
+    
     def ReadRaster(self, xoff, yoff, xsize, ysize,
                    buf_xsize = None, buf_ysize = None, buf_type = None):
 
