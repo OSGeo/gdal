@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.20  2003/03/27 19:52:58  dron
+ * Implemented Delete() method and large file support.
+ *
  * Revision 1.19  2003/02/06 04:55:35  warmerda
  * use default georef info if bounds missing
  *
@@ -125,6 +128,8 @@ class CPL_DLL AAIGDataset : public GDALDataset
                 ~AAIGDataset();
 
     static GDALDataset *Open( GDALOpenInfo * );
+    static CPLErr       Delete( const char *pszFilename );
+    static CPLErr       Remove( const char *pszFilename );
 
     virtual CPLErr GetGeoTransform( double * );
     virtual const char *GetProjectionRef(void);
@@ -140,7 +145,7 @@ class AAIGRasterBand : public GDALRasterBand
 {
     friend class AAIGDataset;
 
-    int         *panLineOffset;
+    GUIntBig      *panLineOffset;
 
   public:
 
@@ -168,7 +173,8 @@ AAIGRasterBand::AAIGRasterBand( AAIGDataset *poDS, int nDataStart,
     nBlockXSize = poDS->nRasterXSize;
     nBlockYSize = 1;
 
-    panLineOffset = (int *) CPLCalloc(poDS->nRasterYSize,sizeof(int));
+    panLineOffset = 
+        (GUIntBig *) CPLCalloc( poDS->nRasterYSize, sizeof(GUIntBig) );
     panLineOffset[0] = nDataStart;
 }
 
@@ -205,15 +211,23 @@ CPLErr AAIGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     if( panLineOffset[nBlockYOff] == 0 )
         return CE_Failure;
 
-    if( VSIFSeek( poODS->fp, panLineOffset[nBlockYOff], SEEK_SET ) != 0 )
+    if( VSIFSeekL( poODS->fp, panLineOffset[nBlockYOff], SEEK_SET ) != 0 )
+    {
+        CPLError( CE_Failure, CPLE_FileIO,
+                  "Can't seek to offset %ld in input file to read data.",
+                  panLineOffset[nBlockYOff] );
         return CE_Failure;
+    }
 
     pszLine = CPLReadLine( poODS->fp );
     if( pszLine == NULL )
+    {
+        CPLError( CE_Failure, CPLE_FileIO, "Can't read line from input file." );
         return CE_Failure;
+    }
 
     if( nBlockYOff < poODS->nRasterYSize - 1 )
-        panLineOffset[nBlockYOff+1] = VSIFTell( poODS->fp );
+        panLineOffset[nBlockYOff + 1] = VSIFTellL( poODS->fp );
 
     if( pImage == NULL )
         return CE_None;
@@ -301,7 +315,7 @@ AAIGDataset::~AAIGDataset()
 
 {
     if( fp != NULL )
-        VSIFClose( fp );
+        VSIFCloseL( fp );
 
     CPLFree( pszProjection );
     CSLDestroy( papszPrj );
@@ -530,7 +544,7 @@ AAIGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
     FILE        *fpImage;
 
-    fpImage = VSIFOpen( pszFilename, "wt" );
+    fpImage = VSIFOpenL( pszFilename, "wt" );
     if( fpImage == NULL )
     {
         CPLError( CE_Failure, CPLE_OpenFailed, 
@@ -587,7 +601,7 @@ AAIGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     }
 
     CPLFree( padfScanline );
-    VSIFClose( fpImage );
+    VSIFCloseL( fpImage );
 
 /* -------------------------------------------------------------------- */
 /*      Try to write projection file.                                   */
@@ -624,6 +638,52 @@ AAIGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 }
 
 /************************************************************************/
+/*                               Remove()                               */
+/*    Called from the Delete()                                          */
+/************************************************************************/
+
+CPLErr AAIGDataset::Remove( const char * pszFilename )
+
+{
+    VSIStatBuf      sStat;
+
+    if( VSIStat( pszFilename, &sStat ) == 0 && VSI_ISREG( sStat.st_mode ) )
+    {
+        if( VSIUnlink( pszFilename ) == 0 )
+            return CE_None;
+        else
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Attempt to unlink %s failed.\n", pszFilename );
+            return CE_Failure;
+        }
+    }
+    else
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Unable to delete %s, not a file.\n", pszFilename );
+        return CE_Failure;
+    }
+}
+
+/************************************************************************/
+/*                               Delete()                               */
+/************************************************************************/
+
+CPLErr AAIGDataset::Delete( const char *pszFilename )
+
+{
+    char                    *pszDirname, *pszBasename;
+    const char              *pszPrjFilename;
+
+    pszDirname = CPLStrdup( CPLGetPath(pszFilename) );
+    pszBasename = CPLStrdup( CPLGetBasename(pszFilename) );
+    pszPrjFilename = CPLFormFilename( pszDirname, pszBasename, "prj" );
+    Remove( pszPrjFilename );
+    return Remove( pszFilename );
+}
+
+/************************************************************************/
 /*                        GDALRegister_AAIGrid()                        */
 /************************************************************************/
 
@@ -647,6 +707,7 @@ void GDALRegister_AAIGrid()
 
         poDriver->pfnOpen = AAIGDataset::Open;
         poDriver->pfnCreateCopy = AAIGCreateCopy;
+        poDriver->pfnDelete = AAIGDataset::Delete;
         
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
