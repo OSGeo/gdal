@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.62  2002/05/29 03:10:40  warmerda
+ * CopyCreate now writes metadata items
+ *
  * Revision 1.61  2002/05/06 21:40:09  warmerda
  * fix up mapinfo tab support substantially
  *
@@ -2468,6 +2471,27 @@ GTiffCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         TIFFSetField( hTIFF, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_PALETTE );
         TIFFSetField( hTIFF, TIFFTAG_COLORMAP, anTRed, anTGreen, anTBlue );
     }
+
+/* -------------------------------------------------------------------- */
+/* 	Transfer some TIFF specific metadata, if available.             */
+/* -------------------------------------------------------------------- */
+    const char *pszMD;
+
+    pszMD = poSrcDS->GetMetadataItem( "TIFFTAG_DOCUMENTNAME" );
+    if( pszMD )
+        TIFFSetField( hTIFF, TIFFTAG_DOCUMENTNAME, pszMD );
+
+    pszMD = poSrcDS->GetMetadataItem( "TIFFTAG_IMAGEDESCRIPTION" );
+    if( pszMD )
+        TIFFSetField( hTIFF, TIFFTAG_IMAGEDESCRIPTION, pszMD );
+
+    pszMD = poSrcDS->GetMetadataItem( "TIFFTAG_SOFTWARE" );
+    if( pszMD )
+        TIFFSetField( hTIFF, TIFFTAG_SOFTWARE, pszMD );
+
+    pszMD = poSrcDS->GetMetadataItem( "TIFFTAG_DATETIME" );
+    if( pszMD )
+        TIFFSetField( hTIFF, TIFFTAG_DATETIME, pszMD );
 
 /* -------------------------------------------------------------------- */
 /*      Write affine transform if it is meaningful.                     */
