@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2001/12/08 04:45:59  warmerda
+ * fixed south setting for UTM
+ *
  * Revision 1.16  2001/11/11 23:51:00  warmerda
  * added required class keyword to friend declarations
  *
@@ -549,7 +552,11 @@ void HKVDataset::ProcessGeoref( const char * pszFilename )
         double dfUtmULX, dfUtmULY, dfUtmLRX, dfUtmLRY;
         int    bSuccess = TRUE;
 
-        oUTM.SetUTM( nZone );
+        if( pasGCPList[4].dfGCPY < 0 )
+            oUTM.SetUTM( nZone, 0 );
+        else
+            oUTM.SetUTM( nZone, 1 );
+
         oUTM.SetWellKnownGeogCS( "WGS84" );
 
         oLL.SetWellKnownGeogCS( "WGS84" );
