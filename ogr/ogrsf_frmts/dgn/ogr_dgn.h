@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2002/11/11 20:35:05  warmerda
+ * added create support
+ *
  * Revision 1.6  2002/10/29 19:45:29  warmerda
  * OGR driver now always builds an index if any features are to be read.  This
  * is primarily done to ensure that color tables appearing late in the file
@@ -71,13 +74,19 @@ class OGRDGNLayer : public OGRLayer
     int			nTotalShapeCount;
 
     DGNHandle           hDGN;
+    int                 bUpdate;
 
     OGRFeature	       *ElementToFeature( DGNElemCore * );
+
     void                ConsiderBrush( DGNElemCore *, const char *pszPen,
                                        OGRFeature *poFeature );
 
+    DGNElemCore       **LineStringToElementGroup( OGRLineString *, int );
+    DGNElemCore       **TranslateLabel( OGRFeature * );
+
   public:
-                        OGRDGNLayer( const char * pszName, DGNHandle hDGN );
+                        OGRDGNLayer( const char * pszName, DGNHandle hDGN,
+                                     int bUpdate );
     			~OGRDGNLayer();
 
     OGRGeometry *	GetSpatialFilter() { return poFilterGeom; }
@@ -93,6 +102,8 @@ class OGRDGNLayer : public OGRLayer
     OGRFeatureDefn *	GetLayerDefn() { return poFeatureDefn; }
 
     int                 TestCapability( const char * );
+
+    OGRErr              CreateFeature( OGRFeature *poFeature );
 };
 
 /************************************************************************/
@@ -106,12 +117,20 @@ class OGRDGNDataSource : public OGRDataSource
     
     char		*pszName;
     DGNHandle           hDGN;
+
+    char                **papszOptions;
     
   public:
     			OGRDGNDataSource();
     			~OGRDGNDataSource();
 
-    int			Open( const char *, int bTestOpen );
+    int			Open( const char *, int bTestOpen, int bUpdate );
+    int                 PreCreate( const char *, char ** );
+
+    OGRLayer           *CreateLayer( const char *, 
+                                     OGRSpatialReference * = NULL,
+                                     OGRwkbGeometryType = wkbUnknown,
+                                     char ** = NULL );
 
     const char	        *GetName() { return pszName; }
     int			GetLayerCount() { return nLayers; }
@@ -131,6 +150,7 @@ class OGRDGNDriver : public OGRSFDriver
                 
     const char *GetName();
     OGRDataSource *Open( const char *, int );
+    OGRDataSource *CreateDataSource( const char *, char ** );
 
     int                 TestCapability( const char * );
 };

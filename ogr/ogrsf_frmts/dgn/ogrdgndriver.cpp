@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2002/11/11 20:34:22  warmerda
+ * added create support
+ *
  * Revision 1.3  2001/07/18 04:55:16  warmerda
  * added CPL_CSVID
  *
@@ -74,8 +77,32 @@ OGRDataSource *OGRDGNDriver::Open( const char * pszFilename, int bUpdate )
 
     poDS = new OGRDGNDataSource();
 
-    if( !poDS->Open( pszFilename, TRUE )
+    if( !poDS->Open( pszFilename, TRUE, bUpdate )
         || poDS->GetLayerCount() == 0 )
+    {
+        delete poDS;
+        return NULL;
+    }
+    else
+        return poDS;
+}
+
+/************************************************************************/
+/*                          CreateDataSource()                          */
+/************************************************************************/
+
+OGRDataSource *OGRDGNDriver::CreateDataSource( const char * pszName,
+                                               char **papszOptions )
+
+{
+/* -------------------------------------------------------------------- */
+/*      Return a new OGRDataSource()                                    */
+/* -------------------------------------------------------------------- */
+    OGRDGNDataSource	*poDS = NULL;
+
+    poDS = new OGRDGNDataSource();
+    
+    if( !poDS->PreCreate( pszName, papszOptions ) )
     {
         delete poDS;
         return NULL;
@@ -92,7 +119,7 @@ int OGRDGNDriver::TestCapability( const char * pszCap )
 
 {
     if( EQUAL(pszCap,ODrCCreateDataSource) )
-        return FALSE;
+        return TRUE;
     else
         return FALSE;
 }
