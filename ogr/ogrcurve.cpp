@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  1999/05/20 14:35:44  warmerda
+ * added support for well known text format
+ *
  * Revision 1.3  1999/05/17 14:39:46  warmerda
  * Added various new methods for ICurve compatibility.
  *
@@ -136,7 +139,7 @@ void OGRCurve::setNumPoints( int nNewPointCount )
 
         assert( paoPoints != NULL );
 
-        memset( paoPoints + sizeof(OGRRawPoint) * nPointCount,
+        memset( paoPoints + nPointCount,
                 0, sizeof(OGRRawPoint) * (nNewPointCount - nPointCount) );
     }
 
@@ -185,6 +188,19 @@ void OGRCurve::addPoint( double x, double y )
 
 {
     setPoint( nPointCount, x, y );
+}
+
+/************************************************************************/
+/*                             setPoints()                              */
+/*                                                                      */
+/*      Set all the points from a passed in list.                       */
+/************************************************************************/
+
+void OGRCurve::setPoints( int nPointsIn, OGRRawPoint * paoPointsIn )
+
+{
+    setNumPoints( nPointsIn );
+    memcpy( paoPoints, paoPointsIn, sizeof(OGRRawPoint) * nPointsIn);
 }
 
 /************************************************************************/
@@ -318,19 +334,81 @@ OGRErr	OGRCurve::exportToWkb( OGRwkbByteOrder eByteOrder,
 }
 
 /************************************************************************/
-/*                         dumpPointsReadable()                         */
+/*                           importFromWkt()                            */
 /*                                                                      */
-/*      Helper function for the derived classes dumpReadable()          */
-/*      methods.                                                        */
+/*      Instantiate from well known text format.  Currently this is     */
+/*      `LINESTRING ( x y, x y, ...)',                                  */
 /************************************************************************/
 
-void OGRCurve::dumpPointsReadable( FILE * fp, const char * pszPrefix )
+OGRErr OGRCurve::importFromWkt( char ** ppszInput )
 
 {
-    fprintf( fp, "%s  nPointCount = %d\n", pszPrefix, nPointCount );
+    char	szToken[OGR_WKT_TOKEN_MAX];
+    const char	*pszInput = *ppszInput;
+
+    if( paoPoints != NULL )
+    {
+        nPointCount = 0;
+        CPLFree( paoPoints );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Read and verify the ``LINESTRING'' keyword token.               */
+/* -------------------------------------------------------------------- */
+    pszInput = OGRWktReadToken( pszInput, szToken );
+
+    if( !EQUAL(szToken,getGeometryName()) )
+        return OGRERR_CORRUPT_DATA;
+
+/* -------------------------------------------------------------------- */
+/*      Read the point list which should consist of exactly one point.  */
+/* -------------------------------------------------------------------- */
+    int			nMaxPoint = 0;
+
+    nPointCount = 0;
+
+    pszInput = OGRWktReadPoints( pszInput, &paoPoints, &nMaxPoint,
+                                 &nPointCount );
+    if( pszInput == NULL )
+        return OGRERR_CORRUPT_DATA;
+
+    *ppszInput = (char *) pszInput;
+    
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                            exportToWkt()                             */
+/*                                                                      */
+/*      Translate this structure into it's well known text format       */
+/*      equivelent.  This could be made alot more CPU efficient!        */
+/************************************************************************/
+
+OGRErr OGRCurve::exportToWkt( char ** ppszReturn )
+
+{
+    int		nMaxString = nPointCount * 16 * 2 + 20;
+
+    *ppszReturn = (char *) VSIMalloc( nMaxString );
+    if( *ppszReturn == NULL )
+        return OGRERR_NOT_ENOUGH_MEMORY;
+
+    sprintf( *ppszReturn, "%s (", getGeometryName() );
+
     for( int i = 0; i < nPointCount; i++ )
-        fprintf( fp, "%s  Point[%d] = (%g,%g)\n",
-                 pszPrefix, i, paoPoints[i].x, paoPoints[i].y );
+    {
+        assert( nMaxString > (int) strlen(*ppszReturn) + 32 );
+
+        if( i > 0 )
+            strcat( *ppszReturn, "," );
+
+        strcat( *ppszReturn, OGRMakeWktCoordinate( paoPoints[i].x,
+                                                   paoPoints[i].y ) );
+    }
+
+    strcat( *ppszReturn, ")" );
+
+    return OGRERR_NONE;
 }
 
 /************************************************************************/

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  1999/05/20 14:35:44  warmerda
+ * added support for well known text format
+ *
  * Revision 1.2  1999/03/30 21:21:43  warmerda
  * added linearring/polygon support
  *
@@ -101,6 +104,16 @@ OGRwkbGeometryType OGRPoint::getGeometryType()
 
 {
     return wkbPoint;
+}
+
+/************************************************************************/
+/*                          getGeometryName()                           */
+/************************************************************************/
+
+const char * OGRPoint::getGeometryName()
+
+{
+    return "POINT";
 }
 
 /************************************************************************/
@@ -219,14 +232,60 @@ OGRErr	OGRPoint::exportToWkb( OGRwkbByteOrder eByteOrder,
 }
 
 /************************************************************************/
-/*                            dumpReadable()                            */
+/*                           importFromWkt()                            */
+/*                                                                      */
+/*      Instantiate point from well known text format ``POINT           */
+/*      (x,y)''.                                                        */
 /************************************************************************/
 
-void OGRPoint::dumpReadable( FILE * fp, const char * pszPrefix )
+OGRErr OGRPoint::importFromWkt( char ** ppszInput )
 
 {
-    if( pszPrefix == NULL )
-        pszPrefix = "";
+    char	szToken[OGR_WKT_TOKEN_MAX];
+    const char	*pszInput = *ppszInput;
+
+/* -------------------------------------------------------------------- */
+/*      Read and verify the ``POINT'' keyword token.                    */
+/* -------------------------------------------------------------------- */
+    pszInput = OGRWktReadToken( pszInput, szToken );
+
+    if( !EQUAL(szToken,"POINT") )
+        return OGRERR_CORRUPT_DATA;
+
+/* -------------------------------------------------------------------- */
+/*      Read the point list which should consist of exactly one point.  */
+/* -------------------------------------------------------------------- */
+    OGRRawPoint		*poPoints = NULL;
+    int			nMaxPoint = 0, nPoints = 0;
+
+    pszInput = OGRWktReadPoints( pszInput, &poPoints, &nMaxPoint, &nPoints );
+    if( pszInput == NULL || nPoints != 1 )
+        return OGRERR_CORRUPT_DATA;
+
+    x = poPoints[0].x;
+    y = poPoints[0].y;
+
+    CPLFree( poPoints );
+
+    *ppszInput = (char *) pszInput;
     
-    fprintf( fp, "%sOGRPoint: (%g,%g)\n", pszPrefix, x, y );
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                            exportToWkt()                             */
+/*                                                                      */
+/*      Translate this structure into it's well known text format       */
+/*      equivelent.                                                     */
+/************************************************************************/
+
+OGRErr OGRPoint::exportToWkt( char ** ppszReturn )
+
+{
+    char	szTextEquiv[100];
+
+    sprintf( szTextEquiv, "POINT (%s)", OGRMakeWktCoordinate(x, y) );
+    *ppszReturn = CPLStrdup( szTextEquiv );
+    
+    return OGRERR_NONE;
 }

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  1999/05/20 14:35:44  warmerda
+ * added support for well known text format
+ *
  * Revision 1.2  1999/03/30 21:21:43  warmerda
  * added linearring/polygon support
  *
@@ -68,15 +71,13 @@ OGRwkbGeometryType OGRLineString::getGeometryType()
 }
 
 /************************************************************************/
-/*                            dumpReadable()                            */
+/*                          getGeometryName()                           */
 /************************************************************************/
 
-void OGRLineString::dumpReadable( FILE * fp, const char * pszPrefix )
+const char * OGRLineString::getGeometryName()
 
 {
-    if( pszPrefix == NULL )
-        pszPrefix = "";
-    
-    fprintf( fp, "%sOGRLineString:\n", pszPrefix );
-    dumpPointsReadable( fp, pszPrefix );
+    return "LINESTRING";
 }
+
+

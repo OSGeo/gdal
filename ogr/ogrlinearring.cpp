@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/05/20 14:35:44  warmerda
+ * added support for well known text format
+ *
  * Revision 1.1  1999/03/30 21:21:05  warmerda
  * New
  *
@@ -69,17 +72,13 @@ OGRwkbGeometryType OGRLinearRing::getGeometryType()
 }
 
 /************************************************************************/
-/*                            dumpReadable()                            */
+/*                          getGeometryName()                           */
 /************************************************************************/
 
-void OGRLinearRing::dumpReadable( FILE * fp, const char * pszPrefix )
+const char * OGRLinearRing::getGeometryName()
 
 {
-    if( pszPrefix == NULL )
-        pszPrefix = "";
-    
-    fprintf( fp, "%sOGRLinearRing:\n", pszPrefix );
-    dumpPointsReadable( fp, pszPrefix );
+    return "LINEARRING";
 }
 
 /************************************************************************/

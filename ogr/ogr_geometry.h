@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  1999/05/20 14:35:44  warmerda
+ * added support for well known text format
+ *
  * Revision 1.4  1999/05/17 14:39:13  warmerda
  * Added ICurve, and some other IGeometry and related methods.
  *
@@ -46,20 +49,8 @@
 #ifndef _OGR_GEOMETRY_H_INCLUDED
 #define _OGR_GEOMETRY_H_INLLUDED
 
-#include <stdio.h>
-
-#define OGRMalloc	malloc
-#define OGRFree		free
-#define OGRRealloc	realloc
-#define OGRCalloc	calloc
-
-typedef int OGRErr;
-
-#define OGRERR_NONE		   0
-#define OGRERR_NOT_ENOUGH_DATA	   1	/* not enough data to deserialize */
-#define OGRERR_NOT_ENOUGH_MEMORY   2
-#define OGRERR_UNSUPPORTED_GEOMETRY_TYPE 3
-#define OGRERR_UNSUPPORTED_OPERATION 4
+#include "ogr_core.h"
+#include "ogr_spatialref.h"
 
 enum OGRwkbGeometryType
 {
@@ -79,14 +70,25 @@ enum OGRwkbByteOrder
     wkbNDR = 1
 };
 
-typedef int	OGRBoolean;
+class OGRRawPoint
+{
+  public:
+    double	x;
+    double	y;
+};
 
 /************************************************************************/
 /*                             OGRGeometry                              */
 /************************************************************************/
 class OGRGeometry
 {
+  private:
+    OGRSpatialReference * poSRS;		// may be NULL
+    
   public:
+    		OGRGeometry();
+    virtual	~OGRGeometry();
+                        
     // standard IGeometry
     virtual int	getDimension() = 0;
     virtual int	getCoordinateDimension() = 0;
@@ -97,17 +99,21 @@ class OGRGeometry
     virtual int	WkbSize() = 0;
     virtual OGRErr importFromWkb( unsigned char *, int=-1 )=0;
     virtual OGRErr exportToWkb( OGRwkbByteOrder, unsigned char * ) = 0;
+    virtual OGRErr importFromWkt( char ** ) = 0;
+    virtual OGRErr exportToWkt( char ** ) = 0;
     
     // non-standard
     virtual OGRwkbGeometryType getGeometryType() = 0;
-    virtual void   dumpReadable( FILE *, const char * = NULL ) = 0;
+    virtual const char *getGeometryName() = 0;
+    virtual void   dumpReadable( FILE *, const char * = NULL );
 
+    void    assignSpatialReference( OGRSpatialReference * poSR );
+    OGRSpatialReference *getSpatialReference( void );
    
 #ifdef notdef
     
     // I presume all these should be virtual?  How many
     // should be pure?
-    OGRSpatialReference	*getSpatialReference();
     OGREnvelope	*getEnvelope();
 
     ?		Export(); /* export to well known representation */
@@ -134,13 +140,6 @@ class OGRGeometry
 #endif    
 };
 
-class OGRRawPoint
-{
-  public:
-    double	x;
-    double	y;
-};
-
 /************************************************************************/
 /*                               OGRPoint                               */
 /************************************************************************/
@@ -160,18 +159,24 @@ class OGRPoint : public OGRGeometry
     virtual int	WkbSize();
     virtual OGRErr importFromWkb( unsigned char *, int=-1 );
     virtual OGRErr exportToWkb( OGRwkbByteOrder, unsigned char * );
+    virtual OGRErr importFromWkt( char ** );
+    virtual OGRErr exportToWkt( char ** );
     
-    virtual OGRwkbGeometryType getGeometryType();
-    virtual void dumpReadable( FILE *, const char * );
-    
+    // IGeometry 
     virtual int	getDimension();
     virtual int	getCoordinateDimension();
 
+    // IPoint
     double	getX() { return x; }
     double	getY() { return y; }
 
+    // Non standard
     void	setX( double xIn ) { x = xIn; }
     void	setY( double yIn ) { y = yIn; }
+
+    virtual const char *getGeometryName();
+    virtual OGRwkbGeometryType getGeometryType();
+
 };
 
 /************************************************************************/
@@ -185,8 +190,6 @@ class OGRCurve : public OGRGeometry
   protected:
     int 	nPointCount;
     OGRRawPoint	*paoPoints;
-
-    virtual void dumpPointsReadable( FILE *, const char * );
 
   public:
     		OGRCurve();
@@ -203,6 +206,8 @@ class OGRCurve : public OGRGeometry
     virtual int	WkbSize();
     virtual OGRErr importFromWkb( unsigned char *, int = -1 );
     virtual OGRErr exportToWkb( OGRwkbByteOrder, unsigned char * );
+    virtual OGRErr importFromWkt( char ** );
+    virtual OGRErr exportToWkt( char ** );
 
     // IGeometry
     virtual int	getDimension();
@@ -218,6 +223,7 @@ class OGRCurve : public OGRGeometry
     void	setNumPoints( int );
     void	setPoint( int, OGRPoint * );
     void	setPoint( int, double, double );
+    void	setPoints( int, OGRRawPoint * );
     void	addPoint( OGRPoint * );
     void	addPoint( double, double );
 };
@@ -231,9 +237,9 @@ class OGRLineString : public OGRCurve
     		OGRLineString();
     virtual     ~OGRLineString();
 
+    // non standard.
     virtual OGRwkbGeometryType getGeometryType();
-    
-    virtual void dumpReadable( FILE *, const char * );
+    virtual const char *getGeometryName();
 };
 
 /************************************************************************/
@@ -255,11 +261,11 @@ class OGRLinearRing : public OGRLineString
   public:
     			OGRLinearRing();
     			OGRLinearRing( OGRLinearRing * );
-    
+
+    // Non standard.
+    virtual const char *getGeometryName();
     virtual OGRwkbGeometryType getGeometryType();
     
-    virtual void dumpReadable( FILE *, const char * );
-
     // IWks Interface - Note this isnt really a first class object
     // for the purposes of WKB form.  These methods always fail since this
     // object cant be serialized on its own. 
@@ -292,10 +298,10 @@ class OGRPolygon : public OGRSurface
     		OGRPolygon();
     virtual     ~OGRPolygon();
 
+    // Non standard.
+    virtual const char *getGeometryName();
     virtual OGRwkbGeometryType getGeometryType();
     
-    virtual void dumpReadable( FILE *, const char * );
-
     // ISurface Interface
     virtual double      get_Area();
     virtual int         Centroid( OGRPoint * );
@@ -305,6 +311,8 @@ class OGRPolygon : public OGRSurface
     virtual int	WkbSize();
     virtual OGRErr importFromWkb( unsigned char *, int = -1 );
     virtual OGRErr exportToWkb( OGRwkbByteOrder, unsigned char * );
+    virtual OGRErr importFromWkt( char ** );
+    virtual OGRErr exportToWkt( char ** );
     
     virtual int	getDimension();
     virtual int	getCoordinateDimension();
@@ -324,7 +332,10 @@ class OGRPolygon : public OGRSurface
 class OGRGeometryFactory
 {
   public:
-    static OGRErr createFromWkb( unsigned char *, OGRGeometry **, int = -1 );
+    static OGRErr createFromWkb( unsigned char *, OGRSpatialReference *,
+                                 OGRGeometry **, int = -1 );
+    static OGRErr createFromWkt( const char *, OGRSpatialReference *,
+                                 OGRGeometry ** );
 };
 
 #endif /* ndef _OGR_GEOMETRY_H_INCLUDED */

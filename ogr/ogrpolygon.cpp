@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  1999/05/20 14:35:44  warmerda
+ * added support for well known text format
+ *
  * Revision 1.2  1999/05/17 14:38:11  warmerda
  * Added new IPolygon style methods.
  *
@@ -38,7 +41,6 @@
 
 #include "ogr_geometry.h"
 #include "ogr_p.h"
-#include <assert.h>
 
 /************************************************************************/
 /*                           OGRPolygon()                            */
@@ -79,30 +81,6 @@ OGRwkbGeometryType OGRPolygon::getGeometryType()
 }
 
 /************************************************************************/
-/*                            dumpReadable()                            */
-/************************************************************************/
-
-void OGRPolygon::dumpReadable( FILE * fp, const char * pszPrefix )
-
-{
-    char	*pszPrefix2;
-    
-    if( pszPrefix == NULL )
-        pszPrefix = "";
-
-    fprintf( fp, "%sOGRPolygon: %d rings\n", pszPrefix, nRingCount );
-
-    pszPrefix2 = (char *) OGRMalloc(strlen(pszPrefix)+3);
-    strcpy( pszPrefix2, "  " );
-    strcat( pszPrefix2, pszPrefix );
-
-    for( int i = 0; i < nRingCount; i++ )
-        papoRings[i]->dumpReadable( fp, pszPrefix2 );
-
-    OGRFree( pszPrefix2 );
-}
-
-/************************************************************************/
 /*                            getDimension()                            */
 /************************************************************************/
 
@@ -120,6 +98,16 @@ int OGRPolygon::getCoordinateDimension()
 
 {
     return 2;
+}
+
+/************************************************************************/
+/*                          getGeometryName()                           */
+/************************************************************************/
+
+const char * OGRPolygon::getGeometryName()
+
+{
+    return "POLYGON";
 }
 
 /************************************************************************/
@@ -220,7 +208,7 @@ OGRErr OGRPolygon::importFromWkb( unsigned char * pabyData,
 /*      Get the byte order byte.                                        */
 /* -------------------------------------------------------------------- */
     eByteOrder = (OGRwkbByteOrder) *pabyData;
-    assert( eByteOrder == wkbXDR || eByteOrder == wkbNDR );
+    CPLAssert( eByteOrder == wkbXDR || eByteOrder == wkbNDR );
 
 /* -------------------------------------------------------------------- */
 /*      Get the geometry feature type.  For now we assume that          */
@@ -235,7 +223,7 @@ OGRErr OGRPolygon::importFromWkb( unsigned char * pabyData,
     else
         eGeometryType = (OGRwkbGeometryType) pabyData[4];
 
-    assert( eGeometryType == wkbPolygon );
+    CPLAssert( eGeometryType == wkbPolygon );
 #endif    
 
 /* -------------------------------------------------------------------- */
@@ -247,6 +235,7 @@ OGRErr OGRPolygon::importFromWkb( unsigned char * pabyData,
             delete papoRings[iRing];
 
         OGRFree( papoRings );
+        papoRings = NULL;
     }
     
 /* -------------------------------------------------------------------- */
@@ -352,6 +341,168 @@ OGRErr	OGRPolygon::exportToWkb( OGRwkbByteOrder eByteOrder,
         nOffset += papoRings[iRing]->_WkbSize();
     }
     
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                           importFromWkt()                            */
+/*                                                                      */
+/*      Instantiate from well known text format.  Currently this is     */
+/*      `POLYGON ((x y, x y, ...),(x y, ...),...)'.                     */
+/************************************************************************/
+
+OGRErr OGRPolygon::importFromWkt( char ** ppszInput )
+
+{
+    char	szToken[OGR_WKT_TOKEN_MAX];
+    const char	*pszInput = *ppszInput;
+    int		iRing;
+
+/* -------------------------------------------------------------------- */
+/*      Clear existing rings.                                           */
+/* -------------------------------------------------------------------- */
+    if( nRingCount > 0 )
+    {
+        for( iRing = 0; iRing < nRingCount; iRing++ )
+            delete papoRings[iRing];
+        
+        nRingCount = 0;
+        CPLFree( papoRings );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Read and verify the ``POLYGON'' keyword token.                  */
+/* -------------------------------------------------------------------- */
+    pszInput = OGRWktReadToken( pszInput, szToken );
+
+    if( !EQUAL(szToken,"POLYGON") )
+        return OGRERR_CORRUPT_DATA;
+
+/* -------------------------------------------------------------------- */
+/*      The next character should be a ( indicating the start of the    */
+/*      list of rings.                                                  */
+/* -------------------------------------------------------------------- */
+    pszInput = OGRWktReadToken( pszInput, szToken );
+    if( szToken[0] != '(' )
+        return OGRERR_CORRUPT_DATA;
+
+/* ==================================================================== */
+/*      Read each ring in turn.  Note that we try to reuse the same     */
+/*      point list buffer from ring to ring to cut down on              */
+/*      allocate/deallocate overhead.                                   */
+/* ==================================================================== */
+    OGRRawPoint	*paoPoints = NULL;
+    int		nMaxPoints = 0, nMaxRings = 0;
+    
+    do
+    {
+        int	nPoints = 0;
+
+/* -------------------------------------------------------------------- */
+/*      Read points for one ring from input.                            */
+/* -------------------------------------------------------------------- */
+        pszInput = OGRWktReadPoints( pszInput, &paoPoints, &nMaxPoints,
+                                     &nPoints );
+
+        if( pszInput == NULL )
+        {
+            CPLFree( paoPoints );
+            return OGRERR_CORRUPT_DATA;
+        }
+        
+/* -------------------------------------------------------------------- */
+/*      Do we need to grow the ring array?                              */
+/* -------------------------------------------------------------------- */
+        if( nRingCount == nMaxRings )
+        {
+            nMaxRings = nMaxRings * 2 + 1;
+            papoRings = (OGRLinearRing **)
+                CPLRealloc(papoRings, nMaxRings * sizeof(OGRLinearRing*));
+        }
+
+/* -------------------------------------------------------------------- */
+/*      Create the new ring, and assign to ring list.                   */
+/* -------------------------------------------------------------------- */
+        papoRings[nRingCount] = new OGRLinearRing();
+        papoRings[nRingCount]->setPoints( nPoints, paoPoints );
+
+        nRingCount++;
+
+/* -------------------------------------------------------------------- */
+/*      Read the delimeter following the ring.                          */
+/* -------------------------------------------------------------------- */
+        
+        pszInput = OGRWktReadToken( pszInput, szToken );
+    } while( szToken[0] == ',' );
+
+/* -------------------------------------------------------------------- */
+/*      freak if we don't get a closing bracket.                        */
+/* -------------------------------------------------------------------- */
+    CPLFree( paoPoints );
+   
+    if( szToken[0] != ')' )
+        return OGRERR_CORRUPT_DATA;
+    
+    *ppszInput = (char *) pszInput;
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                            exportToWkt()                             */
+/*                                                                      */
+/*      Translate this structure into it's well known text format       */
+/*      equivelent.  This could be made alot more CPU efficient!        */
+/************************************************************************/
+
+OGRErr OGRPolygon::exportToWkt( char ** ppszReturn )
+
+{
+    char	**papszRings;
+    int		iRing, nCumulativeLength = 0;
+    OGRErr	eErr;
+
+/* -------------------------------------------------------------------- */
+/*      Build a list of strings containing the stuff for each ring.     */
+/* -------------------------------------------------------------------- */
+    papszRings = (char **) CPLCalloc(sizeof(char *),nRingCount);
+
+    for( iRing = 0; iRing < nRingCount; iRing++ )
+    {
+        eErr = papoRings[iRing]->exportToWkt( &(papszRings[iRing]) );
+        if( eErr != OGRERR_NONE )
+            return eErr;
+
+        CPLAssert( EQUALN(papszRings[iRing],"LINEARRING (", 12) );
+        nCumulativeLength += strlen(papszRings[iRing] + 11);
+    }
+    
+/* -------------------------------------------------------------------- */
+/*      Allocate exactly the right amount of space for the              */
+/*      aggregated string.                                              */
+/* -------------------------------------------------------------------- */
+    *ppszReturn = (char *) VSIMalloc(nCumulativeLength + nRingCount + 11);
+
+    if( *ppszReturn == NULL )
+        return OGRERR_NOT_ENOUGH_MEMORY;
+
+/* -------------------------------------------------------------------- */
+/*      Build up the string, freeing temporary strings as we go.        */
+/* -------------------------------------------------------------------- */
+    strcpy( *ppszReturn, "POLYGON (" );
+
+    for( iRing = 0; iRing < nRingCount; iRing++ )
+    {								
+        if( iRing > 0 )
+            strcat( *ppszReturn, "," );
+        
+        strcat( *ppszReturn, papszRings[iRing] + 11 );
+        VSIFree( papszRings[iRing] );
+    }
+
+    strcat( *ppszReturn, ")" );
+
+    CPLFree( papszRings );
+
     return OGRERR_NONE;
 }
 

@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  1999/05/20 14:35:44  warmerda
+ * added support for well known text format
+ *
  * Revision 1.2  1999/03/30 21:21:43  warmerda
  * added linearring/polygon support
  *
@@ -49,6 +52,7 @@
 /************************************************************************/
 
 OGRErr OGRGeometryFactory::createFromWkb(unsigned char *pabyData,
+                                         OGRSpatialReference * poSR,
                                          OGRGeometry **ppoReturn,
                                          int nBytes )
 
@@ -92,6 +96,7 @@ OGRErr OGRGeometryFactory::createFromWkb(unsigned char *pabyData,
         eErr = poPoint->importFromWkb( pabyData, nBytes );
         if( eErr == OGRERR_NONE )
         {
+            poPoint->assignSpatialReference( poSR );
             *ppoReturn = poPoint;
         }
         else
@@ -108,6 +113,7 @@ OGRErr OGRGeometryFactory::createFromWkb(unsigned char *pabyData,
         eErr = poLS->importFromWkb( pabyData, nBytes );
         if( eErr == OGRERR_NONE )
         {
+            poLS->assignSpatialReference( poSR );
             *ppoReturn = poLS;
         }
         else
@@ -124,6 +130,7 @@ OGRErr OGRGeometryFactory::createFromWkb(unsigned char *pabyData,
         eErr = poPG->importFromWkb( pabyData, nBytes );
         if( eErr == OGRERR_NONE )
         {
+            poPG->assignSpatialReference( poSR );
             *ppoReturn = poPG;
         }
         else
@@ -137,3 +144,89 @@ OGRErr OGRGeometryFactory::createFromWkb(unsigned char *pabyData,
         return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
     }
 }
+
+/************************************************************************/
+/*                           createFromWkt()                            */
+/*                                                                      */
+/*      Convert a block of well known text into a geometry              */
+/*      object (which may have subobjects).                             */
+/************************************************************************/
+
+OGRErr OGRGeometryFactory::createFromWkt(const char *pszData,
+                                         OGRSpatialReference * poSR,
+                                         OGRGeometry **ppoReturn )
+
+{
+    OGRErr	eErr;
+    char	szToken[OGR_WKT_TOKEN_MAX];
+    char	*pszInput = (char *) pszData;
+
+    *ppoReturn = NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Get the first token, which should be the geometry type.         */
+/* -------------------------------------------------------------------- */
+    if( OGRWktReadToken( pszData, szToken ) == NULL )
+        return OGRERR_CORRUPT_DATA;
+
+/* -------------------------------------------------------------------- */
+/*      Instantiate a geometry of the appropriate type, and             */
+/*      initialize from the input stream.                               */
+/* -------------------------------------------------------------------- */
+    if( EQUAL(szToken,"POINT") )
+    {
+        OGRPoint	*poPoint;
+
+        poPoint = new OGRPoint();
+        eErr = poPoint->importFromWkt( &pszInput );
+        if( eErr == OGRERR_NONE )
+        {
+            poPoint->assignSpatialReference( poSR );
+            *ppoReturn = poPoint;
+        }
+        else
+        {
+            delete poPoint;
+        }
+        return eErr;
+    }
+
+    else if( EQUAL(szToken,"LINESTRING") )
+    {
+        OGRLineString	*poLS;
+
+        poLS = new OGRLineString();
+        eErr = poLS->importFromWkt( &pszInput );
+        if( eErr == OGRERR_NONE )
+        {
+            poLS->assignSpatialReference( poSR );
+            *ppoReturn = poLS;
+        }
+        else
+        {
+            delete poLS;
+        }
+        return eErr;
+    }
+
+    else if( EQUAL(szToken,"POLYGON") )
+    {
+        OGRPolygon	*poPG;
+
+        poPG = new OGRPolygon();
+        eErr = poPG->importFromWkt( &pszInput );
+        if( eErr == OGRERR_NONE )
+        {
+            poPG->assignSpatialReference( poSR );
+            *ppoReturn = poPG;
+        }
+        else
+        {
+            delete poPG;
+        }
+        return eErr;
+    }
+    else
+        return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
+}
+
