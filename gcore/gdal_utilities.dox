@@ -258,7 +258,7 @@ simple image reprojection and warping utility
 Usage: 
 \endhtmlonly
 
-\verbatim
+vim[C\verbatim
 gdalwarp [--version] [--formats]
     [-s_srs srs_def] [-t_srs srs_def] [-order n] [-et err_threshold]
     [-te xmin ymin xmax ymax] [-tr xres yres] [-ts width height]
@@ -330,13 +330,6 @@ algorithm).</dd>
 
 Mosaicing into an existing output file is supported if the output file 
 already exists. 
-
-It currently has the following limitations:
-<ul>
-<li>Only 8 bit data is can be warped.
-<li>The entire source image is held in memory.
-<li>Only nearest neighbour resampling is available.
-</ul>
 
 <p>
 \if man
