@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.26  2002/11/12 19:44:32  warmerda
+ * added DGNViewInfo support
+ *
  * Revision 1.25  2002/11/11 20:36:51  warmerda
  * fix justification list, added create related definitions
  *
@@ -280,6 +283,16 @@ typedef struct {
   GByte         color_info[256][3]; /*!< Color table, 256 colors by red (0), green(1) and blue(2) component. */
 } DGNElemColorTable;
 
+typedef struct {
+    int		  flags;
+    unsigned char levels[8];
+    DGNPoint      origin;
+    DGNPoint      delta;
+    double        transmatrx[9];
+    double        conversion;
+    unsigned long activez;
+} DGNViewInfo;
+
 /** 
  * Terminal Control Block (header).
  *
@@ -307,6 +320,8 @@ typedef struct {
     char	sub_units[3];      /*!< User name for subunits (2 chars)*/
     long        subunits_per_master; /*!< Subunits per master unit. */
     char        master_units[3];   /*!< User name for master units (2 chars)*/
+
+    DGNViewInfo views[8];
 
 } DGNElemTCB;
 
