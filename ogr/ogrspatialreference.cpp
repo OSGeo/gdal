@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2000/01/11 22:12:39  warmerda
+ * Ensure GEOGCS node is always at position 1 under PROJCS
+ *
  * Revision 1.9  2000/01/06 19:46:10  warmerda
  * added special logic for setting, and recognising UTM
  *
@@ -877,7 +880,7 @@ OGRSpatialReference::SetGeogCS( const char * pszGeogName,
 /*      Attach below the PROJCS if there is one, or make this the root. */
 /* -------------------------------------------------------------------- */
     if( GetRoot() != NULL && EQUAL(GetRoot()->GetValue(),"PROJCS") )
-        poRoot->AddChild( poGeogCS );
+        poRoot->InsertChild( poGeogCS, 1 );
     else
         SetRoot( poGeogCS );
 
