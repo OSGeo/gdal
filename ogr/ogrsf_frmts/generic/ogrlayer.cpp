@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2003/03/04 17:45:16  warmerda
+ * Ensure m_poAttrIndex is initialized.
+ *
  * Revision 1.13  2003/03/04 05:48:05  warmerda
  * added index initialize support
  *
@@ -85,6 +88,7 @@ OGRLayer::OGRLayer()
 {
     m_poStyleTable = NULL;
     m_poAttrQuery = NULL;
+    m_poAttrIndex = NULL;
 }
 
 /************************************************************************/
