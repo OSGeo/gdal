@@ -578,7 +578,6 @@ elif test "$with_hdf4" = "yes" -o "$with_hdf4" = "" ; then
 
   AC_CHECK_LIB(mfhdf,SDreaddata,HAVE_HDF4=yes,HAVE_HDF4=no, -ldf)
 
-
   if test "$HAVE_HDF4" = "yes" ; then   
     LIBS="-lmfhdf -ldf $LIBS"
   fi
@@ -610,6 +609,12 @@ else
     AC_CHECK_LIB(mfhdf,SDreaddata,HDF_LIB_NAME="-lmfhdf -ldf",HDF_LIB_NAME=missing,-ldf -ljpeg -lz)
   fi
 
+  # Not found... again, with -lsz.
+  if test "$HDF_LIB_NAME" = "missing" ; then
+    unset ac_cv_lib_mfhdf_SDreaddata
+    AC_CHECK_LIB(mfhdf,SDreaddata,HDF_LIB_NAME="-lmfhdf -ldf -lsz",HDF_LIB_NAME=missing,-ldf -lsz -ljpeg -lz)
+  fi
+
   if test "$HDF_LIB_NAME" = "missing" ; then
     AC_MSG_ERROR([HDF4 support requested with arg $with_hdf4, but neither hdf4 nor mfhdf lib found])
   fi
@@ -626,7 +631,7 @@ else
     HDF4_INCLUDE="-I$with_hdf4/include"
   fi
   if test -r $with_hdf4/hdf.h ; then
-    HDF4_INCLUDE="-I$with_hdf4"
+    HDF4_INCLUDE="-I$wHDF4_INCLUDEith_hdf4"
   fi
 
   HAVE_HDF4=yes
