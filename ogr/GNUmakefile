@@ -75,7 +75,7 @@ install-docs:
 
 gdalso:	$(GDAL_SLIB)
 
-$(GDAL_SLIB):	$(GDALA_DEP)
+$(GDAL_SLIB):
 	(cd ..; $(MAKE) check-lib)
 
 %.o:	%.c

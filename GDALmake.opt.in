@@ -159,7 +159,6 @@ FITS_SETTING    =       @FITS_SETTING@
 OGDI_SETTING	=	@HAVE_OGDI@
 
 GDAL_LIBS	=	$(GDAL_LIB) $(CPL_LIB)
-GDALA_DEP	=
 
 ifeq ($(OGR_ENABLED),yes)
 GDAL_LIBS := $(GDAL_LIB) $(PG_LIB) $(OCI_LIB) $(GDAL_LIBS)
@@ -189,7 +188,7 @@ else
 CONFIG_LIBS	=	$(GDAL_LIBS) $(LIBS)
 CONFIG_LIBS_INS	=	$(foreach LF,$(GDAL_LIBS),$(INST_LIB)/$(notdir $(LF)))\
 			 $(LIBS)
-EXE_DEP_LIBS	=	$(GDALA_DEP)
+EXE_DEP_LIBS	=
 endif
 
 
