@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  1999/08/30 14:52:33  warmerda
+ * added support for StringList fields
+ *
  * Revision 1.5  1999/08/26 17:38:01  warmerda
  * added support for real and integer lists
  *
@@ -101,6 +104,10 @@ OGRFeature::~OGRFeature()
           case OFTString:
             if( pauFields[i].String != NULL )
                 CPLFree( pauFields[i].String );
+            break;
+
+          case OFTStringList:
+            CSLDestroy( pauFields[i].StringList.paList );
             break;
 
           case OFTIntegerList:
@@ -465,6 +472,34 @@ const char *OGRFeature::GetFieldAsString( int iField )
         
         return szTempBuffer;
     }
+    else if( poFDefn->GetType() == OFTStringList )
+    {
+        int	i, nCount = pauFields[iField].StringList.nCount;
+
+        sprintf( szTempBuffer, "(%d:", nCount );
+        for( i = 0; i < nCount; i++ )
+        {
+            const char	*pszItem = pauFields[iField].StringList.paList[i];
+            
+            if( strlen(szTempBuffer) + strlen(pszItem)  + 6
+                > sizeof(szTempBuffer) )
+            {
+                break;
+            }
+
+            if( i > 0 )
+                strcat( szTempBuffer, "," );
+            
+            strcat( szTempBuffer, pszItem );
+        }
+
+        if( i < nCount )
+            strcat( szTempBuffer, ",...)" );
+        else
+            strcat( szTempBuffer, ")" );
+        
+        return szTempBuffer;
+    }
     else
         return "";
 }
@@ -545,6 +580,38 @@ const double *OGRFeature::GetFieldAsDoubleList( int iField, int *pnCount )
         if( pnCount != NULL )
             *pnCount = 0;
         
+        return NULL;
+    }
+}
+
+/************************************************************************/
+/*                        GetFieldAsStringList()                        */
+/************************************************************************/
+
+/**
+ * Fetch field value as a list of strings.
+ *
+ * Currently this method only works for OFTStringList fields.
+ *
+ * @param iField the field to fetch, from 0 to GetFieldCount()-1.
+ *
+ * @return the field value.  This list is internal, and should not be
+ * modified, or freed.  It's lifetime may be very brief.
+ */
+
+char **OGRFeature::GetFieldAsStringList( int iField )
+
+{
+    OGRFieldDefn	*poFDefn = poDefn->GetFieldDefn( iField );
+
+    CPLAssert( poFDefn != NULL );
+    
+    if( poFDefn->GetType() == OFTStringList )
+    {
+        return pauFields[iField].StringList.paList;
+    }
+    else
+    {
         return NULL;
     }
 }
@@ -741,6 +808,35 @@ void OGRFeature::SetField( int iField, int nCount, double * padfValues )
 /************************************************************************/
 
 /**
+ * Set field to list of strings value. 
+ *
+ * This method currently on has an effect of OFTStringList fields.
+ *
+ * @param iField the field to set, from 0 to GetFieldCount()-1.
+ * @param papszValues the values to assign.
+ */
+
+void OGRFeature::SetField( int iField, char ** papszValues )
+
+{
+    OGRFieldDefn	*poFDefn = poDefn->GetFieldDefn( iField );
+
+    if( poFDefn->GetType() == OFTStringList )
+    {
+        OGRField	uField;
+        
+        uField.StringList.nCount = CSLCount(papszValues);
+        uField.StringList.paList = papszValues;
+        
+        SetField( iField, &uField );
+    }
+}
+
+/************************************************************************/
+/*                              SetField()                              */
+/************************************************************************/
+
+/**
  * Set field.
  *
  * The passed value OGRField must be of exactly the same type as the
@@ -795,6 +891,16 @@ void OGRFeature::SetField( int iField, OGRField * puValue )
                 puValue->RealList.paList,
                 sizeof(double) * nCount );
         pauFields[iField].RealList.nCount = nCount;
+    }
+    else if( poFDefn->GetType() == OFTStringList )
+    {
+        CSLDestroy( pauFields[iField].StringList.paList );
+        pauFields[iField].StringList.paList =
+            CSLDuplicate( puValue->StringList.paList );
+
+        pauFields[iField].StringList.nCount = puValue->StringList.nCount;
+        CPLAssert( CSLCount(puValue->StringList.paList)
+                   == puValue->StringList.nCount );
     }
     else
         /* do nothing for other field types */;

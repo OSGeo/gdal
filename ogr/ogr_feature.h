@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  1999/08/30 14:52:33  warmerda
+ * added support for StringList fields
+ *
  * Revision 1.6  1999/08/26 17:38:00  warmerda
  * added support for real and integer lists
  *
@@ -117,7 +120,7 @@ typedef union {
     
     struct {
         int	nCount;
-        char	*paList;
+        char	**paList;
     } StringList;
 
 //    union {
@@ -268,12 +271,14 @@ class OGRFeature
     const char	       *GetFieldAsString( int i );
     const int 	       *GetFieldAsIntegerList( int i, int *pnCount );
     const double       *GetFieldAsDoubleList( int i, int *pnCount );
+    char              **GetFieldAsStringList( int i );
 
     void		SetField( int i, int nValue );
     void		SetField( int i, double dfValue );
     void		SetField( int i, const char * pszValue );
     void		SetField( int i, int nCount, int * panValues );
     void		SetField( int i, int nCount, double * padfValues );
+    void		SetField( int i, char ** papszValues );
     void		SetField( int i, OGRField * puValue );
 
     long		GetFID() { return nFID; }
