@@ -24,7 +24,7 @@ clean:
 
 
 gxftest:	gxftest.o gxfopen.o
-	$(CC) gxftest.o gxfopen.o $(GDAL_ROOT)/port/*.o $(LIBS) -o gxftest
+	$(CXX) gxftest.o gxfopen.o $(GDAL_ROOT)/port/*.o $(LIBS) -o gxftest
 
 install-obj:	$(OBJ)
 	cp $(OBJ) ../o

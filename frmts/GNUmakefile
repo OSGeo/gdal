@@ -31,7 +31,7 @@ clean:
 	done
 
 o/gdalallregister.o:	gdalallregister.cpp
-	$(CC) -c $(ALL_C_FLAGS) -DGDAL_FORMATS="$(GDAL_FORMATS)" \
+	$(CXX) -c $(ALL_C_FLAGS) -DGDAL_FORMATS="$(GDAL_FORMATS)" \
 		-I../core gdalallregister.cpp -o o/gdalallregister.o
 
 

@@ -16,7 +16,7 @@ clean:
 	(cd libgeotiff; $(MAKE) clean)
 
 %.o:	%.cpp
-	$(CC) -c $(ALL_C_FLAGS) -I$(GDAL_ROOT)/core -I$(GDAL_ROOT)/port \
+	$(CXX) -c $(ALL_C_FLAGS) -I$(GDAL_ROOT)/core -I$(GDAL_ROOT)/port \
 		$*.cpp -o $*.o
 
 %.o:	%.c
