@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2003/03/07 14:53:21  warmerda
+ * implement preliminary BXFS write support
+ *
  * Revision 1.7  2003/03/06 20:30:28  warmerda
  * use GML/OGR geometry translations from ogr_geometry.h now
  *
@@ -272,7 +275,7 @@ OGRErr OGRGMLLayer::CreateFeature( OGRFeature *poFeature )
         OGREnvelope sGeomBounds;
 
         pszGeometry = poFeature->GetGeometryRef()->exportToGML();
-        VSIFPrintf( fp, "      <gml:geometryProperty>%s</gml:geometryProperty>\n",
+        VSIFPrintf( fp, "      <ogr:geometryProperty>%s</ogr:geometryProperty>\n",
                     pszGeometry );
         CPLFree( pszGeometry );
 

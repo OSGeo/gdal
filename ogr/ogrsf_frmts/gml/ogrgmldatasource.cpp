@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2003/03/07 14:53:21  warmerda
+ * implement preliminary BXFS write support
+ *
  * Revision 1.8  2003/01/22 17:20:24  warmerda
  * fixed xsi:schemaLocation output
  *
@@ -86,7 +89,9 @@ OGRGMLDataSource::~OGRGMLDataSource()
     if( fpOutput != NULL )
     {
         VSIFPrintf( fpOutput, "%s", 
-                    "</gml:featureCollection>\n" );
+                    "</ogr:FeatureCollection>\n" );
+
+        InsertHeader();
 
         if( nBoundedByLocation != -1 
             && sBoundingRect.IsInit() 
@@ -320,7 +325,7 @@ int OGRGMLDataSource::Create( const char *pszFilename,
     if( EQUAL(pszFilename,"stdout") )
         fpOutput = stdout;
     else
-        fpOutput = VSIFOpen( pszFilename, "wt" );
+        fpOutput = VSIFOpen( pszFilename, "wt+" );
     if( fpOutput == NULL )
     {
         CPLError( CE_Failure, CPLE_OpenFailed, 
@@ -335,8 +340,10 @@ int OGRGMLDataSource::Create( const char *pszFilename,
     VSIFPrintf( fpOutput, "%s", 
                 "<?xml version=\"1.0\" encoding=\"utf-8\" ?>\n" );
 
+    nSchemaInsertLocation = VSIFTell( fpOutput );
+
     VSIFPrintf( fpOutput, "%s", 
-                "<gml:featureCollection\n" );
+                "<ogr:FeatureCollection\n" );
 
 /* -------------------------------------------------------------------- */
 /*      Write out schema info if provided in creation options.          */
@@ -447,3 +454,228 @@ void OGRGMLDataSource::GrowExtents( OGREnvelope *psGeomBounds )
     sBoundingRect.Merge( *psGeomBounds );
 }
 
+/************************************************************************/
+/*                            InsertHeader()                            */
+/*                                                                      */
+/*      This method is used to update boundedby info for a              */
+/*      dataset, and insert schema descriptions depending on            */
+/*      selection options in effect.                                    */
+/************************************************************************/
+
+void OGRGMLDataSource::InsertHeader()
+
+{
+    if( fpOutput == NULL || fpOutput == stdout )
+        return;
+
+    int  nSchemaStart = VSIFTell( fpOutput );
+
+/* ==================================================================== */
+/*      Write the schema section at the end of the file.  Once          */
+/*      complete, we will read it back in, and then move the whole      */
+/*      file "down" enough to insert the schema at the beginning.       */
+/* ==================================================================== */
+
+/* -------------------------------------------------------------------- */
+/*      Emit the start of the schema section.                           */
+/* -------------------------------------------------------------------- */
+    const char *pszTargetNameSpace = "http://gdal.velocet.ca/ogr";
+    const char *pszPrefix = "ogr";
+
+    VSIFPrintf( fpOutput, 
+                "<xs:schema targetNamespace=\"%s\" xmlns:%s=\"%s\" xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" xmlns:gml=\"http://www.opengis.net/gml\" elementFormDefault=\"qualified\" version=\"1.0\">\n", 
+                pszTargetNameSpace, pszPrefix, pszTargetNameSpace );
+    
+    VSIFPrintf( fpOutput, 
+                "<xs:import namespace=\"http://www.opengis.net/gml\" schemaLocation=\"http://schemas.cubewerx.com/schemas/gml/2.1.2/feature.xsd\"/>" );
+
+/* -------------------------------------------------------------------- */
+/*      Define the FeatureCollection                                    */
+/* -------------------------------------------------------------------- */
+    VSIFPrintf( fpOutput, 
+                "<xs:element name=\"FeatureCollection\" type=\"%s:FeatureCollectionType\" substitutionGroup=\"gml:_FeatureCollection\"/>\n", 
+                pszPrefix );
+
+    VSIFPrintf( 
+        fpOutput, 
+        "<xs:complexType name=\"FeatureCollectionType\">\n"
+        "  <xs:complexContent>\n"
+        "    <xs:extension base=\"gml:AbstractFeatureCollectionType\">\n"
+        "      <xs:attribute name=\"lockId\" type=\"xs:string\" use=\"optional\"/>\n"
+        "      <xs:attribute name=\"scope\" type=\"xs:string\" use=\"optional\"/>\n"
+        "    </xs:extension>\n"
+        "  </xs:complexContent>\n"
+        "</xs:complexType>\n" );
+
+/* ==================================================================== */
+/*      Define the schema for each layer.                               */
+/* ==================================================================== */
+    int iLayer;
+
+    for( iLayer = 0; iLayer < GetLayerCount(); iLayer++ )
+    {
+        OGRFeatureDefn *poFDefn = GetLayer(iLayer)->GetLayerDefn();
+        
+/* -------------------------------------------------------------------- */
+/*      Emit initial stuff for a feature type.                          */
+/* -------------------------------------------------------------------- */
+        VSIFPrintf( 
+            fpOutput,
+            "<xs:element name=\"%s\" type=\"%s:%s_Type\" substitutionGroup=\"gml:_Feature\"/>\n",
+            poFDefn->GetName(), pszPrefix, poFDefn->GetName() );
+
+        VSIFPrintf( 
+            fpOutput, 
+            "<xs:complexType name=\"%s_Type\">\n"
+            "  <xs:complexContent>\n"
+            "    <xs:extension base=\"gml:AbstractFeatureType\">\n",
+            poFDefn->GetName() );
+
+/* -------------------------------------------------------------------- */
+/*      Define the geometry attribute.  For now I always use the        */
+/*      generic geometry type, but eventually we should express         */
+/*      particulars if available.                                       */
+/* -------------------------------------------------------------------- */
+        VSIFPrintf( 
+            fpOutput,
+            "<xs:element name=\"geometryProperty\" type=\"gml:geometryPropertyType\" nillable=\"true\" minOccurs=\"1\" maxOccurs=\"1\"/>\n" );
+            
+/* -------------------------------------------------------------------- */
+/*      Emit each of the attributes.                                    */
+/* -------------------------------------------------------------------- */
+        for( int iField = 0; iField < poFDefn->GetFieldCount(); iField++ )
+        {
+            OGRFieldDefn *poFieldDefn = poFDefn->GetFieldDefn(iField);
+
+            if( poFieldDefn->GetType() == OFTInteger )
+            {
+                int nWidth;
+
+                if( poFieldDefn->GetWidth() > 0 )
+                    nWidth = poFieldDefn->GetWidth();
+                else
+                    nWidth = 16;
+
+                VSIFPrintf( fpOutput, 
+                            "    <xs:element name=\"%s\" nillable=\"true\" minOccurs=\"0\" maxOccurs=\"1\">\n"
+                            "      <xs:simpleType>\n"
+                            "        <xs:restriction base=\"xs:integer\">\n"
+                            "          <xs:totalDigits value=\"%d\"/>\n"
+                            "        </xs:restriction>\n"
+                            "      </xs:simpleType>\n"
+                            "    </xs:element>\n",
+                            poFieldDefn->GetNameRef(), nWidth );
+            }
+            else if( poFieldDefn->GetType() == OFTReal )
+            {
+                int nWidth, nDecimals;
+
+                if( poFieldDefn->GetPrecision() == 0 )
+                    nDecimals = 16;
+                else
+                    nDecimals = poFieldDefn->GetPrecision();
+
+                if( poFieldDefn->GetWidth() > 0 )
+                    nWidth = poFieldDefn->GetWidth();
+                else
+                    nWidth = 33;
+
+                VSIFPrintf( fpOutput, 
+                            "    <xs:element name=\"%s\" nillable=\"true\" minOccurs=\"0\" maxOccurs=\"1\">\n"
+                            "      <xs:simpleType>\n"
+                            "        <xs:restriction base=\"xs:decimal\">\n"
+                            "          <xs:totalDigits value=\"%d\"/>\n"
+                            "          <xs:fractionDigits value=\"%d\"/>\n"
+                            "        </xs:restriction>\n"
+                            "      </xs:simpleType>\n"
+                            "    </xs:element>\n",
+                            poFieldDefn->GetNameRef(), nWidth, nDecimals );
+            }
+            else if( poFieldDefn->GetType() == OFTString )
+            {
+                char szMaxLength[48];
+
+                if( poFieldDefn->GetWidth() == 0 )
+                    sprintf( szMaxLength, "unbounded" );
+                else
+                    sprintf( szMaxLength, "%d", poFieldDefn->GetWidth() );
+
+                VSIFPrintf( fpOutput, 
+                            "    <xs:element name=\"%s\" nillable=\"true\" minOccurs=\"0\" maxOccurs=\"1\">\n"
+                            "      <xs:simpleType>\n"
+                            "        <xs:restriction base=\"xs:string\">\n"
+                            "          <xs:maxLength value=\"%s\"/>\n"
+                            "        </xs:restriction>\n"
+                            "      </xs:simpleType>\n"
+                            "    </xs:element>\n",
+                            poFieldDefn->GetNameRef(), szMaxLength );
+            }
+            else
+            {
+                /* TODO */
+            }
+        } /* next field */
+
+/* -------------------------------------------------------------------- */
+/*      Finish off feature type.                                        */
+/* -------------------------------------------------------------------- */
+        VSIFPrintf( fpOutput, 
+                    "      </xs:sequence>\n"
+                    "    </xs:extension>\n"
+                    "  </xs:complexContent>\n"
+                    "</xs:complexType>\n" );
+    } /* next layer */
+
+    VSIFPrintf( fpOutput, "</xs:schema>\n" );
+
+/* ==================================================================== */
+/*      Move schema to the start of the file.                           */
+/* ==================================================================== */
+
+/* -------------------------------------------------------------------- */
+/*      Read the schema into memory.                                    */
+/* -------------------------------------------------------------------- */
+    int nSchemaSize = VSIFTell( fpOutput ) - nSchemaStart;
+    char *pszSchema = (char *) CPLMalloc(nSchemaSize+1);
+    
+    VSIFSeek( fpOutput, nSchemaStart, SEEK_SET );
+
+    VSIFRead( pszSchema, 1, nSchemaSize, fpOutput );
+    pszSchema[nSchemaSize] = '\0';
+    
+/* -------------------------------------------------------------------- */
+/*      Move file data down by "schema size" bytes from after <?xml>    */
+/*      header so we have room insert the schema.  Move in pretty       */
+/*      big chunks.                                                     */
+/* -------------------------------------------------------------------- */
+    int nChunkSize = MIN(nSchemaStart-nSchemaInsertLocation,250000);
+    char *pszChunk = (char *) CPLMalloc(nChunkSize);
+    int nEndOfUnmovedData = nSchemaStart;
+
+    for( int nEndOfUnmovedData = nSchemaStart;
+         nEndOfUnmovedData > nSchemaInsertLocation; )
+    {
+        int nBytesToMove = 
+            MIN(nChunkSize, nEndOfUnmovedData - nSchemaInsertLocation );
+
+        VSIFSeek( fpOutput, nEndOfUnmovedData - nBytesToMove, SEEK_SET );
+        VSIFRead( pszChunk, 1, nBytesToMove, fpOutput );
+        VSIFSeek( fpOutput, nEndOfUnmovedData - nBytesToMove + nSchemaSize, 
+                  SEEK_SET );
+        VSIFWrite( pszChunk, 1, nBytesToMove, fpOutput );
+        
+        nEndOfUnmovedData -= nBytesToMove;
+    }
+
+    CPLFree( pszChunk );
+
+/* -------------------------------------------------------------------- */
+/*      Write the schema in the opened slot.                            */
+/* -------------------------------------------------------------------- */
+    VSIFSeek( fpOutput, nSchemaInsertLocation, SEEK_SET );
+    VSIFWrite( pszSchema, 1, nSchemaSize, fpOutput );
+
+    VSIFSeek( fpOutput, 0, SEEK_END );
+
+    nBoundedByLocation += nSchemaSize;
+}

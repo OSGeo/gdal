@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2003/03/07 14:53:21  warmerda
+ * implement preliminary BXFS write support
+ *
  * Revision 1.6  2003/03/06 20:30:28  warmerda
  * use GML/OGR geometry translations from ogr_geometry.h now
  *
@@ -124,9 +127,13 @@ class OGRGMLDataSource : public OGRDataSource
     FILE		*fpOutput;
     OGREnvelope         sBoundingRect;
     int                 nBoundedByLocation;
+    
+    int                 nSchemaInsertLocation;
 
     // input related parameters.
     IGMLReader		*poReader;
+
+    void                InsertHeader();
 
   public:
     			OGRGMLDataSource();
