@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2003/09/04 14:01:44  warmerda
+ * added OGRGetGenerate_DB2_V72_BYTE_ORDER
+ *
  * Revision 1.15  2003/08/27 15:40:37  warmerda
  * added support for generating DB2 V7.2 compatible WKB
  *
@@ -175,6 +178,8 @@ OGRGeometryH CPL_DLL OGRBuildPolygonFromEdges( OGRGeometryH hLinesAsCollection,
 
 OGRErr CPL_DLL OGRSetGenerate_DB2_V72_BYTE_ORDER( 
     int bGenerate_DB2_V72_BYTE_ORDER );
+
+int CPL_DLL OGRGetGenerate_DB2_V72_BYTE_ORDER();
 
 /* -------------------------------------------------------------------- */
 /*      Feature related (ogr_feature.h)                                 */

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2003/09/04 14:01:44  warmerda
+ * added OGRGetGenerate_DB2_V72_BYTE_ORDER
+ *
  * Revision 1.20  2003/08/27 15:40:37  warmerda
  * added support for generating DB2 V7.2 compatible WKB
  *
@@ -1160,4 +1163,14 @@ OGRErr OGRSetGenerate_DB2_V72_BYTE_ORDER( int bGenerate_DB2_V72_BYTE_ORDER )
     else
         return OGRERR_NONE;
 #endif
+}
+/************************************************************************/
+/*                 OGRGetGenerate_DB2_V72_BYTE_ORDER()                  */
+/*                                                                      */
+/*      This is a special entry point to get the value of static flag   */
+/*      OGRGeometry::bGenerate_DB2_V72_BYTE_ORDER.                      */
+/************************************************************************/
+int OGRGetGenerate_DB2_V72_BYTE_ORDER()
+{
+   return OGRGeometry::bGenerate_DB2_V72_BYTE_ORDER;
 }
