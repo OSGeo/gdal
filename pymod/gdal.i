@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.49  2002/12/18 18:33:01  warmerda
+ * changed SetGCPs error to ValueError from TypeError
+ *
  * Revision 1.48  2002/11/30 20:53:50  warmerda
  * added SetFromUserInput
  *
@@ -771,7 +774,7 @@ py_GDALSetGCPs(PyObject *self, PyObject *args) {
 
     if( eErr != CE_None )
     {	
-	PyErr_SetString(PyExc_TypeError,CPLGetLastErrorMsg());
+	PyErr_SetString(PyExc_ValueError,CPLGetLastErrorMsg());
 	return NULL;
     }
 
