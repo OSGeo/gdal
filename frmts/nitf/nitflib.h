@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2004/04/16 15:26:04  warmerda
+ * completed metadata support
+ *
  * Revision 1.10  2004/04/15 20:52:53  warmerda
  * added metadata support
  *
@@ -224,6 +227,8 @@ int       CPL_DLL  NITFWriteIGEOLO( NITFImage *psImage, char chICORDS,
 /* -------------------------------------------------------------------- */
 char *NITFGetField( char *pszTarget, const char *pszSource, 
                     int nStart, int nLength );
+void NITFExtractMetadata( char ***ppapszMetadata, const char *pachHeader,
+                          int nStart, int nLength, const char *pszName );
 
 /* -------------------------------------------------------------------- */
 /*      location ids from the location table (from MIL-STD-2411-1).     */
