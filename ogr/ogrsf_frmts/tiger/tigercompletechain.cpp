@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2004/02/12 06:39:16  warmerda
+ * added preliminary support for some GDT quirks
+ *
  * Revision 1.17  2004/02/03 05:46:00  warmerda
  * fixed problem with chains at EOF without shape points being dropped
  *
@@ -289,6 +292,8 @@ TigerCompleteChain::TigerCompleteChain( OGRTigerDataSource * poDSIn,
 
     psRT2Info = &rt2_info;
 
+    nRT1RecOffset = 0;
+
     if (poDS->GetVersion() >= TIGER_2000_Redistricting) {
       psRT3Info = &rt3_2000_Redistricting_info;
     } else {
@@ -343,6 +348,26 @@ int TigerCompleteChain::SetModule( const char * pszModule )
 
     EstablishFeatureCount();
 
+/* -------------------------------------------------------------------- */
+/*      Is this a copyright record inserted at the beginning of the     */
+/*      RT1 file by the folks at GDT?  If so, setup to ignore the       */
+/*      first record.                                                   */
+/* -------------------------------------------------------------------- */
+    nRT1RecOffset = 0;
+    if( pszModule )
+    {
+        char achHeader[10];
+        
+        VSIFSeek( fpPrimary, 0, SEEK_SET );
+        VSIFRead( achHeader, sizeof(achHeader), 1, fpPrimary );
+        
+        if( EQUALN(achHeader,"Copyright",8) )
+        {
+            nRT1RecOffset = 1;
+            nFeatures--;
+        }
+    }
+        
 /* -------------------------------------------------------------------- */
 /*      Open the RT3 file                                               */
 /* -------------------------------------------------------------------- */
@@ -405,7 +430,8 @@ OGRFeature *TigerCompleteChain::GetFeature( int nRecordId )
     if( fpPrimary == NULL )
         return NULL;
 
-    if( VSIFSeek( fpPrimary, nRecordId * nRecordLength, SEEK_SET ) != 0 )
+    if( VSIFSeek( fpPrimary, (nRecordId+nRT1RecOffset) * nRecordLength, 
+                  SEEK_SET ) != 0 )
     {
         CPLError( CE_Failure, CPLE_FileIO,
                   "Failed to seek to %d of %s1",
@@ -541,14 +567,13 @@ int TigerCompleteChain::AddShapePoints( int nTLID, int nRecordId,
         for( iVertex = 0; iVertex < 10; iVertex++ )
         {
             int         iStart = 19 + 19*iVertex;
-            if( EQUALN(achShapeRec+iStart-1,"+000000000+00000000",19)
-                || EQUALN(achShapeRec+iStart-1,"                   ",19) )
+            int         nX = atoi(GetField(achShapeRec,iStart,iStart+9));
+            int         nY = atoi(GetField(achShapeRec,iStart+10,iStart+18));
+
+            if( nX == 0 && nY == 0 )
                 break;
 
-            poLine->addPoint(atoi(GetField(achShapeRec,iStart,iStart+9))
-                                                                / 1000000.0,
-                             atoi(GetField(achShapeRec,iStart+10,iStart+18))
-                                                                / 1000000.0 );
+            poLine->addPoint( nX / 1000000.0, nY / 1000000.0 );
         }
 
 /* -------------------------------------------------------------------- */

@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2004/02/12 06:39:16  warmerda
+ * added preliminary support for some GDT quirks
+ *
  * Revision 1.16  2004/01/13 17:23:49  warmerda
  * recover more gracefully from RT2 open errors
  *
@@ -259,6 +262,7 @@ class TigerCompleteChain : public TigerFileBase
 
   FILE               *fpRT3;
   int                 bUsingRT3;
+  int                 nRT1RecOffset;
 
   int                 GetShapeRecordId( int, int );
   int                 AddShapePoints( int, int, OGRLineString *, int );
