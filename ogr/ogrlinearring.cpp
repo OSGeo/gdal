@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  1999/07/08 20:25:39  warmerda
+ * Remove getGeometryType() method ... now returns wkbLineString.
+ *
  * Revision 1.4  1999/06/25 20:44:43  warmerda
  * implemented assignSpatialReference, carry properly
  *
@@ -65,16 +68,6 @@ OGRLinearRing::OGRLinearRing( OGRLinearRing * poSrcRing )
 
     memcpy( paoPoints, poSrcRing->paoPoints,
             sizeof(OGRRawPoint) * getNumPoints() );
-}
-
-/************************************************************************/
-/*                          getGeometryType()                           */
-/************************************************************************/
-
-OGRwkbGeometryType OGRLinearRing::getGeometryType()
-
-{
-    return wkbUnknown;
 }
 
 /************************************************************************/
