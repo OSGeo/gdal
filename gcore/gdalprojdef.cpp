@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  1999/07/29 19:09:23  warmerda
+ * added windows support for proj.dll
+ *
  * Revision 1.4  1999/07/29 18:01:31  warmerda
  * added support for translation of OGIS WKT projdefs to proj.4
  *
@@ -61,6 +64,12 @@ static void	(*pfn_pj_free)(PJ *) = NULL;
 #define RAD_TO_DEG	57.29577951308232
 #define DEG_TO_RAD	.0174532925199432958
 
+#ifdef WIN32
+#  define LIBNAME      "proj.dll"
+#else
+#  define LIBNAME      "libproj.so"
+#endif
+
 /************************************************************************/
 /*                          LoadProjLibrary()                           */
 /************************************************************************/
@@ -75,14 +84,14 @@ static int LoadProjLibrary()
 
     bTriedToLoad = TRUE;
     
-    pfn_pj_init = (PJ *(*)(int, char**)) CPLGetSymbol( "libproj.so",
+    pfn_pj_init = (PJ *(*)(int, char**)) CPLGetSymbol( LIBNAME,
                                                        "pj_init" );
     if( pfn_pj_init == NULL )
        return( FALSE );
 
-    pfn_pj_fwd = (UV (*)(UV,PJ*)) CPLGetSymbol( "libproj.so", "pj_fwd" );
-    pfn_pj_inv = (UV (*)(UV,PJ*)) CPLGetSymbol( "libproj.so", "pj_inv" );
-    pfn_pj_free = (void (*)(PJ*)) CPLGetSymbol( "libproj.so", "pj_free" );
+    pfn_pj_fwd = (UV (*)(UV,PJ*)) CPLGetSymbol( LIBNAME, "pj_fwd" );
+    pfn_pj_inv = (UV (*)(UV,PJ*)) CPLGetSymbol( LIBNAME, "pj_inv" );
+    pfn_pj_free = (void (*)(PJ*)) CPLGetSymbol( LIBNAME, "pj_free" );
 
     return( TRUE );
 }
