@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.35  2004/01/23 18:55:01  gwalter
+ * Remove unnecessary print statement.
+ *
  * Revision 1.34  2003/08/12 15:37:40  gwalter
  * Make sure wgs-84 and wgs_84 treated the same way.
  *
@@ -803,7 +806,7 @@ CPLErr HKVDataset::SetProjection( const char * pszNewProjection )
     /* This function is used to update a georef file */
 
 
-    printf( "HKVDataset::SetProjection(%s)\n", pszNewProjection );
+    /* printf( "HKVDataset::SetProjection(%s)\n", pszNewProjection ); */
 
     if( !EQUALN(pszNewProjection,"GEOGCS",6)
         && !EQUALN(pszNewProjection,"PROJCS",6)
