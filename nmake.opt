@@ -38,6 +38,10 @@ VCDIR   = 	D:\Software\VStudio\VC98
 
 # Comment out the following to disable JPEG support.
 JPEG_SUPPORTED = 1
+
+# Comment out the following to disable BSB support.
+BSB_SUPPORTED = 1
+
 #if using an external jpeg library uncomment the follwing lines
 #JPEG_EXTERNAL_LIB = 1
 #JPEGDIR = c:/projects/jpeg-6b
