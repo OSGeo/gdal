@@ -28,8 +28,11 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.2  2003/01/31 20:32:42  warmerda
+ * added fixes for computing target layer_bytes[] for large input images
+ *
  * Revision 1.1  2003/01/30 19:09:24  warmerda
- * New
+ * Migrated to jp2kak directory.
  *
  * Revision 1.9  2002/11/30 16:54:46  warmerda
  * ensure we don't initialize from missing resolution levels
@@ -1110,10 +1113,25 @@ JP2KAKCopyCreate( const char * pszFilename, GDALDataset *poSrcDS,
 
     if( dfQuality < 99.5 || eType != GDT_Byte )
     {
-        layer_bytes[layer_count-1] = 
-            (kdu_long) (nXSize * nYSize * dfQuality / 100.0);
-        layer_bytes[layer_count-1] *= (GDALGetDataTypeSize(eType) / 8);
-        layer_bytes[layer_count-1] *= GDALGetRasterCount(poSrcDS);
+        double dfLayerBytes = 
+            (nXSize * ((double) nYSize) * dfQuality / 100.0);
+
+        dfLayerBytes *= (GDALGetDataTypeSize(eType) / 8);
+        dfLayerBytes *= GDALGetRasterCount(poSrcDS);
+
+        if( dfLayerBytes > 2000000000.0 && sizeof(kdu_long) == 4 )
+        {
+            CPLError( CE_Warning, CPLE_AppDefined, 
+                      "Trimmming maximum size of file 2GB from %.1fGB\n"
+                      "to avoid overflow of kdu_long layer size.",
+                      dfLayerBytes / 1000000000.0 );
+            dfLayerBytes = 2000000000.0;
+        }
+
+        layer_bytes[layer_count-1] = (kdu_long) dfLayerBytes;
+
+        CPLDebug( "JP2KAK", "layer_bytes[] = %g\n", 
+                (double) layer_bytes[layer_count-1] );
     }
     else
         bReversible = true;
