@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2000/10/12 19:31:01  warmerda
+ * fixed usage
+ *
  * Revision 1.3  1999/01/22 17:40:05  warmerda
  * Added projections, moved debugging stuff out
  *
@@ -48,7 +51,7 @@
 static void Usage()
 
 {
-    printf( "hfatest [-dd] [-dt] filename\n" );
+    printf( "hfatest [-dd] [-dt] [-dr] filename\n" );
 }
 
 /************************************************************************/
