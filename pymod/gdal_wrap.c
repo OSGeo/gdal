@@ -33,8 +33,8 @@
  * and things like that.
  *
  * $Log$
- * Revision 1.98  2004/11/01 17:25:28  fwarmerdam
- * added CPL Escape functions
+ * Revision 1.99  2004/11/11 18:32:03  fwarmerdam
+ * Added SetBonne support
  *
  ************************************************************************/
 
@@ -6355,6 +6355,30 @@ static PyObject *_wrap_OSRSetAE(PyObject *self, PyObject *args) {
     return _resultobj;
 }
 
+static PyObject *_wrap_OSRSetBonne(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    int  _result;
+    OGRSpatialReferenceH  _arg0;
+    double  _arg1;
+    double  _arg2;
+    double  _arg3;
+    double  _arg4;
+    char * _argc0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"sdddd:OSRSetBonne",&_argc0,&_arg1,&_arg2,&_arg3,&_arg4)) 
+        return NULL;
+    if (_argc0) {
+        if (SWIG_GetPtr(_argc0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OSRSetBonne. Expected _OGRSpatialReferenceH.");
+        return NULL;
+        }
+    }
+    _result = (int )OSRSetBonne(_arg0,_arg1,_arg2,_arg3,_arg4);
+    _resultobj = Py_BuildValue("i",_result);
+    return _resultobj;
+}
+
 static PyObject *_wrap_OSRSetCEA(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
     int  _result;
@@ -11150,6 +11174,7 @@ static PyMethodDef _gdalMethods[] = {
 	 { "OSRSetEC", _wrap_OSRSetEC, 1 },
 	 { "OSRSetCS", _wrap_OSRSetCS, 1 },
 	 { "OSRSetCEA", _wrap_OSRSetCEA, 1 },
+	 { "OSRSetBonne", _wrap_OSRSetBonne, 1 },
 	 { "OSRSetAE", _wrap_OSRSetAE, 1 },
 	 { "OSRSetACEA", _wrap_OSRSetACEA, 1 },
 	 { "OSRAutoIdentifyEPSG", _wrap_OSRAutoIdentifyEPSG, 1 },
