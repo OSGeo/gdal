@@ -60,7 +60,7 @@ These snapshots are not stable releases, and might (on a bad night) not even
 build.  However, they do contain essentially the latest code.  They can be
 downloaded from:
 
-<a href="ftp://ftp.remotesensing.org/gdal/daily">ftp://ftp.remotesensing.org/gdal/daily</a><p>
+<a href="http://www.remotesensing.org/gdal/daily">http://www.remotesensing.org/gdal/daily</a><p>
 
 Refer to the <a href="gdal_building.html">build instructions</a> for how to
 build GDAL from source.<p>
