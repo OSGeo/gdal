@@ -43,6 +43,10 @@
  *    application termination. 
  * 
  * $Log$
+ * Revision 1.10  2001/08/23 03:45:15  warmerda
+ * If there is only one transparent color in the color table, also consider
+ * it to be the nodata value.
+ *
  * Revision 1.9  2001/08/23 03:32:37  warmerda
  * implemented read/write support for transparency (colortable/nodata)
  *
@@ -631,6 +635,7 @@ GDALDataset *PNGDataset::Open( GDALOpenInfo * poOpenInfo )
         unsigned char *trans = NULL;
         png_color_16 *trans_values = NULL;
         int	num_trans;
+        int	nNoDataIndex = -1;
 
         if( png_get_PLTE( poDS->hPNG, poDS->psPNGInfo, 
                           &pasPNGPalette, &nColorCount ) == 0 )
@@ -648,11 +653,30 @@ GDALDataset *PNGDataset::Open( GDALOpenInfo * poOpenInfo )
             oEntry.c3 = pasPNGPalette[iColor].blue;
 
             if( iColor < num_trans )
+            {
                 oEntry.c4 = trans[iColor];
+                if( oEntry.c4 == 0 )
+                {
+                    if( nNoDataIndex == -1 )
+                        nNoDataIndex = iColor;
+                    else
+                        nNoDataIndex = -2;
+                }
+            }
             else
                 oEntry.c4 = 255;
 
             poDS->poColorTable->SetColorEntry( iColor, &oEntry );
+        }
+
+        /*
+        ** Special hack to an index as the no data value, as long as it
+        ** is the _only_ transparent color in the palette.
+        */
+        if( nNoDataIndex > -1 )
+        {
+            poDS->bHaveNoData = TRUE;
+            poDS->dfNoDataValue = nNoDataIndex;
         }
     }
 
