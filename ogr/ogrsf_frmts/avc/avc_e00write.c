@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: avc_e00write.c,v 1.14 2002/03/18 19:00:44 daniel Exp $
+ * $Id: avc_e00write.c,v 1.16 2002/08/27 15:46:15 daniel Exp $
  *
  * Name:     avc_e00write.c
  * Project:  Arc/Info vector coverage (AVC)  E00->BIN conversion library
@@ -31,6 +31,12 @@
  **********************************************************************
  *
  * $Log: avc_e00write.c,v $
+ * Revision 1.16  2002/08/27 15:46:15  daniel
+ * Applied fix made in GDAL/OGR by 'aubin' (moved include ctype.h after avc.h)
+ *
+ * Revision 1.15  2002/04/16 21:19:10  daniel
+ * Use VSIRmdir()
+ *
  * Revision 1.14  2002/03/18 19:00:44  daniel
  * Use VSIMkdir() and not VSIMkDir()
  *
@@ -75,7 +81,6 @@
  * Initial revision
  *
  **********************************************************************/
-
 
 #include "cpl_vsi.h"
 #include "avc.h"
@@ -960,7 +965,7 @@ int     AVCE00DeleteCoverage(const char *pszCoverToDelete)
      * Define AVC_IGNORE_RMDIR_ERROR at compile time if you want this 
      * error to be ignored.
      *----------------------------------------------------------------*/
-    if (rmdir(pszCoverPath) != 0)
+    if (VSIRmdir(pszCoverPath) != 0)
     {
 #ifndef AVC_IGNORE_RMDIR_ERROR
         CPLError(CE_Failure, CPLE_FileIO, 

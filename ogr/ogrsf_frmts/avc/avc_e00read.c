@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: avc_e00read.c,v 1.14 2000/09/22 19:45:21 daniel Exp $
+ * $Id: avc_e00read.c,v 1.15 2002/08/27 15:46:15 daniel Exp $
  *
  * Name:     avc_e00read.c
  * Project:  Arc/Info vector coverage (AVC)  BIN->E00 conversion library
@@ -32,6 +32,9 @@
  **********************************************************************
  *
  * $Log: avc_e00read.c,v $
+ * Revision 1.15  2002/08/27 15:46:15  daniel
+ * Applied fix made in GDAL/OGR by 'aubin' (moved include ctype.h after avc.h)
+ *
  * Revision 1.14  2000/09/22 19:45:21  daniel
  * Switch to MIT-style license
  *
