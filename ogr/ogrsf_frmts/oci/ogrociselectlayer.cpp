@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2003/01/06 17:59:07  warmerda
+ * initialize FID field
+ *
  * Revision 1.2  2002/12/28 04:38:36  warmerda
  * converted to unix file conventions
  *
@@ -124,6 +127,15 @@ OGROCISelectLayer::ReadTableDefinition( OGROCIStatement *poCommand )
 
     poDefn = poCommand->GetResultDefn();
     poDefn->Reference();
+
+/* -------------------------------------------------------------------- */
+/*      Do we have an FID?                                              */
+/* -------------------------------------------------------------------- */
+    if( poDefn->GetFieldIndex( "OGR_FID" ) > -1 )
+    {
+        iFIDColumn = poDefn->GetFieldIndex( "OGR_FID" );
+        pszFIDName = CPLStrdup(poDefn->GetFieldDefn(iFIDColumn)->GetNameRef());
+    }
 
     return poDefn;
 }
