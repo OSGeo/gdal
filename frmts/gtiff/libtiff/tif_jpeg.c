@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_jpeg.c,v 1.14 2003/05/27 16:10:57 warmerda Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_jpeg.c,v 1.15 2003/07/08 20:32:54 warmerda Exp $ */
 
 /*
  * Copyright (c) 1994-1997 Sam Leffler
@@ -708,8 +708,10 @@ JPEGPreDecode(TIFF* tif, tsample_t s)
                                     sp->cinfo.d.comp_info[0].h_samp_factor,
                                     sp->cinfo.d.comp_info[0].v_samp_factor );
 
-                        sp->h_sampling= sp->cinfo.d.comp_info[0].h_samp_factor;
-                        sp->v_sampling= sp->cinfo.d.comp_info[0].v_samp_factor;
+                        sp->h_sampling = (uint16)
+                            sp->cinfo.d.comp_info[0].h_samp_factor;
+                        sp->v_sampling = (uint16)
+                            sp->cinfo.d.comp_info[0].v_samp_factor;
 		}
 		/* Rest should have sampling factors 1,1 */
 		for (ci = 1; ci < sp->cinfo.d.num_components; ci++) {
@@ -783,7 +785,7 @@ JPEGDecode(TIFF* tif, tidata_t buf, tsize_t cc, tsample_t s)
     if (cc % sp->bytesperline)
         TIFFWarning(tif->tif_name, "fractional scanline not read");
 
-    if( nrows > sp->cinfo.d.image_height )
+    if( nrows > (int) sp->cinfo.d.image_height )
         nrows = sp->cinfo.d.image_height;
 
     /* data is expected to be read in multiples of a scanline */
