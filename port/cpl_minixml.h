@@ -28,6 +28,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.11  2004/01/29 15:29:28  warmerda
+ * Added CPLCleanXMLElementName
+ *
  * Revision 1.10  2003/12/04 15:46:51  warmerda
  * Added CPLAddXMLSibling()
  *
@@ -176,6 +179,7 @@ int        CPL_DLL CPLSetXMLValue( CPLXMLNode *psRoot,  const char *pszPath,
 void       CPL_DLL CPLStripXMLNamespace( CPLXMLNode *psRoot, 
                                          const char *pszNameSpace, 
                                          int bRecurse );
+void       CPL_DLL CPLCleanXMLElementName( char * );
 
 CPLXMLNode CPL_DLL *CPLParseXMLFile( const char *pszFilename );
 int        CPL_DLL CPLSerializeXMLTreeToFile( CPLXMLNode *psTree, 
