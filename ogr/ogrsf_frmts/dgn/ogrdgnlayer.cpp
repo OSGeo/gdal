@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2002/01/15 06:39:56  warmerda
+ * remove _gv_color, flesh out pen and brush style settings
+ *
  * Revision 1.12  2002/01/09 14:12:12  warmerda
  * Treat SHAPE elements as polygon geometries, not linestrings.
  *
@@ -68,6 +71,7 @@
 
 #include "ogr_dgn.h"
 #include "cpl_conv.h"
+#include "ogr_featurestyle.h"
 
 CPL_CVSID("$Id$");
 
@@ -148,14 +152,6 @@ OGRDGNLayer::OGRDGNLayer( const char * pszName, DGNHandle hDGN )
     oField.SetWidth( 1 );
     oField.SetPrecision( 0 );
     poFeatureDefn->AddFieldDefn( &oField );
-
-/* -------------------------------------------------------------------- */
-/*      _gv_color                                                       */
-/* -------------------------------------------------------------------- */
-    oField.SetName( "_gv_color" );
-    oField.SetType( OFTString);
-    oField.SetWidth( 12 );
-    poFeatureDefn->AddFieldDefn( &oField );
 }
 
 /************************************************************************/
@@ -219,14 +215,51 @@ OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement )
 
     char	gv_color[128];
     int		gv_red, gv_green, gv_blue;
+    char        szFSColor[128], szPen[256];
 
+/* -------------------------------------------------------------------- */
+/*      Lookup color.                                                   */
+/* -------------------------------------------------------------------- */
+    szFSColor[0] = '\0';
     if( DGNLookupColor( hDGN, psElement->color, 
                         &gv_red, &gv_green, &gv_blue ) )
     {
         sprintf( gv_color, "%f %f %f 1.0", 
                  gv_red / 255.0, gv_green / 255.0, gv_blue / 255.0 );
-        poFeature->SetField( "_gv_color", gv_color );
+
+        sprintf( szFSColor, "c:#%02x%02x%02x", 
+                 gv_red, gv_green, gv_blue );
     }
+
+/* -------------------------------------------------------------------- */
+/*      Generate corresponding PEN style.                               */
+/* -------------------------------------------------------------------- */
+    if( psElement->style == DGNS_SOLID )
+        sprintf( szPen, "PEN(id:\"ogr-pen-0\"" );
+    else if( psElement->style == DGNS_DOTTED )
+        sprintf( szPen, "PEN(id:\"ogr-pen-5\"" );
+    else if( psElement->style == DGNS_MEDIUM_DASH )
+        sprintf( szPen, "PEN(id:\"ogr-pen-2\"" );
+    else if( psElement->style == DGNS_LONG_DASH )
+        sprintf( szPen, "PEN(id:\"ogr-pen-4\"" );
+    else if( psElement->style == DGNS_DOT_DASH )
+        sprintf( szPen, "PEN(id:\"ogr-pen-6\"" );
+    else if( psElement->style == DGNS_SHORT_DASH )
+        sprintf( szPen, "PEN(id:\"ogr-pen-3\"" );
+    else if( psElement->style == DGNS_DASH_DOUBLE_DOT )
+        sprintf( szPen, "PEN(id:\"ogr-pen-7\"" );
+    else if( psElement->style == DGNS_LONG_DASH_SHORT_DASH )
+        sprintf( szPen, "PEN(p:\"10px 5px 4px 5px\"" );
+    else
+        sprintf( szPen, "PEN(id:\"ogr-pen-0\"" );
+
+    if( strlen(szFSColor) > 0 )
+        sprintf( szPen+strlen(szPen), ",%s", szFSColor );
+
+    if( psElement->weight > 1 )
+        sprintf( szPen+strlen(szPen), ",w:%dpx", psElement->weight );
+        
+    strcat( szPen, ")" );
 
     switch( psElement->stype )
     {
@@ -236,6 +269,8 @@ OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement )
             OGRLinearRing	*poLine = new OGRLinearRing();
             OGRPolygon          *poPolygon = new OGRPolygon();
             DGNElemMultiPoint *psEMP = (DGNElemMultiPoint *) psElement;
+            char		szFullStyle[256];
+            int                 nFillColor;
             
             poLine->setNumPoints( psEMP->num_vertices );
             for( int i = 0; i < psEMP->num_vertices; i++ )
@@ -249,6 +284,28 @@ OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement )
             poPolygon->addRingDirectly( poLine );
 
             poFeature->SetGeometryDirectly( poPolygon );
+
+            if( DGNGetShapeFillInfo( hDGN, psElement, &nFillColor ) 
+                && DGNLookupColor( hDGN, nFillColor, 
+                                   &gv_red, &gv_green, &gv_blue ) )
+            {
+                sprintf( szFullStyle, 
+                         "BRUSH(fc:#%02x%02x%02x,id:\"ogr-brush-0\")",
+                         gv_red, gv_green, gv_blue );
+
+                if( nFillColor != psElement->color )
+                {
+                    strcat( szFullStyle, ";" );
+                    strcat( szFullStyle, szPen );
+                }
+                poFeature->SetStyleString( szFullStyle );
+
+                OGRStyleMgr oSMgr;
+                if( !oSMgr.InitStyleString( szFullStyle ) )
+                    CPLAssert( FALSE );
+            }
+            else
+                poFeature->SetStyleString( szPen );
         }
         else if( psElement->type == DGNT_CURVE )
         {
@@ -273,6 +330,8 @@ OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement )
 
             poFeature->SetGeometryDirectly( poLine );
             CPLFree( pasPoints );
+
+            poFeature->SetStyleString( szPen );
         }
         else
         {
@@ -292,6 +351,8 @@ OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement )
                 
                 poFeature->SetGeometryDirectly( poLine );
             }
+
+            poFeature->SetStyleString( szPen );
         }
         break;
 
@@ -315,6 +376,7 @@ OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement )
           }
 
           poFeature->SetGeometryDirectly( poLine );
+          poFeature->SetStyleString( szPen );
       }
       break;
 
@@ -336,11 +398,8 @@ OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement )
           sprintf( pszOgrFS, "LABEL(t:\"%s\"",  psText->string );
 
           // set the color if we have it. 
-          if( DGNLookupColor( hDGN, psElement->color, 
-                              &gv_red, &gv_green, &gv_blue ) )
-              sprintf( pszOgrFS+strlen(pszOgrFS), 
-                       ",c:#%02x%02x%02x", 
-                       gv_red, gv_green, gv_blue );
+          if( strlen(szFSColor) > 0 )
+              sprintf( pszOgrFS+strlen(pszOgrFS), ",%s", szFSColor );
 
           // Add the size info in ground units.
           if( ABS(psText->height_mult) >= 6.0 )
