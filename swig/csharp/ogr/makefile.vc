@@ -1,0 +1,12 @@
+OBJ	=	ogr_wrap.obj
+
+GDAL_ROOT	=	..\..\..\..
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+default:	$(OBJ)
+	copy *.obj ..
+
+clean:
+	-del *.obj
+

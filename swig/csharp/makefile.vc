@@ -1,0 +1,45 @@
+!INCLUDE ..\..\..\nmake.opt
+
+
+OBJ	=	gdal_wrap.obj gdalconst_wrap.obj ogr_wrap.obj
+
+
+all: ogr_dir gdal_dir const_dir
+    csc /target:library /out:ogr_csharp.dll ogr\*.cs
+    csc /target:library /out:gdal_csharp.dll gdal\*.cs const\*.cs
+    link /dll /debug $(OGR_INCLUDE) $(BASE_INCLUDE) $(OBJ) \
+		$(EXTERNAL_LIBS) ..\..\..\gdal.lib\
+		 /out:gdal.dll $(LINKER_FLAGS)
+
+
+ogr_dir:
+	cd ogr
+	$(MAKE) /f makefile.vc
+	cd ..
+
+gdal_dir:
+	cd gdal
+	$(MAKE) /f makefile.vc
+	cd ..
+
+const_dir:
+	cd const
+	$(MAKE) /f makefile.vc
+	cd ..
+	
+clean:	
+	cd gdal
+	$(MAKE) /f makefile.vc clean
+	cd ..
+	cd ogr
+	$(MAKE) /f makefile.vc clean
+	cd ..
+	cd const
+	$(MAKE) /f makefile.vc clean
+	cd ..
+	-del gdal.lib
+	-del *.dll
+	-del *.obj
+	-del *.exp
+	-del *.ilk
+	-del *.pdb
