@@ -30,6 +30,9 @@
  *    instance validation of access strings to fopen().
  * 
  * $Log$
+ * Revision 1.6  2000/12/14 18:29:48  warmerda
+ * added VSIMkdir
+ *
  * Revision 1.5  2000/01/26 19:06:29  warmerda
  * fix up mkdir/unlink for windows
  *
@@ -295,3 +298,15 @@ int VSIUnlink( const char * pszFilename )
 {
     return unlink( pszFilename );
 }
+
+/************************************************************************/
+/*                              VSIRmdir()                              */
+/************************************************************************/
+
+int VSIRmdir( const char * pszFilename )
+
+{
+    return rmdir( pszFilename );
+}
+
+
