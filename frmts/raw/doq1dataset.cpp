@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2002/09/16 16:17:53  warmerda
+ * XY_ORIGIN is the top left corner of pixel!
+ *
  * Revision 1.11  2002/09/04 06:50:37  warmerda
  * avoid static driver pointers
  *
@@ -347,9 +350,6 @@ GDALDataset *DOQ1Dataset::Open( GDALOpenInfo * poOpenInfo )
 
     poDS->dfXPixelSize = DOQGetField( abyRecordData + 59, 12 );
     poDS->dfYPixelSize = DOQGetField( abyRecordData + 71, 12 );
-
-    poDS->dfULX -= poDS->dfXPixelSize / 2;
-    poDS->dfULY += poDS->dfYPixelSize / 2;
 
 /* -------------------------------------------------------------------- */
 /*      Check for overviews.                                            */
