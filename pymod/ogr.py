@@ -28,6 +28,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.48  2005/02/23 20:32:56  hobu
+# retract slicing for Layers as implemented.
+#
 # Revision 1.47  2005/02/08 15:54:12  hobu
 # Added more docstrings
 #
@@ -554,33 +557,6 @@ class Layer:
     def __len__(self):
         """Returns the number of features in the layer"""
         return self.GetFeatureCount()
-
-    def __getitem__(self, value):
-        """Support list and slice -like access to the layer.
-ds[0] would return the first feature on the layer.
-ds[0:4] would return a list of the first four features."""
-        if isinstance(value, types.SliceType):
-            output = []
-            if value.stop == sys.maxint:
-                #for an unending slice, sys.maxint is used
-                #We need to stop before that or GDAL will write an
-                #error to stdout
-                stop = len(self) - 1
-            else:
-                stop = value.stop
-            for i in xrange(value.start,stop,step=value.step):
-                feature = self.GetFeature(i)
-                if feature:
-                    output.append(feature)
-                else:
-                    return output
-            return output
-        if isinstance(value, types.IntType):
-            if value > len(self)-1:
-                raise IndexError
-            return self.GetFeature(value)
-        else:
-            raise TypeError,"Input %s is not of IntType or SliceType" % type(value)
 
     def Reference(self):
         return _gdal.OGR_L_Reference(self._o)
