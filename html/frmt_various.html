@@ -32,12 +32,15 @@ NOTE: Implemented as <tt>gdal/frmts/aaigrid/aaigriddataset.cpp</tt>.<p>
 
 <h2><a name="AIG">AIG -- Arc/Info Binary Grid</a></h2>
 
-Supported for read access, including reading of an affine georeferencing 
-transform and some projections.  
+Supported by GDAL for read access.  
 This format is the internal binary format for Arc/Info Grid, 
 and takes the form of a coverage level directory in an Arc/Info database. 
 To open the coverage select the coverage directory, or an .adf file (such as
 hdr.adf) from within it.<p>
+
+Support includes reading of an affine 
+georeferencing transform, some projections, and a color
+table (.clr) if available.<p>
 
 This driver is implemented based on a reverse engineering of the format.  See
 the <a href="http://gdal.velocet.ca/projects/aigrid/index.html">format 
