@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2003/04/08 21:21:13  warmerda
+ * added OGRGetDriverByName
+ *
  * Revision 1.12  2003/04/08 19:30:56  warmerda
  * added CopyLayer and CopyDataSource entry points
  *
@@ -322,6 +325,7 @@ OGRErr  CPL_DLL OGRReleaseDataSource( OGRDataSourceH );
 void    CPL_DLL OGRRegisterDriver( OGRSFDriverH );
 int     CPL_DLL OGRGetDriverCount();
 OGRSFDriverH CPL_DLL OGRGetDriver( int );
+OGRSFDriverH CPL_DLL OGRGetDriverByName( const char * );
 int     CPL_DLL OGRGetOpenDSCount();
 OGRDataSourceH CPL_DLL OGRGetOpenDS( int iDS );
 
