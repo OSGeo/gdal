@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.39  2003/05/14 08:53:10  dron
+ * Fixed mistake in RasterIO() description.
+ *
  * Revision 1.38  2003/05/08 14:38:40  warmerda
  * added BlockBasedFlushCache
  *
@@ -1265,9 +1268,9 @@ CPLErr GDALDataset::IRasterIO( GDALRWFlag eRWFlag,
  *
  * This method allows reading a region of one or more GDALRasterBands from
  * this dataset into a buffer,  or writing data from a buffer into a region 
- * of the GDALRasterBands.  It
- * automatically takes care of data type translation if the data type
- * (eBufType) of the buffer is different than that of the GDALRasterBand.
+ * of the GDALRasterBands.  It automatically takes care of data type
+ * translation if the data type (eBufType) of the buffer is different than
+ * that of the GDALRasterBand.
  * The method also takes care of image decimation / replication if the
  * buffer size (nBufXSize x nBufYSize) is different than the size of the
  * region being accessed (nXSize x nYSize).
@@ -1295,16 +1298,16 @@ CPLErr GDALDataset::IRasterIO( GDALRWFlag eRWFlag,
  * @param nYSize The height of the region of the band to be accessed in lines.
  *
  * @param pData The buffer into which the data should be read, or from which
- * it should be written.  This buffer must contain at least nBufXSize *
- * nBufYSize words of type eBufType.  It is organized in left to right,
- * top to bottom pixel order.  Spacing is controlled by the nPixelSpace,
- * and nLineSpace parameters.
+ * it should be written.  This buffer must contain at least
+ * nBufXSize * nBufYSize * nBandCount words of type eBufType.  It is organized
+ * in left to right,top to bottom pixel order.  Spacing is controlled by the
+ * nPixelSpace, and nLineSpace parameters.
  *
- * @param nBufXSize the width of the buffer image into which the desired region is
- * to be read, or from which it is to be written.
+ * @param nBufXSize the width of the buffer image into which the desired region
+ * is to be read, or from which it is to be written.
  *
- * @param nBufYSize the height of the buffer image into which the desired region is
- * to be read, or from which it is to be written.
+ * @param nBufYSize the height of the buffer image into which the desired
+ * region is to be read, or from which it is to be written.
  *
  * @param eBufType the type of the pixel values in the pData data buffer.  The
  * pixel values will automatically be translated to/from the GDALRasterBand
