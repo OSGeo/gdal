@@ -30,6 +30,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.17  2002/12/19 17:42:57  dron
+ * Size of string buffer in TranslateHDF4EOSAttributes() fixed.
+ *
  * Revision 1.16  2002/11/29 18:25:22  dron
  * MODIS determination improved.
  *
@@ -504,7 +507,8 @@ char** HDF4Dataset::TranslateHDF4EOSAttributes( int32 iHandle,
 {
     char	*pszData;
     
-    pszData = (char *)CPLMalloc( nValues * sizeof(char) );
+    pszData = (char *)CPLMalloc( (nValues + 1) * sizeof(char) );
+    pszData[nValues] = '\0';
     SDreadattr( iHandle, iAttribute, pszData );
     // HDF4-EOS attributes has followed structure:
     // 
