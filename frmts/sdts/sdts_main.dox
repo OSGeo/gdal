@@ -12,7 +12,10 @@ Profile) files, primary DLG data from the USGS.  It also include support
 for reading raster data such as USGS DEMs in SDTS format.   It consists
 of open source, easy to compile and integrate C++ code.<p>
 
+<!--------------------------------------------------------------------------->
+
 <h2>SDTS Background</h2>
+
 The USGS SDTS Page at 
 <a href="http://mcmcweb.er.usgs.gov/sdts/">http://mcmcweb.er.usgs.gov/sdts</a>
 is the definative source of information on the SDTS format.  The SDTS
@@ -28,6 +31,8 @@ An SDTS Transfer is a grouping of ISO8211 encoded files (ending in the
 a USGS DLG SDTS transfer might consists of many files matching the 
 SC01????.DDF pattern.  The key file in an SDTS transfer is the catalog
 file, such as SC01CATD.DDF.<p>
+
+<!--------------------------------------------------------------------------->
 
 <h2>Development Information</h2>
 
@@ -60,46 +65,101 @@ data available for each.<p>
 See the <a href="sdts_al_tut.html">SDTS_AL Tutorial</a> for more information
 on how to use this library.<p>
 
-<h2>Building the Source</h2>
+<!--------------------------------------------------------------------------->
+
+<h2>Building the Source on Unix</h2>
 
 <ol>
 
-<li> First, fetch the source.  The most recent source should be accessable at
-an url such as 
-<a href="http://gdal.velocet.ca/projects/sdts/sdts-1.0.tar.gz">
-http://gdal.velocet.ca/projects/sdts/sdts-1.0.tar.gz</a>, or
-by ftp from 
-<a href="ftp://gdal.velocet.ca/pub/outgoing/sdts-1.0.tar.gz">
-ftp://gdal.velocet.ca/pub/outgoing/sdts-1.0.tar.gz</a>.<p>
+<li> First, fetch the source.  The most recent source should be accessable
+at an url such as 
+<a href="ftp://gdal.velocet.ca/pub/outgoing/sdts_1_0.tar.gz">
+ftp://gdal.velocet.ca/pub/outgoing/sdts_1_0.tar.gz</a>.<p>
 
 
-<li> Untar the source.<p>
+<li> Unpack the source.<p>
 <pre>
-% gzip -d sdts-1.0.tar.gz
-% tar xzvf sdts-1.0.tar.gz
+% gzip -d sdts_1_0.tar.gz
+% tar xzvf sdts_1_0.tar.gz
 </pre>
 
-If for some reason you don't have gzip, or tar (perhaps you work on Windows)
-just <a href="mailto:warmerda@home.com">let me know</a>, 
-and I will prepare a zip or similar archive of the source.<p>
+<li> Type ``configure'' to establish configuration 
+options. <p>
 
-<li> On unix you can now type ``configure'' to establish configuration 
-options.<p>
-
-<li> On unix you can now type make to build sdts_al.a, and the sample
+<li> Type make to build sdts_al.a, and the sample
 mainline sdts2shp.<p>
 
 </ol>
 
-Windows developers will have to create their own makefile/project but
-can base it on the very simple Makefile.in provided.  As well, you would
-need to copy cpl_config.h.in to cpl_config.h, and modify as needed.  The
-default will likely work OK, but may result in some compiler warnings.  
-Let me know if you are having difficulties, and I will prepare a VC++ 
-makefile.<p>
+See the <a href="sdts_al_tut.html">SDTS_AL Tutorial</a> for more information
+on how to use this library.<p>
+
+<!--------------------------------------------------------------------------->
+
+<h2>Building the Source on Windows</h2>
+
+<ol>
+
+<li> First, fetch the source.  The most recent source should be accessable
+at an url such as 
+<a href="ftp://gdal.velocet.ca/pub/outgoing/sdts_1_0.zip">
+ftp://gdal.velocet.ca/pub/outgoing/sdts_1_0.zip</a>.<p>
+
+
+<li> Unpack the source.<p>
+
+<pre>
+C:\SDTS> unzip sdts_1_0.zip
+</pre>
+
+<li> Build using makefile.vc with VC++.  You will need the VC++ runtime
+environment variables (LIB/INCLUDE) set properly.  This will build the
+library (sdts_al.lib), and the executables sdts2shp.exe, 8211view.exe and
+8211dump.exe.<p>
+
+<pre>
+C:\SDTS> nmake /f makefile.vc
+</pre>
+
+</ol>
 
 See the <a href="sdts_al_tut.html">SDTS_AL Tutorial</a> for more information
 on how to use this library.<p>
+
+<!--------------------------------------------------------------------------->
+
+<h2>The sdts2shp Sample Program</h2>
+
+The sdts2shp program distributed with this toolkit is primary intended to
+serve as an example of how to use the SDTS access library.  However, it can
+be useful to translate SDTS datasets into ESRI Shapefile format.  
+
+<pre>
+Usage: sdts2shp CATD_filename [-o shapefile_name]
+                [-m module_name] [-v]
+
+Modules include `LE01', `PC01', `NP01' and `ARDF'
+</pre>
+
+A typical session in which we inspect the contents of a transfer, and then
+extract polygon and line layers might look like this:<p>
+
+<pre>
+warmerda@cs46980-c[134]% sdts2shp data/SC01CATD.DDF -v
+Layers:
+  ASCF: `Attribute Primary         '
+  AHDR: `Attribute Primary         '
+  NP01: `Point-Node                '
+  NA01: `Point-Node                '
+  NO01: `Point-Node                '
+  LE01: `Line                      '
+  PC01: `Polygon                   '
+
+warmerda@cs46980-c[135]% sdts2shp data/SC01CATD.DDF -m PC01 -o pc01.shp
+warmerda@cs46980-c[136]% sdts2shp data/SC01CATD.DDF -m LE01 -o le01.shp
+</pre>
+
+<!--------------------------------------------------------------------------->
 
 <h2>Licensing</h2>
 
@@ -131,6 +191,8 @@ The precise license text is:<p>
  DEALINGS IN THE SOFTWARE.
 <p>
 </em>
+
+<!--------------------------------------------------------------------------->
 
 <h2>Author and Acknowledgements</h2>
 
