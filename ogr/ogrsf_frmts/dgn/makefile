@@ -13,6 +13,7 @@ default:	$(OBJ)
 
 clean:
 	-del *.obj *.pdb
+	-del *.lib
 
 dgndump.exe:	$(LL_OBJ) dgndump.obj
 	cl /Zi dgndump.obj $(LL_OBJ) $(GDAL_ROOT)/port/cpl.lib $(LIBS)
