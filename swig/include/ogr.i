@@ -9,6 +9,10 @@
 
  *
  * $Log$
+ * Revision 1.23  2005/02/24 16:15:53  hobu
+ * ifdef'd the %pythoncode, conditionally rename some methods
+ * if they conflict with existing "object" methods in C#.
+ *
  * Revision 1.22  2005/02/22 18:44:34  hobu
  * and the one in the Datasource constructor
  *
@@ -116,6 +120,7 @@ typedef int OGRwkbGeometryType;
 typedef int OGRFieldType;
 typedef int OGRJustification;
 
+#ifdef SWIGPYTHON
 %pythoncode %{
 
 wkb25Bit = -2147483648 # 0x80000000
@@ -137,7 +142,6 @@ wkbMultiLineString25D =    wkbMultiLineString    + wkb25Bit
 wkbMultiPolygon25D =       wkbMultiPolygon       + wkb25Bit
 wkbGeometryCollection25D = wkbGeometryCollection + wkb25Bit
 
-# OGRFieldType
 
 OFTInteger = 0
 OFTIntegerList= 1
@@ -149,7 +153,6 @@ OFTWideString = 6
 OFTWideStringList = 7
 OFTBinary = 8
 
-# OGRJustification
 
 OJUndefined = 0
 OJLeft = 1
@@ -158,10 +161,9 @@ OJRight = 2
 wkbXDR = 0
 wkbNDR = 1
 
-###############################################################################
-# Constants for testing Capabilities
 
-# Layer
+
+
 OLCRandomRead          = "RandomRead"
 OLCSequentialWrite     = "SequentialWrite"
 OLCRandomWrite         = "RandomWrite"
@@ -173,16 +175,18 @@ OLCTransactions        = "Transactions"
 OLCDeleteFeature       = "DeleteFeature"
 OLCFastSetNextByIndex  = "FastSetNextByIndex"
 
-# DataSource
+
 ODsCCreateLayer        = "CreateLayer"
 ODsCDeleteLayer        = "DeleteLayer"
 
-# Driver
+
 ODrCCreateDataSource   = "CreateDataSource"
 ODrCDeleteDataSource   = "DeleteDataSource"
 
 have_geos=0
 %}
+
+#endif
 
 %{
 #include <iostream>
@@ -370,7 +374,7 @@ public:
     OGR_DS_ReleaseResultSet(self, layer);
   }
 
-  
+#ifdef SWIGPYTHON  
   %pythoncode {
     def __len__(self):
         """Returns the number of layers on the datasource"""
@@ -409,7 +413,7 @@ ds[0:4] would return a list of the first four layers."""
         else:
             raise TypeError, "Input %s is not of String or Int type" % type(iLayer)
 }
-
+#endif
 } /* %extend */
 
 
@@ -453,10 +457,10 @@ public:
   }
 
   OGRErr SetAttributeFilter(char* filter_string) {
-    OGRErr err = OGR_L_SetAttributeFilter(self, filter_string);
-  /*  if (err != 0) {
+    OGRErr err = OGR_L_SetAttributeFilter((OGRLayerShadow*)self, filter_string);
+    if (err != 0) {
       throw err;
-    } */
+    } 
     return 0;
   }
   
@@ -572,7 +576,8 @@ public:
   GIntBig GetFeatureRead() {
     return OGR_L_GetFeaturesRead(self);
   }
-  
+
+#ifdef SWIGPYTHON  
   %pythoncode {
     def __len__(self):
         """Returns the number of features in the layer"""
@@ -605,6 +610,8 @@ layer[0:4] would return a list of the first four features."""
         else:
             raise TypeError,"Input %s is not of IntType or SliceType" % type(value)
   }
+  
+#endif
 } /* %extend */
 
 
@@ -797,7 +804,7 @@ public:
   }
   /* ------------------------------------------- */  
   
-    
+#ifdef SWIGPYTHON    
   %pythoncode {
 
     def __cmp__(self, other):
@@ -836,6 +843,8 @@ public:
             return self.GetFieldAsString(fld_index)
         
 }
+
+#endif
 } /* %extend */
 
 
@@ -852,10 +861,10 @@ class OGRFeatureDefnShadow {
 public:
 %extend {
 
-  %feature("kwargs") OGRFeatureDefnShadow;
+ /* %feature("kwargs") OGRFeatureDefnShadow;
   OGRFeatureDefnShadow* OGRFeatureDefnShadow(const char* name=NULL) {
     return (OGRFeatureDefnShadow* )OGR_FD_Create(name);
-  }
+  }*/
   
   void Destroy() {
     OGR_FD_Destroy(self);
@@ -913,6 +922,11 @@ public:
 
 
 %rename (FieldDefn) OGRFieldDefnShadow;
+
+#ifdef SWIGCSHARP
+%rename (GetFieldType) GetType;
+#endif
+
 %apply (THROW_OGR_ERROR) {OGRErr};
 class OGRFieldDefnShadow {
   OGRFieldDefnShadow();
@@ -942,10 +956,11 @@ public:
     OGR_Fld_SetName(self, name);
   }
   
+  
   OGRFieldType GetType() {
     return OGR_Fld_GetType(self);
   }
-  
+
   void SetType(OGRFieldType type) {
     OGR_Fld_SetType(self, type);
   }
@@ -1219,8 +1234,8 @@ public:
     return OGR_G_Overlaps(self, other);
   }
 
-  OGRErr TransformTo(OSRSpatialReferenceShadow* ref) {
-    return OGR_G_TransformTo(self, ref);
+  OGRErr TransformTo(OSRSpatialReferenceShadow* reference) {
+    return OGR_G_TransformTo(self, reference);
   }
   
   OGRErr Transform(OSRCoordinateTransformationShadow* trans) {
@@ -1231,8 +1246,8 @@ public:
     return (OSRSpatialReferenceShadow*)OGR_G_GetSpatialReference(self);
   }
   
-  void AssignSpatialReference(OSRSpatialReferenceShadow* ref) {
-    OGR_G_AssignSpatialReference(self, ref);
+  void AssignSpatialReference(OSRSpatialReferenceShadow* reference) {
+    OGR_G_AssignSpatialReference(self, reference);
   }
   
   void CloseRings() {
