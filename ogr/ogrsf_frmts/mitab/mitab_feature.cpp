@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_feature.cpp,v 1.51 2004/06/30 20:29:03 dmorissette Exp $
+ * $Id: mitab_feature.cpp,v 1.52 2004/10/11 20:18:27 dmorissette Exp $
  *
  * Name:     mitab_feature.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log: mitab_feature.cpp,v $
+ * Revision 1.52  2004/10/11 20:18:27  dmorissette
+ * Do not output a BG color in style string for transparent brushes (bug 693)
+ *
  * Revision 1.51  2004/06/30 20:29:03  dmorissette
  * Fixed refs to old address danmo@videotron.ca
  *
@@ -6431,11 +6434,22 @@ const char *ITABFeatureBrush::GetBrushStyleString()
     else if (m_sBrushDef.nFillPattern == 8)
       nOGRStyle = 7;
           
-    pszStyle =CPLSPrintf("BRUSH(fc:#%6.6x,bc:#%6.6x,id:\"mapinfo-brush-%d.ogr-brush-%d\")",
-                         m_sBrushDef.rgbFGColor,
-                         m_sBrushDef.rgbBGColor,
-                         m_sBrushDef.nFillPattern,nOGRStyle);
-     
+
+    if (GetBrushTransparent())
+    {
+        /* Omit BG Color for transparent brushes */
+        pszStyle =CPLSPrintf("BRUSH(fc:#%6.6x,id:\"mapinfo-brush-%d.ogr-brush-%d\")",
+                             m_sBrushDef.rgbFGColor,
+                             m_sBrushDef.nFillPattern,nOGRStyle);
+    }
+    else
+    {
+        pszStyle =CPLSPrintf("BRUSH(fc:#%6.6x,bc:#%6.6x,id:\"mapinfo-brush-%d.ogr-brush-%d\")",
+                             m_sBrushDef.rgbFGColor,
+                             m_sBrushDef.rgbBGColor,
+                             m_sBrushDef.nFillPattern,nOGRStyle);
+    }
+
      return pszStyle;
     
 }  
