@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2002/05/29 16:01:54  warmerda
+ * fixed SetColorInterpretation
+ *
  * Revision 1.6  2002/04/12 17:37:31  warmerda
  * added colortable support
  *
@@ -234,10 +237,12 @@ GDALColorInterp MEMRasterBand::GetColorInterpretation()
 /*                       SetColorInterpretation()                       */
 /************************************************************************/
 
-void MEMRasterBand::SetColorInterpretation( GDALColorInterp eGCI )
+CPLErr MEMRasterBand::SetColorInterpretation( GDALColorInterp eGCI )
 
 {
     eColorInterp = eGCI;
+
+    return CE_None;
 }
 
 /************************************************************************/
