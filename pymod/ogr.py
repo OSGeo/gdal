@@ -28,6 +28,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.34  2004/12/16 22:13:27  hobu
+# typo in the Clone() method of Feature
+#
 # Revision 1.33  2004/11/25 20:16:30  fwarmerdam
 # Fixed TransformTo() (bug 685).
 #
@@ -557,7 +560,7 @@ class Feature:
             return Geometry( obj = geom_o )
 
     def Clone( self ):
-        return Feature( obj = _gdal.OBJ_F_Clone( self._o ) )
+        return Feature( obj = _gdal.OGR_F_Clone( self._o ) )
 
     def Equal( self, other_geom ):
         return _gdal.OGR_F_Equal( self._o, other_geom._o )
