@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.39  2002/04/29 20:43:18  warmerda
+ * Ensure that ExecuteSQL() prepared layers are cleaned up
+ *
  * Revision 1.38  2002/04/29 20:31:57  warmerda
  * allow ExecuteSQL() to handle FID
  *
@@ -473,6 +476,18 @@ HRESULT CSFCommand::ExtractSpatialQuery( DBPARAMS *pParams )
 }
 
 /************************************************************************/
+/*                             CSFRowset()                              */
+/************************************************************************/
+
+CSFRowset::CSFRowset()
+
+{
+    m_iLayer = -1;
+    m_poDS = NULL;
+    m_poLayer = NULL;
+}
+
+/************************************************************************/
 /*                             ~CSFRowset()                             */
 /************************************************************************/
 
@@ -481,6 +496,9 @@ CSFRowset::~CSFRowset()
 {
     // clear destination.
     CopyColumnInfo( NULL, &m_paColInfo );
+
+    if( m_poLayer != NULL && m_iLayer == -1 )
+        delete m_poLayer;
 
     CPLDebug( "OGR_OLEDB", "~CSFRowset()" );
 }
@@ -609,6 +627,9 @@ HRESULT CSFRowset::Execute(DBPARAMS * pParams, LONG* pcRowsAffected)
 	
     pszCommand = OLE2A(m_strCommandText);
     CPLDebug( "OGR_OLEDB", "CSFRowset::Execute(%s)", pszCommand );
+
+    if( m_poLayer != NULL && m_iLayer == -1 )
+        delete m_poLayer;
 
     m_iLayer = -1;
     m_poLayer = NULL;
