@@ -1,3 +1,7 @@
+2002-11-06  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* gdal/apps/gdal_translate.cpp: added -a_srs option.
+
 2002-10-30  Frank Warmerdam  <warmerdam@pobox.com>
 
 	* gdal/frmts/aigrid: Fixed 0xFF tile type, added robustness fixes.
