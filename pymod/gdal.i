@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.70  2003/06/19 17:13:28  warmerda
+ * fixes for a few prototypes
+ *
  * Revision 1.69  2003/06/18 18:39:14  warmerda
  * added OSRSetprojection functions
  *
@@ -1343,7 +1346,7 @@ int     OSRSetStatePlaneWithUnits( OGRSpatialReferenceH hSRS,
                                    double dfOverrideUnits );
 
 /** Albers Conic Equal Area */
-OGRErr OGRSetACEA( OGRSpatialReferenceH hSRS, double dfStdP1, double dfStdP2,
+OGRErr OSRSetACEA( OGRSpatialReferenceH hSRS, double dfStdP1, double dfStdP2,
                          double dfCenterLat, double dfCenterLong,
                          double dfFalseEasting, double dfFalseNorthing );
     
@@ -1373,7 +1376,8 @@ OGRErr OSRSetEckertVI( OGRSpatialReferenceH hSRS, double dfCentralMeridian,
                              double dfFalseEasting, double dfFalseNorthing );
 
 /** Equirectangular */
-OGRErr OSRSetEquirectangular(double dfCenterLat, double dfCenterLong,
+OGRErr OSRSetEquirectangular(OGRSpatialReferenceH hSRS, 
+                        double dfCenterLat, double dfCenterLong,
                         double dfFalseEasting, double dfFalseNorthing );
 
 /** Gall Stereograpic */
@@ -1381,8 +1385,9 @@ OGRErr OSRSetGS( OGRSpatialReferenceH hSRS, double dfCentralMeridian,
                        double dfFalseEasting, double dfFalseNorthing );
     
 /** Gnomonic */
-OGRErr OSRSetGnomonic(double dfCenterLat, double dfCenterLong,
-                            double dfFalseEasting, double dfFalseNorthing );
+OGRErr OSRSetGnomonic(OGRSpatialReferenceH hSRS, 
+		      double dfCenterLat, double dfCenterLong,
+                      double dfFalseEasting, double dfFalseNorthing );
 
 /** Hotine Oblique Mercator */
 OGRErr OSRSetHOM( OGRSpatialReferenceH hSRS, double dfCenterLat, double dfCenterLong,
