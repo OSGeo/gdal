@@ -1,0 +1,266 @@
+/*!
+\page gdal_utilities
+
+<center>
+<title>GDAL Utilities</title>
+</center>
+
+The following utility programs are distributed with GDAL.
+
+<h2>gdalinfo</h2>
+
+The gdalinfo program lists various information about a GDAL supported
+raster dataset. 
+
+\verbatim
+Usage: gdalinfo [-mm] datasetname
+\endverbatim
+
+The -mm switch will force computation of the actual min/max values for
+each band in the dataset. 
+
+The gdalinfo will report all of the following (if known):
+
+<ul>
+<li> The format driver used to access the file. 
+<li> Raster size (in pixel and lines).
+<li> The coordinate system for the file (in OGC WKT).
+<li> The geotransform associated with the file (rotational coefficients are
+currently not reported).  
+<li> Corner coordinates in georeferenced, and if possible lat/long based on
+the full geotransform (but not GCPs). 
+<li> Ground control points.
+<li> File wide (including subdatasets) metadata. 
+<li> Band data types.
+<li> Band color interpretations.
+<li> Band block size.
+<li> Band descriptions. 
+<li> Band min/max values (internally known and possibly computed).
+<li> Band NODATA value.
+<li> Band overview resolutions available. 
+<li> Band unit type (ie. "meters" or "feet" for elevation bands). 
+<li> Band pseudo-color tables. 
+</ul>
+
+Example:
+\verbatim
+warmerda@gdal[138]% gdalinfo ~/openev/utm.tif 
+Driver: GTiff/GeoTIFF
+Size is 512, 512
+Coordinate System is:
+PROJCS["NAD27 / UTM zone 11N",
+    GEOGCS["NAD27",
+        DATUM["North_American_Datum_1927",
+            SPHEROID["Clarke 1866",6378206.4,294.978698213901]],
+        PRIMEM["Greenwich",0],
+        UNIT["degree",0.0174532925199433]],
+    PROJECTION["Transverse_Mercator"],
+    PARAMETER["latitude_of_origin",0],
+    PARAMETER["central_meridian",-117],
+    PARAMETER["scale_factor",0.9996],
+    PARAMETER["false_easting",500000],
+    PARAMETER["false_northing",0],
+    UNIT["metre",1]]
+Origin = (440720.000000,3751320.000000)
+Pixel Size = (60.000000,-60.000000)
+Corner Coordinates:
+Upper Left  (  440720.000, 3751320.000) (117d38'28.21"W, 33d54'8.47"N)
+Lower Left  (  440720.000, 3720600.000) (117d38'20.79"W, 33d37'31.04"N)
+Upper Right (  471440.000, 3751320.000) (117d18'32.07"W, 33d54'13.08"N)
+Lower Right (  471440.000, 3720600.000) (117d18'28.50"W, 33d37'35.61"N)
+Center      (  456080.000, 3735960.000) (117d28'27.39"W, 33d45'52.46"N)
+Band 1 Block=512x16 Type=Byte, ColorInterp=Gray
+\endverbatim
+
+<h2>gdal_translate</h2>
+
+The gdal_translate utility can be used to convert raster data between 
+different formats, potentially peforming some operations like subsettings, 
+resampling, and rescaling pixels in the process.
+
+\verbatim
+Usage: gdal_translate 
+       [-ot {Byte/UInt16/UInt32/Int32/Float32/Float64/CInt16/
+             CInt32/CFloat32/CFloat64}] [-not_strict]
+       [-of format] [-b band] [-outsize xsize[%] ysize[%]]
+       [-scale [src_min src_max [dst_min dst_max]]]       
+       [-srcwin xoff yoff xsize ysize] [-co "NAME=VALUE"]*
+       src_dataset dst_dataset
+\endverbatim
+
+<ul>
+<li> <b>-ot</b>: For the output bands to be of the indicated data type.
+<li> <b>-not_strict</b>: Be forgiving of mismatches and lost data when 
+translating to the output format.
+<li> <b>-of</b> <i>format</i>: Select the output format.  The default is 
+GeoTIFF (GTiff).  Use the short format name.
+<li> <b>-b</b> <i>band</i>: Select only input band <i>band</i> for output.
+Bands are numbered from 1.
+<li> <b>-outsize</b> <i>xsize[%] ysize[%]</i>: Set the size of the output
+file.  Outsize is in pixels and lines unless '%' is attached in which case it
+is as a fraction of the input image size.
+<li> <b>-scale</b> <i>[src_min src_max [dst_min dst_max]]</i>: Rescale the
+input pixels values from the range <i>src_min</i> to <i>src_max</i> to
+the range <i>dst_min</i> to <i>dst_max</i>.  If omitted the output range is
+0 to 255.  If omitted the input range is automatically computed from the
+source data.
+<li> <b>-srcwin</b> <i>xoff yoff xsize ysize</i>: Selects a subwindow from
+the source image for copying.
+<li> <b>-co</b> <i>"NAME=VALUE"</i>: passes a creation option to the output
+format driver.  Multiple <b>-co</b> options may be listed.  See format 
+specific documentation for legal creation options for each format.
+<li> <i>src_dataset</i>: The source file name.
+<li> <i>dst_dataset</i>: The destination file name.
+</ul>
+
+Example:
+\verbatim
+% gdal_translate -of GTiff -co "TILED=YES" utm.tif utm_tiled.tif
+\endverbatim
+
+<h2>gdaladdo</h2>
+
+The gdaladdo utility can be used to build or rebuild overview images for
+most supported file formats with one over several downsampling algorithms. 
+
+\verbatim
+Usage: gdaladdo [-r {nearest,average,average_mp,average_magphase,mode}]
+                filename levels
+
+Example:
+ % gdaladdo -r average abc.tif 2 4 8 16
+\endverbatim
+
+<ul>
+<li> <b>-r</b> <i>{nearest,average,average_mp,average_magphase,mode}</i>:
+Select a resampling algorithm.
+<li> <i>filename</i>: The file to build overviews for. 
+<li> <i>levels</i>: A list of integral overview levels to build. 
+</ul>
+
+<i>Mode</i> is not actually implemented, and <i>average_mp</i> is unsuitable 
+for use.  <i>Average_magphase</i> averages complex data in mag/phase space.  
+<i>Nearest</i> and <i>average</i> are applicable to normal image data.  
+<i>Nearest</i> applies a nearest neighbour (simple sampling) resampler, while
+<i>average</i> computes the average of all non-NODATA contributing pixels.
+
+Selecting a level value like <i>2</i> causes an overview level that is 1/2
+the resolution (in each dimension) of the base layer to be computed.  If
+the file has existing overview levels at a level selected, those levels will
+be recomputed and rewritten in place.
+
+Some format drivers do not support overviews at all.  Many format drivers
+store overviews in a secondary file with the extension .ovr.  The GeoTIFF
+driver stores overviews internally to the file operated on.
+
+<h2>gdaltindex</h2>
+
+This program builds a shapefile with a record for each input raster file, 
+an attribute containing the filename, and a polygon geometry outlining the
+raster.  This output is suitable for use with UMN MapServer as a raster 
+tileindex. 
+
+\verbatim
+Usage: gdaltindex [-tileindex field_name] index_file [gdal_file]*
+
+eg.
+  % gdaltindex doq_index.shp doq/*.tif
+\endverbatim
+
+<ul>
+<li> The shapefile (index_file) will be created if it doesn't already exist.
+<li> The default tile index field is 'location'.
+<li> Raster filenames will be put in the file exactly as they are specified
+on the commandline.
+<li> Simple rectangular polygons are generated in the same
+coordinate system as the rasters.
+</ul>
+
+<h2>rgb2pct.py</h2>
+
+This utility will compute an optimal pseudo-color table for a given RGB image
+using a median cut algorithm on a downsampled RGB histogram.   Then it 
+converts the image into the a pseudo-colored image using the color table.
+This conversion utilizes Floyd-Steinberg dithering (error diffusion) to 
+maximize output image visual quality. 
+
+\verbatim
+Usage: rgb2pct.py [-n colors] [-of format] source_file dest_file
+\endverbatim
+
+<ul>
+<li> <b>-n</b> <i>colors</i>: Select the number of colors in the generated
+color table.  Defaults to 256.  Must be between 2 and 256. 
+<li> <b>-of</b> <i>format</i>: Format to generated (defaults to GeoTIFF).  Same
+semantics as the <b>-of</b> flag for gdal_translate.  Only output formats
+supporting pseudocolor tables should be used. 
+<li> <i>source_file</i>: The input RGB file. 
+<li> <i>dest_file</i>: The output pseudo-colored file that will be created.
+</ul>
+
+NOTE: rgb2pct.py is a Python script, and will only work if GDAL was built
+with Python support.  It is also not installed by default. It is found
+at $GDAL_HOME/pymod.
+
+<h2>gdal_merge.py</h2>
+
+This utility will automatically mosaic a set of images.  All the images must
+be in the same coordinate system and have a matching number of bands, but 
+they may be overlapping, and at different resolutions.
+
+\verbatim
+Usage: gdal_merge.py [-o out_filename] [-f out_format] [-v]
+                     [-ps pixelsize_x pixelsize_y]
+                     [-ul_lr ulx uly lrx lry] input_files
+\endverbatim
+
+<ul>
+<li> <b>-o</b> <i>out_filename</i>: The name of the output file to be created.
+<li> <b>-f</b> <i>out_format</i>: Output format, defaults to GeoTIFF. 
+<li> <b>-ps</b> <i>pixelsize_x pixelsize_y</i>: Pixel size to be used for the
+output file.  If not specified the resolution of the first input file will
+be used.
+<li> <b>-ul_lr</b> <i>ulx uly lrx lry</i>: The extents of the output file. 
+If not specified the aggregate extents of all input files will be used.
+<li> <b>-v</b>: Generate verbose output of mosaicing operations as they are
+done.
+</ul>
+
+NOTE: gdal_merge.py is a Python script, and will only work if GDAL was built
+with Python support.  It is also not installed by default. It is found
+at $GDAL_HOME/pymod.
+
+<h2>gdal-config</h2>
+
+This utility script (available on Unix systems) can be used to determine
+various information about a GDAL installation.  It is normally just used
+by configure scripts for applications using GDAL but can be queried by an
+end user. 
+
+\verbatim
+Usage: gdal-config [OPTIONS]
+Options:
+        [--prefix[=DIR]]
+        [--libs]
+        [--cflags]
+        [--version]
+        [--ogr-enabled]
+        [--formats]
+\endverbatim
+
+<ul>
+<li> <b>--prefix</b>: the top level directory for the GDAL installation.
+<li> <b>--libs</b>: The libraries and link directives required to use GDAL.
+<li> <b>--cflags</b>: The include and macro definition required to compiled
+modules using GDAL.
+<li> <b>--version</b>: Reports the GDAL version.
+<li> <b>--ogr-enabled</b>: Reports "yes" or "no" to standard output depending
+on whether OGR is built into GDAL.
+<li> <b>--formats</b>: Reports which formats are configured into GDAL to
+stdout.
+</ul>
+
+*/
+
+
+
