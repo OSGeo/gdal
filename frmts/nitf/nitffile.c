@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2003/06/06 15:07:53  warmerda
+ * fixed security area sizing for NITF 2.0 images, its like NITF 1.1.
+ *
  * Revision 1.9  2003/05/29 19:50:39  warmerda
  * added improved TRE handling
  *
@@ -82,7 +85,7 @@ NITFFile *NITFOpen( const char *pszFilename, int bUpdatable )
     FILE	*fp;
     char        *pachHeader;
     NITFFile    *psFile;
-    int         nHeaderLen, nOffset, nNextData;
+    int         nHeaderLen, nOffset, nNextData, nHeaderLenOffset;
     char        szTemp[128];
 
 /* -------------------------------------------------------------------- */
@@ -117,20 +120,30 @@ NITFFile *NITFOpen( const char *pszFilename, int bUpdatable )
 /* -------------------------------------------------------------------- */
 /*      Get header length.                                              */
 /* -------------------------------------------------------------------- */
-    if( EQUALN(szTemp,"NITF01.",7) )
-    {
-        VSIFSeek( fp, 394, SEEK_SET );
-        VSIFRead( szTemp, 1, 6, fp );
-        szTemp[6] = '\0';
-    }
+    if( EQUALN(szTemp,"NITF01.",7) || EQUALN(szTemp,"NITF02.0",8) )
+        nHeaderLenOffset = 394;
     else
+        nHeaderLenOffset = 354;
+
+    if( VSIFSeek( fp, nHeaderLenOffset, SEEK_SET ) != 0 
+        || VSIFRead( szTemp, 1, 6, fp ) != 6 )
     {
-        VSIFSeek( fp, 354, SEEK_SET );
-        VSIFRead( szTemp, 1, 6, fp );
-        szTemp[6] = '\0';
+        CPLError( CE_Failure, CPLE_NotSupported, 
+                  "Unable to read header length from NITF file.  File is either corrupt\n"
+                  "or empty." );
+        return NULL;
     }
 
+    szTemp[6] = '\0';
     nHeaderLen = atoi(szTemp);
+
+    if( nHeaderLen < nHeaderLenOffset || nHeaderLen > 100000 )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported, 
+                  "NITF Header Length (%d) seems to be corrupt.",
+                  nHeaderLen );
+        return NULL;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Read the whole file header.                                     */
@@ -156,10 +169,8 @@ NITFFile *NITFOpen( const char *pszFilename, int bUpdatable )
 /* -------------------------------------------------------------------- */
     nNextData = nHeaderLen;
 
-    if( EQUALN(psFile->szVersion,"NITF01.",7) )
-        nOffset = 400;
-    else
-        nOffset = 360;
+    nOffset = nHeaderLenOffset + 6;
+
     nOffset = NITFCollectSegmentInfo( psFile, nOffset,"IM",6, 10, &nNextData );
 
     nOffset = NITFCollectSegmentInfo( psFile, nOffset, "GR", 4, 6, &nNextData);
