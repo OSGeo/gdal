@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2004/07/10 06:57:54  warmerda
+ * Added C entry points and docs for GEOS geometry functions
+ *
  * Revision 1.18  2004/07/10 04:52:44  warmerda
  * added OGR_G_CloseRings
  *
@@ -156,6 +159,22 @@ OGRErr CPL_DLL OGR_G_TransformTo( OGRGeometryH, OGRSpatialReferenceH );
 
 int    CPL_DLL OGR_G_Intersect( OGRGeometryH, OGRGeometryH );
 int    CPL_DLL OGR_G_Equal( OGRGeometryH, OGRGeometryH );
+int    CPL_DLL OGR_G_Disjoint( OGRGeometryH, OGRGeometryH );
+int    CPL_DLL OGR_G_Touches( OGRGeometryH, OGRGeometryH );
+int    CPL_DLL OGR_G_Crosses( OGRGeometryH, OGRGeometryH );
+int    CPL_DLL OGR_G_Within( OGRGeometryH, OGRGeometryH );
+int    CPL_DLL OGR_G_Contains( OGRGeometryH, OGRGeometryH );
+int    CPL_DLL OGR_G_Overlaps( OGRGeometryH, OGRGeometryH );
+
+OGRGeometryH CPL_DLL OGR_G_GetBoundary( OGRGeometryH );
+OGRGeometryH CPL_DLL OGR_G_ConvexHull( OGRGeometryH );
+OGRGeometryH CPL_DLL OGR_G_Buffer( OGRGeometryH, double, int );
+OGRGeometryH CPL_DLL OGR_G_Intersection( OGRGeometryH, OGRGeometryH );
+OGRGeometryH CPL_DLL OGR_G_Union( OGRGeometryH, OGRGeometryH );
+OGRGeometryH CPL_DLL OGR_G_Difference( OGRGeometryH, OGRGeometryH );
+OGRGeometryH CPL_DLL OGR_G_SymmetricDifference( OGRGeometryH, OGRGeometryH );
+double CPL_DLL OGR_G_Distance( OGRGeometryH, OGRGeometryH );
+
 void   CPL_DLL OGR_G_Empty( OGRGeometryH );
 
 /* Methods for getting/setting vertices in points, line strings and rings */
