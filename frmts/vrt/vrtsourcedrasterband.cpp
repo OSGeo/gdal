@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2004/08/25 14:21:00  warmerda
+ * Added support for overviews in sourced band RasterIO() contributed
+ * by Sebasien Grignard.
+ *
  * Revision 1.2  2004/08/11 18:46:45  warmerda
  * pass pszVRTPath through serialize methods
  *
@@ -162,7 +166,21 @@ CPLErr VRTSourcedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                            eBufType, nPixelSpace, nBufXSize );
         }
     }
-    
+
+
+/* -------------------------------------------------------------------- */
+/*      Do we have overviews that would be appropriate to satisfy       */
+/*      this request?                                                   */
+/* -------------------------------------------------------------------- */
+    if( (nBufXSize < nXSize || nBufYSize < nYSize)
+        && GetOverviewCount() > 0 )
+    {
+        if( OverviewRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize, 
+                              pData, nBufXSize, nBufYSize, 
+                              eBufType, nPixelSpace, nLineSpace ) == CE_None )
+            return CE_None;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Overlay each source in turn over top this.                      */
 /* -------------------------------------------------------------------- */
