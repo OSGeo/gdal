@@ -31,7 +31,7 @@ OBJ	= \
 	tif_strip.o \
 	tif_thunder.o \
 	tif_tile.o \
-	tif_unix.o \
+	tif_vsi.o \
 	tif_version.o \
 	tif_warning.o \
 	tif_write.o \
