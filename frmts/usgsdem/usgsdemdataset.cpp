@@ -31,6 +31,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.5  2002/08/26 06:45:54  warmerda
+ * removed use of bool
+ *
  * Revision 1.4  2002/06/12 21:12:25  warmerda
  * update to metadata based driver info
  *
@@ -310,7 +313,7 @@ int USGSDEMDataset::LoadFromFile(FILE *InDem)
     int		nVUnit, nGUnit;
     double 	dxdelta, dydelta;
     double	dElevMax, dElevMin;
-    bool	bNewFormat;
+    int 	bNewFormat;
     int		nCoordSystem;
     int		nProfiles;
     char	szDateBuffer[5];
