@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2002/06/18 18:59:00  warmerda
+ * fixed bug 163, problem with assembling polygons with *bridges*
+ *
  * Revision 1.4  2002/02/22 22:23:38  warmerda
  * added tolerances when assembling polygons
  *
@@ -301,6 +304,14 @@ int OGRAVCBinLayer::FormPolygonGeometry( OGRFeature *poFeature,
         OGRFeature *poArc;
 
         if( psPAL->pasArcs[iArc].nArcId == 0 )
+            continue;
+
+        // If the other side of the line is the same polygon then this
+        // arc is a "bridge" arc and can be discarded.  If we don't discard
+        // it, then we should double it as bridge arcs seem to only appear
+        // once.  But by discarding it we ensure a multi-ring polygon will be
+        // properly formed. 
+        if( psPAL->pasArcs[iArc].nAdjPoly == psPAL->nPolyId )
             continue;
 
         poArc = poArcLayer->GetFeature( ABS(psPAL->pasArcs[iArc].nArcId) );
