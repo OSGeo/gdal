@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_fax3.c,v 1.11 2000/10/12 14:22:38 warmerda Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_fax3.c,v 1.13 2001/01/23 14:45:58 warmerda Exp $ */
 
 /*
  * Copyright (c) 1990-1997 Sam Leffler
@@ -55,6 +55,7 @@
  * derived from this ``base state'' block.
  */
 typedef struct {
+        int     rw_mode;                /* O_RDONLY for decode, else encode */
 	int	mode;			/* operating mode */
 	uint32	rowbytes;		/* bytes in a decoded scanline */
 	uint32	rowpixels;		/* pixels in a scanline */
@@ -495,7 +496,7 @@ Fax3SetupState(TIFF* tif)
 	    (sp->groupoptions & GROUP3OPT_2DENCODING) ||
 	    td->td_compression == COMPRESSION_CCITTFAX4
 	);
-	if (tif->tif_mode == O_RDONLY) {	/* 1d/2d decoding */
+	if (sp->rw_mode == O_RDONLY) {	/* 1d/2d decoding */
 		Fax3DecodeState* dsp = DecoderState(tif);
 		uint32 nruns = needsRefLine ?
 		     2*TIFFroundup(rowpixels,32) : rowpixels;
@@ -1077,7 +1078,7 @@ static void
 Fax3Cleanup(TIFF* tif)
 {
 	if (tif->tif_data) {
-		if (tif->tif_mode == O_RDONLY) {
+		if (Fax3State(tif)->rw_mode == O_RDONLY) {
 			Fax3DecodeState* sp = DecoderState(tif);
 			if (sp->runs)
 				_TIFFfree(sp->runs);
@@ -1144,7 +1145,7 @@ Fax3VSetField(TIFF* tif, ttag_t tag, va_list ap)
 		sp->mode = va_arg(ap, int);
 		return (1);			/* NB: pseudo tag */
 	case TIFFTAG_FAXFILLFUNC:
-		if (tif->tif_mode == O_RDONLY)
+		if (sp->rw_mode == O_RDONLY)
 			DecoderState(tif)->fill = va_arg(ap, TIFFFaxFillFunc);
 		return (1);			/* NB: pseudo tag */
 	case TIFFTAG_GROUP3OPTIONS:
@@ -1187,7 +1188,7 @@ Fax3VGetField(TIFF* tif, ttag_t tag, va_list ap)
 		*va_arg(ap, int*) = sp->mode;
 		break;
 	case TIFFTAG_FAXFILLFUNC:
-		if (tif->tif_mode == O_RDONLY)
+		if (sp->rw_mode == O_RDONLY)
 			*va_arg(ap, TIFFFaxFillFunc*) = DecoderState(tif)->fill;
 		break;
 	case TIFFTAG_GROUP3OPTIONS:
@@ -1288,13 +1289,15 @@ InitCCITTFax3(TIFF* tif)
 	else
 		tif->tif_data = (tidata_t)
                     _TIFFmalloc(sizeof (Fax3EncodeState));
-        
+
 	if (tif->tif_data == NULL) {
 		TIFFError("TIFFInitCCITTFax3",
 		    "%s: No space for state block", tif->tif_name);
 		return (0);
 	}
+
 	sp = Fax3State(tif);
+        sp->rw_mode = tif->tif_mode;
 
 	/*
 	 * Merge codec-specific tag information and
@@ -1310,7 +1313,7 @@ InitCCITTFax3(TIFF* tif)
 	sp->recvparams = 0;
 	sp->subaddress = NULL;
 
-	if (tif->tif_mode == O_RDONLY) {
+	if (sp->rw_mode == O_RDONLY) {
 		tif->tif_flags |= TIFF_NOBITREV;/* decoder does bit reversal */
 		DecoderState(tif)->runs = NULL;
 		TIFFSetField(tif, TIFFTAG_FAXFILLFUNC, _TIFFFax3fillruns);
@@ -1379,6 +1382,8 @@ Fax4Decode(TIFF* tif, tidata_t buf, tsize_t occ, tsample_t s)
 		fflush(stdout);
 #endif
 		EXPAND2D(EOFG4);
+                if (EOLcnt)
+                    goto EOFG4;
 		(*sp->fill)(buf, thisrun, pa, lastx);
 		SETVAL(0);		/* imaginary change for reference */
 		SWAP(uint32*, sp->curruns, sp->refruns);
@@ -1388,6 +1393,13 @@ Fax4Decode(TIFF* tif, tidata_t buf, tsize_t occ, tsample_t s)
 			tif->tif_row++;
 		continue;
 	EOFG4:
+                NeedBits16( 13, BADG4 );
+        BADG4:
+#ifdef FAX3_DEBUG
+                if( GetBits(13) != 0x1001 )
+                    fputs( "Bad RTC\n", stderr );
+#endif                
+                ClrBits( 13 );
 		(*sp->fill)(buf, thisrun, pa, lastx);
 		UNCACHE_STATE(tif, sp);
 		return (-1);
