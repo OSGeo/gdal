@@ -25,6 +25,9 @@
  * The GDALDriverManager class from gdal_priv.h.
  * 
  * $Log$
+ * Revision 1.17  2003/12/28 17:27:36  warmerda
+ * added call to CPLFreeConfig()
+ *
  * Revision 1.16  2003/05/20 19:10:36  warmerda
  * added GDAL_DATA and CPLGetConfigOptions support
  *
@@ -193,6 +196,7 @@ GDALDriverManager::~GDALDriverManager()
 /*      of those that actually belong to us.                            */
 /* -------------------------------------------------------------------- */
     CPLFinderClean();
+    CPLFreeConfig();
 
 /* -------------------------------------------------------------------- */
 /*      Ensure the global driver manager pointer is NULLed out.         */
