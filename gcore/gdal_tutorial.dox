@@ -534,7 +534,7 @@ In C++:
     CPLFree( pszSRS_WKT );
 
     poBand = poDstDS->GetRasterBand(1);
-    poBand->RasterIO( GA_Write, 0, 0, 512, 512, 
+    poBand->RasterIO( GF_Write, 0, 0, 512, 512, 
                       abyRaster, 512, 512, GDT_Byte, 0, 0 );    
 
     delete poDstDS;
@@ -554,13 +554,13 @@ In C:
     OSRSetUTM( hSRS, 11, TRUE );
     OSRSetWellKnownGeogCS( hSRS, "NAD27" );			
     OSRExportToWkt( hSRS, &pszSRS_WKT );
-    OSRDestroy( hSRS );
+    OSRDestroySpatialReference( hSRS );
 
     GDALSetProjection( hDstDS, pszSRS_WKT );
     CPLFree( pszSRS_WKT );
 
     hBand = GDALGetRasterBand( hDstDS, 1 );
-    GDALRasterIO( hBand, GA_Write, 0, 0, 512, 512, 
+    GDALRasterIO( hBand, GF_Write, 0, 0, 512, 512, 
                   abyRaster, 512, 512, GDT_Byte, 0, 0 );    
 
     GDALClose( hDstDS );
