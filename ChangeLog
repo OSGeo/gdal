@@ -1,3 +1,13 @@
+2001-06-20  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* core/gdal_priv.h,gdaldefaultoverviews.cpp: GDALDefaultOverviews now
+	allows setting exact name of .ovr file, and remembers name to use
+	when building overviews.
+
+	* frmts/raw/hkvdataset.cpp: reimplement overviews in TIFF file.
+
+	* ogr/ogrsf_frmts/pg: Implement PostGIS support.
+
 2001-06-01  Frank Warmerdam  <warmerdam@pobox.com>
 
 	* frmts/jpg/jpgdataset.cpp: altered magic number testing to work
