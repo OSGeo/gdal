@@ -31,6 +31,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.4  2004/04/01 18:36:01  warmerda
+ * fixed rounding issue in testing quarter degree boundaries
+ *
  * Revision 1.3  2004/03/28 21:23:06  warmerda
  * minor nodata item
  *
@@ -650,8 +653,8 @@ static int USGSDEMProductSetup_CDED50K( USGSDEMWriteInfo *psWInfo )
         dfULY = CPLDMSToDec( papszTokens[1] );
         CSLDestroy( papszTokens );
 
-        if( ABS(dfULX*4-floor(dfULX*4)) > 0.0001 
-            || ABS(dfULY*4-floor(dfULY*4)) > 0.0001 )
+        if( ABS(dfULX*4-floor(dfULX*4+0.00005)) > 0.0001 
+            || ABS(dfULY*4-floor(dfULY*4+0.00005)) > 0.0001 )
         {
             CPLError( CE_Failure, CPLE_AppDefined, 
                       "TOPLEFT must be on a 15\" boundary for CDED50K, but is not." );
@@ -663,8 +666,8 @@ static int USGSDEMProductSetup_CDED50K( USGSDEMWriteInfo *psWInfo )
 /*      Set resolution and size information.                            */
 /* -------------------------------------------------------------------- */
 
-    dfULX = floor( dfULX * 4 + 0.001 ) / 4.0;
-    dfULY = floor( dfULY * 4 + 0.001 ) / 4.0;
+    dfULX = floor( dfULX * 4 + 0.00005 ) / 4.0;
+    dfULY = floor( dfULY * 4 + 0.00005 ) / 4.0;
 
     psWInfo->nXSize = 1201;
     psWInfo->nYSize = 1201;
@@ -870,7 +873,7 @@ USGSDEMCreateCopy( const char *pszFilename, GDALDataset *poSrcDS,
     const char *pszProduct = CSLFetchNameValue( sWInfo.papszOptions, 
                                                 "PRODUCT" );
 
-    if( pszProduct == NULL )
+    if( pszProduct == NULL || EQUAL(pszProduct,"DEFAULT") )
         /* default */;
     else if( EQUAL(pszProduct,"CDED50K") )
     {
