@@ -28,6 +28,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2000/07/07 15:29:09  warmerda
+ * Removed the restriction that all lines must have two or more tokens.
+ * In Spot GeoSPOT files there are comment lines (#...) with just one
+ * field on them.
+ *
  * Revision 1.4  2000/06/20 17:35:58  warmerda
  * added overview support
  *
@@ -188,7 +193,7 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
         if( CSLCount( papszTokens ) < 2 )
         {
             CSLDestroy( papszTokens );
-            break;
+            continue;
         }
         
         if( EQUAL(papszTokens[0],"ncols") )
