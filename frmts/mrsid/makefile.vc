@@ -12,5 +12,13 @@ default:	$(OBJ)
 
 clean:
 	-del *.obj
+	-del *.dll
+
+
+plugin:	gdal_MrSID.dll
+
+gdal_MrSID.dll:	$(OBJ)
+	link /dll /out:gdal_MrSID.dll $(OBJ) \
+		$(GDAL_ROOT)/gdal_i.lib $(MRSID_LIB) $(GEOTIFF_LIB)
 
 
