@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.2  2001/01/10 05:00:32  warmerda
+ * Only check against GIF87/GIF89, not GIF87a/GIF89a.
+ *
  * Revision 1.1  2001/01/10 04:40:15  warmerda
  * New
  *
@@ -215,8 +218,8 @@ GDALDataset *GIFDataset::Open( GDALOpenInfo * poOpenInfo )
     if( poOpenInfo->nHeaderBytes < 8 )
         return NULL;
 
-    if( !EQUALN((const char *) poOpenInfo->pabyHeader, "GIF87a",6)
-        && !EQUALN((const char *) poOpenInfo->pabyHeader, "GIF89a",6) )
+    if( !EQUALN((const char *) poOpenInfo->pabyHeader, "GIF87a",5)
+        && !EQUALN((const char *) poOpenInfo->pabyHeader, "GIF89a",5) )
         return NULL;
 
     if( poOpenInfo->eAccess == GA_Update )
@@ -287,7 +290,6 @@ GDALDataset *GIFDataset::Open( GDALOpenInfo * poOpenInfo )
     return poDS;
 }
 
-#ifdef notdef
 /************************************************************************/
 /*                           GIFCreateCopy()                            */
 /************************************************************************/
@@ -418,7 +420,6 @@ GIFCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
     return (GDALDataset *) GDALOpen( pszFilename, GA_ReadOnly );
 }
-#endif
 
 /************************************************************************/
 /*                          GDALRegister_GIF()                        */
@@ -438,9 +439,7 @@ void GDALRegister_GIF()
         poDriver->pszHelpTopic = "frmt_various.html#GIF";
         
         poDriver->pfnOpen = GIFDataset::Open;
-#ifdef notdef
         poDriver->pfnCreateCopy = GIFCreateCopy;
-#endif
 
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
