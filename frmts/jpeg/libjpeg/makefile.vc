@@ -1,3 +1,6 @@
+GDAL_ROOT	=	..\..\..
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
 
 OBJ	=	\
 	jcapimin.obj jcapistd.obj jccoefct.obj jccolor.obj jcdctmgr.obj jchuff.obj \
