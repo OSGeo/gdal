@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.5  1999/10/29 17:30:23  warmerda
+ * read OGC rather than PROJ.4 definition
+ *
  * Revision 1.4  1999/10/27 20:21:45  warmerda
  * added projection/transform support
  *
@@ -253,7 +256,7 @@ GDALDataset *GXFDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*	Establish the projection.					*/
 /* -------------------------------------------------------------------- */
-    poDS->pszProjection = GXFGetMapProjectionAsPROJ4( hGXF );
+    poDS->pszProjection = GXFGetMapProjectionAsOGCWKT( hGXF );
 
 /* -------------------------------------------------------------------- */
 /*      Capture some information from the file that is of interest.     */
