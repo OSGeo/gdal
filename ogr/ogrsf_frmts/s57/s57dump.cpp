@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2000/06/16 18:10:05  warmerda
+ * expanded tabs
+ *
  * Revision 1.7  1999/11/26 15:17:01  warmerda
  * fixed lname to lnam
  *
@@ -62,7 +65,7 @@
 int main( int nArgc, char ** papszArgv )
 
 {
-    char	**papszOptions = NULL;
+    char        **papszOptions = NULL;
     
     if( nArgc < 2 )
     {

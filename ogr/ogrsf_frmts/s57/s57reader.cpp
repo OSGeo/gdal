@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2000/06/16 18:10:05  warmerda
+ * expanded tabs
+ *
  * Revision 1.17  2000/06/16 18:00:58  warmerda
  * Fixed AssembleArea() to support multiple FSPT fields
  *
@@ -229,10 +232,10 @@ OGRFeature *S57Reader::NextPendingMultiPoint()
 {
     CPLAssert( poMultiPoint != NULL );
     CPLAssert( poMultiPoint->GetGeometryRef()->getGeometryType()
-               						== wkbMultiPoint );
+                                                        == wkbMultiPoint );
 
     OGRFeatureDefn *poDefn = poMultiPoint->GetDefnRef();
-    OGRFeature	*poPoint = new OGRFeature( poDefn );
+    OGRFeature  *poPoint = new OGRFeature( poDefn );
     OGRMultiPoint *poMPGeom = (OGRMultiPoint *) poMultiPoint->GetGeometryRef();
 
     poPoint->SetFID( poMultiPoint->GetFID() );
@@ -423,7 +426,7 @@ OGRFeature * S57Reader::ReadNextFeature( OGRFeatureDefn * poTarget )
             
             if( bSplitMultiPoint && poFeature->GetGeometryRef() != NULL
                 && poFeature->GetGeometryRef()->getGeometryType()
-                					== wkbMultiPoint)
+                                                        == wkbMultiPoint)
             {
                 poMultiPoint = poFeature;
                 iPointOffset = 0;
@@ -602,7 +605,7 @@ void S57Reader::GenerateLNAMAndRefs( DDFRecord * poRecord,
                                      OGRFeature * poFeature )
 
 {
-    char	szLNAM[32];
+    char        szLNAM[32];
         
 /* -------------------------------------------------------------------- */
 /*      Apply the LNAM to the object.                                   */
@@ -616,7 +619,7 @@ void S57Reader::GenerateLNAMAndRefs( DDFRecord * poRecord,
 /* -------------------------------------------------------------------- */
 /*      Do we have references to other features.                        */
 /* -------------------------------------------------------------------- */
-    DDFField	*poFFPT;
+    DDFField    *poFFPT;
 
     poFFPT = poRecord->FindField( "FFPT" );
 
@@ -626,9 +629,9 @@ void S57Reader::GenerateLNAMAndRefs( DDFRecord * poRecord,
 /* -------------------------------------------------------------------- */
 /*      Apply references.                                               */
 /* -------------------------------------------------------------------- */
-    int		nRefCount = poFFPT->GetRepeatCount();
+    int         nRefCount = poFFPT->GetRepeatCount();
     DDFSubfieldDefn *poLNAM;
-    char	**papszRefs = NULL;
+    char        **papszRefs = NULL;
 
     poLNAM = poFFPT->GetFieldDefn()->FindSubfieldDefn( "LNAM" );
     if( poLNAM == NULL )
@@ -767,11 +770,11 @@ void S57Reader::AssembleSoundingGeometry( DDFRecord * poFRecord,
 /* -------------------------------------------------------------------- */
 /*      Extract vertices.                                               */
 /* -------------------------------------------------------------------- */
-    OGRMultiPoint	*poMP = new OGRMultiPoint();
-    DDFField		*poField;
-    int			nPointCount, i, nBytesLeft;
+    OGRMultiPoint       *poMP = new OGRMultiPoint();
+    DDFField            *poField;
+    int                 nPointCount, i, nBytesLeft;
     DDFSubfieldDefn    *poXCOO, *poYCOO, *poVE3D;
-    const char	       *pachData;
+    const char         *pachData;
 
     poField = poSRecord->FindField( "SG2D" );
     if( poField == NULL )
@@ -790,8 +793,8 @@ void S57Reader::AssembleSoundingGeometry( DDFRecord * poFRecord,
 
     for( i = 0; i < nPointCount; i++ )
     {
-        double		dfX, dfY, dfZ = 0.0;
-        int		nBytesConsumed;
+        double          dfX, dfY, dfZ = 0.0;
+        int             nBytesConsumed;
 
         dfY = poYCOO->ExtractIntData( pachData, nBytesLeft,
                                       &nBytesConsumed ) / (double) nCOMF;

@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2000/06/16 18:10:05  warmerda
+ * expanded tabs
+ *
  * Revision 1.9  1999/11/26 16:17:58  warmerda
  * added DSNM
  *
@@ -206,7 +209,7 @@ class S57Reader
     OGRFeatureDefn      **papoFDefnList;
 
     char                *pszModuleName;
-    char		*pszDSNM;
+    char                *pszDSNM;
     
     DDFModule           *poModule;
 
@@ -222,20 +225,20 @@ class S57Reader
     int                 nNextFEIndex;
     DDFRecordIndex      oFE_Index;
 
-    char		**papszOptions;
-    int			bGenerateLNAM;
+    char                **papszOptions;
+    int                 bGenerateLNAM;
     
-    int			bSplitMultiPoint;
-    int			iPointOffset;
-    OGRFeature		*poMultiPoint;
+    int                 bSplitMultiPoint;
+    int                 iPointOffset;
+    OGRFeature          *poMultiPoint;
 
-    void		ClearPendingMultiPoint();
-    OGRFeature	       *NextPendingMultiPoint();
+    void                ClearPendingMultiPoint();
+    OGRFeature         *NextPendingMultiPoint();
 
     OGRFeature         *AssembleFeature( DDFRecord  *, OGRFeatureDefn * );
 
     void                ApplyObjectClassAttributes( DDFRecord *, OGRFeature *);
-    void		GenerateLNAMAndRefs( DDFRecord *, OGRFeature * );
+    void                GenerateLNAMAndRefs( DDFRecord *, OGRFeature * );
     
     void                AssembleSoundingGeometry( DDFRecord *, OGRFeature * );
     void                AssemblePointGeometry( DDFRecord *, OGRFeature * );
@@ -255,12 +258,12 @@ class S57Reader
                        ~S57Reader();
 
     void                SetClassBased( S57ClassRegistrar * );
-    void		SetOptions( char ** );
+    void                SetOptions( char ** );
 
     int                 Open( int bTestOpen );
     void                Close();
     DDFModule           *GetModule() { return poModule; }
-    const char	        *GetDSNM() { return pszDSNM; }
+    const char          *GetDSNM() { return pszDSNM; }
 
     void                Ingest();
 

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2000/06/16 18:10:05  warmerda
+ * expanded tabs
+ *
  * Revision 1.7  2000/06/07 20:50:58  warmerda
  * make CSV location configurable with env variable
  *
@@ -170,7 +173,7 @@ int OGRS57DataSource::Open( const char * pszFilename, int bTestOpen )
 /*      instantiate a whole series of modules.                          */
 /* -------------------------------------------------------------------- */
     S57Reader   *poModule;
-    char	*papszReaderOptions[] = { "LNAM_REFS=ON", NULL };
+    char        *papszReaderOptions[] = { "LNAM_REFS=ON", NULL };
 
     poModule = new S57Reader( pszFilename );
     if( !poModule->Open( bTestOpen ) )
