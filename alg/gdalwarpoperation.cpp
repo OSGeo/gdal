@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2003/02/21 15:41:19  warmerda
+ * working minimally
+ *
  * Revision 1.2  2003/02/20 21:53:06  warmerda
  * partial implementation
  *
@@ -123,6 +126,9 @@ GDALWarpOperation::GDALWarpOperation()
 
 {
     psOptions = NULL;
+
+    dfProgressBase = 0.0;
+    dfProgressScale = 1.0;
 }
 
 /************************************************************************/
@@ -230,7 +236,7 @@ int GDALWarpOperation::ValidateOptions()
     {
         if( psOptions->panSrcBands[iBand] < 1 
             || psOptions->panSrcBands[iBand] 
-            >= GDALGetRasterCount( psOptions->hSrcDS ) )
+            > GDALGetRasterCount( psOptions->hSrcDS ) )
         {
             CPLError( CE_Failure, CPLE_IllegalArg,
                       "panSrcBands[%d] = %d ... out of range for dataset.",
@@ -239,7 +245,7 @@ int GDALWarpOperation::ValidateOptions()
         }
         if( psOptions->panDstBands[iBand] < 1 
             || psOptions->panDstBands[iBand]
-            >= GDALGetRasterCount( psOptions->hDstDS ) )
+            > GDALGetRasterCount( psOptions->hDstDS ) )
         {
             CPLError( CE_Failure, CPLE_IllegalArg,
                       "panDstBands[%d] = %d ... out of range for dataset.",
@@ -469,6 +475,11 @@ CPLErr GDALWarpOperation::ChunkAndWarpImage(
     if( dfTotalMemoryUse > psOptions->dfWarpMemoryLimit 
         && (nDstXSize > 2 || nDstYSize > 2) )
     {
+        double dfSaveBase = dfProgressBase;
+        double dfSaveScale = dfProgressScale;
+
+        dfProgressScale *= 0.5;
+
         if( nDstXSize > nDstYSize )
         {
             int nChunk1 = nDstXSize / 2;
@@ -476,13 +487,13 @@ CPLErr GDALWarpOperation::ChunkAndWarpImage(
 
             eErr = ChunkAndWarpImage( nDstXOff, nDstYOff, 
                                       nChunk1, nDstYSize );
-            if( eErr != CE_None )
-                return eErr;
 
-            eErr = ChunkAndWarpImage( nDstXOff+nChunk1, nDstYOff, 
-                                      nChunk2, nDstYSize );
-            if( eErr != CE_None )
-                return eErr;
+            if( eErr == CE_None )
+            {
+                dfProgressBase += dfProgressScale;
+                eErr = ChunkAndWarpImage( nDstXOff+nChunk1, nDstYOff, 
+                                          nChunk2, nDstYSize );
+            }
         }
         else
         {
@@ -491,16 +502,19 @@ CPLErr GDALWarpOperation::ChunkAndWarpImage(
 
             eErr = ChunkAndWarpImage( nDstXOff, nDstYOff, 
                                       nDstXSize, nChunk1 );
-            if( eErr != CE_None )
-                return eErr;
 
-            eErr = ChunkAndWarpImage( nDstXOff, nDstYOff+nChunk1, 
-                                      nDstXSize, nChunk2 );
-            if( eErr != CE_None )
-                return eErr;
+            if( eErr == CE_None )
+            {
+                dfProgressBase += dfProgressScale;
+                eErr = ChunkAndWarpImage( nDstXOff, nDstYOff+nChunk1, 
+                                          nDstXSize, nChunk2 );
+            }
         }
 
-        return CE_None;
+        dfProgressBase = dfSaveBase;
+        dfProgressScale = dfSaveScale;
+
+        return eErr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -720,7 +734,9 @@ CPLErr GDALWarpOperation::WarpRegionToBuffer(
     int nSrcXOff, int nSrcYOff, int nSrcXSize, int nSrcYSize )
 
 {
-    CPLErr eErr;
+    CPLErr eErr = CE_None;
+    int    i;
+    int    nWordSize = GDALGetDataTypeSize(psOptions->eWorkingDataType)/8;
 
 /* -------------------------------------------------------------------- */
 /*      If not given a corresponding source window compute one now.     */
@@ -735,7 +751,102 @@ CPLErr GDALWarpOperation::WarpRegionToBuffer(
             return eErr;
     }
 
-    return CE_None;
+/* -------------------------------------------------------------------- */
+/*      Prepare a WarpKernel object to match this operation.            */
+/* -------------------------------------------------------------------- */
+    GDALWarpKernel   oWK;
+
+    oWK.eResample = psOptions->eResampleAlg;
+    oWK.nBands = psOptions->nBandCount;
+    oWK.eWorkingDataType = psOptions->eWorkingDataType;
+
+    oWK.pfnTransformer = psOptions->pfnTransformer;
+    oWK.pTransformerArg = psOptions->pTransformerArg;
+    
+    oWK.pfnProgress = psOptions->pfnProgress;
+    oWK.pProgress = psOptions->pProgressArg;
+    oWK.dfProgressBase = dfProgressBase;
+    oWK.dfProgressScale = dfProgressScale;
+
+/* -------------------------------------------------------------------- */
+/*      Setup the source buffer.                                        */
+/*                                                                      */
+/*      Eventually we may need to take advantage of pixel               */
+/*      interleaved reading here.                                       */
+/* -------------------------------------------------------------------- */
+    oWK.nSrcXOff = nSrcXOff;
+    oWK.nSrcYOff = nSrcYOff;
+    oWK.nSrcXSize = nSrcXSize;
+    oWK.nSrcYSize = nSrcYSize;
+
+    oWK.papabySrcImage = (GByte **) 
+        CPLCalloc(sizeof(GByte*),psOptions->nBandCount);
+
+    for( i = 0; i < psOptions->nBandCount && eErr == CE_None; i++ )
+    {
+        GDALRasterBandH hBand = 
+            GDALGetRasterBand( psOptions->hSrcDS, psOptions->panSrcBands[i] );
+
+        oWK.papabySrcImage[i] = (GByte *) 
+            VSIMalloc( nWordSize * nSrcXSize * nSrcYSize );
+
+        if( oWK.papabySrcImage[i] == NULL )
+        {
+            CPLError( CE_Failure, CPLE_OutOfMemory, 
+                      "Failed to allocate %d byte source buffer.",
+                      nWordSize * nSrcXSize * nSrcYSize );
+            eErr = CE_Failure;
+        }
+
+        if( eErr == CE_None )
+            eErr = GDALRasterIO( hBand, GF_Read, 
+                                 nSrcXOff, nSrcYOff, nSrcXSize, nSrcYSize, 
+                                 oWK.papabySrcImage[i], nSrcXSize, nSrcYSize,
+                                 psOptions->eWorkingDataType, 0, 0 );
+    }
+    
+/* -------------------------------------------------------------------- */
+/*      Initialize destination buffer.                                  */
+/* -------------------------------------------------------------------- */
+    oWK.nDstXOff = nDstXOff;
+    oWK.nDstYOff = nDstYOff;
+    oWK.nDstXSize = nDstXSize;
+    oWK.nDstYSize = nDstYSize;
+
+    oWK.papabyDstImage = (GByte **) 
+        CPLCalloc(sizeof(GByte*),psOptions->nBandCount);
+
+    for( i = 0; i < psOptions->nBandCount && eErr == CE_None; i++ )
+    {
+        oWK.papabyDstImage[i] = ((GByte *) pDataBuf)
+            + i * nDstXSize * nDstYSize * nWordSize;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Eventually we need handling for a whole bunch of the            */
+/*      validity and density masks here.                                */
+/* -------------------------------------------------------------------- */
+    /* TODO */
+    
+/* -------------------------------------------------------------------- */
+/*      Perform the warp.                                               */
+/* -------------------------------------------------------------------- */
+    if( eErr == CE_None )
+        eErr = oWK.PerformWarp();
+
+/* -------------------------------------------------------------------- */
+/*      Cleanup.                                                        */
+/* -------------------------------------------------------------------- */
+    for( i = 0; i < psOptions->nBandCount; i++ )
+    {
+        if( oWK.papabySrcImage[i] != NULL )
+            VSIFree( oWK.papabySrcImage[i] );
+    }
+
+    CPLFree( oWK.papabySrcImage );
+    CPLFree( oWK.papabyDstImage );
+    
+    return eErr;
 }
 
 /************************************************************************/
