@@ -29,6 +29,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.38  2005/01/24 17:09:45  fwarmerdam
+ * added support for "NRL(USGS) mapProjectionSystem" datasets (geotransform)
+ *
  * Revision 1.37  2004/11/26 19:39:18  fwarmerdam
  * avoid initialization warning from purify
  *
@@ -138,7 +141,7 @@ class HDF4ImageDataset : public HDF4Dataset
 
     GDALColorTable *poColorTable;
 
-    int         bHasGeoTransfom;
+    int         bHasGeoTransform;
     double      adfGeoTransform[6];
     char        *pszProjection;
     char        *pszGCPProjection;
@@ -149,6 +152,7 @@ class HDF4ImageDataset : public HDF4Dataset
     void                ToUTM( OGRSpatialReference *, double *, double * );
     char**              GetSwatAttrs( int32 hSW, char **papszMetadata );
     char**              GetGridAttrs( int32 hGD, char **papszMetadata );
+    void                CaptureNRLGeoTransform(void);
 
   public:
                 HDF4ImageDataset();
@@ -548,6 +552,7 @@ HDF4ImageDataset::HDF4ImageDataset()
     hSD = 0;
     hGR = 0;
     iGR = 0;
+    iBandDim = -1;
     iDatasetType = HDF4_UNKNOWN;
     pszSubdatasetName = NULL;
     pszFieldName = NULL;
@@ -555,7 +560,7 @@ HDF4ImageDataset::HDF4ImageDataset()
     poColorTable = NULL;
     pszProjection = CPLStrdup( "" );
     pszGCPProjection = CPLStrdup( "" );
-    bHasGeoTransfom = FALSE;
+    bHasGeoTransform = FALSE;
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
     adfGeoTransform[2] = 0.0;
@@ -618,7 +623,7 @@ CPLErr HDF4ImageDataset::GetGeoTransform( double * padfTransform )
 {
     memcpy( padfTransform, adfGeoTransform, sizeof(double) * 6 );
 
-    if ( !bHasGeoTransfom )
+    if ( !bHasGeoTransform )
         return CE_Failure;
 
     return CE_None;
@@ -630,7 +635,7 @@ CPLErr HDF4ImageDataset::GetGeoTransform( double * padfTransform )
 
 CPLErr HDF4ImageDataset::SetGeoTransform( double * padfTransform )
 {
-    bHasGeoTransfom = TRUE;
+    bHasGeoTransform = TRUE;
     memcpy( adfGeoTransform, padfTransform, sizeof(double) * 6 );
 
     return CE_None;
@@ -829,6 +834,109 @@ void HDF4ImageDataset::ReadCoordinates( const char *pszString,
     *pdfX = atof(papszStrList[0]);
     *pdfY = atof(papszStrList[1]);
     CSLDestroy( papszStrList );
+}
+
+/************************************************************************/
+/*                       CaptureNRLGeoTransform()                       */
+/*                                                                      */
+/*      Capture geotransform and coordinate system from NRL (Navel      */
+/*      Research Laboratory, Stennis Space Center) metadata.            */
+/************************************************************************/
+
+/* Example metadata:
+Metadata:
+  createTime=Fri Oct  1 18:00:07 2004
+  createSoftware=APS v2.8.4
+  createPlatform=i686-pc-linux-gnu
+  createAgency=Naval Research Laboratory, Stennis Space Center
+  sensor=MODIS
+  sensorPlatform=TERRA-AM
+  sensorAgency=NASA
+  sensorType=whiskbroom
+  sensorSpectrum=Visible/Thermal
+  sensorNumberOfBands=36
+  sensorBandUnits=nano meters
+  sensorBands=645, 858.5, 469, 555, 1240, 1640, 2130, 412.5, 443, 488, 531, 551,
+ 667, 678, 748, 869.5, 905, 936, 940, 3750, 3959, 3959, 4050, 4465.5, 4515.5, 13
+75, 6715, 7325, 8550, 9730, 11130, 12020, 13335, 13635, 13935, 14235
+  sensorBandWidths=50, 35, 20, 20, 20, 24, 50, 15, 10, 10, 10, 10, 10, 10, 10, 1
+5, 30, 10, 50, 90, 60, 60, 60, 65, 67, 30, 360, 300, 300, 300, 500, 500, 300, 30
+0, 300, 300
+  sensorNominalAltitudeInKM=705
+  sensorScanWidthInKM=2330
+  sensorResolutionInKM=1
+  sensorPlatformType=Polar-orbiting Satellite
+  timeStartYear=2004
+  timeStartDay=275
+  timeStartTime=56400000
+  timeStart=Fri Oct  1 15:40:00 2004
+  timeDayNight=Day
+  timeEndYear=2004
+  timeEndDay=275
+  timeEndTime=56700000
+  timeEnd=Fri Oct  1 15:45:00 2004
+  inputMasks=HIGLINT,CLDICE,LAND,ATMFAIL
+  inputMasksInt=523
+  processedVersion=1.2
+  file=MODAM2004275.L3_Mosaic_NOAA_GMX
+  fileTitle=NRL Level-3 Mosaic
+  fileVersion=3.0
+  fileClassification=UNCLASSIFIED
+  fileStatus=EXPERIMENTAL
+  navType=mapped
+  mapProjectionSystem=NRL(USGS)
+  mapProjection=Gomex
+  mapUpperLeft=31, -99
+  mapUpperRight=31, -79
+  mapLowerLeft=14.9844128048645, -99
+  mapLowerRight=14.9844128048645, -79
+  inputFiles=MODAM2004275154000.L3_NOAA_GMX
+  ...
+ */
+
+void HDF4ImageDataset::CaptureNRLGeoTransform()
+
+{
+    double adfXY[8];
+    static char *apszItems[] = {
+        "mapUpperLeft", "mapUpperRight", "mapLowerLeft", "mapLowerRight" };
+    int iCorner;
+
+    for( iCorner = 0; iCorner < 4; iCorner++ )
+    {
+        const char *pszCornerLoc = 
+            CSLFetchNameValue( papszGlobalMetadata, apszItems[iCorner] );
+
+        if( pszCornerLoc == NULL )
+            return;
+
+        char **papszTokens = CSLTokenizeStringComplex( pszCornerLoc, ",",
+                                                       FALSE, FALSE );
+        if( CSLCount( papszTokens ) != 2 )
+            return;
+
+        adfXY[iCorner*2+0] = atof(papszTokens[1]);
+        adfXY[iCorner*2+1] = atof(papszTokens[0]);
+
+        CSLDestroy( papszTokens );
+    }
+
+    if( adfXY[0*2+0] == adfXY[2*2+0] && adfXY[0*2+1] == adfXY[1*2+1] )
+    {
+        bHasGeoTransform = TRUE;
+        adfGeoTransform[0] = adfXY[0*2+0];
+        adfGeoTransform[1] = (adfXY[1*2+0] - adfXY[0*2+0]) / nRasterXSize;
+        adfGeoTransform[2] = 0.0;
+        adfGeoTransform[3] = adfXY[0*2+1];
+        adfGeoTransform[4] = 0.0;
+        adfGeoTransform[5] = (adfXY[2*2+1] - adfXY[0*2+1]) / nRasterYSize;
+        
+        OGRSpatialReference oSRS;
+
+        oSRS.SetWellKnownGeogCS( "WGS84" );
+        CPLFree( pszProjection );
+        oSRS.exportToWkt( &pszProjection );
+    }
 }
 
 /************************************************************************/
@@ -1398,7 +1506,7 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
                         }
                         poDS->adfGeoTransform[2] = 0.0;
                         poDS->adfGeoTransform[4] = 0.0;
-                        poDS->bHasGeoTransfom = TRUE;
+                        poDS->bHasGeoTransform = TRUE;
                     }
 
                     // Retrieve NODATA value
@@ -1509,6 +1617,14 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
                 default:
                     break;
             }
+
+            // Special case projection info for NRL generated files. 
+            const char *pszMapProjectionSystem =
+                CSLFetchNameValue(poDS->papszGlobalMetadata, 
+                                  "mapProjectionSystem");
+            if( pszMapProjectionSystem != NULL 
+                && EQUAL(pszMapProjectionSystem,"NRL(USGS)") )
+                poDS->CaptureNRLGeoTransform();
         }
         break;
 
@@ -1633,7 +1749,7 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
                     poDS->adfGeoTransform[i++] = strtod(pszString, &pszString);
                     pszString++;
                 }
-                poDS->bHasGeoTransfom = TRUE;
+                poDS->bHasGeoTransform = TRUE;
             }
             for( i = 1; i <= poDS->nBands; i++ )
             {
@@ -1699,7 +1815,7 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
                 poDS->adfGeoTransform[5] = - poDS->adfGeoTransform[5];
             poDS->adfGeoTransform[2] = 0.0;
             poDS->adfGeoTransform[4] = 0.0;
-            poDS->bHasGeoTransfom = TRUE;
+            poDS->bHasGeoTransform = TRUE;
         }
         break;
 
