@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.30  2003/09/28 14:14:16  dron
+ * Added CPLScanString().
+ *
  * Revision 1.29  2003/09/12 20:49:24  warmerda
  * reimplement CPLFGets() to avoid textmode problems
  *
@@ -487,6 +490,68 @@ const char *CPLReadLine( FILE * fp )
              && pszRLBuffer[nRLBufferSize-2] != 10 );
 
     return( pszRLBuffer );
+}
+
+/************************************************************************/
+/*                            CPLScanString()                           */
+/************************************************************************/
+
+/**
+ * Scan up to a maximum number of characters from a given string,
+ * allocate abuffer for a new string and fill it with scanned characters.
+ *
+ * @param pszString String containing characters to be scanned. It may be
+ * terminated with a null character.
+ *
+ * @param nMaxLength The maximum number of character to read. Less
+ * characters will be read if a null character is encountered.
+ *
+ * @param bTrimSpaces If TRUE, trim ending spaces from the input string.
+ * Character considered as empty using isspace(3) function.
+ *
+ * @param bNormalize If TRUE, replace ':' symbol with the '_'. It is needed if
+ * resulting string will be used in CPL dictionaries.
+ * 
+ * @return Pointer to the resulting string buffer. Caller responsible to free
+ * this buffer with CPLFree().
+ */
+
+char *CPLScanString( char *pszString, int nMaxLength,
+                     int bTrimSpaces, int bNormalize )
+{
+    char    *pszBuffer;
+
+    if ( !pszString )
+        return NULL;
+
+    if ( !nMaxLength )
+        return CPLStrdup( "" );
+
+    pszBuffer = (char *)CPLMalloc( nMaxLength + 1 );
+    if ( !pszBuffer )
+        return NULL;
+
+    strncpy( pszBuffer, pszString,  nMaxLength );
+    pszBuffer[nMaxLength] = '\0';
+
+    if ( bTrimSpaces )
+    {
+        size_t  i = strlen( pszBuffer );
+        while ( i-- > 0 && isspace(pszBuffer[i]) )
+            pszBuffer[i] = '\0';
+    }
+
+    if ( bNormalize )
+    {
+        size_t  i = strlen( pszBuffer );
+        while ( i-- > 0 )
+        {
+            if ( pszBuffer[i] == ':' )
+                pszBuffer[i] = '_';
+        }
+    }
+
+    return pszBuffer;
 }
 
 /************************************************************************/
