@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.32  2005/01/26 20:04:44  fwarmerdam
+ * Fixed more non8bit issues.
+ *
  * Revision 1.31  2005/01/26 18:29:02  fwarmerdam
  * fixed broken non-8bit cases
  *
@@ -339,10 +342,12 @@ CPLErr ECWRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 /*      Can we perform direct loads, or must we load into a working     */
 /*      buffer, and transform?                                          */
 /* -------------------------------------------------------------------- */
+    int      	nRawPixelSize = GDALGetDataTypeSize(poGDS->eRasterDataType) / 8;
+
     bDirect = nPixelSpace == 1 && eBufType == GDT_Byte
 	    && nNewXSize == nBufXSize && nNewYSize == nBufYSize;
     if( !bDirect )
-        pabyWorkBuffer = (GByte *) CPLMalloc(nNewXSize);
+        pabyWorkBuffer = (GByte *) CPLMalloc(nNewXSize * nRawPixelSize);
 
 /* -------------------------------------------------------------------- */
 /*      Establish access at the desired resolution.                     */
@@ -404,7 +409,8 @@ CPLErr ECWRasterBand::IRasterIO( GDALRWFlag eRWFlag,
             {
                 if ( nNewXSize == nBufXSize )
                 {
-                    GDALCopyWords( pabyWorkBuffer, GDT_Byte, 1, 
+                    GDALCopyWords( pabyWorkBuffer, poGDS->eRasterDataType, 
+                                   nRawPixelSize, 
                                    ((GByte *)pData) + iDstLine * nLineSpace, 
                                    eBufType, nPixelSpace, nBufXSize );
                 }
@@ -414,8 +420,9 @@ CPLErr ECWRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 
                     for ( iPixel = 0; iPixel < nBufXSize; iPixel++ )
                     {
-                        GDALCopyWords( pabyWorkBuffer + (int)(iPixel*dfSrcXInc),
-                                       GDT_Byte, 1,
+                        GDALCopyWords( pabyWorkBuffer 
+                                       + nRawPixelSize*((int)(iPixel*dfSrcXInc)),
+                                       poGDS->eRasterDataType, nRawPixelSize,
                                        (GByte *)pData + iDstLineOff
 				       + iPixel * nBufDataSize,
                                        eBufType, nPixelSpace, 1 );
@@ -501,7 +508,7 @@ ECWDataset::~ECWDataset()
     CPLFree( pszProjection );
     if( poFileView != NULL )
     {
-        //delete poFileView;
+        delete poFileView;
     }
 
     if( fpVSIL != NULL )
@@ -729,8 +736,6 @@ CPLErr ECWDataset::LoadNextLine()
     NCSEcwReadStatus  eRStatus;
     eRStatus = poFileView->ReadLineBIL( eNCSRequestDataType, nWinBandCount,
                                         papCurLineBuf );
-//    eRStatus = poFileView->ReadLineBIL( (UINT8 **) papCurLineBuf );
-//
     if( eRStatus != NCSECW_READ_OK )
         return CE_Failure;
 
