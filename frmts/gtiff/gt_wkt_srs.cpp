@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.26  2002/10/08 23:01:07  warmerda
+ * Added code for building/consuming simple memory geotiff files for JPEG2000
+ *
  * Revision 1.25  2002/09/25 13:08:57  warmerda
  * Fixed free of static PCS name as per bugzilla 207.
  *
@@ -116,12 +119,22 @@
 #include "geo_normalize.h"
 #include "geovalues.h"
 #include "ogr_spatialref.h"
+#include "gdal.h"
+#include "xtiffio.h"
+#include "tif_memio.h"
 
 CPL_CVSID("$Id$");
 
 CPL_C_START
 char *  GTIFGetOGISDefn( GTIFDefn * );
 int     GTIFSetFromOGISDefn( GTIF *, const char * );
+
+CPLErr CPL_DLL GTIFMemBufFromWkt( const char *pszWKT, double *padfGeoTransform,
+                                  int nGCPCount, GDAL_GCP *pasGCPList,
+                                  int *pnSize, unsigned char **ppabyBuffer );
+CPLErr CPL_DLL GTIFWktFromMemBuf( int nSize, unsigned char *pabyBuffer, 
+                          char **ppszWKT, double *padfGeoTransform,
+                          int *pnGCPCount, GDAL_GCP **ppasGCPList );
 CPL_C_END
 
 static char *papszDatumEquiv[] =
@@ -1302,4 +1315,251 @@ int GTIFSetFromOGISDefn( GTIF * psGTIF, const char *pszOGCWKT )
     
 
     return TRUE;
+}
+
+/************************************************************************/
+/*                         GTIFWktFromMemBuf()                          */
+/************************************************************************/
+
+CPLErr GTIFWktFromMemBuf( int nSize, unsigned char *pabyBuffer, 
+                          char **ppszWKT, double *padfGeoTransform,
+                          int *pnGCPCount, GDAL_GCP **ppasGCPList )
+
+{
+    MemIOBuf	sIOBuf;
+    TIFF        *hTIFF;
+    GTIF 	*hGTIF;
+    GTIFDefn	sGTIFDefn;
+
+/* -------------------------------------------------------------------- */
+/*      Initialize access to the memory geotiff structure.              */
+/* -------------------------------------------------------------------- */
+    MemIO_InitBuf( &sIOBuf, nSize, pabyBuffer );
+    
+    hTIFF = XTIFFClientOpen( "membuf", "r", (thandle_t) &sIOBuf, 
+                             MemIO_ReadProc, MemIO_WriteProc, MemIO_SeekProc, 
+                             MemIO_CloseProc, MemIO_SizeProc, 
+                             MemIO_MapProc, MemIO_UnmapProc );
+
+    if( hTIFF == NULL )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "TIFF/GeoTIFF structure is corrupt." );
+        return CE_Failure;
+    }
+    
+/* -------------------------------------------------------------------- */
+/*      Get the projection definition.                                  */
+/* -------------------------------------------------------------------- */
+    hGTIF = GTIFNew(hTIFF);
+
+    if( GTIFGetDefn( hGTIF, &sGTIFDefn ) )
+        *ppszWKT = GTIFGetOGISDefn( &sGTIFDefn );
+    else
+        *ppszWKT = NULL;
+    
+    GTIFFree( hGTIF );
+
+/* -------------------------------------------------------------------- */
+/*      Get geotransform or tiepoints.                                  */
+/* -------------------------------------------------------------------- */
+    double	*padfTiePoints, *padfScale, *padfMatrix;
+    int16	nCount;
+
+    padfGeoTransform[0] = 0.0;
+    padfGeoTransform[1] = 1.0;
+    padfGeoTransform[2] = 0.0;
+    padfGeoTransform[3] = 0.0;
+    padfGeoTransform[4] = 0.0;
+    padfGeoTransform[5] = 1.0;
+
+    *pnGCPCount = 0;
+    *ppasGCPList = NULL;
+    
+    if( TIFFGetField(hTIFF,TIFFTAG_GEOPIXELSCALE,&nCount,&padfScale )
+        && nCount >= 2 )
+    {
+        padfGeoTransform[1] = padfScale[0];
+        padfGeoTransform[5] = - ABS(padfScale[1]);
+
+        
+        if( TIFFGetField(hTIFF,TIFFTAG_GEOTIEPOINTS,&nCount,&padfTiePoints )
+            && nCount >= 6 )
+        {
+            padfGeoTransform[0] =
+                padfTiePoints[3] - padfTiePoints[0] * padfGeoTransform[1];
+            padfGeoTransform[3] =
+                padfTiePoints[4] - padfTiePoints[1] * padfGeoTransform[5];
+        }
+    }
+
+    else if( TIFFGetField(hTIFF,TIFFTAG_GEOTIEPOINTS,&nCount,&padfTiePoints )
+            && nCount >= 6 )
+    {
+        *pnGCPCount = nCount / 6;
+        *ppasGCPList = (GDAL_GCP *) CPLCalloc(sizeof(GDAL_GCP),*pnGCPCount);
+        
+        for( int iGCP = 0; iGCP < *pnGCPCount; iGCP++ )
+        {
+            char	szID[32];
+            GDAL_GCP	*psGCP = *ppasGCPList + iGCP;
+
+            sprintf( szID, "%d", iGCP+1 );
+            psGCP->pszId = CPLStrdup( szID );
+            psGCP->pszInfo = "";
+            psGCP->dfGCPPixel = padfTiePoints[iGCP*6+0];
+            psGCP->dfGCPLine = padfTiePoints[iGCP*6+1];
+            psGCP->dfGCPX = padfTiePoints[iGCP*6+3];
+            psGCP->dfGCPY = padfTiePoints[iGCP*6+4];
+            psGCP->dfGCPZ = padfTiePoints[iGCP*6+5];
+        }
+    }
+
+    else if( TIFFGetField(hTIFF,TIFFTAG_GEOTRANSMATRIX,&nCount,&padfMatrix ) 
+             && nCount == 16 )
+    {
+        padfGeoTransform[0] = padfMatrix[3];
+        padfGeoTransform[1] = padfMatrix[0];
+        padfGeoTransform[2] = padfMatrix[1];
+        padfGeoTransform[3] = padfMatrix[7];
+        padfGeoTransform[4] = padfMatrix[4];
+        padfGeoTransform[5] = padfMatrix[5];
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Cleanup.                                                        */
+/* -------------------------------------------------------------------- */
+    XTIFFClose( hTIFF );
+
+    MemIO_DeinitBuf( &sIOBuf );
+
+    if( *ppszWKT == NULL )
+        return CE_Failure;
+    else
+        return CE_None;
+}
+
+/************************************************************************/
+/*                         GTIFMemBufFromWkt()                          */
+/************************************************************************/
+
+CPLErr GTIFMemBufFromWkt( const char *pszWKT, double *padfGeoTransform,
+                          int nGCPCount, GDAL_GCP *pasGCPList,
+                          int *pnSize, unsigned char **ppabyBuffer )
+
+{
+    MemIOBuf	sIOBuf;
+    TIFF        *hTIFF;
+    GTIF 	*hGTIF;
+
+/* -------------------------------------------------------------------- */
+/*      Initialize access to the memory geotiff structure.              */
+/* -------------------------------------------------------------------- */
+    MemIO_InitBuf( &sIOBuf, 0, NULL );
+    
+    hTIFF = XTIFFClientOpen( "membuf", "w", (thandle_t) &sIOBuf, 
+                             MemIO_ReadProc, MemIO_WriteProc, MemIO_SeekProc, 
+                             MemIO_CloseProc, MemIO_SizeProc, 
+                             MemIO_MapProc, MemIO_UnmapProc );
+
+    if( hTIFF == NULL )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "TIFF/GeoTIFF structure is corrupt." );
+        return CE_Failure;
+    }
+    
+/* -------------------------------------------------------------------- */
+/*      Get the projection definition.                                  */
+/* -------------------------------------------------------------------- */
+
+    if( pszWKT != NULL )
+    {
+        hGTIF = GTIFNew(hTIFF);
+        GTIFSetFromOGISDefn( hGTIF, pszWKT );
+        GTIFWriteKeys( hGTIF );
+        GTIFFree( hGTIF );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Set the geotransform, or GCPs.                                  */
+/* -------------------------------------------------------------------- */
+    if( padfGeoTransform[0] != 0.0 || padfGeoTransform[1] != 1.0
+        || padfGeoTransform[2] != 0.0 || padfGeoTransform[3] != 0.0
+        || padfGeoTransform[4] != 0.0 || ABS(padfGeoTransform[5]) != 1.0 )
+    {
+
+        if( padfGeoTransform[2] == 0.0 && padfGeoTransform[4] == 0.0 )
+        {
+            double	adfPixelScale[3], adfTiePoints[6];
+
+            adfPixelScale[0] = padfGeoTransform[1];
+            adfPixelScale[1] = fabs(padfGeoTransform[5]);
+            adfPixelScale[2] = 0.0;
+
+            TIFFSetField( hTIFF, TIFFTAG_GEOPIXELSCALE, 3, adfPixelScale );
+            
+            adfTiePoints[0] = 0.0;
+            adfTiePoints[1] = 0.0;
+            adfTiePoints[2] = 0.0;
+            adfTiePoints[3] = padfGeoTransform[0];
+            adfTiePoints[4] = padfGeoTransform[3];
+            adfTiePoints[5] = 0.0;
+        
+            TIFFSetField( hTIFF, TIFFTAG_GEOTIEPOINTS, 6, adfTiePoints );
+        }
+        else
+        {
+            double	adfMatrix[16];
+
+            memset(adfMatrix,0,sizeof(double) * 16);
+
+            adfMatrix[0] = padfGeoTransform[1];
+            adfMatrix[1] = padfGeoTransform[2];
+            adfMatrix[3] = padfGeoTransform[0];
+            adfMatrix[4] = padfGeoTransform[4];
+            adfMatrix[5] = padfGeoTransform[5];
+            adfMatrix[7] = padfGeoTransform[3];
+            adfMatrix[15] = 1.0;
+
+            TIFFSetField( hTIFF, TIFFTAG_GEOTRANSMATRIX, 16, adfMatrix );
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Otherwise write tiepoints if they are available.                */
+/* -------------------------------------------------------------------- */
+    else if( nGCPCount > 0 )
+    {
+        double	*padfTiePoints;
+
+        padfTiePoints = (double *) CPLMalloc(6*sizeof(double)*nGCPCount);
+
+        for( int iGCP = 0; iGCP < nGCPCount; iGCP++ )
+        {
+
+            padfTiePoints[iGCP*6+0] = pasGCPList[iGCP].dfGCPPixel;
+            padfTiePoints[iGCP*6+1] = pasGCPList[iGCP].dfGCPLine;
+            padfTiePoints[iGCP*6+2] = 0;
+            padfTiePoints[iGCP*6+3] = pasGCPList[iGCP].dfGCPX;
+            padfTiePoints[iGCP*6+4] = pasGCPList[iGCP].dfGCPY;
+            padfTiePoints[iGCP*6+5] = pasGCPList[iGCP].dfGCPZ;
+        }
+
+        TIFFSetField( hTIFF, TIFFTAG_GEOTIEPOINTS, nGCPCount, padfTiePoints );
+        CPLFree( padfTiePoints );
+    } 
+
+/* -------------------------------------------------------------------- */
+/*      Cleanup and return the created memory buffer.                   */
+/* -------------------------------------------------------------------- */
+    XTIFFClose( hTIFF );
+
+    *pnSize = sIOBuf.size;
+    *ppabyBuffer = (unsigned char *) CPLMalloc(*pnSize);
+    memcpy( *ppabyBuffer, sIOBuf.data, *pnSize );
+    
+    MemIO_DeinitBuf( &sIOBuf );
+    
+    return CE_None;
 }
