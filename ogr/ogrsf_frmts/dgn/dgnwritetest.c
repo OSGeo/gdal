@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2003/01/20 20:05:07  warmerda
+ * added cell header test, and make c clean for windows build
+ *
  * Revision 1.1  2002/11/11 20:40:33  warmerda
  * New
  *
@@ -45,6 +48,9 @@ int main( int argc, char ** argv )
 
 {
     DGNHandle hNewDGN;
+    DGNElemCore *psMembers[2];
+    DGNPoint   asPoints[10];
+    DGNElemCore *psLine;
 
 /* -------------------------------------------------------------------- */
 /*      Create new DGN file.                                            */
@@ -57,9 +63,6 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
 /*      Write one line segment to it.                                   */
 /* -------------------------------------------------------------------- */
-    DGNPoint   asPoints[10];
-    DGNElemCore *psLine;
-
     memset( &asPoints, 0, sizeof(asPoints) );
 
     asPoints[0].x = 0;
@@ -124,8 +127,6 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
 /*      Write a complex shape consisting of two line strings.           */
 /* -------------------------------------------------------------------- */
-    DGNElemCore *psMembers[2];
-
     asPoints[0].x = 8000;
     asPoints[0].y = 8000;
     asPoints[1].x = 6000;
@@ -153,6 +154,46 @@ int main( int argc, char ** argv )
                                               2, psMembers );
 
     DGNAddShapeFillInfo( hNewDGN, psLine, 7 );
+
+    DGNWriteElement( hNewDGN, psLine );
+    DGNWriteElement( hNewDGN, psMembers[0] );
+    DGNWriteElement( hNewDGN, psMembers[1] );
+
+    DGNFreeElement( hNewDGN, psLine );
+    DGNFreeElement( hNewDGN, psMembers[0] );
+    DGNFreeElement( hNewDGN, psMembers[1] );
+
+/* -------------------------------------------------------------------- */
+/*      Write a cell with two lines.                                    */
+/* -------------------------------------------------------------------- */
+    asPoints[0].x = 7000;
+    asPoints[0].y = 7000;
+    asPoints[1].x = 5000;
+    asPoints[1].y = 7000;
+    asPoints[2].x = 5000;
+    asPoints[2].y = 5000;
+
+    psMembers[0] = DGNCreateMultiPointElem( hNewDGN, DGNT_LINE_STRING, 3, 
+                                            asPoints );
+    DGNUpdateElemCore( hNewDGN, psMembers[0], 10, 0, 3, 1, 0 );
+
+    asPoints[0].x = 5000;
+    asPoints[0].y = 5000;
+    asPoints[1].x = 8000;
+    asPoints[1].y = 5000;
+    asPoints[2].x = 7000;
+    asPoints[2].y = 7000;
+
+    psMembers[1] = DGNCreateMultiPointElem( hNewDGN, DGNT_LINE_STRING, 3, 
+                                            asPoints );
+    DGNUpdateElemCore( hNewDGN, psMembers[1], 9, 0, 3, 1, 0 );
+
+    asPoints[0].x = 5000;
+    asPoints[0].y = 5000;
+
+    psLine = DGNCreateCellHeaderFromGroup( hNewDGN, "BE70", 1, NULL,
+                                           2, psMembers, asPoints + 0, 
+                                           1.0, 1.0, 0.0 );
 
     DGNWriteElement( hNewDGN, psLine );
     DGNWriteElement( hNewDGN, psMembers[0] );
