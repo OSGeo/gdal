@@ -1,7 +1,7 @@
 
 EXTRAFLAGS = 	-I$(ECWDIR)\include /DWIN32 -DFRMT_ecw -DNO_X86_MMI
 
-OBJ	=	ecwdataset.obj ecwcreatecopy.obj
+OBJ	=	ecwdataset.obj ecwcreatecopy.obj jp2userbox.obj
 
 GDAL_ROOT	=	..\..
 
