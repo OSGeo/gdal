@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2003/01/09 18:27:40  warmerda
+ * added headers/function headers
+ *
  * Revision 1.13  2003/01/04 23:21:56  mbp
  * Minor bug fixes and field definition changes.  Cleaned
  * up and commented code written for TIGER 2002 support.
@@ -484,6 +487,9 @@ int TigerFileBase::SetWriteModule( const char *pszExtension, int nRecLen,
     return TRUE;
 }
 
+/************************************************************************/
+/*                           AddFieldDefns()                            */
+/************************************************************************/
 void TigerFileBase::AddFieldDefns(TigerRecordInfo *psRTInfo,
 				  OGRFeatureDefn  *poFeatureDefn)
 {
@@ -499,6 +505,9 @@ void TigerFileBase::AddFieldDefns(TigerRecordInfo *psRTInfo,
   }
 }
 
+/************************************************************************/
+/*                             SetFields()                              */
+/************************************************************************/
 
 void TigerFileBase::SetFields(TigerRecordInfo *psRTInfo,
 			      OGRFeature      *poFeature,
@@ -516,6 +525,9 @@ void TigerFileBase::SetFields(TigerRecordInfo *psRTInfo,
   }
 }
 
+/************************************************************************/
+/*                             WriteField()                             */
+/************************************************************************/
 void TigerFileBase::WriteFields(TigerRecordInfo *psRTInfo,
 				OGRFeature      *poFeature,
 				char            *szRecord)
