@@ -28,6 +28,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.45  2005/02/15 02:32:11  fwarmerdam
+# added osr.SpatialReference init from wkt
+#
 # Revision 1.44  2005/01/05 21:21:38  fwarmerdam
 # added goode homolosine
 #
@@ -226,12 +229,14 @@ def GetWellKnownGeogCSAsWKT( name ):
 
 class SpatialReference:
 
-    def __init__(self,obj=None):
-        if obj is None:
-            self._o = _gdal.OSRNewSpatialReference( "" )
-        else:
+    def __init__(self,obj=None, wkt=None):
+        if obj is not None:
             self._o = obj
             _gdal.OSRReference( self._o )
+        else:
+            if wkt is None:
+                wkt = ''
+            self._o = _gdal.OSRNewSpatialReference( wkt )
 
     def __del__(self):
         if _gdal.OSRDereference( self._o ) == 0:
