@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2002/04/29 19:52:29  warmerda
+ * clean up memory after stroking curve
+ *
  * Revision 1.6  2002/01/15 06:40:21  warmerda
  * default PI
  *
@@ -306,6 +309,15 @@ int DGNStrokeCurve( DGNHandle hFile, DGNElemMultiPoint *psCurve,
         pasPoints[iOutPoint].z = 0.0;
         iOutPoint++;
     }
+
+/* -------------------------------------------------------------------- */
+/*      Cleanup.                                                        */
+/* -------------------------------------------------------------------- */
+    CPLFree( padfMx );
+    CPLFree( padfMy );
+    CPLFree( padfD );
+    CPLFree( padfTx );
+    CPLFree( padfTy );
 
     return TRUE;
 }
