@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.60  2004/08/09 14:40:41  warmerda
+ * return name for GDT_Unknown
+ *
  * Revision 1.59  2004/05/28 16:05:25  warmerda
  * add default ext handling and docs for  GDALReadWorldFile
  *
@@ -413,6 +416,9 @@ const char *GDALGetDataTypeName( GDALDataType eDataType )
 {
     switch( eDataType )
     {
+      case GDT_Unknown:
+        return "Unknown";
+
       case GDT_Byte:
         return "Byte";
 
