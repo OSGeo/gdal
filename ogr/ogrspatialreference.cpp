@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.27  2001/01/22 13:59:55  warmerda
+ * added SetSOC
+ *
  * Revision 1.26  2001/01/19 22:14:49  warmerda
  * fixed SetNode to replace existing value properly if it exists
  *
@@ -2309,6 +2312,25 @@ OGRErr OGRSpatialReference::SetStereographic(
     SetProjParm( SRS_PP_LATITUDE_OF_ORIGIN, dfOriginLat );
     SetProjParm( SRS_PP_CENTRAL_MERIDIAN, dfCMeridian );
     SetProjParm( SRS_PP_SCALE_FACTOR, dfScale );
+    SetProjParm( SRS_PP_FALSE_EASTING, dfFalseEasting );
+    SetProjParm( SRS_PP_FALSE_NORTHING, dfFalseNorthing );
+
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                               SetSOC()                               */
+/************************************************************************/
+
+OGRErr OGRSpatialReference::SetSOC( double dfLatitudeOfOrigin, 
+                                    double dfCentralMeridian,
+                                    double dfFalseEasting,
+                                    double dfFalseNorthing )
+
+{
+    SetProjection( SRS_PT_SWISS_OBLIQUE_CYLINDRICAL );
+    SetProjParm( SRS_PP_LATITUDE_OF_CENTER, dfLatitudeOfOrigin );
+    SetProjParm( SRS_PP_CENTRAL_MERIDIAN, dfCentralMeridian );
     SetProjParm( SRS_PP_FALSE_EASTING, dfFalseEasting );
     SetProjParm( SRS_PP_FALSE_NORTHING, dfFalseNorthing );
 

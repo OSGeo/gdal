@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.27  2001/01/22 13:59:55  warmerda
+ * added SetSOC
+ *
  * Revision 1.26  2001/01/19 21:10:47  warmerda
  * replaced tabs
  *
@@ -383,6 +386,10 @@ class OGRSpatialReference
     OGRErr      SetStereographic( double dfCenterLat, double dfCenterLong,
                                   double dfScale,
                                  double dfFalseEasting,double dfFalseNorthing);
+    
+    /** Swiss Oblique Cylindrical */
+    OGRErr      SetSOC( double dfLatitudeOfOrigin, double dfCentralMeridian,
+                        double dfFalseEasting, double dfFalseNorthing );
     
     /** Transverse Mercator */
     OGRErr      SetTM( double dfCenterLat, double dfCenterLong,
