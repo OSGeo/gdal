@@ -23,6 +23,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2003/02/06 14:25:51  warmerda
+ * Added test if createStringArray() fails just after creating session.
+ *
  * Revision 1.11  2003/02/03 15:59:36  warmerda
  * Move oCacheIndex testing into its own scope in destructor to avoid weird
  * compiler bug.
@@ -1650,19 +1653,33 @@ IFMESession *OGRFMEDataSource::AcquireSession()
         IFMEStringArray *poSessionDirectives = 
             poSharedSession->createStringArray();
 
-        poSessionDirectives->append("FME_DEBUG");
-        poSessionDirectives->append("BADNEWS");
+        if( poSessionDirectives == NULL )
+        {
+            err = 1;
+            CPLError( CE_Warning, CPLE_AppDefined, 
+                      "Something has gone wonky with createStringArray() on the IFMESession.\n"
+                      "Is it possible you built with gcc 3.2 on Linux?  This seems problematic." );
 
-        err = poSharedSession->init( poSessionDirectives );
+        }
+        else
+        {
+            poSessionDirectives->append("FME_DEBUG");
+            poSessionDirectives->append("BADNEWS");
+            
+            err = poSharedSession->init( poSessionDirectives );
 
-        poSharedSession->destroyStringArray( poSessionDirectives );
+            poSharedSession->destroyStringArray( poSessionDirectives );
+
+            if( err )
+            {
+                CPLError( CE_Warning, CPLE_AppDefined,
+                          "Failed to initialize FMESession.\n%s",
+                          poSharedSession->getLastErrorMsg());
+            }
+        }
 
         if( err )
         {
-            CPLError( CE_Failure, CPLE_AppDefined,
-                      "Failed to initialize FMESession.\n%s",
-                      poSharedSession->getLastErrorMsg());
-
 #ifdef SUPPORT_INDIRECT_FMEDLL
             int (*pfnFME_destroySession)(void *);
 
