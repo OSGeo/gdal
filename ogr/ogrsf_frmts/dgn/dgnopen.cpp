@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2003/06/12 17:33:17  warmerda
+ * improved DNGO_CAPTURE_RAW_DATA flag documnentation
+ *
  * Revision 1.16  2003/05/21 03:42:01  warmerda
  * Expanded tabs
  *
@@ -222,11 +225,19 @@ DGNHandle DGNOpen( const char * pszFilename, int bUpdate )
 /**
  * Set file access options.
  *
- * @param hDGN handle to file returned by DGNOpen(). 
- * @param nOptions ORed option flags (currently either 0 or 
- * DGNO_CAPTURE_RAW_DATA). 
+ * Sets a flag affecting how the file is accessed.  Currently
+ * there is only one support flag:
  *
- * Sets options affecting subsequent data reading. 
+ * DGNO_CAPTURE_RAW_DATA: If this is enabled (it is off by default),
+ * then the raw binary data associated with elements will be kept in
+ * the raw_data field within the DGNElemCore when they are read.  This
+ * is required if the application needs to interprete the raw data itself.
+ * It is also necessary if the element is to be written back to this file,
+ * or another file using DGNWriteElement().  Off by default (to conserve
+ * memory). 
+ *
+ * @param hDGN handle to file returned by DGNOpen(). 
+ * @param nOptions ORed option flags.
  */
 
 void DGNSetOptions( DGNHandle hDGN, int nOptions )
