@@ -141,6 +141,7 @@ install-actions: install-lib
 	(cd alg; $(MAKE) install)
 	(cd ogr; $(MAKE) install)
 	(cd apps; $(MAKE) install)
+	(cd man; $(MAKE) install)
 ifneq ($(PYTHON),no)
 	(cd pymod; $(MAKE) install)
 endif
