@@ -1,0 +1,155 @@
+/******************************************************************************
+ * $Id$
+ *
+ * Project:  S-57 Translator
+ * Purpose:  Declarations for S-57 translator not including the
+ *           binding onto OGRLayer/DataSource/Driver which are found in
+ *           ogr_s57.h.
+ * Author:   Frank Warmerdam, warmerda@home.com
+ *
+ ******************************************************************************
+ * Copyright (c) 1999, Frank Warmerdam
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ ******************************************************************************
+ *
+ * $Log$
+ * Revision 1.1  1999/11/03 22:12:43  warmerda
+ * New
+ *
+ */
+
+#ifndef _S57_H_INCLUDED
+#define _S57_H_INCLUDED
+
+#include "ogr_feature.h"
+#include "iso8211.h"
+
+/* -------------------------------------------------------------------- */
+/*      RCNM values.                                                    */
+/* -------------------------------------------------------------------- */
+
+#define RCNM_FE		100     /* Feature record */
+
+#define RCNM_VI		110	/* Isolated Node */
+#define RCNM_VC         120     /* Connected Node */
+#define RCNM_VE         130     /* Edge */
+#define RCNM_VF         140     /* Face */
+
+/* -------------------------------------------------------------------- */
+/*      FRID PRIM values.                                               */
+/* -------------------------------------------------------------------- */
+#define PRIM_P		1	/* point feature */
+#define PRIM_L		2	/* line feature */
+#define PRIM_A		3	/* area feature */
+#define PRIM_N		4	/* non-spatial feature  */
+
+/************************************************************************/
+/*                            DDFRecordIndex                            */
+/*                                                                      */
+/*      Maintain an index of DDF records based on an integer key.       */
+/************************************************************************/
+
+class DDFRecordIndex
+{
+    int		bSorted;
+    
+    int		nRecordCount;
+    int		nRecordMax;
+    int		*panRecordKey;
+    DDFRecord	**papoRecordList;
+
+    void	Sort();
+
+public:
+    		DDFRecordIndex();
+    	       ~DDFRecordIndex();
+
+    void        AddRecord( int nKey, DDFRecord * );
+
+    DDFRecord  *FindRecord( int nKey );
+
+    void	Clear();
+
+    int		GetCount() { return nRecordCount; }
+    DDFRecord  *GetByIndex( int i );
+};
+
+/************************************************************************/
+/*                              S57Reader                               */
+/************************************************************************/
+
+class S57Reader
+{
+    int			bClassBased;
+
+    int			nFDefnCount;
+    OGRFeatureDefn	**papoFDefnList;
+
+    char		*pszModuleName;
+    
+    DDFModule		*poModule;
+
+    int			nCOMF;  /* Coordinate multiplier */
+    int			nSOMF;  /* Vertical (sounding) multiplier */
+
+    int			bFileIngested;
+    DDFRecordIndex	oVI_Index;
+    DDFRecordIndex	oVC_Index;
+    DDFRecordIndex	oVE_Index;
+    DDFRecordIndex	oVF_Index;
+
+    int			nNextFEIndex;
+    DDFRecordIndex	oFE_Index;
+    
+    OGRFeature         *AssembleFeature( DDFRecord  *, OGRFeatureDefn * );
+    void                AssemblePointGeometry( DDFRecord *, OGRFeature * );
+    void                AssembleLineGeometry( DDFRecord *, OGRFeature * );
+    void                AssembleAreaGeometry( DDFRecord *, OGRFeature * );
+
+    int			FetchPoint( int, int,
+                                    double *, double *, double * = NULL );
+
+    OGRFeatureDefn     *FindFDefn( DDFRecord * );
+    int			ParseName( DDFField *, int = 0, int * = NULL );
+
+static void		GenerateStandardAttributes( OGRFeatureDefn * );
+
+  public:
+    			S57Reader( const char * );
+    		       ~S57Reader();
+
+    int			Open( int bTestOpen );
+    void		Close();
+    DDFModule		*GetModule() { return poModule; }
+
+    void		Ingest();
+
+    void		Rewind();
+    OGRFeature		*ReadNextFeature( OGRFeatureDefn * = NULL );
+
+    int			GetNextFEIndex() { return nNextFEIndex; }
+    void		SetNextFEIndex( int );
+
+    void		AddFeatureDefn( OGRFeatureDefn * );
+
+static OGRFeatureDefn  *GenerateGeomFeatureDefn( OGRwkbGeometryType );
+};
+
+#endif /* ndef _S57_H_INCLUDED */
