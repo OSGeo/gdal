@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.35  2003/04/08 19:31:32  warmerda
+ * added CopyLayer and CopyDataSource entry points
+ *
  * Revision 1.34  2003/03/20 20:21:48  warmerda
  * added drop index
  *
@@ -244,6 +247,9 @@ class CPL_DLL OGRDataSource
                                      OGRSpatialReference * = NULL,
                                      OGRwkbGeometryType = wkbUnknown,
                                      char ** = NULL );
+    virtual OGRLayer   *CopyLayer( OGRLayer *poSrcLayer, 
+                                   const char *pszNewName, 
+                                   char **papszOptions = NULL );
     OGRStyleTable       *GetStyleTable(){return m_poStyleTable;}
 
     virtual OGRLayer *  ExecuteSQL( const char *pszSQLCommand,
@@ -292,6 +298,10 @@ class CPL_DLL OGRSFDriver
     virtual OGRDataSource *CreateDataSource( const char *pszName,
                                              char ** = NULL );
     virtual OGRErr      DeleteDataSource( const char *pszName );
+
+    virtual OGRDataSource *CopyDataSource( OGRDataSource *poSrcDS, 
+                                           const char *pszNewName, 
+                                           char **papszOptions = NULL );
 };
 
 
@@ -360,6 +370,7 @@ void CPL_DLL RegisterOGRAVCBin();
 void CPL_DLL RegisterOGRAVCE00();
 void CPL_DLL RegisterOGRFME();
 void CPL_DLL RegisterOGRREC();
+void CPL_DLL RegisterOGRMEM();
 CPL_C_END
 
 

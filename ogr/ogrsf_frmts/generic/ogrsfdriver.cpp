@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2003/04/08 19:31:58  warmerda
+ * added CopyLayer and CopyDataSource entry points
+ *
  * Revision 1.4  2003/03/03 05:06:27  warmerda
  * added support for DeleteDataSource and DeleteLayer
  *
@@ -136,5 +139,59 @@ int OGR_Dr_TestCapability( OGRSFDriverH hDriver, const char *pszCap )
 
 {
     return ((OGRSFDriver *) hDriver)->TestCapability( pszCap );
+}
+
+/************************************************************************/
+/*                           CopyDataSource()                           */
+/************************************************************************/
+
+OGRDataSource *OGRSFDriver::CopyDataSource( OGRDataSource *poSrcDS, 
+                                            const char *pszNewName,
+                                            char **papszOptions )
+
+{
+    if( !TestCapability( ODrCCreateDataSource ) )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported, 
+                  "%s driver does not support data source creation.",
+                  GetName() );
+        return NULL;
+    }
+
+    OGRDataSource *poODS;
+
+    poODS = CreateDataSource( pszNewName, papszOptions );
+    if( poODS == NULL )
+        return NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Process each data source layer.                                 */
+/* -------------------------------------------------------------------- */
+    for( int iLayer = 0; iLayer < poSrcDS->GetLayerCount(); iLayer++ )
+    {
+        OGRLayer        *poLayer = poSrcDS->GetLayer(iLayer);
+
+        if( poLayer == NULL )
+            continue;
+
+        poODS->CopyLayer( poLayer, poLayer->GetLayerDefn()->GetName(), 
+                          papszOptions );
+    }
+    
+    return poODS;
+}
+
+/************************************************************************/
+/*                       OGR_Dr_CopyDataSource()                        */
+/************************************************************************/
+
+OGRDataSourceH OGR_Dr_CopyDataSource( OGRSFDriverH hDriver, 
+                                      OGRDataSourceH hSrcDS, 
+                                      const char *pszNewName,
+                                      char **papszOptions )
+                                      
+{
+    return ((OGRSFDriver *) hDriver)->CopyDataSource( 
+        (OGRDataSource *) hSrcDS, pszNewName, papszOptions );
 }
 
