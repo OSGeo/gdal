@@ -28,6 +28,12 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2004/03/04 05:41:21  warmerda
+ * Modified Fetch() method to use SQLFetch() for cases it would be
+ * sufficient for.  The SQLScrollFetch() isn't implemented on some brain
+ * dead drivers, such as the unixODBC text file driver.
+ * http://bugzilla.remotesensing.org/show_bug.cgi?id=463
+ *
  * Revision 1.10  2003/11/24 20:48:08  warmerda
  * pass NULLs t SQLColumns, not empty strings
  *
@@ -513,11 +519,22 @@ int CPLODBCStatement::Fetch( int nOrientation, int nOffset )
         return FALSE;
 
 /* -------------------------------------------------------------------- */
-/*      Fetch a new row.                                                */
+/*      Fetch a new row.  Note that some brain dead drives (such as     */
+/*      the unixodbc text file driver) don't implement                  */
+/*      SQLScrollFetch(), so we try to stick to SQLFetch() if we        */
+/*      can).                                                           */
 /* -------------------------------------------------------------------- */
-    if( Failed( SQLFetchScroll( m_hStmt, (SQLSMALLINT) nOrientation, 
-                                nOffset ) ) )
-        return FALSE;
+    if( nOrientation == SQL_FETCH_NEXT && nOffset == 0 )
+    {
+        if( Failed( SQLFetch( m_hStmt ) ) )
+            return FALSE;
+    }
+    else
+    {
+        if( Failed( SQLFetchScroll( m_hStmt, (SQLSMALLINT) nOrientation, 
+                                    nOffset ) ) )
+            return FALSE;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Pull out all the column values.                                 */
