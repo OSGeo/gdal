@@ -51,6 +51,9 @@
  ***************************************************************************
  *
  * $Log$
+ * Revision 1.2  2002/12/05 05:46:08  warmerda
+ * fixed linkage problem
+ *
  * Revision 1.1  2002/12/05 05:43:23  warmerda
  * New
  * 
@@ -173,10 +176,10 @@ void GDALDestroyGCPTransformer( void *pTransformArg )
 /*                          GDALGCPTransform()                          */
 /************************************************************************/
 
-int CPL_DLL GDALGCPTransform( void *pTransformArg, int bDstToSrc, 
-                              int nPointCount, 
-                              double *x, double *y, double *z, 
-                              int *panSuccess )
+int GDALGCPTransform( void *pTransformArg, int bDstToSrc, 
+                      int nPointCount, 
+                      double *x, double *y, double *z, 
+                      int *panSuccess )
 
 {
     int    i;
