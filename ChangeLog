@@ -1,3 +1,13 @@
+2001-10-12  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* geotiff support: modified configure to only use system libtiff
+	if tiffiop.h is available.  If using internal libtiff, also use
+	internal libgeotiff.  Modified Makefiles in frmts/gtiff and below
+	to only include internal libtiff and libgeotiff directories in include
+	path if they are supposed to be used.  Modified geotiff.cpp, 
+	gt_overview.cpp and gt_wkt_srs.cpp to avoid inlusion of libgeotiff
+	cpl_serv.h to avoid conflicts.
+
 2001-10-10  Frank Warmerdam  <warmerdam@pobox.com>
 
 	* ogr/*: Added "morph" functions for ESRI WKT format to map
