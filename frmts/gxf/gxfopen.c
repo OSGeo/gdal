@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2004/04/07 13:08:56  warmerda
+ * fixed write past end of scanline offset array
+ *
  * Revision 1.12  2004/04/07 02:04:14  warmerda
  * ensure CPLReadLine() buffer is cleared on close
  *
@@ -346,7 +349,7 @@ GXFHandle GXFOpen( const char * pszFilename )
 /*      Allocate, and initialize the raw scanline offset array.         */
 /* -------------------------------------------------------------------- */
     psGXF->panRawLineOffset = (long *)
-        CPLCalloc( sizeof(long), psGXF->nRawYSize );
+        CPLCalloc( sizeof(long), psGXF->nRawYSize+1 );
 
     psGXF->panRawLineOffset[0] = VSIFTell( psGXF->fp );
 
