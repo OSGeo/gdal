@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2002/08/07 02:46:10  warmerda
+ * improved comments
+ *
  * Revision 1.7  2001/11/01 17:01:28  warmerda
  * pass output buffer into OGRMakeWktCoordinate
  *
@@ -64,6 +67,9 @@ CPL_CVSID("$Id$");
 /*      Format a well known text coordinate, trying to keep the         */
 /*      ASCII representation compact, but accurate.  These rules        */
 /*      will have to tighten up in the future.                          */
+/*                                                                      */
+/*      Currently a new point should require no more than 64            */
+/*      characters barring the X or Y value being extremely large.      */
 /************************************************************************/
 
 void OGRMakeWktCoordinate( char *pszTarget, double x, double y, double z )
