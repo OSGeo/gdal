@@ -17,6 +17,9 @@
 /* Define if you have the <unistd.h> header file.  */
 #undef HAVE_UNISTD_H
 
+/* Define if you have the <stdint.h> header file.  */
+#undef HAVE_STDINT_H
+
 #undef HAVE_LIBDL 
 
 #undef HAVE_DLFCN_H
