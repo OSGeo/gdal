@@ -28,6 +28,9 @@
  * ****************************************************************************
  *
  * $Log$
+ * Revision 1.3  2002/08/07 02:17:10  warmerda
+ * Fixed -projwin messages.
+ *
  * Revision 1.2  2002/08/06 17:47:54  warmerda
  * added the -projwin switch
  *
@@ -331,8 +334,8 @@ int main( int argc, char ** argv )
         if( adfGeoTransform[2] != 0.0 || adfGeoTransform[4] != 0.0 )
         {
             fprintf( stderr, 
-                     "The -projwin option was used, but the geotransform is,\n"
-                     "this configuration is not supported.\n" );
+                     "The -projwin option was used, but the geotransform is\n"
+                     "rotated.  This configuration is not supported.\n" );
             exit( 1 );
         }
 
@@ -345,7 +348,7 @@ int main( int argc, char ** argv )
         anSrcWin[3] = (int) ((dfLRY - dfULY) / adfGeoTransform[5] + 0.5);
 
         fprintf( stdout, 
-                 "Computed -srcin %d %d %d %d from projected window.\n",
+                 "Computed -srcwin %d %d %d %d from projected window.\n",
                  anSrcWin[0], 
                  anSrcWin[1], 
                  anSrcWin[2], 
