@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2000/03/23 16:53:55  warmerda
+ * default geotransform is 0,1,0,0,0,1
+ *
  * Revision 1.12  2000/03/06 21:50:10  warmerda
  * fixed bug with setting nBands
  *
@@ -446,7 +449,7 @@ CPLErr GDALDataset::GetGeoTransform( double * padfTransform )
 
     padfTransform[3] = 0.0;	/* Y Origin (top left corner) */
     padfTransform[4] = 0.0;	
-    padfTransform[5] = -1.0;	/* Y Pixel Size */
+    padfTransform[5] = 1.0;	/* Y Pixel Size */
 
     return( CE_Failure );
 }
