@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2003/03/20 20:21:40  warmerda
+ * implement DROP INDEX command
+ *
  * Revision 1.14  2003/03/20 19:11:55  warmerda
  * added debug messages
  *
@@ -396,6 +399,124 @@ OGRErr OGRDataSource::ProcessSQLCreateIndex( const char *pszSQLCommand )
 }
 
 /************************************************************************/
+/*                        ProcessSQLDropIndex()                         */
+/*                                                                      */
+/*      The correct syntax for droping one or more indexes in           */
+/*      the OGR SQL dialect is:                                         */
+/*                                                                      */
+/*          DROP INDEX ON <layername> [USING <columnname>]              */
+/************************************************************************/
+
+OGRErr OGRDataSource::ProcessSQLDropIndex( const char *pszSQLCommand )
+
+{
+    char **papszTokens = CSLTokenizeString( pszSQLCommand );
+
+/* -------------------------------------------------------------------- */
+/*      Do some general syntax checking.                                */
+/* -------------------------------------------------------------------- */
+    if( (CSLCount(papszTokens) != 4 && CSLCount(papszTokens) != 6)
+        || !EQUAL(papszTokens[0],"DROP")
+        || !EQUAL(papszTokens[1],"INDEX")
+        || !EQUAL(papszTokens[2],"ON") 
+        || (CSLCount(papszTokens) == 6 && !EQUAL(papszTokens[4],"USING")) )
+    {
+        CSLDestroy( papszTokens );
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Syntax error in DROP INDEX command.\n"
+                  "Was '%s'\n"
+                  "Should be of form 'DROP INDEX ON <table> [USING <field>]'",
+                  pszSQLCommand );
+        return OGRERR_FAILURE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Find the named layer.                                           */
+/* -------------------------------------------------------------------- */
+    int  i;
+    OGRLayer *poLayer;
+
+    for( i = 0; i < GetLayerCount(); i++ )
+    {
+        poLayer = GetLayer(i);
+        
+        if( EQUAL(poLayer->GetLayerDefn()->GetName(),papszTokens[3]) )
+            break;
+    }
+
+    if( i >= GetLayerCount() )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "CREATE INDEX ON failed, no such layer as `%s'.",
+                  papszTokens[3] );
+        CSLDestroy( papszTokens );
+        return OGRERR_FAILURE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Does this layer even support attribute indexes?                 */
+/* -------------------------------------------------------------------- */
+    if( poLayer->GetIndex() == NULL )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Indexes not supported by this driver." );
+        CSLDestroy( papszTokens );
+        return OGRERR_FAILURE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      If we weren't given a field name, drop all indexes.             */
+/* -------------------------------------------------------------------- */
+    OGRErr eErr;
+
+    if( CSLCount(papszTokens) == 4 )
+    {
+        for( i = 0; i < poLayer->GetLayerDefn()->GetFieldCount(); i++ )
+        {
+            OGRAttrIndex *poAttrIndex;
+
+            poAttrIndex = poLayer->GetIndex()->GetFieldIndex(i);
+            if( poAttrIndex != NULL )
+            {
+                eErr = poLayer->GetIndex()->DropIndex( i );
+                if( eErr != OGRERR_NONE )
+                    return eErr;
+            }
+        }
+
+        CSLDestroy(papszTokens);
+        return OGRERR_NONE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Find the named field.                                           */
+/* -------------------------------------------------------------------- */
+    for( i = 0; i < poLayer->GetLayerDefn()->GetFieldCount(); i++ )
+    {
+        if( EQUAL(papszTokens[5],
+                  poLayer->GetLayerDefn()->GetFieldDefn(i)->GetNameRef()) )
+            break;
+    }
+
+    CSLDestroy( papszTokens );
+
+    if( i >= poLayer->GetLayerDefn()->GetFieldCount() )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "`%s' failed, field not found.",
+                  pszSQLCommand );
+        return OGRERR_FAILURE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Attempt to drop the index.                                      */
+/* -------------------------------------------------------------------- */
+    eErr = poLayer->GetIndex()->DropIndex( i );
+
+    return eErr;
+}
+
+/************************************************************************/
 /*                             ExecuteSQL()                             */
 /************************************************************************/
 
@@ -413,6 +534,15 @@ OGRLayer * OGRDataSource::ExecuteSQL( const char *pszSQLCommand,
     if( EQUALN(pszSQLCommand,"CREATE INDEX",12) )
     {
         ProcessSQLCreateIndex( pszSQLCommand );
+        return NULL;
+    }
+    
+/* -------------------------------------------------------------------- */
+/*      Handle DROP INDEX statements specially.                         */
+/* -------------------------------------------------------------------- */
+    if( EQUALN(pszSQLCommand,"DROP INDEX",10) )
+    {
+        ProcessSQLDropIndex( pszSQLCommand );
         return NULL;
     }
     
