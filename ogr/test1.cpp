@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  1999/05/23 05:34:41  warmerda
+ * added support for clone(), multipolygons and geometry collections
+ *
  * Revision 1.4  1999/05/20 14:36:19  warmerda
  * added well known text support
  *
@@ -61,7 +64,7 @@ int main( int nArgc, char ** papszArgv )
     {
         printf( "Usage: test1 -reportbin bin_file\n" );
         printf( "    or test1 -reporttxt txt_file\n" );
-        printf( "    or test1 -createbin bin_file {point,line}\n" );
+        printf( "    or test1 -createbin bin_file {point,line,polygon,multipolygon}\n" );
         exit( 1 );
     }
 
@@ -112,6 +115,32 @@ int main( int nArgc, char ** papszArgv )
             oPolygon.addRing( &oRing );
 
             CreateBin( &oPolygon, papszArgv[2] );
+        }
+        else if( strcmp( papszArgv[3], "multipolygon") == 0 )
+        {
+            OGRPolygon	oPolygon;
+            OGRLinearRing oRing;
+            OGRMultiPolygon oMPoly;
+
+            oRing.addPoint( 0, 0 );
+            oRing.addPoint( 200, 300 );
+            oRing.addPoint( 300, 400 );
+            oRing.addPoint( 0, 0 );
+
+            oPolygon.addRing( &oRing );
+
+            oRing.setNumPoints( 0 );
+            oRing.addPoint( 10, 10 );
+            oRing.addPoint( 20, 30 );
+            oRing.addPoint( 30, 40 );
+            oRing.addPoint( 10, 10 );
+
+            oPolygon.addRing( &oRing );
+
+            oMPoly.addGeometry( &oPolygon );
+            oMPoly.addGeometry( &oPolygon );
+
+            CreateBin( &oMPoly, papszArgv[2] );
         }
     }
 

@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  1999/05/23 05:34:40  warmerda
+ * added support for clone(), multipolygons and geometry collections
+ *
  * Revision 1.3  1999/05/20 14:35:44  warmerda
  * added support for well known text format
  *
@@ -140,6 +143,40 @@ OGRErr OGRGeometryFactory::createFromWkb(unsigned char *pabyData,
         return eErr;
         break;
 
+      case wkbGeometryCollection:
+        OGRGeometryCollection	*poC;
+
+        poC = new OGRGeometryCollection();
+        eErr = poC->importFromWkb( pabyData, nBytes );
+        if( eErr == OGRERR_NONE )
+        {
+            poC->assignSpatialReference( poSR );
+            *ppoReturn = poC;
+        }
+        else
+        {
+            delete poC;
+        }
+        return eErr;
+        break;
+
+      case wkbMultiPolygon:
+        OGRMultiPolygon	*poMP;
+
+        poMP = new OGRMultiPolygon();
+        eErr = poMP->importFromWkb( pabyData, nBytes );
+        if( eErr == OGRERR_NONE )
+        {
+            poMP->assignSpatialReference( poSR );
+            *ppoReturn = poMP;
+        }
+        else
+        {
+            delete poMP;
+        }
+        return eErr;
+        break;
+
       default:
         return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
     }
@@ -214,6 +251,42 @@ OGRErr OGRGeometryFactory::createFromWkt(const char *pszData,
         OGRPolygon	*poPG;
 
         poPG = new OGRPolygon();
+        eErr = poPG->importFromWkt( &pszInput );
+        if( eErr == OGRERR_NONE )
+        {
+            poPG->assignSpatialReference( poSR );
+            *ppoReturn = poPG;
+        }
+        else
+        {
+            delete poPG;
+        }
+        return eErr;
+    }
+    
+    else if( EQUAL(szToken,"GEOMETRYCOLLECTION") )
+    {
+        OGRGeometryCollection	*poPG;
+
+        poPG = new OGRGeometryCollection();
+        eErr = poPG->importFromWkt( &pszInput );
+        if( eErr == OGRERR_NONE )
+        {
+            poPG->assignSpatialReference( poSR );
+            *ppoReturn = poPG;
+        }
+        else
+        {
+            delete poPG;
+        }
+        return eErr;
+    }
+    
+    else if( EQUAL(szToken,"MULTIPOLYGON") )
+    {
+        OGRMultiPolygon	*poPG;
+
+        poPG = new OGRMultiPolygon();
         eErr = poPG->importFromWkt( &pszInput );
         if( eErr == OGRERR_NONE )
         {

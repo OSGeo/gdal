@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  1999/05/23 05:34:41  warmerda
+ * added support for clone(), multipolygons and geometry collections
+ *
  * Revision 1.3  1999/05/20 14:35:44  warmerda
  * added support for well known text format
  *
@@ -68,6 +71,25 @@ OGRPolygon::~OGRPolygon()
         }
         OGRFree( papoRings );
     }
+}
+
+/************************************************************************/
+/*                               clone()                                */
+/************************************************************************/
+
+OGRGeometry *OGRPolygon::clone()
+
+{
+    OGRPolygon	*poNewPolygon;
+
+    poNewPolygon = new OGRPolygon;
+
+    for( int i = 0; i < nRingCount; i++ )
+    {
+        poNewPolygon->addRing( papoRings[i] );
+    }
+
+    return poNewPolygon;
 }
 
 /************************************************************************/

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  1999/05/23 05:34:40  warmerda
+ * added support for clone(), multipolygons and geometry collections
+ *
  * Revision 1.2  1999/05/20 14:35:44  warmerda
  * added support for well known text format
  *
@@ -214,3 +217,21 @@ int OGRLinearRing::_WkbSize()
     return 4 + 16 * nPointCount;
 }
 
+/************************************************************************/
+/*                               clone()                                */
+/*                                                                      */
+/*      We override the OGRCurve clone() to ensure that we get the      */
+/*      correct virtual table.                                          */
+/************************************************************************/
+
+OGRGeometry *OGRLinearRing::clone()
+
+{
+    OGRLinearRing	*poNewLinearRing;
+
+    poNewLinearRing = new OGRLinearRing();
+
+    poNewLinearRing->setPoints( nPointCount, paoPoints );
+
+    return poNewLinearRing;
+}

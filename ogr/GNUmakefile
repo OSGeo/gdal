@@ -3,7 +3,8 @@ GDAL_ROOT	=	..
 include ../GDALmake.opt
 
 OBJ	=	ogrgeometryfactory.o ogrpoint.o ogrcurve.o ogrlinestring.o \
-		ogrlinearring.o ogrpolygon.o ogrutils.o ogrgeometry.o
+		ogrlinearring.o ogrpolygon.o ogrutils.o ogrgeometry.o \
+		ogrgeometrycollection.o ogrmultipolygon.o
 
 LIBS	:=	$(CPL_LIB) $(LIBS)
 

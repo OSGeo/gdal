@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  1999/05/23 05:34:40  warmerda
+ * added support for clone(), multipolygons and geometry collections
+ *
  * Revision 1.3  1999/05/20 14:35:44  warmerda
  * added support for well known text format
  *
@@ -75,6 +78,19 @@ OGRPoint::~OGRPoint()
 
 {
 }
+
+/************************************************************************/
+/*                               clone()                                */
+/*                                                                      */
+/*      Make a new object that is a copy of this object.                */
+/************************************************************************/
+
+OGRGeometry *OGRPoint::clone()
+
+{
+    return new OGRPoint( x, y );
+}
+
 
 /************************************************************************/
 /*                            getDimension()                            */

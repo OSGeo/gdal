@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  1999/05/23 05:34:40  warmerda
+ * added support for clone(), multipolygons and geometry collections
+ *
  * Revision 1.5  1999/05/20 14:35:44  warmerda
  * added support for well known text format
  *
@@ -106,6 +109,7 @@ class OGRGeometry
     virtual OGRwkbGeometryType getGeometryType() = 0;
     virtual const char *getGeometryName() = 0;
     virtual void   dumpReadable( FILE *, const char * = NULL );
+    virtual OGRGeometry *clone() = 0;
 
     void    assignSpatialReference( OGRSpatialReference * poSR );
     OGRSpatialReference *getSpatialReference( void );
@@ -115,8 +119,6 @@ class OGRGeometry
     // I presume all these should be virtual?  How many
     // should be pure?
     OGREnvelope	*getEnvelope();
-
-    ?		Export(); /* export to well known representation */
 
     OGRGeometry *getBoundary();
 
@@ -162,7 +164,7 @@ class OGRPoint : public OGRGeometry
     virtual OGRErr importFromWkt( char ** );
     virtual OGRErr exportToWkt( char ** );
     
-    // IGeometry 
+    // IGeometry
     virtual int	getDimension();
     virtual int	getCoordinateDimension();
 
@@ -174,6 +176,8 @@ class OGRPoint : public OGRGeometry
     void	setX( double xIn ) { x = xIn; }
     void	setY( double yIn ) { y = yIn; }
 
+    // Non standard from OGRGeometry
+    virtual OGRGeometry *clone();
     virtual const char *getGeometryName();
     virtual OGRwkbGeometryType getGeometryType();
 
@@ -209,7 +213,7 @@ class OGRCurve : public OGRGeometry
     virtual OGRErr importFromWkt( char ** );
     virtual OGRErr exportToWkt( char ** );
 
-    // IGeometry
+    // IGeometry interface
     virtual int	getDimension();
     virtual int	getCoordinateDimension();
 
@@ -240,6 +244,8 @@ class OGRLineString : public OGRCurve
     // non standard.
     virtual OGRwkbGeometryType getGeometryType();
     virtual const char *getGeometryName();
+    virtual OGRGeometry *clone();
+   
 };
 
 /************************************************************************/
@@ -265,6 +271,7 @@ class OGRLinearRing : public OGRLineString
     // Non standard.
     virtual const char *getGeometryName();
     virtual OGRwkbGeometryType getGeometryType();
+    virtual OGRGeometry *clone();
     
     // IWks Interface - Note this isnt really a first class object
     // for the purposes of WKB form.  These methods always fail since this
@@ -298,9 +305,10 @@ class OGRPolygon : public OGRSurface
     		OGRPolygon();
     virtual     ~OGRPolygon();
 
-    // Non standard.
+    // Non standard (OGRGeometry).
     virtual const char *getGeometryName();
     virtual OGRwkbGeometryType getGeometryType();
+    virtual OGRGeometry *clone();
     
     // ISurface Interface
     virtual double      get_Area();
@@ -313,10 +321,12 @@ class OGRPolygon : public OGRSurface
     virtual OGRErr exportToWkb( OGRwkbByteOrder, unsigned char * );
     virtual OGRErr importFromWkt( char ** );
     virtual OGRErr exportToWkt( char ** );
-    
+
+    // IGeometry
     virtual int	getDimension();
     virtual int	getCoordinateDimension();
 
+    // Non standard
     void    	addRing( OGRLinearRing * );
 
     OGRLinearRing *getExteriorRing();
@@ -325,6 +335,61 @@ class OGRPolygon : public OGRSurface
 	
 
 };
+
+/************************************************************************/
+/*                        OGRGeometryCollection                         */
+/************************************************************************/
+
+class OGRGeometryCollection : public OGRGeometry
+{
+    int		nGeomCount;
+    OGRGeometry **papoGeoms;
+    
+  public:
+    		OGRGeometryCollection();
+    virtual     ~OGRGeometryCollection();
+
+    // Non standard (OGRGeometry).
+    virtual const char *getGeometryName();
+    virtual OGRwkbGeometryType getGeometryType();
+    virtual OGRGeometry *clone();
+    
+    // IWks Interface
+    virtual int	WkbSize();
+    virtual OGRErr importFromWkb( unsigned char *, int = -1 );
+    virtual OGRErr exportToWkb( OGRwkbByteOrder, unsigned char * );
+    virtual OGRErr importFromWkt( char ** );
+    virtual OGRErr exportToWkt( char ** );
+
+    // IGeometry methods
+    virtual int	getDimension();
+    virtual int	getCoordinateDimension();
+
+    // IGeometryCollection
+    int		getNumGeometries();
+    OGRGeometry *getGeometryRef( int );
+
+    // Non standard
+    virtual OGRErr addGeometry( OGRGeometry * );
+    
+};
+
+/************************************************************************/
+/*                           OGRMultiPolygon                            */
+/************************************************************************/
+
+class OGRMultiPolygon : public OGRGeometryCollection
+{
+  public:
+    // Non standard (OGRGeometry).
+    virtual const char *getGeometryName();
+    virtual OGRwkbGeometryType getGeometryType();
+    virtual OGRGeometry *clone();
+    
+    // Non standard
+    virtual OGRErr addGeometry( OGRGeometry * );
+};
+
 
 /************************************************************************/
 /*                          OGRGeometryFactory                          */
