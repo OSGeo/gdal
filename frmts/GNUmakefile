@@ -3,38 +3,37 @@ GDAL_ROOT	=	..
 
 include ../GDALmake.opt
 
-OBJ	=	gdalallregister.o geotiff.o gxfopen.o gxfdataset.o
+OBJ	=	o/gdalallregister.o
 
-ALL_C_FLAGS	=	$(GDAL_INCLUDE) $(CFLAGS)
+FRMT_FLAGS	=	$(foreach FRMT, $(GDAL_FORMATS), -DFRMT_$(FRMT))
 
-ifeq ($(OGDI_FLAG),ENABLED)
-OBJ	:=	$(OBJ) ogdidataset.o
-ALL_C_FLAGS :=	-DOGDI_ENABLED $(ALL_C_FLAGS)
-endif
+ALL_C_FLAGS	=	$(GDAL_INCLUDE) $(CFLAGS) $(FRMT_FLAGS)
 
+default:	$(OBJ) sub-libs
 
-
-default:	$(OBJ)
+sub-libs:
+	@for dir in $(GDAL_FORMATS) ; do \
+	  if test -d $$dir ; then \
+	    (cd $$dir; $(MAKE) install-obj ); \
+	  else \
+	    echo "Can't find:" $$dir; \
+	  fi; \
+	done
 
 clean:
-	rm -f *.o
+	rm -f *.o o/*.o o/*.a
+	@for dir in $(GDAL_FORMATS) ; do \
+	  if test -d $$dir ; then \
+	    (cd $$dir; $(MAKE) clean ); \
+	  else \
+	    echo "Can't find:" $$dir; \
+	  fi; \
+	done
 
-%.o:	geotiff/%.cpp
-	$(CC) -c $(ALL_C_FLAGS) -Igeotiff/libtiff -Igeotiff/libgeotiff \
-		 -I../core geotiff/$*.cpp -o $*.o
-
-%.o:	ogdi/%.cpp
-	$(CC) -c $(ALL_C_FLAGS) -I$(TOPDIR)/include ogdi/$*.cpp -o $*.o
-
-%.o:	gxf/%.cpp
-	$(CC) -c $(ALL_C_FLAGS) -Igxf -I../core gxf/$*.cpp -o $*.o
-
-%.o:	gxf/%.c
-	$(CC) -c $(ALL_C_FLAGS) -Igxf -I../core gxf/$*.c -o $*.o
-
-gdalallregister.o:	gdalallregister.cpp
+o/gdalallregister.o:	gdalallregister.cpp
 	$(CC) -c $(ALL_C_FLAGS) -DGDAL_FORMATS="$(GDAL_FORMATS)" \
-		-I$(PCIHOME)/lib -I../core $*.cpp -o $*.o
+		-I../core gdalallregister.cpp -o o/gdalallregister.o
+
 
 
 
