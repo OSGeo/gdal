@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.31  2005/01/26 18:29:02  fwarmerdam
+ * fixed broken non-8bit cases
+ *
  * Revision 1.30  2004/12/20 22:17:15  fwarmerdam
  * last change also include split into ECW and JP2ECW drivers
  *
@@ -282,7 +285,6 @@ CPLErr ECWRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                                  int nPixelSpace, int nLineSpace )
     
 {
-    NCSError     eNCSErr;
     int          iBand, bDirect;
     int          nNewXSize = nBufXSize, nNewYSize = nBufYSize;
     GByte        *pabyWorkBuffer = NULL;
@@ -387,7 +389,8 @@ CPLErr ECWRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 
 	if ( nNewYSize == nBufYSize || iSrcLine == (int)(iDstLine * dfSrcYInc) )
 	{
-            eRStatus = poGDS->poFileView->ReadLineBIL( &pabySrcBuf );
+            eRStatus = poGDS->poFileView->ReadLineBIL( 
+                poGDS->eNCSRequestDataType, 1, (void **) &pabySrcBuf );
 
 	    if( eRStatus != NCSECW_READ_OK )
 	    {
@@ -617,7 +620,7 @@ int ECWDataset::TryWinRasterIO( GDALRWFlag eFlag,
 /* -------------------------------------------------------------------- */
     if( nPixelSpace == 0 )
         nPixelSpace = GDALGetDataTypeSize( eDT ) / 8;
-    if( nLineSpace != NULL )
+    if( nLineSpace == 0 )
         nLineSpace = nPixelSpace * nBufXSize;
     if( nBandSpace == 0 )
         nBandSpace = nLineSpace * nBufYSize;
@@ -848,7 +851,8 @@ CPLErr ECWDataset::IRasterIO( GDALRWFlag eRWFlag,
         NCSEcwReadStatus  eRStatus;
         int  iX;
 
-        eRStatus = poFileView->ReadLineBIL( papabyBIL );
+        eRStatus = poFileView->ReadLineBIL( eNCSRequestDataType, nBandCount, 
+                                            (void **) papabyBIL );
         if( eRStatus != NCSECW_READ_OK )
         {
             CPLFree( pabyBILScanline );
