@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  1999/05/08 20:15:59  warmerda
+ * added validity checking, and better cleanup on error
+ *
  * Revision 1.4  1999/05/07 14:11:49  warmerda
  * added support for tracking record clones
  *
@@ -62,6 +65,8 @@ DDFModule::DDFModule()
 
     papoClones = NULL;
     nCloneCount = nMaxCloneCount = 0;
+
+    fpDDF = NULL;
 }
 
 /************************************************************************/
@@ -183,6 +188,9 @@ int DDFModule::Open( const char * pszFilename )
     
     if( VSIFRead( achLeader, 1, nLeaderSize, fpDDF ) != nLeaderSize )
     {
+        VSIFClose( fpDDF );
+        fpDDF = NULL;
+        
         CPLError( CE_Failure, CPLE_FileIO,
                   "Leader is short on DDF file `%s'.",
                   pszFilename );
@@ -191,19 +199,65 @@ int DDFModule::Open( const char * pszFilename )
     }
 
 /* -------------------------------------------------------------------- */
+/*      Verify that this appears to be a valid DDF file.                */
+/* -------------------------------------------------------------------- */
+    int		i, bValid = TRUE;
+
+    for( i = 0; i < (int)nLeaderSize; i++ )
+    {
+        if( achLeader[i] < 32 || achLeader[i] > 126 )
+            bValid = FALSE;
+    }
+
+    if( achLeader[5] != '1' && achLeader[5] != '2' && achLeader[5] != '3' )
+        bValid = FALSE;
+
+    if( achLeader[6] != 'L' )
+        bValid = FALSE;
+    if( achLeader[8] != '1' && achLeader[8] != ' ' )
+        bValid = FALSE;
+
+/* -------------------------------------------------------------------- */
 /*      Extract information from leader.                                */
 /* -------------------------------------------------------------------- */
-    _recLength			  = DDFScanInt( achLeader+0, 5 );
-    _interchangeLevel 		  = achLeader[5];
-    _leaderIden                   = achLeader[6];
-    _inlineCodeExtensionIndicator = achLeader[7];
-    _versionNumber                = achLeader[8];
-    _appIndicator                 = achLeader[9];
-    _fieldControlLength           = DDFScanInt(achLeader+10,2);
-    _fieldAreaStart               = DDFScanInt(achLeader+12,5);
-    _sizeFieldLength              = DDFScanInt(achLeader+20,1);
-    _sizeFieldPos                 = DDFScanInt(achLeader+21,1);
-    _sizeFieldTag                 = DDFScanInt(achLeader+23,1);
+
+    if( bValid )
+    {
+        _recLength			  = DDFScanInt( achLeader+0, 5 );
+        _interchangeLevel 		  = achLeader[5];
+        _leaderIden                   = achLeader[6];
+        _inlineCodeExtensionIndicator = achLeader[7];
+        _versionNumber                = achLeader[8];
+        _appIndicator                 = achLeader[9];
+        _fieldControlLength           = DDFScanInt(achLeader+10,2);
+        _fieldAreaStart               = DDFScanInt(achLeader+12,5);
+        _sizeFieldLength              = DDFScanInt(achLeader+20,1);
+        _sizeFieldPos                 = DDFScanInt(achLeader+21,1);
+        _sizeFieldTag                 = DDFScanInt(achLeader+23,1);
+
+        if( _recLength < 12 || _fieldControlLength == 0
+            || _fieldAreaStart < 24 || _sizeFieldLength == 0
+            || _sizeFieldPos == 0 || _sizeFieldTag == 0 )
+        {
+            bValid = FALSE;
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      If the header is invalid, then clean up, report the error       */
+/*      and return.                                                     */
+/* -------------------------------------------------------------------- */
+    if( !bValid )
+    {
+        VSIFClose( fpDDF );
+        fpDDF = NULL;
+
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "File `%s' does not appear to have\n"
+                  "a valid ISO 8211 header.\n",
+                  pszFilename );
+        return FALSE;
+    }
 
 /* -------------------------------------------------------------------- */
 /*	Read the whole record info memory.				*/
@@ -226,7 +280,6 @@ int DDFModule::Open( const char * pszFilename )
 /* -------------------------------------------------------------------- */
 /*      First make a pass counting the directory entries.               */
 /* -------------------------------------------------------------------- */
-    int		i;
     int		nFieldEntryWidth;
 
     nFieldEntryWidth = _sizeFieldLength + _sizeFieldPos + _sizeFieldTag;
