@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  1999/07/30 19:15:24  warmerda
+ * fiddled
+ *
  * Revision 1.4  1999/05/11 14:05:15  warmerda
  * catd method update
  *
@@ -44,6 +47,7 @@
  */
 
 #include "sdts_al.h"
+#include "cpl_string.h"
 
 int main( int nArgc, char ** papszArgv )
 
@@ -73,7 +77,7 @@ int main( int nArgc, char ** papszArgv )
     {
         printf( "  %s: `%s'\n",
                 oCATD.GetEntryModule(i),
-                oCATD.GetEntryType(i) );
+                oCATD.GetEntryTypeDesc(i) );
     }
     printf( "\n" );
     
@@ -93,11 +97,14 @@ int main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
 #ifdef notdef    
     SDTSLineReader oLineReader( &oIREF );
-    
-    if( oLineReader.Open( oCATD.getModuleFilePath( "LE01" ) ) )
+
+    if( oLineReader.Open( oCATD.GetModuleFilePath( "LE01" ) ) )
     {
         SDTSRawLine	*poRawLine;
         
+        printf( "ATID referenced modules:\n" );
+        CSLPrint( oLineReader.ScanModuleReferences(), stdout );
+
         while( (poRawLine = oLineReader.GetNextLine()) != NULL )
         {
             poRawLine->Dump( stdout );
@@ -105,6 +112,32 @@ int main( int nArgc, char ** papszArgv )
         }
         
         oLineReader.Close();
+    }
+#endif
+    
+/* -------------------------------------------------------------------- */
+/*      Dump the first polygon                                          */
+/* -------------------------------------------------------------------- */
+#ifndef notdef    
+    SDTSPolygonReader oPolyReader;
+
+    if( oPolyReader.Open( oCATD.GetModuleFilePath( "PC01" ) ) )
+    {
+        SDTSRawPolygon	*poRawPoly;
+        
+        printf( "ATID referenced modules:\n" );
+        CSLPrint( oPolyReader.ScanModuleReferences(), stdout );
+
+        while( (poRawPoly = oPolyReader.GetNextPolygon()) != NULL )
+        {
+            printf( "PolyId:%s nAttributes=%d  AreaId=%s\n",
+                    poRawPoly->oPolyId.GetName(),
+                    poRawPoly->nAttributes,
+                    poRawPoly->oAreaId.GetName() );
+            delete poRawPoly;
+        }
+        
+        oPolyReader.Close();
     }
 #endif
     
