@@ -58,7 +58,6 @@ clean:	lclean
 	(cd frmts; $(MAKE) clean)
 	(cd apps; $(MAKE) clean)
 	(cd pymod; $(MAKE) clean)
-	(cd viewer; $(MAKE) clean)
 
 py-module:
 	(cd pymod; $(MAKE))
