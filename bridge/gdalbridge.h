@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  1999/09/17 03:18:37  warmerda
+ * added name indirection for function pointer names for libtool
+ *
  * Revision 1.3  1999/04/22 13:36:43  warmerda
  * Added copyright header.
  *
@@ -90,7 +93,8 @@ typedef enum {
     GDT_Float64 = 7
 } GDALDataType;
 
-GDAL_ENTRY int	(*GDALGetDataTypeSize)( GDALDataType ) GDAL_NULL;
+GDAL_ENTRY int	(*pfnGDALGetDataTypeSize)( GDALDataType ) GDAL_NULL;
+#define GDALGetDataTypeSize pfnGDALGetDataTypeSize
 
 typedef enum {
     GA_ReadOnly = 0,
@@ -142,52 +146,84 @@ typedef void *GDALProjDefH;
 /*      Registration/driver related.                                    */
 /* ==================================================================== */
 
-GDAL_ENTRY void (*GDALAllRegister)( void ) GDAL_NULL;
+GDAL_ENTRY void (*pfnGDALAllRegister)( void ) GDAL_NULL;
+#define GDALAllRegister pfnGDALAllRegister
 
-GDAL_ENTRY GDALDatasetH (*GDALCreate)( GDALDriverH hDriver, const char *,
-                                        int, int, int, GDALDataType,
-                                        char ** ) GDAL_NULL;
+GDAL_ENTRY GDALDatasetH (*pfnGDALCreate)( GDALDriverH hDriver, const char *,
+                                          int, int, int, GDALDataType,
+                                          char ** ) GDAL_NULL;
+#define GDALCreate pfnGDALCreate
 
-GDAL_ENTRY GDALDatasetH (*GDALOpen)( const char *, GDALAccess ) GDAL_NULL;
 
-GDAL_ENTRY GDALDriverH (*GDALGetDriverByName)( const char * ) GDAL_NULL;
+GDAL_ENTRY GDALDatasetH (*pfnGDALOpen)( const char *, GDALAccess ) GDAL_NULL;
+#define GDALOpen pfnGDALOpen
+
+GDAL_ENTRY GDALDriverH (*pfnGDALGetDriverByName)( const char * ) GDAL_NULL;
+#define GDALGetDriverByName pfnGDALGetDriverByName
 
 /* ==================================================================== */
 /*      GDALDataset class ... normally this represents one file.        */
 /* ==================================================================== */
 
-GDAL_ENTRY void (*GDALClose)( GDALDatasetH ) GDAL_NULL;
+GDAL_ENTRY void (*pfnGDALClose)( GDALDatasetH ) GDAL_NULL;
+#define GDALClose pfnGDALClose
 
-GDAL_ENTRY int (*GDALGetRasterXSize)( GDALDatasetH ) GDAL_NULL;
-GDAL_ENTRY int (*GDALGetRasterYSize)( GDALDatasetH ) GDAL_NULL;
-GDAL_ENTRY int (*GDALGetRasterCount)( GDALDatasetH ) GDAL_NULL;
-GDAL_ENTRY GDALRasterBandH (*GDALGetRasterBand)( GDALDatasetH, int) GDAL_NULL;
-GDAL_ENTRY const char *(*GDALGetProjectionRef)( GDALDatasetH ) GDAL_NULL;
-GDAL_ENTRY CPLErr (*GDALSetProjection)( GDALDatasetH, const char * ) GDAL_NULL;
-GDAL_ENTRY CPLErr (*GDALGetGeoTransform)( GDALDatasetH, double * ) GDAL_NULL;
-GDAL_ENTRY CPLErr (*GDALSetGeoTransform)( GDALDatasetH, double * ) GDAL_NULL;
-GDAL_ENTRY void *(*GDALGetInternalHandle)( GDALDatasetH,
+GDAL_ENTRY int (*pfnGDALGetRasterXSize)( GDALDatasetH ) GDAL_NULL;
+#define GDALGetRasterXSize pfnGDALGetRasterXSize
+
+GDAL_ENTRY int (*pfnGDALGetRasterYSize)( GDALDatasetH ) GDAL_NULL;
+#define GDALGetRasterYSize pfnGDALGetRasterYSize
+
+GDAL_ENTRY int (*pfnGDALGetRasterCount)( GDALDatasetH ) GDAL_NULL;
+#define GDALGetRasterCount pfnGDALGetRasterCount
+
+GDAL_ENTRY GDALRasterBandH
+               (*pfnGDALGetRasterBand)( GDALDatasetH, int) GDAL_NULL;
+#define GDALGetRasterBand pfnGDALGetRasterBand
+
+GDAL_ENTRY const char *(*pfnGDALGetProjectionRef)( GDALDatasetH ) GDAL_NULL;
+#define GDALGetProjectionRef pfnGDALGetProjectionRef
+
+GDAL_ENTRY CPLErr (*pfnGDALSetProjection)( GDALDatasetH,
                                            const char * ) GDAL_NULL;
+#define GDALSetProjection pfnGDALSetProjection
+
+GDAL_ENTRY CPLErr (*pfnGDALGetGeoTransform)( GDALDatasetH, double* ) GDAL_NULL;
+#define GDALGetGeoTransform pfnGDALGetGeoTransform
+
+GDAL_ENTRY CPLErr (*pfnGDALSetGeoTransform)( GDALDatasetH, double* ) GDAL_NULL;
+#define GDALSetGeoTransform pfnGDALSetGeoTransform
+
+GDAL_ENTRY void *(*pfnGDALGetInternalHandle)( GDALDatasetH,
+                                              const char * ) GDAL_NULL;
+#define GDALGetInternalHandle pfnGDALGetInternalHandle
 
 /* ==================================================================== */
 /*      GDALRasterBand ... one band/channel in a dataset.               */
 /* ==================================================================== */
 
-GDAL_ENTRY GDALDataType (*GDALGetRasterDataType)( GDALRasterBandH ) GDAL_NULL;
-GDAL_ENTRY void (*GDALGetBlockSize)( GDALRasterBandH,
-                                     int * pnXSize, int * pnYSize ) GDAL_NULL;
+GDAL_ENTRY GDALDataType (*pGDALGetRasterDataType)( GDALRasterBandH ) GDAL_NULL;
+#define GDALGetRasterDataType pGDALGetRasterDataType
 
-GDAL_ENTRY CPLErr (*GDALRasterIO)( GDALRasterBandH hRBand, GDALRWFlag eRWFlag,
-                                   int nDSXOff, int nDSYOff,
-                                   int nDSXSize, int nDSYSize,
-                                   void * pBuffer, int nBXSize, int nBYSize,
-                                   GDALDataType eBDataType,
+GDAL_ENTRY void (*pGDALGetBlockSize)( GDALRasterBandH,
+                                      int * pnXSize, int * pnYSize ) GDAL_NULL;
+#define GDALGetBlockSize pGDALGetBlockSize
+
+GDAL_ENTRY CPLErr (*pGDALRasterIO)( GDALRasterBandH hRBand, GDALRWFlag eRWFlag,
+                                    int nDSXOff, int nDSYOff,
+                                    int nDSXSize, int nDSYSize,
+                                    void * pBuffer, int nBXSize, int nBYSize,
+                                    GDALDataType eBDataType,
                                    int nPixelSpace, int nLineSpace ) GDAL_NULL;
+#define GDALRasterIO pGDALRasterIO
 
-GDAL_ENTRY CPLErr (*GDALReadBlock)( GDALRasterBandH,
-                                    int, int, void * ) GDAL_NULL;
-GDAL_ENTRY CPLErr (*GDALWriteBlock)( GDALRasterBandH,
+GDAL_ENTRY CPLErr (*pGDALReadBlock)( GDALRasterBandH,
                                      int, int, void * ) GDAL_NULL;
+#define GDALReadBlock pGDALReadBlock
+
+GDAL_ENTRY CPLErr (*pGDALWriteBlock)( GDALRasterBandH,
+                                      int, int, void * ) GDAL_NULL;
+#define GDALWriteBlock pGDALWriteBlock
 
 /* need to add functions related to block cache */
 
@@ -195,13 +231,22 @@ GDAL_ENTRY CPLErr (*GDALWriteBlock)( GDALRasterBandH,
 /*      Projections                                                     */
 /* ==================================================================== */
 
-GDAL_ENTRY GDALProjDefH (*GDALCreateProjDef)( const char * ) GDAL_NULL;
-GDAL_ENTRY CPLErr (*GDALReprojectToLongLat)( GDALProjDefH,
-                                             double *, double * ) GDAL_NULL;
-GDAL_ENTRY CPLErr (*GDALReprojectFromLongLat)( GDALProjDefH,
-                                               double *, double * ) GDAL_NULL;
-GDAL_ENTRY void (*GDALDestroyProjDef)( GDALProjDefH ) GDAL_NULL;
-GDAL_ENTRY const char *(*GDALDecToDMS)( double, const char *, int ) GDAL_NULL;
+GDAL_ENTRY GDALProjDefH (*pGDALCreateProjDef)( const char * ) GDAL_NULL;
+#define GDALCreateProjDef pGDALCreateProjDef
+
+GDAL_ENTRY CPLErr (*pGDALReprojectToLongLat)( GDALProjDefH,
+                                              double *, double * ) GDAL_NULL;
+#define GDALReprojectToLongLat pGDALReprojectToLongLat
+
+GDAL_ENTRY CPLErr (*pGDALReprojectFromLongLat)( GDALProjDefH,
+                                                double *, double * ) GDAL_NULL;
+#define GDALReprojectFromLongLat pGDALReprojectFromLongLat
+
+GDAL_ENTRY void (*pGDALDestroyProjDef)( GDALProjDefH ) GDAL_NULL;
+#define GDALDestroyProjDef pGDALDestroyProjDef
+
+GDAL_ENTRY const char *(*pGDALDecToDMS)( double, const char *, int ) GDAL_NULL;
+#define GDALDecToDMS pGDALDecToDMS
 
 /* -------------------------------------------------------------------- */
 /*      This is the real entry point.  It tries to load the shared      */
