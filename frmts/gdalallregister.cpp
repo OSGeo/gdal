@@ -25,6 +25,10 @@
  * Main format registration function.
  * 
  * $Log$
+ * Revision 1.61  2003/12/12 23:06:12  jimg
+ * Added test for DODS. It's near the end, grouped with the formats that are
+ * expensive to test for, and it's run only if FRMT_dods is defined.
+ *
  * Revision 1.60  2003/12/11 06:18:35  warmerda
  * added BT driver
  *
@@ -413,6 +417,9 @@ void GDALAllRegister()
     GDALRegister_GRASS();
 #endif
 
+#ifdef FRMT_dods
+    GDALRegister_DODS();
+#endif
 /* -------------------------------------------------------------------- */
 /*      Deregister any drivers explicitly marked as supressed by the    */
 /*      GDAL_SKIP environment variable.                                 */
