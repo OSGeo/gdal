@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.17  2004/01/19 16:54:44  warmerda
+ * added logic to capture field types
+ *
  * Revision 1.16  2003/05/21 03:48:35  warmerda
  * Expand tabs
  *
@@ -225,6 +228,12 @@ int GMLReader::SetupParser()
         XMLString::transcode("http://xml.org/sax/features/validation"), true);
     m_poSAXReader->setFeature(
         XMLString::transcode("http://xml.org/sax/features/namespaces"), true);
+
+    m_poSAXReader->setFeature( XMLUni::fgSAX2CoreNameSpaces, true );
+    m_poSAXReader->setFeature( XMLUni::fgXercesSchema, true );
+
+//    m_poSAXReader->setDoSchema(true);
+//    m_poSAXReader->setValidationSchemaFullChecking(true);
 #else
     m_poSAXReader->setFeature(
         XMLString::transcode("http://xml.org/sax/features/validation"), false);
@@ -551,7 +560,11 @@ void GMLReader::SetFeatureProperty( const char *pszElement,
     
     if( iProperty == poClass->GetPropertyCount() )
     {
-        CPLAssert( !poClass->IsSchemaLocked() );
+        if( poClass->IsSchemaLocked() )
+        {
+            CPLDebug("GML","Encountered property missing from class schema.");
+            return;
+        }
 
         poClass->AddProperty( new GMLPropertyDefn( pszElement, pszElement ) );
     }
@@ -560,6 +573,12 @@ void GMLReader::SetFeatureProperty( const char *pszElement,
 /*      Set the property                                                */
 /* -------------------------------------------------------------------- */
     poFeature->SetProperty( iProperty, pszValue );
+
+/* -------------------------------------------------------------------- */
+/*      Do we need to update the property type?                         */
+/* -------------------------------------------------------------------- */
+    if( !poClass->IsSchemaLocked() )
+        poClass->GetProperty( iProperty )->AnalysePropertyValue(pszValue);
 }
 
 /************************************************************************/

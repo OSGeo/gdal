@@ -28,6 +28,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.2  2004/01/19 16:54:44  warmerda
+ * added logic to capture field types
+ *
  * Revision 1.1  2002/01/04 19:46:30  warmerda
  * New
  *
@@ -77,3 +80,58 @@ void GMLPropertyDefn::SetSrcElement( const char *pszSrcElement )
     else
         m_pszSrcElement = NULL;
 }
+
+/************************************************************************/
+/*                        AnalysePropertyValue()                        */
+/*                                                                      */
+/*      Examine the passed property value, and see if we need to        */
+/*      make the field type more specific, or more general.             */
+/************************************************************************/
+
+void GMLPropertyDefn::AnalysePropertyValue( const char *pszValue )
+
+{
+/* -------------------------------------------------------------------- */
+/*      We can't get more general than string, so at this point just    */
+/*      give up on changing.                                            */
+/* -------------------------------------------------------------------- */
+    if( m_eType == GMLPT_String )
+        return;
+
+/* -------------------------------------------------------------------- */
+/*      If it is a zero length string, just return.  We can't deduce    */
+/*      much from this.                                                 */
+/* -------------------------------------------------------------------- */
+    if( *pszValue == '\0' )
+        return;
+
+/* -------------------------------------------------------------------- */
+/*      Does the string consist entirely of numeric values?             */
+/* -------------------------------------------------------------------- */
+    int bIsReal = FALSE;
+    
+
+    for(; *pszValue != '\0'; pszValue++ )
+    {
+        if( isdigit( *pszValue) || *pszValue == '-' || *pszValue == '+' 
+            || isspace( *pszValue ) )
+            /* do nothing */;
+        else if( *pszValue == '.' || *pszValue == 'D' || *pszValue == 'd'
+                 || *pszValue == 'E' || *pszValue == 'e' )
+            bIsReal = TRUE;
+        else 
+        {
+            m_eType = GMLPT_String;
+            return;
+        }
+    }
+
+    if( m_eType == GMLPT_Untyped || m_eType == GMLPT_Integer )
+    {
+        if( bIsReal )
+            m_eType = GMLPT_Real;
+        else
+            m_eType = GMLPT_Integer;
+    }
+}
+
