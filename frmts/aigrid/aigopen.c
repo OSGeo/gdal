@@ -3,7 +3,7 @@
  *
  * Project:  Arc/Info Binary Grid Translator
  * Purpose:  Grid file access cover API for non-GDAL use.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 1999, Frank Warmerdam
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2002/10/31 03:08:47  warmerda
+ * fixed email
+ *
  * Revision 1.12  2002/05/14 21:38:57  warmerda
  * fixed up nPixel and nLines calculation to avoid roundoff error
  *
