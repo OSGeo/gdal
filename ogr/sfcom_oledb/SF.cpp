@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2001/10/22 21:28:25  warmerda
+ * updated logging rules
+ *
  * Revision 1.4  2001/05/28 19:34:41  warmerda
  * override error handler
  *
@@ -64,16 +67,38 @@ static void OGR_OLEDBErrorHandler( CPLErr eErrClass, int nError,
 
     if( !bLogInit )
     {
+        const char *cpl_log = NULL;
+
         bLogInit = TRUE;
 
+        if( getenv("CPL_LOG") != NULL )
+            cpl_log = getenv("CPL_LOG");
+
         fpLog = stderr;
-        if( getenv( "CPL_LOG" ) != NULL )
+        if( cpl_log != NULL && EQUAL(cpl_log,"OFF") )
         {
-            fpLog = fopen( "D:\\temp\\ogr_oledb.log", "wt" );
-            if( fpLog == NULL )
-                fpLog = stderr;
+            fpLog = NULL;
+        }
+        else if( cpl_log != NULL )
+        {
+            char      path[5000];
+            int       i = 0;
+
+            strcpy( path, cpl_log );
+
+            while( (fpLog = fopen( path, "rt" )) != NULL ) 
+            {
+                fclose( fpLog );
+
+                sprintf( path, "%s_%d", cpl_log, i++ );
+            }
+
+            fpLog = fopen( path, "wt" );
         }
     }
+
+    if( fpLog == NULL )
+        return;
 
     if( eErrClass == CE_Debug )
         fprintf( fpLog, "%s\n", pszErrorMsg );
