@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  1999/07/08 20:23:07  warmerda
+ * Added help for GetFeatureCount(), and spatial filtering.
+ *
  * Revision 1.2  1999/07/06 20:37:32  warmerda
  * Added header.
  *
@@ -217,6 +220,9 @@
  all features associated with an OGRLayer (more specifically an 
  OGRFeatureDefn) be deleted before that layer/datasource is deleted.
 
+ Only features matching the current spatial filter (set with 
+ SetSpatialFilter()) will be returned.  
+
  This method implements sequential access to the features of a layer.  The
  ResetReading() method can be used to start at the beginning again.  Random
  reading, writing and spatial filtering will be added to the OGRLayer in 
@@ -228,6 +234,68 @@
  @return a feature, or NULL if no more features are available. 
 
 */
+
+/**
+
+ \fn int OGRLayer::GetFeatureCount( int bForce = TRUE );
+
+ Fetch the feature count in this layer. 
+
+ Returns the number of features in the layer.  For dynamic databases the
+ count may not be exact.  If bForce is FALSE, and it would be expensive
+ to establish the feature count a value of -1 may be returned indicating
+ that the count isn't know.  If bForce is TRUE some implementations will
+ actually scan the entire layer once to count objects. 
+
+ The returned count takes the spatial filter into account. 
+
+ @param bForce Flag indicating whether the count should be computed even
+ if it is expensive.
+
+ @return feature count, -1 if count not known. 
+
+*/
+
+/** 
+ \fn void OGRLayer::SetSpatialFilter( OGRGeometry * poFilter );
+
+ Set a new spatial filter. 
+
+ This method set the geometry to be used as a spatial filter when 
+ fetching features via the GetNextFeature() method.  Only features that
+ geometrically intersect the filter geometry will be returned.  
+
+ Currently this test is may be inaccurately implemented, but it is
+ guaranteed that all features who's envelope (as returned by
+ OGRGeometry::getEnvelope()) overlaps the envelope of the spatial filter
+ will be returned.  This can result in more shapes being returned that 
+ should strictly be the case. 
+
+ This method makes an internal copy of the passed geometry.  The 
+ passed geometry remains the responsibility of the caller, and may 
+ be safely destroyed. 
+
+ For the time being the passed filter geometry should be in the same
+ SRS as the layer (as returned by OGRLayer::GetSpatialRef()).  In the
+ future this may be generalized. 
+
+ @param poFilter the geometry to use as a filtering region.  NULL may
+ be passed indicating that the current spatial filter should be cleared,
+ but no new one instituted.
+ 
+ */
+
+/**
+ \fn OGRGeometry *OGRLayer::GetSpatialFilter();
+
+ This method returns the current spatial filter for this layer. 
+
+ The returned pointer is to an internally owned object, and should not
+ be altered or deleted by the caller.  
+
+ @return spatial filter geometry.
+ 
+ */
 
 /** 
  \fn OGRFeatureDefn *OGRLayer::GetLayerDefn();
