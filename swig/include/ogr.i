@@ -9,6 +9,10 @@
 
  *
  * $Log$
+ * Revision 1.6  2005/02/18 18:28:16  kruland
+ * Rename OGRSpatialReferenceH type to SpatialReference to make the ogr and
+ * osr modules compatible.
+ *
  * Revision 1.5  2005/02/18 18:01:34  hobu
  * Started working on the geometry constructors with a lot
  * of help from Kevin
@@ -116,6 +120,8 @@ using namespace std;
 #include "ogr_api.h"
 #include "ogr_core.h"
 #include "cpl_string.h"
+
+typedef void SpatialReference;
 
 %}
 
@@ -357,7 +363,7 @@ char const *OGRDataSourceH_name_get( OGRDataSourceH *h ) {
 %newobject CreateGeometryFromWkb;
 %inline %{
   OGRGeometryH CreateGeometryFromWkb( unsigned char * bin_string, 
-                                       OGRSpatialReferenceH *reference ) {
+                                      SpatialReference *reference ) {
     OGRGeometryH geom;
     OGRErr err = OGR_G_CreateFromWkb(bin_string,
                                       reference,
@@ -373,7 +379,7 @@ char const *OGRDataSourceH_name_get( OGRDataSourceH *h ) {
 %newobject CreateGeometryFromWkt;
 %inline %{
   OGRGeometryH CreateGeometryFromWkt( char **val, 
-                                       OGRSpatialReferenceH *reference ) {
+                                      SpatialReference *reference ) {
     OGRGeometryH geom;
     OGRErr err = OGR_G_CreateFromWkt(val,
                                       reference,
