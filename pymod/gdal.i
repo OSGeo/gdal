@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.87  2004/02/22 10:25:11  dron
+ * Added wrapper for OSRImportFromUSGS().
+ *
  * Revision 1.86  2004/02/09 06:06:19  warmerda
  * fix warning
  *
@@ -1744,19 +1747,29 @@ py_OSRImportFromPCI(PyObject *self, PyObject *args) {
         }
     }
 
+    parms = CPLMalloc(17 * sizeof(double));
     if (py_parms)
     {
-        parms = CPLMalloc(17 * sizeof(double));
-        for( i = 0; i < PyTuple_Size(py_parms); i++ )
+        for( i = 0; i < 17; i++ )
         {
-            if( !PyArg_Parse( PyTuple_GET_ITEM(py_parms,i), "d", &parms[i] ) )
+            if (i < PyTuple_Size(py_parms))
             {
-                PyErr_SetString(PyExc_TypeError,
+                if(!PyArg_Parse(PyTuple_GET_ITEM(py_parms,i), "d", &parms[i]))
+                {
+                    PyErr_SetString(PyExc_TypeError,
                                 "Type error in argument 4 of OSRImportFromPCI."
                                 "  Expected tuple of floats.");
-                return NULL;
+                    return NULL;
+                }
             }
+            else
+                parms[i] = 0.0;
         }
+    }
+    else
+    {
+        for ( i = 0; i < 17; i++ )
+            parms[i] = 0.0;
     }
 
     err = OSRImportFromPCI( _arg0, proj, units, parms );
@@ -1801,6 +1814,70 @@ py_OSRImportFromWkt(PyObject *self, PyObject *args) {
 %}
 
 %native(OSRImportFromWkt) py_OSRImportFromWkt;
+
+%{
+/************************************************************************/
+/*                          OSRImportFromUSGS()                         */
+/************************************************************************/
+static PyObject *
+py_OSRImportFromUSGS(PyObject *self, PyObject *args) {
+
+    OGRSpatialReferenceH _arg0;
+    char    *_argc0 = NULL;
+    int     err;
+    PyObject *py_parms = NULL;
+    long    iProjSys, iZone, iDatum;
+    double  *parms = NULL;
+    int     i;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"sllO!l:OSRImportFromUSGS",
+	&_argc0, &iProjSys, &iZone, &PyTuple_Type, &py_parms, &iDatum) )
+        return NULL;
+
+    if (_argc0) {
+        if (SWIG_GetPtr_2(_argc0,(void **) &_arg0,_OGRSpatialReferenceH)) {
+            PyErr_SetString(PyExc_TypeError,
+                            "Type error in argument 1 of OSRImportFromUSGS."
+                            "  Expected _OGRSpatialReferenceH.");
+            return NULL;
+        }
+    }
+
+    parms = CPLMalloc(15 * sizeof(double));
+    if (py_parms)
+    {
+        for( i = 0; i < 15; i++ )
+        {
+            if (i < PyTuple_Size(py_parms))
+            {
+                if(!PyArg_Parse(PyTuple_GET_ITEM(py_parms,i), "d", &parms[i]))
+                {
+                    PyErr_SetString(PyExc_TypeError,
+                                "Type error in argument 4 of OSRImportFromUSGS."
+                                "  Expected tuple of floats.");
+                    return NULL;
+                }
+            }
+            else
+                parms[i] = 0.0;
+        }
+    }
+    else
+    {
+        for ( i = 0; i < 15; i++ )
+            parms[i] = 0.0;
+    }
+
+    err = OSRImportFromUSGS( _arg0, iProjSys, iZone, parms, iDatum );
+
+    if (parms)
+        CPLFree(parms);
+    return Py_BuildValue( "i", err );
+}
+%}
+
+%native(OSRImportFromUSGS) py_OSRImportFromUSGS;
 
 %{
 /************************************************************************/
