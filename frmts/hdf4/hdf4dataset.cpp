@@ -30,6 +30,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.11  2002/11/06 15:47:14  dron
+ * Added support for 3D datasets creation
+ *
  * Revision 1.10  2002/10/25 14:28:54  dron
  * Initial support for HDF4 creation.
  *
@@ -75,6 +78,8 @@ CPL_CVSID("$Id$");
 CPL_C_START
 void	GDALRegister_HDF4(void);
 CPL_C_END
+
+extern const char *pszGDALSignature;
 
 /************************************************************************/
 /* ==================================================================== */
@@ -756,7 +761,13 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     const char	*pszValue;
     
-    if ( (pszValue = CSLFetchNameValue(poDS->papszGlobalMetadata, "Title"))
+    if ( (pszValue = CSLFetchNameValue(poDS->papszGlobalMetadata, "Signature"))
+	 && EQUAL( pszValue, pszGDALSignature ) )
+    {
+	poDS->iDataType = GDAL_HDF4;
+	poDS->pszDataType = "GDAL_HDF4";
+    }
+    else if ( (pszValue = CSLFetchNameValue(poDS->papszGlobalMetadata, "Title"))
 	 && EQUAL( pszValue, "SeaWiFS Level-1A Data" ) )
     {
 	poDS->iDataType = SEAWIFS_L1A;
