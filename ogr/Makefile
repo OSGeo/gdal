@@ -1,5 +1,5 @@
 
-MSDASDK =	F:\MSDASDK
+MSDASDK =       C:\MSDASDK
 
 EXTRAFLAGS =	-I$(MSDASDK)\include\oledb
 
@@ -34,4 +34,5 @@ test1.exe:	test1.obj $(OBJ_OGR)
 	cl test1.obj $(OBJ_OGR) $(ALL_LIBS)
 
 clean:
-	del *.obj *.exe
+	del *.obj
+        del *.exe

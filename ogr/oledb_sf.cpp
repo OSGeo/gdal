@@ -36,6 +36,9 @@
  * derived from OledbSupRowset to modify the default binding logic.
  * 
  * $Log$
+ * Revision 1.3  1999/06/04 04:00:23  kshih
+ * Changes to work with geometry
+ *
  * Revision 1.2  1999/05/14 13:31:42  warmerda
  * add best testing when reading from stream
  *
@@ -127,7 +130,8 @@ void OledbSFTable::IdentifyGeometry()
 /*      Verify that the type is acceptable.                             */
 /* -------------------------------------------------------------------- */
     if( paoColumnInfo[iCol].wType != DBTYPE_BYTES 
-        && paoColumnInfo[iCol].wType != DBTYPE_IUNKNOWN )
+        && paoColumnInfo[iCol].wType != DBTYPE_IUNKNOWN 
+		&& paoColumnInfo[iCol].wType != (DBTYPE_BYTES | DBTYPE_BYREF))
     {
         return;
     }
@@ -203,12 +207,29 @@ BYTE *OledbSFTable::GetWKBGeometry( int * pnSize )
 /*      data was truncated.  If so we emit a debugging error            */
 /*      message, but otherwise try to continue.                         */
 /* -------------------------------------------------------------------- */
-    if( paoBindings[iBindColumn].wType == DBTYPE_BYTES )
+    if( paoBindings[iBindColumn].wType == DBTYPE_BYTES)
     {
         if( pnSize != NULL )
             *pnSize = poCData->dwLength;
 
-        return( poCData->bData );
+        return(poCData->bData);
+    }
+
+/* -------------------------------------------------------------------- */
+/*      If the column is bound as DBTYPE_BYTES and DBTYPE_BYREF then    */
+/*      the pointer is contained in the data.  The size of the buffer   */
+/*      follows.(This is an internal convention)                        */
+/* -------------------------------------------------------------------- */
+    if( paoBindings[iBindColumn].wType & DBTYPE_BYTES)
+    {
+		BYTE *pRetVal;
+
+        if( pnSize != NULL )
+			memcpy(pnSize,poCData->bData+4,4);
+            
+		memcpy(&pRetVal,poCData->bData,4);
+
+        return(pRetVal);
     }
 
 /* -------------------------------------------------------------------- */
