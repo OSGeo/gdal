@@ -25,6 +25,9 @@
  * Main format registration function.
  * 
  * $Log$
+ * Revision 1.45  2002/08/13 16:59:53  dron
+ * New driver: EOSAT FAST format
+ *
  * Revision 1.44  2002/07/16 13:30:27  dron
  * New driver: HDF4 dataset.
  *
@@ -306,6 +309,10 @@ void GDALAllRegister()
 
 #ifdef FRMT_fit
     GDALRegister_FIT();
+#endif
+
+#ifdef FRMT_fast
+    GDALRegister_FAST();
 #endif
 
 #ifdef FRMT_hdf4
