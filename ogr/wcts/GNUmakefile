@@ -23,8 +23,8 @@ clean:
 	rm -f *.o $(BIN) $(C_BIN)
 
 $(BIN):	$(WCTS_OBJ)
-	$(CXX) $(LNK_FLAGS) $(WCTS_OBJ) $(CONFIG_LIBS) $(CURL_LIB) -o $(BIN)
+	$(LD) $(LNK_FLAGS) $(WCTS_OBJ) $(CONFIG_LIBS) $(CURL_LIB) -o $(BIN)
 
 $(C_BIN):	$(C_WCTS_OBJ)
-	$(CXX) $(LNK_FLAGS) $(C_WCTS_OBJ) $(CONFIG_LIBS) $(CURL_LIB) \
+	$(LD) $(LNK_FLAGS) $(C_WCTS_OBJ) $(CONFIG_LIBS) $(CURL_LIB) \
 		-o $(C_BIN)
