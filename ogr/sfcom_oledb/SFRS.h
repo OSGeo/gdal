@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2002/04/25 20:15:26  warmerda
+ * upgraded to use ExecuteSQL()
+ *
  * Revision 1.16  2002/04/25 17:39:31  warmerda
  * added ICommandPrepare, and IRowsetChange interfaces
  *
@@ -475,8 +478,7 @@ class CSFRowset :
 public CSFRowsetImpl< CSFRowset, CShapeFile, CSFCommand, OGRVirtualArray>
 
 {
-    int       ParseCommand( const char *, OGRLayer * );
-    
+    char          *ProcessSpecialFields( const char *, int *, int * );
 public:
 
     virtual       ~CSFRowset();
@@ -487,8 +489,7 @@ public:
     CSimpleArray<int>                   m_panOGRIndex;
     OGRDataSource                      *m_poDS;
     int                                 m_iLayer;
-
-    int                                 m_nResultCount;
+    OGRLayer                           *m_poLayer;
 };
 
 #endif //__CSFRowset_H_
