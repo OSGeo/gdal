@@ -1,7 +1,7 @@
 /******************************************************************************
  * $Id$
  *
- * Project:  SignalFusion.com
+ * Project:  OGR ODBC Driver
  * Purpose:  Declarations for ODBC Access Cover API.
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2003/09/25 17:09:49  warmerda
+ * added some more methods
+ *
  * Revision 1.1  2003/09/24 15:38:27  warmerda
  * New
  *
@@ -36,7 +39,6 @@
 #include "cpl_odbc.h"
 
 CPL_CVSID("$Id$");
-
 
 /************************************************************************/
 /*                           CPLODBCSession()                           */
@@ -147,6 +149,11 @@ int CPLODBCSession::EstablishSession( const char *pszDSN,
     return TRUE;
 }
 
+/************************************************************************/
+/* ==================================================================== */
+/*                           CPLODBCStatement                           */
+/* ==================================================================== */
+/************************************************************************/
 
 /************************************************************************/
 /*                          CPLODBCStatement()                          */
@@ -351,7 +358,7 @@ short CPLODBCStatement::GetColNullable( int iCol )
 /*      Fetch one row from a results set.                               */
 /************************************************************************/
 
-int CPLODBCStatement::Fetch()
+int CPLODBCStatement::Fetch( int nOrientation, int nOffset )
 
 {
     ClearColumnData();
@@ -362,7 +369,8 @@ int CPLODBCStatement::Fetch()
 /* -------------------------------------------------------------------- */
 /*      Fetch a new row.                                                */
 /* -------------------------------------------------------------------- */
-    if( Failed( SQLFetch( m_hStmt ) ) )
+    if( Failed( SQLFetchScroll( m_hStmt, (SQLSMALLINT) nOrientation, 
+                                nOffset ) ) )
         return FALSE;
 
 /* -------------------------------------------------------------------- */
@@ -407,6 +415,20 @@ const char *CPLODBCStatement::GetColData( int iCol )
         return NULL;
     else 
         return m_papszColValues[iCol];
+}
+
+/************************************************************************/
+/*                              GetColId()                              */
+/************************************************************************/
+
+int CPLODBCStatement::GetColId( const char *pszColName )
+
+{
+    for( int iCol = 0; iCol < m_nColCount; iCol++ )
+        if( EQUAL(pszColName,m_papszColNames[iCol]) )
+            return iCol;
+    
+    return -1;
 }
 
 /************************************************************************/
@@ -534,4 +556,191 @@ void CPLODBCStatement::Clear()
 
     m_nStatementLen = 0;
     m_nStatementMax = 0;
+}
+
+/************************************************************************/
+/*                             GetColumns()                             */
+/************************************************************************/
+
+int CPLODBCStatement::GetColumns( const char *pszTable, 
+                                  const char *pszCatalog,
+                                  const char *pszSchema )
+
+{
+    if( pszCatalog == NULL )
+        pszCatalog = "";
+    if( pszSchema == NULL )
+        pszSchema = "";
+
+/* -------------------------------------------------------------------- */
+/*      Fetch columns resultset for this table.                         */
+/* -------------------------------------------------------------------- */
+    if( Failed( SQLColumns( m_hStmt, 
+                            (SQLCHAR *) pszCatalog, SQL_NTS,
+                            (SQLCHAR *) pszSchema, SQL_NTS,
+                            (SQLCHAR *) pszTable, SQL_NTS,
+                            (SQLCHAR *) "", SQL_NTS ) ) )
+        return FALSE;
+
+/* -------------------------------------------------------------------- */
+/*      Allocate per column information.                                */
+/* -------------------------------------------------------------------- */
+    SQLINTEGER nResultCount;
+
+    SQLRowCount( m_hStmt, &nResultCount );
+    if( nResultCount < 1 )
+        m_nColCount = 500; // Hopefully lots.
+    else
+        m_nColCount = nResultCount;
+    
+    m_papszColNames = (char **) calloc(sizeof(char *),(m_nColCount+1));
+    m_papszColValues = (char **) calloc(sizeof(char *),(m_nColCount+1));
+
+    m_panColType = (short *) calloc(sizeof(short),m_nColCount);
+    m_panColSize = (short *) calloc(sizeof(short),m_nColCount);
+    m_panColPrecision = (short *) calloc(sizeof(short),m_nColCount);
+    m_panColNullable = (short *) calloc(sizeof(short),m_nColCount);
+
+/* -------------------------------------------------------------------- */
+/*      Establish columns to use for key information.                   */
+/* -------------------------------------------------------------------- */
+    int iCol;
+
+    for( iCol = 0; iCol < m_nColCount; iCol++ )
+    {
+        char szWrkData[8193];
+        SQLINTEGER cbDataLen;
+
+        if( Failed( SQLFetch( m_hStmt ) ) )
+        {
+            m_nColCount = iCol;
+            break;
+        }
+
+        szWrkData[0] = '\0';
+
+        SQLGetData( m_hStmt, 4, SQL_C_CHAR, szWrkData, sizeof(szWrkData)-1, 
+                    &cbDataLen );
+        m_papszColNames[iCol] = strdup(szWrkData);
+
+        SQLGetData( m_hStmt, 5, SQL_C_CHAR, szWrkData, sizeof(szWrkData)-1, 
+                    &cbDataLen );
+        m_panColType[iCol] = atoi(szWrkData);
+
+        SQLGetData( m_hStmt, 7, SQL_C_CHAR, szWrkData, sizeof(szWrkData)-1, 
+                    &cbDataLen );
+        m_panColSize[iCol] = atoi(szWrkData);
+
+        SQLGetData( m_hStmt, 9, SQL_C_CHAR, szWrkData, sizeof(szWrkData)-1, 
+                    &cbDataLen );
+        m_panColPrecision[iCol] = atoi(szWrkData);
+
+        SQLGetData( m_hStmt, 11, SQL_C_CHAR, szWrkData, sizeof(szWrkData)-1, 
+                    &cbDataLen );
+        m_panColNullable[iCol] = atoi(szWrkData) == SQL_NULLABLE;
+    }
+
+    return TRUE;
+}
+
+/************************************************************************/
+/*                             DumpResult()                             */
+/************************************************************************/
+
+void CPLODBCStatement::DumpResult( FILE *fp, int bShowSchema )
+
+{
+    int iCol;
+
+/* -------------------------------------------------------------------- */
+/*      Display schema                                                  */
+/* -------------------------------------------------------------------- */
+    if( bShowSchema )
+    {
+        fprintf( fp, "Column Definitions:\n" );
+        for( iCol = 0; iCol < GetColCount(); iCol++ )
+        {
+            fprintf( fp, " %2d: %-24s ", iCol, GetColName(iCol) );
+            if( GetColPrecision(iCol) > 0 
+                && GetColPrecision(iCol) != GetColSize(iCol) )
+                fprintf( fp, " Size:%3d.%d", 
+                         GetColSize(iCol), GetColPrecision(iCol) );
+            else
+                fprintf( fp, " Size:%5d", GetColSize(iCol) );
+
+            fprintf( fp, " Type:%s", GetTypeName( GetColType(iCol) ) );
+            if( GetColNullable(iCol) )
+                fprintf( fp, " NULLABLE" );
+            fprintf( fp, "\n" );
+        }
+        fprintf( fp, "\n" );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Display results                                                 */
+/* -------------------------------------------------------------------- */
+    int iRecord = 0;
+    while( Fetch() )
+    {
+        fprintf( fp, "Record %d\n", iRecord++ );
+        
+        for( iCol = 0; iCol < GetColCount(); iCol++ )
+        {
+            fprintf( fp, "  %s: %s\n", GetColName(iCol), GetColData(iCol) );
+        }
+    }
+}
+
+/************************************************************************/
+/*                            GetTypeName()                             */
+/************************************************************************/
+
+const char *CPLODBCStatement::GetTypeName( int nTypeCode )
+
+{
+    switch( nTypeCode )
+    {
+      case SQL_CHAR:
+        return "CHAR";
+        
+      case SQL_NUMERIC:
+        return "NUMERIC";
+        
+      case SQL_DECIMAL:
+        return "DECIMAL";
+        
+      case SQL_INTEGER:
+        return "INTEGER";
+        
+      case SQL_SMALLINT:
+        return "SMALLINT";
+
+        
+      case SQL_FLOAT:
+        return "FLOAT";
+        
+      case SQL_REAL:
+        return "REAL";
+
+      case SQL_DOUBLE:
+        return "DOUBLE";
+        
+      case SQL_DATETIME:
+        return "DATETIME";
+
+      case SQL_VARCHAR:
+        return "VARCHAR";
+
+      case SQL_TYPE_DATE:
+        return "DATE";
+
+      case SQL_TYPE_TIME:
+        return "TIME";
+        
+      case SQL_TYPE_TIMESTAMP:
+        return "TIMESTAMP";
+
+      default:
+        return "TIMESTAMP";
+    }
 }

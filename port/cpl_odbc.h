@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2003/09/25 17:09:49  warmerda
+ * added some more methods
+ *
  * Revision 1.1  2003/09/24 15:39:14  warmerda
  * New
  *
@@ -40,6 +43,8 @@
 
 #include <sql.h>
 #include <sqlext.h>
+
+class CPLODBCStatement;
 
 class CPL_DLL CPLODBCSession {
     char      m_szLastError[SQL_MAX_MESSAGE_LENGTH + 1];
@@ -102,7 +107,8 @@ class CPL_DLL CPLODBCStatement {
     int            ExecuteSQL( const char * = NULL );
 
     // Results fetching
-    int            Fetch();
+    int            Fetch( int nOrientation = SQL_FETCH_NEXT, 
+                          int nOffset = 0 );
     void           ClearColumnData();
 
     int            GetColCount();
@@ -114,6 +120,18 @@ class CPL_DLL CPLODBCStatement {
 
     int            GetColId( const char * );
     const char    *GetColData( int );
+
+    // Fetch special metadata.
+    int            GetColumns( const char *pszTable, 
+                               const char *pszCatalog = NULL,
+                               const char *pszSchema = NULL );
+
+    int            GetTables( const char *pszCatalog = NULL,
+                              const char *pszSchema = NULL );
+
+    void           DumpResult( FILE *fp, int bShowSchema = FALSE );
+
+    static const char *GetTypeName( int );
 };
 
 
