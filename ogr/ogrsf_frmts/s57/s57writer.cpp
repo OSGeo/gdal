@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2004/06/02 18:45:11  warmerda
+ * Added special logic for EMPTY_NUMBER_MARKER.
+ *
  * Revision 1.6  2004/01/06 19:04:15  warmerda
  * some iso8211.h enums changed names
  *
@@ -1028,6 +1031,13 @@ int S57Writer::WriteATTF( DDFRecord *poRec, OGRFeature *poFeature )
         nRawSize += 2;
         
         pszATVL = poFeature->GetFieldAsString( iField );
+
+        // Special hack to handle special "empty" marker in integer fields.
+        if( atoi(pszATVL) == EMPTY_NUMBER_MARKER 
+            && poFeature->GetDefnRef()->GetFieldDefn(iField)->GetType() == OFTInteger )
+            pszATVL = "";
+
+        // Watch for really long data.
         if( strlen(pszATVL) + nRawSize + 10 > sizeof(achRawData) )
         {
             CPLError( CE_Failure, CPLE_AppDefined, 
@@ -1035,6 +1045,7 @@ int S57Writer::WriteATTF( DDFRecord *poRec, OGRFeature *poFeature )
             return FALSE;
         }
 
+        // copy data into record buffer.
         memcpy( achRawData + nRawSize, pszATVL, strlen(pszATVL) );
         nRawSize += strlen(pszATVL);
         achRawData[nRawSize++] = DDF_UNIT_TERMINATOR;
