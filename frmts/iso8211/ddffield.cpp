@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  1999/06/23 02:14:08  warmerda
+ * added support for variable width repeaters to GetRepeatCount()
+ *
  * Revision 1.5  1999/06/01 19:10:38  warmerda
  * don't assert on variable length repeating fields
  *
@@ -213,6 +216,15 @@ int DDFField::GetRepeatCount()
         return 1;
 
 /* -------------------------------------------------------------------- */
+/*      The occurance count depends on how many copies of this          */
+/*      field's list of subfields can fit into the data space.          */
+/* -------------------------------------------------------------------- */
+    if( poDefn->GetFixedWidth() )
+    {
+        return nDataSize / poDefn->GetFixedWidth();
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Note that it may be legal to have repeating variable width      */
 /*      subfields, but I don't have any samples, so I ignore it for     */
 /*      now.                                                            */
@@ -221,15 +233,26 @@ int DDFField::GetRepeatCount()
 /*      variable length field, but the count is one, so it isn't        */
 /*      much value for testing.                                         */
 /* -------------------------------------------------------------------- */
+    int		iOffset = 0, iRepeatCount = 1;
     
-//    CPLAssert( poDefn->GetFixedWidth() > 0 );
-    if( poDefn->GetFixedWidth() ==  0 )
-        return 1;
+    while( TRUE )
+    {
+        for( int iSF = 0; iSF < poDefn->GetSubfieldCount(); iSF++ )
+        {
+            int nBytesConsumed;
+            DDFSubfieldDefn * poThisSFDefn = poDefn->GetSubfield( iSF );
+            
+            poThisSFDefn->GetDataLength( pachData+iOffset, nDataSize - iOffset,
+                                         &nBytesConsumed);
+            iOffset += nBytesConsumed;
+            if( iOffset >= nDataSize )
+                return iRepeatCount - 1;
+        }
 
-/* -------------------------------------------------------------------- */
-/*      The occurance count depends on how many copies of this          */
-/*      field's list of subfields can fit into the data space.          */
-/* -------------------------------------------------------------------- */
-    return nDataSize / poDefn->GetFixedWidth();
+        if( iOffset > nDataSize - 2 )
+            return iRepeatCount;
+
+        iRepeatCount++;
+    }
 }
 
