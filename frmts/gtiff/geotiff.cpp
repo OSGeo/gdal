@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2000/03/14 15:16:21  warmerda
+ * initialize adfGeoTransform[]
+ *
  * Revision 1.18  2000/03/13 14:33:01  warmerda
  * avoid ambiguity with Open
  *
@@ -529,7 +532,9 @@ GTiffDataset::GTiffDataset()
     nOverviewCount = 0;
     papoOverviewDS = NULL;
     nDirOffset = 0;
-}
+
+    for( int i = 0; i < 6; i++ )
+        adfGeoTransform[i] = 0.0;}
 
 /************************************************************************/
 /*                           ~GTiffDataset()                            */
