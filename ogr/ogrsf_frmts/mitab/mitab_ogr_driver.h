@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_ogr_driver.h,v 1.11 2003/03/20 15:57:46 warmerda Exp $
+ * $Id: mitab_ogr_driver.h,v 1.12 2004/02/27 21:06:03 fwarmerdam Exp $
  *
  * Name:     mitab_ogr_drive.h
  * Project:  Mid/mif tab ogr support
@@ -30,6 +30,11 @@
  **********************************************************************
  *
  * $Log: mitab_ogr_driver.h,v $
+ * Revision 1.12  2004/02/27 21:06:03  fwarmerdam
+ * Better support for "single file" creation ... don't allow other layers to
+ * be created.  But *do* single file to satisfy the first layer creation request
+ * made.  Also, allow creating a datasource "on" an existing directory.
+ *
  * Revision 1.11  2003/03/20 15:57:46  warmerda
  * Added delete datasource support
  *
@@ -88,6 +93,8 @@ class OGRTABDataSource : public OGRDataSource
 
     char                **m_papszOptions;
     int                 m_bCreateMIF;
+    int                 m_bSingleFile;
+    int                 m_bSingleLayerAlreadyCreated;
 
   public:
                 OGRTABDataSource();

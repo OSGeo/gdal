@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_ogr_driver.cpp,v 1.9 2003/03/20 15:57:46 warmerda Exp $
+ * $Id: mitab_ogr_driver.cpp,v 1.10 2004/02/27 21:06:03 fwarmerdam Exp $
  *
  * Name:     mitab_ogr_driver.cpp
  * Project:  MapInfo Mid/Mif, Tab ogr support
@@ -31,6 +31,11 @@
  **********************************************************************
  *
  * $Log: mitab_ogr_driver.cpp,v $
+ * Revision 1.10  2004/02/27 21:06:03  fwarmerdam
+ * Better support for "single file" creation ... don't allow other layers to
+ * be created.  But *do* single file to satisfy the first layer creation request
+ * made.  Also, allow creating a datasource "on" an existing directory.
+ *
  * Revision 1.9  2003/03/20 15:57:46  warmerda
  * Added delete datasource support
  *
@@ -121,19 +126,6 @@ OGRDataSource *OGRTABDriver::CreateDataSource( const char * pszName,
 {
     VSIStatBuf  stat;
     OGRTABDataSource *poDS;
-
-/* -------------------------------------------------------------------- */
-/*      Verify that the target is a valid directory.                    */
-/* -------------------------------------------------------------------- */
-    if( VSIStat( pszName, &stat ) == 0 )
-    {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "File already exists: %s\n"
-                  "Can't create new Mapinfo file.\n",
-                  pszName );
-        
-        return NULL;
-    }
 
 /* -------------------------------------------------------------------- */
 /*      Try to create the data source.                                  */
