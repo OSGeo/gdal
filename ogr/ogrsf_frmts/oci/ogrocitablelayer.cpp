@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.30  2004/11/22 19:24:15  fwarmerdam
+ * added support for a list of tables in the datasource name
+ *
  * Revision 1.29  2004/11/09 02:49:12  fwarmerdam
  * Don't add user_sdo_geom_metadata record till finalize (layer load complete)
  * time as that is when we have all the diminfo details.  Inserts of metadata
@@ -143,7 +146,6 @@ static int nHits = 0;
 
 OGROCITableLayer::OGROCITableLayer( OGROCIDataSource *poDSIn, 
                                     const char * pszTableName,
-                                    const char * pszGeomColIn,
                                     int nSRIDIn, int bUpdate, int bNewLayerIn )
 
 {
@@ -166,11 +168,11 @@ OGROCITableLayer::OGROCITableLayer( OGROCIDataSource *poDSIn,
         bHaveSpatialIndex = HSI_UNKNOWN;
 
     poFeatureDefn = ReadTableDefinition( pszTableName );
-    
-    CPLFree( pszGeomName );
-    pszGeomName = CPLStrdup( pszGeomColIn );
 
     nSRID = nSRIDIn;
+    if( nSRID == -1 )
+        nSRID = LookupTableSRID();
+        
     poSRS = poDSIn->FetchSRS( nSRID );
     if( poSRS != NULL )
         poSRS->Reference();
@@ -317,7 +319,15 @@ OGRFeatureDefn *OGROCITableLayer::ReadTableDefinition( const char * pszTable )
             return poDefn;
 
         if( oField.GetType() == OFTBinary )
+        {
+            if( nOCIType == 108 && pszGeomName == NULL )
+            {
+                CPLFree( pszGeomName );
+                pszGeomName = CPLStrdup( oField.GetNameRef() );
+                iGeomColumn = iRawFld;
+            }
             continue;                   
+        }
 
         if( EQUAL(oField.GetNameRef(),pszExpectedFIDName) 
             && oField.GetType() == OFTInteger )

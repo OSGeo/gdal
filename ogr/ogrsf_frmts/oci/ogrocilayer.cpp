@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2004/11/22 19:24:15  fwarmerdam
+ * added support for a list of tables in the datasource name
+ *
  * Revision 1.9  2004/11/22 17:19:14  fwarmerdam
  * fixed missing case for 3d multipolygons: bug 618
  *
@@ -704,4 +707,68 @@ int OGROCILayer::TestCapability( const char * pszCap )
 
     else 
         return FALSE;
+}
+
+
+/************************************************************************/
+/*                          LookupTableSRID()                           */
+/*                                                                      */
+/*      Note that the table name may also be prefixed by the owner      */
+/*      with a dot separator.                                           */
+/************************************************************************/
+
+int OGROCILayer::LookupTableSRID()
+
+{
+/* -------------------------------------------------------------------- */
+/*      If we don't have a geometry column, there isn't much point      */
+/*      in trying.                                                      */
+/* -------------------------------------------------------------------- */
+    if( pszGeomName == NULL )
+        return -1;
+    
+/* -------------------------------------------------------------------- */
+/*      Split out the owner if available.                               */
+/* -------------------------------------------------------------------- */
+    const char *pszTableName = GetLayerDefn()->GetName();
+    char *pszOwner = NULL;
+
+    if( strstr(pszTableName,".") != NULL )
+    {
+        pszOwner = CPLStrdup(pszTableName);
+        pszTableName = strstr(pszTableName,".") + 1;
+
+        *(strstr(pszOwner,".")) = '\0';
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Build our query command.                                        */
+/* -------------------------------------------------------------------- */
+    OGROCIStringBuf oCommand;
+
+    oCommand.Appendf( 1000, "SELECT SRID FROM ALL_SDO_GEOM_METADATA "
+                      "WHERE TABLE_NAME = '%s' AND COLUMN_NAME = '%s'", 
+                      pszTableName, pszGeomName );
+    
+    if( pszOwner != NULL )
+    {
+        oCommand.Appendf( 500, " AND OWNER = '%s'", pszOwner );
+        CPLFree( pszOwner );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Execute query command.                                          */
+/* -------------------------------------------------------------------- */
+    OGROCIStatement oGetTables( poDS->GetSession() );
+    int nSRID = -1;
+    
+    if( oGetTables.Execute( oCommand.GetString() ) == CE_None )
+    {
+        char **papszRow = oGetTables.SimpleFetchRow();
+
+        if( papszRow != NULL && papszRow[0] != NULL )
+            nSRID = atoi( papszRow[0] );
+    }
+
+    return nSRID;
 }
