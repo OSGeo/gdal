@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2002/07/09 20:33:12  warmerda
+ * expand tabs
+ *
  * Revision 1.16  2002/06/19 18:20:21  warmerda
  * use VSIStatL() so it works on large files, dont keep stat in openinfo.
  *
@@ -190,7 +193,7 @@ GDALOpenInfo::~GDALOpenInfo()
 GDALDatasetH GDALOpen( const char * pszFilename, GDALAccess eAccess )
 
 {
-    int		iDriver;
+    int         iDriver;
     GDALDriverManager *poDM = GetGDALDriverManager();
     GDALOpenInfo oOpenInfo( pszFilename, eAccess );
 
@@ -198,8 +201,8 @@ GDALDatasetH GDALOpen( const char * pszFilename, GDALAccess eAccess )
     
     for( iDriver = 0; iDriver < poDM->GetDriverCount(); iDriver++ )
     {
-        GDALDriver	*poDriver = poDM->GetDriver( iDriver );
-        GDALDataset	*poDS;
+        GDALDriver      *poDriver = poDM->GetDriver( iDriver );
+        GDALDataset     *poDS;
 
         poDS = poDriver->pfnOpen( &oOpenInfo );
         if( poDS != NULL )
@@ -265,9 +268,9 @@ GDALDatasetH GDALOpenShared( const char *pszFilename, GDALAccess eAccess )
 /*      First scan the existing list to see if it could already         */
 /*      contain the requested dataset.                                  */
 /* -------------------------------------------------------------------- */
-    int		i, nSharedDatasetCount;
+    int         i, nSharedDatasetCount;
     GDALDataset **papoSharedDatasets 
-        		= GDALDataset::GetOpenDatasets(&nSharedDatasetCount);
+                        = GDALDataset::GetOpenDatasets(&nSharedDatasetCount);
     
     for( i = 0; i < nSharedDatasetCount; i++ )
     {
@@ -301,9 +304,9 @@ void GDALClose( GDALDatasetH hDS )
 
 {
     GDALDataset *poDS = (GDALDataset *) hDS;
-    int		i, nSharedDatasetCount;
+    int         i, nSharedDatasetCount;
     GDALDataset **papoSharedDatasets 
-        		= GDALDataset::GetOpenDatasets(&nSharedDatasetCount);
+                        = GDALDataset::GetOpenDatasets(&nSharedDatasetCount);
 
 /* -------------------------------------------------------------------- */
 /*      If this file is in the shared dataset list then dereference     */
@@ -335,9 +338,9 @@ void GDALClose( GDALDatasetH hDS )
 int GDALDumpOpenDatasets( FILE *fp )
    
 {
-    int		i, nSharedDatasetCount;
+    int         i, nSharedDatasetCount;
     GDALDataset **papoSharedDatasets 
-        		= GDALDataset::GetOpenDatasets(&nSharedDatasetCount);
+                        = GDALDataset::GetOpenDatasets(&nSharedDatasetCount);
 
     if( nSharedDatasetCount > 0 )
         VSIFPrintf( fp, "Open GDAL Datasets:\n" );

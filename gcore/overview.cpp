@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2002/07/09 20:33:12  warmerda
+ * expand tabs
+ *
  * Revision 1.9  2002/04/16 17:49:29  warmerda
  * Ensure dfRatio is assigned a value.
  *
@@ -243,7 +246,7 @@ GDALDownsampleChunkC32R( int nSrcWidth, int nSrcHeight,
                 {
                     for( iX = nSrcXOff; iX < nSrcXOff2; iX++ )
                     {
-                        double	dfR, dfI;
+                        double  dfR, dfI;
 
                         dfR = pafSrcScanline[iX*2+(iY-nSrcYOff)*nSrcWidth*2];
                         dfI = pafSrcScanline[iX*2+(iY-nSrcYOff)*nSrcWidth*2+1];
@@ -262,7 +265,7 @@ GDALDownsampleChunkC32R( int nSrcWidth, int nSrcHeight,
                 }
                 else
                 {
-                    double	dfM, dfDesiredM, dfRatio=1.0;
+                    double      dfM, dfDesiredM, dfRatio=1.0;
 
                     pafDstScanline[iDstPixel*2  ] = dfTotalR / nCount;
                     pafDstScanline[iDstPixel*2+1] = dfTotalI / nCount;
@@ -370,11 +373,11 @@ GDALRegenerateCascadingOverviews(
 /* -------------------------------------------------------------------- */
 /*      Generate all the bands.                                         */
 /* -------------------------------------------------------------------- */
-    double	dfPixelsProcessed = 0.0;
+    double      dfPixelsProcessed = 0.0;
 
     for( i = 0; i < nOverviews; i++ )
     {
-        void	*pScaledProgressData;
+        void    *pScaledProgressData;
         double  dfPixels;
         GDALRasterBand *poBaseBand;
         CPLErr  eErr;
@@ -536,13 +539,13 @@ GDALComputeBandStats( GDALRasterBandH hSrcBand,
 
 {
     GDALRasterBand *poSrcBand = (GDALRasterBand *) hSrcBand;
-    int		iLine, nWidth, nHeight;
+    int         iLine, nWidth, nHeight;
     GDALDataType eType = poSrcBand->GetRasterDataType();
     GDALDataType eWrkType;
-    int		bComplex;
-    float	*pafData;
-    double	dfSum=0.0, dfSum2=0.0;
-    int		nSamples = 0;
+    int         bComplex;
+    float       *pafData;
+    double      dfSum=0.0, dfSum2=0.0;
+    int         nSamples = 0;
 
     nWidth = poSrcBand->GetXSize();
     nHeight = poSrcBand->GetYSize();
@@ -567,7 +570,7 @@ GDALComputeBandStats( GDALRasterBandH hSrcBand,
 /* -------------------------------------------------------------------- */
     for( iLine = 0; iLine < nHeight; iLine += nSampleStep )
     {
-        int	iPixel;
+        int     iPixel;
 
         if( !pfnProgress( iLine / (double) nHeight,
                           NULL, pProgressData ) )
@@ -583,7 +586,7 @@ GDALComputeBandStats( GDALRasterBandH hSrcBand,
 
         for( iPixel = 0; iPixel < nWidth; iPixel++ )
         {
-            float	fValue;
+            float       fValue;
 
             if( bComplex )
             {
@@ -619,7 +622,7 @@ GDALComputeBandStats( GDALRasterBandH hSrcBand,
 
     if( pdfStdDev != NULL )
     {
-        double	dfMean = dfSum / nSamples;
+        double  dfMean = dfSum / nSamples;
 
         *pdfStdDev = sqrt((dfSum2 / nSamples) - (dfMean * dfMean));
     }
@@ -644,8 +647,8 @@ GDALOverviewMagnitudeCorrection( GDALRasterBandH hBaseBand,
                                  void *pProgressData )
 
 {
-    CPLErr	eErr;
-    double	dfOrigMean, dfOrigStdDev;
+    CPLErr      eErr;
+    double      dfOrigMean, dfOrigStdDev;
 
 /* -------------------------------------------------------------------- */
 /*      Compute mean/stddev for source raster.                          */
@@ -659,13 +662,13 @@ GDALOverviewMagnitudeCorrection( GDALRasterBandH hBaseBand,
 /* -------------------------------------------------------------------- */
 /*      Loop on overview bands.                                         */
 /* -------------------------------------------------------------------- */
-    int		iOverview;
+    int         iOverview;
 
     for( iOverview = 0; iOverview < nOverviewCount; iOverview++ )
     {
         GDALRasterBand *poOverview = (GDALRasterBand *)pahOverviews[iOverview];
-        double	dfOverviewMean, dfOverviewStdDev;
-        double	dfGain;
+        double  dfOverviewMean, dfOverviewStdDev;
+        double  dfGain;
 
         eErr = GDALComputeBandStats( pahOverviews[iOverview], 1, 
                                      &dfOverviewMean, &dfOverviewStdDev, 
@@ -682,9 +685,9 @@ GDALOverviewMagnitudeCorrection( GDALRasterBandH hBaseBand,
 /* -------------------------------------------------------------------- */
 /*      Apply gain and offset.                                          */
 /* -------------------------------------------------------------------- */
-        GDALDataType	eWrkType, eType = poOverview->GetRasterDataType();
-        int		iLine, nWidth, nHeight, bComplex;
-        float		*pafData;
+        GDALDataType    eWrkType, eType = poOverview->GetRasterDataType();
+        int             iLine, nWidth, nHeight, bComplex;
+        float           *pafData;
 
         nWidth = poOverview->GetXSize();
         nHeight = poOverview->GetYSize();
@@ -703,7 +706,7 @@ GDALOverviewMagnitudeCorrection( GDALRasterBandH hBaseBand,
 
         for( iLine = 0; iLine < nHeight; iLine++ )
         {
-            int	iPixel;
+            int iPixel;
             
             if( !pfnProgress( iLine / (double) nHeight,
                               NULL, pProgressData ) )

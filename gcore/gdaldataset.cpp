@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.28  2002/07/09 20:33:12  warmerda
+ * expand tabs
+ *
  * Revision 1.27  2002/05/28 18:56:22  warmerda
  * added shared dataset concept
  *
@@ -154,7 +157,7 @@ GDALDataset::GDALDataset()
 GDALDataset::~GDALDataset()
 
 {
-    int		i;
+    int         i;
 
     CPLDebug( "GDAL", "GDALClose(%s)\n", GetDescription() );
 
@@ -202,7 +205,7 @@ GDALDataset::~GDALDataset()
 void GDALDataset::FlushCache()
 
 {
-    int		i;
+    int         i;
 
     // This sometimes happens if a dataset is destroyed before completely
     // built. 
@@ -289,7 +292,7 @@ void GDALDataset::SetBand( int nNewBand, GDALRasterBand * poBand )
 /*      Do we need to grow the bands list?                              */
 /* -------------------------------------------------------------------- */
     if( nBands < nNewBand || papoBands == NULL ) {
-        int		i;
+        int             i;
 
         if( papoBands == NULL )
             papoBands = (GDALRasterBand **)
@@ -563,13 +566,13 @@ CPLErr GDALDataset::GetGeoTransform( double * padfTransform )
 {
     CPLAssert( padfTransform != NULL );
         
-    padfTransform[0] = 0.0;	/* X Origin (top left corner) */
-    padfTransform[1] = 1.0;	/* X Pixel size */
+    padfTransform[0] = 0.0;     /* X Origin (top left corner) */
+    padfTransform[1] = 1.0;     /* X Pixel size */
     padfTransform[2] = 0.0;
 
-    padfTransform[3] = 0.0;	/* Y Origin (top left corner) */
-    padfTransform[4] = 0.0;	
-    padfTransform[5] = 1.0;	/* Y Pixel Size */
+    padfTransform[3] = 0.0;     /* Y Origin (top left corner) */
+    padfTransform[4] = 0.0;     
+    padfTransform[5] = 1.0;     /* Y Pixel Size */
 
     return( CE_Failure );
 }

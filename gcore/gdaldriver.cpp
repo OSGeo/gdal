@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.25  2002/07/09 20:33:12  warmerda
+ * expand tabs
+ *
  * Revision 1.24  2002/06/12 21:13:27  warmerda
  * use metadata based driver info
  *
@@ -223,7 +226,7 @@ GDALDatasetH CPL_DLL GDALCreate( GDALDriverH hDriver,
  * implement the Create() method but do implement this CreateCopy() method.
  * If the driver doesn't implement CreateCopy(), but does implement Create()
  * then the default CreateCopy() mechanism built on calling Create() will
- * be used.								
+ * be used.                                                             
  *
  * It is intended that CreateCopy() would often be used with a source dataset
  * which is a virtual dataset allowing configuration of band types, and
@@ -306,7 +309,7 @@ GDALDataset *GDALDriver::CreateCopy( const char * pszFilename,
 /*      suitable.  For now we don't try and copy GCPs, though I         */
 /*      suppose we should.                                              */
 /* -------------------------------------------------------------------- */
-    double	adfGeoTransform[6];
+    double      adfGeoTransform[6];
 
     if( poSrcDS->GetGeoTransform( adfGeoTransform ) == CE_None 
         && (adfGeoTransform[0] != 0.0 
@@ -418,7 +421,7 @@ CPLErr GDALDriver::Delete( const char * pszFilename )
         return pfnDelete( pszFilename );
     else
     {
-        VSIStatBuf	sStat;
+        VSIStatBuf      sStat;
 
         if( VSIStat( pszFilename, &sStat ) == 0 && VSI_ISREG( sStat.st_mode ) )
         {

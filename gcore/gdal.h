@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.51  2002/07/09 20:33:12  warmerda
+ * expand tabs
+ *
  * Revision 1.50  2002/06/12 21:13:27  warmerda
  * use metadata based driver info
  *
@@ -197,10 +200,10 @@
 /*      GDAL Version Information.                                       */
 /* -------------------------------------------------------------------- */
 #ifndef GDAL_VERSION_NUM
-#  define GDAL_VERSION_NUM	1170
+#  define GDAL_VERSION_NUM      1171
 #endif
 #ifndef GDAL_RELEASE_DATE
-#  define GDAL_RELEASE_DATE     20020416				
+#  define GDAL_RELEASE_DATE     20020416                                
 #endif
 #ifndef GDAL_RELEASE_NAME
 #  define GDAL_RELEASE_NAME     "1.1.7"
@@ -215,7 +218,7 @@ CPL_C_START
 /*! Pixel data types */
 typedef enum {
     GDT_Unknown = 0,
-    /*! Eight bit unsigned integer */ 		GDT_Byte = 1,
+    /*! Eight bit unsigned integer */           GDT_Byte = 1,
     /*! Sixteen bit unsigned integer */         GDT_UInt16 = 2,
     /*! Sixteen bit signed integer */           GDT_Int16 = 3,
     /*! Thirty two bit unsigned integer */      GDT_UInt32 = 4,
@@ -226,7 +229,7 @@ typedef enum {
     /*! Complex Int32 */                        GDT_CInt32 = 9,
     /*! Complex Float32 */                      GDT_CFloat32 = 10,
     /*! Complex Float64 */                      GDT_CFloat64 = 11,
-    GDT_TypeCount = 12		/* maximum type # + 1 */
+    GDT_TypeCount = 12          /* maximum type # + 1 */
 } GDALDataType;
 
 int CPL_DLL GDALGetDataTypeSize( GDALDataType );
@@ -285,7 +288,7 @@ const char CPL_DLL *GDALGetPaletteInterpretationName( GDALPaletteInterp );
 /*                                                                      */
 /*      error codes 100 to 299 reserved for GDAL.                       */
 /* -------------------------------------------------------------------- */
-#define CPLE_WrongFormat	200
+#define CPLE_WrongFormat        200
 
 /* -------------------------------------------------------------------- */
 /*      Define handle types related to various internal classes.        */
@@ -348,7 +351,7 @@ int CPL_DLL         GDALGetDriverCount();
 GDALDriverH CPL_DLL GDALGetDriver( int );
 int         CPL_DLL GDALRegisterDriver( GDALDriverH );
 void        CPL_DLL GDALDeregisterDriver( GDALDriverH );
-CPLErr	    CPL_DLL GDALDeleteDataset( GDALDriverH, const char * );
+CPLErr      CPL_DLL GDALDeleteDataset( GDALDriverH, const char * );
 
 /* The following are deprecated */
 const char CPL_DLL *GDALGetDriverShortName( GDALDriverH );
@@ -363,24 +366,24 @@ const char CPL_DLL *GDALGetDriverHelpTopic( GDALDriverH );
 typedef struct
 {
     /** Unique identifier, often numeric */
-    char	*pszId; 
+    char        *pszId; 
 
     /** Informational message or "" */
-    char	*pszInfo;
+    char        *pszInfo;
 
     /** Pixel (x) location of GCP on raster */
-    double 	dfGCPPixel;
+    double      dfGCPPixel;
     /** Line (y) location of GCP on raster */
-    double	dfGCPLine;
+    double      dfGCPLine;
 
     /** X position of GCP in georeferenced space */
-    double	dfGCPX;
+    double      dfGCPX;
 
     /** Y position of GCP in georeferenced space */
-    double	dfGCPY;
+    double      dfGCPY;
 
     /** Elevation of GCP, or zero if not known */
-    double	dfGCPZ;
+    double      dfGCPZ;
 } GDAL_GCP;
 
 void CPL_DLL GDALInitGCPs( int, GDAL_GCP * );
@@ -410,9 +413,9 @@ const char CPL_DLL *GDALGetDescription( GDALMajorObjectH );
 
 GDALDriverH CPL_DLL GDALGetDatasetDriver( GDALDatasetH );
 void CPL_DLL   GDALClose( GDALDatasetH );
-int CPL_DLL	GDALGetRasterXSize( GDALDatasetH );
-int CPL_DLL	GDALGetRasterYSize( GDALDatasetH );
-int CPL_DLL	GDALGetRasterCount( GDALDatasetH );
+int CPL_DLL     GDALGetRasterXSize( GDALDatasetH );
+int CPL_DLL     GDALGetRasterYSize( GDALDatasetH );
+int CPL_DLL     GDALGetRasterCount( GDALDatasetH );
 GDALRasterBandH CPL_DLL GDALGetRasterBand( GDALDatasetH, int );
 
 CPLErr CPL_DLL  GDALAddBand( GDALDatasetH hDS, GDALDataType eType, 
@@ -441,7 +444,7 @@ CPLErr CPL_DLL  GDALBuildOverviews( GDALDatasetH, const char *, int, int *,
 /* ==================================================================== */
 
 GDALDataType CPL_DLL GDALGetRasterDataType( GDALRasterBandH );
-void CPL_DLL	GDALGetBlockSize( GDALRasterBandH,
+void CPL_DLL    GDALGetBlockSize( GDALRasterBandH,
                                   int * pnXSize, int * pnYSize );
 
 CPLErr CPL_DLL GDALRasterIO( GDALRasterBandH hRBand, GDALRWFlag eRWFlag,
@@ -457,6 +460,8 @@ int CPL_DLL GDALGetRasterBandYSize( GDALRasterBandH );
 char CPL_DLL  **GDALGetRasterMetadata( GDALRasterBandH );
 
 GDALColorInterp CPL_DLL GDALGetRasterColorInterpretation( GDALRasterBandH );
+CPLErr CPL_DLL GDALSetRasterColorInterpretation( GDALRasterBandH,
+                                                 GDALColorInterp );
 GDALColorTableH CPL_DLL GDALGetRasterColorTable( GDALRasterBandH );
 CPLErr CPL_DLL GDALSetRasterColorTable( GDALRasterBandH, GDALColorTableH );
 int CPL_DLL     GDALHasArbitraryOverviews( GDALRasterBandH );

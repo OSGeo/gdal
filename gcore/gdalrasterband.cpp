@@ -28,6 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************
  * $Log$
+ * Revision 1.30  2002/07/09 20:33:12  warmerda
+ * expand tabs
+ *
  * Revision 1.29  2002/05/29 15:58:26  warmerda
  * removed GetDescription(), added SetColorInterpretation()
  *
@@ -296,7 +299,7 @@ CPLErr GDALRasterIO( GDALRasterBandH hBand, GDALRWFlag eRWFlag,
                      int nLineSpace )
 
 {
-    GDALRasterBand	*poBand = (GDALRasterBand *) hBand;
+    GDALRasterBand      *poBand = (GDALRasterBand *) hBand;
 
     return( poBand->RasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
                               pData, nBufXSize, nBufYSize, eBufType,
@@ -340,8 +343,8 @@ CPLErr GDALRasterIO( GDALRasterBandH hBand, GDALRWFlag eRWFlag,
  CPLErr GetHistogram( GDALRasterBand *poBand, int *panHistogram )
 
  {
-     int	nXBlocks, nYBlocks, nXBlockSize, nYBlockSize;
-     int	iXBlock, iYBlock;
+     int        nXBlocks, nYBlocks, nXBlockSize, nYBlockSize;
+     int        iXBlock, iYBlock;
 
      memset( panHistogram, 0, sizeof(int) * 256 );
 
@@ -357,7 +360,7 @@ CPLErr GDALRasterIO( GDALRasterBandH hBand, GDALRWFlag eRWFlag,
      {
          for( iXBlock = 0; iXBlock < nXBlocks; iXBlock++ )
          {
-             int	nXValid, nYValid;
+             int        nXValid, nYValid;
              
              poBand->ReadBlock( iXBlock, iYBlock, pabyData );
 
@@ -403,7 +406,7 @@ CPLErr GDALRasterBand::ReadBlock( int nXBlockOff, int nYBlockOff,
     {
         CPLError( CE_Failure, CPLE_IllegalArg,
                   "Illegal nXBlockOff value (%d) in "
-                  	"GDALRasterBand::ReadBlock()\n",
+                        "GDALRasterBand::ReadBlock()\n",
                   nXBlockOff );
 
         return( CE_Failure );
@@ -414,7 +417,7 @@ CPLErr GDALRasterBand::ReadBlock( int nXBlockOff, int nYBlockOff,
     {
         CPLError( CE_Failure, CPLE_IllegalArg,
                   "Illegal nYBlockOff value (%d) in "
-                  	"GDALRasterBand::ReadBlock()\n",
+                        "GDALRasterBand::ReadBlock()\n",
                   nYBlockOff );
 
         return( CE_Failure );
@@ -434,7 +437,7 @@ CPLErr GDALReadBlock( GDALRasterBandH hBand, int nXOff, int nYOff,
                       void * pData )
 
 {
-    GDALRasterBand	*poBand = (GDALRasterBand *) hBand;
+    GDALRasterBand      *poBand = (GDALRasterBand *) hBand;
 
     return( poBand->ReadBlock( nXOff, nYOff, pData ) );
 }
@@ -503,7 +506,7 @@ CPLErr GDALRasterBand::WriteBlock( int nXBlockOff, int nYBlockOff,
     {
         CPLError( CE_Failure, CPLE_IllegalArg,
                   "Illegal nXBlockOff value (%d) in "
-                  	"GDALRasterBand::WriteBlock()\n",
+                        "GDALRasterBand::WriteBlock()\n",
                   nXBlockOff );
 
         return( CE_Failure );
@@ -514,7 +517,7 @@ CPLErr GDALRasterBand::WriteBlock( int nXBlockOff, int nYBlockOff,
     {
         CPLError( CE_Failure, CPLE_IllegalArg,
                   "Illegal nYBlockOff value (%d) in "
-                  	"GDALRasterBand::WriteBlock()\n",
+                        "GDALRasterBand::WriteBlock()\n",
                   nYBlockOff );
 
         return( CE_Failure );
@@ -543,7 +546,7 @@ CPLErr GDALWriteBlock( GDALRasterBandH hBand, int nXOff, int nYOff,
                        void * pData )
 
 {
-    GDALRasterBand	*poBand = (GDALRasterBand *) hBand;
+    GDALRasterBand      *poBand = (GDALRasterBand *) hBand;
 
     return( poBand->WriteBlock( nXOff, nYOff, pData ) );
 }
@@ -618,7 +621,7 @@ void GDALRasterBand::GetBlockSize( int * pnXSize, int *pnYSize )
 void GDALGetBlockSize( GDALRasterBandH hBand, int * pnXSize, int * pnYSize )
 
 {
-    GDALRasterBand	*poBand = (GDALRasterBand *) hBand;
+    GDALRasterBand      *poBand = (GDALRasterBand *) hBand;
 
     poBand->GetBlockSize( pnXSize, pnYSize );
 }
@@ -657,7 +660,7 @@ CPLErr GDALRasterBand::AdoptBlock( int nBlockXOff, int nBlockYOff,
                                    GDALRasterBlock * poBlock )
 
 {
-    int		nBlockIndex;
+    int         nBlockIndex;
     
     InitBlockInfo();
     
@@ -737,9 +740,9 @@ CPLErr GDALFlushRasterCache( GDALRasterBandH hBand )
 CPLErr GDALRasterBand::FlushBlock( int nBlockXOff, int nBlockYOff )
 
 {
-    int		nBlockIndex;
+    int         nBlockIndex;
     GDALRasterBlock *poBlock;
-    CPLErr	eErr = CE_None;
+    CPLErr      eErr = CE_None;
         
     InitBlockInfo();
     
@@ -797,7 +800,7 @@ GDALRasterBlock * GDALRasterBand::GetBlockRef( int nXBlockOff,
                                                int nYBlockOff )
 
 {
-    int		nBlockIndex;
+    int         nBlockIndex;
 
     InitBlockInfo();
     
@@ -808,7 +811,7 @@ GDALRasterBlock * GDALRasterBand::GetBlockRef( int nXBlockOff,
     {
         CPLError( CE_Failure, CPLE_IllegalArg,
                   "Illegal nBlockXOff value (%d) in "
-                  	"GDALRasterBand::GetBlockRef()\n",
+                        "GDALRasterBand::GetBlockRef()\n",
                   nXBlockOff );
 
         return( NULL );
@@ -818,7 +821,7 @@ GDALRasterBlock * GDALRasterBand::GetBlockRef( int nXBlockOff,
     {
         CPLError( CE_Failure, CPLE_IllegalArg,
                   "Illegal nBlockYOff value (%d) in "
-                  	"GDALRasterBand::GetBlockRef()\n",
+                        "GDALRasterBand::GetBlockRef()\n",
                   nYBlockOff );
 
         return( NULL );
@@ -833,7 +836,7 @@ GDALRasterBlock * GDALRasterBand::GetBlockRef( int nXBlockOff,
     
     if( papoBlocks[nBlockIndex] == NULL )
     {
-        GDALRasterBlock	*poBlock;
+        GDALRasterBlock *poBlock;
         
         poBlock = new GDALRasterBlock( this, nXBlockOff, nYBlockOff );
 
@@ -1199,6 +1202,17 @@ CPLErr GDALRasterBand::SetColorInterpretation( GDALColorInterp eColorInterp )
 
 {
     return CE_Failure;
+}
+
+/************************************************************************/
+/*                  GDALSetRasterColorInterpretation()                  */
+/************************************************************************/
+
+CPLErr GDALSetRasterColorInterpretation( GDALRasterBandH hBand,
+                                         GDALColorInterp eColorInterp )
+
+{
+    return ((GDALRasterBand *) hBand)->SetColorInterpretation(eColorInterp);
 }
 
 /************************************************************************/
