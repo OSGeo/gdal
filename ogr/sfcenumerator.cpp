@@ -28,12 +28,16 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/07/07 19:39:20  warmerda
+ * added OpenAny()
+ *
  * Revision 1.1  1999/06/08 03:51:00  warmerda
  * New
  *
  */
 
 #include "sfcenumerator.h"
+#include "sfcdatasource.h"
 #include <stdio.h>
 
 /************************************************************************/
@@ -74,3 +78,63 @@ int SFCEnumerator::IsOGISProvider()
     }
 }
 
+/************************************************************************/
+/*                              OpenAny()                               */
+/************************************************************************/
+
+/**
+ * Try to open a datasource with any of the available providers till it
+ * works. 
+ *
+ * @param pszDataSource the name of the data source to try and open.
+ *
+ * @return the data source opened, or NULL on failure.  
+ */
+
+SFCDataSource * SFCEnumerator::OpenAny( const char * pszDataSource )
+
+{
+/* -------------------------------------------------------------------- */
+/*      Reset to the beginning, and make a pass trying OpenGIS          */
+/*      providers.                                                      */
+/* -------------------------------------------------------------------- */
+    Close();
+    Open();
+
+    while( MoveNext() == S_OK )
+    {
+        SFCDataSource      *poDS;
+
+        if( !IsOGISProvider() )
+            continue;
+
+        poDS = new SFCDataSource();
+        if( !FAILED(poDS->Open( *this, pszDataSource )) )
+            return poDS;
+
+        delete poDS;
+    }
+    
+/* -------------------------------------------------------------------- */
+/*      Reset to the beginning, and make a pass trying non OpenGIS      */
+/*      providers.                                                      */
+/* -------------------------------------------------------------------- */
+    Close();
+    Open();
+
+    while( MoveNext() == S_OK )
+    {
+        SFCDataSource      *poDS;
+
+        if( IsOGISProvider() )
+            continue;
+
+        poDS = new SFCDataSource();
+        if( !FAILED(poDS->Open( *this, pszDataSource )) )
+            return poDS;
+
+        delete poDS;
+    }
+    
+    return NULL;
+}

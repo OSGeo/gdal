@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  1999/07/07 19:39:20  warmerda
+ * added OpenAny()
+ *
  * Revision 1.2  1999/06/08 17:51:55  warmerda
  * remoted unimplemented MoveNextOGISProvider()
  *
@@ -45,10 +48,14 @@
  * Specialized ATL CEnumerator that knows how to identify OGIS providers.
  */
 
+class SFCDataSource;
+
 class SFCEnumerator : public CEnumerator
 {
   public:
     int          IsOGISProvider();
+
+    SFCDataSource *OpenAny( const char * pszDataSource );
 };
 
 
