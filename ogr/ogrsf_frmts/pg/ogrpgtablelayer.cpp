@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2004/04/30 00:47:31  warmerda
+ * launder field name oid to oid_
+ *
  * Revision 1.15  2004/03/17 06:53:28  warmerda
  * Make command string arbitrary length in BuildFullQueryStatement() as
  * per report from Stephen Frost.
@@ -759,8 +762,16 @@ OGRErr OGRPGTableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK )
             if( pszSafeName[i] == '-' || pszSafeName[i] == '#' )
                 pszSafeName[i] = '_';
         }
+
         oField.SetName( pszSafeName );
         CPLFree( pszSafeName );
+
+        if( EQUAL(oField.GetNameRef(),"oid") )
+        {
+            CPLError( CE_Warning, CPLE_AppDefined, 
+                      "Renaming field 'oid' to 'oid_' to avoid conflict with internal oid field." );
+            oField.SetName( "oid_" );
+        }
     }
     
 /* -------------------------------------------------------------------- */
