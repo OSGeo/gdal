@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.64  2003/04/08 22:13:00  warmerda
+ * added new entry poins, and listtostringlist support
+ *
  * Revision 1.63  2003/04/03 19:27:55  warmerda
  * added nullable string support, fixed ogr.Layer.SetAttributeFilter()
  *
@@ -278,6 +281,75 @@ py_StringListToDict(PyObject *self, PyObject *args) {
 %}
 
 %native(StringListToDict) py_StringListToDict;
+
+%{
+static PyObject *
+py_ListToStringList(PyObject *self, PyObject *args) {
+
+    PyObject *psList;
+    char **papszStringList = NULL;
+    char  szSwigTarget[48];
+    int   iEntry;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O!:ListToStringList",
+			 &PyList_Type, &psList))
+        return NULL;
+
+    for( iEntry=0; iEntry < PyList_Size( psList ); iEntry++ )
+    {
+	char *pszItem = NULL;
+        
+	if( !PyArg_Parse( PyList_GET_ITEM(psList,iEntry), "s", &pszItem ) )
+        {
+	    PyErr_SetString(PyExc_TypeError,
+	                    "String list item not a string.");
+            return NULL;
+        }
+
+	papszStringList = CSLAddString( papszStringList, pszItem );
+    }
+
+    SWIG_MakePtr( szSwigTarget, papszStringList, "_stringList" );	
+
+    return Py_BuildValue( "s", szSwigTarget );
+}
+%}
+
+%native(ListToStringList) py_ListToStringList;
+
+%{
+static PyObject *
+py_StringListToList(PyObject *self, PyObject *args) {
+
+    PyObject *psList;
+    char **papszStringList = NULL;
+    int i, nCount;
+    char  *pszSwigStringList = NULL;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"s:StringListToList", &pszSwigStringList) )
+        return NULL;
+
+    if (SWIG_GetPtr_2(pszSwigStringList,(void **) &papszStringList,
+	              _stringList) )
+    {
+        PyErr_SetString(PyExc_TypeError,
+   	      "Type error with stringlist.  Expected _stringList." );
+        return NULL;
+    }
+
+    nCount = CSLCount(papszStringList);
+    psList = PyList_New(nCount);
+
+    for( i = 0; i < nCount; i++ )
+	PyList_SetItem( psList, i, Py_BuildValue( "s", papszStringList[i] ));
+
+    return psList;
+}
+%}
+
+%native(StringListToList) py_StringListToList;
 
 /* -------------------------------------------------------------------- */
 /*      CPL level stuff                                                 */
@@ -2449,60 +2521,10 @@ int     OGR_DS_Reference( OGRDataSourceH );
 int     OGR_DS_Dereference( OGRDataSourceH );
 int     OGR_DS_GetRefCount( OGRDataSourceH );
 int     OGR_DS_GetSummaryRefCount( OGRDataSourceH );
-
-%{
-static PyObject *
-py_OGR_DS_CreateLayer(PyObject *self, PyObject *args) {
-
-    OGRSpatialReferenceH hSRS = NULL;
-    OGRDataSourceH hDS;
-    OGRLayerH      hLayer;
-    char           **papszOptions = NULL;
-    char *srs_in = NULL, *ds_in = NULL, *pszName = NULL; 
-    int  nGeomType, i;
-    PyObject *psOptionsList = NULL;
-    char _ptemp[128];
-
-    self = self;
-    if(!PyArg_ParseTuple(args,"ssziO!:OGR_DS_CreateLayer", 
-			 &ds_in, &pszName, &srs_in, &nGeomType, 
-                         &PyList_Type, &psOptionsList ))
-        return NULL;
-
-    if (SWIG_GetPtr_2(ds_in,(void **) &hDS,_OGRDataSourceH)) {
-        PyErr_SetString(PyExc_TypeError,
-                        "Type error in argument 1 of OGR_DS_CreateLayer."
-                        "  Expected _OGRDataSourceH.");
-        return NULL;
-    }
-
-    if (srs_in != NULL
-        && SWIG_GetPtr_2(srs_in,(void **) &hSRS,_OGRSpatialReferenceH)) {
-        PyErr_SetString(PyExc_TypeError,
-                        "Type error in argument 3 of OGR_DS_CreateLayer."
-                        "  Expected _OGRSpatialReferenceH.");
-        return NULL;
-    }
-   
-    for( i = 0; i < PyList_Size(psOptionsList); i++ )
-    {
-	const char *pszItem = NULL;
-	if( !PyArg_Parse( PyList_GET_ITEM(psOptionsList,i), "s", &pszItem ))
-        {
-	    PyErr_SetString(PyExc_ValueError, "bad option list item");
-	    return NULL;
-        }
-	papszOptions = CSLAddString( papszOptions, pszItem );
-    }
-
-    hLayer = OGR_DS_CreateLayer( hDS, pszName, hSRS, nGeomType, papszOptions );
-
-    SWIG_MakePtr(_ptemp, (char *) hLayer,"_OGRLayerH");
-    return Py_BuildValue("s",_ptemp);
-}
-%} 
-
-%native(OGR_DS_CreateLayer) py_OGR_DS_CreateLayer;
+OGRLayerH OGR_DS_CopyLayer(OGRDataSourceH, OGRLayerH, const char*, stringList);
+OGRLayerH OGR_DS_CreateLayer( OGRDataSourceH, const char *, 
+                              OGRSpatialReferenceH, OGRwkbGeometryType,
+	                      stringList );
 
 /* OGRSFDriver */
 
@@ -2510,7 +2532,9 @@ const char  *OGR_Dr_GetName( OGRSFDriverH );
 OGRDataSourceH  OGR_Dr_Open( OGRSFDriverH, const char *, int );
 int     OGR_Dr_TestCapability( OGRSFDriverH, const char * );
 OGRDataSourceH  OGR_Dr_CreateDataSource( OGRSFDriverH, const char *,
-                                                char ** );
+                                         stringList );
+OGRDataSourceH OGR_Dr_CopyDataSource( OGRSFDriverH,  OGRDataSourceH, 
+	                              const char *, stringList );
 int     OGR_Dr_DeleteDataSource( OGRSFDriverH, const char * );
 
 /* OGRSFDriverRegistrar */
