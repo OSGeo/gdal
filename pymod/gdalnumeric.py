@@ -29,6 +29,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.3  2000/11/17 17:16:33  warmerda
+# improved error reporting
+#
 # Revision 1.2  2000/07/25 13:06:43  warmerda
 # Allow optional specification of window in LoadFile().
 #
@@ -42,8 +45,7 @@ from gdalconst import *
 from Numeric import *
 
 def OpenArray( array ):
-    name = _gdal.NumPyArrayToGDALFilename( array )
-    return gdal.Open( name )
+    return gdal.Open( GetArrayFilename(array) )
 
 def GetArrayFilename( array ):
     _gdal.GDALRegister_NUMPY()
@@ -52,7 +54,7 @@ def GetArrayFilename( array ):
 def LoadFile( filename, xoff=0, yoff=0, xsize=None, ysize=None ):
     ds = gdal.Open( filename )
     if ds is None:
-        raise ValueError, "Can't open "+filename
+        raise ValueError, "Can't open "+filename+"\n\n"+gdal.GetLastErrorMsg()
 
     return DatasetReadAsArray( ds, xoff, yoff, xsize, ysize )
 
