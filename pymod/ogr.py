@@ -28,6 +28,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.47  2005/02/08 15:54:12  hobu
+# Added more docstrings
+#
 # Revision 1.46  2005/02/07 21:37:06  hobu
 # Docstring added to __getattr__ for Feature
 #
@@ -685,9 +688,11 @@ See the constants at the top of ogr.py"""
         return _gdal.OGR_L_TestCapability( self._o, cap )
 
     def CreateField( self, field_def, approx_ok = 1 ):
+        """Creates a new field on the layer given a FieldDef"""
         return _gdal.OGR_L_CreateField( self._o, field_def._o, approx_ok )
 
     def CreateFeature( self, feature ):
+        """Creates a feature on the layer given a Feature"""
         return _gdal.OGR_L_CreateFeature( self._o, feature._o )
 
     def StartTransaction( self ):
@@ -700,6 +705,7 @@ See the constants at the top of ogr.py"""
         return _gdal.OGR_L_RollbackTransaction( self._o )
 
     def GetSpatialRef( self ):
+        """Returns the spatial reference of the layer"""
         srs_o = _gdal.OGR_L_GetSpatialRef( self._o )
         if srs_o is not None and srs_o != 'NULL':
             return osr.SpatialReference( srs_o )
@@ -730,6 +736,7 @@ class Feature:
             self.Destroy()
 
     def __cmp__(self, other):
+        """Compares a feature to another for equality"""
         return _gdal.OGR_F_Equal( self._o, other._o )
 
     def __copy__(self):
@@ -789,6 +796,7 @@ class Feature:
         return _gdal.OGR_F_Equal( self._o, other_geom._o )
     
     def GetFieldCount( self ):
+        """Returns the number of fields in the feature"""
         return _gdal.OGR_F_GetFieldCount( self._o )
 
     def GetFieldDefnRef( self, fld_index ):
