@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.9  2003/01/30 11:59:15  dron
+ * Fixes in component color space handling; several memory leaks removed.
+ *
  * Revision 1.8  2003/01/28 14:44:11  dron
  * Temporary hack for reading JP2 boxes (due to lack of appropriate JasPer API).
  *
@@ -416,11 +419,15 @@ GDALDataset *JPEG2000Dataset::Open( GDALOpenInfo * poOpenInfo )
    
     jas_init();
     if( !(sS = jas_stream_fopen( poOpenInfo->pszFilename, "rb" )) )
+    {
+	jas_image_clearfmts();
 	return NULL;
+    }
     iFormat = jas_image_getfmt( sS );
     if ( !(pszFormatName = jas_image_fmttostr( iFormat )) )
     {
 	jas_stream_close( sS );
+	jas_image_clearfmts();
 	return NULL;
     }
     if ( strlen( pszFormatName ) < 3 ||
@@ -431,6 +438,7 @@ GDALDataset *JPEG2000Dataset::Open( GDALOpenInfo * poOpenInfo )
         CPLDebug( "JPEG2000", "JasPer reports file is format type `%s'.", 
                   pszFormatName );
         jas_stream_close( sS );
+	jas_image_clearfmts();
         return NULL;
     }
 
@@ -438,7 +446,7 @@ GDALDataset *JPEG2000Dataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
     JPEG2000Dataset 	*poDS;
-    int			*iDepth = NULL, *bSignedness = NULL;
+    int			*paiDepth = NULL, *pabSignedness = NULL;
     int			iBand;
 
     poDS = new JPEG2000Dataset();
@@ -462,44 +470,46 @@ GDALDataset *JPEG2000Dataset::Open( GDALOpenInfo * poOpenInfo )
 		poDS->nBands = box->data.ihdr.numcmpts;
 		poDS->nRasterXSize = box->data.ihdr.width;
 		poDS->nRasterYSize = box->data.ihdr.height;
+		CPLDebug( "JPEG2000",
+			  "IHDR box found. Dump: "
+			  "width=%d, height=%d, numcmpts=%d, bpp=%d\n",
+			  box->data.ihdr.width, box->data.ihdr.height,
+			  box->data.ihdr.numcmpts, box->data.ihdr.bpc );
 		if ( box->data.ihdr.bpc )
 		{
-		    iDepth = (int *)
+		    paiDepth = (int *)
 			CPLMalloc(box->data.bpcc.numcmpts * sizeof(int));
-		    bSignedness = (int *)
+		    pabSignedness = (int *)
 			CPLMalloc(box->data.bpcc.numcmpts * sizeof(int));
 		    for ( iBand = 0; iBand < poDS->nBands; iBand++ )
 		    {
-			iDepth[iBand] = box->data.ihdr.bpc && 0x7F;
-			bSignedness[iBand] = box->data.ihdr.bpc >> 7;
+			paiDepth[iBand] = box->data.ihdr.bpc && 0x7F;
+			pabSignedness[iBand] = box->data.ihdr.bpc >> 7;
 			CPLDebug( "JPEG2000",
 				  "Component %d: bpp=%d, signedness=%d",
-				  iBand, iDepth[iBand], bSignedness[iBand] );
+				  iBand, paiDepth[iBand], pabSignedness[iBand] );
 		    }
 		}
-		CPLDebug( "JPEG2000",
-			  "IHDR Box dump: width=%d, height=%d, numcmpts=%d\n"
-			  "bpp=%d",
-			  box->data.ihdr.width, box->data.ihdr.height,
-			  box->data.ihdr.numcmpts, box->data.ihdr.bpc );
 		break;
 		case JP2_BOX_BPCC:
 		CPLDebug( "JPEG2000", "BPCC box found. Dump:" );
-		iDepth = (int *)
-		    CPLMalloc( box->data.bpcc.numcmpts * sizeof(int) );
-		bSignedness = (int *)
-		    CPLMalloc( box->data.bpcc.numcmpts * sizeof(int) );
-		for ( iBand = 0; iBand < box->data.bpcc.numcmpts; iBand++ )
-		{
-		    iDepth[iBand] = box->data.bpcc.bpcs[iBand] && 0x7F;
-		    bSignedness[iBand] = box->data.bpcc.bpcs[iBand] >> 7;
-		    CPLDebug( "JPEG2000",
-			      "Component %d: bpp=%d, signedness=%d",
-			      iBand, iDepth[iBand], bSignedness[iBand] );
+		if ( !paiDepth )
+ 		{
+			CPLMalloc( box->data.bpcc.numcmpts * sizeof(int) );
+		    pabSignedness = (int *)
+			CPLMalloc( box->data.bpcc.numcmpts * sizeof(int) );
+		    for ( iBand = 0; iBand < box->data.bpcc.numcmpts; iBand++ )
+		    {
+			paiDepth[iBand] = box->data.bpcc.bpcs[iBand] && 0x7F;
+			pabSignedness[iBand] = box->data.bpcc.bpcs[iBand] >> 7;
+			CPLDebug( "JPEG2000",
+				  "Component %d: bpp=%d, signedness=%d",
+				  iBand, paiDepth[iBand], pabSignedness[iBand] );
+		    }
 		}
 		break;
 	    }
-	    jp2_box_destroy(box);
+	    jp2_box_destroy( box );
 	    box = 0;
 	}
 	jas_stream_rewind(poDS->sStream);
@@ -518,12 +528,12 @@ GDALDataset *JPEG2000Dataset::Open( GDALOpenInfo * poOpenInfo )
 	poDS->nBands = jas_image_numcmpts( poDS->sImage );
 	poDS->nRasterXSize = jas_image_cmptwidth( poDS->sImage, 0 );
 	poDS->nRasterYSize = jas_image_cmptheight( poDS->sImage, 0 );
-	iDepth = (int *)CPLMalloc( poDS->nBands * sizeof(int) );
-	bSignedness = (int *)CPLMalloc( poDS->nBands * sizeof(int) );
+	paiDepth = (int *)CPLMalloc( poDS->nBands * sizeof(int) );
+	pabSignedness = (int *)CPLMalloc( poDS->nBands * sizeof(int) );
 	for ( iBand = 0; iBand < poDS->nBands; iBand++ )
 	{
-	    iDepth[iBand] = jas_image_cmptprec( poDS->sImage, iBand );
-	    bSignedness[iBand] = jas_image_cmptsgnd( poDS->sImage, iBand );
+	    paiDepth[iBand] = jas_image_cmptprec( poDS->sImage, iBand );
+	    pabSignedness[iBand] = jas_image_cmptsgnd( poDS->sImage, iBand );
 	}
     }
 
@@ -533,21 +543,24 @@ GDALDataset *JPEG2000Dataset::Open( GDALOpenInfo * poOpenInfo )
     for( iBand = 1; iBand <= poDS->nBands; iBand++ )
     {
         poDS->SetBand( iBand, new JPEG2000RasterBand( poDS, iBand,
-	    iDepth[iBand - 1], bSignedness[iBand - 1] ) );
+	    paiDepth[iBand - 1], pabSignedness[iBand - 1] ) );
         
     }
     
-    if ( iDepth )
-	CPLFree( iDepth );
-    if ( bSignedness )
-	CPLFree( bSignedness );
+    if ( paiDepth )
+	CPLFree( paiDepth );
+    if ( pabSignedness )
+	CPLFree( pabSignedness );
 
 /* -------------------------------------------------------------------- */
 /*      Check for world file.                                           */
 /* -------------------------------------------------------------------- */
-    poDS->bGeoTransformValid = 
-        GDALReadWorldFile( poOpenInfo->pszFilename, ".wld", 
-                           poDS->adfGeoTransform );
+    if( !poDS->bGeoTransformValid )
+    {
+	poDS->bGeoTransformValid = 
+	    GDALReadWorldFile( poOpenInfo->pszFilename, ".wld", 
+			       poDS->adfGeoTransform );
+    }
 
     return( poDS );
 }
@@ -745,8 +758,10 @@ JPEG2000CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     CPLDebug( "JPEG2000", "Parameters, delivered to the JasPer library:" );
     CPLDebug( "JPEG2000", "%s", pszOptionBuf );
 
-    // FIXME: 1. determine colormodel; 2. won't works
-    // jas_image_setcolormodel( sImage, 0 );
+    // FIXME: Improve colormodel handling
+    //jas_image_setcolorspace( sImage, JAS_IMAGE_CS_UNKNOWN );
+    for ( i = 0; i < nBands; i++ )
+	sImage->cmpts_[i]->type_ = JAS_IMAGE_CT_UNKNOWN;
     if ( (jas_image_encode( sImage, sStream,
 			    jas_image_strtofmt( (char*)pszFormatName ),
 			    pszOptionBuf )) < 0 )
