@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2000/06/09 21:15:39  warmerda
+ * fixed field copying
+ *
  * Revision 1.12  1999/11/26 03:05:38  warmerda
  * added unset field support
  *
@@ -1279,7 +1282,7 @@ OGRErr OGRFeature::SetFrom( OGRFeature * poSrcFeature, int bForgiving )
 
         if( !poSrcFeature->IsFieldSet(iField) )
         {
-            UnsetField( iField );
+            UnsetField( iDstField );
             continue;
         }
 
