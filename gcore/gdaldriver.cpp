@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.27  2002/09/06 01:28:30  warmerda
+ * fixed logic for setting descriptions in created files
+ *
  * Revision 1.26  2002/09/04 06:52:05  warmerda
  * added unload driver support to GDALDriver
  *
@@ -189,8 +192,8 @@ GDALDataset * GDALDriver::Create( const char * pszFilename,
 
         if( poDS != NULL )
         {
-            if( poDS->GetDescription() == NULL 
-                || strlen(poDS->GetDescription()) > 0 )
+            if( poDS->GetDescription() == NULL
+                || strlen(poDS->GetDescription()) == 0 )
                 poDS->SetDescription( pszFilename );
 
             if( poDS->poDriver == NULL )
