@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.32  2002/11/30 16:44:43  warmerda
+ * fixed to set authority info on various nodes
+ *
  * Revision 1.31  2002/11/25 16:32:38  warmerda
  * improved support for using authority PCS/GCS/Datum info when writing
  *
@@ -243,12 +246,19 @@ char *GTIFGetOGISDefn( GTIFDefn * psDefn )
 /* -------------------------------------------------------------------- */
     if( psDefn->Model == ModelTypeProjected )
     {
-        char	*pszPCSName = "unnamed";
+        if( psDefn->PCS != KvUserDefined )
+        {
+            char	*pszPCSName = "unnamed";
 
-        GTIFGetPCSInfo( psDefn->PCS, &pszPCSName, NULL, NULL, NULL, NULL );
-        oSRS.SetNode( "PROJCS", pszPCSName );
-        if( !EQUAL(pszPCSName,"unnamed") )
-            CPLFree( pszPCSName );
+            GTIFGetPCSInfo( psDefn->PCS, &pszPCSName, NULL, NULL, NULL, NULL );
+            oSRS.SetNode( "PROJCS", pszPCSName );
+            if( !EQUAL(pszPCSName,"unnamed") )
+                CPLFree( pszPCSName );
+
+            oSRS.SetAuthority( "PROJCS", "EPSG", psDefn->PCS );
+        }
+        else
+            oSRS.SetNode( "PROJCS", "unnamed" );
     }
     
 /* ==================================================================== */
@@ -292,6 +302,12 @@ char *GTIFGetOGISDefn( GTIFDefn * psDefn )
                     psDefn->PMLongToGreenwich / psDefn->UOMAngleInDegrees,
                     pszAngularUnits,
                     psDefn->UOMAngleInDegrees * 0.0174532925199433 );
+
+    if( psDefn->GCS != KvUserDefined )
+        oSRS.SetAuthority( "GEOGCS", "EPSG", psDefn->GCS );
+
+    if( psDefn->Datum != KvUserDefined )
+        oSRS.SetAuthority( "DATUM", "EPSG", psDefn->Datum );
 
     CPLFree( pszGeogName );
     CPLFree( pszDatumName );
@@ -464,7 +480,10 @@ char *GTIFGetOGISDefn( GTIFDefn * psDefn )
         GTIFGetUOMLengthInfo( psDefn->UOMLength, &pszUnitsName, NULL );
 
         if( pszUnitsName != NULL && psDefn->UOMLength != KvUserDefined )
+        {
             oSRS.SetLinearUnits( pszUnitsName, psDefn->UOMLengthInMeters );
+            oSRS.SetAuthority( "PROJCS|UNIT", "EPSG", psDefn->UOMLength );
+        }
         else
             oSRS.SetLinearUnits( "unknown", psDefn->UOMLengthInMeters );
 
