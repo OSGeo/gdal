@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.15  2003/08/07 16:16:18  warmerda
+ * added proper setting of band color interpretation
+ *
  * Revision 1.14  2003/07/17 15:04:43  warmerda
  * Fixed problem with non-JPIP JP2 introduced when adding JPIP support.
  *
@@ -230,10 +233,13 @@ class JP2KAKRasterBand : public GDALRasterBand
     GDALColorTable oCT;
 
     int         bYCbCrReported;
+    
+    GDALColorInterp eInterp;
 
   public:
 
-    		JP2KAKRasterBand( int, int, kdu_codestream, int, kdu_client *);
+    		JP2KAKRasterBand( int, int, kdu_codestream, int, kdu_client *,
+                                  jp2_channels );
     		~JP2KAKRasterBand();
     
     virtual CPLErr IReadBlock( int, int, void * );
@@ -318,7 +324,8 @@ private:
 
 JP2KAKRasterBand::JP2KAKRasterBand( int nBand, int nDiscardLevels,
                                     kdu_codestream oCodeStream,
-                                    int nResCount, kdu_client *jpip_client )
+                                    int nResCount, kdu_client *jpip_client,
+                                    jp2_channels oJP2Channels )
 
 {
     this->nBand = nBand;
@@ -360,6 +367,77 @@ JP2KAKRasterBand::JP2KAKRasterBand( int nBand, int nDiscardLevels,
         nBlockYSize = nRasterYSize;
 
 /* -------------------------------------------------------------------- */
+/*      Figure out the color interpretation for this band.              */
+/* -------------------------------------------------------------------- */
+    
+    eInterp = GCI_Undefined;
+
+    if( oJP2Channels.exists() )
+    {
+        int nRedIndex=-1, nGreenIndex=-1, nBlueIndex=-1, nLutIndex;
+
+        if( oJP2Channels.get_num_colours() == 3 )
+        {
+            oJP2Channels.get_colour_mapping( 0, nRedIndex, nLutIndex );
+            oJP2Channels.get_colour_mapping( 1, nGreenIndex, nLutIndex );
+            oJP2Channels.get_colour_mapping( 2, nBlueIndex, nLutIndex );
+        }
+        else
+        {
+            oJP2Channels.get_colour_mapping( 0, nRedIndex, nLutIndex );
+            eInterp = GCI_GrayIndex;
+        }
+
+        if( eInterp != GCI_Undefined )
+            /* nothing to do */;
+
+        // If we have LUT info, it is a palette image.
+        else if( nLutIndex != -1 )
+            eInterp = GCI_PaletteIndex;
+
+        // Establish color band this is. 
+        else if( nRedIndex == nBand-1 )
+            eInterp = GCI_RedBand;
+        else if( nGreenIndex == nBand-1 )
+            eInterp = GCI_GreenBand;
+        else if( nBlueIndex == nBand-1 )
+            eInterp = GCI_BlueBand;
+        else
+            eInterp = GCI_Undefined;
+
+        // Could this band be an alpha band?
+        if( eInterp == GCI_Undefined )
+        {
+            int color_idx, opacity_idx, lut_idx;
+
+            for( color_idx = 0; 
+                 color_idx < oJP2Channels.get_num_colours(); color_idx++ )
+            {
+                if( oJP2Channels.get_opacity_mapping( color_idx, opacity_idx,
+                                                      lut_idx ) )
+                {
+                    if( opacity_idx == nBand - 1 )
+                        eInterp = GCI_AlphaBand;
+                }
+                if( oJP2Channels.get_premult_mapping( color_idx, opacity_idx,
+                                                      lut_idx ) )
+                {
+                    if( opacity_idx == nBand - 1 )
+                        eInterp = GCI_AlphaBand;
+                }
+            }
+        }
+    }
+    else if( nBand == 1 )
+        eInterp = GCI_RedBand;
+    else if( nBand == 2 )
+        eInterp = GCI_GreenBand;
+    else if( nBand == 3 )
+        eInterp = GCI_BlueBand;
+    else
+        eInterp = GCI_GrayIndex;
+        
+/* -------------------------------------------------------------------- */
 /*      Do we have any overviews?  Only check if we are the full res    */
 /*      image.                                                          */
 /* -------------------------------------------------------------------- */
@@ -392,7 +470,7 @@ JP2KAKRasterBand::JP2KAKRasterBand( int nBand, int nDiscardLevels,
                                 sizeof(void*) * nOverviewCount );
                 papoOverviewBand[nOverviewCount-1] = 
                     new JP2KAKRasterBand( nBand, nDiscard, oCodeStream, 0,
-                                          jpip_client );
+                                          jpip_client, oJP2Channels );
             }
             else
             {
@@ -731,6 +809,8 @@ void JP2KAKRasterBand::ApplyPalette( jp2_palette oJP2Palette )
     }
 
     CPLFree( pafLUT );
+
+    eInterp = GCI_PaletteIndex;
 }
 
 /************************************************************************/
@@ -740,10 +820,7 @@ void JP2KAKRasterBand::ApplyPalette( jp2_palette oJP2Palette )
 GDALColorInterp JP2KAKRasterBand::GetColorInterpretation()
 
 {
-    if( oCT.GetColorEntryCount() > 0 )
-        return GCI_PaletteIndex;
-    else
-        return GCI_GrayIndex;
+    return eInterp;
 }
 
 /************************************************************************/
@@ -946,6 +1023,7 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
     kdu_client      *jpip_client = NULL;
     kdu_compressed_source *poInput = NULL;
     jp2_palette oJP2Palette;
+    jp2_channels oJP2Channels;
 
 #ifdef KAKADU4
     jp2_family_src *family = NULL;
@@ -1005,6 +1083,8 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
                 return NULL;
             }
 
+            oJP2Channels = jp2_src->access_channels();
+
             poInput = jp2_src;
 #else
             CPLError( CE_Failure, CPLE_OpenFailed, 
@@ -1028,6 +1108,7 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
             poInput = jp2_src;
 
             oJP2Palette = jp2_src->access_palette();
+            oJP2Channels = jp2_src->access_channels();
         }
         else
 #ifndef FILEIO_DEBUG
@@ -1117,7 +1198,7 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
         {
             JP2KAKRasterBand *poBand = 
                 new JP2KAKRasterBand(iBand,0,poDS->oCodeStream, nResCount,
-                                     jpip_client );
+                                     jpip_client, oJP2Channels );
 
             if( iBand == 1 && oJP2Palette.exists() )
                 poBand->ApplyPalette( oJP2Palette );
