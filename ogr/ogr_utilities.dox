@@ -189,7 +189,7 @@ new</dd>
 <dt>  <b>-update</b>:</dt><dd> Open existing output datasource in update mode</dd>
 <dt> <b>-select</b><em> field_list</em>:</dt><dd> Comma-delimited list of
 fields from input layer to copy to the new layer (defaults to all)</dd>
-<dt> <b>-sql</b><em>sql_statement</em>:</dt><dd> SQL statement to execute.
+<dt> <b>-sql</b> <em>sql_statement</em>:</dt><dd> SQL statement to execute.
 The resulting table/layer will be saved to the output.</dd>
 <dt> <b>-where</b><em> restricted_where</em>:</dt><dd> Attribute query (like SQL WHERE)</dd>
 <dt> <b>-spat</b><em> xmin ymin xmax ymax</em>:</dt><dd> spatial query extents</dd>
@@ -209,6 +209,14 @@ Add "25D" to the name to get 2.5D versions.</dd>
  or a well known definition (ie. EPSG:4326) or a file with a WKT
  definition.
 \endverbatim
+
+Example appending to an existing layer (both flags need to be used):
+
+\verbatim
+% ogr2ogr -update -append -f PostgreSQL PG:dbname=warmerda abc.tab
+\endverbatim
+
+More examples are given in the individual format pages.
 
 \if man
 \section author AUTHOR
