@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  1999/11/04 21:06:48  warmerda
+ * Added the SetFrom() method.
+ *
  * Revision 1.8  1999/10/01 14:46:11  warmerda
  * handle unknown fields gracefully
  *
@@ -197,7 +200,10 @@ OGRErr OGRFeature::SetGeometry( OGRGeometry * poGeomIn )
     if( poGeometry != NULL )
         delete poGeometry;
 
-    poGeometry = poGeomIn->clone();
+    if( poGeomIn != NULL )
+        poGeometry = poGeomIn->clone();
+    else
+        poGeometry = NULL;
 
     // I should be verifying that the geometry matches the defn's type.
     
@@ -1071,3 +1077,91 @@ OGRBoolean OGRFeature::Equal( OGRFeature * poFeature )
 
     return TRUE;
 }
+
+/************************************************************************/
+/*                              SetFrom()                               */
+/************************************************************************/
+
+/**
+ * Set one feature from another.
+ *
+ * Overwrite the contents of this feature from the geometry and attributes
+ * of another.  The poSrcFeature does not need to have the same
+ * OGRFeatureDefn.  Field values are copied by corresponding field names.
+ * Field types do not have to exactly match.  SetField() method conversion
+ * rules will be applied as needed.
+ *
+ * @param poSrcFeature the feature from which geometry, and field values will
+ * be copied.
+ *
+ * @return bForgiving TRUE if the operation should continue despite lacking
+ * output fields matching some of the source fields.
+ *
+ * @return OGRERR_NONE if the operation succeeds, even if some values are
+ * not transferred, otherwise an error code.
+ */
+
+OGRErr OGRFeature::SetFrom( OGRFeature * poSrcFeature, int bForgiving )
+
+{
+    OGRErr	eErr;
+
+    SetFID( OGRNullFID );
+
+/* -------------------------------------------------------------------- */
+/*      Set the geometry.                                               */
+/* -------------------------------------------------------------------- */
+    eErr = SetGeometry( poSrcFeature->GetGeometryRef() );
+    if( eErr != OGRERR_NONE )
+        return eErr;
+
+/* -------------------------------------------------------------------- */
+/*      Set the fields by name.                                         */
+/* -------------------------------------------------------------------- */
+    int		iField, iDstField;
+
+    for( iField = 0; iField < poSrcFeature->GetFieldCount(); iField++ )
+    {
+        iDstField = GetFieldIndex(
+            poSrcFeature->GetFieldDefnRef(iField)->GetNameRef() );
+
+        if( iDstField == -1 )
+        {
+            if( bForgiving )
+                continue;
+            else
+                return OGRERR_FAILURE;
+        }
+
+        switch( poSrcFeature->GetFieldDefnRef(iField)->GetType() )
+        {
+          case OFTInteger:
+            SetField( iDstField, poSrcFeature->GetFieldAsInteger( iField ) );
+            break;
+
+          case OFTReal:
+            SetField( iDstField, poSrcFeature->GetFieldAsDouble( iField ) );
+            break;
+
+          case OFTString:
+            SetField( iDstField, poSrcFeature->GetFieldAsString( iField ) );
+            break;
+
+          default:
+            if( poSrcFeature->GetFieldDefnRef(iField)->GetType()
+                == GetFieldDefnRef(iDstField)->GetType() )
+            {
+                SetField( iDstField, poSrcFeature->GetRawFieldRef(iField) );
+            }
+            else if( !bForgiving )
+                return OGRERR_FAILURE;
+            break;
+        }
+    }
+
+    return OGRERR_NONE;
+}
+
+
+
+
