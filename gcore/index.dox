@@ -48,7 +48,8 @@ Binaries of the GDAL utility programs and the shared libraries are
 available as part of 
 <a href="ftp://ftp.remotesensing.org/pub/gdal/openev/">OpenEV_FW</a> releases 
 on Windows and Linux.  GDAL is also a component of the FreeGIS CDs available 
-from <a href="http://www.freegis.org/">www.freegis.org</a> in RPM format.<p>
+from <a href="http://www.freegis.org/">www.freegis.org</a> in RPM format.
+Alessandro Amici is working on <a href="http://mentors.debian.net/debian/dists/unstable/main/binary-i386/gdal/">Debian packages</a>.<p>
 
 The GDAL source is available by anonymous CVS or as a tarball:<p>
 
