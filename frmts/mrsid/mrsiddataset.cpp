@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2005/02/06 18:40:05  dron
+ * Fixes in colorspace handling when the new file creating; use WORLDFILE option.
+ *
  * Revision 1.19  2005/02/02 14:58:46  fwarmerdam
  * Added a few debug statements.
  *
@@ -1252,6 +1255,8 @@ GDALDataset *MrSIDDataset::Open( GDALOpenInfo * poOpenInfo )
 #ifdef MRSID_ESDK_VERSION_40
 # include "MG3ImageWriter.h"
 # include "MG3WriterParams.h"
+# include "MG2ImageWriter.h"
+# include "MG2WriterParams.h"
 #endif /* MRSID_ESDK_VERSION_40 */
 
 LT_USE_NAMESPACE(LizardTech)
@@ -2136,6 +2141,21 @@ LT_STATUS MrSIDDummyImageReader::initialize()
     if ( !LT_SUCCESS(LTIImageReader::initialize()) )
         return LT_STS_Failure;
     
+    lt_uint16 nBands = (lt_uint16)poDS->GetRasterCount();
+    LTIColorSpace eColorSpase = LTI_COLORSPACE_RGB;
+    switch ( nBands )
+    {
+        case 1:
+            eColorSpase = LTI_COLORSPACE_GRAYSCALE;
+            break;
+        case 3:
+            eColorSpase = LTI_COLORSPACE_RGB;
+            break;
+        default:
+            eColorSpase = LTI_COLORSPACE_RGB;
+            break;
+    }
+    
     eDataType = poDS->GetRasterBand(1)->GetRasterDataType();
     switch ( eDataType )
     {
@@ -2162,8 +2182,8 @@ LT_STATUS MrSIDDummyImageReader::initialize()
             eSampleType = LTI_DATATYPE_UINT8;
             break;
     }
-    poPixel = new LTIPixel( LTI_COLORSPACE_GRAYSCALE,
-                            (lt_uint16)poDS->GetRasterCount(), eSampleType );
+
+    poPixel = new LTIPixel( eColorSpase, nBands, eSampleType );
     if ( !LT_SUCCESS(setPixelProps(*poPixel)) )
         return LT_STS_Failure;
 
@@ -2193,6 +2213,9 @@ LT_STATUS MrSIDDummyImageReader::initialize()
         if ( !LT_SUCCESS(setNoDataPixel( &oNoDataPixel )) )
             return LT_STS_Failure;
     }*/
+
+    setDefaultDynamicRange();
+    setClassicalMetadata();
 
     return LT_STS_Success;
 }
@@ -2358,6 +2381,7 @@ CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     int		nBands = poSrcDS->GetRasterCount();
     int         iBand;
     GDALDataType eType = poSrcDS->GetRasterBand(1)->GetRasterDataType();
+    const char  *pszVerison = CSLFetchNameValue( papszOptions, "VERSION" );
         
 /* -------------------------------------------------------------------- */
 /*      Check, whether all bands in input dataset has the same type.    */
@@ -2415,6 +2439,12 @@ CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     if( pszValue != NULL )
         // FIXME: should use atoll() here.
         oImageWriter.params().setTargetFilesize( atol(pszValue) );
+
+/* -------------------------------------------------------------------- */
+/*      Do we need a world file?                                        */
+/* -------------------------------------------------------------------- */
+    if( CSLFetchBoolean( papszOptions, "WORLDFILE", FALSE ) )
+        oImageWriter.setWorldFileSupport( true );
 
 /* -------------------------------------------------------------------- */
 /*  Do actual writing.                                                  */
