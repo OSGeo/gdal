@@ -23,10 +23,48 @@ OPT_GDAL_FORMATS=
 EXTRA_INCLUDES=
 
 dnl ---------------------------------------------------------------------------
+dnl Check if GRASS library is available.
+dnl ---------------------------------------------------------------------------
+
+AC_ARG_WITH(png,[  --with-grass[=ARG]      Include GRASS support (ARG=no or libgrass path)],,)
+
+if test "$with_grass" = "no" ; then
+
+  GRASS_SETTING=no
+
+  echo "GRASS support disabled."
+
+elif test "$with_grass" = "yes" -o "$with_grass" = "" ; then
+
+  AC_CHECK_LIB(grass,G_gisinit_2,GRASS_SETTING=external,GRASS_SETTING=no,)
+
+  if test "$GRASS_SETTING" = "external" ; then   
+    LIBS="-lgrass $LIBS"
+    echo "libgrass found."
+  else
+    echo "libgrass not found."
+  fi
+
+else
+
+  GRASS_SETTING=external
+  LIBS="-L$with_grass -L$with_grass/lib -lgrass $LIBS"
+  EXTRA_INCLUDES="-I$with_grass -I$with_grass/include $EXTRA_INCLUDES"
+
+  echo "using libgrass from $with_grass."
+fi
+
+AC_SUBST(GRASS_SETTING,$GRASS_SETTING)
+
+if test "$GRASS_SETTING" != "no" ; then
+  OPT_GDAL_FORMATS="grass $OPT_GDAL_FORMATS"
+fi
+
+dnl ---------------------------------------------------------------------------
 dnl Select a PNG Library to use, or disable driver.
 dnl ---------------------------------------------------------------------------
 
-AC_ARG_WITH(png,[  --with-png[=ARG]        Include PNG support],,)
+AC_ARG_WITH(png,[  --with-png[=ARG]        Include PNG support (ARG=internal, no or path)],,)
 
 if test "$with_png" = "no" ; then
 
@@ -71,7 +109,7 @@ dnl ---------------------------------------------------------------------------
 dnl Select a JPEG Library to use, or disable driver.
 dnl ---------------------------------------------------------------------------
 
-AC_ARG_WITH(jpeg,[  --with-jpeg[=ARG]       Include JPEG support],,)
+AC_ARG_WITH(jpeg,[  --with-jpeg[=ARG]       Include JPEG support (ARG=internal, no or path)],,)
 
 if test "$with_jpeg" = "no" ; then
 
