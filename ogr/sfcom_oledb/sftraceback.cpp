@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2002/08/29 19:01:06  warmerda
+ * added debug call
+ *
  * Revision 1.2  2002/08/13 14:38:19  warmerda
  * reformat, add header
  *
@@ -97,6 +100,9 @@ IDBProperties *SFGetDataSourceProperties(IRowsetInfo* pIRInfo)
 	{
 		return SFGetDataSourceProperties(pIGetDataSource);
 	}
+
+        CPLDebug( "OGR_OLEDB", 
+                  "Got IRowsetInfo, but not ICommand, nor IGetDataSource" );
 
 	return NULL;
 }
