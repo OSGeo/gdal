@@ -12,6 +12,8 @@ library OGRGeometry
 
     importlib("stdole2.tlb");
 
+    interface IPoint;
+
     // ----------------------------------------------------------------------
     [
       uuid(bc518ff0-08dd-11d3-b3f9-0080c8e62564),
@@ -20,20 +22,4 @@ library OGRGeometry
     coclass GeometryFactory {
         [default] interface IGeometryFactory;
     };
-
-    // ----------------------------------------------------------------------
-    [
-      uuid(bc518ff1-08dd-11d3-b3f9-0080c8e62564),
-      helpstring("Point Class"),
-      noncreatable,
-      hidden
-    ]
-    coclass Point {
-        interface IPoint;
-//        interface IWks;
-//        interface ISpatialRelation;
-//        interface ISpatialRelation2;
-//        interface ISpatialOperator;
-    };
-
 };
