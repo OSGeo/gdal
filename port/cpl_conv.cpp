@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.26  2003/09/07 14:38:43  dron
+ * Added CPLPrintString(), CPLPrintStringFill(), CPLPrintInt32(), CPLPrintUIntBig().
+ *
  * Revision 1.25  2003/09/03 13:07:26  warmerda
  * Cleaned up CPLScanLong() a bit to avoid warnings, and
  * unnecessary conversion to/from double.
@@ -476,7 +479,6 @@ long CPLScanLong( char *pszString, int nMaxLength )
  * @return Double value, converted from its ASCII form.
  */
 
-
 double CPLScanDouble( char *pszString, int nMaxLength )
 {
     char    szTemp[64];
@@ -502,6 +504,173 @@ double CPLScanDouble( char *pszString, int nMaxLength )
     dfValue = atof( szTemp );
 
     return dfValue;
+}
+
+/************************************************************************/
+/*                      CPLPrintString()                                */
+/************************************************************************/
+
+/**
+ * Copy the string pointed to by pszSrc, _not_ including the terminating
+ * `\0' character, to the array pointed to by pszDest.
+ *
+ * @param pszDest Pointer to the destination string buffer. Should be
+ * large enough to hold the resulting string.
+ *
+ * @param pszDest Pointer to the source buffer.
+ * 
+ * @param nMaxLen Maximum length of the resulting string. If string length
+ * is greater than nMaxLen, it will be truncated.
+ * 
+ * @return Pointer to the destination string pszDest.
+ */
+
+char *CPLPrintString( char *pszDest, const char *pszSrc, int nMaxLen )
+{
+    char        *pszTemp = pszDest;
+
+    if ( !pszDest )
+        return NULL;
+
+    if ( !pszSrc )
+    {
+        memset( pszDest, '\0', nMaxLen );
+        return pszDest;
+    }
+
+    while ( nMaxLen && *pszSrc )
+    {
+        *pszTemp++ = *pszSrc++;
+        nMaxLen--;
+    }
+
+    return pszDest;
+}
+
+/************************************************************************/
+/*                         CPLPrintStringFill()                         */
+/************************************************************************/
+
+/**
+ * Copy the string pointed to by pszSrc, _not_ including the terminating
+ * `\0' character, to the array pointed to by pszDest. Remainder of the
+ * destination string will be filled with space characters. This is only
+ * difference from the PrintString().
+ *
+ * @param pszDest Pointer to the destination string buffer. Should be
+ * large enough to hold the resulting string.
+ *
+ * @param pszDest Pointer to the source buffer.
+ * 
+ * @param nMaxLen Maximum length of the resulting string. If string length
+ * is greater than nMaxLen, it will be truncated.
+ * 
+ * @return Pointer to the destination string pszDest.
+ */
+
+char *CPLPrintStringFill( char *pszDest, const char *pszSrc, int nMaxLen )
+{
+    char        *pszTemp = pszDest;
+
+    if ( !pszDest )
+        return NULL;
+
+    if ( !pszSrc )
+    {
+        memset( pszDest, '\0', nMaxLen );
+        return pszDest;
+    }
+
+    while ( nMaxLen && *pszSrc )
+    {
+        *pszTemp++ = *pszSrc++;
+        nMaxLen--;
+    }
+
+    if ( nMaxLen )
+        memset( pszTemp, ' ', nMaxLen );
+
+    return pszDest;
+}
+
+/************************************************************************/
+/*                          CPLPrintInt32()                             */
+/************************************************************************/
+
+/**
+ * Print GInt32 value into specified string buffer. This string will not
+ * be NULL-terminated.
+ *
+ * @param Pointer to the destination string buffer. Should be
+ * large enough to hold the resulting string. Note, that the string will
+ * not be NULL-terminated, so user should do this himself, if needed.
+ *
+ * @param iValue Numerical value to print.
+ * 
+ * @param nMaxLen Maximum length of the resulting string. If string length
+ * is greater than nMaxLen, it will be truncated.
+ * 
+ * @return Pointer to the destination string buffer.
+ */
+
+char *CPLPrintInt32( char *pszBuffer, GInt32 iValue, int nMaxLen )
+{
+    char        szTemp[64];
+
+    if ( !pszBuffer )
+        return NULL;
+
+    if ( nMaxLen >= 64 )
+        nMaxLen = 63;
+
+#if UINT_MAX == 65535
+    sprintf( szTemp, "%*ld", nMaxLen, iValue );
+#else
+    sprintf( szTemp, "%*d", nMaxLen, iValue );
+#endif
+
+    return CPLPrintString( pszBuffer, szTemp, nMaxLen );
+}
+
+/************************************************************************/
+/*                          CPLPrintUIntBig()                           */
+/************************************************************************/
+
+/**
+ * Print GUIntBig value into specified string buffer. This string will not
+ * be NULL-terminated.
+ *
+ * @param Pointer to the destination string buffer. Should be
+ * large enough to hold the resulting string. Note, that the string will
+ * not be NULL-terminated, so user should do this himself, if needed.
+ *
+ * @param iValue Numerical value to print.
+ * 
+ * @param nMaxLen Maximum length of the resulting string. If string length
+ * is greater than nMaxLen, it will be truncated.
+ * 
+ * @return Pointer to the destination string buffer.
+ */
+
+char *CPLPrintUIntBig( char *pszBuffer, GUIntBig iValue, int nMaxLen )
+{
+    char        szTemp[64];
+
+    if ( !pszBuffer )
+        return NULL;
+
+    if ( nMaxLen >= 64 )
+        nMaxLen = 63;
+
+#if defined(WIN32) && defined(_MSC_VER)
+    sprintf( szTemp, "%*I64d", nMaxLen, iValue );
+#elif HAVE_LONG_LONG
+    sprintf( szTemp, "%*Ld", nMaxLen, iValue );
+#else
+    sprintf( szTemp, "%*ld", nMaxLen, iValue );
+#endif
+
+    return CPLPrintString( pszBuffer, szTemp, nMaxLen );
 }
 
 /************************************************************************/
@@ -697,7 +866,7 @@ double CPLDMSToDec( const char *is )
 /************************************************************************/
 
 const char *CPLDecToDMS( double dfAngle, const char * pszAxis,
-                          int nPrecision )
+                         int nPrecision )
 
 {
     int         nDegrees, nMinutes;

@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.23  2003/09/07 14:38:43  dron
+ * Added CPLPrintString(), CPLPrintStringFill(), CPLPrintInt32(), CPLPrintUIntBig().
+ *
  * Revision 1.22  2003/08/31 14:48:05  dron
  * Added CPLScanLong() and CPLScanDouble().
  *
@@ -113,6 +116,14 @@ const char CPL_DLL *CPLReadLine( FILE * );
 /* -------------------------------------------------------------------- */
 double CPLScanDouble( char *, int );
 long CPLScanLong( char *, int );
+
+/* -------------------------------------------------------------------- */
+/*      Print a value to an ASCII character string.                     */
+/* -------------------------------------------------------------------- */
+char *CPLPrintString( char *, const char *, int );
+char *CPLPrintStringFill( char *, const char *, int );
+char *CPLPrintInt32( char *, GInt32 , int );
+char *CPLPrintUIntBig( char *, GUIntBig , int );
 
 /* -------------------------------------------------------------------- */
 /*      Fetch a function from DLL / so.                                 */
