@@ -28,6 +28,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.17  2003/01/24 19:45:17  warmerda
+# fixed handling of CloneGeogCS() failing
+#
 # Revision 1.16  2003/01/08 18:17:33  warmerda
 # added FixupOrdering() and StripCTParms
 #
@@ -117,10 +120,18 @@ class SpatialReference:
         return _gdal.OSRExportToProj4( self._o )
 
     def CloneGeogCS(self):
-        return SpatialReference(obj=_gdal.OSRCloneGeogCS( self._o ))
+        o = _gdal.OSRCloneGeogCS( self._o )
+        if o is None:
+            return None
+        else:
+            return SpatialReference(obj=o)
     
     def Clone(self):
-        return SpatialReference(obj=_gdal.OSRClone( self._o ))
+        o = SpatialReference(obj=_gdal.OSRClone( self._o ))
+        if o is None:
+            return None
+        else:
+            return SpatialReference(obj=o)
     
     def Validate(self):
         return _gdal.OSRValidate( self._o )
