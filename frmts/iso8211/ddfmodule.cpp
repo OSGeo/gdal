@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  1999/05/07 14:11:49  warmerda
+ * added support for tracking record clones
+ *
  * Revision 1.3  1999/05/06 15:39:45  warmerda
  * avoid redeclaring variable i
  *
@@ -56,6 +59,9 @@ DDFModule::DDFModule()
     nFieldDefnCount = 0;
     paoFieldDefns = NULL;
     poRecord = NULL;
+
+    papoClones = NULL;
+    nCloneCount = nMaxCloneCount = 0;
 }
 
 /************************************************************************/
@@ -74,6 +80,9 @@ DDFModule::~DDFModule()
 
 /************************************************************************/
 /*                               Close()                                */
+/*                                                                      */
+/*      Note that closing a file also destroys essentially all other    */
+/*      module datastructures.                                          */
 /************************************************************************/
 
 /**
@@ -83,12 +92,38 @@ DDFModule::~DDFModule()
 void DDFModule::Close()
 
 {
+/* -------------------------------------------------------------------- */
+/*      Close the file.                                                 */
+/* -------------------------------------------------------------------- */
     if( fpDDF != NULL )
     {
         VSIFClose( fpDDF );
         fpDDF = NULL;
     }
 
+/* -------------------------------------------------------------------- */
+/*      Cleanup the working record.                                     */
+/* -------------------------------------------------------------------- */
+    if( poRecord != NULL )
+    {
+        delete poRecord;
+        poRecord = NULL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Cleanup the clones.  Deleting them will cause a callback to     */
+/*      remove them from the list.                                      */
+/* -------------------------------------------------------------------- */
+    while( nCloneCount > 0 )
+        delete papoClones[0];
+
+    nMaxCloneCount = 0;
+    CPLFree( papoClones );
+    papoClones = NULL;
+    
+/* -------------------------------------------------------------------- */
+/*      Cleanup the field definitions.                                  */
+/* -------------------------------------------------------------------- */
     nFieldDefnCount = 0;
     if( paoFieldDefns != NULL )
     {
@@ -96,11 +131,6 @@ void DDFModule::Close()
         paoFieldDefns = NULL;
     }
 
-    if( poRecord != NULL )
-    {
-        delete poRecord;
-        poRecord = NULL;
-    }
 }
 
 /************************************************************************/
@@ -126,6 +156,12 @@ int DDFModule::Open( const char * pszFilename )
 
 {
     static const size_t nLeaderSize = 24;
+
+/* -------------------------------------------------------------------- */
+/*      Close the existing file if there is one.                        */
+/* -------------------------------------------------------------------- */
+    if( fpDDF != NULL )
+        Close();
     
 /* -------------------------------------------------------------------- */
 /*      Open the file.                                                  */
@@ -369,5 +405,50 @@ DDFFieldDefn *DDFModule::GetField(int i)
         return paoFieldDefns + i;
 }
     
+/************************************************************************/
+/*                           AddCloneRecord()                           */
+/*                                                                      */
+/*      We want to keep track of cloned records, so we can clean        */
+/*      them up when the module is destroyed.                           */
+/************************************************************************/
 
+void DDFModule::AddCloneRecord( DDFRecord * poRecord )
 
+{
+/* -------------------------------------------------------------------- */
+/*      Do we need to grow the container array?                         */
+/* -------------------------------------------------------------------- */
+    if( nCloneCount == nMaxCloneCount )
+    {
+        nMaxCloneCount = nCloneCount*2 + 20;
+        papoClones = (DDFRecord **) CPLRealloc(papoClones,
+                                               nMaxCloneCount * sizeof(void*));
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Add to the list.                                                */
+/* -------------------------------------------------------------------- */
+    papoClones[nCloneCount++] = poRecord;
+}
+
+/************************************************************************/
+/*                         RemoveCloneRecord()                          */
+/************************************************************************/
+
+void DDFModule::RemoveCloneRecord( DDFRecord * poRecord )
+
+{
+    int		i;
+
+    for( i = 0; i < nCloneCount; i++ )
+    {
+        if( papoClones[i] == poRecord )
+        {
+            papoClones[i] = papoClones[nCloneCount];
+            nCloneCount--;
+            return;
+        }
+    }
+
+    CPLAssert( FALSE );
+}
