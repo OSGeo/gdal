@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  1999/09/17 16:15:15  warmerda
+ * Added angular units to SetGeogCS().  Use OGRPrintDouble(). Added SetLCC1SP().
+ *
  * Revision 1.4  1999/07/29 17:29:45  warmerda
  * added various help methods for projections
  *
@@ -120,6 +123,11 @@ static char *papszProjectionUnsupported[] =
 };
 
 
+static void OGRPrintDouble( char * pszStrBuf, double dfValue )
+
+{
+    sprintf( pszStrBuf, "%.15g", dfValue );
+}
 
 /************************************************************************/
 /*                        OGRSpatialReference()                         */
@@ -690,7 +698,8 @@ OGRErr OGRSpatialReference::SetNode( const char *pszNodePath,
     if( ABS(dfValue - (int) dfValue) == 0.0 )
         sprintf( szValue, "%d", (int) dfValue );
     else
-        sprintf( szValue, "%.12f", dfValue );
+        // notdef: sprintf( szValue, "%.12f", dfValue );
+        OGRPrintDouble( szValue, dfValue );
 
     return SetNode( pszNodePath, szValue );
 }
@@ -713,7 +722,8 @@ OGRErr OGRSpatialReference::SetLinearUnits( const char * pszUnitsName,
     if( dfInMeters == (int) dfInMeters )
         sprintf( szValue, "%d", (int) dfInMeters );
     else
-        sprintf( szValue, "%.12f", dfInMeters );
+        //notdef: sprintf( szValue, "%.12f", dfInMeters );
+        OGRPrintDouble( szValue, dfInMeters );
 
     poUnits = new OGR_SRSNode( "UNIT" );
     poUnits->AddChild( new OGR_SRSNode( pszUnitsName ) );
@@ -765,7 +775,9 @@ OGRSpatialReference::SetGeogCS( const char * pszGeogName,
                                 const char * pszDatumName,
                                 const char * pszSpheroidName,
                                 double dfSemiMajor, double dfInvFlattening,
-                                const char * pszPMName, double dfPMOffset )
+                                const char * pszPMName, double dfPMOffset,
+                                const char * pszAngularUnits,
+                                double dfConvertToRadians )
 
 {
 
@@ -784,6 +796,12 @@ OGRSpatialReference::SetGeogCS( const char * pszGeogName,
     if( pszSpheroidName == NULL )
         pszSpheroidName = "unnamed";
 
+    if( pszAngularUnits == NULL )
+    {
+        pszAngularUnits = SRS_UA_DEGREE;
+        dfConvertToRadians = atof(SRS_UA_DEGREE_CONV);
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Build the GEOGCS object.                                        */
 /* -------------------------------------------------------------------- */
@@ -799,10 +817,12 @@ OGRSpatialReference::SetGeogCS( const char * pszGeogName,
     poSpheroid = new OGR_SRSNode( "SPHEROID" );
     poSpheroid->AddChild( new OGR_SRSNode( pszSpheroidName ) );
 
-    sprintf( szValue, "%.3f", dfSemiMajor );
+    //notdef: sprintf( szValue, "%.3f", dfSemiMajor );
+    OGRPrintDouble( szValue, dfSemiMajor );
     poSpheroid->AddChild( new OGR_SRSNode(szValue) );
 
-    sprintf( szValue, "%.14f", dfInvFlattening );
+    //notdef: sprintf( szValue, "%.14f", dfInvFlattening );
+    OGRPrintDouble( szValue, dfInvFlattening );
     poSpheroid->AddChild( new OGR_SRSNode(szValue) );
 
 /* -------------------------------------------------------------------- */
@@ -818,7 +838,8 @@ OGRSpatialReference::SetGeogCS( const char * pszGeogName,
     if( dfPMOffset == 0.0 )
         strcpy( szValue, "0" );
     else
-        sprintf( szValue, "%.16f", dfPMOffset );
+        //notdef: sprintf( szValue, "%.16f", dfPMOffset );
+        OGRPrintDouble( szValue, dfPMOffset );
     
     poPM = new OGR_SRSNode( "PRIMEM" );
     poPM->AddChild( new OGR_SRSNode( pszPMName ) );
@@ -827,9 +848,11 @@ OGRSpatialReference::SetGeogCS( const char * pszGeogName,
 /* -------------------------------------------------------------------- */
 /*      Setup the rotational units.                                     */
 /* -------------------------------------------------------------------- */
+    OGRPrintDouble( szValue, dfConvertToRadians );
+    
     poUnits = new OGR_SRSNode( "UNIT" );
-    poUnits->AddChild( new OGR_SRSNode(SRS_UA_DEGREE) );
-    poUnits->AddChild( new OGR_SRSNode(SRS_UA_DEGREE_CONV) );
+    poUnits->AddChild( new OGR_SRSNode(pszAngularUnits) );
+    poUnits->AddChild( new OGR_SRSNode(szValue) );
     
 /* -------------------------------------------------------------------- */
 /*      Complete the GeogCS                                             */
@@ -947,10 +970,13 @@ OGRErr OGRSpatialReference::SetProjParm( const char * pszParmName,
     poParm = new OGR_SRSNode( "PARAMETER" );
     poParm->AddChild( new OGR_SRSNode( pszParmName ) );
 
+#ifdef notdef    
     if( ABS(dfValue - (int) dfValue) == 0.0 )
         sprintf( szValue, "%d", (int) dfValue );
     else
         sprintf( szValue, "%.12f", dfValue );
+#endif        
+    OGRPrintDouble( szValue, dfValue );
 
     poParm->AddChild( new OGR_SRSNode( szValue ) );
 
@@ -1241,6 +1267,26 @@ OGRErr OGRSpatialReference::SetLCC( double dfStdP1, double dfStdP2,
     SetProjParm( SRS_PP_STANDARD_PARALLEL_2, dfStdP2 );
     SetProjParm( SRS_PP_LATITUDE_OF_ORIGIN, dfCenterLat );
     SetProjParm( SRS_PP_CENTRAL_MERIDIAN, dfCenterLong );
+    SetProjParm( SRS_PP_FALSE_EASTING, dfFalseEasting );
+    SetProjParm( SRS_PP_FALSE_NORTHING, dfFalseNorthing );
+
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                             SetLCC1SP()                              */
+/************************************************************************/
+
+OGRErr OGRSpatialReference::SetLCC1SP( double dfCenterLat, double dfCenterLong,
+                                       double dfScale,
+                                       double dfFalseEasting,
+                                       double dfFalseNorthing )
+
+{
+    SetProjection( SRS_PT_LAMBERT_CONFORMAL_CONIC_1SP );
+    SetProjParm( SRS_PP_LATITUDE_OF_ORIGIN, dfCenterLat );
+    SetProjParm( SRS_PP_CENTRAL_MERIDIAN, dfCenterLong );
+    SetProjParm( SRS_PP_SCALE_FACTOR, dfScale );
     SetProjParm( SRS_PP_FALSE_EASTING, dfFalseEasting );
     SetProjParm( SRS_PP_FALSE_NORTHING, dfFalseNorthing );
 
