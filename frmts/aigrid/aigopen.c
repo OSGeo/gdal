@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2002/05/14 21:38:57  warmerda
+ * fixed up nPixel and nLines calculation to avoid roundoff error
+ *
  * Revision 1.11  2001/07/18 04:51:56  warmerda
  * added CPL_CVSID
  *
@@ -176,9 +179,11 @@ AIGInfo_t *AIGOpen( const char * pszInputName, const char * pszAccess )
 /*      Compute the number of pixels and lines.                         */
 /* -------------------------------------------------------------------- */
     psInfo->nPixels = (int)
-        ((psInfo->dfURX - psInfo->dfLLX) / psInfo->dfCellSizeX);
+        ((psInfo->dfURX - psInfo->dfLLX + 0.5 * psInfo->dfCellSizeX) 
+		/ psInfo->dfCellSizeX);
     psInfo->nLines = (int)
-        ((psInfo->dfURY - psInfo->dfLLY) / psInfo->dfCellSizeY);
+        ((psInfo->dfURY - psInfo->dfLLY + 0.5 * psInfo->dfCellSizeY) 
+		/ psInfo->dfCellSizeY);
     
     return( psInfo );
 }
