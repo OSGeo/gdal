@@ -28,6 +28,9 @@
  * ****************************************************************************
  *
  * $Log$
+ * Revision 1.18  2003/09/30 06:10:08  dron
+ * Copy NoData value over the virtual dataset.
+ *
  * Revision 1.17  2003/09/19 18:30:02  warmerda
  * Added -gcp switch to attached GCPs to an image.
  *
@@ -672,9 +675,11 @@ int main( int argc, char ** argv )
 
     for( i = 0; i < nBandCount; i++ )
     {
-        VRTRasterBand *poVRTBand;
-        GDALRasterBand *poSrcBand;
-        GDALDataType  eBandType;
+        VRTRasterBand   *poVRTBand;
+        GDALRasterBand  *poSrcBand;
+        GDALDataType    eBandType;
+        double          dfNoData;
+        int             bSuccess;
 
         poSrcBand = ((GDALDataset *) 
                      hDataset)->GetRasterBand(panBandList[i]);
@@ -745,6 +750,9 @@ int main( int argc, char ** argv )
             poSrcBand->GetColorInterpretation());
         if( strlen(poSrcBand->GetDescription()) > 0 )
             poVRTBand->SetDescription( poSrcBand->GetDescription() );
+        dfNoData = poSrcBand->GetNoDataValue( &bSuccess );
+        if ( bSuccess )
+            poVRTBand->SetNoDataValue( dfNoData );
     }
 
 /* -------------------------------------------------------------------- */
