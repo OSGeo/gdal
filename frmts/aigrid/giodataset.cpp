@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.8  2000/01/31 16:39:37  warmerda
+ * added pfnDelete support, and removed delete hack from Create method
+ *
  * Revision 1.7  2000/01/31 04:13:10  warmerda
  * Added logic in Create() to blow away old grid of same name if present.
  *
@@ -155,6 +158,7 @@ class CPL_DLL GIODataset : public GDALDataset
                 GIODataset();
                 ~GIODataset();
 
+    static CPLErr       Delete( const char * pszGridName );
     static GDALDataset *Open( GDALOpenInfo * );
     static GDALDataset *Create( const char * pszFilename,
                                 int nXSize, int nYSize, int nBands,
@@ -546,16 +550,6 @@ GDALDataset *GIODataset::Create( const char * pszFilename,
     }
 
 /* -------------------------------------------------------------------- */
-/*      If there is an existing grid, blow it away.                     */
-/* -------------------------------------------------------------------- */
-    VSIStatBuf      sStatBuf;
-
-    if( VSIStat( pszFilename, &sStatBuf ) == 0 && pfnGridDelete != NULL )
-    {
-        pfnGridDelete( (char *) pszFilename );
-    }
-    
-/* -------------------------------------------------------------------- */
 /*      Set the access window.                                          */
 /* -------------------------------------------------------------------- */
     double      adfAdjustedBox[4];
@@ -621,6 +615,39 @@ GDALDataset *GIODataset::Create( const char * pszFilename,
 }
 
 /************************************************************************/
+/*                               Delete()                               */
+/************************************************************************/
+
+CPLErr GIODataset::Delete( const char * pszGridName )
+
+{
+    VSIStatBuf      sStat;
+
+    if( !nGridIOSetupCalled )
+    {
+        if( pfnGridIOSetup() != 1 )
+            return CE_Failure;
+
+        nGridIOSetupCalled = TRUE;
+    }
+    
+    if( VSIStat( pszGridName, &sStat ) != 0 || !VSI_ISDIR( sStat.st_mode ) )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "%s is not a grid directory.\n", 
+                  pszGridName );
+
+        return CE_Failure;
+    }
+    
+    if( pfnGridDelete != NULL )
+        pfnGridDelete( (char *) pszGridName );
+    
+    return CE_None;
+}
+
+
+/************************************************************************/
 /*                        GDALRegister_AIGrid2()                        */
 /************************************************************************/
 
@@ -639,6 +666,7 @@ void GDALRegister_AIGrid2()
         
         poDriver->pfnOpen = GIODataset::Open;
         poDriver->pfnCreate = GIODataset::Create;
+        poDriver->pfnDelete = GIODataset::Delete;
 
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
