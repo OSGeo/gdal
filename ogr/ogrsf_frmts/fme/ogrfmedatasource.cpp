@@ -23,6 +23,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2002/11/01 15:28:03  warmerda
+ * added OGRFME_TMPDIR environment variable support
+ *
  * Revision 1.9  2002/09/04 19:03:48  warmerda
  * avoid creating session if datasetname is not for FME
  *
@@ -239,7 +242,9 @@ static const char *GetTmpDir()
 {
     const char     *pszTmpDir;
 
-    pszTmpDir = getenv("TMPDIR");
+    pszTmpDir = getenv("OGRFME_TMPDIR");
+    if( pszTmpDir == NULL )
+        pszTmpDir = getenv("TMPDIR");
     if( pszTmpDir == NULL )
         pszTmpDir = getenv("TEMPDIR");
     if( pszTmpDir == NULL ) //20020419 - ryan
