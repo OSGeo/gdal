@@ -29,6 +29,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.28  2001/10/19 15:43:52  warmerda
+# added SetGCPs, and SetMetadata support
+#
 # Revision 1.27  2001/10/01 13:24:17  warmerda
 # Fixed last fix.
 #
@@ -208,14 +211,20 @@ def GetDriverByName(name):
     
 class GCP:
     def __init__(self):
-        GCPX = 0.0
-        GCPY = 0.0
-        GCPZ = 0.0
-        GCPPixel = 0.0
-        GCPLine = 0.0
-        Info = ''
-        Id = ''
+        self.GCPX = 0.0
+        self.GCPY = 0.0
+        self.GCPZ = 0.0
+        self.GCPPixel = 0.0
+        self.GCPLine = 0.0
+        self.Info = ''
+        self.Id = ''
 
+    def __str__(self):
+        str = '%s (%.2fP,%.2fL) -> (%.7fE,%.7fN,%.2f) %s' \
+              % (self.Id, self.GCPPixel, self.GCPLine,
+                 self.GCPX, self.GCPY, self.GCPZ, self.Info)
+        return str
+        
 class Driver:
     
     def __init__(self, _obj):
@@ -301,6 +310,12 @@ class Dataset:
         else:
             return _gdal.GDALGetMetadata(self._o, domain)
 
+    def SetMetadata(self, metadata, domain = None):
+        if domain is None:
+            return _gdal.GDALSetMetadata(self._o, metadata)
+        else:
+            return _gdal.GDALSetMetadata(self._o, metadatadomain)
+
     def GetSubDatasets(self):
         sd_list = []
         
@@ -337,6 +352,14 @@ class Dataset:
             gcp_list.append(gcp)
 
         return gcp_list
+
+    def SetGCPs(self, gcp_list, projection = '' ):
+        tuple_list = []
+        for gcp in gcp_list:
+            tuple_list.append( (gcp.Id, gcp.Info, gcp.GCPPixel, gcp.GCPLine,
+                                gcp.GCPX, gcp.GCPY, gcp.GCPZ) )
+
+        _gdal.GDALSetGCPs( self._o, tuple_list, projection )
 
     def BuildOverviews(self, resampling="NEAREST", overviewlist = None,
                        callback = None, callback_data = None):

@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.32  2001/10/19 15:43:52  warmerda
+ * added SetGCPs, and SetMetadata support
+ *
  * Revision 1.31  2001/10/10 20:47:49  warmerda
  * added some OSR methods
  *
@@ -649,7 +652,7 @@ py_GDALGetGCPs(PyObject *self, PyObject *args) {
     for( iGCP = 0; pasGCPList != NULL && iGCP < GDALGetGCPCount(_arg0); iGCP++)
     {
 	PyList_SetItem(psList, iGCP, 
-                       Py_BuildValue("(ssfffff)", 
+                       Py_BuildValue("(ssddddd)", 
                                      pasGCPList[iGCP].pszId,
                                      pasGCPList[iGCP].pszInfo,
                                      pasGCPList[iGCP].dfGCPPixel,
@@ -664,6 +667,79 @@ py_GDALGetGCPs(PyObject *self, PyObject *args) {
 %}
 
 %native(GDALGetGCPs) py_GDALGetGCPs;
+
+%{
+/************************************************************************/
+/*                            GDALSetGCPs()                             */
+/************************************************************************/
+static PyObject *
+py_GDALSetGCPs(PyObject *self, PyObject *args) {
+
+    GDALDatasetH  _arg0;
+    char *_argc0 = NULL;
+    GDAL_GCP * pasGCPList;
+    char * pszProjection = "";
+    PyObject *psList;
+    int iGCP, nGCPCount;
+    CPLErr eErr;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"sO!s:GDALGetGCPs",
+			&_argc0, &PyList_Type, &psList, &pszProjection))
+        return NULL;
+
+    if (_argc0) {
+        if (SWIG_GetPtr_2(_argc0,(void **) &_arg0,_GDALDatasetH)) {
+            PyErr_SetString(PyExc_TypeError,
+                            "Type error in argument 1 of GDALSetGCPs."
+                            "  Expected _GDALDatasetH.");
+            return NULL;
+        }
+    }
+
+    nGCPCount = PyList_Size(psList);
+    pasGCPList = (GDAL_GCP *) CPLCalloc(sizeof(GDAL_GCP),nGCPCount);
+    GDALInitGCPs( nGCPCount, pasGCPList );
+
+    for( iGCP = 0; iGCP < nGCPCount; iGCP++ )
+    {
+        char *pszId = NULL, *pszInfo = NULL;
+
+	if( !PyArg_Parse( PyList_GET_ITEM(psList,iGCP), "(ssddddd)", 
+	                  &pszId, &pszInfo, 
+	                  &(pasGCPList[iGCP].dfGCPPixel),
+	                  &(pasGCPList[iGCP].dfGCPLine),
+	                  &(pasGCPList[iGCP].dfGCPX),
+	                  &(pasGCPList[iGCP].dfGCPY),
+	                  &(pasGCPList[iGCP].dfGCPZ) ) )
+        {
+	    PyErr_SetString(PyExc_ValueError, "improper GCP tuple");
+	    return NULL;
+        }
+
+        CPLFree( pasGCPList[iGCP].pszId );
+	pasGCPList[iGCP].pszId = CPLStrdup(pszId);
+        CPLFree( pasGCPList[iGCP].pszInfo );
+	pasGCPList[iGCP].pszInfo = CPLStrdup(pszInfo);
+    }
+
+    eErr = GDALSetGCPs( _arg0, nGCPCount, pasGCPList, pszProjection );
+	
+    GDALDeinitGCPs( nGCPCount, pasGCPList );
+    CPLFree( pasGCPList );    
+
+    if( eErr != CE_None )
+    {	
+	PyErr_SetString(PyExc_TypeError,CPLGetLastErrorMsg());
+	return NULL;
+    }
+
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+%}
+
+%native(GDALSetGCPs) py_GDALSetGCPs;
 
 %{
 /************************************************************************/
@@ -878,6 +954,66 @@ py_GDALGetMetadata(PyObject *self, PyObject *args) {
 %}
 
 %native(GDALGetMetadata) py_GDALGetMetadata;
+
+%{
+/************************************************************************/
+/*                          GDALSetMetadata()                           */
+/************************************************************************/
+static PyObject *
+py_GDALSetMetadata(PyObject *self, PyObject *args) {
+
+    GDALMajorObjectH  hObject;
+    char *_argc0 = NULL;
+    PyObject *psDict;
+    int i;
+    char **papszMetadata;
+    char *pszDomain = NULL;
+    int nPos;
+    PyObject *psKey, *psValue;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"sO!|s:GDALSetMetadata",&_argc0, 
+			 &PyType_Dict, &psDict, &pszDomain))
+        return NULL;
+
+    if (_argc0) {
+#ifdef SWIGTYPE_GDALDatasetH
+        if (SWIG_ConvertPtr(_argc0,(void **) &hObject,NULL,0) ) 
+#else
+        if (SWIG_GetPtr(_argc0,(void **) &hObject,NULL )) 
+#endif
+	{
+            PyErr_SetString(PyExc_TypeError,
+                          "Type error in argument 1 of GDALSetMetadata."
+                          "  Expected _GDALMajorObjectH.");
+            return NULL;
+        }
+    }
+
+    while( PyDict_Next( psDict, &nPos, &psKey, &psValue ) ) 
+    {
+        char *pszKey, *pszValue;
+        
+	if( !PyArg_Parse( psResult, "s", &pszKey )
+	    || !PyArg_Parse( psResult, "s", &pszValue ) )
+        {
+	    PyErr_SetString(PyExc_TypeError,
+                    "Metadata dictionary keys and values must be strings.");
+            return NULL;
+        }
+
+        papszMetadata = CSLSetNameValue( papszMetadata, pszKey, pszValue );
+    }
+
+    GDALSetMetadata( hObject, papszMetadata, pszDomain );
+
+    CSLDestroy( papszMetadata );
+
+    return psDict;
+}
+%}
+
+%native(GDALSetMetadata) py_GDALSetMetadata;
 
 %{
 /************************************************************************/

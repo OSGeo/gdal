@@ -850,7 +850,7 @@ py_GDALGetGCPs(PyObject *self, PyObject *args) {
     for( iGCP = 0; pasGCPList != NULL && iGCP < GDALGetGCPCount(_arg0); iGCP++)
     {
 	PyList_SetItem(psList, iGCP, 
-                       Py_BuildValue("(ssfffff)", 
+                       Py_BuildValue("(ssddddd)", 
                                      pasGCPList[iGCP].pszId,
                                      pasGCPList[iGCP].pszInfo,
                                      pasGCPList[iGCP].dfGCPPixel,
@@ -861,6 +861,75 @@ py_GDALGetGCPs(PyObject *self, PyObject *args) {
     }
 
     return psList;
+}
+
+/************************************************************************/
+/*                            GDALSetGCPs()                             */
+/************************************************************************/
+static PyObject *
+py_GDALSetGCPs(PyObject *self, PyObject *args) {
+
+    GDALDatasetH  _arg0;
+    char *_argc0 = NULL;
+    GDAL_GCP * pasGCPList;
+    char * pszProjection = "";
+    PyObject *psList;
+    int iGCP, nGCPCount;
+    CPLErr eErr;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"sO!s:GDALGetGCPs",
+			&_argc0, &PyList_Type, &psList, &pszProjection))
+        return NULL;
+
+    if (_argc0) {
+        if (SWIG_GetPtr_2(_argc0,(void **) &_arg0,_GDALDatasetH)) {
+            PyErr_SetString(PyExc_TypeError,
+                            "Type error in argument 1 of GDALSetGCPs."
+                            "  Expected _GDALDatasetH.");
+            return NULL;
+        }
+    }
+
+    nGCPCount = PyList_Size(psList);
+    pasGCPList = (GDAL_GCP *) CPLCalloc(sizeof(GDAL_GCP),nGCPCount);
+    GDALInitGCPs( nGCPCount, pasGCPList );
+
+    for( iGCP = 0; iGCP < nGCPCount; iGCP++ )
+    {
+        char *pszId = NULL, *pszInfo = NULL;
+
+	if( !PyArg_Parse( PyList_GET_ITEM(psList,iGCP), "(ssddddd)", 
+	                  &pszId, &pszInfo, 
+	                  &(pasGCPList[iGCP].dfGCPPixel),
+	                  &(pasGCPList[iGCP].dfGCPLine),
+	                  &(pasGCPList[iGCP].dfGCPX),
+	                  &(pasGCPList[iGCP].dfGCPY),
+	                  &(pasGCPList[iGCP].dfGCPZ) ) )
+        {
+	    PyErr_SetString(PyExc_ValueError, "improper GCP tuple");
+	    return NULL;
+        }
+
+        CPLFree( pasGCPList[iGCP].pszId );
+	pasGCPList[iGCP].pszId = CPLStrdup(pszId);
+        CPLFree( pasGCPList[iGCP].pszInfo );
+	pasGCPList[iGCP].pszInfo = CPLStrdup(pszInfo);
+    }
+
+    eErr = GDALSetGCPs( _arg0, nGCPCount, pasGCPList, pszProjection );
+	
+    GDALDeinitGCPs( nGCPCount, pasGCPList );
+    CPLFree( pasGCPList );    
+
+    if( eErr != CE_None )
+    {	
+	PyErr_SetString(PyExc_TypeError,CPLGetLastErrorMsg());
+	return NULL;
+    }
+
+    Py_INCREF(Py_None);
+    return Py_None;
 }
 
 /************************************************************************/
@@ -1053,6 +1122,61 @@ py_GDALGetMetadata(PyObject *self, PyObject *args) {
                             Py_BuildValue("s", pszValue ) );
 	CPLFree( pszKey );
     }
+
+    return psDict;
+}
+
+/************************************************************************/
+/*                          GDALSetMetadata()                           */
+/************************************************************************/
+static PyObject *
+py_GDALSetMetadata(PyObject *self, PyObject *args) {
+
+    GDALMajorObjectH  hObject;
+    char *_argc0 = NULL;
+    PyObject *psDict;
+    char **papszMetadata = NULL;
+    char *pszDomain = NULL;
+    int nPos;
+    PyObject *psKey, *psValue;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"sO!|s:GDALSetMetadata",&_argc0, 
+			 &PyDict_Type, &psDict, &pszDomain))
+        return NULL;
+
+    if (_argc0) {
+#ifdef SWIGTYPE_GDALDatasetH
+        if (SWIG_ConvertPtr(_argc0,(void **) &hObject,NULL,0) ) 
+#else
+        if (SWIG_GetPtr(_argc0,(void **) &hObject,NULL )) 
+#endif
+	{
+            PyErr_SetString(PyExc_TypeError,
+                          "Type error in argument 1 of GDALSetMetadata."
+                          "  Expected _GDALMajorObjectH.");
+            return NULL;
+        }
+    }
+
+    while( PyDict_Next( psDict, &nPos, &psKey, &psValue ) ) 
+    {
+        char *pszKey, *pszValue;
+        
+	if( !PyArg_Parse( psKey, "s", &pszKey )
+	    || !PyArg_Parse( psValue, "s", &pszValue ) )
+        {
+	    PyErr_SetString(PyExc_TypeError,
+                    "Metadata dictionary keys and values must be strings.");
+            return NULL;
+        }
+
+        papszMetadata = CSLSetNameValue( papszMetadata, pszKey, pszValue );
+    }
+
+    GDALSetMetadata( hObject, papszMetadata, pszDomain );
+
+    CSLDestroy( papszMetadata );
 
     return psDict;
 }
@@ -3777,11 +3901,13 @@ static PyMethodDef _gdalMethods[] = {
 	 { "GDALComputeMedianCutPCT", py_GDALComputeMedianCutPCT, METH_VARARGS },
 	 { "GDALGetRasterNoDataValue", py_GDALGetRasterNoDataValue, METH_VARARGS },
 	 { "GDALGetDescription", py_GDALGetDescription, METH_VARARGS },
+	 { "GDALSetMetadata", py_GDALSetMetadata, METH_VARARGS },
 	 { "GDALGetMetadata", py_GDALGetMetadata, METH_VARARGS },
 	 { "GDALComputeRasterMinMax", py_GDALComputeRasterMinMax, METH_VARARGS },
 	 { "GDALGetRasterHistogram", py_GDALGetRasterHistogram, METH_VARARGS },
 	 { "GDALSetGeoTransform", py_GDALSetGeoTransform, METH_VARARGS },
 	 { "GDALGetGeoTransform", py_GDALGetGeoTransform, METH_VARARGS },
+	 { "GDALSetGCPs", py_GDALSetGCPs, METH_VARARGS },
 	 { "GDALGetGCPs", py_GDALGetGCPs, METH_VARARGS },
 	 { "GDALWriteRaster", py_GDALWriteRaster, METH_VARARGS },
 	 { "GDALReadRaster", py_GDALReadRaster, METH_VARARGS },
