@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2002/10/28 22:30:24  warmerda
+ * tab expanded
+ *
  * Revision 1.20  2002/05/14 20:34:27  warmerda
  * added PRESERVE_EMPTY_NUMBERS support
  *
@@ -311,7 +314,7 @@ class S57Reader
     int                 ApplyRecordUpdate( DDFRecord *, DDFRecord * );
 
     int                 bMissingWarningIssued;
-    int			bAttrWarningIssued;
+    int                 bAttrWarningIssued;
 
   public:
                         S57Reader( const char * );
