@@ -33,8 +33,8 @@
  * and things like that.
  *
  * $Log$
- * Revision 1.63  2003/04/02 22:16:43  warmerda
- * Convert 'rootless' XML documents with a pseduo-root
+ * Revision 1.64  2003/04/03 19:27:55  warmerda
+ * added nullable string support, fixed ogr.Layer.SetAttributeFilter()
  *
  ************************************************************************/
 
@@ -574,6 +574,7 @@ CPL_CVSID("$Id$");
 #endif
 
 typedef char **stringList;
+typedef char *NULLableString;
 
 
 
@@ -7199,15 +7200,22 @@ static PyObject *_wrap_OGR_L_SetAttributeFilter(PyObject *self, PyObject *args) 
     PyObject * _resultobj;
     OGRErr  _result;
     OGRLayerH  _arg0;
-    char * _arg1;
+    NULLableString  _arg1;
     char * _argc0 = 0;
+    char * _argc1 = 0;
 
     self = self;
-    if(!PyArg_ParseTuple(args,"ss:OGR_L_SetAttributeFilter",&_argc0,&_arg1)) 
+    if(!PyArg_ParseTuple(args,"ss:OGR_L_SetAttributeFilter",&_argc0,&_argc1)) 
         return NULL;
     if (_argc0) {
         if (SWIG_GetPtr(_argc0,(void **) &_arg0,(char *) 0 )) {
             PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OGR_L_SetAttributeFilter. Expected _OGRLayerH.");
+        return NULL;
+        }
+    }
+    if (_argc1) {
+        if (SWIG_GetPtr(_argc1,(void **) &_arg1,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of OGR_L_SetAttributeFilter. Expected _NULLableString.");
         return NULL;
         }
     }

@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.63  2003/04/03 19:27:55  warmerda
+ * added nullable string support, fixed ogr.Layer.SetAttributeFilter()
+ *
  * Revision 1.62  2003/04/02 22:16:43  warmerda
  * Convert 'rootless' XML documents with a pseduo-root
  *
@@ -183,6 +186,7 @@ CPL_CVSID("$Id$");
 #endif
 
 typedef char **stringList;
+typedef char *NULLableString;
 
 %}
 
@@ -2404,12 +2408,13 @@ void    OGR_F_SetStyleString( OGRFeatureH, const char * );
 typedef void *OGRLayerH;
 typedef void *OGRDataSourceH;
 typedef void *OGRSFDriverH;
+typedef void *NULLableString;
 
 /* OGRLayer */
 
 OGRGeometryH  OGR_L_GetSpatialFilter( OGRLayerH );
 void    OGR_L_SetSpatialFilter( OGRLayerH, OGRGeometryH );
-OGRErr  OGR_L_SetAttributeFilter( OGRLayerH, const char * );
+OGRErr  OGR_L_SetAttributeFilter( OGRLayerH, NULLableString );
 void    OGR_L_ResetReading( OGRLayerH );
 OGRFeatureH  OGR_L_GetNextFeature( OGRLayerH );
 OGRFeatureH  OGR_L_GetFeature( OGRLayerH, long );
