@@ -185,7 +185,7 @@ fi
 
 if test "$LIBZ_SETTING" = "external" ; then
   LIBS="-lz $LIBS"
-elif test "$with_libs" = "no" ; then
+elif test "$with_libz" = "no" ; then
   LIBZ_SETTING=no
   AC_MSG_RESULT([not using libz at all.])
 else
