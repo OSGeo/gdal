@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: dbfopen.c,v 1.50 2003/04/21 18:58:25 warmerda Exp $
+ * $Id: dbfopen.c,v 1.51 2003/07/08 13:50:15 warmerda Exp $
  *
  * Project:  Shapelib
  * Purpose:  Implementation of .dbf access API documented in dbf_api.html.
@@ -34,6 +34,9 @@
  ******************************************************************************
  *
  * $Log: dbfopen.c,v $
+ * Revision 1.51  2003/07/08 13:50:15  warmerda
+ * DBFIsAttributeNULL check for pszValue==NULL - bug 360
+ *
  * Revision 1.50  2003/04/21 18:58:25  warmerda
  * ensure current record is flushed at same time as header is updated
  *
@@ -189,7 +192,7 @@
  */
 
 static char rcsid[] = 
-  "$Id: dbfopen.c,v 1.50 2003/04/21 18:58:25 warmerda Exp $";
+  "$Id: dbfopen.c,v 1.51 2003/07/08 13:50:15 warmerda Exp $";
 
 #include "shapefil.h"
 
@@ -888,6 +891,9 @@ DBFIsAttributeNULL( DBFHandle psDBF, int iRecord, int iField )
     const char	*pszValue;
 
     pszValue = DBFReadStringAttribute( psDBF, iRecord, iField );
+
+    if( pszValue == NULL )
+        return TRUE;
 
     switch(psDBF->pachFieldType[iField])
     {
