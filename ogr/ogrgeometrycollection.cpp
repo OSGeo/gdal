@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  1999/09/01 11:50:40  warmerda
+ * Fixed CPLAssert on legal geometry types.
+ *
  * Revision 1.6  1999/07/27 00:48:11  warmerda
  * Added Equal() support
  *
@@ -300,7 +303,9 @@ OGRErr OGRGeometryCollection::importFromWkb( unsigned char * pabyData,
         eGeometryType = (OGRwkbGeometryType) pabyData[4];
 
     CPLAssert( eGeometryType == wkbGeometryCollection
-               || eGeometryType == wkbMultiPolygon );
+               || eGeometryType == wkbMultiPolygon 
+               || eGeometryType == wkbMultiLineString 
+               || eGeometryType == wkbMultiPoint );
 #endif    
 
 /* -------------------------------------------------------------------- */
