@@ -3,7 +3,7 @@
  *
  * Project:  Erdas Imagine (.img) Translator
  * Purpose:  Testing mainline for HFA services - transitory.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 1999, Intergraph Corporation
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2003/04/22 19:40:36  warmerda
+ * fixed email address
+ *
  * Revision 1.6  2001/07/18 04:51:57  warmerda
  * added CPL_CVSID
  *

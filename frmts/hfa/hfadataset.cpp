@@ -4,7 +4,7 @@
  * Name:     hfadataset.cpp
  * Project:  Erdas Imagine Driver
  * Purpose:  Main driver for Erdas Imagine format.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 1999, Frank Warmerdam
@@ -29,6 +29,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.29  2003/04/22 19:40:36  warmerda
+ * fixed email address
+ *
  * Revision 1.28  2003/04/21 15:50:29  warmerda
  * fixup generic overview reading support
  *

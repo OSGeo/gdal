@@ -5,7 +5,7 @@
  * Purpose:  Private class declarations for the HFA classes used to read
  *           Erdas Imagine (.img) files.  Public (C callable) declarations
  *           are in hfa.h.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 1999, Intergraph Corporation
@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2003/04/22 19:40:36  warmerda
+ * fixed email address
+ *
  * Revision 1.12  2003/02/25 18:03:20  warmerda
  * added AddType() method to HFADictionary
  *

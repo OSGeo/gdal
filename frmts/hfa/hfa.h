@@ -5,7 +5,7 @@
  * Purpose:  Public (C callable) interface for the Erdas Imagine reading
  *           code.  This include files, and it's implementing code depends
  *           on CPL, but not GDAL. 
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 1999, Intergraph Corporation
@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2003/04/22 19:40:36  warmerda
+ * fixed email address
+ *
  * Revision 1.9  2003/03/18 21:06:07  dron
  * Added HFADelete() function.
  *
