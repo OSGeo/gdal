@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2004/02/25 19:51:00  warmerda
+ * Fixed nodata check in GDT_Int16 case (from Manuel Massing).
+ *
  * Revision 1.8  2003/07/26 17:32:16  warmerda
  * Added info on new warp options.
  *
@@ -390,7 +393,7 @@ GDALWarpNoDataMasker( void *pMaskFuncArg, int nBandCount, GDALDataType eType,
           int iOffset;
 
           // nothing to do if value is out of range.
-          if( padfNoData[0] < 32768 || padfNoData[0] > 32767
+          if( padfNoData[0] < -32768 || padfNoData[0] > 32767
               || padfNoData[1] != 0.0 )
               return CE_None;
 
