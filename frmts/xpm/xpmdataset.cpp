@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.10  2004/11/11 17:07:19  fwarmerdam
+ * Avoid warnings about using char as a subscript.
+ *
  * Revision 1.9  2003/07/08 21:15:55  warmerda
  * avoid warnings
  *
@@ -567,7 +570,7 @@ ParseXPM( const char *pszInput, int *pnXSize, int *pnYSize,
             return NULL;
         }
 
-        anCharLookup[papszXPMList[iColor+1][0]] = iColor;
+        anCharLookup[(int)papszXPMList[iColor+1][0]] = iColor;
         
         if( EQUAL(papszTokens[1],"None") )
         {
@@ -636,7 +639,7 @@ ParseXPM( const char *pszInput, int *pnXSize, int *pnYSize,
              pszInLine[iPixel] != '\0' && iPixel < *pnXSize; 
              iPixel++ )
         {
-            int nPixelValue = anCharLookup[pszInLine[iPixel]];
+            int nPixelValue = anCharLookup[(int)pszInLine[iPixel]];
             if( nPixelValue != -1 )
                 pabyImage[iLine * *pnXSize + iPixel] = (GByte) nPixelValue;
         }
