@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2002/05/29 20:33:11  warmerda
+ * added FME support
+ *
  * Revision 1.9  2002/02/18 20:56:55  warmerda
  * register AVCBin
  *
@@ -83,6 +86,9 @@ void OGRRegisterAll()
 #endif
 #ifdef PG_ENABLED
     RegisterOGRPG();
+#endif
+#ifdef FME_ENABLED
+    RegisterOGRFME();
 #endif
 }
 
