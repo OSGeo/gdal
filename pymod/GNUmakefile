@@ -20,12 +20,12 @@ LIBS	+=	-L$(GDAL_ROOT)/.libs
 default:	$(GDALMODULE).$(SO_EXT)
 
 clean:
-	$(RM) *.o *.so *.la
+	$(RM) *.o *.$(SO_EXT) *.la
 
 gdal_wrap.c:	gdal.i
 	-swig -python gdal.i
 
-$(GDALMODULE).so:	$(OBJ) $(EXE_DEP_LIBS)
+$(GDALMODULE).$(SO_EXT):	$(OBJ) $(EXE_DEP_LIBS)
 	$(LD_SHARED) $(OBJ) \
 		$(GDAL_SLIB_LINK) $(PYTHON_LIBS) $(LIBS) -o $@
 
