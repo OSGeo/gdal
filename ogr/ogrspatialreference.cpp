@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.84  2004/05/04 17:54:45  warmerda
+ * internal longitude format is greenwich relative - no adjustments needed
+ *
  * Revision 1.83  2004/03/04 18:04:45  warmerda
  * added importFromDict() support
  *
@@ -158,6 +161,12 @@
 #include "ogr_p.h"
 
 CPL_CVSID("$Id$");
+
+// The current opinion is that WKT longitudes like central meridian
+// should be relative to greenwich, not the prime meridian in use. 
+// Define the following if they should be relative to the prime meridian
+// of then geogcs.
+#undef WKT_LONGITUDE_RELATIVE_TO_PM
 
 /************************************************************************/
 /*                           OGRPrintDouble()                           */
@@ -2173,8 +2182,7 @@ double OSRGetProjParm( OGRSpatialReferenceH hSRS, const char *pszName,
  *
  * This method is the same as GetProjParm() except that the value of
  * the parameter is "normalized" into degrees or meters depending on 
- * whether it is linear or angular, and if it is a longitude it is made
- * relative to Greenwich.
+ * whether it is linear or angular.
  *
  * This method is the same as the C function OSRGetNormProjParm().
  *
@@ -2212,8 +2220,10 @@ double OGRSpatialReference::GetNormProjParm( const char * pszName,
 
     if( dfToMeter != 1.0 && IsLinearParameter( pszName ) )
         return dfRawResult * dfToMeter;
+#ifdef WKT_LONGITUDE_RELATIVE_TO_PM
     else if( dfFromGreenwich != 0.0 && IsLongitudeParameter( pszName ) )
         return dfRawResult + dfFromGreenwich;
+#endif
     else
         return dfRawResult;
 }
@@ -2239,9 +2249,8 @@ double OSRGetNormProjParm( OGRSpatialReferenceH hSRS, const char *pszName,
  *
  * This method is the same as SetProjParm() except that the value of
  * the parameter passed in is assumed to be in "normalized" form (decimal
- * degrees for angular values, meters for linear values, and relative to
- * greenwich for longitudinal values.  The values are converted in a form
- * suitable for the GEOGCS and linear units in effect.
+ * degrees for angular values, meters for linear values.  The values are 
+ * converted in a form suitable for the GEOGCS and linear units in effect.
  *
  * This method is the same as the C function OSRSetNormProjParm().
  *
@@ -2262,8 +2271,10 @@ OGRErr OGRSpatialReference::SetNormProjParm( const char * pszName,
     if( (dfToDegrees != 1.0 || dfFromGreenwich != 0.0) 
         && IsAngularParameter(pszName) )
     {
+#ifdef WKT_LONGITUDE_RELATIVE_TO_PM
         if( dfFromGreenwich != 0.0 && IsLongitudeParameter( pszName ) )
             dfValue -= dfFromGreenwich;
+#endif
 
         dfValue /= dfToDegrees;
     }
