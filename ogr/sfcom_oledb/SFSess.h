@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2001/11/09 20:48:19  warmerda
+ * use SFGetLayerWKT() to cleanup WKT
+ *
  * Revision 1.16  2001/11/09 19:07:33  warmerda
  * added debugging
  *
@@ -492,10 +495,10 @@ public CRowsetImpl<CSFSessionSchemaOGISGeoColumns,OGISGeometry_Row,CSFSession>
                 lstrcpyW(trData.m_szTableName,A2OLE(poDefn->GetName()));
                 lstrcpyW(trData.m_szColumnName,A2OLE("OGIS_GEOMETRY"));
                 trData.m_nGeomType = SFWkbGeomTypeToDBGEOM(poDefn->GetGeomType());
-                if( pLayer->GetSpatialRef() != NULL )
-                    pLayer->GetSpatialRef()->exportToWkt( &pszWKT );
-
-                if( pszWKT != NULL )
+                QueryInterface(IID_IUnknown,(void **) &pIU);
+                pszWKT = SFGetLayerWKT( pLayer, pIU );
+                
+                if( pszWKT != NULL && strlen(pszWKT) > 0 )
                 {
                     OGRFree( pszWKT );
                     trData.m_nSpatialRefId = iLayer+1;
@@ -595,35 +598,26 @@ public CCRRowsetImpl<CSFSessionSchemaSpatRef,OGISSpat_Row,CSFSession>
             for (iLayer = 0; iLayer < poDS->GetLayerCount(); iLayer++)
             {
                 OGISSpat_Row trData;
+                char *pszWKT = NULL;
 				
                 pLayer = poDS->GetLayer(iLayer);
 
-                OGRSpatialReference *poSpatRef = pLayer->GetSpatialRef();
-                if (poSpatRef != NULL)
+                QueryInterface(IID_IUnknown,(void **) &pIU);
+                pszWKT = SFGetLayerWKT( pLayer, pIU );
+
+                if( pszWKT != NULL && strlen(pszWKT) > 0 )
                 {
-                    char *pszSpatRef=NULL;
-                    poSpatRef->exportToWkt(&pszSpatRef);
-				
-                    if (pszSpatRef)
-                    {
-                        lstrcpyW(trData.m_szAuthorityName,A2OLE(""));
-                        trData.m_nAuthorityId = 0;
-                        trData.m_nSpatialRefId = iLayer+1;
-                        lstrcpyW(trData.m_pszSpatialRefSystem,
-                                 A2OLE(pszSpatRef));
-                        OGRFree(pszSpatRef);
-					
-                        m_rgRowData.Add(trData);
-                    }
-                    else
-                    {
-                        bAddDefault = true;
-                    }
+                    lstrcpyW(trData.m_szAuthorityName,A2OLE(""));
+                    trData.m_nAuthorityId = 0;
+                    trData.m_nSpatialRefId = iLayer+1;
+                    lstrcpyW(trData.m_pszSpatialRefSystem,A2OLE(pszWKT));
+                    
+                    m_rgRowData.Add(trData);
                 }
                 else
-                {
-                    bAddDefault = true;
-                }
+                    bAddDefault = TRUE;
+
+                OGRFree( pszWKT );
             }
 
             if (bAddDefault)
