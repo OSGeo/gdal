@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.9  2002/06/04 17:37:23  dron
+ * Header records may follow in any order now.
+ *
  * Revision 1.8  2001/11/20 14:52:26  warmerda
  * Fix from Markus for center of pixel positioning.
  *
@@ -267,7 +270,7 @@ AAIGDataset::~AAIGDataset()
 GDALDataset *AAIGDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
-    int		i;
+    int		i, j;
     GDALDataType eDataType;
     char	**papszTokens;
 
@@ -276,18 +279,18 @@ GDALDataset *AAIGDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     if( poOpenInfo->nHeaderBytes < 100
         || poOpenInfo->fp == NULL
-        || !EQUALN((const char *) poOpenInfo->pabyHeader,"ncols",5) )
+        || !( EQUALN((const char *) poOpenInfo->pabyHeader,"ncols",5) ||
+	      EQUALN((const char *) poOpenInfo->pabyHeader,"nrows",5) ||
+	      EQUALN((const char *) poOpenInfo->pabyHeader,"xllcorner",9)||
+	      EQUALN((const char *) poOpenInfo->pabyHeader,"yllcorner",9)||
+	      EQUALN((const char *) poOpenInfo->pabyHeader,"xllcenter",9)||
+	      EQUALN((const char *) poOpenInfo->pabyHeader,"yllcenter",9)||
+	      EQUALN((const char *) poOpenInfo->pabyHeader,"cellsize",8)) )
         return NULL;
 
     papszTokens =  
-        CSLTokenizeStringComplex( (const char *) poOpenInfo->pabyHeader,
-                                  " \n\r", FALSE, FALSE );
-    if( !EQUAL(papszTokens[0],"ncols")
-        || !EQUAL(papszTokens[2],"nrows") )
-    {
-        CSLDestroy( papszTokens );
-        return NULL;
-    }
+        CSLTokenizeString2( (const char *) poOpenInfo->pabyHeader,
+                                  " \n\r", NULL );
 
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
@@ -304,62 +307,59 @@ GDALDataset *AAIGDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Parse the header.                                               */
 /* -------------------------------------------------------------------- */
-    poDS->nRasterXSize = atoi(papszTokens[1]);
-    poDS->nRasterYSize = atoi(papszTokens[3]);
-    poDS->nBands = 1;
+    double dfCellSize;
 
-    if( EQUAL(papszTokens[4],"xllcorner") 
-        && EQUAL(papszTokens[6],"yllcorner") 
-        && EQUAL(papszTokens[8],"cellsize") )
+    if ( (i = CSLFindString( papszTokens, "ncols" )) < 0 )
     {
-        double	dfCellSize = atof( papszTokens[9] );
-
-        poDS->adfGeoTransform[0] = atof( papszTokens[5] );
+        CSLDestroy( papszTokens );
+        return NULL;
+    }
+    poDS->nRasterXSize = atoi(papszTokens[i + 1]);
+    if ( (i = CSLFindString( papszTokens, "nrows" )) < 0 )
+    {
+        CSLDestroy( papszTokens );
+        return NULL;
+    }
+    poDS->nRasterYSize = atoi(papszTokens[i + 1]);
+    if ( (i = CSLFindString( papszTokens, "cellsize" )) < 0 )
+    {
+        CSLDestroy( papszTokens );
+        return NULL;
+    }    
+    dfCellSize = atof( papszTokens[i + 1] );
+    if ((i = CSLFindString( papszTokens, "xllcorner" )) >= 0 &&
+        (j = CSLFindString( papszTokens, "yllcorner" )) >= 0 )
+    {
+        poDS->adfGeoTransform[0] = atof( papszTokens[i + 1] );
         poDS->adfGeoTransform[1] = dfCellSize;
         poDS->adfGeoTransform[2] = 0.0;
-        poDS->adfGeoTransform[3] = atof( papszTokens[7] )
+        poDS->adfGeoTransform[3] = atof( papszTokens[j + 1] )
             + poDS->nRasterYSize * dfCellSize;
         poDS->adfGeoTransform[4] = 0.0;
         poDS->adfGeoTransform[5] = - dfCellSize;
     }
-    else if( EQUAL(papszTokens[4],"xllcenter") 
-             && EQUAL(papszTokens[6],"yllcenter") 
-             && EQUAL(papszTokens[8],"cellsize") )
+    else if ((i = CSLFindString( papszTokens, "xllcenter" )) >= 0 &&
+             (j = CSLFindString( papszTokens, "yllcenter" )) >= 0 )
     {
-        double	dfCellSize = atof( papszTokens[9] );
-
-        poDS->adfGeoTransform[0] = atof( papszTokens[5] ) - 0.5 * dfCellSize;
+        poDS->adfGeoTransform[0] = atof(papszTokens[i + 1]) - 0.5 * dfCellSize;
         poDS->adfGeoTransform[1] = dfCellSize;
         poDS->adfGeoTransform[2] = 0.0;
-        poDS->adfGeoTransform[3] = atof( papszTokens[7] )
+        poDS->adfGeoTransform[3] = atof( papszTokens[j + 1] )
             + poDS->nRasterYSize * dfCellSize + 0.5 * dfCellSize;
         poDS->adfGeoTransform[4] = 0.0;
         poDS->adfGeoTransform[5] = - dfCellSize;
     }
-    else if( EQUAL(papszTokens[6],"xllcenter") 
-             && EQUAL(papszTokens[8],"yllcenter") 
-             && EQUAL(papszTokens[4],"cellsize") )
+    else
     {
-        double	dfCellSize = atof( papszTokens[5] );
-
-        poDS->adfGeoTransform[0] = atof( papszTokens[7] ) - 0.5 * dfCellSize;
-        poDS->adfGeoTransform[1] = dfCellSize;
-        poDS->adfGeoTransform[2] = 0.0;
-        poDS->adfGeoTransform[3] = atof( papszTokens[9] )
-            + poDS->nRasterYSize * dfCellSize + 0.5 * dfCellSize;
-        poDS->adfGeoTransform[4] = 0.0;
-        poDS->adfGeoTransform[5] = - dfCellSize;
+        CSLDestroy( papszTokens );
+        return NULL;
     }
-
-    if( CSLCount( papszTokens ) >= 12 )
+    if( (i = CSLFindString( papszTokens, "NODATA_value" )) >= 0 )
     {
-        if( EQUAL(papszTokens[10],"NODATA_value") )
-        {
-            poDS->bNoDataSet = TRUE;
-            poDS->dfNoDataValue = atof(papszTokens[11]);
-        }
+        poDS->bNoDataSet = TRUE;
+        poDS->dfNoDataValue = atof(papszTokens[i + 1]);
     }
-
+    
     CSLDestroy( papszTokens );
 
 /* -------------------------------------------------------------------- */
@@ -470,4 +470,5 @@ void GDALRegister_AAIGrid()
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
 }
+
 
