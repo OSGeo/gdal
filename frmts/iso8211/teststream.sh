@@ -2,7 +2,7 @@
 
 DATADIR=testdata
 
-for file in 1183CEL0.DDF CA49995B.000 TWFLA009.DDF SC01CATD.DDF SC01LE01.DDF; \
+for file in 1183CEL0.DDF CA49995B.000 TWFLA009.DDF SC01CATD.DDF SC01LE01.DDF TSTPAGEO.DDF ; \
   do
 
   echo "---------------------------------------------------------------------"
