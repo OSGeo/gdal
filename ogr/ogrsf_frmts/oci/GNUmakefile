@@ -13,7 +13,7 @@ CPPFLAGS	=	-I.. -I../.. $(OCI_INCLUDE)
 default:	$(O_OBJ)
 
 clean:
-	rm -f *.o
+	rm -f *.o $(O_OBJ)
 
 fastload:	fastload.cpp
 	$(CXX) $(CPPFLAGS) $(CFLAGS) fastload.cpp -L../../.. -lgdal.1.1 \
