@@ -33,8 +33,8 @@
  * and things like that.
  *
  * $Log$
- * Revision 1.1  2000/03/06 02:24:48  warmerda
- * New
+ * Revision 1.2  2000/03/06 03:30:51  warmerda
+ * Added geotransform stuff
  *
  ************************************************************************/
 
@@ -581,9 +581,11 @@ py_GDALReadRaster(PyObject *self, PyObject *args) {
         return NULL;
 
     if (_argc0) {
-        if (SWIG_GetPtr(_argc0,(void **) &_arg0,(char *) 0 )) {
-            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of GDALRasterIO. Expected _GDALRasterBandH.");
-        return NULL;
+        if (SWIG_GetPtr(_argc0,(void **) &_arg0,"_GDALRasterBandH" )) {
+            PyErr_SetString(PyExc_TypeError,
+			    "Type error in argument 1 of GDALReadRaster."
+			    " Expected _GDALRasterBandH.");
+            return NULL;
         }
     }
 	
@@ -606,6 +608,44 @@ py_GDALReadRaster(PyObject *self, PyObject *args) {
     return result;
 }
 
+
+static PyObject *
+py_GDALGetGeoTransform(PyObject *self, PyObject *args) {
+
+    GDALDatasetH  _arg0;
+    char *_argc0 = NULL;
+    double geotransform[6];
+    CPLErr err;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"s:GDALGetGeoTransform",&_argc0))
+        return NULL;
+
+    if (_argc0) {
+        if (SWIG_GetPtr(_argc0,(void **) &_arg0,"_GDALDatasetH" )) {
+            PyErr_SetString(PyExc_TypeError,
+                            "Type error in argument 1 of GDALGetGeoTransform."
+                            "  Expected _GDALDatasetH.");
+            return NULL;
+        }
+    }
+	
+    err = GDALGetGeoTransform(_arg0,geotransform);
+
+    if( err != CE_None )
+    {
+	PyErr_SetString(PyExc_TypeError,CPLGetLastErrorMsg());
+	return NULL;
+    }
+
+    return Py_BuildValue("dddddd",
+	                 geotransform[0],
+	                 geotransform[1],
+	                 geotransform[2],
+	                 geotransform[3],
+	                 geotransform[4],
+	                 geotransform[5] );
+}
 static PyObject *_wrap_GDALGetDataTypeSize(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
     int  _result;
@@ -1056,91 +1096,6 @@ static PyObject *_wrap_GDALSetProjection(PyObject *self, PyObject *args) {
     return _resultobj;
 }
 
-static PyObject *_wrap_GDALGetGeoTransform(PyObject *self, PyObject *args) {
-    PyObject * _resultobj;
-    CPLErr * _result;
-    GDALDatasetH  _arg0;
-    double * _arg1;
-    char * _argc0 = 0;
-    char * _argc1 = 0;
-    char _ptemp[128];
-
-    self = self;
-    if(!PyArg_ParseTuple(args,"ss:GDALGetGeoTransform",&_argc0,&_argc1)) 
-        return NULL;
-    if (_argc0) {
-        if (SWIG_GetPtr(_argc0,(void **) &_arg0,(char *) 0 )) {
-            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of GDALGetGeoTransform. Expected _GDALDatasetH.");
-        return NULL;
-        }
-    }
-    if (_argc1) {
-        if (SWIG_GetPtr(_argc1,(void **) &_arg1,"_double_p")) {
-            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of GDALGetGeoTransform. Expected _double_p.");
-        return NULL;
-        }
-    }
-    _result = (CPLErr *) malloc(sizeof(CPLErr ));
-    *(_result) = GDALGetGeoTransform(_arg0,_arg1);
-    SWIG_MakePtr(_ptemp, (void *) _result,"_CPLErr_p");
-    _resultobj = Py_BuildValue("s",_ptemp);
-    return _resultobj;
-}
-
-static PyObject *_wrap_GDALSetGeoTransform(PyObject *self, PyObject *args) {
-    PyObject * _resultobj;
-    CPLErr * _result;
-    GDALDatasetH  _arg0;
-    double * _arg1;
-    char * _argc0 = 0;
-    char * _argc1 = 0;
-    char _ptemp[128];
-
-    self = self;
-    if(!PyArg_ParseTuple(args,"ss:GDALSetGeoTransform",&_argc0,&_argc1)) 
-        return NULL;
-    if (_argc0) {
-        if (SWIG_GetPtr(_argc0,(void **) &_arg0,(char *) 0 )) {
-            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of GDALSetGeoTransform. Expected _GDALDatasetH.");
-        return NULL;
-        }
-    }
-    if (_argc1) {
-        if (SWIG_GetPtr(_argc1,(void **) &_arg1,"_double_p")) {
-            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of GDALSetGeoTransform. Expected _double_p.");
-        return NULL;
-        }
-    }
-    _result = (CPLErr *) malloc(sizeof(CPLErr ));
-    *(_result) = GDALSetGeoTransform(_arg0,_arg1);
-    SWIG_MakePtr(_ptemp, (void *) _result,"_CPLErr_p");
-    _resultobj = Py_BuildValue("s",_ptemp);
-    return _resultobj;
-}
-
-static PyObject *_wrap_GDALGetInternalHandle(PyObject *self, PyObject *args) {
-    PyObject * _resultobj;
-    void * _result;
-    GDALDatasetH  _arg0;
-    char * _arg1;
-    char * _argc0 = 0;
-    char _ptemp[128];
-
-    self = self;
-    if(!PyArg_ParseTuple(args,"ss:GDALGetInternalHandle",&_argc0,&_arg1)) 
-        return NULL;
-    if (_argc0) {
-        if (SWIG_GetPtr(_argc0,(void **) &_arg0,(char *) 0 )) {
-            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of GDALGetInternalHandle. Expected _GDALDatasetH.");
-        return NULL;
-        }
-    }
-    _result = (void *)GDALGetInternalHandle(_arg0,_arg1);
-    SWIG_MakePtr(_ptemp, (char *) _result,"_void_p");
-    _resultobj = Py_BuildValue("s",_ptemp);
-    return _resultobj;
-}
-
 static PyObject *_wrap_GDALReferenceDataset(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
     int  _result;
@@ -1234,113 +1189,6 @@ static PyObject *_wrap_GDALGetBlockSize(PyObject *self, PyObject *args) {
     GDALGetBlockSize(_arg0,_arg1,_arg2);
     Py_INCREF(Py_None);
     _resultobj = Py_None;
-    return _resultobj;
-}
-
-static PyObject *_wrap_GDALRasterIO(PyObject *self, PyObject *args) {
-    PyObject * _resultobj;
-    CPLErr * _result;
-    GDALRasterBandH  _arg0;
-    GDALRWFlag  _arg1;
-    int  _arg2;
-    int  _arg3;
-    int  _arg4;
-    int  _arg5;
-    void * _arg6;
-    int  _arg7;
-    int  _arg8;
-    GDALDataType  _arg9;
-    int  _arg10;
-    int  _arg11;
-    char * _argc0 = 0;
-    char * _argc6 = 0;
-    char _ptemp[128];
-
-    self = self;
-    if(!PyArg_ParseTuple(args,"siiiiisiiiii:GDALRasterIO",&_argc0,&_arg1,&_arg2,&_arg3,&_arg4,&_arg5,&_argc6,&_arg7,&_arg8,&_arg9,&_arg10,&_arg11)) 
-        return NULL;
-    if (_argc0) {
-        if (SWIG_GetPtr(_argc0,(void **) &_arg0,(char *) 0 )) {
-            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of GDALRasterIO. Expected _GDALRasterBandH.");
-        return NULL;
-        }
-    }
-    if (_argc6) {
-        if (SWIG_GetPtr(_argc6,(void **) &_arg6,(char *) 0 )) {
-            PyErr_SetString(PyExc_TypeError,"Type error in argument 7 of GDALRasterIO. Expected _void_p.");
-        return NULL;
-        }
-    }
-    _result = (CPLErr *) malloc(sizeof(CPLErr ));
-    *(_result) = GDALRasterIO(_arg0,_arg1,_arg2,_arg3,_arg4,_arg5,_arg6,_arg7,_arg8,_arg9,_arg10,_arg11);
-    SWIG_MakePtr(_ptemp, (void *) _result,"_CPLErr_p");
-    _resultobj = Py_BuildValue("s",_ptemp);
-    return _resultobj;
-}
-
-static PyObject *_wrap_GDALReadBlock(PyObject *self, PyObject *args) {
-    PyObject * _resultobj;
-    CPLErr * _result;
-    GDALRasterBandH  _arg0;
-    int  _arg1;
-    int  _arg2;
-    void * _arg3;
-    char * _argc0 = 0;
-    char * _argc3 = 0;
-    char _ptemp[128];
-
-    self = self;
-    if(!PyArg_ParseTuple(args,"siis:GDALReadBlock",&_argc0,&_arg1,&_arg2,&_argc3)) 
-        return NULL;
-    if (_argc0) {
-        if (SWIG_GetPtr(_argc0,(void **) &_arg0,(char *) 0 )) {
-            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of GDALReadBlock. Expected _GDALRasterBandH.");
-        return NULL;
-        }
-    }
-    if (_argc3) {
-        if (SWIG_GetPtr(_argc3,(void **) &_arg3,(char *) 0 )) {
-            PyErr_SetString(PyExc_TypeError,"Type error in argument 4 of GDALReadBlock. Expected _void_p.");
-        return NULL;
-        }
-    }
-    _result = (CPLErr *) malloc(sizeof(CPLErr ));
-    *(_result) = GDALReadBlock(_arg0,_arg1,_arg2,_arg3);
-    SWIG_MakePtr(_ptemp, (void *) _result,"_CPLErr_p");
-    _resultobj = Py_BuildValue("s",_ptemp);
-    return _resultobj;
-}
-
-static PyObject *_wrap_GDALWriteBlock(PyObject *self, PyObject *args) {
-    PyObject * _resultobj;
-    CPLErr * _result;
-    GDALRasterBandH  _arg0;
-    int  _arg1;
-    int  _arg2;
-    void * _arg3;
-    char * _argc0 = 0;
-    char * _argc3 = 0;
-    char _ptemp[128];
-
-    self = self;
-    if(!PyArg_ParseTuple(args,"siis:GDALWriteBlock",&_argc0,&_arg1,&_arg2,&_argc3)) 
-        return NULL;
-    if (_argc0) {
-        if (SWIG_GetPtr(_argc0,(void **) &_arg0,(char *) 0 )) {
-            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of GDALWriteBlock. Expected _GDALRasterBandH.");
-        return NULL;
-        }
-    }
-    if (_argc3) {
-        if (SWIG_GetPtr(_argc3,(void **) &_arg3,(char *) 0 )) {
-            PyErr_SetString(PyExc_TypeError,"Type error in argument 4 of GDALWriteBlock. Expected _void_p.");
-        return NULL;
-        }
-    }
-    _result = (CPLErr *) malloc(sizeof(CPLErr ));
-    *(_result) = GDALWriteBlock(_arg0,_arg1,_arg2,_arg3);
-    SWIG_MakePtr(_ptemp, (void *) _result,"_CPLErr_p");
-    _resultobj = Py_BuildValue("s",_ptemp);
     return _resultobj;
 }
 
@@ -2012,6 +1860,7 @@ static PyMethodDef _gdalMethods[] = {
 	 { "GDALColorEntry_c2_set", _wrap_GDALColorEntry_c2_set, 1 },
 	 { "GDALColorEntry_c1_get", _wrap_GDALColorEntry_c1_get, 1 },
 	 { "GDALColorEntry_c1_set", _wrap_GDALColorEntry_c1_set, 1 },
+	 { "GDALGetGeoTransform", py_GDALGetGeoTransform, 1 },
 	 { "GDALReadRaster", py_GDALReadRaster, 1 },
 	 { "GDALDecToDMS", _wrap_GDALDecToDMS, 1 },
 	 { "GDALDestroyProjDef", _wrap_GDALDestroyProjDef, 1 },
@@ -2034,16 +1883,10 @@ static PyMethodDef _gdalMethods[] = {
 	 { "GDALGetRasterColorInterpretation", _wrap_GDALGetRasterColorInterpretation, 1 },
 	 { "GDALGetRasterBandYSize", _wrap_GDALGetRasterBandYSize, 1 },
 	 { "GDALGetRasterBandXSize", _wrap_GDALGetRasterBandXSize, 1 },
-	 { "GDALWriteBlock", _wrap_GDALWriteBlock, 1 },
-	 { "GDALReadBlock", _wrap_GDALReadBlock, 1 },
-	 { "GDALRasterIO", _wrap_GDALRasterIO, 1 },
 	 { "GDALGetBlockSize", _wrap_GDALGetBlockSize, 1 },
 	 { "GDALGetRasterDataType", _wrap_GDALGetRasterDataType, 1 },
 	 { "GDALDereferenceDataset", _wrap_GDALDereferenceDataset, 1 },
 	 { "GDALReferenceDataset", _wrap_GDALReferenceDataset, 1 },
-	 { "GDALGetInternalHandle", _wrap_GDALGetInternalHandle, 1 },
-	 { "GDALSetGeoTransform", _wrap_GDALSetGeoTransform, 1 },
-	 { "GDALGetGeoTransform", _wrap_GDALGetGeoTransform, 1 },
 	 { "GDALSetProjection", _wrap_GDALSetProjection, 1 },
 	 { "GDALGetProjectionRef", _wrap_GDALGetProjectionRef, 1 },
 	 { "GDALGetRasterBand", _wrap_GDALGetRasterBand, 1 },

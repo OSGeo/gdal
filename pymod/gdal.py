@@ -33,6 +33,15 @@ class Dataset:
         else:
             return None
 
+    def GetGeoTransform(self):
+        return _gdal.GDALGetGeoTransform(self._o)
+
+    def GetProjection(self):
+        return _gdal.GDALGetProjectionRef(self._o)
+
+    def GetProjectionRef(self):
+        return _gdal.GDALGetProjectionRef(self._o)
+
 class Band:            
     def __init__(self, _obj):
         self._o = _obj
