@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2001/10/26 20:02:54  warmerda
+ * use indirect allocation for MEMRasterBand
+ *
  * Revision 1.5  2001/10/19 15:44:59  warmerda
  * added get/set gcps support
  *
@@ -353,7 +356,8 @@ GDALDataset *NUMPYDataset::Open( GDALOpenInfo * poOpenInfo )
     for( int iBand = 0; iBand < nBands; iBand++ )
     {
         poDS->SetBand( iBand+1, 
-                       new MEMRasterBand( poDS, iBand+1, 
+                       (GDALRasterBand *) 
+                       MEMCreateRasterBand( poDS, iBand+1, 
                                 (GByte *) psArray->data + nBandOffset*iBand,
                                           eType, nPixelOffset, nLineOffset,
                                           FALSE ) );
