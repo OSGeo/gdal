@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2000/03/06 02:20:15  warmerda
+ * added getname functions for colour interpretations
+ *
  * Revision 1.4  1999/07/23 19:35:47  warmerda
  * added GDALGetDataTypeName
  *
@@ -122,5 +125,87 @@ const char *GDALGetDataTypeName( GDALDataType eDataType )
 
       default:
         return NULL;
+    }
+}
+
+/************************************************************************/
+/*                  GDALGetPaletteInterpretationName()                  */
+/************************************************************************/
+
+const char *GDALGetPaletteInterpretationName( GDALPaletteInterp eInterp )
+
+{
+    switch( eInterp )
+    {
+      case GPI_Gray:
+        return "Gray";
+
+      case GPI_RGB:
+        return "RGB";
+        
+      case GPI_CMYK:
+        return "CMYK";
+
+      case GPI_HLS:
+        return "HLS";
+        
+      default:
+        return "Unknown";
+    }
+}
+
+/************************************************************************/
+/*                   GDALGetColorInterpretationName()                   */
+/************************************************************************/
+
+const char *GDALGetColorInterpretationName( GDALColorInterp eInterp )
+
+{
+    switch( eInterp )
+    {
+      case GCI_Undefined:
+        return "Undefined";
+
+      case GCI_GrayIndex:
+        return "Gray";
+
+      case GCI_PaletteIndex:
+        return "Palette";
+
+      case GCI_RedBand:
+        return "Red";
+
+      case GCI_GreenBand:
+        return "Green";
+
+      case GCI_BlueBand:
+        return "Blue";
+
+      case GCI_AlphaBand:
+        return "Alpha";
+
+      case GCI_HueBand:
+        return "Hue";
+
+      case GCI_SaturationBand:
+        return "Saturation";
+
+      case GCI_LightnessBand:
+        return "Lightness";
+
+      case GCI_CyanBand:
+        return "Cyan";
+
+      case GCI_MagentaBand:
+        return "Magenta";
+
+      case GCI_YellowBand:
+        return "Yellow";
+
+      case GCI_BlackBand:
+        return "Black";
+        
+      default:
+        return "Unknown";
     }
 }
