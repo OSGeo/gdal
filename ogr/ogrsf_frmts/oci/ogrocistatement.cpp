@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2003/02/06 21:16:04  warmerda
+ * fixed panFieldMap memory leak
+ *
  * Revision 1.6  2003/01/10 22:29:56  warmerda
  * Added separate Prepare step
  *
@@ -109,6 +112,9 @@ void OGROCIStatement::Clean()
     
     CPLFree( panCurColumnInd );
     panCurColumnInd = NULL;
+
+    CPLFree( panFieldMap );
+    panFieldMap = NULL;
 
     if( poDefn != NULL && poDefn->Dereference() <= 0 )
     {
