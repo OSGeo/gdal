@@ -29,6 +29,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.33  2003/05/21 17:04:57  warmerda
+ * significant improvements to reading and writing mapinfo units
+ *
  * Revision 1.32  2003/05/13 19:32:10  warmerda
  * support for reading and writing opacity provided by Diana Esch-Mosher
  *
@@ -149,9 +152,48 @@ static const char *apszDatumMap[] = {
     /* Imagine name, WKT name */
     "NAD27", "North_American_Datum_1927",
     "NAD83", "North_American_Datum_1983",
-    "WGS84", "WGS_1984",
+    "WGS 84", "WGS_1984",
     NULL, NULL
 };
+
+static const char *apszUnitMap[] = {
+    "meters", "1.0",
+    "meter", "1.0",
+    "m", "1.0",
+    "centimeters", "0.01",
+    "centimeter", "0.01",
+    "cm", "0.01", 
+    "millimeters", "0.001",
+    "millimeter", "0.001",
+    "mm", "0.001",
+    "kilometers", "1000.0",
+    "kilometer", "1000.0",
+    "km", "1000.0",
+    "us_survey_feet", "0.3048006096012192",
+    "us_survey_foot", "0.3048006096012192",
+    "feet", "0.3048006096012192", 
+    "foot", "0.3048006096012192",
+    "ft", "0.3048006096012192",
+    "international_feet", "0.3048",
+    "international_foot", "0.3048",
+    "inches", "0.0254000508001",
+    "inch", "0.0254000508001",
+    "in", "0.0254000508001",
+    "yards", "0.9144",
+    "yard", "0.9144",
+    "yd", "0.9144",
+    "miles", "1304.544",
+    "mile", "1304.544",
+    "mi", "1304.544",
+    "modified_american_feet", "0.3048122530",
+    "modified_american_foot", "0.3048122530",
+    "clarke_feet", "0.3047972651",
+    "clarke_foot", "0.3047972651",
+    "indian_feet", "0.3047995142",
+    "indian_foot", "0.3047995142",
+    NULL, NULL
+};
+
 
 /* ==================================================================== */
 /*      Table relating USGS and ESRI state plane zones.                 */
@@ -496,10 +538,10 @@ HFARasterBand::HFARasterBand( HFADataset *poDS, int nBand, int iOverview )
         {
             GDALColorEntry   sEntry;
 
-            sEntry.c1 = (int) (padfRed[iColor]   * 255);
-            sEntry.c2 = (int) (padfGreen[iColor] * 255);
-            sEntry.c3 = (int) (padfBlue[iColor]  * 255);
-            sEntry.c4 = (int) (padfAlpha[iColor]  * 255);
+            sEntry.c1 = (short) (padfRed[iColor]   * 255);
+            sEntry.c2 = (short) (padfGreen[iColor] * 255);
+            sEntry.c3 = (short) (padfBlue[iColor]  * 255);
+            sEntry.c4 = (short) (padfAlpha[iColor]  * 255);
             poCT->SetColorEntry( iColor, &sEntry );
         }
     }
@@ -889,7 +931,7 @@ CPLErr HFADataset::WriteProjection()
         if( bHaveSRS && oSRS.IsGeographic() )
         {
             sPro.proNumber = EPRJ_LATLONG;
-            sPro.proName = "Geographic(Latitude/Longitude)";
+            sPro.proName = "Geographic (Lat/Lon)";
         }
     }
 
@@ -994,7 +1036,7 @@ CPLErr HFADataset::WriteProjection()
     else if( EQUAL(pszProjName,SRS_PT_LAMBERT_AZIMUTHAL_EQUAL_AREA) )
     {
         sPro.proNumber = EPRJ_LAMBERT_AZIMUTHAL_EQUAL_AREA;
-        sPro.proName = "Lambert Azitmuthal Equal Area";
+        sPro.proName = "Lambert Azitmuthal Equal-area";
         sPro.proParams[4] = oSRS.GetProjParm(SRS_PP_LONGITUDE_OF_CENTER)*D2R;
         sPro.proParams[5] = oSRS.GetProjParm(SRS_PP_LATITUDE_OF_CENTER)*D2R;
         sPro.proParams[6] = oSRS.GetProjParm(SRS_PP_FALSE_EASTING);
@@ -1056,7 +1098,7 @@ CPLErr HFADataset::WriteProjection()
     else if( EQUAL(pszProjName,SRS_PT_VANDERGRINTEN) )
     {
         sPro.proNumber = EPRJ_VANDERGRINTEN;
-        sPro.proName = "VanDerGrinten";
+        sPro.proName = "Van der Grinten";
         sPro.proParams[4] = oSRS.GetProjParm(SRS_PP_CENTRAL_MERIDIAN)*D2R;
         sPro.proParams[6] = oSRS.GetProjParm(SRS_PP_FALSE_EASTING);
         sPro.proParams[7] = oSRS.GetProjParm(SRS_PP_FALSE_NORTHING);
@@ -1064,7 +1106,7 @@ CPLErr HFADataset::WriteProjection()
     else if( EQUAL(pszProjName,SRS_PT_HOTINE_OBLIQUE_MERCATOR) )
     {
         sPro.proNumber = EPRJ_HOTINE_OBLIQUE_MERCATOR;
-        sPro.proName = "Hotine Oblique Mercator";
+        sPro.proName = "Oblique Mercator (Hotine)";
         sPro.proParams[2] = oSRS.GetProjParm(SRS_PP_SCALE_FACTOR,1.0);
         sPro.proParams[3] = oSRS.GetProjParm(SRS_PP_AZIMUTH)*D2R;
         /* hopefully the rectified grid angle is zero */
@@ -1149,16 +1191,38 @@ CPLErr HFADataset::WriteProjection()
     sMapInfo.pixelSize.width = ABS(adfGeoTransform[1]);
     sMapInfo.pixelSize.height = ABS(adfGeoTransform[5]);
 
+/* -------------------------------------------------------------------- */
+/*      Handle units.  Try to match up with a known name.               */
+/* -------------------------------------------------------------------- */
     sMapInfo.units = "meters";
 
-    if( bHaveSRS )
+    if( bHaveSRS && oSRS.IsGeographic() )
+        sMapInfo.units = "dd";
+    else if( bHaveSRS && oSRS.GetLinearUnits() != 1.0 )
     {
-        if( oSRS.IsGeographic() )
-            sMapInfo.units = "dd";
-        else if( oSRS.GetLinearUnits() == 1.0 )
-            sMapInfo.units = "meters";
+        double dfClosestDiff = 100.0;
+        int    iClosest=-1, iUnit;
+        char *pszUnitName = NULL;
+        double dfActualSize = oSRS.GetLinearUnits( &pszUnitName );
+
+        for( iUnit = 0; apszUnitMap[iUnit] != NULL; iUnit += 2 )
+        {
+            if( fabs(atof(apszUnitMap[iUnit+1]) - dfActualSize) < dfClosestDiff )
+            {
+                iClosest = iUnit;
+                dfClosestDiff = fabs(atof(apszUnitMap[iUnit+1])-dfActualSize);
+            }
+        }
+        
+        if( iClosest == -1 ||  fabs(dfClosestDiff/dfActualSize) > 0.0001 )
+        {
+            CPLError( CE_Warning, CPLE_NotSupported, 
+                      "Unable to identify Erdas units matching %s/%gm,\n"
+                      "output units will be wrong.", 
+                      pszUnitName, dfActualSize );
+        }
         else
-            sMapInfo.units = "feet";
+            sMapInfo.units = (char *) apszUnitMap[iClosest];
     }
 
 /* -------------------------------------------------------------------- */
@@ -1221,6 +1285,48 @@ CPLErr HFADataset::ReadProjection()
 
     if( psPro == NULL )
         return CE_Failure;
+
+    if( psPro->proType == EPRJ_EXTERNAL )
+    {
+        oSRS.SetLocalCS( psPro->proName );
+    }
+
+    else if( psPro->proNumber != EPRJ_LATLONG
+             && psPro->proNumber != EPRJ_STATE_PLANE )
+    {
+        oSRS.SetProjCS( psPro->proName );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Handle units.  It is important to deal with this first so       */
+/*      that the projection Set methods will automatically do           */
+/*      translation of linear values (like false easting) to PROJCS     */
+/*      units from meters.  Erdas linear projection values are          */
+/*      always in meters.                                               */
+/* -------------------------------------------------------------------- */
+    int iUnitIndex = 0;
+
+    if( oSRS.IsProjected() || oSRS.IsLocal() )
+    {
+        if( psMapInfo )
+        {
+            for( iUnitIndex = 0; 
+                 apszUnitMap[iUnitIndex] != NULL; 
+                 iUnitIndex += 2 )
+            {
+                if( EQUAL(apszUnitMap[iUnitIndex], psMapInfo->units ) )
+                    break;
+            }
+            
+            if( apszUnitMap[iUnitIndex] == NULL )
+                iUnitIndex = 0;
+            
+            oSRS.SetLinearUnits( psMapInfo->units, 
+                                 atof(apszUnitMap[iUnitIndex+1]) );
+        }
+        else
+            oSRS.SetLinearUnits( SRS_UL_METER, 1.0 );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Handle different projection methods.                            */
@@ -1383,27 +1489,6 @@ CPLErr HFADataset::ReadProjection()
       default:
         oSRS.SetLocalCS( psPro->proName );
         break;
-    }
-
-    if( psPro->proType == EPRJ_EXTERNAL )
-    {
-        oSRS.SetLocalCS( psPro->proName );
-    }
-
-    else if( oSRS.IsProjected() && psPro->proNumber != EPRJ_STATE_PLANE )
-    {
-        if( EQUAL(oSRS.GetRoot()->GetChild(0)->GetValue(),"unnamed") )
-            oSRS.SetProjCS( psPro->proName );
-
-        if( psMapInfo && EQUAL(psMapInfo->units,"feet") )
-        {
-            oSRS.SetLinearUnits( SRS_UL_US_FOOT,
-                                 atof(SRS_UL_US_FOOT_CONV) );
-        }
-        else
-        {
-            oSRS.SetLinearUnits( SRS_UL_METER, 1.0 );
-        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -1775,6 +1860,8 @@ HFADataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     GDALDataType eType = GDT_Byte;
     int          iBand;
     int          nBandCount = poSrcDS->GetRasterCount();
+
+    (void) bStrict;
 
     if( !pfnProgress( 0.0, NULL, pProgressData ) )
         return NULL;
