@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.29  2004/02/25 21:14:35  warmerda
+ * added morph of spheroid names to ESRI
+ *
  * Revision 1.28  2003/11/03 21:37:34  warmerda
  * fixed southern hemisphere UTM support
  *
@@ -327,6 +330,48 @@ static int ESRIToUSGSZone( int nESRIZone )
     }
 
     return 0;
+}
+
+/************************************************************************/
+/*                          MorphNameToESRI()                           */
+/*                                                                      */
+/*      Make name ESRI compatible. Convert spaces and special           */
+/*      characters to underscores and then strip down.                  */
+/************************************************************************/
+
+static void MorphNameToESRI( char ** ppszName )
+
+{
+    int         i, j;
+    char        *pszName = *ppszName;
+
+/* -------------------------------------------------------------------- */
+/*      Translate non-alphanumeric values to underscores.               */
+/* -------------------------------------------------------------------- */
+    for( i = 0; pszName[i] != '\0'; i++ )
+    {
+        if( !(pszName[i] >= 'A' && pszName[i] <= 'Z')
+            && !(pszName[i] >= 'a' && pszName[i] <= 'z')
+            && !(pszName[i] >= '0' && pszName[i] <= '9') )
+        {
+            pszName[i] = '_';
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Remove repeated and trailing underscores.                       */
+/* -------------------------------------------------------------------- */
+    for( i = 1, j = 0; pszName[i] != '\0'; i++ )
+    {
+        if( pszName[j] == '_' && pszName[i] == '_' )
+            continue;
+
+        pszName[++j] = pszName[i];
+    }
+    if( pszName[j] == '_' )
+        pszName[j] = '\0';
+    else
+        pszName[j+1] = '\0';
 }
 
 /************************************************************************/
@@ -886,6 +931,24 @@ OGRErr OGRSpatialReference::morphToESRI()
         GetRoot()->applyRemapper( 
             "PARAMETER", apszAlbersMapping + 1, apszAlbersMapping + 0, 2 );
 
+/* -------------------------------------------------------------------- */
+/*      Convert SPHEROID name to use underscores instead of spaces.     */
+/* -------------------------------------------------------------------- */
+    OGR_SRSNode *poSpheroid;
+
+    poSpheroid = GetAttrNode( "SPHEROID" );
+    if( poSpheroid != NULL )
+        poSpheroid = poSpheroid->GetChild(0);
+
+    if( poSpheroid != NULL )
+    {
+        char *pszNewValue = CPLStrdup(poSpheroid->GetValue());
+
+        MorphNameToESRI( &pszNewValue );
+
+        poSpheroid->SetValue( pszNewValue );
+    }
+    
 /* -------------------------------------------------------------------- */
 /*      Try to insert a D_ in front of the datum name.                  */
 /* -------------------------------------------------------------------- */
