@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2000/08/10 14:39:47  warmerda
+ * implemented compressed block support
+ *
  * Revision 1.5  1999/04/23 13:43:09  warmerda
  * Fixed up MSB case
  *
@@ -148,6 +151,191 @@ CPLErr	HFABand::LoadBlockInfo()
 }
 
 /************************************************************************/
+/*                          UncompressBlock()                           */
+/*                                                                      */
+/*      Uncompress ESRI Grid compression format block.                  */
+/************************************************************************/
+
+static CPLErr UncompressBlock( GByte *pabyCData, int nSrcBytes,
+                               GByte *pabyDest, int nMaxPixels, 
+                               int nDataType )
+
+{
+    GUInt32  nDataMin, nDataOffset;
+    int      nNumBits, nPixelsOutput=0;			
+    GInt32   nNumRuns;
+
+    memcpy( &nDataMin, pabyCData, 4 );
+    nDataMin = CPL_LSBWORD32( nDataMin );
+        
+    memcpy( &nNumRuns, pabyCData+4, 4 );
+    nNumRuns = CPL_LSBWORD32( nNumRuns );
+        
+    memcpy( &nDataOffset, pabyCData+8, 4 );
+    nDataOffset = CPL_LSBWORD32( nDataOffset );
+
+    nNumBits = pabyCData[12];
+
+/* -------------------------------------------------------------------- */
+/*	Establish data pointers.					*/    
+/* -------------------------------------------------------------------- */
+    GByte *pabyCounter, *pabyValues;
+    int   nValueBitOffset;
+
+    pabyCounter = pabyCData + 13;
+    pabyValues = pabyCData + nDataOffset;
+    nValueBitOffset = 0;
+    
+/* ==================================================================== */
+/*      Loop over runs.                                                 */
+/* ==================================================================== */
+    int    iRun;
+
+    for( iRun = 0; iRun < nNumRuns; iRun++ )
+    {
+        int	nRepeatCount = 0;
+        int	nDataValue;
+
+/* -------------------------------------------------------------------- */
+/*      Get the repeat count.  This can be stored as one, two, three    */
+/*      or four bytes depending on the low order two bits of the        */
+/*      first byte.                                                     */
+/* -------------------------------------------------------------------- */
+        if( ((*pabyCounter) & 0xc0) == 0x00 )
+        {
+            nRepeatCount = (*(pabyCounter++)) & 0x3f;
+        }
+        else if( ((*pabyCounter) & 0xc0) == 0x40 )
+        {
+            nRepeatCount = (*(pabyCounter++)) & 0x3f;
+            nRepeatCount = nRepeatCount * 256 + (*(pabyCounter++));
+        }
+        else if( ((*pabyCounter) & 0xc0) == 0x80 )
+        {
+            nRepeatCount = (*(pabyCounter++)) & 0x3f;
+            nRepeatCount = nRepeatCount * 256 + (*(pabyCounter++));
+            nRepeatCount = nRepeatCount * 256 + (*(pabyCounter++));
+        }
+        else if( ((*pabyCounter) & 0xc0) == 0xc0 )
+        {
+            nRepeatCount = (*(pabyCounter++)) & 0x3f;
+            nRepeatCount = nRepeatCount * 256 + (*(pabyCounter++));
+            nRepeatCount = nRepeatCount * 256 + (*(pabyCounter++));
+            nRepeatCount = nRepeatCount * 256 + (*(pabyCounter++));
+        }
+
+/* -------------------------------------------------------------------- */
+/*      Extract the data value in a way that depends on the number      */
+/*      of bits in it.                                                  */
+/* -------------------------------------------------------------------- */
+        if( nNumBits == 0 )
+        {
+            nDataValue = 0;
+        }
+        else if( nNumBits == 1 )
+        {
+            nDataValue =
+                (pabyValues[nValueBitOffset>>3] >> (nValueBitOffset&7)) & 0x1;
+            nValueBitOffset++;
+        }
+        else if( nNumBits == 2 )
+        {
+            nDataValue =
+                (pabyValues[nValueBitOffset>>3] >> (nValueBitOffset&7)) & 0x3;
+            nValueBitOffset += 2;
+        }
+        else if( nNumBits == 4 )
+        {
+            nDataValue =
+                (pabyValues[nValueBitOffset>>3] >> (nValueBitOffset&7)) & 0xf;
+            nValueBitOffset += 4;
+        }
+        else if( nNumBits == 8 )
+        {
+            nDataValue = *pabyValues;
+            pabyValues++;
+        }
+        else if( nNumBits == 16 )
+        {
+            nDataValue = 256 * *(pabyValues++);
+            nDataValue += *(pabyValues++);
+        }
+        else if( nNumBits == 32 )
+        {
+            nDataValue = 256 * 256 * 256 * *(pabyValues++);
+            nDataValue = 256 * 256 * *(pabyValues++);
+            nDataValue = 256 * *(pabyValues++);
+            nDataValue = *(pabyValues++);
+        }
+        else
+        {
+            printf( "nNumBits = %d\n", nNumBits );
+            CPLAssert( FALSE );
+            nDataValue = 0;
+        }
+
+/* -------------------------------------------------------------------- */
+/*      Offset by the minimum value.                                    */
+/* -------------------------------------------------------------------- */
+        nDataValue += nDataMin;
+
+/* -------------------------------------------------------------------- */
+/*      Now apply to the output buffer in a type specific way.          */
+/* -------------------------------------------------------------------- */
+        if( nPixelsOutput + nRepeatCount > nMaxPixels )
+        {
+            CPLAssert( FALSE );
+            nRepeatCount = nMaxPixels - nPixelsOutput;
+        }
+        
+        if( nDataType == EPT_u8 )
+        {
+            int		i;
+            
+            for( i = 0; i < nRepeatCount; i++ )
+            {
+                CPLAssert( nDataValue < 256 );
+                ((GByte *) pabyDest)[nPixelsOutput++] = nDataValue;
+            }
+        }
+        else if( nDataType == EPT_u16 )
+        {
+            int		i;
+            
+            for( i = 0; i < nRepeatCount; i++ )
+            {
+                ((GUInt16 *) pabyDest)[nPixelsOutput++] = nDataValue;
+            }
+        }
+        else if( nDataType == EPT_s16 )
+        {
+            int		i;
+            
+            for( i = 0; i < nRepeatCount; i++ )
+            {
+                ((GInt16 *) pabyDest)[nPixelsOutput++] = nDataValue;
+            }
+        }
+        else if( nDataType == EPT_f32 )
+        {
+            int		i;
+
+            for( i = 0; i < nRepeatCount; i++ )
+            {
+                ((float *) pabyDest)[nPixelsOutput++] = nDataValue;
+            }
+        }
+        else
+        {
+            CPLAssert( FALSE );
+        }
+    }
+
+    return CE_None;
+}
+
+
+/************************************************************************/
 /*                           GetRasterBlock()                           */
 /************************************************************************/
 
@@ -165,7 +353,7 @@ CPLErr HFABand::GetRasterBlock( int nXBlock, int nYBlock, void * pData )
 /*      If the block isn't valid, or is compressed we just return       */
 /*      all zeros, and an indication of failure.                        */
 /* -------------------------------------------------------------------- */
-    if( !(panBlockFlag[iBlock] & (BFLG_VALID|BFLG_COMPRESSED)) )
+    if( !panBlockFlag[iBlock] & BFLG_VALID )
     {
         int	nBytes;
 
@@ -181,9 +369,46 @@ CPLErr HFABand::GetRasterBlock( int nXBlock, int nYBlock, void * pData )
 /*      Otherwise we really read the data.                              */
 /* -------------------------------------------------------------------- */
     if( VSIFSeek( psInfo->fp, panBlockStart[iBlock], SEEK_SET ) != 0 )
+    {
+        CPLError( CE_Failure, CPLE_FileIO, 
+                  "Seek to %d failed.\n", panBlockStart[iBlock] );
         return CE_Failure;
+    }
 
-    if( VSIFRead( pData, panBlockSize[iBlock], 1, psInfo->fp ) == 0 )
+/* -------------------------------------------------------------------- */
+/*	If the block is compressed, read into an intermediate buffer	*/
+/*	and convert.							*/
+/* -------------------------------------------------------------------- */
+    if( panBlockFlag[iBlock] & BFLG_COMPRESSED )
+    {
+        GByte 	*pabyCData;
+        CPLErr  eErr;
+
+        pabyCData = (GByte *) CPLMalloc(panBlockSize[iBlock]);
+
+        if( VSIFRead( pabyCData, panBlockSize[iBlock], 1, psInfo->fp ) != 1 )
+        {
+            CPLError( CE_Failure, CPLE_FileIO, 
+                      "Read of %d bytes at %d failed.\n", 
+                      panBlockSize[iBlock],
+                      panBlockStart[iBlock] );
+
+            return CE_Failure;
+        }
+
+        eErr = UncompressBlock( pabyCData, panBlockSize[iBlock],
+                                (GByte *) pData, nBlockXSize*nBlockYSize, 
+                                nDataType );
+
+        CPLFree( pabyCData );
+
+        return eErr;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Read uncompressed data directly into the return buffer.         */
+/* -------------------------------------------------------------------- */
+    if( VSIFRead( pData, panBlockSize[iBlock], 1, psInfo->fp ) != 1 )
         return CE_Failure;
 
 /* -------------------------------------------------------------------- */
