@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_tabfile.cpp,v 1.50 2002/08/27 17:19:22 warmerda Exp $
+ * $Id: mitab_tabfile.cpp,v 1.52 2002/09/23 13:15:35 warmerda Exp $
  *
  * Name:     mitab_tabfile.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -32,6 +32,12 @@
  **********************************************************************
  *
  * $Log: mitab_tabfile.cpp,v $
+ * Revision 1.52  2002/09/23 13:15:35  warmerda
+ * fixed memory leak in SetMIFCoordSys
+ *
+ * Revision 1.51  2002/09/23 13:06:21  warmerda
+ * ensure pre-created m_poDefn is referenced properly
+ *
  * Revision 1.50  2002/08/27 17:19:22  warmerda
  * auto-add FID column if there aren't any columns
  *
@@ -375,6 +381,7 @@ int TABFile::Open(const char *pszFname, const char *pszAccess,
          *------------------------------------------------------------*/
         char *pszFeatureClassName = TABGetBasename(m_pszFname);
         m_poDefn = new OGRFeatureDefn(pszFeatureClassName);
+        m_poDefn->Reference();
         CPLFree(pszFeatureClassName);
     }
 
@@ -1040,9 +1047,16 @@ int TABFile::Close()
      * Note: we have to check the reference count before deleting 
      * m_poSpatialRef and m_poDefn
      *----------------------------------------------------------------*/
-    if (m_poDefn && m_poDefn->Dereference() == 0)
-        delete m_poDefn;
-    m_poDefn = NULL;
+    if (m_poDefn )
+    {
+        int nRefCount = m_poDefn->Dereference();
+
+        CPLAssert( nRefCount >= 0 );
+
+        if( nRefCount == 0 )
+            delete m_poDefn;
+        m_poDefn = NULL;
+    }
     
     if (m_poSpatialRef && m_poSpatialRef->Dereference() == 0)
         delete m_poSpatialRef;
@@ -2134,7 +2148,8 @@ int TABFile::SetMIFCoordSys(const char *pszMIFCoordSys)
             }
 
             // Release our handle on poSpatialRef
-            poSpatialRef->Dereference();
+            if( poSpatialRef->Dereference() == 0 )
+                delete poSpatialRef;
         }
     }
     else

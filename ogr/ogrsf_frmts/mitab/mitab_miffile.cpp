@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_miffile.cpp,v 1.33 2002/05/08 15:10:48 julien Exp $
+ * $Id: mitab_miffile.cpp,v 1.34 2002/09/23 12:53:29 warmerda Exp $
  *
  * Name:     mitab_miffile.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -32,6 +32,9 @@
  **********************************************************************
  *
  * $Log: mitab_miffile.cpp,v $
+ * Revision 1.34  2002/09/23 12:53:29  warmerda
+ * fix memory leak of m_pszIndex
+ *
  * Revision 1.33  2002/05/08 15:10:48  julien
  * Implement MIFFile::SetMIFCoordSys in mitab_capi.cpp (Bug 984)
  *
@@ -1042,6 +1045,9 @@ int MIFFile::Close()
     m_pabFieldIndexed = NULL;
     CPLFree(m_pabFieldUnique);
     m_pabFieldUnique = NULL;
+
+    CPLFree( m_pszIndex );
+    m_pszIndex = NULL;
 
     CPLFree(m_paeFieldType);
     m_paeFieldType = NULL;

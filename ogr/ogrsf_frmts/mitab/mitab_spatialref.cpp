@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_spatialref.cpp,v 1.34 2002/04/01 19:49:24 warmerda Exp $
+ * $Id: mitab_spatialref.cpp,v 1.38 2002/12/12 20:12:18 warmerda Exp $
  *
  * Name:     mitab_spatialref.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -30,6 +30,20 @@
  **********************************************************************
  *
  * $Log: mitab_spatialref.cpp,v $
+ * Revision 1.38  2002/12/12 20:12:18  warmerda
+ * fixed signs of rotational parameters for TOWGS84 in WKT
+ *
+ * Revision 1.37  2002/10/15 14:33:30  warmerda
+ * Added untested support in mitab_spatialref.cpp, and mitab_coordsys.cpp for
+ * projections Regional Mercator (26), Polyconic (27), Azimuthal Equidistant -
+ * All origin latitudes (28), and Lambert Azimuthal Equal Area - any aspect (29).
+ *
+ * Revision 1.36  2002/09/05 15:38:16  warmerda
+ * one more ogc datum name
+ *
+ * Revision 1.35  2002/09/05 15:23:22  warmerda
+ * added some EPSG datum names provided by Siro Martello @ Cadcorp
+ *
  * Revision 1.34  2002/04/01 19:49:24  warmerda
  * added support for cassini/soldner - proj 30
  *
@@ -164,7 +178,7 @@ MapInfoDatumInfo asDatumInfoList[] =
 {10, "", 4, -320, 550, -494, 0, 0, 0, 0, 0},
 {11, "", 4, 124, -234, -25, 0, 0, 0, 0, 0},
 {12, "Australian_Geodetic_Datum_1966", 2, -133, -48, 148, 0, 0, 0, 0, 0},
-{13, "", 2, -134, -48, 149, 0, 0, 0, 0, 0},
+{13, "Australian_Geodetic_Datum_1984", 2, -134, -48, 149, 0, 0, 0, 0, 0},
 {14, "", 4, -127, -769, 472, 0, 0, 0, 0, 0},
 {15, "Bermuda_1957", 7, -73, 213, 296, 0, 0, 0, 0, 0},
 {16, "Bogota", 4, 307, 304, -318, 0, 0, 0, 0, 0},
@@ -182,7 +196,7 @@ MapInfoDatumInfo asDatumInfoList[] =
 {28, "European_Datum_1950", 4, -87, -98, -121, 0, 0, 0, 0, 0},
 {29, "", 4, -86, -98, -119, 0, 0, 0, 0, 0},
 {30, "Gandajika_1970", 4, -133, -321, 50, 0, 0, 0, 0, 0},
-{31, "", 4, 84, -22, 209, 0, 0, 0, 0, 0},
+{31, "New_Zealand_Geodetic_Datum_1949", 4, 84, -22, 209, 0, 0, 0, 0, 0},
 {32, "", 21, 0, 0, 0, 0, 0, 0, 0, 0},
 {33, "", 0, 0, 0, 0, 0, 0, 0, 0, 0},
 {34, "", 7, -100, -248, 259, 0, 0, 0, 0, 0},
@@ -206,7 +220,7 @@ MapInfoDatumInfo asDatumInfoList[] =
 {52, "Mahe_1971", 6, 41, -220, -134, 0, 0, 0, 0, 0},
 {53, "", 4, -289, -124, 60, 0, 0, 0, 0, 0},
 {54, "Massawa", 10, 639, 405, 60, 0, 0, 0, 0, 0},
-{55, "", 16, 31, 146, 47, 0, 0, 0, 0, 0},
+{55, "Merchich", 16, 31, 146, 47, 0, 0, 0, 0, 0},
 {56, "", 4, 912, -58, 1227, 0, 0, 0, 0, 0},
 {57, "Minna", 6, -92, -93, 122, 0, 0, 0, 0, 0},
 {58, "", 6, -247, -148, 369, 0, 0, 0, 0, 0},
@@ -237,7 +251,7 @@ MapInfoDatumInfo asDatumInfoList[] =
 {84, "", 4, -128, -283, 22, 0, 0, 0, 0, 0},
 {85, "Qornoq", 4, 164, 138, -189, 0, 0, 0, 0, 0},
 {86, "", 4, 94, -948, -1262, 0, 0, 0, 0, 0},
-{87, "", 4, -225, -65, 9, 0, 0, 0, 0, 0},
+{87, "Monte_Mario", 4, -225, -65, 9, 0, 0, 0, 0, 0},
 {88, "", 4, 170, 42, 84, 0, 0, 0, 0, 0},
 {89, "", 4, -203, 141, 53, 0, 0, 0, 0, 0},
 {90, "Sapper_Hill_1943", 4, -355, 16, 74, 0, 0, 0, 0, 0},
@@ -262,7 +276,7 @@ MapInfoDatumInfo asDatumInfoList[] =
 {109, "", 10, 593, 26, 478, 0, 0, 0, 0, 0},
 {110, "", 4, 81, 120, 129, 0, 0, 0, 0, 0},
 {111, "", 1, -1, 15, 1, 0, 0, 0, 0, 0},
-{112, "", 10, 498, -36, 568, 0, 0, 0, 0, 0},
+{112, "Rikets_koordinatsystem_1990", 10, 498, -36, 568, 0, 0, 0, 0, 0},
 {113, "", 4, -303, -62, 105, 0, 0, 0, 0, 0},
 {114, "", 4, -223, 110, 37, 0, 0, 0, 0, 0},
 {115, "", 0, 0, 0, 0, 0, 0, 0, 0, 0},
@@ -271,19 +285,19 @@ MapInfoDatumInfo asDatumInfoList[] =
 {118, "", 7, -115, 118, 426, 0, 0, 0, 0, 0},
 {119, "", 6, -270, 13, 62, 0, 0, 0, 0, 0},
 {120, "", 6, -79, -129, 145, 0, 0, 0, 0, 0},
-{121, "", 10, -384, 664, -48, 0, 0, 0, 0, 0},
+{121, "Bukit_Rimpah", 10, -384, 664, -48, 0, 0, 0, 0, 0},
 {122, "", 10, 374, 150, 588, 0, 0, 0, 0, 0},
 {123, "", 6, -83, 37, 124, 0, 0, 0, 0, 0},
 {124, "", 6, 260, 12, -147, 0, 0, 0, 0, 0},
 {125, "", 6, -7, 215, 225, 0, 0, 0, 0, 0},
 {126, "", 4, -104, 167, -38, 0, 0, 0, 0, 0},
-{127, "", 4, -333, -222, 114, 0, 0, 0, 0, 0},
+{127, "Herat_North", 4, -333, -222, 114, 0, 0, 0, 0, 0},
 {128, "", 10, 682, -203, 480, 0, 0, 0, 0, 0},
 {129, "", 50, 283, 682, 231, 0, 0, 0, 0, 0},
-{130, "", 11, 217, 823, 299, 0, 0, 0, 0, 0},
-{131, "", 11, 198, 881, 317, 0, 0, 0, 0, 0},
-{132, "", 11, 210, 814, 289, 0, 0, 0, 0, 0},
-{133, "", 4, -24, -15, 5, 0, 0, 0, 0, 0},
+{130, "Indian_1954", 11, 217, 823, 299, 0, 0, 0, 0, 0},
+{131, "Indian_1960", 11, 198, 881, 317, 0, 0, 0, 0, 0},
+{132, "Indian_1975", 11, 210, 814, 289, 0, 0, 0, 0, 0},
+{133, "Indonesian_Datum_1974", 4, -24, -15, 5, 0, 0, 0, 0, 0},
 {134, "", 4, -794, 119, -298, 0, 0, 0, 0, 0},
 {135, "", 4, 647, 1777, -1124, 0, 0, 0, 0, 0},
 {136, "", 6, -130, 29, 364, 0, 0, 0, 0, 0},
@@ -292,20 +306,20 @@ MapInfoDatumInfo asDatumInfoList[] =
 {139, "", 6, -186, -93, 310, 0, 0, 0, 0, 0},
 {140, "", 4, -425, -169, 81, 0, 0, 0, 0, 0},
 {141, "", 6, -106, -129, 165, 0, 0, 0, 0, 0},
-{142, "", 6, -148, 51, -291, 0, 0, 0, 0, 0},
+{142, "Pointe_Noire", 6, -148, 51, -291, 0, 0, 0, 0, 0},
 {143, "", 4, -499, -249, 314, 0, 0, 0, 0, 0},
 {144, "", 4, -289, -124, 60, 0, 0, 0, 0, 0},
 {145, "", 6, -88, 4, 101, 0, 0, 0, 0, 0},
-{146, "", 10, 589, 76, 480, 0, 0, 0, 0, 0},
-{147, "", 4, -189, -242, -91, 0, 0, 0, 0, 0},
+{146, "S_JTSK_Ferro", 10, 589, 76, 480, 0, 0, 0, 0, 0},
+{147, "Tananarive_1925", 4, -189, -242, -91, 0, 0, 0, 0, 0},
 {148, "", 6, -73, -247, 227, 0, 0, 0, 0, 0},
 {149, "", 6, -123, -206, 219, 0, 0, 0, 0, 0},
-{150, "", 0, 0, 0, 0, 0, 0, 0, 0, 0},
+{150, "Hartebeesthoek94", 0, 0, 0, 0, 0, 0, 0, 0, 0},
 {1000, "", 10, 582, 105, 414, -1.04, -0.35, 3.08, 8.3, 0},
-{1001, "", 3, 24, -123, -94, -0.02, 0.25, 0.13, 1.1, 0},
+{1001, "Pulkovo_1942", 3, 24, -123, -94, -0.02, 0.25, 0.13, 1.1, 0},
 {1002, "", 30, -168, -60, 320, 0, 0, 0, 0, 2.337229166667},
-{1003, "", 10, 660.077, 13.551, 369.344, 0.804816, 0.577692, 0.952236, 5.66,0},
-{1004, "", 21, -56, 75.77, 15.31, -0.37, -0.2, -0.21, -1.01, 0},
+{1003, "Nouvelle_Triangulation_Francaise_Paris", 10, 660.077, 13.551, 369.344, 0.804816, 0.577692, 0.952236, 5.66,0},
+{1004, "Hungarian_Datum_1972", 21, -56, 75.77, 15.31, -0.37, -0.2, -0.21, -1.01, 0},
 {1005, "", 28, -134.73, -110.92, -292.66, 0, 0, 0, 1, 0},
 {1006, "", 2, -117.763, -51.51, 139.061, -0.292, -0.443, -0.277, -0.191, 0},
 {1007, "", 2, -129.193, -41.212, 130.73, -0.246, -0.374, -0.329, -2.955, 0},
@@ -556,6 +570,7 @@ OGRSpatialReference *TABFile::GetSpatialRef()
          * Lambert Azimuthal Equal Area
          *-------------------------------------------------------------*/
       case 4:
+      case 29:
         m_poSpatialRef->SetLAEA( sTABProj.adProjParams[1],
                                  sTABProj.adProjParams[0],
                                  0.0, 0.0 );
@@ -565,6 +580,7 @@ OGRSpatialReference *TABFile::GetSpatialRef()
          * Azimuthal Equidistant (Polar aspect only)
          *-------------------------------------------------------------*/
       case 5:
+      case 28:
         m_poSpatialRef->SetAE( sTABProj.adProjParams[1],
                                sTABProj.adProjParams[0],
                                0.0, 0.0 );
@@ -593,6 +609,21 @@ OGRSpatialReference *TABFile::GetSpatialRef()
                                 sTABProj.adProjParams[3],
                                 sTABProj.adProjParams[4] * dfConv,
                                 sTABProj.adProjParams[5] * dfConv );
+        break;
+
+        /*--------------------------------------------------------------
+         * Transverse Mercator
+         *-------------------------------------------------------------*/
+      case 8:
+      case 21:
+      case 22:
+      case 23:
+      case 24:
+        m_poSpatialRef->SetTM( sTABProj.adProjParams[1],
+                               sTABProj.adProjParams[0],
+                               sTABProj.adProjParams[2],
+                               sTABProj.adProjParams[3] * dfConv,
+                               sTABProj.adProjParams[4] * dfConv );
         break;
 
         /*--------------------------------------------------------------
@@ -661,21 +692,6 @@ OGRSpatialReference *TABFile::GetSpatialRef()
         break;
 
         /*--------------------------------------------------------------
-         * Transverse Mercator
-         *-------------------------------------------------------------*/
-      case 8:
-      case 21:
-      case 22:
-      case 23:
-      case 24:
-        m_poSpatialRef->SetTM( sTABProj.adProjParams[1],
-                               sTABProj.adProjParams[0],
-                               sTABProj.adProjParams[2],
-                               sTABProj.adProjParams[3] * dfConv,
-                               sTABProj.adProjParams[4] * dfConv );
-        break;
-
-        /*--------------------------------------------------------------
          * Gall Stereographic
          *-------------------------------------------------------------*/
       case 17:
@@ -708,6 +724,7 @@ OGRSpatialReference *TABFile::GetSpatialRef()
          * Stereographic
          *-------------------------------------------------------------*/
       case 20:
+      case 31: /* this is called Double Stereographic, whats the diff? */
         m_poSpatialRef->SetStereographic( sTABProj.adProjParams[1],
                                           sTABProj.adProjParams[0],
                                           sTABProj.adProjParams[2],
@@ -723,6 +740,25 @@ OGRSpatialReference *TABFile::GetSpatialRef()
                                 sTABProj.adProjParams[0],
                                 sTABProj.adProjParams[2] * dfConv,
                                 sTABProj.adProjParams[3] * dfConv );
+        break;
+
+        /*--------------------------------------------------------------
+         * Regional Mercator (regular mercator with a latitude).
+         *-------------------------------------------------------------*/
+      case 26:
+        m_poSpatialRef->SetMercator( sTABProj.adProjParams[1],
+                                     sTABProj.adProjParams[0],
+                                     1.0, 0.0, 0.0 );
+        break;
+
+        /*--------------------------------------------------------------
+         * Polyconic
+         *-------------------------------------------------------------*/
+      case 27:
+        m_poSpatialRef->SetPolyconic( sTABProj.adProjParams[1],
+                                      sTABProj.adProjParams[0],
+                                      sTABProj.adProjParams[2] * dfConv,
+                                      sTABProj.adProjParams[3] * dfConv );
         break;
 
         /*--------------------------------------------------------------
@@ -887,9 +923,9 @@ OGRSpatialReference *TABFile::GetSpatialRef()
         m_poSpatialRef->SetTOWGS84( psDatumInfo->dfShiftX, 
                                     psDatumInfo->dfShiftY,
                                     psDatumInfo->dfShiftZ,
-                                    psDatumInfo->dfDatumParm0, 
-                                    psDatumInfo->dfDatumParm1, 
-                                    psDatumInfo->dfDatumParm2, 
+                                    -psDatumInfo->dfDatumParm0, 
+                                    -psDatumInfo->dfDatumParm1, 
+                                    -psDatumInfo->dfDatumParm2, 
                                     psDatumInfo->dfDatumParm3 );
     }
 
@@ -1002,6 +1038,9 @@ int TABFile::SetSpatialRef(OGRSpatialReference *poSpatialRef)
         parms[0] = poSpatialRef->GetProjParm(SRS_PP_LONGITUDE_OF_CENTER,0.0);
         parms[1] = poSpatialRef->GetProjParm(SRS_PP_LATITUDE_OF_CENTER,0.0);
         parms[2] = 90.0;
+
+        if( ABS((ABS(parms[1]) - 90)) > 0.001 )
+            sTABProj.nProjId = 28;
     }
 
     else if( EQUAL(pszProjection,SRS_PT_CYLINDRICAL_EQUAL_AREA) )
@@ -1057,11 +1096,25 @@ int TABFile::SetSpatialRef(OGRSpatialReference *poSpatialRef)
         parms[0] = poSpatialRef->GetProjParm(SRS_PP_LONGITUDE_OF_CENTER,0.0);
         parms[1] = poSpatialRef->GetProjParm(SRS_PP_LATITUDE_OF_CENTER,0.0);
         parms[2] = 90.0;
+
+        if( ABS((ABS(parms[1]) - 90)) > 0.001 )
+            sTABProj.nProjId = 28;
     }
 
     else if( EQUAL(pszProjection,SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP) )
     {
         sTABProj.nProjId = 3;
+        parms[0] = poSpatialRef->GetProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0);
+        parms[1] = poSpatialRef->GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0);
+        parms[2] = poSpatialRef->GetProjParm(SRS_PP_STANDARD_PARALLEL_1,0.0);
+        parms[3] = poSpatialRef->GetProjParm(SRS_PP_STANDARD_PARALLEL_2,0.0);
+        parms[4] = poSpatialRef->GetProjParm(SRS_PP_FALSE_EASTING,0.0) / dfLinearConv;
+        parms[5] = poSpatialRef->GetProjParm(SRS_PP_FALSE_NORTHING,0.0) / dfLinearConv;
+    }
+
+    else if( EQUAL(pszProjection,SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP_BELGIUM) )
+    {
+        sTABProj.nProjId = 19;
         parms[0] = poSpatialRef->GetProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0);
         parms[1] = poSpatialRef->GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0);
         parms[2] = poSpatialRef->GetProjParm(SRS_PP_STANDARD_PARALLEL_1,0.0);
@@ -1138,11 +1191,35 @@ int TABFile::SetSpatialRef(OGRSpatialReference *poSpatialRef)
         parms[2] = poSpatialRef->GetProjParm(SRS_PP_SCALE_FACTOR,1.0);
         parms[3] = poSpatialRef->GetProjParm(SRS_PP_FALSE_EASTING,0.0) / dfLinearConv;
         parms[4] = poSpatialRef->GetProjParm(SRS_PP_FALSE_NORTHING,0.0) / dfLinearConv;
+        if( parms[1] != 0.0 )
+            sTABProj.nProjId = 26;
     }
 
     else if( EQUAL(pszProjection,SRS_PT_CASSINI_SOLDNER) )
     {
         sTABProj.nProjId = 30;
+        parms[0] = poSpatialRef->GetProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0);
+        parms[1] = poSpatialRef->GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0);
+        parms[2] = poSpatialRef->GetProjParm(SRS_PP_FALSE_EASTING,0.0) 
+            / dfLinearConv;
+        parms[3] = poSpatialRef->GetProjParm(SRS_PP_FALSE_NORTHING,0.0) 
+            / dfLinearConv;
+    }
+
+    else if( EQUAL(pszProjection,SRS_PT_NEW_ZEALAND_MAP_GRID) )
+    {
+        sTABProj.nProjId = 18;
+        parms[0] = poSpatialRef->GetProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0);
+        parms[1] = poSpatialRef->GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0);
+        parms[2] = poSpatialRef->GetProjParm(SRS_PP_FALSE_EASTING,0.0) 
+            / dfLinearConv;
+        parms[3] = poSpatialRef->GetProjParm(SRS_PP_FALSE_NORTHING,0.0) 
+            / dfLinearConv;
+    }
+
+    else if( EQUAL(pszProjection,SRS_PT_POLYCONIC) )
+    {
+        sTABProj.nProjId = 27;
         parms[0] = poSpatialRef->GetProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0);
         parms[1] = poSpatialRef->GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0);
         parms[2] = poSpatialRef->GetProjParm(SRS_PP_FALSE_EASTING,0.0) 
