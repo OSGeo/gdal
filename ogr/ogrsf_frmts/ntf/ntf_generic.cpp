@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2001/05/01 15:09:33  warmerda
+ * raised MAX_LINK from 200 to 5000, added error reporting
+ *
  * Revision 1.10  2001/05/01 13:47:36  warmerda
  * keep track if generic geometry is 3D
  *
@@ -64,7 +67,7 @@
 #include "ntf.h"
 #include "cpl_string.h"
 
-#define MAX_LINK        200
+#define MAX_LINK        5000
 
 /************************************************************************/
 /* ==================================================================== */
@@ -673,7 +676,11 @@ static OGRFeature *TranslateGenericPoly( NTFFileReader *poReader,
         int             nNumLinks = atoi(papoGroup[1]->GetField( 9, 12 ));
     
         if( nNumLinks > MAX_LINK )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                      "MAX_LINK exceeded in ntf_generic.cpp." );
             return poFeature;
+        }
     
         poFeature->SetField( "NUM_PARTS", nNumLinks );
 
@@ -768,6 +775,9 @@ static OGRFeature *TranslateGenericPoly( NTFFileReader *poReader,
 
         if( nNumLink == MAX_LINK*2 )
         {
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                      "MAX_LINK exceeded in ntf_generic.cpp." );
+
             delete poFeature;
             return NULL;
         }
