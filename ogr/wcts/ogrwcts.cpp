@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2003/03/24 21:49:49  warmerda
+ * Added support for FileURL in Transform
+ *
  * Revision 1.7  2003/03/12 20:51:39  warmerda
  * integrated special handling for bounding box
  *
@@ -58,6 +61,10 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 
+#ifdef HAVE_CURL
+#include <curl/curl.h>
+#endif
+
 CPL_CVSID("$Id$");
 
 /************************************************************************/
@@ -82,6 +89,86 @@ static void WCTSEmitServiceException( const char *pszMessage )
     printf("</ServiceExceptionReport>\n");
 
     exit( 1 );
+}
+
+/************************************************************************/
+/*                            WCTSWriteFct()                            */
+/*                                                                      */
+/*      Append incoming text to our collection buffer, reallocating     */
+/*      it larger as needed.                                            */
+/************************************************************************/
+
+size_t WCTSWriteFct(void *buffer, size_t size, size_t nmemb, void *reqInfo)
+
+{
+    char **ppszWorkBuffer = (char **) reqInfo;
+    int  nNewSize, nOldSize;
+
+    if( *ppszWorkBuffer == NULL )
+        nOldSize = 0;
+    else
+        nOldSize = strlen(*ppszWorkBuffer);
+
+    nNewSize = nOldSize + nmemb * size + 1;
+
+    *ppszWorkBuffer = (char *) CPLRealloc(*ppszWorkBuffer, nNewSize);
+    strncpy( (*ppszWorkBuffer) + nOldSize, (char *) buffer, 
+             nmemb * size );
+    (*ppszWorkBuffer)[nNewSize-1] = '\0';
+
+    return nmemb;
+}
+
+/************************************************************************/
+/*                           WCTSHTTPFetch()                            */
+/*                                                                      */
+/*      Fetch a document from an url and return in a string.            */
+/************************************************************************/
+
+char *WCTSHTTPFetch( const char *pszURL )
+
+{
+#ifndef HAVE_CURL
+    WCTSEmitServiceException( "Server not compiled with libcurl support, remote requests not supported." );
+    return NULL;
+#else
+    CURL *http_handle;
+    char *pszData = NULL;
+    char szCurlErrBuf[CURL_ERROR_SIZE+1];
+    CURLcode error;
+
+    http_handle = curl_easy_init();
+
+    curl_easy_setopt(http_handle, CURLOPT_URL, pszURL );
+
+    /* Enable following redirections.  Requires libcurl 7.10.1 at least */
+    curl_easy_setopt(http_handle, CURLOPT_FOLLOWLOCATION, 1 );
+    curl_easy_setopt(http_handle, CURLOPT_MAXREDIRS, 10 );
+    
+    /* Set timeout.*/
+    curl_easy_setopt(http_handle, CURLOPT_TIMEOUT, 15 );
+
+    /* NOSIGNAL should be set to true for timeout to work in multithread
+     * environments on Unix, requires libcurl 7.10 or more recent.
+     * (this force avoiding the use of sgnal handlers)
+     */
+#ifdef CURLOPT_NOSIGNAL
+    curl_easy_setopt(http_handle, CURLOPT_NOSIGNAL, 1 );
+#endif
+
+    curl_easy_setopt(http_handle, CURLOPT_WRITEDATA, &pszData );
+    curl_easy_setopt(http_handle, CURLOPT_WRITEFUNCTION, WCTSWriteFct );
+
+    szCurlErrBuf[0] = '\0';
+
+    curl_easy_setopt(http_handle, CURLOPT_ERRORBUFFER, szCurlErrBuf );
+
+    error = curl_easy_perform( http_handle );
+
+    curl_easy_cleanup( http_handle );
+
+    return pszData;
+#endif /* def HAVE_CURL */
 }
 
 /************************************************************************/
@@ -602,6 +689,72 @@ void WCTSRecurseAndTransform( CPLXMLNode *psTree,
 }
 
 /************************************************************************/
+/*                            WCTSGetData()                             */
+/*                                                                      */
+/*      Fetch the data component as a parsed XML tree.  In some         */
+/*      cases the data contents are local, in other cases they have     */
+/*      to be fetched from a remote tree.                               */
+/*                                                                      */
+/*      The argument passed in is the <Data> element.  If it has a      */
+/*      FileURL child that child is replaced by the actual instance.    */
+/************************************************************************/
+
+void WCTSGetData( CPLXMLNode * psData )
+
+{
+    CPLAssert( psData != NULL && psData->eType == CXT_Element
+               && EQUAL(psData->pszValue,"Data") );
+
+/* ==================================================================== */
+/*      Handle a FileURL.                                               */
+/* ==================================================================== */
+    if( psData->psChild != NULL 
+        && EQUAL(psData->psChild->pszValue,"FileURL")
+        && psData->psChild->eType == CXT_Element 
+        && psData->psChild->psChild != NULL
+        && psData->psChild->psChild->eType == CXT_Text )
+    {
+        CPLXMLNode *psNewDataTree;
+        char *pszData;
+
+        pszData = WCTSHTTPFetch( psData->psChild->psChild->pszValue );
+
+        psNewDataTree = CPLParseXMLString( pszData );
+        if( psNewDataTree == NULL )
+        {
+            if( strlen(CPLGetLastErrorMsg()) > 0 )
+                WCTSEmitServiceException( CPLGetLastErrorMsg() );
+            else
+                WCTSEmitServiceException( "Failing parsing GML fetched from FileURL." );
+        }
+
+        CPLFree( pszData );
+
+        /* discard special prefix line if present */
+        if( psNewDataTree->eType == CXT_Literal 
+            || (psNewDataTree->eType == CXT_Element
+                && EQUALN(psNewDataTree->pszValue,"?",1) ) )
+        {
+            CPLXMLNode *psNext = psNewDataTree->psNext;
+            psNewDataTree->psNext = NULL;
+            CPLDestroyXMLNode( psNewDataTree );
+            psNewDataTree = psNext;
+        }
+        
+        /* substitute this tree in place of the FileURL */
+        CPLDestroyXMLNode( psData->psChild );
+        psData->psChild = psNewDataTree;
+
+        return;
+    }
+
+/* ==================================================================== */
+/*      Otherwise, no change required.                                  */
+/* ==================================================================== */
+    return;
+}
+
+/************************************************************************/
 /*                           WCTSTransform()                            */
 /************************************************************************/
 
@@ -652,6 +805,7 @@ void WCTSTransform( CPLXMLNode *psOperation )
     if( psData == NULL )
         WCTSEmitServiceException( "Unable to find GML Data contents." );
 
+    WCTSGetData( psData );
     WCTSRecurseAndTransform( psData, poCT );
 
 /* -------------------------------------------------------------------- */
