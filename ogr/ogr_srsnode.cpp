@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2000/03/16 19:03:20  warmerda
+ * added DestroyChild(), FindChild()
+ *
  * Revision 1.8  2000/02/25 13:23:25  warmerda
  * removed include of ogr_geometry.h
  *
@@ -173,6 +176,20 @@ OGR_SRSNode *OGR_SRSNode::GetNode( const char * pszName )
     if( nChildren > 0 && EQUAL(pszName,pszValue) )
         return this;
 
+/* -------------------------------------------------------------------- */
+/*      First we check the immediate children so we will get an         */
+/*      immediate child in preference to a subchild.                    */
+/* -------------------------------------------------------------------- */
+    for( int i = 0; i < nChildren; i++ )
+    {
+        if( EQUAL(papoChildNodes[i]->pszValue,pszName) 
+            && papoChildNodes[i]->nChildren > 0 )
+            return papoChildNodes[i];
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Then get each child to check their children.                    */
+/* -------------------------------------------------------------------- */
     for( int i = 0; i < nChildren; i++ )
     {
         OGR_SRSNode *poNode;
@@ -236,6 +253,59 @@ void OGR_SRSNode::InsertChild( OGR_SRSNode * poNew, int iChild )
              sizeof(void*) * (nChildren - iChild - 1) );
     
     papoChildNodes[iChild] = poNew;
+}
+
+/************************************************************************/
+/*                            DestroyChild()                            */
+/************************************************************************/
+
+/**
+ * Remove a child node, and it's subtree.
+ *
+ * Note that removing a child node will result in children after it
+ * being renumbered down one.
+ *
+ * @param iChild the index of the child.
+ */
+
+void OGR_SRSNode::DestroyChild( int iChild )
+
+{
+    if( iChild < 0 || iChild >= nChildren )
+        return;
+
+    delete papoChildNodes[iChild];
+    while( iChild < nChildren-1 )
+        papoChildNodes[iChild] = papoChildNodes[iChild+1];
+
+    nChildren--;
+}
+
+/************************************************************************/
+/*                             FindChild()                              */
+/************************************************************************/
+
+/**
+ * Find the index of the child matching the given string.
+ *
+ * Note that the node value must match pszValue with the exception of
+ * case.  The comparison is case insensitive.
+ *
+ * @param pszValue the node value being searched for.
+ *
+ * @return the child index, or -1 on failure. 
+ */
+
+int OGR_SRSNode::FindChild( const char * pszValue )
+
+{
+    for( int i = 0; i < nChildren; i++ )
+    {
+        if( EQUAL(papoChildNodes[i]->pszValue,pszValue) )
+            return i;
+    }
+
+    return -1;
 }
 
 /************************************************************************/
