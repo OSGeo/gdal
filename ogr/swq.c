@@ -18,6 +18,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2002/04/25 20:57:35  warmerda
+ * expand tabs
+ *
  * Revision 1.11  2002/04/25 20:45:57  warmerda
  * fixed some bugs with WHERE processing
  *
@@ -77,7 +80,7 @@
 #  define strcasecmp stricmp
 #endif
 
-static char	swq_error[1024];
+static char     swq_error[1024];
 
 #define SWQ_OP_IS_LOGICAL(op) ((op) == SWQ_OR || (op) == SWQ_AND || (op) == SWQ_NOT)
 #define SWQ_OP_IS_POSTUNARY(op) ((op) == SWQ_ISNULL || (op) == SWQ_ISNOTNULL)
@@ -128,8 +131,8 @@ static int swq_isalphanum( char c )
 static char *swq_token( const char *expression, char **next, int *is_literal )
 
 {
-    char	*token;
-    int		i_token;
+    char        *token;
+    int         i_token;
 
     if( is_literal != NULL )
         *is_literal = 0;
@@ -230,7 +233,7 @@ static char *swq_strdup( const char *input )
 
 /************************************************************************/
 /* ==================================================================== */
-/*		WHERE clause parsing                                    */
+/*              WHERE clause parsing                                    */
 /* ==================================================================== */
 /************************************************************************/
 
@@ -384,7 +387,7 @@ static int swq_identify_field( const char *token,
                                swq_field_type *this_type )
 
 {
-    int	i;
+    int i;
 
     for( i = 0; i < field_count; i++ )
     {
@@ -495,7 +498,7 @@ swq_subexpr_compile( char **tokens,
                      int *tokens_consumed )
 
 {
-    swq_expr	*op;
+    swq_expr    *op;
     const char  *error;
     int         op_code = 0;
 
@@ -514,7 +517,7 @@ swq_subexpr_compile( char **tokens,
 
     if( strcmp(tokens[0],"(") == 0 )
     {
-        int	sub_consumed = 0;
+        int     sub_consumed = 0;
 
         error = swq_subexpr_compile( tokens + 1, field_count, field_list, 
                                      field_types, 
@@ -628,7 +631,7 @@ swq_subexpr_compile( char **tokens,
     
     else if( SWQ_OP_IS_LOGICAL( op->operation ) )
     {
-        int	sub_consumed = 0;
+        int     sub_consumed = 0;
 
         error = swq_subexpr_compile( tokens + *tokens_consumed, 
                                      field_count, field_list, field_types, 
@@ -717,7 +720,7 @@ swq_subexpr_compile( char **tokens,
     {
         swq_expr *remainder = NULL;
         swq_expr *parent;
-        int	 sub_consumed;
+        int      sub_consumed;
 
         error = swq_subexpr_compile( tokens + *tokens_consumed + 1, 
                                      field_count, field_list, field_types, 
@@ -757,9 +760,9 @@ const char *swq_expr_compile( const char *where_clause,
 
 {
 #define MAX_TOKEN 1024
-    char	*token_list[MAX_TOKEN], *rest_of_expr;
-    int		token_count = 0;
-    int		tokens_consumed, i;
+    char        *token_list[MAX_TOKEN], *rest_of_expr;
+    int         token_count = 0;
+    int         tokens_consumed, i;
     const char *error;
     
     /*
@@ -870,8 +873,8 @@ int swq_expr_evaluate( swq_expr *expr, swq_op_evaluator fn_evaluator,
 void swq_expr_dump( swq_expr *expr, FILE * fp, int depth )
 
 {
-    char	spaces[60];
-    int		i;
+    char        spaces[60];
+    int         i;
     const char  *op_name = "unknown";
 
     for( i = 0; i < depth*2 && i < sizeof(spaces); i++ )
@@ -941,7 +944,7 @@ void swq_expr_dump( swq_expr *expr, FILE * fp, int depth )
 
 /************************************************************************/
 /* ==================================================================== */
-/*		SELECT statement parsing                                */
+/*              SELECT statement parsing                                */
 /* ==================================================================== */
 /************************************************************************/
 
@@ -1011,7 +1014,7 @@ const char *swq_select_preparse( const char *select_statement,
     select_info->raw_select = swq_strdup( select_statement );
 
 /* -------------------------------------------------------------------- */
-/*	Allocate a big field list. 					*/
+/*      Allocate a big field list.                                      */
 /* -------------------------------------------------------------------- */
     swq_cols = (swq_col_def *) SWQ_MALLOC(sizeof(swq_col_def) * MAX_COLUMNS);
     memset( swq_cols, 0, sizeof(swq_col_def) * MAX_COLUMNS );
@@ -1676,7 +1679,7 @@ const char *swq_select_finish_summarize( swq_select *select_info )
 void swq_select_free( swq_select *select_info )
 
 {
-    int	i;
+    int i;
 
     if( select_info == NULL )
         return;
@@ -1745,7 +1748,7 @@ static void grow_command( char **p_command, int *max_cmd_size, int *cmd_size,
 const char *swq_reform_command( swq_select *select_info )
 
 {
-    char	*command;
+    char        *command;
     int         max_cmd_size = 10;
     int         cmd_size = 0;
     int         i;
