@@ -29,6 +29,9 @@
 ###############################################################################
 # 
 #  $Log$
+#  Revision 1.2  2005/02/25 15:39:42  fwarmerdam
+#  Fixed outfile setting.
+#
 #  Revision 1.1  2005/02/25 07:03:30  fwarmerdam
 #  New
 #
@@ -76,7 +79,7 @@ t_srs = None
 stepsize = 5.0
 substepsize = 5.0
 connected = 0
-outfile = 'graticule.shp'
+outfile = None
 
 xmin = -180
 xmax = 180
@@ -112,7 +115,7 @@ while i < len(sys.argv):
     i = i + 1
     
 if outfile is None:
-    Usage()
+    outfile = "graticule.shp"
 
 
 if substepsize > stepsize:
