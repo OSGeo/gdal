@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2004/10/30 04:54:54  fwarmerdam
+ * Improved geometry check error message.
+ *
  * Revision 1.7  2004/10/30 04:44:00  fwarmerdam
  * Fixed error report when fetching layer.
  *
@@ -360,12 +363,16 @@ int OGRVRTLayer::Initialize( CPLXMLNode *psLTree, const char *pszVRTDirectory )
 
      if( eGeometryType == VGS_WKT || eGeometryType == VGS_WKB )
      {
-         iGeomField = poSrcLayer->GetLayerDefn()->GetFieldIndex(
-             CPLGetXMLValue( psLTree, "GeometryField.field", "missing" ) );
+         const char *pszFieldName = 
+             CPLGetXMLValue( psLTree, "GeometryField.field", "missing" );
+
+         iGeomField = poSrcLayer->GetLayerDefn()->GetFieldIndex(pszFieldName);
+
          if( iGeomField == -1 )
          {
              CPLError( CE_Failure, CPLE_AppDefined, 
-                       "Unable to identify source field for geometry." );
+                       "Unable to identify source field '%s' for geometry.",
+                       pszFieldName );
              return FALSE;
          }
      }
