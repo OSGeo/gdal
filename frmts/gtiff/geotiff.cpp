@@ -25,6 +25,9 @@
  * The GeoTIFF driver implemenation.
  * 
  * $Log$
+ * Revision 1.6  1999/02/24 16:22:36  warmerda
+ * Added use of geo_normalize
+ *
  * Revision 1.5  1999/01/27 20:29:16  warmerda
  * Added constructor/destructor declarations
  *
@@ -47,6 +50,7 @@
 #include "xtiffio.h"
 #include "geotiff.h"
 #include "gdal_priv.h"
+#include "geo_normalize.h"
 
 static GDALDriver	*poGTiffDriver = NULL;
 
@@ -79,9 +83,15 @@ class GTiffDataset : public GDALDataset
     int		bLoadedStripDirty;
     GByte	*pabyStripBuf;
 
+    char	*pszProjection;
+    double	adfGeoTransform[6];
+
   public:
                  GTiffDataset();
                  ~GTiffDataset();
+
+    virtual const char *GetProjectionRef(void);
+    virtual CPLErr GetGeoTransform( double * );
 
     static GDALDataset *Open( GDALOpenInfo * );
     static GDALDataset *Create( const char * pszFilename,
@@ -388,6 +398,7 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
 
     poDS->hTIFF = hTIFF;
     poDS->poDriver = poGTiffDriver;
+    poDS->pszProjection = NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Capture some information from the file that is of interest.     */
@@ -430,17 +441,51 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
 /* -------------------------------------------------------------------- */
+/*      Get the transform.                                              */
+/* -------------------------------------------------------------------- */
+    double	*padfTiePoints, *padfScale;
+    int16	nCount;
+
+    poDS->adfGeoTransform[0] = 0.0;
+    poDS->adfGeoTransform[1] = 1.0;
+    poDS->adfGeoTransform[2] = 0.0;
+    poDS->adfGeoTransform[3] = 0.0;
+    poDS->adfGeoTransform[4] = 0.0;
+    poDS->adfGeoTransform[5] = 1.0;
+    
+    if( TIFFGetField(hTIFF,TIFFTAG_GEOPIXELSCALE,&nCount,&padfScale )
+        && nCount >= 2 )
+    {
+        poDS->adfGeoTransform[1] = padfScale[0];
+        poDS->adfGeoTransform[5] = padfScale[1];
+    }
+        
+    if( TIFFGetField(hTIFF,TIFFTAG_GEOTIEPOINTS,&nCount,&padfTiePoints )
+        && nCount >= 6 )
+    {
+        poDS->adfGeoTransform[0] =
+            padfTiePoints[3] - padfTiePoints[0] * poDS->adfGeoTransform[1];
+        poDS->adfGeoTransform[3] =
+            padfTiePoints[4] - padfTiePoints[1] * poDS->adfGeoTransform[5];
+    }
+        
+/* -------------------------------------------------------------------- */
 /*	Try and print out some useful names from the GeoTIFF file.	*/
 /* -------------------------------------------------------------------- */
-    geocode_t	nProjCS;
     GTIF 	*hGTIF;
+    GTIFDefn	sGTIFDefn;
     
     hGTIF = GTIFNew(hTIFF);
-    if (GTIFKeyGet(hGTIF,ProjectedCSTypeGeoKey,&nProjCS, 0,1)!=0)
+
+    if( GTIFGetDefn( hGTIF, &sGTIFDefn ) )
     {
-        printf( "ProjectedCSTypeGeoKey = %s\n",
-                GTIFValueName( ProjectedCSTypeGeoKey, nProjCS ) );
+        poDS->pszProjection = GTIFGetProj4Defn( &sGTIFDefn );
     }
+    else
+    {
+        poDS->pszProjection = CPLStrdup( "" );
+    }
+    
     GTIFFree( hGTIF );
 
     return( poDS );
@@ -528,6 +573,28 @@ GDALDataset *GTiffDataset::Create( const char * pszFilename,
     }
 
     return( poDS );
+}
+
+/************************************************************************/
+/*                          GetProjectionRef()                          */
+/************************************************************************/
+
+const char *GTiffDataset::GetProjectionRef()
+
+{
+    return( pszProjection );
+}
+
+/************************************************************************/
+/*                          GetGeoTransform()                           */
+/************************************************************************/
+
+CPLErr GTiffDataset::GetGeoTransform( double * padfTransform )
+
+{
+    memcpy( padfTransform, adfGeoTransform, sizeof(double)*6 );
+
+    return( CE_None );
 }
 
 
