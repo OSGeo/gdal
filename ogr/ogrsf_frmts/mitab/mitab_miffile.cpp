@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_miffile.cpp,v 1.18 2000/06/28 00:32:04 warmerda Exp $
+ * $Id: mitab_miffile.cpp,v 1.19 2000/07/04 01:50:40 warmerda Exp $
  *
  * Name:     mitab_miffile.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -32,6 +32,9 @@
  **********************************************************************
  *
  * $Log: mitab_miffile.cpp,v $
+ * Revision 1.19  2000/07/04 01:50:40  warmerda
+ * Removed unprotected debugging printf.
+ *
  * Revision 1.18  2000/06/28 00:32:04  warmerda
  * Make GetFeatureCountByType() actually work if bForce is TRUE
  * Collect detailed (by feature type) feature counts in PreParse().
@@ -340,8 +343,6 @@ int MIFFile::Open(const char *pszFname, const char *pszAccess,
     if( GetFeatureCountByType( numPoints, numLines, numRegions, numTexts, 
                                FALSE ) == 0 )
     {
-        printf( "p=%d,l=%d,r=%d,t=%d\n", 
-                numPoints, numLines, numRegions, numTexts );
         numPoints += numTexts;
         if( numPoints > 0 && numLines == 0 && numRegions == 0 )
             m_poDefn->SetGeomType( wkbPoint );

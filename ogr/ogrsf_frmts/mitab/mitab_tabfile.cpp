@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_tabfile.cpp,v 1.34 2000/06/28 00:31:05 warmerda Exp $
+ * $Id: mitab_tabfile.cpp,v 1.35 2000/07/04 01:50:02 warmerda Exp $
  *
  * Name:     mitab_tabfile.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -32,6 +32,9 @@
  **********************************************************************
  *
  * $Log: mitab_tabfile.cpp,v $
+ * Revision 1.35  2000/07/04 01:50:02  warmerda
+ * removed unprotected debugging printf.
+ *
  * Revision 1.34  2000/06/28 00:31:05  warmerda
  * Try to set geometry type on OGRFeatureDefn by feature count
  *
@@ -449,8 +452,6 @@ int TABFile::Open(const char *pszFname, const char *pszAccess,
 
         GetFeatureCountByType( numPoints, numLines, numRegions, numTexts);
 
-        printf( "p=%d,l=%d,r=%d,t=%d\n", 
-                numPoints, numLines, numRegions, numTexts );
         numPoints += numTexts;
         if( numPoints > 0 && numLines == 0 && numRegions == 0 )
             m_poDefn->SetGeomType( wkbPoint );

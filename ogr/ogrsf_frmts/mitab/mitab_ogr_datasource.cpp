@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_ogr_datasource.cpp,v 1.1 2000/01/26 18:17:09 warmerda Exp $
+ * $Id: mitab_ogr_datasource.cpp,v 1.2 2000/07/04 01:46:23 warmerda Exp $
  *
  * Name:     mitab_ogr_datasource.cpp
  * Project:  MapInfo Mid/Mif, Tab ogr support
@@ -30,6 +30,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log: mitab_ogr_datasource.cpp,v $
+ * Revision 1.2  2000/07/04 01:46:23  warmerda
+ * Avoid warnings on unused arguments.
+ *
  * Revision 1.1  2000/01/26 18:17:09  warmerda
  * New
  *
@@ -266,8 +269,8 @@ OGRLayer *OGRTABDataSource::GetLayer( int iLayer )
 OGRLayer *
 OGRTABDataSource::CreateLayer( const char * pszLayerName,
                                OGRSpatialReference *poSRSIn,
-                               OGRwkbGeometryType eGeomTypeIn,
-                               char ** papszOptions )
+                               OGRwkbGeometryType /* eGeomTypeIn */,
+                               char ** /* papszOptions */ )
 
 {
     IMapInfoFile	*poFile;
