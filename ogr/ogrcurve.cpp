@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  1999/05/17 14:39:46  warmerda
+ * Added various new methods for ICurve compatibility.
+ *
  * Revision 1.2  1999/03/30 21:21:43  warmerda
  * added linearring/polygon support
  *
@@ -329,3 +332,104 @@ void OGRCurve::dumpPointsReadable( FILE * fp, const char * pszPrefix )
         fprintf( fp, "%s  Point[%d] = (%g,%g)\n",
                  pszPrefix, i, paoPoints[i].x, paoPoints[i].y );
 }
+
+/************************************************************************/
+/*                             get_Length()                             */
+/*                                                                      */
+/*      For now we return a simple euclidian 2D distance.               */
+/************************************************************************/
+
+double OGRCurve::get_Length()
+
+{
+    double      dfLength = 0;
+    int         i;
+
+    for( i = 0; i < nPointCount-1; i++ )
+    {
+        double      dfDeltaX, dfDeltaY;
+
+        dfDeltaX = paoPoints[i+1].x - paoPoints[i].x;
+        dfDeltaY = paoPoints[i+1].y - paoPoints[i].y;
+        dfLength += sqrt(dfDeltaX*dfDeltaX + dfDeltaY*dfDeltaY);
+    }
+    
+    return dfLength;
+}
+
+/************************************************************************/
+/*                             StartPoint()                             */
+/************************************************************************/
+
+void OGRCurve::StartPoint( OGRPoint * poPoint )
+
+{
+    getPoint( 0, poPoint );
+}
+
+/************************************************************************/
+/*                              EndPoint()                              */
+/************************************************************************/
+
+void OGRCurve::EndPoint( OGRPoint * poPoint )
+
+{
+    getPoint( nPointCount-1, poPoint );
+}
+
+/************************************************************************/
+/*                            get_IsClosed()                            */
+/************************************************************************/
+
+int OGRCurve::get_IsClosed()
+
+{
+    return( nPointCount > 1 
+            && paoPoints[0].x == paoPoints[nPointCount-1].x
+            && paoPoints[0].y == paoPoints[nPointCount-1].y );
+}
+
+/************************************************************************/
+/*                               Value()                                */
+/*                                                                      */
+/*      Get an interpolated point at some distance along the curve.     */
+/************************************************************************/
+
+void OGRCurve::Value( double dfDistance, OGRPoint * poPoint )
+
+{
+    double      dfLength = 0;
+    int         i;
+
+    if( dfDistance < 0 )
+    {
+        StartPoint( poPoint );
+        return;
+    }
+
+    for( i = 0; i < nPointCount-1; i++ )
+    {
+        double      dfDeltaX, dfDeltaY, dfSegLength;
+
+        dfDeltaX = paoPoints[i+1].x - paoPoints[i].x;
+        dfDeltaY = paoPoints[i+1].y - paoPoints[i].y;
+        dfSegLength = sqrt(dfDeltaX*dfDeltaX + dfDeltaY*dfDeltaY);
+
+        if( dfLength <= dfDistance && dfLength + dfSegLength >= dfDistance )
+        {
+            double      dfRatio;
+
+            dfRatio = (dfDistance - dfLength) / dfSegLength;
+
+            poPoint->setX( paoPoints[i].x * (1 - dfRatio)
+                           + paoPoints[i+1].x * dfRatio );
+            poPoint->setY( paoPoints[i].y * (1 - dfRatio)
+                           + paoPoints[i+1].y * dfRatio );
+            return;
+        }
+    }
+    
+    EndPoint( poPoint );
+}
+
+
