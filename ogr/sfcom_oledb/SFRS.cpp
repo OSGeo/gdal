@@ -337,21 +337,25 @@ DBTYPE DBFType2OLEType(DBFFieldType eDBFType,int *pnOffset, int nWidth)
 HRESULT CSFRowset::Execute(DBPARAMS * pParams, LONG* pcRowsAffected)
 {	
 	USES_CONVERSION;
-	LPSTR		szFile = OLE2A(m_strCommandText);
+	LPSTR		szBaseFile = OLE2A(m_strCommandText);
 	DBFHandle	hDBF;
 	SHPHandle	hSHP;
+        char            szFilename[512];
 	int			nFields;
 	int			i;
 	int			nOffset = 0;
 	
-
-	hDBF = DBFOpen("c:\\anno.dbf","r");
-
+	
+	strcpy(szFilename,szBaseFile);
+	strcat(szFilename,".dbf");
+	hDBF = DBFOpen(szFilename,"r");
+	
 	if (!hDBF)
 		return DB_E_ERRORSINCOMMAND;
 
-
-	hSHP = SHPOpen("c:\\anno.shp","r");
+	strcpy(szFilename,szBaseFile);
+	strcat(szFilename,".shp");
+	hSHP = SHPOpen(szFilename,"r");
 	
 	if (!hSHP)
 		return DB_E_ERRORSINCOMMAND;
