@@ -164,5 +164,42 @@ in the list of user attributes associated with the layer.  If the differences
 are signifiant it may be necessary to define a whole new product family 
 type (as is done for Code Point Plus vs. Code Point). 
 
+Generic Products
+----------------
+
+In situations where a file is not identified as being part of an existing
+known product it will be treated generically.  In this case the entire dataset
+is scanned to establish what features have what attributes.  Because of this,
+opening a generic dataset can be much slower than opening a recognised dataset.
+Based on this scan a list of generic features (layers) are defined from the 
+following set:
+
+ GENERIC_POINT
+ GENERIC_LINE
+ GENERIC_NAME
+ GENERIC_TEXT
+ GENERIC_POLY
+ GENERIC_NODE
+ GENERIC_COLLECTION
+
+Generic products are primarily handled by the ntf_generic.cpp module whereas
+specific products are handled in ntf_estlayers.cpp.  
+
+Because some data products (OSNI datasets) not from the Ordnance Survey
+were found to have record groups in unusual orders compared to what the
+UK Ordnance Survey does, it was found necessary to cache all the records of
+level 3 and higher generic products, and construct record groups by id
+reference from within this cache rather than depending on convenient record
+orderings.  This is accomplished by the NTFFileReader "indexing" capability
+near the bottom of ntffilereader.cpp.  Because of this in memory indexing
+accessing generic datasets can be much more memory intensive than accessing
+known data products, though it isn't necessary for generic level 1 and 2
+products. 
+
+It is possible to force a known product to be treated as generic by setting
+the FORCE_GENERIC option to "ON" using OGRNTFDataSource::SetOptionsList() as
+is demonstrated in ntfdump.cpp. 
+
+
 
 
