@@ -11,7 +11,10 @@ OBJ	= \
 	geo_print.o \
 	geo_set.o \
 	geo_tiffp.o \
-	geo_write.o 
+	geo_write.o \
+	geo_normalize.o \
+	cpl_csv.o \
+	geotiff_proj4.o
 
 ALL_C_FLAGS	=	-I../libtiff $(CFLAGS)
 

@@ -75,10 +75,10 @@ _XTIFFPrintDirectory(TIFF* tif, FILE* fd, long flags)
 		{
 		   fprintf(fd," (");
 		   for (j=0;j<3;j++)
-			fprintf(fd, " %lf", xd->xd_geotiepoints[i+j]);
+			fprintf(fd, " %f", xd->xd_geotiepoints[i+j]);
 		   fprintf(fd,")->(");
 		   for (j=3;j<6;j++)
-			fprintf(fd, " %lf", xd->xd_geotiepoints[i+j]);
+			fprintf(fd, " %f", xd->xd_geotiepoints[i+j]);
 		   fprintf(fd,")\n");
 		}
 	}
@@ -88,7 +88,7 @@ _XTIFFPrintDirectory(TIFF* tif, FILE* fd, long flags)
 		num = xd->xd_geodimensions[GEO_NUM_PIXELSCALE];
 		fprintf(fd, "  Geo Pixel Scale: (");
 		for (j=0;j<num;j++)
-		   fprintf(fd, " %lf", xd->xd_geopixelscale[j]);
+		   fprintf(fd, " %f", xd->xd_geopixelscale[j]);
 		fprintf(fd, " )\n");
 	}
 
@@ -99,13 +99,13 @@ _XTIFFPrintDirectory(TIFF* tif, FILE* fd, long flags)
 		for (i=0;num>3;num-=4)
 		{
 		   for (j=0;j<4;j++)
-			fprintf(fd, " %8.2lf", xd->xd_geomatrix[i++]);
+			fprintf(fd, " %8.2f", xd->xd_geomatrix[i++]);
 		   fprintf(fd, "\n");
 		}
 		if (num)
 		{
 		   for (j=0;j<num;j++)
-			fprintf(fd, " %8.2lf", xd->xd_geomatrix[i++]);
+			fprintf(fd, " %8.2f", xd->xd_geomatrix[i++]);
 		   fprintf(fd, "\n");
 		}
 	}
@@ -117,7 +117,7 @@ _XTIFFPrintDirectory(TIFF* tif, FILE* fd, long flags)
 		for (i=0;i<num;i+=4)
 		{
 		   for (j=0;j<4;j++)
-			fprintf(fd, " %8.2lf", xd->xd_geomatrix[i+j]);
+			fprintf(fd, " %8.2f", xd->xd_geomatrix[i+j]);
 		   fprintf(fd, "\n");
 		}
 	}
@@ -148,7 +148,7 @@ _XTIFFPrintDirectory(TIFF* tif, FILE* fd, long flags)
 		{
 			fprintf(fd, "\n");
 			for (i=0;i<num;i++) 
-				fprintf(fd, "  %8.2lf", xd->xd_geodoubleparams[i]);
+				fprintf(fd, "  %8.2f", xd->xd_geodoubleparams[i]);
 			fprintf(fd, "\n");
 		} else
 			fprintf(fd, "(present)\n");
@@ -172,8 +172,6 @@ _XTIFFVSetField(TIFF* tif, ttag_t tag, va_list ap)
 	xtiff *xt = XTIFFDIR(tif);
 	XTIFFDirectory* xd = &xt->xtif_dir;
 	int status = 1;
-	uint32 v32=0;
-	int i=0, v=0;
 	uint16 num;
 
 	/* va_start is called by the calling routine */
@@ -249,16 +247,6 @@ _XTIFFVSetField(TIFF* tif, ttag_t tag, va_list ap)
 	}
 	va_end(ap);
 	return (status);
-badvalue:
-	TIFFError(tif->tif_name, "%d: Bad value for \"%s\"", v,
-	    _TIFFFieldWithTag(tif, tag)->field_name);
-	va_end(ap);
-	return (0);
-badvalue32:
-	TIFFError(tif->tif_name, "%ld: Bad value for \"%s\"", v32,
-	    _TIFFFieldWithTag(tif, tag)->field_name);
-	va_end(ap);
-	return (0);
 }
 
 
@@ -345,7 +333,6 @@ _XTIFFFreeDirectory(xtiff* xt)
 static void _XTIFFLocalDefaultDirectory(TIFF *tif)
 {
 	xtiff *xt = XTIFFDIR(tif);
-	XTIFFDirectory* xd = &xt->xtif_dir;
 
 	/* Install the extended Tag field info */
 	_TIFFMergeFieldInfo(tif, xtiffFieldInfo, N(xtiffFieldInfo));
@@ -430,7 +417,7 @@ _XTIFFDefaultDirectory(TIFF *tif)
 static
 void _XTIFFInitialize(void)
 {
-	static first_time=1;
+	static int first_time=1;
 	
 	if (! first_time) return; /* Been there. Done that. */
 	first_time = 0;
