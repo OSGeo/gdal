@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2003/08/27 15:40:37  warmerda
+ * added support for generating DB2 V7.2 compatible WKB
+ *
  * Revision 1.19  2003/06/10 14:51:07  warmerda
  * Allow Intersects() test against NULL geometry
  *
@@ -93,6 +96,8 @@
 #include <assert.h>
 
 CPL_CVSID("$Id$");
+
+int OGRGeometry::bGenerate_DB2_V72_BYTE_ORDER = FALSE;
 
 /************************************************************************/
 /*                            OGRGeometry()                             */
@@ -1133,3 +1138,26 @@ char *OGRGeometry::exportToGML() const
     return OGR_G_ExportToGML( (OGRGeometryH) this );
 }
 
+/************************************************************************/
+/*                 OGRSetGenerate_DB2_V72_BYTE_ORDER()                  */
+/*                                                                      */
+/*      This is a special entry point to enable the hack for            */
+/*      generating DB2 V7.2 style WKB.  DB2 seems to have placed        */
+/*      (and require) an extra 0x30 or'ed with the byte order in        */
+/*      WKB.  This entry point is used to turn on or off the            */
+/*      generation of such WKB.                                         */
+/************************************************************************/
+
+OGRErr OGRSetGenerate_DB2_V72_BYTE_ORDER( int bGenerate_DB2_V72_BYTE_ORDER )
+
+{
+#if defined(HACK_FOR_IBM_DB2_V72)
+    OGRGeometry::bGenerate_DB2_V72_BYTE_ORDER = bGenerate_DB2_V72_BYTE_ORDER;
+    return OGRERR_NONE;
+#else
+    if( bGenerate_DB2_V72_BYTE_ORDER )
+        return OGRERR_FAILURE;
+    else
+        return OGRERR_NONE;
+#endif
+}

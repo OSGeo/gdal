@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.22  2003/08/27 15:40:37  warmerda
+ * added support for generating DB2 V7.2 compatible WKB
+ *
  * Revision 1.21  2003/08/11 03:28:04  warmerda
  * Export OGREnvelope C++ class with CPL_DLL as per bug 378.
  *
@@ -207,12 +210,16 @@ typedef enum
     wkbNDR = 1          /* LSB/Intel/Vax: Least Significant Byte First      */
 } OGRwkbByteOrder;
 
-#define HACK_FOR_IBM_DB2_V72
+#ifndef NO_HACK_FOR_IBM_DB2_V72
+#  define HACK_FOR_IBM_DB2_V72
+#endif
 
 #ifdef HACK_FOR_IBM_DB2_V72
 #  define DB2_V72_FIX_BYTE_ORDER(x) ((((x) & 0x31) == (x)) ? (OGRwkbByteOrder) ((x) & 0x1) : (x))
+#  define DB2_V72_UNFIX_BYTE_ORDER(x) (OGRGeometry::bGenerate_DB2_V72_BYTE_ORDER ? ((x) | 0x30) : (x))
 #else
 #  define DB2_V72_FIX_BYTE_ORDER(x) (x)
+#  define DB2_V72_UNFIX_BYTE_ORDER(x) (x)
 #endif
 
 /************************************************************************/

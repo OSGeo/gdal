@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.23  2003/08/27 15:40:37  warmerda
+ * added support for generating DB2 V7.2 compatible WKB
+ *
  * Revision 1.22  2003/06/09 13:48:54  warmerda
  * added DB2 V7.2 byte order hack
  *
@@ -549,7 +552,7 @@ OGRErr  OGRGeometryCollection::exportToWkb( OGRwkbByteOrder eByteOrder,
 /* -------------------------------------------------------------------- */
 /*      Set the byte order.                                             */
 /* -------------------------------------------------------------------- */
-    pabyData[0] = (unsigned char) eByteOrder;
+    pabyData[0] = DB2_V72_UNFIX_BYTE_ORDER((unsigned char) eByteOrder);
 
 /* -------------------------------------------------------------------- */
 /*      Set the geometry feature type, ensuring that 3D flag is         */

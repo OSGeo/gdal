@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2003/08/27 15:40:37  warmerda
+ * added support for generating DB2 V7.2 compatible WKB
+ *
  * Revision 1.14  2003/04/22 19:33:26  warmerda
  * Added synctodisk
  *
@@ -169,6 +172,9 @@ OGRGeometryH CPL_DLL OGRBuildPolygonFromEdges( OGRGeometryH hLinesAsCollection,
                                        int bAutoClose, 
                                        double dfTolerance,
                                        OGRErr * peErr );
+
+OGRErr CPL_DLL OGRSetGenerate_DB2_V72_BYTE_ORDER( 
+    int bGenerate_DB2_V72_BYTE_ORDER );
 
 /* -------------------------------------------------------------------- */
 /*      Feature related (ogr_feature.h)                                 */
