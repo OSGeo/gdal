@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2003/10/08 16:00:16  warmerda
+ * provide default GetFeature(int) implementation
+ *
  * Revision 1.2  2003/09/26 20:03:03  warmerda
  * initialize pszFIDColumn
  *
@@ -247,9 +250,9 @@ OGRFeature *OGRODBCLayer::GetNextRawFeature()
 OGRFeature *OGRODBCLayer::GetFeature( long nFeatureId )
 
 {
-    /* This should be implemented! */
+    /* This should be implemented directly! */
 
-    return NULL;
+    return OGRLayer::GetFeature( nFeatureId );
 }
 
 /************************************************************************/
