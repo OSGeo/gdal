@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.18  2001/12/11 22:40:26  warmerda
+ * cleanup CPLReadLine buffer in CSLLoad()
+ *
  * Revision 1.17  2001/11/07 14:31:16  warmerda
  * doc fix
  *
@@ -251,6 +254,8 @@ char **CSLLoad(const char *pszFname)
         }
 
         VSIFClose(fp);
+
+        CPLReadLine( NULL );
     }
     else
     {
