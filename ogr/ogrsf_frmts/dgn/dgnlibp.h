@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2002/01/15 06:39:08  warmerda
+ * added default PI value
+ *
  * Revision 1.8  2001/12/19 15:29:56  warmerda
  * added preliminary cell header support
  *
@@ -59,6 +62,11 @@
 #define _DGNLIBP_H_INCLUDED
 
 #include "dgnlib.h"
+
+
+#ifndef PI
+#define PI  3.1415926535897932384626433832795
+#endif
 
 typedef struct {
     FILE	*fp;
