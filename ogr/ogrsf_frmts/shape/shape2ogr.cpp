@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.28  2003/10/18 19:01:10  warmerda
+ * added Radims patch to recognise multipolygons on read properly - bug 213
+ *
  * Revision 1.27  2003/06/10 14:44:11  warmerda
  * Added support for writing shapes with NULL geometries.
  *
@@ -129,6 +132,156 @@
 
 CPL_CVSID("$Id$");
 
+/************************************************************************/
+/*                        RingStartEnd                                  */
+/*        set first and last vertex for given ring                      */
+/************************************************************************/
+void RingStartEnd ( SHPObject *psShape, int ring, int *start, int *end )
+{
+    if( psShape->panPartStart == NULL ) {
+	*start = 0;
+        *end = psShape->nVertices - 1;
+    } else {
+        if( ring == psShape->nParts - 1 )
+            *end = psShape->nVertices - 1;
+        else
+            *end = psShape->panPartStart[ring+1] - 1;
+
+        *start = psShape->panPartStart[ring];
+    }
+}
+    
+/************************************************************************/
+/*                          RingDirection()                             */
+/*                                                                      */
+/*      return: 1 CW (clockwise)                                        */
+/*             -1 CCW (counterclockwise)                                */
+/*              0 error                                                 */
+/************************************************************************/
+
+int RingDirection ( SHPObject *Shape, int ring ) 
+{
+    int    i, start, end, v, next;
+    double *x, *y, dx0, dy0, dx1, dy1, area2; 
+
+    /* Note: first and last coordinate MUST be identical according to shapefile specification */
+    if ( ring < 0 || ring >= Shape->nParts ) return ( 0 );
+
+    x = Shape->padfX;
+    y = Shape->padfY;
+
+    RingStartEnd ( Shape, ring, &start, &end );
+
+    /* Find the lowest rightmost vertex */
+    v = start;  
+    for ( i = start + 1; i < end; i++ ) { /* => v < end */
+	if ( y[i] < y[v] || ( y[i] == y[v] && x[i] > x[v] ) ) {
+	    v = i;
+	}
+    }
+    
+    /* Vertices may be duplicate, we have to go to nearest different in each direction */
+    /* preceding */
+    next = v - 1;
+    while ( 1 ) {
+	if ( next < start ) 
+	    next = end - 1; 
+
+	if ( x[next] != x[v] || y[next] != y[v] )
+	    break;
+
+	if ( next == v ) /* So we cannot get into endless loop */
+	    break;
+
+	next--;
+    }
+	    
+    dx0 = x[next] - x[v];
+    dy0 = y[next] - y[v];
+    
+    
+    /* following */
+    next = v + 1;
+    while ( 1 ) {
+	if ( next >= end ) 
+	    next = start; 
+
+	if ( x[next] != x[v] || y[next] != y[v] )
+	    break;
+
+	if ( next == v ) /* So we cannot get into endless loop */
+	    break;
+
+	next++;
+    }
+    dx1 = x[next] - x[v];
+    dy1 = y[next] - y[v];
+
+    area2 = dx1 * dy0 - dx0 * dy1;
+    
+    if ( area2 > 0 )      /* CCW */
+	return -1;
+    else if ( area2 < 0 )  /* CW */
+	return 1;
+    
+    return 0; /* error */
+}
+
+/************************************************************************/
+/*                          PointInRing()                               */
+/*                                                                      */
+/*      return: 1 point is inside the ring                              */
+/*              0 point is outside the ring                             */
+/*                                                                      */
+/*              for point exactly on the boundary it returns 0 or 1     */
+/************************************************************************/
+
+int PointInRing ( SHPObject *Shape, int ring, double x, double y ) 
+{
+    int    i, start, end, c = 0;
+    double *xp, *yp; 
+
+    if ( ring < 0 || ring >= Shape->nParts ) return ( 0 );
+
+    xp = Shape->padfX;
+    yp = Shape->padfY;
+
+    RingStartEnd ( Shape, ring, &start, &end );
+
+    /* This code was originaly written by Randolph Franklin, here it is slightly modified. */
+    for (i = start; i < end; i++) {
+        if ( ( ( ( yp[i] <= y ) && ( y < yp[i+1] ) ) || 
+               ( ( yp[i+1] <= y ) && ( y < yp[i] ) ) ) &&
+             ( x < (xp[i+1] - xp[i]) * (y - yp[i]) / (yp[i+1] - yp[i]) + xp[i] )
+	     ) 
+	{
+            c = !c;
+	}
+    }
+    return c;
+}
+    
+/************************************************************************/
+/*                        CreateLinearRing                              */
+/*                                                                      */
+/************************************************************************/
+OGRLinearRing * CreateLinearRing ( SHPObject *psShape, int ring )
+{
+    OGRLinearRing *poRing;
+    int nRingStart, nRingEnd, nRingPoints;
+
+    poRing = new OGRLinearRing();
+
+    RingStartEnd ( psShape, ring, &nRingStart, &nRingEnd );
+
+    nRingPoints = nRingEnd - nRingStart + 1;
+
+    poRing->setPoints( nRingPoints, psShape->padfX + nRingStart, 
+	       psShape->padfY + nRingStart, psShape->padfZ + nRingStart );
+
+    return ( poRing );
+}
+    
 /************************************************************************/
 /*                          SHPReadOGRObject()                          */
 /*                                                                      */
@@ -255,42 +408,128 @@ OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape )
              || psShape->nSHPType == SHPT_POLYGONZ )
     {
         int     iRing;
-        OGRPolygon *poOGRPoly;
         
-        poOGR = poOGRPoly = new OGRPolygon();
+	if ( psShape->nParts == 1 ) { /* Surely outer ring */
+            OGRPolygon *poOGRPoly;
+	    OGRLinearRing       *poRing;
 
-        for( iRing = 0; iRing < psShape->nParts; iRing++ )
-        {
-            OGRLinearRing       *poRing;
-            int nRingPoints;
-            int nRingStart;
+	    poOGR = poOGRPoly = new OGRPolygon();
+	    poRing = CreateLinearRing ( psShape, 0 );
+	    poOGRPoly->addRingDirectly( poRing );
+	} else {
+	    int nOuter = 0; /* Number of outer rings */ 
+	    int *direction; /* ring direction (1 CW,outer, -1 CCW, inner) */ 
+	    int *outer;     /* list of outer rings */ 
+	    int *outside;   /* outer ring index for inner rings, -1 for outer rings */ 
 
-            poRing = new OGRLinearRing();
+	    direction = (int *) CPLMalloc( psShape->nParts * sizeof(int) );
+	    outer = (int *) CPLMalloc( psShape->nParts * sizeof(int) );
+	    outside = (int *) CPLMalloc( psShape->nParts * sizeof(int) );
+	    
+	    /* First distinguish outer from inner rings */
+	    for( iRing = 0; iRing < psShape->nParts; iRing++ ) {
+		direction[iRing] = RingDirection ( psShape, iRing);
+		if ( direction[iRing] == 1 ) {
+		    outer[nOuter] = iRing;
+		    nOuter++;
+		}
+		    
+		outside[iRing] = -1;
+	    }
+	    
+	    /* Find for each inner ring outer ring it is within */
 
-            if( psShape->panPartStart == NULL )
-            {
-                nRingPoints = psShape->nVertices;
-                nRingStart = 0;
-            }
-            else
-            {
+	    /* Note: According to specification, rings can touch by one vertex, but not along segment. */
+	    /* It may happen that inner ring touches the outer and PointInRing() retuirns 0 (outside) */
+	    /* because of representation error. Because of that, cycle through all vertices of inner */
+	    /* ring is used, until outer ring is found. Of course, this may fail as well, but probability */
+	    /* is lower. We could use also points on inner segments or centroid. */ 
+	    /* In theory, it may also happen, that vertex touching outer ring falls outside its outer */
+	    /* ring and inside another (incorrect). */ 
+	    /* The problem is how to find a point on inner ring which doesn't lie on outer ring. */
 
-                if( iRing == psShape->nParts - 1 )
-                    nRingPoints =
-                        psShape->nVertices - psShape->panPartStart[iRing];
-                else
-                    nRingPoints = psShape->panPartStart[iRing+1]
-                        - psShape->panPartStart[iRing];
-                nRingStart = psShape->panPartStart[iRing];
-            }
-            
-            poRing->setPoints( nRingPoints, 
-                               psShape->padfX + nRingStart,
-                               psShape->padfY + nRingStart,
-                               psShape->padfZ + nRingStart );
+	    /* All inner rings for which outer ring was not find are later added to first outer ring */
+	    for( iRing = 0; iRing < psShape->nParts; iRing++ ) { /* cycle through inner rings */
+		int  start, end;
+		
+		if ( direction[iRing] != -1 ) /* is not inner ring */
+		    continue;
+		
+		RingStartEnd ( psShape, iRing, &start, &end );
 
-            poOGRPoly->addRingDirectly( poRing );
-        }
+		for ( int vert = start; vert < end; vert++ ) { /* cycle through inner ring's vertices */
+		    double x, y;
+		    
+		    x = psShape->padfX[vert];
+		    y = psShape->padfY[vert];
+
+		    for( int oRing = 0; oRing < psShape->nParts; oRing++ ) { /* outer rings */
+			int inside;
+			    
+			if ( direction[oRing] != 1 ) /* not outer */ 
+			    continue;
+			    
+			inside = PointInRing ( psShape, oRing, x, y);
+
+			if ( inside ) {
+			    outside[iRing] = oRing;
+			    break;
+			}
+		    }
+		    if ( outside[iRing] >= 0 ) /* outer ring found */
+			break;
+	        }
+	    }
+
+	    if ( nOuter == 1 ) { /* One outer ring and more inner rings */
+		OGRPolygon    *poOGRPoly;
+	        OGRLinearRing *poRing;
+
+		/* Outer */
+	        poOGR = poOGRPoly = new OGRPolygon();
+		poRing = CreateLinearRing ( psShape, outer[0] );
+	        poOGRPoly->addRingDirectly( poRing );
+
+		/* Inner */
+		for( iRing = 0; iRing < psShape->nParts; iRing++ ) {
+		    if ( direction[iRing] == -1 ) {
+			poRing = CreateLinearRing ( psShape, iRing );
+			poOGRPoly->addRingDirectly( poRing );
+		    }
+		}
+	    } else { 
+		OGRGeometryCollection *poOGRGeCo;
+
+		poOGR = poOGRGeCo = new OGRMultiPolygon();
+
+	        for ( iRing = 0; iRing < nOuter; iRing++ ) { /* outer rings */
+		    int oRing; 
+
+		    OGRPolygon    *poOGRPoly;
+		    OGRLinearRing *poRing;
+
+		    oRing = outer[iRing];
+
+		    /* Outer */
+		    poOGRPoly = new OGRPolygon();
+		    poRing = CreateLinearRing ( psShape, oRing );
+		    poOGRPoly->addRingDirectly( poRing );
+
+		    /* Inner */
+		    for( int iRing2 = 0; iRing2 < psShape->nParts; iRing2++ ) {
+			if ( outside[iRing2] == oRing 
+			     || ( iRing == 0 && direction[iRing2] == -1 && outside[iRing2] == -1 ) ) {
+			    poRing = CreateLinearRing ( psShape, iRing2 );
+			    poOGRPoly->addRingDirectly( poRing );
+			}
+		    }
+                    poOGRGeCo->addGeometry (poOGRPoly);
+		}
+	    }
+            CPLFree( direction );
+            CPLFree( outer );
+            CPLFree( outside );
+	}
     }
 
 /* -------------------------------------------------------------------- */
