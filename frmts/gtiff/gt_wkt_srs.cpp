@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.44  2004/03/18 09:58:07  dron
+ * Use auxiliary functions from the libgeotiff instead of the ones from CPL.
+ *
  * Revision 1.43  2003/11/25 15:26:08  warmerda
  * dont use GCS or PCS values that are out of range
  *
@@ -165,9 +168,9 @@
  *
  */
 
-#include "cpl_port.h"
-#include "cpl_csv.h"
-#define CPL_SERV_H_INCLUDED
+#include "cpl_serv.h"
+#include "geo_tiffp.h"
+#define _CPL_ERROR_H_INCLUDED_
 
 #include "geo_normalize.h"
 #include "geovalues.h"
