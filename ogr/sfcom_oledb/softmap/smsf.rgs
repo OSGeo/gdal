@@ -26,7 +26,8 @@ HKCR
 				}
 			}
 			'OLE DB Provider' = s 'Softmap OLE DB Provider for OpenGIS Simple Features from Shapefiles'
-			OLEDB_SERVICES = d '4294967295'
+			val OLEDB_SERVICES = d '4294967295'
+			// val OLEDB_SERVICES = d '0'
 			'TypeLib' = s '{C9BD5066-0D6D-11D3-94FF-00104B238935}'
 		}
 	}
