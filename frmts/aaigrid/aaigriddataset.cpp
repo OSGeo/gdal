@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.15  2002/07/09 21:06:54  warmerda
+ * fixed free of SrcDS pszProjection in CreateCopy
+ *
  * Revision 1.14  2002/06/15 00:07:23  aubin
  * mods to enable 64bit file i/o
  *
@@ -80,12 +83,12 @@
 CPL_CVSID("$Id$");
 
 CPL_C_START
-void	GDALRegister_AAIGrid(void);
+void    GDALRegister_AAIGrid(void);
 CPL_C_END
 
 /************************************************************************/
 /* ==================================================================== */
-/*				AAIGDataset				*/
+/*                              AAIGDataset                             */
 /* ==================================================================== */
 /************************************************************************/
 
@@ -95,14 +98,14 @@ class CPL_DLL AAIGDataset : public GDALDataset
 {
     friend class AAIGRasterBand;
     
-    FILE	*fp;
+    FILE        *fp;
 
-    double	adfGeoTransform[6];
-    char	**papszPrj;
-    char	*pszProjection;
+    double      adfGeoTransform[6];
+    char        **papszPrj;
+    char        *pszProjection;
 
-    int		bNoDataSet;
-    double	dfNoDataValue;
+    int         bNoDataSet;
+    double      dfNoDataValue;
 
   public:
                 AAIGDataset();
@@ -124,7 +127,7 @@ class AAIGRasterBand : public GDALRasterBand
 {
     friend class AAIGDataset;
 
-    int		*panLineOffset;
+    int         *panLineOffset;
 
   public:
 
@@ -136,7 +139,7 @@ class AAIGRasterBand : public GDALRasterBand
     virtual CPLErr IReadBlock( int, int, void * );
 };
 
-static GDALDriver	*poAAIGDriver = NULL;
+static GDALDriver       *poAAIGDriver = NULL;
 
 /************************************************************************/
 /*                           AAIGRasterBand()                            */
@@ -176,10 +179,10 @@ CPLErr AAIGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                   void * pImage )
 
 {
-    AAIGDataset	*poODS = (AAIGDataset *) poDS;
-    const char	*pszLine;
-    char	**papszTokens;
-    int		i;
+    AAIGDataset *poODS = (AAIGDataset *) poDS;
+    const char  *pszLine;
+    char        **papszTokens;
+    int         i;
 
     if( nBlockYOff < 0 || nBlockYOff > poODS->nRasterYSize - 1 
         || nBlockXOff != 0 )
@@ -228,7 +231,7 @@ CPLErr AAIGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 double AAIGRasterBand::GetNoDataValue( int * pbSuccess )
 
 {
-    AAIGDataset	*poODS = (AAIGDataset *) poDS;
+    AAIGDataset *poODS = (AAIGDataset *) poDS;
 
     if( pbSuccess )
         *pbSuccess = poODS->bNoDataSet;
@@ -243,7 +246,7 @@ double AAIGRasterBand::GetNoDataValue( int * pbSuccess )
 CPLErr AAIGRasterBand::SetNoDataValue( double dfNoData )
 
 {
-    AAIGDataset	*poODS = (AAIGDataset *) poDS;
+    AAIGDataset *poODS = (AAIGDataset *) poDS;
 
     poODS->bNoDataSet = TRUE;
     poODS->dfNoDataValue = dfNoData;
@@ -300,9 +303,9 @@ AAIGDataset::~AAIGDataset()
 GDALDataset *AAIGDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
-    int		i, j;
+    int         i, j;
     GDALDataType eDataType;
-    char	**papszTokens;
+    char        **papszTokens;
 
 /* -------------------------------------------------------------------- */
 /*      Does this look like an AI grid file?                            */
@@ -310,12 +313,12 @@ GDALDataset *AAIGDataset::Open( GDALOpenInfo * poOpenInfo )
     if( poOpenInfo->nHeaderBytes < 100
         || poOpenInfo->fp == NULL
         || !( EQUALN((const char *) poOpenInfo->pabyHeader,"ncols",5) ||
-	      EQUALN((const char *) poOpenInfo->pabyHeader,"nrows",5) ||
-	      EQUALN((const char *) poOpenInfo->pabyHeader,"xllcorner",9)||
-	      EQUALN((const char *) poOpenInfo->pabyHeader,"yllcorner",9)||
-	      EQUALN((const char *) poOpenInfo->pabyHeader,"xllcenter",9)||
-	      EQUALN((const char *) poOpenInfo->pabyHeader,"yllcenter",9)||
-	      EQUALN((const char *) poOpenInfo->pabyHeader,"cellsize",8)) )
+              EQUALN((const char *) poOpenInfo->pabyHeader,"nrows",5) ||
+              EQUALN((const char *) poOpenInfo->pabyHeader,"xllcorner",9)||
+              EQUALN((const char *) poOpenInfo->pabyHeader,"yllcorner",9)||
+              EQUALN((const char *) poOpenInfo->pabyHeader,"xllcenter",9)||
+              EQUALN((const char *) poOpenInfo->pabyHeader,"yllcenter",9)||
+              EQUALN((const char *) poOpenInfo->pabyHeader,"cellsize",8)) )
         return NULL;
 
     papszTokens =  
@@ -325,7 +328,7 @@ GDALDataset *AAIGDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
-    AAIGDataset 	*poDS;
+    AAIGDataset         *poDS;
 
     poDS = new AAIGDataset();
 
@@ -395,7 +398,7 @@ GDALDataset *AAIGDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Find the start of real data.                                    */
 /* -------------------------------------------------------------------- */
-    int		nStartOfData;
+    int         nStartOfData;
 
     for( i = 2; TRUE ; i++ )
     {
@@ -403,7 +406,7 @@ GDALDataset *AAIGDataset::Open( GDALOpenInfo * poOpenInfo )
         {
             CPLError( CE_Failure, CPLE_AppDefined, 
                       "Couldn't find data values in ASCII Grid file.\n" );
-            return NULL;			
+            return NULL;                        
         }
 
         if( poOpenInfo->pabyHeader[i-1] == '\n' 
@@ -428,10 +431,10 @@ GDALDataset *AAIGDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->SetBand( 1, new AAIGRasterBand( poDS, nStartOfData, eDataType ) );
 
 /* -------------------------------------------------------------------- */
-/*	Try to read projection file.					*/
+/*      Try to read projection file.                                    */
 /* -------------------------------------------------------------------- */
-    char	*pszDirname, *pszBasename;
-    const char	*pszPrjFilename;
+    char        *pszDirname, *pszBasename;
+    const char  *pszPrjFilename;
     VSIStatBuf   sStatBuf;
 
     pszDirname = CPLStrdup(CPLGetPath(poOpenInfo->pszFilename));
@@ -440,7 +443,7 @@ GDALDataset *AAIGDataset::Open( GDALOpenInfo * poOpenInfo )
     pszPrjFilename = CPLFormFilename( pszDirname, pszBasename, "prj" );
     if( VSIStat( pszPrjFilename, &sStatBuf ) == 0 )
     {
-        OGRSpatialReference	oSRS;
+        OGRSpatialReference     oSRS;
 
         poDS->papszPrj = CSLLoad( pszPrjFilename );
 
@@ -479,7 +482,7 @@ const char *AAIGDataset::GetProjectionRef()
 }
 
 /************************************************************************/
-/*                        AAIGCreateCopy()	                        */
+/*                        AAIGCreateCopy()                              */
 /************************************************************************/
 
 static GDALDataset *
@@ -493,13 +496,13 @@ AAIGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     int  nYSize = poSrcDS->GetRasterYSize();
 
 /* -------------------------------------------------------------------- */
-/*      Some rudimentary checks		                                */
+/*      Some rudimentary checks                                         */
 /* -------------------------------------------------------------------- */
     if( nBands != 1 )
     {
         CPLError( CE_Failure, CPLE_NotSupported, 
                   "AAIG driver doesn't support %d bands.  Must be 1 band.\n",
-		  nBands );
+                  nBands );
 
         return NULL;
     }
@@ -510,7 +513,7 @@ AAIGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Create the dataset.                                             */
 /* -------------------------------------------------------------------- */
-    FILE	*fpImage;
+    FILE        *fpImage;
 
     fpImage = VSIFOpen( pszFilename, "wt" );
     if( fpImage == NULL )
@@ -522,7 +525,7 @@ AAIGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     }
 
 /* -------------------------------------------------------------------- */
-/*      Write ASCII Grid file header			                */
+/*      Write ASCII Grid file header                                    */
 /* -------------------------------------------------------------------- */
     double      adfGeoTransform[6];
 
@@ -537,8 +540,8 @@ AAIGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Loop over image, copying image data.                            */
 /* -------------------------------------------------------------------- */
-    double 	*padfScanline, dfNoData;
-    int		iLine, iPixel, bSuccess;
+    double      *padfScanline, dfNoData;
+    int         iLine, iPixel, bSuccess;
     CPLErr      eErr = CE_None;
     
     GDALRasterBand * poBand = poSrcDS->GetRasterBand( 1 );
@@ -550,17 +553,17 @@ AAIGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     
     // Write scanlines to output file
     padfScanline = (double *) CPLMalloc( nXSize *
-		                GDALGetDataTypeSize(GDT_CFloat64) / 8 );
+                                GDALGetDataTypeSize(GDT_CFloat64) / 8 );
     for( iLine = 0; eErr == CE_None && iLine < nYSize; iLine++ )
     {
         eErr = poBand->RasterIO( GF_Read, 0, iLine, nXSize, 1, 
                               padfScanline, nXSize, 1, GDT_CFloat64,
                               sizeof(double), sizeof(double) * nXSize );
-	for ( iPixel = 0; iPixel < nXSize; iPixel++ )
-	   VSIFPrintf( fpImage, " %6.20g", padfScanline[iPixel] );
-	VSIFPrintf( fpImage, "\n" );
-	if( eErr == CE_None &&
-	    !pfnProgress((iLine + 1) / ((double) nYSize), NULL, pProgressData) )
+        for ( iPixel = 0; iPixel < nXSize; iPixel++ )
+           VSIFPrintf( fpImage, " %6.20g", padfScanline[iPixel] );
+        VSIFPrintf( fpImage, "\n" );
+        if( eErr == CE_None &&
+            !pfnProgress((iLine + 1) / ((double) nYSize), NULL, pProgressData) )
         {
             eErr = CE_Failure;
             CPLError( CE_Failure, CPLE_UserInterrupt, 
@@ -572,34 +575,35 @@ AAIGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     VSIFClose( fpImage );
 
 /* -------------------------------------------------------------------- */
-/*	Try to write projection file.					*/
+/*      Try to write projection file.                                   */
 /* -------------------------------------------------------------------- */
-    char	*pszProjection;
+    const char  *pszOriginalProjection;
 
-    pszProjection = (char *)poSrcDS->GetProjectionRef();
-    if ( !EQUAL( pszProjection, "" ) )
+    pszOriginalProjection = (char *)poSrcDS->GetProjectionRef();
+    if( !EQUAL( pszOriginalProjection, "" ) )
     {
-        char			*pszDirname, *pszBasename;
-        const char		*pszPrjFilename;
-        FILE			*fp;
-        OGRSpatialReference	oSRS;
+        char                    *pszDirname, *pszBasename;
+        const char              *pszPrjFilename;
+        char                    *pszESRIProjection = NULL;
+        FILE                    *fp;
+        OGRSpatialReference     oSRS;
 
         pszDirname = CPLStrdup( CPLGetPath(pszFilename) );
         pszBasename = CPLStrdup( CPLGetBasename(pszFilename) );
 
         pszPrjFilename = CPLFormFilename( pszDirname, pszBasename, "prj" );
         fp = VSIFOpen( pszPrjFilename, "wt" );
-	
-        oSRS.importFromWkt( &pszProjection );
-	oSRS.morphToESRI();
-	oSRS.exportToWkt( &pszProjection );
-        fputs( pszProjection, fp );
+        
+        oSRS.importFromWkt( (char **) &pszOriginalProjection );
+        oSRS.morphToESRI();
+        oSRS.exportToWkt( &pszESRIProjection );
+        VSIFPuts( pszESRIProjection, fp );
 
-	VSIFClose( fp );
+        VSIFClose( fp );
         CPLFree( pszDirname );
         CPLFree( pszBasename );
+        CPLFree( pszESRIProjection );
     }
-    CPLFree( pszProjection );
     
     return (GDALDataset *) GDALOpen( pszFilename, GA_Update );
 }
@@ -611,7 +615,7 @@ AAIGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 void GDALRegister_AAIGrid()
 
 {
-    GDALDriver	*poDriver;
+    GDALDriver  *poDriver;
 
     if( poAAIGDriver == NULL )
     {
@@ -626,7 +630,7 @@ void GDALRegister_AAIGrid()
 
         poDriver->pfnOpen = AAIGDataset::Open;
         poDriver->pfnCreateCopy = AAIGCreateCopy;
-	
+        
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
 }
