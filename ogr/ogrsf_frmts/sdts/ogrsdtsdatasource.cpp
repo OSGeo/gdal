@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/11/04 21:12:31  warmerda
+ * added TestCapability() support
+ *
  * Revision 1.1  1999/09/22 13:32:16  warmerda
  * New
  *
@@ -65,6 +68,16 @@ OGRSDTSDataSource::~OGRSDTSDataSource()
     CPLFree( papoLayers );
 
     CPLFree( pszName );
+}
+
+/************************************************************************/
+/*                           TestCapability()                           */
+/************************************************************************/
+
+int OGRSDTSDataSource::TestCapability( const char * )
+
+{
+    return FALSE;
 }
 
 /************************************************************************/

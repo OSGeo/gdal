@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/11/04 21:12:31  warmerda
+ * added TestCapability() support
+ *
  * Revision 1.1  1999/09/22 13:32:16  warmerda
  * New
  *
@@ -101,6 +104,7 @@ class OGRSDTSDataSource : public OGRDataSource
     const char	        *GetName() { return pszName; }
     int			GetLayerCount() { return nLayers; }
     OGRLayer		*GetLayer( int );
+    int                 TestCapability( const char * );
 };
 
 /************************************************************************/
@@ -114,6 +118,7 @@ class OGRSDTSDriver : public OGRSFDriver
                 
     const char *GetName();
     OGRDataSource *Open( const char *, int );
+    int         TestCapability( const char * );
 };
 
 
