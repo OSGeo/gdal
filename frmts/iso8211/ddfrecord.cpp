@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  1999/05/08 20:16:20  warmerda
+ * added some record validity testing
+ *
  * Revision 1.4  1999/05/07 14:12:24  warmerda
  * added record cloning, and subfield value fetches
  *
@@ -240,6 +243,18 @@ int DDFRecord::ReadHeader()
         nReuseHeader = TRUE;
 
     nFieldOffset = _fieldAreaStart - nLeaderSize;
+
+/* -------------------------------------------------------------------- */
+/*      Is there anything seemly screwy about this record?              */
+/* -------------------------------------------------------------------- */
+    if( _recLength < 24 || _recLength > 100000000
+        || _fieldAreaStart < 24 || _fieldAreaStart > 100000 )
+    {
+        CPLError( CE_Failure, CPLE_FileIO, 
+                  "Data record appears to be corrupt on DDF file." );
+        
+        return FALSE;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Read the remainder of the record.                               */
