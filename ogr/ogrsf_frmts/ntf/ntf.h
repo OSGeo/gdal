@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2002/07/08 14:49:44  warmerda
+ * added TILE_REF uniquification support
+ *
  * Revision 1.20  2002/02/11 16:52:43  warmerda
  * added ReadPhysicalLine() method on NTFRecord
  *
@@ -385,6 +388,7 @@ class NTFFileReader
     double            GetXOrigin() { return dfXOrigin; }
     double            GetYOrigin() { return dfYOrigin; }
     const char       *GetTileName() { return pszTileName; }
+    const char       *GetFilename() { return pszFilename; }
     int               GetNTFLevel() { return nNTFLevel; }
     const char       *GetProduct() { return pszProduct; }
     const char       *GetPVName() { return pszPVName; }
@@ -394,6 +398,8 @@ class NTFFileReader
 
     int               GetFCCount() { return nFCCount; }
     int               GetFeatureClass( int, char **, char ** );
+
+    void              OverrideTileName( const char * );
 
     // Generic file index
     void              IndexFile();
@@ -571,6 +577,8 @@ class OGRNTFDataSource : public OGRDataSource
     NTFGenericClass     aoGenericClass[100];
 
     char                **papszOptions;
+
+    void                EnsureTileNameUnique( NTFFileReader * );
     
   public:
                         OGRNTFDataSource();

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.27  2002/07/08 14:49:44  warmerda
+ * added TILE_REF uniquification support
+ *
  * Revision 1.26  2002/06/18 02:29:41  warmerda
  * fixed possible one-off error in att records ended with variable value
  *
@@ -1979,5 +1982,16 @@ NTFRecord **NTFFileReader::GetNextIndexedRecordGroup( NTFRecord **
     }
 
     return apoCGroup + 1;
+}
+
+/************************************************************************/
+/*                          OverrideTileName()                          */
+/************************************************************************/
+
+void NTFFileReader::OverrideTileName( const char *pszNewName )
+
+{
+    CPLFree( pszTileName );
+    pszTileName = CPLStrdup( pszNewName );
 }
 

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2002/07/08 14:49:44  warmerda
+ * added TILE_REF uniquification support
+ *
  * Revision 1.12  2001/12/12 17:22:15  warmerda
  * Use CPLStat() instead of VSIStat().
  *
@@ -353,7 +356,9 @@ int OGRNTFDataSource::Open( const char * pszFilename, int bTestOpen,
 
         poFR->SetBaseFID( nNTFFileCount * 1000000 + 1 );
         poFR->Close();
-        
+
+        EnsureTileNameUnique( poFR );
+
         papoNTFFileReader[nNTFFileCount++] = poFR;
     }
 
@@ -541,3 +546,47 @@ const char *OGRNTFDataSource::GetOption( const char * pszOption )
     return CSLFetchNameValue( papszOptions, pszOption );
 }
 
+/************************************************************************/
+/*                        EnsureTileNameUnique()                        */
+/*                                                                      */
+/*      This method is called with an NTFFileReader to ensure that      */
+/*      it's tilename is unique relative to all the readers already     */
+/*      assigned to this data source.  If not, a unique name is         */
+/*      selected for it and assigned.  This method should not be        */
+/*      called with readers that are allready attached to the data      */
+/*      source.                                                         */
+/************************************************************************/
+
+void OGRNTFDataSource::EnsureTileNameUnique( NTFFileReader *poNewReader )
+
+{
+    int       iSequenceNumber = -1;
+    int       bIsUnique;
+    char      szCandidateName[11];
+
+    do
+    {
+        bIsUnique = TRUE;
+        if( iSequenceNumber++ == -1 )
+            strncpy( szCandidateName, poNewReader->GetTileName(), 10 );
+        else
+            sprintf( szCandidateName, "%010d", iSequenceNumber );
+
+        for( int iReader = 0; iReader < nNTFFileCount && bIsUnique; iReader++ )
+        {
+            if( strcmp( szCandidateName, 
+                        GetFileReader( iReader )->GetTileName() ) == 0 )
+                bIsUnique = FALSE;
+        }
+    } while( !bIsUnique );
+
+    if( iSequenceNumber > 0 )
+    {
+        poNewReader->OverrideTileName( szCandidateName );
+        CPLError( CE_Warning, CPLE_AppDefined, 
+                  "Forcing TILE_REF to `%s' on file %s\n"
+                  "to avoid conflict with other tiles in this data source.",
+                  szCandidateName, poNewReader->GetFilename() );
+    }
+
+}
