@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2001/12/19 15:29:56  warmerda
+ * added preliminary cell header support
+ *
  * Revision 1.13  2001/08/21 03:01:39  warmerda
  * added raw_data support
  *
@@ -275,6 +278,30 @@ typedef struct {
 
 } DGNElemTCB;
 
+/** 
+ * Cell Header.
+ *
+ * The core.stype code is DGNST_CELL_HEADER.
+ *
+ * Returned for DGNT_CELL_HEADER(2).
+ */
+
+typedef struct {
+    DGNElemCore core;
+
+    int		totlength;         /*!< Total length of cell */
+    char        name[7];           /*!< Cell name */
+ unsigned short cclass;            /*!< Class bitmap */
+ unsigned short levels[4];         /*!< Levels used in cell */
+    
+    DGNPoint    rnglow;            /*!< X/Y/Z minimums for cell */
+    DGNPoint    rnghigh;           /*!< X/Y/Z minimums for cell */
+    
+    double      trans[9];          /*!< 2D/3D Transformation Matrix */
+    DGNPoint    origin;            /*!< Cell Origin */
+
+} DGNElemCellHeader;
+
 /* -------------------------------------------------------------------- */
 /*      Structure types                                                 */
 /* -------------------------------------------------------------------- */
@@ -299,6 +326,9 @@ typedef struct {
 
 /** DGNElemCore style: Element uses DGNElemComplexHeader structure */
 #define DGNST_COMPLEX_HEADER       7
+
+/** DGNElemCore style: Element uses DGNElemCellHeader structure */
+#define DGNST_CELL_HEADER          8
 
 /* -------------------------------------------------------------------- */
 /*      Element types                                                   */

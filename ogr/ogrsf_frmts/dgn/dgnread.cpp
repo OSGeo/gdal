@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2001/12/19 15:29:56  warmerda
+ * added preliminary cell header support
+ *
  * Revision 1.16  2001/11/09 14:55:29  warmerda
  * fixed 3D support for arcs
  *
@@ -213,6 +216,59 @@ DGNElemCore *DGNReadElement( DGNHandle hDGN )
 /* -------------------------------------------------------------------- */
     switch( nType )
     {
+      case DGNT_CELL_HEADER:
+      {
+          DGNElemCellHeader *psCell;
+
+          psCell = (DGNElemCellHeader *) 
+              CPLCalloc(sizeof(DGNElemCellHeader),1);
+          psElement = (DGNElemCore *) psCell;
+          psElement->stype = DGNST_CELL_HEADER;
+          DGNParseCore( psDGN, psElement );
+
+          psCell->totlength = psDGN->abyElem[36] + psDGN->abyElem[37] * 256;
+
+          DGNRad50ToAscii( psDGN->abyElem[38] + psDGN->abyElem[39] * 256, 
+                           psCell->name + 0 );
+          DGNRad50ToAscii( psDGN->abyElem[40] + psDGN->abyElem[41] * 256, 
+                           psCell->name + 3 );
+
+          psCell->cclass = psDGN->abyElem[42] + psDGN->abyElem[43] * 256;
+          psCell->levels[0] = psDGN->abyElem[44] + psDGN->abyElem[45] * 256;
+          psCell->levels[1] = psDGN->abyElem[46] + psDGN->abyElem[47] * 256;
+          psCell->levels[2] = psDGN->abyElem[48] + psDGN->abyElem[49] * 256;
+          psCell->levels[3] = psDGN->abyElem[50] + psDGN->abyElem[51] * 256;
+
+          if( psDGN->dimension == 2 )
+          {
+              psCell->rnglow.x = DGN_INT32( psDGN->abyElem + 52 );
+              psCell->rnglow.y = DGN_INT32( psDGN->abyElem + 56 );
+              psCell->rnghigh.x = DGN_INT32( psDGN->abyElem + 60 );
+              psCell->rnghigh.y = DGN_INT32( psDGN->abyElem + 64 );
+
+              psCell->origin.x = DGN_INT32( psDGN->abyElem + 84 );
+              psCell->origin.y = DGN_INT32( psDGN->abyElem + 88 );
+          }
+          else
+          {
+              psCell->rnglow.x = DGN_INT32( psDGN->abyElem + 52 );
+              psCell->rnglow.y = DGN_INT32( psDGN->abyElem + 56 );
+              psCell->rnglow.z = DGN_INT32( psDGN->abyElem + 60 );
+              psCell->rnghigh.x = DGN_INT32( psDGN->abyElem + 64 );
+              psCell->rnghigh.y = DGN_INT32( psDGN->abyElem + 68 );
+              psCell->rnghigh.z = DGN_INT32( psDGN->abyElem + 72 );
+
+              psCell->origin.x = DGN_INT32( psDGN->abyElem + 112 );
+              psCell->origin.y = DGN_INT32( psDGN->abyElem + 116 );
+              psCell->origin.z = DGN_INT32( psDGN->abyElem + 120 );
+          }
+
+          DGNTransformPoint( psDGN, &(psCell->rnglow) );
+          DGNTransformPoint( psDGN, &(psCell->rnghigh) );
+          DGNTransformPoint( psDGN, &(psCell->origin) );
+      }
+      break;
+
       case DGNT_LINE:
       {
           DGNElemMultiPoint *psLine;
@@ -806,6 +862,22 @@ void DGNDumpElement( DGNHandle hDGN, DGNElemCore *psElement, FILE *fp )
       }
       break;
 
+      case DGNST_CELL_HEADER:
+      {
+          DGNElemCellHeader	*psCell = (DGNElemCellHeader*) psElement;
+
+          fprintf( fp, "  totlength=%d, name=%s, class=%x, levels=%02x%02x%02x%02x\n", 
+                   psCell->totlength, psCell->name, psCell->cclass, 
+                   psCell->levels[0], psCell->levels[1], psCell->levels[2], 
+                   psCell->levels[3] );
+          fprintf( fp, "  rnglow=(%.5f,%.5f), rnghigh=(%.5f,%.5f)\n",
+                   psCell->rnglow.x, psCell->rnglow.y, 
+                   psCell->rnghigh.x, psCell->rnghigh.y ); 
+          fprintf( fp, "  origin=(%.5f,%.5f)\n", 
+                   psCell->origin.x, psCell->origin.y );
+      }
+      break;
+
       case DGNST_ARC:
       {
           DGNElemArc	*psArc = (DGNElemArc *) psElement;
@@ -1257,3 +1329,54 @@ int DGNLookupColor( DGNHandle hDGN, int color_index,
 
     return TRUE;
 }
+
+/************************************************************************/
+/*                          DGNRad50ToAscii()                           */
+/*                                                                      */
+/*      Convert one 32-bits Radix-50 to ASCII (6 chars).                */
+/************************************************************************/
+
+void DGNRad50ToAscii(unsigned short rad50, char *str )
+{
+    unsigned char cTimes;
+    unsigned long value;
+    unsigned long temp;
+    char ch;
+
+    while (rad50 > 0)
+    {
+        value = rad50;
+        cTimes = 0;
+        while (value >= 40)
+        {
+            value /= 40;
+            cTimes ++;
+        }
+
+        /* Map 0..39 to ASCII */
+        if (value==0)                      
+            ch = ' ';          /* space */
+        else if (value >= 1 && value <= 26)  
+            ch = value-1+'A';/* printable alpha A..Z */
+        else if (value == 27)              
+            ch = '$';          /* dollar */
+        else if (value == 28)              
+            ch = '.';          /* period */
+        else if (value == 29)              
+            ch = ' ';          /* unused char, emit a space instead */
+        else if (value >= 30 && value <= 39) 
+            ch = value-30+'0';   /* digit 0..9 */
+
+        *str = ch;
+        str++;
+
+        temp = 1;
+        while (cTimes-- > 0)
+            temp *= 40;
+
+        rad50-=value*temp;
+    }
+    /* Do zero-terminate */
+    *str = '\0';
+}
+
