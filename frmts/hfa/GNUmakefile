@@ -7,9 +7,9 @@ HFAOBJ  =	hfaopen.o hfaentry.o hfadictionary.o hfafield.o hfatype.o \
 		hfaband.o
 OBJ	=	$(HFAOBJ) hfadataset.o 
 
-ALL_C_FLAGS	=	$(GDAL_INCLUDE) $(CFLAGS)
+ALL_C_FLAGS	=	$(GDAL_INCLUDE) $(CPPFLAGS)
 
-CPPFLAGS	=	$(GDAL_INCLUDE)
+CPPFLAGS	:=	$(GDAL_INCLUDE) $(CPPFLAGS)
 
 IMG_DATA_DIR	=	/usr2/data/imagine
 
