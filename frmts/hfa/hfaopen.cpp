@@ -35,6 +35,9 @@
  * of the GDAL core, but dependent on the Common Portability Library.
  *
  * $Log$
+ * Revision 1.24  2003/03/18 21:05:31  dron
+ * Added HFARemove() and HFADelete() functions.
+ *
  * Revision 1.23  2003/03/13 14:38:00  warmerda
  * added USE_SPILL creation option to force use of spill file.
  *
@@ -411,6 +414,63 @@ void HFAClose( HFAHandle hHFA )
     }
 
     CPLFree( hHFA );
+}
+
+/************************************************************************/
+/*                              HFARemove()                             */
+/*  Used from HFADelete() function.                                     */
+/************************************************************************/
+
+CPLErr HFARemove( const char *pszFilename )
+
+{
+    VSIStatBuf      sStat;
+
+    if( VSIStat( pszFilename, &sStat ) == 0 && VSI_ISREG( sStat.st_mode ) )
+    {
+        if( VSIUnlink( pszFilename ) == 0 )
+            return CE_None;
+        else
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Attempt to unlink %s failed.\n", pszFilename );
+            return CE_Failure;
+        }
+    }
+    else
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Unable to delete %s, not a file.\n", pszFilename );
+        return CE_Failure;
+    }
+}
+
+/************************************************************************/
+/*                              HFADelete()                             */
+/************************************************************************/
+
+CPLErr HFADelete( const char *pszFilename )
+
+{
+    char	szName[128];
+    HFAInfo_t   *psInfo = HFAOpen( pszFilename, "rb" );
+    HFAEntry	*poDMS;
+
+
+    sprintf( szName, "Layer_%d", 1 );
+    poDMS = psInfo->poRoot->GetNamedChild( szName )->
+        GetNamedChild( "ExternalRasterDMS" );
+
+    if ( poDMS )
+    {
+        const char *pszRawFilename =
+            poDMS->GetStringField( "fileName.string" );
+        
+        HFARemove( pszRawFilename );
+    }
+
+    HFAClose( psInfo );
+    return HFARemove( pszFilename );
 }
 
 /************************************************************************/
