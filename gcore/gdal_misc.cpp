@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.22  2000/12/04 20:45:14  warmerda
+ * removed unused variable.
+ *
  * Revision 1.21  2000/10/06 15:22:49  warmerda
  * added GDALDataTypeUnion
  *
@@ -873,7 +876,7 @@ int GDALGetRandomRasterSample( GDALRasterBandH hBand, int nSamples,
          iSampleBlock += nSampleRate )
     {
         double dfValue = 0.0;
-        int  iXBlock, iYBlock, nYCheck, iOffset;
+        int  iXBlock, iYBlock, iOffset;
         GDALRasterBlock *poBlock;
 
         iYBlock = iSampleBlock / nBlocksPerRow;
@@ -883,11 +886,6 @@ int GDALGetRandomRasterSample( GDALRasterBandH hBand, int nSamples,
         if( poBlock == NULL )
             continue;
         
-        if( (iYBlock+1) * nBlockYSize > poBand->GetYSize() )
-            nYCheck = poBand->GetYSize() - iYBlock * nBlockYSize;
-        else
-            nYCheck = nBlockYSize;
-
         /* this isn't the fastest way to do this, but is easier for now */
         for( iOffset = nBlockXSize*nBlockYSize-1; 
              iOffset >= 0 && nActualSamples < nSamples; 
