@@ -38,10 +38,15 @@ We should fix the driver at some point to set valid default bounds for
 each projection, but for the time being, the MapInfo driver sets the following
 default bounds when a new layer is created:
 <UL>
-  <LI>For a file in LAT/LON coordinates: BOUNDS (-180, -90) (180, 90)
+  <LI>For a file in LAT/LON (geographic) coordinates: BOUNDS (-180, -90) (180, 90)
   <LI>For any other projection: BOUNDS (-30000000, -15000000) (30000000, 15000000)
 </UL>
 <p>
+
+If no coordinate system is provided when creating a layer, the projection
+case is used, not geographic which can result in very low precision if
+the coordinates really are geographic.  You can add "-a_srs WGS84" to the
+<b>ogr2ogr</b> commandline during a translation to force geographic mode.<p>
 
 MapInfo feature attributes suffer a number of limitations:<P>
 
