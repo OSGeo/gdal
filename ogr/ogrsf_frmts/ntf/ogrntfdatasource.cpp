@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2002/07/08 16:18:52  warmerda
+ * fix initialization of szCandidateName
+ *
  * Revision 1.13  2002/07/08 14:49:44  warmerda
  * added TILE_REF uniquification support
  *
@@ -564,6 +567,7 @@ void OGRNTFDataSource::EnsureTileNameUnique( NTFFileReader *poNewReader )
     int       bIsUnique;
     char      szCandidateName[11];
 
+    szCandidateName[10] = '\0';
     do
     {
         bIsUnique = TRUE;
