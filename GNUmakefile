@@ -72,6 +72,7 @@ clean:	lclean
 	(cd ogr; $(MAKE) clean)
 	(cd core; $(MAKE) clean)
 	(cd frmts; $(MAKE) clean)
+	(cd alg; $(MAKE) clean)
 	(cd apps; $(MAKE) clean)
 	(cd pymod; $(MAKE) clean)
 
