@@ -1,3 +1,39 @@
+GDAL 1.2.3 - Overview of Changes
+--------------------------------
+
+GeoTIFF Driver:
+    - Fixed many missing compression codecs when built with the internal 
+      libtiff.
+    - Modified driver metadata to only list available compression types.
+
+DODS Driver:
+    - Added support for OPeNDAP version after 3.4.x (use of opendap-config).
+
+GRASS Driver:
+    - Fixed support for building with grass57.
+
+MrSID Driver:
+    - Fixed support for MrSID Encoding SDK. 
+
+NITF Driver:
+    - Fixed serious bug with non-square output files.
+
+
+OGR 1.2.3 - Overview of Changes
+-------------------------------
+
+OGRSpatialReference:
+    - Corrected memory leaks - OSRCleanup() cleans up temporary tables.
+    - Fixed build problem with ogrct.cpp on Solaris. 
+
+TIGER Driver:
+    - Improved generality of support for GDT files.
+
+OGRGeometry:
+    - Added getArea() method for rings, polygons and multipolygons. 
+
+ =============================================================================
+
 GDAL 1.2.2 - Overview of Changes
 --------------------------------
 
