@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2004/08/16 21:29:48  warmerda
+ * added output support
+ *
  * Revision 1.3  2004/07/31 04:50:22  warmerda
  * started write support
  *
@@ -62,8 +65,12 @@ class OGRCSVLayer : public OGRLayer
 
     OGRFeature *        GetNextUnfilteredFeature();
 
+    int                 bInWriteMode;
+    int                 bUseCRLF;
+    int                 bNeedRewind;
+
   public:
-                        OGRCSVLayer( const char *pszName, FILE *fp );
+                        OGRCSVLayer( const char *pszName, FILE *fp, int bNew );
                         ~OGRCSVLayer();
 
     void                ResetReading();
@@ -75,6 +82,13 @@ class OGRCSVLayer : public OGRLayer
     void                SetSpatialFilter( OGRGeometry * ) {}
 
     int                 TestCapability( const char * );
+
+    virtual OGRErr      CreateField( OGRFieldDefn *poField,
+                                     int bApproxOK = TRUE );
+
+    virtual OGRErr      CreateFeature( OGRFeature *poFeature );
+
+    void                SetCRLF(int);
 };
 
 /************************************************************************/
@@ -103,6 +117,13 @@ class OGRCSVDataSource : public OGRDataSource
     int                 GetLayerCount() { return nLayers; }
     OGRLayer            *GetLayer( int );
 
+    virtual OGRLayer   *CreateLayer( const char *pszName, 
+                                     OGRSpatialReference *poSpatialRef = NULL,
+                                     OGRwkbGeometryType eGType = wkbUnknown,
+                                     char ** papszOptions = NULL );
+
+    virtual OGRErr      DeleteLayer(int);
+
     int                 TestCapability( const char * );
 };
 
@@ -119,6 +140,8 @@ class OGRCSVDriver : public OGRSFDriver
     OGRDataSource *Open( const char *, int );
     OGRDataSource *CreateDataSource( const char *, char ** );
     int         TestCapability( const char * );
+
+    virtual OGRErr      DeleteDataSource( const char *pszName );
     
 };
 

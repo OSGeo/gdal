@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2004/08/16 21:29:48  warmerda
+ * added output support
+ *
  * Revision 1.3  2004/07/31 04:50:22  warmerda
  * started write support
  *
@@ -78,14 +81,6 @@ OGRDataSource *OGRCSVDriver::Open( const char * pszFilename, int bUpdate )
         poDS = NULL;
     }
 
-    if( poDS != NULL && bUpdate )
-    {
-        CPLError( CE_Failure, CPLE_OpenFailed,
-                  "CSV Driver doesn't support update." );
-        delete poDS;
-        poDS = NULL;
-    }
-    
     return poDS;
 }
 
@@ -145,12 +140,27 @@ int OGRCSVDriver::TestCapability( const char * pszCap )
 {
     if( EQUAL(pszCap,ODrCCreateDataSource) )
         return TRUE;
+    else if( EQUAL(pszCap,ODrCDeleteDataSource) )
+        return TRUE;
     else
         return FALSE;
 }
 
 /************************************************************************/
-/*                           RegisterOGRCSV()                          */
+/*                          DeleteDataSource()                          */
+/************************************************************************/
+
+OGRErr OGRCSVDriver::DeleteDataSource( const char *pszFilename )
+
+{
+    if( CPLUnlinkTree( pszFilename ) == 0 )
+        return OGRERR_NONE;
+    else
+        return OGRERR_FAILURE;
+}
+
+/************************************************************************/
+/*                           RegisterOGRCSV()                           */
 /************************************************************************/
 
 void RegisterOGRCSV()

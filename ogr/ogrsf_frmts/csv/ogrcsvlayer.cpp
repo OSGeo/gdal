@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2004/08/16 21:29:48  warmerda
+ * added output support
+ *
  * Revision 1.1  2004/07/20 19:18:23  warmerda
  * New
  *
@@ -48,10 +51,14 @@ CPL_CVSID("$Id$");
 /************************************************************************/
 
 OGRCSVLayer::OGRCSVLayer( const char *pszLayerNameIn, 
-                          FILE * fp )
+                          FILE * fp, int bNew )
 
 {
     fpCSV = fp;
+
+    bInWriteMode = bNew;
+    bUseCRLF = FALSE;
+    bNeedRewind = FALSE;
 
     nNextFID = 1;
 
@@ -59,15 +66,41 @@ OGRCSVLayer::OGRCSVLayer( const char *pszLayerNameIn,
     poFeatureDefn->SetGeomType( wkbNone );
 
 /* -------------------------------------------------------------------- */
+/*      If this is not a new file, read ahead to establish if it is     */
+/*      already in CRLF (DOS) mode, or just a normal unix CR mode.      */
+/* -------------------------------------------------------------------- */
+    if( !bNew )
+    {
+        int nBytesRead = 0;
+        char chNewByte;
+
+        while( nBytesRead < 10000 && VSIFRead( &chNewByte, 1, 1, fpCSV ) == 1 )
+        {
+            if( chNewByte == 13 )
+            {
+                bUseCRLF = TRUE;
+                break;
+            }
+        }
+        VSIRewind( fpCSV );
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Check if the first record seems to be field definitions or      */
 /*      not.  We assume it is field definitions if none of the          */
 /*      values are strictly numeric.                                    */
 /* -------------------------------------------------------------------- */
-    char **papszTokens = CSVReadParseLine( fpCSV );
-    int nFieldCount = CSLCount(papszTokens);
-    int iField;
+    char **papszTokens = NULL;
+    int nFieldCount=0, iField;
 
-    bHasFieldNames = TRUE;
+    if( !bInWriteMode )
+    {
+        papszTokens = CSVReadParseLine( fpCSV );
+        nFieldCount = CSLCount( papszTokens );
+        bHasFieldNames = TRUE;
+    }
+    else
+        bHasFieldNames = FALSE;
 
     for( iField = 0; iField < nFieldCount && bHasFieldNames; iField++ )
     {
@@ -124,7 +157,7 @@ OGRCSVLayer::OGRCSVLayer( const char *pszLayerNameIn,
 }
 
 /************************************************************************/
-/*                           ~OGRCSVLayer()                           */
+/*                            ~OGRCSVLayer()                            */
 /************************************************************************/
 
 OGRCSVLayer::~OGRCSVLayer()
@@ -146,6 +179,8 @@ void OGRCSVLayer::ResetReading()
 
     if( bHasFieldNames )
         CSLDestroy( CSVReadParseLine( fpCSV ) );
+
+    bNeedRewind = FALSE;
 
     nNextFID = 1;
 }
@@ -203,6 +238,9 @@ OGRFeature *OGRCSVLayer::GetNextFeature()
 
 {
     OGRFeature  *poFeature = NULL;
+
+    if( bNeedRewind )
+        ResetReading();
     
 /* -------------------------------------------------------------------- */
 /*      Read features till we find one that satisfies our current       */
@@ -233,3 +271,148 @@ int OGRCSVLayer::TestCapability( const char * pszCap )
     return FALSE;
 }
 
+/************************************************************************/
+/*                            CreateField()                             */
+/************************************************************************/
+
+OGRErr OGRCSVLayer::CreateField( OGRFieldDefn *poNewField, int bApproxOK )
+
+{
+/* -------------------------------------------------------------------- */
+/*      If we have already written our field names, then we are not     */
+/*      allowed to add new fields.                                      */
+/* -------------------------------------------------------------------- */
+    if( bHasFieldNames )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Unable to create new fields after first feature written.");
+        return OGRERR_FAILURE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Does this duplicate an existing field?                          */
+/* -------------------------------------------------------------------- */
+    if( poFeatureDefn->GetFieldIndex( poNewField->GetNameRef() ) != -1 )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Attempt to create field %s, but a field with this name already exists.",
+                  poNewField->GetNameRef() );
+
+        return OGRERR_FAILURE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Is this a legal field type for CSV?  For now we only allow      */
+/*      simple integer, real and string fields.                         */
+/* -------------------------------------------------------------------- */
+    switch( poNewField->GetType() )
+    {
+      case OFTInteger:
+      case OFTReal:
+      case OFTString:
+        // these types are OK.
+        break;
+
+      default:
+        if( bApproxOK )
+        {
+            CPLError( CE_Warning, CPLE_AppDefined, 
+                      "Attempt to create field of type %s, but this is not supported\n"
+                      "for .csv files.  Just treating as a plain string.",
+                      poNewField->GetFieldTypeName( poNewField->GetType() ) );
+        }
+        else
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                      "Attempt to create field of type %s, but this is not supported\n"
+                      "for .csv files.",
+                      poNewField->GetFieldTypeName( poNewField->GetType() ) );
+            return OGRERR_FAILURE;
+        }
+    }
+    
+/* -------------------------------------------------------------------- */
+/*      Seems ok, add to field list.                                    */
+/* -------------------------------------------------------------------- */
+    poFeatureDefn->AddFieldDefn( poNewField );
+
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                           CreateFeature()                            */
+/************************************************************************/
+
+OGRErr OGRCSVLayer::CreateFeature( OGRFeature *poNewFeature )
+
+{
+    int iField;
+
+    bNeedRewind = TRUE;
+
+/* -------------------------------------------------------------------- */
+/*      Write field names if we haven't written them yet.               */
+/* -------------------------------------------------------------------- */
+    if( !bHasFieldNames )
+    {
+        for( iField = 0; iField < poFeatureDefn->GetFieldCount(); iField++ )
+        {
+            char *pszEscaped;
+
+            if( iField > 0 )
+                fprintf( fpCSV, "%s", "," );
+
+            pszEscaped = 
+                CPLEscapeString( poFeatureDefn->GetFieldDefn(iField)->GetNameRef(), 
+                                 -1, CPLES_CSV );
+
+            VSIFPrintf( fpCSV, "%s", pszEscaped );
+            CPLFree( pszEscaped );
+        }
+        if( bUseCRLF )
+            VSIFPutc( 13, fpCSV );
+        VSIFPutc( '\n', fpCSV );
+
+        bHasFieldNames = TRUE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Make sure we are at the end of the file.                        */
+/* -------------------------------------------------------------------- */
+    VSIFSeek( fpCSV, 0, SEEK_END );
+
+/* -------------------------------------------------------------------- */
+/*      Write out all the field values.                                 */
+/* -------------------------------------------------------------------- */
+    
+    for( iField = 0; iField < poFeatureDefn->GetFieldCount(); iField++ )
+    {
+        char *pszEscaped;
+        
+        if( iField > 0 )
+            fprintf( fpCSV, "%s", "," );
+        
+        pszEscaped = 
+            CPLEscapeString( poNewFeature->GetFieldAsString(iField),
+                             -1, CPLES_CSV );
+        
+        VSIFWrite( pszEscaped, 1, strlen(pszEscaped), fpCSV );
+        CPLFree( pszEscaped );
+    }
+    
+    if( bUseCRLF )
+        VSIFPutc( 13, fpCSV );
+    VSIFPutc( '\n', fpCSV );
+
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                              SetCRLF()                               */
+/************************************************************************/
+
+void OGRCSVLayer::SetCRLF( int bNewValue )
+
+{
+    bUseCRLF = bNewValue;
+}
