@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2004/09/09 19:20:18  dron
+ * Use VSIFClose instead of VSIFCloseL in MrSIDDataset::Open().
+ *
  * Revision 1.16  2004/09/09 18:13:27  dron
  * Fixed bug when getting NoData value in MrSIDRasterBand().
  *
@@ -1120,7 +1123,7 @@ GDALDataset *MrSIDDataset::Open( GDALOpenInfo * poOpenInfo )
     if( !EQUALN((const char *) poOpenInfo->pabyHeader, "msid", 4) )
         return NULL;
 
-    VSIFCloseL( poOpenInfo->fp );
+    VSIFClose( poOpenInfo->fp );
     poOpenInfo->fp = NULL;
 
 /* -------------------------------------------------------------------- */
@@ -1854,7 +1857,7 @@ GDALDataset *MrSIDDataset::Open( GDALOpenInfo * poOpenInfo )
     else if ( !EQUALN((const char *) poOpenInfo->pabyHeader, "msid", 4) )
         return NULL;
 
-    VSIFCloseL( poOpenInfo->fp );
+    VSIFClose( poOpenInfo->fp );
     poOpenInfo->fp = NULL;
 
 /* -------------------------------------------------------------------- */
