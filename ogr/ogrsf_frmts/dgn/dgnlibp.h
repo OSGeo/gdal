@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2003/06/27 14:50:53  warmerda
+ * avoid warnings
+ *
  * Revision 1.17  2003/05/21 03:42:01  warmerda
  * Expanded tabs
  *
@@ -145,11 +148,11 @@ typedef struct {
                         + (p)[3]*256 \
                         + (p)[1]*65536*256 \
                         + (p)[0]*65536)
-#define DGN_WRITE_INT32( n, p ) { GInt32 nMacroWork = (n);                    \
-                   ((unsigned char *)p)[0] = (nMacroWork & 0x00ff0000) >> 16; \
-                   ((unsigned char *)p)[1] = (nMacroWork & 0xff000000) >> 24; \
-                   ((unsigned char *)p)[2] = (nMacroWork & 0x000000ff) >> 0;  \
-                   ((unsigned char *)p)[3] = (nMacroWork & 0x0000ff00) >> 8; }
+#define DGN_WRITE_INT32( n, p ) { GInt32 nMacroWork = (n);                   \
+ ((unsigned char *)p)[0] = (unsigned char)((nMacroWork & 0x00ff0000) >> 16); \
+ ((unsigned char *)p)[1] = (unsigned char)((nMacroWork & 0xff000000) >> 24); \
+ ((unsigned char *)p)[2] = (unsigned char)((nMacroWork & 0x000000ff) >> 0);  \
+ ((unsigned char *)p)[3] = (unsigned char)((nMacroWork & 0x0000ff00) >> 8); }
 
 int DGNParseCore( DGNInfo *, DGNElemCore * );
 void DGNTransformPoint( DGNInfo *, DGNPoint * );
