@@ -111,7 +111,7 @@ GDALmake.opt:	GDALmake.opt.in config.status
 
 docs:
 	(cd html; rm -f *.*)
-	(cd html; cvs update gdal_utilities.html \
+	(cd html; cvs update gdal_utilities.html gdalicon.png \
 		             formats_list.html frmt_various.html)
 	doxygen
 	cp frmts/*/frmt_*.html html
