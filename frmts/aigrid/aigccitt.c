@@ -33,6 +33,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2002/10/31 03:24:49  warmerda
+ * fixed assert
+ *
  * Revision 1.1  2002/10/31 03:07:58  warmerda
  * New
  *
@@ -1870,7 +1873,7 @@ CPLErr DecompressCCITTRLETile( unsigned char *pabySrcData, int nSrcBytes,
     DecoderState(sp)->runs = NULL;
     DecoderState(sp)->fill = _TIFFFax3fillruns;
 
-    assert( sizeof(runs_buf) <= (nBlockXSize * 2 + 3) );
+    assert( sizeof(runs_buf) >= (nBlockXSize * 2 + 3) );
 
 /* -------------------------------------------------------------------- */
 /*                                                                      */
