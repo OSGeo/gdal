@@ -39,12 +39,15 @@ OBJ	= \
 	tif_overview.o \
 	tif_ovrcache.o 
 
-ALL_C_FLAGS	=	$(CFLAGS)
+ALL_C_FLAGS	=	$(CFLAGS) -I../../zlib
 
 ifneq ($(JPEG_SETTING),no)
 ALL_C_FLAGS 	:=	$(ALL_C_FLAGS) -DJPEG_SUPPORT
 endif
 
+ifeq ($(JPEG_SETTING),internal)
+ALL_C_FLAGS 	:=	$(ALL_C_FLAGS) -I../../jpeg
+endif
 
 default:	libtiff.a
 
