@@ -100,10 +100,10 @@ web-update:	docs
 install:	lib install-actions
 
 install-actions:
-	$(INSTALL) -d $(INST_BIN)
-	$(INSTALL) -d $(INST_DATA)
-	$(INSTALL) -d $(INST_LIB)
-	$(INSTALL) -d $(INST_INCLUDE)
+	$(INSTALL_DIR) $(INST_BIN)
+	$(INSTALL_DIR) $(INST_DATA)
+	$(INSTALL_DIR) $(INST_LIB)
+	$(INSTALL_DIR) $(INST_INCLUDE)
 	(cd port; $(MAKE) install)
 	(cd core; $(MAKE) install)
 	(cd frmts; $(MAKE) install)
@@ -114,4 +114,4 @@ ifneq ($(PYTHON),no)
 endif
 	$(INSTALL) $(GDAL_LIB) $(INST_LIB)
 	$(INSTALL) $(GDAL_SLIB) $(INST_LIB)
-	$(INSTALL) data/*.csv $(INST_DATA)
+	for f in data/*.csv ; do $(INSTALL) $$f $(INST_DATA) ; done

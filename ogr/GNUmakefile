@@ -115,13 +115,14 @@ reg-test2:
 
 ifeq ($(OGR_ENABLED),yes)
 install-full:	ogrinfo ogr2ogr
-	$(INSTALL) ogrinfo ogr2ogr $(INST_BIN)
+	$(INSTALL) ogr2ogr $(INST_BIN)
+	$(INSTALL) ogrinfo $(INST_BIN)
 else
 install-full:
 endif
 
 install:	$(OGR_LIB) install-full
-	$(INSTALL) $(INST_H_FILES) $(INST_INCLUDE)
+	for f in $(INST_H_FILES) ; do $(INSTALL) $$f $(INST_INCLUDE) ; done
 	$(INSTALL) $(OGR_LIB) $(INST_LIB)
 
 

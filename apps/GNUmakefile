@@ -69,6 +69,6 @@ gdal-config-inst:	gdal-config.in ../GDALmake.opt ./GNUmakefile ../VERSION
 
 
 install: default
-	$(INSTALL) $(BIN_LIST) $(INST_BIN)
+	for f in $(BIN_LIST) ; do $(INSTALL) $$f $(INST_BIN) ; done
 	$(INSTALL) gdal-config-inst $(INST_BIN)/gdal-config
 

@@ -1,6 +1,7 @@
 CC	=	@CC@
 CXX	=	@CXX@
-INSTALL = 	install
+INSTALL = 	$(GDAL_ROOT)/install-sh -c
+INSTALL_DIR = 	$(GDAL_ROOT)/install-sh -d
 
 CXX_OPTFLAGS =	@CXXFLAGS@
 C_OPTFLAGS =	@CFLAGS@

@@ -26,4 +26,4 @@ gdaldrivermanager.o:	gdaldrivermanager.cpp ../GDALmake.opt
 	$(CXX) -c $(GDAL_INCLUDE) $(CXXFLAGS) $*.cpp -o $*.o
 
 install:
-	$(INSTALL) *.h $(INST_INCLUDE)
+	for f in *.h ; do $(INSTALL) $$f $(INST_INCLUDE) ; done

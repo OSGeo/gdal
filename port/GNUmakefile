@@ -2,6 +2,8 @@
 # CPL (Common Portability Library) makefile
 #
 
+GDAL_ROOT = ..
+
 ifneq ($(wildcard ../GDALmake.op?),)
 include ../GDALmake.opt
 else
@@ -29,5 +31,5 @@ $(LIB): $(OBJ)
 	$(AR) rc $(LIB) $(OBJ)
 
 install:	$(LIB)
-	$(INSTALL) *.h $(INST_INCLUDE)
+	for f in *.h ; do $(INSTALL) $$f $(INST_INCLUDE) ; done
 	$(INSTALL) cpl.a $(INST_LIB)

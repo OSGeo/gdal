@@ -30,5 +30,5 @@ $(GDALMODULE):	$(OBJ) $(GDAL_LIB)
 
 
 install:
-	$(INSTALL) -d $(INST_PYMOD)
-	$(INSTALL) *.py $(GDALMODULE) $(INST_PYMOD)
+	$(INSTALL_DIR) $(INST_PYMOD)
+	for f in *.py $(GDALMODULE) ; do $(INSTALL) $$f $(INST_PYMOD) ; done
