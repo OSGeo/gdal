@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2003/06/05 15:41:08  dron
+ * Fixed problem with projection name determining.
+ *
  * Revision 1.14  2003/04/30 09:47:29  dron
  * Few memory leaks fixed.
  *
@@ -350,7 +353,7 @@ void ENVIDataset::FlushCache()
 /* -------------------------------------------------------------------- */
     if ( pszProjection && !EQUAL(pszProjection, "") )
     {
-	const char	*pszProjName, *pszHemisphere;
+	const char	*pszHemisphere;
 	double		dfPixelY;
 	int		bNorth;
 	int		iUTMZone;
@@ -359,10 +362,9 @@ void ENVIDataset::FlushCache()
 	char	*pszProj = pszProjection;
 
 	oSRS.importFromWkt( &pszProj );
-	pszProjName = oSRS.GetAttrValue("PROJCS");
-	if ( strstr( pszProjName, "UTM" ) )
+        iUTMZone = oSRS.GetUTMZone( &bNorth );
+	if ( iUTMZone )
 	{
-	    iUTMZone = oSRS.GetUTMZone( &bNorth );
 	    if ( bNorth )
 	    {
 		pszHemisphere = "North";
