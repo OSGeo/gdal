@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.53  2001/09/26 17:54:17  warmerda
+ * added use of TIFFRewriteDirectory() where available
+ *
  * Revision 1.52  2001/09/25 19:24:19  warmerda
  * Added support for reading MapInfo .tab files.  Code supplied by Petri
  * J. Riipinen <petri.riipinen@nic.fi>.
@@ -1225,7 +1228,14 @@ GTiffDataset::~GTiffDataset()
         delete poColorTable;
 
     if( bNewDataset )
+    {
         WriteGeoTIFFInfo();
+#if defined(TIFFLIB_VERSION)
+#if  TIFFLIB_VERSION >= 20010926
+        TIFFRewriteDirectory( hTIFF );
+#endif
+#endif
+    }
 
     if( bBase )
     {
