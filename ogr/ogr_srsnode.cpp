@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2002/01/18 15:30:04  warmerda
+ * fixed serious bug in DeleteChild()
+ *
  * Revision 1.16  2001/12/01 17:01:50  warmerda
  * don't omit empty child nodes when exporting pretty wkt
  *
@@ -301,7 +304,10 @@ void OGR_SRSNode::DestroyChild( int iChild )
 
     delete papoChildNodes[iChild];
     while( iChild < nChildren-1 )
+    {
         papoChildNodes[iChild] = papoChildNodes[iChild+1];
+        iChild++;
+    }
 
     nChildren--;
 }
