@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.4  1998/12/15 19:01:40  warmerda
+ * *** empty log message ***
+ *
  * Revision 1.3  1998/12/05 23:04:21  warmerda
  * Use EQUALN() instead of strincmp() which doesn't exist on Linux.
  *
@@ -742,3 +745,4 @@ char **CSLSetNameValue(char **papszList,
     return CSLAddString(papszList, 
                            CPLSPrintf("%s=%s", pszName, pszValue));
 }
+

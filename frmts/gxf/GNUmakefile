@@ -3,7 +3,7 @@ GDAL_ROOT	=	../..
 
 include $(GDAL_ROOT)/GDALmake.opt
 
-OBJ	=	gxfopen.o
+OBJ	=	gxfopen.o gxfdataset.o
 
 ALL_C_FLAGS	=	$(GDAL_INCLUDE) $(CFLAGS)
 
@@ -23,3 +23,5 @@ clean:
 		$*.c -o $*.o
 
 
+gxftest:	gxftest.o gxfopen.o
+	$(CC) gxftest.o gxfopen.o $(GDAL_ROOT)/port/*.o $(LIBS) -o gxftest
