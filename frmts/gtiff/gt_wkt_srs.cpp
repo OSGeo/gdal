@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.23  2002/02/07 20:29:23  warmerda
+ * fixed bug if no DATUM node available
+ *
  * Revision 1.22  2001/11/02 22:28:22  warmerda
  * fixed free of static spheroid name
  *
@@ -1274,7 +1277,8 @@ int GTIFSetFromOGISDefn( GTIF * psGTIF, const char *pszOGCWKT )
             GTIFKeySet( psGTIF, GeogGeodeticDatumGeoKey, TYPE_SHORT,
                         1, nDatum );
         }
-        else if( !EQUAL(poSRS->GetAttrValue("DATUM"),"unknown") )
+        else if( poSRS->GetAttrValue("DATUM") != NULL
+                 && !EQUAL(poSRS->GetAttrValue("DATUM"),"unknown") )
         {
             CPLError( CE_Warning, CPLE_AppDefined,
                       "Couldn't translate `%s' to a GeoTIFF datum.\n",
