@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.16  2003/09/11 20:09:42  warmerda
+ * ensure pszExtension is initialized
+ *
  * Revision 1.15  2003/08/07 16:16:18  warmerda
  * added proper setting of band color interpretation
  *
@@ -959,7 +962,7 @@ const GDAL_GCP *JP2KAKDataset::GetGCPs()
 GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
-    const char  *pszExtension;
+    const char  *pszExtension = NULL;
     int         bIsJPIP = FALSE;
 
     if( poOpenInfo->fp == NULL )
