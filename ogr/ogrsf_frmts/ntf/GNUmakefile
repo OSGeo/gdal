@@ -10,7 +10,7 @@ OBJ	=	ntffilereader.o ntfrecord.o ogrntfdatasource.o \
 
 ALL_C_FLAGS	=	-I.. -I../.. -I$(GDAL_ROOT)/port $(CFLAGS)
 
-LIBS	:=	../../ogr.a $(CPL_LIB) $(LIBS) 
+LIBS	:=	$(GDAL_LIB) $(LIBS) 
 
 
 default:	$(O_OBJ)
@@ -23,10 +23,6 @@ clean:
 
 %.o:	%.c
 	$(CC) -c $(ALL_C_FLAGS) $*.c -o $*.o
-
-ntftest:	ntftest.o $(OBJ)
-	$(CXX) $(LNK_FLAGS) ntftest.o $(LIBS) -o ntftest
-
 
 ntfdump:	ntfdump.o $(OBJ)
 	$(CXX) $(LNK_FLAGS) ntfdump.o $(LIBS) -o ntfdump

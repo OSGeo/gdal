@@ -36,10 +36,10 @@ clean:
 	$(CC) -c $(ALL_C_FLAGS) $*.c -o $*.o
 
 dgndump:	dgndump.c $(OBJ)
-	$(CXX) $(ALL_C_FLAGS) dgndump.c $(OBJ) $(CPL_LIB) -ldl -lm -o dgndump 
+	$(CXX) $(ALL_C_FLAGS) dgndump.c $(OBJ) $(GDAL_LIB) -ldl -lm -o dgndump 
 
 dgnwritetest:	dgnwritetest.c $(OBJ)
-	$(CXX) $(ALL_C_FLAGS) dgnwritetest.c $(OBJ) $(CPL_LIB) -ldl -lm \
+	$(CXX) $(ALL_C_FLAGS) dgnwritetest.c $(OBJ) $(GDAL_LIB) -ldl -lm \
 	-o dgnwritetest
 
 docs:

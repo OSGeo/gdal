@@ -12,7 +12,7 @@ OBJ	=	ogrs57driver.o ogrs57datasource.o ogrs57layer.o \
 
 ALL_C_FLAGS	=	-I.. -I../.. -I$(GDAL_ROOT)/port -I$(ISODIR) $(CFLAGS)
 
-LIBS	:=	../../ogr.a $(ISOLIB) $(CPL_LIB) $(LIBS) 
+LIBS	:=	$(GDAL_LIB) $(ISOLIB) $(LIBS) 
 
 
 default:	$(O_OBJ)
