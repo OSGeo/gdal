@@ -1,4 +1,9 @@
 
+# Location to install .exe, .dll and python stuff
+
+BINDIR = D:\bin
+PY_INST_DIR = D:\bin\pymod
+
 # Location of Visual C++ directory
 VCDIR   = 	D:\Software\VStudio\VC98
 PYDIR   =	D:\Software\Python20
@@ -8,23 +13,20 @@ PYDIR   =	D:\Software\Python20
 INCLUDE_OGR_FRMTS = YES
 
 # Enable the following if VCDIR set properly.
-SETARGV =	$(VCDIR)\lib\setargv.obj
+#SETARGV =	$(VCDIR)\lib\setargv.obj
 
-ECWDIR  = 	D:\Software\ECW_SDK
-ECWLIB  =       $(ECWDIR)\lib\NCSEcw.lib $(ECWDIR)\lib\NCSEcwC.lib \
-		$(ECWDIR)\lib\NCSUtil.lib
+# Uncomment the following and update to enable ECW support.
+#ECWDIR  = 	D:\Software\ECW_SDK
+#ECWLIB  =       $(ECWDIR)\lib\NCSEcw.lib $(ECWDIR)\lib\NCSEcwC.lib \
+#		$(ECWDIR)\lib\NCSUtil.lib
 
-OGDIDIR =	D:\warmerda\iii\devdir
-OGDIVER =	31
-OGDILIB =	$(OGDIDIR)\lib\$(TARGET)\ogdi$(OGDIVER).lib \
-		$(OGDIDIR)\lib\$(TARGET)\zlib_ogdi$(OGDIVER).lib
+# Uncomment the following and update to enable OGDI support.
+#OGDIDIR =	D:\warmerda\iii\devdir
+#OGDIVER =	31
+#OGDILIB =	$(OGDIDIR)\lib\$(TARGET)\ogdi$(OGDIVER).lib \
+#		$(OGDIDIR)\lib\$(TARGET)\zlib_ogdi$(OGDIVER).lib
 
-# Location to install .exe, .dll and python stuff
-
-BINDIR = D:\bin
-PY_INST_DIR = D:\bin\pymod
-#BINDIR = D:\warmerda\openev_fw\bin
-#PY_INST_DIR = D:\warmerda\openev_fw\pymod
+########### END OF STUFF THAT NORMALLY NEEDS TO BE UPDATED ##################
 
 # Location of MS Data Access SDK 
 #MSDASDK =	D:\Software\MDAC_2.6
