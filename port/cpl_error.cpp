@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.27  2003/05/27 20:44:16  warmerda
+ * use VSI time services
+ *
  * Revision 1.26  2003/05/08 21:51:14  warmerda
  * added CPL{G,S}etConfigOption() usage
  *
@@ -114,9 +117,6 @@
 #include "cpl_conv.h"
 
 #define TIMESTAMP_DEBUG
-#ifdef TIMESTAMP_DEBUG
-#include <time.h>
-#endif
 
 CPL_CVSID("$Id$");
 
@@ -285,10 +285,7 @@ void CPLDebug( const char * pszCategory, const char * pszFormat, ... )
 #ifdef TIMESTAMP_DEBUG
     if( CPLGetConfigOption( "CPL_TIMESTAMP", NULL ) != NULL )
     {
-        time_t ltime;
-    
-        time( &ltime );
-        strcpy( pszMessage, ctime( &ltime ) );
+        strcpy( pszMessage, VSICTime( VSITime(NULL) ) );
         
         // On windows anyway, ctime puts a \n at the end, but I'm not 
         // convinced this is standard behaviour, so we'll get rid of it
