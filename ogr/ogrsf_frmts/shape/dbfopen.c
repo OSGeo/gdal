@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: dbfopen.c,v 1.51 2003/07/08 13:50:15 warmerda Exp $
+ * $Id: dbfopen.c,v 1.52 2003/07/08 15:20:03 warmerda Exp $
  *
  * Project:  Shapelib
  * Purpose:  Implementation of .dbf access API documented in dbf_api.html.
@@ -34,6 +34,9 @@
  ******************************************************************************
  *
  * $Log: dbfopen.c,v $
+ * Revision 1.52  2003/07/08 15:20:03  warmerda
+ * avoid warnings about downcasting to unsigned char
+ *
  * Revision 1.51  2003/07/08 13:50:15  warmerda
  * DBFIsAttributeNULL check for pszValue==NULL - bug 360
  *
@@ -192,7 +195,7 @@
  */
 
 static char rcsid[] = 
-  "$Id: dbfopen.c,v 1.51 2003/07/08 13:50:15 warmerda Exp $";
+  "$Id: dbfopen.c,v 1.52 2003/07/08 15:20:03 warmerda Exp $";
 
 #include "shapefil.h"
 
@@ -260,11 +263,11 @@ static void DBFWriteHeader(DBFHandle psDBF)
 
     /* record count preset at zero */
 
-    abyHeader[8] = psDBF->nHeaderLength % 256;
-    abyHeader[9] = psDBF->nHeaderLength / 256;
+    abyHeader[8] = (unsigned char) (psDBF->nHeaderLength % 256);
+    abyHeader[9] = (unsigned char) (psDBF->nHeaderLength / 256);
     
-    abyHeader[10] = psDBF->nRecordLength % 256;
-    abyHeader[11] = psDBF->nRecordLength / 256;
+    abyHeader[10] = (unsigned char) (psDBF->nRecordLength % 256);
+    abyHeader[11] = (unsigned char) (psDBF->nRecordLength / 256);
 
 /* -------------------------------------------------------------------- */
 /*      Write the initial 32 byte file header, and all the field        */
@@ -327,10 +330,10 @@ DBFUpdateHeader( DBFHandle psDBF )
     fseek( psDBF->fp, 0, 0 );
     fread( abyFileHeader, 32, 1, psDBF->fp );
     
-    abyFileHeader[4] = psDBF->nRecords % 256;
-    abyFileHeader[5] = (psDBF->nRecords/256) % 256;
-    abyFileHeader[6] = (psDBF->nRecords/(256*256)) % 256;
-    abyFileHeader[7] = (psDBF->nRecords/(256*256*256)) % 256;
+    abyFileHeader[4] = (unsigned char) (psDBF->nRecords % 256);
+    abyFileHeader[5] = (unsigned char) ((psDBF->nRecords/256) % 256);
+    abyFileHeader[6] = (unsigned char) ((psDBF->nRecords/(256*256)) % 256);
+    abyFileHeader[7] = (unsigned char) ((psDBF->nRecords/(256*256*256)) % 256);
     
     fseek( psDBF->fp, 0, 0 );
     fwrite( abyFileHeader, 32, 1, psDBF->fp );
@@ -685,13 +688,13 @@ DBFAddField(DBFHandle psDBF, const char * pszFieldName,
 
     if( eType == FTString )
     {
-        pszFInfo[16] = nWidth % 256;
-        pszFInfo[17] = nWidth / 256;
+        pszFInfo[16] = (unsigned char) (nWidth % 256);
+        pszFInfo[17] = (unsigned char) (nWidth / 256);
     }
     else
     {
-        pszFInfo[16] = nWidth;
-        pszFInfo[17] = nDecimals;
+        pszFInfo[16] = (unsigned char) nWidth;
+        pszFInfo[17] = (unsigned char) nDecimals;
     }
     
 /* -------------------------------------------------------------------- */
@@ -1489,7 +1492,7 @@ static void str_to_upper (char *string)
 
     while (++i < len)
         if (isalpha(string[i]) && islower(string[i]))
-            string[i] = toupper ((int)string[i]);
+            string[i] = (char) toupper ((int)string[i]);
 }
 
 /************************************************************************/
