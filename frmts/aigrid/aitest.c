@@ -26,7 +26,7 @@ static void DumpMagic( AIGInfo_t * psInfo, int bVerbose )
              && byMagic != 0x08 && byMagic != 0x10 && byMagic != 0xd7 
              && byMagic != 0xdf && byMagic != 0xe0 && byMagic != 0xfc
              && byMagic != 0xf8 && byMagic != 0xff && byMagic != 0x41
-             && byMagic != 0x40 && byMagic != 0x42 )
+             && byMagic != 0x40 && byMagic != 0x42 && byMagic != 0xf0 )
             bReport = TRUE;
 
         if( byMagic == 0 && psInfo->panBlockSize[i] > 8 
