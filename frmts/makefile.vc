@@ -5,7 +5,7 @@ GDAL_ROOT = ..
 EXTRAFLAGS =	-DFRMT_ceos -DFRMT_aigrid -DFRMT_elas -DFRMT_hfa -DFRMT_gtiff\
 		-DFRMT_sdts -DFRMT_raw -DFRMT_gxf -DFRMT_ceos2 -DFRMT_png \
 		-DFRMT_jpeg -DFRMT_dted -DFRMT_mem -DFRMT_jdem -DFRMT_gif \
-		-DFRMT_envisat -DFRMT_aaigrid
+		-DFRMT_envisat -DFRMT_aaigrid $(ECWDEF)
 
 !INCLUDE $(GDAL_ROOT)/nmake.opt
 
@@ -51,6 +51,8 @@ subdirs:
 	cd ..\envisat
 	$(MAKE) /f makefile.vc
 	cd ..\gif
+	$(MAKE) /f makefile.vc
+	cd ..\ecw
 	$(MAKE) /f makefile.vc
 	cd ..
 
@@ -99,6 +101,8 @@ clean:
 	cd ..\envisat
 	$(MAKE) /f makefile.vc clean
 	cd ..\gif
+	$(MAKE) /f makefile.vc clean
+	cd ..\ecw
 	$(MAKE) /f makefile.vc clean
 	cd ..
 

@@ -25,6 +25,9 @@
  * Main format registration function.
  * 
  * $Log$
+ * Revision 1.32  2001/04/02 17:11:45  warmerda
+ * added ecw support
+ *
  * Revision 1.31  2001/03/12 15:17:32  warmerda
  * added aaigrid
  *
@@ -232,6 +235,10 @@ void GDALAllRegister()
 
 #ifdef FRMT_fits
     GDALRegister_FITS();
+#endif
+
+#ifdef FRMT_ecw
+    GDALRegister_ECW();
 #endif
 
 #ifdef FRMT_raw
