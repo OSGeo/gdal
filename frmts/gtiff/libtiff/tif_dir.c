@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_dir.c,v 1.15 2001/03/02 04:59:52 warmerda Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_dir.c,v 1.16 2001/09/25 01:33:54 warmerda Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -167,16 +167,10 @@ _TIFFVSetField(TIFF* tif, ttag_t tag, va_list ap)
 		/*
 		 * Setup new compression routine state.
 		 */
-		if ( ! tif->tif_mode == O_RDONLY ) { 
-		  /* Handle removal of LZW compression */ 
-		  if ( v == COMPRESSION_LZW ) { 
-		    TIFFError(tif->tif_name, 
-			      "LZW compression no longer supported due to Unisys patent enforcement"); 
-		    v=COMPRESSION_NONE;
-		  }
-		}
 		if( (status = TIFFSetCompressionScheme(tif, v)) != 0 )
-		  td->td_compression = v;
+                    td->td_compression = v;
+                else
+                    status = 0;
 		break;
 	case TIFFTAG_PHOTOMETRIC:
 		td->td_photometric = (uint16) va_arg(ap, int);
