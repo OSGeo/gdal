@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.13  2004/04/02 15:17:49  warmerda
+ * Disable BSB creation.
+ *
  * Revision 1.12  2003/10/20 17:26:01  warmerda
  * Fixed memory leak when scanning for GCPs.
  *
@@ -77,6 +80,9 @@ CPL_CVSID("$Id$");
 CPL_C_START
 void	GDALRegister_BSB(void);
 CPL_C_END
+
+// Define for BSB support, disable now since it doesn't really work.
+#undef BSB_CREATE
 
 /************************************************************************/
 /* ==================================================================== */
@@ -444,6 +450,7 @@ const GDAL_GCP *BSBDataset::GetGCPs()
     return pasGCPList;
 }
 
+#ifdef BSB_CREATE
 /************************************************************************/
 /*                           BSBCreateCopy()                            */
 /************************************************************************/
@@ -677,6 +684,7 @@ BSBCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     else
         return (GDALDataset *) GDALOpen( pszFilename, GA_ReadOnly );
 }
+#endif
 
 /************************************************************************/
 /*                        GDALRegister_BSB()                            */
@@ -697,14 +705,16 @@ void GDALRegister_BSB()
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
                                    "frmt_various.html#BSB" );
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, "Byte" );
-
+#ifdef BSB_CREATE
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, 
 "<CreationOptionList>\n"
 "   <Option name='NA' type='string'/>\n"
 "</CreationOptionList>\n" );
-
+#endif
         poDriver->pfnOpen = BSBDataset::Open;
+#ifdef BSB_CREATE
         poDriver->pfnCreateCopy = BSBCreateCopy;
+#endif
 
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
