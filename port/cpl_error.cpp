@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.22  2002/08/01 20:02:54  warmerda
+ * added CPL_LOG_ERRORS support
+ *
  * Revision 1.21  2001/12/14 19:45:17  warmerda
  * Avoid use of errno in prototype.
  *
@@ -188,6 +191,9 @@ void    CPLErrorV(CPLErr eErrClass, int err_no, const char *fmt, va_list args )
      */
     gnCPLLastErrNo = err_no;
     geCPLLastErrType = eErrClass;
+
+    if( getenv("CPL_LOG_ERRORS") != NULL )
+        CPLDebug( "CPLError", "%s", gszCPLLastErrMsg );
 
     if( gpfnCPLErrorHandler )
         gpfnCPLErrorHandler(eErrClass, err_no, gszCPLLastErrMsg);
