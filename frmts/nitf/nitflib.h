@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2002/12/18 06:35:15  warmerda
+ * implement nodata support for mapped data
+ *
  * Revision 1.5  2002/12/17 21:23:15  warmerda
  * implement LUT reading and writing
  *
@@ -152,6 +155,9 @@ typedef struct {
     char       *pszComments;
     char       szIC[3];
     char       szCOMRAT[5];
+
+    int        bNoDataSet;
+    int        nNoDataValue;
 
     /* Internal information not for application use. */
     

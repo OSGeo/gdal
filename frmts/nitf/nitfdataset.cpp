@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2002/12/18 06:35:15  warmerda
+ * implement nodata support for mapped data
+ *
  * Revision 1.3  2002/12/17 21:23:15  warmerda
  * implement LUT reading and writing
  *
@@ -100,6 +103,7 @@ class NITFRasterBand : public GDALRasterBand
     virtual GDALColorInterp GetColorInterpretation();
     virtual GDALColorTable *GetColorTable();
     virtual CPLErr SetColorTable( GDALColorTable * ); 
+    virtual double GetNoDataValue( int *pbSuccess = NULL );
 };
 
 
@@ -230,8 +234,13 @@ CPLErr NITFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         return CE_Failure;
     else /* nBlockResult == BLKREAD_NULL */ 
     {
-        memset( pImage, 0, 
-                psImage->nWordSize*psImage->nBlockWidth*psImage->nBlockHeight);
+        if( psImage->bNoDataSet )
+            memset( pImage, psImage->nNoDataValue, 
+                    psImage->nWordSize*psImage->nBlockWidth*psImage->nBlockHeight);
+        else
+            memset( pImage, 0, 
+                    psImage->nWordSize*psImage->nBlockWidth*psImage->nBlockHeight);
+
         return CE_None;
     }
 }
@@ -264,6 +273,22 @@ CPLErr NITFRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
         return CE_None;
     else
         return CE_Failure;
+}
+
+/************************************************************************/
+/*                           GetNoDataValue()                           */
+/************************************************************************/
+
+double NITFRasterBand::GetNoDataValue( int *pbSuccess )
+
+{
+    if( pbSuccess != NULL )
+        *pbSuccess = psImage->bNoDataSet;
+
+    if( psImage->bNoDataSet )
+        return psImage->nNoDataValue;
+    else
+        return -1e10;
 }
 
 /************************************************************************/
