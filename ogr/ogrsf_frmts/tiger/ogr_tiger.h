@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2003/08/18 14:47:53  warmerda
+ * upgraded with *untested* TIGER 2003 support
+ *
  * Revision 1.13  2003/01/11 15:29:55  warmerda
  * expanded tabs
  *
@@ -102,18 +105,19 @@ class OGRTigerDataSource;
 */
 
 typedef enum {
-    TIGER_1990_Precensus,
-    TIGER_1990,
-    TIGER_1992,
-    TIGER_1994,
-    TIGER_1995,
-    TIGER_1997,
-    TIGER_1998,
-    TIGER_1999,
-    TIGER_2000_Redistricting,
-    TIGER_2000_Census,
-    TIGER_UA2000,
-    TIGER_2002,
+    TIGER_1990_Precensus = 0,
+    TIGER_1990 = 1,
+    TIGER_1992 = 2,
+    TIGER_1994 = 3,
+    TIGER_1995 = 4,
+    TIGER_1997 = 5,
+    TIGER_1998 = 6,
+    TIGER_1999 = 7,
+    TIGER_2000_Redistricting = 8,
+    TIGER_2000_Census = 9,
+    TIGER_UA2000 = 10,
+    TIGER_2002 = 11,
+    TIGER_2003 = 12,
     TIGER_Unknown
 } TigerVersion;
 
