@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.67  2003/05/30 15:38:59  warmerda
+ * updated to use SetStatePlaneWithUnits
+ *
  * Revision 1.66  2003/05/28 16:23:49  warmerda
  * added GDALTermProgress
  *
@@ -1326,7 +1329,10 @@ double  OSRGetNormProjParm( OGRSpatialReferenceH hSRS,
 
 int     OSRSetUTM( OGRSpatialReferenceH hSRS, int nZone, int bNorth );
 int     OSRGetUTMZone( OGRSpatialReferenceH hSRS, int *pbNorth );
-int     OSRSetStatePlane( OGRSpatialReferenceH hSRS, int nZone, int bNAD83 );
+int     OSRSetStatePlaneWithUnits( OGRSpatialReferenceH hSRS, 
+	                           int nZone, int bNAD83, 
+                                   const char *pszOverrideUnitsName, 
+                                   double dfOverrideUnits );
 
 %{
 /************************************************************************/
