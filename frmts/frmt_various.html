@@ -263,6 +263,25 @@ Details on the supporting code, and format can be found on the
 
 NOTE: Implemented as <tt>gdal/frmts/gxf/gxfdataset.cpp</tt>.<p>
 
+
+<h2><a name="ILWIS">ILWIS -- Raster Map</h2>
+
+This driver implements reading and writing of ILWIS raster maps and map lists. Select the raster files with the.mpr (for raster map) or .mpl (for maplist) extensions
+<p>
+Features:
+<ul>
+<li>Support for Byte, Int16, Int32 and Float64 pixel data types.</li>
+<li>Supports map lists with an associated set of ILWIS raster maps.</li>
+<li>Read and write geo-reference (.grf). Support for geo-referencing transform is limited to north-oriented GeoRefCorner only. If possible the affine transform is computed from the corner coordinates.</li>
+<li>Read and write coordinate files (.csy). Support is limited to: Projection type of Projection and Lat/Lon type that are defined in .csy file, the rest of pre-defined projection types are ignored.</li>
+</ul>
+
+Limitations:
+<ul>
+<li>Map lists with internal raster map storage (such as produced through Import General Raster) are not supported.</li>
+<li>ILWIS domain (.dom) and representation (.rpr) files are currently ignored.</li>
+</ul>
+
 <h2><a name="JDEM">JDEM -- Japanese DEM (.mem)</a></h2>
 
 GDAL includes read support for Japanese DEM files, normally having the
