@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.24  2002/12/16 17:07:13  warmerda
+ * added NormProjParm functions, and OSRGetPrimeMeridian
+ *
  * Revision 1.23  2002/12/14 22:59:14  warmerda
  * added Krovak in ESRI compatible way
  *
@@ -300,6 +303,8 @@ const char CPL_DLL * OSRGetAttrValue( OGRSpatialReferenceH hSRS,
 OGRErr CPL_DLL OSRSetLinearUnits( OGRSpatialReferenceH, const char *, double );
 double CPL_DLL OSRGetLinearUnits( OGRSpatialReferenceH, char ** );
 
+double CPL_DLL OSRGetPrimeMeridian( OGRSpatialReferenceH, char ** );
+
 int CPL_DLL OSRIsGeographic( OGRSpatialReferenceH );
 int CPL_DLL OSRIsLocal( OGRSpatialReferenceH );
 int CPL_DLL OSRIsProjected( OGRSpatialReferenceH );
@@ -340,6 +345,11 @@ double CPL_DLL OSRGetProjParm( OGRSpatialReferenceH hSRS,
                         const char * pszParmName, 
                         double dfDefault /* = 0.0 */,
                         OGRErr * /* = NULL */ );
+OGRErr CPL_DLL OSRSetNormProjParm( OGRSpatialReferenceH, const char *, double);
+double CPL_DLL OSRGetNormProjParm( OGRSpatialReferenceH hSRS,
+                                   const char * pszParmName, 
+                                   double dfDefault /* = 0.0 */,
+                                   OGRErr * /* = NULL */ );
 
 OGRErr CPL_DLL OSRSetUTM( OGRSpatialReferenceH hSRS, int nZone, int bNorth );
 int    CPL_DLL OSRGetUTMZone( OGRSpatialReferenceH hSRS, int *pbNorth );
