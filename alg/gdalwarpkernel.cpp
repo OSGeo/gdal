@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2004/03/28 21:21:23  warmerda
+ * fixed bug in setting values in Int32 working buffer
+ *
  * Revision 1.16  2003/10/31 11:21:33  dron
  * Bicubic resampler improved.
  *
@@ -741,7 +744,7 @@ static int GWKSetPixelValue( GDALWarpKernel *poWK, int iBand,
         break;
 
       case GDT_Int32:
-        if( dfReal < 2147483648.0 )
+        if( dfReal < -2147483648.0 )
             ((GInt32 *) pabyDst)[iDstOffset] = 0;
         else if( dfReal > 2147483647.0 )
             ((GInt32 *) pabyDst)[iDstOffset] = 2147483647;
