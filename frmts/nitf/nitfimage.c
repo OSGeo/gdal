@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2002/12/18 21:18:11  warmerda
+ * read RPF CoverageSection for more exact geotransform
+ *
  * Revision 1.9  2002/12/18 20:16:04  warmerda
  * support writing IGEOLO
  *
@@ -78,7 +81,7 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
     char      *pachHeader;
     NITFSegmentInfo *psSegInfo;
     char       szTemp[128];
-    int        nOffset, iBand;
+    int        nOffset, iBand, i;
 
 /* -------------------------------------------------------------------- */
 /*      Verify segment, and return existing image accessor if there     */
@@ -375,7 +378,6 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
 /* -------------------------------------------------------------------- */
     if( EQUAL(psImage->szIC,"C4") )
     {
-        int      i;
         GUInt32  nLocBase = psSegInfo->nSegmentStart;
 
         for( i = 0; i < psFile->nLocCount; i++ )
@@ -431,7 +433,6 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
     {
         GUInt32  nIMDATOFF;
         GUInt16  nBMRLNTH, nTMRLNTH, nTPXCDLNTH;
-        int      i;
         int nBlockCount = psImage->nBlocksPerRow * psImage->nBlocksPerColumn
             * psImage->nBands;
 
@@ -482,6 +483,36 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
                         psImage->nBlockOffset * i
                         + psSegInfo->nSegmentStart + nIMDATOFF;
             }
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      If we have an RPF CoverageSectionSubheader, read the more       */
+/*      precise bounds from it.                                         */
+/* -------------------------------------------------------------------- */
+    for( i = 0; i < psFile->nLocCount; i++ )
+    {
+        if( psFile->pasLocations[i].nLocId == LID_CoverageSectionSubheader )
+        {
+            double adfTarget[8];
+
+            VSIFSeek( psFile->fp, psFile->pasLocations[i].nLocOffset,
+                      SEEK_SET );
+            VSIFRead( adfTarget, 8, 8, psFile->fp );
+            for( i = 0; i < 8; i++ )
+                CPL_MSBPTR64( (adfTarget + i) );
+
+            psImage->dfULX = adfTarget[1];
+            psImage->dfULY = adfTarget[0];
+            psImage->dfLLX = adfTarget[3];
+            psImage->dfLLY = adfTarget[2];
+            psImage->dfURX = adfTarget[5];
+            psImage->dfURY = adfTarget[4];
+            psImage->dfLRX = adfTarget[7];
+            psImage->dfLRY = adfTarget[6];
+
+            CPLDebug( "NITF", "Got spatial info from CoverageSection" );
+            break;
         }
     }
 
