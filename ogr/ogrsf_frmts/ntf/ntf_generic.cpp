@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  1999/10/04 18:17:16  warmerda
+ * Fixed redeclaration of for loop variables.
+ *
  * Revision 1.4  1999/10/04 03:07:34  warmerda
  * added text_ht_ground and rename TX TEXT and FC FEAT_CODE
  *
@@ -316,14 +319,15 @@ static OGRFeature *TranslateGenericNode( NTFFileReader *poReader,
     poFeature->SetField( "NUM_LINKS", nLinkCount );
 
     // GEOM_ID_OF_LINK
-    for( int iLink = 0; iLink < nLinkCount; iLink++ )
+    int      iLink;
+    for( iLink = 0; iLink < nLinkCount; iLink++ )
         panLinks[iLink] = atoi(papoGroup[0]->GetField(20+iLink*12,
                                                       25+iLink*12));
 
     poFeature->SetField( "GEOM_ID_OF_LINK", nLinkCount, panLinks );
 
     // DIR
-    for( int iLink = 0; iLink < nLinkCount; iLink++ )
+    for( iLink = 0; iLink < nLinkCount; iLink++ )
         panLinks[iLink] = atoi(papoGroup[0]->GetField(19+iLink*12,
                                                       19+iLink*12));
 
@@ -367,14 +371,15 @@ static OGRFeature *TranslateGenericCollection( NTFFileReader *poReader,
     poFeature->SetField( "NUM_PARTS", nPartCount );
 
     // TYPE
-    for( int iPart = 0; iPart < nPartCount; iPart++ )
+    int      iPart;
+    for( iPart = 0; iPart < nPartCount; iPart++ )
         panParts[iPart] = atoi(papoGroup[0]->GetField(13+iPart*8,
                                                       14+iPart*8));
 
     poFeature->SetField( "TYPE", nPartCount, panParts );
 
     // ID
-    for( int iPart = 0; iPart < nPartCount; iPart++ )
+    for( iPart = 0; iPart < nPartCount; iPart++ )
         panParts[iPart] = atoi(papoGroup[0]->GetField(15+iPart*8,
                                                       20+iPart*8));
 
