@@ -2,7 +2,7 @@
  * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
- * Purpose:  The OGRPolgygon geometry class.
+ * Purpose:  The OGRPolygon geometry class.
  * Author:   Frank Warmerdam, warmerda@home.com
  *
  ******************************************************************************
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/05/17 14:38:11  warmerda
+ * Added new IPolygon style methods.
+ *
  * Revision 1.1  1999/03/30 21:21:05  warmerda
  * New
  *
@@ -152,10 +155,10 @@ int OGRPolygon::getNumInteriorRings()
 OGRLinearRing *OGRPolygon::getInteriorRing( int iRing )
 
 {
-    if( iRing < 0 || iRing > nRingCount-1 )
+    if( iRing < 0 || iRing >= nRingCount-1 )
         return NULL;
     else
-        return papoRings[iRing-1];
+        return papoRings[iRing+1];
 }
 
 /************************************************************************/
@@ -352,3 +355,38 @@ OGRErr	OGRPolygon::exportToWkb( OGRwkbByteOrder eByteOrder,
     return OGRERR_NONE;
 }
 
+/************************************************************************/
+/*                              get_Area()                              */
+/************************************************************************/
+
+double OGRPolygon::get_Area()
+
+{
+    // notdef ... correct later.
+    
+    return 0.0;
+}
+
+/************************************************************************/
+/*                              Centroid()                              */
+/************************************************************************/
+
+int OGRPolygon::Centroid( OGRPoint * )
+
+{
+    // notdef ... not implemented yet.
+    
+    return 0;
+}
+
+/************************************************************************/
+/*                           PointOnSurface()                           */
+/************************************************************************/
+
+int OGRPolygon::PointOnSurface( OGRPoint * )
+
+{
+    // notdef ... not implemented yet.
+    
+    return 0;
+}
