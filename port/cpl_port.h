@@ -42,6 +42,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.37  2005/03/01 19:57:55  fwarmerdam
+ * Added CPLIsNan and CPLIsInf macros.
+ *
  * Revision 1.36  2004/01/06 21:42:32  warmerda
  * "Fix" for bug 455 related to CPL_IS_LSB macro.
  *
@@ -273,6 +276,14 @@ typedef unsigned long    GUIntBig;
 int strcasecmp(char * str1, char * str2);
 int strncasecmp(char * str1, char * str2, int len);
 char * strdup (char *instr);
+#endif
+
+#ifdef WIN32
+#  define CPLIsNan(x) _isnan(x)
+#  define CPLIsInf(x) _isinf(x)
+#else
+#  define CPLIsNan(x) isnan(x)
+#  define CPLIsInf(x) isinf(x)
 #endif
 
 /*---------------------------------------------------------------------
