@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_dir.c,v 1.21 2002/03/27 06:33:59 warmerda Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_dir.c,v 1.22 2002/04/03 21:04:27 warmerda Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -934,7 +934,7 @@ _TIFFVGetField(TIFF* tif, ttag_t tag, va_list ap)
                 
                 if( fip->field_passcount )
                 {
-                    *va_arg(ap, int *) = tv->count;
+                    *va_arg(ap, u_short *) = tv->count;
                     *va_arg(ap, void **) = tv->value;
                     ret_val = 1;
                     break;
