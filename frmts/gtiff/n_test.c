@@ -31,8 +31,6 @@ int main( int nArgc, char ** papszArgv )
             printf( "PROJ.4 String = `%s'\n",
                     GTIFGetProj4Defn( &sDefn ) );
         }
-
-        
         
         GTIFFree( hGTIF );
         XTIFFClose( hTIFF );
