@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2000/01/24 03:08:16  shadow
+ * add description reading
+ *
  * Revision 1.3  2000/01/17 08:16:41  shadow
  * stupid errors
  *
@@ -77,13 +80,15 @@ class DOQ2Dataset : public RawDataset
     double	dfXPixelSize, dfYPixelSize;
 
     char	*pszProjection;
-    
+    char        *pszDescription;
+
   public:
     		DOQ2Dataset();
     	        ~DOQ2Dataset();
 
     CPLErr 	GetGeoTransform( double * padfTransform );
     const char  *GetProjectionRef( void );
+    const char  *GetDescriptionRef( void );
     
     static GDALDataset *Open( GDALOpenInfo * );
 };
@@ -95,6 +100,7 @@ class DOQ2Dataset : public RawDataset
 DOQ2Dataset::DOQ2Dataset()
 {
     pszProjection = NULL;
+    pszDescription = NULL;
     fpImage = NULL;
 }
 
@@ -106,6 +112,7 @@ DOQ2Dataset::~DOQ2Dataset()
 
 {
     CPLFree( pszProjection );
+    CPLFree( pszDescription );
     if( fpImage != NULL )
         VSIFClose( fpImage );
 }
@@ -138,6 +145,16 @@ const char *DOQ2Dataset::GetProjectionRef()
 }
 
 /************************************************************************/
+/*                        GetDescriptionString()                         */
+/************************************************************************/
+
+const char *DOQ2Dataset::GetDescriptionRef()
+
+{
+    return pszDescription;
+}
+
+/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
@@ -157,6 +174,9 @@ GDALDataset *DOQ2Dataset::Open( GDALOpenInfo * poOpenInfo )
     int		nBytesPerPixel;
     const char *pszDatumLong, *pszDatumShort;
     const char *pszUnits;
+    const char *pszQuadname = NULL;
+    const char *pszQuadquad = NULL;
+    const char *pszState = NULL;
     int	        nZone, nProjType;
     int		nSkipBytes, nBytesPerLine, i;
     double      dfULXMap=0.0, dfULYMap = 0.0;
@@ -186,6 +206,25 @@ GDALDataset *DOQ2Dataset::Open( GDALOpenInfo * poOpenInfo )
 	  {
             nWidth = atoi(papszTokens[1]);
             nHeight = atoi(papszTokens[2]);
+	  }
+        if( EQUAL(papszTokens[0],"QUADRANGLE_NAME") )
+	  {
+	    if (strchr(pszLine, '"') != NULL) {
+	      char *ptr;
+	      pszQuadname = CPLStrdup(strchr(pszLine, '"')+1);
+	      ptr = strrchr(pszLine, '"');
+	      if (ptr) *ptr = '\0';
+	    } else {
+	      pszQuadname = CPLStrdup(papszTokens[1]);
+	    }
+	  }
+        if( EQUAL(papszTokens[0],"QUADRANT") )
+	  {
+	    pszQuadquad = CPLStrdup(papszTokens[1]);
+	  }
+        if( EQUAL(papszTokens[0],"STATE") )
+	  {
+	    pszState = CPLStrdup(papszTokens[1]);
 	  }
         else if( EQUAL(papszTokens[0],"BYTE_COUNT") )
 	  {
@@ -354,6 +393,14 @@ GDALDataset *DOQ2Dataset::Open( GDALOpenInfo * poOpenInfo )
 
     poDS->dfULX -= poDS->dfXPixelSize / 2;
     poDS->dfULY += poDS->dfYPixelSize / 2;
+
+    poDS->pszDescription = 
+      CPLStrdup(CPLSPrintf( "USGS GeoTIFF Q-Quadrangle 1:12000 %s %s, %s.",
+			    pszQuadname, pszQuadquad, pszState));
+    
+    if ( pszQuadname ) CPLFree( pszQuadname );
+    if ( pszQuadquad) CPLFree( pszQuadquad );
+    if ( pszState) CPLFree( pszState );
 
     return( poDS );
 }

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2000/01/24 03:08:16  shadow
+ * add description reading
+ *
  * Revision 1.3  2000/01/06 20:58:21  warmerda
  * Fixed initial poOpenInfo check.
  *
@@ -44,6 +47,7 @@
 static GDALDriver	*poDOQ1Driver = NULL;
 
 static double DOQGetField( unsigned char *, int );
+static char * DOQGetDescription( unsigned char * );
 
 CPL_C_START
 void	GDALRegister_DOQ1(void);
@@ -78,6 +82,7 @@ class DOQ1Dataset : public RawDataset
     double	dfXPixelSize, dfYPixelSize;
 
     char	*pszProjection;
+    char	*pszDescription;
     
   public:
     		DOQ1Dataset();
@@ -85,6 +90,7 @@ class DOQ1Dataset : public RawDataset
 
     CPLErr 	GetGeoTransform( double * padfTransform );
     const char  *GetProjectionRef( void );
+    const char  *GetDescriptionRef( void );
     
     static GDALDataset *Open( GDALOpenInfo * );
 };
@@ -96,6 +102,7 @@ class DOQ1Dataset : public RawDataset
 DOQ1Dataset::DOQ1Dataset()
 {
     pszProjection = NULL;
+    pszDescription = NULL;
     fpImage = NULL;
 }
 
@@ -107,6 +114,7 @@ DOQ1Dataset::~DOQ1Dataset()
 
 {
     CPLFree( pszProjection );
+    CPLFree( pszDescription );
     if( fpImage != NULL )
         VSIFClose( fpImage );
 }
@@ -136,6 +144,16 @@ const char *DOQ1Dataset::GetProjectionRef()
 
 {
     return pszProjection;
+}
+
+/************************************************************************/
+/*                        GetDescriptionRef()                         */
+/************************************************************************/
+
+const char *DOQ1Dataset::GetDescriptionRef()
+
+{
+    return pszDescription;
 }
 
 /************************************************************************/
@@ -231,6 +249,8 @@ GDALDataset *DOQ1Dataset::Open( GDALOpenInfo * poOpenInfo )
                                nSkipBytes + i, nBytesPerPixel, nBytesPerLine,
                                GDT_Byte, TRUE );
     }
+
+    poDS->pszDescription = DOQGetDescription(poOpenInfo->pabyHeader);
 
 /* -------------------------------------------------------------------- */
 /*      Establish the projection string.                                */
@@ -360,4 +380,28 @@ static double DOQGetField( unsigned char *pabyData, int nBytes )
     }
 
     return atof(szWork);
+}
+
+/************************************************************************/
+/*                            DOQGetAscii()                             */
+/************************************************************************/
+
+static char *DOQGetDescription( unsigned char *pabyData )
+
+{
+    char	szWork[128];
+    int i = 0;
+
+    memset( szWork, ' ', 128 );
+    strncpy( szWork, "USGS GeoTIFF DOQ 1:12000 Q-Quad of ", 35 );
+    strncpy( szWork + 35, (const char *) pabyData + 0, 38 );
+    while ( *(szWork + 72 - i) == ' ' ) {
+      i++;
+    }
+    i--;
+    strncpy( szWork + 73 - i, (const char *) pabyData + 38, 2 );
+    strncpy( szWork + 76 - i, (const char *) pabyData + 44, 2 );
+    szWork[77-i] = '\0';
+
+    return CPLStrdup(szWork);
 }
