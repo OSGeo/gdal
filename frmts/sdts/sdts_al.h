@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  1999/09/21 17:25:45  warmerda
+ * Added DDSH fields to raster reader.
+ * Moved SADR reading onto SDTS_IREF.
+ *
  * Revision 1.17  1999/09/21 02:23:25  warmerda
  * added logic to put outer ring first, and set ring direction
  *
@@ -93,7 +97,6 @@ class SDTSTransfer;
 
 #define SDTS_SIZEOF_SADR	8
 
-int SDTSGetSADR( SDTS_IREF *, DDFField *, int, double *, double *, double * );
 char **SDTSScanModuleReferences( DDFModule *, const char * );
 
 /************************************************************************/
@@ -107,6 +110,8 @@ char **SDTSScanModuleReferences( DDFModule *, const char * );
 */
 class SDTS_IREF
 {
+    int		nDefaultSADRFormat;
+    
   public:
     		SDTS_IREF();
 		~SDTS_IREF();
@@ -126,7 +131,9 @@ class SDTS_IREF
     double      dfYRes;				/* YHRS */
 
     char  	*pszCoordinateFormat;		/* HFMT */
-                
+
+    int		GetSADRCount( DDFField * );
+    int		GetSADR( DDFField *, int, double *, double *, double * );
 };
 
 /************************************************************************/
@@ -602,6 +609,9 @@ class SDTSRasterReader
     int		nYStart;		/* SORI */
 
     char	szINTR[4];		/* CE is center, TL is top left */
+    char	szFMT[32];
+    char	szUNITS[64];
+    char	szLabel[64];
 
     double	adfTransform[6];
     
@@ -613,7 +623,7 @@ class SDTSRasterReader
                       const char * pszModule  );
     void	Close();
 
-    int		GetRasterType() { return 1; }  /* 1 = int16 */
+    int		GetRasterType();	/* 1 = int16, see GDAL types */
 
     int		GetTransform( double * );
 
