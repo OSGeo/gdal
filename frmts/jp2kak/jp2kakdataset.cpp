@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.11  2003/06/26 15:54:30  warmerda
+ * upgraded to work with Kakadu 4.0.2
+ *
  * Revision 1.10  2003/06/12 20:21:52  warmerda
  * Don't depend on .jp2 extension for JP2 files, trust 16bit magic header.
  * Still requires a known extension for JPC streams *and* now tests the two
@@ -113,6 +116,10 @@
 #include "kdu_image.h"
 #include "jp2kak_roi.h"
 
+#ifdef J2_INPUT_MAX_BUFFER_BYTES
+#  define KAKADU4
+#endif
+
 CPL_CVSID("$Id$");
 
 CPL_C_START
@@ -154,6 +161,9 @@ class JP2KAKDataset : public GDALDataset
 {
     kdu_codestream oCodeStream;
     kdu_compressed_source *poInput;
+#ifdef KAKADU4
+    jp2_family_src  *family;
+#endif
     kdu_dims dims; 
 
     char	   *pszProjection;
@@ -711,6 +721,9 @@ JP2KAKDataset::JP2KAKDataset()
     pszProjection = NULL;
     nGCPCount = 0;
     pasGCPList = NULL;
+#ifdef KAKADU4
+    family = NULL;
+#endif
 
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
@@ -734,6 +747,13 @@ JP2KAKDataset::~JP2KAKDataset()
         oCodeStream.destroy();
         poInput->close();
         delete poInput;
+#ifdef KAKADU4
+        if( family )
+        {
+            family->close();
+            delete family;
+        }
+#endif
     }
 }
 
@@ -846,14 +866,26 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
     kdu_compressed_source *poInput;
     jp2_palette oJP2Palette;
 
+#ifdef KAKADU4
+    jp2_family_src *family = NULL;
+#endif
+
     try
     {
         if( EQUAL(pszExtension,"jp2") || EQUAL(pszExtension,"jpx") )
         {
             jp2_source *jp2_src;
-            
+
+#ifdef KAKADU4
+            family = new jp2_family_src;
+            family->open( poOpenInfo->pszFilename, true );
+            jp2_src = new jp2_source;
+            jp2_src->open( family );
+            jp2_src->read_header();
+#else
             jp2_src = new jp2_source;
             jp2_src->open( poOpenInfo->pszFilename, true );
+#endif
             poInput = jp2_src;
 
             oJP2Palette = jp2_src->access_palette();
@@ -883,7 +915,10 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->oCodeStream.create( poInput );
         poDS->oCodeStream.set_fussy();
         poDS->oCodeStream.set_persistent();
-        
+
+#ifdef KAKADU4
+        poDS->family = family;
+#endif
 /* -------------------------------------------------------------------- */
 /*      Get overall image size.                                         */
 /* -------------------------------------------------------------------- */
@@ -951,13 +986,18 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Try to read any available georeferencing info in a "geotiff"    */
 /*      box".                                                           */
 /* -------------------------------------------------------------------- */
-        jp2_input_box   oBox;
         unsigned char  *pabyGTData = NULL;
         int		nGTDataSize = 0;
+        jp2_input_box   oBox;
 
+#ifdef KAKADU4
+        for( family == NULL || oBox.open( family ); 
+             oBox.exists(); oBox.open_next() )
+#else
         VSIFSeek( poOpenInfo->fp, 0, SEEK_SET );
         while( oBox.open(poOpenInfo->fp).exists() 
                && oBox.get_remaining_bytes() != -1 )
+#endif
         {
             if( oBox.get_box_type() == 0x75756964 /* UUID */ )
             {
@@ -965,7 +1005,7 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
                 oBox.read( uuid2, 16 );
                 if( memcmp( uuid2, msi_uuid2, 16 ) == 0 )
                 {
-                    nGTDataSize = oBox.get_remaining_bytes();
+                    nGTDataSize = (int) oBox.get_remaining_bytes();
 
                     pabyGTData = (unsigned char *) CPLMalloc(nGTDataSize);
                     oBox.read( pabyGTData, nGTDataSize );
@@ -1000,6 +1040,7 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     catch( ... )
     {
+        CPLDebug( "JP2KAK", "JP2KAKDataset::Open() - caught exception." );
         if( poDS != NULL )
             delete poDS;
 
@@ -1037,12 +1078,12 @@ transfer_bytes(kdu_byte *dest, kdu_line_buf &src, int gap, int precision,
                 if( eOutType == GDT_Int16 )
                 {
                     val = (int) (sp->fval*scale16);
-                    *((GInt16 *) dest) = MAX(MIN(val,32767),-32768);
+                    *((GInt16 *) dest) = (GInt16) MAX(MIN(val,32767),-32768);
                 }
                 else if( eOutType == GDT_UInt16 )
                 {
                     val = (int) (sp->fval*scale16) + 32768;
-                    *((GUInt16 *) dest) = MAX(MIN(val,65535),0);
+                    *((GUInt16 *) dest) = (GUInt16) MAX(MIN(val,65535),0);
                 }
                 else if( eOutType == GDT_Float32 )
                     *((float *) dest) = sp->fval;
@@ -1102,8 +1143,8 @@ transfer_bytes(kdu_byte *dest, kdu_line_buf &src, int gap, int precision,
             }
             else
             { // Need to force zeros into one or more least significant bits.
-                kdu_int16 downshift = KDU_FIX_POINT-precision;
-                kdu_int16 upshift = 8-precision;
+                kdu_int16 downshift = (kdu_int16) (KDU_FIX_POINT-precision);
+                kdu_int16 upshift = (kdu_int16) (8-precision);
                 kdu_int16 offset = 1<<(downshift-1);
 
                 for (; width > 0; width--, sp++, dest+=gap)
@@ -1124,8 +1165,8 @@ transfer_bytes(kdu_byte *dest, kdu_line_buf &src, int gap, int precision,
 
             if (precision >= 8)
             {
-                kdu_int16 downshift = precision-8;
-                kdu_int16 offset = (1<<downshift)>>1;
+                kdu_int16 downshift = (kdu_int16) (precision-8);
+                kdu_int16 offset = (kdu_int16) ((1<<downshift)>>1);
               
                 for (; width > 0; width--, sp++, dest+=gap)
                 {
@@ -1139,7 +1180,7 @@ transfer_bytes(kdu_byte *dest, kdu_line_buf &src, int gap, int precision,
             }
             else
             {
-                kdu_int16 upshift = 8-precision;
+                kdu_int16 upshift = (kdu_int16) (8-precision);
 
                 for (; width > 0; width--, sp++, dest+=gap)
                 {
@@ -1159,7 +1200,7 @@ transfer_bytes(kdu_byte *dest, kdu_line_buf &src, int gap, int precision,
 /*                       JP2KAKWriteGeoTIFFInfo()                       */
 /************************************************************************/
 
-void JP2KAKWriteGeoTIFFInfo( jp2_target jp2_out, GDALDataset *poSrcDS )
+void JP2KAKWriteGeoTIFFInfo( jp2_target *jp2_out, GDALDataset *poSrcDS )
 
 {
 /* -------------------------------------------------------------------- */
@@ -1189,13 +1230,23 @@ void JP2KAKWriteGeoTIFFInfo( jp2_target jp2_out, GDALDataset *poSrcDS )
 /* -------------------------------------------------------------------- */
 /*      Write to a box on the JP2 file.                                 */
 /* -------------------------------------------------------------------- */
-    jp2_output_box &uuid_box = jp2_out.open_box( jp2_uuid_box_type );
+#ifdef KAKADU4
+    jp2_out->open_next( jp2_uuid_box_type );
+
+    jp2_out->write( (kdu_byte *) msi_uuid2, sizeof(msi_uuid2) );
+
+    jp2_out->write( (kdu_byte *) pabyGTBuf, nGTBufSize );
+
+    jp2_out->close();
+#else
+    jp2_output_box &uuid_box = jp2_out->open_box( jp2_uuid_box_type );
 
     uuid_box.write( (kdu_byte *) msi_uuid2, sizeof(msi_uuid2) );
 
     uuid_box.write( (kdu_byte *) pabyGTBuf, nGTBufSize );
 
     uuid_box.close();
+#endif
 
     CPLFree( pabyGTBuf );
 }
@@ -1205,7 +1256,7 @@ void JP2KAKWriteGeoTIFFInfo( jp2_target jp2_out, GDALDataset *poSrcDS )
 /************************************************************************/
 
 static GDALDataset *
-JP2KAKCopyCreate( const char * pszFilename, GDALDataset *poSrcDS, 
+JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS, 
                   int bStrict, char ** papszOptions, 
                   GDALProgressFunc pfnProgress, void * pProgressData )
 
@@ -1339,6 +1390,10 @@ JP2KAKCopyCreate( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Open output file, and setup codestream.                         */
 /* -------------------------------------------------------------------- */
+#ifdef KAKADU4
+    jp2_family_tgt         family;
+#endif
+
     kdu_compressed_target *poOutputFile = NULL;
     jp2_target             jp2_out;
     kdu_simple_file_target jpc_out;
@@ -1352,7 +1407,13 @@ JP2KAKCopyCreate( const char * pszFilename, GDALDataset *poSrcDS,
     {
         if( bIsJP2 )
         {
+#ifdef KAKADU4
+            family.open( pszFilename );
+
+            jp2_out.open( &family );
+#else
             jp2_out.open( pszFilename );
+#endif
             poOutputFile = &jp2_out;
         }
         else
@@ -1501,7 +1562,15 @@ JP2KAKCopyCreate( const char * pszFilename, GDALDataset *poSrcDS,
         oJP2Channels.set_colour_mapping( 0, 0, 0 );
         oJP2Channels.set_colour_mapping( 1, 0, 1 );
         oJP2Channels.set_colour_mapping( 2, 0, 2 );
+
     }
+
+#ifdef KAKADU4
+    if( bIsJP2 )
+    {
+        jp2_out.write_header();
+    }
+#endif
 
 /* -------------------------------------------------------------------- */
 /*      Set the GeoTIFF box if georeferencing is available, and this    */
@@ -1518,8 +1587,16 @@ JP2KAKCopyCreate( const char * pszFilename, GDALDataset *poSrcDS,
                  || ABS(adfGeoTransform[5]) != 1.0))
             || poSrcDS->GetGCPCount() > 0) )
     {
-        JP2KAKWriteGeoTIFFInfo( jp2_out, poSrcDS );
+        JP2KAKWriteGeoTIFFInfo( &jp2_out, poSrcDS );
     }
+
+/* -------------------------------------------------------------------- */
+/*      Open codestream box.                                            */
+/* -------------------------------------------------------------------- */
+#ifdef KAKADU4
+    if( bIsJP2 )
+        jp2_out.open_codestream();
+#endif
 
 /* -------------------------------------------------------------------- */
 /*      Create one big tile, and a compressing engine, and line         */
@@ -1594,7 +1671,8 @@ JP2KAKCopyCreate( const char * pszFilename, GDALDataset *poSrcDS,
                     kdu_byte *sp = pabyBuffer;
                 
                     for (int n=nXSize; n > 0; n--, dest++, sp++)
-                        dest->fval = ((((kdu_int16)(*sp))-128.0) * 0.00390625);
+                        dest->fval = (float) 
+                            ((((kdu_int16)(*sp))-128.0) * 0.00390625);
                 }
                 else if( eType == GDT_Int16 )
                 {
@@ -1602,7 +1680,8 @@ JP2KAKCopyCreate( const char * pszFilename, GDALDataset *poSrcDS,
                     GInt16  *sp = (GInt16 *) pabyBuffer;
                 
                     for (int n=nXSize; n > 0; n--, dest++, sp++)
-                        dest->fval = (((kdu_int16)(*sp)) * 0.0000152588);
+                        dest->fval = (float) 
+                            (((kdu_int16)(*sp)) * 0.0000152588);
                 }
                 else if( eType == GDT_UInt16 )
                 {
@@ -1610,7 +1689,8 @@ JP2KAKCopyCreate( const char * pszFilename, GDALDataset *poSrcDS,
                     GUInt16  *sp = (GUInt16 *) pabyBuffer;
                 
                     for (int n=nXSize; n > 0; n--, dest++, sp++)
-                        dest->fval = (((int)(*sp) - 32768) * 0.0000152588);
+                        dest->fval = (float) 
+                            (((int)(*sp) - 32768) * 0.0000152588);
                 }
                 else if( eType == GDT_Float32 )
                 {
@@ -1674,7 +1754,17 @@ JP2KAKCopyCreate( const char * pszFilename, GDALDataset *poSrcDS,
 
     CPLFree( layer_bytes );
 
-    poOutputFile->close();
+    if( bIsJP2 )
+    {
+        jp2_out.close();
+#ifdef KAKADU4
+        family.close();
+#endif
+    }
+    else
+    {
+        poOutputFile->close();
+    }
 
     if( !pfnProgress( 1.0, NULL, pProgressData ) )
         return NULL;
@@ -1706,7 +1796,7 @@ void GDALRegister_JP2KAK()
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "jp2" );
 
         poDriver->pfnOpen = JP2KAKDataset::Open;
-        poDriver->pfnCreateCopy = JP2KAKCopyCreate;
+        poDriver->pfnCreateCopy = JP2KAKCreateCopy;
 
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
