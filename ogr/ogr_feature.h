@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  1999/07/27 00:47:37  warmerda
+ * Added FID to OGRFeature class
+ *
  * Revision 1.4  1999/07/07 04:23:07  danmo
  * Fixed typo in  #define _OGR_..._H_INCLUDED  line
  *
@@ -83,9 +86,15 @@ enum OGRJustification
     OJRight = 2
 };
 
+#define OGRNullFID            -1
+
 /************************************************************************/
 /*                               OGRField                               */
 /************************************************************************/
+
+/**
+ * OGRFeature field attribute value union.
+ */
 
 typedef union {
     int		Integer;
@@ -224,7 +233,8 @@ class OGRFeatureDefn
 class OGRFeature
 {
   private:
-    
+
+    long		nFID;
     OGRFeatureDefn 	*poDefn;
     OGRGeometry		*poGeometry;
     OGRField		*pauFields;
@@ -240,6 +250,7 @@ class OGRFeature
     OGRGeometry        *GetGeometryRef() { return poGeometry; }
 
     OGRFeature	       *Clone();
+    virtual OGRBoolean  Equal( OGRFeature * poFeature );
 
     int			GetFieldCount() { return poDefn->GetFieldCount(); }
     OGRFieldDefn       *GetFieldDefnRef( int iField )
@@ -257,6 +268,9 @@ class OGRFeature
     void		SetField( int i, double dfValue );
     void		SetField( int i, const char * pszValue );
     void		SetField( int i, OGRField * puValue );
+
+    long		GetFID() { return nFID; }
+    virtual OGRErr	SetFID( long );
 
     void		DumpReadable( FILE * );
 };
