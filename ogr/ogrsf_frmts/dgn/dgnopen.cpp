@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2002/04/22 20:44:41  warmerda
+ * added (partial) cell library support
+ *
  * Revision 1.13  2002/03/14 21:39:27  warmerda
  * added bUpdate to DGNOpen()
  *
@@ -93,6 +96,14 @@ int DGNTestOpen( GByte *pabyHeader, int nByteCount )
     if( nByteCount < 4 )
         return TRUE;
 
+    // Is it a cell library?
+    if( pabyHeader[0] == 0x08
+        && pabyHeader[1] == 0x05
+        && pabyHeader[2] == 0x17
+        && pabyHeader[3] == 0x00 )
+        return TRUE;
+
+    // Is it not a regular 2D or 3D file?
     if( (pabyHeader[0] != 0x08 && pabyHeader[0] != 0xC8) 
         || pabyHeader[1] != 0x09
         || pabyHeader[2] != 0xFE || pabyHeader[3] != 0x02 )
