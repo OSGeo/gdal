@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.67  2002/06/18 02:47:46  warmerda
+ * fixed handling of long string constant
+ *
  * Revision 1.66  2002/06/17 14:53:58  warmerda
  * fixed byte line alignment bug with 1bit files
  *
@@ -3110,24 +3113,24 @@ void GDALRegister_GTiff()
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_gtiff.html" );
         poDriver->SetMetadataItem( GDAL_DMD_MIMETYPE, "image/tiff" );
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "tif" );
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, "
-<CreationOptionList>
-   <Option name='COMPRESS' type='string-select'>
-       <Value>NONE</Value>
-       <Value>PACKBITS</Value>
-       <Value>JPEG</Value>
-       <Value>LZW</Value>
-       <Value>DEFLATE</Value>
-   </Option>
-   <Option name='INTERLEAVE' type='string-select'>
-       <Value>BAND</Value>
-       <Value>PIXEL</Value>
-   </Option>
-   <Option name='TILED' type='boolean' description='Switch to tiled format'/>
-   <Option name='TFW' type='boolean' description='Write out world filet'/>
-   <Option name='BLOCKXSIZE' type='int' description='Tile Width'/>
-   <Option name='BLOCKYSIZE' type='int' description='Tile/String Height'/>
-</CreationOptionList>" );
+        poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, 
+"<CreationOptionList>"
+"   <Option name='COMPRESS' type='string-select'>"
+"       <Value>NONE</Value>"
+"       <Value>PACKBITS</Value>"
+"       <Value>JPEG</Value>"
+"       <Value>LZW</Value>"
+"       <Value>DEFLATE</Value>"
+"   </Option>"
+"   <Option name='INTERLEAVE' type='string-select'>"
+"       <Value>BAND</Value>"
+"       <Value>PIXEL</Value>"
+"   </Option>"
+"   <Option name='TILED' type='boolean' description='Switch to tiled format'/>"
+"   <Option name='TFW' type='boolean' description='Write out world filet'/>"
+"   <Option name='BLOCKXSIZE' type='int' description='Tile Width'/>"
+"   <Option name='BLOCKYSIZE' type='int' description='Tile/String Height'/>"
+"</CreationOptionList>" );
 
 
         poDriver->pfnOpen = GTiffDataset::Open;
