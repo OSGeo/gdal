@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2000/06/27 16:46:56  warmerda
+ * default to using dummy progress func
+ *
  * Revision 1.17  2000/06/26 21:44:50  warmerda
  * make progress func save for overviews
  *
@@ -765,6 +768,9 @@ CPLErr GDALDataset::BuildOverviews( const char *pszResampling,
 
         panBandList = panAllBandList;
     }
+
+    if( pfnProgress == NULL )
+        pfnProgress = GDALDummyProgress;
 
     eErr = IBuildOverviews( pszResampling, nOverviews, panOverviewList, 
                             nBands, panBandList, pfnProgress, pProgressData );
