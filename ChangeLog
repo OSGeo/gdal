@@ -1,3 +1,9 @@
+2004-02-07  Andrey Kiselev  <dron@remotesensing.org>
+	
+	* ogr/{ogr_srs_api.h, ogr_spatialref.h, ogr_srs_usgs.cpp}: Implemented
+	OGRSpatialReference::exportToUSGS() to export OGR spatial reference
+	definition in form of parameters, suitable for USGS GCTP package.
+
 2004-02-05  Andrey Kiselev  <dron@remotesensing.org>
 	
 	* ogr/{ogr_srs_api.h, ogr_spatialref.h, ogrspatialreference.cpp,
