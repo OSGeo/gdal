@@ -28,6 +28,10 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.10  2001/07/25 17:21:56  nemec
+ * Fixed another bug with partial tiles (relating to different image origins)
+ * Added more debugging info for simpler bug reports
+ *
  * Revision 1.9  2001/07/25 01:25:47  nemec
  * Changes with values used for padding - now all zeros but without overhead of
  * zeroing memory all the time.
@@ -376,7 +380,12 @@ CPLErr FITRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                 ystop = nBlockYSize;
             }
             else {
-                ystart = nBlockYSize-1;
+                int localBlockYSize = nBlockYSize;
+                long maxy_full =
+                    (long) floor(poFIT_DS->info->ySize / (double) nBlockYSize);
+                if (nBlockYOff >= maxy_full)
+                    localBlockYSize = poFIT_DS->info->ySize % nBlockYSize;
+                ystart = localBlockYSize-1;
                 ystop = -1;
             }
 
@@ -441,7 +450,12 @@ CPLErr FITRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                 xstop = nBlockXSize;
             }
             else {
-                xstart = nBlockXSize-1;
+                int localBlockXSize = nBlockXSize;
+                long maxx_full =
+                    (long) floor(poFIT_DS->info->xSize / (double) nBlockXSize);
+                if (nBlockXOff >= maxx_full)
+                    localBlockXSize = poFIT_DS->info->xSize % nBlockXSize;
+                xstart = localBlockXSize-1;
                 xstop = -1;
             }
             if (yinc == 1) {
@@ -922,6 +936,14 @@ GDALDataset *FITDataset::Open( GDALOpenInfo * poOpenInfo )
     info->zPageSize = head->zPageSize;
     swapb(head->cPageSize);
     info->cPageSize = head->cPageSize;
+
+    CPLDebug("FIT", "size %i %i %i %i, pageSize %i %i %i %i",
+             info->xSize, info->ySize, info->zSize, info->cSize, 
+             info->xPageSize, info->yPageSize, info->zPageSize,
+             info->cPageSize);
+
+    CPLDebug("FIT", "dtype %i order %i space %i cm %i",
+             info->dtype, info->order, info->space, info->cm);
 
     /**************************/
 
