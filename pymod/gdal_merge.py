@@ -26,6 +26,9 @@
 ###############################################################################
 # 
 #  $Log$
+#  Revision 1.12  2004/04/02 17:40:44  warmerda
+#  added GDALGeneralCmdLineProcessor() support
+#
 #  Revision 1.11  2004/03/26 17:11:42  warmerda
 #  added -init
 #
@@ -283,14 +286,19 @@ if __name__ == '__main__':
     create_options = []
     pre_init = None
 
+    gdal.AllRegister()
+    argv = gdal.GeneralCmdLineProcessor( sys.argv )
+    if argv is None:
+        sys.exit( 0 )
+
     # Parse command line arguments.
     i = 1
-    while i < len(sys.argv):
-        arg = sys.argv[i]
+    while i < len(argv):
+        arg = argv[i]
 
         if arg == '-o':
             i = i + 1
-            out_file = sys.argv[i]
+            out_file = argv[i]
 
         elif arg == '-v':
             verbose = 1
@@ -303,30 +311,30 @@ if __name__ == '__main__':
 
         elif arg == '-init':
             i = i + 1
-            pre_init = float(sys.argv[i])
+            pre_init = float(argv[i])
 
         elif arg == '-n':
             i = i + 1
-            nodata = int(sys.argv[i])
+            nodata = int(argv[i])
 
         elif arg == '-f':
             i = i + 1
-            format = sys.argv[i]
+            format = argv[i]
 
         elif arg == '-co':
             i = i + 1
-            create_options.append( sys.argv[i] )
+            create_options.append( argv[i] )
 
         elif arg == '-ps':
-            psize_x = float(sys.argv[i+1])
-            psize_y = -1 * abs(float(sys.argv[i+1]))
+            psize_x = float(argv[i+1])
+            psize_y = -1 * abs(float(argv[i+1]))
             i = i + 2
 
         elif arg == '-ul_lr':
-            ulx = float(sys.argv[i+1])
-            uly = float(sys.argv[i+2])
-            lrx = float(sys.argv[i+3])
-            lry = float(sys.argv[i+4])
+            ulx = float(argv[i+1])
+            uly = float(argv[i+2])
+            lrx = float(argv[i+3])
+            lry = float(argv[i+4])
             i = i + 4
 
         elif arg[:1] == '-':

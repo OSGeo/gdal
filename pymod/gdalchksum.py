@@ -29,6 +29,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.2  2004/04/02 17:40:44  warmerda
+# added GDALGeneralCmdLineProcessor() support
+#
 # Revision 1.1  2003/03/02 17:11:33  warmerda
 # New
 #
@@ -50,21 +53,26 @@ bands = []
 
 filename = None
 
+gdal.AllRegister()
+argv = gdal.GeneralCmdLineProcessor( sys.argv )
+if argv is None:
+    sys.exit( 0 )
+
 # Parse command line arguments.
 i = 1
-while i < len(sys.argv):
-    arg = sys.argv[i]
+while i < len(argv):
+    arg = argv[i]
 
     if arg == '-b':
-        bands.append( int(sys.argv[i]) )
+        bands.append( int(argv[i]) )
 
     elif arg == '-srcwin':
-        srcwin = [int(sys.argv[i+1]),int(sys.argv[i+2]),
-                  int(sys.argv[i+3]),int(sys.argv[i+3]) ]
+        srcwin = [int(argv[i+1]),int(argv[i+2]),
+                  int(argv[i+3]),int(argv[i+3]) ]
         i = i + 4
 
     elif filename is None:
-        filename = sys.argv[i]
+        filename = argv[i]
 
     else:
         Usage()
