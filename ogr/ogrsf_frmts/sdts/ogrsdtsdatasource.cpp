@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2002/04/17 15:17:49  warmerda
+ * Initialize poTransfer to NULL.
+ *
  * Revision 1.6  2002/04/15 13:18:39  warmerda
  * Free transfer in destructor!
  *
@@ -66,6 +69,8 @@ OGRSDTSDataSource::OGRSDTSDataSource()
 
     pszName = NULL;
     poSRS = NULL;
+
+    poTransfer = NULL;
 }
 
 /************************************************************************/
