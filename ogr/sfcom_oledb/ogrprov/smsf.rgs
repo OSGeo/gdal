@@ -1,0 +1,35 @@
+HKCR
+
+{
+	OGR.SF.OLEDB.1 = s 'OGR.SF.OLEDB'
+	{
+		CLSID = s '{5883B8F6-2E72-4054-BFC6-A43B638E620B}'
+	}
+	OGR.SF.OLEDB = s 'OGR.SF.OLEDB'
+	{
+		CLSID = s '{5883B8F6-2E72-4054-BFC6-A43B638E620B}'
+		CurVer = s 'OGR.SF.OLEDB.1'
+	}
+	NoRemove CLSID
+	{
+		ForceRemove {5883B8F6-2E72-4054-BFC6-A43B638E620B} = s 'OGR.SF.OLEDB'
+		{
+			ProgID = s 'OGR.SF.OLEDB.1'
+			VersionIndependentProgID = s 'OGR.SF.OLEDB'
+			InprocServer32 = s '%MODULE%'
+			{
+				val ThreadingModel = s 'Both'
+			}
+			'Implemented Categories' = s ''
+			{
+				{A0690A28-FAF5-11D1-BAF5-080036DB0B03} = s ''
+				{
+				}
+			}
+			'OLE DB Provider' = s 'OpenGIS Simple Features OLE DB Provider (Generic OGR)'
+			val OLEDB_SERVICES = d '4294967295'
+			// val OLEDB_SERVICES = d '0'
+			'TypeLib' = s '{C9BD5066-0D6D-11D3-94FF-00104B238935}'
+		}
+	}
+}
