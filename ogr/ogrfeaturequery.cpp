@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2001/10/25 16:41:01  danmo
+ * Fixed OGRFeatureQueryEvaluator() crash with string fields with unset value
+ *
  * Revision 1.3  2001/07/19 18:25:07  warmerda
  * expanded tabs
  *
@@ -203,9 +206,25 @@ static int OGRFeatureQueryEvaluator( swq_field_op *op, OGRFeature *poFeature )
         switch( op->operation )
         {
           case SWQ_EQ:
-            return EQUAL(psField->String,op->string_value);
+            if (psField->Set.nMarker1 == OGRUnsetMarker
+                && psField->Set.nMarker2 == OGRUnsetMarker )
+            {
+                return (op->string_value[0] == '\0');
+            }
+            else
+            {
+                return EQUAL(psField->String,op->string_value);
+            }
           case SWQ_NE:
-            return !EQUAL(psField->String,op->string_value);
+            if (psField->Set.nMarker1 == OGRUnsetMarker
+                && psField->Set.nMarker2 == OGRUnsetMarker )
+            {
+                return (op->string_value[0] != '\0');
+            }
+            else
+            {
+                return !EQUAL(psField->String,op->string_value);
+            }
           default:
             assert( FALSE );
             return FALSE;
