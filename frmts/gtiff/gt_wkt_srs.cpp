@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  1999/09/10 13:41:34  warmerda
+ * Handle OGC datum name exceptions, and massage projparm into proj units
+ *
  * Revision 1.2  1999/09/09 13:56:23  warmerda
  * made some changes to order WKT like Adams
  *
@@ -48,6 +51,77 @@
 CPL_C_START
 char *  GTIFGetOGISDefn( GTIFDefn * );
 CPL_C_END
+
+static char *papszDatumEquiv[] =
+{
+    "Militar_Geographische_Institut",
+    "Militar_Geographische_Institute",
+    "World_Geodetic_System_1984",
+    "WGS_1984",
+    "WGS_72_Transit_Broadcast_Ephemeris",
+    "WGS_1972_Transit_Broadcast_Ephemeris",
+    "World_Geodetic_System_1972",
+    "WGS_1972",
+    "European_Terrestrial_Reference_System_89",
+    "European_Reference_System_1989",
+    NULL
+};
+
+/************************************************************************/
+/*                          WKTMassageDatum()                           */
+/*                                                                      */
+/*      Massage an EPSG datum name into WMT format.  Also transform     */
+/*      specific exception cases into WKT versions.                     */
+/************************************************************************/
+
+static void WKTMassageDatum( char ** ppszDatum )
+
+{
+    int		i, j;
+    char	*pszDatum = *ppszDatum;
+
+/* -------------------------------------------------------------------- */
+/*      Translate non-alphanumeric values to underscores.               */
+/* -------------------------------------------------------------------- */
+    for( i = 0; pszDatum[i] != '\0'; i++ )
+    {
+        if( !(pszDatum[i] >= 'A' && pszDatum[i] <= 'Z')
+            && !(pszDatum[i] >= 'a' && pszDatum[i] <= 'z')
+            && !(pszDatum[i] >= '0' && pszDatum[i] <= '9') )
+        {
+            pszDatum[i] = '_';
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Remove repeated and trailing underscores.                       */
+/* -------------------------------------------------------------------- */
+    for( i = 1, j = 0; pszDatum[i] != '\0'; i++ )
+    {
+        if( pszDatum[j] == '_' && pszDatum[i] == '_' )
+            continue;
+
+        pszDatum[++j] = pszDatum[i];
+    }
+    if( pszDatum[j] == '_' )
+        pszDatum[j] = '\0';
+    else
+        pszDatum[j+1] = '\0';
+    
+/* -------------------------------------------------------------------- */
+/*      Search for datum equivelences.  Specific massaged names get     */
+/*      mapped to OpenGIS specified names.                              */
+/* -------------------------------------------------------------------- */
+    for( i = 0; papszDatumEquiv[i] != NULL; i += 2 )
+    {
+        if( EQUAL(*ppszDatum,papszDatumEquiv[i]) )
+        {
+            CPLFree( *ppszDatum );
+            *ppszDatum = CPLStrdup( papszDatumEquiv[i+1] );
+            break;
+        }
+    }
+}
 
 /************************************************************************/
 /*                          GTIFGetOGISDefn()                           */
@@ -78,18 +152,13 @@ char *GTIFGetOGISDefn( GTIFDefn * psDefn )
     char	*pszPMName = NULL;
     char	*pszSpheroidName = NULL;
     double	dfInvFlattening;
-    int		i;
     
     GTIFGetGCSInfo( psDefn->GCS, &pszGeogName, NULL, NULL );
     GTIFGetDatumInfo( psDefn->Datum, &pszDatumName, NULL );
     GTIFGetPMInfo( psDefn->PM, &pszPMName, NULL );
     GTIFGetEllipsoidInfo( psDefn->Ellipsoid, &pszSpheroidName, NULL, NULL );
 
-    for( i = 0; pszDatumName[i] != '\0'; i++ )
-    {
-        if( pszDatumName[i] == ' ' )
-            pszDatumName[i] = '_';
-    }
+    WKTMassageDatum( &pszDatumName );
 
     if( (psDefn->SemiMinor / psDefn->SemiMajor) < 0.99999999999999999
         || (psDefn->SemiMinor / psDefn->SemiMajor) > 1.00000000000000001 )
@@ -112,120 +181,133 @@ char *GTIFGetOGISDefn( GTIFDefn * psDefn )
     if( psDefn->Model == ModelTypeProjected )
     {
 /* -------------------------------------------------------------------- */
+/*      Make a local copy of parms, and convert back into the           */
+/*      angular units of the GEOGCS and the linear units of the         */
+/*      projection.                                                     */
+/* -------------------------------------------------------------------- */
+        double		adfParm[10];
+        int		i;
+
+        for( i = 0; i < MIN(10,psDefn->nParms); i++ )
+            adfParm[i] = psDefn->ProjParm[i];
+
+        adfParm[5] /= psDefn->UOMLengthInMeters;
+        adfParm[6] /= psDefn->UOMLengthInMeters;
+        
+/* -------------------------------------------------------------------- */
 /*      Translation the fundamental projection.                         */
 /* -------------------------------------------------------------------- */
         switch( psDefn->CTProjection )
         {
           case CT_TransverseMercator:
-            oSRS.SetTM( psDefn->ProjParm[0], psDefn->ProjParm[1],
-                        psDefn->ProjParm[4],
-                        psDefn->ProjParm[5], psDefn->ProjParm[6] );
+            oSRS.SetTM( adfParm[0], adfParm[1],
+                        adfParm[4],
+                        adfParm[5], adfParm[6] );
             break;
 
           case CT_TransvMercator_SouthOriented:
-            oSRS.SetTMSO( psDefn->ProjParm[0], psDefn->ProjParm[1],
-                          psDefn->ProjParm[4],
-                          psDefn->ProjParm[5], psDefn->ProjParm[6] );
+            oSRS.SetTMSO( adfParm[0], adfParm[1],
+                          adfParm[4],
+                          adfParm[5], adfParm[6] );
             break;
 
           case CT_Mercator:
-            oSRS.SetMercator( psDefn->ProjParm[0], psDefn->ProjParm[1],
-                              psDefn->ProjParm[4],
-                              psDefn->ProjParm[5], psDefn->ProjParm[6] );
+            oSRS.SetMercator( adfParm[0], adfParm[1],
+                              adfParm[4],
+                              adfParm[5], adfParm[6] );
             break;
 
           case CT_ObliqueStereographic:
-            oSRS.SetOS( psDefn->ProjParm[0], psDefn->ProjParm[1],
-                        psDefn->ProjParm[4],
-                        psDefn->ProjParm[5], psDefn->ProjParm[6] );
+            oSRS.SetOS( adfParm[0], adfParm[1],
+                        adfParm[4],
+                        adfParm[5], adfParm[6] );
             break;
 
           case CT_Stereographic:
-            oSRS.SetOS( psDefn->ProjParm[0], psDefn->ProjParm[1],
-                        psDefn->ProjParm[4],
-                        psDefn->ProjParm[5], psDefn->ProjParm[6] );
+            oSRS.SetOS( adfParm[0], adfParm[1],
+                        adfParm[4],
+                        adfParm[5], adfParm[6] );
             break;
 
           case CT_ObliqueMercator: /* hotine */
-            oSRS.SetHOM( psDefn->ProjParm[0], psDefn->ProjParm[1],
-                         psDefn->ProjParm[2], 0.0,
-                         psDefn->ProjParm[4],
-                         psDefn->ProjParm[5], psDefn->ProjParm[6] );
+            oSRS.SetHOM( adfParm[0], adfParm[1],
+                         adfParm[2], 0.0,
+                         adfParm[4],
+                         adfParm[5], adfParm[6] );
             break;
         
           case CT_CassiniSoldner:
-            oSRS.SetCS( psDefn->ProjParm[0], psDefn->ProjParm[1],
-                        psDefn->ProjParm[5], psDefn->ProjParm[6] );
+            oSRS.SetCS( adfParm[0], adfParm[1],
+                        adfParm[5], adfParm[6] );
             break;
         
           case CT_Polyconic:
-            oSRS.SetPolyconic( psDefn->ProjParm[0], psDefn->ProjParm[1],
-                               psDefn->ProjParm[5], psDefn->ProjParm[6] );
+            oSRS.SetPolyconic( adfParm[0], adfParm[1],
+                               adfParm[5], adfParm[6] );
             break;
 
           case CT_AzimuthalEquidistant:
-            oSRS.SetAE( psDefn->ProjParm[0], psDefn->ProjParm[1],
-                        psDefn->ProjParm[5], psDefn->ProjParm[6] );
+            oSRS.SetAE( adfParm[0], adfParm[1],
+                        adfParm[5], adfParm[6] );
             break;
         
           case CT_MillerCylindrical:
-            oSRS.SetMC( psDefn->ProjParm[0], psDefn->ProjParm[1],
-                        psDefn->ProjParm[5], psDefn->ProjParm[6] );
+            oSRS.SetMC( adfParm[0], adfParm[1],
+                        adfParm[5], adfParm[6] );
             break;
         
           case CT_Equirectangular:
-            oSRS.SetEquirectangular( psDefn->ProjParm[0], psDefn->ProjParm[1],
-                                     psDefn->ProjParm[5], psDefn->ProjParm[6] );
+            oSRS.SetEquirectangular( adfParm[0], adfParm[1],
+                                     adfParm[5], adfParm[6] );
             break;
         
           case CT_Gnomonic:
-            oSRS.SetGnomonic( psDefn->ProjParm[0], psDefn->ProjParm[1],
-                              psDefn->ProjParm[5], psDefn->ProjParm[6] );
+            oSRS.SetGnomonic( adfParm[0], adfParm[1],
+                              adfParm[5], adfParm[6] );
             break;
         
           case CT_LambertAzimEqualArea:
-            oSRS.SetLAEA( psDefn->ProjParm[0], psDefn->ProjParm[1],
-                          psDefn->ProjParm[5], psDefn->ProjParm[6] );
+            oSRS.SetLAEA( adfParm[0], adfParm[1],
+                          adfParm[5], adfParm[6] );
             break;
         
           case CT_Orthographic:
-            oSRS.SetOrthographic( psDefn->ProjParm[0], psDefn->ProjParm[1],
-                                  psDefn->ProjParm[5], psDefn->ProjParm[6] );
+            oSRS.SetOrthographic( adfParm[0], adfParm[1],
+                                  adfParm[5], adfParm[6] );
             break;
         
           case CT_Robinson:
-            oSRS.SetRobinson( psDefn->ProjParm[1],
-                              psDefn->ProjParm[5], psDefn->ProjParm[6] );
+            oSRS.SetRobinson( adfParm[1],
+                              adfParm[5], adfParm[6] );
             break;
         
           case CT_Sinusoidal:
-            oSRS.SetSinusoidal( psDefn->ProjParm[1],
-                                psDefn->ProjParm[5], psDefn->ProjParm[6] );
+            oSRS.SetSinusoidal( adfParm[1],
+                                adfParm[5], adfParm[6] );
             break;
         
           case CT_VanDerGrinten:
-            oSRS.SetVDG( psDefn->ProjParm[1],
-                         psDefn->ProjParm[5], psDefn->ProjParm[6] );
+            oSRS.SetVDG( adfParm[1],
+                         adfParm[5], adfParm[6] );
             break;
 
           case CT_PolarStereographic:
-            oSRS.SetPS( psDefn->ProjParm[0], psDefn->ProjParm[1],
-                        psDefn->ProjParm[4],
-                        psDefn->ProjParm[5], psDefn->ProjParm[6] );
+            oSRS.SetPS( adfParm[0], adfParm[1],
+                        adfParm[4],
+                        adfParm[5], adfParm[6] );
             break;
         
           case CT_LambertConfConic_2SP:
-            oSRS.SetLCC( psDefn->ProjParm[0], psDefn->ProjParm[1],
-                         psDefn->ProjParm[2], psDefn->ProjParm[3],
-                         psDefn->ProjParm[5], psDefn->ProjParm[6] );
+            oSRS.SetLCC( adfParm[0], adfParm[1],
+                         adfParm[2], adfParm[3],
+                         adfParm[5], adfParm[6] );
             break;
         
           case CT_AlbersEqualArea:
-            oSRS.SetACEA( psDefn->ProjParm[0], psDefn->ProjParm[1],
-                          psDefn->ProjParm[2], psDefn->ProjParm[3],
-                          psDefn->ProjParm[5], psDefn->ProjParm[6] );
+            oSRS.SetACEA( adfParm[0], adfParm[1],
+                          adfParm[2], adfParm[3],
+                          adfParm[5], adfParm[6] );
             break;
-        
         }
 
 /* -------------------------------------------------------------------- */
