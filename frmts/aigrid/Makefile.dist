@@ -1,6 +1,7 @@
 
 
-OBJ	=	aigopen.o gridlib.o cpl_vsisimple.o cpl_conv.o cpl_error.o
+OBJ	=	aigopen.o gridlib.o aigccitt.o \
+		cpl_vsisimple.o cpl_conv.o cpl_error.o
 
 default:	aitest
 

@@ -34,7 +34,7 @@ install-obj:	$(foreach file,$(OBJ),../o/$(file))
 aitest-dist:
 	rm -rf aitest_dist
 	mkdir aitest_dist
-	cp gridlib.c aitest.c aigrid.h aigopen.c aitest_dist
+	cp gridlib.c aitest.c aigrid.h aigopen.c aigccitt.c aitest_dist
 	cp $(GDAL_ROOT)/port/cpl_{vsisimple,conv,error}.cpp aitest_dist
 	cp $(GDAL_ROOT)/port/cpl_{port,conv,vsi,config,error}.h aitest_dist
 	cp Makefile.dist aitest_dist/Makefile
