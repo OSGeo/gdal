@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.82  2004/06/24 03:10:49  warmerda
+ * update to GDAL 1.2.1
+ *
  * Revision 1.81  2004/04/29 13:42:58  warmerda
  * added C Offset/Scale entry points
  *
@@ -163,13 +166,13 @@
 /*      GDAL Version Information.                                       */
 /* -------------------------------------------------------------------- */
 #ifndef GDAL_VERSION_NUM
-#  define GDAL_VERSION_NUM      1201
+#  define GDAL_VERSION_NUM      1210
 #endif
 #ifndef GDAL_RELEASE_DATE
-#  define GDAL_RELEASE_DATE     20040310
+#  define GDAL_RELEASE_DATE     20040623
 #endif
 #ifndef GDAL_RELEASE_NAME
-#  define GDAL_RELEASE_NAME     "1.2.0.1 (dev)"
+#  define GDAL_RELEASE_NAME     "1.2.1.0"
 #endif
 
 /* -------------------------------------------------------------------- */
