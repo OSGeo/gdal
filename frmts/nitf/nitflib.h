@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2002/12/17 21:23:15  warmerda
+ * implement LUT reading and writing
+ *
  * Revision 1.4  2002/12/17 20:03:08  warmerda
  * added rudimentary NITF 1.1 support
  *
@@ -107,6 +110,7 @@ typedef struct {
     char      szISUBCAT[7];
 
     int       nSignificantLUTEntries;
+    int       nLUTLocation;
     unsigned char *pabyLUT;
 
 } NITFBandInfo;
@@ -171,6 +175,8 @@ int       CPL_DLL  NITFWriteImageBlock( NITFImage *, int nBlockX, int nBlockY,
                                         int nBand, void *pData );
 int       CPL_DLL  NITFWriteImageLine( NITFImage *, int nLine, int nBand, 
                                        void *pData );
+int       CPL_DLL  NITFWriteLUT( NITFImage *, int nBand, int nColors, 
+                                 unsigned char *pabyLUT );
 
 #define BLKREAD_OK    0
 #define BLKREAD_NULL  1

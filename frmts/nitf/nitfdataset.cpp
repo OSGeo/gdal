@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2002/12/17 21:23:15  warmerda
+ * implement LUT reading and writing
+ *
  * Revision 1.2  2002/12/17 05:26:26  warmerda
  * implement basic write support
  *
@@ -96,6 +99,7 @@ class NITFRasterBand : public GDALRasterBand
 
     virtual GDALColorInterp GetColorInterpretation();
     virtual GDALColorTable *GetColorTable();
+    virtual CPLErr SetColorTable( GDALColorTable * ); 
 };
 
 
@@ -293,6 +297,34 @@ GDALColorTable *NITFRasterBand::GetColorTable()
 
 {
     return poColorTable;
+}
+
+/************************************************************************/
+/*                           SetColorTable()                            */
+/************************************************************************/
+
+CPLErr NITFRasterBand::SetColorTable( GDALColorTable *poNewCT )
+
+{
+    GByte abyNITFLUT[768];
+    int   i;
+    int   nCount = MIN(256,poNewCT->GetColorEntryCount());
+
+    memset( abyNITFLUT, 0, 768 );
+    for( i = 0; i < nCount; i++ )
+    {
+        GDALColorEntry sEntry;
+
+        poNewCT->GetColorEntryAsRGB( i, &sEntry );
+        abyNITFLUT[i    ] = sEntry.c1;
+        abyNITFLUT[i+256] = sEntry.c2;
+        abyNITFLUT[i+512] = sEntry.c3;
+    }
+
+    if( NITFWriteLUT( psImage, nBand, nCount, abyNITFLUT ) )
+        return CE_None;
+    else
+        return CE_Failure;
 }
 
 /************************************************************************/
@@ -565,9 +597,14 @@ NITFCreateCopy( const char *pszFilename, GDALDataset *poSrcDS,
         
         else if( poSrcDS->GetRasterCount() == 1 && eType == GDT_Byte
                  && poBand1->GetColorTable() != NULL )
+        {
             papszFullOptions = 
                 CSLSetNameValue( papszFullOptions, "IREP", "RGB/LUT" );
-        
+            papszFullOptions = 
+                CSLSetNameValue( papszFullOptions, "LUT_SIZE", 
+                  CPLSPrintf("%d", 
+                             poBand1->GetColorTable()->GetColorEntryCount()) );
+        }
         else if( GDALDataTypeIsComplex(eType) )
             papszFullOptions = 
                 CSLSetNameValue( papszFullOptions, "IREP", "NODISPLY" );
