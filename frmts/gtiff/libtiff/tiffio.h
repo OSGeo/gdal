@@ -1,4 +1,4 @@
-/* $Id: tiffio.h,v 1.34 2004/07/11 20:09:07 dron Exp $ */
+/* $Id: tiffio.h,v 1.35 2004/09/01 18:43:11 dron Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -309,12 +309,23 @@ extern	tsize_t TIFFVTileSize(TIFF*, uint32);
 extern	uint32 TIFFDefaultStripSize(TIFF*, uint32);
 extern	void TIFFDefaultTileSize(TIFF*, uint32*, uint32*);
 extern	int TIFFFileno(TIFF*);
+extern  int TIFFSetFileno(TIFF*, int);
+extern  thandle_t TIFFClientdata(TIFF*);
+extern  thandle_t TIFFSetClientdata(TIFF*, thandle_t);
 extern	int TIFFGetMode(TIFF*);
+extern	int TIFFSetMode(TIFF*, int);
 extern	int TIFFIsTiled(TIFF*);
 extern	int TIFFIsByteSwapped(TIFF*);
 extern	int TIFFIsUpSampled(TIFF*);
 extern	int TIFFIsMSB2LSB(TIFF*);
 extern	int TIFFIsBigEndian(TIFF*);
+extern	TIFFReadWriteProc TIFFGetReadProc(TIFF*);
+extern	TIFFReadWriteProc TIFFGetWriteProc(TIFF*);
+extern	TIFFSeekProc TIFFGetSeekProc(TIFF*);
+extern	TIFFCloseProc TIFFGetCloseProc(TIFF*);
+extern	TIFFSizeProc TIFFGetSizeProc(TIFF*);
+extern	TIFFMapFileProc TIFFGetMapFileProc(TIFF*);
+extern	TIFFUnmapFileProc TIFFGetUnmapFileProc(TIFF*);
 extern	uint32 TIFFCurrentRow(TIFF*);
 extern	tdir_t TIFFCurrentDirectory(TIFF*);
 extern	tdir_t TIFFNumberOfDirectories(TIFF*);
@@ -367,6 +378,7 @@ extern	TIFF* TIFFClientOpen(const char*, const char*,
 	    TIFFSizeProc,
 	    TIFFMapFileProc, TIFFUnmapFileProc);
 extern	const char* TIFFFileName(TIFF*);
+extern const char* TIFFSetFileName(TIFF*, const char *);
 extern	void TIFFError(const char*, const char*, ...);
 extern	void TIFFWarning(const char*, const char*, ...);
 extern	TIFFErrorHandler TIFFSetErrorHandler(TIFFErrorHandler);
@@ -480,3 +492,5 @@ extern  void TIFFSetClientInfo( TIFF *, void *, const char * );
 }
 #endif
 #endif /* _TIFFIO_ */
+
+/* vim: set ts=8 sts=8 sw=8 noet: */

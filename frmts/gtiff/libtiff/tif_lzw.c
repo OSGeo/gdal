@@ -1,4 +1,4 @@
-/* $Id: tif_lzw.c,v 1.21 2004/07/24 19:01:15 dron Exp $ */
+/* $Id: tif_lzw.c,v 1.22 2004/09/08 18:01:29 dron Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -415,7 +415,7 @@ LZWDecode(TIFF* tif, tidata_t op0, tsize_t occ0, tsample_t s)
 			NextCode(tif, sp, bp, code, GetNextCode);
 			if (code == CODE_EOI)
 				break;
-			*op++ = code, occ--;
+			*op++ = (char)code, occ--;
 			oldcodep = sp->dec_codetab + code;
 			continue;
 		}
@@ -501,7 +501,7 @@ LZWDecode(TIFF* tif, tidata_t op0, tsize_t occ0, tsample_t s)
 			}
 			op += len, occ -= len;
 		} else
-			*op++ = code, occ--;
+			*op++ = (char)code, occ--;
 	}
 
 	tif->tif_rawcp = (tidata_t) bp;
@@ -1076,3 +1076,5 @@ bad:
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 #endif /* LZW_SUPPORT */
+
+/* vim: set ts=8 sts=8 sw=8 noet: */

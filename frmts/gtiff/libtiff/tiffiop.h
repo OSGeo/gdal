@@ -1,4 +1,4 @@
-/* $Id: tiffiop.h,v 1.22 2004/08/01 10:41:56 dron Exp $ */
+/* $Id: tiffiop.h,v 1.24 2004/08/19 08:22:01 dron Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -178,6 +178,7 @@ struct tiff {
 /* tag support */
 	TIFFFieldInfo**	tif_fieldinfo;	/* sorted table of registered tags */
 	int		tif_nfields;	/* # entries in registered tag table */
+	const TIFFFieldInfo *tif_foundfield;/* cached pointer to already found tag */
         TIFFTagMethods  tif_tagmethods; /* tag get/set/print routines */
         TIFFClientInfoLink *tif_clientinfo; /* extra client information. */
 };
