@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2003/06/03 17:36:47  warmerda
+ * Added RPC entry points
+ *
  * Revision 1.10  2003/03/02 05:24:35  warmerda
  * added GDALChecksumImage
  *
@@ -131,6 +134,15 @@ GDALCreateGCPTransformer( int nGCPCount, const GDAL_GCP *pasGCPList,
                           int nReqOrder, int bReversed );
 void CPL_DLL GDALDestroyGCPTransformer( void *pTransformArg );
 int CPL_DLL GDALGCPTransform( 
+    void *pTransformArg, int bDstToSrc, int nPointCount,
+    double *x, double *y, double *z, int *panSuccess );
+
+/* RPC based transformer ... src is pixel/line/elev, dst is long/lat/elev */
+
+void CPL_DLL *
+GDALCreateRPCTransformer( char **papszRPCMetadata, int bReversed );
+void CPL_DLL GDALDestroyRPCTransformer( void *pTransformArg );
+int CPL_DLL GDALRPCTransform( 
     void *pTransformArg, int bDstToSrc, int nPointCount,
     double *x, double *y, double *z, int *panSuccess );
 
