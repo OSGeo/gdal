@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2002/03/06 20:08:24  warmerda
+ * add accelerated GetFeatureCount and GetExtent
+ *
  * Revision 1.2  2002/01/25 20:37:23  warmerda
  * added driver and related classes
  *
@@ -85,6 +88,9 @@ class OGRGMLLayer : public OGRLayer
 
     void		ResetReading();
     OGRFeature *	GetNextFeature();
+
+    int                 GetFeatureCount( int bForce = TRUE );
+    OGRErr              GetExtent(OGREnvelope *psExtent, int bForce = TRUE);
 
     OGRErr              CreateFeature( OGRFeature *poFeature );
     
