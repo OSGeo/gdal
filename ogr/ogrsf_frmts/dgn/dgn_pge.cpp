@@ -13,6 +13,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2002/04/11 14:22:31  warmerda
+ * skip tags without tagsets
+ *
  * Revision 1.5  2002/03/25 17:12:30  warmerda
  * allow wildcarded tagsets
  *
@@ -131,6 +134,14 @@ int DGNReadTags( const char *pszFilename, int nTagScheme,
                     break;
                 }
             }
+        }
+
+        if( psTagDef == NULL )
+        {
+            CPLDebug( "PGE_DGN", 
+                      "Skipping tag %d:%d since no matching tagset found.",
+                      psTag->tagSet, psTag->tagIndex );
+            continue;
         }
 
 /* -------------------------------------------------------------------- */
