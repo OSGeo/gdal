@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.27  2000/06/09 14:21:53  warmerda
+ * Don't try to write geotiff info to read-only files.
+ *
  * Revision 1.26  2000/05/04 13:56:28  warmerda
  * Avoid having a block ysize larger than the whole file for stripped files.
  *
@@ -622,7 +625,8 @@ GTiffDataset::~GTiffDataset()
     if( poColorTable != NULL )
         delete poColorTable;
 
-    WriteGeoTIFFInfo();
+    if( bNewDataset )
+        WriteGeoTIFFInfo();
 
     if( bBase )
     {
