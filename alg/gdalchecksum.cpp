@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2003/05/02 16:02:06  dron
+ * Memory leak fixed.
+ *
  * Revision 1.2  2003/03/13 16:47:20  warmerda
  * fixed bug in non-complex case
  *
@@ -82,6 +85,8 @@ int GDALChecksumImage( GDALRasterBandH hBand,
             nChecksum &= 0xffff;
         }
     }
+
+    CPLFree( panLineData );
 
     return nChecksum;
 }
