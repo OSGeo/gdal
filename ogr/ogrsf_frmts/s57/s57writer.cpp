@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2003/09/17 21:13:44  warmerda
+ * write ATTF ahead of FSPT, dont write explicit FIELD_TERMINATOR
+ *
  * Revision 1.2  2003/09/15 20:53:06  warmerda
  * fleshed out feature writing
  *
@@ -765,7 +768,7 @@ int S57Writer::WritePrimitive( OGRFeature *poFeature )
         szName[2] = (nRCID & 0xff00) >> 8;
         szName[3] = (nRCID & 0xff0000) >> 16;
         szName[4] = (nRCID & 0xff000000) >> 24;
-        
+
         poRec->SetStringSubfield( "VRPT", 0, "NAME", 1, szName, 5 );
         poRec->SetIntSubfield   ( "VRPT", 0, "ORNT", 1, 
                                   poFeature->GetFieldAsInteger( "ORNT_1") );
@@ -840,6 +843,15 @@ int S57Writer::WriteCompleteFeature( OGRFeature *poFeature )
                               poFeature->GetFieldAsInteger( "FIDS") );
 
 /* -------------------------------------------------------------------- */
+/*      ATTF support.                                                   */
+/* -------------------------------------------------------------------- */
+    
+    if( poRegistrar != NULL 
+        && poRegistrar->SelectClass( poFeature->GetDefnRef()->GetName() )
+        && !WriteATTF( poRec, poFeature ) )
+        return FALSE;
+
+/* -------------------------------------------------------------------- */
 /*      Add the FSPT if needed.                                         */
 /* -------------------------------------------------------------------- */
     if( poFeature->IsFieldSet( poFeature->GetFieldIndex("NAME_RCNM") ) )
@@ -877,15 +889,6 @@ int S57Writer::WriteCompleteFeature( OGRFeature *poFeature )
                             (const char *) pabyRawData, nRawDataSize );
         CPLFree( pabyRawData );
     }
-
-/* -------------------------------------------------------------------- */
-/*      ATTF support.                                                   */
-/* -------------------------------------------------------------------- */
-    
-    if( poRegistrar != NULL 
-        && poRegistrar->SelectClass( poFeature->GetDefnRef()->GetName() )
-        && !WriteATTF( poRec, poFeature ) )
-        return FALSE;
 
 /* -------------------------------------------------------------------- */
 /*      Write out the record.                                           */
@@ -957,8 +960,6 @@ int S57Writer::WriteATTF( DDFRecord *poRec, OGRFeature *poFeature )
     
         nACount++;
     }
-
-    achRawData[nRawSize++] = DDF_FIELD_TERMINATOR;
 
 /* -------------------------------------------------------------------- */
 /*      If we got no attributes, return without adding ATTF.            */
