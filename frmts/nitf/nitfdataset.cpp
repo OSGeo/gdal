@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2003/06/23 18:32:06  warmerda
+ * dont return projectionref if we dont have a geotransform
+ *
  * Revision 1.8  2003/06/03 19:44:26  warmerda
  * added RPC coefficient support
  *
@@ -679,7 +682,10 @@ CPLErr NITFDataset::SetGeoTransform( double *padfGeoTransform )
 const char *NITFDataset::GetProjectionRef()
 
 {
-    return pszProjection;
+    if( bGotGeoTransform )
+        return pszProjection;
+    else
+        return "";
 }
 
 /************************************************************************/
