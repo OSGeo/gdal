@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2001/03/26 18:31:55  warmerda
+ * Fixed nodata handling in first constructor.
+ *
  * Revision 1.8  2001/03/23 03:25:32  warmerda
  * Added nodata support
  *
@@ -82,6 +85,9 @@ RawRasterBand::RawRasterBand( GDALDataset *poDS, int nBand,
               poDS, nBand, fpRaw, nImgOffset, nPixelOffset, nLineOffset, 
               GDALGetDataTypeName(eDataType), bNativeOrder );
 
+    dfNoDataValue = 0.0;
+    bNoDataSet = FALSE;
+
 /* -------------------------------------------------------------------- */
 /*      Treat one scanline as the block size.                           */
 /* -------------------------------------------------------------------- */
@@ -121,7 +127,7 @@ RawRasterBand::RawRasterBand( FILE * fpRaw, unsigned int nImgOffset,
               GDALGetDataTypeName(eDataType), bNativeOrder );
 
     dfNoDataValue = 0.0;
-    bNoDataSet = TRUE;
+    bNoDataSet = FALSE;
 
 /* -------------------------------------------------------------------- */
 /*      Treat one scanline as the block size.                           */
