@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2000/09/23 02:22:29  warmerda
+ * added geotransform support
+ *
  * Revision 1.4  2000/09/22 03:20:06  warmerda
  * added projection support, and error handling
  *
@@ -83,11 +86,14 @@ class GRASSDataset : public GDALDataset
 
     char	*pszProjection;
 
+    double	adfGeoTransform[6];
+
   public:
                  GRASSDataset();
                  ~GRASSDataset();
 
     virtual const char *GetProjectionRef(void);
+    virtual CPLErr GetGeoTransform( double * );
 
     static GDALDataset *Open( GDALOpenInfo * );
 };
@@ -270,6 +276,13 @@ GRASSDataset::GRASSDataset()
 
 {
     pszProjection = NULL;
+
+    adfGeoTransform[0] = 0.0;
+    adfGeoTransform[1] = 1.0;
+    adfGeoTransform[2] = 0.0;
+    adfGeoTransform[3] = 0.0;
+    adfGeoTransform[4] = 0.0;
+    adfGeoTransform[5] = 1.0;
 }
 
 /************************************************************************/
@@ -292,6 +305,17 @@ const char *GRASSDataset::GetProjectionRef()
         return "";
     else
         return pszProjection;
+}
+
+/************************************************************************/
+/*                          GetGeoTransform()                           */
+/************************************************************************/
+
+CPLErr GRASSDataset::GetGeoTransform( double * padfGeoTransform ) 
+{
+    memcpy( padfGeoTransform, adfGeoTransform, sizeof(double) * 6 );
+    
+    return CE_None;
 }
 
 /************************************************************************/
@@ -343,6 +367,13 @@ GDALDataset *GRASSDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->nRasterYSize = sCellInfo.rows;
 
     G_set_window( &sCellInfo );
+
+    poDS->adfGeoTransform[0] = sCellInfo.west;
+    poDS->adfGeoTransform[1] = sCellInfo.ew_res;
+    poDS->adfGeoTransform[2] = 0.0;
+    poDS->adfGeoTransform[3] = sCellInfo.north;
+    poDS->adfGeoTransform[4] = 0.0;
+    poDS->adfGeoTransform[5] = -1 * sCellInfo.ns_res;
 
 /* -------------------------------------------------------------------- */
 /*      Try to get a projection definition.                             */
