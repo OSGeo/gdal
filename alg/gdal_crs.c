@@ -51,6 +51,9 @@
  ***************************************************************************
  *
  * $Log$
+ * Revision 1.7  2004/08/11 19:01:56  warmerda
+ * default to 2nd order if we have enough points for 3rd order but 0 requested
+ *
  * Revision 1.6  2004/08/09 14:38:27  warmerda
  * added serialize/deserialize support for warpoptions and transformers
  *
@@ -159,7 +162,7 @@ void *GDALCreateGCPTransformer( int nGCPCount, const GDAL_GCP *pasGCPList,
     if( nReqOrder == 0 )
     {
         if( nGCPCount >= 10 )
-            nReqOrder = 3;
+            nReqOrder = 2; /*for now we avoid 3rd order since it is unstable*/
         else if( nGCPCount >= 6 )
             nReqOrder = 2;
         else
