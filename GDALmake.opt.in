@@ -24,7 +24,7 @@ INST_INCLUDE	=	@exec_prefix@/include
 INST_DATA 	=	@exec_prefix@/share/gdal
 INST_LIB	=	@libdir@
 INST_BIN	=	@bindir@
-INST_PYMOD      =       @pyexecdir@
+INST_PYMOD      =       @pymoddir@
 
 #
 #	Whether we use debug flags, or optimization is determined by

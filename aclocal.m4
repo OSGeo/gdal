@@ -229,7 +229,7 @@ AC_DEFUN(AM_PATH_PYTHON,
      PYTHON=no
   fi
   if test "$PYTHON" != no ; then
-    AC_MSG_CHECKING([where .py files should go])
+    AC_MSG_CHECKING([where python Makefiles are])
 changequote(,)dnl
     python_prefix="`$PYTHON -c '
 import sys
@@ -266,8 +266,26 @@ changequote([, ])dnl
     pythondir='$(prefix)/lib/site-python'
     pyexecdir='$(exec_prefix)/lib/site-python'
   fi
+
+  AC_ARG_WITH(pymoddir,[  --with-pymoddir=ARG     Override Python package install dir)],,)
+
+  if test "$PYTHON" != "no" ; then
+    AC_MSG_CHECKING([where .py files should go])
+
+    if test "$with_pymoddir" = "" ; then
+       pymoddir=$pyexecdir
+    else
+       pymoddir=$with_pymoddir
+    fi
+
+    export pymoddir
+    AC_MSG_RESULT($pymoddir)
+  fi  
+
   AC_SUBST(pythondir)
-  AC_SUBST(pyexecdir)])
+  AC_SUBST(pyexecdir)
+  AC_SUBST(pymoddir)
+])
 
 
 dnl finds information needed for compilation of shared library style python
