@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2002/12/03 18:07:40  warmerda
+ * added VQLUT reporting
+ *
  * Revision 1.2  2002/12/03 04:43:54  warmerda
  * lots of work
  *
@@ -67,9 +70,16 @@ int main( int nArgc, char ** papszArgv )
 /*      Dump first TRE tag if there are any.                            */
 /* -------------------------------------------------------------------- */
     if( psFile->pachTRE != NULL )
+    {
         printf( "File contains %d bytes of TRE data.  "
-                "The first tag is %6.6s.\n\n", 
+                "The first tag is %6.6s.\n", 
                 psFile->nTREBytes, psFile->pachTRE );
+
+        if( psFile->apanVQLUT[3] != NULL )
+            printf( "  ... got VQ LUTs.\n" );
+
+        printf( "\n" );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Report info from location table, if found.                      */
