@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_middatafile.cpp,v 1.1 1999/11/08 04:16:07 stephane Exp $
+ * $Id: mitab_ogr_driver.cpp,v 1.2 1999/11/12 02:44:36 stephane Exp $
  *
  * Name:     mitab_ogr_driver.cpp
  * Project:  MapInfo Mid/Mif, Tab ogr support
@@ -28,7 +28,13 @@
  * 
  **********************************************************************
  *
- * $Log: mitab_middatafile.cpp,v $
+ * $Log: mitab_ogr_driver.cpp,v $
+ * Revision 1.2  1999/11/12 02:44:36  stephane
+ * added comment, change Register name.
+ *
+ * Revision 1.1  1999/11/08 21:05:51  svillene
+ * first revision
+ *
  * Revision 1.1  1999/11/08 04:16:07  stephane
  * First Revision
  *

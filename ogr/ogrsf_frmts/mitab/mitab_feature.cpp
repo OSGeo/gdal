@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_feature.cpp,v 1.13 1999/11/08 04:41:46 stephane Exp $
+ * $Id: mitab_feature.cpp,v 1.14 1999/11/14 04:47:54 daniel Exp $
  *
  * Name:     mitab_feature.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -28,6 +28,10 @@
  **********************************************************************
  *
  * $Log: mitab_feature.cpp,v $
+ * Revision 1.14  1999/11/14 04:47:54  daniel
+ * Fixed precision in writing angles.  Also changed the way ARCs start/end
+ * angles are handled on read and write.
+ *
  * Revision 1.13  1999/11/08 04:41:46  stephane
  * Modification in arc GeometryType
  *
@@ -818,7 +822,7 @@ int TABFontPoint::WriteGeometryToMAPFile(TABMAPFile *poMapFile)
      * Contrary to arc start/end angles, no conversion based on 
      * origin quadrant is required here
      *------------------------------------------------------------*/
-   poObjBlock->WriteInt16((int)(m_dAngle * 10));
+   poObjBlock->WriteInt16(ROUND_INT(m_dAngle * 10.0));
 
     poObjBlock->WriteIntCoord(nX, nY);
 
@@ -2885,8 +2889,18 @@ int TABArc::ReadGeometryFromMAPFile(TABMAPFile *poMapFile)
          * This should be necessary only when X axis is flipped.
          * __TODO__ Why is order of start/end values reversed as well???
          *------------------------------------------------------------*/
-        if (poMapFile->GetHeaderBlock()->m_nCoordOriginQuadrant==2 ||
-            poMapFile->GetHeaderBlock()->m_nCoordOriginQuadrant==3)
+
+        /*-------------------------------------------------------------
+         * OK, Arc angles again!!!!!!!!!!!!
+         * After further tests, it appears that the angle values ALWAYS
+         * have to be flipped, no matter which quadrant the file is in.
+         * This does not make any sense, so I suspect that there is something
+         * that we are missing here!
+         *------------------------------------------------------------*/
+
+        if (TRUE
+            /* poMapFile->GetHeaderBlock()->m_nCoordOriginQuadrant==2 ||
+               poMapFile->GetHeaderBlock()->m_nCoordOriginQuadrant==3 */ )
         {
             // X axis direction is flipped... adjust angle
             m_dEndAngle = poObjBlock->ReadInt16()/10.0;
@@ -3055,9 +3069,33 @@ int TABArc::WriteGeometryToMAPFile(TABMAPFile *poMapFile)
      *------------------------------------------------------------*/
     CPLAssert(poMapFile->GetHeaderBlock()->m_nCoordOriginQuadrant == 1);
 
-    poObjBlock->WriteInt16((int)(m_dStartAngle*10));
-    poObjBlock->WriteInt16((int)(m_dEndAngle*10));
-    
+    if (TRUE)
+    {
+        /*-------------------------------------------------------------
+         * OK, Arc angles again!!!!!!!!!!!!
+         * After further tests, it appears that the angle values ALWAYS
+         * have to be flipped, no matter which quadrant the file is in.
+         * This does not make any sense, so I suspect that there is something
+         * that we are missing here!
+         *------------------------------------------------------------*/
+        double dAdjustedStartAngle, dAdjustedEndAngle;
+
+        dAdjustedStartAngle = (m_dStartAngle<=180.0) ? (180.0-m_dStartAngle):
+                                               (540.0-m_dStartAngle);
+        dAdjustedEndAngle   = (m_dEndAngle<=180.0) ? (180.0-m_dEndAngle):
+                                               (540.0-m_dEndAngle);
+        poObjBlock->WriteInt16(ROUND_INT(dAdjustedEndAngle*10.0));
+        poObjBlock->WriteInt16(ROUND_INT(dAdjustedStartAngle*10.0));
+    }
+    else
+    {
+        /* This is what we should logically do... but looks like MapInfo
+         * does not like arc angles written this way...
+         */
+        poObjBlock->WriteInt16(ROUND_INT(m_dStartAngle*10.0));
+        poObjBlock->WriteInt16(ROUND_INT(m_dEndAngle*10.0));
+    }
+
     // An arc is defined by its defining ellipse's MBR:
     poMapFile->Coordsys2Int(m_dCenterX-m_dXRadius, m_dCenterY-m_dYRadius,
                             nXMin, nYMin);
@@ -3080,7 +3118,7 @@ int TABArc::WriteGeometryToMAPFile(TABMAPFile *poMapFile)
 }
 
 /**********************************************************************
- *                   TABText::SetStart/EndAngle()
+ *                   TABArc::SetStart/EndAngle()
  *
  * Set the start/end angle values in degrees, making sure the values are
  * always in the range [0..360]
@@ -3472,7 +3510,7 @@ int TABText::WriteGeometryToMAPFile(TABMAPFile *poMapFile)
      * Contrary to arc start/end angles, no conversion based on 
      * origin quadrant is required here
      *----------------------------------------------------------------*/
-    poObjBlock->WriteInt16((int)(m_dAngle*10));
+    poObjBlock->WriteInt16(ROUND_INT(m_dAngle*10.0));
 
     poObjBlock->WriteInt16(m_nFontStyle);          // Font style/effect
 

@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_tabfile.cpp,v 1.17 1999/11/09 07:36:34 daniel Exp $
+ * $Id: mitab_tabfile.cpp,v 1.21 1999/11/14 17:49:18 stephane Exp $
  *
  * Name:     mitab_tabfile.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -30,6 +30,19 @@
  **********************************************************************
  *
  * $Log: mitab_tabfile.cpp,v $
+ * Revision 1.21  1999/11/14 17:49:18  stephane
+ * Add missing ifndef OGR in open
+ *
+ * Revision 1.20  1999/11/14 17:43:32  stephane
+ * Add ifdef to remove CPLError if OGR is define
+ *
+ * Revision 1.19  1999/11/14 04:49:11  daniel
+ * Support dataset with no .MAP/.ID files, support version 100 files,
+ * and return better error message for unsupported .TAB file types.
+ *
+ * Revision 1.18  1999/11/12 05:52:45  daniel
+ * Added SetMIFCoordSys()
+ *
  * Revision 1.17  1999/11/09 07:36:34  daniel
  * Modif. GetNextFeatureId() to skip deleted features when reading
  *
@@ -85,6 +98,8 @@
 
 #include "mitab.h"
 #include "mitab_utils.h"
+
+#include <ctype.h>      /* isspace() */
 
 /*=====================================================================
  *                      class TABFile
@@ -152,6 +167,10 @@ void TABFile::ResetReading()
  * Note that dataset extents will have to be set using SetBounds() before
  * any feature can be written to a newly created dataset.
  *
+ * In read mode, a valid dataset must have at least a .TAB and a .DAT file.
+ * The .MAP and .ID files are optional and if they do not exist then
+ * all features will be returned with NONE geometry.
+ *
  * Returns 0 on success, -1 on error.
  **********************************************************************/
 int TABFile::Open(const char *pszFname, const char *pszAccess)
@@ -162,8 +181,12 @@ int TABFile::Open(const char *pszFname, const char *pszAccess)
    
     if (m_poMAPFile)
     {
+#ifndef OGR
         CPLError(CE_Failure, CPLE_FileIO,
                  "Open() failed: object already contains an open file");
+#else
+	CPLErrorReset();
+#endif
         return -1;
     }
 
@@ -182,8 +205,12 @@ int TABFile::Open(const char *pszFname, const char *pszAccess)
     }
     else
     {
+#ifndef OGR
         CPLError(CE_Failure, CPLE_FileIO,
                  "Open() failed: access mode \"%s\" not supported", pszAccess);
+#else
+	CPLErrorReset();
+#endif
         return -1;
     }
 
@@ -203,9 +230,13 @@ int TABFile::Open(const char *pszFname, const char *pszAccess)
         strcpy(m_pszFname+nFnameLen-4, ".tab");
     else
     {
+#ifndef OGR
         CPLError(CE_Failure, CPLE_FileIO,
                  "Open() failed for %s: invalid filename extension",
                  m_pszFname);
+#else
+	CPLErrorReset();
+#endif
         CPLFree(m_pszFname);
         return -1;
     }
@@ -236,6 +267,39 @@ int TABFile::Open(const char *pszFname, const char *pszAccess)
         {
             // Failed... an error has already been produced.
             CPLFree(m_pszFname);
+#ifdef OGR
+	    CPLErrorReset();
+#endif
+            return -1;
+        }
+
+        /*-------------------------------------------------------------
+         * Look for a line with the "Fields" keyword.
+         * If there is no "Fields", then we may have a valid .TAB file,
+         * but we do not support it.
+         *------------------------------------------------------------*/
+        GBool bFieldsFound = FALSE;
+        for (int i=0; !bFieldsFound && m_papszTABFile && m_papszTABFile[i];i++)
+        {
+            const char *pszStr = m_papszTABFile[i];
+            while(*pszStr != '\0' && isspace(*pszStr))
+                pszStr++;
+            if (EQUALN(pszStr, "Fields", 6))
+                bFieldsFound = TRUE;
+        }
+
+        if ( !bFieldsFound )
+        {
+#ifndef OGR
+           CPLError(CE_Failure, CPLE_NotSupported,
+                     "%s contains no table field definition.  "
+                     "This type of .TAB file cannot be read by this library.",
+                     m_pszFname);
+#else
+	    CPLErrorReset();
+#endif
+            CPLFree(m_pszFname);
+
             return -1;
         }
     }
@@ -249,35 +313,11 @@ int TABFile::Open(const char *pszFname, const char *pszAccess)
         m_pszCharset = CPLStrdup("Neutral");
     }
 
-    /*-----------------------------------------------------------------
-     * Open .MAP file
-     *----------------------------------------------------------------*/
-    if (nFnameLen > 4 && strcmp(pszTmpFname+nFnameLen-4, ".TAB")==0)
-        strcpy(pszTmpFname+nFnameLen-4, ".MAP");
-    else 
-        strcpy(pszTmpFname+nFnameLen-4, ".map");
-
-#ifndef _WIN32
-    TABAdjustFilenameExtension(pszTmpFname);
-#endif
-
-    m_poMAPFile = new TABMAPFile;
-    m_poMAPFile->Open(pszTmpFname, pszAccess);
-
-    if (m_poMAPFile == NULL)
-    {
-        // Open Failed... an error has already been reported, just return.
-        CPLFree(pszTmpFname);
-        Close();
-        return -1;
-    }
-
-    m_nLastFeatureId = m_poMAPFile->GetMaxObjId();
 
     /*-----------------------------------------------------------------
      * Open .DAT file
      *----------------------------------------------------------------*/
-    if (nFnameLen > 4 && strcmp(pszTmpFname+nFnameLen-4, ".MAP")==0)
+    if (nFnameLen > 4 && strcmp(pszTmpFname+nFnameLen-4, ".TAB")==0)
         strcpy(pszTmpFname+nFnameLen-4, ".DAT");
     else 
         strcpy(pszTmpFname+nFnameLen-4, ".dat");
@@ -287,30 +327,88 @@ int TABFile::Open(const char *pszFname, const char *pszAccess)
 #endif
 
     m_poDATFile = new TABDATFile;
-    m_poDATFile->Open(pszTmpFname, pszAccess);
-
-
-    if (m_poDATFile == NULL)
+   
+    if ( m_poDATFile->Open(pszTmpFname, pszAccess) != 0)
     {
         // Open Failed... an error has already been reported, just return.
         CPLFree(pszTmpFname);
         Close();
+#ifdef OGR
+	CPLErrorReset();
+#endif
         return -1;
     }
 
-    CPLFree(pszTmpFname);
-    pszTmpFname = NULL;
+    m_nLastFeatureId = m_poDATFile->GetNumRecords();
+
 
     /*-----------------------------------------------------------------
-     * Build FeatureDefn (only in read access)
+     * Parse .TAB file and build FeatureDefn (only in read access)
      *----------------------------------------------------------------*/
     if (m_eAccessMode == TABRead && ParseTABFile() != 0)
     {
         // Failed... an error has already been reported, just return.
         CPLFree(pszTmpFname);
         Close();
+#ifdef OGR
+	CPLErrorReset();
+#endif
         return -1;
     }
+
+
+    /*-----------------------------------------------------------------
+     * Open .MAP (and .ID) file
+     * Note that the .MAP and .ID files are optional.  Failure to open them
+     * is not an error... it simply means that all features will be returned
+     * with NONE geometry.
+     *----------------------------------------------------------------*/
+    if (nFnameLen > 4 && strcmp(pszTmpFname+nFnameLen-4, ".DAT")==0)
+        strcpy(pszTmpFname+nFnameLen-4, ".MAP");
+    else 
+        strcpy(pszTmpFname+nFnameLen-4, ".map");
+
+#ifndef _WIN32
+    TABAdjustFilenameExtension(pszTmpFname);
+#endif
+
+    m_poMAPFile = new TABMAPFile;
+    if (m_eAccessMode == TABRead)
+    {
+        /*-------------------------------------------------------------
+         * Read access: .MAP/.ID are optional... try to open but return
+         * no error if files do not exist.
+         *------------------------------------------------------------*/
+        if (m_poMAPFile->Open(pszTmpFname, pszAccess, TRUE) < 0)
+        {
+            // File exists, but Open Failed... 
+            // we have to produce an error message
+#ifndef OGR
+            CPLError(CE_Failure, CPLE_FileIO, 
+                     "Open() failed for %s", pszTmpFname);
+#else
+            CPLErrorReset();
+#endif
+	    CPLFree(pszTmpFname);
+            Close();
+            return -1;
+        }
+    }
+    else if (m_poMAPFile->Open(pszTmpFname, pszAccess) != 0)
+    {
+        // Open Failed for write... 
+        // an error has already been reported, just return.
+        CPLFree(pszTmpFname);
+        Close();
+#ifdef OGR
+	CPLErrorReset();
+#endif
+        return -1;
+    }
+
+
+    CPLFree(pszTmpFname);
+    pszTmpFname = NULL;
 
     /*-----------------------------------------------------------------
      * __TODO__ we could probably call GetSpatialRef() here to force
@@ -367,6 +465,15 @@ int TABFile::ParseTABFile()
         if (EQUAL(papszTok[0], "!version"))
         {
             m_pszVersion = CPLStrdup(papszTok[1]);
+            if (EQUAL(m_pszVersion, "100"))
+            {
+                /* Version 100 files contain only the fields definition,
+                 * so we set default values for the other params.
+                 */
+                bInsideTableDef = TRUE;
+                m_pszCharset = CPLStrdup("Neutral");
+            }
+
         }
         else if (EQUAL(papszTok[0], "!charset"))
         {
@@ -378,7 +485,7 @@ int TABFile::ParseTABFile()
             bInsideTableDef = TRUE;
         }
         else if (bInsideTableDef &&
-                 EQUAL(papszTok[0], "Fields"))
+                 (EQUAL(papszTok[0],"Fields") || EQUAL(papszTok[0],"FIELDS:")))
         {
             /*---------------------------------------------------------
              * We found the list of table fields
@@ -530,6 +637,20 @@ int TABFile::ParseTABFile()
     }
 
     CSLDestroy(papszTok);
+
+    if (m_pszCharset == NULL)
+        m_pszCharset = CPLStrdup("Neutral");
+    if (m_pszVersion == NULL)
+        m_pszVersion = CPLStrdup("300");
+
+    if (m_poDefn->GetFieldCount() == 0)
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "%s contains no table field definition.  "
+                 "This type of .TAB file cannot be read by this library.",
+                 m_pszFname);
+        return -1;
+    }
 
     return 0;
 }
@@ -1312,6 +1433,76 @@ int TABFile::GetBounds(double &dXMin, double &dYMin,
 
     return 0;
 }
+
+/**********************************************************************
+ *                   TABFile::SetMIFCoordSys()
+ *
+ * Set projection for a new file using a MIF coordsys string.
+ *
+ * This function must be called after creating a new dataset and before any
+ * feature can be written to it.
+ *
+ * Returns 0 on success, -1 on error.
+ **********************************************************************/
+int TABFile::SetMIFCoordSys(const char *pszMIFCoordSys)
+{
+    if (m_eAccessMode != TABWrite)
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "SetMIFCoordSys() can be used only with Write access.");
+        return -1;
+    }
+
+    /*-----------------------------------------------------------------
+     * Check that dataset has been created but no feature set yet.
+     *----------------------------------------------------------------*/
+    if (m_poMAPFile && m_nLastFeatureId < 1)
+    {
+        OGRSpatialReference *poSpatialRef;
+
+        poSpatialRef = MITABCoordSys2SpatialRef( pszMIFCoordSys );
+
+        if (poSpatialRef)
+        {
+            double dXMin, dYMin, dXMax, dYMax;
+            if (SetSpatialRef(poSpatialRef) != 0)
+            {
+                if (MITABExtractCoordSysBounds(pszMIFCoordSys,
+                                               dXMin, dYMin, 
+                                               dXMax, dYMax) == TRUE)
+                {
+                    // If the coordsys string contains bounds, then use them
+                    if (SetBounds(dXMin, dYMin, dXMax, dYMax) != 0)
+                    {
+                        // Failed Setting Bounds... an error should have
+                        // been already reported.
+                        return -1;
+                    }
+                }
+            }
+            else
+            {
+                // Failed setting poSpatialRef... and error should have 
+                // been reported.
+                return -1;
+            }
+
+            // Release our handle on poSpatialRef
+            poSpatialRef->Dereference();
+        }
+    }
+    else
+    {
+        CPLError(CE_Failure, CPLE_AssertionFailed,
+                 "SetMIFCoordSys() can be called only after dataset has been "
+                 "created and before any feature is set.");
+        return -1;
+    }
+
+    return 0;
+}
+
+
 
 /************************************************************************/
 /*                           TestCapability()                           */

@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_miffile.cpp,v 1.3 1999/11/11 01:22:05 stephane Exp $
+ * $Id: mitab_miffile.cpp,v 1.5 1999/11/14 18:12:47 stephane Exp $
  *
  * Name:     mitab_tabfile.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -30,6 +30,12 @@
  **********************************************************************
  *
  * $Log: mitab_miffile.cpp,v $
+ * Revision 1.5  1999/11/14 18:12:47  stephane
+ * add a test if it's a empty line for unknown feature type
+ *
+ * Revision 1.4  1999/11/14 17:43:32  stephane
+ * Add ifdef to remove CPLError if OGR is define
+ *
  * Revision 1.3  1999/11/11 01:22:05  stephane
  * Remove DebugFeature call, Point Reading error, add IsValidFeature() to test correctly if we are on a feature
  *
@@ -110,9 +116,14 @@ int MIFFile::Open(const char *pszFname, const char *pszAccess)
     
     if (m_poMIDFile)
     {
+#ifndef OGR
         CPLError(CE_Failure, CPLE_FileIO,
                  "Open() failed: object already contains an open file");
+#else
+	CPLErrorReset();
+#endif
         return -1;
+
     }
 
     /*-----------------------------------------------------------------
@@ -130,8 +141,12 @@ int MIFFile::Open(const char *pszFname, const char *pszAccess)
     }
     else
     {
+#ifndef OGR
         CPLError(CE_Failure, CPLE_FileIO,
                  "Open() failed: access mode \"%s\" not supported", pszAccess);
+#else
+	CPLErrorReset();
+#endif
         return -1;
     }
 
@@ -148,9 +163,13 @@ int MIFFile::Open(const char *pszFname, const char *pszAccess)
         strcpy(m_pszFname+nFnameLen-4, ".mid");
     else
     {
+#ifndef OGR
         CPLError(CE_Failure, CPLE_FileIO,
                  "Open() failed for %s: invalid filename extension",
                  m_pszFname);
+#else
+	CPLErrorReset();
+#endif
         CPLFree(m_pszFname);
         return -1;
     }
@@ -173,10 +192,13 @@ int MIFFile::Open(const char *pszFname, const char *pszAccess)
     {
 	CPLFree(pszTmpFname);
 	Close();
-	
+#ifndef OGR	
 	CPLError(CE_Failure, CPLE_NotSupported,
                  "Unable to open the MID file.");
-	
+#else
+	CPLErrorReset();
+#endif
+
 	return -1;
     }
     /*-----------------------------------------------------------------
@@ -206,10 +228,13 @@ int MIFFile::Open(const char *pszFname, const char *pszAccess)
     {
         CPLFree(pszTmpFname);
         Close();
-	
+#ifndef OGR
 	CPLError(CE_Failure, CPLE_NotSupported,
                  "Unable to open the MID file.");
-	
+#else
+	CPLErrorReset();
+#endif
+
         return -1;
     }
 
@@ -223,10 +248,13 @@ int MIFFile::Open(const char *pszFname, const char *pszAccess)
     {
         CPLFree(pszTmpFname);
         Close();
-        
+
+#ifndef OGR  
 	CPLError(CE_Failure, CPLE_NotSupported,
                  "Unable to read the header file.");
-        
+#else
+	CPLErrorReset();
+#endif
 	return -1;
     }
 
@@ -235,9 +263,13 @@ int MIFFile::Open(const char *pszFname, const char *pszAccess)
     {
 	CPLFree(pszTmpFname);
         Close();
+#ifndef OGR
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Unable to count the number of feature.");
-        return -1;
+#else
+	CPLErrorReset();
+#endif
+       return -1;
     }
 
     /* Put the MID file at the correct location, on the first feature */
@@ -245,6 +277,9 @@ int MIFFile::Open(const char *pszFname, const char *pszAccess)
     {
 	CPLFree(pszTmpFname);
         Close();
+#ifdef OGR
+	CPLErrorReset();
+#endif
         return -1;
     }
 
@@ -958,8 +993,9 @@ TABFeature *MIFFile::GetFeatureRef(int nFeatureId)
 	}
 	else
 	{
-	    CPLError(CE_Failure, CPLE_NotSupported,
-                 "Error during reading, unknown type %s.",
+	    if (!EQUAL(pszLine,""))
+	       CPLError(CE_Failure, CPLE_NotSupported,
+                   "Error during reading, unknown type %s.",
 		     pszLine);
 	
 	    //m_poCurFeature = new TABDebugFeature(m_poDefn);

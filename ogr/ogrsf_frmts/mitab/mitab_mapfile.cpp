@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_mapfile.cpp,v 1.7 1999/10/19 22:57:17 daniel Exp $
+ * $Id: mitab_mapfile.cpp,v 1.8 1999/11/14 04:43:31 daniel Exp $
  *
  * Name:     mitab_mapfile.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log: mitab_mapfile.cpp,v $
+ * Revision 1.8  1999/11/14 04:43:31  daniel
+ * Support dataset with no .MAP/.ID files
+ *
  * Revision 1.7  1999/10/19 22:57:17  daniel
  * Create m_poCurObjBlock only when needed to avoid empty blocks in files
  * and problems with MBR in header block of files with only "NONE" geometries
@@ -97,9 +100,17 @@ TABMAPFile::~TABMAPFile()
  * Open a .MAP file, and initialize the structures to be ready to read
  * objects from it.
  *
+ * Since .MAP and .ID files are optional, you can set bNoErrorMsg=TRUE to
+ * disable the error message and receive an return value of 1 if file 
+ * cannot be opened.  
+ * In this case, only the methods MoveToObjId() and GetCurObjType() can 
+ * be used.  They will behave as if the .ID file contained only null
+ * references, so all object will look like they have NONE geometries.
+ *
  * Returns 0 on success, -1 on error.
  **********************************************************************/
-int TABMAPFile::Open(const char *pszFname, const char *pszAccess)
+int TABMAPFile::Open(const char *pszFname, const char *pszAccess,
+                     GBool bNoErrorMsg /* = FALSE */)
 {
     FILE        *fp=NULL;
     TABRawBinBlock *poBlock=NULL;
@@ -110,6 +121,12 @@ int TABMAPFile::Open(const char *pszFname, const char *pszAccess)
                  "Open() failed: object already contains an open file");
         return -1;
     }
+
+    m_fp = NULL;
+    m_poHeader = NULL;
+    m_poIdIndex = NULL;
+    m_poSpIndex = NULL;
+    m_poToolDefTable = NULL;
 
     /*-----------------------------------------------------------------
      * Validate access mode and make sure we use binary access.
@@ -164,6 +181,24 @@ int TABMAPFile::Open(const char *pszFname, const char *pszAccess)
          *----------------------------------------------------------------*/
         poBlock = new TABMAPHeaderBlock(m_eAccessMode);
         poBlock->InitNewBlock(fp, 512, m_oBlockManager.AllocNewBlock() );
+    }
+    else if (bNoErrorMsg)
+    {
+        /*-----------------------------------------------------------------
+         * .MAP does not exist... produce no error message, but set
+         * the class members so that MoveToObjId() and GetCurObjType()
+         * can be used to return only NONE geometries.
+         *----------------------------------------------------------------*/
+        m_fp = NULL;
+        m_nCurObjType = TAB_GEOM_NONE;
+
+        /* Create a false header block that will return default
+         * values for projection and coordsys conversion stuff...
+         */
+        m_poHeader = new TABMAPHeaderBlock(m_eAccessMode);
+        m_poHeader->InitNewBlock(NULL, 512, 0 );
+
+        return 1;
     }
     else
     {
@@ -491,6 +526,21 @@ GInt32 TABMAPFile::GetMaxObjId()
 int   TABMAPFile::MoveToObjId(int nObjId)
 {
     int nFileOffset;
+
+    /*-----------------------------------------------------------------
+     * In read access mode, since the .MAP/.ID are optional, if the 
+     * file is not opened then we can still act as if one existed and
+     * make any object id look like a TAB_GEOM_NONE
+     *----------------------------------------------------------------*/
+    if (m_fp == NULL && m_eAccessMode == TABRead)
+    {
+        CPLAssert(m_poIdIndex == NULL && m_poCurObjBlock == NULL);
+        m_nCurObjPtr = 0;
+        m_nCurObjId = nObjId;
+        m_nCurObjType = TAB_GEOM_NONE;
+
+        return 0;
+    }
 
     if (m_poIdIndex == NULL || m_poCurObjBlock == NULL)
     {

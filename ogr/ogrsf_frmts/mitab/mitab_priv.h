@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_priv.h,v 1.10 1999/11/11 01:22:05 stephane Exp $
+ * $Id: mitab_priv.h,v 1.11 1999/11/14 04:43:56 daniel Exp $
  *
  * Name:     mitab_priv.h
  * Project:  MapInfo TAB Read/Write library
@@ -28,6 +28,9 @@
  **********************************************************************
  *
  * $Log: mitab_priv.h,v $
+ * Revision 1.11  1999/11/14 04:43:56  daniel
+ * Support dataset with no .MAP/.ID files
+ *
  * Revision 1.10  1999/11/11 01:22:05  stephane
  * Remove DebugFeature call, Point Reading error, add IsValidFeature() to test correctly if we are on a feature
  *
@@ -783,7 +786,8 @@ class TABMAPFile
     TABMAPFile();
     ~TABMAPFile();
 
-    int         Open(const char *pszFname, const char *pszAccess);
+    int         Open(const char *pszFname, const char *pszAccess,
+                     GBool bNoErrorMsg = FALSE );
     int         Close();
 
     int         Int2Coordsys(GInt32 nX, GInt32 nY, double &dX, double &dY);

@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_coordsys.cpp,v 1.4 1999/11/11 02:55:25 warmerda Exp $
+ * $Id: mitab_coordsys.cpp,v 1.5 1999/11/12 05:51:57 daniel Exp $
  *
  * Name:     mitab_coordsys.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log: mitab_coordsys.cpp,v $
+ * Revision 1.5  1999/11/12 05:51:57  daniel
+ * Added MITABExtractCoordSysBounds()
+ *
  * Revision 1.4  1999/11/11 02:55:25  warmerda
  * fixed problems with stereographic and survey ft
  *
@@ -940,4 +943,38 @@ char *MITABSpatialRef2CoordSys( OGRSpatialReference * poSR )
     }
 
     return( CPLStrdup( szCoordSys ) );
+}
+
+
+/************************************************************************/
+/*                      MITABExtractCoordSysBounds                      */
+/*                                                                      */
+/* Return TRUE if MIF coordsys string contains a BOUNDS parameter and   */
+/* Set x/y min/max values.                                              */
+/************************************************************************/
+
+GBool MITABExtractCoordSysBounds( const char * pszCoordSys,
+                                  double &dXMin, double &dYMin,
+                                  double &dXMax, double &dYMax )
+
+{
+    char	**papszFields;
+
+    if( pszCoordSys == NULL )
+        return NULL;
+    
+    papszFields = CSLTokenizeStringComplex( pszCoordSys, " ,()", TRUE, FALSE );
+
+    int iBounds = CSLFindString( papszFields, "Bounds" );
+
+    if (iBounds >= 0 && iBounds + 5 < CSLCount(papszFields))
+    {
+        dXMin = atof(papszFields[++iBounds]);
+        dYMin = atof(papszFields[++iBounds]);
+        dXMax = atof(papszFields[++iBounds]);
+        dYMax = atof(papszFields[++iBounds]);
+        return TRUE;
+    }
+
+    return FALSE;
 }

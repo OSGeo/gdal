@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab.h,v 1.13 1999/11/08 04:34:55 stephane Exp $
+ * $Id: mitab_ogr_driver.h,v 1.2 1999/11/12 02:44:36 stephane Exp $
  *
  * Name:     mitab_ogr_drive.h
  * Project:  Mid/mif tab ogr support
@@ -27,7 +27,13 @@
  * 
  **********************************************************************
  *
- * $Log: mitab.h,v $
+ * $Log: mitab_ogr_driver.h,v $
+ * Revision 1.2  1999/11/12 02:44:36  stephane
+ * added comment, change Register name.
+ *
+ * Revision 1.1  1999/11/08 21:05:51  svillene
+ * first revision
+ *
  *
  **********************************************************************/
 #include "mitab.h"

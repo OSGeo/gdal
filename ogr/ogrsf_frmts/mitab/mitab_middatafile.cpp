@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_middatafile.cpp,v 1.2 1999/11/11 01:22:05 stephane Exp $
+ * $Id: mitab_middatafile.cpp,v 1.3 1999/11/14 17:43:32 stephane Exp $
  *
  * Name:     mitab_datfile.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log: mitab_middatafile.cpp,v $
+ * Revision 1.3  1999/11/14 17:43:32  stephane
+ * Add ifdef to remove CPLError if OGR is define
+ *
  * Revision 1.2  1999/11/11 01:22:05  stephane
  * Remove DebugFeature call, Point Reading error, add IsValidFeature() to test correctly if we are on a feature
  *
@@ -85,8 +88,6 @@ int MIDDATAFile::Open(const char *pszFname, const char *pszAccess)
 {
    if (m_fp)
    {
-       CPLError(CE_Failure, CPLE_FileIO,
-                 "Open() failed: object already contains an open file");
        return -1;
    }
 
@@ -105,8 +106,6 @@ int MIDDATAFile::Open(const char *pszFname, const char *pszAccess)
     }
     else
     {
-        CPLError(CE_Failure, CPLE_FileIO,
-                 "Open() failed: access mode \"%s\" not supported", pszAccess);
         return -1;
     }
 
@@ -118,8 +117,6 @@ int MIDDATAFile::Open(const char *pszFname, const char *pszAccess)
 
     if (m_fp == NULL)
     {
-        CPLError(CE_Failure, CPLE_FileIO,
-                 "Open() failed for %s", m_pszFname);
         CPLFree(m_pszFname);
         m_pszFname = NULL;
         return -1;
