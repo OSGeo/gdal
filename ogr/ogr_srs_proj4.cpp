@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.51  2005/01/05 21:02:33  fwarmerdam
+ * added Goode Homolosine
+ *
  * Revision 1.50  2004/11/11 18:28:45  fwarmerdam
  * added Bonne projection support
  *
@@ -726,9 +729,16 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
 
     else if( EQUAL(pszProj,"gall") )
     {
-        SetSinusoidal( OSR_GDV( papszNV, "lon_0", 0.0 )+dfFromGreenwich, 
-                       OSR_GDV( papszNV, "x_0", 0.0 ), 
-                       OSR_GDV( papszNV, "y_0", 0.0 ) );
+        SetGS( OSR_GDV( papszNV, "lon_0", 0.0 )+dfFromGreenwich, 
+               OSR_GDV( papszNV, "x_0", 0.0 ), 
+               OSR_GDV( papszNV, "y_0", 0.0 ) );
+    }
+
+    else if( EQUAL(pszProj,"goode") )
+    {
+        SetGH( OSR_GDV( papszNV, "lon_0", 0.0 )+dfFromGreenwich, 
+               OSR_GDV( papszNV, "x_0", 0.0 ), 
+               OSR_GDV( papszNV, "y_0", 0.0 ) );
     }
 
     else if( EQUAL(pszProj,"lcc") ) 
@@ -1350,6 +1360,16 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
     {
         sprintf( szProj4+strlen(szProj4),
                  "+proj=gall +lon_0=%.16g +x_0=%.16g +y_0=%.16g ",
+                 GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0)
+                 - dfFromGreenwich,
+                 GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
+                 GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0) );
+    }
+
+    else if( EQUAL(pszProjection,SRS_PT_GOODE_HOMOLOSINE) )
+    {
+        sprintf( szProj4+strlen(szProj4),
+                 "+proj=goode +lon_0=%.16g +x_0=%.16g +y_0=%.16g ",
                  GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0)
                  - dfFromGreenwich,
                  GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),

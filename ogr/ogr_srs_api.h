@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.48  2005/01/05 21:02:33  fwarmerdam
+ * added Goode Homolosine
+ *
  * Revision 1.47  2004/11/11 18:28:45  fwarmerdam
  * added Bonne projection support
  *
@@ -238,6 +241,7 @@ typedef enum {
 #define SRS_PT_EQUIDISTANT_CONIC "Equidistant_Conic"
 #define SRS_PT_EQUIRECTANGULAR  "Equirectangular"
 #define SRS_PT_GALL_STEREOGRAPHIC "Gall_Stereographic"
+#define SRS_PT_GOODE_HOMOLOSINE "Goode_Homolosine"
 #define SRS_PT_GNOMONIC         "Gnomonic"
 #define SRS_PT_HOTINE_OBLIQUE_MERCATOR                                  \
                                 "Hotine_Oblique_Mercator"
@@ -514,6 +518,10 @@ OGRErr CPL_DLL OSRSetEquirectangular(OGRSpatialReferenceH hSRS,
 /** Gall Stereograpic */
 OGRErr CPL_DLL OSRSetGS( OGRSpatialReferenceH hSRS, double dfCentralMeridian,
                        double dfFalseEasting, double dfFalseNorthing );
+    
+/** Goode Homolosine */
+OGRErr CPL_DLL OSRSetGH( OGRSpatialReferenceH hSRS, double dfCentralMeridian,
+                         double dfFalseEasting, double dfFalseNorthing );
     
 /** Gnomonic */
 OGRErr CPL_DLL OSRSetGnomonic(OGRSpatialReferenceH hSRS,
