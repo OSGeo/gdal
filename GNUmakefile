@@ -142,6 +142,7 @@ install-actions:
 ifneq ($(PYTHON),no)
 	(cd pymod; $(MAKE) install)
 endif
-	$(INSTALL_LIB) $(LIBGDAL-yes) $(INST_LIB)
+	for f in $(LIBGDAL-yes) ; do $(INSTALL_LIB) $$f $(INST_LIB) ; done
 	for f in data/*.* ; do $(INSTALL_DATA) $$f $(INST_DATA) ; done
+	$(LIBTOOL_FINISH) $(INST_LIB)
 
