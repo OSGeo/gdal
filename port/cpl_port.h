@@ -38,6 +38,9 @@
  *   GUInt16, and GByte are defined.
  *
  * $Log$
+ * Revision 1.3  1998/12/14 04:50:07  warmerda
+ * Added DBMALLOC support
+ *
  * Revision 1.2  1998/12/04 21:38:40  danmo
  * Changed str*casecmp() to str*icmp() for WIN32
  *
@@ -72,6 +75,10 @@ typedef int		GBool;
 #include <math.h>
 #include <stdarg.h>
 #include <string.h>
+
+#ifdef DBMALLOC
+#include <dbmalloc.h>
+#endif
 
 /* ==================================================================== */
 /*      Other standard services.                                        */
