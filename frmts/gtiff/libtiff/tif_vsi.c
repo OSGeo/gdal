@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2005/03/18 20:30:57  fwarmerdam
+ * ensure we close the underlying file if the open fails.
+ *
  * Revision 1.6  2003/07/17 22:45:58  warmerda
  * avoid casting warning
  *
@@ -162,6 +165,8 @@ TIFFOpen(const char* name, const char* mode)
 
         if( tif != NULL )
             tif->tif_fd = 0;
+        else
+            VSIFCloseL( fp );
         
 	return tif;
 }
