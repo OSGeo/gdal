@@ -28,6 +28,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.28  2003/06/10 09:26:55  dron
+# Added SetAngularUnits() and GetAngularUnits().
+#
 # Revision 1.27  2003/05/30 21:47:37  warmerda
 # added OSRSetStatePlaneWithUnits
 #
@@ -262,6 +265,12 @@ class SpatialReference:
 
     def IsSame(self, other):
         return _gdal.OSRIsSame(self._o, other._o)
+
+    def SetAngularUnits(self, units_name, to_radians ):
+        return _gdal.OSRSetAngularUnits( self._o, units_name, to_radians )
+
+    def GetAngularUnits( self ):
+        return _gdal.OSRGetAngularUnits( self._o, 'NULL' )
 
     def SetLinearUnits(self, units_name, to_meters ):
         return _gdal.OSRSetLinearUnits( self._o, units_name, to_meters )

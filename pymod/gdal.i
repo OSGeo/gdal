@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.68  2003/06/10 09:26:55  dron
+ * Added SetAngularUnits() and GetAngularUnits().
+ *
  * Revision 1.67  2003/05/30 15:38:59  warmerda
  * updated to use SetStatePlaneWithUnits
  *
@@ -1285,6 +1288,8 @@ int     OSRSetAttrValue( OGRSpatialReferenceH hSRS, const char * pszNodePath,
 const char *OSRGetAttrValue( OGRSpatialReferenceH hSRS,
                              const char * pszName, int iChild /* = 0 */ );
 
+int     OSRSetAngularUnits( OGRSpatialReferenceH, const char *, double );
+double  OSRGetAngularUnits( OGRSpatialReferenceH, char ** );
 int     OSRSetLinearUnits( OGRSpatialReferenceH, const char *, double );
 double  OSRGetLinearUnits( OGRSpatialReferenceH, char ** );
 
