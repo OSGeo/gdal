@@ -68,6 +68,7 @@ gdal-config:	gdal-config.in ../GDALmake.opt ./GNUmakefile ../VERSION
 	rm -f gdal-config
 	echo '#!/bin/sh' > gdal-config
 	echo 'CONFIG_LIBS="$(CONFIG_LIBS)"' >> gdal-config
+	echo 'CONFIG_DEP_LIBS="$(LIBS)"' >> gdal-config
 	echo 'CONFIG_PREFIX="$(GDAL_ROOT)"' >> gdal-config
 	echo 'CONFIG_CFLAGS="-I$(GDAL_ROOT)/port -I$(GDAL_ROOT)/gcore -I$(GDAL_ROOT)/alg -I$(GDAL_ROOT)/ogr -I$(GDAL_ROOT)/ogr/ogrsf_frmts"' >> gdal-config
 	echo 'CONFIG_VERSION="'`cat ../VERSION`'"' >> gdal-config
@@ -80,6 +81,7 @@ gdal-config-inst:	gdal-config.in ../GDALmake.opt ./GNUmakefile ../VERSION
 	rm -f gdal-config-inst
 	echo '#!/bin/sh' > gdal-config-inst
 	echo 'CONFIG_LIBS="$(CONFIG_LIBS_INS)"' >> gdal-config-inst
+	echo 'CONFIG_DEP_LIBS="$(LIBS)"' >> gdal-config-inst
 	echo 'CONFIG_PREFIX="$(INST_PREFIX)"' >> gdal-config-inst
 	echo 'CONFIG_CFLAGS="-I$(INST_INCLUDE)"' >> gdal-config-inst
 	echo 'CONFIG_VERSION="'`cat ../VERSION`'"' >> gdal-config-inst
