@@ -10,3 +10,8 @@ all:
 	cd softmap
 	$(MAKE) 
 	cd ..
+
+clean:
+	cd softmap
+	$(MAKE) clean
+	cd ..
