@@ -11,14 +11,14 @@ OBJ	= \
 
 O_OBJ	=	$(foreach file,$(OBJ),../../o/$(file))
 
-ALL_C_FLAGS	=	  $(CFLAGS) $(HDF4_INCLUDE) -I.
+CPPFLAGS	:=	$(GDAL_INCLUDE) $(HDF4_INCLUDE) -I. $(CPPFLAGS) 
 
 default:	$(OBJ)
 
 clean:
-	rm -f $(O_OBJ) *.o *.a
+	$(RM) *.o *.a
 
-install-obj:	$(O_OBJ)
+install-obj:    $(SUBLIBS) $(O_OBJ)
 
 ../../o/%.o:	%.c
-	$(CC) -c -I$(GDAL_ROOT)/port $(ALL_C_FLAGS) $< -o $@
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c -o $@ $<
