@@ -67,6 +67,8 @@ $(OGR_LIB):	$(OBJ)
 web-update:	docs
 	cp html/* /u/www/projects/opengis/ogrhtml
 
+test:	reg-test reg-test2
+
 reg-test:
 	@rm -f s.out
 	@./reg_test.sh > s.out
@@ -77,4 +79,16 @@ reg-test:
 	else \
 	    echo "******* Results Don't Match Expected *********"; \
 	    diff s.out reg_test.log; \
+	fi
+
+reg-test2:
+	@rm -f s2.out
+	@./reg_test2.sh > s2.out
+	@if test "`diff s2.out reg_test2.log`" = '' ; then \
+	    echo "******* Results Match Expected *********"; \
+	    grep FAILURE s2.out; \
+	    rm s2.out; \
+	else \
+	    echo "******* Results Don't Match Expected *********"; \
+	    diff s2.out reg_test2.log; \
 	fi
