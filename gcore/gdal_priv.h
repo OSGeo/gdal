@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.46  2003/07/27 11:01:01  dron
+ * GDALRasterBlock::IsCached() method added.
+ *
  * Revision 1.45  2003/05/08 14:38:40  warmerda
  * added BlockBasedFlushCache
  *
@@ -386,8 +389,9 @@ class CPL_DLL GDALRasterBlock
 
     GDALRasterBand *GetBand() { return poBand; }
 
-    static int FlushCacheBlock();
+    static int  FlushCacheBlock();
     static void Verify();
+    static int  IsCached( int nXOff, int nYOff );
 };
 
 
