@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.39  2003/02/13 19:27:28  warmerda
+ * always append no_defs to avoid getting hosted by defaults file
+ *
  * Revision 1.38  2002/12/15 23:42:59  warmerda
  * added initial support for normalizing proj params
  *
@@ -1499,6 +1502,12 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
         sprintf( szProj4+strlen(szProj4), "+units=%s ",
                  pszPROJ4Units );
 
+/* -------------------------------------------------------------------- */
+/*      Add the no_defs flag to ensure that no values from              */
+/*      proj_def.dat are implicitly used with our definitions.          */
+/* -------------------------------------------------------------------- */
+    sprintf( szProj4+strlen(szProj4), "+no_defs " );
+    
     *ppszProj4 = CPLStrdup( szProj4 );
 
     return OGRERR_NONE;
