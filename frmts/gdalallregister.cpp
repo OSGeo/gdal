@@ -25,6 +25,9 @@
  * Main format registration function.
  * 
  * $Log$
+ * Revision 1.17  2000/03/31 13:35:32  warmerda
+ * added SAR_CEOS
+ *
  * Revision 1.16  2000/03/07 21:34:50  warmerda
  * added HKV
  *
@@ -86,6 +89,7 @@ void GDALRegister_HFA(void);
 void GDALRegister_AIGrid(void);
 void GDALRegister_AIGrid2(void);
 void GDALRegister_CEOS(void);
+void GDALRegister_SAR_CEOS(void);
 void GDALRegister_SDTS(void);
 void GDALRegister_ELAS(void);
 void GDALRegister_EHdr(void);
@@ -146,6 +150,10 @@ void GDALAllRegister()
 
 #ifdef FRMT_hfa
     GDALRegister_HFA();
+#endif
+    
+#ifdef FRMT_ceos2
+    GDALRegister_SAR_CEOS();
 #endif
     
 #ifdef FRMT_ceos
