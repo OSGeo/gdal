@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2003/09/28 14:15:27  dron
+ * Implemented GCP segment reading, header parsing improved.
+ *
  * Revision 1.3  2003/09/17 22:20:48  gwalter
  * Added CreateCopy() function.
  *
@@ -57,6 +60,9 @@ typedef enum
     PDI_FILE
 } PCIDSKInterleaving;
 
+const int       nSegBlocks = 64;    // Number of blocks of Segment Pointers
+const int       nGeoSegBlocks = 8;  // Number of blocks in GEO Segment
+
 /************************************************************************/
 /* ==================================================================== */
 /*                              PCIDSKDataset                           */
@@ -70,14 +76,21 @@ class PCIDSKDataset : public RawDataset
     const char          *pszFilename;
     FILE                *fp;
 
-    struct tm           *poCreatTime;   // Date/time of the database creation
+    char                *pszCreatTime;  // Date/time of the database creation
 
     vsi_l_offset        nGeoPtrOffset;  // Offset in bytes to the pointer
                                         // to GEO segment
     vsi_l_offset        nGeoOffset;     // Offset in bytes to the GEO segment
+    vsi_l_offset        nGcpPtrOffset;  // Offset in bytes to the pointer
+                                        // to GCP segment
+    vsi_l_offset        nGcpOffset;     // Offset in bytes to the GCP segment
+
+    GDAL_GCP            *pasGCPList;
+    long                 nGCPCount;
 
     double              adfGeoTransform[6];
     char                *pszProjection;
+    char                *pszGCPProjection;
 
     GDALDataType        PCIDSKTypeToGDAL( const char *);
     void                WriteGeoSegment();
@@ -102,6 +115,9 @@ class PCIDSKDataset : public RawDataset
     virtual CPLErr      SetGeoTransform( double * );
     const char          *GetProjectionRef();
     virtual CPLErr      SetProjection( const char * );
+    virtual int         GetGCPCount();
+    virtual const       char *GetGCPProjection();
+    virtual const       GDAL_GCP *GetGCPs();
 };
 
 /************************************************************************/
@@ -152,9 +168,12 @@ PCIDSKDataset::PCIDSKDataset()
     pszFilename = NULL;
     fp = NULL;
     nBands = 0;
-    poCreatTime = NULL;
+    pszCreatTime = NULL;
     nGeoOffset = 0;
     pszProjection = CPLStrdup( "" );
+    pszGCPProjection = CPLStrdup( "" );
+    nGCPCount = 0;
+    pasGCPList = NULL;
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
     adfGeoTransform[2] = 0.0;
@@ -164,7 +183,7 @@ PCIDSKDataset::PCIDSKDataset()
 }
 
 /************************************************************************/
-/*                            ~BMPDataset()                             */
+/*                            ~PCIDSKDataset()                          */
 /************************************************************************/
 
 PCIDSKDataset::~PCIDSKDataset()
@@ -173,10 +192,24 @@ PCIDSKDataset::~PCIDSKDataset()
 
     if ( pszProjection )
         CPLFree( pszProjection );
+    if ( pszGCPProjection )
+        CPLFree( pszGCPProjection );
     if( fp != NULL )
         VSIFCloseL( fp );
-    if( poCreatTime )
-        delete poCreatTime;
+    if( pszCreatTime )
+        CPLFree( pszCreatTime );
+    if( nGCPCount > 0 )
+    {
+        for( int i = 0; i < nGCPCount; i++ )
+        {
+            if ( pasGCPList[i].pszId )
+                CPLFree( pasGCPList[i].pszId );
+            if ( pasGCPList[i].pszInfo )
+                CPLFree( pasGCPList[i].pszInfo );
+        }
+
+        CPLFree( pasGCPList );
+    }
 }
 
 /************************************************************************/
@@ -228,6 +261,38 @@ CPLErr PCIDSKDataset::SetProjection( const char *pszNewProjection )
 }
 
 /************************************************************************/
+/*                            GetGCPCount()                             */
+/************************************************************************/
+
+int PCIDSKDataset::GetGCPCount()
+
+{
+    return nGCPCount;
+}
+
+/************************************************************************/
+/*                          GetGCPProjection()                          */
+/************************************************************************/
+
+const char *PCIDSKDataset::GetGCPProjection()
+
+{
+    if( nGCPCount > 0 )
+        return pszGCPProjection;
+    else
+        return "";
+}
+
+/************************************************************************/
+/*                               GetGCPs()                              */
+/************************************************************************/
+
+const GDAL_GCP *PCIDSKDataset::GetGCPs()
+{
+    return pasGCPList;
+}
+
+/************************************************************************/
 /*                             FlushCache()                             */
 /************************************************************************/
 
@@ -270,8 +335,10 @@ void PCIDSKDataset::WriteGeoSegment( )
 
     CPLPrintStringFill( szTemp, "Master Georeferencing Segment for File", 64 );
     CPLPrintStringFill( szTemp + 64, "", 64 );
-    // FIXME: should use poCreatTime
-    CPLPrintTime( szTemp + 128, 16, "%H:%M %d-%b-%y ", &oUpdateTime, "C" );
+    if ( pszCreatTime )
+        CPLPrintStringFill( szTemp + 128, pszCreatTime, 16 );
+    else
+        CPLPrintTime( szTemp + 128, 16, "%H:%M %d-%b-%y ", &oUpdateTime, "C" );
     CPLPrintTime( szTemp + 144, 16, "%H:%M %d-%b-%y ", &oUpdateTime, "C" );
     CPLPrintStringFill( szTemp + 160, "", 64 );
     // Write the history line
@@ -363,13 +430,13 @@ void PCIDSKDataset::WriteGeoSegment( )
 
 GDALDataType PCIDSKDataset::PCIDSKTypeToGDAL( const char *pszType )
 {
-    if ( EQUAL( pszType, "8U      ") )
+    if ( EQUALN( pszType, "8U", 2 ) )
         return GDT_Byte;
-    if ( EQUAL( pszType, "16S     ") )
+    if ( EQUALN( pszType, "16S", 3 ) )
         return GDT_Int16;
-    if ( EQUAL( pszType, "16U     ") )
+    if ( EQUALN( pszType, "16U", 3 ) )
         return GDT_UInt16;
-    if ( EQUAL( pszType, "32R     ") )
+    if ( EQUALN( pszType, "32R", 3 ) )
         return GDT_Float32;
 
     return GDT_Unknown;
@@ -409,45 +476,42 @@ GDALDataset *PCIDSKDataset::Open( GDALOpenInfo * poOpenInfo )
 /* ==================================================================== */
 /*   Read PCIDSK File Header.                                           */
 /* ==================================================================== */
-    char            szTemp[512];
+    char            szTemp[1024];
+    char            *pszString;
 
 /* -------------------------------------------------------------------- */
 /*      Read File Identification.                                       */
 /* -------------------------------------------------------------------- */
-    VSIFSeekL( poDS->fp, 8, SEEK_SET );
-    VSIFReadL( szTemp, 1, 8, poDS->fp );
-    szTemp[8] = '\0';
-    poDS->SetMetadataItem( "SOFTWARE",  szTemp );
+    VSIFSeekL( poDS->fp, 0, SEEK_SET );
+    VSIFReadL( szTemp, 1, 512, poDS->fp );
 
-    VSIFSeekL( poDS->fp, 48, SEEK_SET );
-    VSIFReadL( szTemp, 1, 64, poDS->fp );
-    szTemp[64] = '\0';
-    poDS->SetMetadataItem( "FILE_ID",  szTemp );
+    pszString = CPLScanString( szTemp + 8, 8, TRUE, TRUE );
+    poDS->SetMetadataItem( "SOFTWARE", pszString );
+    CPLFree( pszString );
 
-    VSIFSeekL( poDS->fp, 112, SEEK_SET );
-    VSIFReadL( szTemp, 1, 32, poDS->fp );
-    szTemp[32] = '\0';
-    poDS->SetMetadataItem( "GENERATING_FACILITY",  szTemp );
+    pszString = CPLScanString( szTemp + 48, 64, TRUE, TRUE );
+    poDS->SetMetadataItem( "FILE_ID", pszString );
+    CPLFree( pszString );
 
-    VSIFSeekL( poDS->fp, 144, SEEK_SET );
-    VSIFReadL( szTemp, 1, 64, poDS->fp );
-    szTemp[64] = '\0';
-    poDS->SetMetadataItem( "DESCRIPTION1",  szTemp );
+    pszString = CPLScanString( szTemp + 112, 32, TRUE, TRUE );
+    poDS->SetMetadataItem( "GENERATING_FACILITY", pszString );
+    CPLFree( pszString );
 
-    VSIFSeekL( poDS->fp, 208, SEEK_SET );
-    VSIFReadL( szTemp, 1, 64, poDS->fp );
-    szTemp[64] = '\0';
-    poDS->SetMetadataItem( "DESCRIPTION2",  szTemp );
+    pszString = CPLScanString( szTemp + 144, 64, TRUE, TRUE );
+    poDS->SetMetadataItem( "DESCRIPTION1", pszString );
+    CPLFree( pszString );
 
-    VSIFSeekL( poDS->fp, 272, SEEK_SET );
-    VSIFReadL( szTemp, 1, 16, poDS->fp );
-    szTemp[16] = '\0';
-    poDS->SetMetadataItem( "DATE_OF_CREATION",  szTemp );
+    pszString = CPLScanString( szTemp + 208, 64, TRUE, TRUE );
+    poDS->SetMetadataItem( "DESCRIPTION2", pszString );
+    CPLFree( pszString );
 
-    VSIFSeekL( poDS->fp, 288, SEEK_SET );
-    VSIFReadL( szTemp, 1, 16, poDS->fp );
-    szTemp[16] = '\0';
-    poDS->SetMetadataItem( "DATE_OF_UPDATE",  szTemp );
+    pszString = CPLScanString( szTemp + 272, 16, TRUE, TRUE );
+    poDS->SetMetadataItem( "DATE_OF_CREATION", pszString );
+    poDS->pszCreatTime = pszString;
+
+    pszString = CPLScanString( szTemp + 288, 16, TRUE, TRUE );
+    poDS->SetMetadataItem( "DATE_OF_UPDATE", pszString );
+    CPLFree( pszString );
 
 /* -------------------------------------------------------------------- */
 /*      Read Image Data.                                                */
@@ -457,32 +521,26 @@ GDALDataset *PCIDSKDataset::Open( GDALOpenInfo * poOpenInfo )
     vsi_l_offset    nImageOffset;       // Offset to the first byte of the image
     int             nByteBands, nInt16Bands, nUInt16Bands, nFloat32Bands;
 
-    VSIFSeekL( poDS->fp, 304, SEEK_SET );
-    VSIFReadL( szTemp, 1, 16, poDS->fp );
-    szTemp[16] = '\0';
-    if ( !EQUAL( szTemp, "                " ) )
-        nImageStart = atol( szTemp );       // XXX: should be atoll()
+    pszString = CPLScanString( szTemp + 304, 16, TRUE, FALSE );
+    if ( !EQUAL( pszString, "" ) )
+        nImageStart = atol( szTemp );   // XXX: should be atoll()
     else
         nImageStart = 0;
+    CPLFree( pszString );
     nImageOffset = (nImageStart - 1) * 512;
 
-    VSIFSeekL( poDS->fp, 336, SEEK_SET );
-    VSIFReadL( szTemp, 1, 16, poDS->fp );
-    szTemp[16] = '\0';
-    nImgHdrsStart = atol( szTemp );     // XXX: should be atoll()
+    pszString = CPLScanString( szTemp + 336, 16, TRUE, FALSE );
+    nImgHdrsStart = atol( pszString );  // XXX: should be atoll()
+    CPLFree( pszString );
 
-    VSIFSeekL( poDS->fp, 376, SEEK_SET );
-    VSIFReadL( szTemp, 1, 24, poDS->fp );
-    poDS->nBands = CPLScanLong( szTemp, 8 );
-    poDS->nRasterXSize = CPLScanLong( szTemp + 8, 8 );
-    poDS->nRasterYSize = CPLScanLong( szTemp + 16, 8 );
+    poDS->nBands = CPLScanLong( szTemp + 376, 8 );
+    poDS->nRasterXSize = CPLScanLong( szTemp + 384, 8 );
+    poDS->nRasterYSize = CPLScanLong( szTemp + 392, 8 );
 
-    VSIFSeekL( poDS->fp, 464, SEEK_SET );
-    VSIFReadL( szTemp, 1, 16, poDS->fp );
-    nByteBands = CPLScanLong( szTemp, 4 );
-    nInt16Bands = CPLScanLong( szTemp + 4, 4 );
-    nUInt16Bands = CPLScanLong( szTemp + 8, 4 );
-    nFloat32Bands = CPLScanLong( szTemp + 12, 4 );
+    nByteBands = CPLScanLong( szTemp + 464, 4 );
+    nInt16Bands = CPLScanLong( szTemp + 468, 4 );
+    nUInt16Bands = CPLScanLong( szTemp + 472, 4 );
+    nFloat32Bands = CPLScanLong( szTemp + 476, 4 );
 
     // If these fields are blank, then it is assumed that all channels are 8-bit
     if ( nByteBands == 0 && nInt16Bands == 0
@@ -498,23 +556,22 @@ GDALDataset *PCIDSKDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Read type of interleaving and set up image parameters.          */
 /* -------------------------------------------------------------------- */
-    VSIFSeekL( poDS->fp, 360, SEEK_SET );
-    VSIFReadL( szTemp, 1, 8, poDS->fp );
-    szTemp[8] = '\0';
-    if ( EQUALN( szTemp, "PIXEL", 5 ) )
+    pszString = CPLScanString( szTemp + 360, 8, TRUE, FALSE );
+    if ( EQUALN( pszString, "PIXEL", 5 ) )
         eInterleaving = PDI_PIXEL;
-    else if ( EQUALN( szTemp, "BAND", 4 ) )
+    else if ( EQUALN( pszString, "BAND", 4 ) )
         eInterleaving = PDI_BAND;
-    else if ( EQUALN( szTemp, "FILE", 4 ) )
+    else if ( EQUALN( pszString, "FILE", 4 ) )
         eInterleaving = PDI_FILE;
     else
     {
         CPLDebug( "PCIDSK",
                   "PCIDSK interleaving type %s is not supported by GDAL",
-                  szTemp );
+                  pszString );
         delete poDS;
         return NULL;
     }
+    CPLFree( pszString );
 
     for( iBand = 0; iBand < poDS->nBands; iBand++ )
     {
@@ -523,18 +580,22 @@ GDALDataset *PCIDSKDataset::Open( GDALOpenInfo * poOpenInfo )
         vsi_l_offset    nImgHdrOffset = (nImgHdrsStart - 1 + iBand * 2) * 512;
         vsi_l_offset    nPixelOffset = 0, nLineOffset = 0, nLineSize = 0;
         int             bNativeOrder;
+        int             i;
 
-        VSIFSeekL( poDS->fp, nImgHdrOffset + 160, SEEK_SET );
-        VSIFReadL( szTemp, 1, 8, poDS->fp );
-        szTemp[8] = '\0';
-        eType = poDS->PCIDSKTypeToGDAL( szTemp );
+        VSIFSeekL( poDS->fp, nImgHdrOffset, SEEK_SET );
+        VSIFReadL( szTemp, 1, 1024, poDS->fp );
+
+        pszString = CPLScanString( szTemp + 160, 8, TRUE, FALSE );
+        eType = poDS->PCIDSKTypeToGDAL( pszString );
         if ( eType == GDT_Unknown )
         {
             CPLDebug( "PCIDSK",
-                      "PCIDSK data type %s is not supported by GDAL", szTemp );
+                      "PCIDSK data type %s is not supported by GDAL",
+                      pszString );
             delete poDS;
             return NULL;
         }
+        CPLFree( pszString );
 
         switch ( eInterleaving )
         {
@@ -549,41 +610,41 @@ GDALDataset *PCIDSKDataset::Open( GDALOpenInfo * poOpenInfo )
                 nLineOffset = nPixelOffset * poDS->nRasterXSize;
                 break;
             case PDI_FILE:
-                // Read the filename
-                VSIFSeekL( poDS->fp, nImgHdrOffset + 64, SEEK_SET );
-                VSIFReadL( szTemp, 1, 64, poDS->fp );
-                szTemp[64] = '\0';
-
-                // Empty filename means we have data stored inside PCIDSK file
-                if ( EQUAL( szTemp, "                                "
-                                    "                                " ) )
                 {
-                    VSIFSeekL( poDS->fp, nImgHdrOffset + 168, SEEK_SET );
-                    VSIFReadL( szTemp, 1, 16, poDS->fp );
-                    szTemp[16] = '\0';
-                    nImageOffset = atol( szTemp ); // XXX: should be atoll()
+                    char    *pszFilename;
 
-                    VSIFSeekL( poDS->fp, nImgHdrOffset + 184, SEEK_SET );
-                    VSIFReadL( szTemp, 1, 16, poDS->fp );
-                    nPixelOffset = CPLScanLong( szTemp, 8 );
-                    nLineOffset = CPLScanLong( szTemp + 8, 8 );
+                    // Read the filename
+                    pszFilename = CPLScanString( szTemp + 64, 64, TRUE, FALSE );
+
+                    // Empty filename means we have data stored inside
+                    // PCIDSK file
+                    if ( EQUAL(pszFilename, "") )
+                    {
+                        pszString = CPLScanString( szTemp + 168, 16, TRUE, FALSE );
+                        nImageOffset = atol( pszString ); // XXX: should be atoll()
+                        CPLFree( pszString );
+
+                        nPixelOffset = CPLScanLong( szTemp + 184, 8 );
+                        nLineOffset = CPLScanLong( szTemp +  + 192, 8 );
+                    }
+                    else
+                    {
+                        iBand--;
+                        poDS->nBands--;
+                        continue;
+                    }
+
+                    CPLFree( pszFilename );
                 }
-                else
-                    iBand--;
-                    poDS->nBands--;
-                    continue;
                 break;
             default: /* NOTREACHED */
                 break;
         }
 
-        VSIFSeekL( poDS->fp, nImgHdrOffset + 201, SEEK_SET );
-        VSIFReadL( szTemp, 1, 1, poDS->fp );
-        szTemp[1] = '\0';
 #ifdef CPL_MSB
-        bNativeOrder = ( szTemp[0] == 'S')?FALSE:TRUE;
+        bNativeOrder = ( szTemp[201] == 'S')?FALSE:TRUE;
 #else
-        bNativeOrder = ( szTemp[0] == 'S')?TRUE:FALSE;
+        bNativeOrder = ( szTemp[201] == 'S')?TRUE:FALSE;
 #endif
 
         poBand = new RawRasterBand( poDS, iBand + 1, poDS->fp,
@@ -595,38 +656,30 @@ GDALDataset *PCIDSKDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Read and assign few metadata parameters to each image band.     */
 /* -------------------------------------------------------------------- */
-        VSIFSeekL( poDS->fp, nImgHdrOffset, SEEK_SET );
-        VSIFReadL( szTemp, 1, 64, poDS->fp );
-        szTemp[64] = '\0';
-        poBand->SetDescription( szTemp );
+        pszString = CPLScanString( szTemp, 64, TRUE, TRUE );
+        poBand->SetDescription( pszString );
+        CPLFree( pszString );
 
-        VSIFSeekL( poDS->fp, nImgHdrOffset + 128, SEEK_SET );
-        VSIFReadL( szTemp, 1, 16, poDS->fp );
-        szTemp[16] = '\0';
-        poBand->SetMetadataItem( "DATE_OF_CREATION",  szTemp );
+        pszString = CPLScanString( szTemp + 128, 16, TRUE, TRUE );
+        poBand->SetMetadataItem( "DATE_OF_CREATION", pszString );
+        CPLFree( pszString );
 
-        VSIFSeekL( poDS->fp, nImgHdrOffset + 144, SEEK_SET );
-        VSIFReadL( szTemp, 1, 16, poDS->fp );
-        szTemp[16] = '\0';
-        poBand->SetMetadataItem( "DATE_OF_UPDATE",  szTemp );
+        pszString = CPLScanString( szTemp + 144, 16, TRUE, TRUE );
+        poBand->SetMetadataItem( "DATE_OF_UPDATE",  pszString );
+        CPLFree( pszString );
 
-        VSIFSeekL( poDS->fp, nImgHdrOffset + 202, SEEK_SET );
-        VSIFReadL( szTemp, 1, 16, poDS->fp );
-        szTemp[16] = '\0';
-        if ( !EQUAL( szTemp, "                " ) )
-            poBand->SetMetadataItem( "UNITS",  szTemp );
+        pszString = CPLScanString( szTemp + 202, 16, TRUE, TRUE );
+        if ( !EQUAL( szTemp, "" ) )
+            poBand->SetMetadataItem( "UNITS",  pszString );
+        CPLFree( pszString );
 
-        int         i;
         for ( i = 0; i < 8; i++ )
         {
-            VSIFSeekL( poDS->fp, nImgHdrOffset + 384 + i * 80, SEEK_SET );
-            VSIFReadL( szTemp, 1, 80, poDS->fp );
-            szTemp[80] = '\0';
-            if ( !EQUAL( szTemp, "                                "
-                                 "                                "
-                                 "                " ) )
-                poBand->SetMetadataItem(CPLSPrintf("HISTORY%d", i + 1), szTemp);
-            
+            pszString = CPLScanString( szTemp + 384 + i * 80, 80, TRUE, TRUE );
+            if ( !EQUAL( pszString, "" ) )
+                poBand->SetMetadataItem( CPLSPrintf("HISTORY%d", i + 1),
+                                         pszString );
+            CPLFree( pszString );
         }
 
         switch ( eInterleaving )
@@ -662,7 +715,7 @@ GDALDataset *PCIDSKDataset::Open( GDALOpenInfo * poOpenInfo )
     nSegments = ( nSegBlocks * 512 ) / 32;
 
 /* -------------------------------------------------------------------- */
-/*      Search for Georeferencing Segment.                              */
+/*      Read segments.                                                  */
 /* -------------------------------------------------------------------- */
     int             i;
     
@@ -725,7 +778,7 @@ GDALDataset *PCIDSKDataset::Open( GDALOpenInfo * poOpenInfo )
                         for ( j = 0; j < nXCoeffs; j++ )
                         {
                             poDS->adfGeoTransform[j] =
-                                CPLScanDouble( szTemp + 26 * j, 26 );;
+                                CPLScanDouble( szTemp + 26 * j, 26 );
                         }
                         VSIFSeekL( poDS->fp, nGeoDataOffset + 1642, SEEK_SET );
                         VSIFReadL( szTemp, 1, nYCoeffs * 26, poDS->fp );
@@ -802,6 +855,60 @@ GDALDataset *PCIDSKDataset::Open( GDALOpenInfo * poOpenInfo )
             }
             break;
 
+            case 214:                       // GCP segment
+            {
+                vsi_l_offset    nGcpStart, nGcpDataOffset;
+                int             j;
+                OGRSpatialReference oSRS;
+
+                poDS->nGcpPtrOffset = nSegPointersOffset + i * 32;
+                nGcpStart = atol( szTemp + 12 ); // XXX: should be atoll()
+                poDS->nGcpOffset = ( nGcpStart - 1 ) * 512;
+                nGcpDataOffset = poDS->nGcpOffset + 1024;
+
+                if ( bActive && !poDS->nGCPCount )  // XXX: We will read the
+                                                    // first GCP segment only
+                {
+                    VSIFSeekL( poDS->fp, nGcpDataOffset, SEEK_SET );
+                    VSIFReadL( szTemp, 1, 80, poDS->fp );
+                    poDS->nGCPCount = CPLScanLong( szTemp, 16 );
+                    if ( poDS->nGCPCount > 0 )
+                    {
+                        double      dfUnitConv = 1.0;
+                        char        szProj[17];
+
+                        memcpy( szProj, szTemp + 32, 16 );
+                        szProj[16] = '\0';
+                        oSRS.importFromPCI( szProj, NULL, NULL );
+                        if ( poDS->pszGCPProjection )
+                                CPLFree( poDS->pszGCPProjection );
+                        oSRS.exportToWkt( &poDS->pszGCPProjection );
+                        poDS->pasGCPList = (GDAL_GCP *)
+                            CPLCalloc( poDS->nGCPCount, sizeof(GDAL_GCP) );
+                        GDALInitGCPs( poDS->nGCPCount, poDS->pasGCPList );
+                        if ( EQUALN( szTemp + 64, "FEET     ", 9 ) )
+                            dfUnitConv = atof(SRS_UL_FOOT_CONV);
+                        for ( j = 0; j < poDS->nGCPCount; j++ )
+                        {
+                            VSIFSeekL( poDS->fp, nGcpDataOffset + j * 128 + 512,
+                                       SEEK_SET );
+                            VSIFReadL( szTemp, 1, 128, poDS->fp );
+                            poDS->pasGCPList[j].dfGCPPixel =
+                                CPLScanDouble( szTemp + 6, 18 );
+                            poDS->pasGCPList[j].dfGCPLine = 
+                                CPLScanDouble( szTemp + 24, 18 );
+                            poDS->pasGCPList[j].dfGCPX = 
+                                CPLScanDouble( szTemp + 60, 18 );
+                            poDS->pasGCPList[j].dfGCPY = 
+                                CPLScanDouble( szTemp + 78, 18 );
+                            poDS->pasGCPList[j].dfGCPZ =
+                                CPLScanDouble( szTemp + 96, 18 ) / dfUnitConv;
+                        }
+                    }
+                }
+            }
+            break;
+
             default:
             break;
         }
@@ -861,8 +968,6 @@ GDALDataset *PCIDSKDataset::Create( const char * pszFilename,
     vsi_l_offset    nSegPointersStart;  // Start block of Segment Pointers
     vsi_l_offset    nImageBlocks;       // Number of blocks of image data
     int             nImgHdrBlocks;      // Number of blocks of image header data
-    const int       nSegBlocks = 64;    // Number of blocks of Segment Pointers
-    const int       nGeoSegBlocks = 8;  // Number of blocks in GEO Segment
 
 /* -------------------------------------------------------------------- */
 /*      Calculate offsets.                                              */
@@ -911,7 +1016,7 @@ GDALDataset *PCIDSKDataset::Create( const char * pszFilename,
     sprintf( szTemp + 384, "%8d", nXSize );
     sprintf( szTemp + 392, "%8d", nYSize );
     CPLPrintStringFill( szTemp + 400, "METRE", 8 );
-    // Two following parameters will be filled in FlushCache()
+    // Two following parameters will be filled with real values in FlushCache()
     CPLPrintStringFill( szTemp + 408, "", 16 );    // X size of pixel
     CPLPrintStringFill( szTemp + 424, "", 16 );    // Y size of pixel
 
@@ -1015,7 +1120,7 @@ GDALDataset *PCIDSKDataset::Create( const char * pszFilename,
 
 /* -------------------------------------------------------------------- */
 /*      Write out pointer to the Georeferencing segment.                */
-/*      Segment will be disabled until data will be actualle written    */
+/*      Segment will be disabled until data will be actually written    */
 /*      out in FlushCache().                                            */
 /* -------------------------------------------------------------------- */
     CPLPrintStringFill( szTemp, " 150GEO", 7 );
