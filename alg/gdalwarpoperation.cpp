@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2003/05/27 20:49:26  warmerda
+ * added REPORT_TIMINGS support
+ *
  * Revision 1.11  2003/05/16 19:43:28  warmerda
  * ensure that chunks dont get negative sizes
  *
@@ -164,6 +167,9 @@ GDALWarpOperation::GDALWarpOperation()
     nChunkListCount = 0;
     nChunkListMax = 0;
     panChunkList = NULL;
+
+    bReportTimings = FALSE;
+    nLastTimeReported = 0;
 }
 
 /************************************************************************/
@@ -432,6 +438,12 @@ CPLErr GDALWarpOperation::Initialize( const GDALWarpOptions *psNewOptions )
     {
         psOptions->dfWarpMemoryLimit = 64.0 * 1024*1024;
     }
+
+/* -------------------------------------------------------------------- */
+/*      Are we doing timings?                                           */
+/* -------------------------------------------------------------------- */
+    bReportTimings = CSLFetchBoolean( psOptions->papszWarpOptions, 
+                                      "REPORT_TIMINGS", FALSE );
 
 /* -------------------------------------------------------------------- */
 /*      If the options don't validate, then wipe them.                  */
@@ -858,7 +870,9 @@ CPLErr GDALWarpOperation::WarpRegion( int nDstXOff, int nDstYOff,
             return CE_Failure;
         }
     }
-        
+
+    ReportTiming( NULL );
+
 /* -------------------------------------------------------------------- */
 /*      Allocate the output buffer.                                     */
 /* -------------------------------------------------------------------- */
@@ -955,6 +969,8 @@ CPLErr GDALWarpOperation::WarpRegion( int nDstXOff, int nDstYOff,
             CPLFree( pDstBuffer );
             return eErr;
         }
+
+        ReportTiming( "Output buffer read" );
     }
 
 /* -------------------------------------------------------------------- */
@@ -981,6 +997,7 @@ CPLErr GDALWarpOperation::WarpRegion( int nDstXOff, int nDstYOff,
         {
             GDALFlushCache( psOptions->hDstDS );
         }
+        ReportTiming( "Output buffer write" );
     }
 
 /* -------------------------------------------------------------------- */
@@ -1040,6 +1057,9 @@ CPLErr GDALWarpOperation::WarpRegionToBuffer(
     CPLErr eErr = CE_None;
     int    i;
     int    nWordSize = GDALGetDataTypeSize(psOptions->eWorkingDataType)/8;
+
+    (void) eBufDataType;
+    CPLAssert( eBufDataType == psOptions->eWorkingDataType );
 
 /* -------------------------------------------------------------------- */
 /*      If not given a corresponding source window compute one now.     */
@@ -1101,7 +1121,7 @@ CPLErr GDALWarpOperation::WarpRegionToBuffer(
         oWK.papabySrcImage[i] = ((GByte *) oWK.papabySrcImage[0])
             + nWordSize * nSrcXSize * nSrcYSize * i;
 
-    if( eErr == CE_None )
+    if( eErr == CE_None && nSrcXSize > 0 && nSrcYSize > 0 )
         eErr = 
             GDALDatasetRasterIO( psOptions->hSrcDS, GF_Read, 
                                  nSrcXOff, nSrcYOff, nSrcXSize, nSrcYSize, 
@@ -1109,6 +1129,8 @@ CPLErr GDALWarpOperation::WarpRegionToBuffer(
                                  psOptions->eWorkingDataType, 
                                  psOptions->nBandCount, psOptions->panSrcBands,
                                  0, 0, 0 );
+
+    ReportTiming( "Input buffer read" );
 
 /* -------------------------------------------------------------------- */
 /*      Initialize destination buffer.                                  */
@@ -1186,7 +1208,10 @@ CPLErr GDALWarpOperation::WarpRegionToBuffer(
 /*      Perform the warp.                                               */
 /* -------------------------------------------------------------------- */
     if( eErr == CE_None )
+    {
         eErr = oWK.PerformWarp();
+        ReportTiming( "In memory warp operation" );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Optional application provided postwarp chunk processor.         */
@@ -1383,7 +1408,7 @@ CPLErr GDALWarpOperation::ComputeSourceWindow(int nDstXOff, int nDstYOff,
 /* -------------------------------------------------------------------- */
 /*      Collect the bounds, ignoring any failed points.                 */
 /* -------------------------------------------------------------------- */
-    double dfMinXOut, dfMinYOut, dfMaxXOut, dfMaxYOut;
+    double dfMinXOut=0.0, dfMinYOut=0.0, dfMaxXOut=0.0, dfMaxYOut=0.0;
     int    bGotInitialPoint = FALSE;
     int    nFailedCount = 0, i;
 
@@ -1452,5 +1477,26 @@ CPLErr GDALWarpOperation::ComputeSourceWindow(int nDstXOff, int nDstYOff,
     *pnSrcYSize = MAX(0,*pnSrcYSize);
 
     return CE_None;
+}
+
+/************************************************************************/
+/*                            ReportTiming()                            */
+/************************************************************************/
+
+void GDALWarpOperation::ReportTiming( const char * pszMessage )
+
+{
+    if( !bReportTimings )
+        return;
+
+    unsigned long nNewTime = VSITime(NULL);
+
+    if( pszMessage != NULL )
+    {
+        CPLDebug( "WARP_TIMING", "%s: %ds", 
+                  pszMessage, nNewTime - nLastTimeReported );
+    }
+
+    nLastTimeReported = nNewTime;
 }
 

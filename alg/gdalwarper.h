@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2003/05/27 20:49:25  warmerda
+ * added REPORT_TIMINGS support
+ *
  * Revision 1.7  2003/05/07 19:13:06  warmerda
  * added pre and post warp chunk processor
  *
@@ -287,9 +290,14 @@ private:
     int             nChunkListMax;
     int            *panChunkList;
 
+    int             bReportTimings;
+    unsigned long   nLastTimeReported;
+
     void            WipeChunkList();
     CPLErr          CollectChunkList( int nDstXOff, int nDstYOff, 
                                       int nDstXSize, int nDstYSize );
+    void            ReportTiming( const char * );
+    
 public:
                     GDALWarpOperation();
     virtual        ~GDALWarpOperation();
