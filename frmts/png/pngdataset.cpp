@@ -43,6 +43,9 @@
  *    application termination. 
  * 
  * $Log$
+ * Revision 1.13  2002/04/20 09:51:03  dron
+ * *** empty log message ***
+ *
  * Revision 1.12  2001/11/11 23:51:00  warmerda
  * added required class keyword to friend declarations
  *
@@ -721,7 +724,12 @@ GDALDataset *PNGDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->bGeoTransformValid = 
         GDALReadWorldFile( poOpenInfo->pszFilename, ".wld", 
                            poDS->adfGeoTransform );
-
+    if( !poDS->bGeoTransformValid )
+	GDALReadWorldFile( poOpenInfo->pszFilename, ".tfw", 
+                           poDS->adfGeoTransform );
+    if( !poDS->bGeoTransformValid )
+	GDALReadWorldFile( poOpenInfo->pszFilename, ".tifw", 
+                           poDS->adfGeoTransform );
     return poDS;
 }
 
@@ -933,6 +941,13 @@ PNGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
     CPLFree( pabyAlpha );
     CPLFree( pasPNGColors );
+
+/* -------------------------------------------------------------------- */
+/*      Do we need a world file?                                          */
+/* -------------------------------------------------------------------- */
+    if( CSLFetchNameValue(papszOptions,"WORLDFILE")  != NULL
+        || CSLFindString( papszOptions, "WORLDFILE") != -1 )
+	GDALWriteWorldFile( pszFilename, "wld", poDS->adfGeoTransform );
 
     return (GDALDataset *) GDALOpen( pszFilename, GA_ReadOnly );
 }
