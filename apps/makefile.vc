@@ -1,8 +1,4 @@
 
-OBJ	=	gdalopen.obj gdaldrivermanager.obj gdaldriver.obj \
-		gdaldataset.obj gdalrasterband.obj gdal_misc.obj \
-		rasterio.obj gdalrasterblock.obj gdalprojdef.obj
-
 GDAL_ROOT	=	..
 
 XTRAOBJ =	$(SETARGV)
