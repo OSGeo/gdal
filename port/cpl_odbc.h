@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2003/09/26 13:51:02  warmerda
+ * Add documentation
+ *
  * Revision 1.2  2003/09/25 17:09:49  warmerda
  * added some more methods
  *
@@ -44,7 +47,19 @@
 #include <sql.h>
 #include <sqlext.h>
 
+/**
+ * \file cpl_odbc.h
+ *
+ * ODBC Abstraction Layer (C++).
+ */
+
 class CPLODBCStatement;
+
+/**
+ * A class representing an ODBC database session. 
+ *
+ * Includes error collection services.
+ */
 
 class CPL_DLL CPLODBCSession {
     char      m_szLastError[SQL_MAX_MESSAGE_LENGTH + 1];
@@ -58,15 +73,25 @@ class CPL_DLL CPLODBCSession {
     int		EstablishSession( const char *pszDSN, 
                                   const char *pszUserid, 
                                   const char *pszPassword );
+    const char  *GetLastError();
+
+    // Essentially internal. 
+
     int         CloseSession();
 
     int         Failed( int, HSTMT = NULL );
-
     HDBC        GetConnection() { return m_hDBC; }
     HENV        GetEnvironment()  { return m_hEnv; }
-
-    const char  *GetLastError() { return m_szLastError; }
 };
+
+/**
+ * Abstraction for statement, and resultset.
+ *
+ * Includes methods for executing an SQL statement, and for accessing the
+ * resultset from that statement.  Also provides for executing other ODBC
+ * requests that produce results sets such as SQLColumns() and SQLTables()
+ * requests.
+ */
 
 class CPL_DLL CPLODBCStatement {
 
