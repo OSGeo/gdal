@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/06/08 15:41:16  warmerda
+ * added working blob/geometry support
+ *
  * Revision 1.1  1999/06/08 03:50:43  warmerda
  * New
  *
@@ -37,6 +40,8 @@
 
 #include "sfctable.h"
 #include "ogr_geometry.h"
+#include "assert.h"
+#include "oledb_sup.h"
 
 /************************************************************************/
 /*                              SFCTable()                              */
@@ -75,7 +80,7 @@ SFCTable::~SFCTable()
 
 int SFCTable::HasGeometry() 
 {
-    if( m_pRowset == NULL )
+    if( m_spRowset == NULL )
         return FALSE;
 
     if( !bTriedToIdentify )
@@ -96,7 +101,7 @@ int SFCTable::HasGeometry()
 void SFCTable::IdentifyGeometry()
 
 {
-    if( m_pRowset == NULL || bTriedToIdentify )
+    if( m_spRowset == NULL || bTriedToIdentify )
         return;
 
     bTriedToIdentify = TRUE;
@@ -127,7 +132,7 @@ void SFCTable::IdentifyGeometry()
     if( !GetColumnType(iCol, &nType) 
         || (nType != DBTYPE_BYTES
             && nType != DBTYPE_IUNKNOWN
-            && != (DBTYPE_BYTES | DBTYPE_BYREF)) )
+            && nType != (DBTYPE_BYTES | DBTYPE_BYREF)) )
         return;
 
 /* -------------------------------------------------------------------- */
@@ -138,26 +143,31 @@ void SFCTable::IdentifyGeometry()
 
 /************************************************************************/
 /*                           GetWKBGeometry()                           */
-/*                                                                      */
-/*      The pointer returned is to a block of binary data.  The data    */
-/*      pointer returned is to memory internal to this class.  It       */
-/*      should not be free, or altered.  It is only valid till the      */
-/*      next row fetch.                                                 */
-/*      CoTaskMemFree().                                                */
 /************************************************************************/
+
+/** 
+ * Fetch geometry binary column binary data.
+ *
+ * Note that the returned pointer is to an internal buffer, and will
+ * be invalidated by the next record read operation.  The data should
+ * not be freed or modified.
+ *
+ * @param pnSize pointer to an integer into which the number of bytes 
+ * returned may be put.  This may be NULL.
+ *
+ * @return a pointer to the binary data or NULL if the fetch fails.
+ */
 
 BYTE *SFCTable::GetWKBGeometry( int * pnSize )
 
 {
-#ifdef notdef
     if( pnSize != NULL )
         *pnSize = 0;
 
     if( !HasGeometry() )
         return NULL;
 
-    if( pabyRecord == NULL )
-        return NULL;
+    /* do we have a record?  How to test? */
 
 /* -------------------------------------------------------------------- */
 /*      Cleanup the previous passes geometry binary data, if necessary. */
@@ -169,45 +179,28 @@ BYTE *SFCTable::GetWKBGeometry( int * pnSize )
     }
 
 /* -------------------------------------------------------------------- */
-/*      Find the binding column if we don't already know it.  We        */
-/*      have put this off to here, so that the binding will have        */
-/*      been done.  It is normally done on the first row fetch on       */
-/*      the OledbSupTable.                                              */
+/*      Get the geometry column datatype.                               */
 /* -------------------------------------------------------------------- */
-    if( iBindColumn == -1 )
-    {
-        for( iBindColumn = 0; iBindColumn < (int) nBindings; iBindColumn++ )
-        {
-            if( paoBindings[iBindColumn].iOrdinal 
-                == paoColumnInfo[iGeomColumn].iOrdinal )
-                break;
-        }
-        if( iBindColumn == (int) nBindings )
-        {
-            iBindColumn = -1;
-            return NULL;
-        }
-    }
+    DBTYPE      nGeomType;
 
-/* -------------------------------------------------------------------- */
-/*      Get access to the data in our data record.                      */
-/* -------------------------------------------------------------------- */
-    COLUMNDATA      *poCData;
-    
-    poCData = (COLUMNDATA *) (pabyRecord + paoBindings[iBindColumn].obLength);
-        
+    GetColumnType( iGeomColumn, &nGeomType );
+
 /* -------------------------------------------------------------------- */
 /*      If the column is bound as DBTYPE_BYTES, just return a           */
 /*      pointer to the internal buffer.  We also check to see if the    */
 /*      data was truncated.  If so we emit a debugging error            */
 /*      message, but otherwise try to continue.                         */
 /* -------------------------------------------------------------------- */
-    if( paoBindings[iBindColumn].wType == DBTYPE_BYTES)
+    if( nGeomType == DBTYPE_BYTES)
     {
         if( pnSize != NULL )
-            *pnSize = poCData->dwLength;
+        {
+            ULONG       dwLength;
+            GetLength( iGeomColumn, &dwLength );
+            *pnSize = dwLength;
+        }
 
-        return(poCData->bData);
+        return( (BYTE *) GetValue(iGeomColumn) );
     }
 
 /* -------------------------------------------------------------------- */
@@ -215,8 +208,9 @@ BYTE *SFCTable::GetWKBGeometry( int * pnSize )
 /*      the pointer is contained in the data.  The size of the buffer   */
 /*      follows.(This is an internal convention)                        */
 /* -------------------------------------------------------------------- */
-    if( paoBindings[iBindColumn].wType & DBTYPE_BYTES)
+    if( nGeomType & DBTYPE_BYTES)
     {
+#ifdef notdef
         BYTE *pRetVal;
 
         if( pnSize != NULL )
@@ -225,6 +219,7 @@ BYTE *SFCTable::GetWKBGeometry( int * pnSize )
         memcpy(&pRetVal,poCData->bData,4);
 
         return(pRetVal);
+#endif
     }
 
 /* -------------------------------------------------------------------- */
@@ -232,13 +227,15 @@ BYTE *SFCTable::GetWKBGeometry( int * pnSize )
 /*      IUnknown, and we need to get an IStream interface for it to     */
 /*      read the data.                                                  */
 /* -------------------------------------------------------------------- */
-    IUnknown * pIUnknown = *((IUnknown **) poCData->bData);
-    IStream *  pIStream = NULL;
-    HRESULT      hr;
+    IUnknown * pIUnknown;
+    ISequentialStream *  pIStream = NULL;
+    HRESULT    hr;
 
-    assert( paoBindings[iBindColumn].wType == DBTYPE_IUNKNOWN );
+    assert( nGeomType == DBTYPE_IUNKNOWN );
+
+    GetValue( iGeomColumn, &pIUnknown );
             
-    hr = pIUnknown->QueryInterface( IID_IStream,
+    hr = pIUnknown->QueryInterface( IID_ISequentialStream,
                                     (void**)&pIStream );
     if( FAILED(hr) )
     {
@@ -246,46 +243,106 @@ BYTE *SFCTable::GetWKBGeometry( int * pnSize )
         return NULL;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Stat the stream, to get it's length.                            */
-/* -------------------------------------------------------------------- */
-    STATSTG      oStreamStat;
-    ULONG        nSize;
+    printf( "Got sequential stream\n" );
 
-    hr = pIStream->Stat( &oStreamStat, STATFLAG_NONAME );
-    if( FAILED(hr) )
+/* -------------------------------------------------------------------- */
+/*      Read data in chunks, reallocating buffer larger as needed.      */
+/* -------------------------------------------------------------------- */
+    BYTE      abyChunk[32];
+    ULONG     nBytesRead;
+    int       nSize;
+    
+    nSize = 0;
+    do 
     {
-        DumpErrorHResult( hr, "IStream::Stat()" );
-        pIStream->Release();
-        return NULL;
+        pIStream->Read( abyChunk, sizeof(abyChunk), &nBytesRead );
+        if( nBytesRead > 0 )
+        {
+            nSize += nBytesRead;
+            pabyLastGeometry = (BYTE *) 
+                CoTaskMemRealloc(pabyLastGeometry, nSize);
+
+            memcpy( pabyLastGeometry + nSize - nBytesRead, 
+                    abyChunk, nBytesRead );
+        }
     }
-
-    nSize = oStreamStat.cbSize.LowPart;
-
-/* -------------------------------------------------------------------- */
-/*      Allocate the data and read from the stream.                     */
-/* -------------------------------------------------------------------- */
-    ULONG		nBytesActuallyRead = 0;
-
-    pabyLastGeometry = (BYTE *) CoTaskMemAlloc( nSize );
-    pabyLastGeometry[0] = 0;
-    pabyLastGeometry[1] = 0;
-
-    hr = pIStream->Read( pabyLastGeometry, nSize, &nBytesActuallyRead );
-    if( FAILED( hr ) || nBytesActuallyRead < nSize )
-    {
-        DumpErrorHResult( hr, "IStream::Read()" ); 
-        CoTaskMemFree( pabyLastGeometry );
-        pabyLastGeometry = NULL;
-    }
-
+    while( nBytesRead == sizeof(abyChunk) );
+    
     pIStream->Release();
-    pIUnknown->Release();
 
+/* -------------------------------------------------------------------- */
+/*      Return the number of bytes read, if requested.                  */
+/* -------------------------------------------------------------------- */
     if( pnSize != NULL && pabyLastGeometry != NULL )
         *pnSize = nSize;
-#endif
 
     return pabyLastGeometry;
+}
+
+/************************************************************************/
+/*                          ReleaseIUnknowns()                          */
+/************************************************************************/
+
+/** 
+ * Release any IUnknowns in current record. 
+ *
+ * It is very important that this be called once, and only once for each
+ * record read on an SFCTable if there may be IUnknowns (generally 
+ * ISequentialStreams for the geometry column).  
+ *
+ * Unfortunately, the CRowset::ReleaseRows() doesn't take care of this
+ * itself.  
+ */
+
+void SFCTable::ReleaseIUnknowns()
+
+{
+    for( int i = 0; i < GetColumnCount(); i++ )
+    {
+        DBTYPE      nType;
+
+        GetColumnType( i, &nType );
+        if( nType == DBTYPE_IUNKNOWN )
+        {
+            IUnknown      *pIUnknown;
+
+            GetValue( i, &pIUnknown );
+            
+            if( pIUnknown != NULL )
+                pIUnknown->Release();
+        } 
+    }
+}
+
+/************************************************************************/
+/*                           GetOGRGeometry()                           */
+/************************************************************************/
+
+/**
+ * Fetch the OGRGeometry for this record.
+ *
+ * The reading of the BLOB column, and translation into an OGRGeometry
+ * subclass is handled automatically.  The returned object becomes the
+ * responsibility of the caller and should be destroyed with delete.
+ *
+ * @return pointer to an OGRGeometry, or NULL if the read fails.
+ */
+
+OGRGeometry * SFCTable::GetOGRGeometry()
+
+{
+    BYTE      *pabyData;
+    int       nBytesRead;
+    OGRGeometry *poGeom;
+
+    pabyData = GetWKBGeometry( &nBytesRead );
+    if( pabyData == NULL )
+        return NULL;
+
+    if( OGRGeometryFactory::createFromWkb( pabyData, NULL, &poGeom, 
+                                           nBytesRead ) == OGRERR_NONE )
+        return poGeom;
+    else
+        return NULL;
 }
 

@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/06/08 15:41:16  warmerda
+ * added working blob/geometry support
+ *
  * Revision 1.1  1999/06/08 03:50:43  warmerda
  * New
  *
@@ -69,9 +72,11 @@ class SFCTable : public CTable<CDynamicAccessor>
     BYTE        *pabyLastGeometry;
 
   public:
-    		SFCRowset();
-    virtual     ~SFCRowset();
+    		SFCTable();
+    virtual     ~SFCTable();
 
+    void        ReleaseIUnknowns();
+    
     /** Get the spatial reference system of this rowset */
     const char *GetSpatialRefWKT();
 
@@ -82,7 +87,7 @@ class SFCTable : public CTable<CDynamicAccessor>
     int         HasGeometry();
 
     /** Get geometry type */
-    OGRwkbGeometryType GetGeometryType();
+//    OGRwkbGeometryType GetGeometryType();
 
     /** Fetch the raw geometry data for the last row read */
     BYTE        *GetWKBGeometry( int * pnSize );
