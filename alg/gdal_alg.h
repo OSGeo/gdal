@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2002/12/06 21:43:12  warmerda
+ * tweak prototypes
+ *
  * Revision 1.4  2002/12/05 21:44:35  warmerda
  * fixed prototype
  *
@@ -104,7 +107,7 @@ int CPL_DLL GDALReprojectionTransform(
 
 /* GCP based transformer ... forward is to georef coordinates */
 void CPL_DLL *
-GDALCreateGCPTransformer( int nGCPCount, GDAL_GCP *pasGCPList, 
+GDALCreateGCPTransformer( int nGCPCount, const GDAL_GCP *pasGCPList, 
                           int nReqOrder, int bReversed );
 void CPL_DLL GDALDestroyGCPTransformer( void *pTransformArg );
 int GDALGCPTransform( 
@@ -116,9 +119,6 @@ int GDALGCPTransform(
 int CPL_DLL GDALSimpleImageWarp( GDALDatasetH hSrcDS, 
                                  GDALDatasetH hDstDS, 
                                  int nBandCount, int *panBandList,
-                                 GByte *pabyRedLUT, 
-                                 GByte *pabyGreenLUT,
-                                 GByte *pabyBlueLUT,
                                  GDALTransformerFunc pfnTransform,
                                  void *pTransformArg,
                                  GDALProgressFunc pfnProgress, 
