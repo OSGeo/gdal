@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.57  2003/03/07 16:31:12  warmerda
+ * added GetLayerByName
+ *
  * Revision 1.56  2003/03/03 05:15:42  warmerda
  * added DeleteLayer and DeleteDataSource methods
  *
@@ -2562,6 +2565,7 @@ void OGR_DS_Destroy( OGRDataSourceH );
 const char  *OGR_DS_GetName( OGRDataSourceH );
 int     OGR_DS_GetLayerCount( OGRDataSourceH );
 OGRLayerH  OGR_DS_GetLayer( OGRDataSourceH, int );
+OGRLayerH OGR_DS_GetLayerByName( OGRDataSourceH, const char * );
 int     OGR_DS_DeleteLayer( OGRDataSourceH, int );
 int     OGR_DS_TestCapability( OGRDataSourceH, const char * );
 OGRLayerH  OGR_DS_ExecuteSQL( OGRDataSourceH, const char *, OGRGeometryH, 
