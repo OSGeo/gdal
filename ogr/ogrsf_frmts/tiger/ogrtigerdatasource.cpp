@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.31  2004/09/22 16:17:06  fwarmerdam
+ * Make GDT support work even if version number seems weird.
+ *
  * Revision 1.30  2004/08/17 20:54:00  warmerda
  * Avoid out-of-buffer read for very short filenames.
  *
@@ -453,6 +456,7 @@ int OGRTigerDataSource::Open( const char * pszFilename, int bTestOpen,
             char        szHeader[500];
             FILE        *fp;
             char        *pszFilename, *pszRecStart = NULL;
+            int         bIsGDT = FALSE;
 
             pszFilename = BuildFilename( papszFileList[i], "1" );
 
@@ -475,6 +479,8 @@ int OGRTigerDataSource::Open( const char * pszFilename, int bTestOpen,
             if( EQUALN(pszRecStart,"Copyright (C)",13) 
                 && strstr(pszRecStart,"Geographic Data Tech") != NULL )
             {
+                bIsGDT = TRUE;
+
                 while( *pszRecStart != '\0' 
                        && *pszRecStart != 10 
                        && *pszRecStart != 13 )
@@ -504,7 +510,8 @@ int OGRTigerDataSource::Open( const char * pszFilename, int bTestOpen,
                 && nVersionCode != 21 
                 && nVersionCode != 24
                 && pszRecStart[3]  != '9'
-                && pszRecStart[3]  != '0' )
+                && pszRecStart[3]  != '0'
+                && !bIsGDT )
                 continue;
 
             // we could (and should) add a bunch more validation here.
