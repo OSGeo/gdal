@@ -11,17 +11,17 @@ lib-depend:
 	(cd ../port ; $(MAKE) )
 
 gdalinfo:	gdalinfo.o lib-depend
-	$(CC) $(LNK_FLAGS) gdalinfo.o $(GDAL_LIBS) $(LIBS) -o gdalinfo
+	$(CXX) $(LNK_FLAGS) gdalinfo.o $(GDAL_LIBS) $(LIBS) -o gdalinfo
 
 gdal_translate:	gdal_translate.o lib-depend
-	$(CC) $(LNK_FLAGS) gdal_translate.o $(GDAL_LIBS) $(LIBS) \
+	$(CXX) $(LNK_FLAGS) gdal_translate.o $(GDAL_LIBS) $(LIBS) \
 		-o gdal_translate
 
 gdal2raw:	gdal2raw.o lib-depend
-	$(CC) $(LNK_FLAGS) gdal2raw.o $(GDAL_LIBS) $(LIBS) -o gdal2raw
+	$(CXX) $(LNK_FLAGS) gdal2raw.o $(GDAL_LIBS) $(LIBS) -o gdal2raw
 
 gdal_chksum:	gdal_chksum.o lib-depend
-	$(CC) $(LNK_FLAGS) gdal_chksum.o $(GDAL_LIBS) $(LIBS) -o gdal_chksum
+	$(CXX) $(LNK_FLAGS) gdal_chksum.o $(GDAL_LIBS) $(LIBS) -o gdal_chksum
 
 clean:
 	rm -f *.o gdalinfo core
@@ -30,5 +30,5 @@ clean:
 	$(CC) $(INCLUDE) -c $(CFLAGS) $*.c -o $*.o
 
 %.o:	%.cpp
-	$(CC) $(INCLUDE) -c $(CFLAGS) $*.cpp -o $*.o
+	$(CXX) $(INCLUDE) -c $(CFLAGS) $*.cpp -o $*.o
 

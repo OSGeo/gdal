@@ -15,5 +15,5 @@ clean:
 	$(CC) -c $(GDAL_INCLUDE) $(CFLAGS) $*.c -o $*.o
 
 %.o:	%.cpp
-	$(CC) -c $(GDAL_INCLUDE) $(CFLAGS) $*.cpp -o $*.o
+	$(CXX) -c $(GDAL_INCLUDE) $(CFLAGS) $*.cpp -o $*.o
 

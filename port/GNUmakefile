@@ -24,7 +24,7 @@ clean:
 	$(CC) -c $(CFLAGS) $*.c -o $*.o
 
 %.o:	%.cpp
-	$(CC) -c $(CFLAGS) $*.cpp -o $*.o
+	$(CXX) -c $(CFLAGS) $*.cpp -o $*.o
 
 $(LIB): $(OBJ)
 	rm -f $(LIB)

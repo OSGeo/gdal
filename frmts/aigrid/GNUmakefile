@@ -16,7 +16,7 @@ clean:
 	rm -f *.o aitest
 
 %.o:	%.cpp
-	$(CC) -c $(ALL_C_FLAGS) -I$(GDAL_ROOT)/core -I$(GDAL_ROOT)/port \
+	$(CXX) -c $(ALL_C_FLAGS) -I$(GDAL_ROOT)/core -I$(GDAL_ROOT)/port \
 		$*.cpp -o $*.o
 
 %.o:	%.c
@@ -25,7 +25,7 @@ clean:
 
 
 aitest:	aitest.o $(AIGOBJ)
-	$(CC) aitest.o $(AIGOBJ) $(GDAL_ROOT)/port/*.o $(LIBS) -o aitest
+	$(CXX) aitest.o $(AIGOBJ) $(GDAL_ROOT)/port/*.o $(LIBS) -o aitest
 
 install-obj:	$(OBJ)
 	cp $(OBJ) ../o

@@ -14,7 +14,7 @@ clean:
 	rm -f *.o
 
 %.o:	%.cpp
-	$(CC) -c $(ALL_C_FLAGS) $*.cpp -o $*.o
+	$(CXX) -c $(ALL_C_FLAGS) $*.cpp -o $*.o
 
 
 install-obj:	$(OBJ)
