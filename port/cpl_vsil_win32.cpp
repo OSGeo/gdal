@@ -28,6 +28,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.9  2003/05/27 20:45:33  warmerda
+ * added VSI IO debugging stuff
+ *
  * Revision 1.8  2002/06/17 14:10:14  warmerda
  * no stat64 on Win32
  *
@@ -62,6 +65,11 @@ CPL_CVSID("$Id$");
 
 #include <windows.h>
 
+typedef struct {
+    HANDLE       hFile;
+    vsi_l_offset nLastOffset;
+} VSIWin32File;
+
 /************************************************************************/
 /*                              VSIFOpen()                              */
 /************************************************************************/
@@ -88,6 +96,8 @@ FILE *VSIFOpenL( const char * pszFilename, const char * pszAccess )
                         (dwDesiredAccess == GENERIC_READ) ? 
                         FILE_ATTRIBUTE_READONLY : FILE_ATTRIBUTE_NORMAL, 
                         NULL );
+
+    VSIDebug3( "VSIFOpenL(%s,%s) = %p", pszFilename, pszAccess, hFile );
     
     if( hFile == INVALID_HANDLE_VALUE )
     {
@@ -107,6 +117,8 @@ int VSIFCloseL( FILE * fp )
 
 {
     HANDLE hFile = (HANDLE) fp;
+
+    VSIDebug1( "VSIFCloseL(%p)", fp );
 
     return CloseHandle( hFile ) ? 0 : -1;
 }
@@ -140,6 +152,30 @@ int VSIFSeekL( FILE * fp, vsi_l_offset nOffset, int nWhence )
     li.QuadPart = nOffset;
     nMoveLow = li.LowPart;
     dwMoveHigh = li.HighPart;
+
+#ifdef VSI_DEBUG
+    if( nWhence == SEEK_SET )
+    {
+        VSIDebug3( "VSIFSeekL(%p,%d:%lu,SEEK_SET)", 
+                   fp, (int) dwMoveHigh, (unsigned long) nMoveLow );
+    }
+    else if( nWhence == SEEK_END )
+    {
+        VSIDebug3( "VSIFSeekL(%p,%d:%lu,SEEK_END)",
+                   fp, (int) dwMoveHigh, (unsigned long) nMoveLow );
+    }
+    else if( nWhence == SEEK_CUR )
+    {
+        VSIDebug3( "VSIFSeekL(%p,%d:%lu,SEEK_CUR)",
+                   fp, (int) dwMoveHigh, (unsigned long) nMoveLow );
+    }
+    else
+    {
+        VSIDebug4( "VSIFSeekL(%p,%d:%lu,%d-Unknown)",
+                   fp, (int) dwMoveHigh, (unsigned long) nMoveLow,
+                   nWhence );
+    }
+#endif 
 
     SetLastError( 0 );
     SetFilePointer(hFile, (LONG) nMoveLow, (PLONG)&dwMoveHigh,
@@ -182,6 +218,8 @@ vsi_l_offset VSIFTellL( FILE * fp )
     li.LowPart = SetFilePointer( hFile, 0, (PLONG) &(li.HighPart), 
                                  FILE_CURRENT );
 
+    VSIDebug3( "VSIFTellL(%p) = %ld:%ld", fp, li.HighPart, li.LowPart );
+
     return li.QuadPart;
 }
 
@@ -204,6 +242,8 @@ void VSIFFlushL( FILE * fp )
 {
     HANDLE hFile = (HANDLE) fp;
 
+    VSIDebug1( "VSIFFlushL(%p)", fp );
+
     FlushFileBuffers( hFile );
 }
 
@@ -216,11 +256,17 @@ size_t VSIFReadL( void * pBuffer, size_t nSize, size_t nCount, FILE * fp )
 {
     HANDLE      hFile = (HANDLE) fp;
     DWORD       dwSizeRead;
+    size_t      nResult;
 
     if( !ReadFile( hFile, pBuffer, nSize * nCount, &dwSizeRead, NULL ) )
-        return 0;
+        nResult = 0;
     else
-        return dwSizeRead / nSize;
+        nResult = dwSizeRead / nSize;
+
+    VSIDebug3( "VSIFReadL(%p,%ld) = %ld", 
+               fp, (long) nSize * nCount, (long) dwSizeRead );
+
+    return nResult;
 }
 
 /************************************************************************/
@@ -232,11 +278,17 @@ size_t VSIFWriteL( void * pBuffer, size_t nSize, size_t nCount, FILE * fp )
 {
     HANDLE      hFile = (HANDLE) fp;
     DWORD       dwSizeWritten;
+    size_t      nResult;
 
     if( !WriteFile( hFile, pBuffer, nSize * nCount, &dwSizeWritten, NULL ) )
-        return 0;
+        nResult = 0;
     else
-        return dwSizeWritten / nSize;
+        nResult = dwSizeWritten / nSize;
+
+    VSIDebug3( "VSIFWriteL(%p,%ld) = %ld", 
+               fp, (long) nSize * nCount, (long) dwSizeWritten );
+
+    return nResult;
 }
 
 /************************************************************************/
