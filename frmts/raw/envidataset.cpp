@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2003/04/30 09:47:29  dron
+ * Few memory leaks fixed.
+ *
  * Revision 1.13  2003/03/11 16:34:49  gwalter
  * Test header before opening dataset to avoid "band names = {" being written
  * (during FlushCache in dataset deletion) to non-envi format files that also have
@@ -559,6 +562,7 @@ int ENVIDataset::ProcessMapinfo( const char *pszMapinfo )
         oSRS.exportToWkt( &pszProjection );
     }
 
+    CSLDestroy( papszFields );
     return TRUE;
 }
 
@@ -933,6 +937,8 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
 
         for( i = 0; i < MIN(CSLCount(papszBandNames),nBands); i++ )
             poDS->GetRasterBand(i + 1)->SetDescription( papszBandNames[i] );
+
+        CSLDestroy( papszBandNames );
     }
     
     
