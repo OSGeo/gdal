@@ -33,7 +33,7 @@ oledb:
 	$(MAKE)
 	cd ..
 
-all:	frmts oledb default
+all:	frmts default oledb
 
 geometryidl.h: geometryidl.idl spatialreferenceidl.h
 	midl geometryidl.idl
