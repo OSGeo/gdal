@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2002/01/28 19:11:34  warmerda
+ * avoid warning
+ *
  * Revision 1.3  2002/01/28 18:18:48  warmerda
  * Added DTEDPtStreamSetMetadata
  *
@@ -343,9 +346,9 @@ void DTEDFillPtStream( void *hStream, int nPixelSearchDist )
     {
         for( iY = 0; iY < nKernelWidth; iY++ )
         {
-            pafKernel[iX + iY * nKernelWidth] = 1.0 / 
+            pafKernel[iX + iY * nKernelWidth] = (float) (1.0 / 
                 sqrt( (nPixelSearchDist-iX) * (nPixelSearchDist-iX)
-                      + (nPixelSearchDist-iY) * (nPixelSearchDist-iY) );
+                      + (nPixelSearchDist-iY) * (nPixelSearchDist-iY) ));
         }
     }
         
