@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  1999/06/10 14:00:15  warmerda
+ * Added request for IStream from IUnknowns that don't give an ISequentialStream.
+ *
  * Revision 1.3  1999/06/08 17:50:20  warmerda
  * Fixed some off-by-one errors, and updated bytes|byref case.
  *
@@ -246,6 +249,15 @@ BYTE *SFCTable::GetWKBGeometry( int * pnSize )
             
     hr = pIUnknown->QueryInterface( IID_ISequentialStream,
                                     (void**)&pIStream );
+
+    // for some reason the Cadcorp provider can return an IStream but
+    // not an ISequentialStream!
+    if( FAILED(hr) )
+    {
+        hr = pIUnknown->QueryInterface( IID_IStream,
+                                        (void**)&pIStream );
+    }
+    
     if( FAILED(hr) )
     {
         DumpErrorHResult( hr, "Can't get IStream interface to geometry" );
