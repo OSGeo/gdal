@@ -85,6 +85,12 @@ PG_LIB	=	@PG_LIB@
 PG_INC	=	@PG_INC@
 
 #
+# HDF4 Support.
+#
+HAVE_HDF4     = @HAVE_HDF4@
+HDF4_INCLUDE  = @HDF4_INCLUDE@
+
+#
 # Xerces C++ XML Parser for GML.
 #
 HAVE_XERCES    = @HAVE_XERCES@
@@ -137,7 +143,6 @@ endif
 #
 GDAL_FORMATS = 	gxf gtiff hfa aigrid aaigrid ceos ceos2 iso8211 bsb xpm \
 		sdts raw dted mem jdem envisat elas fit vrt usgsdem l1b \
-		hdf4 \
 		@OPT_GDAL_FORMATS@
 
 #
