@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.8  2003/10/05 15:31:00  dron
+ * TM projection support implemented.
+ *
  * Revision 1.7  2003/07/08 21:10:19  warmerda
  * avoid warnings
  *
@@ -110,8 +113,6 @@ class FASTDataset : public GDALDataset
     GDALDataType eDataType;
     FASTSatellite iSatellite;
 
-    void	ComputeGeoref();
-    
   public:
                 FASTDataset();
 		~FASTDataset();
@@ -187,7 +188,7 @@ FASTDataset::~FASTDataset()
 	CPLFree( pszProjection );
     for ( i = 0; i < nBands; i++ )
 	if ( fpChannels[i] )
-	    VSIFClose( fpChannels[i] );
+	    VSIFCloseL( fpChannels[i] );
     if( fpHeader != NULL )
         VSIFClose( fpHeader );
 }
@@ -210,7 +211,10 @@ CPLErr FASTDataset::GetGeoTransform( double * padfTransform )
 const char *FASTDataset::GetProjectionRef()
 
 {
+    if( pszProjection )
         return pszProjection;
+    else
+        return "";
 }
 /************************************************************************/
 /*                             FOpenChannel()                           */
@@ -225,11 +229,11 @@ FILE *FASTDataset::FOpenChannel( char *pszFilename, int iBand )
     switch ( iSatellite )
     {
 	case LANDSAT:
-	if ( pszFilename[0] != ' ' )
+	if ( !EQUAL( pszFilename, "" ) )
 	{
 	    pszChannelFilename =
                 CPLFormCIFilename( pszDirname, pszFilename, NULL );
-	    fpChannels[iBand] = VSIFOpen( pszChannelFilename, "rb" );
+	    fpChannels[iBand] = VSIFOpenL( pszChannelFilename, "rb" );
 	}
 	else
 	    fpChannels[iBand] = NULL;
@@ -238,67 +242,67 @@ FILE *FASTDataset::FOpenChannel( char *pszFilename, int iBand )
 	default:
 	pszChannelFilename = CPLFormFilename( pszDirname,
 	    CPLSPrintf( "%s.%d", pszPrefix, iBand + 1 ), pszSuffix );
-	fpChannels[iBand] = VSIFOpen( pszChannelFilename, "rb" );
+	fpChannels[iBand] = VSIFOpenL( pszChannelFilename, "rb" );
 	if ( fpChannels[iBand] )
 	    break;
 	pszChannelFilename = CPLFormFilename( pszDirname,
 	    CPLSPrintf( "IMAGERY%d", iBand + 1 ), pszSuffix );
-	fpChannels[iBand] = VSIFOpen( pszChannelFilename, "rb" );
+	fpChannels[iBand] = VSIFOpenL( pszChannelFilename, "rb" );
 	if ( fpChannels[iBand] )
 	    break;
 	pszChannelFilename = CPLFormFilename( pszDirname,
 	    CPLSPrintf( "imagery%d", iBand + 1 ), pszSuffix );
-	fpChannels[iBand] = VSIFOpen( pszChannelFilename, "rb" );
+	fpChannels[iBand] = VSIFOpenL( pszChannelFilename, "rb" );
 	if ( fpChannels[iBand] )
 	    break;
 	pszChannelFilename = CPLFormFilename( pszDirname,
 	    CPLSPrintf( "IMAGERY%d.DAT", iBand + 1 ), NULL );
-	fpChannels[iBand] = VSIFOpen( pszChannelFilename, "rb" );
+	fpChannels[iBand] = VSIFOpenL( pszChannelFilename, "rb" );
 	if ( fpChannels[iBand] )
 	    break;
 	pszChannelFilename = CPLFormFilename( pszDirname,
 	    CPLSPrintf( "imagery%d.dat", iBand + 1 ), NULL );
-	fpChannels[iBand] = VSIFOpen( pszChannelFilename, "rb" );
+	fpChannels[iBand] = VSIFOpenL( pszChannelFilename, "rb" );
 	if ( fpChannels[iBand] )
 	    break;
 	pszChannelFilename = CPLFormFilename( pszDirname,
 	    CPLSPrintf( "IMAGERY%d.dat", iBand + 1 ), NULL );
-	fpChannels[iBand] = VSIFOpen( pszChannelFilename, "rb" );
+	fpChannels[iBand] = VSIFOpenL( pszChannelFilename, "rb" );
 	if ( fpChannels[iBand] )
 	    break;
 	pszChannelFilename = CPLFormFilename( pszDirname,
 	    CPLSPrintf( "imagery%d.DAT", iBand + 1 ), NULL );
-	fpChannels[iBand] = VSIFOpen( pszChannelFilename, "rb" );
+	fpChannels[iBand] = VSIFOpenL( pszChannelFilename, "rb" );
 	if ( fpChannels[iBand] )
 	    break;
 	pszChannelFilename = CPLFormFilename( pszDirname,
 	    CPLSPrintf( "BAND%d", iBand + 1 ), pszSuffix );
-	fpChannels[iBand] = VSIFOpen( pszChannelFilename, "rb" );
+	fpChannels[iBand] = VSIFOpenL( pszChannelFilename, "rb" );
 	if ( fpChannels[iBand] )
 	    break;
 	pszChannelFilename = CPLFormFilename( pszDirname,
 	    CPLSPrintf( "band%d", iBand + 1 ), pszSuffix );
-	fpChannels[iBand] = VSIFOpen( pszChannelFilename, "rb" );
+	fpChannels[iBand] = VSIFOpenL( pszChannelFilename, "rb" );
 	if ( fpChannels[iBand] )
 	    break;
 	pszChannelFilename = CPLFormFilename( pszDirname,
 	    CPLSPrintf( "BAND%d.DAT", iBand + 1 ), NULL );
-	fpChannels[iBand] = VSIFOpen( pszChannelFilename, "rb" );
+	fpChannels[iBand] = VSIFOpenL( pszChannelFilename, "rb" );
 	if ( fpChannels[iBand] )
 	    break;
 	pszChannelFilename = CPLFormFilename( pszDirname,
 	    CPLSPrintf( "band%d.dat", iBand + 1 ), NULL );
-	fpChannels[iBand] = VSIFOpen( pszChannelFilename, "rb" );
+	fpChannels[iBand] = VSIFOpenL( pszChannelFilename, "rb" );
 	if ( fpChannels[iBand] )
 	    break;
 	pszChannelFilename = CPLFormFilename( pszDirname,
 	    CPLSPrintf( "BAND%d.dat", iBand + 1 ), NULL );
-	fpChannels[iBand] = VSIFOpen( pszChannelFilename, "rb" );
+	fpChannels[iBand] = VSIFOpenL( pszChannelFilename, "rb" );
 	if ( fpChannels[iBand] )
 	    break;
 	pszChannelFilename = CPLFormFilename( pszDirname,
 	    CPLSPrintf( "band%d.DAT", iBand + 1 ), NULL );
-	fpChannels[iBand] = VSIFOpen( pszChannelFilename, "rb" );
+	fpChannels[iBand] = VSIFOpenL( pszChannelFilename, "rb" );
 	break;
     }
     
@@ -307,6 +311,23 @@ FILE *FASTDataset::FOpenChannel( char *pszFilename, int iBand )
     CPLFree( pszPrefix );
     CPLFree( pszSuffix );
     return fpChannels[iBand];
+}
+
+/************************************************************************/
+/*                         PackedDMSToDec()                             */
+/*    Convert a packed DMS value (dddmmssss) into decimal degrees.     */
+/************************************************************************/
+
+static double PackedDMSToDec( double dfPacked )
+{
+    double  dfDegrees, dfMinutes, dfSeconds, dfTemp;
+    
+    dfTemp = floor( dfPacked / 10000.0 );
+    dfDegrees = floor( dfPacked / 1000000.0 );
+    dfMinutes = dfTemp - floor( dfTemp / 100.0 ) * 100.0;
+    dfSeconds = (dfPacked - dfTemp * 10000.0) / 100.0;
+
+    return dfDegrees + dfMinutes / 60.0 + dfSeconds / 3600.0;
 }
 
 /************************************************************************/
@@ -345,15 +366,11 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
 /*    Read the administrative header and calibration coefficients from  */
 /*    radiometric record.                                               */
 /* -------------------------------------------------------------------- */
-    char	pszHeader[ADM_HEADER_SIZE];
-    char	pszDate[FAST_DATE_SIZE + 1];
-    char	pszSatName[FAST_SATNAME_SIZE + 1];
-    char	pszSensorName[FAST_SENSORNAME_SIZE + 1];
-    char	pszFilename[FAST_FILENAME_SIZE + 1];
-    char	pszValue[FAST_VALUE_SIZE + 1];
+    char	szHeader[ADM_HEADER_SIZE];
+    char	*pszTemp;
  
     VSIFSeek( poDS->fpHeader, 0, SEEK_SET );
-    if ( VSIFRead( pszHeader, 1, ADM_HEADER_SIZE, poDS->fpHeader ) <
+    if ( VSIFRead( szHeader, 1, ADM_HEADER_SIZE, poDS->fpHeader ) <
 	 ADM_HEADER_SIZE )
     {
 	CPLError( CE_Failure, CPLE_AppDefined,
@@ -365,83 +382,112 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
     // Read acquisition date
-    pszDate[FAST_DATE_SIZE] = '\0';
-    memcpy( pszDate, pszHeader + 70, FAST_DATE_SIZE );
-    poDS->SetMetadataItem( "ACQUISITION_DATE", pszDate );
+    pszTemp = CPLScanString( szHeader + 70, FAST_DATE_SIZE, TRUE, TRUE );
+    poDS->SetMetadataItem( "ACQUISITION_DATE", pszTemp );
+    CPLFree( pszTemp );
 
     // Read satellite name
-    pszSatName[FAST_SATNAME_SIZE] = '\0';
-    memcpy( pszSatName, pszHeader + 91, FAST_SATNAME_SIZE );
-    poDS->SetMetadataItem( "SATELLITE", pszSatName );
-    if ( EQUALN(pszSatName, "LANDSAT", 7) )
+    pszTemp = CPLScanString( szHeader + 91, FAST_SATNAME_SIZE, TRUE, TRUE );
+    poDS->SetMetadataItem( "SATELLITE", pszTemp );
+    if ( EQUALN(pszTemp, "LANDSAT", 7) )
 	poDS->iSatellite = LANDSAT;
-    else if ( EQUALN(pszSatName, "IRS", 3) )
+    else if ( EQUALN(pszTemp, "IRS", 3) )
 	poDS->iSatellite = IRS;
     else
 	poDS->iSatellite = IRS;
+    CPLFree( pszTemp );
 
     // Read sensor name
-    pszSensorName[FAST_SENSORNAME_SIZE] = '\0';
-    memcpy( pszSensorName, pszHeader + 110, FAST_SENSORNAME_SIZE );
-    poDS->SetMetadataItem( "SENSOR", pszSensorName );
+    pszTemp = CPLScanString( szHeader + 110, FAST_SENSORNAME_SIZE, TRUE, TRUE );
+    poDS->SetMetadataItem( "SENSOR", pszTemp );
+    CPLFree( pszTemp );
 
-    pszFilename[FAST_FILENAME_SIZE] = '\0';
-    pszValue[FAST_VALUE_SIZE] = '\0';
+    // Read filenames
     poDS->nBands = 0;
-    memcpy( pszFilename, pszHeader + 1130, FAST_FILENAME_SIZE );
-    if ( poDS->FOpenChannel( pszFilename, poDS->nBands ) )
+    pszTemp = CPLScanString( szHeader + 1130, FAST_FILENAME_SIZE, TRUE, FALSE );
+    if ( poDS->FOpenChannel( pszTemp, poDS->nBands ) )
     {
 	poDS->nBands++;
-	memcpy( pszValue, pszHeader + 1616, FAST_VALUE_SIZE );
-	poDS->SetMetadataItem( CPLSPrintf("BIAS%d",  poDS->nBands), pszValue );
-	memcpy( pszValue, pszHeader + 1641, FAST_VALUE_SIZE );
-	poDS->SetMetadataItem( CPLSPrintf("GAIN%d",  poDS->nBands), pszValue );
+        CPLFree( pszTemp );
+	pszTemp =
+            CPLScanString( szHeader + 1616, FAST_VALUE_SIZE, TRUE, FALSE );
+	poDS->SetMetadataItem( CPLSPrintf("BIAS%d",  poDS->nBands), pszTemp );
+        CPLFree( pszTemp );
+	pszTemp =
+            CPLScanString( szHeader + 1641, FAST_VALUE_SIZE, TRUE, FALSE );
+	poDS->SetMetadataItem( CPLSPrintf("GAIN%d",  poDS->nBands), pszTemp );
     }
-    memcpy( pszFilename, pszHeader + 1169, FAST_FILENAME_SIZE );
-    if ( poDS->FOpenChannel( pszFilename, poDS->nBands ) )
+    CPLFree( pszTemp );
+    pszTemp = CPLScanString( szHeader + 1169, FAST_FILENAME_SIZE, TRUE, FALSE );
+    if ( poDS->FOpenChannel( pszTemp, poDS->nBands ) )
     {
 	poDS->nBands++;
-	memcpy( pszValue, pszHeader + 1696, FAST_VALUE_SIZE );
-	poDS->SetMetadataItem( CPLSPrintf("BIAS%d",  poDS->nBands), pszValue );
-	memcpy( pszValue, pszHeader + 1721, FAST_VALUE_SIZE );
-	poDS->SetMetadataItem( CPLSPrintf("GAIN%d",  poDS->nBands), pszValue );
+        CPLFree( pszTemp );
+	pszTemp =
+            CPLScanString( szHeader + 1696, FAST_VALUE_SIZE, TRUE, FALSE );
+	poDS->SetMetadataItem( CPLSPrintf("BIAS%d",  poDS->nBands), pszTemp );
+        CPLFree( pszTemp );
+	pszTemp =
+            CPLScanString( szHeader + 1721, FAST_VALUE_SIZE, TRUE, FALSE );
+	poDS->SetMetadataItem( CPLSPrintf("GAIN%d",  poDS->nBands), pszTemp );
     }
-    memcpy( pszFilename, pszHeader + 1210, FAST_FILENAME_SIZE );
-    if ( poDS->FOpenChannel( pszFilename, poDS->nBands ) )
+    CPLFree( pszTemp );
+    pszTemp = CPLScanString( szHeader + 1210, FAST_FILENAME_SIZE, TRUE, FALSE );
+    if ( poDS->FOpenChannel( pszTemp, poDS->nBands ) )
     {
 	poDS->nBands++;
-	memcpy( pszValue, pszHeader + 1776, FAST_VALUE_SIZE );
-	poDS->SetMetadataItem( CPLSPrintf("BIAS%d",  poDS->nBands), pszValue );
-	memcpy( pszValue, pszHeader + 1801, FAST_VALUE_SIZE );
-	poDS->SetMetadataItem( CPLSPrintf("GAIN%d",  poDS->nBands), pszValue );
+        CPLFree( pszTemp );
+	pszTemp =
+            CPLScanString( szHeader + 1776, FAST_VALUE_SIZE, TRUE, FALSE );
+	poDS->SetMetadataItem( CPLSPrintf("BIAS%d",  poDS->nBands), pszTemp );
+        CPLFree( pszTemp );
+	pszTemp =
+            CPLScanString( szHeader + 1801, FAST_VALUE_SIZE, TRUE, FALSE );
+	poDS->SetMetadataItem( CPLSPrintf("GAIN%d",  poDS->nBands), pszTemp );
     }
-    memcpy( pszFilename, pszHeader + 1249, FAST_FILENAME_SIZE );
-    if ( poDS->FOpenChannel( pszFilename, poDS->nBands ) )
+    CPLFree( pszTemp );
+    pszTemp = CPLScanString( szHeader + 1249, FAST_FILENAME_SIZE, TRUE, FALSE );
+    if ( poDS->FOpenChannel( pszTemp, poDS->nBands ) )
     {
 	poDS->nBands++;
-	memcpy( pszValue, pszHeader + 1856, FAST_VALUE_SIZE );
-	poDS->SetMetadataItem( CPLSPrintf("BIAS%d",  poDS->nBands), pszValue );
-	memcpy( pszValue, pszHeader + 1881, FAST_VALUE_SIZE );
-	poDS->SetMetadataItem( CPLSPrintf("GAIN%d",  poDS->nBands), pszValue );
+        CPLFree( pszTemp );
+	pszTemp =
+            CPLScanString( szHeader + 1856, FAST_VALUE_SIZE, TRUE, FALSE );
+	poDS->SetMetadataItem( CPLSPrintf("BIAS%d",  poDS->nBands), pszTemp );
+        CPLFree( pszTemp );
+	pszTemp =
+            CPLScanString( szHeader + 1881, FAST_VALUE_SIZE, TRUE, FALSE );
+	poDS->SetMetadataItem( CPLSPrintf("GAIN%d",  poDS->nBands), pszTemp );
     }
-    memcpy( pszFilename, pszHeader + 1290, FAST_FILENAME_SIZE );
-    if ( poDS->FOpenChannel( pszFilename, poDS->nBands ) )
+    CPLFree( pszTemp );
+    pszTemp = CPLScanString( szHeader + 1290, FAST_FILENAME_SIZE, TRUE, FALSE );
+    if ( poDS->FOpenChannel( pszTemp, poDS->nBands ) )
     {
 	poDS->nBands++;
-	memcpy( pszValue, pszHeader + 1936, FAST_VALUE_SIZE );
-	poDS->SetMetadataItem( CPLSPrintf("BIAS%d",  poDS->nBands), pszValue );
-	memcpy( pszValue, pszHeader + 1961, FAST_VALUE_SIZE );
-	poDS->SetMetadataItem( CPLSPrintf("GAIN%d",  poDS->nBands), pszValue );
+        CPLFree( pszTemp );
+	pszTemp =
+            CPLScanString( szHeader + 1936, FAST_VALUE_SIZE, TRUE, FALSE );
+	poDS->SetMetadataItem( CPLSPrintf("BIAS%d",  poDS->nBands), pszTemp );
+        CPLFree( pszTemp );
+	pszTemp =
+            CPLScanString( szHeader + 1961, FAST_VALUE_SIZE, TRUE, FALSE );
+	poDS->SetMetadataItem( CPLSPrintf("GAIN%d",  poDS->nBands), pszTemp );
     }
-    memcpy( pszFilename, pszHeader + 1329, FAST_FILENAME_SIZE );
-    if ( poDS->FOpenChannel( pszFilename, poDS->nBands ) )
+    CPLFree( pszTemp );
+    pszTemp = CPLScanString( szHeader + 1329, FAST_FILENAME_SIZE, TRUE, FALSE );
+    if ( poDS->FOpenChannel( pszTemp, poDS->nBands ) )
     {
 	poDS->nBands++;
-	memcpy( pszValue, pszHeader + 2016, FAST_VALUE_SIZE );
-	poDS->SetMetadataItem( CPLSPrintf("BIAS%d",  poDS->nBands), pszValue );
-	memcpy( pszValue, pszHeader + 2041, FAST_VALUE_SIZE );
-	poDS->SetMetadataItem( CPLSPrintf("GAIN%d",  poDS->nBands), pszValue );
+        CPLFree( pszTemp );
+	pszTemp =
+            CPLScanString( szHeader + 2016, FAST_VALUE_SIZE, TRUE, FALSE );
+	poDS->SetMetadataItem( CPLSPrintf("BIAS%d",  poDS->nBands), pszTemp );
+        CPLFree( pszTemp );
+	pszTemp =
+            CPLScanString( szHeader + 2041, FAST_VALUE_SIZE, TRUE, FALSE );
+	poDS->SetMetadataItem( CPLSPrintf("GAIN%d",  poDS->nBands), pszTemp );
     }
+    CPLFree( pszTemp );
 
     if ( !poDS->nBands )
     {
@@ -450,10 +496,10 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
 	return NULL;
     }
     
-    poDS->nRasterXSize = atoi( pszHeader + 842 );
-    poDS->nRasterYSize = atoi( pszHeader + 870 );
+    poDS->nRasterXSize = atoi( szHeader + 842 );
+    poDS->nRasterYSize = atoi( szHeader + 870 );
 
-    switch( atoi( pszHeader + 983 ) )
+    switch( atoi( szHeader + 983 ) )
     {
 	case 8:
         default:
@@ -465,43 +511,72 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
 /*          Read geometric record					*/
 /* -------------------------------------------------------------------- */
     OGRSpatialReference oSRS;
-    int		iUTMZone;
     // Coordinates of corner pixel's centers
     double	dfULX = 0.5, dfULY = 0.5;
     double	dfURX = poDS->nRasterXSize - 0.5, dfURY = 0.5;
     double	dfLLX = 0.5, dfLLY = poDS->nRasterYSize - 0.5;
     double	dfLRX = poDS->nRasterXSize - 0.5, dfLRY = poDS->nRasterYSize - 0.5;
     
-    if ( EQUALN(pszHeader + 3145, "WGS84", 5) )
+    if ( EQUALN(szHeader + 3145, "WGS84", 5) || EQUALN(szHeader + 3145, " ", 1) )
 	oSRS.SetWellKnownGeogCS( "WGS84" );
     
-    if ( EQUALN(pszHeader + 3103, "UTM", 3) )
+    if ( EQUALN(szHeader + 3103, "UTM", 3) )
     {
+        int		iUTMZone;
+
         if ( poDS->iSatellite == LANDSAT )
-	    iUTMZone = atoi( pszHeader + 3592 );
+	    iUTMZone = atoi( szHeader + 3592 );
 	else
-	    iUTMZone = (int)atof( pszHeader + 3232 );
-        if( *(pszHeader + 3662) == 'N' )	// North hemisphere
+	    iUTMZone = (int)atof( szHeader + 3232 );
+        iUTMZone = ABS( iUTMZone );
+        if( *(szHeader + 3662) == 'N' )	        // Northern hemisphere
 	    oSRS.SetUTM( iUTMZone, TRUE );
-        else					// South hemisphere
+        else					// Southern hemisphere
 	    oSRS.SetUTM( iUTMZone, FALSE );
-	// UTM coordinates
-        dfULX = atof( pszHeader + 3664 );
-        dfULY = atof( pszHeader + 3678 );
-        dfURX = atof( pszHeader + 3744 );
-        dfURY = atof( pszHeader + 3758 );
-        dfLRX = atof( pszHeader + 3824 );
-        dfLRY = atof( pszHeader + 3838 );
-        dfLLX = atof( pszHeader + 3904 );
-        dfLLY = atof( pszHeader + 3918 );
+
+	// Coordinates in meters
+        dfULX = CPLScanDouble( szHeader + 3664, 13 );
+        dfULY = CPLScanDouble( szHeader + 3678, 13 );
+        dfURX = CPLScanDouble( szHeader + 3744, 13 );
+        dfURY = CPLScanDouble( szHeader + 3758, 13 );
+        dfLRX = CPLScanDouble( szHeader + 3824, 13 );
+        dfLRY = CPLScanDouble( szHeader + 3838, 13 );
+        dfLLX = CPLScanDouble( szHeader + 3904, 13 );
+        dfLLY = CPLScanDouble( szHeader + 3918, 13 );
+    }
+    
+    else if ( EQUALN(szHeader + 3103, "TM", 2) )
+    {
+        double  dfZone = 0.0;
+
+        oSRS.SetTM( // Center latitude
+                    PackedDMSToDec( CPLScanDouble(szHeader + 3312, 24) ),
+                    // Center longitude
+                    PackedDMSToDec( CPLScanDouble(szHeader + 3282, 24) ),
+                    CPLScanDouble(szHeader + 3232, 24),    // Scale factor
+                    CPLScanDouble(szHeader + 3337, 24),    // False easting
+                    CPLScanDouble(szHeader + 3362, 24) );  // False northing
+
+        dfZone = atoi( szHeader + 3592 ) * 1000000.0;
+	// Coordinates in meters
+        dfULX = CPLScanDouble( szHeader + 3664, 13 ) - dfZone;
+        dfULY = CPLScanDouble( szHeader + 3678, 13 );
+        dfURX = CPLScanDouble( szHeader + 3744, 13 ) - dfZone;
+        dfURY = CPLScanDouble( szHeader + 3758, 13 );
+        dfLRX = CPLScanDouble( szHeader + 3824, 13 ) - dfZone;
+        dfLRY = CPLScanDouble( szHeader + 3838, 13 );
+        dfLLX = CPLScanDouble( szHeader + 3904, 13 ) - dfZone;
+        dfLLY = CPLScanDouble( szHeader + 3918, 13 );
     }
 
     oSRS.SetLinearUnits( SRS_UL_METER, 1.0 );
     
+    if ( poDS->pszProjection )
+        CPLFree( poDS->pszProjection );
     oSRS.exportToWkt( &poDS->pszProjection );
 
     poDS->adfGeoTransform[1] = (dfURX - dfLLX) / (poDS->nRasterXSize - 1);
-    if( *(pszHeader + 3662) == 'N' )
+    if( *(szHeader + 3662) == 'N' )
 	poDS->adfGeoTransform[5] = (dfURY - dfLLY) / (poDS->nRasterYSize - 1);
     else	    
 	poDS->adfGeoTransform[5] =  (dfLLY - dfURY) / (poDS->nRasterYSize - 1);
