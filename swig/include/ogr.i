@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.20  2005/02/22 18:24:34  hobu
+ * apply the double_4 typemap for Layer.GetExtent
+ *
  * Revision 1.19  2005/02/22 15:33:37  kruland
  * Removed duplicate defns of SetField that I introduced in previous revision.
  * Added %appy to SetField which will call str() on second arg.
@@ -218,6 +221,7 @@ public:
   OGRDataSourceShadow *CreateDataSource( const char *name, 
                                     char **options = 0 ) {
     OGRDataSourceShadow *ds = (OGRDataSourceShadow*) OGR_Dr_CreateDataSource( self, name, options);
+    OGR_DS_Reference(ds);
     return ds;
   }
   
@@ -235,6 +239,8 @@ public:
   OGRDataSourceShadow *Open( const char* name, 
                         int update=0 ) {
     OGRDataSourceShadow* ds = (OGRDataSourceShadow*) OGR_Dr_Open(self, name, update);
+    OGR_DS_Reference(ds);
+    OGR_DS_Reference(ds);
     return ds;
   }
 
@@ -259,7 +265,9 @@ public:
 %rename (DataSource) OGRDataSourceShadow;
 
 class OGRDataSourceShadow {
-  OGRDataSourceShadow();
+  OGRDataSourceShadow() {
+        OGR_DS_Reference(self);
+  }
   ~OGRDataSourceShadow();
 public:
 %extend {
@@ -344,7 +352,7 @@ public:
     return OGR_DS_TestCapability(self, cap);
   }
 
-  //%newobject ExecuteSQL;
+  %newobject ExecuteSQL;
   %feature( "kwargs" ) ExecuteSQL;
   OGRLayerShadow *ExecuteSQL(const char* statement,
                         OGRGeometryShadow* geom=NULL,
@@ -515,14 +523,11 @@ public:
     return OGR_L_GetFeatureCount(self, force);
   }
   
-  //TODO make a typemap to return this as a four-tuple
-  %newobject GetExtent;
-  OGREnvelope GetExtent(int force) {
-    OGREnvelope extent;
-    OGRErr err = OGR_L_GetExtent(self, &extent, force);
+  %feature( "kwargs" ) GetExtent;
+  void GetExtent(double_4 argout, int force=1) {
+    OGRErr err = OGR_L_GetExtent(self, (OGREnvelope*)argout, force);
     if (err != 0)
       throw err;
-    return extent;
   }
 
   int TestCapability(const char* cap) {
@@ -795,7 +800,7 @@ public:
 
     def __cmp__(self, other):
         """Compares a feature to another for equality"""
-        return _gdal.OGR_F_Equal( self._o, other._o )
+        return self.Equal(other)
 
     def __copy__(self):
         return self.Clone()
@@ -1311,6 +1316,7 @@ OGRDriverShadow* GetDriver(int driver_number) {
     return layer;
   }
 %}
+
 
 %feature( "kwargs" ) Open;
 %newobject Open;
