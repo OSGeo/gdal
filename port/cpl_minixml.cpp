@@ -28,15 +28,20 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.2  2001/11/16 20:29:58  warmerda
+ * fixed lost char in normal CString tokens
+ *
  * Revision 1.1  2001/11/16 15:39:48  warmerda
  * New
- *
- **********************************************************************/
+ */
 
 #include <ctype.h>
 #include "cpl_minixml.h"
 #include "cpl_error.h"
 #include "cpl_conv.h"
+#include "cpl_string.h"
+
+CPL_CVSID("$Id$");
 
 typedef enum {
     TNone,
@@ -213,6 +218,7 @@ static TokenType ReadToken( ParseContext *psContext )
     {
         psContext->eTokenType = TString;
 
+        AddToToken( psContext, chNext );
         while( (chNext = ReadChar(psContext)) != '<' 
                && chNext != '\0' )
             AddToToken( psContext, chNext );
@@ -474,8 +480,7 @@ CPLXMLNode *CPLParseXMLString( const char *pszString )
 /* -------------------------------------------------------------------- */
 /*      Did we pop all the way out of our stack?                        */
 /* -------------------------------------------------------------------- */
-    if( CPLGetLastErrorType() == CE_None 
-        && sContext.nStackSize != 0 )
+    if( CPLGetLastErrorType() == CE_None && sContext.nStackSize != 0 )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "Parse error at EOF, not all elements have been closed.\n" );
@@ -674,4 +679,75 @@ void CPLDestroyXMLNode( CPLXMLNode *psNode )
 
     CPLFree( psNode->pszValue );
     CPLFree( psNode );
+}
+
+/************************************************************************/
+/*                           CPLGetXMLNode()                            */
+/************************************************************************/
+
+CPLXMLNode *CPLGetXMLNode( CPLXMLNode *poRoot, const char *pszPath )
+
+{
+    char	**papszTokens;
+    int		iToken = 0;
+
+    papszTokens = CSLTokenizeStringComplex( pszPath, ".", FALSE, FALSE );
+
+    while( papszTokens[iToken] != NULL && poRoot != NULL )
+    {
+        CPLXMLNode *psChild;
+
+        for( psChild = poRoot->psChild; psChild != NULL; 
+             psChild = psChild->psNext ) 
+        {
+            if( psChild->eType != CXT_Text 
+                && EQUAL(papszTokens[iToken],psChild->pszValue) )
+                break;
+        }
+
+        if( psChild == NULL )
+        {
+            poRoot = NULL;
+            break;
+        }
+
+        poRoot = psChild;
+        iToken++;
+    }
+
+    CSLDestroy( papszTokens );
+    return poRoot;
+}
+
+/************************************************************************/
+/*                           CPLGetXMLValue()                           */
+/************************************************************************/
+
+const char *CPLGetXMLValue( CPLXMLNode *poRoot, const char *pszPath, 
+                            const char *pszDefault )
+
+{
+    CPLXMLNode	*psTarget;
+
+    psTarget = CPLGetXMLNode( poRoot, pszPath );
+    if( psTarget == NULL )
+        return pszDefault;
+
+    if( psTarget->eType == CXT_Attribute )
+    {
+        CPLAssert( psTarget->psChild != NULL 
+                   && psTarget->psChild->eType == CXT_Text );
+
+        return psTarget->psChild->pszValue;
+    }
+
+    if( psTarget->eType == CXT_Element 
+        && psTarget->psChild != NULL 
+        && psTarget->psChild->eType == CXT_Text
+        && psTarget->psChild->psNext == NULL )
+    {
+        return psTarget->psChild->pszValue;
+    }
+        
+    return pszDefault;
 }
