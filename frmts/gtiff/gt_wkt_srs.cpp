@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.43  2003/11/25 15:26:08  warmerda
+ * dont use GCS or PCS values that are out of range
+ *
  * Revision 1.42  2003/06/23 14:09:52  warmerda
  * Use gdal_datum.csv and fallback to datum.csv.
  *
@@ -688,6 +691,9 @@ int GTIFSetFromOGISDefn( GTIF * psGTIF, const char *pszOGCWKT )
              && EQUAL(poSRS->GetAuthorityName("GEOGCS"),"EPSG") )
         nGCS = atoi(poSRS->GetAuthorityCode("GEOGCS"));
 
+    if( nGCS > 32767 )
+        nGCS = KvUserDefined;
+
 /* -------------------------------------------------------------------- */
 /*      Get the linear units.                                           */
 /* -------------------------------------------------------------------- */
@@ -711,7 +717,11 @@ int GTIFSetFromOGISDefn( GTIF * psGTIF, const char *pszOGCWKT )
 /* -------------------------------------------------------------------- */
     if( poSRS->GetAuthorityName("PROJCS") != NULL 
         && EQUAL(poSRS->GetAuthorityName("PROJCS"),"EPSG") )
+    {
         nPCS = atoi(poSRS->GetAuthorityCode("PROJCS"));
+        if( nPCS > 32767 )
+            nPCS = KvUserDefined;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Handle the projection transformation.                           */
