@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.10  2003/01/30 16:25:35  dron
+ * Support for reading and writing GeoJP2 information via hacked JasPer.
+ *
  * Revision 1.9  2003/01/30 11:59:15  dron
  * Fixes in component color space handling; several memory leaks removed.
  *
@@ -71,6 +74,15 @@ CPL_CVSID("$Id$");
 
 CPL_C_START
 void	GDALRegister_JPEG2000(void);
+#ifdef HAVE_JASPER_UUID
+CPLErr CPL_DLL GTIFMemBufFromWkt( const char *pszWKT, 
+                                  const double *padfGeoTransform,
+                                  int nGCPCount, const GDAL_GCP *pasGCPList,
+                                  int *pnSize, unsigned char **ppabyBuffer );
+CPLErr CPL_DLL GTIFWktFromMemBuf( int nSize, unsigned char *pabyBuffer, 
+                          char **ppszWKT, double *padfGeoTransform,
+                          int *pnGCPCount, GDAL_GCP **ppasGCPList );
+#endif
 CPL_C_END
 
 // XXX: Part of code below extracted from the JasPer internal headers and
@@ -78,6 +90,7 @@ CPL_C_END
 #define	JP2_FTYP_MAXCOMPATCODES	32
 #define	JP2_BOX_IHDR	0x69686472	/* Image Header */
 #define	JP2_BOX_BPCC	0x62706363	/* Bits Per Component */
+#define	JP2_BOX_UUID	0x75756964	/* UUID */
 extern "C" {
 typedef struct {
 	uint_fast32_t magic;
@@ -135,6 +148,14 @@ typedef struct {
 	jp2_cmapent_t *ents;
 } jp2_cmap_t;
 
+#ifdef HAVE_JASPER_UUID
+typedef struct {
+	uint_fast32_t data_len;
+	uint_fast8_t uuid[16];
+	uint_fast8_t *data;
+} jp2_uuid_t;
+#endif
+
 struct jp2_boxops_s;
 typedef struct {
 
@@ -143,6 +164,9 @@ typedef struct {
 
 	uint_fast32_t type;
 	uint_fast32_t len;
+#ifdef HAVE_JASPER_UUID
+	uint_fast32_t data_len;
+#endif
 
 	union {
 		jp2_jp_t jp;
@@ -153,6 +177,9 @@ typedef struct {
 		jp2_pclr_t pclr;
 		jp2_cdef_t cdef;
 		jp2_cmap_t cmap;
+#ifdef HAVE_JASPER_UUID
+		jp2_uuid_t uuid;
+#endif
 	} data;
 
 } jp2_box_t;
@@ -163,10 +190,24 @@ typedef struct jp2_boxops_s {
 	int (*putdata)(jp2_box_t *box, jas_stream_t *out);
 	void (*dumpdata)(jp2_box_t *box, FILE *out);
 } jp2_boxops_t;
+
+extern jp2_box_t *jp2_box_create(int type);
 extern void jp2_box_destroy(jp2_box_t *box);
 extern jp2_box_t *jp2_box_get(jas_stream_t *in);
+extern int jp2_box_put(jp2_box_t *box, jas_stream_t *out);
+#ifdef HAVE_JASPER_UUID
+int jp2_encode_uuid(jas_image_t *image, jas_stream_t *out,
+		    char *optstr, jp2_box_t *uuid);
+#endif
 }
 // XXX: End of JasPer header.
+
+#ifdef HAVE_JASPER_UUID
+// Magick sequence for GeoJP2 box
+static unsigned char msi_uuid2[16] =
+	{0xb1,0x4b,0xf8,0xbd,0x08,0x3d,0x4b,0x43,
+         0xa5,0xae,0x8c,0xd7,0xd5,0xa6,0xce,0x03}; 
+#endif
 
 /************************************************************************/
 /* ==================================================================== */
@@ -178,21 +219,28 @@ class JPEG2000Dataset : public GDALDataset
 {
     friend class JPEG2000RasterBand;
 
-    double      adfGeoTransform[6];
-    int		bGeoTransformValid;
-
     FILE	*fp;
     jas_stream_t *sStream;
     jas_image_t	*sImage;
     int		iFormat;
 
+    char	*pszProjection;
+    int		bGeoTransformValid;
+    double	adfGeoTransform[6];
+    int		nGCPCount;
+    GDAL_GCP    *pasGCPList;
+
   public:
                 JPEG2000Dataset();
 		~JPEG2000Dataset();
     
-    static GDALDataset *Open( GDALOpenInfo * );
+    static GDALDataset	*Open( GDALOpenInfo * );
 
-    CPLErr 	GetGeoTransform( double* );
+    CPLErr		GetGeoTransform( double* );
+    virtual const char	*GetProjectionRef(void);
+    virtual int		GetGCPCount();
+    virtual const char	*GetGCPProjection();
+    virtual const GDAL_GCP *GetGCPs();
 };
 
 /************************************************************************/
@@ -234,7 +282,7 @@ JPEG2000RasterBand::JPEG2000RasterBand( JPEG2000Dataset *poDS, int nBand,
 	case 1:				// Signed component
 	if (iDepth <= 8)
 	    this->eDataType = GDT_Byte; // FIXME: should be signed,
-					// but we haven't unsigned byte
+					// but we haven't signed byte
 					// data type in GDAL
 	else if (iDepth <= 16)
             this->eDataType = GDT_Int16;
@@ -363,6 +411,9 @@ JPEG2000Dataset::JPEG2000Dataset()
     sStream = 0;
     sImage = 0;
     nBands = 0;
+    pszProjection = CPLStrdup("");
+    nGCPCount = 0;
+    pasGCPList = NULL;
     bGeoTransformValid = FALSE;
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
@@ -384,8 +435,28 @@ JPEG2000Dataset::~JPEG2000Dataset()
     if ( sImage )
 	jas_image_destroy( sImage );
     jas_image_clearfmts();
+    if ( pszProjection )
+	CPLFree( pszProjection );
+    if( nGCPCount > 0 )
+    {
+        for( int i = 0; i < nGCPCount; i++ )
+	    if ( pasGCPList[i].pszId )
+		CPLFree( pasGCPList[i].pszId );
+
+        CPLFree( pasGCPList );
+    }
     if( fp != NULL )
         VSIFClose( fp );
+}
+
+/************************************************************************/
+/*                          GetProjectionRef()                          */
+/************************************************************************/
+
+const char *JPEG2000Dataset::GetProjectionRef()
+
+{
+    return( pszProjection );
 }
 
 /************************************************************************/
@@ -401,6 +472,39 @@ CPLErr JPEG2000Dataset::GetGeoTransform( double * padfTransform )
     }
     else
         return CE_Failure;
+}
+
+/************************************************************************/
+/*                            GetGCPCount()                             */
+/************************************************************************/
+
+int JPEG2000Dataset::GetGCPCount()
+
+{
+    return nGCPCount;
+}
+
+/************************************************************************/
+/*                          GetGCPProjection()                          */
+/************************************************************************/
+
+const char *JPEG2000Dataset::GetGCPProjection()
+
+{
+    if( nGCPCount > 0 )
+        return pszProjection;
+    else
+        return "";
+}
+
+/************************************************************************/
+/*                               GetGCP()                               */
+/************************************************************************/
+
+const GDAL_GCP *JPEG2000Dataset::GetGCPs()
+
+{
+    return pasGCPList;
 }
 
 /************************************************************************/
@@ -456,7 +560,7 @@ GDALDataset *JPEG2000Dataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->sStream = sS;
     poDS->iFormat = iFormat;
 
-    if (EQUALN( pszFormatName, "jp2", 3 ))
+    if ( EQUALN( pszFormatName, "jp2", 3 ) )
     {
 // XXX: Hack to read JP2 boxes from input file. JasPer hasn't public API
 // call for such things, so we use internal JasPer functions.
@@ -508,6 +612,30 @@ GDALDataset *JPEG2000Dataset::Open( GDALOpenInfo * poOpenInfo )
 		    }
 		}
 		break;
+#ifdef HAVE_JASPER_UUID
+		case JP2_BOX_UUID: // Box for custom data
+		CPLDebug( "JPEG2000", "UUID box found. Length=%d", box->len );
+		if( memcmp( box->data.uuid.uuid, msi_uuid2, 16 ) == 0 )
+                {
+		    CPLDebug( "JPEG2000", "GeoTIFF info found." );
+		    if( box->data.uuid.data != NULL )
+		    {
+			if ( poDS->pszProjection )
+			{
+			    CPLFree( poDS->pszProjection );
+			    poDS->pszProjection = NULL;
+			}
+			GTIFWktFromMemBuf( box->data.uuid.data_len,
+			    box->data.uuid.data,
+			    &(poDS->pszProjection), poDS->adfGeoTransform,
+			    &(poDS->nGCPCount), &(poDS->pasGCPList) );
+			CPLDebug( "JPEG2000", "Got projection: %s",
+			      poDS->pszProjection );
+			poDS->bGeoTransformValid = TRUE;
+		    }
+                }
+		break;
+#endif
 	    }
 	    jp2_box_destroy( box );
 	    box = 0;
@@ -688,7 +816,7 @@ JPEG2000CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     }
 
 /* -------------------------------------------------------------------- */
-/*       Read compression parameters and encode image                   */
+/*       Read compression parameters and encode the image.              */
 /* -------------------------------------------------------------------- */
     int		    i, j;
     const int	    OPTSMAX = 4096;
@@ -761,18 +889,91 @@ JPEG2000CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     // FIXME: Improve colormodel handling
     //jas_image_setcolorspace( sImage, JAS_IMAGE_CS_UNKNOWN );
     for ( i = 0; i < nBands; i++ )
+	//
 	sImage->cmpts_[i]->type_ = JAS_IMAGE_CT_UNKNOWN;
-    if ( (jas_image_encode( sImage, sStream,
-			    jas_image_strtofmt( (char*)pszFormatName ),
-			    pszOptionBuf )) < 0 )
+
+/* -------------------------------------------------------------------- */
+/*      Set the GeoTIFF box if georeferencing is available, and this    */
+/*      is a JP2 file.                                                  */
+/* -------------------------------------------------------------------- */
+    if ( EQUALN( pszFormatName, "jp2", 3 ) )
     {
-        CPLError( CE_Failure, CPLE_FileIO, "Unable to encode image %s.\n", 
-                  pszFilename );
-        jas_matrix_destroy( sMatrix );
-	CPLFree( paiScanline );
-	CPLFree( sComps );
-	jas_image_destroy( sImage );
-	return NULL;
+#ifdef HAVE_JASPER_UUID
+	double	adfGeoTransform[6];
+	if( ((poSrcDS->GetGeoTransform(adfGeoTransform) == CE_None
+		 && (adfGeoTransform[0] != 0.0 
+		     || adfGeoTransform[1] != 1.0 
+		     || adfGeoTransform[2] != 0.0 
+		     || adfGeoTransform[3] != 0.0 
+		     || adfGeoTransform[4] != 0.0 
+		     || ABS(adfGeoTransform[5]) != 1.0))
+		|| poSrcDS->GetGCPCount() > 0) )
+	{
+	    // Prepare the memory buffer containing the degenerate GeoTIFF file.
+	    const char	*pszWKT;
+	    int		nGTBufSize = 0;
+	    unsigned char *pabyGTBuf = NULL;
+	    jp2_box_t	*box = jp2_box_create( JP2_BOX_UUID );
+
+	    if( GDALGetGCPCount( poSrcDS ) > 0 )
+		pszWKT = poSrcDS->GetGCPProjection();
+	    else
+		pszWKT = poSrcDS->GetProjectionRef();
+
+	    GTIFMemBufFromWkt( pszWKT, adfGeoTransform,
+			       poSrcDS->GetGCPCount(), poSrcDS->GetGCPs(),
+			       &nGTBufSize, &pabyGTBuf );
+ 
+	    memcpy( box->data.uuid.uuid, msi_uuid2, sizeof(msi_uuid2) );
+	    box->data.uuid.data_len = nGTBufSize;
+	    box->data.uuid.data = (uint_fast8_t *)jas_malloc( nGTBufSize );
+	    memcpy( box->data.uuid.data, pabyGTBuf, nGTBufSize );
+	    CPLFree( pabyGTBuf );
+	    if ( jp2_encode_uuid( sImage, sStream, pszOptionBuf, box) < 0 )
+	    {
+		CPLError( CE_Failure, CPLE_FileIO,
+			  "Unable to encode image %s.", pszFilename );
+		jp2_box_destroy( box );
+		jas_matrix_destroy( sMatrix );
+		CPLFree( paiScanline );
+		CPLFree( sComps );
+		jas_image_destroy( sImage );
+		jas_image_clearfmts();
+		return NULL;
+	    }
+	jp2_box_destroy( box );
+	}
+	else
+	{
+#endif
+	    if ( jp2_encode( sImage, sStream, pszOptionBuf) < 0 )
+	    {
+		CPLError( CE_Failure, CPLE_FileIO,
+			  "Unable to encode image %s.", pszFilename );
+		jas_matrix_destroy( sMatrix );
+		CPLFree( paiScanline );
+		CPLFree( sComps );
+		jas_image_destroy( sImage );
+		jas_image_clearfmts();
+		return NULL;
+	    }
+#ifdef HAVE_JASPER_UUID
+	}
+#endif
+    }
+    else    // Write JPC code stream
+    {
+	if ( jpc_encode(sImage, sStream, pszOptionBuf) < 0 )
+	{
+	    CPLError( CE_Failure, CPLE_FileIO,
+		      "Unable to encode image %s.\n", pszFilename );
+	    jas_matrix_destroy( sMatrix );
+	    CPLFree( paiScanline );
+	    CPLFree( sComps );
+	    jas_image_destroy( sImage );
+	    jas_image_clearfmts();
+	    return NULL;
+	}
     }
 
     jas_stream_flush( sStream );
@@ -780,14 +981,14 @@ JPEG2000CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     jas_matrix_destroy( sMatrix );
     CPLFree( paiScanline );
     CPLFree( sComps );
+    jas_image_destroy( sImage );
+    jas_image_clearfmts();
     if ( jas_stream_close( sStream ) )
     {
         CPLError( CE_Failure, CPLE_FileIO, "Unable to close file %s.\n",
 		  pszFilename );
         return NULL;
     }
-    jas_image_destroy( sImage );
-    jas_image_clearfmts();
 
 /* -------------------------------------------------------------------- */
 /*      Do we need a world file?                                        */
