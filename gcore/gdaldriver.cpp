@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.26  2002/09/04 06:52:05  warmerda
+ * added unload driver support to GDALDriver
+ *
  * Revision 1.25  2002/07/09 20:33:12  warmerda
  * expand tabs
  *
@@ -120,6 +123,8 @@ GDALDriver::GDALDriver()
     pfnCreate = NULL;
     pfnDelete = NULL;
     pfnCreateCopy = NULL;
+    pfnUnloadDriver = NULL;
+    pDriverData = NULL;
 }
 
 /************************************************************************/
@@ -129,6 +134,8 @@ GDALDriver::GDALDriver()
 GDALDriver::~GDALDriver()
 
 {
+    if( pfnUnloadDriver != NULL )
+        pfnUnloadDriver( this );
 }
 
 /************************************************************************/
