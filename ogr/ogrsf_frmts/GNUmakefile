@@ -7,6 +7,7 @@ SUBDIRS-$(HAVE_OGDI)	+= ogdi
 SUBDIRS-$(HAVE_OCI)	+= oci
 SUBDIRS-$(HAVE_OGR_PG)	+= pg
 SUBDIRS-$(HAVE_FME)	+= fme
+SUBDIRS-$(ODBC_SETTING)	+= odbc
 
 default:	$(foreach d,$(SUBDIRS-yes),$(d)-target)
 
