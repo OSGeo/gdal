@@ -41,6 +41,10 @@ OBJ	= \
 
 ALL_C_FLAGS	=	$(CFLAGS)
 
+ifneq ($(JPEG_SETTING),no)
+ALL_C_FLAGS 	:=	$(ALL_C_FLAGS) -DJPEG_SUPPORT
+endif
+
 
 default:	libtiff.a
 
@@ -48,7 +52,7 @@ clean:
 	rm -f *.o *.a
 
 %.o:	%.c
-	$(CC) -c $(CFLAGS) -I$(GDAL_ROOT)/port $*.c -o $*.o
+	$(CC) -c $(ALL_C_FLAGS) -I$(GDAL_ROOT)/port $*.c -o $*.o
 
 libtiff.a:	$(OBJ)
 	ar r libtiff.a $(OBJ)
