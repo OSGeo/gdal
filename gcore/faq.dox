@@ -78,8 +78,9 @@ OGR Projections Tutorial</a>.<p>
 
 <li> <b>Can I reproject rasters with GDAL?</b><p>
 
-For not-too-large 8bit rasters the <a href="gdal_utilities.html#gdalwarp">gdalwarp</a> utility can be used.  At this time there is no general solution,
-but hopfully there will be soon.<p>
+Yes, you can use the <a href="gdal_utilities.html#gdalwarp">gdalwarp</a> 
+utility program or programmatically use the GDALWarpOperation class described
+in the <a href="warptut.html">Warp API Tutorial</a>.
 
 </ol>
 
