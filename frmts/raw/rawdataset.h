@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2001/12/12 18:15:46  warmerda
+ * preliminary update for large raw file support
+ *
  * Revision 1.6  2001/03/23 03:25:32  warmerda
  * Added nodata support
  *
@@ -80,7 +83,9 @@ class CPL_DLL RawRasterBand : public GDALRasterBand
     friend	RawDataset;
 
     FILE	*fpRaw;
-    unsigned int nImgOffset;
+    int         bIsVSIL;
+
+    vsi_l_offset nImgOffset;
     int		nPixelOffset;
     int		nLineOffset;
     int		bNativeOrder;
@@ -91,18 +96,23 @@ class CPL_DLL RawRasterBand : public GDALRasterBand
     int		nLoadedScanline;
     void	*pLineBuffer;
 
+    int         Seek( vsi_l_offset, int );
+    size_t      Read( void *, size_t, size_t );
+    size_t      Write( void *, size_t, size_t );
+
   public:
 
                  RawRasterBand( GDALDataset *poDS, int nBand, FILE * fpRaw, 
-                                unsigned int nImgOffset, int nPixelOffset,
-                                int nLineOffset,
-                                GDALDataType eDataType, int bNativeOrder );
-
-                 RawRasterBand( FILE * fpRaw, 
-                                unsigned int nImgOffset, int nPixelOffset,
+                                vsi_l_offset nImgOffset, int nPixelOffset,
                                 int nLineOffset,
                                 GDALDataType eDataType, int bNativeOrder,
-                                int nXSize, int nYSize );
+                                int bIsVSIL = FALSE );
+
+                 RawRasterBand( FILE * fpRaw, 
+                                vsi_l_offset nImgOffset, int nPixelOffset,
+                                int nLineOffset,
+                                GDALDataType eDataType, int bNativeOrder,
+                                int nXSize, int nYSize, int bIsVSIL = FALSE );
 
                  ~RawRasterBand();
 
@@ -117,5 +127,4 @@ class CPL_DLL RawRasterBand : public GDALRasterBand
 
     void	 StoreNoDataValue( double );
 };
-
 

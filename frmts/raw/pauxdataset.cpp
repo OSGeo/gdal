@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2001/12/12 18:15:46  warmerda
+ * preliminary update for large raw file support
+ *
  * Revision 1.15  2001/12/12 03:15:31  warmerda
  * avoid leaks
  *
@@ -168,7 +171,7 @@ PAuxRasterBand::PAuxRasterBand( GDALDataset *poDS, int nBand,
                                 GDALDataType eDataType, int bNativeOrder )
         : RawRasterBand( poDS, nBand, fpRaw, 
                          nImgOffset, nPixelOffset, nLineOffset, 
-                         eDataType, bNativeOrder )
+                         eDataType, bNativeOrder, TRUE )
 
 {
     PAuxDataset *poPDS = (PAuxDataset *) poDS;
@@ -334,7 +337,7 @@ PAuxDataset::~PAuxDataset()
 {
     FlushCache();
     if( fpImage != NULL )
-        VSIFClose( fpImage );
+        VSIFCloseL( fpImage );
 
     if( bAuxUpdated )
     {
@@ -790,7 +793,7 @@ GDALDataset *PAuxDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     if( poOpenInfo->eAccess == GA_Update )
     {
-        poDS->fpImage = VSIFOpen( pszTarget, "rb+" );
+        poDS->fpImage = VSIFOpenL( pszTarget, "rb+" );
 
         if( poDS->fpImage == NULL )
         {
@@ -804,7 +807,7 @@ GDALDataset *PAuxDataset::Open( GDALOpenInfo * poOpenInfo )
     }
     else
     {
-        poDS->fpImage = VSIFOpen( pszTarget, "rb" );
+        poDS->fpImage = VSIFOpenL( pszTarget, "rb" );
 
         if( poDS->fpImage == NULL )
         {
