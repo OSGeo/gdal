@@ -1,13 +1,13 @@
 GDAL_ROOT	=	../..
 
-CURL_LIB = -lcurl
-CURL_DEF = -DHAVE_CURL
+#CURL_LIB = -lcurl
+#OTHER_OPTS :=	$(OTHER_OPTS) -DHAVE_CURL
+
+OTHER_OPTS :=	$(OTHER_OPTS) -DDISABLE_USER_DEFINED_CRS
 
 include ../../GDALmake.opt
 
-
-
-LINCLUDE =	-I../ogrsf_frmts -I.. -I$(GDAL_ROOT)/port $(CURL_DEF)
+LINCLUDE =	-I../ogrsf_frmts -I.. -I$(GDAL_ROOT)/port $(OTHER_OPTS)
 
 WCTS_OBJ	=	ogrwcts.o
 C_WCTS_OBJ	=	wctsclient.o
