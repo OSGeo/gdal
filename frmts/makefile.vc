@@ -5,7 +5,7 @@ EXTRAFLAGS =	-DFRMT_ceos -DFRMT_aigrid -DFRMT_elas -DFRMT_hfa -DFRMT_gtiff\
 		-DFRMT_sdts -DFRMT_raw -DFRMT_gxf -DFRMT_ceos2 -DFRMT_png \
 		-DFRMT_dted -DFRMT_mem -DFRMT_jdem -DFRMT_gif \
 		-DFRMT_envisat -DFRMT_aaigrid -DFRMT_usgsdem -DFRMT_l1b \
-		-DFRMT_fit -DFRMT_vrt -DFRMT_xpm -DFRMT_bmp -DFRMT_bsb \
+		-DFRMT_fit -DFRMT_vrt -DFRMT_xpm -DFRMT_bmp $(BSBDEF) \
 		-DFRMT_nitf -DFRMT_pcidsk \
 		$(JPEGDEF) $(JP2KAKDEF) $(MRSIDDEF) $(FITSDEF) \
 		$(JPEG2000DEF) $(ECWDEF) $(OGDIDEF) $(HDFDEF) $(ZLIBDEF)
@@ -18,6 +18,10 @@ DIRLIST =	$(EXTRAFLAGS:-DFRMT_=)
 
 !IFDEF JPEG_SUPPORTED
 JPEGDEF =	-DFRMT_jpeg
+!ENDIF
+
+!IFDEF BSB_SUPPORTED
+BSBDEF =	-DFRMT_bsb
 !ENDIF
 
 !IFDEF OGDIDIR
