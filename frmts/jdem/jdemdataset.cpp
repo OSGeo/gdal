@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.3  2001/06/21 19:59:51  warmerda
+ * added help link
+ *
  * Revision 1.2  2000/11/28 02:28:54  warmerda
  * Added error checks, GetGeoTransform and GetProjection
  *
@@ -286,7 +289,6 @@ GDALDataset *JDEMDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
-    poDS->nBands = 1;
     poDS->SetBand( 1, new JDEMRasterBand( poDS, 1 ));
 
     return( poDS );
@@ -307,6 +309,7 @@ void GDALRegister_JDEM()
         
         poDriver->pszShortName = "JDEM";
         poDriver->pszLongName = "Japanese DEM (.mem)";
+        poDriver->pszHelpTopic = "frmt_various.html#JDEM";
         
         poDriver->pfnOpen = JDEMDataset::Open;
 
