@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_tabseamless.cpp,v 1.1 2001/03/09 04:16:02 daniel Exp $
+ * $Id: mitab_tabseamless.cpp,v 1.2 2001/03/15 03:57:51 daniel Exp $
  *
  * Name:     mitab_tabseamless.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -31,6 +31,12 @@
  **********************************************************************
  *
  * $Log: mitab_tabseamless.cpp,v $
+ * Revision 1.2  2001/03/15 03:57:51  daniel
+ * Added implementation for new OGRLayer::GetExtent(), returning data MBR.
+ *
+ * Revision 1.1  2001/03/09 04:38:04  danmo
+ * Update from master - version 1.1.0
+ *
  * Revision 1.1  2001/03/09 04:16:02  daniel
  * Added TABSeamless for reading seamless TAB files
  *
@@ -692,6 +698,29 @@ int TABSeamless::GetBounds(double &dXMin, double &dYMin,
 }
 
 /**********************************************************************
+ *                   TABSeamless::GetExtent()
+ *
+ * Fetch extent of the data currently stored in the dataset.
+ *
+ * The bForce flag has no effect on TAB files since that value is
+ * always in the header.
+ *
+ * Returns OGRERR_NONE/OGRRERR_FAILURE.
+ **********************************************************************/
+OGRErr TABSeamless::GetExtent (OGREnvelope *psExtent, int bForce)
+{
+    if (m_poIndexTable == NULL)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+             "GetExtent() can be called only after dataset has been opened.");
+        return OGRERR_FAILURE;
+    }
+
+    return m_poIndexTable->GetExtent(psExtent, bForce);
+
+}
+
+/**********************************************************************
  *                   TABSeamless::GetFeatureCountByType()
  *
  * Return number of features of each type.
@@ -771,6 +800,9 @@ int TABSeamless::TestCapability( const char * pszCap )
 
     else if( EQUAL(pszCap,OLCFastSpatialFilter) )
         return FALSE;
+
+    else if( EQUAL(pszCap,OLCFastGetExtent) )
+        return TRUE;
 
     else 
         return FALSE;

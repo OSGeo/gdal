@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_tabview.cpp,v 1.7 2000/09/28 16:39:44 warmerda Exp $
+ * $Id: mitab_tabview.cpp,v 1.8 2001/03/15 03:57:51 daniel Exp $
  *
  * Name:     mitab_tabfile.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -32,6 +32,9 @@
  **********************************************************************
  *
  * $Log: mitab_tabview.cpp,v $
+ * Revision 1.8  2001/03/15 03:57:51  daniel
+ * Added implementation for new OGRLayer::GetExtent(), returning data MBR.
+ *
  * Revision 1.7  2000/09/28 16:39:44  warmerda
  * avoid warnings for unused, and unitialized variables
  *
@@ -991,6 +994,29 @@ int TABView::GetBounds(double &dXMin, double &dYMin,
 }
 
 /**********************************************************************
+ *                   TABView::GetExtent()
+ *
+ * Fetch extent of the data currently stored in the dataset.
+ *
+ * The bForce flag has no effect on TAB files since that value is
+ * always in the header.
+ *
+ * Returns OGRERR_NONE/OGRRERR_FAILURE.
+ **********************************************************************/
+OGRErr TABView::GetExtent (OGREnvelope *psExtent, int bForce)
+{
+    if (m_nMainTableIndex == -1)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+             "GetExtent() can be called only after dataset has been opened.");
+        return -1;
+    }
+
+    return m_papoTABFiles[m_nMainTableIndex]->GetExtent(psExtent, bForce);
+
+}
+
+/**********************************************************************
  *                   TABView::GetFeatureCountByType()
  *
  * Return number of features of each type.
@@ -1088,8 +1114,10 @@ int TABView::TestCapability( const char * pszCap )
     if( EQUAL(pszCap,OLCRandomRead) )
         return TRUE;
 
-    else if( EQUAL(pszCap,OLCSequentialWrite) 
-             || EQUAL(pszCap,OLCRandomWrite) )
+    else if( EQUAL(pszCap,OLCSequentialWrite))
+        return TRUE;
+
+    else if( EQUAL(pszCap,OLCRandomWrite))
         return FALSE;
 
     else if( EQUAL(pszCap,OLCFastFeatureCount) )
@@ -1097,6 +1125,9 @@ int TABView::TestCapability( const char * pszCap )
 
     else if( EQUAL(pszCap,OLCFastSpatialFilter) )
         return FALSE;
+
+    else if( EQUAL(pszCap,OLCFastGetExtent) )
+        return TRUE;
 
     else 
         return FALSE;

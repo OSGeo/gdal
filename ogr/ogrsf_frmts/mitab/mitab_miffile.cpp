@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_miffile.cpp,v 1.26 2001/03/09 04:14:19 daniel Exp $
+ * $Id: mitab_miffile.cpp,v 1.27 2001/03/15 03:57:51 daniel Exp $
  *
  * Name:     mitab_miffile.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -32,6 +32,9 @@
  **********************************************************************
  *
  * $Log: mitab_miffile.cpp,v $
+ * Revision 1.27  2001/03/15 03:57:51  daniel
+ * Added implementation for new OGRLayer::GetExtent(), returning data MBR.
+ *
  * Revision 1.26  2001/03/09 04:14:19  daniel
  * Fixed problem creating new files with mixed case extensions (e.g. ".Tab")
  *
@@ -1845,6 +1848,23 @@ int MIFFile::GetBounds(double &dXMin, double &dYMin,
     return 0;
 }
 
+/**********************************************************************
+ *                   MIFFile::GetExtent()
+ *
+ * Fetch extent of the data currently stored in the dataset.
+ *
+ * Returns OGRERR_NONE/OGRRERR_FAILURE.
+ **********************************************************************/
+OGRErr MIFFile::GetExtent (OGREnvelope *psExtent, int bForce)
+{
+    // We cannot return the bounds since they may be bigger than the actual 
+    // extent of the data... so we'll have to scan the whole file.
+
+    return OGRLayer::GetExtent(psExtent, bForce);
+}
+
+
+
 /************************************************************************/
 /*                           TestCapability()                           */
 /************************************************************************/
@@ -1855,14 +1875,19 @@ int MIFFile::TestCapability( const char * pszCap )
     if( EQUAL(pszCap,OLCRandomRead) )
         return TRUE;
 
-    else if( EQUAL(pszCap,OLCSequentialWrite) 
-             || EQUAL(pszCap,OLCRandomWrite) )
+    else if( EQUAL(pszCap,OLCSequentialWrite) )
+        return TRUE;
+
+    else if( EQUAL(pszCap,OLCSequentialWrite) )
         return FALSE;
 
     else if( EQUAL(pszCap,OLCFastFeatureCount) )
         return FALSE;
 
     else if( EQUAL(pszCap,OLCFastSpatialFilter) )
+        return FALSE;
+
+    else if( EQUAL(pszCap,OLCFastGetExtent) )
         return FALSE;
 
     else 

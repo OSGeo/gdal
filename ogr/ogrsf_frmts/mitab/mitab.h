@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab.h,v 1.50 2001/03/09 04:16:02 daniel Exp $
+ * $Id: mitab.h,v 1.51 2001/03/15 03:57:51 daniel Exp $
  *
  * Name:     mitab.h
  * Project:  MapInfo MIF Read/Write library
@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log: mitab.h,v $
+ * Revision 1.51  2001/03/15 03:57:51  daniel
+ * Added implementation for new OGRLayer::GetExtent(), returning data MBR.
+ *
  * Revision 1.50  2001/03/09 04:16:02  daniel
  * Added TABSeamless for reading seamless TAB files
  *
@@ -105,7 +108,7 @@
 /*---------------------------------------------------------------------
  * Current version of the MITAB library... always useful!
  *--------------------------------------------------------------------*/
-#define MITAB_VERSION "1.1.0 (2001-03-08)"
+#define MITAB_VERSION "1.1.1dev (2001-03-14)"
 
 #ifndef PI
 #  define PI 3.14159265358979323846
@@ -169,15 +172,16 @@ class IMapInfoFile : public OGRLayer
 
     ///////////////
     //  OGR methods for read support
-    OGRGeometry *       GetSpatialFilter();
-    void                SetSpatialFilter( OGRGeometry * );
-    void                ResetReading() = 0;
-    int                 GetFeatureCount (int bForce) = 0;
+    virtual OGRGeometry *GetSpatialFilter();
+    virtual void        SetSpatialFilter( OGRGeometry * );
+    virtual void        ResetReading() = 0;
+    virtual int         GetFeatureCount (int bForce) = 0;
     virtual OGRFeature *GetNextFeature();
-    OGRFeature         *GetFeature(long nFeatureId);
-    OGRErr              CreateFeature(OGRFeature *poFeature);
-    int                 TestCapability( const char * pszCap ) =0;
-    
+    virtual OGRFeature *GetFeature(long nFeatureId);
+    virtual OGRErr      CreateFeature(OGRFeature *poFeature);
+    virtual int         TestCapability( const char * pszCap ) =0;
+    virtual int         GetExtent(OGREnvelope *psExtent, int bForce) =0;
+
     ///////////////
     // Read access specific stuff
     //
@@ -282,10 +286,11 @@ class TABFile: public IMapInfoFile
     virtual const char *GetTableName()
                             {return m_poDefn?m_poDefn->GetName():"";};
 
-    void                ResetReading();
-    int                 TestCapability( const char * pszCap );
-    int                 GetFeatureCount (int bForce);
-    
+    virtual void        ResetReading();
+    virtual int         TestCapability( const char * pszCap );
+    virtual int         GetFeatureCount (int bForce);
+    virtual int         GetExtent(OGREnvelope *psExtent, int bForce);
+
     ///////////////
     // Read access specific stuff
     //
@@ -401,9 +406,10 @@ class TABView: public IMapInfoFile
     virtual const char *GetTableName()
            {return m_poRelation?m_poRelation->GetFeatureDefn()->GetName():"";};
 
-    void                ResetReading();
-    int                 TestCapability( const char * pszCap );
-    int                 GetFeatureCount (int bForce);
+    virtual void        ResetReading();
+    virtual int         TestCapability( const char * pszCap );
+    virtual int         GetFeatureCount (int bForce);
+    virtual int         GetExtent(OGREnvelope *psExtent, int bForce);
     
     ///////////////
     // Read access specific stuff
@@ -510,9 +516,10 @@ class TABSeamless: public IMapInfoFile
     virtual const char *GetTableName()
            {return m_poFeatureDefnRef?m_poFeatureDefnRef->GetName():"";};
 
-    void                ResetReading();
-    int                 TestCapability( const char * pszCap );
-    int                 GetFeatureCount (int bForce);
+    virtual void        ResetReading();
+    virtual int         TestCapability( const char * pszCap );
+    virtual int         GetFeatureCount (int bForce);
+    virtual int         GetExtent(OGREnvelope *psExtent, int bForce);
     
     ///////////////
     // Read access specific stuff
@@ -651,9 +658,10 @@ class MIFFile: public IMapInfoFile
     virtual const char *GetTableName()
                            {return m_poDefn?m_poDefn->GetName():"";};
 
-    int                 TestCapability( const char * pszCap ) ;
-    int                 GetFeatureCount (int bForce);
-    void                ResetReading();
+    virtual int         TestCapability( const char * pszCap ) ;
+    virtual int         GetFeatureCount (int bForce);
+    virtual void        ResetReading();
+    virtual int         GetExtent(OGREnvelope *psExtent, int bForce);
 
     ///////////////
     // Read access specific stuff

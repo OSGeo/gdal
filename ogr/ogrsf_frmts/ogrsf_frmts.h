@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2001/03/15 04:01:43  danmo
+ * Added OGRLayer::GetExtent()
+ *
  * Revision 1.18  2001/02/06 17:10:28  warmerda
  * export entry points from DLL
  *
@@ -101,6 +104,7 @@
 #define OLCRandomWrite         "RandomWrite"
 #define OLCFastSpatialFilter   "FastSpatialFilter"
 #define OLCFastFeatureCount    "FastFeatureCount"
+#define OLCFastGetExtent       "FastGetExtent"
 #define OLCCreateField         "CreateField"
 
 #define ODsCCreateLayer        "CreateLayer"
@@ -135,6 +139,7 @@ class CPL_DLL OGRLayer
     virtual OGRSpatialReference *GetSpatialRef() { return NULL; }
 
     virtual int         GetFeatureCount( int bForce = TRUE );
+    virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce = TRUE);
 
     virtual int         TestCapability( const char * ) = 0;
 

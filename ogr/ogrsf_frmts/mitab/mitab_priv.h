@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_priv.h,v 1.22 2000/11/23 21:11:07 daniel Exp $
+ * $Id: mitab_priv.h,v 1.23 2001/03/15 03:57:51 daniel Exp $
  *
  * Name:     mitab_priv.h
  * Project:  MapInfo TAB Read/Write library
@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log: mitab_priv.h,v $
+ * Revision 1.23  2001/03/15 03:57:51  daniel
+ * Added implementation for new OGRLayer::GetExtent(), returning data MBR.
+ *
  * Revision 1.22  2000/11/23 21:11:07  daniel
  * OOpps... VC++ didn't like the way TABPenDef, etc. were initialized
  *
@@ -911,7 +914,7 @@ class TABMAPFile
     int         Coordsys2Int(double dX, double dY, GInt32 &nX, GInt32 &nY);
     int         Int2CoordsysDist(GInt32 nX, GInt32 nY, double &dX, double &dY);
     int         Coordsys2IntDist(double dX, double dY, GInt32 &nX, GInt32 &nY);
-    int         SetCoordFilter(TABVertex &sMin, TABVertex &sMax);
+    void        SetCoordFilter(TABVertex sMin, TABVertex sMax);
     int         SetCoordsysBounds(double dXMin, double dYMin, 
                                   double dXMax, double dYMax);
 

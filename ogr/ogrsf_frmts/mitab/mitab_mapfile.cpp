@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_mapfile.cpp,v 1.17 2000/11/23 21:11:07 daniel Exp $
+ * $Id: mitab_mapfile.cpp,v 1.18 2001/03/15 03:57:51 daniel Exp $
  *
  * Name:     mitab_mapfile.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -31,6 +31,9 @@
  **********************************************************************
  *
  * $Log: mitab_mapfile.cpp,v $
+ * Revision 1.18  2001/03/15 03:57:51  daniel
+ * Added implementation for new OGRLayer::GetExtent(), returning data MBR.
+ *
  * Revision 1.17  2000/11/23 21:11:07  daniel
  * OOpps... VC++ didn't like the way TABPenDef, etc. were initialized
  *
@@ -284,7 +287,8 @@ int TABMAPFile::Open(const char *pszFname, const char *pszAccess,
 
     /*-----------------------------------------------------------------
      * Default Coord filter is the MBR of the whole file
-     * In write mode, this will be set during the SetCoordsysBounds() call.
+     * This is currently unused but could eventually be used to handle
+     * spatial filters more efficiently.
      *----------------------------------------------------------------*/
     if (m_eAccessMode == TABRead)
     {
@@ -1474,19 +1478,20 @@ int   TABMAPFile::WriteSymbolDef(TABSymbolDef *psDef)
  * Set the MBR of the area of interest... only objects that at least 
  * overlap with that area will be returned.
  *
+ * This is currently unused but could eventually be used to handle
+ * spatial filters more efficiently.
+ *
  * sMin and sMax and the min/max expressed in the file's projection coord.
  *
  * Returns 0 on success, -1 on error.
  **********************************************************************/
-int TABMAPFile::SetCoordFilter(TABVertex &sMin, TABVertex &sMax)
+void TABMAPFile::SetCoordFilter(TABVertex sMin, TABVertex sMax)
 {
     m_sMinFilter = sMin;
     m_sMaxFilter = sMax;
 
     Coordsys2Int(sMin.x, sMin.y, m_XMinFilter, m_YMinFilter);
     Coordsys2Int(sMax.x, sMax.y, m_XMaxFilter, m_YMaxFilter);
-
-    return 0;
 }
 
 

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2001/03/15 04:01:43  danmo
+ * Added OGRLayer::GetExtent()
+ *
  * Revision 1.4  1999/11/04 21:10:30  warmerda
  * Added CreateField() method.
  *
@@ -68,6 +71,49 @@ int OGRLayer::GetFeatureCount( int bForce )
 
     return nFeatureCount;
 }
+
+/************************************************************************/
+/*                             GetExtent()                              */
+/************************************************************************/
+
+OGRErr OGRLayer::GetExtent(OGREnvelope *psExtent, int bForce )
+
+{
+    OGRFeature  *poFeature;
+    OGREnvelope oEnv;
+    GBool       bExtentSet = FALSE;
+
+    if( !bForce )
+        return OGRERR_FAILURE;
+
+    ResetReading();
+    while( (poFeature = GetNextFeature()) != NULL )
+    {
+        OGRGeometry *poGeom = poFeature->GetGeometryRef();
+        if (poGeom && !bExtentSet)
+        {
+            poGeom->getEnvelope(psExtent);
+            bExtentSet = TRUE;
+        }
+        else if (poGeom)
+        {
+            poGeom->getEnvelope(&oEnv);
+            if (oEnv.MinX < psExtent->MinX) 
+                psExtent->MinX = oEnv.MinX;
+            if (oEnv.MinY < psExtent->MinY) 
+                psExtent->MinY = oEnv.MinY;
+            if (oEnv.MaxX > psExtent->MaxX) 
+                psExtent->MaxX = oEnv.MaxX;
+            if (oEnv.MaxY > psExtent->MaxY) 
+                psExtent->MaxY = oEnv.MaxY;
+        }
+        delete poFeature;
+    }
+    ResetReading();
+
+    return (bExtentSet ? OGRERR_NONE : OGRERR_FAILURE);
+}
+
 
 /************************************************************************/
 /*                             GetFeature()                             */

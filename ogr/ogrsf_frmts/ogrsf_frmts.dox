@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2001/03/15 04:01:43  danmo
+ * Added OGRLayer::GetExtent()
+ *
  * Revision 1.5  1999/10/13 13:19:22  warmerda
  * Fixed CreateFeature() documentation.
  *
@@ -261,6 +264,32 @@
 
 */
 
+/**
+
+ \fn OGRErr OGRLayer::GetExtent( OGREnvelope *psExtent, int bForce = TRUE );
+
+ Fetch the extent of this layer.
+
+ Returns the extent (MBR) of the data in the layer.  If bForce is FALSE,
+ and it would be expensive to establish the extent then OGRERR_FAILURE
+ will be returned indicating that the extent isn't know.  If bForce is 
+ TRUE then some implementations will actually scan the entire layer once
+ to compute the MBR of all the features in the layer.
+
+ The returned extent does not take the spatial filter into account.  If
+ a spatial filter was previously set then it should be ignored but some
+ implementations may be unable to do that, so it is safer to call 
+ GetExtent() without setting a spatial filter.
+
+ @param psExtent the structure in which the extent value will be returned.
+
+ @param bForce Flag indicating whether the extent should be computed even
+ if it is expensive.
+
+ @return OGRERR_NONE on success, OGRERR_FAILURE if extent not known. 
+
+*/
+
 /** 
  \fn void OGRLayer::SetSpatialFilter( OGRGeometry * poFilter );
 
@@ -424,6 +453,9 @@ TRUE if this layer can return a feature
 count (via OGRLayer::GetFeatureCount()) efficiently ... ie. without counting
 the features.  In some cases this will return TRUE until a spatial filter is
 installed after which it will return FALSE.<p>
+
+ <li> <b>OLCFastGetExtent</b> / "FastGetExtent": 
+TRUE if this layer can return its data extent (via OGRLayer::GetExtent()) efficiently ... ie. without scanning all the features.  In some cases this will return TRUE until a spatial filter is installed after which it will return FALSE.<p>
 
 </ul>
 

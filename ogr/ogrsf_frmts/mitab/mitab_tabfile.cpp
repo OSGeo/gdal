@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_tabfile.cpp,v 1.42 2001/03/09 04:14:19 daniel Exp $
+ * $Id: mitab_tabfile.cpp,v 1.43 2001/03/15 03:57:51 daniel Exp $
  *
  * Name:     mitab_tabfile.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -32,6 +32,9 @@
  **********************************************************************
  *
  * $Log: mitab_tabfile.cpp,v $
+ * Revision 1.43  2001/03/15 03:57:51  daniel
+ * Added implementation for new OGRLayer::GetExtent(), returning data MBR.
+ *
  * Revision 1.42  2001/03/09 04:14:19  daniel
  * Fixed problem creating new files with mixed case extensions (e.g. ".Tab")
  *
@@ -1863,6 +1866,46 @@ int TABFile::GetBounds(double &dXMin, double &dYMin,
 
 
 /**********************************************************************
+ *                   TABFile::GetExtent()
+ *
+ * Fetch extent of the data currently stored in the dataset.
+ *
+ * The bForce flag has no effect on TAB files since that value is
+ * always in the header.
+ *
+ * Returns OGRERR_NONE/OGRRERR_FAILURE.
+ **********************************************************************/
+OGRErr TABFile::GetExtent (OGREnvelope *psExtent, int bForce)
+{
+    TABMAPHeaderBlock *poHeader;
+
+    if (m_poMAPFile && (poHeader=m_poMAPFile->GetHeaderBlock()) != NULL)
+    {
+        double dX0, dX1, dY0, dY1;
+        /*-------------------------------------------------------------
+         * Fetch extent of the data from the .map header block
+         * this value is different from the projection bounds.
+         *------------------------------------------------------------*/
+        m_poMAPFile->Int2Coordsys(poHeader->m_nXMin, poHeader->m_nYMin,  
+                                  dX0, dY0);
+        m_poMAPFile->Int2Coordsys(poHeader->m_nXMax, poHeader->m_nYMax, 
+                                  dX1, dY1);
+
+       /*-------------------------------------------------------------
+         * ... and make sure that Min < Max
+         *------------------------------------------------------------*/
+        psExtent->MinX = MIN(dX0, dX1);
+        psExtent->MaxX = MAX(dX0, dX1);
+        psExtent->MinY = MIN(dY0, dY1);
+        psExtent->MaxY = MAX(dY0, dY1);
+
+        return OGRERR_NONE;
+    }
+
+    return OGRERR_FAILURE;
+}
+
+/**********************************************************************
  *                   TABFile::GetFeatureCountByType()
  *
  * Return number of features of each type.
@@ -2042,7 +2085,10 @@ int TABFile::TestCapability( const char * pszCap )
         return m_poFilterGeom == NULL;
 
     else if( EQUAL(pszCap,OLCFastSpatialFilter) )
-        return m_eAccessMode == TABWrite;
+        return FALSE;
+
+    else if( EQUAL(pszCap,OLCFastGetExtent) )
+        return TRUE;
 
     else if( EQUAL(pszCap,OLCCreateField) )
         return TRUE;

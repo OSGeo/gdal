@@ -5,6 +5,9 @@ MITAB Library - Revision History
 CHANGES - Current Version:
 --------------------------
 
+- Added implementation for OGRLayer::GetExtent() that returns extents 
+  of the data, which is differents from the bounds of the projection.
+
 
 Version 1.1.0 - (2001-03-08)
 ----------------------------
@@ -247,5 +250,5 @@ Version 0.1 - (1999-12-04)
 
 
 ------------
-$Id: HISTORY.TXT,v 1.48 2001/03/09 04:16:16 daniel Exp $
+$Id: HISTORY.TXT,v 1.49 2001/03/15 03:57:51 daniel Exp $
 ------------
