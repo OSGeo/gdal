@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2000/03/31 14:40:49  warmerda
+ * Fixed multiple declaration of i in GetNode().
+ *
  * Revision 1.9  2000/03/16 19:03:20  warmerda
  * added DestroyChild(), FindChild()
  *
@@ -170,6 +173,8 @@ OGR_SRSNode *OGR_SRSNode::GetChild( int iChild )
 OGR_SRSNode *OGR_SRSNode::GetNode( const char * pszName )
 
 {
+    int  i;
+
     if( this == NULL )
         return NULL;
     
@@ -180,7 +185,7 @@ OGR_SRSNode *OGR_SRSNode::GetNode( const char * pszName )
 /*      First we check the immediate children so we will get an         */
 /*      immediate child in preference to a subchild.                    */
 /* -------------------------------------------------------------------- */
-    for( int i = 0; i < nChildren; i++ )
+    for( i = 0; i < nChildren; i++ )
     {
         if( EQUAL(papoChildNodes[i]->pszValue,pszName) 
             && papoChildNodes[i]->nChildren > 0 )
@@ -190,7 +195,7 @@ OGR_SRSNode *OGR_SRSNode::GetNode( const char * pszName )
 /* -------------------------------------------------------------------- */
 /*      Then get each child to check their children.                    */
 /* -------------------------------------------------------------------- */
-    for( int i = 0; i < nChildren; i++ )
+    for( i = 0; i < nChildren; i++ )
     {
         OGR_SRSNode *poNode;
 
