@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2000/09/26 20:30:04  warmerda
+ * added support for imagery groups
+ *
  * Revision 1.5  2000/09/23 02:22:29  warmerda
  * added geotransform support
  *
@@ -51,7 +54,7 @@
 #include "cpl_string.h"
 #include "ogr_spatialref.h"
 
-static GDALDriver	*poGRASSDriver = NULL;
+static GDALDriver *poGRASSDriver = NULL;
 
 CPL_C_START
 void	GDALRegister_GRASS(void);
@@ -329,6 +332,8 @@ GDALDataset *GRASSDataset::Open( GDALOpenInfo * poOpenInfo )
 {
     static int	bDoneGISInit = FALSE;
     char	*pszMapset = NULL, *pszCell = NULL;
+    char        **papszCells = NULL;
+    char        **papszMapsets = NULL;
 
     if( !bDoneGISInit )
     {
@@ -339,7 +344,38 @@ GDALDataset *GRASSDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Check if this is a valid grass cell.                            */
 /* -------------------------------------------------------------------- */
-    if( !G_check_cell( poOpenInfo->pszFilename, &pszMapset, &pszCell ) )
+    if( G_check_cell( poOpenInfo->pszFilename, &pszMapset, &pszCell ) )
+    {
+        papszCells = CSLAddString( papszCells, pszCell );
+        papszMapsets = CSLAddString( papszMapsets, pszMapset );
+
+        G_free( pszMapset );
+        G_free( pszCell );
+    }
+    
+/* -------------------------------------------------------------------- */
+/*      Check if this is a valid GRASS imagery group.                   */
+/* -------------------------------------------------------------------- */
+    else if( I_check_group( poOpenInfo->pszFilename, &pszMapset, &pszCell ) )
+    {
+        struct Ref ref;
+
+        I_init_group_ref( &ref );
+        I_get_group_ref( pszCell, &ref );
+        
+        for( int iRef = 0; iRef < ref.nfiles; iRef++ )
+        {
+            papszCells = CSLAddString( papszCells, ref.file[iRef].name );
+            papszMapsets = CSLAddString( papszMapsets, ref.file[iRef].mapset );
+        }
+
+        I_free_group_ref( &ref );
+
+        G_free( pszMapset );
+        G_free( pszCell );
+    }
+
+    else
         return NULL;
 
 /* -------------------------------------------------------------------- */
@@ -357,7 +393,7 @@ GDALDataset *GRASSDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     struct Cell_head	sCellInfo;
     
-    if( G_get_cellhd( pszCell, pszMapset, &sCellInfo ) != 0 )
+    if( G_get_cellhd( papszCells[0], papszMapsets[0], &sCellInfo ) != 0 )
     {
         /* notdef: report failure. */
         return NULL;
@@ -380,7 +416,7 @@ GDALDataset *GRASSDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     char	*pszProj4;
 
-    pszProj4 = G_get_cell_as_proj4( pszCell, pszMapset );
+    pszProj4 = G_get_cell_as_proj4( papszCells[0], papszMapsets[0] );
     if( pszProj4 != NULL )
     {
         OGRSpatialReference   oSRS;
@@ -396,10 +432,13 @@ GDALDataset *GRASSDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
-    poDS->SetBand( 1, new GRASSRasterBand( poDS, 1, pszMapset, pszCell ) );
-
-    G_free( pszMapset );
-    G_free( pszCell );
+    for( int iBand = 0; papszCells[iBand] != NULL; iBand++ )
+    {
+        poDS->SetBand( iBand+1, 
+                       new GRASSRasterBand( poDS, iBand+1, 
+                                            papszMapsets[iBand], 
+                                            papszCells[iBand] ) );
+    }
 
     return poDS;
 }
