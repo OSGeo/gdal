@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  1999/07/08 20:04:58  warmerda
+ * added GetFeatureCount
+ *
  * Revision 1.2  1999/07/06 20:25:09  warmerda
  * added some documentation
  *
@@ -70,6 +73,8 @@ class OGRLayer
     virtual OGRFeatureDefn *GetLayerDefn() = 0;
 
     virtual OGRSpatialReference *GetSpatialRef() { return NULL; }
+
+    virtual int         GetFeatureCount( int bForce = TRUE );
 };
 
 /************************************************************************/
