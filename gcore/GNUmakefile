@@ -7,6 +7,15 @@ OBJ	=	gdalopen.o gdaldrivermanager.o gdaldriver.o gdaldataset.o \
 		gdalcolortable.o gdalmajorobject.o overview.o \
 		gdaldefaultoverviews.o
 
+# Enable the following if you want to use MITAB's code to convert
+# .tab coordinate systems into well known text.  But beware that linking
+# against static libraries becomes more complicated because of the odd
+# call out.
+
+#ifeq ($(OGR_ENABLED),yes)
+#CXXFLAGS 	:=	-DHAVE_MITAB $(CXXFLAGS)
+#endif
+
 default:	$(OBJ)
 
 clean:
