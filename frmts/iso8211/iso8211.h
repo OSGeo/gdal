@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2000/09/19 14:08:51  warmerda
+ * keep and report _extendedCharSet
+ *
  * Revision 1.10  2000/06/16 18:02:08  warmerda
  * added SetRepeatingFlag hack support
  *
@@ -147,6 +150,7 @@ class DDFModule
     char        _versionNumber;
     char        _appIndicator;
     int         _fieldControlLength;
+    char        _extendedCharSet[4];
 
     long _recLength;
     char _leaderIden;

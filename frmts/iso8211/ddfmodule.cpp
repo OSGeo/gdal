@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2000/09/19 14:08:51  warmerda
+ * keep and report _extendedCharSet
+ *
  * Revision 1.11  1999/11/18 19:03:04  warmerda
  * expanded tabs
  *
@@ -251,6 +254,10 @@ int DDFModule::Open( const char * pszFilename, int bFailQuietly )
         _appIndicator                 = achLeader[9];
         _fieldControlLength           = DDFScanInt(achLeader+10,2);
         _fieldAreaStart               = DDFScanInt(achLeader+12,5);
+        _extendedCharSet[0]           = achLeader[17];
+        _extendedCharSet[1]           = achLeader[18];
+        _extendedCharSet[2]           = achLeader[19];
+        _extendedCharSet[3]           = '\0';
         _sizeFieldLength              = DDFScanInt(achLeader+20,1);
         _sizeFieldPos                 = DDFScanInt(achLeader+21,1);
         _sizeFieldTag                 = DDFScanInt(achLeader+23,1);
@@ -375,6 +382,7 @@ void DDFModule::Dump( FILE * fp )
              _inlineCodeExtensionIndicator );
     fprintf( fp, "    _versionNumber = %c\n", _versionNumber );
     fprintf( fp, "    _appIndicator = %c\n", _appIndicator );
+    fprintf( fp, "    _extendedCharSet = `%s'\n", _extendedCharSet );
     fprintf( fp, "    _fieldControlLength = %d\n", _fieldControlLength );
     fprintf( fp, "    _fieldAreaStart = %ld\n", _fieldAreaStart );
     fprintf( fp, "    _sizeFieldLength = %ld\n", _sizeFieldLength );
