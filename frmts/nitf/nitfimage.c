@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2002/12/03 18:08:16  warmerda
+ * implemented nitf VQ decompression
+ *
  * Revision 1.1  2002/12/03 04:43:41  warmerda
  * New
  *
@@ -281,11 +284,36 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
                    * psImage->nBands, sizeof(GUInt32) );
 
 /* -------------------------------------------------------------------- */
+/*      Offsets to VQ compressed tiles are based on a fixed block       */
+/*      size, and are offset from the spatial data location kept in     */
+/*      the location table ... which is generally not the beginning     */
+/*      of the image data segment.                                      */
+/* -------------------------------------------------------------------- */
+    if( EQUAL(psImage->szIC,"C4") )
+    {
+        int      i;
+        GUInt32  nLocBase = psSegInfo->nSegmentStart;
+
+        for( i = 0; i < psFile->nLocCount; i++ )
+        {
+            if( psFile->pasLocations[i].nLocId == 140 )
+                nLocBase = psFile->pasLocations[i].nLocOffset;
+        }
+
+        if( nLocBase == psSegInfo->nSegmentStart )
+            CPLError( CE_Warning, CPLE_AppDefined, 
+                      "Failed to find spatial data location, guessing." );
+
+        for( i=0; i < psImage->nBlocksPerRow * psImage->nBlocksPerColumn; i++ )
+            psImage->panBlockStart[i] = nLocBase + 6144 * i;
+    }
+
+/* -------------------------------------------------------------------- */
 /*      If there is no block map, just compute directly assuming the    */
 /*      blocks start at the beginning of the image segment, and are     */
 /*      packed tightly with the IMODE organization.                     */
 /* -------------------------------------------------------------------- */
-    if( psImage->szIC[0] != 'M' && psImage->szIC[1] != 'M' )
+    else if( psImage->szIC[0] != 'M' && psImage->szIC[1] != 'M' )
     {
         int iBlockX, iBlockY, iBand;
 
@@ -348,6 +376,54 @@ void NITFImageDeaccess( NITFImage *psImage )
 }
 
 /************************************************************************/
+/*                        NITFUncompressVQTile()                        */
+/*                                                                      */
+/*      This code was derived from OSSIM which in turn derived it       */
+/*      from OpenMap ... open source means sharing!                     */
+/************************************************************************/
+
+static void NITFUncompressVQTile( NITFImage *psImage, 
+                                  GByte *pabyVQBuf,
+                                  GByte *pabyResult )
+
+{
+    int   i, j, t, iSrcByte = 0;
+
+    for (i = 0; i < 256; i += 4)
+    {
+        for (j = 0; j < 256; j += 8)
+        {
+            GUInt16 firstByte  = pabyVQBuf[iSrcByte++];
+            GUInt16 secondByte = pabyVQBuf[iSrcByte++];
+            GUInt16 thirdByte  = pabyVQBuf[iSrcByte++];
+
+            /*
+             * because dealing with half-bytes is hard, we
+             * uncompress two 4x4 tiles at the same time. (a
+             * 4x4 tile compressed is 12 bits )
+             * this little code was grabbed from openmap software.
+             */
+                  
+            /* Get first 12-bit value as index into VQ table */
+
+            GUInt16 val1 = (firstByte << 4) | (secondByte >> 4);
+                  
+            /* Get second 12-bit value as index into VQ table*/
+
+            GUInt16 val2 = ((secondByte & 0x000F) << 8) | thirdByte;
+                  
+            for ( t = 0; t < 4; ++t)
+            {
+                GByte *pabyTarget = pabyResult + (i+t) * 256 + j;
+                
+                memcpy( pabyTarget, psImage->psFile->apanVQLUT[t] + val1, 4 );
+                memcpy( pabyTarget+4, psImage->psFile->apanVQLUT[t] + val2, 4);
+            }
+        }  /* for j */
+    } /* for i */
+}
+
+/************************************************************************/
 /*                         NITFReadImageBlock()                         */
 /************************************************************************/
 
@@ -390,9 +466,10 @@ int NITFReadImageBlock( NITFImage *psImage, int nBlockX, int nBlockY,
     }
 
 /* -------------------------------------------------------------------- */
-/*      Read the requested information into a temporary buffer.         */
+/*      Read the requested information into a temporary buffer and      */
+/*      pull out what we want.                                          */
 /* -------------------------------------------------------------------- */
-    if( psImage->szIC[0] != 'C' )
+    if( psImage->szIC[0] == 'N' )
     {
         GByte *pabyWrkBuf = (GByte *) CPLMalloc(nWrkBufSize);
         int   iPixel, iLine;
@@ -426,6 +503,32 @@ int NITFReadImageBlock( NITFImage *psImage, int nBlockX, int nBlockY,
         }
 
         CPLFree( pabyWrkBuf );
+
+        return BLKREAD_OK;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Handle VQ compression.  The VQ compression basically keeps a    */
+/*      64x64 array of 12bit code words.  Each code word expands to     */
+/*      a predefined 4x4 8 bit per pixel pattern.                       */
+/* -------------------------------------------------------------------- */
+    else if( EQUAL(psImage->szIC,"C4") || EQUAL(psImage->szIC,"M4") )
+    {
+        GByte abyVQCoded[6144];
+
+        /* Read the codewords */
+        if( VSIFSeek( psImage->psFile->fp, psImage->panBlockStart[iFullBlock], 
+                      SEEK_SET ) != 0 
+            || VSIFRead( abyVQCoded, 1, sizeof(abyVQCoded),
+                         psImage->psFile->fp ) != sizeof(abyVQCoded) )
+        {
+            CPLError( CE_Failure, CPLE_FileIO, 
+                      "Unable to read %d byte block from %d.", 
+                      sizeof(abyVQCoded), psImage->panBlockStart[iFullBlock] );
+            return BLKREAD_FAIL;
+        }
+        
+        NITFUncompressVQTile( psImage, abyVQCoded, pData );
 
         return BLKREAD_OK;
     }
