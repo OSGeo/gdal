@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2004/01/05 20:13:36  warmerda
+ * check guessed record length
+ *
  * Revision 1.13  2003/12/12 15:30:56  warmerda
  * Fixed yet another memory leak in the recipe stuff.
  *
@@ -369,9 +372,34 @@ int CeosDefaultRecipe( CeosSARVolume_t *volume, void *token )
     if( ImageDesc->BytesPerRecord == 0 && ImageDesc->RecordsPerLine == 1 &&
 	ImageDesc->PixelsPerLine > 0 && ImageDesc->BytesPerPixel > 0 )
     {
+        CeosRecord_t *img_rec;
+
         ImageDesc->BytesPerRecord = ImageDesc->PixelsPerLine *
 	  ImageDesc->BytesPerPixel + ImageDesc->ImageDataStart +
 	  ImageDesc->ImageSuffixData ;
+
+        TypeCode.UCharCode.Subtype1 = 0xed;
+        TypeCode.UCharCode.Type = 0xed;
+        TypeCode.UCharCode.Subtype2 = 0x12;
+        TypeCode.UCharCode.Subtype3 = 0x12;
+        
+        img_rec = FindCeosRecord( volume->RecordList, TypeCode, 
+                                  __CEOS_IMAGRY_OPT_FILE, -1, -1 );
+        if( img_rec == NULL )
+        {
+            CPLDebug( "SAR_CEOS", 
+                      "Unable to find imagery rec to check record length." );
+            return 0;
+        }
+
+        if( img_rec->Length != ImageDesc->BytesPerRecord )
+        {
+            CPLDebug( "SAR_CEOS", 
+                      "Guessed record length (%d) did not match\n"
+                      "actual imagery record length (%d), recipe fails.", 
+                      ImageDesc->BytesPerRecord, img_rec->Length );
+            return 0;
+        }
     }
     
     if( ImageDesc->PixelsPerRecord == 0 && 
