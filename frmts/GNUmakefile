@@ -14,6 +14,7 @@ default:	$(OBJ) $(foreach d,$(GDAL_FORMATS),$(d)-install-obj)
 
 clean:	$(foreach d,$(GDAL_FORMATS),$(d)-clean)
 	rm -f *.o o/*.o o/*.a
+	$(RM) o/*.lo
 
 o/gdalallregister.o:	gdalallregister.cpp ../GDALmake.opt
 	$(CXX) -c $(GDAL_INCLUDE) $(CXXFLAGS) $(FRMT_FLAGS) \

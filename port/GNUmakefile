@@ -20,7 +20,7 @@ CPPFLAGS	:=
 default:	$(OBJ)
 
 clean:
-	rm -f *.o $(LIB)
+	$(RM) *.o $(LIB)
 
 install:
 	for f in *.h ; do $(INSTALL_DATA) $$f $(INST_INCLUDE) ; done

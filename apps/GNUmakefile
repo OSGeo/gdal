@@ -1,4 +1,4 @@
-GDAL_ROOT	=	$(shell (cd ..; pwd))
+GDAL_ROOT	=	..
 
 include ../GDALmake.opt
 
@@ -49,7 +49,7 @@ gdalwarpsimple$(EXE): gdalwarpsimple.o $(DEP_LIBS)
 		$(CONFIG_LIBS) -o gdalwarpsimple$(EXE)
 
 clean:
-	rm -f *.o $(BIN_LIST) core gdal-config gdal-config-inst
+	$(RM) *.o $(BIN_LIST) core gdal-config gdal-config-inst
 
 $(DEP_LIBS):
 

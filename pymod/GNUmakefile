@@ -1,32 +1,27 @@
 GDAL_ROOT	=	..
 
+include ../GDALmake.opt
+
 GDALMODULE	=	_gdalmodule.so
 OBJ        	=       gdal_wrap.o numpydataset.o gdalnumeric.o
 
-include ../GDALmake.opt
+CPPFLAGS	+=	$(GDAL_INCLUDE) $(PYTHON_INCLUDES)
+CFLAGS	+=	$(PYTHON_CFLAGS)
 
 default:	$(GDALMODULE)
 
 clean:
-	rm -f *.o *.so
-
-%.o:	%.c
-	$(CC) -c  $(GDAL_INCLUDE) $(PYTHON_INCLUDES)\
-		$(CFLAGS) $(PYTHON_CFLAGS) $*.c -o $*.o
-
-%.o:	%.cpp
-	$(CXX) -c $(GDAL_INCLUDE) $(PYTHON_INCLUDES) \
-		 $(CXXFLAGS) $(PYTHON_CFLAGS) $*.cpp -o $*.o
-
+	$(RM) *.o *.so
 
 gdal_wrap.c:	gdal.i
 	-swig -python gdal.i
 
-$(GDAL_SLIB):
-
-$(GDALMODULE):	$(OBJ) $(GDAL_LIB)
+$(GDALMODULE):	$(OBJ) $(EXE_DEP_LIBS)
 	$(LD_SHARED) $(OBJ) \
 		$(GDAL_SLIB_LINK) $(PYTHON_LIBS) $(LIBS) -o $(GDALMODULE)
+
+$(GDALMODULE:.so=.la):	$(OBJ:.o=.lo) $(EXE_DEP_LIBS)
+	$(LD_SHARED) $^ $(PYTHON_LIBS) $(LIBS) -o $@
 
 # special care is taken so that python scripts are installed as executables
 install:	$(GDALMODULE)
