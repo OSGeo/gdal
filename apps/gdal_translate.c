@@ -1,4 +1,11 @@
 /******************************************************************************
+ * $Id$
+ *
+ * Project:  GDAL Utilities
+ * Purpose:  GDAL Image Translator Program
+ * Author:   Frank Warmerdam, warmerda@home.com
+ *
+ ******************************************************************************
  * Copyright (c) 1998, Frank Warmerdam
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -20,14 +27,11 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************
  *
- * gdal_translate.c
- *
- * Application to translate a GDAL supported dataset from one format to
- * another.
- *
- * Status: Incomplete.
- *
  * $Log$
+ * Revision 1.5  1999/08/12 18:23:47  warmerda
+ * Attempt to create the output file with the data type of the first
+ * source band.
+ *
  * Revision 1.4  1999/05/17 01:38:05  warmerda
  * added transfer of geotransform and proj
  *
@@ -39,7 +43,6 @@
  *
  * Revision 1.1  1999/03/02 21:12:25  warmerda
  * New
- *
  */
 
 #include "gdal.h"
@@ -156,8 +159,10 @@ int main( int argc, char ** argv )
         exit( 1 );
     }
     
+    hBand = GDALGetRasterBand( hDataset, panBandList[0] );
     hOutDS = GDALCreate( hDriver, pszDest, nRasterXSize, nRasterYSize,
-                         nBandCount, GDT_Byte, NULL );
+                         nBandCount,
+                         GDALGetRasterDataType(hBand), NULL );
     if( hOutDS == NULL )
     {
         printf( "GDALCreate() failed.\n" );
