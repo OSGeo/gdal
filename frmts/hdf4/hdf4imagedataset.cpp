@@ -29,6 +29,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.7  2002/09/06 10:42:23  dron
+ * Georeferencing for ASTER Level 1b datasets and ASTER DEMs.
+ *
  * Revision 1.6  2002/07/23 12:27:58  dron
  * General Raster Interface support added.
  *
@@ -50,16 +53,17 @@
  *
  */
 
+
 #include "hdf.h"
 #include "mfhdf.h"
 
 #include "gdal_priv.h"
 #include "cpl_string.h"
+#include "ogr_spatialref.h"
+
 #include "hdf4dataset.h"
 
 CPL_CVSID("$Id$");
-
-static GDALDriver	*poHDF4ImageDriver = NULL;
 
 CPL_C_START
 void	GDALRegister_HDF4(void);
@@ -84,25 +88,24 @@ class HDF4ImageDataset : public HDF4Dataset
     int32	aiDimSizes[MAX_VAR_DIMS];
     int		iXDim, iYDim, iBandDim;
 #define    N_COLOR_ENTRIES    256
-    uint8	aiPaletteData[N_COLOR_ENTRIES][3];		// XXX: Static array
+    uint8	aiPaletteData[N_COLOR_ENTRIES][3];	// XXX: Static array currently
     char	szName[65];
 
     GDALColorTable *poColorTable;
 
-//    double      adfGeoTransform[6];
-//    char        *pszProjection;
+    double      adfGeoTransform[6];
+    char        *pszProjection;
 
-//    void	ComputeGeoref();
-    
   public:
                 HDF4ImageDataset();
 		~HDF4ImageDataset();
     
     static GDALDataset *Open( GDALOpenInfo * );
 
-//    CPLErr 	GetGeoTransform( double * padfTransform );
-//    const char *GetProjectionRef();
-
+    CPLErr 	GetGeoTransform( double * padfTransform );
+    const char *GetProjectionRef();
+    void	ReadCoordinates( const char*, double*, double* );
+    void	ToUTM( OGRSpatialReference *, double *, double * );
 };
 
 /************************************************************************/
@@ -157,10 +160,10 @@ GDALDataType HDF4ImageRasterBand::GetDataType( int32 iNumType )
 	return GDT_Unknown;
 	break;
         case DFNT_FLOAT32:
-	return GDT_CFloat32;
+	return GDT_Float32;
 	break;
         case DFNT_FLOAT64:
-	return GDT_CFloat64;
+	return GDT_Float64;
 	break;
 	default:
 	return GDT_Unknown;
@@ -349,7 +352,6 @@ CPLErr HDF4ImageRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /************************************************************************/
 
 GDALColorTable *HDF4ImageRasterBand::GetColorTable()
-
 {
     HDF4ImageDataset	*poGDS = (HDF4ImageDataset *) poDS;
 
@@ -361,7 +363,6 @@ GDALColorTable *HDF4ImageRasterBand::GetColorTable()
 /************************************************************************/
 
 GDALColorInterp HDF4ImageRasterBand::GetColorInterpretation()
-
 {
     HDF4ImageDataset	*poGDS = (HDF4ImageDataset *) poDS;
 
@@ -371,14 +372,21 @@ GDALColorInterp HDF4ImageRasterBand::GetColorInterpretation()
     {
 	if ( poGDS->poColorTable != NULL )
             return GCI_PaletteIndex;
-	else if ( nBand == 1 )
-            return GCI_RedBand;
-        else if ( nBand == 2 )
-            return GCI_GreenBand;
-        else if ( nBand == 3 )
-            return GCI_BlueBand;
-        else
-            return GCI_AlphaBand;
+	else if ( poGDS->nBands != 1 )
+	{
+	    if ( nBand == 1 )
+                return GCI_RedBand;
+            else if ( nBand == 2 )
+                return GCI_GreenBand;
+            else if ( nBand == 3 )
+                return GCI_BlueBand;
+            else if ( nBand == 4 )
+                return GCI_AlphaBand;
+            else
+                return GCI_Undefined;
+	}
+	else
+	    return GCI_GrayIndex;
     }
     else
         return GCI_GrayIndex;
@@ -386,7 +394,7 @@ GDALColorInterp HDF4ImageRasterBand::GetColorInterpretation()
 
 /************************************************************************/
 /* ==================================================================== */
-/*				HDF4ImageDataset				*/
+/*				HDF4ImageDataset			*/
 /* ==================================================================== */
 /************************************************************************/
 
@@ -402,6 +410,7 @@ HDF4ImageDataset::HDF4ImageDataset()
     papszSubdatasetName = NULL;
     iSubdatasetType = HDF4_UNKNOWN;
     poColorTable = NULL;
+    pszProjection = "";
 }
 
 /************************************************************************/
@@ -426,44 +435,66 @@ HDF4ImageDataset::~HDF4ImageDataset()
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-/*CPLErr HDF4ImageDataset::GetGeoTransform( double * padfTransform )
+CPLErr HDF4ImageDataset::GetGeoTransform( double * padfTransform )
 
 {
     memcpy( padfTransform, adfGeoTransform, sizeof(double) * 6 );
     return CE_None;
-}*/
+}
 
 /************************************************************************/
 /*                          GetProjectionRef()                          */
 /************************************************************************/
 
-/*const char *L1BDataset::GetProjectionRef()
+const char *HDF4ImageDataset::GetProjectionRef()
 
 {
-    if( bProjDetermined )
-        return pszProjection;
-    else
-        return "";
-}*/
+    return pszProjection;
+}
 
 
 /************************************************************************/
-/*                            ComputeGeoref()				*/
+/*                            ReadCoordinates()				*/
 /************************************************************************/
 
-/*void HDF4ImageDataset::ComputeGeoref()
+void HDF4ImageDataset::ToUTM( OGRSpatialReference *poProj,
+				double *pdfGeoX, double *pdfGeoY )
 {
-    if (nGCPCount >= 3 && bProjDetermined)
-    {
-        int bApproxOK = TRUE;
-        GDALGCPsToGeoTransform( 4, pasCorners, adfGeoTransform, bApproxOK );
-    }
-    else
-    {
-        adfGeoTransform[0] = adfGeoTransform[2] = adfGeoTransform[3] = adfGeoTransform[4] = 0;
-	adfGeoTransform[1] = adfGeoTransform[5] = 1;
-    }
-}*/
+/* -------------------------------------------------------------------- */
+/*      Setup transformation to lat/long.                               */
+/* -------------------------------------------------------------------- */
+    OGRCoordinateTransformation *poTransform = NULL;
+    OGRSpatialReference *poLatLong = NULL;
+    poLatLong = poProj->CloneGeogCS();
+    poTransform = OGRCreateCoordinateTransformation( poLatLong, poProj );
+    
+/* -------------------------------------------------------------------- */
+/*      Transform to latlong and report.                                */
+/* -------------------------------------------------------------------- */
+    //if( poTransform != NULL 
+        /*&&*/ poTransform->Transform(1, pdfGeoX, pdfGeoY,NULL);// == OGRERR_NONE )
+
+    if( poTransform != NULL )
+        CPLFree( poTransform );
+
+    if( poLatLong != NULL )
+        CPLFree( poLatLong );
+}
+
+/************************************************************************/
+/*                            ReadCoordinates()				*/
+/************************************************************************/
+
+void HDF4ImageDataset::ReadCoordinates( const char *pszString,
+					double *pdfX, double *pdfY )
+{
+    char **papszStrList;
+    papszStrList = CSLTokenizeString2( pszString, ", ", 0 );
+    *pdfX = atof(papszStrList[0]);
+    *pdfY = atof(papszStrList[1]);
+    CPLFree( papszStrList );
+}
+
 
 /************************************************************************/
 /*                                Open()                                */
@@ -485,7 +516,6 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 
     poDS = new HDF4ImageDataset( );
 
-    poDS->poDriver = poHDF4ImageDriver;
     poDS->fp = poOpenInfo->fp;
     poOpenInfo->fp = NULL;
 
@@ -502,6 +532,10 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
     
     if( EQUAL( poDS->papszSubdatasetName[1], "SEAWIFS_L1A" ) )
         poDS->iDataType = SEAWIFS_L1A;
+    else if( EQUAL( poDS->papszSubdatasetName[1], "ASTER_L1B" ) )
+        poDS->iDataType = ASTER_L1B;
+    else if( EQUAL( poDS->papszSubdatasetName[1], "AST14DEM" ) )
+        poDS->iDataType = AST14DEM;
     else if( EQUAL( poDS->papszSubdatasetName[1], "MODIS_L1B" ) )
         poDS->iDataType = MODIS_L1B;
     else if( EQUAL( poDS->papszSubdatasetName[1], "MOD02QKM_L1B" ) )
@@ -533,6 +567,9 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->hSD = SDstart( poDS->pszFilename, DFACC_READ );
         if ( poDS->hSD == -1 )
            return NULL;
+        
+	if ( poDS->ReadGlobalAttributes( poDS->hSD, "GLOBAL_METADATA" ) != CE_None )
+            return NULL;
     
         poDS->iSDS = SDselect( poDS->hSD, iDataset );
         SDgetinfo( poDS->iSDS, poDS->szName, &poDS->iRank, poDS->aiDimSizes,
@@ -628,6 +665,106 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
     for( i = 1; i <= poDS->nBands; i++ )
         poDS->SetBand( i, new HDF4ImageRasterBand( poDS, i ) );
 
+    char 	**papszProjParmList;
+    int		iUTMZone, iNumber;
+    const char	*pszTemp;
+    double	dfULX = 0.5, dfULY = 0.5;
+    double	dfURX = poDS->nRasterXSize - 0.5, dfURY = 0.5;
+    double	dfLLX = 0.5, dfLLY = poDS->nRasterYSize - 0.5;
+    double	dfLRX = poDS->nRasterXSize - 0.5, dfLRY = poDS->nRasterYSize - 0.5;
+    double	dfCenterX, dfCenterY;
+    OGRSpatialReference oSRS;
+    poDS->adfGeoTransform[0] = poDS->adfGeoTransform[2] =
+        poDS->adfGeoTransform[3] = poDS->adfGeoTransform[4] = 0.0;
+    poDS->adfGeoTransform[1] = poDS->adfGeoTransform[5] = 1.0;
+    switch ( poDS->iDataType )
+    {
+        case ASTER_L1B:
+	iNumber = atoi(&poDS->szName[9]);
+        /*papszProjParmList = CSLTokenizeString2(
+			poDS->GetMetadataItem( CPLSPrintf("PROJECTIONPARAMETERS%c%c",
+			poDS->szName[9], poDS->szName[10]), 0 ),", " , 0 );*/
+	if ( EQUAL(poDS->GetMetadataItem( CPLSPrintf("MPMETHOD%d", iNumber), NULL ), "UTM" ) )
+	{
+            oSRS.SetProjCS( "UTM" );
+	    oSRS.SetWellKnownGeogCS( "WGS84" );
+            
+	    poDS->ReadCoordinates( poDS->GetMetadataItem( "UPPERLEFT" ), &dfULY, &dfULX );
+            poDS->ReadCoordinates( poDS->GetMetadataItem( "UPPERRIGHT" ), &dfURY, &dfURX );
+            poDS->ReadCoordinates( poDS->GetMetadataItem( "LOWERLEFT" ), &dfLLY, &dfLLX );
+            poDS->ReadCoordinates( poDS->GetMetadataItem( "LOWERRIGHT" ), &dfLRY, &dfLRX );
+            poDS->ReadCoordinates( poDS->GetMetadataItem( "SCENECENTER" ),
+		                &dfCenterY, &dfCenterX );
+	    
+	    /*oProj.SetGeogCS( "ASTER_PROJ", "ASTER_DATUM", "ASTER_SPHEROID",
+			    atof(papszProjParmList[0]), // Semi-major axis
+			    1/(atof(papszProjParmList[0])/atof(papszProjParmList[1]) - 1.0), // Inverse Flattening
+			    NULL,
+			    0,
+			    );*/
+	    iUTMZone = atoi( poDS->GetMetadataItem(
+			    CPLSPrintf("UTMZONECODE%d", iNumber), 0 ) );
+	    if( iUTMZone > 0 )
+		oSRS.SetUTM( iUTMZone, TRUE );
+	    else
+		oSRS.SetUTM( - iUTMZone, FALSE );
+
+	    oSRS.exportToWkt( &poDS->pszProjection );
+
+	    poDS->ToUTM( &oSRS, &dfULX, &dfULY );
+            poDS->ToUTM( &oSRS, &dfURX, &dfURY );
+            poDS->ToUTM( &oSRS, &dfLLX, &dfLLY );
+            poDS->ToUTM( &oSRS, &dfLRX, &dfLRY );
+            
+	    poDS->adfGeoTransform[1] = (dfURX - dfLLX) / (poDS->nRasterXSize - 1);
+	    if( dfCenterY > 0 )
+	        poDS->adfGeoTransform[5] = (dfULY - dfLRY) / (poDS->nRasterYSize - 1);
+            else	    
+	        poDS->adfGeoTransform[5] = (dfLLY - dfURY) / (poDS->nRasterYSize - 1);
+            poDS->adfGeoTransform[0] = dfLLX + poDS->adfGeoTransform[1] / 2;
+            poDS->adfGeoTransform[3] = dfULY - poDS->adfGeoTransform[5] / 2;
+            poDS->adfGeoTransform[2] = 0.0;
+            poDS->adfGeoTransform[4] = 0.0;
+	}
+	break;
+	case AST14DEM:
+            oSRS.SetProjCS( "UTM" );
+	    oSRS.SetWellKnownGeogCS( "WGS84" );
+            
+	    poDS->ReadCoordinates( poDS->GetMetadataItem( "UPPERLEFT" ), &dfULY, &dfULX );
+            poDS->ReadCoordinates( poDS->GetMetadataItem( "UPPERRIGHT" ), &dfURY, &dfURX );
+            poDS->ReadCoordinates( poDS->GetMetadataItem( "LOWERLEFT" ), &dfLLY, &dfLLX );
+            poDS->ReadCoordinates( poDS->GetMetadataItem( "LOWERRIGHT" ), &dfLRY, &dfLRX );
+            poDS->ReadCoordinates( poDS->GetMetadataItem( "SCENECENTER" ),
+		                &dfCenterY, &dfCenterX );
+            
+	    // Calculate UTM zone from scene center coordinates
+            iUTMZone = 30 + (int) (dfCenterX + 3.0) / 6.0;
+	    if( dfCenterY > 0 )			// FIXME: does it right?
+		oSRS.SetUTM( iUTMZone, TRUE );
+	    else
+		oSRS.SetUTM( - iUTMZone, FALSE );
+	    oSRS.exportToWkt( &poDS->pszProjection );
+            
+	    poDS->ToUTM( &oSRS, &dfULX, &dfULY );
+            poDS->ToUTM( &oSRS, &dfURX, &dfURY );
+            poDS->ToUTM( &oSRS, &dfLLX, &dfLLY );
+            poDS->ToUTM( &oSRS, &dfLRX, &dfLRY );
+            
+	    poDS->adfGeoTransform[1] = 30;
+	    if( dfCenterY > 0 )
+	        poDS->adfGeoTransform[5] = -30;
+            else	    
+	        poDS->adfGeoTransform[5] = 30;
+            poDS->adfGeoTransform[0] = dfLLX + poDS->adfGeoTransform[1] / 2;
+            poDS->adfGeoTransform[3] = dfULY - poDS->adfGeoTransform[5] / 2;
+            poDS->adfGeoTransform[2] = 0.0;
+            poDS->adfGeoTransform[4] = 0.0;
+	break;
+	default:
+	break;
+    }
+
     return( poDS );
 }
 
@@ -640,9 +777,9 @@ void GDALRegister_HDF4Image()
 {
     GDALDriver	*poDriver;
 
-    if( poHDF4ImageDriver == NULL )
+    if( GDALGetDriverByName( "HDF4Image" ) == NULL )
     {
-        poHDF4ImageDriver = poDriver = new GDALDriver();
+        poDriver = new GDALDriver();
         
         poDriver->SetDescription( "HDF4Image" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
