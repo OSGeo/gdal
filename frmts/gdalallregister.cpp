@@ -25,6 +25,9 @@
  * Main format registration function.
  * 
  * $Log$
+ * Revision 1.10  1999/07/23 19:36:41  warmerda
+ * added raw/ehdr support
+ *
  * Revision 1.9  1999/06/03 14:05:33  warmerda
  * added SDTS support
  *
@@ -66,6 +69,7 @@ void GDALRegister_AIGrid(void);
 void GDALRegister_CEOS(void);
 void GDALRegister_SDTS(void);
 void GDALRegister_ELAS(void);
+void GDALRegister_EHdr(void);
 CPL_C_END
 
 #ifdef notdef
@@ -116,5 +120,9 @@ void GDALAllRegister()
 
 #ifdef FRMT_ogdi
     GDALRegister_OGDI();
+#endif
+
+#ifdef FRMT_raw
+    GDALRegister_EHdr();
 #endif
 }
