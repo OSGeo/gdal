@@ -31,8 +31,11 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.18  2004/12/17 19:50:03  fwarmerdam
+ * Fixed last bug reference.
+ *
  * Revision 1.17  2004/12/17 19:49:06  fwarmerdam
- * Applied patch for min/max elevation values per bug 709.
+ * Applied patch for min/max elevation values per bug 708.
  *
  * Revision 1.16  2004/12/10 21:59:55  fwarmerdam
  * added ZRESOLUTION support from Hunter Blanks (bug 708)
