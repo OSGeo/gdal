@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2004/11/17 17:49:26  fwarmerdam
+ * implemented SetFeature and DeleteFeature methods
+ *
  * Revision 1.14  2004/05/08 02:14:49  warmerda
  * added GetFeature() on table, generalize FID support a bit
  *
@@ -181,6 +184,7 @@ class OGRPGTableLayer : public OGRPGLayer
     virtual OGRErr      SetAttributeFilter( const char * );
 
     virtual OGRErr      SetFeature( OGRFeature *poFeature );
+    virtual OGRErr      DeleteFeature( long nFID );
     virtual OGRErr      CreateFeature( OGRFeature *poFeature );
     
     virtual OGRErr      CreateField( OGRFieldDefn *poField,

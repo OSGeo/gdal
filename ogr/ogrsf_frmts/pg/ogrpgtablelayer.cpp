@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.23  2004/11/17 17:49:27  fwarmerdam
+ * implemented SetFeature and DeleteFeature methods
+ *
  * Revision 1.22  2004/09/16 18:24:47  fwarmerdam
  * fixed trimming code, just truncate long text
  *
@@ -496,15 +499,96 @@ OGRErr OGRPGTableLayer::SetAttributeFilter( const char *pszQuery )
     return OGRERR_NONE;
 }
 
+/************************************************************************/
+/*                           DeleteFeature()                            */
+/************************************************************************/
+
+OGRErr OGRPGTableLayer::DeleteFeature( long nFID )
+
+{
+    PGconn              *hPGConn = poDS->GetPGConn();
+    PGresult            *hResult;
+    char                *pszCommand;
+
+/* -------------------------------------------------------------------- */
+/*      We can only delete features if we have a well defined FID       */
+/*      column to target.                                               */
+/* -------------------------------------------------------------------- */
+    if( !bHasFid )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "DeleteFeature(%d) failed.  Unable to delete features in tables without\n"
+                  "a recognised FID column.",
+                  nFID );
+        return OGRERR_FAILURE;
+
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Form the statement to drop the record.                          */
+/* -------------------------------------------------------------------- */
+    pszCommand = (char *) CPLMalloc( strlen(pszFIDColumn)
+                                     + strlen(poFeatureDefn->GetName())
+                                     + 100 );
+
+    sprintf( pszCommand, "DELETE FROM \"%s\" WHERE \"%s\" = %ld",
+             poFeatureDefn->GetName(), pszFIDColumn, nFID );
+             
+/* -------------------------------------------------------------------- */
+/*      Execute the insert.                                             */
+/* -------------------------------------------------------------------- */
+    OGRErr eErr;
+
+    eErr = poDS->SoftStartTransaction();
+    if( eErr != OGRERR_NONE )
+        return eErr;
+
+    CPLDebug( "OGR_PG", "PQexec(%s)\n", pszCommand );
+
+    hResult = PQexec(hPGConn, pszCommand);
+    CPLFree( pszCommand );
+
+    if( PQresultStatus(hResult) != PGRES_COMMAND_OK )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "DeleteFeature() DELETE statement failed.\n%s", 
+                  PQerrorMessage(hPGConn) );
+
+        PQclear( hResult );
+        
+        poDS->SoftRollback();
+
+        return OGRERR_FAILURE;
+    }
+
+    return poDS->SoftCommit();
+}
 
 /************************************************************************/
 /*                             SetFeature()                             */
+/*                                                                      */
+/*      SetFeature() is implemented by dropping the old copy of the     */
+/*      feature in question (if there is one) and then creating a       */
+/*      new one with the provided feature id.                           */
 /************************************************************************/
 
 OGRErr OGRPGTableLayer::SetFeature( OGRFeature *poFeature )
 
 {
-    return OGRERR_FAILURE;
+    OGRErr eErr;
+
+    if( poFeature->GetFID() == OGRNullFID )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "FID required on features given to SetFeature()." );
+        return OGRERR_FAILURE;
+    }
+
+    eErr = DeleteFeature( poFeature->GetFID() );
+    if( eErr != OGRERR_NONE )
+        return eErr;
+
+    return CreateFeature( poFeature );
 }
 
 /************************************************************************/
@@ -517,7 +601,7 @@ OGRErr OGRPGTableLayer::CreateFeature( OGRFeature *poFeature )
     PGconn              *hPGConn = poDS->GetPGConn();
     PGresult            *hResult;
     char                *pszCommand;
-    int                 i, bNeedComma;
+    int                 i, bNeedComma = FALSE;
     unsigned int        nCommandBufSize;;
     OGRErr              eErr;
 
@@ -534,15 +618,27 @@ OGRErr OGRPGTableLayer::CreateFeature( OGRFeature *poFeature )
     sprintf( pszCommand, "INSERT INTO \"%s\" (", poFeatureDefn->GetName() );
 
     if( bHasWkb && poFeature->GetGeometryRef() != NULL )
+    {
         strcat( pszCommand, "WKB_GEOMETRY " );
+        bNeedComma = TRUE;
+    }
     
     if( bHasPostGISGeometry && poFeature->GetGeometryRef() != NULL )
     {
         strcat( pszCommand, pszGeomColumn );
         strcat( pszCommand, " " );
+        bNeedComma = TRUE;
     }
-    
-    bNeedComma = poFeature->GetGeometryRef() != NULL;
+
+    if( poFeature->GetFID() != OGRNullFID && pszFIDColumn != NULL )
+    {
+        if( bNeedComma )
+            strcat( pszCommand, ", " );
+        strcat( pszCommand, pszFIDColumn );
+        strcat( pszCommand, " " );
+        bNeedComma = TRUE;
+    }
+
     for( i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
     {
         if( !poFeature->IsFieldSet( i ) )
@@ -623,6 +719,15 @@ OGRErr OGRPGTableLayer::CreateFeature( OGRFeature *poFeature )
         }
         else
             strcat( pszCommand, "''" );
+    }
+
+    /* Set the FID */
+    if( poFeature->GetFID() != OGRNullFID && pszFIDColumn != NULL )
+    {
+        if( bNeedComma )
+            strcat( pszCommand, ", " );
+        sprintf( pszCommand + strlen(pszCommand), "%ld ", poFeature->GetFID());
+        bNeedComma = TRUE;
     }
 
     /* Set the other fields */
@@ -741,6 +846,7 @@ OGRErr OGRPGTableLayer::CreateFeature( OGRFeature *poFeature )
     if( PQresultStatus(hResult) != PGRES_COMMAND_OK )
     {
         CPLDebug( "OGR_PG", "PQexec(%s)\n", pszCommand );
+
         CPLFree( pszCommand );
 
         CPLError( CE_Failure, CPLE_AppDefined, 
