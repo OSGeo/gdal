@@ -18,7 +18,7 @@ library.<p>
 
 <li> <a href="hierarchy.html">OGR Class Documentation</a>
 
-<li> <a href="ogr__api_8h.html">OGR C API</a>
+<li> ogr_api.h: OGR C API
 
 <li> <a href="osr_tutorial.html">OGR Projections Tutorial</a>
 
