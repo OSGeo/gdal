@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2003/11/07 22:06:10  warmerda
+ * reorder registration
+ *
  * Revision 1.16  2003/11/07 17:51:30  warmerda
  * Added VRT format
  *
@@ -96,11 +99,11 @@ void OGRRegisterAll()
     RegisterOGRS57();
     RegisterOGRTAB();
     RegisterOGRDGN();
-    RegisterOGRGML();
+    RegisterOGRVRT();
     RegisterOGRAVCBin();
     RegisterOGRREC();
     RegisterOGRMEM();
-    RegisterOGRVRT();
+    RegisterOGRGML();
 #ifdef ODBC_ENABLED
     RegisterOGRODBC();
 #endif
