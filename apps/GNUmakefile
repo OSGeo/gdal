@@ -4,13 +4,24 @@ include ../GDALmake.opt
 
 INCLUDE		=	$(GDAL_INCLUDE) -I$(GDAL_ROOT)/frmts
 
-default:	gdalinfo
+default:	gdalinfo gdal_translate
 
 lib-depend:
 	(cd ../core ; $(MAKE) )
+	(cd ../frmts ; $(MAKE) )
 
 gdalinfo:	gdalinfo.o lib-depend
-	$(CC) gdalinfo.o $(GDAL_LIBS) $(LIBS) -o gdalinfo
+	$(CC) $(LNK_FLAGS) gdalinfo.o $(GDAL_LIBS) $(LIBS) -o gdalinfo
+
+gdal_translate:	gdal_translate.o lib-depend
+	$(CC) $(LNK_FLAGS) gdal_translate.o $(GDAL_LIBS) $(LIBS) \
+		-o gdal_translate
+
+gdal2raw:	gdal2raw.o lib-depend
+	$(CC) $(LNK_FLAGS) gdal2raw.o $(GDAL_LIBS) $(LIBS) -o gdal2raw
+
+gdal_chksum:	gdal_chksum.o lib-depend
+	$(CC) $(LNK_FLAGS) gdal_chksum.o $(GDAL_LIBS) $(LIBS) -o gdal_chksum
 
 clean:
 	rm -f *.o gdalinfo core
