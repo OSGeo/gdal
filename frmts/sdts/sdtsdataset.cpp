@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2001/11/11 23:51:00  warmerda
+ * added required class keyword to friend declarations
+ *
  * Revision 1.10  2001/09/10 19:27:36  warmerda
  * added GetMinMax() and raster data types
  *
@@ -88,7 +91,7 @@ class SDTSRasterBand;
 
 class SDTSDataset : public GDALDataset
 {
-    friend      SDTSRasterBand;
+    friend class SDTSRasterBand;
     
     SDTSTransfer *poTransfer;
     SDTSRasterReader *poRL;
@@ -106,7 +109,7 @@ class SDTSDataset : public GDALDataset
 
 class SDTSRasterBand : public GDALRasterBand
 {
-    friend      SDTSDataset;
+    friend class SDTSDataset;
 
     SDTSRasterReader *poRL;
     

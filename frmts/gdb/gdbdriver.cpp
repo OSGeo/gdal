@@ -25,6 +25,9 @@
  * The GDB driver implemenation is the GDAL Driver for GeoGateway.
  * 
  * $Log$
+ * Revision 1.4  2001/11/11 23:50:59  warmerda
+ * added required class keyword to friend declarations
+ *
  * Revision 1.3  2001/07/18 04:51:56  warmerda
  * added CPL_CVSID
  *
@@ -59,7 +62,7 @@ class GDBRasterBand;
 
 class GDBDataset : public GDALDataset
 {
-    friend	GDBRasterBand;
+    friend class GDBRasterBand;
     
     FILE	*fp;
     
@@ -75,7 +78,7 @@ class GDBDataset : public GDALDataset
 
 class GDBRasterBand : public GDALRasterBand
 {
-    friend	GDBDataset;
+    friend class GDBDataset;
     
   public:
 

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2001/11/11 23:50:59  warmerda
+ * added required class keyword to friend declarations
+ *
  * Revision 1.7  2001/07/18 04:51:56  warmerda
  * added CPL_CVSID
  *
@@ -90,7 +93,7 @@ class GRASSRasterBand;
 
 class GRASSDataset : public GDALDataset
 {
-    friend	GRASSRasterBand;
+    friend class GRASSRasterBand;
 
     char	*pszProjection;
 
@@ -114,7 +117,7 @@ class GRASSDataset : public GDALDataset
 
 class GRASSRasterBand : public GDALRasterBand
 {
-    friend	GRASSDataset;
+    friend class GRASSDataset;
 
     int		hCell;
     int         nGRSType;

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2001/11/11 23:51:00  warmerda
+ * added required class keyword to friend declarations
+ *
  * Revision 1.17  2001/07/18 04:51:57  warmerda
  * added CPL_CVSID
  *
@@ -135,7 +138,7 @@ class MFFDataset : public RawDataset
 
 class MFFTiledBand : public GDALRasterBand
 {
-    friend	MFFDataset;
+    friend class MFFDataset;
 
     FILE        *fpRaw;
     int         bNative;

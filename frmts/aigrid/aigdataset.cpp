@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.11  2001/11/11 23:50:59  warmerda
+ * added required class keyword to friend declarations
+ *
  * Revision 1.10  2001/09/11 13:46:25  warmerda
  * return nodata value
  *
@@ -82,7 +85,7 @@ class AIGRasterBand;
 
 class CPL_DLL AIGDataset : public GDALDataset
 {
-    friend	AIGRasterBand;
+    friend class AIGRasterBand;
     
     AIGInfo_t	*psInfo;
 
@@ -107,7 +110,7 @@ class CPL_DLL AIGDataset : public GDALDataset
 
 class AIGRasterBand : public GDALRasterBand
 {
-    friend	AIGDataset;
+    friend class AIGDataset;
 
   public:
 

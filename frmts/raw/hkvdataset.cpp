@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2001/11/11 23:51:00  warmerda
+ * added required class keyword to friend declarations
+ *
  * Revision 1.15  2001/07/18 04:51:57  warmerda
  * added CPL_CVSID
  *
@@ -99,7 +102,7 @@ class HKVDataset;
 
 class HKVRasterBand : public RawRasterBand
 {
-    friend	HKVDataset;
+    friend class HKVDataset;
 
   public:
     		HKVRasterBand( HKVDataset *poDS, int nBand, FILE * fpRaw, 
@@ -117,7 +120,7 @@ class HKVRasterBand : public RawRasterBand
 
 class HKVDataset : public RawDataset
 {
-    friend	HKVRasterBand;
+    friend class HKVRasterBand;
 
     char	*pszPath;
     FILE	*fpBlob;

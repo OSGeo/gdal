@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.7  2001/11/11 23:50:59  warmerda
+ * added required class keyword to friend declarations
+ *
  * Revision 1.6  2001/11/06 14:34:22  warmerda
  * Fixed bug in YLLCENTER handling.  Added case for alternate line ordering.
  *
@@ -70,7 +73,7 @@ class AAIGRasterBand;
 
 class CPL_DLL AAIGDataset : public GDALDataset
 {
-    friend	AAIGRasterBand;
+    friend class AAIGRasterBand;
     
     FILE	*fp;
 
@@ -99,7 +102,7 @@ class CPL_DLL AAIGDataset : public GDALDataset
 
 class AAIGRasterBand : public GDALRasterBand
 {
-    friend	AAIGDataset;
+    friend class AAIGDataset;
 
     int		*panLineOffset;
 

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2001/11/11 23:50:59  warmerda
+ * added required class keyword to friend declarations
+ *
  * Revision 1.6  2001/09/14 17:05:39  warmerda
  * Used strrchr() instead of rindex().
  *
@@ -73,7 +76,7 @@ class FITSRasterBand;
 
 class FITSDataset : public GDALDataset {
 
-  friend FITSRasterBand;
+  friend class FITSRasterBand;
   
   fitsfile* hFITS;
   GDALDataType gdalDataType;   // GDAL code for the image type
@@ -105,7 +108,7 @@ public:
 
 class FITSRasterBand : public GDALRasterBand {
 
-  friend	FITSDataset;
+  friend class FITSDataset;
   
 public:
 

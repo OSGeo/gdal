@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.5  2001/11/11 23:51:00  warmerda
+ * added required class keyword to friend declarations
+ *
  * Revision 1.4  2001/07/18 04:51:57  warmerda
  * added CPL_CVSID
  *
@@ -100,7 +103,7 @@ class JDEMRasterBand;
 
 class JDEMDataset : public GDALDataset
 {
-    friend	JDEMRasterBand;
+    friend class JDEMRasterBand;
 
     FILE	*fp;
     GByte	abyHeader[1012];
@@ -122,7 +125,7 @@ class JDEMDataset : public GDALDataset
 
 class JDEMRasterBand : public GDALRasterBand
 {
-    friend	JDEMDataset;
+    friend class JDEMDataset;
     
   public:
 

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2001/11/11 23:50:59  warmerda
+ * added required class keyword to friend declarations
+ *
  * Revision 1.20  2001/10/23 14:27:15  warmerda
  * D-PAF ERS-1: add naming convention
  *
@@ -165,7 +168,7 @@ class SAR_CEOSRasterBand;
 
 class SAR_CEOSDataset : public GDALDataset
 {
-    friend	SAR_CEOSRasterBand;
+    friend class SAR_CEOSRasterBand;
 
     CeosSARVolume_t sVolume;
 
@@ -198,7 +201,7 @@ class SAR_CEOSDataset : public GDALDataset
 
 class SAR_CEOSRasterBand : public GDALRasterBand
 {
-    friend	SAR_CEOSDataset;
+    friend class SAR_CEOSDataset;
 
   public:
                    SAR_CEOSRasterBand( SAR_CEOSDataset *, int, GDALDataType );

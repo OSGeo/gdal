@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.9  2001/11/11 23:50:59  warmerda
+ * added required class keyword to friend declarations
+ *
  * Revision 1.8  2001/08/22 20:53:01  warmerda
  * added support for reading transparent value
  *
@@ -82,7 +85,7 @@ class GIFRasterBand;
 
 class GIFDataset : public GDALDataset
 {
-    friend	GIFRasterBand;
+    friend class GIFRasterBand;
 
     GifFileType *hGifFile;
 
@@ -105,7 +108,7 @@ class GIFDataset : public GDALDataset
 
 class GIFRasterBand : public GDALRasterBand
 {
-    friend	GIFDataset;
+    friend class GIFDataset;
 
     SavedImage	*psImage;
 

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2001/11/11 23:50:59  warmerda
+ * added required class keyword to friend declarations
+ *
  * Revision 1.5  2001/07/18 04:51:56  warmerda
  * added CPL_CVSID
  *
@@ -99,7 +102,7 @@ class ELASRasterBand;
 
 class ELASDataset : public GDALDataset
 {
-    friend	ELASRasterBand;
+    friend class ELASRasterBand;
 
     FILE	*fp;
 
@@ -136,7 +139,7 @@ class ELASDataset : public GDALDataset
 
 class ELASRasterBand : public GDALRasterBand
 {
-    friend	ELASDataset;
+    friend class ELASDataset;
 
   public:
 

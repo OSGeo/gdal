@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2001/11/11 23:50:59  warmerda
+ * added required class keyword to friend declarations
+ *
  * Revision 1.4  2001/07/18 04:51:56  warmerda
  * added CPL_CVSID
  *
@@ -63,7 +66,7 @@ class DTEDRasterBand;
 
 class DTEDDataset : public GDALDataset
 {
-    friend	DTEDRasterBand;
+    friend class DTEDRasterBand;
 
     DTEDInfo	*psDTED;
 
@@ -84,7 +87,7 @@ class DTEDDataset : public GDALDataset
 
 class DTEDRasterBand : public GDALRasterBand
 {
-    friend	DTEDDataset;
+    friend class DTEDDataset;
 
   public:
 
