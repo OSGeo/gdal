@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  1999/06/09 21:09:36  warmerda
+ * updated docs
+ *
  * Revision 1.2  1999/06/09 21:00:10  warmerda
  * added support for spatial table identification
  *
@@ -68,6 +71,14 @@ SFCDataSource::~SFCDataSource()
 /*                          GetSFTableCount()                           */
 /************************************************************************/
 
+/**
+ * Get the number of spatial tables.
+ *
+ * See Reinitialize() method for details on the spatial table list.
+ *
+ * @return number of spatial tables.
+ */
+
 int SFCDataSource::GetSFTableCount()
 
 {
@@ -80,6 +91,19 @@ int SFCDataSource::GetSFTableCount()
 /************************************************************************/
 /*                           GetSFTableName()                           */
 /************************************************************************/
+
+/**
+ * Get the name of a spatial table.
+ *
+ * Fetches the name of the requested spatial table.  This name is suitable
+ * for use with CreateSFCTable().  See Reinitialize() method for details
+ * on the list of spatial tables.
+ *
+ * @param i value between 0 and GetSFTableCount()-1.
+ *
+ * @return pointer to internal table name.  Should not be modified, or
+ * freed by the application.
+ */
 
 const char *SFCDataSource::GetSFTableName( int i )
 
@@ -107,9 +131,17 @@ void SFCDataSource::AddSFTable( const char * pszTableName )
 /**
  * Reinitialize SFTable list.  
  *
- * This method can be called to trigger rebuilding of the list of tables
- * returned by GetSFCTableName().   Otherwise it is built on the first
+ * This method can be called to trigger rebuilding of the list of spatial
+ * tables returned by GetSFTableName().   Otherwise it is built on the first
  * request for SFTables, and cached - not reflecting additions or deletions.
+ *
+ * The list of spatial tables is intended to be a list of all tables in
+ * this data source that have spatial information in them.  That is those
+ * for which an SFCTable would be able to get geometry information from the
+ * table.  Some data sources may not support any means of returning the list
+ * of tables in which case none will be identified.  In this case the
+ * user would have to enter a table name directly to use with
+ * CreateSFCTable().
  *
  * This method will try to build the list of simple features tables by 
  * traversing the DBSCHEMA_OGIS_FEATURE_TABLES schema rowset.  If that doesn't

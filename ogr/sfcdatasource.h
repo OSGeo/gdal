@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  1999/06/09 21:09:36  warmerda
+ * updated docs
+ *
  * Revision 1.4  1999/06/09 21:00:10  warmerda
  * added support for spatial table identification
  *
@@ -98,10 +101,8 @@ class SFCDataSource : public CDataSource
 
     void	Reinitialize();
 
-    /** Get number of spatial tables available from this datasource */
     int		GetSFTableCount();
 
-    /** Get name of a given spatial table. */
     const char	*GetSFTableName( int );
     
     SFCTable	*CreateSFCTable( const char * pszTablename,
