@@ -29,11 +29,17 @@ Intel Linux system.<p>
 <h3>Other Binary Packages</h3>
 
 <ol>
+
 <li> GDAL is also a component of the FreeGIS CDs available 
 from <a href="http://www.freegis.org/">www.freegis.org</a> in RPM format.<p>
+
 <li> Packages for Debian users are available in the official repository
 <a href="http://packages.debian.org/libgdal1">http://packages.debian.org/libgdal1</a>.<p>
+
 <li> Packages for MacOS X are available via Fink from the <a href="http://fink.sourceforge.net/pdb/package.php/gdal">Fink repository</a>.
+
+<li> <a href="http://hobu.stat.iastate.edu/gdal-1.1.9win32.exe">http://hobu.stat.iastate.edu/gdal-1.1.9win32.exe</a>: Python 2.3 GDAL 1.1.9 add-on including Oracle Spatial, ECW, netcdf, GML and PostGIS.<p>
+
 </ol>
 
 <h2>Source</h2>
