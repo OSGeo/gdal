@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.23  2004/09/15 16:00:47  fwarmerdam
+ * Report 3D values for Cell Header range and origin.
+ *
  * Revision 1.22  2004/09/15 14:06:25  fwarmerdam
  * added dumping of cone in DGNDumpElement()
  * A bunch of changes related to quaternion handling... not sure if it all
@@ -721,16 +724,17 @@ void DGNDumpElement( DGNHandle hDGN, DGNElemCore *psElement, FILE *fp )
       {
           DGNElemCellHeader     *psCell = (DGNElemCellHeader*) psElement;
 
-          fprintf( fp, "  totlength=%d, name=%s, class=%x, levels=%02x%02x%02x%02x\n", 
-                   psCell->totlength, psCell->name, psCell->cclass, 
-                   psCell->levels[0], psCell->levels[1], psCell->levels[2], 
+          fprintf( fp, "  totlength=%d, name=%s, class=%x, levels=%02x%02x%02x%02x\n",
+                   psCell->totlength, psCell->name, psCell->cclass,
+                   psCell->levels[0], psCell->levels[1], psCell->levels[2],
                    psCell->levels[3] );
-          fprintf( fp, "  rnglow=(%.5f,%.5f), rnghigh=(%.5f,%.5f)\n",
-                   psCell->rnglow.x, psCell->rnglow.y, 
-                   psCell->rnghigh.x, psCell->rnghigh.y ); 
-          fprintf( fp, "  origin=(%.5f,%.5f)\n", 
-                   psCell->origin.x, psCell->origin.y );
-          fprintf( fp, "  xscale=%g, yscale=%g, rotation=%g\n", 
+          fprintf( fp, "  rnglow=(%.5f,%.5f,%.5f)\n"
+                       "  rnghigh=(%.5f,%.5f,%.5f)\n",
+                   psCell->rnglow.x, psCell->rnglow.y, psCell->rnglow.z,
+                   psCell->rnghigh.x, psCell->rnghigh.y, psCell->rnghigh.z );
+          fprintf( fp, "  origin=(%.5f,%.5f,%.5f)\n",
+                   psCell->origin.x, psCell->origin.y, psCell->origin.z);
+          fprintf( fp, "  xscale=%g, yscale=%g, rotation=%g\n",
                    psCell->xscale, psCell->yscale, psCell->rotation );
       }
       break;
@@ -740,7 +744,7 @@ void DGNDumpElement( DGNHandle hDGN, DGNElemCore *psElement, FILE *fp )
           DGNElemCellLibrary    *psCell = (DGNElemCellLibrary*) psElement;
 
           fprintf( fp, 
-                "  name=%s, class=%x, levels=%02x%02x%02x%02x, numwords=%d\n", 
+                   "  name=%s, class=%x, levels=%02x%02x%02x%02x, numwords=%d\n", 
                    psCell->name, psCell->cclass, 
                    psCell->levels[0], psCell->levels[1], psCell->levels[2], 
                    psCell->levels[3], psCell->numwords );
