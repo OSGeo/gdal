@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2005/03/21 20:36:31  fwarmerdam
+ * set precision for decimal fields - MS bug 1255
+ *
  * Revision 1.8  2005/02/22 12:53:56  fwarmerdam
  * use OGRLayer base spatial filter support
  *
@@ -149,6 +152,7 @@ CPLErr OGRODBCLayer::BuildFeatureDefn( const char *pszLayerName,
 
           case SQL_DECIMAL:
             oField.SetType( OFTReal );
+            oField.SetPrecision( poStmt->GetColPrecision(iCol) );
             break;
 
           case SQL_FLOAT:
