@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: geo_normalize.c,v 1.19 2000/06/09 14:05:43 warmerda Exp $
+ * $Id: geo_normalize.c,v 1.21 2000/09/15 19:30:14 warmerda Exp $
  *
  * Project:  libgeotiff
  * Purpose:  Code to normalize PCS and other composite codes in a GeoTIFF file.
@@ -28,6 +28,14 @@
  ******************************************************************************
  *
  * $Log: geo_normalize.c,v $
+ * Revision 1.21  2000/09/15 19:30:14  warmerda
+ * report units of linear proj parms
+ *
+ * Revision 1.20  2000/09/15 18:21:07  warmerda
+ * Fixed order of parameters for LCC 2SP.  When parameters
+ * were read from EPSG CSV files the standard parallels and origin
+ * were mixed up.  This affects alot of state plane zones!
+ *
  * Revision 1.19  2000/06/09 14:05:43  warmerda
  * added default knowledge of NAD27/NAD83/WGS72/WGS84
  *
@@ -1068,10 +1076,10 @@ static int SetGTParmIds( GTIFDefn * psDefn )
         return TRUE;
 
       case CT_LambertConfConic_2SP:
-        psDefn->ProjParmId[0] = ProjStdParallel1GeoKey;
-        psDefn->ProjParmId[1] = ProjStdParallel2GeoKey;
-        psDefn->ProjParmId[2] = ProjFalseOriginLatGeoKey;
-        psDefn->ProjParmId[3] = ProjFalseOriginLongGeoKey;
+        psDefn->ProjParmId[0] = ProjFalseOriginLatGeoKey;
+        psDefn->ProjParmId[1] = ProjFalseOriginLongGeoKey;
+        psDefn->ProjParmId[2] = ProjStdParallel1GeoKey;
+        psDefn->ProjParmId[3] = ProjStdParallel2GeoKey;
         psDefn->ProjParmId[5] = ProjFalseEastingGeoKey;
         psDefn->ProjParmId[6] = ProjFalseNorthingGeoKey;
         return TRUE;
@@ -1965,8 +1973,10 @@ void GTIFPrintDefn( GTIFDefn * psDefn, FILE * fp )
                         pszName, psDefn->ProjParm[i],
                         GTIFDecToDMS( psDefn->ProjParm[i], pszAxisName, 2 ) );
             }
-            else
+            else if( i == 4 )
                 printf( "   %s: %f\n", pszName, psDefn->ProjParm[i] );
+            else
+                printf( "   %s: %f m\n", pszName, psDefn->ProjParm[i] );
         }
     }
 
