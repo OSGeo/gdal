@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2001/06/27 16:14:21  warmerda
+ * Free the element index on close (patch c/o Tom Parker, avs.com).
+ *
  * Revision 1.6  2001/03/18 16:54:39  warmerda
  * added use of DGNTestOpen, remove extention test
  *
@@ -176,6 +179,7 @@ void DGNClose( DGNHandle hDGN )
     DGNInfo	*psDGN = (DGNInfo *) hDGN;
 
     VSIFClose( psDGN->fp );
+    CPLFree( psDGN->element_index );
     CPLFree( psDGN );
 }
 
