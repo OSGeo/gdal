@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2000/04/04 15:09:03  warmerda
+ * Added calibration info.
+ *
  * Revision 1.2  2000/03/31 13:33:51  warmerda
  * ported to gdal
  *
@@ -59,7 +62,6 @@ Link_t *CreateLink( void * pObject );
 Link_t *InsertLink(Link_t *psList, Link_t *psLink);
 void    DestroyList( Link_t *psList );
 Link_t *AddLink( Link_t *psList, Link_t *psLink );
-
 
 /* Basic CEOS header defs */
 
@@ -140,6 +142,12 @@ Link_t *AddLink( Link_t *psList, Link_t *psLink );
 #define __CEOS_SAR_SLANT_FIRST 32
 #define __CEOS_SAR_SLANT_MID 64
 #define __CEOS_SAR_SLANT_LAST 128
+
+/* Maximum size of LUT for Calibration records */
+#define __CEOS_RADAR_MAX_LUT 512
+#define __CEOS_RADAR_FLIP_DATE 19980101
+#define __CEOS_RADAR_FACILITY "CDPF-RSAT"
+
 
 typedef union
 {
@@ -241,6 +249,19 @@ typedef struct
     int32     SlantRangeLastPixel;
 } CeosSAREmbeddedInfo_t;
 
+typedef struct
+{
+    double Slant[ 6 ];
+    double Lut[ 512 ];
+    double SemiMajorAxis;
+    double PlatformLatitude;
+    double CalibrationScale;
+    int NumberOfSamples;
+    int Increment;
+    TBool PossiblyFlipped;
+    
+} CeosRadarCalibration_t;
+
 
 /* Function prototypes */
 
@@ -294,13 +315,13 @@ void AddRecipe( int ( *function )( CeosSARVolume_t *volume, void *token ),
 int CeosDefaultRecipe( CeosSARVolume_t *volume, void *token );
 int ScanSARRecipeFCN( CeosSARVolume_t *volume, void *token );
 
-#ifdef notdef
-int GetCeosOrbitalData( CeosSARVolume_t *volume, EphemerisSeg_t *Orb, ProjInfo_t *Proj );
-#endif
+/* ceoscalib.c function declarations */
+
+CeosRadarCalibration_t *GetCeosRadarCalibration( CeosSARVolume_t *volume );
 
 /* CEOS byte swapping stuff */
 
-#ifdef CPL_MSB
+#if defined(CCL_MSB)
 #define NativeToCeos(a,b,c,d) memcpy(a,b,c)
 #define CeosToNative(a,b,c,d) memcpy(a,b,c)
 #else
