@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2003/01/08 22:07:14  warmerda
+ * Added support for integer and real list field types
+ *
  * Revision 1.10  2002/12/12 14:29:28  warmerda
  * fixed bug with creating features with no geometry in PostGIS
  *
@@ -164,10 +167,11 @@ OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition( const char * pszTable )
 
     for( iRecord = 0; iRecord < PQntuples(hResult); iRecord++ )
     {
-        const char	*pszType;
+        const char	*pszType, *pszFormatType;
         OGRFieldDefn    oField( PQgetvalue( hResult, iRecord, 0 ), OFTString);
 
         pszType = PQgetvalue(hResult, iRecord, 1 );
+        pszFormatType = PQgetvalue(hResult,iRecord,3);
 
         if( EQUAL(oField.GetNameRef(),"ogc_fid") )
         {
@@ -199,7 +203,6 @@ OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition( const char * pszTable )
             nWidth = atoi(PQgetvalue(hResult,iRecord,2));
             if( nWidth == -1 )
             {
-                const char *pszFormatType = PQgetvalue(hResult,iRecord,3);
                 if( EQUALN(pszFormatType,"character(",10) )
                     nWidth = atoi(pszFormatType+10);
                 else
@@ -225,6 +228,14 @@ OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition( const char * pszTable )
 
             oField.SetWidth( nWidth );
             oField.SetPrecision( nPrecision );
+        }
+        else if( EQUAL(pszFormatType,"integer[]") )
+        {
+            oField.SetType( OFTIntegerList );
+        }
+        else if( EQUAL(pszFormatType,"float[]") )
+        {
+            oField.SetType( OFTRealList );
         }
         else if( EQUAL(pszType,"int2") )
         {
@@ -563,6 +574,7 @@ OGRErr OGRPGTableLayer::CreateFeature( OGRFeature *poFeature )
     for( i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
     {
         const char *pszStrValue = poFeature->GetFieldAsString(i);
+        char *pszNeedToFree = NULL;
 
         if( !poFeature->IsFieldSet( i ) )
             continue;
@@ -572,15 +584,56 @@ OGRErr OGRPGTableLayer::CreateFeature( OGRFeature *poFeature )
         else
             bNeedComma = TRUE;
 
+        // We need special formatting for integer list values.
+        if( poFeatureDefn->GetFieldDefn(i)->GetType() == OFTIntegerList )
+        {
+            int nCount, nOff = 0, j;
+            const int *panItems = poFeature->GetFieldAsIntegerList(i,&nCount);
+            
+            pszNeedToFree = (char *) CPLMalloc(nCount * 13 + 10);
+            strcpy( pszNeedToFree, "{" );
+            for( j = 0; j < nCount; j++ )
+            {
+                if( j != 0 )
+                    strcat( pszNeedToFree+nOff, "," );
+
+                nOff += strlen(pszNeedToFree+nOff);
+                sprintf( pszNeedToFree+nOff, "%d", panItems[j] );
+            }
+            strcat( pszNeedToFree+nOff, "}" );
+            pszStrValue = pszNeedToFree;
+        }
+
+        // We need special formatting for real list values.
+        if( poFeatureDefn->GetFieldDefn(i)->GetType() == OFTRealList )
+        {
+            int nCount, nOff = 0, j;
+            const double *padfItems =poFeature->GetFieldAsDoubleList(i,&nCount);
+            
+            pszNeedToFree = (char *) CPLMalloc(nCount * 40 + 10);
+            strcpy( pszNeedToFree, "{" );
+            for( j = 0; j < nCount; j++ )
+            {
+                if( j != 0 )
+                    strcat( pszNeedToFree+nOff, "," );
+
+                nOff += strlen(pszNeedToFree+nOff);
+                sprintf( pszNeedToFree+nOff, "%.16g", padfItems[j] );
+            }
+            strcat( pszNeedToFree+nOff, "}" );
+            pszStrValue = pszNeedToFree;
+        }
+
+        // Grow the command buffer?
         if( strlen(pszStrValue) + strlen(pszCommand+nOffset) + nOffset 
             > nCommandBufSize-50 )
         {
             nCommandBufSize = strlen(pszCommand) + strlen(pszStrValue) + 10000;
             pszCommand = (char *) CPLRealloc(pszCommand, nCommandBufSize );
         }
-        
+
         if( poFeatureDefn->GetFieldDefn(i)->GetType() != OFTInteger
-            && poFeatureDefn->GetFieldDefn(i)->GetType() != OFTReal )
+                 && poFeatureDefn->GetFieldDefn(i)->GetType() != OFTReal )
         {
             int		iChar;
 
@@ -608,6 +661,9 @@ OGRErr OGRPGTableLayer::CreateFeature( OGRFeature *poFeature )
         {
             strcat( pszCommand+nOffset, pszStrValue );
         }
+
+        if( pszNeedToFree )
+            CPLFree( pszNeedToFree );
     }
 
     strcat( pszCommand+nOffset, ")" );
@@ -720,6 +776,14 @@ OGRErr OGRPGTableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK )
             strcpy( szFieldType, "VARCHAR" );
         else
             sprintf( szFieldType, "CHAR(%d)", oField.GetWidth() );
+    }
+    else if( oField.GetType() == OFTIntegerList )
+    {
+        strcpy( szFieldType, "INTEGER[]" );
+    }
+    else if( oField.GetType() == OFTRealList )
+    {
+        strcpy( szFieldType, "FLOAT8[]" );
     }
     else if( bApproxOK )
     {
