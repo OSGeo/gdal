@@ -25,6 +25,9 @@
  * Working test program for HFA support.
  *
  * $Log$
+ * Revision 1.2  1999/01/04 22:52:47  warmerda
+ * field access working
+ *
  * Revision 1.1  1999/01/04 05:28:13  warmerda
  * New
  *
@@ -141,4 +144,10 @@ int main( int argc, char ** argv )
     }
 
     HFAClose( hHFA );
+
+#ifdef DBMALLOC
+    malloc_dump(1);
+#endif
+
+    exit( 0 );
 }

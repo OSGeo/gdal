@@ -36,6 +36,9 @@
  * of the GDAL core, but dependent on the Common Portability Library.
  *
  * $Log$
+ * Revision 1.2  1999/01/04 22:52:47  warmerda
+ * field access working
+ *
  * Revision 1.1  1999/01/04 05:28:13  warmerda
  * New
  *
@@ -88,6 +91,7 @@ HFAHandle HFAOpen( const char * pszFilename, const char * pszAccess )
     char	szHeader[16];
     HFAInfo_t	*psInfo;
     GUInt32	nHeaderPos;
+    HFAEntry	*poBand;
 
 /* -------------------------------------------------------------------- */
 /*      Open the file.                                                  */
@@ -172,6 +176,15 @@ HFAHandle HFAOpen( const char * pszFilename, const char * pszAccess )
     psInfo->pszDictionary = HFAGetDictionary( psInfo );
     psInfo->poDictionary = new HFADictionary( psInfo->pszDictionary );
 
+/* -------------------------------------------------------------------- */
+/*      Find the first band node.                                       */
+/* -------------------------------------------------------------------- */
+    poBand = psInfo->poRoot->GetNamedChild( "Band_1" );
+
+    printf( " XSize = %d, YSize = %d\n",
+            poBand->GetIntField( "width" ),
+            poBand->GetIntField( "height" ) );
+
     return psInfo;
 }
 
@@ -186,8 +199,10 @@ void HFAClose( HFAHandle hHFA )
 
     VSIFClose( hHFA->fp );
 
+    if( hHFA->poDictionary != NULL )
+        delete hHFA->poDictionary;
+    
     CPLFree( hHFA->pszDictionary );
     CPLFree( hHFA );
 }
-
 

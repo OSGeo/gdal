@@ -34,6 +34,9 @@
  * Implementation of the HFAEntry class.
  *
  * $Log$
+ * Revision 1.2  1999/01/04 22:52:47  warmerda
+ * field access working
+ *
  * Revision 1.1  1999/01/04 05:28:12  warmerda
  * New
  *
@@ -69,8 +72,6 @@ HFAEntry::HFAEntry( HFAInfo_t * psHFAIn, GUInt32 nPos,
     szName[0] = szType[0] = '\0';
 
     pabyData = NULL;
-    papbyFieldData = NULL;
-    panFieldItemCount = NULL;
 
     poType = NULL;
 
@@ -118,6 +119,8 @@ HFAEntry::HFAEntry( HFAInfo_t * psHFAIn, GUInt32 nPos,
 HFAEntry::~HFAEntry()
 
 {
+    CPLFree( pabyData );
+    
     if( poNext != NULL )
         delete poNext;
 
@@ -171,9 +174,6 @@ HFAEntry *HFAEntry::GetNext()
 void HFAEntry::LoadData()
 
 {
-    GByte	*pabyCur;
-    int		iField;
-    
     if( pabyData != NULL || nDataSize == 0 )
         return;
 
@@ -201,195 +201,6 @@ void HFAEntry::LoadData()
     poType = psHFA->poDictionary->FindType( szType );
     if( poType == NULL )
         return;
-
-/* -------------------------------------------------------------------- */
-/*      Allocate per-field information structures.                      */
-/* -------------------------------------------------------------------- */
-    panFieldItemCount = (int *) CPLCalloc(sizeof(int),poType->nFields);
-    papbyFieldData = (GByte **) CPLCalloc(sizeof(GByte*),poType->nFields);
-    
-/* -------------------------------------------------------------------- */
-/*      Process fields one at a time.                                   */
-/* -------------------------------------------------------------------- */
-    pabyCur = pabyData;
-    for( iField = 0; iField < poType->nFields; iField++ )
-    {
-        HFAField	*poField = poType->papoFields[iField];
-        
-        /* for now we don't try to handle pointers */
-        if( poField->chPointer )
-            break;
-
-        /* for now we don't try to handle sub objects */
-        if( poField->pszItemObjectType != NULL || poField->chItemType == 'o' )
-            break;
-
-        panFieldItemCount[iField] = poField->nItemCount;
-        papbyFieldData[iField] = pabyCur;
-
-        pabyCur += poField->nItemCount *
-            psHFA->poDictionary->GetItemSize( poField->chItemType );
-    }
-
-    CPLAssert( (int) (pabyCur - pabyData) <= (int) nDataSize );
-}
-
-/************************************************************************/
-/*                              GetField()                              */
-/*                                                                      */
-/*      Get a field index by name.                                      */
-/************************************************************************/
-
-int HFAEntry::GetField( const char * pszFieldName )
-
-{
-    int		iField;
-    
-    LoadData();
-
-    if( poType == NULL )
-        return -1;
-    
-    for( iField = 0; iField < poType->nFields; iField++ )
-    {
-        if( EQUAL(pszFieldName,poType->papoFields[iField]->pszFieldName) )
-            return( iField );
-    }
-
-    return -1;
-}
-
-/************************************************************************/
-/*                            GetIntField()                             */
-/************************************************************************/
-
-int HFAEntry::GetIntField( const char * pszFieldName, int iArrayEntry )
-
-{
-    int		iField = GetField( pszFieldName );
-    HFAField	*poField;
-
-    if( iField == -1 || papbyFieldData[iField] == NULL )
-        return 0;
-
-    if( iArrayEntry < 0 || iArrayEntry > panFieldItemCount[iField] )
-        return 0;
-
-
-    poField = poType->papoFields[iField];
-
-    switch( poField->chItemType )
-    {
-      /* notdef: doesn't handle U1, U2 or U4 */
-        
-      case 'c':
-      case 'C':
-        return( papbyFieldData[iField][iArrayEntry] );
-
-      case 'e':
-      case 's':
-      {
-          unsigned short nNumber;
-
-          memcpy( &nNumber, papbyFieldData[iField] + iArrayEntry * 2, 2 );
-          HFAStandard( 2, &nNumber );
-          return( nNumber );
-      }
-
-      case 'S':
-      {
-          short nNumber;
-
-          memcpy( &nNumber, papbyFieldData[iField] + iArrayEntry * 2, 2 );
-          HFAStandard( 2, &nNumber );
-          return( nNumber );
-      }
-
-      case 't':
-      case 'l':
-      {
-          unsigned long	nULong;
-
-          memcpy( &nULong, papbyFieldData[iField] + iArrayEntry * 4, 4 );
-          HFAStandard( 4, &nULong );
-          return( nULong );
-      }
-      
-      case 'L':
-      {
-          long	nLong;
-
-          memcpy( &nLong, papbyFieldData[iField] + iArrayEntry * 4, 4 );
-          HFAStandard( 4, &nLong );
-          return( nLong );
-      }
-      
-      case 'f':
-      {
-          float		fNumber;
-
-          memcpy( &fNumber, papbyFieldData[iField] + iArrayEntry * 4, 4 );
-          HFAStandard( 4, &fNumber );
-          return( (int) fNumber );
-      }
-      
-      case 'd':
-      {
-          double	dfNumber;
-
-          memcpy( &dfNumber, papbyFieldData[iField] + iArrayEntry * 8, 8 );
-          HFAStandard( 8, &dfNumber );
-          return( (int) dfNumber );
-      }
-
-      default:
-        return 0;
-    }
-}
-
-/************************************************************************/
-/*                           GetDoubleField()                           */
-/************************************************************************/
-
-double HFAEntry::GetDoubleField( const char * pszFieldName, int iArrayEntry )
-
-{
-    int		iField = GetField( pszFieldName );
-    HFAField	*poField;
-
-    if( iField == -1 || papbyFieldData[iField] == NULL )
-        return 0;
-
-    if( iArrayEntry < 0 || iArrayEntry > panFieldItemCount[iField] )
-        return 0;
-
-    poField = poType->papoFields[iField];
-
-    switch( poField->chItemType )
-    {
-      /* notdef: doesn't handle U1, U2 or U4 */
-        
-      case 'f':
-      {
-          float		fNumber;
-
-          memcpy( &fNumber, papbyFieldData + iArrayEntry * 4, 4 );
-          HFAStandard( 4, &fNumber );
-          return( fNumber );
-      }
-      
-      case 'd':
-      {
-          double	dfNumber;
-
-          memcpy( &dfNumber, papbyFieldData + iArrayEntry * 8, 8 );
-          HFAStandard( 8, &dfNumber );
-          return( dfNumber );
-      }
-
-      default:
-        return( (double) GetIntField( pszFieldName, iArrayEntry ) );
-    }
 }
 
 /************************************************************************/
@@ -399,8 +210,6 @@ double HFAEntry::GetDoubleField( const char * pszFieldName, int iArrayEntry )
 void HFAEntry::DumpFieldValues( FILE * fp, const char * pszPrefix )
 
 {
-    int		iField;
-    
     if( pszPrefix == NULL )
         pszPrefix = "";
 
@@ -409,28 +218,171 @@ void HFAEntry::DumpFieldValues( FILE * fp, const char * pszPrefix )
     if( poType == NULL )
         return;
 
-    for( iField = 0; iField < poType->nFields; iField++ )
-    {
-        HFAField	*poField = poType->papoFields[iField];
-        int		iIndex;
+    poType->DumpInstValue( fp,
+                           pabyData, nDataPos, nDataSize,
+                           pszPrefix );
+}
 
-        for( iIndex = 0; iIndex < panFieldItemCount[iField]; iIndex++ )
+/************************************************************************/
+/*                           GetNamedChild()                            */
+/************************************************************************/
+
+HFAEntry *HFAEntry::GetNamedChild( const char * pszName )
+
+{
+    int		nNameLen;
+    HFAEntry	*poEntry;
+
+/* -------------------------------------------------------------------- */
+/*      Establish how much of this name path is for the next child.     */
+/*      Up to the '.' or end of estring.                                */
+/* -------------------------------------------------------------------- */
+    for( nNameLen = 0;
+         pszName[nNameLen] != '.'
+             && pszName[nNameLen] != '\0'
+             && pszName[nNameLen] != ':';
+         nNameLen++ ) {}
+
+/* -------------------------------------------------------------------- */
+/*      Scan children looking for this name.                            */
+/* -------------------------------------------------------------------- */
+    for( poEntry = GetChild(); poEntry != NULL; poEntry = poEntry->GetNext() )
+    {
+        if( EQUALN(poEntry->GetName(),pszName,nNameLen)
+            && (int) strlen(poEntry->GetName()) == nNameLen )
         {
-            switch( poField->chItemType )
-            {
-              case 'f':
-              case 'd':
-                VSIFPrintf( fp, "%s%s[%d] = %f\n",
-                            pszPrefix, poField->pszFieldName, iIndex,
-                            GetDoubleField( poField->pszFieldName, iIndex ) );
-                break;
-                
-              default:
-                VSIFPrintf( fp, "%s%s[%d] = %d\n",
-                            pszPrefix, poField->pszFieldName, iIndex,
-                            GetIntField( poField->pszFieldName, iIndex ) );
-                break;
-            }
+            break;
         }
     }
+
+/* -------------------------------------------------------------------- */
+/*      Is there a remainder to process?                                */
+/* -------------------------------------------------------------------- */
+    if( poEntry != NULL && pszName[nNameLen] == '.' )
+        return( poEntry->GetNamedChild( pszName+nNameLen+1 ) );
+    else
+        return( poEntry );
 }
+
+/************************************************************************/
+/*                           GetFieldValue()                            */
+/************************************************************************/
+        
+void *HFAEntry::GetFieldValue( const char * pszFieldPath,
+                               char chReqType )
+
+{
+    HFAEntry	*poEntry = this;
+    
+/* -------------------------------------------------------------------- */
+/*      Is there a node path in this string?                            */
+/* -------------------------------------------------------------------- */
+    if( strchr(pszFieldPath,':') != NULL )
+    {
+        poEntry = GetNamedChild( pszFieldPath );
+        if( poEntry == NULL )
+            return NULL;
+        
+        pszFieldPath = strchr(pszFieldPath,':') + 1;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Do we have the data and type for this node?                     */
+/* -------------------------------------------------------------------- */
+    LoadData();
+
+    if( pabyData == NULL )
+        return NULL;
+    
+    if( poType == NULL )
+        return NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Extract the instance information.                               */
+/* -------------------------------------------------------------------- */
+
+    return( poType->ExtractInstValue( pszFieldPath,
+                                      pabyData, nDataPos, nDataSize,
+                                      chReqType ) );
+}
+
+/************************************************************************/
+/*                            GetIntField()                             */
+/************************************************************************/
+
+int HFAEntry::GetIntField( const char * pszFieldPath, CPLErr *peErr )
+
+{
+    void	*pRetData;
+
+    pRetData = GetFieldValue( pszFieldPath, 'i' );
+    if( pRetData == NULL )
+    {
+        if( peErr != NULL )
+            *peErr = CE_Failure;
+
+        return 0;
+    }
+    else
+    {
+        if( peErr != NULL )
+            *peErr = CE_None;
+
+        return *((int *) pRetData);
+    }
+}
+
+/************************************************************************/
+/*                           GetDoubleField()                           */
+/************************************************************************/
+
+double HFAEntry::GetDoubleField( const char * pszFieldPath, CPLErr *peErr )
+
+{
+    void	*pRetData;
+
+    pRetData = GetFieldValue( pszFieldPath, 'i' );
+    if( pRetData == NULL )
+    {
+        if( peErr != NULL )
+            *peErr = CE_Failure;
+
+        return 0.0;
+    }
+    else
+    {
+        if( peErr != NULL )
+            *peErr = CE_None;
+
+        return *((double *) pRetData);
+    }
+}
+
+/************************************************************************/
+/*                           GetStringField()                           */
+/************************************************************************/
+
+const char *HFAEntry::GetStringField( const char * pszFieldPath, CPLErr *peErr)
+
+{
+    void	*pRetData;
+
+    pRetData = GetFieldValue( pszFieldPath, 'i' );
+    if( pRetData == NULL )
+    {
+        if( peErr != NULL )
+            *peErr = CE_Failure;
+
+        return NULL;
+    }
+    else
+    {
+        if( peErr != NULL )
+            *peErr = CE_None;
+
+        return (char *) pRetData;
+    }
+}
+
+
+

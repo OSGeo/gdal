@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/01/04 22:52:47  warmerda
+ * field access working
+ *
  * Revision 1.1  1999/01/04 05:28:13  warmerda
  * New
  *
@@ -51,6 +54,12 @@ class HFAEntry;
 class HFAType;
 class HFADictionary;
 
+/************************************************************************/
+/*                              HFAInfo_t                               */
+/*                                                                      */
+/*      This is just a structure, and used hold info about the whole    */
+/*      dataset within hfaopen.cpp                                      */
+/************************************************************************/
 typedef struct {
     FILE	*fp;
 
@@ -64,7 +73,13 @@ typedef struct {
 
     HFADictionary *poDictionary;
     char	*pszDictionary;
-    
+
+    int		nXSize;
+    int		nYSize;
+    int		nBands;
+
+    int		nDataType;	/* one of Eimg_Layer pixelType values, EPT_* */
+
 } HFAInfo_t;
 
 #define HFA_PRIVATE
@@ -100,12 +115,10 @@ class HFAEntry
     GUInt32	nDataPos;
     GUInt32	nDataSize;
     GByte	*pabyData;
-    
-    int		*panFieldItemCount;
-    GByte	**papbyFieldData;
 
-    int		GetField( const char * );
     void	LoadData();
+
+    void	*GetFieldValue( const char *, char );
 
 public:
     		HFAEntry( HFAInfo_t * psHFA, GUInt32 nPos,
@@ -121,10 +134,11 @@ public:
 
     HFAEntry	*GetChild();
     HFAEntry	*GetNext();
+    HFAEntry    *GetNamedChild( const char * );
 
-    GInt32	GetIntField( const char *, int = 0 );
-    double	GetDoubleField( const char *, int = 0 );
-    const char	*GetStringField( const char * );
+    GInt32	GetIntField( const char *, CPLErr * = NULL );
+    double	GetDoubleField( const char *, CPLErr * = NULL );
+    const char	*GetStringField( const char *, CPLErr * = NULL );
 
     void	DumpFieldValues( FILE *, const char * = NULL );
 };
@@ -159,6 +173,17 @@ class HFAField
     void	CompleteDefn( HFADictionary * );
 
     void	Dump( FILE * );
+
+    void	*ExtractInstValue( const char * pszField, int nIndexValue,
+                               GByte *pabyData, int nDataOffset, int nDataSize,
+                               char chReqType );
+
+    void	DumpInstValue( FILE *fpOut, 
+                               GByte *pabyData, int nDataOffset, int nDataSize,
+                               const char *pszPrefix = NULL );
+    
+    int		GetInstBytes( GByte * pabyData );
+    int		GetInstCount( GByte * pabyData );
 };
 
 
@@ -186,6 +211,13 @@ class HFAType
     void	CompleteDefn( HFADictionary * );
 
     void	Dump( FILE * );
+
+    void	*ExtractInstValue( const char * pszField,
+                               GByte *pabyData, int nDataOffset, int nDataSize,
+                               char chReqType );
+    void	DumpInstValue( FILE *fpOut, 
+                               GByte *pabyData, int nDataOffset, int nDataSize,
+                               const char *pszPrefix = NULL );
 };
 
 /************************************************************************/
