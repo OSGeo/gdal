@@ -12,6 +12,8 @@ default:	$(OBJ)
 
 clean:
 	rm -f *.o
+	(cd libtiff; $(MAKE) clean)
+	(cd libgeotiff; $(MAKE) clean)
 
 %.o:	%.cpp
 	$(CC) -c $(ALL_C_FLAGS) -I$(GDAL_ROOT)/core -I$(GDAL_ROOT)/port \
