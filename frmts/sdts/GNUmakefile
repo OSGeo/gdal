@@ -1,3 +1,6 @@
+VERSION =	1.0
+DISTDIR =	sdts-$(VERSION)
+WEB_DIR =	/u/www/projects/sdts
 
 SHPDIR		=	../shapelib
 ISO8211DIR	=	../iso8211
@@ -56,4 +59,25 @@ docs:
 	mkdir html
 	doxygen
 	rm html/index.html
+	cp html/sdts_al_main.html html/index.html
 
+dist:	docs
+	rm -rf $(DISTDIR)
+	mkdir $(DISTDIR)
+	mkdir $(DISTDIR)/html
+	cp html/* $(DISTDIR)/html
+	autoconf
+	cp *.cpp *.h configure Makefile.in $(DISTDIR)
+	cp $(ISO8211DIR)/{*.cpp,*.h} $(DISTDIR)
+	rm configure
+	cp $(GDAL_ROOT)/port/{cpl_error*,cpl_port*,cpl_string*} $(DISTDIR)
+	cp $(GDAL_ROOT)/port/{cpl_vsisimple.cpp,cpl_config.h.in} $(DISTDIR)
+	cp $(GDAL_ROOT)/port/{cpl_vsi.h,cpl_conv.*} $(DISTDIR)
+	cp $(SHPDIR)/{shpopen.c,dbfopen.c,shapefil.h} $(DISTDIR)
+	rm $(DISTDIR)/*.o
+	tar czf $(DISTDIR).tar.gz $(DISTDIR)
+
+update-web:	dist docs
+	cp html/* $(WEB_DIR)
+	cp $(DISTDIR).tar.gz $(WEB_DIR)
+	cp $(DISTDIR).tar.gz /u/ftp/pub/outgoing
