@@ -3,7 +3,7 @@
  *
  * Project:  S-57 Translator
  * Purpose:  Implements OGRS57Layer class.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 1999, Frank Warmerdam
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2003/09/09 16:42:51  warmerda
+ * fixed email
+ *
  * Revision 1.10  2003/09/05 19:12:05  warmerda
  * added RETURN_PRIMITIVES support to get low level prims
  *
