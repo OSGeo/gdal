@@ -33,6 +33,9 @@
  *   hostile source.
  *
  * $Log$
+ * Revision 1.21  2003/03/28 17:38:39  warmerda
+ * Added NULL check in CPLParseXMLString().
+ *
  * Revision 1.20  2003/03/28 05:05:18  warmerda
  * Completed security audit. Several bugs related to possible buffer
  * overruns correct, notably with regard to CPLError() calls.
@@ -500,6 +503,13 @@ CPLXMLNode *CPLParseXMLString( const char *pszString )
     ParseContext sContext;
 
     CPLErrorReset();
+
+    if( pszString == NULL )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "CPLParseXMLString() called with NULL pointer." );
+        return NULL;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Initialize parse context.                                       */
