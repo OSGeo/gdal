@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.42  2002/02/04 19:23:09  warmerda
+ * *** empty log message ***
+ *
  * Revision 1.41  2002/01/13 03:12:04  warmerda
  * added version/release information
  *
@@ -170,7 +173,7 @@
 /*      GDAL Version Information.                                       */
 /* -------------------------------------------------------------------- */
 #define GDAL_VERSION_NUM	1160
-#define GDAL_RELEASE_DATE       20020112
+#define GDAL_RELEASE_DATE       20020204
 #define GDAL_RELEASE_NAME       "1.1.6"
 
 /* -------------------------------------------------------------------- */
