@@ -58,7 +58,7 @@ int main( int argc, char ** argv )
     }
     
     if( argc < 2 ) {
-        printf( "Usage: aitest coverage\n" );
+        printf( "Usage: aitest [-magic] coverage\n" );
         exit( 1 );
     }
 
