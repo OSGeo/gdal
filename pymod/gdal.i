@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.81  2004/01/30 09:58:32  dron
+ * Wrapper for OSRExportToPCI() function.
+ *
  * Revision 1.80  2004/01/29 15:22:30  dron
  * Added wrapper for OSRImportFromPCI().
  *
@@ -1758,6 +1761,55 @@ py_OSRImportFromWkt(PyObject *self, PyObject *args) {
 %}
 
 %native(OSRImportFromWkt) py_OSRImportFromWkt;
+
+%{
+/************************************************************************/
+/*                          OSRExportToPCI()                            */
+/************************************************************************/
+static PyObject *
+py_OSRExportToPCI(PyObject *self, PyObject *args) {
+
+    OGRSpatialReferenceH _arg0;
+    char *_argc0 = NULL;
+    char *proj = NULL, *units = NULL;
+    double *params;
+    int err;
+    PyObject *ret;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"s:OSRExportToPCI",&_argc0) )
+        return NULL;
+
+    if (_argc0) {
+        if (SWIG_GetPtr_2(_argc0,(void **) &_arg0,_OGRSpatialReferenceH)) {
+            PyErr_SetString(PyExc_TypeError,
+                            "Type error in argument 1 of OSRExportToPCI."
+                            "  Expected _OGRSpatialReferenceH.");
+            return NULL;
+        }
+    }
+	
+    err = OSRExportToPCI( _arg0, &proj, &units, &params );
+    if( err != OGRERR_NONE )
+    {
+        PyErr_SetString(PyExc_TypeError,
+                        "Failed to export given SpatialReference.");
+        return NULL;
+    }
+
+    ret = Py_BuildValue( "(ss(dddddddddddddddd))", proj, units,
+                         params[0], params[1], params[2], params[3],
+                         params[4], params[5], params[6], params[7],
+                         params[8], params[9], params[10], params[11],
+                         params[12],params[13],params[14], params[15] );
+    CPLFree( proj );
+    CPLFree( units );
+    CPLFree( params );
+    return ret;
+}
+%}
+
+%native(OSRExportToPCI) py_OSRExportToPCI;
 
 %{
 /************************************************************************/
