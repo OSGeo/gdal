@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2004/08/11 20:10:54  warmerda
+ * fixed issue with intializing blocksizes
+ *
  * Revision 1.1  2004/08/11 18:42:40  warmerda
  * New
  *
@@ -105,7 +108,6 @@ GDALDatasetH GDALAutoCreateWarpedVRT( GDALDatasetH hSrcDS,
     psWO->eResampleAlg = eResampleAlg;
 
     psWO->hSrcDS = hSrcDS;
-    GDALReferenceDataset( hSrcDS );
 
     psWO->nBandCount = GDALGetRasterCount( hSrcDS );
     psWO->panSrcBands = (int *) CPLMalloc(sizeof(int) * psWO->nBandCount);
@@ -263,8 +265,23 @@ VRTWarpedDataset::~VRTWarpedDataset()
     {
         const GDALWarpOptions *psWO = poWarper->GetOptions();
 
+/* -------------------------------------------------------------------- */
+/*      We take care to only call GDALClose() on psWO->hSrcDS if the    */
+/*      reference count drops to zero.  This is makes it so that we     */
+/*      can operate reference counting semantics more-or-less           */
+/*      properly even if the dataset isn't open in shared mode,         */
+/*      though we require that the caller also honour the reference     */
+/*      counting semantics even though it isn't a shared dataset.       */
+/* -------------------------------------------------------------------- */
         if( psWO->hSrcDS != NULL )
-            GDALClose( psWO->hSrcDS );
+        {
+            if( GDALDereferenceDataset( psWO->hSrcDS ) < 1 )
+            {
+                GDALReferenceDataset( psWO->hSrcDS );
+                GDALClose( psWO->hSrcDS );
+            }
+        }
+
         delete poWarper;
     }
 }
@@ -283,7 +300,41 @@ CPLErr VRTWarpedDataset::Initialize( void *psWO )
 
     poWarper = new GDALWarpOperation();
 
+    // The act of initializing this warped dataset with this warp options
+    // will result in our assuming ownership of a reference to the
+    // hSrcDS.
+
+    if( ((GDALWarpOptions *) psWO)->hSrcDS != NULL )
+        GDALReferenceDataset( ((GDALWarpOptions *) psWO)->hSrcDS );
+
     return poWarper->Initialize( (GDALWarpOptions *) psWO );
+}
+
+/************************************************************************/
+/*                      GDALInitializeWarpedVRT()                       */
+/************************************************************************/
+
+/**
+ * Set warp info on virtual warped dataset.
+ *
+ * Initializes all the warping information for a virtual warped dataset.
+ *
+ * This method is the same as the C++ method VRTWarpedDataset::Initialize().
+ *
+ * @param hDS dataset previously created with the VRT driver, and a 
+ * SUBCLASS of "VRTWarpedDataset".
+ * 
+ * @param psWO the warp options to apply.  Note that ownership of the
+ * transformation information is taken over by the function though everything
+ * else remains the property of the caller. 
+ *
+ * @return CE_None on success or CE_Failure if an error occurs. 
+ */
+
+CPLErr GDALInitializeWarpedVRT( GDALDatasetH hDS, GDALWarpOptions *psWO )
+
+{
+    return ((VRTWarpedDataset *) hDS)->Initialize( psWO );
 }
 
 /************************************************************************/
@@ -296,19 +347,21 @@ CPLErr VRTWarpedDataset::XMLInit( CPLXMLNode *psTree, const char *pszVRTPath )
     CPLErr eErr;
 
 /* -------------------------------------------------------------------- */
-/*      First initialize all the general VRT stuff.  This will even     */
+/*      Initialize blocksize before calling sub-init so that the        */
+/*      band initializers can get it from the dataset object when       */
+/*      they are created.                                               */
+/* -------------------------------------------------------------------- */
+    nBlockXSize = atoi(CPLGetXMLValue(psTree,"BlockXSize","512"));
+    nBlockYSize = atoi(CPLGetXMLValue(psTree,"BlockYSize","128"));
+
+/* -------------------------------------------------------------------- */
+/*      Initialize all the general VRT stuff.  This will even           */
 /*      create the VRTWarpedRasterBands and initialize them.            */
 /* -------------------------------------------------------------------- */
     eErr = VRTDataset::XMLInit( psTree, pszVRTPath );
 
     if( eErr != CE_None )
         return eErr;
-
-/* -------------------------------------------------------------------- */
-/*      Now find the block size.                                        */
-/* -------------------------------------------------------------------- */
-    nBlockXSize = atoi(CPLGetXMLValue(psTree,"BlockXSize","512"));
-    nBlockYSize = atoi(CPLGetXMLValue(psTree,"BlockYSize","128"));
 
 /* -------------------------------------------------------------------- */
 /*      Find the GDALWarpOptions XML tree.                              */
