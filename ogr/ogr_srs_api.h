@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2002/12/09 16:11:53  warmerda
+ * added DMS translation
+ *
  * Revision 1.20  2002/11/25 16:12:54  warmerda
  * added GetAuthorityCode/Name
  *
@@ -362,6 +365,13 @@ int CPL_DLL OPTGetParameterInfo( const char * pszProjectionMethod,
                                  char ** ppszUserName,
                                  char ** ppszType,
                                  double *pdfDefaultValue );
+
+/* -------------------------------------------------------------------- */
+/*      DMS translation.                                                */
+/* -------------------------------------------------------------------- */
+double CPL_DLL OSRDMSToDec( const char * );
+const char CPL_DLL *OSRDecToDMS( double dfAngle, const char *pszAxis,
+                                 int nSecondDecimals );
 
 CPL_C_END
 
