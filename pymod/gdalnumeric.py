@@ -29,6 +29,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.7  2002/02/13 17:17:22  warmerda
+# improve unknown type handling
+#
 # Revision 1.6  2002/01/18 05:46:53  warmerda
 # added support for writing arrays to a GDAL band
 #
@@ -120,6 +123,8 @@ def BandReadAsArray( band, xoff, yoff, xsize, ysize ):
     if typecode == None:
         datatype = GDT_Float32
         typecode = Float32
+    else:
+        datatype = NumericTypeCodeToGDALTypeCode( typecode )
 
     raw_data = band.ReadRaster( xoff, yoff, xsize, ysize,
                                 buf_type = datatype );
@@ -166,9 +171,9 @@ def GDALTypeCodeToNumericTypeCode( gdal_code ):
     elif gdal_code == GDT_Float64:
         return Float64
     elif gdal_code == GDT_CInt16:
-        return None
+        return Complex32
     elif gdal_code == GDT_CInt32:
-        return None
+        return Complex32
     elif gdal_code == GDT_CFloat32:
         return Complex32
     elif gdal_code == GDT_CFloat64:
