@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2002/01/21 20:53:33  warmerda
+ * a bunch of reorganization to support spatial filtering
+ *
  * Revision 1.18  2002/01/15 06:38:51  warmerda
  * moved some functions to dgnhelp.cpp
  *
@@ -175,44 +178,60 @@ static int DGNLoadRawElement( DGNInfo *psDGN, int *pnType, int *pnLevel )
 }
 
 /************************************************************************/
-/*                           DGNReadElement()                           */
+/*                        DGNGetElementExtents()                        */
+/*                                                                      */
+/*      Returns FALSE if the element type does not have reconisable     */
+/*      element extents, other TRUE and the extents will be updated.    */
+/*                                                                      */
+/*      It is assumed the raw element data has been loaded into the     */
+/*      working area by DGNLoadRawElement().                            */
 /************************************************************************/
 
-/**
- * Read a DGN element.
- *
- * This function will return the next element in the file, starting with the
- * first.  It is affected by DGNGotoElement() calls. 
- *
- * The element is read into a structure which includes the DGNElemCore 
- * structure.  It is expected that applications will inspect the stype
- * field of the returned DGNElemCore and use it to cast the pointer to the
- * appropriate element structure type such as DGNElemMultiPoint. 
- *
- * @param hDGN the handle of the file to read from.
- *
- * @return pointer to element structure, or NULL on EOF or processing error.
- * The structure should be freed with DGNFreeElement() when no longer needed.
- */
-
-DGNElemCore *DGNReadElement( DGNHandle hDGN )
+static int 
+DGNGetElementExtents( DGNInfo *psDGN, int nType, 
+                      GUInt32 *pnXMin, GUInt32 *pnYMin, GUInt32 *pnZMin, 
+                      GUInt32 *pnXMax, GUInt32 *pnYMax, GUInt32 *pnZMax )
 
 {
-    DGNInfo	*psDGN = (DGNInfo *) hDGN;
+    switch( nType )
+    {
+      case DGNT_LINE:
+      case DGNT_LINE_STRING:
+      case DGNT_SHAPE:
+      case DGNT_CURVE:
+      case DGNT_BSPLINE:
+      case DGNT_ELLIPSE:
+      case DGNT_ARC:
+      case DGNT_TEXT:
+      case DGNT_COMPLEX_CHAIN_HEADER:
+      case DGNT_COMPLEX_SHAPE_HEADER:
+        *pnXMin = DGN_INT32( psDGN->abyElem + 4 );
+        *pnYMin = DGN_INT32( psDGN->abyElem + 8 );
+        if( pnZMin != NULL )
+            *pnZMin = DGN_INT32( psDGN->abyElem + 12 );
+
+        *pnXMax = DGN_INT32( psDGN->abyElem + 16 );
+        *pnYMax = DGN_INT32( psDGN->abyElem + 20 );
+        if( pnZMax != NULL )
+            *pnZMax = DGN_INT32( psDGN->abyElem + 24 );
+        return TRUE;
+
+      default:
+        return FALSE;
+    }
+}
+
+/************************************************************************/
+/*                         DGNProcessElement()                          */
+/*                                                                      */
+/*      Assumes the raw element data has already been loaded, and       */
+/*      tries to convert it into an element structure.                  */
+/************************************************************************/
+
+static DGNElemCore *DGNProcessElement( DGNInfo *psDGN, int nType, int nLevel )
+
+{
     DGNElemCore *psElement = NULL;
-    int		nType, nLevel;
-
-#ifdef DGN_DEBUG
-    GUInt32     nOffset;
-
-    nOffset = VSIFTell( psDGN->fp );
-#endif
-
-/* -------------------------------------------------------------------- */
-/*      Load the element data into the current buffer.                  */
-/* -------------------------------------------------------------------- */
-    if( !DGNLoadRawElement( psDGN, &nType, &nLevel ) )
-        return NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Handle based on element type.                                   */
@@ -610,9 +629,76 @@ DGNElemCore *DGNReadElement( DGNHandle hDGN )
     psElement->element_id = psDGN->next_element_id - 1;
 
 #ifdef DGN_DEBUG
-    psElement->offset = nOffset;
+    psElement->offset = VSIFTell( psDGN->fp ) - psDGN->nElemBytes;
     psElement->size = psDGN->nElemBytes;
 #endif
+
+    return psElement;
+}
+
+/************************************************************************/
+/*                           DGNReadElement()                           */
+/************************************************************************/
+
+/**
+ * Read a DGN element.
+ *
+ * This function will return the next element in the file, starting with the
+ * first.  It is affected by DGNGotoElement() calls. 
+ *
+ * The element is read into a structure which includes the DGNElemCore 
+ * structure.  It is expected that applications will inspect the stype
+ * field of the returned DGNElemCore and use it to cast the pointer to the
+ * appropriate element structure type such as DGNElemMultiPoint. 
+ *
+ * @param hDGN the handle of the file to read from.
+ *
+ * @return pointer to element structure, or NULL on EOF or processing error.
+ * The structure should be freed with DGNFreeElement() when no longer needed.
+ */
+
+DGNElemCore *DGNReadElement( DGNHandle hDGN )
+
+{
+    DGNInfo	*psDGN = (DGNInfo *) hDGN;
+    DGNElemCore *psElement = NULL;
+    int		nType, nLevel;
+    int         bInsideFilter;
+
+/* -------------------------------------------------------------------- */
+/*      Load the element data into the current buffer.  If a spatial    */
+/*      filter is in effect, loop until we get something within our     */
+/*      spatial constraints.                                            */
+/* -------------------------------------------------------------------- */
+    do { 
+        bInsideFilter = TRUE;
+
+        if( !DGNLoadRawElement( psDGN, &nType, &nLevel ) )
+            return NULL;
+        
+        if( psDGN->has_spatial_filter )
+        {
+            GUInt32	nXMin, nXMax, nYMin, nYMax;
+            
+            if( !psDGN->sf_converted_to_uor )
+                DGNSpatialFilterToUOR( psDGN );
+
+            if( !DGNGetElementExtents( psDGN, nType, 
+                                       &nXMin, &nYMin, NULL,
+                                       &nXMax, &nYMax, NULL ) )
+                bInsideFilter = !psDGN->sf_converted_to_uor;
+            else if( nXMin > psDGN->sf_max_x
+                     || nYMin > psDGN->sf_max_y
+                     || nXMax < psDGN->sf_min_x
+                     || nYMax < psDGN->sf_min_y )
+                bInsideFilter = FALSE;
+        }
+    } while( !bInsideFilter );
+
+/* -------------------------------------------------------------------- */
+/*      Convert into an element structure.                              */
+/* -------------------------------------------------------------------- */
+    psElement = DGNProcessElement( psDGN, nType, nLevel );
 
     return psElement;
 }
@@ -718,7 +804,28 @@ static DGNElemCore *DGNParseTCB( DGNInfo * psDGN )
     psTCB->sub_units[1] = (char) psDGN->abyElem[1123];
     psTCB->sub_units[2] = '\0';
 
-    /* NOTDEF: Add origin extraction later */
+    /* Get global origin */
+    memcpy( &(psTCB->origin_x), psDGN->abyElem+1240, 8 );
+    memcpy( &(psTCB->origin_y), psDGN->abyElem+1248, 8 );
+    memcpy( &(psTCB->origin_z), psDGN->abyElem+1256, 8 );
+
+    /* Transform to IEEE */
+    DGN2IEEEDouble( &(psTCB->origin_x) );
+    DGN2IEEEDouble( &(psTCB->origin_y) );
+    DGN2IEEEDouble( &(psTCB->origin_z) );
+
+    /* Convert from UORs to master units. */
+    if( psTCB->uor_per_subunit != 0
+        && psTCB->subunits_per_master != 0 )
+    {
+        psTCB->origin_x = psTCB->origin_x / 
+            (psTCB->uor_per_subunit * psTCB->subunits_per_master);
+        psTCB->origin_y = psTCB->origin_y / 
+            (psTCB->uor_per_subunit * psTCB->subunits_per_master);
+        psTCB->origin_z = psTCB->origin_z / 
+            (psTCB->uor_per_subunit * psTCB->subunits_per_master);
+    }
+
     if( !psDGN->got_tcb )
     {
         psDGN->got_tcb = TRUE;
@@ -791,9 +898,25 @@ void DGNRewind( DGNHandle hDGN )
 void DGNTransformPoint( DGNInfo *psDGN, DGNPoint *psPoint )
 
 {
-    psPoint->x = psPoint->x * psDGN->scale + psDGN->origin_x;
-    psPoint->y = psPoint->y * psDGN->scale + psDGN->origin_y;
-    psPoint->z = psPoint->z * psDGN->scale + psDGN->origin_z;
+    psPoint->x = psPoint->x * psDGN->scale - psDGN->origin_x;
+    psPoint->y = psPoint->y * psDGN->scale - psDGN->origin_y;
+    psPoint->z = psPoint->z * psDGN->scale - psDGN->origin_z;
+}
+
+/************************************************************************/
+/*                      DGNInverseTransformPoint()                      */
+/************************************************************************/
+
+void DGNInverseTransformPoint( DGNInfo *psDGN, DGNPoint *psPoint )
+
+{
+    psPoint->x = (psPoint->x + psDGN->origin_x) / psDGN->scale;
+    psPoint->y = (psPoint->y + psDGN->origin_y) / psDGN->scale;
+    psPoint->z = (psPoint->z + psDGN->origin_z) / psDGN->scale;
+
+    psPoint->x = MAX(-2147483647,MIN(2147483647,psPoint->x));
+    psPoint->y = MAX(-2147483647,MIN(2147483647,psPoint->y));
+    psPoint->z = MAX(-2147483647,MIN(2147483647,psPoint->z));
 }
 
 /************************************************************************/
@@ -901,6 +1024,7 @@ void DGNBuildIndex( DGNInfo *psDGN )
 {
     int	nMaxElements, nType, nLevel;
     long nLastOffset;
+    GUInt32 anRegion[6];
 
     if( psDGN->index_built ) 
         return;
@@ -968,20 +1092,12 @@ void DGNBuildIndex( DGNInfo *psDGN )
         else
             psEI->stype = DGNST_CORE;
 
-        if( (psEI->stype == DGNST_MULTIPOINT 
-             || psEI->stype == DGNST_ARC
-             || psEI->stype == DGNST_TEXT)
-            && !(psEI->flags & DGNEIF_DELETED)
-            && !(psEI->flags & DGNEIF_COMPLEX) )
+        if( !(psEI->flags & DGNEIF_DELETED)
+            && !(psEI->flags & DGNEIF_COMPLEX) 
+            && DGNGetElementExtents( psDGN, nType, 
+                                     anRegion+0, anRegion+1, anRegion+2,
+                                     anRegion+3, anRegion+4, anRegion+5 ) )
         {
-            GUInt32	anRegion[6];
-
-            anRegion[0] = DGN_INT32( psDGN->abyElem + 4 );
-            anRegion[1] = DGN_INT32( psDGN->abyElem + 8 );
-            anRegion[2] = DGN_INT32( psDGN->abyElem + 12 );
-            anRegion[3] = DGN_INT32( psDGN->abyElem + 16 );
-            anRegion[4] = DGN_INT32( psDGN->abyElem + 20 );
-            anRegion[5] = DGN_INT32( psDGN->abyElem + 24 );
 #ifdef notdef
             printf( "panRegion[%d]=%.1f,%.1f,%.1f,%.1f,%.1f,%.1f\n", 
                     psDGN->element_count,
