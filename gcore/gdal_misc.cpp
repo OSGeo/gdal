@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.52  2004/02/25 09:03:15  dron
+ * Added GDALPackedDMSToDec() and GDALDecToPackedDMS() functions.
+ *
  * Revision 1.51  2004/02/18 14:59:55  dron
  * Properly determine pixel offset in last tiles in GDALGetRandomRasterSample().
  *
@@ -1522,6 +1525,38 @@ const char *GDALDecToDMS( double dfAngle, const char * pszAxis,
 
 {
     return CPLDecToDMS( dfAngle, pszAxis, nPrecision );
+}
+
+/************************************************************************/
+/*                         GDALPackedDMSToDec()                         */
+/************************************************************************/
+
+/**
+ * Convert a packed DMS value (DDDMMMSSS.SS) into decimal degrees.
+ *
+ * See CPLPackedDMSToDec().
+ */
+
+double GDALPackedDMSToDec( double dfPacked )
+
+{
+    return CPLPackedDMSToDec( dfPacked );
+}
+
+/************************************************************************/
+/*                         GDALDecToPackedDMS()                         */
+/************************************************************************/
+
+/**
+ * Convert decimal degrees into packed DMS value (DDDMMMSSS.SS).
+ *
+ * See CPLDecToPackedDMS().
+ */
+
+double GDALDecToPackedDMS( double dfDec )
+
+{
+    return CPLDecToPackedDMS( dfDec );
 }
 
 /************************************************************************/

@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.75  2004/02/25 09:03:15  dron
+ * Added GDALPackedDMSToDec() and GDALDecToPackedDMS() functions.
+ *
  * Revision 1.74  2004/02/19 15:55:52  warmerda
  * updated to 1.2.0
  *
@@ -478,6 +481,8 @@ int CPL_DLL GDALReadTabFile( const char *pszBaseFilename,
                              int *pnGCPCount, GDAL_GCP **ppasGCPs );
 
 const char CPL_DLL *GDALDecToDMS( double, const char *, int );
+double CPL_DLL GDALPackedDMSToDec( double );
+double CPL_DLL GDALDecToPackedDMS( double );
 
 const char CPL_DLL *GDALVersionInfo( const char * );
 
