@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2004/07/09 16:34:23  warmerda
+ * Added patch from Markus to trim strings to allowed length.
+ *
  * Revision 1.18  2004/05/08 02:14:49  warmerda
  * added GetFeature() on table, generalize FID support a bit
  *
@@ -687,7 +690,10 @@ OGRErr OGRPGTableLayer::CreateFeature( OGRFeature *poFeature )
                     pszCommand[nOffset++] = pszStrValue[iChar];
             }
             pszCommand[nOffset] = '\0';
-            
+            sprintf( pszCommand + strlen(pszCommand), 
+                     "::varchar(%d)", 
+                     poFeatureDefn->GetFieldDefn(i)->GetWidth() );
+           
             strcat( pszCommand+nOffset, "'" );
         }
         else
