@@ -24,7 +24,7 @@ clean:
 	$(CC) -c $(ALL_C_FLAGS) $*.c -o $*.o
 	ar r ../ogrsf_frmts.a $*.o
 
-dgndump:	dgndump.o $(OBJ)
-	$(CXX) dgndump.o $(OBJ) $(CPL_LIB) -ldl -lm -o dgndump 
+dgndump:	dgndump.c $(OBJ)
+	$(CXX) $(ALL_C_FLAGS) dgndump.c $(OBJ) $(CPL_LIB) -ldl -lm -o dgndump 
 
 
