@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2000/07/19 19:07:04  warmerda
+ * break linkage between MEMDataset and MEMRasterBand
+ *
  * Revision 1.1  2000/07/19 15:55:11  warmerda
  * New
  *
@@ -42,7 +45,7 @@ static GDALDriver	*poMEMDriver = NULL;
 /*                           MEMRasterBand()                            */
 /************************************************************************/
 
-MEMRasterBand::MEMRasterBand( MEMDataset *poDS, int nBand,
+MEMRasterBand::MEMRasterBand( GDALDataset *poDS, int nBand,
                               GByte *pabyDataIn, GDALDataType eTypeIn, 
                               int nPixelOffsetIn, int nLineOffsetIn,
                               int bAssumeOwnership )
@@ -51,7 +54,7 @@ MEMRasterBand::MEMRasterBand( MEMDataset *poDS, int nBand,
     this->poDS = poDS;
     this->nBand = nBand;
 
-    this->eAccess = poDS->eAccess;
+    this->eAccess = poDS->GetAccess();
 
     eDataType = eTypeIn;
 

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2000/07/19 19:07:04  warmerda
+ * break linkage between MEMDataset and MEMRasterBand
+ *
  * Revision 1.1  2000/07/19 15:55:11  warmerda
  * New
  *
@@ -50,8 +53,6 @@ class MEMRasterBand;
 
 class MEMDataset : public GDALDataset
 {
-    friend	MEMRasterBand;
-
   public:
                  MEMDataset();
                  ~MEMDataset();
@@ -68,8 +69,6 @@ class MEMDataset : public GDALDataset
 
 class MEMRasterBand : public GDALRasterBand
 {
-    friend	MEMDataset;
-
     GByte      *pabyData;
     int         nPixelOffset;
     int         nLineOffset;
@@ -77,7 +76,7 @@ class MEMRasterBand : public GDALRasterBand
 
   public:
 
-                   MEMRasterBand( MEMDataset *poDS, int nBand,
+                   MEMRasterBand( GDALDataset *poDS, int nBand,
                                   GByte *pabyData, GDALDataType eType, 
                                   int nPixelOffset, int nLineOffset,
                                   int bAssumeOwnership );
