@@ -78,6 +78,7 @@ GDAL_VER	=	1.1
 GDAL_LIB	= 	$(GDAL_ROOT)/gdal.a
 GDAL_SLIB	=	$(GDAL_ROOT)/libgdal.$(GDAL_VER).$(SO_EXT)
 GDAL_SLIB_LINK	=	-L$(GDAL_ROOT) -lgdal.$(GDAL_VER)
+#GDAL_SLIB_SONAME = 	-Wl,-soname,libgdal.so.$(sover)
 
 OGR_LIB		=	$(GDAL_ROOT)/ogr/ogr.a
 CPL_LIB		=	$(GDAL_ROOT)/port/cpl.a
