@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2004/06/02 20:57:55  warmerda
+ * centralize initialization
+ *
  * Revision 1.13  2004/05/28 18:16:22  warmerda
  * Added support for hold colortable and interp on RawRasterBand
  *
@@ -133,6 +136,9 @@ class CPL_DLL RawRasterBand : public GDALRasterBand
     virtual CPLErr  IRasterIO( GDALRWFlag, int, int, int, int,
                               void *, int, int, GDALDataType,
                               int, int );
+
+    void        Initialize();
+
   public:
 
                  RawRasterBand( GDALDataset *poDS, int nBand, FILE * fpRaw, 
