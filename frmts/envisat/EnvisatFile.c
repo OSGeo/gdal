@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2004/03/10 18:18:54  warmerda
+ * Avoid warning.
+ *
  * Revision 1.10  2004/03/10 18:18:29  warmerda
  * Avoid warning.
  *
@@ -1711,7 +1714,7 @@ int S_NameValueList_Parse( const char *text, int text_offset,
         {
             next_text++;
         }
-        line_offset = (next_text - text) + text_offset;
+        line_offset = (int) (next_text - text) + text_offset;
         while( *next_text != '\0' && *next_text != '\n' )
         {
             if( line_len > sizeof(line)-1 )
