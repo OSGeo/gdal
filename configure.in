@@ -1167,29 +1167,29 @@ else
     LIBS="-L$with_static_proj4/src $PROJ_LIB $ORIG_LIBS"
     AC_CHECK_LIB(proj,pj_init,PROJ_STATIC=yes,PROJ_STATIC=no,)
 
-    if test "PROJ_STATIC" = "no"; then
+    if test "$PROJ_STATIC" = "no"; then
       LIBS="-L$with_static_proj4/lib $PROJ_LIB $ORIG_LIBS"
       AC_CHECK_LIB(proj,pj_init,PROJ_STATIC=yes,PROJ_STATIC=no,)
     fi
 
-    if test "PROJ_STATIC" = "no"; then
+    if test "$PROJ_STATIC" = "no"; then
       LIBS="-L$with_static_proj4/src/.libs $PROJ_LIB $ORIG_LIBS"
       AC_CHECK_LIB(proj,pj_init,PROJ_STATIC=yes,PROJ_STATIC=no,)
     fi
 
-    if test "PROJ_STATIC" = "no"; then
+    if test "$PROJ_STATIC" = "no"; then
       LIBS="-L$with_static_proj4 $PROJ_LIB $ORIG_LIBS"
       AC_CHECK_LIB(proj,pj_init,PROJ_STATIC=yes,PROJ_STATIC=no,)
     fi
 
-    if test "PROJ_STATIC" = "no"; then
+    if test "$PROJ_STATIC" = "no"; then
       LIBS="$PROJ_LIB $ORIG_LIBS"
       AC_CHECK_LIB(proj,pj_init,PROJ_STATIC=yes,PROJ_STATIC=no,)
     fi
 
   fi
 
-  if test "PROJ_STATIC" = "no"; then
+  if test "$PROJ_STATIC" = "no"; then
     LIBS="$ORIG_LIBS"
   fi
 
