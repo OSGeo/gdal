@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2004/11/02 20:21:26  fwarmerdam
+ * added support for category names and colormaps
+ *
  * Revision 1.20  2004/10/21 15:08:19  fwarmerdam
  * Added warning about file compression.
  *
@@ -1004,6 +1007,46 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
         CSLDestroy( papszBandNames );
     }
     
+/* -------------------------------------------------------------------- */
+/*      Apply class names if we have them.                              */
+/* -------------------------------------------------------------------- */
+    if( CSLFetchNameValue( poDS->papszHeader, "class_names" ) != NULL )
+    {
+        char	**papszClassNames = 
+            poDS->SplitList( CSLFetchNameValue( poDS->papszHeader, 
+                                                "class_names" ) );
+
+        poDS->GetRasterBand(1)->SetCategoryNames( papszClassNames );
+        CSLDestroy( papszClassNames );
+    }
+    
+/* -------------------------------------------------------------------- */
+/*      Apply colormap if we have one.					*/
+/* -------------------------------------------------------------------- */
+    if( CSLFetchNameValue( poDS->papszHeader, "class_lookup" ) != NULL )
+    {
+        char	**papszClassColors = 
+            poDS->SplitList( CSLFetchNameValue( poDS->papszHeader, 
+                                                "class_lookup" ) );
+        int nColorValueCount = CSLCount(papszClassColors);
+        GDALColorTable oCT;
+
+        for( i = 0; i*3 < nColorValueCount; i++ )
+        {
+            GDALColorEntry sEntry;
+
+            sEntry.c1 = atoi(papszClassColors[i*3+0]);
+            sEntry.c2 = atoi(papszClassColors[i*3+1]);
+            sEntry.c3 = atoi(papszClassColors[i*3+2]);
+            sEntry.c4 = 255;
+            oCT.SetColorEntry( i, &sEntry );
+        }
+
+        CSLDestroy( papszClassColors );
+
+        poDS->GetRasterBand(1)->SetColorTable( &oCT );
+        poDS->GetRasterBand(1)->SetColorInterpretation( GCI_PaletteIndex );
+    }
     
 /* -------------------------------------------------------------------- */
 /*      Look for mapinfo						*/
