@@ -25,6 +25,7 @@ clean:
 	ar r ../ogrsf_frmts.a $*.o
 
 install-libs:	isolib-marker sdtslib-marker
+	@echo Done adding ISO8211 and SDTS libraries into $(FRMTSLIB)
 
 isolib-marker:	$(ISOLIB)
 	./install-libs.sh $(ISOLIB) $(FRMTSLIB)
