@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2001/03/15 03:19:23  warmerda
+ * added polyconic (9818) support
+ *
  * Revision 1.8  2001/03/14 21:33:46  warmerda
  * treaat 9717 (Lambert Near Conformal) like LCC1SP
  *
@@ -974,6 +977,11 @@ static OGRErr SetEPSGProjCS( OGRSpatialReference * poSRS, int nPCSCode )
       case 9816:
         poSRS->SetTMG( adfProjParms[0], adfProjParms[1],
                        adfProjParms[5], adfProjParms[6] );
+        break;
+
+      case 9818:
+        poSRS->SetPolyconic( adfProjParms[0], adfProjParms[1], 
+                             adfProjParms[5], adfProjParms[6] );
         break;
 
       default:
