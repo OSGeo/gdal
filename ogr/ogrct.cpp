@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2002/12/09 16:49:55  warmerda
+ * implemented support for alternate GEOGCS units
+ *
  * Revision 1.17  2002/11/27 14:48:22  warmerda
  * added PROJSO environment variable
  *
@@ -131,10 +134,15 @@ class OGRProj4CT : public OGRCoordinateTransformation
     OGRSpatialReference *poSRSSource;
     void        *psPJSource;
     int         bSourceLatLong;
+    double      dfSourceToRadians;
+    double      dfSourceFromRadians;
+    
 
     OGRSpatialReference *poSRSTarget;
     void        *psPJTarget;
     int         bTargetLatLong;
+    double      dfTargetToRadians;
+    double      dfTargetFromRadians;
 
     int         nErrorCount;
 
@@ -385,6 +393,43 @@ int OGRProj4CT::Initialize( OGRSpatialReference * poSourceIn,
     bTargetLatLong = poSRSTarget->IsGeographic();
 
 /* -------------------------------------------------------------------- */
+/*      Setup source and target translations to radians for lat/long    */
+/*      systems.                                                        */
+/* -------------------------------------------------------------------- */
+    dfSourceToRadians = DEG_TO_RAD;
+    dfSourceFromRadians = RAD_TO_DEG;
+
+    if( bSourceLatLong )
+    {
+        OGR_SRSNode *poUNITS = poSRSSource->GetAttrNode( "GEOGCS|UNIT" );
+        if( poUNITS && poUNITS->GetChildCount() >= 2 )
+        {
+            dfSourceToRadians = atof(poUNITS->GetChild(1)->GetValue());
+            if( dfSourceToRadians == 0.0 )
+                dfSourceToRadians = DEG_TO_RAD;
+            else
+                dfSourceFromRadians = 1 / dfSourceToRadians;
+        }
+    }
+
+    dfTargetToRadians = DEG_TO_RAD;
+    dfTargetFromRadians = RAD_TO_DEG;
+
+    if( bTargetLatLong )
+    {
+        OGR_SRSNode *poUNITS = poSRSTarget->GetAttrNode( "GEOGCS|UNIT" );
+        if( poUNITS && poUNITS->GetChildCount() >= 2 )
+        {
+            dfTargetToRadians = atof(poUNITS->GetChild(1)->GetValue());
+            if( dfTargetToRadians == 0.0 )
+                dfTargetToRadians = DEG_TO_RAD;
+            else
+                dfTargetFromRadians = 1 / dfTargetToRadians;
+        }
+    }
+
+
+/* -------------------------------------------------------------------- */
 /*      Establish PROJ.4 handle for source if projection.               */
 /* -------------------------------------------------------------------- */
     char        *pszProj4Defn, **papszArgs;
@@ -481,8 +526,8 @@ int OGRProj4CT::Transform( int nCount, double *x, double *y, double *z )
     {
         for( i = 0; i < nCount; i++ )
         {
-            x[i] *= DEG_TO_RAD;
-            y[i] *= DEG_TO_RAD;
+            x[i] *= dfSourceToRadians;
+            y[i] *= dfSourceToRadians;
         }
     }
 
@@ -529,8 +574,8 @@ int OGRProj4CT::Transform( int nCount, double *x, double *y, double *z )
     {
         for( i = 0; i < nCount; i++ )
         {
-            x[i] *= RAD_TO_DEG;
-            y[i] *= RAD_TO_DEG;
+            x[i] *= dfTargetFromRadians;
+            y[i] *= dfTargetFromRadians;
         }
     }
 
