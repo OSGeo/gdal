@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2000/03/20 22:39:49  warmerda
+ * Added IsSame( method.
+ *
  * Revision 1.14  2000/03/20 14:59:35  warmerda
  * added OGRCoordinateTransformation
  *
@@ -192,6 +195,7 @@ class OGRSpatialReference
     int         IsGeographic();
     int         IsProjected();
     int         IsSameGeogCS( OGRSpatialReference * );
+    int         IsSame( OGRSpatialReference * );
     
     OGRErr      SetProjection( const char * );
     OGRErr      SetGeogCS( const char * pszGeogName,
