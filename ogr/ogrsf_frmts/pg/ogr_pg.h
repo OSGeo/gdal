@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2001/11/15 21:19:58  warmerda
+ * added soft transaction semantics
+ *
  * Revision 1.6  2001/09/28 04:03:52  warmerda
  * partially upraded to PostGIS 0.6
  *
@@ -118,6 +121,10 @@ class OGRPGLayer : public OGRLayer
     virtual OGRErr      CreateField( OGRFieldDefn *poField,
                                      int bApproxOK = TRUE );
     
+    virtual OGRErr       StartTransaction();
+    virtual OGRErr       CommitTransaction();
+    virtual OGRErr       RollbackTransaction();
+
     int                 TestCapability( const char * );
 };
 
@@ -134,6 +141,7 @@ class OGRPGDataSource : public OGRDataSource
 
     int			bDSUpdate;
     int			bHavePostGIS;
+    int			nSoftTransactionLevel;
 
     PGconn		*hPGConn;
 
@@ -162,6 +170,12 @@ class OGRPGDataSource : public OGRDataSource
                                       char ** = NULL );
 
     int                 TestCapability( const char * );
+
+    OGRErr              SoftStartTransaction();
+    OGRErr              SoftCommit();
+    OGRErr              SoftRollback();
+    
+    OGRErr              FlushSoftTransaction();
 };
 
 /************************************************************************/

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2001/11/15 21:19:58  warmerda
+ * added soft transaction semantics
+ *
  * Revision 1.7  2001/09/28 04:03:52  warmerda
  * partially upraded to PostGIS 0.6
  *
@@ -71,6 +74,7 @@ OGRPGDataSource::OGRPGDataSource()
     nLayers = 0;
     hPGConn = NULL;
     bHavePostGIS = FALSE;
+    nSoftTransactionLevel = 0;
 }
 
 /************************************************************************/
@@ -80,6 +84,8 @@ OGRPGDataSource::OGRPGDataSource()
 OGRPGDataSource::~OGRPGDataSource()
 
 {
+    FlushSoftTransaction();
+
     CPLFree( pszName );
 
     for( int i = 0; i < nLayers; i++ )
@@ -682,4 +688,116 @@ int OGRPGDataSource::FetchSRSId( OGRSpatialReference * poSRS )
     PQclear( hResult );
 
     return nSRSId;
+}
+
+/************************************************************************/
+/*                        SoftStartTransaction()                        */
+/*                                                                      */
+/*      Create a transaction scope.  If we already have a               */
+/*      transaction active this isn't a real transaction, but just      */
+/*      an increment to the scope count.                                */
+/************************************************************************/
+
+OGRErr OGRPGDataSource::SoftStartTransaction()
+
+{
+    nSoftTransactionLevel++;
+
+    if( nSoftTransactionLevel == 1 )
+    {
+        PGresult            *hResult;
+        PGconn		*hPGConn = GetPGConn();
+
+        hResult = PQexec(hPGConn, "BEGIN");
+
+        if( !hResult || PQresultStatus(hResult) != PGRES_COMMAND_OK )
+            return OGRERR_FAILURE;
+
+        PQclear( hResult );
+    }
+
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                             SoftCommit()                             */
+/*                                                                      */
+/*      Commit the current transaction if we are at the outer           */
+/*      scope.                                                          */
+/************************************************************************/
+
+OGRErr OGRPGDataSource::SoftCommit()
+
+{
+    if( nSoftTransactionLevel <= 0 )
+    {
+        CPLDebug( "OGR_PG", "SoftCommit() with no transaction active." );
+        return OGRERR_FAILURE;
+    }
+
+    nSoftTransactionLevel--;
+
+    if( nSoftTransactionLevel == 0 )
+    {
+        PGresult            *hResult;
+        PGconn		*hPGConn = GetPGConn();
+
+        hResult = PQexec(hPGConn, "COMMIT");
+
+        if( !hResult || PQresultStatus(hResult) != PGRES_COMMAND_OK )
+            return OGRERR_FAILURE;
+
+        PQclear( hResult );
+    }
+
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                            SoftRollback()                            */
+/*                                                                      */
+/*      Force a rollback of the current transaction if there is one,    */
+/*      even if we are nested several levels deep.                      */
+/************************************************************************/
+
+OGRErr OGRPGDataSource::SoftRollback()
+
+{
+    if( nSoftTransactionLevel <= 0 )
+    {
+        CPLDebug( "OGR_PG", "SoftRollback() with no transaction active." );
+        return OGRERR_FAILURE;
+    }
+
+    nSoftTransactionLevel = 0;
+
+    PGresult            *hResult;
+    PGconn		*hPGConn = GetPGConn();
+    
+    hResult = PQexec(hPGConn, "ROLLBACK");
+    
+    if( !hResult || PQresultStatus(hResult) != PGRES_COMMAND_OK )
+        return OGRERR_FAILURE;
+    
+    PQclear( hResult );
+
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                        FlushSoftTransaction()                        */
+/*                                                                      */
+/*      Force the unwinding of any active transaction, and it's         */
+/*      commit.                                                         */
+/************************************************************************/
+
+OGRErr OGRPGDataSource::FlushSoftTransaction()
+
+{
+    if( nSoftTransactionLevel <= 0 )
+        return OGRERR_NONE;
+
+    nSoftTransactionLevel = 1;
+
+    return SoftCommit();
 }
