@@ -1,4 +1,4 @@
-.TH "gdal_translate" 1 "16 Sep 2004" "Doxygen" \" -*- nroff -*-
+.TH "gdal_translate" 1 "2 Feb 2005" "Doxygen" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -9,17 +9,17 @@ gdal_translate \- converts raster data between different formats
 .PP
 .nf
 
-gdal_translate 
-       [-ot {Byte/UInt16/UInt32/Int32/Float32/Float64/CInt16/
-             CInt32/CFloat32/CFloat64}] [-not_strict]
+gdal_translate [--help-general]
+       [-ot {Byte/Int16/UInt16/UInt32/Int32/Float32/Float64/
+             CInt16/CInt32/CFloat32/CFloat64}] [-not_strict]
        [-of format] [-b band] [-outsize xsize[%] ysize[%]]
-       [-scale [src_min src_max [dst_min dst_max]]]       
-       [-srcwin xoff yoff xsize ysize] [-a_srs srs_def]
-       [-projwin xoff yoff xsize ysize] [-co "NAME=VALUE"]*
+       [-scale [src_min src_max [dst_min dst_max]]]
+       [-srcwin xoff yoff xsize ysize] [-projwin ulx uly lrx lry]
+       [-a_srs srs_def] [-a_ullr ulx uly lrx lry]
        [-gcp pixel line easting northing]*
-       [-mo "META-TAG=VALUE"]* [-quiet]
+       [-mo "META-TAG=VALUE"]* [-quiet] [-sds]
+       [-co "NAME=VALUE"]*
        src_dataset dst_dataset
-.fi
 .PP
 .SH "DESCRIPTION"
 .PP
@@ -42,6 +42,8 @@ Selects a subwindow from the source image for copying based on pixel/line locati
 Selects a subwindow from the source image for copying (like -srcwin) but with the corners given in georeferenced coordinates.  
 .IP "\fB\fB-a_srs\fP \fIsrs_def\fP:\fP" 1c
 Override the projection for the output file. The srs_def may be any of the usual GDAL/OGR forms, complete WKT, PROJ.4, EPSG:n or a file containing the wkt.  
+.IP "\fB\fB-a_ullr\fP \fIulx uly lrx lry\fP:\fP" 1c
+Assign/override the georeferenced bounds of the output file. This assigns georeferenced bounds to the output file, ignoring what would have been derived from the source file. 
 .IP "\fB\fB-mo\fP \fI'KEY=VALUE'\fP:\fP" 1c
 passes a metadata key and value to set on the output dataset if possible. 
 .IP "\fB\fB-co\fP \fI'NAME=VALUE'\fP:\fP" 1c
@@ -52,6 +54,8 @@ Add the indicated metadata values to the output dataset.
 Add the indicated ground control point to the output dataset. This option may be provided multiple times to provide a set of GCPs.  
 .IP "\fB\fB-quiet\fP:\fP" 1c
 Supress progress monitor and other non-error output. 
+.IP "\fB\fB-sds\fP:\fP" 1c
+Copy all subdatsets of this file to individual output files. Use with formats like HDF or OGDI that have subdatasets. 
 .IP "\fB\fIsrc_dataset\fP:\fP" 1c
 The source file name. 
 .IP "\fB\fIdst_dataset\fP:\fP" 1c
@@ -64,7 +68,6 @@ The destination file name.
 .nf
 
 gdal_translate -of GTiff -co "TILED=YES" utm.tif utm_tiled.tif
-.fi
 .PP
 .SH "AUTHORS"
 .PP

@@ -1,4 +1,4 @@
-.TH "gdaladdo" 1 "16 Sep 2004" "Doxygen" \" -*- nroff -*-
+.TH "gdaladdo" 1 "2 Feb 2005" "Doxygen" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -11,7 +11,6 @@ gdaladdo \- builds or rebuilds overview images
 
 gdaladdo [-r {nearest,average,average_mp,average_magphase,mode}]
                 filename levels
-.fi
 .PP
 .SH "DESCRIPTION"
 .PP
@@ -39,7 +38,6 @@ Create overviews, embedded in the supplied TIFF file:
 .nf
 
 gdaladdo -r average abc.tif 2 4 8 16
-.fi
 .PP
 .PP
 Create an external compressed GeoTIFF overview file from the ERDAS .IMG file:
@@ -48,7 +46,6 @@ Create an external compressed GeoTIFF overview file from the ERDAS .IMG file:
 .nf
 
 gdaladdo --config COMPRESS_OVERVIEW DEFLATE erdas.img 2 4 8 16
-.fi
 .PP
 .SH "AUTHORS"
 .PP

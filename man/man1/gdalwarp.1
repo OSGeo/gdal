@@ -1,4 +1,4 @@
-.TH "gdalwarp" 1 "16 Sep 2004" "Doxygen" \" -*- nroff -*-
+.TH "gdalwarp" 1 "2 Feb 2005" "Doxygen" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -16,7 +16,6 @@ gdalwarp
     [-srcnodata value [value...]] [-dstnodata value [value...]]
     [-rn] [-rb] [-rc] [-rcs] [-wm memory_in_mb] [-multi] [-q]
     [-of format] [-co "NAME=VALUE"]* srcfile dstfile
-.fi
 .PP
 .SH "DESCRIPTION"
 .PP
@@ -27,7 +26,9 @@ source spatial reference set. The coordinate systems that can be passed are anyt
 .IP "\fB\fB-t_srs\fP \fIsrs_def\fP:\fP" 1c
 target spatial reference set. The coordinate systems that can be passed are anything supported by the OGRSpatialReference.SetFromUserInput() call, which includes EPSG PCS and GCSes (ie. EPSG:4296), PROJ.4 declarations (as above), or the name of a .prf file containing well known text. 
 .IP "\fB\fB-order\fP \fIn\fP:\fP" 1c
-order of polynom used for warping (1 to 3). The default is to figure out the best order. 
+order of polynomial used for warping (1 to 3). The default is to select a polynomial order based on the number of GCPs. 
+.IP "\fB\fB-tps\fP\fP" 1c
+Enable use of thin plate spline transformer based on available GCPs. Use this \fIinstead\fP of the -order switch. 
 .IP "\fB\fB-et\fP \fIerr_threshold\fP:\fP" 1c
 error threshold for transformation approximation (in pixel units - defaults to 0.125). 
 .IP "\fB\fB-te\fP \fIxmin ymin xmax ymax\fP: set georeferenced extents of output file to be created. \fP" 1c
@@ -79,7 +80,6 @@ For instance, an eight bit spot scene stored in GeoTIFF with control points mapp
 .nf
 
 gdalwarp -t_srs '+proj=utm +zone=11 +datum=WGS84' raw_spot.tif utm11.tif
-.fi
 .PP
 .PP
 For instance, the second channel of an ASTER image stored in HDF with control points mapping the corners to lat/long could be warped to a UTM projection with a command like this:
@@ -88,7 +88,6 @@ For instance, the second channel of an ASTER image stored in HDF with control po
 .nf
 
 gdalwarp HDF4_SDS:ASTER_L1B:"pg-PR1B0000-2002031402_100_001":2 pg-PR1B0000-2002031402_100_001_2.tif
-.fi
 .PP
 .SH "AUTHORS"
 .PP
