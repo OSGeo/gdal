@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.26  2004/08/20 21:21:28  warmerda
+ * added support for managing a persistent geos::GeometryFactory
+ *
  * Revision 1.25  2004/07/10 06:57:53  warmerda
  * Added C entry points and docs for GEOS geometry functions
  *
@@ -1246,7 +1249,8 @@ geos::Geometry *OGRGeometry::exportToGEOS() const
 #else
 
     char *pszWKT = NULL;
-    geos::WKTReader   geosWktReader;
+    geos::WKTReader   geosWktReader( 
+        OGRGeometryFactory::getGEOSGeometryFactory() );
 
     if( exportToWkt( &pszWKT ) != OGRERR_NONE )
         return NULL;
