@@ -12,7 +12,7 @@ of open source, easy to compile and integrate C++ code.<p>
 
 <h2>ISO 8211 Background</h2>
 
-The <a href="http://starship.skyport.net/crew/tibs/iso8211/faq.html">ISO 8211
+The <a href="http://starship.python.net/crew/tibs/iso8211/faq.html">ISO 8211
 FAQ</a> has some good background on ISO 8211 formatted files.  I will briefly
 introduce it here, with reference to the library classes representing
 the components.<p>
