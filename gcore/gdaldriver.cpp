@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2000/04/30 23:22:16  warmerda
+ * added CreateCopy support
+ *
  * Revision 1.11  2000/03/06 02:21:15  warmerda
  * Added help topic C function
  *
@@ -78,6 +81,7 @@ GDALDriver::GDALDriver()
     pfnOpen = NULL;
     pfnCreate = NULL;
     pfnDelete = NULL;
+    pfnCreateCopy = NULL;
 }
 
 /************************************************************************/
@@ -147,6 +151,151 @@ GDALDatasetH CPL_DLL GDALCreate( GDALDriverH hDriver,
     return( ((GDALDriver *) hDriver)->Create( pszFilename,
                                               nXSize, nYSize, nBands,
                                               eBandType, papszOptions ) );
+}
+
+/************************************************************************/
+/*                             CreateCopy()                             */
+/************************************************************************/
+
+/**
+ * Create a copy of a dataset.
+ *
+ * This method will attempt to create a copy of a raster dataset with the
+ * indicated filename, and in this drivers format.  Band number, size, 
+ * type, projection, geotransform and so forth are all to be copied from
+ * the provided template dataset.  
+ *
+ * Note that many sequential write once formats (such as JPEG and PNG) don't
+ * implement the Create() method but do implement this CreateCopy() method.
+ * If the driver doesn't implement CreateCopy(), but does implement Create()
+ * then the default CreateCopy() mechanism built on calling Create() will
+ * be used.								
+ *
+ * It is intended that CreateCopy() would often be used with a source dataset
+ * which is a virtual dataset allowing configuration of band types, and
+ * other information without actually duplicating raster data.  This virtual
+ * dataset format hasn't yet been implemented at the time of this documentation
+ * being written. 
+ *
+ * @param pszFilename the name for the new dataset. 
+ * @param poSrcDS the dataset being duplicated. 
+ * @param bStrict TRUE if the copy must be strictly equivelent, or more
+ * normally FALSE indicating that the copy may adapt as needed for the 
+ * output format. 
+ * @param papszOptions additional format dependent options controlling 
+ * creation of the output file. 
+ * @param pfnProgress a function to be used to report progress of the copy.
+ * @param pProgressData application data passed into progress function.
+ *
+ * @return a pointer to the newly created dataset (may be read-only access).
+ */
+
+GDALDataset *GDALDriver::CreateCopy( const char * pszFilename, 
+                                     GDALDataset * poSrcDS, 
+                                     int bStrict, char ** papszOptions,
+                                     GDALProgressFunc pfnProgress,
+                                     void * pProgressData )
+
+{
+    if( pfnProgress == NULL )
+        pfnProgress = GDALDummyProgress;
+
+    if( pfnCreateCopy != NULL )
+        return pfnCreateCopy( pszFilename, poSrcDS, bStrict, papszOptions,
+                              pfnProgress, pProgressData );
+    
+/* -------------------------------------------------------------------- */
+/*      Create destination dataset.                                     */
+/* -------------------------------------------------------------------- */
+    GDALDataset  *poDstDS;
+    int          nXSize = poSrcDS->GetRasterXSize();
+    int          nYSize = poSrcDS->GetRasterYSize();
+    GDALDataType eType = poSrcDS->GetRasterBand(1)->GetRasterDataType();
+    CPLErr       eErr;
+
+    CPLDebug( "GDAL", "Using default GDALDriver::CreateCopy implementation." );
+
+    pfnProgress( 0.0, NULL, pProgressData );
+
+    poDstDS = Create( pszFilename, nXSize, nYSize, 
+                      poSrcDS->GetRasterCount(), eType, papszOptions );
+
+    if( poDstDS == NULL )
+        return NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Try setting the projection and geotransform if it seems         */
+/*      suitable.  For now we don't try and copy GCPs, though I         */
+/*      suppose we should.                                              */
+/* -------------------------------------------------------------------- */
+    double	adfGeoTransform[6];
+
+    if( poSrcDS->GetGeoTransform( adfGeoTransform ) == CE_None )
+    {
+        poDstDS->SetGeoTransform( adfGeoTransform );
+    }
+
+    if( poSrcDS->GetProjectionRef() != NULL
+        && strlen(poSrcDS->GetProjectionRef()) > 0 )
+    {
+        poDstDS->SetProjection( poSrcDS->GetProjectionRef() );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Loop copying bands.                                             */
+/* -------------------------------------------------------------------- */
+    for( int iBand = 0; iBand < poSrcDS->GetRasterCount(); iBand++ )
+    {
+        GDALRasterBand *poSrcBand = poSrcDS->GetRasterBand( iBand+1 );
+        GDALRasterBand *poDstBand = poDstDS->GetRasterBand( iBand+1 );
+
+        void           *pData;
+
+        pData = CPLMalloc(nXSize * 8);
+
+        for( int iLine = 0; iLine < nYSize; iLine++ )
+        {
+            eErr = poSrcBand->RasterIO( GF_Read, 0, iLine, nXSize, 1, 
+                                        pData, nXSize, 1, eType, 0, 0 );
+            if( eErr != CE_None )
+            {
+                return NULL;
+            }
+            
+            eErr = poDstBand->RasterIO( GF_Write, 0, iLine, nXSize, 1, 
+                                        pData, nXSize, 1, eType, 0, 0 );
+
+            if( eErr != CE_None )
+            {
+                return NULL;
+            }
+
+            pfnProgress( (iBand + iLine / (double) nYSize)
+                         / (double) poSrcDS->GetRasterCount(), 
+                         NULL, pProgressData );
+        }
+
+        CPLFree( pData );
+    }
+
+    return poDstDS;
+}
+
+/************************************************************************/
+/*                           GDALCreateCopy()                           */
+/************************************************************************/
+
+GDALDatasetH GDALCreateCopy( GDALDriverH hDriver, 
+                             const char * pszFilename, 
+                             GDALDatasetH hSrcDS, 
+                             int bStrict, char ** papszOptions,
+                             GDALProgressFunc pfnProgress,
+                             void * pProgressData )
+
+{
+    return (GDALDatasetH) ((GDALDriver *) hDriver)->
+        CreateCopy( pszFilename, (GDALDataset *) hSrcDS, bStrict, papszOptions,
+                    pfnProgress, pProgressData );
 }
 
 /************************************************************************/

@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2000/04/30 23:22:16  warmerda
+ * added CreateCopy support
+ *
  * Revision 1.19  2000/04/21 21:55:01  warmerda
  * majorobject updates, and overview building
  *
@@ -494,6 +497,15 @@ class CPL_DLL GDALDriver : public GDALMajorObject
 
     CPLErr		Delete( const char * pszName );
 
+    GDALDataset         *CreateCopy( const char *, GDALDataset *, 
+                                     int, char **,
+                                     GDALProgressFunc pfnProgress, 
+                                     void * pProgressData );
+    
+    GDALDataset         *(*pfnCreateCopy)( const char *, GDALDataset *, 
+                                           int, char **,
+                                           GDALProgressFunc pfnProgress, 
+                                           void * pProgressData );
 };
 
 /* ******************************************************************** */

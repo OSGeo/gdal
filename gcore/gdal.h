@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.23  2000/04/30 23:22:16  warmerda
+ * added CreateCopy support
+ *
  * Revision 1.22  2000/04/26 18:25:29  warmerda
  * added missing CPL_DLL attributes
  *
@@ -209,6 +212,9 @@ void CPL_DLL GDALAllRegister( void );
 GDALDatasetH CPL_DLL GDALCreate( GDALDriverH hDriver,
                                  const char *, int, int, int, GDALDataType,
                                  char ** );
+GDALDatasetH CPL_DLL GDALCreateCopy( GDALDriverH, const char *, GDALDatasetH,
+                                     int, char **, GDALProgressFunc, void * );
+
 GDALDatasetH CPL_DLL GDALOpen( const char *, GDALAccess );
 
 GDALDriverH CPL_DLL GDALGetDriverByName( const char * );
