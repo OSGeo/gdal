@@ -9,6 +9,10 @@ CPPFLAGS	:=	$(GDAL_INCLUDE) $(PYTHON_INCLUDES) $(CPPFLAGS)
 CFLAGS		:=	$(PYTHON_CFLAGS) $(CFLAGS)
 CXXFLAGS	:=	$(PYTHON_CFLAGS) $(CXXFLAGS)
 
+PY_COMMANDS	=	epsg_tr.py gdalchksum.py gdal2xyz.py gcps2wld.py \
+			gdalimport.py gdal_merge.py pct2rgb.py rgb2pct.py 
+PY_MODULES	=	gdal.py ogr.py osr.py gdalconst.py gdalnumeric.py
+
 # this is needed during install due to the _gdalmodule.so library
 # being relinked by libtool
 LIBS	+=	-L$(GDAL_ROOT)/.libs
@@ -38,12 +42,7 @@ $(GDALMODULE).la:	$(OBJ:.o=.lo) $(EXE_DEP_LIBS)
 install:	$(GDALMODULE).$(SO_EXT)
 	$(INSTALL_DIR) $(INST_PYMOD)
 	$(INSTALL_LIB) $(GDALMODULE).$(SO_EXT) $(INST_PYMOD)
-	for f in *.py ; do \
-	    if egrep '\#\!.*python' $$f > /dev/null ; then \
-		$(INSTALL) $$f $(INST_PYMOD) ; \
-	    else \
-		$(INSTALL_DATA) $$f $(INST_PYMOD) ; \
-	    fi \
-	done
+	for f in $(PY_COMMANDS) ; do $(INSTALL) $$f $(INST_BIN) ; done
+	for f in $(PY_MODULES) ; do $(INSTALL_DATA) $$f $(INST_PYMOD) ; done
 	# ugh! spurius relinking leaves a file owned by root into .libs/.
 	rm -f .libs/*.soT
