@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2003/01/07 16:46:47  warmerda
+ * improve long line check
+ *
  * Revision 1.8  2002/02/18 21:40:03  warmerda
  * Fixed error message.
  *
@@ -196,7 +199,7 @@ int NTFRecord::ReadPhysicalLine( FILE *fp, char *pszLine )
 /*      If we don't find EOL within 80 characters something has gone    */
 /*      badly wrong!                                                    */
 /* -------------------------------------------------------------------- */
-    if( i == nBytesRead )
+    if( i == MAX_RECORD_LEN+2 )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "%d byte record too long for NTF format.\n"
