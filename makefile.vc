@@ -99,7 +99,7 @@ lib_dist:	default
 	zip -r $(DISTDIR).zip $(DISTDIR)
 
 $(GDAL_DLL):	lib
-	link /dll /debug $(OGR_INCLUDE) $(LIBOBJ) $(ECWLIB) \
+	link /dll /debug $(OGR_INCLUDE) $(LIBOBJ) $(ECWLIB) $(OGDILIB) \
 		 /out:$(GDAL_DLL) /implib:gdal_i.lib
 
 install: $(GDAL_DLL) apps_dir pymod_dir
