@@ -30,6 +30,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.12  2004/05/10 17:09:30  warmerda
+# improve PostGIS output
+#
 # Revision 1.11  2004/05/03 20:00:54  warmerda
 # Don't double up no_defs.
 #
@@ -133,7 +136,7 @@ def trHandleCode(code, gen_dict_line, report_error, output_format):
             wkt = prj_srs.ExportToWkt()
             
             print '---'
-            print '--- EPSG : %s' % name
+            print '--- EPSG %d : %s' % (code, name)
             print '---'
 
             if err:
