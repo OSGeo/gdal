@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.22  2002/10/07 12:56:04  warmerda
+ * Added DGN_ASSOC_ID.
+ *
  * Revision 1.21  2002/05/31 03:40:22  warmerda
  * added improved support for parsing attribute linkages
  *
@@ -540,6 +543,7 @@ typedef struct {
 #define DGNLT_SYBASE            0x4f58
 #define DGNLT_XBASE             0x1971
 #define DGNLT_SHAPE_FILL        0x0041
+#define DGNLT_ASSOC_ID          0x7D2F
 
 /* -------------------------------------------------------------------- */
 /*      API                                                             */
