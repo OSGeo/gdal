@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2002/04/16 16:21:28  warmerda
+ * Ensure polygons written with correct winding.
+ *
  * Revision 1.15  2002/03/27 21:04:38  warmerda
  * Added support for reading, and creating lone .dbf files for wkbNone geometry
  * layers.  Added support for creating a single .shp file instead of a directory
@@ -462,6 +465,7 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom )
         psShape = SHPCreateObject( hSHP->nShapeType, iShape, nRings,
                                    panRingStart, NULL,
                                    nVertex, padfX, padfY, padfZ, NULL );
+        SHPRewindObject( hSHP, psShape );
         SHPWriteObject( hSHP, iShape, psShape );
         SHPDestroyObject( psShape );
         
