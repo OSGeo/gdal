@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.2  1998/12/04 21:40:42  danmo
+ * Added more Name=Value manipulation fuctions
+ *
  * Revision 1.1  1998/12/03 18:26:02  warmerda
  * New
  *
@@ -71,6 +74,11 @@ const char *CPLSPrintf(char *fmt, ...);
 char  **CSLAppendPrintf(char **papszStrList, char *fmt, ...);
 
 const char *CSLFetchNameValue(char **papszStrList, const char *pszName);
+char  **CSLFetchNameValueMultiple(char **papszStrList, const char *pszName);
+char  **CSLAddNameValue(char **papszStrList, 
+                        const char *pszName, const char *pszValue);
+char  **CSLSetNameValue(char **papszStrList, 
+                        const char *pszName, const char *pszValue);
 
 CPL_C_END
 

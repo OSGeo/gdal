@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.2  1998/12/04 21:40:42  danmo
+ * Added more Name=Value manipulation fuctions
+ *
  * Revision 1.1  1998/12/03 18:26:02  warmerda
  * New
  *
@@ -217,7 +220,7 @@ int  CSLSave(char **papszStrList, const char *pszFname)
                     VSIFPutc('\n', fp) == EOF)
                 {
                     CPLError(CE_Failure, CPLE_FileIO,
-                             "SaveStringList(%s): %s", pszFname, 
+                             "CSLSave(%s): %s", pszFname, 
                              strerror(errno));
                     break;  /* A Problem happened... abort */
                 }
@@ -232,7 +235,7 @@ int  CSLSave(char **papszStrList, const char *pszFname)
         {
             /* Unable to open file */
             CPLError(CE_Failure, CPLE_OpenFailed,
-                     "SaveStringList(%s): %s", pszFname, strerror(errno));
+                     "CSLSave(%s): %s", pszFname, strerror(errno));
         }
     }
 
@@ -344,7 +347,7 @@ char **CSLInsertString(char **papszStrList, int nInsertAtLineNo,
 {
     char *apszList[2];
 
-    /* Create a temporary StringList and call InsertStringsInList()
+    /* Create a temporary StringList and call CSLInsertStrings()
      */
     apszList[0] = pszNewLine;
     apszList[1] = NULL;
@@ -544,33 +547,33 @@ char ** CSLTokenizeStringComplex( const char * pszString,
 /**********************************************************************
  *                       CPLSPrintf()
  *
- * My own version of sprintf() that works with a static buffer.
+ * My own version of CPLSPrintf() that works with a static buffer.
  *
  * It returns a ref. to a static buffer that should not be freed and
- * is valid only until the next call to SPrintf().
+ * is valid only until the next call to CPLSPrintf().
  *
  * NOTE: This function should move to cpl_conv.cpp. 
  **********************************************************************/
 /* For now, assume that a 8000 chars buffer will be enough.
  */
-#define SPRINTF_BUF_SIZE 8000
-static char gszSPrintfBuffer[SPRINTF_BUF_SIZE];
+#define CPLSPrintf_BUF_SIZE 8000
+static char gszCPLSPrintfBuffer[CPLSPrintf_BUF_SIZE];
 
 const char *CPLSPrintf(char *fmt, ...)
 {
     va_list args;
 
     va_start(args, fmt);
-    vsprintf(gszSPrintfBuffer, fmt, args);
+    vsprintf(gszCPLSPrintfBuffer, fmt, args);
     va_end(args);
 
-    return gszSPrintfBuffer;
+    return gszCPLSPrintfBuffer;
 }
 
 /**********************************************************************
  *                       CSLAppendPrintf()
  *
- * Use sprintf() to append a new line at the end of a StringList.
+ * Use CPLSPrintf() to append a new line at the end of a StringList.
  *
  * Returns the modified StringList.
  **********************************************************************/
@@ -579,19 +582,21 @@ char **CSLAppendPrintf(char **papszStrList, char *fmt, ...)
     va_list args;
 
     va_start(args, fmt);
-    vsprintf(gszSPrintfBuffer, fmt, args);
+    vsprintf(gszCPLSPrintfBuffer, fmt, args);
     va_end(args);
 
-    return CSLAddString(papszStrList, gszSPrintfBuffer);
+    return CSLAddString(papszStrList, gszCPLSPrintfBuffer);
 }
 
 
 /**********************************************************************
  *                       CSLFetchNameValue()
  *
- * In a StringList of "Name:Value" or "Name=Value" pairs, look for the
- * value associated with the specified name.  The search is not case
- * sensitive.
+ * In a StringList of "Name=Value" pairs, look for the
+ * first value associated with the specified name.  The search is not
+ * case sensitive.
+ * ("Name:Value" pairs are also supported for backward compatibility
+ * with older stuff.)
  * 
  * Returns a reference to the value in the StringList that the caller
  * should not attempt to free.
@@ -609,8 +614,8 @@ const char *CSLFetchNameValue(char **papszStrList, const char *pszName)
     while(*papszStrList != NULL)
     {
         if (EQUALN(*papszStrList, pszName, nLen)
-            && ( (*papszStrList)[nLen] == ':' || 
-                 (*papszStrList)[nLen] == '=' ) )
+            && ( (*papszStrList)[nLen] == '=' || 
+                 (*papszStrList)[nLen] == ':' ) )
         {
             return (*papszStrList)+nLen+1;
         }
@@ -619,3 +624,118 @@ const char *CSLFetchNameValue(char **papszStrList, const char *pszName)
     return NULL;
 }
 
+/**********************************************************************
+ *                       CSLFetchNameValueMultiple()
+ *
+ * In a StringList of "Name=Value" pairs, look for all the
+ * values with the specified name.  The search is not case
+ * sensitive.
+ * ("Name:Value" pairs are also supported for backward compatibility
+ * with older stuff.)
+ * 
+ * Returns stringlist with one entry for each occurence of the
+ * specified name.  The stringlist should eventually be destroyed
+ * by calling CSLDestroy().
+ *
+ * Returns NULL if the name is not found.
+ **********************************************************************/
+char **CSLFetchNameValueMultiple(char **papszStrList, const char *pszName)
+{
+    int nLen;
+    char **papszValues = NULL;
+
+    if (papszStrList == NULL || pszName == NULL)
+        return NULL;
+
+    nLen = strlen(pszName);
+    while(*papszStrList != NULL)
+    {
+        if (strnicmp(*papszStrList, pszName, nLen) == 0
+            && ( (*papszStrList)[nLen] == '=' || 
+                 (*papszStrList)[nLen] == ':' ) )
+        {
+            papszValues = CSLAddString(papszValues, 
+                                          (*papszStrList)+nLen+1);
+        }
+        papszStrList++;
+    }
+
+    return papszValues;
+}
+
+
+/**********************************************************************
+ *                       CSLAddNameValue()
+ *
+ * Add a new entry to a StringList of "Name=Value" pairs,
+ * ("Name:Value" pairs are also supported for backward compatibility
+ * with older stuff.)
+ * 
+ * This function does not check if a "Name=Value" pair already exists
+ * for that name and can generate multiple entryes for the same name.
+ * Use CSLSetNameValue() if you want each name to have only one value.
+ *
+ * Returns the modified stringlist.
+ **********************************************************************/
+char **CSLAddNameValue(char **papszStrList, 
+                    const char *pszName, const char *pszValue)
+{
+    const char *pszLine;
+
+    if (papszStrList == NULL || pszName == NULL || pszValue==NULL)
+        return papszStrList;
+
+    pszLine = CPLSPrintf("%s=%s", pszName, pszValue);
+
+    return CSLAddString(papszStrList, pszLine);
+}
+
+/**********************************************************************
+ *                       CSLSetNameValue()
+ *
+ * Set the value for a given name in a StringList of "Name=Value" pairs
+ * ("Name:Value" pairs are also supported for backward compatibility
+ * with older stuff.)
+ * 
+ * If there is already a value for that name in the list then the value
+ * is changed, otherwise a new "Name=Value" pair is added.
+ *
+ * Returns the modified stringlist.
+ **********************************************************************/
+char **CSLSetNameValue(char **papszList, 
+                    const char *pszName, const char *pszValue)
+{
+    char **papszPtr;
+    int nLen;
+
+    if (papszList == NULL || pszName == NULL || pszValue==NULL)
+        return papszList;
+
+    nLen = strlen(pszName);
+    papszPtr = papszList;
+    while(*papszPtr != NULL)
+    {
+        if (strnicmp(*papszPtr, pszName, nLen) == 0
+            && ( (*papszPtr)[nLen] == '=' || 
+                 (*papszPtr)[nLen] == ':' ) )
+        {
+            /* Found it!  
+             * Change the value... make sure to keep the ':' or '='
+             */
+            char cSep;
+            cSep = (*papszPtr)[nLen];
+
+            free(*papszPtr);
+            *papszPtr = CPLStrdup(CPLSPrintf("%s%c%s", pszName,
+                                                       cSep, pszValue));
+
+            return papszList;
+        }
+        papszPtr++;
+    }
+
+    /* The name does not exist yet... create a new entry
+     */
+    return CSLAddString(papszList, 
+                           CPLSPrintf("%s=%s", pszName, pszValue));
+}
