@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2004/11/05 05:53:43  fwarmerdam
+ * Avoid various memory leaks.
+ *
  * Revision 1.10  2004/10/07 15:53:42  fwarmerdam
  * added preliminary alpha band support
  *
@@ -439,6 +442,12 @@ int main( int argc, char ** argv )
 
     pfnTransformer = GDALGenImgProjTransform;
 
+    CPLFree( pszSourceSRS );
+    pszSourceSRS = NULL;
+
+    CPLFree( pszTargetSRS );
+    pszTargetSRS = NULL;
+
 /* -------------------------------------------------------------------- */
 /*      Warp the transformer with a linear approximator unless the      */
 /*      acceptable error is zero.                                       */
@@ -571,6 +580,8 @@ int main( int argc, char ** argv )
         GDALClose( hDstDS );
         GDALClose( hSrcDS );
         
+        CSLDestroy( argv );
+    
         GDALDumpOpenDatasets( stderr );
         
         GDALDestroyDriverManager();
@@ -611,6 +622,10 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
     GDALClose( hDstDS );
     GDALClose( hSrcDS );
+
+    GDALDestroyWarpOptions( psWO );
+
+    CSLDestroy( argv );
 
     GDALDumpOpenDatasets( stderr );
 
