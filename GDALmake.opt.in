@@ -42,7 +42,7 @@ CXXFLAGS	=	@CXX_WFLAGS@ @CXX_PIC@ $(CXX_ODFLAGS)
 LD_SHARED	=	@LD_SHARED@
 
 GDAL_INCLUDE	=	-I$(GDAL_ROOT) -I$(GDAL_ROOT)/port -I$(GDAL_ROOT)/core\
-			-I$(GDAL_ROOT)/ogr
+			-I$(GDAL_ROOT)/ogr @EXTRA_INCLUDES@
 
 GDAL_VER	=	1.1
 GDAL_LIB	= 	$(GDAL_ROOT)/gdal.a
@@ -60,6 +60,9 @@ OGDI_FRMT	=	ogdi
 endif
 
 
+PNG_SETTING	=	@PNG_SETTING@
+JPEG_SETTING	=	@JPEG_SETTING@
+
 GDAL_LIBS	=	$(GDAL_LIB) $(OGR_LIB) $(GDAL_ROOT)/frmts/o/*.a \
 			$(CPL_LIB) $(OGDI_LIBS)
 GDAL_OBJ	=	$(GDAL_ROOT)/frmts/o/*.o \
@@ -73,4 +76,5 @@ GDAL_OBJ	=	$(GDAL_ROOT)/frmts/o/*.o \
 #	format registration entry point.  eg. gdb -> GDALRegister_GDB().
 #
 GDAL_FORMATS = 	gxf gtiff hfa $(OGDI_FRMT) aigrid ceos ceos2 elas iso8211 \
-		sdts raw dted zlib png jpeg
+		sdts raw dted zlib @OPT_GDAL_FORMATS@
+
