@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.32  2001/09/21 16:21:02  warmerda
+ * added Clear(), and SetFromUserInput() methods
+ *
  * Revision 1.31  2001/07/19 18:25:07  warmerda
  * expanded tabs
  *
@@ -258,6 +261,7 @@ class CPL_DLL OGRSpatialReference
     int         IsSameGeogCS( OGRSpatialReference * );
     int         IsSame( OGRSpatialReference * );
 
+    void        Clear();
     OGRErr      SetLocalCS( const char * );
     OGRErr      SetProjCS( const char * );
     OGRErr      SetProjection( const char * );
@@ -270,6 +274,8 @@ class CPL_DLL OGRSpatialReference
                            const char * pszUnits = NULL,
                            double dfConvertToRadians = 0.0 );
     OGRErr      SetWellKnownGeogCS( const char * );
+
+    OGRErr      SetFromUserInput( const char * );
 
     OGRErr      SetTOWGS84( double, double, double,
                             double = 0.0, double = 0.0, double = 0.0,

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2001/09/21 16:21:02  warmerda
+ * added Clear(), and SetFromUserInput() methods
+ *
  * Revision 1.14  2000/11/09 06:21:32  warmerda
  * added limited ESRI prj support
  *
@@ -270,6 +273,8 @@ OGRErr CPL_DLL OSRSetLocalCS( OGRSpatialReferenceH hSRS, const char *pszName );
 OGRErr CPL_DLL OSRSetProjCS( OGRSpatialReferenceH hSRS, const char * pszName );
 OGRErr CPL_DLL OSRSetWellKnownGeogCS( OGRSpatialReferenceH hSRS,
                                       const char * pszName );
+OGRErr CPL_DLL OSRSetFromUserInput( OGRSpatialReferenceH hSRS, 
+                                    const char * );
 
 OGRErr CPL_DLL OSRSetGeogCS( OGRSpatialReferenceH hSRS,
                       const char * pszGeogName,
