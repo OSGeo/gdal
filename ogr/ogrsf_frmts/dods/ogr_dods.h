@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2004/02/17 05:46:43  warmerda
+ * Added grid/array support
+ *
  * Revision 1.3  2004/01/29 21:01:03  warmerda
  * added sequences within sequences support
  *
@@ -44,6 +47,7 @@
 
 #include "ogrsf_frmts.h"
 #include "cpl_error.h"
+#include "cpl_conv.h"
 
 // Lots of DODS related definitions
 
@@ -122,7 +126,7 @@ class OGRDODSLayer : public OGRLayer
 
     OGRDODSFieldDefn  **papoFields;
 
-    int                 ProvideDataDDS();
+    virtual int         ProvideDataDDS();
     int                 bDataLoaded;
 
     AISConnect         *poConnection;
@@ -184,6 +188,68 @@ public:
     virtual OGRFeature *GetFeature( long nFeatureId );
     
     virtual int         GetFeatureCount( int );
+};
+
+/************************************************************************/
+/*                           OGRDODSGridLayer                           */
+/************************************************************************/
+
+class OGRDODSDim
+{
+public:
+    OGRDODSDim() { 
+        pszDimName = NULL;
+        nDimStart = 0;
+        nDimEnd = 0;
+        nDimStride = 0;
+        nDimEntries = 0;
+        poMap = NULL;
+        pRawData = NULL;
+        iLastValue = 0;
+    }
+    ~OGRDODSDim() {
+        CPLFree( pszDimName );
+        CPLFree( pRawData );
+    }
+
+    char *pszDimName;
+    int  nDimStart;
+    int  nDimEnd;
+    int  nDimStride;
+    int  nDimEntries;
+    Array *poMap;
+    void *pRawData;
+    int  iLastValue;
+};
+
+class OGRDODSGridLayer : public OGRDODSLayer
+{
+    Array              *poTargetArray;
+    Grid               *poTargetGrid; // NULL if simple array used.
+
+    int                 nDimCount;
+    OGRDODSDim         *paoDimensions;
+    int                 nMaxRawIndex;
+
+    void               *pRawData;
+
+    int                 ArrayEntryToField( Array *poArray, void *pRawData, 
+                                           int iArrayIndex,
+                                           OGRFeature *poFeature, int iField);
+								       
+protected:
+    virtual int         ProvideDataDDS();
+
+public:
+                        OGRDODSGridLayer( OGRDODSDataSource *poDS, 
+                                         const char *pszTarget,
+                                         AttrTable *poAttrInfo );
+    virtual             ~OGRDODSGridLayer();
+
+    virtual OGRFeature *GetFeature( long nFeatureId );
+    
+    virtual int         GetFeatureCount( int );
+
 };
 
 /************************************************************************/
