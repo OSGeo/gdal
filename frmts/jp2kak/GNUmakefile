@@ -14,14 +14,12 @@ APPOBJ  = $(KAKDIR)/apps/make/args.o $(KAKDIR)/apps/make/image_in.o \
 
 #CXXFLAGS :=	$(CXXFLAGS) -DFILEIO_DEBUG
 
+CPPFLAGS	=	$(GDAL_INCLUDE) $(KAKINC) -I.
+
 default:	$(OBJ)
 
 clean:
 	rm -f *.o
 
-%.o:	%.cpp
-	$(CXX) -c $(GDAL_INCLUDE) $(CXXFLAGS) $(KAKINC) -I. \
-		$*.cpp -o $*.o
-
-install-obj:	$(foreach file,$(OBJ),../o/$(file))
+install-obj:	$(O_OBJ)
 	cp $(APPOBJ) ../o

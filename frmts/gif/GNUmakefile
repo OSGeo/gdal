@@ -24,4 +24,4 @@ clean:
 
 all:	$(OBJ)
 
-install-obj:	$(foreach file,$(OBJ),../o/$(file))
+install-obj:	$(O_OBJ)

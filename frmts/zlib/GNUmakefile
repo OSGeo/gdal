@@ -13,11 +13,4 @@ default:	$(OBJ)
 clean:
 	rm -f *.o
 
-%.o:	%.c
-	$(CC) -c $(CFLAGS) $*.c -o $*.o
-
-%.o:	%.cpp
-	$(CXX) -c $(CXXFLAGS) $*.cpp -o $*.o
-
-
-install-obj:	$(foreach file,$(OBJ),../o/$(file))
+install-obj:	$(O_OBJ)

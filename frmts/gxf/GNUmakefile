@@ -10,23 +10,17 @@ include $(GDAL_ROOT)/GDALmake.opt
 GXFOBJ	=	gxfopen.o gxf_proj4.o gxf_ogcwkt.o
 OBJ	=	gxfdataset.o $(GXFOBJ)
 
+CPPFLAGS	=	$(GDAL_INCLUDE)
 
 default:	$(OBJ)
 
 clean:
 	rm -f *.o
 
-%.o:	%.c
-	$(CC) -c $(GDAL_INCLUDE) $(CFLAGS) $*.c -o $*.o
-
-%.o:	%.cpp
-	$(CXX) -c $(GDAL_INCLUDE) $(CXXFLAGS) $*.cpp -o $*.o
-
-
 gxftest:	gxftest.o $(GXFOBJ)
 	$(CXX) gxftest.o $(GXFOBJ) $(GDAL_ROOT)/port/*.o $(LIBS) -o gxftest
 
-install-obj:	$(foreach file,$(OBJ),../o/$(file))
+install-obj:	$(O_OBJ)
 
 $(SHARED_LIB):	$(OBJ)
 	$(LD_SHARED) $(OBJ) $(GDAL_SLIB_LINK) $(LIBS) -o $(SHARED_LIB) 

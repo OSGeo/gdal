@@ -20,22 +20,16 @@ OBJ	=	jpgdataset.o
 XTRA_OPT	=	
 endif
 
+CPPFLAGS	=	$(XTRA_OPT) $(GDAL_INCLUDE)
 
 default:	$(OBJ)
 
 clean:
 	rm -f *.o
 
-%.o:	%.c
-	$(CC) -c $(XTRA_OPT) $(GDAL_INCLUDE) $(CFLAGS) $*.c -o $*.o
-
 %.o:	libjpeg/%.c
 	$(CC) -c $(XTRA_OPT) $(GDAL_INCLUDE) $(CFLAGS) libjpeg/$*.c -o $*.o
 
-%.o:	%.cpp
-	$(CXX) -c $(XTRA_OPT) $(GDAL_INCLUDE) $(CXXFLAGS) $*.cpp -o $*.o
-
-
 all:	$(OBJ)
 
-install-obj:	$(foreach file,$(OBJ),../o/$(file))
+install-obj:	$(O_OBJ)

@@ -15,7 +15,7 @@ clean:
 
 all:	$(OBJ)
 
-install-obj:	$(foreach file,$(OBJ),../o/$(file))
+install-obj:	$(O_OBJ)
 
 envisat_dump:	envisat_dump.o EnvisatFile.o
 	$(CC) $(CFLAGS) envisat_dump.o EnvisatFile.o $(GDAL_LIB) -ldl -lm -o envisat_dump

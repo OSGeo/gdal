@@ -8,15 +8,11 @@ OBJ	=	rawdataset.o ehdrdataset.o pauxdataset.o doq1dataset.o \
 		fujibasdataset.o envidataset.o gscdataset.o fastdataset.o \
 		atlsci_spheroid.o
 
+CPPFLAGS	+=	$(GDAL_INCLUDE)
+
 default:	$(OBJ)
 
 clean:
 	rm -f *.o
 
-%.o:	%.c
-	$(CC) -c $(GDAL_INCLUDE) $(CFLAGS) $*.c -o $*.o
-
-%.o:	%.cpp
-	$(CXX) -c $(GDAL_INCLUDE) $(CXXFLAGS) $*.cpp -o $*.o
-
-install-obj:	$(foreach file,$(OBJ),../o/$(file))
+install-obj:	$(O_OBJ)

@@ -46,5 +46,4 @@ lib-tiff:
 lib-geotiff:
 	(cd libgeotiff; $(MAKE) install-obj)
 
-install-obj:	$(SUBLIBS) \
-		$(foreach file,$(OBJ),../o/$(file))
+install-obj:	$(SUBLIBS) $(O_OBJ)

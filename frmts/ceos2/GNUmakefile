@@ -8,11 +8,11 @@ include $(GDAL_ROOT)/GDALmake.opt
 
 XTRAOPTS =	-I../raw
 
-CPPFLAGS	=	$(GDAL_INCLUDE) $(XTRAOPTS)
+CPPFLAGS	+=	$(GDAL_INCLUDE) $(XTRAOPTS)
 
 default:	$(OBJ)
 
 clean:
 	rm -f *.o
 
-install-obj:	$(foreach file,$(OBJ),../o/$(file))
+install-obj:	$(O_OBJ)

@@ -9,7 +9,7 @@ OBJ	=	bsb_read.o bsbdataset.o
 
 DISTDIR =	bsb-$(VERSION)
 
-CPPFLAGS	=	$(GDAL_INCLUDE)
+CPPFLAGS	+=	$(GDAL_INCLUDE)
 
 default:	$(OBJ)
 
@@ -20,7 +20,7 @@ bsb2raw:	bsb2raw.o bsb_read.o
 	$(CXX) bsb2raw.o bsb_read.o $(GDAL_LIB) $(LIBS) -o bsb2raw
 
 
-install-obj:	$(foreach file,$(OBJ),../o/$(file))
+install-obj:	$(O_OBJ)
 
 dist:	
 	rm -rf $(DISTDIR)
@@ -36,4 +36,3 @@ dist:
 	rm $(DISTDIR)/*.o
 	tar czf $(DISTDIR).tar.gz $(DISTDIR)
 	zip -r $(DISTDIR).zip $(DISTDIR)
-
