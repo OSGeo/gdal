@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.23  2000/10/17 17:55:26  warmerda
+ * added comments for byte orders
+ *
  * Revision 1.22  2000/04/26 18:25:55  warmerda
  * added missing CPL_DLL attributes
  *
@@ -139,8 +142,8 @@ const char CPL_DLL * OGRGeometryTypeToName( OGRwkbGeometryType );
 
 enum OGRwkbByteOrder
 {
-    wkbXDR = 0,
-    wkbNDR = 1
+    wkbXDR = 0,		/* MSB/Sun/Motoroloa: Most Significant Byte First   */
+    wkbNDR = 1          /* LSB/Intel/Vax: Least Significant Byte First      */
 };
 
 /**
