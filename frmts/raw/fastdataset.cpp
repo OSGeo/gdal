@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.1  2002/10/05 12:35:31  dron
+ * FAST driver moved to the RAW directory.
+ *
  * Revision 1.5  2002/10/04 16:06:06  dron
  * Some redundancy removed.
  *
@@ -213,65 +216,103 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
     pszDirname = CPLStrdup( CPLGetDirname( poOpenInfo->pszFilename ) );
     
 /* -------------------------------------------------------------------- */
-/*      Read the administrative header.                                 */
+/*    Read the administrative header and calibration coefficients.      */
 /* -------------------------------------------------------------------- */
     char	*pszHeader;
     const char	*pszChannelFilename;
-    char	pszTempName[FAST_FILENAME_SIZE + 1];
+    char	pszFilename[FAST_FILENAME_SIZE + 1];
+    char	pszValue[FAST_VALUE_SIZE + 1];
     
     pszHeader = (char *)CPLMalloc( ADM_HEADER_SIZE );
     VSIFSeek( poDS->fpHeader, 0, SEEK_SET );
     VSIFRead( pszHeader, 1, ADM_HEADER_SIZE, poDS->fpHeader );
 
-    pszTempName[FAST_FILENAME_SIZE] = '\0';
+    pszFilename[FAST_FILENAME_SIZE] = '\0';
+    pszFilename[FAST_VALUE_SIZE] = '\0';
     poDS->nBands = 0;
     if ( pszHeader[1130] != ' ' )
     {
-	memcpy( pszTempName, pszHeader + 1130, FAST_FILENAME_SIZE );
-	pszChannelFilename = CPLFormFilename( pszDirname, pszTempName, NULL );
+	memcpy( pszFilename, pszHeader + 1130, FAST_FILENAME_SIZE );
+	pszChannelFilename = CPLFormFilename( pszDirname, pszFilename, NULL );
         poDS->fpChannels[poDS->nBands] = VSIFOpen( pszChannelFilename, "rb" );
 	if ( poDS->fpChannels[poDS->nBands] )
+	{
 	    poDS->nBands++;
+	    memcpy( pszValue, pszHeader + 1616, FAST_VALUE_SIZE );
+	    poDS->SetMetadataItem( CPLSPrintf("BIAS%d",  poDS->nBands), pszValue );
+	    memcpy( pszValue, pszHeader + 1641, FAST_VALUE_SIZE );
+	    poDS->SetMetadataItem( CPLSPrintf("GAIN%d",  poDS->nBands), pszValue );
+	}
     }
     if ( pszHeader[1169] != ' ' )
     {
-	memcpy( pszTempName, pszHeader + 1169, FAST_FILENAME_SIZE );
-	pszChannelFilename = CPLFormFilename( pszDirname, pszTempName, NULL );
+	memcpy( pszFilename, pszHeader + 1169, FAST_FILENAME_SIZE );
+	pszChannelFilename = CPLFormFilename( pszDirname, pszFilename, NULL );
 	poDS->fpChannels[poDS->nBands] = VSIFOpen( pszChannelFilename, "rb" );
 	if ( poDS->fpChannels[poDS->nBands] )
+	{
 	    poDS->nBands++;
+	    memcpy( pszValue, pszHeader + 1696, FAST_VALUE_SIZE );
+	    poDS->SetMetadataItem( CPLSPrintf("BIAS%d",  poDS->nBands), pszValue );
+	    memcpy( pszValue, pszHeader + 1721, FAST_VALUE_SIZE );
+	    poDS->SetMetadataItem( CPLSPrintf("GAIN%d",  poDS->nBands), pszValue );
+	}
     }
     if ( pszHeader[1210] != ' ' )
     {
-	memcpy( pszTempName, pszHeader + 1210, FAST_FILENAME_SIZE );
-	pszChannelFilename = CPLFormFilename( pszDirname, pszTempName, NULL );
+	memcpy( pszFilename, pszHeader + 1210, FAST_FILENAME_SIZE );
+	pszChannelFilename = CPLFormFilename( pszDirname, pszFilename, NULL );
         poDS->fpChannels[poDS->nBands] = VSIFOpen( pszChannelFilename, "rb" );
 	if ( poDS->fpChannels[poDS->nBands] )
+	{
 	    poDS->nBands++;
+	    memcpy( pszValue, pszHeader + 1776, FAST_VALUE_SIZE );
+	    poDS->SetMetadataItem( CPLSPrintf("BIAS%d",  poDS->nBands), pszValue );
+	    memcpy( pszValue, pszHeader + 1801, FAST_VALUE_SIZE );
+	    poDS->SetMetadataItem( CPLSPrintf("GAIN%d",  poDS->nBands), pszValue );
+	}
     }
     if ( pszHeader[1249] != ' ' )
     {
-	memcpy( pszTempName, pszHeader + 1249, FAST_FILENAME_SIZE );
-	pszChannelFilename = CPLFormFilename( pszDirname, pszTempName, NULL );
+	memcpy( pszFilename, pszHeader + 1249, FAST_FILENAME_SIZE );
+	pszChannelFilename = CPLFormFilename( pszDirname, pszFilename, NULL );
         poDS->fpChannels[poDS->nBands] = VSIFOpen( pszChannelFilename, "rb" );
 	if ( poDS->fpChannels[poDS->nBands] )
+	{
 	    poDS->nBands++;
+	    memcpy( pszValue, pszHeader + 1856, FAST_VALUE_SIZE );
+	    poDS->SetMetadataItem( CPLSPrintf("BIAS%d",  poDS->nBands), pszValue );
+	    memcpy( pszValue, pszHeader + 1881, FAST_VALUE_SIZE );
+	    poDS->SetMetadataItem( CPLSPrintf("GAIN%d",  poDS->nBands), pszValue );
+	}
     }
     if ( pszHeader[1290] != ' ' )
     {
-	memcpy( pszTempName, pszHeader + 1290, FAST_FILENAME_SIZE );
-	pszChannelFilename = CPLFormFilename( pszDirname, pszTempName, NULL );
+	memcpy( pszFilename, pszHeader + 1290, FAST_FILENAME_SIZE );
+	pszChannelFilename = CPLFormFilename( pszDirname, pszFilename, NULL );
         poDS->fpChannels[poDS->nBands] = VSIFOpen( pszChannelFilename, "rb" );
 	if ( poDS->fpChannels[poDS->nBands] )
+	{
 	    poDS->nBands++;
+	    memcpy( pszValue, pszHeader + 1936, FAST_VALUE_SIZE );
+	    poDS->SetMetadataItem( CPLSPrintf("BIAS%d",  poDS->nBands), pszValue );
+	    memcpy( pszValue, pszHeader + 1961, FAST_VALUE_SIZE );
+	    poDS->SetMetadataItem( CPLSPrintf("GAIN%d",  poDS->nBands), pszValue );
+	}
     }
     if ( pszHeader[1329] != ' ' )
     {
-	memcpy( pszTempName, pszHeader + 1329, FAST_FILENAME_SIZE );
-	pszChannelFilename = CPLFormFilename( pszDirname, pszTempName, NULL );
+	memcpy( pszFilename, pszHeader + 1329, FAST_FILENAME_SIZE );
+	pszChannelFilename = CPLFormFilename( pszDirname, pszFilename, NULL );
         poDS->fpChannels[poDS->nBands] = VSIFOpen( pszChannelFilename, "rb" );
 	if ( poDS->fpChannels[poDS->nBands] )
+	{
 	    poDS->nBands++;
+	    memcpy( pszValue, pszHeader + 2016, FAST_VALUE_SIZE );
+	    poDS->SetMetadataItem( CPLSPrintf("BIAS%d",  poDS->nBands), pszValue );
+	    memcpy( pszValue, pszHeader + 2041, FAST_VALUE_SIZE );
+	    poDS->SetMetadataItem( CPLSPrintf("GAIN%d",  poDS->nBands), pszValue );
+	}
     }
 
     if ( !poDS->nBands )
@@ -286,20 +327,6 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
         default:
 	poDS->eDataType = GDT_Byte;
 	break;
-    }
-
-/* -------------------------------------------------------------------- */
-/*          Read calibration coefficients				*/
-/* -------------------------------------------------------------------- */
-    pszTempName[FAST_VALUE_SIZE] = '\0';
-
-    for ( i = 0; i < poDS->nBands; i++ )
-    {
-	// pszTempName has enough size to hold numeric values
-	memcpy( pszTempName, pszHeader + 1616 + i * 80, FAST_VALUE_SIZE );
-	poDS->SetMetadataItem( CPLSPrintf("BIAS%d", i + 1), pszTempName );
-	memcpy( pszTempName, pszHeader + 1641 + i * 80, FAST_VALUE_SIZE );
-	poDS->SetMetadataItem( CPLSPrintf("GAIN%d", i + 1), pszTempName );
     }
 
 /* -------------------------------------------------------------------- */
