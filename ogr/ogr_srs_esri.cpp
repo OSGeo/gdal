@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2001/11/09 21:06:40  warmerda
+ * stripctparms may not results in null root
+ *
  * Revision 1.9  2001/10/11 19:27:54  warmerda
  * worked on esri morphing
  *
@@ -385,15 +388,15 @@ OGRErr OGRSpatialReference::morphToESRI()
 {
     OGRErr	eErr;
 
-    if( GetRoot() == NULL )
-        return OGRERR_NONE;
-
 /* -------------------------------------------------------------------- */
 /*      Strip all CT parameters (AXIS, AUTHORITY, TOWGS84, etc).        */
 /* -------------------------------------------------------------------- */
     eErr = StripCTParms();
     if( eErr != OGRERR_NONE )
         return eErr;
+
+    if( GetRoot() == NULL )
+        return OGRERR_NONE;
 
 /* -------------------------------------------------------------------- */
 /*      Translate PROJECTION keywords that are misnamed.                */
