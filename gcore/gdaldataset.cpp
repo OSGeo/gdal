@@ -1,5 +1,12 @@
 /******************************************************************************
- * Copyright (c) 1998, Frank Warmerdam
+ * $Id$
+ *
+ * Project:  GDAL Core
+ * Purpose:  Base class for raster file formats.  
+ * Author:   Frank Warmerdam, warmerda@home.com
+ *
+ ******************************************************************************
+ * Copyright (c) 1998, 2000, Frank Warmerdam
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -20,11 +27,10 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************
  *
- * gdaldataset.cpp
- *
- * The GDALDataset class.
- * 
  * $Log$
+ * Revision 1.11  2000/03/06 02:20:56  warmerda
+ * added reference counting
+ *
  * Revision 1.10  2000/02/28 16:34:49  warmerda
  * set the nRasterX/YSize in bands
  *
@@ -46,7 +52,6 @@
  *
  * Revision 1.4  1999/01/11 15:37:55  warmerda
  * fixed log keyword
- * 
  */
 
 #include "gdal_priv.h"
@@ -64,6 +69,7 @@ GDALDataset::GDALDataset()
     nRasterYSize = 512;
     nBands = 0;
     papoBands = NULL;
+    nRefCount = 1;
 }
 
 /************************************************************************/
@@ -546,5 +552,66 @@ GDALDriverH GDALGetDatasetDriver( GDALDatasetH hDataset )
 
 {
     return (GDALDriverH) ((GDALDataset *) hDataset)->GetDriver();
+}
+
+/************************************************************************/
+/*                             Reference()                              */
+/************************************************************************/
+
+/**
+ * Add one to dataset reference count.
+ *
+ * The reference is one after instantiation.
+ *
+ * This method is the same as the C GDALReferenceDataset() function.
+ *
+ * @return the post-increment reference count.
+ */
+
+int GDALDataset::Reference()
+
+{
+    return ++nRefCount;
+}
+
+/************************************************************************/
+/*                        GDALReferenceDataset()                        */
+/************************************************************************/
+
+int GDALReferenceDataset( GDALDatasetH hDataset )
+
+{
+    return ((GDALDataset *) hDataset)->Reference();
+}
+
+/************************************************************************/
+/*                             Reference()                              */
+/************************************************************************/
+
+/**
+ * Subtract one from dataset reference count.
+ *
+ * The reference is one after instantiation.  Generally when the reference
+ * count has dropped to zero the dataset may be safely deleted (closed).
+ *
+ * This method is the same as the C GDALDereferenceDataset() function.
+ *
+ * @return the post-decrement reference count.
+ */
+
+int GDALDataset::Dereference()
+
+{
+    return --nRefCount;
+}
+
+/************************************************************************/
+/*                       GDALDereferenceDataset()                       */
+/************************************************************************/
+
+int GDALDereferenceDataset( GDALDatasetH hDataset )
+
+{
+    return ((GDALDataset *) hDataset)->Dereference();
 }
 
