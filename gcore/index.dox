@@ -13,11 +13,15 @@ a similar capability for simple features vector data.
 The <a href="NEWS.html">NEWS</a> page describes the September 2004
 GDAL 1.2.2 release.<p>
 
-Master Page: <a href="http://www.remotesensing.org/gdal/index.html">
-http://www.remotesensing.org/gdal/index.html</a><br>
-Mirror: <a href="http://gdal.maptools.org">http://gdal.maptools.org/</a><br>
+Master Page: <a href="http://www.gdal.org/index.html">http://www.gdal.org</a><br>
+Mirror Page: <a href="http://www.remotesensing.org/gdal/index.html">
+http://www.remotesensing.org/gdal</a><br>
+Mirror: <a href="http://gdal.maptools.org">http://gdal.maptools.org</a><br>
+Download: 
+<a href="http://www.gdal.org/dl">http at gdal.org</a>,
+<a href="ftp://ftp.remotesensing.org/gdal">ftp at remotesensing.org</a>,
+<a href="http://gdal.maptools.org/dl">http at maptools.org</a><br>
 Primary Maintainer: <a href="http://pobox.com/~warmerdam">Frank Warmerdam</a>.<p>
-
 
 <h2>User Oriented Documentation</h2>
 
