@@ -1,3 +1,7 @@
+2000-10-17  Frank Warmerdam  <warmerda@cs46980-c>
+
+	* Added PostgreSQL vector driver under ogr/ogrsf_frmts/pg.
+
 2000-10-13  Frank Warmerdam  <warmerda@cs46980-c>
 
 	* GTiff: improved support for writing GCS codes, and hardcode 
