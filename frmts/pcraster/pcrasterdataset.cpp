@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2004/11/13 19:00:55  fwarmerdam
+ * Don't blow an assertion if we don't have enough header data, just
+ * return NULL (in open()).
+ *
  * Revision 1.5  2004/11/13 12:08:44  kdejong
  * Reading files with other cell representations than UINT1, INT4 or REAL4 will keep their original cell representation in memory.
  *
@@ -115,7 +119,8 @@ GDALDataset* PCRasterDataset::open(GDALOpenInfo* info)
 {
   PCRasterDataset* dataset = 0;
 
-  assert(info->nHeaderBytes >= static_cast<int>(CSF_SIZE_SIG));
+  if( info->nHeaderBytes < static_cast<int>(CSF_SIZE_SIG) )
+      return NULL;
 
   if(info->fp && strncmp((char*)info->pabyHeader, CSF_SIG, CSF_SIZE_SIG) == 0) {
     MOPEN_PERM mode = M_READ;
