@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.27  2004/05/06 14:58:06  warmerda
+ * added USE00A and STDIDC parsing and reporting as metadata
+ *
  * Revision 1.26  2004/04/30 17:38:28  warmerda
  * clean up metadata
  *
@@ -1527,6 +1530,137 @@ int NITFReadRPC00B( NITFImage *psImage, NITFRPC00BInfo *psRPC )
     }
 
     return TRUE;
+}
+
+/************************************************************************/
+/*                           NITFReadUSE00A()                           */
+/*                                                                      */
+/*      Read a USE00A TRE and return contents as metadata strings.      */
+/************************************************************************/
+
+char **NITFReadUSE00A( NITFImage *psImage )
+
+{
+    const char *pachTRE;
+    int  nTRESize;
+    char **papszMD = NULL;
+
+
+/* -------------------------------------------------------------------- */
+/*      Do we have the TRE?                                             */
+/* -------------------------------------------------------------------- */
+    pachTRE = NITFFindTRE( psImage->pachTRE, psImage->nTREBytes, 
+                           "USE00A", &nTRESize );
+
+    if( pachTRE == NULL )
+        return NULL;
+
+    if( nTRESize != 107 )
+    {
+        CPLError( CE_Warning, CPLE_AppDefined, 
+                  "USE00A TRE wrong size, ignoring." );
+        return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Parse out field values.                                         */
+/* -------------------------------------------------------------------- */
+    NITFExtractMetadata( &papszMD, pachTRE,   0,   3, 
+                         "NITF_USE00A_ANGLE_TO_NORTH" );
+    NITFExtractMetadata( &papszMD, pachTRE,   3,   5, 
+                         "NITF_USE00A_MEAN_GSD" );
+    /* reserved: 1 */
+    NITFExtractMetadata( &papszMD, pachTRE,   9,   5, 
+                         "NITF_USE00A_DYNAMIC_RANGE" );
+    /* reserved: 3+1+3 */
+    NITFExtractMetadata( &papszMD, pachTRE,  21,   5, 
+                         "NITF_USE00A_OBL_ANG" );
+    NITFExtractMetadata( &papszMD, pachTRE,  26,   6, 
+                         "NITF_USE00A_ROLL_ANG" );
+    /* reserved: 12+15+4+1+3+1+1 = 37 */
+    NITFExtractMetadata( &papszMD, pachTRE,  69,   2, 
+                         "NITF_USE00A_N_REF" );
+    NITFExtractMetadata( &papszMD, pachTRE,  71,   5, 
+                         "NITF_USE00A_REV_NUM" );
+    NITFExtractMetadata( &papszMD, pachTRE,  76,   3, 
+                         "NITF_USE00A_N_SEG" );
+    NITFExtractMetadata( &papszMD, pachTRE,  79,   6, 
+                         "NITF_USE00A_MAX_LP_SEG" );
+    /* reserved: 6+6 */
+    NITFExtractMetadata( &papszMD, pachTRE,  97,   5, 
+                         "NITF_USE00A_SUN_EL" );
+    NITFExtractMetadata( &papszMD, pachTRE, 102,   5, 
+                         "NITF_USE00A_SUN_AZ" );
+
+    return papszMD;
+}
+
+/************************************************************************/
+/*                           NITFReadSTDIDC()                           */
+/*                                                                      */
+/*      Read a STDIDC TRE and return contents as metadata strings.      */
+/************************************************************************/
+
+char **NITFReadSTDIDC( NITFImage *psImage )
+
+{
+    const char *pachTRE;
+    int  nTRESize;
+    char **papszMD = NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Do we have the TRE?                                             */
+/* -------------------------------------------------------------------- */
+    pachTRE = NITFFindTRE( psImage->pachTRE, psImage->nTREBytes, 
+                           "STDIDC", &nTRESize );
+
+    if( pachTRE == NULL )
+        return NULL;
+
+    if( nTRESize != 89 )
+    {
+        CPLError( CE_Warning, CPLE_AppDefined, 
+                  "STDIDC TRE wrong size, ignoring." );
+        return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Parse out field values.                                         */
+/* -------------------------------------------------------------------- */
+    NITFExtractMetadata( &papszMD, pachTRE,   0,  14, 
+                         "NITF_STDIDC_ACQUISITION_DATE" );
+    NITFExtractMetadata( &papszMD, pachTRE,  14,  14, 
+                         "NITF_STDIDC_MISSION" );
+    NITFExtractMetadata( &papszMD, pachTRE,  28,   2, 
+                         "NITF_STDIDC_PASS" );
+    NITFExtractMetadata( &papszMD, pachTRE,  30,   3, 
+                         "NITF_STDIDC_OP_NUM" );
+    NITFExtractMetadata( &papszMD, pachTRE,  33,   2, 
+                         "NITF_STDIDC_START_SEGMENT" );
+    NITFExtractMetadata( &papszMD, pachTRE,  35,   2, 
+                         "NITF_STDIDC_REPRO_NUM" );
+    NITFExtractMetadata( &papszMD, pachTRE,  37,   3, 
+                         "NITF_STDIDC_REPLAY_REGEN" );
+    /* reserved: 1 */
+    NITFExtractMetadata( &papszMD, pachTRE,  41,   3, 
+                         "NITF_STDIDC_START_COLUMN" );
+    NITFExtractMetadata( &papszMD, pachTRE,  44,   5, 
+                         "NITF_STDIDC_START_ROW" );
+    NITFExtractMetadata( &papszMD, pachTRE,  49,   2, 
+                         "NITF_STDIDC_END_SEGMENT" );
+    NITFExtractMetadata( &papszMD, pachTRE,  51,   3, 
+                         "NITF_STDIDC_END_COLUMN" );
+    NITFExtractMetadata( &papszMD, pachTRE,  54,   5, 
+                         "NITF_STDIDC_END_ROW" );
+    NITFExtractMetadata( &papszMD, pachTRE,  59,   2, 
+                         "NITF_STDIDC_COUNTRY" );
+    NITFExtractMetadata( &papszMD, pachTRE,  61,   4, 
+                         "NITF_STDIDC_WAC" );
+    NITFExtractMetadata( &papszMD, pachTRE,  65,  11, 
+                         "NITF_STDIDC_LOCATION" );
+    /* reserved: 5+8 */
+
+    return papszMD;
 }
 
 /************************************************************************/
