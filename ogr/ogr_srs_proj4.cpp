@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.49  2004/09/10 21:04:51  fwarmerdam
+ * Various fixes for swiss oblique mercator (somerc) support.
+ * http://bugzilla.remotesensing.org/show_bug.cgi?id=423
+ *
  * Revision 1.48  2004/09/10 20:29:16  fwarmerdam
  * Re bug 423: fixed up SRS_PT_SWISS_OBLIQUE_CYLINDRICAL to use somerc.
  *
@@ -751,6 +755,16 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
                 OSR_GDV( papszNV, "y_0", 0.0 ) );
     }
 
+    else if( EQUAL(pszProj,"somerc") )
+    {
+        SetHOM( OSR_GDV( papszNV, "lat_0", 0.0 ), 
+                OSR_GDV( papszNV, "lon_0", 0.0 )+dfFromGreenwich, 
+                90.0,  90.0, 
+                OSR_GDV( papszNV, "k", 1.0 ), 
+                OSR_GDV( papszNV, "x_0", 0.0 ), 
+                OSR_GDV( papszNV, "y_0", 0.0 ) );
+    }
+
     else
     {
         CPLDebug( "OGR_PROJ4", "Unsupported projection: %s", pszProj );
@@ -1355,16 +1369,32 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
            should be applied ... see the +not_rot flag for PROJ.4.
            Just ignoring for now. */
 
-        sprintf( szProj4+strlen(szProj4),
-                 "+proj=omerc +lat_0=%.16g +lonc=%.16g +alpha=%.16g"
-                 " +k=%.16g +x_0=%.16g +y_0=%.16g ",
-                 GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
-                 GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0)
-                 - dfFromGreenwich,
-                 GetNormProjParm(SRS_PP_AZIMUTH,0.0),
-                 GetNormProjParm(SRS_PP_SCALE_FACTOR,1.0),
-                 GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
-                 GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0) );
+        /* special case for swiss oblique mercator : see bug 423 */
+        if( fabs(GetNormProjParm(SRS_PP_AZIMUTH,0.0) - 90.0) < 0.0001 
+            && fabs(GetNormProjParm(SRS_PP_RECTIFIED_GRID_ANGLE,0.0)-90.0) < 0.0001 )
+        {
+            sprintf( szProj4+strlen(szProj4),
+                     "+proj=somerc +lat_0=%.16g +lon_0=%.16g"
+                     " +x_0=%.16g +y_0=%.16g ",
+                     GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
+                     GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0)
+                     - dfFromGreenwich,
+                     GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
+                     GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0) );
+        }
+        else
+        {
+            sprintf( szProj4+strlen(szProj4),
+                     "+proj=omerc +lat_0=%.16g +lonc=%.16g +alpha=%.16g"
+                     " +k=%.16g +x_0=%.16g +y_0=%.16g ",
+                     GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
+                     GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0)
+                     - dfFromGreenwich,
+                     GetNormProjParm(SRS_PP_AZIMUTH,0.0),
+                     GetNormProjParm(SRS_PP_SCALE_FACTOR,1.0),
+                     GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
+                     GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0) );
+        }
     }
 
     else if( EQUAL(pszProjection,
