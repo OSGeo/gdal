@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2004/11/02 19:38:19  fwarmerdam
+ * set help topic
+ *
  * Revision 1.2  2004/10/30 18:54:58  fwarmerdam
  * Added support for UInt16 data (magnitude detected), and also fixed
  * so that the new "32bit void" tiff files can be read as CInt16.
@@ -494,6 +497,7 @@ void GDALRegister_RS2()
         poDriver->SetDescription( "RS2" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
                                    "RadarSat 2 XML Product" );
+        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_rs2.html" );
 
         poDriver->pfnOpen = RS2Dataset::Open;
 
