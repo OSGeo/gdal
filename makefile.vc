@@ -18,7 +18,10 @@ OGR_INCLUDE = /INCLUDE:_OCTNewCoordinateTransformation \
 !ELSE
 OGR_OBJ = ogr\ogr.lib
 OGR_INCLUDE =	/INCLUDE:_OCTNewCoordinateTransformation /INCLUDE:_OGRFree \
-		/INCLUDE:_OPTGetParameterList
+		/INCLUDE:_OPTGetParameterList \
+		/INCLUDE:_OGRFeatureStylePuller \
+		/INCLUDE:_OSRValidate \
+		/INCLUDE:_OPTGetProjectionMethods
 !ENDIF
 
 BASE_INCLUDE =	/INCLUDE:_GDALSimpleImageWarp \
