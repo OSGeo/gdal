@@ -95,7 +95,7 @@ JPEG_SUPPORTED = 1
 # You will likely require /MD and /EHsc in OPTFLAGS. 
 # If you have old MrSID DSDK version 3.1.x, uncomment MRSID_FLAGS option.
 # Otherwise it should stays commented out.
-#MRSID_DIR =	d:\projects\mrsid\
+#MRSID_DIR =	d:\projects\mrsid
 #MRSID_INCLUDE = $(MRSID_DIR)\include
 #MRSID_LIB =	/LIBPATH:$(MRSID_DIR)\lib \
 #		MrSIDDecode_md.lib lt_xTrans_md.lib advapi32.lib user32.lib
@@ -112,6 +112,9 @@ JPEG_SUPPORTED = 1
 #NETCDF_SETTING=yes
 #NETCDF_LIB=C:\Software\netcdf\lib\netcdf.lib
 #NETCDF_INC_DIR=C:\Software\netcdf\include
+
+# Uncomment the following to link PROJ.4 library statically
+#PROJ_FLAGS = -DPROJ_STATIC
 
 !IFDEF ORACLE_HOME
 OCI_LIB =	$(ORACLE_HOME)\oci\lib\msvc\ociw32.lib \
