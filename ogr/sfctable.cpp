@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  1999/06/10 19:21:20  warmerda
+ * Fixed doc typo.
+ *
  * Revision 1.5  1999/06/10 19:18:22  warmerda
  * added support for the spatial ref schema rowset
  *
@@ -588,7 +591,7 @@ OGRGeometry * SFCTable::GetOGRGeometry()
  * Zero (wkbUnknown) will be returned if there is no column info schema
  * rowset (from which this value is normally extracted). 
  *
- * @Return well known geometry type.
+ * @return well known geometry type.
  */ 
 
 int SFCTable::GetGeometryType()
@@ -609,7 +612,7 @@ int SFCTable::GetGeometryType()
  * system.  The SFCDataSource::GetWKTFromSRSId() method can be used to
  * transform this id into a useful form. 
  *
- * @Return spatial reference system id.  The value will be -1 if not known.
+ * @return spatial reference system id.  The value will be -1 if not known.
  */ 
 
 int SFCTable::GetSpatialRefID()
