@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2000/06/26 19:54:23  warmerda
+ * added options support in GDALCreateCopy
+ *
  * Revision 1.10  2000/06/26 18:46:31  warmerda
  * Added Dataset.BuildOverviews
  *
@@ -230,7 +233,7 @@ py_GDALBuildOverviews(PyObject *self, PyObject *args) {
 
     if (SWIG_GetPtr(pszSwigDS,(void **) &hDS, "_GDALDatasetH" )) {
         PyErr_SetString(PyExc_TypeError,
-	   	        "Type error in argument 1 of GDALCreateCopy."
+	   	        "Type error in argument 1 of GDALBuildOverviews."
 			" Expected _GDALDatasetH.");
         return NULL;
     }
@@ -271,6 +274,7 @@ py_GDALCreateCopy(PyObject *self, PyObject *args) {
     int  bStrict = FALSE;
     GDALDriverH hDriver = NULL;
     GDALDatasetH hSourceDS = NULL, hTargetDS = NULL;   
+    char **papszOptions = NULL;
 
     self = self;
     if(!PyArg_ParseTuple(args,"sss|iO!:GDALCreateCopy",	
@@ -292,9 +296,29 @@ py_GDALCreateCopy(PyObject *self, PyObject *args) {
         return NULL;
     }
 
+    if( poPyOptions != NULL )
+    {
+        int i;
+
+	for( i = 0; i < PyList_Size(poPyOptions); i++ )
+        {
+            char *pszItem = NULL;
+
+	    if( !PyArg_Parse(PyList_GET_ITEM(poPyOptions,i), "s", 
+			     &pszItem) )
+            {
+	        PyErr_SetString(PyExc_ValueError, "bad option list item");
+	        return NULL;
+            }
+            papszOptions = CSLAddString( papszOptions, pszItem );
+        }
+    }
+
     hTargetDS = GDALCreateCopy( hDriver, pszFilename, hSourceDS, bStrict, 
-			        NULL, NULL, NULL );
+			        papszOptions, NULL, NULL );
 	
+    CSLDestroy( papszOptions );
+
     if( hTargetDS == NULL )
     {
         Py_INCREF(Py_None);
