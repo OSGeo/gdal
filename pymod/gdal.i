@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2000/06/26 17:58:15  warmerda
+ * added driver, createcopy support
+ *
  * Revision 1.8  2000/06/13 18:14:19  warmerda
  * added control of the gdal raster cache
  *
@@ -203,6 +206,60 @@ int   GDALFlushCacheBlock();
 
 %{
 /************************************************************************/
+/*                           GDALCreateCopy()                           */
+/************************************************************************/
+static PyObject *
+py_GDALCreateCopy(PyObject *self, PyObject *args) {
+
+    PyObject *poPyOptions=NULL;
+    char *pszSwigDriver=NULL, *pszFilename=NULL, *pszSwigSourceDS=NULL;
+    int  bStrict = FALSE;
+    GDALDriverH hDriver = NULL;
+    GDALDatasetH hSourceDS = NULL, hTargetDS = NULL;   
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"sss|iO!:GDALCreateCopy",	
+			 &pszSwigDriver, &pszFilename, &pszSwigSourceDS, 
+			 &bStrict, &PyList_Type, &poPyOptions) )
+        return NULL;
+
+    if (SWIG_GetPtr(pszSwigDriver,(void **) &hDriver, "_GDALDriverH" )) {
+        PyErr_SetString(PyExc_TypeError,
+	   	        "Type error in argument 1 of GDALCreateCopy."
+			" Expected _GDALDriverH.");
+        return NULL;
+    }
+	
+    if (SWIG_GetPtr(pszSwigSourceDS,(void **) &hSourceDS, "_GDALDatasetH" )) {
+        PyErr_SetString(PyExc_TypeError,
+	   	        "Type error in argument 3 of GDALCreateCopy."
+			" Expected _GDALDatasetH.");
+        return NULL;
+    }
+
+    hTargetDS = GDALCreateCopy( hDriver, pszFilename, hSourceDS, bStrict, 
+			        NULL, NULL, NULL );
+	
+    if( hTargetDS == NULL )
+    {
+        Py_INCREF(Py_None);
+	return Py_None;
+    }
+    else
+    {
+        char  szSwigTarget[48];
+
+	SWIG_MakePtr( szSwigTarget, hTargetDS, "_GDALDatasetH" );	
+	return Py_BuildValue( "s", szSwigTarget );
+    }
+}
+
+%}
+
+%native(GDALCreateCopy) py_GDALCreateCopy;
+
+%{
+/************************************************************************/
 /*                         GDALReadRaster()                             */
 /************************************************************************/
 static PyObject *
@@ -289,7 +346,7 @@ py_GDALWriteRaster(PyObject *self, PyObject *args) {
     if (_argc0) {
         if (SWIG_GetPtr(_argc0,(void **) &_arg0,"_GDALRasterBandH" )) {
             PyErr_SetString(PyExc_TypeError,
-			    "Type error in argument 1 of GDALReadRaster."
+			    "Type error in argument 1 of GDALWriteRaster."
 			    " Expected _GDALRasterBandH.");
             return NULL;
         }
@@ -620,7 +677,7 @@ py_OSRImportFromWkt(PyObject *self, PyObject *args) {
 	
     err = OSRImportFromWkt( _arg0, &wkt );
 
-    return Py_BuildValue( "d", err );
+    return Py_BuildValue( "i", err );
 }
 %}
 

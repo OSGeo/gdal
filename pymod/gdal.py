@@ -29,6 +29,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.9  2000/06/26 17:58:15  warmerda
+# added driver, createcopy support
+#
 # Revision 1.8  2000/06/13 18:14:19  warmerda
 # added control of the gdal raster cache
 #
@@ -75,6 +78,14 @@ def Open(file,access=GA_ReadOnly):
         _gdal.GDALDereferenceDataset( _obj )
         return Dataset(_obj)
 
+def GetDriverList():
+    list = []
+    _gdal.GDALAllRegister()
+    driver_count = _gdal.GDALGetDriverCount()
+    for iDriver in range(driver_count):
+        list.append( Driver(_gdal.GDALGetDriver( iDriver )) )
+    return list
+    
 class GCP:
     def __init__(self):
         GCPX = 0.0
@@ -85,7 +96,23 @@ class GCP:
         Info = ''
         Id = ''
 
+class Driver:
+    
+    def __init__(self, _obj):
+        self._o = _obj
+        self.ShortName = _gdal.GDALGetDriverShortName(self._o)
+        self.LongName = _gdal.GDALGetDriverLongName(self._o)
+        self.HelpTopic = _gdal.GDALGetDriverHelpTopic(self._o)
 
+    def CreateCopy(self, filename, source_ds, strict=1, options=None):
+        target_ds = _gdal.GDALCreateCopy( self._o, filename, source_ds._o,
+                                          strict)
+        if target_ds is None:
+            return None
+        else:
+            _gdal.GDALDereferenceDataset( target_ds )
+            return Dataset(target_ds)
+        
 class Dataset:
 
     def __init__(self, _obj):
