@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2001/06/10 20:32:06  warmerda
+ * added support for external large image files
+ *
  * Revision 1.15  2001/05/31 15:46:09  warmerda
  * added uncompress support for reduce precision, non-run length encoded data
  *
@@ -110,6 +113,8 @@ HFABand::HFABand( HFAInfo_t * psInfoIn, HFAEntry * poNodeIn )
 
     nOverviews = 0;
     papoOverviews = NULL;
+
+    fpExternal = NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Does this band have overviews?  Try to find them.               */
@@ -224,10 +229,13 @@ HFABand::~HFABand()
     CPLFree( apadfPCT[0] );
     CPLFree( apadfPCT[1] );
     CPLFree( apadfPCT[2] );
+
+    if( fpExternal != NULL )
+        VSIFCloseL( fpExternal );
 }
 
 /************************************************************************/
-/*                            LoadBlockMap()                            */
+/*                           LoadBlockInfo()                            */
 /************************************************************************/
 
 CPLErr	HFABand::LoadBlockInfo()
@@ -242,12 +250,16 @@ CPLErr	HFABand::LoadBlockInfo()
     poDMS = poNode->GetNamedChild( "RasterDMS" );
     if( poDMS == NULL )
     {
+        if( poNode->GetNamedChild( "ExternalRasterDMS" ) != NULL )
+            return LoadExternalBlockInfo();
+
         CPLError( CE_Failure, CPLE_AppDefined,
                "Can't find RasterDMS field in Eimg_Layer with block list.\n");
+
         return CE_Failure;
     }
 
-    panBlockStart = (GUInt32 *) CPLMalloc(sizeof(GUInt32) * nBlocks);
+    panBlockStart = (vsi_l_offset *) CPLMalloc(sizeof(vsi_l_offset) * nBlocks);
     panBlockSize = (int *) CPLMalloc(sizeof(int) * nBlocks);
     panBlockFlag = (int *) CPLMalloc(sizeof(int) * nBlocks);
 
@@ -274,6 +286,119 @@ CPLErr	HFABand::LoadBlockInfo()
         if( nCompressType != 0 )
             panBlockFlag[iBlock] |= BFLG_COMPRESSED;
     }
+
+    return( CE_None );
+}
+
+/************************************************************************/
+/*                       LoadExternalBlockInfo()                        */
+/************************************************************************/
+
+CPLErr	HFABand::LoadExternalBlockInfo()
+
+{
+    int		iBlock;
+    HFAEntry	*poDMS;
+    
+    if( panBlockStart != NULL )
+        return( CE_None );
+
+/* -------------------------------------------------------------------- */
+/*      Get the info structure.                                         */
+/* -------------------------------------------------------------------- */
+    poDMS = poNode->GetNamedChild( "ExternalRasterDMS" );
+    CPLAssert( poDMS != NULL );
+
+/* -------------------------------------------------------------------- */
+/*      Open raw data file.                                             */
+/* -------------------------------------------------------------------- */
+    const char *pszRawFilename = poDMS->GetStringField( "fileName.string" );
+    const char *pszFullFilename;
+
+    pszFullFilename = CPLFormFilename( psInfo->pszPath, pszRawFilename, NULL );
+
+    fpExternal = VSIFOpenL( pszFullFilename, "rb" );
+    if( fpExternal == NULL )
+    {
+        CPLError( CE_Failure, CPLE_OpenFailed, 
+                  "Unable to find external data file:\n%s\n", 
+                  pszFullFilename );
+        return CE_Failure;
+    }
+   
+/* -------------------------------------------------------------------- */
+/*      Verify header.                                                  */
+/* -------------------------------------------------------------------- */
+    char	szHeader[49];
+
+    VSIFReadL( szHeader, 49, 1, fpExternal );
+
+    if( strncmp( szHeader, "ERDAS_IMG_EXTERNAL_RASTER", 26 ) != 0 )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Raw data file %s appears to be corrupt.\n",
+                  pszFullFilename );
+        return CE_Failure;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Allocate blockmap.                                              */
+/* -------------------------------------------------------------------- */
+    panBlockStart = (vsi_l_offset *) CPLMalloc(sizeof(vsi_l_offset) * nBlocks);
+    panBlockSize = (int *) CPLMalloc(sizeof(int) * nBlocks);
+    panBlockFlag = (int *) CPLMalloc(sizeof(int) * nBlocks);
+
+/* -------------------------------------------------------------------- */
+/*      Load the validity bitmap.                                       */
+/* -------------------------------------------------------------------- */
+    unsigned char *pabyBlockMap;
+    int		  nBytesPerRow;
+
+    nBytesPerRow = (nBlocksPerRow + 7) / 8;
+    pabyBlockMap = (unsigned char *) 
+        CPLMalloc(nBytesPerRow*nBlocksPerColumn+20);
+
+    VSIFSeekL( fpExternal, 
+               poDMS->GetIntField( "layerStackValidFlagsOffset[0]" ),  
+               SEEK_SET );
+
+    if( VSIFReadL( pabyBlockMap, nBytesPerRow * nBlocksPerColumn + 20, 1, 
+                   fpExternal ) != 1 )
+    {
+        CPLError( CE_Failure, CPLE_FileIO,
+                  "Failed to read block validity map." );
+        return CE_Failure;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Establish block information.  Block position is computed        */
+/*      from data base address.  Blocks are never compressed.           */
+/*      Validity is determined from the validity bitmap.                */
+/* -------------------------------------------------------------------- */
+    vsi_l_offset nBlockSize, nBlockStart;
+
+    nBlockStart = poDMS->GetIntField( "layerStackDataOffset[0]" );
+    nBlockSize = (nBlockXSize*nBlockYSize*HFAGetDataTypeBits(nDataType)+7) / 8;
+
+    for( iBlock = 0; iBlock < nBlocks; iBlock++ )
+    {
+        int	nRow, nColumn, nBit;
+
+        panBlockStart[iBlock] = nBlockStart + nBlockSize * iBlock;
+        
+        panBlockSize[iBlock] = nBlockSize;
+        
+        nColumn = iBlock % nBlocksPerRow;
+        nRow = iBlock / nBlocksPerRow;
+        nBit = nRow * nBytesPerRow * 8 + nColumn + 20 * 8;
+
+        if( (pabyBlockMap[nBit>>3] >> (nBit&7)) & 0x1 )
+            panBlockFlag[iBlock] = BFLG_VALID;
+        else
+            panBlockFlag[iBlock] = 0;
+    }
+
+    CPLFree( pabyBlockMap );
 
     return( CE_None );
 }
@@ -568,6 +693,12 @@ CPLErr HFABand::GetRasterBlock( int nXBlock, int nYBlock, void * pData )
 
 {
     int		iBlock;
+    FILE	*fpData;
+
+    if( fpExternal != NULL )
+        fpData = fpExternal;
+    else
+        fpData = psInfo->fp;
 
     if( LoadBlockInfo() != CE_None )
         return CE_Failure;
@@ -575,8 +706,8 @@ CPLErr HFABand::GetRasterBlock( int nXBlock, int nYBlock, void * pData )
     iBlock = nXBlock + nYBlock * nBlocksPerRow;
     
 /* -------------------------------------------------------------------- */
-/*      If the block isn't valid, or is compressed we just return       */
-/*      all zeros, and an indication of failure.                        */
+/*      If the block isn't valid, we just return all zeros, and an	*/
+/*	indication of failure.                        			*/
 /* -------------------------------------------------------------------- */
     if( !panBlockFlag[iBlock] & BFLG_VALID )
     {
@@ -593,7 +724,7 @@ CPLErr HFABand::GetRasterBlock( int nXBlock, int nYBlock, void * pData )
 /* -------------------------------------------------------------------- */
 /*      Otherwise we really read the data.                              */
 /* -------------------------------------------------------------------- */
-    if( VSIFSeekL( psInfo->fp, panBlockStart[iBlock], SEEK_SET ) != 0 )
+    if( VSIFSeekL( fpData, panBlockStart[iBlock], SEEK_SET ) != 0 )
     {
         CPLError( CE_Failure, CPLE_FileIO, 
                   "Seek to %d failed.\n", panBlockStart[iBlock] );
@@ -611,7 +742,7 @@ CPLErr HFABand::GetRasterBlock( int nXBlock, int nYBlock, void * pData )
 
         pabyCData = (GByte *) CPLMalloc(panBlockSize[iBlock]);
 
-        if( VSIFReadL( pabyCData, panBlockSize[iBlock], 1, psInfo->fp ) != 1 )
+        if( VSIFReadL( pabyCData, panBlockSize[iBlock], 1, fpData ) != 1 )
         {
             CPLError( CE_Failure, CPLE_FileIO, 
                       "Read of %d bytes at %d failed.\n", 
@@ -633,7 +764,7 @@ CPLErr HFABand::GetRasterBlock( int nXBlock, int nYBlock, void * pData )
 /* -------------------------------------------------------------------- */
 /*      Read uncompressed data directly into the return buffer.         */
 /* -------------------------------------------------------------------- */
-    if( VSIFReadL( pData, panBlockSize[iBlock], 1, psInfo->fp ) != 1 )
+    if( VSIFReadL( pData, panBlockSize[iBlock], 1, fpData ) != 1 )
         return CE_Failure;
 
 /* -------------------------------------------------------------------- */
