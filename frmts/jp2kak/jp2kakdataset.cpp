@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.22  2004/07/23 19:13:41  warmerda
+ * Added J2K_SUBFILE support
+ *
  * Revision 1.21  2004/04/02 17:26:46  warmerda
  * Added creation options.
  *
@@ -137,6 +140,7 @@
 #ifdef FILEIO_DEBUG
 #include "dbg_file_source.h"
 #endif
+#include "subfile_source.h"
 
 // Application level includes
 #include "kdu_file_io.h"
@@ -1011,6 +1015,7 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
 {
     const char  *pszExtension = NULL;
     int         bIsJPIP = FALSE;
+    int         bIsSubfile = FALSE;
 
     if( poOpenInfo->fp == NULL )
     {
@@ -1021,6 +1026,10 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
             && EQUAL(pszExtension,"jp2") )
         {
             bIsJPIP = TRUE;
+        }
+        else if( EQUALN(poOpenInfo->pszFilename,"J2K_SUBFILE:",12) )
+        {
+            bIsSubfile = TRUE;
         }
         else
             return NULL;
@@ -1036,7 +1045,7 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      extensions are supported for JPC files since the standard       */
 /*      prefix is so short (two bytes).                                 */
 /* -------------------------------------------------------------------- */
-    if( !bIsJPIP )
+    if( !bIsJPIP && !bIsSubfile )
     {
         if( memcmp(poOpenInfo->pabyHeader,jp2_header,sizeof(jp2_header)) == 0 )
             pszExtension = "jp2";
@@ -1081,7 +1090,11 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
 
     try
     {
-        if( bIsJPIP )
+        if( bIsSubfile )
+        {
+            poInput = new subfile_source( poOpenInfo->pszFilename );
+        }
+        else if( bIsJPIP )
         {
 #ifdef USE_JPIP
             jp2_source *jp2_src;
