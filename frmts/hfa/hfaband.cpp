@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  1999/02/15 19:32:34  warmerda
+ * Zero out compressed or invalid blocks.
+ *
  * Revision 1.2  1999/01/28 18:02:42  warmerda
  * Byte swapping fix with PCTs
  *
@@ -150,20 +153,30 @@ CPLErr HFABand::GetRasterBlock( int nXBlock, int nYBlock, void * pData )
 
     iBlock = nXBlock + nYBlock * nBlocksPerRow;
     
-    if( !(panBlockFlag[iBlock] & BFLG_VALID) )
-        return( CE_Failure );
+/* -------------------------------------------------------------------- */
+/*      If the block isn't valid, or is compressed we just return       */
+/*      all zeros, and an indication of failure.                        */
+/* -------------------------------------------------------------------- */
+    if( !(panBlockFlag[iBlock] & (BFLG_VALID|BFLG_COMPRESSED)) )
+    {
+        int	nBytes;
 
+        nBytes = HFAGetDataTypeBits(nDataType)*nBlockXSize*nBlockYSize/8;
+
+        while( nBytes > 0 )
+            ((GByte *) pData)[--nBytes] = 0;
+        
+        return( CE_Failure );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Otherwise we really read the data.                              */
+/* -------------------------------------------------------------------- */
     if( VSIFSeek( psInfo->fp, panBlockStart[iBlock], SEEK_SET ) != 0 )
         return CE_Failure;
 
     if( VSIFRead( pData, panBlockSize[iBlock], 1, psInfo->fp ) == 0 )
         return CE_Failure;
-
-    if( panBlockFlag[iBlock] & BFLG_COMPRESSED )
-    {
-        /* notdef */
-        CPLAssert( FALSE );
-    }
 
     return( CE_None );
 }
