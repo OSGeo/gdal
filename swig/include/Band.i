@@ -9,6 +9,12 @@
 
  *
  * $Log$
+ * Revision 1.7  2005/02/17 17:27:13  kruland
+ * Changed the handling of fixed size double arrays to make it fit more
+ * naturally with GDAL/OSR usage.  Declare as typedef double * double_17;
+ * If used as return argument use:  function ( ... double_17 argout ... );
+ * If used as value argument use: function (... double_17 argin ... );
+ *
  * Revision 1.6  2005/02/17 04:12:09  kruland
  * Reimplement Band::ReadRaster Band::WriteRaster so they use optional int
  * argument.  This allows keyword arguments in some languages.  Added a
@@ -143,8 +149,8 @@ public:
     return GDALChecksumImage( self, xoff, yoff, xsize, ysize );
   }
 
-  void ComputeRasterMinMax( double_2 *c_minmax, int approx_ok = 0) {
-    GDALComputeRasterMinMax( self, approx_ok, &(*c_minmax)[0] );
+  void ComputeRasterMinMax( double_2 argout, int approx_ok = 0) {
+    GDALComputeRasterMinMax( self, approx_ok, argout );
   }
 
   CPLErr Fill( double real_fill, double imag_fill =0.0 ) {

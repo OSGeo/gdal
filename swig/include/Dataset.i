@@ -9,6 +9,12 @@
 
  *
  * $Log$
+ * Revision 1.5  2005/02/17 17:27:13  kruland
+ * Changed the handling of fixed size double arrays to make it fit more
+ * naturally with GDAL/OSR usage.  Declare as typedef double * double_17;
+ * If used as return argument use:  function ( ... double_17 argout ... );
+ * If used as value argument use: function (... double_17 argin ... );
+ *
  * Revision 1.4  2005/02/16 17:41:19  kruland
  * Added a few more methods to Dataset and marked the ones still missing.
  *
@@ -68,19 +74,19 @@ public:
     return GDALSetProjection( self, prj );
   }
 
-  void GetGeoTransform( double_6 *c_transform ) {
-    if ( GDALGetGeoTransform( self, &(*c_transform)[0] ) != 0 ) {
-      (*c_transform)[0] = 0.0;
-      (*c_transform)[1] = 1.0;
-      (*c_transform)[2] = 0.0;
-      (*c_transform)[3] = 0.0;
-      (*c_transform)[4] = 0.0;
-      (*c_transform)[5] = 1.0;
+  void GetGeoTransform( double_6 argout ) {
+    if ( GDALGetGeoTransform( self, argout ) != 0 ) {
+      argout[0] = 0.0;
+      argout[1] = 1.0;
+      argout[2] = 0.0;
+      argout[3] = 0.0;
+      argout[4] = 0.0;
+      argout[5] = 1.0;
     }
   }
 
-  CPLErr SetGeoTransform( double_6 c_transform ) {
-    return GDALSetGeoTransform( self, c_transform );
+  CPLErr SetGeoTransform( double_6 argin ) {
+    return GDALSetGeoTransform( self, argin );
   }
 
 %apply (char **dict) { char ** };
