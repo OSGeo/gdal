@@ -29,6 +29,9 @@ Attribute VB_Name = "GDAL"
 '*****************************************************************************
 '
 ' $Log$
+' Revision 1.3  2005/04/06 22:29:50  fwarmerdam
+' added CreateCoordinateTransformation() function
+'
 ' Revision 1.2  2005/03/16 23:34:07  fwarmerdam
 ' fixed up open to always return a GDALDataset
 '
@@ -135,4 +138,20 @@ Public Function CreateColorTable(ByVal PaletteInterp As Long) _
     End If
 End Function
 
+' ----------------------------------------------------------------------------
+Public Function CreateCoordinateTransformation( _
+        SrcSRS As OGRSpatialReference, TrgSRS As OGRSpatialReference) _
+        As OGRCoordinateTransformation
+        
+    Dim obj As Long
+    
+    Set ct = New OGRCoordinateTransformation
+
+    obj = GDALCore.OCTNewCoordinateTransformation(SrcSRS.GetObjPtr(), _
+                                                  TrgSRS.GetObjPtr())
+    If obj <> 0 Then
+        Call ct.CInit(obj)
+    End If
+    Set CreateCoordinateTransformation = ct
+End Function
 
