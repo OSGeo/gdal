@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2003/01/10 22:31:19  warmerda
+ * various additions
+ *
  * Revision 1.5  2003/01/07 22:24:35  warmerda
  * added SRS support
  *
@@ -115,6 +118,7 @@ class CPL_DLL OGROCISession {
     OCISvcCtx  *hSvcCtx;
     OCIDescribe*hDescribe;
     OCIType    *hGeometryTDO;
+    OCIType    *hOrdinatesTDO;
 
     char       *pszUserid;
     char       *pszPassword;
@@ -132,6 +136,8 @@ class CPL_DLL OGROCISession {
         
     CPLErr   GetParmInfo( OCIParam *hParmDesc, OGRFieldDefn *poOGRDefn,
                           ub2 *pnOCIType, ub4 *pnOCILen );
+
+    void     CleanName( char * );
 
   private:
     
@@ -152,6 +158,9 @@ class CPL_DLL OGROCIStatement {
 
     OCIStmt     *GetStatement() { return hStatement; }
 
+    char        *pszCommandText;
+
+    CPLErr       Prepare( const char * pszStatement );
     CPLErr       Execute( const char * pszStatement,
                           int nMode = -1 );
     void         Clean();
@@ -285,14 +294,21 @@ class OGROCITableLayer : public OGROCILayer
 
     int			bLaunderColumnNames;
     int			bPreservePrecision;
+    int                 bValidTable;
 
     OGRSpatialReference *poSRS;
 
+    int                 nOrdinalCount;
+    int                 nOrdinalMax;
+    double             *padfOrdinals;
+
+    OCIArray           *hOrdVARRAY;
+
+    void                PushOrdinal( double );
+
     char               *TranslateToSDOGeometry( OGRGeometry * );
     OGRErr              TranslateElementGroup( OGRGeometry *poGeometry,
-                                               OGROCIStringBuf *poElemInfo,
-                                               int &nLastOrdinate,
-                                               OGROCIStringBuf *poOrdinates );
+                                               OGROCIStringBuf *poElemInfo );
 
     void                FinalizeNewLayer();
     
@@ -325,6 +341,7 @@ class OGROCITableLayer : public OGROCILayer
     virtual int         TestCapability( const char * );
 
     // following methods are not base class overrides
+    int                 IsValid() { return bValidTable; }
     void                SetDimension( int );
     void		SetLaunderFlag( int bFlag ) 
 				{ bLaunderColumnNames = bFlag; }
