@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2004/11/01 18:22:07  fwarmerdam
+ * added PALSAR support
+ *
  * Revision 1.16  2004/08/26 18:30:47  warmerda
  * added preliminary SIR-C support
  *
@@ -294,6 +297,7 @@ static char *ExtractString( CeosRecord_t *record, unsigned int offset, unsigned 
 static int GetCeosStringType(const CeosStringType_t *CeosType, const char *string);
 
 static int SIRCRecipeFCN( CeosSARVolume_t *volume, void *token );
+static int PALSARRecipeFCN( CeosSARVolume_t *volume, void *token );
 
 Link_t *RecipeFunctions = NULL;
 
@@ -304,6 +308,7 @@ void RegisterRecipes( void )
     AddRecipe( ScanSARRecipeFCN, ScanSARRecipe, "ScanSAR" );
     AddRecipe( CeosDefaultRecipe, RadarSatRecipe, "RadarSat" );
     AddRecipe( CeosDefaultRecipe, JersRecipe, "Jers" );
+    AddRecipe( PALSARRecipeFCN, RadarSatRecipe, "PALSAR-ALOS" );
     /*  AddRecipe( CeosDefaultRecipe, AtlantisRecipe ); */
 }
 
@@ -610,6 +615,74 @@ static int SIRCRecipeFCN( CeosSARVolume_t *volume, void *token )
         ImageDesc->BytesPerPixel * ImageDesc->PixelsPerLine;
     
     ImageDesc->DataType = __CEOS_TYP_CCP_COMPLEX_FLOAT;
+
+/* -------------------------------------------------------------------- */
+/*      Sanity checking                                                 */
+/* -------------------------------------------------------------------- */
+    if( ImageDesc->PixelsPerLine == 0 || ImageDesc->Lines == 0 ||
+	ImageDesc->RecordsPerLine == 0 || ImageDesc->ImageDataStart == 0 ||
+	ImageDesc->FileDescriptorLength == 0 || ImageDesc->DataType == 0 ||
+	ImageDesc->NumChannels == 0 || ImageDesc->BytesPerPixel == 0 ||
+	ImageDesc->ChannelInterleaving == 0 || ImageDesc->BytesPerRecord == 0)
+    {
+	return 0;
+    } else {
+	
+	ImageDesc->ImageDescValid = TRUE;
+	return 1;
+    }
+}    
+
+static int PALSARRecipeFCN( CeosSARVolume_t *volume, void *token )
+{
+    struct CeosSARImageDesc *ImageDesc = &(volume->ImageDesc);
+    CeosTypeCode_t TypeCode;
+    CeosRecord_t *record;
+    char szSARDataFormat[29], szProduct[32];
+
+    memset( ImageDesc, 0, sizeof( struct CeosSARImageDesc ) );
+
+/* -------------------------------------------------------------------- */
+/*      First, we need to check if the "SAR Data Format Type            */
+/*      identifier" is set to "COMPRESSED CROSS-PRODUCTS" which is      */
+/*      pretty idiosyncratic to SIRC products.  It might also appear    */
+/*      for some other similarly encoded Polarmetric data I suppose.    */
+/* -------------------------------------------------------------------- */
+    /* IMAGE_OPT */
+    TypeCode.UCharCode.Subtype1 = 63;
+    TypeCode.UCharCode.Type     = 192;
+    TypeCode.UCharCode.Subtype2 = 18;
+    TypeCode.UCharCode.Subtype3 = 18;
+
+    record = FindCeosRecord( volume->RecordList, TypeCode, 
+                             __CEOS_IMAGRY_OPT_FILE, -1, -1 );
+    if( record == NULL )
+        return 0;
+
+    ExtractString( record, 401, 28, szSARDataFormat );
+    if( !EQUALN( szSARDataFormat, "INTEGER*18                 ", 25) )
+        return 0;
+
+    ExtractString( record, 49, 16, szProduct );
+    if( !EQUALN( szProduct, "ALOS-", 5 ) )
+        return 0;
+
+/* -------------------------------------------------------------------- */
+/*      Apply normal handling...                                        */
+/* -------------------------------------------------------------------- */
+    CeosDefaultRecipe( volume, token );
+
+/* -------------------------------------------------------------------- */
+/*      Make sure this looks like the SIRC product we are expecting.    */
+/* -------------------------------------------------------------------- */
+    if( ImageDesc->BytesPerPixel != 18 )
+        return 0;
+
+/* -------------------------------------------------------------------- */
+/*      Then fix up a few values.                                       */
+/* -------------------------------------------------------------------- */
+    ImageDesc->DataType = __CEOS_TYP_PALSAR_COMPLEX_SHORT;
+    ImageDesc->NumChannels = 6;
 
 /* -------------------------------------------------------------------- */
 /*      Sanity checking                                                 */
