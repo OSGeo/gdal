@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.39  2004/02/01 14:23:29  dron
+ * Added OSRImportFromUSGS().
+ *
  * Revision 1.38  2004/01/24 09:35:00  warmerda
  * added TransformEx support to capture per point reprojection failure
  *
@@ -352,6 +355,8 @@ OGRErr CPL_DLL OSRExportToPrettyWkt( OGRSpatialReferenceH, char **, int);
 OGRErr CPL_DLL OSRExportToProj4( OGRSpatialReferenceH, char **);
 OGRErr CPL_DLL OSRExportToPCI( OGRSpatialReferenceH, char **, char **,
                                double ** );
+OGRErr CPL_DLL OSRImportFromUSGS( OGRSpatialReferenceH,
+                                  long, long, double *, long);
 OGRErr CPL_DLL OSRExportToXML( OGRSpatialReferenceH, char **, const char * );
 
 OGRErr CPL_DLL OSRMorphToESRI( OGRSpatialReferenceH );
