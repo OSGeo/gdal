@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  1999/07/23 14:04:34  warmerda
+ * Removed extra printf.
+ *
  * Revision 1.5  1999/06/28 01:21:39  warmerda
  * added support for selecting .adf files as well as coverage dir
  *
@@ -77,8 +80,6 @@ AIGInfo_t *AIGOpen( const char * pszInputName, const char * pszAccess )
         }
     }
 
-    printf( "Coveragename trimmed to:%s\n", pszCoverName );
-    
 /* -------------------------------------------------------------------- */
 /*      Allocate info structure.                                        */
 /* -------------------------------------------------------------------- */
