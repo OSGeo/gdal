@@ -13,7 +13,8 @@ OBJ	=	cpl_conv.obj \
 		cpl_findfile.obj \
 		cpl_vsil_win32.obj \
 		cpl_minixml.obj \
-		cpl_multiproc.obj
+		cpl_multiproc.obj \
+		cpl_list.obj
 
 LIB	=	cpl.lib
 
