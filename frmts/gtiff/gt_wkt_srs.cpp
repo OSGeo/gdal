@@ -31,6 +31,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.36  2003/02/18 16:39:31  warmerda
+ * Ensure GeographicTypeGeoKey, GeogGeodeticDatumGeoKey and GeogEllipsoidKey
+ * are written out as KvUserDefined when they are not know for compatibility
+ * with Erdas Imagine.
+ *
  * Revision 1.35  2003/01/08 18:24:03  warmerda
  * ensure order is fixed up
  *
@@ -1441,16 +1446,26 @@ int GTIFSetFromOGISDefn( GTIF * psGTIF, const char *pszOGCWKT )
         }
         else if( nDatum != KvUserDefined )
         {
+            GTIFKeySet( psGTIF, GeographicTypeGeoKey, TYPE_SHORT, 1, 
+                        KvUserDefined );
             GTIFKeySet( psGTIF, GeogGeodeticDatumGeoKey, TYPE_SHORT,
                         1, nDatum );
         }
         else if( nSpheroid != KvUserDefined )
         {
+            GTIFKeySet( psGTIF, GeographicTypeGeoKey, TYPE_SHORT, 1, 
+                        KvUserDefined );
+            GTIFKeySet( psGTIF, GeogGeodeticDatumGeoKey, TYPE_SHORT,
+                        1, KvUserDefined );
             GTIFKeySet( psGTIF, GeogEllipsoidGeoKey, TYPE_SHORT, 1, 
                         nSpheroid );
         }
         else if( dfSemiMajor != 0.0 )
         {
+            GTIFKeySet( psGTIF, GeographicTypeGeoKey, TYPE_SHORT, 1, 
+                        KvUserDefined );
+            GTIFKeySet( psGTIF, GeogGeodeticDatumGeoKey, TYPE_SHORT,
+                        1, KvUserDefined );
             GTIFKeySet( psGTIF, GeogEllipsoidGeoKey, TYPE_SHORT, 1, 
                         KvUserDefined );
             GTIFKeySet( psGTIF, GeogSemiMajorAxisGeoKey, TYPE_DOUBLE, 1,
