@@ -28,6 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************
  * $Log$
+ * Revision 1.37  2003/03/20 22:10:53  warmerda
+ * added support for reporting cache thrashing
+ *
  * Revision 1.36  2003/02/20 18:34:12  warmerda
  * added GDALGetRasterAccess()
  *
@@ -162,6 +165,8 @@ GDALRasterBand::GDALRasterBand()
     nBlocksPerColumn = 0;
 
     papoBlocks = NULL;
+
+    nBlockReads = 0;
 }
 
 /************************************************************************/
@@ -177,6 +182,14 @@ GDALRasterBand::~GDALRasterBand()
     FlushCache();
     
     CPLFree( papoBlocks );
+
+    if( nBlockReads > nBlocksPerRow * nBlocksPerColumn
+        && nBand == 1 && poDS != NULL )
+    {
+        CPLDebug( "GDAL", "%d block reads on %d block band 1 of %s.",
+                  nBlockReads, nBlocksPerRow * nBlocksPerColumn, 
+                  poDS->GetDescription() );
+    }
 }
 
 /************************************************************************/
@@ -889,6 +902,14 @@ GDALRasterBlock * GDALRasterBand::GetBlockRef( int nXBlockOff,
         }
 
         AdoptBlock( nXBlockOff, nYBlockOff, poBlock );
+
+        nBlockReads++;
+        if( nBlockReads == nBlocksPerRow * nBlocksPerColumn + 1 
+            && nBand == 1 && poDS != NULL )
+        {
+            CPLDebug( "GDAL", "Potential thrashing on band %d of %s.",
+                      nBand, poDS->GetDescription() );
+        }
     }
 
 /* -------------------------------------------------------------------- */

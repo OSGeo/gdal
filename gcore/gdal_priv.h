@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.41  2003/03/20 22:10:53  warmerda
+ * added support for reporting cache thrashing
+ *
  * Revision 1.40  2003/03/18 06:00:57  warmerda
  * made GDALRasterBand::FlushCache() virtual
  *
@@ -410,6 +413,8 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
     int         nBlocksPerColumn;
 
     GDALRasterBlock **papoBlocks;
+
+    int         nBlockReads;
 
     friend class GDALDataset;
     friend class GDALRasterBlock;
