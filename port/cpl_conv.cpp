@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.37  2004/03/24 09:01:17  dron
+ * Added CPLPrintUIntBig().
+ *
  * Revision 1.36  2004/02/25 09:02:25  dron
  * Fixed bug in CPLPackedDMSToDec().
  *
@@ -611,6 +614,50 @@ long CPLScanLong( char *pszString, int nMaxLength )
 }
 
 /************************************************************************/
+/*                           CPLScanUIntBig()                           */
+/************************************************************************/
+
+/**
+ * Scan up to a maximum number of characters from a string and convert
+ * the result to a GUIntBig.
+ *
+ * @param pszString String containing characters to be scanned. It may be
+ * terminated with a null character.
+ *
+ * @param nMaxLength The maximum number of character to consider as part
+ * of the number. Less characters will be considered if a null character
+ * is encountered.
+ * 
+ * @return GUIntBig value, converted from its ASCII form.
+ */
+
+GUIntBig CPLScanUIntBig( char *pszString, int nMaxLength )
+{
+    GUIntBig    iValue;
+    char        *pszValue = (char *)CPLMalloc( nMaxLength + 1);
+
+/* -------------------------------------------------------------------- */
+/*	Compute string into local buffer, and terminate it.		*/
+/* -------------------------------------------------------------------- */
+    strncpy( pszValue, pszString, nMaxLength );
+    pszValue[nMaxLength] = '\0';
+
+/* -------------------------------------------------------------------- */
+/*	Fetch out the result                                            */
+/* -------------------------------------------------------------------- */
+#if defined(WIN32) && defined(_MSC_VER)
+    iValue = _atoi64( pszValue );
+# elif HAVE_ATOLL
+    iValue = atoll( pszValue );
+#else
+    iValue = atol( pszValue );
+#endif
+
+    CPLFree( pszValue );
+    return iValue;
+}
+
+/************************************************************************/
 /*                             CPLScanDouble()                          */
 /************************************************************************/
 
@@ -687,7 +734,7 @@ double CPLScanDouble( char *pszString, int nMaxLength, char *pszLocale )
 /************************************************************************/
 
 /**
- * Copy the string pointed to by pszSrc, _not_ including the terminating
+ * Copy the string pointed to by pszSrc, NOT including the terminating
  * `\0' character, to the array pointed to by pszDest.
  *
  * @param pszDest Pointer to the destination string buffer. Should be
@@ -698,29 +745,30 @@ double CPLScanDouble( char *pszString, int nMaxLength, char *pszLocale )
  * @param nMaxLen Maximum length of the resulting string. If string length
  * is greater than nMaxLen, it will be truncated.
  * 
- * @return Pointer to the destination string pszDest.
+ * @return Number of characters printed.
  */
 
-char *CPLPrintString( char *pszDest, const char *pszSrc, int nMaxLen )
+int CPLPrintString( char *pszDest, const char *pszSrc, int nMaxLen )
 {
-    char        *pszTemp = pszDest;
+    char    *pszTemp = pszDest;
+    int     nChars = 0;
 
     if ( !pszDest )
-        return NULL;
+        return 0;
 
     if ( !pszSrc )
     {
-        memset( pszDest, '\0', nMaxLen );
-        return pszDest;
+        *pszDest = '\0';
+        return 1;
     }
 
-    while ( nMaxLen && *pszSrc )
+    while ( nChars < nMaxLen && *pszSrc )
     {
         *pszTemp++ = *pszSrc++;
-        nMaxLen--;
+        nChars++;
     }
 
-    return pszDest;
+    return nChars;
 }
 
 /************************************************************************/
@@ -728,7 +776,7 @@ char *CPLPrintString( char *pszDest, const char *pszSrc, int nMaxLen )
 /************************************************************************/
 
 /**
- * Copy the string pointed to by pszSrc, _not_ including the terminating
+ * Copy the string pointed to by pszSrc, NOT including the terminating
  * `\0' character, to the array pointed to by pszDest. Remainder of the
  * destination string will be filled with space characters. This is only
  * difference from the PrintString().
@@ -741,20 +789,21 @@ char *CPLPrintString( char *pszDest, const char *pszSrc, int nMaxLen )
  * @param nMaxLen Maximum length of the resulting string. If string length
  * is greater than nMaxLen, it will be truncated.
  * 
- * @return Pointer to the destination string pszDest.
+ * @return Number of characters printed.
  */
 
-char *CPLPrintStringFill( char *pszDest, const char *pszSrc, int nMaxLen )
+int CPLPrintStringFill( char *pszDest, const char *pszSrc, int nMaxLen )
 {
-    char        *pszTemp = pszDest;
+    char    *pszTemp = pszDest;
+    int     nChars = 0;
 
     if ( !pszDest )
-        return NULL;
+        return 0;
 
     if ( !pszSrc )
     {
-        memset( pszDest, '\0', nMaxLen );
-        return pszDest;
+        memset( pszDest, ' ', nMaxLen );
+        return nMaxLen;
     }
 
     while ( nMaxLen && *pszSrc )
@@ -766,7 +815,7 @@ char *CPLPrintStringFill( char *pszDest, const char *pszSrc, int nMaxLen )
     if ( nMaxLen )
         memset( pszTemp, ' ', nMaxLen );
 
-    return pszDest;
+    return nMaxLen;
 }
 
 /************************************************************************/
@@ -786,15 +835,15 @@ char *CPLPrintStringFill( char *pszDest, const char *pszSrc, int nMaxLen )
  * @param nMaxLen Maximum length of the resulting string. If string length
  * is greater than nMaxLen, it will be truncated.
  * 
- * @return Pointer to the destination string buffer.
+ * @return Number of characters printed.
  */
 
-char *CPLPrintInt32( char *pszBuffer, GInt32 iValue, int nMaxLen )
+int CPLPrintInt32( char *pszBuffer, GInt32 iValue, int nMaxLen )
 {
-    char        szTemp[64];
+    char    szTemp[64];
 
     if ( !pszBuffer )
-        return NULL;
+        return 0;
 
     if ( nMaxLen >= 64 )
         nMaxLen = 63;
@@ -825,15 +874,15 @@ char *CPLPrintInt32( char *pszBuffer, GInt32 iValue, int nMaxLen )
  * @param nMaxLen Maximum length of the resulting string. If string length
  * is greater than nMaxLen, it will be truncated.
  * 
- * @return Pointer to the destination string buffer.
+ * @return Number of characters printed.
  */
 
-char *CPLPrintUIntBig( char *pszBuffer, GUIntBig iValue, int nMaxLen )
+int CPLPrintUIntBig( char *pszBuffer, GUIntBig iValue, int nMaxLen )
 {
-    char        szTemp[64];
+    char    szTemp[64];
 
     if ( !pszBuffer )
-        return NULL;
+        return 0;
 
     if ( nMaxLen >= 64 )
         nMaxLen = 63;
@@ -873,20 +922,20 @@ char *CPLPrintUIntBig( char *pszBuffer, GUIntBig iValue, int nMaxLen )
  * will be used for printing a numeric value to the string (in most cases
  * it should be C/POSIX).
  *
- * @return Pointer to the destination string buffer.
+ * @return Number of characters printed.
  */
 
-char *CPLPrintDouble( char *pszBuffer, const char *pszFormat,
-                      double dfValue, char *pszLocale )
+int CPLPrintDouble( char *pszBuffer, const char *pszFormat,
+                    double dfValue, char *pszLocale )
 {
 
 #define DOUBLE_BUFFER_SIZE 64
 
-    char        szTemp[DOUBLE_BUFFER_SIZE];
-    int         i;
+    char    szTemp[DOUBLE_BUFFER_SIZE];
+    int     i;
 
     if ( !pszBuffer )
-        return NULL;
+        return 0;
 
 #if defined(HAVE_LOCALE_H) && defined(HAVE_SETLOCALE)
     char        *pszCurLocale = NULL;
@@ -896,7 +945,7 @@ char *CPLPrintDouble( char *pszBuffer, const char *pszFormat,
         // Save the current locale
         pszCurLocale = setlocale(LC_ALL, NULL );
         // Set locale to the specified value
-        setlocale(LC_ALL, pszLocale );
+        setlocale( LC_ALL, pszLocale );
     }
 #endif
 
@@ -916,7 +965,7 @@ char *CPLPrintDouble( char *pszBuffer, const char *pszFormat,
 #if defined(HAVE_LOCALE_H) && defined(HAVE_SETLOCALE)
     // Restore stored locale back
     if ( pszCurLocale )
-        setlocale(LC_ALL, pszCurLocale );
+        setlocale( LC_ALL, pszCurLocale );
 #endif
 
     return CPLPrintString( pszBuffer, szTemp, 64 );
@@ -959,13 +1008,14 @@ char *CPLPrintDouble( char *pszBuffer, const char *pszFormat,
  * as well as time format settings also may be ajusted differently from the
  * C/POSIX defaults. To solve these problems this option was introdiced.
  *
- * @return Pointer to the destination not NULL terminated buffer.
+ * @return Number of characters printed.
  */
 
-char *CPLPrintTime( char *pszBuffer, int nMaxLen, const char *pszFormat,
-                    const struct tm *poBrokenTime, char *pszLocale )
+int CPLPrintTime( char *pszBuffer, int nMaxLen, const char *pszFormat,
+                  const struct tm *poBrokenTime, char *pszLocale )
 {
-    char        *pszTemp = (char *)CPLMalloc( (nMaxLen + 1) * sizeof(char) );
+    char    *pszTemp = (char *)CPLMalloc( (nMaxLen + 1) * sizeof(char) );
+    int     nChars;
 
 #if defined(HAVE_LOCALE_H) && defined(HAVE_SETLOCALE)
     char        *pszCurLocale = NULL;
@@ -975,7 +1025,7 @@ char *CPLPrintTime( char *pszBuffer, int nMaxLen, const char *pszFormat,
         // Save the current locale
         pszCurLocale = setlocale(LC_ALL, NULL );
         // Set locale to the specified value
-        setlocale(LC_ALL, pszLocale );
+        setlocale( LC_ALL, pszLocale );
     }
 #endif
     
@@ -985,14 +1035,14 @@ char *CPLPrintTime( char *pszBuffer, int nMaxLen, const char *pszFormat,
 #if defined(HAVE_LOCALE_H) && defined(HAVE_SETLOCALE)
     // Restore stored locale back
     if ( pszCurLocale )
-        setlocale(LC_ALL, pszCurLocale );
+        setlocale( LC_ALL, pszCurLocale );
 #endif
 
-    CPLPrintString( pszBuffer, pszTemp, nMaxLen );
+    nChars = CPLPrintString( pszBuffer, pszTemp, nMaxLen );
 
     CPLFree( pszTemp );
 
-    return pszBuffer;
+    return nChars;
 }
 
 /************************************************************************/
