@@ -66,6 +66,7 @@ dist:	docs
 	cp $(GDAL_ROOT)/port/{cpl_vsi.h,cpl_conv.*} $(DISTDIR)
 	rm $(DISTDIR)/*.o
 	tar czf $(DISTDIR).tar.gz $(DISTDIR)
+	zip -r $(DISTDIR).zip $(DISTDIR)
 
 update-web:	dist docs
 	cp html/* $(WEB_DIR)
