@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.48  2004/07/10 05:02:57  warmerda
+ * Fixed improper projection parameters for false easting/northing for LCC.
+ *
  * Revision 1.47  2004/04/29 19:58:43  warmerda
  * export GTIFGetOGISDefn, and GTIFSetFromOGISDefn
  *
@@ -1425,10 +1428,10 @@ int GTIFSetFromOGISDefn( GTIF * psGTIF, const char *pszOGCWKT )
         GTIFKeySet(psGTIF, ProjStdParallel2GeoKey, TYPE_DOUBLE, 1,
                    poSRS->GetProjParm( SRS_PP_STANDARD_PARALLEL_2, 0.0 ) );
         
-        GTIFKeySet(psGTIF, ProjFalseEastingGeoKey, TYPE_DOUBLE, 1,
+        GTIFKeySet(psGTIF, ProjFalseOriginEastingGeoKey, TYPE_DOUBLE, 1,
                    poSRS->GetProjParm( SRS_PP_FALSE_EASTING, 0.0 ) );
         
-        GTIFKeySet(psGTIF, ProjFalseNorthingGeoKey, TYPE_DOUBLE, 1,
+        GTIFKeySet(psGTIF, ProjFalseOriginNorthingGeoKey, TYPE_DOUBLE, 1,
                    poSRS->GetProjParm( SRS_PP_FALSE_NORTHING, 0.0 ) );
     }
     
