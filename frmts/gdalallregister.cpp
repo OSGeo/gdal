@@ -25,6 +25,9 @@
  * Main format registration function.
  * 
  * $Log$
+ * Revision 1.15  2000/03/06 21:51:09  warmerda
+ * Added MFF
+ *
  * Revision 1.14  2000/01/31 16:24:37  warmerda
  * added aigrid2
  *
@@ -169,5 +172,6 @@ void GDALAllRegister()
     GDALRegister_DOQ1();
     GDALRegister_EHdr();
     GDALRegister_PAux();
+    GDALRegister_MFF();
 #endif
 }
