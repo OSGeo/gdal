@@ -30,6 +30,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.3  2002/07/17 13:36:18  dron
+ * <hdf.h> and <mfhdf.h> changed to "hdf.h" and "mfhdf.h".
+ *
  * Revision 1.2  2002/07/16 17:51:10  warmerda
  * removed hdf/ from include statements
  *
@@ -39,8 +42,8 @@
  *
  */
 
-#include <hdf.h>
-#include <mfhdf.h>
+#include "hdf.h"
+#include "mfhdf.h"
 
 #include "gdal_priv.h"
 #include "cpl_string.h"
@@ -434,7 +437,7 @@ void HDF4Dataset::TranslateHDF4EOSAttributes( int32 iHandle, int32 iAttribute, i
 void HDF4Dataset::TranslateHDF4Attributes( int32 iHandle, int32 iAttribute,
 		        char *pszAttrName, int32 iNumType, int32 nValues )
 {
-    int8	*pbData;
+    int8	*pbData = NULL;
     
     // Allocate a buffer to hold the attribute data.
     switch (iNumType)
@@ -590,7 +593,7 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
 	     EQUAL( szAttrName, "archivemetadata.0" ) ||
 	     EQUALN( szAttrName, "productmetadata.", 16 ) )
             poDS->TranslateHDF4EOSAttributes( poDS->hSD, iAttribute, nValues );
-	else if ( !EQUAL( szAttrName, "structmetadata.0" ) ) // Not interesting
+	else if ( !EQUALN( szAttrName, "structmetadata.", 15 ) ) // Not interesting
 	    poDS->TranslateHDF4Attributes( poDS->hSD, iAttribute,
 			                   szAttrName, iNumType, nValues );
      }

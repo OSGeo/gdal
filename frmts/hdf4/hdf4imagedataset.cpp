@@ -29,6 +29,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.3  2002/07/17 13:36:18  dron
+ * <hdf.h> and <mfhdf.h> changed to "hdf.h" and "mfhdf.h".
+ *
  * Revision 1.2  2002/07/16 17:51:10  warmerda
  * removed hdf/ from include statements
  *
@@ -38,8 +41,8 @@
  *
  */
 
-#include <hdf.h>
-#include <mfhdf.h>
+#include "hdf.h"
+#include "mfhdf.h"
 
 #include "gdal_priv.h"
 #include "cpl_string.h"
