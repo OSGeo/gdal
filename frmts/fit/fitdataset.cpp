@@ -28,6 +28,10 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.9  2001/07/25 01:25:47  nemec
+ * Changes with values used for padding - now all zeros but without overhead of
+ * zeroing memory all the time.
+ *
  * Revision 1.8  2001/07/18 04:51:56  warmerda
  * added CPL_CVSID
  *
@@ -1033,6 +1037,8 @@ static GDALDataset *FITCreateCopy(const char * pszFilename,
     // XXX - shoould FIT_PAGE_SIZE based on file page size ??
     int size = MAX(sizeof(FIThead02), FIT_PAGE_SIZE);
     FIThead02 *head = (FIThead02 *) malloc(size);
+    // clean header so padding (past real header) is all zeros
+    memset( head, 0, size );
 
     strncpy((char *) &head->magic, "IT", 2);
     strncpy((char *) &head->version, "02", 2);
@@ -1154,8 +1160,9 @@ static GDALDataset *FITCreateCopy(const char * pszFilename,
                 do_clean = TRUE;
             }
 
-            // clean out image sinnce only doing partial reads
-            memset( output, 0, pageBytes );
+            // clean out image if only doing partial reads
+            if (do_clean)
+                memset( output, 0, pageBytes );
 
             for( int iBand = 0; iBand < nBands; iBand++ ) {
                 GDALRasterBand * poBand = poSrcDS->GetRasterBand( iBand+1 );
