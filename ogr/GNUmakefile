@@ -68,6 +68,8 @@ endif
 docs:
 	rm -rf html/*
 	doxygen
+	cp ogrsf_frmts/*/drv_*.html html
+	cp ogrsf_frmts/ogr_formats.html html
 
 install-docs:
 	$(INSTALL_DIR) $(INST_DOCS)/ogr
