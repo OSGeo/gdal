@@ -26,6 +26,9 @@
  * that calls the GDAL library.
  * 
  * $Log$
+ * Revision 1.9  1999/05/23 02:46:26  warmerda
+ * Added documentation short description.
+ *
  * Revision 1.8  1999/04/21 04:16:13  warmerda
  * experimental docs
  *
@@ -56,6 +59,8 @@
 #define GDAL_H_INCLUDED
 
 /*! \file gdal.h
+ *
+ * Public (C callable) GDAL entry points.
  */
 
 #include "cpl_port.h"
