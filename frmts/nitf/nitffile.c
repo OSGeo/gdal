@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2002/12/03 18:07:59  warmerda
+ * load VQLUTs
+ *
  * Revision 1.2  2002/12/03 04:43:54  warmerda
  * lots of work
  *
@@ -168,7 +171,7 @@ NITFFile *NITFOpen( const char *pszFilename, int bUpdatable )
 void NITFClose( NITFFile *psFile )
 
 {
-    int  iSegment;
+    int  iSegment, i;
 
     for( iSegment = 0; iSegment < psFile->nSegmentCount; iSegment++ )
     {
@@ -186,6 +189,10 @@ void NITFClose( NITFFile *psFile )
     }
 
     CPLFree( psFile->pasSegmentInfo );
+    CPLFree( psFile->pasLocations );
+    for( i = 0; i < 4; i++ )
+        CPLFree( psFile->apanVQLUT[i] );
+
     if( psFile->fp != NULL )
         VSIFClose( psFile->fp );
     CPLFree( psFile->pachHeader );
@@ -332,7 +339,47 @@ static void NITFLoadLocationTable( NITFFile *psFile )
 static int NITFLoadVQTables( NITFFile *psFile )
 
 {
-    return FALSE;
+    int     i, nVQOffset=0, nVQSize=0;
+
+/* -------------------------------------------------------------------- */
+/*      Do we already have the VQ tables?                               */
+/* -------------------------------------------------------------------- */
+    if( psFile->apanVQLUT[0] != NULL )
+        return TRUE;
+
+/* -------------------------------------------------------------------- */
+/*      Do we have the location information?                            */
+/* -------------------------------------------------------------------- */
+    for( i = 0; i < psFile->nLocCount; i++ )
+    {
+        if( psFile->pasLocations[i].nLocId == 132 )
+        {
+            nVQOffset = psFile->pasLocations[i].nLocOffset;
+            nVQSize = psFile->pasLocations[i].nLocSize;
+        }
+    }
+
+    if( nVQOffset == 0 )
+        return FALSE;
+
+/* -------------------------------------------------------------------- */
+/*      Load the tables.                                                */
+/* -------------------------------------------------------------------- */
+    for( i = 0; i < 4; i++ )
+    {
+        GUInt32 nVQVector;
+
+        psFile->apanVQLUT[i] = (GUInt32 *) CPLCalloc(4096,sizeof(GUInt32));
+
+        VSIFSeek( psFile->fp, nVQOffset + 6 + i*14 + 10, SEEK_SET );
+        VSIFRead( &nVQVector, 1, 4, psFile->fp );
+        nVQVector = CPL_MSBWORD32( nVQVector );
+        
+        VSIFSeek( psFile->fp, nVQOffset + nVQVector, SEEK_SET );
+        VSIFRead( psFile->apanVQLUT[i], 4, 4096, psFile->fp );
+    }
+
+    return TRUE;
 }
 
 /************************************************************************/
