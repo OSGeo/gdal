@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2003/01/08 22:07:14  warmerda
+ * Added support for integer and real list field types
+ *
  * Revision 1.10  2002/05/09 16:03:19  warmerda
  * major upgrade to support SRS better and add ExecuteSQL
  *
@@ -65,6 +68,7 @@
 #include "cpl_conv.h"
 #include "ogr_pg.h"
 #include <libpq/libpq-fs.h>
+#include "cpl_string.h"
 
 CPL_CVSID("$Id$");
 
@@ -337,10 +341,52 @@ OGRFeature *OGRPGLayer::GetNextRawFeature()
         if( iOGRField < 0 )
             continue;
 
-        if( !PQgetisnull( hCursorResult, nResultOffset, iField ) )
+        if( PQgetisnull( hCursorResult, nResultOffset, iField ) )
+            continue;
+
+        if( poFeatureDefn->GetFieldDefn(iOGRField)->GetType() == OFTIntegerList)
+        {
+            char **papszTokens;
+            int *panList, nCount, i;
+
+            papszTokens = CSLTokenizeStringComplex( 
+                PQgetvalue( hCursorResult, nResultOffset, iField ),
+                "{,}", FALSE, FALSE );
+
+            nCount = CSLCount(papszTokens);
+            panList = (int *) CPLCalloc(sizeof(int),nCount);
+
+            for( i = 0; i < nCount; i++ )
+                panList[i] = atoi(papszTokens[i]);
+            poFeature->SetField( iOGRField, nCount, panList );
+            CPLFree( panList );
+            CSLDestroy( papszTokens );
+        }
+        else if( poFeatureDefn->GetFieldDefn(iOGRField)->GetType() == OFTRealList)
+        {
+            char **papszTokens;
+            int nCount, i;
+            double *padfList;
+
+            papszTokens = CSLTokenizeStringComplex( 
+                PQgetvalue( hCursorResult, nResultOffset, iField ),
+                "{,}", FALSE, FALSE );
+
+            nCount = CSLCount(papszTokens);
+            padfList = (double *) CPLCalloc(sizeof(double),nCount);
+
+            for( i = 0; i < nCount; i++ )
+                padfList[i] = atof(papszTokens[i]);
+            poFeature->SetField( iOGRField, nCount, padfList );
+            CPLFree( padfList );
+            CSLDestroy( papszTokens );
+        }
+        else
+        {
             poFeature->SetField( iOGRField, 
                                  PQgetvalue( hCursorResult, 
                                              nResultOffset, iField ) );
+        }
     }
 
     nResultOffset++;
