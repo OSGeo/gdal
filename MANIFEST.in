@@ -1,0 +1,14 @@
+recursive-include pymod *.py *.cpp *.c *.h *.i
+recursive-include html *
+recursive-include core *.h
+recursive-include port *.h
+recursive-include alg *.h
+recursive-include ogr *.h
+recursive-include frmts *.h
+include VERSION
+include setup.py
+include MAINFEST.in
+include *gdal*.so
+include *gdal*.lib
+include *gdal*.dll
+
