@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2001/11/07 22:14:17  warmerda
+ * add a way of statically linking in PROJ.4
+ *
  * Revision 1.9  2001/07/18 05:03:05  warmerda
  * added CPL_CVSID
  *
@@ -62,24 +65,31 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 
+#ifdef PROJ_STATIC
+#include "proj_api.h"
+#endif
+
 CPL_CVSID("$Id$");
 
 /* ==================================================================== */
 /*      PROJ.4 interface stuff.                                         */
 /* ==================================================================== */
-typedef struct { double u, v; } UV;
+#ifndef PROJ_STATIC
+typedef struct { double u, v; } projUV;
 
-#define PJ void
-
-static PJ       *(*pfn_pj_init)(int, char**) = NULL;
-static UV       (*pfn_pj_fwd)(UV, PJ *) = NULL;
-static UV       (*pfn_pj_inv)(UV, PJ *) = NULL;
-static void     (*pfn_pj_free)(PJ *) = NULL;
-static int      (*pfn_pj_transform)(PJ *, PJ*, long, int, 
-                                    double *, double *, double * );
+#define projPJ void *
 
 #define RAD_TO_DEG      57.29577951308232
 #define DEG_TO_RAD      .0174532925199432958
+
+#endif
+
+static projPJ       (*pfn_pj_init)(int, char**) = NULL;
+static projUV       (*pfn_pj_fwd)(projUV, projPJ) = NULL;
+static projUV       (*pfn_pj_inv)(projUV, projPJ) = NULL;
+static void     (*pfn_pj_free)(projPJ) = NULL;
+static int      (*pfn_pj_transform)(projPJ, projPJ, long, int, 
+                                    double *, double *, double * );
 
 #ifdef WIN32
 #  define LIBNAME      "proj.dll"
@@ -129,19 +139,32 @@ static int LoadProjLibrary()
 
     bTriedToLoad = TRUE;
 
+#ifdef PROJ_STATIC
+    pfn_pj_init = pj_init;
+    pfn_pj_fwd = pj_fwd;
+    pfn_pj_inv = pj_inv;
+    pfn_pj_free = pj_free;
+    pfn_pj_transform = pj_transform;
+#else
     CPLPushErrorHandler( CPLQuietErrorHandler );
-    pfn_pj_init = (PJ *(*)(int, char**)) CPLGetSymbol( LIBNAME,
+
+    pfn_pj_init = (projPJ (*)(int, char**)) CPLGetSymbol( LIBNAME,
                                                        "pj_init" );
     CPLPopErrorHandler();
     
     if( pfn_pj_init == NULL )
        return( FALSE );
 
-    pfn_pj_fwd = (UV (*)(UV,PJ*)) CPLGetSymbol( LIBNAME, "pj_fwd" );
-    pfn_pj_inv = (UV (*)(UV,PJ*)) CPLGetSymbol( LIBNAME, "pj_inv" );
-    pfn_pj_free = (void (*)(PJ*)) CPLGetSymbol( LIBNAME, "pj_free" );
-    pfn_pj_transform = (int (*)(PJ*,PJ*,long,int,double*,double*,double*))
+    pfn_pj_fwd = (projUV (*)(projUV,projPJ)) 
+        CPLGetSymbol( LIBNAME, "pj_fwd" );
+    pfn_pj_inv = (projUV (*)(projUV,projPJ)) 
+        CPLGetSymbol( LIBNAME, "pj_inv" );
+    pfn_pj_free = (void (*)(projPJ)) 
+        CPLGetSymbol( LIBNAME, "pj_free" );
+    pfn_pj_transform = (int (*)(projPJ,projPJ,long,int,double*,
+                                double*,double*))
                         CPLGetSymbol( LIBNAME, "pj_transform" );
+#endif
 
     if( pfn_pj_transform == NULL )
     {
