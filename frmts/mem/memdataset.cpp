@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2002/06/10 21:31:57  warmerda
+ * preserve projection and geotransform
+ *
  * Revision 1.7  2002/05/29 16:01:54  warmerda
  * fixed SetColorInterpretation
  *
@@ -287,6 +290,14 @@ CPLErr MEMRasterBand::SetColorTable( GDALColorTable *poCT )
 MEMDataset::MEMDataset()
 
 {
+    pszProjection = NULL;
+    bGeoTransformSet = FALSE;
+    adfGeoTransform[0] = 0.0;
+    adfGeoTransform[1] = 1.0;
+    adfGeoTransform[2] = 0.0;
+    adfGeoTransform[3] = 0.0;
+    adfGeoTransform[4] = 0.0;
+    adfGeoTransform[5] = -1.0;
 }
 
 /************************************************************************/
@@ -297,6 +308,60 @@ MEMDataset::~MEMDataset()
 
 {
     FlushCache();
+    CPLFree( pszProjection );
+}
+
+/************************************************************************/
+/*                          GetProjectionRef()                          */
+/************************************************************************/
+
+const char *MEMDataset::GetProjectionRef()
+
+{
+    if( pszProjection == NULL )
+        return "";
+    else
+        return pszProjection;
+}
+
+/************************************************************************/
+/*                           SetProjection()                            */
+/************************************************************************/
+
+CPLErr MEMDataset::SetProjection( const char *pszProjectionIn )
+
+{
+    CPLFree( pszProjection );
+    pszProjection = CPLStrdup( pszProjectionIn );
+
+    return CE_Failure;
+}
+
+/************************************************************************/
+/*                          GetGeoTransform()                           */
+/************************************************************************/
+
+CPLErr MEMDataset::GetGeoTransform( double *padfGeoTransform )
+
+{
+    memcpy( padfGeoTransform, adfGeoTransform, sizeof(double) * 6 );
+    if( bGeoTransformSet )
+        return CE_None;
+    else
+        return CE_Failure;
+}
+
+/************************************************************************/
+/*                          SetGeoTransform()                           */
+/************************************************************************/
+
+CPLErr MEMDataset::SetGeoTransform( double *padfGeoTransform )
+
+{
+    memcpy( adfGeoTransform, padfGeoTransform, sizeof(double) * 6 );
+    bGeoTransformSet = TRUE;
+
+    return CE_None;
 }
 
 /************************************************************************/
