@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: geo_normalize.c,v 1.31 2002/11/30 15:44:35 warmerda Exp $
+ * $Id: geo_normalize.c,v 1.32 2002/11/30 16:01:11 warmerda Exp $
  *
  * Project:  libgeotiff
  * Purpose:  Code to normalize PCS and other composite codes in a GeoTIFF file.
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log: geo_normalize.c,v $
+ * Revision 1.32  2002/11/30 16:01:11  warmerda
+ * fixed some problems in GTIFGetUOMAngleInfo
+ *
  * Revision 1.31  2002/11/30 15:44:35  warmerda
  * fixed GetCTParms EPSG code mappings
  *
@@ -832,23 +835,26 @@ int GTIFGetUOMLengthInfo( int nUOMLengthCode,
 /*                        GTIFGetUOMAngleInfo()                         */
 /************************************************************************/
 
-int GTIFGetUOMAngleInfo( int nUOMLengthCode,
+int GTIFGetUOMAngleInfo( int nUOMAngleCode,
                          char **ppszUOMName,
                          double * pdfInDegrees )
 
 {
     const char	*pszUOMName = NULL;
-    double	dfInDegrees = 0.0;
+    double	dfInDegrees = 1.0;
     const char *pszFilename = CSVFilename( "unit_of_measure.csv" );
     char	szSearchKey[24];
 
-    sprintf( szSearchKey, "%d", nUOMLengthCode );
+    sprintf( szSearchKey, "%d", nUOMAngleCode );
     pszUOMName = CSVGetField( pszFilename,
                               "UOM_CODE", szSearchKey, CC_Integer,
                               "UNIT_OF_MEAS_NAME" );
 
 /* -------------------------------------------------------------------- */
-/*      If the file is found, read from there.                          */
+/*      If the file is found, read from there.  Note that FactorC is    */
+/*      an empty field for any of the DMS style formats, and in this    */
+/*      case we really want to return the default InDegrees value       */
+/*      (1.0) from above.                                               */
 /* -------------------------------------------------------------------- */
     if( pszUOMName != NULL )
     {
@@ -866,6 +872,11 @@ int GTIFGetUOMAngleInfo( int nUOMLengthCode,
 
         if( dfFactorC != 0.0 )
             dfInDegrees = dfFactorB / dfFactorC;
+
+        /* We do a special override of some of the DMS formats name */
+        if( nUOMAngleCode == 9102 || nUOMAngleCode == 9107
+            || nUOMAngleCode == 9108 || nUOMAngleCode == 9110 )
+            pszUOMName = "degree";
     }
 
 /* -------------------------------------------------------------------- */
@@ -873,7 +884,7 @@ int GTIFGetUOMAngleInfo( int nUOMLengthCode,
 /* -------------------------------------------------------------------- */
     else
     {
-        switch( nUOMLengthCode )
+        switch( nUOMAngleCode )
         {
           case 9101:
             pszUOMName = "radian";
