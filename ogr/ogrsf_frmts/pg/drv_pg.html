@@ -101,6 +101,10 @@ one of "Geometry", "BYTEA" or "OID" to force the type of geometry used for
 a table. <p>
 <li> <b>OVERWRITE</b>: This may be "YES" to force an existing layer of the
 desired name to be destroyed before creating the requested layer.<p>
+<li> <b>LAUNDER</b>: This may be "YES" to force new fields created on this
+layer to have their field names "laundered" into a form more compatible with
+PostgreSQL.  This converts to lower case and converts some special characters
+like "-" and "#" to "_".  The default value is "NO".<p>
 </ul>
 
 <h3>Example</h3>
