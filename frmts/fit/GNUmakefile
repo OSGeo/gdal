@@ -4,7 +4,7 @@ include $(GDAL_ROOT)/GDALmake.opt
 
 OBJ	=	fitdataset.o fit.o
 
-CPPFLAGS	=	$(GDAL_INCLUDE) $(XTRA_OPT) $(CPPFLAGS)
+CPPFLAGS	:=	$(GDAL_INCLUDE) $(XTRA_OPT) $(CPPFLAGS)
 
 default:	$(OBJ)
 
