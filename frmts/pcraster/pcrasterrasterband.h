@@ -34,6 +34,7 @@ class PCRasterRasterBand: public GDALRasterBand
 
 private:
 
+  //! Dataset this band is part of. For use only.
   PCRasterDataset const* d_dataset;
 
   //! Assignment operator. NOT IMPLEMENTED.

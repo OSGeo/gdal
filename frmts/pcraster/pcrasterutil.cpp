@@ -8,6 +8,11 @@
 #define INCLUDED_CASSERT
 #endif
 
+#ifndef INCLUDED_PCRTYPES
+#include "pcrtypes.h"
+#define INCLUDED_PCRTYPES
+#endif
+
 #ifndef INCLUDED_PCRASTERUTIL
 #include "pcrasterutil.h"
 #define INCLUDED_PCRASTERUTIL
@@ -17,14 +22,15 @@
 
 //! Converts PCRaster data type to GDAL data type.
 /*!
-  \param     PCRType PCRaster data type.
+  \param     type PCRaster data type.
   \return    GDAL data type, GDT_Uknown if conversion is not possible.
+  \warning   \a type must be CR_UINT1, CR_INT4 or CR_REAL4.
 */
-GDALDataType PCRType2GDALType(CSF_CR PCRType)
+GDALDataType PCRasterType2GDALType(CSF_CR type)
 {
   GDALDataType dataType = GDT_Unknown;
 
-  switch(PCRType) {
+  switch(type) {
     case CR_UINT1: {
       dataType = GDT_Byte;
       break;
@@ -38,7 +44,6 @@ GDALDataType PCRType2GDALType(CSF_CR PCRType)
       break;
     }
     default: {
-      assert(false);
       break;
     }
   }
@@ -48,30 +53,27 @@ GDALDataType PCRType2GDALType(CSF_CR PCRType)
 
 
 
-CSF_VS string2PCRValueScale(const std::string& string)
+CSF_VS string2PCRasterValueScale(const std::string& string)
 {
   CSF_VS valueScale = VS_UNDEFINED;
 
-  if(string == "BOOLEAN") {
+  if(string == "VS_BOOLEAN") {
     valueScale = VS_BOOLEAN;
   }
-  else if(string == "NOMINAL") {
+  else if(string == "VS_NOMINAL") {
     valueScale = VS_NOMINAL;
   }
-  else if(string == "ORDINAL") {
+  else if(string == "VS_ORDINAL") {
     valueScale = VS_ORDINAL;
   }
-  else if(string == "SCALAR") {
+  else if(string == "VS_SCALAR") {
     valueScale = VS_SCALAR;
   }
-  else if(string == "DIRECTIONAL") {
+  else if(string == "VS_DIRECTION") {
     valueScale = VS_DIRECTION;
   }
-  else if(string == "LDD") {
+  else if(string == "VS_LDD") {
     valueScale = VS_LDD;
-  }
-  else {
-    assert(false);
   }
 
   return valueScale;
@@ -79,7 +81,59 @@ CSF_VS string2PCRValueScale(const std::string& string)
 
 
 
-CSF_VS GDALType2PCRValueScale(GDALDataType type)
+std::string PCRasterValueScale2String(CSF_VS valueScale)
+{
+  std::string result = "VS_UNDEFINED";
+
+  switch(valueScale) {
+    case VS_BOOLEAN: {
+      result = "VS_BOOLEAN";
+      break;
+    }
+    case VS_NOMINAL: {
+      result = "VS_NOMINAL";
+      break;
+    }
+    case VS_ORDINAL: {
+      result = "VS_ORDINAL";
+      break;
+    }
+    case VS_SCALAR: {
+      result = "VS_SCALAR";
+      break;
+    }
+    case VS_DIRECTION: {
+      result = "VS_DIRECTION";
+      break;
+    }
+    case VS_LDD: {
+      result = "VS_LDD";
+      break;
+    }
+    default: {
+      break;
+    }
+  }
+
+  return result;
+}
+
+
+
+//! Converts GDAL data type to PCRaster value scale.
+/*!
+  \param     type GDAL data type.
+  \return    Value scale.
+  \exception .
+  \warning   .
+  \sa        .
+  \todo      Convert assertion to exception.
+
+  GDAL byte is regarded as PCRaster boolean, integral as nominal and float
+  as scalar. This function will never return VS_LDD, VS_ORDINAL or
+  VS_DIRECTION.
+*/
+CSF_VS GDALType2PCRasterValueScale(GDALDataType type)
 {
   CSF_VS valueScale = VS_UNDEFINED;
 
@@ -97,6 +151,11 @@ CSF_VS GDALType2PCRValueScale(GDALDataType type)
       break;
     }
     case GDT_Float32: {
+      // A foreign dataset is unlikely to support our directional.
+      valueScale = VS_SCALAR;
+      break;
+    }
+    case GDT_Float64: {
       // A foreign dataset is unlikely to support our directional.
       valueScale = VS_SCALAR;
       break;
@@ -120,7 +179,8 @@ CSF_VS GDALType2PCRValueScale(GDALDataType type)
   \warning   The string must contain a valid version 2.0 cell representation.
   \sa        .
 */
-CSF_CR string2PCRCellRepresentation(const std::string& string)
+/*
+CSF_CR string2PCRasterCellRepresentation(const std::string& string)
 {
   CSF_CR cellRepresentation = CR_UNDEFINED;
 
@@ -139,6 +199,7 @@ CSF_CR string2PCRCellRepresentation(const std::string& string)
 
   return cellRepresentation;
 }
+*/
 
 
 
@@ -153,8 +214,11 @@ CSF_CR string2PCRCellRepresentation(const std::string& string)
   If exact is false, conversion to CSF2.0 types will take place. This is
   usefull for in file cell representations. If exact is true, and exact match
   is made. This is usefull for in app cell representations.
+
+  If exact is false, this function alwasy returns one of CR_UINT1, CR_INT4
+  or CR_REAL4.
 */
-CSF_CR GDALType2PCRCellRepresentation(GDALDataType type, bool exact)
+CSF_CR GDALType2PCRasterCellRepresentation(GDALDataType type, bool exact)
 {
   CSF_CR cellRepresentation = CR_UNDEFINED;
 
@@ -172,8 +236,6 @@ CSF_CR GDALType2PCRCellRepresentation(GDALDataType type, bool exact)
       break;
     }
     case GDT_Int16: {
-      // CSF_CR bla = exact ? CR_INT2: CR_INT4;
-      // std::cout << "------> " << CR_INT2 << '\t' << bla << std::endl;
       cellRepresentation = exact ? CR_INT2: CR_INT4;
       break;
     }
@@ -185,8 +247,11 @@ CSF_CR GDALType2PCRCellRepresentation(GDALDataType type, bool exact)
       cellRepresentation = CR_REAL4;
       break;
     }
+    case GDT_Float64: {
+      cellRepresentation = exact ? CR_REAL8: CR_REAL4;
+      break;
+    }
     default: {
-      assert(false);
       break;
     }
   }
@@ -213,12 +278,28 @@ void* createBuffer(size_t size, CSF_CR type)
       buffer = new UINT1[size];
       break;
     }
+    case CR_UINT2: {
+      buffer = new UINT2[size];
+      break;
+    }
+    case CR_UINT4: {
+      buffer = new UINT4[size];
+      break;
+    }
+    case CR_INT2: {
+      buffer = new INT2[size];
+      break;
+    }
     case CR_INT4: {
       buffer = new INT4[size];
       break;
     }
     case CR_REAL4: {
       buffer = new REAL4[size];
+      break;
+    }
+    case CR_REAL8: {
+      buffer = new REAL8[size];
       break;
     }
     default: {
@@ -241,12 +322,28 @@ void deleteBuffer(void* buffer, CSF_CR type)
         delete static_cast<UINT1*>(buffer);
         break;
       }
+      case CR_UINT2: {
+        delete static_cast<UINT2*>(buffer);
+        break;
+      }
+      case CR_UINT4: {
+        delete static_cast<UINT4*>(buffer);
+        break;
+      }
+      case CR_INT2: {
+        delete static_cast<INT2*>(buffer);
+        break;
+      }
       case CR_INT4: {
         delete static_cast<INT4*>(buffer);
         break;
       }
       case CR_REAL4: {
         delete static_cast<REAL4*>(buffer);
+        break;
+      }
+      case CR_REAL8: {
+        delete static_cast<REAL8*>(buffer);
         break;
       }
       default: {
@@ -266,6 +363,14 @@ bool isContinuous(CSF_VS valueScale)
 
 
 
+//! Determines a missing value to use for data of \a type.
+/*!
+  \param     type Cell representation of the data.
+  \return    Missing value.
+  \exception .
+  \warning   \a type must be CR_UINT1, CR_INT4 or CR_REAL4.
+  \sa        .
+*/
 double missingValue(CSF_CR type)
 {
   double missingValue = 0.0;
@@ -294,46 +399,56 @@ double missingValue(CSF_CR type)
 
 
 
-CSF_CR updateCellRepresentation(CSF_VS valueScale, CSF_CR cellRepresentation)
+//! Updates \a cellRepresentation to a currently supported value.
+/*!
+  \param     valueScale In file value scale of the data.
+  \param     cellRepresentation Cell representation of the data.
+  \return    Cell representation.
+  \exception .
+  \warning   .
+  \sa        .
+
+  Some (older) applications write PCRaster rasters using a cell representation
+  which we currently don't want to write anymore. This function can be called
+  to convert these cell representations to a value we currently use.
+*/
+CSF_CR updateCellRepresentation(CSF_VS valueScale, CSF_CR type)
 {
-  CSF_CR result = cellRepresentation;
+  CSF_CR result = type;
 
   if(valueScale == VS_NOMINAL || valueScale == VS_ORDINAL) {
-    if(cellRepresentation == CR_UINT1) {
+    if(type == CR_UINT1) {
       result = CR_INT4;
     }
   }
-
-/*
-  switch(cellRepresentation) {
-    case CR_INT2: {
-      result = CR_INT4;
-      break;
-    }
-    case CR_UINT1:
-    case CR_INT4:
-    case CR_REAL4: {
-      break;
-    }
-    default: {
-      assert(false);
-      break;
+  /*
+  else if(valueScale == VS_SCALAR) {
+    if(type == CR_REAL8) {
+      result = CR_REAL4;
     }
   }
-*/
+  */
 
   return result;
 }
 
 
 
+//! Opens the raster in \a filename using mode \a mode.
+/*!
+  \param     filename Filename of raster to open.
+  \return    Pointer to CSF MAP structure.
+  \exception .
+  \warning   .
+  \sa        .
+*/
 MAP* open(std::string const& filename, MOPEN_PERM mode)
 {
   MAP* map = Mopen(filename.c_str(), mode);
   if(map && MgetVersion(map) > 1) {
     // When needed, update in-app cell representation from older / not
     // supported cell representations to one of the currently supported ones.
-    // This means that UINT1 is silently upgraded to INT4 for nominal and
+    // This means that UINT1 is silently updated to INT4 for nominal and
     // ordinal data.
     int result = RuseAs(map, updateCellRepresentation(
            RgetValueScale(map), RgetCellRepr(map)));
@@ -341,4 +456,138 @@ MAP* open(std::string const& filename, MOPEN_PERM mode)
   }
 
   return map;
+}
+
+
+
+void alterFromStdMV(void* buffer, size_t size, CSF_CR cellRepresentation,
+         double missingValue)
+{
+  switch(cellRepresentation) {
+    case(CR_UINT1): {
+      std::for_each(static_cast<UINT1*>(buffer),
+         static_cast<UINT1*>(buffer) + size,
+         pcr::AlterFromStdMV<UINT1>(static_cast<UINT1>(missingValue)));
+      break;
+    }
+    case(CR_INT4): {
+      std::for_each(static_cast<INT4*>(buffer),
+         static_cast<INT4*>(buffer) + size,
+         pcr::AlterFromStdMV<INT4>(static_cast<INT4>(missingValue)));
+      break;
+    }
+    case(CR_REAL4): {
+      std::for_each(static_cast<REAL4*>(buffer),
+         static_cast<REAL4*>(buffer) + size,
+         pcr::AlterFromStdMV<REAL4>(static_cast<REAL4>(missingValue)));
+      break;
+    }
+    default: {
+      assert(false);
+      break;
+    }
+  }
+}
+
+
+
+void alterToStdMV(void* buffer, size_t size, CSF_CR cellRepresentation,
+         double missingValue)
+{
+  switch(cellRepresentation) {
+    case(CR_UINT1): {
+      std::for_each(static_cast<UINT1*>(buffer),
+         static_cast<UINT1*>(buffer) + size,
+         pcr::AlterToStdMV<UINT1>(static_cast<UINT1>(missingValue)));
+      break;
+    }
+    case(CR_INT4): {
+      std::for_each(static_cast<INT4*>(buffer),
+         static_cast<INT4*>(buffer) + size,
+         pcr::AlterToStdMV<INT4>(static_cast<INT4>(missingValue)));
+      break;
+    }
+    case(CR_REAL4): {
+      std::for_each(static_cast<REAL4*>(buffer),
+         static_cast<REAL4*>(buffer) + size,
+         pcr::AlterToStdMV<REAL4>(static_cast<REAL4>(missingValue)));
+      break;
+    }
+    case(CR_REAL8): {
+      std::for_each(static_cast<REAL8*>(buffer),
+         static_cast<REAL8*>(buffer) + size,
+         pcr::AlterToStdMV<REAL8>(static_cast<REAL8>(missingValue)));
+      break;
+    }
+    default: {
+      assert(false);
+      break;
+    }
+  }
+}
+
+
+
+CSF_VS fitValueScale(CSF_VS valueScale, CSF_CR cellRepresentation)
+{
+  CSF_VS result = valueScale;
+
+  switch(cellRepresentation) {
+    case CR_UINT1: {
+      switch(valueScale) {
+        case VS_LDD: {
+          result = VS_LDD;
+          break;
+        }
+        default: {
+          result = VS_BOOLEAN;
+          break;
+        }
+      }
+      break;
+    }
+    case CR_INT4: {
+      switch(valueScale) {
+        case VS_BOOLEAN: {
+          result = VS_NOMINAL;
+          break;
+        }
+        case VS_SCALAR: {
+          result = VS_ORDINAL;
+          break;
+        }
+        case VS_DIRECTION: {
+          result = VS_ORDINAL;
+          break;
+        }
+        case VS_LDD: {
+          result = VS_NOMINAL;
+          break;
+        }
+        default: {
+          result = valueScale;
+          break;
+        }
+      }
+      break;
+    }
+    case CR_REAL4: {
+      switch(valueScale) {
+        case VS_DIRECTION: {
+          result = VS_DIRECTION;
+          break;
+        }
+        default: {
+          result = VS_SCALAR;
+          break;
+        }
+      }
+      break;
+    }
+    default: {
+      break;
+    }
+  }
+
+  return result;
 }
