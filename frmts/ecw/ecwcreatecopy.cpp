@@ -28,6 +28,10 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.9  2005/02/17 15:32:27  fwarmerdam
+ * Ensure that datatype is preserved on writable rasterbands. Otherwise
+ * non-8bit support is broken.
+ *
  * Revision 1.8  2005/02/08 04:50:37  fwarmerdam
  * added FlushCache method on writeable dataset
  *
@@ -1140,6 +1144,7 @@ ECWWriteRasterBand::ECWWriteRasterBand( ECWWriteDataset *poDSIn,
     poGDS = poDSIn;
     nBlockXSize = poDSIn->GetRasterXSize();
     nBlockYSize = 1;
+    eDataType = poDSIn->eDataType;
 }
 
 /************************************************************************/
