@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2004/05/26 20:25:05  warmerda
+ * Added 4bit support.
+ *
  * Revision 1.2  2004/05/26 18:19:15  warmerda
  * Implement
  *
@@ -81,12 +84,29 @@ if there are more than 255 bands.
 
 /************************************************************************/
 /* ==================================================================== */
+/*                         LAN4BitRasterBand                            */
+/* ==================================================================== */
+/************************************************************************/
+
+class LANDataset;
+
+class LAN4BitRasterBand : public GDALRasterBand
+{
+  public:
+                   LAN4BitRasterBand( LANDataset *, int );
+
+    virtual CPLErr IReadBlock( int, int, void * );
+};
+
+/************************************************************************/
+/* ==================================================================== */
 /*				LANDataset				*/
 /* ==================================================================== */
 /************************************************************************/
 
 class LANDataset : public RawDataset
 {
+  public:
     FILE	*fpImage;	// image data file.
     
     char	pachHeader[ERD_HEADER_SIZE];
@@ -104,6 +124,88 @@ class LANDataset : public RawDataset
 
     static GDALDataset *Open( GDALOpenInfo * );
 };
+
+/************************************************************************/
+/* ==================================================================== */
+/*                         LAN4BitRasterBand                            */
+/* ==================================================================== */
+/************************************************************************/
+
+/************************************************************************/
+/*                         LAN4BitRasterBand()                          */
+/************************************************************************/
+
+LAN4BitRasterBand::LAN4BitRasterBand( LANDataset *poDS, int nBandIn )
+
+{
+    this->poDS = poDS;
+    this->nBand = nBandIn;
+    this->eDataType = GDT_Byte;
+
+    nBlockXSize = poDS->GetRasterXSize();;
+    nBlockYSize = 1;
+}
+
+/************************************************************************/
+/*                             IReadBlock()                             */
+/************************************************************************/
+
+CPLErr LAN4BitRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
+                                      void * pImage )
+
+{
+    LANDataset *poLAN_DS = (LANDataset *) poDS;
+    CPLAssert( nBlockXOff == 0  );
+    
+/* -------------------------------------------------------------------- */
+/*      Seek to profile.                                                */
+/* -------------------------------------------------------------------- */
+    int nOffset;
+
+    nOffset = 
+        ERD_HEADER_SIZE
+        + (nBlockYOff * nRasterXSize * poLAN_DS->GetRasterCount()) / 2
+        + ((nBand - 1) * nRasterXSize) / 2;
+
+    if( VSIFSeekL( poLAN_DS->fpImage, nOffset, SEEK_SET ) != 0 )
+    {
+        CPLError( CE_Failure, CPLE_FileIO, 
+                  "LAN Seek failed:%s", VSIStrerror( errno ) );
+        return CE_Failure;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Read the profile.                                               */
+/* -------------------------------------------------------------------- */
+    if( VSIFReadL( pImage, 1, nRasterXSize/2, poLAN_DS->fpImage ) != 
+        (size_t) nRasterXSize / 2 )
+    {
+        CPLError( CE_Failure, CPLE_FileIO, 
+                  "LAN Read failed:%s", VSIStrerror( errno ) );
+        return CE_Failure;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Convert 4bit to 8bit.                                           */
+/* -------------------------------------------------------------------- */
+    int i;
+
+    for( i = nRasterXSize-1; i >= 0; i-- )
+    {
+        if( (i & 0x01) != 0 )
+            ((GByte *) pImage)[i] = ((GByte *) pImage)[i/2] & 0x0f;
+        else
+            ((GByte *) pImage)[i] = (((GByte *) pImage)[i/2] & 0xf0)/16;
+    }
+
+    return CE_None;
+}
+
+/************************************************************************/
+/* ==================================================================== */
+/*				LANDataset				*/
+/* ==================================================================== */
+/************************************************************************/
 
 /************************************************************************/
 /*                             LANDataset()                             */
@@ -211,10 +313,7 @@ GDALDataset *LANDataset::Open( GDALOpenInfo * poOpenInfo )
     else if( *((GInt16 *) (poDS->pachHeader + 6)) == 1 ) /* 4bit! */
     {
         eDataType = GDT_Byte;
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "Currently the GDAL .LAN/.GIS driver does not support 4 bit files." );
-        delete poDS;
-        return NULL;
+        nPixelOffset = -1;
     }
     else if( *((GInt16 *) (poDS->pachHeader + 6)) == 2 )
     {
@@ -237,13 +336,20 @@ GDALDataset *LANDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Create band information object.                                 */
 /* -------------------------------------------------------------------- */
     for( int iBand = 1; iBand <= nBandCount; iBand++ )
-        poDS->SetBand( iBand, 
-                       new RawRasterBand( poDS, iBand, poDS->fpImage, 
-                                          ERD_HEADER_SIZE + (iBand-1) 
-                                          * nPixelOffset * poDS->nRasterXSize,
-                                          nPixelOffset, 
-                                          poDS->nRasterXSize * nPixelOffset,
-                                          eDataType, FALSE ));
+    {
+        if( nPixelOffset == -1 ) /* 4 bit case */
+            poDS->SetBand( iBand, 
+                           new LAN4BitRasterBand( poDS, iBand ) );
+        else
+            poDS->SetBand( 
+                iBand, 
+                new RawRasterBand( poDS, iBand, poDS->fpImage, 
+                                   ERD_HEADER_SIZE + (iBand-1) 
+                                   * nPixelOffset * poDS->nRasterXSize,
+                                   nPixelOffset, 
+                                   poDS->nRasterXSize*nPixelOffset*nBandCount,
+                                   eDataType, FALSE ));
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Check for overviews.                                            */
@@ -299,8 +405,13 @@ GDALDataset *LANDataset::Open( GDALOpenInfo * poOpenInfo )
 CPLErr LANDataset::GetGeoTransform( double * padfTransform )
 
 {
-    memcpy( padfTransform, adfGeoTransform, sizeof(double)*6 );
-    return CE_None;
+    if( adfGeoTransform[2] == 0.0 || adfGeoTransform[5] == 0.0 )
+        return CE_Failure;
+    else
+    {
+        memcpy( padfTransform, adfGeoTransform, sizeof(double)*6 );
+        return CE_None;
+    }
 }
 
 /************************************************************************/
