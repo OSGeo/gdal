@@ -56,6 +56,9 @@ IDA (WinDisp4) Driver:
 GTiff Driver:
  - Added support for offset/scale being saved and loaded (special metadata). 
 
+PNG Driver: 
+ - Updated internal code for libpng to libpng 1.2.8.
+
 
 OGR 1.2.6 - Overview of Changes
 -------------------------------
