@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2004/10/08 20:49:01  fwarmerdam
+ * enable ExecuteSQL
+ *
  * Revision 1.1  2004/10/07 20:57:50  fwarmerdam
  * New
  *
@@ -152,8 +155,8 @@ class OGRMySQLResultLayer : public OGRMySQLLayer
 
   public:
                         OGRMySQLResultLayer( OGRMySQLDataSource *,
-                                          const char * pszRawStatement,
-                                          void *hInitialResult );
+                                             const char * pszRawStatement,
+                                             MYSQL_RES *hResultSetIn );
     virtual             ~OGRMySQLResultLayer();
 
     OGRGeometry *       GetSpatialFilter() { return poFilterGeom; }
@@ -220,12 +223,11 @@ class OGRMySQLDataSource : public OGRDataSource
 
     int                 TestCapability( const char * );
 
-#ifdef notdef
     virtual OGRLayer *  ExecuteSQL( const char *pszSQLCommand,
                                     OGRGeometry *poSpatialFilter,
                                     const char *pszDialect );
     virtual void        ReleaseResultSet( OGRLayer * poLayer );
-#endif
+
     // nonstandard
 
     void                ReportError( const char * = NULL );
