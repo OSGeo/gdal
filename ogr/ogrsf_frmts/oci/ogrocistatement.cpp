@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2003/01/06 17:59:26  warmerda
+ * fiddle with maximum buffer widths
+ *
  * Revision 1.4  2003/01/02 21:50:31  warmerda
  * various fixes
  *
@@ -239,9 +242,9 @@ CPLErr OGROCIStatement::Execute( const char *pszSQLStatement,
         if( oField.GetWidth() > 0 )
             nBufWidth = oField.GetWidth() + 2;
         else if( oField.GetType() == OFTInteger )
-            nBufWidth = 20;
+            nBufWidth = 22;
         else if( oField.GetType() == OFTReal )
-            nBufWidth = 32;
+            nBufWidth = 36;
 
         papszCurColumn[nOGRField] = (char *) CPLMalloc(nBufWidth+2);
         CPLAssert( ((long) papszCurColumn[nOGRField]) % 2 == 0 );
