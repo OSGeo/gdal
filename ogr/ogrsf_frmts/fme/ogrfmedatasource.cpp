@@ -23,6 +23,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2003/07/16 22:16:03  warmerda
+ * dont try FMEObjects on OCI: names
+ *
  * Revision 1.12  2003/02/06 14:25:51  warmerda
  * Added test if createStringArray() fails just after creating session.
  *
@@ -600,7 +603,7 @@ int OGRFMEDataSource::Open( const char * pszCompositeName )
             break;
     }
          
-    if( (i < 2 || pszCompositeName[i] != ':')
+    if( (i < 2 || pszCompositeName[i] != ':' || EQUALN(pszCompositeName,"OCI:",4))
         && !EQUAL(CPLGetExtension( pszCompositeName ), "fdd")
         && !EQUALN(pszCompositeName,"PROMPT",6) )
     {
