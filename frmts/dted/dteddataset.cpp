@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2004/01/29 23:35:22  gwalter
+ * Add a few more metadata fields, make sure that
+ * nodata value is recognized.
+ *
  * Revision 1.12  2003/05/30 16:17:21  warmerda
  * fix warnings with casting and unused parameters
  *
@@ -108,11 +112,15 @@ class DTEDRasterBand : public GDALRasterBand
 {
     friend class DTEDDataset;
 
+    int 	bNoDataSet;
+    double	dfNoDataValue;
+
   public:
 
                 DTEDRasterBand( DTEDDataset *, int );
     
     virtual CPLErr IReadBlock( int, int, void * );
+    virtual double  GetNoDataValue( int *pbSuccess = NULL );
 };
 
 
@@ -127,6 +135,9 @@ DTEDRasterBand::DTEDRasterBand( DTEDDataset *poDS, int nBand )
     this->nBand = nBand;
     
     eDataType = GDT_Int16;
+
+    bNoDataSet = TRUE;
+    dfNoDataValue = (double) DTED_NODATA_VALUE;
 
     nBlockXSize = 1;
     nBlockYSize = poDS->GetRasterYSize();;
@@ -168,6 +179,19 @@ CPLErr DTEDRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     }
 
     return CE_None;
+}
+
+/************************************************************************/
+/*                           GetNoDataValue()                           */
+/************************************************************************/
+
+double DTEDRasterBand::GetNoDataValue( int * pbSuccess )
+
+{
+    if( pbSuccess )
+        *pbSuccess = bNoDataSet;
+
+    return dfNoDataValue;
 }
 
 /************************************************************************/
@@ -226,20 +250,76 @@ GDALDataset *DTEDDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     char *pszValue;
 
-    pszValue = DTEDGetMetadata( psDTED, DTEDMD_VERTACCURACY );
-    poDS->SetMetadataItem( "DTED_VerticalAccuracy", pszValue );
+    pszValue = DTEDGetMetadata( psDTED, DTEDMD_VERTACCURACY_UHL );
+    poDS->SetMetadataItem( "DTED_VerticalAccuracy_UHL", pszValue );
     CPLFree( pszValue );
 
-    pszValue = DTEDGetMetadata( psDTED, DTEDMD_SECURITYCODE );
-    poDS->SetMetadataItem( "DTED_SecurityCode", pszValue );
+    pszValue = DTEDGetMetadata( psDTED, DTEDMD_VERTACCURACY_ACC );
+    poDS->SetMetadataItem( "DTED_VerticalAccuracy_ACC", pszValue );
+    CPLFree( pszValue );
+
+    pszValue = DTEDGetMetadata( psDTED, DTEDMD_SECURITYCODE_UHL );
+    poDS->SetMetadataItem( "DTED_SecurityCode_UHL", pszValue );
+    CPLFree( pszValue );
+
+    pszValue = DTEDGetMetadata( psDTED, DTEDMD_SECURITYCODE_DSI );
+    poDS->SetMetadataItem( "DTED_SecurityCode_DSI", pszValue );
+    CPLFree( pszValue );
+
+    pszValue = DTEDGetMetadata( psDTED, DTEDMD_UNIQUEREF_UHL );
+    poDS->SetMetadataItem( "DTED_UniqueRef_UHL", pszValue );
+    CPLFree( pszValue );
+
+    pszValue = DTEDGetMetadata( psDTED, DTEDMD_UNIQUEREF_DSI );
+    poDS->SetMetadataItem( "DTED_UniqueRef_DSI", pszValue );
+    CPLFree( pszValue );
+
+    pszValue = DTEDGetMetadata( psDTED, DTEDMD_DATA_EDITION );
+    poDS->SetMetadataItem( "DTED_DataEdition", pszValue );
+    CPLFree( pszValue );
+
+    pszValue = DTEDGetMetadata( psDTED, DTEDMD_MATCHMERGE_VERSION );
+    poDS->SetMetadataItem( "DTED_MatchMergeVersion", pszValue );
+    CPLFree( pszValue );
+
+    pszValue = DTEDGetMetadata( psDTED, DTEDMD_MAINT_DATE );
+    poDS->SetMetadataItem( "DTED_MaintenanceDate", pszValue );
+    CPLFree( pszValue );
+
+    pszValue = DTEDGetMetadata( psDTED, DTEDMD_MATCHMERGE_DATE );
+    poDS->SetMetadataItem( "DTED_MatchMergeDate", pszValue );
+    CPLFree( pszValue );
+
+    pszValue = DTEDGetMetadata( psDTED, DTEDMD_MAINT_DESCRIPTION );
+    poDS->SetMetadataItem( "DTED_MaintenanceDescription", pszValue );
     CPLFree( pszValue );
 
     pszValue = DTEDGetMetadata( psDTED, DTEDMD_PRODUCER );
     poDS->SetMetadataItem( "DTED_Producer", pszValue );
     CPLFree( pszValue );
 
+    pszValue = DTEDGetMetadata( psDTED, DTEDMD_VERTDATUM );
+    poDS->SetMetadataItem( "DTED_VerticalDatum", pszValue );
+    CPLFree( pszValue );
+
+    pszValue = DTEDGetMetadata( psDTED, DTEDMD_DIGITIZING_SYS );
+    poDS->SetMetadataItem( "DTED_DigitizingSystem", pszValue );
+    CPLFree( pszValue );
+
     pszValue = DTEDGetMetadata( psDTED, DTEDMD_COMPILATION_DATE );
     poDS->SetMetadataItem( "DTED_CompilationDate", pszValue );
+    CPLFree( pszValue );
+
+    pszValue = DTEDGetMetadata( psDTED, DTEDMD_HORIZACCURACY );
+    poDS->SetMetadataItem( "DTED_HorizontalAccuracy", pszValue );
+    CPLFree( pszValue );
+
+    pszValue = DTEDGetMetadata( psDTED, DTEDMD_REL_HORIZACCURACY );
+    poDS->SetMetadataItem( "DTED_RelHorizontalAccuracy", pszValue );
+    CPLFree( pszValue );
+
+    pszValue = DTEDGetMetadata( psDTED, DTEDMD_REL_VERTACCURACY );
+    poDS->SetMetadataItem( "DTED_RelVerticalAccuracy", pszValue );
     CPLFree( pszValue );
     
     return( poDS );
@@ -362,35 +442,112 @@ DTEDCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /*      Write all the profiles.                                         */
 /* -------------------------------------------------------------------- */
     GInt16      anProfData[3601];
+    double       dfNodataCount=0.0;
+    GByte       iPartialCell;
 
     for( int iProfile = 0; iProfile < psDTED->nXSize; iProfile++ )
     {
         for( int iY = 0; iY < psDTED->nYSize; iY++ )
+        {
             anProfData[iY] = panData[iProfile + iY * psDTED->nXSize];
-
+            if ( anProfData[iY] == DTED_NODATA_VALUE )
+                dfNodataCount = dfNodataCount+1.0;
+        }
         DTEDWriteProfile( psDTED, iProfile, anProfData );
     }
-
     CPLFree( panData );
+
+/* -------------------------------------------------------------------- */
+/* Partial cell indicator: 0 for complete coverage; 1-99 for incomplete */
+/* -------------------------------------------------------------------- */
+    char pszPartialCell[2];
+    
+    if ( dfNodataCount < 0.5 )
+        iPartialCell = 0;
+    else
+    {
+      iPartialCell = int(floor(100.0 - 
+           (dfNodataCount*100.0/(psDTED->nXSize * psDTED->nYSize))));
+        if (iPartialCell < 1)
+           iPartialCell=1;       
+    }
+    sprintf(pszPartialCell,"%02d",iPartialCell);
+    strncpy((char *) (psDTED->pachDSIRecord+289), pszPartialCell, 2 );
 
 /* -------------------------------------------------------------------- */
 /*      Try to copy any matching available metadata.                    */
 /* -------------------------------------------------------------------- */
-    if( poSrcDS->GetMetadataItem( "DTED_VerticalAccuracy" ) != NULL )
-        DTEDSetMetadata( psDTED, DTEDMD_VERTACCURACY, 
-                         poSrcDS->GetMetadataItem( "DTED_VerticalAccuracy" ) );
+    if( poSrcDS->GetMetadataItem( "DTED_VerticalAccuracy_UHL" ) != NULL )
+        DTEDSetMetadata( psDTED, DTEDMD_VERTACCURACY_UHL, 
+                     poSrcDS->GetMetadataItem( "DTED_VerticalAccuracy_UHL" ) );
 
-    if( poSrcDS->GetMetadataItem( "DTED_SecurityCode" ) != NULL )
-        DTEDSetMetadata( psDTED, DTEDMD_SECURITYCODE, 
-                         poSrcDS->GetMetadataItem( "DTED_SecurityCode" ) );
+    if( poSrcDS->GetMetadataItem( "DTED_VerticalAccuracy_ACC" ) != NULL )
+        DTEDSetMetadata( psDTED, DTEDMD_VERTACCURACY_ACC, 
+                    poSrcDS->GetMetadataItem( "DTED_VerticalAccuracy_ACC" ) );
+
+    if( poSrcDS->GetMetadataItem( "DTED_SecurityCode_UHL" ) != NULL )
+        DTEDSetMetadata( psDTED, DTEDMD_SECURITYCODE_UHL, 
+                    poSrcDS->GetMetadataItem( "DTED_SecurityCode_UHL" ) );
+
+    if( poSrcDS->GetMetadataItem( "DTED_SecurityCode_DSI" ) != NULL )
+        DTEDSetMetadata( psDTED, DTEDMD_SECURITYCODE_DSI, 
+                    poSrcDS->GetMetadataItem( "DTED_SecurityCode_DSI" ) );
+
+    if( poSrcDS->GetMetadataItem( "DTED_UniqueRef_UHL" ) != NULL )
+        DTEDSetMetadata( psDTED, DTEDMD_UNIQUEREF_UHL, 
+                         poSrcDS->GetMetadataItem( "DTED_UniqueRef_UHL" ) );
+
+    if( poSrcDS->GetMetadataItem( "DTED_UniqueRef_DSI" ) != NULL )
+        DTEDSetMetadata( psDTED, DTEDMD_UNIQUEREF_DSI, 
+                         poSrcDS->GetMetadataItem( "DTED_UniqueRef_DSI" ) );
+
+    if( poSrcDS->GetMetadataItem( "DTED_DataEdition" ) != NULL )
+        DTEDSetMetadata( psDTED, DTEDMD_DATA_EDITION, 
+                         poSrcDS->GetMetadataItem( "DTED_DataEdition" ) );
+
+    if( poSrcDS->GetMetadataItem( "DTED_MatchMergeVersion" ) != NULL )
+        DTEDSetMetadata( psDTED, DTEDMD_MATCHMERGE_VERSION, 
+                     poSrcDS->GetMetadataItem( "DTED_MatchMergeVersion" ) );
+
+    if( poSrcDS->GetMetadataItem( "DTED_MaintenanceDate" ) != NULL )
+        DTEDSetMetadata( psDTED, DTEDMD_MAINT_DATE, 
+                         poSrcDS->GetMetadataItem( "DTED_MaintenanceDate" ) );
+
+    if( poSrcDS->GetMetadataItem( "DTED_MatchMergeDate" ) != NULL )
+        DTEDSetMetadata( psDTED, DTEDMD_MATCHMERGE_DATE, 
+                         poSrcDS->GetMetadataItem( "DTED_MatchMergeDate" ) );
+
+    if( poSrcDS->GetMetadataItem( "DTED_MaintenanceDescription" ) != NULL )
+        DTEDSetMetadata( psDTED, DTEDMD_MAINT_DESCRIPTION, 
+                 poSrcDS->GetMetadataItem( "DTED_MaintenanceDescription" ) );
 
     if( poSrcDS->GetMetadataItem( "DTED_Producer" ) != NULL )
         DTEDSetMetadata( psDTED, DTEDMD_PRODUCER, 
                          poSrcDS->GetMetadataItem( "DTED_Producer" ) );
 
+    if( poSrcDS->GetMetadataItem( "DTED_VerticalDatum" ) != NULL )
+        DTEDSetMetadata( psDTED, DTEDMD_VERTDATUM, 
+                         poSrcDS->GetMetadataItem( "DTED_VerticalDatum" ) );
+
+    if( poSrcDS->GetMetadataItem( "DTED_DigitizingSystem" ) != NULL )
+        DTEDSetMetadata( psDTED, DTEDMD_DIGITIZING_SYS, 
+                         poSrcDS->GetMetadataItem( "DTED_DigitizingSystem" ) );
+
     if( poSrcDS->GetMetadataItem( "DTED_CompilationDate" ) != NULL )
         DTEDSetMetadata( psDTED, DTEDMD_COMPILATION_DATE, 
                          poSrcDS->GetMetadataItem( "DTED_CompilationDate" ) );
+
+    if( poSrcDS->GetMetadataItem( "DTED_HorizontalAccuracy" ) != NULL )
+        DTEDSetMetadata( psDTED, DTEDMD_HORIZACCURACY, 
+                     poSrcDS->GetMetadataItem( "DTED_HorizontalAccuracy" ) );
+
+    if( poSrcDS->GetMetadataItem( "DTED_RelHorizontalAccuracy" ) != NULL )
+        DTEDSetMetadata( psDTED, DTEDMD_REL_HORIZACCURACY, 
+                   poSrcDS->GetMetadataItem( "DTED_RelHorizontalAccuracy" ) );
+
+    if( poSrcDS->GetMetadataItem( "DTED_RelVerticalAccuracy" ) != NULL )
+        DTEDSetMetadata( psDTED, DTEDMD_REL_VERTACCURACY, 
+                     poSrcDS->GetMetadataItem( "DTED_RelVerticalAccuracy" ) );
 
 /* -------------------------------------------------------------------- */
 /*      Try to open the resulting DTED file.                            */

@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2004/01/29 23:35:22  gwalter
+ * Add a few more metadata fields, make sure that
+ * nodata value is recognized.
+ *
  * Revision 1.14  2003/10/15 15:51:53  warmerda
  * Fixed C++ style comments.
  *
@@ -325,7 +329,7 @@ int DTEDReadProfile( DTEDInfo * psDInfo, int nColumnOffset,
             ** complement form for negatives.  For these, redo the job
             ** in twos complement.  eg. w_069_s50.dt0
             */
-            if( panData[i] < -16000 )
+            if(( panData[i] < -16000 ) && (panData[i] != DTED_NODATA_VALUE))
             {
                 static int bWarned = FALSE;
 
@@ -432,14 +436,44 @@ static void DTEDGetMetadataLocation( DTEDInfo *psDInfo,
 {
     switch( eCode )
     {
-      case DTEDMD_VERTACCURACY:
+      case DTEDMD_VERTACCURACY_UHL:
         *ppszLocation = psDInfo->pachUHLRecord + 28;
         *pnLength = 4;
         break;
 
-      case DTEDMD_SECURITYCODE:
+      case DTEDMD_SECURITYCODE_UHL:
         *ppszLocation = psDInfo->pachUHLRecord + 32;
         *pnLength = 3;
+        break;
+
+      case DTEDMD_UNIQUEREF_UHL:
+        *ppszLocation = psDInfo->pachUHLRecord + 35;
+        *pnLength = 12;
+        break;
+
+      case DTEDMD_DATA_EDITION:
+        *ppszLocation = psDInfo->pachDSIRecord + 87;
+        *pnLength = 2;
+        break;
+
+      case DTEDMD_MATCHMERGE_VERSION:
+        *ppszLocation = psDInfo->pachDSIRecord + 89;
+        *pnLength = 1;
+        break;
+
+      case DTEDMD_MAINT_DATE:
+        *ppszLocation = psDInfo->pachDSIRecord + 90;
+        *pnLength = 4;
+        break;
+
+      case DTEDMD_MATCHMERGE_DATE:
+        *ppszLocation = psDInfo->pachDSIRecord + 94;
+        *pnLength = 4;
+        break;
+
+      case DTEDMD_MAINT_DESCRIPTION:
+        *ppszLocation = psDInfo->pachDSIRecord + 98;
+        *pnLength = 4;
         break;
 
       case DTEDMD_PRODUCER:
@@ -447,9 +481,49 @@ static void DTEDGetMetadataLocation( DTEDInfo *psDInfo,
         *pnLength = 8;
         break;
 
+      case DTEDMD_VERTDATUM:
+        *ppszLocation = psDInfo->pachDSIRecord + 141;
+        *pnLength = 3;
+        break;
+
+      case DTEDMD_DIGITIZING_SYS:
+        *ppszLocation = psDInfo->pachDSIRecord + 149;
+        *pnLength = 10;
+        break;
+
       case DTEDMD_COMPILATION_DATE:
         *ppszLocation = psDInfo->pachDSIRecord + 159;
         *pnLength = 4;
+        break;
+
+      case DTEDMD_HORIZACCURACY:
+        *ppszLocation = psDInfo->pachACCRecord + 3;
+        *pnLength = 4;
+        break;
+
+      case DTEDMD_REL_HORIZACCURACY:
+        *ppszLocation = psDInfo->pachACCRecord + 11;
+        *pnLength = 4;
+        break;
+
+      case DTEDMD_REL_VERTACCURACY:
+        *ppszLocation = psDInfo->pachACCRecord + 15;
+        *pnLength = 4;
+        break;
+
+      case DTEDMD_VERTACCURACY_ACC:
+        *ppszLocation = psDInfo->pachACCRecord + 7;
+        *pnLength = 4;
+        break;
+
+      case DTEDMD_SECURITYCODE_DSI:
+        *ppszLocation = psDInfo->pachDSIRecord + 3;
+        *pnLength = 1;
+        break;
+
+      case DTEDMD_UNIQUEREF_DSI:
+        *ppszLocation = psDInfo->pachDSIRecord + 64;
+        *pnLength = 15;
         break;
 
       default:
@@ -457,8 +531,6 @@ static void DTEDGetMetadataLocation( DTEDInfo *psDInfo,
         *pnLength = 0;
     }
 }
-                                         
-
 
 /************************************************************************/
 /*                          DTEDGetMetadata()                           */
