@@ -38,6 +38,7 @@ fi
 find gdal -name CVS -exec rm -rf {} \;
 
 rm -rf gdal/viewer
+rm -rf gdal/dist_docs
 
 rm -f gdal/VERSION
 echo $GDAL_VERSION > gdal/VERSION
@@ -53,7 +54,7 @@ zip -r ../gdal${COMPRESSED_VERSION}.zip gdal-${GDAL_VERSION}
 cd ..
 rm -rf dist_wrk
 
-TARGETDIR=/ftp/remotesensing/pub/gdal
+TARGETDIR=remotesensing.org:/ftp/remotesensing/pub/gdal
 if test "$2" = "-install" ; then
   if test \! -d $TARGETDIR ; then
     echo "Can't find $TARGETDIR ... -install failed."
@@ -62,9 +63,9 @@ if test "$2" = "-install" ; then
 
   echo "Installing: " $TARGETDIR/gdal-${GDAL_VERSION}.tar.gz
   rm -f $TARGETDIR/gdal-${GDAL_VERSION}.tar.gz
-  cp gdal-${GDAL_VERSION}.tar.gz $TARGETDIR
+  scp gdal-${GDAL_VERSION}.tar.gz $TARGETDIR
 
   echo "Installing: " $TARGETDIR/gdal${COMPRESSED_VERSION}.zip
   rm -f $TARGETDIR/gdal${COMPRESSED_VERSION}.zip
-  cp gdal${COMPRESSED_VERSION}.zip $TARGETDIR
+  scp gdal${COMPRESSED_VERSION}.zip $TARGETDIR
 fi
