@@ -28,6 +28,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.27  2003/05/30 21:47:37  warmerda
+# added OSRSetStatePlaneWithUnits
+#
 # Revision 1.26  2003/05/30 15:38:59  warmerda
 # updated to use SetStatePlaneWithUnits
 #
@@ -110,6 +113,7 @@
 
 import _gdal
 import gdal
+from _gdal import ptrcreate, ptrfree, ptrvalue, ptrset, ptrcast, ptradd, ptrmap
 
 SRS_PP_CENTRAL_MERIDIAN         = "central_meridian"
 SRS_PP_SCALE_FACTOR             = "scale_factor"
@@ -261,6 +265,21 @@ class SpatialReference:
 
     def SetLinearUnits(self, units_name, to_meters ):
         return _gdal.OSRSetLinearUnits( self._o, units_name, to_meters )
+
+    def GetLinearUnits( self ):
+        return _gdal.OSRGetLinearUnits( self._o, 'NULL' )
+
+    def GetLinearUnitsName( self ):
+        name = None
+        if self.IsProjected():
+            name = self.GetAttrValue( 'PROJCS|UNIT', 0 )
+        elif self.IsLocal():
+            name = self.GetAttrValue( 'LOCAL_CS|UNIT', 0 )
+
+        if name is None:
+            return 'Meter'
+        else:
+            return name
 
     def SetAuthority( self, target_key, authority_name, authority_code ):
         return _gdal.OSRSetAuthority( self._o, target_key, authority_name,

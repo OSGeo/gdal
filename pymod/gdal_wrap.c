@@ -33,8 +33,8 @@
  * and things like that.
  *
  * $Log$
- * Revision 1.67  2003/05/28 19:47:26  warmerda
- * added GDALTermProgress
+ * Revision 1.68  2003/05/30 21:47:37  warmerda
+ * added OSRSetStatePlaneWithUnits
  *
  ************************************************************************/
 
@@ -5224,24 +5224,26 @@ static PyObject *_wrap_OSRGetUTMZone(PyObject *self, PyObject *args) {
     return _resultobj;
 }
 
-static PyObject *_wrap_OSRSetStatePlane(PyObject *self, PyObject *args) {
+static PyObject *_wrap_OSRSetStatePlaneWithUnits(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
     int  _result;
     OGRSpatialReferenceH  _arg0;
     int  _arg1;
     int  _arg2;
+    char * _arg3;
+    double  _arg4;
     char * _argc0 = 0;
 
     self = self;
-    if(!PyArg_ParseTuple(args,"sii:OSRSetStatePlane",&_argc0,&_arg1,&_arg2)) 
+    if(!PyArg_ParseTuple(args,"siisd:OSRSetStatePlaneWithUnits",&_argc0,&_arg1,&_arg2,&_arg3,&_arg4)) 
         return NULL;
     if (_argc0) {
         if (SWIG_GetPtr(_argc0,(void **) &_arg0,(char *) 0 )) {
-            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OSRSetStatePlane. Expected _OGRSpatialReferenceH.");
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OSRSetStatePlaneWithUnits. Expected _OGRSpatialReferenceH.");
         return NULL;
         }
     }
-    _result = (int )OSRSetStatePlane(_arg0,_arg1,_arg2);
+    _result = (int )OSRSetStatePlaneWithUnits(_arg0,_arg1,_arg2,_arg3,_arg4);
     _resultobj = Py_BuildValue("i",_result);
     return _resultobj;
 }
@@ -8857,7 +8859,7 @@ static PyMethodDef _gdalMethods[] = {
 	 { "OSRExportToProj4", py_OSRExportToProj4, 1 },
 	 { "OSRImportFromWkt", py_OSRImportFromWkt, 1 },
 	 { "OSRImportFromESRI", py_OSRImportFromESRI, 1 },
-	 { "OSRSetStatePlane", _wrap_OSRSetStatePlane, 1 },
+	 { "OSRSetStatePlaneWithUnits", _wrap_OSRSetStatePlaneWithUnits, 1 },
 	 { "OSRGetUTMZone", _wrap_OSRGetUTMZone, 1 },
 	 { "OSRSetUTM", _wrap_OSRSetUTM, 1 },
 	 { "OSRGetNormProjParm", _wrap_OSRGetNormProjParm, 1 },
