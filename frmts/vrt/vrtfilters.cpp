@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2003/08/07 17:11:21  warmerda
+ * added normalized flag for kernel based filters
+ *
  * Revision 1.1  2003/07/17 20:27:18  warmerda
  * New
  *
@@ -376,6 +379,7 @@ VRTKernelFilteredSource::VRTKernelFilteredSource()
     GDALDataType aeSupTypes[] = { GDT_Float32 };
     padfKernelCoefs = NULL;
     nKernelSize = 0;
+    bNormalized = FALSE;
 
     SetFilteringDataTypesSupported( 1, aeSupTypes );
 }
@@ -388,6 +392,16 @@ VRTKernelFilteredSource::~VRTKernelFilteredSource()
 
 {
     CPLFree( padfKernelCoefs );
+}
+
+/************************************************************************/
+/*                           SetNormalized()                            */
+/************************************************************************/
+
+void VRTKernelFilteredSource::SetNormalized( int bNormalizedIn )
+
+{
+    bNormalized = bNormalizedIn;
 }
 
 /************************************************************************/
@@ -469,10 +483,15 @@ FilterData( int nXSize, int nYSize, GDALDataType eType,
                     }
                 }
 
-                if( dfKernSum != 0.0 )
-                    fResult = dfSum / dfKernSum;
+                if( bNormalized )
+                {
+                    if( dfKernSum != 0.0 )
+                        fResult = dfSum / dfKernSum;
+                    else
+                        fResult = 0.0;
+                }
                 else
-                    fResult = 0.0;
+                    fResult = dfSum;
 
                 ((float *) pabyDstData)[iX + iY * nXSize] = fResult;
             }
@@ -525,6 +544,8 @@ CPLErr VRTKernelFilteredSource::XMLInit( CPLXMLNode *psTree )
     CPLFree( padfNewCoefs );
     CSLDestroy( papszCoefItems );
 
+    SetNormalized( atoi(CPLGetXMLValue(psTree,"Kernel.normalized","0")) );
+
     return eErr;
 }
 
@@ -547,6 +568,15 @@ CPLXMLNode *VRTKernelFilteredSource::SerializeToXML()
     psSrc->pszValue = CPLStrdup("KernelFilteredSource" );
 
     psKernel = CPLCreateXMLNode( psSrc, CXT_Element, "Kernel" );
+
+    if( bNormalized )
+        CPLCreateXMLNode( 
+            CPLCreateXMLNode( psKernel, CXT_Attribute, "normalized" ), 
+            CXT_Text, "1" );
+    else
+        CPLCreateXMLNode( 
+            CPLCreateXMLNode( psKernel, CXT_Attribute, "normalized" ), 
+            CXT_Text, "0" );
 
     pszKernelCoefs = (char *) CPLMalloc(nCoefCount * 32);
 

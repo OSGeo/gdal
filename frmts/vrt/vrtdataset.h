@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2003/08/07 17:11:21  warmerda
+ * added normalized flag for kernel based filters
+ *
  * Revision 1.9  2003/07/17 20:30:24  warmerda
  * Added custom VRTDriver and moved all the sources class declarations in here.
  *
@@ -370,6 +373,8 @@ protected:
 
     double  *padfKernelCoefs;
 
+    int     bNormalized;
+
 public:
             VRTKernelFilteredSource();
     virtual ~VRTKernelFilteredSource();
@@ -381,6 +386,7 @@ public:
                                 GByte *pabySrcData, GByte *pabyDstData );
 
     CPLErr          SetKernel( int nKernelSize, double *padfCoefs );
+    void            SetNormalized( int );
 };
 
 /************************************************************************/
