@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.20  2003/12/09 16:47:17  warmerda
+ * Make sure GetGeoTransform() still initializes the geotransform array.
+ *
  * Revision 1.19  2003/11/07 18:33:10  warmerda
  * additional transparent hack for AUG
  *
@@ -368,11 +371,9 @@ CPLErr GIFDataset::GetGeoTransform( double * padfTransform )
 
 {
 
+    memcpy( padfTransform, adfGeoTransform, sizeof(double)*6 );
     if( bGeoTransformValid )
-    {
-        memcpy( padfTransform, adfGeoTransform, sizeof(double)*6 );
         return CE_None;
-    }
     else
         return CE_Failure;
 }
