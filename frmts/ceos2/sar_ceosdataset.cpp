@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2001/08/30 18:24:06  warmerda
+ * added support for reading map projection record in ers dataset
+ *
  * Revision 1.15  2001/08/22 16:54:30  warmerda
  * dont try to extract gcps if there is no prefix data
  *
@@ -125,10 +128,10 @@ static CeosTypeCode_t QuadToTC( int a, int b, int c, int d )
 #define VOLUME_DESCRIPTOR_RECORD_TC        QuadToTC( 192, 192, 18, 18 )
 #define IMAGE_HEADER_RECORD_TC             QuadToTC( 63, 192, 18, 18 )
 #define LEADER_RADIOMETRIC_DATA_RECORD_TC  QuadToTC( 18, 50, 18, 20 )
+#define LEADER_MAP_PROJ_RECORD_TC          QuadToTC( 10, 20, 31, 20 )
 
 #define PROC_PARAM_RECORD_TYPECODE { 18, 120, 18, 20 }
 #define RAD_MET_RECORD_TYPECODE    { 18, 50, 18, 20 }
-#define MAP_PROJ_RECORD_TYPECODE   { 18, 20, 18, 20 }
 
 /************************************************************************/
 /* ==================================================================== */
@@ -152,6 +155,7 @@ class SAR_CEOSDataset : public GDALDataset
 
     void        ScanForGCPs();
     void        ScanForMetadata();
+    int         ScanForMapProjection();
 
   public:
                 SAR_CEOSDataset();
@@ -599,6 +603,77 @@ void SAR_CEOSDataset::ScanForMetadata()
 }
 
 /************************************************************************/
+/*                        ScanForMapProjection()                        */
+/*                                                                      */
+/*      Try to find a map projection record, and read corner points     */
+/*      from it.  This has only been tested with ERS products.          */
+/************************************************************************/
+
+int SAR_CEOSDataset::ScanForMapProjection()
+
+{
+    CeosRecord_t *record;
+    char	 szField[100];
+    int          i;
+
+/* -------------------------------------------------------------------- */
+/*      Find record, and try to determine if it has useful GCPs.        */
+/* -------------------------------------------------------------------- */
+
+    record = FindCeosRecord( sVolume.RecordList, 
+                             LEADER_MAP_PROJ_RECORD_TC,
+                             __CEOS_LEADER_FILE, -1, -1 );
+
+    if( record == NULL )
+        return FALSE;
+
+    memset( szField, 0, 17 );
+    GetCeosField( record, 29, "A16", szField );
+    if( !EQUALN(szField,"Slant Range",11) )
+        return FALSE;
+
+    GetCeosField( record, 1073, "A16", szField );
+    if( EQUALN(szField,"        ",8) )
+        return FALSE;
+
+/* -------------------------------------------------------------------- */
+/*      Read corner points.                                             */
+/* -------------------------------------------------------------------- */
+    nGCPCount = 4;
+    pasGCPList = (GDAL_GCP *) CPLCalloc(sizeof(GDAL_GCP),nGCPCount);
+
+    GDALInitGCPs( nGCPCount, pasGCPList );
+
+    for( i = 0; i < nGCPCount; i++ )
+    {
+        char         szId[32];
+
+        sprintf( szId, "%d", i+1 );
+        pasGCPList[i].pszId = CPLStrdup( szId );
+    
+        GetCeosField( record, 1073+32*i, "A16", szField );
+        pasGCPList[i].dfGCPY = atof(szField);
+        GetCeosField( record, 1089+32*i, "A16", szField );
+        pasGCPList[i].dfGCPX = atof(szField);
+        pasGCPList[i].dfGCPZ = 0.0;
+    }
+    
+    pasGCPList[0].dfGCPLine = 0.5;
+    pasGCPList[0].dfGCPPixel = 0.5;
+
+    pasGCPList[1].dfGCPLine = 0.5;
+    pasGCPList[1].dfGCPPixel = nRasterXSize-0.5;
+
+    pasGCPList[2].dfGCPLine = nRasterYSize-0.5;
+    pasGCPList[2].dfGCPPixel = nRasterXSize-0.5;
+
+    pasGCPList[3].dfGCPLine = nRasterYSize-0.5;
+    pasGCPList[3].dfGCPPixel = 0.5;
+
+    return TRUE;
+}
+
+/************************************************************************/
 /*                            ScanForGCPs()                             */
 /************************************************************************/
 
@@ -613,7 +688,10 @@ void SAR_CEOSDataset::ScanForGCPs()
 /*      unlikely that the GCPs are available.                           */
 /* -------------------------------------------------------------------- */
     if( sVolume.ImageDesc.ImageDataStart < 192 )
+    {
+        ScanForMapProjection();
         return;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Just sample fix scanlines through the image for GCPs, to        */
