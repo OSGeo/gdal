@@ -663,7 +663,7 @@ py_GDALCreate(PyObject *self, PyObject *args) {
     char **papszOptions = NULL;
 
     self = self;
-    if(!PyArg_ParseTuple(args,"ssiiii|O:GDALCreate",	
+    if(!PyArg_ParseTuple(args,"ssiiii|O!:GDALCreate",	
 			 &pszSwigDriver, &pszFilename, 
 			 &nXSize, &nYSize, &nBands, &nDataType,
 			 &PyList_Type, &poPyOptions ))

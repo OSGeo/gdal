@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.40  2002/08/15 15:34:58  warmerda
+ * fixed problem with options passing in py_GDALCreate (bug 180)
+ *
  * Revision 1.39  2002/07/18 15:33:51  warmerda
  * fixed last fix
  *
@@ -464,7 +467,7 @@ py_GDALCreate(PyObject *self, PyObject *args) {
     char **papszOptions = NULL;
 
     self = self;
-    if(!PyArg_ParseTuple(args,"ssiiii|O:GDALCreate",	
+    if(!PyArg_ParseTuple(args,"ssiiii|O!:GDALCreate",	
 			 &pszSwigDriver, &pszFilename, 
 			 &nXSize, &nYSize, &nBands, &nDataType,
 			 &PyList_Type, &poPyOptions ))
