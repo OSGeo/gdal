@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.10  2001/09/11 13:46:25  warmerda
+ * return nodata value
+ *
  * Revision 1.9  2001/07/18 04:51:56  warmerda
  * added CPL_CVSID
  *
@@ -113,6 +116,7 @@ class AIGRasterBand : public GDALRasterBand
     virtual CPLErr IReadBlock( int, int, void * );
     virtual double GetMinimum( int *pbSuccess );
     virtual double GetMaximum( int *pbSuccess );
+    virtual double GetNoDataValue( int *pbSuccess );
 };
 
 static GDALDriver	*poAIGDriver = NULL;
@@ -205,7 +209,7 @@ double AIGRasterBand::GetMinimum( int *pbSuccess )
 }
 
 /************************************************************************/
-/*                             GetMinimum()                             */
+/*                             GetMaximum()                             */
 /************************************************************************/
 
 double AIGRasterBand::GetMaximum( int *pbSuccess )
@@ -219,6 +223,18 @@ double AIGRasterBand::GetMaximum( int *pbSuccess )
     return poODS->psInfo->dfMax;
 }
 
+/************************************************************************/
+/*                           GetNoDataValue()                           */
+/************************************************************************/
+
+double AIGRasterBand::GetNoDataValue( int *pbSuccess )
+
+{
+    if( pbSuccess != NULL )
+        *pbSuccess = TRUE;
+
+    return GRID_NO_DATA;
+}
 
 /************************************************************************/
 /* ==================================================================== */
