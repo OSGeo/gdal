@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.26  2004/06/23 19:03:59  warmerda
+ * fixed some serious problems in ResizeField(), especially with shrinking
+ *
  * Revision 1.25  2004/03/10 18:09:35  warmerda
  * Avoid warning on casting result of pointer subtraction.
  *
@@ -1110,7 +1113,10 @@ int DDFRecord::ResizeField( DDFField *poField, int nNewDataSize )
     }
 
     if( iTarget == nFieldCount )
+    {
+        CPLAssert( FALSE );
         return FALSE;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Reallocate the data buffer accordingly.                         */
@@ -1118,19 +1124,22 @@ int DDFRecord::ResizeField( DDFField *poField, int nNewDataSize )
     int nBytesToAdd = nNewDataSize - poField->GetDataSize();
     const char *pachOldData = pachData;
 
-    pachData = (char *) CPLRealloc(pachData, nDataSize + nBytesToAdd );
+    // Don't realloc things smaller ... we will cut off some data.
+    if( nBytesToAdd > 0 )
+        pachData = (char *) CPLRealloc(pachData, nDataSize + nBytesToAdd );
+
     nDataSize += nBytesToAdd;
 
 /* -------------------------------------------------------------------- */
-/*      Shift data after the target field on by the bytes added.        */
+/*      How much data needs to be shifted up or down after this field?  */
 /* -------------------------------------------------------------------- */
-    nBytesToMove = nDataSize 
-        - (poField->GetData()+poField->GetDataSize()-pachOldData+nBytesToAdd);
+    if( nBytesToAdd > 0 )
+        nBytesToMove = nDataSize 
+            - (poField->GetData()+poField->GetDataSize()-pachOldData+nBytesToAdd);
+    else
+        nBytesToMove = nDataSize 
+            - (poField->GetData()+poField->GetDataSize()-pachOldData);
 
-    memmove( (char *)poField->GetData() + poField->GetDataSize() + nBytesToAdd,
-             (char *)poField->GetData() + poField->GetDataSize(), 
-             nBytesToMove );
-             
 /* -------------------------------------------------------------------- */
 /*      Update fields to point into newly allocated buffer.             */
 /* -------------------------------------------------------------------- */
@@ -1144,6 +1153,14 @@ int DDFRecord::ResizeField( DDFField *poField, int nNewDataSize )
                                  paoFields[i].GetDataSize() );
     }
 
+/* -------------------------------------------------------------------- */
+/*      Shift the data beyond this field up or down as needed.          */
+/* -------------------------------------------------------------------- */
+    if( nBytesToMove > 0 )
+        memmove( (char *)poField->GetData()+poField->GetDataSize()+nBytesToAdd,
+                 (char *)poField->GetData()+poField->GetDataSize(), 
+                 nBytesToMove );
+             
 /* -------------------------------------------------------------------- */
 /*      Update the target fields info.                                  */
 /* -------------------------------------------------------------------- */
