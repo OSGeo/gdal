@@ -30,6 +30,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2004/11/05 04:55:48  fwarmerdam
+ * We can't compute the diagonal based on the first and last corner points
+ * if either didn't transform successfully.  Just fallback to using the
+ * diagonal of the min/max window even though it is slightly less precise.
+ *
  * Revision 1.18  2004/08/13 14:50:06  warmerda
  * use SetFromUserInput() for SourceSRS and TargetSRS
  *
@@ -362,9 +367,17 @@ CPLErr GDALSuggestedWarpOutput( GDALDatasetH hSrcDS,
 /*      georeferenced coordinates.                                      */
 /* -------------------------------------------------------------------- */
     double dfDiagonalDist, dfDeltaX, dfDeltaY;
-    
-    dfDeltaX = adfX[nSamplePoints-1] - adfX[0];
-    dfDeltaY = adfY[nSamplePoints-1] - adfY[0];
+
+    if( abSuccess[0] && abSuccess[nSamplePoints-1] )
+    {
+        dfDeltaX = adfX[nSamplePoints-1] - adfX[0];
+        dfDeltaY = adfY[nSamplePoints-1] - adfY[0];
+    }
+    else
+    {
+        dfDeltaX = dfMaxXOut - dfMinXOut;
+        dfDeltaY = dfMaxYOut - dfMinYOut;
+    }
 
     dfDiagonalDist = sqrt( dfDeltaX * dfDeltaX + dfDeltaY * dfDeltaY );
     
