@@ -153,17 +153,24 @@ int main( int argc, char ** argv )
     while( argc > 2 && (atoi(argv[2]) > 0 || argv[2][0] == '0') )
     {
         int	nBlock = atoi(argv[2]);
+        CPLErr  eErr;
 
         argv++;
         argc--;
         
-        AIGReadBlock( psInfo->fpGrid,
-                      psInfo->panBlockOffset[nBlock],
-                      psInfo->panBlockSize[nBlock],
-                      psInfo->nBlockXSize, psInfo->nBlockYSize,
-                      panRaster, psInfo->nCellType );
+        eErr = AIGReadBlock( psInfo->fpGrid,
+                             psInfo->panBlockOffset[nBlock],
+                             psInfo->panBlockSize[nBlock],
+                             psInfo->nBlockXSize, psInfo->nBlockYSize,
+                             panRaster, psInfo->nCellType );
 
         printf( "\nBlock %d:\n", nBlock );
+
+        if( eErr != CE_None )
+        {
+            printf( "  Error! Skipping block.\n" );
+            continue;
+        }
         
         for( j = 0; j < psInfo->nBlockYSize; j++ )
         {
