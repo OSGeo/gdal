@@ -129,6 +129,9 @@ class ILWISRasterBand : public GDALRasterBand
   virtual CPLErr IReadBlock( int, int, void * );
 	virtual CPLErr IWriteBlock( int, int, void * ); 
 	virtual double GetNoDataValue( int *pbSuccess );
+
+  private:
+        void FillWithNoData(void * pImage);
 };
 
 /************************************************************************/
@@ -143,7 +146,7 @@ class ILWISDataset : public GDALDataset
 		double adfGeoTransform[6];
 		int    bGeoDirty;
 		int		 bNewDataset;            /* product of Create() */
-		string pszFileType; //indicating the input dataset: Map/MapList  
+    string pszFileType; //indicating the input dataset: Map/MapList  
 		CPLErr ReadProjection( string csyFileName);
 		CPLErr WriteProjection();
 		CPLErr WriteGeoReference();
