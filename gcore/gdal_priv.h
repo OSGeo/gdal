@@ -26,6 +26,9 @@
  * Note this is a C++ include file, and can't be used by C code.
  * 
  * $Log$
+ * Revision 1.3  1998/12/06 22:17:09  warmerda
+ * Fill out rasterio support.
+ *
  * Revision 1.2  1998/12/03 18:34:06  warmerda
  * Update to use CPL
  *
@@ -120,7 +123,14 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
     GDALAccess	eAccess;
 
     friend class GDALDataset;
-    
+
+  protected:
+    virtual CPLErr IReadBlock( int, int, void * ) = 0;
+    virtual CPLErr IWriteBlock( int, int, void * );
+    virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
+                              void *, int, int, GDALDataType,
+                              int, int );
+
   public:
                 GDALRasterBand();
                 
@@ -130,11 +140,12 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
     void	GetBlockSize( int *, int * );
     GDALAccess	GetAccess();
     
-    virtual CPLErr RasterIO( GDALRWFlag, int, int, int, int,
-                             void *, int, int, GDALDataType,
-                             int, int );
-    virtual CPLErr ReadBlock( int, int, void * ) = 0;
-    virtual CPLErr WriteBlock( int, int, void * );
+    CPLErr 	RasterIO( GDALRWFlag, int, int, int, int,
+                          void *, int, int, GDALDataType,
+                          int, int );
+    CPLErr 	ReadBlock( int, int, void * );
+
+    CPLErr 	WriteBlock( int, int, void * );
 };
 
 /************************************************************************/
@@ -183,7 +194,14 @@ class CPL_DLL GDALDriver
     char		*pszHelpTopic;
     
     GDALDataset 	*(*pfnOpen)( GDALOpenInfo * );
-    // eventually a create function.
+
+    GDALDataset		*(*pfnCreate)( const char * pszName,
+                                       int nXSize, int nYSize, int nBands,
+                                       char ** papszOptions );
+
+    GDALDataset		*Create( const char * pszName,
+                                 int nXSize, int nYSize, int nBands,
+                                 GDALDataType eType, char ** papszOptions );
 };
 
 /************************************************************************/
