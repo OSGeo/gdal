@@ -258,7 +258,7 @@ simple image reprojection and warping utility
 Usage: 
 \endhtmlonly
 
-vim[C\verbatim
+\verbatim
 gdalwarp [--version] [--formats]
     [-s_srs srs_def] [-t_srs srs_def] [-order n] [-et err_threshold]
     [-te xmin ymin xmax ymax] [-tr xres yres] [-ts width height]
@@ -346,6 +346,14 @@ projection with a command like this:<p>
 
 \verbatim
 % gdalwarp -t_srs '+proj=utm +zone=11 +datum=WGS84' raw_spot.tif utm11.tif
+\endverbatim
+
+For instance, the second channel of an ASTER image stored in HDF with
+control points mapping the corners to lat/long could be warped to a UTM
+projection with a command like this:<p>
+
+\verbatim
+% gdalwarp HDF4_SDS:ASTER_L1B:"pg-PR1B0000-2002031402_100_001":2 pg-PR1B0000-2002031402_100_001_2.tif
 \endverbatim
 
 \if man
