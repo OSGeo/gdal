@@ -28,6 +28,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2001/06/25 15:07:51  warmerda
+ * Added support for DGNElemComplexHeader
+ * Don't include elements with the complex bit (such as shared cell definition
+ * elements) in extents computation for fear they are in a different coord sys.
+ *
  * Revision 1.10  2001/03/07 13:56:44  warmerda
  * updated copyright to be held by Avenza Systems
  *
@@ -383,6 +388,22 @@ DGNElemCore *DGNReadElement( DGNHandle hDGN )
         psElement = DGNParseTCB( psDGN );
         break;
 
+      case DGNT_COMPLEX_CHAIN_HEADER:
+      case DGNT_COMPLEX_SHAPE_HEADER:
+      {
+          DGNElemComplexHeader *psHdr;
+
+          psHdr = (DGNElemComplexHeader *) 
+              CPLCalloc(sizeof(DGNElemComplexHeader),1);
+          psElement = (DGNElemCore *) psHdr;
+          psElement->stype = DGNST_COMPLEX_HEADER;
+          DGNParseCore( psDGN, psElement );
+
+          psHdr->totlength = psDGN->abyElem[36] + psDGN->abyElem[37] * 256;
+          psHdr->numelems = psDGN->abyElem[38] + psDGN->abyElem[39] * 256;
+      }
+      break;
+
       default:
       {
           psElement = (DGNElemCore *) CPLCalloc(sizeof(DGNElemCore),1);
@@ -705,6 +726,17 @@ void DGNDumpElement( DGNHandle hDGN, DGNElemCore *psElement, FILE *fp )
       }
       break;
 
+      case DGNST_COMPLEX_HEADER:
+      {
+          DGNElemComplexHeader	*psHdr = (DGNElemComplexHeader *) psElement;
+
+          fprintf( fp, 
+                   "  totlength=%d, numelems=%d\n",
+                   psHdr->totlength,
+                   psHdr->numelems );
+      }
+      break;
+
       case DGNST_COLORTABLE:
       {
           DGNElemColorTable *psCT = (DGNElemColorTable *) psElement;
@@ -832,6 +864,12 @@ const char *DGNTypeToName( int nType )
 
       case DGNT_APPLICATION_ELEM:
         return "Application Element";
+
+      case DGNT_SHARED_CELL_DEFN:
+        return "Shared Cell Definition";
+        
+      case DGNT_SHARED_CELL_ELEM:
+        return "Shared Cell Element";
         
       default:
         sprintf( szNumericResult, "%d", nType );
@@ -986,6 +1024,9 @@ void DGNBuildIndex( DGNInfo *psDGN )
         psEI->flags = 0;
         psEI->offset = nLastOffset;
 
+        if( psDGN->abyElem[0] & 0x80 )
+            psEI->flags |= DGNEIF_COMPLEX;
+
         if( psDGN->abyElem[1] & 0x80 )
             psEI->flags |= DGNEIF_DELETED;
 
@@ -1003,6 +1044,10 @@ void DGNBuildIndex( DGNInfo *psDGN )
         else if( nType == DGNT_ELLIPSE || nType == DGNT_ARC )
             psEI->stype = DGNST_ARC;
         
+        else if( nType == DGNT_COMPLEX_SHAPE_HEADER 
+                 || nType == DGNT_COMPLEX_CHAIN_HEADER )
+            psEI->stype = DGNST_COMPLEX_HEADER;
+        
         else if( nType == DGNT_TEXT )
             psEI->stype = DGNST_TEXT;
 
@@ -1019,7 +1064,8 @@ void DGNBuildIndex( DGNInfo *psDGN )
         if( (psEI->stype == DGNST_MULTIPOINT 
              || psEI->stype == DGNST_ARC
              || psEI->stype == DGNST_TEXT)
-            && !(psEI->flags & DGNEIF_DELETED) )
+            && !(psEI->flags & DGNEIF_DELETED)
+            && !(psEI->flags & DGNEIF_COMPLEX) )
         {
             GUInt32	anRegion[6];
 

@@ -28,6 +28,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2001/06/25 15:07:51  warmerda
+ * Added support for DGNElemComplexHeader
+ * Don't include elements with the complex bit (such as shared cell definition
+ * elements) in extents computation for fear they are in a different coord sys.
+ *
  * Revision 1.11  2001/03/18 16:54:39  warmerda
  * added use of DGNTestOpen, remove extention test
  *
@@ -204,6 +209,21 @@ typedef struct {
 } DGNElemText;
 
 /** 
+ * Complex header element 
+ *
+ * The core.stype code is DGNST_COMPLEXHEADER.
+ *
+ * Used for: DGNT_COMPLEX_CHAIN_HEADER(12), DGNT_COMPLEX_SHAPE_HEADER(14).
+ */
+
+typedef struct {
+    DGNElemCore core;
+    
+    int		totlength;     /*!< Total length of surface */
+    int		numelems;      /*!< # of elements in surface */
+} DGNElemComplexHeader;
+
+/** 
  * Color table.
  *
  * The core.stype code is DGNST_COLORTABLE.
@@ -271,6 +291,9 @@ typedef struct {
 /** DGNElemCore style: Element uses DGNElemText structure */
 #define DGNST_TEXT                 6 
 
+/** DGNElemCore style: Element uses DGNElemComplexHeader structure */
+#define DGNST_COMPLEX_HEADER       7
+
 /* -------------------------------------------------------------------- */
 /*      Element types                                                   */
 /* -------------------------------------------------------------------- */
@@ -291,6 +314,8 @@ typedef struct {
 #define DGNT_ARC                  16
 #define DGNT_TEXT                 17
 #define DGNT_BSPLINE              21
+#define DGNT_SHARED_CELL_DEFN     34
+#define DGNT_SHARED_CELL_ELEM     35
 #define DGNT_APPLICATION_ELEM     66
 
 /* -------------------------------------------------------------------- */
@@ -343,6 +368,7 @@ typedef struct {
 /*      DGNElementInfo flag values.                                     */
 /* -------------------------------------------------------------------- */
 #define DGNEIF_DELETED     0x01
+#define DGNEIF_COMPLEX     0x02
 
 /* -------------------------------------------------------------------- */
 /*      Justifications                                                  */
