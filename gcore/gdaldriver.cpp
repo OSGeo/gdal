@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2000/06/27 16:47:28  warmerda
+ * added cancel support for CopyCreate progress func
+ *
  * Revision 1.13  2000/06/26 18:47:14  warmerda
  * Ensure pszHelpTopic is initialized
  *
@@ -219,7 +222,11 @@ GDALDataset *GDALDriver::CreateCopy( const char * pszFilename,
 
     CPLDebug( "GDAL", "Using default GDALDriver::CreateCopy implementation." );
 
-    pfnProgress( 0.0, NULL, pProgressData );
+    if( !pfnProgress( 0.0, NULL, pProgressData ) )
+    {
+        CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
+        return NULL;
+    }
 
     poDstDS = Create( pszFilename, nXSize, nYSize, 
                       poSrcDS->GetRasterCount(), eType, papszOptions );
@@ -274,9 +281,15 @@ GDALDataset *GDALDriver::CreateCopy( const char * pszFilename,
                 return NULL;
             }
 
-            pfnProgress( (iBand + iLine / (double) nYSize)
-                         / (double) poSrcDS->GetRasterCount(), 
-                         NULL, pProgressData );
+            if( !pfnProgress( (iBand + iLine / (double) nYSize)
+                              / (double) poSrcDS->GetRasterCount(), 
+                              NULL, pProgressData ) )
+            {
+                CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
+                delete poDstDS;
+                Delete( pszFilename );
+                return NULL;
+            }
         }
 
         CPLFree( pData );
