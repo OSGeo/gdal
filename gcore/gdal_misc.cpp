@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.42  2003/02/15 20:22:14  warmerda
+ * GDALReadTabFile() returns true if it gets GCPs but cant make geotransform
+ *
  * Revision 1.41  2003/01/27 21:55:52  warmerda
  * various documentation improvements
  *
@@ -1284,7 +1287,8 @@ int GDALReadTabFile( const char * pszBaseFilename,
      
     CSLDestroy(papszTok);
     CSLDestroy(papszLines);
-    return *pnGCPCount == 0;
+
+    return TRUE;
 }
 
 /************************************************************************/
