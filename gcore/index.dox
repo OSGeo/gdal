@@ -7,7 +7,7 @@ that is released under an <a href="faq.html#license">X/MIT</a> style
 Open Source</a> license.  As a library, it presents a
 <a href="gdal_datamodel.html"> single abstract data
 model</a> to the calling application for all supported formats.
-The related <a href="http://gdal.velocet.ca/projects/opengis/">OGR</a> 
+The related <a href="ogr">OGR</a> 
 library (which lives within the GDAL source tree) provides
 a similar capability for simple features vector data.<P>
 
@@ -98,8 +98,8 @@ projects</a>, many of which are incorporated into GDAL or use GDAL.<p>
 organization for cooperative OpenSource work related to remote sensing.  
 GDAL is hosted at remotesensing.org.<p>
 
-<li> <a href="http://gdal.velocet.ca/projects/opengis/ogrhtml/class_ogrspatialreference.html">OGRSpatialReference</a>: My OGR encapsulation of OpenGIS
-projection definitions.<p>
+<li> <a href="ogr/osr_tutorial.html">OGRSpatialReference Tutorial</a>: My OGR 
+encapsulation of OpenGIS projection definitions.<p>
 
 <li> <a href="http://keittlab.bio.sunysb.edu/R/GDAL/">GDAL Bindings into R.</a>
 by Timothy H. Keitt.<p>
