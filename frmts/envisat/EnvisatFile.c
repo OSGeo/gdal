@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2001/02/27 22:34:33  warmerda
+ * added EnvisatFile_ReadDatasetRecord
+ *
  * Revision 1.1  2001/02/24 14:20:48  warmerda
  * New
  *
@@ -1477,6 +1480,74 @@ int EnvisatFile_WriteDatasetRecord( EnvisatFile *self,
     if( result != self->ds_info[ds_index]->dsr_size )
     {
         SendError( "write failed in EnvisatFile_WriteDatasetRecord()" );
+        return FAILURE;
+    }
+
+    return SUCCESS;
+}
+
+/*-----------------------------------------------------------------------------
+
+Name:
+    EnvisatFile_ReadDatasetRecord()
+
+Purpose:
+    Read an arbitrary dataset record.
+
+Description:
+    Note that no range checking is made on offset and size, and data may be
+    read from outside the dataset if they are inappropriate.
+
+Inputs:
+    self -- the file to be searched.
+    ds_index -- the index of dataset to access.
+    record_index -- the record to write.
+    record_buffer -- buffer to load data into
+
+Outputs:
+
+Returns:
+    SUCCESS or FAILURE
+
+-----------------------------------------------------------------------------*/
+
+int EnvisatFile_ReadDatasetRecord( EnvisatFile *self, 
+                                    int ds_index,
+                                    int record_index,
+                                    void *buffer )
+
+{
+    int		absolute_offset;
+    int         result;
+
+    if( ds_index < 0 || ds_index >= self->ds_count )
+    {
+        SendError( "Attempt to write non-existant dataset in "
+                   "EnvisatFile_WriteDatasetRecord()" );
+        return FAILURE;
+    }
+
+    if( record_index < 0
+        || record_index >=  self->ds_info[ds_index]->num_dsr )
+    {
+        SendError( "Attempt to write beyond end of dataset in "
+                   "EnvisatFile_WriteDatasetRecord()" );
+        return FAILURE;
+    }
+
+    absolute_offset = self->ds_info[ds_index]->ds_offset
+        + record_index * self->ds_info[ds_index]->dsr_size;
+
+    if( fseek( self->fp, absolute_offset, SEEK_SET ) != 0 )
+    {
+        SendError( "seek failed in EnvisatFile_WriteDatasetRecord()" );
+        return FAILURE;
+    }
+
+    result = fread( buffer, 1, self->ds_info[ds_index]->dsr_size, self->fp );
+    if( result != self->ds_info[ds_index]->dsr_size )
+    {
+        SendError( "read failed in EnvisatFile_ReadDatasetRecord()" );
         return FAILURE;
     }
 
