@@ -30,6 +30,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.5  2004/06/01 13:24:09  warmerda
+# Added step to preserve georeferencing.
+#
 # Revision 1.4  2004/04/02 17:40:44  warmerda
 # added GDALGeneralCmdLineProcessor() support
 #
@@ -137,6 +140,15 @@ tif_ds = gtiff_driver.Create( tif_filename,
                               src_ds.RasterXSize, src_ds.RasterYSize, 1)
 
 tif_ds.GetRasterBand(1).SetRasterColorTable( ct )
+
+# ----------------------------------------------------------------------------
+# We should copy projection information and so forth at this point.
+
+tif_ds.SetProjection( src_ds.GetProjection() )
+tif_ds.SetGeoTransform( src_ds.GetGeoTransform() )
+
+# ----------------------------------------------------------------------------
+# Actually transfer and dither the data.
 
 err = gdal.DitherRGB2PCT( src_ds.GetRasterBand(1),
                           src_ds.GetRasterBand(2),
