@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  1999/07/29 17:30:38  warmerda
+ * avoid geometry dependent stuff if ogr_geometry.h not included
+ *
  * Revision 1.3  1999/07/07 04:23:07  danmo
  * Fixed typo in  #define _OGR_..._H_INCLUDED  line
  *
@@ -60,6 +63,7 @@
 /*      helper function for parsing well known text format vector objects.*/
 /* -------------------------------------------------------------------- */
 
+#ifdef _OGR_GEOMETRY_H_INCLUDED
 #define OGR_WKT_TOKEN_MAX	64
 
 const char * OGRWktReadToken( const char * pszInput, char * pszToken );
@@ -69,5 +73,6 @@ const char * OGRWktReadPoints( const char * pszInput,
                                int * pnReadPoints );
 
 const char *OGRMakeWktCoordinate( double, double );
+#endif
 
 #endif /* ndef _OGR_P_H_INCLUDED */
