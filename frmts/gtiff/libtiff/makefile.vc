@@ -32,9 +32,7 @@ OBJ	= \
 	tif_version.obj \
 	tif_warning.obj \
 	tif_write.obj \
-	tif_zip.obj \
-	tif_overview.obj \
-	tif_ovrcache.obj
+	tif_zip.obj
 
 GDAL_ROOT	=	..\..\..
 
