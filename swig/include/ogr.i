@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.11  2005/02/21 16:52:39  hobu
+ * GetFieldAs* methods that take in string or int input for Feature
+ *
  * Revision 1.10  2005/02/18 23:47:11  hobu
  * Feature and FeatureDefn
  * except for the field handling methods on Feature
@@ -614,17 +617,64 @@ public:
   int GetFieldCount() {
     return OGR_F_GetFieldCount(self);
   }
-  
-  %newobject GetFieldDefnRef_ByID;
-  OGRFieldDefnH *GetFieldDefnRef_ByID(int id) {
+
+  /* ---- GetFieldDefnRef --------------------- */
+  %newobject GetFieldDefnRef;
+  OGRFieldDefnH *GetFieldDefnRef(int id) {
     return (OGRFieldDefnH *) OGR_F_GetFieldDefnRef(self, id);
   }
 
-  %newobject GetFieldDefnRef_ByString;
-  OGRFieldDefnH *GetFieldDefnRef_ByString(const char* name) {
+  %newobject GetFieldDefnRef;
+  OGRFieldDefnH *GetFieldDefnRef(const char* name) {
     return (OGRFieldDefnH *) OGR_F_GetFieldDefnRef(self, OGR_F_GetFieldIndex(self, name));
   }
+  /* ------------------------------------------- */
+
+  /* ---- GetFieldAsString --------------------- */
+
+  const char* GetFieldAsString(int id) {
+    return (const char *) OGR_F_GetFieldAsString(self, id);
+  }
+
+  const char* GetFieldAsString(const char* name) {
+    return (const char *) OGR_F_GetFieldAsString(self, OGR_F_GetFieldIndex(self, name));
+  }
+  /* ------------------------------------------- */
+
+  /* ---- GetFieldAsInteger -------------------- */
+
+  int GetFieldAsInteger(int id) {
+    return OGR_F_GetFieldAsInteger(self, id);
+  }
+
+  int GetFieldAsInteger(const char* name) {
+    return OGR_F_GetFieldAsInteger(self, OGR_F_GetFieldIndex(self, name));
+  }
+  /* ------------------------------------------- */  
+
+  /* ---- GetFieldAsDouble --------------------- */
+
+  double GetFieldAsDouble(int id) {
+    return OGR_F_GetFieldAsDouble(self, id);
+  }
+
+  double GetFieldAsDouble(const char* name) {
+    return OGR_F_GetFieldAsDouble(self, OGR_F_GetFieldIndex(self, name));
+  }
+  /* ------------------------------------------- */  
+
+
   
+  /* ---- IsFieldSet --------------------------- */
+  int IsFieldSet(int id) {
+    return OGR_F_IsFieldSet(self, id);
+  }
+
+  int IsFieldSet(const char* name) {
+    return OGR_F_IsFieldSet(self, OGR_F_GetFieldIndex(self, name));
+  }
+  /* ------------------------------------------- */  
+      
   int GetFieldIndex(const char* name) {
     return OGR_F_GetFieldIndex(self, name);
   }
@@ -644,6 +694,26 @@ public:
     OGR_F_DumpReadable(self, NULL);
   }
 
+  void UnsetField(int id) {
+    OGR_F_UnsetField(self, id);
+  }
+
+
+  void UnsetField(const char* name) {
+    OGR_F_UnsetField(self, OGR_F_GetFieldIndex(self, name));
+  }
+
+  /* ---- SetField ----------------------------- */
+  
+  void SetField(int id, const char* value) {
+    OGR_F_SetFieldString(self, id, value);
+  }
+
+  void SetField(const char* name, const char* value) {
+    OGR_F_SetFieldString(self, OGR_F_GetFieldIndex(self, name), value);
+  }
+  /* ---- SetField ----------------------------- */  
+  
   %feature(" kwargs ") SetFrom;
   OGRErr SetFrom(OGRFeatureH other, int forgiving=1) {
     OGRErr err = OGR_F_SetFrom(self, other, forgiving);
@@ -677,7 +747,7 @@ public:
         try:
             names = []
             for i in range(self.GetFieldCount()):
-                names.append(self.GetFieldDefnRef(i).GetName())
+                names.append(self.GetFieldDefnRef_ByID(i).GetName())
             if name in names:
                 return self.GetField(name)
             else:
