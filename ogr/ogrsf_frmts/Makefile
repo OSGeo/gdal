@@ -1,24 +1,20 @@
+GDAL_ROOT	=	..\..
+
+DIRLIST		=	generic shape ntf sdts tiger s57 dgn mitab $(OGDIDIR)
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+!IFDEF OGDIDIR
+OGDIDIR	=	ogdi
+OGDIOBJ =	ogdi\*.obj
+!ENDIF
+
 default:
-	cd generic
-	$(MAKE) $*
-	cd ..\shape 
-	$(MAKE) $*
-	cd ..\ntf
-	$(MAKE) $*
-	cd ..\sdts
-	$(MAKE) $*
-	cd ..\tiger
-	$(MAKE) $*
-	cd ..\s57
-	$(MAKE) $*
-	cd ..\mitab
-	$(MAKE) $*
-	cd ..\dgn
-	$(MAKE) $*
-	cd ..
+	for %d in ( $(DIRLIST) ) do ..\..\submake.bat %d
+
 	lib /out:ogrsf_frmts.lib generic\*.obj shape\*.obj ntf\*.obj \
 				 sdts\*.obj s57\*.obj tiger\*.obj \
-				 mitab\*.obj dgn\*.obj
+				 mitab\*.obj dgn\*.obj $(OGDIOBJ)
 	lib /out:ogrsf_frmts_sup.lib \
 				 ..\..\frmts\iso8211\*.obj \
 				 ..\..\frmts\sdts\sdtsattrreader.obj \
@@ -36,19 +32,4 @@ default:
 clean:
 	-del ogrsf_frmts.lib
 	-del ogrsf_frmts_sup.lib
-	cd generic 
-	$(MAKE) clean
-	cd ..\shape 
-	$(MAKE) clean
-	cd ..\ntf
-	$(MAKE) clean
-	cd ..\sdts
-	$(MAKE) clean
-	cd ..\tiger
-	$(MAKE) clean
-	cd ..\s57
-	$(MAKE) clean
-	cd ..\dgn
-	$(MAKE) clean
-	cd ..\mitab
-	$(MAKE) clean
+	for %d in ( $(DIRLIST) ) do ..\..\submake.bat %d clean
