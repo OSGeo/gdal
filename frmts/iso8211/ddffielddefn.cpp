@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2003/07/18 20:45:30  warmerda
+ * be careful to avoid pszDest buffer overrun
+ *
  * Revision 1.12  2003/07/03 15:38:46  warmerda
  * some write capabilities added
  *
@@ -601,7 +604,7 @@ char *DDFFieldDefn::ExpandFormat( const char * pszSrc )
                 > nDestMax )
             {
                 nDestMax = 2 * (strlen(pszExpandedContents) + strlen(pszDest));
-                pszDest = (char *) CPLRealloc(pszDest,nDestMax);
+                pszDest = (char *) CPLRealloc(pszDest,nDestMax+1);
             }
 
             strcat( pszDest, pszExpandedContents );
@@ -634,7 +637,7 @@ char *DDFFieldDefn::ExpandFormat( const char * pszSrc )
                 {
                     nDestMax = 
                         2 * (strlen(pszExpandedContents) + strlen(pszDest));
-                    pszDest = (char *) CPLRealloc(pszDest,nDestMax);
+                    pszDest = (char *) CPLRealloc(pszDest,nDestMax+1);
                 }
 
                 strcat( pszDest, pszExpandedContents );
