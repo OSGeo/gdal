@@ -37,6 +37,9 @@
  *   hostile source.
  *
  * $Log$
+ * Revision 1.30  2004/03/31 17:11:41  warmerda
+ * fixed return value of CPLCreateXMLElementAndValue()
+ *
  * Revision 1.29  2004/01/29 17:01:51  warmerda
  * Added reference to spec.
  *
@@ -1331,9 +1334,13 @@ void CPLAddXMLSibling( CPLXMLNode *psOlderSibling, CPLXMLNode *psNewSibling )
  *
  * This is function is a convenient short form for:
  *
- *     return CPLCreateXMLNode( 
- *        CPLCreateXMLNode( psParent, CXT_Element, pszName ),
- *        CXT_Text, pszValue );
+ *     CPLXMLNode *psTextNode;
+ *     CPLXMLNode *psElementNode;
+ *
+ *     psElementNode = CPLCreateXMLNode( psParent, CXT_Element, pszName );
+ *     psTextNode = CPLCreateXMLNode( psElementNode, CXT_Text, pszValue );
+ * 
+ *     return psElementNode;
  *
  * It creates a CXT_Element node, with a CXT_Text child, and
  * attaches the element to the passed parent.
@@ -1352,9 +1359,13 @@ CPLXMLNode *CPLCreateXMLElementAndValue( CPLXMLNode *psParent,
                                          const char *pszValue )
 
 {
-    return CPLCreateXMLNode( 
-        CPLCreateXMLNode( psParent, CXT_Element, pszName ),
-        CXT_Text, pszValue );
+    CPLXMLNode *psTextNode;
+    CPLXMLNode *psElementNode;
+
+    psElementNode = CPLCreateXMLNode( psParent, CXT_Element, pszName );
+    psTextNode = CPLCreateXMLNode( psElementNode, CXT_Text, pszValue );
+
+    return psElementNode;
 }
 
 /************************************************************************/
