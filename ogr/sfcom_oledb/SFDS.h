@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2002/08/12 18:06:32  warmerda
+ * added IDataSourceKey support from Autodesk
+ *
  * Revision 1.17  2002/05/08 20:27:48  warmerda
  * added support for caching OGRDataSources
  *
@@ -84,6 +87,7 @@
 
 #include "resource.h"       // main symbols
 #include "SFRS.h"
+//#include "IDataSourceKey.h"
 
 //20020315 - ryan
 // {E3023100-F731-46E2-AF00-C3E835F0C68E}
@@ -105,11 +109,17 @@ class ATL_NO_VTABLE MyIDBInitializeImpl : public IDBInitializeImpl<T>
              MyIDBInitializeImpl()
         {
             CPLDebug( "OGR_OLEDB", "MyIDBInitializeImpl() constructor" );
+            m_pDataSource = NULL;
         }
     virtual ~MyIDBInitializeImpl()
 	{
             CPLDebug( "OGR_OLEDB", "~MyIDBInitializeImpl()" );
-            SFClearOGRDataSource((void *) this);
+            if( m_pDataSource != NULL )
+            {
+                SFDSCacheReleaseDataSource(m_pDataSource);
+                m_pDataSource = NULL;
+            }
+            //SFClearOGRDataSource((void *) this);
 	}
 
     STDMETHOD(Initialize)(void)
@@ -123,21 +133,15 @@ class ATL_NO_VTABLE MyIDBInitializeImpl : public IDBInitializeImpl<T>
                 char *pszDataSource;
                 IUnknown *pIU;
                 QueryInterface(IID_IUnknown, (void **) &pIU);		
-                OGRDataSource *poDS;
 			
                 pszDataSource = SFGetInitDataSource(pIU);
 
 
-                poDS = SFDSCacheOpenDataSource( pszDataSource );
-                CPLDebug( "OGR_OLEDB", "Open(%s) = %p", pszDataSource, poDS );
+                m_pDataSource = SFDSCacheOpenDataSource( pszDataSource );
+                CPLDebug( "OGR_OLEDB", "Open(%s) = %p",
+                          pszDataSource, m_pDataSource );
 
-                if (poDS)
-                {
-                    hr = S_OK;
-                    QueryInterface(IID_IUnknown, (void **) &pIU);
-                    SFSetOGRDataSource(pIU,poDS,(void *) this);
-                }
-                else
+                if ( m_pDataSource == NULL )
                     hr = E_FAIL;
 			
                 free(pszDataSource);
@@ -145,6 +149,14 @@ class ATL_NO_VTABLE MyIDBInitializeImpl : public IDBInitializeImpl<T>
 	
             return hr;
 	}
+
+	OGRDataSource* GetDataSource()
+	{
+		return m_pDataSource;
+	}
+
+  private:
+	OGRDataSource* m_pDataSource;
 };
 
 class ATL_NO_VTABLE CDataSourceISupportErrorInfoImpl : public ISupportErrorInfo
@@ -158,6 +170,18 @@ public:
 		return S_FALSE;
 	}
 };
+template <class T> class ATL_NO_VTABLE IDataSourceKeyImpl : public IDataSourceKey
+{
+public:
+	
+	STDMETHOD(GetKey)(ULONG* nKey)
+	{
+		T* pT = static_cast<T*>(this);
+		*nKey = (ULONG) pT->GetDataSource();
+		return S_OK;
+	}
+
+};
 /////////////////////////////////////////////////////////////////////////////
 // CDataSource
 class ATL_NO_VTABLE CSFSource : 
@@ -170,7 +194,8 @@ class ATL_NO_VTABLE CSFSource :
 	public IInternalConnectionImpl<CSFSource>,
 	public CDataSourceISupportErrorInfoImpl,
         public IServiceProviderImpl<CSFSource>,
-        public ISpecifyPropertyPagesImpl<CSFSource>
+        public ISpecifyPropertyPagesImpl<CSFSource>,
+	public IDataSourceKeyImpl<CSFSource>
 	{
 public:
                      CSFSource()
@@ -235,6 +260,7 @@ BEGIN_COM_MAP(CSFSource)
     COM_INTERFACE_ENTRY(ISupportErrorInfo)
     COM_INTERFACE_ENTRY(IServiceProvider)     
     COM_INTERFACE_ENTRY(ISpecifyPropertyPages)
+    COM_INTERFACE_ENTRY(IDataSourceKey)
 END_COM_MAP()
 
 //20020315 - ryan
