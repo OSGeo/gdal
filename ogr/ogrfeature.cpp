@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  1999/07/27 00:48:34  warmerda
+ * added fid, and Equal() support
+ *
  * Revision 1.2  1999/07/05 17:19:52  warmerda
  * added docs
  *
@@ -61,6 +64,8 @@ OGRFeature::OGRFeature( OGRFeatureDefn * poDefnIn )
     poDefnIn->Reference();
     poDefn = poDefnIn;
 
+    nFID = OGRNullFID;
+    
     poGeometry = NULL;
 
     // we should likely be initializing from the defaults, but this will
@@ -596,4 +601,78 @@ void OGRFeature::DumpReadable( FILE * fpOut )
         poGeometry->dumpReadable( fpOut, "  " );
 
     fprintf( fpOut, "\n" );
+}
+
+/************************************************************************/
+/*                               GetFID()                               */
+/************************************************************************/
+
+/**
+ * \fn long OGRFeature::GetFID();
+ *
+ * Get feature identifier.
+ *
+ * @return feature id or OGRNullFID if none has been assigned.
+ */
+
+/************************************************************************/
+/*                               SetFID()                               */
+/************************************************************************/
+
+/**
+ * Set the feature identifier.
+ *
+ * For specific types of features this operation may fail on illegal
+ * features ids.  Generally it always succeeds.  Feature ids should be
+ * greater than or equal to zero, with the exception of OGRNullFID (-1)
+ * indicating that the feature id is unknown.
+ *
+ * @param nFID the new feature identifier value to assign.
+ *
+ * @return On success OGRERR_NONE, or on failure some other value. 
+ */
+
+OGRErr OGRFeature::SetFID( long nFIDIn )
+
+{
+    nFID = nFIDIn;
+
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                               Equal()                                */
+/************************************************************************/
+
+/**
+ * Test if two features are the same.
+ *
+ * Two features are considered equal if the share them (pointer equality)
+ * same OGRFeatureDefn, have the same field values, and the same geometry
+ * (as tested by OGRGeometry::Equal()) as well as the same feature id.
+ *
+ * @param poFeature the other feature to test this one against.
+ *
+ * @return TRUE if they are equal, otherwise FALSE.
+ */
+
+OGRBoolean OGRFeature::Equal( OGRFeature * poFeature )
+
+{
+    if( poFeature == this )
+        return TRUE;
+
+    if( GetFID() != poFeature->GetFID() )
+        return FALSE;
+    
+    if( GetDefnRef() != poFeature->GetDefnRef() )
+        return FALSE;
+
+    //notdef: add testing of attributes at a later date.
+
+    if( GetGeometryRef() != NULL
+        && (!GetGeometryRef()->Equal( poFeature->GetGeometryRef() ) ) )
+        return FALSE;
+
+    return TRUE;
 }
