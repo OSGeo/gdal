@@ -28,6 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************
  * $Log$
+ * Revision 1.26  2001/12/07 15:29:45  warmerda
+ * added InitBlockInfo() in GetHistogram()
+ *
  * Revision 1.25  2001/10/18 14:35:22  warmerda
  * avoid conflicts between parameters and member data
  *
@@ -1624,6 +1627,8 @@ CPLErr GDALRasterBand::GetHistogram( double dfMin, double dfMax,
     int         nSampleRate;
     double      dfScale;
 
+    InitBlockInfo();
+    
     if( bApproxOK )
         nSampleRate = 
             (int) MAX(1,sqrt((double) nBlocksPerRow * nBlocksPerColumn));
