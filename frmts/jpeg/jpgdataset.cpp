@@ -28,12 +28,16 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.2  2000/07/07 15:11:01  warmerda
+ * added QUALITY=n creation option
+ *
  * Revision 1.1  2000/04/28 20:57:57  warmerda
  * New
  *
  */
 
 #include "gdal_priv.h"
+#include "cpl_string.h"
 
 CPL_C_START
 #include "jpeglib.h"
@@ -377,6 +381,7 @@ JPEGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     int  nBands = poSrcDS->GetRasterCount();
     int  nXSize = poSrcDS->GetRasterXSize();
     int  nYSize = poSrcDS->GetRasterYSize();
+    int  nQuality = 75;
 
 /* -------------------------------------------------------------------- */
 /*      Some some rudimentary checks                                    */
@@ -399,6 +404,21 @@ JPEGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                       poSrcDS->GetRasterBand(1)->GetRasterDataType()) );
 
         return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      What options has the user selected?                             */
+/* -------------------------------------------------------------------- */
+    if( CSLFetchNameValue(papszOptions,"QUALITY") != NULL )
+    {
+        nQuality = atoi(CSLFetchNameValue(papszOptions,"QUALITY"));
+        if( nQuality < 10 || nQuality > 100 )
+        {
+            CPLError( CE_Failure, CPLE_IllegalArg,
+                      "QUALITY=%s is not a legal value in the range 10-100.",
+                      CSLFetchNameValue(papszOptions,"QUALITY") );
+            return NULL;
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -441,7 +461,7 @@ JPEGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
     jpeg_set_defaults( &sCInfo );
     
-    jpeg_set_quality( &sCInfo, 75, TRUE );
+    jpeg_set_quality( &sCInfo, nQuality, TRUE );
 
     jpeg_start_compress( &sCInfo, TRUE );
 
