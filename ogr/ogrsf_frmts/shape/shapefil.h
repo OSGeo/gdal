@@ -37,6 +37,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2001/07/20 13:05:00  warmerda
+ * further hacked SHPAPI_CALL
+ *
  * Revision 1.4  2001/07/20 12:35:02  warmerda
  * updated
  *
@@ -99,6 +102,7 @@
 #include "cpl_port.h"
 
 #define SHPAPI_CALL CPL_DLL
+#define SHPAPI_CALL1(x)      SHPAPI_CALL *
 
 #ifdef USE_DBMALLOC
 #include <dbmalloc.h>
@@ -108,11 +112,6 @@
 extern "C" {
 #endif
 
-#ifndef SHPAPI_CALL
-#define SHPAPI_CALL
-#endif
-
-#define SHPAPI_CALL1(x)      * SHPAPI_CALL
     
 /************************************************************************/
 /*                        Configuration options.                        */
@@ -310,7 +309,7 @@ int	SHPAPI_CALL
 void 	SHPAPI_CALL
       SHPTreeTrimExtraNodes( SHPTree * hTree );
 
-int    *SHPAPI_CALL
+int    SHPAPI_CALL1(*)
       SHPTreeFindLikelyShapes( SHPTree * hTree,
                                double * padfBoundsMin,
                                double * padfBoundsMax,
