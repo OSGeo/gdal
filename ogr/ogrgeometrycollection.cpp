@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.26  2004/02/21 15:36:14  warmerda
+ * const correctness updates for geometry: bug 289
+ *
  * Revision 1.25  2004/01/16 21:57:16  warmerda
  * fixed up EMPTY support
  *
@@ -162,7 +165,7 @@ void OGRGeometryCollection::empty()
 /*                               clone()                                */
 /************************************************************************/
 
-OGRGeometry *OGRGeometryCollection::clone()
+OGRGeometry *OGRGeometryCollection::clone() const
 
 {
     OGRGeometryCollection       *poNewGC;
@@ -182,7 +185,7 @@ OGRGeometry *OGRGeometryCollection::clone()
 /*                          getGeometryType()                           */
 /************************************************************************/
 
-OGRwkbGeometryType OGRGeometryCollection::getGeometryType()
+OGRwkbGeometryType OGRGeometryCollection::getGeometryType() const
 
 {
     if( getCoordinateDimension() == 3 )
@@ -195,7 +198,7 @@ OGRwkbGeometryType OGRGeometryCollection::getGeometryType()
 /*                            getDimension()                            */
 /************************************************************************/
 
-int OGRGeometryCollection::getDimension()
+int OGRGeometryCollection::getDimension() const
 
 {
     return 2; // This isn't strictly correct.  It should be based on members.
@@ -208,16 +211,16 @@ int OGRGeometryCollection::getDimension()
 /*      overridden by some of the subclasses.                           */
 /************************************************************************/
 
-int OGRGeometryCollection::getCoordinateDimension()
+int OGRGeometryCollection::getCoordinateDimension() const
 
 {
     if( nCoordinateDimension == 0 )
     {
-        nCoordinateDimension = 2;
+        ((OGRGeometryCollection *)this)->nCoordinateDimension = 2;
 
         for( int i = 0; i < nGeomCount; i++ )
             if( papoGeoms[i]->getCoordinateDimension() == 3 )
-                nCoordinateDimension = 3;
+                ((OGRGeometryCollection *)this)->nCoordinateDimension = 3;
     }
 
     return nCoordinateDimension;
@@ -240,7 +243,7 @@ void OGRGeometryCollection::flattenTo2D()
 /*                          getGeometryName()                           */
 /************************************************************************/
 
-const char * OGRGeometryCollection::getGeometryName()
+const char * OGRGeometryCollection::getGeometryName() const
 
 {
     return "GEOMETRYCOLLECTION";
@@ -259,7 +262,7 @@ const char * OGRGeometryCollection::getGeometryName()
  * @return count of children geometries.  May be zero.
  */
 
-int OGRGeometryCollection::getNumGeometries()
+int OGRGeometryCollection::getNumGeometries() const
 
 {
     return nGeomCount;
@@ -284,7 +287,16 @@ int OGRGeometryCollection::getNumGeometries()
  * @return pointer to requested geometry.
  */
 
-OGRGeometry * OGRGeometryCollection::getGeometryRef( int i )
+OGRGeometry * OGRGeometryCollection::getGeometryRef( int i ) 
+
+{
+    if( i < 0 || i >= nGeomCount )
+        return NULL;
+    else
+        return papoGeoms[i];
+}
+
+const OGRGeometry * OGRGeometryCollection::getGeometryRef( int i ) const
 
 {
     if( i < 0 || i >= nGeomCount )
@@ -318,7 +330,7 @@ OGRGeometry * OGRGeometryCollection::getGeometryRef( int i )
  * the geometry type is illegal for the type of geometry container.
  */
 
-OGRErr OGRGeometryCollection::addGeometry( OGRGeometry * poNewGeom )
+OGRErr OGRGeometryCollection::addGeometry( const OGRGeometry * poNewGeom )
 
 {
     OGRGeometry *poClone = poNewGeom->clone();
@@ -430,7 +442,7 @@ OGRErr OGRGeometryCollection::removeGeometry( int iGeom, int bDelete )
 /*      representation including the byte order, and type information.  */
 /************************************************************************/
 
-int OGRGeometryCollection::WkbSize()
+int OGRGeometryCollection::WkbSize() const
 
 {
     int         nSize = 9;
@@ -550,7 +562,7 @@ OGRErr OGRGeometryCollection::importFromWkb( unsigned char * pabyData,
 /************************************************************************/
 
 OGRErr  OGRGeometryCollection::exportToWkb( OGRwkbByteOrder eByteOrder,
-                                            unsigned char * pabyData )
+                                            unsigned char * pabyData ) const
 
 {
     int         nOffset;
@@ -703,7 +715,7 @@ OGRErr OGRGeometryCollection::importFromWkt( char ** ppszInput )
 /*      equivelent.  This could be made alot more CPU efficient!        */
 /************************************************************************/
 
-OGRErr OGRGeometryCollection::exportToWkt( char ** ppszDstText )
+OGRErr OGRGeometryCollection::exportToWkt( char ** ppszDstText ) const
 
 {
     char        **papszGeoms;
@@ -764,7 +776,7 @@ OGRErr OGRGeometryCollection::exportToWkt( char ** ppszDstText )
 /*                            getEnvelope()                             */
 /************************************************************************/
 
-void OGRGeometryCollection::getEnvelope( OGREnvelope * psEnvelope )
+void OGRGeometryCollection::getEnvelope( OGREnvelope * psEnvelope ) const
 
 {
     OGREnvelope         oGeomEnv;
@@ -793,7 +805,7 @@ void OGRGeometryCollection::getEnvelope( OGREnvelope * psEnvelope )
 /*                               Equal()                                */
 /************************************************************************/
 
-OGRBoolean OGRGeometryCollection::Equal( OGRGeometry * poOther )
+OGRBoolean OGRGeometryCollection::Equal( OGRGeometry * poOther ) const
 
 {
     OGRGeometryCollection *poOGC = (OGRGeometryCollection *) poOther;

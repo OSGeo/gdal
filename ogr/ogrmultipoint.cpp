@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2004/02/21 15:36:14  warmerda
+ * const correctness updates for geometry: bug 289
+ *
  * Revision 1.17  2004/01/16 21:57:16  warmerda
  * fixed up EMPTY support
  *
@@ -101,7 +104,7 @@ OGRMultiPoint::OGRMultiPoint()
 /*                          getGeometryType()                           */
 /************************************************************************/
 
-OGRwkbGeometryType OGRMultiPoint::getGeometryType()
+OGRwkbGeometryType OGRMultiPoint::getGeometryType() const
 
 {
     if( getCoordinateDimension() == 3 )
@@ -114,7 +117,7 @@ OGRwkbGeometryType OGRMultiPoint::getGeometryType()
 /*                          getGeometryName()                           */
 /************************************************************************/
 
-const char * OGRMultiPoint::getGeometryName()
+const char * OGRMultiPoint::getGeometryName() const
 
 {
     return "MULTIPOINT";
@@ -142,7 +145,7 @@ OGRErr OGRMultiPoint::addGeometryDirectly( OGRGeometry * poNewGeom )
 /*                               clone()                                */
 /************************************************************************/
 
-OGRGeometry *OGRMultiPoint::clone()
+OGRGeometry *OGRMultiPoint::clone() const
 
 {
     OGRMultiPoint       *poNewGC;
@@ -165,7 +168,7 @@ OGRGeometry *OGRMultiPoint::clone()
 /*      equivelent.  This could be made alot more CPU efficient!        */
 /************************************************************************/
 
-OGRErr OGRMultiPoint::exportToWkt( char ** ppszDstText )
+OGRErr OGRMultiPoint::exportToWkt( char ** ppszDstText ) const
 
 {
     int         nMaxString = getNumGeometries() * 20 + 128;

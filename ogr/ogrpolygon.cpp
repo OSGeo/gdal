@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.25  2004/02/21 15:36:14  warmerda
+ * const correctness updates for geometry: bug 289
+ *
  * Revision 1.24  2004/01/16 21:57:17  warmerda
  * fixed up EMPTY support
  *
@@ -136,7 +139,7 @@ OGRPolygon::~OGRPolygon()
 /*                               clone()                                */
 /************************************************************************/
 
-OGRGeometry *OGRPolygon::clone()
+OGRGeometry *OGRPolygon::clone() const
 
 {
     OGRPolygon  *poNewPolygon;
@@ -176,7 +179,7 @@ void OGRPolygon::empty()
 /*                          getGeometryType()                           */
 /************************************************************************/
 
-OGRwkbGeometryType OGRPolygon::getGeometryType()
+OGRwkbGeometryType OGRPolygon::getGeometryType() const
 
 {
     if( getCoordinateDimension() == 3 )
@@ -189,7 +192,7 @@ OGRwkbGeometryType OGRPolygon::getGeometryType()
 /*                            getDimension()                            */
 /************************************************************************/
 
-int OGRPolygon::getDimension()
+int OGRPolygon::getDimension() const
 
 {
     return 2;
@@ -199,7 +202,7 @@ int OGRPolygon::getDimension()
 /*                       getCoordinateDimension()                       */
 /************************************************************************/
 
-int OGRPolygon::getCoordinateDimension()
+int OGRPolygon::getCoordinateDimension() const
 
 {
     for( int iRing = 0; iRing < nRingCount; iRing++ )
@@ -226,7 +229,7 @@ void OGRPolygon::flattenTo2D()
 /*                          getGeometryName()                           */
 /************************************************************************/
 
-const char * OGRPolygon::getGeometryName()
+const char * OGRPolygon::getGeometryName() const
 
 {
     return "POLYGON";
@@ -259,6 +262,15 @@ OGRLinearRing *OGRPolygon::getExteriorRing()
         return NULL;
 }
 
+const OGRLinearRing *OGRPolygon::getExteriorRing() const
+
+{
+    if( nRingCount > 0 )
+        return papoRings[0];
+    else
+        return NULL;
+}
+
 /************************************************************************/
 /*                        getNumInteriorRings()                         */
 /************************************************************************/
@@ -272,7 +284,7 @@ OGRLinearRing *OGRPolygon::getExteriorRing()
  */
 
 
-int OGRPolygon::getNumInteriorRings()
+int OGRPolygon::getNumInteriorRings() const
 
 {
     if( nRingCount > 0 )
@@ -302,6 +314,15 @@ int OGRPolygon::getNumInteriorRings()
  */
 
 OGRLinearRing *OGRPolygon::getInteriorRing( int iRing )
+
+{
+    if( iRing < 0 || iRing >= nRingCount-1 )
+        return NULL;
+    else
+        return papoRings[iRing+1];
+}
+
+const OGRLinearRing *OGRPolygon::getInteriorRing( int iRing ) const
 
 {
     if( iRing < 0 || iRing >= nRingCount-1 )
@@ -373,7 +394,7 @@ void OGRPolygon::addRingDirectly( OGRLinearRing * poNewRing )
 /*      representation including the byte order, and type information.  */
 /************************************************************************/
 
-int OGRPolygon::WkbSize()
+int OGRPolygon::WkbSize() const
 
 {
     int         nSize = 9;
@@ -490,7 +511,7 @@ OGRErr OGRPolygon::importFromWkb( unsigned char * pabyData,
 /************************************************************************/
 
 OGRErr  OGRPolygon::exportToWkb( OGRwkbByteOrder eByteOrder,
-                                 unsigned char * pabyData )
+                                 unsigned char * pabyData ) const
 
 {
     int         nOffset;
@@ -674,7 +695,7 @@ OGRErr OGRPolygon::importFromWkt( char ** ppszInput )
 /*      equivelent.  This could be made alot more CPU efficient!        */
 /************************************************************************/
 
-OGRErr OGRPolygon::exportToWkt( char ** ppszDstText )
+OGRErr OGRPolygon::exportToWkt( char ** ppszDstText ) const
 
 {
     char        **papszRings;
@@ -739,7 +760,7 @@ OGRErr OGRPolygon::exportToWkt( char ** ppszDstText )
 /*                              get_Area()                              */
 /************************************************************************/
 
-double OGRPolygon::get_Area()
+double OGRPolygon::get_Area() const
 
 {
     // notdef ... correct later.
@@ -751,7 +772,7 @@ double OGRPolygon::get_Area()
 /*                              Centroid()                              */
 /************************************************************************/
 
-int OGRPolygon::Centroid( OGRPoint * )
+int OGRPolygon::Centroid( OGRPoint * ) const
 
 {
     // notdef ... not implemented yet.
@@ -763,7 +784,7 @@ int OGRPolygon::Centroid( OGRPoint * )
 /*                           PointOnSurface()                           */
 /************************************************************************/
 
-int OGRPolygon::PointOnSurface( OGRPoint * )
+int OGRPolygon::PointOnSurface( OGRPoint * ) const
 
 {
     // notdef ... not implemented yet.
@@ -774,8 +795,8 @@ int OGRPolygon::PointOnSurface( OGRPoint * )
 /************************************************************************/
 /*                            getEnvelope()                             */
 /************************************************************************/
-
-void OGRPolygon::getEnvelope( OGREnvelope * psEnvelope )
+ 
+void OGRPolygon::getEnvelope( OGREnvelope * psEnvelope ) const
 
 {
     OGREnvelope         oRingEnv;
@@ -804,7 +825,7 @@ void OGRPolygon::getEnvelope( OGREnvelope * psEnvelope )
 /*                               Equal()                                */
 /************************************************************************/
 
-OGRBoolean OGRPolygon::Equal( OGRGeometry * poOther )
+OGRBoolean OGRPolygon::Equal( OGRGeometry * poOther ) const
 
 {
     OGRPolygon *poOPoly = (OGRPolygon *) poOther;

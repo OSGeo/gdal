@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2004/02/21 15:36:14  warmerda
+ * const correctness updates for geometry: bug 289
+ *
  * Revision 1.9  2003/09/11 22:47:53  aamici
  * add class constructors and destructors where needed in order to
  * let the mingw/cygwin binutils produce sensible partially linked objet files
@@ -89,7 +92,7 @@ OGRCurve::~OGRCurve()
  * @return TRUE if closed, else FALSE.
  */
 
-int OGRCurve::get_IsClosed()
+int OGRCurve::get_IsClosed() const
 
 {
     OGRPoint            oStartPoint, oEndPoint;
