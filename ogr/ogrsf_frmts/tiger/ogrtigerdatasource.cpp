@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2001/12/12 17:25:07  warmerda
+ * Use CPLStat instead of VSIStat.
+ *
  * Revision 1.14  2001/07/19 16:58:39  warmerda
  * ensure version initialized, even if not testopen
  *
@@ -251,7 +254,7 @@ int OGRTigerDataSource::Open( const char * pszFilename, int bTestOpen,
 /* -------------------------------------------------------------------- */
 /*      Is the given path a directory or a regular file?                */
 /* -------------------------------------------------------------------- */
-    if( VSIStat( pszFilename, &stat ) != 0 
+    if( CPLStat( pszFilename, &stat ) != 0 
         || (!VSI_ISDIR(stat.st_mode) && !VSI_ISREG(stat.st_mode)) )
     {
         if( !bTestOpen )
@@ -566,12 +569,12 @@ int OGRTigerDataSource::Create( const char *pszNameIn, char **papszOptions )
 /* -------------------------------------------------------------------- */
 /*      Try to create directory if it doesn't already exist.            */
 /* -------------------------------------------------------------------- */
-    if( VSIStat( pszNameIn, &stat ) != 0 )
+    if( CPLStat( pszNameIn, &stat ) != 0 )
     {
         VSIMkdir( pszNameIn, 0755 );
     }
 
-    if( VSIStat( pszNameIn, &stat ) != 0 || !VSI_ISDIR(stat.st_mode) )
+    if( CPLStat( pszNameIn, &stat ) != 0 || !VSI_ISDIR(stat.st_mode) )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "%s is not a directory, nor can be directly created as one.",
