@@ -18,6 +18,9 @@ gdalinfo.exe:	gdalinfo.c $(GDALLIB)
 gdal_translate.exe:	gdal_translate.c $(GDALLIB)
 	$(CC) $(CFLAGS) gdal_translate.c $(LIBS) 
 	
+gdal2raw.exe:	gdal2raw.c $(GDALLIB)
+	$(CC) $(CFLAGS) gdal2raw.c $(LIBS) 
+	
 clean:
 	del *.obj *.exe
 
