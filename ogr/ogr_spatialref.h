@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.57  2004/02/01 14:24:09  dron
+ * Added OGRSpatialReference::importFromUSGS().
+ *
  * Revision 1.56  2004/01/24 09:34:59  warmerda
  * added TransformEx support to capture per point reprojection failure
  *
@@ -202,6 +205,8 @@ class CPL_DLL OGRSpatialReference
     OGRErr      importFromPCI( const char *pszProj,
                                const char *pszUnits = NULL,
                                double *padfPrjParams = NULL );
+    OGRErr      importFromUSGS( long iProjsys, long iZone,
+                                double *padfPrjParams, long iDatum );
     OGRErr      importFromWMSAUTO( const char *pszAutoDef );
     OGRErr      importFromXML( const char * );
 
@@ -314,7 +319,7 @@ class CPL_DLL OGRSpatialReference
 
     /** Equirectangular */
     OGRErr      SetEquirectangular(double dfCenterLat, double dfCenterLong,
-                        double dfFalseEasting, double dfFalseNorthing );
+                            double dfFalseEasting, double dfFalseNorthing );
 
     /** Gall Stereograpic */
     OGRErr      SetGS( double dfCentralMeridian,
