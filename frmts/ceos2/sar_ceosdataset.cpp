@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.22  2001/12/20 15:20:03  warmerda
+ * Added some more metadata from Landsat ESA CEOS files.
+ *
  * Revision 1.21  2001/11/11 23:50:59  warmerda
  * added required class keyword to friend declarations
  *
@@ -648,6 +651,45 @@ void SAR_CEOSDataset::ScanForMetadata()
     if( record != NULL )
     {
         /* perhaps add something here eventually */
+    }
+
+/* -------------------------------------------------------------------- */
+/*      For ERS Standard Format Landsat scenes we pick up the           */
+/*      calibration offset and gain from the Radiometric Ancillary      */
+/*      Record.                                                         */
+/* -------------------------------------------------------------------- */
+    record = FindCeosRecord( sVolume.RecordList, 
+                             QuadToTC( 0x3f, 0x24, 0x12, 0x09 ),
+                             __CEOS_LEADER_FILE, -1, -1 );
+    if( record != NULL )
+    {
+        GetCeosField( record, 29, "A20", szField );
+        szField[20] = '\0';
+
+        if( !EQUALN(szField,"                    ", 20 ) )
+            SetMetadataItem( "CEOS_OFFSET_A0", szField );
+
+        GetCeosField( record, 49, "A20", szField );
+        szField[20] = '\0';
+
+        if( !EQUALN(szField,"                    ", 20 ) )
+            SetMetadataItem( "CEOS_GAIN_A1", szField );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      For ERS Standard Format Landsat scenes we pick up the           */
+/*      gain setting from the Scene Header Record.			*/
+/* -------------------------------------------------------------------- */
+    record = FindCeosRecord( sVolume.RecordList, 
+                             QuadToTC( 0x12, 0x12, 0x12, 0x09 ),
+                             __CEOS_LEADER_FILE, -1, -1 );
+    if( record != NULL )
+    {
+        GetCeosField( record, 1486, "A1", szField );
+        szField[1] = '\0';
+
+        if( szField[0] == 'H' || szField[0] == 'V' )
+            SetMetadataItem( "CEOS_GAIN_SETTING", szField );
     }
 }
 
