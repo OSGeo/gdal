@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/01/28 18:02:42  warmerda
+ * Byte swapping fix with PCTs
+ *
  * Revision 1.1  1999/01/22 17:41:34  warmerda
  * New
  *
@@ -214,7 +217,7 @@ CPLErr HFABand::GetPCT( int * pnColors,
                       psInfo->fp);
 
             for( i = 0; i < nPCTColors; i++ )
-                HFAStandard( 8, apadfPCT[iColumns] + i );
+                HFAStandard( 8, apadfPCT[iColumn] + i );
         }
     }
 
