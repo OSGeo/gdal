@@ -40,6 +40,10 @@ Release 1.4
  o Add experimental support for 3D files.  Somes 3d elements not supported. 
    3d quaterion for ellipse and arc elements not utilized. 
 
+ o Added preliminary support for reading cell header structures based
+   on input from Mike Cane. 
+
+
 Release 1.3
 -----------
 
