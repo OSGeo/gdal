@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_mapcoordblock.cpp,v 1.8 2000/02/28 16:58:55 daniel Exp $
+ * $Id: mitab_mapcoordblock.cpp,v 1.9 2000/10/10 19:05:12 daniel Exp $
  *
  * Name:     mitab_mapcoordblock.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -31,6 +31,9 @@
  **********************************************************************
  *
  * $Log: mitab_mapcoordblock.cpp,v $
+ * Revision 1.9  2000/10/10 19:05:12  daniel
+ * Fixed ReadBytes() to allow strings overlapping on 2 blocks
+ *
  * Revision 1.8  2000/02/28 16:58:55  daniel
  * Added V450 object types with num_points > 32767 and pen width in points
  *
@@ -587,6 +590,24 @@ void TABMAPCoordBlock::SetMAPBlockManagerRef(TABBinBlockManager *poBlockMgr)
 int     TABMAPCoordBlock::ReadBytes(int numBytes, GByte *pabyDstBuf)
 {
     int nStatus;
+
+    if (m_pabyBuf && 
+        m_nCurPos < (m_numDataBytes+MAP_COORD_HEADER_SIZE) && 
+        m_nCurPos+numBytes > (m_numDataBytes+MAP_COORD_HEADER_SIZE) && 
+        m_nNextCoordBlock > 0)
+    {
+        // Data overlaps on more than one block
+        // Read until end of this block and then recursively call ReadBytes()
+        // for the rest.
+        int numBytesInThisBlock = 
+                      (m_numDataBytes+MAP_COORD_HEADER_SIZE)-m_nCurPos;
+        nStatus = TABRawBinBlock::ReadBytes(numBytesInThisBlock, pabyDstBuf);
+        if (nStatus == 0)
+            nStatus = TABMAPCoordBlock::ReadBytes(numBytes-numBytesInThisBlock,
+                                               pabyDstBuf+numBytesInThisBlock);
+        return nStatus;
+    }
+
 
     if (m_pabyBuf && 
         m_nCurPos >= (m_numDataBytes+MAP_COORD_HEADER_SIZE) && 
