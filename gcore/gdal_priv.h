@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.25  2001/10/02 13:15:16  warmerda
+ * added CPL_DLL for GDALDefaultOverviews
+ *
  * Revision 1.24  2001/06/20 16:08:54  warmerda
  * GDALDefaultOverviews now remembers ovr filename, and allows explicit setting
  *
@@ -179,7 +182,7 @@ class CPL_DLL GDALProjDef
 /* ******************************************************************** */
 /*                         GDALDefaultOverviews                         */
 /* ******************************************************************** */
-class GDALDefaultOverviews
+class CPL_DLL GDALDefaultOverviews
 {
     GDALDataset *poDS;
     GDALDataset *poODS;
