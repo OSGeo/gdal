@@ -8,19 +8,13 @@ OBJ	=	oci_utils.o ogrocisession.o ogrocistatement.o \
 		ogrocitablelayer.o ogrociselectlayer.o ogrocistringbuf.o \
 		ogrociwritablelayer.o ogrociloaderlayer.o
 
-ALL_C_FLAGS	=	-I.. -I../.. -I$(GDAL_ROOT)/port \
-		$(OCI_INCLUDE) $(CFLAGS)
+CPPFLAGS	=	-I.. -I../.. $(OCI_INCLUDE)
 
 default:	$(O_OBJ)
 
 clean:
 	rm -f *.o
 
-%.o:	%.cpp
-	$(CXX) -c $(ALL_C_FLAGS) $*.cpp -o $*.o
-
-%.o:	%.c
-	$(CC) -c $(ALL_C_FLAGS) $*.c -o $*.o
-
 fastload:	fastload.cpp
-	$(CXX) $(ALL_C_FLAGS) fastload.cpp -L../../.. -lgdal.1.1 -o fastload
+	$(CXX) $(CPPFLAGS) $(CFLAGS) fastload.cpp -L../../.. -lgdal.1.1 \
+		-o fastload
