@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.22  2004/01/06 19:07:45  warmerda
+ * Added braces within case with variable declarations.
+ *
  * Revision 1.21  2003/09/04 14:01:44  warmerda
  * added OGRGetGenerate_DB2_V72_BYTE_ORDER
  *
@@ -1085,9 +1088,11 @@ const char *OGRGeometryTypeToName( OGRwkbGeometryType eType )
         return "None";
 
       default:
-        static char szWorkName[33];
-        sprintf( szWorkName, "Unrecognised: %d", (int) eType );
-        return szWorkName;
+      {
+          static char szWorkName[33];
+          sprintf( szWorkName, "Unrecognised: %d", (int) eType );
+          return szWorkName;
+      }
     }
 }
 
