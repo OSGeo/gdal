@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.22  2001/01/10 22:24:37  warmerda
+ * Patched GDALDataset::FlushCache() to recover gracefully if papoBands
+ * doesn't exist yet matching nBands.
+ *
  * Revision 1.21  2000/10/06 15:27:13  warmerda
  * default bands to same access as dataset in SetBand()
  *
@@ -160,6 +164,12 @@ void GDALDataset::FlushCache()
 
 {
     int		i;
+
+    // This sometimes happens if a dataset is destroyed before completely
+    // built. 
+
+    if( papoBands == NULL )
+        return;
 
     for( i = 0; i < nBands; i++ )
     {
