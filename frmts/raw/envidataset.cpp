@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2003/01/24 15:00:07  warmerda
+ * Added additional data types as per Bugzilla 262.
+ *
  * Revision 1.4  2002/09/04 06:50:37  warmerda
  * avoid static driver pointers
  *
@@ -650,13 +653,35 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
             eType = GDT_Int16;
             break;
 
+          case 3:
+            eType = GDT_Int32;
+            break;
+
           case 4:
             eType = GDT_Float32;
+            break;
+
+          case 5:
+            eType = GDT_Float64;
+            break;
+
+          case 6:
+            eType = GDT_CFloat32;
+            break;
+
+          case 9:
+            eType = GDT_CFloat64;
             break;
 
           case 12:
             eType = GDT_UInt16;
             break;
+
+          case 13:
+            eType = GDT_UInt32;
+            break;
+
+            /* 14=Int64, 15=UInt64 */
 
           default:
             CPLError( CE_Failure, CPLE_AppDefined, 
