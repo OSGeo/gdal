@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.22  2004/11/21 22:08:49  fwarmerdam
+ * added Release() and DestroyDataSource() methods on OGRDataSource
+ *
  * Revision 1.21  2004/11/08 18:52:11  fwarmerdam
  * Added CreateField docs.
  *
@@ -913,6 +916,19 @@ Fetch reference count of datasource and all owned layers.
 This method is the same as the C function OGR_DS_GetSummaryRefCount().
 
 @return the current summary reference count for the datasource and its layers.
+*/
+
+/**
+ \fn OGRErr OGRDataSource::Release();
+
+Drop a reference to this datasource, and if the reference count drops to 
+zero close (destroy) the datasource.   Internally this actually calls
+the OGRSFDriverRegistrary::ReleaseDataSource() method.  This method is
+essentially a convenient alias. 
+
+This method is the same as the C function OGRReleaseDataSource().
+
+@return OGRERR_NONE on success or an error code. 
 */
 
 /**

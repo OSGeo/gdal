@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.46  2004/11/21 22:08:49  fwarmerdam
+ * added Release() and DestroyDataSource() methods on OGRDataSource
+ *
  * Revision 1.45  2004/10/06 19:49:14  fwarmerdam
  * Added Mysql registration function.
  *
@@ -266,6 +269,7 @@ class CPL_DLL OGRDataSource
 
     OGRDataSource();
     virtual     ~OGRDataSource();
+    static void         DestroyDataSource( OGRDataSource * );
 
     virtual const char  *GetName() = 0;
 
@@ -296,6 +300,7 @@ class CPL_DLL OGRDataSource
     int                 Dereference();
     int                 GetRefCount() const;
     int                 GetSummaryRefCount() const;
+    OGRErr              Release();
 
   protected:
 
