@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2003/09/15 20:45:47  warmerda
+ * initialize nFixedWidth
+ *
  * Revision 1.15  2003/09/05 19:13:02  warmerda
  * added repeating support when creating fields
  *
@@ -99,6 +102,7 @@ DDFFieldDefn::DDFFieldDefn()
     nSubfieldCount = 0;
     papoSubfields = NULL;
     bRepeatingSubfields = FALSE;
+    nFixedWidth = 0;
 }
 
 /************************************************************************/
