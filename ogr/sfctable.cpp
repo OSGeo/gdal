@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  1999/09/09 21:03:49  warmerda
+ * added pIUnknown check
+ *
  * Revision 1.11  1999/09/07 14:05:06  warmerda
  * Ignore bPrecision for real/double fields as it's interpretation is
  * unclear.  Use it as the field width for integers.  Note many types are
@@ -584,10 +587,13 @@ BYTE *SFCTable::GetWKBGeometry( int * pnSize )
     assert( nGeomType == DBTYPE_IUNKNOWN );
 
     GetValue( iGeomColumn, &pIUnknown );
-            
+    
+    if( pIUnknown == NULL )
+        return NULL;
+
     hr = pIUnknown->QueryInterface( IID_ISequentialStream,
                                     (void**)&pIStream );
-
+    
     // for some reason the Cadcorp provider can return an IStream but
     // not an ISequentialStream!
     if( FAILED(hr) )
@@ -601,7 +607,7 @@ BYTE *SFCTable::GetWKBGeometry( int * pnSize )
         DumpErrorHResult( hr, "Can't get IStream interface to geometry" );
         return NULL;
     }
-
+    
 /* -------------------------------------------------------------------- */
 /*      Read data in chunks, reallocating buffer larger as needed.      */
 /* -------------------------------------------------------------------- */
