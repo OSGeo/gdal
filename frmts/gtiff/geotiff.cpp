@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.80  2002/12/17 18:24:03  warmerda
+ * dont return the projection via GetProjectionRef() if GCPs are used
+ *
  * Revision 1.79  2002/12/09 16:09:52  warmerda
  * ensure parent extender is invoked
  *
@@ -2861,7 +2864,10 @@ GTiffCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 const char *GTiffDataset::GetProjectionRef()
 
 {
-    return( pszProjection );
+    if( nGCPCount == 0 )
+        return( pszProjection );
+    else
+        return "";
 }
 
 /************************************************************************/
