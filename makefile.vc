@@ -5,6 +5,7 @@ GDAL_ROOT = .
 OGR_OBJ = ogr\ogrsf_frmts\ogrsf_frmts.lib ogr\ogr.lib
 OGR_INCLUDE = /INCLUDE:_OCTNewCoordinateTransformation \
 		/INCLUDE:_OGRRegisterAll \
+		/INCLUDE:_OSRValidate \
 		/INCLUDE:_OPTGetProjectionMethods
 
 # Uncomment the following (instead of the above) to include only the
