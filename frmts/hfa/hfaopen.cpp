@@ -35,6 +35,9 @@
  * of the GDAL core, but dependent on the Common Portability Library.
  *
  * $Log$
+ * Revision 1.20  2003/02/27 11:13:46  dron
+ * Fixed 64-bit integer constant represenattion for MSVC compiler.
+ *
  * Revision 1.19  2003/02/23 15:50:20  dron
  * Spill file creation now really works for single band datasets.
  *
@@ -1350,8 +1353,18 @@ HFAHandle HFACreate( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Check whether we should create external large file with image.  */
 /* -------------------------------------------------------------------- */
+#ifdef WIN32
+    
+#define	MAX_SIZE    4294967295i64
+    
+#else
+    
+#define MAX_SIZE    4294967295LL
+
+#endif
+
     if ( (GUIntBig)nBytesPerBlock * (GUIntBig)nBlocks *
-	 (GUIntBig)nBands > 4294967296LL )
+	 (GUIntBig)nBands > MAX_SIZE )
     {
 	HFAEntry *poImgFormat;
 
