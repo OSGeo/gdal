@@ -1,11 +1,11 @@
-/**********************************************************************
+/******************************************************************************
  * $Id$
  *
  * Project:  GML Reader
  * Purpose:  Implementation of GMLReader class.
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
- **********************************************************************
+ ******************************************************************************
  * Copyright (c) 2002, Frank Warmerdam
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -25,14 +25,15 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
  * DEALINGS IN THE SOFTWARE.
- **********************************************************************
+ *****************************************************************************
  *
  * $Log$
+ * Revision 1.2  2002/01/24 17:37:33  warmerda
+ * added to/from XML support
+ *
  * Revision 1.1  2002/01/04 19:46:30  warmerda
  * New
- *
- *
- **********************************************************************/
+ */
 
 #include "gmlreaderp.h"
 #include "cpl_conv.h"
@@ -81,9 +82,7 @@ GMLReader::GMLReader()
 GMLReader::~GMLReader()
 
 {
-    for( int i = 0; i < m_nClassCount; i++ )
-        delete m_papoClass[i];
-    CPLFree( m_papoClass );
+    ClearClasses();
 
     CPLFree( m_pszFilename );
 
@@ -119,9 +118,8 @@ int GMLReader::SetupParser()
         
         catch (const XMLException& toCatch)
         {
-            TrString oError( toCatch.getMessage() );
             printf( "Error during initialization! Message:\n%s\n", 
-                    (const char *) oError );
+                    tr_strdup(toCatch.getMessage()) );
             return FALSE;
         }
         bXercesInitialized = TRUE;
@@ -141,7 +139,7 @@ int GMLReader::SetupParser()
     m_poSAXReader->setLexicalHandler( m_poGMLHandler );
     m_poSAXReader->setEntityResolver( m_poGMLHandler );
     m_poSAXReader->setDTDHandler( m_poGMLHandler );
-    
+
     m_poSAXReader->setFeature(
         XMLString::transcode("http://xml.org/sax/features/validation"), true);
     m_poSAXReader->setFeature(
@@ -182,23 +180,32 @@ void GMLReader::CleanupParser()
 GMLFeature *GMLReader::NextFeature()
 
 {
-    GMLFeature *poReturn;
+    GMLFeature *poReturn = NULL;
 
-    if( !m_bReadStarted )
+    try
     {
-        if( m_poSAXReader == NULL )
-            SetupParser();
+        if( !m_bReadStarted )
+        {
+            if( m_poSAXReader == NULL )
+                SetupParser();
 
-        if( !m_poSAXReader->parseFirst( m_pszFilename, m_oToFill ) )
-            return NULL;
-        m_bReadStarted = TRUE;
+            if( !m_poSAXReader->parseFirst( m_pszFilename, m_oToFill ) )
+                return NULL;
+            m_bReadStarted = TRUE;
+        }
+
+        while( m_poCompleteFeature == NULL 
+               && m_poSAXReader->parseNext( m_oToFill ) ) {}
+
+        poReturn = m_poCompleteFeature;
+        m_poCompleteFeature = NULL;
+
     }
-
-    while( m_poCompleteFeature == NULL 
-           && m_poSAXReader->parseNext( m_oToFill ) ) {}
-
-    poReturn = m_poCompleteFeature;
-    m_poCompleteFeature = NULL;
+    catch (const XMLException& toCatch)
+    {
+        printf( "Error during NextFeature()! Message:\n%s\n", 
+                tr_strdup( toCatch.getMessage() ) );
+    }
 
     return poReturn;
 }
@@ -247,13 +254,15 @@ void GMLReader::PushFeature( const char *pszElement,
 /* -------------------------------------------------------------------- */
     GMLFeature *poFeature = new GMLFeature( GetClass( iClass ) );
     int	nFIDIndex;
-    TrString oFID( "fid" );
+    XMLCh   anFID[100];
 
-    nFIDIndex = attrs.getIndex( oFID );
+    tr_strcpy( anFID, "fid" );
+    nFIDIndex = attrs.getIndex( anFID );
     if( nFIDIndex != -1 )
     {
-        TrString  oValue( attrs.getValue( nFIDIndex ) );
-        poFeature->SetFID( oValue );
+        char *pszFID = tr_strdup( attrs.getValue( nFIDIndex ) );
+        poFeature->SetFID( pszFID );
+        CPLFree( pszFID );
     }
 
 /* -------------------------------------------------------------------- */
@@ -303,6 +312,21 @@ int GMLReader::IsFeatureElement( const char *pszElement )
 int GMLReader::IsAttributeElement( const char *pszElement )
 
 {
+    if( m_poState->m_poFeature == NULL )
+        return FALSE;
+
+    if( m_poState->m_nPathLength > 0 )
+        return FALSE;
+
+    GMLFeatureClass *poClass = m_poState->m_poFeature->GetClass();
+
+    if( !poClass->IsSchemaLocked() )
+        return TRUE;
+
+    for( int i = 0; i < poClass->GetPropertyCount(); i++ )
+        if( EQUAL(poClass->GetProperty(i)->GetSrcElement(),pszElement) )
+            return TRUE;
+
     return FALSE;
 }
 
@@ -386,3 +410,230 @@ int GMLReader::AddClass( GMLFeatureClass *poNewClass )
 
     return m_nClassCount-1;
 }
+
+/************************************************************************/
+/*                            ClearClasses()                            */
+/************************************************************************/
+
+void GMLReader::ClearClasses()
+
+{
+    for( int i = 0; i < m_nClassCount; i++ )
+        delete m_papoClass[i];
+    CPLFree( m_papoClass );
+
+    m_nClassCount = 0;
+    m_papoClass = NULL;
+}
+
+/************************************************************************/
+/*                         SetFeatureProperty()                         */
+/*                                                                      */
+/*      Set the property value on the current feature, adding the       */
+/*      property name to the GMLFeatureClass if required.               */
+/*      Eventually this function may also "refine" the property         */
+/*      type based on what is encountered.                              */
+/************************************************************************/
+
+void GMLReader::SetFeatureProperty( const char *pszElement, 
+                                    const char *pszValue )
+
+{
+    GMLFeature *poFeature = GetState()->m_poFeature;
+
+    CPLAssert( poFeature  != NULL );
+
+/* -------------------------------------------------------------------- */
+/*      Does this property exist in the feature class?  If not, add     */
+/*      it.                                                             */
+/* -------------------------------------------------------------------- */
+    GMLFeatureClass *poClass = poFeature->GetClass();
+    int      iProperty;
+
+    for( iProperty=0; iProperty < poClass->GetPropertyCount(); iProperty++ )
+    {
+        if( EQUAL(poClass->GetProperty( iProperty )->GetSrcElement(),
+                  pszElement ) )
+            break;
+    }
+    
+    if( iProperty == poClass->GetPropertyCount() )
+    {
+        CPLAssert( !poClass->IsSchemaLocked() );
+
+        poClass->AddProperty( new GMLPropertyDefn( pszElement, pszElement ) );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Set the property                                                */
+/* -------------------------------------------------------------------- */
+    poFeature->SetProperty( iProperty, pszValue );
+}
+
+/************************************************************************/
+/*                            LoadClasses()                             */
+/************************************************************************/
+
+int GMLReader::LoadClasses( const char *pszFile )
+
+{
+    // Add logic later to determine reasonable default schema file. 
+    if( pszFile == NULL )
+        return FALSE;
+
+/* -------------------------------------------------------------------- */
+/*      Load the raw XML file.                                          */
+/* -------------------------------------------------------------------- */
+    FILE       *fp;
+    int		nLength;
+    char        *pszWholeText;
+
+    fp = VSIFOpen( pszFile, "r" );
+
+    if( fp == NULL )
+    {
+        CPLError( CE_Failure, CPLE_OpenFailed, 
+                  "Failed to open file %s.", pszFile );
+        return FALSE;
+    }
+
+    VSIFSeek( fp, 0, SEEK_END );
+    nLength = VSIFTell( fp );
+    VSIFSeek( fp, 0, SEEK_SET );
+
+    pszWholeText = (char *) VSIMalloc(nLength+1);
+    if( pszWholeText == NULL )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Failed to allocate %d byte buffer for %s,\n"
+                  "is this really a GMLFeatureClassList file?",
+                  nLength, pszFile );
+        VSIFClose( fp );
+        return FALSE;
+    }
+    
+    if( VSIFRead( pszWholeText, nLength, 1, fp ) != 1 )
+    {
+        VSIFree( pszWholeText );
+        VSIFClose( fp );
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Read failed on %s.", pszFile );
+        return FALSE;
+    }
+    pszWholeText[nLength] = '\0';
+
+    VSIFClose( fp );
+
+    if( strstr( pszWholeText, "<GMLFeatureClassList>" ) == NULL )
+    {
+        VSIFree( pszWholeText );
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "File %s does not contain a GMLFeatureClassList tree.",
+                  pszFile );
+        return FALSE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Convert to XML parse tree.                                      */
+/* -------------------------------------------------------------------- */
+    CPLXMLNode *psRoot;
+
+    psRoot = CPLParseXMLString( pszWholeText );
+    VSIFree( pszWholeText );
+
+    // We assume parser will report errors via CPL.
+    if( psRoot == NULL )
+        return FALSE;
+
+    if( psRoot->eType != CXT_Element 
+        || !EQUAL(psRoot->pszValue,"GMLFeatureClassList") )
+    {
+        CPLDestroyXMLNode(psRoot);
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "File %s is not a GMLFeatureClassList document.",
+                  pszFile );
+        return FALSE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Extract feature classes for all definitions found.              */
+/* -------------------------------------------------------------------- */
+    CPLXMLNode *psThis;
+
+    for( psThis = psRoot->psChild; psThis != NULL; psThis = psThis->psNext )
+    {
+        if( psThis->eType == CXT_Element 
+            && EQUAL(psThis->pszValue,"GMLFeatureClass") )
+        {
+            GMLFeatureClass   *poClass;
+
+            poClass = new GMLFeatureClass();
+
+            if( !poClass->InitializeFromXML( psThis ) )
+            {
+                delete poClass;
+                CPLDestroyXMLNode( psRoot );
+                return FALSE;
+            }
+
+            poClass->SetSchemaLocked( TRUE );
+
+            AddClass( poClass );
+        }
+    }
+
+    CPLDestroyXMLNode( psRoot );
+    
+    SetClassListLocked( TRUE );
+
+    return TRUE;
+}
+
+/************************************************************************/
+/*                            SaveClasses()                             */
+/************************************************************************/
+
+int GMLReader::SaveClasses( const char *pszFile )
+
+{
+    // Add logic later to determine reasonable default schema file. 
+    if( pszFile == NULL )
+        return FALSE;
+
+/* -------------------------------------------------------------------- */
+/*      Create in memory schema tree.                                   */
+/* -------------------------------------------------------------------- */
+    CPLXMLNode *psRoot;
+
+    psRoot = CPLCreateXMLNode( NULL, CXT_Element, "GMLFeatureClassList" );
+
+    for( int iClass = 0; iClass < GetClassCount(); iClass++ )
+    {
+        GMLFeatureClass *poClass = GetClass( iClass );
+        
+        CPLAddXMLChild( psRoot, poClass->SerializeToXML() );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Serialize to disk.                                              */
+/* -------------------------------------------------------------------- */
+    FILE	*fp;
+    int	        bSuccess = TRUE;
+    char        *pszWholeText = CPLSerializeXMLTree( psRoot );
+    
+    CPLDestroyXMLNode( psRoot );
+ 
+    fp = VSIFOpen( pszFile, "w" );
+    
+    if( fp == NULL )
+        bSuccess = FALSE;
+    else if( VSIFWrite( pszWholeText, strlen(pszWholeText), 1, fp ) != 1 )
+        bSuccess = FALSE;
+    else
+        VSIFClose( fp );
+
+    CPLFree( pszWholeText );
+
+    return bSuccess;
+}
+
