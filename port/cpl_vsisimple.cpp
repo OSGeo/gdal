@@ -23,13 +23,16 @@
  * cpl_vsisimple.cpp
  *
  * This is a simple implementation (direct to Posix) of the Virtual System
- * Interface (VSI).  See gdal_vsi.h.
+ * Interface (VSI).  See cpl_vsi.h.
  *
  * TODO:
  *  - add some assertions to ensure that arguments are widely legal.  For
  *    instance validation of access strings to fopen().
  * 
  * $Log$
+ * Revision 1.16  2003/09/08 08:11:40  dron
+ * Added VSIGMTime() and VSILocalTime().
+ *
  * Revision 1.15  2003/05/27 20:46:18  warmerda
  * added VSI IO debugging stuff
  *
@@ -416,7 +419,7 @@ unsigned long VSITime( unsigned long * pnTimeToSet )
 }
 
 /************************************************************************/
-/*                              VSITime()                               */
+/*                              VSICTime()                              */
 /************************************************************************/
 
 const char *VSICTime( unsigned long nTime )
@@ -426,3 +429,40 @@ const char *VSICTime( unsigned long nTime )
 
     return (const char *) ctime( &tTime );
 }
+
+/************************************************************************/
+/*                             VSIGMTime()                              */
+/************************************************************************/
+
+struct tm *VSIGMTime( const time_t *pnTime, struct tm *poBrokenTime )
+{
+
+#if HAVE_GMTIME_R
+    gmtime_r( pnTime, poBrokenTime );
+#else
+    struct tm   *poTime;
+    poTime = gmtime( pnTime );
+    memcpy( poBrokenTime, poTime, sizeof(tm) );
+#endif
+
+    return poBrokenTime;
+}
+
+/************************************************************************/
+/*                             VSILocalTime()                           */
+/************************************************************************/
+
+struct tm *VSILocalTime( const time_t *pnTime, struct tm *poBrokenTime )
+{
+
+#if HAVE_LOCALTIME_R
+    localtime_r( pnTime, poBrokenTime );
+#else
+    struct tm   *poTime;
+    poTime = localtime( pnTime );
+    memcpy( poBrokenTime, poTime, sizeof(tm) );
+#endif
+
+    return poBrokenTime;
+}
+
