@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  1999/04/07 11:54:16  warmerda
+ * Added dumping stuff.
+ *
  * Revision 1.4  1999/04/01 20:49:41  warmerda
  * make class internals protected so OledbSFTable can have access
  *
@@ -79,6 +82,8 @@ HRESULT OledbSupGetDataSource( REFCLSID, const char*, IOpenRowset ** );
 HRESULT OledbSupGetTableRowset( IOpenRowset *, const char*, IRowset ** );
 
 void OledbSupWriteColumnInfo( FILE *, DBCOLUMNINFO * );
+void OledbSupDumpRow( FILE *, DBCOLUMNINFO *, int, DBBINDING *,
+                      ULONG, ULONG, BYTE * );
 
 /************************************************************************/
 /*                         OledbSupRowset                               */
@@ -131,6 +136,7 @@ class OledbSupRowset
                                 int * pnDBType = NULL,
                                 int * pnStatus = NULL,
                                 int * pnSize = NULL );
+    void         DumpRow( FILE * );
 };
    
 

@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  1999/04/07 11:54:56  warmerda
+ * Added dumping stuff.
+ *
  * Revision 1.3  1999/04/01 17:54:43  warmerda
  * Added support for default binding of IUNKNOWN fields
  *
@@ -513,5 +516,17 @@ DBCOLUMNINFO *OledbSupRowset::GetColumnInfo( int iOrdinal )
     }
 
     return NULL;
+}
+
+/************************************************************************/
+/*                              DumpRow()                               */
+/************************************************************************/
+
+void OledbSupRowset::DumpRow( FILE * fp )
+
+{
+    OledbSupDumpRow( fp, paoColumnInfo, GetNumColumns(), 
+                     paoBindings, nBindings, 
+                     64, pabyRecord );
 }
 
