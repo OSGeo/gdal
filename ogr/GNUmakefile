@@ -19,6 +19,8 @@ INST_H_FILES	=	ogr_core.h ogr_feature.h ogr_geometry.h ogr_p.h \
 
 OGR_LIB  =	ogr.a
 
+OGR_OBJ  =	ogr.o
+
 FRMTS_OBJ	= 	ogrsf_frmts/o/*.o
 
 LINCLUDE =	-Iogrsf_frmts -I. -I$(GDAL_ROOT)/port 
@@ -66,7 +68,7 @@ ogrtindex$(EXE):	ogrtindex.o  $(EXE_DEP_LIBS)
 	$(CXX) $(LNK_FLAGS) ogrtindex.o $(CONFIG_LIBS) -o ogrtindex$(EXE)
 
 lib:	sublibs
-	$(MAKE) $(OGR_LIB) 
+	$(MAKE) $(OGR_LIB) $(OGR_OBJ)
 
 ifeq ($(OGR_ENABLED),yes)
 
@@ -90,6 +92,9 @@ install-docs:
 $(OGR_LIB):	$(OBJ) $(FRMTS_OBJ)
 	$(AR) r $(OGR_LIB) $?
 	$(RANLIB) $(OGR_LIB)
+
+$(OGR_OBJ):	$(OBJ) $(FRMTS_OBJ)
+	$(LD_R) -o $@ $^
 
 gdalso:	$(GDAL_SLIB)
 

@@ -1,5 +1,6 @@
 CC	=	@CC@
 CXX	=	@CXX@
+LD_R	=	ld -r
 INSTALL = 	$(GDAL_ROOT)/install-sh -c
 INSTALL_DATA = 	$(GDAL_ROOT)/install-sh -c -m 0644
 INSTALL_DIR = 	$(GDAL_ROOT)/install-sh -d
@@ -77,7 +78,7 @@ GDAL_INCLUDE	=	-I$(GDAL_ROOT) -I$(GDAL_ROOT)/port -I$(GDAL_ROOT)/gcore\
 			-I$(GDAL_ROOT)/ogr
 
 GDAL_VER	=	1.1
-GDAL_LIB	= 	$(GDAL_ROOT)/gdal.a
+GDAL_LIB	= 	$(GDAL_ROOT)/libgdal.a
 GDAL_SLIB	=	$(GDAL_ROOT)/libgdal.$(GDAL_VER).$(SO_EXT)
 GDAL_SLIB_LINK	=	-L$(GDAL_ROOT) -lgdal.$(GDAL_VER)
 #GDAL_SLIB_SONAME = 	-Wl,-soname,libgdal.so.$(sover)
@@ -165,21 +166,11 @@ GDAL_OBJ	=	$(GDAL_ROOT)/frmts/o/*.o \
 			$(GDAL_ROOT)/gcore/*.o \
 			$(GDAL_ROOT)/port/*.o \
 			$(GDAL_ROOT)/alg/*.o \
-			$(GDAL_ROOT)/ogr/ogrct.o \
-			$(GDAL_ROOT)/ogr/ogr_opt.o \
-			$(GDAL_ROOT)/ogr/ogr_fromepsg.o \
-			$(GDAL_ROOT)/ogr/ogr_srs_validate.o \
-			$(GDAL_ROOT)/ogr/ogrutils.o \
-			$(GDAL_ROOT)/ogr/ogr_srs_proj4.o \
-			$(GDAL_ROOT)/ogr/ograssemblepolygon.o \
-			$(GDAL_ROOT)/ogr/ogr_api.o
+			$(GDAL_ROOT)/ogr/ogr.o
 
 ifeq ($(OGR_ENABLED),yes)
 GDAL_LIBS := $(OGR_LIB) $(PG_LIB) $(OCI_LIB) $(GDAL_LIBS)
 GDALA_DEP := $(GDALA_DEP) $(OGR_LIB)
-
-GDAL_OBJ := $(GDAL_OBJ) $(GDAL_ROOT)/ogr/ogrsf_frmts/generic/ogrregisterall.o \
-		$(GDAL_ROOT)/ogr/ogrfeaturestyle.o
 endif
 
 #
