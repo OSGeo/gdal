@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2003/03/20 20:21:40  warmerda
+ * implement DROP INDEX command
+ *
  * Revision 1.1  2003/03/04 05:47:03  warmerda
  * New
  *
@@ -98,6 +101,7 @@ public:
     /* base class virtual methods */
     OGRErr      Initialize( const char *pszIndexPath, OGRLayer * );
     OGRErr      CreateIndex( int iField );
+    OGRErr      DropIndex( int iField );
     OGRErr      IndexAllFeatures( int iField );
 
     OGRErr      AddToIndex( OGRFeature *poFeature );
@@ -461,6 +465,65 @@ OGRErr OGRMILayerAttrIndex::CreateIndex( int iField )
 /*      Save the new configuration.                                     */
 /* -------------------------------------------------------------------- */
     return SaveConfigToXML();
+}
+
+/************************************************************************/
+/*                             DropIndex()                              */
+/*                                                                      */
+/*      For now we don't have any capability to remove index data       */
+/*      from the MapInfo index file, so we just limit ourselves to      */
+/*      ignoring it from now on.                                        */
+/************************************************************************/
+
+OGRErr OGRMILayerAttrIndex::DropIndex( int iField )
+
+{
+/* -------------------------------------------------------------------- */
+/*      Do we have this field indexed already?                          */
+/* -------------------------------------------------------------------- */
+    int i;
+    OGRFieldDefn *poFldDefn=poLayer->GetLayerDefn()->GetFieldDefn(iField);
+
+    for( i = 0; i < nIndexCount; i++ )
+    {
+        if( papoIndexList[i]->iField == iField )
+            break;
+
+    }
+
+    if( i == nIndexCount )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "DROP INDEX on field (%s) that doesn't have an index.",
+                  poFldDefn->GetNameRef() );
+        return OGRERR_FAILURE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Remove from the list.                                           */
+/* -------------------------------------------------------------------- */
+    OGRMIAttrIndex *poAI = papoIndexList[i];
+
+    memmove( papoIndexList + i, papoIndexList + i + 1, 
+             sizeof(void*) * (nIndexCount - i - 1) );
+
+    delete poAI;
+
+    nIndexCount--;
+             
+/* -------------------------------------------------------------------- */
+/*      Save the new configuration, or if there is nothing left try     */
+/*      to clean up the index files.                                    */
+/* -------------------------------------------------------------------- */
+    if( nIndexCount > 0 )
+        return SaveConfigToXML();
+    else
+    {
+        VSIUnlink( pszMetadataFilename );
+        VSIUnlink( pszMIINDFilename );
+
+        return OGRERR_NONE;
+    }
 }
 
 /************************************************************************/
