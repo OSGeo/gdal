@@ -12,6 +12,7 @@ OBJ	= \
 	geo_tiffp.obj \
 	geo_write.obj \
 	geo_normalize.obj \
+	geo_extra.obj \
 	cpl_csv.obj \
 	geotiff_proj4.obj
 
