@@ -39,6 +39,6 @@ int main( int argc, char **argv )
         char *pszRawXML = CPLSerializeXMLTree( poTree );
         printf( "%s", pszRawXML );
         CPLFree( pszRawXML );
+        CPLDestroyXMLNode( poTree );
     }
-    CPLDestroyXMLNode( poTree );
 }
