@@ -4,7 +4,8 @@ GDAL_ROOT	=	../../..
 include $(GDAL_ROOT)/GDALmake.opt
 
 OBJ	=	ntffilereader.o ntfrecord.o ogrntfdatasource.o \
-		ogrntfdriver.o ogrntflayer.o ntf_estlayers.o
+		ogrntfdriver.o ogrntflayer.o ntf_estlayers.o \
+		ogrntffeatureclasslayer.o
 
 ALL_C_FLAGS	=	-I.. -I../.. -I$(GDAL_ROOT)/port $(CFLAGS)
 
