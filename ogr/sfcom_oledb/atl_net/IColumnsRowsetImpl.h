@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2002/08/28 18:51:20  warmerda
+ * fixed bug2, iLayer was -1 for command rowsets
+ *
  * Revision 1.2  2002/08/28 16:38:26  warmerda
  * dont check m_rgRowData.Add() result as true/false for CAtlArray
  *
@@ -228,9 +231,9 @@ class ATL_NO_VTABLE IColumnsRowsetImpl : public IColumnsRowset
             }
 
             HRESULT PopulateRowset(ULONG numCols, DBCOLUMNINFO *pColInfo,
-                                   OGRDataSource *poDS, int iLayer )
+                                   OGRDataSource *poDS, int iLayer,
+                                   OGRLayer *poLayer )
                 {
-                    OGRLayer      *poLayer = poDS->GetLayer(iLayer);
                     USES_CONVERSION;
                     
                     for (ULONG i = 0 ; i < numCols; i++)
@@ -384,7 +387,8 @@ class ATL_NO_VTABLE IColumnsRowsetImpl : public IColumnsRowset
                         {
                             hr = pColRowset->PopulateRowset(numCols, pColInfo,
                                                             pT->m_poDS,
-                                                            pT->m_iLayer );
+                                                            pT->m_iLayer,
+                                                            pT->m_poLayer );
                         }
 
                         CoTaskMemFree(pColInfo);
@@ -498,6 +502,7 @@ class ATL_NO_VTABLE IColumnsRowsetImpl : public IColumnsRowset
                 if (pBind == NULL)
                 {
                     ATLTRACE2(atlTraceDBProvider, 0, "Failed to allocate memory for new Binding\n");
+                    CPLDebug( "OGR_OLEDB", "pBind == NULL in IColumnsRowsetImpl.h");
                     return E_OUTOFMEMORY;
                 }
                 // auto cleanup on failure
@@ -511,18 +516,20 @@ class ATL_NO_VTABLE IColumnsRowsetImpl : public IColumnsRowset
                 if (!pRowsetObj->m_rgBindings.SetAt(pT->m_rgBindings.GetKeyAt(hBindPos), pBind))
                 {
                     ATLTRACE2(atlTraceDBProvider, 0, "Failed to add hAccessor to Map\n");
+                    CPLDebug( "OGR_OLEDB", "SetAt() failed in IColumnsRowsetImpl.h");
                     return E_OUTOFMEMORY;
                 }
                 if (pBindSrc->cBindings)
                 {
-                    ATLTRY(pBind->pBindings = new DBBINDING[pBindSrc->cBindings])
-                        if (pBind->pBindings == NULL)
-                        {
-                            ATLTRACE2(atlTraceDBProvider, 0, "Failed to Allocate dbbinding Array\n");
-                            // We added it, must now remove on failure
-                            //pRowsetObj->m_rgBindings.Remove(pT->m_rgBindings.GetKeyAt(iBind));
-                            return E_OUTOFMEMORY;
-                        }
+                    ATLTRY(pBind->pBindings = new DBBINDING[pBindSrc->cBindings]);
+                    if (pBind->pBindings == NULL)
+                    {
+                        CPLDebug( "OGR_OLEDB",
+                                  "Failed to Allocate dbbinding Array");
+                        // We added it, must now remove on failure
+                        //pRowsetObj->m_rgBindings.Remove(pT->m_rgBindings.GetKeyAt(iBind));
+                        return E_OUTOFMEMORY;
+                    }
                 }
                 else
                 {
