@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/03/30 21:21:43  warmerda
+ * added linearring/polygon support
+ *
  * Revision 1.1  1999/03/29 21:21:10  warmerda
  * New
  *
@@ -50,10 +53,12 @@ typedef int OGRErr;
 #define OGRERR_NOT_ENOUGH_DATA	   1	/* not enough data to deserialize */
 #define OGRERR_NOT_ENOUGH_MEMORY   2
 #define OGRERR_UNSUPPORTED_GEOMETRY_TYPE 3
+#define OGRERR_UNSUPPORTED_OPERATION 4
 
 enum OGRwkbGeometryType
 {
-    wkbPoint = 1,
+    wkbUnknown = 0,		// non-standard
+    wkbPoint = 1,		// rest are standard WKB type codes
     wkbLineString = 2,
     wkbPolygon = 3,
     wkbMultiPoint = 4,
@@ -87,7 +92,7 @@ class OGRGeometry
     
     // non-standard
     virtual OGRwkbGeometryType getGeometryType() = 0;
-    virtual void   dumpReadable( FILE * ) = 0;
+    virtual void   dumpReadable( FILE *, const char * = NULL ) = 0;
 
 #ifdef notdef
     
@@ -150,7 +155,7 @@ class OGRPoint : public OGRGeometry
     virtual OGRErr exportToWkb( OGRwkbByteOrder, unsigned char * );
     
     virtual OGRwkbGeometryType getGeometryType();
-    virtual void dumpReadable( FILE * );
+    virtual void dumpReadable( FILE *, const char * );
     
     virtual int	getDimension();
     virtual int	getCoordinateDimension();
@@ -170,12 +175,12 @@ class OGRPoint : public OGRGeometry
 
 class OGRCurve : public OGRGeometry
 {
+  protected:
     int 	nPointCount;
     OGRRawPoint	*paoPoints;
 
-  protected:
-    virtual void dumpPointsReadable( FILE * );
-    
+    virtual void dumpPointsReadable( FILE *, const char * );
+
   public:
     		OGRCurve();
     virtual     ~OGRCurve();
@@ -212,7 +217,72 @@ class OGRLineString : public OGRCurve
 
     virtual OGRwkbGeometryType getGeometryType();
     
-    virtual void dumpReadable( FILE * );
+    virtual void dumpReadable( FILE *, const char * );
+};
+
+/************************************************************************/
+/*                            OGRLinearRing                             */
+/*                                                                      */
+/*      This is an alias for OGRLineString for now.                     */
+/************************************************************************/
+
+class OGRLinearRing : public OGRLineString
+{
+  private:
+    friend class OGRPolygon; 
+    
+    // These are not IWks compatible ... just a convenience for OGRPolygon.
+    virtual int	_WkbSize();
+    virtual OGRErr _importFromWkb( OGRwkbByteOrder, unsigned char *, int=-1 );
+    virtual OGRErr _exportToWkb( OGRwkbByteOrder, unsigned char * );
+    
+  public:
+    			OGRLinearRing();
+    			OGRLinearRing( OGRLinearRing * );
+    
+    virtual OGRwkbGeometryType getGeometryType();
+    
+    virtual void dumpReadable( FILE *, const char * );
+
+    // IWks Interface - Note this isnt really a first class object
+    // for the purposes of WKB form.  These methods always fail since this
+    // object cant be serialized on its own. 
+    virtual int	WkbSize();
+    virtual OGRErr importFromWkb( unsigned char *, int=-1 );
+    virtual OGRErr exportToWkb( OGRwkbByteOrder, unsigned char * );
+};
+
+/************************************************************************/
+/*                              OGRPolygon                              */
+/************************************************************************/
+class OGRPolygon : public OGRGeometry
+{
+    int		nRingCount;
+    OGRLinearRing **papoRings;
+    
+  public:
+    		OGRPolygon();
+    virtual     ~OGRPolygon();
+
+    virtual OGRwkbGeometryType getGeometryType();
+    
+    virtual void dumpReadable( FILE *, const char * );
+
+    // IWks Interface
+    virtual int	WkbSize();
+    virtual OGRErr importFromWkb( unsigned char *, int = -1 );
+    virtual OGRErr exportToWkb( OGRwkbByteOrder, unsigned char * );
+    
+    virtual int	getDimension();
+    virtual int	getCoordinateDimension();
+
+    void    	addRing( OGRLinearRing * );
+
+    OGRLinearRing *getExteriorRing();
+    int		getNumInteriorRings();
+    OGRLinearRing *getInteriorRing( int );
+	
+
 };
 
 /************************************************************************/

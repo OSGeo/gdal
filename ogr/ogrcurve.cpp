@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/03/30 21:21:43  warmerda
+ * added linearring/polygon support
+ *
  * Revision 1.1  1999/03/29 21:21:10  warmerda
  * New
  *
@@ -318,11 +321,11 @@ OGRErr	OGRCurve::exportToWkb( OGRwkbByteOrder eByteOrder,
 /*      methods.                                                        */
 /************************************************************************/
 
-void OGRCurve::dumpPointsReadable( FILE * fp )
+void OGRCurve::dumpPointsReadable( FILE * fp, const char * pszPrefix )
 
 {
-    fprintf( fp, "  nPointCount = %d\n", nPointCount );
+    fprintf( fp, "%s  nPointCount = %d\n", pszPrefix, nPointCount );
     for( int i = 0; i < nPointCount; i++ )
-        fprintf( fp, "  Point[%d] = (%g,%g)\n",
-                 i, paoPoints[i].x, paoPoints[i].y );
+        fprintf( fp, "%s  Point[%d] = (%g,%g)\n",
+                 pszPrefix, i, paoPoints[i].x, paoPoints[i].y );
 }

@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/03/30 21:21:43  warmerda
+ * added linearring/polygon support
+ *
  * Revision 1.1  1999/03/29 21:21:10  warmerda
  * New
  *
@@ -110,6 +113,22 @@ OGRErr OGRGeometryFactory::createFromWkb(unsigned char *pabyData,
         else
         {
             delete poLS;
+        }
+        return eErr;
+        break;
+
+      case wkbPolygon:
+        OGRPolygon	*poPG;
+
+        poPG = new OGRPolygon();
+        eErr = poPG->importFromWkb( pabyData, nBytes );
+        if( eErr == OGRERR_NONE )
+        {
+            *ppoReturn = poPG;
+        }
+        else
+        {
+            delete poPG;
         }
         return eErr;
         break;

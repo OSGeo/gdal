@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  1999/03/30 21:21:43  warmerda
+ * added linearring/polygon support
+ *
  * Revision 1.2  1999/03/29 21:36:14  warmerda
  * New
  *
@@ -79,6 +82,28 @@ int main( int nArgc, char ** papszArgv )
             oLine.addPoint( 0, 0 );
             
             CreateBin( &oLine, papszArgv[2] );
+        }
+        else if( strcmp( papszArgv[3], "polygon") == 0 )
+        {
+            OGRPolygon	oPolygon;
+            OGRLinearRing oRing;
+
+            oRing.addPoint( 0, 0 );
+            oRing.addPoint( 200, 300 );
+            oRing.addPoint( 300, 400 );
+            oRing.addPoint( 0, 0 );
+
+            oPolygon.addRing( &oRing );
+
+            oRing.setNumPoints( 0 );
+            oRing.addPoint( 10, 10 );
+            oRing.addPoint( 20, 30 );
+            oRing.addPoint( 30, 40 );
+            oRing.addPoint( 10, 10 );
+
+            oPolygon.addRing( &oRing );
+
+            CreateBin( &oPolygon, papszArgv[2] );
         }
     }
 

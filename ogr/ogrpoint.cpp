@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/03/30 21:21:43  warmerda
+ * added linearring/polygon support
+ *
  * Revision 1.1  1999/03/29 21:21:10  warmerda
  * New
  *
@@ -219,8 +222,11 @@ OGRErr	OGRPoint::exportToWkb( OGRwkbByteOrder eByteOrder,
 /*                            dumpReadable()                            */
 /************************************************************************/
 
-void OGRPoint::dumpReadable( FILE * fp )
+void OGRPoint::dumpReadable( FILE * fp, const char * pszPrefix )
 
 {
-    fprintf( fp, "OGRPoint: (%g,%g)\n", x, y );
+    if( pszPrefix == NULL )
+        pszPrefix = "";
+    
+    fprintf( fp, "%sOGRPoint: (%g,%g)\n", pszPrefix, x, y );
 }
