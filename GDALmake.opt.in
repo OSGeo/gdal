@@ -63,3 +63,4 @@ GDAL_OBJ	=	$(GDAL_ROOT)/frmts/o/*.o \
 #
 GDAL_FORMATS = 	gxf gtiff hfa $(OGDI_FRMT) aigrid ceos elas
 
+
