@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  1999/06/01 12:49:04  warmerda
+ * Add error check of tile size, abort if not multiple of 16.
+ *
  * Revision 1.13  1999/04/21 04:18:32  warmerda
  * updated usage
  *
@@ -818,6 +821,19 @@ static void ImagineToGeoTIFF( HFAHandle hHFA,
     nDataType = poRedBand->nDataType;
     nBlockXSize = poRedBand->nBlockXSize;
     nBlockYSize = poRedBand->nBlockYSize;
+
+/* -------------------------------------------------------------------- */
+/*      Tile sizes must be a multiple of 16.                            */
+/* -------------------------------------------------------------------- */
+    if( (nBlockXSize % 16) != 0 || (nBlockYSize % 16) != 0 )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                 "Tile sizes must be multiple of 16.  Imagine file tile size\n"
+                  "of %dx%d is not.  Translation aborted.\n",
+                  nBlockXSize, nBlockYSize );
+        
+        exit( 1 );
+    }
     
 /* -------------------------------------------------------------------- */
 /*      Verify some conditions of similarity on the bands.  These       */
