@@ -3,7 +3,7 @@ OBJ	=	envisatdataset.obj EnvisatFile.obj
 
 GDAL_ROOT	=	..\..
 
-EXTRAFLAGS = 	-I$(GDAL_ROOT) -DGDAL_BUILD
+EXTRAFLAGS = 	-I..\raw
 
 !INCLUDE $(GDAL_ROOT)\nmake.opt
 
