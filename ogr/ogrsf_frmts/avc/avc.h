@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: avc.h,v 1.16 2002/02/14 16:34:15 warmerda Exp $
+ * $Id: avc.h,v 1.17 2004/02/11 05:49:44 daniel Exp $
  *
  * Name:     avc.h
  * Project:  Arc/Info Vector coverage (AVC) BIN<->E00 conversion library
@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log: avc.h,v $
+ * Revision 1.17  2004/02/11 05:49:44  daniel
+ * Added support for deleted flag in arc.dir (bug 2332)
+ *
  * Revision 1.16  2002/02/14 16:34:15  warmerda
  * fixed prototype name for AVCBinReadNextPrj
  *
@@ -334,6 +337,7 @@ typedef struct AVCTableDef_t
     GInt16      nRecSize;
     GInt32      numRecords;
     char        szExternal[3];  /* "XX" or "  " */
+    GInt16      bDeletedFlag;   /* 1 if deleted, 0 if table is active */
 
     /* Data file path read from the arc####.dat file
      */

@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: avc_bin.c,v 1.24 2002/08/27 15:26:06 daniel Exp $
+ * $Id: avc_bin.c,v 1.26 2004/02/28 06:35:49 warmerda Exp $
  *
  * Name:     avc_bin.c
  * Project:  Arc/Info vector coverage (AVC)  BIN->E00 conversion library
@@ -30,6 +30,16 @@
  **********************************************************************
  *
  * $Log: avc_bin.c,v $
+ * Revision 1.26  2004/02/28 06:35:49  warmerda
+ * Fixed AVCBinReadObject() index support to use 'x' or 'X' for index
+ * depending on the case of the original name.
+ * Fixed so that PC Arc/Info coverages with the extra 256 byte header work
+ * properly when using indexes to read them.
+ *   http://bugzilla.remotesensing.org/show_bug.cgi?id=493
+ *
+ * Revision 1.25  2004/02/11 05:49:44  daniel
+ * Added support for deleted flag in arc.dir (bug 2332)
+ *
  * Revision 1.24  2002/08/27 15:26:06  daniel
  * Removed C++ style comments for IRIX compiler (GDAL bug 192)
  *
@@ -581,7 +591,10 @@ void *AVCBinReadObject(AVCBinFile *psFile, int iObjIndex )
             return NULL;
 
         chOrig = pszExt[2];
-        pszExt[2] = 'x';
+        if( chOrig > 'A' && chOrig < 'Z' )
+            pszExt[2] = 'X';
+        else
+            pszExt[2] = 'x';
 
         psFile->psIndexFile = 
             AVCRawBinOpen( psFile->pszFilename, "rb", 
@@ -598,12 +611,22 @@ void *AVCBinReadObject(AVCBinFile *psFile, int iObjIndex )
      *----------------------------------------------------------------*/
     if( bIndexed )
     {
-        AVCRawBinFSeek( psFile->psIndexFile, 100 + (iObjIndex-1)*8, SEEK_SET );
+        int nIndexOffset;
+
+        if (psFile->eCoverType == AVCCoverPC)
+            nIndexOffset = 356 + (iObjIndex-1)*8;
+        else
+            nIndexOffset = 100 + (iObjIndex-1)*8;
+
+        AVCRawBinFSeek( psFile->psIndexFile, nIndexOffset, SEEK_SET );
         if( AVCRawBinEOF( psFile->psIndexFile ) )
             return NULL;
 
         nObjectOffset = AVCRawBinReadInt32( psFile->psIndexFile );
         nObjectOffset *= 2;
+
+        if (psFile->eCoverType == AVCCoverPC)
+            nObjectOffset += 256;
     }
     else
         nObjectOffset = nRecordStart + nRecordSize * (iObjIndex-1);
@@ -1589,8 +1612,9 @@ int _AVCBinReadNextArcDir(AVCRawBinFile *psFile, AVCTableDef *psArcDir)
     psArcDir->numFields = AVCRawBinReadInt16(psFile);
     psArcDir->nRecSize  = AVCRawBinReadInt16(psFile);
 
-    AVCRawBinFSeek(psFile, 20, SEEK_CUR);     /* Skip 20 bytes */
+    AVCRawBinFSeek(psFile, 18, SEEK_CUR);     /* Skip 18 bytes */
     
+    psArcDir->bDeletedFlag = AVCRawBinReadInt16(psFile);
     psArcDir->numRecords = AVCRawBinReadInt32(psFile);
 
     AVCRawBinFSeek(psFile, 10, SEEK_CUR);     /* Skip 10 bytes */
@@ -1794,6 +1818,7 @@ char **AVCBinReadListTables(const char *pszInfoPath, const char *pszCoverName,
                _AVCBinReadNextArcDir(hFile, &sEntry) == 0)
         {
             if (/* sEntry.numRecords > 0 && (DO NOT skip empty tables) */
+                !sEntry.bDeletedFlag &&
                 (pszCoverName == NULL ||
                  EQUALN(szNameToFind, sEntry.szTableName, nLen)) &&
                 _AVCBinReadInfoFileExists(pszInfoPath, 
@@ -1866,7 +1891,8 @@ AVCBinFile *_AVCBinReadOpenTable(const char *pszInfoPath,
     {
         while(!bFound && _AVCBinReadNextArcDir(hFile, &sTableDef) == 0)
         {
-            if (EQUALN(sTableDef.szTableName, pszTableName, 
+            if (!sTableDef.bDeletedFlag &&
+                EQUALN(sTableDef.szTableName, pszTableName, 
                        strlen(pszTableName)) &&
                 _AVCBinReadInfoFileExists(pszInfoPath, 
                                           sTableDef.szInfoFile, 
