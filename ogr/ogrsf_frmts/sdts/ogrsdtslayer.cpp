@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2003/10/06 16:21:33  warmerda
+ * ensure we get the attributes properly for primary and secondary records
+ *
  * Revision 1.8  2001/07/18 04:55:16  warmerda
  * added CPL_CSVID
  *
@@ -120,6 +123,9 @@ OGRSDTSLayer::OGRSDTSLayer( SDTSTransfer * poTransferIn, int iLayerIn,
     
     if( poTransfer->GetLayerType(iLayer) != SLTAttr )
         papszATIDRefs = poReader->ScanModuleReferences();
+    else
+        papszATIDRefs = CSLAddString( papszATIDRefs, 
+                                      poTransfer->GetCATD()->GetEntryModule(iCATDEntry) );
 
     for( int iTable = 0;
          papszATIDRefs != NULL && papszATIDRefs[iTable] != NULL;
@@ -140,6 +146,8 @@ OGRSDTSLayer::OGRSDTSLayer( SDTSTransfer * poTransferIn, int iLayerIn,
             continue;
 
         poFDefn = poAttrReader->GetModule()->FindFieldDefn( "ATTP" );
+        if( poFDefn == NULL )
+            poFDefn = poAttrReader->GetModule()->FindFieldDefn( "ATTS" );
         if( poFDefn == NULL )
             continue;
         
@@ -422,6 +430,16 @@ OGRFeature * OGRSDTSLayer::GetNextUnfilteredFeature()
         poSR = poTransfer->GetAttr( poSDTSFeature->paoATID+iAttrRecord );
           
         AssignAttrRecordToFeature( poFeature, poTransfer, poSR );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      If this record is an attribute record, attach the local         */
+/*      attributes.                                                     */
+/* -------------------------------------------------------------------- */
+    if( poTransfer->GetLayerType(iLayer) == SLTAttr )
+    {
+        AssignAttrRecordToFeature( poFeature, poTransfer, 
+                                   ((SDTSAttrRecord *) poSDTSFeature)->poATTR);
     }
     
 /* -------------------------------------------------------------------- */
