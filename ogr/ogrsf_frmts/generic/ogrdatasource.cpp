@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.22  2004/11/21 22:09:38  fwarmerdam
+ * added DestroyDataSource() static method, and Release() method
+ *
  * Revision 1.21  2003/11/05 21:43:54  warmerda
  * Removed destructor debug message ... too much extra noise.
  *
@@ -127,6 +130,16 @@ OGRDataSource::~OGRDataSource()
 }
 
 /************************************************************************/
+/*                         DestroyDataSource()                          */
+/************************************************************************/
+
+void OGRDataSource::DestroyDataSource( OGRDataSource *poDS )
+
+{
+    delete poDS;
+}
+
+/************************************************************************/
 /*                           OGR_DS_Destroy()                           */
 /************************************************************************/
 
@@ -134,6 +147,16 @@ void OGR_DS_Destroy( OGRDataSourceH hDS )
 
 {
     delete (OGRDataSource *) hDS;
+}
+
+/************************************************************************/
+/*                              Release()                               */
+/************************************************************************/
+
+OGRErr OGRDataSource::Release()
+
+{
+    return OGRSFDriverRegistrar::GetRegistrar()->ReleaseDataSource( this );
 }
 
 /************************************************************************/
