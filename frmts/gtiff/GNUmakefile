@@ -37,10 +37,10 @@ gt_write:	gt_write.o gt_gs.o cpl_csv.o
 	$(CC) gt_write.o gt_gs.o cpl_csv.o $(GDAL_ROOT)/port/*.o \
 		libgeotiff/libgeotiff.a libtiff/libtiff.a $(LIBS) -o gt_write
 
-addtifo:	addtifo.o tif_overview.o rawblockedimage.o
-	$(CC) addtifo.o tif_overview.o rawblockedimage.o \
+addtiffo:	addtiffo.o tif_overview.o rawblockedimage.o
+	$(CC) addtiffo.o tif_overview.o rawblockedimage.o \
 		$(GDAL_ROOT)/port/*.o \
-		libgeotiff/libgeotiff.a libtiff/libtiff.a $(LIBS) -o addtifo
+		libgeotiff/libgeotiff.a libtiff/libtiff.a $(LIBS) -o addtiffo
 
 
 lib-tiff:
@@ -51,3 +51,13 @@ lib-geotiff:
 
 install-obj:	$(OBJ) lib-tiff lib-geotiff
 	cp $(OBJ) libgeotiff/libgeotiff.a libtiff/libtiff.a ../o
+
+
+addtiffo-dist:
+	rm -rf addtiffo
+	mkdir addtiffo
+	cp tif_overview.cpp addtiffo.c rawblockedimage.* addtiffo
+	cp README.addtiffo addtiffo/README
+	cp Makefile.addtiffo addtiffo/Makefile
+	cp makefile.vc.addtiffo addtiffo/Makefile.vc
+
