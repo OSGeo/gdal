@@ -1,0 +1,68 @@
+Source: gdal
+Section: science
+Priority: optional
+Maintainer: Silke Reimer <silke@intevation.net>
+Build-Depends: debhelper (>> 4.1.25), zlib1g-dev, libcfitsio-dev, libpng12-dev, libjpeg62-dev, libungif4-dev, libhdf4g-dev, postgresql-dev, postgresql-client, libxerces21-dev, python-dev, python-numeric, doxygen
+Standards-Version: 3.6.0
+
+Package: libgdal1
+Section: libs
+Architecture: any
+Depends: ${shlibs:Depends}
+Recommends: proj
+Description: Geospatial Data Abstraction Library
+ GDAL is a translator library for raster geospatial data formats
+ that is released under an Open Source license. As a library, it
+ presents a single abstract data model to the calling application
+ for all supported formats. The related OGR library (which lives
+ within the GDAL source tree) provides a similar capability for
+ simple features vector data.
+
+Package: libgdal1-dev
+Section: libdevel
+Architecture: any
+Depends: libgdal1 (=${Source-Version})
+Suggests: libgdal-doc
+Description: Geospatial Data Abstraction Library - Development files
+ GDAL is a translator library for raster geospatial data formats
+ that is released under an Open Source license. As a library, it
+ presents a single abstract data model to the calling application
+ for all supported formats. The related OGR library (which lives
+ within the GDAL source tree) provides a similar capability for
+ simple features vector data.
+
+Package: libgdal-doc
+Section: doc
+Architecture: all
+Suggests: libgdal1 (=${Source-Version})
+Description: Documentation for the Geospatial Data Abstraction Library
+ GDAL is a translator library for raster geospatial data formats
+ that is released under an Open Source license. As a library, it
+ presents a single abstract data model to the calling application
+ for all supported formats. The related OGR library (which lives
+ within the GDAL source tree) provides a similar capability for
+ simple features vector data.
+
+Package: gdal-bin
+Section: science
+Architecture: any
+Depends: ${shlibs:Depends}
+Description: Geospatial Data Abstraction Library - Utility programs
+ GDAL is a translator library for raster geospatial data formats
+ that is released under an Open Source license. As a library, it
+ presents a single abstract data model to the calling application
+ for all supported formats. The related OGR library (which lives
+ within the GDAL source tree) provides a similar capability for
+ simple features vector data.
+
+Package: python-gdal
+Section: python
+Architecture: any
+Depends: ${shlibs:Depends}, ${python:Depends}, python-numeric
+Description: Python bindings to the Geospatial Data Abstraction Library
+ GDAL is a translator library for raster geospatial data formats
+ that is released under an Open Source license. As a library, it
+ presents a single abstract data model to the calling application
+ for all supported formats. The related OGR library (which lives
+ within the GDAL source tree) provides a similar capability for
+ simple features vector data.
