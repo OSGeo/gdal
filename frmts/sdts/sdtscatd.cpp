@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2003/02/06 03:18:34  warmerda
+ * fixed memory leak of pszFullPath
+ *
  * Revision 1.13  2001/07/18 04:51:57  warmerda
  * added CPL_CVSID
  *
@@ -205,9 +208,6 @@ int SDTS_CATD::Read( const char * pszFilename )
 /* -------------------------------------------------------------------- */
 /*      Create a full path to the file.                                 */
 /* -------------------------------------------------------------------- */
-        poEntry->pszFullPath = (char *)
-            CPLMalloc(strlen(pszPrefixPath)+strlen(poEntry->pszFile)+2);
-
         poEntry->pszFullPath = 
             CPLStrdup(CPLFormCIFilename( pszPrefixPath, poEntry->pszFile,
                                          NULL ));
