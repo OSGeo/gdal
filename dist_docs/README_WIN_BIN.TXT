@@ -84,8 +84,3 @@ OGR:
  o OGDI omitted.
  o PostgreSQL omitted.
 
-
-
-
-
-
