@@ -138,23 +138,23 @@ assumption is meters.<p>
 \endcode
 
 <li> <b>Offset</b>: This optional element contains the offset that should be
-applied when computing "real" pixel values from scaled pixel values.   The
-default is 0.0.<p>
+applied when computing "real" pixel values from scaled pixel values on 
+a raster band.   The default is 0.0.<p>
 
 \code
   <Offset>0.0</Offset>
 \endcode
 
 <li> <b>Scale</b>: This optional element contains the scale that should be
-applied when computing "real" pixel values from scaled pixel values.   The
-default is 1.0.<p>
+applied when computing "real" pixel values from scaled pixel values on a
+raster band.   The default is 1.0.<p>
 
 \code
   <Scale>0.0</Scale>
 \endcode
 
 <li> <b>CategoryNames</b>: This optional element contains a list of Category
-subelements with the names of the categories for classied images. <p>
+subelements with the names of the categories for classied raster band. <p>
 
 \code
   <CategoryNames>
