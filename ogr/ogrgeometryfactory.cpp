@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2001/06/01 14:34:02  warmerda
+ * added debugging of corrupt geometry
+ *
  * Revision 1.7  1999/11/18 19:02:19  warmerda
  * expanded tabs
  *
@@ -111,7 +114,22 @@ OGRErr OGRGeometryFactory::createFromWkb(unsigned char *pabyData,
 /* -------------------------------------------------------------------- */
     eByteOrder = (OGRwkbByteOrder) *pabyData;
 
-    assert( eByteOrder == wkbXDR || eByteOrder == wkbNDR );
+    if( eByteOrder != wkbXDR && eByteOrder != wkbNDR )
+    {
+        CPLDebug( "OGR", 
+                  "OGRGeometryFactory::createFromWkb() - got corrupt data.\n"
+                  "%X%X%X%X%X%X%X%X\n", 
+                  pabyData[0],
+                  pabyData[1],
+                  pabyData[2],
+                  pabyData[3],
+                  pabyData[4],
+                  pabyData[5],
+                  pabyData[6],
+                  pabyData[7],
+                  pabyData[8] );
+        return OGRERR_CORRUPT_DATA;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Get the geometry feature type.  For now we assume that          */
