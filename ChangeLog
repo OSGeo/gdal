@@ -1,3 +1,7 @@
+2001-02-05  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* Added support for R*4 (Float32) images in SAR_CEOS reader.
+
 2001-01-30  Frank Warmerdam  <warmerdam@pobox.com>
 
 	* core/overview.cpp: Added resampling type of AVERAGE_MP to do
