@@ -5,7 +5,7 @@ include ../GDALmake.opt
 GDALMODULE	=	_gdalmodule
 OBJ        	=       gdal_wrap.o numpydataset.o gdalnumeric.o
 
-CPPFLAGS	+=	$(GDAL_INCLUDE) $(PYTHON_INCLUDES)
+CPPFLAGS	:=	$(GDAL_INCLUDE) $(PYTHON_INCLUDES) $(CPPFLAGS)
 CFLAGS	+=	$(PYTHON_CFLAGS)
 
 # this is needed during install due to the _gdalmodule.so library
