@@ -4,9 +4,16 @@
 BINDIR = D:\bin
 PY_INST_DIR = D:\bin\pymod
 
-# Location of Visual C++ directory
-VCDIR   = 	D:\Software\VStudio\VC98
+# Set this to the installed directory containing python.  If you don't
+# have python just let it point to a directory that does not exist (as now). 
 PYDIR   =	D:\Software\Python22
+
+# Uncomment the first for an optimized build or the second for a debug build.
+OPTFLAGS=	/nologo /Ox 
+#OPTFLAGS=	/nologo /Zi /Fd$(GDAL_ROOT)\gdal.pdb
+
+# Version number embedded in DLL name. 
+VERSION =	11
 
 # Uncomment the following to link OGR utilities against main GDAL DLL
 # instead of statically linking against OGR libraries.
@@ -16,13 +23,12 @@ DLLBUILD=1
 # vector formats. 
 INCLUDE_OGR_FRMTS = YES
 
+# Location of Visual C++ directory (only required for following SETARGV stuff)
+VCDIR   = 	D:\Software\VStudio\VC98
+
 # Enable the following if VCDIR set properly, and you want the utility
 # programs to be able to expand wildcards. 
 #SETARGV =	$(VCDIR)\lib\setargv.obj
-
-# Uncomment the first for an optimized build or the second for a debug build.
-#OPTFLAGS=	/nologo /Ox 
-OPTFLAGS=	/nologo /Zi /Fd$(GDAL_ROOT)\gdal.pdb
 
 # Comment out the following to disable JPEG support.
 JPEG_SUPPORTED = 1
@@ -60,10 +66,10 @@ JPEG_SUPPORTED = 1
 
 ########### END OF STUFF THAT NORMALLY NEEDS TO BE UPDATED ##################
 
-# Location of MS Data Access SDK 
+
+# Location of MS Data Access SDK (not really needed anymore I think)
 #MSDASDK =	D:\Software\MDAC_2.6
 
-VERSION =	11
 GDAL_DLL =	gdal$(VERSION).dll
 
 INC	=	-I$(GDAL_ROOT)\port -I$(GDAL_ROOT)\ogr -I$(GDAL_ROOT)\core
