@@ -26,6 +26,9 @@
  * serves as an early test harnass.
  *
  * $Log$
+ * Revision 1.14  2000/06/12 14:21:43  warmerda
+ * Fixed min/max printf.
+ *
  * Revision 1.13  2000/05/15 14:06:26  warmerda
  * Added -mm for computing min/max, and fixed ovewriting of i.
  *
@@ -214,7 +217,7 @@ int main( int argc, char ** argv )
 
         dfMin = GDALGetRasterMinimum( hBand, &bGotMin );
         dfMax = GDALGetRasterMaximum( hBand, &bGotMax );
-        printf( "Min=%.3f/%d, Max=%.3f/%d",  dfMin, bGotMin, dfMax);
+        printf( "Min=%.3f/%d, Max=%.3f/%d",  dfMin, bGotMin, dfMax, bGotMax);
         
         if( bComputeMinMax )
         {
