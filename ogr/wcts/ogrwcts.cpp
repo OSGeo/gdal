@@ -27,20 +27,28 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************
  *
- * Security Audit 2003/03/28 warmerda:
+ * Security Audit 2003/03/29 warmerda:
  *   Completed security audit.  I believe that *this* module may be safely used
  *   to handle arbitrary input.  It also requires the following to be safe:
- *    1) libcurl (not checked, note libcurl may allow operating on file:
- *       urls, potentially compromising local files to some extent). 
+ *
+ *    1) libcurl (not checked), all URLs other than http, https and ftp have
+ *       been disabled to avoid issues with less known protocols.
  *    2) CPLTokenize() support for parsing QUERY_STRING.  (checked)
  *    3) OGR GML Geometry reading and writing services. (checked)
  *    4) OGR GML CRS reading and writing services.  (not checked)
  *    5) cpl_minixml.cpp parsing and serializing services (checked)
  *    6) cpl_string escaping logic, and stringlist handling (checked)
- *   For optimal overall security this server should be run *without* libcurl, 
- *   without GML CRS parsing till these areas are reviewed.
+ * 
+ *   For optimal overall security this server should be run user defined CRS
+ *   support as this code is in flux, so any audit will be rapidly outdated.
+ *   This may be accomplished by compiling with DISABLE_USER_DEFINED_CRS
+ *   defined in the GNUmakefile (the default).
  *
  * $Log$
+ * Revision 1.12  2003/03/28 17:51:13  warmerda
+ * Only allow http, https and ftp in FileURL urls.
+ * Added support for DISABLE_USER_DEFINED_CRS.
+ *
  * Revision 1.11  2003/03/28 06:12:45  warmerda
  * completed security audit.  Avoid passinglong strings to CPLSPrintf()
  *
@@ -188,6 +196,11 @@ char *WCTSHTTPFetch( const char *pszURL )
     error = curl_easy_perform( http_handle );
 
     curl_easy_cleanup( http_handle );
+
+    if( strlen(szCurlErrBuf) > 0 )
+        WCTSEmitServiceException( szCurlErrBuf );
+    else if( pszData == NULL )
+        WCTSEmitServiceException( "No response from WCTS server." );
 
     return pszData;
 #endif /* def HAVE_CURL */
@@ -547,6 +560,11 @@ WCTSImportCoordinateReferenceSystem( CPLXMLNode *psXMLCRS )
     if( CPLGetXMLNode( psXMLCRS, "ProjectedCRS" ) != NULL 
         || CPLGetXMLNode( psXMLCRS, "GeographicCRS" ) != NULL )
     {
+#ifdef DISABLE_USER_DEFINED_CRS
+        WCTSEmitServiceException( 
+            "User defined ProjectedCRS and GeographicCRS support\n"
+            "disabled for security reasons." );
+#else
         char *pszSerializedForm;
         OGRSpatialReference oSRS;
 
@@ -562,6 +580,7 @@ WCTSImportCoordinateReferenceSystem( CPLXMLNode *psXMLCRS )
 
         CPLFree( pszSerializedForm );
         return oSRS.Clone();
+#endif
     }
     
 /* -------------------------------------------------------------------- */
@@ -774,6 +793,16 @@ void WCTSGetData( CPLXMLNode * psData )
     {
         CPLXMLNode *psNewDataTree;
         char *pszData;
+
+        if( !EQUALN(psData->psChild->psChild->pszValue,"http:",5) 
+            && !EQUALN(psData->psChild->psChild->pszValue,"https:",6) 
+            && !EQUALN(psData->psChild->psChild->pszValue,"ftp:",4) )
+            
+        {
+            WCTSEmitServiceException( 
+                "Use of FileURL with protocol other than http, https or ftp\n"
+                "not supported for security reasons." );
+        }
 
         pszData = WCTSHTTPFetch( psData->psChild->psChild->pszValue );
 
