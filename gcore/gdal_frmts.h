@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.26  2004/05/26 14:15:56  warmerda
+ * Added LAN (.LAN/.GIS format).
+ *
  * Revision 1.25  2004/01/07 20:06:12  warmerda
  * Added netCDF register
  *
@@ -162,6 +165,7 @@ void CPL_DLL GDALRegister_PCIDSK(void);
 void CPL_DLL GDALRegister_BT(void);
 void CPL_DLL GDALRegister_DODS(void);
 void CPL_DLL GDALRegister_netCDF(void);
+void CPL_DLL GDALRegister_LAN(void);
 CPL_C_END
 
 #endif /* ndef GDAL_FRMTS_H_INCLUDED */
