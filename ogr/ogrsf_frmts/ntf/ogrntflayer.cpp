@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  1999/09/09 16:28:14  warmerda
+ * Removed ifdef'ed out methods.
+ *
  * Revision 1.2  1999/08/28 18:24:42  warmerda
  * added TestForLayer() optimization
  *
@@ -180,58 +183,6 @@ OGRFeature *OGRNTFLayer::GetNextFeature()
 
     return poFeature;
 }
-
-#ifdef notdef
-/************************************************************************/
-/*                             GetFeature()                             */
-/************************************************************************/
-
-OGRFeature *OGRNTFLayer::GetFeature( long nFeatureId )
-
-{
-    return SHPReadOGRFeature( hSHP, hDBF, poFeatureDefn, nFeatureId );
-}
-
-/************************************************************************/
-/*                             SetFeature()                             */
-/************************************************************************/
-
-OGRErr OGRNTFLayer::SetFeature( OGRFeature *poFeature )
-
-{
-    return SHPWriteOGRFeature( hSHP, hDBF, poFeatureDefn, poFeature );
-}
-
-/************************************************************************/
-/*                           CreateFeature()                            */
-/************************************************************************/
-
-OGRErr OGRNTFLayer::CreateFeature( OGRFeature *poFeature )
-
-{
-    poFeature->SetFID( OGRNullFID );
-    
-    return SHPWriteOGRFeature( hSHP, hDBF, poFeatureDefn, poFeature );
-}
-
-/************************************************************************/
-/*                          GetFeatureCount()                           */
-/*                                                                      */
-/*      If a spatial filter is in effect, we turn control over to       */
-/*      the generic counter.  Otherwise we return the total count.      */
-/*      Eventually we should consider implementing a more efficient     */
-/*      way of counting features matching a spatial query.              */
-/************************************************************************/
-
-int OGRNTFLayer::GetFeatureCount( int bForce )
-
-{
-    if( poFilterGeom != NULL )
-        return OGRLayer::GetFeatureCount( bForce );
-    else
-        return nTotalShapeCount;
-}
-#endif
 
 /************************************************************************/
 /*                           TestCapability()                           */
