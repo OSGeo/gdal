@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  1999/11/04 21:18:01  warmerda
+ * fix bug with shapeid for new shapes
+ *
  * Revision 1.5  1999/07/27 01:52:04  warmerda
  * added support for writing polygon/multipoint/arc files
  *
@@ -388,10 +391,11 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom )
 /*                       SHPReadOGRFeatureDefn()                        */
 /************************************************************************/
 
-OGRFeatureDefn *SHPReadOGRFeatureDefn( SHPHandle hSHP, DBFHandle hDBF )
+OGRFeatureDefn *SHPReadOGRFeatureDefn( const char * pszName,
+                                       SHPHandle hSHP, DBFHandle hDBF )
 
 {
-    OGRFeatureDefn	*poDefn = new OGRFeatureDefn( "Shape" );
+    OGRFeatureDefn	*poDefn = new OGRFeatureDefn( pszName );
     int			iField;
 
     for( iField = 0; iField < DBFGetFieldCount( hDBF ); iField++ )
@@ -506,12 +510,6 @@ OGRErr SHPWriteOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
 
 {
 /* -------------------------------------------------------------------- */
-/*      If this is a new feature, establish it's feature id.            */
-/* -------------------------------------------------------------------- */
-    if( poFeature->GetFID() == OGRNullFID )
-        poFeature->SetFID( DBFGetRecordCount( hDBF ) );
-
-/* -------------------------------------------------------------------- */
 /*      Write the geometry.                                             */
 /* -------------------------------------------------------------------- */
     OGRErr	eErr;
@@ -521,6 +519,12 @@ OGRErr SHPWriteOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
     if( eErr != OGRERR_NONE )
         return eErr;
     
+/* -------------------------------------------------------------------- */
+/*      If this is a new feature, establish it's feature id.            */
+/* -------------------------------------------------------------------- */
+    if( poFeature->GetFID() == OGRNullFID )
+        poFeature->SetFID( DBFGetRecordCount( hDBF ) );
+
 /* -------------------------------------------------------------------- */
 /*      Write all the fields.                                           */
 /* -------------------------------------------------------------------- */
