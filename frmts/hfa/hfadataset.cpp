@@ -29,6 +29,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.31  2003/05/08 21:54:53  warmerda
+ * implement block based flushing
+ *
  * Revision 1.30  2003/04/28 20:50:18  warmerda
  * implement dataset level IO, and attempt to optimization createcopy()
  *
@@ -726,11 +729,22 @@ HFADataset::~HFADataset()
 void HFADataset::FlushCache()
 
 {
-    GDALDataset::FlushCache();
-
     if( eAccess != GA_Update )
         return;
 
+/* -------------------------------------------------------------------- */
+/*      If we are using spill files we need to flush all bands of a     */
+/*      given block before proceeding in order to optimize write        */
+/*      throughput.                                                     */
+/* -------------------------------------------------------------------- */
+    if( hHFA->papoBand[0]->fpExternal == NULL )
+        GDALDataset::FlushCache();
+    else
+        GDALDataset::BlockBasedFlushCache();
+
+/* -------------------------------------------------------------------- */
+/*      Write out projection and metadata if they have changed.         */
+/* -------------------------------------------------------------------- */
     if( bGeoDirty )
         WriteProjection();
 
