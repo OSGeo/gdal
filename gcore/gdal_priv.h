@@ -29,8 +29,8 @@
  ******************************************************************************
  *
  * $Log$
- * Revision 1.13  2000/02/28 16:35:05  warmerda
- * added raster x/ysize to GDALRasterBand
+ * Revision 1.14  2000/03/06 02:20:35  warmerda
+ * added colortables, overviews, etc
  *
  * Revision 1.12  2000/01/31 15:00:25  warmerda
  * added some documentation
@@ -154,6 +154,8 @@ class CPL_DLL GDALDataset : public GDALMajorObject
     int		nBands;
     GDALRasterBand **papoBands;
 
+    int         nRefCount;
+
     		GDALDataset(void);
     void        RasterInitialize( int, int );
     void        SetBand( int, GDALRasterBand * );
@@ -176,6 +178,9 @@ class CPL_DLL GDALDataset : public GDALMajorObject
 
     virtual void *GetInternalHandle( const char * );
     virtual GDALDriver *GetDriver(void);
+ 
+    int           Reference();
+    int           Dereference();
 };
 
 /* ******************************************************************** */
@@ -216,9 +221,32 @@ class CPL_DLL GDALRasterBlock
 
 
 /* ******************************************************************** */
+/*                             GDALColorTable                           */
+/* ******************************************************************** */
+
+class CPL_DLL GDALColorTable
+{
+    GDALPaletteInterp eInterp;
+
+    int		nEntryCount;
+    GDALColorEntry *paoEntries;
+
+public:
+    		GDALColorTable( GDALPaletteInterp = GPI_RGB );
+    		~GDALColorTable();
+
+    GDALColorTable *Clone() const;
+
+    GDALPaletteInterp GetPaletteInterpretation() const;
+
+    int           GetColorEntryCount() const;
+    const GDALColorEntry *GetColorEntry( int ) const;
+    int           GetColorEntryAsRGB( int, GDALColorEntry * ) const;
+    void          SetColorEntry( int, const GDALColorEntry * );
+};
+
+/* ******************************************************************** */
 /*                            GDALRasterBand                            */
-/*                                                                      */
-/*      one band, or channel in a dataset.                              */
 /* ******************************************************************** */
 
 //! A single raster band (or channel).
@@ -228,8 +256,9 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
   protected:
     GDALDataset	*poDS;
     int		nBand; /* 1 based */
-    int		nRasterXSize;
-    int		nRasterYSize;
+
+    int	        nRasterXSize;
+    int         nRasterYSize;
     
     GDALDataType eDataType;
     GDALAccess	eAccess;
@@ -253,6 +282,9 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
     virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
                               void *, int, int, GDALDataType,
                               int, int );
+    CPLErr         OverviewRasterIO( GDALRWFlag, int, int, int, int,
+                                     void *, int, int, GDALDataType,
+                                     int, int );
 
     CPLErr	   FlushBlock( int = -1, int = -1 );
     CPLErr	   AdoptBlock( int, int, GDALRasterBlock * );
@@ -262,7 +294,10 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
                 GDALRasterBand();
                 
     virtual	~GDALRasterBand();
-    
+
+    int		GetXSize();
+    int		GetYSize();
+
     GDALDataType GetRasterDataType( void );
     void	GetBlockSize( int *, int * );
     GDALAccess	GetAccess();
@@ -276,6 +311,23 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
 
     GDALRasterBlock *GetBlockRef( int, int );
     CPLErr	FlushCache();
+
+    // New OpengIS CV_SampleDimension stuff.
+
+    virtual const char  *GetDescription();
+    virtual char **GetCategoryNames();
+    virtual double GetNoDataValue( int *pbSuccess = NULL );
+    virtual double GetMinimum( int *pbSuccess = NULL );
+    virtual double GetMaximum(int *pbSuccess = NULL );
+    virtual double GetOffset( int *pbSuccess = NULL );
+    virtual double GetScale( int *pbSuccess = NULL );
+    virtual const char *GetUnitType();
+    virtual GDALColorInterp GetColorInterpretation();
+    virtual GDALColorTable *GetColorTable();
+
+    virtual int HasArbitraryOverviews();
+    virtual int GetOverviewCount();
+    virtual GDALRasterBand *GetOverview(int);
 };
 
 /* ******************************************************************** */
@@ -307,7 +359,6 @@ class CPL_DLL GDALOpenInfo
 
 /* ******************************************************************** */
 /*                              GDALDriver                              */
-/*                                                                      */
 /* ******************************************************************** */
 
 /**
