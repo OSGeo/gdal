@@ -8,6 +8,12 @@ GDAL_ROOT	=	..\..
 default:	$(OBJ)
 	copy *.obj ..\o
 
+all:	$(OBJ) aitest.exe 
+
+aitest.exe:	$(OBJ) aitest.c
+	$(CC) $(CFLAGS) aitest.c aigopen.obj gridlib.obj \
+			$(GDAL_ROOT)/port/cpl.lib
+	
 clean:
 	del *.obj
 
