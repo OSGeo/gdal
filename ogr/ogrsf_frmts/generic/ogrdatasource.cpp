@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2003/05/21 04:54:29  warmerda
+ * avoid warnings about unused formal parameters and possibly uninit variables
+ *
  * Revision 1.18  2003/04/23 16:27:15  warmerda
  * (re) filled OGR_DS_GetName()
  *
@@ -225,6 +228,10 @@ OGRLayer *OGRDataSource::CreateLayer( const char * pszName,
                                       char ** )
 
 {
+    (void) eType;
+    (void) poSpatialRef;
+    (void) pszName;
+
     CPLError( CE_Failure, CPLE_NotSupported,
               "CreateLayer() not supported by this data source." );
               
@@ -351,6 +358,7 @@ OGRLayerH OGR_DS_CopyLayer( OGRDataSourceH hDS,
 OGRErr OGRDataSource::DeleteLayer( int iLayer )
 
 {
+    (void) iLayer;
     CPLError( CE_Failure, CPLE_NotSupported,
               "DeleteLayer() not supported by this data source." );
               
@@ -443,7 +451,7 @@ OGRErr OGRDataSource::ProcessSQLCreateIndex( const char *pszSQLCommand )
 /*      Find the named layer.                                           */
 /* -------------------------------------------------------------------- */
     int  i;
-    OGRLayer *poLayer;
+    OGRLayer *poLayer = NULL;
 
     for( i = 0; i < GetLayerCount(); i++ )
     {
@@ -541,7 +549,7 @@ OGRErr OGRDataSource::ProcessSQLDropIndex( const char *pszSQLCommand )
 /*      Find the named layer.                                           */
 /* -------------------------------------------------------------------- */
     int  i;
-    OGRLayer *poLayer;
+    OGRLayer *poLayer=NULL;
 
     for( i = 0; i < GetLayerCount(); i++ )
     {
@@ -635,6 +643,8 @@ OGRLayer * OGRDataSource::ExecuteSQL( const char *pszSQLCommand,
     const char *pszError;
     swq_select *psSelectInfo = NULL;
 
+    (void) pszDialect;
+
 /* -------------------------------------------------------------------- */
 /*      Handle CREATE INDEX statements specially.                       */
 /* -------------------------------------------------------------------- */
@@ -715,7 +725,7 @@ OGRLayer * OGRDataSource::ExecuteSQL( const char *pszSQLCommand,
 /*      Build the field list for all indicated tables.                  */
 /* -------------------------------------------------------------------- */
     swq_field_list sFieldList;
-    int            nFIDIndex;
+    int            nFIDIndex = 0;
 
     memset( &sFieldList, 0, sizeof(sFieldList) );
     sFieldList.table_count = psSelectInfo->table_count;

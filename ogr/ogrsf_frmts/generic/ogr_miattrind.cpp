@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2003/05/21 04:54:29  warmerda
+ * avoid warnings about unused formal parameters and possibly uninit variables
+ *
  * Revision 1.2  2003/03/20 20:21:40  warmerda
  * implement DROP INDEX command
  *
@@ -593,7 +596,7 @@ OGRErr OGRMILayerAttrIndex::AddToIndex( OGRFeature *poFeature )
 /*                          RemoveFromIndex()                           */
 /************************************************************************/
 
-OGRErr OGRMILayerAttrIndex::RemoveFromIndex( OGRFeature *poFeature )
+OGRErr OGRMILayerAttrIndex::RemoveFromIndex( OGRFeature * /*poFeature*/ )
 
 {
     return OGRERR_UNSUPPORTED_OPERATION;
@@ -663,7 +666,7 @@ OGRErr OGRMIAttrIndex::AddEntry( OGRField *psKey, long nFID )
 /*                            RemoveEntry()                             */
 /************************************************************************/
 
-OGRErr OGRMIAttrIndex::RemoveEntry( OGRField *psKey, long nFID )
+OGRErr OGRMIAttrIndex::RemoveEntry( OGRField * /*psKey*/, long /*nFID*/ )
 
 {
     return OGRERR_UNSUPPORTED_OPERATION;

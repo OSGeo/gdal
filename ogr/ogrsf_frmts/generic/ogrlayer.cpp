@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2003/05/21 04:54:29  warmerda
+ * avoid warnings about unused formal parameters and possibly uninit variables
+ *
  * Revision 1.16  2003/04/22 19:36:04  warmerda
  * Added SyncToDisk
  *
@@ -403,6 +406,7 @@ OGRErr OGR_L_CreateFeature( OGRLayerH hLayer, OGRFeatureH hFeat )
 const char *OGRLayer::GetInfo( const char * pszTag )
 
 {
+    (void) pszTag;
     return NULL;
 }
 
@@ -413,6 +417,9 @@ const char *OGRLayer::GetInfo( const char * pszTag )
 OGRErr OGRLayer::CreateField( OGRFieldDefn * poField, int bApproxOK )
 
 {
+    (void) poField;
+    (void) bApproxOK;
+
     CPLError( CE_Failure, CPLE_NotSupported,
               "CreateField() not supported by this layer.\n" );
               
