@@ -122,13 +122,13 @@ INPUT            =	port core
 # and *.h) to filter out the source-files in the directories. If left 
 # blank all files are included.
 
-FILE_PATTERNS    =	*.h *.cpp *.c
+FILE_PATTERNS    =	*.h *.cpp *.c *.dox
 
 # The EXAMPLE_PATH tag can be used to specify one or more files or 
 # directories that contain example code fragments that are included (see 
 # the \include command).
 
-EXAMPLE_PATH     =
+EXAMPLE_PATH     = apps
 
 # The RECURSIVE tag can be used to turn specify whether or not subdirectories
 # should be searched for input files as well. Possible values are YES and NO.
