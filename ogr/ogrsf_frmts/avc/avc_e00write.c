@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: avc_e00write.c,v 1.12 2001/05/23 15:23:17 daniel Exp $
+ * $Id: avc_e00write.c,v 1.13 2002/02/18 21:16:33 warmerda Exp $
  *
  * Name:     avc_e00write.c
  * Project:  Arc/Info vector coverage (AVC)  E00->BIN conversion library
@@ -31,6 +31,9 @@
  **********************************************************************
  *
  * $Log: avc_e00write.c,v $
+ * Revision 1.13  2002/02/18 21:16:33  warmerda
+ * modified to use VSIMkDir
+ *
  * Revision 1.12  2001/05/23 15:23:17  daniel
  * Remove trailing '/' in info directory path when creating the info dir.
  *
@@ -72,14 +75,7 @@
 
 #include <ctype.h>      /* tolower() */
 
-#ifdef WIN32
-#  include <direct.h>    /* mkdir() on Windows */
-#else
-#  include <sys/stat.h>  /* mkdir() on Unix */
-#  include <sys/types.h>
-#  include <fcntl.h>
-#  include <unistd.h>
-#endif
+#include "cpl_vsi.h"
 #include "avc.h"
 
 static GBool _IsStringAlnum(const char *pszFname);
@@ -180,13 +176,7 @@ AVCE00WritePtr  AVCE00WriteOpen(const char *pszCoverPath,
          * Create new pszCoverPath directory.  
          * This will fail if a file with the same name already exists.
          *------------------------------------------------------------*/
-        if(
-#ifdef WIN32
-            mkdir(pszCoverPath) != 0
-#else
-            mkdir(pszCoverPath, 0777) != 0
-#endif
-            )
+        if( VSIMkDir(pszCoverPath, 0777) != 0 )
         {
             CPLError(CE_Failure, CPLE_OpenFailed, 
                      "Unable to create coverage directory: %s.", pszCoverPath);
@@ -345,13 +335,10 @@ AVCE00WritePtr  AVCE00WriteOpen(const char *pszCoverPath,
              */
             pszInfoDir = CPLStrdup(psInfo->pszInfoPath);
             pszInfoDir[strlen(pszInfoDir)-1] = '\0';
-#ifdef WIN32
-            mkdir(pszInfoDir);
+            
+            VSIMkdir(pszInfoDir, 0777);
             fp = VSIFOpen(pszArcDir, "a+b");
-#else
-            mkdir (pszInfoDir, 0777);
-            fp = VSIFOpen(pszArcDir, "a+");
-#endif
+
             CPLFree(pszArcDir);
             CPLFree(pszInfoDir);
             if (fp)
