@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2001/11/09 20:48:58  warmerda
+ * added functions for processing WKT and getting provider options
+ *
  * Revision 1.6  2001/05/28 19:39:29  warmerda
  * added SFWkbGeomTypeToDBGEOM
  *
@@ -45,22 +48,22 @@
  *
  * Revision 1.1  1999/06/22 15:53:54  kshih
  * Utility functions.
- *
- *
  */
 
 #include <stdio.h>
 #include "ogrsf_frmts.h"
 #include <oledb.h>
 
-
-OGRDataSource	*SFGetOGRDataSource(IUnknown *pUnk);
-void			SFSetOGRDataSource(IUnknown *pUnk, OGRDataSource *pOGR, void *);
-void			SFClearOGRDataSource(void *);
-void			SFGetFilenames(const char *,char **,char **);
-char			*SFGetInitDataSource(IUnknown *pIUnknownIn);
-HRESULT	     	SFReportError(HRESULT passed_hr, IID iid, DWORD providerCode,char *pszText);
-void			SFRegisterOGRFormats();
+OGRDataSource  *SFGetOGRDataSource(IUnknown *pUnk);
+void		SFSetOGRDataSource(IUnknown *pUnk,OGRDataSource *pOGR,void *);
+void		SFClearOGRDataSource(void *);
+void		SFGetFilenames(const char *,char **,char **);
+char	       *SFGetInitDataSource(IUnknown *pIUnknownIn);
+char          **SFGetProviderOptions( IUnknown *);
+char           *SFGetLayerWKT( OGRLayer *, IUnknown * );
+HRESULT	     	SFReportError(HRESULT passed_hr, IID iid, DWORD providerCode,
+                              char *pszText);
+void		SFRegisterOGRFormats();
 int             SFWkbGeomTypeToDBGEOM( OGRwkbGeometryType );
 
 void OGRComDebug( const char * pszDebugClass, const char * pszFormat, ... );

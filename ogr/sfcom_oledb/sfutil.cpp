@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2001/11/09 20:48:58  warmerda
+ * added functions for processing WKT and getting provider options
+ *
  * Revision 1.14  2001/11/09 19:07:11  warmerda
  * added VARIANTToString... doesnot appear to work
  *
@@ -76,6 +79,7 @@
 #include "sfutil.h"
 #include "SF.h"
 #include "cpl_error.h"
+#include "cpl_string.h"
 #include "oledbgis.h"
 
 typedef struct _IUnknownOGRInfo
@@ -234,6 +238,114 @@ char *SFGetInitDataSource(IUnknown *pIUnknownIn)
 
     return pszDataSource;
 }
+
+/************************************************************************/
+/*                        SFGetProviderOptions()                        */
+/*                                                                      */
+/*      Get the set of provider options in effect from the provider     */
+/*      string.  Returned as a CPL name/value string list.              */
+/************************************************************************/
+
+char **SFGetProviderOptions(IUnknown *pIUnknownIn)
+{
+    IDBProperties	*pIDBProp;
+    char                **papszResult = NULL;
+
+    if (pIUnknownIn == NULL)
+        return NULL;
+
+    pIDBProp = SFGetDataSourceProperties(pIUnknownIn);
+	
+    if (pIDBProp == NULL)
+        return NULL;
+
+    DBPROPIDSET sPropIdSets[1];
+    DBPROPID	rgPropIds[1];
+		
+    ULONG		nPropSets;
+    DBPROPSET	*rgPropSets;
+		
+    rgPropIds[0] = DBPROP_INIT_PROVIDERSTRING;
+		
+    sPropIdSets[0].cPropertyIDs = 1;
+    sPropIdSets[0].guidPropertySet = DBPROPSET_DBINIT;
+    sPropIdSets[0].rgPropertyIDs = rgPropIds;
+		
+    pIDBProp->GetProperties(1,sPropIdSets,&nPropSets,&rgPropSets);
+		
+    if (rgPropSets)
+    {
+        USES_CONVERSION;
+        char *pszProviderString = (char *) 
+            OLE2A(rgPropSets[0].rgProperties[0].vValue.bstrVal);
+
+        CPLDebug( "OLEDB", "ProviderString[%s]", pszProviderString );
+
+        papszResult = CSLTokenizeStringComplex( pszProviderString, 
+                                                ";", TRUE, FALSE );
+    }
+		
+    if (rgPropSets)
+    {
+        int i;
+        for (i=0; i < (int) nPropSets; i++)
+        {
+            CoTaskMemFree(rgPropSets[i].rgProperties);
+        }
+        CoTaskMemFree(rgPropSets);
+    }
+    pIDBProp->Release();	
+
+    return papszResult;
+}
+
+/************************************************************************/
+/*                           SFGetLayerWKT()                            */
+/*                                                                      */
+/*      Fetch the WKT coordinate system associated with a layer,        */
+/*      after passing through the appropriate SRS_PROFILE for the       */
+/*      provider instance.  The returned string should be freed by      */
+/*      the caller.  The passed in IUnknown reference is released       */
+/*      internally.                                                     */
+/************************************************************************/
+
+char *SFGetLayerWKT( OGRLayer *poLayer, IUnknown *pIUnknown )
+
+{
+    char      **papszOptions;
+    char      *pszWKT = NULL;
+    OGRSpatialReference *poSRS;
+    const char  *pszSrsProfile;
+
+    if( poLayer->GetSpatialRef() == NULL )
+    {
+        pIUnknown->Release();
+        return NULL;
+    }
+
+    papszOptions = SFGetProviderOptions(pIUnknown);
+
+    poSRS = poLayer->GetSpatialRef()->Clone();
+
+    pszSrsProfile = CSLFetchNameValue( papszOptions, "SRS_PROFILE" );
+    if( pszSrsProfile != NULL && EQUAL(pszSrsProfile,"ESRI") )
+    {
+        poSRS->morphToESRI();
+    }
+    else if( pszSrsProfile != NULL
+             && EQUAL(pszSrsProfile,"SF1") )
+    {
+        poSRS->StripCTParms();
+    }
+    
+    poSRS->exportToWkt( &pszWKT );
+    OSRDestroySpatialReference( poSRS );
+
+    CSLDestroy( papszOptions );
+
+    return pszWKT;
+}
+
 /************************************************************************/
 /*                            OGRComDebug()                             */
 /************************************************************************/
