@@ -28,6 +28,9 @@
  * ****************************************************************************
  *
  * $Log$
+ * Revision 1.12  2002/12/03 03:40:11  warmerda
+ * Avoid initialization warning.
+ *
  * Revision 1.11  2002/11/24 04:26:42  warmerda
  * Use AddComplexSource() for scaling, rid of Create() altogether.
  *
@@ -585,7 +588,7 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
 /*      Do we need to collect scaling information?                      */
 /* -------------------------------------------------------------------- */
-        double dfScale, dfOffset;
+        double dfScale=1.0, dfOffset=0.0;
 
         if( bScale && !bHaveScaleSrc )
         {
