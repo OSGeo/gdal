@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2004/07/11 19:23:51  warmerda
+ * read implementation working well
+ *
  * Revision 1.1  2004/07/09 06:25:05  warmerda
  * New
  *
@@ -71,6 +74,8 @@ class OGRSQLiteLayer : public OGRLayer
     CPLErr              BuildFeatureDefn( const char *pszLayerName, 
                                           sqlite3_stmt *hStmt );
 
+    virtual void	ClearStatement() = 0;
+
   public:
                         OGRSQLiteLayer();
     virtual             ~OGRSQLiteLayer();
@@ -100,7 +105,7 @@ class OGRSQLiteTableLayer : public OGRSQLiteLayer
 
     char                *pszQuery;
 
-    void		ClearStatement();
+    virtual void	ClearStatement();
     OGRErr              ResetStatement();
 
   public:
@@ -141,23 +146,15 @@ class OGRSQLiteTableLayer : public OGRSQLiteLayer
 #endif
 };
 
-#ifdef notdef
 /************************************************************************/
 /*                         OGRSQLiteSelectLayer                         */
 /************************************************************************/
 
 class OGRSQLiteSelectLayer : public OGRSQLiteLayer
 {
-    char                *pszBaseStatement;
-
-    void		ClearStatement();
-    OGRErr              ResetStatement();
-
-    virtual CPLSQLiteStatement *  GetStatement();
-
   public:
                         OGRSQLiteSelectLayer( OGRSQLiteDataSource *, 
-                                           CPLSQLiteStatement * );
+                                              sqlite3_stmt * );
                         ~OGRSQLiteSelectLayer();
 
     virtual void        ResetReading();
@@ -172,8 +169,9 @@ class OGRSQLiteSelectLayer : public OGRSQLiteLayer
     virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce = TRUE);
 
     virtual int         TestCapability( const char * );
+
+    virtual void	ClearStatement();
 };
-#endif
 
 /************************************************************************/
 /*                         OGRSQLiteDataSource                          */

@@ -28,24 +28,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2004/07/11 19:23:51  warmerda
+ * read implementation working well
+ *
  * Revision 1.1  2004/07/09 06:25:04  warmerda
  * New
- *
- * Revision 1.5  2004/01/05 22:38:17  warmerda
- * stripped out some junk
- *
- * Revision 1.4  2004/01/05 22:23:40  warmerda
- * added ExecuteSQL implementation via OGRSQLiteSelectLayer
- *
- * Revision 1.3  2003/11/10 20:08:50  warmerda
- * support explicit tables list, or GetTables() fallback
- *
- * Revision 1.2  2003/10/06 19:18:30  warmerda
- * Added userid/password support
- *
- * Revision 1.1  2003/09/25 17:08:37  warmerda
- * New
- *
  */
 
 #include "ogr_sqlite.h"
@@ -151,6 +138,7 @@ int OGRSQLiteDataSource::Open( const char * pszNewName, int bUpdate,
     int nRowCount, iRow, nColCount;
     char *pszErrMsg;
 
+#ifdef notdef
     rc = sqlite3_get_table( 
         hDB,
         "SELECT f_table_name, f_geometry_column, geometry_type"
@@ -167,9 +155,12 @@ int OGRSQLiteDataSource::Open( const char * pszNewName, int bUpdate,
         }
 
         sqlite3_free_table(papszResult);
+
+        return TRUE;
     }
     else
         sqlite3_free( pszErrMsg );
+#endif
 
 /* -------------------------------------------------------------------- */
 /*      Otherwise our final resort is to return all tables and views    */
@@ -270,41 +261,48 @@ OGRLayer * OGRSQLiteDataSource::ExecuteSQL( const char *pszSQLCommand,
                                           const char *pszDialect )
 
 {
-    return NULL;
-#ifdef notdef
-    CPLSQLiteStatement *poStmt = new CPLSQLiteStatement( &oSession );
+    if( pszDialect != NULL && EQUAL(pszDialect,"OGRSQL") )
+        return OGRDataSource::ExecuteSQL( pszSQLCommand, 
+                                          poSpatialFilter, 
+                                          pszDialect );
 
-    poStmt->Append( pszSQLCommand );
-    if( !poStmt->ExecuteSQL() )
+/* -------------------------------------------------------------------- */
+/*      Prepare statement.                                              */
+/* -------------------------------------------------------------------- */
+    int rc;
+    sqlite3_stmt *hSQLStmt = NULL;
+
+    rc = sqlite3_prepare( GetDB(), pszSQLCommand, strlen(pszSQLCommand),
+                          &hSQLStmt, NULL );
+
+    if( rc != SQLITE_OK )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "%s", oSession.GetLastError() );
+        sqlite3_finalize( hSQLStmt );
+
         return NULL;
     }
 
 /* -------------------------------------------------------------------- */
-/*      Are there result columns for this statement?                    */
+/*      Do we get a resultset?                                          */
 /* -------------------------------------------------------------------- */
-    if( poStmt->GetColCount() == 0 )
+    rc = sqlite3_step( hSQLStmt );
+    if( rc != SQLITE_ROW )
     {
-        delete poStmt;
-        CPLErrorReset();
+        sqlite3_finalize( hSQLStmt );
         return NULL;
     }
-
+    
 /* -------------------------------------------------------------------- */
-/*      Create a results layer.  It will take ownership of the          */
-/*      statement.                                                      */
+/*      Create layer.                                                   */
 /* -------------------------------------------------------------------- */
     OGRSQLiteSelectLayer *poLayer = NULL;
         
-    poLayer = new OGRSQLiteSelectLayer( this, poStmt );
+    poLayer = new OGRSQLiteSelectLayer( this, hSQLStmt );
 
     if( poSpatialFilter != NULL )
         poLayer->SetSpatialFilter( poSpatialFilter );
     
     return poLayer;
-#endif
 }
 
 /************************************************************************/
