@@ -29,6 +29,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2004/04/07 13:15:57  warmerda
+ * Ensure that GDALSetCacheMax() keeps flushing till the new limit is
+ * honoured. http://bugzilla.remotesensing.org/show_bug.cgi?id=542
+ *
  * Revision 1.15  2004/04/06 19:16:16  dron
  * Remove GDALRasterBlock::IsCached() method in favor
  * of GDALRasterBand::IsBlockCached().
@@ -107,8 +111,20 @@ void GDALSetCacheMax( int nNewSize )
 
 {
     nCacheMax = nNewSize;
-    if( nCacheUsed > nCacheMax )
+
+/* -------------------------------------------------------------------- */
+/*      Flush blocks till we are under the new limit or till we         */
+/*      can't seem to flush anymore.                                    */
+/* -------------------------------------------------------------------- */
+    while( nCacheUsed > nCacheMax )
+    {
+        int nOldCacheUsed = nCacheUsed;
+
         GDALFlushCacheBlock();
+
+        if( nCacheUsed == nOldCacheUsed )
+            break;
+    }
 }
 
 /************************************************************************/
