@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2003/10/08 07:59:39  dron
+ * More datums and ellipsoids added.
+ *
  * Revision 1.3  2003/09/11 19:47:48  warmerda
  * it seems Visual C++ doesnt like having a const int field in PCIDatums
  *
@@ -53,6 +56,10 @@ typedef struct
 
 static PCIDatums aoDatums[] =
 {
+    { "D-01", 4267 },   // NAD27 (USA, NADCON)
+    { "D-03", 4267 },   // NAD27 (Canada, NTv1)
+    { "D-02", 4269 },   // NAD83 (USA, NADCON)
+    { "D-04", 4269 },   // NAD83 (Canada, NTv1)
     { "D000", 6326 },   // WGS 1984
     { "D001", 6322 },   // WGS 1972
     { NULL, 0 }
@@ -80,12 +87,12 @@ static PCIDatums aoEllips[] =
     // FIXME: Mercury, 1960 --- skipped
     // FIXME: Modified Mercury, 1968 --- skipped
     // FIXME: Sphere, rad 6370997 m (normal sphere) --- skipped
-    // FIXME: Bessel, 1841 (Japan by Law) --- skipped
+    { "E333", 7046 },    // Bessel 1841 (Japan By Law)
     // FIXME: D-PAF (Orbits) --- skipped
     { "E900", 7006 },   // Bessel, 1841 (Namibia)
-    // FIXME: Everest, 1956 --- skipped
+    { "E901", 7044 },   // Everest, 1956
     // Everest, 1969 --- skipped
-    // Everest (Sabah & Sarawak) --- skipped
+    { "E903", 7016 },   // Everest (Sabah & Sarawak)
     { "E904", 7020 },   // Helmert, 1906
     // FIXME: SGS 85 --- skipped
     // FIXME: WGS 60 --- skipped
@@ -316,6 +323,10 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
     if( pszProj == NULL || strlen( pszProj ) < 16 )
         return OGRERR_CORRUPT_DATA;
 
+#ifdef DEBUG
+    CPLDebug( "OSR_PCI", "Trying to import projection \"%s\"", pszProj );
+#endif
+
 /* -------------------------------------------------------------------- */
 /*      Use safe defaults if projection parameters are not supplied.    */
 /* -------------------------------------------------------------------- */
@@ -486,7 +497,7 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
 
     else
     {
-        CPLDebug( "OGR_ESRI", "Unsupported projection: %s", pszProj );
+        CPLDebug( "OSR_PCI", "Unsupported projection: %s", pszProj );
         SetLocalCS( pszProj );
     }
 
@@ -503,7 +514,9 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
         {
             if( EQUALN( pszProj + 12, paoDatum->pszPCIDatum, 4 ) )
             {
-                importFromEPSG( paoDatum->nEPSGCode );
+                OGRSpatialReference oGCS;
+                oGCS.importFromEPSG( paoDatum->nEPSGCode );
+                CopyGeogCSFrom( &oGCS );
                 break;
             }
             paoDatum++;
@@ -512,6 +525,12 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
         if ( !paoDatum->pszPCIDatum )  // No matching; search for ellipsoids
         {
             paoDatum = aoEllips;
+
+#ifdef DEBUG
+            CPLDebug( "OSR_PCI",
+                      "Cannot found matching datum definition, "
+                      "search for ellipsoids." );
+#endif
 
             while ( paoDatum->pszPCIDatum )
             {
@@ -544,6 +563,11 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
 
         if ( !paoDatum->pszPCIDatum )      // Didn't found matches
         {
+#ifdef DEBUG
+            CPLDebug( "OSR_PCI",
+                      "Cannot found matching ellipsoid definition." );
+#endif
+
             if( EQUALN( pszProj + 12, "E999", 4 ) )
             {
                 double      dfInvFlattening;
@@ -569,6 +593,10 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
                 // If we don't know, default to WGS84
                 // so there is something there.
                 SetWellKnownGeogCS( "WGS84" );
+#ifdef DEBUG
+                CPLDebug( "OSR_PCI", "Setting WGS84 as a fallback." );
+#endif
+
             }
         }
     }
@@ -678,7 +706,13 @@ OGRErr OGRSpatialReference::exportToPCI( char **ppszProj, char **ppszUnits,
     }
 
     else if( pszProjection == NULL )
+    {
+#ifdef DEBUG
+        CPLDebug( "OSR_PCI",
+                  "Empty projection definition, considered as LONG/LAT" );
+#endif
         CPLPrintStringFill( szProj, "LONG/LAT", 16 );
+    }
 
     else if( EQUAL(pszProjection, SRS_PT_ALBERS_CONIC_EQUAL_AREA) )
     {
@@ -879,20 +913,25 @@ OGRErr OGRSpatialReference::exportToPCI( char **ppszProj, char **ppszUnits,
 
     // Projection unsupported by PCI
     else
+    {
+        CPLDebug( "OSR_PCI",
+                  "Projection \"%s\" unsupported by PCI. "
+                  "PIXEL value will be used.", pszProjection );
         CPLPrintStringFill( szProj, "PIXEL", 16 );
+    }
     
 /* -------------------------------------------------------------------- */
 /*      Translate the datum.                                            */
 /* -------------------------------------------------------------------- */
     const char  *pszDatum = GetAttrValue( "DATUM" );
 
-    /*if( EQUAL( pszDatum, SRS_DN_NAD27 ) )
-        CPLPrintStringFill( szProj + 12, "D000", 4 );
+    if( EQUAL( pszDatum, SRS_DN_NAD27 ) )
+        CPLPrintStringFill( szProj + 12, "D-01", 4 );
 
     else if( EQUAL( pszDatum, SRS_DN_NAD83 ) )
-        CPLPrintStringFill( szProj + 12, "D000", 4 );
+        CPLPrintStringFill( szProj + 12, "D-02", 4 );
 
-    else*/ if( EQUAL( pszDatum, SRS_DN_WGS84 ) )
+    else if( EQUAL( pszDatum, SRS_DN_WGS84 ) )
         CPLPrintStringFill( szProj + 12, "D000", 4 );
 
     // If not found well known datum, translate ellipsoid
@@ -902,6 +941,12 @@ OGRErr OGRSpatialReference::exportToPCI( char **ppszProj, char **ppszUnits,
         double      dfInvFlattening = GetInvFlattening();
 
         PCIDatums   *paoDatum = aoEllips;
+
+#ifdef DEBUG
+        CPLDebug( "OSR_PCI",
+                  "Datum \"%s\" unsupported by PCI. "
+                  "Try to translate ellipsoid definition.", pszDatum );
+#endif
         
         while ( paoDatum->pszPCIDatum )
         {
@@ -921,6 +966,11 @@ OGRErr OGRSpatialReference::exportToPCI( char **ppszProj, char **ppszUnits,
 
         if ( !paoDatum->pszPCIDatum )       // Didn't found matches; set
         {                                   // custom ellipsoid parameters
+#ifdef DEBUG
+            CPLDebug( "OSR_PCI",
+                      "Ellipsoid \"%s\" unsupported by PCI. "
+                      "Custom PCI ellipsoid will be used.", pszDatum );
+#endif
             CPLPrintStringFill( szProj + 12, "E999", 4 );
             (*ppadfPrjParams)[0] = dfSemiMajor;
             if ( ABS( dfInvFlattening ) < 0.000000000001 )
