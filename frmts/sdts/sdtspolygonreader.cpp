@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  1999/08/10 02:52:13  warmerda
+ * introduce use of SDTSApplyModIdList to capture multi-attributes
+ *
  * Revision 1.2  1999/07/30 19:15:56  warmerda
  * added module reference counting
  *
@@ -87,11 +90,8 @@ int SDTSRawPolygon::Read( DDFRecord * poRecord )
 
         else if( EQUAL(pszFieldName,"ATID") )
         {
-            if( nAttributes < MAX_RAWPOLYGON_ATID )
-            {
-                aoATID[nAttributes].Set( poField );
-                nAttributes++;
-            }
+            SDTSApplyModIdList( poField, MAX_RAWPOLYGON_ATID,
+                                &nAttributes, aoATID );
         }
     }
 

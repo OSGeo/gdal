@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  1999/08/10 02:52:13  warmerda
+ * introduce use of SDTSApplyModIdList to capture multi-attributes
+ *
  * Revision 1.4  1999/07/30 19:15:56  warmerda
  * added module reference counting
  *
@@ -44,6 +47,47 @@
 
 #include "sdts_al.h"
 #include "cpl_string.h"
+
+/************************************************************************/
+/*                         SDTSApplyModIdList()                         */
+/*                                                                      */
+/*      Apply one or more module id's stored in a DDFField to a         */
+/*      SDTSModId list.  This is currently used for ATID on the         */
+/*      various feature types.                                          */
+/************************************************************************/
+
+void SDTSApplyModIdList( DDFField * poField, int nMaxAttributes,
+                         int * pnAttributes, SDTSModId *paoATID )
+
+{
+    int		nRepeatCount = poField->GetRepeatCount();
+    DDFSubfieldDefn *poMODN;
+
+    poMODN = poField->GetFieldDefn()->FindSubfieldDefn( "MODN" );
+    if( poMODN == NULL )
+    {
+        CPLAssert( FALSE );
+        return;
+    }
+
+    for( int iRepeat = 0; iRepeat < nRepeatCount; iRepeat++ )
+    {
+        if( *pnAttributes < nMaxAttributes )
+        {
+            const char * pabyData;
+            SDTSModId *poModId = paoATID + *pnAttributes;
+
+            pabyData = poField->GetSubfieldData( poMODN, NULL, iRepeat );
+            
+            memcpy( poModId->szModule, pabyData, 4 );
+            poModId->szModule[4] = '\0';
+            poModId->nRecord = atoi(pabyData + 4);
+
+            (*pnAttributes)++;
+        }
+    }
+}
+
 
 /************************************************************************/
 /*                           SDTSModId::Set()                           */

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  1999/08/10 02:52:13  warmerda
+ * introduce use of SDTSApplyModIdList to capture multi-attributes
+ *
  * Revision 1.8  1999/07/30 19:15:56  warmerda
  * added module reference counting
  *
@@ -61,11 +64,14 @@
 #include "iso8211.h"
 
 class SDTS_IREF;
+class SDTSModId;
 
 #define SDTS_SIZEOF_SADR	8
 
 int SDTSGetSADR( SDTS_IREF *, DDFField *, int, double *, double *, double * );
 char **SDTSScanModuleReferences( DDFModule *, const char * );
+void SDTSApplyModIdList( DDFField * poField, int nMaxAttributes,
+                         int * pnAttributes, SDTSModId *paoATID );
 
 /************************************************************************/
 /*                              SDTS_IREF                               */
