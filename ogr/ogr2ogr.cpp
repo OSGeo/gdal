@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.22  2003/01/22 18:13:35  warmerda
+ * use indirect (in DLL) feature creation and destruction
+ *
  * Revision 1.21  2003/01/17 20:42:48  warmerda
  * added -preserve_fid and -fid commandline options
  *
@@ -726,7 +729,7 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
         }
 
         CPLErrorReset();
-        poDstFeature = new OGRFeature( poDstLayer->GetLayerDefn() );
+        poDstFeature = OGRFeature::CreateFeature( poDstLayer->GetLayerDefn() );
 
         if( poDstFeature->SetFrom( poFeature, TRUE ) != OGRERR_NONE )
         {
@@ -773,7 +776,7 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
                     poDstFeature->StealGeometry() ) );
         }
                     
-        delete poFeature;
+        OGRFeature::DestroyFeature( poFeature );
 
         CPLErrorReset();
         if( poDstLayer->CreateFeature( poDstFeature ) != OGRERR_NONE 
@@ -782,11 +785,11 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
             if( nGroupTransactions )
                 poDstLayer->RollbackTransaction();
 
-            delete poDstFeature;
+            OGRFeature::DestroyFeature( poDstFeature );
             return FALSE;
         }
 
-        delete poDstFeature;
+        OGRFeature::DestroyFeature( poDstFeature );
     }
 
     if( nGroupTransactions )
