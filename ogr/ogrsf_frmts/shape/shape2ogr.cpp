@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2001/09/04 15:39:07  warmerda
+ * tightened up NULL attribute handling
+ *
  * Revision 1.11  2001/07/18 04:55:16  warmerda
  * added CPL_CSVID
  *
@@ -542,6 +545,10 @@ OGRFeature *SHPReadOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
 
     for( int iField = 0; iField < poDefn->GetFieldCount(); iField++ )
     {
+        // Skip null fields.
+        if( DBFIsAttributeNULL( hDBF, iShape, iField ) )
+            continue;
+
         switch( poDefn->GetFieldDefn(iField)->GetType() )
         {
           case OFTString:
@@ -618,6 +625,12 @@ OGRErr SHPWriteOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
 /* -------------------------------------------------------------------- */
     for( int iField = 0; iField < poDefn->GetFieldCount(); iField++ )
     {
+        if( !poFeature->IsFieldSet( iField ) )
+        {
+            DBFWriteNULLAttribute( hDBF, poFeature->GetFID(), iField );
+            continue;
+        }
+
         switch( poDefn->GetFieldDefn(iField)->GetType() )
         {
           case OFTString:
