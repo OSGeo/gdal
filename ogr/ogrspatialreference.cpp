@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.44  2002/01/18 15:30:41  warmerda
+ * ensure all AXIS nodes wiped in StripCTParms
+ *
  * Revision 1.43  2002/01/18 04:51:05  warmerda
  * added PROJ.4 support to SetFromUserInput()
  *
@@ -2520,8 +2523,9 @@ OGRErr OGRSpatialReference::StripCTParms( OGR_SRSNode * poCurrent )
         return OGRERR_NONE;
 
     poCurrent->DestroyChild( poCurrent->FindChild( "AUTHORITY" ) );
-    poCurrent->DestroyChild( poCurrent->FindChild( "AXIS" ) );
     poCurrent->DestroyChild( poCurrent->FindChild( "TOWGS84" ) );
+    while( poCurrent->FindChild( "AXIS" ) >= 0 )
+        poCurrent->DestroyChild( poCurrent->FindChild( "AXIS" ) );
     
     for( int iChild = 0; iChild < poCurrent->GetChildCount(); iChild++ )
         StripCTParms( poCurrent->GetChild( iChild ) );
