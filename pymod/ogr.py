@@ -28,6 +28,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.38  2005/01/22 18:52:16  hobu
+# passing _obj instead of obj in GetSpatialFilter in the Geometry constructor at the end of the function.
+#
 # Revision 1.37  2005/01/22 18:30:58  hobu
 # typo in Layer::GetSpatialFilter
 #
@@ -443,7 +446,7 @@ class Layer:
         if geom_o is None or geom_o == 'NULL':
             return None
         else:
-            return Geometry( _obj = geom_o, thisown = 0 )
+            return Geometry( obj = geom_o, thisown = 0 )
 
     def SetAttributeFilter( self, where_clause = None ):
         filter = gdal.ToNULLableString( where_clause )
