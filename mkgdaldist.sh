@@ -34,8 +34,8 @@ mv gdal gdal-${GDAL_VERSION}
 
 rm -f ../gdal-${GDAL_VERSION}.tar.gz ../gdal${COMPRESSED_VERSION}.zip
 
-tar cf ../gdal-${GDAL_VERSION}.tar.gz gdal-${GDAL_VERSION}
-gzip -9 ../gdal-${GDAL_VERSION}.tar.gz
+tar cf ../gdal-${GDAL_VERSION}.tar gdal-${GDAL_VERSION}
+gzip -9 ../gdal-${GDAL_VERSION}.tar
 zip -r ../gdal${COMPRESSED_VERSION}.zip gdal-${GDAL_VERSION}
 
 cd ..
