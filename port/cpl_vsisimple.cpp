@@ -30,6 +30,9 @@
  *    instance validation of access strings to fopen().
  * 
  * $Log$
+ * Revision 1.17  2003/09/10 19:44:36  warmerda
+ * added VSIStrerrno()
+ *
  * Revision 1.16  2003/09/08 08:11:40  dron
  * Added VSIGMTime() and VSILocalTime().
  *
@@ -466,3 +469,12 @@ struct tm *VSILocalTime( const time_t *pnTime, struct tm *poBrokenTime )
     return poBrokenTime;
 }
 
+/************************************************************************/
+/*                            VSIStrerror()                             */
+/************************************************************************/
+
+char *VSIStrerror( int nErrno )
+
+{
+    return strerror( nErrno );
+}
