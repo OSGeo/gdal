@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2003/05/02 16:00:17  dron
+ * Implemented RawRasterBand::IRasterIO() method. Introduced `dirty' flag.
+ *
  * Revision 1.16  2003/03/18 05:59:41  warmerda
  * Added FlushCache() implementation that uses fflush() to force
  * everything out.
@@ -105,6 +108,8 @@ RawRasterBand::RawRasterBand( GDALDataset *poDS, int nBand,
     this->nLineOffset = nLineOffset;
     this->bNativeOrder = bNativeOrder;
 
+    this->bDirty = FALSE;
+
     CPLDebug( "GDALRaw", 
               "RawRasterBand(%p,%d,%p,\n"
               "              Off=%d,PixOff=%d,LineOff=%d,%s,%d)\n",
@@ -148,7 +153,9 @@ RawRasterBand::RawRasterBand( FILE * fpRaw, vsi_l_offset nImgOffset,
     this->nPixelOffset = nPixelOffset;
     this->nLineOffset = nLineOffset;
     this->bNativeOrder = bNativeOrder;
-    
+
+    this->bDirty = FALSE;
+
     CPLDebug( "GDALRaw", 
               "RawRasterBand(floating,Off=%d,PixOff=%d,LineOff=%d,%s,%d)\n",
               (unsigned int) nImgOffset, nPixelOffset, nLineOffset, 
@@ -201,10 +208,16 @@ CPLErr RawRasterBand::FlushCache()
     if( eErr != CE_None )
         return eErr;
 
-    if( bIsVSIL )
-        VSIFFlushL( fpRaw );
-    else
-        VSIFFlush( fpRaw );
+    // If we have unflushed raw, flush it to disk now.
+    if ( bDirty )
+    {
+        if( bIsVSIL )
+            VSIFFlushL( fpRaw );
+        else
+            VSIFFlush( fpRaw );
+
+        bDirty = FALSE;
+    }
 
     return CE_None;
 }
@@ -259,7 +272,7 @@ CPLErr RawRasterBand::AccessLine( int iLine )
 /* -------------------------------------------------------------------- */
 /*      Byte swap the interesting data, if required.                    */
 /* -------------------------------------------------------------------- */
-    if( !bNativeOrder  && eDataType != GDT_Byte )
+    if( !bNativeOrder && eDataType != GDT_Byte )
     {
         if( GDALDataTypeIsComplex( eDataType ) )
         {
@@ -390,7 +403,394 @@ CPLErr RawRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
                        nBlockXSize, nPixelOffset );
     }
 
+    bDirty = TRUE;
     return eErr;
+}
+
+/************************************************************************/
+/*                             AccessBlock()                            */
+/************************************************************************/
+
+CPLErr RawRasterBand::AccessBlock( vsi_l_offset nBlockOff, int nBlockSize,
+                                   void * pData )
+{
+    int         nBytesActuallyRead;
+
+/* -------------------------------------------------------------------- */
+/*      Seek to the right block.                                        */
+/* -------------------------------------------------------------------- */
+    if( Seek( nBlockOff, SEEK_SET ) == -1 )
+    {
+        memset( pData, 0, nBlockSize );
+        return CE_None;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Read the block.                                                 */
+/* -------------------------------------------------------------------- */
+    nBytesActuallyRead = Read( pData, 1, nBlockSize );
+    if( nBytesActuallyRead < nBlockSize )
+    {
+
+        memset( ((GByte *) pData) + nBytesActuallyRead, 
+                0, nBlockSize - nBytesActuallyRead );
+        return CE_None;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Byte swap the interesting data, if required.                    */
+/* -------------------------------------------------------------------- */
+    if( !bNativeOrder && eDataType != GDT_Byte )
+    {
+        if( GDALDataTypeIsComplex( eDataType ) )
+        {
+            int nWordSize;
+
+            nWordSize = GDALGetDataTypeSize(eDataType)/16;
+            GDALSwapWords( pData, nWordSize, nBlockSize / nPixelOffset,
+                           nPixelOffset );
+            GDALSwapWords( ((GByte *) pData) + nWordSize, 
+                           nWordSize, nBlockSize / nPixelOffset, nPixelOffset );
+        }
+        else
+            GDALSwapWords( pData, GDALGetDataTypeSize(eDataType) / 8,
+                           nBlockSize / nPixelOffset, nPixelOffset );
+    }
+
+    return CE_None;
+}
+
+/************************************************************************/
+/*                             IRasterIO()                              */
+/************************************************************************/
+
+CPLErr RawRasterBand::IRasterIO( GDALRWFlag eRWFlag,
+                                 int nXOff, int nYOff, int nXSize, int nYSize,
+                                 void * pData, int nBufXSize, int nBufYSize,
+                                 GDALDataType eBufType,
+                                 int nPixelSpace, int nLineSpace )
+
+{
+    int         nBandDataSize = GDALGetDataTypeSize(eDataType) / 8;
+    int         nBufDataSize = GDALGetDataTypeSize( eBufType ) / 8;
+
+#ifdef DEBUG
+    CPLDebug( "RawRaster", 
+              "IRasterIO(nXOff=%d, nYOff=%d, nXSize=%d, nYSize=%d -> "
+              "nBufXSize=%d, nBufYSize=%d, nPixelSpace=%d, nLineSpace=%d)", 
+              nXOff, nYOff, nXSize, nYSize,
+              nBufXSize, nBufYSize, nPixelSpace, nLineSpace );
+#endif
+
+/* ==================================================================== */
+/*   Read data.                                                         */
+/* ==================================================================== */
+    if ( eRWFlag == GF_Read )
+    {
+/* ==================================================================== */
+/*   1. Simplest case when we should get contiguous block               */
+/*   of uninterleaved pixels.                                           */
+/* ==================================================================== */
+        if ( nXSize == GetXSize() 
+             && nXSize == nBufXSize
+             && nYSize == nBufYSize
+             && eBufType == eDataType
+             && nPixelOffset == nBandDataSize
+             && nPixelSpace == nBufDataSize
+             && nLineSpace == nPixelSpace * nXSize )
+        {
+            if ( AccessBlock( nImgOffset
+                              + (vsi_l_offset)nYOff * nLineOffset + nXOff,
+                              nXSize * nYSize * nBandDataSize, pData ) != CE_None )
+            {
+                CPLError( CE_Failure, CPLE_FileIO,
+                          "Failed to read %d bytes at %d.",
+                          nXSize * nYSize * nBandDataSize,
+                          nImgOffset
+                          + (vsi_l_offset)nYOff * nLineOffset + nXOff );
+            }
+        }
+
+/* ==================================================================== */
+/*   2. Case when we need deinterleave and/or subsample data.           */
+/* ==================================================================== */
+        else
+        {
+            GByte   *pabyData;
+            double  dfSrcXInc, dfSrcYInc;
+            int     iLine, nBytesToRead;
+            
+            dfSrcXInc = (double)nXSize / nBufXSize;
+            dfSrcYInc = (double)nYSize / nBufYSize;
+
+            nBytesToRead = nPixelOffset * nXSize;
+
+            pabyData = (GByte *) CPLMalloc( nBytesToRead );
+
+            iLine = 0;
+            while ( iLine < nYSize )
+            {
+                if ( AccessBlock( nImgOffset
+                                  + ((vsi_l_offset)nYOff + iLine) * nLineOffset
+                                  + nXOff * nPixelOffset,
+                                  nBytesToRead, pabyData ) != CE_None )
+                {
+                    CPLError( CE_Failure, CPLE_FileIO,
+                              "Failed to read %d bytes at %d.",
+                              nBytesToRead,
+                              nImgOffset
+                              + ((vsi_l_offset)nYOff + iLine) * nLineOffset
+                              + nXOff * nPixelOffset );
+                }
+
+/* -------------------------------------------------------------------- */
+/*      Copy data from disk buffer to user block buffer and subsample,  */
+/*      if needed.                                                      */
+/* -------------------------------------------------------------------- */
+                if ( nXSize == nBufXSize && nYSize == nBufYSize )
+                {
+                    GDALCopyWords( pabyData, eDataType, nPixelOffset,
+                                   (GByte *)pData + iLine * nLineSpace,
+                                   eBufType, nPixelSpace, nXSize );
+                    iLine++;
+                }
+                else
+                {
+                    int     iPixel;
+
+                    for ( iPixel = 0; iPixel < nBufXSize; iPixel++ )
+                    {
+                        GDALCopyWords( pabyData+
+                                       (iLine*nXSize+(int)(iPixel*dfSrcXInc))*nPixelOffset,
+                                       eDataType, 0,
+                                       (GByte *)pData+iLine*nLineSpace
+                                        +(iLine*nBufXSize+iPixel)*nBufDataSize,
+                                       eBufType, nPixelSpace, 1 );
+                    }
+
+                    iLine = (int)((double)iLine + dfSrcYInc);
+                }
+            }
+
+            CPLFree( pabyData );
+        }
+    }
+
+/* ==================================================================== */
+/*   Write data.                                                        */
+/* ==================================================================== */
+    else
+    {
+        int nBytesToWrite, nBytesActuallyWritten;
+
+/* ==================================================================== */
+/*   1. Simplest case when we should write contiguous block             */
+/*   of uninterleaved pixels.                                           */
+/* ==================================================================== */
+        if ( nXSize == GetXSize() 
+             && nXSize == nBufXSize
+             && nYSize == nBufYSize
+             && eBufType == eDataType
+             && nPixelOffset == nBandDataSize
+             && nPixelSpace == nBufDataSize
+             && nLineSpace == nPixelSpace * nXSize )
+        {
+/* -------------------------------------------------------------------- */
+/*      Byte swap the data buffer, if required.                         */
+/* -------------------------------------------------------------------- */
+            if( !bNativeOrder && eDataType != GDT_Byte )
+            {
+                if( GDALDataTypeIsComplex( eDataType ) )
+                {
+                    int nWordSize;
+
+                    nWordSize = GDALGetDataTypeSize(eDataType)/16;
+                    GDALSwapWords( pData, nWordSize, nXSize, nPixelOffset );
+                    GDALSwapWords( ((GByte *) pData) + nWordSize, 
+                                   nWordSize, nXSize, nPixelOffset );
+                }
+                else
+                    GDALSwapWords( pData, nBandDataSize, nXSize, nPixelOffset );
+            }
+
+/* -------------------------------------------------------------------- */
+/*      Seek to the right block.                                        */
+/* -------------------------------------------------------------------- */
+            if( Seek( nImgOffset + (vsi_l_offset)nYOff * nLineOffset + nXOff,
+                      SEEK_SET) == -1 )
+            {
+                CPLError( CE_Failure, CPLE_FileIO,
+                          "Failed to seek to %d to write data.\n",
+                          nImgOffset + (vsi_l_offset)nYOff * nLineOffset + nXOff );
+        
+                return CE_Failure;
+            }
+
+/* -------------------------------------------------------------------- */
+/*      Write the block.                                                */
+/* -------------------------------------------------------------------- */
+            nBytesToWrite = nXSize * nYSize * nBandDataSize;
+
+            nBytesActuallyWritten = Write( pData, 1, nBytesToWrite );
+            if( nBytesActuallyWritten < nBytesToWrite )
+            {
+                CPLError( CE_Failure, CPLE_FileIO,
+                          "Failed to write %d bytes to file. %d bytes written",
+                          nBytesToWrite, nBytesActuallyWritten );
+        
+                return CE_Failure;
+            }
+
+/* -------------------------------------------------------------------- */
+/*      Byte swap (if necessary) back into machine order so the         */
+/*      buffer is still usable for reading purposes.                    */
+/* -------------------------------------------------------------------- */
+            if( !bNativeOrder  && eDataType != GDT_Byte )
+            {
+                if( GDALDataTypeIsComplex( eDataType ) )
+                {
+                    int nWordSize;
+
+                    nWordSize = GDALGetDataTypeSize(eDataType)/16;
+                    GDALSwapWords( pData, nWordSize, nXSize, nPixelOffset );
+                    GDALSwapWords( ((GByte *) pData) + nWordSize, 
+                                   nWordSize, nXSize, nPixelOffset );
+                }
+                else
+                    GDALSwapWords( pData, nBandDataSize, nXSize, nPixelOffset );
+            }
+        }
+
+/* ==================================================================== */
+/*   2. Case when we need deinterleave and/or subsample data.           */
+/* ==================================================================== */
+        else
+        {
+            GByte   *pabyData;
+            double  dfSrcXInc, dfSrcYInc;
+            vsi_l_offset nBlockOff;
+            int     iLine;
+            
+            dfSrcXInc = (double)nXSize / nBufXSize;
+            dfSrcYInc = (double)nYSize / nBufYSize;
+
+            nBytesToWrite = nPixelOffset * nXSize;
+
+            pabyData = (GByte *) CPLMalloc( nBytesToWrite );
+
+            iLine = 0;
+            while ( iLine < nYSize )
+            {
+                nBlockOff = nImgOffset
+                    + ((vsi_l_offset)nYOff + iLine) * nLineOffset
+                    + nXOff * nPixelOffset;
+
+/* -------------------------------------------------------------------- */
+/*      If the data for this band is completely contiguous we don't     */
+/*      have to worry about pre-reading from disk.                      */
+/* -------------------------------------------------------------------- */
+                if( nPixelOffset > nBandDataSize )
+                    AccessBlock( nBlockOff, nBytesToWrite, pabyData );
+
+/* -------------------------------------------------------------------- */
+/*      Copy data from user block buffer to disk buffer and subsample,  */
+/*      if needed.                                                      */
+/* -------------------------------------------------------------------- */
+                if ( nXSize == nBufXSize && nYSize == nBufYSize )
+                {
+                    GDALCopyWords( (GByte *)pData + iLine * nLineSpace,
+                                   eBufType, nPixelSpace,
+                                   pabyData, eDataType, nPixelOffset, nXSize );
+                    iLine++;
+                }
+                else
+                {
+                    int     iPixel;
+
+                    for ( iPixel = 0; iPixel < nBufXSize; iPixel++ )
+                    {
+                        GDALCopyWords( (GByte *)pData+iLine*nLineSpace
+                                        +(iLine*nBufXSize+iPixel)*nBufDataSize,
+                                       eBufType, nPixelSpace,
+                                       pabyData+
+                                       (iLine*nXSize+(int)(iPixel*dfSrcXInc))*nPixelOffset,
+                                       eDataType, 0, 1 );
+                    }
+
+                    iLine = (int)((double)iLine + dfSrcYInc);
+                }
+
+/* -------------------------------------------------------------------- */
+/*      Byte swap the data buffer, if required.                         */
+/* -------------------------------------------------------------------- */
+                if( !bNativeOrder && eDataType != GDT_Byte )
+                {
+                    if( GDALDataTypeIsComplex( eDataType ) )
+                    {
+                        int nWordSize;
+
+                        nWordSize = GDALGetDataTypeSize(eDataType)/16;
+                        GDALSwapWords( pabyData, nWordSize, nXSize, nPixelOffset );
+                        GDALSwapWords( ((GByte *) pabyData) + nWordSize, 
+                                       nWordSize, nXSize, nPixelOffset );
+                    }
+                    else
+                        GDALSwapWords( pabyData, nBandDataSize, nXSize,
+                                       nPixelOffset );
+                }
+
+/* -------------------------------------------------------------------- */
+/*      Seek to the right line in block.                                */
+/* -------------------------------------------------------------------- */
+                if( Seek( nBlockOff, SEEK_SET) == -1 )
+                {
+                    CPLError( CE_Failure, CPLE_FileIO,
+                              "Failed to seek to %d to read.\n", nBlockOff );
+
+                    return CE_Failure;
+                }
+
+/* -------------------------------------------------------------------- */
+/*      Write the line of block.                                        */
+/* -------------------------------------------------------------------- */
+                nBytesActuallyWritten = Write( pabyData, 1, nBytesToWrite );
+                if( nBytesActuallyWritten < nBytesToWrite )
+                {
+                    CPLError( CE_Failure, CPLE_FileIO,
+                              "Failed to write %d bytes to file. %d bytes written",
+                              nBytesToWrite, nBytesActuallyWritten );
+            
+                    return CE_Failure;
+                }
+
+/* -------------------------------------------------------------------- */
+/*      Byte swap (if necessary) back into machine order so the         */
+/*      buffer is still usable for reading purposes.                    */
+/* -------------------------------------------------------------------- */
+                if( !bNativeOrder && eDataType != GDT_Byte )
+                {
+                    if( GDALDataTypeIsComplex( eDataType ) )
+                    {
+                        int nWordSize;
+
+                        nWordSize = GDALGetDataTypeSize(eDataType)/16;
+                        GDALSwapWords( pabyData, nWordSize, nXSize, nPixelOffset );
+                        GDALSwapWords( ((GByte *) pabyData) + nWordSize, 
+                                       nWordSize, nXSize, nPixelOffset );
+                    }
+                    else
+                        GDALSwapWords( pabyData, nBandDataSize, nXSize,
+                                       nPixelOffset );
+                }
+
+            }
+
+            bDirty = TRUE;
+            CPLFree( pabyData );
+        }
+    }
+
+    return CE_None;
 }
 
 /************************************************************************/
