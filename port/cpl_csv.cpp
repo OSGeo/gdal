@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2003/05/21 03:04:14  warmerda
+ * fixed bFinderInitialized
+ *
  * Revision 1.7  2003/05/20 19:13:31  warmerda
  * reorganize default file search rules, use GDAL_DATA and CPLGetConfigOptions
  *
@@ -894,7 +897,7 @@ const char * CSVFilename( const char *pszBasename )
     {
         FILE    *fp = NULL;
         const char *pszResult;
-        static bFinderInitialized = FALSE;
+        static int bFinderInitialized = FALSE;
 
         pszResult = CPLFindFile( "epsg_csv", pszBasename );
 
