@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.32  2003/01/28 16:54:49  warmerda
+ * indicate required include file
+ *
  * Revision 1.31  2003/01/28 16:07:31  warmerda
  * improved documentation
  *
@@ -130,7 +133,7 @@ static GDALDataset **papoGDALDatasetList = NULL;
 /************************************************************************/
 
 /**
- * \class GDALDataset 
+ * \class GDALDataset "gdal_priv.h"
  *
  * A dataset encapsulating one or more raster bands.  Details are
  * further discussed in the <a href="gdal_datamodel.html#GDALDataset">GDAL
