@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2003/05/29 19:50:57  warmerda
+ * added TRE in image, and RPC00B support
+ *
  * Revision 1.7  2002/12/18 20:16:04  warmerda
  * support writing IGEOLO
  *
@@ -108,6 +111,9 @@ NITFFile CPL_DLL *NITFCreate( const char *pszFilename,
                               int nBitsPerSample, const char *pszPVType,
                               char **papszOptions );
 
+const char CPL_DLL *NITFFindTRE( const char *pszTREData, int nTREBytes, 
+                                 const char *pszTag, int *pnFoundTRESize );
+
 /* -------------------------------------------------------------------- */
 /*      Image level access.                                             */
 /* -------------------------------------------------------------------- */
@@ -161,6 +167,9 @@ typedef struct {
 
     int        bNoDataSet;
     int        nNoDataValue;
+
+    int     nTREBytes;
+    char    *pachTRE;
 
     /* Internal information not for application use. */
     
@@ -236,6 +245,37 @@ typedef enum {
     LID_ColorTableIndexSectionSubheader = 152,
     LID_ColorTableIndexRecord = 153
 } NITFLocId;
+
+/* -------------------------------------------------------------------- */
+/*      RPC structure, and function to fill it.                         */
+/* -------------------------------------------------------------------- */
+typedef struct  {
+    int		SUCCESS;
+
+    double	ERR_BIAS;
+    double      ERR_RAND;
+
+    double      LINE_OFF;
+    double      SAMP_OFF;
+    double      LAT_OFF;
+    double      LONG_OFF;
+    double      HEIGHT_OFF;
+
+    double      LINE_SCALE;
+    double      SAMP_SCALE;
+    double      LAT_SCALE;
+    double      LONG_SCALE;
+    double      HEIGHT_SCALE;
+
+    double      LINE_NUM_COEFF[20];
+    double      LINE_DEN_COEFF[20];
+    double      SAMP_NUM_COEFF[20];
+    double      SAMP_DEN_COEFF[20];
+} NITFRPC00BInfo;
+
+int CPL_DLL NITFReadRPC00B( NITFImage *psImage, NITFRPC00BInfo * );
+int CPL_DLL NITFRPCGeoToImage(NITFRPC00BInfo *, double, double, double,
+                              double *, double *);
 
 CPL_C_END
 

@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2003/05/29 19:50:57  warmerda
+ * added TRE in image, and RPC00B support
+ *
  * Revision 1.13  2003/05/05 17:57:54  warmerda
  * added blocked writing support
  *
@@ -331,6 +334,43 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
     {
         psImage->nCols = psImage->nBlocksPerRow * psImage->nBlockWidth;
         psImage->nRows = psImage->nBlocksPerColumn * psImage->nBlockHeight;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Skip some unused fields.                                        */
+/* -------------------------------------------------------------------- */
+    else
+    {
+        int nUserTREBytes;
+
+        nOffset += 3;                   /* IDLVL */
+        nOffset += 3;                   /* IALVL */
+        nOffset += 10;                  /* ILOC */
+        nOffset += 4;                   /* IMAG */
+        
+/* -------------------------------------------------------------------- */
+/*      Are there user TRE bytes to skip?                               */
+/* -------------------------------------------------------------------- */
+        nUserTREBytes = atoi(NITFGetField( szTemp, pachHeader, nOffset, 5 ));
+        nOffset += 5;
+
+        if( nUserTREBytes > 0 )
+            nOffset += nUserTREBytes;
+
+/* -------------------------------------------------------------------- */
+/*      Are there managed TRE bytes to recognise?                       */
+/* -------------------------------------------------------------------- */
+        psImage->nTREBytes = atoi(NITFGetField(szTemp,pachHeader,nOffset,5));
+        nOffset += 5;
+
+        if( psImage->nTREBytes != 0 )
+        {
+            nOffset += 3;
+            psImage->pachTRE = pachHeader + nOffset;
+            psImage->nTREBytes -= 3;
+
+            nOffset += psImage->nTREBytes;
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -1221,3 +1261,143 @@ static void NITFSwapWords( void *pData, int nWordSize, int nWordCount,
     }
 }
 
+/************************************************************************/
+/*                           NITFReadRPC00B()                           */
+/*                                                                      */
+/*      Read an RPC00B structure if the TRE is available.               */
+/************************************************************************/
+
+int NITFReadRPC00B( NITFImage *psImage, NITFRPC00BInfo *psRPC )
+
+{
+    const char *pachTRE;
+    char szTemp[100];
+    int  i;
+
+    psRPC->SUCCESS = 0;
+
+/* -------------------------------------------------------------------- */
+/*      Do we have the TRE?                                             */
+/* -------------------------------------------------------------------- */
+    pachTRE = NITFFindTRE( psImage->pachTRE, psImage->nTREBytes, 
+                           "RPC00B", NULL );
+
+    if( pachTRE == NULL )
+        return FALSE;
+
+/* -------------------------------------------------------------------- */
+/*      Parse out field values.                                         */
+/* -------------------------------------------------------------------- */
+    psRPC->SUCCESS = atoi(NITFGetField(szTemp, pachTRE, 0, 1 ));
+
+    psRPC->ERR_BIAS = atof(NITFGetField(szTemp, pachTRE, 1, 7 ));
+    psRPC->ERR_RAND = atof(NITFGetField(szTemp, pachTRE, 8, 7 ));
+
+    psRPC->LINE_OFF = atof(NITFGetField(szTemp, pachTRE, 15, 6 ));
+    psRPC->SAMP_OFF = atof(NITFGetField(szTemp, pachTRE, 21, 5 ));
+    psRPC->LAT_OFF = atof(NITFGetField(szTemp, pachTRE, 26, 8 ));
+    psRPC->LONG_OFF = atof(NITFGetField(szTemp, pachTRE, 34, 9 ));
+    psRPC->HEIGHT_OFF = atof(NITFGetField(szTemp, pachTRE, 43, 5 ));
+
+    psRPC->LINE_SCALE = atof(NITFGetField(szTemp, pachTRE, 48, 6 ));
+    psRPC->SAMP_SCALE = atof(NITFGetField(szTemp, pachTRE, 54, 5 ));
+    psRPC->LAT_SCALE = atof(NITFGetField(szTemp, pachTRE, 59, 8 ));
+    psRPC->LONG_SCALE = atof(NITFGetField(szTemp, pachTRE, 67, 9 ));
+    psRPC->HEIGHT_SCALE = atof(NITFGetField(szTemp, pachTRE, 76, 5 ));
+
+/* -------------------------------------------------------------------- */
+/*      Parse out coefficients.                                         */
+/* -------------------------------------------------------------------- */
+    for( i = 0; i < 20; i++ )
+    {
+        psRPC->LINE_NUM_COEFF[i] = 
+            atof(NITFGetField(szTemp, pachTRE, 81+i*12, 12));
+        psRPC->LINE_DEN_COEFF[i] = 
+            atof(NITFGetField(szTemp, pachTRE, 321+i*12, 12));
+        psRPC->SAMP_NUM_COEFF[i] = 
+            atof(NITFGetField(szTemp, pachTRE, 561+i*12, 12));
+        psRPC->SAMP_DEN_COEFF[i] = 
+            atof(NITFGetField(szTemp, pachTRE, 801+i*12, 12));
+    }
+
+    return TRUE;
+}
+
+/************************************************************************/
+/*                         NITFRPCGeoToImage()                          */
+/************************************************************************/
+
+int NITFRPCGeoToImage( NITFRPC00BInfo *psRPC, 
+                       double dfLong, double dfLat, double dfHeight, 
+                       double *pdfPixel, double *pdfLine )
+
+{
+    double dfLineNumerator, dfLineDenominator, 
+        dfPixelNumerator, dfPixelDenominator;
+    double dfPolyTerm[20];
+    int i;
+
+/* -------------------------------------------------------------------- */
+/*      Normalize Lat/Long position.                                    */
+/* -------------------------------------------------------------------- */
+    dfLong = (dfLong - psRPC->LONG_OFF) / psRPC->LONG_SCALE;
+    dfLat  = (dfLat - psRPC->LAT_OFF) / psRPC->LAT_SCALE;
+    dfHeight = (dfHeight - psRPC->HEIGHT_OFF) / psRPC->HEIGHT_SCALE;
+
+/* -------------------------------------------------------------------- */
+/*      Compute the 20 terms.                                           */
+/* -------------------------------------------------------------------- */
+
+    dfPolyTerm[0] = 1.0;
+    dfPolyTerm[1] = dfLong;
+    dfPolyTerm[2] = dfLat;
+    dfPolyTerm[3] = dfHeight;
+    dfPolyTerm[4] = dfLong * dfLat;
+    dfPolyTerm[5] = dfLong * dfHeight;
+    dfPolyTerm[6] = dfLat * dfHeight;
+    dfPolyTerm[7] = dfLong * dfLong;
+    dfPolyTerm[8] = dfLat * dfLat;
+    dfPolyTerm[9] = dfHeight * dfHeight;
+
+    dfPolyTerm[10] = dfLong * dfLat * dfHeight;
+    dfPolyTerm[11] = dfLong * dfLong * dfLong;
+    dfPolyTerm[12] = dfLong * dfLat * dfLat;
+    dfPolyTerm[13] = dfLong * dfHeight * dfHeight;
+    dfPolyTerm[14] = dfLong * dfLong * dfLat;
+    dfPolyTerm[15] = dfLat * dfLat * dfLat;
+    dfPolyTerm[16] = dfLat * dfHeight * dfHeight;
+    dfPolyTerm[17] = dfLong * dfLong * dfHeight;
+    dfPolyTerm[18] = dfLat * dfLat * dfHeight;
+    dfPolyTerm[19] = dfHeight * dfHeight * dfHeight;
+    
+
+/* -------------------------------------------------------------------- */
+/*      Compute numerator and denominator sums.                         */
+/* -------------------------------------------------------------------- */
+    dfPixelNumerator = 0.0;
+    dfPixelDenominator = 0.0;
+    dfLineNumerator = 0.0;
+    dfLineDenominator = 0.0;
+
+    for( i = 0; i < 20; i++ )
+    {
+        dfPixelNumerator += psRPC->SAMP_NUM_COEFF[i] * dfPolyTerm[i];
+        dfPixelDenominator += psRPC->SAMP_DEN_COEFF[i] * dfPolyTerm[i];
+        dfLineNumerator += psRPC->LINE_NUM_COEFF[i] * dfPolyTerm[i];
+        dfLineDenominator += psRPC->LINE_DEN_COEFF[i] * dfPolyTerm[i];
+    }
+        
+/* -------------------------------------------------------------------- */
+/*      Compute normalized pixel and line values.                       */
+/* -------------------------------------------------------------------- */
+    *pdfPixel = dfPixelNumerator / dfPixelDenominator;
+    *pdfLine = dfLineNumerator / dfLineDenominator;
+
+/* -------------------------------------------------------------------- */
+/*      Denormalize.                                                    */
+/* -------------------------------------------------------------------- */
+    *pdfPixel = *pdfPixel * psRPC->SAMP_SCALE + psRPC->SAMP_OFF;
+    *pdfLine  = *pdfLine  * psRPC->LINE_SCALE + psRPC->LINE_OFF;
+
+    return TRUE;
+}
