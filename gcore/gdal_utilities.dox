@@ -587,7 +587,9 @@ gdaltindex doq_index.shp doq/*.tif
 \if man
 \section wauthor AUTHOR
 Frank Warmerdam <warmerdam@pobox.com>
+*/
 
+/*! \page gdal_contour
 builds vector contour lines from a raster elevation model
 \section isynopsis SYNOPSIS
 \endif
@@ -711,6 +713,8 @@ with Python support.
 \if man
 \section iauthor AUTHOR
 Frank Warmerdam <warmerdam@pobox.com>
+*/
+/*! \page pct2rgb.py
 
 converts an image into a pseudo-colored image
 \section rsynopsis SYNOPSIS
