@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.22  2001/12/11 20:37:49  warmerda
+ * add option to avoid caching indexed records on multiple readers
+ *
  * Revision 1.21  2001/08/28 20:50:03  warmerda
  * expand tabs
  *
@@ -170,6 +173,9 @@ NTFFileReader::NTFFileReader( OGRNTFDataSource * poDataSource )
     panColumnOffset = NULL;
     poRasterLayer = NULL;
     nRasterXSize = nRasterYSize = nRasterDataType = 1;
+
+    bIndexBuilt = FALSE;
+    bIndexNeeded = FALSE;
 }
 
 /************************************************************************/
@@ -1575,6 +1581,19 @@ int NTFFileReader::TestForLayer( OGRNTFLayer * poLayer )
 }
 
 /************************************************************************/
+/*                            FreshenIndex()                            */
+/*                                                                      */
+/*      Rebuild the index if it is needed, and currently missing.       */
+/************************************************************************/
+
+void NTFFileReader::FreshenIndex()
+
+{
+    if( !bIndexBuilt && bIndexNeeded )
+        IndexFile();
+}
+
+/************************************************************************/
 /*                             IndexFile()                              */
 /*                                                                      */
 /*      Read all records beyond the section header and build an         */
@@ -1589,6 +1608,9 @@ void NTFFileReader::IndexFile()
     Reset();
 
     DestroyIndex();
+
+    bIndexNeeded = TRUE;
+    bIndexBuilt = TRUE;
 
 /* -------------------------------------------------------------------- */
 /*      Process all records after the section header, and before 99     */
@@ -1644,6 +1666,8 @@ void NTFFileReader::DestroyIndex()
         apapoRecordIndex[i] = NULL;
         anIndexSize[i] = 0;
     }
+
+    bIndexBuilt = FALSE;
 }
 
 /************************************************************************/
@@ -1700,6 +1724,7 @@ NTFRecord **NTFFileReader::GetNextIndexedRecordGroup( NTFRecord **
     {
         nPrevType = NRT_POINTREC;
         nPrevId = 0;
+        FreshenIndex();
     }
     else
     {

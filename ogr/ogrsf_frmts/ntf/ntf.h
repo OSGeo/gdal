@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2001/12/11 20:37:49  warmerda
+ * add option to avoid caching indexed records on multiple readers
+ *
  * Revision 1.17  2001/08/28 20:41:14  warmerda
  * added support for type 5 GTYPE values on GEOMETRY record
  *
@@ -316,6 +319,8 @@ class NTFFileReader
 
     int               anIndexSize[100];
     NTFRecord         **apapoRecordIndex[100];
+    int		      bIndexBuilt;
+    int               bIndexNeeded;
 
     void              EstablishRasterAccess();
     int               nRasterXSize;
@@ -384,6 +389,7 @@ class NTFFileReader
 
     // Generic file index
     void              IndexFile();
+    void              FreshenIndex();
     void              DestroyIndex();
     NTFRecord        *GetIndexedRecord( int, int );
     NTFRecord       **GetNextIndexedRecordGroup( NTFRecord ** );

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2001/12/11 20:37:49  warmerda
+ * add option to avoid caching indexed records on multiple readers
+ *
  * Revision 1.14  2001/08/28 20:50:03  warmerda
  * expand tabs
  *
@@ -318,6 +321,10 @@ void OGRNTFDataSource::WorkupGeneric( NTFFileReader * poReader )
             }
         }
     }
+
+    if( GetOption("CACHING") != NULL
+        && EQUAL(GetOption("CACHING"),"OFF") )
+        poReader->DestroyIndex();
 
     poReader->Reset();
 }

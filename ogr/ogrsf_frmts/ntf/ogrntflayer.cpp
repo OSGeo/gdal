@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2001/12/11 20:37:49  warmerda
+ * add option to avoid caching indexed records on multiple readers
+ *
  * Revision 1.8  2001/07/18 04:55:16  warmerda
  * added CPL_CSVID
  *
@@ -191,6 +194,11 @@ OGRFeature *OGRNTFLayer::GetNextFeature()
     if( poFeature == NULL )
     {
         poCurrentReader->Close();
+
+        if( poDS->GetOption("CACHING") != NULL
+            && EQUAL(poDS->GetOption("CACHING"),"OFF") )
+            poCurrentReader->DestroyIndex();
+
         do { 
             iCurrentReader++;
         } while( iCurrentReader < poDS->GetFileCount()
