@@ -30,6 +30,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2000/01/12 19:41:04  warmerda
+ * Ensure lat/long projections handled properly, especially for OGC
+ * definitions.
+ *
  * Revision 1.6  2000/01/10 17:36:56  warmerda
  * Avoid errors when looking for the libproj.so.
  *
@@ -226,12 +230,13 @@ CPLErr GDALProjDef::ToLongLat( double * padfX, double * padfY )
     
     CPLAssert( padfX != NULL && padfY != NULL );
     
+    if( strstr(pszProjection,"+proj=longlat") != NULL
+        || strstr(pszProjection,"+proj=latlong") != NULL
+        || EQUALN(pszProjection,"GEOGCS",6) )
+        return CE_None;
+
     if( psPJ == NULL )
         return CE_Failure;
-
-    if( strstr(pszProjection,"+proj=longlat") != NULL
-        || strstr(pszProjection,"+proj=latlong") != NULL )
-        return CE_None;
 
     uv.u = *padfX;
     uv.v = *padfY;
@@ -266,12 +271,13 @@ CPLErr GDALProjDef::FromLongLat( double * padfX, double * padfY )
     
     CPLAssert( padfX != NULL && padfY != NULL );
     
+    if( strstr(pszProjection,"+proj=longlat") != NULL
+        || strstr(pszProjection,"+proj=latlong") != NULL 
+        || EQUALN(pszProjection,"GEOGCS",6) )
+        return CE_None;
+
     if( psPJ == NULL )
         return CE_Failure;
-
-    if( strstr(pszProjection,"+proj=longlat") != NULL
-        || strstr(pszProjection,"+proj=latlong") != NULL )
-        return CE_None;
 
     uv.u = *padfX * DEG_TO_RAD;
     uv.v = *padfY * DEG_TO_RAD;
