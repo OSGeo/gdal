@@ -28,6 +28,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.6  2002/01/22 18:54:48  warmerda
+ * ensure text is property initialized when serializing
+ *
  * Revision 1.5  2002/01/16 03:58:51  warmerda
  * support single quotes as well as double quotes
  *
@@ -648,6 +651,7 @@ char *CPLSerializeXMLTree( CPLXMLNode *psNode )
     char *pszText = NULL;
 
     pszText = (char *) CPLMalloc(nMaxLength);
+    pszText[0] = '\0';
 
     CPLSerializeXMLNode( psNode, 0, &pszText, &nLength, &nMaxLength );
 
