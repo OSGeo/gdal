@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2002/12/04 03:12:57  warmerda
+ * Fixed some bugs in last change.
+ *
  * Revision 1.8  2002/12/03 15:21:19  warmerda
  * finished up window computations for odd cases
  *
@@ -372,7 +375,7 @@ VRTSimpleSource::GetSrcDstWindow( int nXOff, int nYOff, int nXSize, int nYSize,
     if( *pnOutXOff + *pnOutXSize > nBufXSize )
         *pnOutXSize = nBufXSize - *pnOutXOff;
     if( *pnOutYOff + *pnOutYSize > nBufYSize )
-        *pnOutXSize = nBufXSize - *pnOutXOff;
+        *pnOutYSize = nBufYSize - *pnOutYOff;
 
     if( *pnOutXSize < 1 || *pnOutYSize < 1 )
         return FALSE;
