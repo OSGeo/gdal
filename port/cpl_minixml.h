@@ -28,6 +28,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.6  2002/11/16 20:38:34  warmerda
+ * added support for literals like DOCTYPE
+ *
  * Revision 1.5  2002/05/24 04:09:10  warmerda
  * added clone and SetXMLValue functions
  *
@@ -57,7 +60,8 @@ typedef enum
     CXT_Element = 0,
     CXT_Text = 1,
     CXT_Attribute = 2,
-    CXT_Comment = 3
+    CXT_Comment = 3,
+    CXT_Literal = 4
 } CPLXMLNodeType;
 
 typedef struct _CPLXMLNode
