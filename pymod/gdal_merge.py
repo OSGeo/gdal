@@ -26,6 +26,9 @@
 ###############################################################################
 # 
 #  $Log$
+#  Revision 1.11  2004/03/26 17:11:42  warmerda
+#  added -init
+#
 #  Revision 1.10  2003/04/22 14:42:45  warmerda
 #  Don't import Numeric unless we need it.
 #
@@ -257,7 +260,7 @@ class file_info:
 def Usage():
     print 'Usage: gdal_merge.py [-o out_filename] [-f out_format] [-co NAME=VALUE]*'
     print '                     [-ps pixelsize_x pixelsize_y] [-separate] [-v] [-pct]'
-    print '                     [-ul_lr ulx uly lrx lry] [-n nodata_value]'
+    print '                     [-ul_lr ulx uly lrx lry] [-n nodata_value] [-init value]'
     print '                     input_files'
     print
 
@@ -278,6 +281,7 @@ if __name__ == '__main__':
     copy_pct = 0
     nodata = None
     create_options = []
+    pre_init = None
 
     # Parse command line arguments.
     i = 1
@@ -296,6 +300,10 @@ if __name__ == '__main__':
 
         elif arg == '-pct':
             copy_pct = 1
+
+        elif arg == '-init':
+            i = i + 1
+            pre_init = float(sys.argv[i])
 
         elif arg == '-n':
             i = i + 1
@@ -373,7 +381,6 @@ if __name__ == '__main__':
         if separate != 0:
             bands = len(file_infos)
         else:
-            # bands = 1
             bands = file_infos[0].bands
 
         t_fh = Driver.Create( out_file, xsize, ysize, bands,
@@ -387,6 +394,11 @@ if __name__ == '__main__':
             bands = len(file_infos)
         else:
             bands = min(file_infos[0].bands,t_fh.RasterCount)
+
+    # Do we need to pre-initialize the whole mosaic file to some value?
+    if pre_init is not None:
+        for i in range(t_fh.RasterCount):
+            t_fh.GetRasterBand(i+1).Fill( pre_init )
 
     # Copy data from source files into output file.
     t_band = 1
