@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  1999/10/12 19:02:41  warmerda
+ * The SADR for the raster represents the center of the top left pixel, not
+ * it's top left corner.
+ *
  * Revision 1.4  1999/09/21 17:25:04  warmerda
  * Read raster data type from DDSH
  *
@@ -220,6 +224,9 @@ int SDTSRasterReader::Open( SDTS_CATD * poCATD, SDTS_IREF * poIREF,
     adfTransform[2] = 0.0;
     adfTransform[4] = 0.0;
     adfTransform[5] = -1 * poIREF->dfYRes;
+
+    adfTransform[0] += adfTransform[1] * 0.5;
+    adfTransform[3] += adfTransform[5] * 0.5;
     
 /* -------------------------------------------------------------------- */
 /*      If the origin is the center of the pixel, then shift it back    */
