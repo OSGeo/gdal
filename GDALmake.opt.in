@@ -120,7 +120,7 @@ LIBS	+=	$(PG_LIB)
 #
 # HDF4 Support.
 #
-HDF4_INCLUDE  = @HDF4_INCLUDE@
+HDF4_INCLUDE  = @HDF4_INCLUDE@ -I$(GDAL_ROOT)/ogr
 
 #
 # DODS Include file location
