@@ -515,6 +515,31 @@ else
   PYTHON_CFLAGS=""
   PYTHON_LINK=""
 fi
+
+AC_MSG_CHECKING([for special pymod link hacks])
+if test ! -z "`uname | grep Darwin`" -a ${with_libtool} == no ; then
+    AC_MSG_RESULT(darwin-nonlibtool)
+
+    PY_LD_SHARED='g++ -bundle -framework Python'
+    PY_SO_EXT='so'
+elif test ! -z "`uname | grep Darwin`" -a ${with_libtool} == yes ; then
+    AC_MSG_RESULT(darwin-libtool)
+
+    PYTHON_LIBS='-framework Python $(LIBS)'
+    PY_LD_SHARED='$(LD_SHARED)'
+    PY_SO_EXT='$(SO_EXT)'
+else
+    AC_MSG_RESULT(default)
+
+    PY_LD_SHARED='$(LD_SHARED)'
+    PY_SO_EXT='$(SO_EXT)'
+fi
+
+export PY_LD_SHARED PY_SO_EXT
+
+AC_SUBST(PY_LD_SHARED)
+AC_SUBST(PY_SO_EXT)])
+
 AC_SUBST(PYTHON_CC)dnl
 AC_SUBST(PYTHON_OPT)dnl
 AC_SUBST(PYTHON_SO)dnl
