@@ -6,7 +6,8 @@ OBJ	=	ogrtigerdriver.obj ogrtigerdatasource.obj ogrtigerlayer.obj \
 		tigerpolychainlink.obj tigerpolygon.obj tigerpip.obj \
 		tigerentitynames.obj tigeridhistory.obj tigertlidrange.obj \
 		tigerzipplus4.obj tigerpolygoncorrections.obj \
-		tigerzerocellid.obj tigeroverunder.obj tigerpoint.obj
+		tigerzerocellid.obj tigeroverunder.obj tigerpoint.obj \
+		tigerpolygoneconomic.obj 
 
 EXTRAFLAGS =	-I.. -I..\..
 
