@@ -1,3 +1,9 @@
+2003-10-21	Silke Reimer	<silke@intevation.de>
+
+	* ogr/ogr_utilites.dox, gcore/gdal_utilities.dox: Changed to fit better
+	for creation of man pages
+	* man/*: Added man pages for gdal and ogr binaries.
+
 2003-09-09  Andrey Kiselev  <dron@remotesensing.org>
 	
 	* ogr/{ogr_srs_api.h, ogr_spatialref.h, ogr_srs_pci.cpp}: Implemented
