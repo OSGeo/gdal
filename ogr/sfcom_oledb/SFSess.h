@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2001/10/15 15:36:30  warmerda
+ * don't default to EPSG authority
+ *
  * Revision 1.13  2001/10/15 15:20:28  warmerda
  * allow nulling of SRS fields
  *
@@ -577,8 +580,8 @@ public CCRRowsetImpl<CSFSessionSchemaSpatRef,OGISSpat_Row,CSFSession>
 				
                     if (pszSpatRef)
                     {
-                        lstrcpyW(trData.m_szAuthorityName,A2OLE("EPSG"));
-                        trData.m_nAuthorityId = 1;
+                        lstrcpyW(trData.m_szAuthorityName,A2OLE(""));
+                        trData.m_nAuthorityId = 0;
                         trData.m_nSpatialRefId = iLayer+1;
                         lstrcpyW(trData.m_pszSpatialRefSystem,
                                  A2OLE(pszSpatRef));
