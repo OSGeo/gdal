@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2002/04/29 20:43:18  warmerda
+ * Ensure that ExecuteSQL() prepared layers are cleaned up
+ *
  * Revision 1.18  2002/04/29 20:31:57  warmerda
  * allow ExecuteSQL() to handle FID
  *
@@ -484,6 +487,7 @@ public CSFRowsetImpl< CSFRowset, CShapeFile, CSFCommand, OGRVirtualArray>
     char          *ProcessSpecialFields( const char *, int * );
 public:
 
+                  CSFRowset();
     virtual       ~CSFRowset();
 
     HRESULT Execute(DBPARAMS * pParams, LONG* pcRowsAffected);
