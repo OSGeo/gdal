@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2001/10/11 19:26:16  warmerda
+ * added applyRemapping
+ *
  * Revision 1.13  2001/07/18 05:03:05  warmerda
  * added CPL_CVSID
  *
@@ -740,3 +743,71 @@ void OGR_SRSNode::MakeValueSafe()
         pszValue[j+1] = '\0';
 }
 
+/************************************************************************/
+/*                           applyRemapper()                            */
+/************************************************************************/
+
+/**
+ * Remap node values matching list.
+ *
+ * Remap the value of this node or any of it's children if it matches
+ * one of the values in the source list to the corresponding value from
+ * the destination list.  If the pszNode value is set, only do so if the
+ * parent node matches that value.  Even if a replacement occurs, searching
+ * continues.
+ *
+ * @param pszNode Restrict remapping to children of this type of node 
+ *                (eg. "PROJECTION")
+ * @param papszSrcValues a NULL terminated array of source string.  If the
+ * node value matches one of these (case insensitive) then replacement occurs.
+ * @param papszDstValue an array of destination strings.  On a match, the
+ * one corresponding to a source value will be used to replace a node.
+ * @param nStepSize increment when stepping through source and destination
+ * arrays, allowing source and destination arrays to be one interleaved array
+ * for instances.  Defaults to 1.
+ * 
+ * @return returns OGRERR_NONE unless something bad happens.  There is no
+ * indication returned about whether any replacement occured.  
+ */
+
+OGRErr OGR_SRSNode::applyRemapper( const char *pszNode, 
+                                   char **papszSrcValues, 
+                                   char **papszDstValues, 
+                                   int nStepSize, int bChildOfHit )
+
+{
+    int	i;
+
+/* -------------------------------------------------------------------- */
+/*      Scan for value, and replace if our parent was a "hit".          */
+/* -------------------------------------------------------------------- */
+    if( bChildOfHit || pszNode == NULL )
+    {
+        for( i = 0; papszSrcValues[i] != NULL; i += nStepSize )
+        {
+            if( EQUAL(papszSrcValues[i],pszValue) )
+            {
+                SetValue( papszDstValues[i] );
+                break;
+            }
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Are the the target node?                                        */
+/* -------------------------------------------------------------------- */
+    if( pszNode != NULL )
+        bChildOfHit = EQUAL(pszValue,pszNode);
+
+/* -------------------------------------------------------------------- */
+/*      Recurse                                                         */
+/* -------------------------------------------------------------------- */
+    for( int i = 0; i < GetChildCount(); i++ )
+    {
+        GetChild(i)->applyRemapper( pszNode, papszSrcValues, 
+                                    papszDstValues, nStepSize, bChildOfHit );
+    }
+
+    return OGRERR_NONE;
+}
+                                   
