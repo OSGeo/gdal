@@ -8,6 +8,7 @@
 #define __xtiffio_h
 
 #include "tiffio.h"
+#include "geo_config.h"
 
 /**
  * \file xtiffio.h
