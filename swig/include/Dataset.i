@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.3  2005/02/15 20:50:49  kruland
+ * Added SetProjection.
+ *
  * Revision 1.2  2005/02/15 16:53:36  kruland
  * Removed use of vector<double> in the ?etGeoTransform() methods.  Use fixed
  * length double array type instead.
@@ -46,6 +49,10 @@ public:
 
   char const *GetProjection() {
     return GDALGetProjectionRef( self );
+  }
+
+  CPLErr SetProjection( char const *prj ) {
+    return GDALSetProjection( self, prj );
   }
 
   void GetGeoTransform( double_6 *c_transform ) {
