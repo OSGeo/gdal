@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2002/12/09 18:52:51  warmerda
+ * added DMS conversion
+ *
  * Revision 1.15  2002/03/05 14:26:57  warmerda
  * expanded tabs
  *
@@ -411,3 +414,139 @@ int CPLStat( const char *pszPath, VSIStatBuf *psStatBuf )
     else
         return VSIStat( pszPath, psStatBuf );
 }
+
+/************************************************************************/
+/*                            proj_strtod()                             */
+/************************************************************************/
+static double
+proj_strtod(char *nptr, char **endptr) 
+
+{
+    char c, *cp = nptr;
+    double result;
+
+    /*
+     * Scan for characters which cause problems with VC++ strtod()
+     */
+    while ((c = *cp) != '\0') {
+        if (c == 'd' || c == 'D') {
+
+            /*
+             * Found one, so NUL it out, call strtod(),
+             * then restore it and return
+             */
+            *cp = '\0';
+            result = strtod(nptr, endptr);
+            *cp = c;
+            return result;
+        }
+        ++cp;
+    }
+
+    /* no offending characters, just handle normally */
+
+    return strtod(nptr, endptr);
+}
+
+/************************************************************************/
+/*                            CPLDMSToDec()                             */
+/************************************************************************/
+
+static const char*sym = "NnEeSsWw";
+static const double vm[] = { 1.0, 0.0166666666667, 0.00027777778 };
+
+double CPLDMSToDec( const char *is )
+
+{
+    int sign, n, nl;
+    char *p, *s, work[64];
+    double v, tv;
+
+    /* copy sting into work space */
+    while (isspace(sign = *is)) ++is;
+    for (n = sizeof(work), s = work, p = (char *)is; isgraph(*p) && --n ; )
+        *s++ = *p++;
+    *s = '\0';
+    /* it is possible that a really odd input (like lots of leading
+       zeros) could be truncated in copying into work.  But ... */
+    sign = *(s = work);
+    if (sign == '+' || sign == '-') s++;
+    else sign = '+';
+    for (v = 0., nl = 0 ; nl < 3 ; nl = n + 1 ) {
+        if (!(isdigit(*s) || *s == '.')) break;
+        if ((tv = proj_strtod(s, &s)) == HUGE_VAL)
+            return tv;
+        switch (*s) {
+          case 'D': case 'd':
+            n = 0; break;
+          case '\'':
+            n = 1; break;
+          case '"':
+            n = 2; break;
+          case 'r': case 'R':
+            if (nl) {
+                return 0.0;
+            }
+            ++s;
+            v = tv;
+            goto skip;
+          default:
+            v += tv * vm[nl];
+          skip:	n = 4;
+            continue;
+        }
+        if (n < nl) {
+            return 0.0;
+        }
+        v += tv * vm[n];
+        ++s;
+    }
+    /* postfix sign */
+    if (*s && (p = strchr(sym, *s))) {
+        sign = (p - sym) >= 4 ? '-' : '+';
+        ++s;
+    }
+    if (sign == '-')
+        v = -v;
+
+    return v;
+}
+
+
+/************************************************************************/
+/*                            CPLDecToDMS()                             */
+/*                                                                      */
+/*      Translate a decimal degrees value to a DMS string with          */
+/*      hemisphere.                                                     */
+/************************************************************************/
+
+const char *CPLDecToDMS( double dfAngle, const char * pszAxis,
+                          int nPrecision )
+
+{
+    int         nDegrees, nMinutes;
+    double      dfSeconds;
+    char        szFormat[30];
+    static char szBuffer[50];
+    const char  *pszHemisphere;
+    
+
+    nDegrees = (int) ABS(dfAngle);
+    nMinutes = (int) ((ABS(dfAngle) - nDegrees) * 60);
+    dfSeconds = (ABS(dfAngle) * 3600 - nDegrees*3600 - nMinutes*60);
+
+    if( EQUAL(pszAxis,"Long") && dfAngle < 0.0 )
+        pszHemisphere = "W";
+    else if( EQUAL(pszAxis,"Long") )
+        pszHemisphere = "E";
+    else if( dfAngle < 0.0 )
+        pszHemisphere = "S";
+    else
+        pszHemisphere = "N";
+
+    sprintf( szFormat, "%%3dd%%2d\'%%.%df\"%s", nPrecision, pszHemisphere );
+    sprintf( szBuffer, szFormat, nDegrees, nMinutes, dfSeconds );
+
+    return( szBuffer );
+}
+

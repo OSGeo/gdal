@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2002/12/09 18:52:51  warmerda
+ * added DMS conversion
+ *
  * Revision 1.16  2002/12/03 04:42:02  warmerda
  * improved finder cleanup support
  *
@@ -132,6 +135,13 @@ void          CPL_DLL CPLFinderClean();
 /*      Safe version of stat() that works properly on stuff like "C:".  */
 /* -------------------------------------------------------------------- */
 int CPL_DLL     CPLStat( const char *, VSIStatBuf * );
+
+/* -------------------------------------------------------------------- */
+/*      DMS to Dec to DMS conversion.                                   */
+/* -------------------------------------------------------------------- */
+double CPL_DLL CPLDMSToDec( const char *is );
+const char CPL_DLL *CPLDecToDMS( double dfAngle, const char * pszAxis,
+                                 int nPrecision );
 
 CPL_C_END
 
