@@ -28,6 +28,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2003/03/11 16:34:49  gwalter
+ * Test header before opening dataset to avoid "band names = {" being written
+ * (during FlushCache in dataset deletion) to non-envi format files that also have
+ * .hdr header files.
+ *
  * Revision 1.12  2003/03/05 12:52:19  dron
  * Added flag for large file creation.
  *
@@ -564,16 +569,6 @@ int ENVIDataset::ProcessMapinfo( const char *pszMapinfo )
 int ENVIDataset::ReadHeader( FILE * fpHdr )
 
 {
-    char	szTestHdr[4];
-    
-/* -------------------------------------------------------------------- */
-/*      Check that the first line says "ENVI".                          */
-/* -------------------------------------------------------------------- */
-    if( VSIFRead( szTestHdr, 4, 1, fpHdr ) != 1 )
-        return FALSE;
-
-    if( strncmp(szTestHdr,"ENVI",4) != 0 )
-        return FALSE;
 
     CPLReadLine( fpHdr );
 
@@ -703,6 +698,22 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
 
     if( fpHeader == NULL )
         return NULL;
+    
+/* -------------------------------------------------------------------- */
+/*      Check that the first line says "ENVI".                          */
+/* -------------------------------------------------------------------- */
+    char	szTestHdr[4];
+
+    if( VSIFRead( szTestHdr, 4, 1, fpHeader ) != 1 )
+    {
+        VSIFClose( fpHeader );
+        return NULL;
+    }
+    if( strncmp(szTestHdr,"ENVI",4) != 0 )
+    {
+        VSIFClose( fpHeader );
+        return NULL;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
