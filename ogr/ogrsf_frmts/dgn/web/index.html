@@ -10,8 +10,10 @@ I have implemented a Microstation DGN reading library on contract to
 <a href="http://www.avenza.com/">Avenza Systems Inc.</a>, makers of 
 MAPublisher.  The library will be OpenSource (under my usual X/MIT license), 
 portable and callable from C/C++.  While it has been incorporated into my 
-<a href="/projects/opengis/">OGR Simple Features</a> library, it is also
-be usable standalone with minimal overhead.<p>
+<a href="http://gdal.maptools.org/ogr">OGR Simple Features</a> library, it is 
+also be usable standalone with minimal overhead.  The dgnlib library, and this
+page of DGN related information are primarily hosted at 
+<a href="http://dgnlib.maptools.org/">http://dgnlib.maptools.org</a>.<p>
 
 <h2>DGNLib</h2>
 
@@ -21,7 +23,7 @@ DGNLib is a small C/C++ library for reading and writing DGN files.
 
 <li> <b>Where can I get the source code?</b><p>
 
-<a href="dgnlib-1.7.zip">dgnlib-1.7.zip</a>: Current standalone source
+<a href="dl/dgnlib-1.8.zip">dgnlib-1.8.zip</a>: Current standalone source
 with <i>dgndump</i> example mainline.<p>
 
 <li> <b>Does DGNLib support all DGN elements?</b><p>
@@ -55,7 +57,7 @@ after a pre-scan, but this isn't required.<P>
 No, but there is a <a href="representation.html">document</a> that tries to
 indicate how to properly draw DGN elements given the structures returned by
 DGNLib.  The OGR layer re-interprets the drawing information into 
-<a href="/projects/opengis/ogr_feature_style_008.html">OGR Feature Style</a>
+<a href="http://pobox.com/~warmerdam/projects/opengis/ogr_feature_style_008.html">OGR Feature Style</a>
 format which is understood by some applications such as 
 <a href="http://mapserver.gis.umn.edu/">UMN MapServer</a>.
 <p>
@@ -73,7 +75,7 @@ recent releases.<p>
 
 <li> <b>Is there documentation?</b><p>
 
-There is a detailed <a href="libhtml/dgnlib_h.html">DGN Library API Reference
+There is a detailed <a href="libhtml/dgnlib_8h.html">DGN Library API Reference
 </a> available.  There is currently no tutorial style information on how to
 use the library, but the dgndump.c utility can serve as a limited example.<p>
 
@@ -200,6 +202,15 @@ support.<p>
 <li> Jamie Cecchetto (<a href="http://www.centurysystems.net">Century 
 Systems</a>) for funding 3D write support. <p>
 
+<li> <a href="http://www.dmsolutions.ca/">DM Solutions Group</a> for 
+providing the <a href="http://maptools.org">maptools.org</a> site to 
+host this on, and for funding (also thanks to Tyler Mitchell of 
+<a href="http://www.libnum.com">Lignum</a>) integration into
+OGR.<p>
+
+<li> Marius Kintel (<a href="http://www.sim.no">Systems In Motion</a>) for
+adding support for reading 3D cone (23), 3D surface (18) and 3D solid (19) 
+elements.<p>
 </ul>
 
 </BODY>
