@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2003/07/27 11:16:06  dron
+ * Check NULL pointer in GetMetadata()/SetMetadata().
+ *
  * Revision 1.1  2003/07/17 20:27:18  warmerda
  * New
  *
@@ -66,7 +69,7 @@ VRTDriver::~VRTDriver()
 char **VRTDriver::GetMetadata( const char *pszDomain )
 
 {
-    if( EQUAL(pszDomain,"SourceParsers") )
+    if( pszDomain && EQUAL(pszDomain,"SourceParsers") )
         return papszSourceParsers;
     else
         return GDALDriver::GetMetadata( pszDomain );
@@ -79,7 +82,7 @@ char **VRTDriver::GetMetadata( const char *pszDomain )
 CPLErr VRTDriver::SetMetadata( char **papszMetadata, const char *pszDomain )
 
 {
-    if( EQUAL(pszDomain,"SourceParsers") )
+    if( pszDomain && EQUAL(pszDomain,"SourceParsers") )
     {
         CSLDestroy( papszSourceParsers );
         papszSourceParsers = CSLDuplicate( papszMetadata );
