@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2002/02/22 22:18:44  warmerda
+ * added support for commplex shapes
+ *
  * Revision 1.17  2002/02/20 22:27:35  warmerda
  * fixed problem with units on text height for very small values
  *
@@ -216,6 +219,40 @@ void OGRDGNLayer::ResetReading()
 }
 
 /************************************************************************/
+/*                           ConsiderBrush()                            */
+/*                                                                      */
+/*      Method to set the style for a polygon, including a brush if     */
+/*      appropriate.                                                    */
+/************************************************************************/
+
+void OGRDGNLayer::ConsiderBrush( DGNElemCore *psElement, const char *pszPen,
+                                 OGRFeature *poFeature )
+
+{
+    int		gv_red, gv_green, gv_blue;
+    char		szFullStyle[256];
+    int                 nFillColor;
+
+    if( DGNGetShapeFillInfo( hDGN, psElement, &nFillColor ) 
+        && DGNLookupColor( hDGN, nFillColor, 
+                           &gv_red, &gv_green, &gv_blue ) )
+    {
+        sprintf( szFullStyle, 
+                 "BRUSH(fc:#%02x%02x%02x,id:\"ogr-brush-0\")",
+                 gv_red, gv_green, gv_blue );
+              
+        if( nFillColor != psElement->color )
+        {
+            strcat( szFullStyle, ";" );
+            strcat( szFullStyle, pszPen );
+        }
+        poFeature->SetStyleString( szFullStyle );
+    }
+    else
+        poFeature->SetStyleString( pszPen );
+}
+
+/************************************************************************/
 /*                          ElementToFeature()                          */
 /************************************************************************/
 
@@ -288,8 +325,6 @@ OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement )
             OGRLinearRing	*poLine = new OGRLinearRing();
             OGRPolygon          *poPolygon = new OGRPolygon();
             DGNElemMultiPoint *psEMP = (DGNElemMultiPoint *) psElement;
-            char		szFullStyle[256];
-            int                 nFillColor;
             
             poLine->setNumPoints( psEMP->num_vertices );
             for( int i = 0; i < psEMP->num_vertices; i++ )
@@ -304,27 +339,7 @@ OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement )
 
             poFeature->SetGeometryDirectly( poPolygon );
 
-            if( DGNGetShapeFillInfo( hDGN, psElement, &nFillColor ) 
-                && DGNLookupColor( hDGN, nFillColor, 
-                                   &gv_red, &gv_green, &gv_blue ) )
-            {
-                sprintf( szFullStyle, 
-                         "BRUSH(fc:#%02x%02x%02x,id:\"ogr-brush-0\")",
-                         gv_red, gv_green, gv_blue );
-
-                if( nFillColor != psElement->color )
-                {
-                    strcat( szFullStyle, ";" );
-                    strcat( szFullStyle, szPen );
-                }
-                poFeature->SetStyleString( szFullStyle );
-
-                OGRStyleMgr oSMgr;
-                if( !oSMgr.InitStyleString( szFullStyle ) )
-                    CPLAssert( FALSE );
-            }
-            else
-                poFeature->SetStyleString( szPen );
+            ConsiderBrush( psElement, szPen, poFeature );
         }
         else if( psElement->type == DGNT_CURVE )
         {
@@ -443,6 +458,52 @@ OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement )
       }
       break;
 
+      case DGNST_COMPLEX_HEADER:
+      {
+          DGNElemComplexHeader *psHdr = (DGNElemComplexHeader *) psElement;
+          int           iChild;
+          OGRGeometryCollection oChildren;
+
+          /* collect subsequent child geometries. */
+          // we should disable the spatial filter ... add later.
+          for( iChild = 0; iChild < psHdr->numelems; iChild++ )
+          {
+              OGRFeature *poChildFeature = NULL;
+              DGNElemCore *psChildElement;
+
+              psChildElement = DGNReadElement( hDGN );
+              // should verify complex bit set, not another header.
+
+              if( psChildElement != NULL )
+                  poChildFeature = ElementToFeature( psChildElement );
+
+              if( poChildFeature != NULL
+                  && poChildFeature->GetGeometryRef() != NULL )
+              {
+                  OGRGeometry *poGeom;
+
+                  poGeom = poChildFeature->GetGeometryRef();
+                  if( wkbFlatten(poGeom->getGeometryType()) == wkbLineString )
+                      oChildren.addGeometry( poGeom );
+              }
+
+              if( poChildFeature != NULL )
+                  delete poChildFeature;
+          }
+
+          // Try to assemble into polygon geometry.
+          OGRGeometry *poGeom;
+
+          poGeom = 
+              OGRBuildPolygonFromEdges( &oChildren, TRUE, TRUE, 100000, NULL );
+
+          if( poGeom != NULL )
+              poFeature->SetGeometryDirectly( poGeom );
+
+          ConsiderBrush( psElement, szPen, poFeature );
+      }
+      break;
+
       default:
         break;
     }
@@ -518,3 +579,52 @@ int OGRDGNLayer::TestCapability( const char * pszCap )
     else 
         return FALSE;
 }
+
+/************************************************************************/
+/*                            CollectLines()                            */
+/************************************************************************/
+
+OGRGeometry *OGRDGNLayer::CollectLines( OGRGeometryCollection *poLines,
+                                        int bMakePolygon )
+
+{
+    return NULL;
+#ifdef notdef
+    int	nVertices=0, iLine;
+    OGRLineString *poLine;
+
+    // Collect the number of vertices.
+    for( iLine = 0; iLine < poLines->getNumGeometries(); iLine++ )
+    {
+        poLine = (OGRLineString *) poLines->getGeometryRef(iLine);
+
+        if( wkbFlatten(poLine->getGeometryType()) != wkbLineString )
+            continue;
+
+        nVertices += poLine->getNumPoints();
+    }
+
+    // Prepare ring / linestring.
+    OGRLineString *poOutLine;
+
+    if( bMakePolygon )
+        poOutLine = new OGRLinearRing();
+    else
+        poOutLine = new OGRLineString();
+
+    poOutLine->setNumPoints( nVertices );
+
+    // Collect lines together. 
+    nVertices = 0;
+    for( iLine = 0; iLine < poLines->getNumGeometries(); iLine++ )
+    {
+        poLine = (OGRLineString *) poLines->getGeometryRef(iLine);
+
+        if( wkbFlatten(poLine->getGeometryType()) != wkbLineString )
+            continue;
+
+        if( 
+    }
+#endif
+}
+                                        
