@@ -103,11 +103,11 @@ LIBGDAL_REVISION	:=	0
 LIBGDAL_AGE	:=	2
 
 # native build targets and variables
-GDAL_VER	=	1.2
+GDAL_VER	=	@GDAL_VER@
+
 GDAL_LIB	= 	$(GDAL_ROOT)/libgdal.a
-GDAL_SLIB	=	$(GDAL_ROOT)/libgdal.$(GDAL_VER).$(SO_EXT)
-GDAL_SLIB_LINK	=	-L$(GDAL_ROOT) -lgdal.$(GDAL_VER)
-#GDAL_SLIB_SONAME = 	-Wl,-soname,libgdal.so.$(sover)
+GDAL_SLIB	=	$(GDAL_ROOT)/libgdal.$(SO_EXT)
+GDAL_SLIB_LINK	=	-L$(GDAL_ROOT) -lgdal
 
 #
 # OGR/PostgreSQL support.
