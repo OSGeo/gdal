@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2005/04/06 16:05:29  fwarmerdam
+ * added spatialmetadata (RTM) support
+ *
  * Revision 1.20  2005/04/06 15:04:23  fwarmerdam
  * added TIGER2004 support
  *
@@ -584,6 +587,26 @@ class TigerPolyChainLink : public TigerFileBase
 public:
                       TigerPolyChainLink( OGRTigerDataSource *, const char * );
   virtual            ~TigerPolyChainLink();
+
+  virtual int         SetModule( const char * );
+
+  virtual OGRFeature *GetFeature( int );
+
+  virtual OGRErr      CreateFeature( OGRFeature *poFeature );
+};
+
+/************************************************************************/
+/*                TigerSpatialMetadata (Type M records)                 */
+/************************************************************************/
+
+class TigerSpatialMetadata : public TigerFileBase
+{
+ private:
+  TigerRecordInfo    *psRTMInfo;
+
+public:
+                      TigerSpatialMetadata( OGRTigerDataSource *, const char * );
+  virtual            ~TigerSpatialMetadata();
 
   virtual int         SetModule( const char * );
 
