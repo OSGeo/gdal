@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2003/06/06 15:07:53  warmerda
+ * fixed security area sizing for NITF 2.0 images, its like NITF 1.1.
+ *
  * Revision 1.15  2003/06/06 13:48:13  warmerda
  * Corrected problem with pixel interleaved (IMODE=P) images that include
  * block maps like the v_3301f.ntf "stdset" file.
@@ -151,7 +154,8 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
 /* -------------------------------------------------------------------- */
     nOffset = 333;
 
-    if( EQUALN(psFile->szVersion,"NITF01.",7) )
+//    if( EQUALN(psFile->szVersion,"NITF01.",7) )
+    if( atof(psFile->szVersion+4) < 2.1 )
         nOffset += 40;
 
 /* -------------------------------------------------------------------- */
@@ -806,6 +810,17 @@ int NITFReadImageBlock( NITFImage *psImage, int nBlockX, int nBlockY,
         NITFUncompressVQTile( psImage, abyVQCoded, pData );
 
         return BLKREAD_OK;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Report unsupported compression scheme(s).                       */
+/* -------------------------------------------------------------------- */
+    else if( atoi(psImage->szIC + 1) > 0 )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported, 
+                  "Unsupported imagery compression format %s in NITF library.",
+                  psImage->szIC );
+        return BLKREAD_FAIL;
     }
 
     return BLKREAD_FAIL;
