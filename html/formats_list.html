@@ -14,7 +14,7 @@
 <th>Code</th>
 <th>Creation</th>
 <th>Georeferencing</th>
-<th>Maximum file size</th>
+<th>Maximum file size<sup><a href="#footnote1">1</a></sup></th>
 </tr>
 
 <tr><td> <a href="frmt_various.html#AAIGrid">Arc/Info ASCII Grid</a>
@@ -147,14 +147,14 @@
 </td><td> HDF4
 </td><td> Yes
 </td><td> Yes
-</td><td>
+</td><td> 2GiB
 </td></tr>
 
 <tr><td> <a href="frmt_hfa.html">Erdas Imagine (.img)</a>
 </td><td> HFA
 </td><td> Yes
 </td><td> Yes
-</td><td> No limits
+</td><td> No limits<sup><a href="#footnote2">2</a></sup>
 </td></tr>
 
 <tr><td> <a href="frmt_various.html#HKV">Atlantis MFF2e</a>
@@ -196,7 +196,7 @@
 </td><td> MFF
 </td><td> Yes
 </td><td> Yes
-</td><td>
+</td><td> No limits
 </td></tr>
 
 <tr><td> <a href="frmt_nitf.html">NITF</a>
@@ -263,6 +263,16 @@
 </td></tr>
 
 </table>
+
+<p>
+<a name="#footnote1"><sup>1</sup>Maximum file size does not only determined by
+	the file format itself, but operating system/file system capabilities
+	as well. Look <a href="gdal_building.html#largefiles">here</a> for
+	details.</a>
+<p>
+<a name="#footnote2"><sup>2</sup>ERDAS Imagine has different file format for
+	large files, where 32-bit pointers cannot be used. Look for details
+	<a href="frmt_hfa.html">here</a>.
 
 </body>
 </html>
