@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.53  2002/09/06 01:29:55  warmerda
+ * added C entry points for GetAccess() and GetOpenDatasets()
+ *
  * Revision 1.52  2002/09/04 06:52:35  warmerda
  * added GDALDestroyDriverManager
  *
@@ -442,6 +445,8 @@ int CPL_DLL     GDALDereferenceDataset( GDALDatasetH );
 
 CPLErr CPL_DLL  GDALBuildOverviews( GDALDatasetH, const char *, int, int *,
                                     int, int *, GDALProgressFunc, void * );
+void CPL_DLL    GDALGetOpenDatasets( GDALDatasetH ***hDS, int *pnCount );
+int CPL_DLL     GDALGetAccess( GDALDatasetH hDS );
 
 /* ==================================================================== */
 /*      GDALRasterBand ... one band/channel in a dataset.               */

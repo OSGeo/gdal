@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.29  2002/09/06 01:29:55  warmerda
+ * added C entry points for GetAccess() and GetOpenDatasets()
+ *
  * Revision 1.28  2002/07/09 20:33:12  warmerda
  * expand tabs
  *
@@ -925,6 +928,8 @@ CPLErr GDALSetGCPs( GDALDatasetH hDS, int nGCPCount,
  * If the operation is unsupported for the indicated dataset, then 
  * CE_Failure is returned, and CPLGetLastError() will return CPLE_NonSupported.
  *
+ * This method is the same as the C function GDALBuildOverviews().
+ *
  * @param pszResampling one of "NEAREST", "AVERAGE" or "MODE" controlling
  * the downsampling method applied.
  * @param nOverviews number of overviews to build. 
@@ -1030,9 +1035,39 @@ CPLErr GDALDataset::IBuildOverviews( const char *pszResampling,
 /*                          GetOpenDatasets()                           */
 /************************************************************************/
 
+/**
+ * Fetch all open GDAL dataset handles.
+ *
+ * This method is the same as the C function GDALGetOpenDatasets().
+ *
+ * @param pnCount integer into which to place the count of dataset pointers
+ * being returned.
+ *
+ * @return a pointer to an array of dataset handles. 
+ */
+
 GDALDataset **GDALDataset::GetOpenDatasets( int *pnCount )
 
 {
     *pnCount = nGDALDatasetCount;
     return papoGDALDatasetList;
+}
+
+/************************************************************************/
+/*                        GDALGetOpenDatasets()                         */
+/************************************************************************/
+
+void GDALGetOpenDatasets( GDALDatasetH ***hDS, int *pnCount )
+
+{
+    *hDS = (GDALDatasetH **) GDALDataset::GetOpenDatasets( pnCount);
+}
+
+/************************************************************************/
+/*                             GDALGetAccess()                          */
+/************************************************************************/
+
+int GDALGetAccess( GDALDatasetH hDS )
+{
+    return ((GDALDataset *) hDS)->GetAccess();
 }
