@@ -1,3 +1,9 @@
+2004-07-04  Andrey Kiselev  <dron@remotesensing.org>
+	
+	* frmts/mrsid/mrsiddataset.cpp: Added support for JPEG2000 format
+	via LizardTech MrSID DSDK version 4.0.x. MrSID driver now able to read
+	both MrSID and JPEG2000 file formats.
+
 2004-06-23  Frank Warmerdam  <warmerdam@pobox.com>
 
 	* Prepare for 1.2.1 release.
