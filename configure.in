@@ -38,7 +38,7 @@ dnl ---------------------------------------------------------------------------
 dnl Check if libz is available.
 dnl ---------------------------------------------------------------------------
 
-AC_ARG_WITH(libz,[  --with-libz[=ARG]       Include libz support (ARG=internal or link argument)],,)
+AC_ARG_WITH(libz,[  --with-libz[=ARG]       Include libz support (ARG=internal or libz directory)],,)
 
 if test "$with_libz" = "external" -o "$with_libz" = "" ; then
 
@@ -57,7 +57,7 @@ elif test "$with_libz" = "internal" ; then
 else
 
   LIBZ_SETTING=external
-  LIBS="$with_libz $LIBS"
+  LIBS="-L$with_libz -L$with_libz -lz $LIBS"
 
   echo "using $with_libz for libz."
 fi
