@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.22  2002/07/25 13:13:36  warmerda
+ * fixed const correctness of some docs
+ *
  * Revision 1.21  2002/04/18 14:22:45  warmerda
  * made OGRSpatialReference and co 'const correct'
  *
@@ -155,7 +158,7 @@ void OGR_SRSNode::ClearChildren()
 /************************************************************************/
 
 /**
- * \fn int OGR_SRSNode::GetChildCount();
+ * \fn int OGR_SRSNode::GetChildCount() const;
  *
  * Get number of children nodes.
  *
@@ -372,7 +375,7 @@ int OGR_SRSNode::FindChild( const char * pszValue ) const
 /************************************************************************/
 
 /**
- * \fn const char *OGR_SRSNode::GetValue();
+ * \fn const char *OGR_SRSNode::GetValue() const;
  *
  * Fetch value string for this node.
  *

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.52  2002/07/25 13:13:36  warmerda
+ * fixed const correctness of some docs
+ *
  * Revision 1.51  2002/04/25 20:56:28  warmerda
  * expanded tabs
  *
@@ -395,7 +398,7 @@ int OSRDereference( OGRSpatialReferenceH hSRS )
 /************************************************************************/
 
 /**
- * \fn int OGRSpatialReference::GetReferenceCount();
+ * \fn int OGRSpatialReference::GetReferenceCount() const;
  *
  * Fetch current reference count.
  *
