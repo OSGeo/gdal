@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.91  2004/03/23 15:34:37  warmerda
+ * added field index check in GetField()
+ *
  * Revision 1.90  2004/03/12 16:41:21  warmerda
  * Added some new cpl level functions
  *
@@ -2988,6 +2991,13 @@ py_OGR_F_GetField(PyObject *self, PyObject *args) {
                         "Type error in argument 1 of OGR_F_GetField."
                         "  Expected _OGRFeatureH.");
         return NULL;
+    }
+
+    if( iField < 0 || iField >= OGR_F_GetFieldCount( hFeat ) )
+    {
+        PyErr_SetString(PyExc_ValueError,
+                        "Illegal field requested in GetField()." );
+	return NULL;	
     }
 
     if( !OGR_F_IsFieldSet( hFeat, iField ) )
