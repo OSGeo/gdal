@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2002/08/08 13:02:01  warmerda
+ * added the -al commandline switch
+ *
  * Revision 1.15  2002/04/25 03:40:41  warmerda
  * fixed to pass spatial query
  *
@@ -100,7 +103,7 @@ int main( int nArgc, char ** papszArgv )
     const char  *pszDataSource = NULL;
     char        **papszLayers = NULL;
     OGRGeometry *poSpatialFilter = NULL;
-    int         nRepeatCount = 1;
+    int         nRepeatCount = 1, bAllLayers = FALSE;
     const char  *pszSQLStatement = NULL;
     
 /* -------------------------------------------------------------------- */
@@ -149,6 +152,10 @@ int main( int nArgc, char ** papszArgv )
         {
             nRepeatCount = atoi(papszArgv[++iArg]);
         }
+        else if( EQUALN(papszArgv[iArg],"-al",2) )
+        {
+            bAllLayers = TRUE;
+        }
         else if( papszArgv[iArg][0] == '-' )
         {
             Usage();
@@ -156,7 +163,10 @@ int main( int nArgc, char ** papszArgv )
         else if( pszDataSource == NULL )
             pszDataSource = papszArgv[iArg];
         else
+        {
             papszLayers = CSLAddString( papszLayers, papszArgv[iArg] );
+            bAllLayers = FALSE;
+        }
     }
 
     if( pszDataSource == NULL )
@@ -253,7 +263,7 @@ int main( int nArgc, char ** papszArgv )
                 exit( 1 );
             }
 
-            if( CSLCount(papszLayers) == 0 )
+            if( CSLCount(papszLayers) == 0 && !bAllLayers )
             {
                 printf( "%d: %s",
                         iLayer+1,
@@ -266,8 +276,9 @@ int main( int nArgc, char ** papszArgv )
 
                 printf( "\n" );
             }
-            else if( CSLFindString( papszLayers,
-                                    poLayer->GetLayerDefn()->GetName() ) != -1 )
+            else if( bAllLayers 
+                     || CSLFindString( papszLayers,
+                                   poLayer->GetLayerDefn()->GetName() ) != -1 )
             {
                 if( iRepeat != 0 )
                     poLayer->ResetReading();
@@ -298,7 +309,7 @@ static void Usage()
 {
     printf( "Usage: ogrinfo [-ro] [-q] [-where restricted_where]\n"
             "               [-spat xmin ymin xmax ymax] [-fid fid]\n"
-            "               [-sql statement]\n"
+            "               [-sql statement] [-al]\n"
             "               datasource_name [layer [layer ...]]\n");
     exit( 1 );
 }
