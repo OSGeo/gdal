@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.41  2003/05/21 04:45:39  warmerda
+ * avoid warings about unused formal parameters
+ *
  * Revision 1.40  2003/05/21 03:05:47  warmerda
  * remove unused variable
  *
@@ -376,9 +379,12 @@ void GDALDataset::RasterInitialize( int nXSize, int nYSize )
  * @return CE_None on success or CE_Failure on failure.  
  */
 
-CPLErr GDALDataset::AddBand( GDALDataType eType, char **papszOptions )
+CPLErr GDALDataset::AddBand( GDALDataType eType, char ** papszOptions )
 
 {
+    (void) eType;
+    (void) papszOptions;
+
     CPLError( CE_Failure, CPLE_NotSupported, 
               "Dataset does not support the AddBand() method." );
 
@@ -1081,10 +1087,15 @@ const GDAL_GCP *GDALGetGCPs( GDALDatasetH hDS )
  * not supported for this format). 
  */ 
 
-CPLErr GDALDataset::SetGCPs( int nGCPCount, const GDAL_GCP *pasGCPList,
-                             const char *pszGCPProjection )
+CPLErr GDALDataset::SetGCPs( int nGCPCount, 
+                             const GDAL_GCP *pasGCPList,
+                             const char * pszGCPProjection )
 
 {
+    (void) nGCPCount;
+    (void) pasGCPList;
+    (void) pszGCPProjection;
+
     CPLError( CE_Failure, CPLE_NotSupported, 
               "Dataset does not support the SetGCPs() method." );
 
