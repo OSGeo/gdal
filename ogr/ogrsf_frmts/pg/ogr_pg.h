@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2000/11/23 06:03:35  warmerda
+ * added Oid support
+ *
  * Revision 1.1  2000/10/17 17:46:51  warmerda
  * New
  *
@@ -55,6 +58,8 @@ class OGRPGLayer : public OGRLayer
 
     char               *GeometryToBYTEA( OGRGeometry * );
     OGRGeometry        *BYTEAToGeometry( const char * );
+    Oid                 GeometryToOID( OGRGeometry * );
+    OGRGeometry        *OIDToGeometry( Oid );
 
     OGRFeatureDefn     *ReadTableDefinition(const char *);
     OGRPGDataSource    *poDS;
@@ -64,6 +69,7 @@ class OGRPGLayer : public OGRLayer
     int                 nResultOffset;
 
     int			bHasWkb;
+    int                 bWkbAsOid;
     int                 bHasFid;
 
   public:

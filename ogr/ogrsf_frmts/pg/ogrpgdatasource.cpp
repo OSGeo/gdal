@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2000/11/23 06:03:35  warmerda
+ * added Oid support
+ *
  * Revision 1.1  2000/10/17 17:46:51  warmerda
  * New
  *
@@ -221,6 +224,11 @@ OGRPGDataSource::CreateLayer( const char * pszLayerName,
 {
     PGresult            *hResult;
     char		szCommand[1024];
+    const char		*pszGeomType;
+
+    pszGeomType = CSLFetchNameValue( papszOptions, "GEOM_TYPE" );
+    if( pszGeomType == NULL )
+        pszGeomType = "bytea";
 
     hResult = PQexec(hPGConn, "BEGIN");
     PQclear( hResult );
@@ -230,9 +238,9 @@ OGRPGDataSource::CreateLayer( const char * pszLayerName,
 /* -------------------------------------------------------------------- */
     sprintf( szCommand, 
              "CREATE TABLE %s ( "
-             "   ogc_fid SERIAL, "
-             "   ogc_wkb bytea )",
-             pszLayerName );
+             "   OGC_FID SERIAL, "
+             "   WKB_GEOMETRY %s )",
+             pszLayerName, pszGeomType );
     hResult = PQexec(hPGConn, szCommand);
     if( PQresultStatus(hResult) != PGRES_COMMAND_OK )
     {

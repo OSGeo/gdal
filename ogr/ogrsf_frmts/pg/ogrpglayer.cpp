@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2000/11/23 06:03:35  warmerda
+ * added Oid support
+ *
  * Revision 1.1  2000/10/17 17:46:51  warmerda
  * New
  *
@@ -35,6 +38,7 @@
 
 #include "cpl_conv.h"
 #include "ogr_pg.h"
+#include <libpq/libpq-fs.h>
 
 #define CURSOR_PAGE	1
 
@@ -52,6 +56,7 @@ OGRPGLayer::OGRPGLayer( OGRPGDataSource *poDSIn, const char * pszTableName,
     
     bUpdateAccess = bUpdate;
     bHasWkb = FALSE;
+    bWkbAsOid = FALSE;
 
     iNextShapeId = 0;
 
@@ -132,18 +137,20 @@ OGRFeatureDefn *OGRPGLayer::ReadTableDefinition( const char * pszTable )
         const char	*pszType;
         OGRFieldDefn    oField( PQgetvalue( hResult, iRecord, 0 ), OFTString);
 
+        pszType = PQgetvalue(hResult, iRecord, 1 );
+        
         if( EQUAL(oField.GetNameRef(),"ogc_fid") )
         {
             bHasFid = TRUE;
             continue;
         }
-        else if( EQUAL(oField.GetNameRef(),"ogc_wkb") )
+        else if( EQUAL(oField.GetNameRef(),"WKB_GEOMETRY") )
         {
             bHasWkb = TRUE;
+            if( EQUAL(pszType,"OID") )
+                bWkbAsOid = TRUE;
             continue;
         }
-        
-        pszType = PQgetvalue(hResult, iRecord, 1 );
         
         if( EQUAL(pszType,"varchar") )
         {
@@ -304,7 +311,7 @@ OGRFeature *OGRPGLayer::GetNextFeature()
     int		iField;
     OGRFeature *poFeature = new OGRFeature( poFeatureDefn );
 
-    if( EQUAL(PQfname(hCursorResult,0),"ogc_fid") )
+    if( EQUAL(PQfname(hCursorResult,0),"OGC_FID") )
     {
         poFeature->SetFID( atoi(PQgetvalue(hCursorResult,nResultOffset,0)) );
     }
@@ -319,12 +326,22 @@ OGRFeature *OGRPGLayer::GetNextFeature()
     {
         int	iOGRField;
 
-        if( EQUAL(PQfname(hCursorResult,iField),"ogc_wkb") )
+        if( EQUAL(PQfname(hCursorResult,iField),"WKB_GEOMETRY") )
         {
-            poFeature->SetGeometryDirectly( 
-                BYTEAToGeometry( 
-                    PQgetvalue( hCursorResult, 
-                                nResultOffset, iField ) ) );
+            if( bWkbAsOid )
+            {
+                poFeature->SetGeometryDirectly( 
+                    OIDToGeometry( (Oid) atoi(
+                        PQgetvalue( hCursorResult, 
+                                    nResultOffset, iField ) ) ) );
+            }
+            else
+            {
+                poFeature->SetGeometryDirectly( 
+                    BYTEAToGeometry( 
+                        PQgetvalue( hCursorResult, 
+                                    nResultOffset, iField ) ) );
+            }
             continue;
         }
 
@@ -449,6 +466,74 @@ char *OGRPGLayer::GeometryToBYTEA( OGRGeometry * poGeometry )
 }
 
 /************************************************************************/
+/*                          OIDToGeometry()                             */
+/************************************************************************/
+
+OGRGeometry *OGRPGLayer::OIDToGeometry( Oid oid )
+
+{
+    PGconn	*hPGConn = poDS->GetPGConn();
+    GByte       *pabyWKB;
+    int		fd, nBytes;
+    OGRGeometry *poGeometry;
+
+#define MAX_WKB	500000
+
+    if( oid == 0 )
+        return NULL;
+
+    fd = lo_open( hPGConn, oid, INV_READ );
+    if( fd < 0 )
+        return NULL;
+
+    pabyWKB = (GByte *) CPLMalloc(MAX_WKB);
+    nBytes = lo_read( hPGConn, fd, (char *) pabyWKB, MAX_WKB );
+    lo_close( hPGConn, fd );
+
+    poGeometry = NULL;
+    OGRGeometryFactory::createFromWkb( pabyWKB, NULL, &poGeometry, nBytes );
+
+    CPLFree( pabyWKB );
+
+    return poGeometry;
+}
+
+/************************************************************************/
+/*                           GeometryToOID()                            */
+/************************************************************************/
+
+Oid OGRPGLayer::GeometryToOID( OGRGeometry * poGeometry )
+
+{
+    PGconn	*hPGConn = poDS->GetPGConn();
+    int		nWkbSize = poGeometry->WkbSize();
+    GByte	*pabyWKB;
+    Oid		oid;
+    int		fd, nBytesWritten;
+
+    pabyWKB = (GByte *) CPLMalloc(nWkbSize);
+    if( poGeometry->exportToWkb( wkbNDR, pabyWKB ) != OGRERR_NONE )
+        return 0;
+
+    oid = lo_creat( hPGConn, INV_READ|INV_WRITE );
+    
+    fd = lo_open( hPGConn, oid, INV_WRITE );
+    nBytesWritten = lo_write( hPGConn, fd, (char *) pabyWKB, nWkbSize );
+    lo_close( hPGConn, fd );
+
+    if( nBytesWritten != nWkbSize )
+    {
+        CPLDebug( "OGR_PG", 
+                  "Only wrote %d bytes of %d intended for (fd=%d,oid=%d).\n",
+                  nBytesWritten, nWkbSize, fd, oid );
+    }
+
+    CPLFree( pabyWKB );
+    
+    return oid;
+}
+
+/************************************************************************/
 /*                           CreateFeature()                            */
 /************************************************************************/
 
@@ -460,6 +545,9 @@ OGRErr OGRPGLayer::CreateFeature( OGRFeature *poFeature )
     char		szCommand[8000];
     int                 i, bNeedComma;
 
+    hResult = PQexec(hPGConn, "BEGIN");
+    PQclear( hResult );
+
 /* -------------------------------------------------------------------- */
 /*      Form the INSERT command.  Note, we aren't watching for          */
 /*      command buffer overflow for the field list, and we don't        */
@@ -468,7 +556,7 @@ OGRErr OGRPGLayer::CreateFeature( OGRFeature *poFeature )
     sprintf( szCommand, "INSERT INTO %s (", poFeatureDefn->GetName() );
 
     if( bHasWkb && poFeature->GetGeometryRef() != NULL )
-        strcat( szCommand, "ogc_wkb, " );
+        strcat( szCommand, "WKB_GEOMETRY, " );
     
     bNeedComma = FALSE;
     for( i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
@@ -484,7 +572,7 @@ OGRErr OGRPGLayer::CreateFeature( OGRFeature *poFeature )
     strcat( szCommand, ") VALUES (" );
 
     /* Set the geometry */
-    if( bHasWkb && poFeature->GetGeometryRef() != NULL )
+    if( bHasWkb && !bWkbAsOid && poFeature->GetGeometryRef() != NULL )
     {
         char	*pszBytea = GeometryToBYTEA( poFeature->GetGeometryRef() );
 
@@ -501,6 +589,18 @@ OGRErr OGRPGLayer::CreateFeature( OGRFeature *poFeature )
             sprintf( szCommand + strlen(szCommand), 
                      "'%s', ", pszBytea );
             CPLFree( pszBytea );
+        }
+        else
+            strcat( szCommand, "''," );
+    }
+    else if( bHasWkb && bWkbAsOid && poFeature->GetGeometryRef() != NULL )
+    {
+        Oid	oid = GeometryToOID( poFeature->GetGeometryRef() );
+
+        if( oid != 0 )
+        {
+            sprintf( szCommand + strlen(szCommand), 
+                     "'%d', ", oid );
         }
         else
             strcat( szCommand, "''," );
@@ -539,9 +639,6 @@ OGRErr OGRPGLayer::CreateFeature( OGRFeature *poFeature )
 /* -------------------------------------------------------------------- */
 /*      Execute the insert.                                             */
 /* -------------------------------------------------------------------- */
-    hResult = PQexec(hPGConn, "BEGIN");
-    PQclear( hResult );
-
     hResult = PQexec(hPGConn, szCommand);
     if( PQresultStatus(hResult) != PGRES_COMMAND_OK )
     {
