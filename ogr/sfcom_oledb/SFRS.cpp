@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.27  2001/10/24 16:17:25  warmerda
+ * improve debugging support
+ *
  * Revision 1.26  2001/10/23 21:35:25  warmerda
  * try getting IStream if ISequentialStream is missing.
  *
@@ -124,7 +127,7 @@ void OGRComDebug( const char * pszDebugClass, const char * pszFormat, ... );
 // Define the following to get detailed debugging information from the stream
 // class.
 
-#define SFISTREAM_DEBUG
+#undef SFISTREAM_DEBUG
 
 // These global variables are a hack to transmit spatial query info from
 // the CSFCommand::Execute() method to the CSFRowset::Execute() method.
@@ -435,11 +438,11 @@ public:
 
 CVirtualArray::CVirtualArray()
 {
-	mBuffer = NULL;
-        m_nBufferSize = 0;
-	m_nLastRecordAccessed = -1;
-	m_nPackedRecordLength = 0;
-	m_nArraySize = 0;
+    mBuffer = NULL;
+    m_nBufferSize = 0;
+    m_nLastRecordAccessed = -1;
+    m_nPackedRecordLength = 0;
+    m_nArraySize = 0;
 }
 
 /************************************************************************/
@@ -448,6 +451,8 @@ CVirtualArray::CVirtualArray()
 
 CVirtualArray::~CVirtualArray()
 {
+    CPLDebug( "OGR_OLEDB", "~CVirtualArray()" );
+
     if( mBuffer != NULL )
 	free(mBuffer);
 }
@@ -458,7 +463,7 @@ CVirtualArray::~CVirtualArray()
 
 void CVirtualArray::RemoveAll()
 {
-	
+    CPLDebug( "OGR_OLEDB", "CVirtualArray::RemoveAll()" );
 }
 
 /************************************************************************/
@@ -934,6 +939,16 @@ HRESULT CSFCommand::ExtractSpatialQuery( DBPARAMS *pParams )
     }
 
     return S_OK;
+}
+
+/************************************************************************/
+/*                             ~CSFRowset()                             */
+/************************************************************************/
+
+CSFRowset::~CSFRowset()
+
+{
+    CPLDebug( "OGR_OLEDB", "~CSFRowset()" );
 }
 
 /************************************************************************/
