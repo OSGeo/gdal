@@ -1,0 +1,322 @@
+import "ocidl.idl";
+
+typedef struct WKSPoint
+{
+    double x;
+    double y;
+} WKSPoint;
+
+[
+  object, uuid(bcca38a0-fe1c-11d0-ad87-080009b6f22b)
+]
+interface ISpatialReferenceInfo : IUnknown
+{
+  [propget] HRESULT Name([out, retval] BSTR* name);
+  [propput] HRESULT Name([in] BSTR name);
+  [propget] HRESULT Authority([out, retval] BSTR* name);
+  [propput] HRESULT Authority([in] BSTR name); 
+  [propget] HRESULT Code([out, retval] long* code);
+  [propput] HRESULT Code([in] long code);
+  [propget] HRESULT Alias([out, retval] BSTR* alias);
+  [propput] HRESULT Alias([in] BSTR alias);
+  [propget] HRESULT Abbreviation([out, retval] BSTR* abbrev);
+  [propput] HRESULT Abbreviation([in] BSTR abbrev);
+  [propget] HRESULT Remarks([out, retval] BSTR* remarks);
+  [propput] HRESULT Remarks([in] BSTR remarks);
+  [propget] HRESULT WellKnownText ([out, retval] BSTR* wkt);
+};
+
+[
+ object, uuid(221733b0-fe1d-11d0-ad87-080009b6f22b)
+]
+interface IUnit : ISpatialReferenceInfo
+{
+};
+
+[
+ object, uuid(4febc550-fe1d-11d0-ad87-080009b6f22b)
+]
+interface IAngularUnit : IUnit
+{
+  [propget] HRESULT RadiansPerUnit([out, retval] double* factor);
+  [propput] HRESULT RadiansPerUnit([in] double factor);
+};
+
+[
+ object, uuid(80855df0-fe1d-11d0-ad87-080009b6f22b)
+]
+interface ILinearUnit : IUnit
+{
+  [propget] HRESULT MetersPerUnit([out, retval] double* factor);
+  [propput] HRESULT MetersPerUnit([in] double factor);
+};
+
+[
+ object, uuid(ce7266c0-fe1d-11d0-ad87-080009b6f22b)
+]
+interface IEllipsoid : ISpatialReferenceInfo
+{
+  [propget] HRESULT SemiMajorAxis([out, retval] double* axis);
+  [propput] HRESULT SemiMajorAxis([in] double axis);
+  [propget] HRESULT SemiMinorAxis([out, retval] double* axis);
+  [propput] HRESULT SemiMinorAxis([in] double axis);
+  [propget] HRESULT InverseFlattening([out, retval] double* invFlat);
+  [propput] HRESULT InverseFlattening([in] double invFlat);
+  [propget] HRESULT AxisUnit([out, retval] ILinearUnit** unit);
+  [propput] HRESULT AxisUnit([in] ILinearUnit* unit);
+};
+
+[
+ object, uuid(f699c510-fe1d-11d0-ad87-080009b6f22b)
+]
+interface IHorizontalDatum : ISpatialReferenceInfo
+{
+  [propget] HRESULT Ellipsoid([out, retval] IEllipsoid** ellipsoid);
+  [propput] HRESULT Ellipsoid([in] IEllipsoid* ellipsoid);
+};
+
+[
+ object, uuid(15129940-fe1e-11d0-ad87-080009b6f22b)
+]
+interface IPrimeMeridian : ISpatialReferenceInfo
+{
+  [propget] HRESULT Longitude([out, retval] double* longitude);
+  [propput] HRESULT Longitude([in] double longitude);
+  [propget] HRESULT AngularUnit([out, retval] IAngularUnit** unit);
+  [propput] HRESULT AngularUnit([in] IAngularUnit* unit);
+};
+
+[
+ object, uuid(4c4c5c00-fe1e-11d0-ad87-080009b6f22b)
+]
+interface ISpatialReference : ISpatialReferenceInfo
+{
+};
+
+[
+ object, uuid(7c3c56d0-fe1e-11d0-ad87-080009b6f22b)
+]
+interface IGeodeticSpatialReference : ISpatialReference
+{
+};
+
+[
+ object, uuid(a3fd5390-fe1e-11d0-ad87-080009b6f22b)
+]
+interface IGeographicCoordinateSystem : IGeodeticSpatialReference
+{ 
+  [propget] HRESULT Usage([out, retval] BSTR* usage);
+  [propput] HRESULT Usage([in] BSTR usage);
+  [propget] HRESULT HorizontalDatum([out, retval] IHorizontalDatum** datum);
+  [propput] HRESULT HorizontalDatum([in] IHorizontalDatum* datum);
+  [propget] HRESULT AngularUnit([out, retval] IAngularUnit** unit);
+  [propput] HRESULT AngularUnit([in] IAngularUnit* unit);
+  [propget] HRESULT PrimeMeridian([out, retval] IPrimeMeridian** prmMerid);
+  [propput] HRESULT PrimeMeridian([in] IPrimeMeridian* prmMerid);
+};
+
+[
+ object, uuid(9a5e32d0-fe1f-11d0-ad87-080009b6f22b)
+]
+interface IParameter : ISpatialReferenceInfo
+{
+  [propput] HRESULT ValueUnit([in] IUnit* unit );
+  [propget] HRESULT ValueUnit([out, retval] IUnit** unit);
+  [propput] HRESULT Value ([in] double value);
+  [propget] HRESULT Value ([out, retval] double* value);
+};
+
+[
+ object, uuid(7309b460-fe1f-11d0-ad87-080009b6f22b)
+]
+interface IParameterInfo : IUnknown
+{
+  [propget] HRESULT NumParameters ([out, retval] long* numParams);
+  [propget] HRESULT Parameter ([in] long index, [out, retval] IParameter** param);
+  [propput] HRESULT Parameter ([in] long index, [in] IParameter* param);
+};
+
+// subclasses of IParameterInfo may provide projection specific methods 
+// with type safe signatures for getting and setting parameters
+// for eg.
+// interface ITransverseMercatorParameterInfo : IParameterInfo
+// {
+//   [propget] CentralMeridian([out] double* centralMeridian)
+//   [propput] CentralMeridian([in] double centralMeridian)
+// };
+
+[
+ object, uuid(5eb513c0-fe1f-11d0-ad87-080009b6f22b)
+]
+interface IGeographicTransform : ISpatialReferenceInfo 
+{
+  [propget] HRESULT SourceGCS([out, retval] IGeographicCoordinateSystem** gcs);
+  [propput] HRESULT SourceGCS([in] IGeographicCoordinateSystem* gcs);
+  [propget] HRESULT TargetGCS([out, retval] IGeographicCoordinateSystem** gcs);
+  [propput] HRESULT TargetGCS([in] IGeographicCoordinateSystem* gcs);
+  [propget] HRESULT DefaultParameterInfo ([out, retval] IParameterInfo** paramInfo);
+  [propget] HRESULT ParameterInfo ([out, retval] IParameterInfo** paramInfo);
+  [propput] HRESULT ParameterInfo([in] IParameterInfo* paramInfo);
+  HRESULT Forward([in] long count, [in, out, size_is(count)] WKSPoint points[]);
+  HRESULT Inverse([in] long count, [in, out, size_is(count)] WKSPoint points[]);
+};
+
+[
+ object, uuid(5002f420-fe1f-11d0-ad87-080009b6f22b)
+]
+interface IProjection : ISpatialReferenceInfo
+{
+   [propget] HRESULT Usage([out, retval] BSTR* usage);
+   [propget] HRESULT Classification([out, retval] BSTR* classification);
+   HRESULT Forward([in] long count, [in, out, size_is(count)] WKSPoint points[]);
+   HRESULT Inverse([in] long count, [in, out, size_is(count)] WKSPoint points[]);
+   [propget] HRESULT DefaultParameterInfo ([out, retval] IParameterInfo** paramInfo);
+   [propget] HRESULT ParameterInfo([out, retval] IParameterInfo** paramInfo);
+   [propput] HRESULT ParameterInfo([in] IParameterInfo* paramInfo);
+   [propget] HRESULT AngularUnit([out, retval] IAngularUnit** unit);
+   [propput] HRESULT AngularUnit([in] IAngularUnit* unit);
+   [propget] HRESULT LinearUnit([out, retval] ILinearUnit** unit);
+   [propput] HRESULT LinearUnit([in] ILinearUnit* unit);
+   [propget] HRESULT Ellipsoid([out, retval] IEllipsoid** ellipsoid);
+   [propput] HRESULT Ellipsoid([in] IEllipsoid* ellipsoid);
+};
+
+[
+ object, uuid(3dc39ff0-fe1f-11d0-ad87-080009b6f22b)
+]
+interface IProjectedCoordinateSystem : IGeodeticSpatialReference
+{
+  [propget] HRESULT Usage([out, retval] BSTR* usage);
+  [propput] HRESULT Usage([in] BSTR usage);
+  [propget] HRESULT GeographicCoordinateSystem
+                     ([out, retval] IGeographicCoordinateSystem** gcs);
+  [propput] HRESULT GeographicCoordinateSystem
+                     ([in] IGeographicCoordinateSystem* gcs);
+  [propget] HRESULT LinearUnit([out, retval] ILinearUnit** unit);
+  [propput] HRESULT LinearUnit([in] ILinearUnit* unit);
+  [propget] HRESULT Projection ([out, retval] IProjection** projection);
+  [propput] HRESULT Projection ([in] IProjection* projection);
+  [propget] HRESULT DefaultParameterInfo ([out, retval] IParameterInfo** paramInfo);
+  [propget] HRESULT ParameterInfo ([out, retval] IParameterInfo** paramInfo);
+  [propput] HRESULT ParameterInfo([in] IParameterInfo* paramInfo);
+  HRESULT Forward([in] long count, [in, out, size_is(count)] WKSPoint points[]);
+  HRESULT Inverse([in] long count, [in, out, size_is(count)] WKSPoint points[]);
+};
+
+[
+ object, uuid(620600B1-FEA1-11d0-B04B-0080C7F79481)
+]
+interface ISpatialReferenceFactory : IUnknown
+{
+  HRESULT CreateFromWKT
+           ([in] BSTR wktSpatialReference, [out, retval] ISpatialReference** sref);
+}
+
+[
+ object, uuid(30ae14f0-fe1f-11d0-ad87-080009b6f22b)
+]
+interface ISpatialReferenceAuthorityFactory : IUnknown
+{
+  [propget] HRESULT Authority([out, retval] BSTR* authority);
+  HRESULT CreateProjectedCoordinateSystem 
+           ([in] long code, [out, retval] IProjectedCoordinateSystem** pcs);
+  HRESULT CreateGeographicCoordinateSystem 
+	([in] long code, [out, retval] IGeographicCoordinateSystem** gcs);
+  HRESULT CreateProjection
+           ([in] long code, [out, retval] IProjection** projection);
+  HRESULT CreateGeographicTransform
+	([in] long code, [out, retval] IGeographicTransform** gt);
+  HRESULT CreateHorizontalDatum
+	([in] long code, [out, retval] IHorizontalDatum** datum);
+  HRESULT CreateEllipsoid
+	([in] long code, [out, retval] IEllipsoid** ellipsoid);
+  HRESULT CreatePrimeMeridian
+	([in] long code, [out, retval] IPrimeMeridian** prmMerid);
+  HRESULT CreateLinearUnit
+	([in] long code, [out, retval] ILinearUnit** unit);
+  HRESULT CreateAngularUnit
+	([in] long code, [out, retval] IAngularUnit** unit);
+};
+
+
+
+
+
+
+#if defined (_SPATIALREFERENCE_) 
+
+// example of a specific SpatialReference library implementation
+
+library SpatialReference
+{
+
+// COM Classes would be defined here in an actual library. 
+// CoTypes are shown instead.
+// A CoType is a template for CoClasses.
+
+/*************************************************************************	
+   coType AngularUnit
+   {
+      [mandatory] interface IUnit;
+      [mandatory] interface IAngularUnit;
+      [mandatory] interface ISpatialReferenceInfo;
+   };
+ coType LinearUnit
+   {
+      [mandatory] interface IUnit;
+      [mandatory] interface ILinearUnit;
+      [mandatory] interface ISpatialReferenceInfo;
+   };
+
+   coType Ellipsoid
+   {
+      [mandatory] interface IEllipsoid;
+      [mandatory] interface ISpatialReferenceInfo;
+   };
+
+ coType HorizontalDatum
+   {
+      [mandatory] interface IHorizontalDatum;
+      [mandatory] interface ISpatialReferenceInfo;
+   };
+
+ coType PrimeMeridian
+   {
+      [mandatory] interface IPrimeMeridian;
+      [mandatory] interface ISpatialReferenceInfo;
+   };
+
+
+ coType GeographicCoordinateSystem
+   {
+      [mandatory] interface ISpatialReference;
+      [mandatory] interface IGeodeticSpatialReference;
+      [mandatory] interface IGeographicCoordinateSystem;
+      [mandatory] interface ISpatialReferenceInfo;
+   };
+
+ coType Parameter
+   {
+      [mandatory] interface IParameter;
+      [mandatory] interface ISpatialReferenceInfo;
+   };
+
+ coType ProjectedCoordinateSystem
+   {     
+      [mandatory] interface ISpatialReference;
+      [mandatory] interface IGeodeticSpatialReference;
+      [mandatory] interface IProjectedCoordinateSystem;
+      [mandatory] interface ISpatialReferenceInfo;
+   };
+
+// Each Projection is its own CoType, SimpleCylindrical is shown as an example
+
+ coType SimpleCylindrical
+   {
+      [mandatory] interface IProjection;
+      [mandatory] interface ISpatialReferenceInfo;
+   };
+
+*****************************************************************/
+};
+#endif
