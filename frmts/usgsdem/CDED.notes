@@ -39,7 +39,7 @@ Offset Length Name                    Notes
  
   534     6   Vert. Unit of Measure   Hardcoded to "2" (meters)
 
-  540     6   Cov. Polygon Sides      Hardcoded to "6".
+  540     6   Cov. Polygon Sides      Hardcoded to "4".
 
   546   144   Corner Coordinates      Generated
 
