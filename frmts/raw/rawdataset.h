@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2002/03/21 16:22:03  warmerda
+ * fixed friend declarations
+ *
  * Revision 1.7  2001/12/12 18:15:46  warmerda
  * preliminary update for large raw file support
  *
@@ -64,7 +67,7 @@ class RawRasterBand;
 
 class CPL_DLL RawDataset : public GDALDataset
 {
-    friend	RawRasterBand;
+    friend class RawRasterBand;
 
   public:
                  RawDataset();
@@ -80,7 +83,7 @@ class CPL_DLL RawDataset : public GDALDataset
 
 class CPL_DLL RawRasterBand : public GDALRasterBand
 {
-    friend	RawDataset;
+    friend class RawDataset;
 
     FILE	*fpRaw;
     int         bIsVSIL;
