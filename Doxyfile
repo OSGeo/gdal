@@ -128,7 +128,7 @@ FILE_PATTERNS    =	*.h *.cpp *.c *.dox
 # directories that contain example code fragments that are included (see 
 # the \include command).
 
-EXAMPLE_PATH     = apps
+EXAMPLE_PATH     = apps frmts
 
 # The RECURSIVE tag can be used to turn specify whether or not subdirectories
 # should be searched for input files as well. Possible values are YES and NO.
