@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.66  2003/05/28 16:23:49  warmerda
+ * added GDALTermProgress
+ *
  * Revision 1.65  2003/04/22 17:28:41  warmerda
  * avoid use of assert()
  *
@@ -382,6 +385,8 @@ const char *GDALGetColorInterpretationName( GDALColorInterp );
 const char *GDALGetPaletteInterpretationName( GDALPaletteInterp );
 
 const char *GDALDecToDMS( double, const char *, int );
+
+int GDALTermProgress( double, const char *, void * );
 
 /* -------------------------------------------------------------------- */
 /*      Define handle types related to various internal classes.        */
