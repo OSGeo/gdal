@@ -1,3 +1,10 @@
+gdal (1.2.0-1) unstable; urgency=low
+
+  * New upstream release.
+  * use upstream man pages.
+
+ -- Alessandro Amici (devel) <alexamici@tiscali.it>  Tue,  2 Mar 2004 20:39:46 +0100
+
 gdal (1.2+cvs.031016-1) unstable; urgency=low
 
   * Take maintainership
