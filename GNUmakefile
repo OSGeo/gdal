@@ -81,6 +81,8 @@ GDALmake.opt:	GDALmake.opt.in config.status
 
 docs:
 	doxygen
+	cp frmts/*/frmt_*.html html
+	cp html/gdal_index.html html/index.html
 
 all:	default
 
