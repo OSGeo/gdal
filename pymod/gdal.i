@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.72  2003/06/23 14:07:30  warmerda
+ * fixed typedef int int problem
+ *
  * Revision 1.71  2003/06/21 23:26:27  warmerda
  * added TOWGS84 and PROJ.4 calls, OGRERR to int
  *
@@ -384,6 +387,12 @@ void CSLDestroy(stringList);
 /* -------------------------------------------------------------------- */
 /*      General GDAL stuff.                                             */
 /* -------------------------------------------------------------------- */
+//#define GDALDataType int
+//#define GDALAccess int
+//#define GDALRWFlag int
+//#define GDALColorInterp int
+//#define GDALPaletteInterp int
+
 typedef int GDALDataType;
 typedef int GDALAccess;
 typedef int GDALRWFlag;
@@ -2234,7 +2243,6 @@ typedef struct
     double      MaxY;
 } OGREnvelope;
 
-typedef int int;
 typedef int OGRwkbGeometryType;
 typedef int OGRFieldType;
 typedef int OGRJustification;
