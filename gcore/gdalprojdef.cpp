@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/01/27 20:28:01  warmerda
+ * Don't call CPLGetsymbol() for every function if first fails.
+ *
  * Revision 1.1  1999/01/11 15:36:26  warmerda
  * New
  *
@@ -67,11 +70,14 @@ static int LoadProjLibrary()
     
     pfn_pj_init = (PJ *(*)(int, char**)) CPLGetSymbol( "libproj.so",
                                                        "pj_init" );
+    if( pfn_pj_init == NULL )
+       return( FALSE );
+
     pfn_pj_fwd = (UV (*)(UV,PJ*)) CPLGetSymbol( "libproj.so", "pj_fwd" );
     pfn_pj_inv = (UV (*)(UV,PJ*)) CPLGetSymbol( "libproj.so", "pj_inv" );
     pfn_pj_free = (void (*)(PJ*)) CPLGetSymbol( "libproj.so", "pj_free" );
 
-    return( pfn_pj_init != NULL );
+    return( TRUE );
 }
 
 /************************************************************************/
