@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.74  2003/05/28 19:16:43  warmerda
+ * fixed up argument names and stuff for docs
+ *
  * Revision 1.73  2003/04/01 14:34:45  warmerda
  * Clarify SetUTM() documentation.
  *
@@ -1363,7 +1366,7 @@ OGRErr OSRSetWellKnownGeogCS( OGRSpatialReferenceH hSRS, const char *pszName )
  * If this object has a PROJCS root already, the GEOGCS is installed within
  * it, otherwise it is installed as the root.
  * 
- * @param poSrsSRS the spatial reference to copy the GEOGCS information from.
+ * @param poSrcSRS the spatial reference to copy the GEOGCS information from.
  * 
  * @return OGRERR_NONE on success or an error code.
  */

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.29  2003/05/28 19:16:42  warmerda
+ * fixed up argument names and stuff for docs
+ *
  * Revision 1.28  2003/04/08 20:57:28  warmerda
  * added RemapFields on OGRFeature
  *
@@ -2000,11 +2003,11 @@ long OGR_F_GetFID( OGRFeatureH hFeat )
  * @return On success OGRERR_NONE, or on failure some other value. 
  */
 
-OGRErr OGRFeature::SetFID( long nFIDIn )
+OGRErr OGRFeature::SetFID( long nFID )
 
 {
-    nFID = nFIDIn;
-
+    this->nFID = nFID;
+    
     return OGRERR_NONE;
 }
 

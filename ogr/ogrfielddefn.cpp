@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2003/05/28 19:16:42  warmerda
+ * fixed up argument names and stuff for docs
+ *
  * Revision 1.8  2003/04/03 23:39:11  danmo
  * Small updates to C API docs (Normand S.)
  *
@@ -595,10 +598,10 @@ int OGR_Fld_GetPrecision( OGRFieldDefnH hDefn )
  * @param nPrecision the new precision. 
  */
 
-void OGR_Fld_SetPrecision( OGRFieldDefnH hDefn, int nNewPrecision )
+void OGR_Fld_SetPrecision( OGRFieldDefnH hDefn, int nPrecision )
 
 {
-    ((OGRFieldDefn *) hDefn)->SetPrecision( nNewPrecision );
+    ((OGRFieldDefn *) hDefn)->SetPrecision( nPrecision );
 }
 
 /************************************************************************/

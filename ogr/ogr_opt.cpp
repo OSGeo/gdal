@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2003/05/28 19:16:42  warmerda
+ * fixed up argument names and stuff for docs
+ *
  * Revision 1.3  2001/07/18 05:03:05  warmerda
  * added CPL_CVSID
  *
@@ -420,13 +423,13 @@ char **OPTGetParameterList( const char *pszProjectionMethod,
  * the parameter.  This pointer may be NULL to skip.  The  returned type 
  * should not be modified or freed.  The type values are described above.
  *
- * @param pdfDefaultvalue location at which to put the default value for
+ * @param pdfDefaultValue location at which to put the default value for
  * this parameter.  The pointer may be NULL.
  *
  * @return TRUE if parameter found, or FALSE otherwise.
  */
 
-int OPTGetParameterInfo( const char * /* pszProjectionMethod */,
+int OPTGetParameterInfo( const char * pszProjectionMethod,
                          const char * pszParameterName,
                          char ** ppszUserName,
                          char ** ppszType,
@@ -434,6 +437,8 @@ int OPTGetParameterInfo( const char * /* pszProjectionMethod */,
 
 {
     int         i;
+
+    (void) pszProjectionMethod;
 
     for( i = 0; papszParameterDefinitions[i] != NULL; i += 4 )
     {

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2003/05/28 19:16:43  warmerda
+ * fixed up argument names and stuff for docs
+ *
  * Revision 1.8  2002/09/11 13:47:17  warmerda
  * preliminary set of fixes for 3D WKB enum
  *
@@ -216,7 +219,7 @@ OGRErr OGRMultiLineString::importFromWkt( char ** ppszInput )
 /*      equivelent.  This could be made alot more CPU efficient!        */
 /************************************************************************/
 
-OGRErr OGRMultiLineString::exportToWkt( char ** ppszReturn )
+OGRErr OGRMultiLineString::exportToWkt( char ** ppszDstText )
 
 {
     char        **papszLines;
@@ -242,26 +245,26 @@ OGRErr OGRMultiLineString::exportToWkt( char ** ppszReturn )
 /*      Allocate exactly the right amount of space for the              */
 /*      aggregated string.                                              */
 /* -------------------------------------------------------------------- */
-    *ppszReturn = (char *) VSIMalloc(nCumulativeLength+getNumGeometries()+20);
+    *ppszDstText = (char *) VSIMalloc(nCumulativeLength+getNumGeometries()+20);
 
-    if( *ppszReturn == NULL )
+    if( *ppszDstText == NULL )
         return OGRERR_NOT_ENOUGH_MEMORY;
 
 /* -------------------------------------------------------------------- */
 /*      Build up the string, freeing temporary strings as we go.        */
 /* -------------------------------------------------------------------- */
-    strcpy( *ppszReturn, "MULTILINESTRING (" );
+    strcpy( *ppszDstText, "MULTILINESTRING (" );
 
     for( iLine = 0; iLine < getNumGeometries(); iLine++ )
     {                                                           
         if( iLine > 0 )
-            strcat( *ppszReturn, "," );
+            strcat( *ppszDstText, "," );
         
-        strcat( *ppszReturn, papszLines[iLine] + 11 );
+        strcat( *ppszDstText, papszLines[iLine] + 11 );
         VSIFree( papszLines[iLine] );
     }
 
-    strcat( *ppszReturn, ")" );
+    strcat( *ppszDstText, ")" );
 
     CPLFree( papszLines );
 

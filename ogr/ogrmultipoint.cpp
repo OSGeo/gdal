@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2003/05/28 19:16:43  warmerda
+ * fixed up argument names and stuff for docs
+ *
  * Revision 1.13  2003/04/28 15:28:53  warmerda
  * Ryan Proulx fixed WKT MULTIPOINT format
  *
@@ -143,52 +146,46 @@ OGRGeometry *OGRMultiPoint::clone()
 /*      equivelent.  This could be made alot more CPU efficient!        */
 /************************************************************************/
 
-OGRErr OGRMultiPoint::exportToWkt( char ** ppszReturn )
+OGRErr OGRMultiPoint::exportToWkt( char ** ppszDstText )
 
 {
     int         nMaxString = getNumGeometries() * 20 + 128;
     int         nRetLen = 0;
 
-    *ppszReturn = (char *) VSIMalloc( nMaxString );
-    if( *ppszReturn == NULL )
+    *ppszDstText = (char *) VSIMalloc( nMaxString );
+    if( *ppszDstText == NULL )
         return OGRERR_NOT_ENOUGH_MEMORY;
 
-    sprintf( *ppszReturn, "%s (", getGeometryName() );
+    sprintf( *ppszDstText, "%s (", getGeometryName() );
 
     for( int i = 0; i < getNumGeometries(); i++ )
     {
         OGRPoint        *poPoint = (OGRPoint *) getGeometryRef( i );
 
         if( i > 0 )
-            strcat( *ppszReturn + nRetLen, "," );
+            strcat( *ppszDstText + nRetLen, "," );
 
-        //20030424 - removed extra bracket - ryan
-        //strcat( *ppszReturn + nRetLen, "(" );
-
-        nRetLen += strlen(*ppszReturn + nRetLen);
+        nRetLen += strlen(*ppszDstText + nRetLen);
 
         if( nMaxString < nRetLen + 100 )
         {
             nMaxString = nMaxString * 2;
-            *ppszReturn = (char *) CPLRealloc(*ppszReturn,nMaxString);
+            *ppszDstText = (char *) CPLRealloc(*ppszDstText,nMaxString);
         }
         
         if( poPoint->getCoordinateDimension() == 3 )
-            OGRMakeWktCoordinate( *ppszReturn + nRetLen,
+            OGRMakeWktCoordinate( *ppszDstText + nRetLen,
                                   poPoint->getX(), 
                                   poPoint->getY(),
                                   poPoint->getZ() );
         else
-            OGRMakeWktCoordinate( *ppszReturn + nRetLen,
+            OGRMakeWktCoordinate( *ppszDstText + nRetLen,
                                   poPoint->getX(), 
                                   poPoint->getY(),
                                   0.0 );
-        
-        //20030424 - removed extra bracket - ryan
-        //strcat( *ppszReturn + nRetLen, ")" );
     }
 
-    strcat( *ppszReturn+nRetLen, ")" );
+    strcat( *ppszDstText+nRetLen, ")" );
 
     return OGRERR_NONE;
 }

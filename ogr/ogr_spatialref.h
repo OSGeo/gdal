@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.50  2003/05/28 19:16:42  warmerda
+ * fixed up argument names and stuff for docs
+ *
  * Revision 1.49  2003/03/12 14:25:01  warmerda
  * added NeedsQuoting() method
  *
@@ -360,7 +363,7 @@ class CPL_DLL OGRSpatialReference
                            const char * pszUnits = NULL,
                            double dfConvertToRadians = 0.0 );
     OGRErr      SetWellKnownGeogCS( const char * );
-    OGRErr      CopyGeogCSFrom( const OGRSpatialReference * );
+    OGRErr      CopyGeogCSFrom( const OGRSpatialReference * poSrcSRS );
 
     OGRErr      SetFromUserInput( const char * );
 

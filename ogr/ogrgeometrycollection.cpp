@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2003/05/28 19:16:42  warmerda
+ * fixed up argument names and stuff for docs
+ *
  * Revision 1.20  2003/03/31 15:55:42  danmo
  * Added C API function docs
  *
@@ -436,13 +439,13 @@ int OGRGeometryCollection::WkbSize()
 /************************************************************************/
 
 OGRErr OGRGeometryCollection::importFromWkb( unsigned char * pabyData,
-                                             int nBytesAvailable )
+                                             int nSize )
 
 {
     OGRwkbByteOrder     eByteOrder;
     int                 nDataOffset;
     
-    if( nBytesAvailable < 9 && nBytesAvailable != -1 )
+    if( nSize < 9 && nSize != -1 )
         return OGRERR_NOT_ENOUGH_DATA;
 
 /* -------------------------------------------------------------------- */
@@ -497,8 +500,8 @@ OGRErr OGRGeometryCollection::importFromWkb( unsigned char * pabyData,
     papoGeoms = (OGRGeometry **) OGRMalloc(sizeof(void*) * nGeomCount);
 
     nDataOffset = 9;
-    if( nBytesAvailable != -1 )
-        nBytesAvailable -= nDataOffset;
+    if( nSize != -1 )
+        nSize -= nDataOffset;
 
     nCoordinateDimension = 0; // unknown
 
@@ -511,7 +514,7 @@ OGRErr OGRGeometryCollection::importFromWkb( unsigned char * pabyData,
 
         eErr = OGRGeometryFactory::
             createFromWkb( pabyData + nDataOffset, NULL,
-                           papoGeoms + iGeom, nBytesAvailable );
+                           papoGeoms + iGeom, nSize );
 
         if( eErr != OGRERR_NONE )
         {
@@ -519,8 +522,8 @@ OGRErr OGRGeometryCollection::importFromWkb( unsigned char * pabyData,
             return eErr;
         }
 
-        if( nBytesAvailable != -1 )
-            nBytesAvailable -= papoGeoms[iGeom]->WkbSize();
+        if( nSize != -1 )
+            nSize -= papoGeoms[iGeom]->WkbSize();
 
         nDataOffset += papoGeoms[iGeom]->WkbSize();
     }
@@ -670,7 +673,7 @@ OGRErr OGRGeometryCollection::importFromWkt( char ** ppszInput )
 /*      equivelent.  This could be made alot more CPU efficient!        */
 /************************************************************************/
 
-OGRErr OGRGeometryCollection::exportToWkt( char ** ppszReturn )
+OGRErr OGRGeometryCollection::exportToWkt( char ** ppszDstText )
 
 {
     char        **papszGeoms;
@@ -694,27 +697,27 @@ OGRErr OGRGeometryCollection::exportToWkt( char ** ppszReturn )
 /* -------------------------------------------------------------------- */
 /*      Allocate the right amount of space for the aggregated string    */
 /* -------------------------------------------------------------------- */
-    *ppszReturn = (char *) VSIMalloc(nCumulativeLength + nGeomCount + 23);
+    *ppszDstText = (char *) VSIMalloc(nCumulativeLength + nGeomCount + 23);
 
-    if( *ppszReturn == NULL )
+    if( *ppszDstText == NULL )
         return OGRERR_NOT_ENOUGH_MEMORY;
 
 /* -------------------------------------------------------------------- */
 /*      Build up the string, freeing temporary strings as we go.        */
 /* -------------------------------------------------------------------- */
-    strcpy( *ppszReturn, getGeometryName() );
-    strcat( *ppszReturn, " (" );
+    strcpy( *ppszDstText, getGeometryName() );
+    strcat( *ppszDstText, " (" );
 
     for( iGeom = 0; iGeom < nGeomCount; iGeom++ )
     {                                                           
         if( iGeom > 0 )
-            strcat( *ppszReturn, "," );
+            strcat( *ppszDstText, "," );
         
-        strcat( *ppszReturn, papszGeoms[iGeom] );
+        strcat( *ppszDstText, papszGeoms[iGeom] );
         VSIFree( papszGeoms[iGeom] );
     }
 
-    strcat( *ppszReturn, ")" );
+    strcat( *ppszDstText, ")" );
 
     CPLFree( papszGeoms );
 
@@ -725,7 +728,7 @@ OGRErr OGRGeometryCollection::exportToWkt( char ** ppszReturn )
 /*                            getEnvelope()                             */
 /************************************************************************/
 
-void OGRGeometryCollection::getEnvelope( OGREnvelope * poEnvelope )
+void OGRGeometryCollection::getEnvelope( OGREnvelope * psEnvelope )
 
 {
     OGREnvelope         oGeomEnv;
@@ -733,20 +736,20 @@ void OGRGeometryCollection::getEnvelope( OGREnvelope * poEnvelope )
     if( nGeomCount == 0 )
         return;
 
-    papoGeoms[0]->getEnvelope( poEnvelope );
+    papoGeoms[0]->getEnvelope( psEnvelope );
 
     for( int iGeom = 1; iGeom < nGeomCount; iGeom++ )
     {
         papoGeoms[iGeom]->getEnvelope( &oGeomEnv );
 
-        if( poEnvelope->MinX > oGeomEnv.MinX )
-            poEnvelope->MinX = oGeomEnv.MinX;
-        if( poEnvelope->MinY > oGeomEnv.MinY )
-            poEnvelope->MinY = oGeomEnv.MinY;
-        if( poEnvelope->MaxX < oGeomEnv.MaxX )
-            poEnvelope->MaxX = oGeomEnv.MaxX;
-        if( poEnvelope->MaxY < oGeomEnv.MaxY )
-            poEnvelope->MaxY = oGeomEnv.MaxY;
+        if( psEnvelope->MinX > oGeomEnv.MinX )
+            psEnvelope->MinX = oGeomEnv.MinX;
+        if( psEnvelope->MinY > oGeomEnv.MinY )
+            psEnvelope->MinY = oGeomEnv.MinY;
+        if( psEnvelope->MaxX < oGeomEnv.MaxX )
+            psEnvelope->MaxX = oGeomEnv.MaxX;
+        if( psEnvelope->MaxY < oGeomEnv.MaxY )
+            psEnvelope->MaxY = oGeomEnv.MaxY;
     }
 }
 
