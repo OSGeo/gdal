@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2001/03/26 18:43:05  warmerda
+ * fixed bug in EnvisatFile_Close
+ *
  * Revision 1.2  2001/02/27 22:34:33  warmerda
  * added EnvisatFile_ReadDatasetRecord
  *
@@ -704,6 +707,7 @@ void EnvisatFile_Close( EnvisatFile *self )
     S_NameValueList_Destroy( &(self->mph_count), &(self->mph_entries) );
     S_NameValueList_Destroy( &(self->sph_count), &(self->sph_entries) );
 
+printf( "-- 5 --\n" );
     for( i = 0; i < self->ds_count; i++ )
     {
         if( self->ds_info != NULL && self->ds_info[i] != NULL )
@@ -714,12 +718,16 @@ void EnvisatFile_Close( EnvisatFile *self )
             free( self->ds_info[i] );
         }
     }
+printf( "-- 6 --\n" );
     if( self->ds_info != NULL )
-        free( self->ds_info[i] );
+        free( self->ds_info );
+printf( "-- 6.5 --\n" );
     if( self->filename != NULL )
         free( self->filename );
+printf( "-- 7 --\n" );
 
     free( self );
+printf( "-- 8 --\n" );
 }
 
 /*-----------------------------------------------------------------------------
