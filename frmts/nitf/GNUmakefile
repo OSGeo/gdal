@@ -21,6 +21,6 @@ clean:
 
 
 nitfdump:	nitfdump.o $(NITFLIB_OBJ)
-	$(CXX) nitfdump.o $(NITFLIB_OBJ) $(GDAL_ROOT)/port/cpl.a -o nitfdump
+	$(CXX) nitfdump.o $(NITFLIB_OBJ) $(GDAL_LIB) -o nitfdump
 
 install-obj:	$(foreach file,$(OBJ),../o/$(file))

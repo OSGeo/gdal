@@ -35,23 +35,23 @@ $(ISOLIB):	$(OBJ)
 
 8211dump:	8211dump.o $(ISOLIB)
 	$(CXX) $(CXX_ODFLAGS) 8211dump.o \
-		$(ISOLIB) $(CPL_LIB) $(LIBS) -o 8211dump
+		$(ISOLIB) $(GDAL_LIB) $(LIBS) -o 8211dump
 
 8211view:	8211view.o $(ISOLIB)
 	$(CXX) $(CXX_ODFLAGS) 8211view.o \
-		$(ISOLIB) $(CPL_LIB) $(LIBS) -o 8211view
+		$(ISOLIB) $(GDAL_LIB) $(LIBS) -o 8211view
 
 timetest:	timetest.o $(ISOLIB)
 	$(CXX) $(CXX_ODFLAGS) timetest.o \
-		$(ISOLIB) $(CPL_LIB) $(LIBS) -o timetest
+		$(ISOLIB) $(GDAL_LIB) $(LIBS) -o timetest
 
 upd_test:	upd_test.o $(ISOLIB)
 	$(CXX) $(CXX_ODFLAGS) upd_test.o \
-		$(ISOLIB) $(CPL_LIB) $(LIBS) -o upd_test
+		$(ISOLIB) $(GDAL_LIB) $(LIBS) -o upd_test
 
 mkcatalog:	mkcatalog.o $(ISOLIB)
 	$(CXX) $(CXX_ODFLAGS) mkcatalog.o \
-		$(ISOLIB) $(CPL_LIB) $(LIBS) -o mkcatalog
+		$(ISOLIB) $(GDAL_LIB) $(LIBS) -o mkcatalog
 
 docs:
 	rm -rf html
