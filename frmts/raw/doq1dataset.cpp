@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2000/01/06 20:58:21  warmerda
+ * Fixed initial poOpenInfo check.
+ *
  * Revision 1.2  1999/12/30 02:39:43  warmerda
  * Added projections support.
  *
@@ -147,7 +150,7 @@ GDALDataset *DOQ1Dataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*	We assume the user is pointing to the binary (ie. .bil) file.	*/
 /* -------------------------------------------------------------------- */
-    if( poOpenInfo->nHeaderBytes < 212 && poOpenInfo->fp != NULL )
+    if( poOpenInfo->nHeaderBytes < 212 || poOpenInfo->fp == NULL )
         return NULL;
 
 /* -------------------------------------------------------------------- */
