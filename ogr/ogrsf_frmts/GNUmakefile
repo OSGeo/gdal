@@ -17,10 +17,17 @@ endif
 ifeq ($(HAVE_OGR_PG),yes)
 	(cd pg; $(MAKE) $*)
 endif
+	$(MAKE) ogrsf_frmts.a
+
+ogrsf_frmts.a:	last-ranlib 
 	$(RANLIB) ogrsf_frmts.a
+
+last-ranlib:
+	touch last-ranlib
 
 clean:
 	rm -f ogrsf_frmts.a
+	rm -f last-ranlib
 	(cd generic; $(MAKE) clean)
 	(cd shape; $(MAKE) clean)
 	(cd ntf; $(MAKE) clean)
