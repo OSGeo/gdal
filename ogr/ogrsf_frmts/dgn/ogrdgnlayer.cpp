@@ -28,6 +28,13 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.22  2002/10/29 19:45:29  warmerda
+ * OGR driver now always builds an index if any features are to be read.  This
+ * is primarily done to ensure that color tables appearing late in the file
+ * will still affect feature elements occuring before them ... such as with
+ * the m_epoche.dgn file.  Also implement fast feature counting and spatial
+ * extents support based on the index.
+ *
  * Revision 1.21  2002/05/31 19:03:46  warmerda
  * removed old CollectLines code
  *
@@ -605,6 +612,8 @@ OGRFeature *OGRDGNLayer::GetNextFeature()
 {
     DGNElemCore *psElement;
 
+    DGNGetElementIndex( hDGN, NULL );
+
     while( (psElement = DGNReadElement( hDGN )) != NULL )
     {
         OGRFeature	*poFeature;
@@ -664,4 +673,68 @@ int OGRDGNLayer::TestCapability( const char * pszCap )
         return FALSE;
 }
 
-                                        
+/************************************************************************/
+/*                          GetFeatureCount()                           */
+/************************************************************************/
+
+int OGRDGNLayer::GetFeatureCount( int bForce )
+
+{
+/* -------------------------------------------------------------------- */
+/*      If any odd conditions are in effect collect the information     */
+/*      normally.                                                       */
+/* -------------------------------------------------------------------- */
+    if( poFilterGeom != NULL || m_poAttrQuery != NULL )
+        return OGRLayer::GetFeatureCount( bForce );
+
+/* -------------------------------------------------------------------- */
+/*      Otherwise scan the index.                                       */
+/* -------------------------------------------------------------------- */
+    int nElementCount, i, nFeatureCount = 0;
+    const DGNElementInfo *pasIndex = DGNGetElementIndex(hDGN,&nElementCount);
+
+    for( i = 0; i < nElementCount; i++ )
+    {
+        if( pasIndex[i].flags & DGNEIF_DELETED )
+            continue;
+
+        switch( pasIndex[i].stype )
+        {
+          case DGNST_MULTIPOINT:
+          case DGNST_ARC:
+          case DGNST_TEXT:
+            if( !(pasIndex[i].flags & DGNEIF_COMPLEX) )
+                nFeatureCount++;
+            break;
+
+          case DGNST_COMPLEX_HEADER:
+            nFeatureCount++;
+            break;
+
+          default:
+            break;
+        }
+    }
+
+    return nFeatureCount;
+}
+
+/************************************************************************/
+/*                             GetExtent()                              */
+/************************************************************************/
+
+OGRErr OGRDGNLayer::GetExtent( OGREnvelope *psExtent, int bForce )
+
+{
+    double	adfExtents[6];
+
+    if( !DGNGetExtents( hDGN, adfExtents ) )
+        return OGRERR_FAILURE;
+    
+    psExtent->MinX = adfExtents[0];
+    psExtent->MinY = adfExtents[1];
+    psExtent->MaxX = adfExtents[3];
+    psExtent->MaxY = adfExtents[4];
+    
+    return OGRERR_NONE;
+}
