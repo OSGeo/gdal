@@ -10,8 +10,7 @@ OBJ	=	ogrfmecacheindex.o ogrfmedatasource.o ogrfmedriver.o \
 ALL_C_FLAGS	=	-I.. -I../.. -I$(GDAL_ROOT)/port \
 		$(FME_INCLUDE) $(CFLAGS) \
 		-DSUPPORT_INDIRECT_FMEDLL \
-		-DSUPPORT_PERSISTENT_CACHE \
-		-DSUPPORT_CLEANUP_SESSION
+		-DSUPPORT_PERSISTENT_CACHE
 
 default:	$(OBJ)
 
