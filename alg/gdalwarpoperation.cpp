@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2004/03/28 21:22:46  warmerda
+ * Substantial improvement in default selection of eWorkingDataType.  In some
+ * cases we need to use a more refined data type to preserve nodata values.
+ *
  * Revision 1.17  2003/11/22 19:13:31  dron
  * Added C bindings for GDALWarpOperation functions.
  *
@@ -443,16 +447,72 @@ CPLErr GDALWarpOperation::Initialize( const GDALWarpOptions *psNewOptions )
 
 /* -------------------------------------------------------------------- */
 /*      If no working data type was provided, set one now.              */
+/*                                                                      */
+/*      Default to the highest resolution output band.  But if the      */
+/*      input band is higher resolution and has a nodata value "out     */
+/*      of band" with the output type we may need to use the higher     */
+/*      resolution input type to ensure we can identify nodata values.  */
 /* -------------------------------------------------------------------- */
     if( psOptions->eWorkingDataType == GDT_Unknown 
         && psOptions->hDstDS != NULL 
         && psOptions->nBandCount >= 1 )
     {
-        GDALRasterBandH hBand = GDALGetRasterBand( psOptions->hDstDS, 
-                                                   psOptions->panDstBands[0] );
+        int iBand;
+        psOptions->eWorkingDataType = GDT_Byte;
+
+        for( iBand = 0; iBand < psOptions->nBandCount; iBand++ )
+        {
+            GDALRasterBandH hDstBand = GDALGetRasterBand( 
+                psOptions->hDstDS, psOptions->panDstBands[iBand] );
+            GDALRasterBandH hSrcBand = GDALGetRasterBand( 
+                psOptions->hSrcDS, psOptions->panSrcBands[iBand] );
                                                   
-        if( hBand != NULL )
-            psOptions->eWorkingDataType = GDALGetRasterDataType( hBand );
+            if( hDstBand != NULL )
+                psOptions->eWorkingDataType = 
+                    GDALDataTypeUnion( psOptions->eWorkingDataType, 
+                                       GDALGetRasterDataType( hDstBand ) );
+            
+            if( hSrcBand != NULL 
+                && psOptions->padfSrcNoDataReal != NULL )
+            {
+                int bMergeSource = FALSE;
+
+                if( psOptions->padfSrcNoDataImag[iBand] != 0.0 
+                    && !GDALDataTypeIsComplex( psOptions->eWorkingDataType ) )
+                    bMergeSource = TRUE;
+                else if( psOptions->padfSrcNoDataReal[iBand] < 0.0 
+                         && (psOptions->eWorkingDataType == GDT_Byte
+                             || psOptions->eWorkingDataType == GDT_UInt16
+                             || psOptions->eWorkingDataType == GDT_UInt32) )
+                    bMergeSource = TRUE;
+                else if( psOptions->padfSrcNoDataReal[iBand] < -32768.0 
+                         && psOptions->eWorkingDataType == GDT_Int16 )
+                    bMergeSource = TRUE;
+                else if( psOptions->padfSrcNoDataReal[iBand] < -2147483648.0 
+                         && psOptions->eWorkingDataType == GDT_Int32 )
+                    bMergeSource = TRUE;
+                else if( psOptions->padfSrcNoDataReal[iBand] > 256 
+                         && psOptions->eWorkingDataType == GDT_Byte )
+                    bMergeSource = TRUE;
+                else if( psOptions->padfSrcNoDataReal[iBand] > 32767
+                         && psOptions->eWorkingDataType == GDT_Int16 )
+                    bMergeSource = TRUE;
+                else if( psOptions->padfSrcNoDataReal[iBand] > 65535
+                         && psOptions->eWorkingDataType == GDT_UInt16 )
+                    bMergeSource = TRUE;
+                else if( psOptions->padfSrcNoDataReal[iBand] > 2147483648.0 
+                         && psOptions->eWorkingDataType == GDT_Int32 )
+                    bMergeSource = TRUE;
+                else if( psOptions->padfSrcNoDataReal[iBand] > 4294967295.0
+                         && psOptions->eWorkingDataType == GDT_UInt32 )
+                    bMergeSource = TRUE;
+
+                if( bMergeSource )
+                    psOptions->eWorkingDataType = 
+                        GDALDataTypeUnion( psOptions->eWorkingDataType, 
+                                           GDALGetRasterDataType( hSrcBand ) );
+            }
+        }
     }
 
 /* -------------------------------------------------------------------- */
