@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.23  2005/02/28 15:42:05  fwarmerdam
+ * Call RawDataset::FlushCache() instead of GDALDataset::FlushCache()
+ *
  * Revision 1.22  2005/02/08 15:52:44  gwalter
  * Avoid overwriting header when it hasn't changed.
  *
@@ -373,7 +376,7 @@ ENVIDataset::~ENVIDataset()
 void ENVIDataset::FlushCache()
 
 {
-    GDALDataset::FlushCache();
+    RawDataset::FlushCache();
 
     if ( !bHeaderDirty )
         return;
