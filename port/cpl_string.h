@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.4  1999/06/26 14:05:19  warmerda
+ * Added CSLFindString().
+ *
  * Revision 1.3  1999/02/17 01:41:58  warmerda
  * Added CSLGetField
  *
@@ -73,6 +76,7 @@ char  **CSLInsertString(char **papszStrList, int nInsertAtLineNo,
                         char *pszNewLine);
 char  **CSLRemoveStrings(char **papszStrList, int nFirstLineToDelete,
                          int nNumToRemove, char ***ppapszRetStrings);
+int	CSLFindString( char **, const char * );
 
 const char *CPLSPrintf(char *fmt, ...);
 char  **CSLAppendPrintf(char **papszStrList, char *fmt, ...);

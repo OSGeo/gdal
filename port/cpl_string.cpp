@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.10  1999/06/26 14:05:10  warmerda
+ * Added CSLFindString().
+ *
  * Revision 1.9  1999/04/28 02:33:02  danmo
  * CSLInsertStrings(): make sure papszStrList is NULL-terminated properly
  *
@@ -490,6 +493,31 @@ char **CSLRemoveStrings(char **papszStrList, int nFirstLineToDelete,
      */
 
     return papszStrList;
+}
+
+/************************************************************************/
+/*                           CSLFindString()                            */
+/*                                                                      */
+/*      Find a string within a string list.  The string must match      */
+/*      the full length, but the comparison is case insensitive.        */
+/*      Return -1 on failure.                                           */
+/************************************************************************/
+
+int CSLFindString( char ** papszList, const char * pszTarget )
+
+{
+    int		i;
+
+    if( papszList == NULL )
+        return -1;
+
+    for( i = 0; papszList[i] != NULL; i++ )
+    {
+        if( EQUAL(papszList[i],pszTarget) )
+            return i;
+    }
+
+    return -1;
 }
 
 /**********************************************************************
