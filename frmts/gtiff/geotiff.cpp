@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.45  2001/04/17 14:58:16  warmerda
+ * fixed access to rw mode separate RGB tiff images
+ *
  * Revision 1.44  2001/03/13 19:16:46  warmerda
  * don't try to handle MINISWHITE through RGBA interface, test before using RGBA
  *
@@ -303,7 +306,7 @@ CPLErr GTiffRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
 {
     GTiffDataset	*poGDS = (GTiffDataset *) poDS;
-    int			nBlockBufSize, nBlockId;
+    int			nBlockBufSize, nBlockId, nBlockIdBand0;
     CPLErr		eErr = CE_None;
 
     poGDS->SetDirectory();
@@ -315,20 +318,21 @@ CPLErr GTiffRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         CPLAssert( nBlockXOff == 0 );
         nBlockBufSize = TIFFStripSize( poGDS->hTIFF );
     }
-        
+
+    nBlockIdBand0 = nBlockXOff + nBlockYOff * nBlocksPerRow;
     if( poGDS->nPlanarConfig == PLANARCONFIG_SEPARATE )
-        nBlockId = nBlockXOff + nBlockYOff * nBlocksPerRow
-                   + (nBand-1) * poGDS->nBlocksPerBand;
+        nBlockId = nBlockIdBand0 + (nBand-1) * poGDS->nBlocksPerBand;
     else
-        nBlockId = nBlockXOff + nBlockYOff * nBlocksPerRow;
+        nBlockId = nBlockIdBand0;
         
 /* -------------------------------------------------------------------- */
 /*	Handle the case of a strip in a writable file that doesn't	*/
 /*	exist yet, but that we want to read.  Just set to zeros and	*/
 /*	return.								*/
 /* -------------------------------------------------------------------- */
+    
     if( poGDS->eAccess == GA_Update
-        && (((int) poGDS->hTIFF->tif_dir.td_nstrips) <= nBlockId
+        && (((int) poGDS->hTIFF->tif_dir.td_nstrips) <= nBlockIdBand0
             || poGDS->hTIFF->tif_dir.td_stripbytecount[nBlockId] == 0) )
     {
         memset( pImage, 0,
@@ -357,6 +361,7 @@ CPLErr GTiffRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         }
         else
         {
+            
             if( TIFFReadEncodedStrip( poGDS->hTIFF, nBlockId, pImage,
                                       nBlockBufSize ) == -1 )
             {
