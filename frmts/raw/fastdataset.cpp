@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.16  2004/07/12 18:24:23  gwalter
+ * Fixed geotransform calculation.
+ *
  * Revision 1.15  2004/04/27 14:25:41  warmerda
  * Cast to avoid warning on Solaris.
  *
@@ -732,6 +735,9 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
          && dfLLX != 0.0 && dfLLY != 0.0
          && dfLRX != 0.0 && dfLRY != 0.0 )
     {
+        int transform_ok=FALSE;
+        GDAL_GCP *pasGCPList;
+
         // Strip out zone number from the easting values, if either
         if ( dfULX >= 1000000.0 )
             dfULX -= (double)iZone * 1000000.0;
@@ -760,13 +766,50 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
             CPLFree( poDS->pszProjection );
         oSRS.exportToWkt( &poDS->pszProjection );
 
-        // Calculate transformation matrix
-        poDS->adfGeoTransform[1] = (dfURX - dfLLX) / (poDS->nRasterXSize - 1);
-        poDS->adfGeoTransform[5] = (dfLLY - dfURY) / (poDS->nRasterYSize - 1);
-        poDS->adfGeoTransform[0] = dfULX - poDS->adfGeoTransform[1] / 2;
-        poDS->adfGeoTransform[3] = dfULY - poDS->adfGeoTransform[5] / 2;
-        poDS->adfGeoTransform[2] = 0.0;
-        poDS->adfGeoTransform[4] = 0.0;
+        // Generate GCPs
+        pasGCPList = (GDAL_GCP *) CPLCalloc( sizeof( GDAL_GCP ), 4 );
+        GDALInitGCPs( 4, pasGCPList );
+
+        pasGCPList[0].pszId = "UPPER_LEFT";
+        pasGCPList[0].dfGCPX = dfULX;
+        pasGCPList[0].dfGCPY = dfULY;
+        pasGCPList[0].dfGCPZ = 0.0;
+        pasGCPList[0].dfGCPPixel = 0.5;
+        pasGCPList[0].dfGCPLine = 0.5;
+        pasGCPList[1].pszId = "UPPER_RIGHT";
+        pasGCPList[1].dfGCPX = dfURX;
+        pasGCPList[1].dfGCPY = dfURY;
+        pasGCPList[1].dfGCPZ = 0.0;
+        pasGCPList[1].dfGCPPixel = poDS->nRasterXSize-0.5;
+        pasGCPList[1].dfGCPLine = 0.5;
+        pasGCPList[2].pszId = "LOWER_LEFT";
+        pasGCPList[2].dfGCPX = dfLLX;
+        pasGCPList[2].dfGCPY = dfLLY;
+        pasGCPList[2].dfGCPZ = 0.0;
+        pasGCPList[2].dfGCPPixel = 0.5;
+        pasGCPList[2].dfGCPLine = poDS->nRasterYSize-0.5;
+        pasGCPList[3].pszId = "LOWER_RIGHT";
+        pasGCPList[3].dfGCPX = dfLRX;
+        pasGCPList[3].dfGCPY = dfLRY;
+        pasGCPList[3].dfGCPZ = 0.0;
+        pasGCPList[3].dfGCPPixel = poDS->nRasterXSize-0.5;
+        pasGCPList[3].dfGCPLine = poDS->nRasterYSize-0.5;
+
+        // Calculate transformation matrix, if accurate
+        transform_ok = GDALGCPsToGeoTransform(4,pasGCPList,poDS->adfGeoTransform,0);
+        if (transform_ok == FALSE)
+        {
+            
+            poDS->adfGeoTransform[0] = 0.0;
+            poDS->adfGeoTransform[1] = 1.0;
+            poDS->adfGeoTransform[2] = 0.0;
+            poDS->adfGeoTransform[3] = 0.0;
+            poDS->adfGeoTransform[4] = 0.0;
+            poDS->adfGeoTransform[5] = 1.0;
+            if ( poDS->pszProjection )
+                CPLFree( poDS->pszProjection );
+            poDS->pszProjection = CPLStrdup("");
+        }
     }
 
 /* -------------------------------------------------------------------- */
