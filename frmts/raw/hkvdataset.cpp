@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2001/07/11 18:09:06  warmerda
+ * Correct corner GCPs. BOTTOM_RIGHT actually refers to the top left corner of
+ * the bottom right pixel!
+ *
  * Revision 1.13  2001/06/20 16:10:02  warmerda
  * overhauled to TIFF style overviews
  *
@@ -509,11 +513,11 @@ void HKVDataset::ProcessGeoref( const char * pszFilename )
     ProcessGeorefGCP( papszGeoref, "top_left", 
                       0, 0 );
     ProcessGeorefGCP( papszGeoref, "top_right", 
-                      GetRasterXSize(), 0 );
+                      GetRasterXSize()-1, 0 );
     ProcessGeorefGCP( papszGeoref, "bottom_left", 
-                      0, GetRasterYSize() );
+                      0, GetRasterYSize()-1 );
     ProcessGeorefGCP( papszGeoref, "bottom_right", 
-                      GetRasterXSize(), GetRasterYSize() );
+                      GetRasterXSize()-1, GetRasterYSize()-1 );
     ProcessGeorefGCP( papszGeoref, "centre", 
                       GetRasterXSize()/2.0, GetRasterYSize()/2.0 );
 
@@ -563,11 +567,11 @@ void HKVDataset::ProcessGeoref( const char * pszFilename )
             oUTM.exportToWkt( &pszProjection );
             
             adfGeoTransform[0] = dfUtmULX;
-            adfGeoTransform[1] = (dfUtmLRX - dfUtmULX) / GetRasterXSize();
+            adfGeoTransform[1] = (dfUtmLRX - dfUtmULX) / (GetRasterXSize()-1);
             adfGeoTransform[2] = 0.0;
             adfGeoTransform[3] = dfUtmULY;
             adfGeoTransform[4] = 0.0;
-            adfGeoTransform[5] = (dfUtmLRY - dfUtmULY) / GetRasterYSize();
+            adfGeoTransform[5] = (dfUtmLRY - dfUtmULY) / (GetRasterYSize()-1);
         }
 
         if( poTransform != NULL )
