@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2004/04/27 14:28:49  warmerda
+ * Avoid Solaris C++ problems with SetCSVFilenameHook().
+ *
  * Revision 1.9  2003/07/18 12:45:18  warmerda
  * added GDALDefaultCSVFilename
  *
@@ -1005,8 +1008,11 @@ static const char *CSVFileOverride( const char * pszInput )
 
 */
 
+CPL_C_START
 void SetCSVFilenameHook( const char *(*pfnNewHook)( const char * ) )
 
 {
     pfnCSVFilenameHook = pfnNewHook;
 }
+CPL_C_END
+
