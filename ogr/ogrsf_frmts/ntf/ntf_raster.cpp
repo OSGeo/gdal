@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/10/04 11:36:53  warmerda
+ * Added HEIGHT attribute.
+ *
  * Revision 1.1  1999/10/04 03:07:49  warmerda
  * New
  *
@@ -232,6 +235,10 @@ OGRNTFRasterLayer::OGRNTFRasterLayer( OGRNTFDataSource *poDSIn,
     poFeatureDefn = new OGRFeatureDefn( poReaderIn->GetTileName() );
     poFeatureDefn->SetGeomType( wkbPoint25D );
 
+    OGRFieldDefn      oHeight( "HEIGHT", OFTInteger );
+    oHeight.SetWidth(5);
+    poFeatureDefn->AddFieldDefn( &oHeight );
+
     pafColumn = (float *) CPLCalloc(sizeof(float),
                                     poReader->GetRasterYSize());
     iColumnOffset = -1;
@@ -330,6 +337,7 @@ OGRFeature *OGRNTFRasterLayer::GetFeature( long nFeatureId )
         new OGRPoint( padfGeoTransform[0] + padfGeoTransform[1] * iReqColumn,
                       padfGeoTransform[3] + padfGeoTransform[5] * iReqRow,
                       pafColumn[iReqRow] ) );
+    poFeature->SetField( 0, (int) pafColumn[iReqRow] );
     
     return poFeature;
 }
