@@ -1,3 +1,7 @@
+2000-10-12  Frank Warmerdam  <warmerda@cs46980-c>
+
+	* gdal/frmts/hfa: Implemented write support for Imagine files.
+
 2000-10-06  Frank Warmerdam  <warmerda@cs46980-c>
 
 	* Upgraded PAuxDataset to support nodata values.
