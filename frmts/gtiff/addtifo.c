@@ -28,9 +28,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/02/11 22:27:12  warmerda
+ * Added multi-sample support
+ *
  * Revision 1.1  1999/02/11 18:12:30  warmerda
  * New
- *
  */
 
 #include <stdio.h>
@@ -80,8 +82,8 @@ int main( int argc, char ** argv )
         
         anOverviews[0] = 2;
         anOverviews[1] = 4;
-        anOverviews[1] = 8;
-        anOverviews[1] = 16;
+        anOverviews[2] = 8;
+        anOverviews[3] = 16;
     }
 
 /* -------------------------------------------------------------------- */

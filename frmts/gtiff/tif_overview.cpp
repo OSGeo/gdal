@@ -14,8 +14,8 @@
  *    to cache the overviews so it doesn't have to hold them all in memory.
  *    If the application crashes these will not be deleted (*.rbi).
  *
- *  o Currently only images with samples_per_pixel=1, and bits_per_sample of
- *    a multiple of eight will work.
+ *  o Currently only images with bits_per_sample of a multiple of eight
+ *    will work.
  *
  *  o The downsampler currently just takes the top left pixel from the
  *    source rectangle.  Eventually sampling options of averaging, mode, and
@@ -23,7 +23,12 @@
  *
  *  o The code will attempt to use the same kind of compression,
  *    photometric interpretation, and organization as the source image, but
- *    it doesn't copy geotiff tags to the reduced resolution images. 
+ *    it doesn't copy geotiff tags to the reduced resolution images.
+ *
+ *  o Reduced resolution overviews for multi-sample files will currently
+ *    always be generated as PLANARCONFIG_SEPARATE.  This could be fixed
+ *    reasonable easily if needed to improve compatibility with other
+ *    packages.  Many don't properly support PLANARCONFIG_SEPARATE. 
  * 
  ******************************************************************************
  * Copyright (c) 1999, Frank Warmerdam
@@ -48,6 +53,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  1999/02/11 22:27:12  warmerda
+ * Added multi-sample support
+ *
  * Revision 1.4  1999/02/11 19:23:39  warmerda
  * Only fix on multiples of 16 in block size if it is a tiled file.
  *
@@ -76,12 +84,13 @@ extern "C" {
 /************************************************************************/
 
 static
-void TIFF_WriteOverview( TIFF *hTIFF, RawBlockedImage *poRBI, int bTiled,
-                         int nCompressFlag, int nPhotometric,
+void TIFF_WriteOverview( TIFF *hTIFF, int nSamples, RawBlockedImage **papoRBI,
+                         int bTiled, int nCompressFlag, int nPhotometric,
                          GUInt16 *panRed, GUInt16 *panGreen, GUInt16 *panBlue )
 
 {
-    int		iTileX, iTileY;
+    int		iSample;
+    RawBlockedImage	*poRBI = papoRBI[0];
                                    
 /* -------------------------------------------------------------------- */
 /*      Setup TIFF fields.                                              */
@@ -92,7 +101,7 @@ void TIFF_WriteOverview( TIFF *hTIFF, RawBlockedImage *poRBI, int bTiled,
                   PLANARCONFIG_SEPARATE );
 
     TIFFSetField( hTIFF, TIFFTAG_BITSPERSAMPLE, poRBI->GetBitsPerPixel() );
-    TIFFSetField( hTIFF, TIFFTAG_SAMPLESPERPIXEL, 1 );
+    TIFFSetField( hTIFF, TIFFTAG_SAMPLESPERPIXEL, nSamples );
     TIFFSetField( hTIFF, TIFFTAG_COMPRESSION, nCompressFlag );
     TIFFSetField( hTIFF, TIFFTAG_PHOTOMETRIC, nPhotometric );
 
@@ -117,29 +126,42 @@ void TIFF_WriteOverview( TIFF *hTIFF, RawBlockedImage *poRBI, int bTiled,
 /* -------------------------------------------------------------------- */
 /*      Write blocks to TIFF file.                                      */
 /* -------------------------------------------------------------------- */
-    for( iTileY = 0;
-         iTileY*poRBI->GetBlockYSize() < poRBI->GetYSize();
-         iTileY++ )
+    for( iSample = 0; iSample < nSamples; iSample++ )
     {
-        for( iTileX = 0;
-             iTileX*poRBI->GetBlockXSize() < poRBI->GetXSize();
-             iTileX++ )
+        int		iTileX, iTileY;
+        
+        poRBI = papoRBI[iSample];
+        
+        for( iTileY = 0;
+             iTileY*poRBI->GetBlockYSize() < poRBI->GetYSize();
+             iTileY++ )
         {
-            GByte	*pabyData = poRBI->GetTile( iTileX, iTileY );
+            for( iTileX = 0;
+                 iTileX*poRBI->GetBlockXSize() < poRBI->GetXSize();
+                 iTileX++ )
+            {
+                GByte	*pabyData = poRBI->GetTile( iTileX, iTileY );
+                int	nTileID;
 
-            if( bTiled )
-            {
-                TIFFWriteEncodedTile( hTIFF,
-                          TIFFComputeTile(hTIFF,
-                                          iTileX * poRBI->GetBlockXSize(),
-                                          iTileY * poRBI->GetBlockYSize(),
-                                          0, 0 ),
-                                      pabyData, TIFFTileSize(hTIFF) );
-            }
-            else
-            {
-                TIFFWriteEncodedStrip( hTIFF, iTileY, pabyData,
-                                       TIFFStripSize( hTIFF ) );
+                if( bTiled )
+                {
+                    nTileID =
+                        TIFFComputeTile(hTIFF,
+                                        iTileX * poRBI->GetBlockXSize(),
+                                        iTileY * poRBI->GetBlockYSize(),
+                                        0, iSample );
+                    TIFFWriteEncodedTile( hTIFF, nTileID, 
+                                          pabyData, TIFFTileSize(hTIFF) );
+                }
+                else
+                {
+                    nTileID =
+                        TIFFComputeStrip(hTIFF, iTileY*poRBI->GetBlockYSize(),
+                                         iSample);
+
+                    TIFFWriteEncodedStrip( hTIFF, nTileID,
+                                           pabyData, TIFFStripSize( hTIFF ) );
+                }
             }
         }
     }
@@ -156,12 +178,13 @@ void TIFF_WriteOverview( TIFF *hTIFF, RawBlockedImage *poRBI, int bTiled,
 
 static
 void TIFF_DownSample( GByte * pabySrcTile, int nBlockXSize, int nBlockYSize,
-                      int nBitsPerPixel,
+                      int nPixelSkewBits, int nBitsPerPixel,
                       GByte * pabyOTile, int nOBlockXSize, int nOBlockYSize,
                       int nTXOff, int nTYOff, int nOMult )
 
 {
-    int		i, j, k, nBytes = nBitsPerPixel / 8;
+    int		i, j, k, nPixelBytes = (nBitsPerPixel) / 8;
+    int		nPixelGroupBytes = (nBitsPerPixel+nPixelSkewBits)/8;
     GByte	*pabySrc, *pabyDst;
 
     CPLAssert( nBitsPerPixel >= 8 );
@@ -174,8 +197,9 @@ void TIFF_DownSample( GByte * pabySrcTile, int nBlockXSize, int nBlockYSize,
         if( j + nTYOff >= nOBlockYSize )
             break;
             
-        pabySrc = pabySrcTile + j*nOMult*nBlockXSize * nBytes;
-        pabyDst = pabyOTile + ((j+nTYOff)*nOBlockXSize + nTXOff) * nBytes;
+        pabySrc = pabySrcTile + j*nOMult*nBlockXSize * nPixelGroupBytes;
+        pabyDst = pabyOTile
+            + ((j+nTYOff)*nOBlockXSize + nTXOff) * nPixelBytes;
 
         for( i = 0; i*nOMult < nBlockXSize; i++ )
         {
@@ -187,12 +211,118 @@ void TIFF_DownSample( GByte * pabySrcTile, int nBlockXSize, int nBlockYSize,
              * of the source block of pixels.
              */
 
-            for( k = 0; k < nBytes; k++ )
+            for( k = 0; k < nPixelBytes; k++ )
             {
                 *(pabyDst++) = pabySrc[k];
             }
             
-            pabySrc += nOMult * nBytes;
+            pabySrc += nOMult * nPixelGroupBytes;
+        }
+    }
+}
+
+/************************************************************************/
+/*                      TIFF_ProcessFullResBlock()                      */
+/*                                                                      */
+/*      Process one block of full res data, downsampling into each      */
+/*      of the overviews.                                               */
+/************************************************************************/
+
+void TIFF_ProcessFullResBlock( TIFF *hTIFF, int nPlanarConfig,
+                               int nOverviews, int * panOvList,
+                               int nBitsPerPixel, 
+                               int nSamples, RawBlockedImage ** papoRawBIs,
+                               int nSXOff, int nSYOff, GByte *pabySrcTile,
+                               int nBlockXSize, int nBlockYSize )
+
+{
+    int		iOverview, iSample;
+
+    for( iSample = 0; iSample < nSamples; iSample++ )
+    {
+        /*
+         * We have to read a tile/strip for each sample for
+         * PLANARCONFIG_SEPARATE.  Otherwise, we just read all the samples
+         * at once when handling the first sample.
+         */
+        if( nPlanarConfig == PLANARCONFIG_SEPARATE || iSample == 0 )
+        {
+            if( TIFFIsTiled(hTIFF) )
+            {
+                TIFFReadEncodedTile( hTIFF,
+                                     TIFFComputeTile(hTIFF, nSXOff, nSYOff,
+                                                     0, iSample ),
+                                     pabySrcTile,
+                                     TIFFTileSize(hTIFF));
+            }
+            else
+            {
+                TIFFReadEncodedStrip( hTIFF,
+                                      TIFFComputeStrip(hTIFF, nSYOff, iSample),
+                                      pabySrcTile,
+                                      TIFFStripSize(hTIFF) );
+            }
+        }
+
+        /*        
+         * Loop over destination overview layers
+         */
+        for( iOverview = 0; iOverview < nOverviews; iOverview++ )
+        {
+            RawBlockedImage *poRBI = papoRawBIs[iOverview*nSamples + iSample];
+            GByte	*pabyOTile;
+            int	nTXOff, nTYOff, nOXOff, nOYOff, nOMult;
+            int	nOBlockXSize = poRBI->GetBlockXSize();
+            int	nOBlockYSize = poRBI->GetBlockYSize();
+            int	nSkewBits, nSampleByteOffset; 
+
+            /*
+             * Fetch the destination overview tile
+             */
+            nOMult = panOvList[iOverview];
+            nOXOff = (nSXOff/nOMult) / nOBlockXSize;
+            nOYOff = (nSYOff/nOMult) / nOBlockYSize;
+            pabyOTile = poRBI->GetTileForUpdate( nOXOff, nOYOff );
+                
+            /*
+             * Establish the offset into this tile at which we should
+             * start placing data.
+             */
+            nTXOff = (nSXOff - nOXOff*nOMult*nOBlockXSize) / nOMult;
+            nTYOff = (nSYOff - nOYOff*nOMult*nOBlockYSize) / nOMult;
+
+            /*
+             * Figure out the skew (extra space between ``our samples'') and
+             * the byte offset to the first sample.
+             */
+            CPLAssert( (nBitsPerPixel % 8) == 0 );
+            if( nPlanarConfig == PLANARCONFIG_SEPARATE )
+            {
+                nSkewBits = 0;
+                nSampleByteOffset = 0;
+            }
+            else
+            {
+                nSkewBits = nBitsPerPixel * (nSamples-1);
+                nSampleByteOffset = (nBitsPerPixel/8) * iSample;
+            }
+            
+            /*
+             * Perform the downsampling.
+             */
+#ifdef DBMALLOC
+            malloc_chain_check( 1 );
+#endif
+            TIFF_DownSample( pabySrcTile + nSampleByteOffset,
+                             nBlockXSize, nBlockYSize,
+                             nSkewBits, nBitsPerPixel, pabyOTile,
+                             poRBI->GetBlockXSize(),
+                             poRBI->GetBlockYSize(),
+                             nTXOff, nTYOff,
+                             nOMult );
+#ifdef DBMALLOC
+            malloc_chain_check( 1 );
+#endif            
         }
     }
 }
@@ -213,8 +343,9 @@ void TIFF_BuildOverviews( const char * pszTIFFFilename,
 {
     RawBlockedImage	**papoRawBIs;
     uint32		nXSize, nYSize, nBlockXSize, nBlockYSize;
-    uint16		nBitsPerPixel, nPhotometric, nCompressFlag;
-    int			bTiled, nSXOff, nSYOff, i;
+    uint16		nBitsPerPixel, nPhotometric, nCompressFlag, nSamples,
+                        nPlanarConfig;
+    int			bTiled, nSXOff, nSYOff, i, iSample;
     GByte		*pabySrcTile;
     TIFF		*hTIFF;
     GUInt16		*panRedMap, *panGreenMap, *panBlueMap;
@@ -233,6 +364,8 @@ void TIFF_BuildOverviews( const char * pszTIFFFilename,
     TIFFGetField( hTIFF, TIFFTAG_IMAGELENGTH, &nYSize );
 
     TIFFGetField( hTIFF, TIFFTAG_BITSPERSAMPLE, &nBitsPerPixel );
+    TIFFGetField( hTIFF, TIFFTAG_SAMPLESPERPIXEL, &nSamples );
+    TIFFGetField( hTIFF, TIFFTAG_PLANARCONFIG, &nPlanarConfig );
 
     TIFFGetField( hTIFF, TIFFTAG_PHOTOMETRIC, &nPhotometric );
     TIFFGetField( hTIFF, TIFFTAG_COMPRESSION, &nCompressFlag );
@@ -289,7 +422,9 @@ void TIFF_BuildOverviews( const char * pszTIFFFilename,
 /* -------------------------------------------------------------------- */
 /*      Initialize the overview raw layers                              */
 /* -------------------------------------------------------------------- */
-    papoRawBIs = (RawBlockedImage **) CPLCalloc(nOverviews,sizeof(void*));
+    papoRawBIs = (RawBlockedImage **)
+        CPLCalloc(nOverviews*nSamples,sizeof(void*));
+
     for( i = 0; i < nOverviews; i++ )
     {
         int	nOXSize, nOYSize, nOBlockXSize, nOBlockYSize;
@@ -309,9 +444,13 @@ void TIFF_BuildOverviews( const char * pszTIFFFilename,
                 nOBlockYSize = nOBlockYSize + 16 - (nOBlockYSize % 16);
         }
 
-        papoRawBIs[i] = new RawBlockedImage( nOXSize, nOYSize,
-                                             nOBlockXSize, nOBlockYSize,
-                                             nBitsPerPixel );
+        for( iSample = 0; iSample < nSamples; iSample++ )
+        {
+            papoRawBIs[i*nSamples + iSample] =
+                new RawBlockedImage( nOXSize, nOYSize,
+                                     nOBlockXSize, nOBlockYSize,
+                                     nBitsPerPixel );
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -330,63 +469,15 @@ void TIFF_BuildOverviews( const char * pszTIFFFilename,
     {
         for( nSXOff = 0; nSXOff < (int) nXSize; nSXOff += nBlockXSize )
         {
-            int		iOverview;
-
             /*
-             * Read the source tile/strip
+             * Read and resample into the various overview images.
              */
-            if( bTiled )
-            {
-                TIFFReadEncodedTile( hTIFF,
-                                     TIFFComputeTile(hTIFF, nSXOff, nSYOff,
-                                                     0, 0 ),
-                                     pabySrcTile,
-                                     TIFFTileSize(hTIFF));
-            }
-            else
-            {
-                TIFFReadEncodedStrip( hTIFF, nSYOff / nBlockYSize,
-                                      pabySrcTile,
-                                      TIFFTileSize(hTIFF) );
-            }
-
-            /*
-             * Loop over destination overview layers
-             */
-            for( iOverview = 0; iOverview < nOverviews; iOverview++ )
-            {
-                RawBlockedImage *poRBI = papoRawBIs[iOverview];
-                GByte	*pabyOTile;
-                int	nTXOff, nTYOff, nOXOff, nOYOff, nOMult;
-                int	nOBlockXSize = poRBI->GetBlockXSize();
-                int	nOBlockYSize = poRBI->GetBlockYSize();
-
-                /*
-                 * Fetch the destination overview tile
-                 */
-                nOMult = panOvList[iOverview];
-                nOXOff = (nSXOff/nOMult) / nOBlockXSize;
-                nOYOff = (nSYOff/nOMult) / nOBlockYSize;
-                pabyOTile = poRBI->GetTileForUpdate( nOXOff, nOYOff );
-                
-                /*
-                 * Establish the offset into this tile at which we should
-                 * start placing data.
-                 */
-                nTXOff = (nSXOff - nOXOff*nOMult*nOBlockXSize) / nOMult;
-                nTYOff = (nSYOff - nOYOff*nOMult*nOBlockYSize) / nOMult;
-
-                /*
-                 * Perform the downsampling.
-                 */
-                TIFF_DownSample( pabySrcTile, nBlockXSize, nBlockYSize,
-                                 nBitsPerPixel,
-                                 pabyOTile,
-                                 poRBI->GetBlockXSize(),
-                                 poRBI->GetBlockYSize(),
-                                 nTXOff, nTYOff,
-                                 nOMult );
-            }
+            
+            TIFF_ProcessFullResBlock( hTIFF, nPlanarConfig,
+                                      nOverviews, panOvList,
+                                      nBitsPerPixel, nSamples, papoRawBIs,
+                                      nSXOff, nSYOff, pabySrcTile,
+                                      nBlockXSize, nBlockYSize );
         }
     }
 
@@ -411,8 +502,8 @@ void TIFF_BuildOverviews( const char * pszTIFFFilename,
     {
         for( i = 0; i < nOverviews; i++ )
         {
-            TIFF_WriteOverview( hTIFF, papoRawBIs[i], bTiled,
-                                nCompressFlag, nPhotometric,
+            TIFF_WriteOverview( hTIFF, nSamples, papoRawBIs + i*nSamples,
+                                bTiled, nCompressFlag, nPhotometric,
                                 panRedMap, panGreenMap, panBlueMap );
         }
         
@@ -422,7 +513,7 @@ void TIFF_BuildOverviews( const char * pszTIFFFilename,
 /* -------------------------------------------------------------------- */
 /*      Cleanup the rawblockedimage files.                              */
 /* -------------------------------------------------------------------- */
-    for( i = 0; i < nOverviews; i++ )
+    for( i = 0; i < nOverviews*nSamples; i++ )
     {
         delete papoRawBIs[i];
     }
