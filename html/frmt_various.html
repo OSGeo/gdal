@@ -136,6 +136,25 @@ This driver may be sufficient to read GTopo 30 data, and Geospot products.<p>
 
 NOTE: Implemented as <tt>gdal/frmts/raw/ehdrdataset.cpp</tt>.<p>
 
+<h2><a name="ENVI">ENVI - ENVI .hdr Labelled Raster</h2>
+
+GDAL supports some variations of raw raster files with associated ENVI
+style .hdr files describing the format.  To select an existing ENVI raster
+file select the binary file containing the data (as opposed to the .hdr 
+file), and GDAL will find the .hdr file by replacing the dataset extension
+with .hdr.<p>
+
+GDAL should support reading bil, bip and bsq interleaved formats, and
+the 8bit, 16bit signed, 16bit unsigned, and 32bit floating point pixel types.
+There is limited support for recognising map_info keywords with the 
+coordinate system and georeferencing.  In particular, UTM and State Plane 
+should work.<p>
+
+At this time there is no support for creating ENVI labelled dataset.<p>
+
+
+NOTE: Implemented as <tt>gdal/frmts/raw/envidataset.cpp</tt>.<p>
+
 <h2><a name="Envisat">Envisat -- Envisat Image Product</h2>
 
 GDAL supports the Envisat product format for read access.  All sample
