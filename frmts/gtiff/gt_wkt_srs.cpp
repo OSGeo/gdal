@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.33  2002/11/30 17:36:41  warmerda
+ * added support for writing ellipsoid and citation
+ *
  * Revision 1.32  2002/11/30 16:44:43  warmerda
  * fixed to set authority info on various nodes
  *
@@ -309,6 +312,9 @@ char *GTIFGetOGISDefn( GTIFDefn * psDefn )
     if( psDefn->Datum != KvUserDefined )
         oSRS.SetAuthority( "DATUM", "EPSG", psDefn->Datum );
 
+    if( psDefn->Ellipsoid != KvUserDefined )
+        oSRS.SetAuthority( "SPHEROID", "EPSG", psDefn->Ellipsoid );
+
     CPLFree( pszGeogName );
     CPLFree( pszDatumName );
     CPLFree( pszPMName );
@@ -571,6 +577,7 @@ int GTIFSetFromOGISDefn( GTIF * psGTIF, const char *pszOGCWKT )
 {
     OGRSpatialReference *poSRS;
     int		nPCS = KvUserDefined;
+    OGRErr      eErr;
 
     GTIFKeySet(psGTIF, GTRasterTypeGeoKey, TYPE_SHORT, 1,
                RasterPixelIsArea);
@@ -584,6 +591,34 @@ int GTIFSetFromOGISDefn( GTIF * psGTIF, const char *pszOGCWKT )
     if( poSRS->importFromWkt((char **) &pszOGCWKT) != OGRERR_NONE )
         return FALSE;
 
+/* -------------------------------------------------------------------- */
+/*      Get the ellipsoid definition.                                   */
+/* -------------------------------------------------------------------- */
+    short nSpheroid = KvUserDefined;
+    double dfSemiMajor, dfInvFlattening;
+
+    if( poSRS->GetAuthorityName("PROJCS|GEOGCS|DATUM|SPHEROID") != NULL
+        && EQUAL(poSRS->GetAuthorityName("PROJCS|GEOGCS|DATUM|SPHEROID"),
+                 "EPSG")) 
+    {
+        nSpheroid = 
+            atoi(poSRS->GetAuthorityCode("PROJCS|GEOGCS|DATUM|SPHEROID"));
+    }
+    else if( poSRS->GetAuthorityName("GEOGCS|DATUM|SPHEROID") != NULL
+            && EQUAL(poSRS->GetAuthorityName("GEOGCS|DATUM|SPHEROID"),"EPSG")) 
+    {
+        nSpheroid = 
+            atoi(poSRS->GetAuthorityCode("GEOGCS|DATUM|SPHEROID"));
+    }
+    
+    dfSemiMajor = poSRS->GetSemiMajor( &eErr );
+    dfInvFlattening = poSRS->GetInvFlattening( &eErr );
+    if( eErr != OGRERR_NONE )
+    {
+        dfSemiMajor = 0.0;
+        dfInvFlattening = 0.0;
+    }
+    
 /* -------------------------------------------------------------------- */
 /*      Get the Datum so we can special case a few PCS codes.           */
 /* -------------------------------------------------------------------- */
@@ -1365,6 +1400,17 @@ int GTIFSetFromOGISDefn( GTIF * psGTIF, const char *pszOGCWKT )
     }
     
 /* -------------------------------------------------------------------- */
+/*      Try to write a citation from the main coordinate system         */
+/*      name.                                                           */
+/* -------------------------------------------------------------------- */
+    if( poSRS->GetRoot() != NULL
+        && poSRS->GetRoot()->GetChild(0) != NULL )
+    {
+        GTIFKeySet( psGTIF, GTCitationGeoKey, TYPE_ASCII, 0, 
+                    poSRS->GetRoot()->GetChild(0)->GetValue() );
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Try to identify the GCS/datum, scanning the EPSG datum file for */
 /*      a match.                                                        */
 /* -------------------------------------------------------------------- */
@@ -1390,8 +1436,24 @@ int GTIFSetFromOGISDefn( GTIF * psGTIF, const char *pszOGCWKT )
             GTIFKeySet( psGTIF, GeogGeodeticDatumGeoKey, TYPE_SHORT,
                         1, nDatum );
         }
+        else if( nSpheroid != KvUserDefined )
+        {
+            GTIFKeySet( psGTIF, GeogEllipsoidGeoKey, TYPE_SHORT, 1, 
+                        nSpheroid );
+        }
+        else if( dfSemiMajor != 0.0 )
+        {
+            GTIFKeySet( psGTIF, GeogEllipsoidGeoKey, TYPE_SHORT, 1, 
+                        KvUserDefined );
+            GTIFKeySet( psGTIF, GeogSemiMajorAxisGeoKey, TYPE_DOUBLE, 1,
+                        dfSemiMajor );
+            GTIFKeySet( psGTIF, GeogInvFlatteningGeoKey, TYPE_DOUBLE, 1,
+                        dfInvFlattening );
+        }
         else if( poSRS->GetAttrValue("DATUM") != NULL
-                 && !EQUAL(poSRS->GetAttrValue("DATUM"),"unknown") )
+                 && strstr(poSRS->GetAttrValue("DATUM"),"unknown") == NULL
+                 && strstr(poSRS->GetAttrValue("DATUM"),"unnamed") == NULL )
+                 
         {
             CPLError( CE_Warning, CPLE_AppDefined,
                       "Couldn't translate `%s' to a GeoTIFF datum.\n",
