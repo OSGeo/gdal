@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2003/03/02 05:25:59  warmerda
+ * added some source nodata support
+ *
  * Revision 1.4  2003/02/22 02:04:11  warmerda
  * added dfMaxError to reproject function
  *
@@ -65,12 +68,18 @@ typedef enum {
 } GDALResampleAlg;
 
 typedef int 
-(*GDALMaskFunc)( void *pDensityMaskArg,
+(*GDALMaskFunc)( void *pMaskFuncArg,
                  int nBandCount, GDALDataType eType, 
                  int nXOff, int nYOff, 
                  int nXSize, int nYSize,
                  GByte **papabyImageData, 
                  int bMaskIsFloat, void *pMask );
+
+CPLErr GDALWarpNoDataMasker( void *pMaskFuncArg, int nBandCount, 
+                             GDALDataType eType,
+                             int nXOff, int nYOff, int nXSize, int nYSize,
+                             GByte **papabyImageData, int bMaskIsFloat,
+                             void *pValidityMask );
 
 /************************************************************************/
 /*                           GDALWarpOptions                            */
@@ -253,6 +262,9 @@ private:
                                          int nDstXSize, int nDstYSize,
                                          int *pnSrcXOff, int *pnSrcYOff, 
                                          int *pnSrcXSize, int *pnSrcYSize );
+
+    CPLErr          CreateKernelMask( GDALWarpKernel *, int iBand, 
+                                      const char *pszType );
 
 public:
                     GDALWarpOperation();

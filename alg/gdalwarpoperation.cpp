@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2003/03/02 05:25:59  warmerda
+ * added some source nodata support
+ *
  * Revision 1.4  2003/02/22 02:05:20  warmerda
  * added defaulting of band mapping, added warp options
  *
@@ -628,8 +631,8 @@ CPLErr GDALWarpOperation::WarpRegion( int nDstXOff, int nDstYOff,
             }
             else
             {
-                adfInitRealImag[0] = atof(pszInitDest);
-                adfInitRealImag[1] = 0.0;
+                CPLStringToComplex( pszInitDest, 
+                                    adfInitRealImag + 0, adfInitRealImag + 1);
             }
 
             pBandData = ((GByte *) pDstBuffer) + iBand * nBandSize;
@@ -642,9 +645,15 @@ CPLErr GDALWarpOperation::WarpRegion( int nDstXOff, int nDstYOff,
             {
                 memset( pBandData, 0, nBandSize );
             }
-            else
+            else if( adfInitRealImag[1] == 0.0 )
             {
                 GDALCopyWords( &adfInitRealImag, GDT_Float64, 0, 
+                               pBandData,psOptions->eWorkingDataType,nWordSize,
+                               nDstXSize * nDstYSize );
+            }
+            else
+            {
+                GDALCopyWords( &adfInitRealImag, GDT_CFloat64, 0, 
                                pBandData,psOptions->eWorkingDataType,nWordSize,
                                nDstXSize * nDstYSize );
             }
@@ -850,8 +859,36 @@ CPLErr GDALWarpOperation::WarpRegionToBuffer(
 /*      Eventually we need handling for a whole bunch of the            */
 /*      validity and density masks here.                                */
 /* -------------------------------------------------------------------- */
+    
     /* TODO */
     
+/* -------------------------------------------------------------------- */
+/*      If we have source nodata values create, or update the           */
+/*      validity mask.                                                  */
+/* -------------------------------------------------------------------- */
+    if( psOptions->padfSrcNoDataReal != NULL )
+    {
+        for( i = 0; i < psOptions->nBandCount && eErr == CE_None; i++ )
+        {
+            eErr = CreateKernelMask( &oWK, i, "BandSrcValid" );
+            if( eErr == CE_None )
+            {
+                double adfNoData[2];
+
+                adfNoData[0] = psOptions->padfSrcNoDataReal[i];
+                adfNoData[1] = psOptions->padfSrcNoDataImag[i];
+
+                eErr = 
+                    GDALWarpNoDataMasker( adfNoData, 1, 
+                                          psOptions->eWorkingDataType,
+                                          oWK.nSrcXOff, oWK.nSrcYOff, 
+                                          oWK.nSrcXSize, oWK.nSrcYSize,
+                                          &(oWK.papabySrcImage[i]),
+                                          FALSE, oWK.papanBandSrcValid[i] );
+            }
+        }
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Perform the warp.                                               */
 /* -------------------------------------------------------------------- */
@@ -872,6 +909,107 @@ CPLErr GDALWarpOperation::WarpRegionToBuffer(
     
     return eErr;
 }
+
+/************************************************************************/
+/*                          CreateKernelMask()                          */
+/*                                                                      */
+/*      If mask does not yet exist, create it.  Supported types are     */
+/*      the name of the variable in question.  That is                  */
+/*      "BandSrcValid", "UnifiedSrcValid", "UnifiedSrcDensity",         */
+/*      "DstValid", and "DstDensity".                                   */
+/************************************************************************/
+
+CPLErr GDALWarpOperation::CreateKernelMask( GDALWarpKernel *poKernel,
+                                            int iBand, const char *pszType )
+
+{
+    void **ppMask;
+    int  nXSize, nYSize, nBitsPerPixel, nDefault;
+
+/* -------------------------------------------------------------------- */
+/*      Get particulars of mask to be updated.                          */
+/* -------------------------------------------------------------------- */
+    if( EQUAL(pszType,"BandSrcValid") )
+    {
+        if( poKernel->papanBandSrcValid == NULL )
+            poKernel->papanBandSrcValid = (GUInt32 **)
+                CPLCalloc( sizeof(void*),poKernel->nBands);
+                
+        ppMask = (void **) &(poKernel->papanBandSrcValid[iBand]);
+        nXSize = poKernel->nSrcXSize;
+        nYSize = poKernel->nSrcYSize;
+        nBitsPerPixel = 1;
+        nDefault = 0xff;
+    }
+    else if( EQUAL(pszType,"UnifiedSrcValid") )
+    {
+        ppMask = (void **) &(poKernel->panUnifiedSrcValid);
+        nXSize = poKernel->nSrcXSize;
+        nYSize = poKernel->nSrcYSize;
+        nBitsPerPixel = 1;
+        nDefault = 0xff;
+    }
+    else if( EQUAL(pszType,"UnifiedSrcDensity") )
+    {
+        ppMask = (void **) &(poKernel->pafUnifiedSrcDensity);
+        nXSize = poKernel->nSrcXSize;
+        nYSize = poKernel->nSrcYSize;
+        nBitsPerPixel = 32;
+        nDefault = 0;
+    }
+    else if( EQUAL(pszType,"DstValid") )
+    {
+        ppMask = (void **) &(poKernel->panDstValid);
+        nXSize = poKernel->nDstXSize;
+        nYSize = poKernel->nDstYSize;
+        nBitsPerPixel = 1;
+        nDefault = 0xff;
+    }
+    else if( EQUAL(pszType,"DstDensity") )
+    {
+        ppMask = (void **) &(poKernel->pafDstDensity);
+        nXSize = poKernel->nDstXSize;
+        nYSize = poKernel->nDstYSize;
+        nBitsPerPixel = 32;
+        nDefault = 0;
+    }
+    else
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Internal error in CreateKernelMask(%s).",
+                  pszType );
+        return CE_Failure;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Allocate if needed.                                             */
+/* -------------------------------------------------------------------- */
+    if( *ppMask == NULL )
+    {
+        int nBytes;
+
+        if( nBitsPerPixel == 32 )
+            nBytes = nXSize * nYSize * 4;
+        else
+            nBytes = (nXSize * nYSize + 7) / 8;
+
+        *ppMask = VSIMalloc( nBytes );
+
+        if( *ppMask == NULL )
+        {
+            CPLError( CE_Failure, CPLE_OutOfMemory, 
+                      "Out of memory allocating %d bytes for %s mask.", 
+                      nBytes, pszType );
+            return CE_Failure;
+        }
+
+        memset( *ppMask, nDefault, nBytes );
+    }
+
+    return CE_None;
+}
+
+
 
 /************************************************************************/
 /*                        ComputeSourceWindow()                         */
