@@ -3,7 +3,7 @@ GDAL_ROOT	=	$(shell (cd ..; pwd))
 include ../GDALmake.opt
 
 CPPFLAGS	+=	$(GDAL_INCLUDE) -I$(GDAL_ROOT)/frmts -I$(GDAL_ROOT)/alg
-DEP_LIBS	=	$(GDAL_LIB) $(XTRAOBJ)
+DEP_LIBS	=	$(EXE_DEP_LIBS) $(XTRAOBJ)
 BIN_LIST	=	gdalinfo$(EXE) gdal_translate$(EXE) gdaladdo$(EXE) \
 			gdalwarp$(EXE)
 
@@ -14,38 +14,38 @@ lib-depend:
 	(cd ../port ; $(MAKE) )
 
 gdalinfo$(EXE):	gdalinfo.o  $(DEP_LIBS)
-	$(CXX) $(LNK_FLAGS) gdalinfo.o $(XTRAOBJ) \
+	$(LD) $(LNK_FLAGS) gdalinfo.o $(XTRAOBJ) \
 		$(CONFIG_LIBS) -o gdalinfo$(EXE)
 
 gdal_translate$(EXE):	gdal_translate.o  $(DEP_LIBS)
-	$(CXX) $(LNK_FLAGS) gdal_translate.o $(XTRAOBJ) \
+	$(LD) $(LNK_FLAGS) gdal_translate.o $(XTRAOBJ) \
 		$(CONFIG_LIBS) -o gdal_translate$(EXE)
 
 gdaladdo$(EXE):	gdaladdo.o  $(DEP_LIBS)
-	$(CXX) $(LNK_FLAGS) gdaladdo.o $(XTRAOBJ) \
+	$(LD) $(LNK_FLAGS) gdaladdo.o $(XTRAOBJ) \
 		$(CONFIG_LIBS) -o gdaladdo$(EXE)
 
 gdal2raw$(EXE):	gdal2raw.o $(DEP_LIBS)
-	$(CXX) $(LNK_FLAGS) gdal2raw.o $(XTRAOBJ) $(CONFIG_LIBS) \
+	$(LD) $(LNK_FLAGS) gdal2raw.o $(XTRAOBJ) $(CONFIG_LIBS) \
 		-o gdal2raw$(EXE)
 
 gdalwarp$(EXE): gdalwarp.o $(DEP_LIBS)
-	$(CXX) $(LNK_FLAGS) gdalwarp.o $(XTRAOBJ) \
+	$(LD) $(LNK_FLAGS) gdalwarp.o $(XTRAOBJ) \
 		$(CONFIG_LIBS) -o gdalwarp$(EXE)
 
 gdal_chksum$(EXE):	gdal_chksum.o $(DEP_LIBS)
-	$(CXX) $(LNK_FLAGS) gdal_chksum.o $(CONFIG_LIBS) -o gdal_chksum$(EXE)
+	$(LD) $(LNK_FLAGS) gdal_chksum.o $(CONFIG_LIBS) -o gdal_chksum$(EXE)
 
 gdaltindex$(EXE):	gdaltindex.o $(DEP_LIBS)
-	$(CXX) $(LNK_FLAGS) gdaltindex.o $(XTRAOBJ) $(CONFIG_LIBS) \
+	$(LD) $(LNK_FLAGS) gdaltindex.o $(XTRAOBJ) $(CONFIG_LIBS) \
 		-o gdaltindex$(EXE)
 
 test1$(EXE):	test1.o $(DEP_LIBS)
-	$(CXX) $(LNK_FLAGS) test1.o $(XTRAOBJ) $(CONFIG_LIBS) \
+	$(LD) $(LNK_FLAGS) test1.o $(XTRAOBJ) $(CONFIG_LIBS) \
 		 -o test1$(EXE)
 
 gdalwarptest$(EXE): gdalwarptest.o $(DEP_LIBS)
-	$(CXX) $(LNK_FLAGS) gdalwarptest.o $(XTRAOBJ) \
+	$(LD) $(LNK_FLAGS) gdalwarptest.o $(XTRAOBJ) \
 		$(CONFIG_LIBS) -o gdalwarptest$(EXE)
 
 clean:
