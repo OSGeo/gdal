@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2003/03/13 20:39:25  dron
+ * Improved block initialization logic in IRasterIO().
+ *
  * Revision 1.11  2003/01/15 21:30:48  warmerda
  * some rounding tweaks when adjusting output size in GetSrcDstWindow
  *
@@ -877,6 +880,7 @@ void VRTRasterBand::Initialize( int nXSize, int nYSize )
     nBlockXSize = MIN(128,nXSize);
     nBlockYSize = MIN(128,nYSize);
 
+    bEqualAreas = FALSE;
     bNoDataValueSet = FALSE;
     dfNoDataValue = -10000.0;
     poColorTable = NULL;
@@ -926,17 +930,23 @@ CPLErr VRTRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 /*      Initialize the buffer to some background value. Use the         */
 /*      nodata value if available.                                      */
 /* -------------------------------------------------------------------- */
-    double dfWriteValue = 0.0;
-    int    iLine;
-
-    if( bNoDataValueSet )
-        dfWriteValue = dfNoDataValue;
-    
-    for( iLine = 0; iLine < nBufYSize; iLine++ )
+    if ( nPixelSpace == GDALGetDataTypeSize(eBufType)/8 &&
+         (!bNoDataValueSet || dfNoDataValue == 0) )
+        memset( pData, 0, nBufXSize * nBufYSize * nPixelSpace );
+    else if ( !bEqualAreas || bNoDataValueSet )
     {
-        GDALCopyWords( &dfWriteValue, GDT_Float64, 0, 
-                       ((GByte *)pData) + nLineSpace * iLine, 
-                       eBufType, nPixelSpace, nBufXSize );
+        double dfWriteValue = 0.0;
+        int    iLine;
+
+        if( bNoDataValueSet )
+            dfWriteValue = dfNoDataValue;
+        
+        for( iLine = 0; iLine < nBufYSize; iLine++ )
+        {
+            GDALCopyWords( &dfWriteValue, GDT_Float64, 0, 
+                           ((GByte *)pData) + nLineSpace * iLine, 
+                           eBufType, nPixelSpace, nBufXSize );
+        }
     }
     
 /* -------------------------------------------------------------------- */
@@ -1044,6 +1054,13 @@ CPLErr VRTRasterBand::AddSimpleSource( GDALRasterBand *poSrcBand,
     poSimpleSource->nDstYSize = nDstYSize;
     
     poSimpleSource->fNoDataValue = (float) dfNoDataValue;
+
+/* -------------------------------------------------------------------- */
+/*      Default source and dest rectangles.                             */
+/* -------------------------------------------------------------------- */
+    if ( nSrcXOff == nDstXOff && nSrcYOff == nDstYOff &&
+         nSrcXSize == nDstXSize && nSrcYSize == nRasterYSize )
+        bEqualAreas = TRUE;
 
 /* -------------------------------------------------------------------- */
 /*      If we can get the associated GDALDataset, add a reference to it.*/
