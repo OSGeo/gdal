@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2003/10/15 20:22:16  warmerda
+ * removed C++ contour definitions
+ *
  * Revision 1.13  2003/10/14 15:25:01  warmerda
  * added contour stuff
  *
@@ -181,104 +184,26 @@ GDALSuggestedWarpOutput( GDALDatasetH hSrcDS,
                          double *padfGeoTransformOut, 
                          int *pnPixels, int *pnLines );
 
-CPL_C_END
-
 /* -------------------------------------------------------------------- */
 /*      Contour Line Generation                                         */
 /* -------------------------------------------------------------------- */
 
-#ifdef __cplusplus
+typedef CPLErr (*GDALContourWriter)( double dfLevel, int nPoints,
+                                     double *padfX, double *padfY, void * );
 
-class GDALContourItem
+typedef void *GDALContourGeneratorH;
+
+GDALContourGeneratorH CPL_DLL
+GDAL_CG_Create( int nWidth, int nHeight, 
+                int bNoDataSet, double dfNoDataValue,
+                double dfContourInterval, double dfContourBase,
+                GDALContourWriter pfnWriter, void *pCBData );
+CPLErr CPL_DLL GDAL_CG_FeedLine( GDALContourGeneratorH hCG, 
+                                 double *padfScanline );
+void CPL_DLL GDAL_CG_Destroy( GDALContourGeneratorH hCG );
+
+typedef struct 
 {
-public:
-    int    bRecentlyAccessed;
-    double dfLevel;
-
-    int  nPoints;
-    int  nMaxPoints;
-    double *padfX;
-    double *padfY;
-
-    GDALContourItem( double dfLevel );
-    ~GDALContourItem();
-
-    int    AddSegment( double dfXStart, double dfYStart,
-                       double dfXEnd, double dfYEnd );
-    void   MakeRoomFor( int );
-    int    Merge( GDALContourItem * );
-};
-
-class GDALContourNode
-{
-    double dfMinLevel;
-    double dfMaxLevel;
-
-    double dfMinX;
-    double dfMaxX;
-
-    GDALContourItem  *poContour;
-    GDALContourNode  *poLeft;
-    GDALContourNode  *poRight;
-    GDALContourNode  *poParent;
-};
-
-typedef CPLErr (*GDALContourWriter)( GDALContourItem *, void * );
-
-class GDALContourGenerator
-{
-    int    nWidth;
-    int    nHeight;
-    int    iLine;
-
-    double *padfLastLine;
-    double *padfThisLine;
-
-    int     nActiveContours;
-    int     nMaxContours;
-    GDALContourItem **papoContours;
-
-    int     bNoDataActive;
-    double  dfNoDataValue;
-
-    double  dfContourInterval;
-    double  dfContourOffset;
-
-    GDALContourWriter pfnWriter;
-    void   *pWriterCBData;
-
-    CPLErr AddSegment( double dfLevel, 
-                       double dfXStart, double dfYStart,
-                       double dfXEnd, double dfYEnd );
-
-    CPLErr ProcessPixel( int iPixel );
-    CPLErr ProcessRect( double, double, double, 
-                        double, double, double, 
-                        double, double, double,
-                        double, double, double );
-
-    void   Intersect( double, double, double, 
-                      double, double, double, 
-                      double, double, int *, double *, double * );
-
-public:
-    GDALContourGenerator( int nWidth, int nHeight,
-                          GDALContourWriter pfnWriter, void *pWriterCBData );
-    ~GDALContourGenerator();
-
-    void                SetNoData( double dfNoDataValue );
-    void                SetContourLevels( double dfContourInterval, 
-                                          double dfContourOffset = 0.0 )
-        { this->dfContourInterval = dfContourInterval;
-          this->dfContourOffset = dfContourOffset; }
-
-    CPLErr 		FeedLine( double *padfScanline );
-    CPLErr              EjectContours( int bOnlyUnused = FALSE );
-};
-
-class OGRContourWriterInfo
-{
-public:
     void   *hLayer;
 
     double adfGeoTransform[6];
@@ -286,14 +211,9 @@ public:
     int    nElevField;
     int    nIDField;
     int    nNextID;
-};
+} OGRContourWriterInfo;
 
-CPLErr OGRContourWriter( GDALContourItem *, void *pInfo );
-
-
-#endif /* def __cplusplus */
-
-CPL_C_START
+CPLErr OGRContourWriter( double, int, double *, double *, void *pInfo );
 
 CPLErr GDALContourGenerate( GDALRasterBandH hBand, 
                             double dfContourInterval, double dfContourBase,
