@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2005/01/04 03:43:41  fwarmerdam
+ * added support for creating and destroying spatial indexes
+ *
  * Revision 1.15  2005/01/03 22:26:21  fwarmerdam
  * updated to use spatial indexing
  *
@@ -131,6 +134,10 @@ class OGRShapeLayer : public OGRLayer
     int                 CheckForQIX();
 
   public:
+    OGRErr              CreateSpatialIndex( int nMaxDepth );
+    OGRErr              DropSpatialIndex();
+
+  public:
                         OGRShapeLayer( const char * pszName,
                                        SHPHandle hSHP, DBFHandle hDBF,
                                        OGRSpatialReference *poSRS,
@@ -176,7 +183,7 @@ class OGRShapeDataSource : public OGRDataSource
     int                 bDSUpdate;
 
     int                 bSingleNewFile;
-    
+
   public:
                         OGRShapeDataSource();
                         ~OGRShapeDataSource();
@@ -193,6 +200,10 @@ class OGRShapeDataSource : public OGRDataSource
                                       OGRSpatialReference * = NULL,
                                       OGRwkbGeometryType = wkbUnknown,
                                       char ** = NULL );
+
+    virtual OGRLayer    *ExecuteSQL( const char *pszStatement,
+                                     OGRGeometry *poSpatialFilter,
+                                     const char *pszDialect );
 
     int                 TestCapability( const char * );
 };
