@@ -522,15 +522,15 @@ dnl ---------------------------------------------------------------------------
 dnl Select a JasPer Library to use, or disable driver.
 dnl ---------------------------------------------------------------------------
 
-AC_ARG_WITH(jasper,[  --with-jasper[=ARG]        Include JPEG-2000 support via JasPer library (ARG=path)],,)
+AC_ARG_WITH(jasper,[  --with-jasper[=ARG]     Include JPEG-2000 support via JasPer library (ARG=path)],,)
 
-if test "$with_jpeg2000" = "no" ; then
+if test "$with_jasper" = "no" ; then
 
   HAVE_JASPER=no
 
   echo "jpeg2000 support disabled."
 
-elif test "$with_jpeg2000" = "yes" -o "$with_jpeg2000" = "" ; then
+elif test "$with_jasper" = "yes" -o "$with_jasper" = "" ; then
 
   AC_CHECK_LIB(jasper,jpc_decode,HAVE_JASPER=yes,HAVE_JASPER=no,)
   AC_CHECK_LIB(jasper,jp2_decode,HAVE_JASPER=yes,HAVE_JASPER=no,)
@@ -542,10 +542,10 @@ elif test "$with_jpeg2000" = "yes" -o "$with_jpeg2000" = "" ; then
 else
 
   HAVE_JASPER=yes
-  LIBS="-L$with_jpeg2000 -L$with_jpeg2000/lib -ljasper $LIBS"
-  EXTRA_INCLUDES="-I$with_jpeg2000 -I$with_jpeg2000/include $EXTRA_INCLUDES"
+  LIBS="-L$with_jasper -L$with_jasper/lib -ljasper $LIBS"
+  EXTRA_INCLUDES="-I$with_jasper -I$with_jasper/include $EXTRA_INCLUDES"
 
-  echo "using JasPer library from $with_jpeg2000."
+  echo "using JasPer library from $with_jasper."
 fi
 
 AC_SUBST(HAVE_JASPER,$HAVE_JASPER)
