@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2002/06/07 14:07:49  warmerda
+ * Default to doing a GDAL rather than APP build.
+ *
  * Revision 1.7  2002/05/24 21:29:26  warmerda
  * avoid warnings
  *
@@ -51,7 +54,7 @@
  *
  */
 
-#ifdef GDAL_BUILD
+#ifndef APP_BUILD
 #  include "cpl_conv.h"
 #  include "EnvisatFile.h"
 
