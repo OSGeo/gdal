@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2001/10/24 17:20:08  warmerda
+ * added destructor debug output
+ *
  * Revision 1.9  2001/10/22 21:29:50  warmerda
  * reworked to allow selecting a subset of fields
  *
@@ -263,6 +266,11 @@ BEGIN_COM_MAP(CSFRowsetImpl)
 	COM_INTERFACE_ENTRY(IRowset)
 END_COM_MAP()
 
+        virtual ~CSFRowsetImpl()
+        {
+            CPLDebug( "OGR_OLEDB", "~CSFRowsetImpl()" );
+        }
+
 	HRESULT FinalConstruct()
 	{
 		HRESULT hr = SFAccessorImpl<T>::FinalConstruct();
@@ -384,6 +392,9 @@ public CSFRowsetImpl< CSFRowset, CShapeFile, CSFCommand, CVirtualArray>
     int       ParseCommand( const char *, OGRLayer * );
     
 public:
+
+    virtual       ~CSFRowset();
+
     HRESULT Execute(DBPARAMS * pParams, LONG* pcRowsAffected);
 
     CSimpleArray<ATLCOLUMNINFO>		m_paColInfo;
