@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  1999/08/28 03:11:29  warmerda
+ * Register NTF format.  Improve error reporting.
+ *
  * Revision 1.2  1999/07/27 01:52:51  warmerda
  * close datasource when done
  *
@@ -58,6 +61,7 @@ int main( int nArgc, char ** papszArgv )
 /*      Register format(s).                                             */
 /* -------------------------------------------------------------------- */
     RegisterOGRShape();
+    RegisterOGRNTF();
 
 /* -------------------------------------------------------------------- */
 /*      Processing command line arguments.                              */
@@ -143,6 +147,8 @@ int main( int nArgc, char ** papszArgv )
             exit( 1 );
         }
 
+        printf( "INFO: Testing layer %s.\n",
+                poLayer->GetLayerDefn()->GetName() );
         TestOGRLayer( poLayer );
     }
 
@@ -151,6 +157,10 @@ int main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
     delete poDS;
 
+#ifdef DBMALLOC
+    malloc_dump(1);
+#endif
+    
     return 0;
 }
 
@@ -391,8 +401,22 @@ static void TestSpatialFilter( OGRLayer *poLayer )
     poLayer->ResetReading();
     poTargetFeature = poLayer->GetNextFeature();
 
-    if( poTargetFeature == NULL || poTargetFeature->GetGeometryRef() == NULL )
+    if( poTargetFeature == NULL )
+    {
+        printf( "INFO: Skipping Spatial Filter test for %s.\n"
+                "      No features in layer.\n",
+                poTargetFeature->GetDefnRef()->GetName() );
         return;
+    }
+
+    if( poTargetFeature->GetGeometryRef() == NULL )
+    {
+        printf( "INFO: Skipping Spatial Filter test for %s,\n"
+                "      target feature has no geometry.\n",
+                poTargetFeature->GetDefnRef()->GetName() );
+        delete poTargetFeature;
+        return;
+    }
 
     poTargetFeature->GetGeometryRef()->getEnvelope( &sEnvelope );
 
