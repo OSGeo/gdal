@@ -80,3 +80,9 @@ clean:
 	cd iso8211
 	nmake /NOLOGO /f makefile.vc clean
 
+
+html-install:
+	copy *.html $(HTMLDIR)
+	-for %d in ( $(DIRLIST) ) do \
+		copy %d\frmt_*.html $(HTMLDIR)
+	
