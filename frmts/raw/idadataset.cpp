@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2004/12/26 21:25:36  fwarmerdam
+ * avoid spurious opens
+ *
  * Revision 1.2  2004/12/26 17:37:46  fwarmerdam
  * fix unix/dos format
  *
@@ -133,6 +136,7 @@ IDARasterBand::~IDARasterBand()
 
 IDADataset::IDADataset()
 {
+    fpRaw = NULL;
 }
 
 /************************************************************************/
@@ -142,6 +146,8 @@ IDADataset::IDADataset()
 IDADataset::~IDADataset()
 
 {
+    if( fpRaw != NULL )
+        VSIFClose( fpRaw );
 }
 
 /************************************************************************/
@@ -155,6 +161,11 @@ GDALDataset *IDADataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Is this an IDA file?                                            */
 /* -------------------------------------------------------------------- */
     if( poOpenInfo->nHeaderBytes < 512 )
+        return NULL;
+
+    // For now only allow GA file till we get more specific 
+    // criteria to limit the format.
+    if( !EQUAL(CPLGetExtension(poOpenInfo->pszFilename),"GA") )
         return NULL;
 
 /* -------------------------------------------------------------------- */
