@@ -28,6 +28,10 @@
  * ****************************************************************************
  *
  * $Log$
+ * Revision 1.8  2000/02/18 03:52:16  warmerda
+ * Added support for setting the output band data type, but still does
+ * no scaling.
+ *
  * Revision 1.7  1999/10/21 13:21:49  warmerda
  * Added report of available formats.
  *
@@ -62,7 +66,8 @@
 static void Usage()
 
 {
-    printf( "Usage: gdal_translate [-of format] [-b band]\n"
+    printf( "Usage: gdal_translate [-ot {Byte/UInt16/UInt32/Int32/Float32/Float64}]\n"
+            "                      [-of format] [-b band]\n"
             "                      src_dataset dst_dataset\n" );
 }
 
@@ -81,6 +86,7 @@ int main( int argc, char ** argv )
     GDALDriverH		hDriver;
     int			*panBandList, nBandCount;
     double		adfGeoTransform[6];
+    GDALDataType	eOutputType = GDT_Unknown;
 
 /* -------------------------------------------------------------------- */
 /*      Handle command line arguments.                                  */
@@ -90,6 +96,28 @@ int main( int argc, char ** argv )
         if( EQUAL(argv[i],"-of") )
             pszFormat = argv[++i];
 
+        else if( EQUAL(argv[i],"-ot") )
+        {
+            int	iType;
+            
+            for( iType = 1; iType < GDT_TypeCount; iType++ )
+            {
+                if( GDALGetDataTypeName((GDALDataType)iType) != NULL
+                    && EQUAL(GDALGetDataTypeName((GDALDataType)iType),
+                             argv[i+1]) )
+                {
+                    eOutputType = (GDALDataType) iType;
+                }
+            }
+
+            if( eOutputType == GDT_Unknown )
+            {
+                printf( "Unknown output pixel type: %s\n", argv[i+1] );
+                Usage();
+                exit( 2 );
+            }
+            i++;
+        }
         else if( EQUAL(argv[i],"-b") )
             nSrcBand = atoi(argv[++i]);
             
@@ -174,11 +202,15 @@ int main( int argc, char ** argv )
         Usage();
         exit( 1 );
     }
+
+    if( eOutputType == GDT_Unknown )
+    {
+        hBand = GDALGetRasterBand( hDataset, panBandList[0] );
+        eOutputType = GDALGetRasterDataType(hBand);
+    }
     
-    hBand = GDALGetRasterBand( hDataset, panBandList[0] );
     hOutDS = GDALCreate( hDriver, pszDest, nRasterXSize, nRasterYSize,
-                         nBandCount,
-                         GDALGetRasterDataType(hBand), NULL );
+                         nBandCount, eOutputType, NULL );
     if( hOutDS == NULL )
     {
         printf( "GDALCreate() failed.\n" );
