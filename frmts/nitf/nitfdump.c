@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2002/12/03 04:43:54  warmerda
+ * lots of work
+ *
  * Revision 1.1  2002/12/02 06:09:29  warmerda
  * New
  *
@@ -49,7 +52,7 @@ int main( int nArgc, char ** papszArgv )
 
     if( nArgc < 2 )
     {
-        printf( "Usage: nitfdump <filename>\n" );
+        printf( "Usage: nitfdump <nitf_filename>\n" );
         exit( 1 );
     }
 
@@ -59,6 +62,31 @@ int main( int nArgc, char ** papszArgv )
     psFile = NITFOpen( papszArgv[1], FALSE );
     if( psFile == NULL )
         exit( 2 );
+
+/* -------------------------------------------------------------------- */
+/*      Dump first TRE tag if there are any.                            */
+/* -------------------------------------------------------------------- */
+    if( psFile->pachTRE != NULL )
+        printf( "File contains %d bytes of TRE data.  "
+                "The first tag is %6.6s.\n\n", 
+                psFile->nTREBytes, psFile->pachTRE );
+
+/* -------------------------------------------------------------------- */
+/*      Report info from location table, if found.                      */
+/* -------------------------------------------------------------------- */
+    if( psFile->nLocCount > 0 )
+    {
+        int i;
+        printf( "Location Table\n" );
+        for( i = 0; i < psFile->nLocCount; i++ )
+        {
+            printf( "  LocId=%d, Offset=%d, Size=%d\n", 
+                    psFile->pasLocations[i].nLocId,
+                    psFile->pasLocations[i].nLocOffset,
+                    psFile->pasLocations[i].nLocSize );
+        }
+        printf( "\n" );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Dump general info about segments.                               */
@@ -76,6 +104,48 @@ int main( int nArgc, char ** papszArgv )
                 psSegInfo->nSegmentStart,
                 psSegInfo->nSegmentSize );
         printf( "\n" );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Report details of images.                                       */
+/* -------------------------------------------------------------------- */
+    for( iSegment = 0; iSegment < psFile->nSegmentCount; iSegment++ )
+    {
+        NITFSegmentInfo *psSegInfo = psFile->pasSegmentInfo + iSegment;
+        NITFImage *psImage;
+        int iBand;
+
+        if( !EQUAL(psSegInfo->szSegmentType,"IM") )
+            continue;
+        
+        psImage = NITFImageAccess( psFile, iSegment );
+        if( psImage == NULL )
+        {
+            printf( "NITFAccessImage(%d) failed!\n", iSegment );
+            continue;
+        }
+
+        printf( "Image Segment %d, %dPx%dLx%dB x %dbits:\n", 
+                iSegment, psImage->nRows, psImage->nCols, psImage->nBands,
+                psImage->nBitsPerSample );
+        printf( "  PVTYPE=%s, IREP=%s, ICAT=%s, IMODE=%c, IC=%s, COMRAT=%s\n", 
+                psImage->szPVType, psImage->szIREP, psImage->szICAT,
+                psImage->chIMODE, psImage->szIC, psImage->szCOMRAT );
+        printf( "  %d x %d blocks of size %d x %d\n",
+                psImage->nBlocksPerRow, psImage->nBlocksPerColumn,
+                psImage->nBlockWidth, psImage->nBlockHeight );
+
+        if( strlen(psImage->pszComments) > 0 )
+            printf( "  Comments:\n%s\n", psImage->pszComments );
+
+        for( iBand = 0; iBand < psImage->nBands; iBand++ )
+        {
+            NITFBandInfo *psBandInfo = psImage->pasBandInfo + iBand;
+
+            printf( "  Band %d: IREPBAND=%s, ISUBCAT=%s, %d LUT entries.\n",
+                    iBand + 1, psBandInfo->szIREPBAND, psBandInfo->szISUBCAT,
+                    psBandInfo->nSignificantLUTEntries );
+        }
     }
 
 /* -------------------------------------------------------------------- */

@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2002/12/03 04:43:54  warmerda
+ * lots of work
+ *
  * Revision 1.1  2002/12/02 06:09:29  warmerda
  * New
  *
@@ -44,6 +47,8 @@ static int
 NITFCollectSegmentInfo( NITFFile *psFile, int nOffset, char *pszType,
                         int nHeaderLenSize, int nDataLenSize, 
                         int *pnNextData );
+static void NITFLoadLocationTable( NITFFile *psFile );
+static int NITFLoadVQTables( NITFFile *psFile );
 
 /************************************************************************/
 /*                              NITFOpen()                              */
@@ -53,7 +58,7 @@ NITFFile *NITFOpen( const char *pszFilename, int bUpdatable )
 
 {
     FILE	*fp;
-    char        szHeader[500];
+    char        *pachHeader;
     NITFFile    *psFile;
     int         nHeaderLen, nOffset, nNextData;
     char        szTemp[128];
@@ -75,12 +80,11 @@ NITFFile *NITFOpen( const char *pszFilename, int bUpdatable )
     }
 
 /* -------------------------------------------------------------------- */
-/*      Read non-varying portion of file header.                        */
+/*      Check file type.                                                */
 /* -------------------------------------------------------------------- */
+    VSIFRead( szTemp, 1, 4, fp );
 
-    VSIFRead( szHeader, 1, 500, fp );
-
-    if( !EQUALN(szHeader,"NITF",4) )
+    if( !EQUALN(szTemp,"NITF",4) && !EQUALN(szTemp,"NSIF",4) )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "The file %s is not an NITF file.", 
@@ -89,20 +93,32 @@ NITFFile *NITFOpen( const char *pszFilename, int bUpdatable )
     }
 
 /* -------------------------------------------------------------------- */
+/*      Get header length.                                              */
+/* -------------------------------------------------------------------- */
+    VSIFSeek( fp, 354, SEEK_SET );
+    VSIFRead( szTemp, 1, 6, fp );
+    szTemp[6] = '\0';
+
+    nHeaderLen = atoi(szTemp);
+
+/* -------------------------------------------------------------------- */
+/*      Read the whole file header.                                     */
+/* -------------------------------------------------------------------- */
+    pachHeader = (char *) CPLMalloc(nHeaderLen);
+    VSIFSeek( fp, 0, SEEK_SET );
+    VSIFRead( pachHeader, 1, nHeaderLen, fp );
+
+/* -------------------------------------------------------------------- */
 /*      Create and initialize info structure about file.                */
 /* -------------------------------------------------------------------- */
     psFile = (NITFFile *) CPLCalloc(sizeof(NITFFile),1);
     psFile->fp = fp;
+    psFile->pachHeader = pachHeader;
 
 /* -------------------------------------------------------------------- */
 /*      Get version.                                                    */
 /* -------------------------------------------------------------------- */
-    NITFGetField( psFile->szVersion, szHeader, 4, 5 );
-
-/* -------------------------------------------------------------------- */
-/*      Get header length.                                              */
-/* -------------------------------------------------------------------- */
-    nHeaderLen = atoi(NITFGetField( szTemp, szHeader, 354, 6 ));       
+    NITFGetField( psFile->szVersion, pachHeader, 4, 5 );
 
 /* -------------------------------------------------------------------- */
 /*      Collect segment info for the types we care about.               */
@@ -113,7 +129,34 @@ NITFFile *NITFOpen( const char *pszFilename, int bUpdatable )
 
     nOffset = NITFCollectSegmentInfo( psFile, nOffset, "GR", 4, 6, &nNextData);
 
+    nOffset += 3; /* NUMX reserved field */
+
     nOffset = NITFCollectSegmentInfo( psFile, nOffset, "TX", 4, 5, &nNextData);
+
+    nOffset = NITFCollectSegmentInfo( psFile, nOffset, "DE", 4, 9, &nNextData);
+
+    nOffset = NITFCollectSegmentInfo( psFile, nOffset, "RE", 4, 7, &nNextData);
+
+/* -------------------------------------------------------------------- */
+/*      Is there a TRE to suck up?                                      */
+/* -------------------------------------------------------------------- */
+    psFile->nTREBytes = 
+        atoi(NITFGetField( szTemp, pachHeader, nOffset, 5 ));
+    nOffset += 5;
+
+    nOffset += 3; /* UDHOFL */
+
+    if( psFile->nTREBytes != 0 )
+    {
+        psFile->pachTRE = pachHeader + nOffset;
+        psFile->nTREBytes -= 3;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Are the VQ tables to load up?                                   */
+/* -------------------------------------------------------------------- */
+    NITFLoadLocationTable( psFile );
+    NITFLoadVQTables( psFile );
 
     return psFile;
 }
@@ -125,7 +168,27 @@ NITFFile *NITFOpen( const char *pszFilename, int bUpdatable )
 void NITFClose( NITFFile *psFile )
 
 {
+    int  iSegment;
+
+    for( iSegment = 0; iSegment < psFile->nSegmentCount; iSegment++ )
+    {
+        NITFSegmentInfo *psSegInfo = psFile->pasSegmentInfo + iSegment;
+
+        if( psSegInfo->hAccess == NULL )
+            continue;
+
+        if( EQUAL(psSegInfo->szSegmentType,"IM"))
+            NITFImageDeaccess( (NITFImage *) psSegInfo->hAccess );
+        else
+        {
+            CPLAssert( FALSE );
+        }
+    }
+
     CPLFree( psFile->pasSegmentInfo );
+    if( psFile->fp != NULL )
+        VSIFClose( psFile->fp );
+    CPLFree( psFile->pachHeader );
     CPLFree( psFile );
 }
 
@@ -198,13 +261,78 @@ NITFCollectSegmentInfo( NITFFile *psFile, int nOffset, char *pszType,
         psInfo->nSegmentHeaderStart = *pnNextData;
         psInfo->nSegmentStart = *pnNextData + psInfo->nSegmentHeaderSize;
 
-        *pnNextData += (psInfo->nSegmentHeaderStart+psInfo->nSegmentSize);
+        *pnNextData += (psInfo->nSegmentHeaderSize+psInfo->nSegmentSize);
         psFile->nSegmentCount++;
     }
 
     CPLFree( pachSegDef );
 
     return nOffset + nSegDefSize + 3;
+}
+
+/************************************************************************/
+/*                       NITFLoadLocationTable()                        */
+/************************************************************************/
+
+static void NITFLoadLocationTable( NITFFile *psFile )
+
+{
+    GUInt32  nLocTableOffset;
+    GUInt16  nLocCount;
+    int      iLoc;
+
+/* -------------------------------------------------------------------- */
+/*      Get the location table position from within the RPFHDR TRE      */
+/*      structure.                                                      */
+/* -------------------------------------------------------------------- */
+    if( psFile->pachTRE == NULL || !EQUALN(psFile->pachTRE,"RPFHDR",6) )
+        return;
+
+    memcpy( &nLocTableOffset, psFile->pachTRE + 55, 4 );
+    nLocTableOffset = CPL_MSBWORD32( nLocTableOffset );
+    
+    if( nLocTableOffset == 0 )
+        return;
+
+/* -------------------------------------------------------------------- */
+/*      Read the count of entries in the location table.                */
+/* -------------------------------------------------------------------- */
+    VSIFSeek( psFile->fp, nLocTableOffset + 6, SEEK_SET );
+    VSIFRead( &nLocCount, 1, 2, psFile->fp );
+    nLocCount = CPL_MSBWORD16( nLocCount );
+    psFile->nLocCount = nLocCount;
+
+    psFile->pasLocations = (NITFLocation *) 
+        CPLCalloc(sizeof(NITFLocation), nLocCount);
+    
+/* -------------------------------------------------------------------- */
+/*      Process the locations.                                          */
+/* -------------------------------------------------------------------- */
+    VSIFSeek( psFile->fp, 6, SEEK_CUR );
+    for( iLoc = 0; iLoc < nLocCount; iLoc++ )
+    {
+        unsigned char abyEntry[10];
+        
+        VSIFRead( abyEntry, 1, 10, psFile->fp );
+        
+        psFile->pasLocations[iLoc].nLocId = abyEntry[0] * 256 + abyEntry[1];
+
+        CPL_MSBPTR32( abyEntry + 2 );
+        memcpy( &(psFile->pasLocations[iLoc].nLocSize), abyEntry + 2, 4 );
+
+        CPL_MSBPTR32( abyEntry + 6 );
+        memcpy( &(psFile->pasLocations[iLoc].nLocOffset), abyEntry + 6, 4 );
+    }
+}
+
+/************************************************************************/
+/*                          NITFLoadVQTables()                          */
+/************************************************************************/
+
+static int NITFLoadVQTables( NITFFile *psFile )
+
+{
+    return FALSE;
 }
 
 /************************************************************************/

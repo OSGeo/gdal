@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2002/12/03 04:43:54  warmerda
+ * lots of work
+ *
  * Revision 1.1  2002/12/02 06:09:29  warmerda
  * New
  *
@@ -44,13 +47,20 @@ CPL_C_START
 typedef struct { 
     char szSegmentType[3]; /* one of "IM", ... */
 
-    int  nSegmentHeaderStart;
-    int  nSegmentHeaderSize;
-    int  nSegmentStart;
-    int  nSegmentSize;
+    GUInt32 nSegmentHeaderStart;
+    GUInt32 nSegmentHeaderSize;
+    GUInt32 nSegmentStart;
+    GUInt32 nSegmentSize;
 
     void *hAccess;
 } NITFSegmentInfo;
+
+typedef struct { 
+    int	nLocId;
+    int nLocOffset;
+    int nLocSize;
+} NITFLocation;
+
 
 typedef struct {
     FILE    *fp;
@@ -59,13 +69,24 @@ typedef struct {
 
     int     nSegmentCount;
     NITFSegmentInfo *pasSegmentInfo;
+
+    char    *pachHeader;
+
+    int     nTREBytes;
+    char    *pachTRE;
+
+    GUInt32 *apanVQLUT[4];
+
+    int     nLocCount;
+    NITFLocation *pasLocations;
+    
 } NITFFile;
 
 /* -------------------------------------------------------------------- */
 /*      File level prototypes.                                          */
 /* -------------------------------------------------------------------- */
-NITFFile *NITFOpen( const char *pszFilename, int bUpdatable );
-void      NITFClose( NITFFile * );
+NITFFile CPL_DLL *NITFOpen( const char *pszFilename, int bUpdatable );
+void     CPL_DLL  NITFClose( NITFFile * );
 
 /* -------------------------------------------------------------------- */
 /*      Image level access.                                             */
@@ -74,15 +95,15 @@ typedef struct {
     char      szIREPBAND[3];
     char      szISUBCAT[7];
 
-    int       nLUTEntries;
-    int       nLUTSamplesPerEntry;
+    int       nSignificantLUTEntries;
     unsigned char *pabyLUT;
 
 } NITFBandInfo;
 
 typedef struct {
-    NITFFile  *psNITFFile;
+    NITFFile  *psFile;
     int        iSegment;
+    char      *pachHeader;
 
     int        nRows;
     int        nCols;
@@ -103,7 +124,6 @@ typedef struct {
     char       szICAT[9];
 
     char       chICORDS;
-   
     double     dfULX;
     double     dfULY;
     double     dfURX;
@@ -114,15 +134,31 @@ typedef struct {
     double     dfLLY;
 
     char       *pszComments;
-
-    char       szCompression[3];
-
+    char       szIC[3];
     char       szCOMRAT[5];
+
+    /* Internal information not for application use. */
     
+    int        nWordSize;
+    int        nPixelOffset;
+    int        nLineOffset;
+    int        nBlockOffset;
+    int        nBandOffset;
+
+    GUInt32    *panBlockStart;
 } NITFImage;
 
-NITFImage *NITFImageAccess( NITFFile *, int iSegment );
-void       NITFImageDeaccess( NITFImage * );
+NITFImage CPL_DLL *NITFImageAccess( NITFFile *, int iSegment );
+void      CPL_DLL  NITFImageDeaccess( NITFImage * );
+
+int       CPL_DLL  NITFReadImageBlock( NITFImage *, int nBlockX, int nBlockY,
+                                       int nBand, void *pData );
+int       CPL_DLL  NITFReadImageLine( NITFImage *, int nLine, int nBand, 
+                                      void *pData );
+
+#define BLKREAD_OK    0
+#define BLKREAD_NULL  1
+#define BLKREAD_FAIL  2
 
 /* -------------------------------------------------------------------- */
 /*      These are really intended to be private helper stuff for the    */
