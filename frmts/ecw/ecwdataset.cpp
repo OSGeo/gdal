@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.14  2003/09/23 13:47:47  warmerda
+ * never return a NULL projection
+ *
  * Revision 1.13  2003/06/19 18:50:20  warmerda
  * added projection reading support
  *
@@ -450,6 +453,16 @@ GDALDataset *ECWDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
 
+    CPLDebug( "ECW", "FileInfo: SizeXY=%d,%d Bands=%d\n"
+              "       OriginXY=%g,%g  CellIncrementXY=%g,%g\n",
+              poDS->psFileInfo->nSizeX,
+              poDS->psFileInfo->nSizeY,
+              poDS->psFileInfo->nBands,
+              poDS->psFileInfo->fOriginX,
+              poDS->psFileInfo->fOriginY,
+              poDS->psFileInfo->fCellIncrementX,
+              poDS->psFileInfo->fCellIncrementY );
+
 /* -------------------------------------------------------------------- */
 /*      Establish raster info.                                          */
 /* -------------------------------------------------------------------- */
@@ -476,7 +489,10 @@ GDALDataset *ECWDataset::Open( GDALOpenInfo * poOpenInfo )
 const char *ECWDataset::GetProjectionRef() 
 
 {
-    return pszProjection;
+    if( pszProjection == NULL )
+        return "";
+    else
+        return pszProjection;
 }
 
 /************************************************************************/
