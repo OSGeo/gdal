@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2004/07/10 04:52:44  warmerda
+ * added OGR_G_CloseRings
+ *
  * Revision 1.17  2003/10/09 15:27:41  warmerda
  * added OGRLayer::DeleteFeature() support
  *
@@ -134,6 +137,7 @@ OGRwkbGeometryType CPL_DLL OGR_G_GetGeometryType( OGRGeometryH );
 const char CPL_DLL *OGR_G_GetGeometryName( OGRGeometryH );
 void   CPL_DLL OGR_G_DumpReadable( OGRGeometryH, FILE *, const char * );
 void   CPL_DLL OGR_G_FlattenTo2D( OGRGeometryH );
+void   CPL_DLL OGR_G_CloseRings( OGRGeometryH );
 
 OGRGeometryH CPL_DLL OGR_G_CreateFromGML( const char * );
 char   CPL_DLL *OGR_G_ExportToGML( OGRGeometryH );
