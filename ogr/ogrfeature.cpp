@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  1999/08/30 16:33:51  warmerda
+ * Use provided formatting in GetAsString() for real fields.
+ *
  * Revision 1.6  1999/08/30 14:52:33  warmerda
  * added support for StringList fields
  *
@@ -413,7 +416,18 @@ const char *OGRFeature::GetFieldAsString( int iField )
     }
     else if( poFDefn->GetType() == OFTReal )
     {
-        sprintf( szTempBuffer, "%g", pauFields[iField].Real );
+        char	szFormat[64];
+
+        if( poFDefn->GetWidth() != 0 )
+        {
+            sprintf( szFormat, "%%%d.%df",
+                     poFDefn->GetWidth(), poFDefn->GetPrecision() );
+        }
+        else
+            strcpy( szFormat, "%g" );
+        
+        sprintf( szTempBuffer, szFormat, pauFields[iField].Real );
+        
         return szTempBuffer;
     }
     else if( poFDefn->GetType() == OFTIntegerList )
@@ -447,12 +461,21 @@ const char *OGRFeature::GetFieldAsString( int iField )
     else if( poFDefn->GetType() == OFTRealList )
     {
         char	szItem[40];
+        char	szFormat[64];
         int	i, nCount = pauFields[iField].RealList.nCount;
 
+        if( poFDefn->GetWidth() != 0 )
+        {
+            sprintf( szFormat, "%%%d.%df",
+                     poFDefn->GetWidth(), poFDefn->GetPrecision() );
+        }
+        else
+            strcpy( szFormat, "%g" );
+        
         sprintf( szTempBuffer, "(%d:", nCount );
         for( i = 0; i < nCount; i++ )
         {
-            sprintf( szItem, "%g", pauFields[iField].RealList.paList[i] );
+            sprintf( szItem, szFormat, pauFields[iField].RealList.paList[i] );
             if( strlen(szTempBuffer) + strlen(szItem) + 6
                 > sizeof(szTempBuffer) )
             {
