@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2003/05/07 19:13:06  warmerda
+ * added pre and post warp chunk processor
+ *
  * Revision 1.6  2003/04/23 05:18:57  warmerda
  * added multithread support
  *
@@ -155,6 +158,12 @@ typedef struct {
     GDALMaskFunc        pfnDstValidityMaskFunc;
     void               *pDstValidityMaskFuncArg;
 
+    CPLErr              (*pfnPreWarpChunkProcessor)( void *pKern, void *pArg );
+    void               *pPreWarpProcessorArg;
+    
+    CPLErr              (*pfnPostWarpChunkProcessor)( void *pKern, void *pArg);
+    void               *pPostWarpProcessorArg;
+
 } GDALWarpOptions;
 
 GDALWarpOptions CPL_DLL *GDALCreateWarpOptions();
@@ -281,7 +290,6 @@ private:
     void            WipeChunkList();
     CPLErr          CollectChunkList( int nDstXOff, int nDstYOff, 
                                       int nDstXSize, int nDstYSize );
-
 public:
                     GDALWarpOperation();
     virtual        ~GDALWarpOperation();
