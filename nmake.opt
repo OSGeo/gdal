@@ -99,6 +99,11 @@ OCI_LIB =	$(ORACLE_HOME)\oci\lib\msvc\ociw32.lib \
 		$(ORACLE_HOME)\oci\lib\msvc\oci.lib
 !ENDIF
 
+# Comment out the following if you want to build with Python support, but
+# you don't have Numeric Python installed (with include files).  Numeric
+# integration may not work.
+HAVE_NUMPY=1
+
 ########### END OF STUFF THAT NORMALLY NEEDS TO BE UPDATED ##################
 
 
