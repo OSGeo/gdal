@@ -1,15 +1,6 @@
 include ../../GDALmake.opt
 
-default:	check-lib
-
-check-lib:	sub-libs
-	$(MAKE) ogrsf_frmts.a
-
-ogrsf_frmts.a:	./o/*.o
-	ar r $@ $^
-	$(RANLIB) ogrsf_frmts.a
-
-sub-libs:
+default:
 	(cd generic; $(MAKE) $*)
 	(cd shape; $(MAKE) $*)
 	(cd ntf; $(MAKE) $*)

@@ -19,9 +19,7 @@ clean:
 
 %.o:	%.cpp
 	$(CXX) -c $(ALL_C_FLAGS) $*.cpp -o $*.o
-	ar r ../ogrsf_frmts.a $*.o
 
 %.o:	%.c
 	$(CC) -c $(ALL_C_FLAGS) $*.c -o $*.o
-	ar r ../ogrsf_frmts.a $*.o
 
