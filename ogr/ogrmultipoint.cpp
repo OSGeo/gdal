@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2004/01/16 21:57:16  warmerda
+ * fixed up EMPTY support
+ *
  * Revision 1.16  2004/01/16 21:20:00  warmerda
  * Added EMPTY support
  *
@@ -265,6 +268,8 @@ OGRErr OGRMultiPoint::importFromWkt( char ** ppszInput )
         pszInput = OGRWktReadToken( pszPreScan, szToken );
         pszInput = OGRWktReadToken( pszInput, szToken );
         
+        *ppszInput = (char *) pszInput;
+
         if( !EQUAL(szToken,")") )
             return OGRERR_CORRUPT_DATA;
         else

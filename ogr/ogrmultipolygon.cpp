@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2004/01/16 21:57:17  warmerda
+ * fixed up EMPTY support
+ *
  * Revision 1.10  2004/01/16 21:20:00  warmerda
  * Added EMPTY support
  *
@@ -177,6 +180,8 @@ OGRErr OGRMultiPolygon::importFromWkt( char ** ppszInput )
         pszInput = OGRWktReadToken( pszInput, szToken );
         pszInput = OGRWktReadToken( pszInput, szToken );
         
+        *ppszInput = (char *) pszInput;
+
         if( !EQUAL(szToken,")") )
             return OGRERR_CORRUPT_DATA;
         else

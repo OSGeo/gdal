@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.25  2004/01/16 21:57:16  warmerda
+ * fixed up EMPTY support
+ *
  * Revision 1.24  2004/01/16 21:20:00  warmerda
  * Added EMPTY support
  *
@@ -651,6 +654,8 @@ OGRErr OGRGeometryCollection::importFromWkt( char ** ppszInput )
         pszInput = OGRWktReadToken( pszInput, szToken );
         pszInput = OGRWktReadToken( pszInput, szToken );
         
+        *ppszInput = (char *) pszInput;
+
         if( !EQUAL(szToken,")") )
             return OGRERR_CORRUPT_DATA;
         else

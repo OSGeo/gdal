@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.26  2004/01/16 21:57:17  warmerda
+ * fixed up EMPTY support
+ *
  * Revision 1.25  2004/01/16 21:20:00  warmerda
  * Added EMPTY support
  *
@@ -395,19 +398,19 @@ OGRErr OGRPoint::importFromWkt( char ** ppszInput )
     const char *pszPreScan;
 
     pszPreScan = OGRWktReadToken( pszInput, szToken );
-    if( EQUAL(szToken,",") )
+    if( !EQUAL(szToken,"(") )
         return OGRERR_CORRUPT_DATA;
 
     pszPreScan = OGRWktReadToken( pszPreScan, szToken );
     if( EQUAL(szToken,"EMPTY") )
     {
         pszInput = OGRWktReadToken( pszPreScan, szToken );
-        pszInput = OGRWktReadToken( pszInput, szToken );
         
         if( !EQUAL(szToken,")") )
             return OGRERR_CORRUPT_DATA;
         else
         {
+            *ppszInput = (char *) pszInput;
             empty();
             return OGRERR_NONE;
         }
