@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2003/06/10 19:59:33  warmerda
+ * added new Func based source type for passthrough to a callback
+ *
  * Revision 1.13  2003/03/14 10:31:22  dron
  * Check return value of the VRTSimpleSource::XMLInit() in VRTRasterBand::XMLInit().
  *
@@ -604,7 +607,7 @@ VRTAveragedSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
                 continue;
 
             // Compute output value.
-            float dfOutputValue = dfSum / nPixelCount;
+            float dfOutputValue = (float) (dfSum / nPixelCount);
 
             // Put it in the output buffer.
             GByte *pDstLocation;
@@ -614,7 +617,7 @@ VRTAveragedSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
                 + nLineSpace * iBufLine;
 
             if( eBufType == GDT_Byte )
-                *pDstLocation = (int) MIN(255,MAX(0,dfOutputValue));
+                *pDstLocation = (GByte) MIN(255,MAX(0,dfOutputValue));
             else
                 GDALCopyWords( &dfOutputValue, GDT_Float32, 4, 
                                pDstLocation, eBufType, 8, 1 );
@@ -791,7 +794,7 @@ VRTComplexSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
                 continue;
 
             if( bDoScaling )
-                fResult = fResult * dfScaleRatio + dfScaleOff;
+                fResult = (float) (fResult * dfScaleRatio + dfScaleOff);
 
             GByte *pDstLocation;
 
@@ -800,7 +803,7 @@ VRTComplexSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
                 + nLineSpace * (iY + nOutYOff);
 
             if( eBufType == GDT_Byte )
-                *pDstLocation = (int) MIN(255,MAX(0,fResult));
+                *pDstLocation = (GByte) MIN(255,MAX(0,fResult));
             else
                 GDALCopyWords( &fResult, GDT_Float32, 4, 
                                pDstLocation, eBufType, 8, 1 );
@@ -811,6 +814,99 @@ VRTComplexSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
     CPLFree( pafData );
 
     return CE_None;
+}
+
+/************************************************************************/
+/* ==================================================================== */
+/*                          VRTFuncSource                               */
+/* ==================================================================== */
+/************************************************************************/
+
+class VRTFuncSource : public VRTSource
+{
+public:
+            VRTFuncSource();
+    virtual ~VRTFuncSource();
+
+    virtual CPLErr  XMLInit( CPLXMLNode * ) { return CE_Failure; }
+    virtual CPLXMLNode *SerializeToXML();
+
+    virtual CPLErr  RasterIO( int nXOff, int nYOff, int nXSize, int nYSize, 
+                              void *pData, int nBufXSize, int nBufYSize, 
+                              GDALDataType eBufType, 
+                              int nPixelSpace, int nLineSpace );
+
+    VRTImageReadFunc    pfnReadFunc;
+    void               *pCBData;
+    GDALDataType        eType;
+    
+    float               fNoDataValue;
+};
+
+/************************************************************************/
+/*                           VRTFuncSource()                            */
+/************************************************************************/
+
+VRTFuncSource::VRTFuncSource()
+
+{
+    pfnReadFunc = NULL;
+    pCBData = NULL;
+    fNoDataValue = (float) VRT_NODATA_UNSET;
+    eType = GDT_Byte;
+}
+
+/************************************************************************/
+/*                           ~VRTFuncSource()                           */
+/************************************************************************/
+
+VRTFuncSource::~VRTFuncSource()
+
+{
+}
+
+/************************************************************************/
+/*                           SerializeToXML()                           */
+/************************************************************************/
+
+CPLXMLNode *VRTFuncSource::SerializeToXML()
+
+{
+    return NULL;
+}
+
+/************************************************************************/
+/*                              RasterIO()                              */
+/************************************************************************/
+
+CPLErr 
+VRTFuncSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
+                         void *pData, int nBufXSize, int nBufYSize, 
+                         GDALDataType eBufType, 
+                         int nPixelSpace, int nLineSpace )
+
+{
+    if( nPixelSpace*8 == GDALGetDataTypeSize( eBufType )
+        && nLineSpace == nPixelSpace * nXSize 
+        && nBufXSize == nXSize && nBufYSize == nYSize 
+        && eBufType == eType )
+    {
+        return pfnReadFunc( pCBData,
+                            nXOff, nYOff, nXSize, nYSize, 
+                            pData );
+    }
+    else
+    {
+        printf( "%d,%d  %d,%d, %d,%d %d,%d %d,%d\n", 
+                nPixelSpace*8, GDALGetDataTypeSize(eBufType),
+                nLineSpace, nPixelSpace * nXSize, 
+                nBufXSize, nXSize, 
+                nBufYSize, nYSize, 
+                (int) eBufType, (int) eType );
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "VRTFuncSource::RasterIO() - Irregular request." );
+        return CE_Failure;
+    }
 }
 
 /************************************************************************/
@@ -974,6 +1070,8 @@ CPLErr VRTRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                    void * pImage )
 
 {
+    (int) nBlockXOff;
+
     return IRasterIO( GF_Read, 0, nBlockYOff, nBlockXSize, nBlockYSize, 
                       pImage, nBlockXSize, nBlockYSize, eDataType, 
                       GDALGetDataTypeSize(eDataType)/8, 0 );
@@ -1158,6 +1256,30 @@ CPLErr VRTRasterBand::AddComplexSource( GDALRasterBand *poSrcBand,
 }
 
 /************************************************************************/
+/*                           AddFuncSource()                            */
+/************************************************************************/
+
+CPLErr VRTRasterBand::AddFuncSource( VRTImageReadFunc pfnReadFunc, 
+                                     void *pCBData, double dfNoDataValue )
+
+{
+/* -------------------------------------------------------------------- */
+/*      Create source.                                                  */
+/* -------------------------------------------------------------------- */
+    VRTFuncSource *poFuncSource = new VRTFuncSource;
+
+    poFuncSource->fNoDataValue = (float) dfNoDataValue;
+    poFuncSource->pfnReadFunc = pfnReadFunc;
+    poFuncSource->pCBData = pCBData;
+    poFuncSource->eType = GetRasterDataType();
+
+/* -------------------------------------------------------------------- */
+/*      add to list.                                                    */
+/* -------------------------------------------------------------------- */
+    return AddSource( poFuncSource );
+}
+
+/************************************************************************/
 /*                              XMLInit()                               */
 /************************************************************************/
 
@@ -1244,10 +1366,10 @@ CPLErr VRTRasterBand::XMLInit( CPLXMLNode * psTree )
         {
             GDALColorEntry sCEntry;
 
-            sCEntry.c1 = atoi(CPLGetXMLValue( psEntry, "c1", "0" ));
-            sCEntry.c2 = atoi(CPLGetXMLValue( psEntry, "c2", "0" ));
-            sCEntry.c3 = atoi(CPLGetXMLValue( psEntry, "c3", "0" ));
-            sCEntry.c4 = atoi(CPLGetXMLValue( psEntry, "c4", "255" ));
+            sCEntry.c1 = (short) atoi(CPLGetXMLValue( psEntry, "c1", "0" ));
+            sCEntry.c2 = (short) atoi(CPLGetXMLValue( psEntry, "c2", "0" ));
+            sCEntry.c3 = (short) atoi(CPLGetXMLValue( psEntry, "c3", "0" ));
+            sCEntry.c4 = (short) atoi(CPLGetXMLValue( psEntry, "c4", "255" ));
 
             oTable.SetColorEntry( iEntry++, &sCEntry );
         }

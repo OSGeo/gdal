@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2003/06/10 19:59:33  warmerda
+ * added new Func based source type for passthrough to a callback
+ *
  * Revision 1.7  2003/03/13 20:38:30  dron
  * bNoDataValueSet added to VRTRasterBand class.
  *
@@ -61,6 +64,10 @@
 
 CPL_C_START
 void	GDALRegister_VRT(void);
+typedef CPLErr
+(*VRTImageReadFunc)( void *hCBData,
+                     int nXOff, int nYOff, int nXSize, int nYSize,
+                     void *pData );
 CPL_C_END
 
 int VRTApplyMetadata( CPLXMLNode *, GDALMajorObject * );
@@ -185,6 +192,10 @@ class CPL_DLL VRTRasterBand : public GDALRasterBand
                                      double dfScaleOff=0.0, 
                                      double dfScaleRatio=1.0,
                                      double dfNoDataValue = VRT_NODATA_UNSET);
+
+    CPLErr         AddFuncSource( VRTImageReadFunc pfnReadFunc, void *hCBData,
+                                  double dfNoDataValue = VRT_NODATA_UNSET );
+
 
     virtual CPLErr IReadBlock( int, int, void * );
 
