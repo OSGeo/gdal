@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2000/09/25 21:16:24  warmerda
+ * Avoid initialization warnings.
+ *
  * Revision 1.5  2000/08/14 18:37:24  warmerda
  * added (untested) support for writing palettes to overviews
  *
@@ -65,8 +68,8 @@ GTIFFBuildOverviews( const char * pszFilename,
 
 {
     TIFF  *hOTIFF;
-    int   nBitsPerPixel, nPhotometric, nSampleFormat, iOverview, iBand;
-    int   nXSize, nYSize;
+    int   nBitsPerPixel=0, nPhotometric=0, nSampleFormat=0, iOverview, iBand;
+    int   nXSize=0, nYSize=0;
 
     if( nBands == 0 || nOverviews == 0 )
         return CE_Failure;
