@@ -28,6 +28,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.9  2000/11/17 17:16:13  warmerda
+# added ImportFromESRI()
+#
 # Revision 1.8  2000/10/20 04:20:59  warmerda
 # added SetStatePlane
 #
@@ -79,6 +82,9 @@ class SpatialReference:
 
     def ImportFromWkt( self, wkt ):
         return _gdal.OSRImportFromWkt( self._o, wkt )
+
+    def ImportFromESRI( self, prj_lines ):
+        return _gdal.OSRImportFromESRI( self._o, prj_lines )
 
     def ExportToWkt(self):
         return _gdal.OSRExportToWkt( self._o )

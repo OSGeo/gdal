@@ -33,8 +33,8 @@
  * and things like that.
  *
  * $Log$
- * Revision 1.22  2000/10/30 21:25:41  warmerda
- * added access to CPL error functions
+ * Revision 1.23  2000/11/17 17:16:13  warmerda
+ * added ImportFromESRI()
  *
  ************************************************************************/
 
@@ -562,6 +562,12 @@ char *SWIG_GetPtr(char *_c, void **ptr, char *_t)
 #include "ogr_srs_api.h"
 #include "gdal_py.h"
 
+#ifdef SWIGTYPE_GDALDatasetH
+#  define SWIG_GetPtr_2(s,d,t)  SWIG_ConvertPtr( s, d,(SWIGTYPE##t),1)
+#else
+#  define SWIG_GetPtr_2(s,d,t)  SWIG_GetPtr( s, d, #t)
+#endif
+
 
 typedef struct {
     PyObject *psPyCallback;
@@ -648,7 +654,7 @@ py_GDALBuildOverviews(PyObject *self, PyObject *args) {
 		         &(sProgressInfo.psPyCallbackData) ) )
         return NULL;
 
-    if (SWIG_GetPtr(pszSwigDS,(void **) &hDS, "_GDALDatasetH" )) {
+    if (SWIG_GetPtr_2(pszSwigDS,(void **) &hDS,_GDALDatasetH)) {
         PyErr_SetString(PyExc_TypeError,
 	   	        "Type error in argument 1 of GDALBuildOverviews."
 			" Expected _GDALDatasetH.");
@@ -700,14 +706,14 @@ py_GDALCreateCopy(PyObject *self, PyObject *args) {
 		         &(sProgressInfo.psPyCallbackData)) )
         return NULL;
 
-    if (SWIG_GetPtr(pszSwigDriver,(void **) &hDriver, "_GDALDriverH" )) {
+    if (SWIG_GetPtr_2(pszSwigDriver,(void **) &hDriver,_GDALDriverH)) {
         PyErr_SetString(PyExc_TypeError,
 	   	        "Type error in argument 1 of GDALCreateCopy."
 			" Expected _GDALDriverH.");
         return NULL;
     }
 	
-    if (SWIG_GetPtr(pszSwigSourceDS,(void **) &hSourceDS, "_GDALDatasetH" )) {
+    if (SWIG_GetPtr_2(pszSwigSourceDS,(void **) &hSourceDS, _GDALDatasetH )) {
         PyErr_SetString(PyExc_TypeError,
 	   	        "Type error in argument 3 of GDALCreateCopy."
 			" Expected _GDALDatasetH.");
@@ -746,7 +752,11 @@ py_GDALCreateCopy(PyObject *self, PyObject *args) {
     {
         char  szSwigTarget[48];
 
+#ifdef SWIGTYPE_GDALDatasetH
+	SWIG_MakePtr( szSwigTarget, hTargetDS, SWIGTYPE_GDALDatasetH );	
+#else
 	SWIG_MakePtr( szSwigTarget, hTargetDS, "_GDALDatasetH" );	
+#endif
 	return Py_BuildValue( "s", szSwigTarget );
     }
 }
@@ -772,7 +782,7 @@ py_GDALCreate(PyObject *self, PyObject *args) {
 			 &PyList_Type, &poPyOptions ))
         return NULL;
 
-    if (SWIG_GetPtr(pszSwigDriver,(void **) &hDriver, "_GDALDriverH" )) {
+    if (SWIG_GetPtr_2(pszSwigDriver,(void **) &hDriver, _GDALDriverH )) {
         PyErr_SetString(PyExc_TypeError,
 	   	        "Type error in argument 1 of GDALCreate."
 			" Expected _GDALDriverH.");
@@ -811,7 +821,11 @@ py_GDALCreate(PyObject *self, PyObject *args) {
     {
         char  szSwigTarget[48];
 
+#ifdef SWIGTYPE_GDALDatasetH
+	SWIG_MakePtr( szSwigTarget, hTargetDS, SWIGTYPE_GDALDatasetH );	
+#else
 	SWIG_MakePtr( szSwigTarget, hTargetDS, "_GDALDatasetH" );	
+#endif
 	return Py_BuildValue( "s", szSwigTarget );
     }
 }
@@ -843,7 +857,7 @@ py_GDALReadRaster(PyObject *self, PyObject *args) {
         return NULL;
 
     if (_argc0) {
-        if (SWIG_GetPtr(_argc0,(void **) &_arg0,"_GDALRasterBandH" )) {
+        if (SWIG_GetPtr_2(_argc0,(void **) &_arg0,_GDALRasterBandH )) {
             PyErr_SetString(PyExc_TypeError,
 			    "Type error in argument 1 of GDALReadRaster."
 			    " Expected _GDALRasterBandH.");
@@ -898,7 +912,7 @@ py_GDALWriteRaster(PyObject *self, PyObject *args) {
 
 
     if (_argc0) {
-        if (SWIG_GetPtr(_argc0,(void **) &_arg0,"_GDALRasterBandH" )) {
+        if (SWIG_GetPtr_2(_argc0,(void **) &_arg0,_GDALRasterBandH)) {
             PyErr_SetString(PyExc_TypeError,
 			    "Type error in argument 1 of GDALWriteRaster."
 			    " Expected _GDALRasterBandH.");
@@ -936,7 +950,7 @@ py_GDALGetGCPs(PyObject *self, PyObject *args) {
         return NULL;
 
     if (_argc0) {
-        if (SWIG_GetPtr(_argc0,(void **) &_arg0,"_GDALDatasetH" )) {
+        if (SWIG_GetPtr_2(_argc0,(void **) &_arg0,_GDALDatasetH)) {
             PyErr_SetString(PyExc_TypeError,
                             "Type error in argument 1 of GDALGetGCPs."
                             "  Expected _GDALDatasetH.");
@@ -978,7 +992,7 @@ py_GDALGetGeoTransform(PyObject *self, PyObject *args) {
         return NULL;
 
     if (_argc0) {
-        if (SWIG_GetPtr(_argc0,(void **) &_arg0,"_GDALDatasetH" )) {
+        if (SWIG_GetPtr_2(_argc0,(void **) &_arg0,_GDALDatasetH)) {
             PyErr_SetString(PyExc_TypeError,
                             "Type error in argument 1 of GDALGetGeoTransform."
                             "  Expected _GDALDatasetH.");
@@ -1015,7 +1029,7 @@ py_GDALSetGeoTransform(PyObject *self, PyObject *args) {
         return NULL;
 
     if (_argc0) {
-        if (SWIG_GetPtr(_argc0,(void **) &_arg0,"_GDALDatasetH" )) {
+        if (SWIG_GetPtr_2(_argc0,(void **) &_arg0,_GDALDatasetH)) {
             PyErr_SetString(PyExc_TypeError,
                             "Type error in argument 1 of GDALSetGeoTransform."
                             "  Expected _GDALDatasetH.");
@@ -1055,7 +1069,7 @@ py_GDALGetRasterHistogram(PyObject *self, PyObject *args) {
         return NULL;
 
     if (_argc0) {
-        if (SWIG_GetPtr(_argc0,(void **) &hBand,"_GDALRasterBandH" )) {
+        if (SWIG_GetPtr_2(_argc0,(void **) &hBand,_GDALRasterBandH)) {
             PyErr_SetString(PyExc_TypeError,
                           "Type error in argument 1 of GDALGetRasterHistogram."
                           "  Expected _GDALRasterBandH.");
@@ -1095,7 +1109,12 @@ py_GDALGetMetadata(PyObject *self, PyObject *args) {
         return NULL;
 
     if (_argc0) {
-        if (SWIG_GetPtr(_argc0,(void **) &hObject,NULL )) {
+#ifdef SWIGTYPE_GDALDatasetH
+        if (SWIG_ConvertPtr(_argc0,(void **) &hObject,NULL,0) ) 
+#else
+        if (SWIG_GetPtr_2(_argc0,(void **) &hObject,NULL )) 
+#endif
+	{
             PyErr_SetString(PyExc_TypeError,
                           "Type error in argument 1 of GDALGetMetadata."
                           "  Expected _GDALMajorObjectH.");
@@ -1137,7 +1156,12 @@ py_GDALGetDescription(PyObject *self, PyObject *args) {
         return NULL;
 
     if (_argc0) {
-        if (SWIG_GetPtr(_argc0,(void **) &hObject,NULL )) {
+#ifdef SWIGTYPE_GDALDatasetH
+        if (SWIG_ConvertPtr(_argc0,(void **) &hObject,NULL,0) ) 
+#else
+        if (SWIG_GetPtr_2(_argc0,(void **) &hObject,NULL )) 
+#endif
+	{
             PyErr_SetString(PyExc_TypeError,
                           "Type error in argument 1 of GDALGetDescription."
                           "  Expected _GDALMajorObjectH.");
@@ -1162,7 +1186,7 @@ py_GDALGetRasterNoDataValue(PyObject *self, PyObject *args) {
         return NULL;
 
     if (_argc0) {
-        if (SWIG_GetPtr(_argc0,(void **) &hObject,"_GDALRasterBandH" )) {
+        if (SWIG_GetPtr_2(_argc0,(void **) &hObject,_GDALRasterBandH)) {
             PyErr_SetString(PyExc_TypeError,
                           "Type error in argument 1 of GDALGetNoDataValue."
                           "  Expected _GDALRasterBandH.");
@@ -1171,6 +1195,52 @@ py_GDALGetRasterNoDataValue(PyObject *self, PyObject *args) {
     }
 
     return Py_BuildValue("d", GDALGetRasterNoDataValue(hObject,NULL) );
+}
+
+/************************************************************************/
+/*                          OSRImportFromESRI()                         */
+/************************************************************************/
+static PyObject *
+py_OSRImportFromESRI(PyObject *self, PyObject *args) {
+
+    OGRSpatialReferenceH _arg0;
+    char *_argc0 = NULL;
+    OGRErr err;
+    PyObject *py_prj = NULL;
+    char **prj = NULL;
+    int    i;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"sO!:OSRImportFromESRI",
+	&_argc0, &PyList_Type, &py_prj) )
+        return NULL;
+
+    if (_argc0) {
+        if (SWIG_GetPtr_2(_argc0,(void **) &_arg0,_OGRSpatialReferenceH)) {
+            PyErr_SetString(PyExc_TypeError,
+                            "Type error in argument 1 of OSRImportFromESRI."
+                            "  Expected _OGRSpatialReferenceH.");
+            return NULL;
+        }
+    }
+	
+    for( i = 0; i < PyList_Size(py_prj); i++ )
+    {
+        char      *line = NULL;
+        if( !PyArg_Parse( PyList_GET_ITEM(py_prj,i), "s", &line ) )
+        {
+            PyErr_SetString(PyExc_TypeError,
+                            "Type error in argument 2 of OSRImportFromESRI."
+                            "  Expected list of strings.");
+            return NULL;
+        }
+        prj = CSLAddString( prj, line );
+    }
+
+    err = OSRImportFromESRI( _arg0, prj );
+    CSLDestroy( prj );
+
+    return Py_BuildValue( "i", err );
 }
 
 /************************************************************************/
@@ -1189,7 +1259,7 @@ py_OSRImportFromWkt(PyObject *self, PyObject *args) {
         return NULL;
 
     if (_argc0) {
-        if (SWIG_GetPtr(_argc0,(void **) &_arg0,"_OGRSpatialReferenceH" )) {
+        if (SWIG_GetPtr_2(_argc0,(void **) &_arg0,_OGRSpatialReferenceH)) {
             PyErr_SetString(PyExc_TypeError,
                             "Type error in argument 1 of OSRImportFromWkt."
                             "  Expected _OGRSpatialReferenceH.");
@@ -1219,7 +1289,7 @@ py_OSRExportToProj4(PyObject *self, PyObject *args) {
         return NULL;
 
     if (_argc0) {
-        if (SWIG_GetPtr(_argc0,(void **) &_arg0,"_OGRSpatialReferenceH" )) {
+        if (SWIG_GetPtr_2(_argc0,(void **) &_arg0,_OGRSpatialReferenceH)) {
             PyErr_SetString(PyExc_TypeError,
                             "Type error in argument 1 of OSRExportToProj4."
                             "  Expected _OGRSpatialReferenceH.");
@@ -1253,7 +1323,7 @@ py_OSRExportToWkt(PyObject *self, PyObject *args) {
         return NULL;
 
     if (_argc0) {
-        if (SWIG_GetPtr(_argc0,(void **) &_arg0,"_OGRSpatialReferenceH" )) {
+        if (SWIG_GetPtr_2(_argc0,(void **) &_arg0,_OGRSpatialReferenceH)) {
             PyErr_SetString(PyExc_TypeError,
                             "Type error in argument 1 of OSRExportToWkt."
                             "  Expected _OGRSpatialReferenceH.");
@@ -1288,7 +1358,7 @@ py_OSRExportToPrettyWkt(PyObject *self, PyObject *args) {
         return NULL;
 
     if (_argc0) {
-        if (SWIG_GetPtr(_argc0,(void **) &_arg0,"_OGRSpatialReferenceH" )) {
+        if (SWIG_GetPtr_2(_argc0,(void **) &_arg0,_OGRSpatialReferenceH)) {
             PyErr_SetString(PyExc_TypeError,
                             "Type error in argument 1 of OSRExportToWkt."
                             "  Expected _OGRSpatialReferenceH.");
@@ -1322,8 +1392,8 @@ py_OCTTransform(PyObject *self, PyObject *args) {
         return NULL;
 
     if (_argc0) {
-        if (SWIG_GetPtr(_argc0,(void **) &_arg0,
-		        "_OGRCoordinateTransformationH" )) {
+        if (SWIG_GetPtr_2(_argc0,
+			  (void **) &_arg0,_OGRCoordinateTransformationH)) {
             PyErr_SetString(PyExc_TypeError,
                             "Type error in argument 1 of OCTTransform."
                             "  Expected _OGRCoordinateTransformationH.");
@@ -3474,6 +3544,7 @@ static PyMethodDef _gdalMethods[] = {
 	 { "OSRExportToWkt", py_OSRExportToWkt, 1 },
 	 { "OSRExportToProj4", py_OSRExportToProj4, 1 },
 	 { "OSRImportFromWkt", py_OSRImportFromWkt, 1 },
+	 { "OSRImportFromESRI", py_OSRImportFromESRI, 1 },
 	 { "OSRSetStatePlane", _wrap_OSRSetStatePlane, 1 },
 	 { "OSRGetUTMZone", _wrap_OSRGetUTMZone, 1 },
 	 { "OSRSetUTM", _wrap_OSRSetUTM, 1 },
