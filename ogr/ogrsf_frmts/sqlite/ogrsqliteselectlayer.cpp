@@ -2,7 +2,7 @@
  * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
- * Purpose:  Implements OGRODBCSelectLayer class, layer access to the results
+ * Purpose:  Implements OGRSQLiteSelectLayer class, layer access to the results
  *           of a SELECT statement executed via ExecuteSQL().
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
@@ -29,24 +29,23 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2004/07/11 19:23:51  warmerda
+ * read implementation working well
+ *
  * Revision 1.1  2004/07/09 06:25:05  warmerda
  * New
- *
- * Revision 1.1  2004/01/05 22:23:32  warmerda
- * New
- *
  */
 
 #include "cpl_conv.h"
-#include "ogr_odbc.h"
+#include "ogr_sqlite.h"
 
 CPL_CVSID("$Id$");
 /************************************************************************/
-/*                          OGRODBCSelectLayer()                         */
+/*                        OGRSQLiteSelectLayer()                        */
 /************************************************************************/
 
-OGRODBCSelectLayer::OGRODBCSelectLayer( OGRODBCDataSource *poDSIn,
-                                        CPLODBCStatement * poStmtIn )
+OGRSQLiteSelectLayer::OGRSQLiteSelectLayer( OGRSQLiteDataSource *poDSIn,
+                                            sqlite3_stmt *hStmtIn )
 
 {
     poDS = poDSIn;
@@ -55,27 +54,30 @@ OGRODBCSelectLayer::OGRODBCSelectLayer( OGRODBCDataSource *poDSIn,
     nSRSId = -1;
     poFeatureDefn = NULL;
 
-    poStmt = poStmtIn;
-    pszBaseStatement = CPLStrdup( poStmtIn->GetCommand() );
+    hStmt = hStmtIn;
 
-    BuildFeatureDefn( "SELECT", poStmt );
+    BuildFeatureDefn( "SELECT", hStmt );
+    
+    // Reset so the next _step() will get the first record.
+    sqlite3_reset( hStmt );
 }
 
 /************************************************************************/
-/*                          ~OGRODBCSelectLayer()                          */
+/*                       ~OGRSQLiteSelectLayer()                        */
 /************************************************************************/
 
-OGRODBCSelectLayer::~OGRODBCSelectLayer()
+OGRSQLiteSelectLayer::~OGRSQLiteSelectLayer()
 
 {
-    ClearStatement();
+    sqlite3_finalize( hStmt );
+    hStmt = NULL;
 }
 
 /************************************************************************/
 /*                          SetSpatialFilter()                          */
 /************************************************************************/
 
-void OGRODBCSelectLayer::SetSpatialFilter( OGRGeometry * poGeomIn )
+void OGRSQLiteSelectLayer::SetSpatialFilter( OGRGeometry * poGeomIn )
 
 {
     if( poFilterGeom != NULL )
@@ -92,84 +94,41 @@ void OGRODBCSelectLayer::SetSpatialFilter( OGRGeometry * poGeomIn )
 
 /************************************************************************/
 /*                           ClearStatement()                           */
+/*                                                                      */
+/*      Called when GetNextRawFeature() runs out of rows.               */
 /************************************************************************/
 
-void OGRODBCSelectLayer::ClearStatement()
+void OGRSQLiteSelectLayer::ClearStatement()
 
 {
-    if( poStmt != NULL )
-    {
-        delete poStmt;
-        poStmt = NULL;
-    }
-}
-
-/************************************************************************/
-/*                            GetStatement()                            */
-/************************************************************************/
-
-CPLODBCStatement *OGRODBCSelectLayer::GetStatement()
-
-{
-    if( poStmt == NULL )
-        ResetStatement();
-
-    return poStmt;
-}
-
-/************************************************************************/
-/*                           ResetStatement()                           */
-/************************************************************************/
-
-OGRErr OGRODBCSelectLayer::ResetStatement()
-
-{
-    ClearStatement();
-
-    iNextShapeId = 0;
-
-    CPLDebug( "ODBC", "Recreating statement." );
-    poStmt = new CPLODBCStatement( poDS->GetSession() );
-    poStmt->Append( pszBaseStatement );
-
-    if( poStmt->ExecuteSQL() )
-        return OGRERR_NONE;
-    else
-    {
-        delete poStmt;
-        poStmt = NULL;
-        return OGRERR_FAILURE;
-    }
 }
 
 /************************************************************************/
 /*                            ResetReading()                            */
 /************************************************************************/
 
-void OGRODBCSelectLayer::ResetReading()
+void OGRSQLiteSelectLayer::ResetReading()
 
 {
-    if( iNextShapeId != 0 )
-        ClearStatement();
-
-    OGRODBCLayer::ResetReading();
+    sqlite3_reset( hStmt );
+    OGRSQLiteLayer::ResetReading();
 }
 
 /************************************************************************/
 /*                             GetFeature()                             */
 /************************************************************************/
 
-OGRFeature *OGRODBCSelectLayer::GetFeature( long nFeatureId )
+OGRFeature *OGRSQLiteSelectLayer::GetFeature( long nFeatureId )
 
 {
-    return OGRODBCLayer::GetFeature( nFeatureId );
+    return OGRSQLiteLayer::GetFeature( nFeatureId );
 }
 
 /************************************************************************/
 /*                         SetAttributeFilter()                         */
 /************************************************************************/
 
-OGRErr OGRODBCSelectLayer::SetAttributeFilter( const char *pszQuery )
+OGRErr OGRSQLiteSelectLayer::SetAttributeFilter( const char *pszQuery )
 
 {
     CPLError( CE_Failure, CPLE_AppDefined, 
@@ -182,10 +141,10 @@ OGRErr OGRODBCSelectLayer::SetAttributeFilter( const char *pszQuery )
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRODBCSelectLayer::TestCapability( const char * pszCap )
+int OGRSQLiteSelectLayer::TestCapability( const char * pszCap )
 
 {
-    return OGRODBCLayer::TestCapability( pszCap );
+    return OGRSQLiteLayer::TestCapability( pszCap );
 }
 
 /************************************************************************/
@@ -195,7 +154,7 @@ int OGRODBCSelectLayer::TestCapability( const char * pszCap )
 /*      can optimize the GetExtent() method!                            */
 /************************************************************************/
 
-OGRErr OGRODBCSelectLayer::GetExtent(OGREnvelope *, int )
+OGRErr OGRSQLiteSelectLayer::GetExtent(OGREnvelope *, int )
 
 {
     return OGRERR_FAILURE;
@@ -210,8 +169,8 @@ OGRErr OGRODBCSelectLayer::GetExtent(OGREnvelope *, int )
 /*      way of counting features matching a spatial query.              */
 /************************************************************************/
 
-int OGRODBCSelectLayer::GetFeatureCount( int bForce )
+int OGRSQLiteSelectLayer::GetFeatureCount( int bForce )
 
 {
-    return OGRODBCLayer::GetFeatureCount( bForce );
+    return OGRSQLiteLayer::GetFeatureCount( bForce );
 }

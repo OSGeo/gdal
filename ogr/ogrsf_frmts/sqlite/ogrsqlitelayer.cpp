@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2004/07/11 19:23:51  warmerda
+ * read implementation working well
+ *
  * Revision 1.1  2004/07/09 06:25:04  warmerda
  * New
  *
@@ -112,18 +115,16 @@ CPLErr OGRSQLiteLayer::BuildFeatureDefn( const char *pszLayerName,
         OGRFieldDefn    oField( sqlite3_column_name( hStmt, iCol ), 
                                 OFTString );
 
-        printf( "%s: %s\n", 
-                sqlite3_column_name( hStmt, iCol ),
-                sqlite3_column_decltype( hStmt, iCol ) );
-
         //oField.SetWidth( MAX(0,poStmt->GetColSize( iCol )) );
 
         if( pszGeomColumn != NULL 
             && EQUAL(oField.GetNameRef(),pszGeomColumn) )
             continue;
 
-        // TODO: Identify primary key? 
-        
+        // The rowid is for internal use, not a real column.
+        if( EQUAL(oField.GetNameRef(),"_rowid_") )
+            continue;
+
         switch( sqlite3_column_type( hStmt, iCol ) )
         {
           case SQLITE_INTEGER:
@@ -203,8 +204,8 @@ OGRFeature *OGRSQLiteLayer::GetNextRawFeature()
     if( rc != SQLITE_ROW )
     {
         // we really should check for errors 
-        sqlite3_finalize( hStmt );
-        hStmt = NULL;
+        ClearStatement();
+
         return NULL;
     }
 
@@ -214,12 +215,28 @@ OGRFeature *OGRSQLiteLayer::GetNextRawFeature()
     int         iField;
     OGRFeature *poFeature = new OGRFeature( poFeatureDefn );
 
-#ifdef notdef
-    if( pszFIDColumn != NULL && poStmt->GetColId(pszFIDColumn) > -1 )
-        poFeature->SetFID( 
-            atoi(poStmt->GetColData(poStmt->GetColId(pszFIDColumn))) );
+    if( pszFIDColumn != NULL )
+    {
+        int iFIDCol;
+
+        for( iFIDCol = 0; iFIDCol < sqlite3_column_count(hStmt); iFIDCol++ )
+        {
+            if( EQUAL(sqlite3_column_name(hStmt,iFIDCol),
+                      pszFIDColumn) )
+                break;
+        }
+
+        if( iFIDCol == sqlite3_column_count(hStmt) )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                      "Unable to find FID column '%s'.", 
+                      pszFIDColumn );
+            return NULL;
+        }
+        
+        poFeature->SetFID( sqlite3_column_int( hStmt, iFIDCol ) );
+    }
     else
-#endif
         poFeature->SetFID( iNextShapeId );
 
     iNextShapeId++;

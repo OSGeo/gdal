@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2004/07/11 19:23:51  warmerda
+ * read implementation working well
+ *
  * Revision 1.1  2004/07/09 06:25:05  warmerda
  * New
  *
@@ -88,30 +91,22 @@ CPLErr OGRSQLiteTableLayer::Initialize( const char *pszTableName,
 
     CPLFree( pszFIDColumn );
     pszFIDColumn = NULL;
+
 /* -------------------------------------------------------------------- */
 /*      Do we have a simple primary key?                                */
+/*                                                                      */
+/*      I don't know a way to determine it, so we will just             */
+/*      explicitly use the rowid.                                       */
 /* -------------------------------------------------------------------- */
-#ifdef notdef
-    CPLSQLiteStatement oGetKey( poSession );
-    
-    if( oGetKey.GetPrimaryKeys( pszTableName ) && oGetKey.Fetch() )
-    {
-        pszFIDColumn = CPLStrdup(oGetKey.GetColData( 3 ));
-        
-        if( oGetKey.Fetch() ) // more than one field in key! 
-        {
-            CPLFree( pszFIDColumn );
-            pszFIDColumn = NULL;
-        }
-    }
-#endif
+
+    pszFIDColumn = CPLStrdup("_rowid_");
 
 /* -------------------------------------------------------------------- */
 /*      Get the column definitions for this table.                      */
 /* -------------------------------------------------------------------- */
     CPLErr eErr;
     sqlite3_stmt *hColStmt = NULL;
-    const char *pszSQL = CPLSPrintf( "SELECT * FROM %s LIMIT 1",
+    const char *pszSQL = CPLSPrintf( "SELECT _rowid_, * FROM %s LIMIT 1",
                                      pszTableName );
 
     if( sqlite3_prepare( hDB, pszSQL, strlen(pszSQL), &hColStmt, NULL )
@@ -204,11 +199,11 @@ OGRErr OGRSQLiteTableLayer::ResetStatement()
     iNextShapeId = 0;
 
     if( pszQuery != NULL )
-        pszSQL = CPLStrdup( CPLSPrintf( "SELECT * FROM %s WHERE %s", 
+        pszSQL = CPLStrdup( CPLSPrintf( "SELECT _rowid_, * FROM %s WHERE %s", 
 				        poFeatureDefn->GetName(), 
 					pszQuery ) );
     else
-        pszSQL = CPLStrdup( CPLSPrintf( "SELECT * FROM %s", 
+        pszSQL = CPLStrdup( CPLSPrintf( "SELECT _rowid_, * FROM %s", 
 				        poFeatureDefn->GetName() ) );
 
     rc = sqlite3_prepare( poDS->GetDB(), pszSQL, strlen(pszSQL), 
@@ -241,30 +236,42 @@ void OGRSQLiteTableLayer::ResetReading()
 OGRFeature *OGRSQLiteTableLayer::GetFeature( long nFeatureId )
 
 {
-        return OGRSQLiteLayer::GetFeature( nFeatureId );
-
-#ifdef notdef
+/* -------------------------------------------------------------------- */
+/*      If we don't have an explicit FID column, just read through      */
+/*      the result set iteratively to find our target.                  */
+/* -------------------------------------------------------------------- */
     if( pszFIDColumn == NULL )
         return OGRSQLiteLayer::GetFeature( nFeatureId );
+
+/* -------------------------------------------------------------------- */
+/*      Setup explicit query statement to fetch the record we want.     */
+/* -------------------------------------------------------------------- */
+    const char *pszSQL;
+    int rc;
 
     ClearStatement();
 
     iNextShapeId = nFeatureId;
 
-    poStmt = new CPLSQLiteStatement( poDS->GetSession() );
-    poStmt->Append( "SELECT * FROM " );
-    poStmt->Append( poFeatureDefn->GetName() );
-    poStmt->Appendf( " WHERE %s = %d", pszFIDColumn, nFeatureId );
+    pszSQL =
+        CPLSPrintf( "SELECT _rowid_, * FROM %s WHERE %s = %d", 
+                    poFeatureDefn->GetName(), 
+                    pszFIDColumn, nFeatureId );
 
-    if( !poStmt->ExecuteSQL() )
-    {
-        delete poStmt;
-        poStmt = NULL;
-        return NULL;
-    }
+    rc = sqlite3_prepare( poDS->GetDB(), pszSQL, strlen(pszSQL), 
+	    	          &hStmt, NULL );
 
-    return GetNextRawFeature();
-#endif
+/* -------------------------------------------------------------------- */
+/*      Get the feature if possible.                                    */
+/* -------------------------------------------------------------------- */
+    OGRFeature *poFeature = NULL;
+
+    if( rc == SQLITE_OK )
+        poFeature = GetNextRawFeature();
+
+    ClearStatement();
+
+    return poFeature;
 }
 
 /************************************************************************/
@@ -318,7 +325,38 @@ int OGRSQLiteTableLayer::TestCapability( const char * pszCap )
 int OGRSQLiteTableLayer::GetFeatureCount( int bForce )
 
 {
-    return OGRSQLiteLayer::GetFeatureCount( bForce );
+    if( poFilterGeom != NULL && pszGeomColumn != NULL )
+        return OGRSQLiteLayer::GetFeatureCount( bForce );
+
+/* -------------------------------------------------------------------- */
+/*      Form count SQL.                                                 */
+/* -------------------------------------------------------------------- */
+    const char *pszSQL;
+
+    if( pszQuery != NULL )
+        pszSQL = CPLSPrintf( "SELECT count(*) FROM %s WHERE %s",
+                             poFeatureDefn->GetName(), pszQuery );
+    else
+        pszSQL = CPLSPrintf( "SELECT count(*) FROM %s",
+                             poFeatureDefn->GetName() );
+
+/* -------------------------------------------------------------------- */
+/*      Execute.                                                        */
+/* -------------------------------------------------------------------- */
+    char **papszResult, *pszErrMsg;
+    int nRowCount, nColCount;
+    int nResult = -1;
+
+    if( sqlite3_get_table( poDS->GetDB(), pszSQL, &papszResult, 
+                           &nColCount, &nRowCount, &pszErrMsg ) != SQLITE_OK )
+        return -1;
+
+    if( nRowCount == 1 && nColCount == 1 )
+        nResult = atoi(papszResult[1]);
+
+    sqlite3_free_table( papszResult );
+
+    return nResult;
 }
 
 /************************************************************************/
