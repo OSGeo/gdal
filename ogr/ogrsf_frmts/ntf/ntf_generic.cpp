@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2001/01/17 19:08:37  warmerda
+ * added CODELIST support
+ *
  * Revision 1.5  1999/10/04 18:17:16  warmerda
  * Fixed redeclaration of for loop variables.
  *
@@ -559,7 +562,7 @@ static OGRFeature *TranslateGenericPoint( NTFFileReader *poReader,
 
             if( poReader->ProcessAttValue(szValType,
                                           papoGroup[0]->GetField(11,16),
-                                          NULL, &pszProcessedValue ) )
+                                          NULL, &pszProcessedValue, NULL ) )
                 poFeature->SetField(szValType, pszProcessedValue);
         }
 
@@ -610,7 +613,7 @@ static OGRFeature *TranslateGenericLine( NTFFileReader *poReader,
 
             if( poReader->ProcessAttValue(szValType,
                                           papoGroup[0]->GetField(11,16),
-                                          NULL, &pszProcessedValue ) )
+                                          NULL, &pszProcessedValue, NULL ) )
                 poFeature->SetField(szValType, pszProcessedValue);
         }
 

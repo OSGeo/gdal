@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2001/01/17 19:08:37  warmerda
+ * added CODELIST support
+ *
  * Revision 1.10  2000/12/23 05:10:35  warmerda
  * Segregate referenced collections in BL2000 collections into the COLL_ID_REFS field.
  * Improve error handling if MAX_LINKS exceeded.  Raise MAX_LINKS to 5000.
@@ -995,6 +998,8 @@ static OGRFeature *TranslateBL2000Collection( NTFFileReader *poReader,
     poFeature->SetField( 10, nCollections, anCollList );
 
     // Attributes
+    // Node that _CODE_DESC values are automatically applied if
+    // the target fields exist. 
     poReader->ApplyAttributeValues( poFeature, papoGroup,
                                     "AI", 3, "OP", 4, "NM", 5, "TY", 6, 
                                     "AC", 7, "NB", 8, "NA", 9,
@@ -1962,20 +1967,40 @@ void NTFFileReader::EstablishLayers()
                         "GEOM_ID_OF_LINK", OFTIntegerList, 6, 0,
                         "RingStart", OFTIntegerList, 6, 0,
                         NULL );
-        EstablishLayer( "BL2000_COLLECTIONS", wkbNone,
-                        TranslateBL2000Collection, NRT_COLLECT, NULL,
-                        "COLL_ID", OFTInteger, 6, 0,
-                        "NUM_PARTS", OFTInteger, 4, 0,
-                        "POLY_ID", OFTIntegerList, 6, 0,
-                        "ADMIN_AREA_ID", OFTInteger, 6, 0, 
-                        "CENSUS_CODE", OFTString, 6, 0,
-                        "ADMIN_NAME", OFTString, 0, 0,
-                        "AREA_TYPE", OFTString, 2, 0,
-                        "AREA_CODE", OFTString, 3, 0,
-                        "NON_TYPE_CODE", OFTString, 3, 0,
-                        "NON_INLAND_AREA", OFTReal, 12, 3,
-                        "COLL_ID_REFS", OFTIntegerList, 6, 0,
-                        NULL );
+        if( poDS->GetOption("CODELIST") != NULL 
+            && EQUAL(poDS->GetOption("CODELIST"),"ON") )
+            EstablishLayer( "BL2000_COLLECTIONS", wkbNone,
+                            TranslateBL2000Collection, NRT_COLLECT, NULL,
+                            "COLL_ID", OFTInteger, 6, 0,
+                            "NUM_PARTS", OFTInteger, 4, 0,
+                            "POLY_ID", OFTIntegerList, 6, 0,
+                            "ADMIN_AREA_ID", OFTInteger, 6, 0, 
+                            "CENSUS_CODE", OFTString, 6, 0,
+                            "ADMIN_NAME", OFTString, 0, 0,
+                            "AREA_TYPE", OFTString, 2, 0,
+                            "AREA_CODE", OFTString, 3, 0,
+                            "NON_TYPE_CODE", OFTString, 3, 0,
+                            "NON_INLAND_AREA", OFTReal, 12, 3,
+                            "COLL_ID_REFS", OFTIntegerList, 6, 0,
+                            "AREA_TYPE_DESC", OFTString, 0, 0,
+                            "AREA_CODE_DESC", OFTString, 0, 0,
+                            "NON_TYPE_CODE_DESC", OFTString, 0, 0,
+                            NULL );
+        else
+            EstablishLayer( "BL2000_COLLECTIONS", wkbNone,
+                            TranslateBL2000Collection, NRT_COLLECT, NULL,
+                            "COLL_ID", OFTInteger, 6, 0,
+                            "NUM_PARTS", OFTInteger, 4, 0,
+                            "POLY_ID", OFTIntegerList, 6, 0,
+                            "ADMIN_AREA_ID", OFTInteger, 6, 0, 
+                            "CENSUS_CODE", OFTString, 6, 0,
+                            "ADMIN_NAME", OFTString, 0, 0,
+                            "AREA_TYPE", OFTString, 2, 0,
+                            "AREA_CODE", OFTString, 3, 0,
+                            "NON_TYPE_CODE", OFTString, 3, 0,
+                            "NON_INLAND_AREA", OFTReal, 12, 3,
+                            "COLL_ID_REFS", OFTIntegerList, 6, 0,
+                            NULL );
     }
     else if( GetProductId() == NPC_BASEDATA )
     {

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2001/01/17 19:08:37  warmerda
+ * added CODELIST support
+ *
  * Revision 1.14  2000/12/23 05:12:17  warmerda
  * improve error reporting if MAX_REC_GROUP exceeded
  *
@@ -183,6 +186,8 @@ void NTFFileReader::SetBaseFID( long nNewBase )
 void NTFFileReader::ClearDefs()
 
 {
+    int		i;
+
     Close();
     
     ClearCGroup();
@@ -192,6 +197,12 @@ void NTFFileReader::ClearDefs()
     CSLDestroy( papszFCName );
     papszFCName = NULL;
     nFCCount = 0;
+
+    for( i = 0; i < nAttCount; i++ )
+    {
+        if( pasAttDesc[i].poCodeList != NULL )
+            delete pasAttDesc[i].poCodeList;
+    }
 
     CPLFree( pasAttDesc );
     nAttCount = 0;
@@ -365,6 +376,28 @@ int NTFFileReader::Open( const char * pszFilenameIn )
                 CPLRealloc( pasAttDesc, sizeof(NTFAttDesc) * nAttCount );
 
             ProcessAttDesc( poRecord, pasAttDesc + nAttCount - 1 );
+        }
+
+/* -------------------------------------------------------------------- */
+/*      Handle attribute description records.                           */
+/* -------------------------------------------------------------------- */
+        else if( poRecord->GetType() == NRT_CODELIST )
+        {
+            NTFCodeList	*poCodeList;
+            NTFAttDesc  *psAttDesc;
+
+            poCodeList = new NTFCodeList( poRecord );
+            psAttDesc = GetAttDesc( poCodeList->szValType );
+            if( psAttDesc == NULL )
+            {
+                CPLDebug( "NTF", "Got CODELIST for %s without ATTDESC.", 
+                          poCodeList->szValType );
+                delete poCodeList;
+            }
+            else
+            {
+                psAttDesc->poCodeList = poCodeList;
+            }
         }
 
 /* -------------------------------------------------------------------- */
@@ -757,6 +790,7 @@ int NTFFileReader::ProcessAttDesc( NTFRecord * poRecord, NTFAttDesc* psAD )
     if( poRecord->GetType() != NRT_ADR )
         return FALSE;
 
+    psAD->poCodeList = NULL;
     strcpy( psAD->val_type, poRecord->GetField( 3, 4 ));
     strcpy( psAD->fwidth, poRecord->GetField( 5, 7 ));
     strcpy( psAD->finter, poRecord->GetField( 8, 12 ));
@@ -939,7 +973,8 @@ NTFAttDesc * NTFFileReader::GetAttDesc( const char * pszType )
 int NTFFileReader::ProcessAttValue( const char *pszValType, 
                                     const char *pszRawValue,
                                     char **ppszAttName, 
-                                    char **ppszAttValue )
+                                    char **ppszAttValue,
+                                    char **ppszCodeDesc )
 
 {
 /* -------------------------------------------------------------------- */
@@ -997,6 +1032,22 @@ int NTFFileReader::ProcessAttValue( const char *pszValType,
     else
     {
         *ppszAttValue = (char *) pszRawValue;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Handle processing code values into code descriptions, if        */
+/*      applicable.                                                     */
+/* -------------------------------------------------------------------- */
+    if( ppszCodeDesc == NULL )
+    {
+    }
+    else if( psAttDesc->poCodeList != NULL )
+    {
+        *ppszCodeDesc = (char *)psAttDesc->poCodeList->Lookup( *ppszAttValue );
+    }
+    else
+    {
+        *ppszCodeDesc = NULL;
     }
 
     return TRUE;
@@ -1073,10 +1124,10 @@ int NTFFileReader::ApplyAttributeValue( OGRFeature * poFeature, int iField,
 /*      Process the attribute value ... this really only has a          */
 /*      useful effect for real numbers.                                 */
 /* -------------------------------------------------------------------- */
-    char	*pszAttLongName, *pszAttValue;
+    char	*pszAttLongName, *pszAttValue, *pszCodeDesc;
 
     ProcessAttValue( pszAttName, papszValues[iValue],
-                     &pszAttLongName, &pszAttValue );
+                     &pszAttLongName, &pszAttValue, &pszCodeDesc );
 
 /* -------------------------------------------------------------------- */
 /*      Apply the value to the field using the simple set string        */
@@ -1084,6 +1135,18 @@ int NTFFileReader::ApplyAttributeValue( OGRFeature * poFeature, int iField,
 /*      take care of translation to other types.                        */
 /* -------------------------------------------------------------------- */
     poFeature->SetField( iField, pszAttValue );
+
+/* -------------------------------------------------------------------- */
+/*      Apply the code description if we found one.                     */
+/* -------------------------------------------------------------------- */
+    if( pszCodeDesc != NULL )
+    {
+        char	szDescFieldName[256];
+
+        sprintf( szDescFieldName, "%s_DESC", 
+                 poFeature->GetDefnRef()->GetFieldDefn(iField)->GetNameRef() );
+        poFeature->SetField( szDescFieldName, pszCodeDesc );
+    }
 
     return TRUE;
 }

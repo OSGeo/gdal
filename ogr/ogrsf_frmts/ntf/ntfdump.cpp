@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2001/01/17 19:08:37  warmerda
+ * added CODELIST support
+ *
  * Revision 1.4  1999/10/04 13:28:43  warmerda
  * added DEM_SAMPLE support
  *
@@ -60,7 +63,7 @@ int main( int argc, char ** argv )
     char	**papszOptions = NULL;
     
     if( argc == 1 )
-        printf( "Usage: ntfdump [-s n] [-g] [-d] [-c] files\n" );
+        printf( "Usage: ntfdump [-s n] [-g] [-d] [-c] [-codelist] files\n" );
     
     for( int i = 1; i < argc; i++ )
     {
@@ -71,6 +74,11 @@ int main( int argc, char ** argv )
         {
             papszOptions = CSLSetNameValue( papszOptions,
                                             "DEM_SAMPLE", argv[++i] );
+        }
+        else if( EQUAL(argv[i],"-codelist") )
+        {
+            papszOptions = CSLSetNameValue( papszOptions,
+                                            "CODELIST", "ON" );
         }
         else if( argv[i][0] == '-' )
             pszMode = argv[i];

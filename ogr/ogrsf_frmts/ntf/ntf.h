@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2001/01/17 19:08:37  warmerda
+ * added CODELIST support
+ *
  * Revision 1.12  2000/12/06 19:31:16  warmerda
  * added BL2000 support
  *
@@ -92,6 +95,7 @@
 #define NRT_CPOLY    33                /* Complex Polygon */
 #define NRT_COLLECT  34                /* Collection of featues */
 #define NRT_ADR      40                /* Attribute Description Record */
+#define NRT_CODELIST 42                /* Codelist Record (ie. BL2000) */
 #define NRT_TEXTREC  43		       /* Text */
 #define NRT_TEXTPOS  44		       /* Text position */
 #define NRT_TEXTREP  45		       /* Text representation */
@@ -185,6 +189,27 @@ public:
 };
 
 /************************************************************************/
+/*                             NTFCodeList                              */
+/************************************************************************/
+
+class NTFCodeList
+{
+public:
+                NTFCodeList( NTFRecord * );
+                ~NTFCodeList();
+
+    const char  *Lookup( const char * );
+
+    char	szValType[3];   /* attribute code for list, ie. AC */
+    char        szFInter[6];	/* format of code values */
+ 
+    int         nNumCode;
+    char	**papszCodeVal; /* Short code value */
+    char        **papszCodeDes; /* Long description of code */
+
+};
+
+/************************************************************************/
 /*                              NTFAttDesc                              */
 /************************************************************************/
 typedef struct
@@ -193,7 +218,11 @@ typedef struct
   char  fwidth       [ 3 +1];
   char  finter       [ 5 +1];
   char  att_name     [ 100 ];
+
+  NTFCodeList *poCodeList;
+
 } NTFAttDesc;
+
 
 class OGRNTFLayer;
 class OGRNTFRasterLayer;
@@ -225,7 +254,7 @@ class NTFFileReader
     // attribute definitions
     int               nAttCount;
     NTFAttDesc       *pasAttDesc;
-    
+
     char             *pszTileName;
     int               nCoordWidth;
     int		      nZWidth;
@@ -309,7 +338,8 @@ class NTFFileReader
     int               ProcessAttValue( const char *pszValType, 
                                        const char *pszRawValue,
                                        char **ppszAttName, 
-                                       char **ppszAttValue );
+                                       char **ppszAttValue,
+                                       char **ppszCodeDesc );
 
     int		      TestForLayer( OGRNTFLayer * );
     OGRFeature       *ReadOGRFeature( OGRNTFLayer * = NULL );
