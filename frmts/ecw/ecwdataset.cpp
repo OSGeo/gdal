@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.10  2002/10/01 19:34:27  warmerda
+ * fixed problems with supersampling by forcing through fullres blocks
+ *
  * Revision 1.9  2002/09/04 06:50:37  warmerda
  * avoid static driver pointers
  *
@@ -95,6 +98,10 @@ class CPL_DLL ECWDataset : public GDALDataset
     NCSFileView *hFileView;
     NCSFileViewFileInfo *psFileInfo;
 
+    int         nFullResWindowBand;
+    int         nLastScanlineRead;
+    CPLErr      ResetFullResViewWindow(int nBand, int nStartLine );
+
   public:
     		ECWDataset();
     		~ECWDataset();
@@ -154,17 +161,6 @@ ECWRasterBand::~ECWRasterBand()
 }
 
 /************************************************************************/
-/*                             IReadBlock()                             */
-/************************************************************************/
-
-CPLErr ECWRasterBand::IReadBlock( int, int nBlockYOff, void * pImage )
-
-{
-    return IRasterIO( GF_Read, 0, nBlockYOff, nBlockXSize, 1, 
-                      pImage, nBlockXSize, 1, GDT_Byte, 0, 0 );
-}
-
-/************************************************************************/
 /*                             IRasterIO()                              */
 /************************************************************************/
 
@@ -180,10 +176,33 @@ CPLErr ECWRasterBand::IRasterIO( GDALRWFlag eRWFlag,
     int          iBand, bDirect;
     GByte        *pabyWorkBuffer = NULL;
 
+/* -------------------------------------------------------------------- */
+/*      Supersampling is not supported by the ECW API, so just turn     */
+/*      over control to the normal API.  We also drop down to the       */
+/*      block oriented API if only a single scanline was requested.     */
+/*      This is based on the assumption that doing lots of single       */
+/*      scanline windows is expensive.                                  */
+/* -------------------------------------------------------------------- */
+    if( nXSize < nBufXSize || nYSize < nBufYSize || nYSize == 1 )	
+    {
+#ifdef notdef
+        CPLDebug( "ECWRasterBand", 
+                  "RasterIO(%d,%d,%d,%d -> %dx%d) - redirected.", 
+                  nXOff, nYOff, nXSize, nYSize, nBufXSize, nBufYSize );
+#endif
+        return GDALRasterBand::IRasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize,
+                                         pData, nBufXSize, nBufYSize, 
+                                         eBufType, nPixelSpace, nLineSpace );
+    }
+#ifdef notdef
     CPLDebug( "ECWRasterBand", 
-              "RasterIO(%d,%d,%d,%d -> %dx%d)\n", 
+              "RasterIO(%d,%d,%d,%d -> %dx%d)", 
               nXOff, nYOff, nXSize, nYSize, nBufXSize, nBufYSize );
+#endif
 
+/* -------------------------------------------------------------------- */
+/*      Default line and pixel spacing if needed.                       */
+/* -------------------------------------------------------------------- */
     if( nLineSpace == 0 )
         nLineSpace = nBufXSize;
 
@@ -202,6 +221,7 @@ CPLErr ECWRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 /*      Establish access at the desired resolution.                     */
 /* -------------------------------------------------------------------- */
     iBand = nBand-1;
+    poODS->nFullResWindowBand = -1;
     eNCSErr = NCScbmSetFileView( poODS->hFileView, 
                                  1, (unsigned int *) (&iBand),
                                  nXOff, nYOff, 
@@ -256,6 +276,51 @@ CPLErr ECWRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 }
 
 /************************************************************************/
+/*                             IReadBlock()                             */
+/************************************************************************/
+
+CPLErr ECWRasterBand::IReadBlock( int, int nBlockYOff, void * pImage )
+
+{
+    ECWDataset	*poODS = (ECWDataset *) poDS;
+
+/* -------------------------------------------------------------------- */
+/*      Do we need to reset the view window?                            */
+/* -------------------------------------------------------------------- */
+    if( nBand != poODS->nFullResWindowBand
+        || poODS->nLastScanlineRead >= nBlockYOff )
+    {
+        CPLErr eErr;
+
+        eErr = poODS->ResetFullResViewWindow( nBand, nBlockYOff );
+        if( eErr != CE_None )
+            return eErr;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Load lines till we get to the desired scanline.                 */
+/* -------------------------------------------------------------------- */
+    while( poODS->nLastScanlineRead < nBlockYOff )
+    {
+        NCSEcwReadStatus  eRStatus;
+
+        eRStatus = NCScbmReadViewLineBIL( poODS->hFileView, 
+                                          (unsigned char **) &pImage );
+        
+        if( eRStatus != NCSECW_READ_OK )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                      "NCScbmReadViewLineBIL failed." );
+            return CE_Failure;
+        }
+
+        poODS->nLastScanlineRead++;
+    }
+
+    return CE_None;
+}
+
+/************************************************************************/
 /* ==================================================================== */
 /*                            ECWDataset                               */
 /* ==================================================================== */
@@ -269,6 +334,7 @@ CPLErr ECWRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 ECWDataset::ECWDataset()
 
 {
+    nFullResWindowBand = -1;
 }
 
 /************************************************************************/
@@ -280,6 +346,43 @@ ECWDataset::~ECWDataset()
 {
 }
 
+/************************************************************************/
+/*                       ResetFullResViewWindow()                       */
+/************************************************************************/
+
+CPLErr ECWDataset::ResetFullResViewWindow( int nBand,
+                                           int nStartLine )
+
+{
+    NCSError     eNCSErr;
+    unsigned int iBand = nBand-1;
+#ifdef nodef
+    CPLDebug( "ECWDataset", 
+              "NCScbmSetFileView( %d, %d, %d, %d, %d, %d, %d )", 
+              nBand,
+              0, nStartLine, 
+              nRasterXSize-1, nRasterYSize-1,
+              nRasterXSize, nRasterYSize-nStartLine );
+#endif
+                              
+    eNCSErr = NCScbmSetFileView( hFileView, 1, &iBand,
+                                 0, nStartLine, 
+                                 nRasterXSize-1, nRasterYSize-1,
+                                 nRasterXSize, nRasterYSize-nStartLine );
+
+    if( eNCSErr != NCS_SUCCESS )
+    {
+        nFullResWindowBand = -1;
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "%s", NCSGetErrorText(eNCSErr) );
+        return CE_Failure;
+    }
+
+    nFullResWindowBand = nBand;
+    nLastScanlineRead = nStartLine-1;
+
+    return CE_None;
+}
 
 /************************************************************************/
 /*                                Open()                                */
