@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  1999/05/31 20:44:11  warmerda
+ * ogr_geometry.h
+ *
  * Revision 1.8  1999/05/31 15:01:59  warmerda
  * OGRCurve now an abstract base class with essentially no implementation.
  * Everything moved down to OGRLineString where it belongs.  Also documented
@@ -130,6 +133,8 @@ class OGRGeometry
     virtual int	getCoordinateDimension() = 0;
     virtual OGRBoolean	IsEmpty() { return 0; } 
     virtual OGRBoolean	IsSimple() { return 1; }
+    virtual void	empty() = 0;
+    virtual OGRGeometry *clone() = 0;
 
     // IWks Interface
     virtual int	WkbSize() = 0;
@@ -142,7 +147,6 @@ class OGRGeometry
     virtual OGRwkbGeometryType getGeometryType() = 0;
     virtual const char *getGeometryName() = 0;
     virtual void   dumpReadable( FILE *, const char * = NULL );
-    virtual OGRGeometry *clone() = 0;
 
     void    assignSpatialReference( OGRSpatialReference * poSR );
     OGRSpatialReference *getSpatialReference( void );
@@ -205,6 +209,8 @@ class OGRPoint : public OGRGeometry
     // IGeometry
     virtual int	getDimension();
     virtual int	getCoordinateDimension();
+    virtual OGRGeometry *clone();
+    virtual void empty();
 
     // IPoint
     double	getX() { return x; }
@@ -215,7 +221,6 @@ class OGRPoint : public OGRGeometry
     void	setY( double yIn ) { y = yIn; }
 
     // Non standard from OGRGeometry
-    virtual OGRGeometry *clone();
     virtual const char *getGeometryName();
     virtual OGRwkbGeometryType getGeometryType();
 
@@ -269,6 +274,8 @@ class OGRLineString : public OGRCurve
     // IGeometry interface
     virtual int	getDimension();
     virtual int	getCoordinateDimension();
+    virtual OGRGeometry *clone();
+    virtual void empty();
 
     // ICurve methods
     virtual double get_Length();
@@ -287,13 +294,13 @@ class OGRLineString : public OGRCurve
     void	setPoint( int, OGRPoint * );
     void	setPoint( int, double, double );
     void	setPoints( int, OGRRawPoint * );
+    void	setPoints( int, double * padfX, double * padfY );
     void	addPoint( OGRPoint * );
     void	addPoint( double, double );
 
     // non-standard from OGRGeometry
     virtual OGRwkbGeometryType getGeometryType();
     virtual const char *getGeometryName();
-    virtual OGRGeometry *clone();
    
 };
 
@@ -380,6 +387,7 @@ class OGRPolygon : public OGRSurface
     virtual const char *getGeometryName();
     virtual OGRwkbGeometryType getGeometryType();
     virtual OGRGeometry *clone();
+    virtual void empty();
     
     // ISurface Interface
     virtual double      get_Area();
@@ -431,6 +439,7 @@ class OGRGeometryCollection : public OGRGeometry
     virtual const char *getGeometryName();
     virtual OGRwkbGeometryType getGeometryType();
     virtual OGRGeometry *clone();
+    virtual void empty();
     
     // IWks Interface
     virtual int	WkbSize();
@@ -458,9 +467,52 @@ class OGRGeometryCollection : public OGRGeometry
 
 /**
  * A collection of non-overlapping OGRPolygons.
+ *
+ * Note that the IMultiSurface class hasn't been modelled, nor have any
+ * of it's methods. 
  */
 
 class OGRMultiPolygon : public OGRGeometryCollection
+{
+  public:
+    // Non standard (OGRGeometry).
+    virtual const char *getGeometryName();
+    virtual OGRwkbGeometryType getGeometryType();
+    virtual OGRGeometry *clone();
+    
+    // Non standard
+    virtual OGRErr addGeometry( OGRGeometry * );
+};
+
+/************************************************************************/
+/*                            OGRMultiPoint                             */
+/************************************************************************/
+
+/**
+ * A collection of OGRPoints.
+ */
+
+class OGRMultiPoint : public OGRGeometryCollection
+{
+  public:
+    // Non standard (OGRGeometry).
+    virtual const char *getGeometryName();
+    virtual OGRwkbGeometryType getGeometryType();
+    virtual OGRGeometry *clone();
+    
+    // Non standard
+    virtual OGRErr addGeometry( OGRGeometry * );
+};
+
+/************************************************************************/
+/*                          OGRMultiLineString                          */
+/************************************************************************/
+
+/**
+ * A collection of OGRLineStrings.
+ */
+
+class OGRMultiLineString : public OGRGeometryCollection
 {
   public:
     // Non standard (OGRGeometry).
@@ -486,7 +538,7 @@ class OGRGeometryFactory
   public:
     static OGRErr createFromWkb( unsigned char *, OGRSpatialReference *,
                                  OGRGeometry **, int = -1 );
-    static OGRErr createFromWkt( const char *, OGRSpatialReference *,
+    static OGRErr createFromWkt( char **, OGRSpatialReference *,
                                  OGRGeometry ** );
 };
 
