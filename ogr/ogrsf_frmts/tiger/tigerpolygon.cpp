@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2003/08/27 02:26:03  warmerda
+ * fixed bug with UGA, BLKGRP and VTF fields in 2002 RTS redistricting format
+ *
  * Revision 1.12  2003/08/18 14:47:53  warmerda
  * upgraded with *untested* TIGER 2003 support
  *
@@ -303,9 +306,9 @@ static TigerFieldInfo rtS_2000_Redistricting_fields[] = {
 
   { "SLDU",       'R', 'A', OFTString,    85,  87,   3,       1,   1,     1 },
   { "SLDL",       'R', 'A', OFTString,    88,  90,   3,       1,   1,     1 },
-  { "UGA",        'L', 'A', OFTString,    91,  96,   6,       1,   1,     1 },
-  { "BLKGRP",     'L', 'N', OFTInteger,   97, 102,   7,       1,   1,     1 },
-  { "VTD",        'R', 'A', OFTString,    97, 102,   7,       1,   1,     1 },
+  { "UGA",        'L', 'A', OFTString,    91,  95,   5,       1,   1,     1 },
+  { "BLKGRP",     'L', 'N', OFTInteger,   96,  96,   1,       1,   1,     1 },
+  { "VTD",        'R', 'A', OFTString,    97, 102,   6,       1,   1,     1 },
   { "STATECOL",   'L', 'N', OFTInteger,  103, 104,   2,       1,   1,     1 },
   { "COUNTYCOL",  'L', 'N', OFTInteger,  105, 107,   3,       1,   1,     1 },
   { "BLOCKCOL",   'R', 'N', OFTInteger,  108, 112,   5,       1,   1,     1 },
