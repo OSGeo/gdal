@@ -25,6 +25,9 @@
  * The GeoTIFF driver implemenation.
  * 
  * $Log$
+ * Revision 1.9  1999/07/29 18:03:05  warmerda
+ * return OGIS WKT format, instead of Proj.4 format
+ *
  * Revision 1.8  1999/07/23 19:22:04  warmerda
  * Added support for writing geotransform information to newly created tiff
  * files.
@@ -63,6 +66,7 @@ static GDALDriver	*poGTiffDriver = NULL;
 
 CPL_C_START
 void	GDALRegister_GTiff(void);
+char *  GTIFGetOGISDefn( GTIFDefn * );
 CPL_C_END
 
 
@@ -599,7 +603,8 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
 
     if( GTIFGetDefn( hGTIF, &sGTIFDefn ) )
     {
-        poDS->pszProjection = GTIFGetProj4Defn( &sGTIFDefn );
+//        poDS->pszProjection = GTIFGetProj4Defn( &sGTIFDefn );
+        poDS->pszProjection = GTIFGetOGISDefn( &sGTIFDefn );
     }
     else
     {
