@@ -15,11 +15,10 @@ Well Known Text format for describing coordinate systems.
 Some background on OpenGIS coordinate systems and services can be found
 in the Simple Features for COM, and Spatial Reference Systems Abstract Model
 documents available from <a href="http://www.opengis.org/">www.opengis.org</a>.
-The GeoTIFF 
-<a href="http://www.remotesensing.org/geotiff/proj_list">Projections Transform
-List</a> may also be of assistance in understanding formulations of projections
-in WKT.  The <a 
-href="http://www.petroconsultants.com/products/geodetic.html">EPSG</a> 
+The GeoTIFF Projections Transform List
+(http://www.remotesensing.org/geotiff/proj_list) may also be of assistance in 
+understanding formulations of projections in WKT.  The 
+<a href="http://www.petroconsultants.com/products/geodetic.html">EPSG</a> 
 Geodesy web page is also a useful resource. 
 
 <h2>Defining a Geographic Coordinate System</h2>
