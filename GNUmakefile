@@ -89,7 +89,7 @@ py-module:
 	(cd pymod; $(MAKE))
 
 lclean:
-	rm -f *.a *.so config.log config.cache
+	rm -f *.a *.so config.log config.cache html/*.*
 
 distclean:	dist-clean
 
@@ -107,12 +107,15 @@ GDALmake.opt:	GDALmake.opt.in config.status
 
 docs:
 	(cd html; rm -f *.*)
-	(cd html; cvs update gdal_utilities.html gdalicon.png \
-		             formats_list.html frmt_various.html)
 	doxygen
-	cp frmts/*/frmt_*.html html
+	cp data/gdalicon.png html
+	cp frmts/*.html frmts/*/frmt_*.html html
 
 all:	default ogr-all
+
+install-docs:	
+	$(INSTALL_DIR) $(INST_DOCS)
+	cp html/*.* $(INST_DOCS)
 
 web-update:	docs
 	rm -rf /u/www/gdal/html
