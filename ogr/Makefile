@@ -25,8 +25,7 @@ OBJ_OGR	=	ogrgeometryfactory.obj ogrpoint.obj ogrcurve.obj \
 OBJ_OLEDB =	oledb_sup.obj \
 		sfcenumerator.obj sfcdatasource.obj sfctable.obj
 
-default:        test1.exe sfcdump.exe test2.exe ogrinfo.exe test_ogrsf.exe \
-		ogr2ogr.exe
+default:        ogr.lib ogrinfo.exe test_ogrsf.exe ogr2ogr.exe
 
 frmts:
 	cd ogrsf_frmts
@@ -38,7 +37,7 @@ oledb:
 	$(MAKE)
 	cd ..
 
-all:	frmts default oledb
+all:	frmts default oledb sfcdump.exe test1.exe test2.exe
 
 geometryidl.h: geometryidl.idl spatialreferenceidl.h
 	midl geometryidl.idl
