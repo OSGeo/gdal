@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.31  2001/12/17 22:36:12  warmerda
+ * added readFeature() method
+ *
  * Revision 1.30  2001/12/14 19:40:18  warmerda
  * added optimized feature counting, and extents collection
  *
@@ -473,13 +476,9 @@ OGRFeature * S57Reader::ReadNextFeature( OGRFeatureDefn * poTarget )
     {
         OGRFeature      *poFeature;
 
-        poFeature = AssembleFeature( oFE_Index.GetByIndex(nNextFEIndex++),
-                                     poTarget );
-
+        poFeature = ReadFeature( nNextFEIndex++, poTarget );
         if( poFeature != NULL )
         {
-            poFeature->SetFID( nNextFEIndex );
-            
             if( bSplitMultiPoint && poFeature->GetGeometryRef() != NULL
                 && poFeature->GetGeometryRef()->getGeometryType()
                                                         == wkbMultiPoint)
@@ -495,6 +494,30 @@ OGRFeature * S57Reader::ReadNextFeature( OGRFeatureDefn * poTarget )
 
     return NULL;
 }
+
+/************************************************************************/
+/*                            ReadFeature()                             */
+/*                                                                      */
+/*      Read the features who's id is provided.                         */
+/************************************************************************/
+
+OGRFeature *S57Reader::ReadFeature( int nFeatureId, OGRFeatureDefn *poTarget )
+
+{
+    OGRFeature	*poFeature;
+
+    if( nFeatureId < 0 || nFeatureId >= oFE_Index.GetCount() )
+        return NULL;
+
+    
+    poFeature = AssembleFeature( oFE_Index.GetByIndex(nFeatureId),
+                                 poTarget );
+    if( poFeature != NULL )
+        poFeature->SetFID( nFeatureId );
+
+    return poFeature;
+}
+
 
 /************************************************************************/
 /*                          AssembleFeature()                           */
