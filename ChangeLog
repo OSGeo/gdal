@@ -1,5 +1,8 @@
 2001-02-19  Frank Warmerdam  <warmerdam@pobox.com>
 
+	* aclocal.m4: fixed mixup between pyexecdir and pythonexecdir, thanks
+	to Bernhard Reiter.
+
 	* apps/gdal_translate.c: fixed georeferenced calculation for
 	-srcwin subwindowing.
 

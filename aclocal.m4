@@ -166,7 +166,7 @@ print sys.version[:3]'`"
 changequote([, ])dnl
 
     pythondir=$python_prefix/lib/python${python_version}/site-packages
-    pythonexecdir=$python_exec/lib/python${python_version}/site-packages
+    pyexecdir=$python_exec/lib/python${python_version}/site-packages
 
     AC_MSG_RESULT(found)
 
