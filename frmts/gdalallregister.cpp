@@ -25,6 +25,9 @@
  * Main format registration function.
  * 
  * $Log$
+ * Revision 1.33  2001/05/15 13:24:42  warmerda
+ * added fujibas
+ *
  * Revision 1.32  2001/04/02 17:11:45  warmerda
  * added ecw support
  *
@@ -249,6 +252,7 @@ void GDALAllRegister()
     GDALRegister_MFF();
     GDALRegister_HKV();
     GDALRegister_EFF();
+    GDALRegister_FujiBAS();
 #endif
 
 /* -------------------------------------------------------------------- */

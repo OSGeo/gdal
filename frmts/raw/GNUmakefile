@@ -5,7 +5,7 @@ include $(GDAL_ROOT)/GDALmake.opt
 
 OBJ	=	rawdataset.o ehdrdataset.o pauxdataset.o doq1dataset.o \
 		doq2dataset.o mffdataset.o hkvdataset.o effdataset.o \
-		pnmdataset.o
+		pnmdataset.o fujibasdataset.o
 
 default:	$(OBJ)
 

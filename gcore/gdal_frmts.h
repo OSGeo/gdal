@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2001/05/15 13:20:32  warmerda
+ * added fujibas
+ *
  * Revision 1.4  2001/04/02 17:12:01  warmerda
  * Added ecw support.
  *
@@ -77,6 +80,7 @@ void CPL_DLL GDALRegister_GIF(void);
 void CPL_DLL GDALRegister_Envisat(void);
 void CPL_DLL GDALRegister_FITS(void);
 void CPL_DLL GDALRegister_ECW(void);
+void CPL_DLL GDALRegister_FujiBAS(void);
 CPL_C_END
 
 #endif /* ndef GDAL_FRMTS_H_INCLUDED */
