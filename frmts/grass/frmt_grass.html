@@ -9,8 +9,8 @@
 
 GDAL optionally supports reading of existing GRASS raster layers (cells, and
 image groups), but not writing or export.  The support for GRASS raster 
-layers is determined
-when the library is configured, and requires libgrass to be pre-installed. <p>
+layers is determined when the library is configured, and requires libgrass
+to be pre-installed (see Notes below). <p>
 
 GRASS rasters can be selected in several ways.<p>
 
@@ -65,10 +65,10 @@ See Also:<p>
 <h2>NOTES on driver variations</h2>
 
 For GRASS 5.7 Radim Blazek has moved the driver to using the GRASS
-shared libraries directly instead of using libgrass.  Currently (GDAL 1.2.2)
+shared libraries directly instead of using libgrass.  Currently (GDAL 1.2.2 and later)
 both version of the driver are available and can be configured using
-"--with-libgrass" for the libgrass variant or "--with-grass=<dir>" for the 
-new GRASS 5.7 library based version.  The GRASS 5.7 version is currently
+"--with-libgrass" for the libgrass variant or "--with-grass=&lt;dir&gt;" for the 
+new GRASS 5.7 library based version.  The GRASS 5.7 driver version is currently
 not supporting coordinate system access, though it is hoped that will be
 corrected at some point.<p>
 
