@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2002/12/02 00:07:50  warmerda
+ * set angular units properly in GEOGCS
+ *
  * Revision 1.14  2002/11/30 15:45:07  warmerda
  * be careful about how UOM codes are linear
  *
@@ -230,6 +233,121 @@ EPSGAngleStringToDD( const char * pszAngle, int nUOMAngle )
     }
 
     return( dfAngle );
+}
+
+/************************************************************************/
+/*                        EPSGGetUOMAngleInfo()                         */
+/************************************************************************/
+
+int EPSGGetUOMAngleInfo( int nUOMAngleCode,
+                         char **ppszUOMName,
+                         double * pdfInDegrees )
+
+{
+    const char	*pszUOMName = NULL;
+    double	dfInDegrees = 1.0;
+    const char *pszFilename = CSVFilename( "unit_of_measure.csv" );
+    char	szSearchKey[24];
+
+    sprintf( szSearchKey, "%d", nUOMAngleCode );
+    pszUOMName = CSVGetField( pszFilename,
+                              "UOM_CODE", szSearchKey, CC_Integer,
+                              "UNIT_OF_MEAS_NAME" );
+
+/* -------------------------------------------------------------------- */
+/*      If the file is found, read from there.  Note that FactorC is    */
+/*      an empty field for any of the DMS style formats, and in this    */
+/*      case we really want to return the default InDegrees value       */
+/*      (1.0) from above.                                               */
+/* -------------------------------------------------------------------- */
+    if( pszUOMName != NULL )
+    {
+        double dfFactorB, dfFactorC;
+        
+        dfFactorB = 
+            atof(CSVGetField( pszFilename,
+                              "UOM_CODE", szSearchKey, CC_Integer,
+                              "FACTOR_B" ));
+        
+        dfFactorC = 
+            atof(CSVGetField( pszFilename,
+                              "UOM_CODE", szSearchKey, CC_Integer,
+                              "FACTOR_C" ));
+
+        if( dfFactorC != 0.0 )
+            dfInDegrees = (dfFactorB / dfFactorC) * (180.0 / PI);
+
+        /* We do a special override of some of the DMS formats name */
+        if( nUOMAngleCode == 9102 || nUOMAngleCode == 9107
+            || nUOMAngleCode == 9108 || nUOMAngleCode == 9110 )
+            pszUOMName = "degree";
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Otherwise handle a few well known units directly.               */
+/* -------------------------------------------------------------------- */
+    else
+    {
+        switch( nUOMAngleCode )
+        {
+          case 9101:
+            pszUOMName = "radian";
+            dfInDegrees = 180.0 / PI;
+            break;
+        
+          case 9102:
+          case 9107:
+          case 9108:
+          case 9110:
+            pszUOMName = "degree";
+            dfInDegrees = 1.0;
+            break;
+
+          case 9103:
+            pszUOMName = "arc-minute";
+            dfInDegrees = 1 / 60.0;
+            break;
+
+          case 9104:
+            pszUOMName = "arc-second";
+            dfInDegrees = 1 / 3600.0;
+            break;
+        
+          case 9105:
+            pszUOMName = "grad";
+            dfInDegrees = 180.0 / 200.0;
+            break;
+
+          case 9106:
+            pszUOMName = "gon";
+            dfInDegrees = 180.0 / 200.0;
+            break;
+        
+          case 9109:
+            pszUOMName = "microradian";
+            dfInDegrees = 180.0 / (3.14159265358979 * 1000000.0);
+            break;
+
+          default:
+            return FALSE;
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Return to caller.                                               */
+/* -------------------------------------------------------------------- */
+    if( ppszUOMName != NULL )
+    {
+        if( pszUOMName != NULL )
+            *ppszUOMName = CPLStrdup( pszUOMName );
+        else
+            *ppszUOMName = NULL;
+    }
+
+    if( pdfInDegrees != NULL )
+        *pdfInDegrees = dfInDegrees;
+
+    return( TRUE );
 }
 
 /************************************************************************/
@@ -812,8 +930,9 @@ static OGRErr SetEPSGGeogCS( OGRSpatialReference * poSRS, int nGeogCS )
 {
     int  nDatumCode, nPMCode, nUOMAngle, nEllipsoidCode;
     char *pszGeogCSName = NULL, *pszDatumName = NULL, *pszEllipsoidName = NULL;
-    char *pszPMName = NULL;
+    char *pszPMName = NULL, *pszAngleName = NULL;
     double dfPMOffset, dfSemiMajor, dfInvFlattening, adfBursaTransform[7];
+    double dfAngleInDegrees, dfAngleInRadians;
 
     if( !EPSGGetGCSInfo( nGeogCS, &pszGeogCSName,
                          &nDatumCode, &pszDatumName, 
@@ -829,9 +948,21 @@ static OGRErr SetEPSGGeogCS( OGRSpatialReference * poSRS, int nGeogCS )
                                &dfSemiMajor, &dfInvFlattening ) )
         return OGRERR_UNSUPPORTED_SRS;
 
+    if( !EPSGGetUOMAngleInfo( nUOMAngle, &pszAngleName, &dfAngleInDegrees ) )
+    {
+        pszAngleName = CPLStrdup("degree");
+        dfAngleInDegrees = 1.0;
+    }
+
+    if( dfAngleInDegrees == 1.0 )
+        dfAngleInRadians = atof(SRS_UA_DEGREE_CONV);
+    else
+        dfAngleInRadians = atof(SRS_UA_DEGREE_CONV) * dfAngleInDegrees;
+
     poSRS->SetGeogCS( pszGeogCSName, pszDatumName, 
                       pszEllipsoidName, dfSemiMajor, dfInvFlattening,
-                      pszPMName, dfPMOffset );
+                      pszPMName, dfPMOffset,
+                      pszAngleName, dfAngleInRadians );
 
     if( EPSGGetWGS84Transform( nGeogCS, adfBursaTransform ) )
     {
@@ -854,6 +985,7 @@ static OGRErr SetEPSGGeogCS( OGRSpatialReference * poSRS, int nGeogCS )
     poSRS->SetAuthority( "SPHEROID", "EPSG", nEllipsoidCode );
     poSRS->SetAuthority( "PRIMEM", "EPSG", nPMCode );
 
+    CPLFree( pszAngleName );
     CPLFree( pszDatumName );
     CPLFree( pszEllipsoidName );
     CPLFree( pszGeogCSName );
