@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.2  2001/04/20 03:06:07  warmerda
+ * addec compression support
+ *
  * Revision 1.1  2001/04/02 17:06:46  warmerda
  * New
  *
@@ -35,12 +38,21 @@
 
 #include "gdal_priv.h"
 #include "ogr_spatialref.h"
+#include "cpl_string.h"
 #include <NCSECWClient.h>
+#include <NCSEcwCompressClient.h>
 #include <NCSErrors.h>
 
 static GDALDriver	*poECWDriver = NULL;
 
 #ifdef FRMT_ecw
+
+typedef struct {
+    int              bCancelled;
+    GDALProgressFunc pfnProgress;
+    void             *pProgressData;
+    GDALDataset      *poSrc;
+} ECWCompressInfo;
 
 /************************************************************************/
 /* ==================================================================== */
@@ -321,7 +333,247 @@ CPLErr ECWDataset::GetGeoTransform( double * padfTransform )
     return( CE_None );
 }
 
+/************************************************************************/
+/*                         ECWCompressReadCB()                          */
+/************************************************************************/
+
+static BOOLEAN ECWCompressReadCB( struct NCSEcwCompressClient *psClient, 
+                                  UINT32 nNextLine, IEEE4 **ppInputArray )
+
+{
+    ECWCompressInfo      *psCompressInfo;
+    int                  iBand;
+
+    psCompressInfo = (ECWCompressInfo *) psClient->pClientData;
+
+    for( iBand = 0; iBand < psClient->nInputBands; iBand++ )
+    {
+        GDALRasterBand      *poBand;
+
+
+        poBand = psCompressInfo->poSrc->GetRasterBand( iBand+1 );
+
+        if( poBand->RasterIO( GF_Read, 0, nNextLine, poBand->GetXSize(), 1, 
+                              ppInputArray[iBand], poBand->GetXSize(), 1, 
+                              GDT_Float32, 0, 0 ) != CE_None )
+            return FALSE;
+    }
+
+    return TRUE;
+}
+
+/************************************************************************/
+/*                        ECWCompressStatusCB()                         */
+/************************************************************************/
+
+static void ECWCompressStatusCB( NCSEcwCompressClient *psClient, 
+                                 UINT32 nCurrentLine )
+
+{
+    ECWCompressInfo      *psCompressInfo;
+
+    psCompressInfo = (ECWCompressInfo *) psClient->pClientData;
+    
+    psCompressInfo->bCancelled = 
+        !psCompressInfo->pfnProgress( nCurrentLine 
+                                      / (float) psClient->nInOutSizeY,
+                                      NULL, psCompressInfo->pProgressData );
+}
+
+/************************************************************************/
+/*                        ECWCompressCancelCB()                         */
+/************************************************************************/
+
+static BOOLEAN ECWCompressCancelCB( NCSEcwCompressClient *psClient )
+
+{
+    ECWCompressInfo      *psCompressInfo;
+
+    psCompressInfo = (ECWCompressInfo *) psClient->pClientData;
+
+    return psCompressInfo->bCancelled;
+}
+
+/************************************************************************/
+/*                           ECWCreateCopy()                            */
+/************************************************************************/
+
+static GDALDataset *
+ECWCreateCopy( const char * pszFilename, GDALDataset *poSrcDS, 
+                 int bStrict, char ** papszOptions, 
+                 GDALProgressFunc pfnProgress, void * pProgressData )
+
+{
+    int  nBands = poSrcDS->GetRasterCount();
+    int  nXSize = poSrcDS->GetRasterXSize();
+    int  nYSize = poSrcDS->GetRasterYSize();
+
+    if( !pfnProgress( 0.0, NULL, pProgressData ) )
+        return NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Do some rudimentary checking in input.                          */
+/* -------------------------------------------------------------------- */
+    if( nBands == 0 )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported, 
+                  "ECW driver requires at least one band as input." );
+        return NULL;
+    }
+
+    if( nXSize < 128 || nYSize < 128 )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported, 
+                  "ECW driver requires image to be at least 128x128,\n"
+                  "the source image is %dx%d.\n", 
+                  nXSize, nYSize );
+        return NULL;
+    }
+
+    if( poSrcDS->GetRasterBand(1)->GetRasterDataType() != GDT_Byte 
+        && bStrict )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported, 
+                  "CW driver doesn't support data type %s. "
+                  "Only eight bit bands supported.\n", 
+                  GDALGetDataTypeName( 
+                      poSrcDS->GetRasterBand(1)->GetRasterDataType()) );
+
+        return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Parse out some known options.                                   */
+/* -------------------------------------------------------------------- */
+    float      dfTargetCompression = 75.0;
+
+    if( CSLFetchNameValue(papszOptions, "TARGET") != NULL )
+    {
+        dfTargetCompression = atof(CSLFetchNameValue(papszOptions, "TARGET"));
+        
+        if( dfTargetCompression < 1.1 || dfTargetCompression > 100.0 )
+        {
+            CPLError( CE_Failure, CPLE_NotSupported, 
+                      "TARGET compression of %.3f invalid, should be a\n"
+                      "value between 1 and 100 percent.\n", 
+                      dfTargetCompression );
+            return NULL;
+        }
+    }
+        
+/* -------------------------------------------------------------------- */
+/*      Create and initialize compressor.                               */
+/* -------------------------------------------------------------------- */
+    NCSEcwCompressClient      *psClient;
+    ECWCompressInfo           sCompressInfo;
+
+    psClient = NCSEcwCompressAllocClient();
+    if( psClient == NULL )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "NCSEcwCompressAllocClient() failed.\n" );
+        return NULL;
+    }
+
+    psClient->nInputBands = nBands;
+    psClient->nInOutSizeX = nXSize;
+    psClient->nInOutSizeY = nYSize;
+    psClient->fTargetCompression = dfTargetCompression;
+
+    if( nBands == 1 )
+        psClient->eCompressFormat = COMPRESS_UINT8;
+    else if( nBands == 3 )
+        psClient->eCompressFormat = COMPRESS_RGB;
+    else
+        psClient->eCompressFormat = COMPRESS_MULTI;
+
+    strcpy( psClient->szOutputFilename, pszFilename );
+
+    sCompressInfo.bCancelled = FALSE;
+    sCompressInfo.pfnProgress = pfnProgress;
+    sCompressInfo.pProgressData = pProgressData;
+    sCompressInfo.poSrc = poSrcDS;
+
+    psClient->pReadCallback = ECWCompressReadCB;
+    psClient->pStatusCallback = ECWCompressStatusCB;
+    psClient->pCancelCallback = ECWCompressCancelCB;
+    psClient->pClientData = (void *) &sCompressInfo;
+
+/* -------------------------------------------------------------------- */
+/*      Set block size if desired.                                      */
+/* -------------------------------------------------------------------- */
+    psClient->nBlockSizeX = 256;
+    psClient->nBlockSizeY = 256;
+    if( CSLFetchNameValue(papszOptions, "BLOCKSIZE") != NULL )
+    {
+        psClient->nBlockSizeX = atoi(CSLFetchNameValue(papszOptions, 
+                                                       "BLOCKSIZE"));
+        psClient->nBlockSizeY = atoi(CSLFetchNameValue(papszOptions, 
+                                                       "BLOCKSIZE"));
+    }
+        
+    if( CSLFetchNameValue(papszOptions, "BLOCKXSIZE") != NULL )
+        psClient->nBlockSizeX = atoi(CSLFetchNameValue(papszOptions, 
+                                                       "BLOCKXSIZE"));
+        
+    if( CSLFetchNameValue(papszOptions, "BLOCKYSIZE") != NULL )
+        psClient->nBlockSizeX = atoi(CSLFetchNameValue(papszOptions, 
+                                                       "BLOCKYSIZE"));
+        
+/* -------------------------------------------------------------------- */
+/*      Georeferencing.                                                 */
+/* -------------------------------------------------------------------- */
+    double      adfGeoTransform[6];
+
+    if( poSrcDS->GetGeoTransform( adfGeoTransform ) == CE_None )
+    {
+        if( adfGeoTransform[2] != 0.0 || adfGeoTransform[4] != 0.0 )
+            CPLError( CE_Warning, CPLE_NotSupported, 
+                      "Rotational coefficients ignored, georeferencing of\n"
+                      "output ECW file will be incorrect.\n" );
+        else
+        {
+            psClient->fOriginX = adfGeoTransform[0];
+            psClient->fOriginY = adfGeoTransform[3];
+            psClient->fCellIncrementX = adfGeoTransform[1];
+            psClient->fCellIncrementY = adfGeoTransform[5];
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Start the compression.                                          */
+/* -------------------------------------------------------------------- */
+    NCSError      eError;
+
+    eError = NCSEcwCompressOpen( psClient, FALSE );
+    if( eError == NCS_SUCCESS )
+    {
+        eError = NCSEcwCompress( psClient );
+        NCSEcwCompressClose( psClient );
+    }
+
+    if( eError != NCS_SUCCESS )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "ECW compression failed.\n%s", 
+                  NCSGetErrorText( eError ) );
+
+        NCSEcwCompressFreeClient( psClient );
+        return NULL;
+    }
+
+    if( !pfnProgress( 1.0, NULL, pProgressData ) )
+        return NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Cleanup, and return read-only handle.                           */
+/* -------------------------------------------------------------------- */
+    NCSEcwCompressFreeClient( psClient );
+    
+    return (GDALDataset *) GDALOpen( pszFilename, GA_ReadOnly );
+}
 #endif /* def FRMT_ecw */
+
 /************************************************************************/
 /*                          GDALRegister_ECW()                        */
 /************************************************************************/
@@ -337,9 +589,10 @@ void GDALRegister_ECW()
         poECWDriver = poDriver = new GDALDriver();
         
         poDriver->pszShortName = "ECW";
-        poDriver->pszLongName = "ECW (Ermapper Compressed Wavelets)";
+        poDriver->pszLongName = "ECW (ERMapper Compressed Wavelets)";
         
         poDriver->pfnOpen = ECWDataset::Open;
+        poDriver->pfnCreateCopy = ECWCreateCopy;
 
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
