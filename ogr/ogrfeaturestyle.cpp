@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2002/01/16 04:00:25  warmerda
+ * use CSLTokenizeString2() and avoid discarding quotes when splitting stuff
+ *
  * Revision 1.6  2001/07/18 05:03:05  warmerda
  * added CPL_CVSID
  *
@@ -381,7 +384,10 @@ OGRStyleTool *OGRStyleMgr::GetPart(int hPartId,
     if (pszStyle == NULL)
       return NULL;
 
-    papszStyleString = CSLTokenizeStringComplex(pszStyle, ";",TRUE,FALSE);
+    papszStyleString = CSLTokenizeString2(pszStyle, ";",
+                                          CSLT_HONOURSTRINGS
+                                          | CSLT_PRESERVEQUOTES
+                                          | CSLT_PRESERVEESCAPES );
 
     pszString = CSLGetField(papszStyleString,hPartId);
     
@@ -410,8 +416,10 @@ OGRStyleTool *OGRStyleMgr::GetPart(int hPartId,
 OGRStyleTool *OGRStyleMgr::CreateStyleToolFromStyleString(const char *
                                                           pszStyleString)
 {
-    char **papszToken = CSLTokenizeStringComplex(pszStyleString,"();",
-                                                 TRUE,FALSE);
+    char **papszToken = CSLTokenizeString2(pszStyleString,"();",
+                                           CSLT_HONOURSTRINGS
+                                           | CSLT_PRESERVEQUOTES
+                                           | CSLT_PRESERVEESCAPES );
         
     if (CSLCount(papszToken) <2)
       return NULL;
@@ -892,7 +900,10 @@ GBool OGRStyleTool::Parse(OGRStyleParamId *pasStyle,
     if (m_pszStyleString == NULL)
       return FALSE;
     
-    papszToken  = CSLTokenizeStringComplex(m_pszStyleString,"()",TRUE,FALSE);
+    papszToken  = CSLTokenizeString2(m_pszStyleString,"()",
+                                     CSLT_HONOURSTRINGS
+                                     | CSLT_PRESERVEQUOTES
+                                     | CSLT_PRESERVEESCAPES );
 
     if (CSLCount(papszToken) > 2 || CSLCount(papszToken) == 0)
     {
@@ -902,7 +913,9 @@ GBool OGRStyleTool::Parse(OGRStyleParamId *pasStyle,
     }
     
     
-    papszToken2 = CSLTokenizeStringComplex(papszToken[1],":,",TRUE,TRUE);
+    papszToken2 = CSLTokenizeString2(papszToken[1],":,",
+                                     CSLT_HONOURSTRINGS 
+                                     | CSLT_ALLOWEMPTYTOKENS );
     
     if (CSLCount(papszToken2) %2 != 0)
     {
