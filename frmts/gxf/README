@@ -1,0 +1,21 @@
+Notes
+-----
+
+Gilles Clement of Global Geomatics approved this support library
+for general OpenSource release six months after it was released
+as part of OGDI.  This should be approximately September of 1999. 
+
+
+GXF Irregularities
+------------------
+
+ o The #TRANSFORM is defined to have commas between fields, but in the
+   example files it has spaces.  Treating both the same.
+
+ o The document doesn't memtion it, but it seems that the first five
+   characters have to be taken as sufficient for a field name.  For 
+   instance the old sample file I have has only #TITL for the title,
+   while new ones have #TITLE. 
+
+
+
