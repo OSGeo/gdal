@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  1999/07/08 20:27:52  warmerda
+ * added SFCDumpTableFeatures()
+ *
  * Revision 1.6  1999/07/07 19:38:57  warmerda
  * added -provider any support
  *
@@ -55,7 +58,7 @@
 #include "sfcenumerator.h"
 #include "sfcdatasource.h"
 #include "sfctable.h"
-#include "ogr_geometry.h"
+#include "ogr_feature.h"
 #include "cpl_conv.h"
 #include <atldbsch.h>
 #include "oledbgis.h"
@@ -69,6 +72,7 @@ static void SFCDumpTableSchema( SFCTable * );
 static void SFCDumpTableGeometry( SFCTable * );
 static void SFCDumpTables( SFCDataSource * );
 static void SFCDumpSFTables( SFCDataSource * );
+static void SFCDumpTableFeatures( SFCTable * poTable );
 
 /************************************************************************/
 /*                               Usage()                                */
@@ -218,6 +222,8 @@ void main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
     if( EQUAL(pszAction,"dumpgeom") )
         SFCDumpTableGeometry( poTable );
+    else if( EQUALN(pszAction, "dumpfeat",8) )
+        SFCDumpTableFeatures( poTable );
     else
         SFCDumpTableSchema( poTable );
 
@@ -266,6 +272,32 @@ static void SFCDumpTableGeometry( SFCTable * poTable )
         {
             poGeom->dumpReadable( stdout ); 
             delete poGeom;
+        }
+    }
+}
+
+/************************************************************************/
+/*                        SFCDumpTableFeatures()                        */
+/************************************************************************/
+
+static void SFCDumpTableFeatures( SFCTable * poTable )
+
+{
+    while( poTable->MoveNext() == S_OK )
+    {
+        OGRFeature * poFeature = poTable->GetOGRFeature();
+
+        poTable->ReleaseIUnknowns();
+
+        if( poFeature == NULL )
+        {
+            printf( "Failed to reconstitute feature!\n" );
+            break;
+        }
+        else
+        {
+            poFeature->DumpReadable( stdout ); 
+            delete poFeature;
         }
     }
 }
