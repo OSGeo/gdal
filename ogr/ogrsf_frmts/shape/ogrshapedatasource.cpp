@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2000/11/02 16:26:12  warmerda
+ * fixed geometry type message
+ *
  * Revision 1.3  2000/08/29 15:11:47  warmerda
  * added Z types for SHPT
  *
@@ -301,7 +304,7 @@ OGRShapeDataSource::CreateLayer( const char * pszLayerName,
     if( nShapeType == -1 )
     {
         CPLError( CE_Failure, CPLE_NotSupported,
-                  "Geometry type of `%s' not supported in shapefiles.\n",
+                  "Geometry type of `%s' not supported in shapefiles.\n"
                   "Type can be overridden with a layer creation option\n"
                   "of SHPT=POINT/ARC/POLYGON/MULTIPOINT.\n",
                   OGRGeometryTypeToName(eType) );
