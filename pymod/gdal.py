@@ -29,6 +29,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.35  2002/11/18 19:25:43  warmerda
+# provide access to overviews
+#
 # Revision 1.34  2002/11/05 12:54:45  dron
 # Added GetMetadata()/SetMetadata to the Driver interface
 #
@@ -534,6 +537,15 @@ class Band:
     def SetNoDataValue(self,value):
         return _gdal.GDALSetRasterNoDataValue(self._o,value)
 
+    def GetOverviewCount(self):
+        return _gdal.GDALGetOverviewCount(self._o)
+
+    def GetOverview(self, ov_index ):
+        _o = _gdal.GDALGetOverview( self._o, ov_index )
+        if _o is None:
+            return None
+        else:
+            return Band( _obj = _o )
 
 class ColorTable:
     def __init__(self, _obj = None):
