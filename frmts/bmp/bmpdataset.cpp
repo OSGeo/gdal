@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.7  2002/12/09 19:31:44  dron
+ * Switched to CPL_LSBWORD32 macro.
+ *
  * Revision 1.6  2002/12/07 15:20:23  dron
  * SetColorTable() added. Create() really works now.
  *
@@ -35,7 +38,7 @@
  * fixed type warning
  *
  * Revision 1.4  2002/12/06 18:37:05  dron
- * Create() method, added, 1- and 4-bpp images readed now.
+ * Create() method added, 1- and 4-bpp images readed now.
  *
  * Revision 1.3  2002/12/05 19:25:35  dron
  * Preliminary CreateCopy() function.
@@ -45,8 +48,6 @@
  *
  * Revision 1.1  2002/12/03 19:04:18  dron
  * Initial version.
- *
- *
  *
  */
 
@@ -75,6 +76,8 @@ CPL_C_END
 // +---------------------+
 // | Colour-index array  |
 // +---------------------+
+//
+// All numbers stored in LSB order.
 
 enum BMPComprMethod
 {
@@ -157,6 +160,7 @@ typedef struct
 class BMPDataset : public GDALDataset
 {
     friend class BMPRasterBand;
+    friend class BMPComprRasterBand;
 
     BitmapFileHeader	sFileHeader;
     BitmapInfoHeader	sInfoHeader;
@@ -196,6 +200,8 @@ class BMPRasterBand : public GDALRasterBand
 {
     friend class BMPDataset;
 
+  protected:
+
     unsigned int    nScanSize;
     unsigned int    iBytesPerPixel;
     GByte	    *pabyScan;
@@ -209,7 +215,7 @@ class BMPRasterBand : public GDALRasterBand
     virtual CPLErr	    IWriteBlock( int, int, void * );
     virtual GDALColorInterp GetColorInterpretation();
     virtual GDALColorTable  *GetColorTable();
-    CPLErr  SetColorTable( GDALColorTable * );
+    CPLErr		    SetColorTable( GDALColorTable * );
 };
 
 /************************************************************************/
@@ -406,6 +412,7 @@ CPLErr BMPRasterBand::SetColorTable( GDALColorTable *poColorTable )
     if ( poColorTable )
     {
 	GDALColorEntry	oEntry;
+	GInt32		iLong;
 	int		i;
 
 	poGDS->sInfoHeader.iClrUsed = poColorTable->GetColorEntryCount();
@@ -414,14 +421,9 @@ CPLErr BMPRasterBand::SetColorTable( GDALColorTable *poColorTable )
 	    return CE_Failure;
 	
 	VSIFSeek( poGDS->fp, BFH_SIZE + 32, SEEK_SET );
-#ifdef CPL_LSB
-	VSIFWrite( &poGDS->sInfoHeader.iClrUsed, 4, 1, poGDS->fp );
-#else
-	long	iLong;
 	
-	iLong = CPL_SWAP32( poGDS->sInfoHeader.iClrUsed );
+	iLong = CPL_LSBWORD32( poGDS->sInfoHeader.iClrUsed );
 	VSIFWrite( &iLong, 4, 1, poGDS->fp );
-#endif
 	poGDS->pabyColorTable = (GByte *) CPLRealloc( poGDS->pabyColorTable,
 				4 * poGDS->sInfoHeader.iClrUsed );
 	if ( !poGDS->pabyColorTable )
@@ -482,6 +484,120 @@ GDALColorInterp BMPRasterBand::GetColorInterpretation()
     }
     else
         return GCI_Undefined;
+}
+
+/************************************************************************/
+/* ==================================================================== */
+/*                       BMPComprRasterBand                             */
+/* ==================================================================== */
+/************************************************************************/
+
+class BMPComprRasterBand : public BMPRasterBand
+{
+    friend class BMPDataset;
+
+    GByte	    *pabyComprBuf;
+    GByte	    *pabyUncomprBuf;
+    
+  public:
+
+    		BMPComprRasterBand( BMPDataset *, int );
+		~BMPComprRasterBand();
+    
+    virtual CPLErr	    IReadBlock( int, int, void * );
+//    virtual CPLErr	    IWriteBlock( int, int, void * );
+};
+
+/************************************************************************/
+/*                           BMPComprRasterBand()                       */
+/************************************************************************/
+
+BMPComprRasterBand::BMPComprRasterBand( BMPDataset *poDS, int nBand )
+    : BMPRasterBand( poDS, nBand )
+{
+    int	    i, j, k, iLength;
+    long    iComprSize, iUncomprSize;
+   
+    iComprSize = poDS->sFileHeader.iSize - poDS->sFileHeader.iOffBits;
+    iUncomprSize = poDS->GetRasterXSize() * poDS->GetRasterYSize();
+    pabyComprBuf = (GByte *) CPLMalloc( iComprSize );
+    pabyUncomprBuf = (GByte *) CPLMalloc( iUncomprSize );
+
+    CPLDebug( "BMP", "RLE8 compression detected." );
+    CPLDebug ( "BMP", "Size of compressed buffer %ld bytes,"
+	       " size of uncompressed buffer %ld bytes.",
+	       iComprSize, iUncomprSize );
+ 
+    VSIFSeek( poDS->fp, poDS->sFileHeader.iOffBits, SEEK_SET );
+    VSIFRead( pabyComprBuf, 1, iComprSize, poDS->fp );
+    i = 0;
+    j = 0;
+    while( j < iUncomprSize && i <= iComprSize )
+    {
+	if ( pabyComprBuf[i] )
+	{
+	    iLength = pabyComprBuf[i++];
+	    while( iLength > 0 && j < iUncomprSize && i < iComprSize )
+	    {
+		pabyUncomprBuf[j++] = pabyComprBuf[i];
+		iLength--;
+	    }
+	    i++;
+	}
+	else
+	{
+	    if ( pabyComprBuf[i + 1] == 0 )
+	    {
+		i += 2;
+	    }
+	    else if ( pabyComprBuf[i + 1] == 1 )
+	    {
+		break;
+	    }
+	    else if ( pabyComprBuf[i + 1] == 2 )
+	    {
+		i += 2;
+		j += pabyComprBuf[i++] +
+		     pabyComprBuf[i++] * poDS->GetRasterXSize();
+	    }
+	    else
+	    {
+		iLength = pabyComprBuf[++i];
+		for ( k = 1; k <= iLength && j < iUncomprSize && i <= iComprSize; k++ )
+		    pabyUncomprBuf[j++] = pabyComprBuf[++i];
+		if ( k & 0x01 )
+		    i += 2;
+		else
+		    i++;
+	    }
+	}
+    }
+}
+
+/************************************************************************/
+/*                           ~BMPComprRasterBand()                      */
+/************************************************************************/
+
+BMPComprRasterBand::~BMPComprRasterBand()
+{
+    if ( pabyComprBuf )
+	CPLFree( pabyComprBuf );
+    if ( pabyUncomprBuf )
+	CPLFree( pabyUncomprBuf );
+}
+
+/************************************************************************/
+/*                             IReadBlock()                             */
+/************************************************************************/
+
+CPLErr BMPComprRasterBand::
+    IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage )
+{
+    memcpy( pImage, pabyUncomprBuf +
+	    (poDS->GetRasterYSize() - nBlockYOff - 1) * poDS->GetRasterXSize(),
+	    nBlockXSize );
+
+    return CE_None;
 }
 
 /************************************************************************/
@@ -731,9 +847,20 @@ GDALDataset *BMPDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     int		    iBand;
     
-    for( iBand = 1; iBand <= poDS->nBands; iBand++ )
+    if ( poDS->sInfoHeader.iCompression == BMPC_RGB )
     {
-        poDS->SetBand( iBand, new BMPRasterBand( poDS, iBand ) );
+	for( iBand = 1; iBand <= poDS->nBands; iBand++ )
+	    poDS->SetBand( iBand, new BMPRasterBand( poDS, iBand ) );
+    }
+    else if ( poDS->sInfoHeader.iCompression == BMPC_RLE8 )
+    {
+	for( iBand = 1; iBand <= poDS->nBands; iBand++ )
+	    poDS->SetBand( iBand, new BMPComprRasterBand( poDS, iBand ) );
+    }
+    else
+    {
+	delete poDS;
+	return NULL;
     }
 
 /* -------------------------------------------------------------------- */
@@ -861,36 +988,36 @@ GDALDataset *BMPDataset::Create( const char * pszFilename,
     GInt32	iLong;
     GInt16	iShort;
     
-    iLong = CPL_SWAP32( poDS->sFileHeader.iSize );
+    iLong = CPL_LSBWORD32( poDS->sFileHeader.iSize );
     VSIFWrite( &iLong, 4, 1, poDS->fp );
-    iShort = CPL_SWAP16( poDS->sFileHeader.iReserved1 );
+    iShort = CPL_LSBWORD16( poDS->sFileHeader.iReserved1 );
     VSIFWrite( &iShort, 2, 1, poDS->fp );
-    iShort = CPL_SWAP16( poDS->sFileHeader.iReserved2 );
+    iShort = CPL_LSBWORD16( poDS->sFileHeader.iReserved2 );
     VSIFWrite( &iShort, 2, 1, poDS->fp );
-    iLong = CPL_SWAP32( poDS->sFileHeader.iOffBits );
+    iLong = CPL_LSBWORD32( poDS->sFileHeader.iOffBits );
     VSIFWrite( &iLong, 4, 1, poDS->fp );
 
-    iLong = CPL_SWAP32( poDS->sInfoHeader.iSize );
+    iLong = CPL_LSBWORD32( poDS->sInfoHeader.iSize );
     VSIFWrite( &iLong, 4, 1, poDS->fp );
-    iLong = CPL_SWAP32( poDS->sInfoHeader.iWidth );
+    iLong = CPL_LSBWORD32( poDS->sInfoHeader.iWidth );
     VSIFWrite( &iLong, 4, 1, poDS->fp );
-    iLong = CPL_SWAP32( poDS->sInfoHeader.iHeight );
+    iLong = CPL_LSBWORD32( poDS->sInfoHeader.iHeight );
     VSIFWrite( &iLong, 4, 1, poDS->fp );
-    iShort = CPL_SWAP16( poDS->sInfoHeader.iPlanes );
+    iShort = CPL_LSBWORD16( poDS->sInfoHeader.iPlanes );
     VSIFWrite( &iShort, 2, 1, poDS->fp );
-    iShort = CPL_SWAP16( poDS->sInfoHeader.iBitCount );
+    iShort = CPL_LSBWORD16( poDS->sInfoHeader.iBitCount );
     VSIFWrite( &iShort, 2, 1, poDS->fp );
-    iLong = CPL_SWAP32( poDS->sInfoHeader.iCompression );
+    iLong = CPL_LSBWORD32( poDS->sInfoHeader.iCompression );
     VSIFWrite( &iLong, 4, 1, poDS->fp );
-    iLong = CPL_SWAP32( poDS->sInfoHeader.iSizeImage );
+    iLong = CPL_LSBWORD32( poDS->sInfoHeader.iSizeImage );
     VSIFWrite( &iLong, 4, 1, poDS->fp );
-    iLong = CPL_SWAP32( poDS->sInfoHeader.iXPelsPerMeter );
+    iLong = CPL_LSBWORD32( poDS->sInfoHeader.iXPelsPerMeter );
     VSIFWrite( &iLong, 4, 1, poDS->fp );
-    iLong = CPL_SWAP32( poDS->sInfoHeader.iYPelsPerMeter );
+    iLong = CPL_LSBWORD32( poDS->sInfoHeader.iYPelsPerMeter );
     VSIFWrite( &iLong, 4, 1, poDS->fp );
-    iLong = CPL_SWAP32( poDS->sInfoHeader.iClrUsed );
+    iLong = CPL_LSBWORD32( poDS->sInfoHeader.iClrUsed );
     VSIFWrite( &iLong, 4, 1, poDS->fp );
-    iLong = CPL_SWAP32( poDS->sInfoHeader.iClrImportant );
+    iLong = CPL_LSBWORD32( poDS->sInfoHeader.iClrImportant );
     VSIFWrite( &iLong, 4, 1, poDS->fp );
 #endif
 
@@ -1052,61 +1179,41 @@ BMPCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Write all structures to the file                                */
 /* -------------------------------------------------------------------- */
-    VSIFWrite( &sFileHeader.bType, 1, 2, fpImage );
-    
-#ifdef CPL_LSB
-    VSIFWrite( &sFileHeader.iSize, 4, 1, fpImage );
-    VSIFWrite( &sFileHeader.iReserved1, 2, 1, fpImage );
-    VSIFWrite( &sFileHeader.iReserved2, 2, 1, fpImage );
-    VSIFWrite( &sFileHeader.iOffBits, 4, 1, fpImage );
-
-    VSIFWrite( &sInfoHeader.iSize, 4, 1, fpImage );
-    VSIFWrite( &sInfoHeader.iWidth, 4, 1, fpImage );
-    VSIFWrite( &sInfoHeader.iHeight, 4, 1, fpImage );
-    VSIFWrite( &sInfoHeader.iPlanes, 2, 1, fpImage );
-    VSIFWrite( &sInfoHeader.iBitCount, 2, 1, fpImage );
-    VSIFWrite( &sInfoHeader.iCompression, 4, 1, fpImage );
-    VSIFWrite( &sInfoHeader.iSizeImage, 4, 1, fpImage );
-    VSIFWrite( &sInfoHeader.iXPelsPerMeter, 4, 1, fpImage );
-    VSIFWrite( &sInfoHeader.iYPelsPerMeter, 4, 1, fpImage );
-    VSIFWrite( &sInfoHeader.iClrUsed, 4, 1, fpImage );
-    VSIFWrite( &sInfoHeader.iClrImportant, 4, 1, fpImage );
-#else
     GInt32	iLong;
     GInt16	iShort;
-    
-    iLong = CPL_SWAP32( sFileHeader.iSize );
+
+    VSIFWrite( &sFileHeader.bType, 1, 2, fpImage );
+    iLong = CPL_LSBWORD32( sFileHeader.iSize );
     VSIFWrite( &iLong, 4, 1, fpImage );
-    iShort = CPL_SWAP16( sFileHeader.iReserved1 );
+    iShort = CPL_LSBWORD16( sFileHeader.iReserved1 );
     VSIFWrite( &iShort, 2, 1, fpImage );
-    iShort = CPL_SWAP16( sFileHeader.iReserved2 );
+    iShort = CPL_LSBWORD16( sFileHeader.iReserved2 );
     VSIFWrite( &iShort, 2, 1, fpImage );
-    iLong = CPL_SWAP32( sFileHeader.iOffBits );
+    iLong = CPL_LSBWORD32( sFileHeader.iOffBits );
     VSIFWrite( &iLong, 4, 1, fpImage );
 
-    iLong = CPL_SWAP32( sInfoHeader.iSize );
+    iLong = CPL_LSBWORD32( sInfoHeader.iSize );
     VSIFWrite( &iLong, 4, 1, fpImage );
-    iLong = CPL_SWAP32( sInfoHeader.iWidth );
+    iLong = CPL_LSBWORD32( sInfoHeader.iWidth );
     VSIFWrite( &iLong, 4, 1, fpImage );
-    iLong = CPL_SWAP32( sInfoHeader.iHeight );
+    iLong = CPL_LSBWORD32( sInfoHeader.iHeight );
     VSIFWrite( &iLong, 4, 1, fpImage );
-    iShort = CPL_SWAP16( sInfoHeader.iPlanes );
+    iShort = CPL_LSBWORD16( sInfoHeader.iPlanes );
     VSIFWrite( &iShort, 2, 1, fpImage );
-    iShort = CPL_SWAP16( sInfoHeader.iBitCount );
+    iShort = CPL_LSBWORD16( sInfoHeader.iBitCount );
     VSIFWrite( &iShort, 2, 1, fpImage );
-    iLong = CPL_SWAP32( sInfoHeader.iCompression );
+    iLong = CPL_LSBWORD32( sInfoHeader.iCompression );
     VSIFWrite( &iLong, 4, 1, fpImage );
-    iLong = CPL_SWAP32( sInfoHeader.iSizeImage );
+    iLong = CPL_LSBWORD32( sInfoHeader.iSizeImage );
     VSIFWrite( &iLong, 4, 1, fpImage );
-    iLong = CPL_SWAP32( sInfoHeader.iXPelsPerMeter );
+    iLong = CPL_LSBWORD32( sInfoHeader.iXPelsPerMeter );
     VSIFWrite( &iLong, 4, 1, fpImage );
-    iLong = CPL_SWAP32( sInfoHeader.iYPelsPerMeter );
+    iLong = CPL_LSBWORD32( sInfoHeader.iYPelsPerMeter );
     VSIFWrite( &iLong, 4, 1, fpImage );
-    iLong = CPL_SWAP32( sInfoHeader.iClrUsed );
+    iLong = CPL_LSBWORD32( sInfoHeader.iClrUsed );
     VSIFWrite( &iLong, 4, 1, fpImage );
-    iLong = CPL_SWAP32( sInfoHeader.iClrImportant );
+    iLong = CPL_LSBWORD32( sInfoHeader.iClrImportant );
     VSIFWrite( &iLong, 4, 1, fpImage );
-#endif
 
     if ( sInfoHeader.iClrUsed )
 	VSIFWrite( pabyColorTable, 1, 4 * sInfoHeader.iClrUsed, fpImage );
