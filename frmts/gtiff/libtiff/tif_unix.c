@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_unix.c,v 1.3 2000/01/28 21:46:30 warmerda Exp $ */
+/* $Header: /usr/cvsroot/gdal/frmts/gtiff/libtiff/tif_unix.c,v 1.9 2000/04/03 21:30:12 warmerda Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -29,8 +29,11 @@
  */
 #include "tiffiop.h"
 #include <sys/types.h>
-#include <unistd.h>
 #include <stdlib.h>
+
+#ifndef WIN32
+#include <unistd.h>
+#endif
 
 static tsize_t
 _tiffReadProc(thandle_t fd, tdata_t buf, tsize_t size)
