@@ -48,7 +48,7 @@ docs:
 	mkdir html
 	doxygen
 	rm html/index.html
-	cp html/ISO8211lib.html html/index.html
+	cp html/ISO8211Lib.html html/index.html
 
 dist:	docs
 	rm -rf $(DISTDIR)
