@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  1999/01/28 16:24:09  warmerda
+ * Handle HFAStandardWord().
+ *
  * Revision 1.3  1999/01/22 17:39:26  warmerda
  * Added HFABand, and other stuff
  *
@@ -49,7 +52,7 @@
 #ifdef CPL_LSB
 #  define HFAStandard(n,p)	{}
 #else
-#  define HFAStandard(n,p)	CPLSwapWord(n,p)
+   void HFAStandard( int, void *);
 #endif
 
 class HFAEntry;
