@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2003/05/21 04:49:17  warmerda
+ * avoid warnings
+ *
  * Revision 1.8  2003/04/03 23:39:11  danmo
  * Small updates to C API docs (Normand S.)
  *
@@ -194,6 +197,8 @@ OGRGeometryH OGRBuildPolygonFromEdges( OGRGeometryH hLines,
     int         bSuccess = TRUE;
     OGRGeometryCollection *poLines = (OGRGeometryCollection *) hLines;
     OGRPolygon  *poPolygon = new OGRPolygon();
+
+    (void) bBestEffort;
 
 /* -------------------------------------------------------------------- */
 /*      Setup array of line markers indicating if they have been        */

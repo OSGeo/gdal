@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2003/05/21 04:49:17  warmerda
+ * avoid warnings
+ *
  * Revision 1.4  2003/03/28 17:43:52  warmerda
  * rewrote to use new URN and projections proposal
  *
@@ -201,7 +204,7 @@ static void addProjArg( const OGRSpatialReference *poSRS, CPLXMLNode *psBase,
 
 static CPLXMLNode *addAxis( CPLXMLNode *psXMLParent, 
                             const char *pszAxis, // "Lat", "Long", "E" or "N"
-                            const OGR_SRSNode *poUnitsSrc )
+                            const OGR_SRSNode * /* poUnitsSrc */ )
 
 {
     CPLXMLNode *psAxisXML;
@@ -524,7 +527,7 @@ static CPLXMLNode *exportProjCSToXML( const OGRSpatialReference *poSRS )
 /************************************************************************/
 
 OGRErr OGRSpatialReference::exportToXML( char **ppszRawXML, 
-                                         const char *pszDialect ) const
+                                         const char * /*pszDialect*/ ) const
 
 {
     CPLXMLNode *psXMLTree = NULL;
@@ -663,7 +666,8 @@ static void importXMLAuthority( CPLXMLNode *psSrcXML,
 /************************************************************************/
 
 static double getNormalizedValue( CPLXMLNode *psNode, const char *pszPath,
-                                  const char *pszMeasure, double dfDefault )
+                                  const char * /*pszMeasure*/, 
+                                  double dfDefault )
 
 {
     CPLXMLNode *psTargetNode;
