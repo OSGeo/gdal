@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  1999/12/23 14:51:07  warmerda
+ * Improved support in face of 3D geometries.
+ *
  * Revision 1.6  1999/11/04 21:18:01  warmerda
  * fix bug with shapeid for new shapes
  *
@@ -216,17 +219,20 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom )
         OGRPoint	*poPoint = (OGRPoint *) poGeom;
         double		dfX, dfY, dfZ = 0;
 
-        if( poGeom->getGeometryType() != wkbPoint )
+        if( poGeom->getGeometryType() != wkbPoint
+            || poGeom->getGeometryType() == wkbPoint25D )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
-                      "Attempt to write non-point geometry to point shapefile.");
+                      "Attempt to write non-point (%s) geometry to"
+                      " point shapefile.",
+                      poGeom->getGeometryName() );
 
             return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
         }
 
         dfX = poPoint->getX();
         dfY = poPoint->getY();
-        dfZ = 0.0;
+        dfZ = poPoint->getZ();
         
         psShape = SHPCreateSimpleObject( hSHP->nShapeType, 1,
                                          &dfX, &dfY, &dfZ );
@@ -245,11 +251,12 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom )
         int		iPoint;
         SHPObject	*psShape;
 
-        if( poGeom->getGeometryType() != wkbPoint )
+        if( poGeom->getGeometryType() != wkbMultiPoint )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
-                      "Attempt to write non-multipoint geometry to "
-                      "multipoint shapefile.");
+                      "Attempt to write non-multipoint (%s) geometry to "
+                      "multipoint shapefile.",
+                      poGeom->getGeometryName() );
 
             return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
         }
@@ -289,11 +296,13 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom )
         int		iPoint;
         SHPObject	*psShape;
 
-        if( poGeom->getGeometryType() != wkbLineString )
+        if( poGeom->getGeometryType() != wkbLineString
+            || poGeom->getGeometryType() != wkbLineString25D )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
-                      "Attempt to write non-linestring geometry to "
-                      "ARC type shapefile.");
+                      "Attempt to write non-linestring (%s) geometry to "
+                      "ARC type shapefile.",
+                      poGeom->getGeometryName() );
 
             return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
         }
@@ -333,8 +342,9 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom )
         if( poGeom->getGeometryType() != wkbPolygon )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
-                      "Attempt to write non-polygon geometry to "
-                      " type shapefile.");
+                      "Attempt to write non-polygon (%s) geometry to "
+                      " type shapefile.",
+                      poGeom->getGeometryName() );
 
             return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
         }
