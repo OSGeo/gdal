@@ -5,7 +5,6 @@ OBJ	=	gdalopen.obj gdaldrivermanager.obj gdaldriver.obj \
 
 GDAL_ROOT	=	..
 
-GDALLIB	=	..\gdal.lib
 LIBS	=	$(GDALLIB)
 
 !INCLUDE ..\nmake.opt
