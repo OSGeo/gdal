@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2000/07/11 20:15:12  warmerda
+ * apply CPL_DLL to OGR functions
+ *
  * Revision 1.7  2000/07/09 20:47:35  warmerda
  * added CPL_START/END
  *
@@ -58,11 +61,11 @@
 
 CPL_C_START
 
-void  *OGRMalloc( size_t );
-void  *OGRCalloc( size_t, size_t );
-void  *OGRRealloc( void *, size_t );
-char  *OGRStrdup( const char * );
-void   OGRFree( void * );
+void CPL_DLL *OGRMalloc( size_t );
+void CPL_DLL *OGRCalloc( size_t, size_t );
+void CPL_DLL *OGRRealloc( void *, size_t );
+char CPL_DLL *OGRStrdup( const char * );
+void CPL_DLL OGRFree( void * );
 
 typedef int OGRErr;
 
