@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.2  2004/12/20 22:17:57  fwarmerdam
+ * adjusted for two create copy entry points
+ *
  * Revision 1.1  2004/12/10 19:15:34  fwarmerdam
  * New
  *
@@ -58,10 +61,18 @@
 
 #ifdef HAVE_COMPRESS
 GDALDataset *
-ECWCreateCopy( const char * pszFilename, GDALDataset *poSrcDS, 
+ECWCreateCopyECW( const char * pszFilename, GDALDataset *poSrcDS, 
+                 int bStrict, char ** papszOptions, 
+                 GDALProgressFunc pfnProgress, void * pProgressData );
+GDALDataset *
+ECWCreateCopyJPEG2000( const char * pszFilename, GDALDataset *poSrcDS, 
                  int bStrict, char ** papszOptions, 
                  GDALProgressFunc pfnProgress, void * pProgressData );
 #endif
+
+CPL_C_START
+char **ECWGetCSList(void);
+CPL_C_END
 
 /************************************************************************/
 /* ==================================================================== */
