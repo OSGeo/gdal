@@ -1345,21 +1345,33 @@ else
     AC_CHECK_LIB(proj,pj_init,PROJ_STATIC=yes,PROJ_STATIC=no,)
 
     if test "$PROJ_STATIC" = "no"; then
+      dnl Disable previous value cached by the previous AC_CHECK_LIB test :
+      dnl AC_CHECK_LIB caches the result value for a couple (function, library)
+      dnl in a variable named "ac_cv_lib_<library name>_<function name>".
+      dnl In order to try to locate the library in different locations, using
+      dnl different values of LIBS, we have to 'unset' this variable after
+      dnl each negative test.
+
+      unset ac_cv_lib_proj_pj_init
+
       LIBS="-L$with_static_proj4/lib $PROJ_LIB $ORIG_LIBS"
       AC_CHECK_LIB(proj,pj_init,PROJ_STATIC=yes,PROJ_STATIC=no,)
     fi
 
     if test "$PROJ_STATIC" = "no"; then
+      unset ac_cv_lib_proj_pj_init
       LIBS="-L$with_static_proj4/src/.libs $PROJ_LIB $ORIG_LIBS"
       AC_CHECK_LIB(proj,pj_init,PROJ_STATIC=yes,PROJ_STATIC=no,)
     fi
 
     if test "$PROJ_STATIC" = "no"; then
+      unset ac_cv_lib_proj_pj_init
       LIBS="-L$with_static_proj4 $PROJ_LIB $ORIG_LIBS"
       AC_CHECK_LIB(proj,pj_init,PROJ_STATIC=yes,PROJ_STATIC=no,)
     fi
 
     if test "$PROJ_STATIC" = "no"; then
+      unset ac_cv_lib_proj_pj_init
       LIBS="$PROJ_LIB $ORIG_LIBS"
       AC_CHECK_LIB(proj,pj_init,PROJ_STATIC=yes,PROJ_STATIC=no,)
     fi
