@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2003/09/03 20:36:26  warmerda
+ * added subfield writing support
+ *
  * Revision 1.16  2003/07/03 15:38:46  warmerda
  * some write capabilities added
  *
@@ -212,6 +215,19 @@ int DDFRecord::Read()
 /*                               Write()                                */
 /************************************************************************/
 
+/**
+ * Write record out to module.
+ *
+ * This method writes the current record to the module to which it is 
+ * attached.  Normally this would be at the end of the file, and only used
+ * for modules newly created with DDFModule::Create().  Rewriting existing
+ * records is not supported at this time.  Calling Write() multiple times
+ * on a DDFRecord will result it multiple copies being written at the end of
+ * the module.
+ *
+ * @return TRUE on success or FALSE on failure.
+ */
+
 int DDFRecord::Write()
 
 {
@@ -229,7 +245,7 @@ int DDFRecord::Write()
     szLeader[5] = ' ';
     szLeader[6] = 'D';
     
-    sprintf( szLeader + 12, "%05d", nFieldOffset );
+    sprintf( szLeader + 12, "%05d", nFieldOffset + nLeaderSize );
     szLeader[17] = ' ';
 
     szLeader[20] = '0' + _sizeFieldLength;
@@ -1168,11 +1184,9 @@ DDFField *DDFRecord::AddField( DDFFieldDefn *poDefn )
     }
 
 /* -------------------------------------------------------------------- */
-/*      Insert field terminator.                                        */
+/*      Initialize field.                                               */
 /* -------------------------------------------------------------------- */
-    char chFT = DDF_FIELD_TERMINATOR;
-
-    SetFieldRaw( paoFields+nFieldCount-1, 0, &chFT, 1 );
+    CreateDefaultFieldInstance( paoFields + nFieldCount-1, 0 );
 
     return paoFields + (nFieldCount - 1);
 }
@@ -1286,6 +1300,92 @@ DDFRecord::SetFieldRaw( DDFField *poField, int iIndexWithinField,
 }
 
 /************************************************************************/
+/*                           UpdateFieldRaw()                           */
+/************************************************************************/
+
+int
+DDFRecord::UpdateFieldRaw( DDFField *poField, int iIndexWithinField,
+                           int nStartOffset, int nOldSize, 
+                           const char *pachRawData, int nRawDataSize )
+
+{
+    int         iTarget, nRepeatCount;
+
+/* -------------------------------------------------------------------- */
+/*      Find which field we are to update.                              */
+/* -------------------------------------------------------------------- */
+    for( iTarget = 0; iTarget < nFieldCount; iTarget++ )
+    {
+        if( paoFields + iTarget == poField )
+            break;
+    }
+
+    if( iTarget == nFieldCount )
+        return FALSE;
+
+    nRepeatCount = poField->GetRepeatCount();
+
+    if( iIndexWithinField < 0 || iIndexWithinField >= nRepeatCount )
+        return FALSE;
+
+/* -------------------------------------------------------------------- */
+/*      Figure out how much pre and post data there is.                 */
+/* -------------------------------------------------------------------- */
+    char *pachWrkData;
+    int         nInstanceSize, nPostBytes, nPreBytes;
+        
+    pachWrkData = (char *) poField->GetInstanceData( iIndexWithinField, 
+                                                     &nInstanceSize );
+    nPreBytes = pachWrkData - poField->GetData() + nStartOffset;
+    nPostBytes = poField->GetDataSize() - nPreBytes - nOldSize;
+
+/* -------------------------------------------------------------------- */
+/*      If we aren't changing the size, just copy over the existing     */
+/*      data.                                                           */
+/* -------------------------------------------------------------------- */
+    if( nOldSize == nRawDataSize )
+    {
+        memcpy( pachWrkData + nStartOffset, pachRawData, nRawDataSize );
+        return TRUE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      If we are shrinking, move in the new data, and shuffle down     */
+/*      the old before resizing.                                        */
+/* -------------------------------------------------------------------- */
+    if( nRawDataSize < nOldSize )
+    {
+        memcpy( ((char*) poField->GetData()) + nPreBytes, 
+                pachRawData, nRawDataSize );
+        memmove( ((char *) poField->GetData()) + nPreBytes + nRawDataSize, 
+                 ((char *) poField->GetData()) + nPreBytes + nOldSize, 
+                 nPostBytes );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Resize the whole buffer.                                        */
+/* -------------------------------------------------------------------- */
+    if( !ResizeField( poField, 
+                      poField->GetDataSize() - nOldSize + nRawDataSize ) )
+        return FALSE;
+
+/* -------------------------------------------------------------------- */
+/*      If we growing the buffer, shuffle up the post data, and         */
+/*      move in our new values.                                         */
+/* -------------------------------------------------------------------- */
+    if( nRawDataSize >= nOldSize )
+    {
+        memmove( ((char *) poField->GetData()) + nPreBytes + nRawDataSize, 
+                 ((char *) poField->GetData()) + nPreBytes + nOldSize, 
+                 nPostBytes );
+        memcpy( ((char*) poField->GetData()) + nPreBytes, 
+                pachRawData, nRawDataSize );
+    }
+
+    return TRUE;
+}
+
+/************************************************************************/
 /*                           ResetDirectory()                           */
 /*                                                                      */
 /*      Re-prepares the directory information for the record.           */
@@ -1361,7 +1461,341 @@ int DDFRecord::ResetDirectory()
                  poField->GetData() - pachData - nFieldOffset );
     }
 
-    pachData[nEntrySize * nFieldCount] = DDF_UNIT_TERMINATOR;
+    pachData[nEntrySize * nFieldCount] = DDF_FIELD_TERMINATOR;
         
     return TRUE;
+}
+
+/************************************************************************/
+/*                     CreateDefaultFieldInstance()                     */
+/************************************************************************/
+
+/**
+ * Initialize default instance.
+ *
+ * This method is normally only used internally by the AddField() method
+ * to initialize the new field instance with default subfield values.  It
+ * installs default data for one instance of the field in the record
+ * using the DDFFieldDefn::GetDefaultValue() method and 
+ * DDFRecord::SetFieldRaw(). 
+ *
+ * @param poField the field within the record to be assign a default 
+ * instance. 
+ * @param iIndexWithinField the instance to set (may not have been tested with
+ * values other than 0). 
+ *
+ * @return TRUE on success or FALSE on failure. 
+ */
+
+int DDFRecord::CreateDefaultFieldInstance( DDFField *poField, 
+                                           int iIndexWithinField )
+
+{
+    int nRawSize, nSuccess;
+    char *pachRawData;
+
+    pachRawData = poField->GetFieldDefn()->GetDefaultValue( &nRawSize );
+    if( pachRawData == NULL )
+        return FALSE;
+
+    nSuccess = SetFieldRaw( poField, iIndexWithinField, pachRawData, nRawSize);
+
+    CPLFree( pachRawData );
+
+    return nSuccess;
+}
+
+/************************************************************************/
+/*                         SetStringSubfield()                          */
+/************************************************************************/
+
+/**
+ * Set a string subfield in record.
+ *
+ * The value of a given subfield is replaced with a new string value 
+ * formatted appropriately. 
+ *
+ * @param pszField the field name to operate on.
+ * @param iFieldIndex the field index to operate on (zero based).
+ * @param pszSubfield the subfield name to operate on. 
+ * @param iSubfieldIndex the subfield index to operate on (zero based). 
+ * @param pszValue the new string to place in the subfield.  This may be 
+ * arbitrary binary bytes if nValueLength is specified. 
+ * @param nValueLength the number of valid bytes in pszValue, may be -1 to 
+ * internally fetch with strlen(). 
+ * 
+ * @return TRUE if successful, and FALSE if not. 
+ */
+
+int DDFRecord::SetStringSubfield( const char *pszField, int iFieldIndex, 
+                                  const char *pszSubfield, int iSubfieldIndex,
+                                  const char *pszValue, int nValueLength )
+
+{
+/* -------------------------------------------------------------------- */
+/*      Fetch the field. If this fails, return zero.                    */
+/* -------------------------------------------------------------------- */
+    DDFField *poField; 
+
+    poField = FindField( pszField, iFieldIndex );
+    if( poField == NULL )
+        return FALSE;
+
+/* -------------------------------------------------------------------- */
+/*      Get the subfield definition                                     */
+/* -------------------------------------------------------------------- */
+    DDFSubfieldDefn     *poSFDefn;
+
+    poSFDefn = poField->GetFieldDefn()->FindSubfieldDefn( pszSubfield );
+    if( poSFDefn == NULL )
+        return FALSE;
+
+/* -------------------------------------------------------------------- */
+/*      How long will the formatted value be?                           */
+/* -------------------------------------------------------------------- */
+    int nFormattedLen;
+
+    if( !poSFDefn->FormatStringValue( NULL, 0, &nFormattedLen, pszValue,
+                                      nValueLength ) )
+        return FALSE;
+
+/* -------------------------------------------------------------------- */
+/*      Get a pointer to the data.                                      */
+/* -------------------------------------------------------------------- */
+    int         nMaxBytes;
+    char *pachSubfieldData = (char *) 
+        poField->GetSubfieldData(poSFDefn, &nMaxBytes,
+                                 iSubfieldIndex);
+
+/* -------------------------------------------------------------------- */
+/*      If the new length matches the existing length, just overlay     */
+/*      and return.                                                     */
+/* -------------------------------------------------------------------- */
+    int nExistingLength;
+
+    poSFDefn->GetDataLength( pachSubfieldData, nMaxBytes, &nExistingLength );
+
+    if( nExistingLength == nFormattedLen )
+    {
+        return poSFDefn->FormatStringValue( pachSubfieldData, nFormattedLen,
+                                            NULL, pszValue, nValueLength );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      We will need to resize the raw data.                            */
+/* -------------------------------------------------------------------- */
+    const char *pachFieldInstData;
+    int         nInstanceSize, nStartOffset, nSuccess;
+    char *pachNewData;
+
+    pachFieldInstData = poField->GetInstanceData( iFieldIndex,
+                                                  &nInstanceSize );
+
+    nStartOffset = pachSubfieldData - pachFieldInstData;
+
+    pachNewData = (char *) CPLMalloc(nFormattedLen);
+    poSFDefn->FormatStringValue( pachNewData, nFormattedLen, NULL, 
+                                 pszValue, nValueLength );
+    
+    nSuccess = UpdateFieldRaw( poField, iFieldIndex,
+                               nStartOffset, nExistingLength, 
+                               pachNewData, nFormattedLen );
+
+    CPLFree( pachNewData );
+
+    return nSuccess;
+}
+
+/************************************************************************/
+/*                           SetIntSubfield()                           */
+/************************************************************************/
+
+/**
+ * Set an integer subfield in record.
+ *
+ * The value of a given subfield is replaced with a new integer value 
+ * formatted appropriately. 
+ *
+ * @param pszField the field name to operate on.
+ * @param iFieldIndex the field index to operate on (zero based).
+ * @param pszSubfield the subfield name to operate on. 
+ * @param iSubfieldIndex the subfield index to operate on (zero based). 
+ * @param nNewValue the new value to place in the subfield. 
+ * 
+ * @return TRUE if successful, and FALSE if not. 
+ */
+
+int DDFRecord::SetIntSubfield( const char *pszField, int iFieldIndex, 
+                               const char *pszSubfield, int iSubfieldIndex,
+                               int nNewValue )
+
+{
+/* -------------------------------------------------------------------- */
+/*      Fetch the field. If this fails, return zero.                    */
+/* -------------------------------------------------------------------- */
+    DDFField *poField; 
+
+    poField = FindField( pszField, iFieldIndex );
+    if( poField == NULL )
+        return FALSE;
+
+/* -------------------------------------------------------------------- */
+/*      Get the subfield definition                                     */
+/* -------------------------------------------------------------------- */
+    DDFSubfieldDefn     *poSFDefn;
+
+    poSFDefn = poField->GetFieldDefn()->FindSubfieldDefn( pszSubfield );
+    if( poSFDefn == NULL )
+        return FALSE;
+
+/* -------------------------------------------------------------------- */
+/*      How long will the formatted value be?                           */
+/* -------------------------------------------------------------------- */
+    int nFormattedLen;
+
+    if( !poSFDefn->FormatIntValue( NULL, 0, &nFormattedLen, nNewValue ) )
+        return FALSE;
+
+/* -------------------------------------------------------------------- */
+/*      Get a pointer to the data.                                      */
+/* -------------------------------------------------------------------- */
+    int         nMaxBytes;
+    char *pachSubfieldData = (char *) 
+        poField->GetSubfieldData(poSFDefn, &nMaxBytes,
+                                 iSubfieldIndex);
+
+/* -------------------------------------------------------------------- */
+/*      If the new length matches the existing length, just overlay     */
+/*      and return.                                                     */
+/* -------------------------------------------------------------------- */
+    int nExistingLength;
+
+    poSFDefn->GetDataLength( pachSubfieldData, nMaxBytes, &nExistingLength );
+
+    if( nExistingLength == nFormattedLen )
+    {
+        return poSFDefn->FormatIntValue( pachSubfieldData, nFormattedLen,
+                                         NULL, nNewValue );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      We will need to resize the raw data.                            */
+/* -------------------------------------------------------------------- */
+    const char *pachFieldInstData;
+    int         nInstanceSize, nStartOffset, nSuccess;
+    char *pachNewData;
+
+    pachFieldInstData = poField->GetInstanceData( iFieldIndex,
+                                                  &nInstanceSize );
+
+    nStartOffset = pachSubfieldData - pachFieldInstData;
+
+    pachNewData = (char *) CPLMalloc(nFormattedLen);
+    poSFDefn->FormatIntValue( pachNewData, nFormattedLen, NULL, 
+                              nNewValue );
+    
+    nSuccess = UpdateFieldRaw( poField, iFieldIndex,
+                               nStartOffset, nExistingLength, 
+                               pachNewData, nFormattedLen );
+
+    CPLFree( pachNewData );
+
+    return nSuccess;
+}
+
+/************************************************************************/
+/*                          SetFloatSubfield()                          */
+/************************************************************************/
+
+/**
+ * Set a float subfield in record.
+ *
+ * The value of a given subfield is replaced with a new float value 
+ * formatted appropriately. 
+ *
+ * @param pszField the field name to operate on.
+ * @param iFieldIndex the field index to operate on (zero based).
+ * @param pszSubfield the subfield name to operate on. 
+ * @param iSubfieldIndex the subfield index to operate on (zero based). 
+ * @param dfNewValue the new value to place in the subfield. 
+ * 
+ * @return TRUE if successful, and FALSE if not. 
+ */
+
+int DDFRecord::SetFloatSubfield( const char *pszField, int iFieldIndex, 
+                                 const char *pszSubfield, int iSubfieldIndex,
+                                 double dfNewValue )
+
+{
+/* -------------------------------------------------------------------- */
+/*      Fetch the field. If this fails, return zero.                    */
+/* -------------------------------------------------------------------- */
+    DDFField *poField; 
+
+    poField = FindField( pszField, iFieldIndex );
+    if( poField == NULL )
+        return FALSE;
+
+/* -------------------------------------------------------------------- */
+/*      Get the subfield definition                                     */
+/* -------------------------------------------------------------------- */
+    DDFSubfieldDefn     *poSFDefn;
+
+    poSFDefn = poField->GetFieldDefn()->FindSubfieldDefn( pszSubfield );
+    if( poSFDefn == NULL )
+        return FALSE;
+
+/* -------------------------------------------------------------------- */
+/*      How long will the formatted value be?                           */
+/* -------------------------------------------------------------------- */
+    int nFormattedLen;
+
+    if( !poSFDefn->FormatFloatValue( NULL, 0, &nFormattedLen, dfNewValue ) )
+        return FALSE;
+
+/* -------------------------------------------------------------------- */
+/*      Get a pointer to the data.                                      */
+/* -------------------------------------------------------------------- */
+    int         nMaxBytes;
+    char *pachSubfieldData = (char *) 
+        poField->GetSubfieldData(poSFDefn, &nMaxBytes,
+                                 iSubfieldIndex);
+
+/* -------------------------------------------------------------------- */
+/*      If the new length matches the existing length, just overlay     */
+/*      and return.                                                     */
+/* -------------------------------------------------------------------- */
+    int nExistingLength;
+
+    poSFDefn->GetDataLength( pachSubfieldData, nMaxBytes, &nExistingLength );
+
+    if( nExistingLength == nFormattedLen )
+    {
+        return poSFDefn->FormatFloatValue( pachSubfieldData, nFormattedLen,
+                                         NULL, dfNewValue );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      We will need to resize the raw data.                            */
+/* -------------------------------------------------------------------- */
+    const char *pachFieldInstData;
+    int         nInstanceSize, nStartOffset, nSuccess;
+    char *pachNewData;
+
+    pachFieldInstData = poField->GetInstanceData( iFieldIndex,
+                                                  &nInstanceSize );
+
+    nStartOffset = pachSubfieldData - pachFieldInstData;
+
+    pachNewData = (char *) CPLMalloc(nFormattedLen);
+    poSFDefn->FormatFloatValue( pachNewData, nFormattedLen, NULL, 
+                              dfNewValue );
+    
+    nSuccess = UpdateFieldRaw( poField, iFieldIndex,
+                               nStartOffset, nExistingLength, 
+                               pachNewData, nFormattedLen );
+
+    CPLFree( pachNewData );
+
+    return nSuccess;
 }
