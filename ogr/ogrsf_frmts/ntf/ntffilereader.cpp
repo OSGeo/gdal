@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.23  2001/12/12 02:47:10  warmerda
+ * avoid leaking records, check odd conditions
+ *
  * Revision 1.22  2001/12/11 20:37:49  warmerda
  * add option to avoid caching indexed records on multiple readers
  *
@@ -456,6 +459,7 @@ int NTFFileReader::Open( const char * pszFilenameIn )
 /* -------------------------------------------------------------------- */
     if( poRecord->GetType() == NRT_VTR )
     {
+        delete poRecord;
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Cound not find section header record in %s.\n", 
                   pszFilename );
@@ -565,6 +569,8 @@ int NTFFileReader::Open( const char * pszFilenameIn )
         dfPaperToGround = dfScale / 1000.0;
     else
         dfPaperToGround = 0.0;
+
+    delete poRecord;
 
 /* -------------------------------------------------------------------- */
 /*      Ensure we have appropriate layers defined.                      */
@@ -1621,10 +1627,17 @@ void NTFFileReader::IndexFile()
         int     iType = poRecord->GetType();
         int     iId = atoi(poRecord->GetField( 3, 8 ));
 
+        if( iType < 0 || iType >= 100 )
+        {
+            CPLDebug( "OGR_NTF", "Illegal type %d record, skipping.", 
+                      iType );
+            delete poRecord;
+            continue;
+        }
+
 /* -------------------------------------------------------------------- */
 /*      Grow type specific subindex if needed.                          */
 /* -------------------------------------------------------------------- */
-        
         if( anIndexSize[iType] <= iId )
         {
             int nNewSize = MAX(iId+1,anIndexSize[iType] * 2 + 10);
@@ -1643,8 +1656,19 @@ void NTFFileReader::IndexFile()
 /*      Put record into type specific subindex based on it's id as      */
 /*      the key.                                                        */
 /* -------------------------------------------------------------------- */
+        if( apapoRecordIndex[iType][iId] != NULL )
+        {
+            CPLDebug( "OGR_NTF", 
+                      "Duplicate record with index %d and type %d\n"
+                      "in NTFFileReader::IndexFile().",
+                      iId, iType );
+            delete apapoRecordIndex[iType][iId];
+        }
         (apapoRecordIndex[iType])[iId] = poRecord;
     }
+
+    if( poRecord != NULL )
+        delete poRecord;
 }
 
 /************************************************************************/
