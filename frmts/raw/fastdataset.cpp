@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.9  2003/10/17 07:08:21  dron
+ * Use locale selection option in CPLScanDouble().
+ *
  * Revision 1.8  2003/10/05 15:31:00  dron
  * TM projection support implemented.
  *
@@ -535,14 +538,14 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
 	    oSRS.SetUTM( iUTMZone, FALSE );
 
 	// Coordinates in meters
-        dfULX = CPLScanDouble( szHeader + 3664, 13 );
-        dfULY = CPLScanDouble( szHeader + 3678, 13 );
-        dfURX = CPLScanDouble( szHeader + 3744, 13 );
-        dfURY = CPLScanDouble( szHeader + 3758, 13 );
-        dfLRX = CPLScanDouble( szHeader + 3824, 13 );
-        dfLRY = CPLScanDouble( szHeader + 3838, 13 );
-        dfLLX = CPLScanDouble( szHeader + 3904, 13 );
-        dfLLY = CPLScanDouble( szHeader + 3918, 13 );
+        dfULX = CPLScanDouble( szHeader + 3664, 13, "C" );
+        dfULY = CPLScanDouble( szHeader + 3678, 13, "C" );
+        dfURX = CPLScanDouble( szHeader + 3744, 13, "C" );
+        dfURY = CPLScanDouble( szHeader + 3758, 13, "C" );
+        dfLRX = CPLScanDouble( szHeader + 3824, 13, "C" );
+        dfLRY = CPLScanDouble( szHeader + 3838, 13, "C" );
+        dfLLX = CPLScanDouble( szHeader + 3904, 13, "C" );
+        dfLLY = CPLScanDouble( szHeader + 3918, 13, "C" );
     }
     
     else if ( EQUALN(szHeader + 3103, "TM", 2) )
@@ -550,23 +553,23 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
         double  dfZone = 0.0;
 
         oSRS.SetTM( // Center latitude
-                    PackedDMSToDec( CPLScanDouble(szHeader + 3312, 24) ),
+                    PackedDMSToDec( CPLScanDouble(szHeader + 3312, 24, "C") ),
                     // Center longitude
-                    PackedDMSToDec( CPLScanDouble(szHeader + 3282, 24) ),
-                    CPLScanDouble(szHeader + 3232, 24),    // Scale factor
-                    CPLScanDouble(szHeader + 3337, 24),    // False easting
-                    CPLScanDouble(szHeader + 3362, 24) );  // False northing
+                    PackedDMSToDec( CPLScanDouble(szHeader + 3282, 24, "C") ),
+                    CPLScanDouble(szHeader + 3232, 24, "C"),   // Scale factor
+                    CPLScanDouble(szHeader + 3337, 24, "C"),   // False easting
+                    CPLScanDouble(szHeader + 3362, 24, "C") ); // False northing
 
         dfZone = atoi( szHeader + 3592 ) * 1000000.0;
 	// Coordinates in meters
-        dfULX = CPLScanDouble( szHeader + 3664, 13 ) - dfZone;
-        dfULY = CPLScanDouble( szHeader + 3678, 13 );
-        dfURX = CPLScanDouble( szHeader + 3744, 13 ) - dfZone;
-        dfURY = CPLScanDouble( szHeader + 3758, 13 );
-        dfLRX = CPLScanDouble( szHeader + 3824, 13 ) - dfZone;
-        dfLRY = CPLScanDouble( szHeader + 3838, 13 );
-        dfLLX = CPLScanDouble( szHeader + 3904, 13 ) - dfZone;
-        dfLLY = CPLScanDouble( szHeader + 3918, 13 );
+        dfULX = CPLScanDouble( szHeader + 3664, 13, "C" ) - dfZone;
+        dfULY = CPLScanDouble( szHeader + 3678, 13, "C" );
+        dfURX = CPLScanDouble( szHeader + 3744, 13, "C" ) - dfZone;
+        dfURY = CPLScanDouble( szHeader + 3758, 13, "C" );
+        dfLRX = CPLScanDouble( szHeader + 3824, 13, "C" ) - dfZone;
+        dfLRY = CPLScanDouble( szHeader + 3838, 13, "C" );
+        dfLLX = CPLScanDouble( szHeader + 3904, 13, "C" ) - dfZone;
+        dfLLY = CPLScanDouble( szHeader + 3918, 13, "C" );
     }
 
     oSRS.SetLinearUnits( SRS_UL_METER, 1.0 );
