@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2001/12/11 17:37:24  warmerda
+ * improved PROJ.4 error reporting.
+ *
  * Revision 1.11  2001/11/18 00:57:53  warmerda
  * change printf to CPLDebug
  *
@@ -93,6 +96,8 @@ static projUV       (*pfn_pj_inv)(projUV, projPJ) = NULL;
 static void     (*pfn_pj_free)(projPJ) = NULL;
 static int      (*pfn_pj_transform)(projPJ, projPJ, long, int, 
                                     double *, double *, double * );
+static int         *(*pfn_pj_get_errno_ref)(void);
+static char        *(*pfn_pj_strerrno)(int);
 
 #ifdef WIN32
 #  define LIBNAME      "proj.dll"
@@ -148,6 +153,8 @@ static int LoadProjLibrary()
     pfn_pj_inv = pj_inv;
     pfn_pj_free = pj_free;
     pfn_pj_transform = pj_transform;
+    pfn_pj_get_errno_ref = pj_get_errno_ref;
+    pfn_pj_get_strerrno = pj_get_strerrno;
 #else
     CPLPushErrorHandler( CPLQuietErrorHandler );
 
@@ -167,6 +174,10 @@ static int LoadProjLibrary()
     pfn_pj_transform = (int (*)(projPJ,projPJ,long,int,double*,
                                 double*,double*))
                         CPLGetSymbol( LIBNAME, "pj_transform" );
+    pfn_pj_get_errno_ref = (int *(*)(void))
+        CPLGetSymbol( LIBNAME, "pj_get_errno_ref" );
+    pfn_pj_strerrno = (char *(*)(int))
+        CPLGetSymbol( LIBNAME, "pj_strerrno" );
 #endif
 
     if( pfn_pj_transform == NULL )
@@ -261,6 +272,8 @@ OGRProj4CT::OGRProj4CT()
 {
     poSRSSource = NULL;
     poSRSTarget = NULL;
+    psPJSource = NULL;
+    psPJTarget = NULL;
 }
 
 /************************************************************************/
@@ -310,9 +323,23 @@ int OGRProj4CT::Initialize( OGRSpatialReference * poSourceIn,
     psPJSource = pfn_pj_init( CSLCount(papszArgs), papszArgs );
     
     if( psPJSource == NULL )
-        CPLError( CE_Failure, CPLE_NotSupported, 
-                  "Failed to initialize PROJ.4 with `%s'.", 
-                  pszProj4Defn );
+    {
+        if( pfn_pj_get_errno_ref != NULL
+            && pfn_pj_strerrno != NULL )
+        {
+            int	*p_pj_errno = pfn_pj_get_errno_ref();
+
+            CPLError( CE_Failure, CPLE_NotSupported, 
+                      "Failed to initialize PROJ.4 with `%s'.\n%s", 
+                      pszProj4Defn, pfn_pj_strerrno(*p_pj_errno) );
+        }
+        else
+        {
+            CPLError( CE_Failure, CPLE_NotSupported, 
+                      "Failed to initialize PROJ.4 with `%s'.\n", 
+                      pszProj4Defn );
+        }
+    }
     
     CSLDestroy( papszArgs );
     CPLFree( pszProj4Defn );
