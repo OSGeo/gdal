@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2003/02/14 22:15:04  warmerda
+ * expand tabs
+ *
  * Revision 1.19  2003/01/24 20:15:34  warmerda
  * added polar stereographic support
  *
@@ -271,8 +274,8 @@ static int anUsgsEsriZones[] =
 static int ESRIToUSGSZone( int nESRIZone )
 
 {
-    int		nPairs = sizeof(anUsgsEsriZones) / (2*sizeof(int));
-    int		i;
+    int         nPairs = sizeof(anUsgsEsriZones) / (2*sizeof(int));
+    int         i;
     
     for( i = 0; i < nPairs; i++ )
     {
