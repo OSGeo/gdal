@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.46  2004/04/29 18:10:35  warmerda
+ * try not to crash if GTIF is NULL
+ *
  * Revision 1.45  2004/04/21 13:59:15  warmerda
  * try to preserve PROJCS and GEOGCS names in citations
  *
@@ -315,7 +318,8 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
         {
             char szPCSName[200];
             strcpy( szPCSName, "unnamed" );
-            GTIFKeyGet( hGTIF, GTCitationGeoKey, szPCSName, 0, sizeof(szPCSName) );
+            if( hGTIF != NULL )
+                GTIFKeyGet( hGTIF, GTCitationGeoKey, szPCSName, 0, sizeof(szPCSName) );
             oSRS.SetNode( "PROJCS", szPCSName );
         }
     }
@@ -331,7 +335,8 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
     double	dfInvFlattening, dfSemiMajor;
     char        szGCSName[200];
     
-    if(GTIFKeyGet( hGTIF, GeogCitationGeoKey, szGCSName, 0, sizeof(szGCSName)))
+    if( hGTIF != NULL 
+        && GTIFKeyGet( hGTIF, GeogCitationGeoKey, szGCSName, 0, sizeof(szGCSName)))
         pszGeogName = CPLStrdup(szGCSName);
     GTIFGetGCSInfo( psDefn->GCS, &pszGeogName, NULL, NULL, NULL );
     GTIFGetDatumInfo( psDefn->Datum, &pszDatumName, NULL );
