@@ -26,6 +26,9 @@
 ###############################################################################
 # 
 #  $Log$
+#  Revision 1.10  2003/04/22 14:42:45  warmerda
+#  Don't import Numeric unless we need it.
+#
 #  Revision 1.9  2003/04/22 13:30:05  warmerda
 #  Added -co flag.
 #
@@ -57,7 +60,6 @@
 
 import gdal
 import sys
-import Numeric
 
 verbose = 0
 
@@ -93,6 +95,8 @@ def raster_copy_with_nodata( s_fh, s_xoff, s_yoff, s_xsize, s_ysize, s_band_n,
                              t_fh, t_xoff, t_yoff, t_xsize, t_ysize, t_band_n,
                              nodata ):
 
+    import Numeric
+    
     if verbose != 0:
         print 'Copy %d,%d,%d,%d to %d,%d,%d,%d.' \
               % (s_xoff, s_yoff, s_xsize, s_ysize,
