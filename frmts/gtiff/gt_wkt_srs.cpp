@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.38  2003/03/26 22:13:53  warmerda
+ * Changed geod_datum.csv to datum.csv.
+ *
  * Revision 1.37  2003/03/18 18:33:37  warmerda
  * fixed memory leaks
  *
@@ -561,7 +564,7 @@ static int OGCDatumName2EPSGDatumCode( const char * pszOGCName )
 /* -------------------------------------------------------------------- */
 /*      Open the table if possible.                                     */
 /* -------------------------------------------------------------------- */
-    fp = VSIFOpen( CSVFilename("geod_datum.csv"), "r" );
+    fp = VSIFOpen( CSVFilename("datum.csv"), "r" );
     if( fp == NULL )
         return nReturn;
 
