@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2002/05/22 14:09:04  warmerda
+ * Add support for the nbands value as per suggestion from Brent Fraser.
+ *
  * Revision 1.12  2002/01/10 14:07:57  warmerda
  * Verify that poOpenInfo->fp is not NULL in Open() as per:
  * http://bugzilla.remotesensing.org/show_bug.cgi?id=95
@@ -275,6 +278,10 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
         else if( EQUAL(papszTokens[0],"cellsize") )
         {
             dfXDim = dfYDim = atof(papszTokens[1]);
+        }
+        else if( EQUAL(papszTokens[0],"nbands") )
+        {
+            nBands = atoi(papszTokens[1]);
         }
         else if( EQUAL(papszTokens[0],"NODATA_value") 
                  || EQUAL(papszTokens[0],"NODATA") )
