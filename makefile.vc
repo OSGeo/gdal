@@ -43,6 +43,9 @@ clean:
 	cd pymod
 	$(MAKE) /f makefile.vc clean
 	cd ..
+	if exist gdal.lib del gdal.lib
+	if exist $(GDAL_DLL) del $(GDAL_DLL)
+	if exist gdal_i.lib del gdal_i.*
 
 port_dir:
 	cd port
