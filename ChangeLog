@@ -1,3 +1,8 @@
+2001-11-06  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* frmts/aaigrid/aaigriddataset.cpp: fixed a few bugs as pointed
+	out by Markus.
+
 2001-10-19  Frank Warmerdam  <warmerdam@pobox.com>
 
 	* pymod/gdalnumeric.py: added CopyDatasetInfo().
