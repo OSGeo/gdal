@@ -26,6 +26,9 @@
  * driver specific function pointers.
  * 
  * $Log$
+ * Revision 1.4  1999/01/11 15:36:50  warmerda
+ * Added GDALCreate()
+ *
  * Revision 1.3  1998/12/31 18:54:53  warmerda
  * Flesh out create method.
  *
@@ -85,4 +88,20 @@ GDALDataset * GDALDriver::Create( const char * pszFilename,
         return( pfnCreate( pszFilename, nXSize, nYSize, nBands, eType,
                            papszParmList ) );
     }
+}
+
+/************************************************************************/
+/*                             GDALCreate()                             */
+/************************************************************************/
+
+GDALDatasetH CPL_DLL GDALCreate( GDALDriverH hDriver,
+                                 const char * pszFilename,
+                                 int nXSize, int nYSize, int nBands,
+                                 GDALDataType eBandType,
+                                 char ** papszOptions )
+
+{
+    return( ((GDALDriver *) hDriver)->Create( pszFilename,
+                                              nXSize, nYSize, nBands,
+                                              eBandType, papszOptions ) );
 }
