@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.94  2004/04/24 21:28:20  warmerda
+ * Added GetLastErrorType
+ *
  * Revision 1.93  2004/04/02 17:40:43  warmerda
  * added GDALGeneralCmdLineProcessor() support
  *
@@ -536,6 +539,7 @@ static PyObject *ptrptrvalue(PyObject *self, PyObject *args) {
 /* -------------------------------------------------------------------- */
 void CPLErrorReset();
 int CPLGetLastErrorNo();
+int CPLGetLastErrorType();
 const char *CPLGetLastErrorMsg();
 
 void CSLDestroy(stringList);
