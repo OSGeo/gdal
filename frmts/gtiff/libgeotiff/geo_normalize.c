@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: geo_normalize.c,v 1.21 2000/09/15 19:30:14 warmerda Exp $
+ * $Id: geo_normalize.c,v 1.22 2000/10/13 14:30:57 warmerda Exp $
  *
  * Project:  libgeotiff
  * Purpose:  Code to normalize PCS and other composite codes in a GeoTIFF file.
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log: geo_normalize.c,v $
+ * Revision 1.22  2000/10/13 14:30:57  warmerda
+ * fixed LCC parm order when parameters read directly from geotiff file
+ *
  * Revision 1.21  2000/09/15 19:30:14  warmerda
  * report units of linear proj parms
  *
@@ -1438,14 +1441,14 @@ static void GTIFFetchProjParms( GTIF * psGTIF, GTIFDefn * psDefn )
 
         /* notdef: should transform to decimal degrees at this point */
 
-        psDefn->ProjParm[0] = dfStdParallel1;
-        psDefn->ProjParmId[0] = ProjStdParallel1GeoKey;
-        psDefn->ProjParm[1] = dfStdParallel2;
-        psDefn->ProjParmId[1] = ProjStdParallel2GeoKey;
-        psDefn->ProjParm[2] = dfNatOriginLat;
-        psDefn->ProjParmId[2] = ProjFalseOriginLatGeoKey;
-        psDefn->ProjParm[3] = dfNatOriginLong;
-        psDefn->ProjParmId[3] = ProjFalseOriginLongGeoKey;
+        psDefn->ProjParm[0] = dfNatOriginLat;
+        psDefn->ProjParmId[0] = ProjFalseOriginLatGeoKey;
+        psDefn->ProjParm[1] = dfNatOriginLong;
+        psDefn->ProjParmId[1] = ProjFalseOriginLongGeoKey;
+        psDefn->ProjParm[2] = dfStdParallel1;
+        psDefn->ProjParmId[2] = ProjStdParallel1GeoKey;
+        psDefn->ProjParm[3] = dfStdParallel2;
+        psDefn->ProjParmId[3] = ProjStdParallel2GeoKey;
         psDefn->ProjParm[5] = dfFalseEasting;
         psDefn->ProjParmId[5] = ProjFalseEastingGeoKey;
         psDefn->ProjParm[6] = dfFalseNorthing;
