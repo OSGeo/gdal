@@ -425,3 +425,519 @@ INFO: Feature/layer spatial ref. consistency verified.
 INFO: Spatial filter inclusion seems to work.
 INFO: Spatial filter exclusion seems to work.
 INFO: Open of `/u/data/sdts/safe_dem/7096CATD.DDF' using driver `SDTS' successful.
+INFO: Open of `/u/data/s57/newfiles/I/CA39995I.000' using driver `IHO S-57 (ENC)' successful.
+INFO: Testing layer ADMARE.
+INFO: Feature count verified.
+INFO: Feature/layer spatial ref. consistency verified.
+INFO: Spatial filter inclusion seems to work.
+INFO: Spatial filter exclusion seems to work.
+INFO: Testing layer AIRARE.
+INFO: Feature count verified.
+INFO: Feature/layer spatial ref. consistency verified.
+INFO: Spatial filter inclusion seems to work.
+INFO: Spatial filter exclusion seems to work.
+INFO: Testing layer ACHBRT.
+INFO: Feature count verified.
+INFO: Feature/layer spatial ref. consistency verified.
+INFO: Spatial filter inclusion seems to work.
+INFO: Spatial filter exclusion seems to work.
+INFO: Testing layer ACHARE.
+INFO: Feature count verified.
+INFO: Feature/layer spatial ref. consistency verified.
+INFO: Spatial filter inclusion seems to work.
+INFO: Spatial filter exclusion seems to work.
+INFO: Testing layer BCNLAT.
+INFO: Feature count verified.
+INFO: Feature/layer spatial ref. consistency verified.
+INFO: Spatial filter inclusion seems to work.
+INFO: Spatial filter exclusion seems to work.
+INFO: Testing layer BCNSPP.
+INFO: Feature count verified.
+INFO: Feature/layer spatial ref. consistency verified.
+INFO: Spatial filter inclusion seems to work.
+INFO: Spatial filter exclusion seems to work.
+INFO: Testing layer BRIDGE.
+INFO: Feature count verified.
+INFO: Feature/layer spatial ref. consistency verified.
+INFO: Spatial filter inclusion seems to work.
+INFO: Spatial filter exclusion seems to work.
+INFO: Testing layer BUISGL.
+INFO: Feature count verified.
+INFO: Feature/layer spatial ref. consistency verified.
+INFO: Spatial filter inclusion seems to work.
+INFO: Spatial filter exclusion seems to work.
+INFO: Testing layer BUAARE.
+INFO: Feature count verified.
+INFO: Feature/layer spatial ref. consistency verified.
+INFO: Spatial filter inclusion seems to work.
+INFO: Spatial filter exclusion seems to work.
+INFO: Testing layer BOYCAR.
+INFO: Feature count verified.
+INFO: Feature/layer spatial ref. consistency verified.
+INFO: Spatial filter inclusion seems to work.
+INFO: Spatial filter exclusion seems to work.
+INFO: Testing layer BOYINB.
+INFO: Feature count verified.
+INFO: Feature/layer spatial ref. consistency verified.
+INFO: Spatial filter inclusion seems to work.
+INFO: Spatial filter exclusion seems to work.
+INFO: Testing layer BOYLAT.
+INFO: Feature count verified.
+INFO: Feature/layer spatial ref. consistency verified.
+INFO: Spatial filter inclusion seems to work.
+INFO: Spatial filter exclusion seems to work.
+INFO: Testing layer BOYSAW.
+INFO: Feature count verified.
+INFO: Feature/layer spatial ref. consistency verified.
+INFO: Spatial filter inclusion seems to work.
+INFO: Spatial filter exclusion seems to work.
+INFO: Testing layer BOYSPP.
+INFO: Feature count verified.
+INFO: Feature/layer spatial ref. consistency verified.
+INFO: Spatial filter inclusion seems to work.
+INFO: Spatial filter exclusion seems to work.
+INFO: Testing layer CBLARE.
+INFO: Feature count verified.
+INFO: Feature/layer spatial ref. consistency verified.
+INFO: Spatial filter inclusion seems to work.
+INFO: Spatial filter exclusion seems to work.
+INFO: Testing layer CBLOHD.
+INFO: Feature count verified.
+INFO: Feature/layer spatial ref. consistency verified.
+INFO: Spatial filter inclusion seems to work.
+INFO: Spatial filter exclusion seems to work.
+INFO: Testing layer CBLSUB.
+INFO: Feature count verified.
+INFO: Feature/layer spatial ref. consistency verified.
+INFO: Spatial filter inclusion seems to work.
+INFO: Spatial filter exclusion seems to work.
+INFO: Testing layer CTSARE.
+INFO: Feature count verified.
+INFO: Feature/layer spatial ref. consistency verified.
+INFO: Spatial filter inclusion seems to work.
+INFO: Spatial filter exclusion seems to work.
+INFO: Testing layer COALNE.
+INFO: Feature count verified.
+INFO: Feature/layer spatial ref. consistency verified.
+INFO: Spatial filter inclusion seems to work.
+INFO: Spatial filter exclusion seems to work.
+INFO: Testing layer DAMCON.
+INFO: Feature count verified.
+INFO: Feature/layer spatial ref. consistency verified.
+INFO: Spatial filter inclusion seems to work.
+INFO: Spatial filter exclusion seems to work.
+INFO: Testing layer DWRTPT.
+INFO: Feature count verified.
+INFO: Feature/layer spatial ref. consistency verified.
+INFO: Spatial filter inclusion seems to work.
+INFO: Spatial filter exclusion seems to work.
+INFO: Testing layer DEPARE.
+INFO: Feature count verified.
+INFO: Feature/layer spatial ref. consistency verified.
+INFO: Spatial filter inclusion seems to work.
+INFO: Spatial filter exclusion seems to work.
+INFO: Testing layer DEPCNT.
+INFO: Feature count verified.
+INFO: Feature/layer spatial ref. consistency verified.
+INFO: Spatial filter inclusion seems to work.
+INFO: Spatial filter exclusion seems to work.
+INFO: Testing layer DISMAR.
+INFO: Feature count verified.
+INFO: Feature/layer spatial ref. consistency verified.
+INFO: Spatial filter inclusion seems to work.
+INFO: Spatial filter exclusion seems to work.
+INFO: Testing layer DOCARE.
+INFO: Feature count verified.
+INFO: Feature/layer spatial ref. consistency verified.
+INFO: Spatial filter inclusion seems to work.
+INFO: Spatial filter exclusion seems to work.
+INFO: Testing layer DRGARE.
+INFO: Feature count verified.
+INFO: Feature/layer spatial ref. consistency verified.
+INFO: Spatial filter inclusion seems to work.
+INFO: Spatial filter exclusion seems to work.
+INFO: Testing layer DRYDOC.
+INFO: Feature count verified.
+INFO: Feature/layer spatial ref. consistency verified.
+INFO: Spatial filter inclusion seems to work.
+INFO: Spatial filter exclusion seems to work.
+INFO: Testing layer DMPGRD.
+INFO: Feature count verified.
+INFO: Feature/layer spatial ref. consistency verified.
+INFO: Spatial filter inclusion seems to work.
+INFO: Spatial filter exclusion seems to work.
+INFO: Testing layer DYKCON.
+INFO: Feature count verified.
+INFO: Feature/layer spatial ref. consistency verified.
+INFO: Spatial filter inclusion seems to work.
+INFO: Spatial filter exclusion seems to work.
+INFO: Testing layer FAIRWY.
+INFO: Feature count verified.
+INFO: Feature/layer spatial ref. consistency verified.
+INFO: Spatial filter inclusion seems to work.
+INFO: Spatial filter exclusion seems to work.
+INFO: Testing layer FERYRT.
+INFO: Feature count verified.
+INFO: Feature/layer spatial ref. consistency verified.
+INFO: Spatial filter inclusion seems to work.
+INFO: Spatial filter exclusion seems to work.
+INFO: Testing layer FSHZNE.
+INFO: Feature count verified.
+INFO: Feature/layer spatial ref. consistency verified.
+INFO: Spatial filter inclusion seems to work.
+INFO: Spatial filter exclusion seems to work.
+INFO: Testing layer FSHFAC.
+INFO: Feature count verified.
+INFO: Feature/layer spatial ref. consistency verified.
+INFO: Spatial filter inclusion seems to work.
+INFO: Spatial filter exclusion seems to work.
+INFO: Testing layer FSHGRD.
+INFO: Feature count verified.
+INFO: Feature/layer spatial ref. consistency verified.
+INFO: Spatial filter inclusion seems to work.
+INFO: Spatial filter exclusion seems to work.
+INFO: Testing layer FOGSIG.
+INFO: Feature count verified.
+INFO: Feature/layer spatial ref. consistency verified.
+INFO: Spatial filter inclusion seems to work.
+INFO: Spatial filter exclusion seems to work.
+INFO: Testing layer GATCON.
+INFO: Feature count verified.
+INFO: Feature/layer spatial ref. consistency verified.
+INFO: Spatial filter inclusion seems to work.
+INFO: Spatial filter exclusion seems to work.
+INFO: Testing layer GRIDRN.
+INFO: Feature count verified.
+INFO: Feature/layer spatial ref. consistency verified.
+INFO: Spatial filter inclusion seems to work.
+INFO: Spatial filter exclusion seems to work.
+INFO: Testing layer HRBFAC.
+INFO: Feature count verified.
+INFO: Feature/layer spatial ref. consistency verified.
+INFO: Spatial filter inclusion seems to work.
+INFO: Spatial filter exclusion seems to work.
+INFO: Testing layer HULKES.
+INFO: Feature count verified.
+INFO: Feature/layer spatial ref. consistency verified.
+INFO: Spatial filter inclusion seems to work.
+INFO: Spatial filter exclusion seems to work.
+INFO: Testing layer ICEARE.
+INFO: Feature count verified.
+INFO: Feature/layer spatial ref. consistency verified.
+INFO: Spatial filter inclusion seems to work.
+INFO: Spatial filter exclusion seems to work.
+INFO: Testing layer ICNARE.
+INFO: Feature count verified.
+INFO: Feature/layer spatial ref. consistency verified.
+INFO: Spatial filter inclusion seems to work.
+INFO: Spatial filter exclusion seems to work.
+INFO: Testing layer ISTZNE.
+INFO: Feature count verified.
+INFO: Feature/layer spatial ref. consistency verified.
+INFO: Spatial filter inclusion seems to work.
+INFO: Spatial filter exclusion seems to work.
+INFO: Testing layer LAKARE.
+INFO: Feature count verified.
+INFO: Feature/layer spatial ref. consistency verified.
+INFO: Spatial filter inclusion seems to work.
+INFO: Spatial filter exclusion seems to work.
+INFO: Testing layer LNDARE.
+INFO: Feature count verified.
+INFO: Feature/layer spatial ref. consistency verified.
+INFO: Spatial filter inclusion seems to work.
+INFO: Spatial filter exclusion seems to work.
+INFO: Testing layer LNDRGN.
+INFO: Feature count verified.
+INFO: Feature/layer spatial ref. consistency verified.
+INFO: Spatial filter inclusion seems to work.
+INFO: Spatial filter exclusion seems to work.
+INFO: Testing layer LNDMRK.
+INFO: Feature count verified.
+INFO: Feature/layer spatial ref. consistency verified.
+INFO: Spatial filter inclusion seems to work.
+INFO: Spatial filter exclusion seems to work.
+INFO: Testing layer LIGHTS.
+INFO: Feature count verified.
+INFO: Feature/layer spatial ref. consistency verified.
+INFO: Spatial filter inclusion seems to work.
+INFO: Spatial filter exclusion seems to work.
+INFO: Testing layer LITVES.
+INFO: Feature count verified.
+INFO: Feature/layer spatial ref. consistency verified.
+INFO: Spatial filter inclusion seems to work.
+INFO: Spatial filter exclusion seems to work.
+INFO: Testing layer MARCUL.
+INFO: Feature count verified.
+INFO: Feature/layer spatial ref. consistency verified.
+INFO: Spatial filter inclusion seems to work.
+INFO: Spatial filter exclusion seems to work.
+INFO: Testing layer MIPARE.
+INFO: Feature count verified.
+INFO: Feature/layer spatial ref. consistency verified.
+INFO: Spatial filter inclusion seems to work.
+INFO: Spatial filter exclusion seems to work.
+INFO: Testing layer MORFAC.
+INFO: Feature count verified.
+INFO: Feature/layer spatial ref. consistency verified.
+INFO: Spatial filter inclusion seems to work.
+INFO: Spatial filter exclusion seems to work.
+INFO: Testing layer NAVLNE.
+INFO: Feature count verified.
+INFO: Feature/layer spatial ref. consistency verified.
+INFO: Spatial filter inclusion seems to work.
+INFO: Spatial filter exclusion seems to work.
+INFO: Testing layer OBSTRN.
+INFO: Feature count verified.
+INFO: Feature/layer spatial ref. consistency verified.
+INFO: Spatial filter inclusion seems to work.
+INFO: Spatial filter exclusion seems to work.
+INFO: Testing layer OFSPLF.
+INFO: Feature count verified.
+INFO: Feature/layer spatial ref. consistency verified.
+INFO: Spatial filter inclusion seems to work.
+INFO: Spatial filter exclusion seems to work.
+INFO: Testing layer PILBOP.
+INFO: Feature count verified.
+INFO: Feature/layer spatial ref. consistency verified.
+INFO: Spatial filter inclusion seems to work.
+INFO: Spatial filter exclusion seems to work.
+INFO: Testing layer PIPARE.
+INFO: Feature count verified.
+INFO: Feature/layer spatial ref. consistency verified.
+INFO: Spatial filter inclusion seems to work.
+INFO: Spatial filter exclusion seems to work.
+INFO: Testing layer PIPOHD.
+INFO: Feature count verified.
+INFO: Feature/layer spatial ref. consistency verified.
+INFO: Spatial filter inclusion seems to work.
+INFO: Spatial filter exclusion seems to work.
+INFO: Testing layer PIPSOL.
+INFO: Feature count verified.
+INFO: Feature/layer spatial ref. consistency verified.
+INFO: Spatial filter inclusion seems to work.
+INFO: Spatial filter exclusion seems to work.
+INFO: Testing layer PRCARE.
+INFO: Feature count verified.
+INFO: Feature/layer spatial ref. consistency verified.
+INFO: Spatial filter inclusion seems to work.
+INFO: Spatial filter exclusion seems to work.
+INFO: Testing layer PRDARE.
+INFO: Feature count verified.
+INFO: Feature/layer spatial ref. consistency verified.
+INFO: Spatial filter inclusion seems to work.
+INFO: Spatial filter exclusion seems to work.
+INFO: Testing layer RTPBCN.
+INFO: Feature count verified.
+INFO: Feature/layer spatial ref. consistency verified.
+INFO: Spatial filter inclusion seems to work.
+INFO: Spatial filter exclusion seems to work.
+INFO: Testing layer RDOCAL.
+INFO: Feature count verified.
+INFO: Feature/layer spatial ref. consistency verified.
+INFO: Spatial filter inclusion seems to work.
+INFO: Spatial filter exclusion seems to work.
+INFO: Testing layer RAPIDS.
+INFO: Feature count verified.
+INFO: Feature/layer spatial ref. consistency verified.
+INFO: Spatial filter inclusion seems to work.
+INFO: Spatial filter exclusion seems to work.
+INFO: Testing layer RCRTCL.
+INFO: Feature count verified.
+INFO: Feature/layer spatial ref. consistency verified.
+INFO: Spatial filter inclusion seems to work.
+INFO: Spatial filter exclusion seems to work.
+INFO: Testing layer RECTRC.
+INFO: Feature count verified.
+INFO: Feature/layer spatial ref. consistency verified.
+INFO: Spatial filter inclusion seems to work.
+INFO: Spatial filter exclusion seems to work.
+INFO: Testing layer RSCSTA.
+INFO: Feature count verified.
+INFO: Feature/layer spatial ref. consistency verified.
+INFO: Spatial filter inclusion seems to work.
+INFO: Spatial filter exclusion seems to work.
+INFO: Testing layer RESARE.
+INFO: Feature count verified.
+INFO: Feature/layer spatial ref. consistency verified.
+INFO: Spatial filter inclusion seems to work.
+INFO: Spatial filter exclusion seems to work.
+INFO: Testing layer RIVERS.
+INFO: Feature count verified.
+INFO: Feature/layer spatial ref. consistency verified.
+INFO: Spatial filter inclusion seems to work.
+INFO: Spatial filter exclusion seems to work.
+INFO: Testing layer RUNWAY.
+INFO: Feature count verified.
+INFO: Feature/layer spatial ref. consistency verified.
+INFO: Spatial filter inclusion seems to work.
+INFO: Spatial filter exclusion seems to work.
+INFO: Testing layer SNDWAV.
+INFO: Feature count verified.
+INFO: Feature/layer spatial ref. consistency verified.
+INFO: Spatial filter inclusion seems to work.
+INFO: Spatial filter exclusion seems to work.
+INFO: Testing layer SEAARE.
+INFO: Feature count verified.
+INFO: Feature/layer spatial ref. consistency verified.
+INFO: Spatial filter inclusion seems to work.
+INFO: Spatial filter exclusion seems to work.
+INFO: Testing layer SPLARE.
+INFO: Feature count verified.
+INFO: Feature/layer spatial ref. consistency verified.
+INFO: Spatial filter inclusion seems to work.
+INFO: Spatial filter exclusion seems to work.
+INFO: Testing layer SBDARE.
+INFO: Feature count verified.
+INFO: Feature/layer spatial ref. consistency verified.
+INFO: Spatial filter inclusion seems to work.
+INFO: Spatial filter exclusion seems to work.
+INFO: Testing layer SLCONS.
+INFO: Feature count verified.
+INFO: Feature/layer spatial ref. consistency verified.
+INFO: Spatial filter inclusion seems to work.
+INFO: Spatial filter exclusion seems to work.
+INFO: Testing layer SISTAT.
+INFO: Feature count verified.
+INFO: Feature/layer spatial ref. consistency verified.
+INFO: Spatial filter inclusion seems to work.
+INFO: Spatial filter exclusion seems to work.
+INFO: Testing layer SILTNK.
+INFO: Feature count verified.
+INFO: Feature/layer spatial ref. consistency verified.
+INFO: Spatial filter inclusion seems to work.
+INFO: Spatial filter exclusion seems to work.
+INFO: Testing layer SLOTOP.
+INFO: Feature count verified.
+INFO: Feature/layer spatial ref. consistency verified.
+INFO: Spatial filter inclusion seems to work.
+INFO: Spatial filter exclusion seems to work.
+INFO: Testing layer SLOGRD.
+INFO: Feature count verified.
+INFO: Feature/layer spatial ref. consistency verified.
+INFO: Spatial filter inclusion seems to work.
+INFO: Spatial filter exclusion seems to work.
+INFO: Testing layer SMCFAC.
+INFO: Feature count verified.
+INFO: Feature/layer spatial ref. consistency verified.
+INFO: Spatial filter inclusion seems to work.
+INFO: Spatial filter exclusion seems to work.
+INFO: Testing layer SOUNDG.
+INFO: Feature count verified.
+INFO: Feature/layer spatial ref. consistency verified.
+INFO: Spatial filter inclusion seems to work.
+INFO: Spatial filter exclusion seems to work.
+INFO: Testing layer SUBTLN.
+INFO: Feature count verified.
+INFO: Feature/layer spatial ref. consistency verified.
+INFO: Spatial filter inclusion seems to work.
+INFO: Spatial filter exclusion seems to work.
+INFO: Testing layer TESARE.
+INFO: Feature count verified.
+INFO: Feature/layer spatial ref. consistency verified.
+INFO: Spatial filter inclusion seems to work.
+INFO: Spatial filter exclusion seems to work.
+INFO: Testing layer TOPMAR.
+INFO: Feature count verified.
+INFO: Feature/layer spatial ref. consistency verified.
+INFO: Spatial filter inclusion seems to work.
+INFO: Spatial filter exclusion seems to work.
+INFO: Testing layer TSSBND.
+INFO: Feature count verified.
+INFO: Feature/layer spatial ref. consistency verified.
+INFO: Spatial filter inclusion seems to work.
+INFO: Spatial filter exclusion seems to work.
+INFO: Testing layer TSSCRS.
+INFO: Feature count verified.
+INFO: Feature/layer spatial ref. consistency verified.
+INFO: Spatial filter inclusion seems to work.
+INFO: Spatial filter exclusion seems to work.
+INFO: Testing layer TSSLPT.
+INFO: Feature count verified.
+INFO: Feature/layer spatial ref. consistency verified.
+INFO: Spatial filter inclusion seems to work.
+INFO: Spatial filter exclusion seems to work.
+INFO: Testing layer TSSRON.
+INFO: Feature count verified.
+INFO: Feature/layer spatial ref. consistency verified.
+INFO: Spatial filter inclusion seems to work.
+INFO: Spatial filter exclusion seems to work.
+INFO: Testing layer TSEZNE.
+INFO: Feature count verified.
+INFO: Feature/layer spatial ref. consistency verified.
+INFO: Spatial filter inclusion seems to work.
+INFO: Spatial filter exclusion seems to work.
+INFO: Testing layer TUNNEL.
+INFO: Feature count verified.
+INFO: Feature/layer spatial ref. consistency verified.
+INFO: Spatial filter inclusion seems to work.
+INFO: Spatial filter exclusion seems to work.
+INFO: Testing layer TWRTPT.
+INFO: Feature count verified.
+INFO: Feature/layer spatial ref. consistency verified.
+INFO: Spatial filter inclusion seems to work.
+INFO: Spatial filter exclusion seems to work.
+INFO: Testing layer UWTROC.
+INFO: Feature count verified.
+INFO: Feature/layer spatial ref. consistency verified.
+INFO: Spatial filter inclusion seems to work.
+INFO: Spatial filter exclusion seems to work.
+INFO: Testing layer UNSARE.
+INFO: Feature count verified.
+INFO: Feature/layer spatial ref. consistency verified.
+INFO: Spatial filter inclusion seems to work.
+INFO: Spatial filter exclusion seems to work.
+INFO: Testing layer WATTUR.
+INFO: Feature count verified.
+INFO: Feature/layer spatial ref. consistency verified.
+INFO: Spatial filter inclusion seems to work.
+INFO: Spatial filter exclusion seems to work.
+INFO: Testing layer WATFAL.
+INFO: Feature count verified.
+INFO: Feature/layer spatial ref. consistency verified.
+INFO: Spatial filter inclusion seems to work.
+INFO: Spatial filter exclusion seems to work.
+INFO: Testing layer WEDKLP.
+INFO: Feature count verified.
+INFO: Feature/layer spatial ref. consistency verified.
+INFO: Spatial filter inclusion seems to work.
+INFO: Spatial filter exclusion seems to work.
+INFO: Testing layer WRECKS.
+INFO: Feature count verified.
+INFO: Feature/layer spatial ref. consistency verified.
+INFO: Spatial filter inclusion seems to work.
+INFO: Spatial filter exclusion seems to work.
+INFO: Testing layer M_ACCY.
+INFO: Feature count verified.
+INFO: Feature/layer spatial ref. consistency verified.
+INFO: Spatial filter inclusion seems to work.
+INFO: Spatial filter exclusion seems to work.
+INFO: Testing layer M_CSCL.
+INFO: Feature count verified.
+INFO: Feature/layer spatial ref. consistency verified.
+INFO: Spatial filter inclusion seems to work.
+INFO: Spatial filter exclusion seems to work.
+INFO: Testing layer M_COVR.
+INFO: Feature count verified.
+INFO: Feature/layer spatial ref. consistency verified.
+INFO: Spatial filter inclusion seems to work.
+INFO: Spatial filter exclusion seems to work.
+INFO: Testing layer M_NSYS.
+INFO: Feature count verified.
+INFO: Feature/layer spatial ref. consistency verified.
+INFO: Spatial filter inclusion seems to work.
+INFO: Spatial filter exclusion seems to work.
+INFO: Testing layer M_QUAL.
+INFO: Feature count verified.
+INFO: Feature/layer spatial ref. consistency verified.
+INFO: Spatial filter inclusion seems to work.
+INFO: Spatial filter exclusion seems to work.
+INFO: Testing layer C_AGGR.
+INFO: Feature count verified.
+INFO: Feature/layer spatial ref. consistency verified.
+INFO: Skipping Spatial Filter test for C_AGGR,
+      target feature has no geometry.
+INFO: Testing layer C_ASSO.
+INFO: Feature count verified.
+INFO: Feature/layer spatial ref. consistency verified.
+INFO: Skipping Spatial Filter test for C_ASSO,
+      target feature has no geometry.
