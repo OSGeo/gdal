@@ -1,4 +1,4 @@
-/******************************************************************************
+/* ****************************************************************************
  * $Id$
  *
  * Project:  SDTS Translator
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  1999/09/03 19:04:13  warmerda
+ * made comment blocks doxygen compatible
+ *
  * Revision 1.7  1999/09/03 14:16:36  warmerda
  * Fixed other memory leaks.
  *
@@ -76,9 +79,9 @@ static void
 WriteAttrRecordToDBF( DBFHandle hDBF, int nRecord, 
                       SDTSTransfer *, DDFField * poAttributes );
 
-/************************************************************************/
+/* **********************************************************************/
 /*                               Usage()                                */
-/************************************************************************/
+/* **********************************************************************/
 
 static void Usage()
 
@@ -91,9 +94,9 @@ static void Usage()
     exit( 1 );
 }
 
-/************************************************************************/
+/* **********************************************************************/
 /*                                main()                                */
-/************************************************************************/
+/* **********************************************************************/
 
 int main( int nArgc, char ** papszArgv )
 
@@ -212,9 +215,9 @@ int main( int nArgc, char ** papszArgv )
 #endif
 }
 
-/************************************************************************/
+/* **********************************************************************/
 /*                         WriteLineShapefile()                         */
-/************************************************************************/
+/* **********************************************************************/
 
 static void WriteLineShapefile( const char * pszShapefile,
                                 SDTSTransfer * poTransfer,
@@ -342,9 +345,9 @@ static void WriteLineShapefile( const char * pszShapefile,
     SHPClose( hSHP );
 }    
 
-/************************************************************************/
+/* **********************************************************************/
 /*                        WritePointShapefile()                         */
-/************************************************************************/
+/* **********************************************************************/
 
 static void WritePointShapefile( const char * pszShapefile,
                                  SDTSTransfer * poTransfer,
@@ -454,9 +457,9 @@ static void WritePointShapefile( const char * pszShapefile,
     SHPClose( hSHP );
 }    
 
-/************************************************************************/
+/* **********************************************************************/
 /*                         WriteAttributeDBF()                          */
-/************************************************************************/
+/* **********************************************************************/
 
 static void WriteAttributeDBF( const char * pszShapefile,
                                SDTSTransfer * poTransfer,
@@ -532,9 +535,9 @@ static void WriteAttributeDBF( const char * pszShapefile,
     DBFClose( hDBF );
 }    
 
-/************************************************************************/
+/* **********************************************************************/
 /*                       WritePolygonShapefile()                        */
-/************************************************************************/
+/* **********************************************************************/
 
 static void WritePolygonShapefile( const char * pszShapefile,
                                    SDTSTransfer * poTransfer, 
@@ -619,7 +622,8 @@ static void WritePolygonShapefile( const char * pszShapefile,
 /*      Process all the polygon features in the module.                 */
 /* ==================================================================== */
     SDTSRawPolygon	*poRawPoly;
-        
+
+    poPolyReader->Rewind();
     while( (poRawPoly = (SDTSRawPolygon *) poPolyReader->GetNextFeature())
            != NULL )
     {
@@ -673,12 +677,12 @@ static void WritePolygonShapefile( const char * pszShapefile,
     SHPClose( hSHP );
 }    
 
-/************************************************************************/
+/* **********************************************************************/
 /*                        AddPrimaryAttrToDBF()                         */
 /*                                                                      */
 /*      Add the fields from all the given primary attribute modules     */
 /*      to the schema of the passed DBF file.                           */
-/************************************************************************/
+/* **********************************************************************/
 
 static void
 AddPrimaryAttrToDBFSchema( DBFHandle hDBF, SDTSTransfer *poTransfer,
@@ -787,9 +791,9 @@ AddPrimaryAttrToDBFSchema( DBFHandle hDBF, SDTSTransfer *poTransfer,
     } /* next module */
 }
 
-/************************************************************************/
+/* **********************************************************************/
 /*                       WritePrimaryAttrToDBF()                        */
-/************************************************************************/
+/* **********************************************************************/
 
 static void
 WritePrimaryAttrToDBF( DBFHandle hDBF, int iRecord, 
@@ -811,9 +815,9 @@ WritePrimaryAttrToDBF( DBFHandle hDBF, int iRecord,
     }
 }
 
-/************************************************************************/
+/* **********************************************************************/
 /*                        WriteAttrRecordToDBF()                        */
-/************************************************************************/
+/* **********************************************************************/
 
 static void
 WriteAttrRecordToDBF( DBFHandle hDBF, int iRecord, 
