@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/12/22 15:38:15  warmerda
+ * major update
+ *
  * Revision 1.1  1999/12/15 19:59:17  warmerda
  * New
  *
@@ -53,6 +56,9 @@ TigerLandmarks::TigerLandmarks( OGRTigerDataSource * poDSIn,
 /* -------------------------------------------------------------------- */
 /*      Fields from type 5 record.                                      */
 /* -------------------------------------------------------------------- */
+    oField.Set( "MODULE", OFTString, 8 );
+    poFeatureDefn->AddFieldDefn( &oField );
+    
     oField.Set( "STATE", OFTInteger, 2 );
     poFeatureDefn->AddFieldDefn( &oField );
     
@@ -140,12 +146,12 @@ OGRFeature *TigerLandmarks::GetFeature( int nRecordId )
 /* -------------------------------------------------------------------- */
     OGRFeature	*poFeature = new OGRFeature( poFeatureDefn );
 
-    poFeature->SetField( "STATE", GetField( achRecord, 6, 7 ));
-    poFeature->SetField( "COUNTY", GetField( achRecord, 8, 10 ));
-    poFeature->SetField( "LAND", GetField( achRecord, 11, 20 ));
-    poFeature->SetField( "SOURCE", GetField( achRecord, 21, 21 ));
-    poFeature->SetField( "CFCC", GetField( achRecord, 22, 24 ));
-    poFeature->SetField( "LANAME", GetField( achRecord, 25, 54 ));
+    SetField( poFeature, "STATE", achRecord, 6, 7 );
+    SetField( poFeature, "COUNTY", achRecord, 8, 10 );
+    SetField( poFeature, "LAND", achRecord, 11, 20 );
+    SetField( poFeature, "SOURCE", achRecord, 21, 21 );
+    SetField( poFeature, "CFCC", achRecord, 22, 24 );
+    SetField( poFeature, "LANAME", achRecord, 25, 54 );
 
 /* -------------------------------------------------------------------- */
 /*      Set geometry                                                    */
@@ -156,7 +162,9 @@ OGRFeature *TigerLandmarks::GetFeature( int nRecordId )
     dfY = atoi(GetField(achRecord, 65, 73)) / 1000000.0;
 
     if( dfX != 0.0 || dfY != 0.0 )
+    {
         poFeature->SetGeometryDirectly( new OGRPoint( dfX, dfY ) );
+    }
         
     return poFeature;
 }

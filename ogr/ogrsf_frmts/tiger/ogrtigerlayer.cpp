@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/12/22 15:38:15  warmerda
+ * major update
+ *
  * Revision 1.1  1999/10/07 18:19:21  warmerda
  * New
  *
@@ -163,7 +166,15 @@ OGRFeature *OGRTigerLayer::GetFeature( long nFeatureId )
         poReader->GetFeature( nFeatureId-panModuleOffset[iLastModule]-1 );
 
     if( poFeature != NULL )
+    {
         poFeature->SetFID( nFeatureId );
+
+        if( poFeature->GetGeometryRef() != NULL )
+            poFeature->GetGeometryRef()->assignSpatialReference(
+                poDS->GetSpatialRef() );
+
+        poFeature->SetField( 0, poReader->GetModule() );
+    }
 
     return poFeature;
 }

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/12/22 15:38:15  warmerda
+ * major update
+ *
  * Revision 1.1  1999/12/15 19:59:17  warmerda
  * New
  *
@@ -53,6 +56,9 @@ TigerAltName::TigerAltName( OGRTigerDataSource * poDSIn,
 /* -------------------------------------------------------------------- */
 /*      Fields from type 4 record.                                      */
 /* -------------------------------------------------------------------- */
+    oField.Set( "MODULE", OFTString, 8 );
+    poFeatureDefn->AddFieldDefn( &oField );
+    
     oField.Set( "TLID", OFTInteger, 10 );
     poFeatureDefn->AddFieldDefn( &oField );
     
@@ -143,7 +149,7 @@ OGRFeature *TigerAltName::GetFeature( int nRecordId )
 
         pszFieldText = GetField( achRecord, 19 + iFeat*8, 26 + iFeat*8 );
 
-        if( !EQUAL(pszFieldText,"        ") )
+        if( *pszFieldText != '\0' )
             anFeatList[nFeatCount++] = atoi(pszFieldText);
     }
 

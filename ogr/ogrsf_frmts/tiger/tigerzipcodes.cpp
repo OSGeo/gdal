@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/12/22 15:38:15  warmerda
+ * major update
+ *
  * Revision 1.1  1999/12/15 19:59:17  warmerda
  * New
  *
@@ -53,6 +56,9 @@ TigerZipCodes::TigerZipCodes( OGRTigerDataSource * poDSIn,
 /* -------------------------------------------------------------------- */
 /*      Fields from type 5 record.                                      */
 /* -------------------------------------------------------------------- */
+    oField.Set( "MODULE", OFTString, 8 );
+    poFeatureDefn->AddFieldDefn( &oField );
+    
     oField.Set( "TLID", OFTInteger, 10 );
     poFeatureDefn->AddFieldDefn( &oField );
     
@@ -158,18 +164,18 @@ OGRFeature *TigerZipCodes::GetFeature( int nRecordId )
 /* -------------------------------------------------------------------- */
     OGRFeature	*poFeature = new OGRFeature( poFeatureDefn );
 
-    poFeature->SetField( "TLID", GetField( achRecord, 6, 15 ));
-    poFeature->SetField( "RTSQ", GetField( achRecord, 16, 18 ));
-    poFeature->SetField( "FRADDL", GetField( achRecord, 19, 29 ));
-    poFeature->SetField( "TOADDL", GetField( achRecord, 30, 40 ));
-    poFeature->SetField( "FRADDR", GetField( achRecord, 41, 51 ));
-    poFeature->SetField( "TOADDR", GetField( achRecord, 52, 62 ));
-    poFeature->SetField( "FRIADDL", GetField( achRecord, 63, 63 ));
-    poFeature->SetField( "TOIADDL", GetField( achRecord, 64, 64 ));
-    poFeature->SetField( "FRIADDR", GetField( achRecord, 65, 65 ));
-    poFeature->SetField( "TOIADDR", GetField( achRecord, 66, 66 ));
-    poFeature->SetField( "ZIPL", GetField( achRecord, 67, 71 ));
-    poFeature->SetField( "ZIPR", GetField( achRecord, 72, 76 ));
+    SetField( poFeature, "TLID", achRecord, 6, 15 );
+    SetField( poFeature, "RTSQ", achRecord, 16, 18 );
+    SetField( poFeature, "FRADDL", achRecord, 19, 29 );
+    SetField( poFeature, "TOADDL", achRecord, 30, 40 );
+    SetField( poFeature, "FRADDR", achRecord, 41, 51 );
+    SetField( poFeature, "TOADDR", achRecord, 52, 62 );
+    SetField( poFeature, "FRIADDL", achRecord, 63, 63 );
+    SetField( poFeature, "TOIADDL", achRecord, 64, 64 );
+    SetField( poFeature, "FRIADDR", achRecord, 65, 65 );
+    SetField( poFeature, "TOIADDR", achRecord, 66, 66 );
+    SetField( poFeature, "ZIPL", achRecord, 67, 71 );
+    SetField( poFeature, "ZIPR", achRecord, 72, 76 );
 
     return poFeature;
 }

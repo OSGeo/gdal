@@ -28,12 +28,14 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  1999/12/22 15:38:15  warmerda
+ * major update
+ *
  * Revision 1.2  1999/11/04 21:14:31  warmerda
  * various improvements, and TestCapability()
  *
  * Revision 1.1  1999/10/07 18:19:21  warmerda
  * New
- *
  */
 
 #include "ogr_tiger.h"

@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/12/22 15:38:15  warmerda
+ * major update
+ *
  * Revision 1.1  1999/10/07 18:19:21  warmerda
  * New
  *
@@ -178,14 +181,34 @@ const char *TigerFileBase::GetField( const char * pachRawDataRecord,
 
 {
     static char 	aszField[128];
+    int			nLength = nEndChar - nStartChar + 1;
     
     CPLAssert( nEndChar - nStartChar + 2 < (int) sizeof(aszField) );
 
-    strncpy( aszField, pachRawDataRecord + nStartChar - 1,
-             nEndChar - nStartChar + 1 );
+    strncpy( aszField, pachRawDataRecord + nStartChar - 1, nLength );
 
-    aszField[nEndChar-nStartChar+1] = '\0';
+    aszField[nLength] = '\0';
+    while( nLength > 0 && aszField[nLength-1] == ' ' )
+        aszField[--nLength] = '\0';
 
     return aszField;
 }
 
+/************************************************************************/
+/*                              SetField()                              */
+/*                                                                      */
+/*      Set a field on an OGRFeature from a tiger record, or leave      */
+/*      NULL if the value isn't found.                                  */
+/************************************************************************/
+
+void TigerFileBase::SetField( OGRFeature *poFeature, const char *pszField,
+                              const char *pachRecord, int nStart, int nEnd )
+
+{
+    const char *pszFieldValue = GetField( pachRecord, nStart, nEnd );
+
+    if( pszFieldValue[0] == '\0' )
+        return;
+
+    poFeature->SetField( pszField, pszFieldValue );
+}

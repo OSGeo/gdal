@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  1999/12/22 15:38:15  warmerda
+ * major update
+ *
  * Revision 1.2  1999/11/04 21:14:31  warmerda
  * various improvements, and TestCapability()
  *
@@ -63,6 +66,9 @@ TigerCompleteChain::TigerCompleteChain( OGRTigerDataSource * poDSIn,
 /* -------------------------------------------------------------------- */
 /*      Fields from type 1 record.                                      */
 /* -------------------------------------------------------------------- */
+    oField.Set( "MODULE", OFTString, 8 );
+    poFeatureDefn->AddFieldDefn( &oField );
+    
     oField.Set( "TLID", OFTInteger, 10 );
     poFeatureDefn->AddFieldDefn( &oField );
     
@@ -354,44 +360,44 @@ OGRFeature *TigerCompleteChain::GetFeature( int nRecordId )
 /* -------------------------------------------------------------------- */
     OGRFeature	*poFeature = new OGRFeature( poFeatureDefn );
 
-    poFeature->SetField( "TLID", GetField( achRecord, 6, 15 ));
-    poFeature->SetField( "SIDE1", GetField( achRecord, 16, 16 ));
-    poFeature->SetField( "SOURCE", GetField( achRecord, 17, 17 ));
-    poFeature->SetField( "FEDIRP", GetField( achRecord, 18, 19 ));
-    poFeature->SetField( "FENAME", GetField( achRecord, 20, 49 ));
-    poFeature->SetField( "FETYPE", GetField( achRecord, 50, 53 ));
-    poFeature->SetField( "FEDIRS", GetField( achRecord, 54, 55 ));
-    poFeature->SetField( "CFCC", GetField( achRecord, 56, 58 ));
-    poFeature->SetField( "FRADDL", GetField( achRecord, 59, 59 ));
-    poFeature->SetField( "TOADDL", GetField( achRecord, 70, 80 ));
-    poFeature->SetField( "FRADDR", GetField( achRecord, 81, 91 ));
-    poFeature->SetField( "TOADDR", GetField( achRecord, 92, 102 ));
-    poFeature->SetField( "FRIADDL", GetField( achRecord, 103, 103 ));
-    poFeature->SetField( "TOIADDL", GetField( achRecord, 104, 104 ));
-    poFeature->SetField( "FRIADDR", GetField( achRecord, 105, 105 ));
-    poFeature->SetField( "TOIADDR", GetField( achRecord, 106, 106 ));
-    poFeature->SetField( "ZIPL", GetField( achRecord, 107, 111 ));
-    poFeature->SetField( "ZIPR", GetField( achRecord, 112, 116 ));
-    poFeature->SetField( "FAIRL", GetField( achRecord, 117, 121 ));
-    poFeature->SetField( "FAIRR", GetField( achRecord, 122, 126 ));
-    poFeature->SetField( "TRUSTL", GetField( achRecord, 127, 127 ));
-    poFeature->SetField( "TRUSTR", GetField( achRecord, 128, 128 ));
-    poFeature->SetField( "CENSUS1", GetField( achRecord, 129, 129 ));
-    poFeature->SetField( "CENSUS2", GetField( achRecord, 130, 130 ));
-    poFeature->SetField( "STATEL", GetField( achRecord, 131, 132 ));
-    poFeature->SetField( "STATER", GetField( achRecord, 133, 134 ));
-    poFeature->SetField( "COUNTYL", GetField( achRecord, 135, 137 ));
-    poFeature->SetField( "COUNTYR", GetField( achRecord, 138, 140 ));
-    poFeature->SetField( "FMCDL", GetField( achRecord, 141, 145 ));
-    poFeature->SetField( "FMCDR", GetField( achRecord, 146, 150 ));
-    poFeature->SetField( "FSMCDL", GetField( achRecord, 151, 155 ));
-    poFeature->SetField( "FSMCDR", GetField( achRecord, 156, 160 ));
-    poFeature->SetField( "FPLL", GetField( achRecord, 161, 165 ));
-    poFeature->SetField( "FPLR", GetField( achRecord, 166, 170 ));
-    poFeature->SetField( "CTBNAL", GetField( achRecord, 171, 176 ));
-    poFeature->SetField( "CTBNAR", GetField( achRecord, 177, 182 ));
-    poFeature->SetField( "BLKL", GetField( achRecord, 183, 186 ));
-    poFeature->SetField( "BLKR", GetField( achRecord, 187, 190 ));
+    SetField( poFeature, "TLID", achRecord, 6, 15 );
+    SetField( poFeature, "SIDE1", achRecord, 16, 16 );
+    SetField( poFeature, "SOURCE", achRecord, 17, 17 );
+    SetField( poFeature, "FEDIRP", achRecord, 18, 19 );
+    SetField( poFeature, "FENAME", achRecord, 20, 49 );
+    SetField( poFeature, "FETYPE", achRecord, 50, 53 );
+    SetField( poFeature, "FEDIRS", achRecord, 54, 55 );
+    SetField( poFeature, "CFCC", achRecord, 56, 58 );
+    SetField( poFeature, "FRADDL", achRecord, 59, 59 );
+    SetField( poFeature, "TOADDL", achRecord, 70, 80 );
+    SetField( poFeature, "FRADDR", achRecord, 81, 91 );
+    SetField( poFeature, "TOADDR", achRecord, 92, 102 );
+    SetField( poFeature, "FRIADDL", achRecord, 103, 103 );
+    SetField( poFeature, "TOIADDL", achRecord, 104, 104 );
+    SetField( poFeature, "FRIADDR", achRecord, 105, 105 );
+    SetField( poFeature, "TOIADDR", achRecord, 106, 106 );
+    SetField( poFeature, "ZIPL", achRecord, 107, 111 );
+    SetField( poFeature, "ZIPR", achRecord, 112, 116 );
+    SetField( poFeature, "FAIRL", achRecord, 117, 121 );
+    SetField( poFeature, "FAIRR", achRecord, 122, 126 );
+    SetField( poFeature, "TRUSTL", achRecord, 127, 127 );
+    SetField( poFeature, "TRUSTR", achRecord, 128, 128 );
+    SetField( poFeature, "CENSUS1", achRecord, 129, 129 );
+    SetField( poFeature, "CENSUS2", achRecord, 130, 130 );
+    SetField( poFeature, "STATEL", achRecord, 131, 132 );
+    SetField( poFeature, "STATER", achRecord, 133, 134 );
+    SetField( poFeature, "COUNTYL", achRecord, 135, 137 );
+    SetField( poFeature, "COUNTYR", achRecord, 138, 140 );
+    SetField( poFeature, "FMCDL", achRecord, 141, 145 );
+    SetField( poFeature, "FMCDR", achRecord, 146, 150 );
+    SetField( poFeature, "FSMCDL", achRecord, 151, 155 );
+    SetField( poFeature, "FSMCDR", achRecord, 156, 160 );
+    SetField( poFeature, "FPLL", achRecord, 161, 165 );
+    SetField( poFeature, "FPLR", achRecord, 166, 170 );
+    SetField( poFeature, "CTBNAL", achRecord, 171, 176 );
+    SetField( poFeature, "CTBNAR", achRecord, 177, 182 );
+    SetField( poFeature, "BLKL", achRecord, 183, 186 );
+    SetField( poFeature, "BLKR", achRecord, 187, 190 );
 
 /* -------------------------------------------------------------------- */
 /*      Read RT3 record, and apply fields.				*/
@@ -417,26 +423,26 @@ OGRFeature *TigerCompleteChain::GetFeature( int nRecordId )
             return NULL;
         }
 
-        poFeature->SetField( "STATE90L", GetField( achRT3Rec, 16, 17 ));
-        poFeature->SetField( "STATE90R", GetField( achRT3Rec, 18, 19 ));
-        poFeature->SetField( "COUN90L", GetField( achRT3Rec, 20, 22 ));
-        poFeature->SetField( "COUN90R", GetField( achRT3Rec, 23, 25 ));
-        poFeature->SetField( "FMCD90L", GetField( achRT3Rec, 26, 30 ));
-        poFeature->SetField( "FMCD90R", GetField( achRT3Rec, 31, 35 ));
-        poFeature->SetField( "FPL90L", GetField( achRT3Rec, 36, 40 ));
-        poFeature->SetField( "FPL90R", GetField( achRT3Rec, 41, 45 ));
-        poFeature->SetField( "CTBNA90L", GetField( achRT3Rec, 46, 51 ));
-        poFeature->SetField( "CTBNA90R", GetField( achRT3Rec, 52, 57 ));
-        poFeature->SetField( "AIR90L", GetField( achRT3Rec, 58, 61 ));
-        poFeature->SetField( "AIR90R", GetField( achRT3Rec, 62, 65 ));
-        poFeature->SetField( "TRUST90L", GetField( achRT3Rec, 66, 66 ));
-        poFeature->SetField( "TRUST90R", GetField( achRT3Rec, 67, 67 ));
-        poFeature->SetField( "BLK90L", GetField( achRT3Rec, 70, 73 ));
-        poFeature->SetField( "BLK90R", GetField( achRT3Rec, 74, 77 ));
-        poFeature->SetField( "AIRL", GetField( achRT3Rec, 78, 81 ));
-        poFeature->SetField( "AIRR", GetField( achRT3Rec, 82, 85 ));
-        poFeature->SetField( "VTDL", GetField( achRT3Rec, 104, 107 ));
-        poFeature->SetField( "VTDR", GetField( achRT3Rec, 108, 111 ));
+        SetField( poFeature, "STATE90L", achRT3Rec, 16, 17 );
+        SetField( poFeature, "STATE90R", achRT3Rec, 18, 19 );
+        SetField( poFeature, "COUN90L", achRT3Rec, 20, 22 );
+        SetField( poFeature, "COUN90R", achRT3Rec, 23, 25 );
+        SetField( poFeature, "FMCD90L", achRT3Rec, 26, 30 );
+        SetField( poFeature, "FMCD90R", achRT3Rec, 31, 35 );
+        SetField( poFeature, "FPL90L", achRT3Rec, 36, 40 );
+        SetField( poFeature, "FPL90R", achRT3Rec, 41, 45 );
+        SetField( poFeature, "CTBNA90L", achRT3Rec, 46, 51 );
+        SetField( poFeature, "CTBNA90R", achRT3Rec, 52, 57 );
+        SetField( poFeature, "AIR90L", achRT3Rec, 58, 61 );
+        SetField( poFeature, "AIR90R", achRT3Rec, 62, 65 );
+        SetField( poFeature, "TRUST90L", achRT3Rec, 66, 66 );
+        SetField( poFeature, "TRUST90R", achRT3Rec, 67, 67 );
+        SetField( poFeature, "BLK90L", achRT3Rec, 70, 73 );
+        SetField( poFeature, "BLK90R", achRT3Rec, 74, 77 );
+        SetField( poFeature, "AIRL", achRT3Rec, 78, 81 );
+        SetField( poFeature, "AIRR", achRT3Rec, 82, 85 );
+        SetField( poFeature, "VTDL", achRT3Rec, 104, 107 );
+        SetField( poFeature, "VTDR", achRT3Rec, 108, 111 );
     }
 
 /* -------------------------------------------------------------------- */

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/12/22 15:38:15  warmerda
+ * major update
+ *
  * Revision 1.1  1999/12/15 19:59:17  warmerda
  * New
  *
@@ -53,6 +56,9 @@ TigerKeyFeatures::TigerKeyFeatures( OGRTigerDataSource * poDSIn,
 /* -------------------------------------------------------------------- */
 /*      Fields from type 9 record.                                      */
 /* -------------------------------------------------------------------- */
+    oField.Set( "MODULE", OFTString, 8 );
+    poFeatureDefn->AddFieldDefn( &oField );
+    
     oField.Set( "STATE", OFTInteger, 2 );
     poFeatureDefn->AddFieldDefn( &oField );
     
@@ -155,17 +161,17 @@ OGRFeature *TigerKeyFeatures::GetFeature( int nRecordId )
 /* -------------------------------------------------------------------- */
     OGRFeature	*poFeature = new OGRFeature( poFeatureDefn );
 
-    poFeature->SetField( "STATE", GetField( achRecord, 6, 7 ));
-    poFeature->SetField( "COUNTY", GetField( achRecord, 8, 10 ));
-    poFeature->SetField( "CENID", GetField( achRecord, 11, 15 ));
-    poFeature->SetField( "POLYID", GetField( achRecord, 16, 25 ));
-    poFeature->SetField( "SOURCE", GetField( achRecord, 26, 26 ));
-    poFeature->SetField( "CFCC", GetField( achRecord, 27, 29 ));
-    poFeature->SetField( "KGLNAME", GetField( achRecord, 30, 59 ));
-    poFeature->SetField( "KGLADD", GetField( achRecord, 60, 70 ));
-    poFeature->SetField( "KGLZIP", GetField( achRecord, 71, 75 ));
-    poFeature->SetField( "KGLZIP4", GetField( achRecord, 76, 79 ));
-    poFeature->SetField( "FEAT", GetField( achRecord, 80, 87 ));
+    SetField( poFeature, "STATE", achRecord, 6, 7 );
+    SetField( poFeature, "COUNTY", achRecord, 8, 10 );
+    SetField( poFeature, "CENID", achRecord, 11, 15 );
+    SetField( poFeature, "POLYID", achRecord, 16, 25 );
+    SetField( poFeature, "SOURCE", achRecord, 26, 26 );
+    SetField( poFeature, "CFCC", achRecord, 27, 29 );
+    SetField( poFeature, "KGLNAME", achRecord, 30, 59 );
+    SetField( poFeature, "KGLADD", achRecord, 60, 70 );
+    SetField( poFeature, "KGLZIP", achRecord, 71, 75 );
+    SetField( poFeature, "KGLZIP4", achRecord, 76, 79 );
+    SetField( poFeature, "FEAT", achRecord, 80, 87 );
 
     return poFeature;
 }

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/12/22 15:38:15  warmerda
+ * major update
+ *
  * Revision 1.1  1999/12/15 19:59:17  warmerda
  * New
  *
@@ -53,6 +56,9 @@ TigerAreaLandmarks::TigerAreaLandmarks( OGRTigerDataSource * poDSIn,
 /* -------------------------------------------------------------------- */
 /*      Fields from type 5 record.                                      */
 /* -------------------------------------------------------------------- */
+    oField.Set( "MODULE", OFTString, 8 );
+    poFeatureDefn->AddFieldDefn( &oField );
+    
     oField.Set( "STATE", OFTInteger, 2 );
     poFeatureDefn->AddFieldDefn( &oField );
     

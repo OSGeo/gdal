@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  1999/12/22 15:38:15  warmerda
+ * major update
+ *
  * Revision 1.3  1999/12/15 19:59:52  warmerda
  * added new file types
  *
@@ -36,7 +39,6 @@
  *
  * Revision 1.1  1999/10/07 18:19:21  warmerda
  * New
- *
  */
 
 #ifndef _OGR_TIGER_H_INCLUDED
@@ -80,6 +82,9 @@ public:
   OGRFeatureDefn     *GetFeatureDefn() { return poFeatureDefn; }
 
   static const char * GetField( const char *, int, int );
+  static void         SetField( OGRFeature *, const char *, const char *,
+                                int, int );
+
 };
 
 /************************************************************************/
@@ -193,6 +198,114 @@ class TigerKeyFeatures : public TigerFileBase
 public:
     		      TigerKeyFeatures( OGRTigerDataSource *, const char * );
   virtual            ~TigerKeyFeatures();
+
+  virtual int         SetModule( const char * );
+
+  virtual OGRFeature *GetFeature( int );
+};
+
+/************************************************************************/
+/*                   TigerPolygon (Type A&S records)                    */
+/************************************************************************/
+
+class TigerPolygon : public TigerFileBase
+{
+  FILE		     *fpRTS;
+  int		      bUsingRTS;
+
+public:
+    		      TigerPolygon( OGRTigerDataSource *, const char * );
+  virtual            ~TigerPolygon();
+
+  virtual int         SetModule( const char * );
+
+  virtual OGRFeature *GetFeature( int );
+};
+
+/************************************************************************/
+/*                  TigerEntityNames (Type C records)                   */
+/************************************************************************/
+
+class TigerEntityNames : public TigerFileBase
+{
+public:
+    		      TigerEntityNames( OGRTigerDataSource *, const char * );
+  virtual            ~TigerEntityNames();
+
+  virtual int         SetModule( const char * );
+
+  virtual OGRFeature *GetFeature( int );
+};
+
+/************************************************************************/
+/*                  TigerIDHistory (Type H records)                     */
+/************************************************************************/
+
+class TigerIDHistory : public TigerFileBase
+{
+public:
+    		      TigerIDHistory( OGRTigerDataSource *, const char * );
+  virtual            ~TigerIDHistory();
+
+  virtual int         SetModule( const char * );
+
+  virtual OGRFeature *GetFeature( int );
+};
+
+/************************************************************************/
+/*                   TigerPolyChainLink (Type I records)                */
+/************************************************************************/
+
+class TigerPolyChainLink : public TigerFileBase
+{
+public:
+    		      TigerPolyChainLink( OGRTigerDataSource *, const char * );
+  virtual            ~TigerPolyChainLink();
+
+  virtual int         SetModule( const char * );
+
+  virtual OGRFeature *GetFeature( int );
+};
+
+/************************************************************************/
+/*                   TigerPIP (Type P records)                          */
+/************************************************************************/
+
+class TigerPIP : public TigerFileBase
+{
+public:
+    		      TigerPIP( OGRTigerDataSource *, const char * );
+  virtual            ~TigerPIP();
+
+  virtual int         SetModule( const char * );
+
+  virtual OGRFeature *GetFeature( int );
+};
+
+/************************************************************************/
+/*                   TigerTLIDRange (Type R records)                    */
+/************************************************************************/
+
+class TigerTLIDRange : public TigerFileBase
+{
+public:
+    		      TigerTLIDRange( OGRTigerDataSource *, const char * );
+  virtual            ~TigerTLIDRange();
+
+  virtual int         SetModule( const char * );
+
+  virtual OGRFeature *GetFeature( int );
+};
+
+/************************************************************************/
+/*                    TigerZipPlus4 (Type Z records)                    */
+/************************************************************************/
+
+class TigerZipPlus4 : public TigerFileBase
+{
+public:
+    		      TigerZipPlus4( OGRTigerDataSource *, const char * );
+  virtual            ~TigerZipPlus4();
 
   virtual int         SetModule( const char * );
 

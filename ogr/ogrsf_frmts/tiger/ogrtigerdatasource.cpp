@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  1999/12/22 15:38:15  warmerda
+ * major update
+ *
  * Revision 1.3  1999/12/15 19:59:52  warmerda
  * added new file types
  *
@@ -62,7 +65,7 @@
 #include <ctype.h>
 
 /************************************************************************/
-/*                          OGRTigerDataSource()                          */
+/*                         OGRTigerDataSource()                         */
 /************************************************************************/
 
 OGRTigerDataSource::OGRTigerDataSource()
@@ -82,7 +85,7 @@ OGRTigerDataSource::OGRTigerDataSource()
 }
 
 /************************************************************************/
-/*                         ~OGRTigerDataSource()                          */
+/*                        ~OGRTigerDataSource()                         */
 /************************************************************************/
 
 OGRTigerDataSource::~OGRTigerDataSource()
@@ -309,6 +312,34 @@ int OGRTigerDataSource::Open( const char * pszFilename, int bTestOpen,
                                  new TigerKeyFeatures( this,
                                                        papszModules[0]) ));
     
+    AddLayer( new OGRTigerLayer( this,
+                                 new TigerPolygon( this,
+                                                   papszModules[0]) ));
+    
+    AddLayer( new OGRTigerLayer( this,
+                                 new TigerEntityNames( this,
+                                                       papszModules[0]) ));
+    
+    AddLayer( new OGRTigerLayer( this,
+                                 new TigerIDHistory( this,
+                                                     papszModules[0]) ));
+    
+    AddLayer( new OGRTigerLayer( this,
+                                 new TigerPolyChainLink( this,
+                                                       papszModules[0]) ));
+    
+    AddLayer( new OGRTigerLayer( this,
+                                 new TigerPIP( this,
+                                               papszModules[0]) ));
+    
+    AddLayer( new OGRTigerLayer( this,
+                                 new TigerTLIDRange( this,
+                                                     papszModules[0]) ));
+    
+    AddLayer( new OGRTigerLayer( this,
+                                 new TigerZipPlus4( this,
+                                                     papszModules[0]) ));
+    
     return TRUE;
 }
 
@@ -375,4 +406,3 @@ int OGRTigerDataSource::TestCapability( const char * )
 {
     return FALSE;
 }
-
