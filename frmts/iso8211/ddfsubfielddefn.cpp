@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2003/09/05 19:13:45  warmerda
+ * added format support for binary ints
+ *
  * Revision 1.9  2003/09/03 20:36:26  warmerda
  * added subfield writing support
  *
@@ -869,16 +872,41 @@ int DDFSubfieldDefn::FormatIntValue( char *pachData, int nBytesAvailable,
     }
     else
     {
-        if( GetBinaryFormat() == NotBinary )
+        GUInt32 nMask = 0xff;
+        int i;
+
+        switch( GetBinaryFormat() )
         {
+          case NotBinary:
             memset( pachData, '0', nSize );
             strncpy( pachData + nSize - strlen(szWork), szWork,
                      strlen(szWork) );
-        }
-        else
-        {
+            break;
+
+          case UInt:
+          case SInt:
+            for( i = 0; i < nFormatWidth; i++ )
+            {
+                int iOut;
+
+                // big endian required?
+                if( pszFormatString[0] == 'B' )
+                    iOut = nFormatWidth - i - 1;
+                else
+                    iOut = i;
+
+                pachData[iOut] = (nNewValue & nMask) >> (i*8);
+                nMask *= 256;
+            }
+            break;
+
+          case FloatReal:
             CPLAssert( FALSE );
-            /* implement me */
+            break;
+
+          default:
+            CPLAssert( FALSE );
+            break;
         }
     }
 
