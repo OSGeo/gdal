@@ -14,6 +14,7 @@ CPPFLAGS="$CPPFLAGS -I/usr/local/include"
 dnl Checks for libraries.
 AC_CHECK_LIB(dl,dlopen,,,)
 AC_CHECK_LIB(dbmalloc,malloc_chain_check,,,)
+AC_CHECK_LIB(m,main,,,)
 
 dnl Checks for header files.
 AC_HEADER_STDC
@@ -94,6 +95,44 @@ AC_SUBST(GRASS_SETTING,$GRASS_SETTING)
 
 if test "$GRASS_SETTING" != "no" ; then
   OPT_GDAL_FORMATS="grass $OPT_GDAL_FORMATS"
+fi
+
+dnl ---------------------------------------------------------------------------
+dnl Check if cfitsio library is available.
+dnl ---------------------------------------------------------------------------
+
+AC_ARG_WITH(cfitsio,[  --with-cfitsio[=ARG]      Include FITS support (ARG=no or libcfitsio path)],,)
+
+if test "$with_cfitsio" = "no" ; then
+
+  FITS_SETTING=no
+
+  echo "FITS support disabled."
+
+elif test "$with_cfitsio" = "yes" -o "$with_cfitsio" = "" ; then
+
+  AC_CHECK_LIB(cfitsio,ffopen,FITS_SETTING=external,FITS_SETTING=no,)
+
+  if test "$FITS_SETTING" = "external" ; then   
+    LIBS="-lcfitsio $LIBS"
+    echo "using pre-installed libcfitsio."
+  else
+    echo "libcfitsio not found - FITS support disabled"
+  fi
+
+else
+
+  FITS_SETTING=external
+  LIBS="-L$with_cfitsio -L$with_cfitsio/lib -lcfitsio $LIBS"
+  EXTRA_INCLUDES="-I$with_cfitsio -I$with_cfitsio/include $EXTRA_INCLUDES"
+
+  echo "using libcfitsio from $with_cfitsio."
+fi
+
+AC_SUBST(FITS_SETTING,$FITS_SETTING)
+
+if test "$FITS_SETTING" != "no" ; then
+  OPT_GDAL_FORMATS="fits $OPT_GDAL_FORMATS"
 fi
 
 dnl ---------------------------------------------------------------------------

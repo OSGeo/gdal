@@ -25,6 +25,9 @@
  * Main format registration function.
  * 
  * $Log$
+ * Revision 1.30  2001/03/06 03:53:44  sperkins
+ * Added FITS format support.
+ *
  * Revision 1.29  2001/02/06 16:34:30  warmerda
  * moved format registration entry points to gdal_frmts.h
  *
@@ -218,6 +221,10 @@ void GDALAllRegister()
 
 #ifdef FRMT_envisat
     GDALRegister_Envisat();
+#endif
+
+#ifdef FRMT_fits
+    GDALRegister_FITS();
 #endif
 
 #ifdef FRMT_raw

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2001/03/06 03:53:44  sperkins
+ * Added FITS format support.
+ *
  * Revision 1.1  2001/02/06 16:30:05  warmerda
  * New
  *
@@ -65,6 +68,7 @@ void CPL_DLL GDALRegister_GRASS(void);
 void CPL_DLL GDALRegister_PNM(void);
 void CPL_DLL GDALRegister_GIF(void);
 void CPL_DLL GDALRegister_Envisat(void);
+void CPL_DLL GDALRegister_FITS(void);
 CPL_C_END
 
 #endif /* ndef GDAL_FRMTS_H_INCLUDED */

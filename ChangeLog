@@ -1,3 +1,7 @@
+2001-03-05  Simon Perkins  <simes@genie.lanl.gov>
+
+	* Added FITS format support.
+
 2001-03-01  Frank Warmerdam  <warmerdam@pobox.com>
 
 	* Added --ogr-enabled, --formats and --version options for gdal-config.
