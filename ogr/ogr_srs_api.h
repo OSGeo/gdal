@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2002/09/26 18:13:25  warmerda
+ * avoid double def
+ *
  * Revision 1.18  2002/06/11 18:02:03  warmerda
  * add PROJ.4 normalization and EPSG support
  *
@@ -243,9 +246,14 @@ typedef enum {
 /* -------------------------------------------------------------------- */
 /*      C Wrappers for C++ objects and methods.                         */
 /* -------------------------------------------------------------------- */
+#ifndef _DEFINED_OGRSpatialReferenceH
+#define _DEFINED_OGRSpatialReferenceH
 
 typedef void *OGRSpatialReferenceH;                               
 typedef void *OGRCoordinateTransformationH;
+
+#endif
+
 
 OGRSpatialReferenceH CPL_DLL
       OSRNewSpatialReference( const char * /* = NULL */);
