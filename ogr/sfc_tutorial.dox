@@ -13,7 +13,7 @@ Most of the classes
 are based on the ATL OLE DB consumer templates.  To fully understand the
 classes it is critical to also review the Microsoft provided information
 on these classes.  It can be accessed in the
-<a href="http://msdn.microsoft.com/library/devprods/vs6/vc++/vcmfc/vcrefoverviewofconsumerclasses.htm">MSDN Online Library</a>. <p>
+<http://msdn.microsoft.com/">MSDN Online Library</a>. <p>
 
 In general terms, the OpenGIS SF COM interface specification requires 
 geographic data providers to make their datasets look like a database.  
