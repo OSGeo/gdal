@@ -35,6 +35,9 @@
  * of the GDAL core, but dependent on the Common Portability Library.
  *
  * $Log$
+ * Revision 1.36  2005/01/10 18:25:06  fwarmerdam
+ * added support for getting/setting LAYER_TYPE metadata
+ *
  * Revision 1.35  2005/01/10 17:41:27  fwarmerdam
  * added HFA compression support: bug 664
  *
@@ -166,9 +169,10 @@ static char *apszAuxMetadataItems[] = {
  "Statistics",           "dmedian",               "STATISTICS_MEDIAN",  "Esta_Statistics",
  "Statistics",           "dmode",                 "STATISTICS_MODE",    "Esta_Statistics",
  "Statistics",           "dstddev",               "STATISTICS_STDDEV",  "Esta_Statistics",
- "HistogramParameters",  "lBinFunction.numBins",  "STATISTICS_HISTONUMBINS",    "Eimg_StatisticsParameters830",
- "HistogramParameters",  "dBinFunction.minLimit", "STATISTICS_HISTOMIN",        "Eimg_StatisticsParameters830",
- "HistogramParameters",  "dBinFunction.maxLimit", "STATISTICS_HISTOMAX",        "Eimg_StatisticsParameters830",
+ "HistogramParameters",  "lBinFunction.numBins",  "STATISTICS_HISTONUMBINS", "Eimg_StatisticsParameters830",
+ "HistogramParameters",  "dBinFunction.minLimit", "STATISTICS_HISTOMIN", "Eimg_StatisticsParameters830",
+ "HistogramParameters",  "dBinFunction.maxLimit", "STATISTICS_HISTOMAX", "Eimg_StatisticsParameters830",
+ "",                     "elayerType",            "LAYER_TYPE",          "",
  NULL
 };
 
@@ -2112,8 +2116,14 @@ CPLErr HFASetMetadata( HFAHandle hHFA, int nBand, char **papszMD )
         if ( pszAuxMetaData[i] != NULL )
         {
             // found one, get the right entry
-            HFAEntry *poEntry =	poNode->GetNamedChild( pszAuxMetaData[i] );
-            if( poEntry == NULL )
+            HFAEntry *poEntry;
+
+            if( strlen(pszAuxMetaData[i]) > 0 )
+                poEntry = poNode->GetNamedChild( pszAuxMetaData[i] );
+            else
+                poEntry = poNode;
+
+            if( poEntry == NULL && strlen(pszAuxMetaData[i+3]) > 0 )
             {
                 // child does not yet exist --> create it
                 poEntry = new HFAEntry( hHFA, pszAuxMetaData[i], pszAuxMetaData[i+3],
@@ -2144,6 +2154,12 @@ CPLErr HFASetMetadata( HFAHandle hHFA, int nBand, char **papszMD )
               {
                   int nValue = atoi( pszValue );
                   poEntry->SetIntField( pszFieldName, nValue );
+              }
+              break;
+              case 's':
+              case 'e':
+              {
+                  poEntry->SetStringField( pszFieldName, pszValue );
               }
               break;
               default:

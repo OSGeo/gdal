@@ -29,6 +29,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.47  2005/01/10 18:25:06  fwarmerdam
+ * added support for getting/setting LAYER_TYPE metadata
+ *
  * Revision 1.46  2005/01/10 17:41:27  fwarmerdam
  * added HFA compression support: bug 664
  *
@@ -665,8 +668,13 @@ void HFARasterBand::ReadAuxMetadata()
     char ** pszAuxMetaData = GetHFAAuxMetaDataList();
     for( i = 0; pszAuxMetaData[i] != NULL; i += 4 )
     {
-        HFAEntry *poEntry =
-            poBand->poNode->GetNamedChild( pszAuxMetaData[i] );
+        HFAEntry *poEntry;
+        
+        if( strlen(pszAuxMetaData[i]) > 0 )
+            poEntry = poBand->poNode->GetNamedChild( pszAuxMetaData[i] );
+        else
+            poEntry = poBand->poNode;
+
         const char *pszFieldName = pszAuxMetaData[i+1] + 1;
         CPLErr eErr = CE_None;
 
@@ -705,6 +713,14 @@ void HFARasterBand::ReadAuxMetadata()
           }
           break;
           case 's':
+          case 'e':
+          {
+              const char *pszValue;
+              pszValue = poEntry->GetStringField( pszFieldName, &eErr );
+              if( eErr == CE_None )
+                  SetMetadataItem( pszAuxMetaData[i+2], pszValue );
+          }
+          break;
           default:
             CPLAssert( FALSE );
         }
