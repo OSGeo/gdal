@@ -51,5 +51,9 @@ apps_dir:
 	cd ..
 
 ogr:      port_dir
-	cd ogr
+	cd frmts/iso8211
+	$(MAKE) /f makefile.vc
+	cd ..\sdts	
+	$(MAKE) /f makefile.vc
+	cd ..\..\ogr
 	$(MAKE) all 
