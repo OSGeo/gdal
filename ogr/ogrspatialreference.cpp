@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.22  2000/10/20 04:20:17  warmerda
+ * overwrite existing linear units node if one exists
+ *
  * Revision 1.21  2000/10/16 21:26:07  warmerda
  * added some level of LOCAL_CS support
  *
@@ -981,11 +984,20 @@ OGRErr OGRSpatialReference::SetLinearUnits( const char * pszUnitsName,
         //notdef: sprintf( szValue, "%.12f", dfInMeters );
         OGRPrintDouble( szValue, dfInMeters );
 
-    poUnits = new OGR_SRSNode( "UNIT" );
-    poUnits->AddChild( new OGR_SRSNode( pszUnitsName ) );
-    poUnits->AddChild( new OGR_SRSNode( szValue ) );
-
-    poCS->AddChild( poUnits );
+    if( poCS->FindChild( "UNIT" ) >= 0 )
+    {
+        poUnits = poCS->GetChild( poCS->FindChild( "UNIT" ) );
+        poUnits->GetChild(0)->SetValue( pszUnitsName );
+        poUnits->GetChild(1)->SetValue( szValue );
+    }
+    else
+    {
+        poUnits = new OGR_SRSNode( "UNIT" );
+        poUnits->AddChild( new OGR_SRSNode( pszUnitsName ) );
+        poUnits->AddChild( new OGR_SRSNode( szValue ) );
+        
+        poCS->AddChild( poUnits );
+    }
 
     return OGRERR_NONE;
 }
