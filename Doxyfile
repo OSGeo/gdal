@@ -43,13 +43,13 @@ LATEX_OUTPUT          =
 # each generated HTML page. If it is left blank doxygen will generate a 
 # standard header.
 
-HTML_HEADER          = html/gdal_header.html
+#HTML_HEADER          = html/gdal_header.html
 
 # The HTML_FOOTER tag can be used to specify a personal HTML footer for 
 # each generated HTML page. If it is left blank doxygen will generate a 
 # standard footer.
 
-HTML_FOOTER          = html/gdal_footer.html
+#HTML_FOOTER          = html/gdal_footer.html
 
 # The QUIET tag can be used to turn on/off the messages that are generated
 # by doxygen. Possible values are YES and NO. If left blank NO is used.
