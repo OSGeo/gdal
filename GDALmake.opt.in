@@ -3,9 +3,9 @@ top_builddir	=	$(GDAL_ROOT)
 #
 # the library can be built by the native build or with the help of libtool
 #
+HAVE_LIBTOOL	=	@HAVE_LIBTOOL@
 LIBTOOL	=	@LIBTOOL@
-ifneq ($(LIBTOOL),)
-HAVE_LIBTOOL	=	yes
+ifeq ($(HAVE_LIBTOOL),yes)
 LIBTOOL_COMPILE	=	$(LIBTOOL) --mode=compile
 LIBTOOL_LINK	=	$(LIBTOOL) --mode=link
 LIBTOOL_INSTALL	=	$(LIBTOOL) --mode=install
