@@ -140,7 +140,7 @@ install: $(GDAL_DLL) apps_dir pymod_dir
 	cd ..
 	xcopy /y /r /d /f data\*.* $(DATADIR)
 !IFDEF INCLUDE_OGR_FRMTS
-	cd ..\ogr
+	cd ogr
 	$(MAKE) install
 !ENDIF
 	cd ..
