@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.3  2001/07/12 00:49:18  nemec
+ * Convert unknown colorInterp based on number of bands for happier .fit files
+ *
  * Revision 1.2  2001/07/06 18:46:25  nemec
  * Cleanup files - improve Windows build, make proper copyright notice
  *
@@ -180,8 +183,23 @@ int fitGetColorModel(GDALColorInterp colorInterp, int nBands) {
         return 0;
 
     default:
+        CPLDebug("FIT write", "unrecognized colorInterp %i - deriving from "
+                 "number of bands (%i)", colorInterp, nBands);
+        switch (nBands) {
+        case 1:
+            return 2; // iflLuminance - luminance
+        case 2:
+            return 13; // iflLuminanceAlpha - Luminance plus alpha
+        case 3:
+            return 3; // iflRGB - full color (Red, Green, Blue triplets)
+        case 4:
+            return 5; // iflRGBA - full color with transparency (alpha channel)
+        } // switch
+
         CPLError(CE_Failure, CPLE_NotSupported, 
-                 "FIT write - unrecognized colorInterp %i", colorInterp);
+                 "FIT write - unrecognized colorInterp %i and "
+                 "unrecognized number of bands (%i)", colorInterp, nBands);
+
         return 0;
     } // switch
 }
