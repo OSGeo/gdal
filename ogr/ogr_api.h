@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2003/03/05 05:08:49  warmerda
+ * added GetLayerByName
+ *
  * Revision 1.7  2003/03/03 05:05:54  warmerda
  * added support for DeleteDataSource and DeleteLayer
  *
@@ -258,6 +261,7 @@ void   CPL_DLL OGR_DS_Destroy( OGRDataSourceH );
 const char CPL_DLL *OGR_DS_GetName( OGRDataSourceH );
 int    CPL_DLL OGR_DS_GetLayerCount( OGRDataSourceH );
 OGRLayerH CPL_DLL OGR_DS_GetLayer( OGRDataSourceH, int );
+OGRLayerH CPL_DLL OGR_DS_GetLayerByName( OGRDataSourceH, const char * );
 OGRErr    CPL_DLL OGR_DS_DeleteLayer( OGRDataSourceH, int );
 OGRLayerH CPL_DLL OGR_DS_CreateLayer( OGRDataSourceH, const char *, 
                                       OGRSpatialReferenceH, OGRwkbGeometryType,
