@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.16  2003/03/06 18:08:39  dron
+ * Unneeded macro removed.
+ *
  * Revision 1.15  2003/02/24 11:06:11  dron
  * Updated to JasPer 1.700.2.
  *
@@ -73,22 +76,17 @@
  * Revision 1.1  2002/09/18 16:49:01  dron
  * Initial release
  *
- *
- *
  */
 
 #include "gdal_priv.h"
 #include "cpl_string.h"
 
-#define uchar unsigned char
-#define longlong long long
-#define ulonglong unsigned long long
 #include <jasper/jasper.h>
 
 CPL_CVSID("$Id$");
 
 CPL_C_START
-void	GDALRegister_JPEG2000(void);
+void    GDALRegister_JPEG2000(void);
 #ifdef HAVE_JASPER_UUID
 CPLErr CPL_DLL GTIFMemBufFromWkt( const char *pszWKT, 
                                   const double *padfGeoTransform,
@@ -102,108 +100,108 @@ CPL_C_END
 
 // XXX: Part of code below extracted from the JasPer internal headers and
 // must be in sync with JasPer version (this one works with JasPer 1.600.0)
-#define	JP2_FTYP_MAXCOMPATCODES	32
-#define	JP2_BOX_IHDR	0x69686472	/* Image Header */
-#define	JP2_BOX_BPCC	0x62706363	/* Bits Per Component */
-#define	JP2_BOX_UUID	0x75756964	/* UUID */
+#define JP2_FTYP_MAXCOMPATCODES 32
+#define JP2_BOX_IHDR    0x69686472      /* Image Header */
+#define JP2_BOX_BPCC    0x62706363      /* Bits Per Component */
+#define JP2_BOX_UUID    0x75756964      /* UUID */
 extern "C" {
 typedef struct {
-	uint_fast32_t magic;
+        uint_fast32_t magic;
 } jp2_jp_t;
 typedef struct {
-	uint_fast32_t majver;
-	uint_fast32_t minver;
-	uint_fast32_t numcompatcodes;
-	uint_fast32_t compatcodes[JP2_FTYP_MAXCOMPATCODES];
+        uint_fast32_t majver;
+        uint_fast32_t minver;
+        uint_fast32_t numcompatcodes;
+        uint_fast32_t compatcodes[JP2_FTYP_MAXCOMPATCODES];
 } jp2_ftyp_t;
 typedef struct {
-	uint_fast32_t width;
-	uint_fast32_t height;
-	uint_fast16_t numcmpts;
-	uint_fast8_t bpc;
-	uint_fast8_t comptype;
-	uint_fast8_t csunk;
-	uint_fast8_t ipr;
+        uint_fast32_t width;
+        uint_fast32_t height;
+        uint_fast16_t numcmpts;
+        uint_fast8_t bpc;
+        uint_fast8_t comptype;
+        uint_fast8_t csunk;
+        uint_fast8_t ipr;
 } jp2_ihdr_t;
 typedef struct {
-	uint_fast16_t numcmpts;
-	uint_fast8_t *bpcs;
+        uint_fast16_t numcmpts;
+        uint_fast8_t *bpcs;
 } jp2_bpcc_t;
 typedef struct {
-	uint_fast8_t method;
-	uint_fast8_t pri;
-	uint_fast8_t approx;
-	uint_fast32_t csid;
-	uint_fast8_t *iccp;
-	int iccplen;
+        uint_fast8_t method;
+        uint_fast8_t pri;
+        uint_fast8_t approx;
+        uint_fast32_t csid;
+        uint_fast8_t *iccp;
+        int iccplen;
 } jp2_colr_t;
 typedef struct {
-	uint_fast16_t numlutents;
-	uint_fast8_t numchans;
-	int_fast32_t *lutdata;
-	uint_fast8_t *bpc;
+        uint_fast16_t numlutents;
+        uint_fast8_t numchans;
+        int_fast32_t *lutdata;
+        uint_fast8_t *bpc;
 } jp2_pclr_t;
 typedef struct {
-	uint_fast16_t channo;
-	uint_fast16_t type;
-	uint_fast16_t assoc;
+        uint_fast16_t channo;
+        uint_fast16_t type;
+        uint_fast16_t assoc;
 } jp2_cdefchan_t;
 typedef struct {
-	uint_fast16_t numchans;
-	jp2_cdefchan_t *ents;
+        uint_fast16_t numchans;
+        jp2_cdefchan_t *ents;
 } jp2_cdef_t;
 typedef struct {
-	uint_fast16_t cmptno;
-	uint_fast8_t map;
-	uint_fast8_t pcol;
+        uint_fast16_t cmptno;
+        uint_fast8_t map;
+        uint_fast8_t pcol;
 } jp2_cmapent_t;
 
 typedef struct {
-	uint_fast16_t numchans;
-	jp2_cmapent_t *ents;
+        uint_fast16_t numchans;
+        jp2_cmapent_t *ents;
 } jp2_cmap_t;
 
 #ifdef HAVE_JASPER_UUID
 typedef struct {
-	uint_fast32_t data_len;
-	uint_fast8_t uuid[16];
-	uint_fast8_t *data;
+        uint_fast32_t data_len;
+        uint_fast8_t uuid[16];
+        uint_fast8_t *data;
 } jp2_uuid_t;
 #endif
 
 struct jp2_boxops_s;
 typedef struct {
 
-	struct jp2_boxops_s *ops;
-	struct jp2_boxinfo_s *info;
+        struct jp2_boxops_s *ops;
+        struct jp2_boxinfo_s *info;
 
-	uint_fast32_t type;
-	uint_fast32_t len;
+        uint_fast32_t type;
+        uint_fast32_t len;
 #ifdef HAVE_JASPER_UUID
-	uint_fast32_t data_len;
+        uint_fast32_t data_len;
 #endif
 
-	union {
-		jp2_jp_t jp;
-		jp2_ftyp_t ftyp;
-		jp2_ihdr_t ihdr;
-		jp2_bpcc_t bpcc;
-		jp2_colr_t colr;
-		jp2_pclr_t pclr;
-		jp2_cdef_t cdef;
-		jp2_cmap_t cmap;
+        union {
+                jp2_jp_t jp;
+                jp2_ftyp_t ftyp;
+                jp2_ihdr_t ihdr;
+                jp2_bpcc_t bpcc;
+                jp2_colr_t colr;
+                jp2_pclr_t pclr;
+                jp2_cdef_t cdef;
+                jp2_cmap_t cmap;
 #ifdef HAVE_JASPER_UUID
-		jp2_uuid_t uuid;
+                jp2_uuid_t uuid;
 #endif
-	} data;
+        } data;
 
 } jp2_box_t;
 typedef struct jp2_boxops_s {
-	void (*init)(jp2_box_t *box);
-	void (*destroy)(jp2_box_t *box);
-	int (*getdata)(jp2_box_t *box, jas_stream_t *in);
-	int (*putdata)(jp2_box_t *box, jas_stream_t *out);
-	void (*dumpdata)(jp2_box_t *box, FILE *out);
+        void (*init)(jp2_box_t *box);
+        void (*destroy)(jp2_box_t *box);
+        int (*getdata)(jp2_box_t *box, jas_stream_t *in);
+        int (*putdata)(jp2_box_t *box, jas_stream_t *out);
+        void (*dumpdata)(jp2_box_t *box, FILE *out);
 } jp2_boxops_t;
 
 extern jp2_box_t *jp2_box_create(int type);
@@ -212,7 +210,7 @@ extern jp2_box_t *jp2_box_get(jas_stream_t *in);
 extern int jp2_box_put(jp2_box_t *box, jas_stream_t *out);
 #ifdef HAVE_JASPER_UUID
 int jp2_encode_uuid(jas_image_t *image, jas_stream_t *out,
-		    char *optstr, jp2_box_t *uuid);
+                    char *optstr, jp2_box_t *uuid);
 #endif
 }
 // XXX: End of JasPer header.
@@ -220,13 +218,13 @@ int jp2_encode_uuid(jas_image_t *image, jas_stream_t *out,
 #ifdef HAVE_JASPER_UUID
 // Magick sequence for GeoJP2 box
 static unsigned char msi_uuid2[16] =
-	{0xb1,0x4b,0xf8,0xbd,0x08,0x3d,0x4b,0x43,
+        {0xb1,0x4b,0xf8,0xbd,0x08,0x3d,0x4b,0x43,
          0xa5,0xae,0x8c,0xd7,0xd5,0xa6,0xce,0x03}; 
 #endif
 
 /************************************************************************/
 /* ==================================================================== */
-/*				JPEG2000Dataset				*/
+/*                              JPEG2000Dataset                         */
 /* ==================================================================== */
 /************************************************************************/
 
@@ -234,27 +232,27 @@ class JPEG2000Dataset : public GDALDataset
 {
     friend class JPEG2000RasterBand;
 
-    FILE	*fp;
+    FILE        *fp;
     jas_stream_t *psStream;
-    jas_image_t	*psImage;
-    int		iFormat;
+    jas_image_t *psImage;
+    int         iFormat;
 
-    char	*pszProjection;
-    int		bGeoTransformValid;
-    double	adfGeoTransform[6];
-    int		nGCPCount;
+    char        *pszProjection;
+    int         bGeoTransformValid;
+    double      adfGeoTransform[6];
+    int         nGCPCount;
     GDAL_GCP    *pasGCPList;
 
   public:
                 JPEG2000Dataset();
-		~JPEG2000Dataset();
+                ~JPEG2000Dataset();
     
-    static GDALDataset	*Open( GDALOpenInfo * );
+    static GDALDataset  *Open( GDALOpenInfo * );
 
-    CPLErr		GetGeoTransform( double* );
-    virtual const char	*GetProjectionRef(void);
-    virtual int		GetGCPCount();
-    virtual const char	*GetGCPProjection();
+    CPLErr              GetGeoTransform( double* );
+    virtual const char  *GetProjectionRef(void);
+    virtual int         GetGCPCount();
+    virtual const char  *GetGCPProjection();
     virtual const GDAL_GCP *GetGCPs();
 };
 
@@ -268,13 +266,13 @@ class JPEG2000RasterBand : public GDALRasterBand
 {
     friend class JPEG2000Dataset;
 
-    jas_matrix_t	*psMatrix;
+    jas_matrix_t        *psMatrix;
 
   public:
 
-    		JPEG2000RasterBand( JPEG2000Dataset *, int, int, int );
-    		~JPEG2000RasterBand();
-		
+                JPEG2000RasterBand( JPEG2000Dataset *, int, int, int );
+                ~JPEG2000RasterBand();
+                
     virtual CPLErr IReadBlock( int, int, void * );
     virtual GDALColorInterp GetColorInterpretation();
 };
@@ -285,7 +283,7 @@ class JPEG2000RasterBand : public GDALRasterBand
 /************************************************************************/
 
 JPEG2000RasterBand::JPEG2000RasterBand( JPEG2000Dataset *poDS, int nBand,
-		int iDepth, int bSignedness )
+                int iDepth, int bSignedness )
 
 {
     this->poDS = poDS;
@@ -295,25 +293,25 @@ JPEG2000RasterBand::JPEG2000RasterBand( JPEG2000Dataset *poDS, int nBand,
     // Maximum possible depth for JPEG2000 is 38!
     switch ( bSignedness )
     {
-	case 1:				// Signed component
-	if (iDepth <= 8)
-	    this->eDataType = GDT_Byte; // FIXME: should be signed,
-					// but we haven't signed byte
-					// data type in GDAL
-	else if (iDepth <= 16)
+        case 1:                         // Signed component
+        if (iDepth <= 8)
+            this->eDataType = GDT_Byte; // FIXME: should be signed,
+                                        // but we haven't signed byte
+                                        // data type in GDAL
+        else if (iDepth <= 16)
             this->eDataType = GDT_Int16;
-	else if (iDepth <= 32)
+        else if (iDepth <= 32)
             this->eDataType = GDT_Int32;
-	break;
-	case 0:				// Unsigned component
-	default:
-	if (iDepth <= 8)
-	    this->eDataType = GDT_Byte;
-	else if (iDepth <= 16)
+        break;
+        case 0:                         // Unsigned component
+        default:
+        if (iDepth <= 8)
+            this->eDataType = GDT_Byte;
+        else if (iDepth <= 16)
             this->eDataType = GDT_UInt16;
-	else if (iDepth <= 32)
+        else if (iDepth <= 32)
             this->eDataType = GDT_UInt32;
-	break;
+        break;
     }
 
     nBlockXSize = poDS->GetRasterXSize();
@@ -338,73 +336,73 @@ JPEG2000RasterBand::~JPEG2000RasterBand()
 CPLErr JPEG2000RasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                       void * pImage )
 {
-    int		    i, j;
+    int             i, j;
     JPEG2000Dataset *poGDS = (JPEG2000Dataset *) poDS;
 
     // Decode image from the stream, if not yet
     if ( !poGDS->psImage )
     {
-	if ( !( poGDS->psImage =
-	        jas_image_decode(poGDS->psStream, poGDS->iFormat, 0) ) )
-	{
-	    CPLDebug( "JPEG2000", "Unable to decode image. Format: %s, %d",
-		      jas_image_fmttostr( poGDS->iFormat ), poGDS->iFormat );
-	    return CE_Failure;
-	}
+        if ( !( poGDS->psImage =
+                jas_image_decode(poGDS->psStream, poGDS->iFormat, 0) ) )
+        {
+            CPLDebug( "JPEG2000", "Unable to decode image. Format: %s, %d",
+                      jas_image_fmttostr( poGDS->iFormat ), poGDS->iFormat );
+            return CE_Failure;
+        }
     }
     
     jas_image_readcmpt( poGDS->psImage, nBand - 1, nBlockXOff, nBlockYOff,
-	nBlockXSize, nBlockYSize, psMatrix );
+        nBlockXSize, nBlockYSize, psMatrix );
 
     for( i = 0; i < jas_matrix_numrows(psMatrix); i++ )
-	for( j = 0; j < jas_matrix_numcols(psMatrix); j++ )
-	    // XXX: We need casting because matrix element always
-	    // has 32 bit depth in JasPer
-	    // FIXME: what about float values?
-	    switch( eDataType )
-	    {
-	        case GDT_Int16:
-		{
-		    GInt16* ptr = (GInt16*)pImage;
-		    *ptr = (GInt16)jas_matrix_get(psMatrix, i, j);
-		    ptr++;
-		    pImage = ptr;
-		}
-		break;
-	        case GDT_Int32:
-		{
-		    GInt32* ptr = (GInt32*)pImage;
-		    *ptr = (GInt32)jas_matrix_get(psMatrix, i, j);
-		    ptr++;
-		    pImage = ptr;
-		}
-		break;
-	        case GDT_UInt16:
-		{
-		    GUInt16* ptr = (GUInt16*)pImage;
-		    *ptr = (GUInt16)jas_matrix_get(psMatrix, i, j);
-		    ptr++;
-		    pImage = ptr;
-		}
-		break;
-	        case GDT_UInt32:
-		{
-		    GUInt32* ptr = (GUInt32*)pImage;
-		    *ptr = (GUInt32)jas_matrix_get(psMatrix, i, j);
-		    ptr++;
-		    pImage = ptr;
-		}
-		break;
-	        case GDT_Byte:
-	        default:
-		{
-		    GByte* ptr = (GByte*)pImage;
-		    *ptr = (GByte)jas_matrix_get(psMatrix, i, j);
-		    ptr++;
-		    pImage = ptr;
-		}
-		break;
-	    }
+        for( j = 0; j < jas_matrix_numcols(psMatrix); j++ )
+            // XXX: We need casting because matrix element always
+            // has 32 bit depth in JasPer
+            // FIXME: what about float values?
+            switch( eDataType )
+            {
+                case GDT_Int16:
+                {
+                    GInt16* ptr = (GInt16*)pImage;
+                    *ptr = (GInt16)jas_matrix_get(psMatrix, i, j);
+                    ptr++;
+                    pImage = ptr;
+                }
+                break;
+                case GDT_Int32:
+                {
+                    GInt32* ptr = (GInt32*)pImage;
+                    *ptr = (GInt32)jas_matrix_get(psMatrix, i, j);
+                    ptr++;
+                    pImage = ptr;
+                }
+                break;
+                case GDT_UInt16:
+                {
+                    GUInt16* ptr = (GUInt16*)pImage;
+                    *ptr = (GUInt16)jas_matrix_get(psMatrix, i, j);
+                    ptr++;
+                    pImage = ptr;
+                }
+                break;
+                case GDT_UInt32:
+                {
+                    GUInt32* ptr = (GUInt32*)pImage;
+                    *ptr = (GUInt32)jas_matrix_get(psMatrix, i, j);
+                    ptr++;
+                    pImage = ptr;
+                }
+                break;
+                case GDT_Byte:
+                default:
+                {
+                    GByte* ptr = (GByte*)pImage;
+                    *ptr = (GByte)jas_matrix_get(psMatrix, i, j);
+                    ptr++;
+                    pImage = ptr;
+                }
+                break;
+            }
 
     return CE_None;
 }
@@ -420,42 +418,42 @@ GDALColorInterp JPEG2000RasterBand::GetColorInterpretation()
     // Decode image from the stream, if not yet
     if ( !poGDS->psImage )
     {
-	if ( !( poGDS->psImage =
-	        jas_image_decode(poGDS->psStream, poGDS->iFormat, 0) ) )
-	{
-	    CPLDebug( "JPEG2000", "Unable to decode image. Format: %s, %d",
-		      jas_image_fmttostr( poGDS->iFormat ), poGDS->iFormat );
-	    return GCI_Undefined;
-	}
+        if ( !( poGDS->psImage =
+                jas_image_decode(poGDS->psStream, poGDS->iFormat, 0) ) )
+        {
+            CPLDebug( "JPEG2000", "Unable to decode image. Format: %s, %d",
+                      jas_image_fmttostr( poGDS->iFormat ), poGDS->iFormat );
+            return GCI_Undefined;
+        }
     }
     
     if ( jas_clrspc_fam( jas_image_clrspc( poGDS->psImage ) ) ==
-	 JAS_CLRSPC_FAM_GRAY )
-	return GCI_GrayIndex;
+         JAS_CLRSPC_FAM_GRAY )
+        return GCI_GrayIndex;
     else if ( jas_clrspc_fam( jas_image_clrspc( poGDS->psImage ) ) == 
-	      JAS_CLRSPC_FAM_RGB )
+              JAS_CLRSPC_FAM_RGB )
     {
-	switch ( jas_image_cmpttype( poGDS->psImage, nBand - 1 ) )
-	{
-	    case JAS_IMAGE_CT_RGB_R:
-		return GCI_RedBand;
-	    case JAS_IMAGE_CT_RGB_G:
-		return GCI_GreenBand;
-	    case JAS_IMAGE_CT_RGB_B:
-		return GCI_BlueBand;
-	    case JAS_IMAGE_CT_OPACITY:
-		return GCI_AlphaBand;
-	    default:
-		return GCI_Undefined;
-	}
+        switch ( jas_image_cmpttype( poGDS->psImage, nBand - 1 ) )
+        {
+            case JAS_IMAGE_CT_RGB_R:
+                return GCI_RedBand;
+            case JAS_IMAGE_CT_RGB_G:
+                return GCI_GreenBand;
+            case JAS_IMAGE_CT_RGB_B:
+                return GCI_BlueBand;
+            case JAS_IMAGE_CT_OPACITY:
+                return GCI_AlphaBand;
+            default:
+                return GCI_Undefined;
+        }
     }
     else
-	return GCI_Undefined;
+        return GCI_Undefined;
 }
 
 /************************************************************************/
 /* ==================================================================== */
-/*				JPEG2000Dataset				*/
+/*                              JPEG2000Dataset                         */
 /* ==================================================================== */
 /************************************************************************/
 
@@ -490,17 +488,17 @@ JPEG2000Dataset::~JPEG2000Dataset()
 
 {
     if ( psStream )
-	jas_stream_close( psStream );
+        jas_stream_close( psStream );
     if ( psImage )
-	jas_image_destroy( psImage );
+        jas_image_destroy( psImage );
     jas_image_clearfmts();
     if ( pszProjection )
-	CPLFree( pszProjection );
+        CPLFree( pszProjection );
     if( nGCPCount > 0 )
     {
         for( int i = 0; i < nGCPCount; i++ )
-	    if ( pasGCPList[i].pszId )
-		CPLFree( pasGCPList[i].pszId );
+            if ( pasGCPList[i].pszId )
+                CPLFree( pasGCPList[i].pszId );
 
         CPLFree( pasGCPList );
     }
@@ -573,8 +571,8 @@ const GDAL_GCP *JPEG2000Dataset::GetGCPs()
 GDALDataset *JPEG2000Dataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
-    int		iFormat;
-    char	*pszFormatName = NULL;
+    int         iFormat;
+    char        *pszFormatName = NULL;
     jas_stream_t *sS;
 
     if( poOpenInfo->fp == NULL )
@@ -583,34 +581,34 @@ GDALDataset *JPEG2000Dataset::Open( GDALOpenInfo * poOpenInfo )
     jas_init();
     if( !(sS = jas_stream_fopen( poOpenInfo->pszFilename, "rb" )) )
     {
-	jas_image_clearfmts();
-	return NULL;
+        jas_image_clearfmts();
+        return NULL;
     }
     iFormat = jas_image_getfmt( sS );
     if ( !(pszFormatName = jas_image_fmttostr( iFormat )) )
     {
-	jas_stream_close( sS );
-	jas_image_clearfmts();
-	return NULL;
+        jas_stream_close( sS );
+        jas_image_clearfmts();
+        return NULL;
     }
     if ( strlen( pszFormatName ) < 3 ||
         (!EQUALN( pszFormatName, "jp2", 3 ) &&
-	 !EQUALN( pszFormatName, "jpc", 3 ) &&
-	 !EQUALN( pszFormatName, "pgx", 3 )) )
+         !EQUALN( pszFormatName, "jpc", 3 ) &&
+         !EQUALN( pszFormatName, "pgx", 3 )) )
     {
         CPLDebug( "JPEG2000", "JasPer reports file is format type `%s'.", 
                   pszFormatName );
         jas_stream_close( sS );
-	jas_image_clearfmts();
+        jas_image_clearfmts();
         return NULL;
     }
 
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
-    JPEG2000Dataset 	*poDS;
-    int			*paiDepth = NULL, *pabSignedness = NULL;
-    int			iBand;
+    JPEG2000Dataset     *poDS;
+    int                 *paiDepth = NULL, *pabSignedness = NULL;
+    int                 iBand;
 
     poDS = new JPEG2000Dataset();
 
@@ -623,112 +621,118 @@ GDALDataset *JPEG2000Dataset::Open( GDALOpenInfo * poOpenInfo )
     {
 // XXX: Hack to read JP2 boxes from input file. JasPer hasn't public API
 // call for such things, so we use internal JasPer functions.
-	jp2_box_t *box;
-	box = 0;
-	while ( ( box = jp2_box_get(poDS->psStream) ) )
-	{
-	    switch (box->type)
-	    {
-		case JP2_BOX_IHDR:
-		poDS->nBands = box->data.ihdr.numcmpts;
-		poDS->nRasterXSize = box->data.ihdr.width;
-		poDS->nRasterYSize = box->data.ihdr.height;
-		CPLDebug( "JPEG2000",
-			  "IHDR box found. Dump: "
-			  "width=%d, height=%d, numcmpts=%d, bpp=%d\n",
-			  box->data.ihdr.width, box->data.ihdr.height,
-			  box->data.ihdr.numcmpts, (box->data.ihdr.bpc & 0x7F) + 1 );
-		if ( box->data.ihdr.bpc )
-		{
-		    paiDepth = (int *)
-			CPLMalloc(box->data.bpcc.numcmpts * sizeof(int));
-		    pabSignedness = (int *)
-			CPLMalloc(box->data.bpcc.numcmpts * sizeof(int));
-		    for ( iBand = 0; iBand < poDS->nBands; iBand++ )
-		    {
-			paiDepth[iBand] = (box->data.ihdr.bpc & 0x7F) + 1;
-			pabSignedness[iBand] = box->data.ihdr.bpc >> 7;
-			CPLDebug( "JPEG2000",
-				  "Component %d: bpp=%d, signedness=%d",
-				  iBand, paiDepth[iBand], pabSignedness[iBand] );
-		    }
-		}
-		break;
-		case JP2_BOX_BPCC:
-		CPLDebug( "JPEG2000", "BPCC box found. Dump:" );
-		if ( !paiDepth )
- 		{
-			CPLMalloc( box->data.bpcc.numcmpts * sizeof(int) );
-		    pabSignedness = (int *)
-			CPLMalloc( box->data.bpcc.numcmpts * sizeof(int) );
-		    for( iBand=0; iBand < (int)box->data.bpcc.numcmpts; iBand++)
-		    {
-			paiDepth[iBand] = box->data.bpcc.bpcs[iBand] && 0x7F;
-			pabSignedness[iBand] = box->data.bpcc.bpcs[iBand] >> 7;
-			CPLDebug( "JPEG2000",
-				  "Component %d: bpp=%d, signedness=%d",
-				  iBand, paiDepth[iBand], pabSignedness[iBand] );
-		    }
-		}
-		break;
-#ifdef HAVE_JASPER_UUID
-		case JP2_BOX_UUID: // Box for custom data
-		CPLDebug( "JPEG2000", "UUID box found. Length=%d", box->len );
-		if( memcmp( box->data.uuid.uuid, msi_uuid2, 16 ) == 0 )
+        jp2_box_t *box;
+        box = 0;
+        while ( ( box = jp2_box_get(poDS->psStream) ) )
+        {
+            switch (box->type)
+            {
+                case JP2_BOX_IHDR:
+                poDS->nBands = box->data.ihdr.numcmpts;
+                poDS->nRasterXSize = box->data.ihdr.width;
+                poDS->nRasterYSize = box->data.ihdr.height;
+                CPLDebug( "JPEG2000",
+                          "IHDR box found. Dump: "
+                          "width=%d, height=%d, numcmpts=%d, bpp=%d\n",
+                          box->data.ihdr.width, box->data.ihdr.height,
+                          box->data.ihdr.numcmpts, (box->data.ihdr.bpc & 0x7F) + 1 );
+                if ( box->data.ihdr.bpc )
                 {
-		    CPLDebug( "JPEG2000", "GeoTIFF info found." );
-		    if( box->data.uuid.data != NULL )
-		    {
-			if ( poDS->pszProjection )
-			{
-			    CPLFree( poDS->pszProjection );
-			    poDS->pszProjection = NULL;
-			}
-			GTIFWktFromMemBuf( box->data.uuid.data_len,
-			    box->data.uuid.data,
-			    &(poDS->pszProjection), poDS->adfGeoTransform,
-			    &(poDS->nGCPCount), &(poDS->pasGCPList) );
-			CPLDebug( "JPEG2000", "Got projection: %s",
-			      poDS->pszProjection );
-			poDS->bGeoTransformValid = TRUE;
-		    }
+                    paiDepth = (int *)CPLMalloc(poDS->nBands * sizeof(int));
+                    pabSignedness = (int *)CPLMalloc(poDS->nBands * sizeof(int));
+                    for ( iBand = 0; iBand < poDS->nBands; iBand++ )
+                    {
+                        paiDepth[iBand] = (box->data.ihdr.bpc & 0x7F) + 1;
+                        pabSignedness[iBand] = box->data.ihdr.bpc >> 7;
+                        CPLDebug( "JPEG2000",
+                                  "Component %d: bpp=%d, signedness=%d",
+                                  iBand, paiDepth[iBand], pabSignedness[iBand] );
+                    }
                 }
-		break;
+                break;
+                case JP2_BOX_BPCC:
+                CPLDebug( "JPEG2000", "BPCC box found. Dump:" );
+                if ( !paiDepth )
+                {
+                    paiDepth = (int *)
+                        CPLMalloc( box->data.bpcc.numcmpts * sizeof(int) );
+                    pabSignedness = (int *)
+                        CPLMalloc( box->data.bpcc.numcmpts * sizeof(int) );
+                    for( iBand=0; iBand < (int)box->data.bpcc.numcmpts; iBand++)
+                    {
+                        paiDepth[iBand] = box->data.bpcc.bpcs[iBand] && 0x7F;
+                        pabSignedness[iBand] = box->data.bpcc.bpcs[iBand] >> 7;
+                        CPLDebug( "JPEG2000",
+                                  "Component %d: bpp=%d, signedness=%d",
+                                  iBand, paiDepth[iBand], pabSignedness[iBand] );
+                    }
+                }
+                break;
+#ifdef HAVE_JASPER_UUID
+                case JP2_BOX_UUID: // Box for custom data
+                CPLDebug( "JPEG2000", "UUID box found. Length=%d", box->len );
+                if( memcmp( box->data.uuid.uuid, msi_uuid2, 16 ) == 0 )
+                {
+                    CPLDebug( "JPEG2000", "GeoTIFF info found." );
+                    if( box->data.uuid.data != NULL )
+                    {
+                        if ( poDS->pszProjection )
+                        {
+                            CPLFree( poDS->pszProjection );
+                            poDS->pszProjection = NULL;
+                        }
+                        GTIFWktFromMemBuf( box->data.uuid.data_len,
+                            box->data.uuid.data,
+                            &(poDS->pszProjection), poDS->adfGeoTransform,
+                            &(poDS->nGCPCount), &(poDS->pasGCPList) );
+                        CPLDebug( "JPEG2000", "Got projection: %s",
+                              poDS->pszProjection );
+                        poDS->bGeoTransformValid = TRUE;
+                    }
+                }
+                break;
 #endif
-	    }
-	    jp2_box_destroy( box );
-	    box = 0;
-	}
-	if ( jas_stream_rewind( poDS->psStream ) < 0 )
+            }
+            jp2_box_destroy( box );
+            box = 0;
+        }
+	if( !paiDepth || !pabSignedness )
 	{
 	    jas_stream_close( sS );
 	    delete poDS;
-	    CPLDebug( "JPEG2000", "Unable to rewind input stream.\n" );
+	    CPLDebug( "JPEG2000", "Unable to read JP2 header boxes.\n" );
 	    return NULL;
 	}
+        if ( jas_stream_rewind( poDS->psStream ) < 0 )
+        {
+            jas_stream_close( sS );
+            delete poDS;
+            CPLDebug( "JPEG2000", "Unable to rewind input stream.\n" );
+            return NULL;
+        }
     }
     else
     {
-	if ( !(poDS->psImage = jas_image_decode(poDS->psStream, poDS->iFormat, 0)) )
-	{
-	    jas_stream_close( sS );
-	    delete poDS;
-	    CPLDebug( "JPEG2000", "Unable to decode image %s. Format: %s, %d",
-		      poOpenInfo->pszFilename,
-		      jas_image_fmttostr( poDS->iFormat ), poDS->iFormat );
-	    return NULL;
-	}
+        if ( !(poDS->psImage = jas_image_decode(poDS->psStream, poDS->iFormat, 0)) )
+        {
+            jas_stream_close( sS );
+            delete poDS;
+            CPLDebug( "JPEG2000", "Unable to decode image %s. Format: %s, %d",
+                      poOpenInfo->pszFilename,
+                      jas_image_fmttostr( poDS->iFormat ), poDS->iFormat );
+            return NULL;
+        }
 
-	poDS->nBands = jas_image_numcmpts( poDS->psImage );
-	poDS->nRasterXSize = jas_image_cmptwidth( poDS->psImage, 0 );
-	poDS->nRasterYSize = jas_image_cmptheight( poDS->psImage, 0 );
-	paiDepth = (int *)CPLMalloc( poDS->nBands * sizeof(int) );
-	pabSignedness = (int *)CPLMalloc( poDS->nBands * sizeof(int) );
-	for ( iBand = 0; iBand < poDS->nBands; iBand++ )
-	{
-	    paiDepth[iBand] = jas_image_cmptprec( poDS->psImage, iBand );
-	    pabSignedness[iBand] = jas_image_cmptsgnd( poDS->psImage, iBand );
-	}
+        poDS->nBands = jas_image_numcmpts( poDS->psImage );
+        poDS->nRasterXSize = jas_image_cmptwidth( poDS->psImage, 0 );
+        poDS->nRasterYSize = jas_image_cmptheight( poDS->psImage, 0 );
+        paiDepth = (int *)CPLMalloc( poDS->nBands * sizeof(int) );
+        pabSignedness = (int *)CPLMalloc( poDS->nBands * sizeof(int) );
+        for ( iBand = 0; iBand < poDS->nBands; iBand++ )
+        {
+            paiDepth[iBand] = jas_image_cmptprec( poDS->psImage, iBand );
+            pabSignedness[iBand] = jas_image_cmptsgnd( poDS->psImage, iBand );
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -737,23 +741,23 @@ GDALDataset *JPEG2000Dataset::Open( GDALOpenInfo * poOpenInfo )
     for( iBand = 1; iBand <= poDS->nBands; iBand++ )
     {
         poDS->SetBand( iBand, new JPEG2000RasterBand( poDS, iBand,
-	    paiDepth[iBand - 1], pabSignedness[iBand - 1] ) );
+            paiDepth[iBand - 1], pabSignedness[iBand - 1] ) );
         
     }
     
     if ( paiDepth )
-	CPLFree( paiDepth );
+        CPLFree( paiDepth );
     if ( pabSignedness )
-	CPLFree( pabSignedness );
+        CPLFree( pabSignedness );
 
 /* -------------------------------------------------------------------- */
 /*      Check for world file.                                           */
 /* -------------------------------------------------------------------- */
     if( !poDS->bGeoTransformValid )
     {
-	poDS->bGeoTransformValid = 
-	    GDALReadWorldFile( poOpenInfo->pszFilename, ".wld", 
-			       poDS->adfGeoTransform );
+        poDS->bGeoTransformValid = 
+            GDALReadWorldFile( poOpenInfo->pszFilename, ".wld", 
+                               poDS->adfGeoTransform );
     }
 
     return( poDS );
@@ -779,9 +783,9 @@ JPEG2000CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Create the dataset.                                             */
 /* -------------------------------------------------------------------- */
-    int			iBand;
-    jas_stream_t	*psStream;
-    jas_image_t		*psImage;
+    int                 iBand;
+    jas_stream_t        *psStream;
+    jas_image_t         *psImage;
 
     jas_init();
     if( !(psStream = jas_stream_fopen( pszFilename, "w+b" )) )
@@ -801,22 +805,22 @@ JPEG2000CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Loop over image, copying image data.                            */
 /* -------------------------------------------------------------------- */
-    GDALRasterBand	*poBand;
-    GUInt32		*paiScanline;
-    int         	iLine, iPixel;
-    CPLErr      	eErr = CE_None;
-    jas_matrix_t	*psMatrix;
+    GDALRasterBand      *poBand;
+    GUInt32             *paiScanline;
+    int                 iLine, iPixel;
+    CPLErr              eErr = CE_None;
+    jas_matrix_t        *psMatrix;
     jas_image_cmptparm_t *sComps; // Array of pointers to image components
 
     sComps = (jas_image_cmptparm_t*)
-	CPLMalloc( nBands * sizeof(jas_image_cmptparm_t) );
+        CPLMalloc( nBands * sizeof(jas_image_cmptparm_t) );
   
     if ( !(psMatrix = jas_matrix_create( 1, nXSize )) )
     {
         CPLError( CE_Failure, CPLE_OutOfMemory, 
                   "Unable to create matrix with size %dx%d.\n", 1, nYSize );
-	CPLFree( sComps );
-	jas_image_destroy( psImage );
+        CPLFree( sComps );
+        jas_image_destroy( psImage );
         return NULL;
     }
     paiScanline = (GUInt32 *) CPLMalloc( nXSize *
@@ -826,53 +830,53 @@ JPEG2000CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     {
         poBand = poSrcDS->GetRasterBand( iBand + 1);
         
-	sComps[iBand].tlx = sComps[iBand].tly = 0;
-	sComps[iBand].hstep = sComps[iBand].vstep = 1;
-	sComps[iBand].width = nXSize;
-	sComps[iBand].height = nYSize;
-	sComps[iBand].prec = GDALGetDataTypeSize( poBand->GetRasterDataType() );
-	switch ( poBand->GetRasterDataType() )
-	{
-	    case GDT_Int16:
-	    case GDT_Int32:
-	    case GDT_Float32:
-	    case GDT_Float64:
+        sComps[iBand].tlx = sComps[iBand].tly = 0;
+        sComps[iBand].hstep = sComps[iBand].vstep = 1;
+        sComps[iBand].width = nXSize;
+        sComps[iBand].height = nYSize;
+        sComps[iBand].prec = GDALGetDataTypeSize( poBand->GetRasterDataType() );
+        switch ( poBand->GetRasterDataType() )
+        {
+            case GDT_Int16:
+            case GDT_Int32:
+            case GDT_Float32:
+            case GDT_Float64:
             sComps[iBand].sgnd = 1;
-	    break;
-	    case GDT_Byte:
-	    case GDT_UInt16:
-	    case GDT_UInt32:
-	    default:
-	    sComps[iBand].sgnd = 0;
-	    break;
-	}
-	jas_image_addcmpt(psImage, iBand, sComps);
+            break;
+            case GDT_Byte:
+            case GDT_UInt16:
+            case GDT_UInt32:
+            default:
+            sComps[iBand].sgnd = 0;
+            break;
+        }
+        jas_image_addcmpt(psImage, iBand, sComps);
 
-	for( iLine = 0; eErr == CE_None && iLine < nYSize; iLine++ )
+        for( iLine = 0; eErr == CE_None && iLine < nYSize; iLine++ )
         {
             eErr = poBand->RasterIO( GF_Read, 0, iLine, nXSize, 1, 
                               paiScanline, nXSize, 1, GDT_UInt32,
                               sizeof(GUInt32), sizeof(GUInt32) * nXSize );
             for ( iPixel = 0; iPixel < nXSize; iPixel++ )
-	        jas_matrix_setv( psMatrix, iPixel, paiScanline[iPixel] );
-	    
+                jas_matrix_setv( psMatrix, iPixel, paiScanline[iPixel] );
+            
             if( (jas_image_writecmpt(psImage, iBand, 0, iLine,
-			      nXSize, 1, psMatrix)) < 0 )
+                              nXSize, 1, psMatrix)) < 0 )
             {
                 CPLError( CE_Failure, CPLE_AppDefined, 
                     "Unable to write scanline %d of the component %d.\n", 
                     iLine, iBand );
-		jas_matrix_destroy( psMatrix );
-		CPLFree( paiScanline );
-		CPLFree( sComps );
-		jas_image_destroy( psImage );
+                jas_matrix_destroy( psMatrix );
+                CPLFree( paiScanline );
+                CPLFree( sComps );
+                jas_image_destroy( psImage );
                 return NULL;
             }
-	    
+            
             if( eErr == CE_None &&
             !pfnProgress( ((iLine + 1) + iBand * nYSize) /
-			  ((double) nYSize * nBands),
-			 NULL, pProgressData) )
+                          ((double) nYSize * nBands),
+                         NULL, pProgressData) )
             {
                 eErr = CE_Failure;
                 CPLError( CE_Failure, CPLE_UserInterrupt, 
@@ -884,110 +888,110 @@ JPEG2000CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
 /*       Read compression parameters and encode the image.              */
 /* -------------------------------------------------------------------- */
-    int		    i, j;
-    const int	    OPTSMAX = 4096;
-    const char	    *pszFormatName;
-    char	    pszOptionBuf[OPTSMAX + 1];
+    int             i, j;
+    const int       OPTSMAX = 4096;
+    const char      *pszFormatName;
+    char            pszOptionBuf[OPTSMAX + 1];
 
-    const char	*apszComprOptions[]=
+    const char  *apszComprOptions[]=
     {
-	"imgareatlx",
-	"imgareatly",
-	"tilegrdtlx",
-	"tilegrdtly",
-	"tilewidth",
-	"tileheight",
-	"prcwidth",
-	"prcheight",
-	"cblkwidth",
-	"cblkheight",
-	"mode",
-	"rate",
-	"ilyrrates",
-	"prg",
-	"numrlvls",
-	"sop",
-	"eph",
-	"lazy",
-	"termall",
-	"segsym",
-	"vcausal",
-	"pterm",
-	"resetprob",
-	"numgbits",
-	NULL
+        "imgareatlx",
+        "imgareatly",
+        "tilegrdtlx",
+        "tilegrdtly",
+        "tilewidth",
+        "tileheight",
+        "prcwidth",
+        "prcheight",
+        "cblkwidth",
+        "cblkheight",
+        "mode",
+        "rate",
+        "ilyrrates",
+        "prg",
+        "numrlvls",
+        "sop",
+        "eph",
+        "lazy",
+        "termall",
+        "segsym",
+        "vcausal",
+        "pterm",
+        "resetprob",
+        "numgbits",
+        NULL
     };
     
     pszFormatName = CSLFetchNameValue( papszOptions, "FORMAT" );
     if ( !pszFormatName ||
-	 !EQUALN( pszFormatName, "jp2", 3 ) ||
-	 !EQUALN( pszFormatName, "jpc", 3 ) )
-	pszFormatName = "jp2";
+         !EQUALN( pszFormatName, "jp2", 3 ) ||
+         !EQUALN( pszFormatName, "jpc", 3 ) )
+        pszFormatName = "jp2";
     
     pszOptionBuf[0] = '\0';
     if ( papszOptions )
     {
-	CPLDebug( "JPEG2000", "User supplied parameters:" );
-	for ( i = 0; papszOptions[i] != NULL; i++ )
-	{
-	    CPLDebug( "JPEG2000", "%s\n", papszOptions[i] );
-	    for ( j = 0; apszComprOptions[j] != NULL; j++ )
-		if( EQUALN( apszComprOptions[j], papszOptions[i],
-			    strlen(apszComprOptions[j]) ) )
-		{
-		    int m, n;
+        CPLDebug( "JPEG2000", "User supplied parameters:" );
+        for ( i = 0; papszOptions[i] != NULL; i++ )
+        {
+            CPLDebug( "JPEG2000", "%s\n", papszOptions[i] );
+            for ( j = 0; apszComprOptions[j] != NULL; j++ )
+                if( EQUALN( apszComprOptions[j], papszOptions[i],
+                            strlen(apszComprOptions[j]) ) )
+                {
+                    int m, n;
 
-		    n = strlen( pszOptionBuf );
-		    m = n + strlen( papszOptions[i] ) + 1;
-		    if ( m > OPTSMAX )
-			break;
-		    if ( n > 0 )
-		    {
-			strcat( pszOptionBuf, "\n" );
-		    }
-		    strcat( pszOptionBuf, papszOptions[i] );
-		}
-	}
+                    n = strlen( pszOptionBuf );
+                    m = n + strlen( papszOptions[i] ) + 1;
+                    if ( m > OPTSMAX )
+                        break;
+                    if ( n > 0 )
+                    {
+                        strcat( pszOptionBuf, "\n" );
+                    }
+                    strcat( pszOptionBuf, papszOptions[i] );
+                }
+        }
     }
     CPLDebug( "JPEG2000", "Parameters, delivered to the JasPer library:" );
     CPLDebug( "JPEG2000", "%s", pszOptionBuf );
 
-    if ( nBands == 1 )			    // Grayscale
+    if ( nBands == 1 )                      // Grayscale
     {
-	jas_image_setclrspc( psImage, JAS_CLRSPC_SGRAY );
-	jas_image_setcmpttype( psImage, 0, JAS_IMAGE_CT_GRAY_Y );
+        jas_image_setclrspc( psImage, JAS_CLRSPC_SGRAY );
+        jas_image_setcmpttype( psImage, 0, JAS_IMAGE_CT_GRAY_Y );
     }
     else if ( nBands == 3 || nBands == 4 )  // Assume as RGB(A)
     {
-	jas_image_setclrspc( psImage, JAS_CLRSPC_SRGB );
-	for ( iBand = 0; iBand < nBands; iBand++ )
-	{
-	    poBand = poSrcDS->GetRasterBand( iBand + 1);
-	    switch ( poBand->GetColorInterpretation() )
-	    {
-		case GCI_RedBand:
-		jas_image_setcmpttype( psImage, iBand, JAS_IMAGE_CT_RGB_R );
-		break;
-		case GCI_GreenBand:
-		jas_image_setcmpttype( psImage, iBand, JAS_IMAGE_CT_RGB_G );
-		break;
-		case GCI_BlueBand:
-		jas_image_setcmpttype( psImage, iBand, JAS_IMAGE_CT_RGB_B );
-		break;
-		case GCI_AlphaBand:
-		jas_image_setcmpttype( psImage, iBand, JAS_IMAGE_CT_OPACITY );
-		break;
-		default:
-		jas_image_setcmpttype( psImage, iBand, JAS_IMAGE_CT_UNKNOWN );
-		break;
-	    }
-	}
+        jas_image_setclrspc( psImage, JAS_CLRSPC_SRGB );
+        for ( iBand = 0; iBand < nBands; iBand++ )
+        {
+            poBand = poSrcDS->GetRasterBand( iBand + 1);
+            switch ( poBand->GetColorInterpretation() )
+            {
+                case GCI_RedBand:
+                jas_image_setcmpttype( psImage, iBand, JAS_IMAGE_CT_RGB_R );
+                break;
+                case GCI_GreenBand:
+                jas_image_setcmpttype( psImage, iBand, JAS_IMAGE_CT_RGB_G );
+                break;
+                case GCI_BlueBand:
+                jas_image_setcmpttype( psImage, iBand, JAS_IMAGE_CT_RGB_B );
+                break;
+                case GCI_AlphaBand:
+                jas_image_setcmpttype( psImage, iBand, JAS_IMAGE_CT_OPACITY );
+                break;
+                default:
+                jas_image_setcmpttype( psImage, iBand, JAS_IMAGE_CT_UNKNOWN );
+                break;
+            }
+        }
     }
-    else				    // Unknown
+    else                                    // Unknown
     {
-	jas_image_setclrspc( psImage, JAS_CLRSPC_UNKNOWN );
-	for ( iBand = 0; iBand < nBands; iBand++ )
-	    jas_image_setcmpttype( psImage, iBand, JAS_IMAGE_CT_UNKNOWN );
+        jas_image_setclrspc( psImage, JAS_CLRSPC_UNKNOWN );
+        for ( iBand = 0; iBand < nBands; iBand++ )
+            jas_image_setcmpttype( psImage, iBand, JAS_IMAGE_CT_UNKNOWN );
     }
 
 /* -------------------------------------------------------------------- */
@@ -997,81 +1001,81 @@ JPEG2000CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     if ( EQUALN( pszFormatName, "jp2", 3 ) )
     {
 #ifdef HAVE_JASPER_UUID
-	double	adfGeoTransform[6];
-	if( ((poSrcDS->GetGeoTransform(adfGeoTransform) == CE_None
-		 && (adfGeoTransform[0] != 0.0 
-		     || adfGeoTransform[1] != 1.0 
-		     || adfGeoTransform[2] != 0.0 
-		     || adfGeoTransform[3] != 0.0 
-		     || adfGeoTransform[4] != 0.0 
-		     || ABS(adfGeoTransform[5]) != 1.0))
-		|| poSrcDS->GetGCPCount() > 0) )
-	{
-	    // Prepare the memory buffer containing the degenerate GeoTIFF file.
-	    const char	*pszWKT;
-	    int		nGTBufSize = 0;
-	    unsigned char *pabyGTBuf = NULL;
-	    jp2_box_t	*box = jp2_box_create( JP2_BOX_UUID );
+        double  adfGeoTransform[6];
+        if( ((poSrcDS->GetGeoTransform(adfGeoTransform) == CE_None
+                 && (adfGeoTransform[0] != 0.0 
+                     || adfGeoTransform[1] != 1.0 
+                     || adfGeoTransform[2] != 0.0 
+                     || adfGeoTransform[3] != 0.0 
+                     || adfGeoTransform[4] != 0.0 
+                     || ABS(adfGeoTransform[5]) != 1.0))
+                || poSrcDS->GetGCPCount() > 0) )
+        {
+            // Prepare the memory buffer containing the degenerate GeoTIFF file.
+            const char  *pszWKT;
+            int         nGTBufSize = 0;
+            unsigned char *pabyGTBuf = NULL;
+            jp2_box_t   *box = jp2_box_create( JP2_BOX_UUID );
 
-	    if( GDALGetGCPCount( poSrcDS ) > 0 )
-		pszWKT = poSrcDS->GetGCPProjection();
-	    else
-		pszWKT = poSrcDS->GetProjectionRef();
+            if( GDALGetGCPCount( poSrcDS ) > 0 )
+                pszWKT = poSrcDS->GetGCPProjection();
+            else
+                pszWKT = poSrcDS->GetProjectionRef();
 
-	    GTIFMemBufFromWkt( pszWKT, adfGeoTransform,
-			       poSrcDS->GetGCPCount(), poSrcDS->GetGCPs(),
-			       &nGTBufSize, &pabyGTBuf );
+            GTIFMemBufFromWkt( pszWKT, adfGeoTransform,
+                               poSrcDS->GetGCPCount(), poSrcDS->GetGCPs(),
+                               &nGTBufSize, &pabyGTBuf );
  
-	    memcpy( box->data.uuid.uuid, msi_uuid2, sizeof(msi_uuid2) );
-	    box->data.uuid.data_len = nGTBufSize;
-	    box->data.uuid.data = (uint_fast8_t *)jas_malloc( nGTBufSize );
-	    memcpy( box->data.uuid.data, pabyGTBuf, nGTBufSize );
-	    CPLFree( pabyGTBuf );
-	    if ( jp2_encode_uuid( psImage, psStream, pszOptionBuf, box) < 0 )
-	    {
-		CPLError( CE_Failure, CPLE_FileIO,
-			  "Unable to encode image %s.", pszFilename );
-		jp2_box_destroy( box );
-		jas_matrix_destroy( psMatrix );
-		CPLFree( paiScanline );
-		CPLFree( sComps );
-		jas_image_destroy( psImage );
-		jas_image_clearfmts();
-		return NULL;
-	    }
-	jp2_box_destroy( box );
-	}
-	else
-	{
+            memcpy( box->data.uuid.uuid, msi_uuid2, sizeof(msi_uuid2) );
+            box->data.uuid.data_len = nGTBufSize;
+            box->data.uuid.data = (uint_fast8_t *)jas_malloc( nGTBufSize );
+            memcpy( box->data.uuid.data, pabyGTBuf, nGTBufSize );
+            CPLFree( pabyGTBuf );
+            if ( jp2_encode_uuid( psImage, psStream, pszOptionBuf, box) < 0 )
+            {
+                CPLError( CE_Failure, CPLE_FileIO,
+                          "Unable to encode image %s.", pszFilename );
+                jp2_box_destroy( box );
+                jas_matrix_destroy( psMatrix );
+                CPLFree( paiScanline );
+                CPLFree( sComps );
+                jas_image_destroy( psImage );
+                jas_image_clearfmts();
+                return NULL;
+            }
+        jp2_box_destroy( box );
+        }
+        else
+        {
 #endif
-	    if ( jp2_encode( psImage, psStream, pszOptionBuf) < 0 )
-	    {
-		CPLError( CE_Failure, CPLE_FileIO,
-			  "Unable to encode image %s.", pszFilename );
-		jas_matrix_destroy( psMatrix );
-		CPLFree( paiScanline );
-		CPLFree( sComps );
-		jas_image_destroy( psImage );
-		jas_image_clearfmts();
-		return NULL;
-	    }
+            if ( jp2_encode( psImage, psStream, pszOptionBuf) < 0 )
+            {
+                CPLError( CE_Failure, CPLE_FileIO,
+                          "Unable to encode image %s.", pszFilename );
+                jas_matrix_destroy( psMatrix );
+                CPLFree( paiScanline );
+                CPLFree( sComps );
+                jas_image_destroy( psImage );
+                jas_image_clearfmts();
+                return NULL;
+            }
 #ifdef HAVE_JASPER_UUID
-	}
+        }
 #endif
     }
     else    // Write JPC code stream
     {
-	if ( jpc_encode(psImage, psStream, pszOptionBuf) < 0 )
-	{
-	    CPLError( CE_Failure, CPLE_FileIO,
-		      "Unable to encode image %s.\n", pszFilename );
-	    jas_matrix_destroy( psMatrix );
-	    CPLFree( paiScanline );
-	    CPLFree( sComps );
-	    jas_image_destroy( psImage );
-	    jas_image_clearfmts();
-	    return NULL;
-	}
+        if ( jpc_encode(psImage, psStream, pszOptionBuf) < 0 )
+        {
+            CPLError( CE_Failure, CPLE_FileIO,
+                      "Unable to encode image %s.\n", pszFilename );
+            jas_matrix_destroy( psMatrix );
+            CPLFree( paiScanline );
+            CPLFree( sComps );
+            jas_image_destroy( psImage );
+            jas_image_clearfmts();
+            return NULL;
+        }
     }
 
     jas_stream_flush( psStream );
@@ -1084,7 +1088,7 @@ JPEG2000CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     if ( jas_stream_close( psStream ) )
     {
         CPLError( CE_Failure, CPLE_FileIO, "Unable to close file %s.\n",
-		  pszFilename );
+                  pszFilename );
         return NULL;
     }
 
@@ -1093,23 +1097,23 @@ JPEG2000CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
     if( CSLFetchBoolean( papszOptions, "WORLDFILE", FALSE ) )
     {
-    	double      adfGeoTransform[6];
-	
-	poSrcDS->GetGeoTransform( adfGeoTransform );
-	GDALWriteWorldFile( pszFilename, "wld", adfGeoTransform );
+        double      adfGeoTransform[6];
+        
+        poSrcDS->GetGeoTransform( adfGeoTransform );
+        GDALWriteWorldFile( pszFilename, "wld", adfGeoTransform );
     }
 
     return (GDALDataset *) GDALOpen( pszFilename, GA_Update );
 }
 
 /************************************************************************/
-/*                        GDALRegister_JPEG2000()			*/
+/*                        GDALRegister_JPEG2000()                       */
 /************************************************************************/
 
 void GDALRegister_JPEG2000()
 
 {
-    GDALDriver	*poDriver;
+    GDALDriver  *poDriver;
 
     if( GDALGetDriverByName( "JPEG2000" ) == NULL )
     {
