@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2003/03/31 15:55:42  danmo
+ * Added C API function docs
+ *
  * Revision 1.3  2003/01/07 16:44:27  warmerda
  * added removeGeometry
  *
@@ -47,6 +50,12 @@
 /************************************************************************/
 /*                        OGR_G_GetPointCount()                         */
 /************************************************************************/
+/**
+ * Fetch number of points from a geometry.
+ *
+ * @param hGeom handle to the geometry from which to get the number of points.
+ * @return the number of points.
+ */
 
 int OGR_G_GetPointCount( OGRGeometryH hGeom )
 
@@ -70,6 +79,13 @@ int OGR_G_GetPointCount( OGRGeometryH hGeom )
 /************************************************************************/
 /*                             OGR_G_GetX()                             */
 /************************************************************************/
+/**
+ * Fetch the x coordinate of a point from a geometry.
+ *
+ * @param hGeom handle to the geometry from which to get the x coordinate.
+ * @param i point to get the x coordinate.
+ * @return the X coordinate of this point. 
+ */
 
 double OGR_G_GetX( OGRGeometryH hGeom, int i )
 
@@ -95,6 +111,13 @@ double OGR_G_GetX( OGRGeometryH hGeom, int i )
 /************************************************************************/
 /*                             OGR_G_GetY()                             */
 /************************************************************************/
+/**
+ * Fetch the x coordinate of a point from a geometry.
+ *
+ * @param hGeom handle to the geometry from which to get the y coordinate.
+ * @param i point to get the Y coordinate.
+ * @return the Y coordinate of this point. 
+ */
 
 double OGR_G_GetY( OGRGeometryH hGeom, int i )
 
@@ -120,6 +143,13 @@ double OGR_G_GetY( OGRGeometryH hGeom, int i )
 /************************************************************************/
 /*                             OGR_G_GetZ()                             */
 /************************************************************************/
+/**
+ * Fetch the z coordinate of a point from a geometry.
+ *
+ * @param hGeom handle to the geometry from which to get the Z coordinate.
+ * @param i point to get the Z coordinate.
+ * @return the Z coordinate of this point. 
+ */
 
 double OGR_G_GetZ( OGRGeometryH hGeom, int i )
 
@@ -145,6 +175,16 @@ double OGR_G_GetZ( OGRGeometryH hGeom, int i )
 /************************************************************************/
 /*                           OGR_G_GetPoint()                           */
 /************************************************************************/
+
+/**
+ * Fetch a point in line string or a point geometry.
+ *
+ * @param hGeom handle to the geometry from which to get the coordinates.
+ * @param i the vertex to fetch, from 0 to getNumPoints()-1, zero for a point.
+ * @param pdfX value of x coordinate.
+ * @param pdfY value of y coordinate.
+ * @param pdfZ value of z coordinate.
+ */
 
 void OGR_G_GetPoint( OGRGeometryH hGeom, int i, 
                      double *pdfX, double *pdfY, double *pdfZ )
@@ -183,6 +223,20 @@ void OGR_G_GetPoint( OGRGeometryH hGeom, int i,
 /************************************************************************/
 /*                           OGR_G_SetPoint()                           */
 /************************************************************************/
+/**
+ * Set the location of a vertex in a point or linestring geometry.
+ *
+ * If iPoint is larger than the number of existing
+ * points in the linestring, the point count will be increased to
+ * accomodate the request.
+ *
+ * @param hGeom handle to the geometry to add a vertex to.
+ * @param i the index of the vertex to assign (zero based) or
+ *  zero for a point.
+ * @param dfX input X coordinate to assign.
+ * @param dfY input Y coordinate to assign.
+ * @param dfZ input Z coordinate to assign (defaults to zero).
+ */
 
 void OGR_G_SetPoint( OGRGeometryH hGeom, int i, 
                      double dfX, double dfY, double dfZ )
@@ -213,8 +267,19 @@ void OGR_G_SetPoint( OGRGeometryH hGeom, int i,
 }
 
 /************************************************************************/
-/*                           OGR_G_SetPoint()                           */
+/*                           OGR_G_AddPoint()                           */
 /************************************************************************/
+/**
+ * Add a point to a geometry (line string or point).
+ *
+ * The vertex count of the line string is increased by one, and assigned from
+ * the passed location value.
+ *
+ * @param hGeom handle to the geometry to add a point to.
+ * @param dfX x coordinate of point to add.
+ * @param dfY y coordinate of point to add.
+ * @param dfZ z coordinate of point to add.
+ */
 
 void OGR_G_AddPoint( OGRGeometryH hGeom, 
                      double dfX, double dfY, double dfZ )
@@ -243,6 +308,12 @@ void OGR_G_AddPoint( OGRGeometryH hGeom,
 /************************************************************************/
 /*                       OGR_G_GetGeometryCount()                       */
 /************************************************************************/
+/**
+ * Fetch the number of elements in a geometry.
+ *
+ * @param hGeom geometry from which to get the number of elements.
+ * @return the number of elements.
+ */
 
 int OGR_G_GetGeometryCount( OGRGeometryH hGeom )
 
@@ -269,6 +340,27 @@ int OGR_G_GetGeometryCount( OGRGeometryH hGeom )
 /************************************************************************/
 /*                        OGR_G_GetGeometryRef()                        */
 /************************************************************************/
+
+/**
+ * Fetch geometry from a geometry container.
+ *
+ * This function returns an handle to a geometry within the container.
+ * The returned geometry remains owned by the container, and should not be
+ * modified.  The handle is only valid untill the next change to the
+ * geometry container.  Use OGR_G_Clone() to make a copy.
+ *
+ * This function relates to the SFCOM 
+ * IGeometryCollection::get_Geometry() method.
+ *
+ * This function is the same as the CPP method 
+ * OGRGeometryCollection::getGeometryRef().
+ *
+ * @param hGeom handle to the geometry container from which to get a 
+ * geometry from.
+ * @param iSubGeom the index of the geometry to fetch, between 0 and
+ *          getNumGeometries() - 1.
+ * @return handle to the requested geometry.
+ */
 
 OGRGeometryH OGR_G_GetGeometryRef( OGRGeometryH hGeom, int iSubGeom )
 
@@ -298,6 +390,25 @@ OGRGeometryH OGR_G_GetGeometryRef( OGRGeometryH hGeom, int iSubGeom )
 /************************************************************************/
 /*                         OGR_G_AddGeometry()                          */
 /************************************************************************/
+
+/**
+ * Add a geometry to a geometry container.
+ *
+ * Some subclasses of OGRGeometryCollection restrict the types of geometry
+ * that can be added, and may return an error.  The passed geometry is cloned
+ * to make an internal copy.
+ *
+ * There is no SFCOM analog to this method.
+ *
+ * This function is the same as the CPP method 
+ * OGRGeometryCollection::addGeometry.
+ *
+ * @param hGeom existing geometry container.
+ * @param hNewGeom geometry to add to the container.
+ *
+ * @return OGRERR_NONE if successful, or OGRERR_UNSUPPORTED_GEOMETRY_TYPE if
+ * the geometry type is illegal for the type of existing geometry.
+ */
 
 OGRErr OGR_G_AddGeometry( OGRGeometryH hGeom, OGRGeometryH hNewSubGeom )
 
@@ -333,6 +444,25 @@ OGRErr OGR_G_AddGeometry( OGRGeometryH hGeom, OGRGeometryH hNewSubGeom )
 /************************************************************************/
 /*                     OGR_G_AddGeometryDirectly()                      */
 /************************************************************************/
+/**
+ * Add a geometry directly to an existing geometry container.
+ *
+ * Some subclasses of OGRGeometryCollection restrict the types of geometry
+ * that can be added, and may return an error.  Ownership of the passed
+ * geometry is taken by the container rather than cloning as addGeometry()
+ * does.
+ *
+ * This function is the same as the CPP method 
+ * OGRGeometryCollection::addGeometryDirectly.
+ *
+ * There is no SFCOM analog to this method.
+ *
+ * @param hGeom existing geometry.
+ * @param hNewGeom geometry to add to the existing geometry.
+ *
+ * @return OGRERR_NONE if successful, or OGRERR_UNSUPPORTED_GEOMETRY_TYPE if
+ * the geometry type is illegal for the type of geometry container.
+ */
 
 OGRErr OGR_G_AddGeometryDirectly( OGRGeometryH hGeom, 
                                   OGRGeometryH hNewSubGeom )
@@ -369,6 +499,31 @@ OGRErr OGR_G_AddGeometryDirectly( OGRGeometryH hGeom,
 /************************************************************************/
 /*                        OGR_G_RemoveGeometry()                        */
 /************************************************************************/
+
+/**
+ * Remove a geometry from an exiting geometry container.
+ *
+ * Removing a geometry will cause the geometry count to drop by one, and all
+ * "higher" geometries will shuffle down one in index.
+ *
+ * There is no SFCOM analog to this method.
+ *
+ * This function is the same as the CPP method 
+ * OGRGeometryCollection::removeGeometry().
+ *
+ * @param hGeom the existing geometry to delete from.
+ * @param iGeom the index of the geometry to delete.  A value of -1 is a
+ * special flag meaning that all geometries should be removed.
+ *
+ * @param bDelete if TRUE the geometry will be destroyed, otherwise it will
+ * not.  The default is TRUE as the existing geometry is considered to own the
+ * geometries in it. 
+ *
+ * @return OGRERR_NONE if successful, or OGRERR_FAILURE if the index is
+ * out of range.
+ */
+
+
 
 OGRErr OGR_G_RemoveGeometry( OGRGeometryH hGeom, int iGeom, int bDelete )
 

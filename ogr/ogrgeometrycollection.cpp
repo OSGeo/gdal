@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2003/03/31 15:55:42  danmo
+ * Added C API function docs
+ *
  * Revision 1.19  2003/03/07 21:32:52  warmerda
  * fixed bug with coordinate dimension reading from WKB
  *
@@ -372,7 +375,7 @@ OGRErr OGRGeometryCollection::addGeometryDirectly( OGRGeometry * poNewGeom )
  * @param iGeom the index of the geometry to delete.  A value of -1 is a
  * special flag meaning that all geometries should be removed.
  *
- * @param bDelete if TRUE the geometr will be deallocated, otherwise it will
+ * @param bDelete if TRUE the geometry will be deallocated, otherwise it will
  * not.  The default is TRUE as the container is considered to own the
  * geometries in it. 
  *

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2003/03/31 15:55:42  danmo
+ * Added C API function docs
+ *
  * Revision 1.13  2003/03/21 02:58:22  warmerda
  * added ref count stuff
  *
@@ -77,7 +80,7 @@
   Open a file / data source with one of the registered drivers.
 
   This method loops through all the drivers registered with the driver
-  manager trying each until one succeeds with the give data source.  This
+  manager trying each until one succeeds with the given data source.  This
   method is static.  Applications don't normally need to use any other
   OGRSFDriverRegistrar methods directly, not do they normally need to have
   a pointer to an OGRSFDriverRegistrar instance.
@@ -115,6 +118,54 @@
 
 */
 
+
+/**
+ 
+  \fn OGRDataSourceH OGROpen( const char *pszName, int bUpdate,
+                        OGRSFDriverH *pahDriverList );
+
+  Open a file / data source with one of the registered drivers.
+
+  This function loops through all the drivers registered with the driver
+  manager trying each until one succeeds with the given data source.  This
+  function is static.  Applications don't normally need to use any other
+  OGRSFDriverRegistrar function, not do they normally need to have
+  a pointer to an OGRSFDriverRegistrar instance.
+
+  If this function fails, CPLGetLastErrorMsg() can be used to check if there
+  is an error message explaining why.
+
+  This function is the same as the CPP method OGRSFDriverRegistrar::Open().
+
+  @param pszName the name of the file, or data source to open.
+  @param bUpdate FALSE for read-only access (the default) or TRUE for 
+         read-write access.
+  @param pahDriver if non-NULL, this argument will be updated with a 
+         pointer to the driver which was used to open the data source.
+
+  @return NULL on error or if the pass name is not supported by this driver,
+  otherwise an handle to an OGRDataSource.  This OGRDataSource should be
+  closed by deleting the object when it is no longer needed.
+
+  <b>Example:</b>
+
+  <pre>
+    OGRDataSourceH	*hDS;
+    OGRSFDriverH        *pahDriver;
+
+    hDS = OGROpen( "polygon.shp", 0 /*bUpdate*/, pahDriver );
+    if( hDS == NULL )
+    {
+        return;
+    }
+
+    ... use the data source ...
+
+    delete hDS;
+  </pre>
+
+*/
+
 /**
   \fn OGRSFDriverRegistrar *OGRSFDriverRegistrar::GetRegistrar();
 
@@ -139,6 +190,23 @@
 
 */
 
+
+/** 
+  \fn void OGRRegisterDriver( OGRSFDriverH hDriver );
+  
+  Add a driver to the list of registered drivers.
+
+  If the passed driver is already registered (based on handle comparison) 
+  then the driver isn't registered.  New drivers are added at the end of
+  the list of registered drivers.
+
+  This function is the same as the CPP method 
+  OGRSFDriverRegistrar::RegisterDriver().
+
+  @param hDriver handle on the driver to add.
+
+*/
+
 /**
 
   \fn int OGRSFDriverRegistrar::GetDriverCount();
@@ -147,13 +215,26 @@
 
   This method is the same as the C function OGRGetDriverCount().
 
-  @return the driver count.
+  @return the drivers count.
+
+*/
+
+/**
+
+  \fn int OGRGetDriverCount();
+
+  Fetch the number of registered drivers.
+
+  This function is the same as the CPP method 
+  OGRSFDriverRegistrar::GetDriverCount().
+
+  @return the drivers count.
 
 */
 
 /**
  
-  \fn OGRSFDriver * OGRSFDriverRegistrar::GetDriver( int iDriver );
+  \fn OGRSFDriver *OGRSFDriverRegistrar::GetDriver( int idriver );
 
   Fetch the indicated driver.
 
@@ -161,10 +242,32 @@
 
   @param iDriver the driver index, from 0 to GetDriverCount()-1.
 
-  @return pointer to the driver, or NULL if iDriver is out of range.
+  @return the driver, or NULL if iDriver is out of range.
 
 */
 
+/**
+ 
+  \fn OGRSFDriverH OGRGetDriver( int iDriver );
+
+  Fetch the indicated driver.
+
+  This function is the same as the CPP method 
+  OGRSFDriverRegistrar::GetDriver().
+
+  @param iDriver the driver index, from 0 to GetDriverCount()-1.
+
+  @return handle to the driver, or NULL if iDriver is out of range.
+
+*/
+
+/**
+
+  \fn int OGRRegisterAll();
+
+  Register all drivers.
+
+*/
 
 /************************************************************************/
 /*                             OGRSFDriver                              */
@@ -185,13 +288,30 @@
   or freed. 
 */
 
+
+/** 
+
+  \fn const char *OGR_Dr_GetName( OGRSFDriverH hDriver );
+
+  Fetch name of driver (file format).  This name should be relatively short
+  (10-40 characters), and should reflect the underlying file format.  For
+  instance "ESRI Shapefile".
+
+  This function is the same as the CPP method OGRSFDriver::GetName().
+
+  @param hDriver handle on the the driver to get the name from.
+  @return driver name.  This is an internal string and should not be modified
+  or freed. 
+*/
+
 /**
 
   \fn OGRDataSource *OGRSFDriver::Open( const char *pszName, int bUpdate );
 
   Attempt to open file with this driver. 
 
-  This method is what OGRSFDriverRegistrar uses to implement its Open() method.
+  This method is what OGRSFDriverRegistrar uses to implement its Open() 
+  method.
   See it for more details.
 
   This method is the same as the C function OGR_Dr_Open().
@@ -202,6 +322,30 @@
 
   @return NULL on error or if the pass name is not supported by this driver,
   otherwise a pointer to an OGRDataSource.  This OGRDataSource should be
+  closed by deleting the object when it is no longer needed.
+
+*/
+
+
+/**
+
+  \fn OGRDataSourceH OGR_Dr_Open( OGRSFDriverH hDriver, const char *pszName, 
+                            int bUpdate );
+
+  Attempt to open file with this driver. 
+
+  This method is what OGRSFDriverRegistrar uses to implement its Open() method.
+  See it for more details.
+
+  This function is the same as the CPP method OGRSFDriver::Open().
+
+  @param hDriver handle on the driver that is used to open file.
+  @param pszName the name of the file, or data source to try and open.
+  @param bUpdate TRUE if update access is required, otherwise FALSE (the
+  default).
+
+  @return NULL on error or if the pass name is not supported by this driver,
+  otherwise an handle to an OGRDataSource.  This OGRDataSource should be
   closed by deleting the object when it is no longer needed.
 
 */
@@ -231,7 +375,7 @@
 */ 
 
 /**
- \fn OGRErr OGRSFDriver::DeleteDataSource( const charpszDataSource );
+ \fn OGRErr OGRSFDriver::DeleteDataSource( const char *pszDataSource );
 
  Destroy a datasource.
 
@@ -247,6 +391,60 @@
 
  @return OGRERR_NONE on success, and OGRERR_UNSUPPORTED_OPERATION if this
  is not supported by this driver. 
+*/
+
+
+/**
+ \fn int OGR_Dr_TestCapability( OGRSFDriverH hDriver, const char *pszCap );
+
+ Test if capability is available.
+
+ One of the following data source capability names can be passed into this
+ function, and a TRUE or FALSE value will be returned indicating whether
+ or not the capability is available for this object.
+
+ <ul>
+  <li> <b>ODrCCreateDataSource</b>: True if this driver can support creating data sources.<p>
+  <li> <b>ODrCDeleteDataSource</b>: True if this driver supports deleting data sources.<p>
+ </ul>
+
+ The #define macro forms of the capability names should be used in preference
+ to the strings themselves to avoid mispelling.
+
+ This function is the same as the CPP method OGRSFDriver::TestCapability().
+
+ @param hDriver handle on the driver to test the capability against.
+
+ @param pszCap the capability to test.
+
+ @return TRUE if capability available otherwise FALSE.
+
+*/ 
+
+
+/** 
+
+  \fn OGRDataSourceH OGR_Dr_CreateDataSource( OGRSFDriverH hDriver,
+                                        const char *pszName, 
+                                        char ** papszOptions )
+
+ This function attempts to create a new data source based on the passed
+ driver.  The papszOptions argument can be used to control driver specific
+ creation options.  These options are normally documented in the format
+ specific documentation. 
+
+ This function is the same as the CPP method OGRSFDriver::CreateDataSource().
+
+ @param hDriver handle on the driver on which data source creation is
+based.
+
+ @param pszName the name for the new data source.
+
+ @param papszOptions a StringList of name=value options.  Options are driver
+specific. 
+
+ @return NULL is returned on failure, or a new OGRDataSource handle on 
+success. 
 */
 
 /************************************************************************/
@@ -268,6 +466,22 @@
 
 */
 
+/** 
+ \fn const char *OGR_DS_GetName( OGRDataSourceH hDS );
+
+ Returns the name of the data source.  This string should be sufficient to
+ open the data source if passed to the same OGRSFDriver that this data
+ source was opened with, but it need not be exactly the same string that
+ was used to open the data source.  Normally this a filename. 
+
+ This function is the same as the CPP method OGRDataSource::GetName().
+
+ @param hDS handle on the data source to get the name from.
+ @return pointer to an internal name string which should not be modified
+ or freed by the caller.
+
+*/
+
 /**
  \fn int OGRDataSource::GetLayerCount();
 
@@ -279,17 +493,47 @@
 
 */
 
+
+/**
+ \fn int OGR_DS_GetLayerCount( OGRDataSourceH hDS );
+
+ Get the number of layers in this data source.
+
+ This function is the same as the CPP method OGRDataSource::GetLayerCount().
+
+ @param hDS handle on the data source from which to get the number of layers.
+ @return layer count.
+
+*/
+
 /**
  \fn OGRLayer *OGRDataSource::GetLayer(int iLayer);
 
- Fetch a layer by index.  The returned layer remains owned by the OGRDataSource
- and should not be deleted by the application.
+ Fetch a layer by index.  The returned layer remains owned by the 
+ OGRDataSource and should not be deleted by the application.
 
  This method is the same as the C function OGR_DS_GetLayer().
 
  @param iLayer a layer number between 0 and GetLayerCount()-1.
 
  @return the layer, or NULL if iLayer is out of range or an error occurs.
+
+*/
+
+
+/**
+ \fn OGRLayerH OGR_DS_GetLayer( OGRDataSourceH hDS, int iLayer );
+
+ Fetch a layer by index.  The returned layer remains owned by the 
+ OGRDataSource and should not be deleted by the application.
+
+ This function is the same as the CPP method OGRDataSource::GetLayer().
+
+ @param hDS handle on the data source from which to get the layer.
+ @param iLayer a layer number between 0 and OGR_DS_GetLayerCount()-1.
+
+ @return an handle on the layer, or NULL if iLayer is out of range
+ or an error occurs.
 
 */
 
@@ -330,13 +574,71 @@
 
  @param pszStatement the SQL statement to execute. 
 
- @param poSpatialFilter
+ @param poSpatialFilter geometry which represents a spatial filter.
 
  @param pszDialect allows control of the statement dialect.  By default it 
  is assumed to be "generic" SQL, whatever that is. 
 
  @return an OGRLayer containing the results of the query.  Deallocate with
  ReleaseResultsSet().
+
+*/
+
+
+/**
+ \fn OGRLayerH OGR_DS_ExecuteSQL( OGRDataSourceH hDS, 
+                             const char *pszSQLCommand,
+                             OGRGeometryH hSpatialFilter,
+                             const char *pszDialect );
+
+ Execute an SQL statement against the data store. 
+
+ The dialects supported will vary by driver, but all datasources should
+ support a minimal SELECT statement like the following.  The WHERE clause
+ can be any where clause supported by OGR_L_SetAttributeFilter().
+
+   SELECT <field-list> FROM table-name [WHERE <where-expr>] 
+       [ORDER BY <sort specification list>]
+
+   <field-list> ::= DISTINCT fieldname | <field-spec> 
+                 | <field-spec> , <field-list>
+
+   <field-spec> ::= fieldname 
+                 | <field_func> ( [DISTINCT] <field-func> )
+                 | Count(*)
+
+   <field-func> ::= AVG | MAX | MIN | SUM | COUNT
+
+
+   <sort specification list> ::=
+              <sort specification> [ { <comma> <sort specification> }... ]
+
+   <sort specification> ::= <sort key> [ <ordering specification> ]
+
+   <sort key> ::=  <column name>
+
+   <ordering specification> ::= ASC | DESC
+
+ The result of an SQL query is either NULL for statements that are in error,
+ or that have no results set, or an OGRLayer pointer representing a results
+ set from the query.  Note that this OGRLayer is in addition to the layers
+ in the data store and must be destroyed with 
+ OGR_DS_ReleaseResultsSet() before the data source is closed 
+ (destroyed).  
+
+ This function is the same as the CPP method OGRDataSource::ExecuteSQL();
+
+ @param hDS handle on the data source on which the SQL query is executed.
+
+ @param pszSQLCommand the SQL statement to execute. 
+
+ @param hSpatialFilter handle on a geometry which represents a spatial filter.
+
+ @param pszDialect allows control of the statement dialect.  By default it 
+ is assumed to be "generic" SQL, whatever that is. 
+
+ @return an handle on a OGRLayer containing the results of the query.  
+ Deallocate with OGR_DS_ReleaseResultsSet().
 
 */
 
@@ -354,6 +656,27 @@
  @param poResultsSet the result of a previous ExecuteSQL() call.
 
 */ 
+
+
+/**
+ \fn void OGR_DS_ReleaseResultSet( OGRDataSourceH hDS, OGRLayerH hLayer );
+
+ Release results of OGR_DS_ExecuteSQL().
+
+ This function should only be used to deallocate OGRLayers resulting from
+ an OGR_DS_ExecuteSQL() call on the same OGRDataSource.  
+ Failure to deallocate a results set before destroying the OGRDataSource 
+ may cause errors. 
+
+ This function is the same as the CPP method 
+ OGRDataSource::ReleaseResultsSet().
+
+ @param hDS an handle on the data source on which was executed an 
+ SQL query.
+ @param hLayer the result of a previous OGR_DS_ExecuteSQL() call.
+
+*/ 
+
 
 /**
  \fn int OGRDataSource::TestCapability( const char *pszCapability );
@@ -373,6 +696,33 @@
 
  This method is the same as the C function OGR_DS_TestCapability().
 
+ @param pszCapability the capability to test.
+
+ @return TRUE if capability available otherwise FALSE.
+
+*/ 
+
+
+/**
+ \fn int OGR_DS_TestCapability( OGRDataSourceH hDS, const char *pszCap );
+
+ Test if capability is available.
+
+ One of the following data source capability names can be passed into this
+ function, and a TRUE or FALSE value will be returned indicating whether 
+ or not the capability is available for this object.
+
+ <ul>
+  <li> <b>ODsCreateLayer</b>: True if this datasource can create new layers.
+  <p>
+ </ul>
+
+ The #define macro forms of the capability names should be used in preference
+ to the strings themselves to avoid mispelling.
+
+ This function is the same as the CPP method OGRDataSource::TestCapability().
+
+ @param hDS handle on the data source against which to test the capability.
  @param pszCapability the capability to test.
 
  @return TRUE if capability available otherwise FALSE.
@@ -433,6 +783,62 @@ specific.
 */
 
 /**
+ \fn OGRLayerH OGR_DS_CreateLayer( OGRDataSourceH hDS, 
+                              const char * pszName,
+                              OGRSpatialReferenceH hSpatialRef,
+                              OGRwkbGeometryType eType,
+                              char ** papszOptions );
+
+This function attempts to create a new layer on the data source with the
+indicated name, coordinate system, geometry type.  The papszOptions argument
+can be used to control driver specific creation options.  These options are
+normally documented in the format specific documentation. 
+
+This function is the same as the CPP method OGRDataSource::CreateLayer().
+
+ @param pszName the name for the new layer.  This should ideally not 
+match any existing layer on the datasource.
+
+ @param hSpatialRef handle on the coordinate system to use for the new layer,
+or NULL if no coordinate system is available. 
+
+ @param eType the geometry type for the layer.  Use wkbUnknown if there
+are no constraints on the types geometry to be written. 
+
+ @param papszOptions a StringList of name=value options.  Options are driver
+specific. 
+
+ @return NULL is returned on failure, or a new OGRLayer handle on success. 
+
+<b>Example:</b>
+
+\code
+#include "ogrsf_frmts.h" 
+#include "cpl_string.h"
+
+...
+
+	OGRLayerH *hLayer;
+        char     *papszOptions;
+
+	if( OGR_DS_TestCapability( hDS, ODsCreateLayer ) )
+        {
+	    ...
+        }
+
+        papszOptions = CSLSetNameValue( papszOptions, "DIM", "2" );
+        hLayer = OGR_DS_CreateLayer( hDS, "NewLayer", NULL, wkbUnknown,
+				     papszOptions );
+        CSLDestroy( papszOptions );
+
+        if( hLayer == NULL )
+        {
+            ...
+        }        
+\endcode
+*/
+
+/**
  \fn int OGRDataSource::Reference();
 
 Increment datasource reference count.
@@ -471,7 +877,7 @@ This method is the same as the C function OGR_DS_GetSummaryRefCount().
 
 @return the current summary reference count for the datasource and its layers.
 */
-				         
+
 
 /************************************************************************/
 /*                               OGRLayer                               */
@@ -484,6 +890,18 @@ This method is the same as the C function OGR_DS_GetSummaryRefCount().
  GetNextFeature().
 
  This method is the same as the C function OGR_L_ResetReading().
+
+*/
+
+/**
+ \fn void OGR_L_ResetReading( OGRLayerH hLayer );
+
+ Reset feature reading to start on the first feature.  This affects 
+ GetNextFeature().
+
+ This function is the same as the CPP method OGRLayer::ResetReading().
+
+ @param hLayer handle on the layer on which features are read.
 
 */
 
@@ -509,6 +927,30 @@ This method is the same as the C function OGR_DS_GetSummaryRefCount().
 
 */
 
+
+/**
+ \fn OGRFeatureH OGR_L_GetNextFeature( OGRLayerH hLayer );
+
+ Fetch the next available feature from this layer.  The returned feature
+ becomes the responsiblity of the caller to delete.  It is critical that
+ all features associated with an OGRLayer (more specifically an 
+ OGRFeatureDefn) be deleted before that layer/datasource is deleted.
+
+ Only features matching the current spatial filter (set with 
+ SetSpatialFilter()) will be returned.  
+
+ This method implements sequential access to the features of a layer.  The
+ ResetReading() method can be used to start at the beginning again.  Random
+ reading, writing and spatial filtering will be added to the OGRLayer in 
+ the future.
+
+ This function is the same as the CPP method OGRLayer::GetNextFeature().
+
+ @hLayer handle on the layer from which feature are read.
+ @return an handle on a feature, or NULL if no more features are available. 
+
+*/
+
 /**
 
  \fn int OGRLayer::GetFeatureCount( int bForce = TRUE );
@@ -525,6 +967,29 @@ This method is the same as the C function OGR_DS_GetSummaryRefCount().
 
  This method is the same as the C function OGR_L_GetFeatureCount().
 
+ @param bForce Flag indicating whether the count should be computed even
+ if it is expensive.
+
+ @return feature count, -1 if count not known. 
+
+*/
+
+/**
+ \fnint OGR_L_GetFeatureCount( OGRLayerH hLayer, int bForce );
+
+ Fetch the feature count in this layer. 
+
+ Returns the number of features in the layer.  For dynamic databases the
+ count may not be exact.  If bForce is FALSE, and it would be expensive
+ to establish the feature count a value of -1 may be returned indicating
+ that the count isn't know.  If bForce is TRUE some implementations will
+ actually scan the entire layer once to count objects. 
+
+ The returned count takes the spatial filter into account. 
+
+ This function is the same as the CPP OGRLayer::GetFeatureCount().
+
+ @param hLayer handle on the layer that owned the features.
  @param bForce Flag indicating whether the count should be computed even
  if it is expensive.
 
@@ -563,6 +1028,38 @@ This method is the same as the C function OGR_DS_GetSummaryRefCount().
 
 */
 
+
+/**
+
+ \fn OGRErr OGR_L_GetExtent( OGRLayerH hLayer, OGREnvelope *psExtent, int bForce);
+
+ Fetch the extent of this layer.
+
+ Returns the extent (MBR) of the data in the layer.  If bForce is FALSE,
+ and it would be expensive to establish the extent then OGRERR_FAILURE
+ will be returned indicating that the extent isn't know.  If bForce is 
+ TRUE then some implementations will actually scan the entire layer once
+ to compute the MBR of all the features in the layer.
+
+ The returned extent does not take the spatial filter into account.  If
+ a spatial filter was previously set then it should be ignored but some
+ implementations may be unable to do that, so it is safer to call 
+ GetExtent() without setting a spatial filter.
+
+ Layers without any geometry may return OGRERR_FAILURE just indicating that
+ no meaningful extents could be collected.
+
+ This function is the same as the CPP method OGRLayer::GetExtent().
+
+ @param hLayer handle on the layer from which to get extent.
+ @param psExtent the structure in which the extent value will be returned.
+ @param bForce Flag indicating whether the extent should be computed even
+ if it is expensive.
+
+ @return OGRERR_NONE on success, OGRERR_FAILURE if extent not known. 
+
+*/
+
 /** 
  \fn void OGRLayer::SetSpatialFilter( OGRGeometry * poFilter );
 
@@ -594,6 +1091,39 @@ This method is the same as the C function OGR_DS_GetSummaryRefCount().
  
  */
 
+/** 
+ \fn void OGR_L_SetSpatialFilter( OGRLayerH hLayer, OGRGeometryH hGeom );
+
+ Set a new spatial filter. 
+
+ This function set the geometry to be used as a spatial filter when 
+ fetching features via the OGR_L_GetNextFeature() function.  Only 
+ features that geometrically intersect the filter geometry will be 
+ returned.  
+
+ Currently this test is may be inaccurately implemented, but it is
+ guaranteed that all features who's envelope (as returned by
+ OGR_G_GetEnvelope()) overlaps the envelope of the spatial filter
+ will be returned.  This can result in more shapes being returned that 
+ should strictly be the case. 
+
+ This function makes an internal copy of the passed geometry.  The 
+ passed geometry remains the responsibility of the caller, and may 
+ be safely destroyed. 
+
+ For the time being the passed filter geometry should be in the same
+ SRS as the layer (as returned by OGR_L_GetSpatialRef()).  In the
+ future this may be generalized. 
+
+ This function is the same as the CPP method OGRLayer::SetSpatialFilter.
+
+ @param hLayer handle on the layer on which to set the spatial filter.
+ @param hGeom handle on the geometry to use as a filtering region.  NULL may
+ be passed indicating that the current spatial filter should be cleared,
+ but no new one instituted.
+ 
+ */
+
 /**
  \fn OGRGeometry *OGRLayer::GetSpatialFilter();
 
@@ -605,6 +1135,22 @@ This method is the same as the C function OGR_DS_GetSummaryRefCount().
  This method is the same as the C function OGR_L_GetSpatialFilter().
 
  @return spatial filter geometry.
+ 
+ */
+
+
+/**
+ \fn OGRGeometryH OGR_L_GetSpatialFilter( OGRLayerH hLayer );
+
+ This function returns the current spatial filter for this layer. 
+
+ The returned pointer is to an internally owned object, and should not
+ be altered or deleted by the caller.  
+
+ This function is the same as the CPP method OGRLayer::GetSpatialFilter().
+
+ @param hLayer handle on the layer to get the spatial filter from.
+ @return an handle on the spatial filter geometry.
  
  */
 
@@ -639,6 +1185,37 @@ This method is the same as the C function OGR_DS_GetSummaryRefCount().
  */
 
 /** 
+ \fn OGRErr OGR_L_SetAttributeFilter(OGRLayerH hLayer, const char *pszQuery);
+
+ Set a new attribute query.
+
+ This function sets the attribute query string to be used when 
+ fetching features via the GetNextFeature() method.  Only features for which
+ the query evaluates as true will be returned.
+
+ The query string should be in the format of an SQL WHERE clause.  For
+ instance "population > 1000000 and population < 5000000" where population
+ is an attribute in the layer.  The query format is a restricted form of SQL
+ WHERE clause as defined "eq_format=restricted_where" about half way through
+ this document:
+
+   http://ogdi.sourceforge.net/prop/6.2.CapabilitiesMetadata.html
+
+ Note that installing a query string will generally result in resetting
+ the current reading position (ala ResetReading()).  
+
+ This function is the same as the CPP method OGRLayer::SetAttributeFilter().
+
+ @param hLayer handle on the layer on which attribute query will be executed.
+ @param pszQuery query in restricted SQL WHERE format, or NULL to clear the
+ current query.
+
+ @return OGRERR_NONE if successfully installed, or an error code if the 
+ query expression is in error, or some other failure occurs. 
+ 
+ */
+
+/** 
  \fn OGRFeatureDefn *OGRLayer::GetLayerDefn();
 
  Fetch the schema information for this layer.
@@ -653,6 +1230,22 @@ This method is the same as the C function OGR_DS_GetSummaryRefCount().
 
 */
 
+/** 
+ \fn OGRFeatureDefnH OGR_L_GetLayerDefn( OGRLayerH hLayer );
+
+ Fetch the schema information for this layer.
+
+ The returned handle on the OGRFeatureDefn is owned by the OGRLayer,
+ and should not be modified or freed by the application.  It encapsulates
+ the attribute schema of the features of the layer. 
+
+ This function is the same as the CPP method OGRLayer::GetLayerDefn().
+
+ @param hLayer handle on the layer to get the schema information.
+ @return an handle on the feature definition.
+
+*/
+
 /**
 
  \fn OGRSpatialReference *OGRLayer::GetSpatialRef();
@@ -664,6 +1257,23 @@ This method is the same as the C function OGR_DS_GetSummaryRefCount().
 
  This method is the same as the C function OGR_L_GetSpatialRef().
 
+ @return spatial reference, or NULL if there isn't one.
+
+*/
+
+
+/**
+
+ \fn OGRSpatialReferenceH OGR_L_GetSpatialRef( OGRLayerH hLayer );
+
+ Fetch the spatial reference system for this layer. 
+
+ The returned object is owned by the OGRLayer and should not be modified
+ or freed by the application.  
+
+ This function is the same as the CPP method OGRLayer::GetSpatialRef().
+
+ @param hLayer handle on the layer to get the spatial reference from.
  @return spatial reference, or NULL if there isn't one.
 
 */
@@ -686,13 +1296,45 @@ This method is the same as the C function OGR_DS_GetSummaryRefCount().
  call should always work if the feature exists as a fallback implementation
  just scans all the features in the layer looking for the desired feature.
  
- Sequential reads are generally considered interrupted bya GetFeature() call.
+ Sequential reads are generally considered interrupted by a GetFeature() call.
 
  This method is the same as the C function OGR_L_GetFeature().
 
  @param nFID the feature id of the feature to read. 
 
  @return a feature now owned by the caller, or NULL on failure. 
+
+*/
+
+
+/**
+
+ \fn OGRFeatureH OGR_L_GetFeature( OGRLayerH hLayer, long nFeatureId );
+
+ Fetch a feature by it's identifier.
+
+ This function will attempt to read the identified feature.  The nFID
+ value cannot be OGRNullFID.  Success or failure of this operation is
+ unaffected by the spatial or attribute filters.
+
+ If this function returns a non-NULL feature, it is guaranteed that it's 
+ feature id (OGR_F_GetFID()) will be the same as nFID.
+
+ Use OGR_L_TestCapability(OLCRandomRead) to establish if this layer
+ supports efficient random access reading via OGR_L_GetFeature(); however, 
+ the call should always work if the feature exists as a fallback 
+ implementation just scans all the features in the layer looking for the 
+ desired feature.
+ 
+ Sequential reads are generally considered interrupted by a 
+ OGR_L_GetFeature() call.
+
+ This function is the same as the CPP method OGRLayer::GetFeature( ).
+
+ @param hLayer handle on the layer that owned the feature.
+ @param nFeatureId the feature id of the feature to read. 
+
+ @return an handle on a feature now owned by the caller, or NULL on failure. 
 
 */
 
@@ -718,6 +1360,28 @@ This method is the same as the C function OGR_DS_GetSummaryRefCount().
 */
 
 /**
+ 
+ \fn OGRErr OGR_L_SetFeature( OGRLayerH hLayer, OGRFeatureH hFeat );
+
+ Rewrite an existing feature.
+
+ This function will write a feature to the layer, based on the feature id
+ within the OGRFeature.   
+
+ Use OGR_L_TestCapability(OLCRandomWrite) to establish if this layer
+ supports random access writing via OGR_L_SetFeature().
+
+ This function is the same as the CPP method OGRLayer::SetFeature().
+
+ @param hLayer handle on the layer to write the feature.
+ @param hFeat the feature to write.
+
+ @return OGRERR_NONE if the operation works, otherwise an appropriate error
+ code.
+
+*/
+
+/**
 
  \fn OGRErr OGRLayer::CreateFeature( OGRFeature * poFeature );
 
@@ -732,6 +1396,28 @@ This method is the same as the C function OGR_DS_GetSummaryRefCount().
  This method is the same as the C function OGR_L_CreateFeature().
 
  @param poFeature the feature to write to disk. 
+
+ @return OGRERR_NONE on success.
+
+*/
+
+
+/**
+
+ \fn OGRErr OGR_L_CreateFeature( OGRLayerH hLayer, OGRFeatureH hFeat );
+
+ Create and write a new feature within a layer.
+
+ The passed feature is written to the layer as a new feature, rather than
+ overwriting an existing one.  If the feature has a feature id other than
+ OGRNullFID, then the native implementation may use that as the feature id
+ of the new feature, but not necessarily.  Upon successful return the 
+ passed feature will have been updated with the new feature id. 
+
+ This function is the same as the CPP method OGRLayer::CreateFeature().
+
+ @param hLayer handle on the layer to write the feature to.
+ @param hFeat the handle of the feature to write to disk. 
 
  @return OGRERR_NONE on success.
 
@@ -789,6 +1475,64 @@ OGRLayers will return FALSE for any unrecognised capabilities.<p>
 
 */
 
+
+/**
+
+ \fn int OGR_L_TestCapability( OGRLayerH hLayer, const char *pszCap );
+
+ Test if this layer supported the named capability.
+
+ The capability codes that can be tested are represented as strings, but
+ #defined constants exists to ensure correct spelling.  Specific layer 
+ types may implement class specific capabilities, but this can't generally
+ be discovered by the caller. <p>
+
+ <ul>
+
+ <li> <b>OLCRandomRead</b> / "RandomRead": TRUE if the OGR_L_GetFeature() 
+function works for this layer.<p>
+
+ <li> <b>OLCSequentialWrite</b> / "SequentialWrite": TRUE if the 
+OGR_L_CreateFeature() function works for this layer.  Note this means that 
+this particular layer is writable.  The same OGRLayer class  may returned 
+FALSE for other layer instances that are effectively read-only.<p>
+
+ <li> <b>OLCRandomWrite</b> / "RandomWrite": TRUE if the OGR_L_SetFeature()
+function is operational on this layer.   Note this means that this 
+particular layer is writable.  The same OGRLayer class  may returned FALSE 
+for other layer instances that are effectively read-only.<p>
+
+ <li> <b>OLCFastSpatialFilter</b> / "FastSpatialFilter": TRUE if this layer
+implements spatial filtering efficiently.  Layers that effectively read all
+features, and test them with the OGRFeature intersection methods should
+return FALSE.  This can be used as a clue by the application whether it 
+should build and maintain it's own spatial index for features in this 
+layer.<p>
+
+ <li> <b>OLCFastFeatureCount</b> / "FastFeatureCount": 
+TRUE if this layer can return a feature
+count (via OGR_L_GetFeatureCount()) efficiently ... ie. without counting
+the features.  In some cases this will return TRUE until a spatial filter is
+installed after which it will return FALSE.<p>
+
+ <li> <b>OLCFastGetExtent</b> / "FastGetExtent": 
+TRUE if this layer can return its data extent (via OGR_L_GetExtent()) 
+efficiently ... ie. without scanning all the features.  In some cases this 
+will return TRUE until a spatial filter is installed after which it will 
+return FALSE.<p>
+
+</ul>
+ 
+ This function is the same as the CPP method OGRLayer::TestCapability().
+
+ @param hLayer handle on the layer to get the capability from.
+ @param pszCap the name of the capability to test.
+
+ @return TRUE if the layer has the requested capability, or FALSE otherwise.
+OGRLayers will return FALSE for any unrecognised capabilities.<p>
+
+*/
+
 /**
  \fn const char *OGRLayer::GetInfo( const char *pszTag );
 
@@ -809,6 +1553,7 @@ OGRLayers will return FALSE for any unrecognised capabilities.<p>
  have a value, or is unknown.
 
 */
+
 
 /**
  \fn int OGRLayer::Reference();
@@ -839,6 +1584,62 @@ This method is the same as the C function OGR_L_GetRefCount().
 
 @return the current reference count for the layer object itself.
 */
-				         
 
+/**
 
+ \fn OGRErr OGR_L_CreateField( OGRLayerH hLayer, OGRFieldDefnH hField, 
+                          int bApproxOK );
+
+ Write a new field definition within a layer.
+
+ This function is the same as the CPP method OGRLayer::CreateField().
+
+ @param hLayer handle on the layer to write the field definition.
+ @param hField handle of the field definition to write to disk. 
+ @param bApproxOK ?
+
+ @return OGRERR_NONE on success.
+
+*/
+
+/**
+
+ \fn OGRErr OGR_L_StartTransaction( OGRLayerH hLayer );
+
+ What does this do?.
+
+ This function is the same as the CPP method OGRLayer::StartTransaction().
+
+ @param hLayer handle on the layer ?
+
+ @return OGRERR_NONE on success.
+
+*/
+
+/**
+
+ \fn OGRErr OGR_L_CommitTransaction( OGRLayerH hLayer );
+
+ What does this do?.
+
+ This function is the same as the CPP method OGRLayer::CommitTransaction().
+
+ @param hLayer handle on the layer?
+
+ @return OGRERR_NONE on success.
+
+*/
+
+/**
+
+ \fn OGRErr OGR_L_RollbackTransaction( OGRLayerH hLayer );
+
+ What does this do?.
+
+ This function is the same as the CPP method OGRLayer::RollbackTransaction().
+
+ @param hLayer handle on the layer?
+
+ @return OGRERR_NONE on success.
+
+*/
