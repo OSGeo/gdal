@@ -29,6 +29,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.34  2002/11/05 12:54:45  dron
+# Added GetMetadata()/SetMetadata to the Driver interface
+#
 # Revision 1.33  2002/09/11 14:30:06  warmerda
 # added GDALMajorObject.SetDescription()
 #
@@ -295,7 +298,18 @@ class Driver:
 
     def Delete(self, filename):
         return _gdal.GDALDeleteDataset( self._o, filename )
-        
+
+    def GetMetadata(self, domain = None):
+        if domain is None:
+            return _gdal.GDALGetMetadata(self._o)
+        else:
+            return _gdal.GDALGetMetadata(self._o, domain)
+
+    def SetMetadata(self, metadata, domain = None):
+        if domain is None:
+            return _gdal.GDALSetMetadata(self._o, metadata)
+        else:
+            return _gdal.GDALSetMetadata(self._o, metadatadomain)
         
 class Dataset:
 
