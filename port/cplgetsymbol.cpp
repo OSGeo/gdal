@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  1999/01/28 18:35:44  warmerda
+ * minor windows cleanup.
+ *
  * Revision 1.2  1999/01/27 20:16:03  warmerda
  * Added windows implementation.
  *
@@ -90,7 +93,7 @@ void *CPLGetSymbol( const char * pszLibrary, const char * pszSymbolName )
 /* ==================================================================== */
 /*                 Windows Implementation                               */
 /* ==================================================================== */
-#ifdef WIN32
+#ifdef _WIN32
 
 #include <windows.h>
 
@@ -133,5 +136,5 @@ void *CPLGetSymbol( const char * pszLibrary, const char * pszSymbolName )
     return( pSymbol );
 }
 
-#endif /* def WIN32 */
+#endif /* def _WIN32 */
 
