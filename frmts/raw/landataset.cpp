@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2004/05/28 16:06:27  warmerda
+ * added pre7.4 handling and world file support
+ *
  * Revision 1.3  2004/05/26 20:25:05  warmerda
  * Added 4bit support.
  *
@@ -50,7 +53,7 @@ CPL_C_END
 
 /**
 
-Erdas Header format:
+Erdas Header format: "HEAD74"
 
 Offset   Size    Type      Description
 ------   ----    ----      -----------
@@ -60,6 +63,29 @@ Offset   Size    Type      Description
 10         6     char      Unknown.
 16         4    Int32      Width
 20         4    Int32      Height
+24         4    Int32      X Start (offset in original file?)
+28         4    Int32      Y Start (offset in original file?)
+32        56     char      Unknown.
+88         2    Int16      0=LAT, 1=UTM, 2=StatePlane, 3- are projections?
+90         2    Int16      Classes in coverage.
+92        14     char      Unknown.
+106        2    Int16      Area Unit (0=none, 1=Acre, 2=Hectare, 3=Other)
+108        4  Float32      Pixel area. 
+112        4  Float32      Upper Left corner X (center of pixel?)
+116        4  Float32      Upper Left corner Y (center of pixel?)
+120        4  Float32      Width of a pixel.
+124        4  Float32      Height of a pixel.
+
+Erdas Header format: "HEADER"
+
+Offset   Size    Type      Description
+------   ----    ----      -----------
+0          6     char      magic cookie / version (ie. HEAD74). 
+6          2    Int16      Pixel type, 0=8bit, 1=4bit, 2=16bit
+8          2    Int16      Number of Bands. 
+10         6     char      Unknown.
+16         4  Float32      Width
+20         4  Float32      Height
 24         4    Int32      X Start (offset in original file?)
 28         4    Int32      Y Start (offset in original file?)
 32        56     char      Unknown.
@@ -302,8 +328,16 @@ GDALDataset *LANDataset::Open( GDALOpenInfo * poOpenInfo )
     int  nBandCount, nPixelOffset;
     GDALDataType eDataType;
 
-    poDS->nRasterXSize = *((GInt32 *) (poDS->pachHeader + 16));
-    poDS->nRasterYSize = *((GInt32 *) (poDS->pachHeader + 20));
+    if( EQUALN(poDS->pachHeader,"HEADER",7) )
+    {
+        poDS->nRasterXSize = (int) *((float *) (poDS->pachHeader + 16));
+        poDS->nRasterYSize = (int) *((float *) (poDS->pachHeader + 20));
+    }
+    else
+    {
+        poDS->nRasterXSize = *((GInt32 *) (poDS->pachHeader + 16));
+        poDS->nRasterYSize = *((GInt32 *) (poDS->pachHeader + 20));
+    }
 
     if( *((GInt16 *) (poDS->pachHeader + 6)) == 0 )
     {
@@ -371,6 +405,18 @@ GDALDataset *LANDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->adfGeoTransform[3] -= poDS->adfGeoTransform[5] * 0.5;
 
 /* -------------------------------------------------------------------- */
+/*      If we didn't get any georeferencing, try for a worldfile.       */
+/* -------------------------------------------------------------------- */
+    if( poDS->adfGeoTransform[1] == 0.0
+        || poDS->adfGeoTransform[5] == 0.0 )
+    {
+        if( !GDALReadWorldFile( poOpenInfo->pszFilename, NULL, 
+                                poDS->adfGeoTransform ) )
+            GDALReadWorldFile( poOpenInfo->pszFilename, ".wld", 
+                               poDS->adfGeoTransform );
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Try to come up with something for the coordinate system.        */
 /* -------------------------------------------------------------------- */
     int nCoordSys = *((GInt16 *) (poDS->pachHeader + 88));
@@ -405,7 +451,7 @@ GDALDataset *LANDataset::Open( GDALOpenInfo * poOpenInfo )
 CPLErr LANDataset::GetGeoTransform( double * padfTransform )
 
 {
-    if( adfGeoTransform[2] == 0.0 || adfGeoTransform[5] == 0.0 )
+    if( adfGeoTransform[1] == 0.0 || adfGeoTransform[5] == 0.0 )
         return CE_Failure;
     else
     {
