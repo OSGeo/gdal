@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  1999/06/22 16:59:30  kshih
+ * Temporary fix for ADO.  Use static variable to keep datasource around.
+ *
  * Revision 1.10  1999/06/21 21:08:46  warmerda
  * added some extra debugging info in GetInitDataSource()
  *
@@ -53,6 +56,7 @@
 #include "SFSess.h"
 #include "ogr_geometry.h"
 #include "oledb_sf.h"
+#include "sfutil.h"
 
 OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape );
 void OGRComDebug( const char * pszDebugClass, const char * pszFormat, ... );
@@ -306,8 +310,6 @@ void	CVirtualArray::Initialize(int nArraySize,
 
         aSchemaInfo.Add(sInfo);
     }
-
-
     if (hSHP)
     {
         memset(&sInfo,0,sizeof(SchemaInfo));
@@ -315,9 +317,9 @@ void	CVirtualArray::Initialize(int nArraySize,
         aSchemaInfo.Add(sInfo);
     }
 
-    m_nPackedRecordLength = nOffset  // for records
+    m_nPackedRecordLength = nOffset  + 150000// for records
         + 4  // for pointer to BLOB contining Geometry
-        + 4; // for size of array pointed to by above buffer;
+        + 4 ; // for size of array pointed to by above buffer;
 }
 
 /************************************************************************/
@@ -366,15 +368,16 @@ BYTE &CVirtualArray::operator[](int iIndex)
 	
 #define USE_ISTREAM
 #ifdef  USE_ISTREAM
-    IStream	*pStream = new SFIStream(pByte,poShape->WkbSize());
+	IStream	*pStream = new SFIStream(pByte,poShape->WkbSize());
     *((void **) &(pBuffer[aSchemaInfo[aSchemaInfo.GetSize()-1].nOffset])) = 
         pStream;
 #else
-    *((void **) &(pBuffer[aSchemaInfo[aSchemaInfo.GetSize()-1].nOffset])) = 
-        pByte;
 
-    *((int *) &(pBuffer[aSchemaInfo[aSchemaInfo.GetSize()-1].nOffset+4])) = 
-        poShape->WkbSize();
+    *((void **) &(pBuffer[aSchemaInfo[aSchemaInfo.GetSize()-1].nOffset])) = 
+        (void *) pByte;
+
+
+
 #endif
 	
     delete poShape;
@@ -427,78 +430,7 @@ DBTYPE DBFType2OLEType(DBFFieldType eDBFType,int *pnOffset, int nWidth)
 }
 
 
-/************************************************************************/
-/*                         GetInitDataSource()                          */
-/*  Returns char * to allocated string.  Caller responsible for freeing */
-/************************************************************************/
-static char *GetInitDataSource(CSFRowset *pRowset)
-{
-	IRowsetInfo *pRInfo;
-	HRESULT		hr;
-	char		*pszDataSource = NULL;
 
-        OGRComDebug( "Info", "In GetInitDataSource\n" );
-
-	hr = pRowset->QueryInterface(IID_IRowsetInfo,(void **) &pRInfo);
-	if (SUCCEEDED(hr))
-	{
-                OGRComDebug( "Info", "Got IRowsetInfo\n" );
-		IGetDataSource	*pIGetDataSource;
-		hr = pRInfo->GetSpecification(IID_IGetDataSource, (IUnknown **) &pIGetDataSource);
-		pRInfo->Release();
-
-		if (SUCCEEDED(hr))
-		{
-			IDBProperties *pIDBProp;
-
-                        OGRComDebug( "Info", "Got IGetDataSource\n" );
-			hr = pIGetDataSource->GetDataSource(IID_IDBProperties, (IUnknown **) &pIDBProp);
-			pIGetDataSource->Release();
-
-			if (SUCCEEDED(hr))
-			{
-				DBPROPIDSET sPropIdSets[1];
-				DBPROPID	rgPropIds[1];
-
-				ULONG		nPropSets;
-				DBPROPSET	*rgPropSets;
-
-                                OGRComDebug( "Info", "Got Properties\n" );
-				rgPropIds[0] = DBPROP_INIT_DATASOURCE;
-
-				sPropIdSets[0].cPropertyIDs = 1;
-				sPropIdSets[0].guidPropertySet = DBPROPSET_DBINIT;
-				sPropIdSets[0].rgPropertyIDs = rgPropIds;
-
-				pIDBProp->GetProperties(1,sPropIdSets,&nPropSets,&rgPropSets);
-
-				if (rgPropSets)
-				{
-					USES_CONVERSION;
-					char *pszSource = (char *)  OLE2A(rgPropSets[0].rgProperties[0].vValue.bstrVal);
-					pszDataSource = (char *) malloc(1+strlen(pszSource));
-					strcpy(pszDataSource,pszSource);
-                                        OGRComDebug( "Info", 
-                                                     "Got rgPropSets\n" );
-				}
-
-				if (rgPropSets)
-				{
-					int i;
-					for (i=0; i < nPropSets; i++)
-					{
-						CoTaskMemFree(rgPropSets[i].rgProperties);
-					}
-					CoTaskMemFree(rgPropSets);
-				}
-
-				pIDBProp->Release();
-			}
-		}
-	}
-
-	return pszDataSource;
-}
 /************************************************************************/
 /*                         CSFRowset::Execute()                         */
 /************************************************************************/
@@ -516,26 +448,17 @@ HRESULT CSFRowset::Execute(DBPARAMS * pParams, LONG* pcRowsAffected)
     int			i;
     int			nOffset = 0;
 
-
-	szBaseFile = GetInitDataSource(this);
-	if( szBaseFile == NULL )
-		return DB_E_ERRORSINCOMMAND;
-
-    strcpy(szFilename,szBaseFile);
-    strcat(szFilename,".dbf");
-    hDBF = DBFOpen(szFilename,"r");
+	hDBF = SFGetDBFHandle(NULL);
 	
     if (!hDBF)
         return DB_E_ERRORSINCOMMAND;
 
-    strcpy(szFilename,szBaseFile);
-    strcat(szFilename,".shp");
-    hSHP = SHPOpen(szFilename,"r");
-	
+	hSHP = SFGetSHPHandle(NULL);
     if (!hSHP)
         return DB_E_ERRORSINCOMMAND;
 
     *pcRowsAffected = DBFGetRecordCount(hDBF);
+
     nFields = DBFGetFieldCount(hDBF);
 
     for (i=0; i < nFields; i++)
@@ -565,7 +488,7 @@ HRESULT CSFRowset::Execute(DBPARAMS * pParams, LONG* pcRowsAffected)
         m_paColInfo.Add(colInfo);
     }
 
-	
+
     ATLCOLUMNINFO colInfo;
     memset(&colInfo, 0, sizeof(ATLCOLUMNINFO));
 	
@@ -577,7 +500,7 @@ HRESULT CSFRowset::Execute(DBPARAMS * pParams, LONG* pcRowsAffected)
     colInfo.bScale		= 0;
     colInfo.columnid.uName.pwszName = colInfo.pwszName;
     colInfo.cbOffset	= nOffset;
-    colInfo.wType		= (DBTYPE_BYTES | DBTYPE_BYREF);
+    colInfo.wType		= (DBTYPE_BYTES  | DBTYPE_BYREF);
 
 #ifdef USE_ISTREAM
     colInfo.wType		= (DBTYPE_IUNKNOWN);
