@@ -24,6 +24,9 @@
  * gxfopen.h: Includes for underlying GXF reading code.
  *
  * $Log$
+ * Revision 1.4  1998/12/15 19:07:40  warmerda
+ * Add Close, move Readline, add zmin/max, add readscanline
+ *
  * Revision 1.3  1998/12/14 04:51:30  warmerda
  * Added some functions, clarified raw vs. not raw.
  *
@@ -51,10 +54,12 @@ CPL_C_START
 GXFHandle GXFOpen( const char * pszFilename );
 
 CPLErr   GXFGetRawInfo( GXFHandle hGXF, int *pnXSize, int *pnYSize,
-                        int *pnSense );
+                        int *pnSense, double * pdfZMin, double * pdfZMax,
+                        double * pdfDummy );
 CPLErr   GXFGetInfo( GXFHandle hGXF, int *pnXSize, int *pnYSize );
 
 CPLErr   GXFGetRawScanline( GXFHandle, int iScanline, double * padfLineBuf );
+CPLErr   GXFGetScanline( GXFHandle, int iScanline, double * padfLineBuf );
 
 char	**GXFGetMapProjection( GXFHandle );
 char	**GXFGetMapDatumTransform( GXFHandle );

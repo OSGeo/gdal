@@ -26,6 +26,9 @@
  * Supporting routines for reading Geosoft GXF files.
  *
  * $Log$
+ * Revision 1.4  1998/12/15 19:07:40  warmerda
+ * Add Close, move Readline, add zmin/max, add readscanline
+ *
  * Revision 1.3  1998/12/14 04:52:06  warmerda
  * Added projection support, fixed bugs in compressed image support.
  *
@@ -75,58 +78,6 @@ typedef struct {
     long	*panRawLineOffset;
     
 } GXFInfo_t;
-
-/************************************************************************/
-/*                            CPLReadLine()                             */
-/*                                                                      */
-/*      Read a line of text from the given file handle, taking care     */
-/*      to capture CR and/or LF and strip off ... equivelent of         */
-/*      DKReadLine().  Pointer to an internal buffer is returned.       */
-/*      The application shouldn't free it, or depend on it's value      */
-/*      past the next call to CPLReadLine()                             */
-/************************************************************************/
-
-const char *CPLReadLine( FILE * fp )
-
-{
-    static char	*pszRLBuffer = NULL;
-    static int	nRLBufferSize = 0;
-    int		nLength;
-
-/* -------------------------------------------------------------------- */
-/*      Allocate our working buffer.  Eventually this should grow as    */
-/*      needed ... we will implement that aspect later.                 */
-/* -------------------------------------------------------------------- */
-    if( nRLBufferSize < 512 )
-    {
-        nRLBufferSize = 512;
-        pszRLBuffer = (char *) CPLRealloc(pszRLBuffer, nRLBufferSize);
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Do the actual read.                                             */
-/* -------------------------------------------------------------------- */
-    if( VSIFGets( pszRLBuffer, nRLBufferSize, fp ) == NULL )
-        return NULL;
-
-/* -------------------------------------------------------------------- */
-/*      Clear CR and LF off the end.                                    */
-/* -------------------------------------------------------------------- */
-    nLength = strlen(pszRLBuffer);
-    if( nLength > 0
-        && (pszRLBuffer[nLength-1] == 10 || pszRLBuffer[nLength-1] == 13) )
-    {
-        pszRLBuffer[--nLength] = '\0';
-    }
-    
-    if( nLength > 0
-        && (pszRLBuffer[nLength-1] == 10 || pszRLBuffer[nLength-1] == 13) )
-    {
-        pszRLBuffer[--nLength] = '\0';
-    }
-
-    return( pszRLBuffer );
-}
 
 /************************************************************************/
 /*                         GXFReadHeaderValue()                         */
@@ -256,6 +207,10 @@ GXFHandle GXFOpen( const char * pszFilename )
     psGXF->fp = fp;
     psGXF->dfTransformScale = 1.0;
     psGXF->dfUnitToMeter = 1.0;
+    psGXF->nSense = GXFS_LL_RIGHT;
+    psGXF->dfXPixelSize = 1.0;
+    psGXF->dfYPixelSize = 1.0;
+    psGXF->dfSetDummyTo = -1e12;
     
 /* -------------------------------------------------------------------- */
 /*      Read the header, one line at a time.                            */
@@ -375,6 +330,26 @@ GXFHandle GXFOpen( const char * pszFilename )
 }
 
 /************************************************************************/
+/*                              GXFClose()                              */
+/************************************************************************/
+
+void GXFClose( GXFHandle hGXF )
+
+{
+    GXFInfo_t	*psGXF = (GXFInfo_t *) hGXF;
+
+    CPLFree( psGXF->panRawLineOffset );
+    CPLFree( psGXF->pszUnitName );
+    CSLDestroy( psGXF->papszMapDatumTransform );
+    CSLDestroy( psGXF->papszMapProjection );
+    CPLFree( psGXF->pszTitle );
+
+    VSIFClose( psGXF->fp );
+
+    CPLFree( psGXF );
+}
+
+/************************************************************************/
 /*                           GXFParseBase90()                           */
 /*                                                                      */
 /*      Parse a base 90 number ... exceptions (repeat, and dummy)       */
@@ -467,13 +442,13 @@ static int GXFReadRawScanlineFrom( GXFInfo_t * psGXF, long iOffset,
                     double	dfValue;
 
                     pszLine += psGXF->nGType;
-                    if( strlen(pszLine) < psGXF->nGType )
+                    if( (int) strlen(pszLine) < psGXF->nGType )
                         pszLine = CPLReadLine( psGXF->fp );
                     
                     nCount = (int) GXFParseBase90( psGXF, pszLine, FALSE);
                     pszLine += psGXF->nGType;
                     
-                    if( strlen(pszLine) < psGXF->nGType )
+                    if( (int) strlen(pszLine) < psGXF->nGType )
                         pszLine = CPLReadLine( psGXF->fp );
                     
                     if( *pszLine == '!' )
@@ -506,6 +481,58 @@ static int GXFReadRawScanlineFrom( GXFInfo_t * psGXF, long iOffset,
     }
 
     return CE_None;
+}
+
+/************************************************************************/
+/*                           GXFGetScanline()                           */
+/*                                                                      */
+/*      Read a scanline based on offset from the top of the image,      */
+/*      adjusting for difference #SENSE values, at least horizontal     */
+/*      scanline types.                                                 */
+/************************************************************************/
+
+CPLErr GXFGetScanline( GXFHandle hGXF, int iScanline, double * padfLineBuf )
+
+{
+    GXFInfo_t	*psGXF = (GXFInfo_t *) hGXF;
+    CPLErr	nErr;
+    int		iRawScanline;
+
+    if( psGXF->nSense == GXFS_LL_RIGHT
+        || psGXF->nSense == GXFS_LR_LEFT )
+    {
+        iRawScanline = psGXF->nRawYSize - iScanline - 1;
+    }
+
+    else if( psGXF->nSense == GXFS_UL_RIGHT
+             || psGXF->nSense == GXFS_UR_LEFT )
+    {
+        iRawScanline = iScanline;
+    }
+    else
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Unable to support vertically oriented images." );
+        return( CE_Failure );
+    }
+
+    nErr = GXFGetRawScanline( hGXF, iRawScanline, padfLineBuf );
+
+    if( nErr == CE_None
+        && (psGXF->nSense == GXFS_LR_LEFT || psGXF->nSense == GXFS_UR_LEFT) )
+    {
+        int	i;
+        double	dfTemp;
+        
+        for( i = psGXF->nRawXSize / 2 - 1; i >= 0; i-- )
+        {
+            dfTemp = padfLineBuf[i];
+            padfLineBuf[i] = padfLineBuf[psGXF->nRawXSize-i-1];
+            padfLineBuf[psGXF->nRawXSize-i-1] = dfTemp;
+        }
+    }
+
+    return( nErr );
 }
 
 /************************************************************************/
@@ -564,11 +591,64 @@ CPLErr GXFGetRawScanline( GXFHandle hGXF, int iScanline, double * padfLineBuf )
 }
 
 /************************************************************************/
+/*                         GXFScanForZMinMax()                          */
+/*                                                                      */
+/*      The header doesn't contain the ZMin/ZMax values, but the        */
+/*      application has requested it ... scan the entire image for      */
+/*      it.                                                             */
+/************************************************************************/
+
+static void GXFScanForZMinMax( GXFHandle hGXF )
+
+{
+    GXFInfo_t	*psGXF = (GXFInfo_t *) hGXF;
+    int		iLine, iPixel;
+    double	*padfScanline;
+    
+
+    padfScanline = (double *) VSICalloc(sizeof(double),psGXF->nRawXSize);
+    if( padfScanline == NULL )
+        return;
+
+    psGXF->dfZMinimum = 1e50;
+    psGXF->dfZMaximum = -1e50;
+
+    for( iLine = 0; iLine < psGXF->nRawYSize; iLine++ )
+    {
+        if( GXFGetRawScanline( hGXF, iLine, padfScanline ) != CE_None )
+            break;
+
+        for( iPixel = 0; iPixel < psGXF->nRawXSize; iPixel++ )
+        {
+            if( padfScanline[iPixel] != psGXF->dfSetDummyTo )
+            {
+                psGXF->dfZMinimum =
+                    MIN(psGXF->dfZMinimum,padfScanline[iPixel]);
+                psGXF->dfZMaximum =
+                    MAX(psGXF->dfZMaximum,padfScanline[iPixel]);
+            }
+        }
+    }
+
+    VSIFree( padfScanline );
+
+/* -------------------------------------------------------------------- */
+/*      Did we get any real data points?                                */
+/* -------------------------------------------------------------------- */
+    if( psGXF->dfZMinimum > psGXF->dfZMaximum )
+    {
+        psGXF->dfZMinimum = 0.0;
+        psGXF->dfZMaximum = 0.0;
+    }
+}
+
+/************************************************************************/
 /*                             GXFGetRawInfo()                          */
 /************************************************************************/
 
 CPLErr GXFGetRawInfo( GXFHandle hGXF, int *pnXSize, int *pnYSize,
-                      int * pnSense )
+                      int * pnSense, double * pdfZMin, double * pdfZMax,
+                      double * pdfDummy )
 
 {
     GXFInfo_t	*psGXF = (GXFInfo_t *) hGXF;
@@ -581,6 +661,21 @@ CPLErr GXFGetRawInfo( GXFHandle hGXF, int *pnXSize, int *pnYSize,
 
     if( pnSense != NULL )
         *pnSense = psGXF->nSense;
+
+    if( (pdfZMin != NULL || pdfZMax != NULL)
+        && psGXF->dfZMinimum == 0.0 && psGXF->dfZMaximum == 0.0 )
+    {
+        GXFScanForZMinMax( hGXF );
+    }
+    
+    if( pdfZMin != NULL )
+        *pdfZMin = psGXF->dfZMinimum;
+
+    if( pdfZMax != NULL )
+        *pdfZMax = psGXF->dfZMaximum;
+
+    if( pdfDummy != NULL )
+        *pdfDummy = psGXF->dfSetDummyTo;
 
     return( CE_None );
 }
@@ -621,34 +716,31 @@ char *GXFGetMapProjectionAsPROJ4( GXFHandle hGXF )
 
 {
     GXFInfo_t	*psGXF = (GXFInfo_t *) hGXF;
-    char	**papszMethods;
+    char	**papszMethods = NULL;
     char	szPROJ4[512];
 
 /* -------------------------------------------------------------------- */
 /*      If there was nothing in the file return "unknown".              */
 /* -------------------------------------------------------------------- */
-    if( CSLCount(psGXF->papszMapProjection) < 3 )
+    if( CSLCount(psGXF->papszMapProjection) < 2 )
         return( CPLStrdup( "unknown" ) );
 
 /* -------------------------------------------------------------------- */
 /*      Parse the third line, looking for known projection methods.     */
 /* -------------------------------------------------------------------- */
     szPROJ4[0] = '\0';
-    
-    papszMethods = CSLTokenizeStringComplex( psGXF->papszMapProjection[2], ",",
-                                             TRUE, TRUE );
+
+    if( psGXF->papszMapProjection[2] != NULL )
+        papszMethods = CSLTokenizeStringComplex(psGXF->papszMapProjection[2],
+                                                ",", TRUE, TRUE );
 
 #ifdef DBMALLOC
     malloc_chain_check(1);
 #endif    
     
-    if( CSLCount(papszMethods) < 1 )
-    {
-        CSLDestroy(papszMethods);
-        return( CPLStrdup( "unknown" ) );
-    }
-    
-    if( EQUAL(papszMethods[0],"Geographic") )
+    if( papszMethods == NULL
+        || papszMethods[0] == NULL 
+        || EQUAL(papszMethods[0],"Geographic") )
     {
         strcat( szPROJ4, "+proj=longlat" );
     }
