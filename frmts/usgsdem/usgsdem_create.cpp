@@ -31,6 +31,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.20  2005/03/23 20:30:57  fwarmerdam
+ * Fixed "east" check for NTS option case.
+ *
  * Revision 1.19  2005/03/23 17:41:42  fwarmerdam
  * added NTS and INTERNALNAME options for Matt
  *
@@ -1032,7 +1035,7 @@ static int USGSDEMProductSetup_CDED50K( USGSDEMWriteInfo *psWInfo )
         if( !USGSDEM_LookupNTSByTile( szTrimmedTile, NULL, &dfULX, &dfULY ) )
             return FALSE;
 
-        if( EQUALN(pszNTS+7,"e",1) )
+        if( EQUALN(pszNTS+6,"e",1) )
             dfULX += 0.25;
     }
 
