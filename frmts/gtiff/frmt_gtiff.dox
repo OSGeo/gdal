@@ -7,7 +7,8 @@ Most forms of TIFF and GeoTIFF files are supported by GDAL for reading, and
 somewhat less varieties can be written.
 
 Currently band types of Byte, UInt16, Int16, and Float32 are supported for
-reading.  The compression formats listed below should be supported for
+reading.  Paletted images will return palette information associated with
+the band.  The compression formats listed below should be supported for
 reading as well. 
 
 Most GeoTIFF projections should be supported, with the caveat that in order
@@ -42,6 +43,9 @@ to use.  JPEG should only be used with Byte data.  LZW is normally
 unavailable.  None is the default.<p>
 
 </ul>
+
+GeoTIFF supports internal creation of overviews (with gdaladdo for instance).
+
 
 See Also:<p>
 
