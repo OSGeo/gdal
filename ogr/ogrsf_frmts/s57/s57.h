@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2002/05/14 20:34:27  warmerda
+ * added PRESERVE_EMPTY_NUMBERS support
+ *
  * Revision 1.19  2002/03/05 14:25:43  warmerda
  * expanded tabs
  *
@@ -99,6 +102,17 @@ class S57Reader;
 
 char **S57FileCollector( const char * pszDataset );
 
+#define EMPTY_NUMBER_MARKER 2147483641  /* MAXINT-6 */
+
+/* -------------------------------------------------------------------- */
+/*      Various option strings.                                         */
+/* -------------------------------------------------------------------- */
+#define S57O_UPDATES "UPDATES"
+#define S57O_LNAM_REFS "LNAM_REFS"
+#define S57O_SPLIT_MULTIPOINT "SPLIT_MULTIPOINT"
+#define S57O_ADD_SOUNDG_DEPTH "ADD_SOUNDG_DEPTH"
+#define S57O_PRESERVE_EMPTY_NUMBERS "PRESERVE_EMPTY_NUMBERS"
+
 /* -------------------------------------------------------------------- */
 /*      RCNM values.                                                    */
 /* -------------------------------------------------------------------- */
@@ -122,8 +136,8 @@ char **S57FileCollector( const char * pszDataset );
 /*                          S57ClassRegistrar                           */
 /************************************************************************/
 
-#define MAX_CLASSES 500
-#define MAX_ATTRIBUTES 500
+#define MAX_CLASSES 23000
+#define MAX_ATTRIBUTES 25000
     
 class S57ClassRegistrar
 {
@@ -271,6 +285,7 @@ class S57Reader
     OGRFeature          *poMultiPoint;
 
     int                 bAutoReadUpdates;
+    int                 bPreserveEmptyNumbers;
 
     void                ClearPendingMultiPoint();
     OGRFeature         *NextPendingMultiPoint();
@@ -294,6 +309,9 @@ class S57Reader
     void                GenerateStandardAttributes( OGRFeatureDefn * );
 
     int                 ApplyRecordUpdate( DDFRecord *, DDFRecord * );
+
+    int                 bMissingWarningIssued;
+    int			bAttrWarningIssued;
 
   public:
                         S57Reader( const char * );
