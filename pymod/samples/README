@@ -15,3 +15,7 @@ gdal2grd.py		Script to write out ASCII GRD rasters (used in Golden
 
 assemblepoly.py         Script demonstrates how to assemble polygons from
 			arcs.  Demonstrates various aspects of OGR Python API.
+
+tigerpoly.py            Script demonstrating how to assemble polygons from
+			arcs in TIGER/Line datasource, writing results to
+			a newly created shapefile. 
