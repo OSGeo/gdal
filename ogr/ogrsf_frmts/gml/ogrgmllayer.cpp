@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2002/04/24 19:32:07  warmerda
+ * Make a copy of the passed OGRSpatialReference in the constructor.
+ *
  * Revision 1.3  2002/03/06 20:08:24  warmerda
  * add accelerated GetFeatureCount and GetExtent
  *
@@ -56,7 +59,11 @@ OGRGMLLayer::OGRGMLLayer( const char * pszName,
 
 {
     poFilterGeom = NULL;
-    poSRS = poSRSIn;
+
+    if( poSRSIn == NULL )
+        poSRS = NULL;
+    else
+        poSRS = poSRSIn->Clone();
     
     iNextGMLId = 0;
     nTotalGMLCount = -1;
