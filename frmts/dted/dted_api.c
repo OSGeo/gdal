@@ -28,6 +28,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2003/02/26 15:30:41  warmerda
+ * Modified reading code to treat any large negative values as if negative
+ * values are being stored in twos complement form, as per
+ * http://bugzilla.remotesensing.org/show_bug.cgi?id=286.
+ *
  * Revision 1.10  2002/03/05 14:26:01  warmerda
  * expanded tabs
  *
@@ -303,7 +308,18 @@ int DTEDReadProfile( DTEDInfo * psDInfo, int nColumnOffset,
         panData[i] = (pabyRecord[8+i*2] & 0x7f) * 256 + pabyRecord[8+i*2+1];
 
         if( pabyRecord[8+i*2] & 0x80 )
+        {
             panData[i] *= -1;
+
+            // It seems that some files are improperly generated in twos
+            // complement form for negatives.  For these, redo the job
+            // in twos complement.  eg. w_069_s50.dt0
+            if( panData[i] < -16000 )
+            {
+                memcpy( panData + i, pabyRecord + 8+i*2, 2 );
+                panData[i] = CPL_MSBWORD16( panData[i] );
+            }
+        }
     }
 
     CPLFree( pabyRecord );
