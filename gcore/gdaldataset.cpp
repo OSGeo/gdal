@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.27  2002/05/28 18:56:22  warmerda
+ * added shared dataset concept
+ *
  * Revision 1.26  2001/11/16 21:36:01  warmerda
  * added the AddBand() method on GDALDataset
  *
@@ -105,6 +108,9 @@
 
 CPL_CVSID("$Id$");
 
+static int nGDALDatasetCount = 0;
+static GDALDataset **papoGDALDatasetList = NULL;
+
 /************************************************************************/
 /*                            GDALDataset()                             */
 /************************************************************************/
@@ -119,6 +125,15 @@ GDALDataset::GDALDataset()
     nBands = 0;
     papoBands = NULL;
     nRefCount = 1;
+    bShared = FALSE;
+
+/* -------------------------------------------------------------------- */
+/*      Add this dataset to the open dataset list.                      */
+/* -------------------------------------------------------------------- */
+    nGDALDatasetCount++;
+    papoGDALDatasetList = (GDALDataset **) 
+        CPLRealloc( papoGDALDatasetList, sizeof(void *) * nGDALDatasetCount );
+    papoGDALDatasetList[nGDALDatasetCount-1] = this;
 }
 
 /************************************************************************/
@@ -131,7 +146,9 @@ GDALDataset::GDALDataset()
  * This is the accepted method of closing a GDAL dataset and deallocating
  * all resources associated with it.
  *
- * Equivelent of the C callable GDALClose().
+ * Equivelent of the C callable GDALClose().  Except that GDALClose() first
+ * decrements the reference count, and then closes only if it has dropped to
+ * zero.
  */
 
 GDALDataset::~GDALDataset()
@@ -140,6 +157,24 @@ GDALDataset::~GDALDataset()
     int		i;
 
     CPLDebug( "GDAL", "GDALClose(%s)\n", GetDescription() );
+
+/* -------------------------------------------------------------------- */
+/*      Remove dataset from the "open" dataset list.                    */
+/* -------------------------------------------------------------------- */
+    for( i = 0; i < nGDALDatasetCount; i++ )
+    {
+        if( papoGDALDatasetList[i] == this )
+        {
+            papoGDALDatasetList[i] = papoGDALDatasetList[nGDALDatasetCount-1];
+            nGDALDatasetCount--;
+            if( nGDALDatasetCount == 0 )
+            {
+                CPLFree( papoGDALDatasetList );
+                papoGDALDatasetList = NULL;
+            }
+            break;
+        }
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Destroy the raster bands if they exist.                         */
@@ -151,16 +186,6 @@ GDALDataset::~GDALDataset()
     }
 
     CPLFree( papoBands );
-}
-
-/************************************************************************/
-/*                             GDALClose()                              */
-/************************************************************************/
-
-void GDALClose( GDALDatasetH hDS )
-
-{
-    delete ((GDALDataset *) hDS);
 }
 
 /************************************************************************/
@@ -688,7 +713,7 @@ int GDALReferenceDataset( GDALDatasetH hDataset )
 }
 
 /************************************************************************/
-/*                             Reference()                              */
+/*                            Dereference()                             */
 /************************************************************************/
 
 /**
@@ -716,6 +741,38 @@ int GDALDereferenceDataset( GDALDatasetH hDataset )
 
 {
     return ((GDALDataset *) hDataset)->Dereference();
+}
+
+/************************************************************************/
+/*                             GetShared()                              */
+/************************************************************************/
+
+/**
+ * Returns shared flag.
+ *
+ * @return TRUE if the GDALDataset is available for sharing, or FALSE if not.
+ */
+
+int GDALDataset::GetShared()
+
+{
+    return bShared;
+}
+
+/************************************************************************/
+/*                            MarkAsShared()                            */
+/************************************************************************/
+
+/**
+ * Mark this dataset as available for sharing.
+ */
+
+void GDALDataset::MarkAsShared()
+
+{
+    CPLAssert( !bShared );
+
+    bShared = TRUE;
 }
 
 /************************************************************************/
@@ -966,3 +1023,13 @@ CPLErr GDALDataset::IBuildOverviews( const char *pszResampling,
     }
 }
 
+/************************************************************************/
+/*                          GetOpenDatasets()                           */
+/************************************************************************/
+
+GDALDataset **GDALDataset::GetOpenDatasets( int *pnCount )
+
+{
+    *pnCount = nGDALDatasetCount;
+    return papoGDALDatasetList;
+}
