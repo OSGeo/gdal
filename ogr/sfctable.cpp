@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  1999/06/08 17:50:20  warmerda
+ * Fixed some off-by-one errors, and updated bytes|byref case.
+ *
  * Revision 1.2  1999/06/08 15:41:16  warmerda
  * added working blob/geometry support
  *
@@ -111,7 +114,7 @@ void SFCTable::IdentifyGeometry()
 /*      preferred name) or WKB_GEOMETRY (one provided sample            */
 /*      database).                                                      */
 /* -------------------------------------------------------------------- */
-    for( int iCol = 0; iCol < GetColumnCount(); iCol++ )
+    for( int iCol = 1; iCol <= GetColumnCount(); iCol++ )
     {
         if( GetColumnName(iCol) == NULL )
             continue;
@@ -121,7 +124,7 @@ void SFCTable::IdentifyGeometry()
             break;
     }
 
-    if( iCol == GetColumnCount() )
+    if( iCol > GetColumnCount() )
         return;
 
 /* -------------------------------------------------------------------- */
@@ -165,7 +168,9 @@ BYTE *SFCTable::GetWKBGeometry( int * pnSize )
         *pnSize = 0;
 
     if( !HasGeometry() )
+    {
         return NULL;
+    }
 
     /* do we have a record?  How to test? */
 
@@ -205,21 +210,25 @@ BYTE *SFCTable::GetWKBGeometry( int * pnSize )
 
 /* -------------------------------------------------------------------- */
 /*      If the column is bound as DBTYPE_BYTES and DBTYPE_BYREF then    */
-/*      the pointer is contained in the data.  The size of the buffer   */
-/*      follows.(This is an internal convention)                        */
+/*      the pointer is contained in the data.                           */
 /* -------------------------------------------------------------------- */
-    if( nGeomType & DBTYPE_BYTES)
+    if( nGeomType == (DBTYPE_BYTES|DBTYPE_BYREF) )
     {
-#ifdef notdef
         BYTE *pRetVal;
 
-        if( pnSize != NULL )
-            memcpy(pnSize,poCData->bData+4,4);
-            
-        memcpy(&pRetVal,poCData->bData,4);
+        // note: this case hasn't been tested since it was adapted from
+        // oledbsup_sf.cpp
 
+        GetValue( iGeomColumn, &pRetVal );
+
+        if( pnSize != NULL )
+        {
+            ULONG      dwLength;
+            GetLength( iGeomColumn, &dwLength );
+            *pnSize = dwLength;
+        }
+            
         return(pRetVal);
-#endif
     }
 
 /* -------------------------------------------------------------------- */
@@ -242,8 +251,6 @@ BYTE *SFCTable::GetWKBGeometry( int * pnSize )
         DumpErrorHResult( hr, "Can't get IStream interface to geometry" );
         return NULL;
     }
-
-    printf( "Got sequential stream\n" );
 
 /* -------------------------------------------------------------------- */
 /*      Read data in chunks, reallocating buffer larger as needed.      */
