@@ -304,7 +304,7 @@ are missing for some C++ methods.
 typedef void *OGRSpatialReferenceH;                               
 typedef void *OGRCoordinateTransformationH;
 
-OGRSpatialReferenceH OSRNewSpatialReference( const char * /* = NULL */);
+OGRSpatialReferenceH OSRNewSpatialReference( const char * );
 void    OSRDestroySpatialReference( OGRSpatialReferenceH );
 
 int     OSRReference( OGRSpatialReferenceH );
@@ -317,7 +317,7 @@ OGRErr  OSRExportToWkt( OGRSpatialReferenceH, char ** );
 OGRErr  OSRSetAttrValue( OGRSpatialReferenceH hSRS, const char * pszNodePath,
                          const char * pszNewNodeValue );
 const char *OSRGetAttrValue( OGRSpatialReferenceH hSRS,
-                             const char * pszName, int iChild /* = 0 */ );
+                             const char * pszName, int iChild);
 
 OGRErr  OSRSetLinearUnits( OGRSpatialReferenceH, const char *, double );
 double  OSRGetLinearUnits( OGRSpatialReferenceH, char ** );
@@ -336,14 +336,14 @@ OGRErr  OSRSetGeogCS( OGRSpatialReferenceH hSRS,
                       const char * pszDatumName,
                       const char * pszEllipsoidName,
                       double dfSemiMajor, double dfInvFlattening,
-                      const char * pszPMName /* = NULL */,
-                      double dfPMOffset /* = 0.0 */,
-                      const char * pszUnits /* = NULL */,
-                      double dfConvertToRadians /* = 0.0 */ );
+                      const char * pszPMName ,
+                      double dfPMOffset ,
+                      const char * pszUnits,
+                      double dfConvertToRadians );
 
-double  OSRGetSemiMajor( OGRSpatialReferenceH, OGRErr * /* = NULL */ );
-double  OSRGetSemiMinor( OGRSpatialReferenceH, OGRErr * /* = NULL */ );
-double  OSRGetInvFlattening( OGRSpatialReferenceH, OGRErr * /* = NULL */ );
+double  OSRGetSemiMajor( OGRSpatialReferenceH, OGRErr * );
+double  OSRGetSemiMinor( OGRSpatialReferenceH, OGRErr * );
+double  OSRGetInvFlattening( OGRSpatialReferenceH, OGRErr * );
 
 OGRErr  OSRSetAuthority( OGRSpatialReferenceH hSRS,
                          const char * pszTargetKey,
@@ -352,8 +352,8 @@ OGRErr  OSRSetAuthority( OGRSpatialReferenceH hSRS,
 OGRErr  OSRSetProjParm( OGRSpatialReferenceH, const char *, double );
 double  OSRGetProjParm( OGRSpatialReferenceH hSRS,
                         const char * pszParmName, 
-                        double dfDefault /* = 0.0 */,
-                        OGRErr * /* = NULL */ );
+                        double dfDefault,
+                        OGRErr * );
 
 OGRErr  OSRSetUTM( OGRSpatialReferenceH hSRS, int nZone, int bNorth );
 int     OSRGetUTMZone( OGRSpatialReferenceH hSRS, int *pbNorth );
