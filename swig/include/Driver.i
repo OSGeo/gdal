@@ -9,6 +9,11 @@
 
  *
  * $Log$
+ * Revision 1.6  2005/02/20 19:42:53  kruland
+ * Rename the Swig shadow classes so the names do not give the impression that
+ * they are any part of the GDAL/OSR apis.  There were no bugs with the old
+ * names but they were confusing.
+ *
  * Revision 1.5  2005/02/16 17:11:27  kruland
  * Added r/o data members for LongName, ShortName, and HelpTopic.
  *
@@ -26,14 +31,16 @@
 
 /*************************************************************************
 *
-*  Define the extensions for Driver (nee GDALDriver)
+*  Define the extensions for Driver (nee GDALDriverShadow)
 *
 *************************************************************************/
 
 
-%rename (Driver) GDALDriver;
+%rename (Driver) GDALDriverShadow;
 
-class GDALDriver {
+class GDALDriverShadow {
+  ~GDALDriverShadow();
+  GDALDriverShadow();
 public:
 %extend {
 
@@ -46,9 +53,9 @@ public:
     
 %newobject Create;
 %feature( "kwargs" ) Create;
-  GDALDataset *Create( const char *name, int xsize, int ysize, int bands =1,
+  GDALDatasetShadow *Create( const char *name, int xsize, int ysize, int bands =1,
                        GDALDataType eType=GDT_Byte, char **options = 0 ) {
-    GDALDataset* ds = (GDALDataset*) GDALCreate( self, name, xsize, ysize, bands, eType, options );
+    GDALDatasetShadow* ds = (GDALDatasetShadow*) GDALCreate( self, name, xsize, ysize, bands, eType, options );
     if ( ds != 0 )
       GDALDereferenceDataset( ds );
     return ds;
@@ -56,8 +63,8 @@ public:
 
 %newobject CreateCopy;
 %feature( "kwargs" ) CreateCopy;
-  GDALDataset *CreateCopy( const char *name, GDALDataset* src, int strict =1, char **options = 0 ) {
-    GDALDataset *ds = (GDALDataset*) GDALCreateCopy(self, name, src, strict, 0, 0, 0 );
+  GDALDatasetShadow *CreateCopy( const char *name, GDALDatasetShadow* src, int strict =1, char **options = 0 ) {
+    GDALDatasetShadow *ds = (GDALDatasetShadow*) GDALCreateCopy(self, name, src, strict, 0, 0, 0 );
     if ( ds != 0 )
       GDALDereferenceDataset( ds );
     return ds;
@@ -77,13 +84,13 @@ public:
 };
 
 %{
-char const *GDALDriver_ShortName_get( GDALDriver *h ) {
+char const *GDALDriverShadow_ShortName_get( GDALDriverShadow *h ) {
   return GDALGetDriverShortName( h );
 }
-char const *GDALDriver_LongName_get( GDALDriver *h ) {
+char const *GDALDriverShadow_LongName_get( GDALDriverShadow *h ) {
   return GDALGetDriverLongName( h );
 }
-char const *GDALDriver_HelpTopic_get( GDALDriver *h ) {
+char const *GDALDriverShadow_HelpTopic_get( GDALDriverShadow *h ) {
   return GDALGetDriverHelpTopic( h );
 }
 %}

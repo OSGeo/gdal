@@ -9,6 +9,11 @@
 
  *
  * $Log$
+ * Revision 1.8  2005/02/20 19:42:53  kruland
+ * Rename the Swig shadow classes so the names do not give the impression that
+ * they are any part of the GDAL/OSR apis.  There were no bugs with the old
+ * names but they were confusing.
+ *
  * Revision 1.7  2005/02/17 17:27:13  kruland
  * Changed the handling of fixed size double arrays to make it fit more
  * naturally with GDAL/OSR usage.  Declare as typedef double * double_17;
@@ -35,20 +40,20 @@
  * Remove use of vector<double> in ComputeRasterMinMax.  Use double_2 instead.
  *
  * Revision 1.1  2005/02/15 06:23:48  kruland
- * Extracted Band class (GDALRasterBand) into seperate .i file.  Does not use
+ * Extracted Band class (GDALRasterBandShadow) into seperate .i file.  Does not use
  * C++ API.
  *
  *
 */
 
-//************************************************************************
-//
-// Define the extensions for Band (nee GDALRasterBand)
-//
-//************************************************************************
+/************************************************************************
+ *
+ * Define the extensions for Band (nee GDALRasterBandShadow)
+ *
+*************************************************************************/
 %{
 static
-CPLErr ReadRaster_internal( GDALRasterBand *obj, 
+CPLErr ReadRaster_internal( GDALRasterBandShadow *obj, 
                             int xoff, int yoff, int xsize, int ysize,
                             int buf_xsize, int buf_ysize,
                             GDALDataType buf_type,
@@ -69,7 +74,7 @@ CPLErr ReadRaster_internal( GDALRasterBand *obj,
 }
 
 static
-CPLErr WriteRaster_internal( GDALRasterBand *obj,
+CPLErr WriteRaster_internal( GDALRasterBandShadow *obj,
                              int xoff, int yoff, int xsize, int ysize,
                              int buf_xsize, int buf_ysize,
                              GDALDataType buf_type,
@@ -84,11 +89,12 @@ CPLErr WriteRaster_internal( GDALRasterBand *obj,
 }
 %}
 
-%rename (Band) GDALRasterBand;
+%rename (Band) GDALRasterBandShadow;
 
-class GDALRasterBand {
+class GDALRasterBandShadow {
 private:
-  GDALRasterBand();
+  GDALRasterBandShadow();
+  ~GDALRasterBandShadow();
 public:
 %extend {
 
@@ -135,8 +141,8 @@ public:
     return GDALGetOverviewCount( self );
   }
 
-  GDALRasterBand *GetOverview(int i) {
-    return (GDALRasterBand*) GDALGetOverview( self, i );
+  GDALRasterBandShadow *GetOverview(int i) {
+    return (GDALRasterBandShadow*) GDALGetOverview( self, i );
   }
 
   int Checksum( int xoff, int yoff, int xsize, int ysize) {
@@ -212,13 +218,13 @@ public:
 };
 
 %{
-GDALDataType GDALRasterBand_DataType_get( GDALRasterBand *h ) {
+GDALDataType GDALRasterBandShadow_DataType_get( GDALRasterBandShadow *h ) {
   return GDALGetRasterDataType( h );
 }
-int GDALRasterBand_XSize_get( GDALRasterBand *h ) {
+int GDALRasterBandShadow_XSize_get( GDALRasterBandShadow *h ) {
   return GDALGetRasterBandXSize( h );
 }
-int GDALRasterBand_YSize_get( GDALRasterBand *h ) {
+int GDALRasterBandShadow_YSize_get( GDALRasterBandShadow *h ) {
   return GDALGetRasterBandYSize( h );
 }
 %}
