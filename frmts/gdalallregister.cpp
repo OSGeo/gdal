@@ -25,6 +25,9 @@
  * Main format registration function.
  * 
  * $Log$
+ * Revision 1.2  1998/12/03 18:37:26  warmerda
+ * Drop GDB, add geotiff.
+ *
  * Revision 1.1  1998/11/29 22:22:14  warmerda
  * New
  *
@@ -32,10 +35,10 @@
 
 #include "gdal_priv.h"
 
-GDAL_C_START
+CPL_C_START
 void GDALRegister_GDB(void);
 void GDALRegister_GTiff(void);
-GDAL_C_END
+CPL_C_END
 
 /************************************************************************/
 /*                          GDALAllRegister()                           */
