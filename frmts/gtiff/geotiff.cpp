@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.60  2002/04/03 20:43:13  warmerda
+ * Avoid using tiffiop.h - added IsBlockAvailable() method
+ *
  * Revision 1.59  2002/03/06 21:18:15  warmerda
  * Don't try to write color table to non-eight bit files.
  *
@@ -167,7 +170,7 @@
 #include "gdal_priv.h"
 #define CPL_SERV_H_INCLUDED
 
-#include "tiffiop.h"
+#include "tiffio.h"
 #include "xtiffio.h"
 #include "geotiff.h"
 #include "geo_normalize.h"
@@ -247,6 +250,8 @@ class GTiffDataset : public GDALDataset
 
     int		nGCPCount;
     GDAL_GCP	*pasGCPList;
+
+    int         IsBlockAvailable( int nBlockId );
 
   public:
                  GTiffDataset();
@@ -385,9 +390,7 @@ CPLErr GTiffRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /*	exist yet, but that we want to read.  Just set to zeros and	*/
 /*	return.								*/
 /* -------------------------------------------------------------------- */
-    if( poGDS->eAccess == GA_Update
-        && (((int) poGDS->hTIFF->tif_dir.td_nstrips) <= nBlockIdBand0
-            || poGDS->hTIFF->tif_dir.td_stripbytecount[nBlockId] == 0) )
+    if( poGDS->eAccess == GA_Update && !poGDS->IsBlockAvailable(nBlockId) )
     {
         memset( pImage, 0,
                 nBlockXSize * nBlockYSize
@@ -1324,9 +1327,7 @@ CPLErr GTiffDataset::LoadBlockBuf( int nBlockId )
 /*      doesn't yet exist on disk, just zero the memory buffer and      */
 /*      pretend we loaded it.                                           */
 /* -------------------------------------------------------------------- */
-    if( eAccess == GA_Update 
-        && (((int) hTIFF->tif_dir.td_nstrips) <= nBlockId
-            || hTIFF->tif_dir.td_stripbytecount[nBlockId] == 0) )
+    if( eAccess == GA_Update && !IsBlockAvailable( nBlockId ) )
     {
         memset( pabyBlockBuf, 0, nBlockBufSize );
         nLoadedBlock = nBlockId;
@@ -1392,6 +1393,34 @@ void GTiffDataset::Crystalize()
         TIFFSetDirectory( hTIFF, 0 );
         nDirOffset = TIFFCurrentDirOffset( hTIFF );
     }
+}
+
+
+/************************************************************************/
+/*                          IsBlockAvailable()                          */
+/*                                                                      */
+/*      Return TRUE if the indicated strip/tile is available.  We       */
+/*      establish this by testing if the stripbytecount is zero.  If    */
+/*      zero then the block has never been committed to disk.           */
+/************************************************************************/
+
+int GTiffDataset::IsBlockAvailable( int nBlockId )
+
+{
+    uint32 *panByteCounts = NULL;
+
+    if( ( TIFFIsTiled( hTIFF ) 
+          && TIFFGetField( hTIFF, TIFFTAG_TILEBYTECOUNTS, &panByteCounts ) )
+        || ( !TIFFIsTiled( hTIFF ) 
+          && TIFFGetField( hTIFF, TIFFTAG_STRIPBYTECOUNTS, &panByteCounts ) ) )
+    {
+        if( panByteCounts == NULL )
+            return FALSE;
+        else
+            return panByteCounts[nBlockId] != 0;
+    }
+    else
+        return FALSE;
 }
 
 /************************************************************************/
