@@ -1,3 +1,8 @@
+2003-02-19  Andrey Kiselev  <dron@remotesensing.org>
+	
+	* /gdal/frmts/raw/effdataset.cpp: Removed. FAST driver now should work
+	with most part of FAST datasets.
+
 2003-02-18  Andrey Kiselev  <dron@remotesensing.org>
 	
 	* /gdal/frmts/raw/envidataset.cpp: Write support via Create() method

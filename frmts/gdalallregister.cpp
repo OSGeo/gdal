@@ -25,6 +25,9 @@
  * Main format registration function.
  * 
  * $Log$
+ * Revision 1.55  2003/02/19 07:14:56  dron
+ * EFF support removed.
+ *
  * Revision 1.54  2003/02/14 11:27:16  dron
  * GDALRegister_JPEG2000() moved behind of PNM and other JasPer formats.
  *
@@ -340,7 +343,6 @@ void GDALAllRegister()
     GDALRegister_PAux();
     GDALRegister_MFF();
     GDALRegister_HKV();
-    GDALRegister_EFF();
     GDALRegister_FujiBAS();
     GDALRegister_GSC();
     GDALRegister_FAST();
