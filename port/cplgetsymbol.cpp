@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/01/27 20:16:03  warmerda
+ * Added windows implementation.
+ *
  * Revision 1.1  1999/01/11 15:34:57  warmerda
  * New
  *
@@ -83,4 +86,52 @@ void *CPLGetSymbol( const char * pszLibrary, const char * pszSymbolName )
 }
 
 #endif /* def __unix__ */
+
+/* ==================================================================== */
+/*                 Windows Implementation                               */
+/* ==================================================================== */
+#ifdef WIN32
+
+#include <windows.h>
+
+/************************************************************************/
+/*                            CPLGetSymbol()                            */
+/*                                                                      */
+/*      Note that this function doesn't:                                */
+/*       o prevent the reference count on the library from going up     */
+/*         for every request, or given any opportunity to unload        */
+/*         the library.                                                 */
+/*       o Attempt to look for the library in non-standard              */
+/*         locations.                                                   */
+/*       o Attempt to try variations on the symbol name, like           */
+/*         pre-prending or post-pending an underscore.                  */
+/************************************************************************/
+
+void *CPLGetSymbol( const char * pszLibrary, const char * pszSymbolName )
+
+{
+    void	*pLibrary;
+    void	*pSymbol;
+
+    pLibrary = LoadLibrary(pszLibrary);
+    if( pLibrary == NULL )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Can't load requested DLL: %s", pszLibrary );
+        return NULL;
+    }
+
+    pSymbol = GetProcAddress( (HINSTANCE) pLibrary, pszSymbolName );
+
+    if( pSymbol == NULL )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Can't find requested entry point: %s\n", pszSymbolName );
+        return NULL;
+    }
+    
+    return( pSymbol );
+}
+
+#endif /* def WIN32 */
 
