@@ -12,14 +12,14 @@ LIBS	=	$(GDALLIB)
 
 default:	gdal_translate.exe gdalinfo.exe
 
-gdalinfo.exe:	gdalinfo.c $(GDALLIB)
-	$(CC) $(CFLAGS) gdalinfo.c $(LIBS) 
+gdalinfo.exe:	gdalinfo.c $(GDALLIB) $(XTRAOBJ) 
+	$(CC) $(CFLAGS) gdalinfo.c $(XTRAOBJ) $(LIBS) 
 	
-gdal_translate.exe:	gdal_translate.c $(GDALLIB)
-	$(CC) $(CFLAGS) gdal_translate.c $(LIBS) 
+gdal_translate.exe:	gdal_translate.c $(GDALLIB) $(XTRAOBJ)
+	$(CC) $(CFLAGS) gdal_translate.c $(XTRAOBJ) $(LIBS) 
 	
-gdal2raw.exe:	gdal2raw.c $(GDALLIB)
-	$(CC) $(CFLAGS) gdal2raw.c $(LIBS) 
+gdal2raw.exe:	gdal2raw.c $(GDALLIB) $(XTRAOBJ)
+	$(CC) $(CFLAGS) gdal2raw.c $(XTRAOBJ) $(LIBS) 
 	
 clean:
 	del *.obj *.exe
