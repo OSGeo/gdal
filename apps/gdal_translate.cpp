@@ -28,6 +28,9 @@
  * ****************************************************************************
  *
  * $Log$
+ * Revision 1.6  2002/10/04 20:47:31  warmerda
+ * fixed type override going through virtual db
+ *
  * Revision 1.5  2002/09/11 14:22:33  warmerda
  * make an effort to preserve band descriptions
  *
@@ -100,8 +103,8 @@ static void Usage()
     int	iDr;
         
     printf( "Usage: gdal_translate [--version]\n"
-            "       [-ot {Byte/UInt16/UInt32/Int32/Float32/Float64/CInt16/\n"
-            "             CInt32/CFloat32/CFloat64}] [-not_strict]\n"
+            "       [-ot {Byte/Int16/UInt16/UInt32/Int32/Float32/Float64/\n"
+            "             CInt16/CInt32/CFloat32/CFloat64}] [-not_strict]\n"
             "       [-of format] [-b band] [-outsize xsize[%%] ysize[%%]]\n"
             "       [-scale [src_min src_max [dst_min dst_max]]]\n"
             "       [-srcwin xoff yoff xsize ysize]\n"
@@ -448,15 +451,6 @@ int main( int argc, char ** argv )
                    ? atof(pszOYSize)/100*anSrcWin[3] : atoi(pszOYSize)));
     }
     
-/* -------------------------------------------------------------------- */
-/*      Set the band type if not previously set.                        */
-/* -------------------------------------------------------------------- */
-    if( eOutputType == GDT_Unknown )
-    {
-        eOutputType = GDALGetRasterDataType( 
-            GDALGetRasterBand( hDataset, panBandList[0] ) );
-    }
-
 /* ==================================================================== */
 /*      Create a virtual dataset as long as no scaling is being         */
 /*      applied.                                                        */
@@ -495,11 +489,17 @@ int main( int argc, char ** argv )
         {
             VRTRasterBand *poVRTBand;
             GDALRasterBand *poSrcBand;
+            GDALDataType  eBandType;
 
             poSrcBand = ((GDALDataset *) 
                          hDataset)->GetRasterBand(panBandList[i]);
 
-            poVDS->AddBand( poSrcBand->GetRasterDataType(), NULL );
+            if( eOutputType == GDT_Unknown )
+                eBandType = poSrcBand->GetRasterDataType();
+            else
+                eBandType = eOutputType;
+
+            poVDS->AddBand( eBandType, NULL );
             poVRTBand = (VRTRasterBand *) poVDS->GetRasterBand( i+1 );
             
             poVRTBand->AddSimpleSource( poSrcBand,
@@ -529,6 +529,15 @@ int main( int argc, char ** argv )
         GDALClose( hDataset );
 
         exit( hOutDS == NULL );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Set the band type if not previously set.                        */
+/* -------------------------------------------------------------------- */
+    if( eOutputType == GDT_Unknown )
+    {
+        eOutputType = GDALGetRasterDataType( 
+            GDALGetRasterBand( hDataset, panBandList[0] ) );
     }
 
 /* -------------------------------------------------------------------- */
