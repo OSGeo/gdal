@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.58  2002/12/01 21:16:10  warmerda
+ * added Get/set angular units methods
+ *
  * Revision 1.57  2002/12/01 20:22:39  warmerda
  * preserve a little more precision in projection parameters
  *
@@ -808,10 +811,137 @@ OGRErr OGRSpatialReference::SetNode( const char *pszNodePath,
     if( ABS(dfValue - (int) dfValue) == 0.0 )
         sprintf( szValue, "%d", (int) dfValue );
     else
-        // notdef: sprintf( szValue, "%.12f", dfValue );
+        // notdef: sprintf( szValue, "%.16g", dfValue );
         OGRPrintDouble( szValue, dfValue );
 
     return SetNode( pszNodePath, szValue );
+}
+
+/************************************************************************/
+/*                          SetAngularUnits()                           */
+/************************************************************************/
+
+/**
+ * Set the angular units for the geographic coordinate system.
+ *
+ * This method creates a UNITS subnode with the specified values as a
+ * child of the GEOGCS node. 
+ *
+ * This method does the same as the C function OSRSetAngularUnits(). 
+ *
+ * @param pszUnitsName the units name to be used.  Some preferred units
+ * names can be found in ogr_srs_api.h such as SRS_UA_DEGREE. 
+ *
+ * @param dfInRadians the value to multiple by an angle in the indicated
+ * units to transform to radians.  Some standard conversion factors can
+ * be found in ogr_srs_api.h. 
+ *
+ * @return OGRERR_NONE on success.
+ */
+
+OGRErr OGRSpatialReference::SetAngularUnits( const char * pszUnitsName,
+                                             double dfInRadians )
+
+{
+    OGR_SRSNode *poCS;
+    OGR_SRSNode *poUnits;
+    char        szValue[128];
+
+    poCS = GetAttrNode( "GEOGCS" );
+
+    if( poCS == NULL )
+        return OGRERR_FAILURE;
+
+    OGRPrintDouble( szValue, dfInRadians );
+
+    if( poCS->FindChild( "UNIT" ) >= 0 )
+    {
+        poUnits = poCS->GetChild( poCS->FindChild( "UNIT" ) );
+        poUnits->GetChild(0)->SetValue( pszUnitsName );
+        poUnits->GetChild(1)->SetValue( szValue );
+    }
+    else
+    {
+        poUnits = new OGR_SRSNode( "UNIT" );
+        poUnits->AddChild( new OGR_SRSNode( pszUnitsName ) );
+        poUnits->AddChild( new OGR_SRSNode( szValue ) );
+        
+        poCS->AddChild( poUnits );
+    }
+
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                         OSRSetAngularUnits()                         */
+/************************************************************************/
+
+OGRErr OSRSetAngularUnits( OGRSpatialReferenceH hSRS, 
+                           const char * pszUnits, double dfInRadians )
+
+{
+    return ((OGRSpatialReference *) hSRS)->SetAngularUnits( pszUnits, 
+                                                            dfInRadians );
+}
+
+/************************************************************************/
+/*                          GetAngularUnits()                           */
+/************************************************************************/
+
+/**
+ * Fetch angular geographic coordinate system units.
+ *
+ * If no units are available, a value of "degree" and SRS_UA_DEGREE_CONV 
+ * will be assumed.  This method only checks directly under the GEOGCS node
+ * for units.
+ *
+ * This method does the same thing as the C function OSRGetAngularUnits()/
+ *
+ * @param ppszName a pointer to be updated with the pointer to the 
+ * units name.  The returned value remains internal to the OGRSpatialReference
+ * and shouldn't be freed, or modified.  It may be invalidated on the next
+ * OGRSpatialReference call. 
+ *
+ * @return the value to multiply by angular distances to transform them to 
+ * radians.
+ */
+
+double OGRSpatialReference::GetAngularUnits( char ** ppszName ) const
+
+{
+    const OGR_SRSNode *poCS = GetAttrNode( "GEOGCS" );
+
+    if( ppszName != NULL )
+        *ppszName = "unknown";
+        
+    if( poCS == NULL )
+        return 1.0;
+
+    for( int iChild = 0; iChild < poCS->GetChildCount(); iChild++ )
+    {
+        const OGR_SRSNode     *poChild = poCS->GetChild(iChild);
+        
+        if( EQUAL(poChild->GetValue(),"UNIT")
+            && poChild->GetChildCount() >= 2 )
+        {
+            if( ppszName != NULL )
+                *ppszName = (char *) poChild->GetChild(0)->GetValue();
+            
+            return atof( poChild->GetChild(1)->GetValue() );
+        }
+    }
+
+    return 1.0;
+}
+
+/************************************************************************/
+/*                         OSRGetAngularUnits()                         */
+/************************************************************************/
+
+double OSRGetAngularUnits( OGRSpatialReferenceH hSRS, char ** ppszName )
+    
+{
+    return ((OGRSpatialReference *) hSRS)->GetAngularUnits( ppszName );
 }
 
 /************************************************************************/
@@ -822,8 +952,7 @@ OGRErr OGRSpatialReference::SetNode( const char *pszNodePath,
  * Set the linear units for the projection.
  *
  * This method creates a UNITS subnode with the specified values as a
- * child of the PROJCS or LOCAL_CS node.  It does not currently check for an 
- * existing node and override it, but it should!
+ * child of the PROJCS or LOCAL_CS node. 
  *
  * This method does the same as the C function OSRSetLinearUnits(). 
  *
@@ -856,7 +985,7 @@ OGRErr OGRSpatialReference::SetLinearUnits( const char * pszUnitsName,
     if( dfInMeters == (int) dfInMeters )
         sprintf( szValue, "%d", (int) dfInMeters );
     else
-        //notdef: sprintf( szValue, "%.12f", dfInMeters );
+        //notdef: sprintf( szValue, "%.16g", dfInMeters );
         OGRPrintDouble( szValue, dfInMeters );
 
     if( poCS->FindChild( "UNIT" ) >= 0 )
@@ -1045,11 +1174,9 @@ OGRSpatialReference::SetGeogCS( const char * pszGeogName,
     poSpheroid = new OGR_SRSNode( "SPHEROID" );
     poSpheroid->AddChild( new OGR_SRSNode( pszSpheroidName ) );
 
-    //notdef: sprintf( szValue, "%.3f", dfSemiMajor );
     OGRPrintDouble( szValue, dfSemiMajor );
     poSpheroid->AddChild( new OGR_SRSNode(szValue) );
 
-    //notdef: sprintf( szValue, "%.14f", dfInvFlattening );
     OGRPrintDouble( szValue, dfInvFlattening );
     poSpheroid->AddChild( new OGR_SRSNode(szValue) );
 
@@ -1066,7 +1193,6 @@ OGRSpatialReference::SetGeogCS( const char * pszGeogName,
     if( dfPMOffset == 0.0 )
         strcpy( szValue, "0" );
     else
-        //notdef: sprintf( szValue, "%.16f", dfPMOffset );
         OGRPrintDouble( szValue, dfPMOffset );
     
     poPM = new OGR_SRSNode( "PRIMEM" );
@@ -3169,4 +3295,24 @@ OGRErr OSRGetTOWGS84( OGRSpatialReferenceH hSRS,
 
 {
     return ((OGRSpatialReference *) hSRS)->GetTOWGS84( padfCoeff, nCoeffCount);
+}
+
+/************************************************************************/
+/*                         IsAngularParameter()                         */
+/*                                                                      */
+/*      Is the passed projection parameter an angular one?              */
+/************************************************************************/
+
+int OGRSpatialReference::IsAngularParameter( const char *pszParameterName )
+
+{
+    if( EQUALN(pszParameterName,"long",4)
+        || EQUALN(pszParameterName,"lati",4)
+        || EQUAL(pszParameterName,SRS_PP_CENTRAL_MERIDIAN)
+        || EQUALN(pszParameterName,"standard_parallel",17)
+        || EQUAL(pszParameterName,SRS_PP_AZIMUTH)
+        || EQUAL(pszParameterName,SRS_PP_RECTIFIED_GRID_ANGLE) )
+        return TRUE;
+    else
+        return FALSE;
 }

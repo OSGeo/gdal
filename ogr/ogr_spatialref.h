@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.40  2002/12/01 21:16:10  warmerda
+ * added Get/set angular units methods
+ *
  * Revision 1.39  2002/11/25 16:12:54  warmerda
  * added GetAuthorityCode/Name
  *
@@ -291,9 +294,11 @@ class CPL_DLL OGRSpatialReference
     OGRErr      SetNode( const char *, const char * );
     OGRErr      SetNode( const char *, double );
 
-    // Set/get geographic components
     OGRErr      SetLinearUnits( const char *pszName, double dfInMeters );
     double      GetLinearUnits( char ** = NULL ) const;
+
+    OGRErr      SetAngularUnits( const char *pszName, double dfInRadians );
+    double      GetAngularUnits( char ** = NULL ) const;
 
     int         IsGeographic() const;
     int         IsProjected() const;
@@ -335,6 +340,8 @@ class CPL_DLL OGRSpatialReference
                            
     OGRErr      SetProjParm( const char *, double );
     double      GetProjParm( const char *, double =0.0, OGRErr* = NULL ) const;
+
+    static int  IsAngularParameter( const char * );
 
     /** Albers Conic Equal Area */
     OGRErr      SetACEA( double dfStdP1, double dfStdP2,
