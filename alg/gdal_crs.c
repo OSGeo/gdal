@@ -51,6 +51,9 @@
  ***************************************************************************
  *
  * $Log$
+ * Revision 1.8  2004/12/26 16:12:21  fwarmerdam
+ * thin plate spline support now implemented
+ *
  * Revision 1.7  2004/08/11 19:01:56  warmerda
  * default to 2nd order if we have enough points for 3rd order but 0 requested
  *
@@ -79,6 +82,8 @@
 #include "cpl_minixml.h"
 #include "cpl_string.h"
 
+CPL_CVSID("$Id$");
+
 #define MAXORDER 3
 
 struct Control_Points
@@ -104,6 +109,8 @@ static int CRS_compute_georef_equations(struct Control_Points *,
 
 typedef struct
 {
+    GDALTransformerInfo sTI;
+
     double adfToGeoX[20];
     double adfToGeoY[20];
     
@@ -175,6 +182,12 @@ void *GDALCreateGCPTransformer( int nGCPCount, const GDAL_GCP *pasGCPList,
 
     psInfo->pasGCPList = GDALDuplicateGCPs( nGCPCount, pasGCPList );
     psInfo->nGCPCount = nGCPCount;
+
+    strcpy( psInfo->sTI.szSignature, "GTI" );
+    psInfo->sTI.pszClassName = "GDALGCPTransformer";
+    psInfo->sTI.pfnTransform = GDALGCPTransform;
+    psInfo->sTI.pfnCleanup = GDALDestroyGCPTransformer;
+    psInfo->sTI.pfnSerialize = GDALSerializeGCPTransformer;
 
 /* -------------------------------------------------------------------- */
 /*      Allocate and initialize the working points list.                */

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2004/12/26 16:12:21  fwarmerdam
+ * thin plate spline support now implemented
+ *
  * Revision 1.2  2003/06/03 19:41:58  warmerda
  * working implmentation, but inverse is still not iteratively solved
  *
@@ -125,6 +128,8 @@ static void RPCTransformPoint( GDALRPCInfo *psRPC,
 
 typedef struct {
 
+    GDALTransformerInfo sTI;
+
     GDALRPCInfo sRPC;
 
     double      adfPLToLatLongGeoTransform[6];
@@ -154,6 +159,12 @@ void *GDALCreateRPCTransformer( GDALRPCInfo *psRPCInfo, int bReversed,
     memcpy( &(psTransform->sRPC), psRPCInfo, sizeof(GDALRPCInfo) );
     psTransform->bReversed = bReversed;
     psTransform->dfPixErrThreshold = dfPixErrThreshold;
+
+    strcpy( psTransform->sTI.szSignature, "GTI" );
+    psTransform->sTI.pszClassName = "GDALRPCTransformer";
+    psTransform->sTI.pfnTransform = GDALRPCTransform;
+    psTransform->sTI.pfnCleanup = GDALDestroyRPCTransformer;
+    psTransform->sTI.pfnSerialize = NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Establish a reference point for calcualating an affine          */
