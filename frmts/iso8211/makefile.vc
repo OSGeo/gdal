@@ -15,8 +15,8 @@ clean:
 all:	default 8211view.exe 8211dump.exe
 
 8211view.exe:	8211view.obj $(OBJ)
-	$(CC) $(CFLAGS) 8211view.obj $(OBJ) 
+	$(CC) $(CFLAGS) 8211view.obj $(OBJ) $(CPLLIB)
 
 8211dump.exe:	8211dump.obj $(OBJ)
-	$(CC) $(CFLAGS) 8211dump.obj $(OBJ) 
+	$(CC) $(CFLAGS) 8211dump.obj $(OBJ) $(CPLLIB)
 
