@@ -29,6 +29,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.36  2002/12/04 19:15:21  warmerda
+# fixed gdal.RasterBand.GetRasterColorTable() method
+#
 # Revision 1.35  2002/11/18 19:25:43  warmerda
 # provide access to overviews
 #
@@ -512,7 +515,7 @@ class Band:
         if _ct is None:
             return None
         else:
-            return _gdal.GDALColorTable( _ct )
+            return ColorTable( _ct )
 
     def SetRasterColorTable(self, ct):
         return _gdal.GDALSetRasterColorTable( self._o, ct._o )
@@ -580,3 +583,14 @@ class ColorTable:
                     _gdal.GDALColorEntry_c2_get( entry ),
                     _gdal.GDALColorEntry_c3_get( entry ),
                     _gdal.GDALColorEntry_c4_get( entry ))
+
+    def __str__(self):
+        str = ''
+        count = self.GetCount()
+        for i in range(count):
+            entry = self.GetColorEntry(i)
+            str = str + ('%d: (%3d,%3d,%3d,%3d)\n' \
+                         % (i,entry[0],entry[1],entry[2],entry[3]))
+
+        return str
+
