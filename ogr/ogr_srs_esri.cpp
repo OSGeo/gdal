@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2001/10/11 19:27:54  warmerda
+ * worked on esri morphing
+ *
  * Revision 1.8  2001/10/10 20:42:43  warmerda
  * added ESRI WKT morphing support
  *
@@ -73,6 +76,11 @@ char *apszProjMapping[] = {
  
 char *apszArgMapping[] = {
     
+    NULL, NULL }; 
+ 
+char *apszDatumMapping[] = {
+    "North_American_1927", SRS_DN_NAD27,
+    "North_American_1983", SRS_DN_NAD83,
     NULL, NULL }; 
  
 
@@ -388,6 +396,18 @@ OGRErr OGRSpatialReference::morphToESRI()
         return eErr;
 
 /* -------------------------------------------------------------------- */
+/*      Translate PROJECTION keywords that are misnamed.                */
+/* -------------------------------------------------------------------- */
+    GetRoot()->applyRemapper( "PROJECTION", 
+                              apszProjMapping+1, apszProjMapping, 2 );
+
+/* -------------------------------------------------------------------- */
+/*      Translate DATUM keywords that are misnamed.                     */
+/* -------------------------------------------------------------------- */
+    GetRoot()->applyRemapper( "DATUM", 
+                              apszDatumMapping+1, apszDatumMapping, 2 );
+
+/* -------------------------------------------------------------------- */
 /*      Try to insert a D_ in front of the datum name.                  */
 /* -------------------------------------------------------------------- */
     OGR_SRSNode	*poDatum;
@@ -409,12 +429,6 @@ OGRErr OGRSpatialReference::morphToESRI()
             CPLFree( pszNewValue );
         }
     }
-
-/* -------------------------------------------------------------------- */
-/*      Translate PROJECTION keywords that are misnamed.                */
-/* -------------------------------------------------------------------- */
-    GetRoot()->applyRemapper( "PROJECTION", 
-                              apszProjMapping+1, apszProjMapping, 2 );
 
     return OGRERR_NONE;
 }
@@ -481,6 +495,12 @@ OGRErr OGRSpatialReference::morphFromESRI()
 /* -------------------------------------------------------------------- */
     GetRoot()->applyRemapper( "PROJECTION", 
                               apszProjMapping, apszProjMapping+1, 2 );
+
+/* -------------------------------------------------------------------- */
+/*      Translate DATUM keywords that are misnamed.                     */
+/* -------------------------------------------------------------------- */
+    GetRoot()->applyRemapper( "DATUM", 
+                              apszDatumMapping, apszDatumMapping+1, 2 );
 
     return eErr;
 }
