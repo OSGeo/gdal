@@ -35,6 +35,9 @@
  * of the GDAL core, but dependent on the Common Portability Library.
  *
  * $Log$
+ * Revision 1.6  2000/10/12 19:30:32  warmerda
+ * substantially improved write support
+ *
  * Revision 1.5  2000/09/29 21:42:38  warmerda
  * preliminary write support implemented
  *
@@ -477,6 +480,71 @@ const Eprj_MapInfo *HFAGetMapInfo( HFAHandle hHFA )
 }
 
 /************************************************************************/
+/*                           HFASetMapInfo()                            */
+/************************************************************************/
+
+CPLErr HFASetMapInfo( HFAHandle hHFA, const Eprj_MapInfo *poMapInfo )
+
+{
+/* -------------------------------------------------------------------- */
+/*      Loop over bands, setting information on each one.               */
+/* -------------------------------------------------------------------- */
+    for( int iBand = 0; iBand < hHFA->nBands; iBand++ )
+    {
+        HFAEntry	*poMIEntry;
+
+/* -------------------------------------------------------------------- */
+/*      Create a new Map_Info if there isn't one present already.       */
+/* -------------------------------------------------------------------- */
+        poMIEntry = hHFA->papoBand[iBand]->poNode->GetNamedChild( "Map_Info" );
+        if( poMIEntry == NULL )
+        {
+            poMIEntry = new HFAEntry( hHFA, "Map_Info", "Eprj_MapInfo", 
+                                      hHFA->papoBand[iBand]->poNode );
+        }
+
+        poMIEntry->MarkDirty();
+
+/* -------------------------------------------------------------------- */
+/*      Ensure we have enough space for all the data.                   */
+/* -------------------------------------------------------------------- */
+        int	nSize;
+        GByte   *pabyData;
+
+        nSize = 48 + 40 
+            + strlen(poMapInfo->proName) + 1
+            + strlen(poMapInfo->units) + 1;
+
+        pabyData = poMIEntry->MakeData( nSize );
+        poMIEntry->SetPosition();
+
+/* -------------------------------------------------------------------- */
+/*      Write the various fields.                                       */
+/* -------------------------------------------------------------------- */
+        poMIEntry->SetStringField( "proName", poMapInfo->proName );
+
+        poMIEntry->SetDoubleField( "upperLeftCenter.x", 
+                                   poMapInfo->upperLeftCenter.x );
+        poMIEntry->SetDoubleField( "upperLeftCenter.y", 
+                                   poMapInfo->upperLeftCenter.y );
+
+        poMIEntry->SetDoubleField( "lowerRightCenter.x", 
+                                   poMapInfo->lowerRightCenter.x );
+        poMIEntry->SetDoubleField( "lowerRightCenter.y", 
+                                   poMapInfo->lowerRightCenter.y );
+
+        poMIEntry->SetDoubleField( "pixelSize.width", 
+                                   poMapInfo->pixelSize.width );
+        poMIEntry->SetDoubleField( "pixelSize.height", 
+                                   poMapInfo->pixelSize.height );
+
+        poMIEntry->SetStringField( "units", poMapInfo->units );
+    }
+
+    return CE_None;
+}
+
+/************************************************************************/
 /*                        HFAGetProParameters()                         */
 /************************************************************************/
 
@@ -540,6 +608,88 @@ const Eprj_ProParameters *HFAGetProParameters( HFAHandle hHFA )
 }
 
 /************************************************************************/
+/*                        HFASetProParameters()                         */
+/************************************************************************/
+
+CPLErr HFASetProParameters( HFAHandle hHFA, const Eprj_ProParameters *poPro )
+
+{
+/* -------------------------------------------------------------------- */
+/*      Loop over bands, setting information on each one.               */
+/* -------------------------------------------------------------------- */
+    for( int iBand = 0; iBand < hHFA->nBands; iBand++ )
+    {
+        HFAEntry	*poMIEntry;
+
+/* -------------------------------------------------------------------- */
+/*      Create a new Projection if there isn't one present already.     */
+/* -------------------------------------------------------------------- */
+        poMIEntry = hHFA->papoBand[iBand]->poNode->GetNamedChild("Projection");
+        if( poMIEntry == NULL )
+        {
+            poMIEntry = new HFAEntry( hHFA, "Projection","Eprj_ProParameters", 
+                                      hHFA->papoBand[iBand]->poNode );
+        }
+
+        poMIEntry->MarkDirty();
+
+/* -------------------------------------------------------------------- */
+/*      Ensure we have enough space for all the data.                   */
+/* -------------------------------------------------------------------- */
+        int	nSize;
+        GByte   *pabyData;
+
+        nSize = 34 + 15 * 8
+            + 8 + strlen(poPro->proName) + 1
+            + 32 + 8 + strlen(poPro->proSpheroid.sphereName) + 1;
+
+        if( poPro->proExeName != NULL )
+            nSize += strlen(poPro->proExeName) + 1;
+
+        pabyData = poMIEntry->MakeData( nSize );
+        poMIEntry->SetPosition();
+
+/* -------------------------------------------------------------------- */
+/*      Write the various fields.                                       */
+/* -------------------------------------------------------------------- */
+        poMIEntry->SetIntField( "proType", poPro->proType );
+
+        poMIEntry->SetIntField( "proNumber", poPro->proNumber );
+
+        poMIEntry->SetStringField( "proExeName", poPro->proExeName );
+        poMIEntry->SetStringField( "proName", poPro->proName );
+        poMIEntry->SetIntField( "proZone", poPro->proZone );
+        poMIEntry->SetDoubleField( "proParams[0]", poPro->proParams[0] );
+        poMIEntry->SetDoubleField( "proParams[1]", poPro->proParams[1] );
+        poMIEntry->SetDoubleField( "proParams[2]", poPro->proParams[2] );
+        poMIEntry->SetDoubleField( "proParams[3]", poPro->proParams[3] );
+        poMIEntry->SetDoubleField( "proParams[4]", poPro->proParams[4] );
+        poMIEntry->SetDoubleField( "proParams[5]", poPro->proParams[5] );
+        poMIEntry->SetDoubleField( "proParams[6]", poPro->proParams[6] );
+        poMIEntry->SetDoubleField( "proParams[7]", poPro->proParams[7] );
+        poMIEntry->SetDoubleField( "proParams[8]", poPro->proParams[8] );
+        poMIEntry->SetDoubleField( "proParams[9]", poPro->proParams[9] );
+        poMIEntry->SetDoubleField( "proParams[10]", poPro->proParams[10] );
+        poMIEntry->SetDoubleField( "proParams[11]", poPro->proParams[11] );
+        poMIEntry->SetDoubleField( "proParams[12]", poPro->proParams[12] );
+        poMIEntry->SetDoubleField( "proParams[13]", poPro->proParams[13] );
+        poMIEntry->SetDoubleField( "proParams[14]", poPro->proParams[14] );
+        poMIEntry->SetStringField( "proSpheroid.sphereName", 
+                                   poPro->proSpheroid.sphereName );
+        poMIEntry->SetDoubleField( "proSpheroid.a", 
+                                   poPro->proSpheroid.a );
+        poMIEntry->SetDoubleField( "proSpheroid.b", 
+                                   poPro->proSpheroid.b );
+        poMIEntry->SetDoubleField( "proSpheroid.eSquared", 
+                                   poPro->proSpheroid.eSquared );
+        poMIEntry->SetDoubleField( "proSpheroid.radius", 
+                                   poPro->proSpheroid.radius );
+    }
+
+    return CE_None;
+}
+
+/************************************************************************/
 /*                            HFAGetDatum()                             */
 /************************************************************************/
 
@@ -593,6 +743,75 @@ const Eprj_Datum *HFAGetDatum( HFAHandle hHFA )
 }
 
 /************************************************************************/
+/*                            HFASetDatum()                             */
+/************************************************************************/
+
+CPLErr HFASetDatum( HFAHandle hHFA, const Eprj_Datum *poDatum )
+
+{
+/* -------------------------------------------------------------------- */
+/*      Loop over bands, setting information on each one.               */
+/* -------------------------------------------------------------------- */
+    for( int iBand = 0; iBand < hHFA->nBands; iBand++ )
+    {
+        HFAEntry	*poDatumEntry=NULL, *poProParms;
+
+/* -------------------------------------------------------------------- */
+/*      Create a new Projection if there isn't one present already.     */
+/* -------------------------------------------------------------------- */
+        poProParms = 
+            hHFA->papoBand[iBand]->poNode->GetNamedChild("Projection");
+        if( poProParms == NULL )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                      "Can't add Eprj_Datum with no Eprj_ProjParameters." );
+            return CE_Failure;
+        }
+
+        poDatumEntry = poProParms->GetNamedChild("Datum");
+        if( poDatumEntry == NULL )
+        {
+            poDatumEntry = new HFAEntry( hHFA, "Datum","Eprj_Datum", 
+                                      poProParms );
+        }
+
+        poDatumEntry->MarkDirty();
+
+/* -------------------------------------------------------------------- */
+/*      Ensure we have enough space for all the data.                   */
+/* -------------------------------------------------------------------- */
+        int	nSize;
+        GByte   *pabyData;
+
+        nSize = 26 + strlen(poDatum->datumname) + 1 + 7*8;
+        
+        if( poDatum->gridname != NULL )
+            nSize += strlen(poDatum->gridname) + 1;
+
+        pabyData = poDatumEntry->MakeData( nSize );
+        poDatumEntry->SetPosition();
+
+/* -------------------------------------------------------------------- */
+/*      Write the various fields.                                       */
+/* -------------------------------------------------------------------- */
+        poDatumEntry->SetStringField( "datumname", poDatum->datumname );
+        poDatumEntry->SetIntField( "type", poDatum->type );
+
+        poDatumEntry->SetDoubleField( "params[0]", poDatum->params[0] );
+        poDatumEntry->SetDoubleField( "params[1]", poDatum->params[1] );
+        poDatumEntry->SetDoubleField( "params[2]", poDatum->params[2] );
+        poDatumEntry->SetDoubleField( "params[3]", poDatum->params[3] );
+        poDatumEntry->SetDoubleField( "params[4]", poDatum->params[4] );
+        poDatumEntry->SetDoubleField( "params[5]", poDatum->params[5] );
+        poDatumEntry->SetDoubleField( "params[6]", poDatum->params[6] );
+
+        poDatumEntry->SetStringField( "gridname", poDatum->gridname );
+    }
+
+    return CE_None;
+}
+
+/************************************************************************/
 /*                             HFAGetPCT()                              */
 /*                                                                      */
 /*      Read the PCT from a band, if it has one.                        */
@@ -607,6 +826,23 @@ CPLErr HFAGetPCT( HFAHandle hHFA, int nBand, int *pnColors,
 
     return( hHFA->papoBand[nBand-1]->GetPCT( pnColors, ppadfRed,
                                              ppadfGreen, ppadfBlue ) );
+}
+
+/************************************************************************/
+/*                             HFAGetPCT()                              */
+/*                                                                      */
+/*      Read the PCT from a band, if it has one.                        */
+/************************************************************************/
+
+CPLErr HFASetPCT( HFAHandle hHFA, int nBand, int nColors,
+                  double *padfRed, double *padfGreen, double *padfBlue )
+
+{
+    if( nBand < 1 || nBand > hHFA->nBands )
+        return CE_Failure;
+
+    return( hHFA->papoBand[nBand-1]->SetPCT( nColors, padfRed,
+                                             padfGreen, padfBlue ) );
 }
 
 /************************************************************************/
@@ -725,8 +961,10 @@ void HFAStandard( int nBytes, void * pData )
 /*      file.                                                           */
 /* ==================================================================== */
 
+static char szLDict[] = "{4096:Cdata,}RasterDMS,.";
+
 static char szDefaultDD[] = 
-"{1:lversion,1:LfreeList,1:LrootEntryPtr,1:sentryHeaderLength,1:LdictionaryPtr,}Ehfa_File,{1:e2:raster,vector,type,1:LdictionaryPtr,}Ehfa_Layer,{1:Lnext,1:Lprev,1:Lparent,1:Lchild,1:Ldata,1:ldataSize,64:cname,32:ctype,1:tmodTime,}Ehfa_Entry,{16:clabel,1:LheaderPtr,}Ehfa_HeaderTag,{1:LfreeList,1:lfreeSize,}Ehfa_FreeListNode,{1:lsize,1:Lptr,}Ehfa_Data,{1:sfileCode,1:Loffset,1:lsize,1:e2:false,true,logvalid,1:e2:no compression,ESRI GRID compression,compressionType,}Edms_VirtualBlockInfo,{1:lmin,1:lmax,}Edms_FreeIDList,{1:lnumvirtualblocks,1:lnumobjectsperblock,1:lnextobjectnum,1:e2:no compression,RLC compression,compressionType,0:poEdms_VirtualBlockInfo,blockinfo,0:poEdms_FreeIDList,freelist,1:tmodTime,}Edms_State,{1:lwidth,1:lheight,1:e3:thematic,athematic,fft of real-valued data,layerType,1:e13:u1,u2,u4,u8,s8,u16,s16,u32,s32,f32,f64,c64,c128,pixelType,1:lblockWidth,1:lblockHeight,}Eimg_Layer_SubSample,{1:lwidth,1:lheight,1:e3:thematic,athematic,fft of real-valued data,layerType,1:e13:u1,u2,u4,u8,s8,u16,s16,u32,s32,f32,f64,c64,c128,pixelType,1:lblockWidth,1:lblockHeight,}Eimg_Layer,{1:dx,1:dy,}Eprj_Coordinate,{1:dwidth,1:dheight,}Eprj_Size,{0:pcproName,1:*oEprj_Coordinate,upperLeftCenter,1:*oEprj_Coordinate,lowerRightCenter,1:*oEprj_Size,pixelSize,0:pcunits,}Eprj_MapInfo,{1:dminimum,1:dmaximum,1:dmean,1:dmedian,1:dmode,1:dstddev,}Esta_Statistics,{1:lskipFactorX,1:lskipFactorY,}Esta_SkipFactors,{1:lnumRows,}Edsc_Table,{1:lnumRows,1:LcolumnDataPtr,1:e4:integer,real,complex,string,dataType,1:lmaxNumChars,}Edsc_Column,{1:lnumrows,1:lnumcolumns,1:e13:EGDA_TYPE_U1,EGDA_TYPE_U2,EGDA_TYPE_U4,EGDA_TYPE_U8,EGDA_TYPE_S8,EGDA_TYPE_U16,EGDA_TYPE_S16,EGDA_TYPE_U32,EGDA_TYPE_S32,EGDA_TYPE_F32,EGDA_TYPE_F64,EGDA_TYPE_C64,EGDA_TYPE_C128,datatype,1:e4:EGDA_SCALAR_OBJECT,EGDA_TABLE_OBJECT,EGDA_MATRIX_OBJECT,EGDA_RASTER_OBJECT,objecttype,}Egda_BaseData,{1:lnumBins,1:e4:direct,linear,logarithmic,explicit,binFunctionType,1:dminLimit,1:dmaxLimit,1:*bbinLimits,}Edsc_BinFunction,{1:lversion,1:lnumobjects,1:e2:EAOI_UNION,EAOI_INTERSECTION,operation,}Eaoi_AreaOfInterest,.";
+"{1:lversion,1:LfreeList,1:LrootEntryPtr,1:sentryHeaderLength,1:LdictionaryPtr,}Ehfa_File,{1:Lnext,1:Lprev,1:Lparent,1:Lchild,1:Ldata,1:ldataSize,64:cname,32:ctype,1:tmodTime,}Ehfa_Entry,{16:clabel,1:LheaderPtr,}Ehfa_HeaderTag,{1:LfreeList,1:lfreeSize,}Ehfa_FreeListNode,{1:lsize,1:Lptr,}Ehfa_Data,{1:lwidth,1:lheight,1:e3:thematic,athematic,fft of real-valued data,layerType,1:e13:u1,u2,u4,u8,s8,u16,s16,u32,s32,f32,f64,c64,c128,pixelType,1:lblockWidth,1:lblockHeight,}Eimg_Layer,{1:lwidth,1:lheight,1:e3:thematic,athematic,fft of real-valued data,layerType,1:e13:u1,u2,u4,u8,s8,u16,s16,u32,s32,f32,f64,c64,c128,pixelType,1:lblockWidth,1:lblockHeight,}Eimg_Layer_SubSample,{1:e2:raster,vector,type,1:LdictionaryPtr,}Ehfa_Layer,{1:sfileCode,1:Loffset,1:lsize,1:e2:false,true,logvalid,1:e2:no compression,ESRI GRID compression,compressionType,}Edms_VirtualBlockInfo,{1:lmin,1:lmax,}Edms_FreeIDList,{1:lnumvirtualblocks,1:lnumobjectsperblock,1:lnextobjectnum,1:e2:no compression,RLC compression,compressionType,0:poEdms_VirtualBlockInfo,blockinfo,0:poEdms_FreeIDList,freelist,1:tmodTime,}Edms_State,{0:pcstring,}Emif_String,{1:oEmif_String,algorithm,0:poEmif_String,nameList,}Eimg_RRDNamesList,{1:oEmif_String,projection,1:oEmif_String,units,}Eimg_MapInformation,{1:oEmif_String,dependent,}Eimg_DependentFile,{1:oEmif_String,ImageLayerName,}Eimg_DependentLayerName,{1:lnumrows,1:lnumcolumns,1:e13:EGDA_TYPE_U1,EGDA_TYPE_U2,EGDA_TYPE_U4,EGDA_TYPE_U8,EGDA_TYPE_S8,EGDA_TYPE_U16,EGDA_TYPE_S16,EGDA_TYPE_U32,EGDA_TYPE_S32,EGDA_TYPE_F32,EGDA_TYPE_F64,EGDA_TYPE_C64,EGDA_TYPE_C128,datatype,1:e4:EGDA_SCALAR_OBJECT,EGDA_TABLE_OBJECT,EGDA_MATRIX_OBJECT,EGDA_RASTER_OBJECT,objecttype,}Egda_BaseData,{1:*bvalueBD,}Eimg_NonInitializedValue,{1:dx,1:dy,}Eprj_Coordinate,{1:dwidth,1:dheight,}Eprj_Size,{0:pcproName,1:*oEprj_Coordinate,upperLeftCenter,1:*oEprj_Coordinate,lowerRightCenter,1:*oEprj_Size,pixelSize,0:pcunits,}Eprj_MapInfo,{0:pcdatumname,1:e3:EPRJ_DATUM_PARAMETRIC,EPRJ_DATUM_GRID,EPRJ_DATUM_REGRESSION,type,0:pdparams,0:pcgridname,}Eprj_Datum,{0:pcsphereName,1:da,1:db,1:deSquared,1:dradius,}Eprj_Spheroid,{1:e2:EPRJ_INTERNAL,EPRJ_EXTERNAL,proType,1:lproNumber,0:pcproExeName,0:pcproName,1:lproZone,0:pdproParams,1:*oEprj_Spheroid,proSpheroid,}Eprj_ProParameters,{1:dminimum,1:dmaximum,1:dmean,1:dmedian,1:dmode,1:dstddev,}Esta_Statistics,{1:lnumBins,1:e4:direct,linear,logarithmic,explicit,binFunctionType,1:dminLimit,1:dmaxLimit,1:*bbinLimits,}Edsc_BinFunction,{0:poEmif_String,LayerNames,1:*bExcludedValues,1:oEmif_String,AOIname,1:lSkipFactorX,1:lSkipFactorY,1:*oEdsc_BinFunction,BinFunction,}Eimg_StatisticsParameters830,{1:lnumrows,}Edsc_Table,{1:lnumRows,1:LcolumnDataPtr,1:e4:integer,real,complex,string,dataType,1:lmaxNumChars,}Edsc_Column,{1:lposition,0:pcname,1:e2:EMSC_FALSE,EMSC_TRUE,editable,1:e3:LEFT,CENTER,RIGHT,alignment,0:pcformat,1:e3:DEFAULT,APPLY,AUTO-APPLY,formulamode,0:pcformula,1:dcolumnwidth,0:pcunits,1:e5:NO_COLOR,RED,GREEN,BLUE,COLOR,colorflag,0:pcgreenname,0:pcbluename,}Eded_ColumnAttributes_1,{1:lversion,1:lnumobjects,1:e2:EAOI_UNION,EAOI_INTERSECTION,operation,}Eaoi_AreaOfInterest,.";
 
 /************************************************************************/
 /*                            HFACreateLL()                             */
@@ -1011,6 +1249,24 @@ HFAHandle HFACreate( const char * pszFilename,
             HFAStandard( 2, &nValue16 );
             memcpy( pabyData + nOffset + 12, &nValue16, 2 );
         }
+
+/* -------------------------------------------------------------------- */
+/*      Create the Ehfa_Layer.                                          */
+/* -------------------------------------------------------------------- */
+        HFAEntry *poEhfa_Layer;
+        GUInt32  nLDict;
+
+        poEhfa_Layer = new HFAEntry( psInfo, "Ehfa_Layer", "Ehfa_Layer", 
+                                     poEimg_Layer );
+        poEhfa_Layer->MakeData();
+        poEhfa_Layer->SetPosition();
+        nLDict = HFAAllocateSpace( psInfo, strlen(szLDict)+1);
+
+        poEhfa_Layer->SetStringField( "type", "raster" );
+        poEhfa_Layer->SetIntField( "dictionaryPtr", nLDict );
+
+        VSIFSeek( psInfo->fp, nLDict, SEEK_SET );
+        VSIFWrite( (void *) szLDict, strlen(szLDict)+1, 1, psInfo->fp );
     }
 
 /* -------------------------------------------------------------------- */

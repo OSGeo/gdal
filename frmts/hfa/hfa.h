@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2000/10/12 19:30:31  warmerda
+ * substantially improved write support
+ *
  * Revision 1.4  2000/09/29 21:42:38  warmerda
  * preliminary write support implemented
  *
@@ -150,8 +153,11 @@ HFAHandle HFACreate( const char *pszFilename, int nXSize, int nYSize,
 CPLErr  HFAFlush( HFAHandle );
 
 const Eprj_MapInfo *HFAGetMapInfo( HFAHandle );
+CPLErr HFASetMapInfo( HFAHandle, const Eprj_MapInfo * );
 const Eprj_Datum *HFAGetDatum( HFAHandle );
+CPLErr HFASetDatum( HFAHandle, const Eprj_Datum * );
 const Eprj_ProParameters *HFAGetProParameters( HFAHandle );
+CPLErr HFASetProParameters( HFAHandle, const Eprj_ProParameters * );
 
 CPLErr	HFAGetRasterInfo( HFAHandle hHFA, int *pnXSize, int *pnYSize,
                           int *pnBands );
@@ -163,10 +169,14 @@ CPLErr  HFASetRasterBlock( HFAHandle hHFA, int nBand, int nXBlock, int nYBlock,
                            void * pData );
 int     HFAGetDataTypeBits( int );
 CPLErr	HFAGetPCT( HFAHandle, int, int *, double **, double **, double ** );
+CPLErr  HFASetPCT( HFAHandle, int, int, double *, double *, double * );
 void    HFADumpTree( HFAHandle, FILE * );
 void    HFADumpDictionary( HFAHandle, FILE * );
 CPLErr  HFAGetDataRange( HFAHandle, int, double *, double * );
 
+/* -------------------------------------------------------------------- */
+/*      data types.                                                     */
+/* -------------------------------------------------------------------- */
 #define EPT_u1	0
 #define EPT_u2	1
 #define EPT_u4	2
@@ -180,6 +190,33 @@ CPLErr  HFAGetDataRange( HFAHandle, int, double *, double * );
 #define EPT_f64	10
 #define EPT_c64	11
 #define EPT_c128 12
+
+/* -------------------------------------------------------------------- */
+/*      Projection codes.                                               */
+/* -------------------------------------------------------------------- */
+#define EPRJ_LATLONG				0
+#define EPRJ_UTM				1
+#define EPRJ_STATE_PLANE 			2
+#define EPRJ_ALBERS_CONIC_EQUAL_AREA		3
+#define EPRJ_LAMBERT_CONFORMAL_CONIC	        4
+#define EPRJ_MERCATOR                           5
+#define EPRJ_POLAR_STEREOGRAPHIC                6
+#define EPRJ_POLYCONIC                          7
+#define EPRJ_EQUIDISTANT_CONIC                  8
+#define EPRJ_TRANSVERSE_MERCATOR                9
+#define EPRJ_STEREOGRAPHIC                      10
+#define EPRJ_LAMBERT_AZIMUTHAL_EQUAL_AREA       11
+#define EPRJ_AZIMUTHAL_EQUIDISTANT              12
+#define EPRJ_GNOMONIC                           13
+#define EPRJ_ORTHOGRAPHIC                       14
+#define EPRJ_GENERAL_VERTICAL_NEAR_SIDE_PERSPECTIVE 15
+#define EPRJ_SINUSOIDAL                         16
+#define EPRJ_EQUIRECTANGULAR                    17
+#define EPRJ_MILLER_CYLINDRICAL                 18
+#define EPRJ_VANDERGRINTEN                      19
+#define EPRJ_HOTINE_OBLIQUE_MERCATOR            20
+#define EPRJ_SPACE_OBLIQUE_MERCATOR             21
+#define EPRJ_MODIFIED_TRANSVERSE_MERCATOR       22
 
 CPL_C_END
 

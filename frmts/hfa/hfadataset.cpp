@@ -29,6 +29,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.10  2000/10/12 19:30:31  warmerda
+ * substantially improved write support
+ *
  * Revision 1.9  2000/09/29 21:42:38  warmerda
  * preliminary write support implemented
  *
@@ -60,10 +63,29 @@
 
 #include "gdal_priv.h"
 #include "hfa.h"
+#include "ogr_spatialref.h"
 
 CPL_C_START
 void	GDALRegister_HFA(void);
 CPL_C_END
+
+#ifndef PI
+#  define PI 3.14159265358979323846
+#endif
+
+#ifndef R2D
+#  define R2D	(180/PI)
+#endif
+#ifndef D2R
+#  define D2R	(PI/180)
+#endif
+
+static const char *apszDatumMap[] = {
+    /* Imagine name, WKT name */
+    "NAD27", "North_American_Datum_1927",
+    "NAD83", "North_American_Datum_1983",
+    NULL, NULL 
+};
 
 
 /************************************************************************/
@@ -80,7 +102,12 @@ class CPL_DLL HFADataset : public GDALDataset
     
     HFAHandle	hHFA;
 
+    int         bGeoDirty;
     double      adfGeoTransform[6];
+    char	*pszProjection;
+
+    CPLErr      ReadProjection();
+    CPLErr      WriteProjection();
 
   public:
                 HFADataset();
@@ -90,11 +117,20 @@ class CPL_DLL HFADataset : public GDALDataset
     static GDALDataset *Create( const char * pszFilename,
                                 int nXSize, int nYSize, int nBands,
                                 GDALDataType eType, char ** papszParmList );
+    static GDALDataset *CreateCopy( const char * pszFilename, 
+                                    GDALDataset *poSrcDS, 
+                                    int bStrict, char ** papszOptions, 
+                                    GDALProgressFunc pfnProgress, 
+                                    void * pProgressData );
 
-#ifdef notdef    
+
     virtual const char *GetProjectionRef(void);
-#endif    
+    virtual CPLErr SetProjection( const char * );
+
     virtual CPLErr GetGeoTransform( double * );
+    virtual CPLErr SetGeoTransform( double * );
+
+    virtual void   FlushCache( void );
 };
 
 /************************************************************************/
@@ -272,6 +308,8 @@ HFADataset::HFADataset()
 
 {
     hHFA = NULL;
+    bGeoDirty = FALSE;
+    pszProjection = NULL;
 }
 
 /************************************************************************/
@@ -282,11 +320,581 @@ HFADataset::~HFADataset()
 
 {
     FlushCache();
-    
+
     if( hHFA != NULL )
         HFAClose( hHFA );
+    
+    CPLFree( pszProjection );
 }
 
+/************************************************************************/
+/*                             FlushCache()                             */
+/************************************************************************/
+
+void HFADataset::FlushCache()
+
+{
+    GDALDataset::FlushCache();
+
+/* -------------------------------------------------------------------- */
+/*      If necessary write various georef structures.                   */
+/* -------------------------------------------------------------------- */
+    if( bGeoDirty )
+    {
+/* -------------------------------------------------------------------- */
+/*      Set the projection.                                             */
+/* -------------------------------------------------------------------- */
+        WriteProjection();
+
+    }
+}
+
+/************************************************************************/
+/*                          WriteProjection()                           */
+/************************************************************************/
+
+CPLErr HFADataset::WriteProjection()
+
+{
+    Eprj_Datum	        sDatum;
+    Eprj_ProParameters  sPro;
+    Eprj_MapInfo	sMapInfo;
+    OGRSpatialReference	oSRS;
+    OGRSpatialReference *poGeogSRS = NULL;
+    int                 bHaveSRS;
+    char		*pszP = pszProjection;
+
+    bGeoDirty = FALSE;
+
+    if( pszProjection != NULL && strlen(pszProjection) > 0 
+        && oSRS.importFromWkt( &pszP ) == OGRERR_NONE )
+        bHaveSRS = TRUE;
+    else
+        bHaveSRS = FALSE;
+
+/* -------------------------------------------------------------------- */
+/*      Initialize projection and datum.                                */
+/* -------------------------------------------------------------------- */
+    memset( &sPro, 0, sizeof(sPro) );
+    memset( &sDatum, 0, sizeof(sDatum) );
+    memset( &sMapInfo, 0, sizeof(sMapInfo) );
+
+/* -------------------------------------------------------------------- */
+/*      Collect datum information.                                      */
+/* -------------------------------------------------------------------- */
+    if( bHaveSRS )
+    {
+        poGeogSRS = oSRS.CloneGeogCS();
+    }
+
+    if( poGeogSRS )
+    {
+        int	i;
+
+        sDatum.datumname = (char *) poGeogSRS->GetAttrValue( "GEOGCS|DATUM" );
+        
+        /* WKT to Imagine translation */
+        for( i = 0; apszDatumMap[i] != NULL; i += 2 )
+        {
+            if( EQUAL(sDatum.datumname,apszDatumMap[i+1]) )
+            {
+                sDatum.datumname = (char *) apszDatumMap[i];
+                break;
+            }
+        }
+    
+        if( poGeogSRS->GetTOWGS84( sDatum.params ) == OGRERR_NONE )
+            sDatum.type = EPRJ_DATUM_PARAMETRIC;
+        else if( EQUAL(sDatum.datumname,"NAD27") )
+        {
+            sDatum.type = EPRJ_DATUM_GRID;
+            sDatum.gridname = "nadcon.dat";
+        }
+        else
+        {
+            /* we will default to this (effectively WGS84) for now */
+            sDatum.type = EPRJ_DATUM_PARAMETRIC;
+        }
+
+        sPro.proSpheroid.sphereName = (char *) 
+            poGeogSRS->GetAttrValue( "GEOGCS|DATUM|SPHEROID" );
+        sPro.proSpheroid.a = poGeogSRS->GetSemiMajor();
+        sPro.proSpheroid.b = poGeogSRS->GetSemiMinor();
+        sPro.proSpheroid.radius = sPro.proSpheroid.a;
+
+        double a2 = sPro.proSpheroid.a*sPro.proSpheroid.a;
+        double b2 = sPro.proSpheroid.b*sPro.proSpheroid.b;
+
+        sPro.proSpheroid.eSquared = (a2-b2)/a2;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Recognise various projections.                                  */
+/* -------------------------------------------------------------------- */
+    const char * pszProjName = NULL;
+
+    if( bHaveSRS )
+        pszProjName = oSRS.GetAttrValue( "PROJCS|PROJECTION" );
+
+    if( pszProjName == NULL )
+    {
+        if( bHaveSRS && oSRS.IsGeographic() )
+        {
+            sPro.proNumber = EPRJ_LATLONG;
+            sPro.proName = "Geographic(Latitude/Longitude)";
+        }
+    }
+
+    /* FIXME/NOTDEF/TODO: Add State Plane */
+    else if( oSRS.GetUTMZone( NULL ) != 0 )
+    {
+        int	bNorth, nZone;
+
+        nZone = oSRS.GetUTMZone( &bNorth );
+        sPro.proNumber = EPRJ_UTM;
+        sPro.proName = "UTM";
+        sPro.proZone = nZone;
+        if( bNorth )
+            sPro.proParams[3] = 1.0;
+        else
+            sPro.proParams[3] = -1.0;
+    }
+
+    else if( EQUAL(pszProjName,SRS_PT_ALBERS_CONIC_EQUAL_AREA) )
+    {
+        sPro.proNumber = EPRJ_ALBERS_CONIC_EQUAL_AREA;
+        sPro.proName = "Albers Conic Equal Area";
+        sPro.proParams[2] = oSRS.GetProjParm(SRS_PP_STANDARD_PARALLEL_1)*R2D;
+        sPro.proParams[3] = oSRS.GetProjParm(SRS_PP_STANDARD_PARALLEL_2)*R2D;
+        sPro.proParams[4] = oSRS.GetProjParm(SRS_PP_LONGITUDE_OF_CENTER)*R2D;
+        sPro.proParams[5] = oSRS.GetProjParm(SRS_PP_LATITUDE_OF_CENTER)*R2D;
+        sPro.proParams[6] = oSRS.GetProjParm(SRS_PP_FALSE_EASTING);
+        sPro.proParams[7] = oSRS.GetProjParm(SRS_PP_FALSE_NORTHING);
+    }
+    else if( EQUAL(pszProjName,SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP) )
+    {
+        sPro.proNumber = EPRJ_LAMBERT_CONFORMAL_CONIC;
+        sPro.proName = "Lambert Conformal Conic";
+        sPro.proParams[2] = oSRS.GetProjParm(SRS_PP_STANDARD_PARALLEL_1)*R2D;
+        sPro.proParams[3] = oSRS.GetProjParm(SRS_PP_STANDARD_PARALLEL_2)*R2D;
+        sPro.proParams[4] = oSRS.GetProjParm(SRS_PP_CENTRAL_MERIDIAN)*R2D;
+        sPro.proParams[5] = oSRS.GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN)*R2D;
+        sPro.proParams[6] = oSRS.GetProjParm(SRS_PP_FALSE_EASTING);
+        sPro.proParams[7] = oSRS.GetProjParm(SRS_PP_FALSE_NORTHING);
+    }
+    else if( EQUAL(pszProjName,SRS_PT_MERCATOR_1SP) )
+    {
+        sPro.proNumber = EPRJ_MERCATOR;
+        sPro.proName = "Mercator";
+        sPro.proParams[4] = oSRS.GetProjParm(SRS_PP_CENTRAL_MERIDIAN)*R2D;
+        sPro.proParams[5] = oSRS.GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN)*R2D;
+        /* hopefully the scale factor is 1.0! */
+        sPro.proParams[6] = oSRS.GetProjParm(SRS_PP_FALSE_EASTING);
+        sPro.proParams[7] = oSRS.GetProjParm(SRS_PP_FALSE_NORTHING);
+    }
+    else if( EQUAL(pszProjName,SRS_PT_POLAR_STEREOGRAPHIC) )
+    {
+        sPro.proNumber = EPRJ_POLAR_STEREOGRAPHIC;
+        sPro.proName = "Polar Stereographic";
+        sPro.proParams[4] = oSRS.GetProjParm(SRS_PP_CENTRAL_MERIDIAN)*R2D;
+        sPro.proParams[5] = oSRS.GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN)*R2D;
+        /* hopefully the scale factor is 1.0! */
+        sPro.proParams[6] = oSRS.GetProjParm(SRS_PP_FALSE_EASTING);
+        sPro.proParams[7] = oSRS.GetProjParm(SRS_PP_FALSE_NORTHING);
+    }
+    else if( EQUAL(pszProjName,SRS_PT_POLYCONIC) )
+    {
+        sPro.proNumber = EPRJ_POLYCONIC;
+        sPro.proName = "Polyconic";
+        sPro.proParams[4] = oSRS.GetProjParm(SRS_PP_CENTRAL_MERIDIAN)*R2D;
+        sPro.proParams[5] = oSRS.GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN)*R2D;
+        sPro.proParams[6] = oSRS.GetProjParm(SRS_PP_FALSE_EASTING);
+        sPro.proParams[7] = oSRS.GetProjParm(SRS_PP_FALSE_NORTHING);
+    }
+    else if( EQUAL(pszProjName,SRS_PT_EQUIDISTANT_CONIC) )
+    {
+        sPro.proNumber = EPRJ_EQUIDISTANT_CONIC;
+        sPro.proName = "Equidistant Conic";
+        sPro.proParams[2] = oSRS.GetProjParm(SRS_PP_STANDARD_PARALLEL_1)*R2D;
+        sPro.proParams[3] = oSRS.GetProjParm(SRS_PP_STANDARD_PARALLEL_2)*R2D;
+        sPro.proParams[4] = oSRS.GetProjParm(SRS_PP_LONGITUDE_OF_CENTER)*R2D;
+        sPro.proParams[5] = oSRS.GetProjParm(SRS_PP_LATITUDE_OF_CENTER)*R2D;
+        sPro.proParams[6] = oSRS.GetProjParm(SRS_PP_FALSE_EASTING);
+        sPro.proParams[7] = oSRS.GetProjParm(SRS_PP_FALSE_NORTHING);
+        sPro.proParams[8] = 1.0;
+    }
+    else if( EQUAL(pszProjName,SRS_PT_TRANSVERSE_MERCATOR) )
+    {
+        sPro.proNumber = EPRJ_TRANSVERSE_MERCATOR;
+        sPro.proName = "Transverse Mercator";
+        sPro.proParams[4] = oSRS.GetProjParm(SRS_PP_CENTRAL_MERIDIAN)*R2D;
+        sPro.proParams[5] = oSRS.GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN)*R2D;
+        sPro.proParams[2] = oSRS.GetProjParm(SRS_PP_SCALE_FACTOR,1.0);
+        sPro.proParams[6] = oSRS.GetProjParm(SRS_PP_FALSE_EASTING);
+        sPro.proParams[7] = oSRS.GetProjParm(SRS_PP_FALSE_NORTHING);
+    }
+    else if( EQUAL(pszProjName,SRS_PT_STEREOGRAPHIC) )
+    {
+        sPro.proNumber = EPRJ_STEREOGRAPHIC;
+        sPro.proName = "Stereographic";
+        sPro.proParams[4] = oSRS.GetProjParm(SRS_PP_CENTRAL_MERIDIAN)*R2D;
+        sPro.proParams[5] = oSRS.GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN)*R2D;
+        /* hopefully the scale factor is 1.0! */
+        sPro.proParams[6] = oSRS.GetProjParm(SRS_PP_FALSE_EASTING);
+        sPro.proParams[7] = oSRS.GetProjParm(SRS_PP_FALSE_NORTHING);
+    }
+    else if( EQUAL(pszProjName,SRS_PT_LAMBERT_AZIMUTHAL_EQUAL_AREA) )
+    {
+        sPro.proNumber = EPRJ_LAMBERT_AZIMUTHAL_EQUAL_AREA;
+        sPro.proName = "Lambert Azitmuthal Equal Area";
+        sPro.proParams[4] = oSRS.GetProjParm(SRS_PP_LONGITUDE_OF_CENTER)*R2D;
+        sPro.proParams[5] = oSRS.GetProjParm(SRS_PP_LATITUDE_OF_CENTER)*R2D;
+        sPro.proParams[6] = oSRS.GetProjParm(SRS_PP_FALSE_EASTING);
+        sPro.proParams[7] = oSRS.GetProjParm(SRS_PP_FALSE_NORTHING);
+    }
+    else if( EQUAL(pszProjName,SRS_PT_AZIMUTHAL_EQUIDISTANT) )
+    {
+        sPro.proNumber = EPRJ_AZIMUTHAL_EQUIDISTANT;
+        sPro.proName = "Azitmuthal Equidistant";
+        sPro.proParams[4] = oSRS.GetProjParm(SRS_PP_LONGITUDE_OF_CENTER)*R2D;
+        sPro.proParams[5] = oSRS.GetProjParm(SRS_PP_LATITUDE_OF_CENTER)*R2D;
+        sPro.proParams[6] = oSRS.GetProjParm(SRS_PP_FALSE_EASTING);
+        sPro.proParams[7] = oSRS.GetProjParm(SRS_PP_FALSE_NORTHING);
+    }
+    else if( EQUAL(pszProjName,SRS_PT_GNOMONIC) )
+    {
+        sPro.proNumber = EPRJ_GNOMONIC;
+        sPro.proName = "Gnomonic";
+        sPro.proParams[4] = oSRS.GetProjParm(SRS_PP_CENTRAL_MERIDIAN)*R2D;
+        sPro.proParams[5] = oSRS.GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN)*R2D;
+        sPro.proParams[6] = oSRS.GetProjParm(SRS_PP_FALSE_EASTING);
+        sPro.proParams[7] = oSRS.GetProjParm(SRS_PP_FALSE_NORTHING);
+    }
+    else if( EQUAL(pszProjName,SRS_PT_ORTHOGRAPHIC) )
+    {
+        sPro.proNumber = EPRJ_ORTHOGRAPHIC;
+        sPro.proName = "Orthographic";
+        sPro.proParams[4] = oSRS.GetProjParm(SRS_PP_CENTRAL_MERIDIAN)*R2D;
+        sPro.proParams[5] = oSRS.GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN)*R2D;
+        sPro.proParams[6] = oSRS.GetProjParm(SRS_PP_FALSE_EASTING);
+        sPro.proParams[7] = oSRS.GetProjParm(SRS_PP_FALSE_NORTHING);
+    }
+    else if( EQUAL(pszProjName,SRS_PT_SINUSOIDAL) )
+    {
+        sPro.proNumber = EPRJ_SINUSOIDAL;
+        sPro.proName = "Sinusoidal";
+        sPro.proParams[4] = oSRS.GetProjParm(SRS_PP_LONGITUDE_OF_CENTER)*R2D;
+        sPro.proParams[6] = oSRS.GetProjParm(SRS_PP_FALSE_EASTING);
+        sPro.proParams[7] = oSRS.GetProjParm(SRS_PP_FALSE_NORTHING);
+    }
+    else if( EQUAL(pszProjName,SRS_PT_EQUIRECTANGULAR) )
+    {
+        sPro.proNumber = EPRJ_EQUIRECTANGULAR;
+        sPro.proName = "Equirectangular";
+        sPro.proParams[4] = oSRS.GetProjParm(SRS_PP_CENTRAL_MERIDIAN)*R2D;
+        sPro.proParams[5] = oSRS.GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN)*R2D;
+        sPro.proParams[6] = oSRS.GetProjParm(SRS_PP_FALSE_EASTING);
+        sPro.proParams[7] = oSRS.GetProjParm(SRS_PP_FALSE_NORTHING);
+    }
+    else if( EQUAL(pszProjName,SRS_PT_MILLER_CYLINDRICAL) )
+    {
+        sPro.proNumber = EPRJ_MILLER_CYLINDRICAL;
+        sPro.proName = "Miller Cylindrical";
+        sPro.proParams[4] = oSRS.GetProjParm(SRS_PP_LONGITUDE_OF_CENTER)*R2D;
+        /* hopefully the latitude is zero! */
+        sPro.proParams[6] = oSRS.GetProjParm(SRS_PP_FALSE_EASTING);
+        sPro.proParams[7] = oSRS.GetProjParm(SRS_PP_FALSE_NORTHING);
+    }
+    else if( EQUAL(pszProjName,SRS_PT_VANDERGRINTEN) )
+    {
+        sPro.proNumber = EPRJ_VANDERGRINTEN;
+        sPro.proName = "VanDerGrinten";
+        sPro.proParams[4] = oSRS.GetProjParm(SRS_PP_CENTRAL_MERIDIAN)*R2D;
+        sPro.proParams[6] = oSRS.GetProjParm(SRS_PP_FALSE_EASTING);
+        sPro.proParams[7] = oSRS.GetProjParm(SRS_PP_FALSE_NORTHING);
+    }
+    else if( EQUAL(pszProjName,SRS_PT_HOTINE_OBLIQUE_MERCATOR) )
+    {
+        sPro.proNumber = EPRJ_HOTINE_OBLIQUE_MERCATOR;
+        sPro.proName = "Hotine Oblique Mercator";
+        sPro.proParams[2] = oSRS.GetProjParm(SRS_PP_SCALE_FACTOR,1.0);
+        sPro.proParams[3] = oSRS.GetProjParm(SRS_PP_AZIMUTH)*R2D;
+        /* hopefully the rectified grid angle is zero */
+        sPro.proParams[4] = oSRS.GetProjParm(SRS_PP_LONGITUDE_OF_CENTER)*R2D;
+        sPro.proParams[5] = oSRS.GetProjParm(SRS_PP_LATITUDE_OF_CENTER)*R2D;
+        sPro.proParams[6] = oSRS.GetProjParm(SRS_PP_FALSE_EASTING);
+        sPro.proParams[7] = oSRS.GetProjParm(SRS_PP_FALSE_NORTHING);
+        sPro.proParams[12] = 1.0;
+    }
+    else
+    {
+    }
+
+/* -------------------------------------------------------------------- */
+/*      MapInfo                                                         */
+/* -------------------------------------------------------------------- */
+
+    if( bHaveSRS && sPro.proName != NULL )
+        sMapInfo.proName = sPro.proName;
+    else
+        sMapInfo.proName = "Unknown";
+
+    sMapInfo.upperLeftCenter.x = 
+        adfGeoTransform[0] + adfGeoTransform[1]*0.5;
+    sMapInfo.upperLeftCenter.y = 
+        adfGeoTransform[3] + adfGeoTransform[5]*0.5;
+
+    sMapInfo.lowerRightCenter.x = 
+        adfGeoTransform[0] + adfGeoTransform[1] * (GetRasterXSize()-0.5);
+    sMapInfo.lowerRightCenter.y = 
+        adfGeoTransform[3] + adfGeoTransform[5] * (GetRasterYSize()-0.5);
+
+    sMapInfo.pixelSize.width = adfGeoTransform[1];
+    sMapInfo.pixelSize.height = adfGeoTransform[5];
+
+    sMapInfo.units = "meters";
+
+    if( bHaveSRS )
+    {
+        if( oSRS.IsGeographic() )
+            sMapInfo.units = "dd";
+        else if( oSRS.GetLinearUnits() == 1.0 )
+            sMapInfo.units = "meters";
+        else
+            sMapInfo.units = "feet";
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Write out definitions.                                          */
+/* -------------------------------------------------------------------- */
+    HFASetMapInfo( hHFA, &sMapInfo );
+
+    if( bHaveSRS && sPro.proName != NULL )
+    {
+        HFASetProParameters( hHFA, &sPro );
+        HFASetDatum( hHFA, &sDatum );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Cleanup                                                         */
+/* -------------------------------------------------------------------- */
+    if( poGeogSRS != NULL )
+        delete poGeogSRS;
+
+    return CE_None;
+}
+
+/************************************************************************/
+/*                           ReadProjection()                           */
+/************************************************************************/
+
+CPLErr HFADataset::ReadProjection()
+
+{
+    const Eprj_Datum	      *psDatum;
+    const Eprj_ProParameters  *psPro;
+    const Eprj_MapInfo        *psMapInfo;
+    OGRSpatialReference        oSRS;
+
+    psDatum = HFAGetDatum( hHFA );
+    psPro = HFAGetProParameters( hHFA );
+    psMapInfo = HFAGetMapInfo( hHFA );
+
+    if( psPro == NULL )
+        return CE_Failure;
+
+/* -------------------------------------------------------------------- */
+/*      Handle different projection methods.                            */
+/* -------------------------------------------------------------------- */
+    switch( psPro->proNumber )
+    {
+      case EPRJ_LATLONG:
+        break;
+       
+      case EPRJ_UTM:
+        oSRS.SetUTM( psPro->proZone, psPro->proParams[3] >= 0.0 );
+        break;
+
+      case EPRJ_STATE_PLANE:
+        /* We don't currently handle state plane */
+        break;
+
+      case EPRJ_ALBERS_CONIC_EQUAL_AREA:
+        oSRS.SetACEA( psPro->proParams[2]*R2D, psPro->proParams[3]*R2D, 
+                      psPro->proParams[5]*R2D, psPro->proParams[4]*R2D, 
+                      psPro->proParams[6], psPro->proParams[7] );
+        break;
+
+      case EPRJ_LAMBERT_CONFORMAL_CONIC:
+        oSRS.SetLCC( psPro->proParams[2]*R2D, psPro->proParams[3]*R2D, 
+                     psPro->proParams[5]*R2D, psPro->proParams[4]*R2D, 
+                     psPro->proParams[6], psPro->proParams[7] );
+        break;
+        
+      case EPRJ_MERCATOR:
+        oSRS.SetMercator( psPro->proParams[5]*R2D, psPro->proParams[4]*R2D, 
+                          1.0,
+                          psPro->proParams[6], psPro->proParams[7] );
+        break;
+        
+      case EPRJ_POLAR_STEREOGRAPHIC:
+        oSRS.SetPS( psPro->proParams[5]*R2D, psPro->proParams[4]*R2D, 
+                    1.0,
+                    psPro->proParams[6], psPro->proParams[7] );
+        break;
+
+      case EPRJ_POLYCONIC:
+        oSRS.SetPolyconic( psPro->proParams[5]*R2D, psPro->proParams[4]*R2D, 
+                           psPro->proParams[6], psPro->proParams[7] );
+        break;
+
+      case EPRJ_EQUIDISTANT_CONIC:
+        double		dfStdParallel2;
+
+        if( psPro->proParams[8] != 0.0 )
+            dfStdParallel2 = psPro->proParams[3]*R2D;
+        else
+            dfStdParallel2 = psPro->proParams[2]*R2D;
+        oSRS.SetEC( psPro->proParams[2]*R2D, dfStdParallel2,
+                    psPro->proParams[5]*R2D, psPro->proParams[4]*R2D, 
+                    psPro->proParams[6], psPro->proParams[7] );
+        break;
+
+      case EPRJ_TRANSVERSE_MERCATOR:
+        oSRS.SetTM( psPro->proParams[5]*R2D, psPro->proParams[4]*R2D, 
+                    psPro->proParams[2],
+                    psPro->proParams[6], psPro->proParams[7] );
+        break;
+
+      case EPRJ_STEREOGRAPHIC:
+        oSRS.SetStereographic( psPro->proParams[5]*R2D,psPro->proParams[4]*R2D,
+                               1.0,
+                               psPro->proParams[6], psPro->proParams[7] );
+        break;
+
+      case EPRJ_LAMBERT_AZIMUTHAL_EQUAL_AREA:
+        oSRS.SetLAEA( psPro->proParams[5]*R2D, psPro->proParams[4]*R2D, 
+                      psPro->proParams[6], psPro->proParams[7] );
+        break;
+
+      case EPRJ_AZIMUTHAL_EQUIDISTANT:
+        oSRS.SetAE( psPro->proParams[5]*R2D, psPro->proParams[4]*R2D, 
+                    psPro->proParams[6], psPro->proParams[7] );
+        break;
+
+      case EPRJ_GNOMONIC:
+        oSRS.SetGnomonic( psPro->proParams[5]*R2D, psPro->proParams[4]*R2D, 
+                          psPro->proParams[6], psPro->proParams[7] );
+        break;
+
+      case EPRJ_ORTHOGRAPHIC:
+        oSRS.SetOrthographic( psPro->proParams[5]*R2D, psPro->proParams[4]*R2D,
+                              psPro->proParams[6], psPro->proParams[7] );
+        break;
+        
+      case EPRJ_SINUSOIDAL:
+        oSRS.SetSinusoidal( psPro->proParams[4]*R2D, 
+                            psPro->proParams[6], psPro->proParams[7] );
+        break;
+
+      case EPRJ_EQUIRECTANGULAR:
+        oSRS.SetEquirectangular( 
+            psPro->proParams[5]*R2D, psPro->proParams[4]*R2D, 
+            psPro->proParams[6], psPro->proParams[7] );
+        break;
+
+      case EPRJ_MILLER_CYLINDRICAL:
+        oSRS.SetMC( 0.0, psPro->proParams[4]*R2D, 
+                    psPro->proParams[6], psPro->proParams[7] );
+        break;
+
+      case EPRJ_VANDERGRINTEN:
+        oSRS.SetVDG( psPro->proParams[4]*R2D, 
+                     psPro->proParams[6], psPro->proParams[7] );
+        break;
+
+      case EPRJ_HOTINE_OBLIQUE_MERCATOR:
+        if( psPro->proParams[12] > 0.0 )
+            oSRS.SetHOM( psPro->proParams[5]*R2D, psPro->proParams[4]*R2D, 
+                         psPro->proParams[3]*R2D, 0.0, 
+                         psPro->proParams[2], 
+                         psPro->proParams[6], psPro->proParams[7] );
+        break;
+
+      default:
+        /* we do nothing for unsupported projections for now */
+        break;
+    }
+
+    if( oSRS.IsProjected() )
+    {
+        oSRS.SetProjCS( psPro->proName );
+
+        if( psMapInfo && EQUAL(psMapInfo->units,"feet") )
+        {
+            oSRS.SetLinearUnits( SRS_UL_US_FOOT, 
+                                 atof(SRS_UL_US_FOOT_CONV) );
+        }
+        else
+        {
+            oSRS.SetLinearUnits( SRS_UL_METER, 1.0 );
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Try and set the GeogCS information.                             */
+/* -------------------------------------------------------------------- */
+    const char *pszDatumName = psPro->proSpheroid.sphereName;
+    const char *pszEllipsoidName = psPro->proSpheroid.sphereName;
+    double	dfInvFlattening;
+    
+    if( psDatum != NULL )
+    {
+        int	i;
+
+        pszDatumName = psDatum->datumname;
+
+        /* Imagine to WKT translation */
+        for( i = 0; apszDatumMap[i] != NULL; i += 2 )
+        {
+            if( EQUAL(pszDatumName,apszDatumMap[i]) )
+            {
+                pszDatumName = apszDatumMap[i+1];
+                break;
+            }
+        }
+    }
+
+    dfInvFlattening = 1.0/(1.0 - psPro->proSpheroid.b/psPro->proSpheroid.a);
+
+    oSRS.SetGeogCS( pszDatumName, pszDatumName, pszEllipsoidName, 
+                    psPro->proSpheroid.a, dfInvFlattening );
+
+    if( psDatum != NULL && psDatum->type == EPRJ_DATUM_PARAMETRIC )
+    {
+        oSRS.SetTOWGS84( psDatum->params[0], 
+                         psDatum->params[1], 
+                         psDatum->params[2], 
+                         psDatum->params[3], 
+                         psDatum->params[4], 
+                         psDatum->params[5], 
+                         psDatum->params[6] );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Get the WKT representation of the coordinate system.            */
+/* -------------------------------------------------------------------- */
+    CPLFree( pszProjection );
+    pszProjection = NULL;
+    
+    if( oSRS.exportToWkt( &pszProjection ) == OGRERR_NONE )
+        return CE_None;
+    else
+    {
+        pszProjection = NULL;
+        return CE_Failure;
+    }
+}
 
 /************************************************************************/
 /*                                Open()                                */
@@ -359,6 +967,11 @@ GDALDataset *HFADataset::Open( GDALOpenInfo * poOpenInfo )
     }
     
 /* -------------------------------------------------------------------- */
+/*      Get the projection.                                             */
+/* -------------------------------------------------------------------- */
+    poDS->ReadProjection();
+
+/* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
     for( i = 0; i < poDS->nBands; i++ )
@@ -372,6 +985,29 @@ GDALDataset *HFADataset::Open( GDALOpenInfo * poOpenInfo )
     return( poDS );
 }
 
+/************************************************************************/
+/*                          GetProjectionRef()                          */
+/************************************************************************/
+
+const char *HFADataset::GetProjectionRef()
+
+{
+    return pszProjection;
+}
+
+/************************************************************************/
+/*                           SetProjection()                            */
+/************************************************************************/
+
+CPLErr HFADataset::SetProjection( const char * pszNewProjection )
+
+{
+    CPLFree( pszProjection );
+    pszProjection = CPLStrdup( pszNewProjection );
+    bGeoDirty = TRUE;
+
+    return CE_None;
+}
 
 /************************************************************************/
 /*                          GetGeoTransform()                           */
@@ -381,6 +1017,19 @@ CPLErr HFADataset::GetGeoTransform( double * padfTransform )
 
 {
     memcpy( padfTransform, adfGeoTransform, sizeof(double)*6 );
+
+    return CE_None;
+}
+
+/************************************************************************/
+/*                          GetSeoTransform()                           */
+/************************************************************************/
+
+CPLErr HFADataset::SetGeoTransform( double * padfTransform )
+
+{
+    memcpy( adfGeoTransform, padfTransform, sizeof(double)*6 );
+    bGeoDirty = TRUE;
 
     return CE_None;
 }
@@ -465,6 +1114,171 @@ GDALDataset *HFADataset::Create( const char * pszFilenameIn,
 }
 
 /************************************************************************/
+/*                             CreateCopy()                             */
+/************************************************************************/
+
+GDALDataset *
+HFADataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS, 
+                        int bStrict, char ** papszOptions, 
+                        GDALProgressFunc pfnProgress, void * pProgressData )
+
+{
+    HFADataset	*poDS;
+    GDALDataType eType = GDT_Byte;
+    int          iBand;
+
+    if( !pfnProgress( 0.0, NULL, pProgressData ) )
+        return NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Create the basic dataset.                                       */
+/* -------------------------------------------------------------------- */
+    for( iBand = 0; iBand < poSrcDS->GetRasterCount(); iBand++ )
+    {
+        GDALRasterBand *poBand = poSrcDS->GetRasterBand( iBand+1 );
+        eType = GDALDataTypeUnion( eType, poBand->GetRasterDataType() );
+    }    
+
+    poDS = (HFADataset *) Create( pszFilename, 
+                                  poSrcDS->GetRasterXSize(), 
+                                  poSrcDS->GetRasterYSize(), 
+                                  poSrcDS->GetRasterCount(), 
+                                  eType, papszOptions );
+
+/* -------------------------------------------------------------------- */
+/*      Does the source have a PCT for any of the bands?  If so,        */
+/*      copy it over.                                                   */
+/* -------------------------------------------------------------------- */
+    for( iBand = 0; iBand < poSrcDS->GetRasterCount(); iBand++ )
+    {
+        GDALRasterBand *poBand = poSrcDS->GetRasterBand( iBand+1 );
+        GDALColorTable *poCT;
+
+        poCT = poBand->GetColorTable();
+        if( poCT != NULL )
+        {
+            double	*padfRed, *padfGreen, *padfBlue;
+            int         nColors = poCT->GetColorEntryCount(), iColor;
+
+            padfRed   = (double *) CPLMalloc(sizeof(double) * nColors);
+            padfGreen = (double *) CPLMalloc(sizeof(double) * nColors);
+            padfBlue  = (double *) CPLMalloc(sizeof(double) * nColors);
+            for( iColor = 0; iColor < nColors; iColor++ )
+            {
+                GDALColorEntry  sEntry;
+
+                poCT->GetColorEntryAsRGB( iColor, &sEntry );
+                padfRed[iColor]   = sEntry.c1 / 255.0;
+                padfGreen[iColor] = sEntry.c2 / 255.0;
+                padfBlue[iColor]  = sEntry.c3 / 255.0;
+            }
+
+            HFASetPCT( poDS->hHFA, iBand+1, nColors, 
+                       padfRed, padfGreen, padfBlue );
+
+            CPLFree( padfRed );
+            CPLFree( padfGreen );
+            CPLFree( padfBlue );
+        }
+    }    
+
+/* -------------------------------------------------------------------- */
+/*      Copy projection information.                                    */
+/* -------------------------------------------------------------------- */
+    double	adfGeoTransform[6];
+    const char  *pszProj;
+
+    if( poSrcDS->GetGeoTransform( adfGeoTransform ) == CE_None )
+        poDS->SetGeoTransform( adfGeoTransform );
+
+    pszProj = poSrcDS->GetProjectionRef();
+    if( pszProj != NULL && strlen(pszProj) > 0 )
+        poDS->SetProjection( pszProj );
+
+/* -------------------------------------------------------------------- */
+/*      Copy the image data.                                            */
+/* -------------------------------------------------------------------- */
+    int         nXSize = poDS->GetRasterXSize();
+    int         nYSize = poDS->GetRasterYSize();
+    int  	nBlockXSize, nBlockYSize, nBlockTotal, nBlocksDone;
+
+    poDS->GetRasterBand(1)->GetBlockSize( &nBlockXSize, &nBlockYSize );
+
+    nBlockTotal = ((nXSize + nBlockXSize - 1) / nBlockXSize)
+        * ((nYSize + nBlockYSize - 1) / nBlockYSize)
+        * poSrcDS->GetRasterCount();
+
+    nBlocksDone = 0;
+    for( iBand = 0; iBand < poSrcDS->GetRasterCount(); iBand++ )
+    {
+        GDALRasterBand *poSrcBand = poSrcDS->GetRasterBand( iBand+1 );
+        GDALRasterBand *poDstBand = poDS->GetRasterBand( iBand+1 );
+        int	       iYOffset, iXOffset;
+        void           *pData;
+        CPLErr  eErr;
+
+
+        pData = CPLMalloc(nBlockXSize * nBlockYSize
+                          * GDALGetDataTypeSize(eType) / 8);
+
+        for( iYOffset = 0; iYOffset < nYSize; iYOffset += nBlockYSize )
+        {
+            for( iXOffset = 0; iXOffset < nXSize; iXOffset += nBlockXSize )
+            {
+                int	nTBXSize, nTBYSize;
+
+                if( !pfnProgress( (nBlocksDone++) / (float) nBlockTotal,
+                                  NULL, pProgressData ) )
+                {
+                    CPLError( CE_Failure, CPLE_UserInterrupt, 
+                              "User terminated" );
+                    delete poDS;
+                    poHFADriver->Delete( pszFilename );
+                    return NULL;
+                }
+
+                nTBXSize = MIN(nBlockXSize,nXSize-iXOffset);
+                nTBYSize = MIN(nBlockYSize,nYSize-iYOffset);
+
+                eErr = poSrcBand->RasterIO( GF_Read, 
+                                            iXOffset, iYOffset, 
+                                            nTBXSize, nTBYSize,
+                                            pData, nTBXSize, nTBYSize,
+                                            eType, 0, 0 );
+                if( eErr != CE_None )
+                {
+                    return NULL;
+                }
+            
+                eErr = poDstBand->RasterIO( GF_Write, 
+                                            iXOffset, iYOffset, 
+                                            nTBXSize, nTBYSize,
+                                            pData, nTBXSize, nTBYSize,
+                                            eType, 0, 0 );
+
+                if( eErr != CE_None )
+                {
+                    return NULL;
+                }
+            }
+        }
+
+        CPLFree( pData );
+    }
+
+    if( !pfnProgress( 1.0, NULL, pProgressData ) )
+    {
+        CPLError( CE_Failure, CPLE_UserInterrupt, 
+                  "User terminated" );
+        delete poDS;
+        poHFADriver->Delete( pszFilename );
+        return NULL;
+    }
+
+    return poDS;
+}
+
+/************************************************************************/
 /*                          GDALRegister_HFA()                        */
 /************************************************************************/
 
@@ -483,6 +1297,7 @@ void GDALRegister_HFA()
         
         poDriver->pfnOpen = HFADataset::Open;
         poDriver->pfnCreate = HFADataset::Create;
+        poDriver->pfnCreateCopy = HFADataset::CreateCopy;
 
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }

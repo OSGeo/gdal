@@ -33,6 +33,9 @@
  * Implementation of the HFAEntry class.
  *
  * $Log$
+ * Revision 1.5  2000/10/12 19:30:32  warmerda
+ * substantially improved write support
+ *
  * Revision 1.4  2000/09/29 21:42:38  warmerda
  * preliminary write support implemented
  *
@@ -525,6 +528,7 @@ CPLErr HFAEntry::SetFieldValue( const char * pszFieldPath,
 /* -------------------------------------------------------------------- */
 /*      Extract the instance information.                               */
 /* -------------------------------------------------------------------- */
+    MarkDirty();
 
     return( poType->SetInstValue( pszFieldPath,
                                   pabyData, nDataPos, nDataSize,
@@ -635,6 +639,7 @@ CPLErr HFAEntry::FlushToDisk()
 /* -------------------------------------------------------------------- */
         GUInt32		nLong;
 
+        fflush( psHFA->fp );
         if( VSIFSeek( psHFA->fp, nFilePos, SEEK_SET ) != 0 )
         {
             CPLError( CE_Failure, CPLE_FileIO, 
@@ -675,7 +680,7 @@ CPLErr HFAEntry::FlushToDisk()
         VSIFWrite( &nLong, 4, 1, psHFA->fp );
 
         VSIFWrite( szName, 1, 64, psHFA->fp );
-        VSIFWrite( szType, 1, 64, psHFA->fp );
+        VSIFWrite( szType, 1, 32, psHFA->fp );
 
         nLong = 0; /* Should we keep the time, or set it more reasonably? */
         if( VSIFWrite( &nLong, 4, 1, psHFA->fp ) != 1 )
@@ -689,6 +694,7 @@ CPLErr HFAEntry::FlushToDisk()
 /* -------------------------------------------------------------------- */
 /*      Write out the data.                                             */
 /* -------------------------------------------------------------------- */
+        fflush( psHFA->fp );
         if( nDataSize > 0 && pabyData != NULL )
         {
             if( VSIFSeek( psHFA->fp, nDataPos, SEEK_SET ) != 0 
@@ -701,6 +707,8 @@ CPLErr HFAEntry::FlushToDisk()
                 return CE_Failure;
             }
         }
+
+        fflush( psHFA->fp );
     }
 
 /* -------------------------------------------------------------------- */

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2000/10/12 19:30:32  warmerda
+ * substantially improved write support
+ *
  * Revision 1.7  2000/09/29 21:42:38  warmerda
  * preliminary write support implemented
  *
@@ -582,5 +585,111 @@ CPLErr HFABand::GetPCT( int * pnColors,
     *ppadfGreen = apadfPCT[1];
     *ppadfBlue = apadfPCT[2];
     
+    return( CE_None );
+}
+
+/************************************************************************/
+/*                               SetPCT()                               */
+/*                                                                      */
+/*      Set the PCT information for this band.                          */
+/************************************************************************/
+
+CPLErr HFABand::SetPCT( int nColors,
+                        double *padfRed,
+                        double *padfGreen,
+                        double *padfBlue )
+
+{
+
+    if( nColors == 0 )
+        return CE_None;
+
+/* -------------------------------------------------------------------- */
+/*      Create the Descriptor table.                                    */
+/* -------------------------------------------------------------------- */
+    if( TRUE )
+    {
+        HFAEntry	*poEdsc_Table;
+
+        poEdsc_Table = new HFAEntry( psInfo, "Descriptor_Table", "Edsc_Table",
+                                     poNode );
+
+        poEdsc_Table->SetIntField( "numrows", nColors );
+
+/* -------------------------------------------------------------------- */
+/*      Create the Binning function node.  I am not sure that we        */
+/*      really need this though.                                        */
+/* -------------------------------------------------------------------- */
+        HFAEntry       *poEdsc_BinFunction;
+
+        poEdsc_BinFunction = 
+            new HFAEntry( psInfo, "#Bin_Function#", "Edsc_BinFunction",
+                          poEdsc_Table );
+
+        poEdsc_BinFunction->SetIntField( "numBins", 256 );
+        poEdsc_BinFunction->SetStringField( "binFunction", "direct" );
+        poEdsc_BinFunction->SetDoubleField( "minLimit", 0.0 );
+        poEdsc_BinFunction->SetDoubleField( "maxLimit", 255.0 );
+
+/* -------------------------------------------------------------------- */
+/*      Process each color component                                    */
+/* -------------------------------------------------------------------- */
+        for( int iColumn = 0; iColumn < 3; iColumn++ )
+        {
+            HFAEntry        *poEdsc_Column;
+            double	    *padfValues;
+            const char      *pszName;
+            
+            if( iColumn == 0 )
+            {
+                pszName = "Red";
+                padfValues = padfRed;
+            }
+            else if( iColumn == 1 )
+            {
+                pszName = "Green";
+                padfValues = padfGreen;
+            }
+            else if( iColumn == 2 )
+            {
+                pszName = "Blue";
+                padfValues = padfBlue;
+                
+            }
+
+/* -------------------------------------------------------------------- */
+/*      Create the Edsc_Column.                                         */
+/* -------------------------------------------------------------------- */
+            poEdsc_Column = new HFAEntry( psInfo, pszName, "Edsc_Column", 
+                                          poEdsc_Table );
+            poEdsc_Column->SetIntField( "numRows", nColors );
+            poEdsc_Column->SetStringField( "dataType", "real" );
+            poEdsc_Column->SetIntField( "maxNumChars", 0 );
+
+/* -------------------------------------------------------------------- */
+/*      Write the data out.                                             */
+/* -------------------------------------------------------------------- */
+            int		nOffset = HFAAllocateSpace( psInfo, 8*nColors);
+            double      *padfFileData;
+
+            poEdsc_Column->SetIntField( "columnDataPtr", nOffset );
+
+            padfFileData = (double *) CPLMalloc(nColors*sizeof(double));
+            for( int iColor = 0; iColor < nColors; iColor++ )
+            {
+                padfFileData[iColor] = padfValues[iColor];
+                HFAStandard( 8, padfFileData + iColor );
+            }
+            VSIFSeek( psInfo->fp, nOffset, SEEK_SET );
+            VSIFWrite( padfFileData, 8, nColors, psInfo->fp );
+            CPLFree( padfFileData );
+        }
+
+/* -------------------------------------------------------------------- */
+/*      Update the layer type to be thematic.                           */
+/* -------------------------------------------------------------------- */
+        poNode->SetStringField( "layerType", "thematic" );
+    }
+
     return( CE_None );
 }

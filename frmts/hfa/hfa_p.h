@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2000/10/12 19:30:32  warmerda
+ * substantially improved write support
+ *
  * Revision 1.5  2000/09/29 21:42:38  warmerda
  * preliminary write support implemented
  *
@@ -123,7 +126,7 @@ class HFABand
     double	*apadfPCT[3];
 
     CPLErr	LoadBlockInfo();
-    
+
   public:
     		HFABand( HFAInfo_t *, HFAEntry * );
                 ~HFABand();
@@ -146,6 +149,7 @@ class HFABand
     CPLErr	SetRasterBlock( int nXBlock, int nYBlock, void * pData );
 
     CPLErr	GetPCT( int *, double **, double **, double ** );
+    CPLErr	SetPCT( int, double *, double *, double * );
 };
 
 

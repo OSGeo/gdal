@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2000/10/12 19:30:32  warmerda
+ * substantially improved write support
+ *
  * Revision 1.8  2000/09/29 21:42:38  warmerda
  * preliminary write support implemented
  *
@@ -56,6 +59,8 @@
  */
 
 #include "hfa_p.h"
+
+#define MAX_ENTRY_REPORT   16
                            
 /************************************************************************/
 /* ==================================================================== */
@@ -353,27 +358,42 @@ HFAField::SetInstValue( const char * pszField, int nIndexValue,
                         char chReqType, void *pValue )
 
 {
-    int			nInstItemCount = GetInstCount( pabyData );
-
 /* -------------------------------------------------------------------- */
-/*      Check the index value is valid.                                 */
-/*                                                                      */
-/*      Eventually this will have to account for variable fields.       */
-/* -------------------------------------------------------------------- */
-    if( nIndexValue < 0 || nIndexValue >= nInstItemCount )
-    {
-        CPLAssert( FALSE );
-        return CE_Failure;
-    }
-
-/* -------------------------------------------------------------------- */
-/*      For now pointer operations are not supported.                   */
+/*	If this field contains a pointer, then we will adjust the	*/
+/*	data offset relative to it.    					*/
 /* -------------------------------------------------------------------- */
     if( chPointer != '\0' )
     {
-        CPLError( CE_Failure, CPLE_NotSupported, 
-             "HFAField::SetInstValue() not supported yet through pointers." );
-        return CE_Failure;
+        GUInt32		nCount;
+        GUInt32		nOffset;
+
+        if( nBytes > -1 )
+            nCount = nItemCount;
+        else if( chReqType == 's' )
+        {
+            if( pValue == NULL )
+                nCount = 0;
+            else
+                nCount = strlen((char *) pValue) + 1;
+        }
+        else
+            nCount = nIndexValue+1;
+
+        nOffset = nCount;
+        HFAStandard( 4, &nOffset );
+        memcpy( pabyData, &nOffset, 4 );
+
+        if( pValue == NULL )
+            nOffset = 0;
+        else
+            nOffset = nDataOffset + 8;
+        HFAStandard( 4, &nOffset );
+        memcpy( pabyData+4, &nOffset, 4 );
+
+        pabyData += 8;
+
+        nDataOffset += 8;
+        nDataSize -= 8;
     }
 
 /* -------------------------------------------------------------------- */
@@ -382,8 +402,22 @@ HFAField::SetInstValue( const char * pszField, int nIndexValue,
 /* -------------------------------------------------------------------- */
     if( (chItemType == 'c' || chItemType == 'C') && chReqType == 's' )
     {
-        memset( pabyData, 0, nBytes );
-        strncpy( (char *) pabyData, (char *) pValue, nBytes );
+        int	nBytesToCopy;
+        
+        if( nBytes == -1 )
+        {
+            if( pValue == NULL )
+                nBytesToCopy = 0;
+            else
+                nBytesToCopy = strlen((char *) pValue) + 1;
+        }
+        else
+            nBytesToCopy = nBytes;
+
+        memset( pabyData, 0, nBytesToCopy );
+
+        if( pValue != NULL )
+            strncpy( (char *) pabyData, (char *) pValue, nBytesToCopy );
 
         return CE_None;
     }
@@ -872,7 +906,7 @@ void HFAField::DumpInstValue(  FILE *fpOut,
 /* -------------------------------------------------------------------- */
 /*      Dump each entry in the field array.                             */
 /* -------------------------------------------------------------------- */
-    for( iEntry = 0; iEntry < MIN(8,nEntries); iEntry++ )
+    for( iEntry = 0; iEntry < MIN(MAX_ENTRY_REPORT,nEntries); iEntry++ )
     {
         if( nEntries == 1 )
             VSIFPrintf( fpOut, "%s%s = ", pszPrefix, pszFieldName );
@@ -949,7 +983,7 @@ void HFAField::DumpInstValue(  FILE *fpOut,
         }
     }
 
-    if( nEntries > 8 )
+    if( nEntries > MAX_ENTRY_REPORT )
         printf( "%s ... remaining instances omitted ...\n", pszPrefix );
 
     if( nEntries == 0 )
