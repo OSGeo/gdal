@@ -6,12 +6,12 @@ CFLAGS	=	-I$(MSDASDK)\include\oledb
 OLE_LIBS =	$(MSDASDK)\lib\oledb\oledb.lib ole32.lib oleaut32.lib 
 
 OBJ_OGR	=	ogrgeometryfactory.obj ogrpoint.obj ogrcurve.obj \
-		ogrlinestring.obj 
+		ogrlinestring.obj ogrpolygon.obj ogrlinearring.obj
 OBJ_OLEDB =	oledb_sup.obj oledbsuprowset.obj
 
 default:	test1.exe sfdump.exe
 
-sfdump.obj:	sfdump.cpp
+sfdump.obj:	sfdump.cpp sfclsid.h
 	$(CC) /c $(CFLAGS) sfdump.cpp
 
 test1.obj:	test1.cpp
@@ -25,6 +25,12 @@ ogrcurve.obj:	ogrcurve.cpp
 
 ogrlinestring.obj:	ogrlinestring.cpp
 	$(CC) /c $(CFLAGS) ogrlinestring.cpp
+
+ogrlinearring.obj:	ogrlinearring.cpp
+	$(CC) /c $(CFLAGS) ogrlinearring.cpp
+
+ogrpolygon.obj:	ogrpolygon.cpp
+	$(CC) /c $(CFLAGS) ogrpolygon.cpp
 
 ogrgeometryfactory.obj:	ogrgeometryfactory.cpp
 	$(CC) /c $(CFLAGS) ogrgeometryfactory.cpp
