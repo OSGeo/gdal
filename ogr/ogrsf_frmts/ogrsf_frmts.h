@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  1999/10/06 19:02:43  warmerda
+ * Added tiger registration.
+ *
  * Revision 1.9  1999/09/22 03:05:08  warmerda
  * added SDTS
  *
@@ -197,6 +200,7 @@ void	RegisterOGRShape();
 void	RegisterOGRNTF();
 void	RegisterOGRFME();
 void    RegisterOGRSDTS();
+void    RegisterOGRTiger();
 CPL_C_END
 
 
