@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2000/06/09 21:19:05  warmerda
+ * Set GTRasterTypeGeoKey.
+ *
  * Revision 1.11  2000/06/09 13:26:47  warmerda
  * default spheroid information to WGS84 if we don't have any
  *
@@ -449,6 +452,9 @@ int GTIFSetFromOGISDefn( GTIF * psGTIF, const char *pszOGCWKT )
 {
     OGRSpatialReference *poSRS;
     int		nPCS = KvUserDefined;
+
+    GTIFKeySet(psGTIF, GTRasterTypeGeoKey, TYPE_SHORT, 1,
+               RasterPixelIsArea);
 
 /* -------------------------------------------------------------------- */
 /*      Create an OGRSpatialReference object corresponding to the       */
