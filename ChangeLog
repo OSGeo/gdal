@@ -1,4 +1,21 @@
+2001-01-03  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* Fixed some serious bugs with clean target on windows makefile.
+	Now links gdal11.dll with /debug.
+
+	* Erdas Imagine now uses large file API to support 2-4GB files on
+	Windows.
+
+	* libtiff now uses large file api (tif_vsi.c) on windows to handle
+	2-4GB tiff files. 
+
+	* Added large file API in port/cpl_vsi.h, and implemented for
+	Win32 in port/cpl_vsil_win32.c
+
 2000-12-15  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* Added read support for .tfw files, and read/write support
+	for GEOTRANSMATRIX in GeoTIFF. 
 
 	* Fixed so that non-geographic/projected model types result in
 	an empty coordinate system string, not WGS84, as per bug report
