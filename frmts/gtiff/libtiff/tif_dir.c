@@ -1,4 +1,4 @@
-/* $Id: tif_dir.c,v 1.37 2004/09/21 14:44:06 dron Exp $ */
+/* $Id: tif_dir.c,v 1.41 2004/10/09 18:33:56 dron Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -40,26 +40,33 @@
 #define DATATYPE_UINT		2       /* !unsigned integer data */
 #define DATATYPE_IEEEFP		3       /* !IEEE floating point data */
 
-void
-_TIFFsetByteArray(void** vpp, void* vp, long n)
+static void
+setByteArray(void** vpp, void* vp, size_t nmemb, size_t elem_size)
 {
 	if (*vpp)
 		_TIFFfree(*vpp), *vpp = 0;
-	if (vp && (*vpp = (void*) _TIFFmalloc(n)))
-		_TIFFmemcpy(*vpp, vp, n);
+	if (vp) {
+		tsize_t	bytes = nmemb * elem_size;
+		if (elem_size && bytes / elem_size == nmemb)
+			*vpp = (void*) _TIFFmalloc(bytes);
+		if (*vpp)
+			_TIFFmemcpy(*vpp, vp, bytes);
+	}
 }
+void _TIFFsetByteArray(void** vpp, void* vp, long n)
+    { setByteArray(vpp, vp, n, 1); }
 void _TIFFsetString(char** cpp, char* cp)
-    { _TIFFsetByteArray((void**) cpp, (void*) cp, (long) (strlen(cp)+1)); }
+    { setByteArray((void**) cpp, (void*) cp, strlen(cp)+1, 1); }
 void _TIFFsetNString(char** cpp, char* cp, long n)
-    { _TIFFsetByteArray((void**) cpp, (void*) cp, n); }
+    { setByteArray((void**) cpp, (void*) cp, n, 1); }
 void _TIFFsetShortArray(uint16** wpp, uint16* wp, long n)
-    { _TIFFsetByteArray((void**) wpp, (void*) wp, n*sizeof (uint16)); }
+    { setByteArray((void**) wpp, (void*) wp, n, sizeof (uint16)); }
 void _TIFFsetLongArray(uint32** lpp, uint32* lp, long n)
-    { _TIFFsetByteArray((void**) lpp, (void*) lp, n*sizeof (uint32)); }
+    { setByteArray((void**) lpp, (void*) lp, n, sizeof (uint32)); }
 void _TIFFsetFloatArray(float** fpp, float* fp, long n)
-    { _TIFFsetByteArray((void**) fpp, (void*) fp, n*sizeof (float)); }
+    { setByteArray((void**) fpp, (void*) fp, n, sizeof (float)); }
 void _TIFFsetDoubleArray(double** dpp, double* dp, long n)
-    { _TIFFsetByteArray((void**) dpp, (void*) dp, n*sizeof (double)); }
+    { setByteArray((void**) dpp, (void*) dp, n, sizeof (double)); }
 
 /*
  * Install extra samples information.
@@ -478,7 +485,7 @@ _TIFFVSetField(TIFF* tif, ttag_t tag, va_list ap)
         default: {
             const TIFFFieldInfo* fip = _TIFFFindFieldInfo(tif, tag, TIFF_ANY);
             TIFFTagValue *tv;
-            int           tv_size, iCustom;
+            int tv_size, iCustom;
 
             /*
              * This can happen if multiple images are open with
@@ -521,14 +528,21 @@ _TIFFVSetField(TIFF* tif, ttag_t tag, va_list ap)
              */
             if( tv == NULL )
             {
-                td->td_customValueCount++;
-                if( td->td_customValueCount > 1 )
-                    td->td_customValues = (TIFFTagValue *)
-                        _TIFFrealloc(td->td_customValues,
-                                     sizeof(TIFFTagValue) * td->td_customValueCount);
-                else
-                    td->td_customValues = (TIFFTagValue *)
-                        _TIFFmalloc(sizeof(TIFFTagValue));
+		TIFFTagValue	*new_customValues;
+		
+		td->td_customValueCount++;
+		new_customValues = (TIFFTagValue *)
+			_TIFFrealloc(td->td_customValues,
+				     sizeof(TIFFTagValue) * td->td_customValueCount);
+		if (!new_customValues) {
+			TIFFError(module,
+		"%s: Failed to allocate space for list of custom values",
+				  tif->tif_name);
+			status = 0;
+			goto end;
+		}
+
+		td->td_customValues = new_customValues;
 
                 tv = td->td_customValues + (td->td_customValueCount-1);
                 tv->info = fip;
@@ -539,45 +553,81 @@ _TIFFVSetField(TIFF* tif, ttag_t tag, va_list ap)
             /*
              * Set custom value ... save a copy of the custom tag value.
              */
-            tv_size = TIFFDataWidth(fip->field_type);
-            if( fip->field_passcount )
+	    switch (fip->field_type) {
+		    /*
+		     * XXX: We can't use TIFFDataWidth() to determine the
+		     * space needed to store the value. For TIFF_RATIONAL
+		     * values TIFFDataWidth() returns 8, but we use 4-byte
+		     * float to represent rationals.
+		     */
+		    case TIFF_BYTE:
+		    case TIFF_ASCII:
+		    case TIFF_SBYTE:
+		    case TIFF_UNDEFINED:
+			tv_size = 1;
+			break;
+
+		    case TIFF_SHORT:
+		    case TIFF_SSHORT:
+			tv_size = 2;
+			break;
+
+		    case TIFF_LONG:
+		    case TIFF_SLONG:
+		    case TIFF_FLOAT:
+		    case TIFF_IFD:
+		    case TIFF_RATIONAL:
+		    case TIFF_SRATIONAL:
+			tv_size = 4;
+			break;
+
+		    case TIFF_DOUBLE:
+			tv_size = 8;
+			break;
+
+		    default:
+			status = 0;
+			TIFFError(module, "%s: Bad field type %d for \"%s\"",
+				  tif->tif_name, fip->field_type,
+				  fip->field_name);
+			goto end;
+		    
+	    }
+            
+            if(fip->field_passcount)
                 tv->count = (int) va_arg(ap, int);
             else
                 tv->count = 1;
-            if( fip->field_passcount )
-            {
+            
+	    if (fip->field_passcount) {
                 tv->value = _TIFFmalloc(tv_size * tv->count);
 		if ( !tv->value ) {
-			va_end(ap);
-			return 0;
+			status = 0;
+			goto end;
 		}
-                _TIFFmemcpy( tv->value, (void *) va_arg(ap,void*),
-                             tv->count * tv_size );
-            }
-            else if( fip->field_type == TIFF_ASCII )
-            {
+                _TIFFmemcpy(tv->value, (void *) va_arg(ap,void*),
+                            tv->count * tv_size);
+            } else if (fip->field_type == TIFF_ASCII) {
                 const char *value = (const char *) va_arg(ap,const char *);
                 tv->count = strlen(value)+1;
                 tv->value = _TIFFmalloc(tv->count);
-		if ( !tv->value ) {
-			va_end(ap);
-			return 0;
+		if (!tv->value) {
+			status = 0;
+			goto end;
 		}
-                strcpy( tv->value, value );
-            }
-            else
-            {
+                strcpy(tv->value, value);
+            } else {
                 /* not supporting "pass by value" types yet */
 		TIFFError(module,
 			  "%s: Pass by value is not implemented.",
 			  tif->tif_name);
 
                 tv->value = _TIFFmalloc(tv_size * tv->count);
-		if ( !tv->value ) {
-			va_end(ap);
-			return 0;
+		if (!tv->value) {
+			status = 0;
+			goto end;
 		}
-                _TIFFmemset( tv->value, 0, tv->count * tv_size );
+                _TIFFmemset(tv->value, 0, tv->count * tv_size);
                 status = 0;
             }
           }
@@ -586,20 +636,22 @@ _TIFFVSetField(TIFF* tif, ttag_t tag, va_list ap)
             TIFFSetFieldBit(tif, _TIFFFieldWithTag(tif, tag)->field_bit);
             tif->tif_flags |= TIFF_DIRTYDIRECT;
 	}
+
+end:
 	va_end(ap);
 	return (status);
 badvalue:
-	TIFFError(module, "%.1000s: Bad value %d for \"%s\"",
+	TIFFError(module, "%s: Bad value %d for \"%s\"",
 		  tif->tif_name, v, _TIFFFieldWithTag(tif, tag)->field_name);
 	va_end(ap);
 	return (0);
 badvalue32:
-	TIFFError(module, "%.1000s: Bad value %ld for \"%s\"",
+	TIFFError(module, "%s: Bad value %ld for \"%s\"",
 		   tif->tif_name, v32, _TIFFFieldWithTag(tif, tag)->field_name);
 	va_end(ap);
 	return (0);
 badvaluedbl:
-	TIFFError(module, "%.1000s: Bad value %f for \"%s\"",
+	TIFFError(module, "%s: Bad value %f for \"%s\"",
 		  tif->tif_name, d, _TIFFFieldWithTag(tif, tag)->field_name);
 	va_end(ap);
 	return (0);
@@ -1120,9 +1172,10 @@ TIFFDefaultDirectory(TIFF* tif)
 	td->td_orientation = ORIENTATION_TOPLEFT;
 	td->td_samplesperpixel = 1;
 	td->td_rowsperstrip = (uint32) -1;
-	td->td_tilewidth = (uint32) -1;
-	td->td_tilelength = (uint32) -1;
+	td->td_tilewidth = 0;
+	td->td_tilelength = 0;
 	td->td_tiledepth = 1;
+	td->td_stripbytecountsorted = 1; /* Our own arrays always sorted. */
 	td->td_resolutionunit = RESUNIT_INCH;
 	td->td_sampleformat = SAMPLEFORMAT_UINT;
 	td->td_imagedepth = 1;

@@ -1,4 +1,4 @@
-/* $Id: tif_strip.c,v 1.7 2004/09/22 13:49:08 dron Exp $ */
+/* $Id: tif_strip.c,v 1.12 2004/10/02 11:16:27 dron Exp $ */
 
 /*
  * Copyright (c) 1991-1997 Sam Leffler
@@ -30,6 +30,36 @@
  * Strip-organized Image Support Routines.
  */
 #include "tiffiop.h"
+
+static uint32
+summarize(TIFF* tif, size_t summand1, size_t summand2, const char* where)
+{
+	/*
+	 * XXX: We are using casting to uint32 here, bacause sizeof(size_t)
+	 * may be larger than sizeof(uint32) on 64-bit architectures.
+	 */
+	uint32	bytes = summand1 + summand2;
+
+	if (bytes - summand1 != summand2) {
+		TIFFError(tif->tif_name, "Integer overflow in %s", where);
+		bytes = 0;
+	}
+
+	return (bytes);
+}
+
+static uint32
+multiply(TIFF* tif, size_t nmemb, size_t elem_size, const char* where)
+{
+	uint32	bytes = nmemb * elem_size;
+
+	if (elem_size && bytes / elem_size != nmemb) {
+		TIFFError(tif->tif_name, "Integer overflow in %s", where);
+		bytes = 0;
+	}
+
+	return (bytes);
+}
 
 /*
  * Compute which strip a (row,sample) value is in.
@@ -65,7 +95,8 @@ TIFFNumberOfStrips(TIFF* tif)
 	nstrips = (td->td_rowsperstrip == (uint32) -1 ? 1 :
 	     TIFFhowmany(td->td_imagelength, td->td_rowsperstrip));
 	if (td->td_planarconfig == PLANARCONFIG_SEPARATE)
-		nstrips *= td->td_samplesperpixel;
+		nstrips = multiply(tif, nstrips, td->td_samplesperpixel,
+				   "TIFFNumberOfStrips");
 	return (nstrips);
 }
 
@@ -79,7 +110,6 @@ TIFFVStripSize(TIFF* tif, uint32 nrows)
 
 	if (nrows == (uint32) -1)
 		nrows = td->td_imagelength;
-#ifdef YCBCR_SUPPORT
 	if (td->td_planarconfig == PLANARCONFIG_CONTIG &&
 	    td->td_photometric == PHOTOMETRIC_YCBCR &&
 	    !isUpSampled(tif)) {
@@ -99,15 +129,19 @@ TIFFVStripSize(TIFF* tif, uint32 nrows)
                               ycbcrsubsampling + 1 );
 
 		w = TIFFroundup(td->td_imagewidth, ycbcrsubsampling[0]);
-		scanline = TIFFhowmany(w*td->td_bitspersample, 8);
+		scanline = TIFFhowmany8(multiply(tif, w, td->td_bitspersample,
+						 "TIFFVStripSize"));
 		samplingarea = ycbcrsubsampling[0]*ycbcrsubsampling[1];
 		nrows = TIFFroundup(nrows, ycbcrsubsampling[1]);
 		/* NB: don't need TIFFhowmany here 'cuz everything is rounded */
+		scanline = multiply(tif, nrows, scanline, "TIFFVStripSize");
 		return ((tsize_t)
-		    (nrows*scanline + 2*(nrows*scanline / samplingarea)));
+		    summarize(tif, scanline,
+			      multiply(tif, 2, scanline / samplingarea,
+				       "TIFFVStripSize"), "TIFFVStripSize"));
 	} else
-#endif
-		return ((tsize_t)(nrows * TIFFScanlineSize(tif)));
+		return ((tsize_t) multiply(tif, nrows, TIFFScanlineSize(tif),
+					   "TIFFVStripSize"));
 }
 
 
@@ -188,9 +222,11 @@ TIFFScanlineSize(TIFF* tif)
 	TIFFDirectory *td = &tif->tif_dir;
 	tsize_t scanline;
 	
-	scanline = td->td_bitspersample * td->td_imagewidth;
+	scanline = multiply (tif, td->td_bitspersample, td->td_imagewidth,
+			     "TIFFScanlineSize");
 	if (td->td_planarconfig == PLANARCONFIG_CONTIG)
-		scanline *= td->td_samplesperpixel;
+		scanline = multiply (tif, scanline, td->td_samplesperpixel,
+				     "TIFFScanlineSize");
 	return ((tsize_t) TIFFhowmany8(scanline));
 }
 
@@ -206,13 +242,16 @@ TIFFRasterScanlineSize(TIFF* tif)
 	TIFFDirectory *td = &tif->tif_dir;
 	tsize_t scanline;
 	
-	scanline = td->td_bitspersample * td->td_imagewidth;
+	scanline = multiply (tif, td->td_bitspersample, td->td_imagewidth,
+			     "TIFFRasterScanlineSize");
 	if (td->td_planarconfig == PLANARCONFIG_CONTIG) {
-		scanline *= td->td_samplesperpixel;
+		scanline = multiply (tif, scanline, td->td_samplesperpixel,
+				     "TIFFRasterScanlineSize");
 		return ((tsize_t) TIFFhowmany8(scanline));
 	} else
-		return ((tsize_t)
-		    TIFFhowmany8(scanline)*td->td_samplesperpixel);
+		return ((tsize_t) multiply (tif, TIFFhowmany8(scanline),
+					    td->td_samplesperpixel,
+					    "TIFFRasterScanlineSize"));
 }
 
 /* vim: set ts=8 sts=8 sw=8 noet: */

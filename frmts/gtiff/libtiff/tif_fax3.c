@@ -1,4 +1,4 @@
-/* $Id: tif_fax3.c,v 1.26 2004/09/14 06:02:56 dron Exp $ */
+/* $Id: tif_fax3.c,v 1.27 2004/10/02 13:29:41 dron Exp $ */
 
 /*
  * Copyright (c) 1990-1997 Sam Leffler
@@ -41,7 +41,6 @@
 #include "tif_fax3.h"
 #define	G3CODES
 #include "t4.h"
-#include <assert.h>
 #include <stdio.h>
 
 /*
@@ -437,6 +436,21 @@ _TIFFFax3fillruns(unsigned char* buf, uint32* runs, uint32* erun, uint32 lastx)
 #undef	ZERO
 #undef	FILL
 
+static char *
+CheckMalloc(TIFF* tif, size_t nmemb, size_t elem_size, const char* what)
+{
+	char	*cp = NULL;
+	tsize_t	bytes = nmemb * elem_size;
+
+	if (elem_size && bytes / elem_size == nmemb)
+		cp = (char*) _TIFFmalloc(bytes);
+
+	if (cp == NULL)
+		TIFFError(tif->tif_name, "No space %s", what);
+	
+	return (cp);
+}
+
 /*
  * Setup G3/G4-related compression/decompression state
  * before data is processed.  This routine is called once
@@ -481,13 +495,10 @@ Fax3SetupState(TIFF* tif)
 
 	nruns = needsRefLine ? 2*TIFFroundup(rowpixels,32) : rowpixels;
 
-	dsp->runs = (uint32*) _TIFFmalloc((2*nruns+3)*sizeof (uint32));
-	if (dsp->runs == NULL) {
-		TIFFError("Fax3SetupState",
-		    "%s: No space for Group 3/4 run arrays",
-		    tif->tif_name);
+	dsp->runs = (uint32*) CheckMalloc(tif, 2*nruns+3, sizeof (uint32),
+					  "for Group 3/4 run arrays");
+	if (dsp->runs == NULL)
 		return (0);
-	}
 	dsp->curruns = dsp->runs;
 	if (needsRefLine)
 		dsp->refruns = dsp->runs + (nruns>>1);

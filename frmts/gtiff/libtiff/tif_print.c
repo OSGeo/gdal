@@ -1,4 +1,4 @@
-/* $Id: tif_print.c,v 1.17 2004/09/21 10:18:22 dron Exp $ */
+/* $Id: tif_print.c,v 1.19 2004/10/10 11:56:03 dron Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -73,7 +73,7 @@ TIFFPrintDirectory(TIFF* tif, FILE* fd, long flags)
 	long l, n;
 
 	fprintf(fd, "TIFF Directory at offset 0x%lx\n",
-		(unsigned int)tif->tif_diroff);
+		(unsigned long)tif->tif_diroff);
 	td = &tif->tif_dir;
 	if (TIFFFieldSet(tif,FIELD_SUBFILETYPE)) {
 		fprintf(fd, "  Subfile Type:");
@@ -478,6 +478,13 @@ TIFFPrintDirectory(TIFF* tif, FILE* fd, long flags)
 			fprintf(fd, " %5lu", (long) td->td_subifd[i]);
 		fputc('\n', fd);
 	}
+ 	if (TIFFFieldSet(tif,FIELD_XMLPACKET)) {
+            fprintf(fd, "  XMLPacket (XMP Metadata):\n" );
+            for( i=0; i < td->td_xmlpacketLength; i++ )
+                fputc( ((char *)td->td_xmlpacketData)[i], fd );
+            fprintf( fd, "\n" );
+        }
+
         /*
         ** Custom tag support.
         */

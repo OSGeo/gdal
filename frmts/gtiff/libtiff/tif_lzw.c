@@ -1,4 +1,4 @@
-/* $Id: tif_lzw.c,v 1.23 2004/09/14 06:32:19 dron Exp $ */
+/* $Id: tif_lzw.c,v 1.24 2004/10/02 13:29:41 dron Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -38,7 +38,6 @@
  */
 #include "tif_predict.h"
 
-#include <assert.h>
 #include <stdio.h>
 
 /*

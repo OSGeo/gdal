@@ -1,4 +1,4 @@
-/* $Id: /cvs/maptools/cvsroot/libtiff/libtiff/tif_codec.c,v 1.8 2004/02/17 15:50:28 warmerda Exp $ */
+/* $Header: /cvs/maptools/cvsroot/libtiff/libtiff/tif_codec.c,v 1.8 2004/02/17 15:50:28 warmerda Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -136,16 +136,15 @@ TIFFIsCODECConfigured(uint16 scheme)
 {
 	const TIFFCodec* codec = TIFFFindCODEC(scheme);
 
-	if(codec == NULL)
-		return 0;
-
-        if(codec->init == NULL)
-		return 0;
-
-	if(codec->init != NotConfigured)
-		return 1;
-
+	if(codec == NULL) {
+            return 0;
+        }
+        if(codec->init == NULL) {
+            return 0;
+        }
+	if(codec->init != NotConfigured){
+            return 1;
+        }
 	return 0;
 }
 
-/* vim: set ts=8 sts=8 sw=8 noet: */

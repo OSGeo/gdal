@@ -1,4 +1,4 @@
-/* $Id: tif_packbits.c,v 1.9 2004/09/14 06:32:19 dron Exp $ */
+/* $Id: tif_packbits.c,v 1.10 2004/10/02 13:29:41 dron Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -38,7 +38,8 @@ PackBitsPreEncode(TIFF* tif, tsample_t s)
 {
 	(void) s;
 
-        tif->tif_data = _TIFFmalloc(sizeof(tsize_t));
+        if (!(tif->tif_data = _TIFFmalloc(sizeof(tsize_t))))
+		return (0);
 	/*
 	 * Calculate the scanline/tile-width size in bytes.
 	 */

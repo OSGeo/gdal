@@ -1,4 +1,4 @@
-/* $Id: tif_write.c,v 1.12 2004/09/14 06:42:55 dron Exp $ */
+/* $Id: tif_write.c,v 1.16 2004/10/12 18:50:48 dron Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -30,7 +30,6 @@
  * Scanline-oriented Write Support
  */
 #include "tiffiop.h"
-#include <assert.h>
 #include <stdio.h>
 
 #define	STRIPINCR	20		/* expansion factor on strip array */
@@ -529,7 +528,7 @@ TIFFWriteCheck(TIFF* tif, int tiles, const char* module)
 		    tif->tif_name, isTiled(tif) ? "tile" : "strip");
 		return (0);
 	}
-	tif->tif_tilesize = TIFFTileSize(tif);
+	tif->tif_tilesize = isTiled(tif) ? TIFFTileSize(tif) : (tsize_t) -1;
 	tif->tif_scanlinesize = TIFFScanlineSize(tif);
 	tif->tif_flags |= TIFF_BEENWRITING;
 	return (1);
@@ -584,21 +583,30 @@ TIFFWriteBufferSetup(TIFF* tif, tdata_t bp, tsize_t size)
 static int
 TIFFGrowStrips(TIFF* tif, int delta, const char* module)
 {
-	TIFFDirectory *td = &tif->tif_dir;
+	TIFFDirectory	*td = &tif->tif_dir;
+	uint32		*new_stripoffset, *new_stripbytecount;
 
 	assert(td->td_planarconfig == PLANARCONFIG_CONTIG);
-	td->td_stripoffset = (uint32*)_TIFFrealloc(td->td_stripoffset,
-	    (td->td_nstrips + delta) * sizeof (uint32));
-	td->td_stripbytecount = (uint32*)_TIFFrealloc(td->td_stripbytecount,
-	    (td->td_nstrips + delta) * sizeof (uint32));
-	if (td->td_stripoffset == NULL || td->td_stripbytecount == NULL) {
+	new_stripoffset = (uint32*)_TIFFrealloc(td->td_stripoffset,
+		(td->td_nstrips + delta) * sizeof (uint32));
+	new_stripbytecount = (uint32*)_TIFFrealloc(td->td_stripbytecount,
+		(td->td_nstrips + delta) * sizeof (uint32));
+	if (new_stripoffset == NULL || new_stripbytecount == NULL) {
+		if (new_stripoffset)
+			_TIFFfree(new_stripoffset);
+		if (new_stripbytecount)
+			_TIFFfree(new_stripbytecount);
 		td->td_nstrips = 0;
 		TIFFError(module, "%s: No space to expand strip arrays",
-		    tif->tif_name);
+			  tif->tif_name);
 		return (0);
 	}
-	_TIFFmemset(td->td_stripoffset+td->td_nstrips, 0, delta*sizeof (uint32));
-	_TIFFmemset(td->td_stripbytecount+td->td_nstrips, 0, delta*sizeof (uint32));
+	td->td_stripoffset = new_stripoffset;
+	td->td_stripbytecount = new_stripbytecount;
+	_TIFFmemset(td->td_stripoffset + td->td_nstrips,
+		    0, delta*sizeof (uint32));
+	_TIFFmemset(td->td_stripbytecount + td->td_nstrips,
+		    0, delta*sizeof (uint32));
 	td->td_nstrips += delta;
 	return (1);
 }
@@ -616,7 +624,7 @@ TIFFAppendToStrip(TIFF* tif, tstrip_t strip, tidata_t data, tsize_t cc)
 		/*
 		 * No current offset, set the current strip.
 		 */
-		if (td->td_stripoffset[strip] != 0) {
+		if (td->td_nstrips || td->td_stripoffset[strip] != 0) {
 			/*
 			 * Prevent overlapping of the data chunks. We need
                          * this to enable in place updating of the compressed
@@ -624,22 +632,34 @@ TIFFAppendToStrip(TIFF* tif, tstrip_t strip, tidata_t data, tsize_t cc)
                          * the file without any optimization of the spare
                          * space, so such scheme is not too much effective.
 			 */
-			tstrip_t i;
-			for (i = 0; i < td->td_stripsperimage; i++) {
-				if (td->td_stripoffset[i] > 
-					td->td_stripoffset[strip]
-				    && td->td_stripoffset[i] <
+			if (td->td_stripbytecountsorted) {
+				if (strip == td->td_nstrips - 1
+				    || td->td_stripoffset[strip + 1] <
 					td->td_stripoffset[strip] + cc) {
 					td->td_stripoffset[strip] =
-						TIFFSeekFile(tif, (toff_t) 0,
+						TIFFSeekFile(tif, (toff_t)0,
 							     SEEK_END);
+				}
+			} else {
+				tstrip_t i;
+				for (i = 0; i < td->td_nstrips; i++) {
+					if (td->td_stripoffset[i] > 
+						td->td_stripoffset[strip]
+					    && td->td_stripoffset[i] <
+						td->td_stripoffset[strip] + cc) {
+						td->td_stripoffset[strip] =
+							TIFFSeekFile(tif,
+								     (toff_t)0,
+								     SEEK_END);
+					}
 				}
 			}
 
 			if (!SeekOK(tif, td->td_stripoffset[strip])) {
 				TIFFError(module,
 					  "%s: Seek error at scanline %lu",
-					  tif->tif_name, (unsigned long)tif->tif_row);
+					  tif->tif_name,
+					  (unsigned long)tif->tif_row);
 				return (0);
 			}
 		} else

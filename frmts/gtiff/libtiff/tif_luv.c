@@ -1,4 +1,4 @@
-/* $Id: tif_luv.c,v 1.11 2004/09/19 10:08:38 dron Exp $ */
+/* $Id: tif_luv.c,v 1.13 2004/10/12 18:50:48 dron Exp $ */
 
 /*
  * Copyright (c) 1997 Greg Ward Larson
@@ -148,7 +148,6 @@
  */
 
 #include <stdio.h>
-#include <assert.h>
 #include <stdlib.h>
 #include <math.h>
 
@@ -1163,6 +1162,17 @@ LogL16GuessDataFmt(TIFFDirectory *td)
 	return (SGILOGDATAFMT_UNKNOWN);
 }
 
+static uint32
+multiply(size_t m1, size_t m2)
+{
+	uint32	bytes = m1 * m2;
+
+	if (m1 && bytes / m1 != m2)
+		bytes = 0;
+
+	return bytes;
+}
+
 static int
 LogL16InitState(TIFF* tif)
 {
@@ -1191,9 +1201,9 @@ LogL16InitState(TIFF* tif)
 		    "No support for converting user data format to LogL");
 		return (0);
 	}
-	sp->tbuflen = td->td_imagewidth * td->td_rowsperstrip;
-	sp->tbuf = (tidata_t*) _TIFFmalloc(sp->tbuflen * sizeof (int16));
-	if (sp->tbuf == NULL) {
+	sp->tbuflen = multiply(td->td_imagewidth, td->td_rowsperstrip);
+	if (multiply(sp->tbuflen, sizeof (int16)) == 0 ||
+	    (sp->tbuf = (tidata_t*) _TIFFmalloc(sp->tbuflen * sizeof (int16))) == NULL) {
 		TIFFError(module, "%s: No space for SGILog translation buffer",
 		    tif->tif_name);
 		return (0);
@@ -1289,9 +1299,9 @@ LogLuvInitState(TIFF* tif)
 		    "No support for converting user data format to LogLuv");
 		return (0);
 	}
-	sp->tbuflen = td->td_imagewidth * td->td_rowsperstrip;
-	sp->tbuf = (tidata_t*) _TIFFmalloc(sp->tbuflen * sizeof (uint32));
-	if (sp->tbuf == NULL) {
+	sp->tbuflen = multiply(td->td_imagewidth, td->td_rowsperstrip);
+	if (multiply(sp->tbuflen, sizeof (uint32)) == 0 ||
+	    (sp->tbuf = (tidata_t*) _TIFFmalloc(sp->tbuflen * sizeof (uint32))) == NULL) {
 		TIFFError(module, "%s: No space for SGILog translation buffer",
 		    tif->tif_name);
 		return (0);
@@ -1499,7 +1509,7 @@ LogLuvVSetField(TIFF* tif, ttag_t tag, va_list ap)
 		/*
 		 * Must recalculate sizes should bits/sample change.
 		 */
-		tif->tif_tilesize = TIFFTileSize(tif);
+		tif->tif_tilesize = isTiled(tif) ? TIFFTileSize(tif) : (tsize_t) -1;
 		tif->tif_scanlinesize = TIFFScanlineSize(tif);
 		return (1);
 	case TIFFTAG_SGILOGENCODE:

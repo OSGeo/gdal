@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_dumpmode.c,v 1.2 2000/01/28 15:08:10 warmerda Exp $ */
+/* $Header: /cvs/maptools/cvsroot/libtiff/libtiff/tif_dumpmode.c,v 1.3 2004/10/02 13:29:41 dron Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -30,7 +30,6 @@
  * "Null" Compression Algorithm Support.
  */
 #include "tiffiop.h"
-#include <assert.h>
 
 /*
  * Encode a hunk of pixels.

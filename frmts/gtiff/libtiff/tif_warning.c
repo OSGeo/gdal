@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_warning.c,v 1.1.1.1 1999/07/27 21:50:27 mike Exp $ */
+/* $Header: /cvs/maptools/cvsroot/libtiff/libtiff/tif_warning.c,v 1.1.1.1 1999/07/27 21:50:27 mike Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler

@@ -1,4 +1,4 @@
-/* $Id: tif_dirinfo.c,v 1.29 2004/09/14 06:54:36 dron Exp $ */
+/* $Id: tif_dirinfo.c,v 1.35 2004/10/12 06:46:50 dron Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -31,6 +31,7 @@
  */
 #include "tiffiop.h"
 #include <stdlib.h>
+#include <stdio.h>
 
 /*
  * NB: NB: THIS ARRAY IS ASSUMED TO BE SORTED BY TAG.
@@ -172,6 +173,8 @@ const TIFFFieldInfo tiffFieldInfo[] = {
       FALSE,	FALSE,	"TileByteCounts" },
     { TIFFTAG_TILEBYTECOUNTS,	-1, 1, TIFF_SHORT,	FIELD_STRIPBYTECOUNTS,
       FALSE,	FALSE,	"TileByteCounts" },
+    { TIFFTAG_SUBIFD,		-1,-1, TIFF_IFD,	FIELD_SUBIFD,
+      TRUE,	TRUE,	"SubIFD" },
     { TIFFTAG_SUBIFD,		-1,-1, TIFF_LONG,	FIELD_SUBIFD,
       TRUE,	TRUE,	"SubIFD" },
     { TIFFTAG_INKSET,		 1, 1, TIFF_SHORT,	FIELD_INKSET,
@@ -208,7 +211,7 @@ const TIFFFieldInfo tiffFieldInfo[] = {
 /* XXX temporarily accept LONG for backwards compatibility */
     { TIFFTAG_REFERENCEBLACKWHITE,6,6,TIFF_LONG,	FIELD_REFBLACKWHITE,
       TRUE,	FALSE,	"ReferenceBlackWhite" },
-    { TIFFTAG_XMLPACKET,	-1,-3, TIFF_UNDEFINED,	FIELD_XMLPACKET,
+    { TIFFTAG_XMLPACKET,	-1,-3, TIFF_BYTE,	FIELD_XMLPACKET,
       FALSE,	TRUE,	"XMLPacket" },
 /* begin SGI tags */
     { TIFFTAG_MATTEING,		 1, 1, TIFF_SHORT,	FIELD_EXTRASAMPLES,
@@ -303,6 +306,8 @@ _TIFFMergeFieldInfo(TIFF* tif, const TIFFFieldInfo info[], int n)
 	TIFFFieldInfo** tp;
 	int i;
 
+        tif->tif_foundfield = NULL;
+
 	if (tif->tif_nfields > 0) {
 		tif->tif_fieldinfo = (TIFFFieldInfo**)
 		    _TIFFrealloc(tif->tif_fieldinfo,
@@ -311,6 +316,7 @@ _TIFFMergeFieldInfo(TIFF* tif, const TIFFFieldInfo info[], int n)
 		tif->tif_fieldinfo = (TIFFFieldInfo**)
 		    _TIFFmalloc(n * sizeof (TIFFFieldInfo*));
 	}
+	assert(tif->tif_fieldinfo != NULL);
 	tp = &tif->tif_fieldinfo[tif->tif_nfields];
 	for (i = 0; i < n; i++)
 		tp[i] = (TIFFFieldInfo*) &info[i];	/* XXX */
@@ -378,7 +384,7 @@ TIFFDataWidth(TIFFDataType type)
 TIFFDataType
 _TIFFSampleToTagType(TIFF* tif)
 {
-	int bps = (int) TIFFhowmany(tif->tif_dir.td_bitspersample, 8);
+	uint32 bps = TIFFhowmany8(tif->tif_dir.td_bitspersample);
 
 	switch (tif->tif_dir.td_sampleformat) {
 	case SAMPLEFORMAT_IEEEFP:
@@ -451,9 +457,6 @@ _TIFFFindFieldInfoByName(TIFF* tif, const char *field_name, TIFFDataType dt)
 	return ((const TIFFFieldInfo *)0);
 }
 
-#include <assert.h>
-#include <stdio.h>
-
 const TIFFFieldInfo*
 _TIFFFieldWithTag(TIFF* tif, ttag_t tag)
 {
@@ -504,6 +507,8 @@ _TIFFCreateAnonFieldInfo(TIFF *tif, ttag_t tag, TIFFDataType field_type)
     TIFFFieldInfo *fld;
 
     fld = (TIFFFieldInfo *) _TIFFmalloc(sizeof (TIFFFieldInfo));
+    if (fld == NULL)
+	return NULL;
     _TIFFmemset( fld, 0, sizeof(TIFFFieldInfo) );
 
     fld->field_tag = tag;
@@ -514,6 +519,10 @@ _TIFFCreateAnonFieldInfo(TIFF *tif, ttag_t tag, TIFFDataType field_type)
     fld->field_oktochange = TRUE;
     fld->field_passcount = TRUE;
     fld->field_name = (char *) _TIFFmalloc(32);
+    if (fld->field_name == NULL) {
+	_TIFFfree(fld);
+	return NULL;
+    }
 
     /* note that this name is a special sign to TIFFClose() and
      * _TIFFSetupFieldInfo() to free the field
