@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.55  2003/03/02 17:13:35  warmerda
+ * Fixed CPLPopErrorHandler.
+ *
  * Revision 1.54  2003/03/02 17:11:27  warmerda
  * added error handling support
  *
@@ -2059,9 +2062,9 @@ py_CPLPushErrorHandler(PyObject *self, PyObject *args) {
 static PyObject *
 py_CPLPopErrorHandler(PyObject *self, PyObject *args) 
 {
-    self = self;
     PyErrorHandlerData *psCBData = NULL;
 
+    self = self;
     if(!PyArg_ParseTuple(args,":CPLPopErrorHandler" ) )
         return NULL;
 
