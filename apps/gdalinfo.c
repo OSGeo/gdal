@@ -26,6 +26,9 @@
  * serves as an early test harnass.
  *
  * $Log$
+ * Revision 1.13  2000/05/15 14:06:26  warmerda
+ * Added -mm for computing min/max, and fixed ovewriting of i.
+ *
  * Revision 1.12  2000/04/21 21:57:33  warmerda
  * updated the way metadata is handled
  *
@@ -78,15 +81,22 @@ int main( int argc, char ** argv )
 {
     GDALDatasetH	hDataset;
     GDALRasterBandH	hBand;
-    int			i;
+    int			i, iBand;
     double		adfGeoTransform[6];
     GDALDriverH		hDriver;
     char		**papszMetadata;
+    int                 bComputeMinMax = FALSE;
 
     if( argc < 2 )
     {
-        printf( "Usage: gdalinfo datasetname\n" );
+        printf( "Usage: gdalinfo [-mm] datasetname\n" );
         exit( 10 );
+    }
+
+    if( EQUAL(argv[1],"-mm") )
+    {
+        bComputeMinMax = TRUE;
+        argv++;
     }
 
     GDALAllRegister();
@@ -187,15 +197,15 @@ int main( int argc, char ** argv )
 /* ==================================================================== */
 /*      Loop over bands.                                                */
 /* ==================================================================== */
-    for( i = 0; i < GDALGetRasterCount( hDataset ); i++ )
+    for( iBand = 0; iBand < GDALGetRasterCount( hDataset ); iBand++ )
     {
         double      dfMin, dfMax, adfCMinMax[2];
         int         bGotMin, bGotMax;
         int         nBlockXSize, nBlockYSize;
 
-        hBand = GDALGetRasterBand( hDataset, i+1 );
+        hBand = GDALGetRasterBand( hDataset, iBand+1 );
         GDALGetBlockSize( hBand, &nBlockXSize, &nBlockYSize );
-        printf( "Band %d Block=%dx%d Type=%s, ColorInterp=%s\n", i+1,
+        printf( "Band %d Block=%dx%d Type=%s, ColorInterp=%s\n", iBand+1,
                 nBlockXSize, nBlockYSize,
                 GDALGetDataTypeName(
                     GDALGetRasterDataType(hBand)),
@@ -204,10 +214,16 @@ int main( int argc, char ** argv )
 
         dfMin = GDALGetRasterMinimum( hBand, &bGotMin );
         dfMax = GDALGetRasterMaximum( hBand, &bGotMax );
-        GDALComputeRasterMinMax( hBand, TRUE, adfCMinMax );
-        printf( "Min=%.3f/%d, Max=%.3f/%d, Computed Min/Max=%.3f,%.3f\n", 
-                dfMin, bGotMin, dfMax, bGotMax, adfCMinMax[0], adfCMinMax[1] );
+        printf( "Min=%.3f/%d, Max=%.3f/%d",  dfMin, bGotMin, dfMax);
         
+        if( bComputeMinMax )
+        {
+            GDALComputeRasterMinMax( hBand, TRUE, adfCMinMax );
+            printf( ", Computed Min/Max=%.3f,%.3f", 
+                    adfCMinMax[0], adfCMinMax[1] );
+        }
+        printf( "\n" );
+
         if( GDALGetOverviewCount(hBand) > 0 )
         {
             int		iOverview;
