@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.86  2004/09/10 20:59:06  fwarmerdam
+ * Added note on SetSOC() being deprecated.
+ *
  * Revision 1.85  2004/05/06 19:26:04  dron
  * Added OSRSetProjection() function.
  *
@@ -3485,6 +3488,12 @@ OGRErr OSRSetStereographic( OGRSpatialReferenceH hSRS,
 
 /************************************************************************/
 /*                               SetSOC()                               */
+/*                                                                      */
+/*      NOTE: This definition isn't really used in practice any more    */
+/*      and should be considered deprecated.  It seems that swiss       */
+/*      oblique mercator is now define as Hotine_Oblique_Mercator       */
+/*      with an azimuth of 90 and a rectified_grid_angle of 90.  See    */
+/*      EPSG:2056 and Bug 423.                                          */
 /************************************************************************/
 
 OGRErr OGRSpatialReference::SetSOC( double dfLatitudeOfOrigin, 
