@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2002/12/29 03:19:48  warmerda
+ * fixed extraction of database name
+ *
  * Revision 1.2  2002/12/28 04:38:36  warmerda
  * converted to unix file conventions
  *
@@ -113,7 +116,7 @@ int OGROCIDataSource::Open( const char * pszNewName, int bUpdate,
     {
         pszUserid[i++] = '\0';
         pszPassword = pszUserid + i;
-        for( i = 0; pszUserid[i] != '\0' && pszUserid[i] != '@'; i++ ) {}
+        for( ; pszUserid[i] != '\0' && pszUserid[i] != '@'; i++ ) {}
     }
 
     if( pszUserid[i] == '@' )
