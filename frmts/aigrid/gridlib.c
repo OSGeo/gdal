@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2000/04/20 14:05:03  warmerda
+ * added more raw float magic codes
+ *
  * Revision 1.12  2000/03/15 02:00:52  warmerda
  * Added type 0x01 (untested).
  *
@@ -478,7 +481,7 @@ CPLErr AIGReadBlock( FILE * fp, int nBlockOffset, int nBlockSize,
 /* -------------------------------------------------------------------- */
     pabyCur = pabyRaw + 2;
     if( (nCellType == AIG_CELLTYPE_INT || pabyCur[0] != 0x00)
-        && (pabyCur[0] < 0x3f || pabyCur[0] > 0x43) )
+        && (pabyCur[0] < FLOAT_MAGIC_BEGIN || pabyCur[0] > FLOAT_MAGIC_END) )
     {
         nMinSize = pabyCur[1];
         pabyCur += 2;
@@ -531,7 +534,7 @@ CPLErr AIGReadBlock( FILE * fp, int nBlockOffset, int nBlockSize,
                                  nBlockXSize, nBlockYSize, panData );
     }
     else if( nMagic == 0x00
-             || (nMagic >= 0x3f && nMagic <= 0x43) )
+             || (nMagic >= FLOAT_MAGIC_BEGIN && nMagic <= FLOAT_MAGIC_END) )
     {
         if( nCellType == AIG_CELLTYPE_FLOAT )
             AIGProcessRaw32BitFloatBlock( pabyCur, nDataSize, 0,
