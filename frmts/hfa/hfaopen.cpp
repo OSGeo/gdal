@@ -35,6 +35,9 @@
  * of the GDAL core, but dependent on the Common Portability Library.
  *
  * $Log$
+ * Revision 1.38  2005/02/22 21:34:18  fwarmerdam
+ * minor comment cleanup
+ *
  * Revision 1.37  2005/02/17 22:21:49  fwarmerdam
  * avoid memory leak
  *
@@ -1462,6 +1465,7 @@ HFAHandle HFACreate( const char * pszFilename,
     HFAHandle	psInfo;
     int		nBlockSize = 64;
     const char * pszValue = CSLFetchNameValue( papszOptions, "BLOCKSIZE" );
+
     if ( pszValue != NULL )
     {
         nBlockSize = atoi( pszValue );
@@ -1531,7 +1535,7 @@ HFAHandle HFACreate( const char * pszFilename,
     if ( bCreateLargeRaster )
     {
         poImgFormat->SetIntField( "spaceUsedForRasterData", 0 );
-        bCreateCompressed = FALSE;	// Can't be compressed if we are creating a spillfile - Frank, does this make sense?
+        bCreateCompressed = FALSE;	// Can't be compressed if we are creating a spillfile
     }
     else
     {
