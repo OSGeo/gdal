@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2001/05/29 02:24:33  warmerda
+ * fixed bracket count on import
+ *
  * Revision 1.4  2001/05/24 18:05:18  warmerda
  * substantial fixes to WKT support for MULTIPOINT/LINE/POLYGON
  *
@@ -179,14 +182,6 @@ OGRErr OGRMultiPoint::importFromWkt( char ** ppszInput )
         return OGRERR_CORRUPT_DATA;
 
 /* -------------------------------------------------------------------- */
-/*      The next character should be a ( indicating the start of the    */
-/*      list of objects.                                                */
-/* -------------------------------------------------------------------- */
-    pszInput = OGRWktReadToken( pszInput, szToken );
-    if( szToken[0] != '(' )
-        return OGRERR_CORRUPT_DATA;
-
-/* -------------------------------------------------------------------- */
 /*      Read the point list which should consist of exactly one point.  */
 /* -------------------------------------------------------------------- */
     int                 nMaxPoint = 0;
@@ -223,13 +218,6 @@ OGRErr OGRMultiPoint::importFromWkt( char ** ppszInput )
     if( eErr != OGRERR_NONE )
         return eErr;
 
-/* -------------------------------------------------------------------- */
-/*      freak if we don't get a closing bracket.                        */
-/* -------------------------------------------------------------------- */
-    pszInput = OGRWktReadToken( pszInput, szToken );
-    if( szToken[0] != ')' )
-        return OGRERR_CORRUPT_DATA;
-    
     *ppszInput = (char *) pszInput;
     
     return OGRERR_NONE;
