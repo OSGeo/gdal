@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: shpopen.c,v 1.35 2001/12/07 15:10:44 warmerda Exp $
+ * $Id: shpopen.c,v 1.37 2002/04/10 17:35:22 warmerda Exp $
  *
  * Project:  Shapelib
  * Purpose:  Implementation of core Shapefile read/write functions.
@@ -34,6 +34,12 @@
  ******************************************************************************
  *
  * $Log: shpopen.c,v $
+ * Revision 1.37  2002/04/10 17:35:22  warmerda
+ * fixed bug in ring reversal code
+ *
+ * Revision 1.36  2002/04/10 16:59:54  warmerda
+ * added SHPRewindObject
+ *
  * Revision 1.35  2001/12/07 15:10:44  warmerda
  * fix if .shx fails to open
  *
@@ -147,7 +153,7 @@
  */
 
 static char rcsid[] = 
-  "$Id: shpopen.c,v 1.35 2001/12/07 15:10:44 warmerda Exp $";
+  "$Id: shpopen.c,v 1.37 2002/04/10 17:35:22 warmerda Exp $";
 
 #include "shapefil.h"
 
@@ -1700,4 +1706,158 @@ SHPDestroyObject( SHPObject * psShape )
         free( psShape->panPartType );
 
     free( psShape );
+}
+
+/************************************************************************/
+/*                          SHPRewindObject()                           */
+/*                                                                      */
+/*      Reset the winding of polygon objects to adhere to the           */
+/*      specification.                                                  */
+/************************************************************************/
+
+int SHPAPI_CALL
+SHPRewindObject( SHPHandle hSHP, SHPObject * psObject )
+
+{
+    int  iOpRing, bAltered = 0;
+
+/* -------------------------------------------------------------------- */
+/*      Do nothing if this is not a polygon object.                     */
+/* -------------------------------------------------------------------- */
+    if( psObject->nSHPType != SHPT_POLYGON
+        && psObject->nSHPType != SHPT_POLYGONZ
+        && psObject->nSHPType != SHPT_POLYGONM )
+        return 0;
+
+/* -------------------------------------------------------------------- */
+/*      Process each of the rings.                                      */
+/* -------------------------------------------------------------------- */
+    for( iOpRing = 0; iOpRing < psObject->nParts; iOpRing++ )
+    {
+        int      bInner, iVert, nVertCount, nVertStart, iCheckRing;
+        double   dfSum, dfTestX, dfTestY;
+
+/* -------------------------------------------------------------------- */
+/*      Determine if this ring is an inner ring or an outer ring        */
+/*      relative to all the other rings.  For now we assume the         */
+/*      first ring is outer and all others are inner, but eventually    */
+/*      we need to fix this to handle multiple island polygons and      */
+/*      unordered sets of rings.                                        */
+/* -------------------------------------------------------------------- */
+        dfTestX = psObject->padfX[psObject->panPartStart[iOpRing]];
+        dfTestY = psObject->padfY[psObject->panPartStart[iOpRing]];
+
+        bInner = FALSE;
+        for( iCheckRing = 0; iCheckRing < psObject->nParts; iCheckRing++ )
+        {
+            int iEdge;
+
+            if( iCheckRing == iOpRing )
+                continue;
+            
+            nVertStart = psObject->panPartStart[iCheckRing];
+
+            if( iCheckRing == psObject->nParts-1 )
+                nVertCount = psObject->nVertices 
+                    - psObject->panPartStart[iCheckRing];
+            else
+                nVertCount = psObject->panPartStart[iCheckRing+1] 
+                    - psObject->panPartStart[iCheckRing];
+
+            for( iEdge = 0; iEdge < nVertCount; iEdge++ )
+            {
+                int iNext;
+
+                if( iEdge < nVertCount-1 )
+                    iNext = iEdge+1;
+                else
+                    iNext = 0;
+
+                if( (psObject->padfY[iEdge+nVertStart] < dfTestY 
+                     && psObject->padfY[iNext+nVertStart] >= dfTestY)
+                    || (psObject->padfY[iNext+nVertStart] < dfTestY 
+                        && psObject->padfY[iEdge+nVertStart] >= dfTestY) )
+                {
+                    if( psObject->padfX[iEdge+nVertStart] 
+                        + (dfTestY - psObject->padfY[iEdge+nVertStart])
+                           / (psObject->padfY[iNext+nVertStart]
+                              - psObject->padfY[iEdge+nVertStart])
+                           * (psObject->padfX[iNext+nVertStart]
+                              - psObject->padfX[iEdge+nVertStart]) < dfTestX )
+                        bInner = !bInner;
+                }
+            }
+        }
+
+/* -------------------------------------------------------------------- */
+/*      Determine the current order of this ring so we will know if     */
+/*      it has to be reversed.                                          */
+/* -------------------------------------------------------------------- */
+        nVertStart = psObject->panPartStart[iOpRing];
+
+        if( iOpRing == psObject->nParts-1 )
+            nVertCount = psObject->nVertices - psObject->panPartStart[iOpRing];
+        else
+            nVertCount = psObject->panPartStart[iOpRing+1] 
+                - psObject->panPartStart[iOpRing];
+
+        dfSum = 0.0;
+        for( iVert = nVertStart; iVert < nVertStart+nVertCount-1; iVert++ )
+        {
+            dfSum += psObject->padfX[iVert] * psObject->padfY[iVert+1]
+                - psObject->padfY[iVert] * psObject->padfX[iVert+1];
+        }
+
+        dfSum += psObject->padfX[iVert] * psObject->padfY[nVertStart]
+               - psObject->padfY[iVert] * psObject->padfX[nVertStart];
+
+/* -------------------------------------------------------------------- */
+/*      Reverse if necessary.                                           */
+/* -------------------------------------------------------------------- */
+        if( (dfSum < 0.0 && bInner) || (dfSum > 0.0 && !bInner) )
+        {
+            int   i;
+
+            bAltered++;
+            printf( "Reverse Ring %d of Object %d\n", 
+                    iOpRing, psObject->nShapeId );
+
+            for( i = 0; i < nVertCount/2; i++ )
+            {
+                double dfSaved;
+
+                // Swap X
+                dfSaved = psObject->padfX[nVertStart+i];
+                psObject->padfX[nVertStart+i] = 
+                    psObject->padfX[nVertStart+nVertCount-i-1];
+                psObject->padfX[nVertStart+nVertCount-i-1] = dfSaved;
+
+                // Swap Y
+                dfSaved = psObject->padfY[nVertStart+i];
+                psObject->padfY[nVertStart+i] = 
+                    psObject->padfY[nVertStart+nVertCount-i-1];
+                psObject->padfY[nVertStart+nVertCount-i-1] = dfSaved;
+
+                // Swap Z
+                if( psObject->padfZ )
+                {
+                    dfSaved = psObject->padfZ[nVertStart+i];
+                    psObject->padfZ[nVertStart+i] = 
+                        psObject->padfZ[nVertStart+nVertCount-i-1];
+                    psObject->padfZ[nVertStart+nVertCount-i-1] = dfSaved;
+                }
+
+                // Swap M
+                if( psObject->padfM )
+                {
+                    dfSaved = psObject->padfM[nVertStart+i];
+                    psObject->padfM[nVertStart+i] = 
+                        psObject->padfM[nVertStart+nVertCount-i-1];
+                    psObject->padfM[nVertStart+nVertCount-i-1] = dfSaved;
+                }
+            }
+        }
+    }
+
+    return bAltered;
 }
