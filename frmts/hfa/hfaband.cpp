@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2000/10/31 19:13:53  warmerda
+ * Look for overviews even if RRDNames exists and fails
+ *
  * Revision 1.11  2000/10/31 18:02:32  warmerda
  * Added external and unnamed overview support
  *
@@ -174,7 +177,7 @@ HFABand::HFABand( HFAInfo_t * psInfoIn, HFAEntry * poNodeIn )
 /*      overviews within the same layer, as occurs in floodplain.img    */
 /*      for instance.                                                   */
 /* -------------------------------------------------------------------- */
-    else
+    if( nOverviews == 0 )
     {
         HFAEntry	*poChild;
 
