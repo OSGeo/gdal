@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.76  2003/12/02 16:39:04  warmerda
+ * added GDALGetColorEntry support
+ *
  * Revision 1.75  2003/10/09 15:27:52  warmerda
  * added OGRLayer::DeleteFeature() support
  *
@@ -507,20 +510,14 @@ int              GDALFlushRasterCache( GDALRasterBandH );
 /* ==================================================================== */
 /*      Color tables.                                                   */
 /* ==================================================================== */
-typedef struct
-{
-    short      c1;      /* gray, red, cyan or hue */
-    short      c2;      /* green, magenta, or lightness */
-    short      c3;      /* blue, yellow, or saturation */
-    short      c4;      /* alpha or blackband */
-} GDALColorEntry;
+typedef short *GDALColorEntry;
 
 GDALColorTableH  GDALCreateColorTable( GDALPaletteInterp );
 void             GDALDestroyColorTable( GDALColorTableH );
 GDALColorTableH  GDALCloneColorTable( GDALColorTableH );
 GDALPaletteInterp  GDALGetPaletteInterpretation( GDALColorTableH );
 int              GDALGetColorEntryCount( GDALColorTableH );
-const GDALColorEntry  *GDALGetColorEntry( GDALColorTableH, int );
+const GDALColorEntry *GDALGetColorEntry( GDALColorTableH, int );
 int  GDALGetColorEntryAsRGB( GDALColorTableH, int, GDALColorEntry *);
 void  GDALSetColorEntry( GDALColorTableH, int, const GDALColorEntry * );
 
