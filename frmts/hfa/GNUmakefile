@@ -72,7 +72,7 @@ img2tif-dist:
 	   addtiffo_src/rawblocked* \
 	   img2tif_dist
 	mkdir img2tif_dist/port
-	cp $(GDAL_ROOT)/port/cpl_{conv.cpp,conv.h,error.cpp,error.h,port.h,string.cpp,string.h,vsi.h,vsisimple.cpp,config.h} img2tif_dist/port
+	cp $(GDAL_ROOT)/port/cpl_{path.cpp,conv.cpp,conv.h,error.cpp,error.h,port.h,string.cpp,string.h,vsi.h,vsisimple.cpp,config.h} img2tif_dist/port
 	mkdir img2tif_dist/libtiff
 	cp ../gtiff/libtiff/*.{c,h} img2tif_dist/libtiff
 	rm img2tif_dist/libtiff/tif_unix.c
