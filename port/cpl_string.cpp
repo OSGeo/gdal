@@ -44,6 +44,9 @@
  *   without vsnprintf(). 
  *
  * $Log$
+ * Revision 1.37  2003/12/02 15:56:47  warmerda
+ * avoid use of CSLAddString() in tokenize, manage list ourselves
+ *
  * Revision 1.36  2003/08/29 17:32:27  warmerda
  * Open file in binary mode for CSLLoad() since CPLReadline() works much
  * better then.
@@ -665,6 +668,7 @@ char ** CSLTokenizeString2( const char * pszString,
 
 {
     char        **papszRetList = NULL;
+    int         nRetMax = 0, nRetLen = 0;
     char        *pszToken;
     int         nTokenMax, nTokenLen;
     int         bHonourStrings = (nCSLTFlags & CSLT_HONOURSTRINGS);
@@ -750,18 +754,24 @@ char ** CSLTokenizeString2( const char * pszString,
 
         pszToken[nTokenLen] = '\0';
 
-        if( pszToken[0] != '\0' || bAllowEmptyTokens )
-        {
-            papszRetList = CSLAddString( papszRetList, pszToken );
-        }
-
-        /* If the last token is an empty token, then we have to catch
+        /*
+         * If the last token is an empty token, then we have to catch
          * it now, otherwise we won't reenter the loop and it will be lost. 
          */
-        if ( *pszString == '\0' && bAllowEmptyTokens &&
-             strchr(pszDelimiters, *(pszString-1)) )
+
+        if( (pszToken[0] != '\0' || bAllowEmptyTokens)
+            || (*pszString == '\0' && bAllowEmptyTokens
+                && strchr(pszDelimiters, *(pszString-1)) ) )
         {
-            papszRetList = CSLAddString( papszRetList, "" );
+            if( nRetLen >= nRetMax - 1 )
+            {
+                nRetMax = nRetMax * 2 + 10;
+                papszRetList = (char **) 
+                    CPLRealloc(papszRetList, sizeof(char*) * nRetMax );
+            }
+
+            papszRetList[nRetLen++] = CPLStrdup( pszToken );
+            papszRetList[nRetLen] = NULL;
         }
     }
 
