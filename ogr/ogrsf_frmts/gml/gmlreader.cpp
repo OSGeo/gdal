@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.12  2003/03/06 20:30:28  warmerda
+ * use GML/OGR geometry translations from ogr_geometry.h now
+ *
  * Revision 1.11  2002/12/18 21:36:12  danmo
  * Disabled XML validation by default, -DOGR_GML_VALIDATION=1 can turn it on
  *
@@ -65,7 +68,7 @@
 #define SUPPORT_GEOMETRY
 
 #ifdef SUPPORT_GEOMETRY
-#  include "ogr_gml_geom.h"
+#  include "ogr_geometry.h"
 #endif
 
 /************************************************************************/
@@ -750,7 +753,10 @@ int GMLReader::PrescanForSchema( int bGetExtents )
 
             if( poFeature->GetGeometry() != NULL 
                 && strlen(poFeature->GetGeometry()) != 0 )
-                poGeometry = GML2OGRGeometry( poFeature->GetGeometry() );
+            {
+                poGeometry = OGRGeometryFactory::createFromGML( 
+                    poFeature->GetGeometry() );
+            }
 
             if( poGeometry != NULL )
             {
