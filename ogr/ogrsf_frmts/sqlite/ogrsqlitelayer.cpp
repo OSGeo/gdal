@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2004/07/12 20:50:46  warmerda
+ * table/database creation now implemented
+ *
  * Revision 1.2  2004/07/11 19:23:51  warmerda
  * read implementation working well
  *
@@ -121,8 +124,20 @@ CPLErr OGRSQLiteLayer::BuildFeatureDefn( const char *pszLayerName,
             && EQUAL(oField.GetNameRef(),pszGeomColumn) )
             continue;
 
+        // The geometry is for internal use, not a real column.
+        if( EQUAL(oField.GetNameRef(),"wkt_geometry") )
+        {
+            if( pszGeomColumn == NULL )
+                pszGeomColumn = CPLStrdup( oField.GetNameRef() );
+            continue;
+        }
+
         // The rowid is for internal use, not a real column.
         if( EQUAL(oField.GetNameRef(),"_rowid_") )
+            continue;
+
+        // The OGC_FID is for internal use, not a real user visible column.
+        if( EQUAL(oField.GetNameRef(),"OGC_FID") )
             continue;
 
         switch( sqlite3_column_type( hStmt, iCol ) )
@@ -215,6 +230,9 @@ OGRFeature *OGRSQLiteLayer::GetNextRawFeature()
     int         iField;
     OGRFeature *poFeature = new OGRFeature( poFeatureDefn );
 
+/* -------------------------------------------------------------------- */
+/*      Set FID if we have a column to set it from.                     */
+/* -------------------------------------------------------------------- */
     if( pszFIDColumn != NULL )
     {
         int iFIDCol;
@@ -242,7 +260,39 @@ OGRFeature *OGRSQLiteLayer::GetNextRawFeature()
     iNextShapeId++;
 
 /* -------------------------------------------------------------------- */
-/*      Set the fields.                                                 */
+/*      Process Geometry if we have a column.                           */
+/* -------------------------------------------------------------------- */
+    if( pszGeomColumn != NULL )
+    {
+        int iGeomCol;
+
+        for( iGeomCol = 0; iGeomCol < sqlite3_column_count(hStmt); iGeomCol++ )
+        {
+            if( EQUAL(sqlite3_column_name(hStmt,iGeomCol),
+                      pszGeomColumn) )
+                break;
+        }
+
+        if( iGeomCol == sqlite3_column_count(hStmt) )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                      "Unable to find Geometry column '%s'.", 
+                      pszGeomColumn );
+            return NULL;
+        }
+
+        char *pszWKTCopy, *pszWKT = NULL;
+        OGRGeometry *poGeometry = NULL;
+
+        pszWKT = (char *) sqlite3_column_text( hStmt, iGeomCol );
+        pszWKTCopy = pszWKT;
+        if( OGRGeometryFactory::createFromWkt( &pszWKTCopy, NULL, 
+                                               &poGeometry ) == OGRERR_NONE )
+            poFeature->SetGeometryDirectly( poGeometry );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      set the fields.                                                 */
 /* -------------------------------------------------------------------- */
     for( iField = 0; iField < poFeatureDefn->GetFieldCount(); iField++ )
     {
