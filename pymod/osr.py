@@ -28,6 +28,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.25  2003/03/28 17:47:41  warmerda
+# added lots of stuff for accessing projection parameters
+#
 # Revision 1.24  2003/03/21 22:23:27  warmerda
 # added xml support
 #
@@ -105,6 +108,32 @@
 import _gdal
 import gdal
 
+SRS_PP_CENTRAL_MERIDIAN         = "central_meridian"
+SRS_PP_SCALE_FACTOR             = "scale_factor"
+SRS_PP_STANDARD_PARALLEL_1      = "standard_parallel_1"
+SRS_PP_STANDARD_PARALLEL_2      = "standard_parallel_2"
+SRS_PP_PSEUDO_STD_PARALLEL_1    = "pseudo_standard_parallel_1"
+SRS_PP_LONGITUDE_OF_CENTER      = "longitude_of_center"
+SRS_PP_LATITUDE_OF_CENTER       = "latitude_of_center"
+SRS_PP_LONGITUDE_OF_ORIGIN      = "longitude_of_origin"
+SRS_PP_LATITUDE_OF_ORIGIN       = "latitude_of_origin"
+SRS_PP_FALSE_EASTING            = "false_easting"
+SRS_PP_FALSE_NORTHING           = "false_northing"
+SRS_PP_AZIMUTH                  = "azimuth"
+SRS_PP_LONGITUDE_OF_POINT_1     = "longitude_of_point_1"
+SRS_PP_LATITUDE_OF_POINT_1      = "latitude_of_point_1"
+SRS_PP_LONGITUDE_OF_POINT_2     = "longitude_of_point_2"
+SRS_PP_LATITUDE_OF_POINT_2      = "latitude_of_point_2"
+SRS_PP_LONGITUDE_OF_POINT_3     = "longitude_of_point_3"
+SRS_PP_LATITUDE_OF_POINT_3      = "latitude_of_point_3"
+SRS_PP_RECTIFIED_GRID_ANGLE     = "rectified_grid_angle"
+SRS_PP_LANDSAT_NUMBER           = "landsat_number"
+SRS_PP_PATH_NUMBER              = "path_number"
+SRS_PP_PERSPECTIVE_POINT_HEIGHT = "perspective_point_height"
+SRS_PP_FIPSZONE                 = "fipszone"
+SRS_PP_ZONE                     = "zone"
+
+
 def GetProjectionMethods():
     return _gdal.OPTGetProjectionMethods()
 
@@ -125,6 +154,12 @@ class SpatialReference:
     def __del__(self):
         if _gdal.OSRDereference( self._o ) == 0:
             _gdal.OSRDestroySpatialReference( self._o )
+
+    def Reference( self ):
+        return _gdal.OSRReference(self._o)
+
+    def Dereference( self ):
+        return _gdal.OSRDereference(self._o)
 
     def ImportFromWkt( self, wkt ):
         return _gdal.OSRImportFromWkt( self._o, wkt )
@@ -245,6 +280,15 @@ class SpatialReference:
     
     def SetProjParm( self, name, value ):
         return _gdal.OSRSetProjParm( self._o, name, value )
+
+    def GetProjParm( self, name, default_val = 0.0 ):
+        return _gdal.OSRGetProjParm( self._o, name, default_val, 'NULL' )
+
+    def SetNormProjParm( self, name, value ):
+        return _gdal.OSRSetNormProjParm( self._o, name, value )
+
+    def GetNormProjParm( self, name, default_val = 0.0 ):
+        return _gdal.OSRGetNormProjParm( self._o, name, default_val, 'NULL' )
 
     def __str__( self ):
         return self.ExportToPrettyWkt()
