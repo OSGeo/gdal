@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  1999/11/04 16:26:12  warmerda
+ * Added the addGeometryDirectly() method for containers.
+ *
  * Revision 1.18  1999/09/22 13:19:09  warmerda
  * Added the addRingDirectly() method on OGRPolygon.
  *
@@ -528,7 +531,7 @@ class OGRGeometryCollection : public OGRGeometry
     
     // Non standard
     virtual OGRErr addGeometry( OGRGeometry * );
-    
+    virtual OGRErr addGeometryDirectly( OGRGeometry * );
 };
 
 /************************************************************************/
