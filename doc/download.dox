@@ -36,6 +36,11 @@ from <a href="http://www.freegis.org/">www.freegis.org</a> in RPM format.<p>
 
 <li> Packages for MacOS X are available via Fink from the <a href="http://fink.sourceforge.net/pdb/package.php/gdal">Fink repository</a>.
 
+<li> For the fink adverse, there is also a build of GDAL distributed as
+part of the easy-to-install 
+<a href="http://wwwamb.bologna.enea.it/forgrass/download.htm">GRASS GIS ON MAC
+OS X</a> package by Lorenzo Moretti.<p>
+
 <li> <a href="http://hobu.stat.iastate.edu/gdal-1.1.9win32.exe">http://hobu.stat.iastate.edu/gdal-1.1.9win32.exe</a>: Python 2.3 GDAL 1.1.9 add-on including Oracle Spatial, ECW, netcdf, GML and PostGIS.<p>
 
 <li> <a href="http://hobu.stat.iastate.edu/gdal-1.2.0win32.exe">http://hobu.stat.iastate.edu/gdal-1.2.0win32.exe</a>: Python 2.3 GDAL 1.2.0 add-on including ECW, netcdf, GML and PostGIS.<p>
