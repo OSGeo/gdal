@@ -91,11 +91,22 @@ web-update:	docs
 	mkdir /u/www/gdal/html
 	cp html/*.* /u/www/gdal/html
 
-install:	$(GDAL_LIB)
+install:	$(GDAL_LIB) install-actions
+
+install-actions:
+	$(INSTALL) -d $(INST_BIN)
+	$(INSTALL) -d $(INST_DATA)
+	$(INSTALL) -d $(INST_LIB)
+	$(INSTALL) -d $(INST_INCLUDE)
 	(cd port; $(MAKE) install)
 	(cd core; $(MAKE) install)
 	(cd frmts; $(MAKE) install)
 	(cd ogr; $(MAKE) install)
 	(cd apps; $(MAKE) install)
-	cp $(GDAL_LIB) $(INST_LIB)
-	cp $(GDAL_SLIB) $(INST_LIB)
+	(cd apps; $(MAKE) install)
+ifneq ($(PYTHON),no)
+	(cd pymod; $(MAKE) install)
+endif
+	$(INSTALL) $(GDAL_LIB) $(INST_LIB)
+	$(INSTALL) $(GDAL_SLIB) $(INST_LIB)
+	$(INSTALL) data/*.csv $(INST_DATA)
