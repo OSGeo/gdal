@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.31  2002/05/28 18:56:22  warmerda
+ * added shared dataset concept
+ *
  * Revision 1.30  2002/03/01 14:29:09  warmerda
  * added GetBand() method on GDALRasterBand
  *
@@ -213,8 +216,9 @@ class CPL_DLL GDALDefaultOverviews
 class CPL_DLL GDALDataset : public GDALMajorObject
 {
     friend GDALDatasetH GDALOpen( const char *, GDALAccess);
+    friend GDALDatasetH GDALOpenShared( const char *, GDALAccess);
     friend class GDALDriver;
-    
+
   protected:
     GDALDriver	*poDriver;
     GDALAccess	eAccess;
@@ -226,6 +230,7 @@ class CPL_DLL GDALDataset : public GDALMajorObject
     GDALRasterBand **papoBands;
 
     int         nRefCount;
+    int         bShared;
 
     		GDALDataset(void);
     void        RasterInitialize( int, int );
@@ -270,9 +275,13 @@ class CPL_DLL GDALDataset : public GDALMajorObject
     int           Dereference();
     GDALAccess    GetAccess() { return eAccess; }
 
+    int           GetShared();
+    void          MarkAsShared();
+
+    static GDALDataset **GetOpenDatasets( int *pnDatasetCount );
+
     CPLErr BuildOverviews( const char *, int, int *,
                            int, int *, GDALProgressFunc, void * );
-
 };
 
 /* ******************************************************************** */
@@ -405,6 +414,7 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
     int		GetXSize();
     int		GetYSize();
     int         GetBand();
+    GDALDataset*GetDataset();
 
     GDALDataType GetRasterDataType( void );
     void	GetBlockSize( int *, int * );

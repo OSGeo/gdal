@@ -1,5 +1,13 @@
 /******************************************************************************
- * Copyright (c) 1998, Frank Warmerdam
+ * $Id$
+ *
+ * Project:  GDAL Core
+ * Purpose:  Implementation of GDALOpen(), GDALOpenShared(), GDALOpenInfo and
+ *           related services.
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
+ *
+ **********************************************************************
+ * Copyright (c) 2002, Frank Warmerdam
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -20,12 +28,10 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************
  *
- * gdalopen.c
- *
- * GDALOpen() function, and supporting functions.
- *
- * 
  * $Log$
+ * Revision 1.13  2002/05/28 18:56:22  warmerda
+ * added shared dataset concept
+ *
  * Revision 1.12  2001/12/12 17:21:21  warmerda
  * Use CPLStat instead of VSIStat().
  *
@@ -134,6 +140,8 @@ GDALOpenInfo::~GDALOpenInfo()
 /**
  * Open a raster file as a GDALDataset.
  *
+ * See Also: GDALOpenShared()
+ *
  * @param pszFilename the name of the file to access.  In the case of
  * exotic drivers this may not refer to a physical file, but instead contain
  * information for the driver on how to access a dataset.
@@ -191,3 +199,135 @@ GDALDatasetH GDALOpen( const char * pszFilename, GDALAccess eAccess )
     return NULL;
 }
 
+/************************************************************************/
+/*                           GDALOpenShared()                           */
+/************************************************************************/
+
+/**
+ * Open a raster file as a GDALDataset.
+ *
+ * This function works the same as GDALOpen(), but allows the sharing of
+ * GDALDataset handles for a dataset with other callers to GDALOpenShared().
+ * 
+ * In particular, GDALOpenShared() will first consult it's list of currently
+ * open and shared GDALDataset's, and if the GetDescription() name for one
+ * exactly matches the pszFilename passed to GDALOpenShared() it 
+
+ * @param pszFilename the name of the file to access.  In the case of
+ * exotic drivers this may not refer to a physical file, but instead contain
+ * information for the driver on how to access a dataset.
+ *
+ * @param eAccess the desired access, either GA_Update or GA_ReadOnly.  Many
+ * drivers support only read only access.
+ *
+ * @return A GDALDatasetH handle or NULL on failure.  For C++ applications
+ * this handle can be cast to a GDALDataset *. 
+ */
+ 
+GDALDatasetH GDALOpenShared( const char *pszFilename, GDALAccess eAccess )
+
+{
+/* -------------------------------------------------------------------- */
+/*      First scan the existing list to see if it could already         */
+/*      contain the requested dataset.                                  */
+/* -------------------------------------------------------------------- */
+    int		i, nSharedDatasetCount;
+    GDALDataset **papoSharedDatasets 
+        		= GDALDataset::GetOpenDatasets(&nSharedDatasetCount);
+    
+    for( i = 0; i < nSharedDatasetCount; i++ )
+    {
+        if( strcmp(pszFilename,papoSharedDatasets[i]->GetDescription()) == 0 
+            && (eAccess == GA_ReadOnly 
+                || papoSharedDatasets[i]->GetAccess() == eAccess ) )
+            
+        {
+            papoSharedDatasets[i]->Reference();
+            return papoSharedDatasets[i];
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Try opening the the requested dataset.                          */
+/* -------------------------------------------------------------------- */
+    GDALDataset *poDataset;
+
+    poDataset = (GDALDataset *) GDALOpen( pszFilename, eAccess );
+    if( poDataset != NULL )
+        poDataset->MarkAsShared();
+    
+    return (GDALDatasetH) poDataset;
+}
+
+/************************************************************************/
+/*                             GDALClose()                              */
+/************************************************************************/
+
+void GDALClose( GDALDatasetH hDS )
+
+{
+    GDALDataset *poDS = (GDALDataset *) hDS;
+    int		i, nSharedDatasetCount;
+    GDALDataset **papoSharedDatasets 
+        		= GDALDataset::GetOpenDatasets(&nSharedDatasetCount);
+
+/* -------------------------------------------------------------------- */
+/*      If this file is in the shared dataset list then dereference     */
+/*      it, and only delete/remote it if the reference count has        */
+/*      dropped to zero.                                                */
+/* -------------------------------------------------------------------- */
+    for( i = 0; i < nSharedDatasetCount; i++ )
+    {
+        if( papoSharedDatasets[i] == poDS )
+        {
+            if( poDS->Dereference() > 0 )
+                return;
+
+            delete poDS;
+            return;
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      This is not shared dataset, so directly delete it.              */
+/* -------------------------------------------------------------------- */
+    delete poDS;
+}
+
+/************************************************************************/
+/*                        GDALDumpOpenDataset()                         */
+/************************************************************************/
+
+int GDALDumpOpenDatasets( FILE *fp )
+   
+{
+    int		i, nSharedDatasetCount;
+    GDALDataset **papoSharedDatasets 
+        		= GDALDataset::GetOpenDatasets(&nSharedDatasetCount);
+
+    if( nSharedDatasetCount > 0 )
+        VSIFPrintf( fp, "Open GDAL Datasets:\n" );
+    
+    for( i = 0; i < nSharedDatasetCount; i++ )
+    {
+        const char *pszDriverName;
+        GDALDataset *poDS = papoSharedDatasets[i];
+        
+        if( poDS->GetDriver() == NULL )
+            pszDriverName = "DriverIsNULL";
+        else
+            pszDriverName = poDS->GetDriver()->pszShortName;
+
+        poDS->Reference();
+        VSIFPrintf( fp, "  %d %c %-6s %dx%dx%d %s\n", 
+                    poDS->Dereference(), 
+                    poDS->GetShared() ? 'S' : 'N',
+                    pszDriverName, 
+                    poDS->GetRasterXSize(),
+                    poDS->GetRasterYSize(),
+                    poDS->GetRasterCount(),
+                    poDS->GetDescription() );
+    }
+    
+    return nSharedDatasetCount;
+}
