@@ -8,7 +8,7 @@ gdalconst_wrap.c: gdalconst.i
 gdal_wrap.cpp:	gdal.i gdal_typemaps.i Driver.i Dataset.i Band.i ColorTable.i cpl.i
 	swig -python -c++ -I../.. -o $@ $<
 
-ogr_wrap.cpp:  ogr.i
+ogr_wrap.cpp:  ogr.i gdal_typemaps.i
 	swig -python -c++ -I../.. -o $@ $<
 
 osr_wrap.cpp:  osr.i
