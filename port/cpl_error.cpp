@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.10  1999/11/23 04:16:56  danmo
+ * Fixed var. initialization that failed to compile as C
+ *
  * Revision 1.9  1999/09/03 17:03:45  warmerda
  * Completed partial help line.
  *
@@ -270,7 +273,8 @@ static void CPLDefaultErrorHandler( CPLErr eErrClass, int nError,
 
 {
     static int       bLogInit = FALSE;
-    static FILE *    fpLog = stderr;
+    static FILE *    fpLog;
+    fpLog = stderr;
 
     if( !bLogInit )
     {
