@@ -11,6 +11,7 @@ default:
 	(cd dgn; $(MAKE) $*)
 	(cd gml; $(MAKE) $*)
 	(cd avc; $(MAKE) $*)
+	(cd rec; $(MAKE) $*)
 ifeq ($(HAVE_OGDI),yes)
 	(cd ogdi; $(MAKE) $*)
 endif

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.29  2003/02/03 21:16:49  warmerda
+ * added .rec driver
+ *
  * Revision 1.28  2002/12/28 04:09:18  warmerda
  * added Oracle support
  *
@@ -304,6 +307,7 @@ void CPL_DLL RegisterOGRGML();
 void CPL_DLL RegisterOGRAVCBin();
 void CPL_DLL RegisterOGRAVCE00();
 void CPL_DLL RegisterOGRFME();
+void CPL_DLL RegisterOGRREC();
 CPL_C_END
 
 
