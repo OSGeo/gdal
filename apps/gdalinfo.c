@@ -26,6 +26,9 @@
  * serves as an early test harnass.
  *
  * $Log$
+ * Revision 1.27  2002/09/20 14:32:15  warmerda
+ * don't build gdalinfo statically any more
+ *
  * Revision 1.26  2002/09/04 06:53:42  warmerda
  * added GDALDestroyDriverManager() for cleanup
  *
@@ -115,6 +118,17 @@ GDALInfoReportCorner( GDALDatasetH hDataset,
                       double x, double y );
 
 /************************************************************************/
+/*                               Usage()                                */
+/************************************************************************/
+
+void Usage()
+
+{
+    printf( "Usage: gdalinfo [--version] [--formats] [-mm] datasetname\n");
+    exit( 1 );
+}
+
+/************************************************************************/
 /*                                main()                                */
 /************************************************************************/
 
@@ -128,34 +142,57 @@ int main( int argc, char ** argv )
     GDALDriverH		hDriver;
     char		**papszMetadata;
     int                 bComputeMinMax = FALSE, bSample = FALSE;
-
-    if( argc < 2 )
-    {
-        printf( "Usage: gdalinfo [--version] [-mm] datasetname\n" );
-        exit( 10 );
-    }
-
-    if( EQUAL(argv[1],"-mm") )
-    {
-        bComputeMinMax = TRUE;
-        argv++;
-    }
-
-    if( EQUAL(argv[1],"--version") )
-    {
-        printf( "%s\n", GDALVersionInfo( "--version" ) );
-        exit( 0 );
-    }
-
-    if( EQUAL(argv[1],"-sample") )
-    {
-        bSample = TRUE;
-        argv++;
-    }
+    const char          *pszFilename = NULL;
 
     GDALAllRegister();
 
-    hDataset = GDALOpen( argv[1], GA_ReadOnly );
+/* -------------------------------------------------------------------- */
+/*      Parse arguments.                                                */
+/* -------------------------------------------------------------------- */
+    for( i = 1; i < argc; i++ )
+    {
+        if( EQUAL(argv[i],"-mm") )
+        {
+            bComputeMinMax = TRUE;
+        }
+        else if( EQUAL(argv[i],"--version") )
+        {
+            printf( "%s\n", GDALVersionInfo( "--version" ) );
+            exit( 0 );
+        }
+        else if( EQUAL(argv[i],"--formats") )
+        {
+            int iDr;
+
+            printf( "Supported Formats:\n" );
+            for( iDr = 0; iDr < GDALGetDriverCount(); iDr++ )
+            {
+                GDALDriverH hDriver = GDALGetDriver(iDr);
+                
+                printf( "  %s: %s\n",
+                        GDALGetDriverShortName( hDriver ),
+                        GDALGetDriverLongName( hDriver ) );
+            }
+
+            exit( 0 );
+        }
+        else if( EQUAL(argv[i],"-sample") )
+            bSample = TRUE;
+        else if( argv[i][0] == '-' )
+            Usage();
+        else if( pszFilename == NULL )
+            pszFilename = argv[i];
+        else
+            Usage();
+    }
+
+    if( pszFilename == NULL )
+        Usage();
+
+/* -------------------------------------------------------------------- */
+/*      Open dataset.                                                   */
+/* -------------------------------------------------------------------- */
+    hDataset = GDALOpen( pszFilename, GA_ReadOnly );
     
     if( hDataset == NULL )
     {

@@ -12,9 +12,9 @@ lib-depend:
 	(cd ../core ; $(MAKE) )
 	(cd ../port ; $(MAKE) )
 
-gdalinfo$(EXE):	gdalinfo.o $(DEP_LIBS)
-	$(CXX) $(LNK_FLAGS) gdalinfo.o $(XTRAOBJ) $(GDAL_LIBS) $(LIBS) \
-		 -o gdalinfo$(EXE)
+gdalinfo$(EXE):	gdalinfo.o  $(DEP_LIBS)
+	$(CXX) $(LNK_FLAGS) gdalinfo.o $(XTRAOBJ) \
+		$(CONFIG_LIBS) -o gdalinfo$(EXE)
 
 gdal_translate$(EXE):	gdal_translate.o  $(DEP_LIBS)
 	$(CXX) $(LNK_FLAGS) gdal_translate.o $(XTRAOBJ) \
