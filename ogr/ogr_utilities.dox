@@ -15,14 +15,16 @@ source to stdout (the terminal).
 \verbatim
 Usage: ogrinfo [-ro] [-q] [-where restricted_where]
                [-spat xmin ymin xmax ymax] [-fid fid]
-               [-sql statement] [-al]
+               [-sql statement] [-al] [-so] [--formats]
                datasource_name [layer [layer ...]]
 \endverbatim
 
 <ul>
 <li> <b>-ro</b>: Open the data source in read-only mode.  
-<li> <b>-al</b>: List all features of all layers (used instead of listing 
-the layer names).
+<li> <b>-al</b>: List all features of all layers (used instead of having to
+give layer names as arguments).
+<li> <b>-so</b>: Summary Only: supress listing of features, show only the 
+summary information like projection, schema, feature count and extents.
 <li> <b>-q</b>: Quiet verbose reporting of various information, including
 coordinate system, layer schema, extents, and feature count. 
 <li> <b>-where</b> <i>restricted_where</i>: An attribute query in a restricted
@@ -35,6 +37,7 @@ features within the rectangle will be reported.
 <li> <b>-fid</b> <i>fid</i>: If provided, only the feature with this feature
 id will be reported.  Operates exclusive of the spatial or attribute 
 queries.
+<li> <b>--formats</b>: List the format drivers that are enabled.
 <li> <i>datasource_name</i>: The data source to open.  May be a filename, 
 directory or other virtual name.  See the <a href="ogr_formats.html">OGR Vector
 Formats</a> list for supported datasources.
