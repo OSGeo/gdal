@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2004/01/06 18:53:41  warmerda
+ * made data_type_code and data_struct_code global for HP C++ builds
+ *
  * Revision 1.17  2003/09/03 20:36:26  warmerda
  * added subfield writing support
  *
@@ -205,6 +208,15 @@ class DDFModule
 /*                             DDFFieldDefn                             */
 /************************************************************************/
 
+  typedef enum { elementary, vector, array, concatenated } DDF_data_struct_code;
+  typedef enum { char_string, 
+                 implicit_point, 
+                 explicit_point, 
+                 explicit_point_scaled, 
+                 char_bit_string, 
+                 bit_string, 
+                 mixed_data_type } DDF_data_type_code;
+
 /**
  * Information from the DDR defining one field.  Note that just because
  * a field is defined for a DDFModule doesn't mean that it actually occurs
@@ -218,19 +230,10 @@ class DDFFieldDefn
                 DDFFieldDefn();
                 ~DDFFieldDefn();
 
-  typedef enum { elementary, vector, array, concatenated } data_struct_code;
-  typedef enum { char_string, 
-                 implicit_point, 
-                 explicit_point, 
-                 explicit_point_scaled, 
-                 char_bit_string, 
-                 bit_string, 
-                 mixed_data_type } data_type_code;
-
     int         Create( const char *pszTag, const char *pszFieldName,
                         const char *pszDescription,
-                        DDFFieldDefn::data_struct_code eDataStructCode,
-                        DDFFieldDefn::data_type_code   eDataTypeCode,
+                        DDF_data_struct_code eDataStructCode,
+                        DDF_data_type_code   eDataTypeCode,
                         const char *pszFormat = NULL );
     void        AddSubfield( DDFSubfieldDefn *poNewSFDefn,
                              int bDontAddToFormat = FALSE );
@@ -298,9 +301,9 @@ class DDFFieldDefn
     int         BuildSubfields();
     int         ApplyFormats();
 
-    DDFFieldDefn::data_struct_code _data_struct_code;
+    DDF_data_struct_code _data_struct_code;
 
-    DDFFieldDefn::data_type_code   _data_type_code;
+    DDF_data_type_code   _data_type_code;
 
     int         nSubfieldCount;
     DDFSubfieldDefn **papoSubfields;
