@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2003/03/28 13:57:12  warmerda
+ * fixed C++ comment (per bug 311)
+ *
  * Revision 1.10  2002/12/18 21:18:11  warmerda
  * read RPF CoverageSection for more exact geotransform
  *
@@ -356,7 +359,6 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
     }
     else
     {
-//        CPLAssert( FALSE );
         psImage->nPixelOffset = psImage->nWordSize;
         psImage->nLineOffset = psImage->nBlockWidth * psImage->nPixelOffset;
         psImage->nBandOffset = psImage->nBlockHeight * psImage->nLineOffset;
