@@ -26,6 +26,9 @@
  * serves as an early test harnass.
  *
  * $Log$
+ * Revision 1.29  2003/05/01 13:16:37  warmerda
+ * dont generate error reports if instantiating coordinate transform fails
+ *
  * Revision 1.28  2003/04/22 16:02:08  dron
  * New switches: -nogcp and -nomd to suppress printing out GCPs list and metadata
  * strings respectively.
@@ -522,7 +525,10 @@ GDALInfoReportCorner( GDALDatasetH hDataset,
 
         if( hLatLong != NULL )
         {
+            CPLPushErrorHandler( CPLQuietErrorHandler );
             hTransform = OCTNewCoordinateTransformation( hProj, hLatLong );
+            CPLPopErrorHandler();
+            
             OSRDestroySpatialReference( hLatLong );
         }
 
