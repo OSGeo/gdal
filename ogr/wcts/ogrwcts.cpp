@@ -27,7 +27,23 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************
  *
+ * Security Audit 2003/03/28 warmerda:
+ *   Completed security audit.  I believe that *this* module may be safely used
+ *   to handle arbitrary input.  It also requires the following to be safe:
+ *    1) libcurl (not checked, note libcurl may allow operating on file:
+ *       urls, potentially compromising local files to some extent). 
+ *    2) CPLTokenize() support for parsing QUERY_STRING.  (checked)
+ *    3) OGR GML Geometry reading and writing services. (checked)
+ *    4) OGR GML CRS reading and writing services.  (not checked)
+ *    5) cpl_minixml.cpp parsing and serializing services (checked)
+ *    6) cpl_string escaping logic, and stringlist handling (checked)
+ *   For optimal overall security this server should be run *without* libcurl, 
+ *   without GML CRS parsing till these areas are reviewed.
+ *
  * $Log$
+ * Revision 1.11  2003/03/28 06:12:45  warmerda
+ * completed security audit.  Avoid passinglong strings to CPLSPrintf()
+ *
  * Revision 1.10  2003/03/27 17:20:20  warmerda
  * improved request error
  *
@@ -198,7 +214,7 @@ CPLXMLNode *WCTSAuthId2crsId( char **papszParms, const char *pszName )
     papszTokens = CSLTokenizeString2( pszAuthId, ":", 0 );
     if( CSLCount(papszTokens) != 2 )
         WCTSEmitServiceException( 
-            CPLSPrintf( "%s value corrupt, use 'authority:code'.",
+            CPLSPrintf( "%.500s value corrupt, use 'authority:code'.",
                         pszName ));
     
     psCRSId = CPLCreateXMLNode( NULL, CXT_Element, "crsID" );
@@ -333,7 +349,7 @@ CPLXMLNode *WCTSCollectKVPRequest()
 /* -------------------------------------------------------------------- */
     else
         WCTSEmitServiceException( 
-            CPLSPrintf( "Unrecognised REQUEST value (%s).", pszRequest) );
+            CPLSPrintf( "Unrecognised REQUEST value (%.500s).", pszRequest) );
 
     return NULL;
 }
