@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2002/12/03 15:21:19  warmerda
+ * finished up window computations for odd cases
+ *
  * Revision 1.7  2002/11/24 04:29:02  warmerda
  * Substantially rewrote VRTSimpleSource.  Now VRTSource is base class, and
  * sources do their own SerializeToXML(), and XMLInit().  New VRTComplexSource
@@ -284,6 +287,14 @@ VRTSimpleSource::GetSrcDstWindow( int nXOff, int nYOff, int nXSize, int nYSize,
     *pnReqYSize = (int) floor(nYSize * dfScaleY + 0.5);
 
 /* -------------------------------------------------------------------- */
+/*      This request window corresponds to the whole output buffer.     */
+/* -------------------------------------------------------------------- */
+    *pnOutXOff = 0;
+    *pnOutYOff = 0;
+    *pnOutXSize = nBufXSize;
+    *pnOutYSize = nBufYSize;
+
+/* -------------------------------------------------------------------- */
 /*      Clamp within the bounds of the available source data.           */
 /* -------------------------------------------------------------------- */
     int bModified = FALSE;
@@ -292,6 +303,7 @@ VRTSimpleSource::GetSrcDstWindow( int nXOff, int nYOff, int nXSize, int nYSize,
     {
         *pnReqXSize += *pnReqXOff;
         *pnReqXOff = 0;
+
         bModified = TRUE;
     }
     
@@ -329,23 +341,43 @@ VRTSimpleSource::GetSrcDstWindow( int nXOff, int nYOff, int nXSize, int nYSize,
         return FALSE;
 
 /* -------------------------------------------------------------------- */
+/*      If we haven't had to modify the source rectangle, then the      */
+/*      destination rectangle must be the whole region.                 */
+/* -------------------------------------------------------------------- */
+    if( !bModified )
+        return TRUE;
+
+/* -------------------------------------------------------------------- */
 /*      Now transform this possibly reduced request back into the       */
 /*      destination buffer coordinates in case the output region is     */
 /*      less than the whole buffer.                                     */
-/*                                                                      */
-/*      This is kind of hard, so for now we will assume that no         */
-/*      serious modification took place.                                */
 /* -------------------------------------------------------------------- */
-    CPLAssert( !bModified );
-    if( bModified )
+    double dfDstULX, dfDstULY, dfDstLRX, dfDstLRY;
+    double dfScaleWinToBufX, dfScaleWinToBufY;
+
+    SrcToDst( (double) *pnReqXOff, (double) *pnReqYOff, dfDstULX, dfDstULY );
+    SrcToDst( *pnReqXOff + *pnReqXSize, *pnReqYOff + *pnReqYSize, 
+              dfDstLRX, dfDstLRY );
+
+    dfScaleWinToBufX = nBufXSize / (double) nXSize;
+    dfScaleWinToBufY = nBufYSize / (double) nYSize;
+
+    *pnOutXOff = (int) ((dfDstULX - nXOff) * dfScaleWinToBufX);
+    *pnOutYOff = (int) ((dfDstULY - nYOff) * dfScaleWinToBufY);
+    *pnOutXSize = (int) ((dfDstLRX - nXOff) * dfScaleWinToBufX) - *pnOutXOff;
+    *pnOutYSize = (int) ((dfDstLRY - nYOff) * dfScaleWinToBufY) - *pnOutYOff;
+
+    *pnOutXOff = MAX(0,*pnOutXOff);
+    *pnOutYOff = MAX(0,*pnOutYOff);
+    if( *pnOutXOff + *pnOutXSize > nBufXSize )
+        *pnOutXSize = nBufXSize - *pnOutXOff;
+    if( *pnOutYOff + *pnOutYSize > nBufYSize )
+        *pnOutXSize = nBufXSize - *pnOutXOff;
+
+    if( *pnOutXSize < 1 || *pnOutYSize < 1 )
         return FALSE;
-
-    *pnOutXOff = 0;
-    *pnOutYOff = 0;
-    *pnOutXSize = nBufXSize;
-    *pnOutYSize = nBufYSize;
-
-    return TRUE;
+    else
+        return TRUE;
 }
 
 /************************************************************************/
