@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  1999/03/02 21:09:48  warmerda
+ * add GDALDecToDMS()
+ *
  * Revision 1.2  1999/01/27 20:28:01  warmerda
  * Don't call CPLGetsymbol() for every function if first fails.
  *
@@ -237,3 +240,39 @@ CPLErr GDALReprojectFromLongLat( GDALProjDefH hProjDef,
     return( ((GDALProjDef *) hProjDef)->FromLongLat(padfX, padfY) );
 }
 
+/************************************************************************/
+/*                            GDALDecToDMS()                            */
+/*                                                                      */
+/*      Translate a decimal degrees value to a DMS string with          */
+/*      hemisphere.                                                     */
+/************************************************************************/
+
+const char *GDALDecToDMS( double dfAngle, const char * pszAxis,
+                          int nPrecision )
+
+{
+    int		nDegrees, nMinutes;
+    double	dfSeconds;
+    char	szFormat[30];
+    static char szBuffer[50];
+    const char	*pszHemisphere;
+    
+
+    nDegrees = (int) ABS(dfAngle);
+    nMinutes = (int) ((ABS(dfAngle) - nDegrees) * 60);
+    dfSeconds = (ABS(dfAngle) * 3600 - nDegrees*3600 - nMinutes*60);
+
+    if( EQUAL(pszAxis,"Long") && dfAngle < 0.0 )
+        pszHemisphere = "W";
+    else if( EQUAL(pszAxis,"Long") )
+        pszHemisphere = "E";
+    else if( dfAngle < 0.0 )
+        pszHemisphere = "S";
+    else
+        pszHemisphere = "N";
+
+    sprintf( szFormat, "%%3dd%%2d\'%%.%df\"%s", nPrecision, pszHemisphere );
+    sprintf( szBuffer, szFormat, nDegrees, nMinutes, dfSeconds );
+
+    return( szBuffer );
+}

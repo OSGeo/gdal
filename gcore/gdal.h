@@ -26,6 +26,9 @@
  * that calls the GDAL library.
  * 
  * $Log$
+ * Revision 1.7  1999/03/02 21:09:48  warmerda
+ * add GDALDecToDMS()
+ *
  * Revision 1.6  1999/01/11 15:36:17  warmerda
  * Added projections support, and a few other things.
  *
@@ -156,6 +159,8 @@ GDALProjDefH CPL_DLL GDALCreateProjDef( const char * );
 CPLErr 	CPL_DLL GDALReprojectToLongLat( GDALProjDefH, double *, double * );
 CPLErr 	CPL_DLL GDALReprojectFromLongLat( GDALProjDefH, double *, double * );
 void    CPL_DLL GDALDestroyProjDef( GDALProjDefH );
+const char CPL_DLL *GDALDecToDMS( double, const char *, int );
+
 
 CPL_C_END
 
