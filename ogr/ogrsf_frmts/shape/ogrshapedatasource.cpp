@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2002/04/17 15:40:27  warmerda
+ * Added support for 2.5D polygons.
+ *
  * Revision 1.12  2002/04/05 20:28:35  warmerda
  * ensure that eType is set properly if SHPT= options given
  *
@@ -375,6 +378,8 @@ OGRShapeDataSource::CreateLayer( const char * pszLayerName,
         nShapeType = SHPT_POINTZ;
     else if( eType == wkbLineString25D )
         nShapeType = SHPT_ARCZ;
+    else if( eType == wkbPolygon25D )
+        nShapeType = SHPT_POLYGONZ;
     else if( eType == wkbNone )
         nShapeType = SHPT_NULL;
     else
