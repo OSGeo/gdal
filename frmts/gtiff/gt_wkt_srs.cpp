@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.30  2002/11/25 05:34:10  warmerda
+ * implemented support for checking and writing linear units
+ *
  * Revision 1.29  2002/11/24 02:44:42  warmerda
  * cleanup poSRS leak when writing geotiff info
  *
@@ -570,6 +573,24 @@ int GTIFSetFromOGISDefn( GTIF * psGTIF, const char *pszOGCWKT )
         nDatum = KvUserDefined;
 
 /* -------------------------------------------------------------------- */
+/*      Get the linear units.                                           */
+/* -------------------------------------------------------------------- */
+    char        *pszLinearUOMName = NULL;
+    double	dfLinearUOM = poSRS->GetLinearUnits( &pszLinearUOMName );
+    int         nUOMLengthCode = 9001; /* meters */
+
+    if( (pszLinearUOMName != NULL
+         && EQUAL(pszLinearUOMName,SRS_UL_FOOT))
+        || dfLinearUOM == atof(SRS_UL_FOOT_CONV) )
+        nUOMLengthCode = 9002; /* international foot */
+    else if( (pszLinearUOMName != NULL
+         && EQUAL(pszLinearUOMName,SRS_UL_US_FOOT))
+             || ABS(dfLinearUOM-atof(SRS_UL_US_FOOT_CONV)) < 0.0000001 )
+        nUOMLengthCode = 9003; /* us survey foot */
+    else if( dfLinearUOM != 1.0 )
+        nUOMLengthCode = KvUserDefined;
+
+/* -------------------------------------------------------------------- */
 /*      Handle the projection transformation.                           */
 /* -------------------------------------------------------------------- */
     const char *pszProjection = poSRS->GetAttrValue( "PROJECTION" );
@@ -621,20 +642,20 @@ int GTIFSetFromOGISDefn( GTIF * psGTIF, const char *pszOGCWKT )
         nZone = poSRS->GetUTMZone( &bNorth );
 
         if( nDatum == Datum_North_American_Datum_1983 && nZone >= 3
-            && nZone <= 22 && bNorth )
+            && nZone <= 22 && bNorth && nUOMLengthCode == 9001 )
         {
             nPCS = 26900 + nZone;
 
             GTIFKeySet(psGTIF, ProjectedCSTypeGeoKey, TYPE_SHORT, 1, nPCS );
         }
         else if( nDatum == Datum_North_American_Datum_1927 && nZone >= 3
-            && nZone <= 22 && bNorth )
+            && nZone <= 22 && bNorth && nUOMLengthCode == 9001 )
         {
             nPCS = 26700 + nZone;
 
             GTIFKeySet(psGTIF, ProjectedCSTypeGeoKey, TYPE_SHORT, 1, nPCS );
         }
-        else if( nDatum == Datum_WGS84 )
+        else if( nDatum == Datum_WGS84 && nUOMLengthCode == 9001 )
         {
             if( bNorth )
                 nPCS = 32600 + nZone;
@@ -1283,7 +1304,14 @@ int GTIFSetFromOGISDefn( GTIF * psGTIF, const char *pszOGCWKT )
 /* -------------------------------------------------------------------- */
 /*      Write linear units information.                                 */
 /* -------------------------------------------------------------------- */
-    
+    if( !poSRS->IsGeographic() )
+    {
+        GTIFKeySet(psGTIF, ProjLinearUnitsGeoKey, TYPE_SHORT, 1, 
+                   nUOMLengthCode );
+        if( nUOMLengthCode == KvUserDefined )
+            GTIFKeySet( psGTIF, ProjLinearUnitSizeGeoKey, TYPE_DOUBLE, 1, 
+                        dfLinearUOM);
+    }
     
 /* -------------------------------------------------------------------- */
 /*	Try to identify the datum, scanning the EPSG datum file for	*/
