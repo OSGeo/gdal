@@ -1,22 +1,37 @@
-/* Copyright (c) 1997
- * Atlantis Scientific Inc, 20 Colonnade, Suite 110
- * Nepean, Ontario, K2E 7M6, Canada
+/******************************************************************************
+ * $Id$
  *
- * All rights reserved.  Not to be used, reproduced
- * or disclosed without permission.
+ * Project:  ASI CEOS Translator
+ * Purpose:  CEOS field layout recipes.
+ * Author:   Paul Lahaie, pjlahaie@atlsci.com
+ *
+ ******************************************************************************
+ * Copyright (c) 2000, Atlantis Scientific Inc
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ ******************************************************************************
+ *
+ * $Log$
+ * Revision 1.2  2000/03/31 13:34:20  warmerda
+ * ported to gdal
+ *
  */
-
-/* +---------------------------------------------------------------------+
- * |@@@@@@@@@@    @@@| EASI/PACE V6.0, Copyright (c) 1997.               |
- * |@@@@@@ ***      @|                                                   |
- * |@@@  *******    @| PCI Inc., 50 West Wilmot Street,                  |
- * |@@  *********  @@| Richmond Hill, Ontario, L4B 1M5, Canada.          |
- * |@    *******  @@@|                                                   |
- * |@      *** @@@@@@| All rights reserved. Not to be used, reproduced   |
- * |@@@    @@@@@@@@@@| or disclosed without permission.                  |
- * +---------------------------------------------------------------------+
- */
-
 
 #include "ceos.h"
 
@@ -164,13 +179,12 @@ void AddRecipe( int (*function)(CeosSARVolume_t *volume,
 
 int CeosDefaultRecipe( CeosSARVolume_t *volume, void *token )
 {
-    CeosSARImageDescRecipe_t *temp_imagerecipe;
     CeosRecipeType_t *recipe;
     CeosRecord_t *record;
     CeosTypeCode_t TypeCode;
     struct CeosSARImageDesc *ImageDesc = &(volume->ImageDesc);
     char temp_str[1024];
-    int i, temp_int, e;
+    int i, temp_int;
     
 #define DoExtractInt(a) ExtractInt( record, recipe[i].Type, recipe[i].Offset, recipe[i].Length, &a)
 
@@ -299,7 +313,6 @@ int CeosDefaultRecipe( CeosSARVolume_t *volume, void *token )
 int ScanSARRecipeFCN( CeosSARVolume_t *volume, void *token )
 {
     struct CeosSARImageDesc *ImageDesc = &(volume->ImageDesc);
-    CeosRecipeType_t *recipe = token;
 
     memset( ImageDesc, 0, sizeof( struct CeosSARImageDesc ) );
 
@@ -360,11 +373,15 @@ static void ExtractInt(CeosRecord_t *record, int type, unsigned int offset, unsi
 	break;
     case __CEOS_REC_TYP_B:
 	sprintf( format, "B%u", length );
+#ifdef notdef
 	GetCeosField( record, offset, format, buffer );
 	if( length <= 4 )
 	    CeosToNative( value, buffer, length, length );
 	else
 	    *value = 0;
+#else
+	GetCeosField( record, offset, format, value );
+#endif
 	break;
     case __CEOS_REC_TYP_I:
 	sprintf( format, "I%u", length );

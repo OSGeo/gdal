@@ -1,26 +1,65 @@
-/* Copyright (c) 1997
- * Atlantis Scientific Inc, 20 Colonnade, Suite 110
- * Nepean, Ontario, K2E 7M6, Canada
+/******************************************************************************
+ * $Id$
  *
- * All rights reserved.  Not to be used, reproduced
- * or disclosed without permission.
+ * Project:  ASI CEOS Translator
+ * Purpose:  CEOS library prototypes
+ * Author:   Paul Lahaie, pjlahaie@atlsci.com
+ *
+ ******************************************************************************
+ * Copyright (c) 2000, Atlantis Scientific Inc
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ ******************************************************************************
+ *
+ * $Log$
+ * Revision 1.2  2000/03/31 13:33:51  warmerda
+ * ported to gdal
+ *
  */
 
-/* +---------------------------------------------------------------------+
- * |@@@@@@@@@@    @@@| EASI/PACE V6.0, Copyright (c) 1997.               |
- * |@@@@@@ ***      @|                                                   |
- * |@@@  *******    @| PCI Inc., 50 West Wilmot Street,                  |
- * |@@  *********  @@| Richmond Hill, Ontario, L4B 1M5, Canada.          |
- * |@    *******  @@@|                                                   |
- * |@      *** @@@@@@| All rights reserved. Not to be used, reproduced   |
- * |@@@    @@@@@@@@@@| or disclosed without permission.                  |
- * +---------------------------------------------------------------------+
- */
 
 #ifndef __CEOS_H
 #define __CEOS_H
 
-#include "gdb.h"
+#include "cpl_conv.h"
+
+CPL_C_START
+
+#define int32 GInt32
+#define TBool int
+#define uchar unsigned char
+
+typedef struct Link_t_struct 
+{
+  struct Link_t_struct	*next;
+  void		*object;
+} Link_t;
+
+#define HMalloc CPLMalloc
+#define HFree CPLFree
+#define HCalloc CPLCalloc
+
+Link_t *CreateLink( void * pObject );
+Link_t *InsertLink(Link_t *psList, Link_t *psLink);
+void    DestroyList( Link_t *psList );
+Link_t *AddLink( Link_t *psList, Link_t *psLink );
+
 
 /* Basic CEOS header defs */
 
@@ -255,11 +294,13 @@ void AddRecipe( int ( *function )( CeosSARVolume_t *volume, void *token ),
 int CeosDefaultRecipe( CeosSARVolume_t *volume, void *token );
 int ScanSARRecipeFCN( CeosSARVolume_t *volume, void *token );
 
+#ifdef notdef
 int GetCeosOrbitalData( CeosSARVolume_t *volume, EphemerisSeg_t *Orb, ProjInfo_t *Proj );
+#endif
 
 /* CEOS byte swapping stuff */
 
-#if !defined(SEX_SWAPPED)
+#ifdef CPL_MSB
 #define NativeToCeos(a,b,c,d) memcpy(a,b,c)
 #define CeosToNative(a,b,c,d) memcpy(a,b,c)
 #else
@@ -269,5 +310,6 @@ void NativeToCeos( void *dst, const void *src, const size_t len, const size_t sw
 
 /* Recipe defines */
 
+CPL_C_END
 
 #endif
