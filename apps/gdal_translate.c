@@ -28,6 +28,9 @@
  * ****************************************************************************
  *
  * $Log$
+ * Revision 1.25  2002/04/16 17:17:18  warmerda
+ * Ensure variables initialized.
+ *
  * Revision 1.24  2002/04/16 14:00:25  warmerda
  * added GDALVersionInfo
  *
@@ -161,8 +164,8 @@ int main( int argc, char ** argv )
     int                 anSrcWin[4], bStrict = TRUE;
     const char          *pszProjection;
     int                 bScale = FALSE, bHaveScaleSrc = FALSE;
-    double	        dfScaleSrcMin, dfScaleSrcMax;
-    double              dfScaleDstMin, dfScaleDstMax;
+    double	        dfScaleSrcMin=0.0, dfScaleSrcMax=255.0;
+    double              dfScaleDstMin=0.0, dfScaleDstMax=255.0;
 
     anSrcWin[0] = 0;
     anSrcWin[1] = 0;
