@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.2  2004/07/29 16:37:56  warmerda
+ * fixed parsing of subfile definition to handle spaces properly
+ *
  * Revision 1.1  2004/07/23 19:14:00  warmerda
  * New
  *
@@ -57,16 +60,28 @@ class subfile_source : public kdu_compressed_source {
 
     void open(const char *fname, bool allow_seeks=true)
       {
-          char *real_filename = strdup(fname);
+          const char *real_filename;
           close();
-          
-          if( sscanf( fname, "J2K_SUBFILE:%d,%d,%s", 
-                      &subfile_offset, &subfile_size, 
-                      real_filename ) != 3 )
+
+          if( sscanf( fname, "J2K_SUBFILE:%d,%d", 
+                      &subfile_offset, &subfile_size ) != 2 )
           {
               kdu_error e;
 
-              e << "Corrupt subfile definition.";
+              e << "Corrupt subfile definition:" << fname;
+              return;
+          }
+
+          real_filename = strstr(fname,",");
+          if( real_filename != NULL )
+              real_filename = strstr(real_filename+1,",");
+          if( real_filename != NULL )
+              real_filename = real_filename++;
+          else
+          {
+              kdu_error e;
+
+              e << "Could not find filename in subfile definition." << fname;
               return;
           }
 
