@@ -10,15 +10,17 @@ lib-depend:
 	(cd ../core ; $(MAKE) )
 	(cd ../port ; $(MAKE) )
 
-gdalinfo:	gdalinfo.o
-	$(CXX) $(LNK_FLAGS) gdalinfo.o $(GDAL_LIBS) $(LIBS) -o gdalinfo
+gdalinfo:	gdalinfo.o 
+	$(CXX) $(LNK_FLAGS) gdalinfo.o $(XTRAOBJ) $(GDAL_LIBS) $(LIBS) \
+		 -o gdalinfo
 
 gdal_translate:	gdal_translate.o
-	$(CXX) $(LNK_FLAGS) gdal_translate.o $(GDAL_LIBS) $(LIBS) \
+	$(CXX) $(LNK_FLAGS) gdal_translate.o $(XTRAOBJ) $(GDAL_LIBS) $(LIBS) \
 		-o gdal_translate
 
 gdal2raw:	gdal2raw.o
-	$(CXX) $(LNK_FLAGS) gdal2raw.o $(GDAL_LIBS) $(LIBS) -o gdal2raw
+	$(CXX) $(LNK_FLAGS) gdal2raw.o $(XTRAOBJ) $(GDAL_LIBS) $(LIBS) \
+		-o gdal2raw
 
 gdal_chksum:	gdal_chksum.o
 	$(CXX) $(LNK_FLAGS) gdal_chksum.o $(GDAL_LIBS) $(LIBS) -o gdal_chksum
