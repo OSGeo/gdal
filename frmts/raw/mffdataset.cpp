@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2000/05/18 22:06:03  warmerda
+ * added gcp and metadata support
+ *
  * Revision 1.6  2000/05/15 14:18:27  warmerda
  * added COMPLEX_INTERPRETATION metadata
  *
@@ -68,6 +71,11 @@ class MFFDataset : public RawDataset
 {
     FILE	*fpImage;	// image data file.
     
+    int         nGCPCount;
+    GDAL_GCP    *pasGCPList;
+
+    void        ScanForGCPs();
+
   public:
     		MFFDataset();
     	        ~MFFDataset();
@@ -76,6 +84,10 @@ class MFFDataset : public RawDataset
     
     FILE        **pafpBandFiles;
     
+    virtual int    GetGCPCount();
+    virtual const char *GetGCPProjection();
+    virtual const GDAL_GCP *GetGCPs();
+
     static GDALDataset *Open( GDALOpenInfo * );
     static GDALDataset *Create( const char * pszFilename,
                                 int nXSize, int nYSize, int nBands,
@@ -90,6 +102,14 @@ MFFDataset::MFFDataset()
 {
     papszHdrLines = NULL;
     pafpBandFiles = NULL;
+    nGCPCount = 0;
+    pasGCPList = NULL;
+    if( nGCPCount > 0 )
+    {
+        GDALDeinitGCPs( nGCPCount, pasGCPList );
+        CPLFree( pasGCPList );
+    }
+
 }
 
 /************************************************************************/
@@ -109,6 +129,114 @@ MFFDataset::~MFFDataset()
                 VSIFClose( pafpBandFiles[i] );
         }
         CPLFree( pafpBandFiles );
+    }
+}
+
+/************************************************************************/
+/*                            GetGCPCount()                             */
+/************************************************************************/
+
+int MFFDataset::GetGCPCount()
+
+{
+    return nGCPCount;
+}
+
+/************************************************************************/
+/*                          GetGCPProjection()                          */
+/************************************************************************/
+
+const char *MFFDataset::GetGCPProjection()
+
+{
+    if( nGCPCount > 0 )
+        return "GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",7030]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY[\"EPSG\",6326]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",8901]],UNIT[\"DMSH\",0.0174532925199433,AUTHORITY[\"EPSG\",9108]],AXIS[\"Lat\",NORTH],AXIS[\"Long\",EAST],AUTHORITY[\"EPSG\",4326]]";
+    else
+        return "";
+}
+
+/************************************************************************/
+/*                               GetGCP()                               */
+/************************************************************************/
+
+const GDAL_GCP *MFFDataset::GetGCPs()
+
+{
+    return pasGCPList;
+}
+
+/************************************************************************/
+/*                            ScanForGCPs()                             */
+/************************************************************************/
+
+void MFFDataset::ScanForGCPs()
+
+{
+    int     nCorner;
+
+    nGCPCount = 0;
+    pasGCPList = (GDAL_GCP *) CPLCalloc(sizeof(GDAL_GCP),5);
+
+    for( nCorner = 0; nCorner < 5; nCorner++ )
+    {
+        const char * pszBase;
+        double       dfRasterX, dfRasterY;
+        char         szLatName[40], szLongName[40];
+
+        if( nCorner == 0 )
+        {
+            dfRasterX = 0;
+            dfRasterY = 0;
+            pszBase = "TOP_LEFT_CORNER";
+        }
+        else if( nCorner == 1 )
+        {
+            dfRasterX = GetRasterXSize();
+            dfRasterY = 0;
+            pszBase = "TOP_RIGHT_CORNER";
+        }
+        else if( nCorner == 2 )
+        {
+            dfRasterX = GetRasterXSize();
+            dfRasterY = GetRasterYSize();
+            pszBase = "BOTTOM_RIGHT_CORNER";
+        }
+        else if( nCorner == 3 )
+        {
+            dfRasterX = 0;
+            dfRasterY = GetRasterYSize();
+            pszBase = "BOTTOM_LEFT_CORNER";
+        }
+        else if( nCorner == 4 )
+        {
+            dfRasterX = GetRasterXSize()/2.0;
+            dfRasterY = GetRasterYSize()/2.0;
+            pszBase = "CENTRE";
+        }
+
+        sprintf( szLatName, "%s_LATITUDE", pszBase );
+        sprintf( szLongName, "%s_LONGITUDE", pszBase );
+        
+        if( CSLFetchNameValue(papszHdrLines, szLatName) != NULL
+            && CSLFetchNameValue(papszHdrLines, szLongName) != NULL )
+        {
+            GDALInitGCPs( 1, pasGCPList + nGCPCount );
+            
+            CPLFree( pasGCPList[nGCPCount].pszId );
+
+            pasGCPList[nGCPCount].pszId = CPLStrdup( pszBase );
+                
+            pasGCPList[nGCPCount].dfGCPX = 
+                atof(CSLFetchNameValue(papszHdrLines, szLongName));
+            pasGCPList[nGCPCount].dfGCPY = 
+                atof(CSLFetchNameValue(papszHdrLines, szLatName));
+            pasGCPList[nGCPCount].dfGCPZ = 0.0;
+
+            pasGCPList[nGCPCount].dfGCPPixel = dfRasterX;
+            pasGCPList[nGCPCount].dfGCPLine = dfRasterY;
+
+            nGCPCount++;
+        }
     }
 }
 
@@ -325,6 +453,36 @@ GDALDataset *MFFDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Check for overviews.                                            */
 /* -------------------------------------------------------------------- */
     poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
+
+/* -------------------------------------------------------------------- */
+/*      Set all information from the .hdr that isn't well know to be    */
+/*      metadata.                                                       */
+/* -------------------------------------------------------------------- */
+    for( i = 0; papszHdrLines[i] != NULL; i++ )
+    {
+        const char *pszValue;
+        char       *pszName;
+
+        pszValue = CPLParseNameValue(papszHdrLines[i], &pszName);
+        if( pszName == NULL || pszValue == NULL )
+            continue;
+
+        if( !EQUAL(pszName,"END") 
+            && !EQUAL(pszName,"FILE_TYPE") 
+            && !EQUAL(pszName,"IMAGE_FILE_FORMAT") 
+            && !EQUAL(pszName,"IMAGE_LINES") 
+            && !EQUAL(pszName,"LINE_SAMPLES") )
+        {
+            poDS->SetMetadataItem( pszName, pszValue );
+        }
+
+        CPLFree( pszName );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Any GCPs in header file?                                        */
+/* -------------------------------------------------------------------- */
+    poDS->ScanForGCPs();
 
 /* -------------------------------------------------------------------- */
 /*      Cleanup                                                         */
