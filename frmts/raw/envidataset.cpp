@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2003/07/24 18:29:35  warmerda
+ * added oSRS.Fixup() to insert meter as linear units (bug 370)
+ *
  * Revision 1.15  2003/06/05 15:41:08  dron
  * Fixed problem with projection name determining.
  *
@@ -556,6 +559,7 @@ int ENVIDataset::ProcessMapinfo( const char *pszMapinfo )
 
     if( oSRS.GetRoot() != NULL )
     {
+        oSRS.Fixup();
 	if ( pszProjection )
 	{
 	    CPLFree( pszProjection );
