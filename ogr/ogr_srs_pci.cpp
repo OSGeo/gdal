@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2004/01/31 09:51:40  dron
+ * Fixed projection parameters number mismatch; more datums added.
+ *
  * Revision 1.5  2004/01/29 15:21:46  dron
  * More datums added.
  *
@@ -78,6 +81,31 @@ static PCIDatums aoDatums[] =
     { "D044", 4224 },   // Chua Astro
     { "D045", 4225 },   // Corrego Alegre
     { "D046", 4155 },   // Dabola (Guinea)
+    { "D066", 4272 },   // Geodetic Datum 1949 (New Zealand)
+    { "D071", 4255 },   // Herat North (Afghanistan)
+    { "D077", 4239},    // Indian 1954 (Thailand, Vietnam)
+    { "D078", 4240 },   // Indian 1975 (Thailand)
+    { "D083", 4244 },   // Kandawala (Sri Lanka)
+    { "D085", 4245 },   // Kertau 1948 (West Malaysia & Singapore)
+    { "D088", 4250 },   // Leigon (Ghana)
+    { "D089", 4251 },   // Liberia 1964 (Liberia)
+    { "D092", 4256 },   // Mahe 1971 (Mahe Island)
+    { "D093", 4262 },   // Massawa (Ethiopia (Eritrea))
+    { "D094", 4261 },   // Merchich (Morocco)
+    { "D098", 4604 },   // Montserrat Island Astro 1958 (Montserrat (Leeward Islands))
+    { "D139", 4282 },   // Pointe Noire 1948 (Congo)
+    { "D140", 4615 },   // Porto Santo 1936 (Porto Santo, Madeira Islands)
+    { "D151", 4139 },   // Puerto Rico (Puerto Rico, Virgin Islands)
+    { "D153", 4287 },   // Qornoq (Greenland (South))
+    { "D158", 4292 },   // Sapper Hill 1943 (East Falkland Island)
+    { "D159", 4293 },   // Schwarzeck (Namibia)
+    { "D160", 4616 },   // Selvagem Grande 1938 (Salvage Islands)
+    { "D176", 4297 },   // Tananarive Observatory 1925 (Madagascar)
+    { "D177", 4298 },   // Timbalai 1948 (Brunei, East Malaysia (Sabah, Sarawak))
+    { "D187", 4309 },   // Yacare (Uruguay)
+    { "D188", 4311 },   // Zanderij (Suriname)
+    { "D401", 4124 },   // RT90 (Sweden)
+    { "D501", 4312 },   // MGI (Hermannskogel, Austria)
     { NULL, 0 }
 };
 
@@ -316,13 +344,13 @@ OGRErr OSRImportFromPCI( OGRSpatialReferenceH hSRS, const char *pszProj,
  * [7]  False Northing
  * [8]  Scale Factor
  * [9]  Height above sphere surface
- * [9]  Longitude of 1st point on center line
- * [10] Latitude of 1st point on center line
- * [11] Longitude of 2nd point on center line
- * [12] Latitude of 2nd point on center line
- * [13] Azimuth east of north for center line
- * [14] Landsat satellite number
- * [15] Landsat path number
+ * [10] Longitude of 1st point on center line
+ * [11] Latitude of 1st point on center line
+ * [12] Longitude of 2nd point on center line
+ * [13] Latitude of 2nd point on center line
+ * [14] Azimuth east of north for center line
+ * [15] Landsat satellite number
+ * [16] Landsat path number
  *
  * Particular projection uses different parameters, unused ones may be set to
  * zero. If NULL suppliet instead of array pointer default values will be
@@ -352,10 +380,10 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
     {
         int     i;
 
-        padfPrjParams = (double *)CPLMalloc( 16 * sizeof(double) );
+        padfPrjParams = (double *)CPLMalloc( 17 * sizeof(double) );
         if ( !padfPrjParams )
             return OGRERR_NOT_ENOUGH_MEMORY;
-        for ( i = 0; i < 16; i++ )
+        for ( i = 0; i < 17; i++ )
             padfPrjParams[i] = 0.0;
         bProjAllocated = TRUE;
     }
@@ -565,7 +593,7 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
                                    "Not specified (based on %s spheroid)",
                                    pszName ),
                                pszName, dfSemiMajor, dfInvFlattening,
-                               NULL, 0, NULL, 0 );
+                               NULL, 0.0, NULL, 0.0 );
                     SetAuthority( "SPHEROID", "EPSG", paoDatum->nEPSGCode );
 
                     if ( pszName )
@@ -630,6 +658,8 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
             SetLinearUnits( SRS_UL_METER, 1.0 );
     }
 
+    FixupOrdering();
+
     if ( bProjAllocated && padfPrjParams )
         CPLFree( padfPrjParams );
 
@@ -677,7 +707,7 @@ OGRErr OSRExportToPCI( OGRSpatialReferenceH hSRS,
  * will be assigned.
  *
  * @param ppadfPrjParams pointer to which dynamically allocated array of
- * 16 projection parameters will be assigned. See importFromPCI() for the list
+ * 17 projection parameters will be assigned. See importFromPCI() for the list
  * of parameters.
  * 
  * @return OGRERR_NONE on success or an error code on failure. 
@@ -694,8 +724,8 @@ OGRErr OGRSpatialReference::exportToPCI( char **ppszProj, char **ppszUnits,
 /* -------------------------------------------------------------------- */
     int         i;
 
-    *ppadfPrjParams = (double *)CPLMalloc( 16 * sizeof(double) );
-    for ( i = 0; i < 16; i++ )
+    *ppadfPrjParams = (double *)CPLMalloc( 17 * sizeof(double) );
+    for ( i = 0; i < 17; i++ )
         (*ppadfPrjParams)[i] = 0.0;
    
 /* -------------------------------------------------------------------- */
@@ -717,7 +747,7 @@ OGRErr OGRSpatialReference::exportToPCI( char **ppszProj, char **ppszUnits,
 
     if( IsLocal() )
     {
-        CPLPrintStringFill( szProj, "PIXEL", 16 );
+        CPLPrintStringFill( szProj, "PIXEL", 17 );
         return OGRERR_NONE;
     }
 
@@ -727,7 +757,7 @@ OGRErr OGRSpatialReference::exportToPCI( char **ppszProj, char **ppszUnits,
         CPLDebug( "OSR_PCI",
                   "Empty projection definition, considered as LONG/LAT" );
 #endif
-        CPLPrintStringFill( szProj, "LONG/LAT", 16 );
+        CPLPrintStringFill( szProj, "LONG/LAT", 17 );
     }
 
     else if( EQUAL(pszProjection, SRS_PT_ALBERS_CONIC_EQUAL_AREA) )
