@@ -1,7 +1,5 @@
 ; SF.def : Declares the module parameters.
 
-LIBRARY      "SF.DLL"
-
 EXPORTS
 	DllCanUnloadNow     @1 PRIVATE
 	DllGetClassObject   @2 PRIVATE
