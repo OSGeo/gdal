@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2002/03/05 14:25:14  warmerda
+ * expand tabs
+ *
  * Revision 1.14  2001/11/01 17:20:33  warmerda
  * added DISABLE_OGRGEOM_TRANSFORM macro
  *
@@ -688,7 +691,7 @@ OGRErr OGRGeometryCollection::transform( OGRCoordinateTransformation *poCT )
 #else
     for( int iGeom = 0; iGeom < nGeomCount; iGeom++ )
     {
-        OGRErr	eErr;
+        OGRErr  eErr;
 
         eErr = papoGeoms[iGeom]->transform( poCT );
         if( eErr != OGRERR_NONE )

@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.37  2002/03/05 14:25:14  warmerda
+ * expand tabs
+ *
  * Revision 1.36  2002/01/24 16:21:45  warmerda
  * added StripNodes method, removed simplify flag from pretty wkt
  *
@@ -262,8 +265,8 @@ class CPL_DLL OGRSpatialReference
     OGRErr      importFromESRI( char ** );
     OGRErr      importFromXML( const char * );
 
-    OGRErr	morphToESRI();
-    OGRErr	morphFromESRI();
+    OGRErr      morphToESRI();
+    OGRErr      morphFromESRI();
 
     OGRErr      Validate();
     OGRErr      StripCTParms( OGR_SRSNode * = NULL );

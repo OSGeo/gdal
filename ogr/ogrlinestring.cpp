@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.26  2002/03/05 14:25:14  warmerda
+ * expand tabs
+ *
  * Revision 1.25  2002/02/22 22:24:08  warmerda
  * clarify setPoints code
  *
@@ -1026,8 +1029,8 @@ OGRErr OGRLineString::transform( OGRCoordinateTransformation *poCT )
 #ifdef DISABLE_OGRGEOM_TRANSFORM
     return OGRERR_FAILURE;
 #else
-    double	*xyz;
-    int		i;
+    double      *xyz;
+    int         i;
 
 /* -------------------------------------------------------------------- */
 /*      Because we don't want to partially transform this geometry      */

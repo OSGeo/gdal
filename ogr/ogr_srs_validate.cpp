@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2002/03/05 14:25:14  warmerda
+ * expand tabs
+ *
  * Revision 1.3  2001/11/23 17:02:04  warmerda
  * add CT support to PROJCS children
  *
@@ -610,7 +613,7 @@ OGRErr OGRSpatialReference::Validate()
     {
         OGR_SRSNode     *poSPHEROID;
         int             bGotSpheroid = FALSE;
-        int		i;
+        int             i;
 
         if( poDATUM->GetChildCount() == 0 )
         {
@@ -729,14 +732,14 @@ int OGRSpatialReference::IsAliasFor( const char *pszParm1,
                                      const char *pszParm2 )
 
 {
-    int		iGroup;
+    int         iGroup;
 
 /* -------------------------------------------------------------------- */
 /*      Look for a group containing pszParm1.                           */
 /* -------------------------------------------------------------------- */
     for( iGroup = 0; papszAliasGroupList[iGroup] != NULL; iGroup++ )
     {
-        int	i;
+        int     i;
 
         for( i = iGroup; papszAliasGroupList[i] != NULL; i++ )
         {
@@ -809,7 +812,7 @@ OGRErr OGRSpatialReference::ValidateProjection()
 /*      Check all parameters, and verify they are in the permitted      */
 /*      list.                                                           */
 /* -------------------------------------------------------------------- */
-    int	iNode;
+    int iNode;
 
     for( iNode = 0; iNode < poPROJCS->GetChildCount(); iNode++ )
     {

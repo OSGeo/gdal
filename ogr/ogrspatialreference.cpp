@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.47  2002/03/05 14:25:14  warmerda
+ * expand tabs
+ *
  * Revision 1.46  2002/02/18 15:46:02  warmerda
  * Fixed serious problems in IsSame() method.  Still a work in progress.
  *
@@ -1251,9 +1254,9 @@ OGRErr OGRSpatialReference::SetFromUserInput( const char * pszDefinition )
 /* -------------------------------------------------------------------- */
 /*      Try to open it as a file.                                       */
 /* -------------------------------------------------------------------- */
-    FILE	*fp;
-    char	szBuffer[100000], *pszBufPtr;
-    int		nBytes;
+    FILE        *fp;
+    char        szBuffer[100000], *pszBufPtr;
+    int         nBytes;
 
     fp = VSIFOpen( pszDefinition, "rt" );
     if( fp == NULL )
@@ -2829,7 +2832,7 @@ int OGRSpatialReference::IsSame( OGRSpatialReference * poOtherSRS )
     {
         if( GetLinearUnits() != 0.0 )
         {
-            double	dfRatio;
+            double      dfRatio;
 
             dfRatio = poOtherSRS->GetLinearUnits() / GetLinearUnits();
             if( dfRatio < 0.9999999999 || dfRatio > 1.000000001 )
