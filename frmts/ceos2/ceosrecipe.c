@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2001/06/27 20:50:22  warmerda
+ * added UI2 and UI1 data types
+ *
  * Revision 1.4  2001/02/05 15:46:14  warmerda
  * added R*4 support
  *
@@ -54,6 +57,8 @@ typedef struct { int (*function)(CeosSARVolume_t *volume, void *token);
 
 CeosStringType_t CeosDataType[] = { { "IU1", __CEOS_TYP_UCHAR },
 				    { "IU2", __CEOS_TYP_USHORT },
+				    { "UI1", __CEOS_TYP_UCHAR },
+				    { "UI2", __CEOS_TYP_USHORT },
 				    { "CI*2", __CEOS_TYP_COMPLEX_CHAR },
 				    { "CI*4", __CEOS_TYP_COMPLEX_SHORT },
 				    { "CI*8", __CEOS_TYP_COMPLEX_LONG },
