@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2002/04/25 16:07:55  warmerda
+ * fleshed out DISTINCT support
+ *
  * Revision 1.1  2002/04/25 02:24:37  warmerda
  * New
  *
@@ -53,15 +56,13 @@ class CPL_DLL OGRGenSQLResultsLayer : public OGRLayer
 
     OGRFeatureDefn *poDefn;
 
-    OGRFeature  *poSummaryFeature;
-    int         bSummaryFeatureRead;
-
     int         PrepareSummary();
 
     int         nIndexSize;
     long       *panFIDIndex;
 
     int         nNextIndexFID;
+    OGRFeature  *poSummaryFeature;
 
     OGRField    *pasOrderByIndex;
 
