@@ -31,6 +31,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.7  2004/04/23 19:43:00  warmerda
+ * added partial NTS mapsheet db support
+ *
  * Revision 1.6  2004/04/15 17:34:11  warmerda
  * Left rather than right justify the origin code.
  *
@@ -57,13 +60,14 @@
 #include "ogr_spatialref.h"
 #include "cpl_string.h"
 #include "gdalwarper.h"
+#include "cpl_csv.h"
 
 CPL_CVSID("$Id$");
 
 typedef struct 
 {
     GDALDataset *poSrcDS;
-    const char *pszFilename;
+    char        *pszFilename;
     int         nXSize, nYSize;
 
     char       *pszDstSRS;
@@ -96,6 +100,7 @@ static void USGSDEMWriteCleanup( USGSDEMWriteInfo *psWInfo )
 {
     CSLDestroy( psWInfo->papszOptions );
     CPLFree( psWInfo->pszDstSRS );
+    CPLFree( psWInfo->pszFilename );
     if( psWInfo->fp != NULL )
         VSIFClose( psWInfo->fp );
     if( psWInfo->panData != NULL )
@@ -648,6 +653,122 @@ static int USGSDEMWriteProfile( USGSDEMWriteInfo *psWInfo, int iProfile )
 }
 
 /************************************************************************/
+/*                      USGSDEM_LookupNTSByLoc()                        */
+/************************************************************************/
+
+static int 
+USGSDEM_LookupNTSByLoc( double dfULLong, double dfULLat,
+                        char *pszTile, char *pszName )
+
+{
+/* -------------------------------------------------------------------- */
+/*      Access NTS 1:50k sheet CSV file.                                */
+/* -------------------------------------------------------------------- */
+    const char *pszNTSFilename = CSVFilename( "NTS-50kindex.csv" );
+    FILE *fpNTS;
+
+    fpNTS = VSIFOpen( pszNTSFilename, "rb" );
+    if( fpNTS == NULL )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,  
+                  "Unable to find NTS mapsheet lookup file: %s", 
+                  pszNTSFilename );
+        return FALSE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Skip column titles line.                                        */
+/* -------------------------------------------------------------------- */
+    CSLDestroy( CSVReadParseLine( fpNTS ) );
+
+/* -------------------------------------------------------------------- */
+/*      Find desired sheet.                                             */
+/* -------------------------------------------------------------------- */
+    int  bGotHit = FALSE;
+    char **papszTokens;
+
+    while( !bGotHit 
+           && (papszTokens = CSVReadParseLine( fpNTS )) != NULL )
+    {
+        if( CSLCount( papszTokens ) != 4 )
+            continue;
+
+        if( ABS(dfULLong - atof(papszTokens[2])) < 0.01 
+            && ABS(dfULLat - atof(papszTokens[3])) < 0.01 )
+        {
+            bGotHit = TRUE;
+            strncpy( pszTile, papszTokens[0], 7 );
+            if( pszName != NULL )
+                strncpy( pszName, papszTokens[1], 100 );
+        }
+
+        CSLDestroy( papszTokens );
+    }
+
+    VSIFClose( fpNTS );
+
+    return bGotHit;
+}
+
+/************************************************************************/
+/*                      USGSDEM_LookupNTSByTile()                       */
+/************************************************************************/
+
+static int 
+USGSDEM_LookupNTSByTile( const char *pszTile, char *pszName,
+                         double *pdfULLong, double *pdfULLat )
+
+{
+/* -------------------------------------------------------------------- */
+/*      Access NTS 1:50k sheet CSV file.                                */
+/* -------------------------------------------------------------------- */
+    const char *pszNTSFilename = CSVFilename( "NTS-50kindex.csv" );
+    FILE *fpNTS;
+
+    fpNTS = VSIFOpen( pszNTSFilename, "rb" );
+    if( fpNTS == NULL )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,  
+                  "Unable to find NTS mapsheet lookup file: %s", 
+                  pszNTSFilename );
+        return FALSE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Skip column titles line.                                        */
+/* -------------------------------------------------------------------- */
+    CSLDestroy( CSVReadParseLine( fpNTS ) );
+
+/* -------------------------------------------------------------------- */
+/*      Find desired sheet.                                             */
+/* -------------------------------------------------------------------- */
+    int  bGotHit = FALSE;
+    char **papszTokens;
+
+    while( !bGotHit 
+           && (papszTokens = CSVReadParseLine( fpNTS )) != NULL )
+    {
+        if( CSLCount( papszTokens ) != 4 )
+            continue;
+
+        if( EQUAL(pszTile,papszTokens[0]) )
+        {
+            bGotHit = TRUE;
+            if( pszName != NULL )
+                strncpy( pszName, papszTokens[1], 100 );
+            *pdfULLong = atof(papszTokens[2]);
+            *pdfULLat = atof(papszTokens[3]);
+        }
+
+        CSLDestroy( papszTokens );
+    }
+
+    VSIFClose( fpNTS );
+
+    return bGotHit;
+}
+
+/************************************************************************/
 /*                    USGSDEMProductSetup_CDED50K()                     */
 /************************************************************************/
 
@@ -663,7 +784,15 @@ static int USGSDEMProductSetup_CDED50K( USGSDEMWriteInfo *psWInfo )
     double dfULX = (psWInfo->dfULX+psWInfo->dfURX)*0.5;
     double dfULY = (psWInfo->dfULY+psWInfo->dfURY)*0.5;
 
-    if( pszTOPLEFT != NULL )
+    // Try looking up TOPLEFT as a NTS mapsheet name.
+    if( pszTOPLEFT != NULL && strstr(pszTOPLEFT,",") == NULL )
+    {
+        if( !USGSDEM_LookupNTSByTile( pszTOPLEFT, NULL, &dfULX, &dfULY ) )
+            return FALSE;
+    }
+
+    // Assume TOPLEFT is a long/lat corner.
+    else if( pszTOPLEFT != NULL )
     {
         char **papszTokens = CSLTokenizeString2( pszTOPLEFT, ",", 0 );
 
@@ -731,6 +860,17 @@ static int USGSDEMProductSetup_CDED50K( USGSDEMWriteInfo *psWInfo )
     psWInfo->dfURY = dfULY;
     psWInfo->dfLRX = dfULX + psWInfo->dfHorizStepSize * 1200.0;
     psWInfo->dfLRY = dfULY - 0.25;
+
+/* -------------------------------------------------------------------- */
+/*      Can we find the NTS 50k tile name that corresponds with         */
+/*      this?                                                           */
+/* -------------------------------------------------------------------- */
+    char szTile[10];
+
+    if( USGSDEM_LookupNTSByLoc( dfULX, dfULY, szTile, NULL ) )
+    {
+        
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Set some specific options for CDED 50K.                         */
@@ -902,7 +1042,7 @@ USGSDEMCreateCopy( const char *pszFilename, GDALDataset *poSrcDS,
     memset( &sWInfo, 0, sizeof(sWInfo) );
 
     sWInfo.poSrcDS = poSrcDS;
-    sWInfo.pszFilename = pszFilename;
+    sWInfo.pszFilename = CPLStrdup(pszFilename);
     sWInfo.nXSize = poSrcDS->GetRasterXSize();
     sWInfo.nYSize = poSrcDS->GetRasterYSize();
     sWInfo.papszOptions = CSLDuplicate( papszOptions );
