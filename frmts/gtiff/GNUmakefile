@@ -2,7 +2,7 @@ GDAL_ROOT	=	../..
 
 include $(GDAL_ROOT)/GDALmake.opt
 
-OBJ	=	geotiff.o gt_wkt_srs.o
+OBJ	=	geotiff.o gt_wkt_srs.o gt_overview.o
 
 TIFF_OPTS	=	-Ilibgeotiff -Ilibtiff
 
