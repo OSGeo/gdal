@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2004/03/17 18:15:57  warmerda
+ * added floating point test prototypes
+ *
  * Revision 1.7  2004/03/12 22:13:07  warmerda
  * major upgrade with normalized sequen nested sequence support
  *
@@ -199,6 +202,8 @@ private:
     double              GetFieldValueAsDouble( OGRDODSFieldDefn *, int );
     BaseType           *GetFieldValue( OGRDODSFieldDefn *, int,
                                        Sequence * );
+
+    double              BaseTypeToDouble( BaseType * );
     
     int                 BuildFields( BaseType *, const char *, 
                                      const char * );
@@ -360,6 +365,9 @@ class OGRDODSDriver : public OGRSFDriver
 
 string OGRDODSGetVarPath( BaseType * );
 int  OGRDODSGetVarIndex( Sequence *poParent, string oVarName );
+
+int  OGRDODSIsFloatInvalid( const float * );
+int  OGRDODSIsDoubleInvalid( const double * );
 
 #endif /* ndef _OGR_DODS_H_INCLUDED */
 
