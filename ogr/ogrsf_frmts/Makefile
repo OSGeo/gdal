@@ -30,6 +30,12 @@ default:
 				 ..\..\frmts\sdts\sdtsindexedreader.obj \
 				 ..\..\frmts\sdts\sdtsxref.obj
 
+fme-update:	
+	cd fme
+	$(MAKE)
+	cd ..
+	lib ogrsf_frmts.lib fme\*.obj
+
 clean:
 	del ogrsf_frmts.lib
 	cd generic 
