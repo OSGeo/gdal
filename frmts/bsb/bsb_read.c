@@ -33,6 +33,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2003/02/19 03:50:59  warmerda
+ * hacks to support two apparently corrupt BSB files supplied by optech
+ *
  * Revision 1.10  2002/12/04 15:54:23  warmerda
  * improved error reporting, remap 0 pixel values on write
  *
@@ -356,13 +359,34 @@ BSBInfo *BSBOpen( const char *pszFilename )
 /* -------------------------------------------------------------------- */
 /*      If all has gone well this far, we should be pointing at the     */
 /*      sequence "0x1A 0x00".  Read past to get to start of data.       */
+/*                                                                      */
+/*      We actually do some funny stuff here to be able to read past    */
+/*      some garbage to try and find the 0x1a 0x00 sequence since in    */
+/*      at least some files (ie. optech/World.kap) we find a few        */
+/*      bytes of extra junk in the way.                                 */
 /* -------------------------------------------------------------------- */
-    if( BSBGetc( fp, bNO1 ) !=  0x1A || BSBGetc( fp, bNO1 ) != 0x00 )
+/* from optech/World.kap 
+
+   11624: 30333237 34353938 2C302E30 35373836 03274598,0.05786
+   11640: 39303232 38332C31 332E3135 39363435 902283,13.159645
+   11656: 35390D0A 1A0D0A1A 00040190 C0510002 59~~~~~~~~~~~Q~~
+   11672: 90C05100 0390C051 000490C0 51000590 ~~Q~~~~Q~~~~Q~~~
+ */
+
     {
-        BSBClose( psInfo );
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "Failed to find compressed data segment of BSB file." );
-        return NULL;
+        int    nSkipped = 0;
+
+        while( nSkipped < 100 
+              && (BSBGetc( fp, bNO1 ) != 0x1A || BSBGetc( fp, bNO1 ) != 0x00) )
+            nSkipped++;
+
+        if( nSkipped == 100 )
+        {
+            BSBClose( psInfo );
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                      "Failed to find compressed data segment of BSB file." );
+            return NULL;
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -510,6 +534,12 @@ int BSBReadScanline( BSBInfo *psInfo, int nScanline,
 /* -------------------------------------------------------------------- */
     do {
         byNext = BSBGetc( fp, psInfo->bNO1 );
+
+        // Special hack to skip over extra zeros in some files, such
+        // as optech/sample1.kap.
+        while( nScanline != 0 && nLineMarker == 0 && byNext == 0 )
+            byNext = BSBGetc( fp, psInfo->bNO1 );
+
         nLineMarker = nLineMarker * 128 + (byNext & 0x7f);
     } while( (byNext & 0x80) != 0 );
 
@@ -517,8 +547,8 @@ int BSBReadScanline( BSBInfo *psInfo, int nScanline,
         && nLineMarker != nScanline + 1 )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "Got scanline id %d when looking for %d.", 
-                  nLineMarker, nScanline+1 );
+                  "Got scanline id %d when looking for %d @ offset %ld.", 
+                  nLineMarker, nScanline+1, VSIFTell( fp ) );
         return FALSE;
     }
 
