@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.27  2004/04/30 18:30:05  warmerda
+ * Fixed pszLayerName typo.
+ *
  * Revision 1.26  2004/04/30 17:52:42  warmerda
  * added layer name laundering
  *
@@ -468,7 +471,7 @@ OGRPGDataSource::CreateLayer( const char * pszLayerNameIn,
     if( CSLFetchBoolean(papszOptions,"LAUNDER",TRUE) )
         pszLayerName = LaunderName( pszLayerNameIn );
     else
-        pszLayerName = CPLStrdup( pszLayerName );
+        pszLayerName = CPLStrdup( pszLayerNameIn );
 
 /* -------------------------------------------------------------------- */
 /*      Do we already have this layer?  If so, should we blow it        */
