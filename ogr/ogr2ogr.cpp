@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2000/06/09 21:15:19  warmerda
+ * made CreateField and SetFrom forgiving
+ *
  * Revision 1.3  2000/03/14 21:37:35  warmerda
  * added support for passing options to create methods
  *
@@ -271,9 +274,7 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
 
     for( iField = 0; iField < poFDefn->GetFieldCount(); iField++ )
     {
-        if( poDstLayer->CreateField( poFDefn->GetFieldDefn(iField) )
-            != OGRERR_NONE )
-            return FALSE;
+        poDstLayer->CreateField( poFDefn->GetFieldDefn(iField) );
     }
 
 /* -------------------------------------------------------------------- */
@@ -289,7 +290,7 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
 
         poDstFeature = new OGRFeature( poDstLayer->GetLayerDefn() );
 
-        if( poDstFeature->SetFrom( poFeature ) != OGRERR_NONE )
+        if( poDstFeature->SetFrom( poFeature, TRUE ) != OGRERR_NONE )
         {
             delete poFeature;
             
