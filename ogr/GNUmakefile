@@ -19,7 +19,7 @@ LINCLUDE =	-Iogrsf_frmts -I. -I$(GDAL_ROOT)/port
 
 default:	$(OGR_LIB)
 
-all:	sublibs test1 test2 test_ogrsf docs
+all:	sublibs test1 test2 test_ogrsf ogrinfo docs
 
 clean:
 	rm -f *.o test1 test2 
