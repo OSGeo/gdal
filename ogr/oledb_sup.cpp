@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2001/11/09 19:09:03  warmerda
+ * added VARIANTToString... does not appear to work
+ *
  * Revision 1.10  2001/07/18 18:01:00  warmerda
  * removed CPL_CVSID
  *
@@ -726,3 +729,30 @@ void OledbSupDumpRow
     }
     fprintf( fp, "\n" );
 }    
+
+/************************************************************************/
+/*                          VARIANTTOString()                           */
+/************************************************************************/
+
+const char *VARIANTToString( VARIANT * psV )
+
+{
+    static char      szResult[5120];
+    VARIANT          sDest;
+    HRESULT          hr;
+    int              dwLength;
+
+    VariantInit( &sDest );
+
+    hr = VariantChangeTypeEx( &sDest, psV, LOCALE_SYSTEM_DEFAULT, 0, VT_BSTR );
+
+    if( FAILED(hr) )
+        return "Translation failed";
+
+    dwLength = sDest.bstrVal[-1] / sizeof(wchar_t);
+    sprintf( szResult, "%*.*S", dwLength, dwLength, sDest.bstrVal );
+
+    VariantClear( &sDest );
+
+    return szResult;
+}
