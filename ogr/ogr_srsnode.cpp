@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2000/01/12 04:12:55  warmerda
+ * Fixed bug in InsertChild().
+ *
  * Revision 1.5  2000/01/11 22:12:13  warmerda
  * added InsertChild
  *
@@ -225,7 +228,7 @@ void OGR_SRSNode::InsertChild( OGR_SRSNode * poNew, int iChild )
         CPLRealloc( papoChildNodes, sizeof(void*) * nChildren );
 
     memmove( papoChildNodes + iChild + 1, papoChildNodes + iChild,
-             sizeof(void*) * (nChildren - iChild) );
+             sizeof(void*) * (nChildren - iChild - 1) );
     
     papoChildNodes[iChild] = poNew;
 }
