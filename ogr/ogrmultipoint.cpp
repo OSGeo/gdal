@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2002/10/25 15:20:50  warmerda
+ * fixed MULTIPOINT WKT format
+ *
  * Revision 1.11  2002/09/11 13:47:17  warmerda
  * preliminary set of fixes for 3D WKB enum
  *
@@ -156,6 +159,8 @@ OGRErr OGRMultiPoint::exportToWkt( char ** ppszReturn )
         if( i > 0 )
             strcat( *ppszReturn + nRetLen, "," );
 
+        strcat( *ppszReturn + nRetLen, "(" );
+
         nRetLen += strlen(*ppszReturn + nRetLen);
 
         if( nMaxString < nRetLen + 100 )
@@ -174,6 +179,7 @@ OGRErr OGRMultiPoint::exportToWkt( char ** ppszReturn )
                                   poPoint->getX(), 
                                   poPoint->getY(),
                                   0.0 );
+        strcat( *ppszReturn + nRetLen, ")" );
     }
 
     strcat( *ppszReturn+nRetLen, ")" );
@@ -208,6 +214,29 @@ OGRErr OGRMultiPoint::importFromWkt( char ** ppszInput )
     if( !EQUAL(szToken,getGeometryName()) )
         return OGRERR_CORRUPT_DATA;
 
+/* -------------------------------------------------------------------- */
+/*      Do we have the format where each point is bracketed?            */
+/* -------------------------------------------------------------------- */
+    const char *pszPreScan = pszInput;
+
+    // skip white space. 
+    while( *pszPreScan == ' ' || *pszPreScan == '\t' )
+        pszPreScan++;
+
+    // Skip outer bracket.
+    if( *pszPreScan != '(' )
+        return OGRERR_CORRUPT_DATA;
+
+    pszPreScan++;
+
+    // skip white space.
+    while( *pszPreScan == ' ' || *pszPreScan == '\t' )
+        pszPreScan++;
+
+    // Do we have an inner bracket? 
+    if( *pszPreScan == '(' )
+        return importFromWkt_Bracketed( ppszInput );
+    
 /* -------------------------------------------------------------------- */
 /*      Read the point list which should consist of exactly one point.  */
 /* -------------------------------------------------------------------- */
@@ -244,6 +273,76 @@ OGRErr OGRMultiPoint::importFromWkt( char ** ppszInput )
 
     if( eErr != OGRERR_NONE )
         return eErr;
+
+    *ppszInput = (char *) pszInput;
+    
+    return OGRERR_NONE;
+}
+
+
+/************************************************************************/
+/*                      importFromWkt_Bracketed()                       */
+/*                                                                      */
+/*      This operates similar to importFromWkt(), but reads a format    */
+/*      with brackets around each point.  This is the form defined      */
+/*      in the BNF of the SFSQL spec.  It is called from                */
+/*      importFromWkt().                                                */
+/************************************************************************/
+
+OGRErr OGRMultiPoint::importFromWkt_Bracketed( char ** ppszInput )
+
+{
+
+    char        szToken[OGR_WKT_TOKEN_MAX];
+    const char  *pszInput = *ppszInput;
+    OGRErr      eErr = OGRERR_NONE;
+
+/* -------------------------------------------------------------------- */
+/*      Skip MULTIPOINT keyword.                                        */
+/* -------------------------------------------------------------------- */
+    pszInput = OGRWktReadToken( pszInput, szToken );
+
+/* -------------------------------------------------------------------- */
+/*      Read points till we get to the closing bracket.                 */
+/* -------------------------------------------------------------------- */
+    int                 nMaxPoint = 0;
+    int                 nPointCount = 0;
+    OGRRawPoint         *paoPoints = NULL;
+    double              *padfZ = NULL;
+
+    while( (pszInput = OGRWktReadToken( pszInput, szToken ))
+           && (EQUAL(szToken,"(") || EQUAL(szToken,",")) )
+    {
+        OGRGeometry     *poGeom;
+
+        pszInput = OGRWktReadPoints( pszInput, &paoPoints, &padfZ, &nMaxPoint,
+                                     &nPointCount );
+
+        if( pszInput == NULL || nPointCount != 1 )
+            return OGRERR_CORRUPT_DATA;
+
+        if( padfZ )
+            poGeom = new OGRPoint( paoPoints[0].x, 
+                                   paoPoints[0].y, 
+                                   padfZ[0] );
+        else
+            poGeom =  new OGRPoint( paoPoints[0].x, 
+                                    paoPoints[0].y );
+
+        eErr = addGeometryDirectly( poGeom );
+        if( eErr != OGRERR_NONE )
+            return eErr;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Cleanup.                                                        */
+/* -------------------------------------------------------------------- */
+    OGRFree( paoPoints );
+    if( padfZ )
+        OGRFree( padfZ );
+
+    if( !EQUAL(szToken,")") )
+        return OGRERR_CORRUPT_DATA;
 
     *ppszInput = (char *) pszInput;
     
