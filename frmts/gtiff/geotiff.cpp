@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.76  2002/12/04 03:25:57  warmerda
+ * Fixed small memory leak.
+ *
  * Revision 1.75  2002/12/03 13:55:44  warmerda
  * Warn if we cannot export a pseudocolor table in CreateCopy().
  *
@@ -2134,6 +2137,9 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, uint32 nDirOffsetIn,
 /* -------------------------------------------------------------------- */
         GTIF 	*hGTIF;
         GTIFDefn	sGTIFDefn;
+
+        CPLFree( pszProjection );
+        pszProjection = NULL;
     
         hGTIF = GTIFNew(hTIFF);
 
@@ -2142,13 +2148,16 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, uint32 nDirOffsetIn,
             CPLDebug( "GTiff", "Can't create new GeoTIFF instance" );
             return( CE_Failure );
         }
-    
+
         if( GTIFGetDefn( hGTIF, &sGTIFDefn ) )
         {
             pszProjection = GTIFGetOGISDefn( &sGTIFDefn );
         }
-        else if( poTabSRS != NULL )
+
+        if( poTabSRS != NULL 
+            && (pszProjection == NULL || pszProjection[0] == '\0') )
         {
+            CPLFree( pszProjection );
             pszProjection = NULL;
             poTabSRS->exportToWkt( &pszProjection );
         }
