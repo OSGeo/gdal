@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/05/31 15:00:37  warmerda
+ * added generic OGRERR_FAILURE error code.
+ *
  * Revision 1.1  1999/05/20 14:35:00  warmerda
  * New
  *
@@ -52,6 +55,7 @@ typedef int OGRErr;
 #define OGRERR_UNSUPPORTED_GEOMETRY_TYPE 3
 #define OGRERR_UNSUPPORTED_OPERATION 4
 #define OGRERR_CORRUPT_DATA	   5
+#define OGRERR_FAILURE		   6
 
 typedef int	OGRBoolean;
 
