@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  1999/06/25 20:44:43  warmerda
+ * implemented assignSpatialReference, carry properly
+ *
  * Revision 1.6  1999/05/31 20:43:34  warmerda
  * added empty(), and another setPoints()
  *
@@ -111,6 +114,7 @@ OGRGeometry *OGRLineString::clone()
 
     poNewLineString = new OGRLineString();
 
+    poNewLineString->assignSpatialReference( getSpatialReference() );
     poNewLineString->setPoints( nPointCount, paoPoints );
 
     return poNewLineString;

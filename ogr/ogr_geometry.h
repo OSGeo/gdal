@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  1999/06/25 20:44:42  warmerda
+ * implemented assignSpatialReference, carry properly
+ *
  * Revision 1.9  1999/05/31 20:44:11  warmerda
  * ogr_geometry.h
  *
@@ -149,7 +152,7 @@ class OGRGeometry
     virtual void   dumpReadable( FILE *, const char * = NULL );
 
     void    assignSpatialReference( OGRSpatialReference * poSR );
-    OGRSpatialReference *getSpatialReference( void );
+    OGRSpatialReference *getSpatialReference( void ) { return poSRS; }
    
 #ifdef notdef
     

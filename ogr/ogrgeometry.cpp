@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  1999/06/25 20:44:43  warmerda
+ * implemented assignSpatialReference, carry properly
+ *
  * Revision 1.3  1999/05/31 20:42:28  warmerda
  * added empty method
  *
@@ -61,21 +64,9 @@ OGRGeometry::~OGRGeometry()
 
 {
     if( poSRS != NULL )
-        delete poSRS;
-}
-
-
-/************************************************************************/
-/*                       assignSpatialReference()                       */
-/*                                                                      */
-/*      Assign a spatial reference without trying to reproject the      */
-/*      points.                                                         */
-/************************************************************************/
-
-void OGRGeometry::assignSpatialReference( OGRSpatialReference * poSR )
-
-{
-    poSRS = poSR;
+    {
+        poSRS->Dereference();
+    }
 }
 
 
@@ -102,6 +93,34 @@ void OGRGeometry::dumpReadable( FILE * fp, const char * pszPrefix )
     }
 }
 
+/************************************************************************/
+/*                       assignSpatialReference()                       */
+/************************************************************************/
+
+/**
+ * \fn void OGRGeometry::assignSpatialReference( OGRSpatialReference * poSR );
+ *
+ * Assign spatial reference to this object.  Any existing spatial reference
+ * is replaced, but under no circumstances does this result in the object
+ * being reprojected.  It is just changing the interpretation of the existing
+ * geometry.  Note that assigning a spatial reference increments the
+ * reference count on the OGRSpatialReference, but does not copy it. 
+ *
+ * This is similar to the SFCOM IGeometry::put_SpatialReference() method.
+ *
+ * @param poSR new spatial reference system to apply.
+ */
+
+void OGRGeometry::assignSpatialReference( OGRSpatialReference * poSR )
+
+{
+    if( poSRS != NULL )
+        poSRS->Dereference();
+
+    poSRS = poSR;
+    if( poSRS != NULL )
+        poSRS->Reference();
+}
 
 /**
  * \fn int OGRGeometry::getDimension();
@@ -271,19 +290,6 @@ void OGRGeometry::dumpReadable( FILE * fp, const char * pszPrefix )
  *
  * @return a new object instance with the same geometry, and spatial
  * reference system as the original.
- */
-
-/**
- * \fn void OGRGeometry::assignSpatialReference( OGRSpatialReference * poSR );
- *
- * Assign spatial reference to this object.
- *
- * This method isn't currently implemented.  When implemented it will
- * assign the spatial reference system without reprojecting the geometry.
- *
- * This is similar to the SFCOM IGeometry::put_SpatialReference() method.
- *
- * @param poSR new spatial reference system to apply.
  */
 
 /**

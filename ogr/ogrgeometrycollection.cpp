@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  1999/06/25 20:44:43  warmerda
+ * implemented assignSpatialReference, carry properly
+ *
  * Revision 1.3  1999/05/31 20:43:04  warmerda
  * added empty method, implement createFromWkt(), added mline/mpoint
  *
@@ -98,6 +101,7 @@ OGRGeometry *OGRGeometryCollection::clone()
     OGRGeometryCollection	*poNewGC;
 
     poNewGC = new OGRGeometryCollection;
+    poNewGC->assignSpatialReference( getSpatialReference() );
 
     for( int i = 0; i < nGeomCount; i++ )
     {

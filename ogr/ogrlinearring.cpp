@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  1999/06/25 20:44:43  warmerda
+ * implemented assignSpatialReference, carry properly
+ *
  * Revision 1.3  1999/05/23 05:34:40  warmerda
  * added support for clone(), multipolygons and geometry collections
  *
@@ -230,6 +233,7 @@ OGRGeometry *OGRLinearRing::clone()
     OGRLinearRing	*poNewLinearRing;
 
     poNewLinearRing = new OGRLinearRing();
+    poNewLinearRing->assignSpatialReference( getSpatialReference() );
 
     poNewLinearRing->setPoints( nPointCount, paoPoints );
 

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/06/25 20:44:43  warmerda
+ * implemented assignSpatialReference, carry properly
+ *
  * Revision 1.1  1999/05/31 20:42:05  warmerda
  * New
  *
@@ -83,6 +86,7 @@ OGRGeometry *OGRMultiPoint::clone()
     OGRMultiPoint	*poNewGC;
 
     poNewGC = new OGRMultiPoint;
+    poNewGC->assignSpatialReference( getSpatialReference() );
 
     for( int i = 0; i < getNumGeometries(); i++ )
     {

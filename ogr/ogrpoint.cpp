@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  1999/06/25 20:44:43  warmerda
+ * implemented assignSpatialReference, carry properly
+ *
  * Revision 1.7  1999/05/31 20:42:13  warmerda
  * added empty method
  *
@@ -101,7 +104,11 @@ OGRPoint::~OGRPoint()
 OGRGeometry *OGRPoint::clone()
 
 {
-    return new OGRPoint( x, y );
+    OGRPoint	*poNewPoint = new OGRPoint( x, y );
+
+    poNewPoint->assignSpatialReference( getSpatialReference() );
+
+    return poNewPoint;
 }
 
 /************************************************************************/

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  1999/06/25 20:44:43  warmerda
+ * implemented assignSpatialReference, carry properly
+ *
  * Revision 1.6  1999/05/31 20:43:55  warmerda
  * added empty() method
  *
@@ -86,6 +89,7 @@ OGRGeometry *OGRPolygon::clone()
     OGRPolygon	*poNewPolygon;
 
     poNewPolygon = new OGRPolygon;
+    poNewPolygon->assignSpatialReference( getSpatialReference() );
 
     for( int i = 0; i < nRingCount; i++ )
     {
