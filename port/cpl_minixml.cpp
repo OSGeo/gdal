@@ -28,6 +28,11 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.18  2003/03/24 16:47:30  warmerda
+ * Added CPLStripXMLNamespace().
+ * CPLAddXMLChild() will now ensure that attributes are inserted before
+ * non-attributes nodes.
+ *
  * Revision 1.17  2003/02/14 18:44:29  warmerda
  * proper tokens may include a dash
  *
@@ -1041,7 +1046,8 @@ const char *CPLGetXMLValue( CPLXMLNode *poRoot, const char *pszPath,
 /************************************************************************/
 /*                           CPLAddXMLChild()                           */
 /*                                                                      */
-/*      Add a node as a child of another.                               */
+/*      Add a node as a child of another.  Ensure that attributes       */
+/*      are inserted ahead of element children, or Text data.           */
 /************************************************************************/
 
 void CPLAddXMLChild( CPLXMLNode *psParent, CPLXMLNode *psChild )
@@ -1058,9 +1064,30 @@ void CPLAddXMLChild( CPLXMLNode *psParent, CPLXMLNode *psChild )
         return;
     }
 
+    // Insert at head of list if first child is not attribute.
+    if( psChild->eType == CXT_Attribute 
+        && psParent->psChild->eType != CXT_Attribute )
+    {
+        psChild->psNext = psParent->psChild;
+        psParent->psChild = psChild;
+        return;
+    }
+
+    // Search for end of list.
     for( psSib = psParent->psChild; 
          psSib->psNext != NULL; 
-         psSib = psSib->psNext ) {}
+         psSib = psSib->psNext ) 
+    {
+        // Insert attributes if the next node is not an attribute.
+        if( psChild->eType == CXT_Attribute 
+            && psSib->psNext != NULL 
+            && psSib->psNext->eType != CXT_Attribute )
+        {
+            psChild->psNext = psSib->psNext;
+            psSib->psNext = psChild;
+            return;
+        }
+    }
 
     psSib->psNext = psChild;
 }
@@ -1184,3 +1211,33 @@ int CPLSetXMLValue( CPLXMLNode *psRoot,  const char *pszPath,
     return TRUE;
 }
 
+/************************************************************************/
+/*                        CPLStripXMLNamespace()                        */
+/************************************************************************/
+
+void CPLStripXMLNamespace( CPLXMLNode *psRoot, 
+                           const char *pszNamespace, 
+                           int bRecurse )
+
+{
+    if( psRoot == NULL )
+        return;
+
+    if( psRoot->eType == CXT_Element 
+        && EQUALN(pszNamespace,psRoot->pszValue,strlen(pszNamespace)) 
+        && psRoot->pszValue[strlen(pszNamespace)] == ':' )
+    {
+        char *pszNewValue = CPLStrdup(psRoot->pszValue+strlen(pszNamespace)+1);
+
+        CPLFree( psRoot->pszValue );
+        psRoot->pszValue = pszNewValue;
+    }
+
+    if( bRecurse )
+    {
+        if( psRoot->psChild != NULL )
+            CPLStripXMLNamespace( psRoot->psChild, pszNamespace, 1 );
+        if( psRoot->psNext != NULL )
+            CPLStripXMLNamespace( psRoot->psNext, pszNamespace, 1 );
+    }
+}
