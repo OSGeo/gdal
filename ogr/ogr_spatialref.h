@@ -29,13 +29,16 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/05/31 17:14:34  warmerda
+ * Fixed define.
+ *
  * Revision 1.1  1999/05/20 14:35:00  warmerda
  * New
  *
  */
 
 #ifndef _OGR_SPATIALREF_H_INCLUDED
-#define _OGR_SPATIALREF_H_INLLUDED
+#define _OGR_SPATIALREF_H_INCLUDED
 
 #include "ogr_core.h"
 
