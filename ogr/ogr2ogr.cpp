@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2002/01/18 04:46:38  warmerda
+ * added -s_srs support
+ *
  * Revision 1.13  2001/11/15 21:18:59  warmerda
  * added transaction grouping on the write side
  *
@@ -84,6 +87,7 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
                            const char *pszNewLayerName,
                            int bTransform, 
                            OGRSpatialReference *poOutputSRS,
+                           OGRSpatialReference *poSourceSRS,
                            char **papszSelFields );
 
 static int bSkipFailures = FALSE;
@@ -103,7 +107,9 @@ int main( int nArgc, char ** papszArgv )
     char        **papszDSCO = NULL, **papszLCO = NULL;
     int		bTransform = FALSE;
     const char  *pszOutputSRSDef = NULL;
+    const char  *pszSourceSRSDef = NULL;
     OGRSpatialReference *poOutputSRS = NULL;
+    OGRSpatialReference *poSourceSRS = NULL;
     const char  *pszNewLayerName = NULL;
     const char  *pszWHERE = NULL;
     OGRGeometry *poSpatialFilter = NULL;
@@ -143,6 +149,10 @@ int main( int nArgc, char ** papszArgv )
         else if( EQUAL(papszArgv[iArg],"-tg") && iArg < nArgc-1 )
         {
             nGroupTransactions = atoi(papszArgv[++iArg]);
+        }
+        else if( EQUAL(papszArgv[iArg],"-s_srs") && iArg < nArgc-1 )
+        {
+            pszSourceSRSDef = papszArgv[++iArg];
         }
         else if( EQUAL(papszArgv[iArg],"-a_srs") && iArg < nArgc-1 )
         {
@@ -273,6 +283,20 @@ int main( int nArgc, char ** papszArgv )
     }
 
 /* -------------------------------------------------------------------- */
+/*      Parse the source SRS definition if possible.                    */
+/* -------------------------------------------------------------------- */
+    if( pszSourceSRSDef != NULL )
+    {
+        poSourceSRS = new OGRSpatialReference();
+        if( poSourceSRS->SetFromUserInput( pszSourceSRSDef ) != OGRERR_NONE )
+        {
+            printf( "Failed to process SRS definition: %s\n", 
+                    pszSourceSRSDef );
+            exit( 1 );
+        }
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Create the output data source.                                  */
 /* -------------------------------------------------------------------- */
     OGRDataSource       *poODS;
@@ -311,7 +335,7 @@ int main( int nArgc, char ** papszArgv )
             
             if( !TranslateLayer( poDS, poLayer, poODS, papszLCO, 
                                  pszNewLayerName, bTransform, poOutputSRS,
-                                 papszSelFields ) 
+                                 poSourceSRS, papszSelFields ) 
                 && !bSkipFailures )
             {
                 CPLError( CE_Failure, CPLE_AppDefined, 
@@ -376,6 +400,7 @@ static void Usage()
 
     printf(" -a_srs srs_def: Assign an output SRS\n"
            " -t_srs srs_def: Reproject/transform to this SRS on output\n"
+           " -s_srs srs_def: Override source SRS\n"
            "\n" 
            " Srs_def can be a full WKT definition (hard to escape properly),\n"
            " or a well known definition (ie. EPSG:4326) or a file with a WKT\n"
@@ -395,6 +420,7 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
                            const char *pszNewLayerName,
                            int bTransform, 
                            OGRSpatialReference *poOutputSRS,
+                           OGRSpatialReference *poSourceSRS,
                            char **papszSelFields )
 
 {
@@ -412,15 +438,17 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
 
     if( bTransform )
     {
-        if( poSrcLayer->GetSpatialRef() == NULL )
+        if( poSourceSRS == NULL )
+            poSourceSRS = poSrcLayer->GetSpatialRef();
+
+        if( poSourceSRS == NULL )
         {
             printf( "Can't transform coordinates, source layer has no\n"
-                    "coordinate system.\n" );
+                    "coordinate system.  Use -s_srs to set one.\n" );
             exit( 1 );
         }
 
-        poCT = OGRCreateCoordinateTransformation( poSrcLayer->GetSpatialRef(),
-                                                  poOutputSRS );
+        poCT = OGRCreateCoordinateTransformation( poSourceSRS, poOutputSRS );
         if( poCT == NULL )
         {
             char	*pszWKT = NULL;
