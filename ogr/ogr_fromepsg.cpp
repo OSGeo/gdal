@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.31  2003/11/20 19:41:15  warmerda
+ * added logic to set EPSG authority info if read from PROJ.4
+ *
  * Revision 1.30  2003/11/19 20:40:58  warmerda
  * Add support for faking EPSG coordinate systems from PROJ.4 definitions
  *
@@ -1427,6 +1430,13 @@ OGRErr OGRSpatialReference::importFromEPSG( int nCode )
 
         if( eErr != OGRERR_NONE )
             eErr = OGRERR_UNSUPPORTED_SRS;
+        else
+        {
+            if( IsProjected() )
+                SetAuthority( "PROJCS", "EPSG", nCode );
+            else if( IsGeographic() )
+                SetAuthority( "GEOGCS", "EPSG", nCode );
+        }
     }
 
     if( eErr == OGRERR_UNSUPPORTED_SRS )
