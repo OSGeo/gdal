@@ -2,6 +2,7 @@ gdal (1.2+cvs.031016-1) unstable; urgency=low
 
   * Take maintainership
   * added man pages
+  * added libtool patch to debian/rules to avoid linking with rpath
   * changed last line of pymod/GNUmakefile because otherwise all 
     files within pymod would be deleted when building package with 
     fakeroot

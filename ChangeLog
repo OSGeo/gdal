@@ -1,5 +1,10 @@
 2003-10-22	Silke Reimer	<silke@intevation.de>
 
+	* debian/changelog: Added remark about patched libtool to avoid linking
+		with rpath
+
+2003-10-22	Silke Reimer	<silke@intevation.de>
+
 	* debian/*: Added debian directory for building a gdal debian package
 
 2003-10-21	Silke Reimer	<silke@intevation.de>
