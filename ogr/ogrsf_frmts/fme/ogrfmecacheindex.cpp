@@ -24,6 +24,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2002/07/11 16:07:27  warmerda
+ * added CreationTime support, test against FMECACHE_MAX_RETENTION
+ *
  * Revision 1.1  2002/05/24 06:23:57  warmerda
  * New
  *
@@ -224,9 +227,10 @@ CPLXMLNode *OGRFMECacheIndex::FindMatch( const char *pszDriver,
 
         CPLXMLNode *psDirective;
         int        bMatch = TRUE;
+        int        iDir;
 
         psDirective = CPLGetXMLNode( psCDS, "UserDirectives.Directive" );
-        for( int iDir = 0; 
+        for( iDir = 0; 
              iDir < (int)oUserDirectives.entries() && bMatch; 
              iDir++ )
         {
@@ -331,6 +335,21 @@ void OGRFMECacheIndex::Add( CPLXMLNode *psDSNode )
 
     psDSNode->psNext = psTree->psChild;
     psTree->psChild = psDSNode;
+
+    if( psDSNode == NULL || !EQUAL(psDSNode->pszValue,"DataSource") )
+        return;
+
+/* -------------------------------------------------------------------- */
+/*      Prepare the creation time value to use.                         */
+/* -------------------------------------------------------------------- */
+    char      szNewTime[32];
+
+    sprintf( szNewTime, "%lu", (unsigned long) time(NULL) );
+
+/* -------------------------------------------------------------------- */
+/*      Set or insert CreationTime into dataset.                        */
+/* -------------------------------------------------------------------- */
+    CPLSetXMLValue( psDSNode, "CreationTime", szNewTime );
 }
 
 /************************************************************************/
@@ -376,6 +395,14 @@ int OGRFMECacheIndex::ExpireOldCaches( IFMESession *poSession )
                 "%lu", &nLastUseTime );
         
 /* -------------------------------------------------------------------- */
+/*      When was this datasource created.                               */
+/* -------------------------------------------------------------------- */
+        unsigned long nCreationTime = 0;
+
+        sscanf( CPLGetXMLValue( psDSNode, "CreationTime", "0" ), 
+                "%lu", &nCreationTime );
+
+/* -------------------------------------------------------------------- */
 /*      Do we want to delete this datasource according to our           */
 /*      retention and ref timeout rules?                                */
 /* -------------------------------------------------------------------- */
@@ -390,15 +417,20 @@ int OGRFMECacheIndex::ExpireOldCaches( IFMESession *poSession )
             && nLastUseTime + FMECACHE_RETENTION < nCurTime )
             bCleanup = TRUE;
 
+        if( atoi(CPLGetXMLValue( psDSNode, "RefCount", "0" )) < 1 
+            && nCreationTime + FMECACHE_MAX_RETENTION < nCurTime )
+            bCleanup = TRUE;
+
         if( !bCleanup )
             continue;
 
         bChangeMade = TRUE;
 
         CPLDebug( "OGRFMECacheIndex", 
-                  "ExpireOldCaches() cleaning up data source %s - %ds old.",
+                  "ExpireOldCaches() cleaning up data source %s - %ds since last use, %ds old.",
                   CPLGetXMLValue( psDSNode, "DSName", "<missing name>" ),
-                  nCurTime - nLastUseTime );
+                  nCurTime - nLastUseTime,
+                  nCurTime - nCreationTime );
 
 /* -------------------------------------------------------------------- */
 /*      Loop over all the layers, to delete the spatial caches on       */
