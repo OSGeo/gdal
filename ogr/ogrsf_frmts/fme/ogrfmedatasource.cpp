@@ -23,6 +23,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2002/09/04 15:29:16  warmerda
+ * fixed bug in datasource destructor
+ *
  * Revision 1.6  2002/08/14 21:15:25  warmerda
  * improved error recovery logic if session doesnt initialize
  *
@@ -301,6 +304,8 @@ OGRFMEDataSource::OGRFMEDataSource()
     papoLayers = NULL;
 
     poUserDirectives = NULL;
+
+    bUseCaching = FALSE;
 }
 
 /************************************************************************/
@@ -333,7 +338,8 @@ OGRFMEDataSource::~OGRFMEDataSource()
     OGRFMECacheIndex   oCacheIndex( 
                            CPLFormFilename(GetTmpDir(), "ogrfmeds", "ind" ) );
 
-    if( bUseCaching && oCacheIndex.Lock() && oCacheIndex.Load() )
+    if( pszReaderName != NULL && nLayers > 0 
+        && bUseCaching && oCacheIndex.Lock() && oCacheIndex.Load() )
     {
         CPLXMLNode        *psMatchDS = NULL;
 
