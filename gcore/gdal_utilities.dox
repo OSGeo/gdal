@@ -84,7 +84,8 @@ Usage: gdal_translate
              CInt32/CFloat32/CFloat64}] [-not_strict]
        [-of format] [-b band] [-outsize xsize[%] ysize[%]]
        [-scale [src_min src_max [dst_min dst_max]]]       
-       [-srcwin xoff yoff xsize ysize] [-co "NAME=VALUE"]*
+       [-srcwin xoff yoff xsize ysize] 
+       [-projwin xoff yoff xsize ysize] [-co "NAME=VALUE"]*
        src_dataset dst_dataset
 \endverbatim
 
@@ -106,6 +107,9 @@ the range <i>dst_min</i> to <i>dst_max</i>.  If omitted the output range is
 source data.
 <li> <b>-srcwin</b> <i>xoff yoff xsize ysize</i>: Selects a subwindow from
 the source image for copying.
+<li> <b>-projwin</b> <i>ulx uly lrx lry</i>: Selects a subwindow from the
+source image for copying (like -srcwin) but with the corners given in 
+georeferenced coordinates. 
 <li> <b>-co</b> <i>"NAME=VALUE"</i>: passes a creation option to the output
 format driver.  Multiple <b>-co</b> options may be listed.  See format 
 specific documentation for legal creation options for each format.
