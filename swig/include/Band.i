@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.2  2005/02/15 16:56:46  kruland
+ * Remove use of vector<double> in ComputeRasterMinMax.  Use double_2 instead.
+ *
  * Revision 1.1  2005/02/15 06:23:48  kruland
  * Extracted Band class (GDALRasterBand) into seperate .i file.  Does not use
  * C++ API.
@@ -78,13 +81,8 @@ public:
     return GDALChecksumImage( self, xoff, yoff, xsize, ysize );
   }
 
-  std::vector<double> ComputeRasterMinMax( int approx_ok = 0 ) {
-    double c_minmax[2] = {0.0, 0.0};
-    GDALComputeRasterMinMax( self, approx_ok, c_minmax );
-    std::vector<double> retval(2);
-    retval[0] = c_minmax[0];
-    retval[1] = c_minmax[1];
-    return retval;
+  void ComputeRasterMinMax( double_2 *c_minmax, int approx_ok = 0) {
+    GDALComputeRasterMinMax( self, approx_ok, &(*c_minmax)[0] );
   }
 
 %newobject ReadRaster;
