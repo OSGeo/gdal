@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.68  2002/06/25 13:56:54  warmerda
+ * fixed bug generating high overview levels
+ *
  * Revision 1.67  2002/06/18 02:47:46  warmerda
  * fixed handling of long string constant
  *
@@ -1482,6 +1485,31 @@ void GTiffDataset::FlushCache()
 }
 
 /************************************************************************/
+/*                         TIFF_OvLevelAdjust()                         */
+/*                                                                      */
+/*      Some overview levels cannot be achieved closely enough to be    */
+/*      recognised as the desired overview level.  This function        */
+/*      will adjust an overview level to one that is achievable on      */
+/*      the given raster size.                                          */
+/*                                                                      */
+/*      For instance a 1200x1200 image on which a 256 level overview    */
+/*      is request will end up generating a 5x5 overview.  However,     */
+/*      this will appear to the system be a level 240 overview.         */
+/*      This function will adjust 256 to 240 based on knowledge of      */
+/*      the image size.                                                 */
+/*                                                                      */
+/*      This is a copy of the GDALOvLevelAdjust() function in           */
+/*      gdaldefaultoverviews.cpp.                                       */
+/************************************************************************/
+
+static int TIFF_OvLevelAdjust( int nOvLevel, int nXSize )
+
+{
+    int	nOXSize = (nXSize + nOvLevel - 1) / nOvLevel;
+    
+    return (int) (0.5 + nXSize / (double) nOXSize);
+}
+/************************************************************************/
 /*                          IBuildOverviews()                           */
 /************************************************************************/
 
@@ -1636,7 +1664,9 @@ CPLErr GTiffDataset::IBuildOverviews(
                 nOvFactor = (int) 
                   (0.5 + poBand->GetXSize() / (double) poOverview->GetXSize());
 
-                if( nOvFactor == panOverviewList[i] )
+                if( nOvFactor == panOverviewList[i] 
+                    || nOvFactor == TIFF_OvLevelAdjust( panOverviewList[i],
+                                                        poBand->GetXSize() ) )
                 {
                     papoOverviewBands[nNewOverviews++] = poOverview;
                 }
