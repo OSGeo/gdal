@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2003/05/21 14:40:40  warmerda
+ * fix error message
+ *
  * Revision 1.8  2003/05/20 18:35:38  warmerda
  * added error reporting if SRS import fails
  *
@@ -339,7 +342,7 @@ int main( int argc, char ** argv )
         fprintf( stderr, 
                  "Output dataset %s exists,\n"
                  "but some commandline options were provided indicating a new dataset\n"
-                 "should be created.  Please delete existing dataset and run again.",
+                 "should be created.  Please delete existing dataset and run again.\n",
                  pszDstFilename );
         exit( 1 );
     }
