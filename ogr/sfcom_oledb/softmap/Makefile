@@ -36,9 +36,9 @@ $(DLLNAME):	SF.h $(LOC_OBJ) $(PROJ).res
 		$(LOC_OBJ) $(OGR_LIBS) $(OLE_LIBS) $(PROJ).res
 
 clean:
-	del *.obj *.exe *.dll $(PROJ).res $(DLLNAME)
-	del *.lib *.ilk *.exp *.pdb SF.h SF.tlb SF_i.c
-	del sf.cpp sfutil.cpp sftraceback.cpp SFRS.cpp
+	-del *.obj *.exe *.dll $(PROJ).res $(DLLNAME)
+	-del *.lib *.ilk *.exp *.pdb SF.h SF.tlb SF_i.c
+	-del sf.cpp sfutil.cpp sftraceback.cpp SFRS.cpp
 
 install:      $(DLLNAME)
 	regsvr32 $(DLLNAME)

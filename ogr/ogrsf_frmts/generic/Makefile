@@ -11,7 +11,7 @@ GDAL_ROOT	=	..\..\..
 default:	$(OBJ)
 
 clean:
-	del *.obj *.pdb
+	-del *.obj *.pdb
 
 
 
