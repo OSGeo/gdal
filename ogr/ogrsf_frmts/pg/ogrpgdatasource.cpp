@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2001/06/19 22:29:12  warmerda
+ * upgraded to include PostGIS support
+ *
  * Revision 1.2  2000/11/23 06:03:35  warmerda
  * added Oid support
  *
@@ -43,7 +46,7 @@
 static void OGRPGNoticeProcessor( void *arg, const char * pszMessage );
 
 /************************************************************************/
-/*                         OGRPGDataSource()                         */
+/*                          OGRPGDataSource()                           */
 /************************************************************************/
 
 OGRPGDataSource::OGRPGDataSource()
@@ -53,10 +56,11 @@ OGRPGDataSource::OGRPGDataSource()
     papoLayers = NULL;
     nLayers = 0;
     hPGConn = NULL;
+    bHavePostGIS = FALSE;
 }
 
 /************************************************************************/
-/*                        ~OGRPGDataSource()                         */
+/*                          ~OGRPGDataSource()                          */
 /************************************************************************/
 
 OGRPGDataSource::~OGRPGDataSource()
@@ -119,7 +123,8 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
     PQsetNoticeProcessor( hPGConn, OGRPGNoticeProcessor, this );
 
 /* -------------------------------------------------------------------- */
-/*      Get a list of available tables.                                 */
+/*	Test to see if this database instance has support for the	*/
+/*	PostGIS Geometry type.  					*/
 /* -------------------------------------------------------------------- */
     PGresult            *hResult;
     
@@ -130,9 +135,34 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
         PQclear( hResult );
 
         hResult = PQexec(hPGConn, 
+                         "SELECT oid FROM pg_type WHERE typname = 'geometry'" );
+    }
+
+    if( hResult && PQresultStatus(hResult) == PGRES_TUPLES_OK 
+        && PQntuples(hResult) > 0 )
+    {
+        bHavePostGIS = TRUE;
+    }
+
+    if( hResult )
+        PQclear( hResult );
+
+    hResult = PQexec(hPGConn, "COMMIT");
+    PQclear( hResult );
+
+/* -------------------------------------------------------------------- */
+/*      Get a list of available tables.                                 */
+/* -------------------------------------------------------------------- */
+    hResult = PQexec(hPGConn, "BEGIN");
+
+    if( hResult && PQresultStatus(hResult) == PGRES_COMMAND_OK )
+    {
+        PQclear( hResult );
+
+        hResult = PQexec(hPGConn, 
                          "DECLARE mycursor CURSOR for "
                          "SELECT relname FROM pg_class "
-                         "WHERE relkind = 'r' AND relname !~ '^pg_'" );
+                         "WHERE relkind = 'r' AND relname !~ '^pg'" );
     }
 
     if( hResult && PQresultStatus(hResult) == PGRES_COMMAND_OK )
@@ -228,7 +258,12 @@ OGRPGDataSource::CreateLayer( const char * pszLayerName,
 
     pszGeomType = CSLFetchNameValue( papszOptions, "GEOM_TYPE" );
     if( pszGeomType == NULL )
-        pszGeomType = "bytea";
+    {
+        if( bHavePostGIS )
+            pszGeomType = "bytea";
+        else
+            pszGeomType = "geometry";
+    }
 
     hResult = PQexec(hPGConn, "BEGIN");
     PQclear( hResult );

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2001/06/19 22:29:12  warmerda
+ * upgraded to include PostGIS support
+ *
  * Revision 1.3  2001/06/19 15:50:23  warmerda
  * added feature attribute query support
  *
@@ -60,6 +63,8 @@ OGRPGLayer::OGRPGLayer( OGRPGDataSource *poDSIn, const char * pszTableName,
     bUpdateAccess = bUpdate;
     bHasWkb = FALSE;
     bWkbAsOid = FALSE;
+    bHasPostGISGeometry = FALSE;
+    pszGeomColumn = NULL;
 
     iNextShapeId = 0;
 
@@ -83,6 +88,9 @@ OGRPGLayer::~OGRPGLayer()
 
     if( poFilterGeom != NULL )
         delete poFilterGeom;
+
+    if( pszGeomColumn != NULL )
+        CPLFree( pszGeomColumn );
 }
 
 /************************************************************************/
@@ -147,6 +155,12 @@ OGRFeatureDefn *OGRPGLayer::ReadTableDefinition( const char * pszTable )
             bHasFid = TRUE;
             continue;
         }
+        else if( EQUAL(pszType,"geometry") )
+        {
+            bHasPostGISGeometry = TRUE;
+            pszGeomColumn = CPLStrdup( oField.GetNameRef());
+            continue;
+        }
         else if( EQUAL(oField.GetNameRef(),"WKB_GEOMETRY") )
         {
             bHasWkb = TRUE;
@@ -154,7 +168,7 @@ OGRFeatureDefn *OGRPGLayer::ReadTableDefinition( const char * pszTable )
                 bWkbAsOid = TRUE;
             continue;
         }
-        
+
         if( EQUAL(pszType,"varchar") )
         {
             oField.SetType( OFTString );
@@ -257,7 +271,7 @@ OGRFeature *OGRPGLayer::GetNextFeature()
     }
 }
 
-g/************************************************************************/
+/************************************************************************/
 /*                         GetNextRawFeature()                          */
 /************************************************************************/
 
@@ -355,7 +369,20 @@ OGRFeature *OGRPGLayer::GetNextRawFeature()
     {
         int	iOGRField;
 
-        if( EQUAL(PQfname(hCursorResult,iField),"WKB_GEOMETRY") )
+        if( bHasPostGISGeometry
+                 && EQUAL(PQfname(hCursorResult,iField),pszGeomColumn) )
+        {
+            char	*pszWKT;
+            OGRGeometry *poGeometry = NULL;
+            
+            pszWKT = PQgetvalue( hCursorResult, nResultOffset, iField );
+            OGRGeometryFactory::createFromWkt( &pszWKT, NULL, &poGeometry );
+            if( poGeometry != NULL )
+                poFeature->SetGeometryDirectly( poGeometry );
+
+            continue;
+        }
+        else if( EQUAL(PQfname(hCursorResult,iField),"WKB_GEOMETRY") )
         {
             if( bWkbAsOid )
             {
@@ -571,7 +598,7 @@ OGRErr OGRPGLayer::CreateFeature( OGRFeature *poFeature )
 {
     PGconn		*hPGConn = poDS->GetPGConn();
     PGresult            *hResult;
-    char		szCommand[8000];
+    char		szCommand[800000];
     int                 i, bNeedComma;
 
     hResult = PQexec(hPGConn, "BEGIN");
@@ -587,6 +614,12 @@ OGRErr OGRPGLayer::CreateFeature( OGRFeature *poFeature )
     if( bHasWkb && poFeature->GetGeometryRef() != NULL )
         strcat( szCommand, "WKB_GEOMETRY, " );
     
+    if( bHasPostGISGeometry && poFeature->GetGeometryRef() != NULL )
+    {
+        strcat( szCommand, pszGeomColumn );
+        strcat( szCommand, ", " );
+    }
+    
     bNeedComma = FALSE;
     for( i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
     {
@@ -601,7 +634,31 @@ OGRErr OGRPGLayer::CreateFeature( OGRFeature *poFeature )
     strcat( szCommand, ") VALUES (" );
 
     /* Set the geometry */
-    if( bHasWkb && !bWkbAsOid && poFeature->GetGeometryRef() != NULL )
+    if( bHasPostGISGeometry )
+    {
+        char	*pszWKT = NULL;
+
+        poFeature->GetGeometryRef()->exportToWkt( &pszWKT );
+        
+        if( pszWKT != NULL 
+            && strlen(szCommand) + strlen(pszWKT) > sizeof(szCommand)-50 )
+        {
+            OGRFree( pszWKT );
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                      "Internal command buffer to short for INSERT command." );
+            return OGRERR_FAILURE;
+        }
+
+        if( pszWKT != NULL )
+        {
+            sprintf( szCommand + strlen(szCommand), 
+                     "'%s', ", pszWKT );
+            OGRFree( pszWKT );
+        }
+        else
+            strcat( szCommand, "''," );
+    }
+    else if( bHasWkb && !bWkbAsOid && poFeature->GetGeometryRef() != NULL )
     {
         char	*pszBytea = GeometryToBYTEA( poFeature->GetGeometryRef() );
 
