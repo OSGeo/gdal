@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.43  2003/03/13 14:37:17  warmerda
+ * better end of range checking in GDALTermProgress
+ *
  * Revision 1.42  2003/02/15 20:22:14  warmerda
  * GDALReadTabFile() returns true if it gets GCPs but cant make geotransform
  *
@@ -852,7 +855,7 @@ int GDALTermProgress( double dfComplete, const char *pszMessage,
 
     if( dfLastComplete > dfComplete )
     {
-        if( dfLastComplete > 1.0 )
+        if( dfLastComplete >= 1.0 )
             dfLastComplete = -1.0;
         else
             dfLastComplete = dfComplete;
