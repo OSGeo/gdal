@@ -9,7 +9,7 @@ OBJ =	sdtsiref.o sdtscatd.o sdtslinereader.o sdtslib.o \
 	\
 	shpopen.o dbfopen.o \
 	\
-	cpl_error.o cpl_vsisimple.o cpl_string.o cpl_conv.o
+	cpl_error.o cpl_vsisimple.o cpl_string.o cpl_conv.o cpl_path.o
 
 CXXFLAGS = @CXXFLAGS@ @CXX_WFLAGS@
 LIBS 	= @LIBS@ -lm
@@ -95,6 +95,9 @@ cpl_conv.o:	cpl_conv.cpp
 
 cpl_vsisimple.o:	cpl_vsisimple.cpp
 	$(CXX) -c $(CXXFLAGS) cpl_vsisimple.cpp 
+
+cpl_path.o:	cpl_path.cpp
+	$(CXX) -c $(CXXFLAGS) cpl_path.cpp 
 
 #
 #	Shapefile access
