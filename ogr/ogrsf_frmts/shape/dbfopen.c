@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: dbfopen.c,v 1.52 2003/07/08 15:20:03 warmerda Exp $
+ * $Id: dbfopen.c,v 1.54 2004/09/15 16:26:10 fwarmerdam Exp $
  *
  * Project:  Shapelib
  * Purpose:  Implementation of .dbf access API documented in dbf_api.html.
@@ -34,6 +34,12 @@
  ******************************************************************************
  *
  * $Log: dbfopen.c,v $
+ * Revision 1.54  2004/09/15 16:26:10  fwarmerdam
+ * Treat all blank numeric fields as null too.
+ *
+ * Revision 1.53  2003/12/29 00:00:30  fwarmerdam
+ * mark DBFWriteAttributeDirectly as SHPAPI_CALL
+ *
  * Revision 1.52  2003/07/08 15:20:03  warmerda
  * avoid warnings about downcasting to unsigned char
  *
@@ -195,7 +201,7 @@
  */
 
 static char rcsid[] = 
-  "$Id: dbfopen.c,v 1.52 2003/07/08 15:20:03 warmerda Exp $";
+  "$Id: dbfopen.c,v 1.54 2004/09/15 16:26:10 fwarmerdam Exp $";
 
 #include "shapefil.h"
 
@@ -892,6 +898,7 @@ DBFIsAttributeNULL( DBFHandle psDBF, int iRecord, int iField )
 
 {
     const char	*pszValue;
+    int i;
 
     pszValue = DBFReadStringAttribute( psDBF, iRecord, iField );
 
@@ -902,8 +909,20 @@ DBFIsAttributeNULL( DBFHandle psDBF, int iRecord, int iField )
     {
       case 'N':
       case 'F':
-        /* NULL numeric fields have value "****************" */
-        return pszValue[0] == '*';
+        /*
+        ** We accept all asterisks or all blanks as NULL 
+        ** though according to the spec I think it should be all 
+        ** asterisks. 
+        */
+        if( pszValue[0] == '*' )
+            return TRUE;
+
+        for( i = 0; pszValue[i] != '\0'; i++ )
+        {
+            if( pszValue[i] != ' ' )
+                return FALSE;
+        }
+        return TRUE;
 
       case 'D':
         /* NULL date fields have value "00000000" */
@@ -1169,7 +1188,8 @@ static int DBFWriteAttribute(DBFHandle psDBF, int hEntity, int iField,
 /*      as is to the field position in the record.                      */
 /************************************************************************/
 
-int DBFWriteAttributeDirectly(DBFHandle psDBF, int hEntity, int iField,
+int SHPAPI_CALL
+DBFWriteAttributeDirectly(DBFHandle psDBF, int hEntity, int iField,
                               void * pValue )
 
 {
