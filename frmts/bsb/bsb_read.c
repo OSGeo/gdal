@@ -33,6 +33,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2002/07/19 20:57:32  warmerda
+ * nos files are VER/1 but have ver2 style line markers
+ *
  * Revision 1.5  2002/07/19 20:33:55  warmerda
  * Fixed for BSB 1.1 and 3.0 issues:
  *  o Allow for longer lines.
@@ -397,7 +400,7 @@ int BSBReadScanline( BSBInfo *psInfo, int nScanline,
                      unsigned char *pabyScanlineBuf )
 
 {
-    int		nLineMarker = 0, nValueShift, iPixel = 0, nExpectedLine;
+    int		nLineMarker = 0, nValueShift, iPixel = 0;
     unsigned char byValueMask, byCountMask;
     FILE	*fp = psInfo->fp;
     int         byNext, i;
@@ -448,16 +451,12 @@ int BSBReadScanline( BSBInfo *psInfo, int nScanline,
         nLineMarker = nLineMarker * 128 + (byNext & 0x7f);
     } while( (byNext & 0x80) != 0 );
 
-    if( psInfo->nVersion < 200 )
-        nExpectedLine = nScanline;
-    else
-        nExpectedLine = nScanline + 1;
-
-    if( nLineMarker != nExpectedLine )
+    if( nLineMarker != nScanline 
+        && nLineMarker != nScanline + 1 )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Got scanline id %d when looking for %d.", 
-                  nLineMarker, nExpectedLine );
+                  nLineMarker, nScanline+1 );
         return FALSE;
     }
 
