@@ -36,5 +36,6 @@
 #include "geo_config.h"
 
 #include "cpl_string.h"
+#include "cpl_csv.h"
 
 #endif /* ndef CPL_SERV_H_INCLUDED */
