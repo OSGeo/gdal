@@ -26,6 +26,9 @@
  *
  * 
  * $Log$
+ * Revision 1.3  1999/04/21 04:00:34  warmerda
+ * Initialize fp to NULL.
+ *
  * Revision 1.2  1998/12/31 18:52:45  warmerda
  * Use CPL memory functions (they are safe), and fixed up header reading.
  *
@@ -56,6 +59,7 @@ GDALOpenInfo::GDALOpenInfo( const char * pszFilenameIn, GDALAccess eAccessIn )
     pabyHeader = NULL;
     bStatOK = FALSE;
     eAccess = eAccessIn;
+    fp = NULL;
     
 /* -------------------------------------------------------------------- */
 /*      Collect information about the file.                             */
