@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.11  2000/03/31 14:11:55  warmerda
+ * added CPLErrorV
+ *
  * Revision 1.10  2000/01/10 17:35:45  warmerda
  * added push down stack of error handlers
  *
@@ -89,6 +92,7 @@ typedef enum
 } CPLErr;
 
 void CPL_DLL CPLError(CPLErr eErrClass, int err_no, const char *fmt, ...);
+void CPL_DLL CPLErrorV(CPLErr, int, const char *, va_list );
 void CPL_DLL CPLErrorReset();
 int CPL_DLL CPLGetLastErrorNo();
 const char CPL_DLL * CPLGetLastErrorMsg();

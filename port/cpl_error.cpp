@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.12  2000/03/31 14:11:55  warmerda
+ * added CPLErrorV
+ *
  * Revision 1.11  2000/01/10 17:35:45  warmerda
  * added push down stack of error handlers
  *
@@ -127,8 +130,19 @@ void    CPLError(CPLErr eErrClass, int err_no, const char *fmt, ...)
     /* Expand the error message 
      */
     va_start(args, fmt);
-    vsprintf(gszCPLLastErrMsg, fmt, args);
+    CPLErrorV( eErrClass, err_no, fmt, args );
     va_end(args);
+}
+
+/************************************************************************/
+/*                             CPLErrorV()                              */
+/************************************************************************/
+
+void    CPLErrorV(CPLErr eErrClass, int err_no, const char *fmt, va_list args )
+{
+    /* Expand the error message 
+     */
+    vsnprintf(gszCPLLastErrMsg, sizeof(gszCPLLastErrMsg), fmt, args);
 
     /* If the user provided his own error handling function, then call
      * it, otherwise print the error to stderr and return.
