@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.64  2002/06/11 20:28:50  warmerda
+ * fixed error test in CreateCopy
+ *
  * Revision 1.63  2002/06/11 03:43:04  warmerda
  * Allow CreateCopy() to return a GA_ReadOnly dataset if opening the created
  * file with GA_Update fails.  This is the case with compressed files.
@@ -2256,6 +2259,7 @@ TIFF *GTiffCreate( const char * pszFilename,
                       "Attempt to create new tiff file `%s'\n"
                       "failed in XTIFFOpen().\n",
                       pszFilename );
+        return NULL;
     }
 
 /* -------------------------------------------------------------------- */
