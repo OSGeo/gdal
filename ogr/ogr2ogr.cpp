@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2001/10/25 22:33:16  danmo
+ * Added support for -select option
+ *
  * Revision 1.11  2001/09/27 14:50:10  warmerda
  * added untested -spat and -where support
  *
@@ -77,7 +80,8 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
                            char ** papszLSCO,
                            const char *pszNewLayerName,
                            int bTransform, 
-                           OGRSpatialReference *poOutputSRS );
+                           OGRSpatialReference *poOutputSRS,
+                           char **papszSelFields );
 
 static int bSkipFailures = FALSE;
 
@@ -97,9 +101,11 @@ int main( int nArgc, char ** papszArgv )
     const char  *pszOutputSRSDef = NULL;
     OGRSpatialReference *poOutputSRS = NULL;
     const char  *pszNewLayerName = NULL;
-    const char *pszWHERE = NULL;
+    const char  *pszWHERE = NULL;
     OGRGeometry *poSpatialFilter = NULL;
-    
+    const char  *pszSelect;
+    char        **papszSelFields = NULL;
+
 /* -------------------------------------------------------------------- */
 /*      Register format(s).                                             */
 /* -------------------------------------------------------------------- */
@@ -160,6 +166,12 @@ int main( int nArgc, char ** papszArgv )
         else if( EQUAL(papszArgv[iArg],"-where") && papszArgv[iArg+1] != NULL )
         {
             pszWHERE = papszArgv[++iArg];
+        }
+        else if( EQUAL(papszArgv[iArg],"-select") && papszArgv[iArg+1] != NULL)
+        {
+            pszSelect = papszArgv[++iArg];
+            papszSelFields = CSLTokenizeStringComplex(pszSelect, " ,", 
+                                                           FALSE, FALSE );
         }
         else if( papszArgv[iArg][0] == '-' )
         {
@@ -290,7 +302,8 @@ int main( int nArgc, char ** papszArgv )
                 poLayer->SetSpatialFilter( poSpatialFilter );
             
             if( !TranslateLayer( poDS, poLayer, poODS, papszLCO, 
-                                 pszNewLayerName, bTransform, poOutputSRS ) 
+                                 pszNewLayerName, bTransform, poOutputSRS,
+                                 papszSelFields ) 
                 && !bSkipFailures )
             {
                 CPLError( CE_Failure, CPLE_AppDefined, 
@@ -309,6 +322,8 @@ int main( int nArgc, char ** papszArgv )
     delete poODS;
     delete poDS;
 
+    CSLDestroy(papszSelFields);
+
 #ifdef DBMALLOC
     malloc_dump(1);
 #endif
@@ -326,7 +341,8 @@ static void Usage()
     OGRSFDriverRegistrar        *poR = OGRSFDriverRegistrar::GetRegistrar();
 
     printf( "Usage: ogr2ogr [-skipfailures] [-f format_name]\n"
-            "               [-where restricted_where] [-spat xmin ymin xmax ymax]\n"
+            "               [-select field_list] [-where restricted_where]\n"
+            "               [-spat xmin ymin xmax ymax]\n"
             "               [-t_srs srs_def] [-a_srs srs_def]\n"
             "               [[-dsco NAME=VALUE] ...] dst_datasource_name\n"
             "               src_datasource_name\n"
@@ -342,7 +358,9 @@ static void Usage()
             printf( "     -f \"%s\"\n", poDriver->GetName() );
     }
 
-    printf( " -where restricted_where: Attribute query (like SQL WHERE)\n" 
+    printf( " -select field_list: Comma-delimited list of fields from input layer to\n"
+            "                     copy to the new layer (defaults to all)\n" 
+            " -where restricted_where: Attribute query (like SQL WHERE)\n" 
             " -spat xmin ymin xmax ymax: spatial query extents\n"
             " -dsco NAME=VALUE: Dataset creation option (format specific)\n"
             " -lco  NAME=VALUE: Layer creation option (format specific)\n"
@@ -368,7 +386,8 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
                            char **papszLCO,
                            const char *pszNewLayerName,
                            int bTransform, 
-                           OGRSpatialReference *poOutputSRS )
+                           OGRSpatialReference *poOutputSRS,
+                           char **papszSelFields )
 
 {
     OGRLayer    *poDstLayer;
@@ -430,13 +449,32 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
         return FALSE;
 
 /* -------------------------------------------------------------------- */
-/*      Add fields.                                                     */
+/*      Add fields.  Default to copy all field.                         */
+/*      If only a subset of all fields requested, then output only      */
+/*      the selected fields, and in the order that they were            */
+/*      selected.                                                       */
 /* -------------------------------------------------------------------- */
     int         iField;
-
-    for( iField = 0; iField < poFDefn->GetFieldCount(); iField++ )
+    if (papszSelFields)
     {
-        poDstLayer->CreateField( poFDefn->GetFieldDefn(iField) );
+        for( iField=0; papszSelFields[iField] != NULL; iField++)
+        {
+            int iSrcField = poFDefn->GetFieldIndex(papszSelFields[iField]);
+            if (iSrcField >= 0)
+                poDstLayer->CreateField( poFDefn->GetFieldDefn(iSrcField) );
+            else
+            {
+                printf( "Field '%s' not found in source layer.\n", 
+                         papszSelFields[iField] );
+                if( !bSkipFailures )
+                    return FALSE;
+            }
+        }
+    }
+    else
+    {
+        for( iField = 0; iField < poFDefn->GetFieldCount(); iField++ )
+            poDstLayer->CreateField( poFDefn->GetFieldDefn(iField) );
     }
 
 /* -------------------------------------------------------------------- */
