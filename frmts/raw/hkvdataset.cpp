@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.32  2003/07/08 21:10:19  warmerda
+ * avoid warnings
+ *
  * Revision 1.31  2003/04/10 22:13:40  gwalter
  * Updated spheroids: some applications use _ instead of - in spheroid names.
  *
@@ -367,7 +370,7 @@ HKVDataset::HKVDataset()
     adfGeoTransform[5] = 1.0;
 
     /* Initialize datasets to new version; change if necessary */
-    MFF2version = 1.1;
+    MFF2version = (float) 1.1;
 }
 
 /************************************************************************/
@@ -1330,7 +1333,8 @@ GDALDataset *HKVDataset::Open( GDALOpenInfo * poOpenInfo )
     /* Versions differ in their interpretation of corner coordinates.  */
   
     if  (CSLFetchNameValue( papszAttrib, "version" ) != NULL)
-      poDS->SetVersion(atof(CSLFetchNameValue(papszAttrib, "version")));
+      poDS->SetVersion((float)
+                       atof(CSLFetchNameValue(papszAttrib, "version")));
     else
       poDS->SetVersion(1.0);
     

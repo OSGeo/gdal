@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.24  2003/07/08 21:12:07  warmerda
+ * avoid warnings
+ *
  * Revision 1.23  2003/05/27 17:34:22  warmerda
  * fixed problem with scanlines split over multiple text lines
  *
@@ -220,7 +223,8 @@ CPLErr AAIGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     if( panLineOffset[nBlockYOff] == 0 )
         return CE_Failure;
 
-    if( VSIFSeek( poODS->fp, panLineOffset[nBlockYOff], SEEK_SET ) != 0 )
+    if( VSIFSeek( poODS->fp, (long) panLineOffset[nBlockYOff], 
+                  SEEK_SET ) != 0 )
     {
         CPLError( CE_Failure, CPLE_FileIO,
                   "Can't seek to offset %ld in input file to read data.",
@@ -251,9 +255,11 @@ CPLErr AAIGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             if( pImage != NULL )
             {
                 if( eDataType == GDT_Float32 )
-                    ((float *) pImage)[iPixel] = atof(papszTokens[iToken]);
+                    ((float *) pImage)[iPixel] = (float)
+                        atof(papszTokens[iToken]);
                 else
-                    ((GInt16 *) pImage)[iPixel] = atoi(papszTokens[iToken]);
+                    ((GInt16 *) pImage)[iPixel] = (GInt16)
+                        atoi(papszTokens[iToken]);
             }
 
             iPixel++;

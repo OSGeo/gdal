@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.31  2003/07/08 21:28:22  warmerda
+ * avoid warnings
+ *
  * Revision 1.30  2003/02/28 18:45:20  gpotts
  * Prefixed CreateLink with ceos2 since there are multiple symbol conflict on static build under mac. Garrett Potts (gpotts@imagelinks.com)
  *
@@ -164,10 +167,10 @@ static CeosTypeCode_t QuadToTC( int a, int b, int c, int d )
 {
     CeosTypeCode_t   abcd;
 
-    abcd.UCharCode.Subtype1 = a;
-    abcd.UCharCode.Type = b;
-    abcd.UCharCode.Subtype2 = c;
-    abcd.UCharCode.Subtype3 = d;
+    abcd.UCharCode.Subtype1 = (unsigned char) a;
+    abcd.UCharCode.Type = (unsigned char) b;
+    abcd.UCharCode.Subtype2 = (unsigned char) c;
+    abcd.UCharCode.Subtype3 = (unsigned char) d;
 
     return abcd;
 }

@@ -31,6 +31,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.8  2003/07/08 21:30:45  warmerda
+ * avoid warnings
+ *
  * Revision 1.7  2002/11/25 15:27:00  warmerda
  * relax testopen restrictions to work with adams.dem - PA NED data
  *
@@ -234,12 +237,12 @@ CPLErr USGSDEMRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                 if( GetRasterDataType() == GDT_Int16 )
                 {
                     ((GInt16 *) pImage)[i + iY*GetXSize()] = 
-                        (int) (nElev * poGDS->fVRes);
+                        (GInt16) (nElev * poGDS->fVRes);
                 }
                 else
                 {
                     ((float *) pImage)[i + iY*GetXSize()] = 
-                        nElev * poGDS->fVRes;
+                        (float) (nElev * poGDS->fVRes);
                 }
             }
         }

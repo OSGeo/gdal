@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.9  2003/07/08 21:15:55  warmerda
+ * avoid warnings
+ *
  * Revision 1.8  2003/04/10 10:24:16  dron
  * More leaks fixed.
  *
@@ -262,9 +265,9 @@ XPMCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         {
             GDALColorEntry sColor;
 
-            sColor.c1 = i;
-            sColor.c2 = i;
-            sColor.c3 = i;
+            sColor.c1 = (short) i;
+            sColor.c2 = (short) i;
+            sColor.c3 = (short) i;
             sColor.c4 = 255;
 
             poCT->SetColorEntry( i, &sColor );
@@ -585,9 +588,9 @@ ParseXPM( const char *pszInput, int *pnXSize, int *pnYSize,
         }
         else
         {
-            sColor.c1 = nRed;
-            sColor.c2 = nGreen;
-            sColor.c3 = nBlue;
+            sColor.c1 = (short) nRed;
+            sColor.c2 = (short) nGreen;
+            sColor.c3 = (short) nBlue;
             sColor.c4 = 255;
         }
 
@@ -635,7 +638,7 @@ ParseXPM( const char *pszInput, int *pnXSize, int *pnYSize,
         {
             int nPixelValue = anCharLookup[pszInLine[iPixel]];
             if( nPixelValue != -1 )
-                pabyImage[iLine * *pnXSize + iPixel] = nPixelValue;
+                pabyImage[iLine * *pnXSize + iPixel] = (GByte) nPixelValue;
         }
     }
 

@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.7  2003/07/08 21:10:19  warmerda
+ * avoid warnings
+ *
  * Revision 1.6  2003/03/14 17:28:10  dron
  * CPLFormCIFilename() used instead of CPLFormFilename() for FAST-L7 datasets.
  *
@@ -215,7 +218,7 @@ const char *FASTDataset::GetProjectionRef()
 
 FILE *FASTDataset::FOpenChannel( char *pszFilename, int iBand )
 {
-    const char	*pszChannelFilename;
+    const char	*pszChannelFilename = NULL;
     char	*pszPrefix = CPLStrdup( CPLGetBasename( this->pszFilename ) );
     char	*pszSuffix = CPLStrdup( CPLGetExtension( this->pszFilename ) );
 

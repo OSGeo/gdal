@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.17  2003/07/08 21:14:16  warmerda
+ * avoid warnings
+ *
  * Revision 1.16  2003/03/13 16:39:53  warmerda
  * Added support for .gfw.
  *
@@ -518,9 +521,9 @@ GIFCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         psGifCT = MakeMapObject( 256, NULL );
         for( iColor = 0; iColor < 256; iColor++ )
         {
-            psGifCT->Colors[iColor].Red = iColor;
-            psGifCT->Colors[iColor].Green = iColor;
-            psGifCT->Colors[iColor].Blue = iColor;
+            psGifCT->Colors[iColor].Red = (GifByteType) iColor;
+            psGifCT->Colors[iColor].Green = (GifByteType) iColor;
+            psGifCT->Colors[iColor].Blue = (GifByteType) iColor;
         }
     }
     else
@@ -537,9 +540,9 @@ GIFCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             GDALColorEntry	sEntry;
 
             poCT->GetColorEntryAsRGB( iColor, &sEntry );
-            psGifCT->Colors[iColor].Red = sEntry.c1;
-            psGifCT->Colors[iColor].Green = sEntry.c2;
-            psGifCT->Colors[iColor].Blue = sEntry.c3;
+            psGifCT->Colors[iColor].Red = (GifByteType) sEntry.c1;
+            psGifCT->Colors[iColor].Green = (GifByteType) sEntry.c2;
+            psGifCT->Colors[iColor].Blue = (GifByteType) sEntry.c3;
         }
         for( ; iColor < nFullCount; iColor++ )
         {

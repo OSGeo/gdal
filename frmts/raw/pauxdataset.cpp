@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.25  2003/07/08 21:10:19  warmerda
+ * avoid warnings
+ *
  * Revision 1.24  2003/06/26 19:05:03  warmerda
  * fixed leak of pszTarget
  *
@@ -240,9 +243,9 @@ PAuxRasterBand::PAuxRasterBand( GDALDataset *poDS, int nBand,
             {
                 GDALColorEntry    oColor;
                 
-                oColor.c1 = nRed;
-                oColor.c2 = nGreen;
-                oColor.c3 = nBlue;
+                oColor.c1 = (short) nRed;
+                oColor.c2 = (short) nGreen;
+                oColor.c3 = (short) nBlue;
                 oColor.c4 = 255;
 
                 poCT->SetColorEntry( i, &oColor );
