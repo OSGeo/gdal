@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.40  2005/01/10 17:41:27  fwarmerdam
+ * added HFA compression support: bug 664
+ *
  * Revision 1.39  2004/10/26 17:41:29  fwarmerdam
  * call MakeData(30) for poDesc_BinFunction because of basedata
  *
@@ -152,6 +155,7 @@
 
 #include "hfa_p.h"
 #include "cpl_conv.h"
+/* include the compression code */
 
 CPL_CVSID("$Id$");
 
@@ -759,6 +763,24 @@ static CPLErr UncompressBlock( GByte *pabyCData, int /* nSrcBytes */,
                 ((GInt16 *) pabyDest)[nPixelsOutput++] = (GInt16)nDataValue;
             }
         }
+        else if( nDataType == EPT_u32 )
+        {
+            int		i;
+            
+            for( i = 0; i < nRepeatCount; i++ )
+            {
+                ((GUInt32 *) pabyDest)[nPixelsOutput++] = (GUInt32)nDataValue;
+            }
+        }
+        else if( nDataType == EPT_s32 )
+        {
+            int		i;
+            
+            for( i = 0; i < nRepeatCount; i++ )
+            {
+                ((GInt32 *) pabyDest)[nPixelsOutput++] = (GInt32)nDataValue;
+            }
+        }
         else if( nDataType == EPT_f32 )
         {
             int		i;
@@ -989,6 +1011,42 @@ CPLErr HFABand::GetRasterBlock( int nXBlock, int nYBlock, void * pData )
 }
 
 /************************************************************************/
+/*                           ReAllocBlock()                           */
+/************************************************************************/
+
+void HFABand::ReAllocBlock( int iBlock, int nSize )
+{
+	/* For compressed files - need to realloc the space for the block */
+	
+ 	// TODO: Should check to see if panBlockStart[iBlock] is not zero then do a HFAFreeSpace()
+ 	// but that doesn't exist yet.
+ 	// Instead as in interim measure it will reuse the existing block if
+ 	// the new data will fit in.
+ 	if( ( panBlockStart[iBlock] != 0 ) && ( nSize <= panBlockSize[iBlock] ) )
+ 	{
+ 		panBlockSize[iBlock] = nSize;
+ 		//fprintf( stderr, "Reusing block %d\n", iBlock );
+ 	}
+	else
+	{
+	 	panBlockStart[iBlock] = HFAAllocateSpace( psInfo, nSize );
+	
+	 	panBlockSize[iBlock] = nSize;
+	
+	 	// need to re - write this info to the RasterDMS node
+	 	HFAEntry	*poDMS = poNode->GetNamedChild( "RasterDMS" );
+	 	
+	  char	szVarName[64];
+	  sprintf( szVarName, "blockinfo[%d].offset", iBlock );
+		poDMS->SetIntField( szVarName, panBlockStart[iBlock] );
+		
+	  sprintf( szVarName, "blockinfo[%d].size", iBlock );
+		poDMS->SetIntField( szVarName, panBlockSize[iBlock] );
+	}
+}
+
+
+/************************************************************************/
 /*                           SetRasterBlock()                           */
 /************************************************************************/
 
@@ -1003,13 +1061,13 @@ CPLErr HFABand::SetRasterBlock( int nXBlock, int nYBlock, void * pData )
 
     iBlock = nXBlock + nYBlock * nBlocksPerRow;
     
-    if( (panBlockFlag[iBlock] & (BFLG_VALID|BFLG_COMPRESSED)) == 0 )
+    if( (panBlockFlag[iBlock] & BFLG_VALID) == 0 )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
-          "Attempt to write to invalid, or compressed tile with number %d "
-	  "(X position %d, Y position %d).  This\n operation currently "
-	  "unsupported by HFABand::SetRasterBlock().\n",
-	  iBlock, nXBlock, nYBlock );
+                  "Attempt to write to invalid tile with number %d "
+                  "(X position %d, Y position %d).  This\n operation currently "
+                  "unsupported by HFABand::SetRasterBlock().\n",
+                  iBlock, nXBlock, nYBlock );
 
         return CE_Failure;
     }
@@ -1034,14 +1092,115 @@ CPLErr HFABand::SetRasterBlock( int nXBlock, int nYBlock, void * pData )
         nBlockSize = panBlockSize[iBlock];
     }
     
-    if( VSIFSeekL( fpData, nBlockOffset, SEEK_SET ) != 0 )
+
+    if( panBlockFlag[iBlock] & BFLG_COMPRESSED )
     {
-        CPLError( CE_Failure, CPLE_FileIO, "Seek to %x:%08x on %p failed\n%s",
-                  (int) (nBlockOffset >> 32),
-                  (int) (nBlockOffset & 0xffffffff), 
-                  fpData, VSIStrerror(errno) );
-        return CE_Failure;
+        /* ------------------------------------------------------------ */
+        /*      Write compressed data.				        */
+        /* ------------------------------------------------------------ */
+        int nInBlockSize = (nBlockXSize * nBlockYSize * HFAGetDataTypeBits(nDataType) + 7 ) / 8;
+
+        /* create the compressor object */
+        HFACompress compress( pData, nInBlockSize, nDataType );
+     
+        /* compress the data */
+        if( compress.compressBlock() )
+        {
+            /* get the data out of the object */
+            GByte *pCounts      = compress.getCounts();
+            GUInt32 nSizeCount  = compress.getCountSize();
+            GByte *pValues      = compress.getValues();
+            GUInt32 nSizeValues = compress.getValueSize();
+            GUInt32 nMin        = compress.getMin();
+            GUInt32 nNumRuns    = compress.getNumRuns();
+            GByte nNumBits      = compress.getNumBits();
+     
+            /* Compensate for the header info */
+            GUInt32 nDataOffset = nSizeCount + 13;
+            int nTotalSize  = nSizeCount + nSizeValues + 13;
+     
+            //fprintf( stderr, "sizecount = %d sizevalues = %d min = %d numruns = %d numbits = %d\n", nSizeCount, nSizeValues, nMin, nNumRuns, (int)nNumBits );
+
+            // Allocate space for the compressed block and seek to it.
+            ReAllocBlock( iBlock, nTotalSize );
+	     	
+            nBlockOffset = panBlockStart[iBlock];
+            nBlockSize = panBlockSize[iBlock];
+	     	
+            // Seek to offset
+            if( VSIFSeekL( fpData, nBlockOffset, SEEK_SET ) != 0 )
+            {
+                CPLError( CE_Failure, CPLE_FileIO, "Seek to %x:%08x on %p failed\n%s",
+                          (int) (nBlockOffset >> 32),
+                          (int) (nBlockOffset & 0xffffffff), 
+                          fpData, VSIStrerror(errno) );
+                return CE_Failure;
+            }
+     	
+   /* -------------------------------------------------------------------- */
+   /*      Byte swap to local byte order if required.  It appears that     */
+   /*      raster data is always stored in Intel byte order in Imagine     */
+   /*      files.                                                          */
+   /* -------------------------------------------------------------------- */
+     
+#ifdef CPL_MSB
+ 
+            CPL_SWAP32PTR( &nMin );
+            CPL_SWAP32PTR( &nNumRuns );
+            CPL_SWAP32PTR( &nDataOffset );
+     
+#endif /* def CPL_MSB */
+     
+       /* Write out the Minimum value */
+            VSIFWriteL( &nMin, (size_t) sizeof( nMin ), 1, fpData );
+       
+            /* the number of runs */
+            VSIFWriteL( &nNumRuns, (size_t) sizeof( nNumRuns ), 1, fpData );
+       
+            /* The offset to the data */
+            VSIFWriteL( &nDataOffset, (size_t) sizeof( nDataOffset ), 1, fpData );
+       
+            /* The number of bits */
+            VSIFWriteL( &nNumBits, (size_t) sizeof( nNumBits ), 1, fpData );
+       
+            /* The counters - MSB stuff handled in HFACompress */
+            VSIFWriteL( pCounts, (size_t) sizeof( GByte ), nSizeCount, fpData );
+       
+            /* The values - MSB stuff handled in HFACompress */
+            VSIFWriteL( pValues, (size_t) sizeof( GByte ), nSizeValues, fpData );
+       
+            /* Compressed data is freed in the HFACompress destructor */
+        }
+        else
+        {
+            /* If we have actually made the block bigger - ie does not compress well */
+            panBlockFlag[iBlock] ^= BFLG_COMPRESSED;
+            // alloc more space for the uncompressed block
+            ReAllocBlock( iBlock, nInBlockSize );
+			 
+            nBlockOffset = panBlockStart[iBlock];
+            nBlockSize = panBlockSize[iBlock];
+
+            /* Need to change the RasterDMS entry */
+            HFAEntry	*poDMS = poNode->GetNamedChild( "RasterDMS" );
+ 	
+            char	szVarName[64];
+            sprintf( szVarName, "blockinfo[%d].compressionType", iBlock );
+            poDMS->SetIntField( szVarName, 0 );
+        }
     }
+ 
+    if( ( panBlockFlag[iBlock] & BFLG_COMPRESSED ) == 0 )
+    {
+
+        if( VSIFSeekL( fpData, nBlockOffset, SEEK_SET ) != 0 )
+        {
+            CPLError( CE_Failure, CPLE_FileIO, "Seek to %x:%08x on %p failed\n%s",
+                      (int) (nBlockOffset >> 32),
+                      (int) (nBlockOffset & 0xffffffff), 
+                      fpData, VSIStrerror(errno) );
+            return CE_Failure;
+        }
 
 /* -------------------------------------------------------------------- */
 /*      Byte swap to local byte order if required.  It appears that     */
@@ -1050,47 +1209,47 @@ CPLErr HFABand::SetRasterBlock( int nXBlock, int nYBlock, void * pData )
 /* -------------------------------------------------------------------- */
 
 #ifdef CPL_MSB             
-    if( HFAGetDataTypeBits(nDataType) == 16 )
-    {
-        for( int ii = 0; ii < nBlockXSize*nBlockYSize; ii++ )
-            CPL_SWAP16PTR( ((unsigned char *) pData) + ii*2 );
-    }
-    else if( HFAGetDataTypeBits(nDataType) == 32 )
-    {
-        for( int ii = 0; ii < nBlockXSize*nBlockYSize; ii++ )
-            CPL_SWAP32PTR( ((unsigned char *) pData) + ii*4 );
-    }
-    else if( nDataType == EPT_f64 )
-    {
-        for( int ii = 0; ii < nBlockXSize*nBlockYSize; ii++ )
-            CPL_SWAP64PTR( ((unsigned char *) pData) + ii*8 );
-    }
-    else if( nDataType == EPT_c64 )
-    {
-        for( int ii = 0; ii < nBlockXSize*nBlockYSize*2; ii++ )
-            CPL_SWAP32PTR( ((unsigned char *) pData) + ii*4 );
-    }
-    else if( nDataType == EPT_c128 )
-    {
-        for( int ii = 0; ii < nBlockXSize*nBlockYSize*2; ii++ )
-            CPL_SWAP64PTR( ((unsigned char *) pData) + ii*8 );
-    }
+        if( HFAGetDataTypeBits(nDataType) == 16 )
+        {
+            for( int ii = 0; ii < nBlockXSize*nBlockYSize; ii++ )
+                CPL_SWAP16PTR( ((unsigned char *) pData) + ii*2 );
+        }
+        else if( HFAGetDataTypeBits(nDataType) == 32 )
+        {
+            for( int ii = 0; ii < nBlockXSize*nBlockYSize; ii++ )
+                CPL_SWAP32PTR( ((unsigned char *) pData) + ii*4 );
+        }
+        else if( nDataType == EPT_f64 )
+        {
+            for( int ii = 0; ii < nBlockXSize*nBlockYSize; ii++ )
+                CPL_SWAP64PTR( ((unsigned char *) pData) + ii*8 );
+        }
+        else if( nDataType == EPT_c64 )
+        {
+            for( int ii = 0; ii < nBlockXSize*nBlockYSize*2; ii++ )
+                CPL_SWAP32PTR( ((unsigned char *) pData) + ii*4 );
+        }
+        else if( nDataType == EPT_c128 )
+        {
+            for( int ii = 0; ii < nBlockXSize*nBlockYSize*2; ii++ )
+                CPL_SWAP64PTR( ((unsigned char *) pData) + ii*8 );
+        }
 #endif /* def CPL_MSB */
 
 /* -------------------------------------------------------------------- */
 /*      Write uncompressed data.				        */
 /* -------------------------------------------------------------------- */
-    if( VSIFWriteL( pData, (size_t) nBlockSize, 1, fpData ) != 1 )
-    {
-        CPLError( CE_Failure, CPLE_FileIO, 
-                  "Write of %d bytes at %d on %p failed.\n%s",
-                  (int) nBlockSize, 
-                  (int) (nBlockOffset >> 32),
-                  (int) (nBlockOffset & 0xffffffff), 
-                  fpData, VSIStrerror(errno) );
-        return CE_Failure;
+        if( VSIFWriteL( pData, (size_t) nBlockSize, 1, fpData ) != 1 )
+        {
+            CPLError( CE_Failure, CPLE_FileIO, 
+                      "Write of %d bytes at %d on %p failed.\n%s",
+                      (int) nBlockSize, 
+                      (int) (nBlockOffset >> 32),
+                      (int) (nBlockOffset & 0xffffffff), 
+                      fpData, VSIStrerror(errno) );
+            return CE_Failure;
+        }
     }
-
 /* -------------------------------------------------------------------- */
 /*      Swap back, since we don't really have permission to change      */
 /*      the callers buffer.                                             */

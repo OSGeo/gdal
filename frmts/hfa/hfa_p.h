@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2005/01/10 17:41:27  fwarmerdam
+ * added HFA compression support: bug 664
+ *
  * Revision 1.16  2004/07/16 20:40:32  warmerda
  * Added a series of patches from Andreas Wimmer which:
  *  o Add lots of improved support for metadata.
@@ -187,6 +190,8 @@ class HFABand
 
     CPLErr	LoadBlockInfo();
     CPLErr	LoadExternalBlockInfo();
+    
+    void ReAllocBlock( int iBlock, int nSize );
 
   public:
     		HFABand( HFAInfo_t *, HFAEntry * );
@@ -402,5 +407,54 @@ class HFADictionary
     void	Dump( FILE * );
 };
 
+/************************************************************************/
+/*                             HFACompress                              */
+/*                                                                      */
+/*      Class that given a block of memory compresses the contents      */
+/*      using run  length encoding as used by Imagine.                  */
+/************************************************************************/
+
+class HFACompress
+{
+public:
+  HFACompress( void *pData, GUInt32 nBlockSize, int nDataType );
+  ~HFACompress();
+  
+  // This is the method that does the work.
+  bool compressBlock();
+
+  // Get methods - only valid after compressBlock has been called.
+  GByte*  getCounts()     { return m_pCounts; };
+  GUInt32 getCountSize()  { return m_nSizeCounts; };
+  GByte*  getValues()     { return m_pValues; };
+  GUInt32 getValueSize()  { return m_nSizeValues; };
+  GUInt32 getMin()        { return m_nMin; };
+  GUInt32 getNumRuns()    { return m_nNumRuns; };
+  GByte   getNumBits()    { return m_nNumBits; };
+  
+private:
+  void makeCount( GUInt32 count, GByte *pCounter, GUInt32 *pnSizeCount );
+  GUInt32 findMin( GByte *pNumBits );
+  GUInt32 valueAsUInt32( GUInt32 index );
+  void encodeValue( GUInt32 val, GUInt32 repeat );
+
+  void *m_pData;
+  GUInt32 m_nBlockSize;
+  GUInt32 m_nBlockCount;
+  int m_nDataType;
+  
+  GByte   *m_pCounts;
+  GByte   *m_pCurrCount;
+  GUInt32  m_nSizeCounts;
+  
+  GByte   *m_pValues;
+  GByte   *m_pCurrValues;
+  GUInt32  m_nSizeValues;
+  
+  GUInt32  m_nMin;
+  GUInt32  m_nNumRuns;
+  GByte    m_nNumBits;
+  
+};
 
 #endif /* ndef _HFA_P_H_INCLUDED */
