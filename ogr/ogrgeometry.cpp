@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2003/06/10 14:51:07  warmerda
+ * Allow Intersects() test against NULL geometry
+ *
  * Revision 1.18  2003/04/03 23:39:11  danmo
  * Small updates to C API docs (Normand S.)
  *
@@ -233,11 +236,14 @@ void OGR_G_AssignSpatialReference( OGRGeometryH hGeom,
  *
  * Currently this is not implemented in a rigerous fashion, and generally
  * just tests whether the envelopes of the two features intersect.  Eventually
- * this will be made rigerous.
+ * this will be made rigerous.  
+ *
+ * The poOtherGeom argument may be safely NULL, but in this case the method
+ * will always return FALSE.  
  *
  * This method is the same as the C function OGR_G_Intersect().
  *
- * @param poOtherGeom the other geometry to test against.
+ * @param poOtherGeom the other geometry to test against.  
  *
  * @return TRUE if the geometries intersect, otherwise FALSE.
  */
@@ -246,6 +252,9 @@ OGRBoolean OGRGeometry::Intersect( OGRGeometry *poOtherGeom )
 
 {
     OGREnvelope         oEnv1, oEnv2;
+
+    if( this == NULL || poOtherGeom == NULL )
+        return FALSE;
 
     this->getEnvelope( &oEnv1 );
     poOtherGeom->getEnvelope( &oEnv2 );
