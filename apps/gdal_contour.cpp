@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2005/02/03 17:28:37  fwarmerdam
+ * Removed <interval> from end of usage message, use -i instead.
+ *
  * Revision 1.9  2004/09/03 14:36:28  warmerda
  * fix warning about exit value
  *
@@ -76,7 +79,7 @@ static void Usage()
         "Usage: gdal_contour [-b <band>] [-a <attribute_name>] [-3d] [-inodata]\n"
         "                    [-snodata n] [-f <formatname>] [-i <interval>]\n"
         "                    [-off <offset>] [-fl <level> <level>...]\n" 
-        "                    <src_filename> <dst_filename> <interval>\n" );
+        "                    <src_filename> <dst_filename>\n" );
     exit( 1 );
 }
 
