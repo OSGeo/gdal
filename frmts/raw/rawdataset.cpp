@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.22  2004/04/06 19:25:31  dron
+ * Use GDALRasterBand::IsBlockCached() instead of GDALRasterBlock::IsCached().
+ *
  * Revision 1.21  2003/07/27 11:08:19  dron
  * Added some heuristic to switch between cached and direct IRasterIO()
  * implementations.
@@ -490,7 +493,7 @@ int RawRasterBand::IsLineLoaded( int nLineOff, int nLines )
 
     for ( iLine = nLineOff; iLine < nLineOff + nLines; iLine++ )
     {
-        if ( GDALRasterBlock::IsCached( 0, iLine ) )
+        if ( IsBlockCached( 0, iLine ) )
             return TRUE;
     }
 
