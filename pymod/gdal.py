@@ -29,6 +29,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.51  2003/07/18 04:52:52  warmerda
+# remote GetMetadata() on RasterBand
+#
 # Revision 1.50  2003/06/10 09:25:29  dron
 # Handle the case of empty string in MajorObject::GetMetadata().
 #
@@ -547,9 +550,6 @@ class Band(MajorObject):
         ptrfree( c_minmax )
         return result
     
-    def GetMetadata(self):
-        return _gdal.GDALGetMetadata(self._o)
-
     def GetNoDataValue(self):
         c_success_flag = ptrcreate('int',0,1)
         result = _gdal.GDALGetRasterNoDataValue(self._o,c_success_flag)
