@@ -196,8 +196,11 @@ endif
 
 O_OBJ =	$(foreach file,$(OBJ),../o/$(file))
 
-../o/%.o:	%.o
-	cp $< $@
+../o/%.o:	%.c
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c -o $@ $<
+
+../o/%.o:	%.cpp
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c -o $@ $<
 
 %-target:
 	$(MAKE) -C $*
