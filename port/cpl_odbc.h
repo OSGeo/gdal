@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2004/06/23 16:11:30  warmerda
+ * just testing cvs commits
+ *
  * Revision 1.9  2004/06/01 20:40:02  warmerda
  * expanded tabs
  *
@@ -185,8 +188,6 @@ class CPL_DLL CPLODBCStatement {
 
     int            CollectResultsInfo();
 };
-
-
 
 #endif
 
