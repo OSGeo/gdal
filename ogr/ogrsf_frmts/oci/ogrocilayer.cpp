@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2004/11/10 20:17:14  fwarmerdam
+ * fixed memory leak of geometry objects
+ *
  * Revision 1.7  2003/05/21 03:54:01  warmerda
  * expand tabs
  *
@@ -210,15 +213,13 @@ OGRFeature *OGROCILayer::GetNextRawFeature()
     {
         poFeature->SetGeometryDirectly( TranslateGeometry() );
 
-#ifdef notdef
         OGROCISession      *poSession = poDS->GetSession();
 
         if( poFeature->GetGeometryRef() != NULL && hLastGeom != NULL )
             poSession->Failed( 
                 OCIObjectFree(poSession->hEnv, poSession->hError, 
-                              (dvoid *) &hLastGeom, 
+                              (dvoid *) hLastGeom, 
                               (ub2)OCI_OBJECTFREE_FORCE) );
-#endif
 
         hLastGeom = NULL;
         hLastGeomInd = NULL;
