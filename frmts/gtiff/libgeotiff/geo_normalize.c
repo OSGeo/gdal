@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: geo_normalize.c,v 1.14 1999/09/17 14:58:37 warmerda Exp $
+ * $Id: geo_normalize.c,v 1.18 1999/12/10 21:28:12 warmerda Exp $
  *
  * Project:  libgeotiff
  * Purpose:  Code to normalize PCS and other composite codes in a GeoTIFF file.
@@ -28,6 +28,20 @@
  ******************************************************************************
  *
  * $Log: geo_normalize.c,v $
+ * Revision 1.18  1999/12/10 21:28:12  warmerda
+ * fixed Stereographic to look for ProjCenterLat/Long
+ *
+ * Revision 1.17  1999/12/10 20:06:58  warmerda
+ * fixed up scale geokey used for a couple of projections
+ *
+ * Revision 1.16  1999/12/10 19:50:21  warmerda
+ * Added EquidistantConic support, fixed return of StdParallel2GeoKey for
+ * LCC2, and Albers.
+ *
+ * Revision 1.15  1999/12/10 19:39:26  warmerda
+ * Fixed bug setting the false northing for files with
+ * ProjCenterNorthingGeoKey set in GTIFGetDefn().
+ *
  * Revision 1.14  1999/09/17 14:58:37  warmerda
  * Added ProjRectifiedGridAngleGeoKey(3096) and support for it's
  * use with Oblique Mercator in geo_normalize.c.
@@ -969,16 +983,54 @@ static void GTIFFetchProjParms( GTIF * psGTIF, GTIFDefn * psDefn )
         
     if( !GTIFKeyGet(psGTIF, ProjFalseNorthingGeoKey, &dfFalseNorthing,0,1)
         && !GTIFKeyGet(psGTIF, ProjCenterNorthingGeoKey,
-                       &dfFalseEasting, 0, 1) )
+                       &dfFalseNorthing, 0, 1) )
         dfFalseNorthing = 0.0;
         
     switch( psDefn->CTProjection )
     {
 /* -------------------------------------------------------------------- */
+      case CT_Stereographic:
+/* -------------------------------------------------------------------- */
+        if( GTIFKeyGet(psGTIF, ProjNatOriginLongGeoKey, 
+                       &dfNatOriginLong, 0, 1 ) == 0
+            && GTIFKeyGet(psGTIF, ProjFalseOriginLongGeoKey, 
+                          &dfNatOriginLong, 0, 1 ) == 0
+            && GTIFKeyGet(psGTIF, ProjCenterLongGeoKey, 
+                          &dfNatOriginLong, 0, 1 ) == 0 )
+            dfNatOriginLong = 0.0;
+
+        if( GTIFKeyGet(psGTIF, ProjNatOriginLatGeoKey, 
+                       &dfNatOriginLat, 0, 1 ) == 0
+            && GTIFKeyGet(psGTIF, ProjFalseOriginLatGeoKey, 
+                          &dfNatOriginLat, 0, 1 ) == 0
+            && GTIFKeyGet(psGTIF, ProjCenterLatGeoKey, 
+                          &dfNatOriginLat, 0, 1 ) == 0 )
+            dfNatOriginLat = 0.0;
+
+        if( GTIFKeyGet(psGTIF, ProjScaleAtNatOriginGeoKey,
+                       &dfNatOriginScale, 0, 1 ) == 0 )
+            dfNatOriginScale = 1.0;
+            
+        /* notdef: should transform to decimal degrees at this point */
+
+        psDefn->ProjParm[0] = dfNatOriginLat;
+        psDefn->ProjParmId[0] = ProjCenterLatGeoKey;
+        psDefn->ProjParm[1] = dfNatOriginLong;
+        psDefn->ProjParmId[1] = ProjCenterLongGeoKey;
+        psDefn->ProjParm[4] = dfNatOriginScale;
+        psDefn->ProjParmId[4] = ProjScaleAtNatOriginGeoKey;
+        psDefn->ProjParm[5] = dfFalseEasting;
+        psDefn->ProjParmId[5] = ProjFalseEastingGeoKey;
+        psDefn->ProjParm[6] = dfFalseNorthing;
+        psDefn->ProjParmId[6] = ProjFalseNorthingGeoKey;
+
+        psDefn->nParms = 7;
+        break;
+
+/* -------------------------------------------------------------------- */
       case CT_LambertConfConic_1SP:
       case CT_Mercator:
       case CT_ObliqueStereographic:
-      case CT_Stereographic:
       case CT_TransverseMercator:
       case CT_TransvMercator_SouthOriented:
 /* -------------------------------------------------------------------- */
@@ -1091,12 +1143,20 @@ static void GTIFFetchProjParms( GTIF * psGTIF, GTIFDefn * psDefn )
                           &dfNatOriginLat, 0, 1 ) == 0 )
             dfNatOriginLat = 0.0;
 
+        if( GTIFKeyGet(psGTIF, ProjScaleAtNatOriginGeoKey,
+                       &dfNatOriginScale, 0, 1 ) == 0
+            && GTIFKeyGet(psGTIF, ProjScaleAtCenterGeoKey,
+                          &dfNatOriginScale, 0, 1 ) == 0 )
+            dfNatOriginScale = 1.0;
+            
         /* notdef: should transform to decimal degrees at this point */
 
         psDefn->ProjParm[0] = dfNatOriginLat;
         psDefn->ProjParmId[0] = ProjNatOriginLatGeoKey;
         psDefn->ProjParm[1] = dfNatOriginLong;
         psDefn->ProjParmId[1] = ProjNatOriginLongGeoKey;
+        psDefn->ProjParm[4] = dfNatOriginScale;
+        psDefn->ProjParmId[4] = ProjScaleAtNatOriginGeoKey;
         psDefn->ProjParm[5] = dfFalseEasting;
         psDefn->ProjParmId[5] = ProjFalseEastingGeoKey;
         psDefn->ProjParm[6] = dfFalseNorthing;
@@ -1202,7 +1262,7 @@ static void GTIFFetchProjParms( GTIF * psGTIF, GTIFDefn * psDefn )
         psDefn->ProjParm[1] = dfNatOriginLong;
         psDefn->ProjParmId[1] = ProjStraightVertPoleLongGeoKey;
         psDefn->ProjParm[4] = dfNatOriginScale;
-        psDefn->ProjParmId[4] = ProjScaleAtCenterGeoKey;
+        psDefn->ProjParmId[4] = ProjScaleAtNatOriginGeoKey;
         psDefn->ProjParm[5] = dfFalseEasting;
         psDefn->ProjParmId[5] = ProjFalseEastingGeoKey;
         psDefn->ProjParm[6] = dfFalseNorthing;
@@ -1243,7 +1303,7 @@ static void GTIFFetchProjParms( GTIF * psGTIF, GTIFDefn * psDefn )
         psDefn->ProjParm[0] = dfStdParallel1;
         psDefn->ProjParmId[0] = ProjStdParallel1GeoKey;
         psDefn->ProjParm[1] = dfStdParallel2;
-        psDefn->ProjParmId[1] = ProjStdParallel1GeoKey;
+        psDefn->ProjParmId[1] = ProjStdParallel2GeoKey;
         psDefn->ProjParm[2] = dfNatOriginLat;
         psDefn->ProjParmId[2] = ProjFalseOriginLatGeoKey;
         psDefn->ProjParm[3] = dfNatOriginLong;
@@ -1258,6 +1318,7 @@ static void GTIFFetchProjParms( GTIF * psGTIF, GTIFDefn * psDefn )
 
 /* -------------------------------------------------------------------- */
       case CT_AlbersEqualArea:
+      case CT_EquidistantConic:
 /* -------------------------------------------------------------------- */
         if( GTIFKeyGet(psGTIF, ProjStdParallel1GeoKey, 
                        &dfStdParallel1, 0, 1 ) == 0 )
@@ -1288,7 +1349,7 @@ static void GTIFFetchProjParms( GTIF * psGTIF, GTIFDefn * psDefn )
         psDefn->ProjParm[0] = dfStdParallel1;
         psDefn->ProjParmId[0] = ProjStdParallel1GeoKey;
         psDefn->ProjParm[1] = dfStdParallel2;
-        psDefn->ProjParmId[1] = ProjStdParallel1GeoKey;
+        psDefn->ProjParmId[1] = ProjStdParallel2GeoKey;
         psDefn->ProjParm[2] = dfNatOriginLat;
         psDefn->ProjParmId[2] = ProjNatOriginLatGeoKey;
         psDefn->ProjParm[3] = dfNatOriginLong;

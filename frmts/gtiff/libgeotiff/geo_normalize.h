@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: geo_normalize.h,v 1.6 1999/05/04 03:13:42 warmerda Exp $
+ * $Id: geo_normalize.h,v 1.7 1999/09/17 00:55:26 warmerda Exp $
  *
  * Project:  libgeotiff
  * Purpose:  Include file related to geo_normalize.c containing Code to
@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log: geo_normalize.h,v $
+ * Revision 1.7  1999/09/17 00:55:26  warmerda
+ * added GTIFGetUOMAngleInfo(), and UOMAngle in GTIFDefn
+ *
  * Revision 1.6  1999/05/04 03:13:42  warmerda
  * Added prototype
  *
