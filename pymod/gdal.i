@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.53  2003/02/25 04:57:37  warmerda
+ * added CopyGeogCSFrom()
+ *
  * Revision 1.52  2003/02/06 04:50:57  warmerda
  * added the Fixup() method on OGRSpatialReference
  *
@@ -1402,6 +1405,7 @@ int     OSRIsSame( OGRSpatialReferenceH, OGRSpatialReferenceH );
 int     OSRSetProjCS( OGRSpatialReferenceH, const char * );
 int     OSRSetWellKnownGeogCS( OGRSpatialReferenceH, const char * );
 int     OSRSetFromUserInput( OGRSpatialReferenceH, const char * );
+int     OSRCopyGeogCSFrom( OGRSpatialReferenceH, OGRSpatialReferenceH );
 
 int     OSRSetGeogCS( OGRSpatialReferenceH hSRS,
                       const char * pszGeogName,

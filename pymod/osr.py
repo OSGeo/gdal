@@ -28,6 +28,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.22  2003/02/25 04:57:37  warmerda
+# added CopyGeogCSFrom()
+#
 # Revision 1.21  2003/02/20 04:14:04  warmerda
 # Updated email.
 #
@@ -184,6 +187,9 @@ class SpatialReference:
 
     def SetFromUserInput(self, name):
         return _gdal.OSRSetFromUserInput(self._o, name)
+
+    def CopyGeogCSFrom( self, src_srs ):
+        return _gdal.OSRCopyGeogCSFrom( self._o, src_srs._o )
 
     def SetGeogCS( self, geog_name, datum_name, ellipsoid_name,
                    semi_major, inv_flattening,
