@@ -44,6 +44,9 @@
  *   without vsnprintf(). 
  *
  * $Log$
+ * Revision 1.34  2003/05/28 19:22:38  warmerda
+ * fixed docs
+ *
  * Revision 1.33  2003/05/21 04:20:30  warmerda
  * avoid warnings
  *
@@ -1164,7 +1167,7 @@ void CSLSetNameValueSeparator( char ** papszList, const char *pszSeparator )
  * (leading zero supplied if needed).  This is the mechanism used for encoding
  * values to be passed in URLs.
  *
- * @param pszString the string to escape.  
+ * @param pszInput the string to escape.  
  * @param nLength The number of bytes of data to preserve.  If this is -1
  * the strlen(pszString) function will be used to compute the length.
  * @param nScheme the encoding scheme to use.  
