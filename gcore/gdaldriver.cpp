@@ -26,6 +26,9 @@
  * driver specific function pointers.
  * 
  * $Log$
+ * Revision 1.5  1999/10/21 13:22:10  warmerda
+ * Added GDALGetDriverShort/LongName().
+ *
  * Revision 1.4  1999/01/11 15:36:50  warmerda
  * Added GDALCreate()
  *
@@ -105,3 +108,30 @@ GDALDatasetH CPL_DLL GDALCreate( GDALDriverH hDriver,
                                               nXSize, nYSize, nBands,
                                               eBandType, papszOptions ) );
 }
+
+/************************************************************************/
+/*                       GDALGetDriverShortName()                       */
+/************************************************************************/
+
+const char * GDALGetDriverShortName( GDALDriverH hDriver )
+
+{
+    if( hDriver == NULL )
+        return NULL;
+    else
+        return ((GDALDriver *) hDriver)->pszShortName;
+}
+
+/************************************************************************/
+/*                       GDALGetDriverLongName()                        */
+/************************************************************************/
+
+const char * GDALGetDriverLongName( GDALDriverH hDriver )
+
+{
+    if( hDriver == NULL )
+        return NULL;
+    else
+        return ((GDALDriver *) hDriver)->pszLongName;
+}
+
