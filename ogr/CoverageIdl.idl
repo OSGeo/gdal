@@ -1,0 +1,454 @@
+// OpenGIS Coverage MIDL.
+//
+// Use "MIDL /DMAKE_TLB CoverageIdl.idl" to generate type library (CoverageIdl.tlb).
+// The type library can used as follows:
+//   1)  Drop into Microsoft Visual Modeler or Rational Rose to convert to UML.
+//       Limitation: In MVM2.0, the comments and interface inheritance are lost. 
+//   2)  Used to implement interfaces in ATL objects in VC++.
+//       Limitation: In VC6.0, you may need to fix-up the "CoClass.H" file to resolve
+//       multiple-inherited interfaces, and remove bogus "#import CoverageIdl.tlb" statement.
+//
+// To make an Coverage implementation, include this file in your IDL.  You may need to add
+// the directory containing GeometryIdl.idl and SpatialReferenceIdl.idl in your project settings
+// for MIDL and C++ compilation.
+
+
+import "ocidl.idl", "GeometryIdl.idl";
+
+typedef struct WKSVector
+{
+    double x;
+    double y;
+} WKSVector;
+
+typedef enum DimensionType
+{
+    DT_1BIT,
+    DT_2BIT,
+    DT_4BIT,
+    DT_8BIT_U,
+    DT_8BIT_S,
+    DT_16BIT_U,
+    DT_16BIT_S,
+    DT_32BIT_U,
+    DT_32BIT_S,
+    DT_32BIT_REAL,
+    DT_64BIT_REAL,
+} DimensionType;
+
+typedef enum ValueSequence
+{
+    RowSequenceMinToMax=0,
+    RowSequenceMaxtoMin=1,
+    ColumnSequenceMinToMax=0,
+    ColumnSequenceMaxToMin=2,
+    RowDominant=0,
+    ColumnDominant=4,
+} ValueSequence;
+
+typedef enum ByteOrdering
+{
+    wkbXDR = 0,    // Big Endian
+    wkbNDR = 1     // Little Endian
+} ByteOrdering;
+
+typedef enum PixelOrdering
+{
+    PixelInterleaved,
+    LineInterleaved,
+    BandSequencial,
+} PixelOrdering;
+
+typedef enum ValueInBytePacking
+{
+    LoBitFirst,
+    HiBitFirst,
+} ValueInBytePacking;
+
+typedef enum Interpolation
+{
+    NearestNeighbor,
+    Bilinear,
+    Bicubic,
+    Optimal,
+} Interpolation;
+
+typedef enum RasterFilter
+{
+    Mean,
+    Mode,
+    Median,
+    Gaussian,
+    LaplacianType1,
+    LaplacianType2,
+} RasterFilter;
+
+typedef enum RasterEnhancement
+{
+    Linear,
+    Root,
+    Equalization,
+    Infrequency,
+} RasterEnhancement;
+
+typedef enum ColorInterpretation
+{
+    Undefined,
+    GrayIndex,
+    ColorIndex,
+    RedBand,
+    GreenBand,
+    BlueBand,
+    AlphaBand,
+    HueBand,
+    SaturationBand,
+    LightnessBand,
+    CyanBand,
+    MagentaBand,
+    YellowBand,
+    BlackBand,
+} ColorInterpretation;
+
+typedef enum ColorEntryInterpretation
+{
+    Gray,
+    RGB,
+    CMYK,
+    HLS
+} ColorEntryInterpretation;
+
+typedef struct ColorEntry
+{
+    short      C1;      // gray, red, cyan or hue
+    short      C2;      // green, magenta, or lightness
+    short      C3;      // blue, yellow, or saturation
+    short      C4;      // alpha or blackband
+} ColorEntry;
+
+[ object, uuid(7130B968-2B5D-11d3-80D1-00C04F680FFF) ]
+interface IColorTable_dummy : IUnknown
+{
+    [propget] HRESULT NumColor([out, retval] long* val);
+    [propget] HRESULT Interpretation([out, retval] ColorEntryInterpretation *Interpretation);
+    HRESULT Color([in] long index, [out, retval] ColorEntry *Color);
+    HRESULT ColorAsRGB( [in] long index, [out, retval] ColorEntry *Color );
+};
+
+[ object, uuid(9130B968-2B5D-11d3-80D1-00C04F680FFF) ]
+interface IColorTable : IUnknown
+{
+    [propget] HRESULT NumColor([out, retval] long* val);
+    [propget] HRESULT Interpretation([out, retval] ColorEntryInterpretation *Interpretation);
+    HRESULT Color([in] long index, [out, retval] ColorEntry *Color);
+    HRESULT ColorAsRGB( [in] long index, [out, retval] ColorEntry *Color );
+};
+
+[ object, uuid(cd6b4975-2d8c-11d3-b3ff-0080c8e62564) ]
+interface IColorTableFactory : IUnknown
+{
+    HRESULT CreateColorTable( [in] ColorEntryInterpretation Interpretation,
+                              [in] long NumColor, 
+                              [in, size_is(NumColor)] ColorEntry ColorList[],
+                              [out, retval] IColorTable** val);
+};
+
+[ object, uuid(9130B969-2B5D-11d3-80D1-00C04F680FFF) ]
+interface IDimension : IUnknown
+{
+    [propget] HRESULT Categories([out, retval] SAFEARRAY(BSTR)* val);
+    [propget] HRESULT ColorInterpretation([out, retval] ColorInterpretation* val);
+    [propget] HRESULT ColorTable([out, retval] IColorTable** val);
+    [propget] HRESULT Description([out, retval] BSTR* val);
+    [propget] HRESULT DimensionType([out, retval] DimensionType* val);
+    [propget] HRESULT MinimumValue([out, retval] VARIANT* val);
+    [propget] HRESULT MaximumValue([out, retval] VARIANT* val);
+    [propget] HRESULT NodataValue([out, retval] VARIANT* val);
+};
+
+[ object, uuid(9130B966-2B5D-11d3-80D1-00C04F680FFF) ]
+interface ICoverage : IUnknown
+{
+    [propget] HRESULT Domain([out, retval] IGeometry** val);
+    [propget] HRESULT Codomain([out, retval] SAFEARRAY(IDimension*)* val);
+
+    HRESULT Evaluate([in] IPoint* pt, [out, retval] SAFEARRAY(VARIANT)* val);
+    HRESULT EvaluateAsBoolean([in] IPoint* pt, [out, retval] SAFEARRAY(VARIANT_BOOL)* val);
+    HRESULT EvaluateAsByte([in] IPoint* pt, [out, retval] SAFEARRAY(BYTE)* val);
+    HRESULT EvaluateAsInteger([in] IPoint* pt, [out, retval] SAFEARRAY(long)* val);
+    HRESULT EvaluateAsDouble([in] IPoint* pt, [out, retval] SAFEARRAY(double)* val);
+    HRESULT Extent2D([out] double* minX, [out] double* minY, [out] double* maxX, [out] double* maxY);
+};
+
+interface IGridCoverageAdapter;
+interface IGridGeometry;
+
+[ object, uuid(7130B96A-2B5D-11d3-80D1-00C04F680FFF) ]
+interface IGridInfo_dummy : IUnknown
+{
+    [propget] HRESULT OptimalAdapter([out, retval] IGridCoverageAdapter** val);
+};
+
+[ object, uuid(9130B96A-2B5D-11d3-80D1-00C04F680FFF) ]
+interface IGridInfo : IUnknown
+{
+    [propget] HRESULT OptimalAdapter([out, retval] IGridCoverageAdapter** val);
+    [propget] HRESULT OptimalRowSize([out, retval] long* val);
+    [propget] HRESULT OptimalColumnSize([out, retval] long* val);
+    [propget] HRESULT ByteOrdering([out, retval] ByteOrdering* val);
+    [propget] HRESULT PixelOrdering([out, retval] PixelOrdering* val);
+    [propget] HRESULT ValueInBytePacking([out, retval] ValueInBytePacking* val);
+    [propget] HRESULT ValueSequence([out, retval] ValueSequence* val);
+    [propget] HRESULT HasArbitraryOverview([out, retval] VARIANT_BOOL* val);
+    [propget] HRESULT NumOverview([out, retval] long* val);
+    [propget] HRESULT OverviewGridGeometry([in] long nOverview,[out, retval] IGridGeometry** val);
+};
+
+[ object, uuid(9130B96C-2B5D-11d3-80D1-00C04F680FFF) ]
+interface IGeoReference : IUnknown
+{
+    [propget] HRESULT SpatialReference([out, retval] ISpatialReference** spatialRef);
+
+    HRESULT ExportToWKB([out, retval] VARIANT* wkb); 
+    HRESULT GridCoordinateToSRS([in] WKSPoint* posGrid, [out, retval] WKSPoint* posSRS);
+    HRESULT SRSToGridCoordinate([in] WKSPoint* posSRS, [out, retval] WKSPoint* posGrid);
+    HRESULT Compatible([in] IGeoReference* GeoReference, [out, retval] VARIANT_BOOL* val);
+};
+
+[ object, uuid(9130B971-2B5D-11d3-80D1-00C04F680FFF) ]
+interface IAffineGeoReference : IGeoReference
+{
+    [propget] HRESULT Vertical([out,retval] WKSVector* val);
+    [propget] HRESULT Horizontal([out,retval] WKSVector* val);
+    [propget] HRESULT Origin([out,retval] WKSPoint* val);
+};
+
+[ object, uuid(cd6b4970-2d8c-11d3-b3ff-0080c8e62564) ]
+interface ITiepoint : IUnknown
+{
+    [propget] HRESULT Id([out, retval] BSTR *val);
+    [propget] HRESULT GridLocation([out, retval] WKSPoint *posGrid);
+    [propget] HRESULT SRSLocation([out, retval] WKSPoint *posSRS);
+};
+
+[ object, uuid(cd6b4973-2d8c-11d3-b3ff-0080c8e62564) ]
+interface ITiepointFactory : IUnknown
+{
+    HRESULT CreateTiepoint( [in] BSTR id, [in] WKSPoint* posGrid, 
+                            [in] WKSPoint* posSRS, 
+                            [out, retval] ITiepoint** val );
+};
+
+[ object, uuid(cd6b4971-2d8c-11d3-b3ff-0080c8e62564) ]
+interface ITiepointGeoReference : IGeoReference
+{
+    [propget] HRESULT NumTiepoint([out, retval] long *val);
+    [propget] HRESULT Tiepoint([in] long tp_nm, [out, retval] ITiepoint** val);
+};
+
+[ object, uuid(cd6b4972-2d8c-11d3-b3ff-0080c8e62564) ]
+interface IPolynomialTPGeoReference : ITiepointGeoReference
+{
+    [propget] HRESULT Order([out, retval] long *order);
+};
+
+[ object, uuid(9130B970-2B5D-11d3-80D1-00C04F680FFF) ]
+interface IGridGeometry : IUnknown
+{
+    [propget] HRESULT MaxColumn([out, retval] long* val);
+    [propget] HRESULT MaxRow([out, retval] long* val);
+    [propget] HRESULT MinColumn([out, retval] long* val);
+    [propget] HRESULT MinRow([out, retval] long* val);
+    [propget] HRESULT GeoReference([out, retval] IGeoReference** val);
+    
+    HRESULT PointToGrid([in] IPoint* pt,[out, retval] WKSPoint* posGrid);
+    HRESULT GridToPoint([in] WKSPoint* posGrid,[out, retval] IPoint** point);
+};
+
+[ object, uuid(9130B967-2B5D-11d3-80D1-00C04F680FFF) ]
+interface IGridCoverage : ICoverage
+{
+    [propget] HRESULT DataEditable([out, retval] VARIANT_BOOL* val);
+    [propget] HRESULT InterpolationType([out, retval] Interpolation* val);
+    [propget] HRESULT GridInfo([out, retval] IGridInfo** val);
+    [propget] HRESULT GridGeometry([out, retval] IGridGeometry** val);
+    [propget] HRESULT NumSource([out, retval] long* val);
+    [propget] HRESULT Source([in] long index,[out, retval] IGridCoverage** val);
+
+    HRESULT GetDataBlock([in] long colLo,[in] long rowLo,[in] long colHi,[in] long rowHi,[out, retval] IStream** val);
+    HRESULT GetDataBlockAsBoolean([in] long colLo,[in] long rowLo,[in] long colHi,[in] long rowHi,[out, retval] SAFEARRAY(SAFEARRAY(SAFEARRAY(VARIANT_BOOL)))* val);
+    HRESULT GetDataBlockAsByte([in] long colLo,[in] long rowLo,[in] long colHi,[in] long rowHi,[out, retval] SAFEARRAY(SAFEARRAY(SAFEARRAY(BYTE)))* val);
+    HRESULT GetDataBlockAsInteger([in] long colLo,[in] long rowLo,[in] long colHi,[in] long rowHi,[out, retval] SAFEARRAY(SAFEARRAY(SAFEARRAY(long)))* val);
+    HRESULT GetDataBlockAsDouble([in] long colLo,[in] long rowLo,[in] long colHi,[in] long rowHi,[out, retval] SAFEARRAY(SAFEARRAY(SAFEARRAY(double)))* val);
+    HRESULT SetDataBlock([in] long colLo,[in] long rowLo,[in] long colHi,[in] long rowHi,[in] IStream* val);
+    HRESULT SetDataBlockAsBoolean([in] long colLo,[in] long rowLo,[in] long colHi,[in] long rowHi,[in] SAFEARRAY(SAFEARRAY(SAFEARRAY(VARIANT_BOOL))) val);
+    HRESULT SetDataBlockAsByte([in] long colLo,[in] long rowLo,[in] long colHi,[in] long rowHi,[in] SAFEARRAY(SAFEARRAY(SAFEARRAY(BYTE))) val);
+    HRESULT SetDataBlockAsInteger([in] long colLo,[in] long rowLo,[in] long colHi,[in] long rowHi,[in] SAFEARRAY(SAFEARRAY(SAFEARRAY(long))) val);
+    HRESULT SetDataBlockAsDouble([in] long colLo,[in] long rowLo,[in] long colHi,[in] long rowHi,[in] SAFEARRAY(SAFEARRAY(SAFEARRAY(double))) val);
+};
+
+[ object, uuid(9130B975-2B5D-11d3-80D1-00C04F680FFF) ]
+interface IRasterModifier : IUnknown
+{
+    [propget] HRESULT Band([out, retval] long* val);
+};
+
+[ object, uuid(9130B976-2B5D-11d3-80D1-00C04F680FFF) ]
+interface IBandRatioing : IRasterModifier
+{
+    [propget] HRESULT Band2([out, retval] long* val);
+};
+
+[ object, uuid(9130B977-2B5D-11d3-80D1-00C04F680FFF) ]
+interface IDensitySlice : IRasterModifier
+{
+    [propget] HRESULT ColorTable([out, retval] IColorTable** val);
+    [propget] HRESULT BreakPoints([out, retval] SAFEARRAY(VARIANT)* val);
+};
+
+[ object, uuid(9130B980-2B5D-11d3-80D1-00C04F680FFF) ]
+interface IEnhanceRasterModifier : IRasterModifier
+{
+    [propget] HRESULT Enhancememt([out, retval] RasterEnhancement* val);
+};
+
+[ object, uuid(9130B978-2B5D-11d3-80D1-00C04F680FFF) ]
+interface IFilterRasterModifier : IRasterModifier
+{
+    [propget] HRESULT NumRow([out, retval] long* val);
+    [propget] HRESULT NumColumn([out, retval] long* val);
+    [propget] HRESULT Filter([out, retval] RasterFilter* val);
+};
+
+[ object, uuid(9130B979-2B5D-11d3-80D1-00C04F680FFF) ]
+interface IGrayScaleThreshold : IRasterModifier
+{
+    [propget] HRESULT Threshold([out, retval] VARIANT* val);
+};
+
+[ object, uuid(9130B981-2B5D-11d3-80D1-00C04F680FFF) ]
+interface IRasterModifierFactory : IUnknown
+{
+    HRESULT CreateBandRatioing([in] long Band,[in] long Band2,[out, retval] IRasterModifier** val);
+    HRESULT CreateDensitySlice([in] long Band,[in] long NumSlice,[in] IColorTable* ColorTable,[in] SAFEARRAY(VARIANT)* BreakPoints,[out, retval] IRasterModifier** val);
+    HRESULT CreateFilter([in] long Band,[in] long NumColumn,[in] long NumRow,[in] RasterFilter filter,[out, retval] IRasterModifier** val);
+    HRESULT CreateGrayScaleThreshold([in] long Band,[in] VARIANT Threshold,[out, retval] IRasterModifier** val);
+    HRESULT CreateEnhance([in] long Band,[in] RasterEnhancement Enhancement,[out, retval] IRasterModifier** val);
+};
+
+[ object, uuid(9130B974-2B5D-11d3-80D1-00C04F680FFF) ]
+interface IGridCoverageFactory : IUnknown
+{
+    HRESULT CreateFromName([in] BSTR name,[out, retval] IGridCoverage** val);
+};
+
+[ object, uuid(9130B989-2B5D-11d3-80D1-00C04F680FFF) ]
+interface IGeoTIFFCoverageSupport : IUnknown
+{
+    HRESULT CreateFromGeoTIFF([in] BSTR GeoTiff,[out, retval] IGridCoverage** val);
+    HRESULT CreateFromWKBGeoTIFF([in] VARIANT GeoTiff,[out, retval] IGridCoverage** val);
+    HRESULT ExportGeoTIFF([in] IGridCoverage* GridCoverage,[in] BSTR GeoTiff);
+};
+
+[ object, uuid(9130B987-2B5D-11d3-80D1-00C04F680FFF) ]
+interface IGridCoverageAdapter : IUnknown
+{
+    HRESULT ApplyRasterModifier([in] IGridCoverage* GridCoverage,[in] IRasterModifier* modifier,[out, retval] IGridCoverage** val);
+    HRESULT Interpolate([in] IGridCoverage* GridCoverage,[in] Interpolation interpolation,[out, retval] IGridCoverage** val);
+    HRESULT SelectBands([in] IGridCoverage* GridCoverage,[in] SAFEARRAY(long)* bands,[out, retval] IGridCoverage** val);
+    HRESULT Sequence([in] IGridCoverage* GridCoverage,[in] PixelOrdering Pixel,[in] ByteOrdering ByteOrder,[in] ValueSequence value,[out, retval] IGridCoverage** val);
+    HRESULT Resample([in] IGridCoverage* GridCoverage,[in] IGridGeometry * Geometry,[out, retval] IGridCoverage** val);
+};
+
+[ object, uuid(9130B985-2B5D-11d3-80D1-00C04F680FFF) ]
+interface IHistogram : IUnknown
+{
+    [propget] HRESULT NumBucket([out, retval] long* val);
+    [propget] HRESULT MinValue([out, retval] VARIANT* val);
+    [propget] HRESULT MaxValue([out, retval] VARIANT* val);
+    [propget] HRESULT CountPerBucket([out, retval] SAFEARRAY(long)* val);
+};
+
+[ object, uuid(9130B982-2B5D-11d3-80D1-00C04F680FFF) ]
+interface IGridAnalysis : IUnknown
+{
+    HRESULT Histogram([in] SAFEARRAY(VARIANT)* MinValues,[in] SAFEARRAY(VARIANT)* MaxValues,[in] SAFEARRAY(long)* NumBuckets,[out, retval] SAFEARRAY(IHistogram*)* val);
+    HRESULT MinMaxValue([out] SAFEARRAY(VARIANT)* MinValues,[out] SAFEARRAY(VARIANT)* MaxValues);
+    HRESULT Statistics([out] SAFEARRAY(double)* MeanValues,[out] SAFEARRAY(double)* StdDevValues);
+    HRESULT Correlation([out, retval] SAFEARRAY(SAFEARRAY(double))* val);
+};
+
+[ object, uuid(9130B983-2B5D-11d3-80D1-00C04F680FFF) ]
+interface IGridAnalysisFactory : IUnknown
+{
+    HRESULT CreateGridAnalysis([in] IGridCoverage* GridCoverage,[out, retval] IGridAnalysis** val);
+};
+
+[ object, uuid(9130B984-2B5D-11d3-80D1-00C04F680FFF) ]
+interface IGeoReferenceFactory : IUnknown
+{
+    HRESULT CreateAffineGeoReference([in] ISpatialReference* SpatialReference,[in] WKSPoint* Origin,[in] WKSVector* Horizontal,[in] WKSVector* Vertical,[out, retval] IAffineGeoReference** val);
+    HRESULT CreatePolynomialTPGeoReference([in] ISpatialReference* SpatialReference, [in] long Order, [in] long NumPoints, [in] ITiepoint ** Tiepoints, [out, retval] IPolynomialTPGeoReference ** val);
+    HRESULT CreateGeoReferenceFromWKB([in] ISpatialReference* SpatialReference,[in] VARIANT wkb,[out, retval] IGeoReference** val);
+};
+
+[ object, uuid(9130B988-2B5D-11d3-80D1-00C04F680FFF) ]
+interface IGridGeometryFactory : IUnknown
+{
+    HRESULT CreateGridGeometry([in] long MinCol,[in] long MinRow,[in] long MaxCol,[in] long MaxRow,[in] IGeoReference* GeoReference,[out, retval] IGridGeometry** val);
+};
+
+/////////////////////////////////////////////////////////////
+#ifdef MAKE_TLB
+[
+    uuid(483577D3-2B65-11d3-80D1-00C04F680FFF),
+    version(1.0),
+    helpstring("OpenGIS Coverage Type Library")
+]
+library Coverage
+{
+    // Include types which type library should display in VB and VM,
+    // Some other referenced types may also be pulled in (e.g. IPoint).
+
+    struct WKSVector;                   // A lightweight mutable displacement with no spatial reference.
+    struct ColorEntry;                  // A color.
+
+    enum ByteOrdering;                  // How multi-byte values are built from bytes.
+    enum ColorInterpretation;           // How value is used to build color.
+    enum ColorEntryInterpretation;      // Same for a tuple.
+    enum DimensionType;                 // Storeage type for values in a dimension.
+    enum Interpolation;                 // How value is calculated in between pixels.
+    enum PixelOrdering;                 // How pixels are built from bands.
+    enum RasterEnhancement;             // Method used to enhance raster image.
+    enum RasterFilter;                  // Method used to filter raster image.
+    enum ValueInBytePacking;            // For packed tiny values (e.g. 1-bit), which end of BYTE is used first?
+    enum ValueSequence;                 // How pixel values are ordered within streamed data.
+
+    interface IDimension;               // "Meta" information about values in one dimension of a vector of numberic values.
+    interface IColorTable;              // Color palette
+    interface IColorTableFactory;       // Create color tables.
+    interface ICoverage;                // Multi-valued function over a spatial domain.
+    interface   IGridCoverage;          // Coverage based on Grid data.
+    interface IGeoReference;            // Describe relationship between Grid coordinates, and spatial reference system.
+    interface   IAffineGeoReference;    // Shift, scale, rotate and shear grid into SRS.
+    interface   ITiepointGeoReference;  // tiepoints tie grid to SRS
+    interface     IPolynomialTPGeoReference; // specific tiepoint form with order.
+    interface IGeoReferenceFactory;     // Create objects supporting IGeoReference.
+    interface ITiepoint;                // interface to a single tiepoint.
+    interface ITiepointFactory;         // create tiepoints. 
+    interface IGridAnalysis;            // Analyse IGridCoverage objects, e.g. get average pixel values.
+    interface IGridAnalysisFactory;     // Create objects supporting IGridAnalysis
+    interface IGridCoverageFactory;     // Create IGridCoverage from a filename, or other name.
+    interface IGridCoverageAdapter;     // Create IGridCoverage by adapting an existing IGridCoverage.
+    interface IGridGeometry;            // Locate image in world, and set grid bounds.
+    interface IGridGeometryFactory;     // Create objects supporting IGridGeometry.
+    interface IGridInfo;                // Describe pixel ordering, and optimal block sizes for grid.
+    interface IHistogram;               // Graph produced by IGridAnalysis.
+    interface IRasterModifier;          // Convert one IGridCoverage into another IGridCoverage.
+    interface   IBandRatioing;          // ?
+    interface   IDensitySlice;          // Convert band into color table indices.
+    interface   IEnhanceRasterModifier; // Enhance details in band.
+    interface   IFilterRasterModifier;  // Filter values in band.
+    interface   IGrayScaleThreshold;    // Convert band into boolean values.
+    interface IRasterModifierFactory;   // Create objects supporting IRasterModifier.
+};
+#endif
