@@ -1,0 +1,72 @@
+<html>
+<head>
+<title>Microstation DGN</title>
+</head>
+
+<body bgcolor="#ffffff">
+
+<h1>Microstation DGN</h1>
+
+Microstation DGN files from Microstation versions predating version 8.0
+are supported for reading.  The entire file is represented as one layer
+(named "elements").<p>
+
+DGN files are considered to have no georeferencing information through OGR. 
+Features will all have the following generic attributes:
+
+<ul>
+<li> Type: The integer type code as listed below in supported elements. 
+<li> Level: The DGN level number (0-63). 
+<li> GraphicGroup: The graphic group number.
+<li> ColorIndex: The color index from the dgn palette.
+<li> Weight: The drawing weight (thickness) for the element. 
+<li> Style: The style value for the element. 
+</ul>
+
+DGN files do not contain spatial indexes; however, the DGN driver does take
+advantage of the extents information at the beginning of each element to 
+minimize processing of elements outside the current spatial filter window
+when in effect.<p>
+
+<h2>Supported Elements</h2>
+
+The following element types are supported:<p>
+
+<ul>
+<li> Line (3): Line geometry. 
+<li> Line String (4): Multi segment line geometry.
+<li> Shape (6): Polygon geometry. 
+<li> Curve (11): Approximated as a line geometry.
+<li> B-Spline (21): Treated (inaccurately) as a line geometry.
+<li> Arc (16): Approximated as a line geometry.
+<li> Ellipse (15): Approximated as a line geometry.
+<li> Text (17): Treated as a point geometry.
+</ul>
+
+Generally speaking any concept of complex objects, and cells as associated
+components is lost.  Each component of a complex object or cell is treated
+as a independent feature.<p>
+
+<h2>Styling Information</h2>
+
+Some drawing information about features can be extracted from the ColorIndex,
+Weight and Style generic attributes; however, for all features an OGR
+style string has been prepared with the values encoded in ready-to-use form
+for applications supporting OGR style strings.<p>
+
+The various kinds of linear geomtries will carry style information indicating
+the color, thickness and line style (ie. dotted, solid, etc).<p>
+
+Polygons (Shape elements) will carry styling information for the edge as well 
+as a fill color if provided.  Fill patterns are not supported.<p>
+
+Text elements will contain the text, angle, color and size information 
+(expressed in ground units) in the style string.<p>
+
+<ul>
+<li> <a href="http://gdal.velocet.ca/projects/dgn/">Dgnlib Page</a>
+<li> <a href="http://gdal.velocet.ca/projects/opengis/ogr_feature_style.html">OGR Feature Style Specification</a>
+</ul>
+
+</body>
+</html>
