@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2004/02/23 21:45:03  warmerda
+ * added support for various link formats
+ *
  * Revision 1.8  2003/05/21 03:42:01  warmerda
  * Expanded tabs
  *
@@ -79,6 +82,8 @@ class OGRDGNLayer : public OGRLayer
     DGNHandle           hDGN;
     int                 bUpdate;
 
+    char               *pszLinkFormat;
+
     OGRFeature         *ElementToFeature( DGNElemCore * );
 
     void                ConsiderBrush( DGNElemCore *, const char *pszPen,
@@ -86,6 +91,9 @@ class OGRDGNLayer : public OGRLayer
 
     DGNElemCore       **LineStringToElementGroup( OGRLineString *, int );
     DGNElemCore       **TranslateLabel( OGRFeature * );
+
+    int                 bHaveSimpleQuery;
+    OGRFeature         *poEvalFeature;
 
   public:
                         OGRDGNLayer( const char * pszName, DGNHandle hDGN,
