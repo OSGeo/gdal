@@ -1,8 +1,10 @@
 GDAL_ROOT	=	../..
 
+OBJ	=	EnvisatFile.o envisatdataset.o
+
 include $(GDAL_ROOT)/GDALmake.opt
 
-OBJ	=	EnvisatFile.o envisatdataset.o
+XTRA_OPT =	-I../raw
 
 default:	$(OBJ)
 

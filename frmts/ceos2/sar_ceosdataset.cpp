@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.26  2002/06/07 14:19:07  warmerda
+ * avoid paths in include directives
+ *
  * Revision 1.25  2002/04/26 14:52:50  warmerda
  * added EscapedRecord for metadata
  *
@@ -107,7 +110,7 @@
 
 #include "ceos.h"
 #include "gdal_priv.h"
-#include "../raw/rawdataset.h"
+#include "rawdataset.h"
 #include "cpl_string.h"
 
 CPL_CVSID("$Id$");
