@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2003/05/21 05:09:54  warmerda
+ * expand tabs
+ *
  * Revision 1.1  2003/04/08 19:32:47  warmerda
  * New
  *
@@ -46,7 +49,7 @@ class OGRMemLayer : public OGRLayer
 {
     OGRSpatialReference *poSRS;
     OGRFeatureDefn     *poFeatureDefn;
-    OGRGeometry		*poFilterGeom;
+    OGRGeometry         *poFilterGeom;
     
     int                 nFeatureCount;
     int                 nMaxFeatureCount;
@@ -58,22 +61,22 @@ class OGRMemLayer : public OGRLayer
     OGRwkbGeometryType  eWkbType;
 
   public:
-    			OGRMemLayer( const char * pszName,
+                        OGRMemLayer( const char * pszName,
                                      OGRSpatialReference *poSRS,
                                      OGRwkbGeometryType eGeomType );
-    			~OGRMemLayer();
+                        ~OGRMemLayer();
 
-    OGRGeometry *	GetSpatialFilter() { return poFilterGeom; }
-    void		SetSpatialFilter( OGRGeometry * );
+    OGRGeometry *       GetSpatialFilter() { return poFilterGeom; }
+    void                SetSpatialFilter( OGRGeometry * );
 
-    void		ResetReading();
-    OGRFeature *	GetNextFeature();
+    void                ResetReading();
+    OGRFeature *        GetNextFeature();
 
     OGRFeature         *GetFeature( long nFeatureId );
     OGRErr              SetFeature( OGRFeature *poFeature );
     OGRErr              CreateFeature( OGRFeature *poFeature );
     
-    OGRFeatureDefn *	GetLayerDefn() { return poFeatureDefn; }
+    OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
 
     int                 GetFeatureCount( int );
     OGRErr              GetExtent(OGREnvelope *psExtent, int bForce);
@@ -93,17 +96,17 @@ class OGRMemLayer : public OGRLayer
 class OGRMemDataSource : public OGRDataSource
 {
     OGRMemLayer     **papoLayers;
-    int			nLayers;
+    int                 nLayers;
     
-    char		*pszName;
+    char                *pszName;
 
   public:
-    			OGRMemDataSource( const char *, char ** );
-    			~OGRMemDataSource();
+                        OGRMemDataSource( const char *, char ** );
+                        ~OGRMemDataSource();
 
-    const char	        *GetName() { return pszName; }
-    int			GetLayerCount() { return nLayers; }
-    OGRLayer		*GetLayer( int );
+    const char          *GetName() { return pszName; }
+    int                 GetLayerCount() { return nLayers; }
+    OGRLayer            *GetLayer( int );
 
     virtual OGRLayer    *CreateLayer( const char *, 
                                       OGRSpatialReference * = NULL,
@@ -120,7 +123,7 @@ class OGRMemDataSource : public OGRDataSource
 class OGRMemDriver : public OGRSFDriver
 {
   public:
-    		~OGRMemDriver();
+                ~OGRMemDriver();
                 
     const char *GetName();
     OGRDataSource *Open( const char *, int );
