@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.51  2001/09/24 15:57:08  warmerda
+ * improved error handling
+ *
  * Revision 1.50  2001/07/18 04:51:56  warmerda
  * added CPL_CVSID
  *
@@ -373,14 +376,13 @@ CPLErr GTiffRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             {
                 memset( pImage, 0, nBlockBufSize );
                 CPLError( CE_Failure, CPLE_AppDefined,
-                          "TIFFReadEncodedStrip() failed.\n" );
+                          "TIFFReadEncodedTile() failed.\n" );
                 
                 eErr = CE_Failure;
             }
         }
         else
         {
-            
             if( TIFFReadEncodedStrip( poGDS->hTIFF, nBlockId, pImage,
                                       nBlockBufSize ) == -1 )
             {
@@ -425,7 +427,7 @@ CPLErr GTiffRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             {
                 /* Once TIFFError() is properly hooked, this can go away */
                 CPLError( CE_Failure, CPLE_AppDefined,
-                          "TIFFReadEncodedStrip() failed." );
+                          "TIFFReadEncodedTile() failed." );
                 
                 memset( poGDS->pabyBlockBuf, 0, nBlockBufSize );
                 
@@ -1104,6 +1106,7 @@ GTiffDataset::~GTiffDataset()
 
     if( pszTFWFilename != NULL )
         CPLFree( pszTFWFilename );
+    CPLFree( pszProjection );
 }
 
 /************************************************************************/
@@ -1750,7 +1753,6 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, uint32 nDirOffsetIn,
 
     if( GTIFGetDefn( hGTIF, &sGTIFDefn ) )
     {
-//        pszProjection = GTIFGetProj4Defn( &sGTIFDefn );
         pszProjection = GTIFGetOGISDefn( &sGTIFDefn );
     }
     else
@@ -2358,11 +2360,12 @@ GTiffCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                 eErr = poBand->RasterIO( GF_Read, 0, iLine, nXSize, 1, 
                                          pabyLine, nXSize, 1, eType, 
                                          0, 0 );
-
-                if( TIFFWriteScanline( hTIFF, pabyLine, iLine, iBand ) == -1 )
+                if( eErr == CE_None 
+                  && TIFFWriteScanline( hTIFF, pabyLine, iLine, iBand ) == -1 )
                 {
                     CPLError( CE_Failure, CPLE_AppDefined,
                               "TIFFWriteScanline failed." );
+                    eErr = CE_Failure;
                 }
 
                 nLinesDone++;
@@ -2386,6 +2389,12 @@ GTiffCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
     TIFFFlush( hTIFF );
     XTIFFClose( hTIFF );
+
+    if( eErr != CE_None )
+    {
+        VSIUnlink( pszFilename );
+        return NULL;
+    }
 
     return (GDALDataset *) GDALOpen( pszFilename, GA_Update );
 }
