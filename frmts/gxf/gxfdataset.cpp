@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.16  2004/11/03 01:17:58  fwarmerdam
+ * added extra testing to avoid mis-identification
+ *
  * Revision 1.15  2004/04/06 19:23:48  warmerda
  * Don't forget to close the dataset!
  *
@@ -284,6 +287,32 @@ GDALDataset *GXFDataset::Open( GDALOpenInfo * poOpenInfo )
     if( !bFoundKeyword || bFoundIllegal )
         return NULL;
     
+    
+/* -------------------------------------------------------------------- */
+/*      At this point it is plausible that this is a GXF file, but      */
+/*      we also now verify that there is a #GRID keyword before         */
+/*      passing it off to GXFOpen().  We check in the first 50K.        */
+/* -------------------------------------------------------------------- */
+    int nBytesRead, bGotGrid = FALSE;
+    char szBigBuf[50000];
+    FILE *fp;
+
+    fp = VSIFOpen( poOpenInfo->pszFilename, "rb" );
+    if( fp == NULL )
+        return NULL;
+
+    nBytesRead = VSIFRead( szBigBuf, 1, sizeof(szBigBuf), fp );
+    VSIFClose( fp );
+
+    for( i = 0; i < nBytesRead - 5 && !bGotGrid; i++ )
+    {
+        if( szBigBuf[i] == '#' && EQUALN(szBigBuf+i+1,"GRID",4) )
+            bGotGrid = TRUE;
+    }
+
+    if( !bGotGrid )
+        return NULL;
+
 /* -------------------------------------------------------------------- */
 /*      Try opening the dataset.                                        */
 /* -------------------------------------------------------------------- */
