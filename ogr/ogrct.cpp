@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2002/11/27 14:48:22  warmerda
+ * added PROJSO environment variable
+ *
  * Revision 1.16  2002/11/19 20:47:04  warmerda
  * fixed to call pj_free, not pj_dalloc for projPJ
  *
@@ -157,11 +160,15 @@ static int LoadProjLibrary()
 
 {
     static int  bTriedToLoad = FALSE;
+    const char *pszLibName = LIBNAME;
     
     if( bTriedToLoad )
         return( pfn_pj_init != NULL );
 
     bTriedToLoad = TRUE;
+
+    if( getenv("PROJSO") != NULL )
+        pszLibName = getenv("PROJSO");
 
 #ifdef PROJ_STATIC
     pfn_pj_init = pj_init;
@@ -178,7 +185,7 @@ static int LoadProjLibrary()
 #else
     CPLPushErrorHandler( CPLQuietErrorHandler );
 
-    pfn_pj_init = (projPJ (*)(int, char**)) CPLGetSymbol( LIBNAME,
+    pfn_pj_init = (projPJ (*)(int, char**)) CPLGetSymbol( pszLibName,
                                                        "pj_init" );
     CPLPopErrorHandler();
     
@@ -186,22 +193,22 @@ static int LoadProjLibrary()
        return( FALSE );
 
     pfn_pj_fwd = (projUV (*)(projUV,projPJ)) 
-        CPLGetSymbol( LIBNAME, "pj_fwd" );
+        CPLGetSymbol( pszLibName, "pj_fwd" );
     pfn_pj_inv = (projUV (*)(projUV,projPJ)) 
-        CPLGetSymbol( LIBNAME, "pj_inv" );
+        CPLGetSymbol( pszLibName, "pj_inv" );
     pfn_pj_free = (void (*)(projPJ)) 
-        CPLGetSymbol( LIBNAME, "pj_free" );
+        CPLGetSymbol( pszLibName, "pj_free" );
     pfn_pj_transform = (int (*)(projPJ,projPJ,long,int,double*,
                                 double*,double*))
-                        CPLGetSymbol( LIBNAME, "pj_transform" );
+                        CPLGetSymbol( pszLibName, "pj_transform" );
     pfn_pj_get_errno_ref = (int *(*)(void))
-        CPLGetSymbol( LIBNAME, "pj_get_errno_ref" );
+        CPLGetSymbol( pszLibName, "pj_get_errno_ref" );
     pfn_pj_strerrno = (char *(*)(int))
-        CPLGetSymbol( LIBNAME, "pj_strerrno" );
+        CPLGetSymbol( pszLibName, "pj_strerrno" );
     pfn_pj_get_def = (char *(*)(projPJ,int))
-        CPLGetSymbol( LIBNAME, "pj_get_def" );
+        CPLGetSymbol( pszLibName, "pj_get_def" );
     pfn_pj_dalloc = (void (*)(void*))
-        CPLGetSymbol( LIBNAME, "pj_dalloc" );
+        CPLGetSymbol( pszLibName, "pj_dalloc" );
 #endif
 
     if( pfn_pj_transform == NULL )
@@ -209,7 +216,7 @@ static int LoadProjLibrary()
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "Attempt to load %s, but couldn't find pj_transform.\n"
                   "Please upgrade to PROJ 4.1.2 or later.", 
-                  LIBNAME );
+                  pszLibName );
 
         return FALSE;
     }
