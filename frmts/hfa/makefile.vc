@@ -1,6 +1,6 @@
 
 OBJ	=	hfaband.obj hfadataset.obj hfadictionary.obj hfaentry.obj \
-		hfafield.obj hfaopen.obj hfatype.obj
+		hfafield.obj hfaopen.obj hfatype.obj hfacompress.obj
 
 GDAL_ROOT	=	..\..
 

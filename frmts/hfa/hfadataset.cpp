@@ -29,6 +29,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.46  2005/01/10 17:41:27  fwarmerdam
+ * added HFA compression support: bug 664
+ *
  * Revision 1.45  2004/11/05 04:08:01  fwarmerdam
  * Don't crash if access to the histogram table files for some reason.
  *
@@ -706,7 +709,7 @@ void HFARasterBand::ReadAuxMetadata()
             CPLAssert( FALSE );
         }
     }
-    // no try to read the histogram
+    // now try to read the histogram
     HFAEntry *poEntry = poBand->poNode->GetNamedChild( "Descriptor_Table.Histogram" );
     if ( poEntry != NULL )
     {
@@ -2408,6 +2411,13 @@ void GDALRegister_HFA()
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "img" );
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
                                    "Byte Int16 UInt16 Int32 UInt32 Float32 Float64 CFloat32 CFloat64" );
+
+        poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, 
+"<CreationOptionList>"
+"   <Option name='BLOCKSIZE' type='integer' description='tile width/height (32-2048)'/>"
+"   <Option name='USE_SPILL' type='boolean' description='Force use of spill file'/>"
+"   <Option name='COMPRESSED' type='boolean' description='compress blocks, default NO'/>"
+"</CreationOptionList>" );
 
         poDriver->pfnOpen = HFADataset::Open;
         poDriver->pfnCreate = HFADataset::Create;

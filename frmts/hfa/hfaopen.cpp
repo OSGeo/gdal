@@ -35,6 +35,9 @@
  * of the GDAL core, but dependent on the Common Portability Library.
  *
  * $Log$
+ * Revision 1.35  2005/01/10 17:41:27  fwarmerdam
+ * added HFA compression support: bug 664
+ *
  * Revision 1.34  2004/08/19 16:54:07  warmerda
  * added back in support for writing to GDAL_MetaData table
  *
@@ -1461,9 +1464,11 @@ HFAHandle HFACreate( const char * pszFilename,
             nBlockSize = 64;
         }
     }
-    int		bCreateLargeRaster = CSLFetchBoolean(papszOptions,"USE_SPILL",
-                                                     FALSE);
-    char	*pszFullFilename = NULL, *pszRawFilename = NULL;
+    int bCreateLargeRaster = CSLFetchBoolean(papszOptions,"USE_SPILL",
+                                             FALSE);
+    int bCreateCompressed = CSLFetchBoolean(papszOptions,"COMPRESS",
+                                            FALSE);
+    char *pszFullFilename = NULL, *pszRawFilename = NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Create the low level structure.                                 */
@@ -1482,7 +1487,7 @@ HFAHandle HFACreate( const char * pszFilename,
     nBlocksPerColumn = (nYSize + nBlockSize - 1) / nBlockSize;
     nBlocks = nBlocksPerRow * nBlocksPerColumn;
     nBytesPerBlock = (nBlockSize * nBlockSize
-	* HFAGetDataTypeBits(nDataType) + 7) / 8;
+                      * HFAGetDataTypeBits(nDataType) + 7) / 8;
 
     CPLDebug( "HFACreate", "Blocks per row %d, blocks per column %d, "
 	      "total number of blocks %d, bytes per block %d.",
@@ -1519,6 +1524,7 @@ HFAHandle HFACreate( const char * pszFilename,
     if ( bCreateLargeRaster )
     {
         poImgFormat->SetIntField( "spaceUsedForRasterData", 0 );
+        bCreateCompressed = FALSE;	// Can't be compressed if we are creating a spillfile - Frank, does this make sense?
     }
     else
     {
@@ -1575,7 +1581,16 @@ HFAHandle HFACreate( const char * pszFilename,
 				       nBlockSize*nBlockSize );
 	    poEdms_State->SetIntField( "nextobjectnum",
 				       nBlockSize*nBlockSize*nBlocks );
-	    poEdms_State->SetStringField( "compressionType", "no compression" );
+				  
+            /* Is file compressed or not? */     
+            if( bCreateCompressed )
+            {				       
+	    	poEdms_State->SetStringField( "compressionType", "RLC compression" );
+            }
+            else
+            {
+	    	poEdms_State->SetStringField( "compressionType", "no compression" );
+            }
 
 	    /* we need to hardcode file offset into the data, so locate it now */
 	    poEdms_State->SetPosition();
@@ -1605,12 +1620,28 @@ HFAHandle HFACreate( const char * pszFilename,
 		memcpy( pabyData + nOffset, &nValue16, 2 );
 
 		/* offset */
-		nValue = HFAAllocateSpace( psInfo, nBytesPerBlock );
+		if( bCreateCompressed )
+		{				     
+                    /* flag it with zero offset - will allocate space when we compress it */  
+                    nValue = 0;
+		}
+		else
+		{
+                    nValue = HFAAllocateSpace( psInfo, nBytesPerBlock );
+		}
 		HFAStandard( 4, &nValue );
 		memcpy( pabyData + nOffset + 2, &nValue, 4 );
 
 		/* size */
-		nValue = nBytesPerBlock;
+		if( bCreateCompressed )
+		{
+                    /* flag it with zero size - don't know until we compress it */
+                    nValue = 0;
+		}
+		else
+		{
+                    nValue = nBytesPerBlock;
+		}
 		HFAStandard( 4, &nValue );
 		memcpy( pabyData + nOffset + 6, &nValue, 4 );
 
@@ -1619,8 +1650,12 @@ HFAHandle HFACreate( const char * pszFilename,
 		HFAStandard( 2, &nValue16 );
 		memcpy( pabyData + nOffset + 10, &nValue16, 2 );
 
-		/* compressionType (no compression) */
-		nValue16 = 0;
+		/* compressionType */
+		if( bCreateCompressed )
+                    nValue16 = 1;
+		else
+                    nValue16 = 0;
+
 		HFAStandard( 2, &nValue16 );
 		memcpy( pabyData + nOffset + 12, &nValue16, 2 );
 	    }
