@@ -29,6 +29,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.8  2002/09/06 11:47:23  dron
+ * Fixes in pixel sizes determining for ASTER L1B
+ *
  * Revision 1.7  2002/09/06 10:42:23  dron
  * Georeferencing for ASTER Level 1b datasets and ASTER DEMs.
  *
@@ -454,7 +457,7 @@ const char *HDF4ImageDataset::GetProjectionRef()
 
 
 /************************************************************************/
-/*                            ReadCoordinates()				*/
+/*                                ToUTM()				*/
 /************************************************************************/
 
 void HDF4ImageDataset::ToUTM( OGRSpatialReference *poProj,
@@ -471,8 +474,8 @@ void HDF4ImageDataset::ToUTM( OGRSpatialReference *poProj,
 /* -------------------------------------------------------------------- */
 /*      Transform to latlong and report.                                */
 /* -------------------------------------------------------------------- */
-    //if( poTransform != NULL 
-        /*&&*/ poTransform->Transform(1, pdfGeoX, pdfGeoY,NULL);// == OGRERR_NONE )
+    if( poTransform != NULL 
+        && poTransform->Transform(1, pdfGeoX, pdfGeoY,NULL) == OGRERR_NONE )
 
     if( poTransform != NULL )
         CPLFree( poTransform );
@@ -665,13 +668,12 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
     for( i = 1; i <= poDS->nBands; i++ )
         poDS->SetBand( i, new HDF4ImageRasterBand( poDS, i ) );
 
-    char 	**papszProjParmList;
-    int		iUTMZone, iNumber;
-    const char	*pszTemp;
-    double	dfULX = 0.5, dfULY = 0.5;
-    double	dfURX = poDS->nRasterXSize - 0.5, dfURY = 0.5;
-    double	dfLLX = 0.5, dfLLY = poDS->nRasterYSize - 0.5;
-    double	dfLRX = poDS->nRasterXSize - 0.5, dfLRY = poDS->nRasterYSize - 0.5;
+/* -------------------------------------------------------------------- */
+/*      Read projection information                                     */
+/* -------------------------------------------------------------------- */
+    /*char 	**papszProjParmList;*/
+    int		iUTMZone;
+    double	dfULX, dfULY, dfURX, dfURY, dfLLX, dfLLY, dfLRX, dfLRY;
     double	dfCenterX, dfCenterY;
     OGRSpatialReference oSRS;
     poDS->adfGeoTransform[0] = poDS->adfGeoTransform[2] =
@@ -680,11 +682,12 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
     switch ( poDS->iDataType )
     {
         case ASTER_L1B:
-	iNumber = atoi(&poDS->szName[9]);
+		printf("&poDS->szName[9]=%s\n", &poDS->szName[9]);
         /*papszProjParmList = CSLTokenizeString2(
 			poDS->GetMetadataItem( CPLSPrintf("PROJECTIONPARAMETERS%c%c",
 			poDS->szName[9], poDS->szName[10]), 0 ),", " , 0 );*/
-	if ( EQUAL(poDS->GetMetadataItem( CPLSPrintf("MPMETHOD%d", iNumber), NULL ), "UTM" ) )
+	if ( strlen( poDS->szName ) >= 10 && EQUAL(poDS->GetMetadataItem(
+	    CPLSPrintf("MPMETHOD%s", &poDS->szName[9]), NULL ), "UTM" ) )
 	{
             oSRS.SetProjCS( "UTM" );
 	    oSRS.SetWellKnownGeogCS( "WGS84" );
@@ -703,7 +706,7 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 			    0,
 			    );*/
 	    iUTMZone = atoi( poDS->GetMetadataItem(
-			    CPLSPrintf("UTMZONECODE%d", iNumber), 0 ) );
+			    CPLSPrintf("UTMZONECODE%s", &poDS->szName[9]), 0 ) );
 	    if( iUTMZone > 0 )
 		oSRS.SetUTM( iUTMZone, TRUE );
 	    else
@@ -716,11 +719,19 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
             poDS->ToUTM( &oSRS, &dfLLX, &dfLLY );
             poDS->ToUTM( &oSRS, &dfLRX, &dfLRY );
             
-	    poDS->adfGeoTransform[1] = (dfURX - dfLLX) / (poDS->nRasterXSize - 1);
+	    // Determine pixel sizes for different bands
+	    if( EQUAL(&poDS->szName[9], "1") || EQUAL(&poDS->szName[9], "2") ||
+		EQUAL(&poDS->szName[9], "3N") || EQUAL(&poDS->szName[9], "3B") )
+	        poDS->adfGeoTransform[1] = poDS->adfGeoTransform[5] = 15;     // VNIR, 15 m
+	    else if ( EQUAL(&poDS->szName[9], "4") || EQUAL(&poDS->szName[9], "5") ||
+	              EQUAL(&poDS->szName[9], "6") || EQUAL(&poDS->szName[9], "7") || 
+		      EQUAL(&poDS->szName[9], "8") || EQUAL(&poDS->szName[9], "9") )
+		poDS->adfGeoTransform[1] = poDS->adfGeoTransform[5] = 30;     // SWIR, 30 m
+	    else
+		poDS->adfGeoTransform[1] = poDS->adfGeoTransform[5] = 90;     // TIR, 90 m
 	    if( dfCenterY > 0 )
-	        poDS->adfGeoTransform[5] = (dfULY - dfLRY) / (poDS->nRasterYSize - 1);
-            else	    
-	        poDS->adfGeoTransform[5] = (dfLLY - dfURY) / (poDS->nRasterYSize - 1);
+		poDS->adfGeoTransform[5] = -poDS->adfGeoTransform[5];
+	    
             poDS->adfGeoTransform[0] = dfLLX + poDS->adfGeoTransform[1] / 2;
             poDS->adfGeoTransform[3] = dfULY - poDS->adfGeoTransform[5] / 2;
             poDS->adfGeoTransform[2] = 0.0;
@@ -739,7 +750,7 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 		                &dfCenterY, &dfCenterX );
             
 	    // Calculate UTM zone from scene center coordinates
-            iUTMZone = 30 + (int) (dfCenterX + 3.0) / 6.0;
+            iUTMZone = 30 + (int) ((dfCenterX + 3.0) / 6.0);
 	    if( dfCenterY > 0 )			// FIXME: does it right?
 		oSRS.SetUTM( iUTMZone, TRUE );
 	    else
@@ -751,11 +762,13 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
             poDS->ToUTM( &oSRS, &dfLLX, &dfLLY );
             poDS->ToUTM( &oSRS, &dfLRX, &dfLRY );
             
+	    // Pixel size always 30 m for ASTER DEMs
 	    poDS->adfGeoTransform[1] = 30;
 	    if( dfCenterY > 0 )
 	        poDS->adfGeoTransform[5] = -30;
             else	    
 	        poDS->adfGeoTransform[5] = 30;
+
             poDS->adfGeoTransform[0] = dfLLX + poDS->adfGeoTransform[1] / 2;
             poDS->adfGeoTransform[3] = dfULY - poDS->adfGeoTransform[5] / 2;
             poDS->adfGeoTransform[2] = 0.0;
