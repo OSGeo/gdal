@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.7  2005/04/02 21:17:01  fwarmerdam
+ * add extra include files
+ *
  * Revision 1.6  2005/03/10 14:48:42  fwarmerdam
  * Return false on read requests of zero bytes, at David's suggestion.
  *
@@ -52,6 +55,7 @@
 #define VSIIOSTREAM_H_INCLUDED
 
 #include "cpl_vsi.h"
+#include "gdal_priv.h"
 #include "gdal_frmts.h"
 
 #ifdef FRMT_ecw
@@ -64,6 +68,7 @@
 #include <NCSECWCompressClient.h>
 #include <NCSErrors.h>
 #include <NCSFile.h>
+#include <NCSJP2File.h>
 #include <NCSJP2FileView.h>
 
 /* As of July 2002 only uncompress support is available on Unix */
