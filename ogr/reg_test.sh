@@ -17,6 +17,7 @@ test_ogrsf -ro $DATADIR/sdts/safe_hy_bug/HP01CATD.DDF
 test_ogrsf -ro $DATADIR/sdts/michigan_2000000/MIBDCATD.DDF
 test_ogrsf -ro $DATADIR/sdts/safe_dem/7096CATD.DDF
 
+test_ogrsf -ro $DATADIR/s57/newfiles/I/CA39995I.000
 
 
 
