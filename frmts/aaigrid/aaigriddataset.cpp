@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.12  2002/06/13 13:48:28  dron
+ * Added writing of .prj files for Arc/Info 8
+ *
  * Revision 1.11  2002/06/12 21:12:24  warmerda
  * update to metadata based driver info
  *
@@ -540,6 +543,36 @@ AAIGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
     CPLFree( padfScanline );
     VSIFClose( fpImage );
+
+/* -------------------------------------------------------------------- */
+/*	Try to write projection file.					*/
+/* -------------------------------------------------------------------- */
+    char	*pszProjection;
+
+    pszProjection = (char *)poSrcDS->GetProjectionRef();
+    if ( !EQUAL( pszProjection, "" ) )
+    {
+        char			*pszDirname, *pszBasename;
+        const char		*pszPrjFilename;
+        FILE			*fp;
+        OGRSpatialReference	oSRS;
+
+        pszDirname = CPLStrdup( CPLGetPath(pszFilename) );
+        pszBasename = CPLStrdup( CPLGetBasename(pszFilename) );
+
+        pszPrjFilename = CPLFormFilename( pszDirname, pszBasename, "prj" );
+        fp = VSIFOpen( pszPrjFilename, "wt" );
+	
+        oSRS.importFromWkt( &pszProjection );
+	oSRS.morphToESRI();
+	oSRS.exportToWkt( &pszProjection );
+        fputs( pszProjection, fp );
+
+	VSIFClose( fp );
+        CPLFree( pszDirname );
+        CPLFree( pszBasename );
+    }
+    CPLFree( pszProjection );
     
     return (GDALDataset *) GDALOpen( pszFilename, GA_Update );
 }
@@ -570,6 +603,4 @@ void GDALRegister_AAIGrid()
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
 }
-
-
 
