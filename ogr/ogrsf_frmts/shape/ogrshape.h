@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2005/02/02 20:01:02  fwarmerdam
+ * added SetNextByIndex support
+ *
  * Revision 1.16  2005/01/04 03:43:41  fwarmerdam
  * added support for creating and destroying spatial indexes
  *
@@ -150,6 +153,7 @@ class OGRShapeLayer : public OGRLayer
 
     void                ResetReading();
     OGRFeature *        GetNextFeature();
+    virtual OGRErr      SetNextByIndex( long nIndex );
 
     OGRFeature         *GetFeature( long nFeatureId );
     OGRErr              SetFeature( OGRFeature *poFeature );

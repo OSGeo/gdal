@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.25  2005/02/02 19:59:47  fwarmerdam
+ * added SetNextByIndex support
+ *
  * Revision 1.24  2003/10/09 15:27:41  warmerda
  * added OGRLayer::DeleteFeature() support
  *
@@ -319,6 +322,7 @@ typedef union {
 #define OLCCreateField         "CreateField"
 #define OLCTransactions        "Transactions"
 #define OLCDeleteFeature       "DeleteFeature"
+#define OLCFastSetNextByIndex  "FastSetNextByIndex"
 
 #define ODsCCreateLayer        "CreateLayer"
 #define ODsCDeleteLayer        "DeleteLayer"

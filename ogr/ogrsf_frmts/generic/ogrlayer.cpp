@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.22  2005/02/02 20:00:29  fwarmerdam
+ * added SetNextByIndex support
+ *
  * Revision 1.21  2005/01/03 22:17:00  fwarmerdam
  * added OGRLayer::SetSpatialFilterRect()
  *
@@ -111,6 +114,8 @@ OGRLayer::OGRLayer()
     m_poAttrQuery = NULL;
     m_poAttrIndex = NULL;
     m_nRefCount = 0;
+
+    m_nFeaturesRead = 0;
 }
 
 /************************************************************************/
@@ -381,6 +386,38 @@ OGRFeatureH OGR_L_GetFeature( OGRLayerH hLayer, long nFeatureId )
 
 {
     return (OGRFeatureH) ((OGRLayer *)hLayer)->GetFeature( nFeatureId );
+}
+
+/************************************************************************/
+/*                           SetNextByIndex()                           */
+/************************************************************************/
+
+OGRErr OGRLayer::SetNextByIndex( long nIndex )
+
+{
+    OGRFeature *poFeature;
+
+    ResetReading();
+    while( nIndex-- > 0 )
+    {
+        poFeature = GetNextFeature();
+        if( poFeature == NULL )
+            return OGRERR_FAILURE;
+
+        delete poFeature;
+    }
+
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                        OGR_L_SetNextByIndex()                        */
+/************************************************************************/
+
+OGRErr OGR_L_SetNextByIndex( OGRLayerH hLayer, long nIndex )
+
+{
+    return ((OGRLayer *)hLayer)->SetNextByIndex( nIndex );
 }
 
 /************************************************************************/
@@ -690,5 +727,25 @@ OGRErr OGR_L_DeleteFeature( OGRLayerH hDS, long nFID )
 
 {
     return ((OGRLayer *) hDS)->DeleteFeature( nFID );
+}
+
+/************************************************************************/
+/*                          GetFeaturesRead()                           */
+/************************************************************************/
+
+GIntBig OGRLayer::GetFeaturesRead()
+
+{
+    return m_nFeaturesRead;
+}
+
+/************************************************************************/
+/*                       OGR_L_GetFeaturesRead()                        */
+/************************************************************************/
+
+GIntBig OGR_L_GetFeaturesRead( OGRLayerH hLayer )
+
+{
+    return ((OGRLayer *) hLayer)->GetFeaturesRead();
 }
 

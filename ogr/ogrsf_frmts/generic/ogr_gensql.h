@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2005/02/02 20:00:29  fwarmerdam
+ * added SetNextByIndex support
+ *
  * Revision 1.6  2003/03/20 19:13:21  warmerda
  * Added ClearFilters() method to cleanup spatial or attribute filters on the
  * target layer, and any joined layers.  Used in destructor and after all
@@ -110,6 +113,7 @@ class CPL_DLL OGRGenSQLResultsLayer : public OGRLayer
 
     virtual void        ResetReading();
     virtual OGRFeature *GetNextFeature();
+    virtual OGRErr      SetNextByIndex( long nIndex );
     virtual OGRFeature *GetFeature( long nFID );
 
     virtual OGRFeatureDefn *GetLayerDefn();

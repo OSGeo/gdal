@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2005/02/02 20:01:02  fwarmerdam
+ * added SetNextByIndex support
+ *
  * Revision 1.17  2005/01/04 03:43:41  fwarmerdam
  * added support for creating and destroying spatial indexes
  *
@@ -133,6 +136,13 @@ OGRShapeLayer::OGRShapeLayer( const char * pszName,
 OGRShapeLayer::~OGRShapeLayer()
 
 {
+    if( m_nFeaturesRead > 0 && poFeatureDefn != NULL )
+    {
+        CPLDebug( "Shape", "%d features read on layer '%s'.",
+                  (int) m_nFeaturesRead, 
+                  poFeatureDefn->GetName() );
+    }
+
     CPLFree( panMatchingFIDs );
     panMatchingFIDs = NULL;
 
@@ -312,6 +322,26 @@ void OGRShapeLayer::ResetReading()
 }
 
 /************************************************************************/
+/*                           SetNextByIndex()                           */
+/*                                                                      */
+/*      If we already have an FID list, we can easily resposition       */
+/*      ourselves in it.                                                */
+/************************************************************************/
+
+OGRErr OGRShapeLayer::SetNextByIndex( long nIndex )
+
+{
+    // Eventually we should try to use panMatchingFIDs list 
+    // if available and appropriate. 
+    if( poFilterGeom != NULL || m_poAttrQuery != NULL )
+        return OGRLayer::SetNextByIndex( nIndex );
+
+    iNextShapeId = nIndex;
+
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
 /*                           GetNextFeature()                           */
 /************************************************************************/
 
@@ -343,6 +373,8 @@ OGRFeature *OGRShapeLayer::GetNextFeature()
 
             poFeature = SHPReadOGRFeature( hSHP, hDBF, poFeatureDefn, 
                                            panMatchingFIDs[iMatchingFID++] );
+            if( poFeature != NULL )
+                m_nFeaturesRead++;
         }
         else
         {
@@ -351,6 +383,8 @@ OGRFeature *OGRShapeLayer::GetNextFeature()
     
             poFeature = SHPReadOGRFeature( hSHP, hDBF, poFeatureDefn,
                                            iNextShapeId++ );
+            if( poFeature != NULL )
+                m_nFeaturesRead++;
         }
 
         if( (poFilterGeom == NULL
@@ -370,7 +404,13 @@ OGRFeature *OGRShapeLayer::GetNextFeature()
 OGRFeature *OGRShapeLayer::GetFeature( long nFeatureId )
 
 {
-    return SHPReadOGRFeature( hSHP, hDBF, poFeatureDefn, nFeatureId );
+    OGRFeature *poFeature = 
+         SHPReadOGRFeature( hSHP, hDBF, poFeatureDefn, nFeatureId );
+    
+    if( poFeature != NULL )
+        m_nFeaturesRead++;
+
+    return poFeature;
 }
 
 /************************************************************************/
@@ -536,6 +576,9 @@ int OGRShapeLayer::TestCapability( const char * pszCap )
 
     else if( EQUAL(pszCap,OLCFastGetExtent) )
         return TRUE;
+
+    else if( EQUAL(pszCap,OLCFastSetNextByIndex) )
+        return poFilterGeom == NULL && m_poAttrQuery == NULL;
 
     else if( EQUAL(pszCap,OLCCreateField) )
         return TRUE;

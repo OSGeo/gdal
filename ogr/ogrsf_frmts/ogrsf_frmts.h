@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.49  2005/02/02 20:00:01  fwarmerdam
+ * added SetNextByIndex support
+ *
  * Revision 1.48  2005/01/19 20:29:10  fwarmerdam
  * added autoloaddrivers on ogrsfdriverregistrar
  *
@@ -212,6 +215,7 @@ class CPL_DLL OGRLayer
 
     virtual void        ResetReading() = 0;
     virtual OGRFeature *GetNextFeature() = 0;
+    virtual OGRErr      SetNextByIndex( long nIndex );
     virtual OGRFeature *GetFeature( long nFID );
     virtual OGRErr      SetFeature( OGRFeature *poFeature );
     virtual OGRErr      CreateFeature( OGRFeature *poFeature );
@@ -243,6 +247,8 @@ class CPL_DLL OGRLayer
     int                 Reference();
     int                 Dereference();
     int                 GetRefCount() const;
+
+    GIntBig             GetFeaturesRead();
     
     /* consider these private */
     OGRErr               InitializeIndexSupport( const char * );
@@ -254,6 +260,8 @@ class CPL_DLL OGRLayer
     OGRLayerAttrIndex   *m_poAttrIndex;
 
     int                  m_nRefCount;
+
+    GIntBig              m_nFeaturesRead;
 };
 
 

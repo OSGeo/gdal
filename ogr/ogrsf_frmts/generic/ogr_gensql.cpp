@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2005/02/02 20:00:29  fwarmerdam
+ * added SetNextByIndex support
+ *
  * Revision 1.13  2003/03/20 19:13:21  warmerda
  * Added ClearFilters() method to cleanup spatial or attribute filters on the
  * target layer, and any joined layers.  Used in destructor and after all
@@ -212,6 +215,13 @@ OGRGenSQLResultsLayer::OGRGenSQLResultsLayer( OGRDataSource *poSrcDS,
 OGRGenSQLResultsLayer::~OGRGenSQLResultsLayer()
 
 {
+    if( m_nFeaturesRead > 0 && poDefn != NULL )
+    {
+        CPLDebug( "GenSQL", "%d features read on layer '%s'.",
+                  (int) m_nFeaturesRead, 
+                  poDefn->GetName() );
+    }
+
     ClearFilters();
 
 /* -------------------------------------------------------------------- */
@@ -304,6 +314,31 @@ void OGRGenSQLResultsLayer::ResetReading()
 }
 
 /************************************************************************/
+/*                           SetNextByIndex()                           */
+/*                                                                      */
+/*      If we already have an FID list, we can easily resposition       */
+/*      ourselves in it.                                                */
+/************************************************************************/
+
+OGRErr OGRGenSQLResultsLayer::SetNextByIndex( long nIndex )
+
+{
+    swq_select *psSelectInfo = (swq_select *) pSelectInfo;
+
+    if( psSelectInfo->query_mode == SWQM_SUMMARY_RECORD 
+        || psSelectInfo->query_mode == SWQM_DISTINCT_LIST 
+        || panFIDIndex != NULL )
+    {
+        nNextIndexFID = nIndex;
+        return OGRERR_NONE;
+    }
+    else
+    {
+        return poSrcLayer->SetNextByIndex( nIndex );
+    }
+}
+
+/************************************************************************/
 /*                             GetExtent()                              */
 /************************************************************************/
 
@@ -358,11 +393,22 @@ int OGRGenSQLResultsLayer::TestCapability( const char *pszCap )
 {
     swq_select *psSelectInfo = (swq_select *) pSelectInfo;
 
+    if( EQUAL(pszCap,OLCFastSetNextByIndex) )
+    {
+        if( psSelectInfo->query_mode == SWQM_SUMMARY_RECORD 
+            || psSelectInfo->query_mode == SWQM_DISTINCT_LIST 
+            || panFIDIndex != NULL )
+            return TRUE;
+        else 
+            return poSrcLayer->TestCapability( pszCap );
+    }
+
     if( psSelectInfo->query_mode == SWQM_RECORDSET
         && (EQUAL(pszCap,OLCFastFeatureCount) 
             || EQUAL(pszCap,OLCRandomRead) 
             || EQUAL(pszCap,OLCFastGetExtent)) )
         return poSrcLayer->TestCapability( pszCap );
+
     else if( psSelectInfo->query_mode != SWQM_RECORDSET )
     {
         if( EQUAL(pszCap,OLCFastFeatureCount) )
@@ -510,6 +556,8 @@ OGRFeature *OGRGenSQLResultsLayer::TranslateFeature( OGRFeature *poSrcFeat )
 
     if( poSrcFeat == NULL )
         return NULL;
+
+    m_nFeaturesRead++;
 
 /* -------------------------------------------------------------------- */
 /*      Create destination feature.                                     */
