@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.22  2005/02/08 15:52:44  gwalter
+ * Avoid overwriting header when it hasn't changed.
+ *
  * Revision 1.21  2004/11/02 20:21:26  fwarmerdam
  * added support for category names and colormaps
  *
@@ -291,6 +294,8 @@ class ENVIDataset : public RawDataset
 
     int		bFoundMapinfo;
 
+    int         bHeaderDirty;
+
     double      adfGeoTransform[6];
 
     char	*pszProjection;
@@ -333,6 +338,8 @@ ENVIDataset::ENVIDataset()
 
     bFoundMapinfo = FALSE;
 
+    bHeaderDirty = FALSE;
+
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
     adfGeoTransform[2] = 0.0;
@@ -367,6 +374,9 @@ void ENVIDataset::FlushCache()
 
 {
     GDALDataset::FlushCache();
+
+    if ( !bHeaderDirty )
+        return;
 
     VSIFSeek( fp, 0, SEEK_END );
 
@@ -446,6 +456,8 @@ CPLErr ENVIDataset::SetProjection( const char *pszNewProjection )
 	CPLFree( pszProjection );
     pszProjection = CPLStrdup( pszNewProjection );
 
+    bHeaderDirty = TRUE;
+
     return CE_None;
 }
 
@@ -471,6 +483,8 @@ CPLErr ENVIDataset::GetGeoTransform( double * padfTransform )
 CPLErr ENVIDataset::SetGeoTransform( double * padfTransform )
 {
     memcpy( adfGeoTransform, padfTransform, sizeof(double) * 6 );
+
+    bHeaderDirty = TRUE;
     
     return CE_None;
 }
