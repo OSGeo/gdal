@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2003/02/24 17:31:27  warmerda
+ * added general bilinear resampling logic
+ *
  * Revision 1.3  2003/02/22 02:04:44  warmerda
  * fixed bug with progress reporting, added first special case function
  *
@@ -767,6 +770,130 @@ static int GWKGetPixelValue( GDALWarpKernel *poWK, int iBand,
 }
                              
 /************************************************************************/
+/*                        GWKBilinearResample()                         */
+/************************************************************************/
+
+static int GWKBilinearResample( GDALWarpKernel *poWK, int iBand, 
+                                double dfSrcX, double dfSrcY,
+                                double *pdfDensity, 
+                                double *pdfReal, double *pdfImag )
+
+{
+    double  dfAccumulatorReal = 0.0, dfAccumulatorImag = 0.0;
+    double  dfAccumulatorDensity = 0.0;
+    double  dfAccumulatorDivisor = 0.0;
+
+    int     iSrcX = (int) floor(dfSrcX - 0.5);
+    int     iSrcY = (int) floor(dfSrcY - 0.5);
+    int     iSrcOffset = iSrcX + iSrcY * poWK->nSrcXSize;
+    double  dfRatioX = 1.5 - (dfSrcX - iSrcX);
+    double  dfRatioY = 1.5 - (dfSrcY - iSrcY);
+
+    // Upper Left Pixel
+    if( iSrcX >= 0 && iSrcX < poWK->nSrcXSize
+        && iSrcY >= 0 && iSrcY < poWK->nSrcYSize
+        && GWKGetPixelValue( poWK, iBand, iSrcOffset, pdfDensity, 
+                             pdfReal, pdfImag )
+        && *pdfDensity != 0.0 )
+    {
+        double dfMult = dfRatioX * dfRatioY;
+
+        dfAccumulatorDivisor += dfMult;
+
+        dfAccumulatorReal += *pdfReal * dfMult;
+        dfAccumulatorImag += *pdfImag * dfMult;
+        dfAccumulatorDensity += *pdfDensity * dfMult;
+    }
+        
+    // Upper Right Pixel
+    if( iSrcX+1 >= 0 && iSrcX+1 < poWK->nSrcXSize
+        && iSrcY >= 0 && iSrcY < poWK->nSrcYSize
+        && GWKGetPixelValue( poWK, iBand, iSrcOffset+1, pdfDensity, 
+                             pdfReal, pdfImag )
+        && *pdfDensity != 0.0 )
+    {
+        double dfMult = (1.0-dfRatioX) * dfRatioY;
+
+        dfAccumulatorDivisor += dfMult;
+
+        dfAccumulatorReal += *pdfReal * dfMult;
+        dfAccumulatorImag += *pdfImag * dfMult;
+        dfAccumulatorDensity += *pdfDensity * dfMult;
+    }
+        
+    // Lower Right Pixel
+    if( iSrcX+1 >= 0 && iSrcX+1 < poWK->nSrcXSize
+        && iSrcY+1 >= 0 && iSrcY+1 < poWK->nSrcYSize
+        && GWKGetPixelValue( poWK, iBand, iSrcOffset+1+poWK->nSrcXSize, 
+                             pdfDensity, pdfReal, pdfImag )
+        && *pdfDensity != 0.0 )
+    {
+        double dfMult = (1.0-dfRatioX) * (1.0-dfRatioY);
+
+        dfAccumulatorDivisor += dfMult;
+
+        dfAccumulatorReal += *pdfReal * dfMult;
+        dfAccumulatorImag += *pdfImag * dfMult;
+        dfAccumulatorDensity += *pdfDensity * dfMult;
+    }
+        
+    // Lower Left Pixel
+    if( iSrcX >= 0 && iSrcX < poWK->nSrcXSize
+        && iSrcY+1 >= 0 && iSrcY+1 < poWK->nSrcYSize
+        && GWKGetPixelValue( poWK, iBand, iSrcOffset+poWK->nSrcXSize, 
+                             pdfDensity, pdfReal, pdfImag )
+        && *pdfDensity != 0.0 )
+    {
+        double dfMult = dfRatioX * (1.0-dfRatioY);
+
+        dfAccumulatorDivisor += dfMult;
+
+        dfAccumulatorReal += *pdfReal * dfMult;
+        dfAccumulatorImag += *pdfImag * dfMult;
+        dfAccumulatorDensity += *pdfDensity * dfMult;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Return result.                                                  */
+/* -------------------------------------------------------------------- */
+    if( dfAccumulatorDivisor == 1.0 )
+    {
+        *pdfReal = dfAccumulatorReal;
+        *pdfImag = dfAccumulatorImag;
+        *pdfDensity = dfAccumulatorDensity;
+        return TRUE;
+    }
+    else if( dfAccumulatorDivisor < 0.00001 )
+    {
+        *pdfReal = 0.0;
+        *pdfImag = 0.0;
+        *pdfDensity = 0.0;
+        return FALSE;
+    }
+    else
+    {
+        *pdfReal = dfAccumulatorReal / dfAccumulatorDivisor;
+        *pdfImag = dfAccumulatorImag / dfAccumulatorDivisor;
+        *pdfDensity = dfAccumulatorDensity / dfAccumulatorDivisor;
+        return TRUE;
+    }
+}
+
+/************************************************************************/
+/*                          GWKCubicResample()                          */
+/************************************************************************/
+
+static int GWKCubicResample( GDALWarpKernel *poWK, int iBand, 
+                             double dfSrcX, double dfSrcY,
+                             double *pdfDensity, 
+                             double *pdfReal, double *pdfImag )
+
+{
+    *pdfDensity = 0.0;
+    return FALSE;
+}
+
+/************************************************************************/
 /*                           GWKGeneralCase()                           */
 /*                                                                      */
 /*      This is the most general case.  It attempts to handle all       */
@@ -909,11 +1036,19 @@ static CPLErr GWKGeneralCase( GDALWarpKernel *poWK )
                 }
                 else if( poWK->eResample == GRA_Bilinear )
                 {
-                    ;
+                    GWKBilinearResample( poWK, iBand, 
+                                         padfX[iDstX]-poWK->nSrcXOff,
+                                         padfY[iDstX]-poWK->nSrcYOff,
+                                         &dfDensity, 
+                                         &dfValueReal, &dfValueImag );
                 }
                 else if( poWK->eResample == GRA_Cubic )
                 {
-                    ;
+                    GWKCubicResample( poWK, iBand, 
+                                      padfX[iDstX]-poWK->nSrcXOff,
+                                      padfY[iDstX]-poWK->nSrcYOff,
+                                      &dfDensity, 
+                                      &dfValueReal, &dfValueImag );
                 }
 
                 // If we didn't find any valid inputs skip to next band.
