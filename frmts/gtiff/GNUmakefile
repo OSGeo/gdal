@@ -23,7 +23,7 @@ CPPFLAGS	:=	$(GDAL_INCLUDE) $(TIFF_OPTS) $(CPPFLAGS)
 default:	$(OBJ) $(SUBLIBS)
 
 clean:
-	rm -f *.o
+	rm -f *.o $(O_OBJ)
 	(cd libtiff; $(MAKE) clean)
 	(cd libgeotiff; $(MAKE) clean)
 
