@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.29  2004/07/10 04:45:52  warmerda
+ * more rigerous soft transaction handling
+ *
  * Revision 1.28  2004/07/09 07:05:37  warmerda
  * Added OGRSQL dialect support.
  *
@@ -922,10 +925,15 @@ OGRErr OGRPGDataSource::SoftStartTransaction()
         PGresult            *hResult;
         PGconn          *hPGConn = GetPGConn();
 
+        //CPLDebug( "OGR_PG", "BEGIN Transaction" );
         hResult = PQexec(hPGConn, "BEGIN");
 
         if( !hResult || PQresultStatus(hResult) != PGRES_COMMAND_OK )
+        {
+            CPLDebug( "OGR_PG", "BEGIN Transaction failed:\n%s",
+                      PQerrorMessage( hPGConn ) );
             return OGRERR_FAILURE;
+        }
 
         PQclear( hResult );
     }
@@ -956,10 +964,15 @@ OGRErr OGRPGDataSource::SoftCommit()
         PGresult            *hResult;
         PGconn          *hPGConn = GetPGConn();
 
+        //CPLDebug( "OGR_PG", "COMMIT Transaction" );
         hResult = PQexec(hPGConn, "COMMIT");
 
         if( !hResult || PQresultStatus(hResult) != PGRES_COMMAND_OK )
+        {
+            CPLDebug( "OGR_PG", "COMMIT Transaction failed:\n%s",
+                      PQerrorMessage( hPGConn ) );
             return OGRERR_FAILURE;
+        }
 
         PQclear( hResult );
     }
@@ -1056,15 +1069,15 @@ OGRLayer * OGRPGDataSource::ExecuteSQL( const char *pszSQLCommand,
 /* -------------------------------------------------------------------- */
 /*      Execute the statement.                                          */
 /* -------------------------------------------------------------------- */
-    PGresult            *hResult;
+    PGresult            *hResult = NULL;
     
-    hResult = PQexec(hPGConn, "BEGIN");
+    FlushSoftTransaction();
 
-    if( hResult && PQresultStatus(hResult) == PGRES_COMMAND_OK )
+    if( SoftStartTransaction() == OGRERR_NONE  )
     {
-        PQclear( hResult );
-
+        CPLDebug( "OGR_PG", "PQexec(%s)", pszSQLCommand );
         hResult = PQexec(hPGConn, pszSQLCommand );
+        CPLDebug( "OGR_PG", "Command Results Tuples = %d", PQntuples(hResult) );
     }
 
 /* -------------------------------------------------------------------- */
@@ -1096,8 +1109,7 @@ OGRLayer * OGRPGDataSource::ExecuteSQL( const char *pszSQLCommand,
     if( hResult )
         PQclear( hResult );
 
-    hResult = PQexec(hPGConn, "COMMIT");
-    PQclear( hResult );
+    FlushSoftTransaction();
 
     return NULL;
 }
