@@ -72,6 +72,8 @@ $(OGR_LIB):	$(OBJ)
 	$(AR) r $(OGR_LIB) $?
 	$(RANLIB) $(OGR_LIB)
 
+gdalso:	$(GDAL_SLIB)
+
 $(GDAL_SLIB):	$(GDALA_DEP)
 	(cd ..; $(MAKE) check-lib)
 
