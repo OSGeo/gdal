@@ -39,7 +39,7 @@
 
 #include "avc.h"
 
-#ifdef _WIN32
+#if defined _WIN32 && !defined(unix) && !defined(__MINGW32_VERSION)
 #  include <mbctype.h>
 #endif
 
@@ -100,7 +100,7 @@ void AVCFreeDBCSInfo(AVCDBCSInfo *psInfo)
  **********************************************************************/
 int AVCGetDBCSCodePage()
 {
-#ifdef _WIN32
+#if defined _WIN32 && !defined(unix) && !defined(__MINGW32_VERSION)
     int nCP;
     nCP = _getmbcp();
 
