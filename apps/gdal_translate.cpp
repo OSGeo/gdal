@@ -28,6 +28,9 @@
  * ****************************************************************************
  *
  * $Log$
+ * Revision 1.9  2002/11/21 20:48:06  warmerda
+ * added GCP copying when creating virtual dataset
+ *
  * Revision 1.8  2002/11/06 15:05:55  warmerda
  * added -a_srs
  *
@@ -525,6 +528,13 @@ int main( int argc, char ** argv )
             adfGeoTransform[5] *= anSrcWin[3] / (double) nOYSize;
             
             poVDS->SetGeoTransform( adfGeoTransform );
+        }
+
+        if( GDALGetGCPCount( hDataset ) > 0 )
+        {
+            poVDS->SetGCPs( GDALGetGCPCount( hDataset ),
+                            GDALGetGCPs( hDataset ),
+                            GDALGetGCPProjection( hDataset ) );
         }
         
         poVDS->SetMetadata( ((GDALDataset*)hDataset)->GetMetadata() );
