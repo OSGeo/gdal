@@ -5,7 +5,9 @@
 /* Define if you have the vprintf function.  */
 #define HAVE_VPRINTF
 #define HAVE_VSNPRINTF
+#define HAVE_SNPRINTF
 #define vsnprintf _vsnprintf
+#define snprintf _snprintf
 
 /* Define if you have the ANSI C header files.  */
 #ifndef STDC_HEADERS
