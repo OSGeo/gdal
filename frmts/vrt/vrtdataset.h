@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2004/07/28 16:56:02  warmerda
+ * added VRTSourcedRasterBand
+ *
  * Revision 1.13  2004/04/15 18:54:38  warmerda
  * added UnitType, Offset, Scale and CategoryNames support
  *
@@ -153,7 +156,7 @@ class CPL_DLL VRTDataset : public GDALDataset
     virtual CPLErr AddBand( GDALDataType eType, 
                             char **papszOptions=NULL );
 
-    CPLXMLNode *   SerializeToXML(void);
+    virtual CPLXMLNode *   SerializeToXML(void);
  
     static GDALDataset *Open( GDALOpenInfo * );
     static GDALDataset *OpenXML( const char *, const char * );
@@ -164,15 +167,14 @@ class CPL_DLL VRTDataset : public GDALDataset
 
 /************************************************************************/
 /*                            VRTRasterBand                             */
+/*                                                                      */
+/*      Provides support for all the various kinds of metadata but      */
+/*      no raster access.  That is handled by derived classes.          */
 /************************************************************************/
 
 class CPL_DLL VRTRasterBand : public GDALRasterBand
 {
-    int		   nSources;
-    VRTSource    **papoSources;
-
-    int            bEqualAreas;
-
+  protected:
     int            bNoDataValueSet;
     double         dfNoDataValue;
 
@@ -188,23 +190,70 @@ class CPL_DLL VRTRasterBand : public GDALRasterBand
 
     void           Initialize( int nXSize, int nYSize );
 
+  public:
+
+    		   VRTRasterBand();
+    virtual        ~VRTRasterBand();
+
+    virtual CPLErr         XMLInit( CPLXMLNode *, const char * );
+    virtual CPLXMLNode *   SerializeToXML(void);
+
+#define VRT_NODATA_UNSET -1234.56
+
+    virtual CPLErr SetNoDataValue( double );
+    virtual double GetNoDataValue( int *pbSuccess = NULL );
+
+    virtual CPLErr SetColorTable( GDALColorTable * ); 
+    virtual GDALColorTable *GetColorTable();
+
+    virtual CPLErr SetColorInterpretation( GDALColorInterp );
+    virtual GDALColorInterp GetColorInterpretation();
+
+    virtual const char *GetUnitType();
+    CPLErr SetUnitType( const char * ); 
+
+    virtual char **GetCategoryNames();
+    virtual CPLErr SetCategoryNames( char ** );
+
+    virtual double GetOffset( int *pbSuccess = NULL );
+    CPLErr SetOffset( double );
+    virtual double GetScale( int *pbSuccess = NULL );
+    CPLErr SetScale( double );
+
+};
+
+/************************************************************************/
+/*                         VRTSourcedRasterBand                         */
+/************************************************************************/
+
+class CPL_DLL VRTSourcedRasterBand : public VRTRasterBand
+{
+    int		   nSources;
+    VRTSource    **papoSources;
+
+    int            bEqualAreas;
+
+    void           Initialize( int nXSize, int nYSize );
+
     virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
                               void *, int, int, GDALDataType,
                               int, int );
   public:
 
-    		   VRTRasterBand( GDALDataset *poDS, int nBand );
-                   VRTRasterBand( GDALDataType eType, 
-                                  int nXSize, int nYSize );
-                   VRTRasterBand( GDALDataset *poDS, int nBand, 
-                                  GDALDataType eType, 
-                                  int nXSize, int nYSize );
-    virtual        ~VRTRasterBand();
+    		   VRTSourcedRasterBand( GDALDataset *poDS, int nBand );
+                   VRTSourcedRasterBand( GDALDataType eType, 
+                                         int nXSize, int nYSize );
+                   VRTSourcedRasterBand( GDALDataset *poDS, int nBand, 
+                                         GDALDataType eType, 
+                                         int nXSize, int nYSize );
+    virtual        ~VRTSourcedRasterBand();
 
-    CPLErr         XMLInit( CPLXMLNode *, const char * );
-    CPLXMLNode *   SerializeToXML(void);
+    virtual char      **GetMetadata( const char * pszDomain = "" );
+    virtual CPLErr      SetMetadata( char ** papszMetadata,
+                                     const char * pszDomain = "" );
 
-#define VRT_NODATA_UNSET -1234.56
+    virtual CPLErr         XMLInit( CPLXMLNode *, const char * );
+    virtual CPLXMLNode *   SerializeToXML(void);
 
     CPLErr         AddSource( VRTSource * );
     CPLErr         AddSimpleSource( GDALRasterBand *poSrcBand, 
@@ -228,31 +277,36 @@ class CPL_DLL VRTRasterBand : public GDALRasterBand
 
 
     virtual CPLErr IReadBlock( int, int, void * );
+};
+
+/************************************************************************/
+/*                         VRTWarpedRasterBand                          */
+/************************************************************************/
+
+class CPL_DLL VRTWarpedRasterBand : public VRTRasterBand
+{
+    int		   nSources;
+    VRTSource    **papoSources;
+
+    int            bEqualAreas;
+
+    void           Initialize( int nXSize, int nYSize );
+
+  public:
+    
+                   VRTWarpedRasterBand( GDALDataset *poDS, int nBand, 
+                                        GDALDataType eType, 
+                                        int nXSize, int nYSize );
+    virtual        ~VRTWarpedRasterBand();
 
     virtual char      **GetMetadata( const char * pszDomain = "" );
     virtual CPLErr      SetMetadata( char ** papszMetadata,
                                      const char * pszDomain = "" );
 
-    virtual CPLErr SetNoDataValue( double );
-    virtual double GetNoDataValue( int *pbSuccess = NULL );
+    virtual CPLErr         XMLInit( CPLXMLNode *, const char * );
+    virtual CPLXMLNode *   SerializeToXML(void);
 
-    virtual CPLErr SetColorTable( GDALColorTable * ); 
-    virtual GDALColorTable *GetColorTable();
-
-    virtual CPLErr SetColorInterpretation( GDALColorInterp );
-    virtual GDALColorInterp GetColorInterpretation();
-
-    virtual const char *GetUnitType();
-    CPLErr SetUnitType( const char * ); 
-
-    virtual char **GetCategoryNames();
-    virtual CPLErr SetCategoryNames( char ** );
-
-    virtual double GetOffset( int *pbSuccess = NULL );
-    CPLErr SetOffset( double );
-    virtual double GetScale( int *pbSuccess = NULL );
-    CPLErr SetScale( double );
-
+    virtual CPLErr IReadBlock( int, int, void * );
 };
 
 /************************************************************************/
