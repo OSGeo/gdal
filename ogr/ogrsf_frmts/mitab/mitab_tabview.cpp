@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_tabview.cpp,v 1.11 2002/01/10 05:13:22 daniel Exp $
+ * $Id: mitab_tabview.cpp,v 1.12 2002/02/22 20:44:51 julien Exp $
  *
  * Name:     mitab_tabfile.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -32,6 +32,11 @@
  **********************************************************************
  *
  * $Log: mitab_tabview.cpp,v $
+ * Revision 1.12  2002/02/22 20:44:51  julien
+ * Prevent infinite loop with TABRelation by suppress the m_poCurFeature object
+ * from the class and setting it in the calling function and add GetFeature in
+ * the class. (bug 706)
+ *
  * Revision 1.11  2002/01/10 05:13:22  daniel
  * Prevent crash if .IND file is deleted (but 703)
  *
@@ -797,7 +802,16 @@ TABFeature *TABView::GetFeatureRef(int nFeatureId)
         return NULL;
     }
 
-    return m_poRelation->GetFeatureRef(nFeatureId);
+    if(m_poCurFeature)
+    {
+        delete m_poCurFeature;
+        m_poCurFeature = NULL;
+    }
+
+    m_poCurFeature = m_poRelation->GetFeature(nFeatureId);
+    m_nCurFeatureId = nFeatureId;
+    m_poCurFeature->SetFID(m_nCurFeatureId);
+    return m_poCurFeature;
 }
 
 
@@ -1212,7 +1226,6 @@ TABRelation::TABRelation()
     m_panRelTableFieldMap = NULL;
 
     m_poDefn = NULL;
-    m_poCurFeature = NULL;
 }
 
 /**********************************************************************
@@ -1253,11 +1266,6 @@ void TABRelation::ResetAllMembers()
     CPLFree(m_panRelTableFieldMap);
     m_panRelTableFieldMap = NULL;
 
-    if (m_poCurFeature)
-    {
-        delete m_poCurFeature;
-        m_poCurFeature = NULL;
-    }
     /*-----------------------------------------------------------------
      * Note: we have to check the reference count before deleting m_poDefn
      *----------------------------------------------------------------*/
@@ -1494,14 +1502,12 @@ int  TABRelation::CreateRelFields()
 }
 
 /**********************************************************************
- *                   TABRelation::GetFeatureRef()
+ *                   TABRelation::GetFeature()
  *
  * Fill and return a TABFeature object for the specified feature id.
  *
- * The retuned pointer is a reference to an object owned and maintained
- * by this TABRelation object.  It should not be altered or freed by the 
- * caller and its contents is guaranteed to be valid only until the next
- * call to GetFeatureRef() or until the object is deleted.
+ * The retuned pointer is a new TABFeature that will have to be freed
+ * by the caller.
  *
  * Returns NULL if the specified feature id does not exist of if an
  * error happened.  In any case, CPLError() will have been called to
@@ -1513,9 +1519,10 @@ int  TABRelation::CreateRelFields()
  * which can be big sometimes... but this would imply changes at the
  * lower-level in the lib. and we won't go there yet.
  **********************************************************************/
-TABFeature *TABRelation::GetFeatureRef(int nFeatureId)
+TABFeature *TABRelation::GetFeature(int nFeatureId)
 {
     TABFeature *poMainFeature;
+    TABFeature *poCurFeature;
 
     /*-----------------------------------------------------------------
      * Make sure init() has been called
@@ -1528,15 +1535,6 @@ TABFeature *TABRelation::GetFeatureRef(int nFeatureId)
     }
 
     /*-----------------------------------------------------------------
-     * Flush current feature object
-     *----------------------------------------------------------------*/
-    if (m_poCurFeature)
-    {
-        delete m_poCurFeature;
-        m_poCurFeature = NULL;
-    }
-
-    /*-----------------------------------------------------------------
      * Read main feature and create a new one of the right type
      *----------------------------------------------------------------*/
     if ((poMainFeature = m_poMainTable->GetFeatureRef(nFeatureId)) == NULL)
@@ -1546,18 +1544,18 @@ TABFeature *TABRelation::GetFeatureRef(int nFeatureId)
         return NULL;
     }
 
-    m_poCurFeature = poMainFeature->CloneTABFeature(m_poDefn);
+    poCurFeature = poMainFeature->CloneTABFeature(m_poDefn);
 
     /*-----------------------------------------------------------------
      * Keep track of FID and copy the geometry 
      *----------------------------------------------------------------*/
-    m_poCurFeature->SetFID(nFeatureId);
+    poCurFeature->SetFID(nFeatureId);
 
-    if (m_poCurFeature->GetFeatureClass() != TABFCNoGeomFeature)
+    if (poCurFeature->GetFeatureClass() != TABFCNoGeomFeature)
     {
         OGRGeometry *poGeom;
         poGeom = poMainFeature->GetGeometryRef();
-        m_poCurFeature->SetGeometry(poGeom);
+        poCurFeature->SetGeometry(poGeom);
     }
 
     /*-----------------------------------------------------------------
@@ -1585,7 +1583,7 @@ TABFeature *TABRelation::GetFeatureRef(int nFeatureId)
     {
         if (m_panMainTableFieldMap[i] != -1)
         {
-            m_poCurFeature->SetField(m_panMainTableFieldMap[i], 
+            poCurFeature->SetField(m_panMainTableFieldMap[i], 
                                      poMainFeature->GetRawFieldRef(i));
         }
     }
@@ -1600,12 +1598,12 @@ TABFeature *TABRelation::GetFeatureRef(int nFeatureId)
     {
         if (m_panRelTableFieldMap[i] != -1)
         {
-            m_poCurFeature->SetField(m_panRelTableFieldMap[i], 
+            poCurFeature->SetField(m_panRelTableFieldMap[i], 
                                      poRelFeature->GetRawFieldRef(i));
         }
     }
 
-    return m_poCurFeature;
+    return poCurFeature;
 }
 
 
