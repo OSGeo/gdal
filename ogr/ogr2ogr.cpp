@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2001/09/27 14:50:10  warmerda
+ * added untested -spat and -where support
+ *
  * Revision 1.10  2001/09/21 16:19:50  warmerda
  * added support for -a_srs and -t_srs options
  *
@@ -94,6 +97,8 @@ int main( int nArgc, char ** papszArgv )
     const char  *pszOutputSRSDef = NULL;
     OGRSpatialReference *poOutputSRS = NULL;
     const char  *pszNewLayerName = NULL;
+    const char *pszWHERE = NULL;
+    OGRGeometry *poSpatialFilter = NULL;
     
 /* -------------------------------------------------------------------- */
 /*      Register format(s).                                             */
@@ -133,6 +138,28 @@ int main( int nArgc, char ** papszArgv )
         {
             pszOutputSRSDef = papszArgv[++iArg];
             bTransform = TRUE;
+        }
+        else if( EQUAL(papszArgv[iArg],"-spat") 
+                 && papszArgv[iArg+1] != NULL 
+                 && papszArgv[iArg+2] != NULL 
+                 && papszArgv[iArg+3] != NULL 
+                 && papszArgv[iArg+4] != NULL )
+        {
+            OGRLinearRing  oRing;
+
+            oRing.addPoint( atof(papszArgv[iArg+1]), atof(papszArgv[iArg+2]) );
+            oRing.addPoint( atof(papszArgv[iArg+1]), atof(papszArgv[iArg+4]) );
+            oRing.addPoint( atof(papszArgv[iArg+3]), atof(papszArgv[iArg+4]) );
+            oRing.addPoint( atof(papszArgv[iArg+3]), atof(papszArgv[iArg+2]) );
+            oRing.addPoint( atof(papszArgv[iArg+1]), atof(papszArgv[iArg+2]) );
+
+            poSpatialFilter = new OGRPolygon();
+            ((OGRPolygon *) poSpatialFilter)->addRing( &oRing );
+            iArg += 4;
+        }
+        else if( EQUAL(papszArgv[iArg],"-where") && papszArgv[iArg+1] != NULL )
+        {
+            pszWHERE = papszArgv[++iArg];
         }
         else if( papszArgv[iArg][0] == '-' )
         {
@@ -256,6 +283,12 @@ int main( int nArgc, char ** papszArgv )
             || CSLFindString( papszLayers,
                               poLayer->GetLayerDefn()->GetName() ) != -1 )
         {
+            if( pszWHERE != NULL )
+                poLayer->SetAttributeFilter( pszWHERE );
+            
+            if( poSpatialFilter != NULL )
+                poLayer->SetSpatialFilter( poSpatialFilter );
+            
             if( !TranslateLayer( poDS, poLayer, poODS, papszLCO, 
                                  pszNewLayerName, bTransform, poOutputSRS ) 
                 && !bSkipFailures )
@@ -293,6 +326,7 @@ static void Usage()
     OGRSFDriverRegistrar        *poR = OGRSFDriverRegistrar::GetRegistrar();
 
     printf( "Usage: ogr2ogr [-skipfailures] [-f format_name]\n"
+            "               [-where restricted_where] [-spat xmin ymin xmax ymax]\n"
             "               [-t_srs srs_def] [-a_srs srs_def]\n"
             "               [[-dsco NAME=VALUE] ...] dst_datasource_name\n"
             "               src_datasource_name\n"
@@ -308,7 +342,9 @@ static void Usage()
             printf( "     -f \"%s\"\n", poDriver->GetName() );
     }
 
-    printf( " -dsco NAME=VALUE: Dataset creation option (format specific)\n"
+    printf( " -where restricted_where: Attribute query (like SQL WHERE)\n" 
+            " -spat xmin ymin xmax ymax: spatial query extents\n"
+            " -dsco NAME=VALUE: Dataset creation option (format specific)\n"
             " -lco  NAME=VALUE: Layer creation option (format specific)\n"
             " -nln name: Assign an alternate name to the new layer\n" );
 
