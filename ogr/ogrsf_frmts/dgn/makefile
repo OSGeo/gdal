@@ -1,5 +1,5 @@
 
-OBJ	=	dgnopen.obj dgnread.obj dgnfloat.obj \
+OBJ	=	dgnopen.obj dgnread.obj dgnfloat.obj dgnstroke.obj \
 		ogrdgndriver.obj ogrdgndatasource.obj ogrdgnlayer.obj 
 
 EXTRAFLAGS =	-I.. -I..\..
