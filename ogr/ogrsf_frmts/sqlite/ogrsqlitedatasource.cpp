@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2004/07/13 15:11:19  warmerda
+ * implemented SetFeature, transaction support
+ *
  * Revision 1.4  2004/07/12 21:50:59  warmerda
  * fixed up SQL escaping
  *
@@ -56,6 +59,8 @@ OGRSQLiteDataSource::OGRSQLiteDataSource()
     pszName = NULL;
     papoLayers = NULL;
     nLayers = 0;
+
+    nSoftTransactionLevel = 0;
 
     nKnownSRID = 0;
     panSRID = NULL;
@@ -592,3 +597,127 @@ void OGRSQLiteDataSource::DeleteLayer( const char *pszLayerName )
     /* We may need to drop the column from GEOMETRY_COLUMNS in the future. */
 }
 
+/************************************************************************/
+/*                        SoftStartTransaction()                        */
+/*                                                                      */
+/*      Create a transaction scope.  If we already have a               */
+/*      transaction active this isn't a real transaction, but just      */
+/*      an increment to the scope count.                                */
+/************************************************************************/
+
+OGRErr OGRSQLiteDataSource::SoftStartTransaction()
+
+{
+    nSoftTransactionLevel++;
+
+    if( nSoftTransactionLevel == 1 )
+    {
+        int rc;
+        char *pszErrMsg;
+        
+        CPLDebug( "OGR_SQLITE", "BEGIN Transaction" );
+        rc = sqlite3_exec( hDB, "BEGIN", NULL, NULL, &pszErrMsg );
+        if( rc != SQLITE_OK )
+        {
+            nSoftTransactionLevel--;
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                      "BEGIN transaction failed: %s",
+                      pszErrMsg );
+            sqlite3_free( pszErrMsg );
+            return OGRERR_FAILURE;
+        }
+    }
+
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                             SoftCommit()                             */
+/*                                                                      */
+/*      Commit the current transaction if we are at the outer           */
+/*      scope.                                                          */
+/************************************************************************/
+
+OGRErr OGRSQLiteDataSource::SoftCommit()
+
+{
+    if( nSoftTransactionLevel <= 0 )
+    {
+        CPLDebug( "OGR_SQLITE", "SoftCommit() with no transaction active." );
+        return OGRERR_FAILURE;
+    }
+
+    nSoftTransactionLevel--;
+
+    if( nSoftTransactionLevel == 0 )
+    {
+        int rc;
+        char *pszErrMsg;
+        
+        CPLDebug( "OGR_SQLITE", "COMMIT Transaction" );
+        rc = sqlite3_exec( hDB, "COMMIT", NULL, NULL, &pszErrMsg );
+        if( rc != SQLITE_OK )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                      "COMMIT transaction failed: %s",
+                      pszErrMsg );
+            sqlite3_free( pszErrMsg );
+            return OGRERR_FAILURE;
+        }
+    }
+
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                            SoftRollback()                            */
+/*                                                                      */
+/*      Force a rollback of the current transaction if there is one,    */
+/*      even if we are nested several levels deep.                      */
+/************************************************************************/
+
+OGRErr OGRSQLiteDataSource::SoftRollback()
+
+{
+    if( nSoftTransactionLevel <= 0 )
+    {
+        CPLDebug( "OGR_SQLITE", "SoftRollback() with no transaction active." );
+        return OGRERR_FAILURE;
+    }
+
+    nSoftTransactionLevel = 0;
+
+    int rc;
+    char *pszErrMsg;
+    
+    CPLDebug( "OGR_SQLITE", "ROLLBACK Transaction" );
+    rc = sqlite3_exec( hDB, "ROLLBACK", NULL, NULL, &pszErrMsg );
+    if( rc != SQLITE_OK )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "ROLLBACK transaction failed: %s",
+                  pszErrMsg );
+        sqlite3_free( pszErrMsg );
+        return OGRERR_FAILURE;
+    }
+    
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                        FlushSoftTransaction()                        */
+/*                                                                      */
+/*      Force the unwinding of any active transaction, and it's         */
+/*      commit.                                                         */
+/************************************************************************/
+
+OGRErr OGRSQLiteDataSource::FlushSoftTransaction()
+
+{
+    if( nSoftTransactionLevel <= 0 )
+        return OGRERR_NONE;
+
+    nSoftTransactionLevel = 1;
+
+    return SoftCommit();
+}
