@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2001/10/18 17:04:09  warmerda
+ * added hacks to determine record length and pd pixels/line for Telaviv ERS data
+ *
  * Revision 1.7  2001/08/22 16:54:08  warmerda
  * fixed use of prefix field.  Zero prefix bytes(ie ERS-SLC) now believed.
  *
@@ -111,6 +114,8 @@ CeosRecipeType_t RadarSatRecipe[] =
       273, 2, __CEOS_REC_TYP_I }, /* Records per line */
     { __CEOS_REC_PPR, 0, __CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
       0, 0, __CEOS_REC_TYP_I }, /* Pixels Per Record -- need to fill record type */
+    { __CEOS_REC_PDBPR, 1, __CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
+      281, 8, __CEOS_REC_TYP_I }, /* pixel data bytes per record */
     { __CEOS_REC_IDS, 1, __CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
       277, 4, __CEOS_REC_TYP_I }, /* Prefix data per record */
     { __CEOS_REC_FDL, 1, __CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
@@ -257,6 +262,9 @@ int CeosDefaultRecipe( CeosSARVolume_t *volume, void *token )
 		case __CEOS_REC_RPL:
 		    DoExtractInt( ImageDesc->RecordsPerLine );
 		    break;
+		case __CEOS_REC_PDBPR:
+		    DoExtractInt( ImageDesc->PixelDataBytesPerRecord );
+		    break;
 		case __CEOS_REC_FDL:
 		    DoExtractInt( ImageDesc->FileDescriptorLength );
 		    break;
@@ -309,6 +317,21 @@ int CeosDefaultRecipe( CeosSARVolume_t *volume, void *token )
 		
 	    }
 	}
+    }
+
+    /* Some files (Telaviv) don't record the number of pixel groups per line.
+     * Try to derive it from the size of a data group, and the number of
+     * bytes of pixel data if necessary.
+     */
+
+    if( ImageDesc->PixelsPerLine == 0 
+        && ImageDesc->PixelDataBytesPerRecord != 0 
+        && ImageDesc->BytesPerPixel != 0 )
+    {
+        ImageDesc->PixelsPerLine = 
+            ImageDesc->PixelDataBytesPerRecord / ImageDesc->BytesPerPixel;
+        CPLDebug( "SAR_CEOS", "Guessing PixelPerLine to be %d\n", 
+                  ImageDesc->PixelsPerLine );
     }
 
     /* Some files don't have the BytesPerRecord stuff, so we calculate it if possible */
