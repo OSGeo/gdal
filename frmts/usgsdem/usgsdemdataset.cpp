@@ -31,6 +31,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.11  2004/02/24 21:43:39  warmerda
+ * apply elevation offset as well as fVRes
+ *
  * Revision 1.10  2004/02/14 23:26:45  warmerda
  * Added extension metadata.
  *
@@ -212,7 +215,7 @@ CPLErr USGSDEMRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     for( int i = 0; i < GetXSize(); i++)
     {
         int	njunk, nCPoints, lygap;
-        double	djunk, dxStart, dyStart;
+        double	djunk, dxStart, dyStart, dfElevOffset;
 
         fscanf(poGDS->fp, "%d", &njunk);
         fscanf(poGDS->fp, "%d", &njunk);
@@ -221,7 +224,7 @@ CPLErr USGSDEMRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
         dxStart = DConvert(poGDS->fp, 24);
         dyStart = DConvert(poGDS->fp, 24);
-        djunk = DConvert(poGDS->fp, 24);
+        dfElevOffset = DConvert(poGDS->fp, 24);
         djunk = DConvert(poGDS->fp, 24);
         djunk = DConvert(poGDS->fp, 24);
 
@@ -242,15 +245,16 @@ CPLErr USGSDEMRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                 /* leave in output buffer as nodata */;
             else
             {
+                float fComputedElev = nElev * poGDS->fVRes + dfElevOffset;
+
                 if( GetRasterDataType() == GDT_Int16 )
                 {
                     ((GInt16 *) pImage)[i + iY*GetXSize()] = 
-                        (GInt16) (nElev * poGDS->fVRes);
+                        (GInt16) fComputedElev;
                 }
                 else
                 {
-                    ((float *) pImage)[i + iY*GetXSize()] = 
-                        (float) (nElev * poGDS->fVRes);
+                    ((float *) pImage)[i + iY*GetXSize()] = fComputedElev;
                 }
             }
         }
