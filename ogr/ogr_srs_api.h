@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.28  2003/03/12 14:29:34  warmerda
+ * Rename OGRAxisOrientation and OGRDatumType values to avoid conflicts with
+ * the real OGC definitions in applications such as Cadcorps.
+ *
  * Revision 1.27  2003/02/25 04:53:38  warmerda
  * added OSRCopyGeogCSFrom
  *
@@ -130,13 +134,13 @@ CPL_C_START
 /*      Axis orientations (corresponds to CS_AxisOrientationEnum).      */
 /* -------------------------------------------------------------------- */
 typedef enum {
-    CS_AO_Other=0,
-    CS_AO_North=1,
-    CS_AO_South=2,
-    CS_AO_East=3,
-    CS_AO_West=4,
-    CS_AO_Up=5,
-    CS_AO_Down=6
+    OAO_Other=0,
+    OAO_North=1,
+    OAO_South=2,
+    OAO_East=3,
+    OAO_West=4,
+    OAO_Up=5,
+    OAO_Down=6
 } OGRAxisOrientation;
     
 /* -------------------------------------------------------------------- */
@@ -144,22 +148,22 @@ typedef enum {
 /* -------------------------------------------------------------------- */
 
 typedef enum {
-    CS_HD_Min=1000,
-    CS_HD_Other=1000,
-    CS_HD_Classic=1001,
-    CS_HD_Geocentric=1002,
-    CS_HD_Max=1999,
-    CS_VD_Min=2000,
-    CS_VD_Other=2000,
-    CS_VD_Orthometric=2001,
-    CS_VD_Ellipsoidal=2002,
-    CS_VD_AltitudeBarometric=2003,
-    CS_VD_Normal=2004,
-    CS_VD_GeoidModelDerived=2005,
-    CS_VD_Depth=2006,
-    CS_VD_Max=2999,
-    CS_LD_Min=10000,
-    CS_LD_Max=32767
+    ODT_HD_Min=1000,
+    ODT_HD_Other=1000,
+    ODT_HD_Classic=1001,
+    ODT_HD_Geocentric=1002,
+    ODT_HD_Max=1999,
+    ODT_VD_Min=2000,
+    ODT_VD_Other=2000,
+    ODT_VD_Orthometric=2001,
+    ODT_VD_Ellipsoidal=2002,
+    ODT_VD_AltitudeBarometric=2003,
+    ODT_VD_Normal=2004,
+    ODT_VD_GeoidModelDerived=2005,
+    ODT_VD_Depth=2006,
+    ODT_VD_Max=2999,
+    ODT_LD_Min=10000,
+    ODT_LD_Max=32767
 } OGRDatumType; 
 
 /* ==================================================================== */
