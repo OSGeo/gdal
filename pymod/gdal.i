@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.23  2000/10/30 21:25:41  warmerda
+ * added access to CPL error functions
+ *
  * Revision 1.22  2000/10/30 14:15:15  warmerda
  * Fixed nodata function name.
  *
@@ -110,6 +113,9 @@
 %native(NumPyArrayToGDALFilename) py_NumPyArrayToGDALFilename;
 
 void CPLDebug( const char *, const char * );
+void CPLErrorReset();
+int CPLGetLastErrorNo();
+const char *CPLGetLastErrorMsg();
 
 typedef int GDALDataType;
 typedef int GDALAccess;

@@ -33,8 +33,8 @@
  * and things like that.
  *
  * $Log$
- * Revision 1.21  2000/10/20 04:20:59  warmerda
- * added SetStatePlane
+ * Revision 1.22  2000/10/30 21:25:41  warmerda
+ * added access to CPL error functions
  *
  ************************************************************************/
 
@@ -1149,10 +1149,10 @@ py_GDALGetDescription(PyObject *self, PyObject *args) {
 }
 
 /************************************************************************/
-/*                         GDALGetNoDataValue()                         */
+/*                         GDALGetRasterNoDataValue()                   */
 /************************************************************************/
 static PyObject *
-py_GDALGetNoDataValue(PyObject *self, PyObject *args) {
+py_GDALGetRasterNoDataValue(PyObject *self, PyObject *args) {
 
     GDALRasterBandH  hObject;
     char *_argc0 = NULL;
@@ -1441,6 +1441,42 @@ static PyObject *_wrap_CPLDebug(PyObject *self, PyObject *args) {
     CPLDebug(_arg0,_arg1);
     Py_INCREF(Py_None);
     _resultobj = Py_None;
+    return _resultobj;
+}
+
+static PyObject *_wrap_CPLErrorReset(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,":CPLErrorReset")) 
+        return NULL;
+    CPLErrorReset();
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+    return _resultobj;
+}
+
+static PyObject *_wrap_CPLGetLastErrorNo(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    int  _result;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,":CPLGetLastErrorNo")) 
+        return NULL;
+    _result = (int )CPLGetLastErrorNo();
+    _resultobj = Py_BuildValue("i",_result);
+    return _resultobj;
+}
+
+static PyObject *_wrap_CPLGetLastErrorMsg(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    char * _result;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,":CPLGetLastErrorMsg")) 
+        return NULL;
+    _result = (char *)CPLGetLastErrorMsg();
+    _resultobj = Py_BuildValue("s", _result);
     return _resultobj;
 }
 
@@ -3464,7 +3500,7 @@ static PyMethodDef _gdalMethods[] = {
 	 { "OSRReference", _wrap_OSRReference, 1 },
 	 { "OSRDestroySpatialReference", _wrap_OSRDestroySpatialReference, 1 },
 	 { "OSRNewSpatialReference", _wrap_OSRNewSpatialReference, 1 },
-	 { "GDALGetNoDataValue", py_GDALGetNoDataValue, 1 },
+	 { "GDALGetRasterNoDataValue", py_GDALGetRasterNoDataValue, 1 },
 	 { "GDALGetDescription", py_GDALGetDescription, 1 },
 	 { "GDALGetMetadata", py_GDALGetMetadata, 1 },
 	 { "GDALGetRasterHistogram", py_GDALGetRasterHistogram, 1 },
@@ -3532,6 +3568,9 @@ static PyMethodDef _gdalMethods[] = {
 	 { "GDALGetColorInterpretationName", _wrap_GDALGetColorInterpretationName, 1 },
 	 { "GDALGetDataTypeName", _wrap_GDALGetDataTypeName, 1 },
 	 { "GDALGetDataTypeSize", _wrap_GDALGetDataTypeSize, 1 },
+	 { "CPLGetLastErrorMsg", _wrap_CPLGetLastErrorMsg, 1 },
+	 { "CPLGetLastErrorNo", _wrap_CPLGetLastErrorNo, 1 },
+	 { "CPLErrorReset", _wrap_CPLErrorReset, 1 },
 	 { "CPLDebug", _wrap_CPLDebug, 1 },
 	 { "NumPyArrayToGDALFilename", py_NumPyArrayToGDALFilename, 1 },
 	 { NULL, NULL }

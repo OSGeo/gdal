@@ -29,6 +29,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.19  2000/10/30 21:25:41  warmerda
+# added access to CPL error functions
+#
 # Revision 1.18  2000/10/30 14:12:49  warmerda
 # Fixed bug in GetRasterColorTable().
 #
@@ -80,6 +83,15 @@ from gdalconst import *
 
 def Debug(msg_class, message):
     _gdal.CPLDebug( msg_class, message )
+
+def ErrorReset():
+    _gdal.CPLErrorReset()
+
+def GetLastErrorNo():
+    return _gdal.CPLGetLastErrorNo()
+    
+def GetLastErrorMsg():
+    return _gdal.CPLGetLastErrorMsg()
     
 def GetCacheMax():
     return _gdal.GDALGetCacheMax()
