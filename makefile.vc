@@ -170,3 +170,17 @@ devinstall: install
 	copy ogr\ogrsf_frmts\*.h $(INCDIR)
 !ENDIF
 	copy gdal_i.lib $(LIBDIR)
+
+SCRIPT_CONFIG = .\pymod\ng\setup.ini
+
+gdalvars: makefile.vc nmake.opt
+	-del $(SCRIPT_CONFIG)
+	echo $(GDAL_HOME) > $(SCRIPT_CONFIG)
+        findstr /c:"define GDAL_RELEASE_NAME " .\gcore\gdal.h  >> $(SCRIPT_CONFIG)
+        echo $(EXTERNAL_LIBS) >> $(SCRIPT_CONFIG)
+
+swig_python: makefile.vc nmake.opt
+        cd .\pymod\ng
+        "d:\swig\SWIG-1.3.24\swig.exe" -c++ -python -modern -new_repr -o gdal_wrap.cpp gdal.i
+        "d:\swig\SWIG-1.3.24\swig.exe" -c++ -python -modern -new_repr -o osr_wrap.cpp osr.i
+        
