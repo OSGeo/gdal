@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_spatialref.cpp,v 1.29 2001/04/04 21:43:19 warmerda Exp $
+ * $Id: mitab_spatialref.cpp,v 1.30 2001/04/23 17:38:06 warmerda Exp $
  *
  * Name:     mitab_spatialref.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log: mitab_spatialref.cpp,v $
+ * Revision 1.30  2001/04/23 17:38:06  warmerda
+ * fixed use of freed points bug for datum 999/9999
+ *
  * Revision 1.29  2001/04/04 21:43:19  warmerda
  * added code to set WGS84 values
  *
@@ -1159,10 +1162,10 @@ int TABFile::SetSpatialRef(OGRSpatialReference *poSpatialRef)
             sTABProj.adDatumParams[4] = atof(papszFields[9]);
         }
 
-        CSLDestroy( papszFields );
-
         if( CSLCount(papszFields) < 5 )
             psDatumInfo = asDatumInfoList+0; /* WKS84 */
+
+        CSLDestroy( papszFields );
     }
     
     /*-----------------------------------------------------------------
