@@ -43,6 +43,10 @@
  *    application termination. 
  * 
  * $Log$
+ * Revision 1.28  2004/08/25 13:42:37  warmerda
+ * Added png version checking after png_create_read_struct() as per suggestion from
+ * Ben Discoe.
+ *
  * Revision 1.27  2004/05/28 16:05:54  warmerda
  * fix bug in bGeoTransformValid setting reading worldfiles
  *
@@ -639,6 +643,16 @@ GDALDataset *PNGDataset::Open( GDALOpenInfo * poOpenInfo )
     
     poDS->hPNG = png_create_read_struct( PNG_LIBPNG_VER_STRING, poDS, 
                                          NULL, NULL );
+    if (poDS->hPNG == NULL)
+    {
+        int version = png_access_version_number();
+        CPLError( CE_Failure, CPLE_NotSupported, 
+                  "The PNG driver failed to access libpng with version '%s',"
+                  " library is actually version '%d'.\n",
+                  PNG_LIBPNG_VER_STRING, version);
+        delete poDS;
+        return NULL;
+    }
 
     poDS->psPNGInfo = png_create_info_struct( poDS->hPNG );
 
