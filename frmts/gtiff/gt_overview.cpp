@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2001/06/25 14:44:15  warmerda
+ * Fixed to return success if no bands requested to be processed.
+ *
  * Revision 1.6  2000/09/25 21:16:24  warmerda
  * Avoid initialization warnings.
  *
@@ -72,7 +75,7 @@ GTIFFBuildOverviews( const char * pszFilename,
     int   nXSize=0, nYSize=0;
 
     if( nBands == 0 || nOverviews == 0 )
-        return CE_Failure;
+        return CE_None;
 
 /* -------------------------------------------------------------------- */
 /*      Verify that the list of bands is suitable for emitting in       */
