@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.7  1999/06/27 16:50:52  warmerda
+ * added support for CPL_DEBUG and CPL_LOG variables
+ *
  * Revision 1.6  1999/06/26 02:46:11  warmerda
  * Fixed initialization of debug messages.
  *
@@ -59,7 +62,9 @@
 static char gszCPLLastErrMsg[2000] = "";
 static int  gnCPLLastErrNo = 0;
 
-static void (*gpfnCPLErrorHandler)(CPLErr, int, const char *) = NULL;
+static void CPLDefaultErrorHandler( CPLErr, int, const char *);
+static void (*gpfnCPLErrorHandler)(CPLErr, int, const char *) 
+                                        = CPLDefaultErrorHandler;
 
 /**********************************************************************
  *                          CPLError()
@@ -112,14 +117,7 @@ void    CPLError(CPLErr eErrClass, int err_no, const char *fmt, ...)
      */
     gnCPLLastErrNo = err_no;
 
-    if (gpfnCPLErrorHandler != NULL)
-    {
-        gpfnCPLErrorHandler(eErrClass, err_no, gszCPLLastErrMsg);
-    }
-    else
-    {
-        fprintf(stderr, "ERROR %d: %s\n", gnCPLLastErrNo, gszCPLLastErrMsg);
-    }
+    gpfnCPLErrorHandler(eErrClass, err_no, gszCPLLastErrMsg);
 
     if( eErrClass == CE_Fatal )
         abort();
@@ -155,6 +153,27 @@ void CPLDebug( const char * pszCategory, const char * pszFormat, ... )
 {
     char	*pszMessage;
     va_list args;
+    const char      *pszDebug = getenv("CPL_DEBUG");
+
+/* -------------------------------------------------------------------- */
+/*      Does this message pass our current criteria?                    */
+/* -------------------------------------------------------------------- */
+    if( pszDebug == NULL )
+        return;
+
+    if( !EQUAL(pszDebug,"ON") && !EQUAL(pszDebug,"") )
+    {
+        int            i, nLen = strlen(pszCategory);
+
+        for( i = 0; pszDebug[i] != '\0'; i++ )
+        {
+            if( EQUALN(pszCategory,pszDebug+i,nLen) )
+                break;
+        }
+
+        if( pszDebug[i] == '\0' )
+            return;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Format the error message                                        */
@@ -174,15 +193,7 @@ void CPLDebug( const char * pszCategory, const char * pszFormat, ... )
 /*      If the user provided his own error handling function, then call */
 /*      it, otherwise print the error to stderr and return.             */
 /* -------------------------------------------------------------------- */
-
-    if (gpfnCPLErrorHandler != NULL)
-    {
-        gpfnCPLErrorHandler(CE_Debug, CPLE_None, gszCPLLastErrMsg);
-    }
-    else
-    {
-        fprintf(stderr, "%s\n", pszMessage);
-    }
+    gpfnCPLErrorHandler(CE_Debug, CPLE_None, pszMessage);
 
     VSIFree( pszMessage );
 }
@@ -242,6 +253,40 @@ const char* CPLGetLastErrorMsg()
 {
     return gszCPLLastErrMsg;
 }
+
+/************************************************************************/
+/*                       CPLDefaultErrorHandler()                       */
+/************************************************************************/
+
+static void CPLDefaultErrorHandler( CPLErr eErrClass, int nError, 
+                                    const char * pszErrorMsg )
+
+{
+    static int       bLogInit = FALSE;
+    static FILE *    fpLog = stderr;
+
+    if( !bLogInit )
+    {
+        bLogInit = TRUE;
+
+        if( getenv( "CPL_LOG" ) != NULL )
+        {
+            fpLog = fopen( getenv("CPL_LOg"), "wt" );
+            if( fpLog == NULL )
+                fpLog = stderr;
+        }
+    }
+
+    if( eErrClass == CE_Debug )
+        fprintf( fpLog, "%s\n", pszErrorMsg );
+    else if( eErrClass == CE_Warning )
+        fprintf( fpLog, "Warning %d: %s\n", nError, pszErrorMsg );
+    else
+        fprintf( fpLog, "ERROR %d: %s\n", nError, pszErrorMsg );
+
+    fflush( fpLog );
+}
+
 
 /**********************************************************************
  *                          CPLSetErrorHandler()
