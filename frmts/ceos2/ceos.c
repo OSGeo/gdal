@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2001/10/18 17:03:21  warmerda
+ * use DetermineCeosRecordBodyLength internally
+ *
  * Revision 1.3  2001/07/18 04:51:56  warmerda
  * added CPL_CVSID
  *
@@ -82,7 +85,9 @@ void InitCeosRecordWithHeader(CeosRecord_t *record, uchar *header, uchar *buffer
 {
     if(record && buffer && header)
     {
-	CeosToNative(&(record->Length),header+__LENGTH_OFF,sizeof(record->Length), sizeof( record->Length ) );
+        if( record->Length != 0 )
+            record->Length = DetermineCeosRecordBodyLength( header );
+
 	if((record->Buffer = HMalloc(record->Length)) == NULL)
 	{
 	    record->Length = 0;
@@ -107,6 +112,7 @@ int DetermineCeosRecordBodyLength(const uchar *header)
     if(header)
     {
 	CeosToNative(&i,header+__LENGTH_OFF,sizeof( i ), sizeof( i ) );
+
 	return i;
     }
 
