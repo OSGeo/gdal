@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2002/03/06 20:08:47  warmerda
+ * save/use .gfs file by default
+ *
  * Revision 1.3  2002/01/25 20:54:23  warmerda
  * fixed last fix
  *
@@ -147,14 +150,62 @@ int OGRGMLDataSource::Open( const char * pszNewName, int bTestOpen )
     pszName = CPLStrdup( pszNewName );
 
 /* -------------------------------------------------------------------- */
+/*      Can we find a GML Feature Schema (.gfs) for the input file?     */
+/* -------------------------------------------------------------------- */
+    const char *pszGFSFilename;
+    VSIStatBuf sGFSStatBuf, sGMLStatBuf;
+    int	       bHaveSchema = FALSE;
+
+    pszGFSFilename = CPLResetExtension( pszNewName, "gfs" );
+    if( CPLStat( pszGFSFilename, &sGFSStatBuf ) == 0 )
+    {
+        CPLStat( pszNewName, &sGMLStatBuf );
+
+        if( sGMLStatBuf.st_mtime > sGFSStatBuf.st_mtime )
+        {
+            CPLDebug( "GML", 
+                      "Found %s but ignoring because it appears\n"
+                      "be older than the associated GML file.", 
+                      pszGFSFilename );
+        }
+        else
+        {
+            bHaveSchema = poReader->LoadClasses( pszGFSFilename );
+        }
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Force a first pass to establish the schema.  Eventually we      */
 /*      will have mechanisms for remembering the schema and related     */
 /*      information.                                                    */
 /* -------------------------------------------------------------------- */
-    if( !poReader->PrescanForSchema() )
+    if( !bHaveSchema && !poReader->PrescanForSchema( TRUE ) )
     {
         // we assume an errors have been reported.
         return FALSE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Save the schema file if possible.  Don't make a fuss if we      */
+/*      can't ... could be read-only directory or something.            */
+/* -------------------------------------------------------------------- */
+    if( !bHaveSchema )
+    {
+        FILE	*fp = NULL;
+
+        pszGFSFilename = CPLResetExtension( pszNewName, "gfs" );
+        if( CPLStat( pszGFSFilename, &sGFSStatBuf ) != 0 
+            && (fp = VSIFOpen( pszGFSFilename, "wt" )) != NULL )
+        {
+            VSIFClose( fp );
+            poReader->SaveClasses( pszGFSFilename );
+        }
+        else
+        {
+            CPLDebug("GML", 
+                     "Not saving %s files already exists or can't be created.",
+                     pszGFSFilename );
+        }
     }
 
 /* -------------------------------------------------------------------- */
