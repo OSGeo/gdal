@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.7  2001/08/22 17:11:30  warmerda
+ * added support for .wld world files
+ *
  * Revision 1.6  2001/07/18 04:51:57  warmerda
  * added CPL_CVSID
  *
@@ -418,7 +421,9 @@ GDALDataset *JPGDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     poDS->bGeoTransformValid = 
         GDALReadWorldFile( poOpenInfo->pszFilename, ".jgw", 
-                           poDS->adfGeoTransform );
+                           poDS->adfGeoTransform )
+        || GDALReadWorldFile( poOpenInfo->pszFilename, ".wld", 
+                              poDS->adfGeoTransform );
 
     return poDS;
 }
