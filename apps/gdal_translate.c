@@ -28,6 +28,9 @@
  * Status: Incomplete.
  *
  * $Log$
+ * Revision 1.2  1999/04/21 04:14:05  warmerda
+ * Fixed GDALOpen() call
+ *
  * Revision 1.1  1999/03/02 21:12:25  warmerda
  * New
  *
@@ -99,7 +102,7 @@ int main( int argc, char ** argv )
 /*      Attempt to open source file.                                    */
 /* -------------------------------------------------------------------- */
 
-    hDataset = GDALOpen( argv[1], GA_ReadOnly );
+    hDataset = GDALOpen( pszSource, GA_ReadOnly );
     
     if( hDataset == NULL )
     {
