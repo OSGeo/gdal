@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2001/04/30 18:57:57  warmerda
+ * Added debug statement and cpl_error.h
+ *
  * Revision 1.10  1999/11/22 18:25:58  warmerda
  * spatial reference table generation is now working fairly well.  I
  * should still try and boil out duplicate rows.
@@ -57,6 +60,7 @@
 #include "resource.h"       // main symbols
 #include "SFRS.h"
 #include "oledbgis.h"
+#include "cpl_error.h"
 
 class CSFSessionTRSchemaRowset;
 class CSFSessionColSchemaRowset;
@@ -188,6 +192,9 @@ public:
 		OGRFeatureDefn	*poDefn;
 		OGRFieldDefn	*poField;
 
+                CPLDebug( "OGR_OLEDB",
+                          "CSFSessionColSchemaRowset::Execute(%p).",
+                          pcRowsAffected );
 
 		QueryInterface(IID_IUnknown,(void **) &pIU);
 		poDS = SFGetOGRDataSource(pIU);
