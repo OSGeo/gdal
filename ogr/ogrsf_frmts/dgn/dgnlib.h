@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.28  2002/11/13 21:28:23  warmerda
+ * fix declaration order
+ *
  * Revision 1.27  2002/11/13 21:26:32  warmerda
  * added more documentation
  *
@@ -381,6 +384,8 @@ typedef struct {
     
 } DGNElemCellLibrary;
 
+typedef union { char *string; GInt32 integer; double real; } tagValueUnion;
+
 /** 
  * Tag Value.
  *
@@ -399,8 +404,6 @@ typedef struct {
     tagValueUnion tagValue;        /*!< Textual value of tag */
 
 } DGNElemTagValue;
-
-typedef union { char *string; GInt32 integer; double real; } tagValueUnion;
 
 /**
  * Tag definition.
