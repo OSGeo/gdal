@@ -25,6 +25,9 @@
  * Main format registration function.
  * 
  * $Log$
+ * Revision 1.16  2000/03/07 21:34:50  warmerda
+ * added HKV
+ *
  * Revision 1.15  2000/03/06 21:51:09  warmerda
  * Added MFF
  *
@@ -89,6 +92,8 @@ void GDALRegister_EHdr(void);
 void GDALRegister_PAux(void);
 void GDALRegister_DOQ1(void);
 void GDALRegister_DTED(void);
+void GDALRegister_MFF(void);
+void GDALRegister_HKV(void);
 CPL_C_END
 
 #ifdef notdef
@@ -173,5 +178,6 @@ void GDALAllRegister()
     GDALRegister_EHdr();
     GDALRegister_PAux();
     GDALRegister_MFF();
+    GDALRegister_HKV();
 #endif
 }
