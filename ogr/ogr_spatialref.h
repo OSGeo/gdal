@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.33  2001/10/10 20:42:43  warmerda
+ * added ESRI WKT morphing support
+ *
  * Revision 1.32  2001/09/21 16:21:02  warmerda
  * added Clear(), and SetFromUserInput() methods
  *
@@ -189,6 +192,12 @@ class CPL_DLL OGR_SRSNode
     OGRErr      importFromWkt( char ** );
     OGRErr      exportToWkt( char ** );
     OGRErr      exportToPrettyWkt( char **, int = FALSE, int = 1);
+
+    OGRErr      applyRemapper( const char *pszNode, 
+                               char **papszSrcValues, 
+                               char **papszDstValues, 
+                               int nStepSize = 1,
+                               int bChildOfHit = FALSE );
 };
 
 /************************************************************************/
@@ -237,6 +246,9 @@ class CPL_DLL OGRSpatialReference
     OGRErr      importFromProj4( const char * );
     OGRErr      importFromEPSG( int );
     OGRErr      importFromESRI( char ** );
+
+    OGRErr	morphToESRI();
+    OGRErr	morphFromESRI();
 
     OGRErr      Validate();
     OGRErr      StripCTParms( OGR_SRSNode * = NULL );
