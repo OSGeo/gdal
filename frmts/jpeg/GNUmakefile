@@ -17,9 +17,9 @@ OBJ	=	\
 XTRA_OPT	=	-Ilibjpeg
 else
 OBJ	=	jpgdataset.o
+XTRA_OPT	=	
 endif
 
-XTRA_OPT	=	
 
 default:	$(OBJ)
 
