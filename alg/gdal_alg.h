@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2002/12/09 16:08:32  warmerda
+ * added approximating transformer
+ *
  * Revision 1.7  2002/12/07 22:58:42  warmerda
  * added initialization support for simple warper
  *
@@ -120,6 +123,16 @@ void CPL_DLL GDALDestroyGCPTransformer( void *pTransformArg );
 int GDALGCPTransform( 
     void *pTransformArg, int bDstToSrc, int nPointCount,
     double *x, double *y, double *z, int *panSuccess );
+
+/* Approximate transformer */
+void CPL_DLL *
+GDALCreateApproxTransformer( GDALTransformerFunc pfnRawTransformer, 
+                             void *pRawTransformerArg, double dfMaxError );
+void CPL_DLL GDALDestroyApproxTransformer( void *pApproxArg );
+int  CPL_DLL GDALApproxTransform(
+    void *pTransformArg, int bDstToSrc, int nPointCount,
+    double *x, double *y, double *z, int *panSuccess );
+
                       
 
 
