@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.13  2003/06/19 18:50:20  warmerda
+ * added projection reading support
+ *
  * Revision 1.12  2003/06/18 17:26:35  warmerda
  * dont try ecwopen function if path isnt to a valid file
  *
@@ -69,6 +72,7 @@
 #include "gdal_priv.h"
 #include "ogr_spatialref.h"
 #include "cpl_string.h"
+#include "cpl_conv.h"
 #include <NCSECWClient.h>
 #include <NCSECWCompressClient.h>
 #include <NCSErrors.h>
@@ -81,6 +85,9 @@ CPL_CVSID("$Id$");
 #ifdef WIN32
 #define HAVE_COMPRESS
 #endif
+
+static int    gnTriedCSFile = FALSE;
+static char **gpapszCSLookup = NULL;
 
 typedef struct {
     int              bCancelled;
@@ -108,6 +115,10 @@ class CPL_DLL ECWDataset : public GDALDataset
     int         nLastScanlineRead;
     CPLErr      ResetFullResViewWindow(int nBand, int nStartLine );
 
+    char        *pszProjection;
+
+    void        ECW2WKTProjection();
+
   public:
     		ECWDataset();
     		~ECWDataset();
@@ -115,6 +126,7 @@ class CPL_DLL ECWDataset : public GDALDataset
     static GDALDataset *Open( GDALOpenInfo * );
 
     virtual CPLErr GetGeoTransform( double * );
+    virtual const char *GetProjectionRef();
 };
 
 /************************************************************************/
@@ -341,6 +353,7 @@ ECWDataset::ECWDataset()
 
 {
     nFullResWindowBand = -1;
+    pszProjection = NULL;
 }
 
 /************************************************************************/
@@ -350,6 +363,7 @@ ECWDataset::ECWDataset()
 ECWDataset::~ECWDataset()
 
 {
+    CPLFree( pszProjection );
 }
 
 /************************************************************************/
@@ -450,7 +464,19 @@ GDALDataset *ECWDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->SetBand( i+1, new ECWRasterBand( poDS, i+1 ) );
     }
 
+    poDS->ECW2WKTProjection();
+
     return( poDS );
+}
+
+/************************************************************************/
+/*                          GetProjectionRef()                          */
+/************************************************************************/
+
+const char *ECWDataset::GetProjectionRef() 
+
+{
+    return pszProjection;
 }
 
 /************************************************************************/
@@ -469,6 +495,105 @@ CPLErr ECWDataset::GetGeoTransform( double * padfTransform )
     padfTransform[5] = psFileInfo->fCellIncrementY;
 
     return( CE_None );
+}
+
+/************************************************************************/
+/*                         ECW2WKTProjection()                          */
+/*                                                                      */
+/*      Set the dataset pszProjection string in OGC WKT format by       */
+/*      looking up the ECW (GDT) coordinate system info in              */
+/*      ecw_cs.dat support data file.                                   */
+/*                                                                      */
+/*      This code is likely still broken in some circumstances.  For    */
+/*      instance, I haven't been careful about changing the linear      */
+/*      projection parameters (false easting/northing) if the units     */
+/*      is feet.  Lots of cases missing here, and in ecw_cs.dat.        */
+/************************************************************************/
+
+void ECWDataset::ECW2WKTProjection()
+
+{
+    if( psFileInfo == NULL )
+        return;
+
+    CPLDebug( "ECW", "projection=%s, datum=%s",
+              psFileInfo->szProjection, psFileInfo->szDatum );
+
+    if( gnTriedCSFile && gpapszCSLookup == NULL )
+        return;
+
+/* -------------------------------------------------------------------- */
+/*      Load the supporting data file with the coordinate system        */
+/*      translations if we don't already have it loaded.  Note,         */
+/*      currently we never unload the file, even if the driver is       */
+/*      destroyed ... but we should.                                    */
+/* -------------------------------------------------------------------- */
+    if( !gnTriedCSFile )
+    {
+        const char *pszFilename = CPLFindFile( "data", "ecw_cs.dat" );
+        
+        gnTriedCSFile = TRUE;
+        if( pszFilename != NULL )
+            gpapszCSLookup = CSLLoad( pszFilename );
+        if( gpapszCSLookup == NULL )
+            return;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Set projection if we have it.                                   */
+/* -------------------------------------------------------------------- */
+    OGRSpatialReference oSRS;
+    if( EQUAL(psFileInfo->szProjection,"GEODETIC") )
+    {
+    }
+    else
+    {
+        const char *pszProjWKT;
+
+        pszProjWKT = CSLFetchNameValue( gpapszCSLookup, 
+                                        psFileInfo->szProjection );
+
+        if( pszProjWKT == NULL 
+            || EQUAL(pszProjWKT,"unsupported")
+            || oSRS.importFromWkt( (char **) &pszProjWKT ) != OGRERR_NONE )
+        {
+            oSRS.SetLocalCS( psFileInfo->szProjection );
+        }
+
+        if( psFileInfo->eCellSizeUnits == ECW_CELL_UNITS_FEET )
+            oSRS.SetLinearUnits( SRS_UL_US_FOOT, atof(SRS_UL_US_FOOT_CONV));
+        else
+            oSRS.SetLinearUnits( SRS_UL_METER, 1.0 );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Set the geogcs.                                                 */
+/* -------------------------------------------------------------------- */
+    OGRSpatialReference oGeogCS;
+    const char *pszGeogWKT;
+
+    pszGeogWKT = CSLFetchNameValue( gpapszCSLookup, 
+                                    psFileInfo->szDatum );
+
+    if( pszGeogWKT == NULL )
+        oGeogCS.SetWellKnownGeogCS( "WGS84" );
+    else
+    {
+        oGeogCS.importFromWkt( (char **) &pszGeogWKT );
+    }
+
+    if( !oSRS.IsLocal() )
+        oSRS.CopyGeogCSFrom( &oGeogCS );
+
+/* -------------------------------------------------------------------- */
+/*      Capture the resulting composite coordiante system.              */
+/* -------------------------------------------------------------------- */
+    if( pszProjection != NULL )
+    {
+        CPLFree( pszProjection );
+        pszProjection = NULL;
+    }
+    oSRS.exportToWkt( &pszProjection );
 }
 
 /************************************************************************/
@@ -529,7 +654,7 @@ static BOOLEAN ECWCompressCancelCB( NCSEcwCompressClient *psClient )
 
     psCompressInfo = (ECWCompressInfo *) psClient->pClientData;
 
-    return psCompressInfo->bCancelled;
+    return (BOOLEAN) psCompressInfo->bCancelled;
 }
 
 #ifdef HAVE_COMPRESS
@@ -584,18 +709,19 @@ ECWCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Parse out some known options.                                   */
 /* -------------------------------------------------------------------- */
-    float      dfTargetCompression = 75.0;
+    float      fTargetCompression = 75.0;
 
     if( CSLFetchNameValue(papszOptions, "TARGET") != NULL )
     {
-        dfTargetCompression = atof(CSLFetchNameValue(papszOptions, "TARGET"));
+        fTargetCompression = (float) 
+            atof(CSLFetchNameValue(papszOptions, "TARGET"));
         
-        if( dfTargetCompression < 1.1 || dfTargetCompression > 100.0 )
+        if( fTargetCompression < 1.1 || fTargetCompression > 100.0 )
         {
             CPLError( CE_Failure, CPLE_NotSupported, 
                       "TARGET compression of %.3f invalid, should be a\n"
                       "value between 1 and 100 percent.\n", 
-                      dfTargetCompression );
+                      (double) fTargetCompression );
             return NULL;
         }
     }
@@ -617,7 +743,7 @@ ECWCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     psClient->nInputBands = nBands;
     psClient->nInOutSizeX = nXSize;
     psClient->nInOutSizeY = nYSize;
-    psClient->fTargetCompression = dfTargetCompression;
+    psClient->fTargetCompression = fTargetCompression;
 
     if( nBands == 1 )
         psClient->eCompressFormat = COMPRESS_UINT8;
