@@ -42,6 +42,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.42  2005/04/04 15:22:36  fwarmerdam
+ * added CPL_STDCALL declaration
+ *
  * Revision 1.41  2005/03/17 04:20:24  fwarmerdam
  * added FORCE_CDECL
  *
@@ -250,6 +253,14 @@ typedef unsigned long    GUIntBig;
 #  define CPL_DLL     __declspec(dllexport)
 #else
 #  define CPL_DLL
+#endif
+#endif
+
+#ifndef CPL_STDCALL
+#if defined(_MSC_VER) && !defined(CPL_DISABLE_STDCALL)
+#  define CPL_STDCALL     __stdcall
+#else
+#  define CPL_STDCALL
 #endif
 #endif
 
