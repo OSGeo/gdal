@@ -28,6 +28,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.39  2004/05/06 19:28:04  dron
+# Added SetProjection() method.
+#
 # Revision 1.38  2004/05/06 14:11:54  dron
 # Added projection names.
 #
@@ -422,16 +425,24 @@ class SpatialReference:
     def SetAttrValue( self, node_path, value ):
         return _gdal.OSRSetAttrValue( self._o, node_path, value )
     
+    def SetProjection( self, name ):
+	"""Set a projection name."""
+        return _gdal.OSRSetProjection( self._o, name )
+
     def SetProjParm( self, name, value ):
+	"""Set a projection parameter value."""
         return _gdal.OSRSetProjParm( self._o, name, value )
 
     def GetProjParm( self, name, default_val = 0.0 ):
+	"""Fetch a projection parameter value."""
         return _gdal.OSRGetProjParm( self._o, name, default_val, 'NULL' )
 
     def SetNormProjParm( self, name, value ):
+	"""Set a projection parameter with a normalized value."""
         return _gdal.OSRSetNormProjParm( self._o, name, value )
 
     def GetNormProjParm( self, name, default_val = 0.0 ):
+	"""Fetch a normalized projection parameter value."""
         return _gdal.OSRGetNormProjParm( self._o, name, default_val, 'NULL' )
 
     def __str__( self ):
