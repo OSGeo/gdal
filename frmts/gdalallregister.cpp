@@ -25,6 +25,9 @@
  * Main format registration function.
  * 
  * $Log$
+ * Revision 1.8  1999/05/17 01:51:43  warmerda
+ * Removed unused variable.
+ *
  * Revision 1.7  1999/05/13 15:28:19  warmerda
  * Added elas format.
  *
@@ -61,7 +64,10 @@ void GDALRegister_CEOS(void);
 void GDALRegister_ELAS(void);
 CPL_C_END
 
+#ifdef notdef
+// we may have a use for this some day
 static char *szConfiguredFormats = "GDAL_FORMATS";
+#endif
 
 /************************************************************************/
 /*                          GDALAllRegister()                           */

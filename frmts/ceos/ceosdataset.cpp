@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/05/17 01:52:55  warmerda
+ * Removed unused variable.
+ *
  * Revision 1.1  1999/05/05 17:32:38  warmerda
  * New
  *
@@ -117,7 +120,7 @@ GDALDataset *CEOSDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
     CEOSImage	*psCEOS;
-    int		i, bFoundKeyword;
+    int		i;
     
 /* -------------------------------------------------------------------- */
 /*      Before trying CEOSOpen() we first verify that the first         */
