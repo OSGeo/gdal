@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2003/01/07 16:44:27  warmerda
+ * added removeGeometry
+ *
  * Revision 1.2  2002/10/19 16:22:32  warmerda
  * fixed bug with OGR_G_GetGeometryRef() for interior rings of polygons
  *
@@ -362,3 +365,31 @@ OGRErr OGR_G_AddGeometryDirectly( OGRGeometryH hGeom,
         return OGRERR_UNSUPPORTED_OPERATION;
     }
 }
+
+/************************************************************************/
+/*                        OGR_G_RemoveGeometry()                        */
+/************************************************************************/
+
+OGRErr OGR_G_RemoveGeometry( OGRGeometryH hGeom, int iGeom, int bDelete )
+
+{
+    switch( wkbFlatten(((OGRGeometry *) hGeom)->getGeometryType()) )
+    {
+      case wkbPolygon:
+      {
+          CPLError( CE_Failure, CPLE_AppDefined, 
+                    "OGR_G_RemoveGeometry() not supported on polygons yet." );
+          return OGRERR_UNSUPPORTED_OPERATION;
+      }
+
+      case wkbMultiPoint:
+      case wkbMultiLineString:
+      case wkbMultiPolygon:
+      case wkbGeometryCollection:
+        return ((OGRGeometryCollection *)hGeom)->removeGeometry( iGeom,bDelete);
+
+      default:
+        return OGRERR_UNSUPPORTED_OPERATION;
+    }
+}
+

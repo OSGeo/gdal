@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2003/01/07 16:44:27  warmerda
+ * added removeGeometry
+ *
  * Revision 1.17  2002/09/11 13:47:17  warmerda
  * preliminary set of fixes for 3D WKB enum
  *
@@ -286,6 +289,8 @@ OGRGeometry * OGRGeometryCollection::getGeometryRef( int i )
  *
  * There is no SFCOM analog to this method.
  *
+ * This method is the same as the C function OGR_G_AddGeometry().
+ *
  * @param poNewGeom geometry to add to the container.
  *
  * @return OGRERR_NONE if successful, or OGRERR_UNSUPPORTED_GEOMETRY_TYPE if
@@ -321,6 +326,8 @@ OGRErr OGRGeometryCollection::addGeometry( OGRGeometry * poNewGeom )
  * geometry is taken by the container rather than cloning as addGeometry()
  * does.
  *
+ * This method is the same as the C function OGR_G_AddGeometryDirectly().
+ *
  * There is no SFCOM analog to this method.
  *
  * @param poNewGeom geometry to add to the container.
@@ -341,6 +348,56 @@ OGRErr OGRGeometryCollection::addGeometryDirectly( OGRGeometry * poNewGeom )
 
     if( poNewGeom->getCoordinateDimension() == 3 )
         nCoordinateDimension = 3;
+
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                           removeGeometry()                           */
+/************************************************************************/
+
+/**
+ * Remove a geometry from the container.
+ *
+ * Removing a geometry will cause the geometry count to drop by one, and all
+ * "higher" geometries will shuffle down one in index.
+ *
+ * There is no SFCOM analog to this method.
+ *
+ * This method is the same as the C function OGR_G_RemoveGeometry().
+ *
+ * @param iGeom the index of the geometry to delete.  A value of -1 is a
+ * special flag meaning that all geometries should be removed.
+ *
+ * @param bDelete if TRUE the geometr will be deallocated, otherwise it will
+ * not.  The default is TRUE as the container is considered to own the
+ * geometries in it. 
+ *
+ * @return OGRERR_NONE if successful, or OGRERR_FAILURE if the index is
+ * out of range.
+ */
+
+OGRErr OGRGeometryCollection::removeGeometry( int iGeom, int bDelete )
+
+{
+    if( iGeom < -1 || iGeom >= nGeomCount )
+        return OGRERR_FAILURE;
+
+    // Special case.
+    if( iGeom == -1 )
+    {
+        while( nGeomCount > 0 )
+            removeGeometry( nGeomCount-1, bDelete );
+        return OGRERR_NONE;
+    }
+
+    if( bDelete )
+        delete papoGeoms[iGeom];
+
+    memmove( papoGeoms + iGeom, papoGeoms + iGeom + 1, 
+             sizeof(void*) * (nGeomCount-iGeom-1) );
+
+    nGeomCount--;
 
     return OGRERR_NONE;
 }
