@@ -33,6 +33,13 @@
  * Implementation of the HFAEntry class.
  *
  * $Log$
+ * Revision 1.10  2004/10/26 17:49:31  fwarmerdam
+ * Changed GetNamedChild() so that if there are multiple children with a
+ * search for a given child node will be applied to each till a match is found.
+ * This resolves the problem reading the histogram values for a file that
+ * also has a color table preceeding it and they are both called
+ * Descriptor_Table.
+ *
  * Revision 1.9  2003/07/29 10:08:24  dron
  * Fixed definition for GetIntField() method.
  *
@@ -371,17 +378,20 @@ HFAEntry *HFAEntry::GetNamedChild( const char * pszName )
         if( EQUALN(poEntry->GetName(),pszName,nNameLen)
             && (int) strlen(poEntry->GetName()) == nNameLen )
         {
-            break;
+            if( pszName[nNameLen] == '.' )
+            {
+                HFAEntry *poResult;
+
+                poResult = poEntry->GetNamedChild( pszName+nNameLen+1 );
+                if( poResult != NULL )
+                    return poResult;
+            }
+            else
+                return poEntry;
         }
     }
 
-/* -------------------------------------------------------------------- */
-/*      Is there a remainder to process?                                */
-/* -------------------------------------------------------------------- */
-    if( poEntry != NULL && pszName[nNameLen] == '.' )
-        return( poEntry->GetNamedChild( pszName+nNameLen+1 ) );
-    else
-        return( poEntry );
+    return NULL;
 }
 
 /************************************************************************/
