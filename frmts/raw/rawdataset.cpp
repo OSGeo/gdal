@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.25  2004/06/02 20:57:55  warmerda
+ * centralize initialization
+ *
  * Revision 1.24  2004/06/02 20:54:42  warmerda
  * Ensure poCT and eInterp are initialize in the *other* constructor.
  *
@@ -121,6 +124,8 @@ RawRasterBand::RawRasterBand( GDALDataset *poDS, int nBand,
                               int bIsVSIL )
 
 {
+    Initialize();
+
     this->poDS = poDS;
     this->nBand = nBand;
     this->eDataType = eDataType;
@@ -132,20 +137,12 @@ RawRasterBand::RawRasterBand( GDALDataset *poDS, int nBand,
     this->nLineOffset = nLineOffset;
     this->bNativeOrder = bNativeOrder;
 
-    this->bDirty = FALSE;
-
     CPLDebug( "GDALRaw", 
               "RawRasterBand(%p,%d,%p,\n"
               "              Off=%d,PixOff=%d,LineOff=%d,%s,%d)\n",
               poDS, nBand, fpRaw, 
               (unsigned int) nImgOffset, nPixelOffset, nLineOffset, 
               GDALGetDataTypeName(eDataType), bNativeOrder );
-
-    dfNoDataValue = 0.0;
-    bNoDataSet = FALSE;
-
-    poCT = NULL;
-    eInterp = GCI_Undefined;
 
 /* -------------------------------------------------------------------- */
 /*      Treat one scanline as the block size.                           */
@@ -171,6 +168,8 @@ RawRasterBand::RawRasterBand( FILE * fpRaw, vsi_l_offset nImgOffset,
                               int nXSize, int nYSize, int bIsVSIL )
 
 {
+    Initialize();
+
     this->poDS = NULL;
     this->nBand = 1;
     this->eDataType = eDataType;
@@ -182,18 +181,11 @@ RawRasterBand::RawRasterBand( FILE * fpRaw, vsi_l_offset nImgOffset,
     this->nLineOffset = nLineOffset;
     this->bNativeOrder = bNativeOrder;
 
-    this->bDirty = FALSE;
 
     CPLDebug( "GDALRaw", 
               "RawRasterBand(floating,Off=%d,PixOff=%d,LineOff=%d,%s,%d)\n",
               (unsigned int) nImgOffset, nPixelOffset, nLineOffset, 
               GDALGetDataTypeName(eDataType), bNativeOrder );
-
-    dfNoDataValue = 0.0;
-    bNoDataSet = FALSE;
-
-    poCT = NULL;
-    eInterp = GCI_Undefined;
 
 /* -------------------------------------------------------------------- */
 /*      Treat one scanline as the block size.                           */
@@ -210,6 +202,23 @@ RawRasterBand::RawRasterBand( FILE * fpRaw, vsi_l_offset nImgOffset,
     nLineSize = nPixelOffset * nBlockXSize;
     pLineBuffer = CPLMalloc( nLineSize );
 }
+
+/************************************************************************/
+/*                             Initialize()                             */
+/************************************************************************/
+
+void RawRasterBand::Initialize()
+
+{
+    dfNoDataValue = 0.0;
+    bNoDataSet = FALSE;
+
+    poCT = NULL;
+    eInterp = GCI_Undefined;
+
+    bDirty = FALSE;
+}
+
 
 /************************************************************************/
 /*                           ~RawRasterBand()                           */
