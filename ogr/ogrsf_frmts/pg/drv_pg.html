@@ -45,23 +45,18 @@ calls in the normal SQL sense.<p>
 
 <ul>
 
-<li> The type recognition logic is currently quite impoverished.  Only 
-the types "VARCHAR*", "INT*", and "FLOAT*" are recognised directly.  All
-other types are treated as VARCHAR.<p>
+<li> The type recognition logic is currently somewhat impoverished.  
+The types "INT*" and "NUMERIC(width,0)" are mapped to integer, the types
+"FLOAT*" and "NUMERIC(width,precision>0)" are mapped to real, and all other
+types are just treated as strings. <p>
 
 <li> BYTEA fields in PostgreSQL version preceeding 7.1
 don't support more than 8K in a record, so significant sized geometries
 on a feature will trigger an errow about the INSERT command being to big
 for the buffer.  Upgrade to 7.1.x!<P>
 
-<li> The driver is not performance tuned.  All geometry is passed back
-and forth in escaped BYTEA text form, there is no spatial indexing, etc.<p>
-
 <li> Some features are not implemented properly.  For instance, spatial
 filtering is broken.<p>
-
-<li> Special field names, and other mechanisms are likely to change in the
-near future.  This driver is only suitable to use for experimentation.<p>
 
 <li> A sequence object called <tablename>_ogc_fid_seq is created for new
 tables (layer), and must be dropped separately from the table when cleaning
@@ -105,6 +100,10 @@ desired name to be destroyed before creating the requested layer.<p>
 layer to have their field names "laundered" into a form more compatible with
 PostgreSQL.  This converts to lower case and converts some special characters
 like "-" and "#" to "_".  The default value is "NO".<p>
+<li> <b>PRECISION</b>: This may be "YES" to force new fields created on this
+layer to try and represent the width and precision information, if available
+using NUMERIC(width,precision) or CHAR(width) types.  If "NO" then the types
+FLOAT8, INTEGER and VARCHAR will be used instead.  The default is "YES".<p>
 </ul>
 
 <h3>Example</h3>

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2002/10/09 18:30:10  warmerda
+ * substantial upgrade to type handling, and preservations of width/precision
+ *
  * Revision 1.7  2002/10/09 14:16:32  warmerda
  * changed the way that character field widths are extracted from catalog
  *
@@ -157,19 +160,8 @@ OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition( const char * pszTable )
     {
         const char	*pszType;
         OGRFieldDefn    oField( PQgetvalue( hResult, iRecord, 0 ), OFTString);
-        int             nWidth;
 
         pszType = PQgetvalue(hResult, iRecord, 1 );
-
-        nWidth = atoi(PQgetvalue(hResult,iRecord,2));
-        if( nWidth == -1 )
-        {
-            const char *pszFormatType = PQgetvalue(hResult,iRecord,3);
-            if( EQUALN(pszFormatType,"character(",10) )
-                nWidth = atoi(pszFormatType+10);
-            else
-                nWidth = 0;
-        }
 
         if( EQUAL(oField.GetNameRef(),"ogc_fid") )
         {
@@ -190,22 +182,66 @@ OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition( const char * pszTable )
             continue;
         }
 
-        if( EQUAL(pszType,"varchar") )
+        if( EQUAL(pszType,"varchar") || EQUAL(pszType,"text") )
         {
             oField.SetType( OFTString );
+        }
+        else if( EQUAL(pszType,"bpchar") )
+        {
+            int nWidth;
+
+            nWidth = atoi(PQgetvalue(hResult,iRecord,2));
+            if( nWidth == -1 )
+            {
+                const char *pszFormatType = PQgetvalue(hResult,iRecord,3);
+                if( EQUALN(pszFormatType,"character(",10) )
+                    nWidth = atoi(pszFormatType+10);
+                else
+                    nWidth = 0;
+            }
+            oField.SetType( OFTString );
             oField.SetWidth( nWidth );
+        }
+        else if( EQUAL(pszType,"numeric") )
+        {
+            const char *pszFormatName = PQgetvalue(hResult,iRecord,3);
+            const char *pszPrecision = strstr(pszFormatName,",");
+            int    nWidth, nPrecision = 0;
+
+            nWidth = atoi(pszFormatName + 8);
+            if( pszPrecision != NULL )
+                nPrecision = atoi(pszPrecision+1);
+            
+            if( nPrecision == 0 )
+                oField.SetType( OFTInteger );
+            else
+                oField.SetType( OFTReal );
+
+            oField.SetWidth( nWidth );
+            oField.SetPrecision( nPrecision );
+        }
+        else if( EQUAL(pszType,"int2") )
+        {
+            oField.SetType( OFTInteger );
+            oField.SetWidth( 5 );
         }
         else if( EQUALN(pszType,"int",3) )
         {
             oField.SetType( OFTInteger );
         }
-        else if( EQUALN(pszType, "float", 5) ) 
+        else if( EQUALN(pszType,"float",5) || EQUALN(pszType,"double",6) )
         {
             oField.SetType( OFTReal );
         }
-        else
+        else if( EQUAL(pszType, "date") ) 
         {
-            oField.SetWidth( nWidth );
+            oField.SetType( OFTString );
+            oField.SetWidth( 10 );
+        }
+        else if( EQUAL(pszType, "time") ) 
+        {
+            oField.SetType( OFTString );
+            oField.SetWidth( 8 );
         }
         
         poDefn->AddFieldDefn( &oField );
@@ -657,15 +693,23 @@ OGRErr OGRPGTableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK )
 /* -------------------------------------------------------------------- */
     if( oField.GetType() == OFTInteger )
     {
-        strcpy( szFieldType, "INTEGER" );
+        if( oField.GetWidth() > 0 && bPreservePrecision )
+            sprintf( szFieldType, "NUMERIC(%d,0)", oField.GetWidth() );
+        else
+            strcpy( szFieldType, "INTEGER" );
     }
     else if( oField.GetType() == OFTReal )
     {
-        strcpy( szFieldType, "FLOAT8" );
+        if( oField.GetWidth() > 0 && oField.GetPrecision() > 0 
+            && bPreservePrecision )
+            sprintf( szFieldType, "NUMERIC(%d,%d)", 
+                     oField.GetWidth(), oField.GetPrecision() );
+        else
+            strcpy( szFieldType, "FLOAT8" );
     }
     else if( oField.GetType() == OFTString )
     {
-        if( oField.GetWidth() == 0 )
+        if( oField.GetWidth() == 0 || !bPreservePrecision )
             strcpy( szFieldType, "VARCHAR" );
         else
             sprintf( szFieldType, "CHAR(%d)", oField.GetWidth() );

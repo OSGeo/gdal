@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2002/10/09 18:30:10  warmerda
+ * substantial upgrade to type handling, and preservations of width/precision
+ *
  * Revision 1.10  2002/10/04 14:03:09  warmerda
  * added column name laundering support
  *
@@ -145,6 +148,7 @@ class OGRPGTableLayer : public OGRPGLayer
     char		*pszWHERE;
 
     int			bLaunderColumnNames;
+    int			bPreservePrecision;
     
   public:
     			OGRPGTableLayer( OGRPGDataSource *,
@@ -173,6 +177,8 @@ class OGRPGTableLayer : public OGRPGLayer
     // follow methods are not base class overrides
     void		SetLaunderFlag( int bFlag ) 
 				{ bLaunderColumnNames = bFlag; }
+    void		SetPrecisionFlag( int bFlag ) 
+				{ bPreservePrecision = bFlag; }
 };
 
 /************************************************************************/

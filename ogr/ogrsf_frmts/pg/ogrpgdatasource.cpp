@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2002/10/09 18:30:10  warmerda
+ * substantial upgrade to type handling, and preservations of width/precision
+ *
  * Revision 1.14  2002/10/04 14:03:09  warmerda
  * added column name laundering support
  *
@@ -584,6 +587,7 @@ OGRPGDataSource::CreateLayer( const char * pszLayerName,
     poLayer = new OGRPGTableLayer( this, pszLayerName, TRUE, nSRSId );
 
     poLayer->SetLaunderFlag( CSLFetchBoolean(papszOptions,"LAUNDER",FALSE) );
+    poLayer->SetPrecisionFlag( CSLFetchBoolean(papszOptions,"PRECISION",TRUE));
 
 /* -------------------------------------------------------------------- */
 /*      Add layer to data source layer list.                            */
