@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2001/10/11 19:29:57  warmerda
+ * fixed redeclaration of i
+ *
  * Revision 1.14  2001/10/11 19:26:16  warmerda
  * added applyRemapping
  *
@@ -802,7 +805,7 @@ OGRErr OGR_SRSNode::applyRemapper( const char *pszNode,
 /* -------------------------------------------------------------------- */
 /*      Recurse                                                         */
 /* -------------------------------------------------------------------- */
-    for( int i = 0; i < GetChildCount(); i++ )
+    for( i = 0; i < GetChildCount(); i++ )
     {
         GetChild(i)->applyRemapper( pszNode, papszSrcValues, 
                                     papszDstValues, nStepSize, bChildOfHit );
