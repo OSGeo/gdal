@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  1999/08/29 17:14:29  warmerda
+ * Added wkbNone.
+ *
  * Revision 1.14  1999/07/27 00:48:11  warmerda
  * Added Equal() support
  *
@@ -102,7 +105,8 @@ enum OGRwkbGeometryType
     wkbMultiPoint = 4,
     wkbMultiLineString = 5,
     wkbMultiPolygon = 6,
-    wkbGeometryCollection = 7
+    wkbGeometryCollection = 7,
+    wkbNone = 100              // non-standard, for pure attribute records
 };
 
 enum OGRwkbByteOrder
