@@ -29,6 +29,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.5  2000/08/28 20:15:07  warmerda
+ * added projection translation
+ *
  * Revision 1.4  2000/08/25 21:31:04  warmerda
  * added colortable support
  *
@@ -45,6 +48,7 @@
 
 #include "ogdidataset.h"
 #include "cpl_string.h"
+#include "ogr_spatialref.h"
 
 static GDALDriver	*poOGDIDriver = NULL;
 
@@ -460,7 +464,21 @@ GDALDataset *OGDIDataset::Open( GDALOpenInfo * poOpenInfo )
                   "%s", psResult->message );
         return NULL;
     }
-    poDS->pszProjection = CPLStrdup( ECSTEXT(psResult) );
+
+    OGRSpatialReference  oSRS;
+
+    if( oSRS.importFromProj4( ECSTEXT(psResult) ) == OGRERR_NONE )
+    {
+        poDS->pszProjection = NULL;
+        oSRS.exportToWkt( &(poDS->pszProjection) );
+    }
+    else
+    {
+        CPLError( CE_Warning, CPLE_NotSupported,
+                  "untranslatable PROJ.4 projection: %s\n", 
+                  ECSTEXT(psResult) );
+        poDS->pszProjection = CPLStrdup("");
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Select the global region.                                       */
