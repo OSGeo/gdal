@@ -3,8 +3,8 @@ GDAL_ROOT	=	../../..
 
 include $(GDAL_ROOT)/GDALmake.opt
 
-OBJ	=	dgnopen.o dgnread.o dgnfloat.o dgnhelp.o dgnwrite.o dgnstroke.o
-OBJ_OGR =	ogrdgndriver.o ogrdgndatasource.o ogrdgnlayer.o
+MIN_OBJ	=	dgnopen.o dgnread.o dgnfloat.o dgnhelp.o dgnwrite.o dgnstroke.o
+OBJ =	ogrdgndriver.o ogrdgndatasource.o ogrdgnlayer.o $(MIN_OBJ)
 
 CPPFLAGS	:=	-I.. -I../.. $(GDAL_INCLUDE) $(CPPFLAGS)
 
@@ -25,17 +25,17 @@ DIST_FILES =	dgnread.cpp dgnopen.cpp dgnlib.h dgnlibp.h dgnfloat.cpp \
 		$(CPL_DIR)/cpl_string.h $(CPL_DIR)/cpl_string.cpp \
 		$(CPL_DIR)/cpl_config.h.vc
 
-default:	$(O_OBJ) $(foreach file,$(OBJ_OGR),../o/$(file))
+default:	$(O_OBJ)
 
 clean:
 	rm -rf *.o $(DEST_DIR) dgnlib-$(DIST_REV).zip html man $(O_OBJ)
 	rm -f dgndump dgnwritetest
 
-dgndump:	dgndump.c $(OBJ)
-	$(CXX) $(CPPFLAGS) $(CFLAGS) dgndump.c $(OBJ) $(GDAL_LIB) -ldl -lm -o dgndump 
+dgndump:	dgndump.c $(MIN_OBJ)
+	$(CXX) $(CPPFLAGS) $(CFLAGS) dgndump.c $(MIN_OBJ) $(GDAL_LIB) -ldl -lm -o dgndump 
 
-dgnwritetest:	dgnwritetest.c $(OBJ)
-	$(CXX) $(CPPFLAGS) $(CFLAGS) dgnwritetest.c $(OBJ) $(GDAL_LIB) -ldl \
+dgnwritetest:	dgnwritetest.c $(MIN_OBJ)
+	$(CXX) $(CPPFLAGS) $(CFLAGS) dgnwritetest.c $(MIN_OBJ) $(GDAL_LIB) -ldl \
 	-lm -o dgnwritetest
 
 docs:
@@ -57,5 +57,3 @@ web-update:	web-docs-update dist
 
 pge_test:	pge_test.cpp dgn_pge.cpp $(OBJ)
 	gcc -Wall -g pge_test.cpp dgn_pge.cpp $(OBJ) $(GDAL_LIB) -lm -o pge_test
-
-
