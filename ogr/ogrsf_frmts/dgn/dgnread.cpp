@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.28  2002/05/30 19:24:38  warmerda
+ * add partial support for tag type 5
+ *
  * Revision 1.27  2002/04/22 20:42:40  warmerda
  * fixed problem with tag set ids > 255
  *
@@ -961,6 +964,7 @@ static DGNElemCore *DGNParseTagSet( DGNInfo * psDGN )
         CPLMalloc(sizeof(DGNTagDef) * psTagSet->tagCount);
 
     nDataOffset = 48 + strlen(psTagSet->tagSetName) + 1 + 1; 
+
     for( iTag = 0; iTag < psTagSet->tagCount; iTag++ )
     {
         DGNTagDef *tagDef = psTagSet->tagList + iTag;
@@ -986,9 +990,6 @@ static DGNElemCore *DGNParseTagSet( DGNInfo * psDGN )
             + psDGN->abyElem[nDataOffset+1] * 256;
         nDataOffset += 2;
 
-        CPLAssert( tagDef->type == 1 || tagDef->type == 2 || tagDef->type == 3
-                   || tagDef->type == 4 );
-
         /* skip five zeros */
         nDataOffset += 5;
 
@@ -999,7 +1000,7 @@ static DGNElemCore *DGNParseTagSet( DGNInfo * psDGN )
                 CPLStrdup( (char *) psDGN->abyElem + nDataOffset );
             nDataOffset += strlen(tagDef->defaultValue.string)+1;
         }
-        else if( tagDef->type == 3 )
+        else if( tagDef->type == 3 || tagDef->type == 5 )
         {
             memcpy( &(tagDef->defaultValue.integer), 
                     psDGN->abyElem + nDataOffset, 4 );
@@ -1014,6 +1015,8 @@ static DGNElemCore *DGNParseTagSet( DGNInfo * psDGN )
             DGN2IEEEDouble( &(tagDef->defaultValue.real) );
             nDataOffset += 8;
         }
+        else
+            nDataOffset += 4;
     }
     return psElement;
 }
