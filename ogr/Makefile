@@ -13,7 +13,9 @@ ALL_LIBS =	$(OLE_LIBS) ..\port\*.obj $(LIBS)
 
 OBJ_OGR	=	ogrgeometryfactory.obj ogrpoint.obj ogrcurve.obj \
 		ogrlinestring.obj ogrpolygon.obj ogrlinearring.obj \
-		ogrutils.obj ogrgeometry.obj 
+		ogrutils.obj ogrgeometry.obj ogrgeometrycollection.obj \
+		ogrmultipolygon.obj
+
 OBJ_OLEDB =	oledb_sup.obj oledbsuprowset.obj oledb_sf.obj
 
 default:	test1.exe sfdump.exe
