@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.22  2004/11/22 22:24:56  fwarmerdam
+ * Give explicit void for functions taking no arguments.
+ *
  * Revision 1.21  2004/10/07 13:10:59  fwarmerdam
  * added OGR_G_Centroid
  *
@@ -214,7 +217,7 @@ OGRGeometryH CPL_DLL OGRBuildPolygonFromEdges( OGRGeometryH hLinesAsCollection,
 OGRErr CPL_DLL OGRSetGenerate_DB2_V72_BYTE_ORDER( 
     int bGenerate_DB2_V72_BYTE_ORDER );
 
-int CPL_DLL OGRGetGenerate_DB2_V72_BYTE_ORDER();
+int CPL_DLL OGRGetGenerate_DB2_V72_BYTE_ORDER(void);
 
 /* -------------------------------------------------------------------- */
 /*      Feature related (ogr_feature.h)                                 */
@@ -375,15 +378,15 @@ OGRDataSourceH CPL_DLL OGROpen( const char *, int, OGRSFDriverH * );
 OGRDataSourceH CPL_DLL OGROpenShared( const char *, int, OGRSFDriverH * );
 OGRErr  CPL_DLL OGRReleaseDataSource( OGRDataSourceH );
 void    CPL_DLL OGRRegisterDriver( OGRSFDriverH );
-int     CPL_DLL OGRGetDriverCount();
+int     CPL_DLL OGRGetDriverCount(void);
 OGRSFDriverH CPL_DLL OGRGetDriver( int );
 OGRSFDriverH CPL_DLL OGRGetDriverByName( const char * );
-int     CPL_DLL OGRGetOpenDSCount();
+int     CPL_DLL OGRGetOpenDSCount(void);
 OGRDataSourceH CPL_DLL OGRGetOpenDS( int iDS );
 
 
 /* note: this is also declared in ogrsf_frmts.h */
-void CPL_DLL OGRRegisterAll();
+void CPL_DLL OGRRegisterAll(void);
 
 CPL_C_END
 
