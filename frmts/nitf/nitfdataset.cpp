@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.37  2005/03/01 14:28:06  fwarmerdam
+ * Added support for overriding JPEG2000 profile.
+ *
  * Revision 1.36  2005/02/25 17:01:18  fwarmerdam
  * forward AdviseRead and IRasterIO on dataset to j2kdataset if needed
  *
@@ -1434,6 +1437,8 @@ static char **NITFJP2Options( char **papszOptions )
     apszOptions[2] = NULL;
     for( i = 0; papszOptions != NULL && papszOptions[i] != NULL; i++ )
     {
+        if( EQUALN(papszOptions[i],"PROFILE=",8) )
+            apszOptions[0] = papszOptions[i];
         if( EQUALN(papszOptions[i],"TARGET=",7) )
             apszOptions[2] = papszOptions[i];
     }
