@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_dirwrite.c,v 1.19 2003/12/20 13:40:09 dron Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_dirwrite.c,v 1.20 2004/01/21 14:20:53 warmerda Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -571,11 +571,16 @@ TIFFWriteNormalTag(TIFF* tif, TIFFDirEntry* dir, const TIFFFieldInfo* fip)
 		}
 		break;
 	case TIFF_ASCII:
-		{ char* cp;
-		  TIFFGetField(tif, fip->field_tag, &cp);
-		  dir->tdir_count = (uint32) (strlen(cp) + 1);
-		  if (!TIFFWriteByteArray(tif, dir, cp))
-			return (0);
+		{ 
+                    char* cp;
+                    if (fip->field_passcount)
+                        TIFFGetField(tif, fip->field_tag, &wc, &cp);
+                    else
+                        TIFFGetField(tif, fip->field_tag, &cp);
+
+                    dir->tdir_count = (uint32) (strlen(cp) + 1);
+                    if (!TIFFWriteByteArray(tif, dir, cp))
+                        return (0);
 		}
 		break;
 
