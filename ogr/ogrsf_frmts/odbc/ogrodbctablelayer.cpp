@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2003/09/26 18:22:41  warmerda
+ * Fixed SetAttributeFilter().
+ *
  * Revision 1.1  2003/09/25 17:08:37  warmerda
  * New
  *
@@ -188,7 +191,9 @@ void OGRODBCTableLayer::ResetReading()
 OGRErr OGRODBCTableLayer::SetAttributeFilter( const char *pszQuery )
 
 {
-    if( EQUAL(pszQuery,this->pszQuery) )
+    if( (pszQuery == NULL && this->pszQuery == NULL)
+        || (pszQuery != NULL && this->pszQuery != NULL 
+            && EQUAL(pszQuery,this->pszQuery)) )
         return OGRERR_NONE;
 
     CPLFree( this->pszQuery );
