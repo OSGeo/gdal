@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2003/09/11 19:51:55  warmerda
+ * avoid type casting warnings
+ *
  * Revision 1.13  2003/06/23 18:31:39  warmerda
  * fixed field alignment for a few fields on write
  *
@@ -481,9 +484,9 @@ NITFFile *NITFCreate( const char *pszFilename,
 
             for( iC = 0; iC < nCount; iC++ )
             {
-                pachIMHDR[nOffset+18+iC+       0] = iC;
-                pachIMHDR[nOffset+18+iC+nCount*1] = iC;
-                pachIMHDR[nOffset+18+iC+nCount*2] = iC;
+                pachIMHDR[nOffset+18+iC+       0] = (char) iC;
+                pachIMHDR[nOffset+18+iC+nCount*1] = (char) iC;
+                pachIMHDR[nOffset+18+iC+nCount*2] = (char) iC;
             }
             nOffset += 18 + nCount*3;
         }

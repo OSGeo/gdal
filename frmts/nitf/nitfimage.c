@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2003/09/11 19:51:55  warmerda
+ * avoid type casting warnings
+ *
  * Revision 1.18  2003/08/21 19:27:07  warmerda
  * fixed byte swaping issue
  *
@@ -723,8 +726,8 @@ int NITFReadImageBlock( NITFImage *psImage, int nBlockX, int nBlockY,
         if( VSIFSeek( psImage->psFile->fp, 
                       psImage->panBlockStart[iFullBlock], 
                       SEEK_SET ) != 0 
-            || VSIFRead( pData, 1, nWrkBufSize,
-                         psImage->psFile->fp ) != nWrkBufSize )
+            || (int) VSIFRead( pData, 1, nWrkBufSize,
+                               psImage->psFile->fp ) != nWrkBufSize )
         {
             CPLError( CE_Failure, CPLE_FileIO, 
                       "Unable to read %d byte block from %d.", 
@@ -755,8 +758,8 @@ int NITFReadImageBlock( NITFImage *psImage, int nBlockX, int nBlockY,
         /* read all the data needed to get our requested band-block */
         if( VSIFSeek( psImage->psFile->fp, psImage->panBlockStart[iFullBlock], 
                       SEEK_SET ) != 0 
-            || VSIFRead( pabyWrkBuf, 1, nWrkBufSize,
-                         psImage->psFile->fp ) != nWrkBufSize )
+            || (int) VSIFRead( pabyWrkBuf, 1, nWrkBufSize,
+                               psImage->psFile->fp ) != nWrkBufSize )
         {
             CPLError( CE_Failure, CPLE_FileIO, 
                       "Unable to read %d byte block from %d.", 
@@ -866,8 +869,8 @@ int NITFWriteImageBlock( NITFImage *psImage, int nBlockX, int nBlockY,
 
         if( VSIFSeek( psImage->psFile->fp, psImage->panBlockStart[iFullBlock], 
                       SEEK_SET ) != 0 
-            || VSIFWrite( pData, 1, nWrkBufSize,
-                          psImage->psFile->fp ) != nWrkBufSize )
+            || (int) VSIFWrite( pData, 1, nWrkBufSize,
+                                psImage->psFile->fp ) != nWrkBufSize )
         {
             CPLError( CE_Failure, CPLE_FileIO, 
                       "Unable to write %d byte block from %d.", 
