@@ -18,3 +18,5 @@ sfutil.cpp
 SF_i.c
 SFRS.cpp
 OGRVirtualArray.cpp
+swq.c
+SFDSCache.cpp
