@@ -20,15 +20,12 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************
  *
- * cpl_conf.h
+ * cpl_conv.h
  *
  * Prototypes, and stuff for various convenience functions.  This is intended
  * to remain light weight.
  *
- * $Log$
- * Revision 1.1  1998/12/02 19:33:16  warmerda
- * New
- *
+ * $Log: 
  * Revision 1.1  1998/10/18 06:15:11  warmerda
  * Initial implementation.
  *
@@ -37,20 +34,22 @@
 #ifndef CPL_CONV_H_INCLUDED
 #define CPL_CONV_H_INCLUDED
 
-#include "gdal_port.h"
-#include "gdal_vsi.h"
+#include "cpl_port.h"
+#include "cpl_vsi.h"
+#include "cpl_error.h"
 
 /* -------------------------------------------------------------------- */
 /*      Safe malloc() API.  Thin cover over VSI functions with fatal    */
 /*      error reporting if memory allocation fails.                     */
 /* -------------------------------------------------------------------- */
-GDAL_C_START
-void GDAL_DLL *CPLMalloc( size_t );
-void GDAL_DLL *CPLCalloc( size_t, size_t );
-void GDAL_DLL *CPLRealloc( void *, size_t );
-char GDAL_DLL *CPLStrdup( const char * );
+CPL_C_START
+void CPL_DLL *CPLMalloc( size_t );
+void CPL_DLL *CPLCalloc( size_t, size_t );
+void CPL_DLL *CPLRealloc( void *, size_t );
+char CPL_DLL *CPLStrdup( const char * );
 
 #define CPLFree	VSIFree
-GDAL_C_END
+
+CPL_C_END
 
 #endif /* ndef CPL_CONV_H_INCLUDED */
