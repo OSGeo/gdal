@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.36  2002/12/05 15:46:38  warmerda
+ * added GDALReadTabFile()
+ *
  * Revision 1.35  2002/07/09 20:33:12  warmerda
  * expand tabs
  *
@@ -142,6 +145,12 @@
 #include <ctype.h>
 
 CPL_CVSID("$Id$");
+
+#ifdef HAVE_MITAB
+#include "ogr_spatialref.h"
+// from mitab component.
+OGRSpatialReference * MITABCoordSys2SpatialRef( const char * pszCoordSys );
+#endif
 
 /************************************************************************/
 /*                           __pure_virtual()                           */
@@ -1088,6 +1097,151 @@ GDAL_GCP *GDALDuplicateGCPs( int nCount, const GDAL_GCP *pasGCPList )
     return pasReturn;
 }
                              
+/************************************************************************/
+/*                         GDALReadTabFile()                            */
+/*                                                                      */
+/*      Helper function for translator implementators wanting           */
+/*      support for MapInfo .tab-files.                                 */
+/************************************************************************/
+
+#define MAX_GCP 256
+ 
+static int GDALReadTabFile( const char * pszBaseFilename, 
+                            double *padfGeoTransform, char **ppszWKT, 
+                            int *pnGCPCount, GDAL_GCP **ppasGCPs )
+
+
+{
+    const char	*pszTAB;
+    FILE	*fpTAB;
+    char	**papszLines;
+    char    **papszTok=NULL;
+    int 	bTypeRasterFound = FALSE;
+    int		bInsideTableDef = FALSE;
+    int		iLine, numLines=0;
+    int 	nCoordinateCount = 0;
+    GDAL_GCP    asGCPs[MAX_GCP];
+    
+
+/* -------------------------------------------------------------------- */
+/*      Try lower case, then upper case.                                */
+/* -------------------------------------------------------------------- */
+    pszTAB = CPLResetExtension( pszBaseFilename, "tab" );
+
+    fpTAB = VSIFOpen( pszTAB, "rt" );
+
+#ifndef WIN32
+    if( fpTAB == NULL )
+    {
+        pszTAB = CPLResetExtension( pszBaseFilename, "TAB" );
+        fpTAB = VSIFOpen( pszTAB, "rt" );
+    }
+#endif
+    
+    if( fpTAB == NULL )
+        return FALSE;
+
+    VSIFClose( fpTAB );
+
+/* -------------------------------------------------------------------- */
+/*      We found the file, now load and parse it.                       */
+/* -------------------------------------------------------------------- */
+    papszLines = CSLLoad( pszTAB );
+
+    numLines = CSLCount(papszLines);
+
+    // Iterate all lines in the TAB-file
+    for(iLine=0; iLine<numLines; iLine++)
+    {
+        CSLDestroy(papszTok);
+        papszTok = CSLTokenizeStringComplex(papszLines[iLine], " \t(),;", 
+                                            TRUE, FALSE);
+
+        if (CSLCount(papszTok) < 2)
+            continue;
+
+        // Did we find table definition
+        if (EQUAL(papszTok[0], "Definition") && EQUAL(papszTok[1], "Table") )
+        {
+            bInsideTableDef = TRUE;
+        }
+        else if (bInsideTableDef && (EQUAL(papszTok[0], "Type")) )
+        {
+            // Only RASTER-type will be handled
+            if (EQUAL(papszTok[1], "RASTER"))
+            {
+            	bTypeRasterFound = TRUE;
+            }
+            else
+            {
+                CSLDestroy(papszTok);
+                CSLDestroy(papszLines);
+                return FALSE;
+            }
+        }
+        else if (bTypeRasterFound && bInsideTableDef
+                 && CSLCount(papszTok) > 5
+                 && EQUAL(papszTok[4], "Label") 
+                 && nCoordinateCount < MAX_GCP )
+        {
+            GDALInitGCPs( 1, asGCPs + nCoordinateCount );
+            
+            asGCPs[nCoordinateCount].dfGCPPixel = atof(papszTok[2]);
+            asGCPs[nCoordinateCount].dfGCPLine = atof(papszTok[3]);
+            asGCPs[nCoordinateCount].dfGCPX = atof(papszTok[0]);
+            asGCPs[nCoordinateCount].dfGCPY = atof(papszTok[1]);
+            CPLFree( asGCPs[nCoordinateCount].pszId );
+            asGCPs[nCoordinateCount].pszId = CPLStrdup(papszTok[5]);
+
+            nCoordinateCount++;
+        }
+        else if( bTypeRasterFound && bInsideTableDef 
+                 && EQUAL(papszTok[0],"CoordSys") 
+                 && ppszWKT != NULL )
+        {
+#ifdef HAVE_MITAB
+            OGRSpatialReference *poSRS = NULL;
+            
+            poSRS = MITABCoordSys2SpatialRef( papszLines[iLine] );
+            if( poSRS != NULL )
+            {
+                poSRS->exportToWkt( ppszWKT );
+                delete poSRS;
+            }
+#else
+            CPLDebug( "GDAL", "GDALReadTabFile(): Found `%s',\n"
+                 "but GDALReadTabFile() not configured with MITAB callout." );
+#endif
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Try to convert the GCPs into a geotransform definition, if      */
+/*      possible.  Otherwise we will need to use them as GCPs.          */
+/* -------------------------------------------------------------------- */
+    if( !GDALGCPsToGeoTransform( nCoordinateCount, asGCPs, padfGeoTransform, 
+                                 FALSE ) )
+    {
+        CPLDebug( "GDAL", 
+                  "GDALReadTabFile(%s) found file, wasn't able to derive a\n"
+                  "first order geotransform.  Using points as GCPs.",
+                  pszTAB );
+
+        *ppasGCPs = (GDAL_GCP *) 
+            CPLCalloc(sizeof(GDAL_GCP),nCoordinateCount);
+        memcpy( *ppasGCPs, asGCPs, sizeof(GDAL_GCP) * nCoordinateCount );
+        *pnGCPCount = nCoordinateCount;
+    }
+    else
+    {
+        GDALDeinitGCPs( nCoordinateCount, asGCPs );
+    }
+     
+    CSLDestroy(papszTok);
+    CSLDestroy(papszLines);
+    return FALSE;
+}
+
 /************************************************************************/
 /*                         GDALReadWorldFile()                          */
 /*                                                                      */
