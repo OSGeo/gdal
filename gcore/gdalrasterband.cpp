@@ -28,6 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************
  * $Log$
+ * Revision 1.11  2000/03/08 19:59:16  warmerda
+ * added GDALFlushRasterCache
+ *
  * Revision 1.10  2000/03/06 21:50:37  warmerda
  * added min/max support
  *
@@ -636,9 +639,18 @@ CPLErr GDALRasterBand::AdoptBlock( int nBlockXOff, int nBlockYOff,
 
 /************************************************************************/
 /*                             FlushCache()                             */
-/*                                                                      */
-/*      Clear all cached blocks out of this bands cache.                */
 /************************************************************************/
+
+/**
+ * Flush raster data cache.
+ *
+ * This call will recover memory used to cache data blocks for this raster
+ * band, and ensure that new requests are referred to the underlying driver.
+ *
+ * This method is the same as the C function GDALFlushRasterCache().
+ *
+ * @return CE_None on success.
+ */
 
 CPLErr GDALRasterBand::FlushCache()
 
@@ -651,6 +663,16 @@ CPLErr GDALRasterBand::FlushCache()
     }
     
     return( eErr );
+}
+
+/************************************************************************/
+/*                        GDALFlushRasterCache()                        */
+/************************************************************************/
+
+CPLErr GDALFlushRasterCache( GDALRasterBandH hBand )
+
+{
+    return ((GDALRasterBand *) hBand)->FlushCache();
 }
 
 /************************************************************************/

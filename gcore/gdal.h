@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2000/03/08 19:59:16  warmerda
+ * added GDALFlushRasterCache
+ *
  * Revision 1.16  2000/03/06 21:50:37  warmerda
  * added min/max support
  *
@@ -244,6 +247,7 @@ double CPL_DLL GDALGetRasterMinimum( GDALRasterBandH, int *pbSuccess );
 double CPL_DLL GDALGetRasterMaximum( GDALRasterBandH, int *pbSuccess );
 void CPL_DLL GDALComputeRasterMinMax( GDALRasterBandH hBand, int bApproxOK,
                                       double adfMinMax[2] );
+CPLErr CPL_DLL GDALFlushRasterCache( GDALRasterBandH hBand );
 
 /* need to add functions related to block cache */
 
