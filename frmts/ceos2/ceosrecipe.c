@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2001/02/05 15:46:14  warmerda
+ * added R*4 support
+ *
  * Revision 1.3  2000/04/04 15:10:32  warmerda
  * add code to compute BytesPerRecord
  *
@@ -55,6 +58,7 @@ CeosStringType_t CeosDataType[] = { { "IU1", __CEOS_TYP_UCHAR },
 				    { "CI*4", __CEOS_TYP_COMPLEX_SHORT },
 				    { "CI*8", __CEOS_TYP_COMPLEX_LONG },
 				    { "C*8", __CEOS_TYP_COMPLEX_FLOAT },
+				    { "R*4", __CEOS_TYP_FLOAT },
 				    { NULL, 0 } };
 
 CeosStringType_t CeosInterleaveType[] = { { "BSQ", __CEOS_IL_BAND },
