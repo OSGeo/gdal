@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2003/01/10 19:30:14  warmerda
+ * Another related initialization fix.
+ *
  * Revision 1.8  2003/01/10 16:40:33  warmerda
  * initialize SRS table
  *
@@ -73,6 +76,7 @@ OGROCIDataSource::OGROCIDataSource()
     nLayers = 0;
     poSession = NULL;
     papoSRS = NULL;
+    panSRID = NULL;
     nKnownSRID = 0;
 }
 
