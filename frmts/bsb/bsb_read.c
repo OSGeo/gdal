@@ -33,6 +33,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2002/12/04 14:52:54  warmerda
+ * Added binary flag writing.
+ *
  * Revision 1.8  2002/11/04 04:26:45  warmerda
  * preliminary work on write support
  *
@@ -596,7 +599,7 @@ BSBInfo *BSBCreate( const char *pszFilename, int nCreationFlags, int nVersion,
 /* -------------------------------------------------------------------- */
 /*      Open new KAP file.                                              */
 /* -------------------------------------------------------------------- */
-    fp = VSIFOpen( pszFilename, "w" );
+    fp = VSIFOpen( pszFilename, "wb" );
     if( fp == NULL )
     {
         CPLError( CE_Failure, CPLE_OpenFailed, 
