@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.48  2004/08/27 20:23:11  warmerda
+ * fixed up a bit of formatting
+ *
  * Revision 1.47  2004/06/24 00:37:12  warmerda
  * fixed S57M_OPTIONS logic, support deleting attributes
  *
@@ -851,9 +854,9 @@ void S57Reader::ApplyObjectClassAttributes( DDFRecord * poRecord,
             {
                 bAttrWarningIssued = TRUE;
                 CPLError( CE_Warning, CPLE_AppDefined,
-                        "Illegal feature attribute id (ATTF:ATTL[%d]) of %d\n"
-                        "on feature FIDN=%d, FIDS=%d.\n"
-                        "Skipping attribute, no more warnings will be issued.",
+                          "Illegal feature attribute id (ATTF:ATTL[%d]) of %d\n"
+                          "on feature FIDN=%d, FIDS=%d.\n"
+                          "Skipping attribute, no more warnings will be issued.",
                           iAttr, nAttrId, 
                           poFeature->GetFieldAsInteger( "FIDN" ),
                           poFeature->GetFieldAsInteger( "FIDS" ) );
@@ -925,9 +928,9 @@ void S57Reader::ApplyObjectClassAttributes( DDFRecord * poRecord,
             {
                 bAttrWarningIssued = TRUE;
                 CPLError( CE_Warning, CPLE_AppDefined,
-                        "Illegal feature attribute id (NATF:ATTL[%d]) of %d\n"
-                        "on feature FIDN=%d, FIDS=%d.\n"
-                        "Skipping attribute, no more warnings will be issued.",
+                          "Illegal feature attribute id (NATF:ATTL[%d]) of %d\n"
+                          "on feature FIDN=%d, FIDS=%d.\n"
+                          "Skipping attribute, no more warnings will be issued.",
                           iAttr, nAttrId, 
                           poFeature->GetFieldAsInteger( "FIDN" ),
                           poFeature->GetFieldAsInteger( "FIDS" ) );
@@ -937,12 +940,12 @@ void S57Reader::ApplyObjectClassAttributes( DDFRecord * poRecord,
         }
         
         poFeature->SetField( pszAcronym, 
-                          poRecord->GetStringSubfield("NATF",0,"ATVL",iAttr) );
+                             poRecord->GetStringSubfield("NATF",0,"ATVL",iAttr) );
     }
 }
 
 /************************************************************************/
-/*                        generatelnamandrefs()                         */
+/*                        GenerateLNAMAndRefs()                         */
 /************************************************************************/
 
 void S57Reader::GenerateLNAMAndRefs( DDFRecord * poRecord,
