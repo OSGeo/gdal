@@ -23,3 +23,6 @@ o/gdalallregister.o:	gdalallregister.cpp ../GDALmake.opt
 
 # We might want to add dynamically generated drivers here eventually.
 install:
+	$(MAKE) -C vrt install
+	$(MAKE) -C mem install
+	$(MAKE) -C raw install
