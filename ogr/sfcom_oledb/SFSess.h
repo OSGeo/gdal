@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.23  2002/08/12 14:44:28  warmerda
+ * backported VC6 compatibility
+ *
  * Revision 1.22  2002/08/09 21:34:30  warmerda
  * .net porting changes (minor)
  *
@@ -256,7 +259,7 @@ class CSFSessionTRSchemaRowset :
                 return E_OUTOFMEMORY;
         }
         
-        *pcRowsAffected = m_rgRowData.GetCount();
+        *pcRowsAffected = m_rgRowData.GET_SIZE_MACRO();
         
         return S_OK;
     }
@@ -395,7 +398,7 @@ class CSFSessionColSchemaRowset :
                 return E_OUTOFMEMORY;
         }
 
-        *pcRowsAffected = m_rgRowData.GetCount();
+        *pcRowsAffected = m_rgRowData.GET_SIZE_MACRO();
         
         return S_OK;
     }
@@ -434,7 +437,7 @@ public:
 		trDataS.m_nType = DBTYPE_IUNKNOWN;
 		m_rgRowData.Add(trDataBlob);
 
-		*pcRowsAffected = m_rgRowData.GetCount();
+		*pcRowsAffected = m_rgRowData.GET_SIZE_MACRO();
 		return S_OK;
 	}
 };
@@ -603,7 +606,7 @@ public CRowsetImpl <CSFSessionSchemaOGISTables,OGISTables_Row, CSFSession>
             }
         }
 
-        *pcRowsAffected = m_rgRowData.GetCount();
+        *pcRowsAffected = m_rgRowData.GET_SIZE_MACRO();
         
         return S_OK;
     }
