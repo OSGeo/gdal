@@ -192,6 +192,14 @@ These are:
 	<a href="ftp://ftp.remotesensing.org/gdal/jasper-1.600.0.uuid.tar.gz">
 	ftp://ftp.remotesensing.org/gdal/jasper-1.700.2.uuid.tar.gz</a>
 
+	<li> MrSID driver needs LizardTech decoding software development kit
+	(DSDK). <b>This DSDK is not free software, you should contact
+	<a href="http://www.lizardtech.com">LizardTech</a> to obtain it.</b>
+	DSDK distributed in binary form and if you are using GCC, please,
+	ensure that you have the same compiler as was used for DSDK
+	compilation. It is C++ library, so you may get incompatibilities in
+	C++ name mangling between different GCC versions (2.95.x and 3.x).
+
 </ul>
 
 <a name="largefiles"><h2>Large File Support</h2></a>
