@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.9  2005/02/23 21:37:18  kruland
+ * Added GetProjectionRef().  Commented missing methods.
+ *
  * Revision 1.8  2005/02/23 17:46:39  kruland
  * Added r/o attribute RasterCount.
  * Added AddBand method.
@@ -64,6 +67,9 @@ public:
   int RasterXSize;
   int RasterYSize;
   int RasterCount;
+//
+// Needed
+// _band list?
 %mutable;
 
   ~GDALDatasetShadow() {
@@ -81,6 +87,10 @@ public:
   }
 
   char const *GetProjection() {
+    return GDALGetProjectionRef( self );
+  }
+
+  char const *GetProjectionRef() {
     return GDALGetProjectionRef( self );
   }
 
@@ -205,6 +215,8 @@ public:
 /* AddBand */
 /* AdviseRead */
 /* ReadRaster */
+/* GetDescription */
+/* SetDescription */
   
 } /* extend */
 }; /* GDALDatasetShadow */
