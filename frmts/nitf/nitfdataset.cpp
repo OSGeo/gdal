@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2003/09/11 19:51:55  warmerda
+ * avoid type casting warnings
+ *
  * Revision 1.11  2003/08/21 19:25:59  warmerda
  * added overview support
  *
@@ -363,9 +366,9 @@ CPLErr NITFRasterBand::SetColorTable( GDALColorTable *poNewCT )
         GDALColorEntry sEntry;
 
         poNewCT->GetColorEntryAsRGB( i, &sEntry );
-        abyNITFLUT[i    ] = sEntry.c1;
-        abyNITFLUT[i+256] = sEntry.c2;
-        abyNITFLUT[i+512] = sEntry.c3;
+        abyNITFLUT[i    ] = (GByte) sEntry.c1;
+        abyNITFLUT[i+256] = (GByte) sEntry.c2;
+        abyNITFLUT[i+512] = (GByte) sEntry.c3;
     }
 
     if( NITFWriteLUT( psImage, nBand, nCount, abyNITFLUT ) )
