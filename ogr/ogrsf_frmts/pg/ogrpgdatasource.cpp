@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2002/01/13 16:23:16  warmerda
+ * capture dbname= parameter for use in AddGeometryColumn() call
+ *
  * Revision 1.8  2001/11/15 21:19:58  warmerda
  * added soft transaction semantics
  *
@@ -70,6 +73,7 @@ OGRPGDataSource::OGRPGDataSource()
 
 {
     pszName = NULL;
+    pszDBName = NULL;
     papoLayers = NULL;
     nLayers = 0;
     hPGConn = NULL;
@@ -87,6 +91,7 @@ OGRPGDataSource::~OGRPGDataSource()
     FlushSoftTransaction();
 
     CPLFree( pszName );
+    CPLFree( pszDBName );
 
     for( int i = 0; i < nLayers; i++ )
         delete papoLayers[i];
@@ -141,6 +146,31 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
 /*      Install a notice processor.                                     */
 /* -------------------------------------------------------------------- */
     PQsetNoticeProcessor( hPGConn, OGRPGNoticeProcessor, this );
+
+/* -------------------------------------------------------------------- */
+/*      Try to establish the database name from the connection          */
+/*      string passed.                                                  */
+/* -------------------------------------------------------------------- */
+    if( strstr(pszNewName, "dbname=") != NULL )
+    {
+        int	i;
+
+        pszDBName = CPLStrdup( strstr(pszNewName, "dbname=") + 7 );
+
+        for( i = 0; pszDBName[i] != '\0'; i++ )
+        {
+            if( pszDBName[i] == ' ' )					
+            {
+                pszDBName = '\0';
+                break;
+            }
+        }
+    }
+    else if( getenv( "USER" ) != NULL )
+        pszDBName = CPLStrdup( getenv("USER") );
+    else
+        pszDBName = CPLStrdup( "unknown_dbname" );
+        
 
 /* -------------------------------------------------------------------- */
 /*      Test to see if this database instance has support for the       */
@@ -309,8 +339,8 @@ void OGRPGDataSource::DeleteLayer( const char *pszLayerName )
     if( bHavePostGIS )
     {
         sprintf( szCommand, 
-                 "SELECT DropGeometryColumn('warmerda','%s','wkb_geometry')",
-                 pszLayerName );
+                 "SELECT DropGeometryColumn('%s','%s','wkb_geometry')",
+                 pszDBName, pszLayerName );
 
         PQexec( hPGConn, szCommand );
         PQclear( hResult );
