@@ -3,7 +3,7 @@
  *
  * Project:  NTF Translator
  * Purpose:  NTFRecord class implementation.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 1999, Frank Warmerdam
@@ -28,6 +28,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2002/02/11 16:54:47  warmerda
+ * Use internal code to read records, ensuring that "zero" bytes or other
+ * binary garbage are survivable.   Added implicit assumption that records
+ * are no more than 80 data bytes.
+ *
  * Revision 1.4  2002/02/08 20:43:06  warmerda
  * improved error checking and propagation
  *
@@ -70,16 +75,18 @@ NTFRecord::NTFRecord( FILE * fp )
 /* ==================================================================== */
 /*      Read lines untill we get to one without a continuation mark.    */
 /* ==================================================================== */
-    const char      *pszLine;
-    int             nNewLength;
+    char      szLine[83];
+    int       nNewLength;
 
     do { 
-        pszLine = CPLReadLine( fp );
-        if( pszLine == NULL )
+        nNewLength = ReadPhysicalLine( fp, szLine );
+        if( nNewLength == -1 || nNewLength == -2 )
             break;
 
-        nNewLength = strlen(pszLine);
-        if( pszLine[nNewLength-1] != '%' )
+        while( nNewLength > 0 && szLine[nNewLength-1] == ' ' )
+               szLine[--nNewLength] = '\0';
+
+        if( szLine[nNewLength-1] != '%' )
         {
             CPLError( CE_Failure, CPLE_AppDefined, 
                       "Corrupt NTF record, missing end '%%'." );
@@ -92,21 +99,19 @@ NTFRecord::NTFRecord( FILE * fp )
         {
             nLength = nNewLength - 2;
             pszData = (char *) CPLMalloc(nLength+1);
-            strncpy( pszData, pszLine, nLength );
+            memcpy( pszData, szLine, nLength );
             pszData[nLength] = '\0';
         }
         else
         {
             pszData = (char *) CPLRealloc(pszData,nLength+(nNewLength-4)+1);
             
-            CPLAssert( EQUALN(pszLine,"00",2) );
-            strncpy( pszData+nLength, pszLine+2, nNewLength-4 );
+            CPLAssert( EQUALN(szLine,"00",2) );
+            memcpy( pszData+nLength, szLine+2, nNewLength-4 );
             nLength += nNewLength-4;
             pszData[nLength] = '\0';
         }
-    } while( pszLine[nNewLength-2] == '1' );
-
-    CPLReadLine( NULL );
+    } while( szLine[nNewLength-2] == '1' );
 
 /* -------------------------------------------------------------------- */
 /*      Figure out the record type.                                     */
@@ -137,6 +142,73 @@ NTFRecord::~NTFRecord()
         pszFieldBuf = NULL;
         nFieldBufSize = 0;
     }
+}
+
+/************************************************************************/
+/*                          ReadPhysicalLine()                          */
+/************************************************************************/
+
+int NTFRecord::ReadPhysicalLine( FILE *fp, char *pszLine )
+
+{
+    int	        nBytesRead = 0;
+    int	        nRecordStart, nRecordEnd, i, nLength = 0;
+
+/* -------------------------------------------------------------------- */
+/*      Read enough data that we are sure we have a whole record.       */
+/* -------------------------------------------------------------------- */
+    nRecordStart = VSIFTell( fp );
+    nBytesRead = VSIFRead( pszLine, 1, 82, fp );
+
+    if( nBytesRead == 0 )
+    {
+        if( VSIFEof( fp ) )
+            return -1;
+        else
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                      "Low level read error occured while reading NTF file." );
+            return -2;
+        }
+    }
+    
+/* -------------------------------------------------------------------- */
+/*      Search for CR or LF.                                            */
+/* -------------------------------------------------------------------- */
+    for( i = 0; i < nBytesRead; i++ )
+    {
+        if( pszLine[i] == 10 || pszLine[i] == 13 )
+            break;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      If we don't find EOL within 80 characters something has gone    */
+/*      badly wrong!                                                    */
+/* -------------------------------------------------------------------- */
+    if( i == nBytesRead )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Record too long for NTF format, no line may be longer than 80 characters" );
+        return -2;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Trim CR/LF.                                                     */
+/* -------------------------------------------------------------------- */
+    nLength = i;
+    if( pszLine[i+1] == 10 || pszLine[i+1] == 13 )
+        nRecordEnd = nRecordStart + i + 2;
+    else
+        nRecordEnd = nRecordStart + i + 1;
+
+    pszLine[nLength] = '\0';
+
+/* -------------------------------------------------------------------- */
+/*      Restore read pointer to beginning of next record.               */
+/* -------------------------------------------------------------------- */
+    VSIFSeek( fp, nRecordEnd, SEEK_SET );
+    
+    return nLength;
 }
 
 /************************************************************************/
