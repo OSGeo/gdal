@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.2  2002/08/15 09:35:50  dron
+ * Fixes in georeferencing
+ *
  * Revision 1.1  2002/08/13 16:55:41  dron
  * Initial release
  *
@@ -64,12 +67,8 @@ class FASTDataset : public GDALDataset
     char        *pszProjection;
 
     FILE	*fpHeader;
-    char	*pszHeaderFilename;
-    char	*pszHeader;
-    
     FILE	*fpChannels[6];
     char	*pszDirname;
-    const char	*pszChannelFilenames[6];
     GDALDataType eDataType;
 
     void	ComputeGeoref();
@@ -99,8 +98,6 @@ class FASTRasterBand : public RawRasterBand
 
     		FASTRasterBand( FASTDataset *, int, FILE *, vsi_l_offset,
 				int, int, GDALDataType, int );
-    
-//    virtual CPLErr IReadBlock( int, int, void * );
 };
 
 
@@ -109,36 +106,14 @@ class FASTRasterBand : public RawRasterBand
 /************************************************************************/
 
 FASTRasterBand::FASTRasterBand( FASTDataset *poDS, int nBand, FILE * fpRaw,
-		vsi_l_offset nImgOffset, int nPixelOffset,
-                              int nLineOffset,
-                              GDALDataType eDataType, int bNativeOrder) :
-                RawRasterBand( poDS, nBand, fpRaw, 
-                              nImgOffset, nPixelOffset,
-                              nLineOffset,
-                              eDataType, bNativeOrder,
-                              FALSE)
+                                vsi_l_offset nImgOffset, int nPixelOffset,
+                                int nLineOffset, GDALDataType eDataType,
+				int bNativeOrder) :
+                 RawRasterBand( poDS, nBand, fpRaw, nImgOffset, nPixelOffset,
+                               nLineOffset, eDataType, bNativeOrder, FALSE)
 {
-/*    this->poDS = poDS;
-    this->nBand = nBand;
-    eDataType = GDT_UInt16;
-
-    nBlockXSize = poDS->GetRasterXSize();
-    nBlockYSize = 1;*/
-
-/*    nBlocksPerRow = 1;
-    nBlocksPerColumn = 0;*/
 
 }
-
-/************************************************************************/
-/*                             IReadBlock()                             */
-/************************************************************************/
-
-/*CPLErr FASTRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                      void * pImage )
-{
-//    return CE_None;
-}*/
 
 /************************************************************************/
 /* ==================================================================== */
@@ -165,8 +140,12 @@ FASTDataset::FASTDataset()
 FASTDataset::~FASTDataset()
 
 {
+    int i;
+    for ( i = 0; i < nBands; i++ )
+	VSIFClose( fpChannels[i] );
     if( fpHeader != NULL )
         VSIFClose( fpHeader );
+    CPLFree( pszDirname );
 }
 
 /************************************************************************/
@@ -188,28 +167,6 @@ const char *FASTDataset::GetProjectionRef()
 
 {
         return pszProjection;
-}
-
-char *CPLDirname( char *pszInputName )
-{
-    char   *pszDirname = CPLStrdup( pszInputName );
-    int    i;
-
-    for( i = strlen(pszDirname) - 1; i > 0; i-- )
-    {
-         if( pszDirname[i] == '\\' || pszDirname[i] == '/' )
-         {
-             if ( i == 0 )
-		     pszDirname[i + 1] = '\0';
-	     else
-		     pszDirname[i] = '\0';
-             return pszDirname;
-         }
-    }
-    pszDirname[0] = '.';
-    pszDirname[1] = '\0';
-
-    return pszDirname;
 }
 
 /*double ToDouble( char *pszString, int iLength )
@@ -274,75 +231,78 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
-    FASTDataset *poDS;
+    FASTDataset	*poDS;
 
     poDS = new FASTDataset();
 
     poDS->poDriver = poFASTDriver;
     poDS->fpHeader = poOpenInfo->fp;
     poOpenInfo->fp = NULL;
-    poDS->pszHeaderFilename = poOpenInfo->pszFilename;
+    poDS->pszDirname = CPLStrdup( CPLGetDirname( poOpenInfo->pszFilename ) );
     
 /* -------------------------------------------------------------------- */
 /*      Read the administrative header.                                 */
 /* -------------------------------------------------------------------- */
-    poDS->pszDirname = CPLDirname( poDS->pszHeaderFilename );
-    poDS->pszHeader = (char *)CPLMalloc( ADM_HEADER_SIZE );
-    fseek( poDS->fpHeader, 0, SEEK_SET );
-    fread( poDS->pszHeader, 1, ADM_HEADER_SIZE, poDS->fpHeader );
+    char	*pszHeader;
+    const char	*pszChannelFilename;
+    char	pszTempName[FAST_FILENAME_SIZE + 1];
+    
+    pszHeader = (char *)CPLMalloc( ADM_HEADER_SIZE );
+    VSIFSeek( poDS->fpHeader, 0, SEEK_SET );
+    VSIFRead( pszHeader, 1, ADM_HEADER_SIZE, poDS->fpHeader );
 
+    pszTempName[FAST_FILENAME_SIZE] = '\0';
     poDS->nBands = 0;
-    if ( poDS->pszHeader[1130] != ' ' )
+    if ( pszHeader[1130] != ' ' )
     {
-	poDS->pszChannelFilenames[poDS->nBands] =
-	    CPLSPrintf( "%s/%.29s", poDS->pszDirname, poDS->pszHeader + 1130 );
-        poDS->fpChannels[poDS->nBands] =
-	    fopen( poDS->pszChannelFilenames[poDS->nBands], "rb" );
+	memcpy( pszTempName, pszHeader + 1130, FAST_FILENAME_SIZE );
+	pszChannelFilename = CPLFormFilename( poDS->pszDirname, pszTempName, NULL );
+        poDS->fpChannels[poDS->nBands] = VSIFOpen( pszChannelFilename, "rb" );
 	if ( poDS->fpChannels[poDS->nBands] )
 	    poDS->nBands++;
     }
-    if ( poDS->pszHeader[1169] != ' ' )
+    if ( pszHeader[1169] != ' ' )
     {
-	poDS->pszChannelFilenames[poDS->nBands] =
-	    CPLSPrintf( "%s/%.29s", poDS->pszDirname, poDS->pszHeader + 1169 );
-        poDS->fpChannels[poDS->nBands] =
-	    fopen( poDS->pszChannelFilenames[poDS->nBands], "rb" );
+	memcpy( pszTempName, pszHeader + 1169, FAST_FILENAME_SIZE );
+	pszChannelFilename =
+	    CPLStrdup( CPLFormFilename( poDS->pszDirname, pszTempName, NULL ) );
+	poDS->fpChannels[poDS->nBands] = VSIFOpen( pszChannelFilename, "rb" );
 	if ( poDS->fpChannels[poDS->nBands] )
 	    poDS->nBands++;
     }
-    if ( poDS->pszHeader[1210] != ' ' )
+    if ( pszHeader[1210] != ' ' )
     {
-	poDS->pszChannelFilenames[poDS->nBands] =
-	    CPLSPrintf( "%s/%.29s", poDS->pszDirname, poDS->pszHeader + 1210 );
-        poDS->fpChannels[poDS->nBands] =
-	    fopen( poDS->pszChannelFilenames[poDS->nBands], "rb" );
+	memcpy( pszTempName, pszHeader + 1210, FAST_FILENAME_SIZE );
+	pszChannelFilename =
+	    CPLStrdup( CPLFormFilename( poDS->pszDirname, pszTempName, NULL ) );
+        poDS->fpChannels[poDS->nBands] = VSIFOpen( pszChannelFilename, "rb" );
 	if ( poDS->fpChannels[poDS->nBands] )
 	    poDS->nBands++;
     }
-    if ( poDS->pszHeader[1249] != ' ' )
+    if ( pszHeader[1249] != ' ' )
     {
-	poDS->pszChannelFilenames[poDS->nBands] =
-	    CPLSPrintf( "%s/%.29s", poDS->pszDirname, poDS->pszHeader + 1249 );
-        poDS->fpChannels[poDS->nBands] =
-	    fopen( poDS->pszChannelFilenames[poDS->nBands], "rb" );
+	memcpy( pszTempName, pszHeader + 1249, FAST_FILENAME_SIZE );
+	pszChannelFilename =
+	    CPLStrdup( CPLFormFilename( poDS->pszDirname, pszTempName, NULL ) );
+        poDS->fpChannels[poDS->nBands] = VSIFOpen( pszChannelFilename, "rb" );
 	if ( poDS->fpChannels[poDS->nBands] )
 	    poDS->nBands++;
     }
-    if ( poDS->pszHeader[1290] != ' ' )
+    if ( pszHeader[1290] != ' ' )
     {
-	poDS->pszChannelFilenames[poDS->nBands] =
-	    CPLSPrintf( "%s/%.29s", poDS->pszDirname, poDS->pszHeader + 1290 );
-        poDS->fpChannels[poDS->nBands] =
-	    fopen( poDS->pszChannelFilenames[poDS->nBands], "rb" );
+	memcpy( pszTempName, pszHeader + 1290, FAST_FILENAME_SIZE );
+	pszChannelFilename =
+	    CPLStrdup( CPLFormFilename( poDS->pszDirname, pszTempName, NULL ) );
+        poDS->fpChannels[poDS->nBands] = VSIFOpen( pszChannelFilename, "rb" );
 	if ( poDS->fpChannels[poDS->nBands] )
 	    poDS->nBands++;
     }
-    if ( poDS->pszHeader[1329] != ' ' )
+    if ( pszHeader[1329] != ' ' )
     {
-	poDS->pszChannelFilenames[poDS->nBands] =
-	    CPLSPrintf( "%s/%.29s", poDS->pszDirname, poDS->pszHeader + 1329 );
-        poDS->fpChannels[poDS->nBands] =
-	    fopen( poDS->pszChannelFilenames[poDS->nBands], "rb" );
+	memcpy( pszTempName, pszHeader + 1329, FAST_FILENAME_SIZE );
+	pszChannelFilename =
+	    CPLStrdup( CPLFormFilename( poDS->pszDirname, pszTempName, NULL ) );
+        poDS->fpChannels[poDS->nBands] = VSIFOpen( pszChannelFilename, "rb" );
 	if ( poDS->fpChannels[poDS->nBands] )
 	    poDS->nBands++;
     }
@@ -350,10 +310,10 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
     if ( !poDS->nBands )
 	return NULL;
     
-    poDS->nRasterXSize = atoi( poDS->pszHeader + 842 );
-    poDS->nRasterYSize = atoi( poDS->pszHeader + 870 );
+    poDS->nRasterXSize = atoi( pszHeader + 842 );
+    poDS->nRasterYSize = atoi( pszHeader + 870 );
 
-    switch( atoi( poDS->pszHeader + 983 ) )
+    switch( atoi( pszHeader + 983 ) )
     {
         default:
 	case 8:
@@ -363,35 +323,46 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
 
     // Read geometric record
     OGRSpatialReference oSRS;
-    int iUTMZone;
-    double dfULX, dfULY, dfURX, dfURY, dfLLX, dfLLY, dfLRX, dfLRY;
+    int		iUTMZone;
+    // Coordinates of corner pixel's centers
+    double	dfULX = 0.5, dfULY = 0.5;
+    double	dfURX = poDS->nRasterXSize - 0.5, dfURY = 0.5;
+    double	dfLLX = 0.5, dfLLY = poDS->nRasterYSize - 0.5;
+    double	dfLRX = poDS->nRasterXSize - 0.5, dfLRY = poDS->nRasterYSize - 0.5;
     
-    if ( EQUALN(poDS->pszHeader + 3103, "UTM", 3) )
-	oSRS.SetProjCS( "UTM" );
-    if ( EQUALN(poDS->pszHeader + 3145, "WGS84", 5) )
+    if ( EQUALN(pszHeader + 3145, "WGS84", 5) )
 	oSRS.SetWellKnownGeogCS( "WGS84" );
-    iUTMZone = atoi( poDS->pszHeader + 3592 );
-    if( *(poDS->pszHeader + 3662) == 'N' )	// North hemisphere
-	oSRS.SetUTM( iUTMZone, TRUE );
-    else					// South hemisphere
-	oSRS.SetUTM( iUTMZone, FALSE );
-    oSRS.exportToWkt( &poDS->pszProjection );
     
-    dfULX = atof( poDS->pszHeader + 3664 );
-    dfULY = atof( poDS->pszHeader + 3678 );
-    dfURX = atof( poDS->pszHeader + 3744 );
-    dfURY = atof( poDS->pszHeader + 3758 );
-    dfLRX = atof( poDS->pszHeader + 3824 );
-    dfLRY = atof( poDS->pszHeader + 3838 );
-    dfLLX = atof( poDS->pszHeader + 3904 );
-    dfLLY = atof( poDS->pszHeader + 3918 );
+    if ( EQUALN(pszHeader + 3103, "UTM", 3) )
+    {
+	oSRS.SetProjCS( "UTM" );
+        iUTMZone = atoi( pszHeader + 3592 );
+        if( *(pszHeader + 3662) == 'N' )	// North hemisphere
+	    oSRS.SetUTM( iUTMZone, TRUE );
+        else					// South hemisphere
+	    oSRS.SetUTM( iUTMZone, FALSE );
+	// UTM coordinates
+        dfULX = atof( pszHeader + 3664 );
+        dfULY = atof( pszHeader + 3678 );
+        dfURX = atof( pszHeader + 3744 );
+        dfURY = atof( pszHeader + 3758 );
+        dfLRX = atof( pszHeader + 3824 );
+        dfLRY = atof( pszHeader + 3838 );
+        dfLLX = atof( pszHeader + 3904 );
+        dfLLY = atof( pszHeader + 3918 );
+    }
+    
+    oSRS.exportToWkt( &poDS->pszProjection );
 
-    poDS->adfGeoTransform[0] = dfULX;
-    poDS->adfGeoTransform[3] = dfULY;
-    poDS->adfGeoTransform[1] = (dfURX - dfLLX) / poDS->nRasterXSize;
+    poDS->adfGeoTransform[1] = (dfURX - dfLLX) / (poDS->nRasterXSize - 1);
+    if( *(pszHeader + 3662) == 'N' )
+	poDS->adfGeoTransform[5] = (dfURY - dfLLY) / (poDS->nRasterYSize - 1);
+    else	    
+	poDS->adfGeoTransform[5] =  (dfLLY - dfURY) / (poDS->nRasterYSize - 1);
+    poDS->adfGeoTransform[0] = dfULX - poDS->adfGeoTransform[1] / 2;
+    poDS->adfGeoTransform[3] = dfULY - poDS->adfGeoTransform[5] / 2;
     poDS->adfGeoTransform[2] = 0.0;
     poDS->adfGeoTransform[4] = 0.0;
-    poDS->adfGeoTransform[5] = -1 * (dfURY - dfLLY) / poDS->nRasterYSize;
 
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
@@ -400,9 +371,8 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->SetBand( i, new FASTRasterBand( poDS, i, poDS->fpChannels[i -1 ],
 	    0, 1, poDS->nRasterXSize, poDS->eDataType, TRUE));
 
-/* -------------------------------------------------------------------- */
-/*      Get and set other important information	as metadata             */
-/* -------------------------------------------------------------------- */
+    CPLFree( pszPrefixName );
+    CPLFree( pszHeader );
 
     return( poDS );
 }
