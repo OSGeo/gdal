@@ -28,6 +28,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.32  2004/01/29 15:22:30  dron
+# Added wrapper for OSRImportFromPCI().
+#
 # Revision 1.31  2003/11/03 16:55:18  dron
 # Added missed 'scale' parameter to SetPS().
 #
@@ -191,6 +194,12 @@ class SpatialReference:
 
     def ImportFromESRI( self, prj_lines ):
         return _gdal.OSRImportFromESRI( self._o, prj_lines )
+
+    def ImportFromPCI( self, proj, units = "METER", proj_parms = None ):
+	if proj_parms is None:
+	    return _gdal.OSRImportFromPCI( self._o, proj, units )
+	else:
+	    return _gdal.OSRImportFromPCI( self._o, proj, units, proj_parms )
 
     def ImportFromXML( self, xml ):
         return _gdal.OSRImportFromXML( self._o, xml )

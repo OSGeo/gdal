@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.80  2004/01/29 15:22:30  dron
+ * Added wrapper for OSRImportFromPCI().
+ *
  * Revision 1.79  2004/01/22 21:27:38  dron
  * Added wrapper for GDALDataTypeIsComplex() function.
  *
@@ -1668,6 +1671,60 @@ py_OSRImportFromESRI(PyObject *self, PyObject *args) {
 %}
 
 %native(OSRImportFromESRI) py_OSRImportFromESRI;
+
+%{
+/************************************************************************/
+/*                          OSRImportFromPCI()                          */
+/************************************************************************/
+static PyObject *
+py_OSRImportFromPCI(PyObject *self, PyObject *args) {
+
+    OGRSpatialReferenceH _arg0;
+    char    *_argc0 = NULL;
+    int     err;
+    PyObject *py_parms = NULL;
+    char    *proj, *units = NULL;
+    double  *parms = NULL;
+    int     i;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"ss|sO!:OSRImportFromPCI",
+	&_argc0, &proj, &units, &PyTuple_Type, &py_parms) )
+        return NULL;
+
+    if (_argc0) {
+        if (SWIG_GetPtr_2(_argc0,(void **) &_arg0,_OGRSpatialReferenceH)) {
+            PyErr_SetString(PyExc_TypeError,
+                            "Type error in argument 1 of OSRImportFromPCI."
+                            "  Expected _OGRSpatialReferenceH.");
+            return NULL;
+        }
+    }
+
+    if (py_parms)
+    {
+        parms = CPLMalloc(16 * sizeof(double));
+        for( i = 0; i < PyTuple_Size(py_parms); i++ )
+        {
+            if( !PyArg_Parse( PyTuple_GET_ITEM(py_parms,i), "d", &parms[i] ) )
+            {
+                PyErr_SetString(PyExc_TypeError,
+                                "Type error in argument 4 of OSRImportFromPCI."
+                                "  Expected tuple of floats.");
+                return NULL;
+            }
+        }
+    }
+
+    err = OSRImportFromPCI( _arg0, proj, units, parms );
+
+    if (parms)
+        CPLFree(parms);
+    return Py_BuildValue( "i", err );
+}
+%}
+
+%native(OSRImportFromPCI) py_OSRImportFromPCI;
 
 %{
 /************************************************************************/
