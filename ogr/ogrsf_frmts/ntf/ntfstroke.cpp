@@ -30,6 +30,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2004/09/13 20:20:03  fwarmerdam
+ * Fixed bug in NTFStrokeArcToOGRGeometry_Angles which resulted in
+ * wrong quadrant for angles (in some? cases) - Safe bug 11672.
+ *
  * Revision 1.2  2001/08/28 20:50:03  warmerda
  * expand tabs
  *
@@ -162,11 +166,11 @@ NTFStrokeArcToOGRGeometry_Points( double dfCenterX, double dfCenterY,
 
         dfDeltaX = dfStartX - dfCenterX;
         dfDeltaY = dfStartY - dfCenterY;
-        dfStartAngle = atan2(dfDeltaX,dfDeltaY) * 180.0 / PI;
+        dfStartAngle = atan2(dfDeltaY,dfDeltaX) * 180.0 / PI;
 
         dfDeltaX = dfEndX - dfCenterX;
         dfDeltaY = dfEndY - dfCenterY;
-        dfEndAngle = atan2(dfDeltaX,dfDeltaY) * 180.0 / PI;
+        dfEndAngle = atan2(dfDeltaY,dfDeltaX) * 180.0 / PI;
 
         if( dfEndAngle < dfStartAngle )
             dfEndAngle += 360.0;
@@ -192,7 +196,7 @@ NTFStrokeArcToOGRGeometry_Angles( double dfCenterX, double dfCenterY,
     OGRLineString      *poLine = new OGRLineString;
     double             dfArcX, dfArcY, dfSlice;
     int                iPoint;
-        
+
     nVertexCount = MAX(2,nVertexCount);
     dfSlice = (dfEndAngle-dfStartAngle)/(nVertexCount-1);
 
