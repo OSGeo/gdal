@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2002/05/18 22:57:54  warmerda
+ * allow long lines
+ *
  * Revision 1.5  2001/07/18 04:51:56  warmerda
  * added CPL_CVSID
  *
@@ -1683,7 +1686,7 @@ int S_NameValueList_Parse( const char *text, int text_offset,
      */
     while( *next_text != '\0' )
     {
-        char	line[128];
+        char	line[1024];
         int     line_len = 0, equal_index, src_char, line_offset;
         EnvisatNameValue *entry;
 
@@ -1698,10 +1701,10 @@ int S_NameValueList_Parse( const char *text, int text_offset,
         line_offset = (next_text - text) + text_offset;
         while( *next_text != '\0' && *next_text != '\n' )
         {
-            if( line_len > 80 )
+            if( line_len > sizeof(line)-1 )
             {
                 SendError( "S_NameValueList_Parse(): "
-                           "Corrupt line, longer than 80 characters." );
+                           "Corrupt line, longer than 1024 characters." );
                 return FAILURE;
             }
 
