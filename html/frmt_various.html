@@ -389,12 +389,17 @@ NOTE: Implemented as <tt>gdal/frmts/ceos2/sar_ceosdataset.cpp</tt>.<p>
 <h2><a name="SDTS">SDTS -- USGS SDTS DEM</a></h2>
 
 GDAL includes support for reading USGS SDTS formatted DEMs.  USGS DEMs are
-always returned with a data type of signed sixteen bit integer.  Projection
-and georeferencing information is also returned.<p>
+always returned with a data type of signed sixteen bit integer, or 32bit float.
+Projection and georeferencing information is also returned.<p>
 
 SDTS datasets consist of a number of files.  Each DEM should have one file
 with a name like XXXCATD.DDF.  This should be selected to open
 the dataset.<p>
+
+The elevation units of DEMs vary somewhat.  The GetType() method on a band
+will attempt to report if the units are Feet ("ft") or Meters ("m").
+Apparently some DEMs are measured in decimeters and centimeters.  The units
+for these will not be properly reported.<p>
 
 NOTE: Implemented as <tt>gdal/frmts/sdts/sdtsdataset.cpp</tt>.<p>
 
