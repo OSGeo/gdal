@@ -18,6 +18,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2002/04/25 02:23:43  warmerda
+ * fixed support for ORDER BY <field> ASC
+ *
  * Revision 1.6  2002/04/23 20:05:23  warmerda
  * added SELECT statement parsing
  *
@@ -1177,8 +1180,11 @@ const char *swq_select_preparse( const char *select_statement,
                 SWQ_MALLOC(sizeof(swq_order_def)*(select_info->order_specs+1));
 
             if( old_defs != NULL )
+            {
                 memcpy( select_info->order_defs, old_defs, 
                         sizeof(swq_order_def)*select_info->order_specs );
+                SWQ_FREE( old_defs );
+            }
 
             def = select_info->order_defs + select_info->order_specs;
             def->field_name = token;
@@ -1192,6 +1198,11 @@ const char *swq_select_preparse( const char *select_statement,
                 token = swq_token( input, &input, &is_literal );
 
                 def->ascending_flag = 0;
+            } 
+            else if( token != NULL && strcasecmp(token,"ASC") == 0 )
+            {
+                SWQ_FREE( token );
+                token = swq_token( input, &input, &is_literal );
             }
 
             select_info->order_specs++;
