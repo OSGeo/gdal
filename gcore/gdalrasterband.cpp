@@ -28,6 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************
  * $Log$
+ * Revision 1.18  2000/07/12 00:19:29  warmerda
+ * Removed extra line feed.
+ *
  * Revision 1.17  2000/06/05 17:24:05  warmerda
  * added real complex support
  *
@@ -215,7 +218,7 @@ CPLErr GDALRasterBand::RasterIO( GDALRWFlag eRWFlag,
     {
         CPLError( CE_Failure, CPLE_IllegalArg,
                   "Access window out of range in RasterIO().  Requested\n"
-                  "(%d,%d) of size %dx%d on raster of %dx%d.\n",
+                  "(%d,%d) of size %dx%d on raster of %dx%d.",
                   nXOff, nYOff, nXSize, nYSize, nRasterXSize, nRasterYSize );
         return CE_Failure;
     }
