@@ -45,14 +45,10 @@ listed</a> using BugZilla.<p>
 <h2>Download</h2>
 
 Binaries of the GDAL utility programs and the shared libraries are
-available for
-<a href="ftp://ftp.remotesensing.org/pub/gdal/gdal-115a-ntbin.zip">MS Windows 
-NT/95/98</a> and 
-<a href="ftp://ftp.remotesensing.org/pub/gdal/gdal-1.1.7.1-linux-bin.tar.gz">
-Linux</a>.  GDAL utilities and much more can also be found within the 
+available as part of 
 <a href="ftp://ftp.remotesensing.org/pub/gdal/openev/">OpenEV_FW</a> releases 
-on Windows.  GDAL is also a component of the FreeGIS CDs available from
-<a href="http://www.freegis.org/">www.freegis.org</a> in RPM format.<p>
+on Windows and Linux.  GDAL is also a component of the FreeGIS CDs available 
+from <a href="http://www.freegis.org/">www.freegis.org</a> in RPM format.<p>
 
 The GDAL source is available by anonymous CVS or as a tarball:<p>
 
