@@ -3,9 +3,8 @@ GDAL_ROOT	=	../../..
 
 include $(GDAL_ROOT)/GDALmake.opt
 
-OBJ	=	dgnopen.o dgnread.o dgnfloat.o dgnhelp.o
-OBJ_OGR =	ogrdgndriver.o ogrdgndatasource.o ogrdgnlayer.o \
-		dgnstroke.o
+OBJ	=	dgnopen.o dgnread.o dgnfloat.o dgnhelp.o dgnwrite.o dgnstroke.o
+OBJ_OGR =	ogrdgndriver.o ogrdgndatasource.o ogrdgnlayer.o
 
 ALL_C_FLAGS	=	-I.. -I../.. -I$(GDAL_ROOT)/port $(CFLAGS)
 
@@ -17,7 +16,7 @@ DIST_REV =	1.3
 DIST_DIR =	dgnlib-$(DIST_REV)
 DIST_FILE = 	dgnlib-$(DIST_REV).zip
 DIST_FILES =	dgnread.cpp dgnopen.cpp dgnlib.h dgnlibp.h dgnfloat.cpp \
-		dgnstroke.cpp dgndump.c README \
+		dgnstroke.cpp dgnwrite.cpp dgndump.c README \
 		\
 		$(CPL_DIR)/cpl_config.h $(CPL_DIR)/cpl_port.h \
 		$(CPL_DIR)/cpl_vsi.h $(CPL_DIR)/cpl_vsisimple.cpp \
@@ -52,5 +51,9 @@ dist:
 web-update:	docs dist
 	cp html/* /u/www/projects/dgn/libhtml
 	cp $(DIST_FILE) /u/www/projects/dgn/
+
+
+pge_test:	pge_test.cpp dgn_pge.cpp $(OBJ)
+	gcc -g pge_test.cpp dgn_pge.cpp $(OBJ) $(GDAL_HOME)/port/cpl.a -lm -o pge_test
 
 
