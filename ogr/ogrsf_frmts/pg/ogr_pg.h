@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2002/01/13 16:23:16  warmerda
+ * capture dbname= parameter for use in AddGeometryColumn() call
+ *
  * Revision 1.7  2001/11/15 21:19:58  warmerda
  * added soft transaction semantics
  *
@@ -137,7 +140,8 @@ class OGRPGDataSource : public OGRDataSource
     OGRPGLayer        **papoLayers;
     int			nLayers;
     
-    char		*pszName;
+    char	       *pszName;
+    char               *pszDBName;
 
     int			bDSUpdate;
     int			bHavePostGIS;
