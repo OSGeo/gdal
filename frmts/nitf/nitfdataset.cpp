@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.38  2005/03/17 19:34:31  fwarmerdam
+ * Added IC and IMODE metadata.
+ *
  * Revision 1.37  2005/03/01 14:28:06  fwarmerdam
  * Added support for overriding JPEG2000 profile.
  *
@@ -1037,15 +1040,28 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo )
     char **papszMergedMD;
     char **papszUSE00A_MD;
 
+    // File and Image level metadata.
     papszMergedMD = CSLDuplicate( poDS->psFile->papszMetadata );
     papszMergedMD = CSLInsertStrings( papszMergedMD, 
                                       CSLCount( papszMergedMD ),
                                       psImage->papszMetadata );
 
+    // Comments.
     if( psImage->pszComments != NULL && strlen(psImage->pszComments) != 0 )
         papszMergedMD = CSLSetNameValue( 
             papszMergedMD, "NITF_IMAGE_COMMENTS", psImage->pszComments );
 
+    // Compression code. 
+    papszMergedMD = CSLSetNameValue( papszMergedMD, "NITF_IC", 
+                                     psImage->szIC );
+
+    // IMODE
+    char szIMODE[2];
+    szIMODE[0] = psImage->chIMODE;
+    szIMODE[1] = '\0';
+    papszMergedMD = CSLSetNameValue( papszMergedMD, "NITF_IMODE", szIMODE );
+
+    // USE00A 
     papszUSE00A_MD = NITFReadUSE00A( psImage );
     if( papszUSE00A_MD != NULL )
     {
@@ -1063,7 +1079,7 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo )
                                           papszUSE00A_MD );
         CSLDestroy( papszUSE00A_MD );
     }
-    
+
     poDS->SetMetadata( papszMergedMD );
     CSLDestroy( papszMergedMD );
     
