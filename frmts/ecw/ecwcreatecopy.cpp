@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.15  2005/04/02 21:26:34  fwarmerdam
+ * preliminary support for creating GML coverage boxes
+ *
  * Revision 1.14  2005/03/22 04:37:47  fwarmerdam
  * Integrated ECW_LARGE_OK option.
  *
@@ -78,6 +81,7 @@
 #include "cpl_string.h"
 #include "cpl_conv.h"
 #include "vsiiostream.h"
+#include "jp2userbox.h"
 
 CPL_CVSID("$Id$");
 
@@ -99,6 +103,10 @@ public:
                         const char *pszWKT, double *padfGeoTransform,
                         int bIsJPEG2000 );
     CPLErr  CloseDown();
+
+    CPLErr  PrepareCoverageBox( const char *pszWKT, double *padfGeoTransform );
+
+    CNCSJP2File::CNCSJPXAssocBox  m_oGMLAssoc;
 
     // Data
 
@@ -225,6 +233,131 @@ bool GDALECWCompressor::WriteCancel()
 
 {
     return (bool) m_bCancelled;
+}
+
+/************************************************************************/
+/*                         PrepareCoverageBox()                         */
+/************************************************************************/
+
+CPLErr  GDALECWCompressor::PrepareCoverageBox( const char *pszWKT, 
+                                               double *padfGeoTransform )
+
+{
+
+/* -------------------------------------------------------------------- */
+/*      Try do determine a PCS or GCS code we can use.                  */
+/* -------------------------------------------------------------------- */
+    OGRSpatialReference oSRS;
+    char *pszWKTCopy = (char *) pszWKT;
+    int nEPSGCode = 0;
+    char szSRSName[100];
+
+    if( oSRS.importFromWkt( &pszWKTCopy ) != OGRERR_NONE )
+        return CE_Failure;
+
+    if( oSRS.IsProjected() )
+    {
+        const char *pszAuthName = oSRS.GetAuthorityName( "PROJCS" );
+
+        if( pszAuthName != NULL && EQUAL(pszAuthName,"epsg") )
+        {
+            nEPSGCode = atoi(oSRS.GetAuthorityCode( "PROJCS" ));
+        }
+    }
+    else if( oSRS.IsGeographic() )
+    {
+        const char *pszAuthName = oSRS.GetAuthorityName( "GEOGCS" );
+
+        if( pszAuthName != NULL && EQUAL(pszAuthName,"epsg") )
+        {
+            nEPSGCode = atoi(oSRS.GetAuthorityCode( "GEOGCS" ));
+        }
+    }
+
+    sprintf( szSRSName, "urn:ogc:def:crs:EPSG::%d", nEPSGCode );
+
+/* -------------------------------------------------------------------- */
+/*      For now we hardcode for a minimal instance format.              */
+/* -------------------------------------------------------------------- */
+    char szDoc[4000];
+
+    sprintf( szDoc, 
+"<gml:FeatureCollection\n"
+"   xmlns:gml=\"http://www.opengis.net/gml\"\n"
+"   xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n"
+"   xsi:schemaLocation=\"http://www.opengis.net/gml http://www.math.ubc.ca/~burggraf/gml/gml4jp2.xsd\">\n"
+"  <gml:boundedBy>\n"
+"    <gml:Null>withheld</gml:Null>\n"
+"  </gml:boundedBy>\n"
+"  <gml:featureMember>\n"
+"    <gml:RectifiedGridCoverage dimension=\"2\" gml:id=\"RGC0001\">\n"
+"      <gml:rectifiedGridDomain>\n"
+"        <gml:RectifiedGrid dimension=\"2\">\n"
+"          <gml:limits>\n"
+"            <gml:GridEnvelope>\n"
+"              <gml:low>0 0</gml:low>\n"
+"              <gml:high>%d %d</gml:high>\n"
+"            </gml:GridEnvelope>\n"
+"          </gml:limits>\n"
+"          <gml:axisName>x</gml:axisName>\n"
+"          <gml:axisName>y</gml:axisName>\n"
+"          <gml:origin>\n"
+"            <gml:Point gml:id=\"P0001\" srsName=\"%s\">\n"
+"              <gml:pos>%.15g %.15g</gml:pos>\n"
+"            </gml:Point>\n"
+"          </gml:origin>\n"
+"          <gml:offsetVector srsName=\"%s\">%.15g %.15g</gml:offsetVector>\n"
+"          <gml:offsetVector srsName=\"%s\">%.15g %.15g</gml:offsetVector>\n"
+"        </gml:RectifiedGrid>\n"
+"      </gml:rectifiedGridDomain>\n"
+"    </gml:RectifiedGridCoverage>\n"
+"  </gml:featureMember>\n"
+"</gml:FeatureCollection>\n",
+             sFileInfo.nSizeX-1, sFileInfo.nSizeY-1, 
+             szSRSName,
+             padfGeoTransform[0] + padfGeoTransform[1] * 0.5
+                                 + padfGeoTransform[4] * 0.5, 
+             padfGeoTransform[3] + padfGeoTransform[2] * 0.5
+                                 + padfGeoTransform[5] * 0.5,
+             szSRSName, 
+             padfGeoTransform[1], padfGeoTransform[2],
+             szSRSName,
+             padfGeoTransform[4], padfGeoTransform[5] );
+
+/* -------------------------------------------------------------------- */
+/*      Setup the various required boxes.                               */
+/* -------------------------------------------------------------------- */
+    JP2UserBox *poGMLData;
+    CNCSJP2File::CNCSJPXAssocBox *poAssoc;
+    CNCSJP2File::CNCSJPXLabelBox *poLabel;
+
+    poLabel = new CNCSJP2File::CNCSJPXLabelBox();
+    poLabel->SetLabel( "gml.data" );
+    poLabel->m_bValid = true;
+    m_oGMLAssoc.m_OtherBoxes.push_back( poLabel );
+    m_oGMLAssoc.m_OwnedBoxes.push_back( poLabel );
+    
+    poAssoc = new CNCSJP2File::CNCSJPXAssocBox();
+    m_oGMLAssoc.m_OtherBoxes.push_back( poAssoc );
+    m_oGMLAssoc.m_OwnedBoxes.push_back( poAssoc );
+    poAssoc->m_bValid = true;
+
+    poLabel = new CNCSJP2File::CNCSJPXLabelBox();
+    poLabel->SetLabel( "gml.root-instance" );
+    poLabel->m_bValid = true;
+    poAssoc->m_OtherBoxes.push_back( poLabel );
+    poAssoc->m_OwnedBoxes.push_back( poLabel );
+
+    poGMLData = new JP2UserBox();
+    poGMLData->m_nTBox = 'xml ';
+    poGMLData->SetData( strlen( szDoc ), (unsigned char *) szDoc );
+    poAssoc->m_OtherBoxes.push_back( poGMLData );
+    poAssoc->m_OwnedBoxes.push_back( poGMLData );
+
+    m_oGMLAssoc.m_bValid = true;
+    AddBox( &m_oGMLAssoc );
+
+    return CE_None;
 }
 
 /************************************************************************/
@@ -628,7 +761,21 @@ CPLErr GDALECWCompressor::Initialize(
             SetParameter( 
                 CNCSJP2FileView::JP2_COMPRESS_PROGRESSION_RPCL );
 
-        // JP2_GEODATA_USAGE? 
+        pszOption = CSLFetchNameValue(papszOptions, "GEODATA_USAGE");
+        if( pszOption == NULL )
+            /* do nothing special */;
+        else if( EQUAL(pszOption,"NONE") )
+            SetGeodataUsage( JP2_GEODATA_USE_NONE );
+        else if( EQUAL(pszOption,"PCS_ONLY") )
+            SetGeodataUsage( JP2_GEODATA_USE_PCS_ONLY );
+        else if( EQUAL(pszOption,"GML_ONLY") )
+            SetGeodataUsage( JP2_GEODATA_USE_GML_ONLY );
+        else if( EQUAL(pszOption,"PCS_GML") )
+            SetGeodataUsage( JP2_GEODATA_USE_PCS_GML );
+        else if( EQUAL(pszOption,"GML_PCS") )
+            SetGeodataUsage( JP2_GEODATA_USE_GML_PCS );
+        else if( EQUAL(pszOption,"ALL") )
+            SetGeodataUsage( JP2_GEODATA_USE_GML_PCS_WLD );
 
         pszOption = CSLFetchNameValue(papszOptions, "DECOMPRESS_LAYERS");
         if( pszOption != NULL )
@@ -698,6 +845,11 @@ CPLErr GDALECWCompressor::Initialize(
               szProjection, szDatum );
 
 /* -------------------------------------------------------------------- */
+/*      Setup GML information.                                          */
+/* -------------------------------------------------------------------- */
+    PrepareCoverageBox( pszWKT, padfGeoTransform );
+    
+/* -------------------------------------------------------------------- */
 /*      Handle special case of a JPEG2000 data stream in another file.  */
 /* -------------------------------------------------------------------- */
     fpVSIL = NULL;
@@ -739,6 +891,16 @@ CPLErr GDALECWCompressor::Initialize(
                           subfile_offset, subfile_size );
     }
 
+
+/* -------------------------------------------------------------------- */
+/*      Check if we can enable large files.  This option should only    */
+/*      be set when the application is adhering to one of the           */
+/*      ERMapper options for licensing larger than 500MB input          */
+/*      files.  See Bug 767.                                            */
+/* -------------------------------------------------------------------- */
+    if( CSLTestBoolean(CPLGetConfigOption( "ECW_LARGE_OK", "NO" )) )
+        CNCSFile::SetKeySize();
+
 /* -------------------------------------------------------------------- */
 /*      Check if we can enable large files.  This option should only    */
 /*      be set when the application is adhering to one of the           */
@@ -762,7 +924,6 @@ CPLErr GDALECWCompressor::Initialize(
         else
             oError = CNCSJP2FileView::Open( &(m_OStream) );
     }
-
 
     return CE_None;
 }
