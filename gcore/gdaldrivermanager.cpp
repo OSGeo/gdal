@@ -25,6 +25,9 @@
  * The GDALDriverManager class from gdal_priv.h.
  * 
  * $Log$
+ * Revision 1.6  2000/04/22 12:25:41  warmerda
+ * Documented AutoLoadDrivers().
+ *
  * Revision 1.5  2000/04/04 23:44:29  warmerda
  * added AutoLoadDrivers() to GDALDriverManager
  *
@@ -360,6 +363,23 @@ void GDALDriverManager::SetHome( const char * pszNewHome )
 /*                          AutoLoadDrivers()                           */
 /************************************************************************/
 
+/**
+ * Auto-load GDAL drivers from shared libraries.
+ *
+ * This function will automatically load drivers from shared libraries.  It
+ * searches the "driver path" for .so (or .dll) files that start with the
+ * prefix "gdal_X.so".  It then tries to load them and then tries to call
+ * a function within them called GDALRegister_X() where the 'X' is the same 
+ * as the remainder of the shared library basename, or failing that to 
+ * call GDALRegisterMe().  
+ *
+ * There are a few rules for the driver path.  If the GDAL_DRIVER_PATH
+ * environment variable it set, it is taken to be a list of directories
+ * to search separated by colons on unix, or semi-colons on Windows.  Otherwise
+ * the /usr/local/lib directory, and (if known) the lib subdirectory of the
+ * gdal home directory are searched. 
+ */
+
 void GDALDriverManager::AutoLoadDrivers()
 
 {
@@ -370,9 +390,15 @@ void GDALDriverManager::AutoLoadDrivers()
 /* -------------------------------------------------------------------- */
     if( getenv( "GDAL_DRIVER_PATH" ) != NULL )
     {
+#ifdef WIN32
+        papszSearchPath = 
+            CSLTokenizeStringComplex( getenv( "GDAL_DRIVER_PATH" ), ";", 
+                                      TRUE, FALSE );
+#else
         papszSearchPath = 
             CSLTokenizeStringComplex( getenv( "GDAL_DRIVER_PATH" ), ":", 
                                       TRUE, FALSE );
+#endif
     }
     else
     {
