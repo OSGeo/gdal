@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.27  2003/05/30 17:48:57  warmerda
+ * Set GEOGCS|UNIT AUTHORITY information.
+ *
  * Revision 1.26  2003/05/30 15:39:53  warmerda
  * Added override units capability for SetStatePlane()
  *
@@ -1042,6 +1045,7 @@ static OGRErr SetEPSGGeogCS( OGRSpatialReference * poSRS, int nGeogCS )
     {
         pszAngleName = CPLStrdup("degree");
         dfAngleInDegrees = 1.0;
+        nUOMAngle = -1;
     }
 
     if( dfAngleInDegrees == 1.0 )
@@ -1074,6 +1078,9 @@ static OGRErr SetEPSGGeogCS( OGRSpatialReference * poSRS, int nGeogCS )
     poSRS->SetAuthority( "DATUM", "EPSG", nDatumCode );
     poSRS->SetAuthority( "SPHEROID", "EPSG", nEllipsoidCode );
     poSRS->SetAuthority( "PRIMEM", "EPSG", nPMCode );
+
+    if( nUOMAngle > 0 )
+        poSRS->SetAuthority( "GEOGCS|UNIT", "EPSG", nUOMAngle );
 
     CPLFree( pszAngleName );
     CPLFree( pszDatumName );
