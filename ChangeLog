@@ -1,3 +1,8 @@
+2002-11-23  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* added DMD_CREATIONDATATYPES metadata for all drivers with create
+	support.
+
 2002-11-18  Frank Warmerdam  <warmerdam@pobox.com>
 
 	* gdal/ogr/ogrsf_frmts/ntf: Implemented Meridian2 support as per
