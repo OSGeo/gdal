@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.36  2005/02/25 17:01:18  fwarmerdam
+ * forward AdviseRead and IRasterIO on dataset to j2kdataset if needed
+ *
  * Revision 1.35  2005/02/24 15:11:23  fwarmerdam
  * fixed improper j2kdataset cleanup in ~NITFDataset
  *
@@ -182,6 +185,16 @@ class NITFDataset : public GDALDataset
   public:
                  NITFDataset();
                  ~NITFDataset();
+
+    virtual CPLErr AdviseRead( int nXOff, int nYOff, int nXSize, int nYSize,
+                               int nBufXSize, int nBufYSize, 
+                               GDALDataType eDT, 
+                               int nBandCount, int *panBandList,
+                               char **papszOptions );
+
+    virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
+                              void *, int, int, GDALDataType,
+                              int, int *, int, int, int );
 
     virtual const char *GetProjectionRef(void);
     virtual CPLErr GetGeoTransform( double * );
@@ -1213,6 +1226,54 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo )
 
     return( poDS );
 }
+
+/************************************************************************/
+/*                             AdviseRead()                             */
+/************************************************************************/
+
+CPLErr NITFDataset::AdviseRead( int nXOff, int nYOff, int nXSize, int nYSize,
+                                int nBufXSize, int nBufYSize, 
+                                GDALDataType eDT, 
+                                int nBandCount, int *panBandList,
+                                char **papszOptions )
+    
+{
+    if( poJ2KDataset == NULL )
+        return GDALDataset::AdviseRead( nXOff, nYOff, nXSize, nYSize, 
+                                        nBufXSize, nBufYSize, eDT, 
+                                        nBandCount, panBandList, 
+                                        papszOptions);
+    else
+        return poJ2KDataset->AdviseRead( nXOff, nYOff, nXSize, nYSize, 
+                                         nBufXSize, nBufYSize, eDT, 
+                                         nBandCount, panBandList, 
+                                         papszOptions);
+}
+
+/************************************************************************/
+/*                             IRasterIO()                              */
+/************************************************************************/
+
+CPLErr NITFDataset::IRasterIO( GDALRWFlag eRWFlag,
+                               int nXOff, int nYOff, int nXSize, int nYSize,
+                               void * pData, int nBufXSize, int nBufYSize,
+                               GDALDataType eBufType, 
+                               int nBandCount, int *panBandMap,
+                               int nPixelSpace, int nLineSpace, int nBandSpace)
+    
+{
+    if( poJ2KDataset == NULL )
+        return GDALDataset::IRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
+                                       pData, nBufXSize, nBufYSize, eBufType,
+                                       nBandCount, panBandMap, 
+                                       nPixelSpace, nLineSpace, nBandSpace );
+    else
+        return poJ2KDataset->RasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
+                                       pData, nBufXSize, nBufYSize, eBufType,
+                                       nBandCount, panBandMap, 
+                                       nPixelSpace, nLineSpace, nBandSpace );
+}
+
 
 /************************************************************************/
 /*                          GetGeoTransform()                           */
