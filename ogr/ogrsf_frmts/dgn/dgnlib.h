@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2002/01/15 06:38:18  warmerda
+ * added DGNGetShapeFillInfo
+ *
  * Revision 1.14  2001/12/19 15:29:56  warmerda
  * added preliminary cell header support
  *
@@ -441,6 +444,7 @@ void CPL_DLL         DGNRewind( DGNHandle );
 int  CPL_DLL         DGNGotoElement( DGNHandle, int );
 void CPL_DLL         DGNClose( DGNHandle );
 int  CPL_DLL         DGNLookupColor( DGNHandle, int, int *, int *, int * );
+int  CPL_DLL         DGNGetShapeFillInfo( DGNHandle, DGNElemCore *, int * );
 
 void CPL_DLL         DGNDumpElement( DGNHandle, DGNElemCore *, FILE * );
 const char CPL_DLL  *DGNTypeToName( int );
