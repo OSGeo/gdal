@@ -37,6 +37,11 @@ gt_write:	gt_write.o gt_gs.o cpl_csv.o
 	$(CC) gt_write.o gt_gs.o cpl_csv.o $(GDAL_ROOT)/port/*.o \
 		libgeotiff/libgeotiff.a libtiff/libtiff.a $(LIBS) -o gt_write
 
+epsg_to_wkt:	epsg_to_wkt.o gt_wkt_srs.o 
+	$(CXX) epsg_to_wkt.o gt_wkt_srs.o $(GDAL_ROOT)/port/*.o \
+	    libgeotiff/libgeotiff.a libtiff/libtiff.a \
+	    $(OGR_LIB) $(CPL_LIB) $(LIBS) -o epsg_to_wkt
+
 addtiffo:	addtiffo.o tif_overview.o rawblockedimage.o
 	$(CC) addtiffo.o tif_overview.o rawblockedimage.o \
 		$(GDAL_ROOT)/port/*.o \
