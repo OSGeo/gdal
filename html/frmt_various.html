@@ -396,10 +396,8 @@ SDTS datasets consist of a number of files.  Each DEM should have one file
 with a name like XXXCATD.DDF.  This should be selected to open
 the dataset.<p>
 
-The elevation units of DEMs vary somewhat.  The GetType() method on a band
-will attempt to report if the units are Feet ("ft") or Meters ("m").
-Apparently some DEMs are measured in decimeters and centimeters.  The units
-for these will not be properly reported.<p>
+The elevation units of DEMs may be feet or meters.  The GetType() method on a 
+band will attempt to return if the units are Feet ("ft") or Meters ("m").
 
 NOTE: Implemented as <tt>gdal/frmts/sdts/sdtsdataset.cpp</tt>.<p>
 
