@@ -5,7 +5,7 @@ VCDIR   = 	F:\VisualStudio\VC98
 # Location of MS Data Access SDK 
 MSDASDK =	F:\MSDASDK
 
-INC	=	-I$(GDAL_ROOT)\port -I$(GDAL_ROOT)\core
+INC	=	-I$(GDAL_ROOT)\port -I$(GDAL_ROOT)/ogr -I$(GDAL_ROOT)\core
 OPTFLAGS=	/Zi /nologo
 
 CFLAGS	=	$(OPTFLAGS) $(INC) $(EXTRAFLAGS)
