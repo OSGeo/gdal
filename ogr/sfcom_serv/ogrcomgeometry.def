@@ -1,0 +1,5 @@
+LIBRARY         OGRComGeometry
+
+EXPORTS
+                DllGetClassObject       PRIVATE
+                DllCanUnloadNow         PRIVATE
