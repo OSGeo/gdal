@@ -28,11 +28,11 @@
  ******************************************************************************
  *
  * $Log$
- * Revision 1.3  1999/12/06 21:37:19  warmerda
- * Set +proj=longlat if no projection set.
+ * Revision 1.4  1999/12/08 16:34:05  warmerda
+ * added five or six more projections
  *
- * Revision 1.2  1999/11/18 19:02:19  warmerda
- * expanded tabs
+ * Revision 1.5  1999/11/04 21:38:49  warmerda
+ * reimported
  *
  * Revision 1.1  1999/07/29 17:29:15  warmerda
  * New
@@ -62,6 +62,16 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 )
     {
         sprintf( szProj4+strlen(szProj4), "+proj=longlat " );
     }
+    else if( EQUAL(pszProjection,SRS_PT_CYLINDRICAL_EQUAL_AREA) )
+    {
+        sprintf( szProj4+strlen(szProj4),
+           "+proj=cea +lon_0=%.9f +lat_ts=%.9f +x_0=%.3f +y_0=%.3f ",
+                 GetProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
+                 GetProjParm(SRS_PP_STANDARD_PARALLEL_1,0.0),
+                 GetProjParm(SRS_PP_FALSE_EASTING,0.0),
+                 GetProjParm(SRS_PP_FALSE_NORTHING,0.0) );
+    }
+
     else if( EQUAL(pszProjection,SRS_PT_TRANSVERSE_MERCATOR) )
     {
         sprintf( szProj4+strlen(szProj4),
@@ -167,11 +177,51 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 )
                  GetProjParm(SRS_PP_FALSE_NORTHING,0.0) );
     }
 
+    else if( EQUAL(pszProjection,SRS_PT_EQUIDISTANT_CONIC) )
+    {
+        sprintf( szProj4+strlen(szProj4),
+                 "+proj=eqdc +lat_0=%.9f +lon_0=%.9f +lat_1=%.9f +lat_2=%.9f"
+                 " +x_0=%.3f +y_0=%.3f ",
+                 GetProjParm(SRS_PP_LATITUDE_OF_CENTER,0.0),
+                 GetProjParm(SRS_PP_LONGITUDE_OF_CENTER,0.0),
+                 GetProjParm(SRS_PP_STANDARD_PARALLEL_1,0.0),
+                 GetProjParm(SRS_PP_STANDARD_PARALLEL_2,0.0),
+                 GetProjParm(SRS_PP_FALSE_EASTING,0.0),
+                 GetProjParm(SRS_PP_FALSE_NORTHING,0.0) );
+    }
+
     else if( EQUAL(pszProjection,SRS_PT_MILLER_CYLINDRICAL) )
     {
         sprintf( szProj4+strlen(szProj4),
                  "+proj=mill +lat_0=%.9f +lon_0=%.9f +x_0=%.3f +y_0=%.3f ",
                  GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
+                 GetProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
+                 GetProjParm(SRS_PP_FALSE_EASTING,0.0),
+                 GetProjParm(SRS_PP_FALSE_NORTHING,0.0) );
+    }
+
+    else if( EQUAL(pszProjection,SRS_PT_MOLLWEIDE) )
+    {
+        sprintf( szProj4+strlen(szProj4),
+                 "+proj=moll +lon_0=%.9f +x_0=%.3f +y_0=%.3f ",
+                 GetProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
+                 GetProjParm(SRS_PP_FALSE_EASTING,0.0),
+                 GetProjParm(SRS_PP_FALSE_NORTHING,0.0) );
+    }
+
+    else if( EQUAL(pszProjection,SRS_PT_ECKERT_IV) )
+    {
+        sprintf( szProj4+strlen(szProj4),
+                 "+proj=eck4 +lon_0=%.9f +x_0=%.3f +y_0=%.3f ",
+                 GetProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
+                 GetProjParm(SRS_PP_FALSE_EASTING,0.0),
+                 GetProjParm(SRS_PP_FALSE_NORTHING,0.0) );
+    }
+
+    else if( EQUAL(pszProjection,SRS_PT_ECKERT_VI) )
+    {
+        sprintf( szProj4+strlen(szProj4),
+                 "+proj=eck6 +lon_0=%.9f +x_0=%.3f +y_0=%.3f ",
                  GetProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
                  GetProjParm(SRS_PP_FALSE_EASTING,0.0),
                  GetProjParm(SRS_PP_FALSE_NORTHING,0.0) );
@@ -222,6 +272,15 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 )
     {
         sprintf( szProj4+strlen(szProj4),
                  "+proj=sinu +lon_0=%.9f +x_0=%.3f +y_0=%.3f ",
+                 GetProjParm(SRS_PP_LONGITUDE_OF_CENTER,0.0),
+                 GetProjParm(SRS_PP_FALSE_EASTING,0.0),
+                 GetProjParm(SRS_PP_FALSE_NORTHING,0.0) );
+    }
+
+    else if( EQUAL(pszProjection,SRS_PT_GALL_STEREOGRAPHIC) )
+    {
+        sprintf( szProj4+strlen(szProj4),
+                 "+proj=gall +lon_0=%.9f +x_0=%.3f +y_0=%.3f ",
                  GetProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
                  GetProjParm(SRS_PP_FALSE_EASTING,0.0),
                  GetProjParm(SRS_PP_FALSE_NORTHING,0.0) );
