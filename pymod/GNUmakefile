@@ -29,3 +29,6 @@ $(GDALMODULE):	$(OBJ) $(GDAL_LIB)
 		$(GDAL_SLIB_LINK) $(LIBS) -o $(GDALMODULE)
 
 
+install:
+	$(INSTALL) -d $(INST_PYMOD)
+	$(INSTALL) *.py $(GDALMODULE) $(INST_PYMOD)
