@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2003/02/19 02:57:49  warmerda
+ * added wkbLinearRing support
+ *
  * Revision 1.15  2003/01/14 20:08:49  warmerda
  * fixed another bug in OGREnvelope.Merge
  *
@@ -166,13 +169,14 @@ typedef enum
     wkbMultiPolygon = 6,
     wkbGeometryCollection = 7,
     wkbNone = 100,              // non-standard, for pure attribute records
+    wkbLinearRing = 101,        // non-standard, just for createGeometry() call
     wkbPoint25D = 0x80000001,       // 2.5D extensions as per 99-402
     wkbLineString25D = 0x80000002,
     wkbPolygon25D = 0x80000003,
     wkbMultiPoint25D = 0x80000004,
     wkbMultiLineString25D = 0x80000005,
     wkbMultiPolygon25D = 0x80000006,
-    wkbGeometryCollection25D = 0x80000007
+    wkbGeometryCollection25D = 0x80000007,
 } OGRwkbGeometryType;
 
 #define wkb25DBit 0x80000000
