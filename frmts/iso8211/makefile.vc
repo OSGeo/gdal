@@ -12,3 +12,11 @@ default:	$(OBJ)
 clean:
 	del *.obj
 
+all:	default 8211view.exe 8211dump.exe
+
+8211view.exe:	8211view.obj $(OBJ)
+	$(CC) $(CFLAGS) 8211view.obj $(OBJ) 
+
+8211dump.exe:	8211dump.obj $(OBJ)
+	$(CC) $(CFLAGS) 8211dump.obj $(OBJ) 
+
