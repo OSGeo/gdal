@@ -30,6 +30,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.2  2002/12/04 15:49:13  warmerda
+# re-enable cleanup, and fix color count support
+#
 # Revision 1.1  2001/01/22 22:34:28  warmerda
 # New
 #
@@ -40,7 +43,7 @@ import sys
 import os.path
 
 def progress_cb( complete, message, cb_data ):
-    print cb_data, complete
+    print '%s %3d%%' % (cb_data, int(complete*100.0))
 
 def Usage():
     print 'Usage: rgb2pct.py [-n colors] [-of format] source_file dest_file'
@@ -108,7 +111,7 @@ ct = gdal.ColorTable()
 err = gdal.ComputeMedianCutPCT( src_ds.GetRasterBand(1),
                                 src_ds.GetRasterBand(2),
                                 src_ds.GetRasterBand(3),
-                                256, ct,
+                                color_count, ct,
                                 callback = progress_cb,
                                 callback_data = 'Generate PCT' )
 
@@ -142,7 +145,7 @@ if tif_filename <> dst_filename:
     dst_driver.CreateCopy( dst_filename, tif_ds )
     tif_ds = None
 
-#    gtiff_driver.Delete( tif_filename )
+    gtiff_driver.Delete( tif_filename )
 
 
 
