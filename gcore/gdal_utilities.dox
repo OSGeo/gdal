@@ -72,7 +72,7 @@ Example:
 \endhtmlonly
 
 \verbatim
-warmerda@gdal[138]% gdalinfo ~/openev/utm.tif 
+gdalinfo ~/openev/utm.tif 
 Driver: GTiff/GeoTIFF
 Size is 512, 512
 Coordinate System is:
@@ -106,7 +106,7 @@ Band 1 Block=512x16 Type=Byte, ColorInterp=Gray
 Frank Warmerdam <warmerdam@pobox.com>
 
 converts raster data between different formats
-\section synopsis SYNOPSIS
+\section tsynopsis SYNOPSIS
 \endif
 
 \htmlonly
@@ -127,7 +127,7 @@ gdal_translate
 \endverbatim
 
 \if man
-\section description DESCRIPTION
+\section tdescription DESCRIPTION
 \endif
 
 The gdal_translate utility can be used to convert raster data between 
@@ -175,7 +175,7 @@ output.</dd>
 </dl>
 
 \if man
-\section example EXAMPLE
+\section texample EXAMPLE
 \endif
 
 \htmlonly
@@ -183,16 +183,16 @@ Example:
 \endhtmlonly
 
 \verbatim
-% gdal_translate -of GTiff -co "TILED=YES" utm.tif utm_tiled.tif
+gdal_translate -of GTiff -co "TILED=YES" utm.tif utm_tiled.tif
 \endverbatim
 
 
 \if man
-\section author AUTHOR
+\section tauthor AUTHOR
 Frank Warmerdam <warmerdam@pobox.com>
 
 builds or rebuilds overview images
-\section synopsis SYNOPSIS
+\section asynopsis SYNOPSIS
 \endif
 
 \htmlonly
@@ -206,7 +206,7 @@ gdaladdo [-r {nearest,average,average_mp,average_magphase,mode}]
 \endverbatim
 
 \if man
-\section description DESCRIPTION
+\section adescription DESCRIPTION
 \endif
 
 The gdaladdo utility can be used to build or rebuild overview images for
@@ -236,21 +236,23 @@ store overviews in a secondary file with the extension .ovr.  The GeoTIFF
 driver stores overviews internally to the file operated on.<p>
 
 \if man
-\section example EXAMPLE
+\section aexample EXAMPLE
 \endif
 
 \htmlonly
 Example:
 \endhtmlonly
 
- % gdaladdo -r average abc.tif 2 4 8 16
+\verbatim
+gdaladdo -r average abc.tif 2 4 8 16
+\endverbatim
 
 \if man
-\section author AUTHOR
+\section aauthor AUTHOR
 Frank Warmerdam <warmerdam@pobox.com>
 
 simple image reprojection and warping utility
-\section synopsis SYNOPSIS
+\section wsynopsis SYNOPSIS
 \endif
 
 \htmlonly
@@ -269,7 +271,7 @@ gdalwarp [--version] [--formats]
 \endverbatim
 
 \if man
-\section description DESCRIPTION
+\section wdescription DESCRIPTION
 \endif
 
 <p>
@@ -333,7 +335,7 @@ already exists.
 
 <p>
 \if man
-\section example EXAMPLE
+\section wexample EXAMPLE
 \endif
 
 \htmlonly
@@ -345,7 +347,7 @@ control points mapping the corners to lat/long could be warped to a UTM
 projection with a command like this:<p>
 
 \verbatim
-% gdalwarp -t_srs '+proj=utm +zone=11 +datum=WGS84' raw_spot.tif utm11.tif
+gdalwarp -t_srs '+proj=utm +zone=11 +datum=WGS84' raw_spot.tif utm11.tif
 \endverbatim
 
 For instance, the second channel of an ASTER image stored in HDF with
@@ -353,15 +355,15 @@ control points mapping the corners to lat/long could be warped to a UTM
 projection with a command like this:<p>
 
 \verbatim
-% gdalwarp HDF4_SDS:ASTER_L1B:"pg-PR1B0000-2002031402_100_001":2 pg-PR1B0000-2002031402_100_001_2.tif
+gdalwarp HDF4_SDS:ASTER_L1B:"pg-PR1B0000-2002031402_100_001":2 pg-PR1B0000-2002031402_100_001_2.tif
 \endverbatim
 
 \if man
-\section author AUTHOR
+\section wauthor AUTHOR
 Frank Warmerdam <warmerdam@pobox.com>
 
 builds a shapefile as a raster tileindex
-\section synopsis SYNOPSIS
+\section isynopsis SYNOPSIS
 \endif
 
 \htmlonly
@@ -375,7 +377,7 @@ gdaltindex [-tileindex field_name] index_file [gdal_file]*
 
 
 \if man
-\section description DESCRIPTION
+\section idescription DESCRIPTION
 \endif
 
 This program builds a shapefile with a record for each input raster file, 
@@ -393,21 +395,23 @@ coordinate system as the rasters.
 </ul>
 
 \if man
-\section example EXAMPLE
+\section iexample EXAMPLE
 \endif
 
 \htmlonly
 Example:
 \endhtmlonly
 
-  % gdaltindex doq_index.shp doq/*.tif
+\verbatim
+gdaltindex doq_index.shp doq/*.tif
+\endverbatim
 
 \if man
-\section author AUTHOR
+\section iauthor AUTHOR
 Frank Warmerdam <warmerdam@pobox.com>
 
 converts an image into a pseudo-colored image
-\section synopsis SYNOPSIS
+\section rsynopsis SYNOPSIS
 \endif
 
 \htmlonly
@@ -420,7 +424,7 @@ rgb2pct.py [-n colors] [-of format] source_file dest_file
 \endverbatim
 
 \if man
-\section description DESCRIPTION
+\section rdescription DESCRIPTION
 \endif
 
 This utility will compute an optimal pseudo-color table for a given RGB image
@@ -445,11 +449,11 @@ with Python support.  It is also not installed by default. It is found
 at $GDAL_HOME/pymod.
 
 \if man
-\section author AUTHOR
+\section rauthor AUTHOR
 Frank Warmerdam <warmerdam@pobox.com>
 
  mosaics a set of images
-\section synopsis SYNOPSIS
+\section msynopsis SYNOPSIS
 \endif
 
 \htmlonly
@@ -463,13 +467,12 @@ gdal_merge.py [-o out_filename] [-f out_format] [-v]
                      [-ul_lr ulx uly lrx lry] input_files
 \endverbatim
 \if man
-\section description DESCRIPTION
+\section mdescription DESCRIPTION
 \endif
 
 This utility will automatically mosaic a set of images.  All the images must
 be in the same coordinate system and have a matching number of bands, but 
 they may be overlapping, and at different resolutions.
-
 
 <dl>
 <dt> <b>-o</b> <i>out_filename</i>:</dt><dd> The name of the output file to be
@@ -491,11 +494,11 @@ with Python support.  It is also not installed by default. It is found
 at $GDAL_HOME/pymod.
 
 \if man
-\section author AUTHOR
+\section mauthor AUTHOR
 Frank Warmerdam <warmerdam@pobox.com>
 
 determines various information about a GDAL installation
-\section synopsis SYNOPSIS
+\section csynopsis SYNOPSIS
 \endif
 
 \htmlonly
@@ -515,7 +518,7 @@ Options:
 \endverbatim
 
 \if man
-\section description DESCRIPTION
+\section cdescription DESCRIPTION
 \endif
 
 This utility script (available on Unix systems) can be used to determine
