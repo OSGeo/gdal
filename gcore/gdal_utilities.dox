@@ -105,8 +105,9 @@ Usage: gdal_translate
 translating to the output format.
 <li> <b>-of</b> <i>format</i>: Select the output format.  The default is 
 GeoTIFF (GTiff).  Use the short format name.
-<li> <b>-b</b> <i>band</i>: Select only input band <i>band</i> for output.
-Bands are numbered from 1.
+<li> <b>-b</b> <i>band</i>: Select an input band <i>band</i> for output.
+Bands are numbered from 1.  Multiple -b switches may be used to select a set
+of input bands to write to the output file, or to reorder bands. 
 <li> <b>-outsize</b> <i>xsize[%] ysize[%]</i>: Set the size of the output
 file.  Outsize is in pixels and lines unless '%' is attached in which case it
 is as a fraction of the input image size.
