@@ -28,6 +28,9 @@
  * ****************************************************************************
  *
  * $Log$
+ * Revision 1.10  2002/11/21 21:07:37  warmerda
+ * ensure gcps are transformed as needed
+ *
  * Revision 1.9  2002/11/21 20:48:06  warmerda
  * added GCP copying when creating virtual dataset
  *
@@ -532,9 +535,24 @@ int main( int argc, char ** argv )
 
         if( GDALGetGCPCount( hDataset ) > 0 )
         {
-            poVDS->SetGCPs( GDALGetGCPCount( hDataset ),
-                            GDALGetGCPs( hDataset ),
+            GDAL_GCP *pasGCPs;
+            int       nGCPs = GDALGetGCPCount( hDataset );
+
+            pasGCPs = GDALDuplicateGCPs( nGCPs, GDALGetGCPs( hDataset ) );
+
+            for( i = 0; i < nGCPs; i++ )
+            {
+                pasGCPs[i].dfGCPPixel -= anSrcWin[0];
+                pasGCPs[i].dfGCPLine  -= anSrcWin[1];
+                pasGCPs[i].dfGCPPixel *= (nOXSize / (double) anSrcWin[2] );
+                pasGCPs[i].dfGCPLine  *= (nOYSize / (double) anSrcWin[3] );
+            }
+            
+            poVDS->SetGCPs( nGCPs, pasGCPs,
                             GDALGetGCPProjection( hDataset ) );
+
+            GDALDeinitGCPs( nGCPs, pasGCPs );
+            CPLFree( pasGCPs );
         }
         
         poVDS->SetMetadata( ((GDALDataset*)hDataset)->GetMetadata() );
