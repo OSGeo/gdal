@@ -29,6 +29,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.3  2000/08/25 14:28:04  warmerda
+ * preliminary support with IRasterIO
+ *
  * Revision 1.2  1999/02/25 22:20:47  warmerda
  * Explicitly declare OGDIDataset constructor and destructor
  *
@@ -40,8 +43,8 @@
 #ifndef OGDIDATASET_H_INCLUDED
 #define OGDIDATASET_H_INCLUDED
 
-#include "gdal_priv.h"
 #include "ecs.h"
+#include "gdal_priv.h"
 
 CPL_C_START
 void	GDALRegister_OGDI(void);
@@ -63,7 +66,12 @@ class CPL_DLL OGDIDataset : public GDALDataset
     int		nClientID;
 
     ecs_Region	sGlobalBounds;
+    ecs_Region  sCurrentBounds;
+    int         nCurrentBand;
+
     char	*pszProjection;
+
+    static CPLErr CollectLayers(char***,char***);
 
   public:
     		OGDIDataset();
@@ -89,13 +97,23 @@ class OGDIRasterBand : public GDALRasterBand
 {
     friend	OGDIDataset;
 
+    char	*pszLayerName;
+    ecs_Family  eFamily;
+
+    virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
+                              void *, int, int, GDALDataType,
+                              int, int );
+
+    CPLErr         EstablishAccess( int nXOff, int nXSize, int nBufXSize );
+
   public:
 
-                   OGDIRasterBand( OGDIDataset *, int );
+                   OGDIRasterBand( OGDIDataset *, int, const char *,
+                                   ecs_Family );
+                   ~OGDIRasterBand();
 
-    // should override RasterIO eventually.
-    
     virtual CPLErr IReadBlock( int, int, void * );
+    virtual int    HasArbitraryOverviews();
 };
 
 #endif /* ndef OGDIDATASET_H_INCLUDED */

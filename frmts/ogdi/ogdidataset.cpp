@@ -29,6 +29,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.3  2000/08/25 14:28:04  warmerda
+ * preliminary support with IRasterIO
+ *
  * Revision 1.2  2000/02/28 16:32:20  warmerda
  * use SetBand method
  *
@@ -37,7 +40,8 @@
  *
  */
 
-#include "frmts/ogdi/ogdidataset.h"
+#include "ogdidataset.h"
+#include "cpl_string.h"
 
 static GDALDriver	*poOGDIDriver = NULL;
 
@@ -45,13 +49,21 @@ static GDALDriver	*poOGDIDriver = NULL;
 /*                           OGDIRasterBand()                            */
 /************************************************************************/
 
-OGDIRasterBand::OGDIRasterBand( OGDIDataset *poDS, int nBand )
+OGDIRasterBand::OGDIRasterBand( OGDIDataset *poDS, int nBand, 
+                                const char * pszName, ecs_Family eFamily )
 
 {
     ecs_Result	*psResult;
     
     this->poDS = poDS;
     this->nBand = nBand;
+    this->eFamily = eFamily;
+    this->pszLayerName = CPLStrdup(pszName);
+
+/* -------------------------------------------------------------------- */
+/*      Make this layer current.                                        */
+/* -------------------------------------------------------------------- */
+    EstablishAccess( 0, poDS->GetRasterXSize(), poDS->GetRasterXSize() );
 
 /* -------------------------------------------------------------------- */
 /*      Get the raster info.                                            */
@@ -74,6 +86,17 @@ OGDIRasterBand::OGDIRasterBand( OGDIDataset *poDS, int nBand )
 /* -------------------------------------------------------------------- */
     nBlockXSize = poDS->GetRasterXSize();
     nBlockYSize = 1;
+}
+
+/************************************************************************/
+/*                          ~OGDIRasterBand()                           */
+/************************************************************************/
+
+OGDIRasterBand::~OGDIRasterBand()
+
+{
+    FlushCache();
+    CPLFree( pszLayerName );
 }
 
 /************************************************************************/
@@ -112,7 +135,159 @@ CPLErr OGDIRasterBand::IReadBlock( int, int nBlockYOff, void * pImage )
     return( CE_None );
 }
 
+/************************************************************************/
+/*                             IRasterIO()                              */
+/************************************************************************/
 
+CPLErr OGDIRasterBand::IRasterIO( GDALRWFlag eRWFlag,
+                                  int nXOff, int nYOff, int nXSize, int nYSize,
+                                  void * pData, int nBufXSize, int nBufYSize,
+                                  GDALDataType eBufType,
+                                  int nPixelSpace, int nLineSpace )
+
+{
+    OGDIDataset	*poODS = (OGDIDataset *) poDS;
+    CPLErr    eErr;
+
+    CPLDebug( "OGDIRasterBand", 
+              "RasterIO(%d,%d,%d,%d -> %dx%d)\n", 
+              nXOff, nYOff, nXSize, nYSize, nBufXSize, nBufYSize );
+
+/* -------------------------------------------------------------------- */
+/*      Establish access at the desired resolution.                     */
+/* -------------------------------------------------------------------- */
+    eErr = EstablishAccess( nXOff, nXSize, nBufXSize );
+    if( eErr != CE_None )
+        return eErr;
+
+/* -------------------------------------------------------------------- */
+/*      Establish the start scanline we want.                           */
+/* -------------------------------------------------------------------- */
+    double	dfNorthEdge;
+    int         nStartIndex;
+
+    dfNorthEdge =  poODS->sGlobalBounds.north 
+        - nYOff * poODS->sGlobalBounds.ns_res;
+    
+    nStartIndex = (int) ((poODS->sCurrentBounds.north - dfNorthEdge)
+                         / poODS->sCurrentBounds.ns_res + 0.01);
+    
+/* -------------------------------------------------------------------- */
+/*      Read back one scanline at a time, till request is satisfied.    */
+/* -------------------------------------------------------------------- */
+    int      iScanline;
+
+    for( iScanline = 0; iScanline < nBufYSize; iScanline++ )
+    {
+        char		szId[32];
+        ecs_Result	*psResult;
+        void		*pLineData;
+
+        pLineData = ((unsigned char *) pData) + iScanline * nLineSpace;
+
+        sprintf( szId, "%d", iScanline + nStartIndex );
+
+        psResult = cln_GetObject( poODS->nClientID, szId );
+        if( ECSERROR(psResult) )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "%s", psResult->message );
+            return( CE_Failure );
+        }
+        
+        if( eFamily == Matrix )
+        {
+            GDALCopyWords( ECSRASTER(psResult), GDT_UInt32, 4, 
+                           pLineData, eBufType, nPixelSpace,
+                           nBufXSize );
+        }
+    }
+
+    return CE_None;
+}
+
+/************************************************************************/
+/*                       HasArbitraryOverviews()                        */
+/************************************************************************/
+
+int OGDIRasterBand::HasArbitraryOverviews()
+
+{
+    return TRUE;
+}
+
+/************************************************************************/
+/*                          EstablishAccess()                           */
+/************************************************************************/
+
+CPLErr OGDIRasterBand::EstablishAccess( int nWinXOff, int nWinXSize, 
+                                        int nBufXSize )
+
+{
+    ecs_Result	 *psResult;
+    OGDIDataset  *poODS = (OGDIDataset *) poDS;
+
+/* -------------------------------------------------------------------- */
+/*      Is this already the current band?  If not, make it so now.      */
+/* -------------------------------------------------------------------- */
+    if( poODS->nCurrentBand != nBand )
+    {
+        ecs_LayerSelection sSelection;
+        
+        sSelection.Select = pszLayerName;
+        sSelection.F = eFamily;
+        
+        psResult = cln_SelectLayer( poODS->nClientID, &sSelection );
+        if( ECSERROR(psResult) )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "%s", psResult->message );
+            return CE_Failure;
+        }
+
+        poODS->nCurrentBand = nBand;
+    }
+        
+/* -------------------------------------------------------------------- */
+/*      What region would represent this resolution and window?         */
+/* -------------------------------------------------------------------- */
+    ecs_Region   sWin;
+    int          nYSize;
+
+    sWin.west = nWinXOff * poODS->sGlobalBounds.ew_res
+        + poODS->sGlobalBounds.west;
+    sWin.east = (nWinXOff+nWinXSize) * poODS->sGlobalBounds.ew_res
+        + poODS->sGlobalBounds.west;
+    sWin.ew_res = poODS->sGlobalBounds.ew_res*(nWinXSize/(double)nBufXSize);
+
+    sWin.north = poODS->sGlobalBounds.north;
+    sWin.ns_res = sWin.ew_res;
+
+    nYSize = (int) ((poODS->sGlobalBounds.north - poODS->sGlobalBounds.south
+                     + sWin.ns_res*0.9) / sWin.ns_res);
+    sWin.south = sWin.north - nYSize * sWin.ns_res;
+
+    if( ABS(sWin.west - poODS->sCurrentBounds.west) > 0.0001 
+        || ABS(sWin.east - poODS->sCurrentBounds.east) > 0.0001 
+        || ABS(sWin.north - poODS->sCurrentBounds.east) > 0.0001 
+        || ABS(sWin.south - poODS->sCurrentBounds.east) > 0.0001 
+        || ABS(sWin.ew_res/poODS->sCurrentBounds.ew_res - 1.0) > 0.0001
+        || ABS(sWin.ns_res/poODS->sCurrentBounds.ns_res - 1.0) > 0.0001 )
+    {
+        psResult = cln_SelectRegion( poODS->nClientID, &sWin );
+        if( ECSERROR(psResult) )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "%s", psResult->message );
+            return CE_Failure;
+        }
+        
+        poODS->sCurrentBounds = sWin;
+    }
+
+    return CE_None;
+}
+    
 /************************************************************************/
 /* ==================================================================== */
 /*                            OGDIDataset                               */
@@ -128,6 +303,7 @@ OGDIDataset::OGDIDataset()
 
 {
     nClientID = -1;
+    nCurrentBand = -1;
 }
 
 /************************************************************************/
@@ -150,15 +326,54 @@ GDALDataset *OGDIDataset::Open( GDALOpenInfo * poOpenInfo )
 {
     ecs_Result	*psResult;
     int		nClientID;
-    ecs_LayerSelection sSelection;
+    char        **papszImages=NULL, **papszMatrices=NULL;
     
     if( !EQUALN(poOpenInfo->pszFilename,"gltp:",5) )
         return( NULL );
 
 /* -------------------------------------------------------------------- */
+/*      Has the user hardcoded a layer and family in the URL?           */
+/* -------------------------------------------------------------------- */
+    int       nC1=-1, nC2=-1, i;
+    char      *pszURL = CPLStrdup(poOpenInfo->pszFilename);
+
+    for( i = strlen(pszURL)-1; i > 0; i-- )
+    {
+        if( pszURL[i] == '/' )
+            break;
+        
+        if( pszURL[i] == ':' )
+        {
+            if( nC1 == -1 )
+                nC1 = i;
+            else if( nC2 == -1 )
+                nC2 = i;
+        }
+    }	
+
+    if( nC2 == -1 
+        || (!EQUAL(pszURL+nC1,":Image") && !EQUAL(pszURL+nC1,":Matrix") ))
+    {
+        CollectLayers( &papszImages, &papszMatrices );
+    }
+    else
+    {
+        pszURL[nC1] = '\0';
+
+        if( EQUAL(pszURL+nC1+1,"Image") )
+            papszImages = CSLAddString( papszImages, pszURL+nC2+1 );
+        else
+            papszMatrices = CSLAddString( papszImages, pszURL+nC2+1 );
+
+        pszURL[nC2] = '\0';
+    }
+        
+/* -------------------------------------------------------------------- */
 /*      Open the client interface.                                      */
 /* -------------------------------------------------------------------- */
-    psResult = cln_CreateClient( &nClientID, poOpenInfo->pszFilename);
+    psResult = cln_CreateClient( &nClientID, pszURL );
+    CPLFree( pszURL );
+
     if( ECSERROR(psResult) )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
@@ -208,6 +423,8 @@ GDALDataset *OGDIDataset::Open( GDALOpenInfo * poOpenInfo )
                   "%s", psResult->message );
         return NULL;
     }
+
+    poDS->sCurrentBounds = poDS->sGlobalBounds;
     
 /* -------------------------------------------------------------------- */
 /*      Establish raster info.                                          */
@@ -220,32 +437,38 @@ GDALDataset *OGDIDataset::Open( GDALOpenInfo * poOpenInfo )
         ((poDS->sGlobalBounds.north - poDS->sGlobalBounds.south)
          / poDS->sGlobalBounds.ns_res);
 
-    poDS->nBands = 1;
-        
-/* -------------------------------------------------------------------- */
-/*      For now we hardcode for one layer.  Access it now using any     */
-/*      old name ... this should work OK with some OGDI translators     */
-/*      that access one raster file at a time.                          */
-/* -------------------------------------------------------------------- */
-    sSelection.Select = "xx";
-    sSelection.F = Matrix;
-    
-    psResult = cln_SelectLayer( nClientID, &sSelection );
-    if( ECSERROR(psResult) )
-    {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "%s", psResult->message );
-        return NULL;
-    }
-    
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
-    poDS->SetBand( 1, new OGDIRasterBand( poDS, 1 ) );
+    for( i=0; papszMatrices != NULL && papszMatrices[i] != NULL; i++)
+    {
+        poDS->SetBand( poDS->GetRasterCount()+1, 
+                       new OGDIRasterBand( poDS, poDS->GetRasterCount()+1, 
+                                           papszMatrices[i], Matrix ) );
+    }
+
+    for( i=0; papszImages != NULL && papszImages[i] != NULL; i++)
+    {
+        poDS->SetBand( poDS->GetRasterCount()+1, 
+                       new OGDIRasterBand( poDS, poDS->GetRasterCount()+1, 
+                                           papszImages[i], Image ) );
+    }
 
     return( poDS );
 }
 
+/************************************************************************/
+/*                           CollectLayers()                            */
+/************************************************************************/
+
+CPLErr OGDIDataset::CollectLayers( char ***, char *** )
+
+{
+    CPLError( CE_Failure, CPLE_AppDefined, 
+              "CollectLayers() not implemented yet" );
+
+    return CE_Failure;
+}
 
 /************************************************************************/
 /*                          GetProjectionRef()                          */
