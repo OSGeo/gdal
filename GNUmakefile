@@ -134,6 +134,7 @@ install-actions:
 	(cd port; $(MAKE) install)
 	(cd core; $(MAKE) install)
 	(cd frmts; $(MAKE) install)
+	(cd alg; $(MAKE) install)
 	(cd ogr; $(MAKE) install)
 	(cd apps; $(MAKE) install)
 ifneq ($(PYTHON),no)
