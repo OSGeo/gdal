@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.103  2004/01/14 23:06:09  warmerda
+ * Improve calculation of 16bit color table values.
+ *
  * Revision 1.102  2004/01/07 20:51:22  warmerda
  * Added Float64 to supported data types.
  *
@@ -670,9 +673,9 @@ CPLErr GTiffRasterBand::SetColorTable( GDALColorTable * poCT )
             
             poCT->GetColorEntryAsRGB( iColor, &sRGB );
             
-            anTRed[iColor] = (unsigned short) (256 * sRGB.c1);
-            anTGreen[iColor] = (unsigned short) (256 * sRGB.c2);
-            anTBlue[iColor] = (unsigned short) (256 * sRGB.c3);
+            anTRed[iColor] = (unsigned short) (257 * sRGB.c1);
+            anTGreen[iColor] = (unsigned short) (257 * sRGB.c2);
+            anTBlue[iColor] = (unsigned short) (257 * sRGB.c3);
         }
         else
         {
