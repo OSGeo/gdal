@@ -30,6 +30,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.3  2001/03/21 02:28:21  warmerda
+# fixed proj.4 catalog output
+#
 # Revision 1.2  2001/03/15 03:20:12  warmerda
 # various improvements
 #
@@ -84,7 +87,7 @@ def trHandleCode(code, gen_dict_line, report_error, output_format):
             print '# '+name
             
             if string.find(out_string,'+proj=') > -1:
-                print '<'+str(code)+'> '+out_string
+                print '<%s> %s no_defs <>', str(code), out_string
             elif report_error:
                 print '# Unable to translate coordinate system into PROJ.4 format.'
 
