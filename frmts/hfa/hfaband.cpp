@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.35  2003/09/10 19:37:12  warmerda
+ * improved error reporting for IO errors
+ *
  * Revision 1.34  2003/07/29 10:09:43  dron
  * Fixed problem with creation of ordinary files larger 2GB.
  *
@@ -832,6 +835,8 @@ CPLErr HFABand::GetRasterBlock( int nXBlock, int nYBlock, void * pData )
         nBlockSize = panBlockSize[iBlock];
     }
 
+    nBlockOffset += 100000;
+
     if( VSIFSeekL( fpData, nBlockOffset, SEEK_SET ) != 0 )
     {
         // XXX: We will not report error here, because file just may be
@@ -844,8 +849,11 @@ CPLErr HFABand::GetRasterBlock( int nXBlock, int nYBlock, void * pData )
         }
         else
         {
-            CPLError( CE_Failure, CPLE_FileIO, "Seek to %d failed.\n",
-		  nBlockOffset );
+            CPLError( CE_Failure, CPLE_FileIO, 
+                      "Seek to %x:%08x on %p failed\n%s",
+                      (int) (nBlockOffset >> 32),
+                      (int) (nBlockOffset & 0xffffffff), 
+                      fpData, VSIStrerror(errno) );
             return CE_Failure;
         }
     }
@@ -875,8 +883,11 @@ CPLErr HFABand::GetRasterBlock( int nXBlock, int nYBlock, void * pData )
             else
             {
                 CPLError( CE_Failure, CPLE_FileIO,
-                          "Read of %d bytes at %d failed.\n", 
-                          nBlockSize, nBlockOffset );
+                          "Read of %d bytes at %x:%08x on %p failed.\n%s", 
+                          (int) nBlockSize, 
+                          (int) (nBlockOffset >> 32),
+                          (int) (nBlockOffset & 0xffffffff), 
+                          fpData, VSIStrerror(errno) );
                 return CE_Failure;
             }
         }
@@ -897,9 +908,14 @@ CPLErr HFABand::GetRasterBlock( int nXBlock, int nYBlock, void * pData )
     {
 	memset( pData, 0, 
 	    HFAGetDataTypeBits(nDataType)*nBlockXSize*nBlockYSize/8 );
+
         if( fpData != fpExternal )
-            CPLDebug( "HFABand", "Read of %d bytes at %d failed.\n", 
-                      nBlockSize, nBlockOffset );
+            CPLDebug( "HFABand", 
+                      "Read of %x:%08x bytes at %d on %p failed.\n%s", 
+                      (int) nBlockSize, 
+                      (int) (nBlockOffset >> 32),
+                      (int) (nBlockOffset & 0xffffffff), 
+                      fpData, VSIStrerror(errno) );
 
 	return CE_None;
     }
@@ -986,11 +1002,13 @@ CPLErr HFABand::SetRasterBlock( int nXBlock, int nYBlock, void * pData )
         nBlockOffset = panBlockStart[iBlock];
         nBlockSize = panBlockSize[iBlock];
     }
-
+    
     if( VSIFSeekL( fpData, nBlockOffset, SEEK_SET ) != 0 )
     {
-        CPLError( CE_Failure, CPLE_FileIO, 
-                  "Seek to %d failed.\n", nBlockOffset );
+        CPLError( CE_Failure, CPLE_FileIO, "Seek to %x:%08x on %p failed\n%s",
+                  (int) (nBlockOffset >> 32),
+                  (int) (nBlockOffset & 0xffffffff), 
+                  fpData, VSIStrerror(errno) );
         return CE_Failure;
     }
 
@@ -1032,7 +1050,15 @@ CPLErr HFABand::SetRasterBlock( int nXBlock, int nYBlock, void * pData )
 /*      Write uncompressed data.				        */
 /* -------------------------------------------------------------------- */
     if( VSIFWriteL( pData, (size_t) nBlockSize, 1, fpData ) != 1 )
+    {
+        CPLError( CE_Failure, CPLE_FileIO, 
+                  "Write of %d bytes at %d on %p failed.\n%s",
+                  (int) nBlockSize, 
+                  (int) (nBlockOffset >> 32),
+                  (int) (nBlockOffset & 0xffffffff), 
+                  fpData, VSIStrerror(errno) );
         return CE_Failure;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Swap back, since we don't really have permission to change      */
