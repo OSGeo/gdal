@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_getimage.c,v 1.5 2000/04/04 14:54:34 mwelles Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_getimage.c,v 1.6 2000/09/25 13:48:45 warmerda Exp $ */
 
 /*
  * Copyright (c) 1991-1997 Sam Leffler
@@ -1418,7 +1418,7 @@ DECLAREContigPutFunc(putcontig8bitYCbCr11tile)
     (void) y;
     /* XXX adjust fromskew */
     do {
-	x = w>>1;
+        x = w; /* was x = w>>1; patched 2000/09/25 warmerda@home.com */ 
 	do {
 	    int Cb = pp[1];
 	    int Cr = pp[2];
