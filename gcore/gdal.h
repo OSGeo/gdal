@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.49  2002/05/28 18:55:46  warmerda
+ * added GDALOpenShared() and GDALDumpOpenDatasets
+ *
  * Revision 1.48  2002/05/14 21:38:32  warmerda
  * make INST_DATA overidable with binary patch
  *
@@ -317,6 +320,8 @@ GDALDatasetH CPL_DLL GDALCreateCopy( GDALDriverH, const char *, GDALDatasetH,
                                      int, char **, GDALProgressFunc, void * );
 
 GDALDatasetH CPL_DLL GDALOpen( const char *, GDALAccess );
+GDALDatasetH CPL_DLL GDALOpenShared( const char *, GDALAccess );
+int          CPL_DLL GDALDumpOpenDatasets( FILE * );
 
 GDALDriverH CPL_DLL GDALGetDriverByName( const char * );
 int CPL_DLL         GDALGetDriverCount();
