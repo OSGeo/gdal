@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2003/11/05 21:43:54  warmerda
+ * Removed destructor debug message ... too much extra noise.
+ *
  * Revision 1.20  2003/05/28 19:18:04  warmerda
  * fixup argument names for docs
  *
@@ -121,7 +124,6 @@ OGRDataSource::OGRDataSource()
 OGRDataSource::~OGRDataSource()
 
 {
-    CPLDebug( "OGR", "~OGRDDataSource(%p)", this );
 }
 
 /************************************************************************/
