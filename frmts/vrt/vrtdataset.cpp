@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2003/07/17 20:31:12  warmerda
+ * moved out driver and VRTCreateCopy() code
+ *
  * Revision 1.12  2003/06/10 19:58:35  warmerda
  * added support for AddFuncSource in AddBand() method for Imagine
  *
@@ -69,7 +72,6 @@
 #include "vrtdataset.h"
 #include "cpl_string.h"
 #include "cpl_minixml.h"
-#include "cpl_string.h"
 
 CPL_CVSID("$Id$");
 
@@ -457,7 +459,10 @@ GDALDataset *VRTDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Turn the XML representation into a VRTDataset.                  */
 /* -------------------------------------------------------------------- */
-    GDALDataset *poDS = OpenXML( pszXML );
+    VRTDataset *poDS = (VRTDataset *) OpenXML( pszXML );
+
+    if( poDS != NULL )
+        poDS->bNeedsFlush = FALSE;
 
     CPLFree( pszXML );
 
@@ -610,8 +615,10 @@ GDALDataset *VRTDataset::OpenXML( const char *pszXML )
             }
             else
             {
+                CPLDestroyXMLNode( psTree );
                 delete poBand; 
-                break;
+                delete poDS;
+                return NULL;
             }
         }
     }
@@ -704,133 +711,6 @@ VRTDataset::Create( const char * pszName,
 }
 
 /************************************************************************/
-/*                           VRTCreateCopy()                            */
-/************************************************************************/
-
-static GDALDataset *
-VRTCreateCopy( const char * pszFilename, GDALDataset *poSrcDS, 
-               int bStrict, char ** papszOptions, 
-               GDALProgressFunc pfnProgress, void * pProgressData )
-
-{
-    VRTDataset *poVRTDS;
-
-    (void) bStrict;
-    (void) papszOptions;
-
-/* -------------------------------------------------------------------- */
-/*      If the source dataset is a virtual dataset then just write      */
-/*      it to disk as a special case to avoid extra layers of           */
-/*      indirection.                                                    */
-/* -------------------------------------------------------------------- */
-    if( EQUAL(poSrcDS->GetDriver()->GetDescription(),"VRT") )
-    {
-        FILE *fpVRT;
-
-        fpVRT = VSIFOpen( pszFilename, "w" );
-
-
-    /* -------------------------------------------------------------------- */
-    /*      Convert tree to a single block of XML text.                     */
-    /* -------------------------------------------------------------------- */
-        CPLXMLNode *psDSTree = ((VRTDataset *) poSrcDS)->SerializeToXML();
-        char *pszXML;
-        
-        pszXML = CPLSerializeXMLTree( psDSTree );
-        
-        CPLDestroyXMLNode( psDSTree );
-        
-    /* -------------------------------------------------------------------- */
-    /*      Write to disk.                                                  */
-    /* -------------------------------------------------------------------- */
-        VSIFWrite( pszXML, 1, strlen(pszXML), fpVRT );
-        VSIFClose( fpVRT );
-
-        CPLFree( pszXML );
-        
-        return (GDALDataset *) GDALOpen( pszFilename, GA_Update );
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Create the virtual dataset.                                     */
-/* -------------------------------------------------------------------- */
-    poVRTDS = (VRTDataset *) 
-        VRTDataset::Create( pszFilename, 
-                            poSrcDS->GetRasterXSize(),
-                            poSrcDS->GetRasterYSize(),
-                            0, GDT_Byte, NULL );
-
-/* -------------------------------------------------------------------- */
-/*      Do we have a geotransform?                                      */
-/* -------------------------------------------------------------------- */
-    double adfGeoTransform[6];
-
-    if( poSrcDS->GetGeoTransform( adfGeoTransform ) == CE_None )
-    {
-        poVRTDS->SetGeoTransform( adfGeoTransform );
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Copy projection                                                 */
-/* -------------------------------------------------------------------- */
-    poVRTDS->SetProjection( poSrcDS->GetProjectionRef() );
-
-/* -------------------------------------------------------------------- */
-/*      Emit dataset level metadata.                                    */
-/* -------------------------------------------------------------------- */
-    poVRTDS->SetMetadata( poSrcDS->GetMetadata() );
-
-/* -------------------------------------------------------------------- */
-/*      GCPs                                                            */
-/* -------------------------------------------------------------------- */
-    if( poSrcDS->GetGCPCount() > 0 )
-    {
-        poVRTDS->SetGCPs( poSrcDS->GetGCPCount(), 
-                          poSrcDS->GetGCPs(),
-                          poSrcDS->GetGCPProjection() );
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Loop over all the bands.					*/
-/* -------------------------------------------------------------------- */
-    for( int iBand = 0; iBand < poSrcDS->GetRasterCount(); iBand++ )
-    {
-        GDALRasterBand *poSrcBand = poSrcDS->GetRasterBand( iBand+1 );
-
-/* -------------------------------------------------------------------- */
-/*      Create the band with the appropriate band type.                 */
-/* -------------------------------------------------------------------- */
-        poVRTDS->AddBand( poSrcBand->GetRasterDataType(), NULL );
-
-        VRTRasterBand *poVRTBand = 
-			(VRTRasterBand *) poVRTDS->GetRasterBand( iBand+1 );
-
-/* -------------------------------------------------------------------- */
-/*      Setup source mapping.                                           */
-/* -------------------------------------------------------------------- */
-        poVRTBand->AddSimpleSource( poSrcBand );
-
-/* -------------------------------------------------------------------- */
-/*      Emit various band level metadata.                               */
-/* -------------------------------------------------------------------- */
-        poVRTBand->SetMetadata( poSrcBand->GetMetadata() );
-
-        poVRTBand->SetColorTable( poSrcBand->GetColorTable() );
-        poVRTBand->SetColorInterpretation(poSrcBand->GetColorInterpretation());
-
-        int bSuccess;
-
-        poSrcBand->GetNoDataValue( &bSuccess );
-        if( bSuccess )
-            poVRTBand->SetNoDataValue( poSrcBand->GetNoDataValue(NULL) );
-    }
-
-    poVRTDS->FlushCache();
-
-    return poVRTDS;
-}
-
-/************************************************************************/
 /*                          VRTApplyMetadata()                          */
 /************************************************************************/
 int VRTApplyMetadata( CPLXMLNode *psTree, GDALMajorObject *poMO )
@@ -897,31 +777,3 @@ CPLXMLNode *VRTSerializeMetadata( GDALMajorObject *poMO )
 
     return psMD;
 }
-
-/************************************************************************/
-/*                          GDALRegister_VRT()                          */
-/************************************************************************/
-
-void GDALRegister_VRT()
-
-{
-    GDALDriver	*poDriver;
-
-    if( GDALGetDriverByName( "VRT" ) == NULL )
-    {
-        poDriver = new GDALDriver();
-        
-        poDriver->SetDescription( "VRT" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
-                                   "Virtual Raster" );
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
-                                   "Byte Int16 UInt16 Int32 UInt32 Float32 Float64 CInt16 CInt32 CFloat32 CFloat64" );
-        
-        poDriver->pfnOpen = VRTDataset::Open;
-        poDriver->pfnCreateCopy = VRTCreateCopy;
-        poDriver->pfnCreate = VRTDataset::Create;
-
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
-}
-
