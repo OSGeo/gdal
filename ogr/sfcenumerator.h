@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/06/08 17:51:55  warmerda
+ * remoted unimplemented MoveNextOGISProvider()
+ *
  * Revision 1.1  1999/06/08 03:51:00  warmerda
  * New
  *
@@ -46,7 +49,6 @@ class SFCEnumerator : public CEnumerator
 {
   public:
     int          IsOGISProvider();
-    HRESULT      MoveNextOGISProvider();
 };
 
 
