@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2004/11/14 04:54:52  fwarmerdam
+ * fixed some problems with density handlnig
+ *
  * Revision 1.19  2004/11/14 04:16:30  fwarmerdam
  * fixup src alpha support
  *
@@ -695,6 +698,24 @@ CPLErr GDALWarpKernel::Validate()
 }
 
 /************************************************************************/
+/*                         GWKOverlayDensity()                          */
+/*                                                                      */
+/*      Compute the final density for the destination pixel.  This      */
+/*      is a function of the overlay density (passed in) and the        */
+/*      original density.                                               */
+/************************************************************************/
+
+static void GWKOverlayDensity( GDALWarpKernel *poWK, int iDstOffset, 
+                               double dfDensity )
+{
+    if( dfDensity < 0.0001 || poWK->pafDstDensity == NULL )
+        return;
+
+    poWK->pafDstDensity[iDstOffset] 
+        = 1.0 - (1.0-dfDensity) * (1.0-poWK->pafDstDensity[iDstOffset]);
+}
+
+/************************************************************************/
 /*                          GWKSetPixelValue()                          */
 /************************************************************************/
 
@@ -792,8 +813,6 @@ static int GWKSetPixelValue( GDALWarpKernel *poWK, int iBand,
 
         dfImag = (dfImag * dfDensity + dfDstImag * dfDstInfluence) 
             / (dfDensity + dfDstInfluence);
-
-        dfDensity = 1.0 - (1.0-dfDensity) * (1.0-dfDstDensity);
     }
 
 /* -------------------------------------------------------------------- */
@@ -897,14 +916,6 @@ static int GWKSetPixelValue( GDALWarpKernel *poWK, int iBand,
       default:
         return FALSE;
     }
-
-    if( poWK->pafDstDensity != NULL )
-        poWK->pafDstDensity[iDstOffset] = dfDensity;
-
-    // FIXME:
-    // I need to add a bunch more stuff related to input density, setting
-    // the destination buffer density and setting the destination buffer
-    // valid flag. 
 
     return TRUE;
 }
@@ -1838,6 +1849,18 @@ static CPLErr GWKGeneralCase( GDALWarpKernel *poWK )
                     & (0x01 << (iDstOffset & 0x1f))) )
                 continue;
 
+/* -------------------------------------------------------------------- */
+/*      Do not try to apply transparent source pixels to the destination.*/
+/* -------------------------------------------------------------------- */
+            double  dfDensity = 1.0;
+
+            if( poWK->pafUnifiedSrcDensity != NULL )
+            {
+                dfDensity = poWK->pafUnifiedSrcDensity[iSrcOffset];
+                if( dfDensity < 0.00001 )
+                    continue;
+            }
+
 /* ==================================================================== */
 /*      Loop processing each band.                                      */
 /* ==================================================================== */
@@ -1845,7 +1868,7 @@ static CPLErr GWKGeneralCase( GDALWarpKernel *poWK )
             
             for( iBand = 0; iBand < poWK->nBands; iBand++ )
             {
-                double dfDensity = 0.0;
+                double dfBandDensity = 0.0;
                 double dfValueReal = 0.0;
                 double dfValueImag = 0.0;
 
@@ -1854,7 +1877,7 @@ static CPLErr GWKGeneralCase( GDALWarpKernel *poWK )
 /* -------------------------------------------------------------------- */
                 if( poWK->eResample == GRA_NearestNeighbour )
                 {
-                    GWKGetPixelValue( poWK, iBand, iSrcOffset, &dfDensity, 
+                    GWKGetPixelValue( poWK, iBand, iSrcOffset, &dfBandDensity, 
                                       &dfValueReal, &dfValueImag );
                 }
                 else if( poWK->eResample == GRA_Bilinear )
@@ -1862,7 +1885,7 @@ static CPLErr GWKGeneralCase( GDALWarpKernel *poWK )
                     GWKBilinearResample( poWK, iBand, 
                                          padfX[iDstX]-poWK->nSrcXOff,
                                          padfY[iDstX]-poWK->nSrcYOff,
-                                         &dfDensity, 
+                                         &dfBandDensity, 
                                          &dfValueReal, &dfValueImag );
                 }
                 else if( poWK->eResample == GRA_Cubic )
@@ -1870,7 +1893,7 @@ static CPLErr GWKGeneralCase( GDALWarpKernel *poWK )
                     GWKCubicResample( poWK, iBand, 
                                       padfX[iDstX]-poWK->nSrcXOff,
                                       padfY[iDstX]-poWK->nSrcYOff,
-                                      &dfDensity, 
+                                      &dfBandDensity, 
                                       &dfValueReal, &dfValueImag );
                 }
                 else if( poWK->eResample == GRA_CubicSpline )
@@ -1878,13 +1901,13 @@ static CPLErr GWKGeneralCase( GDALWarpKernel *poWK )
                     GWKCubicSplineResample( poWK, iBand, 
                                             padfX[iDstX]-poWK->nSrcXOff,
                                             padfY[iDstX]-poWK->nSrcYOff,
-                                            &dfDensity, 
+                                            &dfBandDensity, 
                                             &dfValueReal, &dfValueImag );
                 }
 
 
                 // If we didn't find any valid inputs skip to next band.
-                if( dfDensity == 0.0 )
+                if( dfBandDensity == 0.0 )
                     continue;
 
 /* -------------------------------------------------------------------- */
@@ -1892,10 +1915,22 @@ static CPLErr GWKGeneralCase( GDALWarpKernel *poWK )
 /*      the destination pixel.                                          */
 /* -------------------------------------------------------------------- */
                 GWKSetPixelValue( poWK, iBand, iDstOffset,
-                                  dfDensity, dfValueReal, dfValueImag );
+                                  dfBandDensity, dfValueReal, dfValueImag );
 
             }
-        }
+
+/* -------------------------------------------------------------------- */
+/*      Update destination density/validity masks.                      */
+/* -------------------------------------------------------------------- */
+            GWKOverlayDensity( poWK, iDstOffset, dfDensity );
+
+            if( poWK->panDstValid != NULL )
+            {
+                poWK->panDstValid[iDstOffset>>5] |= 
+                    0x01 << (iDstOffset & 0x1f);
+            }
+
+        } /* Next iDstX */
 
 /* -------------------------------------------------------------------- */
 /*      Report progress to the user, and optionally cancel out.         */
@@ -2613,8 +2648,7 @@ static CPLErr GWKNearestByte( GDALWarpKernel *poWK )
 /* -------------------------------------------------------------------- */
 /*      Mark this pixel valid/opaque in the output.                     */
 /* -------------------------------------------------------------------- */
-            if( poWK->pafDstDensity != NULL )
-                poWK->pafDstDensity[iDstOffset] = dfDensity;
+            GWKOverlayDensity( poWK, iDstOffset, dfDensity );
 
             if( poWK->panDstValid != NULL )
             {
@@ -3344,8 +3378,7 @@ static CPLErr GWKNearestShort( GDALWarpKernel *poWK )
 /* -------------------------------------------------------------------- */
 /*      Mark this pixel valid/opaque in the output.                     */
 /* -------------------------------------------------------------------- */
-            if( poWK->pafDstDensity != NULL )
-                poWK->pafDstDensity[iDstOffset] = dfDensity;
+            GWKOverlayDensity( poWK, iDstOffset, dfDensity );
 
             if( poWK->panDstValid != NULL )
             {
@@ -3667,8 +3700,7 @@ static CPLErr GWKNearestFloat( GDALWarpKernel *poWK )
 /* -------------------------------------------------------------------- */
 /*      Mark this pixel valid/opaque in the output.                     */
 /* -------------------------------------------------------------------- */
-            if( poWK->pafDstDensity != NULL )
-                poWK->pafDstDensity[iDstOffset] = dfDensity;
+            GWKOverlayDensity( poWK, iDstOffset, dfDensity );
 
             if( poWK->panDstValid != NULL )
             {
