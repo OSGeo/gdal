@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  1999/11/26 15:20:54  warmerda
+ * Fixed multipoint.
+ *
  * Revision 1.11  1999/11/26 15:17:01  warmerda
  * fixed lname to lnam
  *
@@ -1260,9 +1263,9 @@ OGRFeatureDefn *S57Reader::GenerateObjectClassDefn( S57ClassRegistrar *poCR,
         if( EQUAL(poCR->GetAcronym(),"SOUNDG") )
         {
             if( bSplitMultiPoint )
-                poFDefn->SetGeomType( wkbMultiPoint );
-            else
                 poFDefn->SetGeomType( wkbPoint25D );
+            else
+                poFDefn->SetGeomType( wkbMultiPoint );
         }
         else
             poFDefn->SetGeomType( wkbPoint );
