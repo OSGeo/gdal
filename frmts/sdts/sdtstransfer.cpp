@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2000/02/03 19:44:52  warmerda
+ * added method for getting bounds of transfer
+ *
  * Revision 1.10  1999/09/27 11:24:11  warmerda
  * Fixed SLTRaster type spelling.
  *
@@ -610,3 +613,66 @@ DDFField *SDTSTransfer::GetAttr( SDTSModId *poModId )
 
     return poAttrRecord->poATTR;
 }
+
+/************************************************************************/
+/*                             GetBounds()                              */
+/************************************************************************/
+
+/**
+  Fetch approximate bounds for a transfer by scanning all point layers.
+
+  Currently this method only works for datasets with point layers, and even
+  then it is theoretically possible that some lines will go outside the
+  bounds established by examining all point layers.
+
+  @param pdfMinX western edge of dataset
+  @param pdfMinY southern edge of dataset
+  @param pdfMaxX eastern edge of dataset
+  @param pdfMaxY northern edge of dataset
+
+  @return TRUE if success, or FALSE on a failure. 
+  */
+
+int SDTSTransfer::GetBounds( double *pdfMinX, double *pdfMinY,
+                             double *pdfMaxX, double *pdfMaxY )
+
+{
+    int		bFirst = TRUE;
+    
+    for( int iLayer = 0; iLayer < GetLayerCount(); iLayer++ )
+    {
+        SDTSPointReader	*poLayer;
+        SDTSRawPoint    *poPoint;
+        
+        if( GetLayerType( iLayer ) != SLTPoint )
+            continue;
+
+        poLayer = (SDTSPointReader *) GetLayerIndexedReader( iLayer );
+        if( poLayer == NULL )
+            continue;
+
+        poLayer->Rewind();
+        while( (poPoint = (SDTSRawPoint*) poLayer->GetNextFeature()) )
+        {
+            if( bFirst )
+            {
+                *pdfMinX = *pdfMaxX = poPoint->dfX;
+                *pdfMinY = *pdfMaxY = poPoint->dfY;
+                bFirst = FALSE;
+            }
+            else
+            {
+                *pdfMinX = MIN(*pdfMinX,poPoint->dfX);
+                *pdfMaxX = MAX(*pdfMaxX,poPoint->dfX);
+                *pdfMinY = MIN(*pdfMinY,poPoint->dfY);
+                *pdfMaxY = MAX(*pdfMaxY,poPoint->dfY);
+            }
+            
+            if( !poLayer->IsIndexed() )
+                delete poPoint;
+        }
+    }
+    
+    return !bFirst;
+}
+

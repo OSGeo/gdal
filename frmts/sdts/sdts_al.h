@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.23  2000/02/03 19:44:51  warmerda
+ * added method for getting bounds of transfer
+ *
  * Revision 1.22  1999/11/12 13:12:35  warmerda
  * make adfTransform public
  *
@@ -721,6 +724,9 @@ class SDTSTransfer
                                        SDTSLayerType *peType = NULL);
                 
     DDFField *GetAttr( SDTSModId * );
+
+    int          GetBounds( double *pdfMinX, double *pdfMinY,
+                            double *pdfMaxX, double *pdfMaxY );
     
   private:
 
