@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.24  2001/11/14 14:44:06  warmerda
+ * fixed problem with WKT translation
+ *
  * Revision 1.23  2001/11/01 17:20:33  warmerda
  * added DISABLE_OGRGEOM_TRANSFORM macro
  *
@@ -837,6 +840,7 @@ OGRErr OGRLineString::exportToWkt( char ** ppszReturn )
         if( i > 0 )
             strcat( *ppszReturn + nRetLen, "," );
 
+        nRetLen += strlen(*ppszReturn + nRetLen);
         if( getCoordinateDimension() == 3 )
             OGRMakeWktCoordinate( *ppszReturn + nRetLen,
                                   paoPoints[i].x,
