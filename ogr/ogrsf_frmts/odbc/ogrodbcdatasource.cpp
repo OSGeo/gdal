@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2004/08/17 21:08:27  warmerda
+ * Avoid calling OpenTable() while still processing a transaction to get
+ * a list of tables.  As suggested by John Erik Ekberg (cowi.dk).
+ *
  * Revision 1.6  2004/07/09 07:06:43  warmerda
  * Added OGRSQL support in ExecuteSQL().
  *
@@ -110,6 +114,7 @@ int OGRODBCDataSource::Open( const char * pszNewName, int bUpdate,
 /* -------------------------------------------------------------------- */
     char *pszWrkName = CPLStrdup( pszNewName );
     char **papszTables = NULL;
+    char **papszGeomCol = NULL;
     char *pszComma;
 
     while( (pszComma = strrchr( pszWrkName, ',' )) != NULL )
@@ -186,46 +191,57 @@ int OGRODBCDataSource::Open( const char * pszNewName, int bUpdate,
     bDSUpdate = bUpdate;
 
 /* -------------------------------------------------------------------- */
-/*      If we have an explicit list of requested tables, use them       */
-/*      (non-spatial).                                                  */
+/*      If no explicit list of tables was given, check for a list in    */
+/*      a geometry_columns table.                                       */
 /* -------------------------------------------------------------------- */
-    if( papszTables != NULL )
+    if( papszTables == NULL )
     {
-        for( int iTable = 0; papszTables[iTable] != NULL; iTable++ )
-            OpenTable( papszTables[iTable], NULL, bUpdate );
-        return TRUE;
-    }
-
-/* -------------------------------------------------------------------- */
-/*      If we have a GEOMETRY_COLUMN tables, initialize on the basis    */
-/*      of that.                                                        */
-/* -------------------------------------------------------------------- */
-    CPLODBCStatement oStmt( &oSession );
-
-    oStmt.Append( "SELECT f_table_name, f_geometry_column, geometry_type"
-                  " FROM geometry_columns" );
-    if( oStmt.ExecuteSQL() )
-    {
-        while( oStmt.Fetch() )
+        CPLODBCStatement oStmt( &oSession );
+        
+        oStmt.Append( "SELECT f_table_name, f_geometry_column, geometry_type"
+                      " FROM geometry_columns" );
+        if( oStmt.ExecuteSQL() )
         {
-            OpenTable( oStmt.GetColData(0), oStmt.GetColData(1), bUpdate );
+            while( oStmt.Fetch() )
+            {
+                papszTables = 
+                    CSLAddString( papszTables, oStmt.GetColData(0) );
+                papszGeomCol = 
+                    CSLAddString( papszGeomCol, oStmt.GetColData(1) );
+            }
         }
-
-        return TRUE;
     }
-
+            
 /* -------------------------------------------------------------------- */
 /*      Otherwise our final resort is to return all tables as           */
 /*      non-spatial tables.                                             */
 /* -------------------------------------------------------------------- */
-    CPLODBCStatement oTableList( &oSession );
-    
-    if( oTableList.GetTables() )
+    if( papszTables == NULL )
     {
-        while( oTableList.Fetch() )
+        CPLODBCStatement oTableList( &oSession );
+        
+        if( oTableList.GetTables() )
         {
-            OpenTable( oTableList.GetColData(2), NULL, bUpdate );
+            while( oTableList.Fetch() )
+            {
+                papszTables = 
+                    CSLAddString( papszTables, oTableList.GetColData(2) );
+            }
         }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      If we have an explicit list of requested tables, use them       */
+/*      (non-spatial).                                                  */
+/* -------------------------------------------------------------------- */
+    for( int iTable = 0; 
+         papszTables != NULL && papszTables[iTable] != NULL; 
+         iTable++ )
+    {
+        if( papszGeomCol != NULL )
+            OpenTable( papszTables[iTable], papszGeomCol[iTable], bUpdate );
+        else
+            OpenTable( papszTables[iTable], NULL, bUpdate );
     }
     
     return TRUE;
