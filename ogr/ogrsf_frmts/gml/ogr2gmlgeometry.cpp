@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.2  2002/01/25 21:00:31  warmerda
+ * fix some small bugs found by MS VC++
+ *
  * Revision 1.1  2002/01/25 20:37:02  warmerda
  * New
  *
@@ -230,8 +233,9 @@ static int OGR2GMLGeometryAppend( OGRGeometry *poGeometry,
             AppendString( ppszText, pnLength, pnMaxLength,
                           "<gml:outerBoundaryIs>" );
 
-            OGR2GMLGeometryAppend( poPolygon->getExteriorRing(), 
-                                   ppszText, pnLength, pnMaxLength );
+            if( !OGR2GMLGeometryAppend( poPolygon->getExteriorRing(), 
+                                        ppszText, pnLength, pnMaxLength ) )
+                return FALSE;
             
             AppendString( ppszText, pnLength, pnMaxLength,
                           "</gml:outerBoundaryIs>" );
@@ -243,9 +247,10 @@ static int OGR2GMLGeometryAppend( OGRGeometry *poGeometry,
 
             AppendString( ppszText, pnLength, pnMaxLength,
                           "<gml:outerBoundaryIs>" );
-
-            OGR2GMLGeometryAppend( poPolygon->getExteriorRing(), 
-                                   ppszText, pnLength, pnMaxLength );
+            
+            if( !OGR2GMLGeometryAppend( poPolygon->getExteriorRing(), 
+                                        ppszText, pnLength, pnMaxLength ) )
+                return FALSE;
             
             AppendString( ppszText, pnLength, pnMaxLength,
                           "</gml:outerBoundaryIs>" );
@@ -254,6 +259,10 @@ static int OGR2GMLGeometryAppend( OGRGeometry *poGeometry,
         AppendString( ppszText, pnLength, pnMaxLength,
                       "</gml:Polygon>" );
     }
+    else
+        return FALSE;
+
+    return TRUE;
 }
 
 /************************************************************************/
