@@ -33,8 +33,8 @@
  * and things like that.
  *
  * $Log$
- * Revision 1.96  2004/09/17 15:07:57  fwarmerdam
- * added getArea
+ * Revision 1.97  2004/10/04 21:03:37  fwarmerdam
+ * updated
  *
  ************************************************************************/
 
@@ -567,6 +567,15 @@ char *SWIG_GetPtr(char *_c, void **ptr, char *_t)
 #include "gdalwarper.h"
 
 CPL_CVSID("$Id$");
+
+/*
+** this seems to be required for SWIG 1.3 because of my hacky SWIG_GetPtr_2 
+** macro
+*/
+
+#ifdef SWIGTYPE_GDALDatasetH
+#define SWIGTYPENULL NULL
+#endif
 
 #ifdef SWIGTYPE_GDALDatasetH
 #  define SWIG_GetPtr_2(s,d,t)  SWIG_ConvertPtr( s, d,(SWIGTYPE##t),1)
@@ -7971,6 +7980,34 @@ static PyObject *_wrap_OGR_G_GetArea(PyObject *self, PyObject *args) {
     return _resultobj;
 }
 
+static PyObject *_wrap_OGR_G_Centroid(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    int  _result;
+    OGRGeometryH  _arg0;
+    OGRGeometryH  _arg1;
+    char * _argc0 = 0;
+    char * _argc1 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"ss:OGR_G_Centroid",&_argc0,&_argc1)) 
+        return NULL;
+    if (_argc0) {
+        if (SWIG_GetPtr(_argc0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OGR_G_Centroid. Expected _OGRGeometryH.");
+        return NULL;
+        }
+    }
+    if (_argc1) {
+        if (SWIG_GetPtr(_argc1,(void **) &_arg1,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of OGR_G_Centroid. Expected _OGRGeometryH.");
+        return NULL;
+        }
+    }
+    _result = (int )OGR_G_Centroid(_arg0,_arg1);
+    _resultobj = Py_BuildValue("i",_result);
+    return _resultobj;
+}
+
 static PyObject *_wrap_OGR_G_Empty(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
     OGRGeometryH  _arg0;
@@ -10989,6 +11026,7 @@ static PyMethodDef _gdalMethods[] = {
 	 { "OGR_G_GetX", _wrap_OGR_G_GetX, 1 },
 	 { "OGR_G_GetPointCount", _wrap_OGR_G_GetPointCount, 1 },
 	 { "OGR_G_Empty", _wrap_OGR_G_Empty, 1 },
+	 { "OGR_G_Centroid", _wrap_OGR_G_Centroid, 1 },
 	 { "OGR_G_GetArea", _wrap_OGR_G_GetArea, 1 },
 	 { "OGR_G_Distance", _wrap_OGR_G_Distance, 1 },
 	 { "OGR_G_SymmetricDifference", _wrap_OGR_G_SymmetricDifference, 1 },
