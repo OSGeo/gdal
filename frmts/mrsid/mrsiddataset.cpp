@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2004/02/08 14:29:43  dron
+ * Support for DSDK v.3.2.x.
+ *
  * Revision 1.6  2004/02/03 20:56:45  dron
  * Fixes in coordinate handling.
  *
@@ -54,8 +57,13 @@
 #include "lt_fileUtils.h"
 #include "lt_xTrans.h"
 #include "lt_imageBufferInfo.h"
+# include "lt_imageBuffer.h"
 #include "lt_pixel.h"
-#include "lt_colorSpace.h"
+
+#ifdef MRSID_DSDK_VERSION_31
+# include "lt_colorSpace.h"
+#endif
+
 #include "MrSIDImageFile.h"
 #include "MrSIDNavigator.h"
 #include "MetadataReader.h"
@@ -84,7 +92,11 @@ class MrSIDDataset : public GDALDataset
 {
     friend class MrSIDRasterBand;
 
+#ifdef MRSID_DSDK_VERSION_31
     FileSpecification   *poFilename;
+#else
+    LTFileSpec          *poFilename;
+#endif
     MrSIDImageFile      *poMrSidFile;
     MrSIDNavigator      *poMrSidNav;
     Pixel               *poDefaultPixel;
@@ -92,7 +104,11 @@ class MrSIDDataset : public GDALDataset
 
     ImageBufferInfo::SampleType eSampleType;
     GDALDataType        eDataType;
+#ifdef MRSID_DSDK_VERSION_31
     ColorSpace          *poColorSpace;
+#else
+    MrSIDColorSpace     *poColorSpace;
+#endif
 
     int                 nCurrentZoomLevel;
 
@@ -233,10 +249,11 @@ CPLErr MrSIDRasterBand::IRasterIO( GDALRWFlag eRWFlag,
     {
         poGDS->poMrSidNav->loadImage( *poImageBuf );
     }
-    catch ( Exception oException )
+    catch ( ... )
     {
         delete poImageBuf;
-        CPLError( CE_Failure, CPLE_AppDefined, oException.what() );
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "MrSIDRasterBand::IRasterIO(): Failed to load image." );
         return CE_Failure;
     }
 
@@ -302,10 +319,11 @@ CPLErr MrSIDRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     {
         poGDS->poMrSidNav->loadImage( *poImageBuf );
     }
-    catch ( Exception oException )
+    catch ( ... )
     {
         delete poImageBuf;
-        CPLError( CE_Failure, CPLE_AppDefined, oException.what() );
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "MrSIDRasterBand::IReadBlock(): Failed to load image." );
         return CE_Failure;
     }
 
@@ -344,9 +362,27 @@ GDALColorInterp MrSIDRasterBand::GetColorInterpretation()
 {
     MrSIDDataset      *poGDS = (MrSIDDataset *) poDS;
 
-    switch( poGDS->poColorSpace->scheme() )
+#ifdef MRSID_DSDK_VERSION_31
+
+# define GDAL_MRSID_COLOR_SCHEME poGDS->poColorSpace->scheme()
+# define GDAL_MRSID_COLORSPACE_RGB ColorSpace::RGB
+# define GDAL_MRSID_COLORSPACE_CMYK ColorSpace::CMYK
+# define GDAL_MRSID_COLORSPACE_GRAYSCALE ColorSpace::GRAYSCALE
+# define GDAL_MRSID_COLORSPACE_RGBK ColorSpace::RGBK
+
+#else
+
+# define GDAL_MRSID_COLOR_SCHEME (int)poGDS->poColorSpace
+# define GDAL_MRSID_COLORSPACE_RGB MRSID_COLORSPACE_RGB
+# define GDAL_MRSID_COLORSPACE_CMYK MRSID_COLORSPACE_CMYK
+# define GDAL_MRSID_COLORSPACE_GRAYSCALE MRSID_COLORSPACE_GRAYSCALE
+# define GDAL_MRSID_COLORSPACE_RGBK MRSID_COLORSPACE_RGBK
+
+#endif
+
+    switch( GDAL_MRSID_COLOR_SCHEME )
     {
-        case ColorSpace::RGB:
+        case GDAL_MRSID_COLORSPACE_RGB:
             if( nBand == 1 )
                 return GCI_RedBand;
             else if( nBand == 2 )
@@ -355,7 +391,7 @@ GDALColorInterp MrSIDRasterBand::GetColorInterpretation()
                 return GCI_BlueBand;
             else
                 return GCI_Undefined;
-        case ColorSpace::CMYK:
+        case GDAL_MRSID_COLORSPACE_CMYK:
             if( nBand == 1 )
                 return GCI_CyanBand;
             else if( nBand == 2 )
@@ -366,9 +402,9 @@ GDALColorInterp MrSIDRasterBand::GetColorInterpretation()
                 return GCI_BlackBand;
             else
                 return GCI_Undefined;
-        case ColorSpace::GRAYSCALE:
+        case GDAL_MRSID_COLORSPACE_GRAYSCALE:
             return GCI_GrayIndex;
-        case ColorSpace::RGBK:
+        case GDAL_MRSID_COLORSPACE_RGBK:
             if( nBand == 1 )
                 return GCI_RedBand;
             else if( nBand == 2 )
@@ -382,6 +418,12 @@ GDALColorInterp MrSIDRasterBand::GetColorInterpretation()
         default:
             return GCI_Undefined;
     }
+
+#undef GDAL_MRSID_COLORSPACE_RGB
+#undef GDAL_MRSID_COLORSPACE_CMYK
+#undef GDAL_MRSID_COLORSPACE_GRAYSCALE
+#undef GDAL_MRSID_COLORSPACE_RGBK
+
 }
 
 /************************************************************************/
@@ -505,7 +547,12 @@ const char *MrSIDDataset::GetProjectionRef()
 
 char *MrSIDDataset::SerializeMetadataElement( const MetadataElement *poElem )
 {
+#ifdef MRSID_DSDK_VERSION_31
     IntDimension oDim = poElem->getDimensions();
+#else
+    IntDimension oDim( poElem->getDimensionWidth(),
+                       poElem->getDimensionHeight() );
+#endif
     int         i, j, iLength;
     const char  *pszTemp = NULL;
     char        *pszMetadata = CPLStrdup( "" );
@@ -1523,9 +1570,11 @@ CPLErr MrSIDDataset::OpenZoomLevel( int iZoom )
     {
         poMrSidNav = new MrSIDNavigator( *poMrSidFile );
     }
-    catch ( Exception oException )
+    catch ( ... )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, oException.what() );
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "MrSIDDataset::OpenZoomLevel(): "
+                  "Failed to create MrSIDNavigator object." );
         return CE_Failure;
     }
 
@@ -1534,7 +1583,11 @@ CPLErr MrSIDDataset::OpenZoomLevel( int iZoom )
 /* -------------------------------------------------------------------- */
     poDefaultPixel = new Pixel( poMrSidFile->getDefaultPixelValue() );
     eSampleType = poMrSidFile->getSampleType();
+#ifdef MRSID_DSDK_VERSION_31
     poColorSpace = new ColorSpace( poMrSidFile->colorSpace() );
+#else
+    poColorSpace = new MrSIDColorSpace( poMrSidFile->colorSpace() );
+#endif
     switch ( eSampleType )
     {
         case ImageBufferInfo::UINT16:
@@ -1559,7 +1612,9 @@ CPLErr MrSIDDataset::OpenZoomLevel( int iZoom )
     nRasterYSize = poMrSidFile->height();
     nBands = poMrSidFile->nband();
 
+#ifdef MRSID_DSDK_VERSION_31
     CPLAssert( poColorSpace->samplesPerPixel () == nBands);
+#endif
 
 /* -------------------------------------------------------------------- */
 /*      Take georeferencing.                                            */
@@ -1628,13 +1683,21 @@ GDALDataset *MrSIDDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS = new MrSIDDataset();
     try
     {
+#ifdef MRSID_DSDK_VERSION_31
         poDS->poFilename = new FileSpecification( poOpenInfo->pszFilename );
         poDS->poMrSidFile = new MrSIDImageFile( *poDS->poFilename );
+#else
+        poDS->poFilename = new LTFileSpec( poOpenInfo->pszFilename );
+        poDS->poMrSidFile = new MrSIDImageFile( *poDS->poFilename,
+                                                (LTCallbacks *)0 );
+#endif
     }
-    catch ( Exception oException )
+    catch ( ... )
     {
         delete poDS;
-        CPLError( CE_Failure, CPLE_AppDefined, oException.what() );
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "MrSIDDataset::Open(): Failed to open file %s",
+                  poOpenInfo->pszFilename );
         return NULL;
     }
 
