@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2002/08/08 22:02:51  warmerda
+ * mark as multithreaded
+ *
  * Revision 1.19  2002/04/29 20:43:18  warmerda
  * Ensure that ExecuteSQL() prepared layers are cleaned up
  *
@@ -193,7 +196,7 @@ public:
 /*                              CSFCommand                              */
 /************************************************************************/
 class ATL_NO_VTABLE CSFCommand : 
-	public CComObjectRootEx<CComSingleThreadModel>,
+	public CComObjectRootEx<CComMultiThreadModel>,
 	public SFAccessorImpl<CSFCommand>,
 	public ICommandTextImpl<CSFCommand>,
 	public ICommandPropertiesImpl<CSFCommand>,
@@ -254,25 +257,26 @@ public:
         }
         
 BEGIN_PROPSET_MAP(CSFCommand)
-	BEGIN_PROPERTY_SET(DBPROPSET_ROWSET)
-		PROPERTY_INFO_ENTRY(IAccessor)
-		PROPERTY_INFO_ENTRY(IColumnsInfo)
-		PROPERTY_INFO_ENTRY_VALUE(IColumnsRowset,VARIANT_TRUE)
-		PROPERTY_INFO_ENTRY(IConvertType)
-		PROPERTY_INFO_ENTRY(IRowset)
-		PROPERTY_INFO_ENTRY(IRowsetIdentity)
-		PROPERTY_INFO_ENTRY(IRowsetInfo)
-		PROPERTY_INFO_ENTRY(IRowsetLocate)
-		PROPERTY_INFO_ENTRY(BOOKMARKS)
-		PROPERTY_INFO_ENTRY(BOOKMARKSKIPPED)
-		PROPERTY_INFO_ENTRY(BOOKMARKTYPE)
-		PROPERTY_INFO_ENTRY_VALUE(CANFETCHBACKWARDS,VARIANT_FALSE) 
-		PROPERTY_INFO_ENTRY(CANHOLDROWS)
-		PROPERTY_INFO_ENTRY_VALUE(CANSCROLLBACKWARDS,VARIANT_FALSE)
-		PROPERTY_INFO_ENTRY(LITERALBOOKMARKS)
-		PROPERTY_INFO_ENTRY(ORDEREDBOOKMARKS)
-		PROPERTY_INFO_ENTRY_VALUE(MAXOPENROWS,1000)
-	END_PROPERTY_SET(DBPROPSET_ROWSET)
+    BEGIN_PROPERTY_SET(DBPROPSET_ROWSET)
+        PROPERTY_INFO_ENTRY(IAccessor)
+        PROPERTY_INFO_ENTRY(IColumnsInfo)
+        PROPERTY_INFO_ENTRY_VALUE(IColumnsRowset,VARIANT_TRUE)
+        PROPERTY_INFO_ENTRY(IConvertType)
+	PROPERTY_INFO_ENTRY(IRowset)
+	PROPERTY_INFO_ENTRY(IRowsetIdentity)
+	PROPERTY_INFO_ENTRY(IRowsetInfo)
+	PROPERTY_INFO_ENTRY(IRowsetLocate)
+	PROPERTY_INFO_ENTRY(BOOKMARKS)
+	PROPERTY_INFO_ENTRY(BOOKMARKSKIPPED)
+	PROPERTY_INFO_ENTRY(BOOKMARKTYPE)
+	PROPERTY_INFO_ENTRY_VALUE(CANFETCHBACKWARDS,VARIANT_FALSE) 
+	PROPERTY_INFO_ENTRY(CANHOLDROWS)
+	PROPERTY_INFO_ENTRY_VALUE(CANSCROLLBACKWARDS,VARIANT_FALSE)
+	PROPERTY_INFO_ENTRY(LITERALBOOKMARKS)
+	PROPERTY_INFO_ENTRY(ORDEREDBOOKMARKS)
+	PROPERTY_INFO_ENTRY_VALUE(MAXOPENROWS,1000)
+	PROPERTY_INFO_ENTRY_VALUE(ROWTHREADMODEL,DBPROPVAL_RT_APTMTTHREAD|DBPROPVAL_RT_FREETHREAD)
+    END_PROPERTY_SET(DBPROPSET_ROWSET)
 END_PROPSET_MAP()
 		CSimpleArray<ATLCOLUMNINFO>		m_paColInfo;
 };
@@ -484,7 +488,7 @@ class CSFRowset :
 public CSFRowsetImpl< CSFRowset, CShapeFile, CSFCommand, OGRVirtualArray>
 
 {
-    char          *ProcessSpecialFields( const char *, int * );
+    char          *ProcessSpecialFields( const char *, int *, int * );
 public:
 
                   CSFRowset();
