@@ -1,7 +1,7 @@
 
 OBJ	=	hdf4dataset.obj hdf4imagedataset.obj
 
-EXTRAFLAGS = 	-I..\iso8211
+EXTRAFLAGS = 	-I$(HDF4_DIR)\include -DFRMT_hdf4 
 
 GDAL_ROOT	=	..\..
 
