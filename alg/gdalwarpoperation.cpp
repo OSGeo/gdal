@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2003/05/07 19:13:06  warmerda
+ * added pre and post warp chunk processor
+ *
  * Revision 1.8  2003/05/06 18:32:48  warmerda
  * Added WRITE_FLUSH option support.
  * Fixed multi-threaded support so that mutexes are released after creation.
@@ -1158,12 +1161,26 @@ CPLErr GDALWarpOperation::WarpRegionToBuffer(
             return CE_Failure;
         }
     }
-        
+
+/* -------------------------------------------------------------------- */
+/*      Optional application provided prewarp chunk processor.          */
+/* -------------------------------------------------------------------- */
+    if( eErr == CE_None && psOptions->pfnPreWarpChunkProcessor != NULL )
+        eErr = psOptions->pfnPreWarpChunkProcessor( 
+            (void *) &oWK, psOptions->pPreWarpProcessorArg );
+
 /* -------------------------------------------------------------------- */
 /*      Perform the warp.                                               */
 /* -------------------------------------------------------------------- */
     if( eErr == CE_None )
         eErr = oWK.PerformWarp();
+
+/* -------------------------------------------------------------------- */
+/*      Optional application provided postwarp chunk processor.         */
+/* -------------------------------------------------------------------- */
+    if( eErr == CE_None && psOptions->pfnPostWarpChunkProcessor != NULL )
+        eErr = psOptions->pfnPostWarpChunkProcessor( 
+            (void *) &oWK, psOptions->pPostWarpProcessorArg );
 
 /* -------------------------------------------------------------------- */
 /*      Release Warp Mutex, and acquire io mutex.                       */
@@ -1421,3 +1438,4 @@ CPLErr GDALWarpOperation::ComputeSourceWindow(int nDstXOff, int nDstYOff,
 
     return CE_None;
 }
+
