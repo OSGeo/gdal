@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  1999/05/17 14:40:14  warmerda
+ * Get IIDs from sfiiddef.h.
+ *
  * Revision 1.8  1999/05/14 13:32:25  warmerda
  * added temporary debugging stuff
  *
@@ -48,12 +51,7 @@
 #include "msdaguid.h"
 #include "MSjetoledb.h"
 #include "sfclsid.h"
-
-//const IID IID_IGeometry = {0x6A124031,0xFE38,0x11d0,{0xBE,0xCE,0x00,0x80,0x5F,0x7C,0x42,0x68}};
-
-const IID IID_IGeometryFactory = {0x6A124033,0xFE38,0x11d0,{0xBE,0xCE,0x00,0x80,0x5F,0x7C,0x42,0x68}};
-
-const IID IID_ISpatialReferenceFactory = {0x620600B1,0xFEA1,0x11d0,{0xB0,0x4B,0x00,0x80,0xC7,0xF7,0x94,0x81}};
+#include "sfiiddef.h"
 
 static HRESULT SFDumpGeomColumn( IOpenRowset*, const char *, const char * );
 static HRESULT SFDumpSchema( IOpenRowset*, const char * );
