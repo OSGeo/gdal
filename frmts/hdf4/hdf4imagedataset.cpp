@@ -29,6 +29,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.6  2002/07/23 12:27:58  dron
+ * General Raster Interface support added.
+ *
  * Revision 1.5  2002/07/18 08:27:05  dron
  * Improved multidimesional SDS arrays handling.
  *
@@ -68,17 +71,23 @@ CPL_C_END
 /* ==================================================================== */
 /************************************************************************/
 
-class HDF4ImageDataset : /*public GDALDataset,*/ public HDF4Dataset
+class HDF4ImageDataset : public HDF4Dataset
 {
     friend class HDF4ImageRasterBand;
 
     char	**papszSubdatasetName;
     char	*pszFilename;
-    int32	iSDS;
-    int32	iRank, iNumType, nAttrs;
+    HDF4SubdatasetType iSubdatasetType;
+    int32	iSDS, iGR, iPal;
+    int32	iRank, iNumType, nAttrs, iInterlaceMode, iPalInterlaceMode, iPalDataType;
+    int32	nComps, nPalEntries;
     int32	aiDimSizes[MAX_VAR_DIMS];
     int		iXDim, iYDim, iBandDim;
+#define    N_COLOR_ENTRIES    256
+    uint8	aiPaletteData[N_COLOR_ENTRIES][3];		// XXX: Static array
     char	szName[65];
+
+    GDALColorTable *poColorTable;
 
 //    double      adfGeoTransform[6];
 //    char        *pszProjection;
@@ -112,6 +121,8 @@ class HDF4ImageRasterBand : public GDALRasterBand
     
     GDALDataType GetDataType( int32 );
     virtual CPLErr IReadBlock( int, int, void * );
+    virtual GDALColorInterp GetColorInterpretation();
+    virtual GDALColorTable *GetColorTable();
 };
 
 /************************************************************************/
@@ -186,44 +197,103 @@ CPLErr HDF4ImageRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 #define MAX_DIMS         20	/* FIXME: maximum number of dimensions in sds */
     int32	iStart[MAX_DIMS], iStride[MAX_DIMS], iEdges[MAX_DIMS];
 
-    /* HDF rank:
-    A rank 2 dataset is an image read in scan-line order (2D). 
-    A rank 3 dataset is a series of images which are read in an image at a time
-    to form a volume.
-    A rank 4 dataset may be thought of as a series of volumes.
-
-    The "iStart" array specifies the multi-dimensional index of the starting
-    corner of the hyperslab to read. The values are zero based.
-
-    The "edge" array specifies the number of values to read along each
-    dimension of the hyperslab.
-
-    The "iStride" array allows for sub-sampling along each dimension. If a
-    iStride value is specified for a dimension, that many values will be
-    skipped over when reading along that dimension. Specifying iStride = NULL
-    in the C interface or iStride = 1 in either interface specifies contiguous
-    reading of data. If the iStride values are set to 0, SDreaddata returns
-    FAIL (or -1). No matter what iStride value is provided, data is always
-    placed contiguously in buffer.
- 
-    See also:
-    http://www.dur.ac.uk/~dcs0elb/au-case-study/code/hdf-browse.c.html
-    http://dao.gsfc.nasa.gov/DAO_people/yin/quads.code.html
-    */
-    switch ( poGDS->iRank )
+    switch ( poGDS->iSubdatasetType )
     {
-        case 4:	// 4Dim: volume-time
-	// FIXME: needs sample file. Does not works currently.
-	iStart[3] = 0/* range: 0--aiDimSizes[3]-1 */;	iStride[3] = 1;	iEdges[3] = 1;
-	iStart[2] = 0/* range: 0--aiDimSizes[2]-1 */;	iStride[2] = 1;	iEdges[2] = 1;
-	iStart[1] = nBlockYOff; iStride[1] = 1;	iEdges[1] = nBlockYSize;
-	iStart[0] = nBlockXOff;	iStride[0] = 1;	iEdges[0] = nBlockXSize;
-	break;
-        case 3: // 3Dim: volume
-	iStart[poGDS->iBandDim] = nBand - 1;
-	iStride[poGDS->iBandDim] = 1;
-	iEdges[poGDS->iBandDim] = 1;
+	case HDF4_SDS:
+        /* HDF rank:
+        A rank 2 dataset is an image read in scan-line order (2D). 
+        A rank 3 dataset is a series of images which are read in an image at a time
+        to form a volume.
+        A rank 4 dataset may be thought of as a series of volumes.
+
+        The "iStart" array specifies the multi-dimensional index of the starting
+        corner of the hyperslab to read. The values are zero based.
+
+        The "edge" array specifies the number of values to read along each
+        dimension of the hyperslab.
+
+        The "iStride" array allows for sub-sampling along each dimension. If a
+        iStride value is specified for a dimension, that many values will be
+        skipped over when reading along that dimension. Specifying iStride = NULL
+        in the C interface or iStride = 1 in either interface specifies contiguous
+        reading of data. If the iStride values are set to 0, SDreaddata returns
+        FAIL (or -1). No matter what iStride value is provided, data is always
+        placed contiguously in buffer.
+     
+        See also:
+        http://www.dur.ac.uk/~dcs0elb/au-case-study/code/hdf-browse.c.html
+        http://dao.gsfc.nasa.gov/DAO_people/yin/quads.code.html
+        */
+        switch ( poGDS->iRank )
+        {
+            case 4:	// 4Dim: volume-time
+    	    // FIXME: needs sample file. Does not works currently.
+    	    iStart[3] = 0/* range: 0--aiDimSizes[3]-1 */;	iStride[3] = 1;	iEdges[3] = 1;
+    	    iStart[2] = 0/* range: 0--aiDimSizes[2]-1 */;	iStride[2] = 1;	iEdges[2] = 1;
+    	    iStart[1] = nBlockYOff; iStride[1] = 1;	iEdges[1] = nBlockYSize;
+    	    iStart[0] = nBlockXOff;	iStride[0] = 1;	iEdges[0] = nBlockXSize;
+    	    break;
+            case 3: // 3Dim: volume
+    	    iStart[poGDS->iBandDim] = nBand - 1;
+    	    iStride[poGDS->iBandDim] = 1;
+    	    iEdges[poGDS->iBandDim] = 1;
+    	
+    	    iStart[poGDS->iYDim] = nBlockYOff;
+    	    iStride[poGDS->iYDim] = 1;
+    	    iEdges[poGDS->iYDim] = nBlockYSize;
+    	
+    	    iStart[poGDS->iXDim] = nBlockXOff;
+    	    iStride[poGDS->iXDim] = 1;
+    	    iEdges[poGDS->iXDim] = nBlockXSize;
+    	    break;
+            case 2: // 2Dim: rows/cols
+            iStart[poGDS->iYDim] = nBlockYOff;
+	    iStride[poGDS->iYDim] = 1;
+	    iEdges[poGDS->iYDim] = nBlockYSize;
 	
+            iStart[poGDS->iXDim] = nBlockXOff;
+	    iStride[poGDS->iXDim] = 1;
+	    iEdges[poGDS->iXDim] = nBlockXSize;
+	    break;
+        }
+        // Read HDF SDS arrays
+        switch ( poGDS->iNumType )
+        {
+            case DFNT_FLOAT32:
+    	    SDreaddata( poGDS->iSDS, iStart, NULL, iEdges, (float32 *)pImage );
+    	    break;
+            case DFNT_FLOAT64:
+    	    SDreaddata( poGDS->iSDS, iStart, NULL, iEdges, (float64 *)pImage );
+    	    break;
+            case DFNT_INT8:
+    	    SDreaddata( poGDS->iSDS, iStart, NULL, iEdges, (int8 *)pImage );
+    	    break;
+            case DFNT_UINT8:
+    	    SDreaddata( poGDS->iSDS, iStart, NULL, iEdges, (uint8 *)pImage );
+    	    break;
+            case DFNT_INT16:
+    	    SDreaddata( poGDS->iSDS, iStart, NULL, iEdges, (int16 *)pImage );
+    	    break;
+            case DFNT_UINT16:
+    	    SDreaddata( poGDS->iSDS, iStart, NULL, iEdges, (uint16 *)pImage );
+    	    break;
+            case DFNT_INT32:
+    	    SDreaddata( poGDS->iSDS, iStart, NULL, iEdges, (int32 *)pImage );
+    	    break;
+            case DFNT_UINT32:
+    	    SDreaddata( poGDS->iSDS, iStart, NULL, iEdges, (uint32 *)pImage );
+    	    break;
+            case DFNT_CHAR8:
+    	    SDreaddata(poGDS->iSDS, iStart, NULL, iEdges, (char8 *)pImage);
+    	    break;
+            case DFNT_UCHAR8:
+    	    SDreaddata(poGDS->iSDS, iStart, NULL, iEdges, (uchar8 *)pImage);
+    	    break;
+            default:
+    	    break;
+        }
+        break;
+	case HDF4_GR:
 	iStart[poGDS->iYDim] = nBlockYOff;
 	iStride[poGDS->iYDim] = 1;
 	iEdges[poGDS->iYDim] = nBlockYSize;
@@ -231,58 +301,87 @@ CPLErr HDF4ImageRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 	iStart[poGDS->iXDim] = nBlockXOff;
 	iStride[poGDS->iXDim] = 1;
 	iEdges[poGDS->iXDim] = nBlockXSize;
+        switch ( poGDS->iNumType )
+        {
+            case DFNT_FLOAT32:
+    	    GRreadimage( poGDS->iGR, iStart, NULL, iEdges, (float32 *)pImage );
+    	    break;
+            case DFNT_FLOAT64:
+    	    GRreadimage( poGDS->iGR, iStart, NULL, iEdges, (float64 *)pImage );
+    	    break;
+            case DFNT_INT8:
+    	    GRreadimage( poGDS->iGR, iStart, NULL, iEdges, (int8 *)pImage );
+    	    break;
+            case DFNT_UINT8:
+    	    GRreadimage( poGDS->iGR, iStart, NULL, iEdges, (uint8 *)pImage );
+    	    break;
+            case DFNT_INT16:
+    	    GRreadimage( poGDS->iGR, iStart, NULL, iEdges, (int16 *)pImage );
+    	    break;
+            case DFNT_UINT16:
+    	    GRreadimage( poGDS->iGR, iStart, NULL, iEdges, (uint16 *)pImage );
+    	    break;
+            case DFNT_INT32:
+    	    GRreadimage( poGDS->iGR, iStart, NULL, iEdges, (int32 *)pImage );
+    	    break;
+            case DFNT_UINT32:
+    	    GRreadimage( poGDS->iGR, iStart, NULL, iEdges, (uint32 *)pImage );
+    	    break;
+            case DFNT_CHAR8:
+    	    GRreadimage(poGDS->iGR, iStart, NULL, iEdges, (char8 *)pImage);
+    	    break;
+            case DFNT_UCHAR8:
+    	    GRreadimage(poGDS->iGR, iStart, NULL, iEdges, (uchar8 *)pImage);
+    	    break;
+            default:
+    	    break;
+        }
 	break;
-        case 2: // 2Dim: rows/cols
-	iStart[poGDS->iYDim] = nBlockYOff;
-	iStride[poGDS->iYDim] = 1;
-	iEdges[poGDS->iYDim] = nBlockYSize;
-	
-	iStart[poGDS->iXDim] = nBlockXOff;
-	iStride[poGDS->iXDim] = 1;
-	iEdges[poGDS->iXDim] = nBlockXSize;
-	break;
-    }
-
-/************************************************************************/
-/*                        Read HDF SDS arrays                           */
-/************************************************************************/
-    switch ( poGDS->iNumType )
-    {
-        case DFNT_FLOAT32:
-	SDreaddata( poGDS->iSDS, iStart, NULL, iEdges, (float32 *)pImage );
-	break;
-        case DFNT_FLOAT64:
-	SDreaddata( poGDS->iSDS, iStart, NULL, iEdges, (float64 *)pImage );
-	break;
-        case DFNT_INT8:
-	SDreaddata( poGDS->iSDS, iStart, NULL, iEdges, (int8 *)pImage );
-	break;
-        case DFNT_UINT8:
-	SDreaddata( poGDS->iSDS, iStart, NULL, iEdges, (uint8 *)pImage );
-	break;
-        case DFNT_INT16:
-	SDreaddata( poGDS->iSDS, iStart, NULL, iEdges, (int16 *)pImage );
-	break;
-        case DFNT_UINT16:
-	SDreaddata( poGDS->iSDS, iStart, NULL, iEdges, (uint16 *)pImage );
-	break;
-        case DFNT_INT32:
-	SDreaddata( poGDS->iSDS, iStart, NULL, iEdges, (int32 *)pImage );
-	break;
-        case DFNT_UINT32:
-	SDreaddata( poGDS->iSDS, iStart, NULL, iEdges, (uint32 *)pImage );
-	break;
-        case DFNT_CHAR8:
-	SDreaddata(poGDS->iSDS, iStart, NULL, iEdges, (char8 *)pImage);
-	break;
-        case DFNT_UCHAR8:
-	SDreaddata(poGDS->iSDS, iStart, NULL, iEdges, (uchar8 *)pImage);
-	break;
-        default:
+	default:
 	break;
     }
 
     return CE_None;
+}
+
+/************************************************************************/
+/*                           GetColorTable()                            */
+/************************************************************************/
+
+GDALColorTable *HDF4ImageRasterBand::GetColorTable()
+
+{
+    HDF4ImageDataset	*poGDS = (HDF4ImageDataset *) poDS;
+
+    return poGDS->poColorTable;
+}
+
+/************************************************************************/
+/*                       GetColorInterpretation()                       */
+/************************************************************************/
+
+GDALColorInterp HDF4ImageRasterBand::GetColorInterpretation()
+
+{
+    HDF4ImageDataset	*poGDS = (HDF4ImageDataset *) poDS;
+
+    if ( poGDS->iSubdatasetType == HDF4_SDS )
+        return GCI_GrayIndex;
+    else if ( poGDS->iSubdatasetType == HDF4_GR )
+    {
+	if ( poGDS->poColorTable != NULL )
+            return GCI_PaletteIndex;
+	else if ( nBand == 1 )
+            return GCI_RedBand;
+        else if ( nBand == 2 )
+            return GCI_GreenBand;
+        else if ( nBand == 3 )
+            return GCI_BlueBand;
+        else
+            return GCI_AlphaBand;
+    }
+    else
+        return GCI_GrayIndex;
 }
 
 /************************************************************************/
@@ -301,6 +400,8 @@ HDF4ImageDataset::HDF4ImageDataset()
     fp = NULL;
     hHDF4 = 0;
     papszSubdatasetName = NULL;
+    iSubdatasetType = HDF4_UNKNOWN;
+    poColorTable = NULL;
 }
 
 /************************************************************************/
@@ -316,6 +417,9 @@ HDF4ImageDataset::~HDF4ImageDataset()
         VSIFClose( fp );
     if( hHDF4 > 0 )
 	Hclose(hHDF4);
+    if( poColorTable != NULL )
+        delete poColorTable;
+
 }
 
 /************************************************************************/
@@ -370,7 +474,8 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 {
     int		i;
     
-    if( !EQUALN( poOpenInfo->pszFilename,"HDF4_SDS:", 9 ) )
+    if( !EQUALN( poOpenInfo->pszFilename, "HDF4_SDS:", 9 ) &&
+	!EQUALN( poOpenInfo->pszFilename, "HDF4_GR:", 8 ) )
         return NULL;
 
 /* -------------------------------------------------------------------- */
@@ -383,11 +488,18 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->poDriver = poHDF4ImageDriver;
     poDS->fp = poOpenInfo->fp;
     poOpenInfo->fp = NULL;
-    
+
     poDS->papszSubdatasetName =
 	        CSLTokenizeString2( poOpenInfo->pszFilename, ":", 0 );
     poDS->pszFilename = poDS->papszSubdatasetName[2];
 
+    if( EQUAL( poDS->papszSubdatasetName[0], "HDF4_SDS" ) )
+	poDS->iSubdatasetType = HDF4_SDS;
+    else if ( EQUAL( poDS->papszSubdatasetName[0], "HDF4_GR" ) )
+        poDS->iSubdatasetType = HDF4_GR;
+    else
+	poDS->iSubdatasetType = HDF4_UNKNOWN;
+    
     if( EQUAL( poDS->papszSubdatasetName[1], "SEAWIFS_L1A" ) )
         poDS->iDataType = SEAWIFS_L1A;
     else if( EQUAL( poDS->papszSubdatasetName[1], "MODIS_L1B" ) )
@@ -406,75 +518,111 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Try opening the dataset.                                        */
 /* -------------------------------------------------------------------- */
-    int32	hHDF4;
     int32	iDataset = atoi( poDS->papszSubdatasetName[3] );
-    
-    hHDF4 = Hopen( poDS->pszFilename, DFACC_READ, 0 );
-    
-    if( hHDF4 <= 0 )
-        return( NULL );
-
-    
-/* -------------------------------------------------------------------- */
-/*      Open HDF SDS interface.                                         */
-/* -------------------------------------------------------------------- */
-    poDS->hSD = SDstart( poDS->pszFilename, DFACC_READ );
-    if ( poDS->hSD == -1 )
-        return NULL;
-    
-/* -------------------------------------------------------------------- */
-/*      Fetch dataset dimensions and band datatype.	                                */
-/* -------------------------------------------------------------------- */
-    poDS->iSDS = SDselect( poDS->hSD, iDataset );
-    SDgetinfo( poDS->iSDS, poDS->szName, &poDS->iRank, poDS->aiDimSizes,
-	       &poDS->iNumType, &poDS->nAttrs);
-
-/* -------------------------------------------------------------------- */
-/*		Read SDS Attributes.				        */
-/* -------------------------------------------------------------------- */
     int32	iAttribute, nValues, iAttrNumType;
     char	szAttrName[MAX_NC_NAME];
+    
+    poDS->hHDF4 = Hopen( poDS->pszFilename, DFACC_READ, 0 );
+    
+    if( poDS->hHDF4 <= 0 )
+        return( NULL );
 
-    // Loop trough the all attributes
-    for ( iAttribute = 0; iAttribute < poDS->nAttrs; iAttribute++ )
+    switch ( poDS->iSubdatasetType )
     {
-        // Get information about the attribute.
-        SDattrinfo( poDS->iSDS, iAttribute, szAttrName, &iAttrNumType, &nValues );
-        poDS->TranslateHDF4Attributes( poDS->iSDS, iAttribute, szAttrName,
-			               iAttrNumType, nValues );
-    }
+        case HDF4_SDS:
+        poDS->hSD = SDstart( poDS->pszFilename, DFACC_READ );
+        if ( poDS->hSD == -1 )
+           return NULL;
+    
+        poDS->iSDS = SDselect( poDS->hSD, iDataset );
+        SDgetinfo( poDS->iSDS, poDS->szName, &poDS->iRank, poDS->aiDimSizes,
+	           &poDS->iNumType, &poDS->nAttrs);
 
-/* -------------------------------------------------------------------- */
-/*      Create band information objects.                                */
-/* -------------------------------------------------------------------- */
-    switch( poDS->iRank )
-    {
-	case 2:
-	poDS->nBands = 1;
-        poDS->iXDim = 1;
-        poDS->iYDim = 0;
-        break;
-	case 3:
-	if( poDS->aiDimSizes[0] < poDS->aiDimSizes[2] )
-	{
-	    poDS->iBandDim = 0;
-            poDS->iXDim = 2;
-            poDS->iYDim = 1;
-	}
-	else
-	{
-	    poDS->iBandDim = 2;
+        for ( iAttribute = 0; iAttribute < poDS->nAttrs; iAttribute++ )
+        {
+            SDattrinfo( poDS->iSDS, iAttribute, szAttrName, &iAttrNumType, &nValues );
+            poDS->TranslateHDF4Attributes( poDS->iSDS, iAttribute, szAttrName,
+			                   iAttrNumType, nValues );
+        }
+        // Create band information objects.
+        switch( poDS->iRank )
+        {
+	    case 2:
+	    poDS->nBands = 1;
             poDS->iXDim = 1;
             poDS->iYDim = 0;
-	}
-        poDS->nBands = poDS->aiDimSizes[poDS->iBandDim];
+            break;
+	    case 3:
+	    if( poDS->aiDimSizes[0] < poDS->aiDimSizes[2] )
+	    {
+	        poDS->iBandDim = 0;
+                poDS->iXDim = 2;
+                poDS->iYDim = 1;
+	    }
+	    else
+	    {
+	        poDS->iBandDim = 2;
+                poDS->iXDim = 1;
+                poDS->iYDim = 0;
+	    }
+            poDS->nBands = poDS->aiDimSizes[poDS->iBandDim];
+	    break;
+	    case 4: // FIXME
+	    poDS->nBands = poDS->aiDimSizes[2] * poDS->aiDimSizes[3];
+            break;
+	    default:
+	    break;
+        }
 	break;
-	case 4: // FIXME
-	poDS->nBands = poDS->aiDimSizes[2] * poDS->aiDimSizes[3];
-        break;
+	case HDF4_GR:
+        poDS->hGR = GRstart( poDS->hHDF4 );
+        if ( poDS->hGR == -1 )
+           return NULL;
+        
+	poDS->iGR = GRselect( poDS->hGR, iDataset );
+       	if ( GRgetiminfo( poDS->iGR, poDS->szName, &poDS->iRank, &poDS->iNumType,
+			  &poDS->iInterlaceMode, poDS->aiDimSizes, &poDS->nAttrs ) != 0 )
+	    return NULL;
+
+        // Read Attributes:
+        // Loop trough the all attributes
+        /*for ( iAttribute = 0; iAttribute < poDS->nAttrs; iAttribute++ )
+        {
+            // Get information about the attribute.
+            GRattrinfo( poDS->iGR, iAttribute, szAttrName, &iAttrNumType, &nValues );
+            poDS->TranslateHDF4Attributes( poDS->iGR, iAttribute, szAttrName,
+			                   iAttrNumType, nValues );
+	}*/
+	// Read color table
+	GDALColorEntry oEntry;
+	 
+	poDS->iPal = GRgetlutid ( poDS->iGR, iDataset );
+	if ( poDS->iPal != -1 )
+	{
+	    GRgetlutinfo( poDS->iPal, &poDS->nComps, &poDS->iPalDataType,
+	                  &poDS->iPalInterlaceMode, &poDS->nPalEntries );
+	    GRreadlut( poDS->iPal, poDS->aiPaletteData );
+	    poDS->poColorTable = new GDALColorTable();
+	    for( i = 0; i < N_COLOR_ENTRIES; i++ )
+	    {
+                oEntry.c1 = poDS->aiPaletteData[i][0];
+                oEntry.c2 = poDS->aiPaletteData[i][1];
+                oEntry.c3 = poDS->aiPaletteData[i][2];
+		oEntry.c4 = 255;
+		
+                poDS->poColorTable->SetColorEntry( i, &oEntry );
+	    }
+	}
+
+        poDS->iXDim = 0;
+	poDS->iYDim = 1;
+        poDS->nBands = poDS->iRank;
+	break;
 	default:
+	return NULL;
 	break;
     }
+    
     poDS->nRasterXSize = poDS->aiDimSizes[poDS->iXDim];
     poDS->nRasterYSize = poDS->aiDimSizes[poDS->iYDim];
     for( i = 1; i <= poDS->nBands; i++ )
@@ -484,7 +632,7 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 }
 
 /************************************************************************/
-/*                        GDALRegister_HDF4Image()				*/
+/*                        GDALRegister_HDF4Image()			*/
 /************************************************************************/
 
 void GDALRegister_HDF4Image()
