@@ -1,4 +1,12 @@
 /******************************************************************************
+ * $Id$
+ *
+ * Name:     gdal_priv.h
+ * Project:  GDAL Core
+ * Purpose:  GDAL Core C++/Private declarations. 
+ * Author:   Frank Warmerdam, warmerda@home.com
+ *
+ ******************************************************************************
  * Copyright (c) 1998, Frank Warmerdam
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -20,12 +28,10 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************
  *
- * gdal_priv.h
- *
- * This is the primary private include file used within the GDAL library.
- * Note this is a C++ include file, and can't be used by C code.
- * 
  * $Log$
+ * Revision 1.8  1999/10/21 12:04:11  warmerda
+ * Reorganized header.
+ *
  * Revision 1.7  1999/10/01 14:44:02  warmerda
  * added documentation
  *
