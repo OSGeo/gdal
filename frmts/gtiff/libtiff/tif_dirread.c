@@ -1,4 +1,4 @@
-/* $Id: tif_dirread.c,v 1.43 2004/10/12 18:50:48 dron Exp $ */
+/* $Id: tif_dirread.c,v 1.44 2004/11/05 13:10:33 dron Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -48,7 +48,8 @@ static	tsize_t TIFFFetchData(TIFF*, TIFFDirEntry*, char*);
 static	tsize_t TIFFFetchString(TIFF*, TIFFDirEntry*, char*);
 static	float TIFFFetchRational(TIFF*, TIFFDirEntry*);
 static	int TIFFFetchNormalTag(TIFF*, TIFFDirEntry*);
-static	int TIFFFetchPerSampleShorts(TIFF*, TIFFDirEntry*, int*);
+static	int TIFFFetchPerSampleShorts(TIFF*, TIFFDirEntry*, uint16*);
+static	int TIFFFetchPerSampleLongs(TIFF*, TIFFDirEntry*, uint32*);
 static	int TIFFFetchPerSampleAnys(TIFF*, TIFFDirEntry*, double*);
 static	int TIFFFetchShortArray(TIFF*, TIFFDirEntry*, uint16*);
 static	int TIFFFetchStripThing(TIFF*, TIFFDirEntry*, long, uint32**);
@@ -93,8 +94,8 @@ TIFFReadDirectory(TIFF* tif)
 	register int n;
 	register TIFFDirectory* td;
 	TIFFDirEntry* dir;
-	int iv;
-	long v;
+	uint16 iv;
+	uint32 v;
 	double dv;
 	const TIFFFieldInfo* fip;
 	int fix;
@@ -348,13 +349,19 @@ TIFFReadDirectory(TIFF* tif)
 			if (dp->tdir_count == 1) {
 				v = TIFFExtractData(tif,
 				    dp->tdir_type, dp->tdir_offset);
-				if (!TIFFSetField(tif, dp->tdir_tag, (int)v))
+				if (!TIFFSetField(tif, dp->tdir_tag, (uint16)v))
 					goto bad;
 				break;
+			/* XXX: workaround for broken TIFFs */
+			} else if (dp->tdir_type == TIFF_LONG) {
+				if (!TIFFFetchPerSampleLongs(tif, dp, &v) ||
+				    !TIFFSetField(tif, dp->tdir_tag, (uint16)v))
+					goto bad;
+			} else {
+				if (!TIFFFetchPerSampleShorts(tif, dp, &iv)
+				    || !TIFFSetField(tif, dp->tdir_tag, iv))
+					goto bad;
 			}
-			if (!TIFFFetchPerSampleShorts(tif, dp, &iv) ||
-			    !TIFFSetField(tif, dp->tdir_tag, iv))
-				goto bad;
 			dp->tdir_tag = IGNORE;
 			break;
 		case TIFFTAG_STRIPOFFSETS:
@@ -450,7 +457,13 @@ TIFFReadDirectory(TIFF* tif)
 			if (dp->tdir_count == 1) {
 				v = TIFFExtractData(tif,
 				    dp->tdir_type, dp->tdir_offset);
-				if (!TIFFSetField(tif, dp->tdir_tag, (int)v))
+				if (!TIFFSetField(tif, dp->tdir_tag, (uint16)v))
+					goto bad;
+			/* XXX: workaround for broken TIFFs */
+			} else if (dp->tdir_tag == TIFFTAG_BITSPERSAMPLE
+				   && dp->tdir_type == TIFF_LONG) {
+				if (!TIFFFetchPerSampleLongs(tif, dp, &v) ||
+				    !TIFFSetField(tif, dp->tdir_tag, (uint16)v))
 					goto bad;
 			} else {
 				if (!TIFFFetchPerSampleShorts(tif, dp, &iv) ||
@@ -484,11 +497,11 @@ TIFFReadDirectory(TIFF* tif)
 			 */
 			v = 1L<<td->td_bitspersample;
 			if (dp->tdir_tag == TIFFTAG_COLORMAP ||
-			    dp->tdir_count != (uint32) v) {
-				if (!CheckDirCount(tif, dp, (uint32)(3*v)))
+			    dp->tdir_count != v) {
+				if (!CheckDirCount(tif, dp, 3 * v))
 					break;
 			}
-			v *= sizeof (uint16);
+			v *= sizeof(uint16);
 			cp = CheckMalloc(tif, dp->tdir_count, sizeof (uint16),
 			    "to read \"TransferFunction\" tag");
 			if (cp != NULL) {
@@ -497,10 +510,9 @@ TIFFReadDirectory(TIFF* tif)
 					 * This deals with there being only
 					 * one array to apply to all samples.
 					 */
-					uint32 c =
-					    (uint32)1 << td->td_bitspersample;
+					uint32 c = 1L << td->td_bitspersample;
 					if (dp->tdir_count == c)
-						v = 0;
+						v = 0L;
 					TIFFSetField(tif, dp->tdir_tag,
 					    cp, cp+v, cp+2*v);
 				}
@@ -518,7 +530,7 @@ TIFFReadDirectory(TIFF* tif)
 			break;
 /* BEGIN REV 4.0 COMPATIBILITY */
 		case TIFFTAG_OSUBFILETYPE:
-			v = 0;
+			v = 0L;
 			switch (TIFFExtractData(tif, dp->tdir_type,
 			    dp->tdir_offset)) {
 			case OFILETYPE_REDUCEDIMAGE:
@@ -529,8 +541,7 @@ TIFFReadDirectory(TIFF* tif)
 				break;
 			}
 			if (v)
-				(void) TIFFSetField(tif,
-				    TIFFTAG_SUBFILETYPE, (int)v);
+				TIFFSetField(tif, TIFFTAG_SUBFILETYPE, v);
 			break;
 /* END REV 4.0 COMPATIBILITY */
 		default:
@@ -1289,9 +1300,9 @@ TIFFFetchNormalTag(TIFF* tif, TIFFDirEntry* dp)
  * all values are the same.
  */
 static int
-TIFFFetchPerSampleShorts(TIFF* tif, TIFFDirEntry* dir, int* pl)
+TIFFFetchPerSampleShorts(TIFF* tif, TIFFDirEntry* dir, uint16* pl)
 {
-	int samples = tif->tif_dir.td_samplesperpixel;
+	uint16 samples = tif->tif_dir.td_samplesperpixel;
 	int status = 0;
 
 	if (CheckDirCount(tif, dir, (uint32) samples)) {
@@ -1299,10 +1310,10 @@ TIFFFetchPerSampleShorts(TIFF* tif, TIFFDirEntry* dir, int* pl)
 		uint16* v = buf;
 
 		if (samples > NITEMS(buf))
-			v = (uint16*) CheckMalloc(tif, samples, sizeof (uint16),
+			v = (uint16*) CheckMalloc(tif, samples, sizeof(uint16),
 						  "to fetch per-sample values");
 		if (v && TIFFFetchShortArray(tif, dir, v)) {
-			int i;
+			uint16 i;
 			for (i = 1; i < samples; i++)
 				if (v[i] != v[0]) {
 					TIFFError(tif->tif_name,
@@ -1315,7 +1326,44 @@ TIFFFetchPerSampleShorts(TIFF* tif, TIFFDirEntry* dir, int* pl)
 		}
 	bad:
 		if (v && v != buf)
-			_TIFFfree((char*) v);
+			_TIFFfree(v);
+	}
+	return (status);
+}
+
+/*
+ * Fetch samples/pixel long values for 
+ * the specified tag and verify that
+ * all values are the same.
+ */
+static int
+TIFFFetchPerSampleLongs(TIFF* tif, TIFFDirEntry* dir, uint32* pl)
+{
+	uint16 samples = tif->tif_dir.td_samplesperpixel;
+	int status = 0;
+
+	if (CheckDirCount(tif, dir, (uint32) samples)) {
+		uint32 buf[10];
+		uint32* v = buf;
+
+		if (samples > NITEMS(buf))
+			v = (uint32*) CheckMalloc(tif, samples, sizeof(uint32),
+						  "to fetch per-sample values");
+		if (v && TIFFFetchLongArray(tif, dir, v)) {
+			uint16 i;
+			for (i = 1; i < samples; i++)
+				if (v[i] != v[0]) {
+					TIFFError(tif->tif_name,
+		"Cannot handle different per-sample values for field \"%s\"",
+			   _TIFFFieldWithTag(tif, dir->tdir_tag)->field_name);
+					goto bad;
+				}
+			*pl = v[0];
+			status = 1;
+		}
+	bad:
+		if (v && v != buf)
+			_TIFFfree(v);
 	}
 	return (status);
 }
@@ -1328,7 +1376,7 @@ TIFFFetchPerSampleShorts(TIFF* tif, TIFFDirEntry* dir, int* pl)
 static int
 TIFFFetchPerSampleAnys(TIFF* tif, TIFFDirEntry* dir, double* pl)
 {
-	int samples = (int) tif->tif_dir.td_samplesperpixel;
+	uint16 samples = tif->tif_dir.td_samplesperpixel;
 	int status = 0;
 
 	if (CheckDirCount(tif, dir, (uint32) samples)) {
@@ -1339,7 +1387,7 @@ TIFFFetchPerSampleAnys(TIFF* tif, TIFFDirEntry* dir, double* pl)
 			v = (double*) CheckMalloc(tif, samples, sizeof (double),
 						  "to fetch per-sample values");
 		if (v && TIFFFetchAnyArray(tif, dir, v)) {
-			int i;
+			uint16 i;
 			for (i = 1; i < samples; i++)
 				if (v[i] != v[0]) {
 					TIFFError(tif->tif_name,

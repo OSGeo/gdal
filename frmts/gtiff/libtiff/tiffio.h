@@ -1,4 +1,4 @@
-/* $Id: tiffio.h,v 1.36 2004/09/24 15:18:57 dron Exp $ */
+/* $Id: tiffio.h,v 1.38 2004/11/07 18:20:05 dron Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -86,15 +86,16 @@ typedef	uint32 toff_t;		/* file offset */
 #endif
 
 #if defined(USE_WIN32_FILEIO)
-#include <windows.h>
-#ifdef __WIN32__
+# include <windows.h>
+# ifdef __WIN32__
 DECLARE_HANDLE(thandle_t);	/* Win32 file handle */
-#else
+extern	TIFF* TIFFOpenW(const wchar_t*, const char*);
+# else
 typedef	HFILE thandle_t;	/* client data handle */
-#endif
+# endif /* __WIN32__ */
 #else
 typedef	void* thandle_t;	/* client data handle */
-#endif
+#endif /* USE_WIN32_FILEIO */
 
 #ifndef NULL
 # define NULL	(void *)0
@@ -263,7 +264,7 @@ typedef struct {
 #define LOGLUV_PUBLIC		1	
 #endif
 
-#if defined(__cplusplus)
+#if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
 typedef	void (*TIFFErrorHandler)(const char*, const char*, va_list);
@@ -489,9 +490,16 @@ extern  TIFFTagMethods *TIFFAccessTagMethods( TIFF * );
 extern  void *TIFFGetClientInfo( TIFF *, const char * );
 extern  void TIFFSetClientInfo( TIFF *, void *, const char * );
     
-#if defined(__cplusplus)
+#if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
+
+#if defined(c_plusplus) || defined(__cplusplus)
+# include <iostream.h>
+extern	TIFF* TIFFStreamOpen(const char*, ostream *);
+extern	TIFF* TIFFStreamOpen(const char*, istream *);
+#endif
+
 #endif /* _TIFFIO_ */
 
 /* vim: set ts=8 sts=8 sw=8 noet: */

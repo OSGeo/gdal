@@ -1,4 +1,4 @@
-/* $Id: tif_next.c,v 1.4 2004/09/19 10:08:38 dron Exp $ */
+/* $Id: tif_next.c,v 1.5 2004/11/03 22:33:27 fwarmerdam Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -34,7 +34,7 @@
 
 #define SETPIXEL(op, v) {			\
 	switch (npixels++ & 3) {		\
-	case 0:	op[0]  = (u_char) ((v) << 6); break;	\
+	case 0:	op[0]  = (unsigned char) ((v) << 6); break;	\
 	case 1:	op[0] |= (v) << 4; break;	\
 	case 2:	op[0] |= (v) << 2; break;	\
 	case 3:	*op++ |= (v);	   break;	\
@@ -48,7 +48,7 @@
 static int
 NeXTDecode(TIFF* tif, tidata_t buf, tsize_t occ, tsample_t s)
 {
-	register u_char *bp, *op;
+	register unsigned char *bp, *op;
 	register tsize_t cc;
 	register int n;
 	tidata_t row;
@@ -63,7 +63,7 @@ NeXTDecode(TIFF* tif, tidata_t buf, tsize_t occ, tsample_t s)
 	for (op = buf, cc = occ; cc-- > 0;)
 		*op++ = 0xff;
 
-	bp = (u_char *)tif->tif_rawcp;
+	bp = (unsigned char *)tif->tif_rawcp;
 	cc = tif->tif_rawcc;
 	scanline = tif->tif_scanlinesize;
 	for (row = buf; (long)occ > 0; occ -= scanline, row += scanline) {
@@ -96,7 +96,7 @@ NeXTDecode(TIFF* tif, tidata_t buf, tsize_t occ, tsample_t s)
 		}
 		default: {
 			register int npixels = 0, grey;
-			u_long imagewidth = tif->tif_dir.td_imagewidth;
+			unsigned long imagewidth = tif->tif_dir.td_imagewidth;
 
 			/*
 			 * The scanline is composed of a sequence

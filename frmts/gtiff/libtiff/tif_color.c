@@ -1,4 +1,4 @@
-/* $Header$ */
+/* $Id$ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -170,7 +170,7 @@ TIFFCIELabToRGBInit(TIFFCIELabToRGB* cielab,
 #define	SHIFT			16
 #define	FIX(x)			((int32)((x) * (1L<<SHIFT) + 0.5))
 #define	ONE_HALF		((int32)(1<<(SHIFT-1)))
-#define	Code2V(c, RB, RW, CR)	((((c)-(int32)(RB))*(float)(CR))/(float)((RW)-(RB)))
+#define	Code2V(c, RB, RW, CR)	((((c)-(int32)(RB))*(float)(CR))/(float)(((RW)-(RB)) ? ((RW)-(RB)) : 1))
 #define	CLAMP(f,min,max)	((f)<(min)?(min):(f)>(max)?(max):(f))
 
 void
@@ -265,4 +265,4 @@ TIFFYCbCrToRGBInit(TIFFYCbCrToRGB* ycbcr, float *luma, float *refBlackWhite)
 #undef	ONE_HALF
 #undef	FIX
 
-
+/* vim: set ts=8 sts=8 sw=8 noet: */

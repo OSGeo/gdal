@@ -1,4 +1,4 @@
-/* $Id: tiffiop.h,v 1.28 2004/10/02 13:31:30 dron Exp $ */
+/* $Id: tiffiop.h,v 1.29 2004/10/30 04:49:27 fwarmerdam Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -46,6 +46,8 @@
 
 #if HAVE_ASSERT_H
 # include <assert.h>
+#else
+# define assert(x) 
 #endif
 
 #include "tiffio.h"
