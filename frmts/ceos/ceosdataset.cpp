@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2000/06/20 17:35:58  warmerda
+ * added overview support
+ *
  * Revision 1.3  2000/02/28 16:32:20  warmerda
  * use SetBand method
  *
@@ -169,6 +172,11 @@ GDALDataset *CEOSDataset::Open( GDALOpenInfo * poOpenInfo )
 
     for( i = 0; i < poDS->nBands; i++ )
         poDS->SetBand( i+1, new CEOSRasterBand( poDS, i+1 ) );
+
+/* -------------------------------------------------------------------- */
+/*      Check for overviews.                                            */
+/* -------------------------------------------------------------------- */
+    poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
 
     return( poDS );
 }

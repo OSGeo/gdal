@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2000/06/20 17:35:58  warmerda
+ * added overview support
+ *
  * Revision 1.5  2000/03/13 14:34:42  warmerda
  * avoid const problem on write
  *
@@ -275,6 +278,11 @@ GDALDataset *PAuxDataset::Open( GDALOpenInfo * poOpenInfo )
 
         CSLDestroy( papszTokens );
     }
+
+/* -------------------------------------------------------------------- */
+/*      Check for overviews.                                            */
+/* -------------------------------------------------------------------- */
+    poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
 
     return( poDS );
 }
