@@ -35,6 +35,9 @@
  * of the GDAL core, but dependent on the Common Portability Library.
  *
  * $Log$
+ * Revision 1.34  2004/08/19 16:54:07  warmerda
+ * added back in support for writing to GDAL_MetaData table
+ *
  * Revision 1.33  2004/07/16 20:40:32  warmerda
  * Added a series of patches from Andreas Wimmer which:
  *  o Add lots of improved support for metadata.
@@ -1939,13 +1942,106 @@ char ** HFAGetMetadata( HFAHandle hHFA, int nBand )
 }
 
 /************************************************************************/
+/*                         HFASetGDALMetadata()                         */
+/*                                                                      */
+/*      This function is used to set metadata in a table called         */
+/*      GDAL_MetaData.  It is called by HFASetMetadata() for all        */
+/*      metadata items that aren't some specific supported              */
+/*      information (like histogram or stats info).                     */
+/************************************************************************/
+
+static CPLErr 
+HFASetGDALMetadata( HFAHandle hHFA, int nBand, char **papszMD )
+
+{
+    if( papszMD == NULL )
+        return CE_None;
+
+    HFAEntry  *poNode;
+
+    if( nBand > 0 && nBand <= hHFA->nBands )
+        poNode = hHFA->papoBand[nBand - 1]->poNode;
+    else if( nBand == 0 )
+        poNode = hHFA->poRoot;
+    else
+        return CE_Failure;
+
+/* -------------------------------------------------------------------- */
+/*      Create the Descriptor table.                                    */
+/* -------------------------------------------------------------------- */
+    HFAEntry	*poEdsc_Table;
+
+    poEdsc_Table = new HFAEntry( hHFA, "GDAL_MetaData", "Edsc_Table",
+                                 poNode );
+
+    poEdsc_Table->SetIntField( "numrows", 1 );
+
+/* -------------------------------------------------------------------- */
+/*      Create the Binning function node.  I am not sure that we        */
+/*      really need this though.                                        */
+/* -------------------------------------------------------------------- */
+    HFAEntry       *poEdsc_BinFunction;
+
+    poEdsc_BinFunction =
+        new HFAEntry( hHFA, "#Bin_Function#", "Edsc_BinFunction",
+                      poEdsc_Table );
+
+    // Because of the BaseData we have to hardcode the size. 
+    poEdsc_BinFunction->MakeData( 30 );
+
+    poEdsc_BinFunction->SetIntField( "numBins", 1 );
+    poEdsc_BinFunction->SetStringField( "binFunction", "direct" );
+    poEdsc_BinFunction->SetDoubleField( "minLimit", 0.0 );
+    poEdsc_BinFunction->SetDoubleField( "maxLimit", 0.0 );
+
+/* -------------------------------------------------------------------- */
+/*      Process each metadata item as a separate column.		*/
+/* -------------------------------------------------------------------- */
+    for( int iColumn = 0; papszMD[iColumn] != NULL; iColumn++ )
+    {
+        HFAEntry        *poEdsc_Column;
+        char            *pszKey = NULL;
+        const char      *pszValue;
+
+        pszValue = CPLParseNameValue( papszMD[iColumn], &pszKey );
+        if( pszValue == NULL )
+            continue;
+
+/* -------------------------------------------------------------------- */
+/*      Create the Edsc_Column.                                         */
+/* -------------------------------------------------------------------- */
+        poEdsc_Column = new HFAEntry( hHFA, pszKey, "Edsc_Column",
+                                      poEdsc_Table );
+        poEdsc_Column->SetIntField( "numRows", 1 );
+        poEdsc_Column->SetStringField( "dataType", "string" );
+        poEdsc_Column->SetIntField( "maxNumChars", strlen(pszValue)+1 );
+
+/* -------------------------------------------------------------------- */
+/*      Write the data out.                                             */
+/* -------------------------------------------------------------------- */
+        int      nOffset = HFAAllocateSpace( hHFA, strlen(pszValue)+1);
+
+        poEdsc_Column->SetIntField( "columnDataPtr", nOffset );
+
+        VSIFSeekL( hHFA->fp, nOffset, SEEK_SET );
+        VSIFWriteL( (void *) pszValue, 1, strlen(pszValue)+1, hHFA->fp );
+
+        CPLFree( pszKey );
+    }
+
+    return CE_Failure;
+}
+
+/************************************************************************/
 /*                           HFASetMetadata()                           */
 /************************************************************************/
 
 CPLErr HFASetMetadata( HFAHandle hHFA, int nBand, char **papszMD )
 
 {
-    if( papszMD == NULL )
+    char **papszGDALMD = NULL;
+
+    if( CSLCount(papszMD) == 0 )
         return CE_None;
 
     HFAEntry  *poNode;
@@ -2002,27 +2098,29 @@ CPLErr HFASetMetadata( HFAHandle hHFA, int nBand, char **papszMD )
             const char *pszFieldName = pszAuxMetaData[i+1] + 1;
             switch( pszAuxMetaData[i+1][0] )
             {
-                case 'd':
-                {
-                    double dfValue = atof( pszValue );
-                    poEntry->SetDoubleField( pszFieldName, dfValue );
-                }
-                break;
-	        case 'i':
-	        case 'l':
-                {
-                    int nValue = atoi( pszValue );
-                    poEntry->SetIntField( pszFieldName, nValue );
-                }
-                break;
-                default:
-                    CPLAssert( FALSE );
+              case 'd':
+              {
+                  double dfValue = atof( pszValue );
+                  poEntry->SetDoubleField( pszFieldName, dfValue );
+              }
+              break;
+              case 'i':
+              case 'l':
+              {
+                  int nValue = atoi( pszValue );
+                  poEntry->SetIntField( pszFieldName, nValue );
+              }
+              break;
+              default:
+                CPLAssert( FALSE );
             }
         }
         else if ( EQUALN( "STATISTICS_HISTOBINVALUES", pszKey, strlen(pszKey) ) )
         {
             pszBinValues = strdup( pszValue );
 	}
+        else
+            papszGDALMD = CSLAddString( papszGDALMD, papszMD[iColumn] );
     }
 
     if ( pszBinValues != NULL )
@@ -2078,5 +2176,14 @@ CPLErr HFASetMetadata( HFAHandle hHFA, int nBand, char **papszMD )
         }
     }
 
-    return CE_Failure;
+    if( CSLCount( papszGDALMD) != 0 )
+    {
+        CPLErr eErr = HFASetGDALMetadata( hHFA, nBand, papszGDALMD );
+        
+        CSLDestroy( papszGDALMD );
+        return eErr;
+    }
+    else
+        return CE_Failure;
 }
+
