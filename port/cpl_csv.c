@@ -28,12 +28,16 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2000/08/29 21:08:08  warmerda
+ * fallback to use CPLFindFile()
+ *
  * Revision 1.1  2000/04/05 21:55:59  warmerda
  * New
  *
  */
 
 #include "cpl_csv.h"
+#include "cpl_conv.h"
 
 /* ==================================================================== */
 /*      The CSVTable is a persistant set of info about an open CSV      */
@@ -526,10 +530,27 @@ const char * CSVFilename( const char *pszBasename )
 
     if( pfnCSVFilenameHook == NULL )
     {
-        if( getenv("GEOTIFF_CSV") == NULL )
-            sprintf( szPath, "csv/%s", pszBasename );
-        else
+        FILE	*fp = NULL;
+        const char *pszResult = CPLFindFile( "epsg_csv", pszBasename );
+
+        if( pszResult != NULL )
+            return pszResult;
+
+        if( getenv("GEOTIFF_CSV") != NULL )
+        {
             sprintf( szPath, "%s/%s", getenv("GEOTIFF_CSV"), pszBasename );
+        }
+        else if( (fp = fopen( "csv/horiz_cs.csv", "rt" )) != NULL )
+        {
+            sprintf( szPath, "csv/%s", pszBasename );
+        }
+        else
+        {
+            sprintf( szPath, "/usr/local/share/epsg_csv/%s", pszBasename );
+        }
+
+        if( fp != NULL )
+            fclose( fp );
         
         return( szPath );
     }
