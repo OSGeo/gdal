@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.46  2004/06/23 19:46:51  warmerda
+ * fixed logic of APPLY updates logic
+ *
  * Revision 1.45  2004/06/01 14:51:19  warmerda
  * expand tabs
  *
@@ -387,7 +390,9 @@ void S57Reader::SetOptions( char ** papszOptionsIn )
         nOptionFlags &= ~S57M_LNAM_REFS;
 
     pszOptionValue = CSLFetchNameValue( papszOptions, S57O_UPDATES );
-    if( pszOptionValue != NULL && !EQUAL(pszOptionValue,"APPLY") )
+    if( pszOptionValue == NULL )
+        /* no change */;
+    else if( pszOptionValue != NULL && !EQUAL(pszOptionValue,"APPLY") )
         nOptionFlags |= S57M_UPDATES;
     else
         nOptionFlags &= ~S57M_UPDATES;
@@ -1959,7 +1964,6 @@ int S57Reader::ApplyRecordUpdate( DDFRecord *poTarget, DDFRecord *poUpdate )
                 const char *pachRawData;
 
                 pachRawData = poSrcFSPT->GetData() + nPtrSize * i;
-
                 poTarget->SetFieldRaw( poDstFSPT, i + nFSIX - 1, 
                                        pachRawData, nPtrSize );
             }
@@ -2148,7 +2152,9 @@ int S57Reader::ApplyRecordUpdate( DDFRecord *poTarget, DDFRecord *poUpdate )
                 iTAtt = poDstATTF->GetRepeatCount();
 
             pszRawData = poSrcATTF->GetInstanceData( iAtt, &nDataBytes );
-            poTarget->SetFieldRaw( poDstATTF, iTAtt, pszRawData, nDataBytes );
+
+            poTarget->SetFieldRaw( poDstATTF, iTAtt, pszRawData, 
+                                   nDataBytes );
         }
     }
 
