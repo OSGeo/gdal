@@ -26,7 +26,8 @@ SF.dll:	SF.h $(LOC_OBJ) SF.res
 		$(LOC_OBJ) $(OGR_LIBS) $(OLE_LIBS) SF.res
 
 clean:
-	rm -f *.obj *.exe *.dll SF.h SF_i.c SF.tlb SF.res
+	del *.obj *.exe *.dll SF.h SF_i.c SF.tlb SF.res
+	del *.lib *.ilk *.exp *.pdb
 
 SF.h:      SF.idl
 	midl /tlb SF.tlb /h SF.h /Oicf /iid SF_i.c SF.idl
