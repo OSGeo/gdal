@@ -63,6 +63,7 @@ GDAL_SLIB_LINK	=	-L$(GDAL_ROOT) -lgdal.$(GDAL_VER)
 
 OGR_LIB		=	$(GDAL_ROOT)/ogr/ogr.a
 CPL_LIB		=	$(GDAL_ROOT)/port/cpl.a
+OGRFRMTS_LIB	=	$(GDAL_ROOT)/ogr/ogrsf_frmts/ogrsf_frmts.a
 
 #
 # OGDI Parameters
@@ -92,7 +93,6 @@ TIFF_SETTING	=	@TIFF_SETTING@
 GEOTIFF_SETTING	=	@GEOTIFF_SETTING@
 
 GDAL_LIBS	=	$(GDAL_LIB) $(OGR_LIB) \
-			$(wildcard $(GDAL_ROOT)/frmts/o/*.a) \
 			$(GDAL_LIB) $(CPL_LIB) $(OGDI_LIBS)
 GDAL_OBJ	=	$(GDAL_ROOT)/frmts/o/*.o \
 			$(GDAL_ROOT)/core/*.o \
@@ -103,8 +103,8 @@ GDAL_OBJ	=	$(GDAL_ROOT)/frmts/o/*.o \
 			$(GDAL_ROOT)/ogr/ogr_srs_proj4.o
 
 ifeq ($(OGR_ENABLED),yes)
-GDAL_LIBS := $(GDAL_ROOT)/ogr/ogrsf_frmts/ogrsf_frmts.a \
-		$(PG_LIB) $(GDAL_LIBS) 
+GDAL_LIBS := $(OGRFRMTS_LIB) $(PG_LIB) $(GDAL_LIBS) 
+
 GDAL_OBJ := $(GDAL_OBJ) $(GDAL_ROOT)/ogr/ogrsf_frmts/generic/ogrregisterall.o
 endif
 
