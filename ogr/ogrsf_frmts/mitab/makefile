@@ -1,0 +1,29 @@
+#
+# makefile.vc - MapInfo TAB Read/Write library makefile
+#
+# To use the makefile:
+#  - Open a DOS prompt window
+#  - Run the VCVARS32.BAT script to initialize the VC++ environment variables
+#  - Start the build with:  nmake /f makefile.vc
+#
+# $Id$
+#
+
+OBJ	= 	mitab_rawbinblock.obj mitab_mapheaderblock.obj \
+		mitab_mapindexblock.obj \
+	  	mitab_mapobjectblock.obj mitab_mapcoordblock.obj \
+		mitab_feature.obj mitab_feature_mif.obj \
+	  	mitab_mapfile.obj mitab_idfile.obj mitab_datfile.obj \
+		mitab_tabfile.obj mitab_miffile.obj \
+	  	mitab_utils.obj mitab_imapinfofile.obj mitab_middatafile.obj \
+		mitab_maptoolblock.obj \
+		mitab_tooldef.obj mitab_spatialref.obj mitab_ogr_driver.obj
+
+EXTRAFLAGS = -I.. -I..\..
+GDAL_ROOT  =  ..\..\..
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+default:    $(OBJ)
+
+clean:  
+	del *.obj *.pdb
