@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  1999/05/11 14:05:15  warmerda
+ * catd method update
+ *
  * Revision 1.3  1999/05/07 13:45:01  warmerda
  * major upgrade to use iso8211lib
  *
@@ -44,6 +47,7 @@
 
 int main( int nArgc, char ** papszArgv )
 
+{
 {
     SDTS_IREF	oIREF;
     SDTS_CATD	oCATD;
@@ -65,24 +69,25 @@ int main( int nArgc, char ** papszArgv )
     }
 
     printf( "Catalog:\n" );
-    for( i = 0; i < oCATD.getEntryCount(); i++ )
+    for( i = 0; i < oCATD.GetEntryCount(); i++ )
     {
         printf( "  %s: `%s'\n",
-                oCATD.getEntryModule(i),
-                oCATD.getEntryType(i) );
+                oCATD.GetEntryModule(i),
+                oCATD.GetEntryType(i) );
     }
     printf( "\n" );
     
 /* -------------------------------------------------------------------- */
 /*      Dump the internal reference information.                        */
 /* -------------------------------------------------------------------- */
+#ifdef notdef    
     printf( "IREF filename = %s\n", oCATD.getModuleFilePath( "IREF" ) );
     if( oIREF.Read( oCATD.getModuleFilePath( "IREF" ) ) )
     {
         printf( "X Label = %s\n", oIREF.pszXAxisName );
         printf( "X Scale = %f\n", oIREF.dfXScale );
     }
-    
+#endif    
 /* -------------------------------------------------------------------- */
 /*      Dump the first line file.                                       */
 /* -------------------------------------------------------------------- */
@@ -106,6 +111,7 @@ int main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
 /*	Dump all modules of type "Primary Attribute" in the catalog.	*/
 /* -------------------------------------------------------------------- */
+#ifdef notdef    
     SDTSAttrReader oAttrReader( &oIREF );
 
     for( i = 0; i < oCATD.getEntryCount(); i++ )
@@ -132,6 +138,11 @@ int main( int nArgc, char ** papszArgv )
             oAttrReader.Close();
         }
     }
+#endif    
 }
 
+#ifdef DBMALLOC
+malloc_dump(1);
+#endif
 
+}
