@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2003/05/21 04:54:29  warmerda
+ * avoid warnings about unused formal parameters and possibly uninit variables
+ *
  * Revision 1.5  2003/04/08 19:31:58  warmerda
  * added CopyLayer and CopyDataSource entry points
  *
@@ -93,6 +96,7 @@ OGRDataSourceH OGR_Dr_CreateDataSource( OGRSFDriverH hDriver,
 OGRErr OGRSFDriver::DeleteDataSource( const char *pszDataSource )
 
 {
+    (void) pszDataSource;
     CPLError( CE_Failure, CPLE_NotSupported,
               "DeleteDataSource() not supported by this driver." );
               
