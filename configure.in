@@ -794,7 +794,7 @@ dnl ---------------------------------------------------------------------------
 
 AC_ARG_WITH(bsb,[  --without-bsb         Disable BSB format (legal issues pending)],,)
 
-if test "$with_bsb" = yes -o x"$with_ogr" = x ; then
+if test "$with_bsb" = yes -o x"$with_bsb" = x ; then
   echo checking for BSB ... enabled
   OPT_GDAL_FORMATS="bsb $OPT_GDAL_FORMATS"
 else
