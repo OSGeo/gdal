@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2001/11/21 19:55:01  warmerda
+ * initialize data portion of new records
+ *
  * Revision 1.2  2001/11/13 15:43:41  warmerda
  * preliminary dted creation working
  *
@@ -254,7 +257,8 @@ const char *DTEDCreate( const char *pszFilename, int nLevel,
 /* -------------------------------------------------------------------- */
 /*      Write blank template profile data records.                      */
 /* -------------------------------------------------------------------- */
-    memset( achRecord, 0, nXSize*8 + 12 );
+    memset( achRecord, 0, nYSize*2 + 12 );
+    memset( achRecord + 8, 0xff, nYSize*2 );
 
     achRecord[0] = 0252;
     
