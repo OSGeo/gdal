@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2004/10/16 21:56:36  fwarmerdam
+ * Fixed initialization of "z".
+ *
  * Revision 1.5  2004/03/25 13:23:41  warmerda
  * Fixed typo in error message.
  *
@@ -483,7 +486,7 @@ OGRFeature *OGRVRTLayer::TranslateFeature( OGRFeature *poSrcFeat )
     }
     else if( eGeometryType == VGS_PointFromColumns )
     {
-        double dfZ;
+        double dfZ = 0.0;
 
         if( iGeomZField != -1 )
             dfZ = poSrcFeat->GetFieldAsDouble( iGeomZField );
