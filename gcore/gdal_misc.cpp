@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2000/03/23 16:53:21  warmerda
+ * use overviews for approximate min/max
+ *
  * Revision 1.7  2000/03/09 23:21:44  warmerda
  * added GDALDummyProgress
  *
@@ -260,6 +263,30 @@ void GDALComputeRasterMinMax( GDALRasterBandH hBand, int bApproxOK,
             adfMinMax[1] = dfMax;
             return;
         }
+    }
+    
+/* -------------------------------------------------------------------- */
+/*      If we have overview bands, use them for min/max.                */
+/* -------------------------------------------------------------------- */
+    if( bApproxOK && GDALGetOverviewCount(hBand) > 0 )
+    {
+        int     nBestSize = poBand->GetXSize() * poBand->GetYSize();
+        GDALRasterBand *poBestBand = poBand;
+
+        for( int iOverview = 0; 
+             iOverview < poBand->GetOverviewCount(); 
+             iOverview++ )
+        {
+            GDALRasterBand *poTestBand = poBand->GetOverview(iOverview);
+
+            if( poTestBand->GetXSize() * poTestBand->GetYSize() < nBestSize )
+            {
+                nBestSize = poTestBand->GetXSize() * poTestBand->GetYSize();
+                poBestBand = poTestBand;
+            }
+        }
+
+        poBand = poBestBand;
     }
     
 /* -------------------------------------------------------------------- */
