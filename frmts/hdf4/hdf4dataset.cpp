@@ -30,6 +30,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.30  2005/03/30 11:21:15  dron
+ * Remove inline keyword from function definitions.
+ *
  * Revision 1.29  2005/03/29 12:42:53  dron
  * Added AnyTypeToDouble() method.
  *
@@ -256,7 +259,7 @@ char *SPrintArray( GDALDataType eDataType, void *paDataArray,
 /************************************************************************/
 /*              Translate HDF4 data type into GDAL data type            */
 /************************************************************************/
-inline GDALDataType HDF4Dataset::GetDataType( int32 iNumType ) const
+GDALDataType HDF4Dataset::GetDataType( int32 iNumType ) const
 {
     switch (iNumType)
     {
@@ -327,7 +330,7 @@ const char *HDF4Dataset::GetDataTypeName( int32 iNumType ) const
 /*  Return the size of data type in bytes           	                */
 /************************************************************************/
 
-inline int HDF4Dataset::GetDataTypeSize( int32 iNumType ) const
+int HDF4Dataset::GetDataTypeSize( int32 iNumType ) const
 {
     switch (iNumType)
     {
