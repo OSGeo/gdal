@@ -107,6 +107,16 @@ SAR CEOS data products.<p>
 
 NOTE: Implemented as <tt>gdal/frmts/ceos/ceosdataset.cpp</tt>.<p>
 
+<h2><a name="DODS"><a name="OPeNDAP">
+DODS/OPeNDAP -- Read rasters from DODS/OPeNDAP servers</a></a></h2>
+
+Support for read access to DODS/OPeNDAP servers. Pass the DODS/OPeNDAP URL to
+the driver as you would when accessing a local file. The URL specifies the
+remote server, data set and raster within the data set. In addition, you must
+tell the driver which dimensions are to be interpreted as distinct bands as
+well as which correspond to Latitude and Longitude. See the file README.DODS
+for more detailed information.<p>
+
 <h2><a name="DOQ1">DOQ1 -- First Generation USGS DOQ</a></h2>
 
 Support for read access, including reading of an affine georeferencing 
