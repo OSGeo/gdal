@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2000/03/14 21:37:35  warmerda
+ * added support for passing options to create methods
+ *
  * Revision 1.2  1999/11/18 19:02:19  warmerda
  * expanded tabs
  *
@@ -44,7 +47,8 @@ static void Usage();
 
 static int TranslateLayer( OGRDataSource *poSrcDS, 
                            OGRLayer * poSrcLayer,
-                           OGRDataSource *poDstDS );
+                           OGRDataSource *poDstDS,
+                           char ** papszLSCO );
 
 /************************************************************************/
 /*                                main()                                */
@@ -57,6 +61,7 @@ int main( int nArgc, char ** papszArgv )
     const char  *pszDataSource = NULL;
     const char  *pszDestDataSource = NULL;
     char        **papszLayers = NULL;
+    char        **papszDSCO = NULL, **papszLCO = NULL;
     
 /* -------------------------------------------------------------------- */
 /*      Register format(s).                                             */
@@ -71,6 +76,14 @@ int main( int nArgc, char ** papszArgv )
         if( EQUAL(papszArgv[iArg],"-f") && iArg < nArgc-1 )
         {
             pszFormat = papszArgv[++iArg];
+        }
+        else if( EQUAL(papszArgv[iArg],"-dsco") && iArg < nArgc-1 )
+        {
+            papszDSCO = CSLAddString(papszDSCO, papszArgv[++iArg] );
+        }
+        else if( EQUAL(papszArgv[iArg],"-lco") && iArg < nArgc-1 )
+        {
+            papszLCO = CSLAddString(papszLCO, papszArgv[++iArg] );
         }
         else if( papszArgv[iArg][0] == '-' )
         {
@@ -154,7 +167,7 @@ int main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
     OGRDataSource       *poODS;
     
-    poODS = poDriver->CreateDataSource( pszDestDataSource );
+    poODS = poDriver->CreateDataSource( pszDestDataSource, papszDSCO );
     if( poODS == NULL )
         exit( 1 );
 
@@ -176,7 +189,7 @@ int main( int nArgc, char ** papszArgv )
             || CSLFindString( papszLayers,
                               poLayer->GetLayerDefn()->GetName() ) != -1 )
         {
-            if( !TranslateLayer( poDS, poLayer, poODS ) )
+            if( !TranslateLayer( poDS, poLayer, poODS, papszLCO ) )
                 exit( 1 );
         }
     }
@@ -201,9 +214,26 @@ int main( int nArgc, char ** papszArgv )
 static void Usage()
 
 {
-    printf( "Usage: ogr2ogr [-f format_name] dst_datasource_name\n"
-            "               src_datasource_name [layer [layer ...]]\n");
+    OGRSFDriverRegistrar        *poR = OGRSFDriverRegistrar::GetRegistrar();
+
+    printf( "Usage: ogr2ogr [-f format_name]\n"
+            "               [[-dsco NAME=VALUE] ...] dst_datasource_name\n"
+            "               src_datasource_name\n"
+            "               [-lco NAME=VALUE] layer [layer ...]]\n"
+            "\n"
+            " -f format_name: output file format name, possible values are:\n");
     
+    for( int iDriver = 0; iDriver < poR->GetDriverCount(); iDriver++ )
+    {
+        OGRSFDriver *poDriver = poR->GetDriver(iDriver);
+
+        if( poDriver->TestCapability( ODrCCreateDataSource ) )
+            printf( "     -f \"%s\"\n", poDriver->GetName() );
+    }
+
+    printf( " -dsco NAME=VALUE: Dataset creation option (format specific)\n"
+            " -lco  NAME=VALUE: Layer creation option (format specific)\n" );
+
     exit( 1 );
 }
 
@@ -213,7 +243,8 @@ static void Usage()
 
 static int TranslateLayer( OGRDataSource *poSrcDS, 
                            OGRLayer * poSrcLayer,
-                           OGRDataSource *poDstDS )
+                           OGRDataSource *poDstDS,
+                           char **papszLCO )
 
 {
     OGRLayer    *poDstLayer;
@@ -228,7 +259,7 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
     poDstLayer = poDstDS->CreateLayer( poSrcLayer->GetLayerDefn()->GetName(),
                                        poSrcLayer->GetSpatialRef(),
                                        poFDefn->GetGeomType(),
-                                       NULL );
+                                       papszLCO );
 
     if( poDstLayer == NULL )
         return FALSE;
