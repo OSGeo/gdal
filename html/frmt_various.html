@@ -355,6 +355,15 @@ GDAL includes support for reading, and creating .pgm (greyscale), and
 
 Netpbm files can be created with a type of PNM.<p>
 
+Creation Options:<p>
+
+<ul>
+
+<li> <b>MAXVAL=n</b>: Force setting the maximum color value to <B>n</B>
+in the output PNM file. May be useful if you plannig use the output files with
+software which is not liberal to this value.<p>
+</ul>
+
 NOTE: Implemented as <tt>gdal/frmts/raw/pnmdataset.cpp</tt>. 
 
 <h2><a name="SAR_CEOS">SAR_CEOS -- CEOS SAR Image</a></h2>
