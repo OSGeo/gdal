@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2003/10/15 20:58:43  warmerda
+ * ensure dfNoData is initialized
+ *
  * Revision 1.5  2003/10/14 15:26:03  warmerda
  * added format setting
  *
@@ -77,7 +80,7 @@ int main( int argc, char ** argv )
     GDALDatasetH	hSrcDS;
     int i, b3D = FALSE, bNoDataSet = FALSE, bIgnoreNoData = FALSE;
     int nBandIn = 1;
-    double dfInterval = 0.0, dfNoData, dfOffset = 0.0;
+    double dfInterval = 0.0, dfNoData = 0.0, dfOffset = 0.0;
     const char *pszSrcFilename = NULL;
     const char *pszDstFilename = NULL;
     const char *pszElevAttrib = NULL;
