@@ -4,7 +4,8 @@ VCDIR   = 	D:\Software\VStudio\VC98
 PYDIR   =	D:\Software\Python20
 
 #ECWDIR  = 	D:\Software\ECW_SDK
-#ECWLIB  =       $(ECWDIR)\lib\NCSEcw.lib $(ECWDIR)\lib\NCSUtil.lib
+#ECWLIB  =       $(ECWDIR)\lib\NCSEcw.lib $(ECWDIR)\lib\NCSEcwC.lib \
+#		$(ECWDIR)\lib\NCSUtil.lib
 
 #OGDIDIR =	D:\warmerda\iii\devdir
 #OGDIVER =	31
