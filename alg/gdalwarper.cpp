@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2004/03/28 21:20:39  warmerda
+ * fixed initialization of nodata values
+ *
  * Revision 1.11  2004/03/19 15:54:42  warmerda
  * Fixed another place where "2" was used instead of 0 as the default
  * polynomial order.
@@ -217,7 +220,7 @@ CPLErr GDALReprojectImage( GDALDatasetH hSrcDS, const char *pszSrcWKT,
                 for( ii = 0; ii < psWOptions->nBandCount; ii++ )
                 {
                     psWOptions->padfSrcNoDataReal[ii] = -1.1e20;
-                    psWOptions->padfSrcNoDataReal[ii] = 0.0;
+                    psWOptions->padfSrcNoDataImag[ii] = 0.0;
                 }
             }
 
