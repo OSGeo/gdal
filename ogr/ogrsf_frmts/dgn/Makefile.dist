@@ -1,7 +1,7 @@
 
 DGNLIB_OBJ	=	dgnfloat.o dgnhelp.o dgnread.o dgnwrite.o \
 			dgnopen.o dgnstroke.o
-CPLLIB_OBJ	=	cpl_conv.o cpl_error.o cpl_vsisimple.o
+CPLLIB_OBJ	=	cpl_conv.o cpl_error.o cpl_vsisimple.o cpl_string.o
 OBJ = $(CPLLIB_OBJ) $(DGNLIB_OBJ)
 
 default:	dgndump dgnwritetest
