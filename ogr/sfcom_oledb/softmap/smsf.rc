@@ -1,0 +1,9 @@
+#include "../sf_common.rc"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// REGISTRY
+//
+
+IDR_SF                  REGISTRY DISCARDABLE    "smsf.rgs"
+
