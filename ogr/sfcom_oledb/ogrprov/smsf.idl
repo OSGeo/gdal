@@ -27,7 +27,7 @@ library SFLib
 	};
 
 	[
-		uuid(C9BD5075-0D6D-11D3-94FF-00104B238935),
+		uuid(5883B8F6-2E72-4054-BFC6-A43B638E620B),
 		helpstring("SF OLE DB Provider")
 	]
 	coclass SF
@@ -35,3 +35,4 @@ library SFLib
 		interface IUnknown;
 	};
 };
+
