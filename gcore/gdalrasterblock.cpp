@@ -26,6 +26,9 @@
  *
  * 
  * $Log$
+ * Revision 1.7  2001/09/27 16:33:41  warmerda
+ * fixed problems with blocks larger than 2GB/8
+ *
  * Revision 1.6  2001/07/18 04:04:30  warmerda
  * added CPL_CVSID
  *
@@ -279,7 +282,7 @@ CPLErr GDALRasterBlock::Internalize()
     int		nSizeInBytes;
     int		nCurCacheMax = GDALGetCacheMax();
 
-    nSizeInBytes = (nXSize * nYSize * GDALGetDataTypeSize( eType ) + 7) / 8;
+    nSizeInBytes = nXSize * nYSize * (GDALGetDataTypeSize(eType) / 8);
 
     pNewData = VSIMalloc( nSizeInBytes );
     if( pNewData == NULL )
