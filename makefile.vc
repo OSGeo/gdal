@@ -140,3 +140,13 @@ install: $(GDAL_DLL) apps_dir pymod_dir
 	$(MAKE) install
 !ENDIF
 	cd ..
+
+devinstall: install
+	copy port\*.h $(INCDIR)
+	copy core\*.h $(INCDIR)
+	copy alg\*.h $(INCDIR)
+	copy ogr\*.h $(INCDIR)
+!IFDEF INCLUDE_OGR_FRMTS
+	copy ogr\ogrsf_frmts\*.h $(INCDIR)
+!ENDIF
+	copy gdal_i.lib $(BINDIR)
