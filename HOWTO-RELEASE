@@ -40,15 +40,8 @@
    % mkgdaldist.sh 1.1.6
 
 8) Publish the resulting files on ftp.remotesensing.org/gdal, 
-   gdal.mapptools.org/dl and ftp.gdal.org/htdocs/dl.
+   gdal.maptools.org/dl and ftp.gdal.org/htdocs/dl.
 
 9) Announce release to the gdal-dev@remotesensing.org, and freegis@freegis.org.
 
 10) Update the freshmeat.net entry for GDAL. 
-
-
-
-
-
-
- 
