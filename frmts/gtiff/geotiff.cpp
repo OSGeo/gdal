@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.26  2000/05/04 13:56:28  warmerda
+ * Avoid having a block ysize larger than the whole file for stripped files.
+ *
  * Revision 1.25  2000/05/01 01:53:33  warmerda
  * added various compress options
  *
@@ -844,7 +847,7 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, uint32 nDirOffsetIn,
             nRowsPerStrip = 1; /* dummy value */
 
         nBlockXSize = nRasterXSize;
-        nBlockYSize = nRowsPerStrip;
+        nBlockYSize = MIN(nRowsPerStrip,nYSize);
     }
         
     nBlocksPerBand =
@@ -1151,7 +1154,7 @@ GDALDataset *GTiffDataset::Create( const char * pszFilename,
     else
     {
         if( nBlockYSize == 0 )
-            poDS->nRowsPerStrip = TIFFDefaultStripSize(hTIFF,0);
+            poDS->nRowsPerStrip = MIN(nYSize,TIFFDefaultStripSize(hTIFF,0));
         else
             poDS->nRowsPerStrip = nBlockYSize;
 
