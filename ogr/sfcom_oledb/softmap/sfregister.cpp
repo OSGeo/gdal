@@ -28,13 +28,16 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2001/05/28 19:44:32  warmerda
+ * added debugging code
+ *
  * Revision 1.1  1999/11/22 15:13:18  warmerda
  * New
  *
  */
 
 #include "ogrsf_frmts.h"
-
+#include "cpl_error.h"
 
 /************************************************************************/
 /*                        SFRegisterOGRFormats()                        */
@@ -49,6 +52,6 @@ void	SFRegisterOGRFormats()
         return;
     bRegistered = true;
 
-    // Add formats to be registered here.
+    CPLDebug( "OGR_OLEDB", "SFRegisterOGRFormats" );
     OGRRegisterAll();
 }
