@@ -29,6 +29,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.18  2002/05/21 05:29:48  warmerda
+ * added metadata support from a table named GDAL_MetaData
+ *
  * Revision 1.17  2001/11/11 23:51:00  warmerda
  * added required class keyword to friend declarations
  *
@@ -83,7 +86,7 @@
  */
 
 #include "gdal_priv.h"
-#include "hfa.h"
+#include "hfa_p.h"
 #include "ogr_spatialref.h"
 
 CPL_CVSID("$Id$");
@@ -336,6 +339,8 @@ class HFARasterBand : public GDALRasterBand
 
     virtual int    GetOverviewCount();
     virtual GDALRasterBand *GetOverview( int );
+
+    void           ScanForGDALMetadata();
 };
 
 static GDALDriver	*poHFADriver = NULL;
@@ -458,6 +463,8 @@ HFARasterBand::HFARasterBand( HFADataset *poDS, int nBand, int iOverview )
                 new HFARasterBand( poDS, nBand, iOvIndex );
         }
     }
+
+    ScanForGDALMetadata();
 }
 
 /************************************************************************/
@@ -571,6 +578,80 @@ GDALColorTable *HFARasterBand::GetColorTable()
 {
     return poCT;
 }
+
+/************************************************************************/
+/*                        ScanForGDALMetadata()                         */
+/************************************************************************/
+
+void HFARasterBand::ScanForGDALMetadata()
+
+{
+    if( nThisOverview != -1 )
+        return;
+
+    HFAEntry *poLayerNode = hHFA->papoBand[nBand - 1]->poNode;
+    HFAEntry *poTable;
+
+    for( poTable = poLayerNode->GetChild(); 
+         poTable != NULL && !EQUAL(poTable->GetName(),"GDAL_MetaData");
+         poTable = poTable->GetNext() ) {}
+
+    if( poTable == NULL || !EQUAL(poTable->GetType(),"Edsc_Table") )
+        return;
+
+    if( poTable->GetIntField( "numRows" ) != 1 )
+    {
+        CPLDebug( "HFADataset", "GDAL_MetaData.numRows = %d, expected 1!",
+                  poTable->GetIntField( "numRows" ) );
+        return;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Loop over each column.  Each column will be one metadata        */
+/*      entry, with the title being the key, and the row value being    */
+/*      the value.  There is only ever one row in GDAL_MetaData         */
+/*      tables.                                                         */
+/* -------------------------------------------------------------------- */
+    HFAEntry *poColumn;
+
+    for( poColumn = poTable->GetChild(); 
+         poColumn != NULL;
+         poColumn = poColumn->GetNext() )
+    {
+        const char *pszValue;
+        int        columnDataPtr;
+
+        // Skip the #Bin_Function# entry.
+        if( EQUALN(poColumn->GetName(),"#",1) )
+            continue;
+
+        pszValue = poColumn->GetStringField( "dataType" );
+        if( pszValue == NULL || !EQUAL(pszValue,"string") )
+            continue;
+
+        columnDataPtr = poColumn->GetIntField( "columnDataPtr" );
+        if( columnDataPtr == 0 )
+            continue;
+
+/* -------------------------------------------------------------------- */
+/*      read up to 500 bytes from the indicated location.               */
+/* -------------------------------------------------------------------- */
+        char szMDValue[501];
+        int  nMDBytes = sizeof(szMDValue)-1;
+
+        if( VSIFSeek( hHFA->fp, columnDataPtr, SEEK_SET ) != 0 )
+            continue;
+
+        nMDBytes = VSIFRead( szMDValue, 1, nMDBytes, hHFA->fp );
+        if( nMDBytes == 0 )
+            continue;
+
+        szMDValue[nMDBytes] = '\0';
+
+        SetMetadataItem( poColumn->GetName(), szMDValue );
+    }
+}
+
 
 /************************************************************************/
 /* ==================================================================== */
@@ -1299,7 +1380,7 @@ CPLErr HFADataset::ReadProjection()
         return CE_Failure;
     }
 }
-
+									
 /************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
@@ -1383,7 +1464,9 @@ GDALDataset *HFADataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
     for( i = 0; i < poDS->nBands; i++ )
+    {
         poDS->SetBand( i+1, new HFARasterBand( poDS, i+1, -1 ) );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Check for overviews.                                            */
