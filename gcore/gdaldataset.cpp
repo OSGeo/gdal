@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.33  2003/02/13 16:10:23  warmerda
+ * Cleaned up GetProjectionRef() info.
+ *
  * Revision 1.32  2003/01/28 16:54:49  warmerda
  * indicate required include file
  *
@@ -496,14 +499,16 @@ int GDALGetRasterCount( GDALDatasetH hDS )
  * Same as the C function GDALGetProjectionRef().
  *
  * The returned string defines the projection coordinate system of the
- * image in either PROJ.4 format or OpenGIS WKT format.  It should be
- * suitable for use with the GDALProjDef object to reproject positions.
+ * image in OpenGIS WKT format.  It should be suitable with the 
+ * OGRSpatialReference class.
  *
  * When a projection definition is not available an empty (but not NULL)
  * string is returned.
  *
  * @return a pointer to an internal projection reference string.  It should
  * not be altered, freed or expected to last for long. 
+ *
+ * @see http://gdal.velocet.ca/projects/opengis/ogrhtml/osr_tutorial.html
  */
 
 const char *GDALDataset::GetProjectionRef()
