@@ -35,11 +35,16 @@ gdal_module = Extension('_gdal',
                     include_dirs = include_dirs,
                     libraries = libraries,
                     library_dirs = library_dirs)
+osr_module = Extension('_osr',
+                    sources=['osr_wrap.cpp'],
+                    include_dirs = include_dirs,
+                    libraries = libraries,
+                    library_dirs = library_dirs)
 
 
 setup( name = 'Gdal Wrapper',
        version = 'ng using swig 1.3',
        description = 'Swig 1.3 wrapper over gdal',
-       py_modules = ['gdal'],
+       py_modules = ['gdal', 'osr'],
        url="http://www.gdal.org",
-       ext_modules = [gdal_module] )
+       ext_modules = [gdal_module, osr_module] )
