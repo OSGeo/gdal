@@ -28,6 +28,12 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.34  2004/09/10 21:03:55  fwarmerdam
+ * Lots of changes to map Hotine_Oblique_Mercator_Azimuth_Center in ESRI format
+ * to Hotine_Oblique_Mercator with a rectified_grid_angle of 90 (and back).
+ * This is a special case for the swiss oblique mercator.
+ * See http://bugzilla.remotesensing.org/show_bug.cgi?id=423
+ *
  * Revision 1.33  2004/07/29 19:12:05  warmerda
  * support multiline ESRI .prj files in WKT format
  *
@@ -143,6 +149,8 @@ static char *apszProjMapping[] = {
     "Albers", SRS_PT_ALBERS_CONIC_EQUAL_AREA,
     "Cassini", SRS_PT_CASSINI_SOLDNER,
     "Hotine_Oblique_Mercator_Azimuth_Natural_Origin", 
+                                        SRS_PT_HOTINE_OBLIQUE_MERCATOR,
+    "Hotine_Oblique_Mercator_Azimuth_Center", 
                                         SRS_PT_HOTINE_OBLIQUE_MERCATOR,
     "Lambert_Conformal_Conic", SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP,
     "Lambert_Conformal_Conic", SRS_PT_LAMBERT_CONFORMAL_CONIC_1SP,
@@ -912,6 +920,23 @@ OGRErr OGRSpatialReference::morphToESRI()
         return OGRERR_NONE;
 
 /* -------------------------------------------------------------------- */
+/*      There is a special case for Hotine Oblique Mercator to split    */
+/*      out the case with an angle to rectified grid.  Bug 423          */
+/* -------------------------------------------------------------------- */
+    const char *pszProjection = GetAttrValue("PROJECTION");
+    
+    if( pszProjection != NULL
+        && EQUAL(pszProjection,SRS_PT_HOTINE_OBLIQUE_MERCATOR) 
+        && fabs(GetProjParm(SRS_PP_AZIMUTH, 0.0 )-90) < 0.0001 
+        && fabs(GetProjParm(SRS_PP_RECTIFIED_GRID_ANGLE, 0.0 )-90) < 0.0001 )
+    {
+        SetNode( "PROJCS|PROJECTION", 
+                 "Hotine_Oblique_Mercator_Azimuth_Center" );
+
+        /* ideally we should strip out of the rectified_grid_angle */
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Translate PROJECTION keywords that are misnamed.                */
 /* -------------------------------------------------------------------- */
     GetRoot()->applyRemapper( "PROJECTION", 
@@ -960,7 +985,7 @@ OGRErr OGRSpatialReference::morphToESRI()
 /* -------------------------------------------------------------------- */
 /*      Remap parameters used for Albers.                               */
 /* -------------------------------------------------------------------- */
-    const char *pszProjection = GetAttrValue("PROJECTION");
+    pszProjection = GetAttrValue("PROJECTION");
     
     if( pszProjection != NULL && EQUAL(pszProjection,"Albers") )
         GetRoot()->applyRemapper( 
@@ -1091,6 +1116,19 @@ OGRErr OGRSpatialReference::morphFromESRI()
         else
             SetNode( "PROJCS|PROJECTION", 
                      SRS_PT_LAMBERT_CONFORMAL_CONIC_1SP );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      If we are remapping Hotine_Oblique_Mercator_Azimuth_Center      */
+/*      add a rectified_grid_angle parameter - to match the azimuth     */
+/*      I guess.                                                        */
+/* -------------------------------------------------------------------- */
+    if( pszProjection != NULL
+        && EQUAL(pszProjection,"Hotine_Oblique_Mercator_Azimuth_Center") )
+    {
+        SetProjParm( SRS_PP_RECTIFIED_GRID_ANGLE , 
+                     GetProjParm( SRS_PP_AZIMUTH, 0.0 ) );
+        FixupOrdering();
     }
 
 /* -------------------------------------------------------------------- */
