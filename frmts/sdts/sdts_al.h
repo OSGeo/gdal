@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  1999/06/03 21:13:02  warmerda
+ * Added transform for rasters.
+ *
  * Revision 1.6  1999/06/03 14:04:10  warmerda
  * Added SDTS_XREF and SDTSRasterReader
  *
@@ -360,15 +363,20 @@ class SDTSRasterReader
     int		nYStart;		/* SORI */
 
     char	szINTR[4];		/* CE is center, TL is top left */
+
+    double	adfTransform[6];
     
   public:
     		SDTSRasterReader();
                 ~SDTSRasterReader();
 
-    int         Open( SDTS_CATD * poCATD, const char * pszModule  );
+    int         Open( SDTS_CATD * poCATD, SDTS_IREF *,
+                      const char * pszModule  );
     void	Close();
 
     int		GetRasterType() { return 1; }  /* 1 = int16 */
+
+    int		GetTransform( double * );
 
     int		GetXSize() { return nXSize; }
     int		GetYSize() { return nYSize; }
