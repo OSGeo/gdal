@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2003/10/16 16:54:23  warmerda
+ * added support for fixed levels
+ *
  * Revision 1.6  2003/10/15 20:58:43  warmerda
  * ensure dfNoData is initialized
  *
@@ -64,8 +67,9 @@ static void Usage()
 
 {
     printf( 
-        "Usage: gdal_contour [-b <band>] [-off <offset>] [-a <attribute_name>]\n"
-        "                    [-3d] [-inodata] [-snodata n] [-f <formatname>]\n"
+        "Usage: gdal_contour [-b <band>] [-a <attribute_name>] [-3d] [-inodata]\n"
+        "                    [-snodata n] [-f <formatname>] [-i <interval>]\n"
+        "                    [-off <offset>] [-fl <level> <level>...]\n" 
         "                    <src_filename> <dst_filename> <interval>\n" );
     exit( 1 );
 }
@@ -85,6 +89,8 @@ int main( int argc, char ** argv )
     const char *pszDstFilename = NULL;
     const char *pszElevAttrib = NULL;
     const char *pszFormat = "ESRI Shapefile";
+    double adfFixedLevels[1000];
+    int    nFixedLevelCount = 0;
 
     GDALAllRegister();
     OGRRegisterAll();
@@ -106,6 +112,17 @@ int main( int argc, char ** argv )
         else if( EQUAL(argv[i],"-off") && i < argc-1 )
         {
             dfOffset = atof(argv[++i]);
+        }
+        else if( EQUAL(argv[i],"-i") && i < argc-1 )
+        {
+            dfInterval = atof(argv[++i]);
+        }
+        else if( EQUAL(argv[i],"-fl") && i < argc-1 )
+        {
+            while( i < argc-1 
+                   && nFixedLevelCount < sizeof(adfFixedLevels)/sizeof(double)
+                   && atof(argv[i+1]) != 0 || EQUAL(argv[i+1],"0") )
+                adfFixedLevels[nFixedLevelCount++] = atof(argv[++i]);
         }
         else if( EQUAL(argv[i],"-b") && i < argc-1 )
         {
@@ -136,15 +153,11 @@ int main( int argc, char ** argv )
         {
             pszDstFilename = argv[i];
         }
-        else if( dfInterval == 0.0 )
-        {
-            dfInterval = atof(argv[i]);
-        }
         else
             Usage();
     }
 
-    if( dfInterval == 0.0 )
+    if( dfInterval == 0.0 && nFixedLevelCount == 0 )
     {
         Usage();
     }
@@ -224,8 +237,9 @@ int main( int argc, char ** argv )
 /*      Invoke.                                                         */
 /* -------------------------------------------------------------------- */
     CPLErr eErr;
-
+    
     eErr = GDALContourGenerate( hBand, dfInterval, dfOffset, 
+                                nFixedLevelCount, adfFixedLevels,
                                 bNoDataSet, dfNoData, 
                                 hLayer, 0, nElevField,
                                 GDALTermProgress, NULL );
