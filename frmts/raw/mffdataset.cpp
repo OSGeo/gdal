@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2001/07/11 18:08:14  warmerda
+ * Fixed pixel interpretation again.  TOP_LEFT is really 0.0,0.0 but
+ * BOTTOM_RIGHT is the top left corner of the bottom right pixel!
+ *
  * Revision 1.15  2001/07/11 18:00:57  warmerda
  * Fixed off-by-half-pixel issues with MFF GCPs.
  *
@@ -319,26 +323,26 @@ void MFFDataset::ScanForGCPs()
 
         if( nCorner == 0 )
         {
-            dfRasterX = 0.5;
-            dfRasterY = 0.5;
+            dfRasterX = 0;
+            dfRasterY = 0;
             pszBase = "TOP_LEFT_CORNER";
         }
         else if( nCorner == 1 )
         {
-            dfRasterX = GetRasterXSize()-0.5;
-            dfRasterY = 0.5;
+            dfRasterX = GetRasterXSize()-1.0;
+            dfRasterY = 0;
             pszBase = "TOP_RIGHT_CORNER";
         }
         else if( nCorner == 2 )
         {
-            dfRasterX = GetRasterXSize()-0.5;
-            dfRasterY = GetRasterYSize()-0.5;
+            dfRasterX = GetRasterXSize()-1;
+            dfRasterY = GetRasterYSize()-1;
             pszBase = "BOTTOM_RIGHT_CORNER";
         }
         else if( nCorner == 3 )
         {
-            dfRasterX = 0.5;
-            dfRasterY = GetRasterYSize()-0.5;
+            dfRasterX = 0;
+            dfRasterY = GetRasterYSize()-1;
             pszBase = "BOTTOM_LEFT_CORNER";
         }
         else if( nCorner == 4 )
@@ -403,8 +407,8 @@ void MFFDataset::ScanForGCPs()
             pasGCPList[nGCPCount].dfGCPX = atof(papszTokens[3]);
             pasGCPList[nGCPCount].dfGCPY = atof(papszTokens[2]);
             pasGCPList[nGCPCount].dfGCPZ = 0.0;
-            pasGCPList[nGCPCount].dfGCPPixel = atof(papszTokens[1])-0.5;
-            pasGCPList[nGCPCount].dfGCPLine = atof(papszTokens[0])-0.5;
+            pasGCPList[nGCPCount].dfGCPPixel = atof(papszTokens[1]);
+            pasGCPList[nGCPCount].dfGCPLine = atof(papszTokens[0]);
 
             nGCPCount++;
         }
