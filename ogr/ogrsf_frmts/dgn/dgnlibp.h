@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2002/02/06 20:32:33  warmerda
+ * handle improbably large elements
+ *
  * Revision 1.10  2002/01/21 20:52:45  warmerda
  * added spatial filter support
  *
@@ -76,7 +79,7 @@ typedef struct {
     int		next_element_id;
 
     int         nElemBytes;
-    GByte	abyElem[65540];
+    GByte	abyElem[131076];
 
     int         got_tcb;
     int         dimension;
