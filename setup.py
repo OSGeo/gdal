@@ -30,6 +30,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.3  2003/02/07 14:14:00  warmerda
+# fixed spelling of python
+#
 # Revision 1.2  2003/02/07 14:11:03  warmerda
 # corrected a few info items, added header
 #
@@ -100,7 +103,7 @@ else:
 DATA_FILES.append(("include", INCLUDE_FILES))
 DATA_FILES.append((os.path.join("doc","gdal"), HTML_FILES))
 
-setup (name = "Pyhton_GDAL",
+setup (name = "Python_GDAL",
        version = version,
        description = "Geospatial Data Abstraction Library: Python Bindings",
        author = "Frank Warmerdam",
