@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2001/03/07 13:48:59  warmerda
+ * added DGNEIF_DELETED
+ *
  * Revision 1.7  2001/02/02 22:20:15  warmerda
  * document DGNElemText, length/height_mult now double
  *
@@ -326,6 +329,11 @@ typedef struct {
 #define DGNPF_NEW          0x0200
 #define DGNPF_LOCKED       0x0100
 #define DGNPF_CLASS        0x000f
+
+/* -------------------------------------------------------------------- */
+/*      DGNElementInfo flag values.                                     */
+/* -------------------------------------------------------------------- */
+#define DGNEIF_DELETED     0x01
 
 /* -------------------------------------------------------------------- */
 /*      Justifications                                                  */
