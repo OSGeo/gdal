@@ -1,5 +1,8 @@
 2000-10-13  Frank Warmerdam  <warmerda@cs46980-c>
 
+	* GTiff: improved support for writing GCS codes, and hardcode 
+	common datums
+	
 	* Fixed EquidistantConic support for GeoTIFF. 
 
 	* Fixed up cygnus support in port/cpl_port.h.

@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2000/10/13 20:55:54  warmerda
+ * improved support for writing GCS codes, and hardcode common datums
+ *
  * Revision 1.14  2000/10/13 18:03:32  warmerda
  * econic fix
  *
@@ -422,6 +425,20 @@ static int OGCDatumName2EPSGDatumCode( const char * pszOGCName )
     FILE	*fp;
     char	**papszTokens;
     int		nReturn = KvUserDefined;
+
+/* -------------------------------------------------------------------- */
+/*      Do we know it as a built in?                                    */
+/* -------------------------------------------------------------------- */
+    if( EQUAL(pszOGCName,"NAD27") 
+        || EQUAL(pszOGCName,"North_American_Datum_1927") )
+        return Datum_North_American_Datum_1927;
+    else if( EQUAL(pszOGCName,"NAD83") 
+        || EQUAL(pszOGCName,"North_American_Datum_1983") )
+        return Datum_North_American_Datum_1983;
+    else if( EQUAL(pszOGCName,"WGS84") || EQUAL(pszOGCName,"WGS_1984") )
+        return Datum_WGS84;
+    else if( EQUAL(pszOGCName,"WGS72") || EQUAL(pszOGCName,"WGS_1972") )
+        return Datum_WGS72;
     
 /* -------------------------------------------------------------------- */
 /*      Open the table if possible.                                     */
@@ -607,6 +624,37 @@ int GTIFSetFromOGISDefn( GTIF * psGTIF, const char *pszOGCWKT )
                    poSRS->GetProjParm( SRS_PP_FALSE_NORTHING, 0.0 ) );
     }
     
+    else if( EQUAL(pszProjection,SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP) )
+    {
+	GTIFKeySet(psGTIF, GTModelTypeGeoKey, TYPE_SHORT, 1,
+                   ModelTypeProjected);
+	GTIFKeySet(psGTIF, ProjectedCSTypeGeoKey, TYPE_SHORT, 1,
+                   KvUserDefined );
+	GTIFKeySet(psGTIF, ProjectionGeoKey, TYPE_SHORT, 1,
+                   KvUserDefined );
+
+	GTIFKeySet(psGTIF, ProjCoordTransGeoKey, TYPE_SHORT, 1, 
+		   CT_LambertConfConic_2SP );
+
+        GTIFKeySet(psGTIF, ProjFalseOriginLatGeoKey, TYPE_DOUBLE, 1,
+                   poSRS->GetProjParm( SRS_PP_LATITUDE_OF_ORIGIN, 0.0 ) );
+
+        GTIFKeySet(psGTIF, ProjFalseOriginLongGeoKey, TYPE_DOUBLE, 1,
+                   poSRS->GetProjParm( SRS_PP_CENTRAL_MERIDIAN, 0.0 ) );
+        
+        GTIFKeySet(psGTIF, ProjStdParallel1GeoKey, TYPE_DOUBLE, 1,
+                   poSRS->GetProjParm( SRS_PP_STANDARD_PARALLEL_1, 0.0 ) );
+        
+        GTIFKeySet(psGTIF, ProjStdParallel2GeoKey, TYPE_DOUBLE, 1,
+                   poSRS->GetProjParm( SRS_PP_STANDARD_PARALLEL_2, 0.0 ) );
+        
+        GTIFKeySet(psGTIF, ProjFalseEastingGeoKey, TYPE_DOUBLE, 1,
+                   poSRS->GetProjParm( SRS_PP_FALSE_EASTING, 0.0 ) );
+        
+        GTIFKeySet(psGTIF, ProjFalseNorthingGeoKey, TYPE_DOUBLE, 1,
+                   poSRS->GetProjParm( SRS_PP_FALSE_NORTHING, 0.0 ) );
+    }
+    
     else
     {
 	GTIFKeySet(psGTIF, GTModelTypeGeoKey, TYPE_SHORT, 1,
@@ -624,7 +672,21 @@ int GTIFSetFromOGISDefn( GTIF * psGTIF, const char *pszOGCWKT )
 /* -------------------------------------------------------------------- */
     if( nPCS == KvUserDefined )
     {
-        if( nDatum != KvUserDefined )
+        int		nGCS = KvUserDefined;
+
+        if( nDatum == Datum_North_American_Datum_1927 )
+            nGCS = GCS_NAD27;
+        else if( nDatum == Datum_North_American_Datum_1983 )
+            nGCS = GCS_NAD83;
+        else if( nDatum == Datum_WGS84 || nDatum == DatumE_WGS84 )
+            nGCS = GCS_WGS_84;
+
+        if( nGCS != KvUserDefined )
+        {
+            GTIFKeySet( psGTIF, GeographicTypeGeoKey, TYPE_SHORT,
+                        1, nGCS );
+        }
+        else if( nDatum != KvUserDefined )
         {
             GTIFKeySet( psGTIF, GeogGeodeticDatumGeoKey, TYPE_SHORT,
                         1, nDatum );
