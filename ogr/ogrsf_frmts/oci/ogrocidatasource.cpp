@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2003/01/15 06:10:04  warmerda
+ * Added logic to hack angular unit name to "Decimal Degree".
+ *
  * Revision 1.14  2003/01/15 05:35:32  warmerda
  * allow override of SRID, pass to table constructor
  *
@@ -683,6 +686,13 @@ int OGROCIDataSource::FetchSRSId( OGRSpatialReference * poSRS )
     OGRSpatialReference *poSRS2 = poSRS->Clone();
     
     poSRS2->StripCTParms();
+
+/* -------------------------------------------------------------------- */
+/*      Convert any degree type unit names to "Decimal Degree".         */
+/* -------------------------------------------------------------------- */
+    double dfAngularUnits = poSRS2->GetAngularUnits( NULL );
+    if( fabs(dfAngularUnits - 0.0174532925199433) < 0.0000000000000010 )
+        poSRS2->SetAngularUnits( "Decimal Degree", 0.0174532925199433 );
 
 /* -------------------------------------------------------------------- */
 /*      Translate SRS to WKT.                                           */
