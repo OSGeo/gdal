@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.24  2005/02/22 17:17:30  hobu
+ * typo in the haveGEOS() method
+ *
  * Revision 1.23  2005/02/22 12:48:09  fwarmerdam
  * added OGRGeometryFactory::haveGEOS()
  *
@@ -873,7 +876,7 @@ geos::GeometryFactory *OGRGeometryFactory::getGEOSGeometryFactory()
  * @return TRUE if available, otherwise FALSE.
  */
 
-int OGRGeometryFactor::haveGEOS()
+int OGRGeometryFactory::haveGEOS()
 
 {
 #ifndef HAVE_GEOS 
