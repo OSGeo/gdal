@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2001/12/12 02:48:43  warmerda
+ * ensure cplreadline buffer freed
+ *
  * Revision 1.2  2001/07/18 04:55:16  warmerda
  * added CPL_CSVID
  *
@@ -97,6 +100,8 @@ NTFRecord::NTFRecord( FILE * fp )
             pszData[nLength] = '\0';
         }
     } while( pszLine[nNewLength-2] == '1' );
+
+    CPLReadLine( NULL );
 
 /* -------------------------------------------------------------------- */
 /*      Figure out the record type.                                     */
