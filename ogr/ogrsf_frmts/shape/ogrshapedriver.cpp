@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2000/01/26 22:06:32  warmerda
+ * add directory creation, fix open of empty dir
+ *
  * Revision 1.1  1999/11/04 21:16:11  warmerda
  * New
  *
@@ -67,7 +70,8 @@ OGRDataSource *OGRShapeDriver::Open( const char * pszFilename,
 
     poDS = new OGRShapeDataSource();
 
-    if( !poDS->Open( pszFilename, bUpdate, TRUE ) )
+    if( !poDS->Open( pszFilename, bUpdate, TRUE )
+        || poDS->GetLayerCount() == 0 )
     {
         delete poDS;
         return NULL;
@@ -89,14 +93,28 @@ OGRDataSource *OGRShapeDriver::CreateDataSource( const char * pszName,
 /* -------------------------------------------------------------------- */
 /*      Verify that the target is a valid directory.                    */
 /* -------------------------------------------------------------------- */
-    if( VSIStat( pszName, &stat ) != 0 || !VSI_ISDIR(stat.st_mode) )
+    if( VSIStat( pszName, &stat ) == 0 )
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Unable to local directory %s.\n"
-         "Shape data source name must be an existing, writable directory.\n",
-                  pszName );
-        
-        return NULL;
+        if( !VSI_ISDIR(stat.st_mode) )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "%s is not a directory.\n",
+                      pszName );
+            
+            return NULL;
+        }
+    }
+    else
+    {
+        if( VSIMkdir( pszName, 0755 ) != 0 )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Failed to create directory %s\n"
+                      "for shapefile datastore.\n",
+                      pszName );
+            
+            return NULL;
+        }
     }
 
 /* -------------------------------------------------------------------- */
