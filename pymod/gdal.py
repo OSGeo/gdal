@@ -29,6 +29,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.71  2004/12/17 18:48:56  fwarmerdam
+# added dataset level read/write methods
+#
 # Revision 1.70  2004/12/02 19:53:02  fwarmerdam
 # Added GDALComputeBandStats()
 # Implement generic mechanism for progress callbacks, and use for
@@ -725,6 +728,45 @@ class Dataset(MajorObject):
         _gdal.CSLDestroy( sl_options )
         _gdal.ptrfree( IntBandMap )
         return result
+
+    def ReadRaster(self, xoff, yoff, xsize, ysize,
+                   buf_xsize = None, buf_ysize = None, buf_type = None,
+                   band_list = None ):
+
+        if band_list is None:
+            band_list = range(1,self.RasterCount+1)
+        if buf_xsize is None:
+            buf_xsize = xsize;
+        if buf_ysize is None:
+            buf_ysize = ysize;
+        if buf_type is None:
+            buf_type = self._band[band_list[0]-1].DataType;
+
+        return _gdal.GDALDatasetReadRaster(self._o, xoff, yoff, xsize, ysize,
+                                           buf_xsize, buf_ysize, buf_type,
+                                           band_list)
+    
+    def WriteRaster(self, xoff, yoff, xsize, ysize,
+                    buf_string,
+                    buf_xsize = None, buf_ysize = None, buf_type = None,
+                    band_list = None ):
+
+        if buf_xsize is None:
+            buf_xsize = xsize;
+        if buf_ysize is None:
+            buf_ysize = ysize;
+        if band_list is None:
+            band_list = range(1,self.RasterCount+1)
+        if buf_type is None:
+            buf_type = self._band[band_list[0]-1].DataType;
+
+        if len(buf_string) < buf_xsize * buf_ysize * len(band_list) \
+           * (_gdal.GDALGetDataTypeSize(buf_type) / 8):
+            raise ValueError, "raster buffer too small in WriteRaster"
+        else:    
+            return _gdal.GDALDatasetWriteRaster(
+                self._o, xoff, yoff, xsize, ysize,
+                buf_string, buf_xsize, buf_ysize, buf_type, band_list )
 
 ###############################################################################
 
