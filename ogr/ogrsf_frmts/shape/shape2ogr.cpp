@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.30  2003/12/11 19:19:40  warmerda
+ * Fixed leak of geometry objects when building multipolygons.
+ *
  * Revision 1.29  2003/11/09 18:54:53  warmerda
  * added auto-FID field creation if new file has no fields on first feature wrt
  *
@@ -526,7 +529,7 @@ OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape )
 			    poOGRPoly->addRingDirectly( poRing );
 			}
 		    }
-                    poOGRGeCo->addGeometry (poOGRPoly);
+                    poOGRGeCo->addGeometryDirectly (poOGRPoly);
 		}
 	    }
             CPLFree( direction );
