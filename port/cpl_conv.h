@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.26  2003/10/17 07:06:06  dron
+ * Added locale selection option to CPLScanDouble() and CPLPrintDOuble().
+ *
  * Revision 1.25  2003/09/28 14:14:16  dron
  * Added CPLScanString().
  *
@@ -121,7 +124,7 @@ const char CPL_DLL *CPLReadLine( FILE * );
 /*      Read a numeric value from an ASCII character string.            */
 /* -------------------------------------------------------------------- */
 char CPL_DLL *CPLScanString( char *, int, int, int );
-double CPL_DLL CPLScanDouble( char *, int );
+double CPL_DLL CPLScanDouble( char *, int, char * );
 long CPL_DLL CPLScanLong( char *, int );
 
 /* -------------------------------------------------------------------- */
@@ -131,7 +134,7 @@ char CPL_DLL *CPLPrintString( char *, const char *, int );
 char CPL_DLL *CPLPrintStringFill( char *, const char *, int );
 char CPL_DLL *CPLPrintInt32( char *, GInt32 , int );
 char CPL_DLL *CPLPrintUIntBig( char *, GUIntBig , int );
-char CPL_DLL *CPLPrintDouble( char *, const char *, double );
+char CPL_DLL *CPLPrintDouble( char *, const char *, double, char * );
 char CPL_DLL *CPLPrintTime( char *, int , const char *,
                             const struct tm *, char * );
 
