@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2003/08/25 20:01:58  dron
+ * Added CPLFGets() helper function.
+ *
  * Revision 1.20  2003/05/08 21:51:14  warmerda
  * added CPL{G,S}etConfigOption() usage
  *
@@ -99,6 +102,7 @@ char CPL_DLL *CPLStrdup( const char * );
 /* -------------------------------------------------------------------- */
 /*      Read a line from a text file, and strip of CR/LF.               */
 /* -------------------------------------------------------------------- */
+char *CPLFGets( char *, int, FILE *);
 const char CPL_DLL *CPLReadLine( FILE * );
 
 /* -------------------------------------------------------------------- */
