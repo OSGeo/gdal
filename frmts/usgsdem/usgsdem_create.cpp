@@ -31,6 +31,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.15  2004/11/21 22:13:54  fwarmerdam
+ * use new pointer encode/decode functions
+ *
  * Revision 1.14  2004/09/01 19:10:32  warmerda
  * added UTM support care of Hunter Blanks (newwireless.com)
  *
@@ -1301,8 +1304,11 @@ static int USGSDEMLoadRaster( USGSDEMWriteInfo *psWInfo,
     char szDataPointer[100];
     char *apszOptions[] = { szDataPointer, NULL };
 
-    sprintf( szDataPointer, "DATAPOINTER=%ul", 
-             (unsigned long) psWInfo->panData );
+    memset( szDataPointer, 0, sizeof(szDataPointer) );
+    sprintf( szDataPointer, "DATAPOINTER=" );
+    CPLPrintPointer( szDataPointer+strlen(szDataPointer), 
+                     psWInfo->panData, 
+                     sizeof(szDataPointer) - strlen(szDataPointer) );
 
     if( poMemDS->AddBand( GDT_Int16, apszOptions ) != CE_None )
         return FALSE;

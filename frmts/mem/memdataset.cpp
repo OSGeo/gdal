@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2004/11/21 22:13:29  fwarmerdam
+ * use new pointer encode/decode functions
+ *
  * Revision 1.18  2004/08/30 18:50:27  warmerda
  * Fixed so that SetProjection() succeeds.
  *
@@ -548,9 +551,11 @@ CPLErr MEMDataset::AddBand( GDALDataType eType, char **papszOptions )
 /* -------------------------------------------------------------------- */
     const char *pszOption;
     int nPixelOffset, nLineOffset;
+    const char *pszDataPointer;
 
-    pData = (GByte *) strtol(CSLFetchNameValue(papszOptions,"DATAPOINTER"),
-                            NULL, 0 );
+    pszDataPointer = CSLFetchNameValue(papszOptions,"DATAPOINTER");
+    pData = (GByte *) CPLScanPointer(pszDataPointer,
+                                     strlen(pszDataPointer));
     
     pszOption = CSLFetchNameValue(papszOptions,"PIXELOFFSET");
     if( pszOption == NULL )
@@ -624,6 +629,7 @@ GDALDataset *MEMDataset::Open( GDALOpenInfo * poOpenInfo )
     const char *pszOption;
     GDALDataType eType;
     int nBands, nPixelOffset, nLineOffset, nBandOffset;
+    const char *pszDataPointer;
     GByte *pabyData;
 
     pszOption = CSLFetchNameValue(papszOptions,"BANDS");
@@ -656,8 +662,9 @@ GDALDataset *MEMDataset::Open( GDALOpenInfo * poOpenInfo )
     else
         nBandOffset = atoi(pszOption);
 
-    pabyData = (GByte *) strtol(CSLFetchNameValue(papszOptions,"DATAPOINTER"),
-                                NULL, 0 );
+    pszDataPointer = CSLFetchNameValue(papszOptions,"DATAPOINTER");
+    pabyData = (GByte *) CPLScanPointer( pszDataPointer, 
+                                         strlen(pszDataPointer) );
 
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
