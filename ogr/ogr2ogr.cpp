@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2002/10/03 13:20:31  warmerda
+ * improve docs for -append and -update in ogr2ogr
+ *
  * Revision 1.16  2002/05/09 16:32:29  warmerda
  * added -sql, -update and -append options
  *
@@ -462,7 +465,9 @@ static void Usage()
             printf( "     -f \"%s\"\n", poDriver->GetName() );
     }
 
-    printf( " -select field_list: Comma-delimited list of fields from input layer to\n"
+    printf( " -append: Append to existing layer instead of creating new\n"
+            " -update: Open existing output datasource in update mode\n"
+            " -select field_list: Comma-delimited list of fields from input layer to\n"
             "                     copy to the new layer (defaults to all)\n" 
             " -where restricted_where: Attribute query (like SQL WHERE)\n" 
             " -spat xmin ymin xmax ymax: spatial query extents\n"
