@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.41  2005/02/22 21:35:15  fwarmerdam
+ * fixed up bigint offset handling in ige file: bug 774
+ *
  * Revision 1.40  2005/01/10 17:41:27  fwarmerdam
  * added HFA compression support: bug 664
  *
@@ -439,6 +442,7 @@ CPLErr	HFABand::LoadExternalBlockInfo()
 
     if( strncmp( szHeader, "ERDAS_IMG_EXTERNAL_RASTER", 26 ) != 0 )
     {
+        VSIFCloseL( fpExternal );
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Raw data file %s appears to be corrupt.\n",
                   pszFullFilename );
@@ -461,7 +465,7 @@ CPLErr	HFABand::LoadExternalBlockInfo()
         CPLMalloc(nBytesPerRow*nBlocksPerColumn+20);
 
     VSIFSeekL( fpExternal, 
-               poDMS->GetIntField( "layerStackValidFlagsOffset[0]" ),  
+               poDMS->GetBigIntField( "layerStackValidFlagsOffset" ),  
                SEEK_SET );
 
     if( VSIFReadL( pabyBlockMap, nBytesPerRow * nBlocksPerColumn + 20, 1, 
@@ -477,7 +481,7 @@ CPLErr	HFABand::LoadExternalBlockInfo()
 /*      from data base address.  Blocks are never compressed.           */
 /*      Validity is determined from the validity bitmap.                */
 /* -------------------------------------------------------------------- */
-    nBlockStart = poDMS->GetIntField( "layerStackDataOffset[0]" );
+    nBlockStart = poDMS->GetBigIntField( "layerStackDataOffset" );
     nBlockSize = (nBlockXSize*nBlockYSize*HFAGetDataTypeBits(nDataType)+7) / 8;
 
     for( iBlock = 0; iBlock < nBlocks; iBlock++ )
