@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.5  1999/01/11 15:34:29  warmerda
+ * added reserved range comment
+ *
  * Revision 1.4  1998/12/15 19:02:27  warmerda
  * Avoid use of errno as a variable
  *
@@ -91,5 +94,7 @@ CPL_C_END
 #define CPLE_NotSupported		6
 #define CPLE_AssertionFailed		7
 #define CPLE_NoWriteAccess		8
+
+/* 100 - 299 reserved for GDAL */
 
 #endif /* _CPL_ERROR_H_INCLUDED_ */
