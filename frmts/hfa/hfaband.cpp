@@ -28,6 +28,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  1999/03/08 19:23:18  warmerda
+ * Added logic to byte swap block data on MSB systems.  Note that only 16 bit
+ * data is currently handled.  This should be extended to larger data types
+ * (32bit float, 64 bit float).
+ *
  * Revision 1.3  1999/02/15 19:32:34  warmerda
  * Zero out compressed or invalid blocks.
  *
@@ -177,6 +182,31 @@ CPLErr HFABand::GetRasterBlock( int nXBlock, int nYBlock, void * pData )
 
     if( VSIFRead( pData, panBlockSize[iBlock], 1, psInfo->fp ) == 0 )
         return CE_Failure;
+
+/* -------------------------------------------------------------------- */
+/*      Byte swap to local byte order if required.  It appears that     */
+/*      raster data is always stored in Intel byte order in Imagine     */
+/*      files.                                                          */
+/* -------------------------------------------------------------------- */
+
+#ifdef CPL_MSB             
+    if( HFAGetDataTypeBits(poBand->nDataType) == 16 )
+    {
+        int		ii;
+
+        for( ii = 0;
+             ii < poBand->nBlockXSize*poBand->nBlockYSize;
+             ii++ )
+        {
+            unsigned char *pabyData = (unsigned char *) pData;
+            int		nTemp;
+
+            nTemp = pabyData[ii*2];
+            pabyData[ii*2] = pabyData[ii*2+1];
+            pabyData[ii*2+1] = nTemp;
+        }
+    }
+#endif /* def CPL_MSB */
 
     return( CE_None );
 }
