@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2002/11/30 16:55:49  warmerda
+ * added OpenXML method
+ *
  * Revision 1.5  2002/11/24 04:29:02  warmerda
  * Substantially rewrote VRTSimpleSource.  Now VRTSource is base class, and
  * sources do their own SerializeToXML(), and XMLInit().  New VRTComplexSource
@@ -119,6 +122,7 @@ class CPL_DLL VRTDataset : public GDALDataset
     CPLXMLNode *   SerializeToXML(void);
  
     static GDALDataset *Open( GDALOpenInfo * );
+    static GDALDataset *OpenXML( const char * );
     static GDALDataset *Create( const char * pszName,
                                 int nXSize, int nYSize, int nBands,
                                 GDALDataType eType, char ** papszOptions );

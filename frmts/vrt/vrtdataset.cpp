@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2002/11/30 16:55:49  warmerda
+ * added OpenXML method
+ *
  * Revision 1.9  2002/11/24 04:27:52  warmerda
  * CopyCreate() nows saves source image directly if it is a VRTDataset
  *
@@ -387,17 +390,17 @@ CPLErr VRTDataset::GetGeoTransform( double * padfGeoTransform )
 GDALDataset *VRTDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
-    /* -------------------------------------------------------------------- */
-    /*      Does this appear to be a virtual dataset definition XML         */
-    /*      file?                                                           */
-    /* -------------------------------------------------------------------- */
+/* -------------------------------------------------------------------- */
+/*      Does this appear to be a virtual dataset definition XML         */
+/*      file?                                                           */
+/* -------------------------------------------------------------------- */
     if( poOpenInfo->nHeaderBytes < 20 
         || !EQUALN((const char *)poOpenInfo->pabyHeader,"<VRTDataset",11) )
         return NULL;
 
- /* -------------------------------------------------------------------- */
- /*	Try to read the whole file into memory.				*/
- /* -------------------------------------------------------------------- */
+/* -------------------------------------------------------------------- */
+/*	Try to read the whole file into memory.				*/
+/* -------------------------------------------------------------------- */
     unsigned int nLength;
     char        *pszXML;
      
@@ -427,13 +430,32 @@ GDALDataset *VRTDataset::Open( GDALOpenInfo * poOpenInfo )
 
     pszXML[nLength] = '\0';
 
+/* -------------------------------------------------------------------- */
+/*      Turn the XML representation into a VRTDataset.                  */
+/* -------------------------------------------------------------------- */
+    GDALDataset *poDS = OpenXML( pszXML );
+
+    CPLFree( pszXML );
+
+    return poDS;
+}
+
+/************************************************************************/
+/*                              OpenXML()                               */
+/*                                                                      */
+/*      Create an open VRTDataset from a supplied XML representation    */
+/*      of the dataset.                                                 */
+/************************************************************************/
+
+GDALDataset *VRTDataset::OpenXML( const char *pszXML )
+
+{
  /* -------------------------------------------------------------------- */
  /*      Parse the XML.                                                  */
  /* -------------------------------------------------------------------- */
     CPLXMLNode	*psTree;
 
     psTree = CPLParseXMLString( pszXML );
-    CPLFree( pszXML );
 
     if( psTree == NULL )
         return NULL;
@@ -449,9 +471,9 @@ GDALDataset *VRTDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
 
-    /* -------------------------------------------------------------------- */
-    /*      Create the new virtual dataset object.                          */
-    /* -------------------------------------------------------------------- */
+/* -------------------------------------------------------------------- */
+/*      Create the new virtual dataset object.                          */
+/* -------------------------------------------------------------------- */
     VRTDataset *poDS;
 
     poDS = new VRTDataset(atoi(CPLGetXMLValue(psTree,"rasterXSize","0")),
@@ -605,15 +627,24 @@ VRTDataset::Create( const char * pszName,
     VRTDataset *poDS;
     int        iBand;
 
-    poDS = new VRTDataset( nXSize, nYSize );
-    poDS->SetDescription( pszName );
-
-    for( iBand = 0; iBand < nBands; iBand++ )
-        poDS->AddBand( eType, NULL );
-
-    poDS->bNeedsFlush = 1;
-    
-    return poDS;
+    if( EQUALN(pszName,"<VRTDataset",11) )
+    {
+        GDALDataset *poDS = OpenXML( pszName );
+        poDS->SetDescription( "<FromXML>" );
+        return poDS;
+    }
+    else
+    {
+        poDS = new VRTDataset( nXSize, nYSize );
+        poDS->SetDescription( pszName );
+        
+        for( iBand = 0; iBand < nBands; iBand++ )
+            poDS->AddBand( eType, NULL );
+        
+        poDS->bNeedsFlush = 1;
+        
+        return poDS;
+    }
 }
 
 /************************************************************************/
