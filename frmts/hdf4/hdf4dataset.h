@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.3  2002/07/23 12:27:58  dron
+ * General Raster Interface support added.
+ *
  * Revision 1.2  2002/07/17 16:24:31  dron
  * MODIS support improved a bit.
  *
@@ -36,6 +39,13 @@
  *
  *
  */
+
+typedef enum
+{
+    HDF4_SDS,
+    HDF4_GR,
+    HDF4_UNKNOWN
+} HDF4SubdatasetType;
 
 typedef enum
 {

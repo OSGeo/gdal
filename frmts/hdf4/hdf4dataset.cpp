@@ -30,6 +30,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.6  2002/07/23 12:27:58  dron
+ * General Raster Interface support added.
+ *
  * Revision 1.5  2002/07/19 13:39:17  dron
  * Lists supported in HDF-EOS attributes.
  *
@@ -774,14 +777,12 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*              The same list builded for raster images.                */
 /* -------------------------------------------------------------------- */
-/*  FIXME: it won't works. Why?
-
     int32	iGR;
     int32	iInterlaceMode; 
 
-    poDS->hGR = GRstart( poDS->hHDF4 );
+    poDS->hGR = GRstart( hHDF4 );
     if ( poDS->hGR == -1 )
-    {fprintf(stderr,"GRstart failed\n");return NULL;}
+    {fprintf(stderr,"GRstart failed\n");}
 
     if ( GRfileinfo( poDS->hGR, &poDS->nImages, &poDS->nFileAttrs ) != 0 )
 	return NULL;
@@ -797,7 +798,7 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
         nCount = CSLCount( poDS->papszSubDatasets ) / 2;
         sprintf( szTemp, "SUBDATASET_%d_NAME", nCount+1 );
         poDS->papszSubDatasets = CSLSetNameValue( poDS->papszSubDatasets, szTemp,
-              CPLSPrintf( "HDF4_GR:%s:%d", poOpenInfo->pszFilename, i ) );
+              CPLSPrintf( "HDF4_GR:UNKNOWN:%s:%d", poOpenInfo->pszFilename, i ) );
         sprintf( szTemp, "SUBDATASET_%d_DESC", nCount+1 );
         poDS->papszSubDatasets = CSLSetNameValue( poDS->papszSubDatasets, szTemp,
               CPLSPrintf( "[%sx%d] %s (%s)", SPrintArray((GInt32 *)aiDimSizes, 2, "x"),
@@ -805,7 +806,7 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
 
 	GRendaccess( iGR );
     }
-    GRend( poDS->hGR );*/
+    GRend( poDS->hGR );
     
     poDS->nRasterXSize = poDS->nRasterYSize = 512; // XXX: bogus values
     
