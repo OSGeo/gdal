@@ -1505,6 +1505,7 @@ AC_MSG_RESULT($GDAL_VER)
 
 AC_SUBST(GDAL_VER)
 
+
 dnl ---------------------------------------------------------------------------
 
 AC_COMPILER_WFLAGS
@@ -1531,6 +1532,19 @@ dnl ---------------------------------------------------------------------------
 if test "$datadir" = '${prefix}/share' ; then
   datadir='${prefix}/share/gdal'
 fi
+
+dnl ---------------------------------------------------------------------------
+dnl Capture GDAL_PREFIX for the cpl_config.h include file. 
+dnl ---------------------------------------------------------------------------
+
+if test "$prefix" = "NONE" ; then 
+  GDAL_PREFIX=/usr/local
+else
+  GDAL_PREFIX=${prefix}
+fi
+
+export GDAL_PREFIX
+AC_DEFINE_UNQUOTED(GDAL_PREFIX,["]$GDAL_PREFIX["], [--prefix directory for GDAL install])
 
 dnl ---------------------------------------------------------------------------
 dnl Python Checks
