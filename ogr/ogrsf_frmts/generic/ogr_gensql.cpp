@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2002/08/12 16:40:56  dron
+ * stricmp() function replaced by EQUALN() macro
+ *
  * Revision 1.7  2002/08/12 15:06:01  warmerda
  * fix DISTINCT not working with FID (from Bruce)
  *
@@ -315,7 +318,7 @@ int OGRGenSQLResultsLayer::PrepareSummary()
         {
             swq_col_def *psColDef = psSelectInfo->column_defs + iField;
 
-            if(stricmp(psColDef->field_name,"FID") == 0)
+            if( EQUALN(psColDef->field_name, "FID", 3) )
             {
 		// Special case where the column is "FID"
                 char szBuffer[255];
