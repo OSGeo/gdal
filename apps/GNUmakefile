@@ -5,7 +5,7 @@ include ../GDALmake.opt
 CPPFLAGS	+=	$(GDAL_INCLUDE) -I$(GDAL_ROOT)/frmts -I$(GDAL_ROOT)/alg
 DEP_LIBS	=	$(EXE_DEP_LIBS) $(XTRAOBJ)
 BIN_LIST	=	gdalinfo$(EXE) gdal_translate$(EXE) gdaladdo$(EXE) \
-			gdalwarp$(EXE)
+			gdalwarp$(EXE) gdaltindex$(EXE)
 
 ifeq ($(OGR_ENABLED),yes)
 BIN_LIST	+= 	gdal_contour$(EXE)
