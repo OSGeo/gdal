@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_datfile.cpp,v 1.6 1999/10/19 06:09:25 daniel Exp $
+ * $Id: mitab_datfile.cpp,v 1.7 1999/11/09 07:34:35 daniel Exp $
  *
  * Name:     mitab_datfile.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log: mitab_datfile.cpp,v $
+ * Revision 1.7  1999/11/09 07:34:35  daniel
+ * Return default values when deleted attribute records are encountered
+ *
  * Revision 1.6  1999/10/19 06:09:25  daniel
  * Removed obsolete GetFieldDef() method
  *
@@ -86,6 +89,7 @@ TABDATFile::TABDATFile()
     m_nBlockSize = 0;
     m_nRecordSize = -1;
     m_nCurRecordId = -1;
+    m_bCurRecordDeletedFlag = FALSE;
     m_bWriteHeaderInitialized = FALSE;
 }
 
@@ -452,6 +456,8 @@ int  TABDATFile::GetNumRecords()
  **********************************************************************/
 TABRawBinBlock *TABDATFile::GetRecordBlock(int nRecordId)
 {
+    m_bCurRecordDeletedFlag = FALSE;
+
     if (m_eAccessMode == TABRead)
     {
         /*-------------------------------------------------------------
@@ -477,13 +483,13 @@ TABRawBinBlock *TABDATFile::GetRecordBlock(int nRecordId)
         /*-------------------------------------------------------------
          * The first char of the record is a ' ' for an active record, or
          * '*' for a deleted one.
-         * __TODO__ What should we do about deleted records?????
+         * In the case of a deleted record, we simply return default
+         * values for each attribute... this is what MapInfo seems to do
+         * when it takes a .TAB with deleted records and exports it to .MIF
          *------------------------------------------------------------*/
         if (m_poRecordBlock->ReadByte() != ' ')
         {
-            CPLError(CE_Warning, CPLE_NotSupported,
-                     "GetRecordBlock(): record %d in file %s appears to have "
-                     "been deleted.", nRecordId, m_pszFname);
+            m_bCurRecordDeletedFlag = TRUE;
         }
     }
     else if (m_eAccessMode == TABWrite && nRecordId > 0)
@@ -735,6 +741,11 @@ const char *TABDATFile::ReadCharField(int nWidth)
     // We know that character strings are limited to 254 chars in MapInfo
     static char szBuf[256];
 
+    // If current record has been deleted, then return an acceptable 
+    // default value.
+    if (m_bCurRecordDeletedFlag)
+        return "";
+
     if (m_poRecordBlock == NULL)
     {
         CPLError(CE_Failure, CPLE_AssertionFailed,
@@ -767,6 +778,11 @@ const char *TABDATFile::ReadCharField(int nWidth)
  **********************************************************************/
 GInt32 TABDATFile::ReadIntegerField()
 {
+    // If current record has been deleted, then return an acceptable 
+    // default value.
+    if (m_bCurRecordDeletedFlag)
+        return 0;
+
     if (m_poRecordBlock == NULL)
     {
         CPLError(CE_Failure, CPLE_AssertionFailed,
@@ -787,6 +803,11 @@ GInt32 TABDATFile::ReadIntegerField()
  **********************************************************************/
 GInt16 TABDATFile::ReadSmallIntField()
 {
+    // If current record has been deleted, then return an acceptable 
+    // default value.
+    if (m_bCurRecordDeletedFlag)
+        return 0;
+
     if (m_poRecordBlock == NULL)
     {
         CPLError(CE_Failure, CPLE_AssertionFailed,
@@ -807,6 +828,11 @@ GInt16 TABDATFile::ReadSmallIntField()
  **********************************************************************/
 double TABDATFile::ReadFloatField()
 {
+    // If current record has been deleted, then return an acceptable 
+    // default value.
+    if (m_bCurRecordDeletedFlag)
+        return 0.0;
+
     if (m_poRecordBlock == NULL)
     {
         CPLError(CE_Failure, CPLE_AssertionFailed,
@@ -831,6 +857,11 @@ double TABDATFile::ReadFloatField()
 const char *TABDATFile::ReadLogicalField()
 {
     GByte bValue;
+
+    // If current record has been deleted, then return an acceptable 
+    // default value.
+    if (m_bCurRecordDeletedFlag)
+        return "F";
 
     if (m_poRecordBlock == NULL)
     {
@@ -864,6 +895,10 @@ const char *TABDATFile::ReadDateField()
     int nDay, nMonth, nYear;
     static char szBuf[20];
 
+    // If current record has been deleted, then return an acceptable 
+    // default value.
+    if (m_bCurRecordDeletedFlag)
+        return "00/00/0000";
 
     if (m_poRecordBlock == NULL)
     {
@@ -902,6 +937,11 @@ const char *TABDATFile::ReadDateField()
 double TABDATFile::ReadDecimalField(int nWidth)
 {
     const char *pszVal;
+
+    // If current record has been deleted, then return an acceptable 
+    // default value.
+    if (m_bCurRecordDeletedFlag)
+        return 0.0;
 
     pszVal = ReadCharField(nWidth);
 

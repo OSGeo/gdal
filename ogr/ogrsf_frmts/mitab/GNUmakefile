@@ -9,7 +9,7 @@ OBJ	=	mitab_rawbinblock.o mitab_mapheaderblock.o \
 		mitab_mapfile.o mitab_idfile.o mitab_datfile.o \
 		mitab_tabfile.o mitab_miffile.o mitab_utils.o \
 		mitab_imapinfofile.o mitab_middatafile.o \
-		mitab_maptoolblock.o mitab_tooldef.o \
+		mitab_maptoolblock.o mitab_tooldef.o mitab_coordsys.o \
 		mitab_spatialref.o mitab_ogr_driver.o 
 
 ALL_C_FLAGS	=	-I.. -I../.. -I$(GDAL_ROOT)/port $(CFLAGS)

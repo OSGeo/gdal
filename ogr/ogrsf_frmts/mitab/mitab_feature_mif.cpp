@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_feature_mif.cpp,v 1.1 1999/11/08 19:20:30 stephane Exp $
+ * $Id: mitab_feature_mif.cpp,v 1.2 1999/11/11 01:22:05 stephane Exp $
  *
  * Name:     mitab_feature.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log: mitab_feature_mif.cpp,v $
+ * Revision 1.2  1999/11/11 01:22:05  stephane
+ * Remove DebugFeature call, Point Reading error, add IsValidFeature() to test correctly if we are on a feature
+ *
  * Revision 1.1  1999/11/08 19:20:30  stephane
  * First version
  *
@@ -148,7 +151,8 @@ int TABFeature::ReadGeometryFromMIFFile(MIDDATAFile *fp)
     
     /* Go to the first line of the next feature */
 
-    while (((pszLine = fp->GetLine()) != NULL) && isalpha(pszLine[0]) == FALSE)
+    while (((pszLine = fp->GetLine()) != NULL) && 
+	   fp->IsValidFeature(pszLine) == FALSE)
       ;
 
     return 0;
@@ -219,7 +223,8 @@ int TABPoint::ReadGeometryFromMIFFile(MIDDATAFile *fp)
     
     /* Go to the first line of the next feature */
 
-    while (((pszLine = fp->GetLine()) != NULL) && isalpha(pszLine[0]) == FALSE)
+    while (((pszLine = fp->GetLine()) != NULL) && 
+	   fp->IsValidFeature(pszLine) == FALSE)
       ;
 
     return 0; 
@@ -258,7 +263,7 @@ int TABFontPoint::ReadGeometryFromMIFFile(MIDDATAFile *fp)
     const char *pszLine;
     double dfX,dfY;
     papszToken = CSLTokenizeString(fp->GetSavedLine());
-     
+
     if (CSLCount(papszToken) !=3)
     {
 	CSLDestroy(papszToken);
@@ -270,7 +275,7 @@ int TABFontPoint::ReadGeometryFromMIFFile(MIDDATAFile *fp)
     
     CSLDestroy(papszToken);
     
-    papszToken = CSLTokenizeStringComplex(fp->GetLastLine(),"\" ,()",
+    papszToken = CSLTokenizeStringComplex(fp->GetLastLine()," ,()",
 					  TRUE,FALSE);
 
     if (CSLCount(papszToken) !=7)
@@ -296,7 +301,8 @@ int TABFontPoint::ReadGeometryFromMIFFile(MIDDATAFile *fp)
 
     /* Go to the first line of the next feature */
 
-    while (((pszLine = fp->GetLine()) != NULL) && isalpha(pszLine[0]) == FALSE)
+    while (((pszLine = fp->GetLine()) != NULL) && 
+	   fp->IsValidFeature(pszLine) == FALSE)
       ;
     return 0; 
 }
@@ -374,7 +380,8 @@ int TABCustomPoint::ReadGeometryFromMIFFile(MIDDATAFile *fp)
 
     /* Go to the first line of the next feature */
 
-    while (((pszLine = fp->GetLine()) != NULL) && isalpha(pszLine[0]) == FALSE)
+    while (((pszLine = fp->GetLine()) != NULL) && 
+	   fp->IsValidFeature(pszLine) == FALSE)
       ;
  
     return 0; 
@@ -534,7 +541,7 @@ int TABPolyline::ReadGeometryFromMIFFile(MIDDATAFile *fp)
     CSLDestroy(papszToken);
 
     while (((pszLine = fp->GetLine()) != NULL) && 
-	   isalpha(pszLine[0]) == FALSE)
+	   fp->IsValidFeature(pszLine) == FALSE)
     {
 	papszToken = CSLTokenizeStringComplex(pszLine,"() ,",
 					      TRUE,FALSE);
@@ -714,7 +721,8 @@ int TABRegion::ReadGeometryFromMIFFile(MIDDATAFile *fp)
     
     SetMBR(sEnvelope.MinX, sEnvelope.MinY, sEnvelope.MaxX, sEnvelope.MaxY);
 
-    while (((pszLine = fp->GetLine()) != NULL) && isalpha(pszLine[0]) == FALSE)
+    while (((pszLine = fp->GetLine()) != NULL) && 
+	   fp->IsValidFeature(pszLine) == FALSE)
     {
 	papszToken = CSLTokenizeStringComplex(pszLine,"() ,",
 					      TRUE,FALSE);
@@ -762,6 +770,7 @@ int TABRegion::ReadGeometryFromMIFFile(MIDDATAFile *fp)
 	}
 	CSLDestroy(papszToken);
     }
+    
     
     return 0; 
 }
@@ -933,7 +942,8 @@ int TABRectangle::ReadGeometryFromMIFFile(MIDDATAFile *fp)
     SetGeometryDirectly(poPolygon);
     
 
-   while (((pszLine = fp->GetLine()) != NULL) && isalpha(pszLine[0]) == FALSE)
+   while (((pszLine = fp->GetLine()) != NULL) && 
+	  fp->IsValidFeature(pszLine) == FALSE)
    {
        papszToken = CSLTokenizeStringComplex(pszLine,"() ,",
 					     TRUE,FALSE);
@@ -1077,7 +1087,8 @@ int TABEllipse::ReadGeometryFromMIFFile(MIDDATAFile *fp)
     poPolygon->addRing(poRing);
     SetGeometryDirectly(poPolygon);
 
-    while (((pszLine = fp->GetLine()) != NULL) && isalpha(pszLine[0]) == FALSE)
+    while (((pszLine = fp->GetLine()) != NULL) && 
+	   fp->IsValidFeature(pszLine) == FALSE)
     {
 	papszToken = CSLTokenizeStringComplex(pszLine,"() ,",
 					      TRUE,FALSE);
@@ -1234,7 +1245,8 @@ int TABArc::ReadGeometryFromMIFFile(MIDDATAFile *fp)
     SetMBR(dXMin, dYMin, dXMax, dYMax);
     SetGeometryDirectly(poLine);
 
-    while (((pszLine = fp->GetLine()) != NULL) && isalpha(pszLine[0]) == FALSE)
+    while (((pszLine = fp->GetLine()) != NULL) && 
+	   fp->IsValidFeature(pszLine) == FALSE)
     {
 	papszToken = CSLTokenizeStringComplex(pszLine,"() ,",
 					      TRUE,FALSE);
@@ -1399,7 +1411,8 @@ int TABText::ReadGeometryFromMIFFile(MIDDATAFile *fp)
     SetMBR(dXMin, dYMin, dXMax, dYMax);
     GetMBR(dXMin, dYMin, dXMax, dYMax);
     
-    while (((pszLine = fp->GetLine()) != NULL) && isalpha(pszLine[0]) == FALSE)
+    while (((pszLine = fp->GetLine()) != NULL) && 
+	   fp->IsValidFeature(pszLine) == FALSE)
     {
 	papszToken = CSLTokenizeStringComplex(pszLine,"() ,",
 					      TRUE,FALSE);
@@ -1647,14 +1660,17 @@ int TABDebugFeature::ReadGeometryFromMIFFile(MIDDATAFile *fp)
 { 
    const char *pszLine;
   
-   /* Go to the first line of the next feature */
+   
+  /* Go to the first line of the next feature */
+   printf("%s\n", fp->GetLastLine());
 
-   while (((pszLine = fp->GetLine()) != NULL) && isalpha(pszLine[0]) == FALSE)
+   while (((pszLine = fp->GetLine()) != NULL) && 
+	  fp->IsValidFeature(pszLine) == FALSE)
      ;
   
    return 0; 
 }
-int TABDebugFeature::WriteGeometryToMIFFile(MIDDATAFile *fp){ return 0; }
+int TABDebugFeature::WriteGeometryToMIFFile(MIDDATAFile *fp){ return -1; }
 
 
 

@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab.h,v 1.1 1999/11/08 21:05:51 svillene Exp $
+ * $Id: mitab.h,v 1.16 1999/11/10 20:13:12 warmerda Exp $
  *
  * Name:     mitab.h
  * Project:  MapInfo MIF Read/Write library
@@ -28,8 +28,14 @@
  **********************************************************************
  *
  * $Log: mitab.h,v $
- * Revision 1.1  1999/11/08 21:05:51  svillene
- * first revision
+ * Revision 1.16  1999/11/10 20:13:12  warmerda
+ * implement spheroid table
+ *
+ * Revision 1.15  1999/11/09 22:31:38  warmerda
+ * initial implementation of MIF CoordSys support
+ *
+ * Revision 1.14  1999/11/09 07:33:04  daniel
+ * Fixed compilation warning caused by MIFFile::SetSpatialRef()
  *
  * Revision 1.13  1999/11/08 04:34:55  stephane
  * mid/mif support
@@ -83,7 +89,6 @@
 #ifndef PI
 #  define PI 3.14159265358979323846
 #endif
-
 
 class TABFeature;
 
@@ -325,8 +330,7 @@ class MIFFile: public IMapInfoFile
     virtual int GetBounds(double &dXMin, double &dYMin, 
                           double &dXMax, double &dYMax);
     
-    /* TODO */
-    virtual OGRSpatialReference *GetSpatialRef(){return NULL;}
+    virtual OGRSpatialReference *GetSpatialRef();
 
     ///////////////
     // Write access specific stuff
@@ -338,7 +342,7 @@ class MIFFile: public IMapInfoFile
     virtual int AddFieldNative(const char *pszName, TABFieldType eMapInfoType,
                                int nWidth, int nPrecision=0);
     /* TODO */
-    virtual int SetSpatialRef(OGRSpatialReference *poSpatialRef){return FALSE;}
+    virtual int SetSpatialRef(OGRSpatialReference *poSpatialRef);
 
     virtual int SetFeature(TABFeature *poFeature, int nFeatureId = -1);
 
@@ -1100,6 +1104,35 @@ class TABDebugFeature: public TABFeature
     virtual void DumpMIF(FILE *fpOut = NULL);
 };
 
+/* -------------------------------------------------------------------- */
+/*      Some stuff related to spatial reference system handling.        */
+/* -------------------------------------------------------------------- */
+
+char *MITABSpatialRef2CoordSys( OGRSpatialReference * );
+OGRSpatialReference * MITABCoordSys2SpatialRef( const char * );
+
+typedef struct {
+    int		nMapInfoDatumID;
+    const char  *pszOGCDatumName;
+    int		nEllipsoid;
+    double      dfShiftX;
+    double	dfShiftY;
+    double	dfShiftZ;
+    double	dfDatumParm0; /* RotX */
+    double	dfDatumParm1; /* RotY */
+    double	dfDatumParm2; /* RotZ */
+    double	dfDatumParm3; /* Scale Factor */
+    double	dfDatumParm4; /* Prime Meridian */
+} MapInfoDatumInfo;
+
+typedef struct
+{
+    int		nMapInfoId;
+    const char *pszMapinfoName;
+    double	dfA; /* semi major axis in meters */
+    double      dfInvFlattening; /* Inverse flattening */
+} MapInfoSpheroidInfo;
 
 #endif /* _MITAB_H_INCLUDED_ */
+
 

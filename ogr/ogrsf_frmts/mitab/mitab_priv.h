@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_priv.h,v 1.8 1999/11/08 04:34:54 stephane Exp $
+ * $Id: mitab_priv.h,v 1.10 1999/11/11 01:22:05 stephane Exp $
  *
  * Name:     mitab_priv.h
  * Project:  MapInfo TAB Read/Write library
@@ -28,6 +28,12 @@
  **********************************************************************
  *
  * $Log: mitab_priv.h,v $
+ * Revision 1.10  1999/11/11 01:22:05  stephane
+ * Remove DebugFeature call, Point Reading error, add IsValidFeature() to test correctly if we are on a feature
+ *
+ * Revision 1.9  1999/11/09 07:37:22  daniel
+ * Support for deleted records when reading TABDATFiles
+ *
  * Revision 1.8  1999/11/08 04:34:54  stephane
  * mid/mif support
  *
@@ -838,6 +844,7 @@ class TABDATFile
     int         m_nBlockSize;
     int         m_nRecordSize;
     int         m_nCurRecordId;
+    GBool       m_bCurRecordDeletedFlag;
 
     GInt32      m_numRecords;
     GInt32      m_nFirstRecordPtr;
@@ -866,6 +873,7 @@ class TABDATFile
 
     GInt32      GetNumRecords();
     TABRawBinBlock *GetRecordBlock(int nRecordId);
+    GBool       IsCurrentRecordDeleted() { return m_bCurRecordDeletedFlag;};
     int         CommitRecordToFile();
 
     const char  *ReadCharField(int nWidth);
@@ -912,6 +920,7 @@ class MIDDATAFile
      void SaveLine(const char *pszLine);
      const char *GetSavedLine();
      void WriteLine(const char*, ...);
+     GBool IsValidFeature(const char *pszString);
 
 //  Translation information
      void SetTranslation(double, double, double, double);

@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_middatafile.cpp,v 1.1 1999/11/08 04:16:07 stephane Exp $
+ * $Id: mitab_middatafile.cpp,v 1.2 1999/11/11 01:22:05 stephane Exp $
  *
  * Name:     mitab_datfile.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log: mitab_middatafile.cpp,v $
+ * Revision 1.2  1999/11/11 01:22:05  stephane
+ * Remove DebugFeature call, Point Reading error, add IsValidFeature() to test correctly if we are on a feature
+ *
  * Revision 1.1  1999/11/08 04:16:07  stephane
  * First Revision
  *
@@ -228,4 +231,33 @@ double MIDDATAFile::GetXTrans(double dfX)
 double MIDDATAFile::GetYTrans(double dfY)
 {
     return (dfY * m_dfYMultiplier) + m_dfYDisplacement;
+}
+
+
+GBool MIDDATAFile::IsValidFeature(const char *pszString)
+{
+    char **papszToken ;
+
+    papszToken = CSLTokenizeString(pszString);
+    
+    //   printf("%s\n",pszString);
+
+    if (CSLCount(papszToken) == 0)
+    {
+	CSLDestroy(papszToken);
+	return FALSE;
+    }
+
+    if (EQUAL(papszToken[0],"NONE")||EQUAL(papszToken[0],"POINT")||
+	EQUAL(papszToken[0],"LINE")||EQUAL(papszToken[0],"PLINE")||
+	EQUAL(papszToken[0],"REGION")||EQUAL(papszToken[0],"ARC")||
+	EQUAL(papszToken[0],"TEXT")||EQUAL(papszToken[0],"RECT")||
+	EQUAL(papszToken[0],"ROUNDRECT")||EQUAL(papszToken[0],"ELLIPSE"))
+    {
+	CSLDestroy(papszToken);
+	return TRUE;
+    }
+
+    return FALSE;
+
 }
