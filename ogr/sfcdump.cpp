@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  1999/07/09 13:05:19  warmerda
+ * type safe fix
+ *
  * Revision 1.7  1999/07/08 20:27:52  warmerda
  * added SFCDumpTableFeatures()
  *
@@ -243,7 +246,7 @@ void main( int nArgc, char ** papszArgv )
 static void SFCDumpTableSchema( SFCTable * poTable )
 
 {
-    for( int iColumn = 0; iColumn < poTable->GetColumnCount(); iColumn++ )
+    for( ULONG iColumn = 0; iColumn < poTable->GetColumnCount(); iColumn++ )
     {
         OledbSupWriteColumnInfo( stdout, poTable->m_pColumnInfo + iColumn );
     }
