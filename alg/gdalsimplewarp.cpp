@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2003/02/06 04:56:35  warmerda
+ * added documentation
+ *
  * Revision 1.4  2002/12/07 22:58:42  warmerda
  * added initialization support for simple warper
  *
@@ -52,6 +55,39 @@ CPL_CVSID("$Id$");
 /************************************************************************/
 /*                        GDALSimpleImageWarp()                         */
 /************************************************************************/
+
+/**
+ * Perform simple image warp.
+ *
+ * Copies an image from a source dataset to a destination dataset applying
+ * an application defined transformation.   This algorithm is called simple
+ * because it lacks many options such as resampling kernels (other than 
+ * nearest neighbour), support for data types other than 8bit, and the
+ * ability to warp images without holding the entire source and destination
+ * image in memory.
+ *
+ * The following option(s) may be passed in papszWarpOptions. 
+ * <ul>
+ * <li> "INIT=v[,v...]": This option indicates that the output dataset should
+ * be initialized to the indicated value in any area valid data is not written.
+ * Distinct values may be listed for each band separated by columns. 
+ * </ul>
+ *
+ * @param hSrcDS the source image dataset. 
+ * @param hDstDS the destination image dataset. 
+ * @param nBandCount the number of bands to be warped.  If zero, all bands
+ * will be processed.
+ * @param panBandList the list of bands to translate. 
+ * @param pfnTransform the transformation function to call.  See 
+ * GDALTransformerFunc(). 
+ * @param pTransformArg the callback handle to pass to pfnTransform.
+ * @param pfnProgress the function used to report progress.  See 
+ * GDALProgressFunc(). 
+ * @param pProgressArg the callback handle to pass to pfnProgress. 
+ * @param papszWarpOptions additional options controlling the warp. 
+ * 
+ * @return TRUE if the operation completes, or FALSE if an error occurs. 
+ */
 
 int GDALSimpleImageWarp( GDALDatasetH hSrcDS, GDALDatasetH hDstDS, 
                          int nBandCount, int *panBandList, 
