@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2002/12/05 22:17:19  warmerda
+ * added support for opening directly from XML
+ *
  * Revision 1.10  2002/11/30 16:55:49  warmerda
  * added OpenXML method
  *
@@ -130,7 +133,8 @@ void VRTDataset::FlushCache()
 
     // We don't write to disk if there is no filename.  This is a 
     // memory only dataset.
-    if( strlen(GetDescription()) == 0 )
+    if( strlen(GetDescription()) == 0 
+        || EQUALN(GetDescription(),"<VRTDataset",11) )
         return;
 
     /* -------------------------------------------------------------------- */
@@ -139,7 +143,12 @@ void VRTDataset::FlushCache()
     FILE *fpVRT;
 
     fpVRT = VSIFOpen( GetDescription(), "w" );
-
+    if( fpVRT == NULL )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Failed to write .vrt file in FlushCache()." );
+        return;
+    }
 
     /* -------------------------------------------------------------------- */
     /*      Convert tree to a single block of XML text.                     */
@@ -394,41 +403,53 @@ GDALDataset *VRTDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Does this appear to be a virtual dataset definition XML         */
 /*      file?                                                           */
 /* -------------------------------------------------------------------- */
-    if( poOpenInfo->nHeaderBytes < 20 
-        || !EQUALN((const char *)poOpenInfo->pabyHeader,"<VRTDataset",11) )
+    if( (poOpenInfo->nHeaderBytes < 20 
+         || !EQUALN((const char *)poOpenInfo->pabyHeader,"<VRTDataset",11))
+        && !EQUALN(poOpenInfo->pszFilename,"<VRTDataset",11) )
         return NULL;
 
 /* -------------------------------------------------------------------- */
 /*	Try to read the whole file into memory.				*/
 /* -------------------------------------------------------------------- */
-    unsigned int nLength;
     char        *pszXML;
+
+    if( poOpenInfo->fp != NULL )
+    {
+        unsigned int nLength;
      
-    VSIFSeek( poOpenInfo->fp, 0, SEEK_END );
-    nLength = VSIFTell( poOpenInfo->fp );
-    VSIFSeek( poOpenInfo->fp, 0, SEEK_SET );
-
-    nLength = MAX(0,nLength);
-    pszXML = (char *) VSIMalloc(nLength+1);
-
-    if( pszXML == NULL )
-    {
-        CPLError( CE_Failure, CPLE_OutOfMemory, 
-                  "Failed to allocate %d byte buffer to hold VRT xml file.",
-                  nLength );
-        return NULL;
+        VSIFSeek( poOpenInfo->fp, 0, SEEK_END );
+        nLength = VSIFTell( poOpenInfo->fp );
+        VSIFSeek( poOpenInfo->fp, 0, SEEK_SET );
+        
+        nLength = MAX(0,nLength);
+        pszXML = (char *) VSIMalloc(nLength+1);
+        
+        if( pszXML == NULL )
+        {
+            CPLError( CE_Failure, CPLE_OutOfMemory, 
+                      "Failed to allocate %d byte buffer to hold VRT xml file.",
+                      nLength );
+            return NULL;
+        }
+        
+        if( VSIFRead( pszXML, 1, nLength, poOpenInfo->fp ) != nLength )
+        {
+            CPLFree( pszXML );
+            CPLError( CE_Failure, CPLE_FileIO,
+                      "Failed to read %d bytes from VRT xml file.",
+                      nLength );
+            return NULL;
+        }
+        
+        pszXML[nLength] = '\0';
     }
-
-    if( VSIFRead( pszXML, 1, nLength, poOpenInfo->fp ) != nLength )
+/* -------------------------------------------------------------------- */
+/*      Or use the filename as the XML input.                           */
+/* -------------------------------------------------------------------- */
+    else
     {
-        CPLFree( pszXML );
-        CPLError( CE_Failure, CPLE_FileIO,
-                  "Failed to read %d bytes from VRT xml file.",
-                  nLength );
-        return NULL;
+        pszXML = CPLStrdup( poOpenInfo->pszFilename );
     }
-
-    pszXML[nLength] = '\0';
 
 /* -------------------------------------------------------------------- */
 /*      Turn the XML representation into a VRTDataset.                  */
