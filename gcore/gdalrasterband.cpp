@@ -28,6 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************
  * $Log$
+ * Revision 1.43  2003/05/21 04:43:29  warmerda
+ * avoid warnings about unused formal parameters
+ *
  * Revision 1.42  2003/05/06 05:20:38  sperkins
  * cleaned up comments
  *
@@ -1391,9 +1394,10 @@ GDALColorInterp GDALGetRasterColorInterpretation( GDALRasterBandH hBand )
  * @return CE_None on success or CE_Failure if method is unsupported by format.
  */
 
-CPLErr GDALRasterBand::SetColorInterpretation( GDALColorInterp eColorInterp )
+CPLErr GDALRasterBand::SetColorInterpretation( GDALColorInterp eColorInterp)
 
 {
+    (void) eColorInterp;
     CPLError( CE_Failure, CPLE_NotSupported,
               "SetColorInterpretation() not supported for this dataset." );
     return CE_Failure;
@@ -1472,6 +1476,7 @@ GDALColorTableH GDALGetRasterColorTable( GDALRasterBandH hBand )
 CPLErr GDALRasterBand::SetColorTable( GDALColorTable * poCT )
 
 {
+    (void) poCT;
     CPLError( CE_Failure, CPLE_NotSupported,
               "SetColorTable() not supported for this dataset." );
     return CE_Failure;
@@ -1623,12 +1628,19 @@ GDALRasterBandH GDALGetOverview( GDALRasterBandH hBand, int i )
  * @return CE_None on success or CE_Failure if the operation doesn't work. 
  */
 
-CPLErr GDALRasterBand::BuildOverviews( const char *pszResampling, 
-                                       int nOverviews, int *panOverviewList, 
+CPLErr GDALRasterBand::BuildOverviews( const char * pszResampling, 
+                                       int nOverviews, 
+                                       int * panOverviewList, 
                                        GDALProgressFunc pfnProgress, 
                                        void * pProgressData )
 
 {
+    (void) pszResampling;
+    (void) nOverviews;
+    (void) panOverviewList;
+    (void) pfnProgress;
+    (void) pProgressData;
+
     CPLError( CE_Failure, CPLE_NotSupported,
               "BuildOverviews() not supported for this dataset." );
     
