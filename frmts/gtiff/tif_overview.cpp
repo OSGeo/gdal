@@ -48,6 +48,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  1999/02/11 19:21:14  warmerda
+ * Limit tile sizes to multiples of 16
+ *
  * Revision 1.2  1999/02/11 18:37:43  warmerda
  * Removed debugging malloc stuff.
  *
@@ -293,6 +296,12 @@ void TIFF_BuildOverviews( const char * pszTIFFFilename,
 
         nOBlockXSize = MIN((int)nBlockXSize,nOXSize);
         nOBlockYSize = MIN((int)nBlockYSize,nOYSize);
+
+        if( (nOBlockXSize % 16) != 0 )
+            nOBlockXSize = nOBlockXSize + 16 - (nOBlockXSize % 16);
+
+        if( (nOBlockYSize % 16) != 0 )
+            nOBlockYSize = nOBlockYSize + 16 - (nOBlockYSize % 16);
 
         papoRawBIs[i] = new RawBlockedImage( nOXSize, nOYSize,
                                              nOBlockXSize, nOBlockYSize,
