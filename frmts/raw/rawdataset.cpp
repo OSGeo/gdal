@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2003/07/27 11:08:19  dron
+ * Added some heuristic to switch between cached and direct IRasterIO()
+ * implementations.
+ *
  * Revision 1.20  2003/07/16 19:29:09  warmerda
  * use overviews in IRasterIO() on reads when appropriate
  *
@@ -92,6 +96,8 @@
  */
 
 #include "rawdataset.h"
+#include "cpl_conv.h"
+#include "cpl_string.h"
 
 CPL_CVSID("$Id$");
 
@@ -139,7 +145,8 @@ RawRasterBand::RawRasterBand( GDALDataset *poDS, int nBand,
 /*      Allocate working scanline.                                      */
 /* -------------------------------------------------------------------- */
     nLoadedScanline = -1;
-    pLineBuffer = CPLMalloc( nPixelOffset * nBlockXSize );
+    nLineSize = nPixelOffset * nBlockXSize;
+    pLineBuffer = CPLMalloc( nLineSize );
 }
 
 /************************************************************************/
@@ -185,7 +192,8 @@ RawRasterBand::RawRasterBand( FILE * fpRaw, vsi_l_offset nImgOffset,
 /*      Allocate working scanline.                                      */
 /* -------------------------------------------------------------------- */
     nLoadedScanline = -1;
-    pLineBuffer = CPLMalloc( nPixelOffset * nBlockXSize );
+    nLineSize = nPixelOffset * nBlockXSize;
+    pLineBuffer = CPLMalloc( nLineSize );
 }
 
 /************************************************************************/
@@ -470,6 +478,26 @@ CPLErr RawRasterBand::AccessBlock( vsi_l_offset nBlockOff, int nBlockSize,
 }
 
 /************************************************************************/
+/*                          IsLineLoaded()                              */
+/*                                                                      */
+/*  Check whether at least one scanline from the specified block of     */
+/*  lines is cached.                                                    */
+/************************************************************************/
+
+int RawRasterBand::IsLineLoaded( int nLineOff, int nLines )
+{
+    int         iLine;
+
+    for ( iLine = nLineOff; iLine < nLineOff + nLines; iLine++ )
+    {
+        if ( GDALRasterBlock::IsCached( 0, iLine ) )
+            return TRUE;
+    }
+
+    return FALSE;
+}
+
+/************************************************************************/
 /*                             IRasterIO()                              */
 /************************************************************************/
 
@@ -480,16 +508,35 @@ CPLErr RawRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                                  int nPixelSpace, int nLineSpace )
 
 {
-/* XXX: enable following call to switch back to the default block-oriented I/O
- * logic with caching instead of RawRasterBand::IRasterIO() implementation.
- * Probably this should be controlled by user and we need introduce additional
- * methods to switch between two implementations. */
-/*    return GDALRasterBand::IRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
-                                      pData, nBufXSize, nBufYSize,eBufType,
-                                      nPixelSpace, nLineSpace ); */
-
     int         nBandDataSize = GDALGetDataTypeSize(eDataType) / 8;
     int         nBufDataSize = GDALGetDataTypeSize( eBufType ) / 8;
+    int         nBytesToRW = nPixelOffset * nXSize;
+
+/* -------------------------------------------------------------------- */
+/* Use direct IO without caching if:                                    */
+/*                                                                      */
+/* GDAL_ONE_BIG_READ is enabled                                         */
+/*                                                                      */
+/* or                                                                   */
+/*                                                                      */
+/* the length of a scanline on disk is more than 50000 bytes, and the   */
+/* width of the requested chunk is less than 40% of the whole scanline  */
+/* and none of the requested scanlines are already in the cache.        */
+/* -------------------------------------------------------------------- */
+    if ( !CSLTestBoolean( CPLGetConfigOption( "GDAL_ONE_BIG_READ", "NO") ) )
+         {
+        if ( nLineSize < 50000
+             || nBytesToRW > nLineSize / 5 * 2
+             || IsLineLoaded( nYOff, nYSize ) )
+        {
+
+            return GDALRasterBand::IRasterIO( eRWFlag, nXOff, nYOff,
+                                              nXSize, nYSize,
+                                              pData, nBufXSize, nBufYSize,
+                                              eBufType,
+                                              nPixelSpace, nLineSpace );
+        }
+    }
 
 /* ==================================================================== */
 /*   Read data.                                                         */
@@ -540,14 +587,13 @@ CPLErr RawRasterBand::IRasterIO( GDALRWFlag eRWFlag,
         {
             GByte   *pabyData;
             double  dfSrcXInc, dfSrcYInc;
-            int     iLine, nBytesToRead;
+            int     iLine;
             
             dfSrcXInc = (double)nXSize / nBufXSize;
             dfSrcYInc = (double)nYSize / nBufYSize;
 
-            nBytesToRead = nPixelOffset * nXSize;
 
-            pabyData = (GByte *) CPLMalloc( nBytesToRead );
+            pabyData = (GByte *) CPLMalloc( nBytesToRW );
 
             for ( iLine = 0; iLine < nBufYSize; iLine++ )
             {
@@ -555,11 +601,11 @@ CPLErr RawRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                                   + ((vsi_l_offset)nYOff
                                   + (int)(iLine * dfSrcYInc)) * nLineOffset
                                   + nXOff * nPixelOffset,
-                                  nBytesToRead, pabyData ) != CE_None )
+                                  nBytesToRW, pabyData ) != CE_None )
                 {
                     CPLError( CE_Failure, CPLE_FileIO,
                               "Failed to read %d bytes at %d.",
-                              nBytesToRead,
+                              nBytesToRW,
                               nImgOffset
                               + ((vsi_l_offset)nYOff
                               + (int)(iLine * dfSrcYInc)) * nLineOffset
@@ -601,7 +647,7 @@ CPLErr RawRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 /* ==================================================================== */
     else
     {
-        int nBytesToWrite, nBytesActuallyWritten;
+        int nBytesActuallyWritten;
 
 /* ==================================================================== */
 /*   1. Simplest case when we should write contiguous block             */
@@ -649,14 +695,14 @@ CPLErr RawRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 /* -------------------------------------------------------------------- */
 /*      Write the block.                                                */
 /* -------------------------------------------------------------------- */
-            nBytesToWrite = nXSize * nYSize * nBandDataSize;
+            nBytesToRW = nXSize * nYSize * nBandDataSize;
 
-            nBytesActuallyWritten = Write( pData, 1, nBytesToWrite );
-            if( nBytesActuallyWritten < nBytesToWrite )
+            nBytesActuallyWritten = Write( pData, 1, nBytesToRW );
+            if( nBytesActuallyWritten < nBytesToRW )
             {
                 CPLError( CE_Failure, CPLE_FileIO,
                           "Failed to write %d bytes to file. %d bytes written",
-                          nBytesToWrite, nBytesActuallyWritten );
+                          nBytesToRW, nBytesActuallyWritten );
         
                 return CE_Failure;
             }
@@ -694,9 +740,7 @@ CPLErr RawRasterBand::IRasterIO( GDALRWFlag eRWFlag,
             dfSrcXInc = (double)nXSize / nBufXSize;
             dfSrcYInc = (double)nYSize / nBufYSize;
 
-            nBytesToWrite = nPixelOffset * nXSize;
-
-            pabyData = (GByte *) CPLMalloc( nBytesToWrite );
+            pabyData = (GByte *) CPLMalloc( nBytesToRW );
 
             for ( iLine = 0; iLine < nBufYSize; iLine++ )
             {
@@ -709,7 +753,7 @@ CPLErr RawRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 /*      have to worry about pre-reading from disk.                      */
 /* -------------------------------------------------------------------- */
                 if( nPixelOffset > nBandDataSize )
-                    AccessBlock( nBlockOff, nBytesToWrite, pabyData );
+                    AccessBlock( nBlockOff, nBytesToRW, pabyData );
 
 /* -------------------------------------------------------------------- */
 /*      Copy data from user block buffer to disk buffer and subsample,  */
@@ -769,12 +813,12 @@ CPLErr RawRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 /* -------------------------------------------------------------------- */
 /*      Write the line of block.                                        */
 /* -------------------------------------------------------------------- */
-                nBytesActuallyWritten = Write( pabyData, 1, nBytesToWrite );
-                if( nBytesActuallyWritten < nBytesToWrite )
+                nBytesActuallyWritten = Write( pabyData, 1, nBytesToRW );
+                if( nBytesActuallyWritten < nBytesToRW )
                 {
                     CPLError( CE_Failure, CPLE_FileIO,
                               "Failed to write %d bytes to file. %d bytes written",
-                              nBytesToWrite, nBytesActuallyWritten );
+                              nBytesToRW, nBytesActuallyWritten );
             
                     return CE_Failure;
                 }
@@ -912,4 +956,32 @@ RawDataset::~RawDataset()
 
 {
 }
+
+/************************************************************************/
+/*                             IRasterIO()                              */
+/*                                                                      */
+/*      Multi-band raster io handler.                                   */
+/************************************************************************/
+
+CPLErr RawDataset::IRasterIO( GDALRWFlag eRWFlag, 
+                              int nXOff, int nYOff, int nXSize, int nYSize,
+                              void *pData, int nBufXSize, int nBufYSize, 
+                              GDALDataType eBufType,
+                              int nBandCount, int *panBandMap, 
+                              int nPixelSpace, int nLineSpace, int nBandSpace )
+
+{
+/*    if( nBandCount > 1 )
+        return GDALDataset::BlockBasedRasterIO( 
+            eRWFlag, nXOff, nYOff, nXSize, nYSize,
+            pData, nBufXSize, nBufYSize, eBufType, 
+            nBandCount, panBandMap, nPixelSpace, nLineSpace, nBandSpace );
+    else*/
+        return 
+            GDALDataset::IRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
+                                    pData, nBufXSize, nBufYSize, eBufType, 
+                                    nBandCount, panBandMap, 
+                                    nPixelSpace, nLineSpace, nBandSpace );
+}
+
 
