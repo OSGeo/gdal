@@ -6,7 +6,7 @@ include $(GDAL_ROOT)/GDALmake.opt
 OBJ	=	dgnopen.o dgnread.o dgnfloat.o dgnhelp.o dgnwrite.o dgnstroke.o
 OBJ_OGR =	ogrdgndriver.o ogrdgndatasource.o ogrdgnlayer.o
 
-ALL_C_FLAGS	=	-I.. -I../.. -I$(GDAL_ROOT)/port $(CFLAGS)
+CPPFLAGS	+=	-I.. -I../..
 
 CPL_DIR	=	$(GDAL_ROOT)/port
 
@@ -27,20 +27,15 @@ DIST_FILES =	dgnread.cpp dgnopen.cpp dgnlib.h dgnlibp.h dgnfloat.cpp \
 default:	$(O_OBJ) $(foreach file,$(OBJ_OGR),../o/$(file))
 
 clean:
-	rm -rf *.o $(DEST_DIR) dgnlib-$(DIST_REV).zip html man dgndump
-
-%.o:	%.cpp
-	$(CXX) -c $(ALL_C_FLAGS) $*.cpp -o $*.o
-
-%.o:	%.c
-	$(CC) -c $(ALL_C_FLAGS) $*.c -o $*.o
+	rm -rf *.o $(DEST_DIR) dgnlib-$(DIST_REV).zip html man
+	rm -f dgndump dgnwritetest
 
 dgndump:	dgndump.c $(OBJ)
-	$(CXX) $(ALL_C_FLAGS) dgndump.c $(OBJ) $(GDAL_LIB) -ldl -lm -o dgndump 
+	$(CXX) $(CPPFLAGS) $(CFLAGS) dgndump.c $(OBJ) $(GDAL_LIB) -ldl -lm -o dgndump 
 
 dgnwritetest:	dgnwritetest.c $(OBJ)
-	$(CXX) $(ALL_C_FLAGS) dgnwritetest.c $(OBJ) $(GDAL_LIB) -ldl -lm \
-	-o dgnwritetest
+	$(CXX) $(CPPFLAGS) $(CFLAGS) dgnwritetest.c $(OBJ) $(GDAL_LIB) -ldl \
+	-lm -o dgnwritetest
 
 docs:
 	doxygen
