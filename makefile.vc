@@ -109,7 +109,7 @@ install: $(GDAL_DLL) apps_dir pymod_dir
 	cd apps
 	$(MAKE) /f makefile.vc install
 	cd ..\pymod
-	$(MAKE) /f makefile.vc install
+	if exist $(PYDIR)\python.exe $(MAKE) /f makefile.vc install
 	cd ..
 	
 	
