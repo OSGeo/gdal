@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.34  2003/03/20 20:21:48  warmerda
+ * added drop index
+ *
  * Revision 1.33  2003/03/19 20:29:06  warmerda
  * added shared access and reference counting
  *
@@ -256,9 +259,10 @@ class CPL_DLL OGRDataSource
   protected:
 
     OGRErr              ProcessSQLCreateIndex( const char * );
-    OGRStyleTable *m_poStyleTable;
+    OGRErr              ProcessSQLDropIndex( const char * );
 
-    int                  m_nRefCount;
+    OGRStyleTable      *m_poStyleTable;
+    int                 m_nRefCount;
 };
 
 /************************************************************************/
