@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2000/02/15 13:59:30  warmerda
+ * Actually lookup and copy attributes
+ *
  * Revision 1.2  1999/09/29 16:48:02  warmerda
  * added (perhaps incomplete) attribute handling.
  *
@@ -219,6 +222,72 @@ void OGRSDTSLayer::ResetReading()
 }
 
 /************************************************************************/
+/*                     AssignAttrREcordToFeature()                      */
+/************************************************************************/
+
+static void
+AssignAttrRecordToFeature( OGRFeature * poFeature, SDTSTransfer * poTransfer, 
+                           DDFField * poSR )
+
+{
+/* -------------------------------------------------------------------- */
+/*      Process each subfield in the record.                            */
+/* -------------------------------------------------------------------- */
+    DDFFieldDefn 	*poFDefn = poSR->GetFieldDefn();
+        
+    for( int iSF=0; iSF < poFDefn->GetSubfieldCount(); iSF++ )
+    {
+        DDFSubfieldDefn	*poSFDefn = poFDefn->GetSubfield( iSF );
+        int			iField;
+        int			nMaxBytes;
+        const char * 	pachData = poSR->GetSubfieldData(poSFDefn,
+                                                         &nMaxBytes);
+/* -------------------------------------------------------------------- */
+/*      Indentify this field on the feature.                            */
+/* -------------------------------------------------------------------- */
+        iField = poFeature->GetFieldIndex( poSFDefn->GetName() );
+
+/* -------------------------------------------------------------------- */
+/*      Handle each of the types.                                       */
+/* -------------------------------------------------------------------- */
+        switch( poSFDefn->GetType() )
+        {
+          case DDFString:
+            const char	*pszValue;
+
+            pszValue = poSFDefn->ExtractStringData(pachData, nMaxBytes,
+                                                   NULL);
+
+            if( iField != -1 )
+                poFeature->SetField( iField, pszValue );
+            break;
+
+          case DDFFloat:
+            double	dfValue;
+
+            dfValue = poSFDefn->ExtractFloatData(pachData, nMaxBytes,
+                                                 NULL);
+
+            if( iField != -1 )
+                poFeature->SetField( iField, dfValue );
+            break;
+
+          case DDFInt:
+            int		nValue;
+
+            nValue = poSFDefn->ExtractIntData(pachData, nMaxBytes, NULL);
+
+            if( iField != -1 )
+                poFeature->SetField( iField, nValue );
+            break;
+
+          default:
+            break;
+        }
+    } /* next subfield */
+}
+
+/************************************************************************/
 /*                      GetNextUnfilteredFeature()                      */
 /************************************************************************/
 
@@ -312,6 +381,22 @@ OGRFeature * OGRSDTSLayer::GetNextUnfilteredFeature()
         break;
     }
 
+/* -------------------------------------------------------------------- */
+/*      Set attributes for any indicated attribute records.             */
+/* -------------------------------------------------------------------- */
+    int		iAttrRecord;
+    
+    for( iAttrRecord = 0; 
+         iAttrRecord < poSDTSFeature->nAttributes; 
+         iAttrRecord++)
+    {
+        DDFField	*poSR;
+
+        poSR = poTransfer->GetAttr( poSDTSFeature->paoATID+iAttrRecord );
+          
+        AssignAttrRecordToFeature( poFeature, poTransfer, poSR );
+    }
+    
 /* -------------------------------------------------------------------- */
 /*      Translate the record id.                                        */
 /* -------------------------------------------------------------------- */
