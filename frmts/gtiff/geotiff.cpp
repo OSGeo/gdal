@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.32  2000/06/26 22:18:33  warmerda
+ * added scaled progress support
+ *
  * Revision 1.31  2000/06/26 21:09:55  warmerda
  * improved flushing before building overviews
  *
@@ -681,6 +684,12 @@ CPLErr GTiffDataset::IBuildOverviews(
     int          i;
     GTiffDataset *poODS;
 
+    if( !pfnProgress( 0.0, NULL, pProgressData ) )
+    {
+        CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
+        return CE_Failure;
+    }
+
     TIFFFlush( hTIFF );
 
 /* -------------------------------------------------------------------- */
@@ -789,15 +798,28 @@ CPLErr GTiffDataset::IBuildOverviews(
             }
         }
 
+        void         *pScaledProgressData;
+
+        pScaledProgressData = 
+            GDALCreateScaledProgress( iBand / (double) nBands, 
+                                      (iBand+1) / (double) nBands,
+                                      pfnProgress, pProgressData );
+
         eErr = GDALRegenerateOverviews( poBand,
                                         nNewOverviews, papoOverviewBands,
-                                        pszResampling, NULL, NULL );
+                                        pszResampling, 
+                                        GDALScaledProgress, 
+                                        pScaledProgressData);
+
+        GDALDestroyScaledProgress( pScaledProgressData );
     }
 
 /* -------------------------------------------------------------------- */
 /*      Cleanup                                                         */
 /* -------------------------------------------------------------------- */
     CPLFree( papoOverviewBands );
+
+    pfnProgress( 1.0, NULL, pProgressData );
 
     return eErr;
 }

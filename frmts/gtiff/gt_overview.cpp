@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2000/06/26 22:18:33  warmerda
+ * added scaled progress support
+ *
  * Revision 1.2  2000/06/19 18:47:24  warmerda
  * fixed header
  *
@@ -252,10 +255,18 @@ GTIFFBuildOverviews( const char * pszFilename,
             papoOverviews[i+1] = hDstBand->GetOverview(i);
         }
 
-        /* FIXME: The progress should be broken down by band */
+        void         *pScaledProgressData;
+
+        pScaledProgressData = 
+            GDALCreateScaledProgress( iBand / (double) nBands, 
+                                      (iBand+1) / (double) nBands,
+                                      pfnProgress, pProgressData );
+
         eErr = 
             GDALRegenerateOverviews( hSrcBand, nDstOverviews, papoOverviews, 
                                      pszResampling,pfnProgress,pProgressData);
+
+        GDALDestroyScaledProgress( pScaledProgressData );
 
         if( eErr != CE_None )
         {
@@ -269,6 +280,8 @@ GTIFFBuildOverviews( const char * pszFilename,
 /* -------------------------------------------------------------------- */
     hODS->FlushCache();
     delete hODS;
+
+    pfnProgress( 1.0, NULL, pProgressData );
 
     return CE_None;
 }

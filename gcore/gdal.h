@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.27  2000/06/26 22:17:49  warmerda
+ * added scaled progress support
+ *
  * Revision 1.26  2000/06/26 18:47:31  warmerda
  * added GDALBuildOverviews
  *
@@ -216,6 +219,10 @@ typedef void *GDALColorTableH;
 /* -------------------------------------------------------------------- */
 typedef int (*GDALProgressFunc)(double,const char *, void *);
 int CPL_DLL GDALDummyProgress( double, const char *, void *);
+int CPL_DLL GDALScaledProgress( double, const char *, void *);
+void CPL_DLL *GDALCreateScaledProgress( double, double,
+                                        GDALProgressFunc, void * );
+void CPL_DLL GDALDestroyScaledProgress( void * );
 
 /* ==================================================================== */
 /*      Registration/driver related.                                    */

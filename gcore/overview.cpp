@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2000/06/26 22:17:58  warmerda
+ * added scaled progress support
+ *
  * Revision 1.1  2000/04/21 21:54:05  warmerda
  * New
  *
@@ -183,6 +186,13 @@ GDALRegenerateOverviews( GDALRasterBand *poSrcBand,
          nChunkYOff < poSrcBand->GetYSize(); 
          nChunkYOff += nFullResYChunk )
     {
+        if( !pfnProgress( nChunkYOff / (double) poSrcBand->GetYSize(), 
+                          NULL, pProgressData ) )
+        {
+            CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
+            return CE_Failure;
+        }
+
         if( nFullResYChunk + nChunkYOff > poSrcBand->GetYSize() )
             nFullResYChunk = poSrcBand->GetYSize() - nChunkYOff;
         
@@ -207,6 +217,8 @@ GDALRegenerateOverviews( GDALRasterBand *poSrcBand,
 /* -------------------------------------------------------------------- */
     for( int iOverview = 0; iOverview < nOverviews; iOverview++ )
         papoOvrBands[iOverview]->FlushCache();
+
+    pfnProgress( 1.0, NULL, pProgressData );
 
     return CE_None;
 }

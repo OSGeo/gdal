@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2000/06/26 22:17:49  warmerda
+ * added scaled progress support
+ *
  * Revision 1.14  2000/06/05 17:24:05  warmerda
  * added real complex support
  *
@@ -467,6 +470,62 @@ int GDALDummyProgress( double, const char *, void * )
 
 {
     return TRUE;
+}
+
+/************************************************************************/
+/*                         GDALScaledProgress()                         */
+/************************************************************************/
+typedef struct { 
+    GDALProgressFunc pfnProgress;
+    void *pData;
+    double dfMin;
+    double dfMax;
+} GDALScaledProgressInfo;
+
+int GDALScaledProgress( double dfComplete, const char *pszMessage, 
+                        void *pData )
+
+{
+    GDALScaledProgressInfo *psInfo = (GDALScaledProgressInfo *) pData;
+
+    return psInfo->pfnProgress( dfComplete * (psInfo->dfMax - psInfo->dfMin)
+                                + psInfo->dfMin,
+                                pszMessage, psInfo->pData );
+}
+
+/************************************************************************/
+/*                      GDALCreateScaledProgress()                      */
+/************************************************************************/
+
+void *GDALCreateScaledProgress( double dfMin, double dfMax, 
+                                GDALProgressFunc pfnProgress, 
+                                void * pData )
+
+{
+    GDALScaledProgressInfo *psInfo;
+
+    psInfo = (GDALScaledProgressInfo *) 
+        CPLCalloc(sizeof(GDALScaledProgressInfo),1);
+
+    if( ABS(dfMin-dfMax) < 0.0000001 )
+        dfMax = dfMin + 0.01;
+
+    psInfo->pData = pData;
+    psInfo->pfnProgress = pfnProgress;
+    psInfo->dfMin = dfMin;
+    psInfo->dfMax = dfMax;
+
+    return (void *) psInfo;
+}
+
+/************************************************************************/
+/*                     GDALDestroyScaledProgress()                      */
+/************************************************************************/
+
+void GDALDestroyScaledProgress( void * pData )
+
+{
+    CPLFree( pData );
 }
 
 /************************************************************************/
