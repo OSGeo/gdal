@@ -25,6 +25,9 @@
  * Main format registration function.
  * 
  * $Log$
+ * Revision 1.62  2004/01/07 20:06:34  warmerda
+ * Added netcdf support
+ *
  * Revision 1.61  2003/12/12 23:06:12  jimg
  * Added test for DODS. It's near the end, grouped with the formats that are
  * expensive to test for, and it's run only if FRMT_dods is defined.
@@ -355,6 +358,10 @@ void GDALAllRegister()
 
 #ifdef FRMT_ecw
     GDALRegister_ECW();
+#endif
+
+#ifdef FRMT_netcdf
+    GDALRegister_netCDF();
 #endif
 
 #ifdef FRMT_hdf4
