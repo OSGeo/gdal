@@ -2,7 +2,7 @@
 GDAL_ROOT = ..
 
 EXTRAFLAGS =	-DFRMT_ceos -DFRMT_aigrid -DFRMT_elas -DFRMT_hfa -DFRMT_gtiff\
-		-DFRMT_sdts
+		-DFRMT_sdts -DFRMT_raw
 
 !INCLUDE $(GDAL_ROOT)/nmake.opt
 
@@ -24,6 +24,8 @@ subdirs:
 	cd ..\iso8211
 	$(MAKE) /f makefile.vc
 	cd ..\sdts
+	$(MAKE) /f makefile.vc
+	cd ..\raw
 	$(MAKE) /f makefile.vc
 	cd ..
 
