@@ -238,3 +238,31 @@ AC_SUBST(PYTHON_SO)dnl
 AC_SUBST(PYTHON_CFLAGS)dnl
 AC_SUBST(PYTHON_LINK)])
 
+dnl
+dnl Check if we have NUMPY include file(s).
+dnl
+
+AC_DEFUN(AM_CHECK_NUMPY,
+  [
+  AC_MSG_CHECKING([for NumPy include files])
+  echo '#include "Python.h"' > conftest.c
+  echo '#include "Numeric/arrayobject.h"' >> conftest.c
+  if test -z "`${CC-cc} $PYTHON_INCLUDES -c conftest.c 2>&1`"; then
+    export HAVE_NUMPY=yes
+    AC_MSG_RESULT(found)
+  else
+    export HAVE_NUMPY=no
+    AC_MSG_RESULT(missing)
+  fi
+  rm -f conftest.c
+
+  AC_SUBST(HAVE_NUMPY)
+  if test "$HAVE_NUMPY" = "yes" ; then
+    export NUMPY_FLAG=-DHAVE_NUMPY
+  else
+    export NUMPY_FLAG=
+  fi
+  AC_SUBST(NUMPY_FLAG)])
+
+
+

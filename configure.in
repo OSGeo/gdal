@@ -155,6 +155,7 @@ AC_ARG_WITH(python,[  --without-python        Disable Python],,)
 
 AM_PATH_PYTHON
 AM_INIT_PYEXEC_MOD
+AM_CHECK_NUMPY
 
 AC_TRY_OGDI
 
