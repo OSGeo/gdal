@@ -1165,7 +1165,7 @@ ILWISDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                     else if( EQUAL(sStoreType.c_str(),"float"))	
                     {
                         float fNoDataValue = (float)dNoDataValue; // needed for comparing for NoDataValue
-                        if (( pbSuccess && ((float * )pData)[iCol] == dNoDataValue ) || (CPLIsNan((( float * )pData)[iCol])))
+                        if (( pbSuccess && ((float * )pData)[iCol] == fNoDataValue ) || (CPLIsNan((( float * )pData)[iCol])))
                             (( float * )pData)[iCol] = flUNDEF;
                     }
                     else if( EQUAL(sStoreType.c_str(),"Real"))	
@@ -1489,6 +1489,8 @@ void ILWISRasterBand::FillWithNoData(void * pImage)
         case stReal:
           ((double*)pImage)[0] = rUNDEF;
           break;
+        default: // should there be handling for stByte? 
+          break;
       }
       int iItemSize = GDALGetDataTypeSize(eDataType) / 8;
       for (int i = 1; i < nBlockXSize * nBlockYSize; ++i)
@@ -1513,7 +1515,6 @@ CPLErr ILWISRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff,
 
     CPLErr eErr = CE_None;
     int nXSize = dataset->GetRasterXSize();
-    GDALDataType eType = GetRasterDataType();
     int nBlockSize = nBlockXSize * nBlockYSize * nSizePerPixel;
     void *pData;
     pData = CPLMalloc(nBlockSize);
