@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: geo_extra.c,v 1.2 1999/05/04 03:09:33 warmerda Exp $
+ * $Id: geo_extra.c,v 1.4 2002/12/01 23:44:34 warmerda Exp $
  *
  * Project:  libgeotiff
  * Purpose:  Code to normalize a few common PCS values without use of CSV
@@ -29,6 +29,12 @@
  ******************************************************************************
  *
  * $Log: geo_extra.c,v $
+ * Revision 1.4  2002/12/01 23:44:34  warmerda
+ * Fixed typo in last fix.
+ *
+ * Revision 1.3  2002/12/01 23:42:06  warmerda
+ * added overrides for two deprecated stateplane zones
+ *
  * Revision 1.2  1999/05/04 03:09:33  warmerda
  * avoid warnings
  *
@@ -441,12 +447,15 @@ int	GTIFMapSysToPCS( int MapSys, int Datum, int nZone )
 	int		i;
 
         PCSCode = 10000 + nZone;
-
 	for( i = 0; StatePlaneTable[i] != KvUserDefined; i += 2 )
 	{
 	    if( StatePlaneTable[i+1] == PCSCode )
 	        PCSCode = StatePlaneTable[i];
 	}
+
+        /* Old EPSG code was in error for Tennesse CS27, override */
+        if( nZone == 4100 )
+            PCSCode = 2204;
     }
     else if( MapSys == MapSys_State_Plane_83 )
     {
@@ -459,6 +468,10 @@ int	GTIFMapSysToPCS( int MapSys, int Datum, int nZone )
 	    if( StatePlaneTable[i+1] == PCSCode )
 	        PCSCode = StatePlaneTable[i];
 	}
+
+        /* Old EPSG code was in error for Kentucky North CS83, override */
+        if( nZone == 1601 )
+            PCSCode = 2205;
     }
 
     return( PCSCode );
@@ -487,10 +500,18 @@ int	GTIFMapSysToProj( int MapSys, int nZone )
     else if( MapSys == MapSys_State_Plane_27 )
     {
         ProjCode = 10000 + nZone;
+
+        /* Tennesse override */
+        if( nZone == 4100 )
+            ProjCode = 15302;
     }
     else if( MapSys == MapSys_State_Plane_83 )
     {
         ProjCode = 10000 + nZone + 30;
+
+        /* Kentucky North override */
+        if( nZone == 1601 )
+            ProjCode = 15303;
     }
 
     return( ProjCode );

@@ -33,36 +33,36 @@ GTIFFree() is used to deallocate a GeoTIFF access handle.
 
 int GTIFWriteKeys(GTIF *gt)
 {
-	int i;
-	GeoKey *keyptr;
-	KeyEntry *entptr;
-	KeyHeader *header;
+    int i;
+    GeoKey *keyptr;
+    KeyEntry *entptr;
+    KeyHeader *header;
     TempKeyData tempData;
-	int sortkeys[MAX_KEYS];
+    int sortkeys[MAX_KEYS];
 	
-	if (!(gt->gt_flags & FLAG_FILE_MODIFIED)) return 1;
+    if (!(gt->gt_flags & FLAG_FILE_MODIFIED)) return 1;
 	
     tempData.tk_asciiParams = 0;
     tempData.tk_asciiParamsLength = 0;
     tempData.tk_asciiParamsOffset = 0;
 
-	/*  Sort the Keys into numerical order */
-	if (!SortKeys(gt,sortkeys))
-	{
-		/* XXX error: a key was not recognized */
-	}
+    /*  Sort the Keys into numerical order */
+    if (!SortKeys(gt,sortkeys))
+    {
+        /* XXX error: a key was not recognized */
+    }
 	
-	/* Set up header of ProjectionInfo tag */
-	header = (KeyHeader *)gt->gt_short;
-	header->hdr_num_keys = gt->gt_num_keys;
-	header->hdr_version  = GvCurrentVersion;
-	header->hdr_rev_major  = GvCurrentRevision;
-	header->hdr_rev_minor  = GvCurrentMinorRev;
+    /* Set up header of ProjectionInfo tag */
+    header = (KeyHeader *)gt->gt_short;
+    header->hdr_num_keys = gt->gt_num_keys;
+    header->hdr_version  = GvCurrentVersion;
+    header->hdr_rev_major  = GvCurrentRevision;
+    header->hdr_rev_minor  = GvCurrentMinorRev;
 	
     /* Sum up the ASCII tag lengths */
     for (i = 0; i < gt->gt_num_keys; i++)
-	{
-		keyptr = gt->gt_keys + sortkeys[i];
+    {
+        keyptr = gt->gt_keys + sortkeys[i];
         if (keyptr->gk_type == TYPE_ASCII)
         {
             tempData.tk_asciiParamsLength += keyptr->gk_count;
@@ -75,43 +75,35 @@ int GTIFWriteKeys(GTIF *gt)
         tempData.tk_asciiParams[tempData.tk_asciiParamsLength] = '\0';
     }
 
-	/* Set up the rest of SHORT array properly */
-	keyptr = gt->gt_keys;
-	entptr = (KeyEntry*)(gt->gt_short + 4);
-	for (i=0; i< gt->gt_num_keys; i++,entptr++)
-	{
-		if (!WriteKey(gt,&tempData,entptr,keyptr+sortkeys[i])) return 0;
-	}	
+    /* Set up the rest of SHORT array properly */
+    keyptr = gt->gt_keys;
+    entptr = (KeyEntry*)(gt->gt_short + 4);
+    for (i=0; i< gt->gt_num_keys; i++,entptr++)
+    {
+        if (!WriteKey(gt,&tempData,entptr,keyptr+sortkeys[i])) return 0;
+    }	
 	
-	/* Write out the Key Directory */
-	(gt->gt_methods.set)(gt->gt_tif, GTIFF_GEOKEYDIRECTORY, gt->gt_nshorts, gt->gt_short );	
+    /* Write out the Key Directory */
+    (gt->gt_methods.set)(gt->gt_tif, GTIFF_GEOKEYDIRECTORY, gt->gt_nshorts, gt->gt_short );	
 	
-	/* Write out the params directories */
-	if (gt->gt_ndoubles)
-	  (gt->gt_methods.set)(gt->gt_tif, GTIFF_DOUBLEPARAMS, gt->gt_ndoubles, gt->gt_double );
-	if (tempData.tk_asciiParamsLength > 0)
-	{
+    /* Write out the params directories */
+    if (gt->gt_ndoubles)
+        (gt->gt_methods.set)(gt->gt_tif, GTIFF_DOUBLEPARAMS, gt->gt_ndoubles, gt->gt_double );
+    if (tempData.tk_asciiParamsLength > 0)
+    {
         /* just to be safe */
-	    tempData.tk_asciiParams[tempData.tk_asciiParamsLength] = '\0';
-	    (gt->gt_methods.set)(gt->gt_tif,
-            GTIFF_ASCIIPARAMS, 0, tempData.tk_asciiParams);
-	}
+        tempData.tk_asciiParams[tempData.tk_asciiParamsLength] = '\0';
+        (gt->gt_methods.set)(gt->gt_tif,
+                             GTIFF_ASCIIPARAMS, 0, tempData.tk_asciiParams);
+    }
 	
-	gt->gt_flags &= ~FLAG_FILE_MODIFIED;
+    gt->gt_flags &= ~FLAG_FILE_MODIFIED;
 
     if (tempData.tk_asciiParamsLength > 0)
     {
         _GTIFFree (tempData.tk_asciiParams);
     }
-	return 1;
-
-WriteFailed:
-
-    if (tempData.tk_asciiParamsLength > 0)
-    {
-        _GTIFFree (tempData.tk_asciiParams);
-    }
-    return 0;
+    return 1;
 }
 
 /**********************************************************************
@@ -128,44 +120,44 @@ WriteFailed:
 static int WriteKey(GTIF* gt, TempKeyData* tempData,
                     KeyEntry* entptr, GeoKey* keyptr)
 {
-	int count;
+    int count;
 	
-	entptr->ent_key = keyptr->gk_key;
-	entptr->ent_count = keyptr->gk_count;
-	count = entptr->ent_count;
+    entptr->ent_key = keyptr->gk_key;
+    entptr->ent_count = keyptr->gk_count;
+    count = entptr->ent_count;
 	
-	if (count==1 && keyptr->gk_type==TYPE_SHORT)
-	{
-		entptr->ent_location = GTIFF_LOCAL;
-		entptr->ent_val_offset = *(pinfo_t*)&keyptr->gk_data;
-		return 1;
-	}
+    if (count==1 && keyptr->gk_type==TYPE_SHORT)
+    {
+        entptr->ent_location = GTIFF_LOCAL;
+        entptr->ent_val_offset = *(pinfo_t*)&keyptr->gk_data;
+        return 1;
+    }
 		  
-	switch (keyptr->gk_type)
-	{
-		case TYPE_SHORT:
-			entptr->ent_location = GTIFF_GEOKEYDIRECTORY;
-			entptr->ent_val_offset = 
-			   (pinfo_t*)keyptr->gk_data - gt->gt_short;
-			break;
-		case TYPE_DOUBLE:
-			entptr->ent_location = GTIFF_DOUBLEPARAMS;
-			entptr->ent_val_offset = 
-			   (double*)keyptr->gk_data - gt->gt_double;
-			break;
-		case TYPE_ASCII:
-			entptr->ent_location = GTIFF_ASCIIPARAMS;
-			entptr->ent_val_offset = tempData->tk_asciiParamsOffset;
-            _GTIFmemcpy (tempData->tk_asciiParams + tempData->tk_asciiParamsOffset
-                , keyptr->gk_data, keyptr->gk_count);
-            tempData->tk_asciiParams[tempData->tk_asciiParamsOffset+keyptr->gk_count-1] = '|';
-            tempData->tk_asciiParamsOffset += keyptr->gk_count;
-			break;
-		default:
-			return 0; /* failure */
-	}
+    switch (keyptr->gk_type)
+    {
+      case TYPE_SHORT:
+        entptr->ent_location = GTIFF_GEOKEYDIRECTORY;
+        entptr->ent_val_offset = 
+            (pinfo_t*)keyptr->gk_data - gt->gt_short;
+        break;
+      case TYPE_DOUBLE:
+        entptr->ent_location = GTIFF_DOUBLEPARAMS;
+        entptr->ent_val_offset = 
+            (double*)keyptr->gk_data - gt->gt_double;
+        break;
+      case TYPE_ASCII:
+        entptr->ent_location = GTIFF_ASCIIPARAMS;
+        entptr->ent_val_offset = tempData->tk_asciiParamsOffset;
+        _GTIFmemcpy (tempData->tk_asciiParams + tempData->tk_asciiParamsOffset
+                     , keyptr->gk_data, keyptr->gk_count);
+        tempData->tk_asciiParams[tempData->tk_asciiParamsOffset+keyptr->gk_count-1] = '|';
+        tempData->tk_asciiParamsOffset += keyptr->gk_count;
+        break;
+      default:
+        return 0; /* failure */
+    }
 	
-	return 1; /* success */
+    return 1; /* success */
 }
 
 
