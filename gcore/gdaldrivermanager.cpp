@@ -25,6 +25,9 @@
  * The GDALDriverManager class from gdal_priv.h.
  * 
  * $Log$
+ * Revision 1.16  2003/05/20 19:10:36  warmerda
+ * added GDAL_DATA and CPLGetConfigOptions support
+ *
  * Revision 1.15  2003/04/30 17:13:48  warmerda
  * added docs for many C functions
  *
@@ -140,7 +143,11 @@ GDALDriverManager::GDALDriverManager()
 /*      other mechanisms such as environment variables will have        */
 /*      been employed.                                                  */
 /* -------------------------------------------------------------------- */
-    if( pszUpdatableINST_DATA[19] != ' ' )
+    if( CPLGetConfigOption( "GDAL_DATA", NULL ) != NULL )
+    {
+        CPLPushFinderLocation( CPLGetConfigOption( "GDAL_DATA", NULL ) );
+    }
+    else if( pszUpdatableINST_DATA[19] != ' ' )
     {
         CPLPushFinderLocation( pszUpdatableINST_DATA + 19 );
     }
