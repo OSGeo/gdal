@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.43  2002/08/08 22:02:17  warmerda
+ * autodesk fix for preserving geometry index
+ *
  * Revision 1.42  2002/07/12 12:31:42  warmerda
  * removed redundent code
  *
@@ -220,6 +223,15 @@ void CSFCommand::FinalRelease()
     
     // clear destination.
     CopyColumnInfo( NULL, &m_paColInfo );
+
+#ifdef notdef
+    // clean up spatial filter geometry if still hanging around.
+    if( m_poGeometry != NULL )
+    {
+        OGRGeometryFactory::destroyGeometry( m_poGeometry );
+        m_poGeometry = NULL;
+    }
+#endif
 }
 
 /************************************************************************/
@@ -232,6 +244,15 @@ HRESULT CSFCommand::Execute(IUnknown * pUnkOuter, REFIID riid,
 {
     CSFRowset* pRowset;
     HRESULT      hr;
+
+#ifdef notdef
+    // clean up spatial filter geometry from previous execute
+    if( m_poGeometry != NULL )
+    {
+        OGRGeometryFactory::destroyGeometry( m_poGeometry );
+        m_poGeometry = NULL;
+    }
+#endif
 
     if (pParams != NULL && pParams->pData != NULL)
     {
@@ -250,7 +271,8 @@ HRESULT CSFCommand::Execute(IUnknown * pUnkOuter, REFIID riid,
     }
 
     // copy the column information from the rowset to the command.
-    CopyColumnInfo( &(pRowset->m_paColInfo), &m_paColInfo );
+    if( pRowset )
+        CopyColumnInfo( &(pRowset->m_paColInfo), &m_paColInfo );
 
     return hr;
 }
@@ -491,6 +513,15 @@ CSFRowset::~CSFRowset()
     if( m_poLayer != NULL && m_iLayer == -1 )
         delete m_poLayer;
 
+#ifdef notdef
+    // clean up spatial filter geometry if still hanging around.
+    if( m_poGeometry != NULL )
+    {
+        OGRGeometryFactory::destroyGeometry( m_poGeometry );
+        m_poGeometry = NULL;
+    }
+#endif
+
     CPLDebug( "OGR_OLEDB", "~CSFRowset()" );
 }
 
@@ -509,7 +540,8 @@ CSFRowset::~CSFRowset()
 /************************************************************************/
 
 char *CSFRowset::ProcessSpecialFields( const char *pszRawCommand, 
-                                       int *pbAddGeometry )
+                                       int *pbAddGeometry,
+                                       int* pnGeometryIndex )
 
 {
     swq_select *select_info = NULL;
@@ -576,6 +608,7 @@ char *CSFRowset::ProcessSpecialFields( const char *pszRawCommand,
                  && (stricmp(def->field_name,"OGIS_GEOMETRY") == 0 ) )
         {
             *pbAddGeometry = TRUE;
+            *pnGeometryIndex = i;
 
             /* Strip one item out of the list of columns */
             swq_free( def->field_name );
@@ -610,6 +643,7 @@ HRESULT CSFRowset::Execute(DBPARAMS * pParams, LONG* pcRowsAffected)
     char	*pszCommand;
     IUnknown    *pIUnknown;
     int         bAddGeometry = TRUE;
+    int		nGeometryIndex = -1;
     int         bAddFID = FALSE;
 
     QueryInterface(IID_IUnknown,(void **) &pIUnknown);
@@ -635,7 +669,7 @@ HRESULT CSFRowset::Execute(DBPARAMS * pParams, LONG* pcRowsAffected)
         char *pszCleanCommand;
 
         pszCleanCommand = 
-            ProcessSpecialFields( pszCommand, &bAddGeometry );
+            ProcessSpecialFields( pszCommand, &bAddGeometry, &nGeometryIndex );
 
         m_poLayer = m_poDS->ExecuteSQL( pszCleanCommand, poGeometry, NULL );
         CPLFree( pszCleanCommand );
@@ -680,16 +714,35 @@ HRESULT CSFRowset::Execute(DBPARAMS * pParams, LONG* pcRowsAffected)
     int      iOGRIndex;
     OGRFeatureDefn *poDefn = m_poLayer->GetLayerDefn();
 
+    // Clear index
+    m_panOGRIndex.RemoveAll();
+    int nIndex = 0;
+
     /* FID */
     if( bAddFID )
     {
         iOGRIndex = -1;
         m_panOGRIndex.Add(iOGRIndex);
+        nIndex++;
     }
 
     /* All the regular attributes */
     for( iOGRIndex = 0; iOGRIndex < poDefn->GetFieldCount(); iOGRIndex++ ) 
+    {
+        // Check if the geometry column is supposed to go here
+        if(nGeometryIndex == nIndex)
+        {
+            // The geometry column needs to go here
+            int nGeomIndex = -2;
+            m_panOGRIndex.Add(nGeomIndex);
+            
+            bAddGeometry = FALSE;
+        }
+        
+        // Add the column
         m_panOGRIndex.Add(iOGRIndex);
+        nIndex++;
+    }
         
     /* OGIS_GEOMETRY */
     if( bAddGeometry )
