@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2003/12/11 21:11:00  warmerda
+ * fixed leak of ATIDRefs list
+ *
  * Revision 1.9  2003/10/06 16:21:33  warmerda
  * ensure we get the attributes properly for primary and secondary records
  *
@@ -212,6 +215,7 @@ OGRSDTSLayer::OGRSDTSLayer( SDTSTransfer * poTransferIn, int iLayerIn,
             
         } /* next iSF (subfield) */
     } /* next iTable */
+    CSLDestroy( papszATIDRefs );
 }
 
 /************************************************************************/
