@@ -25,7 +25,7 @@ default:	$(SDTSLIB) sdtsdataset.o
 all:	$(SDTSLIB) sdts2shp
 
 clean:	clean-dist
-	rm -rf *.o sdts2shp html man
+	rm -rf *.o sdts2shp html man $(SDTSLIB)
 
 clean-dist:
 	rm -rf $(DISTDIR) $(DISTDIR).zip $(DISTDIR).tar.gz

@@ -17,7 +17,8 @@ default:	$(ISOLIB) 8211view
 all:	$(ISOLIB) 8211dump 8211view docs
 
 clean:
-	rm -rf *.o 8211dump 8211view $(DISTDIR) $(DISTDIR).tar.gz html/*
+	rm -rf *.o 8211dump 8211view $(DISTDIR) $(DISTDIR).tar.gz html/* \
+		$(ISOLIB)
 
 dist-clean:	clean
 	rm -rf $(DISTDIR)
