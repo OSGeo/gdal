@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2001/03/07 13:49:37  warmerda
+ * removed attribute dumping, handled by DGNDumpElement()
+ *
  * Revision 1.3  2001/01/10 16:10:57  warmerda
  * Added extents reporting
  *
@@ -76,18 +79,6 @@ int main( int argc, char ** argv )
         while( (psElement=DGNReadElement(hDGN)) != NULL )
         {
             DGNDumpElement( hDGN, psElement, stdout );
-
-            {
-                DGNInfo	*psDGNInfo = (DGNInfo *) hDGN;
-                int	 nAttIndex;
-
-                nAttIndex = psDGNInfo->abyElem[30]
-                          + psDGNInfo->abyElem[31] * 256;
-
-                if( nAttIndex * 2 + 32 < psDGNInfo->nElemBytes )
-                    printf( "index to attribute linkage: %d\n", 
-                            nAttIndex );
-            }
             DGNFreeElement( hDGN, psElement );
         }
     }
