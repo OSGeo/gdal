@@ -44,6 +44,9 @@
  *   without vsnprintf(). 
  *
  * $Log$
+ * Revision 1.39  2004/07/12 21:50:38  warmerda
+ * Added SQL escaping style
+ *
  * Revision 1.38  2004/04/23 22:23:32  warmerda
  * Fixed key memory leak in seldom used CSLSetNameValueSeperator().
  *
@@ -1209,6 +1212,10 @@ void CSLSetNameValueSeparator( char ** papszList, const char *pszSeparator )
  * (leading zero supplied if needed).  This is the mechanism used for encoding
  * values to be passed in URLs.
  *
+ * CPLES_SQL(3): All single quotes are replaced with two single quotes.  
+ * Suitable for use when constructing literal values for SQL commands where
+ * the literal will be enclosed in single quotes.
+ *
  * @param pszInput the string to escape.  
  * @param nLength The number of bytes of data to preserve.  If this is -1
  * the strlen(pszString) function will be used to compute the length.
@@ -1313,6 +1320,22 @@ char *CPLEscapeString( const char *pszInput, int nLength,
                 pszOutput[iOut++] = 'o';
                 pszOutput[iOut++] = 't';
                 pszOutput[iOut++] = ';';
+            }
+            else
+                pszOutput[iOut++] = pszInput[iIn];
+        }
+        pszOutput[iOut] = '\0';
+    }
+    else if( nScheme == CPLES_SQL )
+    {
+        int iOut = 0, iIn;
+
+        for( iIn = 0; iIn < nLength; iIn++ )
+        {
+            if( pszInput[iIn] == '\'' )
+            {
+                pszOutput[iOut++] = '\'';
+                pszOutput[iOut++] = '\'';
             }
             else
                 pszOutput[iOut++] = pszInput[iIn];
@@ -1432,6 +1455,21 @@ char *CPLUnescapeString( const char *pszInput, int *pnLength, int nScheme )
             {
                 pszOutput[iOut++] = ' ';
             }   
+            else
+            {
+                pszOutput[iOut++] = pszInput[iIn];
+            }
+        }
+    }
+    else if( nScheme == CPLES_SQL )
+    {
+        for( iIn = 0; pszInput[iIn] != '\0'; iIn++ )
+        {
+            if( pszInput[iIn] == '\'' && pszInput[iIn+1] == '\'' )
+            {
+                iIn++;
+                pszOutput[iOut++] = pszInput[iIn];
+            }
             else
             {
                 pszOutput[iOut++] = pszInput[iIn];

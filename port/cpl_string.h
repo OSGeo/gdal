@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.16  2004/07/12 21:50:38  warmerda
+ * Added SQL escaping style
+ *
  * Revision 1.15  2003/07/17 10:15:40  dron
  * CSLTestBoolean() added.
  *
@@ -158,6 +161,7 @@ void CPL_DLL CSLSetNameValueSeparator( char ** papszStrList,
 #define CPLES_BackslashQuotable 0
 #define CPLES_XML               1
 #define CPLES_URL               2   /* unescape only for now */
+#define CPLES_SQL               3
 
 char CPL_DLL *CPLEscapeString( const char *pszString, int nLength, 
                                int nScheme );
