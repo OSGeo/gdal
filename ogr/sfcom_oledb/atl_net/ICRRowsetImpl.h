@@ -34,6 +34,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2002/08/28 20:07:45  warmerda
+ * Get the pSrcData from m_rgRowData[] in GetDBStatus()
+ *
  * Revision 1.2  2002/08/28 17:42:07  warmerda
  * changed to unix text format
  *
@@ -233,10 +236,15 @@ public:
 			return S_OK;
 		return RefRows(cRows, rghRows, rgRefCounts, rgRowStatus, TRUE);
 	}
-	virtual DBSTATUS GetDBStatus(RowClass* , ATLCOLUMNINFO*)
+	virtual DBSTATUS GetDBStatus(RowClass* pRow, ATLCOLUMNINFO *poColInfo)
 	{
-		return DBSTATUS_S_OK;
+            T* pT = (T*) this;
+            void *pSrcData;
+            
+            pSrcData = (void*)&(pT->m_rgRowData[pRow->m_iRowset]);
+            return pT->GetRCDBStatus(pRow, poColInfo, pSrcData);
 	}
+
 	virtual HRESULT SetDBStatus(DBSTATUS*, RowClass* , ATLCOLUMNINFO*)
 	{
 		// The provider overrides this function to handle special processing
