@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2002/04/08 17:33:25  warmerda
+ * now you can get dataset records via metadata api
+ *
  * Revision 1.7  2001/09/26 19:23:27  warmerda
  * added CollectDSDMetadata
  *
@@ -80,6 +83,8 @@ class EnvisatDataset : public RawDataset
     int         nGCPCount;
     GDAL_GCP    *pasGCPList;
 
+    char        **papszTempMD;
+    
     void        ScanForGCPs();
 
     void	CollectMetadata( EnvisatFile_HeaderFlag );
@@ -92,6 +97,8 @@ class EnvisatDataset : public RawDataset
     virtual int    GetGCPCount();
     virtual const char *GetGCPProjection();
     virtual const GDAL_GCP *GetGCPs();
+    virtual char **GetMetadata( const char * pszDomain );
+
 
     static GDALDataset *Open( GDALOpenInfo * );
 };
@@ -111,6 +118,7 @@ EnvisatDataset::EnvisatDataset()
     hEnvisatFile = NULL;
     nGCPCount = 0;
     pasGCPList = NULL;
+    papszTempMD = NULL;
 }
 
 /************************************************************************/
@@ -128,6 +136,8 @@ EnvisatDataset::~EnvisatDataset()
         GDALDeinitGCPs( nGCPCount, pasGCPList );
         CPLFree( pasGCPList );
     }
+
+    CSLDestroy( papszTempMD );
 }
 
 /************************************************************************/
@@ -269,6 +279,81 @@ void EnvisatDataset::ScanForGCPs()
             
         nGCPCount++;
     }
+}
+
+/************************************************************************/
+/*                            GetMetadata()                             */
+/************************************************************************/
+
+char **EnvisatDataset::GetMetadata( const char * pszDomain )
+
+{
+    if( pszDomain == NULL || !EQUALN(pszDomain,"envisat-ds-",11) )
+        return GDALDataset::GetMetadata( pszDomain );
+
+/* -------------------------------------------------------------------- */
+/*      Get the dataset name and record number.                         */
+/* -------------------------------------------------------------------- */
+    char	szDSName[128];
+    int         i, nRecord = -1;
+
+    strncpy( szDSName, pszDomain+11, sizeof(szDSName) );
+    for( i = 0; i < (int) sizeof(szDSName)-1; i++ )
+    {
+        if( szDSName[i] == '-' )
+        {
+            szDSName[i] = '\0';
+            nRecord = atoi(szDSName+1);
+            break;
+        }
+    }
+
+    if( nRecord == -1 )
+        return NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Get the dataset index and info.                                 */
+/* -------------------------------------------------------------------- */
+    int nDSIndex = EnvisatFile_GetDatasetIndex( hEnvisatFile, szDSName );
+    int nDSRSize, nNumDSR;
+
+    if( nDSIndex == -1 )
+        return NULL;
+
+    EnvisatFile_GetDatasetInfo( hEnvisatFile, nDSIndex, NULL, NULL, NULL,
+                                NULL, NULL, &nNumDSR, &nDSRSize );
+
+    if( nDSRSize == -1 || nRecord < 0 || nRecord >= nNumDSR )
+        return NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Read the requested record.                                      */
+/* -------------------------------------------------------------------- */
+    char  *pszRecord;
+
+    pszRecord = (char *) CPLMalloc(nDSRSize+1);
+    
+    if( EnvisatFile_ReadDatasetRecord( hEnvisatFile, nDSIndex, nRecord, 
+                                       pszRecord ) == FAILURE )
+    {
+        CPLFree( pszRecord );
+        return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Massage the data into a safe textual format.  For now we        */
+/*      just turn zero bytes into spaces.                               */
+/* -------------------------------------------------------------------- */
+    for( i = 0; i < nDSRSize; i++ )
+        if( pszRecord[i] == '\0' )
+            pszRecord[i] = ' ';
+
+    CSLDestroy( papszTempMD );
+    papszTempMD = CSLSetNameValue( NULL, "RawRecord", pszRecord );
+
+    CPLFree( pszRecord );
+
+    return papszTempMD;
 }
 
 /************************************************************************/
