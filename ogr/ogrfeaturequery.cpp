@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2002/04/29 19:31:55  warmerda
+ * added support for FID field
+ *
  * Revision 1.5  2002/04/19 20:46:06  warmerda
  * added [NOT] IN, [NOT] LIKE and IS [NOT] NULL support
  *
@@ -98,11 +101,12 @@ OGRErr OGRFeatureQuery::Compile( OGRFeatureDefn *poDefn,
     char        **papszFieldNames;
     swq_field_type *paeFieldTypes;
     int         iField;
+    int         nFieldCount = poDefn->GetFieldCount()+1;
 
     papszFieldNames = (char **) 
-        CPLMalloc(sizeof(char *) * poDefn->GetFieldCount() );
+        CPLMalloc(sizeof(char *) * nFieldCount );
     paeFieldTypes = (swq_field_type *) 
-        CPLMalloc(sizeof(swq_field_type) * poDefn->GetFieldCount() );
+        CPLMalloc(sizeof(swq_field_type) * nFieldCount );
 
     for( iField = 0; iField < poDefn->GetFieldCount(); iField++ )
     {
@@ -130,6 +134,9 @@ OGRErr OGRFeatureQuery::Compile( OGRFeatureDefn *poDefn,
         }
     }
 
+    papszFieldNames[nFieldCount-1] = "FID";
+    paeFieldTypes[nFieldCount-1] = SWQ_INTEGER;
+
 /* -------------------------------------------------------------------- */
 /*      Try to parse.                                                   */
 /* -------------------------------------------------------------------- */
@@ -137,7 +144,7 @@ OGRErr OGRFeatureQuery::Compile( OGRFeatureDefn *poDefn,
     OGRErr      eErr = OGRERR_NONE;
 
     poTargetDefn = poDefn;
-    pszError = swq_expr_compile( pszExpression, poDefn->GetFieldCount(),
+    pszError = swq_expr_compile( pszExpression, nFieldCount,
                                  papszFieldNames, paeFieldTypes, 
                                  (swq_expr **) &pSWQExpr );
     if( pszError != NULL )
@@ -151,6 +158,7 @@ OGRErr OGRFeatureQuery::Compile( OGRFeatureDefn *poDefn,
     CPLFree( papszFieldNames );
     CPLFree( paeFieldTypes );
 
+
     return eErr;
 }
 
@@ -161,7 +169,16 @@ OGRErr OGRFeatureQuery::Compile( OGRFeatureDefn *poDefn,
 static int OGRFeatureQueryEvaluator( swq_field_op *op, OGRFeature *poFeature )
 
 {
-    OGRField    *psField = poFeature->GetRawFieldRef( op->field_index );
+    OGRField sFID;
+    OGRField *psField;
+
+    if( op->field_index == poFeature->GetDefnRef()->GetFieldCount() )
+    {
+        sFID.Integer = poFeature->GetFID();
+        psField = &sFID;
+    }
+    else
+        psField = poFeature->GetRawFieldRef( op->field_index );
 
     switch( op->field_type )
     {
