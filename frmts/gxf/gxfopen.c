@@ -29,6 +29,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2000/07/28 16:33:07  warmerda
+ * Fixed mixup between RawXSize and RawYSize in GXFGetRawScanline().
+ * See http://bugzilla.remotesensing.org/show_bug.cgi?id=5
+ * Thanks to msalazar@schaferdc.com.
+ *
  * Revision 1.7  1999/10/27 20:22:33  warmerda
  * Added Doxygen style documentation.
  * Added GXFGetPosition() function.
@@ -600,7 +605,7 @@ CPLErr GXFGetRawScanline( GXFHandle hGXF, int iScanline, double * padfLineBuf )
 /* -------------------------------------------------------------------- */
 /*      Validate scanline.                                              */
 /* -------------------------------------------------------------------- */
-    if( iScanline < 0 || iScanline >= psGXF->nRawXSize )
+    if( iScanline < 0 || iScanline >= psGXF->nRawYSize )
     {
         CPLError( CE_Failure, CPLE_IllegalArg,
                   "GXFGetRawScanline(): Scanline `%d' does not exist.\n",
