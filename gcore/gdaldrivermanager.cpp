@@ -25,6 +25,9 @@
  * The GDALDriverManager class from gdal_priv.h.
  * 
  * $Log$
+ * Revision 1.9  2002/05/14 21:38:32  warmerda
+ * make INST_DATA overidable with binary patch
+ *
  * Revision 1.8  2001/07/18 04:04:30  warmerda
  * added CPL_CVSID
  *
@@ -55,6 +58,9 @@
 #include "cpl_string.h"
 
 CPL_CVSID("$Id$");
+
+static char *pszUpdatableINST_DATA = 
+"__INST_DATA_TARGET:                                                                                                                                      ";
 
 /************************************************************************/
 /* ==================================================================== */
@@ -104,9 +110,28 @@ GDALDriverManager::GDALDriverManager()
     CPLAssert( poDM == NULL );
     poDM = this;
 
+/* -------------------------------------------------------------------- */
+/*      We want to push a location to search for data files             */
+/*      supporting GDAL/OGR such as EPSG csv files, S-57 definition     */
+/*      files, and so forth.  The static pszUpdateableINST_DATA         */
+/*      string can be updated within the shared library or              */
+/*      executable during an install to point installed data            */
+/*      directory.  If it isn't burned in here then we use the          */
+/*      INST_DATA macro (setup at configure time) if                    */
+/*      available. Otherwise we don't push anything and we hope         */
+/*      other mechanisms such as environment variables will have        */
+/*      been employed.                                                  */
+/* -------------------------------------------------------------------- */
+    if( pszUpdatableINST_DATA[19] != ' ' )
+    {
+        CPLPushFinderLocation( pszUpdatableINST_DATA + 19 );
+    }
+    else
+    {
 #ifdef INST_DATA
-    CPLPushFinderLocation( INST_DATA );
+        CPLPushFinderLocation( INST_DATA );
 #endif
+    }
 }
 
 /************************************************************************/
