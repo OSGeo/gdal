@@ -40,10 +40,10 @@
  *
  */
 
+#include "cpl_port.h"
 #include "tiffio.h"
 #include "tif_ovrcache.h"
 #include <assert.h>
-#include "cpl_port.h"
 
 CPL_CVSID("tif_ovrcache.c,v 1.2 2001/07/18 04:51:56 warmerda Exp");
 
