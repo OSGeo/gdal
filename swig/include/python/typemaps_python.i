@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.26  2005/02/24 17:35:15  hobu
+ * add the python name to the THROW_OGR_ERROR typemap
+ *
  * Revision 1.25  2005/02/24 16:36:31  kruland
  * Added IF_FALSE_RETURN_NONE typemap for GCPsToGeoTransform method.
  * Changed GCPs typemaps to use new object rather than raw tuple.
@@ -205,7 +208,7 @@ OGRErrMessages( int rc ) {
   }
 }
 %}
-%typemap(out,fragment="OGRErrMessages") THROW_OGR_ERROR
+%typemap(python, out,fragment="OGRErrMessages") THROW_OGR_ERROR
 {
   /* %typemap(out) THROW_OGR_ERROR */
   resultobj = 0;
@@ -214,7 +217,7 @@ OGRErrMessages( int rc ) {
     SWIG_fail;
   }
 }
-%typemap(ret) THROW_OGR_ERROR
+%typemap(python, ret) THROW_OGR_ERROR
 {
   /* %typemap(ret) THROW_OGR_ERROR */
   if (resultobj == Py_None ) {
