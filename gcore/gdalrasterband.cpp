@@ -28,6 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************
  * $Log$
+ * Revision 1.13  2000/03/10 13:54:37  warmerda
+ * fixed use of overviews in gethistogram
+ *
  * Revision 1.12  2000/03/09 23:22:03  warmerda
  * added GetHistogram
  *
@@ -1437,9 +1440,10 @@ CPLErr GDALRasterBand::GetHistogram( double dfMin, double dfMax,
             }
             
             if( poBestOverview != NULL )
-                return GetHistogram( dfMin, dfMax, nBuckets, panHistogram, 
-                                     bIncludeOutOfRange, bApproxOK, 
-                                     pfnProgress, pProgressData );
+                return poBestOverview->
+                    GetHistogram( dfMin, dfMax, nBuckets, panHistogram, 
+                                  bIncludeOutOfRange, bApproxOK, 
+                                  pfnProgress, pProgressData );
         }
     }
 
