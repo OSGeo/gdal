@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.48  2003/02/25 04:53:51  warmerda
+ * added CopyGeogCSFrom() method
+ *
  * Revision 1.47  2003/02/06 04:53:12  warmerda
  * added Fixup() method
  *
@@ -353,6 +356,7 @@ class CPL_DLL OGRSpatialReference
                            const char * pszUnits = NULL,
                            double dfConvertToRadians = 0.0 );
     OGRErr      SetWellKnownGeogCS( const char * );
+    OGRErr      CopyGeogCSFrom( const OGRSpatialReference * );
 
     OGRErr      SetFromUserInput( const char * );
 
