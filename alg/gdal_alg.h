@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2001/02/02 21:19:25  warmerda
+ * added CPL_DLL for functions
+ *
  * Revision 1.1  2001/01/22 22:30:59  warmerda
  * New
  *
@@ -46,7 +49,7 @@
 
 CPL_C_START
 
-int GDALComputeMedianCutPCT( GDALRasterBandH hRed, 
+int CPL_DLL GDALComputeMedianCutPCT( GDALRasterBandH hRed, 
                              GDALRasterBandH hGreen, 
                              GDALRasterBandH hBlue, 
                              int (*pfnIncludePixel)(int,int,void*),
@@ -55,7 +58,7 @@ int GDALComputeMedianCutPCT( GDALRasterBandH hRed,
                              GDALProgressFunc pfnProgress, 
                              void * pProgressArg );
 
-int GDALDitherRGB2PCT( GDALRasterBandH hRed, 
+int CPL_DLL GDALDitherRGB2PCT( GDALRasterBandH hRed, 
                        GDALRasterBandH hGreen, 
                        GDALRasterBandH hBlue, 
                        GDALRasterBandH hTarget, 
