@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2001/12/19 22:03:58  warmerda
+ * iniitialize bExtentsSet
+ *
  * Revision 1.14  2001/12/17 22:34:43  warmerda
  * ensure SPLIT_MULTIPOINT option is passed to S57Reader
  *
@@ -95,6 +98,8 @@ OGRS57DataSource::OGRS57DataSource()
     papszOptions = NULL;
 
     poSpatialRef = new OGRSpatialReference( "GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563]],PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433]]");
+    
+    bExtentsSet = FALSE;
 }
 
 /************************************************************************/
