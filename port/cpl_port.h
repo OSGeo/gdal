@@ -38,6 +38,9 @@
  *   GUInt16, and GByte are defined.
  *
  * $Log$
+ * Revision 1.9  1999/02/17 01:41:17  warmerda
+ * Added NULL.
+ *
  * Revision 1.8  1999/02/02 21:32:38  warmerda
  * Added CPL_{MSB,LSB}WORD{16,32} macros.
  *
@@ -141,6 +144,10 @@ typedef int             GBool;
 #ifndef MAX
 #  define MIN(a,b)      ((a<b) ? a : b)
 #  define MAX(a,b)      ((a>b) ? a : b)
+#endif
+
+#ifndef NULL
+#define NULL 0
 #endif
 
 #ifndef ABS
