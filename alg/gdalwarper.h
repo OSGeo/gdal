@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2003/11/22 19:13:31  dron
+ * Added C bindings for GDALWarpOperation functions.
+ *
  * Revision 1.10  2003/07/04 11:50:57  dron
  * GRA_CubicSpline added to the list of resampling algorithms.
  *
@@ -334,5 +337,21 @@ public:
 };
 
 #endif /* def __cplusplus */
+
+CPL_C_START
+
+typedef void * GDALWarpOperationH;
+
+GDALWarpOperationH CPL_DLL GDALCreateWarpOperation(const GDALWarpOptions* );
+void CPL_DLL GDALDestroyWarpOperation( GDALWarpOperationH );
+CPLErr CPL_DLL GDALChunkAndWarpImage( GDALWarpOperationH, int, int, int, int );
+CPLErr CPL_DLL GDALChunkAndWarpMulti( GDALWarpOperationH, int, int, int, int );
+CPLErr CPL_DLL GDALWarpRegion( GDALWarpOperationH,
+                               int, int, int, int, int, int, int, int );
+CPLErr CPL_DLL GDALWarpRegionToBuffer( GDALWarpOperationH, int, int, int, int,
+                                       void *, GDALDataType,
+                                       int, int, int, int );
+
+CPL_C_END
 
 #endif /* ndef GDAL_ALG_H_INCLUDED */

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2003/11/22 19:13:31  dron
+ * Added C bindings for GDALWarpOperation functions.
+ *
  * Revision 1.16  2003/07/26 17:43:15  warmerda
  * Added various warp options in ComputeSourceWindow().
  *
@@ -483,6 +486,43 @@ CPLErr GDALWarpOperation::Initialize( const GDALWarpOptions *psNewOptions )
 }
 
 /************************************************************************/
+/*                         GDALCreateWarpOperation()                    */
+/************************************************************************/
+
+/**
+ * @see GDALWarpOperation::Initialize()
+ */
+
+GDALWarpOperationH GDALCreateWarpOperation(
+    const GDALWarpOptions *psNewOptions )
+{
+    GDALWarpOperation *poOperation;
+
+    poOperation = new GDALWarpOperation;
+    if ( poOperation->Initialize( psNewOptions ) != CE_None )
+    {
+        delete poOperation;
+        return NULL;
+    }
+
+    return (GDALWarpOperationH)poOperation;
+}
+
+/************************************************************************/
+/*                         GDALDestroyWarpOperation()                   */
+/************************************************************************/
+
+/**
+ * @see GDALWarpOperation::~GDALWarpOperation()
+ */
+
+void GDALDestroyWarpOperation( GDALWarpOperationH hOperation )
+{
+    if ( hOperation )
+        delete (GDALWarpOperation *)hOperation;
+}
+
+/************************************************************************/
 /*                         ChunkAndWarpImage()                          */
 /************************************************************************/
 
@@ -549,6 +589,21 @@ CPLErr GDALWarpOperation::ChunkAndWarpImage(
     WipeChunkList();
 
     return CE_None;
+}
+
+/************************************************************************/
+/*                         GDALChunkAndWarpImage()                      */
+/************************************************************************/
+
+/**
+ * @see GDALWarpOperation::ChunkAndWarpImage()
+ */
+
+CPLErr GDALChunkAndWarpImage( GDALWarpOperationH hOperation,
+    int nDstXOff, int nDstYOff,  int nDstXSize, int nDstYSize )
+{
+    return ( (GDALWarpOperation *)hOperation )->
+        ChunkAndWarpImage( nDstXOff, nDstYOff, nDstXSize, nDstYSize );
 }
 
 /************************************************************************/
@@ -703,6 +758,21 @@ CPLErr GDALWarpOperation::ChunkAndWarpMulti(
     WipeChunkList();
 
     return CE_None;
+}
+
+/************************************************************************/
+/*                         GDALChunkAndWarpMulti()                      */
+/************************************************************************/
+
+/**
+ * @see GDALWarpOperation::ChunkAndWarpMulti()
+ */
+
+CPLErr GDALChunkAndWarpMulti( GDALWarpOperationH hOperation,
+    int nDstXOff, int nDstYOff,  int nDstXSize, int nDstYSize )
+{
+    return ( (GDALWarpOperation *)hOperation )->
+        ChunkAndWarpMulti( nDstXOff, nDstYOff, nDstXSize, nDstYSize );
 }
 
 /************************************************************************/
@@ -1039,7 +1109,27 @@ CPLErr GDALWarpOperation::WarpRegion( int nDstXOff, int nDstYOff,
 }
 
 /************************************************************************/
-/*                            WarpToBuffer()                            */
+/*                             GDALWarpRegion()                         */
+/************************************************************************/
+
+/**
+ * @see GDALWarpOperation::WarpRegion()
+ */
+
+CPLErr GDALWarpRegion( GDALWarpOperationH hOperation,
+                       int nDstXOff, int nDstYOff,
+                       int nDstXSize, int nDstYSize,
+                       int nSrcXOff, int nSrcYOff,
+                       int nSrcXSize, int nSrcYSize )
+
+{
+    return ( (GDALWarpOperation *)hOperation )->
+        WarpRegion( nDstXOff, nDstYOff, nDstXSize, nDstYSize,
+                    nSrcXOff, nSrcYOff, nSrcXSize, nSrcYSize);
+}
+
+/************************************************************************/
+/*                            WarpRegionToBuffer()                      */
 /************************************************************************/
 
 /**
@@ -1269,6 +1359,26 @@ CPLErr GDALWarpOperation::WarpRegionToBuffer(
     CPLFree( oWK.papabyDstImage );
     
     return eErr;
+}
+
+/************************************************************************/
+/*                            GDALWarpRegionToBuffer()                  */
+/************************************************************************/
+
+/**
+ * @see GDALWarpOperation::WarpRegionToBuffer()
+ */
+                                 
+CPLErr GDALWarpRegionToBuffer( GDALWarpOperationH hOperation,
+    int nDstXOff, int nDstYOff, int nDstXSize, int nDstYSize, 
+    void *pDataBuf, GDALDataType eBufDataType,
+    int nSrcXOff, int nSrcYOff, int nSrcXSize, int nSrcYSize )
+
+{
+    return ( (GDALWarpOperation *)hOperation )->
+        WarpRegionToBuffer( nDstXOff, nDstYOff, nDstXSize, nDstYSize,
+                            pDataBuf, eBufDataType,
+                            nSrcXOff, nSrcYOff, nSrcXSize, nSrcYSize );
 }
 
 /************************************************************************/
