@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.3  2002/05/07 13:59:08  warmerda
+ * added support for NOS files
+ *
  * Revision 1.2  2001/12/08 21:58:27  warmerda
  * added gcps
  *
@@ -301,11 +304,15 @@ GDALDataset *BSBDataset::Open( GDALOpenInfo * poOpenInfo )
             && poOpenInfo->pabyHeader[i+2] == 'B' 
             && poOpenInfo->pabyHeader[i+3] == '/' )
             break;
+        if( poOpenInfo->pabyHeader[i+0] == 'N' 
+            && poOpenInfo->pabyHeader[i+1] == 'O' 
+            && poOpenInfo->pabyHeader[i+2] == 'S' 
+            && poOpenInfo->pabyHeader[i+3] == '/' )
+            break;
     }
 
     if( i == poOpenInfo->nHeaderBytes - 4 )
         return NULL;
-
 
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
