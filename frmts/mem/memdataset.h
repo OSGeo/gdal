@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2002/05/29 16:01:54  warmerda
+ * fixed SetColorInterpretation
+ *
  * Revision 1.6  2002/04/12 17:37:31  warmerda
  * added colortable support
  *
@@ -116,9 +119,7 @@ class CPL_DLL MEMRasterBand : public GDALRasterBand
     virtual GDALColorTable *GetColorTable();
     virtual CPLErr SetColorTable( GDALColorTable * ); 
 
-    // Helper methods to setup band properly.
-
-    void SetColorInterpretation( GDALColorInterp );
+    virtual CPLErr SetColorInterpretation( GDALColorInterp );
 };
 
 #endif /* ndef MEMDATASET_H_INCLUDED */
