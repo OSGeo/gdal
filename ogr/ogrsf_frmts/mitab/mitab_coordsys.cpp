@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_coordsys.cpp,v 1.14 2000/09/28 16:39:44 warmerda Exp $
+ * $Id: mitab_coordsys.cpp,v 1.16 2000/10/16 21:44:50 warmerda Exp $
  *
  * Name:     mitab_coordsys.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -31,6 +31,12 @@
  **********************************************************************
  *
  * $Log: mitab_coordsys.cpp,v $
+ * Revision 1.16  2000/10/16 21:44:50  warmerda
+ * added nonearth support
+ *
+ * Revision 1.15  2000/10/12 22:01:01  daniel
+ * Fixed test on number of bound params in MITABExtractCoordSysBounds()
+ *
  * Revision 1.14  2000/09/28 16:39:44  warmerda
  * avoid warnings for unused, and unitialized variables
  *
@@ -150,13 +156,15 @@ OGRSpatialReference *MITABCoordSys2SpatialRef( const char * pszCoordSys )
         nProjection = atoi(papszFields[2]);
         papszNextField = papszFields + 3;
     }
-    else if (CSLCount( papszFields ) >= 3
-             && EQUAL(papszFields[0],"NonEarth")
-             && EQUAL(papszFields[1],"Units") )
+    else if (CSLCount( papszFields ) >= 2
+             && EQUAL(papszFields[0],"NonEarth") )
     {
         // NonEarth Units "..." Bounds (x, y) (x, y)
         nProjection = 0;
         papszNextField = papszFields + 2;
+
+        if( papszNextField[0] != NULL && EQUAL(papszNextField[0],"Units") )
+            papszNextField++;
     }
     else
     {
@@ -230,10 +238,7 @@ OGRSpatialReference *MITABCoordSys2SpatialRef( const char * pszCoordSys )
          * Ideally we would like to return a SpatialRef whith no GEGOCS
          *-------------------------------------------------------------*/
       case 0:
-        CSLDestroy(papszFields);
-        //return poSR;
-        delete poSR;
-        return NULL;
+        poSR->SetLocalCS( "Nonearth" );
         break;
 
         /*--------------------------------------------------------------
@@ -484,7 +489,7 @@ OGRSpatialReference *MITABCoordSys2SpatialRef( const char * pszCoordSys )
 /*      For Non-Earth projection, we're done at this point.             */
 /* -------------------------------------------------------------------- */
     if (nProjection == 0)
-        return NULL; //poSR;
+        return poSR;
 
 /* ==================================================================== */
 /*      Establish the GeogCS                                            */
@@ -1048,7 +1053,7 @@ GBool MITABExtractCoordSysBounds( const char * pszCoordSys,
 
     int iBounds = CSLFindString( papszFields, "Bounds" );
 
-    if (iBounds >= 0 && iBounds + 5 < CSLCount(papszFields))
+    if (iBounds >= 0 && iBounds + 4 < CSLCount(papszFields))
     {
         dXMin = atof(papszFields[++iBounds]);
         dYMin = atof(papszFields[++iBounds]);
