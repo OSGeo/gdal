@@ -26,8 +26,11 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************/
 
+#ifdef _MSC_VER
 #pragma warning(disable : 4786)
 #pragma warning(disable : 4503)
+#endif
+
 #include "gdal_priv.h"
 #include "cpl_csv.h"
 #include "ogr_spatialref.h"
@@ -35,7 +38,11 @@
 #include <string>
 #include <algorithm>
 #include <map>
+
+#ifdef WIN32
 #include  <io.h>
+#endif
+
 #include  <stdio.h>
 #include  <stdlib.h>
 
