@@ -28,6 +28,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.4  2001/12/06 18:13:49  warmerda
+ * added CPLAddXMLChild and CPLCreateElmentAndValue
+ *
  * Revision 1.3  2001/11/16 21:20:16  warmerda
  * fixed typo
  *
@@ -486,7 +489,9 @@ CPLXMLNode *CPLParseXMLString( const char *pszString )
     if( CPLGetLastErrorType() == CE_None && sContext.nStackSize != 0 )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
-                  "Parse error at EOF, not all elements have been closed.\n" );
+                  "Parse error at EOF, not all elements have been closed,\n"
+		  "starting with %s\n",
+		  sContext.papsStack[sContext.nStackSize-1]->pszValue );
     }
 
 /* -------------------------------------------------------------------- */
@@ -754,3 +759,45 @@ const char *CPLGetXMLValue( CPLXMLNode *poRoot, const char *pszPath,
         
     return pszDefault;
 }
+
+/************************************************************************/
+/*                           CPLAddXMLChild()                           */
+/*                                                                      */
+/*      Add a node as a child of another.                               */
+/************************************************************************/
+
+void CPLAddXMLChild( CPLXMLNode *psParent, CPLXMLNode *psChild )
+
+{
+    CPLXMLNode *psSib;
+
+    CPLAssert( psChild->psNext == NULL );
+    psChild->psNext = NULL;
+
+    if( psParent->psChild == NULL )
+    {
+        psParent->psChild = psChild;
+        return;
+    }
+
+    for( psSib = psParent->psChild; 
+         psSib->psNext != NULL; 
+         psSib = psSib->psNext ) {}
+
+    psSib->psNext = psChild;
+}
+
+/************************************************************************/
+/*                    CPLCreateXMLElementAndValue()                     */
+/************************************************************************/
+
+CPLXMLNode *CPLCreateXMLElementAndValue( CPLXMLNode *psParent, 
+                                         const char *pszName, 
+                                         const char *pszValue )
+
+{
+    return CPLCreateXMLNode( 
+        CPLCreateXMLNode( psParent, CXT_Element, pszName ),
+        CXT_Text, pszValue );
+}
+
