@@ -20,15 +20,15 @@ OBJ	=	jpgdataset.o
 XTRA_OPT	=	
 endif
 
-CPPFLAGS	=	$(XTRA_OPT) $(GDAL_INCLUDE)
+CPPFLAGS	+=	$(XTRA_OPT) $(GDAL_INCLUDE)
 
 default:	$(OBJ)
 
 clean:
 	rm -f *.o
 
-%.o:	libjpeg/%.c
-	$(CC) -c $(XTRA_OPT) $(GDAL_INCLUDE) $(CFLAGS) libjpeg/$*.c -o $*.o
+../o/%.o:	libjpeg/%.c
+	$(CC) -c $(CPPFLAGS) $(CFLAGS) $< -o $@
 
 all:	$(OBJ)
 
