@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2002/01/28 18:18:07  warmerda
+ * Added DTEDPtStreamSetMetadata
+ *
  * Revision 1.6  2002/01/26 05:51:40  warmerda
  * added metadata read/write support
  *
@@ -157,6 +160,7 @@ typedef enum {
     DTEDMD_SECURITYCODE = 2,            /* UHL 33+3, DSI 4+1 */
     DTEDMD_PRODUCER = 3,                /* DSI 103+8 */
     DTEDMD_COMPILATION_DATE = 4,        /* DSI 160+4 */
+    DTEDMD_MAX = 4
 } DTEDMetaDataCode;
 
     
@@ -169,6 +173,7 @@ int   DTEDSetMetadata( DTEDInfo *, DTEDMetaDataCode, const char *);
 void *DTEDCreatePtStream( const char *pszPath, int nLevel );
 int   DTEDWritePt( void *hStream, double dfLong, double dfLat, double dfElev );
 void  DTEDFillPtStream( void *hStream, int nPixelSearchDist );
+void  DTEDPtStreamSetMetadata( void *hStream, DTEDMetaDataCode, const char *);
 void  DTEDClosePtStream( void *hStream );
 
 CPL_C_END
