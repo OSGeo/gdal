@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  1999/06/28 01:21:39  warmerda
+ * added support for selecting .adf files as well as coverage dir
+ *
  * Revision 1.4  1999/05/17 01:52:35  warmerda
  * Fixed argument type problem.
  *
@@ -47,18 +50,35 @@
 /*                              AIGOpen()                               */
 /************************************************************************/
 
-AIGInfo_t *AIGOpen( const char * pszCoverName, const char * pszAccess )
+AIGInfo_t *AIGOpen( const char * pszInputName, const char * pszAccess )
 
 {
     AIGInfo_t	*psInfo;
     char	*pszHDRFilename;
-    
-/* -------------------------------------------------------------------- */
-/*      Verify that the target is a directory, and has appropriate      */
-/*      subfiles.                                                       */
-/* -------------------------------------------------------------------- */
-    /* notdef */
+    char        *pszCoverName;
 
+/* -------------------------------------------------------------------- */
+/*      If the pass name ends in .adf assume a file within the          */
+/*      coverage has been selected, and strip that off the coverage     */
+/*      name.                                                           */
+/* -------------------------------------------------------------------- */
+    pszCoverName = CPLStrdup( pszInputName );
+    if( EQUAL(pszCoverName+strlen(pszCoverName)-4, ".adf") )
+    {
+        int      i;
+
+        for( i = strlen(pszCoverName)-1; i > 0; i-- )
+        {
+            if( pszCoverName[i] == '\\' || pszCoverName[i] == '/' )
+            {
+                pszCoverName[i] = '\0';
+                break;
+            }
+        }
+    }
+
+    printf( "Coveragename trimmed to:%s\n", pszCoverName );
+    
 /* -------------------------------------------------------------------- */
 /*      Allocate info structure.                                        */
 /* -------------------------------------------------------------------- */
@@ -69,6 +89,7 @@ AIGInfo_t *AIGOpen( const char * pszCoverName, const char * pszAccess )
 /* -------------------------------------------------------------------- */
     if( AIGReadHeader( pszCoverName, psInfo ) != CE_None )
     {
+        CPLFree( pszCoverName );
         CPLFree( psInfo );
         return NULL;
     }
@@ -89,11 +110,13 @@ AIGInfo_t *AIGOpen( const char * pszCoverName, const char * pszAccess )
 
         CPLFree( psInfo );
         CPLFree( pszHDRFilename );
+        CPLFree( pszCoverName );
         return( NULL );
     }
 
     CPLFree( pszHDRFilename );
-
+    pszHDRFilename = NULL;
+    
 /* -------------------------------------------------------------------- */
 /*      Read the block index file.                                      */
 /* -------------------------------------------------------------------- */
@@ -126,6 +149,9 @@ AIGInfo_t *AIGOpen( const char * pszCoverName, const char * pszAccess )
         CPLFree( psInfo );
         return NULL;
     }
+
+    CPLFree( pszCoverName );
+    pszCoverName = NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Compute the number of pixels and lines.                         */
