@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.20  2005/03/23 00:27:32  fwarmerdam
+ * First pass try at support for the libjpeg Mk1 library.
+ *
  * Revision 1.19  2005/03/22 21:48:11  fwarmerdam
  * Added preliminary Mk1 libjpeg support.  Compress still not working.
  *
@@ -433,11 +436,12 @@ GDALDataset *JPGDataset::Open( GDALOpenInfo * poOpenInfo )
     jpeg_stdio_src( &(poDS->sDInfo), poDS->fpImage );
     jpeg_read_header( &(poDS->sDInfo), TRUE );
 
-    if( poDS->sDInfo.data_precision != 8 )
+    if( poDS->sDInfo.data_precision != 8
+        && poDS->sDInfo.data_precision != 12 )
     {
         CPLError( CE_Failure, CPLE_NotSupported, 
                   "GDAL JPEG Driver doesn't support files with precision of"
-                  " other than 8 bits." );
+                  " other than 8 or 12 bits." );
         delete poDS;
         return NULL;
     }
@@ -604,6 +608,17 @@ JPEGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     sCInfo.image_height = nYSize;
     sCInfo.input_components = nBands;
 
+    if( nBands == 1 )
+    {
+        sCInfo.in_color_space = JCS_GRAYSCALE;
+    }
+    else
+    {
+        sCInfo.in_color_space = JCS_RGB;
+    }
+
+    jpeg_set_defaults( &sCInfo );
+    
 #ifdef JPEG_LIB_MK1
     if( eDT == GDT_UInt16 )
     {
@@ -617,17 +632,6 @@ JPEGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     }
 #endif
 
-    if( nBands == 1 )
-    {
-        sCInfo.in_color_space = JCS_GRAYSCALE;
-    }
-    else
-    {
-        sCInfo.in_color_space = JCS_RGB;
-    }
-
-    jpeg_set_defaults( &sCInfo );
-    
     jpeg_set_quality( &sCInfo, nQuality, TRUE );
 
     if( bProgressive )
@@ -651,7 +655,7 @@ JPEGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         eErr = poSrcDS->RasterIO( GF_Read, 0, iLine, nXSize, 1, 
                                   pabyScanline, nXSize, 1, GDT_UInt16,
                                   nBands, anBandList, 
-                                  nBands, nBands * nXSize, 1 );
+                                  nBands*2, nBands * nXSize * 2, 2 );
 #else
         eErr = poSrcDS->RasterIO( GF_Read, 0, iLine, nXSize, 1, 
                                   pabyScanline, nXSize, 1, GDT_Byte,
