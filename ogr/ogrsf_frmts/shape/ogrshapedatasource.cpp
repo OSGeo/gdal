@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2000/08/29 15:11:47  warmerda
+ * added Z types for SHPT
+ *
  * Revision 1.2  2000/03/14 21:37:16  warmerda
  * added SHPT= option support
  *
@@ -260,7 +263,6 @@ OGRShapeDataSource::CreateLayer( const char * pszLayerName,
         nShapeType = SHPT_ARCZ;
     else
         nShapeType = -1;
-
     
 /* -------------------------------------------------------------------- */
 /*      Has the application overridden this with a special creation     */
@@ -278,6 +280,14 @@ OGRShapeDataSource::CreateLayer( const char * pszLayerName,
         nShapeType = SHPT_POLYGON;
     else if( EQUAL(pszOverride,"MULTIPOINT") )
         nShapeType = SHPT_MULTIPOINT;
+    else if( EQUAL(pszOverride,"POINTZ") )
+        nShapeType = SHPT_POINTZ;
+    else if( EQUAL(pszOverride,"ARCZ") )
+        nShapeType = SHPT_ARCZ;
+    else if( EQUAL(pszOverride,"POLYGONZ") )
+        nShapeType = SHPT_POLYGONZ;
+    else if( EQUAL(pszOverride,"MULTIPOINTZ") )
+        nShapeType = SHPT_MULTIPOINTZ;
     else
     {
         CPLError( CE_Failure, CPLE_NotSupported,
