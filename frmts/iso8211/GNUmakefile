@@ -57,3 +57,14 @@ update-web:	dist docs
 	cp html/* $(WEB_DIR)
 	cp $(DISTDIR).tar.gz $(WEB_DIR)
 	cp $(DISTDIR).tar.gz /home/ftp/pub/outgoing
+
+
+test:
+	@./teststream.sh >& t1.out
+	@if test "`diff t1.out teststream.out`" = '' ; then \
+	    echo "******* Stream 1 Succeeded *********"; \
+	    rm t1.out; \
+	else \
+	    echo "******* Stream 1 Failed *********"; \
+	    diff t1.out teststream.out; \
+	fi
