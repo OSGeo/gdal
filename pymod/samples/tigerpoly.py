@@ -29,6 +29,10 @@
 ###############################################################################
 # 
 #  $Log$
+#  Revision 1.4  2004/10/30 20:54:42  fwarmerdam
+#  Applied patch from Schuyler Erle (bug 646) to discard dangles and
+#  degenerate rings.
+#
 #  Revision 1.3  2003/07/11 14:52:13  warmerda
 #  Added logic to replicate all source polygon fields onto output file.
 #
@@ -166,6 +170,12 @@ while feat is not None:
     lpoly_id = feat.GetField( lpoly_field )
     rpoly_id = feat.GetField( rpoly_field )
 
+ 
+    if lpoly_id == rpoly_id:
+        feat.Destroy()
+        feat = link_layer.GetNextFeature()
+        continue    
+    
     try:
         module.poly_line_links[lpoly_id].append( tlid )
     except:
@@ -192,6 +202,7 @@ tile_ref_field = feat.GetFieldIndex( 'MODULE' )
 polyid_field = feat.GetFieldIndex( 'POLYID' )
 
 poly_count = 0
+degenerate_count = 0
 
 while feat is not None:
     module = modules_hash[feat.GetField( tile_ref_field )]
@@ -207,6 +218,13 @@ while feat is not None:
     try:
         poly = ogr.BuildPolygonFromEdges( link_coll )
 
+        if poly.GetGeometryRef(0).GetPointCount() < 4:
+            degenerate_count = degenerate_count + 1
+            poly.Destroy()
+            feat.Destroy()
+            feat = poly_layer.GetNextFeature()
+            continue
+        
         #print poly.ExportToWkt()
         #feat.SetGeometryDirectly( poly )
 
@@ -227,6 +245,9 @@ while feat is not None:
     feat.Destroy()
 
     feat = poly_layer.GetNextFeature()
+
+if degenerate_count: 
+    print 'Discarded %d degenerate polygons.' % degenerate_count
 
 print 'Built %d polygons.' % poly_count
 
