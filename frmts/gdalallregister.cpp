@@ -25,6 +25,9 @@
  * Main format registration function.
  * 
  * $Log$
+ * Revision 1.3  1999/01/11 15:30:16  warmerda
+ * added OGDI
+ *
  * Revision 1.2  1998/12/03 18:37:26  warmerda
  * Drop GDB, add geotiff.
  *
@@ -38,6 +41,8 @@
 CPL_C_START
 void GDALRegister_GDB(void);
 void GDALRegister_GTiff(void);
+void GDALRegister_GXF(void);
+void GDALRegister_OGDI(void);
 CPL_C_END
 
 /************************************************************************/
@@ -51,4 +56,8 @@ void GDALAllRegister()
 {
 /*    GDALRegister_GDB();	*/
     GDALRegister_GTiff();
+    GDALRegister_GXF();
+#ifdef OGDI_ENABLED
+    GDALRegister_OGDI();
+#endif
 }
