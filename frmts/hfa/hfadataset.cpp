@@ -29,6 +29,12 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.40  2004/07/16 20:40:32  warmerda
+ * Added a series of patches from Andreas Wimmer which:
+ *  o Add lots of improved support for metadata.
+ *  o Use USE_SPILL only, instead of SPILL_FILE extra creation option.
+ *  o Added ability to control block sizes.
+ *
  * Revision 1.39  2004/05/17 14:28:28  warmerda
  * Added min/max support, and harvesting of other auxilary metadata
  * from statistics node.
@@ -361,19 +367,6 @@ int anUsgsEsriZones[] =
  5400,    0
 };
 
-static char *apszAuxMetadataItems[] = {
-
-// node/entry         field_name                  metadata_key
-
- "Statistics",        "dminimum",                  "STATISTICS_MINIMUM", 
- "Statistics", 	      "dmaximum",                  "STATISTICS_MAXIMUM", 
- "Statistics", 	      "dmean",                     "STATISTICS_MEAN",    
- "Statistics", 	      "dmedian",                   "STATISTICS_MEDIAN",  
- "Statistics", 	      "dmode",                     "STATISTICS_MODE",    
- "Statistics", 	      "dstddev",                   "STATISTICS_STDDEV",  
-
- NULL
-};
 
 /************************************************************************/
 /* ==================================================================== */
@@ -649,17 +642,18 @@ void HFARasterBand::ReadAuxMetadata()
     if( nThisOverview != -1 )
         return;
 
-    for( i = 0; apszAuxMetadataItems[i] != NULL; i += 3 )
+    char ** pszAuxMetaData = GetHFAAuxMetaDataList();
+    for( i = 0; pszAuxMetaData[i] != NULL; i += 4 )
     {
-        HFAEntry *poEntry = 
-            poBand->poNode->GetNamedChild( apszAuxMetadataItems[i] );
-        const char *pszFieldName = apszAuxMetadataItems[i+1] + 1;
+        HFAEntry *poEntry =
+            poBand->poNode->GetNamedChild( pszAuxMetaData[i] );
+        const char *pszFieldName = pszAuxMetaData[i+1] + 1;
         CPLErr eErr = CE_None;
 
         if( poEntry == NULL )
             continue;
 
-        switch( apszAuxMetadataItems[i+1][0] )
+        switch( pszAuxMetaData[i+1][0] )
         {
           case 'd':
           {
@@ -671,17 +665,72 @@ void HFARasterBand::ReadAuxMetadata()
                   char szValueAsString[100];
 
                   sprintf( szValueAsString, "%.14g", dfValue );
-                  SetMetadataItem( apszAuxMetadataItems[i+2], 
+                  SetMetadataItem( pszAuxMetaData[i+2],
                                    szValueAsString );
               }
           }
           break;
-
           case 'i':
+          case 'l':
+          {
+              int nValue;
+              nValue = poEntry->GetIntField( pszFieldName, &eErr );
+              if( eErr == CE_None )
+              {
+                  char szValueAsString[100];
+
+                  sprintf( szValueAsString, "%d", nValue );
+                  SetMetadataItem( pszAuxMetaData[i+2], szValueAsString );
+              }
+          }
+          break;
           case 's':
           default:
             CPLAssert( FALSE );
         }
+    }
+    // no try to read the histogram
+    HFAEntry *poEntry = poBand->poNode->GetNamedChild( "Descriptor_Table.Histogram" );
+    if ( poEntry != NULL )
+    {
+        int nNumBins = poEntry->GetIntField( "numRows" );
+        int nOffset =  poEntry->GetIntField( "columnDataPtr" );
+        const char * pszType =  poEntry->GetStringField( "dataType" );
+        int nBinSize = 4;
+        if ( EQUALN( "real", pszType, 4 ) )
+        {
+            nBinSize = 8;
+        }
+        unsigned int nBufSize = 1024;
+        char * pszBinValues = (char *)CPLMalloc( nBufSize );
+        pszBinValues[0] = 0;
+        for ( int nBin = 0; nBin < nNumBins; ++nBin )
+        {
+            VSIFSeekL( hHFA->fp, nOffset + nBin*nBinSize, SEEK_SET );
+            char szBuf[32];
+            if ( nBinSize == 8 )
+            {
+                double dfValue;
+                VSIFReadL( &dfValue, nBinSize, 1, hHFA->fp );
+                HFAStandard( nBinSize, &dfValue );
+                snprintf( szBuf, 31, "%.14g", dfValue );
+            }
+            else
+            {
+                int nValue;
+                VSIFReadL( &nValue, nBinSize, 1, hHFA->fp );
+                HFAStandard( nBinSize, &nValue );
+                snprintf( szBuf, 31, "%d", nValue );
+            }
+            if ( ( strlen( pszBinValues ) + strlen( szBuf ) + 2 ) > nBufSize )
+            {
+                nBufSize *= 2;
+                pszBinValues = (char *)realloc( pszBinValues, nBufSize );
+            }
+            strcat( pszBinValues, szBuf );
+            strcat( pszBinValues, "|" );
+        }
+        SetMetadataItem( "STATISTICS_HISTOBINVALUES", pszBinValues );
     }
 }
 
