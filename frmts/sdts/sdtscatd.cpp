@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  1999/08/16 13:58:30  warmerda
+ * added support for secondary attribute modules
+ *
  * Revision 1.7  1999/08/11 20:49:38  warmerda
  * Initialize pszPrefixPath in case Open() isn't called.
  *
@@ -283,7 +286,7 @@ const char * SDTS_CATD::GetEntryTypeDesc( int iEntry )
  * <li> SLTLine: Read with SDTSLineReader, underlying type of
  * <tt>Line</tt>.
  * <li> SLTAttr: Read with SDTSAttrReader, underlying type of
- * <tt>Attribute Primary</tt>.
+ * <tt>Attribute Primary</tt> or <tt>Attribute Secondary</tt>.
  * <li> SLTPolygon: Read with SDTSPolygonReader, underlying type of
  * <tt>Polygon</tt>.
  * </ul> 
@@ -296,6 +299,9 @@ SDTSLayerType SDTS_CATD::GetEntryType( int iEntry )
         return SLTUnknown;
 
     else if( EQUALN(papoEntries[iEntry]->pszType,"Attribute Primary",17) )
+        return SLTAttr;
+    
+    else if( EQUALN(papoEntries[iEntry]->pszType,"Attribute Secondary",17) )
         return SLTAttr;
     
     else if( EQUALN(papoEntries[iEntry]->pszType,"Line ",5) )

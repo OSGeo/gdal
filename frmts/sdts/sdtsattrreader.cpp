@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  1999/08/16 13:58:30  warmerda
+ * added support for secondary attribute modules
+ *
  * Revision 1.3  1999/05/07 13:45:01  warmerda
  * major upgrade to use iso8211lib
  *
@@ -133,6 +136,11 @@ DDFField *SDTSAttrReader::GetNextRecord( SDTSModId * poModId,
 /* -------------------------------------------------------------------- */
     poATTP = poRecord->FindField( "ATTP", 0 );
     if( poATTP == NULL )
+    {
+        poATTP = poRecord->FindField( "ATTS", 0 );
+    }
+
+    if( poATTP == NULL )
         return NULL;
 
 /* -------------------------------------------------------------------- */
@@ -141,6 +149,9 @@ DDFField *SDTSAttrReader::GetNextRecord( SDTSModId * poModId,
     if( poModId != NULL )
     {
         DDFField	*poATPR = poRecord->FindField( "ATPR" );
+
+        if( poATPR == NULL )
+            poATPR = poRecord->FindField( "ATSC" );
 
         if( poATPR != NULL )
             poModId->Set( poATPR );
@@ -154,3 +165,4 @@ DDFField *SDTSAttrReader::GetNextRecord( SDTSModId * poModId,
 
     return poATTP;
 }
+

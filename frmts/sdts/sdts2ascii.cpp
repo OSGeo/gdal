@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  1999/08/16 13:58:30  warmerda
+ * added support for secondary attribute modules
+ *
  * Revision 1.5  1999/07/30 19:15:24  warmerda
  * fiddled
  *
@@ -118,7 +121,7 @@ int main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
 /*      Dump the first polygon                                          */
 /* -------------------------------------------------------------------- */
-#ifndef notdef    
+#ifdef notdef    
     SDTSPolygonReader oPolyReader;
 
     if( oPolyReader.Open( oCATD.GetModuleFilePath( "PC01" ) ) )
@@ -144,15 +147,15 @@ int main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
 /*	Dump all modules of type "Primary Attribute" in the catalog.	*/
 /* -------------------------------------------------------------------- */
-#ifdef notdef    
+#ifndef notdef    
     SDTSAttrReader oAttrReader( &oIREF );
 
-    for( i = 0; i < oCATD.getEntryCount(); i++ )
+    for( i = 0; i < oCATD.GetEntryCount(); i++ )
     {
-        if( EQUAL(oCATD.getEntryType(i),"Attribute Primary         ") )
+        if( oCATD.GetEntryType(i) == SLTAttr )
         {
             if( oAttrReader.Open(
-                	oCATD.getModuleFilePath( oCATD.getEntryModule(i)) ) )
+                	oCATD.GetModuleFilePath( oCATD.GetEntryModule(i)) ) )
             {
                 DDFField	*poATTP;
                 SDTSModId	oModId;
