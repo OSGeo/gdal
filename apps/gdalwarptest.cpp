@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2003/07/04 11:53:14  dron
+ * Added `-rcs' option to select bicubic B-spline resampling.
+ *
  * Revision 1.11  2003/06/05 16:55:42  warmerda
  * enable INIT_DEST=0 by default when creating new files
  *
@@ -92,7 +95,7 @@ static void Usage()
         "    [-s_srs srs_def] [-t_srs srs_def] [-order n] [-et err_threshold]\n"
         "    [-te xmin ymin xmax ymax] [-tr xres yres] [-ts width height]\n"
         "    [-wo \"NAME=VALUE\"] [-ot Byte/Int16/...] [-wt Byte/Int16]\n"
-        "    [-rn] [-rb] [-rc] [-srcnodata value [value...]]\n" 
+        "    [-rn] [-rb] [-rc] [-rcs] [-srcnodata value [value...]]\n" 
         "    [-wm memory_in_mb] [-multi] [-q]\n"
         "    [-of format] [-co \"NAME=VALUE\"]* srcfile dstfile\n" );
     exit( 1 );
@@ -301,6 +304,9 @@ int main( int argc, char ** argv )
 
         else if( EQUAL(argv[i],"-rc") )
             eResampleAlg = GRA_Cubic;
+
+        else if( EQUAL(argv[i],"-rcs") )
+            eResampleAlg = GRA_CubicSpline;
 
         else if( argv[i][0] == '-' )
             Usage();
