@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.111  2005/02/02 19:59:03  fwarmerdam
+ * added SetNextByIndex and GetFeaturesRead
+ *
  * Revision 1.110  2005/01/05 21:21:38  fwarmerdam
  * added goode homolosine
  *
@@ -3307,6 +3310,7 @@ void    OGR_L_SetSpatialFilter( OGRLayerH, OGRGeometryH );
 void    OGR_L_SetSpatialFilterRect( OGRLayerH, double, double, double, double);
 int     OGR_L_SetAttributeFilter( OGRLayerH, NULLableString );
 void    OGR_L_ResetReading( OGRLayerH );
+int     OGR_L_SetNextByIndex( OGRLayerH, long );
 OGRFeatureH  OGR_L_GetNextFeature( OGRLayerH );
 OGRFeatureH  OGR_L_GetFeature( OGRLayerH, long );
 int     OGR_L_SetFeature( OGRLayerH, OGRFeatureH );
@@ -3325,6 +3329,7 @@ int     OGR_L_Reference( OGRLayerH );
 int     OGR_L_Dereference( OGRLayerH );
 int     OGR_L_GetRefCount( OGRLayerH );
 int     OGR_L_SyncToDisk( OGRLayerH );
+int     OGR_L_GetFeaturesRead( OGRLayerH );
 
 /* OGRDataSource */
 
