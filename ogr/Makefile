@@ -88,6 +88,9 @@ test_rep.exe:      test_rep.obj $(OBJ_OGR) $(DEPLIBS)
         cl $(LINKFLAGS) test_rep.obj $(OBJ_OGR) $(OGR_FRMTS) \
 			$(ALL_LIBS) /link $(LINKER_FLAGS)
 
+testepsg.exe:      testepsg.obj $(OBJ_OGR) $(DEPLIBS)
+        cl $(LINKFLAGS) testepsg.obj $(LINKARGS) /link $(LINKER_FLAGS)
+
 ogrinfo.exe:      ogrinfo.obj $(OBJ_OGR) $(DEPLIBS)
         cl $(LINKFLAGS) ogrinfo.obj $(LINKARGS) /link $(LINKER_FLAGS)
 
