@@ -17,7 +17,3 @@ clean:
 install-obj:	$(O_OBJ)
 
 $(OBJ) $(O_OBJ):	vrtdataset.h
-
-vwtest:	vwtest.o
-	$(LD) vwtest.o -L../.. -lgdal -o vwtest
-
