@@ -46,7 +46,8 @@ GDAL_INCLUDE	=	-I$(GDAL_ROOT) -I$(GDAL_ROOT)/port -I$(GDAL_ROOT)/core\
 
 GDAL_VER	=	1.1
 GDAL_LIB	= 	$(GDAL_ROOT)/gdal.a
-GDAL_SLIB	=	$(GDAL_ROOT)/gdal.$(GDAL_VER).so
+GDAL_SLIB	=	$(GDAL_ROOT)/libgdal.$(GDAL_VER).so
+GDAL_SLIB_LINK	=	-L$(GDAL_ROOT) -lgdal.$(GDAL_VER)
 
 OGR_LIB		=	$(GDAL_ROOT)/ogr/ogr.a
 CPL_LIB		=	$(GDAL_ROOT)/port/cpl.a
@@ -71,5 +72,5 @@ GDAL_OBJ	=	$(GDAL_ROOT)/frmts/o/*.o \
 #	and their uppercase form should be the format portion of the
 #	format registration entry point.  eg. gdb -> GDALRegister_GDB().
 #
-GDAL_FORMATS = 	gxf gtiff hfa $(OGDI_FRMT) aigrid ceos elas iso8211 sdts raw \
-		dted
+GDAL_FORMATS = 	gxf gtiff hfa $(OGDI_FRMT) aigrid ceos ceos2 elas iso8211 \
+		sdts raw dted
