@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  1999/08/11 20:49:38  warmerda
+ * Initialize pszPrefixPath in case Open() isn't called.
+ *
  * Revision 1.6  1999/06/03 14:03:01  warmerda
  * Added raster layer support
  *
@@ -89,6 +92,7 @@ SDTS_CATD::SDTS_CATD()
 {
     nEntries = 0;
     papoEntries = NULL;
+    pszPrefixPath = NULL;
 }
 
 /************************************************************************/
