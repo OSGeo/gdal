@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2002/12/17 05:26:26  warmerda
+ * implement basic write support
+ *
  * Revision 1.3  2002/12/03 18:07:40  warmerda
  * added VQLUT reporting
  *
@@ -138,13 +141,23 @@ int main( int nArgc, char ** papszArgv )
         printf( "Image Segment %d, %dPx%dLx%dB x %dbits:\n", 
                 iSegment, psImage->nRows, psImage->nCols, psImage->nBands,
                 psImage->nBitsPerSample );
-        printf( "  PVTYPE=%s, IREP=%s, ICAT=%s, IMODE=%c, IC=%s, COMRAT=%s\n", 
+        printf( "  PVTYPE=%s, IREP=%s, ICAT=%s, IMODE=%c, IC=%s, COMRAT=%s, ICORDS=%c\n", 
                 psImage->szPVType, psImage->szIREP, psImage->szICAT,
-                psImage->chIMODE, psImage->szIC, psImage->szCOMRAT );
+                psImage->chIMODE, psImage->szIC, psImage->szCOMRAT,
+                psImage->chICORDS );
+        if( psImage->chICORDS != ' ' )
+        {
+            printf( "  UL=(%g,%g), UR=(%g,%g)\n  LR=(%g,%g), LL=(%g,%g)\n", 
+                    psImage->dfULX, psImage->dfULY,
+                    psImage->dfURX, psImage->dfURY,
+                    psImage->dfLRX, psImage->dfLRY,
+                    psImage->dfLLX, psImage->dfLLY );
+        }
+
         printf( "  %d x %d blocks of size %d x %d\n",
                 psImage->nBlocksPerRow, psImage->nBlocksPerColumn,
                 psImage->nBlockWidth, psImage->nBlockHeight );
-
+        
         if( strlen(psImage->pszComments) > 0 )
             printf( "  Comments:\n%s\n", psImage->pszComments );
 
