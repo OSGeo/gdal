@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.6  2000/04/26 18:25:10  warmerda
+ * implement CPL_DLL
+ *
  * Revision 1.5  2000/03/30 05:38:48  warmerda
  * added CPLParseNameValue
  *
@@ -58,39 +61,44 @@
  =====================================================================*/
 CPL_C_START
 
-char    **CSLAddString(char **papszStrList, const char *pszNewString);
-int     CSLCount(char **papszStrList);
-const char *CSLGetField( char **, int );
-void    CSLDestroy(char **papszStrList);
-char    **CSLDuplicate(char **papszStrList);
+char CPL_DLL **CSLAddString(char **papszStrList, const char *pszNewString);
+int CPL_DLL CSLCount(char **papszStrList);
+const char CPL_DLL *CSLGetField( char **, int );
+void CPL_DLL CSLDestroy(char **papszStrList);
+char CPL_DLL **CSLDuplicate(char **papszStrList);
 
-char    **CSLTokenizeString(const char *pszString );
-char    **CSLTokenizeStringComplex(const char *pszString,
+char CPL_DLL **CSLTokenizeString(const char *pszString );
+char CPL_DLL **CSLTokenizeStringComplex(const char *pszString,
                                    const char *pszDelimiter,
                                    int bHonourStrings, int bAllowEmptyTokens );
 
-int     CSLPrint(char **papszStrList, FILE *fpOut);
-char    **CSLLoad(const char *pszFname);
-int     CSLSave(char **papszStrList, const char *pszFname);
+int CPL_DLL CSLPrint(char **papszStrList, FILE *fpOut);
+char CPL_DLL **CSLLoad(const char *pszFname);
+int CPL_DLL CSLSave(char **papszStrList, const char *pszFname);
 
-char  **CSLInsertStrings(char **papszStrList, int nInsertAtLineNo, 
+char CPL_DLL **CSLInsertStrings(char **papszStrList, int nInsertAtLineNo, 
                          char **papszNewLines);
-char  **CSLInsertString(char **papszStrList, int nInsertAtLineNo, 
+char CPL_DLL **CSLInsertString(char **papszStrList, int nInsertAtLineNo, 
                         char *pszNewLine);
-char  **CSLRemoveStrings(char **papszStrList, int nFirstLineToDelete,
+char CPL_DLL **CSLRemoveStrings(char **papszStrList, int nFirstLineToDelete,
                          int nNumToRemove, char ***ppapszRetStrings);
-int	CSLFindString( char **, const char * );
+int CPL_DLL CSLFindString( char **, const char * );
 
-const char *CPLSPrintf(char *fmt, ...);
-char  **CSLAppendPrintf(char **papszStrList, char *fmt, ...);
+const char CPL_DLL *CPLSPrintf(char *fmt, ...);
+char CPL_DLL **CSLAppendPrintf(char **papszStrList, char *fmt, ...);
 
-const char *CPLParseNameValue(const char *pszNameValue, char **ppszKey );
-const char *CSLFetchNameValue(char **papszStrList, const char *pszName);
-char  **CSLFetchNameValueMultiple(char **papszStrList, const char *pszName);
-char  **CSLAddNameValue(char **papszStrList, 
-                        const char *pszName, const char *pszValue);
-char  **CSLSetNameValue(char **papszStrList, 
-                        const char *pszName, const char *pszValue);
+const char CPL_DLL *
+      CPLParseNameValue(const char *pszNameValue, char **ppszKey );
+const char CPL_DLL *
+      CSLFetchNameValue(char **papszStrList, const char *pszName);
+char CPL_DLL **
+      CSLFetchNameValueMultiple(char **papszStrList, const char *pszName);
+char CPL_DLL **
+      CSLAddNameValue(char **papszStrList, 
+                      const char *pszName, const char *pszValue);
+char CPL_DLL **
+      CSLSetNameValue(char **papszStrList, 
+                      const char *pszName, const char *pszValue);
 
 CPL_C_END
 

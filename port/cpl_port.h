@@ -38,6 +38,9 @@
  *   GUInt16, and GByte are defined.
  *
  * $Log$
+ * Revision 1.16  2000/04/26 18:25:10  warmerda
+ * implement CPL_DLL
+ *
  * Revision 1.15  2000/01/29 22:31:02  warmerda
  * Define WIN32 if _WINDOWS is defined.
  *
@@ -162,9 +165,12 @@ typedef int             GBool;
 #  define CPL_C_END
 #endif
 
-/* #  define CPL_DLL     __declspec(dllexport) */
+#if defined(WIN32) && !defined(CPL_DISABLE_DLL)
+#  define CPL_DLL     __declspec(dllexport)
+#else
+#  define CPL_DLL
+#endif
 
-#define CPL_DLL
 
 #ifndef NULL
 #  define NULL	0
