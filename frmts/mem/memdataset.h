@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2002/03/01 16:45:53  warmerda
+ * added support for retaining nodata value
+ *
  * Revision 1.4  2001/10/26 20:03:28  warmerda
  * added C entry point for creating MEMRasterBand
  *
@@ -82,18 +85,24 @@ class CPL_DLL MEMRasterBand : public GDALRasterBand
     int         nLineOffset;
     int         bOwnData;
 
+    int         bNoDataSet;
+    double      dfNoData;
+
   public:
 
                    MEMRasterBand( GDALDataset *poDS, int nBand,
-                                  GByte *pabyData, GDALDataType eType, 
+                                  GByte *pabyData, GDALDataType eType,
                                   int nPixelOffset, int nLineOffset,
                                   int bAssumeOwnership );
     virtual        ~MEMRasterBand();
 
     // should override RasterIO eventually.
-    
+
     virtual CPLErr IReadBlock( int, int, void * );
-    virtual CPLErr IWriteBlock( int, int, void * ); 
+    virtual CPLErr IWriteBlock( int, int, void * );
+
+    virtual double GetNoDataValue( int *pbSuccess = NULL );
+    virtual CPLErr SetNoDataValue( double );
 };
 
 #endif /* ndef MEMDATASET_H_INCLUDED */
