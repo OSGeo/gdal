@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.32  2002/04/24 19:21:26  warmerda
+ * Include <ctype.h> for toupper(), tolower().
+ *
  * Revision 1.31  2002/04/19 12:22:05  dron
  * added GDALWriteWorldFile()
  *
@@ -127,6 +130,7 @@
 
 #include "gdal_priv.h"
 #include "cpl_string.h"
+#include <ctype.h>
 
 CPL_CVSID("$Id$");
 
