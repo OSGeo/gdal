@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2003/09/15 20:46:53  warmerda
+ * supressed some warnings in SetFieldRaw if field empty
+ *
  * Revision 1.18  2003/09/11 19:56:35  warmerda
  * avoid warnings
  *
@@ -1269,8 +1272,18 @@ DDFRecord::SetFieldRaw( DDFField *poField, int iIndexWithinField,
     const char *pachWrkData;
     int         nInstanceSize;
 
-    pachWrkData = poField->GetInstanceData( iIndexWithinField, 
-                                            &nInstanceSize );
+    // We special case this to avoid alot of warnings when initializing 
+    // the field the first time.
+    if( poField->GetDataSize() == 0 )
+    {
+        pachWrkData = poField->GetData();
+        nInstanceSize = 0;
+    }
+    else
+    {
+        pachWrkData = poField->GetInstanceData( iIndexWithinField, 
+                                                &nInstanceSize );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Create new image of this whole field.                           */
