@@ -33,8 +33,8 @@
  * and things like that.
  *
  * $Log$
- * Revision 1.104  2005/01/05 21:21:38  fwarmerdam
- * added goode homolosine
+ * Revision 1.105  2005/02/02 19:59:03  fwarmerdam
+ * added SetNextByIndex and GetFeaturesRead
  *
  ************************************************************************/
 
@@ -9977,6 +9977,27 @@ static PyObject *_wrap_OGR_L_ResetReading(PyObject *self, PyObject *args) {
     return _resultobj;
 }
 
+static PyObject *_wrap_OGR_L_SetNextByIndex(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    int  _result;
+    OGRLayerH  _arg0;
+    long  _arg1;
+    char * _argc0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"sl:OGR_L_SetNextByIndex",&_argc0,&_arg1)) 
+        return NULL;
+    if (_argc0) {
+        if (SWIG_GetPtr(_argc0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OGR_L_SetNextByIndex. Expected _OGRLayerH.");
+        return NULL;
+        }
+    }
+    _result = (int )OGR_L_SetNextByIndex(_arg0,_arg1);
+    _resultobj = Py_BuildValue("i",_result);
+    return _resultobj;
+}
+
 static PyObject *_wrap_OGR_L_GetNextFeature(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
     OGRFeatureH  _result;
@@ -10379,6 +10400,26 @@ static PyObject *_wrap_OGR_L_SyncToDisk(PyObject *self, PyObject *args) {
         }
     }
     _result = (int )OGR_L_SyncToDisk(_arg0);
+    _resultobj = Py_BuildValue("i",_result);
+    return _resultobj;
+}
+
+static PyObject *_wrap_OGR_L_GetFeaturesRead(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    int  _result;
+    OGRLayerH  _arg0;
+    char * _argc0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"s:OGR_L_GetFeaturesRead",&_argc0)) 
+        return NULL;
+    if (_argc0) {
+        if (SWIG_GetPtr(_argc0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OGR_L_GetFeaturesRead. Expected _OGRLayerH.");
+        return NULL;
+        }
+    }
+    _result = (int )OGR_L_GetFeaturesRead(_arg0);
     _resultobj = Py_BuildValue("i",_result);
     return _resultobj;
 }
@@ -11286,6 +11327,7 @@ static PyMethodDef _gdalMethods[] = {
 	 { "OGR_DS_GetLayerCount", _wrap_OGR_DS_GetLayerCount, 1 },
 	 { "OGR_DS_GetName", _wrap_OGR_DS_GetName, 1 },
 	 { "OGR_DS_Destroy", _wrap_OGR_DS_Destroy, 1 },
+	 { "OGR_L_GetFeaturesRead", _wrap_OGR_L_GetFeaturesRead, 1 },
 	 { "OGR_L_SyncToDisk", _wrap_OGR_L_SyncToDisk, 1 },
 	 { "OGR_L_GetRefCount", _wrap_OGR_L_GetRefCount, 1 },
 	 { "OGR_L_Dereference", _wrap_OGR_L_Dereference, 1 },
@@ -11304,6 +11346,7 @@ static PyMethodDef _gdalMethods[] = {
 	 { "OGR_L_SetFeature", _wrap_OGR_L_SetFeature, 1 },
 	 { "OGR_L_GetFeature", _wrap_OGR_L_GetFeature, 1 },
 	 { "OGR_L_GetNextFeature", _wrap_OGR_L_GetNextFeature, 1 },
+	 { "OGR_L_SetNextByIndex", _wrap_OGR_L_SetNextByIndex, 1 },
 	 { "OGR_L_ResetReading", _wrap_OGR_L_ResetReading, 1 },
 	 { "OGR_L_SetAttributeFilter", _wrap_OGR_L_SetAttributeFilter, 1 },
 	 { "OGR_L_SetSpatialFilterRect", _wrap_OGR_L_SetSpatialFilterRect, 1 },
