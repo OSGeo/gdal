@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2000/08/22 17:58:04  warmerda
+ * added floating point, and nodata support
+ *
  * Revision 1.4  2000/08/15 19:28:26  warmerda
  * added help topic
  *
@@ -94,6 +97,8 @@ class SDTSRasterBand : public GDALRasterBand
     		SDTSRasterBand( SDTSDataset *, int, SDTSRasterReader * );
     
     virtual CPLErr IReadBlock( int, int, void * );
+
+    virtual double GetNoDataValue( int *pbSuccess );
 };
 
 
@@ -202,7 +207,7 @@ GDALDataset *SDTSDataset::Open( GDALOpenInfo * poOpenInfo )
         VSICalloc(sizeof(GDALRasterBand *),poDS->nBands);
 
     for( i = 0; i < poDS->nBands; i++ )
-        poDS->papoBands[i] = new SDTSRasterBand( poDS, i+1, poRL );
+        poDS->SetBand( i+1, new SDTSRasterBand( poDS, i+1, poRL ) );
 
 /* -------------------------------------------------------------------- */
 /*      Try to establish the projection string.  For now we only        */
@@ -284,8 +289,10 @@ SDTSRasterBand::SDTSRasterBand( SDTSDataset *poDS, int nBand,
     this->nBand = nBand;
     this->poRL = poRL;
 
-    CPLAssert( poRL->GetRasterType() == 1 );
-    eDataType = GDT_Int16;
+    if( poRL->GetRasterType() == 1 )
+        eDataType = GDT_Int16;
+    else
+        eDataType = GDT_Float32;
 
     nBlockXSize = poRL->GetBlockXSize();
     nBlockYSize = poRL->GetBlockYSize();
@@ -303,6 +310,19 @@ CPLErr SDTSRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         return CE_None;
     else
         return CE_Failure;
+}
+
+/************************************************************************/
+/*                           GetNoDataValue()                           */
+/************************************************************************/
+
+double SDTSRasterBand::GetNoDataValue( int *pbSuccess )
+
+{
+    if( pbSuccess != NULL )
+        *pbSuccess = TRUE;
+    
+    return -32766.0;
 }
 
 /************************************************************************/
