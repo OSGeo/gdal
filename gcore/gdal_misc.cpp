@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.65  2005/03/21 16:12:08  fwarmerdam
+ * Trimmed log.
+ *
  * Revision 1.64  2005/03/21 16:11:32  fwarmerdam
  * Added special case for simple 4 corners, non-rotated case in
  * GDALGCPsToGeoTransform().
@@ -73,92 +76,6 @@
  *
  * Revision 1.50  2004/01/18 16:43:37  dron
  * Added GDALGetDataTypeByName() function.
- *
- * Revision 1.49  2003/08/18 12:43:47  warmerda
- * always include ogr_spatialref.h
- *
- * Revision 1.48  2003/08/12 22:13:32  warmerda
- * Changed GDALReadTabFile(0 so that if the CoordSys results in a PROJCS, but
- * the UNITS keyword is set to "degrees" we just use the GEOGCS portion.  It
- * seems that the projection is "just for display", and the GCPs will actually
- * be in lat/long.
- *
- * Revision 1.47  2003/06/03 19:44:00  warmerda
- * added GDALRPCInfo support
- *
- * Revision 1.46  2003/05/23 15:52:54  warmerda
- * Cosmetic changes made.
- *
- * Revision 1.45  2003/05/21 04:31:53  warmerda
- * avoid warnings
- *
- * Revision 1.44  2003/04/30 17:13:48  warmerda
- * added docs for many C functions
- *
- * Revision 1.43  2003/03/13 14:37:17  warmerda
- * better end of range checking in GDALTermProgress
- *
- * Revision 1.42  2003/02/15 20:22:14  warmerda
- * GDALReadTabFile() returns true if it gets GCPs but cant make geotransform
- *
- * Revision 1.41  2003/01/27 21:55:52  warmerda
- * various documentation improvements
- *
- * Revision 1.40  2002/12/11 21:21:46  warmerda
- * fixed debug format problem
- *
- * Revision 1.39  2002/12/09 20:05:31  warmerda
- * fixed return flag from GDALReadTabFile
- *
- * Revision 1.38  2002/12/09 18:53:25  warmerda
- * GDALDecToDMS() now calls CPLDecToDMS()
- *
- * Revision 1.37  2002/12/05 17:55:30  warmerda
- * gdalreadtabfile should not be static
- *
- * Revision 1.36  2002/12/05 15:46:38  warmerda
- * added GDALReadTabFile()
- *
- * Revision 1.35  2002/07/09 20:33:12  warmerda
- * expand tabs
- *
- * Revision 1.34  2002/05/06 21:37:29  warmerda
- * added GDALGCPsToGeoTransform
- *
- * Revision 1.33  2002/04/25 16:18:41  warmerda
- * added extra checking
- *
- * Revision 1.32  2002/04/24 19:21:26  warmerda
- * Include <ctype.h> for toupper(), tolower().
- *
- * Revision 1.31  2002/04/19 12:22:05  dron
- * added GDALWriteWorldFile()
- *
- * Revision 1.30  2002/04/16 13:59:33  warmerda
- * added GDALVersionInfo
- *
- * Revision 1.29  2001/12/07 20:04:21  warmerda
- * fixed serious bug in random sampler
- *
- * Revision 1.28  2001/11/30 03:41:26  warmerda
- * Fixed bug with the block sampling rate being too low to satisfy large
- * sample count values.  Fixed bug with tiled images including some uninitialized
- * or zero data in the sample set on partial edge tiles.
- *
- * Revision 1.27  2001/11/26 20:14:01  warmerda
- * added GDALProjDef stubs for old 'bridges'
- *
- * Revision 1.26  2001/11/19 16:03:16  warmerda
- * moved GDALDectoDMS here
- *
- * Revision 1.25  2001/08/15 15:05:44  warmerda
- * return magnitude for complex samples in random sampler
- *
- * Revision 1.24  2001/07/18 04:04:30  warmerda
- * added CPL_CVSID
- *
- * Revision 1.23  2001/05/01 18:09:25  warmerda
- * added GDALReadWorldFile()
  */
 
 #include "gdal_priv.h"
