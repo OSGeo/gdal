@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  1999/09/03 14:13:15  warmerda
+ * fix memory leaks
+ *
  * Revision 1.5  1999/09/03 13:34:12  warmerda
  * cleanup properly
  *
@@ -268,10 +271,11 @@ static void WriteLineShapefile( const char * pszShapefile,
     nRightPolyField = DBFAddField( hDBF, "RightPoly", FTString, 12, 0 );
     nStartNodeField = DBFAddField( hDBF, "StartNode", FTString, 12, 0 );
     nEndNodeField = DBFAddField( hDBF, "EndNode", FTString, 12, 0 );
-    
-    AddPrimaryAttrToDBFSchema( hDBF, poTransfer,
-                               poLineReader->ScanModuleReferences() );
 
+    char  **papszModRefs = poLineReader->ScanModuleReferences();
+    AddPrimaryAttrToDBFSchema( hDBF, poTransfer, papszModRefs );
+    CSLDestroy( papszModRefs );
+    
 /* ==================================================================== */
 /*      Process all the line features in the module.                    */
 /* ==================================================================== */
@@ -770,8 +774,10 @@ AddPrimaryAttrToDBFSchema( DBFHandle hDBF, SDTSTransfer *poTransfer,
                 break;
             }
         }
+
         if( !poAttrReader->IsIndexed() )
             delete poAttrFeature;
+
     } /* next module */
 }
 
