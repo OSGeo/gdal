@@ -28,6 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************
  * $Log$
+ * Revision 1.16  2000/04/21 21:56:59  warmerda
+ * moved metadata to GDALMajorObject
+ *
  * Revision 1.15  2000/03/31 13:42:27  warmerda
  * added metadata support
  *
@@ -97,8 +100,6 @@ GDALRasterBand::GDALRasterBand()
     nBlocksPerColumn = 0;
 
     papoBlocks = NULL;
-
-    papszMetadata = NULL;
 }
 
 /************************************************************************/
@@ -114,7 +115,6 @@ GDALRasterBand::~GDALRasterBand()
     FlushCache();
     
     CPLFree( papoBlocks );
-    CSLDestroy( papszMetadata );
 }
 
 /************************************************************************/
@@ -1128,7 +1128,10 @@ int GDALRasterBand::HasArbitraryOverviews()
 int GDALRasterBand::GetOverviewCount()
 
 {
-    return 0;
+    if( poDS != NULL && poDS->oOvManager.IsInitialized() )
+        return poDS->oOvManager.GetOverviewCount( nBand );
+    else
+        return 0;
 }
 
 /************************************************************************/
@@ -1149,7 +1152,7 @@ int GDALGetOverviewCount( GDALRasterBandH hBand )
 /**
  * Fetch overview raster band object.
  *
- * This function is the same as the C function GDALGetOverview().
+ * This method is the same as the C function GDALGetOverview().
  * 
  * @param i overview index between 0 and GetOverviewCount()-1.
  * 
@@ -1159,9 +1162,10 @@ int GDALGetOverviewCount( GDALRasterBandH hBand )
 GDALRasterBand * GDALRasterBand::GetOverview( int i )
 
 {
-    (void) i;
-
-    return NULL;
+    if( poDS != NULL && poDS->oOvManager.IsInitialized() )
+        return poDS->oOvManager.GetOverview( nBand, i );
+    else
+        return NULL;
 }
 
 /************************************************************************/
@@ -1174,6 +1178,37 @@ GDALRasterBandH GDALGetOverview( GDALRasterBandH hBand, int i )
     return (GDALRasterBandH) ((GDALRasterBand *) hBand)->GetOverview(i);
 }
 
+/************************************************************************/
+/*                           BuildOverviews()                           */
+/************************************************************************/
+
+/**
+ * Build raster overview(s)
+ *
+ * If the operation is unsupported for the indicated dataset, then 
+ * CE_Failure is returned, and CPLGetLastError() will return CPLE_NonSupported.
+ *
+ * @param pszResampling one of "NEAREST", "AVERAGE" or "MODE" controlling
+ * the downsampling method applied.
+ * @param nOverviews number of overviews to build. 
+ * @param panOverviewList the list of overview decimation factors to build. 
+ * @param pfnProgress a function to call to report progress, or NULL.
+ * @param pProgressData application data to pass to the progress function.
+ *
+ * @return CE_None on success or CE_Failure if the operation doesn't work. 
+ */
+
+CPLErr GDALRasterBand::BuildOverviews( const char *pszResampling, 
+                                       int nOverviews, int *panOverviewList, 
+                                       GDALProgressFunc pfnProgress, 
+                                       void * pProgressData )
+
+{
+    CPLError( CE_Failure, CPLE_NotSupported,
+              "BuildOverviews() not supported for this dataset." );
+    
+    return( CE_Failure );
+}
 
 /************************************************************************/
 /*                             GetOffset()                              */
@@ -1557,39 +1592,4 @@ CPLErr GDALGetRasterHistogram( GDALRasterBandH hBand,
         GetHistogram( dfMin, dfMax, nBuckets, panHistogram, 
                       bIncludeOutOfRange, bApproxOK,
                       pfnProgress, pProgressData );
-}
-                               
-/************************************************************************/
-/*                            GetMetadata()                             */
-/************************************************************************/
-
-/**
- * Fetch raster band specific metadata.
- *
- * The returned string list is owned by the GDALRasterBand, and may change at
- * any time.  It is formated as a "Name=value" list with the last pointer
- * value being NULL.  Use the the CPL StringList functions such as 
- * CSLFetchNameValue() to manipulate it. 
- *
- * Note that relatively few formats return any metadata at this time. 
- *
- * This method does the same thing as the C function GDALGetRasterMetadata().
- * 
- * @return NULL or a string list. 
- */
-
-char **GDALRasterBand::GetMetadata()
-
-{
-    return papszMetadata;
-}
-
-/************************************************************************/
-/*                       GDALGetRasterMetadata()                        */
-/************************************************************************/
-
-char **GDALGetRasterMetadata( GDALRasterBandH hBand )
-
-{
-    return ((GDALRasterBand *) hBand)->GetMetadata();
 }
