@@ -26,6 +26,9 @@
  * that calls the GDAL library.
  * 
  * $Log$
+ * Revision 1.2  1998/12/03 18:34:05  warmerda
+ * Update to use CPL
+ *
  * Revision 1.1  1998/10/18 06:15:10  warmerda
  * Initial implementation.
  *
@@ -34,11 +37,14 @@
 #ifndef GDAL_H_INCLUDED
 #define GDAL_H_INCLUDED
 
-#include "gdal_base.h"
+#include "cpl_port.h"
+#include "cpl_error.h"
 
 /* -------------------------------------------------------------------- */
 /*      Significant constants.                                          */
 /* -------------------------------------------------------------------- */
+
+CPL_C_START
 
 typedef enum {
     GDT_Unknown = 0,
@@ -61,70 +67,49 @@ typedef enum {
     GF_Write = 1
 } GDALRWFlag;
 
-
-
 /* -------------------------------------------------------------------- */
-/*      Provide a C, or C++ style declaration for major classes if      */
-/*      they haven't already been declared by gdal_priv.h.              */
+/*      Define handle types related to various internal classes.        */
 /* -------------------------------------------------------------------- */
 
-#if !defined(GDAL_PRIV_H_INCLUDED)
-
-#  if defined(__cplusplus)
-
-class GDALMajorObject {};
-class GDALRasterBand : public GDALMajorObject {};
-class GDALDataset : public GDALMajorObject {};
-class GDALGeoref;
-
-#  else
-
-typedef void *GDALMajorObject;
-typedef void *GDALDataset;
-typedef void *GDALRasterBand;
-typedef void *GDALGeoref;
-
-#  endif
-
-#endif /* !defined(GDAL_PRIV_H_INCLUDED)
+typedef void *GDALMajorObjectH;
+typedef void *GDALDatasetH;
+typedef void *GDALRasterBandH;
+typedef void *GDALGeorefH;
 
 /* ==================================================================== */
-/*      GDALMajorObject                                                 */
+/*      Registration related.                                           */
 /* ==================================================================== */
 
-GDAL_C_START
-
-const char GDAL_DLL GDALGetDescription( void * );
-void GDAL_DLL   GDALSetDescription( void *, const char * );
+void GDALAllRegister( void );
 
 /* ==================================================================== */
 /*      GDALDataset class ... normally this represents one file.        */
 /* ==================================================================== */
 
-GDALDataset GDAL_DLL *GDALOpen( const char *, GDALAccess );
-void GDAL_DLL   GDALClose( GDALDataset * );
+GDALDatasetH CPL_DLL GDALOpen( const char *, GDALAccess );
+void CPL_DLL   GDALClose( GDALDatasetH );
 
-int GDAL_DLL	GDALGetRasterXSize( GDALDataset * );
-int GDAL_DLL	GDALGetRasterYSize( GDALDataset * );
-int GDAL_DLL	GDALGetRasterCount( GDALDataset * );
-GDALGeoref GDAL_DLL *GDALGetRasterGeoref( GDALDataset * );
-GDALRasterBand GDAL_DLL *GDALGetRasterBand( GDALDataset *, int );
+int CPL_DLL	GDALGetRasterXSize( GDALDatasetH );
+int CPL_DLL	GDALGetRasterYSize( GDALDatasetH );
+int CPL_DLL	GDALGetRasterCount( GDALDatasetH );
+GDALGeorefH CPL_DLL GDALGetRasterGeoref( GDALDatasetH );
+GDALRasterBandH CPL_DLL GDALGetRasterBand( GDALDatasetH, int );
 
 /* ==================================================================== */
 /*      GDALRasterBand ... one band/channel in a dataset.               */
 /* ==================================================================== */
 
-GDALDataType GDAL_DLL *GDALGetRasterDataType( GDALRasterBand * );
-void GDAL_DLL	GDALGetBlockSize( GDALRasterBand *,
-                                   int * pnXSize, int * pnYSize );
+GDALDataType CPL_DLL GDALGetRasterDataType( GDALRasterBandH );
+void CPL_DLL	GDALGetBlockSize( GDALRasterBandH,
+                                  int * pnXSize, int * pnYSize );
 
-GDALErr GDAL_DLL GDALRasterIO( GDALRasterBand *psRBand, GDALRWFlag eRWFlag,
-                               int nDSXOff, int nDSYOff,
-                               int nDSXSize, int nDSYSize,
-                               void * pBuffer, int nBXSize, nBYSize,
-                               GDALDataType eBDataType,
-                               int nPixelSpace, int nLineSpace );
+CPLErr CPL_DLL GDALRasterIO( GDALRasterBandH hRBand, GDALRWFlag eRWFlag,
+                              int nDSXOff, int nDSYOff,
+                              int nDSXSize, int nDSYSize,
+                              void * pBuffer, int nBXSize, int nBYSize,
+                              GDALDataType eBDataType,
+                              int nPixelSpace, int nLineSpace );
 
-GDAL_C_END
+CPL_C_END
 
 #endif /* ndef GDAL_H_INCLUDED */

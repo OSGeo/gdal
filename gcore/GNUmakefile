@@ -1,16 +1,18 @@
+GDAL_ROOT	=	..
+
 include ../GDALmake.opt
 
-
-OBJ	=	vsi_simple.o
+OBJ	=	gdalopen.o gdaldrivermanager.o gdaldriver.o gdaldataset.o \
+		gdalrasterband.o
 
 default:	$(OBJ)
 
 clean:
-	rm *.o
+	rm -f *.o
 
 %.o:	%.c
-	$(CC) -c $(CFLAGS) $*.c -o $*.o
+	$(CC) -c $(GDAL_INCLUDE) $(CFLAGS) $*.c -o $*.o
 
-%.o:	%.cc
-	$(CC) -c $(CFLAGS) $*.cc -o $*.o
+%.o:	%.cpp
+	$(CC) -c $(GDAL_INCLUDE) $(CFLAGS) $*.cpp -o $*.o
 
