@@ -1,3 +1,8 @@
+2003-04-22  Andrey Kiselev  <dron@remotesensing.org>
+	
+	* apps/gdalinfo.c: New switches: -nogcp and -nomd to suppress
+	printing out GCPs list and metadata strings respectively.
+
 2003-03-18  Frank Warmerdam  <warmerdam@pobox.com>
 
 	* gdal/frmts/raw/rawdataset: Implemented FlushCache() method on 
@@ -29,7 +34,7 @@
 2003-02-19  Andrey Kiselev  <dron@remotesensing.org>
 	
 	* /gdal/frmts/raw/effdataset.cpp: Removed. FAST driver now should work
-	with most part of FAST datasets.
+	for most part of FAST datasets.
 
 2003-02-18  Andrey Kiselev  <dron@remotesensing.org>
 	
