@@ -1,0 +1,126 @@
+<html>
+<head>
+<title>IHO S-57 (ENC)</title>
+</head>
+
+<body bgcolor="#ffffff">
+
+<h1>IHO S-57 (ENC)</h1>
+
+IHO S-57 datasets are supported for read access.<p>
+
+The S-57 driver module produces features for all S-57 features in one
+or more related S-57 data files.  An S-57 dataset can be a directory (in
+which case all S-57 files in the directory are selected), an S-57 catalog
+file (in which case all files referred to from the catalog are selected)
+or an individual S-57 data file.  <p>
+
+S-57 feature objects are translated into features.  S-57 geometry
+objects are automatically collected and formed into geometries on the 
+features.  Geometry objects are not separately accessable with the S-57
+reader. <P>
+
+The S-57 reader depends on having two supporting files, s57objectclasses.csv,
+and s57attributes.csv available at runtime in order to translate features
+in an object class specific manner.  These should be in the directory pointed
+to by the encironment variable S57_CSV, or in the current working directory.
+<p>
+
+Note that the S-57 Reader does not support S-57 update files in a useful
+manner at this time.  S-57 update files contain information on how to 
+update a distributed S-57 data file.  While they can be read, they are not
+currently used to create an updated data view of the original file.  <p>
+
+There is no update or creation support in the S-57 driver.<p>
+
+<h4>Feature Translation</h4>
+
+Normally all features read from S-57 are assigned to a layer based on
+the name of the object class (OBJL) to which they belong.  For instance,
+with an OBJL value of 2, the feature is an "Airport / airfield" and has
+a short name of "AIRARE" which is used as the layer name.  A typical
+S-57 transfer will have in excess of 100 layers.<p>
+
+Each feature type has a predefined set of attributes as defined by the
+S-57 standard.  For instance, the airport (AIRARE) object class can
+have the AIRARE, CATAIR, CONDTN, CONVIS, NOBJNM, OBJNAM, STATUS, INFORM,
+NINFOM, NTXTDS, PICREP, SCAMAX, SCAMIN, TXTDSC, ,RECDAT, RECIND, SORDAT,
+and SORIND attributes.  These short names can be related to longer, more
+meaningful names using an S-57 object/attribute catalog such as the
+S-57 standard document itself, or the catalog files (s57attributes.csv,
+and s57objectclasses.csv).  
+Such a catalog can also be used to establish all the available object classes,
+and their attributes.<p>
+
+The following are some common attributes, including generic attributes 
+which appear on all feature, regardless of object class.
+is turned on. <p>
+
+<pre>
+  Attribute Name  Description                            Defined On
+  --------------  -----------                            ----------
+
+  GRUP            Group number.			         All features
+
+  OBJL            Object label code.  This number	 All features
+	          indicates the object class of the 
+                  feature. 
+
+  RVER            Record version.
+
+  AGEN            Numeric agency code, such as 50 for    All features
+                  the Canadian Hydrographic Service.
+		  A potentially outdated list is 
+		  available in agencode.txt.
+
+  FIDN            Feature identification number.         All features
+
+  FIDS            Feature identification subdivision.    All features
+
+  LNAM            Long name.  An encoding of AGEN,       All features
+                  FIDN and FIDS used to uniquely 
+                  identify this features within an
+                  S-57 file.  
+
+  DSNM            Dataset name.  The name of the file    All features
+                  the feature came from.  Used with
+                  LNAM to form a unique dataset wide
+		  identifier for a feature.
+
+  INFORM          Informational text.                    Some features
+
+  NINFOM	  Informational text in national         Some features
+                  language. 
+
+  OBJNAM          Object name				 Some features
+
+  NOBJNM          Object name in national		 Some features
+                  language.
+                         
+  SCAMAX          Maximum scale for display              Some features
+ 
+  SCAMIN          Minimum scale for display              Some features
+  
+  SORDAT          Source date                            Some features
+</pre>
+
+<h4>Soundings</h4>
+
+Depth soundings are handled somewhat specially in S-57 format, in order
+to efficiently represent the many available data points.  In S-57 one
+sounding feature can have many sounding points.  The S-57 reader
+splits each of these out into it's own feature type `SOUNDG' feature
+with an s57_type of `s57_point3d'.  All the soundings from a single
+feature record will have the same AGEN, FIDN, FIDS and LNAM value.<p>
+
+<h3>See Also</h3>
+
+<ul>
+
+<li> <a href="http://gdal.velocet.ca/projects/s57/index.html">Frank's S-57
+Page</a>: Links to other resources, and sample datasts.<p>
+
+</ul>
+
+</body>
+</html>
