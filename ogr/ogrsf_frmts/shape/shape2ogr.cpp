@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.22  2002/10/04 04:30:46  warmerda
+ * Fixed some bugs in 3D support for writing polygons.
+ *
  * Revision 1.21  2002/08/15 15:10:01  warmerda
  * Fixed problem when GetFeature() called for a non-existant id.
  * http://bugzilla.remotesensing.org/show_bug.cgi?id=175
@@ -235,11 +238,12 @@ OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape )
 
 /* -------------------------------------------------------------------- */
 /*      Otherwise for now we just ignore the object.  Eventually we     */
-/*      should implement multipoints, and perhaps do something with     */
-/*      multipatch.                                                     */
+/*      should implement multipatch.                                    */
 /* -------------------------------------------------------------------- */
     else
     {
+        if( psShape->nSHPType != SHPT_NULL )
+            CPLDebug( "OGR", "Unsupported shape type in SHPReadOGRObject()" );
         /* nothing returned */
     }
     
@@ -394,7 +398,7 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom )
 
         /* Collect list of rings */
 
-        if( poGeom->getGeometryType() == wkbPolygon )
+        if( wkbFlatten(poGeom->getGeometryType()) == wkbPolygon )
         {
             poPoly =  (OGRPolygon *) poGeom;
 
@@ -408,8 +412,9 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom )
                     papoRings[iRing] = poPoly->getInteriorRing( iRing-1 );
             }
         }
-        else if( poGeom->getGeometryType() == wkbMultiPolygon
-                 || poGeom->getGeometryType() == wkbGeometryCollection )
+        else if( wkbFlatten(poGeom->getGeometryType()) == wkbMultiPolygon
+                 || wkbFlatten(poGeom->getGeometryType()) 
+                 				== wkbGeometryCollection )
         {
             OGRGeometryCollection *poGC = (OGRGeometryCollection *) poGeom;
             int		iGeom;
@@ -419,7 +424,7 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom )
             {
                 poPoly =  (OGRPolygon *) poGC->getGeometryRef( iGeom );
 
-                if( poPoly->getGeometryType() != wkbPolygon )
+                if( wkbFlatten(poPoly->getGeometryType()) != wkbPolygon )
                 {
                     CPLFree( papoRings );
                     CPLError( CE_Failure, CPLE_AppDefined,
