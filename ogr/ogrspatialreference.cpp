@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.57  2002/12/01 20:22:39  warmerda
+ * preserve a little more precision in projection parameters
+ *
  * Revision 1.56  2002/11/30 16:44:08  warmerda
  * fixed some functions that claimed to use node paths, so they work
  *
@@ -206,7 +209,7 @@ CPL_CVSID("$Id$");
 static void OGRPrintDouble( char * pszStrBuf, double dfValue )
 
 {
-    sprintf( pszStrBuf, "%.15g", dfValue );
+    sprintf( pszStrBuf, "%.16g", dfValue );
 }
 
 /************************************************************************/
