@@ -31,6 +31,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.13  2004/05/11 00:40:45  warmerda
+ * fixed single precision resolution fields
+ *
  * Revision 1.12  2004/05/03 14:13:42  warmerda
  * fine tuned MSVC hack
  *
@@ -222,7 +225,7 @@ static void USGSDEMPrintDouble( char *pszBuffer, double dfValue )
         if( szTemp[i] == 'E' || szTemp[i] == 'e' )
             szTemp[i] = 'D';
 #ifdef MSVC_HACK
-        if( szTemp[i] == '+' 
+        if( (szTemp[i] == '+' || szTemp[i] == '-')
             && szTemp[i+1] == '0' && isdigit(szTemp[i+2]) 
             && isdigit(szTemp[i+3]) && szTemp[i+4] == '\0' )
         {
@@ -234,6 +237,56 @@ static void USGSDEMPrintDouble( char *pszBuffer, double dfValue )
     }
 
     TextFillR( pszBuffer, 24, szTemp );
+}
+
+/************************************************************************/
+/*                         USGSDEMPrintSingle()                         */
+/*                                                                      */
+/*      On MS Visual C++ system the C runtime library uses 3 digits     */
+/*      for the exponent.  This causes various problems, so we try      */
+/*      to correct it here.                                             */
+/************************************************************************/
+
+static void USGSDEMPrintSingle( char *pszBuffer, double dfValue )
+
+{
+#define DOUBLE_BUFFER_SIZE 64
+
+    char    szTemp[DOUBLE_BUFFER_SIZE];
+    int     i;
+#ifdef MSVC_HACK
+    const char *pszFormat = "%13.6e";
+#else
+    const char *pszFormat = "%12.6e";
+#endif
+
+    if ( !pszBuffer )
+        return;
+
+#if defined(HAVE_SNPRINTF)
+    snprintf( szTemp, DOUBLE_BUFFER_SIZE, pszFormat, dfValue );
+#else
+    sprintf( szTemp, pszFormat, dfValue );
+#endif
+    szTemp[DOUBLE_BUFFER_SIZE - 1] = '\0';
+
+    for( i = 0; szTemp[i] != '\0'; i++ )
+    {
+        if( szTemp[i] == 'E' || szTemp[i] == 'e' )
+            szTemp[i] = 'D';
+#ifdef MSVC_HACK
+        if( (szTemp[i] == '+' || szTemp[i] == '-')
+            && szTemp[i+1] == '0' && isdigit(szTemp[i+2]) 
+            && isdigit(szTemp[i+3]) && szTemp[i+4] == '\0' )
+        {
+            memmove( szTemp+i+1, szTemp+i+2, 2 );
+            szTemp[i+3] = '\0';
+            break;
+        }
+#endif
+    }
+
+    TextFillR( pszBuffer, 12, szTemp );
 }
 
 /************************************************************************/
@@ -465,11 +518,9 @@ static int USGSDEMWriteARecord( USGSDEMWriteInfo *psWInfo )
 /* -------------------------------------------------------------------- */
 /*      Spatial Resolution (x, y and z).   12.6 format.                 */
 /* -------------------------------------------------------------------- */
-    CPLPrintDouble( achARec + 816, "%12.6e", 
-                    psWInfo->dfHorizStepSize*3600.0, NULL );
-    CPLPrintDouble( achARec + 828, "%12.6e", 
-                    psWInfo->dfVertStepSize*3600.0, NULL );
-    CPLPrintDouble( achARec + 840, "%12.6e", 1.0, NULL );
+    USGSDEMPrintSingle( achARec + 816, psWInfo->dfHorizStepSize*3600.0 );
+    USGSDEMPrintSingle( achARec + 828, psWInfo->dfVertStepSize*3600.0 );
+    USGSDEMPrintSingle( achARec + 840, 1.0 );
 
 /* -------------------------------------------------------------------- */
 /*      Rows and Columns of profiles.                                   */
