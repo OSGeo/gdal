@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2005/02/12 17:52:28  kmelero
+ * Rewrote CreateCopy to support v2 and v3 of MrSID.  (kmelero@sanz.com)
+ *
  * Revision 1.20  2005/02/06 18:40:05  dron
  * Fixes in colorspace handling when the new file creating; use WORLDFILE option.
  *
@@ -1250,7 +1253,7 @@ GDALDataset *MrSIDDataset::Open( GDALOpenInfo * poOpenInfo )
 #include "lti_metadataRecord.h"
 #include "lti_utils.h"
 #include "MrSIDImageReader.h"
-#include "J2KImageReader.h"
+//#include "J2KImageReader.h"
 
 #ifdef MRSID_ESDK_VERSION_40
 # include "MG3ImageWriter.h"
@@ -1991,9 +1994,9 @@ GDALDataset *MrSIDDataset::Open( GDALOpenInfo * poOpenInfo )
     const LTFileSpec    oFileSpec( poOpenInfo->pszFilename );
 
     poDS = new MrSIDDataset();
-    if ( bIsJP2 )
-        poDS->poImageReader = new J2KImageReader( oFileSpec, true );
-    else
+    //    if ( bIsJP2 )
+    //    poDS->poImageReader = new J2KImageReader( oFileSpec, true );
+    //else
         poDS->poImageReader = new MrSIDImageReader( oFileSpec );
     if ( !LT_SUCCESS( poDS->poImageReader->initialize() ) )
     {
@@ -2042,10 +2045,10 @@ GDALDataset *MrSIDDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Get number of resolution levels (we will use them as overviews).*/
 /* -------------------------------------------------------------------- */
-    if ( bIsJP2 )
-        poDS->nOverviewCount
-	  = ((J2KImageReader *) (poDS->poImageReader))->getNumLevels() - 1;
-    else
+//    if ( bIsJP2 )
+//        poDS->nOverviewCount
+//	  = ((J2KImageReader *) (poDS->poImageReader))->getNumLevels() - 1;
+//    else
         poDS->nOverviewCount
 	  = ((MrSIDImageReader *) (poDS->poImageReader))->getNumLevels() - 1;
 
@@ -2375,95 +2378,99 @@ CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             int bStrict, char ** papszOptions, 
             GDALProgressFunc pfnProgress, void * pProgressData )
 
-{
-    int		nXSize = poSrcDS->GetRasterXSize();
-    int		nYSize = poSrcDS->GetRasterYSize();
-    int		nBands = poSrcDS->GetRasterCount();
-    int         iBand;
-    GDALDataType eType = poSrcDS->GetRasterBand(1)->GetRasterDataType();
-    const char  *pszVerison = CSLFetchNameValue( papszOptions, "VERSION" );
-        
-/* -------------------------------------------------------------------- */
-/*      Check, whether all bands in input dataset has the same type.    */
-/* -------------------------------------------------------------------- */
-    for ( iBand = 2; iBand <= nBands; iBand++ )
+{ 
+  const char* pszVerison = CSLFetchNameValue(papszOptions, "VERSION");
+
+  // Output Mrsid Version 2 file.
+  if( pszVerison && atoi(pszVerison) == 2 )
     {
-        if ( eType != poSrcDS->GetRasterBand(iBand)->GetRasterDataType() )
-        {
-            if ( bStrict )
-            {
-                CPLError( CE_Failure, CPLE_AppDefined,
-            "Unable to export MrSID file with different datatypes per\n"
-            "different bands. All bands should have the same types in MrSID." );
-                return NULL;
-            }
-            else
-            {
-                CPLError( CE_Warning, CPLE_AppDefined,
-            "Unable to export MrSID file with different datatypes per\n"
-            "different bands. All bands should have the same types in MrSID." );
-            }
-        }
-    }
-
-    if( !pfnProgress( 0.0, NULL, pProgressData ) )
+      int nXSize = poSrcDS->GetRasterXSize();
+      int nYSize = poSrcDS->GetRasterYSize();
+      
+      if( !pfnProgress( 0.0, NULL, pProgressData ) )
         return NULL;
+      
+      // Create the file.                                               
+      MrSIDDummyImageReader oImageReader( poSrcDS );
+      oImageReader.initialize();
+      
+      MG2ImageWriter oImageWriter(&oImageReader);
+      oImageWriter.initialize();
 
-/* -------------------------------------------------------------------- */
-/*      Create the file.                                                */
-/* -------------------------------------------------------------------- */
-    MrSIDDummyImageReader oImageReader( poSrcDS );
-    oImageReader.initialize();
-    MG3ImageWriter oImageWriter(&oImageReader);
-    oImageWriter.initialize();
-
-    // don't charge for this one
-    oImageWriter.setUsageMeterEnabled( false );
+      oImageWriter.setUsageMeterEnabled( true );
    
-    // set up the output file
-    oImageWriter.setOutputFileSpec( pszFilename );
+      // set output filename
+      oImageWriter.setOutputFileSpec( pszFilename );
 
-/* -------------------------------------------------------------------- */
-/*  Set up encoding parameters.                                         */
-/* -------------------------------------------------------------------- */
-    const char  *pszValue;
+      // Set defaults
+      oImageWriter.params().setBlockSize(oImageWriter.params().getBlockSize());
+      oImageWriter.setStripHeight(oImageWriter.getStripHeight());
 
-    if( CSLFetchNameValue(papszOptions, "TWOPASS") != NULL )
-        oImageWriter.params().setTwoPassOptimizer( true );
-    
-    pszValue = CSLFetchNameValue(papszOptions, "STRIPHEIGHT");
-    if( pszValue != NULL )
-        oImageWriter.setStripHeight( atol(pszValue) );
+      // check for compression option
+      const char* pszValue = CSLFetchNameValue(papszOptions, "COMPRESSION");
+      if( pszValue != NULL )
+	oImageWriter.params().setCompressionRatio( atof(pszValue) );
 
-    pszValue = CSLFetchNameValue(papszOptions, "FILESIZE");
-    if( pszValue != NULL )
-        // FIXME: should use atoll() here.
-        oImageWriter.params().setTargetFilesize( atol(pszValue) );
+      // set MrSID world file
+      if( CSLFetchNameValue(papszOptions, "WORLDFILE") != NULL )
+	oImageWriter.setWorldFileSupport( true );
+      
+      // write the scene
+      const LTIScene oScene( 0, 0, nXSize, nYSize, 1.0 );
+      oImageWriter.write( oScene );
+    }
+  // Output Mrsid Version 3 file.
+  else
+    {
+      int nXSize = poSrcDS->GetRasterXSize();
+      int nYSize = poSrcDS->GetRasterYSize();
+      
+      if( !pfnProgress( 0.0, NULL, pProgressData ) )
+        return NULL;
+      
+      // Create the file.                                               
+      MrSIDDummyImageReader oImageReader( poSrcDS );
+      oImageReader.initialize();
+      
+      MG3ImageWriter oImageWriter(&oImageReader);
+      oImageWriter.initialize();
+      
+      oImageWriter.setUsageMeterEnabled( true );
+      
+      // set output filename
+      oImageWriter.setOutputFileSpec( pszFilename );
 
-/* -------------------------------------------------------------------- */
-/*      Do we need a world file?                                        */
-/* -------------------------------------------------------------------- */
-    if( CSLFetchBoolean( papszOptions, "WORLDFILE", FALSE ) )
-        oImageWriter.setWorldFileSupport( true );
+      // Set defaults
+      oImageWriter.setStripHeight(oImageWriter.getStripHeight());
 
-/* -------------------------------------------------------------------- */
-/*  Do actual writing.                                                  */
-/* -------------------------------------------------------------------- */
-    const LTIScene oScene( 0, 0, nXSize, nYSize, 1.0 );
+      // set 2 pass optimizer option
+      if( CSLFetchNameValue(papszOptions, "TWOPASS") != NULL )
+	oImageWriter.params().setTwoPassOptimizer( true );
 
-    // write the scene to the file   
-    oImageWriter.write( oScene );
-
-/* -------------------------------------------------------------------- */
-/*  Return pointer to created dataset.                                  */
-/* -------------------------------------------------------------------- */
-    GDALDataset *poDS;
-
-    poDS = (GDALDataset *) GDALOpen( pszFilename, GA_Update );
-    if ( poDS == NULL )
-        poDS = (GDALDataset *) GDALOpen( pszFilename, GA_ReadOnly );
-    
-    return poDS;
+      // set MrSID world file
+      if( CSLFetchNameValue(papszOptions, "WORLDFILE") != NULL )
+	oImageWriter.setWorldFileSupport( true );
+      
+      const char* pszValue;
+      
+      // set filesize in KB
+      pszValue = CSLFetchNameValue(papszOptions, "FILESIZE");
+      if( pszValue != NULL )
+	oImageWriter.params().setTargetFilesize( atoi(pszValue) );
+	
+      // write the scene
+      const LTIScene oScene( 0, 0, nXSize, nYSize, 1.0 );
+      oImageWriter.write( oScene );
+    }
+  
+  // Return pointer to created dataset.                                  
+  GDALDataset *poDS;
+  
+  poDS = (GDALDataset *) GDALOpen( pszFilename, GA_Update );
+  if ( poDS == NULL )
+    poDS = (GDALDataset *) GDALOpen( pszFilename, GA_ReadOnly );
+  
+  return poDS;
 }
 #endif /* MRSID_ESDK_VERSION_40 */
 
@@ -3459,10 +3466,15 @@ void GDALRegister_MrSID()
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, "Byte" );
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
 "<CreationOptionList>"
-"   <Option name='STRIPHEIGHT' type='int' description='Set strip height'/>"
+// Version 2 Options
+"   <Option name='COMPRESSION' type='double' description='Set compression ratio (0.0 default is meant to be lossless)'/>"
+// Version 3 Options
 "   <Option name='TWOPASS' type='int' description='Use twopass optimizer algorithm'/>"
 "   <Option name='FILESIZE' type='int' description='Set target file size (0 implies lossless compression)'/>"
+// Version 2 and 3 Option
 "   <Option name='WORLDFILE' type='boolean' description='Write out world file'/>"
+// Version Type
+"   <Option name='VERSION' type='int' description='Valid versions are 2 and 3, default = 3'/>"
 "</CreationOptionList>" );
 
         //poDriver->pfnCreate = MrSIDDataset::Create;
