@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2003/11/05 17:17:38  warmerda
+ * use DGNLoadTCB() to ensure scaling setup
+ *
  * Revision 1.13  2003/08/19 20:17:15  warmerda
  * Implemented DGNCreateConeElem(). Extended DGNCreateComplex*() to
  * support 3D surface and 3D solid elements.
@@ -500,6 +503,8 @@ DGNElemCore *DGNCloneElement( DGNHandle hDGNSrc, DGNHandle hDGNDst,
 {
     DGNElemCore *psClone = NULL;
 
+    DGNLoadTCB( hDGNDst );
+
 /* -------------------------------------------------------------------- */
 /*      Per structure specific copying.  The core is fixed up later.    */
 /* -------------------------------------------------------------------- */
@@ -848,6 +853,8 @@ DGNElemCore *DGNCreateMultiPointElem( DGNHandle hDGN, int nType,
                || nType == DGNT_CURVE
                || nType == DGNT_BSPLINE );
 
+    DGNLoadTCB( hDGN );
+
 /* -------------------------------------------------------------------- */
 /*      Is this too many vertices to write to a single element?         */
 /* -------------------------------------------------------------------- */
@@ -993,6 +1000,8 @@ DGNCreateArcElem( DGNHandle hDGN, int nType,
     GInt32 nAngle;
 
     CPLAssert( nType == DGNT_ARC || nType == DGNT_ELLIPSE );
+
+    DGNLoadTCB( hDGN );
 
 /* -------------------------------------------------------------------- */
 /*      Allocate element.                                               */
@@ -1217,6 +1226,8 @@ DGNCreateConeElem( DGNHandle hDGN,
     DGNPoint sMin, sMax, sCenter_1, sCenter_2;
     double dfScaledRadius;
 
+    DGNLoadTCB( hDGN );
+
 /* -------------------------------------------------------------------- */
 /*      Allocate element.                                               */
 /* -------------------------------------------------------------------- */
@@ -1363,6 +1374,8 @@ DGNCreateTextElem( DGNHandle hDGN, const char *pszText,
     DGNPoint sMin, sMax, sLowLeft, sLowRight, sUpLeft, sUpRight;
     GInt32 nIntValue, nBase;
     double length, height, diagonal;
+
+    DGNLoadTCB( hDGN );
 
 /* -------------------------------------------------------------------- */
 /*      Allocate element.                                               */
@@ -1599,6 +1612,8 @@ DGNCreateComplexHeaderElem( DGNHandle hDGN, int nType,
                || nType == DGNT_3DSURFACE_HEADER 
                || nType == DGNT_3DSOLID_HEADER );
 
+    DGNLoadTCB( hDGN );
+
 /* -------------------------------------------------------------------- */
 /*      Allocate element.                                               */
 /* -------------------------------------------------------------------- */
@@ -1681,6 +1696,8 @@ DGNCreateComplexHeaderFromGroup( DGNHandle hDGN, int nType,
     int         i, nLevel;
     DGNElemCore *psCH;
     DGNPoint    sMin = {0.0,0.0,0.0}, sMax = {0.0,0.0,0.0};
+
+    DGNLoadTCB( hDGN );
 
     if( nNumElems < 1 || papsElems == NULL )
     {
@@ -1784,6 +1801,8 @@ DGNCreateCellHeaderElem( DGNHandle hDGN, int nTotLength, const char *pszName,
     DGNElemCellHeader *psCH;
     DGNElemCore *psCore;
     DGNInfo *psInfo = (DGNInfo *) hDGN;
+
+    DGNLoadTCB( hDGN );
 
 /* -------------------------------------------------------------------- */
 /*      Allocate element.                                               */
@@ -1959,6 +1978,8 @@ DGNCreateCellHeaderFromGroup( DGNHandle hDGN, const char *pszName,
     DGNElemCore *psCH;
     DGNPoint    sMin={0.0,0.0,0.0}, sMax={0.0,0.0,0.0};
     unsigned char abyLevelsOccuring[8] = {0,0,0,0,0,0,0,0};
+
+    DGNLoadTCB( hDGN );
 
     if( nNumElems < 1 || papsElems == NULL )
     {
