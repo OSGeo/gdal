@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.77  2003/12/05 18:01:08  warmerda
+ * Added ptrptr functions
+ *
  * Revision 1.76  2003/12/02 16:39:04  warmerda
  * added GDALGetColorEntry support
  *
@@ -386,6 +389,99 @@ py_StringListToList(PyObject *self, PyObject *args) {
 %}
 
 %native(StringListToList) py_StringListToList;
+
+/* -------------------------------------------------------------------- */
+/*      Special pointer to pointer manipulation functions.              */
+/* -------------------------------------------------------------------- */
+%{
+static PyObject *ptrptrcreate(PyObject *self, PyObject *args) {
+
+    char *type = "void";
+    char fulltype[100];
+    int  count = 1;
+    char swig_ptr[100];
+    void *ptrptr;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"|si:ptrptrcreate", &type, &count ) )
+        return NULL;
+
+    ptrptr = calloc(sizeof(void*),count);
+
+    sprintf( fulltype, "_%s_pp", type );
+    SWIG_MakePtr( swig_ptr, ptrptr, fulltype );
+
+    return Py_BuildValue( "s", swig_ptr );
+}
+    
+static PyObject *ptrptrset(PyObject *self, PyObject *args) {
+
+    int    array_index = 0;
+    char   *swig_target = NULL, *swig_value;
+    void   *value = NULL;
+    void   **target = NULL;
+    
+    self = self;
+    if(!PyArg_ParseTuple(args,"ss|i:ptrptrset", 
+                         &swig_target, &swig_value, &array_index))
+        return NULL;
+
+    SWIG_GetPtr_2( swig_value, &value, NULL );
+    SWIG_GetPtr_2( swig_target, (void **) &target, NULL );
+
+    if( target != NULL )
+	target[array_index] = value;
+
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+    
+static PyObject *ptrptrvalue(PyObject *self, PyObject *args) {
+
+    int    array_index = 0;
+    char   *swig_target = NULL;
+    void   *value = NULL;
+    void   **target = NULL;
+    char   result_ptr[100];
+    
+    self = self;
+    if(!PyArg_ParseTuple(args,"s|i:ptrptrvalue", 
+                         &swig_target, &array_index))
+        return NULL;
+
+    SWIG_GetPtr_2( swig_target, (void **) &target, NULL );
+
+    if( target != NULL )
+        value = target[array_index];
+
+    if( value == NULL )
+        strcpy( result_ptr, "NULL" );
+    else
+    {
+        char type2[100], *type_off;
+
+        type_off = strstr(swig_target+1,"_"); 
+        if( type_off != NULL )
+        {
+	    strcpy( type2, type_off );
+            if( type2[strlen(type2)-1] == 'p' )
+                type2[strlen(type2)-1] = '\0'; /* trim trailing 'p' */
+        }
+        else
+            strcpy( type2, "_void_p" );
+        
+        SWIG_MakePtr( result_ptr, value, type2 );
+    }
+
+    return Py_BuildValue( "s", result_ptr );
+}
+    
+        
+%}
+
+%native(ptrptrset) ptrptrset;
+%native(ptrptrvalue) ptrptrvalue;
+%native(ptrptrcreate) ptrptrcreate;
 
 /* -------------------------------------------------------------------- */
 /*      CPL level stuff                                                 */
@@ -2737,7 +2833,7 @@ int     OGR_Dr_DeleteDataSource( OGRSFDriverH, const char * );
 
 /* OGRSFDriverRegistrar */
 
-OGRDataSourceH OGROpen( const char *, int, OGRSFDriverH * );
+OGRDataSourceH OGROpen( const char *, int, void * );
 void           OGRRegisterDriver( OGRSFDriverH );
 int            OGRGetDriverCount();
 OGRSFDriverH   OGRGetDriver( int );

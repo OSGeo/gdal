@@ -29,6 +29,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.54  2003/12/05 18:01:08  warmerda
+# Added ptrptr functions
+#
 # Revision 1.53  2003/12/02 16:39:05  warmerda
 # added GDALGetColorEntry support
 #
@@ -108,7 +111,8 @@
 
 import _gdal
 from gdalconst import *
-from _gdal import ptrcreate, ptrfree, ptrvalue, ptrset, ptrcast, ptradd, ptrmap
+from _gdal import ptrcreate, ptrfree, ptrvalue, ptrset, ptrcast, ptradd, ptrmap, ptrptrcreate, ptrptrvalue, ptrptrset
+     
 
 def ToNULLableString(x):
     if x is None or x == 'NULL':

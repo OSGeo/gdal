@@ -33,8 +33,8 @@
  * and things like that.
  *
  * $Log$
- * Revision 1.77  2003/12/02 16:39:05  warmerda
- * added GDALGetColorEntry support
+ * Revision 1.78  2003/12/05 18:01:08  warmerda
+ * Added ptrptr functions
  *
  ************************************************************************/
 
@@ -1218,6 +1218,90 @@ py_StringListToList(PyObject *self, PyObject *args) {
 
     return psList;
 }
+
+static PyObject *ptrptrcreate(PyObject *self, PyObject *args) {
+
+    char *type = "void";
+    char fulltype[100];
+    int  count = 1;
+    char swig_ptr[100];
+    void *ptrptr;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"|si:ptrptrcreate", &type, &count ) )
+        return NULL;
+
+    ptrptr = calloc(sizeof(void*),count);
+
+    sprintf( fulltype, "_%s_pp", type );
+    SWIG_MakePtr( swig_ptr, ptrptr, fulltype );
+
+    return Py_BuildValue( "s", swig_ptr );
+}
+    
+static PyObject *ptrptrset(PyObject *self, PyObject *args) {
+
+    int    array_index = 0;
+    char   *swig_target = NULL, *swig_value;
+    void   *value = NULL;
+    void   **target = NULL;
+    
+    self = self;
+    if(!PyArg_ParseTuple(args,"ss|i:ptrptrset", 
+                         &swig_target, &swig_value, &array_index))
+        return NULL;
+
+    SWIG_GetPtr_2( swig_value, &value, NULL );
+    SWIG_GetPtr_2( swig_target, (void **) &target, NULL );
+
+    if( target != NULL )
+	target[array_index] = value;
+
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+    
+static PyObject *ptrptrvalue(PyObject *self, PyObject *args) {
+
+    int    array_index = 0;
+    char   *swig_target = NULL;
+    void   *value = NULL;
+    void   **target = NULL;
+    char   result_ptr[100];
+    
+    self = self;
+    if(!PyArg_ParseTuple(args,"s|i:ptrptrvalue", 
+                         &swig_target, &array_index))
+        return NULL;
+
+    SWIG_GetPtr_2( swig_target, (void **) &target, NULL );
+
+    if( target != NULL )
+        value = target[array_index];
+
+    if( value == NULL )
+        strcpy( result_ptr, "NULL" );
+    else
+    {
+        char type2[100], *type_off;
+
+        type_off = strstr(swig_target+1,"_"); 
+        if( type_off != NULL )
+        {
+	    strcpy( type2, type_off );
+            if( type2[strlen(type2)-1] == 'p' )
+                type2[strlen(type2)-1] = '\0'; /* trim trailing 'p' */
+        }
+        else
+            strcpy( type2, "_void_p" );
+        
+        SWIG_MakePtr( result_ptr, value, type2 );
+    }
+
+    return Py_BuildValue( "s", result_ptr );
+}
+    
+        
 
 
 typedef struct {
@@ -9816,6 +9900,9 @@ static PyMethodDef _gdalMethods[] = {
 	 { "CPLGetLastErrorMsg", _wrap_CPLGetLastErrorMsg, 1 },
 	 { "CPLGetLastErrorNo", _wrap_CPLGetLastErrorNo, 1 },
 	 { "CPLErrorReset", _wrap_CPLErrorReset, 1 },
+	 { "ptrptrcreate", ptrptrcreate, 1 },
+	 { "ptrptrvalue", ptrptrvalue, 1 },
+	 { "ptrptrset", ptrptrset, 1 },
 	 { "StringListToList", py_StringListToList, 1 },
 	 { "ListToStringList", py_ListToStringList, 1 },
 	 { "StringListToDict", py_StringListToDict, 1 },
