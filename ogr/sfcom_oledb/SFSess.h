@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  1999/06/21 17:29:51  warmerda
+ * Set the SRS id to 2 to match the value dummy value in the SRS table.
+ *
  * Revision 1.5  1999/06/15 03:03:16  kshih
  * Provider Type schema Rowset
  *
@@ -411,7 +414,8 @@ public:
 
 		lstrcpyW(trData.m_szTableName,A2OLE("DBF"));
 		lstrcpyW(trData.m_szColumnName,A2OLE("OGIS_GEOMETRY"));
-
+                trData.m_nSpatialRefId = 2;
+                
 		m_rgRowData.Add(trData);
 
 		return S_OK;
