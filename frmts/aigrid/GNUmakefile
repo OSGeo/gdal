@@ -4,7 +4,7 @@ GDAL_ROOT	=	../..
 include $(GDAL_ROOT)/GDALmake.opt
 
 AIGOBJ  =	gridlib.o aigopen.o
-OBJ	=	aigdataset.o $(AIGOBJ)
+OBJ	=	aigdataset.o giodataset.o $(AIGOBJ)
 
 ALL_C_FLAGS	=	$(GDAL_INCLUDE) $(CFLAGS)
 
