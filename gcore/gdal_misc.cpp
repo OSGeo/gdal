@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2000/04/17 20:59:14  warmerda
+ * fixed sampling bug
+ *
  * Revision 1.10  2000/03/31 13:41:45  warmerda
  * added gcp support functions
  *
@@ -456,18 +459,25 @@ int GDALGetRandomRasterSample( GDALRasterBandH hBand, int nSamples,
     nBlocksPerColumn = (poBand->GetYSize() + nBlockYSize - 1) / nBlockYSize;
 
     nSampleRate = 
-        (int) MAX(1,sqrt((double) nBlocksPerRow * nBlocksPerColumn));
+        (int) MAX(1,sqrt((double) nBlocksPerRow * nBlocksPerColumn)-2.0);
+
+    if( nSampleRate == nBlocksPerRow && nSampleRate > 1 )
+        nSampleRate--;
 
     nBlockSampleRate = MAX(1,(nBlockXSize * nBlockYSize) / 
         (nSamples / (nBlocksPerRow*nBlocksPerColumn / nSampleRate)));
     
     for( int iSampleBlock = 0; 
          iSampleBlock < nBlocksPerRow * nBlocksPerColumn;
-         iSampleBlock += nBlockSampleRate )
+         iSampleBlock += nSampleRate )
     {
         double dfValue = 0.0;
         int  iXBlock, iYBlock, nXCheck, nYCheck, iOffset;
         GDALRasterBlock *poBlock;
+
+        printf( "Capture up to %d samples from block %d.\n", 
+                nSamples - nActualSamples, 
+                iSampleBlock );
 
         iYBlock = iSampleBlock / nBlocksPerRow;
         iXBlock = iSampleBlock - nBlocksPerRow * iYBlock;
