@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2003/10/05 15:31:38  dron
+ * Added support for external raw files.
+ *
  * Revision 1.4  2003/09/28 14:15:27  dron
  * Implemented GCP segment reading, header parsing improved.
  *
@@ -523,9 +526,9 @@ GDALDataset *PCIDSKDataset::Open( GDALOpenInfo * poOpenInfo )
 
     pszString = CPLScanString( szTemp + 304, 16, TRUE, FALSE );
     if ( !EQUAL( pszString, "" ) )
-        nImageStart = atol( szTemp );   // XXX: should be atoll()
+        nImageStart = atol( pszString );// XXX: should be atoll()
     else
-        nImageStart = 0;
+        nImageStart = 1;
     CPLFree( pszString );
     nImageOffset = (nImageStart - 1) * 512;
 
@@ -581,6 +584,7 @@ GDALDataset *PCIDSKDataset::Open( GDALOpenInfo * poOpenInfo )
         vsi_l_offset    nPixelOffset = 0, nLineOffset = 0, nLineSize = 0;
         int             bNativeOrder;
         int             i;
+        FILE            *fp = poDS->fp;
 
         VSIFSeekL( poDS->fp, nImgHdrOffset, SEEK_SET );
         VSIFReadL( szTemp, 1, 1024, poDS->fp );
@@ -616,23 +620,34 @@ GDALDataset *PCIDSKDataset::Open( GDALOpenInfo * poOpenInfo )
                     // Read the filename
                     pszFilename = CPLScanString( szTemp + 64, 64, TRUE, FALSE );
 
-                    // Empty filename means we have data stored inside
-                    // PCIDSK file
-                    if ( EQUAL(pszFilename, "") )
+                    // Non-empty filename means we have data stored in
+                    // external raw file
+                    if ( !EQUAL(pszFilename, "") )
                     {
-                        pszString = CPLScanString( szTemp + 168, 16, TRUE, FALSE );
-                        nImageOffset = atol( pszString ); // XXX: should be atoll()
-                        CPLFree( pszString );
+                        CPLDebug( "PCIDSK", "pszFilename=%s", pszFilename );
+                        if( poOpenInfo->eAccess == GA_ReadOnly )
+                            fp = VSIFOpenL( pszFilename, "rb" );
+                        else
+                            fp = VSIFOpenL( pszFilename, "r+b" );
 
-                        nPixelOffset = CPLScanLong( szTemp + 184, 8 );
-                        nLineOffset = CPLScanLong( szTemp +  + 192, 8 );
+                        if ( !fp )
+                        {
+                            CPLDebug( "PCIDSK",
+                                      "Cannot open external raw file %s",
+                                      pszFilename );
+                            iBand--;
+                            poDS->nBands--;
+                            CPLFree( pszFilename );
+                            continue;
+                        }
                     }
-                    else
-                    {
-                        iBand--;
-                        poDS->nBands--;
-                        continue;
-                    }
+
+                    pszString = CPLScanString( szTemp + 168, 16, TRUE, FALSE );
+                    nImageOffset = atol( pszString ); // XXX: should be atoll()
+                    CPLFree( pszString );
+
+                    nPixelOffset = CPLScanLong( szTemp + 184, 8 );
+                    nLineOffset = CPLScanLong( szTemp +  + 192, 8 );
 
                     CPLFree( pszFilename );
                 }
@@ -647,7 +662,29 @@ GDALDataset *PCIDSKDataset::Open( GDALOpenInfo * poOpenInfo )
         bNativeOrder = ( szTemp[201] == 'S')?TRUE:FALSE;
 #endif
 
-        poBand = new RawRasterBand( poDS, iBand + 1, poDS->fp,
+#ifdef DEBUG
+    #if defined(WIN32) && defined(_MSC_VER)
+        CPLDebug( "PCIDSK",
+                  "Band %d: nImageOffset=%I64d, nPixelOffset=%I64d, "
+                  "nLineOffset=%I64d, nLineSize=%I64d",
+                  iBand + 1, nImageOffset, nPixelOffset,
+                  nLineOffset, nLineSize );
+    #elif HAVE_LONG_LONG
+        CPLDebug( "PCIDSK",
+                  "Band %d: nImageOffset=%Ld, nPixelOffset=%Ld, "
+                  "nLineOffset=%Ld, nLineSize=%Ld",
+                  iBand + 1, nImageOffset, nPixelOffset,
+                  nLineOffset, nLineSize );
+    #else
+        CPLDebug( "PCIDSK",
+                  "Band %d: nImageOffset=%ld, nPixelOffset=%ld, "
+                  "nLineOffset=%ld, nLineSize=%ld",
+                  iBand + 1, nImageOffset, nPixelOffset,
+                  nLineOffset, nLineSize );
+    #endif
+#endif
+
+        poBand = new RawRasterBand( poDS, iBand + 1, fp,
                                     nImageOffset, (int) nPixelOffset, 
                                     (int) nLineOffset, 
                                     eType, bNativeOrder, TRUE);
