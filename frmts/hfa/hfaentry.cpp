@@ -33,6 +33,9 @@
  * Implementation of the HFAEntry class.
  *
  * $Log$
+ * Revision 1.9  2003/07/29 10:08:24  dron
+ * Fixed definition for GetIntField() method.
+ *
  * Revision 1.8  2003/04/22 19:40:36  warmerda
  * fixed email address
  *
@@ -427,7 +430,7 @@ void *HFAEntry::GetFieldValue( const char * pszFieldPath,
 /*                            GetIntField()                             */
 /************************************************************************/
 
-int HFAEntry::GetIntField( const char * pszFieldPath, CPLErr *peErr )
+GInt32 HFAEntry::GetIntField( const char * pszFieldPath, CPLErr *peErr )
 
 {
     void	*pRetData;
@@ -445,7 +448,7 @@ int HFAEntry::GetIntField( const char * pszFieldPath, CPLErr *peErr )
         if( peErr != NULL )
             *peErr = CE_None;
 
-        return *((int *) pRetData);
+        return *((GInt32 *) pRetData);
     }
 }
 
