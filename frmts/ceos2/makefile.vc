@@ -4,6 +4,8 @@ OBJ	=	sar_ceosdataset.obj \
 
 GDAL_ROOT	=	..\..
 
+EXTRAFLAGS = 	-I..\raw
+
 !INCLUDE $(GDAL_ROOT)\nmake.opt
 
 default:	$(OBJ)
