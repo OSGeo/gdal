@@ -116,33 +116,31 @@ dnl ---------------------------------------------------------------------------
 
 AC_ARG_WITH(libz,[  --with-libz[=ARG]       Include libz support (ARG=internal or libz directory)],,)
 
-if test "$with_libz" = "external" -o "$with_libz" = "" ; then
+if test "$with_libz" = "external" -o "$with_libz" = "" -o "$with_libz" = "yes" ; then
 
   AC_CHECK_LIB(z,deflateInit_,LIBZ_SETTING=external,LIBZ_SETTING=internal,)
 
-  if test "$LIBZ_SETTING" = "external" ; then   
-    LIBS="-lz $LIBS"
-  else
-    echo "Using internal libz implementation."
+  if test "$LIBZ_SETTING" = "external" ; then
+    AC_MSG_RESULT([using pre-installed libz])
   fi
 
-elif test "$with_libz" = "internal" ; then
-  LIBZ_SETTING=internal
-  echo "Using internal libz implementation."
+elif test "$with_libz" != "no" -a "$with_libz" != "internal" ; then
 
-else
-
+  LIBS="-L$with_libz $LIBS"
   LIBZ_SETTING=external
-  LIBS="-L$with_libz -L$with_libz -lz $LIBS"
+  AC_MSG_RESULT([using libz library from $with_libz])
 
-  echo "using $with_libz for libz."
+fi
+
+if test "$LIBZ_SETTING" = "external" ; then
+  LIBS="-lz $LIBS"
+else
+  LIBZ_SETTING=internal
+  OPT_GDAL_FORMATS="zlib $OPT_GDAL_FORMATS"
+  AC_MSG_RESULT([using internal libz code.])
 fi
 
 AC_SUBST(LIBZ_SETTING,$LIBZ_SETTING)
-
-if test "$LIBZ_SETTING" = "internal" ; then
-  OPT_GDAL_FORMATS="zlib $OPT_GDAL_FORMATS"
-fi
 
 dnl ---------------------------------------------------------------------------
 dnl Check if GRASS library is available.
@@ -936,7 +934,7 @@ dnl ---------------------------------------------------------------------------
 dnl Check for ODBC support.
 dnl ---------------------------------------------------------------------------
 
-AC_ARG_WITH(odbc,[  --with-odbc[=ARG]    Include ODBC support (ARG=no or path)],,)
+AC_ARG_WITH(odbc,[  --with-odbc[=ARG]       Include ODBC support (ARG=no or path)],,)
 
 if test "$with_odbc" = "no" ; then
 
@@ -962,6 +960,41 @@ else
 fi
 
 AC_SUBST(ODBC_SETTING,$ODBC_SETTING)
+
+dnl ---------------------------------------------------------------------------
+dnl Check for OCI support.
+dnl ---------------------------------------------------------------------------
+
+AC_ARG_WITH(oci,[  --with-oci=ARG        Include OCI (Oracle) support (ARG=no or path)],,)
+
+if test "$with_oci" = "no" ; then
+
+  HAVE_OCI=no
+
+  AC_MSG_RESULT([OCI support disabled.])
+elif  test "$with_oci" = "yes" -o "$with_oci" = "" ; then
+
+  AC_CHECK_LIB(clntsh,OCIBindByName,HAVE_OCI=yes,HAVE_OCI=no,)
+
+  if test "$HAVE_OCI" = "yes" ; then
+    AC_MSG_RESULT([using pre-installed libclntsh])
+  fi
+else
+
+  HAVE_OCI=yes
+  ORACLE_HOME="$with_oci"
+  OCI_INCLUDE="-I$ORACLE_HOME/rdbms/demo -I$ORACLE_HOME/rdbms/public"
+  LIBS="-L$ORACLE_HOME/lib $LIBS"
+
+  AC_MSG_RESULT([using OCI library from $with_oci])
+fi
+
+if test "$HAVE_OCI" = "yes" ; then
+  LIBS="-lclntsh $LIBS"
+fi
+
+AC_SUBST(HAVE_OCI,$HAVE_OCI)
+AC_SUBST(OCI_INCLUDE,$OCI_INCLUDE)
 
 dnl ---------------------------------------------------------------------------
 
