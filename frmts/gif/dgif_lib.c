@@ -112,7 +112,7 @@ GifFileType *DGifOpenFileName(const char *FileName)
     int FileHandle;
 
     if ((FileHandle = open(FileName, O_RDONLY
-#ifdef __MSDOS__
+#ifdef O_BINARY
 			           | O_BINARY
 #endif /* __MSDOS__ */
 			                     )) == -1) {
@@ -140,7 +140,7 @@ GifFileType *DGifOpenFileHandle(int FileHandle)
     f = fdopen(FileHandle, "rb");		   /* Make it into a stream: */
     setvbuf(f, NULL, _IOFBF, GIF_FILE_BUFFER_SIZE);/* And inc. stream buffer.*/
 #else
-    f = fdopen(FileHandle, "r");		   /* Make it into a stream: */
+    f = fdopen(FileHandle, "rb");		   /* Make it into a stream: */
 #endif /* __MSDOS__ */
 
     if ((GifFile = (GifFileType *) malloc(sizeof(GifFileType))) == NULL) {
