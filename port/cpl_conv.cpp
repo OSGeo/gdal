@@ -23,6 +23,9 @@
  * cpl_conv.c: Various CPL convenience functions (from cpl_conv.h).
  *
  * $Log$
+ * Revision 1.2  1998/12/03 18:30:04  warmerda
+ * Use CPLError() instead of GPSError().
+ *
  * Revision 1.1  1998/12/02 19:33:23  warmerda
  * New
  *
@@ -42,7 +45,7 @@ void *CPLCalloc( size_t nCount, size_t nSize )
     pReturn = VSICalloc( nCount, nSize );
     if( pReturn == NULL )
     {
-        GBSError( GE_Fatal,
+        CPLError( CE_Fatal, CPLE_OutOfMemory,
                   "CPLCalloc(): Out of memory allocating %d bytes.\n",
                   nSize * nCount );
     }
@@ -62,7 +65,7 @@ void *CPLMalloc( size_t nSize )
     pReturn = VSIMalloc( nSize );
     if( pReturn == NULL )
     {
-        GBSError( GE_Fatal,
+        CPLError( CE_Fatal, CPLE_OutOfMemory,
                   "CPLMalloc(): Out of memory allocating %d bytes.\n",
                   nSize );
     }
@@ -86,7 +89,7 @@ void * CPLRealloc( void * pData, size_t nNewSize )
     
     if( pReturn == NULL )
     {
-        GBSError( GE_Fatal,
+        CPLError( CE_Fatal, CPLE_OutOfMemory,
                   "CPLRealloc(): Out of memory allocating %d bytes.\n",
                   nNewSize );
     }
@@ -110,7 +113,7 @@ char *CPLStrdup( const char * pszString )
         
     if( pszReturn == NULL )
     {
-        GBSError( GE_Fatal,
+        CPLError( CE_Fatal, CPLE_OutOfMemory,
                   "CPLStrdup(): Out of memory allocating %d bytes.\n",
                   strlen(pszString) );
         
