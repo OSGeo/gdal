@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.25  2002/04/18 14:22:45  warmerda
+ * made OGRSpatialReference and co 'const correct'
+ *
  * Revision 1.24  2002/03/08 20:17:52  warmerda
  * assume WGS84 if ellipse info missing
  *
@@ -605,7 +608,7 @@ OGRErr OSRExportToProj4( OGRSpatialReferenceH hSRS, char ** ppszReturn )
 /*                           exportToProj4()                            */
 /************************************************************************/
 
-OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 )
+OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
 
 {
     char        szProj4[512];
@@ -1038,7 +1041,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 )
 /*      Translate the datum.                                            */
 /* -------------------------------------------------------------------- */
     const char *pszPROJ4Datum = NULL;
-    OGR_SRSNode *poTOWGS84 = GetAttrNode( "TOWGS84" );
+    const OGR_SRSNode *poTOWGS84 = GetAttrNode( "TOWGS84" );
     char  szTOWGS84[256];
 
     if( pszDatum == NULL )
