@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2004/08/18 18:47:12  warmerda
+ * Increase size of work buffer a bit so that providers with broken support
+ * for multiple SQLGetData() calls will still mostly work.
+ *
  * Revision 1.17  2004/08/17 21:51:16  warmerda
  * Changed Fetch() to handle values longer than the working buffer
  * properly ... do extra SQLGetData() calls till complete.
@@ -563,7 +567,7 @@ int CPLODBCStatement::Fetch( int nOrientation, int nOffset )
     
     for( iCol = 0; iCol < m_nColCount; iCol++ )
     {
-        char szWrkData[64];
+        char szWrkData[256];
         SQLINTEGER cbDataLen;
         int nRetCode;
 
