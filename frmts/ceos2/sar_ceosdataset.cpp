@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2000/11/22 19:14:16  warmerda
+ * added CEOS_DM_* metadata items
+ *
  * Revision 1.10  2000/08/15 19:28:26  warmerda
  * added help topic
  *
@@ -103,9 +106,10 @@ static CeosTypeCode_t QuadToTC( int a, int b, int c, int d )
     return abcd;
 }
 
-#define LEADER_DATASET_SUMMARY_TC  QuadToTC( 18, 10, 18, 20 )
+#define LEADER_DATASET_SUMMARY_TC          QuadToTC( 18, 10, 18, 20 )
 #define LEADER_RADIOMETRIC_COMPENSATION_TC QuadToTC( 18, 51, 18, 20 )
-#define VOLUME_DESCRIPTOR_RECORD_TC QuadToTC( 192, 192, 18, 18 )
+#define VOLUME_DESCRIPTOR_RECORD_TC        QuadToTC( 192, 192, 18, 18 )
+#define IMAGE_HEADER_RECORD_TC             QuadToTC( 63, 192, 18, 18 )
 
 #define PROC_PARAM_RECORD_TYPECODE { 18, 120, 18, 20 }
 #define RAD_MET_RECORD_TYPECODE    { 18, 50, 18, 20 }
@@ -366,6 +370,80 @@ void SAR_CEOSDataset::ScanForMetadata()
         papszMetadata = 
             CSLSetNameValue( papszMetadata, "CEOS_BEAM_TYPE", 
                              szField );
+    }
+
+/* -------------------------------------------------------------------- */
+/*	Get process-to-raw data coordinate translation values.  These	*/
+/*	are likely specific to Atlantis APP products.			*/
+/* -------------------------------------------------------------------- */
+    record = FindCeosRecord( sVolume.RecordList, 
+                             IMAGE_HEADER_RECORD_TC,
+                             __CEOS_IMAGRY_OPT_FILE, -1, -1 );
+
+    if( record != NULL )
+    {
+        GetCeosField( record, 449, "A4", szField );
+        szField[4] = '\0';
+
+        if( !EQUALN(szField,"    ",4 ) )
+            SetMetadataItem( "CEOS_DM_CORNER", szField );
+
+
+        GetCeosField( record, 453, "A4", szField );
+        szField[4] = '\0';
+
+        if( !EQUALN(szField,"    ",4 ) )
+            SetMetadataItem( "CEOS_DM_TRANSPOSE", szField );
+
+
+        GetCeosField( record, 457, "A4", szField );
+        szField[4] = '\0';
+
+        if( !EQUALN(szField,"    ",4 ) )
+            SetMetadataItem( "CEOS_DM_START_SAMPLE", szField );
+
+
+        GetCeosField( record, 461, "A5", szField );
+        szField[5] = '\0';
+
+        if( !EQUALN(szField,"     ",5 ) )
+            SetMetadataItem( "CEOS_DM_START_PULSE", szField );
+
+
+        GetCeosField( record, 466, "A16", szField );
+        szField[16] = '\0';
+
+        if( !EQUALN(szField,"                ", 16 ) )
+            SetMetadataItem( "CEOS_DM_FAST_ALPHA", szField );
+
+
+        GetCeosField( record, 482, "A16", szField );
+        szField[16] = '\0';
+
+        if( !EQUALN(szField,"                ", 16 ) )
+            SetMetadataItem( "CEOS_DM_FAST_BETA", szField );
+
+
+        GetCeosField( record, 498, "A16", szField );
+        szField[16] = '\0';
+
+        if( !EQUALN(szField,"                ", 16 ) )
+            SetMetadataItem( "CEOS_DM_SLOW_ALPHA", szField );
+
+
+        GetCeosField( record, 514, "A16", szField );
+        szField[16] = '\0';
+
+        if( !EQUALN(szField,"                ", 16 ) )
+            SetMetadataItem( "CEOS_DM_SLOW_BETA", szField );
+
+
+        GetCeosField( record, 530, "A16", szField );
+        szField[16] = '\0';
+
+        if( !EQUALN(szField,"                ", 16 ) )
+            SetMetadataItem( "CEOS_DM_FAST_ALPHA_2", szField );
+
     }
 }
 
