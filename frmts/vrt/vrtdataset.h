@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2002/05/29 18:13:44  warmerda
+ * added nodata handling for averager
+ *
  * Revision 1.3  2002/05/29 16:06:05  warmerda
  * complete detailed band metadata
  *
@@ -136,12 +139,15 @@ class CPL_DLL VRTRasterBand : public GDALRasterBand
     CPLErr         XMLInit( CPLXMLNode * );
     CPLXMLNode *   SerializeToXML(void);
 
+#define VRT_NODATA_UNSET -1234.56
+
     CPLErr         AddSimpleSource( GDALRasterBand *poSrcBand, 
                                     int nSrcXOff=-1, int nSrcYOff=-1, 
                                     int nSrcXSize=-1, int nSrcYSize=-1, 
                                     int nDstXOff=-1, int nDstYOff=-1, 
                                     int nDstXSize=-1, int nDstYSize=-1,
-                                    const char *pszResampling = "near" );
+                                    const char *pszResampling = "near",
+                                    double dfNoDataValue = VRT_NODATA_UNSET);
 
     virtual CPLErr IReadBlock( int, int, void * );
 

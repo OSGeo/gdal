@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2002/05/29 18:13:44  warmerda
+ * added nodata handling for averager
+ *
  * Revision 1.4  2002/05/29 16:06:05  warmerda
  * complete detailed band metadata
  *
@@ -89,6 +92,8 @@ public:
     int                 nDstYOff;
     int                 nDstXSize;
     int                 nDstYSize;
+
+    float               fNoDataValue;
 };
 
 /************************************************************************/
@@ -425,6 +430,11 @@ VRTAveragedSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
                     if( iX < 0 || iX >= nReqXSize )
                         continue;
 
+                    float fSampledValue = pafSrc[iX + iY * nReqXSize];
+
+                    if( ABS(fSampledValue-fNoDataValue) < 0.0001 )
+                        continue;
+
                     nPixelCount++;
                     dfSum += pafSrc[iX + iY * nReqXSize];
                 }
@@ -571,10 +581,26 @@ CPLErr VRTRasterBand::IRasterIO( GDALRWFlag eRWFlag,
         return CE_Failure;
     }
 
-    /* We should initialize the buffer to some background value here */
+/* -------------------------------------------------------------------- */
+/*      Initialize the buffer to some background value. Use the         */
+/*      nodata value if available.                                      */
+/* -------------------------------------------------------------------- */
+    double dfWriteValue = 0.0;
+    int    iLine;
 
-    /* Apply each source in turn. */
-
+    if( bNoDataValueSet )
+        dfWriteValue = dfNoDataValue;
+    
+    for( iLine = 0; iLine < nBufYSize; iLine++ )
+    {
+        GDALCopyWords( &dfWriteValue, GDT_Float64, 0, 
+                       ((GByte *)pData) + nLineSpace * iLine, 
+                       eBufType, nPixelSpace, nBufXSize );
+    }
+    
+/* -------------------------------------------------------------------- */
+/*      Overlay each source in turn over top this.                      */
+/* -------------------------------------------------------------------- */
     for( iSource = 0; iSource < nSources; iSource++ )
     {
         eErr = 
@@ -608,7 +634,8 @@ CPLErr VRTRasterBand::AddSimpleSource( GDALRasterBand *poSrcBand,
                                        int nSrcXSize, int nSrcYSize, 
                                        int nDstXOff, int nDstYOff, 
                                        int nDstXSize, int nDstYSize,
-                                       const char *pszResampling )
+                                       const char *pszResampling, 
+                                       double dfNoDataValue )
 
 {
 /* -------------------------------------------------------------------- */
@@ -638,7 +665,14 @@ CPLErr VRTRasterBand::AddSimpleSource( GDALRasterBand *poSrcBand,
     if( pszResampling != NULL && EQUALN(pszResampling,"aver",4) )
         poSimpleSource = new VRTAveragedSource();
     else
+    {
         poSimpleSource = new VRTSimpleSource();
+        if( dfNoDataValue != VRT_NODATA_UNSET )
+            CPLError( 
+                CE_Warning, CPLE_AppDefined, 
+                "NODATA setting not currently supportted for nearest\n"
+                "neighbour sampled simple sources on Virtual Datasources." );
+    }
 
     poSimpleSource->poRasterBand = poSrcBand;
 
@@ -651,6 +685,8 @@ CPLErr VRTRasterBand::AddSimpleSource( GDALRasterBand *poSrcBand,
     poSimpleSource->nDstYOff  = nDstYOff;
     poSimpleSource->nDstXSize = nDstXSize;
     poSimpleSource->nDstYSize = nDstYSize;
+    
+    poSimpleSource->fNoDataValue = (float) dfNoDataValue;
 
 /* -------------------------------------------------------------------- */
 /*      If we can get the associated GDALDataset, add a reference to it.*/
