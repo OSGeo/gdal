@@ -83,7 +83,6 @@ GDAL_SLIB	=	$(GDAL_ROOT)/libgdal.$(GDAL_VER).$(SO_EXT)
 GDAL_SLIB_LINK	=	-L$(GDAL_ROOT) -lgdal.$(GDAL_VER)
 #GDAL_SLIB_SONAME = 	-Wl,-soname,libgdal.so.$(sover)
 
-OGR_LIB		=	$(GDAL_ROOT)/ogr/ogr.a
 CPL_LIB		=	$(GDAL_ROOT)/port/cpl.a
 
 #
@@ -159,9 +158,8 @@ GIF_SETTING	=	@GIF_SETTING@
 FITS_SETTING    =       @FITS_SETTING@
 OGDI_SETTING	=	@HAVE_OGDI@
 
-GDAL_LIBS	=	$(GDAL_LIB) $(OGR_LIB) \
-			$(GDAL_LIB) $(CPL_LIB)
-GDALA_DEP	=	$(OGR_LIB)
+GDAL_LIBS	=	$(GDAL_LIB) $(CPL_LIB)
+GDALA_DEP	=
 GDAL_OBJ	=	$(GDAL_ROOT)/frmts/o/*.o \
 			$(GDAL_ROOT)/gcore/*.o \
 			$(GDAL_ROOT)/port/*.o \
@@ -169,8 +167,7 @@ GDAL_OBJ	=	$(GDAL_ROOT)/frmts/o/*.o \
 			$(GDAL_ROOT)/ogr/ogr.o
 
 ifeq ($(OGR_ENABLED),yes)
-GDAL_LIBS := $(OGR_LIB) $(PG_LIB) $(OCI_LIB) $(GDAL_LIBS)
-GDALA_DEP := $(GDALA_DEP) $(OGR_LIB)
+GDAL_LIBS := $(GDAL_LIB) $(PG_LIB) $(OCI_LIB) $(GDAL_LIBS)
 endif
 
 #

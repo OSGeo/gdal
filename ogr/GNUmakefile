@@ -17,8 +17,6 @@ INST_H_FILES	=	ogr_core.h ogr_feature.h ogr_geometry.h ogr_p.h \
 		ogr_spatialref.h ogr_srs_api.h ogrsf_frmts/ogrsf_frmts.h \
 		ogr_featurestyle.h ogr_api.h
 
-OGR_LIB  =	ogr.a
-
 OGR_OBJ  =	ogr.o
 
 FRMTS_OBJ	= 	ogrsf_frmts/o/*.o
@@ -42,7 +40,7 @@ endif
 clean:
 	rm -f *.o ogrinfo$(EXE) ogr2ogr$(EXE) ogrtindex$(EXE) 
 	rm -f sdts2mi$(EXE) testepsg$(EXE)
-	rm -f test_ogrsf$(EXE) $(OGR_LIB)
+	rm -f test_ogrsf$(EXE)
 	rm -f html/*
 	(cd ogrsf_frmts; $(MAKE) clean)
 
@@ -68,7 +66,7 @@ ogrtindex$(EXE):	ogrtindex.o  $(EXE_DEP_LIBS)
 	$(CXX) $(LNK_FLAGS) ogrtindex.o $(CONFIG_LIBS) -o ogrtindex$(EXE)
 
 lib:	sublibs
-	$(MAKE) $(OGR_LIB) $(OGR_OBJ)
+	$(MAKE) $(OGR_OBJ)
 
 ifeq ($(OGR_ENABLED),yes)
 
@@ -88,10 +86,6 @@ docs:
 install-docs:
 	$(INSTALL_DIR) $(INST_DOCS)/ogr
 	cp html/* $(INST_DOCS)/ogr
-
-$(OGR_LIB):	$(OBJ) $(FRMTS_OBJ)
-	$(AR) r $(OGR_LIB) $?
-	$(RANLIB) $(OGR_LIB)
 
 $(OGR_OBJ):	$(OBJ) $(FRMTS_OBJ)
 	$(LD_R) -o $@ $^
@@ -147,10 +141,7 @@ else
 install-full:
 endif
 
-install:	$(OGR_LIB) install-full
+install:	install-full
 	for f in $(INST_H_FILES) ; \
 	    do $(INSTALL_DATA) $$f $(INST_INCLUDE) ; \
 	done
-	$(INSTALL_DATA) $(OGR_LIB) $(INST_LIB)
-
-
