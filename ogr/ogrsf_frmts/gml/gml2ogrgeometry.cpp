@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.3  2002/03/07 22:37:10  warmerda
+ * use ogr_gml_geom.h
+ *
  * Revision 1.2  2002/03/06 20:07:12  warmerda
  * fixed point reading
  *
@@ -36,7 +39,7 @@
  *
  */
 
-#include "ogr_gml.h"
+#include "ogr_gml_geom.h"
 #include "cpl_minixml.h"
 #include "cpl_error.h"
 

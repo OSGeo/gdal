@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.3  2002/03/07 22:38:04  warmerda
+ * use ogr_gml_geom.h
+ *
  * Revision 1.2  2002/01/25 21:00:31  warmerda
  * fix some small bugs found by MS VC++
  *
@@ -36,7 +39,7 @@
  *
  */
 
-#include "ogr_gml.h"
+#include "ogr_gml_geom.h"
 #include "cpl_minixml.h"
 #include "cpl_error.h"
 #include "cpl_conv.h"
