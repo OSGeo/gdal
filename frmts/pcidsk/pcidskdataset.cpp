@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2004/01/31 09:27:19  dron
+ * Fixed number of projection parameters mismatch.
+ *
  * Revision 1.9  2003/11/28 20:45:36  dron
  * Warn user if dataset contain no raster bands.
  *
@@ -408,7 +411,7 @@ void PCIDSKDataset::WriteGeoSegment( )
 
         CPLPrintStringFill( szTemp + 64, pszUnits, 16 );
 
-        for ( i = 0; i < 16; i++ )
+        for ( i = 0; i < 17; i++ )
         {
             CPLPrintDouble( szTemp + 80 + 26 * i,
                             "%26.18E", padfPrjParms[i], "C" );
@@ -868,7 +871,7 @@ GDALDataset *PCIDSKDataset::Open( GDALOpenInfo * poOpenInfo )
                     else if ( EQUALN( szTemp, "PROJECTION", 10 ) )
                     {
                         char        szProj[17], szUnits[17];
-                        double      adfProjParms[16];
+                        double      adfProjParms[17];
 
                         // Read projection definition
                         VSIFSeekL( poDS->fp, nGeoDataOffset + 32, SEEK_SET );
@@ -896,7 +899,7 @@ GDALDataset *PCIDSKDataset::Open( GDALOpenInfo * poOpenInfo )
                         // Read 16 projection parameters
                         VSIFSeekL( poDS->fp, nGeoDataOffset + 80, SEEK_SET );
                         VSIFReadL( szTemp, 1, 26 * 16, poDS->fp );
-                        for ( j = 0; j < 16; j++ )
+                        for ( j = 0; j < 17; j++ )
                         {
                             adfProjParms[j] =
                                 CPLScanDouble( szTemp + 26 * j, 26, "C" );
