@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2004/01/22 21:15:37  warmerda
+ * parse url into components
+ *
  * Revision 1.1  2004/01/21 20:09:01  warmerda
  * New
  *
@@ -79,14 +82,48 @@ int OGRDODSDataSource::Open( const char * pszNewName )
     pszName = CPLStrdup( pszNewName );
 
 /* -------------------------------------------------------------------- */
+/*      Parse the URL into a base url, projection and constraint        */
+/*      expression.                                                     */
+/* -------------------------------------------------------------------- */
+    char *pszWrkURL = CPLStrdup( pszNewName + 5 );
+    char *pszFound;
+
+    pszFound = strstr(pszWrkURL,"&");
+    if( pszFound )
+    {
+        oConstraints = pszFound;
+        *pszFound = '\0';
+    }
+        
+    pszFound = strstr(pszWrkURL,"?");
+    if( pszFound )
+    {
+        oProjection = pszFound+1;
+        *pszFound = '\0';
+    }
+
+    // Trim common requests.
+    int nLen = strlen(pszWrkURL);
+    if( strcmp(pszWrkURL+nLen-4,".das") == 0 )
+        pszWrkURL[nLen-4] = '\0';
+    else if( strcmp(pszWrkURL+nLen-4,".dds") == 0 )
+        pszWrkURL[nLen-4] = '\0';
+    else if( strcmp(pszWrkURL+nLen-5,".dods") == 0 )
+        pszWrkURL[nLen-5] = '\0';
+    else if( strcmp(pszWrkURL+nLen-5,".html") == 0 )
+        pszWrkURL[nLen-5] = '\0';
+        
+    oBaseURL = pszWrkURL;
+    CPLFree( pszWrkURL );
+
+/* -------------------------------------------------------------------- */
 /*      Connect to the server.                                          */
 /* -------------------------------------------------------------------- */
-    string oURL = (pszNewName + 5);
     string version;
 
     try 
     {
-        poConnection = new AISConnect( oURL );
+        poConnection = new AISConnect( oBaseURL );
         version = poConnection->request_version();
     } 
     catch (Error &e) 
@@ -112,7 +149,7 @@ int OGRDODSDataSource::Open( const char * pszNewName )
     try
     {
         poConnection->request_das( oDAS );
-        poConnection->request_dds( oDDS );
+        poConnection->request_dds( oDDS, oProjection + oConstraints );
     }
     catch (Error &e) 
     {

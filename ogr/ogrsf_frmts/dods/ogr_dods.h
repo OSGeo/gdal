@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2004/01/22 21:15:36  warmerda
+ * parse url into components
+ *
  * Revision 1.1  2004/01/21 20:08:29  warmerda
  * New
  *
@@ -195,6 +198,10 @@ class OGRDODSDataSource : public OGRDataSource
 
     DAS                 oDAS;
     DDS                 oDDS;
+
+    string              oBaseURL;
+    string              oProjection;
+    string              oConstraints;
 
   public:
 
