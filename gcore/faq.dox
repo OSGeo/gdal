@@ -59,19 +59,27 @@ in any significant way.<p>
 
 <!--------------------------------------------------------------------------->
 
-<li> <b>What is ``Well Known Text'' projections, and how do I use them?</b><p>
+<li> <b>What are ``Well Known Text'' projections, and how do I use them?</b><p>
 
 OpenGIS's <i>Well Known Text</i> is a textual format for defining coordinate
 systems.  It is loosely based on the EPSG coordinate systems model.  While
 GDAL itself just passes these definitions around as text strings, there is
 also an OGRSpatialReference class in gdal/ogr for manipulating them and
-a linkage to PROJ.4 for transforming between coordinate systems.  The
+a linkage to <a href="http://www.remotesensing.org/proj">PROJ.4</a> for 
+transforming between coordinate systems.  The
 OGRSpatialReference, and PROJ.4 linkaged (but not PROJ.4 itself) is
 linked into the GDAL shared library by default.  More documentation on WKT
 and OGRSpatialReference can be found in the 
 <a href="http://gdal.velocet.ca/projects/opengis/ogrhtml/osr_tutorial.html">
 OGR Projections Tutorial</a>.<p>
 
+
+<!--------------------------------------------------------------------------->
+
+<li> <b>Can I reproject rasters with GDAL?</b><p>
+
+At this time there is no utility for reprojecting images with GDAL.  Hopefully
+there will be soon, but no timetable is set.<p>
 
 </ol>
 
