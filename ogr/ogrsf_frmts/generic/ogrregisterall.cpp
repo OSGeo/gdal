@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2003/10/06 19:16:38  warmerda
+ * added ODBC support
+ *
  * Revision 1.13  2003/04/08 19:32:06  warmerda
  * added memory driver
  *
@@ -91,6 +94,7 @@ void OGRRegisterAll()
     RegisterOGRAVCBin();
     RegisterOGRREC();
     RegisterOGRMEM();
+    RegisterOGRODBC();
 //    RegisterOGRE00();
 #ifdef OGDI_ENABLED
     RegisterOGROGDI();

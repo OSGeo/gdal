@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.39  2003/10/06 19:15:40  warmerda
+ * added ODBC support
+ *
  * Revision 1.38  2003/05/28 19:17:31  warmerda
  * fixup stuff for docs
  *
@@ -376,6 +379,7 @@ void CPL_DLL RegisterOGRS57();
 void CPL_DLL RegisterOGRTAB();
 void CPL_DLL RegisterOGRMIF();
 void CPL_DLL RegisterOGROGDI();
+void CPL_DLL RegisterOGRODBC();
 void CPL_DLL RegisterOGRPG();
 void CPL_DLL RegisterOGROCI();
 void CPL_DLL RegisterOGRDGN();
