@@ -28,6 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************
  * $Log$
+ * Revision 1.3  2004/10/18 17:31:11  fwarmerdam
+ * minor tweaks to work with older DAP version
+ *
  * Revision 1.2  2004/10/15 20:31:24  fwarmerdam
  * Added most of the DAS information parsing support.
  *
@@ -499,18 +502,17 @@ char **DODSDataset::CollectBandsFromDDSVar( string oVarName,
 /* -------------------------------------------------------------------- */
 /*      Does this match the established dimension?                      */
 /* -------------------------------------------------------------------- */
+    Array::Dim_iter dimx = poArray->dim_begin() + iXDim;
+    Array::Dim_iter dimy = poArray->dim_begin() + iYDim;
+
     if( nRasterXSize == 0 && nRasterYSize == 0 )
     {
-        nRasterXSize = poArray->dimension_size( 
-            poArray->dim_begin() + iXDim );
-        nRasterYSize = poArray->dimension_size( 
-            poArray->dim_begin() + iYDim );
+        nRasterXSize = poArray->dimension_size( dimx );
+        nRasterYSize = poArray->dimension_size( dimy );
     }
 
-    if( nRasterXSize != poArray->dimension_size( 
-            poArray->dim_begin() + iXDim ) 
-        || nRasterYSize != poArray->dimension_size( 
-            poArray->dim_begin() + iYDim ) )
+    if( nRasterXSize != poArray->dimension_size( dimx )
+        || nRasterYSize != poArray->dimension_size( dimy ) )
         return papszResultList;
 
 /* -------------------------------------------------------------------- */
