@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2000/11/28 19:00:32  warmerda
+ * added RegisterOGRDGN
+ *
  * Revision 1.15  2000/10/17 17:54:53  warmerda
  * added postgresql support
  *
@@ -256,6 +259,7 @@ void    RegisterOGRTAB();
 void    RegisterOGRMIF();
 void    RegisterOGROGDI();
 void    RegisterOGRPG();
+void    RegisterOGRDGN();
 CPL_C_END
 
 
