@@ -25,6 +25,9 @@
  * Main format registration function.
  * 
  * $Log$
+ * Revision 1.43  2002/06/13 09:53:45  dron
+ * Registration of AVHRR L1B driver moved above of GRASS driver registartion.
+ *
  * Revision 1.42  2002/05/08 16:34:26  dron
  * NOAA Polar Orbiter Dataset reader added
  *
@@ -302,6 +305,10 @@ void GDALAllRegister()
     GDALRegister_FIT();
 #endif
 
+#ifdef FRMT_l1b
+    GDALRegister_L1B();
+#endif
+
 /* -------------------------------------------------------------------- */
 /*      Our test for the following is weak or expensive so we try       */
 /*      them last.                                                      */
@@ -316,9 +323,5 @@ void GDALAllRegister()
 
 #ifdef FRMT_grass
     GDALRegister_GRASS();
-#endif
-
-#ifdef FRMT_l1b
-    GDALRegister_L1B();
 #endif
 }
