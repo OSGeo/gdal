@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2001/10/09 17:32:25  warmerda
+ * Recognise "WGS 84" as a datum name.
+ *
  * Revision 1.19  2001/07/18 04:51:56  warmerda
  * added CPL_CVSID
  *
@@ -450,7 +453,8 @@ static int OGCDatumName2EPSGDatumCode( const char * pszOGCName )
     else if( EQUAL(pszOGCName,"NAD83") 
         || EQUAL(pszOGCName,"North_American_Datum_1983") )
         return Datum_North_American_Datum_1983;
-    else if( EQUAL(pszOGCName,"WGS84") || EQUAL(pszOGCName,"WGS_1984") )
+    else if( EQUAL(pszOGCName,"WGS84") || EQUAL(pszOGCName,"WGS_1984")
+             || EQUAL(pszOGCName,"WGS 84"))
         return Datum_WGS84;
     else if( EQUAL(pszOGCName,"WGS72") || EQUAL(pszOGCName,"WGS_1972") )
         return Datum_WGS72;
