@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2003/02/22 02:05:20  warmerda
+ * added defaulting of band mapping, added warp options
+ *
  * Revision 1.3  2003/02/21 15:41:19  warmerda
  * working minimally
  *
@@ -220,7 +223,7 @@ int GDALWarpOperation::ValidateOptions()
     {
         CPLError( CE_Failure, CPLE_IllegalArg, 
                   "GDALWarpOptions.Validate()\n"
-                  "  nBandCount=0, not bands configured!" );
+                  "  nBandCount=0, no bands configured!" );
         return FALSE;
     }
 
@@ -269,7 +272,7 @@ int GDALWarpOperation::ValidateOptions()
     {
         CPLError( CE_Failure, CPLE_IllegalArg, 
                   "GDALWarpOptions.Validate()\n"
-                  "  nBandCount=0, not bands configured!" );
+                  "  nBandCount=0, no bands configured!" );
         return FALSE;
     }
 
@@ -340,8 +343,27 @@ CPLErr GDALWarpOperation::Initialize( const GDALWarpOptions *psNewOptions )
 /* -------------------------------------------------------------------- */
 /*      Default band mapping if missing.                                */
 /* -------------------------------------------------------------------- */
+    if( psOptions->nBandCount == 0 
+        && psOptions->hSrcDS != NULL
+        && psOptions->hDstDS != NULL 
+        && GDALGetRasterCount( psOptions->hSrcDS ) 
+        == GDALGetRasterCount( psOptions->hDstDS ) )
+    {
+        int  i;
 
-    /* to do */
+        psOptions->nBandCount = GDALGetRasterCount( psOptions->hSrcDS );
+
+        psOptions->panSrcBands = (int *) 
+            CPLMalloc(sizeof(int) * psOptions->nBandCount );
+        psOptions->panDstBands = (int *) 
+            CPLMalloc(sizeof(int) * psOptions->nBandCount );
+
+        for( i = 0; i < psOptions->nBandCount; i++ )
+        {
+            psOptions->panSrcBands[i] = i+1;
+            psOptions->panDstBands[i] = i+1;
+        }
+    }
 
 /* -------------------------------------------------------------------- */
 /*      If no working data type was provided, set one now.              */
@@ -767,6 +789,8 @@ CPLErr GDALWarpOperation::WarpRegionToBuffer(
     oWK.pProgress = psOptions->pProgressArg;
     oWK.dfProgressBase = dfProgressBase;
     oWK.dfProgressScale = dfProgressScale;
+
+    oWK.papszWarpOptions = psOptions->papszWarpOptions;
 
 /* -------------------------------------------------------------------- */
 /*      Setup the source buffer.                                        */
