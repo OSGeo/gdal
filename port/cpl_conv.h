@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.33  2004/08/11 18:41:46  warmerda
+ * added CPLExtractRelativePath
+ *
  * Revision 1.32  2004/07/31 04:51:36  warmerda
  * added shared file open support
  *
@@ -187,6 +190,7 @@ const char CPL_DLL *CPLResetExtension( const char *, const char * );
 const char CPL_DLL *CPLProjectRelativeFilename( const char *pszProjectDir, 
                                             const char *pszSecondaryFilename );
 int CPL_DLL CPLIsFilenameRelative( const char *pszFilename );
+const char CPL_DLL *CPLExtractRelativePath(const char *, const char *, int *);
 
 /* -------------------------------------------------------------------- */
 /*      Find File Function                                              */
