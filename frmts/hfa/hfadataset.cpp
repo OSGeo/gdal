@@ -29,6 +29,10 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.39  2004/05/17 14:28:28  warmerda
+ * Added min/max support, and harvesting of other auxilary metadata
+ * from statistics node.
+ *
  * Revision 1.38  2004/05/11 21:38:34  warmerda
  * Handle NAD27 better.
  *
@@ -357,6 +361,20 @@ int anUsgsEsriZones[] =
  5400,    0
 };
 
+static char *apszAuxMetadataItems[] = {
+
+// node/entry         field_name                  metadata_key
+
+ "Statistics",        "dminimum",                  "STATISTICS_MINIMUM", 
+ "Statistics", 	      "dmaximum",                  "STATISTICS_MAXIMUM", 
+ "Statistics", 	      "dmean",                     "STATISTICS_MEAN",    
+ "Statistics", 	      "dmedian",                   "STATISTICS_MEDIAN",  
+ "Statistics", 	      "dmode",                     "STATISTICS_MODE",    
+ "Statistics", 	      "dstddev",                   "STATISTICS_STDDEV",  
+
+ NULL
+};
+
 /************************************************************************/
 /* ==================================================================== */
 /*				HFADataset				*/
@@ -435,6 +453,8 @@ class HFARasterBand : public GDALRasterBand
 
     int         bMetadataDirty;
 
+    void        ReadAuxMetadata();
+
   public:
 
                    HFARasterBand( HFADataset *, int, int );
@@ -448,6 +468,9 @@ class HFARasterBand : public GDALRasterBand
     virtual CPLErr          SetColorTable( GDALColorTable * );
     virtual int    GetOverviewCount();
     virtual GDALRasterBand *GetOverview( int );
+
+    virtual double GetMinimum( int *pbSuccess = NULL );
+    virtual double GetMaximum(int *pbSuccess = NULL );
 
     virtual CPLErr SetMetadata( char **, const char * = "" );
     virtual CPLErr SetMetadataItem( const char *, const char *, const char * = "" );
@@ -577,7 +600,8 @@ HFARasterBand::HFARasterBand( HFADataset *poDS, int nBand, int iOverview )
     }
 
 /* -------------------------------------------------------------------- */
-/*      Collect Metadata.                                               */
+/*      Collect GDAL custom Metadata, and "auxilary" metadata from      */
+/*      well known HFA structures.                                      */
 /* -------------------------------------------------------------------- */
     if( nThisOverview == -1 )
     {
@@ -587,6 +611,8 @@ HFARasterBand::HFARasterBand( HFADataset *poDS, int nBand, int iOverview )
             SetMetadata( papszMD );
             poDS->bMetadataDirty = FALSE;
         }
+
+        ReadAuxMetadata();
     }
 }
 
@@ -607,6 +633,96 @@ HFARasterBand::~HFARasterBand()
 
     if( poCT != NULL )
         delete poCT;
+}
+
+/************************************************************************/
+/*                          ReadAuxMetadata()                           */
+/************************************************************************/
+
+void HFARasterBand::ReadAuxMetadata()
+
+{
+    int i;
+    HFABand *poBand = hHFA->papoBand[nBand-1];
+
+    // only load metadata for full resolution layer.
+    if( nThisOverview != -1 )
+        return;
+
+    for( i = 0; apszAuxMetadataItems[i] != NULL; i += 3 )
+    {
+        HFAEntry *poEntry = 
+            poBand->poNode->GetNamedChild( apszAuxMetadataItems[i] );
+        const char *pszFieldName = apszAuxMetadataItems[i+1] + 1;
+        CPLErr eErr = CE_None;
+
+        if( poEntry == NULL )
+            continue;
+
+        switch( apszAuxMetadataItems[i+1][0] )
+        {
+          case 'd':
+          {
+              double dfValue;
+
+              dfValue = poEntry->GetDoubleField( pszFieldName, &eErr );
+              if( eErr == CE_None )
+              {
+                  char szValueAsString[100];
+
+                  sprintf( szValueAsString, "%.14g", dfValue );
+                  SetMetadataItem( apszAuxMetadataItems[i+2], 
+                                   szValueAsString );
+              }
+          }
+          break;
+
+          case 'i':
+          case 's':
+          default:
+            CPLAssert( FALSE );
+        }
+    }
+}
+
+/************************************************************************/
+/*                             GetMinimum()                             */
+/************************************************************************/
+
+double HFARasterBand::GetMinimum( int *pbSuccess )
+
+{
+    const char *pszValue = GetMetadataItem( "STATISTICS_MINIMUM" );
+    
+    if( pszValue != NULL )
+    {
+        *pbSuccess = TRUE;
+        return atof(pszValue);
+    }
+    else
+    {
+        return GDALRasterBand::GetMinimum( pbSuccess );
+    }
+}
+
+/************************************************************************/
+/*                             GetMaximum()                             */
+/************************************************************************/
+
+double HFARasterBand::GetMaximum( int *pbSuccess )
+
+{
+    const char *pszValue = GetMetadataItem( "STATISTICS_MAXIMUM" );
+    
+    if( pszValue != NULL )
+    {
+        *pbSuccess = TRUE;
+        return atof(pszValue);
+    }
+    else
+    {
+        return GDALRasterBand::GetMaximum( pbSuccess );
+    }
 }
 
 /************************************************************************/
