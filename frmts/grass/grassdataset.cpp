@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2004/02/20 22:58:00  warmerda
+ * Revert last change ... doesn't work with libgrass (CVS).  See further info
+ * in bug report (bug 408).
+ *
  * Revision 1.15  2003/10/06 13:35:27  warmerda
  * Fixed GrassErrorHandler typedef as per:
  * http://bugzilla.remotesensing.org/show_bug.cgi?id=408
@@ -498,7 +502,7 @@ CPLErr GRASSDataset::GetGeoTransform( double * padfGeoTransform )
 /*                                Open()                                */
 /************************************************************************/
 
-typedef int (*GrassErrorHandler)(...);
+typedef int (*GrassErrorHandler)();
 
 GDALDataset *GRASSDataset::Open( GDALOpenInfo * poOpenInfo )
 
