@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2000/09/19 14:09:34  warmerda
+ * avoid checking for field terminators in multi-byte strings
+ *
  * Revision 1.6  2000/06/13 13:39:27  warmerda
  * added warnings, and better handlng of short data for subfields
  *
@@ -280,11 +283,27 @@ int DDFSubfieldDefn::GetDataLength( const char * pachSourceData,
     else
     {
         int     nLength = 0;
+        int     bCheckFieldTerminator = TRUE;
+
+        /* We only check for the field terminator because of some buggy 
+         * datasets with missing format terminators.  However, we have found
+         * the field terminator is a legal character within the fields of
+         * some extended datasets (such as JP34NC94.000).  So we don't check
+         * for the field terminator if the field appears to be multi-byte
+         * which we established by the first character being out of the 
+         * ASCII printable range (32-127). 
+         */
+
+        if( pachSourceData[0] < 32 || pachSourceData[0] >= 127 )
+            bCheckFieldTerminator = FALSE;
         
         while( nLength < nMaxBytes
-               && pachSourceData[nLength] != chFormatDelimeter 
-               && pachSourceData[nLength] != DDF_FIELD_TERMINATOR )
+               && pachSourceData[nLength] != chFormatDelimeter )
         {
+            if( bCheckFieldTerminator 
+                && pachSourceData[nLength] == DDF_FIELD_TERMINATOR )
+                break;
+
             nLength++;
         }
 
