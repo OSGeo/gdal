@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.28  2002/09/11 14:17:23  warmerda
+ * copy ct/metadata/description for bands in CreateCopy()
+ *
  * Revision 1.27  2002/09/06 01:28:30  warmerda
  * fixed logic for setting descriptions in created files
  *
@@ -346,6 +349,23 @@ GDALDataset *GDALDriver::CreateCopy( const char * pszFilename,
         GDALRasterBand *poSrcBand = poSrcDS->GetRasterBand( iBand+1 );
         GDALRasterBand *poDstBand = poDstDS->GetRasterBand( iBand+1 );
 
+/* -------------------------------------------------------------------- */
+/*      Do we need to copy a colortable or other metadata?              */
+/* -------------------------------------------------------------------- */
+        GDALColorTable *poCT;
+
+        poCT = poSrcBand->GetColorTable();
+        if( poCT != NULL )
+            poDstBand->SetColorTable( poCT );
+
+        if( strlen(poSrcBand->GetDescription()) > 0 )
+            poDstBand->SetDescription( poSrcBand->GetDescription() );
+
+        poDstBand->SetMetadata( poSrcBand->GetMetadata() );
+
+/* -------------------------------------------------------------------- */
+/*      Copy image data.                                                */
+/* -------------------------------------------------------------------- */
         void           *pData;
 
         pData = CPLMalloc(nXSize * GDALGetDataTypeSize(eType) / 8);
