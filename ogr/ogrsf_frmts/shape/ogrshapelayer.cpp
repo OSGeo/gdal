@@ -3,7 +3,7 @@
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Implements OGRShapeLayer class.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 1999,  Les Technologies SoftMap Inc.
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2003/04/15 20:45:54  warmerda
+ * Added code to update the feature count in CreateFeature().
+ *
  * Revision 1.12  2003/03/05 05:09:41  warmerda
  * initialize panMatchingFIDs
  *
@@ -230,6 +233,8 @@ OGRErr OGRShapeLayer::SetFeature( OGRFeature *poFeature )
 OGRErr OGRShapeLayer::CreateFeature( OGRFeature *poFeature )
 
 {
+    OGRErr eErr;
+
     poFeature->SetFID( OGRNullFID );
 
     if( nTotalShapeCount == 0 
@@ -294,7 +299,14 @@ OGRErr OGRShapeLayer::CreateFeature( OGRFeature *poFeature )
         }
     }
     
-    return SHPWriteOGRFeature( hSHP, hDBF, poFeatureDefn, poFeature );
+    eErr = SHPWriteOGRFeature( hSHP, hDBF, poFeatureDefn, poFeature );
+
+    if( hSHP != NULL )
+        nTotalShapeCount = hSHP->nRecords;
+    else 
+        nTotalShapeCount = hDBF->nRecords;
+    
+    return eErr;
 }
 
 /************************************************************************/
