@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.10  2002/06/11 13:13:02  dron
+ * Write support implemented with CreateCopy() function
+ *
  * Revision 1.9  2002/06/04 17:37:23  dron
  * Header records may follow in any order now.
  *
@@ -290,7 +293,7 @@ GDALDataset *AAIGDataset::Open( GDALOpenInfo * poOpenInfo )
 
     papszTokens =  
         CSLTokenizeString2( (const char *) poOpenInfo->pabyHeader,
-                                  " \n\r", NULL );
+                                  " \n\r", 0 );
 
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
@@ -372,7 +375,7 @@ GDALDataset *AAIGDataset::Open( GDALOpenInfo * poOpenInfo )
         if( poOpenInfo->pabyHeader[i] == '\0' )
         {
             CPLError( CE_Failure, CPLE_AppDefined, 
-                      "Couldn't fine data values in ASCII Grid file.\n" );
+                      "Couldn't find data values in ASCII Grid file.\n" );
             return NULL;			
         }
 
@@ -449,6 +452,96 @@ const char *AAIGDataset::GetProjectionRef()
 }
 
 /************************************************************************/
+/*                        AAIGCreateCopy()	                        */
+/************************************************************************/
+
+static GDALDataset *
+AAIGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS, 
+                int bStrict, char ** papszOptions, 
+                GDALProgressFunc pfnProgress, void * pProgressData )
+
+{
+    int  nBands = poSrcDS->GetRasterCount();
+    int  nXSize = poSrcDS->GetRasterXSize();
+    int  nYSize = poSrcDS->GetRasterYSize();
+
+/* -------------------------------------------------------------------- */
+/*      Some rudimentary checks		                                */
+/* -------------------------------------------------------------------- */
+    if( nBands != 1 )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported, 
+                  "AAIG driver doesn't support %d bands.  Must be 1 band.\n",
+		  nBands );
+
+        return NULL;
+    }
+
+    if( !pfnProgress( 0.0, NULL, pProgressData ) )
+        return NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Create the dataset.                                             */
+/* -------------------------------------------------------------------- */
+    FILE	*fpImage;
+
+    fpImage = VSIFOpen( pszFilename, "wt" );
+    if( fpImage == NULL )
+    {
+        CPLError( CE_Failure, CPLE_OpenFailed, 
+                  "Unable to create file %s.\n", 
+                  pszFilename );
+        return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Write ASCII Grid file header			                */
+/* -------------------------------------------------------------------- */
+    double      adfGeoTransform[6];
+
+    poSrcDS->GetGeoTransform( adfGeoTransform );
+    VSIFPrintf( fpImage, "ncols        %d\n", nXSize );
+    VSIFPrintf( fpImage, "nrows        %d\n", nYSize );
+    VSIFPrintf( fpImage, "xllcorner    %.12f\n", adfGeoTransform[0] );
+    VSIFPrintf( fpImage, "yllcorner    %.12f\n", 
+        adfGeoTransform[3]- nYSize * adfGeoTransform[1] );
+    VSIFPrintf( fpImage, "cellsize     %.12f\n", adfGeoTransform[1] );
+//    VSIFPrintf( fpImage, "NODATA_value %d\n", -9999 );
+
+/* -------------------------------------------------------------------- */
+/*      Loop over image, copying image data.                            */
+/* -------------------------------------------------------------------- */
+    double 	*padfScanline;
+    int		iLine, iPixel;
+    CPLErr      eErr = CE_None;
+    
+    GDALRasterBand * poBand = poSrcDS->GetRasterBand( 1 );
+    padfScanline = (double *) CPLMalloc( nXSize *
+		                GDALGetDataTypeSize(GDT_CFloat64) / 8 );
+    for( iLine = 0; eErr == CE_None && iLine < nYSize; iLine++ )
+    {
+        eErr = poBand->RasterIO( GF_Read, 0, iLine, nXSize, 1, 
+                              padfScanline, nXSize, 1, GDT_CFloat64,
+                              sizeof(double), sizeof(double) * nXSize );
+	for ( iPixel = 0; iPixel < nXSize; iPixel++ )
+	   VSIFPrintf( fpImage, " %6.20g", padfScanline[iPixel] );
+	VSIFPrintf( fpImage, "\n" );
+	if( eErr == CE_None &&
+	    !pfnProgress((iLine + 1) / ((double) nYSize), NULL, pProgressData) )
+        {
+            eErr = CE_Failure;
+            CPLError( CE_Failure, CPLE_UserInterrupt, 
+                      "User terminated CreateCopy()" );
+        }
+    }
+
+    CPLFree( padfScanline );
+    VSIFClose( fpImage );
+    
+    return (GDALDataset *) GDALOpen( pszFilename, GA_Update );
+}
+
+/************************************************************************/
 /*                        GDALRegister_AAIGrid()                        */
 /************************************************************************/
 
@@ -466,9 +559,11 @@ void GDALRegister_AAIGrid()
         poDriver->pszHelpTopic = "frmt_various.html#AAIGrid";
         
         poDriver->pfnOpen = AAIGDataset::Open;
-
+        poDriver->pfnCreateCopy = AAIGCreateCopy;
+	
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
 }
+
 
 
