@@ -30,6 +30,9 @@
  *    instance validation of access strings to fopen().
  * 
  * $Log$
+ * Revision 1.7  2001/01/03 05:33:17  warmerda
+ * added VSIFlush
+ *
  * Revision 1.6  2000/12/14 18:29:48  warmerda
  * added VSIMkdir
  *
@@ -131,6 +134,16 @@ size_t VSIFWrite( void * pBuffer, size_t nSize, size_t nCount, FILE * fp )
 
 {
     return( fwrite( pBuffer, nSize, nCount, fp ) );
+}
+
+/************************************************************************/
+/*                             VSIFFlush()                              */
+/************************************************************************/
+
+void VSIFFlush( FILE * fp )
+
+{
+    fflush( fp );
 }
 
 /************************************************************************/
