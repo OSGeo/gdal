@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.31  2001/11/27 21:05:04  warmerda
+ * ensure pLayer is initialized
+ *
  * Revision 1.30  2001/11/19 21:03:38  warmerda
  * fix a few minor memory leaks
  *
@@ -137,6 +140,8 @@ void OGRComDebug( const char * pszDebugClass, const char * pszFormat, ... );
 // class.
 
 #undef SFISTREAM_DEBUG
+
+#undef ROWGET_DEBUG
 
 // These global variables are a hack to transmit spatial query info from
 // the CSFCommand::Execute() method to the CSFRowset::Execute() method.
@@ -505,8 +510,9 @@ void	CVirtualArray::Initialize(int nArraySize, OGRLayer *pLayer,
 BYTE &CVirtualArray::operator[](int iIndex) 
 {
     OGRFeature      *poFeature;
-
+#ifdef ROWGET_DEBUG
     CPLDebug( "OGR_OLEDB", "CVirtualArray::operator[%d]", iIndex );
+#endif
 
     // Pre-initialize output buffer.
     memset( mBuffer, 0, m_nBufferSize );
@@ -1053,7 +1059,7 @@ HRESULT CSFRowset::Execute(DBPARAMS * pParams, LONG* pcRowsAffected)
     assert(poDS);
 	
     // Get the appropriate layer, spatial filters and name filtering here!
-    OGRLayer	*pLayer;
+    OGRLayer	*pLayer = NULL;
     OGRGeometry *pGeomFilter = NULL;
 	
     pszCommand = OLE2A(m_strCommandText);
