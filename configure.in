@@ -11,11 +11,6 @@ AC_PROG_CC
 AC_PROG_CXX
 AC_PROG_RANLIB
 
-dnl We always want to check /usr/local for stuff.
-LIBS="$LIBS -L/usr/local/lib"
-CFLAGS="$CFLAGS -I/usr/local/include"
-CPPFLAGS="$CPPFLAGS -I/usr/local/include"
-
 dnl Checks for libraries.
 AC_CHECK_LIB(dl,dlopen,,,)
 AC_CHECK_LIB(dbmalloc,malloc_chain_check,,,)
