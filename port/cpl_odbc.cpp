@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2004/06/17 17:11:51  warmerda
+ * fixed case where vsnprintf does not exist
+ *
  * Revision 1.14  2004/06/01 20:40:02  warmerda
  * expanded tabs
  *
@@ -845,7 +848,7 @@ int CPLODBCStatement::Appendf( const char *pszFormat, ... )
     bSuccess = vsnprintf( szFormattedText, sizeof(szFormattedText)-1, 
                           pszFormat, args ) < (int) sizeof(szFormattedText)-1;
 #else
-    vsnprintf( szFormattedText, pszFormat, args );
+    vsprintf( szFormattedText, pszFormat, args );
     bSuccess = TRUE;
 #endif
     va_end( args );
