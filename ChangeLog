@@ -1,5 +1,7 @@
 2000-11-29  Frank Warmerdam  <warmerdam@pobox.com>
 
+	* Added limited SetGeoTransform() support for HKV Blob format.
+
 	* Added "pretty printing" of coordinate system in gdalinfo.c
 
 	* Added gdal_merge.py in pymod directory.
