@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2000/08/18 15:24:32  warmerda
+ * use terminal progress monitor
+ *
  * Revision 1.2  2000/07/07 15:19:30  warmerda
  * try with read-only access if update fails
  *
@@ -101,7 +104,7 @@ int main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
     if( poDataset->BuildOverviews( pszResampling, 
                                    nLevelCount, anLevels, 0, NULL,
-                                   NULL, NULL ) != CE_None )
+                                   GDALTermProgress, NULL ) != CE_None )
     {
         printf( "Overview building failed.\n" );
     }
