@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2002/03/06 20:08:02  warmerda
+ * added tracking of extents, feature count and extrainfo
+ *
  * Revision 1.3  2002/01/25 20:37:43  warmerda
  * added prescan and resetreading methods
  *
@@ -172,7 +175,7 @@ public:
     int              LoadClasses( const char *pszFile = NULL );
     int              SaveClasses( const char *pszFile = NULL );
 
-    int 	     PrescanForSchema();
+    int 	     PrescanForSchema(int bGetExtents = TRUE );
     void             ResetReading();
 
 // --- 
