@@ -1,5 +1,5 @@
 
-SHPDIR		=	/home/warmerda/shapelib-1.2.5
+SHPDIR		=	../shapelib
 ISO8211DIR	=	../iso8211
 GDAL_ROOT	=	../..
 
@@ -7,7 +7,8 @@ include $(GDAL_ROOT)/GDALmake.opt
 
 OBJ	=	sdtsiref.o sdtscatd.o sdtslinereader.o sdtslib.o \
 		sdtspointreader.o sdtsattrreader.o sdtstransfer.o \
-		sdtspolygonreader.o sdtsxref.o sdtsrasterreader.o 
+		sdtspolygonreader.o sdtsxref.o sdtsrasterreader.o \
+		sdtsindexedreader.o
 
 ALL_C_FLAGS =	-I$(ISO8211DIR) $(GDAL_INCLUDE) $(CFLAGS)
 ALL_CXX_FLAGS =	-I$(ISO8211DIR) $(GDAL_INCLUDE) $(CXXFLAGS)
