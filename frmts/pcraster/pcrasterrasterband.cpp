@@ -166,13 +166,12 @@ double PCRasterRasterBand::GetMaximum(int* success)
 CPLErr PCRasterRasterBand::IReadBlock(int nBlockXoff, int nBlockYoff,
          void* buffer)
 {
-  PCRasterDataset* dataset = dynamic_cast<PCRasterDataset*>(this->poDS);
-  size_t nrCellsRead = RgetRow(dataset->map(), nBlockYoff, buffer);
+  size_t nrCellsRead = RgetRow(d_dataset->map(), nBlockYoff, buffer);
 
-  if(dataset->cellRepresentation() == CR_REAL4 ||
-         dataset->cellRepresentation() == CR_REAL8) {
+  if(d_dataset->cellRepresentation() == CR_REAL4 ||
+         d_dataset->cellRepresentation() == CR_REAL8) {
     // Missing value in the buffer is a NAN. Replace by valid value.
-    alterFromStdMV(buffer, nrCellsRead, dataset->cellRepresentation(),
+    alterFromStdMV(buffer, nrCellsRead, d_dataset->cellRepresentation(),
            d_dataset->missingValue());
   }
 
