@@ -390,10 +390,12 @@ GDAL has limited support for reading NLAPS Data Format files.  This is a
 format primarily used by the Eros Data Center for distribution of Landsat 
 data.  NDF datasets consist of a header file (often with the extension .H1)
 and one or more associated raw data files (often .I1, .I2, ...).  To open
-a dataset select the header file. <p>
+a dataset select the header file, often with the extension .H1, .H2 or
+.HD. <p>
 
 The NDF driver only supports 8bit data.  The only supported projection is
-UTM.<p>
+UTM.  NDF version 1 (NDF_VERSION=0.00) and NDF version 2 are both supported.
+<p>
 
 NOTE: Implemented as <tt>gdal/frmts/raw/ndfdataset.cpp</tt>.<p>
 
