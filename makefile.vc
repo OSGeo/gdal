@@ -1,12 +1,23 @@
 GDAL_ROOT = .
 
-LIBOBJ = port\*.obj core\*.obj frmts\o\*.obj ogr\ogr.lib
+# Uncomment the following two declarations to include all of OGR 
+# in the GDAL DLL. 
+OGR_OBJ = ogr\ogrsf_frmts\ogrsf_frmts.lib ogr\ogr.lib
+OGR_INCLUDE = /INCLUDE:_OCTNewCoordinateTransformation \
+		/INCLUDE:_OGRRegisterAll
 
+# Uncomment the following (instead of the above) to include only the
+# coordinate transform services in GDAL DLL, not all of OGR.
+#OGR_OBJ = ogr\ogr.lib
+#OGR_INCLUDE =	/INCLUDE:_OCTNewCoordinateTransformation /INCLUDE:_OGRFree
+
+LIBOBJ = port\*.obj core\*.obj frmts\o\*.obj $(OGR_OBJ)
+	
 DISTDIR	=	gdal_$(VERSION)
 
 !INCLUDE nmake.opt
 
-default:	port_dir ogr_min core_dir frmts_dir $(GDAL_DLL) apps_dir
+default:	port_dir ogr core_dir frmts_dir $(GDAL_DLL) apps_dir
 
 lib:
 	if exist gdal.lib del gdal.lib
@@ -63,7 +74,8 @@ ogr:      port_dir
 	cd ..\sdts	
 	$(MAKE) /f makefile.vc
 	cd ..\..\ogr
-	$(MAKE) all 
+	$(MAKE) frmts default
+	cd ..
 
 lib_dist:	default
 	rm -rf $(DISTDIR)
@@ -72,8 +84,7 @@ lib_dist:	default
 	zip -r $(DISTDIR).zip $(DISTDIR)
 
 $(GDAL_DLL):	lib
-	link /dll /INCLUDE:_OCTNewCoordinateTransformation \
-		$(LIBOBJ) /out:$(GDAL_DLL) /implib:gdal_i.lib
+	link /dll $(OGR_INCLUDE) $(LIBOBJ) /out:$(GDAL_DLL) /implib:gdal_i.lib
 
 install: $(GDAL_DLL) apps_dir
 	copy $(GDAL_DLL) $(BINDIR)
