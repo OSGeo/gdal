@@ -28,6 +28,9 @@
  * ****************************************************************************
  *
  * $Log$
+ * Revision 1.23  2002/02/07 20:24:18  warmerda
+ * added -scale option
+ *
  * Revision 1.22  2001/12/12 21:01:01  warmerda
  * fixed bug in windowing logic
  *
@@ -104,6 +107,8 @@
 
 CPL_CVSID("$Id$");
 
+static int ArgIsNumeric( const char * );
+
 /*  ******************************************************************* */
 /*                               Usage()                                */
 /* ******************************************************************** */
@@ -117,6 +122,7 @@ static void Usage()
             "       [-ot {Byte/UInt16/UInt32/Int32/Float32/Float64/CInt16/\n"
             "             CInt32/CFloat32/CFloat64}] [-not_strict]\n"
             "       [-of format] [-b band] [-outsize xsize[%%] ysize[%%]]\n"
+            "       [-scale [src_min src_max [dst_min dst_max]]]"
             "       [-srcwin xoff yoff xsize ysize] [-co \"NAME=VALUE\"]*\n"
             "       src_dataset dst_dataset\n\n" );
 
@@ -150,6 +156,9 @@ int main( int argc, char ** argv )
     char                **papszCreateOptions = NULL;
     int                 anSrcWin[4], bStrict = TRUE;
     const char          *pszProjection;
+    int                 bScale = FALSE, bHaveScaleSrc = FALSE;
+    double	        dfScaleSrcMin, dfScaleSrcMax;
+    double              dfScaleDstMin, dfScaleDstMax;
 
     anSrcWin[0] = 0;
     anSrcWin[1] = 0;
@@ -200,6 +209,29 @@ int main( int argc, char ** argv )
         else if( EQUAL(argv[i],"-co") && i < argc-1 )
         {
             papszCreateOptions = CSLAddString( papszCreateOptions, argv[++i] );
+        }   
+
+        else if( EQUAL(argv[i],"-scale") )
+        {
+            bScale = TRUE;
+            if( i < argc-2 && ArgIsNumeric(argv[i+1]) )
+            {
+                bHaveScaleSrc = TRUE;
+                dfScaleSrcMin = atof(argv[i+1]);
+                dfScaleSrcMax = atof(argv[i+2]);
+                i += 2;
+            }
+            if( i < argc-2 && bHaveScaleSrc && ArgIsNumeric(argv[i+1]) )
+            {
+                dfScaleDstMin = atof(argv[i+1]);
+                dfScaleDstMax = atof(argv[i+2]);
+                i += 2;
+            }
+            else
+            {
+                dfScaleDstMin = 0.0;
+                dfScaleDstMax = 255.999;
+            }
         }   
 
         else if( EQUAL(argv[i],"-outsize") && i < argc-2 )
@@ -313,6 +345,7 @@ int main( int argc, char ** argv )
 /*      virtual input source to copy from.                              */
 /* -------------------------------------------------------------------- */
     if( eOutputType == GDT_Unknown 
+        && !bScale
         && nBandCount == GDALGetRasterCount(hDataset)
         && anSrcWin[0] == 0 && anSrcWin[1] == 0 
         && anSrcWin[2] == GDALGetRasterXSize(hDataset)
@@ -394,8 +427,8 @@ int main( int argc, char ** argv )
     {
         GByte	*pabyBlock;
         int     iBlockY;
-        int	nPixelSize;
         GDALRasterBandH hDstBand;
+        double  dfScale = 1.0, dfOffset = 0.0;
 
         hBand = GDALGetRasterBand( hDataset, panBandList[i] );
         hDstBand = GDALGetRasterBand( hOutDS, i+1 );
@@ -404,11 +437,32 @@ int main( int argc, char ** argv )
                 panBandList[i], GDALGetRasterDataType( hBand ) );
 
 /* -------------------------------------------------------------------- */
+/*      Do we need to collect scaling information?                      */
+/* -------------------------------------------------------------------- */
+        if( bScale && !bHaveScaleSrc )
+        {
+            double	adfCMinMax[2];
+            GDALComputeRasterMinMax( hBand, TRUE, adfCMinMax );
+            dfScaleSrcMin = adfCMinMax[0];
+            dfScaleSrcMax = adfCMinMax[1];
+        }
+
+        if( bScale )
+        {
+            if( dfScaleSrcMax == dfScaleSrcMin )
+                dfScaleSrcMax += 0.1;
+            if( dfScaleDstMax == dfScaleDstMin )
+                dfScaleDstMax += 0.1;
+
+            dfScale = (dfScaleDstMax - dfScaleDstMin) 
+                    / (dfScaleSrcMax - dfScaleSrcMin);
+            dfOffset = -1 * dfScaleSrcMin * dfScale + dfScaleDstMin;
+        }
+
+/* -------------------------------------------------------------------- */
 /*      Write out the raw raster data.                                  */
 /* -------------------------------------------------------------------- */
-        nPixelSize = GDALGetDataTypeSize( GDALGetRasterDataType(hBand) ) / 8;
-
-        pabyBlock = (GByte *) CPLMalloc(nPixelSize*nOXSize);
+        pabyBlock = (GByte *) CPLMalloc(sizeof(double)*2*nOXSize);
 
         for( iBlockY = 0; iBlockY < nOYSize; iBlockY++ )
         {
@@ -424,17 +478,41 @@ int main( int argc, char ** argv )
                 iSrcYOff = MAX(0,MIN(anSrcWin[1]+anSrcWin[3]-1,iSrcYOff));
             }
 
-            GDALRasterIO( hBand, GF_Read,
-                          anSrcWin[0], iSrcYOff, anSrcWin[2], 1,
-                          pabyBlock, nOXSize, 1,
-                          GDALGetRasterDataType(hBand),
-                          0, 0 );
+            if( !bScale )
+            {
+                GDALRasterIO( hBand, GF_Read,
+                              anSrcWin[0], iSrcYOff, anSrcWin[2], 1,
+                              pabyBlock, nOXSize, 1,
+                              GDALGetRasterDataType(hBand),
+                              0, 0 );
+                
+                GDALRasterIO( hDstBand, GF_Write,
+                              0, iBlockY, nOXSize, 1,
+                              pabyBlock, nOXSize, 1,
+                              GDALGetRasterDataType(hBand),
+                              0, 0 );
+            }
+            else
+            {
+                int   iPixel;
 
-            GDALRasterIO( hDstBand, GF_Write,
-                          0, iBlockY, nOXSize, 1,
-                          pabyBlock, nOXSize, 1,
-                          GDALGetRasterDataType(hBand),
-                          0, 0 );
+                GDALRasterIO( hBand, GF_Read,
+                              anSrcWin[0], iSrcYOff, anSrcWin[2], 1,
+                              pabyBlock, nOXSize, 1, GDT_Float64,
+                              0, 0 );
+
+                for( iPixel = 0; iPixel < nOXSize; iPixel++ )
+                {
+                    ((double *)pabyBlock)[iPixel] = 
+                        ((double *)pabyBlock)[iPixel] * dfScale + dfOffset;
+                }
+                
+                
+                GDALRasterIO( hDstBand, GF_Write,
+                              0, iBlockY, nOXSize, 1,
+                              pabyBlock, nOXSize, 1, GDT_Float64,
+                              0, 0 );
+            }
 
             dfComplete = (i / (double) nBandCount)
                 + ((iBlockY+1) / ((double) nOYSize*nBandCount));
@@ -451,4 +529,28 @@ int main( int argc, char ** argv )
     GDALClose( hDataset );
     
     exit( 0 );
+}
+
+
+/************************************************************************/
+/*                            ArgIsNumeric()                            */
+/************************************************************************/
+
+int ArgIsNumeric( const char *pszArg )
+
+{
+    if( pszArg[0] == '-' )
+        pszArg++;
+
+    if( *pszArg == '\0' )
+        return FALSE;
+
+    while( *pszArg != '\0' )
+    {
+        if( (*pszArg < '0' || *pszArg > '9') && *pszArg != '.' )
+            return FALSE;
+        pszArg++;
+    }
+        
+    return TRUE;
 }
