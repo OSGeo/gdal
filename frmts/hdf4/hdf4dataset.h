@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.7  2002/11/08 17:57:43  dron
+ * Type of pszDataType changet to const char*.
+ *
  * Revision 1.6  2002/11/06 15:47:14  dron
  * Added support for 3D datasets creation
  *
@@ -89,7 +92,7 @@ class HDF4Dataset : public GDALDataset
     int32	hHDF4, hSD, hGR;
     int32	nDatasets, nImages;
     HDF4Datatype iDataType;
-    char	*pszDataType;
+    const char	*pszDataType;
     
     char	**papszGlobalMetadata;
     char	**papszSubDatasets;
