@@ -61,6 +61,16 @@ int main( int argc, char ** argv )
     psInfo = AIGOpen( argv[1], "r" );
     if( psInfo == NULL )
         exit( 1 );
+
+/* -------------------------------------------------------------------- */
+/*      Dump general information                                        */
+/* -------------------------------------------------------------------- */
+    printf( "%d pixels x %d lines.\n", psInfo->nPixels, psInfo->nLines );
+    printf( "Lower Left = (%f,%f)   Upper Right = (%f,%f)\n",
+            psInfo->dfLLX,
+            psInfo->dfLLY,
+            psInfo->dfURX,
+            psInfo->dfURY );
     
 /* -------------------------------------------------------------------- */
 /*      Do we want a dump of all the ``magic'' numbers for              */
@@ -72,32 +82,44 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
 /*      Read a block, and report it's contents.                         */
 /* -------------------------------------------------------------------- */
-
     panRaster = (GUInt32 *)
         CPLMalloc(psInfo->nBlockXSize * psInfo->nBlockYSize * 4);
     
-    AIGReadBlock( psInfo->fpGrid,
-                  psInfo->panBlockOffset[1], psInfo->panBlockSize[1],
-                  psInfo->nBlockXSize, psInfo->nBlockYSize,
-                  panRaster );
-
-    for( j = 0; j < psInfo->nBlockYSize; j++ )
+    while( argc > 2 && (atoi(argv[2]) > 0 || argv[2][0] == '0') )
     {
-        for( i = 0; i < psInfo->nBlockXSize; i++ )
-        {
-            if( i > 18 )
-            {
-                printf( "..." );
-                break;
-            }
+        int	nBlock = atoi(argv[2]);
 
-            if( panRaster[i+j*psInfo->nBlockXSize] == GRID_NO_DATA )
-                printf( "-*- " );
-            else
-                printf( "%3d ", panRaster[i+j*psInfo->nBlockXSize] );
+        argv++;
+        argc--;
+        
+        AIGReadBlock( psInfo->fpGrid,
+                      psInfo->panBlockOffset[nBlock],
+                      psInfo->panBlockSize[nBlock],
+                      psInfo->nBlockXSize, psInfo->nBlockYSize,
+                      panRaster );
+
+        printf( "\nBlock %d:\n", nBlock );
+        
+        for( j = 0; j < psInfo->nBlockYSize; j++ )
+        {
+            for( i = 0; i < psInfo->nBlockXSize; i++ )
+            {
+                if( i > 18 )
+                {
+                    printf( "..." );
+                    break;
+                }
+
+                if( panRaster[i+j*psInfo->nBlockXSize] == GRID_NO_DATA )
+                    printf( "-*- " );
+                else
+                    printf( "%3d ", panRaster[i+j*psInfo->nBlockXSize] );
+            }
+            printf( "\n" );
         }
-        printf( "\n" );
     }
+
+    CPLFree( panRaster );
 
     AIGClose( psInfo );
 

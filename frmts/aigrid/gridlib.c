@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/02/04 22:15:33  warmerda
+ * fleshed out implementation
+ *
  * Revision 1.1  1999/02/03 14:12:56  warmerda
  * New
  *
@@ -36,34 +39,77 @@
 #include "aigrid.h"
 
 /************************************************************************/
-/*                       AIGProcessRawBlock()                           */
+/*                         AIGProcess16bitRawBlock()                    */
 /*                                                                      */
-/*      Process a block using ``08'' raw format.			*/
+/*      Process a block using ``10'' (sixteen bit) raw format.          */
 /************************************************************************/
 
 static 
-CPLErr AIGProcessRawBlock( GByte *pabyRaw, int nBlockSize,
+CPLErr AIGProcessRaw16BitBlock( GByte *pabyCur, int nDataSize, int nMin,
+                                int nBlockXSize, int nBlockYSize,
+                                GUInt32 * panData )
+
+{
+    int		i;
+
+    CPLAssert( nDataSize >= nBlockXSize*nBlockYSize*2 );
+    
+/* -------------------------------------------------------------------- */
+/*      Collect raw data.                                               */
+/* -------------------------------------------------------------------- */
+    for( i = 0; i < nBlockXSize * nBlockYSize; i++ )
+    {
+        panData[i] = pabyCur[0] * 256 + pabyCur[1] + nMin;
+        pabyCur += 2;
+    }
+
+    return( CE_None );
+}
+
+/************************************************************************/
+/*                         AIGProcess4BitRawBlock()                     */
+/*                                                                      */
+/*      Process a block using ``08'' raw format.                        */
+/************************************************************************/
+
+static 
+CPLErr AIGProcessRaw4BitBlock( GByte *pabyCur, int nDataSize, int nMin,
+                               int nBlockXSize, int nBlockYSize,
+                               GUInt32 * panData )
+
+{
+    int		i;
+
+    CPLAssert( nDataSize >= (nBlockXSize*nBlockYSize+1)/2 );
+    
+/* -------------------------------------------------------------------- */
+/*      Collect raw data.                                               */
+/* -------------------------------------------------------------------- */
+    for( i = 0; i < nBlockXSize * nBlockYSize; i++ )
+    {
+        if( i % 2 == 0 )
+            panData[i] = ((*(pabyCur) & 0xf0) >> 4) + nMin;
+        else
+            panData[i] = (*(pabyCur++) & 0xf) + nMin;
+    }
+
+    return( CE_None );
+}
+
+/************************************************************************/
+/*                         AIGProcessRawBlock()                         */
+/*                                                                      */
+/*      Process a block using ``08'' raw format.                        */
+/************************************************************************/
+
+static 
+CPLErr AIGProcessRawBlock( GByte *pabyCur, int nDataSize, int nMin,
                         int nBlockXSize, int nBlockYSize, GUInt32 * panData )
 
 {
-    GByte	*pabyCur;
-    int		nMinSize, nMin, i;
+    int		i;
 
-/* -------------------------------------------------------------------- */
-/*      Collect minimum value.                                          */
-/* -------------------------------------------------------------------- */
-    pabyCur = pabyRaw + 2;
-    nMinSize = pabyCur[1];
-    pabyCur += 2;
-
-    nMin = 0;
-    for( i = 0; i < nMinSize; i++ )
-    {
-        nMin = nMin * 256 + *pabyCur;
-        pabyCur++;
-    }
-    
-    CPLAssert( nBlockSize >= nBlockXSize*nBlockYSize + 4 + nMinSize );
+    CPLAssert( nDataSize >= nBlockXSize*nBlockYSize );
     
 /* -------------------------------------------------------------------- */
 /*      Collect raw data.                                               */
@@ -79,36 +125,17 @@ CPLErr AIGProcessRawBlock( GByte *pabyRaw, int nBlockSize,
 /************************************************************************/
 /*                         AIGProcessD7Block()                          */
 /*                                                                      */
-/*      Process a block using ``D7'' compression.                       */
+/*      Process a block using ``D7'', ``E0'' or ``DF'' compression.     */
 /************************************************************************/
 
 static 
-CPLErr AIGProcessBlock( GByte *pabyRaw, int nBlockSize,
+CPLErr AIGProcessBlock( GByte *pabyCur, int nDataSize, int nMin, int nMagic, 
                         int nBlockXSize, int nBlockYSize, GUInt32 * panData )
 
 {
-    GByte	*pabyCur;
     int		nTotPixels, nPixels;
-    int		nMinSize, nMin, i;
-    int		nTypeFlag = pabyRaw[2];
+    int		i;
 
-/* -------------------------------------------------------------------- */
-/*      Collect block header info.                                      */
-/* -------------------------------------------------------------------- */
-    pabyCur = pabyRaw + 2;
-    nMinSize = pabyCur[1];
-    pabyCur += 2;
-
-    nMin = 0;
-    for( i = 0; i < nMinSize; i++ )
-    {
-        nMin = nMin * 256 + *pabyCur;
-        if( i == 0 && nTypeFlag == 0xE0 )
-            nMin &= 0x7f;
-
-        pabyCur++;
-    }
-    
 /* ==================================================================== */
 /*     Process runs till we are done.                                  */
 /* ==================================================================== */
@@ -119,33 +146,59 @@ CPLErr AIGProcessBlock( GByte *pabyRaw, int nBlockSize,
     {
         int	nMarker = *(pabyCur++);
 
+        nDataSize--;
+
 /* -------------------------------------------------------------------- */
 /*      Repeat data - four byte data block (0xE0)                       */
 /* -------------------------------------------------------------------- */
-        if( nTypeFlag == 0xE0 )
+        if( nMagic == 0xE0 )
         {
             GUInt32	nValue;
+            int		bNoData = FALSE;
             
             nValue = 0;
             
             for( i = 0; i < 4; i++ )
             {
-                nValue = nValue * 256 + (*pabyCur++);
+                nValue = nValue * 256 + *(pabyCur++);
+                nDataSize--;
                 
                 if( i == 0 )
-                    nValue &= 0x7f;
+                {
+                    if( nValue & 0x80 )
+                        nValue &= 0x7f;
+                    else
+                        bNoData = TRUE;
+                }
             }
 
-            nValue += nMin;
+            if( bNoData )
+                nValue = GRID_NO_DATA;
+            else
+                nValue += nMin;
 
             for( i = 0; i < nMarker; i++ )
-                panData[nPixels++] += nValue;
+                panData[nPixels++] = nValue;
+        }
+        
+/* -------------------------------------------------------------------- */
+/*      Repeat data - one byte data block (0xFC)                        */
+/* -------------------------------------------------------------------- */
+        else if( nMagic == 0xFC || nMagic == 0xF8 )
+        {
+            GUInt32	nValue;
+
+            nValue = *(pabyCur++) + nMin;
+            nDataSize--;
+            
+            for( i = 0; i < nMarker; i++ )
+                panData[nPixels++] = nValue;
         }
         
 /* -------------------------------------------------------------------- */
 /*      Repeat data - no actual data, just assign minimum (0xDF)        */
 /* -------------------------------------------------------------------- */
-        else if( nTypeFlag == 0xDF )
+        else if( nMagic == 0xDF && nMarker < 128 )
         {
             for( i = 0; i < nMarker; i++ )
                 panData[nPixels++] += nMin;
@@ -154,12 +207,13 @@ CPLErr AIGProcessBlock( GByte *pabyRaw, int nBlockSize,
 /* -------------------------------------------------------------------- */
 /*      Literal data (0xD7)                                             */
 /* -------------------------------------------------------------------- */
-        else if( nMarker < 128 && nTypeFlag == 0xD7 )
+        else if( nMagic == 0xD7 && nMarker < 128 )
         {
             while( nMarker > 0 )
             {
                 panData[nPixels++] = *(pabyCur++) + nMin;
                 nMarker--;
+                nDataSize--;
             }
         }
 
@@ -182,7 +236,7 @@ CPLErr AIGProcessBlock( GByte *pabyRaw, int nBlockSize,
             CPLAssert( FALSE );
         }
 
-        CPLAssert( (pabyCur - pabyRaw) <= (nBlockSize + 2) );
+        CPLAssert( nDataSize >= 0 );
     }
 
     CPLAssert( nPixels <= nTotPixels );
@@ -200,9 +254,9 @@ CPLErr AIGReadBlock( FILE * fp, int nBlockOffset, int nBlockSize,
                      int nBlockXSize, int nBlockYSize, GUInt32 *panData )
 
 {
-    GByte	*pabyRaw;
+    GByte	*pabyRaw, *pabyCur;
     CPLErr	eErr;
-    int		i, nMagic;
+    int		i, nMagic, nMin, nMinSize, nDataSize;
 
 /* -------------------------------------------------------------------- */
 /*      If the block has zero size it is all dummies.                   */
@@ -228,18 +282,56 @@ CPLErr AIGReadBlock( FILE * fp, int nBlockOffset, int nBlockSize,
     CPLAssert( nBlockSize == (pabyRaw[0]*256 + pabyRaw[1])*2 );
 
 /* -------------------------------------------------------------------- */
-/*      Is this a 0xD7 or 0xE0 block?                                   */
+/*      Collect minimum value.                                          */
+/* -------------------------------------------------------------------- */
+    pabyCur = pabyRaw + 2;
+    nMinSize = pabyCur[1];
+    pabyCur += 2;
+
+    nMin = 0;
+    for( i = 0; i < nMinSize; i++ )
+    {
+        nMin = nMin * 256 + *pabyCur;
+
+        if( i == 0 )
+            nMin &= 0x7f;
+        
+        pabyCur++;
+    }
+    
+/* -------------------------------------------------------------------- */
+/*	Call an apppropriate handler depending on magic code.		*/
 /* -------------------------------------------------------------------- */
     nMagic = pabyRaw[2];
+    nDataSize = nBlockSize - 2 - nMinSize;
 
     if( nMagic == 0x08 )
     {
-        AIGProcessRawBlock( pabyRaw, nBlockSize, nBlockXSize, nBlockYSize,
+        AIGProcessRawBlock( pabyCur, nDataSize, nMin,
+                            nBlockXSize, nBlockYSize,
                             panData );
+    }
+    else if( nMagic == 0x04 )
+    {
+        AIGProcessRaw4BitBlock( pabyCur, nDataSize, nMin,
+                                nBlockXSize, nBlockYSize,
+                                panData );
+    }
+    else if( nMagic == 0x10 )
+    {
+        AIGProcessRaw16BitBlock( pabyCur, nDataSize, nMin,
+                                 nBlockXSize, nBlockYSize,
+                                 panData );
+    }
+    else if( nMagic == 0xFF )
+    {
+        /* just fill with no data value ... I can't figure this one out */
+        for( i = 0; i < nBlockXSize * nBlockYSize; i++ )
+            panData[i] = GRID_NO_DATA;
     }
     else
     {
-        eErr = AIGProcessBlock( pabyRaw, nBlockSize, 
+        eErr = AIGProcessBlock( pabyCur, nDataSize, nMin, nMagic,
                                 nBlockXSize, nBlockYSize, panData );
     }
 
@@ -247,6 +339,30 @@ CPLErr AIGReadBlock( FILE * fp, int nBlockOffset, int nBlockSize,
     CPLFree( pabyRaw );
     
     return CE_None;
+}
+
+/************************************************************************/
+/*                            AIGReadTile()                             */
+/************************************************************************/
+
+CPLErr AIGReadTile( AIGInfo_t * psInfo, int nBlockXOff, int nBlockYOff,
+                    GUInt32 *panData )
+
+{
+    int		nBlockID;
+
+    nBlockID = nBlockXOff + nBlockYOff * psInfo->nBlocksPerRow;
+    if( nBlockID < 0 || nBlockID >= psInfo->nBlocks )
+    {
+        CPLAssert( FALSE );
+        return CE_Failure;
+    }
+
+    return( AIGReadBlock( psInfo->fpGrid,
+                          psInfo->panBlockOffset[nBlockID],
+                          psInfo->panBlockSize[nBlockID],
+                          psInfo->nBlockXSize, psInfo->nBlockYSize,
+                          panData ) );
 }
 
 /************************************************************************/
@@ -298,12 +414,16 @@ CPLErr AIGReadHeader( const char * pszCoverName, AIGInfo_t * psInfo )
     memcpy( &(psInfo->nBlocksPerColumn), abyData+292, 4 );
     memcpy( &(psInfo->nBlockXSize), abyData+296, 4 );
     memcpy( &(psInfo->nBlockYSize), abyData+304, 4 );
+    memcpy( &(psInfo->dfCellSizeX), abyData+256, 8 );
+    memcpy( &(psInfo->dfCellSizeY), abyData+264, 8 );
     
 #ifdef CPL_LSB
     psInfo->nBlocksPerRow = CPL_SWAP32( psInfo->nBlocksPerRow );
     psInfo->nBlocksPerColumn = CPL_SWAP32( psInfo->nBlocksPerColumn );
     psInfo->nBlockXSize = CPL_SWAP32( psInfo->nBlockXSize );
     psInfo->nBlockYSize = CPL_SWAP32( psInfo->nBlockYSize );
+    CPL_SWAPDOUBLE( &(psInfo->dfCellSizeX) );
+    CPL_SWAPDOUBLE( &(psInfo->dfCellSizeY) );
 #endif
 
     return( CE_None );
@@ -383,3 +503,63 @@ CPLErr AIGReadBlockIndex( const char * pszCoverName, AIGInfo_t * psInfo )
 
     return( CE_None );
 }
+
+/************************************************************************/
+/*                           AIGReadBounds()                            */
+/*                                                                      */
+/*      Read the dblbnd.adf file for the georeferenced bounds.          */
+/************************************************************************/
+
+CPLErr AIGReadBounds( const char * pszCoverName, AIGInfo_t * psInfo )
+
+{
+    char	*pszHDRFilename;
+    FILE	*fp;
+    double	adfBound[4];
+
+/* -------------------------------------------------------------------- */
+/*      Open the file dblbnd.adf file.                                  */
+/* -------------------------------------------------------------------- */
+    pszHDRFilename = (char *) CPLMalloc(strlen(pszCoverName)+40);
+    sprintf( pszHDRFilename, "%s/dblbnd.adf", pszCoverName );
+
+    fp = VSIFOpen( pszHDRFilename, "rb" );
+    
+    if( fp == NULL )
+    {
+        CPLError( CE_Failure, CPLE_OpenFailed,
+                  "Failed to open grid block index file:\n%s\n",
+                  pszHDRFilename );
+
+        CPLFree( pszHDRFilename );
+        return( CE_Failure );
+    }
+
+    CPLFree( pszHDRFilename );
+
+/* -------------------------------------------------------------------- */
+/*      Get the contents - four doubles.                                */
+/* -------------------------------------------------------------------- */
+    VSIFRead( adfBound, 1, 32, fp );
+
+    VSIFClose( fp );
+
+#ifdef CPL_LSB
+    CPL_SWAPDOUBLE(adfBound+0);
+    CPL_SWAPDOUBLE(adfBound+1);
+    CPL_SWAPDOUBLE(adfBound+2);
+    CPL_SWAPDOUBLE(adfBound+3);
+#endif    
+    
+    psInfo->dfLLX = adfBound[0];
+    psInfo->dfLLY = adfBound[1];
+    psInfo->dfURX = adfBound[2];
+    psInfo->dfURY = adfBound[3];
+
+    return( CE_None );
+}
+
+
+
+
+

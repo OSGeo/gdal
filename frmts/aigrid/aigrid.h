@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/02/04 22:15:33  warmerda
+ * fleshed out implementation
+ *
  * Revision 1.1  1999/02/03 14:12:56  warmerda
  * New
  *
@@ -38,6 +41,8 @@
 #define _AIGRID_H_INCLUDED
 
 #include "cpl_conv.h"
+
+CPL_C_START
 
 #define GRID_NO_DATA 65536
 
@@ -54,13 +59,25 @@ typedef struct {
 
     FILE	*fpGrid;	/* the w001001.adf file */
 
+    double	dfLLX;
+    double	dfLLY;
+    double	dfURX;
+    double	dfURY;
+
+    double	dfCellSizeX;
+    double	dfCellSizeY;
+
+    int		nPixels;
+    int		nLines;
+
 } AIGInfo_t;
 
 CPLErr AIGReadBlock( FILE * fp, int nBlockOffset, int nBlockSize,
                      int nBlockXSize, int nBlockYSize, GUInt32 * panData );
-
+CPLErr AIGReadTile( AIGInfo_t *, int, int, GUInt32 * );
 CPLErr AIGReadHeader( const char *, AIGInfo_t * );
 CPLErr AIGReadBlockIndex( const char *, AIGInfo_t * );
+CPLErr AIGReadBounds( const char *, AIGInfo_t * );
 
 /************************************************************************/
 /*                              Public API                              */
@@ -69,5 +86,7 @@ CPLErr AIGReadBlockIndex( const char *, AIGInfo_t * );
 AIGInfo_t	*AIGOpen( const char *, const char * );
 
 void		AIGClose( AIGInfo_t * );
+
+CPL_C_END
 
 #endif /* ndef _AIGRID_H_INCLUDED */

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/02/04 22:15:33  warmerda
+ * fleshed out implementation
+ *
  * Revision 1.1  1999/02/03 14:12:56  warmerda
  * New
  *
@@ -97,6 +100,25 @@ AIGInfo_t *AIGOpen( const char * pszCoverName, const char * pszAccess )
         return NULL;
     }
 
+/* -------------------------------------------------------------------- */
+/*      Read the extents.                                               */
+/* -------------------------------------------------------------------- */
+    if( AIGReadBounds( pszCoverName, psInfo ) != CE_None )
+    {
+        VSIFClose( psInfo->fpGrid );
+        
+        CPLFree( psInfo );
+        return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Compute the number of pixels and lines.                         */
+/* -------------------------------------------------------------------- */
+    psInfo->nPixels = (int)
+        (psInfo->dfURX - psInfo->dfLLX) / psInfo->dfCellSizeX;
+    psInfo->nLines = (int)
+        (psInfo->dfURY - psInfo->dfLLY) / psInfo->dfCellSizeY;
+    
     return( psInfo );
 }
 
