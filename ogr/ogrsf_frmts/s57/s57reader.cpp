@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2000/09/28 16:30:31  warmerda
+ * avoid warnings
+ *
  * Revision 1.19  2000/09/13 19:19:24  warmerda
  * added checking on NATF:ATTL values
  *
@@ -893,7 +896,7 @@ void S57Reader::AssembleLineGeometry( DDFRecord * poFRecord,
         int             nVCount;
         int             nStart, nEnd, nInc;
         DDFField        *poSG2D = poSRecord->FindField( "SG2D" );
-        DDFSubfieldDefn *poXCOO, *poYCOO;
+        DDFSubfieldDefn *poXCOO=NULL, *poYCOO=NULL;
 
         if( poSG2D != NULL )
         {
@@ -1032,7 +1035,7 @@ void S57Reader::AssembleAreaGeometry( DDFRecord * poFRecord,
         
             int             nVCount;
             DDFField        *poSG2D = poSRecord->FindField( "SG2D" );
-            DDFSubfieldDefn *poXCOO, *poYCOO;
+            DDFSubfieldDefn *poXCOO=NULL, *poYCOO=NULL;
 
             if( poSG2D != NULL )
             {

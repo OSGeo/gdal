@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2000/09/28 16:30:31  warmerda
+ * avoid warnings
+ *
  * Revision 1.11  1999/10/04 03:08:52  warmerda
  * added raster support
  *
@@ -566,7 +569,7 @@ OGRGeometry *NTFFileReader::ProcessGeometry( NTFRecord * poRecord,
     else if( nGType == 2 || nGType == 3 || nGType == 4 )
     {
         OGRLineString      *poLine = new OGRLineString;
-        double             dfX, dfY, dfXLast, dfYLast;
+        double             dfX, dfY, dfXLast=0.0, dfYLast=0.0;
         int                iCoord, nOutCount = 0;
 
         poGeometry = poLine;
@@ -689,7 +692,7 @@ OGRGeometry *NTFFileReader::ProcessGeometry3D( NTFRecord * poRecord,
     else if( nGType == 2 )
     {
         OGRLineString      *poLine = new OGRLineString;
-        double             dfX, dfY, dfZ, dfXLast, dfYLast;
+        double             dfX, dfY, dfZ, dfXLast=0.0, dfYLast=0.0;
         int                iCoord, nOutCount = 0;
 
         poGeometry = poLine;
