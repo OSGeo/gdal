@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.14  2002/06/15 00:07:23  aubin
+ * mods to enable 64bit file i/o
+ *
  * Revision 1.13  2002/06/14 12:28:41  dron
  * No data handling at writing.
  *
@@ -69,8 +72,8 @@
  *
  */
 
-#include <ctype.h>
 #include "gdal_priv.h"
+#include <ctype.h>
 #include "cpl_string.h"
 #include "ogr_spatialref.h"
 
@@ -79,7 +82,6 @@ CPL_CVSID("$Id$");
 CPL_C_START
 void	GDALRegister_AAIGrid(void);
 CPL_C_END
-
 
 /************************************************************************/
 /* ==================================================================== */

@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2002/06/15 00:07:23  aubin
+ * mods to enable 64bit file i/o
+ *
  * Revision 1.9  2002/03/27 21:04:38  warmerda
  * Added support for reading, and creating lone .dbf files for wkbNone geometry
  * layers.  Added support for creating a single .shp file instead of a directory
@@ -63,8 +66,8 @@
 #ifndef _OGRSHAPE_H_INCLUDED
 #define _OGRSHAPE_H_INLLUDED
 
-#include "shapefil.h"
 #include "ogrsf_frmts.h"
+#include "shapefil.h"
 
 /* ==================================================================== */
 /*      Functions from Shape2ogr.cpp.                                   */

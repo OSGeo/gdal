@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.13  2002/06/15 00:07:23  aubin
+ * mods to enable 64bit file i/o
+ *
  * Revision 1.12  2002/06/12 21:12:25  warmerda
  * update to metadata based driver info
  *
@@ -838,8 +841,10 @@ GDALDataset *FITDataset::Open( GDALOpenInfo * poOpenInfo )
 /*	First we check to see if the file has the expected header	*/
 /*	bytes.								*/    
 /* -------------------------------------------------------------------- */
+
     if( poOpenInfo->nHeaderBytes < 5 )
         return NULL;
+
 
     if( !EQUALN((const char *) poOpenInfo->pabyHeader, "IT01", 4) &&
         !EQUALN((const char *) poOpenInfo->pabyHeader, "IT02", 4) )
@@ -1050,7 +1055,7 @@ static GDALDataset *FITCreateCopy(const char * pszFilename,
         return NULL;
     }
 
-    fpImage = VSIFOpen( pszFilename, "wb" );
+    fpImage = VSIFOpenL( pszFilename, "wb" );
     if( fpImage == NULL )
     {
         CPLError( CE_Failure, CPLE_OpenFailed, 

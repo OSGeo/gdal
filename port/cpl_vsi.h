@@ -32,6 +32,9 @@
  * specific checking, io redirection and so on. 
  * 
  * $Log$
+ * Revision 1.12  2002/06/15 00:07:23  aubin
+ * mods to enable 64bit file i/o
+ *
  * Revision 1.11  2001/04/30 18:19:06  warmerda
  * avoid stat on macos_pre10
  *
@@ -165,7 +168,14 @@ typedef long vsi_l_offset;
 /*      VSIStat() related.                                              */
 /* ==================================================================== */
 
+#ifdef VSI_LARGE_API_SUPPORTED
+typedef struct stat64 VSIStatBuf;
+#else
+#error "WRONG stat structure defined!  Not using 64bit"
 typedef struct stat VSIStatBuf;
+#endif
+
+
 int CPL_DLL     VSIStat( const char *, VSIStatBuf * );
 
 #ifdef _WIN32

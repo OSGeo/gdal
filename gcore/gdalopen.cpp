@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2002/06/15 00:07:23  aubin
+ * mods to enable 64bit file i/o
+ *
  * Revision 1.14  2002/06/12 21:13:27  warmerda
  * use metadata based driver info
  *
@@ -110,7 +113,7 @@ GDALOpenInfo::GDALOpenInfo( const char * pszFilenameIn, GDALAccess eAccessIn )
         {
             pabyHeader = (GByte *) CPLCalloc(1025,1);
 
-            fp = VSIFOpen( pszFilename, "rb" );
+            fp = VSIFOpenL( pszFilename, "rb" );
 
             if( fp != NULL )
             {

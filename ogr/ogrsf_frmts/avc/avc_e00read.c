@@ -76,13 +76,13 @@
  *
  **********************************************************************/
 
-#include <ctype.h>      /* toupper() */
-
 #ifdef WIN32
 #  include <direct.h>   /* getcwd() */
 #endif
 
 #include "avc.h"
+
+#include <ctype.h>      /* toupper() */
 
 static int _AVCE00ReadBuildSqueleton(AVCE00ReadPtr psInfo,
                                      char **papszCoverDir);

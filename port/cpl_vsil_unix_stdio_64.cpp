@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.5  2002/06/15 00:07:23  aubin
+ * mods to enable 64bit file i/o
+ *
  * Revision 1.4  2001/12/15 17:12:08  warmerda
  * pass 64bit seek/tell functions via VSI_F{SEEK,TELL}64 macros
  *
@@ -64,7 +67,7 @@ CPL_CVSID("$Id$");
 FILE *VSIFOpenL( const char * pszFilename, const char * pszAccess )
 
 {
-    return VSIFOpen( pszFilename, pszAccess );
+    return fopen64( pszFilename, pszAccess );
 }
 
 /************************************************************************/
