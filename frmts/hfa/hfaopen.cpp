@@ -35,6 +35,9 @@
  * of the GDAL core, but dependent on the Common Portability Library.
  *
  * $Log$
+ * Revision 1.22  2003/03/06 18:03:14  dron
+ * Fixed problem with unknown field in .ige file.
+ *
  * Revision 1.21  2003/03/03 15:07:55  dron
  * Improvements in multiband spill file creation.
  *
@@ -1665,7 +1668,7 @@ HFAHandle HFACreate( const char * pszFilename,
 	{
 	    int		    i, iRemainder;
 
-	    nValue32 = iBand + 1;
+	    nValue32 = 1;	// Unknown
 	    HFAStandard( 4, &nValue32 );
 	    VSIFWriteL( &nValue32, 4, 1, fpExternal );
 	    nValue32 = 0;	// Unknown
@@ -1676,7 +1679,7 @@ HFAHandle HFACreate( const char * pszFilename,
 	    nValue32 = nBlocksPerRow;
 	    HFAStandard( 4, &nValue32 );
 	    VSIFWriteL( &nValue32, 4, 1, fpExternal );
-	    nValue32 = 0;	// Unknown
+	    nValue32 = 0x30000;	// Unknown
 	    VSIFWriteL( &nValue32, 4, 1, fpExternal );
 
 	    iRemainder = nBlocksPerRow % 8;
