@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.24  2004/06/02 18:06:15  warmerda
+ * Fix failure logic when output layer not found.
+ *
  * Revision 1.23  2003/05/12 18:08:33  warmerda
  * added 25D settings for -nlt.
  *
@@ -679,6 +682,7 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
             printf( "FAILED: To find existing layer `%s' on output dataset\n"
                     "        to append new features to.\n",
                     pszNewLayerName );
+            return FALSE;
         }
     }
 
