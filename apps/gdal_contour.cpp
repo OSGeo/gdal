@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2003/10/09 20:08:38  warmerda
+ * complete nodata support
+ *
  * Revision 1.2  2003/10/09 18:29:27  warmerda
  * basics working now
  *
@@ -77,6 +80,7 @@ typedef CPLErr (*GDALContourWriter)( GDALContourItem *, void * );
 class GDALContourGenerator
 {
     int    nWidth;
+    int    nHeight;
     int    iLine;
 
     double *padfLastLine;
@@ -100,12 +104,17 @@ class GDALContourGenerator
                        double dfXEnd, double dfYEnd );
 
     CPLErr ProcessPixel( int iPixel );
+    CPLErr ProcessRect( double, double, double, 
+                        double, double, double, 
+                        double, double, double,
+                        double, double, double );
+
     void   Intersect( double, double, double, 
                       double, double, double, 
                       double, double, int *, double *, double * );
 
 public:
-    GDALContourGenerator( int nWidth,
+    GDALContourGenerator( int nWidth, int nHeight,
                           GDALContourWriter pfnWriter, void *pWriterCBData );
     ~GDALContourGenerator();
 
@@ -164,8 +173,8 @@ int main( int argc, char ** argv )
 
 {
     GDALDatasetH	hSrcDS;
-    int i;
-    double dfInterval = 0.0;
+    int i, b3D = FALSE, bNoDataSet = FALSE;
+    double dfInterval = 0.0, dfNoData;
     const char *pszSrcFilename = NULL;
     const char *pszDstFilename = NULL;
     const char *pszElevAttrib = NULL;
@@ -186,6 +195,15 @@ int main( int argc, char ** argv )
         else if( EQUAL(argv[i],"-a") && i < argc-1 )
         {
             pszElevAttrib = argv[++i];
+        }
+        else if( EQUAL(argv[i],"-3d")  )
+        {
+            b3D = TRUE;
+        }
+        else if( EQUAL(argv[i],"-inodata")  && i < argc-1 )
+        {
+            bNoDataSet = TRUE;
+            dfNoData = atof(argv[++i]);
         }
         else if( pszSrcFilename == NULL )
         {
@@ -227,7 +245,8 @@ int main( int argc, char ** argv )
     if( hDS == NULL )
         exit( 1 );
 
-    oCWI.hLayer = OGR_DS_CreateLayer( hDS, "contour", NULL, wkbLineString25D, 
+    oCWI.hLayer = OGR_DS_CreateLayer( hDS, "contour", NULL, 
+                                      b3D ? wkbLineString25D : wkbLineString,
                                       NULL );
     if( oCWI.hLayer == NULL )
         exit( 1 );
@@ -257,9 +276,12 @@ int main( int argc, char ** argv )
     int nXSize = GDALGetRasterXSize( hSrcDS );
     int nYSize = GDALGetRasterYSize( hSrcDS );
 
-    GDALContourGenerator oCG( nXSize, OGRContourWriter, &oCWI );
+    GDALContourGenerator oCG( nXSize, nYSize, OGRContourWriter, &oCWI );
 
     oCG.SetContourLevels( dfInterval );
+
+    if( bNoDataSet )
+        oCG.SetNoData( dfNoData );
 
 /* -------------------------------------------------------------------- */
 /*      Feed the data into the contour generator.                       */
@@ -276,8 +298,6 @@ int main( int argc, char ** argv )
                       padfScanline, nXSize, 1, GDT_Float64, 0, 0 );
         oCG.FeedLine( padfScanline );
     }
-
-    oCG.FeedLine( NULL );
 
     OGR_DS_Destroy( hDS );
 }
@@ -297,11 +317,13 @@ int main( int argc, char ** argv )
 /*                        GDALContourGenerator()                        */
 /************************************************************************/
 
-GDALContourGenerator::GDALContourGenerator( int nWidthIn,
+GDALContourGenerator::GDALContourGenerator( int nWidthIn, int nHeightIn,
                                             GDALContourWriter pfnWriterIn, 
                                             void *pWriterCBDataIn )
 {
     nWidth = nWidthIn;
+    nHeight = nHeightIn;
+
     padfLastLine = (double *) CPLCalloc(sizeof(double),nWidth);
     padfThisLine = (double *) CPLCalloc(sizeof(double),nWidth);
 
@@ -314,6 +336,7 @@ GDALContourGenerator::GDALContourGenerator( int nWidthIn,
     papoContours = NULL;
 
     bNoDataActive = FALSE;
+    dfNoDataValue = -1000000.0;
     dfContourInterval = 10.0;
     dfContourOffset = 0.0;
 }
@@ -329,6 +352,17 @@ GDALContourGenerator::~GDALContourGenerator()
 }
 
 /************************************************************************/
+/*                             SetNoData()                              */
+/************************************************************************/
+
+void GDALContourGenerator::SetNoData( double dfNewValue )
+
+{
+    bNoDataActive = TRUE;
+    dfNoDataValue = dfNewValue;
+}
+
+/************************************************************************/
 /*                            ProcessPixel()                            */
 /************************************************************************/
 
@@ -336,6 +370,7 @@ CPLErr GDALContourGenerator::ProcessPixel( int iPixel )
 
 {
     double  dfUpLeft, dfUpRight, dfLoLeft, dfLoRight;
+    int     bSubdivide = FALSE;
 
 /* -------------------------------------------------------------------- */
 /*      Collect the four corner pixel values.  Value left or right      */
@@ -349,12 +384,152 @@ CPLErr GDALContourGenerator::ProcessPixel( int iPixel )
     dfLoRight = padfThisLine[MIN(nWidth-1,iPixel)];
 
 /* -------------------------------------------------------------------- */
+/*      Check if we have any nodata values.                             */
+/* -------------------------------------------------------------------- */
+    if( bNoDataActive 
+        && ( dfUpLeft == dfNoDataValue
+             || dfLoLeft == dfNoDataValue
+             || dfLoRight == dfNoDataValue
+             || dfUpRight == dfNoDataValue ) )
+        bSubdivide = TRUE;
+
+/* -------------------------------------------------------------------- */
 /*      Check if we have any nodata, if so, go to a special case of     */
 /*      code.                                                           */
 /* -------------------------------------------------------------------- */
-    // TODO 
+    if( iPixel > 0 && iPixel < nWidth 
+        && iLine > 0 && iLine < nHeight && !bSubdivide )
+    {
+        return ProcessRect( dfUpLeft, iPixel - 0.5, iLine - 0.5, 
+                            dfLoLeft, iPixel - 0.5, iLine + 0.5, 
+                            dfLoRight, iPixel + 0.5, iLine + 0.5, 
+                            dfUpRight, iPixel + 0.5, iLine - 0.5 );
+    }
 
+/* -------------------------------------------------------------------- */
+/*      Prepare subdivisions.                                           */
+/* -------------------------------------------------------------------- */
+    int nGoodCount = 0; 
+    double dfASum = 0.0;
+    double dfCenter, dfTop=0.0, dfRight=0.0, dfLeft=0.0, dfBottom=0.0;
     
+    if( dfUpLeft != dfNoDataValue )
+    {
+        dfASum += dfUpLeft;
+        nGoodCount++;
+    }
+
+    if( dfLoLeft != dfNoDataValue )
+    {
+        dfASum += dfLoLeft;
+        nGoodCount++;
+    }
+
+    if( dfLoRight != dfNoDataValue )
+    {
+        dfASum += dfLoRight;
+        nGoodCount++;
+    }
+
+    if( dfUpRight != dfNoDataValue )
+    {
+        dfASum += dfUpRight;
+        nGoodCount++;
+    }
+
+    if( nGoodCount == 0.0 )
+        return CE_None;
+
+    dfCenter = dfASum / nGoodCount;
+
+    if( dfUpLeft != dfNoDataValue )
+    {
+        if( dfUpRight != dfNoDataValue )
+            dfTop = (dfUpLeft + dfUpRight) / 2.0;
+        else
+            dfTop = dfUpLeft;
+
+        if( dfLoLeft != dfNoDataValue )
+            dfLeft = (dfUpLeft + dfLoLeft) / 2.0;
+        else
+            dfLeft = dfUpLeft;
+    }
+    else
+    {
+        dfTop = dfUpRight;
+        dfLeft = dfLoLeft;
+    }
+
+    if( dfLoRight != dfNoDataValue )
+    {
+        if( dfUpRight != dfNoDataValue )
+            dfRight = (dfLoRight + dfUpRight) / 2.0;
+        else
+            dfRight = dfLoRight;
+
+        if( dfLoLeft != dfNoDataValue )
+            dfBottom = (dfLoRight + dfLoLeft) / 2.0;
+        else
+            dfBottom = dfLoRight;
+    }
+    else
+    {
+        dfBottom = dfLoLeft;;
+        dfRight = dfUpRight;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Process any quadrants that aren't "nodata" anchored.            */
+/* -------------------------------------------------------------------- */
+    CPLErr eErr = CE_None;
+
+    if( dfUpLeft != dfNoDataValue && iPixel > 0 && iLine > 0 )
+    {
+        eErr = ProcessRect( dfUpLeft, iPixel - 0.5, iLine - 0.5, 
+                            dfLeft, iPixel - 0.5, iLine, 
+                            dfCenter, iPixel, iLine, 
+                            dfTop, iPixel, iLine - 0.5 );
+    }
+
+    if( dfLoLeft != dfNoDataValue && eErr == CE_None 
+        && iPixel > 0 && iLine < nHeight )
+    {
+        eErr = ProcessRect( dfLeft, iPixel - 0.5, iLine, 
+                            dfLoLeft, iPixel - 0.5, iLine + 0.5,
+                            dfBottom, iPixel, iLine + 0.5, 
+                            dfCenter, iPixel, iLine );
+    }
+
+    if( dfLoRight != dfNoDataValue && iPixel < nWidth && iLine < nHeight )
+    {
+        eErr = ProcessRect( dfCenter, iPixel, iLine, 
+                            dfBottom, iPixel, iLine + 0.5,
+                            dfLoRight, iPixel + 0.5, iLine + 0.5, 
+                            dfRight, iPixel + 0.5, iLine );
+    }
+
+    if( dfUpRight != dfNoDataValue && iPixel < nWidth && iLine > 0 )
+    {
+        eErr = ProcessRect( dfTop, iPixel, iLine - 0.5, 
+                            dfCenter, iPixel, iLine,
+                            dfRight, iPixel + 0.5, iLine, 
+                            dfUpRight, iPixel + 0.5, iLine - 0.5 );
+    }
+
+    return eErr;
+}
+
+/************************************************************************/
+/*                            ProcessRect()                             */
+/************************************************************************/
+
+CPLErr GDALContourGenerator::ProcessRect( 
+    double dfUpLeft, double dfUpLeftX, double dfUpLeftY, 
+    double dfLoLeft, double dfLoLeftX, double dfLoLeftY, 
+    double dfLoRight, double dfLoRightX, double dfLoRightY, 
+    double dfUpRight, double dfUpRightX, double dfUpRightY )
+    
+{
 /* -------------------------------------------------------------------- */
 /*      Identify the range of contour levels we have to deal with.      */
 /* -------------------------------------------------------------------- */
@@ -381,17 +556,17 @@ CPLErr GDALContourGenerator::ProcessPixel( int iPixel )
         double adfX[4], adfY[4];
         CPLErr eErr;
 
-        Intersect( dfUpLeft, iPixel-0.5, iLine-0.5, 
-                   dfLoLeft, iPixel-0.5, iLine+0.5, 
+        Intersect( dfUpLeft, dfUpLeftX, dfUpLeftY,
+                   dfLoLeft, dfLoLeftX, dfLoLeftY,
                    dfLoRight, dfLevel, &nPoints, adfX, adfY );
-        Intersect( dfLoLeft, iPixel-0.5, iLine+0.5, 
-                   dfLoRight, iPixel+0.5, iLine+0.5, 
+        Intersect( dfLoLeft, dfLoLeftX, dfLoLeftY,
+                   dfLoRight, dfLoRightX, dfLoRightY,
                    dfUpRight, dfLevel, &nPoints, adfX, adfY );
-        Intersect( dfLoRight, iPixel+0.5, iLine+0.5, 
-                   dfUpRight, iPixel+0.5, iLine-0.5, 
+        Intersect( dfLoRight, dfLoRightX, dfLoRightY,
+                   dfUpRight, dfUpRightX, dfUpRightY,
                    dfUpLeft, dfLevel, &nPoints, adfX, adfY );
-        Intersect( dfUpRight, iPixel+0.5, iLine-0.5, 
-                   dfUpLeft, iPixel-0.5, iLine-0.5, 
+        Intersect( dfUpRight, dfUpRightX, dfUpRightY,
+                   dfUpLeft, dfUpLeftX, dfUpLeftY,
                    dfLoLeft, dfLevel, &nPoints, adfX, adfY );
         
         if( nPoints == 1 || nPoints == 3 )
@@ -571,7 +746,10 @@ CPLErr GDALContourGenerator::FeedLine( double *padfScanline )
 
     iLine++;
 
-    return eErr;
+    if( iLine == nHeight && eErr == CE_None )
+        return FeedLine( NULL );
+    else
+        return eErr;
 }
 
 /************************************************************************/
@@ -892,7 +1070,7 @@ CPLErr OGRContourWriter( GDALContourItem *poContour, void *pInfo )
                         poInfo->adfGeoTransform[3] 
                         + poInfo->adfGeoTransform[4]*poContour->padfX[iPoint]
                         + poInfo->adfGeoTransform[5]*poContour->padfY[iPoint],
-                        0.0 /* poContour->dfLevel */ );
+                        poContour->dfLevel );
     }
 
     OGR_F_SetGeometryDirectly( hFeat, hGeom );
