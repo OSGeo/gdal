@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2002/01/21 20:49:52  warmerda
+ * added spatial search option
+ *
  * Revision 1.7  2001/08/21 03:01:39  warmerda
  * added raw_data support
  *
@@ -65,8 +68,9 @@ static void DGNDumpRawElement( DGNHandle hDGN, DGNElemCore *psCore,
 static void Usage()
 
 {
-    printf( "Usage: dgndump [-s] [-r n] filename.dgn\n" );
+    printf( "Usage: dgndump [-e xmin ymin xmax ymax] [-s] [-r n] filename.dgn\n" );
     printf( "\n" );
+    printf( "  -e xmin ymin xmax ymax: only get elements within extents.\n" );
     printf( "  -s: produce summary report of element types and levels.\n");
     printf( "  -r n: report raw binary contents of elements of type n.\n");
 
@@ -85,6 +89,7 @@ int main( int argc, char ** argv )
     const char	*pszFilename = NULL;
     int         bSummary = FALSE, iArg, bRaw = FALSE;
     char	achRaw[64];
+    double	dfSFXMin=0.0, dfSFXMax=0.0, dfSFYMin=0.0, dfSFYMax=0.0;
 
     memset( achRaw, 0, 64 );
 
@@ -93,6 +98,14 @@ int main( int argc, char ** argv )
         if( strcmp(argv[iArg],"-s") == 0 )
         {
             bSummary = TRUE;
+        }
+        else if( strcmp(argv[iArg],"-e") == 0 && iArg < argc-4 )
+        {
+            dfSFXMin = atof(argv[iArg+1]);
+            dfSFYMin = atof(argv[iArg+2]);
+            dfSFXMax = atof(argv[iArg+3]);
+            dfSFYMax = atof(argv[iArg+4]);
+            iArg += 4;
         }
         else if( strcmp(argv[iArg],"-r") == 0 && iArg < argc-1 )
         {
@@ -115,6 +128,8 @@ int main( int argc, char ** argv )
 
     if( bRaw )
         DGNSetOptions( hDGN, DGNO_CAPTURE_RAW_DATA );
+
+    DGNSetSpatialFilter( hDGN, dfSFXMin, dfSFYMin, dfSFXMax, dfSFYMax );
 
     if( !bSummary )
     {
