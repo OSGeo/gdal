@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.42  2004/02/20 18:03:36  warmerda
+ * Applied new Value() implementation to deal with duplicate points.
+ * http://bugzilla.remotesensing.org/show_bug.cgi?id=384
+ *
  * Revision 1.41  2004/01/16 21:57:16  warmerda
  * fixed up EMPTY support
  *
@@ -1012,22 +1016,28 @@ void OGRLineString::Value( double dfDistance, OGRPoint * poPoint )
         dfDeltaY = paoPoints[i+1].y - paoPoints[i].y;
         dfSegLength = sqrt(dfDeltaX*dfDeltaX + dfDeltaY*dfDeltaY);
 
-        if( dfLength <= dfDistance && dfLength + dfSegLength >= dfDistance )
+        if (dfSegLength > 0)
         {
-            double      dfRatio;
+            if( (dfLength <= dfDistance) && ((dfLength + dfSegLength) >= 
+                                             dfDistance) )
+            {
+                double      dfRatio;
 
-            dfRatio = (dfDistance - dfLength) / dfSegLength;
+                dfRatio = (dfDistance - dfLength) / dfSegLength;
 
-            poPoint->setX( paoPoints[i].x * (1 - dfRatio)
-                           + paoPoints[i+1].x * dfRatio );
-            poPoint->setY( paoPoints[i].y * (1 - dfRatio)
-                           + paoPoints[i+1].y * dfRatio );
+                poPoint->setX( paoPoints[i].x * (1 - dfRatio)
+                               + paoPoints[i+1].x * dfRatio );
+                poPoint->setY( paoPoints[i].y * (1 - dfRatio)
+                               + paoPoints[i+1].y * dfRatio );
 
-            if( getCoordinateDimension() == 3 )
-                poPoint->setZ( padfZ[i] * (1 - dfRatio)
-                               + padfZ[i] * dfRatio );
+                if( getCoordinateDimension() == 3 )
+                    poPoint->setZ( padfZ[i] * (1 - dfRatio)
+                                   + padfZ[i] * dfRatio );
                 
-            return;
+                return;
+            }
+
+            dfLength += dfSegLength;
         }
     }
     
