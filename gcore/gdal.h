@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2000/03/31 13:41:25  warmerda
+ * added gcps
+ *
  * Revision 1.19  2000/03/24 00:09:05  warmerda
  * rewrote cache management
  *
@@ -214,6 +217,38 @@ const char CPL_DLL *GDALGetDriverLongName( GDALDriverH );
 const char CPL_DLL *GDALGetDriverHelpTopic( GDALDriverH );
 
 /* ==================================================================== */
+/*      GDAL_GCP                                                        */
+/* ==================================================================== */
+
+/** Ground Control Point */
+typedef struct
+{
+    /** Unique identifier, often numeric */
+    char	*pszId; 
+
+    /** Informational message or "" */
+    char	*pszInfo;
+
+    /** Pixel (x) location of GCP on raster */
+    double 	dfGCPPixel;
+    /** Line (y) location of GCP on raster */
+    double	dfGCPLine;
+
+    /** X position of GCP in georeferenced space */
+    double	dfGCPX;
+
+    /** Y position of GCP in georeferenced space */
+    double	dfGCPY;
+
+    /** Elevation of GCP, or zero if not known */
+    double	dfGCPZ;
+} GDAL_GCP;
+
+void GDALInitGCPs( int, GDAL_GCP * );
+void GDALDeinitGCPs( int, GDAL_GCP * );
+GDAL_GCP *GDALDuplicateGCPs( int, const GDAL_GCP * );
+
+/* ==================================================================== */
 /*      GDALDataset class ... normally this represents one file.        */
 /* ==================================================================== */
 
@@ -223,13 +258,20 @@ int CPL_DLL	GDALGetRasterXSize( GDALDatasetH );
 int CPL_DLL	GDALGetRasterYSize( GDALDatasetH );
 int CPL_DLL	GDALGetRasterCount( GDALDatasetH );
 GDALRasterBandH CPL_DLL GDALGetRasterBand( GDALDatasetH, int );
+
 const char CPL_DLL *GDALGetProjectionRef( GDALDatasetH );
 CPLErr CPL_DLL  GDALSetProjection( GDALDatasetH, const char * );
 CPLErr CPL_DLL  GDALGetGeoTransform( GDALDatasetH, double * );
 CPLErr CPL_DLL  GDALSetGeoTransform( GDALDatasetH, double * );
+
+int CPL_DLL     GDALGetGCPCount( GDALDatasetH );
+const char CPL_DLL *GDALGetGCPProjection( GDALDatasetH );
+const GDAL_GCP CPL_DLL *GDALGetGCPs( GDALDatasetH );
+
 void CPL_DLL   *GDALGetInternalHandle( GDALDatasetH, const char * );
 int CPL_DLL     GDALReferenceDataset( GDALDatasetH );
 int CPL_DLL     GDALDereferenceDataset( GDALDatasetH );
+char CPL_DLL  **GDALGetDatasetMetadata( GDALDatasetH );
 
 /* ==================================================================== */
 /*      GDALRasterBand ... one band/channel in a dataset.               */
@@ -249,6 +291,7 @@ CPLErr CPL_DLL GDALReadBlock( GDALRasterBandH, int, int, void * );
 CPLErr CPL_DLL GDALWriteBlock( GDALRasterBandH, int, int, void * );
 int CPL_DLL GDALGetRasterBandXSize( GDALRasterBandH );
 int CPL_DLL GDALGetRasterBandYSize( GDALRasterBandH );
+char CPL_DLL  **GDALGetRasterMetadata( GDALRasterBandH );
 
 GDALColorInterp CPL_DLL GDALGetRasterColorInterpretation( GDALRasterBandH );
 GDALColorTableH CPL_DLL GDALGetRasterColorTable( GDALRasterBandH );
@@ -282,12 +325,20 @@ void CPL_DLL
 /* ==================================================================== */
 /*      Color tables.                                                   */
 /* ==================================================================== */
+/** Color tuple */
 typedef struct
 {
-    short      c1;      /* gray, red, cyan or hue */
-    short      c2;      /* green, magenta, or lightness */
-    short      c3;      /* blue, yellow, or saturation */
-    short      c4;      /* alpha or blackband */
+    /** gray, red, cyan or hue */
+    short      c1;      
+
+    /* green, magenta, or lightness */    
+    short      c2;      
+
+    /* blue, yellow, or saturation */
+    short      c3;      
+
+    /* alpha or blackband */
+    short      c4;      
 } GDALColorEntry;
 
 GDALColorTableH CPL_DLL GDALCreateColorTable( GDALPaletteInterp );

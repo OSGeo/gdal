@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2000/03/31 13:41:24  warmerda
+ * added gcps
+ *
  * Revision 1.16  2000/03/24 00:09:05  warmerda
  * rewrote cache management
  *
@@ -135,7 +138,6 @@ class CPL_DLL GDALProjDef
     CPLErr	SetProjectionString( const char * );
 };
 
-
 /* ******************************************************************** */
 /*                             GDALDataset                              */
 /* ******************************************************************** */
@@ -166,6 +168,8 @@ class CPL_DLL GDALDataset : public GDALMajorObject
     void        RasterInitialize( int, int );
     void        SetBand( int, GDALRasterBand * );
 
+    char	**papszMetadata;
+
   public:
     virtual	~GDALDataset();
 
@@ -184,6 +188,12 @@ class CPL_DLL GDALDataset : public GDALMajorObject
 
     virtual void *GetInternalHandle( const char * );
     virtual GDALDriver *GetDriver(void);
+
+    virtual char **GetMetadata();
+
+    virtual int    GetGCPCount();
+    virtual const char *GetGCPProjection();
+    virtual const GDAL_GCP *GetGCPs();
  
     int           Reference();
     int           Dereference();
@@ -239,6 +249,8 @@ class CPL_DLL GDALRasterBlock
     GDALRasterBand *GetBand() { return poBand; }
 
     static void FlushOldestBlock();
+    static void Verify();
+
 };
 
 
@@ -293,6 +305,8 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
 
     GDALRasterBlock **papoBlocks;
 
+    char	**papszMetadata;
+
     friend class GDALDataset;
     friend class GDALRasterBlock;
 
@@ -332,6 +346,8 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
     CPLErr	FlushCache();
     CPLErr	FlushBlock( int = -1, int = -1 );
 
+    virtual char **GetMetadata();
+ 
     // New OpengIS CV_SampleDimension stuff.
 
     virtual const char  *GetDescription();
