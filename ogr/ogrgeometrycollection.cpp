@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2001/08/30 02:06:19  warmerda
+ * fixed array overrun error in exportToWkt()
+ *
  * Revision 1.11  2001/07/18 05:03:05  warmerda
  * added CPL_CVSID
  *
@@ -582,7 +585,7 @@ OGRErr OGRGeometryCollection::exportToWkt( char ** ppszReturn )
 /* -------------------------------------------------------------------- */
 /*      Allocate the right amount of space for the aggregated string    */
 /* -------------------------------------------------------------------- */
-    *ppszReturn = (char *) VSIMalloc(nCumulativeLength + nGeomCount + 20);
+    *ppszReturn = (char *) VSIMalloc(nCumulativeLength + nGeomCount + 23);
 
     if( *ppszReturn == NULL )
         return OGRERR_NOT_ENOUGH_MEMORY;
