@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.46  2002/11/25 16:11:39  warmerda
+ * added GetAuthorityCode/Name
+ *
  * Revision 1.45  2002/11/04 21:15:15  warmerda
  * improved geometry creation error reporting
  *
@@ -1394,6 +1397,10 @@ int     OSRSetAuthority( OGRSpatialReferenceH hSRS,
                          const char * pszTargetKey,
                          const char * pszAuthority,
                          int nCode );
+const char *OSRGetAuthorityCode( OGRSpatialReferenceH hSRS, 
+	                         const char * pszTargetKey );
+const char *OSRGetAuthorityName( OGRSpatialReferenceH hSRS, 
+	                         const char * pszTargetKey );
 int     OSRSetProjParm( OGRSpatialReferenceH, const char *, double );
 double  OSRGetProjParm( OGRSpatialReferenceH hSRS,
                         const char * pszParmName, 

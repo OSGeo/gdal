@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.54  2002/11/25 16:12:54  warmerda
+ * added GetAuthorityCode/Name
+ *
  * Revision 1.53  2002/07/25 15:58:02  warmerda
  * Fixed docs for how to compute inverse flattening.
  *
@@ -2520,23 +2523,10 @@ OGRErr OGRSpatialReference::SetAuthority( const char *pszTargetKey,
                                           int nCode )
 
 {
-    OGR_SRSNode  *poNode;
-    char         **papszNodePath;
-    int          iPath;
-
 /* -------------------------------------------------------------------- */
 /*      Find the node below which the authority should be put.          */
 /* -------------------------------------------------------------------- */
-    papszNodePath = CSLTokenizeStringComplex( pszTargetKey,"|",FALSE,FALSE);
-
-    for( poNode = GetRoot(), iPath = 0; 
-         poNode != NULL && papszNodePath[iPath] != NULL; 
-         iPath++ )
-    {
-        poNode = poNode->GetNode( papszNodePath[iPath] );
-    }
-
-    CSLDestroy( papszNodePath );
+    OGR_SRSNode  *poNode = GetRoot()->GetNode( pszTargetKey );
 
     if( poNode == NULL )
         return OGRERR_FAILURE;
@@ -2577,6 +2567,127 @@ OGRErr OSRSetAuthority( OGRSpatialReferenceH hSRS,
     return ((OGRSpatialReference *) hSRS)->SetAuthority( pszTargetKey, 
                                                          pszAuthority,
                                                          nCode );
+}
+
+/************************************************************************/
+/*                          GetAuthorityCode()                          */
+/************************************************************************/
+
+/**
+ * Get the authority code for a node.
+ *
+ * This method is used to query an AUTHORITY[] node from within the 
+ * WKT tree, and fetch the code value.  
+ *
+ * While in theory values may be non-numeric, for the EPSG authority all
+ * code values should be integral.
+ *
+ * This method is the same as the C function OSRGetAuthorityCode().
+ *
+ * @param pszTargetKey the partial or complete path to the node to 
+ * set an authority on.  ie. "PROJCS", "GEOGCS" or "GEOGCS|UNIT".
+ *
+ * @return value code from authority node, or NULL on failure.  The value
+ * returned is internal and should not be freed or modified.
+ */
+
+const char *OGRSpatialReference::GetAuthorityCode( const char *pszTargetKey )
+
+{
+/* -------------------------------------------------------------------- */
+/*      Find the node below which the authority should be put.          */
+/* -------------------------------------------------------------------- */
+    OGR_SRSNode  *poNode = GetRoot()->GetNode( pszTargetKey );
+
+    if( poNode == NULL )
+        return NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Fetch AUTHORITY child if there is one.                          */
+/* -------------------------------------------------------------------- */
+    poNode = poNode->GetNode("AUTHORITY");
+
+    if( poNode == NULL )
+        return NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Create a new authority node.                                    */
+/* -------------------------------------------------------------------- */
+    if( poNode->GetChildCount() < 2 )
+        return NULL;
+
+    return poNode->GetChild(1)->GetValue();
+}
+
+/************************************************************************/
+/*                          OSRGetAuthorityCode()                       */
+/************************************************************************/
+
+const char *OSRGetAuthorityCode( OGRSpatialReferenceH hSRS, 
+                                 const char *pszTargetKey )
+
+{
+    return ((OGRSpatialReference *) hSRS)->GetAuthorityCode( pszTargetKey );
+}
+
+/************************************************************************/
+/*                          GetAuthorityName()                          */
+/************************************************************************/
+
+/**
+ * Get the authority name for a node.
+ *
+ * This method is used to query an AUTHORITY[] node from within the 
+ * WKT tree, and fetch the authority name value.  
+ *
+ * The most common authority is "EPSG".
+ *
+ * This method is the same as the C function OSRGetAuthorityName().
+ *
+ * @param pszTargetKey the partial or complete path to the node to 
+ * set an authority on.  ie. "PROJCS", "GEOGCS" or "GEOGCS|UNIT".
+ *
+ * @return value code from authority node, or NULL on failure. The value
+ * returned is internal and should not be freed or modified.
+ */
+
+const char *OGRSpatialReference::GetAuthorityName( const char *pszTargetKey )
+
+{
+/* -------------------------------------------------------------------- */
+/*      Find the node below which the authority should be put.          */
+/* -------------------------------------------------------------------- */
+    OGR_SRSNode  *poNode = GetRoot()->GetNode( pszTargetKey );
+
+    if( poNode == NULL )
+        return NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Fetch AUTHORITY child if there is one.                          */
+/* -------------------------------------------------------------------- */
+    poNode = poNode->GetNode("AUTHORITY");
+
+    if( poNode == NULL )
+        return NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Create a new authority node.                                    */
+/* -------------------------------------------------------------------- */
+    if( poNode->GetChildCount() < 2 )
+        return NULL;
+
+    return poNode->GetChild(0)->GetValue();
+}
+
+/************************************************************************/
+/*                        OSRGetAuthorityName()                         */
+/************************************************************************/
+
+const char *OSRGetAuthorityName( OGRSpatialReferenceH hSRS, 
+                                 const char *pszTargetKey )
+
+{
+    return ((OGRSpatialReference *) hSRS)->GetAuthorityName( pszTargetKey );
 }
 
 /************************************************************************/

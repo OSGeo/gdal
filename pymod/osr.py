@@ -28,6 +28,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.14  2002/11/25 16:11:39  warmerda
+# added GetAuthorityCode/Name
+#
 # Revision 1.13  2001/10/23 18:52:43  warmerda
 # modify initializer for Peppers
 #
@@ -161,6 +164,16 @@ class SpatialReference:
     def SetLinearUnits(self, units_name, to_meters ):
         return _gdal.OSRSetLinearUnits( self._o, units_name, to_meters )
 
+    def SetAuthority( self, target_key, authority_name, authority_code ):
+        return _gdal.OSRSetAuthority( self._o, target_key, authority_name,
+                                      int(authority_code) )
+
+    def GetAuthorityCode( self, target_key ):
+        return _gdal.OSRGetAuthorityCode( self._o, target_key )
+    
+    def GetAuthorityName( self, target_key ):
+        return _gdal.OSRGetAuthorityName( self._o, target_key )
+    
     def SetUTM(self, zone, is_north = 1):
         return _gdal.OSRSetUTM(self._o, zone, is_north )
 
