@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/05/20 19:46:15  warmerda
+ * add some automatation, and Wkt support
+ *
  * Revision 1.1  1999/05/20 14:54:49  warmerda
  * New
  *
@@ -50,7 +53,7 @@ void OGRComDebug( const char * pszDebugClass, const char * pszFormat, ... )
 /* -------------------------------------------------------------------- */
     if( fpDebug == NULL )
     {
-        fpDebug = fopen( "f:\\opengis\\ogr\\sfcom_serv\\Debug", "w" );
+        fpDebug = fopen( "f:\\gdal\\ogr\\sfcom_serv\\Debug", "w" );
     }
 
 /* -------------------------------------------------------------------- */

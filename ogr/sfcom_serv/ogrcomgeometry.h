@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  1999/05/20 19:46:15  warmerda
+ * add some automatation, and Wkt support
+ *
  * Revision 1.5  1999/05/20 14:54:55  warmerda
  * started work on automation
  *
@@ -130,6 +133,9 @@ class OGRComGeometryFactory : public IGeometryFactory
                               IGeometry **geometry);
     STDMETHOD(CreateFromWKT)( BSTR wkt, ISpatialReference *spatialRef,
                               IGeometry **geometry);
+
+    // local helper method.
+    static IGeometry      *COMifyGeometry( OGRGeometry * );
 
   protected:
     ULONG      m_cRef;

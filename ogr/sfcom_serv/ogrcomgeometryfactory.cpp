@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  1999/05/20 19:46:15  warmerda
+ * add some automatation, and Wkt support
+ *
  * Revision 1.4  1999/05/20 14:54:55  warmerda
  * started work on automation
  *
@@ -76,6 +79,13 @@ STDMETHODIMP OGRComGeometryFactory::QueryInterface(REFIID rIID,
 
     else if (rIID == IID_IGeometryFactory) {
         *ppInterface = this;
+    }
+
+    else if (rIID == IID_IDispatch) {
+        *ppInterface = &oDispatcher;
+        OGRComDebug( "info", 
+                     "OGRComGeometryFactory::QueryInterface()"
+                     " - got IDispatch\n" );
     }
 
     // We don't support this interface
@@ -135,6 +145,45 @@ STDMETHODIMP_(ULONG) OGRComGeometryFactory::Release()
 // =======================================================================
 
 /************************************************************************/
+/*                           COMifyGeometry()                           */
+/*                                                                      */
+/*      Local method for turning an OGRGeometry into an                 */
+/*      OGRComGeometry.  This method assumes ownership of the passed    */
+/*      OGRGeometry.  Note the method is static, and the returned       */
+/*      object will be set to a reference count of 1.                   */
+/************************************************************************/
+
+IGeometry *OGRComGeometryFactory::COMifyGeometry( OGRGeometry * poGeom )
+
+{
+    IGeometry      *poCOMGeom = NULL;
+
+    if( poGeom->getGeometryType() == wkbPoint )
+    {
+        poCOMGeom = new OGRComPoint( (OGRPoint *) poGeom );
+    }
+    else if( poGeom->getGeometryType() == wkbLineString )
+    {
+        poCOMGeom = new OGRComLineString( (OGRLineString *) 
+                                          poGeom );
+    }
+    else if( poGeom->getGeometryType() == wkbPolygon )
+    {
+        poCOMGeom = new OGRComPolygon( (OGRPolygon *) poGeom );
+    }
+    else
+    {
+        OGRComDebug( "failure", 
+                     "Didn't recognise type of OGRGeometry\n" );
+    }
+
+    if( poCOMGeom != NULL )
+        poCOMGeom->AddRef();
+
+    return poCOMGeom;
+}
+
+/************************************************************************/
 /*                           CreateFromWKB()                            */
 /************************************************************************/
 
@@ -148,37 +197,20 @@ OGRComGeometryFactory::CreateFromWKB( VARIANT wkb,
     OGRErr           eErr = OGRERR_NONE;
     unsigned char    *pabyRawData;
 
+    // notdef: not doing anything with spatial ref yet. 
+
     assert( wkb.vt == (VT_UI1 | VT_ARRAY) );
 
     SafeArrayAccessData( *(wkb.pparray), (void **) &pabyRawData );
-    eErr = OGRGeometryFactory::createFromWkb( pabyRawData, 
+    eErr = OGRGeometryFactory::createFromWkb( pabyRawData, NULL,
                                               &poOGRGeometry );
     SafeArrayUnaccessData( *(wkb.pparray) );
 
     if( eErr == OGRERR_NONE )
     {
-        if( poOGRGeometry->getGeometryType() == wkbPoint )
-        {
-            *geometry = new OGRComPoint( (OGRPoint *) poOGRGeometry );
-            (*geometry)->AddRef();
-        }
-        else if( poOGRGeometry->getGeometryType() == wkbLineString )
-        {
-            *geometry = new OGRComLineString( (OGRLineString *) 
-                                              poOGRGeometry );
-            (*geometry)->AddRef();
-        }
-        else if( poOGRGeometry->getGeometryType() == wkbPolygon )
-        {
-            *geometry = new OGRComPolygon( (OGRPolygon *) poOGRGeometry );
-            (*geometry)->AddRef();
-        }
-        else
-        {
-            OGRComDebug( "failure", 
-                         "Didn't recognise type of OGRGeometry\n" );
+        *geometry = COMifyGeometry( poOGRGeometry );
+        if( *geometry == NULL )
             eErr = OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
-        }
     }
     else
     {
@@ -202,7 +234,36 @@ OGRComGeometryFactory::CreateFromWKT( BSTR wrt,
                                       IGeometry **geometry )
 
 {
-    return E_FAIL;
+    OGRGeometry      *poOGRGeometry = NULL;
+    OGRErr           eErr = OGRERR_NONE;
+    char             *pszANSIWkt = NULL;
+
+    // notdef: not doing anything with spatial ref yet. 
+    OGRComDebug( "info", "createFromWKT(%S)\n", wrt );
+
+    UnicodeToAnsi( wrt, &pszANSIWkt );
+
+    eErr = OGRGeometryFactory::createFromWkt( pszANSIWkt, NULL,
+                                              &poOGRGeometry );
+    
+    CoTaskMemFree( pszANSIWkt );
+
+    if( eErr == OGRERR_NONE )
+    {
+        *geometry = COMifyGeometry( poOGRGeometry );
+        if( *geometry == NULL )
+            eErr = OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
+    }
+    else
+    {
+        OGRComDebug( "failure",
+                     "OGRGeometryFactory::createFromWkb() failed.\n" );
+    }
+
+    if( eErr != OGRERR_NONE )
+        return E_FAIL;
+    else
+        return ResultFromScode( S_OK );
 }
 
 /************************************************************************/
@@ -270,6 +331,165 @@ OGRComGeometryFactoryDispatcher::Release()
 // IDispatch methods
 // =======================================================================
 
+/************************************************************************/
+/*                          GetTypeInfoCount()                          */
+/************************************************************************/
+STDMETHODIMP 
+OGRComGeometryFactoryDispatcher::GetTypeInfoCount(UINT *pctInfo)
+{
+    *pctInfo=0;
+    OGRComDebug( "info", "GetTypeInfoCount\n" );
+    return NOERROR;
+}
+
+/************************************************************************/
+/*                            GetTypeInfo()                             */
+/************************************************************************/
+STDMETHODIMP 
+OGRComGeometryFactoryDispatcher::GetTypeInfo(UINT itinfo, LCID lcid,
+                                             ITypeInfo **pptInfo)
+{
+    OGRComDebug( "info", "GetTypeInfo\n" );
+
+    *pptInfo=NULL;
+    return ResultFromScode(E_NOTIMPL);
+}
+
+/************************************************************************/
+/*                           GetIDsOfNames()                            */
+/************************************************************************/
+
+#define METHOD_createFromWkb      100
+#define METHOD_createFromWkt      101
+
+STDMETHODIMP 
+OGRComGeometryFactoryDispatcher::GetIDsOfNames(REFIID riid,
+                                               OLECHAR **rgszNames, 
+                                               UINT cNames, LCID lcid, 
+                                               DISPID *rgDispID)
+{
+    HRESULT     hr;
+    int         i;
+    int         idsMin;
+    LPTSTR      psz;
+
+    if (IID_NULL!=riid)
+        return ResultFromScode(DISP_E_UNKNOWNINTERFACE);
+
+    rgDispID[0]=DISPID_UNKNOWN;
+    hr=ResultFromScode(DISP_E_UNKNOWNNAME);
+    
+    OGRComDebug( "info", "GetIdsOfNames(%S)\n", rgszNames[0] );
+
+    if( wcsicmp( rgszNames[0], L"createFromWkt" ) == 0 )
+    {
+        rgDispID[0] = METHOD_createFromWkt;
+        hr = NOERROR;
+    }
+    else if( wcsicmp( rgszNames[0], L"createFromWkb" ) == 0 )
+    {
+        rgDispID[0] = METHOD_createFromWkb;
+        hr = NOERROR;
+    }
+
+    return hr;
+}
+
+/************************************************************************/
+/*                               Invoke()                               */
+/************************************************************************/
+
+STDMETHODIMP 
+OGRComGeometryFactoryDispatcher::Invoke( DISPID dispID, REFIID riid, LCID lcid,
+                                         unsigned short wFlags, 
+                                         DISPPARAMS * pDispParams,
+                                         VARIANT * pVarResult, 
+                                         EXCEPINFO *pExcepInfo,
+                                         UINT * puArgErr )
+
+{
+    OGRComDebug( "info", 
+                 "OGRComGeometryFactoryDispatcher::Invoke(%d)\n", 
+                 dispID );
+
+#ifdef notdef
+    HRESULT     hr;
+    //riid is supposed to be IID_NULL always.
+    if (IID_NULL!=riid)
+        return ResultFromScode(DISP_E_UNKNOWNINTERFACE);
+    switch (dispID)
+    {
+        case PROPERTY_SOUND:
+            if (DISPATCH_PROPERTYGET & wFlags
+                œœ DISPATCH_METHOD & wFlags)
+            {
+                if (NULL==pVarResult)
+                    return ResultFromScode(E_INVALIDARG);
+                VariantInit(pVarResult);
+                V_VT(pVarResult)=VT_I4;
+                V_I4(pVarResult)=m_pObj->m_lSound;
+                return NOERROR;
+            }
+            else
+            {
+                //DISPATCH_PROPERTYPUT
+                long        lSound;
+                int         c;
+                VARIANT     vt;
+                if (1!=pDispParams->cArgs)
+                    return ResultFromScode(DISP_E_BADPARAMCOUNT);
+                c=pDispParams->cNamedArgs;
+                if (1!=c œœ (1==c && DISPID_PROPERTYPUT
+                                   !=pDispParams->rgdispidNamedArgs[0]))
+                    return ResultFromScode(DISP_E_PARAMNOTOPTIONAL);
+                VariantInit(&vt);
+                hr=VariantChangeType(&vt, &pDispParams->rgvarg[0]
+                                     , 0, VT_I4);
+                if (FAILED(hr))
+                {
+                    if (NULL!=puArgErr)
+                        *puArgErr=0;
+                    return hr;
+                }
+                lSound=vt.lVal;
+                if (MB_OK!=lSound && MB_ICONEXCLAMATION!=lSound
+                    && MB_ICONQUESTION!=lSound && MB_ICONHAND!=lSound
+                    && MB_ICONASTERISK!=lSound)
+                {
+                    if (NULL==pExcepInfo)
+                        return ResultFromScode(E_INVALIDARG);
+                    pExcepInfo->wCode=EXCEPTION_INVALIDSOUND;
+                    pExcepInfo->scode=
+                        (SCODE)MAKELONG(EXCEPTION_INVALIDSOUND
+                                        , PRIMARYLANGID(lcid));
+                    FillException(pExcepInfo);
+                    return ResultFromScode(DISP_E_EXCEPTION);
+                }
+                //Everything checks out: save new value.
+                m_pObj->m_lSound=lSound;
+            }
+            break;
+        case METHOD_BEEP:
+            if (!(DISPATCH_METHOD & wFlags))
+                return ResultFromScode(DISP_E_MEMBERNOTFOUND);
+            if (0!=pDispParams->cArgs)
+                return ResultFromScode(DISP_E_BADPARAMCOUNT);
+            MessageBeep((UINT)m_pObj->m_lSound);
+            //The result of this method is the sound we played.
+            if (NULL!=pVarResult)
+            {
+                VariantInit(pVarResult);
+                V_VT(pVarResult)=VT_I4;
+                V_I4(pVarResult)=m_pObj->m_lSound;
+            }
+            break;
+        default:
+            ResultFromScode(DISP_E_MEMBERNOTFOUND);
+    }
+    return NOERROR;
+#endif
+    return E_FAIL;
+}
 
 
 
