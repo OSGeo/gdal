@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2004/05/28 18:15:58  warmerda
+ * added .TRL colortable support
+ *
  * Revision 1.4  2004/05/28 16:06:27  warmerda
  * added pre7.4 handling and world file support
  *
@@ -118,8 +121,17 @@ class LANDataset;
 
 class LAN4BitRasterBand : public GDALRasterBand
 {
+    GDALColorTable *poCT;
+    GDALColorInterp eInterp;
+
   public:
                    LAN4BitRasterBand( LANDataset *, int );
+                  ~LAN4BitRasterBand();
+
+    virtual GDALColorTable *GetColorTable();
+    virtual GDALColorInterp GetColorInterpretation();
+    virtual CPLErr SetColorTable( GDALColorTable * ); 
+    virtual CPLErr SetColorInterpretation( GDALColorInterp );
 
     virtual CPLErr IReadBlock( int, int, void * );
 };
@@ -170,6 +182,20 @@ LAN4BitRasterBand::LAN4BitRasterBand( LANDataset *poDS, int nBandIn )
 
     nBlockXSize = poDS->GetRasterXSize();;
     nBlockYSize = 1;
+
+    poCT = NULL;
+    eInterp = GCI_Undefined;
+}
+
+/************************************************************************/
+/*                         ~LAN4BitRasterBand()                         */
+/************************************************************************/
+
+LAN4BitRasterBand::~LAN4BitRasterBand()
+
+{
+    if( poCT )
+        delete poCT;
 }
 
 /************************************************************************/
@@ -225,6 +251,55 @@ CPLErr LAN4BitRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     }
 
     return CE_None;
+}
+
+/************************************************************************/
+/*                           SetColorTable()                            */
+/************************************************************************/
+
+CPLErr LAN4BitRasterBand::SetColorTable( GDALColorTable *poNewCT )
+
+{
+    if( poCT )
+        delete poCT;
+    if( poNewCT == NULL )
+        poCT = NULL;
+    else
+        poCT = poNewCT->Clone();
+
+    return CE_None;
+}
+
+/************************************************************************/
+/*                           GetColorTable()                            */
+/************************************************************************/
+
+GDALColorTable *LAN4BitRasterBand::GetColorTable()
+
+{
+    return poCT;
+}
+
+/************************************************************************/
+/*                       SetColorInterpretation()                       */
+/************************************************************************/
+
+CPLErr LAN4BitRasterBand::SetColorInterpretation( GDALColorInterp eNewInterp )
+
+{
+    eInterp = eNewInterp;
+
+    return CE_None;
+}
+
+/************************************************************************/
+/*                       GetColorInterpretation()                       */
+/************************************************************************/
+
+GDALColorInterp LAN4BitRasterBand::GetColorInterpretation()
+
+{
+    return eInterp;
 }
 
 /************************************************************************/
@@ -440,6 +515,46 @@ GDALDataset *LANDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->pszProjection = 
             CPLStrdup("LOCAL_CS[\"Unknown\",UNIT[\"Meter\",1]]");
     }
+
+/* -------------------------------------------------------------------- */
+/*      Check for a trailer file with a colormap in it.                 */
+/* -------------------------------------------------------------------- */
+    char *pszPath = CPLStrdup(CPLGetPath(poOpenInfo->pszFilename));
+    char *pszBasename = CPLStrdup(CPLGetBasename(poOpenInfo->pszFilename));
+    const char *pszTRLFilename = 
+        CPLFormCIFilename( pszPath, pszBasename, "trl" );
+    FILE *fpTRL;
+
+    fpTRL = VSIFOpen( pszTRLFilename, "rb" );
+    if( fpTRL != NULL )
+    {
+        char szTRLData[896];
+        int iColor;
+        GDALColorTable *poCT;
+
+        VSIFRead( szTRLData, 1, 896, fpTRL );
+        VSIFClose( fpTRL );
+        
+        poCT = new GDALColorTable();
+        for( iColor = 0; iColor < 256; iColor++ )
+        {
+            GDALColorEntry sEntry;
+
+            sEntry.c2 = ((GByte *) szTRLData)[iColor+128];
+            sEntry.c1 = ((GByte *) szTRLData)[iColor+128+256];
+            sEntry.c3 = ((GByte *) szTRLData)[iColor+128+512];
+            sEntry.c4 = 255;
+            poCT->SetColorEntry( iColor, &sEntry );
+        }
+
+        poDS->GetRasterBand(1)->SetColorTable( poCT );
+        poDS->GetRasterBand(1)->SetColorInterpretation( GCI_PaletteIndex );
+        
+        delete poCT;
+    }
+
+    CPLFree( pszPath );
+    CPLFree( pszBasename );
 
     return( poDS );
 }
