@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2003/02/27 21:17:09  dron
+ * Writing map info implemented.
+ *
  * Revision 1.10  2003/02/27 09:50:41  dron
  * SUFFIX and INTERLEAVE creation options added; reference pixels supported.
  *
@@ -334,17 +337,36 @@ void ENVIDataset::FlushCache()
 /* -------------------------------------------------------------------- */
 /*      Write the rest of header.                                       */
 /* -------------------------------------------------------------------- */
-/* FIXME: write out Mapinfo projection */
-    /*
     if ( pszProjection && !EQUAL(pszProjection, "") )
     {
+	const char	*pszProjName, *pszHemisphere;
+	double		dfPixelY;
+	int		bNorth;
+	int		iUTMZone;
 	OGRSpatialReference oSRS;
-	oSRS.importFromWkt( &pszProjection );
 
-	VSIFPrintf( fp, "map info = {%s, 1, 1, %f, %f, %f, %f, %f, %s}\n",
-		    oSRS.GetAttrValue("PROJECTION"), adfGeoTransform[0],
-		    adfGeoTransform[3], adfGeoTransform[1], adfGeoTransform[5], oSRS.GetUTMZone(), "North");
-    }*/
+	char	*pszProj = pszProjection;
+
+	oSRS.importFromWkt( &pszProj );
+	pszProjName = oSRS.GetAttrValue("PROJCS");
+	if ( strstr( pszProjName, "UTM" ) )
+	{
+	    iUTMZone = oSRS.GetUTMZone( &bNorth );
+	    if ( bNorth )
+	    {
+		pszHemisphere = "North";
+		dfPixelY = -adfGeoTransform[5];
+	    }
+	    else
+	    {
+		pszHemisphere = "South";
+		dfPixelY = adfGeoTransform[5];
+	    }
+	    VSIFPrintf( fp, "map info = {UTM, 1, 1, %f, %f, %f, %f, %d, %s}\n",
+		adfGeoTransform[0], adfGeoTransform[3], adfGeoTransform[1],
+		dfPixelY, iUTMZone, pszHemisphere);
+	}
+    }
 
     VSIFPrintf( fp, "band names = {\n" );
     for ( int i = 1; i <= nBands; i++ )
@@ -521,8 +543,11 @@ int ENVIDataset::ProcessMapinfo( const char *pszMapinfo )
 
     if( oSRS.GetRoot() != NULL )
     {
-        CPLFree( pszProjection );
-        pszProjection = NULL;
+	if ( pszProjection )
+	{
+	    CPLFree( pszProjection );
+	    pszProjection = NULL;
+	}
         oSRS.exportToWkt( &pszProjection );
     }
 
@@ -844,19 +869,19 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
     int nPixelOffset, nLineOffset;
     vsi_l_offset nBandOffset;
     
-    if( EQUAL(pszInterleave,"bsq") )
+    if( EQUALN(pszInterleave, "bsq", 3) )
     {
         nLineOffset = nDataSize * nSamples;
         nPixelOffset = nDataSize;
         nBandOffset = nLineOffset * nLines;
     }
-    else if( EQUAL(pszInterleave,"bil") )
+    else if( EQUALN(pszInterleave, "bil", 3) )
     {
         nLineOffset = nDataSize * nSamples * nBands;
         nPixelOffset = nDataSize;
         nBandOffset = nDataSize * nSamples;
     }
-    else if( EQUAL(pszInterleave,"bip") )
+    else if( EQUALN(pszInterleave, "bip", 3) )
     {
         nLineOffset = nDataSize * nSamples * nBands;
         nPixelOffset = nDataSize * nBands;
@@ -998,7 +1023,7 @@ GDALDataset *ENVIDataset::Create( const char * pszFilename,
     const char	*pszSuffix;
 
     pszSuffix = CSLFetchNameValue( papszOptions, "SUFFIX" );
-    if ( pszSuffix && EQUAL( pszSuffix, "ADD" ))
+    if ( pszSuffix && EQUALN( pszSuffix, "ADD", 3 ))
 	pszHDRFilename = CPLFormFilename( NULL, pszFilename, "hdr" );
     else
 	pszHDRFilename = CPLResetExtension(pszFilename, "hdr" );
@@ -1035,9 +1060,9 @@ GDALDataset *ENVIDataset::Create( const char * pszFilename,
     pszInterleaving = CSLFetchNameValue( papszOptions, "INTERLEAVE" );
     if ( pszInterleaving )
     {
-	if ( EQUAL( pszInterleaving, "bip" ) )
+	if ( EQUALN( pszInterleaving, "bip", 3 ) )
 	    pszInterleaving = "bip";		    // interleaved by pixel
-	else if ( EQUAL( pszInterleaving, "bil" ) )
+	else if ( EQUALN( pszInterleaving, "bil", 3 ) )
 	    pszInterleaving = "bil";		    // interleaved by line
 	else
 	    pszInterleaving = "bsq";		// band sequental by default
