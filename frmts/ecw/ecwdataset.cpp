@@ -6,7 +6,7 @@
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
- * Copyright (c) 2001, Frank Warmerdam
+ * Copyright (c) 2001, Frank Warmerdam <warmerdam@pobox.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.30  2004/12/20 22:17:15  fwarmerdam
+ * last change also include split into ECW and JP2ECW drivers
+ *
  * Revision 1.29  2004/12/20 22:15:41  fwarmerdam
  * avoid ECWRasterBand::AdviseRead() now calls on poGDS, limit debug msgs
  *
