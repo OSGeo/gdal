@@ -25,6 +25,9 @@
  * The GeoTIFF driver implemenation.
  * 
  * $Log$
+ * Revision 1.5  1999/01/27 20:29:16  warmerda
+ * Added constructor/destructor declarations
+ *
  * Revision 1.4  1999/01/11 15:30:44  warmerda
  * pixel interleaved case
  *
@@ -77,6 +80,9 @@ class GTiffDataset : public GDALDataset
     GByte	*pabyStripBuf;
 
   public:
+                 GTiffDataset();
+                 ~GTiffDataset();
+
     static GDALDataset *Open( GDALOpenInfo * );
     static GDALDataset *Create( const char * pszFilename,
                                 int nXSize, int nYSize, int nBands,
