@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2003/10/15 15:51:53  warmerda
+ * Fixed C++ style comments.
+ *
  * Revision 1.13  2003/08/04 18:23:07  warmerda
  * added warning when twos complement hack applied
  *
@@ -317,9 +320,11 @@ int DTEDReadProfile( DTEDInfo * psDInfo, int nColumnOffset,
         {
             panData[i] *= -1;
 
-            // It seems that some files are improperly generated in twos
-            // complement form for negatives.  For these, redo the job
-            // in twos complement.  eg. w_069_s50.dt0
+            /*
+            ** It seems that some files are improperly generated in twos
+            ** complement form for negatives.  For these, redo the job
+            ** in twos complement.  eg. w_069_s50.dt0
+            */
             if( panData[i] < -16000 )
             {
                 static int bWarned = FALSE;
