@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2005/02/22 12:56:28  fwarmerdam
+ * use OGRLayer base spatial filter support
+ *
  * Revision 1.9  2003/05/21 03:48:35  warmerda
  * Expand tabs
  *
@@ -76,7 +79,6 @@ class OGRGMLLayer : public OGRLayer
 {
     OGRSpatialReference *poSRS;
     OGRFeatureDefn     *poFeatureDefn;
-    OGRGeometry         *poFilterGeom;
 
     int                 iNextGMLId;
     int                 nTotalGMLCount;
@@ -95,9 +97,6 @@ class OGRGMLLayer : public OGRLayer
                                      OGRGMLDataSource *poDS );
 
                         ~OGRGMLLayer();
-
-    OGRGeometry *       GetSpatialFilter() { return poFilterGeom; }
-    void                SetSpatialFilter( OGRGeometry * );
 
     void                ResetReading();
     OGRFeature *        GetNextFeature();

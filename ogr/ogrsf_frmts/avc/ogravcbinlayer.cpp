@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2005/02/22 12:55:03  fwarmerdam
+ * use OGRLayer base spatial filter support
+ *
  * Revision 1.7  2003/01/03 15:43:29  warmerda
  * completed OGRBuildPolygonFromEdges() changes
  *
@@ -242,8 +245,9 @@ OGRFeature *OGRAVCBinLayer::GetNextFeature()
     }
 
     while( poFeature != NULL 
-           && m_poAttrQuery != NULL
-           && !m_poAttrQuery->Evaluate( poFeature ) )
+           && ((m_poAttrQuery != NULL
+                && !m_poAttrQuery->Evaluate( poFeature ) )
+               || !FilterGeometry( poFeature->GetGeometryRef() ) ) )
     {
         OGRFeature::DestroyFeature( poFeature );
         poFeature = GetFeature( -3 );

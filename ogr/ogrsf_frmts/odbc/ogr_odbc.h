@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2005/02/22 12:53:56  fwarmerdam
+ * use OGRLayer base spatial filter support
+ *
  * Revision 1.4  2004/01/05 22:38:17  warmerda
  * stripped out some junk
  *
@@ -65,8 +68,6 @@ class OGRODBCLayer : public OGRLayer
     // Layer spatial reference system, and srid.
     OGRSpatialReference *poSRS;
     int                 nSRSId;
-
-    OGRGeometry         *poFilterGeom;
 
     int                 iNextShapeId;
 
@@ -124,9 +125,6 @@ class OGRODBCTableLayer : public OGRODBCLayer
     virtual void        ResetReading();
     virtual int         GetFeatureCount( int );
 
-    virtual OGRGeometry *GetSpatialFilter() { return poFilterGeom; }
-    virtual void        SetSpatialFilter( OGRGeometry * );
-
     virtual OGRErr      SetAttributeFilter( const char * );
 #ifdef notdef
     virtual OGRErr      SetFeature( OGRFeature *poFeature );
@@ -170,9 +168,6 @@ class OGRODBCSelectLayer : public OGRODBCLayer
 
     virtual void        ResetReading();
     virtual int         GetFeatureCount( int );
-
-    virtual OGRGeometry *GetSpatialFilter() { return poFilterGeom; }
-    virtual void        SetSpatialFilter( OGRGeometry * );
 
     virtual OGRErr      SetAttributeFilter( const char * );
     virtual OGRFeature *GetFeature( long nFeatureId );

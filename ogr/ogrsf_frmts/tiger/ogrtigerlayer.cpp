@@ -3,7 +3,7 @@
  *
  * Project:  TIGER/Line Translator
  * Purpose:  Implements OGRTigerLayer class.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 1999, Frank Warmerdam
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2005/02/22 12:50:22  fwarmerdam
+ * use OGRLayer base spatial filter support
+ *
  * Revision 1.10  2005/02/15 02:24:45  fwarmerdam
  * fixed GetFeatureCount() when filters in place
  *
@@ -75,8 +78,6 @@ OGRTigerLayer::OGRTigerLayer( OGRTigerDataSource *poDSIn,
                               TigerFileBase * poReaderIn )
 
 {
-    poFilterGeom = NULL;
-
     poDS = poDSIn;
     poReader = poReaderIn;
 
@@ -134,28 +135,8 @@ OGRTigerLayer::~OGRTigerLayer()
 
     delete poReader;
 
-    if( poFilterGeom != NULL )
-        delete poFilterGeom;
-
     CPLFree( panModuleFCount );
     CPLFree( panModuleOffset );
-}
-
-/************************************************************************/
-/*                          SetSpatialFilter()                          */
-/************************************************************************/
-
-void OGRTigerLayer::SetSpatialFilter( OGRGeometry * poGeomIn )
-
-{
-    if( poFilterGeom != NULL )
-    {
-        delete poFilterGeom;
-        poFilterGeom = NULL;
-    }
-
-    if( poGeomIn != NULL )
-        poFilterGeom = poGeomIn->clone();
 }
 
 /************************************************************************/
@@ -241,9 +222,8 @@ OGRFeature *OGRTigerLayer::GetNextFeature()
         if( poFeature == NULL )
             break;
 
-        if( (poFilterGeom == NULL
-             || poFeature->GetGeometryRef() == NULL 
-             || poFilterGeom->Intersect( poFeature->GetGeometryRef() ) )
+        if( (m_poFilterGeom == NULL
+             || FilterGeometry( poFeature->GetGeometryRef() ) )
             && (m_poAttrQuery == NULL
                 || m_poAttrQuery->Evaluate( poFeature )) )
             return poFeature;
@@ -330,7 +310,7 @@ OGRErr OGRTigerLayer::CreateFeature( OGRFeature *poFeature )
 int OGRTigerLayer::GetFeatureCount( int bForce )
 
 {
-    if( poFilterGeom == NULL && m_poAttrQuery == NULL )
+    if( m_poFilterGeom == NULL && m_poAttrQuery == NULL )
         return nFeatureCount;
     else
         return OGRLayer::GetFeatureCount( bForce );

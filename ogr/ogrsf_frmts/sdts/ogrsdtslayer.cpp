@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2005/02/22 12:53:19  fwarmerdam
+ * use OGRLayer base spatial filter support
+ *
  * Revision 1.11  2005/02/02 20:54:27  fwarmerdam
  * track m_nFeaturesRead
  *
@@ -80,7 +83,6 @@ OGRSDTSLayer::OGRSDTSLayer( SDTSTransfer * poTransferIn, int iLayerIn,
                             OGRSDTSDataSource * poDSIn )
 
 {
-    poFilterGeom = NULL;
     poDS = poDSIn;
 
     poTransfer = poTransferIn;
@@ -236,26 +238,6 @@ OGRSDTSLayer::~OGRSDTSLayer()
     }
 
     delete poFeatureDefn;
-
-    if( poFilterGeom != NULL )
-        delete poFilterGeom;
-}
-
-/************************************************************************/
-/*                          SetSpatialFilter()                          */
-/************************************************************************/
-
-void OGRSDTSLayer::SetSpatialFilter( OGRGeometry * poGeomIn )
-
-{
-    if( poFilterGeom != NULL )
-    {
-        delete poFilterGeom;
-        poFilterGeom = NULL;
-    }
-
-    if( poGeomIn != NULL )
-        poFilterGeom = poGeomIn->clone();
 }
 
 /************************************************************************/
@@ -493,9 +475,8 @@ OGRFeature *OGRSDTSLayer::GetNextFeature()
         if( poFeature == NULL )
             break;
 
-        if( (poFilterGeom == NULL
-             || poFeature->GetGeometryRef() == NULL 
-             || poFilterGeom->Intersect( poFeature->GetGeometryRef() ) )
+        if( (m_poFilterGeom == NULL
+             || FilterGeometry( poFeature->GetGeometryRef() ) )
             && (m_poAttrQuery == NULL
                 || m_poAttrQuery->Evaluate( poFeature )) )
             break;

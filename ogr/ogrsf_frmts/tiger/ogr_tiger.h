@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2005/02/22 12:50:22  fwarmerdam
+ * use OGRLayer base spatial filter support
+ *
  * Revision 1.18  2005/02/15 02:24:45  fwarmerdam
  * fixed GetFeatureCount() when filters in place
  *
@@ -693,8 +696,6 @@ class OGRTigerLayer : public OGRLayer
 {
     TigerFileBase      *poReader;
 
-    OGRGeometry        *poFilterGeom;
-
     OGRTigerDataSource   *poDS;
 
     int                 nFeatureCount;
@@ -708,9 +709,6 @@ class OGRTigerLayer : public OGRLayer
                         OGRTigerLayer( OGRTigerDataSource * poDS,
                                        TigerFileBase * );
     virtual             ~OGRTigerLayer();
-
-    OGRGeometry *       GetSpatialFilter() { return poFilterGeom; }
-    void                SetSpatialFilter( OGRGeometry * );
 
     void                ResetReading();
     OGRFeature *        GetNextFeature();

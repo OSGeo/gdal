@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2005/02/22 12:57:39  fwarmerdam
+ * use OGRLayer base spatial filter support
+ *
  * Revision 1.5  2005/02/02 20:54:26  fwarmerdam
  * track m_nFeaturesRead
  *
@@ -609,7 +612,7 @@ int OGRDODSGridLayer::ProvideDataDDS()
 int OGRDODSGridLayer::GetFeatureCount( int bForce )
 
 {
-    if( poFilterGeom == NULL && m_poAttrQuery == NULL )
+    if( m_poFilterGeom == NULL && m_poAttrQuery == NULL )
         return nMaxRawIndex;
     else
         return OGRDODSLayer::GetFeatureCount( bForce );

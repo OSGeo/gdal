@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2005/02/22 12:50:53  fwarmerdam
+ * use OGRLayer base spatial filter support
+ *
  * Revision 1.4  2003/07/11 13:28:08  warmerda
  * added low level api
  *
@@ -89,7 +92,6 @@ class OGRRECLayer : public OGRLayer
 
     OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
 
-    OGRGeometry *       GetSpatialFilter() { return NULL; }
     void                SetSpatialFilter( OGRGeometry * ) {}
 
     int                 TestCapability( const char * );

@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2005/02/22 12:53:56  fwarmerdam
+ * use OGRLayer base spatial filter support
+ *
  * Revision 1.7  2005/02/02 20:54:27  fwarmerdam
  * track m_nFeaturesRead
  *
@@ -68,8 +71,6 @@ OGRODBCLayer::OGRODBCLayer()
 {
     poDS = NULL;
 
-    poFilterGeom = NULL;
-
     pszGeomColumn = NULL;
     pszFIDColumn = NULL;
 
@@ -103,9 +104,6 @@ OGRODBCLayer::~OGRODBCLayer()
 
     if( pszGeomColumn != NULL )
         CPLFree( pszGeomColumn );
-
-    if( poFilterGeom != NULL )
-        delete poFilterGeom;
 
     if( poFeatureDefn != NULL )
     {
@@ -197,8 +195,8 @@ OGRFeature *OGRODBCLayer::GetNextFeature()
         if( poFeature == NULL )
             return NULL;
 
-        if( (poFilterGeom == NULL
-            || poFilterGeom->Intersect( poFeature->GetGeometryRef() ) )
+        if( (m_poFilterGeom == NULL
+            || FilterGeometry( poFeature->GetGeometryRef() ) )
             && (m_poAttrQuery == NULL
                 || m_poAttrQuery->Evaluate( poFeature )) )
             return poFeature;

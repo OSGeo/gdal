@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.33  2005/02/22 12:54:50  fwarmerdam
+ * use OGRLayer base spatial filter support
+ *
  * Revision 1.32  2005/02/02 21:09:44  fwarmerdam
  * track m_nFeaturesRead
  *
@@ -145,8 +148,6 @@ OGRDGNLayer::OGRDGNLayer( const char * pszName, DGNHandle hDGN,
                           int bUpdate )
     
 {
-    poFilterGeom = NULL;
-    
     this->hDGN = hDGN;
     this->bUpdate = bUpdate;
 
@@ -291,9 +292,6 @@ OGRDGNLayer::~OGRDGNLayer()
     delete poEvalFeature;
     delete poFeatureDefn;
 
-    if( poFilterGeom != NULL )
-        delete poFilterGeom;
-
     CPLFree( pszLinkFormat );
 }
 
@@ -304,24 +302,16 @@ OGRDGNLayer::~OGRDGNLayer()
 void OGRDGNLayer::SetSpatialFilter( OGRGeometry * poGeomIn )
 
 {
-    if( poFilterGeom != NULL )
-    {
-        delete poFilterGeom;
-        poFilterGeom = NULL;
-    }
+    if( !InstallFilter(poGeomIn) )
+        return;
 
-    if( poGeomIn != NULL )
+    if( m_poFilterGeom != NULL )
     {
-        OGREnvelope     oEnvelope;
-        
-        poFilterGeom = poGeomIn->clone();
-
-        poGeomIn->getEnvelope( &oEnvelope );
         DGNSetSpatialFilter( hDGN, 
-                             oEnvelope.MinX, 
-                             oEnvelope.MinY, 
-                             oEnvelope.MaxX, 
-                             oEnvelope.MaxY );
+                             m_sFilterEnvelope.MinX, 
+                             m_sFilterEnvelope.MinY, 
+                             m_sFilterEnvelope.MaxX, 
+                             m_sFilterEnvelope.MaxY );
     }
     else
     {
@@ -780,8 +770,9 @@ OGRFeature *OGRDGNLayer::GetNextFeature()
             continue;
         }
 
-        if( m_poAttrQuery == NULL
-            || m_poAttrQuery->Evaluate( poFeature ) )
+        if( (m_poAttrQuery == NULL
+             || m_poAttrQuery->Evaluate( poFeature ))
+            && FilterGeometry( poFeature->GetGeometryRef() ) )
             return poFeature;
 
         delete poFeature;
@@ -806,7 +797,7 @@ int OGRDGNLayer::TestCapability( const char * pszCap )
         return FALSE; /* maybe later? */
 
     else if( EQUAL(pszCap,OLCFastFeatureCount) )
-        return poFilterGeom == NULL || m_poAttrQuery == NULL;
+        return m_poFilterGeom == NULL || m_poAttrQuery == NULL;
 
     else if( EQUAL(pszCap,OLCFastSpatialFilter) )
         return FALSE;
@@ -829,7 +820,7 @@ int OGRDGNLayer::GetFeatureCount( int bForce )
 /*      If any odd conditions are in effect collect the information     */
 /*      normally.                                                       */
 /* -------------------------------------------------------------------- */
-    if( poFilterGeom != NULL || m_poAttrQuery != NULL )
+    if( m_poFilterGeom != NULL || m_poAttrQuery != NULL )
         return OGRLayer::GetFeatureCount( bForce );
 
 /* -------------------------------------------------------------------- */

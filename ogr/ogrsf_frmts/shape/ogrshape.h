@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2005/02/22 12:51:56  fwarmerdam
+ * use OGRLayer base spatial filter support
+ *
  * Revision 1.17  2005/02/02 20:01:02  fwarmerdam
  * added SetNextByIndex support
  *
@@ -110,7 +113,6 @@ class OGRShapeLayer : public OGRLayer
 {
     OGRSpatialReference *poSRS;
     OGRFeatureDefn     *poFeatureDefn;
-    OGRGeometry         *poFilterGeom;
     int                 iNextShapeId;
     int                 nTotalShapeCount;
 
@@ -147,9 +149,6 @@ class OGRShapeLayer : public OGRLayer
                                        int bUpdate, 
                                        OGRwkbGeometryType eReqType );
                         ~OGRShapeLayer();
-
-    OGRGeometry *       GetSpatialFilter() { return poFilterGeom; }
-    void                SetSpatialFilter( OGRGeometry * );
 
     void                ResetReading();
     OGRFeature *        GetNextFeature();

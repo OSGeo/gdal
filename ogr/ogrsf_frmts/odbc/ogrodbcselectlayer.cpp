@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2005/02/22 12:53:56  fwarmerdam
+ * use OGRLayer base spatial filter support
+ *
  * Revision 1.1  2004/01/05 22:23:32  warmerda
  * New
  *
@@ -66,25 +69,6 @@ OGRODBCSelectLayer::~OGRODBCSelectLayer()
 
 {
     ClearStatement();
-}
-
-/************************************************************************/
-/*                          SetSpatialFilter()                          */
-/************************************************************************/
-
-void OGRODBCSelectLayer::SetSpatialFilter( OGRGeometry * poGeomIn )
-
-{
-    if( poFilterGeom != NULL )
-    {
-        delete poFilterGeom;
-        poFilterGeom = NULL;
-    }
-
-    if( poGeomIn != NULL )
-        poFilterGeom = poGeomIn->clone();
-
-    ResetReading();
 }
 
 /************************************************************************/

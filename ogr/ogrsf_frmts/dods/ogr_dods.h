@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2005/02/22 12:57:39  fwarmerdam
+ * use OGRLayer base spatial filter support
+ *
  * Revision 1.8  2004/03/17 18:15:57  warmerda
  * added floating point test prototypes
  *
@@ -129,8 +132,6 @@ class OGRDODSLayer : public OGRLayer
 
     OGRSpatialReference *poSRS;
 
-    OGRGeometry         *poFilterGeom;
-
     int                 iNextShapeId;
 
     OGRDODSDataSource  *poDS;
@@ -169,9 +170,6 @@ class OGRDODSLayer : public OGRLayer
     OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
 
     virtual OGRSpatialReference *GetSpatialRef();
-
-    virtual OGRGeometry *GetSpatialFilter() { return poFilterGeom; }
-    virtual void        SetSpatialFilter( OGRGeometry * );
 
     virtual int         TestCapability( const char * );
 

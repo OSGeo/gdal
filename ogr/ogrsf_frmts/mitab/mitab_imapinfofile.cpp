@@ -103,7 +103,6 @@
  **********************************************************************/
 IMapInfoFile::IMapInfoFile()
 {
-    m_poFilterGeom = NULL;    
     m_nCurFeatureId = 0;
     m_poCurFeature = NULL;
     m_bBoundsSet = FALSE;
@@ -117,12 +116,6 @@ IMapInfoFile::IMapInfoFile()
  **********************************************************************/
 IMapInfoFile::~IMapInfoFile()
 {
-    if( m_poFilterGeom != NULL )
-    {
-        delete m_poFilterGeom;
-        m_poFilterGeom = NULL;
-    }
-
     if (m_poCurFeature)
     {
         delete m_poCurFeature;
@@ -235,7 +228,7 @@ OGRFeature *IMapInfoFile::GetNextFeature()
             return NULL;
         else if( (m_poFilterGeom == NULL ||
                   ((poGeom = poFeatureRef->GetGeometryRef()) != NULL &&
-                   m_poFilterGeom->Intersect( poGeom )))
+                   FilterGeometry( poGeom )))
                  && (m_poAttrQuery == NULL
                      || m_poAttrQuery->Evaluate( poFeatureRef )) )
         {

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2005/02/22 12:50:10  fwarmerdam
+ * use OGRLayer base spatial filter support
+ *
  * Revision 1.9  2005/02/02 20:54:27  fwarmerdam
  * track m_nFeaturesRead
  *
@@ -91,7 +94,6 @@ OGRVRTLayer::OGRVRTLayer()
 
 {
     poFeatureDefn = NULL;
-    poFilterGeom = NULL;
     pszQuery = NULL;
     poSrcLayer = NULL;
     poSRS = NULL;
@@ -120,9 +122,6 @@ OGRVRTLayer::~OGRVRTLayer()
                   (int) m_nFeaturesRead, 
                   poFeatureDefn->GetName() );
     }
-
-    if( poFilterGeom != NULL )
-        delete poFilterGeom;
 
     if( poSRS != NULL )
         poSRS->Dereference();
@@ -450,8 +449,8 @@ OGRFeature *OGRVRTLayer::GetNextFeature()
         if( poFeature == NULL )
             return NULL;
 
-        if( (poFilterGeom == NULL
-            || poFilterGeom->Intersect( poFeature->GetGeometryRef() ) )
+        if( (m_poFilterGeom == NULL
+            || FilterGeometry( poFeature->GetGeometryRef() ) )
             && (m_poAttrQuery == NULL
                 || m_poAttrQuery->Evaluate( poFeature )) )
             return poFeature;
@@ -630,27 +629,8 @@ OGRSpatialReference *OGRVRTLayer::GetSpatialRef()
 int OGRVRTLayer::GetFeatureCount( int bForce )
 
 {
-    if( poFilterGeom == NULL && m_poAttrQuery == NULL )
+    if( m_poFilterGeom == NULL && m_poAttrQuery == NULL )
         return poSrcLayer->GetFeatureCount( bForce );
     else
         return OGRLayer::GetFeatureCount( bForce );
-}
-
-/************************************************************************/
-/*                          SetSpatialFilter()                          */
-/************************************************************************/
-
-void OGRVRTLayer::SetSpatialFilter( OGRGeometry * poGeomIn )
-
-{
-    if( poFilterGeom != NULL )
-    {
-        delete poFilterGeom;
-        poFilterGeom = NULL;
-    }
-
-    if( poGeomIn != NULL )
-        poFilterGeom = poGeomIn->clone();
-
-    ResetReading();
 }

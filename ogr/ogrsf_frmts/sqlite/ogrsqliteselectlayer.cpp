@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2005/02/22 12:50:31  fwarmerdam
+ * use OGRLayer base spatial filter support
+ *
  * Revision 1.3  2004/08/20 21:43:12  warmerda
  * avoid doing alot of work in GetExtent() if we have no geometry
  *
@@ -74,25 +77,6 @@ OGRSQLiteSelectLayer::~OGRSQLiteSelectLayer()
 {
     sqlite3_finalize( hStmt );
     hStmt = NULL;
-}
-
-/************************************************************************/
-/*                          SetSpatialFilter()                          */
-/************************************************************************/
-
-void OGRSQLiteSelectLayer::SetSpatialFilter( OGRGeometry * poGeomIn )
-
-{
-    if( poFilterGeom != NULL )
-    {
-        delete poFilterGeom;
-        poFilterGeom = NULL;
-    }
-
-    if( poGeomIn != NULL )
-        poFilterGeom = poGeomIn->clone();
-
-    ResetReading();
 }
 
 /************************************************************************/

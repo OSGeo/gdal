@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2005/02/22 12:53:12  fwarmerdam
+ * use OGRLayer base spatial filter support
+ *
  * Revision 1.13  2005/02/02 20:54:27  fwarmerdam
  * track m_nFeaturesRead
  *
@@ -88,8 +91,6 @@ OGRS57Layer::OGRS57Layer( OGRS57DataSource *poDSIn,
                           int nOBJLIn)
 
 {
-    poFilterGeom = NULL;
-
     poDS = poDSIn;
 
     nFeatureCount = nFeatureCountIn;
@@ -128,29 +129,6 @@ OGRS57Layer::~OGRS57Layer()
     }
 
     delete poFeatureDefn;
-
-    if( poFilterGeom != NULL )
-        delete poFilterGeom;
-}
-
-/************************************************************************/
-/*                          SetSpatialFilter()                          */
-/************************************************************************/
-
-void OGRS57Layer::SetSpatialFilter( OGRGeometry * poGeomIn )
-
-{
-    if( poFilterGeom != NULL )
-    {
-        delete poFilterGeom;
-        poFilterGeom = NULL;
-    }
-
-    if( poGeomIn != NULL )
-        poFilterGeom = poGeomIn->clone();
-
-    if( nNextFEIndex != 0 || nCurrentModule != -1 )
-        ResetReading();
 }
 
 /************************************************************************/
@@ -238,9 +216,8 @@ OGRFeature *OGRS57Layer::GetNextFeature()
         if( poFeature == NULL )
             break;
 
-        if( (poFilterGeom == NULL
-             || poFeature->GetGeometryRef() == NULL 
-             || poFilterGeom->Intersect( poFeature->GetGeometryRef() ) )
+        if( (m_poFilterGeom == NULL
+             || FilterGeometry(poFeature->GetGeometryRef()) )
             && (m_poAttrQuery == NULL
                 || m_poAttrQuery->Evaluate( poFeature )) )
             break;
@@ -309,7 +286,7 @@ OGRErr OGRS57Layer::GetExtent( OGREnvelope *psExtent, int bForce )
 int OGRS57Layer::GetFeatureCount (int bForce)
 {
     
-    if( poFilterGeom != NULL || m_poAttrQuery != NULL 
+    if( m_poFilterGeom != NULL || m_poAttrQuery != NULL 
         || nFeatureCount == -1 )
         return OGRLayer::GetFeatureCount( bForce );
     else

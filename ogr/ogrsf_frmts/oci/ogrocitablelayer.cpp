@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.32  2005/02/22 12:57:51  fwarmerdam
+ * use OGRLayer base spatial filter support
+ *
  * Revision 1.31  2005/02/10 15:46:02  fwarmerdam
  * added GEOMETRY_NAME layer creation option
  *
@@ -354,14 +357,8 @@ OGRFeatureDefn *OGROCITableLayer::ReadTableDefinition( const char * pszTable )
 void OGROCITableLayer::SetSpatialFilter( OGRGeometry * poGeomIn )
 
 {
-    if( poFilterGeom != NULL )
-    {
-        delete poFilterGeom;
-        poFilterGeom = NULL;
-    }
-
-    if( poGeomIn != NULL )
-        poFilterGeom = poGeomIn->clone();
+    if( !InstallFilter( poGeomIn ) )
+        return;
 
     BuildWhere();
 
@@ -403,11 +400,11 @@ void OGROCITableLayer::BuildWhere()
     CPLFree( pszWHERE );
     pszWHERE = NULL;
 
-    if( poFilterGeom != NULL && bHaveSpatialIndex )
+    if( m_poFilterGeom != NULL && bHaveSpatialIndex )
     {
         OGREnvelope  sEnvelope;
 
-        poFilterGeom->getEnvelope( &sEnvelope );
+        m_poFilterGeom->getEnvelope( &sEnvelope );
 
         oWHERE.Append( " WHERE sdo_filter(" );
         oWHERE.Append( pszGeomName );
@@ -570,8 +567,8 @@ OGRFeature *OGROCITableLayer::GetNextFeature()
             return NULL;
         }
 
-        if( poFilterGeom == NULL
-            || poFilterGeom->Intersect( poFeature->GetGeometryRef() ) )
+        if( m_poFilterGeom == NULL
+            || FilterGeometry( poFeature->GetGeometryRef() ) )
         {
             nHits++;
             if( poFeature->GetGeometryRef() != NULL )
@@ -579,7 +576,7 @@ OGRFeature *OGROCITableLayer::GetNextFeature()
             return poFeature;
         }
 
-        if( poFilterGeom != NULL )
+        if( m_poFilterGeom != NULL )
             nDiscarded++;
 
         delete poFeature;
@@ -1156,7 +1153,7 @@ int OGROCITableLayer::GetFeatureCount( int bForce )
 /*      Use a more brute force mechanism if we have a spatial query     */
 /*      in play.                                                        */
 /* -------------------------------------------------------------------- */
-    if( poFilterGeom != NULL )
+    if( m_poFilterGeom != NULL )
         return OGROCILayer::GetFeatureCount( bForce );
 
 /* -------------------------------------------------------------------- */

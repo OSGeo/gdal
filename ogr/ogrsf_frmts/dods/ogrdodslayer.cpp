@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2005/02/22 12:57:39  fwarmerdam
+ * use OGRLayer base spatial filter support
+ *
  * Revision 1.6  2005/02/02 20:54:26  fwarmerdam
  * track m_nFeaturesRead
  *
@@ -64,7 +67,6 @@ OGRDODSLayer::OGRDODSLayer( OGRDODSDataSource *poDSIn,
 {
     poDS = poDSIn;
     poFeatureDefn = NULL;
-    poFilterGeom = NULL;
     pszQuery = NULL;
     pszFIDColumn = NULL;
     poSRS = NULL;
@@ -152,9 +154,6 @@ OGRDODSLayer::~OGRDODSLayer()
         CPLFree( papoFields );
     }
 
-    if( poFilterGeom != NULL )
-        delete poFilterGeom;
-
     if( poSRS != NULL )
         poSRS->Dereference();
 
@@ -195,8 +194,7 @@ OGRFeature *OGRDODSLayer::GetNextFeature()
          poFeature != NULL;
          poFeature = GetFeature( iNextShapeId++ ) )
     {
-        if( (poFilterGeom == NULL
-             || poFilterGeom->Intersect( poFeature->GetGeometryRef() ) )
+        if( FilterGeometry( poFeature->GetGeometryRef() )
             && (m_poAttrQuery == NULL
                 || m_poAttrQuery->Evaluate( poFeature )) )
             return poFeature;
@@ -225,25 +223,6 @@ OGRSpatialReference *OGRDODSLayer::GetSpatialRef()
 
 {
     return poSRS;
-}
-
-/************************************************************************/
-/*                          SetSpatialFilter()                          */
-/************************************************************************/
-
-void OGRDODSLayer::SetSpatialFilter( OGRGeometry * poGeomIn )
-
-{
-    if( poFilterGeom != NULL )
-    {
-        delete poFilterGeom;
-        poFilterGeom = NULL;
-    }
-
-    if( poGeomIn != NULL )
-        poFilterGeom = poGeomIn->clone();
-
-    ResetReading();
 }
 
 /************************************************************************/

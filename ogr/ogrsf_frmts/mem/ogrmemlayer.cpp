@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2005/02/22 12:54:34  fwarmerdam
+ * use OGRLayer base spatial filter support
+ *
  * Revision 1.4  2005/02/02 20:12:41  fwarmerdam
  * added SetNextByIndex support
  *
@@ -55,7 +58,6 @@ OGRMemLayer::OGRMemLayer( const char * pszName, OGRSpatialReference *poSRSIn,
                           OGRwkbGeometryType eReqType )
 
 {
-    poFilterGeom = NULL;
     if( poSRSIn == NULL )
         poSRS = NULL;
     else
@@ -97,26 +99,6 @@ OGRMemLayer::~OGRMemLayer()
 
     if( poSRS != NULL && poSRS->Dereference() == 0 )
         delete poSRS;
-
-    if( poFilterGeom != NULL )
-        delete poFilterGeom;
-}
-
-/************************************************************************/
-/*                          SetSpatialFilter()                          */
-/************************************************************************/
-
-void OGRMemLayer::SetSpatialFilter( OGRGeometry * poGeomIn )
-
-{
-    if( poFilterGeom != NULL )
-    {
-        delete poFilterGeom;
-        poFilterGeom = NULL;
-    }
-
-    if( poGeomIn != NULL )
-        poFilterGeom = poGeomIn->clone();
 }
 
 /************************************************************************/
@@ -143,10 +125,10 @@ OGRFeature *OGRMemLayer::GetNextFeature()
         if( poFeature == NULL )
             continue;
 
-        if( (poFilterGeom == NULL
-            || poFilterGeom->Intersect( poFeature->GetGeometryRef() ) )
+        if( (m_poFilterGeom == NULL
+             || FilterGeometry( poFeature->GetGeometryRef() ) )
             && (m_poAttrQuery == NULL
-                || m_poAttrQuery->Evaluate( poFeature )) )
+                || m_poAttrQuery->Evaluate( poFeature ) ) )
         {
             m_nFeaturesRead++;
             return poFeature->Clone();
@@ -166,7 +148,7 @@ OGRFeature *OGRMemLayer::GetNextFeature()
 OGRErr OGRMemLayer::SetNextByIndex( long nIndex )
 
 {
-    if( poFilterGeom != NULL || m_poAttrQuery != NULL )
+    if( m_poFilterGeom != NULL || m_poAttrQuery != NULL )
         return OGRLayer::SetNextByIndex( nIndex );
 
     iNextReadFID = nIndex;
@@ -285,7 +267,7 @@ OGRErr OGRMemLayer::DeleteFeature( long nFID )
 int OGRMemLayer::GetFeatureCount( int bForce )
 
 {
-    if( poFilterGeom != NULL || m_poAttrQuery != NULL )
+    if( m_poFilterGeom != NULL || m_poAttrQuery != NULL )
         return OGRLayer::GetFeatureCount( bForce );
     else
         return nFeatureCount;
@@ -322,7 +304,7 @@ int OGRMemLayer::TestCapability( const char * pszCap )
         return TRUE;
 
     else if( EQUAL(pszCap,OLCFastFeatureCount) )
-        return poFilterGeom == NULL;
+        return m_poFilterGeom == NULL;
 
     else if( EQUAL(pszCap,OLCFastSpatialFilter) )
         return FALSE;
@@ -337,7 +319,7 @@ int OGRMemLayer::TestCapability( const char * pszCap )
         return TRUE;
 
     else if( EQUAL(pszCap,OLCFastSetNextByIndex) )
-        return poFilterGeom != NULL && m_poAttrQuery == NULL;
+        return m_poFilterGeom != NULL && m_poAttrQuery == NULL;
 
     else 
         return FALSE;

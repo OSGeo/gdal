@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2005/02/22 12:57:51  fwarmerdam
+ * use OGRLayer base spatial filter support
+ *
  * Revision 1.20  2004/11/22 19:24:15  fwarmerdam
  * added support for a list of tables in the datasource name
  *
@@ -272,8 +275,6 @@ class OGROCILayer : public OGRLayer
   protected:
     OGRFeatureDefn     *poFeatureDefn;
 
-    OGRGeometry         *poFilterGeom;
-
     int                 iNextShapeId;
 
     OGROCIDataSource    *poDS;
@@ -312,9 +313,6 @@ class OGROCILayer : public OGRLayer
     virtual void        ResetReading();
     virtual OGRFeature *GetNextRawFeature();
     virtual OGRFeature *GetNextFeature();
-
-    virtual OGRGeometry *GetSpatialFilter() { return poFilterGeom; }
-    virtual void        SetSpatialFilter( OGRGeometry * );
 
     OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
 
@@ -423,7 +421,6 @@ class OGROCILoaderLayer : public OGROCIWritableLayer
     virtual void        ResetReading();
     virtual int         GetFeatureCount( int );
 
-    virtual OGRGeometry *GetSpatialFilter() { return NULL; }
     virtual void        SetSpatialFilter( OGRGeometry * ) {}
 
     virtual OGRErr      SetAttributeFilter( const char * ) 
@@ -498,7 +495,6 @@ class OGROCITableLayer : public OGROCIWritableLayer
     virtual void        ResetReading();
     virtual int         GetFeatureCount( int );
 
-    virtual OGRGeometry *GetSpatialFilter() { return poFilterGeom; }
     virtual void        SetSpatialFilter( OGRGeometry * );
 
     virtual OGRErr      SetAttributeFilter( const char * );

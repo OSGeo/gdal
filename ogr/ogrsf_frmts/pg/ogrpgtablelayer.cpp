@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.25  2005/02/22 12:54:05  fwarmerdam
+ * use OGRLayer base spatial filter support
+ *
  * Revision 1.24  2005/02/11 22:17:10  fwarmerdam
  * Applied fix for bug 681.  The truncation logic was kicking
  * inappropriately for integerlist and stringlist values.
@@ -327,14 +330,8 @@ OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition( const char * pszTable )
 void OGRPGTableLayer::SetSpatialFilter( OGRGeometry * poGeomIn )
 
 {
-    if( poFilterGeom != NULL )
-    {
-        delete poFilterGeom;
-        poFilterGeom = NULL;
-    }
-
-    if( poGeomIn != NULL )
-        poFilterGeom = poGeomIn->clone();
+    if( !InstallFilter( poGeomIn ) )
+        return;
 
     BuildWhere();
 
@@ -358,11 +355,11 @@ void OGRPGTableLayer::BuildWhere()
 
     szWHERE[0] = '\0';
 
-    if( poFilterGeom != NULL && bHasPostGISGeometry )
+    if( m_poFilterGeom != NULL && bHasPostGISGeometry )
     {
         OGREnvelope  sEnvelope;
 
-        poFilterGeom->getEnvelope( &sEnvelope );
+        m_poFilterGeom->getEnvelope( &sEnvelope );
         sprintf( szWHERE, 
                  "WHERE %s && GeometryFromText('BOX3D(%.12f %.12f, %.12f %.12f)'::box3d,%d) ",
                  pszGeomColumn, 
@@ -1096,7 +1093,7 @@ int OGRPGTableLayer::GetFeatureCount( int bForce )
 /*      Use a more brute force mechanism if we have a spatial query     */
 /*      in play.                                                        */
 /* -------------------------------------------------------------------- */
-    if( poFilterGeom != NULL && !bHasPostGISGeometry )
+    if( m_poFilterGeom != NULL && !bHasPostGISGeometry )
         return OGRPGLayer::GetFeatureCount( bForce );
 
 /* -------------------------------------------------------------------- */

@@ -217,7 +217,6 @@ class IMapInfoFile : public OGRLayer
   private:
 
   protected: 
-    OGRGeometry        *m_poFilterGeom;
     int                 m_nCurFeatureId;
     TABFeature         *m_poCurFeature;
     GBool               m_bBoundsSet;

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2005/02/22 12:55:18  fwarmerdam
+ * use OGRLayer base spatial filter support
+ *
  * Revision 1.5  2004/08/17 15:40:40  warmerda
  * track capabilities and update mode better
  *
@@ -83,7 +86,6 @@ class OGRCSVLayer : public OGRLayer
 
     OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
 
-    OGRGeometry *       GetSpatialFilter() { return NULL; }
     void                SetSpatialFilter( OGRGeometry * ) {}
 
     int                 TestCapability( const char * );

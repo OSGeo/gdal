@@ -26,6 +26,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2005/02/22 12:57:19  fwarmerdam
+ * use OGRLayer base spatial filter support
+ *
  * Revision 1.2  2005/02/02 20:54:27  fwarmerdam
  * track m_nFeaturesRead
  *
@@ -318,7 +321,7 @@ int OGRFMELayerDB::CreateReader()
 /* -------------------------------------------------------------------- */
 /*      Update the macros for source information, if needed.            */
 /* -------------------------------------------------------------------- */
-    if( poFilterGeom != NULL )
+    if( m_poFilterGeom != NULL )
     {
         const char *pszDirective = "RUNTIME_MACROS";
 
@@ -337,7 +340,7 @@ int OGRFMELayerDB::CreateReader()
 
                 poUDC->getElement( i+1, *poMacroValue );
 
-                poFilterGeom->getEnvelope( &oEnvelope );
+                m_poFilterGeom->getEnvelope( &oEnvelope );
                 
                 if( EQUALN(pszReaderName,"SDE",3) )
                 {
@@ -407,12 +410,12 @@ int OGRFMELayerDB::CreateReader()
         poParms->append( pszAttributeFilter );
     }
 #ifdef notdef
-    if( poFilterGeom != NULL )
+    if( m_poFilterGeom != NULL )
     {
         char      szSEARCH_ENVELOPE[1024];
         OGREnvelope      oEnvelope;
 
-        poFilterGeom->getEnvelope( &oEnvelope );
+        m_poFilterGeom->getEnvelope( &oEnvelope );
 
         sprintf( szSEARCH_ENVELOPE, "%.16f", oEnvelope.MinX );
         poParms->append( "SEARCH_ENVELOPE" );

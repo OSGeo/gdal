@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2005/02/22 12:50:31  fwarmerdam
+ * use OGRLayer base spatial filter support
+ *
  * Revision 1.5  2004/08/20 21:43:12  warmerda
  * avoid doing alot of work in GetExtent() if we have no geometry
  *
@@ -66,8 +69,6 @@ class OGRSQLiteLayer : public OGRLayer
     // Layer spatial reference system, and srid.
     OGRSpatialReference *poSRS;
     int                 nSRSId;
-
-    OGRGeometry         *poFilterGeom;
 
     int                 iNextShapeId;
 
@@ -134,9 +135,6 @@ class OGRSQLiteTableLayer : public OGRSQLiteLayer
     virtual void        ResetReading();
     virtual int         GetFeatureCount( int );
 
-    virtual OGRGeometry *GetSpatialFilter() { return poFilterGeom; }
-    virtual void        SetSpatialFilter( OGRGeometry * );
-
     virtual OGRErr      SetAttributeFilter( const char * );
     virtual OGRErr      SetFeature( OGRFeature *poFeature );
     virtual OGRErr      CreateFeature( OGRFeature *poFeature );
@@ -167,9 +165,6 @@ class OGRSQLiteSelectLayer : public OGRSQLiteLayer
 
     virtual void        ResetReading();
     virtual int         GetFeatureCount( int );
-
-    virtual OGRGeometry *GetSpatialFilter() { return poFilterGeom; }
-    virtual void        SetSpatialFilter( OGRGeometry * );
 
     virtual OGRErr      SetAttributeFilter( const char * );
     virtual OGRFeature *GetFeature( long nFeatureId );

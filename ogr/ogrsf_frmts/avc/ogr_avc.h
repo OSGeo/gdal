@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2005/02/22 12:55:03  fwarmerdam
+ * use OGRLayer base spatial filter support
+ *
  * Revision 1.3  2002/02/18 20:36:27  warmerda
  * added spatial query, nNextFID, nTableAttrIndex
  *
@@ -55,8 +58,6 @@ class OGRAVCLayer : public OGRLayer
 {
   protected:
     OGRFeatureDefn      *poFeatureDefn;
-    OGRGeometry		*poFilterGeom;
-    OGREnvelope         sFilterEnvelope;
 
     OGRAVCDataSource    *poDS;
     
@@ -77,9 +78,6 @@ class OGRAVCLayer : public OGRLayer
                         OGRAVCLayer( AVCFileType eSectionType, 
                                      OGRAVCDataSource *poDS );
     			~OGRAVCLayer();
-
-    OGRGeometry *	GetSpatialFilter() { return poFilterGeom; }
-    void		SetSpatialFilter( OGRGeometry * );
 
     OGRFeatureDefn *	GetLayerDefn() { return poFeatureDefn; }
 
