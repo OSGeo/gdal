@@ -12,7 +12,7 @@ GDAL_ROOT = 	..
 
 OLE_LIBS =	oledb.lib ole32.lib oleaut32.lib 
 
-ALL_LIBS =	$(OLE_LIBS) ..\port\*.obj $(LIBS)
+ALL_LIBS =	$(OLE_LIBS) $(GDAL_ROOT)/port/cpl.lib $(LIBS)
 
 OBJ_OGR	=	ogrgeometryfactory.obj ogrpoint.obj ogrcurve.obj \
 		ogrlinestring.obj ogrpolygon.obj ogrlinearring.obj \
@@ -24,7 +24,7 @@ OBJ_OGR	=	ogrgeometryfactory.obj ogrpoint.obj ogrcurve.obj \
 OBJ_OLEDB =	oledb_sup.obj oledbsuprowset.obj oledb_sf.obj \
 		sfcenumerator.obj sfcdatasource.obj sfctable.obj
 
-default:        test1.exe sfdump.exe shape2ogr.obj sfcdump.exe test2.exe
+default:        test1.exe sfcdump.exe test2.exe
 
 geometryidl.h: geometryidl.idl spatialreferenceidl.h
 	midl geometryidl.idl
@@ -32,11 +32,14 @@ geometryidl.h: geometryidl.idl spatialreferenceidl.h
 spatialreferenceidl.h: spatialreferenceidl.idl
 	midl spatialreferenceidl.idl
 
-sfdump.exe:	geometryidl.h sfdump.obj $(OBJ_OLEDB) $(OBJ_OGR) 
-	cl /Zi sfdump.obj $(OBJ_OLEDB) $(OBJ_OGR) $(ALL_LIBS)
+ogr.lib:	$(OBJ_OGR)
+	lib /out:ogr.lib $(OBJ_OGR)
 
-sfcdump.exe:	geometryidl.h sfcdump.obj $(OBJ_OLEDB) $(OBJ_OGR) 
-	cl /Zi sfcdump.obj $(OBJ_OLEDB) $(OBJ_OGR) $(ALL_LIBS)
+ogroledb.lib:	$(OBJ_OLEDB)
+	lib /out:ogroledb.lib $(OBJ_OLEDB)
+
+sfcdump.exe:	geometryidl.h sfcdump.obj ogr.lib ogroledb.lib
+	cl /Zi sfcdump.obj ogroledb.lib ogr.lib $(ALL_LIBS)
 
 test1.exe:	test1.obj $(OBJ_OGR) 
 	cl test1.obj $(OBJ_OGR) $(ALL_LIBS)
@@ -48,3 +51,6 @@ test2.exe:	test2.obj $(OBJ_OGR)
 clean:
 	del *.obj
         del *.exe
+	del *.lib
+	del *.pdb
+
