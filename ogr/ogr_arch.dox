@@ -1,0 +1,228 @@
+/*! \page ogr_arch
+
+<center>
+<title>OGR Architecture</title>
+</center>
+
+This document is intended to document the OGR classes.  The OGR
+classes are intended to be generic (not specific to OLE DB or COM or
+Windows) but are used as a foundation for implementing OLE DB Provider
+support, as well as client side support for SFCOM.  It is intended that
+these same OGR classes could be used by an implementation of SFCORBA
+for instance or used directly by C++ programs wanting to use an OpenGIS
+simple features inspired API.<p>
+
+Because OGR is modelled on the OpenGIS simple features data model, it is
+very helpful to review the SFCOM, or other simple features interface
+specifications which can be retrieved from the 
+<a href="http://www.opengis.org">Open GIS Consortium</a> web site.  Data
+types, and method names are modelled on those from the interface 
+specifications.<p>
+
+<h2>Class Overview</h2>
+
+<ul>
+<li> <b>Geometry</b> (<a href="../ogr_geometry.h">ogr_geometry.h</a>): 
+The geometry classes (OGRGeometry, etc) encapsulate the OpenGIS model vector 
+data as well as providing some geometry operations, and translation to/from
+well known binary and text format.  A geometry includes a spatial reference
+system (projection).<p>
+
+<li> <b>Spatial Reference</b> 
+(<a href="../ogr_spatialref.h">ogr_spatialref.h</a>):
+An OGRSpatialReference encapsulates the definition of a projection and 
+datum.<p>
+
+<li> <b>Feature</b> (<a href="../ogr_feature.h">ogr_feature.h</a>):
+The OGRFeature encapsulate the definition of a whole feature, that is a 
+geometry and a set of attributes.<p>
+
+<li> <b>Feature Class Definition</b>
+(<a href="../ogr_feature.h">ogr_feature.h</a>): 
+The OGRFeatureDefn class capsures the schema (set of field definitions) for
+a group of related features (normally a whole layer).<p>
+
+<li> <b>Layer</b>
+(<a href="../ogrsf_frmts/ogrsf_frmts.h">ogrsf_frmts.h</a>): 
+OGRLayer is an abstract base class represent a layer of features in an 
+OGRDataSource.<p>
+
+<li> <b>Data Source</b>
+(<a href="../ogrsf_frmts/ogrsf_frmts.h">ogrsf_frmts.h</a>): 
+An OGRDataSource is an abstract base class
+representing a file or database containing one or more OGRLayer
+objects.<p>
+
+<li> <b>Drivers</b> (<a href="../ogrsf_frmts/ogrsf_frmts.h">ogrsf_frmts.h</a>):
+An OGRSFDriver represents a translator for a specific
+format, opening OGRDataSource objects.  All available drivers are managed 
+by the OGRSFDriverRegistrar.<p>
+
+</ul>
+
+<h2>Geometry</h2>
+
+The geometry classes are represent various kinds of vector geometry.  All
+the geometry classes derived from OGRGeometry which defines the common 
+services of all geometries.  Types of geometry include OGRPoint, OGRLineString,
+OGRPolygon, OGRGeometryCollection, OGRMultiPolygon, OGRMultiPoint, 
+and OGRMultiLineString.<p>
+
+Additional intermediate abstract base classes contain functionality that
+could eventually be implemented by other geometry types.  These include
+OGRCurve (base class for OGRLineString) and OGRSurface (base class for 
+OGRPolygon).  Some intermediate interfaces modelled in the simple features
+abstract model and SFCOM are not modelled in OGR at this time.  In most 
+cases the methods are aggregated into other classes.  This may change.<p>
+
+The OGRGeometryFactory is used to convert well known text, and well known
+binary format data into geometries.  These are predefined ascii and binary
+formats for representing all the types of simple features geometries.<p>
+
+In a manner based on the geometry object in SFCOM, the OGRGeometry includes
+a reference to an OGRSpatialReference object, defining the spatial reference
+system of that geometry.  This is normally a reference to a shared 
+spatial reference object with reference counting for each of the 
+OGRGeometry objects using it.<p>
+
+Many of the spatial analysis methods (such as computing overlaps and so
+forth) are not implemented at this time for OGRGeometry.<p>
+
+While it is theoretically possible to derive other or more specific
+geometry classes from the existing OGRGeometry classes, this isn't as
+aspect that has been well thought out.  In particular, it would be
+possible to create specialized classes using the OGRGeometryFactory without
+modifying it.<p>
+
+
+<h2>Spatial Reference</h2>
+
+The OGRSpatialReference class is intended to store an OpenGIS Spatial
+Reference System definition.  This is the default of a projection and
+datum, roughly based on the EPSG organization of data.<p>
+
+The SRS definitions in the simple features specification are only half
+baked, and so many ambiguitites exist in how it should be implemented
+and used interoperabily.  At this time the OGRSpatialReference object is
+only used to translate between SRS well known text format, and an 
+queriable internal representation.  In particular, no attempt has been 
+made yet to validate the parameter values, or to provide reprojection and
+datum shifting capabilities.<p>
+
+There is a recently issued OpenGIS RFP intended to result in a coordinate
+transformations interface specification that would superceed the existing
+simple features SRS definitions; however, in a mostly backward compatible
+manner.<p>
+
+
+<h2>Feature / Feature Definition</h2>
+
+The OGRGeometry captures the geometry of a vector feature ... the 
+spatial position/region of a feature.  The OGRFeature contains this 
+geometry, and adds feature attributes, and a feature class identify.<p>
+
+The set of attributes, their types, names and so forth is represented
+via the OGRFeatureDefn class.  One OGRFeatureDefn normally exists for a
+layer of features.  The same definition is shared in a reference counted 
+manner by the feature of that type (or feature class).<p>
+
+The feature class
+also contains an indicator of the types of geometry allowed for that feature
+class (returned as an OGRwkbGeometryType from OGRFeatureDefn::GetGeomType()).
+If this is wkbUnknown then any type of geometry is allowed.  This implies that
+features in a given layer can potentially be of different geometry types
+though they will always share a common attribute schema. <p>
+
+The OGRFeatureDefn also contains a concept of default spatial reference
+system for all features of that type and a feature class name (normally 
+used as a layer name). <p>
+
+
+<h2>Layer</h2>
+
+An OGRLayer represents a layer of features within a data source.  All 
+features in an OGRLayer share a common schema and are of the same 
+OGRFeatureDefn.  An OGRLayer class also contains methods for reading 
+features from the data source. 
+The OGRLayer can be thought of as a gateway for reading and
+writing features from an underlying data source, normally a file format.
+In SFCOM and other table based simple features implementation an OGRLayer
+represents a spatial table.<p>
+
+Currently only sequential read access is permitted via the OGRLayer; however,
+this is intended to be extented to include random read, update, and writing
+of new features in coming months.  Read access (via the
+OGRLayer::GetNextFeature() method) normally reads all features, one at a
+time sequentially; however, it can be limited to return features intersecting
+a praticular geographic region by installing a spatial filter on the
+OGRLayer (via the OGRLayer::SetSpatialFilter() method).<p>
+
+One flaw in the
+current OGR architecture is that the spatial filter is set directly on
+the OGRLayer which is intended to be the only representative of a given
+layer in a data source.  This means it isn't possible to have multiple
+read operations active at one time with different spatial filters on 
+each.  This aspect may be revised in the future to introduct an OGRLayerView
+class or something similar.<p>
+
+Another question that might arise is why the OGRLayer and OGRFeatureDefn
+classes are distinct.  An OGRLayer always has a one-to-one relationship to
+an OGRFeatureDefn, so why not amalgamate the classes.  There are two reasons:
+
+<ol>
+
+<li> As defined now OGRFeature and OGRFeatureDefn don't depend on OGRLayer,
+so they can exist independently in memory without regard to a particular
+layer in a data store. <p>
+
+<li> The SF CORBA model does not have a concept of a layer with a single
+fixed schema the way that the SFCOM and SFSQL models do.  The fact that
+features belong to a feature collection that is potentially not directly
+related to their current feature grouping may be important to implementing
+SFCORBA support using OGR. 
+
+</ol>
+
+The OGRLayer class is an abstract base class.  An implementation is 
+expected to be subclassed for each file format driver implemented. 
+OGRLayers are normally owned directly by their OGRDataSource, and aren't
+instantiated or destroyed directly.<p>
+
+<h2>Data Source</h2>
+
+An OGRDataSource represents a set of OGRLayer objects.  This usually 
+represents a single file, set of files, database or gateway.  An OGRDataSource
+has a list of OGRLayer's which it owns but can return references to.<p>
+
+OGRDataSource is an abstract base class.  An implementation is 
+expected to be subclassed for each file format driver implemented.
+OGRDataSource objects are not normally instantiated directly but rather with
+the assistance of an OGRSFDriver.  Deleting an OGRDataSource closes access
+to the underlying persistent data source, but does not normally result in 
+deletion of that file.<p>
+
+An OGRDataSource has a name (usually a filename) that can be used to reopen
+the data source with an OGRSFDriver.<p>
+
+<h2>Drivers</h2>
+
+An OGRSFDriver object is instantiated for each file format supported.  
+The OGRSFDriver objects are registered with the OGRSFDriverRegistrar, a
+singleton class that is normally used to open new data sources.<p>
+
+It is intended that a new OGRSFDriver derived class be implemented for each
+file format to be supported (along with a file format specific 
+OGRDataSource, and OGRLayer classes).<p>
+
+On application startup registration
+functions are normally called for each desired file format.  These functions
+instantiate the appropriate OGRSFDriver objects, and register them with the
+OGRSFDriverRegistrar.  When a data source is to be opened, the registrar
+will normally try each OGRSFDriver in turn, untill one succeeds, returning
+an OGRDataSource object.<p>
+
+Eventually driver dependent mechanisms for creating new data sources will
+be implemented.  It is not intended that the OGRSFDriverRegistrar be 
+derived from.<p>
+
+*/
