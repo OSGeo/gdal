@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.21  2004/04/05 21:29:40  warmerda
+ * improved logic to recognise jp2/jpc
+ *
  * Revision 1.20  2004/04/05 20:49:34  warmerda
  * allow jpeg2000 files to be handled
  *
@@ -103,6 +106,8 @@ CPL_CVSID("$Id$");
 #ifdef FRMT_ecw
 
 static unsigned char jpc_header[] = {0xff,0x4f};
+static unsigned char jp2_header[] = 
+{0x00,0x00,0x00,0x0c,0x6a,0x50,0x20,0x20,0x0d,0x0a,0x87,0x0a};
 
 /* As of July 2002 only uncompress support is available on Unix */
 #ifdef WIN32
@@ -594,9 +599,11 @@ GDALDataset *ECWDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      ecwp: protocol url.                                             */
 /* -------------------------------------------------------------------- */
     if( poOpenInfo->nHeaderBytes >= 16 
-        && memcmp( poOpenInfo->pabyHeader, jpc_header, 
-                   sizeof(jpc_header) ) == 0 )
-        /* accept JPEG2000 files /;
+        && (memcmp( poOpenInfo->pabyHeader, jpc_header, 
+                    sizeof(jpc_header) ) == 0
+            || memcmp( poOpenInfo->pabyHeader, jp2_header, 
+                    sizeof(jp2_header) ) == 0) )
+        /* accept JPEG2000 files */;
     else if( (!EQUAL(CPLGetExtension(poOpenInfo->pszFilename),"ecw")
               || poOpenInfo->fp == NULL)
              && !EQUALN(poOpenInfo->pszFilename,"ecwp:",5) )
@@ -606,6 +613,8 @@ GDALDataset *ECWDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Open the client interface.                                      */
 /* -------------------------------------------------------------------- */
     eErr = NCScbmOpenFileView( poOpenInfo->pszFilename, &hFileView, NULL );
+    CPLDebug( "ECW", "NCScbmOpenFileView(%s): eErr = %d", 
+              poOpenInfo->pszFilename, (int) eErr );
     if( eErr != NCS_SUCCESS )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
