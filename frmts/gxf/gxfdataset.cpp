@@ -3,7 +3,7 @@
  *
  * Project:  GXF Reader
  * Purpose:  GDAL binding for GXF reader.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 1998, Frank Warmerdam
@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.14  2003/10/06 20:50:45  warmerda
+ * fixed author email
+ *
  * Revision 1.13  2003/07/08 21:20:21  warmerda
  * avoid warnings
  *
