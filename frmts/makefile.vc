@@ -8,7 +8,8 @@ EXTRAFLAGS =	-DFRMT_ceos -DFRMT_aigrid -DFRMT_elas -DFRMT_hfa -DFRMT_gtiff\
 		-DFRMT_fit -DFRMT_vrt -DFRMT_xpm -DFRMT_bmp $(BSBDEF) \
 		-DFRMT_nitf -DFRMT_pcidsk \
 		$(JPEGDEF) $(JP2KAKDEF) $(MRSIDDEF) $(FITSDEF) \
-		$(JPEG2000DEF) $(ECWDEF) $(OGDIDEF) $(HDFDEF) $(ZLIBDEF)
+		$(JPEG2000DEF) $(ECWDEF) $(OGDIDEF) $(HDFDEF) $(ZLIBDEF) \
+		$(NETCDFDEF)
 
 MOREEXTRA =	
 
@@ -52,6 +53,10 @@ MRSIDDEF	=	-DFRMT_mrsid
 
 !IFDEF FITS_DIR
 FITSDEF		=	-DFRMT_fits
+!ENDIF
+
+!IFDEF NETCDF_SETTING
+NETCDFDEF		=	-DFRMT_netcdf
 !ENDIF
 
 default:	o\gdalallregister.obj subdirs
