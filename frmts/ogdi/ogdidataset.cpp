@@ -29,6 +29,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.15  2002/01/13 01:44:44  warmerda
+ * cleanup debugs a bit
+ *
  * Revision 1.14  2001/11/02 22:21:25  warmerda
  * fixed memory leaks
  *
@@ -200,10 +203,11 @@ CPLErr OGDIRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 {
     OGDIDataset	*poODS = (OGDIDataset *) poDS;
     CPLErr    eErr;
-
+#ifdef notdef
     CPLDebug( "OGDIRasterBand", 
-              "RasterIO(%d,%d,%d,%d -> %dx%d)\n", 
+              "RasterIO(%d,%d,%d,%d -> %dx%d)", 
               nXOff, nYOff, nXSize, nYSize, nBufXSize, nBufYSize );
+#endif
 
 /* -------------------------------------------------------------------- */
 /*      Establish access at the desired resolution.                     */
@@ -320,7 +324,7 @@ CPLErr OGDIRasterBand::EstablishAccess( int nYOff,
         sSelection.Select = pszLayerName;
         sSelection.F = eFamily;
         
-        CPLDebug( "OGDIRasterBand", "<EstablishAccess: SelectLayer(%s)>\n",
+        CPLDebug( "OGDIRasterBand", "<EstablishAccess: SelectLayer(%s)>",
                   pszLayerName );
         psResult = cln_SelectLayer( poODS->nClientID, &sSelection );
         if( ECSERROR(psResult) )
@@ -363,7 +367,9 @@ CPLErr OGDIRasterBand::EstablishAccess( int nYOff,
         || ABS(sWin.ew_res/poODS->sCurrentBounds.ew_res - 1.0) > 0.0001
         || ABS(sWin.ns_res/poODS->sCurrentBounds.ns_res - 1.0) > 0.0001 )
     {
-        CPLDebug( "OGDIRasterBand", "<EstablishAccess: Set Region>\n" );
+#ifdef notdef
+        CPLDebug( "OGDIRasterBand", "<EstablishAccess: Set Region>" );
+#endif
         psResult = cln_SelectRegion( poODS->nClientID, &sWin );
         if( ECSERROR(psResult) )
         {
