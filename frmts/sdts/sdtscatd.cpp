@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  1999/05/11 12:55:17  warmerda
+ * added concept of entry types for vector layer identification
+ *
  * Revision 1.3  1999/05/07 13:45:01  warmerda
  * major upgrade to use iso8211lib
  *
@@ -91,9 +94,17 @@ SDTS_CATD::~SDTS_CATD()
     int		i;
 
     for( i = 0; i < nEntries; i++ )
+    { 
+        CPLFree( papoEntries[i]->pszModule );
+        CPLFree( papoEntries[i]->pszType );
+        CPLFree( papoEntries[i]->pszFile );
+        CPLFree( papoEntries[i]->pszExternalFlag );
+        CPLFree( papoEntries[i]->pszFullPath );
         delete papoEntries[i];
+    }
 
     CPLFree( papoEntries );
+    CPLFree( pszPrefixPath );
 }
 
 /************************************************************************/
@@ -187,10 +198,10 @@ int SDTS_CATD::Read( const char * pszFilename )
 
 
 /************************************************************************/
-/*                         getModuleFilePath()                          */
+/*                         GetModuleFilePath()                          */
 /************************************************************************/
 
-const char * SDTS_CATD::getModuleFilePath( const char * pszModule )
+const char * SDTS_CATD::GetModuleFilePath( const char * pszModule )
 
 {
     int		i;
@@ -205,10 +216,10 @@ const char * SDTS_CATD::getModuleFilePath( const char * pszModule )
 }
 
 /************************************************************************/
-/*                           getEntryModule()                           */
+/*                           GetEntryModule()                           */
 /************************************************************************/
 
-const char * SDTS_CATD::getEntryModule( int iEntry )
+const char * SDTS_CATD::GetEntryModule( int iEntry )
 
 {
     if( iEntry < 0 || iEntry >= nEntries )
@@ -218,10 +229,21 @@ const char * SDTS_CATD::getEntryModule( int iEntry )
 }
 
 /************************************************************************/
-/*                            getEntryType()                            */
+/*                          GetEntryTypeDesc()                          */
 /************************************************************************/
 
-const char * SDTS_CATD::getEntryType( int iEntry )
+/**
+ * Fetch the type description of a module in the catalog.
+ *
+ * @param iEntry The module index within the CATD catalog.  A number from
+ * zero to GetEntryCount()-1.
+ *
+ * @return A pointer to an internal string with the type description for
+ * this module.  This is from the CATD file (subfield TYPE of field CATD),
+ * and will be something like "Attribute Primary        ".
+ */
+
+const char * SDTS_CATD::GetEntryTypeDesc( int iEntry )
 
 {
     if( iEntry < 0 || iEntry >= nEntries )
@@ -230,4 +252,67 @@ const char * SDTS_CATD::getEntryType( int iEntry )
         return papoEntries[iEntry]->pszType;
 }
 
+/************************************************************************/
+/*                            GetEntryType()                            */
+/************************************************************************/
 
+/**
+ * Fetch the enumerated type of a module in the catalog.
+ *
+ * @param iEntry The module index within the CATD catalog.  A number from
+ * zero to GetEntryCount()-1.
+ *
+ * @return A value from the SDTSLayerType enumeration indicating the type of
+ * the module, and indicating the corresponding type of reader.<p>
+ *
+ * <ul>
+ * <li> SLTPoint: Read with SDTSPointReader, underlying type of
+ * <tt>Point-Node</tt>.
+ * <li> SLTLine: Read with SDTSLineReader, underlying type of
+ * <tt>Line</tt>.
+ * <li> SLTAttr: Read with SDTSAttrReader, underlying type of
+ * <tt>Attribute Primary</tt>.
+ * </ul> 
+ */
+
+SDTSLayerType SDTS_CATD::GetEntryType( int iEntry )
+
+{
+    if( iEntry < 0 || iEntry >= nEntries )
+        return SLTUnknown;
+
+    else if( EQUALN(papoEntries[iEntry]->pszType,"Attribute Primary",17) )
+        return SLTAttr;
+    
+    else if( EQUALN(papoEntries[iEntry]->pszType,"Line ",5) )
+        return SLTLine;
+    
+    else if( EQUALN(papoEntries[iEntry]->pszType,"Point-Node",10) )
+        return SLTPoint;
+
+    else
+        return SLTUnknown;
+}
+
+/************************************************************************/
+/*                          GetEntryFilePath()                          */
+/************************************************************************/
+
+/**
+ * Fetch the full filename of the requested module.
+ *
+ * @param iEntry The module index within the CATD catalog.  A number from
+ * zero to GetEntryCount()-1.
+ *
+ * @return A pointer to an internal string containing the filename.  This
+ * string should not be altered, or freed by the application.
+ */
+
+const char * SDTS_CATD::GetEntryFilePath( int iEntry )
+
+{
+    if( iEntry < 0 || iEntry >= nEntries )
+        return NULL;
+    else
+        return papoEntries[iEntry]->pszFullPath;
+}
