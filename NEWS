@@ -2,46 +2,46 @@ GDAL 1.2.4 - Overview of Changes
 --------------------------------
 
 gdalwarp: 
- - Fixed some issues with only partially transformable regions. 
- - Added Alpha mask generation support (-dstalpha switch).
+  - Fixed some issues with only partially transformable regions. 
+  - Added Alpha mask generation support (-dstalpha switch).
 
 HFA/Imagine Driver:
- - bug fix in histogram handling.
- - improved support for large colormaps. 
+  - bug fix in histogram handling.
+  - improved support for large colormaps. 
 
 Envi Driver:
- - Capture category names and colormaps when reading.
+  - Capture category names and colormaps when reading.
 
 SAR CEOS Driver:
- - Added support for PALSAR/ALOS Polarmetric Datasets. 
+  - Added support for PALSAR/ALOS Polarmetric Datasets. 
 
 RadarSat 2 Driver:
- - New.  Reads RadarSat 2 Polarmetric datasets with a "product.xml" and imagery
-   in TIFF files. 
+  - New.  Reads RadarSat 2 Polarmetric datasets with a "product.xml" and 
+    imagery in TIFF files. 
 
 OGDI Driver:
- - Important bug fix for downsampled access.
+  - Important bug fix for downsampled access.
 
 GeoTIFF Driver:
- - Lots of libtiff upgrades, including some quite serious bug fixes.
- - Added better support for 16bit colormaps. 
- - Write projection information even if we don't have a geotransform or GCPs.
- - Improved alpha support.
- - Generate graceful error message for BigTIFF files. 
+  - Lots of libtiff upgrades, including some quite serious bug fixes.
+  - Added better support for 16bit colormaps. 
+  - Write projection information even if we don't have a geotransform or GCPs.
+  - Improved alpha support.
+  - Generate graceful error message for BigTIFF files. 
 
 DODS Driver:
- - Almost completely reimplemented.   Uses chunk-by-chunk access.  Supports
-   reading several bands from seperate objects.  Some new limitations too.
+  - Almost completely reimplemented.   Uses chunk-by-chunk access.  Supports
+    reading several bands from seperate objects.  Some new limitations too.
 
 NetCDF Driver:
- - Seperated out a GMT NetCDF driver and a more generic but partially broken
-   NetCDF driver (Radim).
+  - Seperated out a GMT NetCDF driver and a more generic but partially broken
+    NetCDF driver (Radim).
 
 JP2KAK Driver:
- - Added alpha support, including greyscale+alpha. 
+  - Added alpha support, including greyscale+alpha. 
 
 AirSAR Driver:
- - New, reads AirSAR Polarmetric Radar format. 
+  - New, reads AirSAR Polarmetric Radar format. 
 
 
 
@@ -49,32 +49,32 @@ OGR 1.2.4 - Overview of Changes
 -------------------------------
 
 epsg_tr.py: 
- - Added escaping rules when generating PostGIS output.
+  - Added escaping rules when generating PostGIS output.
 
 tigerpoly.py:
- - Discard dangles and degenerate rings. 
+  - Discard dangles and degenerate rings. 
 
 VRT Driver:
- - Fixed serious error in handling cleanup of VRT datasources, was often 
+  - Fixed serious error in handling cleanup of VRT datasources, was often 
    causing a crash.
 
 SQLLite Driver:
- - Fixed substantial memory leaks. 
+  - Fixed substantial memory leaks. 
 
 MySQL Driver:
- - New readonly non-spatial MySQL driver implemented.
+  - New readonly non-spatial MySQL driver implemented.
 
 MITAB Driver:
- - Updated from upstream, several fixes.
+  - Updated from upstream, several fixes.
 
 TIGER/Line Driver:
- - Fixed serious bug with handling "full" records at end of .RT2 file. 
+  - Fixed serious bug with handling "full" records at end of .RT2 file. 
 
 OCI/Oracle Driver:
- - Added OCI_FID environment support to control FID selection.
+  - Added OCI_FID environment support to control FID selection.
 
 OGRGeometry:
- - Added Centroid() implementation (from GEOS?)
+  - Added Centroid() implementation (from GEOS?)
 
  =============================================================================
 
