@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.2  2003/06/27 16:14:05  warmerda
+ * regularized CPLList declaration
+ *
  * Revision 1.1  2003/06/25 07:45:57  dron
  * New.
  *
@@ -52,7 +55,7 @@
 CPL_C_START
 
 /** List element structure. */
-typedef struct CPLList
+typedef struct _CPLList
 {
     /*! Pointer to the data object. Should be allocated and frred by the
      * caller.
@@ -61,8 +64,8 @@ typedef struct CPLList
     /*! Pointer to the next element in list. NULL, if current element is the
      * last one
      */
-    CPLList    *psNext;
-};
+    struct _CPLList    *psNext;
+} CPLList;
 
 CPLList CPL_DLL *CPLListAppend( CPLList *psList, void *pData );
 CPLList CPL_DLL *CPLListInsert( CPLList *psList, void *pData, int nPosition );
