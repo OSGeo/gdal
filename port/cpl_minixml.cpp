@@ -37,6 +37,9 @@
  *   hostile source.
  *
  * $Log$
+ * Revision 1.29  2004/01/29 17:01:51  warmerda
+ * Added reference to spec.
+ *
  * Revision 1.28  2004/01/29 15:29:28  warmerda
  * Added CPLCleanXMLElementName
  *
@@ -1700,9 +1703,9 @@ int CPLSerializeXMLTreeToFile( CPLXMLNode *psTree, const char *pszFilename )
  * XML token that can be used as an element name.   This is accomplished
  * by changing any characters not legal in a token into an underscore. 
  * 
- * I haven't actually reviewed the XML specifications, so I am not sure 
- * what is and is not legal.  However, this gives a good place to refine the
- * rules when someone has the time to dig them up. 
+ * NOTE: This function should implement the rules in section 2.3 of 
+ * http://www.w3.org/TR/xml11/ but it doesn't yet do that properly.  We
+ * only do a rough approximation of that.
  *
  * @param pszTarget the string to be adjusted.  It is altered in place. 
  */
