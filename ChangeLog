@@ -1,3 +1,13 @@
+2002-04-03  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* gdal/frmts/gtiff/geotiff.cpp: Remove dependence on tiffiop.h by
+	adding IsBlockAvailable() method which uses TIFFGetField() to access
+	the strip/tile byte counts.
+
+	* gdal/frmts/gtiff/libgeotiff: Upgraded from libgeotiff CSV.
+
+	* gdal/frmts/gtiff/libtiff: Upgraded from libtiff CVS.
+
 2002-03-27  Frank Warmerdam  <warmerdam@pobox.com>
 
 	* ogr/ogrsf_frmts/dgn/ogrdgnlayer.cpp: added GetFeature() 
