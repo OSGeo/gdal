@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.22  2003/03/20 19:10:37  warmerda
+ * fixed memory leak
+ *
  * Revision 1.21  2003/02/27 16:02:46  warmerda
  * Handle case with filename without path properly in BuildFilename().
  *
@@ -228,6 +231,7 @@ OGRTigerDataSource::OGRTigerDataSource()
     papszModules = NULL;
 
     pszName = NULL;
+    pszPath = NULL;
 
     papszOptions = NULL;
 
@@ -249,6 +253,7 @@ OGRTigerDataSource::~OGRTigerDataSource()
     CPLFree( papoLayers );
 
     CPLFree( pszName );
+    CPLFree( pszPath );
 
     CSLDestroy( papszOptions );
 
