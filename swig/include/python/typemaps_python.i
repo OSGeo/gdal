@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.6  2005/02/15 17:05:13  kruland
+ * Use CPLParseNameValue instead of strchr() in typemap(out) char **dict.
+ *
  * Revision 1.5  2005/02/15 16:52:41  kruland
  * Added a swig macro for handling fixed length double array arguments.  Used
  * for Band::ComputeMinMax( double[2] ), and Dataset::?etGeoTransform() methods.
@@ -186,15 +189,20 @@ ARRAY_TYPEMAP(c_transform, 6);
 %typemap(out) char **dict
 {
   /* %typemap(out) char ** -> to hash */
-  char **valptr = $1;
+  char **stringarray = $1;
   $result = PyDict_New();
-  if ( valptr != NULL ) {
-    while (*valptr != NULL ) {
-      char *equals = strchr( *valptr, '=' );
-      PyObject *nm = PyString_FromStringAndSize( *valptr, equals-*valptr );
-      PyObject *val = PyString_FromString( equals+1 );
-      PyDict_SetItem($result, nm, val );
-      valptr++;
+  if ( stringarray != NULL ) {
+    while (*stringarray != NULL ) {
+      char const *valptr;
+      char *keyptr;
+      valptr = CPLParseNameValue( *stringarray, &keyptr );
+      if ( valptr != 0 ) {
+        PyObject *nm = PyString_FromString( keyptr );
+        PyObject *val = PyString_FromString( valptr );
+        PyDict_SetItem($result, nm, val );
+        CPLFree( keyptr );
+      }
+      stringarray++;
     }
   }
 }
