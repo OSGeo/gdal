@@ -16,7 +16,8 @@ gdalinfo:	gdalinfo.o $(DEP_LIBS)
 		 -o gdalinfo
 
 gdal_translate:	gdal_translate.o  $(DEP_LIBS)
-	$(CXX) $(LNK_FLAGS) gdal_translate.o $(XTRAOBJ) $(GDAL_LIBS) $(LIBS) \
+	$(CXX) $(LNK_FLAGS) gdal_translate.o $(XTRAOBJ) \
+		$(GDAL_SLIB_LINK) $(LIBS) \
 		-o gdal_translate
 
 gdal2raw:	gdal2raw.o $(DEP_LIBS)
