@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2004/12/30 20:40:54  fwarmerdam
+ * Added documentation.
+ *
  * Revision 1.3  2003/05/02 16:02:06  dron
  * Memory leak fixed.
  *
@@ -47,6 +50,23 @@ CPL_CVSID("$Id$");
 /************************************************************************/
 /*                         GDALChecksumImage()                          */
 /************************************************************************/
+
+/**
+ * Compute checksum for image region. 
+ *
+ * Computes a 16bit (0-65535) checksum from a region of raster data on a GDAL 
+ * supported band.   Floating point data is converted to 32bit integer 
+ * so decimal portions of such raster data will not affect the checksum.
+ * Real and Imaginary components of complex bands influence the result. 
+ *
+ * @param hBand the raster band to read from.
+ * @param nXOff pixel offset of window to read.
+ * @param nYOff line offset of window to read.
+ * @param nXSize pixel size of window to read.
+ * @param nYSize line size of window to read.
+ *
+ * @return Checksum value. 
+ */
 
 int GDALChecksumImage( GDALRasterBandH hBand, 
                        int nXOff, int nYOff, int nXSize, int nYSize )
