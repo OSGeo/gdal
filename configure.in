@@ -792,6 +792,17 @@ AC_SUBST(MRSID_HOME,$MRSID_HOME)
 
 dnl ---------------------------------------------------------------------------
 
+AC_ARG_WITH(bsb,[  --without-bsb         Disable BSB format (legal issues pending)],,)
+
+if test "$with_bsb" = yes -o x"$with_ogr" = x ; then
+  echo checking for BSB ... enabled
+  OPT_GDAL_FORMATS="bsb $OPT_GDAL_FORMATS"
+else
+  echo checking for BSB ... disabled by user
+fi
+
+dnl ---------------------------------------------------------------------------
+
 AC_SUBST(OPT_GDAL_FORMATS,$OPT_GDAL_FORMATS)
 AC_SUBST(EXTRA_INCLUDES,$EXTRA_INCLUDES)
 
