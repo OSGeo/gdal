@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2000/06/16 18:00:58  warmerda
+ * Fixed AssembleArea() to support multiple FSPT fields
+ *
  * Revision 1.16  2000/06/07 21:34:04  warmerda
  * fixed problem with corrupt datasets with an ATTL value of zero
  *
@@ -160,6 +163,14 @@ int S57Reader::Open( int bTestOpen )
         delete poModule;
         poModule = NULL;
         return FALSE;
+    }
+
+    // Make sure the FSPT field is marked as repeating.
+    DDFFieldDefn *poFSPT = poModule->FindFieldDefn( "FSPT" );
+    if( poFSPT != NULL && !poFSPT->IsRepeating() )
+    {
+        CPLDebug( "S57", "Forcing FSPT field to be repeating." );
+        poFSPT->SetRepeatingFlag( TRUE );
     }
 
     nNextFEIndex = 0;
@@ -953,111 +964,113 @@ void S57Reader::AssembleAreaGeometry( DDFRecord * poFRecord,
 
 {
     DDFField    *poFSPT;
-    int         nEdgeCount;
     OGRGeometryCollection * poLines = new OGRGeometryCollection();
 
 /* -------------------------------------------------------------------- */
-/*      Find the FSPT field.                                            */
+/*      Find the FSPT fields.                                           */
 /* -------------------------------------------------------------------- */
-    poFSPT = poFRecord->FindField( "FSPT" );
-    if( poFSPT == NULL )
-        return;
+    for( int iFSPT = 0; 
+         (poFSPT = poFRecord->FindField( "FSPT", iFSPT )) != NULL;
+         iFSPT++ )
+    {
+        int         nEdgeCount;
 
-    nEdgeCount = poFSPT->GetRepeatCount();
+        nEdgeCount = poFSPT->GetRepeatCount();
 
 /* ==================================================================== */
 /*      Loop collecting edges.                                          */
 /* ==================================================================== */
-    for( int iEdge = 0; iEdge < nEdgeCount; iEdge++ )
-    {
-        DDFRecord       *poSRecord;
-        int             nRCID;
+        for( int iEdge = 0; iEdge < nEdgeCount; iEdge++ )
+        {
+            DDFRecord       *poSRecord;
+            int             nRCID;
 
 /* -------------------------------------------------------------------- */
 /*      Find the spatial record for this edge.                          */
 /* -------------------------------------------------------------------- */
-        nRCID = ParseName( poFSPT, iEdge );
+            nRCID = ParseName( poFSPT, iEdge );
 
-        poSRecord = oVE_Index.FindRecord( nRCID );
-        if( poSRecord == NULL )
-        {
-            printf( "Couldn't find spatial record %d.\n", nRCID );
-            continue;
-        }
+            poSRecord = oVE_Index.FindRecord( nRCID );
+            if( poSRecord == NULL )
+            {
+                printf( "Couldn't find spatial record %d.\n", nRCID );
+                continue;
+            }
     
 /* -------------------------------------------------------------------- */
 /*      Establish the number of vertices, and whether we need to        */
 /*      reverse or not.                                                 */
 /* -------------------------------------------------------------------- */
-        OGRLineString *poLine = new OGRLineString();
+            OGRLineString *poLine = new OGRLineString();
         
-        int             nVCount;
-        DDFField        *poSG2D = poSRecord->FindField( "SG2D" );
-        DDFSubfieldDefn *poXCOO, *poYCOO;
+            int             nVCount;
+            DDFField        *poSG2D = poSRecord->FindField( "SG2D" );
+            DDFSubfieldDefn *poXCOO, *poYCOO;
 
-        if( poSG2D != NULL )
-        {
-            poXCOO = poSG2D->GetFieldDefn()->FindSubfieldDefn("XCOO");
-            poYCOO = poSG2D->GetFieldDefn()->FindSubfieldDefn("YCOO");
+            if( poSG2D != NULL )
+            {
+                poXCOO = poSG2D->GetFieldDefn()->FindSubfieldDefn("XCOO");
+                poYCOO = poSG2D->GetFieldDefn()->FindSubfieldDefn("YCOO");
 
-            nVCount = poSG2D->GetRepeatCount();
-        }
-        else
-            nVCount = 0;
+                nVCount = poSG2D->GetRepeatCount();
+            }
+            else
+                nVCount = 0;
 
 /* -------------------------------------------------------------------- */
 /*      Add the start node.                                             */
 /* -------------------------------------------------------------------- */
-        {
-            int         nVC_RCID;
-            double      dfX, dfY;
+            {
+                int         nVC_RCID;
+                double      dfX, dfY;
             
-            nVC_RCID = ParseName( poSRecord->FindField( "VRPT" ), 0 );
+                nVC_RCID = ParseName( poSRecord->FindField( "VRPT" ), 0 );
 
-            if( FetchPoint( RCNM_VC, nVC_RCID, &dfX, &dfY ) )
-                poLine->addPoint( dfX, dfY );
-        }
+                if( FetchPoint( RCNM_VC, nVC_RCID, &dfX, &dfY ) )
+                    poLine->addPoint( dfX, dfY );
+            }
         
 /* -------------------------------------------------------------------- */
 /*      Collect the vertices.                                           */
 /* -------------------------------------------------------------------- */
-        int             nVBase = poLine->getNumPoints();
+            int             nVBase = poLine->getNumPoints();
         
-        poLine->setNumPoints( nVCount+nVBase );
+            poLine->setNumPoints( nVCount+nVBase );
 
-        for( int i = 0; i < nVCount; i++ )
-        {
-            double      dfX, dfY;
-            const char  *pachData;
-            int         nBytesRemaining;
+            for( int i = 0; i < nVCount; i++ )
+            {
+                double      dfX, dfY;
+                const char  *pachData;
+                int         nBytesRemaining;
 
-            pachData = poSG2D->GetSubfieldData(poXCOO,&nBytesRemaining,i);
+                pachData = poSG2D->GetSubfieldData(poXCOO,&nBytesRemaining,i);
                 
-            dfX = poXCOO->ExtractIntData(pachData,nBytesRemaining,NULL)
-                / (double) nCOMF;
+                dfX = poXCOO->ExtractIntData(pachData,nBytesRemaining,NULL)
+                    / (double) nCOMF;
 
-            pachData = poSG2D->GetSubfieldData(poYCOO,&nBytesRemaining,i);
+                pachData = poSG2D->GetSubfieldData(poYCOO,&nBytesRemaining,i);
 
-            dfY = poXCOO->ExtractIntData(pachData,nBytesRemaining,NULL)
-                / (double) nCOMF;
+                dfY = poXCOO->ExtractIntData(pachData,nBytesRemaining,NULL)
+                    / (double) nCOMF;
                 
-            poLine->setPoint( nVBase++, dfX, dfY );
-        }
+                poLine->setPoint( nVBase++, dfX, dfY );
+            }
 
 /* -------------------------------------------------------------------- */
 /*      Add the end node.                                               */
 /* -------------------------------------------------------------------- */
-        {
-            int         nVC_RCID;
-            double      dfX, dfY;
+            {
+                int         nVC_RCID;
+                double      dfX, dfY;
             
-            nVC_RCID = ParseName( poSRecord->FindField( "VRPT" ), 1 );
+                nVC_RCID = ParseName( poSRecord->FindField( "VRPT" ), 1 );
 
-            if( FetchPoint( RCNM_VC, nVC_RCID, &dfX, &dfY ) )
-                poLine->addPoint( dfX, dfY );
+                if( FetchPoint( RCNM_VC, nVC_RCID, &dfX, &dfY ) )
+                    poLine->addPoint( dfX, dfY );
+            }
+
+            poLines->addGeometryDirectly( poLine );
         }
-
-        poLines->addGeometryDirectly( poLine );
     }
 
 /* -------------------------------------------------------------------- */
@@ -1069,8 +1082,11 @@ void S57Reader::AssembleAreaGeometry( DDFRecord * poFRecord,
     poPolygon = OGRBuildPolygonFromEdges( poLines, TRUE, &eErr );
     if( eErr != OGRERR_NONE )
     {
-        abort();
-        CPLDebug( "S57", "Polygon assembly failed" );
+        CPLError( CE_Warning, CPLE_AppDefined,
+                  "Polygon assembly has failed for feature FIDN=%d,FIDS=%d.\n"
+                  "Geometry may be missing or incomplete.", 
+                  poFeature->GetFieldAsInteger( "FIDN" ),
+                  poFeature->GetFieldAsInteger( "FIDS" ) );
     }
 
     delete poLines;
