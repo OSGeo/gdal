@@ -115,7 +115,7 @@ cout << "leaving" << endl;
   $result = PyDict_New();
   if ( valptr != NULL ) {
     while (*valptr != NULL ) {
-      char *equals = index( *valptr, '=' );
+      char *equals = strchr( *valptr, '=' );
       PyObject *nm = PyString_FromStringAndSize( *valptr, equals-*valptr );
       PyObject *val = PyString_FromString( equals+1 );
       PyDict_SetItem($result, nm, val );
