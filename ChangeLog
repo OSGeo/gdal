@@ -1,3 +1,11 @@
+===============================================================================
+	
+2002-12-21  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* Release GDAL/OGR 1.1.8.0.
+
+	* gdal/frmts/nitf: Implemented an NITF reader/writer.
+
 2002-12-07  Andrey Kiselev  <dron@remotesensing.org>
 	
 	* /gdal/frmts/bmp/{bmpimagedataset.cpp, frmts_bmp.html}:
