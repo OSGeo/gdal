@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2001/12/06 19:25:12  warmerda
+ * updated as per submission by Diana Esch-Mosher
+ *
  * Revision 1.7  2001/11/11 23:50:59  warmerda
  * added required class keyword to friend declarations
  *
@@ -108,7 +111,7 @@ public:
 
 class FITSRasterBand : public GDALRasterBand {
 
-  friend class FITSDataset;
+  friend class	FITSDataset;
   
 public:
 
@@ -211,7 +214,7 @@ CPLErr FITSRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff,
 		 pImage, &status);
   if (status) {
     CPLError(CE_Failure, CPLE_AppDefined,
-	     "Couldn't write image data to FITS file (%d).", status);
+	     "Error writing image data to FITS file (%d).", status);
     return CE_Failure;
   }
 
@@ -280,64 +283,70 @@ FITSDataset::FITSDataset() {
 /************************************************************************/
 
 FITSDataset::~FITSDataset() {
-  if (hFITS) {   // Only do this if we've successfully opened the file...
-    // Write any meta data to the file that's compatible with FITS
-    int status = 0;
-    fits_movabs_hdu(hFITS, 1, 0, &status);
-    fits_write_key_longwarn(hFITS, &status);
-    if (status) {
-      CPLError(CE_Warning, CPLE_AppDefined,
-	       "Couldn't move to first HDU in FITS file %s (%d).\n", 
-	       GetDescription(), status);
-    }
-    char** metaData = GetMetadata();
-    int count = CSLCount(metaData);
-    for (int i = 0; i < count; ++i) {
-      const char* field = CSLGetField(metaData, i);
-      if (strlen(field) == 0)
-	continue;
-      else {
-	char* key;
-	const char* value = CPLParseNameValue(field, &key);
-	// FITS keys must be less than 8 chars
-	if (strlen(key) <= 8 && !isIgnorableFITSHeader(key)) {
-	  int dataType = guessFITSHeaderDataType(hFITS, key, value);
-	  if (dataType == TDOUBLE) {
-	    double dblValue = atof(value);
-	    fits_update_key_dbl(hFITS, key, dblValue, 10, 0, &status);
-	  }
-	  else if (dataType == TLONG) {
-	    long longValue = atoi(value);
-	    fits_update_key_lng(hFITS, key, longValue, 0, &status);
-	  }
-	  else if (dataType == TLOGICAL) {
-	    int logicValue = !strcmp(value, "T") ? 1 : 0;
-	    fits_update_key_log(hFITS, key, logicValue, 0, &status);
-	  }
-	  else {  // Assume it's a string
-	    // Avoid warning by copying const string to non const one...
-	    char* valueCpy = strdup(value);
-	    fits_update_key_longstr(hFITS, key, valueCpy, 0, &status);
-	    free(valueCpy);
-	  }
-	  // Check for errors
-	  if (status) {
-	    CPLError(CE_Warning, CPLE_AppDefined,
-		     "Couldn't update key %s in FITS file %s (%d).", 
-		     key, GetDescription(), status);
-	    return;
-	  }
-	}
-	// Must free up key
-	CPLFree(key);
-      }
-    }
 
-    // Make sure we flush the raster cache before we close the file!
-    FlushCache();
+  int status;
+  if (hFITS) {
+    if(eAccess == GA_Update) {   // Only do this if we've successfully opened the file and  update capability
+      // Write any meta data to the file that's compatible with FITS
+      status = 0;
+      fits_movabs_hdu(hFITS, 1, 0, &status);
+      fits_write_key_longwarn(hFITS, &status);
+      if (status) {
+        CPLError(CE_Warning, CPLE_AppDefined,
+	         "Couldn't move to first HDU in FITS file %s (%d).\n", 
+	         GetDescription(), status);
+      }
+      char** metaData = GetMetadata();
+      int count = CSLCount(metaData);
+      for (int i = 0; i < count; ++i) {
+        const char* field = CSLGetField(metaData, i);
+        if (strlen(field) == 0)
+	  continue;
+        else {
+	  char* key;
+	  const char* value = CPLParseNameValue(field, &key);
+	  // FITS keys must be less than 8 chars
+	  if (strlen(key) <= 8 && !isIgnorableFITSHeader(key)) {
+	    int dataType = guessFITSHeaderDataType(hFITS, key, value);
+	    if (dataType == TDOUBLE) {
+	      double dblValue = atof(value);
+	      fits_update_key(hFITS, dataType, key, &dblValue,  0, &status);
+	    }
+	    else if (dataType == TLONG) {
+	      long longValue = atoi(value);
+	      fits_update_key(hFITS, dataType, key, &longValue,  0, &status);
+	    }
+	    else if (dataType == TLOGICAL) {
+	      int logicValue = !strcmp(value, "T") ? 1 : 0;
+	      fits_update_key(hFITS, dataType, key, &logicValue,  0, &status);
+	    }
+	    else {  // Assume it's a string
+	      // Avoid warning by copying const string to non const one...
+	      char* valueCpy = strdup(value);
+		  fits_update_key_longstr(hFITS, key, valueCpy, 0, &status);
+
+	      free(valueCpy);
+	    }
+	    // Check for errors
+	    if (status) {
+	      CPLError(CE_Warning, CPLE_AppDefined,
+		       "Couldn't update key %s in FITS file %s (%d).", 
+		       key, GetDescription(), status);
+	      return;
+	    }
+	  }
+	  // Must free up key
+	  CPLFree(key);
+        }
+      }
+
+      // Make sure we flush the raster cache before we close the file!
+      FlushCache();
+    }
 
     // Close the FITS handle - ignore the error status
     fits_close_file(hFITS, &status);
+
   }
 }
 
@@ -377,6 +386,7 @@ CPLErr FITSDataset::Init(fitsfile* hFITS_, bool isExistingFile_) {
   }
 
   // Determine if image is byte scaled
+  isBScaled = false;
   fits_read_key_flt(hFITS, "BZERO", &bZero, 0, &status);
   fits_read_key_flt(hFITS, "BSCALE", &bScale, 0, &status);
   if (status)
@@ -521,7 +531,7 @@ GDALDataset* FITSDataset::Open(GDALOpenInfo* poOpenInfo) {
   // Get access mode and attempt to open the file
   int status = 0;
   fitsfile* hFITS = 0;
-  if (poOpenInfo->eAccess == GA_ReadOnly)
+  if (poOpenInfo->eAccess == GA_ReadOnly) 
     fits_open_file(&hFITS, poOpenInfo->pszFilename, READONLY, &status);
   else
     fits_open_file(&hFITS, poOpenInfo->pszFilename, READWRITE, &status);
@@ -535,6 +545,9 @@ GDALDataset* FITSDataset::Open(GDALOpenInfo* poOpenInfo) {
 
   // Create a FITSDataset object and initialize it from the FITS handle
   FITSDataset* dataset = new FITSDataset();
+  dataset->eAccess = poOpenInfo->eAccess;
+  dataset->poDriver = poFITSDriver;
+
   dataset->SetDescription(poOpenInfo->pszFilename);
   if (dataset->Init(hFITS, true) != CE_None) {
     delete dataset;
@@ -556,6 +569,7 @@ GDALDataset *FITSDataset::Create(const char* pszFilename,
 				 int nBands, GDALDataType eType,
 				 char** papszParmList) {
 
+
   FITSDataset* dataset;
   fitsfile* hFITS;
   int status = 0;
@@ -568,6 +582,7 @@ GDALDataset *FITSDataset::Create(const char* pszFilename,
   if (CSLFetchNameValue(papszParmList,"BZERO") != NULL) {
     haveBZero = true;
     bZero = atof(CSLFetchNameValue(papszParmList,"BZERO"));
+
   }
   if (CSLFetchNameValue(papszParmList,"BSCALE") != NULL) {
     haveBScale = true;
@@ -646,6 +661,10 @@ GDALDataset *FITSDataset::Create(const char* pszFilename,
   }
   
   dataset = new FITSDataset();
+  dataset->poDriver = poFITSDriver;;
+  dataset->nRasterXSize = nXSize;
+  dataset->nRasterYSize = nYSize;
+  dataset->eAccess = GA_Update;
   dataset->SetDescription(pszFilename);
   dataset->gdalDataType = eType;  // For b-scale we need to know intended type
 
