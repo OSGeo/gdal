@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/05/11 14:09:00  warmerda
+ * fixed up to use PNTS for point record id
+ *
  * Revision 1.1  1999/05/07 13:44:57  warmerda
  * New
  *
@@ -86,7 +89,7 @@ int SDTSRawPoint::Read( SDTS_IREF * poIREF, DDFRecord * poRecord )
         CPLAssert( poField != NULL );
         pszFieldName = poField->GetFieldDefn()->GetName();
 
-        if( EQUAL(pszFieldName,"ATID") )
+        if( EQUAL(pszFieldName,"PNTS") )
             oPoint.Set( poField );
 
         else if( EQUAL(pszFieldName,"ATID") )
