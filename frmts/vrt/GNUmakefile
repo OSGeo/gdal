@@ -7,7 +7,7 @@ OBJ	=	vrtdataset.o vrtrasterband.o vrtdriver.o vrtsources.o \
 		vrtfilters.o vrtsourcedrasterband.o vrtrawrasterband.o \
 		vrtwarped.o
 
-CPPFLAGS	:=	$(GDAL_INCLUDE) $(CPPFLAGS)
+CPPFLAGS	:=	$(GDAL_INCLUDE) $(CPPFLAGS) -I../raw
 
 default:	$(OBJ)
 
