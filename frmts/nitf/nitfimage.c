@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2003/08/21 19:27:07  warmerda
+ * fixed byte swaping issue
+ *
  * Revision 1.17  2003/06/06 16:52:32  warmerda
  * changes based on better understanding of conditional FSDEVT field
  *
@@ -1029,7 +1032,17 @@ int NITFWriteImageLine( NITFImage *psImage, int nLine, int nBand, void *pData )
     if( psImage->nWordSize == psImage->nPixelOffset
         && psImage->nWordSize * psImage->nBlockWidth == psImage->nLineOffset )
     {
+#ifdef CPL_LSB
+        NITFSwapWords( (void *) pData, psImage->nWordSize, 
+                       psImage->nCols, psImage->nWordSize );
+#endif
+
         VSIFWrite( pData, 1, nLineSize, psImage->psFile->fp );
+
+#ifdef CPL_LSB
+        NITFSwapWords( (void *) pData, psImage->nWordSize, 
+                       psImage->nCols, psImage->nWordSize );
+#endif
 
         return BLKREAD_OK;
     }
@@ -1042,7 +1055,7 @@ int NITFWriteImageLine( NITFImage *psImage, int nLine, int nBand, void *pData )
     VSIFRead( pabyLineBuf, 1, nLineSize, psImage->psFile->fp );
 
 /* -------------------------------------------------------------------- */
-/*      Copy the desired data out of the interleaved buffer.            */
+/*      Copy the desired data into the interleaved buffer.              */
 /* -------------------------------------------------------------------- */
     {
         GByte *pabySrc, *pabyDst;
@@ -1056,6 +1069,10 @@ int NITFWriteImageLine( NITFImage *psImage, int nLine, int nBand, void *pData )
             memcpy( pabySrc + iPixel * psImage->nPixelOffset,
                     pabyDst + iPixel * psImage->nWordSize, 
                     psImage->nWordSize );
+#ifdef CPL_LSB
+        NITFSwapWords( pabyDst + iPixel * psImage->nWordSize, 
+                       psImage->nWordSize, 1, psImage->nWordSize );
+#endif
         }
     }
 
