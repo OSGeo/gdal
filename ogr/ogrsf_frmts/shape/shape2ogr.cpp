@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.31  2004/01/16 22:40:40  warmerda
+ * any inner rings not assigned to a polygo are promoted to be outer rings
+ *
  * Revision 1.30  2003/12/11 19:19:40  warmerda
  * Fixed leak of geometry objects when building multipolygons.
  *
@@ -453,8 +456,6 @@ OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape )
 	    /* In theory, it may also happen, that vertex touching outer ring falls outside its outer */
 	    /* ring and inside another (incorrect). */ 
 	    /* The problem is how to find a point on inner ring which doesn't lie on outer ring. */
-
-	    /* All inner rings for which outer ring was not find are later added to first outer ring */
 	    for( iRing = 0; iRing < psShape->nParts; iRing++ ) { /* cycle through inner rings */
 		int  start, end;
 		
@@ -486,6 +487,16 @@ OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape )
 			break;
 	        }
 	    }
+
+            /* promote any unassigned inner rings to be outside rings */
+            
+            for ( iRing = 0; iRing < psShape->nParts; iRing++ ) { /* outer rings */
+                if( direction[iRing] != 1 && outside[iRing] == -1 )
+                {
+                    direction[iRing] = 1; /* this isn't exactly true! */
+                    outer[nOuter++] = iRing;
+                }
+            }
 
 	    if ( nOuter == 1 ) { /* One outer ring and more inner rings */
 		OGRPolygon    *poOGRPoly;
@@ -523,8 +534,7 @@ OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape )
 
 		    /* Inner */
 		    for( int iRing2 = 0; iRing2 < psShape->nParts; iRing2++ ) {
-			if ( outside[iRing2] == oRing 
-			     || ( iRing == 0 && direction[iRing2] == -1 && outside[iRing2] == -1 ) ) {
+			if ( outside[iRing2] == oRing ) {
 			    poRing = CreateLinearRing ( psShape, iRing2 );
 			    poOGRPoly->addRingDirectly( poRing );
 			}
