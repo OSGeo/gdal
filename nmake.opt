@@ -3,7 +3,7 @@
 # Edit as required. GDAL_HOME is used for convenience here,
 # but this particular relative organization is not mandatory.
 
-GDAL_HOME = "C:\GDALBuild"
+GDAL_HOME = "C:\warmerda\bld"
 BINDIR = $(GDAL_HOME)\bin
 PY_INST_DIR = $(GDAL_HOME)\pymod
 LIBDIR = $(GDAL_HOME)\lib
@@ -11,13 +11,15 @@ INCDIR = $(GDAL_HOME)\include
 DATADIR = $(GDAL_HOME)\data
 HTMLDIR = $(GDAL_HOME)\html
 
+ORACLE_HOME =	C:/Software/Oracle/Product/10.1.0/db_1
+
 # Set this to the installed directory containing python.  If you don't
 # have python just let it point to a directory that does not exist (as now). 
-PYDIR   =	"D:\Program Files\Python22"
+PYDIR   =	"C:\Software\Python24"
 
 # Uncomment the first for an optimized build or the second for a debug build.
-OPTFLAGS=	/nologo /MD /GX /Ox 
-#OPTFLAGS=	/nologo /MD /GX /Zi /Fd$(GDAL_ROOT)\gdal.pdb
+#OPTFLAGS=	/nologo /MD /GX /Ox
+OPTFLAGS=	/nologo /MD /GX /Zi /Fd$(GDAL_ROOT)\gdal.pdb
 
 # Version number embedded in DLL name. 
 VERSION =	12
@@ -65,9 +67,9 @@ JPEG_SUPPORTED = 1
 #GEOTIFF_LIB =   C:/warmerda/libgeotiff/geotiff_i.lib
 
 # Uncomment the following and update to enable ECW support.
-#ECWDIR  = 	D:\Software\ECW_SDK
-#ECWLIB  =       $(ECWDIR)\lib\NCSEcw.lib $(ECWDIR)\lib\NCSEcwC.lib \
-#		$(ECWDIR)\lib\NCSUtil.lib
+ECWDIR  = 	C:\warmerda\supportlibs\ECWSDK3.1b
+ECWLIB  =       $(ECWDIR)\lib\NCSEcw.lib $(ECWDIR)\lib\NCSEcwC.lib \
+		$(ECWDIR)\lib\NCSUtil.lib
 
 # Uncomment the following and update to enable OGDI support.
 #OGDIDIR =	D:\warmerda\iii\devdir
@@ -153,13 +155,17 @@ OCI_LIB =	$(ORACLE_HOME)\oci\lib\msvc\ociw32.lib \
 		$(ORACLE_HOME)\oci\lib\msvc\oci.lib
 !ENDIF
 
+# Uncomment for GEOS support
+GEOS_CFLAGS = -Ic:/warmerda/geos/source/headers -DHAVE_GEOS
+GEOS_LIB     = C:/warmerda/geos/source/geos.lib
+
 # Any extra libraries needed on this platform?
 ADD_LIBS	=
 
 # Comment out the following if you want to build with Python support, but
 # you don't have Numeric Python installed (with include files).  Numeric
 # integration may not work.
-HAVE_NUMPY=1
+#HAVE_NUMPY=1
 
 ########### END OF STUFF THAT NORMALLY NEEDS TO BE UPDATED ##################
 
@@ -173,6 +179,7 @@ INC	=	-I$(GDAL_ROOT)\port -I$(GDAL_ROOT)\ogr -I$(GDAL_ROOT)\gcore \
 		-I$(GDAL_ROOT)\alg
 
 #LINKER_FLAGS =	/NODEFAULTLIB:LIBC 
+#LINKER_FLAGS = /debug
 
 CFLAGS	=	$(OPTFLAGS) $(INC) $(EXTRAFLAGS)
 MAKE	=	nmake /nologo
@@ -194,8 +201,8 @@ ODBCLIB = odbc32.lib
 EXTERNAL_LIBS =	$(OGDILIB) $(XERCES_LIB) $(OCI_LIB) $(PG_LIB) $(ODBCLIB) \
 		$(ECWLIB) $(HDF4_LIB) $(FME_LIB) $(JASPER_LIB) $(MRSID_LIB) \
 		$(FITS_LIB) $(JPEG_LIB) $(PNG_LIB) $(NETCDF_LIB) $(PROJ4_LIB) \
-		$(GEOTIFF_LIB) $(TIFF_LIB) $(PROJ_LIB) $(SQLITE_LIB) \
-		$(MYSQL_LIB) $(ADD_LIBS)
+		$(GEOTIFF_LIB) $(TIFF_LIB) $(PROJ_LIBX) $(SQLITE_LIB) \
+		$(MYSQL_LIB) $(GEOS_LIB) $(ADD_LIBS)
 
 .c.obj:	
 	$(CC) $(CFLAGS) /c $*.c
