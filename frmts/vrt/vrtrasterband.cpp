@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2002/12/13 15:07:07  warmerda
+ * fixed bug in IReadBlock
+ *
  * Revision 1.9  2002/12/04 03:12:57  warmerda
  * Fixed some bugs in last change.
  *
@@ -931,8 +934,8 @@ CPLErr VRTRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                    void * pImage )
 
 {
-    return IRasterIO( GF_Read, 0, nBlockYOff, nBlockXSize, 1, 
-                      pImage, nBlockXSize, 1, eDataType, 
+    return IRasterIO( GF_Read, 0, nBlockYOff, nBlockXSize, nBlockYSize, 
+                      pImage, nBlockXSize, nBlockYSize, eDataType, 
                       GDALGetDataTypeSize(eDataType)/8, 0 );
 }
 
