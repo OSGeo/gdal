@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2001/08/24 16:30:55  warmerda
+ * added DDFRecord update in place methods for S57 updating
+ *
  * Revision 1.10  2001/07/18 04:51:57  warmerda
  * added CPL_CVSID
  *
@@ -660,6 +663,406 @@ DDFRecord * DDFRecord::Clone()
     poModule->AddCloneRecord( poNR );
 
     return poNR;
+}
+
+/************************************************************************/
+/*                              CloneOn()                               */
+/************************************************************************/
+
+/**
+ * Recreate a record referencing another module.
+ *
+ * Works similarly to the DDFRecord::Clone() method, but creates the
+ * new record with reference to a different DDFModule.  All DDFFieldDefn
+ * references are transcribed onto the new module based on field names.
+ * If any fields don't have a similarly named field on the target module
+ * the operation will fail.  No validation of field types and properties
+ * is done, but this operation is intended only to be used between 
+ * modules with matching definitions of all affected fields. 
+ *
+ * The new record will be managed as a clone by the target module in
+ * a manner similar to regular clones. 
+ *
+ * @param poTargetModule the module on which the record copy should be
+ * created.
+ *
+ * @return NULL on failure or a pointer to the cloned record.
+ */
+
+DDFRecord *DDFRecord::CloneOn( DDFModule *poTargetModule )
+
+{
+/* -------------------------------------------------------------------- */
+/*      Verify that all fields have a corresponding field definition    */
+/*      on the target module.                                           */
+/* -------------------------------------------------------------------- */
+    int		i;
+
+    for( i = 0; i < nFieldCount; i++ )
+    {
+        DDFFieldDefn	*poDefn = paoFields[i].GetFieldDefn();
+
+        if( poTargetModule->FindFieldDefn( poDefn->GetName() ) == NULL )
+            return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Create a clone.                                                 */
+/* -------------------------------------------------------------------- */
+    DDFRecord	*poClone;
+
+    poClone = Clone();
+
+/* -------------------------------------------------------------------- */
+/*      Update all internal information to reference other module.      */
+/* -------------------------------------------------------------------- */
+    for( i = 0; i < nFieldCount; i++ )
+    {
+        DDFField	*poField = poClone->paoFields+i;
+        DDFFieldDefn	*poDefn;
+
+        poDefn = poTargetModule->FindFieldDefn( 
+            poField->GetFieldDefn()->GetName() );
+        
+        poField->Initialize( poDefn, poField->GetData(), 
+                             poField->GetDataSize() );
+    }
+
+    poModule = poTargetModule;
+
+    return poClone;
+}
+
+
+/************************************************************************/
+/*                            DeleteField()                             */
+/************************************************************************/
+
+/**
+ * Delete a field instance from a record.
+ *
+ * Remove a field from this record, cleaning up the data            
+ * portion and repacking the fields list.  We don't try to          
+ * reallocate the data area of the record to be smaller.            
+ *                                                                       
+ * NOTE: This method doesn't actually remove the header             
+ * information for this field from the record tag list yet.        
+ * This should be added if the resulting record is even to be      
+ * written back to disk!                                           
+ *
+ * @param poTarget the field instance on this record to delete.
+ *
+ * @return TRUE on success, or FALSE on failure.  Failure can occur if 
+ * poTarget isn't really a field on this record.
+ */
+
+int DDFRecord::DeleteField( DDFField *poTarget )
+
+{
+    int		iTarget, i;
+
+/* -------------------------------------------------------------------- */
+/*      Find which field we are to delete.                              */
+/* -------------------------------------------------------------------- */
+    for( iTarget = 0; iTarget < nFieldCount; iTarget++ )
+    {
+        if( paoFields + iTarget == poTarget )
+            break;
+    }
+
+    if( iTarget == nFieldCount )
+        return FALSE;
+
+/* -------------------------------------------------------------------- */
+/*      Change the target fields data size to zero.  This takes care    */
+/*      of repacking the data array, and updating all the following     */
+/*      field data pointers.                                            */
+/* -------------------------------------------------------------------- */
+    ResizeField( poTarget, 0 );
+
+/* -------------------------------------------------------------------- */
+/*      remove the target field, moving down all the other fields       */
+/*      one step in the field list.                                     */
+/* -------------------------------------------------------------------- */
+    for( i = iTarget; i < nFieldCount-1; i++ )
+    {
+        paoFields[i] = paoFields[i+1];
+    }
+
+    nFieldCount--;
+
+    return TRUE;
+}
+
+/************************************************************************/
+/*                            ResizeField()                             */
+/************************************************************************/
+
+/**
+ * Alter field data size within record.
+ *
+ * This method will rearrange a DDFRecord altering the amount of space
+ * reserved for one of the existing fields.  All following fields will
+ * be shifted accordingly.  This includes updating the DDFField infos, 
+ * and actually moving stuff within the data array after reallocating
+ * to the desired size.
+ *
+ * @param poField the field to alter.
+ * @param nNewDataSize the number of data bytes to be reserved for the field.
+ *
+ * @return TRUE on success or FALSE on failure. 
+ */
+
+int DDFRecord::ResizeField( DDFField *poField, int nNewDataSize )
+
+{
+    int		iTarget, i;
+
+/* -------------------------------------------------------------------- */
+/*      Find which field we are to resize.                              */
+/* -------------------------------------------------------------------- */
+    for( iTarget = 0; iTarget < nFieldCount; iTarget++ )
+    {
+        if( paoFields + iTarget == poField )
+            break;
+    }
+
+    if( iTarget == nFieldCount )
+        return FALSE;
+
+/* -------------------------------------------------------------------- */
+/*      Reallocate the data buffer accordingly.                         */
+/* -------------------------------------------------------------------- */
+    int	nBytesToAdd = nNewDataSize - poField->GetDataSize();
+
+    pachData = (char *) CPLRealloc(pachData, nDataSize + nBytesToAdd );
+    nDataSize += nBytesToAdd;
+
+/* -------------------------------------------------------------------- */
+/*      Update the target fields info.                                  */
+/* -------------------------------------------------------------------- */
+    poField->Initialize( poField->GetFieldDefn(),
+                         poField->GetData(), 
+                         poField->GetDataSize() + nBytesToAdd );
+
+/* -------------------------------------------------------------------- */
+/*      Shift all following fields down, and update their data          */
+/*      locations.                                                      */
+/* -------------------------------------------------------------------- */
+    if( nBytesToAdd < 0 )
+    {
+        for( i = iTarget+1; i < nFieldCount; i++ )
+        {
+            char *pszOldDataLocation;
+
+            pszOldDataLocation = (char *) paoFields[i].GetData();
+
+            paoFields[i].Initialize( paoFields[i].GetFieldDefn(), 
+                                     pszOldDataLocation + nBytesToAdd,
+                                     paoFields[i].GetDataSize() ); 
+            memmove( (void *) paoFields[i].GetData(), pszOldDataLocation,
+                     paoFields[i].GetDataSize() );
+        }
+    }
+    else
+    {
+        for( i = nFieldCount-1; i > iTarget; i-- )
+        {
+            char *pszOldDataLocation;
+
+            pszOldDataLocation = (char *) paoFields[i].GetData();
+
+            paoFields[i].Initialize( paoFields[i].GetFieldDefn(), 
+                                     pszOldDataLocation + nBytesToAdd,
+                                     paoFields[i].GetDataSize() ); 
+            memmove( (void *) paoFields[i].GetData(), pszOldDataLocation,
+                     paoFields[i].GetDataSize() );
+        }
+    }
+
+    return TRUE;
+}
+
+/************************************************************************/
+/*                              AddField()                              */
+/************************************************************************/
+
+/**
+ * Add a new field to record.
+ *
+ * Add a new zero sized field to the record.  The new field is always
+ * added at the end of the record. 
+ *
+ * NOTE: This method doesn't currently update the header information for
+ * the record to include the field information for this field, so the
+ * resulting record image isn't suitable for writing to disk.  However, 
+ * everything else about the record state should be updated properly to 
+ * reflect the new field.
+ *
+ * @param poDefn the definition of the field to be added.
+ *
+ * @return the field object on success, or NULL on failure.
+ */
+
+DDFField *DDFRecord::AddField( DDFFieldDefn *poDefn )
+
+{
+    if( nFieldCount == 0 )
+        return FALSE;
+
+/* -------------------------------------------------------------------- */
+/*      Reallocate the fields array larger by one, and initialize       */
+/*      the new field.                                                  */
+/* -------------------------------------------------------------------- */
+    DDFField	*paoNewFields;
+
+    paoNewFields = new DDFField[nFieldCount+1];
+    memcpy( paoNewFields, paoFields, sizeof(DDFField) * nFieldCount );
+    delete[] paoFields;
+    paoFields = paoNewFields;
+    nFieldCount++;
+
+/* -------------------------------------------------------------------- */
+/*      Initialize the new field properly.                              */
+/* -------------------------------------------------------------------- */
+    paoFields[nFieldCount-1].Initialize( 
+        poDefn, 
+        paoFields[nFieldCount-2].GetData()
+        + paoFields[nFieldCount-2].GetDataSize(), 
+        0 );
+
+    return paoFields + (nFieldCount - 1);
+}
+
+/************************************************************************/
+/*                            SetFieldRaw()                             */
+/************************************************************************/
+
+/**
+ * Set the raw contents of a field instance.
+ *
+ * @param poField the field to set data within. 
+ * @param iIndexWithinField The instance of this field to replace.  Must
+ * be a value between 0 and GetRepeatCount().  If GetRepeatCount() is used, a
+ * new instance of the field is appeneded.
+ * @param pachRawData the raw data to replace this field instance with.
+ * @param int nRawDataSize the number of bytes pointed to by pachRawData.
+ *
+ * @return TRUE on success or FALSE on failure.
+ */
+
+int
+DDFRecord::SetFieldRaw( DDFField *poField, int iIndexWithinField,
+                        char *pachRawData, int nRawDataSize )
+
+{
+    int		iTarget, nRepeatCount;
+
+/* -------------------------------------------------------------------- */
+/*      Find which field we are to update.                              */
+/* -------------------------------------------------------------------- */
+    for( iTarget = 0; iTarget < nFieldCount; iTarget++ )
+    {
+        if( paoFields + iTarget == poField )
+            break;
+    }
+
+    if( iTarget == nFieldCount )
+        return FALSE;
+
+    nRepeatCount = poField->GetRepeatCount();
+
+    if( iIndexWithinField < 0 || iIndexWithinField > nRepeatCount )
+        return FALSE;
+
+/* -------------------------------------------------------------------- */
+/*      Are we adding an instance?  This is easier and different        */
+/*      than replacing an existing instance.                            */
+/* -------------------------------------------------------------------- */
+    if( iIndexWithinField == nRepeatCount )
+    {
+        char	*pachFieldData;
+        int	nOldSize;
+
+        if( !poField->GetFieldDefn()->IsRepeating() )
+            return FALSE;
+
+        nOldSize = poField->GetDataSize();
+        if( !ResizeField( poField, nOldSize + nRawDataSize ) )
+            return FALSE;
+
+        pachFieldData = (char *) poField->GetData();
+
+        CPLAssert( pachFieldData[nOldSize-1] == DDF_FIELD_TERMINATOR );
+        
+        memcpy( pachFieldData + nOldSize - 1, 
+                pachRawData, nRawDataSize );
+        pachFieldData[nOldSize+nRawDataSize-1] = DDF_FIELD_TERMINATOR;
+
+        return TRUE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Get a pointer to the start of the existing data for this        */
+/*      iteration of the field.                                         */
+/* -------------------------------------------------------------------- */
+    int		nBytesRemaining1, nBytesRemaining2, nInstanceSize;
+    const char *pachData;
+    DDFSubfieldDefn *poFirstSubfield;
+
+    poFirstSubfield = poField->GetFieldDefn()->GetSubfield(0);
+
+    pachData = 
+        poField->GetSubfieldData(poFirstSubfield, &nBytesRemaining1,
+                                 iIndexWithinField);
+
+/* -------------------------------------------------------------------- */
+/*      Figure out the size of the entire field instance, including     */
+/*      unit terminators, but not any trailing field terminator.        */
+/* -------------------------------------------------------------------- */
+    DDFSubfieldDefn *poLastSubfield;
+    int              nLastSubfieldWidth;
+    const char	    *pachLastData;
+
+    poLastSubfield = poField->GetFieldDefn()->GetSubfield(
+        poField->GetFieldDefn()->GetSubfieldCount()-1);
+    
+    pachLastData = 
+        poField->GetSubfieldData( poLastSubfield, &nBytesRemaining2, 
+                                  iIndexWithinField );
+    poLastSubfield->GetDataLength( pachLastData, nBytesRemaining2, 
+                                   &nLastSubfieldWidth );
+    
+    nInstanceSize = nBytesRemaining1 - (nBytesRemaining2 - nLastSubfieldWidth);
+
+/* -------------------------------------------------------------------- */
+/*      Create new image of this whole field.                           */
+/* -------------------------------------------------------------------- */
+    char	*pachNewImage;
+    int		nPreBytes, nPostBytes, nNewFieldSize;
+
+    nNewFieldSize = poField->GetDataSize() - nInstanceSize + nRawDataSize;
+
+    pachNewImage = (char *) CPLMalloc(nNewFieldSize);
+
+    nPreBytes = pachData - poField->GetData();
+    nPostBytes = poField->GetDataSize() - nPreBytes - nInstanceSize;
+
+    memcpy( pachNewImage, poField->GetData(), nPreBytes );
+    memcpy( pachNewImage + nPreBytes + nRawDataSize, 
+            poField->GetData() + nPreBytes + nInstanceSize,
+            nPostBytes );
+    memcpy( pachNewImage + nPreBytes, pachRawData, nRawDataSize );
+
+/* -------------------------------------------------------------------- */
+/*      Resize the field to the desired new size.                       */
+/* -------------------------------------------------------------------- */
+    ResizeField( poField, nNewFieldSize );
+
+    memcpy( (void *) poField->GetData(), pachNewImage, nNewFieldSize );
+    CPLFree( pachNewImage );
+
+    return TRUE;
 }
 
 

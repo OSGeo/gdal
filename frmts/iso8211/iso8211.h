@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2001/08/24 16:30:55  warmerda
+ * added DDFRecord update in place methods for S57 updating
+ *
  * Revision 1.11  2000/09/19 14:08:51  warmerda
  * keep and report _extendedCharSet
  *
@@ -375,6 +378,7 @@ class DDFRecord
                 ~DDFRecord();
 
     DDFRecord  *Clone();
+    DDFRecord  *CloneOn( DDFModule * );
     
     void        Dump( FILE * );
 
@@ -406,6 +410,13 @@ class DDFRecord
      */
 
     DDFModule * GetModule() { return poModule; }
+
+    int ResizeField( DDFField *poField, int nNewDataSize );
+    int DeleteField( DDFField *poField );
+    DDFField* AddField( DDFFieldDefn * );
+
+    int SetFieldRaw( DDFField *poField, int iIndexWithinField, 
+                     char *pachRawData, int nRawDataSize );
 
     // This is really just for the DDFModule class.
     int         Read();
@@ -480,3 +491,6 @@ class DDFField
 
 
 #endif /* ndef _ISO8211_H_INCLUDED */
+
+
+
