@@ -7,7 +7,7 @@ GDAL_ROOT = 	..
 
 !INCLUDE ..\nmake.opt
 
-OLE_LIBS =	$(MSDASDK)\lib\oledb\oledb.lib ole32.lib oleaut32.lib 
+OLE_LIBS =	oledb.lib ole32.lib oleaut32.lib 
 
 ALL_LIBS =	$(OLE_LIBS) ..\port\*.obj $(LIBS)
 
@@ -33,4 +33,4 @@ test1.exe:	test1.obj $(OBJ_OGR)
 	cl test1.obj $(OBJ_OGR) $(ALL_LIBS)
 
 clean:
-	rm *.obj *.exe
+	del *.obj *.exe
