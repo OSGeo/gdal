@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.15  2003/07/17 10:15:40  dron
+ * CSLTestBoolean() added.
+ *
  * Revision 1.14  2003/03/11 21:33:03  warmerda
  * added URL encode/decode support, untested
  *
@@ -130,6 +133,7 @@ char CPL_DLL **CSLInsertString(char **papszStrList, int nInsertAtLineNo,
 char CPL_DLL **CSLRemoveStrings(char **papszStrList, int nFirstLineToDelete,
                          int nNumToRemove, char ***ppapszRetStrings);
 int CPL_DLL CSLFindString( char **, const char * );
+int CPL_DLL CSLTestBoolean( const char *pszValue );
 int CPL_DLL CSLFetchBoolean( char **papszStrList, const char *pszKey, 
                              int bDefault );
 
