@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.4  2002/03/11 17:09:42  warmerda
+ * added multipolygon support
+ *
  * Revision 1.3  2002/03/07 22:37:10  warmerda
  * use ogr_gml_geom.h
  *
@@ -400,6 +403,43 @@ static OGRGeometry *GML2OGRGeometry_XMLNode( CPLXMLNode *psNode )
         }
 
         return poPoint;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      MultiPolygon                                                    */
+/* -------------------------------------------------------------------- */
+    if( EQUAL(pszBaseGeometry,"MultiPolygon") )
+    {
+        CPLXMLNode *psChild;
+        OGRMultiPolygon *poMPoly = new OGRMultiPolygon();
+
+        // Find all inner rings 
+        for( psChild = psNode->psChild; 
+             psChild != NULL;
+             psChild = psChild->psNext ) 
+        {
+            if( psChild->eType == CXT_Element
+                && EQUAL(BareGMLElement(psChild->pszValue),"polygonMember") )
+            {
+                OGRPolygon *poPolygon;
+
+                poPolygon = (OGRPolygon *) 
+                    GML2OGRGeometry_XMLNode( psChild->psChild );
+                if( !EQUAL(poPolygon->getGeometryName(),"POLYGON") )
+                {
+                    CPLError( CE_Failure, CPLE_AppDefined, 
+                              "Got %s geometry as polygonMember instead of POLYGON.", 
+                              poPolygon->getGeometryName() );
+                    delete poPolygon;
+                    delete poMPoly;
+                    return NULL;
+                }
+
+                poMPoly->addGeometryDirectly( poPolygon );
+            }
+        }
+
+        return poMPoly;
     }
 
     CPLError( CE_Failure, CPLE_AppDefined, 
