@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.50  2002/06/12 21:13:27  warmerda
+ * use metadata based driver info
+ *
  * Revision 1.49  2002/05/28 18:55:46  warmerda
  * added GDALOpenShared() and GDALDumpOpenDatasets
  *
@@ -311,6 +314,23 @@ void CPL_DLL GDALDestroyScaledProgress( void * );
 /*      Registration/driver related.                                    */
 /* ==================================================================== */
 
+typedef struct {
+    char      *pszOptionName;
+    char      *pszValueType;   /* "boolean", "int", "float", "string", 
+                                  "string-select" */
+    char      *pszDescription;
+    char      **papszOptions;
+} GDALOptionDefinition;
+
+#define GDAL_DMD_LONGNAME "DMD_LONGNAME"
+#define GDAL_DMD_HELPTOPIC "DMD_HELPTOPIC"
+#define GDAL_DMD_MIMETYPE "DMD_MIMETYPE"
+#define GDAL_DMD_EXTENSION "DMD_EXTENSION"
+#define GDAL_DMD_CREATIONOPTIONLIST "DMD_CREATIONOPTIONLIST" 
+
+#define GDAL_DCAP_CREATE     "DCAP_CREATE"
+#define GDAL_DCAP_CREATECOPY "DCAP_CREATECOPY"
+
 void CPL_DLL GDALAllRegister( void );
 
 GDALDatasetH CPL_DLL GDALCreate( GDALDriverH hDriver,
@@ -330,6 +350,7 @@ int         CPL_DLL GDALRegisterDriver( GDALDriverH );
 void        CPL_DLL GDALDeregisterDriver( GDALDriverH );
 CPLErr	    CPL_DLL GDALDeleteDataset( GDALDriverH, const char * );
 
+/* The following are deprecated */
 const char CPL_DLL *GDALGetDriverShortName( GDALDriverH );
 const char CPL_DLL *GDALGetDriverLongName( GDALDriverH );
 const char CPL_DLL *GDALGetDriverHelpTopic( GDALDriverH );

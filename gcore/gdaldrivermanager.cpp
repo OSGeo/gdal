@@ -25,6 +25,9 @@
  * The GDALDriverManager class from gdal_priv.h.
  * 
  * $Log$
+ * Revision 1.10  2002/06/12 21:13:27  warmerda
+ * use metadata based driver info
+ *
  * Revision 1.9  2002/05/14 21:38:32  warmerda
  * make INST_DATA overidable with binary patch
  *
@@ -254,7 +257,7 @@ int GDALDriverManager::RegisterDriver( GDALDriver * poDriver )
 /*      If it is already registered, just return the existing           */
 /*      index.                                                          */
 /* -------------------------------------------------------------------- */
-    if( GetDriverByName( poDriver->pszShortName ) != NULL )
+    if( GetDriverByName( poDriver->GetDescription() ) != NULL )
     {
         int		i;
 
@@ -275,6 +278,12 @@ int GDALDriverManager::RegisterDriver( GDALDriver * poDriver )
 
     papoDrivers[nDrivers] = poDriver;
     nDrivers++;
+
+    if( poDriver->pfnCreate != NULL )
+        poDriver->SetMetadataItem( GDAL_DCAP_CREATE, "YES" );
+    
+    if( poDriver->pfnCreateCopy != NULL )
+        poDriver->SetMetadataItem( GDAL_DCAP_CREATECOPY, "YES" );
 
     return( nDrivers - 1 );
 }
@@ -358,7 +367,7 @@ GDALDriver * GDALDriverManager::GetDriverByName( const char * pszName )
 
     for( i = 0; i < nDrivers; i++ )
     {
-        if( EQUAL(papoDrivers[i]->pszShortName, pszName) )
+        if( EQUAL(papoDrivers[i]->GetDescription(), pszName) )
             return papoDrivers[i];
     }
 

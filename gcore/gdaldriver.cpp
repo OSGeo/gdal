@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.24  2002/06/12 21:13:27  warmerda
+ * use metadata based driver info
+ *
  * Revision 1.23  2001/12/15 15:47:54  warmerda
  * don't replace existing descriptions
  *
@@ -110,10 +113,6 @@ CPL_CVSID("$Id$");
 GDALDriver::GDALDriver()
 
 {
-    pszShortName = NULL;
-    pszLongName = NULL;
-    pszHelpTopic = NULL;
-
     pfnOpen = NULL;
     pfnCreate = NULL;
     pfnDelete = NULL;
@@ -171,7 +170,7 @@ GDALDataset * GDALDriver::Create( const char * pszFilename,
         GDALDataset *poDS;
 
         CPLDebug( "GDAL", "GDALDriver::Create(%s,%s,%d,%d,%d,%s,%p)",
-                  pszShortName, pszFilename, nXSize, nYSize, nBands, 
+                  GetDescription(), pszFilename, nXSize, nYSize, nBands, 
                   GDALGetDataTypeName( eType ), 
                   papszParmList );
               
@@ -429,7 +428,7 @@ CPLErr GDALDriver::Delete( const char * pszFilename )
             {
                 CPLError( CE_Failure, CPLE_AppDefined,
                           "%s: Attempt to unlink %s failed.\n",
-                          pszShortName, pszFilename );
+                          GetDescription(), pszFilename );
                 return CE_Failure;
             }
         }
@@ -437,7 +436,7 @@ CPLErr GDALDriver::Delete( const char * pszFilename )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                       "%s: Unable to delete %s, not a file.\n",
-                      pszShortName, pszFilename );
+                      GetDescription(), pszFilename );
             return CE_Failure;
         }
     }
@@ -463,7 +462,7 @@ const char * GDALGetDriverShortName( GDALDriverH hDriver )
     if( hDriver == NULL )
         return NULL;
     else
-        return ((GDALDriver *) hDriver)->pszShortName;
+        return ((GDALDriver *) hDriver)->GetDescription();
 }
 
 /************************************************************************/
@@ -475,8 +474,14 @@ const char * GDALGetDriverLongName( GDALDriverH hDriver )
 {
     if( hDriver == NULL )
         return NULL;
+
+    const char *pszLongName = 
+        ((GDALDriver *) hDriver)->GetMetadataItem( GDAL_DMD_LONGNAME );
+
+    if( pszLongName == NULL )
+        return "";
     else
-        return ((GDALDriver *) hDriver)->pszLongName;
+        return pszLongName;
 }
 
 /************************************************************************/
@@ -488,7 +493,7 @@ const char * GDALGetDriverHelpTopic( GDALDriverH hDriver )
 {
     if( hDriver == NULL )
         return NULL;
-    else
-        return ((GDALDriver *) hDriver)->pszHelpTopic;
+
+    return ((GDALDriver *) hDriver)->GetMetadataItem( GDAL_DMD_HELPTOPIC );
 }
 
