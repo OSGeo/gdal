@@ -1,3 +1,9 @@
+2002-07-23  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* added configure, and make support for ECW on Unix (currently
+	only available on Solaris and MacOS X).  Not tested for MacOS X - 
+	likely needs for for that platform.
+
 2002-07-16  Andrey Kiselev  <dron@remotesensing.org>
 	
 	* /gdal/frmts/hdf4/hdf4dataset.cpp, hdf4imagedataset.cpp,
