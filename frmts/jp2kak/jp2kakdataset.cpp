@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.17  2003/10/14 17:46:15  warmerda
+ * Added world file support.
+ *
  * Revision 1.16  2003/09/11 20:09:42  warmerda
  * ensure pszExtension is initialized
  *
@@ -1258,6 +1261,9 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
             CPLFree( pabyGTData );
             pabyGTData = NULL;
         }
+        else
+            GDALReadWorldFile( poOpenInfo->pszFilename, ".wld", 
+                               poDS->adfGeoTransform );
 
         if( poDS->pszProjection == NULL )
             poDS->pszProjection = CPLStrdup("");
