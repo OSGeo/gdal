@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  1999/03/15 20:06:36  warmerda
+ * Changed TIFF_BuildOverviews() to TIFFBuildOverviews().
+ *
  * Revision 1.9  1999/03/11 20:56:34  warmerda
  * Patched up Usage a bit.
  *
@@ -62,7 +65,7 @@
 CPL_C_START
 CPLErr ImagineToGeoTIFFProjection( HFAHandle hHFA, TIFF * hTIFF );
 CPLErr CopyPyramidsToTiff( HFAHandle, HFABand *, TIFF *, int );
-void 	      TIFF_BuildOverviews( const char *, int, int * );
+void   TIFFBuildOverviews( const char *, int, int * );
 CPL_C_END
 
 static void ImagineToGeoTIFF( HFAHandle, HFABand *, HFABand *, HFABand *,
@@ -325,7 +328,7 @@ int main( int nArgc, char ** papszArgv )
             if( gnReportOn )
                 printf( "  Building %d overviews.\n", nOverviewCount );
             
-            TIFF_BuildOverviews( szFilename, nOverviewCount, anOverviews );
+            TIFFBuildOverviews( szFilename, nOverviewCount, anOverviews );
         }
     }
 
@@ -361,7 +364,7 @@ int main( int nArgc, char ** papszArgv )
                 if( gnReportOn )
                     printf( "  Building %d overviews.\n", nOverviewCount );
             
-                TIFF_BuildOverviews( szFilename, nOverviewCount, anOverviews );
+                TIFFBuildOverviews( szFilename, nOverviewCount, anOverviews );
             }
         }
     }
