@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2000/12/05 23:07:43  warmerda
+ * Check for CE_Failure, not just an error being set.
+ *
  * Revision 1.3  2000/08/30 09:13:34  warmerda
  * Set INST_DATA as FinderLocation
  *
@@ -117,7 +120,7 @@ OGRDataSource *OGRSFDriverRegistrar::Open( const char * pszName,
             return poDS;
         }
 
-        if( CPLGetLastErrorNo() != CPLE_None )
+        if( CPLGetLastErrorType() == CE_Failure )
             return NULL;
     }
 
