@@ -103,7 +103,6 @@ install-actions:
 	(cd frmts; $(MAKE) install)
 	(cd ogr; $(MAKE) install)
 	(cd apps; $(MAKE) install)
-	(cd apps; $(MAKE) install)
 ifneq ($(PYTHON),no)
 	(cd pymod; $(MAKE) install)
 endif
