@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.4  2002/09/06 10:42:23  dron
+ * Georeferencing for ASTER Level 1b datasets and ASTER DEMs.
+ *
  * Revision 1.3  2002/07/23 12:27:58  dron
  * General Raster Interface support added.
  *
@@ -40,18 +43,21 @@
  *
  */
 
-typedef enum
+typedef enum			// Types of subdatasets:
 {
-    HDF4_SDS,
-    HDF4_GR,
+    HDF4_SDS,			// Scientific Dataset
+    HDF4_GR,			// General Raster Image
     HDF4_UNKNOWN
 } HDF4SubdatasetType;
 
-typedef enum
+typedef enum			// Types of data products:
 {
     SEAWIFS_L1A,		// SeaWiFS Level-1A Data
     SEAWIFS_L2,			// SeaWiFS Level-2 Data
     SEAWIFS_L3,			// SeaWiFS Level-3 Standard Mapped Image
+    ASTER_L1A,			// ASTER Level 1A
+    ASTER_L1B,			// ASTER Level 1B
+    AST14DEM,			// ASTER DEM
     MODIS_L1B,
     MOD02QKM_L1B,
     MODIS_UNK,
@@ -71,7 +77,7 @@ class HDF4Dataset : public GDALDataset
 	  
     FILE	*fp;
     int32	hHDF4, hSD, hGR;
-    int32	nDatasets, nImages, nFileAttrs;
+    int32	nDatasets, nImages;
     HDF4Datatype iDataType;
     char	*pszDataType;
     
@@ -83,8 +89,10 @@ class HDF4Dataset : public GDALDataset
     
     const char *HDF4Dataset::GetDataTypeName( int32 );
     virtual char **GetMetadata( const char * pszDomain = "" );
-    void TranslateHDF4Attributes( int32, int32, char *, int32, int32 );
-    void TranslateHDF4EOSAttributes( int32, int32, int32 );
+    void TranslateHDF4Attributes( int32, int32, char *, int32,
+        int32, const char *pszDomain = NULL );
+    void TranslateHDF4EOSAttributes( int32, int32, int32, const char *pszDomain = NULL );
+    CPLErr ReadGlobalAttributes( int32, char *pszDomain = NULL );
     static GDALDataset *Open( GDALOpenInfo * );
 
 };

@@ -30,6 +30,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.8  2002/09/06 10:42:23  dron
+ * Georeferencing for ASTER Level 1b datasets and ASTER DEMs.
+ *
  * Revision 1.7  2002/09/04 06:50:37  warmerda
  * avoid static driver pointers
  *
@@ -106,7 +109,7 @@ HDF4Dataset::~HDF4Dataset()
 char **HDF4Dataset::GetMetadata( const char *pszDomain )
 
 {
-    if( pszDomain != NULL && EQUAL( pszDomain,"SUBDATASETS" ) )
+    if( pszDomain != NULL && EQUALN( pszDomain, "SUBDATASETS", 11 ) )
         return papszSubDatasets;
     else
         return GDALDataset::GetMetadata( pszDomain );
@@ -374,7 +377,7 @@ char ** SLTokenizeHDFEOSAttrs( const char * pszString )
     
     while( pszString != NULL && *pszString != '\0' )
     {
-        int     bInString = FALSE, bInBraket = FALSE;
+        int     bInString = FALSE, bInBracket = FALSE;
 
         nTokenLen = 0;
         
@@ -383,7 +386,7 @@ char ** SLTokenizeHDFEOSAttrs( const char * pszString )
         {
 
             /* End if this is a delimeter skip it and break. */
-            if( !bInBraket && !bInString && strchr(pszDelimiters, *pszString) != NULL )
+            if( !bInBracket && !bInString && strchr(pszDelimiters, *pszString) != NULL )
             {
                 pszString++;
                 break;
@@ -404,12 +407,12 @@ char ** SLTokenizeHDFEOSAttrs( const char * pszString )
             }
             else if ( *pszString == '(' )
 	    {
-                bInBraket = TRUE;
+                bInBracket = TRUE;
 		continue;
 	    }
 	    else if ( *pszString == ')' )
 	    {
-		bInBraket = FALSE;
+		bInBracket = FALSE;
 		continue;
 	    }
 
@@ -450,7 +453,8 @@ char ** SLTokenizeHDFEOSAttrs( const char * pszString )
 /************************************************************************/
 /*         Translate HDF4-EOS attributes in GDAL metadata items         */
 /************************************************************************/
-void HDF4Dataset::TranslateHDF4EOSAttributes( int32 iHandle, int32 iAttribute, int32 nValues )
+void HDF4Dataset::TranslateHDF4EOSAttributes( int32 iHandle, int32 iAttribute,
+		int32 nValues, const char *pszDomain )
 {
     char	*pszData;
     
@@ -519,19 +523,23 @@ void HDF4Dataset::TranslateHDF4EOSAttributes( int32 iHandle, int32 iAttribute, i
 		    i += j;
 		    i += 2;
 	            pszAttrValue = papszAttrList[i];
-	            SetMetadataItem( pszAttrName, pszAttrValue );
+	            SetMetadataItem( pszAttrName, pszAttrValue, pszDomain );
 		    break;
 	        }
 	    }
 	}
     }
+    
+    CSLDestroy( papszAttrList );
+    CPLFree( pszData );
 }
 
 /************************************************************************/
 /*         Translate HDF4 attributes in GDAL metadata items             */
 /************************************************************************/
 void HDF4Dataset::TranslateHDF4Attributes( int32 iHandle, int32 iAttribute,
-		        char *pszAttrName, int32 iNumType, int32 nValues )
+	        char *pszAttrName, int32 iNumType, int32 nValues,
+		const char *pszDomain )
 {
     int8	*pbData = NULL;
     
@@ -582,47 +590,94 @@ void HDF4Dataset::TranslateHDF4Attributes( int32 iHandle, int32 iAttribute,
     switch (iNumType)
     {
         case DFNT_CHAR8: // The same as DFNT_CHAR
-        SetMetadataItem( pszAttrName, pbData );
+        SetMetadataItem( pszAttrName, pbData, pszDomain );
 	break;
 	case DFNT_UCHAR8: // The same as DFNT_UCHAR
-        SetMetadataItem( pszAttrName, pbData );
+        SetMetadataItem( pszAttrName, pbData, pszDomain );
 	break;
         case DFNT_INT8:
-        SetMetadataItem( pszAttrName, SPrintArray((signed char *)pbData, nValues, ", ") );
+        SetMetadataItem( pszAttrName,
+	    SPrintArray((signed char *)pbData, nValues, ", "), pszDomain );
 	break;
         case DFNT_UINT8:
-        SetMetadataItem( pszAttrName, SPrintArray((GByte *)pbData, nValues, ", ") );
+        SetMetadataItem( pszAttrName,
+	    SPrintArray((GByte *)pbData, nValues, ", "), pszDomain );
 	break;
         case DFNT_INT16:
-        SetMetadataItem( pszAttrName, SPrintArray((GInt16 *)pbData, nValues, ", ") );
+        SetMetadataItem( pszAttrName,
+	    SPrintArray((GInt16 *)pbData, nValues, ", "), pszDomain );
 	break;
         case DFNT_UINT16:
-        SetMetadataItem( pszAttrName, SPrintArray((GUInt16 *)pbData, nValues, ", ") );
+        SetMetadataItem( pszAttrName,
+	    SPrintArray((GUInt16 *)pbData, nValues, ", "), pszDomain );
 	break;
         case DFNT_INT32:
-        SetMetadataItem( pszAttrName, SPrintArray((GInt32 *)pbData, nValues, ", ") );
+        SetMetadataItem( pszAttrName,
+	    SPrintArray((GInt32 *)pbData, nValues, ", "), pszDomain );
 	break;
         case DFNT_UINT32:
-        SetMetadataItem( pszAttrName, SPrintArray((GUInt32 *)pbData, nValues, ", ") );
+        SetMetadataItem( pszAttrName,
+	    SPrintArray((GUInt32 *)pbData, nValues, ", "), pszDomain );
 	break;
         case DFNT_INT64:
-        SetMetadataItem( pszAttrName, SPrintArray((GIntBig *)pbData, nValues, ", ") );
+        SetMetadataItem( pszAttrName,
+	    SPrintArray((GIntBig *)pbData, nValues, ", "), pszDomain );
 	break;
         case DFNT_UINT64:
-        SetMetadataItem( pszAttrName, SPrintArray((GUIntBig *)pbData, nValues, ", ") );
+        SetMetadataItem( pszAttrName,
+	    SPrintArray((GUIntBig *)pbData, nValues, ", "), pszDomain );
 	break;
         case DFNT_FLOAT32:
-        SetMetadataItem( pszAttrName, SPrintArray((float *)pbData, nValues, ", ") );
+        SetMetadataItem( pszAttrName,
+	    SPrintArray((float *)pbData, nValues, ", "), pszDomain );
 	break;
         case DFNT_FLOAT64:
-        SetMetadataItem( pszAttrName, SPrintArray((double *)pbData, nValues, ", ") );
+        SetMetadataItem( pszAttrName,
+	    SPrintArray((double *)pbData, nValues, ", "), pszDomain );
 	break;
 	default:
 	break;
     }
     
-    CPLFree(pbData);
+    CPLFree( pbData );
 }
+
+/************************************************************************/
+/*                          ReadGlobalAttributess()                     */
+/************************************************************************/
+
+CPLErr HDF4Dataset::ReadGlobalAttributes( int32 iHandler, char *pszDomain )
+{
+    int32	iAttribute, nValues, iNumType, nAttributes;
+    char	szAttrName[MAX_NC_NAME];
+
+/* -------------------------------------------------------------------- */
+/*     Obtain number of SDSsand global attributes in input file.        */
+/* -------------------------------------------------------------------- */
+    if ( SDfileinfo( hSD, &nDatasets, &nAttributes ) != 0 )
+	return CE_Failure;
+
+    // Loop trough the all attributes
+    for ( iAttribute = 0; iAttribute < nAttributes; iAttribute++ )
+    {
+        // Get information about the attribute. Note that the first
+        // parameter is an SD interface identifier.
+        SDattrinfo( iHandler, iAttribute, szAttrName, &iNumType, &nValues );
+        if ( EQUALN( szAttrName, "coremetadata.", 13 )    ||
+	     EQUALN( szAttrName, "archivemetadata.", 16 ) ||
+	     EQUALN( szAttrName, "productmetadata.", 16 ) ||
+             EQUALN( szAttrName, "badpixelinformation", 19 ) ||
+	     EQUALN( szAttrName, "product_summary", 15 ) ||
+	     EQUALN( szAttrName, "dem_specific", 12 ) ||
+	     EQUALN( szAttrName, "level_1_carryover", 17 ) )
+            TranslateHDF4EOSAttributes( iHandler, iAttribute, nValues );
+	else if ( !EQUALN( szAttrName, "structmetadata.", 15 ) ) // Not interesting for us
+	    TranslateHDF4Attributes( iHandler, iAttribute, szAttrName,
+				iNumType, nValues );
+     }
+    return CE_None;
+}
+
 /************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
@@ -667,31 +722,10 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
    
 /* -------------------------------------------------------------------- */
-/*     Obtain number of SDSsand global attributes in input file.        */
-/* -------------------------------------------------------------------- */
-    if ( SDfileinfo( poDS->hSD, &poDS->nDatasets, &poDS->nFileAttrs ) != 0 )
-	return NULL;
-
-/* -------------------------------------------------------------------- */
 /*		Now read Global Attributes.				*/
 /* -------------------------------------------------------------------- */
-    int32	iAttribute, nValues, iNumType, nAttrs;
-    char	szAttrName[MAX_NC_NAME];
-
-    // Loop trough the all global file attributes
-    for ( iAttribute = 0; iAttribute < poDS->nFileAttrs; iAttribute++ )
-    {
-        // Get information about the file attribute. Note that the first
-        // parameter is an SD interface identifier.
-        SDattrinfo( poDS->hSD, iAttribute, szAttrName, &iNumType, &nValues );
-        if ( EQUAL( szAttrName, "coremetadata.0" )    ||
-	     EQUAL( szAttrName, "archivemetadata.0" ) ||
-	     EQUALN( szAttrName, "productmetadata.", 16 ) )
-            poDS->TranslateHDF4EOSAttributes( poDS->hSD, iAttribute, nValues );
-	else if ( !EQUALN( szAttrName, "structmetadata.", 15 ) ) // Not interesting
-	    poDS->TranslateHDF4Attributes( poDS->hSD, iAttribute,
-			                   szAttrName, iNumType, nValues );
-     }
+    if ( poDS->ReadGlobalAttributes( poDS->hSD ) != CE_None )
+        return NULL;
 
 /* -------------------------------------------------------------------- */
 /*		Determine type of file we read.				*/
@@ -715,6 +749,24 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
     {
 	poDS->iDataType = SEAWIFS_L3;
 	poDS->pszDataType = "SEAWIFS_L3";
+    }
+    else if ( (pszValue = poDS->GetMetadataItem( "SHORTNAME", 0 )) &&
+	       EQUAL( pszValue, "ASTL1A" ) )
+    {
+        poDS->iDataType = ASTER_L1A;
+	poDS->pszDataType = "ASTER_L1A";
+    }
+    else if ( (pszValue = poDS->GetMetadataItem( "SHORTNAME", 0 )) &&
+	       EQUAL( pszValue, "ASTL1B" ) )
+    {
+        poDS->iDataType = ASTER_L1B;
+	poDS->pszDataType = "ASTER_L1B";
+    }
+    else if ( (pszValue = poDS->GetMetadataItem( "SHORTNAME", 0 )) &&
+	       EQUAL( pszValue, "AST14DEM" ) )
+    {
+        poDS->iDataType = AST14DEM;
+	poDS->pszDataType = "AST14DEM";
     }
     else if ( (pszValue = poDS->GetMetadataItem( "ALGORITHMPACKAGENAME", 0 )) &&
 	       EQUAL( pszValue, "MODIS Level 1B channel subset" ) ) // FIXME: does it right?
@@ -745,7 +797,8 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     char	szName[65], szTemp[1024];
     int32	iSDS;
-    int32	iRank; // Number of dimensions in the SDS
+    int32	iRank; 			// Number of dimensions in the SDS
+    int32	iNumType, nAttrs;
     int32	aiDimSizes[MAX_VAR_DIMS];
     int		nCount;
 
@@ -755,10 +808,17 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
 	if ( SDgetinfo( iSDS, szName, &iRank, aiDimSizes, &iNumType, &nAttrs) != 0 )
 	    return NULL;
 	
-	if ( iRank == 1 )	// Skip 1D datsets
+	if ( iRank == 1 )		// Skip 1D datsets
+		continue;
+
+	// Sort known datasets. We will display only image bands
+	if ( (poDS->iDataType == ASTER_L1A || poDS->iDataType == ASTER_L1B ) &&
+			!EQUALN( szName, "ImageData", 9 ) )
+		continue;
+	else if ( (poDS->iDataType == AST14DEM ) && !EQUALN( szName, "Band", 4 ) )
 		continue;
 	
-	// Add datasets with multiple dimensions to list of GDAL subdatasets
+	// Add datasets with multiple dimensions to the list of GDAL subdatasets
         nCount = CSLCount( poDS->papszSubDatasets ) / 2;
         sprintf( szTemp, "SUBDATASET_%d_NAME", nCount+1 );
 	// We will use SDS index as an identificator, because SDS names
@@ -784,7 +844,7 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
     if ( poDS->hGR == -1 )
     {fprintf(stderr,"GRstart failed\n");}
 
-    if ( GRfileinfo( poDS->hGR, &poDS->nImages, &poDS->nFileAttrs ) != 0 )
+    if ( GRfileinfo( poDS->hGR, &poDS->nImages, &nAttrs ) != 0 )
 	return NULL;
    
     for ( i = 0; i < poDS->nImages; i++ )
