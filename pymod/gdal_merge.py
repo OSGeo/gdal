@@ -26,6 +26,9 @@
 ###############################################################################
 # 
 #  $Log$
+#  Revision 1.14  2004/08/23 15:05:27  warmerda
+#  Added projection setting for new files.
+#
 #  Revision 1.13  2004/04/02 22:31:26  warmerda
 #  Use -of for format.
 #
@@ -402,6 +405,7 @@ if __name__ == '__main__':
         t_fh = Driver.Create( out_file, xsize, ysize, bands,
                               file_infos[0].band_type, create_options )
         t_fh.SetGeoTransform( geotransform )
+        t_fh.SetProjection( file_infos[0].projection )
 
         if copy_pct:
             t_fh.GetRasterBand(1).SetRasterColorTable(file_infos[0].ct)
