@@ -43,6 +43,7 @@ clean:
 	(cd dgn; $(MAKE) clean)
 	(cd gml; $(MAKE) clean)
 	(cd avc; $(MAKE) clean)
+	(cd rec; $(MAKE) clean)
 ifeq ($(HAVE_OGDI),yes)
 	(cd ogdi; $(MAKE) clean)
 endif
