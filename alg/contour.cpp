@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2003/10/16 17:47:06  warmerda
+ * Added algorithm details to GDALContourGenerate().
+ *
  * Revision 1.4  2003/10/16 17:41:13  warmerda
  * Added docs for GDALContourGenerate()
  *
@@ -1299,6 +1302,87 @@ CPLErr OGRContourWriter( double dfLevel,
  *
  * The gdal/apps/gdal_contour.cpp mainline can be used as an example of
  * how to use this function.
+ *
+ * ALGORITHM RULES
+
+For contouring purposes raster pixel values are assumed to represent a point 
+value at the center of the corresponding pixel region.  For the purpose of 
+contour generation we virtually connect each pixel center to the values to
+the left, right, top and bottom.  We assume that the pixel value is linearly
+interpolated between the pixel centers along each line, and determine where
+(if any) contour lines will appear onlong these line segements.  Then the
+contour crossings are connected.  
+
+This means that contour lines nodes won't actually be on pixel edges, but 
+rather along vertical and horizontal lines connecting the pixel centers. 
+
+\verbatim
+General Case:
+
+      5 |                  | 3
+     -- + ---------------- + -- 
+        |                  |
+        |                  |
+        |                  |
+        |                  |
+     10 +                  |
+        |\                 |
+        | \                |
+     -- + -+-------------- + -- 
+     12 |  10              | 1
+
+
+Saddle Point:
+
+      5 |                  | 12
+     -- + -------------+-- + -- 
+        |               \  |
+        |                 \|
+        |                  + 
+        |                  |
+        +                  |
+        |\                 |
+        | \                |
+     -- + -+-------------- + -- 
+     12 |                  | 1
+
+or:
+
+      5 |                  | 12
+     -- + -------------+-- + -- 
+        |          __/     |
+        |      ___/        |
+        |  ___/          __+ 
+        | /           __/  |
+        +'         __/     |
+        |       __/        |
+        |   ,__/           |
+     -- + -+-------------- + -- 
+     12 |                  | 1
+\endverbatim
+
+Nodata:
+
+In the "nodata" case we treat the whole nodata pixel as a no-mans land. 
+We extend the corner pixels near the nodata out to half way and then
+construct extra lines from those points to the center which is assigned
+an averaged value from the two nearby points (in this case (12+3+5)/3). 
+
+\verbatim
+      5 |                  | 3
+     -- + ---------------- + -- 
+        |                  |
+        |                  |
+        |      6.7         |
+        |        +---------+ 3
+     10 +___     |          
+        |   \____+ 10       
+        |        |          
+     -- + -------+        +    
+     12 |       12           (nodata)
+
+\endverbatim
+
  *
  * @param hBand The band to read raster data from.  The whole band will be 
  * processed.
