@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2002/11/23 18:54:17  warmerda
+ * added CREATIONDATATYPES metadata for drivers
+ *
  * Revision 1.10  2002/09/04 06:50:37  warmerda
  * avoid static driver pointers
  *
@@ -406,6 +409,8 @@ void GDALRegister_DTED()
                                    "DTED Elevation Raster" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
                                    "frmt_various.html#DTED" );
+        poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
+                                   "Byte Int16 UInt16" );
         
         poDriver->pfnOpen = DTEDDataset::Open;
         poDriver->pfnCreateCopy = DTEDCreateCopy;

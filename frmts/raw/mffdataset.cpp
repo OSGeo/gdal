@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2002/11/23 18:54:17  warmerda
+ * added CREATIONDATATYPES metadata for drivers
+ *
  * Revision 1.20  2002/09/04 06:50:37  warmerda
  * avoid static driver pointers
  *
@@ -882,6 +885,8 @@ void GDALRegister_MFF()
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
                                    "frmt_various.html#MFF" );
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "hdr" );
+        poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
+                                   "Byte UInt16 Float32 CInt16 CFloat32" );
 
         poDriver->pfnOpen = MFFDataset::Open;
         poDriver->pfnCreate = MFFDataset::Create;

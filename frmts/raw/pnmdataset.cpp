@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2002/11/23 18:54:17  warmerda
+ * added CREATIONDATATYPES metadata for drivers
+ *
  * Revision 1.7  2002/09/19 21:10:02  warmerda
  * Fixed GetDriverByName call.
  *
@@ -319,6 +322,8 @@ void GDALRegister_PNM()
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "pnm" );
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, 
                                    "image/x-portable-anymap" );
+        poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
+                                   "Byte" );
 
         poDriver->pfnOpen = PNMDataset::Open;
         poDriver->pfnCreate = PNMDataset::Create;

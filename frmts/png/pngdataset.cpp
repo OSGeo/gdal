@@ -43,6 +43,9 @@
  *    application termination. 
  * 
  * $Log$
+ * Revision 1.19  2002/11/23 18:54:17  warmerda
+ * added CREATIONDATATYPES metadata for drivers
+ *
  * Revision 1.18  2002/09/04 06:50:37  warmerda
  * avoid static driver pointers
  *
@@ -991,6 +994,8 @@ void GDALRegister_PNG()
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "png" );
         poDriver->SetMetadataItem( GDAL_DMD_MIMETYPE, "image/png" );
 
+        poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
+                                   "Byte UInt16" );
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, 
 "<CreationOptionList>\n"
 "   <Option name='WORLDFILE' type='boolean' description='Create world file'/>\n"

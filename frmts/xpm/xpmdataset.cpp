@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.6  2002/11/23 18:54:17  warmerda
+ * added CREATIONDATATYPES metadata for drivers
+ *
  * Revision 1.5  2002/09/04 06:50:37  warmerda
  * avoid static driver pointers
  *
@@ -425,6 +428,8 @@ void GDALRegister_XPM()
                                    "frmt_various.html#XPM" );
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "xpm" );
         poDriver->SetMetadataItem( GDAL_DMD_MIMETYPE, "image/x-xpixmap" );
+        poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
+                                   "Byte" );
 
         poDriver->pfnOpen = XPMDataset::Open;
         poDriver->pfnCreateCopy = XPMCreateCopy;

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2002/11/23 18:54:17  warmerda
+ * added CREATIONDATATYPES metadata for drivers
+ *
  * Revision 1.8  2002/09/04 06:50:37  warmerda
  * avoid static driver pointers
  *
@@ -658,6 +661,8 @@ void GDALRegister_ELAS()
         poDriver->SetDescription( "ELAS" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
                                    "ELAS" );
+        poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
+                                   "Byte Float32 Float64" );
         
         poDriver->pfnOpen = ELASDataset::Open;
         poDriver->pfnCreate = ELASDataset::Create;

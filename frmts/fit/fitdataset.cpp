@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.15  2002/11/23 18:54:17  warmerda
+ * added CREATIONDATATYPES metadata for drivers
+ *
  * Revision 1.14  2002/09/04 06:50:37  warmerda
  * avoid static driver pointers
  *
@@ -1303,6 +1306,8 @@ void GDALRegister_FIT()
         poDriver->pfnOpen = FITDataset::Open;
 #ifdef FIT_WRITE
         poDriver->pfnCreateCopy = FITCreateCopy;
+        poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
+                                   "Byte UInt16 Int16 UInt32 Int32 Float32 Float64" );
 #endif // FIT_WRITE
 
         GetGDALDriverManager()->RegisterDriver( poDriver );

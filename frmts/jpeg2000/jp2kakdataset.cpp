@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.8  2002/11/23 18:54:17  warmerda
+ * added CREATIONDATATYPES metadata for drivers
+ *
  * Revision 1.7  2002/11/21 15:34:09  warmerda
  * Made substantial improvements to improve flushing ability.
  *
@@ -1426,6 +1429,8 @@ void GDALRegister_JP2KAK()
                                    "JPEG-2000 (based on Kakadu)" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
                                    "frmt_jpeg2000.html" );
+        poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
+                                   "Byte Int16 UInt16" );
 
         poDriver->pfnOpen = JP2KAKDataset::Open;
         poDriver->pfnCreateCopy = JP2KAKCopyCreate;
