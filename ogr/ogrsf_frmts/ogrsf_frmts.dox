@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2003/03/21 02:58:22  warmerda
+ * added ref count stuff
+ *
  * Revision 1.12  2003/03/03 05:06:08  warmerda
  * added support for DeleteDataSource and DeleteLayer
  *
@@ -312,32 +315,6 @@
 
  Execute an SQL statement against the data store. 
 
- The dialects supported will vary by driver, but all datasources should
- support a minimal SELECT statement like the following.  The WHERE clause
- can be any where clause supported by OGRLayer::SetAttributeFilter().
-
-   SELECT <field-list> FROM table-name [WHERE <where-expr>] 
-       [ORDER BY <sort specification list>]
-
-   <field-list> ::= DISTINCT fieldname | <field-spec> 
-                 | <field-spec> , <field-list>
-
-   <field-spec> ::= fieldname 
-                 | <field_func> ( [DISTINCT] <field-func> )
-                 | Count(*)
-
-   <field-func> ::= AVG | MAX | MIN | SUM | COUNT
-
-
-   <sort specification list> ::=
-              <sort specification> [ { <comma> <sort specification> }... ]
-
-   <sort specification> ::= <sort key> [ <ordering specification> ]
-
-   <sort key> ::=  <column name>
-
-   <ordering specification> ::= ASC | DESC
-
  The result of an SQL query is either NULL for statements that are in error,
  or that have no results set, or an OGRLayer pointer representing a results
  set from the query.  Note that this OGRLayer is in addition to the layers
@@ -346,6 +323,10 @@
  (destroyed).  
 
  This method is the same as the C function OGR_DS_ExecuteSQL().
+
+ For more information on the SQL dialect supported internally by OGR
+ review the <a href="ogr_sql.html">OGR SQL</a> document.  Some drivers (ie.
+ Oracle and PostGIS) pass the SQL directly through to the underlying RDBMS.
 
  @param pszStatement the SQL statement to execute. 
 
@@ -449,6 +430,46 @@ specific.
             ...
         }        
 \endcode
+*/
+
+/**
+ \fn int OGRDataSource::Reference();
+
+Increment datasource reference count.
+
+This method is the same as the C function OGR_DS_Reference().
+
+@return the reference count after incrementing.
+*/
+				         
+/**
+ \fn int OGRDataSource::Dereference();
+
+Decrement datasource reference count.
+
+This method is the same as the C function OGR_DS_Dereference().
+
+@return the reference count after decrementing.
+*/
+				         
+/**
+ \fn int OGRDataSource::GetRefCount() const;
+
+Fetch reference count.
+
+This method is the same as the C function OGR_DS_GetRefCount().
+
+@return the current reference count for the datasource object itself.
+*/
+				         
+/**
+ \fn int OGRDataSource::GetSummaryRefCount() const;
+
+Fetch reference count of datasource and all owned layers.
+
+This method is the same as the C function OGR_DS_GetSummaryRefCount().
+
+@return the current summary reference count for the datasource and its layers.
 */
 				         
 
@@ -789,5 +810,35 @@ OGRLayers will return FALSE for any unrecognised capabilities.<p>
 
 */
 
+/**
+ \fn int OGRLayer::Reference();
+
+Increment layer reference count.
+
+This method is the same as the C function OGR_L_Reference().
+
+@return the reference count after incrementing.
+*/
+				         
+/**
+ \fn int OGRLayer::Dereference();
+
+Decrement layer reference count.
+
+This method is the same as the C function OGR_L_Dereference().
+
+@return the reference count after decrementing.
+*/
+				         
+/**
+ \fn int OGRLayer::GetRefCount() const;
+
+Fetch reference count.
+
+This method is the same as the C function OGR_L_GetRefCount().
+
+@return the current reference count for the layer object itself.
+*/
+				         
 
 
