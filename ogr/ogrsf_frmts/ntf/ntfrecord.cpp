@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2002/02/11 17:04:03  warmerda
+ * tolerate somewhat longer lines, irish data has long lines
+ *
  * Revision 1.5  2002/02/11 16:54:47  warmerda
  * Use internal code to read records, ensuring that "zero" bytes or other
  * binary garbage are survivable.   Added implicit assumption that records
@@ -55,6 +58,8 @@ CPL_CVSID("$Id$");
 static int nFieldBufSize = 0;
 static char *pszFieldBuf = NULL;
 
+#define MAX_RECORD_LEN  160
+
 /************************************************************************/
 /*                             NTFRecord()                              */
 /*                                                                      */
@@ -75,7 +80,7 @@ NTFRecord::NTFRecord( FILE * fp )
 /* ==================================================================== */
 /*      Read lines untill we get to one without a continuation mark.    */
 /* ==================================================================== */
-    char      szLine[83];
+    char      szLine[MAX_RECORD_LEN+3];
     int       nNewLength;
 
     do { 
@@ -158,7 +163,7 @@ int NTFRecord::ReadPhysicalLine( FILE *fp, char *pszLine )
 /*      Read enough data that we are sure we have a whole record.       */
 /* -------------------------------------------------------------------- */
     nRecordStart = VSIFTell( fp );
-    nBytesRead = VSIFRead( pszLine, 1, 82, fp );
+    nBytesRead = VSIFRead( pszLine, 1, MAX_RECORD_LEN+2, fp );
 
     if( nBytesRead == 0 )
     {
@@ -188,7 +193,9 @@ int NTFRecord::ReadPhysicalLine( FILE *fp, char *pszLine )
     if( i == nBytesRead )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
-                  "Record too long for NTF format, no line may be longer than 80 characters" );
+                  "%d byte record too long for NTF format.\n"
+                  "No line may be longer than 80 characters though up to %d toleraged.\n",
+                  nBytesRead, MAX_RECORD_LEN );
         return -2;
     }
 
