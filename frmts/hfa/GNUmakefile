@@ -24,11 +24,11 @@ clean:
 
 
 hfatest:	hfatest.o $(HFAOBJ)
-	$(CXX) hfatest.o $(HFAOBJ) $(GDAL_ROOT)/port/*.o $(LIBS) -o hfatest
+	$(LD) hfatest.o $(HFAOBJ) $(GDAL_ROOT)/port/*.o $(LIBS) -o hfatest
 
 img2tif:	img2tif.cpp imggeotiff.c geoextra.c \
 		tif_overview.o rawblockedimage.o $(HFAOBJ)
-	$(CXX) $(ALL_C_FLAGS) -I../gtiff/libtiff -I../gtiff/libgeotiff \
+	$(LD) $(ALL_C_FLAGS) -I../gtiff/libtiff -I../gtiff/libgeotiff \
 		img2tif.cpp imggeotiff.c geoextra.c \
 		$(HFAOBJ) $(GDAL_ROOT)/port/*.o $(LIBS) \
 		tif_overview.o rawblockedimage.o\
