@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.51  2004/02/18 14:59:55  dron
+ * Properly determine pixel offset in last tiles in GDALGetRandomRasterSample().
+ *
  * Revision 1.50  2004/01/18 16:43:37  dron
  * Added GDALGetDataTypeByName() function.
  *
@@ -1031,12 +1034,12 @@ int GDALGetRandomRasterSample( GDALRasterBandH hBand, int nSamples,
         if( poBlock == NULL )
             continue;
 
-        if( iXBlock * nBlockXSize > poBand->GetXSize() )
+        if( (iXBlock + 1) * nBlockXSize > poBand->GetXSize() )
             iXValid = poBand->GetXSize() - iXBlock * nBlockXSize;
         else
             iXValid = nBlockXSize;
 
-        if( iYBlock * nBlockYSize > poBand->GetYSize() )
+        if( (iYBlock + 1) * nBlockYSize > poBand->GetYSize() )
             iYValid = poBand->GetYSize() - iYBlock * nBlockYSize;
         else
             iYValid = nBlockYSize;
