@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.4  2002/10/04 12:33:02  dron
+ * Added calibration coefficients extraction.
+ *
  * Revision 1.3  2002/09/04 06:50:37  warmerda
  * avoid static driver pointers
  *
@@ -52,6 +55,7 @@ void	GDALRegister_FAST(void);
 CPL_C_END
 
 #define FAST_FILENAME_SIZE	29
+#define FAST_VALUE_SIZE		24
 #define ADM_HEADER_SIZE		4608
 
 /************************************************************************/
@@ -170,36 +174,6 @@ const char *FASTDataset::GetProjectionRef()
         return pszProjection;
 }
 
-/*double ToDouble( char *pszString, int iLength )
-{
-    
-    char *pszDouble = (char *)CPLMalloc( iLength + 1 );
-    memcpy( pszDouble, pszString, iLength );
-    pszDouble[iLength] = '\0';
-    return atof(pszDouble);
-}
-
-double ToDegrees( char *pszString )
-{
-    double dfDegrees;
-    
-    dfDegrees = ToDouble( pszString, 3) +
-	ToDouble( pszString + 3, 2) / 60.0 +
-	ToDouble( pszString + 5, 7) / 3600.0;
-    
-    switch ( pszString[13] )
-    {
-        case 'W':
-	case 'S':
-	dfDegrees = -dfDegrees;
-	break;
-	default:
-	break;
-    }
-    
-    return dfDegrees;
-}*/
-
 /************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
@@ -315,13 +289,29 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
 
     switch( atoi( pszHeader + 983 ) )
     {
-        default:
 	case 8:
+        default:
 	poDS->eDataType = GDT_Byte;
 	break;
     }
 
-    // Read geometric record
+/* -------------------------------------------------------------------- */
+/*          Read calibration coefficients				*/
+/* -------------------------------------------------------------------- */
+    pszTempName[FAST_VALUE_SIZE] = '\0';
+
+    for ( i = 0; i < poDS->nBands; i++ )
+    {
+	// pszTempName has enough size to hold numeric values
+	memcpy( pszTempName, pszHeader + 1616 + i * 80, FAST_VALUE_SIZE );
+	poDS->SetMetadataItem( CPLSPrintf("BIAS%d", i + 1), pszTempName );
+	memcpy( pszTempName, pszHeader + 1641 + i * 80, FAST_VALUE_SIZE );
+	poDS->SetMetadataItem( CPLSPrintf("GAIN%d", i + 1), pszTempName );
+    }
+
+/* -------------------------------------------------------------------- */
+/*          Read geometric record					*/
+/* -------------------------------------------------------------------- */
     OGRSpatialReference oSRS;
     int		iUTMZone;
     // Coordinates of corner pixel's centers
@@ -368,7 +358,7 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
     for( i = 1; i <= poDS->nBands; i++ )
-        poDS->SetBand( i, new FASTRasterBand( poDS, i, poDS->fpChannels[i -1 ],
+        poDS->SetBand( i, new FASTRasterBand( poDS, i, poDS->fpChannels[i - 1],
 	    0, 1, poDS->nRasterXSize, poDS->eDataType, TRUE));
 
     CPLFree( pszPrefixName );
