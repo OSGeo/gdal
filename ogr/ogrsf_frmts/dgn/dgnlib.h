@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.35  2003/11/19 05:26:19  warmerda
+ * added DGNElemTypeHasDispHdr
+ *
  * Revision 1.34  2003/11/07 13:59:45  warmerda
  * added DGNLoadTCB()
  *
@@ -795,6 +798,8 @@ int CPL_DLL DGNAddRawAttrLink( DGNHandle hDGN, DGNElemCore *psElement,
 
 int CPL_DLL DGNAddShapeFillInfo( DGNHandle hDGN, DGNElemCore *psElement, 
                                  int nColor );
+
+int CPL_DLL DGNElemTypeHasDispHdr( int nElemType );
 
 CPL_C_END
 
