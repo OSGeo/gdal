@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/08/13 03:27:14  warmerda
+ * fixed byte order handling
+ *
  * Revision 1.1  1999/08/13 02:36:14  warmerda
  * New
  *
@@ -231,7 +234,7 @@ GDALDataset *PAuxDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         char	szDefnName[32];
         GDALDataType eType;
-        int	bSwapped = FALSE;
+        int	bNative = TRUE;
 
         sprintf( szDefnName, "ChanDefinition-%d", i+1 );
 
@@ -252,9 +255,9 @@ GDALDataset *PAuxDataset::Open( GDALOpenInfo * poOpenInfo )
         if( CSLCount(papszTokens) > 4 )
         {
 #ifdef CPL_LSB
-            bSwapped = EQUAL(papszTokens[4],"Unswapped");
+            bNative = EQUAL(papszTokens[4],"Swapped");
 #else
-            bSwapped = EQUAL(papszTokens[4],"Swapped");
+            bNative = EQUAL(papszTokens[4],"Unswapped");
 #endif
         }
         
@@ -262,7 +265,7 @@ GDALDataset *PAuxDataset::Open( GDALOpenInfo * poOpenInfo )
             new RawRasterBand( poDS, i+1, poDS->fpImage,
                                atoi(papszTokens[1]),
                                atoi(papszTokens[2]),
-                               atoi(papszTokens[3]), eType, bSwapped );
+                               atoi(papszTokens[3]), eType, bNative );
 
         CSLDestroy( papszTokens );
     }
