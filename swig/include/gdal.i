@@ -9,6 +9,10 @@
 
  *
  * $Log$
+ * Revision 1.20  2005/02/24 16:34:14  kruland
+ * Defined GCP as an object.  Manipulate as an object.  Defined __str__
+ * and serialize as python only methods.
+ *
  * Revision 1.19  2005/02/23 21:38:28  kruland
  * Added AutoCreateWarpedVRT() global algorithm method.  Commented missing methods.
  *
@@ -106,6 +110,8 @@ typedef void GDALDriverShadow;
 typedef void GDALDatasetShadow;
 typedef void GDALRasterBandShadow;
 
+typedef int FALSE_IS_ERR;
+
 %}
 
 %feature("compactdefaultargs");
@@ -119,14 +125,160 @@ typedef int GDALDataType;
 typedef int CPLErr;
 typedef int GDALResampleAlg;
 
+//************************************************************************
+//
+// Define the exposed CPL functions.
+//
+//************************************************************************
 %include "cpl.i"
 
+//************************************************************************
+//
+// Define the Driver object.
+//
+//************************************************************************
 %include "Driver.i"
 
+//************************************************************************
+//
+// Define the Ground Control Point structure.
+//
+//************************************************************************
+%rename (GCP) GDAL_GCP;
+struct GDAL_GCP {
+%extend {
+%mutable;
+  double GCPX;
+  double GCPY;
+  double GCPZ;
+  double GCPPixel;
+  double GCPLine;
+  char *Info;
+  char *Id;
+%immutable;
+
+%feature("kwargs") GDAL_GCP;
+  GDAL_GCP( double x = 0.0, double y = 0.0, double z = 0.0,
+            double pixel = 0.0, double line = 0.0,
+            const char *info = "", const char *id = "" ) {
+    GDAL_GCP *self = (GDAL_GCP*) CPLMalloc( sizeof( GDAL_GCP ) );
+    self->dfGCPX = x;
+    self->dfGCPY = y;
+    self->dfGCPZ = z;
+    self->dfGCPPixel = pixel;
+    self->dfGCPLine = line;
+    self->pszInfo =  CPLStrdup( (info == 0) ? "" : info );
+    self->pszId = CPLStrdup( (id==0)? "" : id );
+    return self;
+  }
+
+  ~GDAL_GCP() {
+    if ( self->pszInfo )
+      CPLFree( self->pszInfo );
+    if ( self->pszId )
+      CPLFree( self->pszId );
+    CPLFree( self );
+  }
+
+%pythoncode {
+  def __str__(self):
+    str = '%s (%.2fP,%.2fL) -> (%.7fE,%.7fN,%.2f) %s '\
+          % (self.Id, self.GCPPixel, self.GCPLine,
+             self.GCPX, self.GCPY, self.GCPZ, self.Info )
+    return str
+    def serialize(self,with_Z=0):
+        base = [CXT_Element,'GCP']
+        base.append([CXT_Attribute,'Id',[CXT_Text,self.Id]])
+        pixval = '%0.15E' % self.GCPPixel       
+        lineval = '%0.15E' % self.GCPLine
+        xval = '%0.15E' % self.GCPX
+        yval = '%0.15E' % self.GCPY
+        zval = '%0.15E' % self.GCPZ
+        base.append([CXT_Attribute,'Pixel',[CXT_Text,pixval]])
+        base.append([CXT_Attribute,'Line',[CXT_Text,lineval]])
+        base.append([CXT_Attribute,'X',[CXT_Text,xval]])
+        base.append([CXT_Attribute,'Y',[CXT_Text,yval]])
+        if with_Z:
+            base.append([CXT_Attribute,'Z',[CXT_Text,zval]])        
+        return base
+} /* pythoncode */
+} /* extend */
+}; /* GDAL_GCP */
+%inline {
+double GDAL_GCP_GCPX_get( GDAL_GCP *h ) {
+  return h->dfGCPX;
+}
+void GDAL_GCP_GCPX_set( GDAL_GCP *h, double val ) {
+  h->dfGCPX = val;
+}
+double GDAL_GCP_GCPY_get( GDAL_GCP *h ) {
+  return h->dfGCPY;
+}
+void GDAL_GCP_GCPY_set( GDAL_GCP *h, double val ) {
+  h->dfGCPY = val;
+}
+double GDAL_GCP_GCPZ_get( GDAL_GCP *h ) {
+  return h->dfGCPZ;
+}
+void GDAL_GCP_GCPZ_set( GDAL_GCP *h, double val ) {
+  h->dfGCPZ = val;
+}
+double GDAL_GCP_GCPPixel_get( GDAL_GCP *h ) {
+  return h->dfGCPPixel;
+}
+void GDAL_GCP_GCPPixel_set( GDAL_GCP *h, double val ) {
+  h->dfGCPPixel = val;
+}
+double GDAL_GCP_GCPLine_get( GDAL_GCP *h ) {
+  return h->dfGCPLine;
+}
+void GDAL_GCP_GCPLine_set( GDAL_GCP *h, double val ) {
+  h->dfGCPLine = val;
+}
+const char * GDAL_GCP_Info_get( GDAL_GCP *h ) {
+  return h->pszInfo;
+}
+void GDAL_GCP_Info_set( GDAL_GCP *h, const char * val ) {
+  if ( h->pszInfo ) 
+    CPLFree( h->pszInfo );
+  h->pszInfo = CPLStrdup(val);
+}
+const char * GDAL_GCP_Id_get( GDAL_GCP *h ) {
+  return h->pszId;
+}
+void GDAL_GCP_Id_set( GDAL_GCP *h, const char * val ) {
+  if ( h->pszId ) 
+    CPLFree( h->pszId );
+  h->pszId = CPLStrdup(val);
+}
+}
+
+%rename (GCPsToGeoTransform) GDALGCPsToGeoTransform;
+%apply (IF_FALSE_RETURN_NONE) { (FALSE_IS_ERR) };
+FALSE_IS_ERR GDALGCPsToGeoTransform( int nGCPs, GDAL_GCP const * pGCPs, 
+    	                             double_6 argout, int bApproxOK = 1 ); 
+%clear (FALSE_IS_ERR);
+
+
+//************************************************************************
+//
+// Define the Dataset object.
+//
+//************************************************************************
 %include "Dataset.i"
 
+//************************************************************************
+//
+// Define the Band object.
+//
+//************************************************************************
 %include "Band.i"
 
+//************************************************************************
+//
+// Define the ColorTable object.
+//
+//************************************************************************
 %include "ColorTable.i"
 
 //************************************************************************
