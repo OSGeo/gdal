@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.31  2002/04/19 12:22:05  dron
+ * added GDALWriteWorldFile()
+ *
  * Revision 1.30  2002/04/16 13:59:33  warmerda
  * added GDALVersionInfo
  *
@@ -1085,15 +1088,13 @@ int GDALReadWorldFile( const char * pszBaseFilename, const char *pszExtension,
 /* -------------------------------------------------------------------- */
 /*      Generate upper and lower case versions of the extension.        */
 /* -------------------------------------------------------------------- */
-    strcpy( szExtUpper, pszExtension );
-    strcpy( szExtLower, pszExtension );
+    strncpy( szExtUpper, pszExtension, 32 );
+    strncpy( szExtLower, pszExtension, 32 );
 
-    for( i = 0; szExtUpper[i] != '\0'; i++ )
+    for( i = 0; szExtUpper[i] != '\0' && i < 32; i++ )
     {
-        if( szExtUpper[i] >= 'a' && szExtUpper[i] <= 'z' )
-            szExtUpper[i] = szExtUpper[i] - 'a' + 'A';
-        if( szExtLower[i] >= 'A' && szExtLower[i] <= 'Z' )
-            szExtLower[i] = szExtLower[i] - 'A' + 'a';
+	szExtUpper[i] = toupper(szExtUpper[i]);
+	szExtLower[i] = tolower(szExtLower[i]);
     }
 
 /* -------------------------------------------------------------------- */
@@ -1149,6 +1150,43 @@ int GDALReadWorldFile( const char * pszBaseFilename, const char *pszExtension,
         CSLDestroy(papszLines);
         return FALSE;
     }
+}
+
+/************************************************************************/
+/*                         GDALWriteWorldFile()                          */
+/*                                                                      */
+/*      Helper function for translator implementators wanting           */
+/*      support for ESRI world files.                                   */
+/************************************************************************/
+
+int GDALWriteWorldFile( const char * pszBaseFilename, const char *pszExtension,
+                       double *padfGeoTransform )
+
+{
+    const char	*pszTFW;
+	FILE	*fpTFW;
+
+	pszTFW = CPLResetExtension( pszBaseFilename, pszExtension );
+	fpTFW = VSIFOpen( pszTFW, "wt" );
+	if( fpTFW == NULL )
+        return FALSE;
+
+/* -------------------------------------------------------------------- */
+/*      We open the file, now fill it with the world data.                        */
+/* -------------------------------------------------------------------- */
+	fprintf( fpTFW, "%.10f\n", padfGeoTransform[1] );
+	fprintf( fpTFW, "%.10f\n", padfGeoTransform[4] );
+	fprintf( fpTFW, "%.10f\n", padfGeoTransform[2] );
+	fprintf( fpTFW, "%.10f\n", padfGeoTransform[5] );
+	fprintf( fpTFW, "%.10f\n", padfGeoTransform[0] 
+                 + 0.5 * padfGeoTransform[1]
+                 + 0.5 * padfGeoTransform[2] );
+	fprintf( fpTFW, "%.10f\n", padfGeoTransform[3]
+                 + 0.5 * padfGeoTransform[4]
+                 + 0.5 * padfGeoTransform[5] );
+
+	VSIFClose( fpTFW );
+	return TRUE;
 }
 
 /************************************************************************/
