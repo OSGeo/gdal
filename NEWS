@@ -53,8 +53,16 @@ IDA (WinDisp4) Driver:
  - New read/write driver for the Image Display and Analysis raster format 
    used by WinDisp 4. 
 
+NDF (NLAPS) Driver:
+ - Added NDF/NLAPS read driver for version 1 and 2. 
+
+MSG Driver: 
+ - Added support for the Metosat Second Generation raw file format.
+
 GTiff Driver:
  - Added support for offset/scale being saved and loaded (special metadata). 
+ - Added Cylindrical Equal Area.
+ - Added PROFILE creation option to limit extra tags.
 
 PNG Driver: 
  - Updated internal code for libpng to libpng 1.2.8.
