@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2002/04/25 02:24:45  warmerda
+ * added ExecuteSQL method
+ *
  * Revision 1.3  2001/07/18 04:55:16  warmerda
  * added CPL_CSVID
  *
@@ -41,6 +44,11 @@
 
 #include "ogrsf_frmts.h"
 #include "ogr_p.h"
+#include "ogr_gensql.h"
+
+CPL_C_START
+#include "swq.h"
+CPL_C_END
 
 CPL_CVSID("$Id$");
 
@@ -77,4 +85,115 @@ OGRLayer *OGRDataSource::CreateLayer( const char * pszName,
               "CreateLayer() not supported by this data source.\n" );
               
     return NULL;
+}
+
+/************************************************************************/
+/*                             ExecuteSQL()                             */
+/************************************************************************/
+
+OGRLayer * OGRDataSource::ExecuteSQL( const char *pszSQLCommand,
+                                      OGREnvelope *psEnvelope,
+                                      const char *pszDialect )
+
+{
+    const char *pszError;
+    swq_select *psSelectInfo = NULL;
+    
+/* -------------------------------------------------------------------- */
+/*      Preparse the SQL statement.                                     */
+/* -------------------------------------------------------------------- */
+    pszError = swq_select_preparse( pszSQLCommand, &psSelectInfo );
+    if( pszError != NULL )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "SQL: %s", pszError );
+        return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Identify the layer (table) being operated on.                   */
+/* -------------------------------------------------------------------- */
+    OGRLayer *poSrcLayer = NULL;
+
+    for( int iLayer = 0; iLayer < GetLayerCount(); iLayer++ )
+    {
+        if( EQUAL(GetLayer(iLayer)->GetLayerDefn()->GetName(),
+                  psSelectInfo->from_table) )
+        {
+            poSrcLayer = GetLayer(iLayer);
+            break;
+        }
+    }
+
+    if( poSrcLayer == NULL )
+    {
+        swq_select_free( psSelectInfo );
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "SELECT from table %s failed, no such table/featureclass.",
+                  psSelectInfo->from_table );
+        return NULL;
+    }
+    
+/* -------------------------------------------------------------------- */
+/*      Build the field list.                                           */
+/* -------------------------------------------------------------------- */
+    int  nFieldCount = poSrcLayer->GetLayerDefn()->GetFieldCount();
+    char **papszFieldList;
+    swq_field_type *paeFieldType;
+    
+    papszFieldList = (char **) CPLMalloc( sizeof(char *) * nFieldCount );
+    paeFieldType = (swq_field_type *)  
+        CPLMalloc( sizeof(swq_field_type) * nFieldCount );
+    
+    for( int iField = 0; iField < nFieldCount; iField++ )
+    {
+        OGRFieldDefn *poFDefn=poSrcLayer->GetLayerDefn()->GetFieldDefn(iField);
+        papszFieldList[iField] = (char *) poFDefn->GetNameRef();
+        if( poFDefn->GetType() == OFTInteger )
+            paeFieldType[iField] = SWQ_INTEGER;
+        else if( poFDefn->GetType() == OFTReal )
+            paeFieldType[iField] = SWQ_FLOAT;
+        else if( poFDefn->GetType() == OFTString )
+            paeFieldType[iField] = SWQ_STRING;
+        else
+            paeFieldType[iField] = SWQ_OTHER;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Finish the parse operation.                                     */
+/* -------------------------------------------------------------------- */
+    
+    pszError = swq_select_parse( psSelectInfo, nFieldCount, papszFieldList,
+                                 paeFieldType, 0 );
+
+    CPLFree( papszFieldList );
+    CPLFree( paeFieldType );
+
+    if( pszError != NULL )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "SQL: %s", pszError );
+        return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Everything seems OK, try to instantiate a results layer.        */
+/* -------------------------------------------------------------------- */
+    OGRGenSQLResultsLayer *poResults;
+
+    poResults = new OGRGenSQLResultsLayer( this, psSelectInfo, NULL );
+
+    // Eventually, we should keep track of layers to cleanup for sure.
+
+    return poResults;
+}
+
+/************************************************************************/
+/*                          ReleaseResultSet()                          */
+/************************************************************************/
+
+void OGRDataSource::ReleaseResultSet( OGRLayer * poLayer )
+
+{
+    delete poLayer;
 }
