@@ -43,6 +43,10 @@
  *    application termination. 
  * 
  * $Log$
+ * Revision 1.26  2004/01/29 18:48:01  warmerda
+ * Changed to do the swapping ourseleves.  The png_set_swap() function didn't
+ * seem to be having the desired effect
+ *
  * Revision 1.25  2004/01/29 14:55:26  warmerda
  * ensure 16bit files are byte swapped as needed
  *
@@ -548,6 +552,15 @@ CPLErr PNGDataset::LoadScanline( int nLine )
     nBufferStartLine = nLine;
     nBufferLines = 1;
 
+/* -------------------------------------------------------------------- */
+/*      Do swap on LSB machines.  16bit PNG data is stored in MSB       */
+/*      format.                                                         */
+/* -------------------------------------------------------------------- */
+#ifdef CPL_LSB
+    if( nBitDepth == 16 )
+        GDALSwapWords( row, 2, GetRasterXSize(), 2 );
+#endif
+
     return CE_None;
 }
 
@@ -665,13 +678,6 @@ GDALDataset *PNGDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     if( poDS->nBitDepth < 8 )
         png_set_packing( poDS->hPNG );
-
-#ifdef CPL_LSB        
-    // png default to big endian, so we'll need to swap bytes if on a little endian machine.
-    if (poDS->nBitDepth>8)
-        png_set_swap(poDS->hPNG);
-#endif
-       
 
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
