@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2003/07/26 17:43:15  warmerda
+ * Added various warp options in ComputeSourceWindow().
+ *
  * Revision 1.15  2003/07/24 16:48:40  warmerda
  * fixed bug with window size, and origin in ComputeSourceWindow
  *
@@ -359,6 +362,18 @@ int GDALWarpOperation::ValidateOptions()
         return FALSE;
     }
 
+    if( CSLFetchNameValue( psOptions->papszWarpOptions, 
+                         "SAMPLE_STEPS" ) != NULL )
+    {
+        if( atoi(CSLFetchNameValue( psOptions->papszWarpOptions, 
+                                    "SAMPLE_STEPS" )) < 2 )
+        {
+            CPLError( CE_Failure, CPLE_IllegalArg, 
+                      "GDALWarpOptions.Validate()\n"
+                      "  SAMPLE_STEPS warp option has illegal value." );
+            return FALSE;
+        }
+    }
     return TRUE;
 }
 
@@ -1368,49 +1383,105 @@ CPLErr GDALWarpOperation::ComputeSourceWindow(int nDstXOff, int nDstYOff,
 
 {
 /* -------------------------------------------------------------------- */
-/*      Setup sample points all around the edge of the input raster.    */
+/*      Figure out whether we just want to do the usual "along the      */
+/*      edge" sampling, or using a grid.  The grid usage is             */
+/*      important in some weird "inside out" cases like WGS84 to        */
+/*      polar stereographic around the pole.   Also figure out the      */
+/*      sampling rate.                                                  */
 /* -------------------------------------------------------------------- */
-    int    nSamplePoints=0, abSuccess[84];
-    double adfX[84], adfY[84], adfZ[84], dfRatio;
+    double dfStepSize;
+    int nSampleMax, nStepCount = 21, bUseGrid;
+    int *pabSuccess = NULL;
+    double *padfX, *padfY, *padfZ;
+    int    nSamplePoints=0;
+    double dfRatio;
 
-    // Take 20 steps 
-    for( dfRatio = 0.0; dfRatio <= 1.01; dfRatio += 0.05 )
+    if( CSLFetchNameValue( psOptions->papszWarpOptions, 
+                           "SAMPLE_STEPS" ) != NULL )
     {
-        
-        // Ensure we end exactly at the end.
-        if( dfRatio > 0.99 )
-            dfRatio = 1.0;
-
-        // Along top 
-        adfX[nSamplePoints]   = dfRatio * nDstXSize + nDstXOff;
-        adfY[nSamplePoints]   = nDstYOff;
-        adfZ[nSamplePoints++] = 0.0;
-
-        // Along bottom 
-        adfX[nSamplePoints]   = dfRatio * nDstXSize + nDstXOff;
-        adfY[nSamplePoints]   = nDstYOff + nDstYSize;
-        adfZ[nSamplePoints++] = 0.0;
-
-        // Along left
-        adfX[nSamplePoints]   = nDstXOff;
-        adfY[nSamplePoints]   = dfRatio * nDstYSize + nDstYOff;
-        adfZ[nSamplePoints++] = 0.0;
-
-        // Along right
-        adfX[nSamplePoints]   = nDstXSize + nDstXOff;
-        adfY[nSamplePoints]   = dfRatio * nDstYSize + nDstYOff;
-        adfZ[nSamplePoints++] = 0.0;
+        nStepCount = 
+            atoi(CSLFetchNameValue( psOptions->papszWarpOptions, 
+                                    "SAMPLE_STEPS" ));
+        nStepCount = MAX(2,nStepCount);
     }
 
-    CPLAssert( nSamplePoints == 84 );
+    dfStepSize = 1.0 / (nStepCount-1);
+
+    bUseGrid = CSLFetchBoolean( psOptions->papszWarpOptions, 
+                                "SAMPLE_GRID", FALSE );
+
+    if( bUseGrid )
+        nSampleMax = nStepCount * nStepCount;
+    else
+        nSampleMax = nStepCount * 4;
+
+    pabSuccess = (int *) CPLMalloc(sizeof(int) * nSampleMax);
+    padfX = (double *) CPLMalloc(sizeof(double) * 3 * nSampleMax);
+    padfY = padfX + nSampleMax;
+    padfZ = padfX + nSampleMax * 2;
+
+/* -------------------------------------------------------------------- */
+/*      Setup sample points on a grid pattern throughout the area.      */
+/* -------------------------------------------------------------------- */
+    if( bUseGrid )
+    {
+        double dfRatioY;
+
+        for( dfRatioY = 0.0; 
+             dfRatioY <= 1.0 + dfStepSize*0.5; 
+             dfRatioY += dfStepSize )
+        {
+            for( dfRatio = 0.0; 
+                 dfRatio <= 1.0 + dfStepSize*0.5; 
+                 dfRatio += dfStepSize )
+            {
+                padfX[nSamplePoints]   = dfRatio * nDstXSize + nDstXOff;
+                padfY[nSamplePoints]   = dfRatioY * nDstYSize + nDstYOff;
+                padfZ[nSamplePoints++] = 0.0;
+            }
+        }
+    }
+ /* -------------------------------------------------------------------- */
+ /*      Setup sample points all around the edge of the input raster.    */
+ /* -------------------------------------------------------------------- */
+    else
+    {
+        for( dfRatio = 0.0; dfRatio <= 1.0 + dfStepSize*0.5; dfRatio += dfStepSize )
+        {
+            // Along top 
+            padfX[nSamplePoints]   = dfRatio * nDstXSize + nDstXOff;
+            padfY[nSamplePoints]   = nDstYOff;
+            padfZ[nSamplePoints++] = 0.0;
+            
+            // Along bottom 
+            padfX[nSamplePoints]   = dfRatio * nDstXSize + nDstXOff;
+            padfY[nSamplePoints]   = nDstYOff + nDstYSize;
+            padfZ[nSamplePoints++] = 0.0;
+            
+            // Along left
+            padfX[nSamplePoints]   = nDstXOff;
+            padfY[nSamplePoints]   = dfRatio * nDstYSize + nDstYOff;
+            padfZ[nSamplePoints++] = 0.0;
+            
+            // Along right
+            padfX[nSamplePoints]   = nDstXSize + nDstXOff;
+            padfY[nSamplePoints]   = dfRatio * nDstYSize + nDstYOff;
+            padfZ[nSamplePoints++] = 0.0;
+        }
+    }
+        
+    CPLAssert( nSamplePoints == nSampleMax );
 
 /* -------------------------------------------------------------------- */
 /*      Transform them to the output coordinate system.                 */
 /* -------------------------------------------------------------------- */
     if( !psOptions->pfnTransformer( psOptions->pTransformerArg, 
                                     TRUE, nSamplePoints, 
-                                    adfX, adfY, adfZ, abSuccess ) )
+                                    padfX, padfY, padfZ, pabSuccess ) )
     {
+        CPLFree( padfX );
+        CPLFree( pabSuccess );
+
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "GDALWarperOperation::ComputeSourceWindow() failed because\n"
                   "the pfnTransformer failed." );
@@ -1426,7 +1497,7 @@ CPLErr GDALWarpOperation::ComputeSourceWindow(int nDstXOff, int nDstYOff,
 
     for( i = 0; i < nSamplePoints; i++ )
     {
-        if( !abSuccess[i] )
+        if( !pabSuccess[i] )
         {
             nFailedCount++;
             continue;
@@ -1435,17 +1506,20 @@ CPLErr GDALWarpOperation::ComputeSourceWindow(int nDstXOff, int nDstYOff,
         if( !bGotInitialPoint )
         {
             bGotInitialPoint = TRUE;
-            dfMinXOut = dfMaxXOut = adfX[i];
-            dfMinYOut = dfMaxYOut = adfY[i];
+            dfMinXOut = dfMaxXOut = padfX[i];
+            dfMinYOut = dfMaxYOut = padfY[i];
         }
         else
         {
-            dfMinXOut = MIN(dfMinXOut,adfX[i]);
-            dfMinYOut = MIN(dfMinYOut,adfY[i]);
-            dfMaxXOut = MAX(dfMaxXOut,adfX[i]);
-            dfMaxYOut = MAX(dfMaxYOut,adfY[i]);
+            dfMinXOut = MIN(dfMinXOut,padfX[i]);
+            dfMinYOut = MIN(dfMinYOut,padfY[i]);
+            dfMaxXOut = MAX(dfMaxXOut,padfX[i]);
+            dfMaxYOut = MAX(dfMaxYOut,padfY[i]);
         }
     }
+
+    CPLFree( padfX );
+    CPLFree( pabSuccess );
 
     if( nFailedCount > nSamplePoints - 10 )
     {
@@ -1475,6 +1549,17 @@ CPLErr GDALWarpOperation::ComputeSourceWindow(int nDstXOff, int nDstYOff,
     
     if( psOptions->eResampleAlg == GRA_Cubic )
         nResWinSize = 2;
+
+/* -------------------------------------------------------------------- */
+/*      Allow addition of extra sample pixels to source window to       */
+/*      avoid missing pixels due to sampling error.                     */
+/* -------------------------------------------------------------------- */
+    if( CSLFetchNameValue( psOptions->papszWarpOptions, 
+                           "SOURCE_EXTRA" ) != NULL )
+    {
+        nResWinSize += atoi(
+            CSLFetchNameValue( psOptions->papszWarpOptions, "SOURCE_EXTRA" ));
+    }
 
 /* -------------------------------------------------------------------- */
 /*      return bounds.                                                  */
