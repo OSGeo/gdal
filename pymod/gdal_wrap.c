@@ -33,8 +33,8 @@
  * and things like that.
  *
  * $Log$
- * Revision 1.66  2003/04/22 17:28:41  warmerda
- * avoid use of assert()
+ * Revision 1.67  2003/05/28 19:47:26  warmerda
+ * added GDALTermProgress
  *
  ************************************************************************/
 
@@ -3132,6 +3132,28 @@ static PyObject *_wrap_GDALDecToDMS(PyObject *self, PyObject *args) {
         return NULL;
     _result = (char *)GDALDecToDMS(_arg0,_arg1,_arg2);
     _resultobj = Py_BuildValue("s", _result);
+    return _resultobj;
+}
+
+static PyObject *_wrap_GDALTermProgress(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    int  _result;
+    double  _arg0;
+    char * _arg1;
+    void * _arg2;
+    char * _argc2 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"dss:GDALTermProgress",&_arg0,&_arg1,&_argc2)) 
+        return NULL;
+    if (_argc2) {
+        if (SWIG_GetPtr(_argc2,(void **) &_arg2,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 3 of GDALTermProgress. Expected _void_p.");
+        return NULL;
+        }
+    }
+    _result = (int )GDALTermProgress(_arg0,_arg1,_arg2);
+    _resultobj = Py_BuildValue("i",_result);
     return _resultobj;
 }
 
@@ -8943,6 +8965,7 @@ static PyMethodDef _gdalMethods[] = {
 	 { "GDALGetDescription", _wrap_GDALGetDescription, 1 },
 	 { "GDALSetMetadata", _wrap_GDALSetMetadata, 1 },
 	 { "GDALGetMetadata", _wrap_GDALGetMetadata, 1 },
+	 { "GDALTermProgress", _wrap_GDALTermProgress, 1 },
 	 { "GDALDecToDMS", _wrap_GDALDecToDMS, 1 },
 	 { "GDALGetPaletteInterpretationName", _wrap_GDALGetPaletteInterpretationName, 1 },
 	 { "GDALGetColorInterpretationName", _wrap_GDALGetColorInterpretationName, 1 },
