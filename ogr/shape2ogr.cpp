@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/05/31 20:41:49  warmerda
+ * added multipoint support
+ *
  * Revision 1.1  1999/05/31 19:26:03  warmerda
  * New
  *
@@ -66,7 +69,33 @@ OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape )
     }
 
 /* -------------------------------------------------------------------- */
+/*      Multipoint.                                                     */
+/* -------------------------------------------------------------------- */
+    else if( psShape->nSHPType == SHPT_MULTIPOINT
+             || psShape->nSHPType == SHPT_MULTIPOINTM
+             || psShape->nSHPType == SHPT_MULTIPOINTZ )
+    {
+        OGRMultiPoint *poOGRMPoint = new OGRMultiPoint();
+        int		i;
+
+        for( i = 0; i < psShape->nVertices; i++ )
+        {
+            OGRPoint	*poPoint;
+
+            poPoint = new OGRPoint( psShape->padfX[i], psShape->padfY[i] );
+            
+            poOGRMPoint->addGeometry( poPoint );
+
+            delete poPoint;
+        }
+        
+        poOGR = poOGRMPoint;
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Arc (LineString)                                                */
+/*                                                                      */
+/*      I am ignoring parts though they can apply to arcs as well.      */
 /* -------------------------------------------------------------------- */
     else if( psShape->nSHPType == SHPT_ARC
              || psShape->nSHPType == SHPT_ARCM
