@@ -25,6 +25,9 @@
  * The GDALDriverManager class from gdal_priv.h.
  * 
  * $Log$
+ * Revision 1.18  2004/04/16 06:23:46  warmerda
+ * Use CPLGetConfigOption() instead of getenv().
+ *
  * Revision 1.17  2003/12/28 17:27:36  warmerda
  * added call to CPLFreeConfig()
  *
@@ -483,10 +486,10 @@ void GDALDriverManager::SetHome( const char * pszNewHome )
 void GDALDriverManager::AutoSkipDrivers()
 
 {
-    if( getenv( "GDAL_SKIP" ) == NULL )
+    if( CPLGetConfigOption( "GDAL_SKIP", NULL ) == NULL )
         return;
 
-    char **papszList = CSLTokenizeString( getenv("GDAL_SKIP") );
+    char **papszList = CSLTokenizeString( CPLGetConfigOption("GDAL_SKIP","") );
 
     for( int i = 0; i < CSLCount(papszList); i++ )
     {
@@ -533,20 +536,20 @@ void GDALDriverManager::AutoLoadDrivers()
 
 {
     char     **papszSearchPath = NULL;
+    const char *pszGDAL_DRIVER_PATH = 
+        CPLGetConfigOption( "GDAL_DRIVER_PATH", NULL );
 
 /* -------------------------------------------------------------------- */
 /*      Where should we look for stuff?                                 */
 /* -------------------------------------------------------------------- */
-    if( getenv( "GDAL_DRIVER_PATH" ) != NULL )
+    if( pszGDAL_DRIVER_PATH != NULL )
     {
 #ifdef WIN32
         papszSearchPath = 
-            CSLTokenizeStringComplex( getenv( "GDAL_DRIVER_PATH" ), ";", 
-                                      TRUE, FALSE );
+            CSLTokenizeStringComplex( pszGDAL_DRIVER_PATH, ";", TRUE, FALSE );
 #else
         papszSearchPath = 
-            CSLTokenizeStringComplex( getenv( "GDAL_DRIVER_PATH" ), ":", 
-                                      TRUE, FALSE );
+            CSLTokenizeStringComplex( pszGDAL_DRIVER_PATH, ":", TRUE, FALSE );
 #endif
     }
     else
