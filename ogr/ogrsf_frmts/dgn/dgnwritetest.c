@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2003/11/25 15:47:56  warmerda
+ * Added surface type for complex headers: Marius
+ *
  * Revision 1.5  2003/11/04 14:23:46  warmerda
  * added check after create
  *
@@ -56,21 +59,22 @@ CPL_CVSID("$Id$");
 int main( int argc, char ** argv )
 
 {
+#ifndef notdef
     DGNElemCore *pEllipse;
     DGNHandle hDGN;
 
-    hDGN = DGNOpen( "D:\\Test.dgn", 1 );
+    hDGN = DGNOpen( "out.dgn", 1 );
 
     pEllipse = DGNCreateArcElem( hDGN, DGNT_ELLIPSE,
-                               100.0, 500.0, 50.0, 40.0, 40.0,
-                               0.0, 360.0, 0.0, NULL );
+                                 1.0, 0.5, 0.0, 0.1, 0.1,
+                                 0.0, 360.0, 0.0, NULL );
    
-    DGNUpdateElemCore( hDGN, pEllipse, 15, 0, 3, 1, 0 );
+    DGNUpdateElemCore( hDGN, pEllipse, 10, 60, 4, 1, 0 );
     DGNWriteElement( hDGN, pEllipse );
     DGNFreeElement( hDGN, pEllipse );
 
     DGNClose( hDGN );
-#ifdef notdef
+#else
     DGNHandle hNewDGN;
     DGNElemCore *psMembers[2];
     DGNPoint   asPoints[10];
@@ -137,7 +141,7 @@ int main( int argc, char ** argv )
 /*      Write an Ellipse with fill info.                                */
 /* -------------------------------------------------------------------- */
     psLine = DGNCreateArcElem( hNewDGN, DGNT_ELLIPSE, 
-                               2000.0, 3000.0, 500.0, 1000.0, 1000.0, 
+                               200.0, 30.0, 5.0, 10.0, 10.0, 
                                0.0, 360.0, 0.0, NULL );
     
     DGNUpdateElemCore( hNewDGN, psLine, 15, 0, 3, 1, 0 );
