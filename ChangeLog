@@ -1,3 +1,8 @@
+2003-06-10  Andrey Kiselev  <dron@remotesensing.org>
+	
+	* frmts/hdf4/{hdf4dataset.h, hdf4dataset.cpp, hdf4imagedataset.cpp}:
+	Added support for MODIS Level 3 products.
+
 2003-05-30  Frank Warmerdam  <warmerdam@pobox.com>
 
 	* OGRSpatialReference.SetStatePlane() arguments changed to include
@@ -5,7 +10,7 @@
 
 2003-05-25  Andrey Kiselev  <dron@remotesensing.org>
 	
-	* frmts/mrsid/ mrsiddataset.cpp: New driver for MrSID file format.
+	* frmts/mrsid/mrsiddataset.cpp: New driver for MrSID file format.
 	Non-free MrSID decoding SDK from LizardTech required to compile this
 	driver. Full support for georeferencing and metadata records.
 
