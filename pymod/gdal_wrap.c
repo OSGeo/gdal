@@ -3662,6 +3662,28 @@ static PyObject *_wrap_OSRSetWellKnownGeogCS(PyObject *self, PyObject *args) {
     return _resultobj;
 }
 
+static PyObject *_wrap_OSRSetFromUserInput(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    int  _result;
+    OGRSpatialReferenceH  _arg0;
+    char * _arg1;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"Os:OSRSetFromUserInput",&_argo0,&_arg1)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OSRSetFromUserInput. Expected _OGRSpatialReferenceH.");
+        return NULL;
+        }
+    }
+    _result = (int )OSRSetFromUserInput(_arg0,_arg1);
+    _resultobj = Py_BuildValue("i",_result);
+    return _resultobj;
+}
+
 static PyObject *_wrap_OSRSetGeogCS(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
     int  _result;
@@ -7499,6 +7521,7 @@ static PyMethodDef _gdalMethods[] = {
 	 { "OSRGetSemiMinor", _wrap_OSRGetSemiMinor, METH_VARARGS },
 	 { "OSRGetSemiMajor", _wrap_OSRGetSemiMajor, METH_VARARGS },
 	 { "OSRSetGeogCS", _wrap_OSRSetGeogCS, METH_VARARGS },
+	 { "OSRSetFromUserInput", _wrap_OSRSetFromUserInput, METH_VARARGS },
 	 { "OSRSetWellKnownGeogCS", _wrap_OSRSetWellKnownGeogCS, METH_VARARGS },
 	 { "OSRSetProjCS", _wrap_OSRSetProjCS, METH_VARARGS },
 	 { "OSRIsSame", _wrap_OSRIsSame, METH_VARARGS },
