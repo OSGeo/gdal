@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.24  2004/07/10 04:52:24  warmerda
+ * Added lots of GEOS methods.
+ * Added closeRings().
+ *
  * Revision 1.23  2004/02/21 15:36:14  warmerda
  * const correctness updates for geometry: bug 289
  *
@@ -102,7 +106,14 @@
 #include "ogr_geometry.h"
 #include "ogr_api.h"
 #include "ogr_p.h"
+#include "ogr_geos.h"
 #include <assert.h>
+
+#ifdef HAVE_GEOS 
+#  include "geos/opDistance.h"
+#  include "geos/opBuffer.h"
+#  include "geos/geosAlgorithm.h"
+#endif
 
 CPL_CVSID("$Id$");
 
@@ -278,8 +289,41 @@ OGRBoolean OGRGeometry::Intersect( OGRGeometry *poOtherGeom ) const
         || oEnv2.MaxX < oEnv1.MinX
         || oEnv2.MaxY < oEnv1.MinY )
         return FALSE;
+
+#ifndef HAVE_GEOS
+    // Without GEOS we assume that envelope overlap is equivelent to
+    // actual intersection.
+    return TRUE;
+#else
+    
+    // we should really have a special case for simple box geometries
+    // to avoid the expense of using GEOS .. add later.
+    
+    geos::Geometry *poThisGeosGeom, *poOtherGeosGeom;
+
+    poThisGeosGeom = exportToGEOS();
+    poOtherGeosGeom = poOtherGeom->exportToGEOS();
+
+    if( poThisGeosGeom != NULL && poOtherGeosGeom != NULL )
+    {
+        OGRBoolean bResult;
+        
+        if( poThisGeosGeom->intersects( poOtherGeosGeom ) )
+            bResult = TRUE;
+        else
+            bResult = FALSE;
+        
+        delete poThisGeosGeom;
+        delete poOtherGeosGeom;
+
+        return bResult;
+    }
     else
+    {
         return TRUE;
+    }
+
+#endif /* HAVE_GEOS */
 }
 
 /************************************************************************/
@@ -1181,4 +1225,651 @@ OGRErr OGRSetGenerate_DB2_V72_BYTE_ORDER( int bGenerate_DB2_V72_BYTE_ORDER )
 int OGRGetGenerate_DB2_V72_BYTE_ORDER()
 {
    return OGRGeometry::bGenerate_DB2_V72_BYTE_ORDER;
+}
+
+/************************************************************************/
+/*                            exportToGEOS()                            */
+/************************************************************************/
+
+geos::Geometry *OGRGeometry::exportToGEOS() const
+
+{
+#ifndef HAVE_GEOS
+
+    CPLError( CE_Failure, CPLE_NotSupported, 
+              "GEOS support not enabled." );
+    return NULL;
+
+#else
+
+    char *pszWKT = NULL;
+    geos::WKTReader   geosWktReader;
+
+    if( exportToWkt( &pszWKT ) != OGRERR_NONE )
+        return NULL;
+
+    string oWKT = pszWKT;
+    CPLFree( pszWKT );
+
+    try 
+    { 
+        geos::Geometry *geosGeometry = NULL;
+        geosGeometry = geosWktReader.read( oWKT );
+        return geosGeometry;
+    }
+    catch( geos::GEOSException &e )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "GEOSException: %s", 
+                  e.toString().c_str() );
+
+        return NULL;
+    }
+
+#endif /* HAVE_GEOS */
+}
+
+
+/************************************************************************/
+/*                              Distance()                              */
+/************************************************************************/
+
+double OGRGeometry::Distance( const OGRGeometry *poOtherGeom ) const
+
+{
+#ifndef HAVE_GEOS
+
+    CPLError( CE_Failure, CPLE_NotSupported, 
+              "GEOS support not enabled." );
+    return -1.0;
+
+#else
+    geos::Geometry *poThis, *poOther;
+
+    poThis = exportToGEOS();
+    poOther = poOtherGeom->exportToGEOS();
+
+    if( poThis != NULL && poOther != NULL )
+    {
+        geos::DistanceOp oDistOp( poThis, poOther );
+        double dfDistance;
+
+        dfDistance = oDistOp.distance();
+        
+        delete poThis;
+        delete poOther;
+
+        return dfDistance;
+    }
+    else
+    {
+        return -1.0;
+    }
+
+#endif /* HAVE_GEOS */
+}
+
+/************************************************************************/
+/*                             ConvexHull()                             */
+/************************************************************************/
+
+OGRGeometry *OGRGeometry::ConvexHull() const
+
+{
+#ifndef HAVE_GEOS
+
+    CPLError( CE_Failure, CPLE_NotSupported, 
+              "GEOS support not enabled." );
+    return NULL;
+
+#else
+    geos::Geometry *poGeosGeom;
+    OGRGeometry *poHullOGRGeom = NULL;
+
+    poGeosGeom = exportToGEOS();
+
+    if( poGeosGeom != NULL )
+    {
+        geos::ConvexHull oCHull( poGeosGeom );
+        geos::Geometry *poHullGeosGeom;
+
+        poHullGeosGeom = oCHull.getConvexHull();
+
+        if( poHullGeosGeom != NULL )
+        {
+            poHullOGRGeom = OGRGeometryFactory::createFromGEOS(poHullGeosGeom);
+            delete poHullGeosGeom;
+        }
+
+        delete poGeosGeom;
+    }
+
+    return poHullOGRGeom;
+
+#endif /* HAVE_GEOS */
+}
+
+/************************************************************************/
+/*                            getBoundary()                             */
+/************************************************************************/
+
+OGRGeometry *OGRGeometry::getBoundary() const
+
+{
+#ifndef HAVE_GEOS
+
+    CPLError( CE_Failure, CPLE_NotSupported, 
+              "GEOS support not enabled." );
+    return NULL;
+
+#else
+    geos::Geometry *poSrcGeosGeom;
+    OGRGeometry *poResultOGRGeom = NULL;
+
+    poSrcGeosGeom = exportToGEOS();
+
+    if( poSrcGeosGeom != NULL )
+    {
+        geos::Geometry *poResultGeosGeom = 
+            poSrcGeosGeom->getBoundary();
+
+        if( poResultGeosGeom != NULL )
+        {
+            poResultOGRGeom = 
+                OGRGeometryFactory::createFromGEOS(poResultGeosGeom);
+            delete poResultGeosGeom;
+        }
+
+        delete poSrcGeosGeom;
+    }
+
+    return poResultOGRGeom;
+
+#endif /* HAVE_GEOS */
+}
+
+/************************************************************************/
+/*                               Buffer()                               */
+/************************************************************************/
+
+OGRGeometry *OGRGeometry::Buffer( double dfDist, int nQuadSegs ) const
+
+{
+#ifndef HAVE_GEOS
+
+    CPLError( CE_Failure, CPLE_NotSupported, 
+              "GEOS support not enabled." );
+    return NULL;
+
+#else
+    geos::Geometry *poGeosGeom;
+    OGRGeometry *poBufferOGRGeom = NULL;
+
+    poGeosGeom = exportToGEOS();
+
+    if( poGeosGeom != NULL )
+    {
+        geos::BufferOp oBuffer( poGeosGeom );
+        geos::Geometry *poBufferGeosGeom;
+
+        poBufferGeosGeom = oBuffer.getResultGeometry( dfDist, nQuadSegs );
+
+        if( poBufferGeosGeom != NULL )
+        {
+            poBufferOGRGeom = 
+                OGRGeometryFactory::createFromGEOS(poBufferGeosGeom);
+            delete poBufferGeosGeom;
+        }
+
+        delete poGeosGeom;
+    }
+
+    return poBufferOGRGeom;
+
+#endif /* HAVE_GEOS */
+}
+
+/************************************************************************/
+/*                            Intersection()                            */
+/************************************************************************/
+
+OGRGeometry *OGRGeometry::Intersection( const OGRGeometry *poOtherGeom ) const
+
+{
+#ifndef HAVE_GEOS
+
+    CPLError( CE_Failure, CPLE_NotSupported, 
+              "GEOS support not enabled." );
+    return NULL;
+
+#else
+    geos::Geometry *poThisGeosGeom, *poOtherGeosGeom;
+
+    poThisGeosGeom = exportToGEOS();
+    poOtherGeosGeom = poOtherGeom->exportToGEOS();
+
+    if( poThisGeosGeom != NULL && poOtherGeosGeom != NULL )
+    {
+        geos::Geometry *poResultGeosGeom = 
+            poThisGeosGeom->intersection( poOtherGeosGeom );
+        
+        delete poThisGeosGeom;
+        delete poOtherGeosGeom;
+
+        OGRGeometry *poResultOGRGeom = 
+            OGRGeometryFactory::createFromGEOS( poResultGeosGeom );
+        delete poResultGeosGeom;
+
+        return poResultOGRGeom;
+    }
+    else
+    {
+        return NULL;
+    }
+
+#endif /* HAVE_GEOS */
+}
+
+/************************************************************************/
+/*                               Union()                                */
+/************************************************************************/
+
+OGRGeometry *OGRGeometry::Union( const OGRGeometry *poOtherGeom ) const
+
+{
+#ifndef HAVE_GEOS
+
+    CPLError( CE_Failure, CPLE_NotSupported, 
+              "GEOS support not enabled." );
+    return NULL;
+
+#else
+    geos::Geometry *poThisGeosGeom, *poOtherGeosGeom;
+
+    poThisGeosGeom = exportToGEOS();
+    poOtherGeosGeom = poOtherGeom->exportToGEOS();
+
+    if( poThisGeosGeom != NULL && poOtherGeosGeom != NULL )
+    {
+        geos::Geometry *poResultGeosGeom = 
+            poThisGeosGeom->Union( poOtherGeosGeom );
+        
+        delete poThisGeosGeom;
+        delete poOtherGeosGeom;
+
+        OGRGeometry *poResultOGRGeom = 
+            OGRGeometryFactory::createFromGEOS( poResultGeosGeom );
+        delete poResultGeosGeom;
+
+        return poResultOGRGeom;
+    }
+    else
+    {
+        return NULL;
+    }
+
+#endif /* HAVE_GEOS */
+}
+
+/************************************************************************/
+/*                             Difference()                             */
+/************************************************************************/
+
+OGRGeometry *OGRGeometry::Difference( const OGRGeometry *poOtherGeom ) const
+
+{
+#ifndef HAVE_GEOS
+
+    CPLError( CE_Failure, CPLE_NotSupported, 
+              "GEOS support not enabled." );
+    return NULL;
+
+#else
+    geos::Geometry *poThisGeosGeom, *poOtherGeosGeom;
+
+    poThisGeosGeom = exportToGEOS();
+    poOtherGeosGeom = poOtherGeom->exportToGEOS();
+
+    if( poThisGeosGeom != NULL && poOtherGeosGeom != NULL )
+    {
+        geos::Geometry *poResultGeosGeom = 
+            poThisGeosGeom->difference( poOtherGeosGeom );
+        
+        delete poThisGeosGeom;
+        delete poOtherGeosGeom;
+
+        OGRGeometry *poResultOGRGeom = 
+            OGRGeometryFactory::createFromGEOS( poResultGeosGeom );
+        delete poResultGeosGeom;
+
+        return poResultOGRGeom;
+    }
+    else
+    {
+        return NULL;
+    }
+
+#endif /* HAVE_GEOS */
+}
+
+/************************************************************************/
+/*                        SymmetricDifference()                         */
+/************************************************************************/
+
+OGRGeometry *
+OGRGeometry::SymmetricDifference( const OGRGeometry *poOtherGeom ) const
+
+{
+#ifndef HAVE_GEOS
+
+    CPLError( CE_Failure, CPLE_NotSupported, 
+              "GEOS support not enabled." );
+    return NULL;
+
+#else
+    geos::Geometry *poThisGeosGeom, *poOtherGeosGeom;
+
+    poThisGeosGeom = exportToGEOS();
+    poOtherGeosGeom = poOtherGeom->exportToGEOS();
+
+    if( poThisGeosGeom != NULL && poOtherGeosGeom != NULL )
+    {
+        geos::Geometry *poResultGeosGeom = 
+            poThisGeosGeom->symDifference( poOtherGeosGeom );
+        
+        delete poThisGeosGeom;
+        delete poOtherGeosGeom;
+
+        OGRGeometry *poResultOGRGeom = 
+            OGRGeometryFactory::createFromGEOS( poResultGeosGeom );
+        delete poResultGeosGeom;
+
+        return poResultOGRGeom;
+    }
+    else
+    {
+        return NULL;
+    }
+
+#endif /* HAVE_GEOS */
+}
+
+/************************************************************************/
+/*                              Disjoint()                              */
+/************************************************************************/
+
+OGRBoolean
+OGRGeometry::Disjoint( const OGRGeometry *poOtherGeom ) const
+
+{
+#ifndef HAVE_GEOS
+
+    CPLError( CE_Failure, CPLE_NotSupported, 
+              "GEOS support not enabled." );
+    return FALSE;
+
+#else
+    geos::Geometry *poThisGeosGeom, *poOtherGeosGeom;
+
+    poThisGeosGeom = exportToGEOS();
+    poOtherGeosGeom = poOtherGeom->exportToGEOS();
+
+    if( poThisGeosGeom != NULL && poOtherGeosGeom != NULL )
+    {
+        OGRBoolean bResult;
+        
+        if( poThisGeosGeom->disjoint( poOtherGeosGeom ) )
+            bResult = TRUE;
+        else
+            bResult = FALSE;
+        
+        delete poThisGeosGeom;
+        delete poOtherGeosGeom;
+
+        return bResult;
+    }
+    else
+    {
+        return FALSE;
+    }
+
+#endif /* HAVE_GEOS */
+}
+
+/************************************************************************/
+/*                              Touches()                               */
+/************************************************************************/
+
+OGRBoolean
+OGRGeometry::Touches( const OGRGeometry *poOtherGeom ) const
+
+{
+#ifndef HAVE_GEOS
+
+    CPLError( CE_Failure, CPLE_NotSupported, 
+              "GEOS support not enabled." );
+    return FALSE;
+
+#else
+    geos::Geometry *poThisGeosGeom, *poOtherGeosGeom;
+
+    poThisGeosGeom = exportToGEOS();
+    poOtherGeosGeom = poOtherGeom->exportToGEOS();
+
+    if( poThisGeosGeom != NULL && poOtherGeosGeom != NULL )
+    {
+        OGRBoolean bResult;
+        
+        if( poThisGeosGeom->touches( poOtherGeosGeom ) )
+            bResult = TRUE;
+        else
+            bResult = FALSE;
+        
+        delete poThisGeosGeom;
+        delete poOtherGeosGeom;
+
+        return bResult;
+    }
+    else
+    {
+        return FALSE;
+    }
+
+#endif /* HAVE_GEOS */
+}
+
+/************************************************************************/
+/*                              Crosses()                               */
+/************************************************************************/
+
+OGRBoolean
+OGRGeometry::Crosses( const OGRGeometry *poOtherGeom ) const
+
+{
+#ifndef HAVE_GEOS
+
+    CPLError( CE_Failure, CPLE_NotSupported, 
+              "GEOS support not enabled." );
+    return FALSE;
+
+#else
+    geos::Geometry *poThisGeosGeom, *poOtherGeosGeom;
+
+    poThisGeosGeom = exportToGEOS();
+    poOtherGeosGeom = poOtherGeom->exportToGEOS();
+
+    if( poThisGeosGeom != NULL && poOtherGeosGeom != NULL )
+    {
+        OGRBoolean bResult;
+        
+        if( poThisGeosGeom->crosses( poOtherGeosGeom ) )
+            bResult = TRUE;
+        else
+            bResult = FALSE;
+        
+        delete poThisGeosGeom;
+        delete poOtherGeosGeom;
+
+        return bResult;
+    }
+    else
+    {
+        return FALSE;
+    }
+
+#endif /* HAVE_GEOS */
+}
+
+
+/************************************************************************/
+/*                               Within()                               */
+/************************************************************************/
+
+OGRBoolean
+OGRGeometry::Within( const OGRGeometry *poOtherGeom ) const
+
+{
+#ifndef HAVE_GEOS
+
+    CPLError( CE_Failure, CPLE_NotSupported, 
+              "GEOS support not enabled." );
+    return FALSE;
+
+#else
+    geos::Geometry *poThisGeosGeom, *poOtherGeosGeom;
+
+    poThisGeosGeom = exportToGEOS();
+    poOtherGeosGeom = poOtherGeom->exportToGEOS();
+
+    if( poThisGeosGeom != NULL && poOtherGeosGeom != NULL )
+    {
+        OGRBoolean bResult;
+        
+        if( poThisGeosGeom->within( poOtherGeosGeom ) )
+            bResult = TRUE;
+        else
+            bResult = FALSE;
+        
+        delete poThisGeosGeom;
+        delete poOtherGeosGeom;
+
+        return bResult;
+    }
+    else
+    {
+        return FALSE;
+    }
+
+#endif /* HAVE_GEOS */
+}
+
+/************************************************************************/
+/*                              Contains()                              */
+/************************************************************************/
+
+OGRBoolean
+OGRGeometry::Contains( const OGRGeometry *poOtherGeom ) const
+
+{
+#ifndef HAVE_GEOS
+
+    CPLError( CE_Failure, CPLE_NotSupported, 
+              "GEOS support not enabled." );
+    return FALSE;
+
+#else
+    geos::Geometry *poThisGeosGeom, *poOtherGeosGeom;
+
+    poThisGeosGeom = exportToGEOS();
+    poOtherGeosGeom = poOtherGeom->exportToGEOS();
+
+    if( poThisGeosGeom != NULL && poOtherGeosGeom != NULL )
+    {
+        OGRBoolean bResult;
+        
+        if( poThisGeosGeom->contains( poOtherGeosGeom ) )
+            bResult = TRUE;
+        else
+            bResult = FALSE;
+        
+        delete poThisGeosGeom;
+        delete poOtherGeosGeom;
+
+        return bResult;
+    }
+    else
+    {
+        return FALSE;
+    }
+
+#endif /* HAVE_GEOS */
+}
+
+/************************************************************************/
+/*                              Overlaps()                              */
+/************************************************************************/
+
+OGRBoolean
+OGRGeometry::Overlaps( const OGRGeometry *poOtherGeom ) const
+
+{
+#ifndef HAVE_GEOS
+
+    CPLError( CE_Failure, CPLE_NotSupported, 
+              "GEOS support not enabled." );
+    return FALSE;
+
+#else
+    geos::Geometry *poThisGeosGeom, *poOtherGeosGeom;
+
+    poThisGeosGeom = exportToGEOS();
+    poOtherGeosGeom = poOtherGeom->exportToGEOS();
+
+    if( poThisGeosGeom != NULL && poOtherGeosGeom != NULL )
+    {
+        OGRBoolean bResult;
+        
+        if( poThisGeosGeom->overlaps( poOtherGeosGeom ) )
+            bResult = TRUE;
+        else
+            bResult = FALSE;
+        
+        delete poThisGeosGeom;
+        delete poOtherGeosGeom;
+
+        return bResult;
+    }
+    else
+    {
+        return FALSE;
+    }
+
+#endif /* HAVE_GEOS */
+}
+
+/************************************************************************/
+/*                             closeRings()                             */
+/************************************************************************/
+
+/**
+ * Force rings to be closed.
+ *
+ * If this geometry, or any contained geometries has polygon rings that 
+ * are not closed, they will be closed by adding the starting point at
+ * the end. 
+ */
+
+void OGRGeometry::closeRings()
+
+{
+}
+
+/************************************************************************/
+/*                          OGR_G_CloseRings()                          */
+/************************************************************************/
+
+void OGR_G_CloseRings( OGRGeometryH hGeom )
+
+{
+    ((OGRGeometry *) hGeom)->closeRings();
 }
