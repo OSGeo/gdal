@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  1999/05/31 20:43:34  warmerda
+ * added empty(), and another setPoints()
+ *
  * Revision 1.5  1999/05/31 15:01:59  warmerda
  * OGRCurve now an abstract base class with essentially no implementation.
  * Everything moved down to OGRLineString where it belongs.  Also documented
@@ -112,6 +115,17 @@ OGRGeometry *OGRLineString::clone()
 
     return poNewLineString;
 }
+
+/************************************************************************/
+/*                               empty()                                */
+/************************************************************************/
+
+void OGRLineString::empty()
+
+{
+    setNumPoints( 0 );
+}
+
 
 /************************************************************************/
 /*                            getDimension()                            */
@@ -313,7 +327,7 @@ void OGRLineString::addPoint( double x, double y )
 /**
  * Assign all points in a line string.
  *
- * This method clear any existing points assigned to this line string,
+ * This method clears any existing points assigned to this line string,
  * and assigns a whole new set.  It is the most efficient way of assigning
  * the value of a line string.
  *
@@ -328,6 +342,37 @@ void OGRLineString::setPoints( int nPointsIn, OGRRawPoint * paoPointsIn )
 {
     setNumPoints( nPointsIn );
     memcpy( paoPoints, paoPointsIn, sizeof(OGRRawPoint) * nPointsIn);
+}
+
+/************************************************************************/
+/*                             setPoints()                              */
+/************************************************************************/
+
+/**
+ * Assign all points in a line string.
+ *
+ * This method clear any existing points assigned to this line string,
+ * and assigns a whole new set.
+ *
+ * There is no SFCOM analog to this method.
+ *
+ * @param nPointsIn number of points being passed in padfX and padfY.
+ * @param padfX list of X coordinates of points being assigned.
+ * @param padfY list of Y coordinates of points being assigned.
+ */
+
+void OGRLineString::setPoints( int nPointsIn, double * padfX, double * padfY )
+
+{
+    int		i;
+    
+    setNumPoints( nPointsIn );
+
+    for( i = 0; i < nPointsIn; i++ )
+    {
+        paoPoints[i].x = padfX[i];
+        paoPoints[i].y = padfY[i];
+    }
 }
 
 /************************************************************************/
