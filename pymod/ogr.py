@@ -28,6 +28,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.10  2003/04/03 19:27:55  warmerda
+# added nullable string support, fixed ogr.Layer.SetAttributeFilter()
+#
 # Revision 1.9  2003/03/20 17:53:30  warmerda
 # added OGR OpenShared and reference coutnting stuff
 #
@@ -58,6 +61,7 @@
 #
 
 import _gdal
+import gdal
 import osr
 
 # OGRwkbGeometryType
@@ -297,8 +301,11 @@ class Layer:
         else:
             return Geometry( _obj = geom_o )
 
-    def SetAttributeFilter( self, where_clause ):
-        return _gdal.OGR_L_SetAttributeFilter( self._o, where_clause )
+    def SetAttributeFilter( self, where_clause = None ):
+        filter = gdal.ToNULLableString( where_clause )
+        result = _gdal.OGR_L_SetAttributeFilter( self._o, filter )
+        gdal.FreeNULLableString(filter)
+        return result
         
     def ResetReading( self ):
         _gdal.OGR_L_ResetReading( self._o )

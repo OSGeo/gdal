@@ -29,6 +29,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.46  2003/04/03 19:27:55  warmerda
+# added nullable string support, fixed ogr.Layer.SetAttributeFilter()
+#
 # Revision 1.45  2003/03/25 19:48:04  warmerda
 # Don't throw an exception from GetGeoTransform() on failure, just return
 # the default transform.
@@ -85,6 +88,22 @@
 import _gdal
 from gdalconst import *
 from _gdal import ptrcreate, ptrfree, ptrvalue, ptrset, ptrcast, ptradd, ptrmap
+
+def ToNULLableString(x):
+    if x is None or x == 'NULL':
+        return 'NULL'
+    else:
+        l = len(x)
+        p = ptrcreate( 'char', '', l+1 )
+        for i in range(l):
+            ptrset( p, x[i], i )
+        ptrset( p, chr(0), l )
+        
+        return ptrcast(p,'NULLableString')
+
+def FreeNULLableString(x):
+    if x is not 'NULL':
+        ptrfree( x )
 
 def Debug(msg_class, message):
     _gdal.CPLDebug( msg_class, message )
