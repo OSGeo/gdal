@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2000/02/18 05:04:50  warmerda
+ * added bHasWarned
+ *
  * Revision 1.4  1999/08/12 19:10:54  warmerda
  * added ESRI_GRID_NO_DATA
  *
@@ -64,6 +67,8 @@ typedef struct {
     int		*panBlockSize;
 
     FILE	*fpGrid;	/* the w001001.adf file */
+
+    int		bHasWarned;
 
     /* public information */
 
