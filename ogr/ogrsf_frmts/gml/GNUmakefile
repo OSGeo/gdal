@@ -18,7 +18,7 @@ else
 ALL_C_FLAGS :=  -DHAVE_XERCES=0 $(ALL_C_FLAGS)
 endif
 
-default:	$(CORE_OBJ) $(OGR_OBJ) gmlview
+default:	$(CORE_OBJ) $(OGR_OBJ)
 
 clean:
 	rm -f *.o gmlview
