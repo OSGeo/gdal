@@ -23,6 +23,8 @@ LOC_OBJ =       SF.obj SFRS.obj sfutil.obj sftraceback.obj sfregister.obj
 
 default:	$(DLLNAME)
 
+all:	$(DLLNAME) install
+
 SF.obj SFRS.obj: $(SFOLEDB)/SF.h $(SFOLEDB)/SFDS.h $(SFOLEDB)/SFRS.h \
 		$(SFOLEDB)/SFSess.h 
 
