@@ -25,6 +25,9 @@
  * Main format registration function.
  * 
  * $Log$
+ * Revision 1.6  1999/05/05 17:32:53  warmerda
+ * added ceos
+ *
  * Revision 1.5  1999/02/04 22:14:46  warmerda
  * added aigrid format
  *
@@ -51,6 +54,7 @@ void GDALRegister_GXF(void);
 void GDALRegister_OGDI(void);
 void GDALRegister_HFA(void);
 void GDALRegister_AIGrid(void);
+void GDALRegister_CEOS(void);
 CPL_C_END
 
 static char *szConfiguredFormats = "GDAL_FORMATS";
@@ -78,6 +82,10 @@ void GDALAllRegister()
 
 #ifdef FRMT_hfa
     GDALRegister_HFA();
+#endif
+    
+#ifdef FRMT_ceos
+    GDALRegister_CEOS();
 #endif
     
 #ifdef FRMT_aigrid
