@@ -28,6 +28,12 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2003/07/17 20:29:15  warmerda
+ * Moved all the sources implementations out.
+ * Improved error checking and returning when initializing from XML.
+ * Added vrt_sources (and new_vrt_sources) metadata domains to permit
+ * management of sources via XML passed in/out of the metadata methods.
+ *
  * Revision 1.14  2003/06/10 19:59:33  warmerda
  * added new Func based source type for passthrough to a callback
  *
@@ -79,835 +85,6 @@
 #include "cpl_string.h"
 
 CPL_CVSID("$Id$");
-
-/************************************************************************/
-/* ==================================================================== */
-/*                             VRTSource                                */
-/* ==================================================================== */
-/************************************************************************/
-
-VRTSource::~VRTSource()
-{
-}
-
-/************************************************************************/
-/* ==================================================================== */
-/*                          VRTSimpleSource                             */
-/* ==================================================================== */
-/************************************************************************/
-
-class VRTSimpleSource : public VRTSource
-{
-public:
-            VRTSimpleSource();
-    virtual ~VRTSimpleSource();
-
-    virtual CPLErr  XMLInit( CPLXMLNode *psTree );
-    virtual CPLXMLNode *SerializeToXML();
-
-    int            GetSrcDstWindow( int, int, int, int, int, int, 
-                                    int *, int *, int *, int *,
-                                    int *, int *, int *, int * );
-
-    virtual CPLErr  RasterIO( int nXOff, int nYOff, int nXSize, int nYSize, 
-                              void *pData, int nBufXSize, int nBufYSize, 
-                              GDALDataType eBufType, 
-                              int nPixelSpace, int nLineSpace );
-
-    void            DstToSrc( double dfX, double dfY,
-                              double &dfXOut, double &dfYOut );
-    void            SrcToDst( double dfX, double dfY,
-                              double &dfXOut, double &dfYOut );
-
-    GDALRasterBand      *poRasterBand;
-
-    int                 nSrcXOff;
-    int                 nSrcYOff;
-    int                 nSrcXSize;
-    int                 nSrcYSize;
-
-    int                 nDstXOff;
-    int                 nDstYOff;
-    int                 nDstXSize;
-    int                 nDstYSize;
-
-    float               fNoDataValue;
-};
-
-/************************************************************************/
-/*                          VRTSimpleSource()                           */
-/************************************************************************/
-
-VRTSimpleSource::VRTSimpleSource()
-
-{
-    poRasterBand = NULL;
-}
-
-/************************************************************************/
-/*                          ~VRTSimpleSource()                          */
-/************************************************************************/
-
-VRTSimpleSource::~VRTSimpleSource()
-
-{
-    if( poRasterBand != NULL && poRasterBand->GetDataset() != NULL )
-    {
-        if( poRasterBand->GetDataset()->GetShared() )
-            GDALClose( (GDALDatasetH) poRasterBand->GetDataset() );
-        else
-            poRasterBand->GetDataset()->Dereference();
-    }
-}
-
-/************************************************************************/
-/*                           SerializeToXML()                           */
-/************************************************************************/
-
-CPLXMLNode *VRTSimpleSource::SerializeToXML()
-
-{
-    CPLXMLNode      *psSrc;
-    GDALDataset     *poDS = poRasterBand->GetDataset();
-
-    if( poDS == NULL || poRasterBand->GetBand() < 1 )
-        return NULL;
-
-    psSrc = CPLCreateXMLNode( NULL, CXT_Element, "SimpleSource" );
-
-    CPLSetXMLValue( psSrc, "SourceFilename", poDS->GetDescription() );
-
-    CPLSetXMLValue( psSrc, "SourceBand", 
-                    CPLSPrintf("%d",poRasterBand->GetBand()) );
-
-    if( nSrcXOff != -1 
-        || nSrcYOff != -1 
-        || nSrcXSize != -1 
-        || nSrcYSize != -1 )
-    {
-        CPLSetXMLValue( psSrc, "SrcRect.#xOff", 
-                        CPLSPrintf( "%d", nSrcXOff ) );
-        CPLSetXMLValue( psSrc, "SrcRect.#yOff", 
-                        CPLSPrintf( "%d", nSrcYOff ) );
-        CPLSetXMLValue( psSrc, "SrcRect.#xSize", 
-                        CPLSPrintf( "%d", nSrcXSize ) );
-        CPLSetXMLValue( psSrc, "SrcRect.#ySize", 
-                        CPLSPrintf( "%d", nSrcYSize ) );
-    }
-
-    if( nDstXOff != -1 
-        || nDstYOff != -1 
-        || nDstXSize != -1 
-        || nDstYSize != -1 )
-    {
-        CPLSetXMLValue( psSrc, "DstRect.#xOff", CPLSPrintf( "%d", nDstXOff ) );
-        CPLSetXMLValue( psSrc, "DstRect.#yOff", CPLSPrintf( "%d", nDstYOff ) );
-        CPLSetXMLValue( psSrc, "DstRect.#xSize",CPLSPrintf( "%d", nDstXSize ));
-        CPLSetXMLValue( psSrc, "DstRect.#ySize",CPLSPrintf( "%d", nDstYSize ));
-    }
-
-    return psSrc;
-}
-
-/************************************************************************/
-/*                              XMLInit()                               */
-/************************************************************************/
-
-CPLErr VRTSimpleSource::XMLInit( CPLXMLNode *psSrc )
-
-{
-/* -------------------------------------------------------------------- */
-/*      Get the raster band.                                            */
-/* -------------------------------------------------------------------- */
-    const char *pszFilename = 
-        CPLGetXMLValue(psSrc, "SourceFilename", NULL);
-    
-    if( pszFilename == NULL )
-    {
-        CPLError( CE_Warning, CPLE_AppDefined, 
-                  "Missing <SourceFilename> element in VRTRasterBand." );
-        return CE_Failure;
-    }
-    
-    int nSrcBand = atoi(CPLGetXMLValue(psSrc,"SourceBand","1"));
-    
-    GDALDataset *poSrcDS = (GDALDataset *) 
-        GDALOpenShared( pszFilename, GA_ReadOnly );
-    
-    if( poSrcDS == NULL || poSrcDS->GetRasterBand(nSrcBand) == NULL )
-        return CE_Failure;
-
-    poRasterBand = poSrcDS->GetRasterBand(nSrcBand);
-    
-/* -------------------------------------------------------------------- */
-/*      Set characteristics.                                            */
-/* -------------------------------------------------------------------- */
-    nSrcXOff = atoi(CPLGetXMLValue(psSrc,"SrcRect.xOff","-1"));
-    nSrcYOff = atoi(CPLGetXMLValue(psSrc,"SrcRect.yOff","-1"));
-    nSrcXSize = atoi(CPLGetXMLValue(psSrc,"SrcRect.xSize","-1"));
-    nSrcYSize = atoi(CPLGetXMLValue(psSrc,"SrcRect.ySize","-1"));
-    nDstXOff = atoi(CPLGetXMLValue(psSrc,"DstRect.xOff","-1"));
-    nDstYOff = atoi(CPLGetXMLValue(psSrc,"DstRect.yOff","-1"));
-    nDstXSize = atoi(CPLGetXMLValue(psSrc,"DstRect.xSize","-1"));
-    nDstYSize = atoi(CPLGetXMLValue(psSrc,"DstRect.ySize","-1"));
-
-    return CE_None;
-}
-
-/************************************************************************/
-/*                              SrcToDst()                              */
-/************************************************************************/
-
-void VRTSimpleSource::SrcToDst( double dfX, double dfY,
-                                double &dfXOut, double &dfYOut )
-
-{
-    dfXOut = ((dfX - nSrcXOff) / nSrcXSize) * nDstXSize + nDstXOff;
-    dfYOut = ((dfY - nSrcYOff) / nSrcYSize) * nDstYSize + nDstYOff;
-}
-
-/************************************************************************/
-/*                              DstToSrc()                              */
-/************************************************************************/
-
-void VRTSimpleSource::DstToSrc( double dfX, double dfY,
-                                double &dfXOut, double &dfYOut )
-
-{
-    dfXOut = ((dfX - nDstXOff) / nDstXSize) * nSrcXSize + nSrcXOff;
-    dfYOut = ((dfY - nDstYOff) / nDstYSize) * nSrcYSize + nSrcYOff;
-}
-
-/************************************************************************/
-/*                          GetSrcDstWindow()                           */
-/************************************************************************/
-
-int 
-VRTSimpleSource::GetSrcDstWindow( int nXOff, int nYOff, int nXSize, int nYSize,
-                                  int nBufXSize, int nBufYSize,
-                                  int *pnReqXOff, int *pnReqYOff,
-                                  int *pnReqXSize, int *pnReqYSize,
-                                  int *pnOutXOff, int *pnOutYOff, 
-                                  int *pnOutXSize, int *pnOutYSize )
-
-{
-/* -------------------------------------------------------------------- */
-/*      Translate requested region in virtual file into the source      */
-/*      band coordinates.                                               */
-/* -------------------------------------------------------------------- */
-    double      dfScaleX = nSrcXSize / (double) nDstXSize;
-    double      dfScaleY = nSrcYSize / (double) nDstYSize;
-
-    *pnReqXOff = (int) floor((nXOff - nDstXOff) * dfScaleX + nSrcXOff);
-    *pnReqYOff = (int) floor((nYOff - nDstYOff) * dfScaleY + nSrcYOff);
-
-    *pnReqXSize = (int) floor(nXSize * dfScaleX + 0.5);
-    *pnReqYSize = (int) floor(nYSize * dfScaleY + 0.5);
-
-/* -------------------------------------------------------------------- */
-/*      This request window corresponds to the whole output buffer.     */
-/* -------------------------------------------------------------------- */
-    *pnOutXOff = 0;
-    *pnOutYOff = 0;
-    *pnOutXSize = nBufXSize;
-    *pnOutYSize = nBufYSize;
-
-/* -------------------------------------------------------------------- */
-/*      Clamp within the bounds of the available source data.           */
-/* -------------------------------------------------------------------- */
-    int bModified = FALSE;
-
-    if( *pnReqXOff < 0 )
-    {
-        *pnReqXSize += *pnReqXOff;
-        *pnReqXOff = 0;
-
-        bModified = TRUE;
-    }
-    
-    if( *pnReqYOff < 0 )
-    {
-        *pnReqYSize += *pnReqYOff;
-        *pnReqYOff = 0;
-        bModified = TRUE;
-    }
-
-    if( *pnReqXSize == 0 )
-        *pnReqXSize = 1;
-    if( *pnReqYSize == 0 )
-        *pnReqYSize = 1;
-
-    if( *pnReqXOff + *pnReqXSize > poRasterBand->GetXSize() )
-    {
-        *pnReqXSize = poRasterBand->GetXSize() - *pnReqXOff;
-        bModified = TRUE;
-    }
-
-    if( *pnReqYOff + *pnReqYSize > poRasterBand->GetYSize() )
-    {
-        *pnReqYSize = poRasterBand->GetYSize() - *pnReqYOff;
-        bModified = TRUE;
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Don't do anything if the requesting region is completely off    */
-/*      the source image.                                               */
-/* -------------------------------------------------------------------- */
-    if( *pnReqXOff >= poRasterBand->GetXSize()
-        || *pnReqYOff >= poRasterBand->GetYSize()
-        || *pnReqXSize <= 0 || *pnReqYSize <= 0 )
-    {
-        return FALSE;
-    }
-
-/* -------------------------------------------------------------------- */
-/*      If we haven't had to modify the source rectangle, then the      */
-/*      destination rectangle must be the whole region.                 */
-/* -------------------------------------------------------------------- */
-    if( !bModified )
-        return TRUE;
-
-/* -------------------------------------------------------------------- */
-/*      Now transform this possibly reduced request back into the       */
-/*      destination buffer coordinates in case the output region is     */
-/*      less than the whole buffer.                                     */
-/* -------------------------------------------------------------------- */
-    double dfDstULX, dfDstULY, dfDstLRX, dfDstLRY;
-    double dfScaleWinToBufX, dfScaleWinToBufY;
-
-    SrcToDst( (double) *pnReqXOff, (double) *pnReqYOff, dfDstULX, dfDstULY );
-    SrcToDst( *pnReqXOff + *pnReqXSize, *pnReqYOff + *pnReqYSize, 
-              dfDstLRX, dfDstLRY );
-
-    dfScaleWinToBufX = nBufXSize / (double) nXSize;
-    dfScaleWinToBufY = nBufYSize / (double) nYSize;
-
-    *pnOutXOff = (int) ((dfDstULX - nXOff) * dfScaleWinToBufX+0.001);
-    *pnOutYOff = (int) ((dfDstULY - nYOff) * dfScaleWinToBufY+0.001);
-    *pnOutXSize = (int) ((dfDstLRX - nXOff) * dfScaleWinToBufX+0.001) 
-        - *pnOutXOff;
-    *pnOutYSize = (int) ((dfDstLRY - nYOff) * dfScaleWinToBufY+0.001) 
-        - *pnOutYOff;
-
-    *pnOutXOff = MAX(0,*pnOutXOff);
-    *pnOutYOff = MAX(0,*pnOutYOff);
-    if( *pnOutXOff + *pnOutXSize > nBufXSize )
-        *pnOutXSize = nBufXSize - *pnOutXOff;
-    if( *pnOutYOff + *pnOutYSize > nBufYSize )
-        *pnOutYSize = nBufYSize - *pnOutYOff;
-
-    if( *pnOutXSize < 1 || *pnOutYSize < 1 )
-    {
-        if( nYOff == 26 )						
-        {
-            printf( "adjusted outsize == 0!\n" );
-            printf( "Dst = (%.16g,%.16g,%.16g,%.16g)\n", 
-                    dfDstULX, dfDstULY, dfDstLRX, dfDstLRY );
-            printf( "Out = (%d,%d,%d,%d)\n",
-                    *pnOutXOff, 
-                    *pnOutYOff, 
-                    *pnOutXSize, 
-                    *pnOutYSize );
-        }
-
-        return FALSE;
-    }
-    else
-        return TRUE;
-}
-
-/************************************************************************/
-/*                              RasterIO()                              */
-/************************************************************************/
-
-CPLErr 
-VRTSimpleSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
-                           void *pData, int nBufXSize, int nBufYSize, 
-                           GDALDataType eBufType, 
-                           int nPixelSpace, int nLineSpace )
-
-{
-    // The window we will actually request from the source raster band.
-    int nReqXOff, nReqYOff, nReqXSize, nReqYSize;
-
-    // The window we will actual set _within_ the pData buffer.
-    int nOutXOff, nOutYOff, nOutXSize, nOutYSize;
-
-    if( !GetSrcDstWindow( nXOff, nYOff, nXSize, nYSize,
-                          nBufXSize, nBufYSize, 
-                          &nReqXOff, &nReqYOff, &nReqXSize, &nReqYSize,
-                          &nOutXOff, &nOutYOff, &nOutXSize, &nOutYSize ) )
-    {
-        return CE_None;
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Actually perform the IO request.                                */
-/* -------------------------------------------------------------------- */
-    CPLErr eErr;
-
-    eErr = 
-        poRasterBand->RasterIO( GF_Read, 
-                                nReqXOff, nReqYOff, nReqXSize, nReqYSize,
-                                ((unsigned char *) pData) 
-                                + nOutXOff * nPixelSpace
-                                + nOutYOff * nLineSpace, 
-                                nOutXSize, nOutYSize, 
-                                eBufType, nPixelSpace, nLineSpace );
-
-    return eErr;
-}
-
-/************************************************************************/
-/* ==================================================================== */
-/*                         VRTAveragedSource                            */
-/* ==================================================================== */
-/************************************************************************/
-
-class VRTAveragedSource : public VRTSimpleSource
-{
-public:
-    virtual CPLErr  RasterIO( int nXOff, int nYOff, int nXSize, int nYSize, 
-                              void *pData, int nBufXSize, int nBufYSize, 
-                              GDALDataType eBufType, 
-                              int nPixelSpace, int nLineSpace );
-    virtual CPLXMLNode *SerializeToXML();
-};
-
-/************************************************************************/
-/*                           SerializeToXML()                           */
-/************************************************************************/
-
-CPLXMLNode *VRTAveragedSource::SerializeToXML()
-
-{
-    CPLXMLNode *psSrc = VRTSimpleSource::SerializeToXML();
-
-    if( psSrc == NULL )
-        return NULL;
-
-    CPLFree( psSrc->pszValue );
-    psSrc->pszValue = CPLStrdup( "AveragedSource" );
-
-    return psSrc;
-}
-
-/************************************************************************/
-/*                              RasterIO()                              */
-/************************************************************************/
-
-CPLErr 
-VRTAveragedSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
-                           void *pData, int nBufXSize, int nBufYSize, 
-                           GDALDataType eBufType, 
-                           int nPixelSpace, int nLineSpace )
-
-{
-    // The window we will actually request from the source raster band.
-    int nReqXOff, nReqYOff, nReqXSize, nReqYSize;
-
-    // The window we will actual set _within_ the pData buffer.
-    int nOutXOff, nOutYOff, nOutXSize, nOutYSize;
-
-    if( !GetSrcDstWindow( nXOff, nYOff, nXSize, nYSize, nBufXSize, nBufYSize, 
-                          &nReqXOff, &nReqYOff, &nReqXSize, &nReqYSize,
-                          &nOutXOff, &nOutYOff, &nOutXSize, &nOutYSize ) )
-        return CE_None;
-
-/* -------------------------------------------------------------------- */
-/*      Allocate a temporary buffer to whole the full resolution        */
-/*      data from the area of interest.                                 */
-/* -------------------------------------------------------------------- */
-    float *pafSrc;
-
-    pafSrc = (float *) VSIMalloc(sizeof(float) * nReqXSize * nReqYSize);
-    if( pafSrc == NULL )
-    {
-        CPLError( CE_Failure, CPLE_OutOfMemory, 
-                  "Out of memory allocating working buffer in VRTAveragedSource::RasterIO()." );
-        return CE_Failure;
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Load it.                                                        */
-/* -------------------------------------------------------------------- */
-    CPLErr eErr;
-    
-    eErr = poRasterBand->RasterIO( GF_Read, 
-                                   nReqXOff, nReqYOff, nReqXSize, nReqYSize,
-                                   pafSrc, nReqXSize, nReqYSize, GDT_Float32, 
-                                   0, 0 );
-
-    if( eErr != CE_None )
-    {
-        VSIFree( pafSrc );
-        return eErr;
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Do the averaging.                                               */
-/* -------------------------------------------------------------------- */
-    for( int iBufLine = nOutYOff; iBufLine < nOutYOff + nOutYSize; iBufLine++ )
-    {
-        double  dfYDst;
-
-        dfYDst = (iBufLine / (double) nBufYSize) * nYSize + nYOff;
-        
-        for( int iBufPixel = nOutXOff; 
-             iBufPixel < nOutXOff + nOutXSize; 
-             iBufPixel++ )
-        {
-            double dfXDst;
-            double dfXSrcStart, dfXSrcEnd, dfYSrcStart, dfYSrcEnd;
-            int    iXSrcStart, iYSrcStart, iXSrcEnd, iYSrcEnd;
-
-            dfXDst = (iBufPixel / (double) nBufXSize) * nXSize + nXOff;
-
-            // Compute the source image rectangle needed for this pixel.
-            DstToSrc( dfXDst, dfYDst, dfXSrcStart, dfYSrcStart );
-            DstToSrc( dfXDst+1.0, dfYDst+1.0, dfXSrcEnd, dfYSrcEnd );
-
-            // Convert to integers, assuming that the center of the source
-            // pixel must be in our rect to get included.
-            iXSrcStart = (int) floor(dfXSrcStart+0.5);
-            iYSrcStart = (int) floor(dfYSrcStart+0.5);
-            iXSrcEnd = (int) floor(dfXSrcEnd+0.5);
-            iYSrcEnd = (int) floor(dfYSrcEnd+0.5);
-
-            // Transform into the coordinate system of the source *buffer*
-            iXSrcStart -= nReqXOff;
-            iYSrcStart -= nReqYOff;
-            iXSrcEnd -= nReqXOff;
-            iYSrcEnd -= nReqYOff;
-
-            double dfSum = 0.0;
-            int    nPixelCount = 0;
-            
-            for( int iY = iYSrcStart; iY < iYSrcEnd; iY++ )
-            {
-                if( iY < 0 || iY >= nReqYSize )
-                    continue;
-
-                for( int iX = iXSrcStart; iX < iXSrcEnd; iX++ )
-                {
-                    if( iX < 0 || iX >= nReqXSize )
-                        continue;
-
-                    float fSampledValue = pafSrc[iX + iY * nReqXSize];
-
-                    if( ABS(fSampledValue-fNoDataValue) < 0.0001 )
-                        continue;
-
-                    nPixelCount++;
-                    dfSum += pafSrc[iX + iY * nReqXSize];
-                }
-            }
-
-            if( nPixelCount == 0 )
-                continue;
-
-            // Compute output value.
-            float dfOutputValue = (float) (dfSum / nPixelCount);
-
-            // Put it in the output buffer.
-            GByte *pDstLocation;
-
-            pDstLocation = ((GByte *)pData) 
-                + nPixelSpace * iBufPixel
-                + nLineSpace * iBufLine;
-
-            if( eBufType == GDT_Byte )
-                *pDstLocation = (GByte) MIN(255,MAX(0,dfOutputValue));
-            else
-                GDALCopyWords( &dfOutputValue, GDT_Float32, 4, 
-                               pDstLocation, eBufType, 8, 1 );
-        }
-    }
-
-    VSIFree( pafSrc );
-
-    return CE_None;
-}
-
-/************************************************************************/
-/* ==================================================================== */
-/*                          VRTComplexSource                            */
-/* ==================================================================== */
-/************************************************************************/
-
-class VRTComplexSource : public VRTSimpleSource
-{
-public:
-                   VRTComplexSource();
-
-    virtual CPLErr RasterIO( int nXOff, int nYOff, int nXSize, int nYSize, 
-                             void *pData, int nBufXSize, int nBufYSize, 
-                             GDALDataType eBufType, 
-                             int nPixelSpace, int nLineSpace );
-    virtual CPLXMLNode *SerializeToXML();
-    virtual CPLErr XMLInit( CPLXMLNode * );
-
-    int		   bDoScaling;
-    double	   dfScaleOff;
-    double         dfScaleRatio;
-
-    int            bNoDataSet;
-    double         dfNoDataValue;
-};
-
-/************************************************************************/
-/*                          VRTComplexSource()                          */
-/************************************************************************/
-
-VRTComplexSource::VRTComplexSource()
-
-{
-    bDoScaling = FALSE;
-    dfScaleOff = 0.0;
-    dfScaleRatio = 1.0;
-    
-    bNoDataSet = FALSE;
-    dfNoDataValue = 0.0;
-}
-
-/************************************************************************/
-/*                           SerializeToXML()                           */
-/************************************************************************/
-
-CPLXMLNode *VRTComplexSource::SerializeToXML()
-
-{
-    CPLXMLNode *psSrc = VRTSimpleSource::SerializeToXML();
-
-    if( psSrc == NULL )
-        return NULL;
-
-    CPLFree( psSrc->pszValue );
-    psSrc->pszValue = CPLStrdup( "ComplexSource" );
-
-    if( bNoDataSet )
-    {
-        CPLSetXMLValue( psSrc, "NODATA", 
-                        CPLSPrintf("%g", dfNoDataValue) );
-    }
-        
-    if( bDoScaling )
-    {
-        CPLSetXMLValue( psSrc, "ScaleOffset", 
-                        CPLSPrintf("%g", dfScaleOff) );
-        CPLSetXMLValue( psSrc, "ScaleRatio", 
-                        CPLSPrintf("%g", dfScaleRatio) );
-    }
-
-    return psSrc;
-}
-
-/************************************************************************/
-/*                              XMLInit()                               */
-/************************************************************************/
-
-CPLErr VRTComplexSource::XMLInit( CPLXMLNode *psSrc )
-
-{
-    CPLErr eErr;
-
-/* -------------------------------------------------------------------- */
-/*      Do base initialization.                                         */
-/* -------------------------------------------------------------------- */
-    eErr = VRTSimpleSource::XMLInit( psSrc );
-    if( eErr != CE_None )
-        return eErr;
-
-/* -------------------------------------------------------------------- */
-/*      Complex parameters.                                             */
-/* -------------------------------------------------------------------- */
-    if( CPLGetXMLValue(psSrc, "ScaleOffset", NULL) != NULL 
-        || CPLGetXMLValue(psSrc, "ScaleRatio", NULL) != NULL )
-    {
-        bDoScaling = TRUE;
-        dfScaleOff = atof(CPLGetXMLValue(psSrc, "ScaleOffset", "0") );
-        dfScaleRatio = atof(CPLGetXMLValue(psSrc, "ScaleRatio", "1") );
-    }
-
-    if( CPLGetXMLValue(psSrc, "NODATA", NULL) != NULL )
-    {
-        bNoDataSet = TRUE;
-        dfNoDataValue = atof(CPLGetXMLValue(psSrc, "NODATA", "0"));
-    }
-
-    return CE_None;
-}
-
-/************************************************************************/
-/*                              RasterIO()                              */
-/************************************************************************/
-
-CPLErr 
-VRTComplexSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
-                            void *pData, int nBufXSize, int nBufYSize, 
-                            GDALDataType eBufType, 
-                            int nPixelSpace, int nLineSpace )
-    
-{
-    // The window we will actually request from the source raster band.
-    int nReqXOff, nReqYOff, nReqXSize, nReqYSize;
-
-    // The window we will actual set _within_ the pData buffer.
-    int nOutXOff, nOutYOff, nOutXSize, nOutYSize;
-
-    if( !GetSrcDstWindow( nXOff, nYOff, nXSize, nYSize, nBufXSize, nBufYSize, 
-                          &nReqXOff, &nReqYOff, &nReqXSize, &nReqYSize,
-                          &nOutXOff, &nOutYOff, &nOutXSize, &nOutYSize ) )
-        return CE_None;
-
-/* -------------------------------------------------------------------- */
-/*      Read into a temporary buffer.                                   */
-/* -------------------------------------------------------------------- */
-    float *pafData;
-    CPLErr eErr;
-
-    pafData = (float *) CPLMalloc(nOutXSize*nOutYSize*sizeof(float));
-    eErr = poRasterBand->RasterIO( GF_Read, 
-                                   nReqXOff, nReqYOff, nReqXSize, nReqYSize,
-                                   pafData, nOutXSize, nOutYSize, GDT_Float32,
-                                   sizeof(float), sizeof(float) * nOutXSize );
-    if( eErr != CE_None )
-    {
-        CPLFree( pafData );
-        return eErr;
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Selectively copy into output buffer with nodata masking,        */
-/*      and/or scaling.                                                 */
-/* -------------------------------------------------------------------- */
-    int iX, iY;
-
-    for( iY = 0; iY < nOutYSize; iY++ )
-    {
-        for( iX = 0; iX < nOutXSize; iX++ )
-        {
-            float fResult;
-
-            fResult = pafData[iX + iY * nOutXSize];
-            if( bNoDataSet && fResult == dfNoDataValue )
-                continue;
-
-            if( bDoScaling )
-                fResult = (float) (fResult * dfScaleRatio + dfScaleOff);
-
-            GByte *pDstLocation;
-
-            pDstLocation = ((GByte *)pData) 
-                + nPixelSpace * (iX + nOutXOff)
-                + nLineSpace * (iY + nOutYOff);
-
-            if( eBufType == GDT_Byte )
-                *pDstLocation = (GByte) MIN(255,MAX(0,fResult));
-            else
-                GDALCopyWords( &fResult, GDT_Float32, 4, 
-                               pDstLocation, eBufType, 8, 1 );
-                
-        }
-    }
-
-    CPLFree( pafData );
-
-    return CE_None;
-}
-
-/************************************************************************/
-/* ==================================================================== */
-/*                          VRTFuncSource                               */
-/* ==================================================================== */
-/************************************************************************/
-
-class VRTFuncSource : public VRTSource
-{
-public:
-            VRTFuncSource();
-    virtual ~VRTFuncSource();
-
-    virtual CPLErr  XMLInit( CPLXMLNode * ) { return CE_Failure; }
-    virtual CPLXMLNode *SerializeToXML();
-
-    virtual CPLErr  RasterIO( int nXOff, int nYOff, int nXSize, int nYSize, 
-                              void *pData, int nBufXSize, int nBufYSize, 
-                              GDALDataType eBufType, 
-                              int nPixelSpace, int nLineSpace );
-
-    VRTImageReadFunc    pfnReadFunc;
-    void               *pCBData;
-    GDALDataType        eType;
-    
-    float               fNoDataValue;
-};
-
-/************************************************************************/
-/*                           VRTFuncSource()                            */
-/************************************************************************/
-
-VRTFuncSource::VRTFuncSource()
-
-{
-    pfnReadFunc = NULL;
-    pCBData = NULL;
-    fNoDataValue = (float) VRT_NODATA_UNSET;
-    eType = GDT_Byte;
-}
-
-/************************************************************************/
-/*                           ~VRTFuncSource()                           */
-/************************************************************************/
-
-VRTFuncSource::~VRTFuncSource()
-
-{
-}
-
-/************************************************************************/
-/*                           SerializeToXML()                           */
-/************************************************************************/
-
-CPLXMLNode *VRTFuncSource::SerializeToXML()
-
-{
-    return NULL;
-}
-
-/************************************************************************/
-/*                              RasterIO()                              */
-/************************************************************************/
-
-CPLErr 
-VRTFuncSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
-                         void *pData, int nBufXSize, int nBufYSize, 
-                         GDALDataType eBufType, 
-                         int nPixelSpace, int nLineSpace )
-
-{
-    if( nPixelSpace*8 == GDALGetDataTypeSize( eBufType )
-        && nLineSpace == nPixelSpace * nXSize 
-        && nBufXSize == nXSize && nBufYSize == nYSize 
-        && eBufType == eType )
-    {
-        return pfnReadFunc( pCBData,
-                            nXOff, nYOff, nXSize, nYSize, 
-                            pData );
-    }
-    else
-    {
-        printf( "%d,%d  %d,%d, %d,%d %d,%d %d,%d\n", 
-                nPixelSpace*8, GDALGetDataTypeSize(eBufType),
-                nLineSpace, nPixelSpace * nXSize, 
-                nBufXSize, nXSize, 
-                nBufYSize, nYSize, 
-                (int) eBufType, (int) eType );
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "VRTFuncSource::RasterIO() - Irregular request." );
-        return CE_Failure;
-    }
-}
 
 /************************************************************************/
 /* ==================================================================== */
@@ -1070,11 +247,24 @@ CPLErr VRTRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                    void * pImage )
 
 {
-    (int) nBlockXOff;
+    int nPixelSize = GDALGetDataTypeSize(eDataType)/8;
+    int nReadXSize, nReadYSize;
 
-    return IRasterIO( GF_Read, 0, nBlockYOff, nBlockXSize, nBlockYSize, 
-                      pImage, nBlockXSize, nBlockYSize, eDataType, 
-                      GDALGetDataTypeSize(eDataType)/8, 0 );
+    if( (nBlockXOff+1) * nBlockXSize > GetXSize() )
+        nReadXSize = GetXSize() - nBlockXOff * nBlockXSize;
+    else
+        nReadXSize = nBlockXSize;
+
+    if( (nBlockYOff+1) * nBlockYSize > GetYSize() )
+        nReadYSize = GetYSize() - nBlockYOff * nBlockYSize;
+    else
+        nReadYSize = nBlockYSize;
+
+    return IRasterIO( GF_Read, 
+                      nBlockXOff * nBlockXSize, nBlockYOff * nBlockYSize, 
+                      nReadXSize, nReadYSize, 
+                      pImage, nReadXSize, nReadYSize, eDataType, 
+                      nPixelSize, nPixelSize * nBlockXSize );
 }
 
 /************************************************************************/
@@ -1090,193 +280,9 @@ CPLErr VRTRasterBand::AddSource( VRTSource *poNewSource )
         CPLRealloc(papoSources, sizeof(void*) * nSources);
     papoSources[nSources-1] = poNewSource;
 
+    ((VRTDataset *)poDS)->SetNeedsFlush();
+
     return CE_None;
-}
-
-/************************************************************************/
-/*                          AddSimpleSource()                           */
-/************************************************************************/
-
-CPLErr VRTRasterBand::AddSimpleSource( GDALRasterBand *poSrcBand, 
-                                       int nSrcXOff, int nSrcYOff, 
-                                       int nSrcXSize, int nSrcYSize, 
-                                       int nDstXOff, int nDstYOff, 
-                                       int nDstXSize, int nDstYSize,
-                                       const char *pszResampling, 
-                                       double dfNoDataValue )
-
-{
-/* -------------------------------------------------------------------- */
-/*      Default source and dest rectangles.                             */
-/* -------------------------------------------------------------------- */
-    if( nSrcYSize == -1 )
-    {
-        nSrcXOff = 0;
-        nSrcYOff = 0;
-        nSrcXSize = poSrcBand->GetXSize();
-        nSrcYSize = poSrcBand->GetYSize();
-    }
-
-    if( nDstYSize == -1 )
-    {
-        nDstXOff = 0;
-        nDstYOff = 0;
-        nDstXSize = nRasterXSize;
-        nDstYSize = nRasterYSize;
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Create source.                                                  */
-/* -------------------------------------------------------------------- */
-    VRTSimpleSource *poSimpleSource;
-
-    if( pszResampling != NULL && EQUALN(pszResampling,"aver",4) )
-        poSimpleSource = new VRTAveragedSource();
-    else
-    {
-        poSimpleSource = new VRTSimpleSource();
-        if( dfNoDataValue != VRT_NODATA_UNSET )
-            CPLError( 
-                CE_Warning, CPLE_AppDefined, 
-                "NODATA setting not currently supported for nearest\n"
-                "neighbour sampled simple sources on Virtual Datasources." );
-    }
-
-    poSimpleSource->poRasterBand = poSrcBand;
-
-    poSimpleSource->nSrcXOff  = nSrcXOff;
-    poSimpleSource->nSrcYOff  = nSrcYOff;
-    poSimpleSource->nSrcXSize = nSrcXSize;
-    poSimpleSource->nSrcYSize = nSrcYSize;
-
-    poSimpleSource->nDstXOff  = nDstXOff;
-    poSimpleSource->nDstYOff  = nDstYOff;
-    poSimpleSource->nDstXSize = nDstXSize;
-    poSimpleSource->nDstYSize = nDstYSize;
-    
-    poSimpleSource->fNoDataValue = (float) dfNoDataValue;
-
-/* -------------------------------------------------------------------- */
-/*      Default source and dest rectangles.                             */
-/* -------------------------------------------------------------------- */
-    if ( nSrcXOff == nDstXOff && nSrcYOff == nDstYOff &&
-         nSrcXSize == nDstXSize && nSrcYSize == nRasterYSize )
-        bEqualAreas = TRUE;
-
-/* -------------------------------------------------------------------- */
-/*      If we can get the associated GDALDataset, add a reference to it.*/
-/* -------------------------------------------------------------------- */
-    if( poSrcBand->GetDataset() != NULL )
-        poSrcBand->GetDataset()->Reference();
-
-/* -------------------------------------------------------------------- */
-/*      add to list.                                                    */
-/* -------------------------------------------------------------------- */
-    return AddSource( poSimpleSource );
-}
-
-/************************************************************************/
-/*                          AddComplexSource()                          */
-/************************************************************************/
-
-CPLErr VRTRasterBand::AddComplexSource( GDALRasterBand *poSrcBand, 
-                                        int nSrcXOff, int nSrcYOff, 
-                                        int nSrcXSize, int nSrcYSize, 
-                                        int nDstXOff, int nDstYOff, 
-                                        int nDstXSize, int nDstYSize,
-                                        double dfScaleOff, 
-                                        double dfScaleRatio,
-                                        double dfNoDataValue )
-
-{
-/* -------------------------------------------------------------------- */
-/*      Default source and dest rectangles.                             */
-/* -------------------------------------------------------------------- */
-    if( nSrcYSize == -1 )
-    {
-        nSrcXOff = 0;
-        nSrcYOff = 0;
-        nSrcXSize = poSrcBand->GetXSize();
-        nSrcYSize = poSrcBand->GetYSize();
-    }
-
-    if( nDstYSize == -1 )
-    {
-        nDstXOff = 0;
-        nDstYOff = 0;
-        nDstXSize = nRasterXSize;
-        nDstYSize = nRasterYSize;
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Create source.                                                  */
-/* -------------------------------------------------------------------- */
-    VRTComplexSource *poSource;
-
-    poSource = new VRTComplexSource();
-
-    poSource->poRasterBand = poSrcBand;
-
-    poSource->nSrcXOff  = nSrcXOff;
-    poSource->nSrcYOff  = nSrcYOff;
-    poSource->nSrcXSize = nSrcXSize;
-    poSource->nSrcYSize = nSrcYSize;
-
-    poSource->nDstXOff  = nDstXOff;
-    poSource->nDstYOff  = nDstYOff;
-    poSource->nDstXSize = nDstXSize;
-    poSource->nDstYSize = nDstYSize;
-    
-/* -------------------------------------------------------------------- */
-/*      Set complex parameters.                                         */
-/* -------------------------------------------------------------------- */
-    if( dfNoDataValue != VRT_NODATA_UNSET )
-    {
-        poSource->bNoDataSet = TRUE;
-        poSource->dfNoDataValue = dfNoDataValue;
-    }
-
-    if( dfScaleOff != 0.0 || dfScaleRatio != 1.0 )
-    {
-        poSource->bDoScaling = TRUE;
-        poSource->dfScaleOff = dfScaleOff;
-        poSource->dfScaleRatio = dfScaleRatio;
-          
-    }
-/* -------------------------------------------------------------------- */
-/*      If we can get the associated GDALDataset, add a reference to it.*/
-/* -------------------------------------------------------------------- */
-    if( poSrcBand->GetDataset() != NULL )
-        poSrcBand->GetDataset()->Reference();
-
-/* -------------------------------------------------------------------- */
-/*      add to list.                                                    */
-/* -------------------------------------------------------------------- */
-    return AddSource( poSource );
-}
-
-/************************************************************************/
-/*                           AddFuncSource()                            */
-/************************************************************************/
-
-CPLErr VRTRasterBand::AddFuncSource( VRTImageReadFunc pfnReadFunc, 
-                                     void *pCBData, double dfNoDataValue )
-
-{
-/* -------------------------------------------------------------------- */
-/*      Create source.                                                  */
-/* -------------------------------------------------------------------- */
-    VRTFuncSource *poFuncSource = new VRTFuncSource;
-
-    poFuncSource->fNoDataValue = (float) dfNoDataValue;
-    poFuncSource->pfnReadFunc = pfnReadFunc;
-    poFuncSource->pCBData = pCBData;
-    poFuncSource->eType = GetRasterDataType();
-
-/* -------------------------------------------------------------------- */
-/*      add to list.                                                    */
-/* -------------------------------------------------------------------- */
-    return AddSource( poFuncSource );
 }
 
 /************************************************************************/
@@ -1378,39 +384,23 @@ CPLErr VRTRasterBand::XMLInit( CPLXMLNode * psTree )
     }
 
 /* -------------------------------------------------------------------- */
-/*      Process SimpleSources.                                          */
+/*      Process sources.                                                */
 /* -------------------------------------------------------------------- */
     CPLXMLNode  *psChild;
-
-    for( psChild = psTree->psChild; psChild != NULL; psChild = psChild->psNext)
+    VRTDriver *poDriver = (VRTDriver *) GDALGetDriverByName( "VRT" );
+    
+    for( psChild = psTree->psChild; 
+         psChild != NULL && poDriver != NULL; 
+         psChild = psChild->psNext)
     {
-        if( EQUAL(psChild->pszValue,"AveragedSource") 
-            || (EQUAL(psChild->pszValue,"SimpleSource")
-                && EQUALN(CPLGetXMLValue(psChild, "Resampling", "Nearest"),
-                          "Aver",4)) )
-        {
-            VRTSource * poSource = new VRTAveragedSource();
-            if ( poSource->XMLInit( psChild ) == CE_None )
-                AddSource( poSource );
-            else
-                return CE_Failure;
-        }
-        else if( EQUAL(psChild->pszValue,"SimpleSource") )
-        {
-            VRTSource * poSource = new VRTSimpleSource();
-            if ( poSource->XMLInit( psChild ) == CE_None )
-                AddSource( poSource );
-            else
-                return CE_Failure;
-        }
-        else if( EQUAL(psChild->pszValue,"ComplexSource") )
-        {
-            VRTSource * poSource = new VRTComplexSource();
-            if ( poSource->XMLInit( psChild ) == CE_None )
-                AddSource( poSource );
-            else
-                return CE_Failure;
-        }
+        VRTSource *poSource;
+        
+        CPLErrorReset();
+        poSource = poDriver->ParseSource( psChild );
+        if( poSource != NULL )
+            AddSource( poSource );
+        else if( CPLGetLastErrorType() != CE_None )
+            return CE_Failure;
     }
 
 /* -------------------------------------------------------------------- */
@@ -1500,6 +490,95 @@ CPLXMLNode *VRTRasterBand::SerializeToXML()
 }
 
 /************************************************************************/
+/*                            GetMetadata()                             */
+/************************************************************************/
+
+char **VRTRasterBand::GetMetadata( const char *pszDomain )
+
+{
+    if( EQUAL(pszDomain,"vrt_sources") )
+    {
+        char **papszSourceList = NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Process SimpleSources.                                          */
+/* -------------------------------------------------------------------- */
+        for( int iSource = 0; iSource < nSources; iSource++ )
+        {
+            CPLXMLNode      *psXMLSrc;
+            char            *pszXML;
+
+            psXMLSrc = papoSources[iSource]->SerializeToXML();
+            if( psXMLSrc == NULL )
+                continue;
+
+            pszXML = CPLSerializeXMLTree( psXMLSrc );
+
+            papszSourceList = 
+                CSLSetNameValue( papszSourceList, 
+                                 CPLSPrintf( "source_%d", iSource ), pszXML );
+            CPLFree( pszXML );
+            CPLDestroyXMLNode( psXMLSrc );
+        }
+        
+        return papszSourceList;
+    }
+    else
+        return GDALRasterBand::GetMetadata( pszDomain );
+}
+
+/************************************************************************/
+/*                            SetMetadata()                             */
+/************************************************************************/
+
+CPLErr VRTRasterBand::SetMetadata( char **papszNewMD, const char *pszDomain )
+
+{
+    if( EQUAL(pszDomain,"new_vrt_sources") 
+        || EQUAL(pszDomain,"vrt_sources") )
+    {
+        VRTDriver *poDriver = (VRTDriver *) GDALGetDriverByName( "VRT" );
+        CPLErr eErr;
+        int    i;
+
+        if( EQUAL(pszDomain,"vrt_sources") )
+        {
+            for( int i = 0; i < nSources; i++ )
+                delete papoSources[i];
+            CPLFree( papoSources );
+            papoSources = NULL;
+            nSources = 0;
+        }
+
+        for( i = 0; i < CSLCount(papszNewMD); i++ )
+        {
+            const char *pszXML = CPLParseNameValue( papszNewMD[i], NULL );
+            CPLXMLNode *psTree = CPLParseXMLString( pszXML );
+            VRTSource *poSource;
+            
+            if( psTree == NULL )
+                return CE_Failure;
+
+            poSource = poDriver->ParseSource( psTree );
+            CPLDestroyXMLNode( psTree );
+
+            if( poSource != NULL )
+            {
+                eErr = AddSource( poSource );
+                if( eErr != CE_None )
+                    return eErr;
+            }
+            else
+                return CE_Failure;
+        }
+
+        return CE_None;
+    }
+    else
+        return GDALRasterBand::SetMetadata( papszNewMD, pszDomain );
+}
+
+/************************************************************************/
 /*                           SetNoDataValue()                           */
 /************************************************************************/
 
@@ -1584,3 +663,173 @@ GDALColorInterp VRTRasterBand::GetColorInterpretation()
 {
     return eColorInterp;
 }
+
+/************************************************************************/
+/*                          AddSimpleSource()                           */
+/************************************************************************/
+
+CPLErr VRTRasterBand::AddSimpleSource( GDALRasterBand *poSrcBand, 
+                                       int nSrcXOff, int nSrcYOff, 
+                                       int nSrcXSize, int nSrcYSize, 
+                                       int nDstXOff, int nDstYOff, 
+                                       int nDstXSize, int nDstYSize,
+                                       const char *pszResampling, 
+                                       double dfNoDataValue )
+
+{
+/* -------------------------------------------------------------------- */
+/*      Default source and dest rectangles.                             */
+/* -------------------------------------------------------------------- */
+    if( nSrcYSize == -1 )
+    {
+        nSrcXOff = 0;
+        nSrcYOff = 0;
+        nSrcXSize = poSrcBand->GetXSize();
+        nSrcYSize = poSrcBand->GetYSize();
+    }
+
+    if( nDstYSize == -1 )
+    {
+        nDstXOff = 0;
+        nDstYOff = 0;
+        nDstXSize = nRasterXSize;
+        nDstYSize = nRasterYSize;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Create source.                                                  */
+/* -------------------------------------------------------------------- */
+    VRTSimpleSource *poSimpleSource;
+
+    if( pszResampling != NULL && EQUALN(pszResampling,"aver",4) )
+        poSimpleSource = new VRTAveragedSource();
+    else
+    {
+        poSimpleSource = new VRTSimpleSource();
+        if( dfNoDataValue != VRT_NODATA_UNSET )
+            CPLError( 
+                CE_Warning, CPLE_AppDefined, 
+                "NODATA setting not currently supported for nearest\n"
+                "neighbour sampled simple sources on Virtual Datasources." );
+    }
+
+    poSimpleSource->SetSrcBand( poSrcBand );
+    poSimpleSource->SetSrcWindow( nSrcXOff, nSrcYOff, nSrcXSize, nSrcYSize );
+    poSimpleSource->SetDstWindow( nDstXOff, nDstYOff, nDstXSize, nDstYSize );
+
+    if( dfNoDataValue != VRT_NODATA_UNSET )
+        poSimpleSource->SetNoDataValue( dfNoDataValue );
+
+/* -------------------------------------------------------------------- */
+/*      Default source and dest rectangles.                             */
+/* -------------------------------------------------------------------- */
+    if ( nSrcXOff == nDstXOff && nSrcYOff == nDstYOff &&
+         nSrcXSize == nDstXSize && nSrcYSize == nRasterYSize )
+        bEqualAreas = TRUE;
+
+/* -------------------------------------------------------------------- */
+/*      If we can get the associated GDALDataset, add a reference to it.*/
+/* -------------------------------------------------------------------- */
+    if( poSrcBand->GetDataset() != NULL )
+        poSrcBand->GetDataset()->Reference();
+
+/* -------------------------------------------------------------------- */
+/*      add to list.                                                    */
+/* -------------------------------------------------------------------- */
+    return AddSource( poSimpleSource );
+}
+
+/************************************************************************/
+/*                          AddComplexSource()                          */
+/************************************************************************/
+
+CPLErr VRTRasterBand::AddComplexSource( GDALRasterBand *poSrcBand, 
+                                        int nSrcXOff, int nSrcYOff, 
+                                        int nSrcXSize, int nSrcYSize, 
+                                        int nDstXOff, int nDstYOff, 
+                                        int nDstXSize, int nDstYSize,
+                                        double dfScaleOff, 
+                                        double dfScaleRatio,
+                                        double dfNoDataValue )
+
+{
+/* -------------------------------------------------------------------- */
+/*      Default source and dest rectangles.                             */
+/* -------------------------------------------------------------------- */
+    if( nSrcYSize == -1 )
+    {
+        nSrcXOff = 0;
+        nSrcYOff = 0;
+        nSrcXSize = poSrcBand->GetXSize();
+        nSrcYSize = poSrcBand->GetYSize();
+    }
+
+    if( nDstYSize == -1 )
+    {
+        nDstXOff = 0;
+        nDstYOff = 0;
+        nDstXSize = nRasterXSize;
+        nDstYSize = nRasterYSize;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Create source.                                                  */
+/* -------------------------------------------------------------------- */
+    VRTComplexSource *poSource;
+
+    poSource = new VRTComplexSource();
+
+    poSource->SetSrcBand( poSrcBand );
+    poSource->SetSrcWindow( nSrcXOff, nSrcYOff, nSrcXSize, nSrcYSize );
+    poSource->SetDstWindow( nDstXOff, nDstYOff, nDstXSize, nDstYSize );
+
+/* -------------------------------------------------------------------- */
+/*      Set complex parameters.                                         */
+/* -------------------------------------------------------------------- */
+    if( dfNoDataValue != VRT_NODATA_UNSET )
+        poSource->SetNoDataValue( dfNoDataValue );
+
+    if( dfScaleOff != 0.0 || dfScaleRatio != 1.0 )
+    {
+        poSource->bDoScaling = TRUE;
+        poSource->dfScaleOff = dfScaleOff;
+        poSource->dfScaleRatio = dfScaleRatio;
+          
+    }
+
+/* -------------------------------------------------------------------- */
+/*      If we can get the associated GDALDataset, add a reference to it.*/
+/* -------------------------------------------------------------------- */
+    if( poSrcBand->GetDataset() != NULL )
+        poSrcBand->GetDataset()->Reference();
+
+/* -------------------------------------------------------------------- */
+/*      add to list.                                                    */
+/* -------------------------------------------------------------------- */
+    return AddSource( poSource );
+}
+
+/************************************************************************/
+/*                           AddFuncSource()                            */
+/************************************************************************/
+
+CPLErr VRTRasterBand::AddFuncSource( VRTImageReadFunc pfnReadFunc, 
+                                     void *pCBData, double dfNoDataValue )
+
+{
+/* -------------------------------------------------------------------- */
+/*      Create source.                                                  */
+/* -------------------------------------------------------------------- */
+    VRTFuncSource *poFuncSource = new VRTFuncSource;
+
+    poFuncSource->fNoDataValue = (float) dfNoDataValue;
+    poFuncSource->pfnReadFunc = pfnReadFunc;
+    poFuncSource->pCBData = pCBData;
+    poFuncSource->eType = GetRasterDataType();
+
+/* -------------------------------------------------------------------- */
+/*      add to list.                                                    */
+/* -------------------------------------------------------------------- */
+    return AddSource( poFuncSource );
+}
+
