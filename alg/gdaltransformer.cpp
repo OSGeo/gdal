@@ -30,6 +30,14 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2004/01/24 09:33:33  warmerda
+ * Added support for internal grid in GDALSuggestedWarpOutput() for cases
+ * where alot of points around the edge fail to transform.
+ * Added use of OGRCoordinateTransformation::TransformEx() to capture per-point
+ * reprojection errors.
+ * Ensure that approximate transformer reverts to exact transformer if any of
+ * the 3 points fail to transform.
+ *
  * Revision 1.11  2003/07/08 15:29:14  warmerda
  * avoid warnings
  *
@@ -212,8 +220,8 @@ CPLErr GDALSuggestedWarpOutput( GDALDatasetH hSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Setup sample points all around the edge of the input raster.    */
 /* -------------------------------------------------------------------- */
-    int    nSamplePoints=0, abSuccess[84];
-    double adfX[84], adfY[84], adfZ[84], dfRatio;
+    int    nSamplePoints=0, abSuccess[441];
+    double adfX[441], adfY[441], adfZ[441], dfRatio;
     int    nInXSize = GDALGetRasterXSize( hSrcDS );
     int    nInYSize = GDALGetRasterYSize( hSrcDS );
 
@@ -251,6 +259,8 @@ CPLErr GDALSuggestedWarpOutput( GDALDatasetH hSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Transform them to the output coordinate system.                 */
 /* -------------------------------------------------------------------- */
+    int    nFailedCount = 0, i;
+
     if( !pfnTransformer( pTransformArg, FALSE, nSamplePoints, 
                          adfX, adfY, adfZ, abSuccess ) )
     {
@@ -259,14 +269,62 @@ CPLErr GDALSuggestedWarpOutput( GDALDatasetH hSrcDS,
                   "transformer failed." );
         return CE_Failure;
     }
+
+    for( i = 0; i < nSamplePoints; i++ )
+    {
+        if( !abSuccess[i] )
+            nFailedCount++;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      If any of the edge points failed to transform, we need to       */
+/*      build a fairly detailed internal grid of points instead to      */
+/*      help identify the area that is transformable.                   */
+/* -------------------------------------------------------------------- */
+    if( nFailedCount > 0 )
+    {
+        double dfRatio2;
+        nSamplePoints = 0;
+
+        // Take 20 steps 
+        for( dfRatio = 0.0; dfRatio <= 1.01; dfRatio += 0.05 )
+        {
+            // Ensure we end exactly at the end.
+            if( dfRatio > 0.99 )
+                dfRatio = 1.0;
+
+            for( dfRatio2 = 0.0; dfRatio2 <= 1.01; dfRatio2 += 0.05 )
+            {
+                // Ensure we end exactly at the end.
+                if( dfRatio2 > 0.99 )
+                    dfRatio2 = 1.0;
+
+                // Along top 
+                adfX[nSamplePoints]   = dfRatio2 * nInXSize;
+                adfY[nSamplePoints]   = dfRatio * nInYSize;
+                adfZ[nSamplePoints++] = 0.0;
+            }
+        }
+
+        CPLAssert( nSamplePoints == 441 );
+
+        if( !pfnTransformer( pTransformArg, FALSE, nSamplePoints, 
+                             adfX, adfY, adfZ, abSuccess ) )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                      "GDALSuggestedWarpOutput() failed because the passed\n"
+                      "transformer failed." );
+            return CE_Failure;
+        }
+    }
         
 /* -------------------------------------------------------------------- */
 /*      Collect the bounds, ignoring any failed points.                 */
 /* -------------------------------------------------------------------- */
     double dfMinXOut=0, dfMinYOut=0, dfMaxXOut=0, dfMaxYOut=0;
     int    bGotInitialPoint = FALSE;
-    int    nFailedCount = 0, i;
 
+    nFailedCount = 0;
     for( i = 0; i < nSamplePoints; i++ )
     {
         if( !abSuccess[i] )
@@ -826,16 +884,11 @@ int GDALReprojectionTransform( void *pTransformArg, int bDstToSrc,
     int bSuccess;
 
     if( bDstToSrc )
-        bSuccess = psInfo->poReverseTransform->Transform( 
-            nPointCount, padfX, padfY, padfZ );
+        bSuccess = psInfo->poReverseTransform->TransformEx( 
+            nPointCount, padfX, padfY, padfZ, panSuccess );
     else
-        bSuccess = psInfo->poForwardTransform->Transform( 
-            nPointCount, padfX, padfY, padfZ );
-
-    if( bSuccess )
-        memset( panSuccess, 1, sizeof(int) * nPointCount );
-    else
-        memset( panSuccess, 0, sizeof(int) * nPointCount );
+        bSuccess = psInfo->poForwardTransform->TransformEx( 
+            nPointCount, padfX, padfY, padfZ, panSuccess );
 
     return bSuccess;
 }
@@ -980,7 +1033,7 @@ int GDALApproxTransform( void *pCBData, int bDstToSrc, int nPoints,
     bSuccess = 
         psATInfo->pfnBaseTransformer( psATInfo->pBaseCBData, bDstToSrc, 3, 
                                       x2, y2, z2, anSuccess2 );
-    if( !bSuccess )
+    if( !bSuccess || !anSuccess2[0] || !anSuccess2[1] || !anSuccess2[2] )
         return psATInfo->pfnBaseTransformer( psATInfo->pBaseCBData, bDstToSrc,
                                              nPoints, x, y, z, panSuccess );
     
