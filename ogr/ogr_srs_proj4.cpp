@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.40  2003/05/20 18:09:36  warmerda
+ * fixed so that importFromProj4() will transform linear parameter units
+ *
  * Revision 1.39  2003/02/13 19:27:28  warmerda
  * always append no_defs to avoid getting hosted by defaults file
  *
@@ -798,6 +801,30 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
                 SetLinearUnits( pszValue, 1.0 );
         }
     }
+
+/* -------------------------------------------------------------------- */
+/*      Adjust linear parameters into PROJCS units if the linear        */
+/*      units are not meters.                                           */
+/* -------------------------------------------------------------------- */
+    if( GetLinearUnits() != 1.0 && IsProjected() )
+    {
+        OGR_SRSNode *poPROJCS = GetAttrNode( "PROJCS" );
+        int  i;
+
+        for( i = 0; i < poPROJCS->GetChildCount(); i++ )
+        {
+            OGR_SRSNode *poParm = poPROJCS->GetChild(i);
+            if( !EQUAL(poParm->GetValue(),"PARAMETER") 
+                || poParm->GetChildCount() != 2 )
+                continue;
+
+            const char *pszParmName = poParm->GetChild(0)->GetValue();
+
+            if( IsLinearParameter(pszParmName) )
+                SetNormProjParm(pszParmName,GetProjParm(pszParmName));
+        }        
+    }
+
         
     CSLDestroy( papszNV );
     
