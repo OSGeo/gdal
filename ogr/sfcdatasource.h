@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  1999/06/10 19:18:22  warmerda
+ * added support for the spatial ref schema rowset
+ *
  * Revision 1.6  1999/06/10 14:39:25  warmerda
  * Added use of OGIS Features Tables schema rowset
  *
@@ -80,9 +83,6 @@ class SFCTable;
 
    <li> Should our methods use BSTR or unicode strings instead of regular char?
 
-   <li> Should this class give direct access to the spatial reference system
-   table?
-
   </ul>
 
  */
@@ -111,6 +111,8 @@ class SFCDataSource : public CDataSource
     SFCTable	*CreateSFCTable( const char * pszTablename,
                                  OGRGeometry * poFilterGeometry = NULL,
                                  const char * pszFilterOperator = NULL );
+
+    char        *GetWKTFromSRSId( int nSRS_ID );
 };
 
 #endif /* ndef SFCDATASOURCE_H_INCLUDED */

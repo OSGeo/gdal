@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  1999/06/10 19:18:22  warmerda
+ * added support for the spatial ref schema rowset
+ *
  * Revision 1.3  1999/06/08 16:04:25  warmerda
  * Remove short method help because it was overriding the full help.
  *
@@ -74,19 +77,34 @@ class SFCTable : public CTable<CDynamicAccessor>
 
     BYTE        *pabyLastGeometry;
 
+    int         nGeomType;
+    ULONG       nSRS_ID;
+
+    int         ReadOGISColumnInfo( CSession * poCSession,
+                                    const char * pszColumnName = NULL );
+    int         FetchDefGeomColumn( CSession * poCSession );
+
+    char        *pszTableName;
+    char        *pszDefGeomColumn;
+
   public:
     		SFCTable();
     virtual     ~SFCTable();
 
+    void        SetTableName( const char * );
+    const char *GetTableName();
+    
+    int         ReadSchemaInfo( CDataSource * );
+
     void        ReleaseIUnknowns();
     
-    const char *GetSpatialRefWKT();
+    int         GetSpatialRefID();
 
     int		GetGeometryColumn();
 
     int         HasGeometry();
 
-//    OGRwkbGeometryType GetGeometryType();
+    int         GetGeometryType();
 
     BYTE        *GetWKBGeometry( int * pnSize );
 

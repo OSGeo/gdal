@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  1999/06/10 19:18:22  warmerda
+ * added support for the spatial ref schema rowset
+ *
  * Revision 1.4  1999/06/10 14:37:45  warmerda
  * added oledbgis.h
  *
@@ -186,13 +189,26 @@ void main( int nArgc, char ** papszArgv )
 
     poTable = poDS->CreateSFCTable( pszTable );
 
-    delete poDS;
-
     if( poTable == NULL )
     {
         printf( "Failed to open table %s.\n",  pszTable );
         goto CleanupAndExit;
     }
+
+/* -------------------------------------------------------------------- */
+/*      Display a little bit of information about the opened table.     */
+/* -------------------------------------------------------------------- */
+    char      *pszSRS_WKT;
+
+    pszSRS_WKT = poDS->GetWKTFromSRSId( poTable->GetSpatialRefID() );
+    printf( "Spatial Reference System ID: %d (%s)\n", 
+            poTable->GetSpatialRefID(), pszSRS_WKT );
+    CoTaskMemFree( pszSRS_WKT );
+
+    printf( "Geometry Type: %d\n", 
+            poTable->GetGeometryType() );
+
+    delete poDS;
 
 /* -------------------------------------------------------------------- */
 /*      Perform action on the table.                                    */

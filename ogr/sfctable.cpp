@@ -30,8 +30,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  1999/06/10 19:18:22  warmerda
+ * added support for the spatial ref schema rowset
+ *
  * Revision 1.4  1999/06/10 14:00:15  warmerda
- * Added request for IStream from IUnknowns that don't give an ISequentialStream.
+ * Add request for IStream from IUnknowns that don't give an ISequentialStream.
  *
  * Revision 1.3  1999/06/08 17:50:20  warmerda
  * Fixed some off-by-one errors, and updated bytes|byref case.
@@ -45,9 +48,11 @@
  */
 
 #include "sfctable.h"
+#include "sfcschemarowsets.h"
 #include "ogr_geometry.h"
 #include "assert.h"
 #include "oledb_sup.h"
+#include "cpl_string.h"
 
 /************************************************************************/
 /*                              SFCTable()                              */
@@ -60,6 +65,12 @@ SFCTable::SFCTable()
     bTriedToIdentify = FALSE;
 
     pabyLastGeometry = NULL;
+    
+    nSRS_ID = -1;
+    nGeomType = wkbUnknown;
+
+    pszTableName = NULL;
+    pszDefGeomColumn = NULL;
 }
 
 /************************************************************************/
@@ -69,8 +80,178 @@ SFCTable::SFCTable()
 SFCTable::~SFCTable()
 
 {
+    CPLFree( pszTableName );
+    CPLFree( pszDefGeomColumn );
+
     if( pabyLastGeometry != NULL )
         CoTaskMemFree( pabyLastGeometry );
+}
+
+/************************************************************************/
+/*                            GetTableName()                            */
+/************************************************************************/
+
+/** 
+ * Get the name of this rowsets table.
+ *
+ * @return a pointer to an internal table name.  May be NULL if not known.
+ * Should not be modified or freed by the application.
+ */
+
+const char * SFCTable::GetTableName()
+
+{
+    return pszTableName;
+}
+
+/************************************************************************/
+/*                            SetTableName()                            */
+/************************************************************************/
+
+/** 
+ * Set the table name.
+ *
+ * This is primarily needed if the SFCTable is created by means other
+ * than SFCDataSource::CreateSFCTable().  The table name is needed to
+ * collect information from the ogis columns schema rowset. 
+ *
+ * @param pszTableName the name of the table from which this SFCTable is 
+ * derived. 
+ */
+
+void SFCTable::SetTableName( const char * pszTableName )
+
+{
+    CPLFree( this->pszTableName );
+    this->pszTableName = CPLStrdup( pszTableName );
+}
+
+/************************************************************************/
+/*                           ReadSchemaInfo()                           */
+/*                                                                      */
+/*      At some point in the future we might want to actually keep      */
+/*      our session around for the life of the SFCTable so we can       */
+/*      use it for other things.                                        */
+/************************************************************************/
+
+/**
+ * Read required schema rowset information.
+ * 
+ * This method is normally called by SFCDataSource::CreateSFCTable(), but
+ * if the SFCTable is created by another means, it is necessary so that
+ * the SFCTable can get information from the schema rowsets about the
+ * geometry column, SRS and so forth.  
+ *
+ * If an SFCTable is instantiated wihtout this method ever being called
+ * a number of the OpenGIS related aspects of the table will not be
+ * operational.
+ *
+ * @param poDS a CDataSource (or SFCDataSource) on which this SFCTable
+ * was created.
+ *
+ * @return TRUE if reading of schema information succeeds. 
+ */
+
+int SFCTable::ReadSchemaInfo( CDataSource * poDS )
+
+{
+    CSession      oSession;
+
+    if( FAILED(oSession.Open( *poDS ) ) )
+        return FALSE;
+
+    if( !FetchDefGeomColumn( &oSession ) )
+        return FALSE;
+
+    return ReadOGISColumnInfo( &oSession );
+}
+
+/************************************************************************/
+/*                         FetchDefGeomColumn()                         */
+/*                                                                      */
+/*      Try to get the default geometry column from the feature         */
+/*      tables schema rowset.                                           */
+/************************************************************************/
+
+int SFCTable::FetchDefGeomColumn( CSession * poSession )
+
+{
+    COGISFeatureTables oTables;
+
+    if( pszTableName == NULL )
+        return FALSE;
+
+    if( FAILED(oTables.Open(*poSession)) )
+    {
+        return FALSE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Search for a matching table name.                               */
+/* -------------------------------------------------------------------- */
+    while( oTables.MoveNext() == S_OK )
+    {
+        if( EQUAL(oTables.m_szName, pszTableName) )
+        {
+            CPLFree( pszDefGeomColumn );
+            pszDefGeomColumn = CPLStrdup( oTables.m_szDGColumnName );
+        }
+    }
+    
+    return pszDefGeomColumn != NULL;
+}
+
+/************************************************************************/
+/*                         ReadOGISColumnInfo()                         */
+/*                                                                      */
+/*      Read information about a geometry column for this table in      */
+/*      the OGIS column info schema rowset.                             */
+/************************************************************************/
+
+int SFCTable::ReadOGISColumnInfo( CSession * poSession, 
+                                  const char * pszColumnName )
+
+{
+/* -------------------------------------------------------------------- */
+/*      If we have no table name, we can't do anything.  Eventually     */
+/*      we could try to use the IRowsetInfo interface to fetch the      */
+/*      table name property, but that's too much work for now.          */
+/* -------------------------------------------------------------------- */
+    if( pszTableName == NULL )
+        return FALSE;
+
+/* -------------------------------------------------------------------- */
+/*      If we aren't given a column name, then we will get the          */
+/*      default column from the schema.  We coul                        */
+/* -------------------------------------------------------------------- */
+    if( pszColumnName == NULL )
+        pszColumnName = pszDefGeomColumn;
+
+    if( pszColumnName == NULL )
+        return FALSE;
+
+/* -------------------------------------------------------------------- */
+/*      Open the column info schema rowset, and try to find a match     */
+/*      for our table and column.                                       */
+/* -------------------------------------------------------------------- */
+    COGISGeometryColumnTable oColumns;
+
+    if( FAILED(oColumns.Open(*poSession)) )
+    {
+        return FALSE;
+    }
+
+    while( oColumns.MoveNext() == S_OK )
+    {
+        if( EQUAL(oColumns.m_szName, pszTableName)
+            && EQUAL(oColumns.m_szColumnName,pszColumnName) )
+        {
+            nSRS_ID = oColumns.m_nSRS_ID;
+            nGeomType = oColumns.m_nGeomType;
+        }
+    }
+    
+    return nSRS_ID != -1;
 }
 
 /************************************************************************/
@@ -101,30 +282,55 @@ int SFCTable::HasGeometry()
 /*      This method should eventually try to use the table of           */
 /*      spatial tables to identify the geometry column - only           */
 /*      falling back to column names if that fails.                     */
-/*                                                                      */
 /************************************************************************/
 
 void SFCTable::IdentifyGeometry()
 
 {
+    int    iCol;
+
     if( m_spRowset == NULL || bTriedToIdentify )
         return;
 
     bTriedToIdentify = TRUE;
 
 /* -------------------------------------------------------------------- */
+/*      If we have a default geometry column name from the schema       */
+/*      rowsets, search for it.                                         */
+/* -------------------------------------------------------------------- */
+    if( pszDefGeomColumn != NULL )
+    {
+        LPOLESTR      pwszColumnName;
+        AnsiToUnicode( pszDefGeomColumn, &pwszColumnName );
+
+        for( iCol = 1; iCol <= GetColumnCount(); iCol++ )
+        {
+            if( GetColumnName(iCol) == NULL )
+                continue;
+            
+            if( wcsicmp( pwszColumnName, GetColumnName(iCol) ) == 0 )
+                break;
+        }
+
+        CoTaskMemFree( pwszColumnName );
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Search for a column called OGIS_GEOMETRY (officially            */
 /*      preferred name) or WKB_GEOMETRY (one provided sample            */
 /*      database).                                                      */
 /* -------------------------------------------------------------------- */
-    for( int iCol = 1; iCol <= GetColumnCount(); iCol++ )
+    else
     {
-        if( GetColumnName(iCol) == NULL )
-            continue;
-
-        if( wcsicmp( L"WKB_GEOMETRY", GetColumnName(iCol) ) == 0 
-         || wcsicmp( L"OGIS_GEOMETRY", GetColumnName(iCol) ) == 0 )
-            break;
+        for( iCol = 1; iCol <= GetColumnCount(); iCol++ )
+        {
+            if( GetColumnName(iCol) == NULL )
+                continue;
+            
+            if( wcsicmp( L"WKB_GEOMETRY", GetColumnName(iCol) ) == 0 
+                || wcsicmp( L"OGIS_GEOMETRY", GetColumnName(iCol) ) == 0 )
+                break;
+        }
     }
 
     if( iCol > GetColumnCount() )
@@ -363,5 +569,52 @@ OGRGeometry * SFCTable::GetOGRGeometry()
         return poGeom;
     else
         return NULL;
+}
+
+/************************************************************************/
+/*                          GetGeometryType()                           */
+/************************************************************************/
+
+/**
+ * Fetch the geometry type of this table.
+ *
+ * This method returns the well known binary type of the geometry in
+ * this table.  This integer can be cast to the type OGRwkbGeometryType
+ * in order to use symbolic constants.  The intent is that all objects
+ * in this table would be of the returned class, or a derived class. 
+ * It will generally be zero (wkbUnknown) if nothing is known about the
+ * geometry types in the table.
+ *
+ * Zero (wkbUnknown) will be returned if there is no column info schema
+ * rowset (from which this value is normally extracted). 
+ *
+ * @Return well known geometry type.
+ */ 
+
+int SFCTable::GetGeometryType()
+
+{
+    return nGeomType;
+}
+
+/************************************************************************/
+/*                          GetSpatialRefID()                           */
+/************************************************************************/
+
+/**
+ * Fetch the spatial reference system id of this table.
+ *
+ * This method returns the id of the spatial reference system for this
+ * table.  All geometries in this table should have this spatial reference
+ * system.  The SFCDataSource::GetWKTFromSRSId() method can be used to
+ * transform this id into a useful form. 
+ *
+ * @Return spatial reference system id.  The value will be -1 if not known.
+ */ 
+
+int SFCTable::GetSpatialRefID()
+
+{
+    return nSRS_ID;
 }
 

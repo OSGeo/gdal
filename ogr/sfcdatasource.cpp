@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  1999/06/10 19:18:22  warmerda
+ * added support for the spatial ref schema rowset
+ *
  * Revision 1.4  1999/06/10 14:39:25  warmerda
  * Added use of OGIS Features Tables schema rowset
  *
@@ -44,51 +47,9 @@
 
 #include "sfcdatasource.h"
 #include "sfctable.h"
+#include "sfcschemarowsets.h"
 #include "ogr_geometry.h"
 #include "cpl_string.h"
-#include "oledbgis.h"
-
-#include <atldbsch.h>
-
-/************************************************************************/
-/*                        COGISFeatureTableInfo                         */
-/*                                                                      */
-/*      Hardbound record for the OGIS Feature Tables schema rowset.     */
-/*      Modelled on CTableInfo.                                         */
-/************************************************************************/
-class COGISFeatureTableInfo
-{
-public:
-// Constructors
-	COGISFeatureTableInfo()
-	{
-		memset(this, 0, sizeof(*this));
-	}
-
-// Attributes
-
-	TCHAR   m_szFeatureTableAlias[129];
-	TCHAR   m_szCatalog[129];
-	TCHAR   m_szSchema[129];
-	TCHAR   m_szName[129];
-	TCHAR   m_szIdColumnName[129];
-	TCHAR   m_szDGColumnName[129];
-
-
-// Binding Map
-BEGIN_COLUMN_MAP(COGISFeatureTableInfo)
-	COLUMN_ENTRY(1, m_szFeatureTableAlias)
-	COLUMN_ENTRY(2, m_szCatalog)
-	COLUMN_ENTRY(3, m_szSchema)
-	COLUMN_ENTRY(4, m_szName)
-	COLUMN_ENTRY(5, m_szIdColumnName)
-	COLUMN_ENTRY(6, m_szDGColumnName)
-END_COLUMN_MAP()
-};
-
-typedef CRestrictions<CAccessor<COGISFeatureTableInfo>, 1, 
-                      &DBSCHEMA_OGIS_FEATURE_TABLES> COGISFeatureTables;
-
 
 /************************************************************************/
 /*                           SFCDataSource()                            */
@@ -348,6 +309,73 @@ SFCTable *SFCDataSource::CreateSFCTable( const char * pszTableName,
         return NULL;
     }
 
+    poTable->SetTableName( pszTableName );
+    poTable->ReadSchemaInfo( this );
+
     return poTable;
 }
 
+/************************************************************************/
+/*                          GetWKTFromSRSId()                           */
+/************************************************************************/
+
+/**
+ * Get WKT format from spatial ref system id.
+ *
+ * Read the spatial reference system system schema rowset to translate
+ * a data source specific SRS ID into it's well known text format 
+ * equivelent.  The returned string should be freed with CoTaskMemFree()
+ * when no longer needed.
+ *
+ * A return value of "Unknown" will indicate that the SRS ID was not
+ * successfully translated.
+ *
+ * @param nSRS_ID the id for the SRS to fetch, as returned from the 
+ * SFCTable::GetSpatialRefID() for instance.
+ *
+ * @return string representation of SRS. 
+ */
+
+char * SFCDataSource::GetWKTFromSRSId( int nSRS_ID )
+
+{
+    CSession      oSession;
+    COGISSpatialRefSystemsTable oTable;
+    const char    *pszReturnString = "(Unknown)";
+
+    if( FAILED(oSession.Open(*this)) )
+        goto ReturnValue;
+
+/* -------------------------------------------------------------------- */
+/*      If this provider doesn't support this schema rowset, we         */
+/*      silently return without making a big fuss.  The caller will     */
+/*      try using the regular tables schema rowset instead.             */
+/* -------------------------------------------------------------------- */
+    if( FAILED(oTable.Open(oSession)) )
+    {
+        goto ReturnValue;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Search for requested id.                                        */
+/* -------------------------------------------------------------------- */
+    while( oTable.MoveNext() == S_OK )
+    {
+        if( oTable.m_nSRS_ID == nSRS_ID )
+        {
+            pszReturnString = oTable.m_szSpatialRefSystemWKT;
+            goto ReturnValue;
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Allocate a copy of the string for the application.              */
+/* -------------------------------------------------------------------- */
+  ReturnValue:
+    char      *pszAppString;
+
+    pszAppString = (char *) CoTaskMemAlloc( strlen(pszReturnString) + 1 );
+    strcpy( pszAppString, pszReturnString );
+
+    return pszAppString;
+}
