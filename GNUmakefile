@@ -90,7 +90,8 @@ py-module:	lib-target
 	(cd pymod; $(MAKE))
 
 lclean:
-	rm -f *.a *.so config.log config.cache html/*.* *.la
+	rm -f *.a *.so config.log config.cache html/*.*
+	$(RM) *.la
 
 distclean:	dist-clean
 
