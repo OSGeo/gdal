@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2001/10/11 19:23:30  warmerda
+ * fixed datum names
+ *
  * Revision 1.18  2001/07/18 05:03:05  warmerda
  * added CPL_CVSID
  *
@@ -981,13 +984,13 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 )
     if( pszDatum == NULL )
         /* nothing */;
 
-    else if( EQUAL(pszDatum,"North_American_Datum_1927") )
+    else if( EQUAL(pszDatum,SRS_DN_NAD27) )
         pszPROJ4Datum = "+datum=NAD27";
 
-    else if( EQUAL(pszDatum,"North_American_Datum_1983") )
+    else if( EQUAL(pszDatum,SRS_DN_NAD83) )
         pszPROJ4Datum = "+datum=NAD83";
 
-    else if( EQUAL(pszDatum,"WGS_1984") )
+    else if( EQUAL(pszDatum,SRS_DN_WGS84) )
         pszPROJ4Datum = "+datum=WGS84";
 
     else if( poTOWGS84 != NULL )
