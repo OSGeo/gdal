@@ -1,4 +1,4 @@
-/* $Header: /usr/cvsroot/gdal/frmts/gtiff/libtiff/tif_unix.c,v 1.5 1999/09/08 18:05:00 warmerda Exp $ */
+/* $Header: /usr/cvsroot/gdal/frmts/gtiff/libtiff/tif_unix.c,v 1.6 1999/09/28 23:49:50 warmerda Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -37,7 +37,12 @@
 static tsize_t
 _tiffReadProc(thandle_t fd, tdata_t buf, tsize_t size)
 {
-	return ((tsize_t) read((int) fd, buf, (size_t) size));
+    tsize_t      ret;
+
+    ret = (tsize_t) read((int) fd, buf, (size_t) size);
+
+    printf( "read(%d,%p,%d) = %d, errno = %d\n", fd, buf, size, ret, errno );
+    return ret;
 }
 
 static tsize_t
@@ -141,6 +146,11 @@ TIFFOpen(const char* name, const char* mode)
 	m = _TIFFgetMode(mode, module);
 	if (m == -1)
 		return ((TIFF*)0);
+
+#ifdef O_BINARY
+        m |= O_BINARY;
+#endif
+        
 #ifdef _AM29K
 	fd = open(name, m);
 #else
