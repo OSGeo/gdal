@@ -29,6 +29,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.49  2003/05/28 19:46:53  warmerda
+# added TermProgress
+#
 # Revision 1.48  2003/05/28 16:20:17  warmerda
 # return default transform if GetGeoTransform() fails
 #
@@ -158,6 +161,9 @@ def GetColorInterpretationName(type):
 
 def GetPaletteInterpretationName(type):
     return _gdal.GDALGetPaletteInterpretationName(type)
+
+def TermProgress( ratio, msg = '', ptr = None ):
+    return _gdal.GDALTermProgress( ratio, msg, 'NULL' )
 
 def Open(file,access=GA_ReadOnly):
     _gdal.GDALAllRegister()
