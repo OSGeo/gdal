@@ -25,9 +25,3 @@
 #undef HAVE_LIBDBMALLOC
 #undef WORDS_BIGENDIAN
 
-/* We want to disable attempts to build as a DLL if building with the
-   Cygnus environment on Windows. We assume cpl_config.h.in is only 
-   used by Cygnus on windows. */
-#define IGNORE_WIN32
-
-
