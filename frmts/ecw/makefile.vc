@@ -17,7 +17,7 @@ clean:
 	-del *.exe
 
 testecw.exe:	testecw.cpp
-	$(CC) /MD $(EXTRAFLAGS) testecw.cpp $(ECWLIB)
+	$(CC) /Zi /MD $(EXTRAFLAGS) testecw.cpp $(ECWLIB)
 
 ecw_example1.exe:	ecw_example1.c
 	$(CC) /MD $(EXTRAFLAGS) ecw_example1.c $(ECWLIB)
