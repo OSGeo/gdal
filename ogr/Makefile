@@ -51,7 +51,7 @@ oledb:	ogroledb.lib
 	$(MAKE)
 	cd ..
 
-all:	frmts default oledb sfcdump.exe test1.exe test2.exe
+all:	frmts default oledb sfcdump.exe
 
 geometryidl.h: geometryidl.idl spatialreferenceidl.h
 	midl geometryidl.idl
