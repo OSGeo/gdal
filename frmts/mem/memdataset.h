@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2002/11/20 05:18:09  warmerda
+ * added AddBand() implementation
+ *
  * Revision 1.8  2002/06/10 21:31:57  warmerda
  * preserve projection and geotransform
  *
@@ -87,6 +90,9 @@ class CPL_DLL MEMDataset : public GDALDataset
 
     virtual CPLErr GetGeoTransform( double * );
     virtual CPLErr SetGeoTransform( double * );
+
+    virtual CPLErr        AddBand( GDALDataType eType, 
+                                   char **papszOptions=NULL );
 
     static GDALDataset *Open( GDALOpenInfo * );
     static GDALDataset *Create( const char * pszFilename,
