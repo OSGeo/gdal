@@ -26,6 +26,9 @@
  * Note this is a C++ include file, and can't be used by C code.
  * 
  * $Log$
+ * Revision 1.4  1998/12/31 18:54:25  warmerda
+ * Implement initial GDALRasterBlock support, and block cache
+ *
  * Revision 1.3  1998/12/06 22:17:09  warmerda
  * Fill out rasterio support.
  *
@@ -58,6 +61,7 @@ class GDALDriver;
 
 #include "gdal.h"
 #include "cpl_vsi.h"
+#include "cpl_conv.h"
 
 /************************************************************************/
 /*                           GDALMajorObject                            */
@@ -106,6 +110,43 @@ class CPL_DLL GDALDataset : public GDALMajorObject
 };
 
 /************************************************************************/
+/*                           GDALRasterBlock                            */
+/*                                                                      */
+/*      One block for a raster.                                         */
+/************************************************************************/
+
+class CPL_DLL GDALRasterBlock
+{
+    GDALDataType	eType;
+    
+    int			nAge;
+    int			bDirty;
+
+    int			nXSize;
+    int			nYSize;
+    
+    void		*pData;
+
+  public:
+		GDALRasterBlock( int, int, GDALDataType, void * );
+    virtual	~GDALRasterBlock();
+
+    CPLErr	Internalize( void );	/* make copy of data */
+    void	Touch( void );		/* update age */
+    void	MarkDirty( void );      /* data has been modified since read */
+    void	MarkClean( void );     
+
+    GDALDataType GetDataType() { return eType; }
+    int		GetXSize() { return nXSize; }
+    int		GetYSize() { return nYSize; }
+    int		GetAge() { return nAge; }
+    int		GetDirty() { return bDirty; }
+
+    void	*GetDataRef( void ) { return pData; }
+};
+
+
+/************************************************************************/
 /*                            GDALRasterBand                            */
 /*                                                                      */
 /*      one band, or channel in a dataset.                              */
@@ -118,9 +159,18 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
     int		nBand; /* 1 based */
     
     GDALDataType eDataType;
+    GDALAccess	eAccess;
+
+    /* stuff related to blocking, and raster cache */
     int		nBlockXSize;
     int		nBlockYSize;
-    GDALAccess	eAccess;
+    int		nBlocksPerRow;
+    int		nBlocksPerColumn;
+
+    int		nLoadedBlocks;
+    int		nMaxLoadableBlocks;
+    
+    GDALRasterBlock **papoBlocks;
 
     friend class GDALDataset;
 
@@ -130,6 +180,10 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
     virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
                               void *, int, int, GDALDataType,
                               int, int );
+
+    CPLErr	   FlushBlock( int = -1, int = -1 );
+    CPLErr	   AdoptBlock( int, int, GDALRasterBlock * );
+    void           InitBlockInfo();
 
   public:
                 GDALRasterBand();
@@ -146,6 +200,9 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
     CPLErr 	ReadBlock( int, int, void * );
 
     CPLErr 	WriteBlock( int, int, void * );
+
+    GDALRasterBlock *GetBlockRef( int, int );
+    CPLErr	FlushCache();
 };
 
 /************************************************************************/
@@ -197,6 +254,7 @@ class CPL_DLL GDALDriver
 
     GDALDataset		*(*pfnCreate)( const char * pszName,
                                        int nXSize, int nYSize, int nBands,
+                                       GDALDataType eType,
                                        char ** papszOptions );
 
     GDALDataset		*Create( const char * pszName,

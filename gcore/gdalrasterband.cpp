@@ -28,6 +28,9 @@
  * for format specific band classes. 
  * 
  * $Log$
+ * Revision 1.4  1998/12/31 18:54:25  warmerda
+ * Implement initial GDALRasterBlock support, and block cache
+ *
  * Revision 1.3  1998/12/06 22:17:09  warmerda
  * Fill out rasterio support.
  *
@@ -52,8 +55,16 @@ GDALRasterBand::GDALRasterBand()
     nBand = 0;
 
     eAccess = GA_ReadOnly;
-    nBlockXSize = nBlockYSize = 0;
+    nBlockXSize = nBlockYSize = -1;
     eDataType = GDT_Byte;
+
+    nBlocksPerRow = 0;
+    nBlocksPerColumn = 0;
+
+    nLoadedBlocks = 0;
+    nMaxLoadableBlocks = 0;
+
+    papoBlocks = NULL;
 }
 
 /************************************************************************/
@@ -63,6 +74,9 @@ GDALRasterBand::GDALRasterBand()
 GDALRasterBand::~GDALRasterBand()
 
 {
+    FlushCache();
+    
+    CPLFree( papoBlocks );
 }
 
 /************************************************************************/
@@ -303,4 +317,254 @@ void GDALGetBlockSize( GDALRasterBandH hBand, int * pnXSize, int * pnYSize )
     GDALRasterBand	*poBand = (GDALRasterBand *) hBand;
 
     poBand->GetBlockSize( pnXSize, pnYSize );
+}
+
+/************************************************************************/
+/*                           InitBlockInfo()                            */
+/************************************************************************/
+
+void GDALRasterBand::InitBlockInfo()
+
+{
+    if( papoBlocks != NULL )
+        return;
+
+    CPLAssert( nBlockXSize > 0 && nBlockYSize > 0 );
+    
+    nBlocksPerRow = (poDS->GetRasterXSize()+nBlockXSize-1) / nBlockXSize;
+    nBlocksPerColumn = (poDS->GetRasterYSize()+nBlockYSize-1) / nBlockYSize;
+    
+    papoBlocks = (GDALRasterBlock **)
+        CPLCalloc( sizeof(void*), nBlocksPerRow * nBlocksPerColumn );
+
+/* -------------------------------------------------------------------- */
+/*      Don't override caching info if the subclass has already set     */
+/*      it.  Eventually I imagine the application should be mostly      */
+/*      in control of this.                                             */
+/* -------------------------------------------------------------------- */
+    if( nMaxLoadableBlocks < 1 )
+    {
+        nMaxLoadableBlocks = nBlocksPerRow;
+    }
+}
+
+
+/************************************************************************/
+/*                             AdoptBlock()                             */
+/*                                                                      */
+/*      Add a block to the raster band's block matrix.  If this         */
+/*      exceeds our maximum blocks for this layer, flush the oldest     */
+/*      block out.                                                      */
+/*                                                                      */
+/*      This method is protected.                                       */
+/************************************************************************/
+
+CPLErr GDALRasterBand::AdoptBlock( int nBlockXOff, int nBlockYOff,
+                                   GDALRasterBlock * poBlock )
+
+{
+    int		nBlockIndex;
+    
+    InitBlockInfo();
+    
+    CPLAssert( nBlockXOff >= 0 && nBlockXOff < nBlocksPerRow );
+    CPLAssert( nBlockYOff >= 0 && nBlockYOff < nBlocksPerColumn );
+
+    nBlockIndex = nBlockXOff + nBlockYOff * nBlocksPerRow;
+    if( papoBlocks[nBlockIndex] == poBlock )
+        return( CE_None );
+
+    if( papoBlocks[nBlockIndex] != NULL )
+        FlushBlock( nBlockXOff, nBlockYOff );
+
+    papoBlocks[nBlockIndex] = poBlock;
+    poBlock->Touch();
+
+    nLoadedBlocks++;
+    if( nLoadedBlocks > nMaxLoadableBlocks )
+        FlushBlock();
+
+    return( CE_None );
+}
+
+/************************************************************************/
+/*                             FlushCache()                             */
+/*                                                                      */
+/*      Clear all cached blocks out of this bands cache.                */
+/************************************************************************/
+
+CPLErr GDALRasterBand::FlushCache()
+
+{
+    CPLErr	eErr = CE_None;
+
+    while( nLoadedBlocks > 0 && eErr == CE_None )
+    {
+        eErr = FlushBlock();
+    }
+    
+    return( eErr );
+}
+
+/************************************************************************/
+/*                             FlushBlock()                             */
+/*                                                                      */
+/*      Flush a block out of the block cache.  If it has been           */
+/*      modified write it to disk.  If no specific tile is              */
+/*      indicated, write the oldest tile.                               */
+/*                                                                      */
+/*      Protected method.                                               */
+/************************************************************************/
+
+CPLErr GDALRasterBand::FlushBlock( int nBlockXOff, int nBlockYOff )
+
+{
+    int		nBlockIndex;
+    GDALRasterBlock *poBlock;
+    CPLErr	eErr = CE_None;
+        
+    InitBlockInfo();
+    
+/* -------------------------------------------------------------------- */
+/*      Select a block if none indicated.                               */
+/*                                                                      */
+/*      Currently we scan all possible blocks, but for efficiency in    */
+/*      cases with many blocks we should eventually modify the          */
+/*      GDALRasterBand to keep a linked list of blocks by age.          */
+/* -------------------------------------------------------------------- */
+    if( nBlockXOff == -1 || nBlockYOff == -1 )
+    {
+        int		i, nBlocks;
+        int		nOldestAge = 0x7fffffff;
+        int		nOldestBlock = -1;
+
+        nBlocks = nBlocksPerRow * nBlocksPerColumn;
+
+        for( i = 0; i < nBlocks; i++ )
+        {
+            if( papoBlocks[i] != NULL
+                && papoBlocks[i]->GetAge() < nOldestAge )
+            {
+                nOldestAge = papoBlocks[i]->GetAge();
+                nOldestBlock = i;
+            }
+        }
+
+        if( nOldestBlock == -1 )
+            return( CE_None );
+
+        nBlockXOff = nOldestBlock % nBlocksPerRow;
+        nBlockYOff = (nOldestBlock - nBlockXOff) / nBlocksPerRow;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Validate                                                        */
+/* -------------------------------------------------------------------- */
+    CPLAssert( nBlockXOff >= 0 && nBlockXOff < nBlocksPerRow );
+    CPLAssert( nBlockYOff >= 0 && nBlockYOff < nBlocksPerColumn );
+
+    nBlockIndex = nBlockXOff + nBlockYOff * nBlocksPerRow;
+    poBlock = papoBlocks[nBlockIndex];
+    if( poBlock == NULL )
+        return( CE_None );
+
+/* -------------------------------------------------------------------- */
+/*      Remove, and update count.                                       */
+/* -------------------------------------------------------------------- */
+    papoBlocks[nBlockIndex] = NULL;
+    nLoadedBlocks--;
+
+    CPLAssert( nLoadedBlocks >= 0 );
+    
+/* -------------------------------------------------------------------- */
+/*      Is the target block dirty?  If so we need to write it.          */
+/* -------------------------------------------------------------------- */
+    if( poBlock->GetDirty() )
+    {
+        eErr = IWriteBlock( nBlockXOff, nBlockYOff, poBlock->GetDataRef() );
+        poBlock->MarkClean();
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Deallocate the block;                                           */
+/* -------------------------------------------------------------------- */
+    delete poBlock;
+
+    return( eErr );
+}
+
+
+/************************************************************************/
+/*                            GetBlockRef()                             */
+/************************************************************************/
+
+GDALRasterBlock * GDALRasterBand::GetBlockRef( int nBlockXOff,
+                                               int nBlockYOff )
+
+{
+    int		nBlockIndex;
+
+    InitBlockInfo();
+    
+/* -------------------------------------------------------------------- */
+/*      Validate the request                                            */
+/* -------------------------------------------------------------------- */
+    if( nBlockXOff < 0 || nBlockXOff >= nBlocksPerRow )
+    {
+        CPLError( CE_Failure, CPLE_IllegalArg,
+                  "Illegal nBlockXOff value (%d) in "
+                  	"GDALRasterBand::GetBlockRef()\n",
+                  nBlockXOff );
+
+        return( NULL );
+    }
+
+    if( nBlockYOff < 0 || nBlockYOff >= nBlocksPerColumn )
+    {
+        CPLError( CE_Failure, CPLE_IllegalArg,
+                  "Illegal nBlockYOff value (%d) in "
+                  	"GDALRasterBand::GetBlockRef()\n",
+                  nBlockYOff );
+
+        return( NULL );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      If the block isn't already in the cache, we will need to        */
+/*      create it, read into it, and adopt it.  Adopting it may         */
+/*      flush an old tile from the cache.                               */
+/* -------------------------------------------------------------------- */
+    nBlockIndex = nBlockXOff + nBlockYOff * nBlocksPerRow;
+    
+    if( papoBlocks[nBlockIndex] == NULL )
+    {
+        GDALRasterBlock	*poBlock;
+        
+        poBlock = new GDALRasterBlock( nBlockXSize, nBlockYSize,
+                                       eDataType, NULL );
+
+        /* allocate data space */
+        if( poBlock->Internalize() != CE_None )
+        {
+            delete poBlock;
+
+            return( NULL );
+        }
+
+        if( IReadBlock(nBlockXOff,nBlockYOff,poBlock->GetDataRef()) != CE_None)
+        {
+            delete poBlock;
+            return( NULL );
+        }
+
+        AdoptBlock( nBlockXOff, nBlockYOff, poBlock );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Every read access updates the last touched time.                */
+/* -------------------------------------------------------------------- */
+    if( papoBlocks[nBlockIndex] != NULL )
+        papoBlocks[nBlockIndex]->Touch();
+
+    return( papoBlocks[nBlockIndex] );
 }

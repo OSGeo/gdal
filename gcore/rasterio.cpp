@@ -24,6 +24,9 @@
  *               of GDALRasterBand::IRasterIO() which is rather complex.
  *
  * $Log$
+ * Revision 1.2  1998/12/31 18:54:25  warmerda
+ * Implement initial GDALRasterBlock support, and block cache
+ *
  * Revision 1.1  1998/12/06 22:15:42  warmerda
  * New
  *
@@ -39,7 +42,7 @@
 /*      normally only be overridden by formats with overviews.          */
 /************************************************************************/
 
-CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
+CPLErr GDALRasterBand::IRasterIO( GDALRWFlag /* notdef: eRWFlag */,
                                   int nXOff, int nYOff, int nXSize, int nYSize,
                                   void * pData, int nBufXSize, int nBufYSize,
                                   GDALDataType eBufType,
@@ -47,32 +50,13 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 
 {
     int		nBandDataSize = GDALGetDataTypeSize( eDataType ) / 8;
-    int		nBandXSize = poDS->GetRasterXSize();
-    int		nBandYSize = poDS->GetRasterYSize();
-    CPLErr	eErr;
+    GByte	*pabySrcBlock = NULL;
+    GDALRasterBlock *poBlock;
 
 /* ==================================================================== */
 /*      Loop reading required source blocks to satisfy output           */
 /*      request.  This is the most general implementation.              */
 /* ==================================================================== */
-
-/* -------------------------------------------------------------------- */
-/*      Allocate memory for one block of source data.  We don't use     */
-/*      the safe routine because for images with very large blocks      */
-/*      this might well fail without being at the end of our rope.      */
-/* -------------------------------------------------------------------- */
-    GByte	*pabySrcBlock;
-
-    pabySrcBlock = (GByte *)
-        VSIMalloc( nBandDataSize * nBlockXSize * nBlockYSize);
-    if( pabySrcBlock == NULL )
-    {
-        CPLError( CE_Failure, CPLE_OutOfMemory,
-                  "Failed to allocate %d bytes for one block buffer.\n",
-                  nBandDataSize * nBlockXSize * nBlockYSize );
-
-        return( CE_Failure );
-    }
 
 /* -------------------------------------------------------------------- */
 /*      Compute stepping increment.                                     */
@@ -113,12 +97,13 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                 nLBlockX = iSrcX / nBlockXSize;
                 nLBlockY = iSrcY / nBlockYSize;
 
-                eErr = ReadBlock( nLBlockX, nLBlockY, pabySrcBlock );
-                if( eErr != CE_None )
+                poBlock = GetBlockRef( nLBlockX, nLBlockY );
+                if( poBlock == NULL )
                 {
-                    VSIFree( pabySrcBlock );
-                    return( eErr );
+                    return( CE_Failure );
                 }
+                
+                pabySrcBlock = (GByte *) poBlock->GetDataRef();
             }
 
 /* -------------------------------------------------------------------- */
@@ -142,8 +127,6 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
         }
     }
 
-    VSIFree( pabySrcBlock );
-    
     return( CE_Failure );
 }
 
