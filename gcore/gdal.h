@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.77  2004/03/10 19:18:29  warmerda
+ * updated date
+ *
  * Revision 1.76  2004/03/01 18:30:44  warmerda
  * Updated release date.
  *
@@ -151,7 +154,7 @@
 #  define GDAL_VERSION_NUM      1200
 #endif
 #ifndef GDAL_RELEASE_DATE
-#  define GDAL_RELEASE_DATE     20040301
+#  define GDAL_RELEASE_DATE     20040310
 #endif
 #ifndef GDAL_RELEASE_NAME
 #  define GDAL_RELEASE_NAME     "1.2.0.0"
