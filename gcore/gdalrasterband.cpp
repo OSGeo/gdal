@@ -28,6 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************
  * $Log$
+ * Revision 1.48  2004/06/04 14:55:16  warmerda
+ * Fixed doc error.
+ *
  * Revision 1.47  2004/04/29 13:42:41  warmerda
  * added C Offset/Scale entry points
  *
@@ -357,6 +360,7 @@ CPLErr GDALRasterIO( GDALRasterBandH hBand, GDALRWFlag eRWFlag,
  {
      int        nXBlocks, nYBlocks, nXBlockSize, nYBlockSize;
      int        iXBlock, iYBlock;
+     GByte      *pabyData;
 
      memset( panHistogram, 0, sizeof(int) * 256 );
 
