@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.3  2001/01/10 05:32:17  warmerda
+ * Added GIFCreateCopy() implementation.
+ *
  * Revision 1.2  2001/01/10 05:00:32  warmerda
  * Only check against GIF87/GIF89, not GIF87a/GIF89a.
  *
@@ -303,27 +306,25 @@ GIFCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     int  nBands = poSrcDS->GetRasterCount();
     int  nXSize = poSrcDS->GetRasterXSize();
     int  nYSize = poSrcDS->GetRasterYSize();
+    int	 bInterlace = FALSE;
 
 /* -------------------------------------------------------------------- */
 /*      Some some rudimentary checks                                    */
 /* -------------------------------------------------------------------- */
-    if( nBands != 1 && nBands != 2 && nBands != 3 && nBands != 4 )
+    if( nBands != 1 )
     {
         CPLError( CE_Failure, CPLE_NotSupported, 
-                  "GIF driver doesn't support %d bands.  Must be 1 (grey),\n"
-                  "2 (grey+alpha), 3 (rgb) or 4 (rgba) bands.\n", 
-                  nBands );
+                  "GIF driver only supports one band images.\n" );
 
         return NULL;
     }
 
     if( poSrcDS->GetRasterBand(1)->GetRasterDataType() != GDT_Byte 
-        && poSrcDS->GetRasterBand(1)->GetRasterDataType() != GDT_UInt16
         && bStrict )
     {
         CPLError( CE_Failure, CPLE_NotSupported, 
                   "GIF driver doesn't support data type %s. "
-                  "Only eight and sixteen bit bands supported.\n", 
+                  "Only eight bit bands supported.\n", 
                   GDALGetDataTypeName( 
                       poSrcDS->GetRasterBand(1)->GetRasterDataType()) );
 
@@ -331,62 +332,67 @@ GIFCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     }
 
 /* -------------------------------------------------------------------- */
-/*      Setup some parameters.                                          */
+/*      Open the output file.                                           */
 /* -------------------------------------------------------------------- */
-    int  nColorType=0, nBitDepth;
-    GDALDataType eType;
+    GifFileType *hGifFile;
 
-    if( nBands == 1 )
-        nColorType = GIF_COLOR_TYPE_GRAY;
-    else if( nBands == 2 )
-        nColorType = GIF_COLOR_TYPE_GRAY_ALPHA;
-    else if( nBands == 3 )
-        nColorType = GIF_COLOR_TYPE_RGB;
-    else if( nBands == 4 )
-        nColorType = GIF_COLOR_TYPE_RGB_ALPHA;
-
-    if( poSrcDS->GetRasterBand(1)->GetRasterDataType() != GDT_UInt16 )
-    {
-        eType = GDT_Byte;
-        nBitDepth = 8;
-    }
-    else 
-    {
-        eType = GDT_UInt16;
-        nBitDepth = 16;
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Create the dataset.                                             */
-/* -------------------------------------------------------------------- */
-    FILE	*fpImage;
-
-    fpImage = VSIFOpen( pszFilename, "wb" );
-    if( fpImage == NULL )
+    hGifFile = EGifOpenFileName( (char *) pszFilename, TRUE );
+    if( hGifFile == NULL )
     {
         CPLError( CE_Failure, CPLE_OpenFailed, 
-                  "Unable to create gif file %s.\n", 
+                  "EGifOpenFilename(%s) failed.  Does file already exist?",
                   pszFilename );
+
         return NULL;
     }
 
 /* -------------------------------------------------------------------- */
-/*      Initialize GIF access to the file.                              */
+/*      Prepare colortable.                                             */
 /* -------------------------------------------------------------------- */
-    gif_structp hGIF;
-    gif_infop   psGIFInfo;
-    
-    hGIF = gif_create_write_struct( GIF_LIBGIF_VER_STRING, 
-                                    NULL, NULL, NULL );
-    psGIFInfo = gif_create_info_struct( hGIF );
-    
-    gif_init_io( hGIF, fpImage );
+    GDALRasterBand	*poBand = poSrcDS->GetRasterBand(1);
+    ColorMapObject	*psGifCT;
+    int			iColor;
 
-    gif_set_IHDR( hGIF, psGIFInfo, nXSize, nYSize, 
-                  nBitDepth, nColorType, GIF_INTERLACE_NONE, 
-                  GIF_COMPRESSION_TYPE_BASE, GIF_FILTER_TYPE_BASE );
-    
-    gif_write_info( hGIF, psGIFInfo );
+    if( poBand->GetColorTable() == NULL )
+    {
+        psGifCT = MakeMapObject( 256, NULL );
+        for( iColor = 0; iColor < 256; iColor++ )
+        {
+            psGifCT->Colors[iColor].Red = iColor;
+            psGifCT->Colors[iColor].Green = iColor;
+            psGifCT->Colors[iColor].Blue = iColor;
+        }
+    }
+    else
+    {
+        GDALColorTable	*poCT = poBand->GetColorTable();
+
+        psGifCT = MakeMapObject( poCT->GetColorEntryCount(), NULL );
+        for( iColor = 0; iColor < poCT->GetColorEntryCount(); iColor++ )
+        {
+            GDALColorEntry	sEntry;
+
+            poCT->GetColorEntryAsRGB( iColor, &sEntry );
+            psGifCT->Colors[iColor].Red = sEntry.c1;
+            psGifCT->Colors[iColor].Green = sEntry.c2;
+            psGifCT->Colors[iColor].Blue = sEntry.c3;
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Setup parameters.                                               */
+/* -------------------------------------------------------------------- */
+    if (EGifPutScreenDesc(hGifFile, nXSize, nYSize, 
+                          psGifCT->ColorCount, 0,
+			  psGifCT) == GIF_ERROR ||
+	EGifPutImageDesc(hGifFile,
+			 0, 0, nXSize, nYSize, bInterlace, NULL) == GIF_ERROR )
+    {
+        PrintGifError();
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Error writing gif file." );
+        return NULL;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Loop over image, copying image data.                            */
@@ -394,29 +400,36 @@ GIFCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     GByte 	*pabyScanline;
     CPLErr      eErr;
 
-    pabyScanline = (GByte *) CPLMalloc( nBands * nXSize * 2 );
+    pabyScanline = (GByte *) CPLMalloc( nXSize );
 
     for( int iLine = 0; iLine < nYSize; iLine++ )
     {
-        gif_bytep       row = pabyScanline;
-
         for( int iBand = 0; iBand < nBands; iBand++ )
         {
-            GDALRasterBand * poBand = poSrcDS->GetRasterBand( iBand+1 );
             eErr = poBand->RasterIO( GF_Read, 0, iLine, nXSize, 1, 
-                                     pabyScanline + iBand, nXSize, 1, GDT_Byte,
+                                     pabyScanline, nXSize, 1, GDT_Byte,
                                      nBands, nBands * nXSize );
         }
-
-        gif_write_rows( hGIF, &row, 1 );
+        
+        if( EGifPutLine( hGifFile, pabyScanline, nXSize ) == GIF_ERROR )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                      "Error writing gif file." );
+            return NULL;
+        }
     }
 
     CPLFree( pabyScanline );
 
-    gif_write_end( hGIF, psGIFInfo );
-    gif_destroy_write_struct( &hGIF, &psGIFInfo );
-
-    VSIFClose( fpImage );
+/* -------------------------------------------------------------------- */
+/*      cleanup                                                         */
+/* -------------------------------------------------------------------- */
+    if (EGifCloseFile(hGifFile) == GIF_ERROR)
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "EGifCloseFile() failed.\n" );
+        return NULL;
+    }
 
     return (GDALDataset *) GDALOpen( pszFilename, GA_ReadOnly );
 }
