@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  1999/06/02 16:28:17  warmerda
+ * added docs
+ *
  * Revision 1.6  1999/05/21 02:38:32  warmerda
  * added AnsiToBSTR()
  *
@@ -91,10 +94,15 @@ void OledbSupDumpRow( FILE *, DBCOLUMNINFO *, int, DBBINDING *,
 
 /************************************************************************/
 /*                         OledbSupRowset                               */
-/*                                                                      */
-/*      Class for convenient access to a rowset.                        */
 /************************************************************************/
-                          
+
+/**
+ * Class abstracting access to a rowset.
+ *
+ * Note that this class doesn't currently give any control over the
+ * creation of the accessor.  Everything is fetched and converted to
+ * strings, except for the geometry.
+ */
 class OledbSupRowset
 {
   protected:    
@@ -122,27 +130,38 @@ class OledbSupRowset
 
   public:
                  OledbSupRowset();
-                ~OledbSupRowset();
+    virtual      ~OledbSupRowset();
 
+    /** Initialize this object for a particular named table (deprecated). */
     HRESULT      OpenTable( IOpenRowset *, const char * );
 
+    /** Initialize this object for a particular rowset */
+    virtual HRESULT AccessRowset( IRowset * );
+
+    /** Fetch the underlying rowset */
     IRowset     *GetIRowset() { return pIRowset; }
 
+    /** Get the number of actual columns in the rowset */
     int          GetNumColumns() { return nColumns; }
+
+    /** Get the oridinal id for a named column. */
     int          GetColumnOrdinal( const char * );
+
+    /** Get type and related information for a column based on it's ordinal. */
     DBCOLUMNINFO *GetColumnInfo( int );
 
-    /* eventually add selective binding support here */
-    
+    /** Read the next record from the rowset into internal buffer. */
     int          GetNextRecord( HRESULT * );
 
+    /** Fetch the data associated with a particular column by it's ordinal. */
     void         *GetFieldData( int  iColumn,
                                 int * pnDBType = NULL,
                                 int * pnStatus = NULL,
                                 int * pnSize = NULL );
+
+    /** Dump contents of a row to a file (deprecated). */
     void         DumpRow( FILE * );
 };
-   
 
 /* -------------------------------------------------------------------- */
 /*                       Constants from sampclnt.                       */
