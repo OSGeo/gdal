@@ -8,7 +8,7 @@ OBJ	=	ogrgeometryfactory.o ogrpoint.o ogrcurve.o ogrlinestring.o \
 		ogrmultipoint.o ogrmultilinestring.o \
 		\
 		ogrfeature.o ogrfeaturedefn.o ogrfielddefn.o \
-		ogrspatialreference.o ogr_srsnode.o
+		ogrspatialreference.o ogr_srsnode.o ogr_srs_proj4.o
 
 LIBS	:=	$(CPL_LIB) $(LIBS) 
 
