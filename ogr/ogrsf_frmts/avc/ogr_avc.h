@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2002/02/18 20:36:27  warmerda
+ * added spatial query, nNextFID, nTableAttrIndex
+ *
  * Revision 1.2  2002/02/14 23:01:04  warmerda
  * added region and attribute support
  *
@@ -53,6 +56,7 @@ class OGRAVCLayer : public OGRLayer
   protected:
     OGRFeatureDefn      *poFeatureDefn;
     OGRGeometry		*poFilterGeom;
+    OGREnvelope         sFilterEnvelope;
 
     OGRAVCDataSource    *poDS;
     
@@ -61,6 +65,7 @@ class OGRAVCLayer : public OGRLayer
     int                 SetupFeatureDefinition( const char *pszName ); 
     int                 AppendTableDefinition( AVCTableDef *psTableDef );
 
+    int                 MatchesSpatialFilter( void * );
     OGRFeature          *TranslateFeature( void * );
 
     int                 TranslateTableFields( OGRFeature *poFeature, 
@@ -123,6 +128,9 @@ class OGRAVCBinLayer : public OGRAVCLayer
     char		szTableName[128];
     AVCBinFile          *hTable;
     int                 nTableBaseField;
+    int                 nTableAttrIndex;
+
+    int                 nNextFID;
 
     OGRSpatialReference *poSRS;
 
