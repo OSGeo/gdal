@@ -49,7 +49,7 @@ AC_DEFUN(AC_LD_SHARED,
     if test -z "`${CC} conftest1.c libconftest.so -o conftest1 2>&1`"; then
       LD_LIBRARY_PATH_OLD="$LD_LIBRARY_PATH"
       export LD_LIBRARY_PATH="`pwd`"
-      if test -z "`conftest1 2>&1`" ; then
+      if test -z "`./conftest1 2>&1`" ; then
         echo "checking for ld -shared ... yes"
         LD_SHARED="ld -shared"
       else
