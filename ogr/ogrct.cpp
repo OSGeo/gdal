@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2002/12/09 17:24:33  warmerda
+ * fixed PROJ_STATIC settings for pj_strerrno
+ *
  * Revision 1.18  2002/12/09 16:49:55  warmerda
  * implemented support for alternate GEOGCS units
  *
@@ -185,7 +188,7 @@ static int LoadProjLibrary()
     pfn_pj_free = pj_free;
     pfn_pj_transform = pj_transform;
     pfn_pj_get_errno_ref = pj_get_errno_ref;
-    pfn_pj_get_strerrno = pj_get_strerrno;
+    pfn_pj_strerrno = pj_strerrno;
     pfn_pj_dalloc = pj_dalloc;
 #ifdef PJ_VERSION >= 446
     pfn_pj_get_def = pj_get_def;
