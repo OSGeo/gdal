@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2002/09/26 19:00:07  warmerda
+ * ensure all entry points CPL_DLL'ed
+ *
  * Revision 1.1  2002/09/26 18:11:51  warmerda
  * New
  *
@@ -231,7 +234,7 @@ OGRErr CPL_DLL OGR_L_RollbackTransaction( OGRLayerH );
 
 /* OGRDataSource */
 
-void OGR_DS_Destroy( OGRDataSourceH );
+void   CPL_DLL OGR_DS_Destroy( OGRDataSourceH );
 const char CPL_DLL *OGR_DS_GetName( OGRDataSourceH );
 int    CPL_DLL OGR_DS_GetLayerCount( OGRDataSourceH );
 OGRLayerH CPL_DLL OGR_DS_GetLayer( OGRDataSourceH, int );
@@ -253,10 +256,10 @@ OGRDataSourceH CPL_DLL OGR_Dr_CreateDataSource( OGRSFDriverH, const char *,
 
 /* OGRSFDriverRegistrar */
 
-OGRDataSourceH OGROpen( const char *, int, OGRSFDriverH * );
-void           OGRRegisterDriver( OGRSFDriverH );
-int            OGRGetDriverCount();
-OGRSFDriverH   OGRGetDriver( int );
+OGRDataSourceH CPL_DLL OGROpen( const char *, int, OGRSFDriverH * );
+void    CPL_DLL OGRRegisterDriver( OGRSFDriverH );
+int     CPL_DLL OGRGetDriverCount();
+OGRSFDriverH CPL_DLL OGRGetDriver( int );
 
 /* note: this is also declared in ogrsf_frmts.h */
 void CPL_DLL OGRRegisterAll();
