@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2003/12/10 18:02:21  warmerda
+ * fixed some minor memory leaks
+ *
  * Revision 1.5  2003/02/28 18:45:20  gpotts
  * Prefixed CreateLink with ceos2 since there are multiple symbol conflict on static build under mac. Garrett Potts (gpotts@imagelinks.com)
  *
@@ -131,8 +134,7 @@ void DeleteCeosRecord(CeosRecord_t *record)
 	    HFree(record->Buffer);
 	    record->Buffer = NULL;
 	}
-
-	memset(record,0,sizeof(CeosRecord_t));
+        HFree( record );
     }
 }
 

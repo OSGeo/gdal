@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.32  2003/12/10 18:02:21  warmerda
+ * fixed some minor memory leaks
+ *
  * Revision 1.31  2003/07/08 21:28:22  warmerda
  * avoid warnings
  *
@@ -1153,6 +1156,7 @@ GDALDataset *SAR_CEOSDataset::Open( GDALOpenInfo * poOpenInfo )
                     }
 
                     VSIFClose( process_fp );
+                    CPLFree( pszFilename );
                     break; /* Exit the while loop, we have this data type*/
                 }
                     
@@ -1386,7 +1390,10 @@ ProcessData( FILE *fp, int fileid, CeosSARVolume_t *sar, int max_records,
 	if( record->Length > CurrentBodyLength )
 	{
 	    if(CurrentBodyLength == 0 )
+            {
 		temp_body = (unsigned char *) CPLMalloc( record->Length );
+                CurrentBodyLength = record->Length;
+            }
 	    else
 	    {
 		temp_body = (unsigned char *) 
