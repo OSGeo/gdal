@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2002/03/04 21:54:30  warmerda
+ * added envi format
+ *
  * Revision 1.10  2001/12/08 04:44:23  warmerda
  * added BSB
  *
@@ -81,6 +84,7 @@ void CPL_DLL GDALRegister_ELAS(void);
 void CPL_DLL GDALRegister_EHdr(void);
 void CPL_DLL GDALRegister_PAux(void);
 void CPL_DLL GDALRegister_EFF(void);
+void CPL_DLL GDALRegister_ENVI(void);
 void CPL_DLL GDALRegister_DOQ1(void);
 void CPL_DLL GDALRegister_DOQ2(void);
 void CPL_DLL GDALRegister_DTED(void);

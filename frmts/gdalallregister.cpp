@@ -25,6 +25,9 @@
  * Main format registration function.
  * 
  * $Log$
+ * Revision 1.40  2002/03/04 21:54:20  warmerda
+ * added envi format
+ *
  * Revision 1.39  2001/12/08 04:43:48  warmerda
  * added BSB registration
  *
@@ -276,6 +279,7 @@ void GDALAllRegister()
     GDALRegister_PNM();
     GDALRegister_DOQ1();
     GDALRegister_DOQ2();
+    GDALRegister_ENVI();
     GDALRegister_EHdr();
     GDALRegister_PAux();
     GDALRegister_MFF();
