@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  1999/06/03 14:11:42  warmerda
+ * Avoid redeclaration of i.
+ *
  * Revision 1.4  1999/05/07 13:45:01  warmerda
  * major upgrade to use iso8211lib
  *
@@ -149,6 +152,8 @@ int SDTSRawLine::Read( SDTS_IREF * poIREF, DDFRecord * poRecord )
 void SDTSRawLine::Dump( FILE * fp )
 
 {
+    int    i;
+
     fprintf( fp, "SDTSRawLine\n" );
     fprintf( fp, "  Module=%s, Record#=%ld\n",
              oLine.szModule, oLine.nRecord );
@@ -164,11 +169,11 @@ void SDTSRawLine::Dump( FILE * fp )
     if( oEndNode.nRecord != -1 )
         fprintf( fp, "  EndNode (Module=%s, Record=%ld)\n", 
                  oEndNode.szModule, oEndNode.nRecord );
-    for( int i = 0; i < nAttributes; i++ )
+    for( i = 0; i < nAttributes; i++ )
         fprintf( fp, "  Attribute (Module=%s, Record=%ld)\n", 
                  aoATID[i].szModule, aoATID[i].nRecord );
 
-    for( int i = 0; i < nVertices; i++ )
+    for( i = 0; i < nVertices; i++ )
     {
         fprintf( fp, "  Vertex[%3d] = (%.2f,%.2f,%.2f)\n",
                  i, padfX[i], padfY[i], padfZ[i] );
