@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.24  2000/11/17 17:26:02  warmerda
+ * set a name in SetUTM()
+ *
  * Revision 1.23  2000/11/09 06:21:32  warmerda
  * added limited ESRI prj support
  *
@@ -2355,6 +2358,18 @@ OGRErr OGRSpatialReference::SetUTM( int nZone, int bNorth )
         SetProjParm( SRS_PP_FALSE_NORTHING, 0 );
     else
         SetProjParm( SRS_PP_FALSE_NORTHING, 10000000 );
+
+    if( EQUAL(GetAttrValue("PROJCS"),"unnamed") )
+    {
+        char	szUTMName[128];
+
+        if( bNorth )
+            sprintf( szUTMName, "UTM Zone %d, Northern Hemisphere", nZone );
+        else
+            sprintf( szUTMName, "UTM Zone %d, Southern Hemisphere", nZone );
+
+        SetNode( "PROJCS", szUTMName );
+    }
 
     return OGRERR_NONE;
 }
