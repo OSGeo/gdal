@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2001/01/16 18:11:12  warmerda
+ * majorly extended, added arc support
+ *
  * Revision 1.2  2000/12/28 21:29:17  warmerda
  * use stype field
  *
@@ -57,6 +60,15 @@ OGRDGNLayer::OGRDGNLayer( const char * pszName, DGNHandle hDGN )
 /* -------------------------------------------------------------------- */
 /*      Element type                                                    */
 /* -------------------------------------------------------------------- */
+    oField.SetName( "DGNId" );
+    oField.SetType( OFTInteger );
+    oField.SetWidth( 8 );
+    oField.SetPrecision( 0 );
+    poFeatureDefn->AddFieldDefn( &oField );
+
+/* -------------------------------------------------------------------- */
+/*      Element type                                                    */
+/* -------------------------------------------------------------------- */
     oField.SetName( "Type" );
     oField.SetType( OFTInteger );
     oField.SetWidth( 2 );
@@ -69,6 +81,50 @@ OGRDGNLayer::OGRDGNLayer( const char * pszName, DGNHandle hDGN )
     oField.SetName( "Level" );
     oField.SetType( OFTInteger );
     oField.SetWidth( 2 );
+    oField.SetPrecision( 0 );
+    poFeatureDefn->AddFieldDefn( &oField );
+
+/* -------------------------------------------------------------------- */
+/*      graphic group                                                   */
+/* -------------------------------------------------------------------- */
+    oField.SetName( "GraphicGroup" );
+    oField.SetType( OFTInteger );
+    oField.SetWidth( 4 );
+    oField.SetPrecision( 0 );
+    poFeatureDefn->AddFieldDefn( &oField );
+
+/* -------------------------------------------------------------------- */
+/*      ColorIndex                                                      */
+/* -------------------------------------------------------------------- */
+    oField.SetName( "ColorIndex" );
+    oField.SetType( OFTInteger );
+    oField.SetWidth( 3 );
+    oField.SetPrecision( 0 );
+    poFeatureDefn->AddFieldDefn( &oField );
+
+/* -------------------------------------------------------------------- */
+/*      _gv_color                                                       */
+/* -------------------------------------------------------------------- */
+    oField.SetName( "_gv_color" );
+    oField.SetType( OFTString);
+    oField.SetWidth( 12 );
+    poFeatureDefn->AddFieldDefn( &oField );
+
+/* -------------------------------------------------------------------- */
+/*      Weight                                                          */
+/* -------------------------------------------------------------------- */
+    oField.SetName( "Weight" );
+    oField.SetType( OFTInteger );
+    oField.SetWidth( 2 );
+    oField.SetPrecision( 0 );
+    poFeatureDefn->AddFieldDefn( &oField );
+
+/* -------------------------------------------------------------------- */
+/*      Style                                                           */
+/* -------------------------------------------------------------------- */
+    oField.SetName( "Style" );
+    oField.SetType( OFTInteger );
+    oField.SetWidth( 1 );
     oField.SetPrecision( 0 );
     poFeatureDefn->AddFieldDefn( &oField );
 }
@@ -123,8 +179,23 @@ OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement )
 {
     OGRFeature	*poFeature = new OGRFeature( poFeatureDefn );
 
+    poFeature->SetFID( psElement->element_id );
+    poFeature->SetField( "DGNId", psElement->element_id );
     poFeature->SetField( "Type", psElement->type );
     poFeature->SetField( "Level", psElement->level );
+    poFeature->SetField( "GraphicGroup", psElement->graphic_group );
+    poFeature->SetField( "ColorIndex", psElement->color );
+    poFeature->SetField( "Weight", psElement->weight );
+    poFeature->SetField( "Style", psElement->style );
+
+    char	gv_color[128];
+    int		gv_red, gv_green, gv_blue;
+
+    DGNLookupColor( hDGN, psElement->color, &gv_red, &gv_green, &gv_blue );
+    sprintf( gv_color, "%f %f %f 1.0", 
+             gv_red / 255.0, gv_green / 255.0, gv_blue / 255.0 );
+    poFeature->SetField( "_gv_color", gv_color );
+    
 
     switch( psElement->stype )
     {
@@ -149,6 +220,29 @@ OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement )
       }
       break;
 
+      case DGNST_ARC:
+      {
+          OGRLineString	*poLine = new OGRLineString();
+          DGNElemArc    *psArc = (DGNElemArc *) psElement;
+          DGNPoint	asPoints[90];
+          int		nPoints;
+
+          nPoints = (int) (MAX(1,ABS(psArc->sweepang) / 5) + 1);
+          DGNStrokeArc( hDGN, psArc, nPoints, asPoints );
+
+          poLine->setNumPoints( nPoints );
+          for( int i = 0; i < nPoints; i++ )
+          {
+              poLine->setPoint( i, 
+                                asPoints[i].x,
+                                asPoints[i].y,
+                                asPoints[i].z );
+          }
+
+          poFeature->SetGeometryDirectly( poLine );
+      }
+      break;
+
       default:
         break;
     }
@@ -164,16 +258,31 @@ OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement )
 OGRFeature *OGRDGNLayer::GetNextFeature()
 
 {
-    OGRFeature	*poFeature;
     DGNElemCore *psElement;
 
     while( (psElement = DGNReadElement( hDGN )) != NULL )
     {
+        OGRFeature	*poFeature;
+
+        if( psElement->deleted )
+        {
+            printf( "Found deleted, skipping.\n" );
+            DGNFreeElement( hDGN, psElement );
+            continue;
+        }
+
         poFeature = ElementToFeature( psElement );
         DGNFreeElement( hDGN, psElement );
 
         if( poFeature == NULL )
             continue;
+
+        if( poFeature->GetGeometryRef() == NULL )
+        {
+            delete poFeature;
+            continue;
+        }
+
         if( poFilterGeom == NULL
             || poFilterGeom->Intersect( poFeature->GetGeometryRef() ) )
             return poFeature;
