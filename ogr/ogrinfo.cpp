@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2002/03/27 22:50:16  warmerda
+ * improve quiet support, and make WKT output be pretty
+ *
  * Revision 1.12  2001/11/19 21:59:33  warmerda
  * added repeat count for memory leak testing
  *
@@ -74,6 +77,7 @@ CPL_CVSID("$Id$");
 
 int     bReadOnly = FALSE;
 int     bVerbose = TRUE;
+int     nFetchFID = OGRNullFID;
 
 static void Usage();
 
@@ -106,6 +110,8 @@ int main( int nArgc, char ** papszArgv )
             bReadOnly = TRUE;
         else if( EQUAL(papszArgv[iArg],"-q") )
             bVerbose = FALSE;
+        else if( EQUAL(papszArgv[iArg],"-fid") && iArg < nArgc-1 )
+            nFetchFID = atoi(papszArgv[++iArg]);
         else if( EQUAL(papszArgv[iArg],"-spat") 
                  && papszArgv[iArg+1] != NULL 
                  && papszArgv[iArg+2] != NULL 
@@ -256,7 +262,7 @@ static void Usage()
 
 {
     printf( "Usage: ogrinfo [-ro] [-q] [-where restricted_where]\n"
-            "               [-spat xmin ymin xmax ymax]\n"
+            "               [-spat xmin ymin xmax ymax] [-fid fid]\n"
             "               datasource_name [layer [layer ...]]\n");
     exit( 1 );
 }
@@ -287,40 +293,42 @@ static void ReportOnLayer( OGRLayer * poLayer, const char *pszWHERE,
     
     printf( "Layer name: %s\n", poDefn->GetName() );
 
-    printf( "Geometry: %s\n", 
-            OGRGeometryTypeToName( poDefn->GetGeomType() ) );
-
-    printf( "Feature Count: %d\n", poLayer->GetFeatureCount() );
-
-    OGREnvelope oExt;
-    if (poLayer->GetExtent(&oExt, TRUE) == OGRERR_NONE)
-    {
-        printf("Extent: (%f, %f) - (%f, %f)\n", 
-               oExt.MinX, oExt.MinY, oExt.MaxX, oExt.MaxY);
-    }
-
     if( bVerbose )
     {
+        printf( "Geometry: %s\n", 
+                OGRGeometryTypeToName( poDefn->GetGeomType() ) );
+        
+        printf( "Feature Count: %d\n", poLayer->GetFeatureCount() );
+        
+        OGREnvelope oExt;
+        if (poLayer->GetExtent(&oExt, TRUE) == OGRERR_NONE)
+        {
+            printf("Extent: (%f, %f) - (%f, %f)\n", 
+                   oExt.MinX, oExt.MinY, oExt.MaxX, oExt.MaxY);
+        }
+
         char    *pszWKT;
         
         if( poLayer->GetSpatialRef() == NULL )
-            pszWKT = CPLStrdup( "(NULL)" );
+            pszWKT = CPLStrdup( "(unknown)" );
         else
-            poLayer->GetSpatialRef()->exportToWkt( &pszWKT );
+        {
+            poLayer->GetSpatialRef()->exportToPrettyWkt( &pszWKT );
+        }            
 
-        printf( "Layer SRS WKT: %s\n", pszWKT );
+        printf( "Layer SRS WKT:\n%s\n", pszWKT );
         CPLFree( pszWKT );
-    }
     
-    for( int iAttr = 0; iAttr < poDefn->GetFieldCount(); iAttr++ )
-    {
-        OGRFieldDefn    *poField = poDefn->GetFieldDefn( iAttr );
-
-        printf( "%s: %s (%d.%d)\n",
-                poField->GetNameRef(),
-                poField->GetFieldTypeName( poField->GetType() ),
-                poField->GetWidth(),
-                poField->GetPrecision() );
+        for( int iAttr = 0; iAttr < poDefn->GetFieldCount(); iAttr++ )
+        {
+            OGRFieldDefn    *poField = poDefn->GetFieldDefn( iAttr );
+            
+            printf( "%s: %s (%d.%d)\n",
+                    poField->GetNameRef(),
+                    poField->GetFieldTypeName( poField->GetType() ),
+                    poField->GetWidth(),
+                    poField->GetPrecision() );
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -328,9 +336,26 @@ static void ReportOnLayer( OGRLayer * poLayer, const char *pszWHERE,
 /* -------------------------------------------------------------------- */
     OGRFeature  *poFeature;
 
-    while( (poFeature = poLayer->GetNextFeature()) != NULL )
+    if( nFetchFID == OGRNullFID )
     {
-        poFeature->DumpReadable( stdout );
-        delete poFeature;
+        while( (poFeature = poLayer->GetNextFeature()) != NULL )
+        {
+            poFeature->DumpReadable( stdout );
+            delete poFeature;
+        }
+    }
+    else
+    {
+        poFeature = poLayer->GetFeature( nFetchFID );
+        if( poFeature == NULL )
+        {
+            printf( "Unable to locate feature id %d on this layer.\n", 
+                    nFetchFID );
+        }
+        else
+        {
+            poFeature->DumpReadable( stdout );
+            delete poFeature;
+        }
     }
 }
