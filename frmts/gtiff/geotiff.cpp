@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.110  2004/04/21 14:00:18  warmerda
+ * pass GTIF pointer into GTIFGetOGISDefn
+ *
  * Revision 1.109  2004/04/12 09:13:18  dron
  * Use compression type of the base image to generate overviews
  * (requires libtiff >= 3.7.0).
@@ -210,7 +213,7 @@ CPL_CVSID("$Id$");
 
 CPL_C_START
 void	GDALRegister_GTiff(void);
-char *  GTIFGetOGISDefn( GTIFDefn * );
+char *  GTIFGetOGISDefn( GTIF *, GTIFDefn * );
 int     GTIFSetFromOGISDefn( GTIF *, const char * );
 const char * GDALDefaultCSVFilename( const char *pszBasename );
 CPL_C_END
@@ -2430,7 +2433,7 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, uint32 nDirOffsetIn,
         {
             if( GTIFGetDefn( hGTIF, &sGTIFDefn ) )
             {
-                pszProjection = GTIFGetOGISDefn( &sGTIFDefn );
+                pszProjection = GTIFGetOGISDefn( hGTIF, &sGTIFDefn );
             }
 
             GTIFFree( hGTIF );
