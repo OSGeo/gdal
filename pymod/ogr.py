@@ -28,6 +28,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.15  2003/09/13 04:57:06  warmerda
+# fixed up NULL support for spatial references
+#
 # Revision 1.14  2003/08/27 15:40:06  warmerda
 # added OGRSetGenerate_DB2_V72_BYTE_ORDER()
 #
@@ -279,9 +282,11 @@ class DataSource:
     def CreateLayer(self, name, srs = None, geom_type = wkbUnknown,
                     options = [] ):
         if srs is None:
-            srs = 'NULL'
+            srs_o = 'NULL'
+        else:
+	    srs_o = srs._o
         md_c = _gdal.ListToStringList( options )
-        obj = _gdal.OGR_DS_CreateLayer( self._o, name, srs, geom_type, md_c)
+        obj = _gdal.OGR_DS_CreateLayer( self._o, name, srs_o, geom_type, md_c)
         _gdal.CSLDestroy(md_c)
         if obj is None and obj != 'NULL':
             raise ValueError, gdal.GetLastErrorMsg()
@@ -403,6 +408,13 @@ class Layer:
 
     def RollbackTransaction( self ):
         return _gdal.OGR_L_RollbackTransaction( self._o )
+
+    def GetSpatialRef( self ):
+        srs_o = _gdal.OGR_L_GetSpatialRef( self._o )
+        if srs_o is not None and srs_o != 'NULL':
+            return osr.SpatialReference( srs_o )
+        else:
+            return None
 
 #############################################################################
 # OGRFeature
@@ -679,7 +691,7 @@ class Geometry:
     
     def GetSpatialReference( self ):
         srs_o = _gdal.OGR_G_GetSpatialReference( self._o )
-        if srs_o is not None:
+        if srs_o is not None and srs_o != 'NULL':
             return osr.SpatialReference( srs_o )
         else:
             return None
