@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2000/01/31 14:24:36  warmerda
+ * implemented dataset delete
+ *
  * Revision 1.10  1999/11/11 21:59:07  warmerda
  * added GetDriver() for datasets
  *
@@ -327,6 +330,11 @@ class CPL_DLL GDALDriver
     GDALDataset		*Create( const char * pszName,
                                  int nXSize, int nYSize, int nBands,
                                  GDALDataType eType, char ** papszOptions );
+
+    CPLErr		(*pfnDelete)( const char * pszName );
+
+    CPLErr		Delete( const char * pszName );
+
 };
 
 /* ******************************************************************** */

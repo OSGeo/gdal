@@ -26,6 +26,9 @@
  * that calls the GDAL library.
  * 
  * $Log$
+ * Revision 1.14  2000/01/31 14:24:36  warmerda
+ * implemented dataset delete
+ *
  * Revision 1.13  1999/11/11 21:59:06  warmerda
  * added GetDriver() for datasets
  *
@@ -147,6 +150,7 @@ GDALDriverH CPL_DLL GDALGetDriver( int );
 int         CPL_DLL GDALRegisterDriver( GDALDriverH );
 void        CPL_DLL GDALDeregisterDriver( GDALDriverH );
 void        CPL_DLL GDALMoveDriver( GDALDriverH, int );
+CPLErr	    CPL_DLL GDALDeleteDataset( GDALDriverH, const char * );
 
 const char CPL_DLL *GDALGetDriverShortName( GDALDriverH );
 const char CPL_DLL *GDALGetDriverLongName( GDALDriverH );

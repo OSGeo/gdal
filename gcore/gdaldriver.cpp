@@ -1,5 +1,12 @@
 /******************************************************************************
- * Copyright (c) 1998, Frank Warmerdam
+ * $Id$
+ *
+ * Project:  GDAL Core
+ * Purpose:  Implementation of GDALDriver class (and C wrappers)
+ * Author:   Frank Warmerdam, warmerda@home.com
+ *
+ ******************************************************************************
+ * Copyright (c) 1998, 2000, Frank Warmerdam
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -20,12 +27,10 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************
  *
- * gdaldriver.cpp
- *
- * The GDALDriver class.  This class is mostly just a container for
- * driver specific function pointers.
- *
  * $Log$
+ * Revision 1.8  2000/01/31 14:24:36  warmerda
+ * implemented dataset delete
+ *
  * Revision 1.7  2000/01/13 04:13:10  pgs
  * added initialization of pfnCreate = NULL to prevent run-time crash when format doesn't support creating a file
  *
@@ -63,6 +68,7 @@ GDALDriver::GDALDriver()
 
     pfnOpen = NULL;
     pfnCreate = NULL;
+    pfnDelete = NULL;
 }
 
 /************************************************************************/
@@ -114,6 +120,51 @@ GDALDatasetH CPL_DLL GDALCreate( GDALDriverH hDriver,
     return( ((GDALDriver *) hDriver)->Create( pszFilename,
                                               nXSize, nYSize, nBands,
                                               eBandType, papszOptions ) );
+}
+
+/************************************************************************/
+/*                               Delete()                               */
+/************************************************************************/
+
+CPLErr GDALDriver::Delete( const char * pszFilename )
+
+{
+    if( pfnDelete != NULL )
+        return pfnDelete( pszFilename );
+    else
+    {
+        VSIStatBuf	sStat;
+
+        if( VSIStat( pszFilename, &sStat ) == 0 && VSI_ISREG( sStat.st_mode ) )
+        {
+            if( VSIUnlink( pszFilename ) == 0 )
+                return CE_None;
+            else
+            {
+                CPLError( CE_Failure, CPLE_AppDefined,
+                          "%s: Attempt to unlink %s failed.\n",
+                          pszShortName, pszFilename );
+                return CE_Failure;
+            }
+        }
+        else
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "%s: Unable to delete %s, not a file.\n",
+                      pszShortName, pszFilename );
+            return CE_Failure;
+        }
+    }
+}
+
+/************************************************************************/
+/*                             GDALDelete()                             */
+/************************************************************************/
+
+CPLErr GDALDeleteDataset( GDALDriverH hDriver, const char * pszFilename )
+
+{
+    return ((GDALDriver *) hDriver)->Delete( pszFilename );
 }
 
 /************************************************************************/
