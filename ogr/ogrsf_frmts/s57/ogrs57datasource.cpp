@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  1999/11/26 16:18:33  warmerda
+ * OGRFeatureDefn generators no longer static
+ *
  * Revision 1.4  1999/11/18 19:01:25  warmerda
  * expanded tabs
  *
@@ -196,16 +199,16 @@ int OGRS57DataSource::Open( const char * pszFilename, int bTestOpen )
     {
         OGRFeatureDefn  *poDefn;
 
-        poDefn = S57Reader::GenerateGeomFeatureDefn( wkbPoint );
+        poDefn = poModule->GenerateGeomFeatureDefn( wkbPoint );
         AddLayer( new OGRS57Layer( this, poDefn ) );
     
-        poDefn = S57Reader::GenerateGeomFeatureDefn( wkbLineString );
+        poDefn = poModule->GenerateGeomFeatureDefn( wkbLineString );
         AddLayer( new OGRS57Layer( this, poDefn ) );
     
-        poDefn = S57Reader::GenerateGeomFeatureDefn( wkbPolygon );
+        poDefn = poModule->GenerateGeomFeatureDefn( wkbPolygon );
         AddLayer( new OGRS57Layer( this, poDefn ) );
     
-        poDefn = S57Reader::GenerateGeomFeatureDefn( wkbNone );
+        poDefn = poModule->GenerateGeomFeatureDefn( wkbNone );
         AddLayer( new OGRS57Layer( this, poDefn ) );
     }
 
@@ -219,6 +222,11 @@ int OGRS57DataSource::Open( const char * pszFilename, int bTestOpen )
         int             *panClassCount;
         int             iClass;
 
+        for( iModule = 0; iModule < nModules; iModule++ )
+        {
+            papoModules[iModule]->SetClassBased( poRegistrar );
+        }
+        
         panClassCount = (int *) CPLCalloc(sizeof(int),MAX_CLASSES);
 
         for( iModule = 0; iModule < nModules; iModule++ )
@@ -228,8 +236,8 @@ int OGRS57DataSource::Open( const char * pszFilename, int bTestOpen )
         {
             if( panClassCount[iClass] > 0 )
             {
-                poDefn = S57Reader::GenerateObjectClassDefn( poRegistrar,
-                                                             iClass );
+                poDefn = poModule->GenerateObjectClassDefn( poRegistrar,
+                                                            iClass );
                 if( poDefn != NULL )
                     AddLayer( new OGRS57Layer( this, poDefn ) );
             }
@@ -243,9 +251,6 @@ int OGRS57DataSource::Open( const char * pszFilename, int bTestOpen )
 /* -------------------------------------------------------------------- */
     for( iModule = 0; iModule < nModules; iModule++ )
     {
-        if( poRegistrar != NULL )
-            papoModules[iModule]->SetClassBased( poRegistrar );
-        
         for( int iLayer = 0; iLayer < nLayers; iLayer++ )
         {
             papoModules[iModule]->AddFeatureDefn(
