@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  1999/09/22 13:19:09  warmerda
+ * Added the addRingDirectly() method on OGRPolygon.
+ *
  * Revision 1.17  1999/09/13 14:34:07  warmerda
  * updated to use wkbZ of 0x8000 instead of 0x80000000
  *
@@ -469,6 +472,7 @@ class OGRPolygon : public OGRSurface
     
     // Non standard
     void    	addRing( OGRLinearRing * );
+    void        addRingDirectly( OGRLinearRing * );
 
     OGRLinearRing *getExteriorRing();
     int		getNumInteriorRings();
