@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.26  2004/08/30 20:11:51  warmerda
+ * keep the S57ClassRegistrar on the driver, not the datasource
+ *
  * Revision 1.25  2003/11/15 21:50:52  warmerda
  * Added limited creation support
  *
@@ -110,8 +113,6 @@
 #include "cpl_string.h"
 
 CPL_CVSID("$Id$");
-
-S57ClassRegistrar *OGRS57DataSource::poRegistrar = NULL;
 
 /************************************************************************/
 /*                          OGRS57DataSource()                          */
@@ -308,20 +309,6 @@ int OGRS57DataSource::Open( const char * pszFilename, int bTestOpen )
     papoModules[0] = poModule;
     
 /* -------------------------------------------------------------------- */
-/*      Instantiate the class registrar if possible.                    */
-/* -------------------------------------------------------------------- */
-    if( poRegistrar == NULL )
-    {
-        poRegistrar = new S57ClassRegistrar();
-
-        if( !poRegistrar->LoadInfo( NULL, FALSE ) )
-        {
-            delete poRegistrar;
-            poRegistrar = NULL;
-        }
-    }
-
-/* -------------------------------------------------------------------- */
 /*      Add the primitive layers if they are called for.                */
 /* -------------------------------------------------------------------- */
     if( GetOption( S57O_RETURN_PRIMITIVES ) != NULL )
@@ -345,7 +332,7 @@ int OGRS57DataSource::Open( const char * pszFilename, int bTestOpen )
 /*      Initialize a layer for each type of geometry.  Eventually       */
 /*      we will do this by object class.                                */
 /* -------------------------------------------------------------------- */
-    if( poRegistrar == NULL )
+    if( OGRS57Driver::GetS57Registrar() == NULL )
     {
         OGRFeatureDefn  *poDefn;
 
@@ -378,7 +365,7 @@ int OGRS57DataSource::Open( const char * pszFilename, int bTestOpen )
 
         for( iModule = 0; iModule < nModules; iModule++ )
         {
-            papoModules[iModule]->SetClassBased( poRegistrar );
+            papoModules[iModule]->SetClassBased( OGRS57Driver::GetS57Registrar() );
         }
         
         panClassCount = (int *) CPLCalloc(sizeof(int),MAX_CLASSES);
@@ -391,7 +378,8 @@ int OGRS57DataSource::Open( const char * pszFilename, int bTestOpen )
             if( panClassCount[iClass] > 0 )
             {
                 poDefn = 
-                    S57GenerateObjectClassDefn( poRegistrar, iClass, 
+                    S57GenerateObjectClassDefn( OGRS57Driver::GetS57Registrar(), 
+                                                iClass, 
                                                 poModule->GetOptionFlags() );
 
                 if( poDefn != NULL )
@@ -531,13 +519,8 @@ int OGRS57DataSource::Create( const char *pszFilename, char **papszOptions )
 /* -------------------------------------------------------------------- */
 /*      Instantiate the class registrar if possible.                    */
 /* -------------------------------------------------------------------- */
-    poRegistrar = new S57ClassRegistrar();
-
-    if( !poRegistrar->LoadInfo( NULL, FALSE ) )
+    if( OGRS57Driver::GetS57Registrar() == NULL )
     {
-        delete poRegistrar;
-        poRegistrar = NULL;
-        
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "Unable to load s57objectclasses.csv, unable to continue." );
         return FALSE;
@@ -551,7 +534,7 @@ int OGRS57DataSource::Create( const char *pszFilename, char **papszOptions )
     if( !poWriter->CreateS57File( pszFilename ) )
         return FALSE;
 
-    poWriter->SetClassBased( poRegistrar );
+    poWriter->SetClassBased( OGRS57Driver::GetS57Registrar() );
     pszName = CPLStrdup( pszFilename );
 
 /* -------------------------------------------------------------------- */
@@ -578,7 +561,8 @@ int OGRS57DataSource::Create( const char *pszFilename, char **papszOptions )
     for( int iClass = 0; iClass < MAX_CLASSES; iClass++ )
     {
         poDefn = 
-            S57GenerateObjectClassDefn( poRegistrar, iClass, nOptionFlags );
+            S57GenerateObjectClassDefn( OGRS57Driver::GetS57Registrar(), 
+                                        iClass, nOptionFlags );
         
         if( poDefn == NULL )
             continue;

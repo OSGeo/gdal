@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2004/08/30 20:12:00  warmerda
+ * keep the S57ClassRegistrar on the driver, not the datasource
+ *
  * Revision 1.8  2003/11/15 21:50:52  warmerda
  * Added limited creation support
  *
@@ -128,8 +131,6 @@ class OGRS57DataSource : public OGRDataSource
 
     S57Writer           *poWriter;
 
-    static S57ClassRegistrar *poRegistrar;
-
     int                 bClassCountSet;
     int                 anClassCount[MAX_CLASSES];
 
@@ -158,8 +159,6 @@ class OGRS57DataSource : public OGRDataSource
     S57Reader          *GetModule( int );
     S57Writer          *GetWriter() { return poWriter; }
 
-    S57ClassRegistrar  *GetS57Registrar() { return poRegistrar; }
-
     OGRErr      GetDSExtent(OGREnvelope *psExtent, int bForce = TRUE);
 };
 
@@ -169,7 +168,10 @@ class OGRS57DataSource : public OGRDataSource
 
 class OGRS57Driver : public OGRSFDriver
 {
+    static S57ClassRegistrar *poRegistrar;
+
   public:
+                 OGRS57Driver();
                 ~OGRS57Driver();
                 
     const char *GetName();
@@ -177,6 +179,8 @@ class OGRS57Driver : public OGRSFDriver
     virtual OGRDataSource *CreateDataSource( const char *pszName,
                                              char ** = NULL );
     int                 TestCapability( const char * );
+
+    static S57ClassRegistrar *GetS57Registrar();
 };
 
 #endif /* ndef _OGR_S57_H_INCLUDED */
