@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2000/10/13 20:59:49  warmerda
+ * ensure we can set the PROJCS name on an existing PROJCS
+ *
  * Revision 1.19  2000/07/09 20:49:54  warmerda
  * added exportToPrettyWkt()
  *
@@ -1475,13 +1478,21 @@ double OSRGetSemiMinor( OGRSpatialReferenceH hSRS, OGRErr *pnErr )
 OGRErr OGRSpatialReference::SetProjCS( const char * pszName )
 
 {
-    if( !GetAttrNode( "PROJCS" ) )
+    OGR_SRSNode	*poProjCS = GetAttrNode( "PROJCS" );
+
+    if( poProjCS == NULL && GetRoot() != NULL )
+    {
+        CPLDebug( "OGR", 
+                  "OGRSpatialReference::SetProjCS(%s) failed.\n"
+               "It appears an incompatible root node (%s) already exists.\n",
+                  GetRoot()->GetValue() );
+        return OGRERR_FAILURE;
+    }
+    else
     {
         SetNode( "PROJCS", pszName );
         return OGRERR_NONE;
     }
-    else
-        return OGRERR_FAILURE;
 }
 
 /************************************************************************/
