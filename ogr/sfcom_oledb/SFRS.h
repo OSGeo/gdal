@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2002/02/05 20:44:17  warmerda
+ * added CheckRows() and feature caching to OGRVirtualArray
+ *
  * Revision 1.12  2002/01/31 16:48:15  warmerda
  * removed need for getting feature count for a rowset
  *
@@ -73,21 +76,30 @@
 #include "SFAccessorImpl.h"
 #include "IFRowsetImpl.h"
 
+// Select one of BLOB_NONE, BLOB_IUNKNOWN, BLOB_BYTES, or BLOB_BYTES_BY_REF
+// This will determine the type and handling of the geometry column.
+
+#define BLOB_IUNKNOWN
+
 /************************************************************************/
 /*                            CVirtualArray                             */
 /************************************************************************/
 
 class CSFRowset;
 
-class CVirtualArray
+class OGRVirtualArray
 {
 public:
-	CVirtualArray();
-	~CVirtualArray();
+	OGRVirtualArray();
+	~OGRVirtualArray();
 	void	RemoveAll();
 	void	Initialize(OGRLayer *pOGRLayer,int, CSFRowset *);
 	BYTE    *GetRow(int iIndex, HRESULT &hr );
+        int     CheckRows( int iIndex, int nCount );
 private:
+        OGRFeature *GetFeature( int iIndex );
+        void        ResetCache( int, int );
+        
         int     FillGeometry( OGRGeometry *poGeometry, 
                               unsigned char *pabyBuffer,
                               ATLCOLUMNINFO *pColInfo );
@@ -102,6 +114,11 @@ private:
 	int	m_nLastRecordAccessed;
 	OGRFeatureDefn	*m_pFeatureDefn;
         CSFRowset       *m_pRowset;
+
+        // OGRFeature cache (filled by CheckRows()).
+        int      m_nFeatureCacheBase;
+        int      m_nFeatureCacheSize;
+        OGRFeature **m_papoFeatureCache;
 };
 
 /************************************************************************/
@@ -416,7 +433,7 @@ END_COM_MAP()
 /************************************************************************/
 
 class CSFRowset :
-public CSFRowsetImpl< CSFRowset, CShapeFile, CSFCommand, CVirtualArray>
+public CSFRowsetImpl< CSFRowset, CShapeFile, CSFCommand, OGRVirtualArray>
 
 {
     int       ParseCommand( const char *, OGRLayer * );
