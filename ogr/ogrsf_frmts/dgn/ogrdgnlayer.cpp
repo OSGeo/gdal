@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2002/01/18 18:52:21  warmerda
+ * set rotation angle for labels
+ *
  * Revision 1.13  2002/01/15 06:39:56  warmerda
  * remove _gv_color, flesh out pen and brush style settings
  *
@@ -411,6 +414,11 @@ OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement )
           else
               sprintf( pszOgrFS+strlen(pszOgrFS), ",s:%.12f", 
                        psText->height_mult );
+
+          // Add the angle, if not horizontal
+          if( psText->rotation != 0.0 )
+              sprintf( pszOgrFS+strlen(pszOgrFS), ",a:%d", 
+                       (int) (psText->rotation+0.5) );
 
           strcat( pszOgrFS, ")" );
 
