@@ -36,10 +36,12 @@ clean:
 	  fi; \
 	done
 
-o/gdalallregister.o:	gdalallregister.cpp
+o/gdalallregister.o:	gdalallregister.cpp ../GDALmake.opt
 	$(CXX) -c $(GDAL_INCLUDE) $(CXXFLAGS) $(FRMT_FLAGS) \
 		-DGDAL_FORMATS="$(GDAL_FORMATS)" \
 		gdalallregister.cpp -o o/gdalallregister.o
+
+../GDALmake.opt:
 
 
 # We might want to add dynamically generated drivers here eventually.
