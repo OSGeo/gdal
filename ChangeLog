@@ -1,3 +1,8 @@
+2002-09-18  Andrey Kiselev  <dron@remotesensing.org>
+	
+	* /gdal/frmts/jpeg2000/{jpeg2000dataset.cpp, GNUmakefile, makefile.vc}:
+	New driver for JPEG-2000 format. You need JasPer software to work.
+
 2002-09-11  Frank Warmerdam  <warmerdam@pobox.com>
 
 	* Fixed default CreateCopy() method, and band copying stuff in
