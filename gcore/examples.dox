@@ -27,3 +27,12 @@ This example demonstrates read one file, and writing the data to another.
 \include gdalallregister.cpp
 */
 
+/*!
+\page jdemdataset.cpp
+<center>
+<title>Sample Driver: jdemdataset.cpp</title>
+</center>
+
+\include jdemdataset.cpp
+*/
+
