@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2001/07/12 14:46:00  warmerda
+ * added limited gcp and projection read support
+ *
  * Revision 1.10  2001/05/15 13:59:24  warmerda
  * allow opening by selecting the .aux file
  *
@@ -62,6 +65,7 @@
 
 #include "rawdataset.h"
 #include "cpl_string.h"
+#include "ogr_spatialref.h"
 
 static GDALDriver	*poPAuxDriver = NULL;
 
@@ -83,6 +87,15 @@ class PAuxDataset : public RawDataset
 
     FILE	*fpImage;	// image data file.
 
+    int         nGCPCount;
+    GDAL_GCP    *pasGCPList;
+    char        *pszGCPProjection;
+
+    void        ScanForGCPs();
+    char       *PCI2WKT( const char *pszGeosys, const char *pszProjParms );
+
+    char       *pszProjection;
+
   public:
     		PAuxDataset();
     	        ~PAuxDataset();
@@ -91,8 +104,13 @@ class PAuxDataset : public RawDataset
     char	**papszAuxLines;
     int		bAuxUpdated;
     
+    virtual const char *GetProjectionRef();
     virtual CPLErr GetGeoTransform( double * );
     virtual CPLErr SetGeoTransform( double * );
+
+    virtual int    GetGCPCount();
+    virtual const char *GetGCPProjection();
+    virtual const GDAL_GCP *GetGCPs();
 
     static GDALDataset *Open( GDALOpenInfo * );
     static GDALDataset *Create( const char * pszFilename,
@@ -214,6 +232,11 @@ PAuxDataset::PAuxDataset()
     fpImage = NULL;
     bAuxUpdated = FALSE;
     pszAuxFilename = NULL;
+    nGCPCount = 0;
+    pasGCPList = NULL;
+
+    pszProjection = NULL;
+    pszGCPProjection = NULL;
 }
 
 /************************************************************************/
@@ -233,8 +256,240 @@ PAuxDataset::~PAuxDataset()
         CSLSave( papszAuxLines, pszAuxFilename );
     }
 
+    CPLFree( pszProjection );
+    CPLFree( pszGCPProjection );
+
+    CPLFree( pasGCPList );
     CPLFree( pszAuxFilename );
     CSLDestroy( papszAuxLines );
+}
+
+/************************************************************************/
+/*                              PCI2WKT()                               */
+/*                                                                      */
+/*      Convert PCI coordinate system to WKT.  For now this is very     */
+/*      incomplete, but can be filled out in the future.                */
+/************************************************************************/
+
+char *PAuxDataset::PCI2WKT( const char *pszGeosys, 
+                            const char * /*pszProjParms*/ )
+
+{
+    char	szEarthModel[8];
+    char	szGeosysBase[16];
+    char	chRow = ' ';
+    int		nZone = 0;
+    const char *pszWellKnownGeogCS;
+    OGRSpatialReference oSRS;
+    char	*pszResult = NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Parse the geosys string.                                        */
+/*                                                                      */
+/*      eg.                                                             */
+/*      "UTM      11 E000"                                              */
+/*      "LONG        D-02"                                              */
+/*      "METER           "                                              */
+/* -------------------------------------------------------------------- */
+    char	**papszTokens;
+
+    papszTokens = CSLTokenizeString( pszGeosys );
+    if( CSLCount(papszTokens) == 1 )
+    {
+        strcpy( szGeosysBase, papszTokens[0] );
+        szEarthModel[0] = '\0';
+    }
+    else if( CSLCount(papszTokens) == 2 )
+    {
+        strncpy( szGeosysBase, papszTokens[0], sizeof(szGeosysBase) );
+        strncpy( szEarthModel, papszTokens[1], sizeof(szEarthModel) );
+    }
+    else if( CSLCount(papszTokens) == 3 )
+    {
+        strncpy( szGeosysBase, papszTokens[0], sizeof(szGeosysBase) );
+        nZone = atoi(papszTokens[1]);
+        strncpy( szEarthModel, papszTokens[2], sizeof(szEarthModel) );
+    }
+    else if( CSLCount(papszTokens) == 4 )
+    {
+        strncpy( szGeosysBase, papszTokens[0], sizeof(szGeosysBase) );
+        nZone = atoi(papszTokens[1]);
+        chRow = papszTokens[2][0];
+        strncpy( szEarthModel, papszTokens[3], sizeof(szEarthModel) );
+    }
+    else
+    {
+        strcpy( szGeosysBase, "METER" );
+        szEarthModel[0] = '\0';
+    }
+
+    CSLDestroy( papszTokens );
+
+/* -------------------------------------------------------------------- */
+/*      Translate the earth model to a well known geographic            */
+/*      coordinate system.  Very simple for now.                        */
+/* -------------------------------------------------------------------- */
+    if( EQUAL(szEarthModel,"E000")
+        || EQUAL(szEarthModel,"D-01")
+        || EQUAL(szEarthModel,"D-03") )
+        pszWellKnownGeogCS = "NAD27";
+    else if( EQUAL(szEarthModel,"E008")
+        || EQUAL(szEarthModel,"D-02")
+        || EQUAL(szEarthModel,"D-04") )
+        pszWellKnownGeogCS = "NAD83";
+    else if( EQUAL(szEarthModel,"D000")
+             || EQUAL(szEarthModel,"E012") )
+        pszWellKnownGeogCS = "WGS84";
+    else
+        pszWellKnownGeogCS = "WGS84";
+
+/* -------------------------------------------------------------------- */
+/*      Translate known projections.                                    */
+/* -------------------------------------------------------------------- */
+    if( EQUAL(szGeosysBase,"LONG") )
+    {
+        /* do nothing, geogcs set later */
+    }
+    else if( EQUAL(szGeosysBase,"UTM") )
+    {
+        /* should be checking row for southern hemisphere! */
+        oSRS.SetUTM( nZone );
+    }
+    else
+        oSRS.SetLocalCS( szGeosysBase );
+
+/* -------------------------------------------------------------------- */
+/*      Apply geographic coordinate system.                             */
+/* -------------------------------------------------------------------- */
+    if( !oSRS.IsLocal() )
+        oSRS.SetWellKnownGeogCS( pszWellKnownGeogCS );
+
+/* -------------------------------------------------------------------- */
+/*      Get out the result.                                             */
+/* -------------------------------------------------------------------- */
+    oSRS.exportToWkt( &pszResult );
+
+    return pszResult;
+}
+
+/************************************************************************/
+/*                            ScanForGCPs()                             */
+/************************************************************************/
+
+void PAuxDataset::ScanForGCPs()
+
+{
+#define MAX_GCP		256
+
+    nGCPCount = 0;
+    pasGCPList = (GDAL_GCP *) CPLCalloc(sizeof(GDAL_GCP),MAX_GCP);
+
+/* -------------------------------------------------------------------- */
+/*      Get the GCP coordinate system.                                  */
+/* -------------------------------------------------------------------- */
+    const char	*pszMapUnits, *pszProjParms;
+
+    pszMapUnits = CSLFetchNameValue( papszAuxLines, "GCP_1_MapUnits" );
+    pszProjParms = CSLFetchNameValue( papszAuxLines, "GCP_1_ProjParms" );
+    
+    if( pszMapUnits != NULL )
+        pszGCPProjection = PCI2WKT( pszMapUnits, pszProjParms );
+    
+/* -------------------------------------------------------------------- */
+/*      Collect standalone GCPs.  They look like:                       */
+/*                                                                      */
+/*      GCP_1_n = row, col, x, y [,z [,"id"[, "desc"]]]			*/
+/* -------------------------------------------------------------------- */
+    int i;
+
+    for( i = 0; nGCPCount < MAX_GCP; i++ )
+    {
+        char	szName[50];
+        char    **papszTokens;
+
+        sprintf( szName, "GCP_1_%d", i+1 );
+        if( CSLFetchNameValue( papszAuxLines, szName ) == NULL )
+            break;
+
+        papszTokens = CSLTokenizeStringComplex( 
+            CSLFetchNameValue( papszAuxLines, szName ), 
+            " ", TRUE, FALSE );
+
+        if( CSLCount(papszTokens) >= 4 )
+        {
+            GDALInitGCPs( 1, pasGCPList + nGCPCount );
+
+            pasGCPList[nGCPCount].dfGCPX = atof(papszTokens[2]);
+            pasGCPList[nGCPCount].dfGCPY = atof(papszTokens[3]);
+            pasGCPList[nGCPCount].dfGCPPixel = atof(papszTokens[0]);
+            pasGCPList[nGCPCount].dfGCPLine = atof(papszTokens[1]);
+
+            if( CSLCount(papszTokens) > 4 )
+                pasGCPList[nGCPCount].dfGCPZ = atof(papszTokens[4]);
+
+            CPLFree( pasGCPList[nGCPCount].pszId );
+            if( CSLCount(papszTokens) > 5 )
+            {
+                pasGCPList[nGCPCount].pszId = papszTokens[5];
+            }
+            else
+            {
+                sprintf( szName, "GCP_%d", i+1 );
+                pasGCPList[nGCPCount].pszId = CPLStrdup( szName );
+            }
+
+            if( CSLCount(papszTokens) > 6 )
+            {
+                CPLFree( pasGCPList[nGCPCount].pszInfo );
+                pasGCPList[nGCPCount].pszInfo = papszTokens[6];
+            }
+
+            nGCPCount++;
+        }
+    }
+}
+
+/************************************************************************/
+/*                            GetGCPCount()                             */
+/************************************************************************/
+
+int PAuxDataset::GetGCPCount()
+
+{
+    return nGCPCount;
+}
+
+/************************************************************************/
+/*                          GetGCPProjection()                          */
+/************************************************************************/
+
+const char *PAuxDataset::GetGCPProjection()
+
+{
+    if( nGCPCount > 0 && pszGCPProjection != NULL )
+        return pszGCPProjection;
+    else
+        return "";
+}
+
+/************************************************************************/
+/*                               GetGCP()                               */
+/************************************************************************/
+
+const GDAL_GCP *PAuxDataset::GetGCPs()
+
+{
+    return pasGCPList;
+}
+
+/************************************************************************/
+/*                          GetProjectionRef()                          */
+/************************************************************************/
+
+const char *PAuxDataset::GetProjectionRef()
+
+{
+    return pszProjection;
 }
 
 /************************************************************************/
@@ -519,9 +774,24 @@ GDALDataset *PAuxDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
 /* -------------------------------------------------------------------- */
+/*      Get the projection.                                             */
+/* -------------------------------------------------------------------- */
+    const char	*pszMapUnits, *pszProjParms;
+
+    pszMapUnits = CSLFetchNameValue( poDS->papszAuxLines, "MapUnits" );
+    pszProjParms = CSLFetchNameValue( poDS->papszAuxLines, "ProjParms" );
+    
+    if( pszMapUnits != NULL )
+        poDS->pszProjection = poDS->PCI2WKT( pszMapUnits, pszProjParms );
+    else
+        poDS->pszProjection = CPLStrdup("");
+    
+/* -------------------------------------------------------------------- */
 /*      Check for overviews.                                            */
 /* -------------------------------------------------------------------- */
     poDS->oOvManager.Initialize( poDS, pszTarget );
+
+    poDS->ScanForGCPs();
 
     CPLFree( pszTarget );
 
