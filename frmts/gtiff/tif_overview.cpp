@@ -48,6 +48,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  1999/02/11 19:23:39  warmerda
+ * Only fix on multiples of 16 in block size if it is a tiled file.
+ *
  * Revision 1.3  1999/02/11 19:21:14  warmerda
  * Limit tile sizes to multiples of 16
  *
@@ -297,11 +300,14 @@ void TIFF_BuildOverviews( const char * pszTIFFFilename,
         nOBlockXSize = MIN((int)nBlockXSize,nOXSize);
         nOBlockYSize = MIN((int)nBlockYSize,nOYSize);
 
-        if( (nOBlockXSize % 16) != 0 )
-            nOBlockXSize = nOBlockXSize + 16 - (nOBlockXSize % 16);
-
-        if( (nOBlockYSize % 16) != 0 )
-            nOBlockYSize = nOBlockYSize + 16 - (nOBlockYSize % 16);
+        if( bTiled )
+        {
+            if( (nOBlockXSize % 16) != 0 )
+                nOBlockXSize = nOBlockXSize + 16 - (nOBlockXSize % 16);
+            
+            if( (nOBlockYSize % 16) != 0 )
+                nOBlockYSize = nOBlockYSize + 16 - (nOBlockYSize % 16);
+        }
 
         papoRawBIs[i] = new RawBlockedImage( nOXSize, nOYSize,
                                              nOBlockXSize, nOBlockYSize,
