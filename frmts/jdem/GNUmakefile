@@ -4,7 +4,7 @@ include $(GDAL_ROOT)/GDALmake.opt
 
 OBJ	=	jdemdataset.o
 
-CPPFLAGS	=	$(GDAL_INCLUDE)
+CPPFLAGS	:=	$(GDAL_INCLUDE) $(CPPFLAGS)
 
 default:	$(OBJ)
 

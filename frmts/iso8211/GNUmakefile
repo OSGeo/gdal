@@ -6,7 +6,7 @@ VERSION =	1.2
 DISTDIR =	iso8211lib-$(VERSION)
 WEB_DIR =	/u/www/projects/iso8211
 
-CPPFLAGS	=	-I. -I$(GDAL_ROOT)/port
+CPPFLAGS	:=	-I. -I$(GDAL_ROOT)/port $(CPPFLAGS)
 
 ISOLIB = libiso8211.a
 OBJ =	ddfmodule.o ddfutils.o ddffielddefn.o ddfrecord.o ddffield.o \

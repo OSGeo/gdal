@@ -10,7 +10,7 @@ include $(GDAL_ROOT)/GDALmake.opt
 GXFOBJ	=	gxfopen.o gxf_proj4.o gxf_ogcwkt.o
 OBJ	=	gxfdataset.o $(GXFOBJ)
 
-CPPFLAGS	=	$(GDAL_INCLUDE)
+CPPFLAGS	:=	$(GDAL_INCLUDE) $(CPPFLAGS)
 
 default:	$(OBJ)
 
