@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2002/05/31 19:03:46  warmerda
+ * removed old CollectLines code
+ *
  * Revision 1.4  2002/03/27 21:36:50  warmerda
  * added implementation of GetFeature()
  *
@@ -63,8 +66,6 @@ class OGRDGNLayer : public OGRLayer
     DGNHandle           hDGN;
 
     OGRFeature	       *ElementToFeature( DGNElemCore * );
-    OGRGeometry        *CollectLines( OGRGeometryCollection *poLines, 
-                                      int bMakePolygon );
     void                ConsiderBrush( DGNElemCore *, const char *pszPen,
                                        OGRFeature *poFeature );
 
