@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/08/30 16:48:40  warmerda
+ * cleanup features
+ *
  * Revision 1.1  1999/08/28 03:13:35  warmerda
  * New
  *
@@ -118,5 +121,6 @@ static void NTFDump( const char * pszFile )
     {
         printf( "-------------------------------------\n" );
         poFeature->DumpReadable( stdout );
+        delete poFeature;
     }
 }
