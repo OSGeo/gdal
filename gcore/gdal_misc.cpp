@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.63  2005/02/10 04:30:29  fwarmerdam
+ * added support for YCbCr color space
+ *
  * Revision 1.62  2004/11/23 19:54:07  fwarmerdam
  * Fixed initialization bug in szDerivedExtension in GDALReadWorldFile().
  *
@@ -571,6 +574,15 @@ const char *GDALGetColorInterpretationName( GDALColorInterp eInterp )
 
       case GCI_BlackBand:
         return "Black";
+        
+      case GCI_YCbCr_YBand:
+        return "YCbCr_Y";
+        
+      case GCI_YCbCr_CbBand:
+        return "YCbCr_Cb";
+        
+      case GCI_YCbCr_CrBand:
+        return "YCbCr_Cr";
         
       default:
         return "Unknown";
