@@ -107,6 +107,21 @@ it is anticipated that it will be added in the future. <p>
 
 NOTE: Implemented as <tt>gdal/frmts/envisat/envisatdataset.cpp</tt>.<p>
 
+<h2><a name="FITS">FITS -- Flexible Image Transport System</h2>
+
+FITS is a format used mainly by astronomers, but it is a relatively
+simple format that supports arbitrary image types and multi-spectral
+images, and so has found its way into GDAL. FITS support is
+implemented in terms of the standard <a
+href="http://heasarc.gsfc.nasa.gov/docs/software/fitsio/fitsio.html">CFITSIO
+library</a>, which you must have on your system in order for FITS
+support to be enabled. Both reading and writing of FITS files is
+supported. At the current time, no support for a georeferencing system
+is implemented, but WCS (World Coordinate System) support is possible
+in the future.
+
+<p>NOTE: Implemented as <tt>gdal/frmts/fits/fitsdataset.cpp</tt>.<p>
+
 <h2><a name="GIO">GIO -- Arc/Info Binary Grid</a></h2>
 
 This is a second implementation for reading, and writing Arc/Info grids, and
