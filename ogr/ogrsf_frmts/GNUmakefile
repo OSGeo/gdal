@@ -27,7 +27,7 @@ ifeq ($(HAVE_FME),yes)
 endif
 
 clean:
-	rm o/*.o
+	rm -f o/*.o
 	(cd generic; $(MAKE) clean)
 	(cd shape; $(MAKE) clean)
 	(cd ntf; $(MAKE) clean)
