@@ -1,3 +1,59 @@
+GDAL 1.2.1 - Overview of Changes
+--------------------------------
+
+gdal_contour:
+    - Now build and installed by default.
+
+HDF4 Driver:
+    - Added some degree of HDF-EOS support.  HDFEOS layer now part of GDAL.
+
+DODS Driver:
+    - Substantial fixes, support for flipped datasets.  
+
+HFA (Erdas Imagine) Driver:
+    - Fixed bug with files between 2 and 4GB.
+    - Capture statistics as metadata.
+
+Erdas 7.x LAN/GIS Driver:
+    - Newly implemented.
+
+USGS DEM Driver:
+    - Various fixes to creation support / CDED product.
+
+NITF Driver:
+    - Capture USE001 and STDIDC TREs as metadata.
+    - Capture all sorts of header information as metadata.
+    - Support geocentric corner coordinate specification.
+
+MrSID Driver:
+    - Support added for DSDK 4.0.x.
+
+ECW Driver:
+    - Added preliminary support for using 3.0 SDK for JPEG2000 support. 
+
+ArcInfo Binary Grids:
+    - Added support for 0x01 and 0x20 block type.
+
+
+OGR 1.2.1 - Overview of Changes
+-------------------------------
+
+OGRSpatialReference:
+    - Various fixes related to prime meridians.
+
+PostgreSQL/PostGIS Driver:
+    - Added layer name laundering. 
+    - Launder names on by default.
+    - Clean stale entries in geometry_columns table when creating a layer.
+    - Support treating names views as layers.
+    - Handle long command strings.
+
+S57 Driver:
+    - Fixed serious bugs with support for auto-applying update files.
+    - Improvements to S57 writing support.
+  
+ =============================================================================
+
 GDAL 1.2.0 - Overview of Changes
 --------------------------------
 
