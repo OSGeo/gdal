@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2004/09/17 15:05:36  fwarmerdam
+ * added get_Area() support
+ *
  * Revision 1.12  2004/02/21 15:36:14  warmerda
  * const correctness updates for geometry: bug 289
  *
@@ -351,4 +354,32 @@ OGRErr OGRMultiPolygon::exportToWkt( char ** ppszDstText ) const
     return OGRERR_NONE;
 }
 
+/************************************************************************/
+/*                              get_Area()                              */
+/************************************************************************/
+
+/**
+ * Compute area of multipolygon.
+ *
+ * The area is computed as the sum of the areas of all polygon members
+ * in this collection.
+ *
+ * @return computed area.
+ */
+
+double OGRMultiPolygon::get_Area() const
+
+{
+    double dfArea = 0.0;
+    int iPoly;
+
+    for( iPoly = 0; iPoly < getNumGeometries(); iPoly++ )
+    {
+        OGRPolygon *poPoly = (OGRPolygon *) getGeometryRef( iPoly );
+
+        dfArea += poPoly->get_Area();
+    }
+
+    return dfArea;
+}
 

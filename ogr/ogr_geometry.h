@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.50  2004/09/17 15:05:36  fwarmerdam
+ * added get_Area() support
+ *
  * Revision 1.49  2004/08/20 21:21:28  warmerda
  * added support for managing a persistent geos::GeometryFactory
  *
@@ -474,6 +477,7 @@ class CPL_DLL OGRLinearRing : public OGRLineString
     virtual OGRGeometry *clone() const;
     virtual int isClockwise() const;
     virtual void closeRings();
+    virtual double get_Area() const;
     
     // IWks Interface - Note this isnt really a first class object
     // for the purposes of WKB form.  These methods always fail since this
@@ -644,6 +648,8 @@ class CPL_DLL OGRMultiPolygon : public OGRGeometryCollection
     
     // Non standard
     virtual OGRErr addGeometryDirectly( OGRGeometry * );
+
+    double  get_Area() const;
 };
 
 /************************************************************************/

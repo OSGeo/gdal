@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2004/09/17 15:05:36  fwarmerdam
+ * added get_Area() support
+ *
  * Revision 1.19  2004/07/10 06:57:54  warmerda
  * Added C entry points and docs for GEOS geometry functions
  *
@@ -174,6 +177,8 @@ OGRGeometryH CPL_DLL OGR_G_Union( OGRGeometryH, OGRGeometryH );
 OGRGeometryH CPL_DLL OGR_G_Difference( OGRGeometryH, OGRGeometryH );
 OGRGeometryH CPL_DLL OGR_G_SymmetricDifference( OGRGeometryH, OGRGeometryH );
 double CPL_DLL OGR_G_Distance( OGRGeometryH, OGRGeometryH );
+
+double CPL_DLL OGR_G_GetArea( OGRGeometryH );
 
 void   CPL_DLL OGR_G_Empty( OGRGeometryH );
 
