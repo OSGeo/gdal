@@ -23,6 +23,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2002/09/04 18:44:48  warmerda
+ * try to make aggregates into multipolygons
+ *
  * Revision 1.7  2002/09/04 15:29:16  warmerda
  * fixed bug in datasource destructor
  *
@@ -1182,16 +1185,17 @@ int OGRFMEDataSource::ReadFMEFeature()
 /*      Translate an FME geometry into an OGR geometry.                 */
 /************************************************************************/
 
-OGRGeometry *OGRFMEDataSource::ProcessGeometry( OGRFMELayer * poLayer, 
-                                                IFMEFeature * poGeomFeat )
+OGRGeometry *
+OGRFMEDataSource::ProcessGeometry( OGRFMELayer * poLayer, 
+                                   IFMEFeature * poGeomFeat,
+                                   OGRwkbGeometryType eDesiredType  )
 {
     
     FME_GeometryType      eGeomType = poGeomFeat->getGeometryType();
-    OGRwkbGeometryType    eLayerGType = poLayer->GetLayerDefn()->GetGeomType();
     int                   bForceToMulti = FALSE;
     
-    if( wkbFlatten(eLayerGType) == wkbGeometryCollection
-        || wkbFlatten(eLayerGType) == wkbMultiPolygon )
+    if( wkbFlatten(eDesiredType) == wkbGeometryCollection
+        || wkbFlatten(eDesiredType) == wkbMultiPolygon )
         bForceToMulti = TRUE;
 
 /* -------------------------------------------------------------------- */
@@ -1308,8 +1312,17 @@ OGRGeometry *OGRFMEDataSource::ProcessGeometry( OGRFMELayer * poLayer,
 /* -------------------------------------------------------------------- */
     else if( eGeomType == FME_GEOM_AGGREGATE )
     {
-        OGRGeometryCollection *poCollection = new OGRGeometryCollection;
+        OGRGeometryCollection *poCollection;
         IFMEFeatureVector *poFeatVector;
+        OGRwkbGeometryType eSubType = wkbUnknown;
+
+        if( bForceToMulti && eDesiredType == wkbMultiPolygon )
+        {
+            poCollection = new OGRMultiPolygon();
+            eSubType = wkbPolygon;
+        }
+        else
+            poCollection = new OGRGeometryCollection();
 
         poFeatVector = poSession->createFeatureVector();
         
@@ -1324,7 +1337,7 @@ OGRGeometry *OGRFMEDataSource::ProcessGeometry( OGRFMELayer * poLayer,
             if( poFMEPart == NULL )
                 continue;
 
-            poOGRPart = ProcessGeometry( poLayer, poFMEPart );
+            poOGRPart = ProcessGeometry( poLayer, poFMEPart, eSubType );
             if( poOGRPart == NULL )
                 continue;
 
@@ -1387,7 +1400,8 @@ OGRFeature *OGRFMEDataSource::ProcessFeature( OGRFMELayer *poLayer,
 /* -------------------------------------------------------------------- */
     OGRGeometry      *poOGRGeom = NULL;
     
-    poOGRGeom = ProcessGeometry( poLayer, poSrcFeature );
+    poOGRGeom = ProcessGeometry( poLayer, poSrcFeature,
+                                 poLayer->GetLayerDefn()->GetGeomType() );
     if( poOGRGeom != NULL )
         poFeature->SetGeometryDirectly( poOGRGeom );
 
