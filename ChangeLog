@@ -1,3 +1,7 @@
+2001-02-28  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* Fixed up handling of pyexecdir.
+
 2001-02-24  Frank Warmerdam  <warmerdam@pobox.com>
 
 	* Added Envisat format support.
