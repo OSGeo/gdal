@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2000/03/14 21:37:16  warmerda
+ * added SHPT= option support
+ *
  * Revision 1.1  1999/11/04 21:16:11  warmerda
  * New
  *
@@ -256,10 +259,42 @@ OGRShapeDataSource::CreateLayer( const char * pszLayerName,
     else if( eType == wkbLineString25D )
         nShapeType = SHPT_ARCZ;
     else
+        nShapeType = -1;
+
+    
+/* -------------------------------------------------------------------- */
+/*      Has the application overridden this with a special creation     */
+/*      option?                                                         */
+/* -------------------------------------------------------------------- */
+    const char *pszOverride = CSLFetchNameValue( papszOptions, "SHPT" );
+
+    if( pszOverride == NULL )
+        /* ignore */;
+    else if( EQUAL(pszOverride,"POINT") )
+        nShapeType = SHPT_POINT;
+    else if( EQUAL(pszOverride,"ARC") )
+        nShapeType = SHPT_ARC;
+    else if( EQUAL(pszOverride,"POLYGON") )
+        nShapeType = SHPT_POLYGON;
+    else if( EQUAL(pszOverride,"MULTIPOINT") )
+        nShapeType = SHPT_MULTIPOINT;
+    else
     {
         CPLError( CE_Failure, CPLE_NotSupported,
-                  "Geometry type of `%d' not supported in shapefiles.\n",
-                  (int) eType );
+                  "Unknown SHPT value of `%s' passed to Shapefile layer\n"
+                  "creation.  Creation aborted.\n",
+                  pszOverride );
+
+        return NULL;
+    }
+
+    if( nShapeType == -1 )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported,
+                  "Geometry type of `%s' not supported in shapefiles.\n",
+                  "Type can be overridden with a layer creation option\n"
+                  "of SHPT=POINT/ARC/POLYGON/MULTIPOINT.\n",
+                  OGRGeometryTypeToName(eType) );
         return NULL;
     }
     
