@@ -30,8 +30,8 @@
  ******************************************************************************
  *
  * $Log$
- * Revision 1.10  2001/09/06 01:54:31  warmerda
- * added gcp functions
+ * Revision 1.11  2001/09/06 14:03:21  warmerda
+ * upgrade bridge error reporting
  *
  * Revision 1.8  2000/11/09 16:25:30  warmerda
  * added various srs defines
@@ -62,6 +62,8 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#include <stdio.h>
     
 /* ==================================================================== */
 /*      Standard types and defines normally supplied by cpl_port.h.     */
@@ -659,7 +661,7 @@ GDAL_ENTRY int (*pOSRGetUTMZone)( OGRSpatialReferenceH hSRS,
 /*      libraries (given a hint of a directory it might be in).  It     */
 /*      returns TRUE if it succeeds, or FALSE otherwise.                */
 /* -------------------------------------------------------------------- */
-int	GDALBridgeInitialize( const char * );
+int	GDALBridgeInitialize( const char *, FILE * );
 void	*GBGetSymbol( const char *, const char * );
 
 /* -------------------------------------------------------------------- */

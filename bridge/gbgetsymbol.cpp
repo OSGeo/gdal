@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2001/09/06 14:03:21  warmerda
+ * upgrade bridge error reporting
+ *
  * Revision 1.2  2000/09/27 13:22:07  warmerda
  * also allow for unix in check
  *
@@ -77,7 +80,7 @@ void *GBGetSymbol( const char * pszLibrary, const char * pszSymbolName )
 
     if( pSymbol == NULL )
     {
-        fprintf( stderr, "GBGetSymbol(): %s", dlerror() );
+        fprintf( stderr, "GBGetSymbol(): %s\n", dlerror() );
         return NULL;
     }
     

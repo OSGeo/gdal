@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2001/09/06 14:03:21  warmerda
+ * upgrade bridge error reporting
+ *
  * Revision 1.2  2000/08/25 20:03:40  warmerda
  * added more entry points
  *
@@ -49,7 +52,7 @@ int main( int argc, char ** argv )
     double		adfGeoTransform[6];
     GDALProjDefH	hProjDef;
 
-    if( !GDALBridgeInitialize( ".." ) )
+    if( !GDALBridgeInitialize( "..", stderr ) )
     {
         fprintf( stderr, "Unable to intiailize GDAL bridge.\n" );
         exit( 10 );
