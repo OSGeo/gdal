@@ -4,14 +4,26 @@
 OBJ	=	gdal_wrap.obj gdalconst_wrap.obj ogr_wrap.obj
 
 
-all: ogr_dir gdal_dir const_dir
+all: sign ogr_dir gdal_dir const_dir
     csc /target:library /out:ogr_csharp.dll ogr\*.cs
     csc /target:library /out:gdal_csharp.dll gdal\*.cs const\*.cs
     link /dll /debug $(OGR_INCLUDE) $(BASE_INCLUDE) $(OBJ) \
 		$(EXTERNAL_LIBS) ..\..\..\gdal.lib\
 		 /out:gdal.dll $(LINKER_FLAGS)
 
+sign:
+    sn -k gdal.snk
 
+register: sign
+    RegAsm.exe /tlb:gdal.tlb gdal_csharp.dll
+
+install_com:
+    gacutil.exe /i gdal_csharp.dll
+
+uninstall_com:
+    gacutil.exe /u gdal_csharp
+    
+    
 ogr_dir:
 	cd ogr
 	$(MAKE) /f makefile.vc
