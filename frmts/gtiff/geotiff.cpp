@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.124  2004/10/27 18:17:19  fwarmerdam
+ * avoid variable sized arrays, not C++ standard
+ *
  * Revision 1.123  2004/10/26 23:47:28  fwarmerdam
  * Added support for writing UInt16 colortables.
  *
@@ -809,7 +812,11 @@ CPLErr GTiffRasterBand::SetColorTable( GDALColorTable * poCT )
     else
         nColors = 65536;
 
-    unsigned short	anTRed[nColors], anTGreen[nColors], anTBlue[nColors];
+    unsigned short *panTRed, *panTGreen, *panTBlue;
+
+    panTRed = (unsigned short *) CPLMalloc(sizeof(unsigned short)*nColors);
+    panTGreen = (unsigned short *) CPLMalloc(sizeof(unsigned short)*nColors);
+    panTBlue = (unsigned short *) CPLMalloc(sizeof(unsigned short)*nColors);
 
     for( int iColor = 0; iColor < nColors; iColor++ )
     {
@@ -819,18 +826,22 @@ CPLErr GTiffRasterBand::SetColorTable( GDALColorTable * poCT )
             
             poCT->GetColorEntryAsRGB( iColor, &sRGB );
             
-            anTRed[iColor] = (unsigned short) (257 * sRGB.c1);
-            anTGreen[iColor] = (unsigned short) (257 * sRGB.c2);
-            anTBlue[iColor] = (unsigned short) (257 * sRGB.c3);
+            panTRed[iColor] = (unsigned short) (257 * sRGB.c1);
+            panTGreen[iColor] = (unsigned short) (257 * sRGB.c2);
+            panTBlue[iColor] = (unsigned short) (257 * sRGB.c3);
         }
         else
         {
-            anTRed[iColor] = anTGreen[iColor] = anTBlue[iColor] = 0;
+            panTRed[iColor] = panTGreen[iColor] = panTBlue[iColor] = 0;
         }
     }
 
     TIFFSetField( poGDS->hTIFF, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_PALETTE );
-    TIFFSetField( poGDS->hTIFF, TIFFTAG_COLORMAP, anTRed, anTGreen, anTBlue );
+    TIFFSetField( poGDS->hTIFF, TIFFTAG_COLORMAP, panTRed, panTGreen, panTBlue );
+
+    CPLFree( panTRed );
+    CPLFree( panTGreen );
+    CPLFree( panTBlue );
 
     if( poGDS->poColorTable )
         delete poGDS->poColorTable;
@@ -1729,12 +1740,19 @@ CPLErr GTiffDataset::IBuildOverviews(
 /* -------------------------------------------------------------------- */
 /*      Do we have a palette?  If so, create a TIFF compatible version. */
 /* -------------------------------------------------------------------- */
-    unsigned short	anTRed[256], anTGreen[256], anTBlue[256];
+    unsigned short	anTRed[65536], anTGreen[65536], anTBlue[65536];
     unsigned short      *panRed=NULL, *panGreen=NULL, *panBlue=NULL;
 
     if( nPhotometric == PHOTOMETRIC_PALETTE && poColorTable != NULL )
     {
-        for( int iColor = 0; iColor < 256; iColor++ )
+        int nColors;
+
+        if( nBitsPerSample == 8 )
+            nColors = 256;
+        else
+            nColors = 65536;
+        
+        for( int iColor = 0; iColor < nColors; iColor++ )
         {
             if( iColor < poColorTable->GetColorEntryCount() )
             {
