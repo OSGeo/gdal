@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  1999/11/22 17:17:05  warmerda
+ * removed debug statements
+ *
  * Revision 1.7  1999/11/22 15:21:37  warmerda
  * reformatted a bit
  *
@@ -179,7 +182,6 @@ char *SFGetInitDataSource(IUnknown *pIUnknownIn)
         ULONG		nPropSets;
         DBPROPSET	*rgPropSets;
 		
-        OGRComDebug( "Info", "Got Properties\n" );
         rgPropIds[0] = DBPROP_INIT_DATASOURCE;
 		
         sPropIdSets[0].cPropertyIDs = 1;
@@ -195,7 +197,6 @@ char *SFGetInitDataSource(IUnknown *pIUnknownIn)
                 OLE2A(rgPropSets[0].rgProperties[0].vValue.bstrVal);
             pszDataSource = (char *) malloc(1+strlen(pszSource));
             strcpy(pszDataSource,pszSource);
-            OGRComDebug( "Info", "Got rgPropSets\n" );
         }
 		
         if (rgPropSets)
