@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  1999/09/03 14:16:36  warmerda
+ * Fixed other memory leaks.
+ *
  * Revision 1.6  1999/09/03 14:13:15  warmerda
  * fix memory leaks
  *
@@ -398,8 +401,9 @@ static void WritePointShapefile( const char * pszShapefile,
     nSDTSRecordField = DBFAddField( hDBF, "SDTSRecId", FTInteger, 8, 0 );
     nAreaField = DBFAddField( hDBF, "AreaId", FTString, 12, 0 );
     
-    AddPrimaryAttrToDBFSchema( hDBF, poTransfer,
-                               poPointReader->ScanModuleReferences() );
+    char  **papszModRefs = poPointReader->ScanModuleReferences();
+    AddPrimaryAttrToDBFSchema( hDBF, poTransfer, papszModRefs );
+    CSLDestroy( papszModRefs );
 
 /* ==================================================================== */
 /*      Process all the line features in the module.                    */
@@ -606,8 +610,10 @@ static void WritePolygonShapefile( const char * pszShapefile,
     }
 
     nSDTSRecordField = DBFAddField( hDBF, "SDTSRecId", FTInteger, 8, 0 );
-    AddPrimaryAttrToDBFSchema( hDBF, poTransfer,
-                               poPolyReader->ScanModuleReferences() );
+
+    char  **papszModRefs = poPolyReader->ScanModuleReferences();
+    AddPrimaryAttrToDBFSchema( hDBF, poTransfer, papszModRefs );
+    CSLDestroy( papszModRefs );
 
 /* ==================================================================== */
 /*      Process all the polygon features in the module.                 */
