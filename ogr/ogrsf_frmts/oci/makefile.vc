@@ -1,7 +1,7 @@
 
 LL_OBJ	=	oci_utils.obj ogrocisession.obj ogrocistatement.obj
 OGR_OBJ	=	ogrocidriver.obj ogrocidatasource.obj ogrocilayer.obj \
-		ogrocitablelayer.obj ogrociselectlayer.obj
+		ogrocitablelayer.obj ogrociselectlayer.obj ogrocistringbuf.obj
 
 OBJ	=	$(LL_OBJ) $(OGR_OBJ)
 

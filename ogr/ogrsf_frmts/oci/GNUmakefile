@@ -5,7 +5,7 @@ include $(GDAL_ROOT)/GDALmake.opt
 
 OBJ	=	oci_utils.o ogrocisession.o ogrocistatement.o \
 		ogrocidriver.o ogrocidatasource.o ogrocilayer.o \
-		ogrocitablelayer.o ogrociselectlayer.o 
+		ogrocitablelayer.o ogrociselectlayer.o ogrocistringbuf.o 
 
 ALL_C_FLAGS	=	-I.. -I../.. -I$(GDAL_ROOT)/port \
 		$(OCI_INCLUDE) $(CFLAGS)
