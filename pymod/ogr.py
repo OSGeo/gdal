@@ -28,6 +28,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.28  2004/08/19 14:08:28  warmerda
+# watch for NULL return values too in geos functions
+#
 # Revision 1.27  2004/07/12 15:10:56  warmerda
 # Fix error case in CreateLayer().
 #
@@ -880,49 +883,49 @@ class Geometry:
 
     def GetBoundary( self ):
         geom = _gdal.OGR_G_GetBoundary( self._o )
-        if geom is not None:
+        if geom is not None and geom != 'NULL':
             return Geometry( obj = geom )
         else:
             return None
         
     def ConvexHull( self ):
         geom = _gdal.OGR_G_ConvexHull( self._o )
-        if geom is not None:
+        if geom is not None and geom != 'NULL':
             return Geometry( obj = geom )
         else:
             return None
         
     def Buffer( self, distance, quadsects = 30 ):
         geom = _gdal.OGR_G_Buffer( self._o, distance, quadsects )
-        if geom is not None:
+        if geom is not None and geom != 'NULL':
             return Geometry( obj = geom )
         else:
             return None
         
     def Intersection( self, other ):
         geom = _gdal.OGR_G_Intersection( self._o, other._o )
-        if geom is not None:
+        if geom is not None and geom != 'NULL':
             return Geometry( obj = geom )
         else:
             return None
         
     def Union( self, other ):
         geom = _gdal.OGR_G_Union( self._o, other._o )
-        if geom is not None:
+        if geom is not None and geom != 'NULL':
             return Geometry( obj = geom )
         else:
             return None
         
     def Difference( self, other ):
         geom = _gdal.OGR_G_Difference( self._o, other._o )
-        if geom is not None:
+        if geom is not None and geom != 'NULL':
             return Geometry( obj = geom )
         else:
             return None
         
     def SymmetricDifference( self, other ):
         geom = _gdal.OGR_G_SymmetricDifference( self._o, other._o )
-        if geom is not None:
+        if geom is not None and geom != 'NULL':
             return Geometry( obj = geom )
         else:
             return None
@@ -931,7 +934,7 @@ class Geometry:
 def BuildPolygonFromEdges( edges, bBestEffort=0, bAutoClose=0, Tolerance=0 ):
     _o = _gdal.OGRBuildPolygonFromEdges( edges._o, bBestEffort, bAutoClose,
                                          Tolerance )
-    if _o is not None:
+    if _o is not None and _o != 'NULL':
         return Geometry( obj = _o )
     else:
         return None;
