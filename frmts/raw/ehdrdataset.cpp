@@ -28,9 +28,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/08/12 18:23:33  warmerda
+ * Added the ability to handle the NBITS and BYTEORDER flags.
+ *
  * Revision 1.1  1999/07/23 19:34:34  warmerda
  * New
- *
  */
 
 #include "rawdataset.h"
@@ -165,6 +167,7 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
     double		dfXDim = 1.0, dfYDim = 1.0;
     int			nLineCount = 0;
     GDALDataType	eDataType = GDT_Byte;
+    char		chByteOrder = 'M';
 
     while( (pszLine = CPLReadLine( fp )) )
     {
@@ -209,6 +212,17 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
         else if( EQUAL(papszTokens[0],"ydim") )
         {
             dfYDim = atof(papszTokens[1]);
+        }
+        else if( EQUAL(papszTokens[0],"NBITS") )
+        {
+            if( atoi(papszTokens[1]) == 16 )
+                eDataType = GDT_UInt16;
+            else if( atoi(papszTokens[1]) == 32 )
+                eDataType = GDT_UInt32;
+        }
+        else if( EQUAL(papszTokens[0],"byteorder") )
+        {
+            chByteOrder = papszTokens[1][0];
         }
 
         CSLDestroy( papszTokens );
@@ -272,7 +286,12 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->papoBands[i] =
             new RawRasterBand( poDS, i+1, poDS->fpImage,
                                nSkipBytes, GDALGetDataTypeSize(eDataType)/8,
-                               nLineOffset, eDataType, TRUE );
+                               nLineOffset, eDataType,
+#ifdef CPL_LSB                               
+                               chByteOrder == 'I' );
+#else
+                               chByteOrder == 'M' );
+#endif        
     }
 
     return( poDS );
