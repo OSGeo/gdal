@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/06/08 17:51:16  warmerda
+ * cleaned up using SFC classes
+ *
  * Revision 1.1  1999/06/08 15:41:55  warmerda
  * New
  *
@@ -41,6 +44,7 @@
 #include "sfcdatasource.h"
 #include "sfctable.h"
 #include "ogr_geometry.h"
+#include "cpl_conv.h"
 
 #ifdef notdef
 #include "ogr_geometry.h"
@@ -57,6 +61,12 @@
 
 static int      bVerbose = TRUE;
 
+static void SFCDumpProviders();
+static SFCDataSource * SFCOpenDataSource( const char * pszProvider, 
+                                          const char * pszDataStore );
+static void SFCDumpTableSchema( SFCTable * );
+static void SFCDumpTableGeometry( SFCTable * );
+
 /************************************************************************/
 /*                               Usage()                                */
 /************************************************************************/
@@ -66,7 +76,9 @@ static void Usage()
 {
     printf("Usage: sfcdump [-provider provider_clsid_alias] [-ds datasource]\n"
            "              [-table tablename] [-column geom_column_name]\n"
-           "              [-action {dumpgeom,dumpschema}] -quiet\n" );
+           "              [-action {dumpprov,dumpgeom,dumpschema}] -quiet\n" );
+
+    OleSupUninitialize();
     exit( 1 );
 }
 
@@ -76,10 +88,10 @@ static void Usage()
 
 void main( int nArgc, char ** papszArgv )
 {
-    SFCDataSource      *poDS;
     const char *pszProvider = "Microsoft.Jet.OLEDB.3.51";
     const char *pszDataSource = "f:\\opengis\\SFData\\World.mdb";
     const char *pszTable = "worldmif_geometry";
+    const char *pszAction = "dumpgeom";
    
 /* -------------------------------------------------------------------- */
 /*      Initialize OLE                                                  */
@@ -114,12 +126,11 @@ void main( int nArgc, char ** papszArgv )
         {
             pszGeomColumn = papszArgv[++iArg];
         }
-
+#endif
         else if( iArg < nArgc-1 && stricmp( papszArgv[iArg],"-action") == 0 )
         {
             pszAction = papszArgv[++iArg];
         }
-#endif
         else if( stricmp( papszArgv[iArg],"-quiet") == 0 )
         {
             bVerbose = FALSE;
@@ -132,165 +143,169 @@ void main( int nArgc, char ** papszArgv )
     }
 
 /* -------------------------------------------------------------------- */
-/*      Report criteria.                                                */
+/*      Perform dump provider action before trying to open anything.    */
 /* -------------------------------------------------------------------- */
-    if( bVerbose )
+    if( EQUAL(pszAction,"dumpprov") )
     {
-        printf( "Provider:    %s\n", pszProvider );
-        printf( "Data Source: %s\n", pszDataSource );
-        printf( "Table:       %s\n", pszTable );
+        SFCDumpProviders();
+        goto CleanupAndExit;
     }
 
 /* -------------------------------------------------------------------- */
-/*      Try to find the requested provider.  Issue a warning, if it     */
-/*      is not an OGISDataProvider.                                     */
+/*      Access the requested data source.                               */
 /* -------------------------------------------------------------------- */
+    SFCDataSource      *poDS;
+
+    poDS = SFCOpenDataSource( pszProvider, pszDataSource );
+    if( poDS == NULL )
+        goto CleanupAndExit;
+
+/* -------------------------------------------------------------------- */
+/*      Open the requested table.                                       */
+/* -------------------------------------------------------------------- */
+    SFCTable      *poTable;
+
+    poTable = poDS->CreateSFCTable( pszTable );
+
+    delete poDS;
+
+    if( poTable == NULL )
     {
-        SFCEnumerator      oEnumerator;
+        printf( "Failed to open table %s.\n",  pszTable );
+        goto CleanupAndExit;
+    }
 
-        if( FAILED(oEnumerator.Open()) )
-        {
-            printf( "Can't open ole db enumerator.\n" );
-            exit( 1 );
-        }
+/* -------------------------------------------------------------------- */
+/*      Perform action on the table.                                    */
+/* -------------------------------------------------------------------- */
+    if( EQUAL(pszAction,"dumpgeom") )
+        SFCDumpTableGeometry( poTable );
+    else
+        SFCDumpTableSchema( poTable );
 
-        if( !oEnumerator.Find((char*) pszProvider) )
-        {
-            printf( "Can't find OLE DB provider `%s'.\n", pszProvider );
-            exit( 1 );
-        }
+    delete poTable;
 
-        if( bVerbose && !oEnumerator.IsOGISProvider() )
+/* -------------------------------------------------------------------- */
+/*      Cleanup and exit.                                               */
+/* -------------------------------------------------------------------- */
+  CleanupAndExit:
+    OleSupUninitialize();
+}
+
+/************************************************************************/
+/*                         SFCDumpTableSchema()                         */
+/************************************************************************/
+
+static void SFCDumpTableSchema( SFCTable * poTable )
+
+{
+    for( int iColumn = 0; iColumn < poTable->GetColumnCount(); iColumn++ )
+    {
+        OledbSupWriteColumnInfo( stdout, poTable->m_pColumnInfo + iColumn );
+    }
+}
+
+/************************************************************************/
+/*                        SFCDumpTableGeometry()                        */
+/************************************************************************/
+
+static void SFCDumpTableGeometry( SFCTable * poTable )
+
+{
+    HRESULT      hr;
+
+    while( !FAILED((hr = poTable->MoveNext())) )
+    {
+        OGRGeometry * poGeom;
+
+        poGeom = poTable->GetOGRGeometry();
+        poTable->ReleaseIUnknowns();
+
+        if( poGeom == NULL )
         {
-            printf( "Warning: Provider found, but does not advertise as "
-                    "an OGISDataProvider.\n" );
-            printf( "         Using anyways.\n" );
+            printf( "Failed to reconstitute geometry!\n" );
+            break;
         }
+        else
+        {
+            poGeom->dumpReadable( stdout ); 
+            delete poGeom;
+        }
+    }
+}
+
+/************************************************************************/
+/*                         SFCOpenDataSource()                          */
+/*                                                                      */
+/*      Open the named datastore with the named provider.               */
+/************************************************************************/
+
+static SFCDataSource * SFCOpenDataSource( const char * pszProvider, 
+                                          const char * pszDataSource )
+
+{
+    SFCEnumerator      oEnumerator;
+
+    if( FAILED(oEnumerator.Open()) )
+    {
+        printf( "Can't open ole db enumerator.\n" );
+        return NULL;
+    }
+
+    if( !oEnumerator.Find((char*) pszProvider) )
+    {
+        printf( "Can't find OLE DB provider `%s'.\n", pszProvider );
+        return NULL;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Attempt to initialize access to the data store.                 */
 /* -------------------------------------------------------------------- */
-        poDS = new SFCDataSource;
+    SFCDataSource *poDS;
 
-        if( FAILED(poDS->Open( oEnumerator, pszDataSource  )) )
-        {
-            printf( "Attempt to access datasource %s failed.\n", 
-                    pszDataSource );
-            exit( 1 );
-        }
-    }
+    poDS = new SFCDataSource;
 
-/* -------------------------------------------------------------------- */
-/*      Establish a session.                                            */
-/* -------------------------------------------------------------------- */
+    if( FAILED(poDS->Open( oEnumerator, pszDataSource  )) )
     {
-        CSession      oSession;
-
-        if( FAILED( oSession.Open(*poDS) ) )
-        {
-            printf( "Attempt to establish a session failed.\n" );
-            exit( 1 );
-        }
-
         delete poDS;
-        poDS = NULL;
-
-/* -------------------------------------------------------------------- */
-/*      Attempt to initialize access to rowset.                         */
-/* -------------------------------------------------------------------- */
-        SFCTable            oTable;
-
-        if( FAILED(oTable.Open( oSession, pszTable )) )
-        {
-            printf( "Attempt to open table %s failed.\n", pszTable );
-            exit( 1 );
-        }
-
-/* -------------------------------------------------------------------- */
-/*      Dump a little info about each column.                           */
-/* -------------------------------------------------------------------- */
-        int      iColumn;
-
-        for( iColumn = 1; iColumn < oTable.GetColumnCount(); iColumn++ )
-        {
-            OledbSupWriteColumnInfo( stdout, oTable.m_pColumnInfo + iColumn );
-        }
-
-/* -------------------------------------------------------------------- */
-/*      Read records, and dump easy columns.                            */
-/* -------------------------------------------------------------------- */
-        HRESULT    hr;
-
-        while( !FAILED((hr = oTable.MoveNext())) )
-        {
-            printf( "\nNew Record\n" );
-            for( iColumn = 1; iColumn < oTable.GetColumnCount(); iColumn++ )
-            {
-                DBTYPE      nType;
-
-                oTable.GetColumnType( iColumn, &nType );
-
-                switch( nType )
-                {
-                    case DBTYPE_R8:
-                    {
-                        double      dfValue;
-
-                        oTable.GetValue( iColumn, &dfValue );
-                        printf( "    %S = %g\n", 
-                                oTable.GetColumnName(iColumn), 
-                                dfValue );
-                    }
-                    break;
-
-                    case DBTYPE_I4:
-                    {
-                        int      nValue;
-
-                        oTable.GetValue( iColumn, &nValue );
-                        printf( "    %S = %d\n", 
-                                oTable.GetColumnName(iColumn), 
-                                nValue );
-                    }
-                    break;
-
-                    case DBTYPE_IUNKNOWN:
-                    {
-                        IUnknown      *pIUnknown;
-
-                        oTable.GetValue( iColumn, &pIUnknown );
-                        printf( "    %S = %p\n", 
-                                oTable.GetColumnName(iColumn), 
-                                pIUnknown );
-                    }
-                    break;
-
-                    default:
-                        printf( "    %S = (unhandled type)\n", 
-                                oTable.GetColumnName(iColumn) );
-                }
-            } /* next field */
-
-            // fetch the geometry data.
-            OGRGeometry * poGeom;
-
-            poGeom = oTable.GetOGRGeometry();
-            if( poGeom == NULL )
-                printf( "Failed to reconstitute geometry!\n" );
-
-            if( bVerbose )
-                poGeom->dumpReadable( stdout ); 
-
-            if( poGeom != NULL )
-                delete poGeom;
-
-            oTable.ReleaseIUnknowns();
-
-        } /* next record */
+        printf( "Attempt to access datasource %s failed.\n", 
+                pszDataSource );
+        return NULL;
     }
-
-    OleSupUninitialize();
+    else
+        return poDS;
 }
 
+/************************************************************************/
+/*                          SFCDumpProviders()                          */
+/*                                                                      */
+/*      Display a list of providers to the user, marking those that     */
+/*      claim OpenGIS compliance.                                       */
+/************************************************************************/
 
+static void SFCDumpProviders()
+
+{
+    SFCEnumerator      oEnum;
+
+    printf( "Available OLE DB Providers\n" );
+    printf( "==========================\n" );
+
+    if( FAILED(oEnum.Open()) )
+    {
+        printf( "Failed to initialize SFCEnumerator.\n" );
+        return;
+    }
+
+    while( oEnum.MoveNext() == S_OK )
+    {
+        printf( "%S: %S\n", 
+                oEnum.m_szName, oEnum.m_szDescription );
+
+        if( oEnum.IsOGISProvider() )
+            printf( "    (OGISDataProvider)\n" );
+
+        printf( "\n" );
+    }
+}
 
