@@ -9,6 +9,11 @@
 
  *
  * $Log$
+ * Revision 1.3  2005/02/16 21:55:02  hobu
+ * started the OGRDriver class stuff.
+ * CopyDataSource, CreateDataSource, and
+ * DS Open
+ *
  * Revision 1.2  2005/02/16 20:02:57  hobu
  * added constants
  *
@@ -104,5 +109,77 @@ using namespace std;
 
 %}
 
-%import gdal_typemaps.i
+
+%rename (Driver) OGRSFDriverH;
+
+class OGRSFDriverH {
+public:
+%extend {
+
+%immutable;
+  char const *name;
+%mutable;
+
+/*
+const char  *OGR_Dr_GetName( OGRSFDriverH );
+OGRDataSourceH  OGR_Dr_Open( OGRSFDriverH, const char *, int );
+OGRDataSourceH OGR_Dr_CopyDataSource( OGRSFDriverH,  OGRDataSourceH, 
+	                              const char *, stringList );
+
+*/
+
+    
+%newobject CreateDataSource;
+%feature( "kwargs" ) CreateDataSource;
+  OGRDataSourceH *CreateDataSource( const char *name, 
+                                    char **options = 0 ) {
+    OGRDataSourceH *ds = (OGRDataSourceH*) OGR_Dr_CreateDataSource( self, name, options);
+    if (ds != NULL) {
+      OGR_DS_Dereference(ds);
+    }
+    return ds;
+  }
+  
+%newobject CopyDataSource;
+%feature( "kwargs" ) CopyDataSource;
+  OGRDataSourceH *CopyDataSource( OGRDataSourceH* copy_ds, 
+                                  const char* name, 
+                                  char **options = 0 ) {
+    OGRDataSourceH *ds = (OGRDataSourceH*) OGR_Dr_CopyDataSource(self, copy_ds, name, options);
+    if (ds != NULL) {
+      OGR_DS_Dereference(ds);
+    }
+      return ds;
+  }
+
+%newobject Open;
+%feature( "kwargs" ) Open;
+  OGRDataSourceH *Open( const char* name, 
+                        int update ) {
+    OGRDataSourceH *ds = (OGRDataSourceH*) OGR_Dr_Open(self, name, update);
+    if (ds != NULL) {
+      OGR_DS_Dereference(ds);
+    }
+      return ds;
+  }
+
+
+  int Delete( const char *name ) {
+    return OGR_Dr_DeleteDataSource( self, name );
+  }
+  int TestCapability (const char *cap) {
+    return OGR_Dr_TestCapability(self, cap);
+  }
+
+
+}
+};
+
+%{
+char const *OGRSFDriverH_name_get( OGRSFDriverH *h ) {
+  return OGR_Dr_GetName( h );
+}
+
+%}
+
 
