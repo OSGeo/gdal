@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.28  2000/06/27 17:30:21  warmerda
+ * added GDALGetRasterSampleOverview
+ *
  * Revision 1.27  2000/06/26 22:17:49  warmerda
  * added scaled progress support
  *
@@ -358,6 +361,7 @@ CPLErr CPL_DLL GDALGetRasterHistogram( GDALRasterBandH hBand,
                                        GDALProgressFunc pfnProgress,
                                        void * pProgressData );
 int CPL_DLL GDALGetRandomRasterSample( GDALRasterBandH, int, float * );
+GDALRasterBandH CPL_DLL GDALGetRasterSampleOverview( GDALRasterBandH, int );
 
 /* need to add functions related to block cache */
 
