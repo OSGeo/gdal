@@ -28,6 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************
  * $Log$
+ * Revision 1.52  2004/12/02 20:32:28  fwarmerdam
+ * added AdviseRead methods
+ *
  * Revision 1.51  2004/11/23 04:07:29  fwarmerdam
  * Added warning on the BuildOverviews() method.
  *
@@ -2220,3 +2223,70 @@ CPLErr GDALGetRasterHistogram( GDALRasterBandH hBand,
                       bIncludeOutOfRange, bApproxOK,
                       pfnProgress, pProgressData );
 }
+
+/************************************************************************/
+/*                             AdviseRead()                             */
+/************************************************************************/
+
+/**
+ * Advise driver of upcoming read requests.
+ *
+ * Some GDAL drivers operate more efficiently if they know in advance what 
+ * set of upcoming read requests will be made.  The AdviseRead() method allows
+ * an application to notify the driver of the region of interest, 
+ * and at what resolution the region will be read.  
+ *
+ * Many drivers just ignore the AdviseRead() call, but it can dramatically
+ * accelerate access via some drivers.  
+ *
+ * @param nXOff The pixel offset to the top left corner of the region
+ * of the band to be accessed.  This would be zero to start from the left side.
+ *
+ * @param nYOff The line offset to the top left corner of the region
+ * of the band to be accessed.  This would be zero to start from the top.
+ *
+ * @param nXSize The width of the region of the band to be accessed in pixels.
+ *
+ * @param nYSize The height of the region of the band to be accessed in lines.
+ *
+ * @param nBufXSize the width of the buffer image into which the desired region
+ * is to be read, or from which it is to be written.
+ *
+ * @param nBufYSize the height of the buffer image into which the desired
+ * region is to be read, or from which it is to be written.
+ *
+ * @param eBufType the type of the pixel values in the pData data buffer.  The
+ * pixel values will automatically be translated to/from the GDALRasterBand
+ * data type as needed.
+ *
+ * @param papszOptions a list of name=value strings with special control 
+ * options.  Normally this is NULL.
+ *
+ * @return CE_Failure if the request is invalid and CE_None if it works or
+ * is ignored. 
+ */
+
+CPLErr GDALRasterBand::AdviseRead( 
+    int nXOff, int nYOff, int nXSize, int nYSize,
+    int nBufXSize, int nBufYSize, GDALDataType eDT, char **papszOptions )
+
+{
+    return CE_None;
+}
+
+/************************************************************************/
+/*                        GDALRasterAdviseRead()                        */
+/************************************************************************/
+
+CPLErr GDALRasterAdviseRead( GDALRasterBandH hRB, 
+                              int nXOff, int nYOff, int nXSize, int nYSize,
+                              int nBufXSize, int nBufYSize, 
+                              GDALDataType eDT, 
+                              char **papszOptions )
+
+{
+    return ((GDALRasterBand *) hRB)->AdviseRead( nXOff, nYOff, nXSize, nYSize, 
+                                                 nBufXSize, nBufYSize, eDT, 
+                                                 papszOptions );
+}
+
