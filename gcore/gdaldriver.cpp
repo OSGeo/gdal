@@ -26,6 +26,9 @@
  * driver specific function pointers.
  * 
  * $Log$
+ * Revision 1.6  1999/12/08 14:40:50  warmerda
+ * Fixed error message.
+ *
  * Revision 1.5  1999/10/21 13:22:10  warmerda
  * Added GDALGetDriverShort/LongName().
  *
@@ -81,7 +84,7 @@ GDALDataset * GDALDriver::Create( const char * pszFilename,
     if( pfnCreate == NULL )
     {
         CPLError( CE_Fatal, CPLE_NotSupported,
-                  "GDALDriver::Create() ... not create method implemented"
+                  "GDALDriver::Create() ... no create method implemented"
                   " for this format.\n" );
         
         return NULL;
