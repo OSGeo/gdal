@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.9  2000/03/22 23:52:59  pgs
+ * use SetBand dork
+ *
  * Revision 1.8  2000/01/31 16:39:37  warmerda
  * added pfnDelete support, and removed delete hack from Create method
  *
@@ -229,7 +232,7 @@ CPLErr GIORasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         memset( pImage, sizeof(float) * poODS->nRasterXSize, 0 );
     else
         pfnGetWindowRowFloat( poODS->nGridChannel, nBlockYOff, (float*)pImage);
-    
+
     return CE_None;
 }
 
@@ -469,7 +472,7 @@ GDALDataset *GIODataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     poDS->papoBands = (GDALRasterBand **)VSICalloc(sizeof(GDALRasterBand *),
                                                    poDS->nBands);
-    poDS->papoBands[0] = new GIORasterBand( poDS, 1 );
+	poDS->SetBand( 1, new GIORasterBand( poDS, 1 ));
 
     return( poDS );
 }
