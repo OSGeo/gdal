@@ -4,7 +4,7 @@
    on a file containing these strings */
  
 #define  HDFEOSd_BANNER  "@(#)## =================  HDFEOS  ================"
-#ifdef LINUX
+#ifdef __GNUC__
 #define  HDFEOSd_HDFEOS_VER  "@(#)## HDFEOS Version: "HDFEOSVERSION1
 #define  HDFEOSd_DATE    "@(#)## Build date: "__DATE__" @ "__TIME__
 #else
