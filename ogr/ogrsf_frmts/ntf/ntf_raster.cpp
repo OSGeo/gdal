@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  1999/10/04 13:38:39  warmerda
+ * Fixed handling for filling holes in the column offset array.
+ *
  * Revision 1.4  1999/10/04 13:28:43  warmerda
  * added DEM_SAMPLE support
  *
@@ -160,13 +163,13 @@ CPLErr NTFFileReader::ReadRasterColumn( int iColumn, float *pafElev )
     {
         int	iPrev;
         
-        for( iPrev = 0; iPrev < iColumn; iPrev++ )
+        for( iPrev = 0; iPrev < iColumn-1; iPrev++ )
         {
-            if( panColumnOffset[iPrev] == 0 )
+            if( panColumnOffset[iPrev+1] == 0 )
             {
                 CPLErr	eErr;
                 
-                eErr = ReadRasterColumn( iPrev, pafElev );
+                eErr = ReadRasterColumn( iPrev, NULL );
                 if( eErr != CE_None )
                     return eErr;
             }
@@ -189,7 +192,7 @@ CPLErr NTFFileReader::ReadRasterColumn( int iColumn, float *pafElev )
 /* -------------------------------------------------------------------- */
 /*      Handle LANDRANGER DTM columns.                                  */
 /* -------------------------------------------------------------------- */
-    if( GetProductId() == NPC_LANDRANGER_DTM )
+    if( pafElev != NULL && GetProductId() == NPC_LANDRANGER_DTM )
     {
         double	dfVScale, dfVOffset;
 
@@ -206,7 +209,7 @@ CPLErr NTFFileReader::ReadRasterColumn( int iColumn, float *pafElev )
 /* -------------------------------------------------------------------- */
 /*      Handle PROFILE                                                  */
 /* -------------------------------------------------------------------- */
-    else if( GetProductId() == NPC_LANDFORM_PROFILE_DTM )
+    else if( pafElev != NULL && GetProductId() == NPC_LANDFORM_PROFILE_DTM )
     {
         for( int iPixel = 0; iPixel < nRasterXSize; iPixel++ )
         {
