@@ -25,6 +25,9 @@
  * Main format registration function.
  * 
  * $Log$
+ * Revision 1.51  2002/11/05 06:20:07  warmerda
+ * hacks for JP2KAK support
+ *
  * Revision 1.50  2002/10/21 18:03:22  warmerda
  * added AutoSkipDrivers() call
  *
@@ -311,9 +314,12 @@ void GDALAllRegister()
     GDALRegister_ECW();
 #endif
 
-#ifdef FRMT_jpeg2000
+#ifdef FRMT_jp2kak
 // JPEG2000 support using Kakadu toolkit
-//    GDALRegister_JP2KAK();
+    GDALRegister_JP2KAK();
+#endif
+
+#ifdef FRMT_jpeg2000
 // JPEG2000 support using JasPer toolkit
     GDALRegister_JPEG2000();
 #endif

@@ -8,7 +8,9 @@ EXTRAFLAGS =	-DFRMT_ceos -DFRMT_aigrid -DFRMT_elas -DFRMT_hfa -DFRMT_gtiff\
 		-DFRMT_fit -DFRMT_vrt -DFRMT_xpm -DFRMT_bsb \
 		$(JPEG2000DEF) $(ECWDEF) $(OGDIDEF) $(ZLIBDEF)
 
-DIRLIST =	$(EXTRAFLAGS:-DFRMT_=)
+MOREEXTRA =	$(KAKDEF)
+
+DIRLIST =	$(EXTRAFLAGS:-DFRMT_=) $(KDK_RECURSE)
 
 !INCLUDE $(GDAL_ROOT)/nmake.opt
 
@@ -26,6 +28,13 @@ JPEG2000DEF	=	-DFRMT_jpeg2000
 ECWDEF	=	-DFRMT_ecw
 !ENDIF
 
+!IFDEF KAKDIR
+KAK_RECURSE =	jpeg2000
+MOREEXTRA =	-DFRMT_jp2kak
+!ENDIF
+
+
+
 default:	o\gdalallregister.obj subdirs
 
 list:
@@ -35,7 +44,7 @@ subdirs:
 	for %d in ( $(DIRLIST) ) do ..\submake.bat %d
 
 o\gdalallregister.obj:	gdalallregister.cpp
-	$(CC) $(CFLAGS) /c gdalallregister.cpp
+	$(CC) $(CFLAGS) $(MOREEXTRA) /c gdalallregister.cpp
 	copy gdalallregister.obj o
 
 clean:
