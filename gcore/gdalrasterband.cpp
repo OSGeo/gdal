@@ -28,6 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************
  * $Log$
+ * Revision 1.8  2000/02/28 16:34:28  warmerda
+ * added arg window check in RasterIO()
+ *
  * Revision 1.7  1999/11/17 16:18:10  warmerda
  * fixed example code
  *
@@ -180,10 +183,17 @@ CPLErr GDALRasterBand::RasterIO( GDALRWFlag eRWFlag,
         nLineSpace = nPixelSpace * nBufXSize;
     
 /* -------------------------------------------------------------------- */
-/*      Do some argument checking.                                      */
+/*      Do some validation of parameters.                               */
 /* -------------------------------------------------------------------- */
-    /* notdef: to fill in later */
-
+    if( nXOff < 0 || nXOff + nXSize > nRasterXSize
+        || nYOff < 0 || nYOff + nYSize > nRasterYSize )
+    {
+        CPLError( CE_Failure, CPLE_IllegalArg,
+                  "Access window out of range in RasterIO().  Requested\n"
+                  "(%d,%d) of size %dx%d on raster of %dx%d.\n",
+                  nXOff, nYOff, nXSize, nYSize, nRasterXSize, nRasterYSize );
+        return CE_Failure;
+    }
     
 /* -------------------------------------------------------------------- */
 /*      Call the format specific function.                              */
