@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2003/05/05 23:31:53  sperkins
+ * 	* frmts/fits/fitsdataset.cpp: Removed dodgy "value type guessing"
+ * 	code from FITS metadata write routine.
+ *
  * Revision 1.15  2002/11/23 18:54:17  warmerda
  * added CREATIONDATATYPES metadata for drivers
  *
@@ -337,26 +341,25 @@ FITSDataset::~FITSDataset() {
 	  const char* value = CPLParseNameValue(field, &key);
 	  // FITS keys must be less than 8 chars
 	  if (strlen(key) <= 8 && !isIgnorableFITSHeader(key)) {
-	    int dataType = guessFITSHeaderDataType(hFITS, key, value);
-	    if (dataType == TDOUBLE) {
-	      double dblValue = atof(value);
-	      fits_update_key(hFITS, dataType, key, &dblValue,  0, &status);
-	    }
-	    else if (dataType == TLONG) {
-	      long longValue = atoi(value);
-	      fits_update_key(hFITS, dataType, key, &longValue,  0, &status);
-	    }
-	    else if (dataType == TLOGICAL) {
-	      int logicValue = !strcmp(value, "T") ? 1 : 0;
-	      fits_update_key(hFITS, dataType, key, &logicValue,  0, &status);
-	    }
-	    else {  // Assume it's a string
-	      // Avoid warning by copying const string to non const one...
-	      char* valueCpy = strdup(value);
-		  fits_update_key_longstr(hFITS, key, valueCpy, 0, &status);
+	    // Although FITS provides support for different value
+	    // types, the GDAL Metadata mechanism works only with
+	    // string values. Prior to about 2003-05-02, this driver
+	    // would attempt to guess the value type from the metadata
+	    // value string amd then would use the appropriate
+	    // type-specific FITS keyword update routine. This was
+	    // found to be troublesome (e.g. a numeric version string
+	    // with leading zeros would be interpreted as a number
+	    // and might get those leading zeros stripped), and so now
+	    // the driver writes every value as a string. In practice
+	    // this is not a problem since most FITS reading routines
+	    // will convert from strings to numbers automatically, but
+	    // if you want finer control, use the underlying FITS
+	    // handle. Note: to avoid a compiler warning we copy the
+	    // const value string to a non const one...
+	    char* valueCpy = strdup(value);
+	    fits_update_key_longstr(hFITS, key, valueCpy, 0, &status);
+	    free(valueCpy);
 
-	      free(valueCpy);
-	    }
 	    // Check for errors
 	    if (status) {
 	      CPLError(CE_Warning, CPLE_AppDefined,
