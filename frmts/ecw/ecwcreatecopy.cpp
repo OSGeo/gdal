@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.10  2005/02/22 08:22:03  fwarmerdam
+ * added support for capturing color interp on writable bands
+ *
  * Revision 1.9  2005/02/17 15:32:27  fwarmerdam
  * Ensure that datatype is preserved on writable rasterbands. Otherwise
  * non-8bit support is broken.
@@ -937,9 +940,16 @@ class ECWWriteRasterBand : public GDALRasterBand
     // NOTE: poDS may be altered for NITF/JPEG2000 files!
     ECWWriteDataset     *poGDS;
 
+    GDALColorInterp     eInterp;
+
   public:
 
                    ECWWriteRasterBand( ECWWriteDataset *, int );
+
+    virtual CPLErr SetColorInterpretation( GDALColorInterp eInterpIn ) 
+        { eInterp = eInterpIn; return CE_None; }
+    virtual GDALColorInterp GetColorInterpretation() 
+        { return eInterp; }
 
     virtual CPLErr IReadBlock( int, int, void * );
     virtual CPLErr IWriteBlock( int, int, void * );
@@ -1145,6 +1155,7 @@ ECWWriteRasterBand::ECWWriteRasterBand( ECWWriteDataset *poDSIn,
     nBlockXSize = poDSIn->GetRasterXSize();
     nBlockYSize = 1;
     eDataType = poDSIn->eDataType;
+    eInterp = GCI_Undefined;
 }
 
 /************************************************************************/
