@@ -28,6 +28,11 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.38  2005/02/25 15:17:00  fwarmerdam
+ * Try to ensure that we do a multi-band adviseread in IRasterIO()
+ * for line by line access.  This should dramatically improve pixel
+ * interleaved line by line access speed.
+ *
  * Revision 1.37  2005/02/25 14:54:37  fwarmerdam
  * Removed extra newline in debug statement.
  *
@@ -882,6 +887,25 @@ CPLErr ECWDataset::IRasterIO( GDALRWFlag eRWFlag,
                         eBufType, nBandCount, panBandMap,
                         nPixelSpace, nLineSpace, nBandSpace ) )
         return CE_None;
+
+/* -------------------------------------------------------------------- */
+/*      If we are requesting a single line at 1:1, we do a multi-band   */
+/*      AdviseRead() and then TryWinRasterIO() again.                   */
+/* -------------------------------------------------------------------- */
+    if( nYSize == 1 && nBufYSize == 1 && nBandCount > 1 )
+    {
+        CPLErr eErr;
+
+        eErr = AdviseRead( nXOff, nYOff, nXSize, GetRasterYSize() - nYOff,
+                           nBufXSize, GetRasterYSize() - nYOff, eBufType, 
+                           nBandCount, panBandMap, NULL );
+        if( eErr == CE_None 
+            && TryWinRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize, 
+                               (GByte *) pData, nBufXSize, nBufYSize, 
+                               eBufType, nBandCount, panBandMap,
+                               nPixelSpace, nLineSpace, nBandSpace ) )
+            return CE_None;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      If we are supersampling we need to fall into the general        */
