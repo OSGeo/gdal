@@ -28,6 +28,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.5  2002/01/16 03:58:51  warmerda
+ * support single quotes as well as double quotes
+ *
  * Revision 1.4  2001/12/06 18:13:49  warmerda
  * added CPLAddXMLChild and CPLCreateElmentAndValue
  *
@@ -216,6 +219,23 @@ static TokenType ReadToken( ParseContext *psContext )
         }
     }
 
+    else if( psContext->bInElement && chNext == '\'' )
+    {
+        psContext->eTokenType = TString;
+
+        while( (chNext = ReadChar(psContext)) != '\'' 
+               && chNext != '\0' )
+            AddToToken( psContext, chNext );
+        
+        if( chNext != '\'' )
+        {
+            psContext->eTokenType = TNone;
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Parse error on line %d, reached EOF before closing quote.", 
+                      psContext->nInputLine );
+        }
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Collect an unquoted string, terminated by a open angle          */
 /*      bracket.                                                        */
@@ -246,6 +266,7 @@ static TokenType ReadToken( ParseContext *psContext )
              (chNext >= 'A' && chNext <= 'Z')
                  || (chNext >= 'a' && chNext <= 'z')
                  || chNext == '_'
+                 || chNext == ':'
                  || (chNext >= '0' && chNext <= '9');
              chNext = ReadChar(psContext) ) 
         {
