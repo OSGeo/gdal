@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2003/11/24 20:45:00  warmerda
+ * make CollectResultsInfo() public
+ *
  * Revision 1.7  2003/10/29 17:56:57  warmerda
  * Added PrimaryKeys() support
  *
@@ -129,8 +132,6 @@ class CPL_DLL CPLODBCStatement {
     int            m_nStatementMax;
     int            m_nStatementLen;
 
-    int            CollectResultsInfo();
-
   public:
     CPLODBCStatement( CPLODBCSession * );
     ~CPLODBCStatement();
@@ -178,6 +179,8 @@ class CPL_DLL CPLODBCStatement {
     void           DumpResult( FILE *fp, int bShowSchema = FALSE );
 
     static const char *GetTypeName( int );
+
+    int            CollectResultsInfo();
 };
 
 
