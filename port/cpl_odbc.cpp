@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2003/10/06 20:04:08  warmerda
+ * added escaping support
+ *
  * Revision 1.5  2003/10/06 17:17:02  warmerda
  * fixed some type issues
  *
@@ -46,6 +49,7 @@
  */
 
 #include "cpl_odbc.h"
+#include "cpl_vsi.h"
 
 CPL_CVSID("$Id$");
 
@@ -303,13 +307,13 @@ int CPLODBCStatement::CollectResultsInfo()
 /* -------------------------------------------------------------------- */
 /*      Allocate per column information.                                */
 /* -------------------------------------------------------------------- */
-    m_papszColNames = (char **) calloc(sizeof(char *),(m_nColCount+1));
-    m_papszColValues = (char **) calloc(sizeof(char *),(m_nColCount+1));
+    m_papszColNames = (char **) VSICalloc(sizeof(char *),(m_nColCount+1));
+    m_papszColValues = (char **) VSICalloc(sizeof(char *),(m_nColCount+1));
 
-    m_panColType = (short *) calloc(sizeof(short),m_nColCount);
-    m_panColSize = (SQLUINTEGER *) calloc(sizeof(SQLUINTEGER),m_nColCount);
-    m_panColPrecision = (short *) calloc(sizeof(short),m_nColCount);
-    m_panColNullable = (short *) calloc(sizeof(short),m_nColCount);
+    m_panColType = (short *) VSICalloc(sizeof(short),m_nColCount);
+    m_panColSize = (SQLUINTEGER *) VSICalloc(sizeof(SQLUINTEGER),m_nColCount);
+    m_panColPrecision = (short *) VSICalloc(sizeof(short),m_nColCount);
+    m_panColNullable = (short *) VSICalloc(sizeof(short),m_nColCount);
 
 /* -------------------------------------------------------------------- */
 /*      Fetch column descriptions.                                      */
@@ -635,7 +639,7 @@ void CPLODBCStatement::ClearColumnData()
         {
             if( m_papszColValues[iCol] != NULL )
             {
-                free( m_papszColValues[iCol] );
+                VSIFree( m_papszColValues[iCol] );
                 m_papszColValues[iCol] = NULL;
             }
         }
@@ -677,17 +681,59 @@ void CPLODBCStatement::Append( const char *pszText )
         m_nStatementMax = (m_nStatementLen + nTextLen) * 2 + 100;
         if( m_pszStatement == NULL )
         {
-            m_pszStatement = (char *) malloc(m_nStatementMax);
+            m_pszStatement = (char *) VSIMalloc(m_nStatementMax);
             m_pszStatement[0] = '\0';
         }
         else
         {
-            m_pszStatement = (char *) realloc(m_pszStatement, m_nStatementMax);
+            m_pszStatement = (char *) VSIRealloc(m_pszStatement, m_nStatementMax);
         }
     }
 
     strcpy( m_pszStatement + m_nStatementLen, pszText );
     m_nStatementLen += nTextLen;
+}
+
+/************************************************************************/
+/*                     AppendEscaped(const char *)                      */
+/************************************************************************/
+
+/**
+ * Append text to internal command.
+ *
+ * The passed text is appended to the internal SQL command text after 
+ * escaping any special characters so it can be used as a character string
+ * in an SQL statement. 
+ *
+ * @param pszText text to append.
+ */
+
+void CPLODBCStatement::AppendEscaped( const char *pszText )
+
+{
+    int  iIn, iOut ,nTextLen = strlen(pszText);
+    char *pszEscapedText = (char *) VSIMalloc(nTextLen*2 + 1);
+
+    for( iIn = 0, iOut = 0; iIn < nTextLen; iIn++ )
+    {
+        switch( pszText[iIn] )
+        {
+            case '\'':
+            case '\\':
+                pszEscapedText[iOut++] = '\\';
+                pszEscapedText[iOut++] = pszText[iIn];
+                break;
+
+            default:
+                pszEscapedText[iOut++] = pszText[iIn];
+                break;
+        }
+    }
+
+    pszEscapedText[iOut] = '\0';
+
+    Append( pszEscapedText );
+    VSIFree( pszEscapedText );
 }
 
 /************************************************************************/
@@ -783,7 +829,7 @@ void CPLODBCStatement::Clear()
 
 {
     if( m_pszStatement != NULL )
-        free( m_pszStatement );
+        VSIFree( m_pszStatement );
 
     m_nStatementLen = 0;
     m_nStatementMax = 0;
