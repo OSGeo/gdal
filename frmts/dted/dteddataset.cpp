@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2000/01/12 19:43:17  warmerda
+ * Don't open dataset twice in Open().
+ *
  * Revision 1.1  1999/12/07 18:01:28  warmerda
  * New
  *
@@ -157,10 +160,6 @@ GDALDataset *DTEDDataset::Open( GDALOpenInfo * poOpenInfo )
     int		i;
     DTEDInfo	*psDTED;
 
-    psDTED = DTEDOpen( poOpenInfo->pszFilename, "r", TRUE );
-    if( psDTED == NULL )
-        return NULL;
-    
 /* -------------------------------------------------------------------- */
 /*      Try opening the dataset.                                        */
 /* -------------------------------------------------------------------- */
