@@ -33,8 +33,8 @@
  * and things like that.
  *
  * $Log$
- * Revision 1.61  2003/03/21 22:23:27  warmerda
- * added xml support
+ * Revision 1.62  2003/03/25 05:58:37  warmerda
+ * add better pointer and stringlist support
  *
  ************************************************************************/
 
@@ -572,6 +572,590 @@ CPL_CVSID("$Id$");
 #else
 #  define SWIG_GetPtr_2(s,d,t)  SWIG_GetPtr( s, d, #t)
 #endif
+
+typedef char **stringList;
+
+
+
+#include <ctype.h>
+
+/*------------------------------------------------------------------
+  ptrcast(value,type)
+
+  Constructs a new pointer value.   Value may either be a string
+  or an integer. Type is a string corresponding to either the
+  C datatype or mangled datatype.
+
+  ptrcast(0,"Vector *")
+               or
+  ptrcast(0,"Vector_p")   
+  ------------------------------------------------------------------ */
+
+static PyObject *ptrcast(PyObject *_PTRVALUE, char *type) {
+
+  char *r,*s;
+  void *ptr;
+  PyObject *obj;
+  char *typestr,*c;
+
+  /* Produce a "mangled" version of the type string.  */
+
+  typestr = (char *) malloc(strlen(type)+2);
+  
+  /* Go through and munge the typestring */
+  
+  r = typestr;
+  *(r++) = '_';
+  c = type;
+  while (*c) {
+    if (!isspace(*c)) {
+      if ((*c == '*') || (*c == '&')) {
+	*(r++) = 'p';
+      }
+      else *(r++) = *c;
+    } else {
+        *(r++) = '_';
+    }
+    c++;
+  }
+  *(r++) = 0;
+
+  /* Check to see what kind of object _PTRVALUE is */
+  
+  if (PyInt_Check(_PTRVALUE)) {
+    ptr = (void *) PyInt_AsLong(_PTRVALUE);
+    /* Received a numerical value. Make a pointer out of it */
+    r = (char *) malloc(strlen(typestr)+22);
+    if (ptr) {
+      SWIG_MakePtr(r, ptr, typestr);
+    } else {
+      sprintf(r,"_0%s",typestr);
+    }
+    obj = PyString_FromString(r);
+    free(r);
+  } else if (PyString_Check(_PTRVALUE)) {
+    /* Have a real pointer value now.  Try to strip out the pointer
+       value */
+    s = PyString_AsString(_PTRVALUE);
+    r = (char *) malloc(strlen(type)+22);
+    
+    /* Now extract the pointer value */
+    if (!SWIG_GetPtr(s,&ptr,0)) {
+      if (ptr) {
+	SWIG_MakePtr(r,ptr,typestr);
+      } else {
+	sprintf(r,"_0%s",typestr);
+      }
+      obj = PyString_FromString(r);
+    } else {
+      obj = NULL;
+    }
+    free(r);
+  } else {
+    obj = NULL;
+  }
+  free(typestr);
+  if (!obj) 
+    PyErr_SetString(PyExc_TypeError,"Type error in ptrcast. Argument is not a valid pointer value.");
+  return obj;
+}
+
+/*------------------------------------------------------------------
+  ptrvalue(ptr,type = 0)
+
+  Attempts to dereference a pointer value.  If type is given, it 
+  will try to use that type.  Otherwise, this function will attempt
+  to "guess" the proper datatype by checking against all of the 
+  builtin C datatypes. 
+  ------------------------------------------------------------------ */
+
+static PyObject *ptrvalue(PyObject *_PTRVALUE, int index, char *type) {
+  void     *ptr;
+  char     *s;
+  PyObject *obj;
+
+  if (!PyString_Check(_PTRVALUE)) {
+    PyErr_SetString(PyExc_TypeError,"Type error in ptrvalue. Argument is not a valid pointer value.");
+    return NULL;
+  }
+  s = PyString_AsString(_PTRVALUE);
+  if (SWIG_GetPtr(s,&ptr,0)) {
+    PyErr_SetString(PyExc_TypeError,"Type error in ptrvalue. Argument is not a valid pointer value.");
+    return NULL;
+  }
+
+  /* If no datatype was passed, try a few common datatypes first */
+
+  if (!type) {
+
+    /* No datatype was passed.   Type to figure out if it's a common one */
+
+    if (!SWIG_GetPtr(s,&ptr,"_int_p")) {
+      type = "int";
+    } else if (!SWIG_GetPtr(s,&ptr,"_double_p")) {
+      type = "double";
+    } else if (!SWIG_GetPtr(s,&ptr,"_short_p")) {
+      type = "short";
+    } else if (!SWIG_GetPtr(s,&ptr,"_long_p")) {
+      type = "long";
+    } else if (!SWIG_GetPtr(s,&ptr,"_float_p")) {
+      type = "float";
+    } else if (!SWIG_GetPtr(s,&ptr,"_char_p")) {
+      type = "char";
+    } else if (!SWIG_GetPtr(s,&ptr,"_char_pp")) {
+      type = "char *";
+    } else {
+      type = "unknown";
+    }
+  }
+
+  if (!ptr) {
+    PyErr_SetString(PyExc_TypeError,"Unable to dereference NULL pointer.");
+    return NULL;
+  }
+
+  /* Now we have a datatype.  Try to figure out what to do about it */
+  if (strcmp(type,"int") == 0) {
+    obj = PyInt_FromLong((long) *(((int *) ptr) + index));
+  } else if (strcmp(type,"double") == 0) {
+    obj = PyFloat_FromDouble((double) *(((double *) ptr)+index));
+  } else if (strcmp(type,"short") == 0) {
+    obj = PyInt_FromLong((long) *(((short *) ptr)+index));
+  } else if (strcmp(type,"long") == 0) {
+    obj = PyInt_FromLong((long) *(((long *) ptr)+index));
+  } else if (strcmp(type,"float") == 0) {
+    obj = PyFloat_FromDouble((double) *(((float *) ptr)+index));
+  } else if (strcmp(type,"char") == 0) {
+    obj = PyString_FromString(((char *) ptr)+index);
+  } else if (strcmp(type,"char *") == 0) {
+    char *c = *(((char **) ptr)+index);
+    if (c) obj = PyString_FromString(c);
+    else obj = PyString_FromString("NULL");
+  } else {
+    PyErr_SetString(PyExc_TypeError,"Unable to dereference unsupported datatype.");
+    return NULL;
+  }
+  return obj;
+}
+
+/*------------------------------------------------------------------
+  ptrcreate(type,value = 0,numelements = 1)
+
+  Attempts to create a new object of given type.  Type must be
+  a basic C datatype.  Will not create complex objects.
+  ------------------------------------------------------------------ */
+
+static PyObject *ptrcreate(char *type, PyObject *_PYVALUE, int numelements) {
+  void     *ptr;
+  PyObject *obj;
+  int       sz;
+  char     *cast;
+  char      temp[40];
+
+  /* Check the type string against a variety of possibilities */
+
+  if (strcmp(type,"int") == 0) {
+    sz = sizeof(int)*numelements;
+    cast = "_int_p";
+  } else if (strcmp(type,"short") == 0) {
+    sz = sizeof(short)*numelements;
+    cast = "_short_p";
+  } else if (strcmp(type,"long") == 0) {
+    sz = sizeof(long)*numelements;
+    cast = "_long_p";
+  } else if (strcmp(type,"double") == 0) {
+    sz = sizeof(double)*numelements;
+    cast = "_double_p";
+  } else if (strcmp(type,"float") == 0) {
+    sz = sizeof(float)*numelements;
+    cast = "_float_p";
+  } else if (strcmp(type,"char") == 0) {
+    sz = sizeof(char)*numelements;
+    cast = "_char_p";
+  } else if (strcmp(type,"char *") == 0) {
+    sz = sizeof(char *)*(numelements+1);
+    cast = "_char_pp";
+  } else {
+    PyErr_SetString(PyExc_TypeError,"Unable to create unknown datatype."); 
+    return NULL;
+  }
+   
+  /* Create the new object */
+  
+  ptr = (void *) malloc(sz);
+  if (!ptr) {
+    PyErr_SetString(PyExc_MemoryError,"Out of memory in swig_create."); 
+    return NULL;
+  }
+
+  /* Now try to set its default value */
+
+  if (_PYVALUE) {
+    if (strcmp(type,"int") == 0) {
+      int *ip,i,ivalue;
+      ivalue = (int) PyInt_AsLong(_PYVALUE);
+      ip = (int *) ptr;
+      for (i = 0; i < numelements; i++)
+	ip[i] = ivalue;
+    } else if (strcmp(type,"short") == 0) {
+      short *ip,ivalue;
+      int i;
+      ivalue = (short) PyInt_AsLong(_PYVALUE);
+      ip = (short *) ptr;
+      for (i = 0; i < numelements; i++)
+	ip[i] = ivalue;
+    } else if (strcmp(type,"long") == 0) {
+      long *ip,ivalue;
+      int i;
+      ivalue = (long) PyInt_AsLong(_PYVALUE);
+      ip = (long *) ptr;
+      for (i = 0; i < numelements; i++)
+	ip[i] = ivalue;
+    } else if (strcmp(type,"double") == 0) {
+      double *ip,ivalue;
+      int i;
+      ivalue = (double) PyFloat_AsDouble(_PYVALUE);
+      ip = (double *) ptr;
+      for (i = 0; i < numelements; i++)
+	ip[i] = ivalue;
+    } else if (strcmp(type,"float") == 0) {
+      float *ip,ivalue;
+      int i;
+      ivalue = (float) PyFloat_AsDouble(_PYVALUE);
+      ip = (float *) ptr;
+      for (i = 0; i < numelements; i++)
+	ip[i] = ivalue;
+    } else if (strcmp(type,"char") == 0) {
+      char *ip,*ivalue;
+      ivalue = (char *) PyString_AsString(_PYVALUE);
+      ip = (char *) ptr;
+      strncpy(ip,ivalue,numelements-1);
+    } else if (strcmp(type,"char *") == 0) {
+      char **ip, *ivalue;
+      int  i;
+      ivalue = (char *) PyString_AsString(_PYVALUE);
+      ip = (char **) ptr;
+      for (i = 0; i < numelements; i++) {
+	if (ivalue) {
+	  ip[i] = (char *) malloc(strlen(ivalue)+1);
+	  strcpy(ip[i],ivalue);
+	} else {
+	  ip[i] = 0;
+	}
+      }
+      ip[numelements] = 0;
+    }
+  } 
+  /* Create the pointer value */
+  
+  SWIG_MakePtr(temp,ptr,cast);
+  obj = PyString_FromString(temp);
+  return obj;
+}
+
+
+/*------------------------------------------------------------------
+  ptrset(ptr,value,index = 0,type = 0)
+
+  Attempts to set the value of a pointer variable.  If type is
+  given, we will use that type.  Otherwise, we'll guess the datatype.
+  ------------------------------------------------------------------ */
+
+static PyObject *ptrset(PyObject *_PTRVALUE, PyObject *_PYVALUE, int index, char *type) {
+  void     *ptr;
+  char     *s;
+  PyObject *obj;
+
+  if (!PyString_Check(_PTRVALUE)) {
+    PyErr_SetString(PyExc_TypeError,"Type error in ptrset. Argument is not a valid pointer value.");
+    return NULL;
+  }
+  s = PyString_AsString(_PTRVALUE);
+  if (SWIG_GetPtr(s,&ptr,0)) {
+    PyErr_SetString(PyExc_TypeError,"Type error in ptrset. Argument is not a valid pointer value.");
+    return NULL;
+  }
+
+  /* If no datatype was passed, try a few common datatypes first */
+
+  if (!type) {
+
+    /* No datatype was passed.   Type to figure out if it's a common one */
+
+    if (!SWIG_GetPtr(s,&ptr,"_int_p")) {
+      type = "int";
+    } else if (!SWIG_GetPtr(s,&ptr,"_double_p")) {
+      type = "double";
+    } else if (!SWIG_GetPtr(s,&ptr,"_short_p")) {
+      type = "short";
+    } else if (!SWIG_GetPtr(s,&ptr,"_long_p")) {
+      type = "long";
+    } else if (!SWIG_GetPtr(s,&ptr,"_float_p")) {
+      type = "float";
+    } else if (!SWIG_GetPtr(s,&ptr,"_char_p")) {
+      type = "char";
+    } else if (!SWIG_GetPtr(s,&ptr,"_char_pp")) {
+      type = "char *";
+    } else {
+      type = "unknown";
+    }
+  }
+
+  if (!ptr) {
+    PyErr_SetString(PyExc_TypeError,"Unable to set NULL pointer.");
+    return NULL;
+  }
+  
+  /* Now we have a datatype.  Try to figure out what to do about it */
+  if (strcmp(type,"int") == 0) {
+    *(((int *) ptr)+index) = (int) PyInt_AsLong(_PYVALUE);
+  } else if (strcmp(type,"double") == 0) {
+    *(((double *) ptr)+index) = (double) PyFloat_AsDouble(_PYVALUE);
+  } else if (strcmp(type,"short") == 0) {
+    *(((short *) ptr)+index) = (short) PyInt_AsLong(_PYVALUE);
+  } else if (strcmp(type,"long") == 0) {
+    *(((long *) ptr)+index) = (long) PyInt_AsLong(_PYVALUE);
+  } else if (strcmp(type,"float") == 0) {
+    *(((float *) ptr)+index) = (float) PyFloat_AsDouble(_PYVALUE);
+  } else if (strcmp(type,"char") == 0) {
+    char *c = PyString_AsString(_PYVALUE);
+    strcpy(((char *) ptr)+index, c);
+  } else if (strcmp(type,"char *") == 0) {
+    char *c = PyString_AsString(_PYVALUE);
+    char **ca = (char **) ptr;
+    if (ca[index]) free(ca[index]);
+    if (strcmp(c,"NULL") == 0) {
+      ca[index] = 0;
+    } else {
+      ca[index] = (char *) malloc(strlen(c)+1);
+      strcpy(ca[index],c);
+    }
+  } else {
+    PyErr_SetString(PyExc_TypeError,"Unable to set unsupported datatype.");
+    return NULL;
+  }
+  Py_INCREF(Py_None);
+  return Py_None;
+}
+
+
+/*------------------------------------------------------------------
+  ptradd(ptr,offset)
+
+  Adds a value to an existing pointer value.  Will do a type-dependent
+  add for basic datatypes.  For other datatypes, will do a byte-add.
+  ------------------------------------------------------------------ */
+
+static PyObject *ptradd(PyObject *_PTRVALUE, int offset) {
+
+  char *r,*s;
+  void *ptr,*junk;
+  PyObject *obj;
+  char *type;
+
+  /* Check to see what kind of object _PTRVALUE is */
+  
+  if (PyString_Check(_PTRVALUE)) {
+    /* Have a potential pointer value now.  Try to strip out the value */
+    s = PyString_AsString(_PTRVALUE);
+
+    /* Try to handle a few common datatypes first */
+
+    if (!SWIG_GetPtr(s,&ptr,"_int_p")) {
+      ptr = (void *) (((int *) ptr) + offset);
+    } else if (!SWIG_GetPtr(s,&ptr,"_double_p")) {
+      ptr = (void *) (((double *) ptr) + offset);
+    } else if (!SWIG_GetPtr(s,&ptr,"_short_p")) {
+      ptr = (void *) (((short *) ptr) + offset);
+    } else if (!SWIG_GetPtr(s,&ptr,"_long_p")) {
+      ptr = (void *) (((long *) ptr) + offset);
+    } else if (!SWIG_GetPtr(s,&ptr,"_float_p")) {
+      ptr = (void *) (((float *) ptr) + offset);
+    } else if (!SWIG_GetPtr(s,&ptr,"_char_p")) {
+      ptr = (void *) (((char *) ptr) + offset);
+    } else if (!SWIG_GetPtr(s,&ptr,0)) {
+      ptr = (void *) (((char *) ptr) + offset);
+    } else {
+      PyErr_SetString(PyExc_TypeError,"Type error in ptradd. Argument is not a valid pointer value.");
+      return NULL;
+    }
+    type = SWIG_GetPtr(s,&junk,"INVALID POINTER");
+    r = (char *) malloc(strlen(type)+20);
+    if (ptr) {
+      SWIG_MakePtr(r,ptr,type);
+    } else {
+      sprintf(r,"_0%s",type);
+    }
+    obj = PyString_FromString(r);
+    free(r);
+  }
+  return obj;
+}
+
+/*------------------------------------------------------------------
+  ptrmap(type1,type2)
+
+  Allows a mapping between type1 and type2. (Like a typedef)
+  ------------------------------------------------------------------ */
+
+static void ptrmap(char *type1, char *type2) {
+
+  char *typestr1,*typestr2,*c,*r;
+
+  /* Produce a "mangled" version of the type string.  */
+
+  typestr1 = (char *) malloc(strlen(type1)+2);
+  
+  /* Go through and munge the typestring */
+  
+  r = typestr1;
+  *(r++) = '_';
+  c = type1;
+  while (*c) {
+    if (!isspace(*c)) {
+      if ((*c == '*') || (*c == '&')) {
+	*(r++) = 'p';
+      }
+      else *(r++) = *c;
+    } else {
+      *(r++) = '_';
+    }
+    c++;
+  }
+  *(r++) = 0;
+  
+  typestr2 = (char *) malloc(strlen(type2)+2);
+
+  /* Go through and munge the typestring */
+  
+  r = typestr2;
+  *(r++) = '_';
+  c = type2;
+  while (*c) {
+    if (!isspace(*c)) {
+      if ((*c == '*') || (*c == '&')) {
+	*(r++) = 'p';
+      }
+      else *(r++) = *c;
+    } else {
+      *(r++) = '_';
+    }
+    c++;
+  }
+  *(r++) = 0;
+  SWIG_RegisterMapping(typestr1,typestr2,0);
+  SWIG_RegisterMapping(typestr2,typestr1,0);
+}
+
+/*------------------------------------------------------------------
+  ptrfree(ptr)
+
+  Destroys a pointer value
+  ------------------------------------------------------------------ */
+
+PyObject *ptrfree(PyObject *_PTRVALUE) {
+  void *ptr, *junk;
+  char *s;
+
+  if (!PyString_Check(_PTRVALUE)) {
+    PyErr_SetString(PyExc_TypeError,"Type error in ptrfree. Argument is not a valid pointer value.");
+    return NULL;
+  }
+  s = PyString_AsString(_PTRVALUE);
+  if (SWIG_GetPtr(s,&ptr,0)) {
+    PyErr_SetString(PyExc_TypeError,"Type error in ptrfree. Argument is not a valid pointer value.");
+    return NULL;
+  }
+
+  /* Check to see if this pointer is a char ** */
+  if (!SWIG_GetPtr(s,&junk,"_char_pp")) {
+    char **c = (char **) ptr;
+    if (c) {
+      int i = 0;
+      while (c[i]) {
+	free(c[i]);
+	i++;
+      }
+    }
+  } 
+  if (ptr)
+    free((char *) ptr);
+
+  Py_INCREF(Py_None);
+  return Py_None;
+}
+
+
+static PyObject *
+py_DictToStringList(PyObject *self, PyObject *args) {
+
+    PyObject *psDict;
+    char **papszMetadata = NULL;
+    int nPos = 0;
+    PyObject *psKey, *psValue;
+    char  szSwigTarget[48];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O!:DictToStringList",
+			 &PyDict_Type, &psDict))
+        return NULL;
+
+    while( PyDict_Next( psDict, &nPos, &psKey, &psValue ) ) 
+    {
+        char *pszKey, *pszValue;
+        
+	if( !PyArg_Parse( psKey, "s", &pszKey )
+	    || !PyArg_Parse( psValue, "s", &pszValue ) )
+        {
+	    PyErr_SetString(PyExc_TypeError,
+                    "Metadata dictionary keys and values must be strings.");
+            return NULL;
+        }
+
+        papszMetadata = CSLSetNameValue( papszMetadata, pszKey, pszValue );
+    }
+
+    SWIG_MakePtr( szSwigTarget, papszMetadata, "_stringList" );	
+
+    return Py_BuildValue( "s", szSwigTarget );
+}
+
+static PyObject *
+py_StringListToDict(PyObject *self, PyObject *args) {
+
+    PyObject *psDict;
+    char **papszMetadata = NULL;
+    int i;
+    char  *pszSwigStringList = NULL;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"s:StringListToDict", &pszSwigStringList) )
+        return NULL;
+
+    if (SWIG_GetPtr_2(pszSwigStringList,(void **) &papszMetadata,_stringList) )
+    {
+        PyErr_SetString(PyExc_TypeError,
+   	      "Type error with stringlist.  Expected _stringList." );
+        return NULL;
+    }
+
+    psDict = PyDict_New();
+    
+    for( i = 0; i < CSLCount(papszMetadata); i++ )
+    {
+	char	*pszKey;
+	const char *pszValue;
+
+	pszValue = CPLParseNameValue( papszMetadata[i], &pszKey );
+	if( pszValue != NULL )
+	    PyDict_SetItem( psDict, 
+                            Py_BuildValue("s", pszKey ), 
+                            Py_BuildValue("s", pszValue ) );
+	CPLFree( pszKey );
+    }
+
+    return psDict;
+}
 
 
 typedef struct {
@@ -1121,78 +1705,6 @@ py_GDALGCPsToGeoTransform(PyObject *self, PyObject *args) {
 
 
 /************************************************************************/
-/*                        GDALGetGeoTransform()                         */
-/************************************************************************/
-static PyObject *
-py_GDALGetGeoTransform(PyObject *self, PyObject *args) {
-
-    GDALDatasetH  _arg0;
-    char *_argc0 = NULL;
-    double geotransform[6];
-
-    self = self;
-    if(!PyArg_ParseTuple(args,"s:GDALGetGeoTransform",&_argc0))
-        return NULL;
-
-    if (_argc0) {
-        if (SWIG_GetPtr_2(_argc0,(void **) &_arg0,_GDALDatasetH)) {
-            PyErr_SetString(PyExc_TypeError,
-                            "Type error in argument 1 of GDALGetGeoTransform."
-                            "  Expected _GDALDatasetH.");
-            return NULL;
-        }
-    }
-	
-    GDALGetGeoTransform(_arg0,geotransform);
-
-    return Py_BuildValue("dddddd",
-	                 geotransform[0],
-	                 geotransform[1],
-	                 geotransform[2],
-	                 geotransform[3],
-	                 geotransform[4],
-	                 geotransform[5] );
-}
-
-/************************************************************************/
-/*                        GDALSetGeoTransform()                         */
-/************************************************************************/
-static PyObject *
-py_GDALSetGeoTransform(PyObject *self, PyObject *args) {
-
-    GDALDatasetH  _arg0;
-    char *_argc0 = NULL;
-    double geotransform[6];
-    int    err;
-
-    self = self;
-    if(!PyArg_ParseTuple(args,"s(dddddd):GDALSetGeoTransform",&_argc0,
-	geotransform+0, geotransform+1, geotransform+2, 
-	geotransform+3, geotransform+4, geotransform+5) )
-        return NULL;
-
-    if (_argc0) {
-        if (SWIG_GetPtr_2(_argc0,(void **) &_arg0,_GDALDatasetH)) {
-            PyErr_SetString(PyExc_TypeError,
-                            "Type error in argument 1 of GDALSetGeoTransform."
-                            "  Expected _GDALDatasetH.");
-            return NULL;
-        }
-    }
-	
-    err = GDALSetGeoTransform(_arg0,geotransform);
-
-    if( err != CE_None )
-    {
-	PyErr_SetString(PyExc_TypeError,CPLGetLastErrorMsg());
-	return NULL;
-    }
-    
-    Py_INCREF(Py_None);
-    return Py_None;
-}
-
-/************************************************************************/
 /*                       GDALGetRasterHistogram()                       */
 /************************************************************************/
 static PyObject *
@@ -1232,238 +1744,6 @@ py_GDALGetRasterHistogram(PyObject *self, PyObject *args) {
     CPLFree( panHistogram );
 
     return psList;
-}
-
-/************************************************************************/
-/*                        GDALComputeRasterMinMax()                     */
-/************************************************************************/
-static PyObject *
-py_GDALComputeRasterMinMax(PyObject *self, PyObject *args) {
-
-    GDALRasterBandH  hBand;
-    char *_argc0 = NULL;
-    int bApproxOK = 0;
-    double adfMinMax[2];
-
-    self = self;
-    if(!PyArg_ParseTuple(args,"s|i:GDALGetRasterMinMax",&_argc0,&bApproxOK))
-        return NULL;
-
-    if (_argc0) {
-        if (SWIG_GetPtr_2(_argc0,(void **) &hBand,_GDALRasterBandH)) {
-            PyErr_SetString(PyExc_TypeError,
-                          "Type error in argument 1 of GDALGetRasterMinMax."
-                          "  Expected _GDALRasterBandH.");
-            return NULL;
-        }
-    }
-
-    GDALComputeRasterMinMax( hBand, bApproxOK, adfMinMax );
-
-    return Py_BuildValue("dd", adfMinMax[0], adfMinMax[1] );
-}
-
-/************************************************************************/
-/*                       GDALGetMetadata()                              */
-/************************************************************************/
-static PyObject *
-py_GDALGetMetadata(PyObject *self, PyObject *args) {
-
-    GDALMajorObjectH  hObject;
-    char *_argc0 = NULL;
-    PyObject *psDict;
-    int i;
-    char **papszMetadata;
-    char *pszDomain = NULL;
-
-    self = self;
-    if(!PyArg_ParseTuple(args,"s|s:GDALGetMetadata",&_argc0, &pszDomain))
-        return NULL;
-
-    if (_argc0) {
-#ifdef SWIGTYPE_GDALDatasetH
-        if (SWIG_ConvertPtr(_argc0,(void **) &hObject,NULL,0) ) 
-#else
-        if (SWIG_GetPtr(_argc0,(void **) &hObject,NULL )) 
-#endif
-	{
-            PyErr_SetString(PyExc_TypeError,
-                          "Type error in argument 1 of GDALGetMetadata."
-                          "  Expected _GDALMajorObjectH.");
-            return NULL;
-        }
-    }
-
-    psDict = PyDict_New();
-    
-    papszMetadata = GDALGetMetadata( hObject, pszDomain );
-
-    for( i = 0; i < CSLCount(papszMetadata); i++ )
-    {
-	char	*pszKey;
-	const char *pszValue;
-
-	pszValue = CPLParseNameValue( papszMetadata[i], &pszKey );
-	if( pszValue != NULL )
-	    PyDict_SetItem( psDict, 
-                            Py_BuildValue("s", pszKey ), 
-                            Py_BuildValue("s", pszValue ) );
-	CPLFree( pszKey );
-    }
-
-    return psDict;
-}
-
-/************************************************************************/
-/*                          GDALSetMetadata()                           */
-/************************************************************************/
-static PyObject *
-py_GDALSetMetadata(PyObject *self, PyObject *args) {
-
-    GDALMajorObjectH  hObject;
-    char *_argc0 = NULL;
-    PyObject *psDict;
-    char **papszMetadata = NULL;
-    char *pszDomain = NULL;
-    int nPos = 0;
-    PyObject *psKey, *psValue;
-    CPLErr eErr;
-
-    self = self;
-    if(!PyArg_ParseTuple(args,"sO!|s:GDALSetMetadata",&_argc0, 
-			 &PyDict_Type, &psDict, &pszDomain))
-        return NULL;
-
-    if (_argc0) {
-#ifdef SWIGTYPE_GDALDatasetH
-        if (SWIG_ConvertPtr(_argc0,(void **) &hObject,NULL,0) ) 
-#else
-        if (SWIG_GetPtr(_argc0,(void **) &hObject,NULL )) 
-#endif
-	{
-            PyErr_SetString(PyExc_TypeError,
-                          "Type error in argument 1 of GDALSetMetadata."
-                          "  Expected _GDALMajorObjectH.");
-            return NULL;
-        }
-    }
-
-    while( PyDict_Next( psDict, &nPos, &psKey, &psValue ) ) 
-    {
-        char *pszKey, *pszValue;
-        
-	if( !PyArg_Parse( psKey, "s", &pszKey )
-	    || !PyArg_Parse( psValue, "s", &pszValue ) )
-        {
-	    PyErr_SetString(PyExc_TypeError,
-                    "Metadata dictionary keys and values must be strings.");
-            return NULL;
-        }
-
-        papszMetadata = CSLSetNameValue( papszMetadata, pszKey, pszValue );
-    }
-
-    eErr = GDALSetMetadata( hObject, papszMetadata, pszDomain );
-
-    CSLDestroy( papszMetadata );
-
-    if( eErr != CE_None )
-    {
-	PyErr_SetString(PyExc_TypeError,CPLGetLastErrorMsg());
-	return NULL;
-    }
-    
-    Py_INCREF(Py_None);
-    return Py_None;
-}
-
-/************************************************************************/
-/*                         GDALGetDescription()                         */
-/************************************************************************/
-static PyObject *
-py_GDALGetDescription(PyObject *self, PyObject *args) {
-
-    GDALMajorObjectH  hObject;
-    char *_argc0 = NULL;
-
-    self = self;
-    if(!PyArg_ParseTuple(args,"s:GDALGetDescription",&_argc0))
-        return NULL;
-
-    if (_argc0) {
-#ifdef SWIGTYPE_GDALDatasetH
-        if (SWIG_ConvertPtr(_argc0,(void **) &hObject,NULL,0) ) 
-#else
-        if (SWIG_GetPtr(_argc0,(void **) &hObject,NULL )) 
-#endif
-	{
-            PyErr_SetString(PyExc_TypeError,
-                          "Type error in argument 1 of GDALGetDescription."
-                          "  Expected _GDALMajorObjectH.");
-            return NULL;
-        }
-    }
-
-    return Py_BuildValue("s", GDALGetDescription(hObject) );
-}
-
-/************************************************************************/
-/*                         GDALSetDescription()                         */
-/************************************************************************/
-static PyObject *
-py_GDALSetDescription(PyObject *self, PyObject *args) {
-
-    GDALMajorObjectH  hObject;
-    char *_argc0 = NULL;
-    char *pszDesc = NULL;
-
-    self = self;
-    if(!PyArg_ParseTuple(args,"ss:GDALSetDescription",&_argc0, &pszDesc))
-        return NULL;
-
-    if (_argc0) {
-#ifdef SWIGTYPE_GDALDatasetH
-        if (SWIG_ConvertPtr(_argc0,(void **) &hObject,NULL,0) ) 
-#else
-        if (SWIG_GetPtr(_argc0,(void **) &hObject,NULL )) 
-#endif
-	{
-            PyErr_SetString(PyExc_TypeError,
-                          "Type error in argument 1 of GDALGetDescription."
-                          "  Expected _GDALMajorObjectH.");
-            return NULL;
-        }
-    }
-
-    GDALSetDescription( hObject, pszDesc );
-
-    Py_INCREF(Py_None);
-    return Py_None;
-}
-
-/************************************************************************/
-/*                         GDALGetRasterNoDataValue()                   */
-/************************************************************************/
-static PyObject *
-py_GDALGetRasterNoDataValue(PyObject *self, PyObject *args) {
-
-    GDALRasterBandH  hObject;
-    char *_argc0 = NULL;
-
-    self = self;
-    if(!PyArg_ParseTuple(args,"s:GDALGetNoDataValue",&_argc0))
-        return NULL;
-
-    if (_argc0) {
-        if (SWIG_GetPtr_2(_argc0,(void **) &hObject,_GDALRasterBandH)) {
-            PyErr_SetString(PyExc_TypeError,
-                          "Type error in argument 1 of GDALGetNoDataValue."
-                          "  Expected _GDALRasterBandH.");
-            return NULL;
-        }
-    }
-
-    return Py_BuildValue("d", GDALGetRasterNoDataValue(hObject,NULL) );
 }
 
 /************************************************************************/
@@ -2542,6 +2822,148 @@ py_OGRBuildPolygonFromEdges(PyObject *self, PyObject *args) {
     SWIG_MakePtr(_ptemp, (char *) hPolygon,"_OGRGeometryH");
     return Py_BuildValue("s",_ptemp);
 }
+static PyObject *_wrap_ptrcast(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    PyObject * _result;
+    PyObject * _arg0;
+    char * _arg1;
+    PyObject * _obj0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"Os:ptrcast",&_obj0,&_arg1)) 
+        return NULL;
+{
+  _arg0 = _obj0;
+}
+    _result = (PyObject *)ptrcast(_arg0,_arg1);
+{
+  _resultobj = _result;
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_ptrvalue(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    PyObject * _result;
+    PyObject * _arg0;
+    int  _arg1 = 0;
+    char * _arg2 = 0;
+    PyObject * _obj0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O|is:ptrvalue",&_obj0,&_arg1,&_arg2)) 
+        return NULL;
+{
+  _arg0 = _obj0;
+}
+    _result = (PyObject *)ptrvalue(_arg0,_arg1,_arg2);
+{
+  _resultobj = _result;
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_ptrset(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    PyObject * _result;
+    PyObject * _arg0;
+    PyObject * _arg1;
+    int  _arg2 = 0;
+    char * _arg3 = 0;
+    PyObject * _obj0 = 0;
+    PyObject * _obj1 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OO|is:ptrset",&_obj0,&_obj1,&_arg2,&_arg3)) 
+        return NULL;
+{
+  _arg0 = _obj0;
+}
+{
+  _arg1 = _obj1;
+}
+    _result = (PyObject *)ptrset(_arg0,_arg1,_arg2,_arg3);
+{
+  _resultobj = _result;
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_ptrcreate(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    PyObject * _result;
+    char * _arg0;
+    PyObject * _arg1 = 0;
+    int  _arg2 = 1;
+    PyObject * _obj1 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"s|Oi:ptrcreate",&_arg0,&_obj1,&_arg2)) 
+        return NULL;
+    if (_obj1)
+{
+  _arg1 = _obj1;
+}
+    _result = (PyObject *)ptrcreate(_arg0,_arg1,_arg2);
+{
+  _resultobj = _result;
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_ptrfree(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    PyObject * _result;
+    PyObject * _arg0;
+    PyObject * _obj0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:ptrfree",&_obj0)) 
+        return NULL;
+{
+  _arg0 = _obj0;
+}
+    _result = (PyObject *)ptrfree(_arg0);
+{
+  _resultobj = _result;
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_ptradd(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    PyObject * _result;
+    PyObject * _arg0;
+    int  _arg1;
+    PyObject * _obj0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"Oi:ptradd",&_obj0,&_arg1)) 
+        return NULL;
+{
+  _arg0 = _obj0;
+}
+    _result = (PyObject *)ptradd(_arg0,_arg1);
+{
+  _resultobj = _result;
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_ptrmap(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    char * _arg0;
+    char * _arg1;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"ss:ptrmap",&_arg0,&_arg1)) 
+        return NULL;
+    ptrmap(_arg0,_arg1);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+    return _resultobj;
+}
+
 static PyObject *_wrap_CPLErrorReset(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
 
@@ -2575,6 +2997,26 @@ static PyObject *_wrap_CPLGetLastErrorMsg(PyObject *self, PyObject *args) {
         return NULL;
     _result = (char *)CPLGetLastErrorMsg();
     _resultobj = Py_BuildValue("s", _result);
+    return _resultobj;
+}
+
+static PyObject *_wrap_CSLDestroy(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    stringList  _arg0;
+    char * _argc0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"s:CSLDestroy",&_argc0)) 
+        return NULL;
+    if (_argc0) {
+        if (SWIG_GetPtr(_argc0,(void **) &_arg0,"_stringList")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of CSLDestroy. Expected _stringList.");
+        return NULL;
+        }
+    }
+    CSLDestroy(_arg0);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
     return _resultobj;
 }
 
@@ -2642,6 +3084,102 @@ static PyObject *_wrap_GDALDecToDMS(PyObject *self, PyObject *args) {
         return NULL;
     _result = (char *)GDALDecToDMS(_arg0,_arg1,_arg2);
     _resultobj = Py_BuildValue("s", _result);
+    return _resultobj;
+}
+
+static PyObject *_wrap_GDALGetMetadata(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    stringList  _result;
+    GDALMajorObjectH  _arg0;
+    char * _arg1;
+    char * _argc0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"ss:GDALGetMetadata",&_argc0,&_arg1)) 
+        return NULL;
+    if (_argc0) {
+        if (SWIG_GetPtr(_argc0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of GDALGetMetadata. Expected _GDALMajorObjectH.");
+        return NULL;
+        }
+    }
+    _result = (stringList )GDALGetMetadata(_arg0,_arg1);
+    SWIG_MakePtr(_ptemp, (char *) _result,"_stringList");
+    _resultobj = Py_BuildValue("s",_ptemp);
+    return _resultobj;
+}
+
+static PyObject *_wrap_GDALSetMetadata(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    CPLErr * _result;
+    GDALMajorObjectH  _arg0;
+    stringList  _arg1;
+    char * _arg2;
+    char * _argc0 = 0;
+    char * _argc1 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"sss:GDALSetMetadata",&_argc0,&_argc1,&_arg2)) 
+        return NULL;
+    if (_argc0) {
+        if (SWIG_GetPtr(_argc0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of GDALSetMetadata. Expected _GDALMajorObjectH.");
+        return NULL;
+        }
+    }
+    if (_argc1) {
+        if (SWIG_GetPtr(_argc1,(void **) &_arg1,"_stringList")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of GDALSetMetadata. Expected _stringList.");
+        return NULL;
+        }
+    }
+    _result = (CPLErr *) malloc(sizeof(CPLErr ));
+    *(_result) = GDALSetMetadata(_arg0,_arg1,_arg2);
+    SWIG_MakePtr(_ptemp, (void *) _result,"_CPLErr_p");
+    _resultobj = Py_BuildValue("s",_ptemp);
+    return _resultobj;
+}
+
+static PyObject *_wrap_GDALGetDescription(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    char * _result;
+    GDALMajorObjectH  _arg0;
+    char * _argc0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"s:GDALGetDescription",&_argc0)) 
+        return NULL;
+    if (_argc0) {
+        if (SWIG_GetPtr(_argc0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of GDALGetDescription. Expected _GDALMajorObjectH.");
+        return NULL;
+        }
+    }
+    _result = (char *)GDALGetDescription(_arg0);
+    _resultobj = Py_BuildValue("s", _result);
+    return _resultobj;
+}
+
+static PyObject *_wrap_GDALSetDescription(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    GDALMajorObjectH  _arg0;
+    char * _arg1;
+    char * _argc0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"ss:GDALSetDescription",&_argc0,&_arg1)) 
+        return NULL;
+    if (_argc0) {
+        if (SWIG_GetPtr(_argc0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of GDALSetDescription. Expected _GDALMajorObjectH.");
+        return NULL;
+        }
+    }
+    GDALSetDescription(_arg0,_arg1);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
     return _resultobj;
 }
 
@@ -3030,6 +3568,62 @@ static PyObject *_wrap_GDALSetProjection(PyObject *self, PyObject *args) {
     return _resultobj;
 }
 
+static PyObject *_wrap_GDALGetGeoTransform(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    int  _result;
+    GDALDatasetH  _arg0;
+    double * _arg1;
+    char * _argc0 = 0;
+    char * _argc1 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"ss:GDALGetGeoTransform",&_argc0,&_argc1)) 
+        return NULL;
+    if (_argc0) {
+        if (SWIG_GetPtr(_argc0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of GDALGetGeoTransform. Expected _GDALDatasetH.");
+        return NULL;
+        }
+    }
+    if (_argc1) {
+        if (SWIG_GetPtr(_argc1,(void **) &_arg1,"_double_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of GDALGetGeoTransform. Expected _double_p.");
+        return NULL;
+        }
+    }
+    _result = (int )GDALGetGeoTransform(_arg0,_arg1);
+    _resultobj = Py_BuildValue("i",_result);
+    return _resultobj;
+}
+
+static PyObject *_wrap_GDALSetGeoTransform(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    int  _result;
+    GDALDatasetH  _arg0;
+    double * _arg1;
+    char * _argc0 = 0;
+    char * _argc1 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"ss:GDALSetGeoTransform",&_argc0,&_argc1)) 
+        return NULL;
+    if (_argc0) {
+        if (SWIG_GetPtr(_argc0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of GDALSetGeoTransform. Expected _GDALDatasetH.");
+        return NULL;
+        }
+    }
+    if (_argc1) {
+        if (SWIG_GetPtr(_argc1,(void **) &_arg1,"_double_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of GDALSetGeoTransform. Expected _double_p.");
+        return NULL;
+        }
+    }
+    _result = (int )GDALSetGeoTransform(_arg0,_arg1);
+    _resultobj = Py_BuildValue("i",_result);
+    return _resultobj;
+}
+
 static PyObject *_wrap_GDALReferenceDataset(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
     int  _result;
@@ -3296,6 +3890,34 @@ static PyObject *_wrap_GDALSetRasterColorTable(PyObject *self, PyObject *args) {
     return _resultobj;
 }
 
+static PyObject *_wrap_GDALGetRasterNoDataValue(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    double  _result;
+    GDALRasterBandH  _arg0;
+    int * _arg1;
+    char * _argc0 = 0;
+    char * _argc1 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"ss:GDALGetRasterNoDataValue",&_argc0,&_argc1)) 
+        return NULL;
+    if (_argc0) {
+        if (SWIG_GetPtr(_argc0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of GDALGetRasterNoDataValue. Expected _GDALRasterBandH.");
+        return NULL;
+        }
+    }
+    if (_argc1) {
+        if (SWIG_GetPtr(_argc1,(void **) &_arg1,"_int_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of GDALGetRasterNoDataValue. Expected _int_p.");
+        return NULL;
+        }
+    }
+    _result = (double )GDALGetRasterNoDataValue(_arg0,_arg1);
+    _resultobj = Py_BuildValue("d",_result);
+    return _resultobj;
+}
+
 static PyObject *_wrap_GDALSetRasterNoDataValue(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
     int  _result;
@@ -3314,6 +3936,35 @@ static PyObject *_wrap_GDALSetRasterNoDataValue(PyObject *self, PyObject *args) 
     }
     _result = (int )GDALSetRasterNoDataValue(_arg0,_arg1);
     _resultobj = Py_BuildValue("i",_result);
+    return _resultobj;
+}
+
+static PyObject *_wrap_GDALComputeRasterMinMax(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    GDALRasterBandH  _arg0;
+    int  _arg1;
+    double * _arg2;
+    char * _argc0 = 0;
+    char * _argc2 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"sis:GDALComputeRasterMinMax",&_argc0,&_arg1,&_argc2)) 
+        return NULL;
+    if (_argc0) {
+        if (SWIG_GetPtr(_argc0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of GDALComputeRasterMinMax. Expected _GDALRasterBandH.");
+        return NULL;
+        }
+    }
+    if (_argc2) {
+        if (SWIG_GetPtr(_argc2,(void **) &_arg2,"_double_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 3 of GDALComputeRasterMinMax. Expected _double_p.");
+        return NULL;
+        }
+    }
+    GDALComputeRasterMinMax(_arg0,_arg1,_arg2);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
     return _resultobj;
 }
 
@@ -4397,6 +5048,58 @@ static PyObject *_wrap_OSRGetProjParm(PyObject *self, PyObject *args) {
         }
     }
     _result = (double )OSRGetProjParm(_arg0,_arg1,_arg2,_arg3);
+    _resultobj = Py_BuildValue("d",_result);
+    return _resultobj;
+}
+
+static PyObject *_wrap_OSRSetNormProjParm(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    int  _result;
+    OGRSpatialReferenceH  _arg0;
+    char * _arg1;
+    double  _arg2;
+    char * _argc0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"ssd:OSRSetNormProjParm",&_argc0,&_arg1,&_arg2)) 
+        return NULL;
+    if (_argc0) {
+        if (SWIG_GetPtr(_argc0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OSRSetNormProjParm. Expected _OGRSpatialReferenceH.");
+        return NULL;
+        }
+    }
+    _result = (int )OSRSetNormProjParm(_arg0,_arg1,_arg2);
+    _resultobj = Py_BuildValue("i",_result);
+    return _resultobj;
+}
+
+static PyObject *_wrap_OSRGetNormProjParm(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    double  _result;
+    OGRSpatialReferenceH  _arg0;
+    char * _arg1;
+    double  _arg2;
+    int * _arg3;
+    char * _argc0 = 0;
+    char * _argc3 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"ssds:OSRGetNormProjParm",&_argc0,&_arg1,&_arg2,&_argc3)) 
+        return NULL;
+    if (_argc0) {
+        if (SWIG_GetPtr(_argc0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OSRGetNormProjParm. Expected _OGRSpatialReferenceH.");
+        return NULL;
+        }
+    }
+    if (_argc3) {
+        if (SWIG_GetPtr(_argc3,(void **) &_arg3,"_int_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 4 of OSRGetNormProjParm. Expected _int_p.");
+        return NULL;
+        }
+    }
+    _result = (double )OSRGetNormProjParm(_arg0,_arg1,_arg2,_arg3);
     _resultobj = Py_BuildValue("d",_result);
     return _resultobj;
 }
@@ -7939,6 +8642,8 @@ static PyMethodDef _gdalMethods[] = {
 	 { "OSRSetStatePlane", _wrap_OSRSetStatePlane, 1 },
 	 { "OSRGetUTMZone", _wrap_OSRGetUTMZone, 1 },
 	 { "OSRSetUTM", _wrap_OSRSetUTM, 1 },
+	 { "OSRGetNormProjParm", _wrap_OSRGetNormProjParm, 1 },
+	 { "OSRSetNormProjParm", _wrap_OSRSetNormProjParm, 1 },
 	 { "OSRGetProjParm", _wrap_OSRGetProjParm, 1 },
 	 { "OSRSetProjParm", _wrap_OSRSetProjParm, 1 },
 	 { "OSRGetAuthorityName", _wrap_OSRGetAuthorityName, 1 },
@@ -7976,15 +8681,7 @@ static PyMethodDef _gdalMethods[] = {
 	 { "GDALChecksumImage", _wrap_GDALChecksumImage, 1 },
 	 { "GDALDitherRGB2PCT", py_GDALDitherRGB2PCT, 1 },
 	 { "GDALComputeMedianCutPCT", py_GDALComputeMedianCutPCT, 1 },
-	 { "GDALGetRasterNoDataValue", py_GDALGetRasterNoDataValue, 1 },
-	 { "GDALSetDescription", py_GDALSetDescription, 1 },
-	 { "GDALGetDescription", py_GDALGetDescription, 1 },
-	 { "GDALSetMetadata", py_GDALSetMetadata, 1 },
-	 { "GDALGetMetadata", py_GDALGetMetadata, 1 },
-	 { "GDALComputeRasterMinMax", py_GDALComputeRasterMinMax, 1 },
 	 { "GDALGetRasterHistogram", py_GDALGetRasterHistogram, 1 },
-	 { "GDALSetGeoTransform", py_GDALSetGeoTransform, 1 },
-	 { "GDALGetGeoTransform", py_GDALGetGeoTransform, 1 },
 	 { "GDALGCPsToGeoTransform", py_GDALGCPsToGeoTransform, 1 },
 	 { "GDALSetGCPs", py_GDALSetGCPs, 1 },
 	 { "GDALGetGCPs", py_GDALGetGCPs, 1 },
@@ -8008,7 +8705,9 @@ static PyMethodDef _gdalMethods[] = {
 	 { "GDALFlushRasterCache", _wrap_GDALFlushRasterCache, 1 },
 	 { "GDALGetOverview", _wrap_GDALGetOverview, 1 },
 	 { "GDALGetOverviewCount", _wrap_GDALGetOverviewCount, 1 },
+	 { "GDALComputeRasterMinMax", _wrap_GDALComputeRasterMinMax, 1 },
 	 { "GDALSetRasterNoDataValue", _wrap_GDALSetRasterNoDataValue, 1 },
+	 { "GDALGetRasterNoDataValue", _wrap_GDALGetRasterNoDataValue, 1 },
 	 { "GDALSetRasterColorTable", _wrap_GDALSetRasterColorTable, 1 },
 	 { "GDALGetRasterColorTable", _wrap_GDALGetRasterColorTable, 1 },
 	 { "GDALGetRasterColorInterpretation", _wrap_GDALGetRasterColorInterpretation, 1 },
@@ -8021,6 +8720,8 @@ static PyMethodDef _gdalMethods[] = {
 	 { "GDALGetGCPCount", _wrap_GDALGetGCPCount, 1 },
 	 { "GDALDereferenceDataset", _wrap_GDALDereferenceDataset, 1 },
 	 { "GDALReferenceDataset", _wrap_GDALReferenceDataset, 1 },
+	 { "GDALSetGeoTransform", _wrap_GDALSetGeoTransform, 1 },
+	 { "GDALGetGeoTransform", _wrap_GDALGetGeoTransform, 1 },
 	 { "GDALSetProjection", _wrap_GDALSetProjection, 1 },
 	 { "GDALGetProjectionRef", _wrap_GDALGetProjectionRef, 1 },
 	 { "GDALGetRasterBand", _wrap_GDALGetRasterBand, 1 },
@@ -8042,14 +8743,28 @@ static PyMethodDef _gdalMethods[] = {
 	 { "GDALOpen", _wrap_GDALOpen, 1 },
 	 { "GDALRegister_NUMPY", _wrap_GDALRegister_NUMPY, 1 },
 	 { "GDALAllRegister", _wrap_GDALAllRegister, 1 },
+	 { "GDALSetDescription", _wrap_GDALSetDescription, 1 },
+	 { "GDALGetDescription", _wrap_GDALGetDescription, 1 },
+	 { "GDALSetMetadata", _wrap_GDALSetMetadata, 1 },
+	 { "GDALGetMetadata", _wrap_GDALGetMetadata, 1 },
 	 { "GDALDecToDMS", _wrap_GDALDecToDMS, 1 },
 	 { "GDALGetPaletteInterpretationName", _wrap_GDALGetPaletteInterpretationName, 1 },
 	 { "GDALGetColorInterpretationName", _wrap_GDALGetColorInterpretationName, 1 },
 	 { "GDALGetDataTypeName", _wrap_GDALGetDataTypeName, 1 },
 	 { "GDALGetDataTypeSize", _wrap_GDALGetDataTypeSize, 1 },
+	 { "CSLDestroy", _wrap_CSLDestroy, 1 },
 	 { "CPLGetLastErrorMsg", _wrap_CPLGetLastErrorMsg, 1 },
 	 { "CPLGetLastErrorNo", _wrap_CPLGetLastErrorNo, 1 },
 	 { "CPLErrorReset", _wrap_CPLErrorReset, 1 },
+	 { "StringListToDict", py_StringListToDict, 1 },
+	 { "DictToStringList", py_DictToStringList, 1 },
+	 { "ptrmap", _wrap_ptrmap, 1 },
+	 { "ptradd", _wrap_ptradd, 1 },
+	 { "ptrfree", _wrap_ptrfree, 1 },
+	 { "ptrcreate", _wrap_ptrcreate, 1 },
+	 { "ptrset", _wrap_ptrset, 1 },
+	 { "ptrvalue", _wrap_ptrvalue, 1 },
+	 { "ptrcast", _wrap_ptrcast, 1 },
 	 { "NumPyArrayToGDALFilename", py_NumPyArrayToGDALFilename, 1 },
 	 { NULL, NULL }
 };
@@ -8067,6 +8782,7 @@ SWIGEXPORT(void,init_gdal)() {
  * (Used by the SWIG pointer type-checker).
  */
 	 SWIG_RegisterMapping("_signed_long","_long",0);
+	 SWIG_RegisterMapping("_char_pp","_stringList",0);
 	 SWIG_RegisterMapping("_long","_unsigned_long",0);
 	 SWIG_RegisterMapping("_long","_signed_long",0);
 	 SWIG_RegisterMapping("_GDALRWFlag","_OGRJustification",0);
@@ -8080,6 +8796,7 @@ SWIGEXPORT(void,init_gdal)() {
 	 SWIG_RegisterMapping("_GDALRWFlag","_unsigned_int",0);
 	 SWIG_RegisterMapping("_GDALRWFlag","_GDALDataType",0);
 	 SWIG_RegisterMapping("_GDALRWFlag","_GDALAccess",0);
+	 SWIG_RegisterMapping("_stringList","_char_pp",0);
 	 SWIG_RegisterMapping("_GDALPaletteInterp","_OGRJustification",0);
 	 SWIG_RegisterMapping("_GDALPaletteInterp","_OGRFieldType",0);
 	 SWIG_RegisterMapping("_GDALPaletteInterp","_OGRwkbGeometryType",0);

@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.61  2003/03/25 05:58:37  warmerda
+ * add better pointer and stringlist support
+ *
  * Revision 1.60  2003/03/21 22:23:27  warmerda
  * added xml support
  *
@@ -175,14 +178,112 @@ CPL_CVSID("$Id$");
 #else
 #  define SWIG_GetPtr_2(s,d,t)  SWIG_GetPtr( s, d, #t)
 #endif
+
+typedef char **stringList;
+
 %}
 
 %native(NumPyArrayToGDALFilename) py_NumPyArrayToGDALFilename;
 
+%include pointer.i
+
+/* -------------------------------------------------------------------- */
+/*      Special wrappers mapping Python Dict and List types to/from     */
+/*      string lists.                                                   */
+/* -------------------------------------------------------------------- */
+typedef char **stringList;
+
+%{
+static PyObject *
+py_DictToStringList(PyObject *self, PyObject *args) {
+
+    PyObject *psDict;
+    char **papszMetadata = NULL;
+    int nPos = 0;
+    PyObject *psKey, *psValue;
+    char  szSwigTarget[48];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O!:DictToStringList",
+			 &PyDict_Type, &psDict))
+        return NULL;
+
+    while( PyDict_Next( psDict, &nPos, &psKey, &psValue ) ) 
+    {
+        char *pszKey, *pszValue;
+        
+	if( !PyArg_Parse( psKey, "s", &pszKey )
+	    || !PyArg_Parse( psValue, "s", &pszValue ) )
+        {
+	    PyErr_SetString(PyExc_TypeError,
+                    "Metadata dictionary keys and values must be strings.");
+            return NULL;
+        }
+
+        papszMetadata = CSLSetNameValue( papszMetadata, pszKey, pszValue );
+    }
+
+    SWIG_MakePtr( szSwigTarget, papszMetadata, "_stringList" );	
+
+    return Py_BuildValue( "s", szSwigTarget );
+}
+%}
+
+%native(DictToStringList) py_DictToStringList;
+
+%{
+static PyObject *
+py_StringListToDict(PyObject *self, PyObject *args) {
+
+    PyObject *psDict;
+    char **papszMetadata = NULL;
+    int i;
+    char  *pszSwigStringList = NULL;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"s:StringListToDict", &pszSwigStringList) )
+        return NULL;
+
+    if (SWIG_GetPtr_2(pszSwigStringList,(void **) &papszMetadata,_stringList) )
+    {
+        PyErr_SetString(PyExc_TypeError,
+   	      "Type error with stringlist.  Expected _stringList." );
+        return NULL;
+    }
+
+    psDict = PyDict_New();
+    
+    for( i = 0; i < CSLCount(papszMetadata); i++ )
+    {
+	char	*pszKey;
+	const char *pszValue;
+
+	pszValue = CPLParseNameValue( papszMetadata[i], &pszKey );
+	if( pszValue != NULL )
+	    PyDict_SetItem( psDict, 
+                            Py_BuildValue("s", pszKey ), 
+                            Py_BuildValue("s", pszValue ) );
+	CPLFree( pszKey );
+    }
+
+    return psDict;
+}
+%}
+
+%native(StringListToDict) py_StringListToDict;
+
+/* -------------------------------------------------------------------- */
+/*      CPL level stuff                                                 */
+/* -------------------------------------------------------------------- */
 void CPLErrorReset();
 int CPLGetLastErrorNo();
 const char *CPLGetLastErrorMsg();
 
+void CSLDestroy(stringList);
+
+/* -------------------------------------------------------------------- */
+/*      General GDAL stuff.                                             */
+/* -------------------------------------------------------------------- */
 typedef int GDALDataType;
 typedef int GDALAccess;
 typedef int GDALRWFlag;
@@ -209,6 +310,12 @@ typedef void *GDALDatasetH;
 typedef void *GDALRasterBandH;
 typedef void *GDALDriverH;
 typedef void *GDALColorTableH;
+
+stringList GDALGetMetadata( GDALMajorObjectH, const char * );
+CPLErr     GDALSetMetadata( GDALMajorObjectH, stringList, const char * );
+
+const char *GDALGetDescription( GDALMajorObjectH );
+void        GDALSetDescription( GDALMajorObjectH, const char * );
 
 /* ==================================================================== */
 /*      Registration/driver related.                                    */
@@ -243,6 +350,8 @@ int 	GDALGetRasterCount( GDALDatasetH );
 GDALRasterBandH  GDALGetRasterBand( GDALDatasetH, int );
 const char  *GDALGetProjectionRef( GDALDatasetH );
 int      GDALSetProjection( GDALDatasetH, const char * );
+int      GDALGetGeoTransform( GDALDatasetH, double * );
+int      GDALSetGeoTransform( GDALDatasetH, double * );
 int      GDALReferenceDataset( GDALDatasetH );
 int      GDALDereferenceDataset( GDALDatasetH );
 int      GDALGetGCPCount( GDALDatasetH );
@@ -264,14 +373,16 @@ GDALColorInterp  GDALGetRasterColorInterpretation( GDALRasterBandH );
 GDALColorTableH  GDALGetRasterColorTable( GDALRasterBandH );
 int              GDALSetRasterColorTable( GDALRasterBandH, GDALColorTableH );
 
+double           GDALGetRasterNoDataValue( GDALRasterBandH, int * );
 int              GDALSetRasterNoDataValue( GDALRasterBandH, double );
 
+void             GDALComputeRasterMinMax( GDALRasterBandH hBand, int bApproxOK,
+                 	                  double adfMinMax[2] );
 /* category names missing ... needs special binding */
 
 int              GDALGetOverviewCount( GDALRasterBandH );
 GDALRasterBandH  GDALGetOverview( GDALRasterBandH, int );
 int              GDALFlushRasterCache( GDALRasterBandH );
-
 
 /* ==================================================================== */
 /*      Color tables.                                                   */
@@ -894,86 +1005,6 @@ py_GDALGCPsToGeoTransform(PyObject *self, PyObject *args) {
 
 %{
 /************************************************************************/
-/*                        GDALGetGeoTransform()                         */
-/************************************************************************/
-static PyObject *
-py_GDALGetGeoTransform(PyObject *self, PyObject *args) {
-
-    GDALDatasetH  _arg0;
-    char *_argc0 = NULL;
-    double geotransform[6];
-
-    self = self;
-    if(!PyArg_ParseTuple(args,"s:GDALGetGeoTransform",&_argc0))
-        return NULL;
-
-    if (_argc0) {
-        if (SWIG_GetPtr_2(_argc0,(void **) &_arg0,_GDALDatasetH)) {
-            PyErr_SetString(PyExc_TypeError,
-                            "Type error in argument 1 of GDALGetGeoTransform."
-                            "  Expected _GDALDatasetH.");
-            return NULL;
-        }
-    }
-	
-    GDALGetGeoTransform(_arg0,geotransform);
-
-    return Py_BuildValue("dddddd",
-	                 geotransform[0],
-	                 geotransform[1],
-	                 geotransform[2],
-	                 geotransform[3],
-	                 geotransform[4],
-	                 geotransform[5] );
-}
-%}
-
-%native(GDALGetGeoTransform) py_GDALGetGeoTransform;
-
-%{
-/************************************************************************/
-/*                        GDALSetGeoTransform()                         */
-/************************************************************************/
-static PyObject *
-py_GDALSetGeoTransform(PyObject *self, PyObject *args) {
-
-    GDALDatasetH  _arg0;
-    char *_argc0 = NULL;
-    double geotransform[6];
-    int    err;
-
-    self = self;
-    if(!PyArg_ParseTuple(args,"s(dddddd):GDALSetGeoTransform",&_argc0,
-	geotransform+0, geotransform+1, geotransform+2, 
-	geotransform+3, geotransform+4, geotransform+5) )
-        return NULL;
-
-    if (_argc0) {
-        if (SWIG_GetPtr_2(_argc0,(void **) &_arg0,_GDALDatasetH)) {
-            PyErr_SetString(PyExc_TypeError,
-                            "Type error in argument 1 of GDALSetGeoTransform."
-                            "  Expected _GDALDatasetH.");
-            return NULL;
-        }
-    }
-	
-    err = GDALSetGeoTransform(_arg0,geotransform);
-
-    if( err != CE_None )
-    {
-	PyErr_SetString(PyExc_TypeError,CPLGetLastErrorMsg());
-	return NULL;
-    }
-    
-    Py_INCREF(Py_None);
-    return Py_None;
-}
-%}
-
-%native(GDALSetGeoTransform) py_GDALSetGeoTransform;
-
-%{
-/************************************************************************/
 /*                       GDALGetRasterHistogram()                       */
 /************************************************************************/
 static PyObject *
@@ -1017,262 +1048,6 @@ py_GDALGetRasterHistogram(PyObject *self, PyObject *args) {
 %}
 
 %native(GDALGetRasterHistogram) py_GDALGetRasterHistogram;
-
-%{
-/************************************************************************/
-/*                        GDALComputeRasterMinMax()                     */
-/************************************************************************/
-static PyObject *
-py_GDALComputeRasterMinMax(PyObject *self, PyObject *args) {
-
-    GDALRasterBandH  hBand;
-    char *_argc0 = NULL;
-    int bApproxOK = 0;
-    double adfMinMax[2];
-
-    self = self;
-    if(!PyArg_ParseTuple(args,"s|i:GDALGetRasterMinMax",&_argc0,&bApproxOK))
-        return NULL;
-
-    if (_argc0) {
-        if (SWIG_GetPtr_2(_argc0,(void **) &hBand,_GDALRasterBandH)) {
-            PyErr_SetString(PyExc_TypeError,
-                          "Type error in argument 1 of GDALGetRasterMinMax."
-                          "  Expected _GDALRasterBandH.");
-            return NULL;
-        }
-    }
-
-    GDALComputeRasterMinMax( hBand, bApproxOK, adfMinMax );
-
-    return Py_BuildValue("dd", adfMinMax[0], adfMinMax[1] );
-}
-%}
-
-%native(GDALComputeRasterMinMax) py_GDALComputeRasterMinMax;
-
-%{
-/************************************************************************/
-/*                       GDALGetMetadata()                              */
-/************************************************************************/
-static PyObject *
-py_GDALGetMetadata(PyObject *self, PyObject *args) {
-
-    GDALMajorObjectH  hObject;
-    char *_argc0 = NULL;
-    PyObject *psDict;
-    int i;
-    char **papszMetadata;
-    char *pszDomain = NULL;
-
-    self = self;
-    if(!PyArg_ParseTuple(args,"s|s:GDALGetMetadata",&_argc0, &pszDomain))
-        return NULL;
-
-    if (_argc0) {
-#ifdef SWIGTYPE_GDALDatasetH
-        if (SWIG_ConvertPtr(_argc0,(void **) &hObject,NULL,0) ) 
-#else
-        if (SWIG_GetPtr(_argc0,(void **) &hObject,NULL )) 
-#endif
-	{
-            PyErr_SetString(PyExc_TypeError,
-                          "Type error in argument 1 of GDALGetMetadata."
-                          "  Expected _GDALMajorObjectH.");
-            return NULL;
-        }
-    }
-
-    psDict = PyDict_New();
-    
-    papszMetadata = GDALGetMetadata( hObject, pszDomain );
-
-    for( i = 0; i < CSLCount(papszMetadata); i++ )
-    {
-	char	*pszKey;
-	const char *pszValue;
-
-	pszValue = CPLParseNameValue( papszMetadata[i], &pszKey );
-	if( pszValue != NULL )
-	    PyDict_SetItem( psDict, 
-                            Py_BuildValue("s", pszKey ), 
-                            Py_BuildValue("s", pszValue ) );
-	CPLFree( pszKey );
-    }
-
-    return psDict;
-}
-%}
-
-%native(GDALGetMetadata) py_GDALGetMetadata;
-
-%{
-/************************************************************************/
-/*                          GDALSetMetadata()                           */
-/************************************************************************/
-static PyObject *
-py_GDALSetMetadata(PyObject *self, PyObject *args) {
-
-    GDALMajorObjectH  hObject;
-    char *_argc0 = NULL;
-    PyObject *psDict;
-    char **papszMetadata = NULL;
-    char *pszDomain = NULL;
-    int nPos = 0;
-    PyObject *psKey, *psValue;
-    CPLErr eErr;
-
-    self = self;
-    if(!PyArg_ParseTuple(args,"sO!|s:GDALSetMetadata",&_argc0, 
-			 &PyDict_Type, &psDict, &pszDomain))
-        return NULL;
-
-    if (_argc0) {
-#ifdef SWIGTYPE_GDALDatasetH
-        if (SWIG_ConvertPtr(_argc0,(void **) &hObject,NULL,0) ) 
-#else
-        if (SWIG_GetPtr(_argc0,(void **) &hObject,NULL )) 
-#endif
-	{
-            PyErr_SetString(PyExc_TypeError,
-                          "Type error in argument 1 of GDALSetMetadata."
-                          "  Expected _GDALMajorObjectH.");
-            return NULL;
-        }
-    }
-
-    while( PyDict_Next( psDict, &nPos, &psKey, &psValue ) ) 
-    {
-        char *pszKey, *pszValue;
-        
-	if( !PyArg_Parse( psKey, "s", &pszKey )
-	    || !PyArg_Parse( psValue, "s", &pszValue ) )
-        {
-	    PyErr_SetString(PyExc_TypeError,
-                    "Metadata dictionary keys and values must be strings.");
-            return NULL;
-        }
-
-        papszMetadata = CSLSetNameValue( papszMetadata, pszKey, pszValue );
-    }
-
-    eErr = GDALSetMetadata( hObject, papszMetadata, pszDomain );
-
-    CSLDestroy( papszMetadata );
-
-    if( eErr != CE_None )
-    {
-	PyErr_SetString(PyExc_TypeError,CPLGetLastErrorMsg());
-	return NULL;
-    }
-    
-    Py_INCREF(Py_None);
-    return Py_None;
-}
-%}
-
-%native(GDALSetMetadata) py_GDALSetMetadata;
-
-%{
-/************************************************************************/
-/*                         GDALGetDescription()                         */
-/************************************************************************/
-static PyObject *
-py_GDALGetDescription(PyObject *self, PyObject *args) {
-
-    GDALMajorObjectH  hObject;
-    char *_argc0 = NULL;
-
-    self = self;
-    if(!PyArg_ParseTuple(args,"s:GDALGetDescription",&_argc0))
-        return NULL;
-
-    if (_argc0) {
-#ifdef SWIGTYPE_GDALDatasetH
-        if (SWIG_ConvertPtr(_argc0,(void **) &hObject,NULL,0) ) 
-#else
-        if (SWIG_GetPtr(_argc0,(void **) &hObject,NULL )) 
-#endif
-	{
-            PyErr_SetString(PyExc_TypeError,
-                          "Type error in argument 1 of GDALGetDescription."
-                          "  Expected _GDALMajorObjectH.");
-            return NULL;
-        }
-    }
-
-    return Py_BuildValue("s", GDALGetDescription(hObject) );
-}
-%}
-
-%native(GDALGetDescription) py_GDALGetDescription;
-
-%{
-/************************************************************************/
-/*                         GDALSetDescription()                         */
-/************************************************************************/
-static PyObject *
-py_GDALSetDescription(PyObject *self, PyObject *args) {
-
-    GDALMajorObjectH  hObject;
-    char *_argc0 = NULL;
-    char *pszDesc = NULL;
-
-    self = self;
-    if(!PyArg_ParseTuple(args,"ss:GDALSetDescription",&_argc0, &pszDesc))
-        return NULL;
-
-    if (_argc0) {
-#ifdef SWIGTYPE_GDALDatasetH
-        if (SWIG_ConvertPtr(_argc0,(void **) &hObject,NULL,0) ) 
-#else
-        if (SWIG_GetPtr(_argc0,(void **) &hObject,NULL )) 
-#endif
-	{
-            PyErr_SetString(PyExc_TypeError,
-                          "Type error in argument 1 of GDALGetDescription."
-                          "  Expected _GDALMajorObjectH.");
-            return NULL;
-        }
-    }
-
-    GDALSetDescription( hObject, pszDesc );
-
-    Py_INCREF(Py_None);
-    return Py_None;
-}
-%}
-
-%native(GDALSetDescription) py_GDALSetDescription;
-
-%{
-/************************************************************************/
-/*                         GDALGetRasterNoDataValue()                   */
-/************************************************************************/
-static PyObject *
-py_GDALGetRasterNoDataValue(PyObject *self, PyObject *args) {
-
-    GDALRasterBandH  hObject;
-    char *_argc0 = NULL;
-
-    self = self;
-    if(!PyArg_ParseTuple(args,"s:GDALGetNoDataValue",&_argc0))
-        return NULL;
-
-    if (_argc0) {
-        if (SWIG_GetPtr_2(_argc0,(void **) &hObject,_GDALRasterBandH)) {
-            PyErr_SetString(PyExc_TypeError,
-                          "Type error in argument 1 of GDALGetNoDataValue."
-                          "  Expected _GDALRasterBandH.");
-            return NULL;
-        }
-    }
-
-    return Py_BuildValue("d", GDALGetRasterNoDataValue(hObject,NULL) );
-}
-%}
-
-%native(GDALGetRasterNoDataValue) py_GDALGetRasterNoDataValue;
 
 /* -------------------------------------------------------------------- */
 /*      Algorithms                                                      */
@@ -1457,9 +1232,10 @@ const char *OSRGetAuthorityName( OGRSpatialReferenceH hSRS,
 	                         const char * pszTargetKey );
 int     OSRSetProjParm( OGRSpatialReferenceH, const char *, double );
 double  OSRGetProjParm( OGRSpatialReferenceH hSRS,
-                        const char * pszParmName, 
-                        double dfDefault /* = 0.0 */,
-                        int    * /* = NULL */ );
+                        const char * pszParmName, double dfDefault, int * );
+int     OSRSetNormProjParm( OGRSpatialReferenceH, const char *, double);
+double  OSRGetNormProjParm( OGRSpatialReferenceH hSRS,
+                            const char * pszParmName, double dfDefault, int *);
 
 int     OSRSetUTM( OGRSpatialReferenceH hSRS, int nZone, int bNorth );
 int     OSRGetUTMZone( OGRSpatialReferenceH hSRS, int *pbNorth );
