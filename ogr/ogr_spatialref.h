@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.49  2003/03/12 14:25:01  warmerda
+ * added NeedsQuoting() method
+ *
  * Revision 1.48  2003/02/25 04:53:51  warmerda
  * added CopyGeogCSFrom() method
  *
@@ -212,6 +215,7 @@ class CPL_DLL OGR_SRSNode
     OGR_SRSNode *poParent;
 
     void        ClearChildren();
+    int         NeedsQuoting() const;
     
   public:
                 OGR_SRSNode(const char * = NULL);
