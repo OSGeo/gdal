@@ -3,7 +3,7 @@ GDAL_ROOT	=	../..
 
 include $(GDAL_ROOT)/GDALmake.opt
 
-OBJ	=	dted_api.o dteddataset.o dted_create.o
+OBJ	=	dted_api.o dteddataset.o dted_create.o dted_ptstream.o
 
 default:	$(OBJ)
 
@@ -25,5 +25,5 @@ install-obj:	$(foreach file,$(OBJ),../o/$(file))
 
 
 dted_test:	dted_test.o $(OBJ)
-	$(CC) -o dted_test dted_test.o dted_api.o dted_create.o \
+	$(CC) -o dted_test dted_test.o dted_api.o dted_create.o dted_ptstream.o \
 		 ../../port/cpl.a -lm 

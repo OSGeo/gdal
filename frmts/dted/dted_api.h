@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2001/11/23 16:43:47  warmerda
+ * added nodata constant
+ *
  * Revision 1.4  2001/11/21 19:55:49  warmerda
  * added pt stream api
  *
@@ -100,6 +103,8 @@ CPL_C_START
 #define DTED_DSI_SIZE 648
 #define DTED_ACC_SIZE 2700
 
+#define DTED_NODATA_VALUE -32767
+
 typedef struct {
   FILE		*fp;
 
@@ -140,6 +145,7 @@ const char *DTEDCreate( const char *pszFilename,
 /* -------------------------------------------------------------------- */
 void *DTEDCreatePtStream( const char *pszPath, int nLevel );
 int   DTEDWritePt( void *hStream, double dfLong, double dfLat, double dfElev );
+void  DTEDFillPtStream( void *hStream, int nPixelSearchDist );
 void  DTEDClosePtStream( void *hStream );
 
 CPL_C_END
