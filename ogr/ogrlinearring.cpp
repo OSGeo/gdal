@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2002/02/22 22:24:31  warmerda
+ * fixed 3d support in clone
+ *
  * Revision 1.7  2001/07/18 05:03:05  warmerda
  * added CPL_CVSID
  *
@@ -236,7 +239,7 @@ OGRGeometry *OGRLinearRing::clone()
     poNewLinearRing = new OGRLinearRing();
     poNewLinearRing->assignSpatialReference( getSpatialReference() );
 
-    poNewLinearRing->setPoints( nPointCount, paoPoints );
+    poNewLinearRing->setPoints( nPointCount, paoPoints, padfZ );
 
     return poNewLinearRing;
 }
