@@ -31,6 +31,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  1999/09/07 00:42:42  warmerda
+ * Grow index based on iRecordId rather than previous index max in
+ * FillIndex().
+ *
  * Revision 1.2  1999/09/03 13:01:39  warmerda
  * added docs
  *
@@ -210,7 +214,7 @@ void SDTSIndexedReader::FillIndex()
 
         if( iRecordId >= nIndexSize )
         {
-            int		nNewSize = (int) (nIndexSize * 1.25 + 100);
+            int		nNewSize = (int) (iRecordId * 1.25 + 100);
 
             papoFeatures = (SDTSFeature **)
                 CPLRealloc( papoFeatures, sizeof(void*) * nNewSize);
