@@ -18,4 +18,6 @@ CPPFLAGS	:=	-I../shape -I.. -I../.. $(GDAL_INCLUDE) $(CPPFLAGS)
 default:	$(O_OBJ)
 
 clean:
-	rm -f *.o
+	rm -f *.o $(O_OBJ)
+
+$(O_OBJ):	ogr_avc.h avc.h 
