@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.7  2000/01/31 04:13:10  warmerda
+ * Added logic in Create() to blow away old grid of same name if present.
+ *
  * Revision 1.6  2000/01/31 04:08:23  warmerda
  * Fixed georeference writing.
  *
@@ -540,6 +543,16 @@ GDALDataset *GIODataset::Create( const char * pszFilename,
             return NULL;
 
         nGridIOSetupCalled = TRUE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      If there is an existing grid, blow it away.                     */
+/* -------------------------------------------------------------------- */
+    VSIStatBuf      sStatBuf;
+
+    if( VSIStat( pszFilename, &sStatBuf ) == 0 && pfnGridDelete != NULL )
+    {
+        pfnGridDelete( (char *) pszFilename );
     }
     
 /* -------------------------------------------------------------------- */
