@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.30  2004/06/08 15:53:08  dron
+ * Even more fixes.
+ *
  * Revision 1.29  2004/06/08 13:38:16  dron
  * Few minor fixes.
  *
@@ -733,8 +736,9 @@ BMPComprRasterBand::BMPComprRasterBand( BMPDataset *poDS, int nBand )
                     i++;
                     if ( i < iComprSize - 1 )
                     {
-                        j += pabyComprBuf[i++] +
-                             pabyComprBuf[i++] * poDS->GetRasterXSize();
+                        j += pabyComprBuf[i] +
+                             pabyComprBuf[i+1] * poDS->GetRasterXSize();
+                        i += 2;
                     }
                     else
                         break;
@@ -783,8 +787,9 @@ BMPComprRasterBand::BMPComprRasterBand( BMPDataset *poDS, int nBand )
                     i++;
                     if ( i < iComprSize - 1 )
                     {
-                        j += pabyComprBuf[i++] +
-                             pabyComprBuf[i++] * poDS->GetRasterXSize();
+                        j += pabyComprBuf[i] +
+                             pabyComprBuf[i+1] * poDS->GetRasterXSize();
+                        i += 2;
                     }
                     else
                         break;
@@ -1051,12 +1056,12 @@ GDALDataset *BMPDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->nColorElems = 4;
     }
     
-    else if ( eBMPType == BMPT_OS22 )
+    if ( eBMPType == BMPT_OS22 )
     {
         poDS->nColorElems = 3; // FIXME: different info in different documents regarding this!
     }
     
-    else if ( eBMPType == BMPT_OS21 )
+    if ( eBMPType == BMPT_OS21 )
     {
         GInt16  iShort;
 
@@ -1068,6 +1073,7 @@ GDALDataset *BMPDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->sInfoHeader.iPlanes = CPL_LSBWORD16( iShort );
         VSIFReadL( &iShort, 1, 2, poDS->fp );
         poDS->sInfoHeader.iBitCount = CPL_LSBWORD16( iShort );
+        poDS->sInfoHeader.iCompression = BMPC_RGB;
         poDS->nColorElems = 3;
     }
 
