@@ -35,4 +35,4 @@ CPPFLAGS	+=	-I.. -I../..
 default:	$(O_OBJ)
 
 clean:
-	rm -f *.o
+	rm -f *.o $(O_OBJ)
