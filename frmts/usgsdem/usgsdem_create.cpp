@@ -31,6 +31,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.10  2004/04/29 13:46:46  warmerda
+ * flush CPLReadLine() memory
+ *
  * Revision 1.9  2004/04/27 14:54:56  warmerda
  * fixed filename checking, and DATAPOINTER support
  *
@@ -938,6 +941,11 @@ static int USGSDEMProductSetup_CDED50K( USGSDEMWriteInfo *psWInfo )
     oSRS.SetWellKnownGeogCS( "NAD83" );
 
     oSRS.exportToWkt( &(psWInfo->pszDstSRS) );
+
+/* -------------------------------------------------------------------- */
+/*      Cleanup.                                                        */
+/* -------------------------------------------------------------------- */
+    CPLReadLine( NULL );
 
     return TRUE;
 }
