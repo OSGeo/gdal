@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/07/06 20:25:09  warmerda
+ * added some documentation
+ *
  * Revision 1.1  1999/07/05 18:59:00  warmerda
  * new
  *
@@ -47,6 +50,11 @@
 /************************************************************************/
 /*                               OGRLayer                               */
 /************************************************************************/
+
+/**
+ * This class represents a layer of simple features, with access methods.
+ *
+ */
 
 class OGRLayer
 {
@@ -68,6 +76,16 @@ class OGRLayer
 /*                            OGRDataSource                             */
 /************************************************************************/
 
+/**
+ * This class represents a data source.  A data source potentially
+ * consists of many layers (OGRLayer).  A data source normally consists
+ * of one, or a related set of files, though the name doesn't have to be
+ * a real item in the file system.
+ *
+ * When an OGRDataSource is destroyed, all it's associated OGRLayers objects
+ * are also destroyed.
+ */ 
+
 class OGRDataSource
 {
   public:
@@ -84,19 +102,33 @@ class OGRDataSource
 /*                             OGRSFDriver                              */
 /************************************************************************/
 
+/**
+ * Represents an operational format driver.
+ *
+ * One OGRSFDriver derived class will normally exist for each file format
+ * registered for use, regardless of whether a file has or will be opened.
+ * The list of available drivers is normally managed by the
+ * OGRSFDriverRegistrar.
+ */
+
 class OGRSFDriver
 {
   public:
     virtual 	~OGRSFDriver() {}
 
     virtual const char	*GetName() = 0;
-    virtual OGRDataSource *Open( const char *pszName, int bUpdate ) = 0;
+    virtual OGRDataSource *Open( const char *pszName, int bUpdate=FALSE ) = 0;
 };
 
 
 /************************************************************************/
 /*                         OGRSFDriverRegistrar                         */
 /************************************************************************/
+
+/**
+ * Singleton manager for drivers.
+ *
+ */
 
 class OGRSFDriverRegistrar
 {
@@ -110,7 +142,7 @@ class OGRSFDriverRegistrar
                 ~OGRSFDriverRegistrar();
 
     static OGRSFDriverRegistrar *GetRegistrar();
-    static OGRDataSource *Open( const char *pszName, int bUpdate );
+    static OGRDataSource *Open( const char *pszName, int bUpdate=FALSE );
     
     void	RegisterDriver( OGRSFDriver * );
 
