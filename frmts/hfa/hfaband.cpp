@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.38  2004/08/19 18:46:57  warmerda
+ * Fixed problem with compressed floating point layers.
+ * http://bugzilla.remotesensing.org/show_bug.cgi?id=596
+ *
  * Revision 1.37  2003/10/02 16:35:21  warmerda
  * added logic to search for <basename>.rrd if overview file missing
  *
@@ -755,10 +759,12 @@ static CPLErr UncompressBlock( GByte *pabyCData, int /* nSrcBytes */,
         else if( nDataType == EPT_f32 )
         {
             int		i;
+            float fDataValue;
 
+            memcpy( &fDataValue, &nDataValue, 4);
             for( i = 0; i < nRepeatCount; i++ )
             {
-                ((float *) pabyDest)[nPixelsOutput++] = (float) nDataValue;
+                ((float *) pabyDest)[nPixelsOutput++] = fDataValue;
             }
         }
         else if( nDataType == EPT_u1 )
