@@ -24,7 +24,7 @@ To some extent this is now covered by the
 
 <!--------------------------------------------------------------------------->
 
-<li> <b>What exactly was the license terms for GDAL?</b><p>
+<li> <a name="license"><b>What exactly was the license terms for GDAL?</b></a><p>
 
 The following terms are the same as X windows is released under, and is
 generally known as the "MIT License".  It is intended to give you permission
@@ -78,8 +78,8 @@ OGR Projections Tutorial</a>.<p>
 
 <li> <b>Can I reproject rasters with GDAL?</b><p>
 
-At this time there is no utility for reprojecting images with GDAL.  Hopefully
-there will be soon, but no timetable is set.<p>
+For not-too-large 8bit rasters the <a href="gdal_utilities.html#gdalwarp">gdalwarp</a> utility can be used.  At this time there is no general solution,
+but hopfully there will be soon.<p>
 
 </ol>
 
