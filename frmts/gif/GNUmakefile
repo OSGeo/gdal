@@ -13,7 +13,7 @@ endif
 
 CPPFLAGS	:=	$(GDAL_INCLUDE) $(CPPFLAGS) $(XTRA_OPT)
 
-default:	$(OBJ)
+default:	$(O_OBJ)
 
 clean:
 	rm -f *.o $(O_OBJ)
