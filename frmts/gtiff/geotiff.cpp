@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  1999/12/30 02:43:12  warmerda
+ * allow an empty string in SetProjection
+ *
  * Revision 1.12  1999/11/17 16:16:53  warmerda
  * Fixed X/Y mixup in setting xblocksize for stripped files.
  *
@@ -775,7 +778,8 @@ CPLErr GTiffDataset::SetProjection( const char * pszNewProjection )
 
 {
     if( !EQUALN(pszNewProjection,"GEOGCS",6)
-        && !EQUALN(pszNewProjection,"PROJCS",6) )
+        && !EQUALN(pszNewProjection,"PROJCS",6)
+        && !EQUAL(pszNewProjection,"") )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                 "Only OGC WKT Projections supported for writing to GeoTIFF.\n"
