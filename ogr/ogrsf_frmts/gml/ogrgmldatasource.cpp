@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2003/01/22 17:20:24  warmerda
+ * fixed xsi:schemaLocation output
+ *
  * Revision 1.7  2003/01/17 20:40:06  warmerda
  * added bounding rectangle support and XSISCHEMAURI option
  *
@@ -342,7 +345,7 @@ int OGRGMLDataSource::Create( const char *pszFilename,
     {
         VSIFPrintf( fpOutput, 
               "     xmlns:xsi=\"http://www.w3c.org/2001/XMLSchema-instance\"\n"
-              "     xsi::schemaLocation=\"%s\"\n", 
+              "     xsi:schemaLocation=\"%s\"\n", 
                     CSLFetchNameValue( papszOptions, "XSISCHEMAURI" ) );
     }
 
