@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2003/07/08 19:46:30  dron
+ * Few typos fixed.
+ *
  * Revision 1.13  2003/07/04 12:34:16  dron
  * Fixed casting to byte in GWKCubicNoMasksByte().
  *
@@ -1185,21 +1188,30 @@ static int GWKBilinearResampleNoMasksByte( GDALWarpKernel *poWK, int iBand,
 /* -------------------------------------------------------------------- */
 /*      Return result.                                                  */
 /* -------------------------------------------------------------------- */
-    if( dfAccumulatorDivisor == 1.0 )
-    {
-        *pbValue = (GByte)dfAccumulator;
-        return TRUE;
-    }
-    else if( dfAccumulatorDivisor < 0.00001 )
+    double      dfValue;
+
+    if( dfAccumulatorDivisor < 0.00001 )
     {
         *pbValue = 0;
         return FALSE;
     }
+    else if( dfAccumulatorDivisor == 1.0 )
+    {
+        dfValue = dfAccumulator;
+    }
     else
     {
-        *pbValue = (GByte)(dfAccumulator / dfAccumulatorDivisor);
-        return TRUE;
+        dfValue = dfAccumulator / dfAccumulatorDivisor;
     }
+
+    if ( dfValue < 0.0 )
+        *pbValue = 0;
+    else if ( dfValue > 255.0 )
+        *pbValue = 255;
+    else
+        *pbValue = (GByte)dfValue;
+    
+    return TRUE;
 }
 
 static int GWKBilinearResampleNoMasksShort( GDALWarpKernel *poWK, int iBand, 
@@ -1318,7 +1330,7 @@ static int GWKCubicResample( GDALWarpKernel *poWK, int iBand,
 
     // Get the bilinear interpolation at the image borders
     if ( iSrcX - 1 < 0 || iSrcX + 2 >= poWK->nSrcXSize
-         || dfSrcY - 1 < 0 || iSrcY + 2 >= poWK->nSrcYSize )
+         || iSrcY - 1 < 0 || iSrcY + 2 >= poWK->nSrcYSize )
         return GWKBilinearResample( poWK, iBand, dfSrcX, dfSrcY,
                                     pdfDensity, pdfReal, pdfImag );
 
@@ -1433,7 +1445,7 @@ static int GWKCubicResampleNoMasksByte( GDALWarpKernel *poWK, int iBand,
 
     // Get the bilinear interpolation at the image borders
     if ( iSrcX - 1 < 0 || iSrcX + 2 >= poWK->nSrcXSize
-         || dfSrcY - 1 < 0 || iSrcY + 2 >= poWK->nSrcYSize )
+         || iSrcY - 1 < 0 || iSrcY + 2 >= poWK->nSrcYSize )
         return GWKBilinearResampleNoMasksByte( poWK, iBand, dfSrcX, dfSrcY,
                                                pbValue);
 
@@ -1465,14 +1477,15 @@ static int GWKCubicResampleNoMasksByte( GDALWarpKernel *poWK, int iBand,
     dfA2 = (dfD0 + dfD2) / 2.0;
     dfA3 = - dfD0 / 6.0 - dfD2 / 2.0 + dfD3 / 6.0;
     
-    double v = (dfA0 + dfA1 * dfDeltaY + dfA2 * dfDeltaY2 + dfA3 * dfDeltaY3);
+    double dfValue =
+        (dfA0 + dfA1 * dfDeltaY + dfA2 * dfDeltaY2 + dfA3 * dfDeltaY3);
 
-    if ( v < 0.0 )
+    if ( dfValue < 0.0 )
         *pbValue = 0;
-    else if ( v > 255.0 )
+    else if ( dfValue > 255.0 )
         *pbValue = 255;
     else
-        *pbValue = (GByte)v;
+        *pbValue = (GByte)dfValue;
     
     return TRUE;
 }
@@ -1497,7 +1510,7 @@ static int GWKCubicResampleNoMasksShort( GDALWarpKernel *poWK, int iBand,
 
     // Get the bilinear interpolation at the image borders
     if ( iSrcX - 1 < 0 || iSrcX + 2 >= poWK->nSrcXSize
-         || dfSrcY - 1 < 0 || iSrcY + 2 >= poWK->nSrcYSize )
+         || iSrcY - 1 < 0 || iSrcY + 2 >= poWK->nSrcYSize )
         return GWKBilinearResampleNoMasksShort( poWK, iBand, dfSrcX, dfSrcY,
                                                 piValue);
 
@@ -1564,7 +1577,7 @@ static int GWKCubicSplineResample( GDALWarpKernel *poWK, int iBand,
 
     // Get the bilinear interpolation at the image borders
     if ( iSrcX - 1 < 0 || iSrcX + 2 >= poWK->nSrcXSize
-         || dfSrcY - 1 < 0 || iSrcY + 2 >= poWK->nSrcYSize )
+         || iSrcY - 1 < 0 || iSrcY + 2 >= poWK->nSrcYSize )
         return GWKBilinearResample( poWK, iBand, dfSrcX, dfSrcY,
                                     pdfDensity, pdfReal, pdfImag );
 
@@ -1609,7 +1622,7 @@ static int GWKCubicSplineResampleNoMasksByte( GDALWarpKernel *poWK, int iBand,
 
     // Get the bilinear interpolation at the image borders
     if ( iSrcX - 1 < 0 || iSrcX + 2 >= poWK->nSrcXSize
-         || dfSrcY - 1 < 0 || iSrcY + 2 >= poWK->nSrcYSize )
+         || iSrcY - 1 < 0 || iSrcY + 2 >= poWK->nSrcYSize )
         return GWKBilinearResampleNoMasksByte( poWK, iBand, dfSrcX, dfSrcY,
                                                pbValue);
 
@@ -1627,8 +1640,13 @@ static int GWKCubicSplineResampleNoMasksByte( GDALWarpKernel *poWK, int iBand,
         }
     }
     
-    *pbValue = (GByte)dfAccumulator;
-    
+    if ( dfAccumulator < 0.0 )
+        *pbValue = 0;
+    else if ( dfAccumulator > 255.0 )
+        *pbValue = 255;
+    else
+        *pbValue = (GByte)dfAccumulator;
+     
     return TRUE;
 }
 
@@ -1647,7 +1665,7 @@ static int GWKCubicSplineResampleNoMasksShort( GDALWarpKernel *poWK, int iBand,
 
     // Get the bilinear interpolation at the image borders
     if ( iSrcX - 1 < 0 || iSrcX + 2 >= poWK->nSrcXSize
-         || dfSrcY - 1 < 0 || iSrcY + 2 >= poWK->nSrcYSize )
+         || iSrcY - 1 < 0 || iSrcY + 2 >= poWK->nSrcYSize )
         return GWKBilinearResampleNoMasksShort( poWK, iBand, dfSrcX, dfSrcY,
                                                 piValue);
 
