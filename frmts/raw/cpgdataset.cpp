@@ -28,6 +28,12 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2004/09/07 15:36:58  gwalter
+ * Updated to recognize more convair
+ * file naming conventions; change
+ * band ordering from hh,hv,vh,vv to
+ * hh,hv,vv,vh.
+ *
  * Revision 1.1  2004/09/03 19:07:25  warmerda
  * New
  *
@@ -112,7 +118,11 @@ int CPGDataset::AdjustFilename( char *pszFilename,
     /* eventually we should handle upper/lower case ... */
 
     strncpy( pszFilename + nNameLen - 3, pszExtension, 3 );
-    strncpy( pszFilename + nNameLen - 9, pszPolarization, 2 );
+    if ( EQUAL(pszFilename+nNameLen-7,"sso.hdr") || 
+         EQUAL(pszFilename+nNameLen-7,"sso.img"))
+        strncpy( pszFilename + nNameLen - 9, pszPolarization, 2 );
+    else
+        strncpy( pszFilename + nNameLen - 13, pszPolarization, 2 );
 
     return VSIStat( pszFilename, &sStatBuf ) == 0;
 }
@@ -130,9 +140,12 @@ GDALDataset *CPGDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     int nNameLen = strlen(poOpenInfo->pszFilename);
 
-    if( nNameLen < 9 
+    if(( nNameLen < 9 
         || (!EQUAL(poOpenInfo->pszFilename+nNameLen-7,"sso.hdr")
-            && !EQUAL(poOpenInfo->pszFilename+nNameLen-7,"sso.img")) )
+            && !EQUAL(poOpenInfo->pszFilename+nNameLen-7,"sso.img")) ) &&
+       ( nNameLen < 13 
+        || (!EQUAL(poOpenInfo->pszFilename+nNameLen-11,"polgasp.hdr")
+            && !EQUAL(poOpenInfo->pszFilename+nNameLen-11,"polgasp.img")) ))
         return NULL;
 
 /* -------------------------------------------------------------------- */
@@ -172,7 +185,6 @@ GDALDataset *CPGDataset::Open( GDALOpenInfo * poOpenInfo )
     AdjustFilename( pszWorkName, "hh", "hdr" );
     papszHdrLines = CSLLoad( pszWorkName );
 
-    
     for( iLine = 0; papszHdrLines && papszHdrLines[iLine] != NULL; iLine++ )
     {
         char **papszTokens = CSLTokenizeString( papszHdrLines[iLine] );
@@ -195,9 +207,7 @@ GDALDataset *CPGDataset::Open( GDALOpenInfo * poOpenInfo )
                  || (EQUAL(papszTokens[0],"number_format") 
                      && !EQUAL(papszTokens[1],"float32"))
                  || (EQUAL(papszTokens[0],"complex_flag") 
-                     && atoi(papszTokens[1]) != 1) 
-                 || (EQUAL(papszTokens[0],"transposed") 
-                     && atoi(papszTokens[1]) != 0) )
+                     && atoi(papszTokens[1]) != 1))
         {
             CPLError( CE_Failure, CPLE_AppDefined, 
                       "Keyword %s has value %s which does not match CPG driver expectation.",
@@ -238,7 +248,7 @@ GDALDataset *CPGDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Open the four bands.                                            */
 /* -------------------------------------------------------------------- */
-    char *apszPolarizations[4] = { "hh", "hv", "vh", "vv" };
+    char *apszPolarizations[4] = { "hh", "hv", "vv", "vh" };
 
     for( iBand = 0; iBand < 4; iBand++ )
     {
