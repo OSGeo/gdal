@@ -31,7 +31,7 @@ clean-dist:
 	rm -rf $(DISTDIR) $(DISTDIR).zip $(DISTDIR).tar.gz
 
 %.o:	%.cpp
-	$(CXX) -c $(ALL_CXX_FLAGS) -I$(GDAL_ROOT)/core -I$(GDAL_ROOT)/port \
+	$(CXX) -c $(ALL_CXX_FLAGS) -I$(GDAL_ROOT)/gcore -I$(GDAL_ROOT)/port \
 		$*.cpp -o $*.o
 
 $(SDTSLIB):	$(OBJ)

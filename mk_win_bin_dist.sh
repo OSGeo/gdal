@@ -30,7 +30,7 @@ cp apps/*.exe ogr/ogrinfo.exe ogr/ogr2ogr.exe $DIST_DIR/bin
 cp $PROJ_DLL $DIST_DIR/bin
 cp gdal_i.lib gdal.lib $DIST_DIR/lib
 cp data/*.csv $DIST_DIR/data
-cp port/*.h core/*.h ogr/*.h ogr/ogrsf_frmts/*.h $DIST_DIR/include
+cp port/*.h gcore/*.h ogr/*.h ogr/ogrsf_frmts/*.h $DIST_DIR/include
 cp html/*.* $DIST_DIR/html
 cp pymod/*.dll pymod/*.py $DIST_DIR/pymod
 cp dist_docs/README_WIN_BIN.TXT $DIST_DIR/README.TXT

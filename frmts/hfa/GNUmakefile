@@ -25,7 +25,7 @@ clean:
 	$(CXX) -c $(GDAL_INCLUDE) $(CXXFLAGS) $*.cpp -o $*.o
 
 %.o:	addtiffo_src/%.cpp
-	$(CXX) -c -I$(GDAL_ROOT)/core -I$(GDAL_ROOT)/port $(ALL_C_FLAGS) \
+	$(CXX) -c -I$(GDAL_ROOT)/gcore -I$(GDAL_ROOT)/port $(ALL_C_FLAGS) \
 		addtiffo_src/$*.cpp -o $*.o
 
 

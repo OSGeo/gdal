@@ -41,7 +41,7 @@ fi
 ###############################################################################
 # The following is intended to "burn" an updated INST_DATA location
 # into the given file over the preformatted message embedded in the so.
-# Look at core/gdaldrivermanager.cpp for a clue as to what is going on there.
+# Look at gcore/gdaldrivermanager.cpp for a clue as to what is going on there.
 #
 
 SHARED_LIB=libgdal.1.1.so
