@@ -30,6 +30,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.2  2000/11/17 17:18:03  warmerda
+# Added usage message.
+#
 # Revision 1.1  2000/11/17 17:15:46  warmerda
 # New
 #
@@ -38,6 +41,10 @@ import osr
 import sys
 import string
 
+if len(sys.argv) < 2:
+    print 'Usage: esri2wkt.py <esri .prj file>'
+    sys.exit(1)
+    
 prj_fd = open( sys.argv[1] )
 prj_lines = prj_fd.readlines()
 prj_fd.close()
