@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  1999/11/26 15:08:38  warmerda
+ * added setoptions, and LNAM support
+ *
  * Revision 1.5  1999/11/18 19:01:25  warmerda
  * expanded tabs
  *
@@ -56,10 +59,25 @@
 int main( int nArgc, char ** papszArgv )
 
 {
+    char	**papszOptions = NULL;
+    
     if( nArgc < 2 )
     {
-        printf( "Usage: s57dump filename\n" );
+        printf( "Usage: s57dump [-split] [-lnam] filename\n" );
         exit( 1 );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Process commandline arguments.                                  */
+/* -------------------------------------------------------------------- */
+    for( int iArg = 1; iArg < nArgc-1; iArg++ )
+    {
+        if( EQUAL(papszArgv[iArg],"-split") )
+            papszOptions =
+                CSLSetNameValue( papszOptions, "SPLIT_MULTIPOINT", "ON" );
+        else if( EQUALN(papszArgv[iArg],"-lnam",4) )
+            papszOptions =
+                CSLSetNameValue( papszOptions, "LNAME_REFS", "ON" );
     }
     
 /* -------------------------------------------------------------------- */
@@ -76,7 +94,7 @@ int main( int nArgc, char ** papszArgv )
     char        **papszFiles;
     int         iFile;
 
-    papszFiles = S57FileCollector( papszArgv[1] );
+    papszFiles = S57FileCollector( papszArgv[nArgc-1] );
 
     for( iFile = 0; papszFiles != NULL && papszFiles[iFile] != NULL; iFile++ )
     {
@@ -90,6 +108,8 @@ int main( int nArgc, char ** papszArgv )
         
         S57Reader       oReader( papszFiles[iFile] );
 
+        oReader.SetOptions( papszOptions );
+        
         if( !oReader.Open( FALSE ) )
             continue;
 
@@ -117,19 +137,19 @@ int main( int nArgc, char ** papszArgv )
                         oRegistrar.GetDescription() );
             
                 oReader.AddFeatureDefn(
-                    S57Reader::GenerateObjectClassDefn( &oRegistrar, i ) );
+                    oReader.GenerateObjectClassDefn( &oRegistrar, i ) );
             }
         }
         else
         {
             oReader.AddFeatureDefn(
-                S57Reader::GenerateGeomFeatureDefn( wkbPoint ) );
+                oReader.GenerateGeomFeatureDefn( wkbPoint ) );
             oReader.AddFeatureDefn(
-                S57Reader::GenerateGeomFeatureDefn( wkbLineString ) );
+                oReader.GenerateGeomFeatureDefn( wkbLineString ) );
             oReader.AddFeatureDefn(
-                S57Reader::GenerateGeomFeatureDefn( wkbPolygon ) );
+                oReader.GenerateGeomFeatureDefn( wkbPolygon ) );
             oReader.AddFeatureDefn(
-                S57Reader::GenerateGeomFeatureDefn( wkbNone ) );
+                oReader.GenerateGeomFeatureDefn( wkbNone ) );
         }
     
         OGRFeature      *poFeature;

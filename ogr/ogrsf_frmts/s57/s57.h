@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  1999/11/26 15:08:38  warmerda
+ * added setoptions, and LNAM support
+ *
  * Revision 1.7  1999/11/25 20:53:49  warmerda
  * added sounding and S57_SPLIT_MULTIPOINT support
  *
@@ -65,12 +68,6 @@ OGRPolygon *OGRBuildPolygonFromEdges( OGRGeometryCollection * poLines,
 class S57Reader;
 
 char **S57FileCollector( const char * pszDataset );
-
-/* -------------------------------------------------------------------- */
-/*      Define the following to automatically split sounding            */
-/*      wkgMultiPoint features into multiple wkbPoint features.         */
-/* -------------------------------------------------------------------- */
-#undef S57_SPLIT_MULTIPOINT
 
 /* -------------------------------------------------------------------- */
 /*      RCNM values.                                                    */
@@ -221,6 +218,10 @@ class S57Reader
     int                 nNextFEIndex;
     DDFRecordIndex      oFE_Index;
 
+    char		**papszOptions;
+    int			bGenerateLNAM;
+    
+    int			bSplitMultiPoint;
     int			iPointOffset;
     OGRFeature		*poMultiPoint;
 
@@ -230,6 +231,7 @@ class S57Reader
     OGRFeature         *AssembleFeature( DDFRecord  *, OGRFeatureDefn * );
 
     void                ApplyObjectClassAttributes( DDFRecord *, OGRFeature *);
+    void		GenerateLNAMAndRefs( DDFRecord *, OGRFeature * );
     
     void                AssembleSoundingGeometry( DDFRecord *, OGRFeature * );
     void                AssemblePointGeometry( DDFRecord *, OGRFeature * );
@@ -242,13 +244,14 @@ class S57Reader
     OGRFeatureDefn     *FindFDefn( DDFRecord * );
     int                 ParseName( DDFField *, int = 0, int * = NULL );
 
-static void             GenerateStandardAttributes( OGRFeatureDefn * );
+    void                GenerateStandardAttributes( OGRFeatureDefn * );
 
   public:
                         S57Reader( const char * );
                        ~S57Reader();
 
     void                SetClassBased( S57ClassRegistrar * );
+    void		SetOptions( char ** );
 
     int                 Open( int bTestOpen );
     void                Close();
@@ -266,8 +269,8 @@ static void             GenerateStandardAttributes( OGRFeatureDefn * );
 
     int                 CollectClassList( int *, int);
 
-static OGRFeatureDefn  *GenerateGeomFeatureDefn( OGRwkbGeometryType );
-static OGRFeatureDefn  *GenerateObjectClassDefn( S57ClassRegistrar *, int );
+    OGRFeatureDefn  *GenerateGeomFeatureDefn( OGRwkbGeometryType );
+    OGRFeatureDefn  *GenerateObjectClassDefn( S57ClassRegistrar *, int );
 };
 
 #endif /* ndef _S57_H_INCLUDED */

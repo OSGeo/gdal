@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  1999/11/26 15:08:38  warmerda
+ * added setoptions, and LNAM support
+ *
  * Revision 1.9  1999/11/26 13:50:34  warmerda
  * added NATF support
  *
@@ -85,6 +88,10 @@ S57Reader::S57Reader( const char * pszFilename )
 
     iPointOffset = 0;
     poMultiPoint = NULL;
+
+    papszOptions = NULL;
+    bSplitMultiPoint = FALSE;
+    bGenerateLNAM = FALSE;
 }
 
 /************************************************************************/
@@ -97,6 +104,7 @@ S57Reader::~S57Reader()
     Close();
     
     CPLFree( pszModuleName );
+    CSLDestroy( papszOptions );
 }
 
 /************************************************************************/
@@ -194,6 +202,8 @@ OGRFeature *S57Reader::NextPendingMultiPoint()
     OGRFeature	*poPoint = new OGRFeature( poDefn );
     OGRMultiPoint *poMPGeom = (OGRMultiPoint *) poMultiPoint->GetGeometryRef();
 
+    poPoint->SetFID( poMultiPoint->GetFID() );
+    
     for( int i = 0; i < poDefn->GetFieldCount(); i++ )
     {
         poPoint->SetField( i, poMultiPoint->GetRawFieldRef(i) );
@@ -205,6 +215,31 @@ OGRFeature *S57Reader::NextPendingMultiPoint()
         ClearPendingMultiPoint();
 
     return poPoint;
+}
+
+/************************************************************************/
+/*                             SetOptions()                             */
+/************************************************************************/
+
+void S57Reader::SetOptions( char ** papszOptionsIn )
+
+{
+    const char * pszOptionValue;
+    
+    CSLDestroy( papszOptions );
+    papszOptions = CSLDuplicate( papszOptionsIn );
+
+    pszOptionValue = CSLFetchNameValue( papszOptions, "SPLIT_MULTIPOINT" );
+    if( pszOptionValue != NULL && !EQUAL(pszOptionValue,"OFF") )
+        bSplitMultiPoint = TRUE;
+    else
+        bSplitMultiPoint = FALSE;
+
+    pszOptionValue = CSLFetchNameValue( papszOptions, "LNAME_REFS" );
+    if( pszOptionValue != NULL && !EQUAL(pszOptionValue,"OFF") )
+        bGenerateLNAM = TRUE;
+    else
+        bGenerateLNAM = FALSE;
 }
 
 /************************************************************************/
@@ -349,15 +384,16 @@ OGRFeature * S57Reader::ReadNextFeature( OGRFeatureDefn * poTarget )
 
         if( poFeature != NULL )
         {
-#ifdef S57_SPLIT_MULTIPOINT            
-            if(poFeature->GetGeometryRef() != NULL
-            && poFeature->GetGeometryRef()->getGeometryType() == wkbMultiPoint)
+            poFeature->SetFID( nNextFEIndex );
+            
+            if( bSplitMultiPoint && poFeature->GetGeometryRef() != NULL
+                && poFeature->GetGeometryRef()->getGeometryType()
+                					== wkbMultiPoint)
             {
                 poMultiPoint = poFeature;
                 iPointOffset = 0;
                 return NextPendingMultiPoint();
             }
-#endif
 
             return poFeature;
         }
@@ -419,6 +455,14 @@ OGRFeature *S57Reader::AssembleFeature( DDFRecord * poRecord,
                          poRecord->GetIntSubfield( "FOID", 0, "FIDN", 0 ));
     poFeature->SetField( "FIDS",
                          poRecord->GetIntSubfield( "FOID", 0, "FIDS", 0 ));
+
+/* -------------------------------------------------------------------- */
+/*      Generate long name, if requested.                               */
+/* -------------------------------------------------------------------- */
+    if( bGenerateLNAM )
+    {
+        GenerateLNAMAndRefs( poRecord, poFeature );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Apply object class specific attributes, if supported.           */
@@ -492,6 +536,65 @@ void S57Reader::ApplyObjectClassAttributes( DDFRecord * poRecord,
         poFeature->SetField( poRegistrar->GetAttrAcronym(nAttrId),
                           poRecord->GetStringSubfield("NATF",0,"ATVL",iAttr) );
     }
+}
+
+/************************************************************************/
+/*                        GenerateLNAMAndRefs()                         */
+/************************************************************************/
+
+void S57Reader::GenerateLNAMAndRefs( DDFRecord * poRecord,
+                                     OGRFeature * poFeature )
+
+{
+    char	szLNAM[32];
+        
+/* -------------------------------------------------------------------- */
+/*      Apply the LNAM to the object.                                   */
+/* -------------------------------------------------------------------- */
+    sprintf( szLNAM, "%04X%08X%04X",
+             poFeature->GetFieldAsInteger( "AGEN" ),
+             poFeature->GetFieldAsInteger( "FIDN" ),
+             poFeature->GetFieldAsInteger( "FIDS" ) );
+    poFeature->SetField( "LNAM", szLNAM );
+
+/* -------------------------------------------------------------------- */
+/*      Do we have references to other features.                        */
+/* -------------------------------------------------------------------- */
+    DDFField	*poFFPT;
+
+    poFFPT = poRecord->FindField( "FFPT" );
+
+    if( poFFPT == NULL )
+        return;
+
+/* -------------------------------------------------------------------- */
+/*      Apply references.                                               */
+/* -------------------------------------------------------------------- */
+    int		nRefCount = poFFPT->GetRepeatCount();
+    DDFSubfieldDefn *poLNAM;
+    char	**papszRefs = NULL;
+
+    poLNAM = poFFPT->GetFieldDefn()->FindSubfieldDefn( "LNAM" );
+    if( poLNAM == NULL )
+        return;
+
+    for( int iRef = 0; iRef < nRefCount; iRef++ )
+    {
+        unsigned char *pabyData;
+
+        pabyData = (unsigned char *)
+            poFFPT->GetSubfieldData( poLNAM, NULL, iRef );
+        
+        sprintf( szLNAM, "%02X%02X%02X%02X%02X%02X%02X%02X",
+                 pabyData[1], pabyData[0], /* AGEN */
+                 pabyData[5], pabyData[4], pabyData[3], pabyData[2], /* FIDN */
+                 pabyData[7], pabyData[6] );
+
+        papszRefs = CSLAddString( papszRefs, szLNAM );
+    }
+
+    poFeature->SetField( "LNAM_REFS", papszRefs );
+    CSLDestroy( papszRefs );
 }
 
 /************************************************************************/
@@ -1065,6 +1168,18 @@ void S57Reader::GenerateStandardAttributes( OGRFeatureDefn *poFDefn )
 /* -------------------------------------------------------------------- */
     oField.Set( "FIDS", OFTInteger, 5, 0 );
     poFDefn->AddFieldDefn( &oField );
+
+/* -------------------------------------------------------------------- */
+/*      LNAM - only generated when LNAM strings are being used.         */
+/* -------------------------------------------------------------------- */
+    if( bGenerateLNAM )
+    {
+        oField.Set( "LNAM", OFTString, 16, 0 );
+        poFDefn->AddFieldDefn( &oField );
+        
+        oField.Set( "LNAM_REFS", OFTStringList, 16, 0 );
+        poFDefn->AddFieldDefn( &oField );
+    }
 }
 
 /************************************************************************/
@@ -1140,11 +1255,12 @@ OGRFeatureDefn *S57Reader::GenerateObjectClassDefn( S57ClassRegistrar *poCR,
     else if( EQUAL(papszGeomPrim[0],"Point") )
     {
         if( EQUAL(poCR->GetAcronym(),"SOUNDG") )
-#ifndef S57_SPLIT_MULTIPOINT        
-            poFDefn->SetGeomType( wkbMultiPoint );
-#else
-            poFDefn->SetGeomType( wkbPoint25D );
-#endif
+        {
+            if( bSplitMultiPoint )
+                poFDefn->SetGeomType( wkbMultiPoint );
+            else
+                poFDefn->SetGeomType( wkbPoint25D );
+        }
         else
             poFDefn->SetGeomType( wkbPoint );
     }
