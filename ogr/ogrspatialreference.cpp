@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.90  2005/01/13 05:17:37  fwarmerdam
+ * added SetLinearUnitsAndUpdateParameters
+ *
  * Revision 1.89  2005/01/05 21:02:33  fwarmerdam
  * added Goode Homolosine
  *
@@ -944,6 +947,66 @@ double OSRGetAngularUnits( OGRSpatialReferenceH hSRS, char ** ppszName )
     
 {
     return ((OGRSpatialReference *) hSRS)->GetAngularUnits( ppszName );
+}
+
+/************************************************************************/
+/*                 SetLinearUnitsAndUpdateParameters()                  */
+/************************************************************************/
+
+/**
+ * Set the linear units for the projection.
+ *
+ * This method creates a UNITS subnode with the specified values as a
+ * child of the PROJCS or LOCAL_CS node.   It works the same as the
+ * SetLinearUnits() method, but it also updates all existing linear
+ * projection parameter values from the old units to the new units. 
+ *
+ * @param pszUnitsName the units name to be used.  Some preferred units
+ * names can be found in ogr_srs_api.h such as SRS_UL_METER, SRS_UL_FOOT 
+ * and SRS_UL_US_FOOT. 
+ *
+ * @param dfInMeters the value to multiple by a length in the indicated
+ * units to transform to meters.  Some standard conversion factors can
+ * be found in ogr_srs_api.h. 
+ *
+ * @return OGRERR_NONE on success.
+ */
+
+OGRErr OGRSpatialReference::SetLinearUnitsAndUpdateParameters(
+    const char *pszName, double dfInMeters )
+
+{
+    double dfOldInMeters = GetLinearUnits();
+    OGR_SRSNode *poPROJCS = GetAttrNode( "PROJCS" );
+
+    if( dfInMeters == 0.0 )
+        return OGRERR_FAILURE;
+
+    if( dfInMeters == dfOldInMeters || poPROJCS == NULL )
+        return SetLinearUnits( pszName, dfInMeters );
+
+    for( int iChild = 0; iChild < poPROJCS->GetChildCount(); iChild++ )
+    {
+        const OGR_SRSNode     *poChild = poPROJCS->GetChild(iChild);
+        
+        if( EQUAL(poChild->GetValue(),"PARAMETER")
+            && poChild->GetChildCount() > 1 )
+        {
+            char *pszParmName = CPLStrdup(poChild->GetChild(0)->GetValue());
+            
+            if( IsLinearParameter( pszParmName ) )
+            {
+                double dfOldValue = GetProjParm( pszParmName );
+
+                SetProjParm( pszParmName, 
+                             dfOldValue * dfOldInMeters / dfInMeters );
+            }
+
+            CPLFree( pszParmName );
+        }
+    }
+
+    return SetLinearUnits( pszName, dfInMeters );
 }
 
 /************************************************************************/
