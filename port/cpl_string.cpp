@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.17  2001/11/07 14:31:16  warmerda
+ * doc fix
+ *
  * Revision 1.16  2001/07/18 04:00:49  warmerda
  * added CPL_CVSID
  *
@@ -763,7 +766,7 @@ const char *CSLFetchNameValue(char **papszStrList, const char *pszName)
  * CPLParseNameValue(). 
  * 
  * @param pszNameValue string in "NAME=VALUE" format. 
- * @param ppszKey optional pointer though which to really the name
+ * @param ppszKey optional pointer though which to return the name
  * portion. 
  * @return the value portion (pointing into original string). 
  */
