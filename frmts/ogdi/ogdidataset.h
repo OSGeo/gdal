@@ -29,6 +29,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/02/25 22:20:47  warmerda
+ * Explicitly declare OGDIDataset constructor and destructor
+ *
  * Revision 1.1  1999/01/11 15:29:16  warmerda
  * New
  *
@@ -63,6 +66,9 @@ class CPL_DLL OGDIDataset : public GDALDataset
     char	*pszProjection;
 
   public:
+    		OGDIDataset();
+    		~OGDIDataset();
+                
     static GDALDataset *Open( GDALOpenInfo * );
 
     int		GetClientID() { return nClientID; }
