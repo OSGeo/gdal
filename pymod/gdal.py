@@ -29,6 +29,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.11  2000/06/26 19:54:52  warmerda
+# improve defaulting rules for overviewlist
+#
 # Revision 1.10  2000/06/26 18:46:31  warmerda
 # Added Dataset.BuildOverviews
 #
@@ -88,6 +91,15 @@ def GetDriverList():
     for iDriver in range(driver_count):
         list.append( Driver(_gdal.GDALGetDriver( iDriver )) )
     return list
+
+def GetDriverByName(name):
+    _gdal.GDALAllRegister()
+    driver_count = _gdal.GDALGetDriverCount()
+    for iDriver in range(driver_count):
+        driver_o = _gdal.GDALGetDriver( iDriver )
+        if _gdal.GDALGetDriverShortName(driver_o) == name:
+            return Driver(driver_o)
+    return None
     
 class GCP:
     def __init__(self):
@@ -109,7 +121,7 @@ class Driver:
 
     def CreateCopy(self, filename, source_ds, strict=1, options=None):
         target_ds = _gdal.GDALCreateCopy( self._o, filename, source_ds._o,
-                                          strict)
+                                          strict, options)
         if target_ds is None:
             return None
         else:
@@ -181,7 +193,17 @@ class Dataset:
 
         return gcp_list
 
-    def BuildOverviews(self, resampling="NEAREST", overviewlist = [2,4,8] ):
+    def BuildOverviews(self, resampling="NEAREST", overviewlist = None ):
+        if overviewlist is None:
+            if self.RasterXSize > 4096:
+                overviewlist = [2,4,8,16,32,64]
+            else if self.RasterXSize > 2048:
+                overviewlist = [2,4,8,16,32]
+            else if self.RasterXSize > 1024:
+                overviewlist = [2,4,8,16]
+            else:
+                overviewlist = [2,4,8]
+                
         return _gdal.GDALBuildOverviews(self._o, resampling, overviewlist, [])
 
 class Band:            
