@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2003/10/06 14:35:21  warmerda
+ * added support for secondary attribute tables.
+ *
  * Revision 1.14  2001/07/18 04:51:57  warmerda
  * added CPL_CVSID
  *
@@ -216,7 +219,8 @@ int main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
 /*      If the module is an attribute primary one, dump to DBF.         */
 /* -------------------------------------------------------------------- */
-    else if( pszMODN[0] == 'A' || pszMODN[0] == 'a' )
+    else if( pszMODN[0] == 'A' || pszMODN[0] == 'a' 
+             || pszMODN[0] == 'B' || pszMODN[0] == 'b' ) 
     {
         WriteAttributeDBF( pszShapefile, &oTransfer, pszMODN );
     }
