@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2000/07/09 20:48:02  warmerda
+ * added exportToPrettyWkt
+ *
  * Revision 1.10  2000/03/31 14:40:49  warmerda
  * Fixed multiple declaration of i in GetNode().
  *
@@ -455,6 +458,116 @@ OGRErr OGR_SRSNode::exportToWkt( char ** ppszResult )
             strcat( *ppszResult, "]" );
         else
             strcat( *ppszResult, "," );
+    }
+
+    CSLDestroy( papszChildrenWkt );
+
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                         exportToPrettyWkt()                          */
+/************************************************************************/
+
+OGRErr OGR_SRSNode::exportToPrettyWkt( char ** ppszResult, int bSimplify,
+                                       int nDepth )
+
+{
+    char        **papszChildrenWkt = NULL;
+    int         nLength = strlen(pszValue)+4;
+    int         i;
+
+/* -------------------------------------------------------------------- */
+/*      Skip uninteresting nodes if simplify flag is set.               */
+/* -------------------------------------------------------------------- */
+    if( bSimplify 
+        && (EQUAL(GetValue(),"AUTHORITY")
+            || EQUAL(GetValue(),"AXIS")) )
+    {
+        *ppszResult = CPLStrdup("");
+        return OGRERR_NONE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Build a list of the WKT format for the children.                */
+/* -------------------------------------------------------------------- */
+    papszChildrenWkt = (char **) CPLCalloc(sizeof(char*),(nChildren+1));
+    
+    for( i = 0; i < nChildren; i++ )
+    {
+        papoChildNodes[i]->exportToPrettyWkt( papszChildrenWkt + i,
+                                              bSimplify, nDepth + 1);
+        nLength += strlen(papszChildrenWkt[i]) + 2 + nDepth*4;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Allocate the result string.                                     */
+/* -------------------------------------------------------------------- */
+    *ppszResult = (char *) CPLMalloc(nLength);
+    *ppszResult[0] = '\0';
+    
+/* -------------------------------------------------------------------- */
+/*      Do we need to quote this value?  Determine whether or not       */
+/*      this is a terminal string value.                                */
+/* -------------------------------------------------------------------- */
+    int         bNeedQuoting = FALSE;
+
+    if( GetChildCount() == 0 )
+    {
+        for( i = 0; pszValue[i] != '\0'; i++ )
+        {
+            if( (pszValue[i] < '0' || pszValue[i] > '9')
+                && pszValue[i] != '.'
+                && pszValue[i] != '-' && pszValue[i] != '+'
+                && pszValue[i] != 'e' && pszValue[i] != 'E' )
+                bNeedQuoting = TRUE;
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Capture this nodes value.  We put it in double quotes if        */
+/*      this is a leaf node, otherwise we assume it is a well formed    */
+/*      node name.                                                      */
+/* -------------------------------------------------------------------- */
+    if( bNeedQuoting )
+    {
+        strcat( *ppszResult, "\"" );
+        strcat( *ppszResult, pszValue ); /* should we do quoting? */
+        strcat( *ppszResult, "\"" );
+    }
+    else
+        strcat( *ppszResult, pszValue );
+
+/* -------------------------------------------------------------------- */
+/*      Add the children strings with appropriate brackets and commas.  */
+/* -------------------------------------------------------------------- */
+    if( nChildren > 0 )
+        strcat( *ppszResult, "[" );
+    
+    for( i = 0; i < nChildren; i++ )
+    {
+        if( strlen(papszChildrenWkt[i]) == 0 )
+            continue;
+
+        if( papoChildNodes[i]->GetChildCount() > 0 )
+        {
+            int  j;
+
+            strcat( *ppszResult, "\n" );
+            for( j = 0; j < 4*nDepth; j++ )
+                strcat( *ppszResult, " " );
+        }
+        strcat( *ppszResult, papszChildrenWkt[i] );
+        if( i < nChildren-1 )
+            strcat( *ppszResult, "," );
+    }
+
+    if( nChildren > 0 )
+    {
+        if( (*ppszResult)[strlen(*ppszResult)-1] == ',' )
+            (*ppszResult)[strlen(*ppszResult)-1] = '\0';
+        
+        strcat( *ppszResult, "]" );
     }
 
     CSLDestroy( papszChildrenWkt );

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2000/07/09 20:48:02  warmerda
+ * added exportToPrettyWkt
+ *
  * Revision 1.6  2000/05/30 22:45:44  warmerda
  * added OSRCloneGeogCS()
  *
@@ -222,6 +225,7 @@ int CPL_DLL OSRDereference( OGRSpatialReferenceH );
 OGRErr CPL_DLL OSRImportFromEPSG( OGRSpatialReferenceH, int );
 OGRErr CPL_DLL OSRImportFromWkt( OGRSpatialReferenceH, char ** );
 OGRErr CPL_DLL OSRExportToWkt( OGRSpatialReferenceH, char ** );
+OGRErr CPL_DLL OSRExportToPrettyWkt( OGRSpatialReferenceH, char **, int);
 
 OGRErr CPL_DLL OSRSetAttrValue( OGRSpatialReferenceH hSRS,
                                 const char * pszNodePath,

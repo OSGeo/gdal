@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2000/07/09 20:48:02  warmerda
+ * added exportToPrettyWkt
+ *
  * Revision 1.20  2000/03/24 14:49:56  warmerda
  * added WGS84 related methods
  *
@@ -152,6 +155,7 @@ class OGR_SRSNode
 
     OGRErr      importFromWkt( char ** );
     OGRErr      exportToWkt( char ** );
+    OGRErr      exportToPrettyWkt( char **, int = FALSE, int = 1);
 };
 
 /************************************************************************/
@@ -192,6 +196,7 @@ class OGRSpatialReference
 
     OGRErr      importFromWkt( char ** );
     OGRErr      exportToWkt( char ** );
+    OGRErr      exportToPrettyWkt( char **, int = FALSE);
     OGRErr      exportToProj4( char ** );
     OGRErr      importFromEPSG( int );
 
