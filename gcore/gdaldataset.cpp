@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.44  2004/12/10 19:04:07  fwarmerdam
+ * fix up docs a bit
+ *
  * Revision 1.43  2004/12/02 20:32:28  fwarmerdam
  * added AdviseRead methods
  *
@@ -699,8 +702,10 @@ CPLErr GDALSetProjection( GDALDatasetH hDS, const char * pszProjection )
  * Fetches the coefficients for transforming between pixel/line (P,L) raster
  * space, and projection coordinates (Xp,Yp) space.
  *
- *  Xp = padfTransform[0] + P*padfTransform[1] + L*padfTransform[2];
- *  Yp = padfTransform[3] + P*padfTransform[4] + L*padfTransform[5];
+ * \code
+ *   Xp = padfTransform[0] + P*padfTransform[1] + L*padfTransform[2];
+ *   Yp = padfTransform[3] + P*padfTransform[4] + L*padfTransform[5];
+ * \endcode
  *
  * In a north up image, padfTransform[1] is the pixel width, and
  * padfTransform[5] is the pixel height.  The upper left corner of the
