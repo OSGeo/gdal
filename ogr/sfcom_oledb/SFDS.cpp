@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2002/09/30 12:57:30  warmerda
+ * fix pre-ATL_NET compat problem
+ *
  * Revision 1.3  2002/09/04 14:34:01  warmerda
  * dos to unix, fix warning
  *
@@ -226,6 +229,7 @@ void CSFSource::DumpProperties()
 
     CPLDebug( "OGR_OLEDB", "pUtlProps = %p", pUtlProps );
 
+#ifdef SUPPORT_ATL_NET
     CPLDebug( "OGR_OLEDB", 
               "m_pUProp = %p,"
               "m_cUPropSet = %d,"
@@ -234,6 +238,7 @@ void CSFSource::DumpProperties()
               pUtlProps->m_pUProp,
               pUtlProps->m_cUPropSet,
               sizeof(UPROPVAL), sizeof(ATL::UPROPVAL) );
+#endif
 
     for( unsigned int ulPropSet = 0; 
          ulPropSet < pUtlProps->m_cUPropSet; ulPropSet++ )
