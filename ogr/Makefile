@@ -1,4 +1,5 @@
 
+LINKFLAGS =	/Zi
 EXTRAFLAGS =	-I$(VCDIR)\ATL\Include \
 		-I$(MSDASDK)\include\oledb \
 		-I. -Iogrsf_frmts -I..\frmts\gtiff\libgeotiff /W3
@@ -52,37 +53,37 @@ ogroledb.lib:	$(OBJ_OLEDB)
 	lib /out:ogroledb.lib $(OBJ_OLEDB)
 
 sfcdump.exe:	geometryidl.h sfcdump.obj ogr.lib ogroledb.lib
-	cl sfcdump.obj ogroledb.lib ogr.lib $(ALL_LIBS)
+	cl $(LINKFLAGS) sfcdump.obj ogroledb.lib ogr.lib $(ALL_LIBS)
 
 test1.exe:	test1.obj $(OBJ_OGR) 
-	cl test1.obj $(OBJ_OGR) $(ALL_LIBS)
+	cl $(LINKFLAGS) test1.obj $(OBJ_OGR) $(ALL_LIBS)
 
 test2.exe:	test2.obj $(OBJ_OGR)
-	cl test2.obj $(OBJ_OGR) $(OGR_FRMTS) \
+	cl $(LINKFLAGS) test2.obj $(OBJ_OGR) $(OGR_FRMTS) \
 			$(ALL_LIBS)
 
 test3.exe:      test3.obj $(OBJ_OGR)
-        cl test3.obj $(OBJ_OGR) $(OGR_FRMTS) \
+        cl $(LINKFLAGS) test3.obj $(OBJ_OGR) $(OGR_FRMTS) \
 			$(ALL_LIBS)
 
 test_ogrsf.exe:      test_ogrsf.obj $(OBJ_OGR)
-        cl test_ogrsf.obj $(OBJ_OGR) $(OGR_FRMTS) \
+        cl $(LINKFLAGS) test_ogrsf.obj $(OBJ_OGR) $(OGR_FRMTS) \
 			$(ALL_LIBS)
 
 test_rep.exe:      test_rep.obj $(OBJ_OGR)
-        cl test_rep.obj $(OBJ_OGR) $(OGR_FRMTS) \
+        cl $(LINKFLAGS) test_rep.obj $(OBJ_OGR) $(OGR_FRMTS) \
 			$(ALL_LIBS)
 
 ogrinfo.exe:      ogrinfo.obj $(OBJ_OGR)
-        cl ogrinfo.obj $(OBJ_OGR) $(OGR_FRMTS) \
+        cl $(LINKFLAGS) ogrinfo.obj $(OBJ_OGR) $(OGR_FRMTS) \
 			$(ALL_LIBS)
 
 ogr2ogr.exe:      ogr2ogr.obj $(OBJ_OGR)
-        cl ogr2ogr.obj $(OBJ_OGR) $(OGR_FRMTS) \
+        cl $(LINKFLAGS) ogr2ogr.obj $(OBJ_OGR) $(OGR_FRMTS) \
 			$(ALL_LIBS)
 
 sdts2mi.exe:      sdts2mi.obj $(OBJ_OGR)
-        cl sdts2mi.obj $(OBJ_OGR) $(OGR_FRMTS) \
+        cl $(LINKFLAGS) sdts2mi.obj $(OBJ_OGR) $(OGR_FRMTS) \
 			$(ALL_LIBS)
 
 clean:
