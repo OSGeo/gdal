@@ -28,13 +28,32 @@
     <ancillary url="/home/warmerda/dods/natl_prof_bot.cdp.das"/>
   </entry>
   <entry>
+    <primary regexp="http://data.nodc.noaa.gov/cgi-bin/nph-dods/pathfinder/Version5.0/Monthly/2001/200105.s04m1pfv50-bsst-16b.hdf*"/>
+
+    <ancillary url="/home/warmerda/dods/200105.s04m1pfv50-bsst-16b.das"/>
+  </entry>
+
+
+  <entry>
+    <primary regexp="http://opendap.aviso.oceanobs.com/thredds/dodsC/merged/h/msla_oer_merged_h"/>
+
+    <ancillary url="/home/warmerda/dods/msla_oer_merged_h.das"/>
+  </entry>
+
+  <entry>
+    <primary regexp="http://opendap.aviso.oceanobs.com/thredds/dodsC/merged/h/msla_oer_merged_h_lr"/>
+
+    <ancillary url="/u/www/dods/tony/msla_oer_merged_h_lr.das"/>
+  </entry>
+
+  <entry>
     <primary regexp="http://opendap.aviso.oceanobs.com/dodsC/en/h/msla_oer_en_err*"/>
 
     <ancillary url="/home/warmerda/dods/msla_oer_en_err.das"/>
   </entry>
-  <entry>
-    <primary regexp="http://data.nodc.noaa.gov/cgi-bin/nph-dods/pathfinder/Version5.0/Monthly/2001/200105.s04m1pfv50-bsst-16b.hdf*"/>
 
-    <ancillary url="/home/warmerda/dods/200105.s04m1pfv50-bsst-16b.das"/>
+  <entry>
+    <primary regexp="http://opendap.mercator-ocean.fr/thredds/dodsC/mercator_psy2v1_mersea_grid1o8_nat_best_estimate"/>
+    <ancillary url="/home/warmerda/dods/mercator_psy2v1_mersea_grid1o8_nat_best_estimate.das"/>
   </entry>
 </ais>
