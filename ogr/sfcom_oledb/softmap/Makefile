@@ -25,24 +25,26 @@ default:	$(DLLNAME)
 
 all:	$(DLLNAME) install
 
-SF.obj SFRS.obj: $(SFOLEDB)/SF.h $(SFOLEDB)/SFDS.h $(SFOLEDB)/SFRS.h \
+SF.obj SFRS.obj: SF.h $(SFOLEDB)/SFDS.h $(SFOLEDB)/SFRS.h \
 		$(SFOLEDB)/SFSess.h 
 
-$(PROJ).res:	$(PROJ).rc $(SFOLEDB)/SF.h $(SFOLEDB)/sf_common.rc
+$(PROJ).res:	$(PROJ).rc SF.h $(SFOLEDB)/sf_common.rc
 	rc.exe /l 0x1009 /fo$(PROJ).res /I$(SFOLEDB) /d _DEBUG $(PROJ).rc
 
-$(DLLNAME):	$(SFOLEDB)/SF.h $(LOC_OBJ) $(PROJ).res
+$(DLLNAME):	SF.h $(LOC_OBJ) $(PROJ).res
 	link /dll /def:$(SFOLEDB)/SF.def /out:$(DLLNAME) \
 		$(LOC_OBJ) $(OGR_LIBS) $(OLE_LIBS) $(PROJ).res
 
 clean:
 	del *.obj *.exe *.dll $(PROJ).res $(DLLNAME)
-	del *.lib *.ilk *.exp *.pdb
+	del *.lib *.ilk *.exp *.pdb SF.h SF.tlb SF_i.c
 	del sf.cpp sfutil.cpp sftraceback.cpp SFRS.cpp
 
 install:      $(DLLNAME)
 	regsvr32 $(DLLNAME)
 
+SF.h:      $(PROJ).idl
+	midl /tlb SF.tlb /h SF.h /Oicf /iid SF_i.c $(PROJ).idl
 
 sf.cpp:	$(SFOLEDB)\sf.cpp
 	copy $(SFOLEDB)\sf.cpp
