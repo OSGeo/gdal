@@ -29,6 +29,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.32  2004/09/28 14:18:06  fwarmerdam
+ * A few more additions to improve error handling.  The "create" write
+ * error checks don't work (at least on Linux) because of the buffering.
+ *
  * Revision 1.31  2004/09/28 14:05:21  fwarmerdam
  * Try to strategically check the success of VSIFWriteL() calls in
  * the Create() method as per:
@@ -544,8 +548,8 @@ CPLErr BMPRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
     if ( VSIFSeekL( poGDS->fp, iScanOffset, SEEK_SET ) < 0 )
     {
         CPLError( CE_Failure, CPLE_FileIO,
-                  "Can't seek to offset %ld in output file to write data",
-                  iScanOffset );
+                  "Can't seek to offset %ld in output file to write data.\n%s",
+                  iScanOffset, VSIStrerror( errno ) );
         return CE_Failure;
     }
 
@@ -565,8 +569,9 @@ CPLErr BMPRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
     if ( VSIFWriteL( pabyScan, 1, nScanSize, poGDS->fp ) < nScanSize )
     {
         CPLError( CE_Failure, CPLE_FileIO,
-                  "Can't write block with X offset %d and Y offset %d",
-                  nBlockXOff, nBlockYOff );
+                  "Can't write block with X offset %d and Y offset %d.\n%s",
+                  nBlockXOff, nBlockYOff,
+                  VSIStrerror( errno ) );
         return CE_Failure;
     }
 
