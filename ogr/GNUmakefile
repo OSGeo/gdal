@@ -10,7 +10,9 @@ OBJ	=	ogrgeometryfactory.o ogrpoint.o ogrcurve.o ogrlinestring.o \
 		ogrfeature.o ogrfeaturedefn.o ogrfielddefn.o \
 		ogrspatialreference.o ogr_srsnode.o
 
-LIBS	:=	$(CPL_LIB) $(LIBS)
+LIBS	:=	$(CPL_LIB) $(LIBS) 
+
+LINCLUDE =	-Iogrsf_frmts -I. -I$(GDAL_ROOT)/port
 
 default:	$(OBJ)
 
@@ -23,19 +25,17 @@ very-clean: clean
 	rm -rf html
 
 %.o:	%.c
-	$(CC) -c $(GDAL_INCLUDE) $(CFLAGS) $*.c -o $*.o
+	$(CC) -c $(LINCLUDE) $(CFLAGS) $*.c -o $*.o
 
 %.o:	%.cpp
-	$(CXX) -c $(GDAL_INCLUDE) $(CFLAGS) $*.cpp -o $*.o
+	$(CXX) -c $(LINCLUDE) $(CFLAGS) $*.cpp -o $*.o
 
 
 test1:	$(OBJ) test1.o
 	$(CXX) $(LNK_FLAGS) test1.o $(OBJ) $(LIBS) -o test1
 
-test2:	$(OBJ) test2.o shape2ogr.o  
-	$(CXX) $(LNK_FLAGS) test2.o $(OBJ) shape2ogr.o \
-		../frmts/shapelib/shpopen.o \
-		../frmts/shapelib/dbfopen.o \
+test2:	$(OBJ) test2.o 
+	$(CXX) $(LNK_FLAGS) test2.o $(OBJ) ogrsf_frmts/ogrsf_frmts.a \
 						$(LIBS) -o test2
 
 
