@@ -3,6 +3,7 @@
 *.lib
 *.pdb
 *.ilk
+*.opt
 gdal_translate
 gdaladdo
 gdalinfo
