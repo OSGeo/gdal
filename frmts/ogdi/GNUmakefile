@@ -15,3 +15,7 @@ clean:
 
 %.o:	%.cpp
 	$(CC) -c $(ALL_C_FLAGS) $*.cpp -o $*.o
+
+
+install-obj:	$(OBJ)
+	cp $(OBJ) ../o

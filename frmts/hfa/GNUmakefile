@@ -5,7 +5,7 @@ include $(GDAL_ROOT)/GDALmake.opt
 
 HFAOBJ  =	hfaopen.o hfaentry.o hfadictionary.o hfafield.o hfatype.o \
 		hfaband.o
-OBJ	=	$(HFAOBJ) 
+OBJ	=	$(HFAOBJ) hfadataset.o 
 
 ALL_C_FLAGS	=	$(GDAL_INCLUDE) $(CFLAGS)
 
@@ -31,11 +31,11 @@ hfatest:	hfatest.o $(HFAOBJ)
 	$(CC) hfatest.o $(HFAOBJ) $(GDAL_ROOT)/port/*.o $(LIBS) -o hfatest
 
 img2tif:	img2tif.cpp imggeotiff.c geoextra.c $(HFAOBJ)
-	$(CC) $(ALL_C_FLAGS) -I../geotiff/libtiff -I../geotiff/libgeotiff \
+	$(CC) $(ALL_C_FLAGS) -I../gtiff/libtiff -I../gtiff/libgeotiff \
 		img2tif.cpp imggeotiff.c geoextra.c \
 		$(HFAOBJ) $(GDAL_ROOT)/port/*.o $(LIBS) \
-		../geotiff/libgeotiff/libgeotiff.a \
-		../geotiff/libtiff/libtiff.a \
+		../gtiff/libgeotiff/libgeotiff.a \
+		../gtiff/libtiff/libtiff.a \
 		-o img2tif
 
 
@@ -50,3 +50,9 @@ test:	hfatest
 
 test_img2tif:	img2tif
 	./tst_img2tif_1.sh
+
+
+install-obj:	$(OBJ)
+	cp $(OBJ) ../o
+
+
