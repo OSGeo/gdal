@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.2  1998/12/06 02:52:52  warmerda
+ * Implement assert support
+ *
  * Revision 1.1  1998/12/03 18:26:02  warmerda
  * New
  *
@@ -80,5 +83,6 @@ CPL_C_END
 #define CPLE_OpenFailed			4
 #define CPLE_IllegalArg			5
 #define CPLE_NotSupported		6
+#define CPLE_AssertionFailed		7
 
 #endif /* _CPL_ERROR_H_INCLUDED_ */

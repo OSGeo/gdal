@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.2  1998/12/06 02:52:52  warmerda
+ * Implement assert support
+ *
  * Revision 1.1  1998/12/03 18:26:02  warmerda
  * New
  *
@@ -128,3 +131,18 @@ void     CPLSetErrorHandler(void (*pfnErrorHandler)(CPLErr, int, const char *))
     gpfnCPLErrorHandler = pfnErrorHandler;
 }
 
+/************************************************************************/
+/*                             _CPLAssert()                             */
+/*                                                                      */
+/*      This function is called only when an assertion fails.           */
+/************************************************************************/
+
+void _CPLAssert( const char * pszExpression, const char * pszFile,
+                 int iLine )
+
+{
+    CPLError( CE_Fatal, CPLE_AssertionFailed,
+              "Assertion `%s' failed\n"
+              "in file `%s', line %d\n",
+              pszExpression, pszFile, iLine );
+}
