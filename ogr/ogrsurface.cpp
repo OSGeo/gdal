@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2005/04/06 20:43:00  fwarmerdam
+ * fixed a variety of method signatures for documentation
+ *
  * Revision 1.1  1999/05/31 14:59:26  warmerda
  * New
  *
@@ -37,27 +40,28 @@
 #include "ogr_p.h"
 
 /**
- * \fn double OGRSurface::get_Area();
+ * \fn double OGRSurface::get_Area() const;
  *
  * Get the area of the surface object.
  *
- * This method relates to the SFCOM ISurface::get_Area() method.
+ * For polygons the area is computed as the area of the outer ring less
+ * the area of all internal rings. 
  *
- * NOTE: Currently not implemented.
+ * This method relates to the SFCOM ISurface::get_Area() method.
  *
  * @return the area of the feature in square units of the spatial reference
  * system in use.
  */
 
 /**
- * \fn OGRErr OGRSurface::Centroid( OGRPoint * poPoint );
+ * \fn OGRErr OGRSurface::Centroid( OGRPoint * poPoint ) const;
  *
  * Compute and return centroid of surface.  The centroid is not necessarily
  * within the geometry.  
  *
  * This method relates to the SFCOM ISurface::get_Centroid() method.
  *
- * NOTE: Currently not implemented.
+ * NOTE: Only implemented when GEOS included in build.
  *
  * @param poPoint point to be set with the centroid location.
  *
@@ -65,11 +69,11 @@
  */
 
 /**
- * \fn OGRErr OGRSurface::PointOnSurface( OGRPoint * poPoint );
+ * \fn OGRErr OGRSurface::PointOnSurface( OGRPoint * poPoint ) const;
  *
  * This method relates to the SFCOM ISurface::get_PointOnSurface() method.
  *
- * NOTE: Currently not implemented.
+ * NOTE: Only implemented when GEOS included in build.
  *
  * @param poPoint point to be set with an internal point. 
  *

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.31  2005/04/06 20:43:00  fwarmerdam
+ * fixed a variety of method signatures for documentation
+ *
  * Revision 1.30  2005/02/22 12:38:01  fwarmerdam
  * rename Equal/Intersect to Equals/Intersects
  *
@@ -981,15 +984,6 @@ void OGRPolygon::closeRings()
 /************************************************************************/
 /*                              get_Area()                              */
 /************************************************************************/
-
-/**
- * Compute area of polygon.
- *
- * The area is computed as the area of the outer ring less the area of all
- * internal rings. 
- *
- * @return computed area.
- */
 
 double OGRPolygon::get_Area() const
 

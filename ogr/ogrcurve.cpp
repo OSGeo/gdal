@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2005/04/06 20:43:00  fwarmerdam
+ * fixed a variety of method signatures for documentation
+ *
  * Revision 1.10  2004/02/21 15:36:14  warmerda
  * const correctness updates for geometry: bug 289
  *
@@ -112,7 +115,7 @@ int OGRCurve::get_IsClosed() const
 }
 
 /**
- * \fn double OGRCurve::get_Length();
+ * \fn double OGRCurve::get_Length() const;
  *
  * Returns the length of the curve.
  *
@@ -123,7 +126,7 @@ int OGRCurve::get_IsClosed() const
  */
 
 /**
- * \fn void OGRCurve::StartPoint( OGRPoint * poPoint );
+ * \fn void OGRCurve::StartPoint( OGRPoint * poPoint ) const;
  *
  * Return the curve start point.
  *
@@ -133,7 +136,7 @@ int OGRCurve::get_IsClosed() const
  */
 
 /**
- * \fn void OGRCurve::EndPoint( OGRPoint * poPoint );
+ * \fn void OGRCurve::EndPoint( OGRPoint * poPoint ) const;
  *
  * Return the curve end point.
  *
@@ -143,7 +146,7 @@ int OGRCurve::get_IsClosed() const
  */
 
 /**
- * \fn void OGRCurve::Value( double dfDistance, OGRPoint * poPoint );
+ * \fn void OGRCurve::Value( double dfDistance, OGRPoint * poPoint ) const;
  *
  * Fetch point at given distance along curve.
  *

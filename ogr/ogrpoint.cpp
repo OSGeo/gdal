@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.30  2005/04/06 20:43:00  fwarmerdam
+ * fixed a variety of method signatures for documentation
+ *
  * Revision 1.29  2005/02/22 12:38:01  fwarmerdam
  * rename Equal/Intersect to Equals/Intersects
  *
@@ -487,7 +490,7 @@ void OGRPoint::getEnvelope( OGREnvelope * psEnvelope ) const
 
 
 /**
- * \fn double OGRPoint::getX();
+ * \fn double OGRPoint::getX() const;
  *
  * Fetch X coordinate.
  *
@@ -497,7 +500,7 @@ void OGRPoint::getEnvelope( OGREnvelope * psEnvelope ) const
  */
 
 /**
- * \fn double OGRPoint::getY();
+ * \fn double OGRPoint::getY() const;
  *
  * Fetch Y coordinate.
  *
@@ -507,7 +510,7 @@ void OGRPoint::getEnvelope( OGREnvelope * psEnvelope ) const
  */
 
 /**
- * \fn double OGRPoint::getZ();
+ * \fn double OGRPoint::getZ() const;
  *
  * Fetch Z coordinate.
  *
