@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.18  2003/06/19 09:36:13  dron
+ * Fixed reading number of meaningful GCPs for NOAA-9/NOAA-14 data format.
+ *
  * Revision 1.17  2003/04/17 12:54:21  dron
  * Fixed small memory leak.
  *
@@ -106,7 +109,7 @@ enum {          // Spacecrafts:
     NOAA14,     // NOAA-14(J)
     NOAA15,     // NOAA-15(K)
     NOAA16,     // NOAA-16(L)
-    NOAA17,     // NOAA-17(M)
+    NOAA17      // NOAA-17(M)
 };
 
 enum {          // Types of datasets
@@ -510,6 +513,11 @@ void L1BDataset::FetchNOAA9GCPs(GDAL_GCP *pasGCPList, GInt16 *piRecordHeader, in
     
     nGoodGCPs = ((GByte)*(piRecordHeader + iGCPCodeOffset) <= nGCPPerLine)?
             (GByte)*(piRecordHeader + iGCPCodeOffset):nGCPPerLine;
+
+#ifdef DEBUG
+    CPLDebug( "L1B", "nGCPPerLine=%d, nGoodGCPs=%d",
+              nGCPPerLine, nGoodGCPs );
+#endif
     dfPixel = (iLocationIndicator == DESCEND)?dfGCPStart: GetRasterXSize() - dfGCPStart;
     j = iGCPOffset / (int)sizeof(piRecordHeader[0]);
     iGCPPos = iGCPOffset / (int)sizeof(piRecordHeader[0]) + 2 * nGoodGCPs;
@@ -757,7 +765,8 @@ GDALDataset *L1BDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->nBands = 5;
         poDS->iChannels = 0x1F;
     }
-    if ( EQUALN((const char *)poDS->pabyTBMHeader + 117, "10", 2) )
+    if ( EQUALN((const char *)poDS->pabyTBMHeader + 117, "10", 2) ||
+         EQUALN((const char *)poDS->pabyTBMHeader + 117, "  ", 2) )
         poDS->iDataFormat = PACKED10BIT;
     else if ( EQUALN((const char *)poDS->pabyTBMHeader + 117, "16", 2) )
         poDS->iDataFormat = UNPACKED16BIT;
@@ -836,7 +845,7 @@ GDALDataset *L1BDataset::Open( GDALOpenInfo * poOpenInfo )
                 }
                 poDS->nDataStartOffset = poDS->nRecordSize + 122;
                 poDS->nRecordDataStart = 448;
-                poDS->iGCPCodeOffset = 53;
+                poDS->iGCPCodeOffset = 52;
                 poDS->iGCPOffset = 104;
             }
             else if (poDS->iSpacecraftID <= NOAA17)
@@ -900,7 +909,7 @@ GDALDataset *L1BDataset::Open( GDALOpenInfo * poOpenInfo )
                 }
                 poDS->nDataStartOffset = poDS->nRecordSize + 512;
                 poDS->nRecordDataStart = 1264;
-                poDS->iGCPCodeOffset = 0; // XXX: not exists for NOAA15?
+                poDS->iGCPCodeOffset = 0; // XXX: not exist for NOAA15?
                 poDS->iGCPOffset = 640;
             }
             else
@@ -971,7 +980,7 @@ GDALDataset *L1BDataset::Open( GDALOpenInfo * poOpenInfo )
                 }
                 poDS->nDataStartOffset = poDS->nRecordSize * 2 + 122;
                 poDS->nRecordDataStart = 448;
-                poDS->iGCPCodeOffset = 53;
+                poDS->iGCPCodeOffset = 52;
                 poDS->iGCPOffset = 104;
             }
             else if (poDS->iSpacecraftID <= NOAA17)
@@ -1035,7 +1044,7 @@ GDALDataset *L1BDataset::Open( GDALOpenInfo * poOpenInfo )
                 }
                 poDS->nDataStartOffset = poDS->nRecordSize + 512;
                 poDS->nRecordDataStart = 1264;
-                poDS->iGCPCodeOffset = 0; // XXX: not exists for NOAA15?
+                poDS->iGCPCodeOffset = 0; // XXX: not exist for NOAA15?
                 poDS->iGCPOffset = 640;
             }
             else
