@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_imapinfofile.cpp,v 1.15 2001/07/03 23:11:21 daniel Exp $
+ * $Id: mitab_imapinfofile.cpp,v 1.17 2001/09/14 19:14:43 warmerda Exp $
  *
  * Name:     mitab_imapinfo
  * Project:  MapInfo mid/mif Tab Read/Write library
@@ -31,6 +31,12 @@
  **********************************************************************
  *
  * $Log: mitab_imapinfofile.cpp,v $
+ * Revision 1.17  2001/09/14 19:14:43  warmerda
+ * added attribute query support
+ *
+ * Revision 1.16  2001/09/14 03:23:55  warmerda
+ * Substantial upgrade to support spatial queries using spatial indexes
+ *
  * Revision 1.15  2001/07/03 23:11:21  daniel
  * Test for NULL geometries if spatial filter enabled in GetNextFeature().
  *
@@ -221,9 +227,11 @@ OGRFeature *IMapInfoFile::GetNextFeature()
         poFeatureRef = GetFeatureRef(nFeatureId);
         if (poFeatureRef == NULL)
             return NULL;
-        else if (m_poFilterGeom == NULL ||
-                 ((poGeom = poFeatureRef->GetGeometryRef()) != NULL &&
-                  m_poFilterGeom->Intersect( poGeom )) )
+        else if( (m_poFilterGeom == NULL ||
+                  ((poGeom = poFeatureRef->GetGeometryRef()) != NULL &&
+                   m_poFilterGeom->Intersect( poGeom )))
+                 && (m_poAttrQuery == NULL
+                     || m_poAttrQuery->Evaluate( poFeatureRef )) )
         {
             // Avoid cloning feature... return the copy owned by the class
             CPLAssert(poFeatureRef == m_poCurFeature);
@@ -382,6 +390,8 @@ void IMapInfoFile::SetSpatialFilter (OGRGeometry * poGeomIn )
 
     if( poGeomIn != NULL )
         m_poFilterGeom = poGeomIn->clone();
+
+    ResetReading();
 }
 
 /************************************************************************/

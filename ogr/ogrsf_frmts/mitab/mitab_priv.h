@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_priv.h,v 1.25 2001/05/01 18:28:10 daniel Exp $
+ * $Id: mitab_priv.h,v 1.26 2001/09/14 03:23:55 warmerda Exp $
  *
  * Name:     mitab_priv.h
  * Project:  MapInfo TAB Read/Write library
@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log: mitab_priv.h,v $
+ * Revision 1.26  2001/09/14 03:23:55  warmerda
+ * Substantial upgrade to support spatial queries using spatial indexes
+ *
  * Revision 1.25  2001/05/01 18:28:10  daniel
  * Fixed default BRUSH, should be BRUSH(1,0,16777215).
  *
@@ -543,7 +546,7 @@ class TABMAPIndexBlock: public TABRawBinBlock
 {
   protected:
     int         m_numEntries;
-    TABMAPIndexEntry m_pasEntries[TAB_MAX_ENTRIES_INDEX_BLOCK];
+    TABMAPIndexEntry m_asEntries[TAB_MAX_ENTRIES_INDEX_BLOCK];
 
     int         ReadNextEntry(TABMAPIndexEntry *psEntry);
     int         WriteNextEntry(TABMAPIndexEntry *psEntry);
@@ -578,6 +581,7 @@ class TABMAPIndexBlock: public TABRawBinBlock
 
     int         GetNumFreeEntries();
     int         GetNumEntries()         {return m_numEntries;};
+    TABMAPIndexEntry *GetEntry( int iIndex );
     int         AddEntry(GInt32 XMin, GInt32 YMin,
                          GInt32 XMax, GInt32 YMax,
                          GInt32 nBlockPtr,
@@ -590,6 +594,10 @@ class TABMAPIndexBlock: public TABRawBinBlock
     void        SetMAPBlockManagerRef(TABBinBlockManager *poBlockMgr);
     void        SetParentRef(TABMAPIndexBlock *poParent);
     void        SetCurChildRef(TABMAPIndexBlock *poChild, int nChildIndex);
+
+    int         GetCurChildIndex() { return m_nCurChildIndex; }
+    TABMAPIndexBlock *GetCurChild() { return m_poCurChild; }
+    TABMAPIndexBlock *GetParentRef() { return m_poParentRef; } 
 
     int         SplitNode(int nNewEntryX, int nNewEntryY);
     int         SplitRootNode(int nNewEntryX, int nNewEntryY);
@@ -626,6 +634,10 @@ class TABMAPObjectBlock: public TABRawBinBlock
     GInt32      m_nMaxX;
     GInt32      m_nMaxY;
 
+    int         m_nCurObjectOffset; // -1 if there is no current object.
+    int         m_nCurObjectId;     // -1 if there is no current object.
+    int         m_nCurObjectType;   // -1 if there is no current object.
+
   public:
     TABMAPObjectBlock(TABAccess eAccessMode = TABRead);
     ~TABMAPObjectBlock();
@@ -648,6 +660,11 @@ class TABMAPObjectBlock: public TABRawBinBlock
 
     void        GetMBR(GInt32 &nXMin, GInt32 &nYMin, 
                        GInt32 &nXMax, GInt32 &nYMax);
+
+    int         AdvanceToNextObject( TABMAPHeaderBlock * );
+    int		GetCurObjectOffset() { return m_nCurObjectOffset; }
+    int		GetCurObjectId() { return m_nCurObjectId; }
+    int		GetCurObjectType() { return m_nCurObjectType; }
 
 #ifdef DEBUG
     virtual void Dump(FILE *fpOut = NULL);
@@ -868,6 +885,12 @@ class TABMAPFile
 
     int         CommitSpatialIndex();
 
+    // Stuff related to traversing spatial index.
+    TABMAPIndexBlock *m_poSpIndexLeaf;
+
+    int         LoadNextMatchingObjectBlock();
+    TABRawBinBlock *PushBlock( int nFileOffset );
+    
   public:
     TABMAPFile();
     ~TABMAPFile();
@@ -881,12 +904,17 @@ class TABMAPFile
     int         Int2CoordsysDist(GInt32 nX, GInt32 nY, double &dX, double &dY);
     int         Coordsys2IntDist(double dX, double dY, GInt32 &nX, GInt32 &nY);
     void        SetCoordFilter(TABVertex sMin, TABVertex sMax);
+    void        GetCoordFilter(TABVertex &sMin, TABVertex &sMax);
+    void        ResetCoordFilter();
     int         SetCoordsysBounds(double dXMin, double dYMin, 
                                   double dXMax, double dYMax);
 
     GInt32      GetMaxObjId();
     int         MoveToObjId(int nObjId);
     int         PrepareNewObj(int nObjId, GByte nObjType);
+
+    void        ResetReading();
+    int		GetNextFeatureId( int nPrevId );
 
     int         GetCurObjType();
     int         GetCurObjId();
@@ -895,6 +923,7 @@ class TABMAPFile
     TABMAPCoordBlock  *GetCoordBlock(int nFileOffset);
     TABMAPHeaderBlock *GetHeaderBlock();
     TABIDFile         *GetIDFileRef();
+    TABRawBinBlock    *GetIndexObjectBlock(int nFileOffset);
 
     int         ReadPenDef(int nPenIndex, TABPenDef *psDef);
     int         ReadBrushDef(int nBrushIndex, TABBrushDef *psDef);

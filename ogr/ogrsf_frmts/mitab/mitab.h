@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab.h,v 1.53 2001/06/25 01:51:19 daniel Exp $
+ * $Id: mitab.h,v 1.54 2001/09/14 03:23:55 warmerda Exp $
  *
  * Name:     mitab.h
  * Project:  MapInfo MIF Read/Write library
@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log: mitab.h,v $
+ * Revision 1.54  2001/09/14 03:23:55  warmerda
+ * Substantial upgrade to support spatial queries using spatial indexes
+ *
  * Revision 1.53  2001/06/25 01:51:19  daniel
  * Version 1.1.2
  *
@@ -264,6 +267,7 @@ class TABFile: public IMapInfoFile
 
     OGRFeatureDefn *m_poDefn;
     OGRSpatialReference *m_poSpatialRef;
+    int         bUseSpatialTraversal;
 
     int         m_nLastFeatureId;
 
@@ -300,6 +304,8 @@ class TABFile: public IMapInfoFile
     ///////////////
     // Read access specific stuff
     //
+
+    int		GetNextFeatureId_Spatial( int nPrevId );
 
     virtual int GetNextFeatureId(int nPrevId);
     virtual TABFeature *GetFeatureRef(int nFeatureId);
@@ -345,6 +351,8 @@ class TABFile: public IMapInfoFile
 
     int         GetFieldIndexNumber(int nFieldId);
     TABINDFile  *GetINDFileRef();
+
+    TABMAPFile  *GetMAPFileRef() { return m_poMAPFile; }
 
 #ifdef DEBUG
     virtual void Dump(FILE *fpOut = NULL);

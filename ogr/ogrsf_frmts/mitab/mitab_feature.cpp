@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_feature.cpp,v 1.38 2001/07/03 03:14:52 daniel Exp $
+ * $Id: mitab_feature.cpp,v 1.39 2001/09/05 13:33:33 daniel Exp $
  *
  * Name:     mitab_feature.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log: mitab_feature.cpp,v $
+ * Revision 1.39  2001/09/05 13:33:33  daniel
+ * TABPolyline::ValidateMapInfoType(): return TAB_GEOM_NONE if numpoints < 2
+ *
  * Revision 1.38  2001/07/03 03:14:52  daniel
  * GetLabelStyleString(): take line spacing and num. of lines into account
  * when calculating text height.
@@ -1459,9 +1462,15 @@ int  TABPolyline::ValidateMapInfoType()
         {
             m_nMapInfoType = TAB_GEOM_PLINE;
         }
-        else
+        else if ( poLine->getNumPoints() == 2 )
         {
             m_nMapInfoType = TAB_GEOM_LINE;
+        }
+        else
+        {
+            CPLError(CE_Failure, CPLE_AssertionFailed,
+                     "TABPolyline: Geometry must contain at least 2 points.");
+            m_nMapInfoType = TAB_GEOM_NONE;
         }
     }
     else if (poGeom && poGeom->getGeometryType() == wkbMultiLineString)

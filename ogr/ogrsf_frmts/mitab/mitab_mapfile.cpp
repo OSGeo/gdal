@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_mapfile.cpp,v 1.18 2001/03/15 03:57:51 daniel Exp $
+ * $Id: mitab_mapfile.cpp,v 1.19 2001/09/14 03:23:55 warmerda Exp $
  *
  * Name:     mitab_mapfile.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -31,6 +31,9 @@
  **********************************************************************
  *
  * $Log: mitab_mapfile.cpp,v $
+ * Revision 1.19  2001/09/14 03:23:55  warmerda
+ * Substantial upgrade to support spatial queries using spatial indexes
+ *
  * Revision 1.18  2001/03/15 03:57:51  daniel
  * Added implementation for new OGRLayer::GetExtent(), returning data MBR.
  *
@@ -108,6 +111,7 @@ TABMAPFile::TABMAPFile()
     m_pszFname = NULL;
     m_poHeader = NULL;
     m_poSpIndex = NULL;
+    m_poSpIndexLeaf = NULL;
 
     m_poCurObjBlock = NULL;
     m_nCurObjPtr = -1;
@@ -115,7 +119,6 @@ TABMAPFile::TABMAPFile()
     m_nCurObjId = -1;
     m_poCurCoordBlock = NULL;
     m_poToolDefTable = NULL;
-
 }
 
 /**********************************************************************
@@ -292,14 +295,7 @@ int TABMAPFile::Open(const char *pszFname, const char *pszAccess,
      *----------------------------------------------------------------*/
     if (m_eAccessMode == TABRead)
     {
-        m_XMinFilter = m_poHeader->m_nXMin;
-        m_YMinFilter = m_poHeader->m_nYMin;
-        m_XMaxFilter = m_poHeader->m_nXMax;
-        m_YMaxFilter = m_poHeader->m_nYMax;
-        Int2Coordsys(m_XMinFilter, m_YMinFilter,
-                     m_sMinFilter.x, m_sMinFilter.y);
-        Int2Coordsys(m_XMaxFilter, m_YMaxFilter, 
-                     m_sMaxFilter.x, m_sMaxFilter.y);
+        ResetCoordFilter();
     }
 
     /*-----------------------------------------------------------------
@@ -436,6 +432,7 @@ int TABMAPFile::Close()
     {
         delete m_poSpIndex;
         m_poSpIndex = NULL;
+        m_poSpIndexLeaf = NULL;
     }
 
     if (m_poToolDefTable)
@@ -455,6 +452,212 @@ int TABMAPFile::Close()
     return 0;
 }
 
+/************************************************************************/
+/*                             PushBlock()                              */
+/*                                                                      */
+/*      Install a new block (object or spatial) as being current -      */
+/*      whatever that means.  This method is only intended to ever      */
+/*      be called from LoadNextMatchingObjectBlock().                   */
+/************************************************************************/
+
+TABRawBinBlock *TABMAPFile::PushBlock( int nFileOffset )
+
+{
+    TABRawBinBlock *poBlock;
+
+    poBlock = GetIndexObjectBlock( nFileOffset );
+    if( poBlock == NULL )
+        return NULL;
+
+    if( poBlock->GetBlockType() == TABMAP_INDEX_BLOCK )
+    {
+        TABMAPIndexBlock *poIndex = (TABMAPIndexBlock *) poBlock;
+
+        if( m_poSpIndexLeaf == NULL )
+        {
+            m_poSpIndexLeaf = m_poSpIndex = poIndex;
+        }
+        else
+        {
+            CPLAssert( 
+                m_poSpIndexLeaf->GetEntry(
+                    m_poSpIndexLeaf->GetCurChildIndex())->nBlockPtr 
+                == nFileOffset );
+
+            m_poSpIndexLeaf->SetCurChildRef( poIndex, 
+                                         m_poSpIndexLeaf->GetCurChildIndex() );
+            poIndex->SetParentRef( m_poSpIndexLeaf );
+            m_poSpIndexLeaf = poIndex;
+        }
+    }
+    else
+    {
+        CPLAssert( poBlock->GetBlockType() == TABMAP_OBJECT_BLOCK );
+        
+        if( m_poCurObjBlock != NULL )
+            delete m_poCurObjBlock;
+
+        m_poCurObjBlock = (TABMAPObjectBlock *) poBlock;
+
+        m_nCurObjPtr = nFileOffset;
+        m_nCurObjType = 0;
+        m_nCurObjId   = -1;
+    }
+
+    return poBlock;
+}
+
+/************************************************************************/
+/*                    LoadNextMatchingObjectBlock()                     */
+/*                                                                      */
+/*      Advance through the spatial indices till the next object        */
+/*      block is loaded that matching the spatial query extents.        */
+/************************************************************************/
+
+int TABMAPFile::LoadNextMatchingObjectBlock()
+
+{
+    // If we are just starting, verify the stack is empty.
+    if( m_poSpIndexLeaf == NULL )
+    {
+        CPLAssert( m_poSpIndex == NULL && m_poSpIndexLeaf == NULL );
+
+        if( PushBlock( m_poHeader->m_nFirstIndexBlock ) == NULL )
+            return -1;
+
+        if( m_poSpIndex == NULL )
+        {
+            CPLAssert( m_poCurObjBlock != NULL );
+            return TRUE;
+        }
+    }
+
+    while( m_poSpIndexLeaf != NULL )
+    {
+        int		iEntry = m_poSpIndexLeaf->GetCurChildIndex();
+
+        if( iEntry >= m_poSpIndexLeaf->GetNumEntries()-1 )
+        {
+            TABMAPIndexBlock *poParent = m_poSpIndexLeaf->GetParentRef();
+            delete m_poSpIndexLeaf;
+            m_poSpIndexLeaf = poParent;
+            
+            if( poParent != NULL )
+            {
+                poParent->SetCurChildRef( NULL, poParent->GetCurChildIndex() );
+            }
+            else
+            {
+                m_poSpIndex = NULL;
+            }
+            continue;
+        }
+
+        m_poSpIndexLeaf->SetCurChildRef( NULL, ++iEntry );
+
+        TABMAPIndexEntry *psEntry = m_poSpIndexLeaf->GetEntry( iEntry );
+        TABRawBinBlock *poBlock;
+        
+        if( psEntry->XMax < m_XMinFilter
+            || psEntry->YMax < m_YMinFilter
+            || psEntry->XMin > m_XMaxFilter
+            || psEntry->YMin > m_YMaxFilter )
+            continue;
+
+        poBlock = PushBlock( psEntry->nBlockPtr );
+        if( poBlock == NULL )
+            return FALSE;
+        else if( poBlock->GetBlockType() == TABMAP_OBJECT_BLOCK )
+            return TRUE;
+        else
+            /* continue processing new index block */;
+    }
+
+    return m_poSpIndexLeaf != NULL;
+}
+
+/************************************************************************/
+/*                            ResetReading()                            */
+/*                                                                      */
+/*      Ensure that any resources related to a spatial traversal of     */
+/*      the file are recovered, and the state reinitialized to the      */
+/*      initial conditions.                                             */
+/************************************************************************/
+
+void TABMAPFile::ResetReading()
+
+{
+    if (m_poSpIndex && m_eAccessMode == TABRead )
+    {
+        delete m_poSpIndex;
+        m_poSpIndex = NULL;
+        m_poSpIndexLeaf = NULL;
+    }
+}
+
+/************************************************************************/
+/*                          GetNextFeatureId()                          */
+/*                                                                      */
+/*      Fetch the next feature id based on a traversal of the           */
+/*      spatial index.                                                  */
+/************************************************************************/
+
+int TABMAPFile::GetNextFeatureId( int nPrevId )
+
+{
+    if( nPrevId == 0 )
+        nPrevId = -1;
+
+/* -------------------------------------------------------------------- */
+/*      This should always be true if we are being called properly.     */
+/* -------------------------------------------------------------------- */
+    if( nPrevId != -1 && m_nCurObjId != nPrevId )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "TABMAPFile::GetNextFeatureId(%d) called out of sequence.", 
+                  nPrevId );
+        return -1;
+    }
+
+    CPLAssert( nPrevId == -1 || m_poCurObjBlock != NULL );
+
+/* -------------------------------------------------------------------- */
+/*      Ensure things are initialized properly if this is a request     */
+/*      for the first feature.                                          */
+/* -------------------------------------------------------------------- */
+    if( nPrevId == -1 )
+    {
+        m_nCurObjId = -1;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Try to advance to the next object in the current object         */
+/*      block.                                                          */
+/* -------------------------------------------------------------------- */
+    if( nPrevId == -1 
+        || m_poCurObjBlock->AdvanceToNextObject(m_poHeader) == -1 )
+    {
+        // If not, try to advance to the next object block, and get
+        // first object from it.  Note that some object blocks actually
+        // have no objects, so we may have to advance to additional 
+        // object blocks till we find a non-empty one.
+        do 
+        {
+            if( !LoadNextMatchingObjectBlock() )
+                return -1;
+
+        } while( m_poCurObjBlock->AdvanceToNextObject(m_poHeader) == -1 );
+    }
+
+    m_nCurObjType = m_poCurObjBlock->GetCurObjectType();
+    m_nCurObjId = m_poCurObjBlock->GetCurObjectId();
+    m_nCurObjPtr = m_poCurObjBlock->GetStartAddress() 
+        + m_poCurObjBlock->GetCurObjectOffset();
+
+    CPLAssert( m_nCurObjId != -1 );
+
+    return m_nCurObjId;
+}
 
 /**********************************************************************
  *                   TABMAPFile::Int2Coordsys()
@@ -561,19 +764,7 @@ int TABMAPFile::SetCoordsysBounds(double dXMin, double dYMin,
     nStatus = m_poHeader->SetCoordsysBounds(dXMin, dYMin, dXMax, dYMax);
 
     if (nStatus == 0)
-    {
-        /*-------------------------------------------------------------
-         * Default Coord filter is the MBR of the whole file
-         *------------------------------------------------------------*/
-        m_XMinFilter = m_poHeader->m_nXMin;
-        m_YMinFilter = m_poHeader->m_nYMin;
-        m_XMaxFilter = m_poHeader->m_nXMax;
-        m_YMaxFilter = m_poHeader->m_nYMax;
-        Int2Coordsys(m_XMinFilter, m_YMinFilter, 
-                     m_sMinFilter.x, m_sMinFilter.y);
-        Int2Coordsys(m_XMaxFilter, m_YMaxFilter, 
-                     m_sMaxFilter.x, m_sMaxFilter.y);
-    }
+        ResetCoordFilter();
 
     return nStatus;
 }
@@ -637,9 +828,13 @@ int   TABMAPFile::MoveToObjId(int nObjId)
     }
 
     /*-----------------------------------------------------------------
-     * Move map object pointer to the right location
+     * Move map object pointer to the right location.  Fetch location
+     * from the index file, unless we are already pointing at it.
      *----------------------------------------------------------------*/
-    nFileOffset = m_poIdIndex->GetObjPtr(nObjId);
+    if( m_nCurObjId == nObjId )
+        nFileOffset = m_nCurObjPtr;
+    else
+        nFileOffset = m_poIdIndex->GetObjPtr(nObjId);
 
     if (nFileOffset == 0)
     {
@@ -1124,6 +1319,56 @@ TABIDFile *TABMAPFile::GetIDFileRef()
     return m_poIdIndex;
 }
 
+/**********************************************************************
+ *                   TABMAPFile::GetIndexBlock()
+ *
+ * Return a reference to the requested index or object block..
+ *
+ * Ownership of the returned block is turned over to the caller, who should
+ * delete it when no longer needed.  The type of the block can be determined
+ * with the GetBlockType() method. 
+ *
+ * @param nFileOffset the offset in the map file of the spatial index
+ * block or object block to load.
+ *
+ * @return The requested TABMAPIndexBlock, TABMAPObjectBlock or NULL if the 
+ * read fails for some reason.
+ **********************************************************************/
+TABRawBinBlock *TABMAPFile::GetIndexObjectBlock( int nFileOffset )
+{
+    /*----------------------------------------------------------------
+     * Read from the file
+     *---------------------------------------------------------------*/
+    GByte abyData[512];
+
+    if (VSIFSeek(m_fp, nFileOffset, SEEK_SET) != 0 
+        || VSIFRead(abyData, sizeof(GByte), 512, m_fp) != 512 )
+    {
+        CPLError(CE_Failure, CPLE_FileIO,
+                 "GetIndexBlock() failed reading %d bytes at offset %d.",
+                 512, nFileOffset);
+        return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Create and initialize depending on the block type.              */
+/* -------------------------------------------------------------------- */
+    int nBlockType = abyData[0];
+    TABRawBinBlock *poBlock;
+
+    if( nBlockType == TABMAP_INDEX_BLOCK )
+        poBlock = new TABMAPIndexBlock();
+    else
+        poBlock = new TABMAPObjectBlock();
+    
+    if( poBlock->InitBlockFromData(abyData,512,TRUE,m_fp,nFileOffset) == -1 )
+    {
+        delete poBlock;
+        poBlock = NULL;
+    }
+
+    return poBlock;
+}
 
 /**********************************************************************
  *                   TABMAPFile::InitDrawingTools()
@@ -1471,6 +1716,9 @@ int   TABMAPFile::WriteSymbolDef(TABSymbolDef *psDef)
     return m_poToolDefTable->AddSymbolDefRef(psDef);
 }
 
+#define ORDER_MIN_MAX(type,min,max)                                    \
+    {   if( (max) < (min) )                                            \
+          { type temp = (max); (max) = (min); (min) = temp; } }
 
 /**********************************************************************
  *                   TABMAPFile::SetCoordFilter()
@@ -1478,12 +1726,8 @@ int   TABMAPFile::WriteSymbolDef(TABSymbolDef *psDef)
  * Set the MBR of the area of interest... only objects that at least 
  * overlap with that area will be returned.
  *
- * This is currently unused but could eventually be used to handle
- * spatial filters more efficiently.
- *
- * sMin and sMax and the min/max expressed in the file's projection coord.
- *
- * Returns 0 on success, -1 on error.
+ * @param sMin minimum x/y the file's projection coord.
+ * @param sMax maximum x/y the file's projection coord.
  **********************************************************************/
 void TABMAPFile::SetCoordFilter(TABVertex sMin, TABVertex sMax)
 {
@@ -1492,9 +1736,52 @@ void TABMAPFile::SetCoordFilter(TABVertex sMin, TABVertex sMax)
 
     Coordsys2Int(sMin.x, sMin.y, m_XMinFilter, m_YMinFilter);
     Coordsys2Int(sMax.x, sMax.y, m_XMaxFilter, m_YMaxFilter);
+
+    ORDER_MIN_MAX(int,m_XMinFilter,m_XMaxFilter);
+    ORDER_MIN_MAX(int,m_YMinFilter,m_YMaxFilter);
+    ORDER_MIN_MAX(double,m_sMinFilter.x,m_sMaxFilter.x);
+    ORDER_MIN_MAX(double,m_sMinFilter.y,m_sMaxFilter.y);
 }
 
+/**********************************************************************
+ *                   TABMAPFile::ResetCoordFilter()
+ *
+ * Reset the MBR of the area of interest to be the extents as defined
+ * in the header. 
+ **********************************************************************/
 
+void TABMAPFile::ResetCoordFilter()
+
+{
+    m_XMinFilter = m_poHeader->m_nXMin;
+    m_YMinFilter = m_poHeader->m_nYMin;
+    m_XMaxFilter = m_poHeader->m_nXMax;
+    m_YMaxFilter = m_poHeader->m_nYMax;
+    Int2Coordsys(m_XMinFilter, m_YMinFilter,
+                 m_sMinFilter.x, m_sMinFilter.y);
+    Int2Coordsys(m_XMaxFilter, m_YMaxFilter, 
+                 m_sMaxFilter.x, m_sMaxFilter.y);
+
+    ORDER_MIN_MAX(int,m_XMinFilter,m_XMaxFilter);
+    ORDER_MIN_MAX(int,m_YMinFilter,m_YMaxFilter);
+    ORDER_MIN_MAX(double,m_sMinFilter.x,m_sMaxFilter.x);
+    ORDER_MIN_MAX(double,m_sMinFilter.y,m_sMaxFilter.y);
+}
+
+/**********************************************************************
+ *                   TABMAPFile::GetCoordFilter()
+ *
+ * Get the MBR of the area of interest, as previously set by
+ * SetCoordFilter().
+ *
+ * @param sMin vertex into which the minimum x/y values put in coordsys space.
+ * @param sMax vertex into which the maximum x/y values put in coordsys space.
+ **********************************************************************/
+void TABMAPFile::GetCoordFilter(TABVertex &sMin, TABVertex &sMax)
+{
+    sMin = m_sMinFilter;
+    sMax = m_sMaxFilter;
+}
 
 /**********************************************************************
  *                   TABMAPFile::CommitSpatialIndex()

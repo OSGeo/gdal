@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_ogr_driver.h,v 1.8 2001/01/22 16:03:59 warmerda Exp $
+ * $Id: mitab_ogr_driver.h,v 1.9 2001/09/14 03:22:58 warmerda Exp $
  *
  * Name:     mitab_ogr_drive.h
  * Project:  Mid/mif tab ogr support
@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log: mitab_ogr_driver.h,v $
+ * Revision 1.9  2001/09/14 03:22:58  warmerda
+ * added RegisterOGRTAB() prototype
+ *
  * Revision 1.8  2001/01/22 16:03:59  warmerda
  * expanded tabs
  *
@@ -109,5 +112,7 @@ public:
     int         TestCapability( const char * );
     virtual OGRDataSource *CreateDataSource( const char *, char ** = NULL );
 };
+
+void CPL_DLL RegisterOGRTAB();
 
 #endif /* _MITAB_OGR_DRIVER_H_INCLUDED_ */

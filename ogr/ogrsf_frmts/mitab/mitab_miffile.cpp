@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_miffile.cpp,v 1.27 2001/03/15 03:57:51 daniel Exp $
+ * $Id: mitab_miffile.cpp,v 1.29 2001/09/14 19:14:43 warmerda Exp $
  *
  * Name:     mitab_miffile.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -32,6 +32,12 @@
  **********************************************************************
  *
  * $Log: mitab_miffile.cpp,v $
+ * Revision 1.29  2001/09/14 19:14:43  warmerda
+ * added attribute query support
+ *
+ * Revision 1.28  2001/08/10 17:49:01  warmerda
+ * fixed a few memory leaks
+ *
  * Revision 1.27  2001/03/15 03:57:51  daniel
  * Added implementation for new OGRLayer::GetExtent(), returning data MBR.
  *
@@ -459,6 +465,7 @@ int MIFFile::ParseMIFHeader()
                 m_dYMax = atof(papszFields[++iBounds]);
                 m_bBoundsSet = TRUE;
             }
+            CSLDestroy( papszFields );
         }
         else if (EQUALN(pszLine,"TRANSFORM",9))
         {
@@ -659,7 +666,7 @@ int  MIFFile::AddFields(const char *pszLine)
 int MIFFile::GetFeatureCount (int bForce)
 {
     
-    if( m_poFilterGeom != NULL )
+    if( m_poFilterGeom != NULL || m_poAttrQuery != NULL )
         return OGRLayer::GetFeatureCount( bForce );
     else
     {
@@ -1013,6 +1020,9 @@ int MIFFile::Close()
     m_pabFieldIndexed = NULL;
     CPLFree(m_pabFieldUnique);
     m_pabFieldUnique = NULL;
+
+    CPLFree(m_paeFieldType);
+    m_paeFieldType = NULL;
 
     m_nCurFeatureId = 0;
     m_nFeatureCount =0;

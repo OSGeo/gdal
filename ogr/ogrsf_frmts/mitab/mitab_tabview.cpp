@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_tabview.cpp,v 1.8 2001/03/15 03:57:51 daniel Exp $
+ * $Id: mitab_tabview.cpp,v 1.9 2001/06/27 19:52:26 warmerda Exp $
  *
  * Name:     mitab_tabfile.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -32,6 +32,9 @@
  **********************************************************************
  *
  * $Log: mitab_tabview.cpp,v $
+ * Revision 1.9  2001/06/27 19:52:26  warmerda
+ * use VSIUnlink() instead of unlink()
+ *
  * Revision 1.8  2001/03/15 03:57:51  daniel
  * Added implementation for new OGRLayer::GetExtent(), returning data MBR.
  *

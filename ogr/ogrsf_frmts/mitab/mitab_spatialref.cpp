@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_spatialref.cpp,v 1.30 2001/04/23 17:38:06 warmerda Exp $
+ * $Id: mitab_spatialref.cpp,v 1.31 2001/08/10 21:25:59 warmerda Exp $
  *
  * Name:     mitab_spatialref.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log: mitab_spatialref.cpp,v $
+ * Revision 1.31  2001/08/10 21:25:59  warmerda
+ * SetSpatialRef() now makes a clone of the srs instead of taking a ref to it
+ *
  * Revision 1.30  2001/04/23 17:38:06  warmerda
  * fixed use of freed points bug for datum 999/9999
  *
@@ -901,8 +904,7 @@ int TABFile::SetSpatialRef(OGRSpatialReference *poSpatialRef)
     if (m_poSpatialRef && m_poSpatialRef->Dereference() == 0)
         delete m_poSpatialRef;
     
-    m_poSpatialRef = poSpatialRef;
-    m_poSpatialRef->Reference();
+    m_poSpatialRef = poSpatialRef->Clone();
 
     /*-----------------------------------------------------------------
      * Initialize TABProjInfo

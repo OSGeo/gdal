@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_mapobjectblock.cpp,v 1.6 2000/01/15 22:30:44 daniel Exp $
+ * $Id: mitab_mapobjectblock.cpp,v 1.7 2001/09/14 03:23:55 warmerda Exp $
  *
  * Name:     mitab_mapobjectblock.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -31,6 +31,9 @@
  **********************************************************************
  *
  * $Log: mitab_mapobjectblock.cpp,v $
+ * Revision 1.7  2001/09/14 03:23:55  warmerda
+ * Substantial upgrade to support spatial queries using spatial indexes
+ *
  * Revision 1.6  2000/01/15 22:30:44  daniel
  * Switch to MIT/X-Consortium OpenSource license
  *
@@ -135,7 +138,50 @@ int     TABMAPObjectBlock::InitBlockFromData(GByte *pabyBuf, int nSize,
     m_nFirstCoordBlock = ReadInt32();
     m_nLastCoordBlock = ReadInt32();
 
+    m_nCurObjectOffset = -1;
+    m_nCurObjectId = -1;
+
     return 0;
+}
+
+/************************************************************************/
+/*                        AdvanceToNextObject()                         */
+/************************************************************************/
+
+int TABMAPObjectBlock::AdvanceToNextObject( TABMAPHeaderBlock *poHeader )
+
+{
+    if( m_nCurObjectId == -1 ) 
+    {
+        m_nCurObjectOffset = 20;
+    }
+    else
+    {
+        m_nCurObjectOffset += poHeader->GetMapObjectSize( m_nCurObjectType );
+    }
+    
+    
+
+    if( m_nCurObjectOffset + 5 < m_numDataBytes + 20 )
+    {
+        GotoByteInBlock( m_nCurObjectOffset );
+        m_nCurObjectType = ReadByte();
+    }
+    else
+    {
+        m_nCurObjectType = -1;
+    }
+
+    if( m_nCurObjectType <= 0 || m_nCurObjectType >= 0x80 )
+    {
+        m_nCurObjectType = -1;
+        m_nCurObjectId = -1;
+        m_nCurObjectOffset = -1;
+    }
+    else
+        m_nCurObjectId = ReadInt32();
+
+    return m_nCurObjectId;
 }
 
 /**********************************************************************

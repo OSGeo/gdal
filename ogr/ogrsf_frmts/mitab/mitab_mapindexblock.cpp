@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_mapindexblock.cpp,v 1.7 2000/05/23 17:02:54 daniel Exp $
+ * $Id: mitab_mapindexblock.cpp,v 1.8 2001/09/14 03:23:55 warmerda Exp $
  *
  * Name:     mitab_mapindexblock.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -31,6 +31,9 @@
  **********************************************************************
  *
  * $Log: mitab_mapindexblock.cpp,v $
+ * Revision 1.8  2001/09/14 03:23:55  warmerda
+ * Substantial upgrade to support spatial queries using spatial indexes
+ *
  * Revision 1.7  2000/05/23 17:02:54  daniel
  * Removed unused variables
  *
@@ -92,15 +95,11 @@ TABMAPIndexBlock::~TABMAPIndexBlock()
 {
     if (m_poCurChild)
     {
-        m_poCurChild->CommitToFile();
+        if (m_eAccess == TABWrite || m_eAccess == TABReadWrite)
+            m_poCurChild->CommitToFile();
         delete m_poCurChild;
     }
-
-    // Note that in read mode, m_numEntries is set but m_papsEntries is not
-    // used... be careful about that!
-
 }
-
 
 /**********************************************************************
  *                   TABMAPIndexBlock::InitBlockFromData()
@@ -202,7 +201,7 @@ int     TABMAPIndexBlock::CommitToFile()
     for(int i=0; nStatus == 0 && i<m_numEntries; i++)
     {
         if (nStatus == 0)
-            nStatus = WriteNextEntry(&(m_pasEntries[i]));
+            nStatus = WriteNextEntry(&(m_asEntries[i]));
     }
 
 
@@ -315,7 +314,7 @@ int     TABMAPIndexBlock::ReadAllEntries()
 
     for(int i=0; i<m_numEntries; i++)
     {
-        if ( ReadNextEntry(&(m_pasEntries[i])) != 0)
+        if ( ReadNextEntry(&(m_asEntries[i])) != 0)
             return -1;
     }
 
@@ -359,6 +358,24 @@ int     TABMAPIndexBlock::GetNumFreeEntries()
     /* nMaxEntries = (m_nBlockSize-4)/20;*/
 
     return (TAB_MAX_ENTRIES_INDEX_BLOCK - m_numEntries);
+}
+
+/**********************************************************************
+ *                   TABMAPIndexBlock::GetEntry()
+ *
+ * Fetch a reference to the requested entry.
+ *
+ * @param iIndex index of entry, must be from 0 to GetNumEntries()-1. 
+ *
+ * @return a reference to the internal copy of the entry, or NULL if out
+ * of range. 
+ **********************************************************************/
+TABMAPIndexEntry *TABMAPIndexBlock::GetEntry( int iIndex )
+{
+    if( iIndex < 0 || iIndex >= m_numEntries )
+        return NULL;
+
+    return m_asEntries + iIndex;
 }
 
 /**********************************************************************
@@ -421,11 +438,11 @@ int     TABMAPIndexBlock::InsertEntry(GInt32 nXMin, GInt32 nYMin,
     m_numEntries++;
     CPLAssert(m_numEntries <= TAB_MAX_ENTRIES_INDEX_BLOCK);
 
-    m_pasEntries[m_numEntries-1].XMin = nXMin;
-    m_pasEntries[m_numEntries-1].YMin = nYMin;
-    m_pasEntries[m_numEntries-1].XMax = nXMax;
-    m_pasEntries[m_numEntries-1].YMax = nYMax;
-    m_pasEntries[m_numEntries-1].nBlockPtr = nBlockPtr;
+    m_asEntries[m_numEntries-1].XMin = nXMin;
+    m_asEntries[m_numEntries-1].YMin = nYMin;
+    m_asEntries[m_numEntries-1].XMax = nXMax;
+    m_asEntries[m_numEntries-1].YMax = nYMax;
+    m_asEntries[m_numEntries-1].nBlockPtr = nBlockPtr;
 
     return 0;
 }
@@ -491,10 +508,10 @@ int     TABMAPIndexBlock::AddEntry(GInt32 nXMin, GInt32 nYMin,
      * First check if current child could be a valid candidate.
      *----------------------------------------------------------------*/
     if (!bFound &&
-        m_poCurChild && (m_pasEntries[m_nCurChildIndex].XMin <= nXMin &&
-                         m_pasEntries[m_nCurChildIndex].XMax >= nXMax &&
-                         m_pasEntries[m_nCurChildIndex].YMin <= nYMin &&
-                         m_pasEntries[m_nCurChildIndex].YMax >= nYMax ) )
+        m_poCurChild && (m_asEntries[m_nCurChildIndex].XMin <= nXMin &&
+                         m_asEntries[m_nCurChildIndex].XMax >= nXMax &&
+                         m_asEntries[m_nCurChildIndex].YMin <= nYMin &&
+                         m_asEntries[m_nCurChildIndex].YMax >= nYMax ) )
     {
 
         bFound = TRUE;
@@ -525,8 +542,8 @@ int     TABMAPIndexBlock::AddEntry(GInt32 nXMin, GInt32 nYMin,
 
         for(i=0; i<m_numEntries; i++)
         {
-            int nX = (m_pasEntries[i].XMin + m_pasEntries[i].XMax)/2;
-            int nY = (m_pasEntries[i].YMin + m_pasEntries[i].YMax)/2;
+            int nX = (m_asEntries[i].XMin + m_asEntries[i].XMax)/2;
+            int nY = (m_asEntries[i].YMin + m_asEntries[i].YMax)/2;
 
             int nDist = (nX-nObjCenterX)*(nX-nObjCenterX) +
                              (nY-nObjCenterY)*(nY-nObjCenterY);
@@ -549,7 +566,7 @@ int     TABMAPIndexBlock::AddEntry(GInt32 nXMin, GInt32 nYMin,
             CPLPushErrorHandler(CPLQuietErrorHandler);
 
             if ((poBlock = TABCreateMAPBlockFromFile(m_fp, 
-                                       m_pasEntries[nBestCandidate].nBlockPtr,
+                                       m_asEntries[nBestCandidate].nBlockPtr,
                                        512, TRUE, TABReadWrite)) &&
                 poBlock->GetBlockClass() == TABMAP_INDEX_BLOCK)
             {
@@ -712,10 +729,10 @@ int     TABMAPIndexBlock::SplitNode(int nNewEntryX, int nNewEntryY)
     m_numEntries = 0;
     for(int iEntry=0; iEntry<nSrcEntries; iEntry++)
     {
-        int nEntryCenterX = (m_pasEntries[iEntry].XMax +
-                             m_pasEntries[iEntry].XMin) / 2;
-        int nEntryCenterY = (m_pasEntries[iEntry].YMax +
-                             m_pasEntries[iEntry].YMin) / 2;
+        int nEntryCenterX = (m_asEntries[iEntry].XMax +
+                             m_asEntries[iEntry].XMin) / 2;
+        int nEntryCenterY = (m_asEntries[iEntry].YMax +
+                             m_asEntries[iEntry].YMin) / 2;
 
         if (iEntry == m_nCurChildIndex ||
             (nWidth > nHeight && 
@@ -724,9 +741,9 @@ int     TABMAPIndexBlock::SplitNode(int nNewEntryX, int nNewEntryY)
              ABS(nEntryCenterY-nCenterY1) < ABS(nEntryCenterY-nCenterY2) ) )
         {
             // This entry stays in current node.
-            InsertEntry(m_pasEntries[iEntry].XMin, m_pasEntries[iEntry].YMin,
-                        m_pasEntries[iEntry].XMax, m_pasEntries[iEntry].YMax,
-                        m_pasEntries[iEntry].nBlockPtr);
+            InsertEntry(m_asEntries[iEntry].XMin, m_asEntries[iEntry].YMin,
+                        m_asEntries[iEntry].XMax, m_asEntries[iEntry].YMax,
+                        m_asEntries[iEntry].nBlockPtr);
 
             // We have to keep track of new m_nCurChildIndex value
             if (iEntry == m_nCurChildIndex) 
@@ -737,11 +754,11 @@ int     TABMAPIndexBlock::SplitNode(int nNewEntryX, int nNewEntryY)
         else
         {
             // This entry goes in the new node.
-            poNewNode->InsertEntry(m_pasEntries[iEntry].XMin, 
-                                   m_pasEntries[iEntry].YMin,
-                                   m_pasEntries[iEntry].XMax, 
-                                   m_pasEntries[iEntry].YMax,
-                                   m_pasEntries[iEntry].nBlockPtr);
+            poNewNode->InsertEntry(m_asEntries[iEntry].XMin, 
+                                   m_asEntries[iEntry].YMin,
+                                   m_asEntries[iEntry].XMax, 
+                                   m_asEntries[iEntry].YMax,
+                                   m_asEntries[iEntry].nBlockPtr);
         }
     }
 
@@ -759,21 +776,21 @@ int     TABMAPIndexBlock::SplitNode(int nNewEntryX, int nNewEntryY)
             if (iEntry == m_nCurChildIndex)
             {
                 // Keep current child in current node
-                InsertEntry(m_pasEntries[iEntry].XMin, 
-                            m_pasEntries[iEntry].YMin,
-                            m_pasEntries[iEntry].XMax,
-                            m_pasEntries[iEntry].YMax,
-                            m_pasEntries[iEntry].nBlockPtr);
+                InsertEntry(m_asEntries[iEntry].XMin, 
+                            m_asEntries[iEntry].YMin,
+                            m_asEntries[iEntry].XMax,
+                            m_asEntries[iEntry].YMax,
+                            m_asEntries[iEntry].nBlockPtr);
                 m_nCurChildIndex = m_numEntries-1;
             }
             else
             {
                 // All other entries go to second node
-                poNewNode->InsertEntry(m_pasEntries[iEntry].XMin, 
-                                       m_pasEntries[iEntry].YMin,
-                                       m_pasEntries[iEntry].XMax, 
-                                       m_pasEntries[iEntry].YMax,
-                                       m_pasEntries[iEntry].nBlockPtr);
+                poNewNode->InsertEntry(m_asEntries[iEntry].XMin, 
+                                       m_asEntries[iEntry].YMin,
+                                       m_asEntries[iEntry].XMax, 
+                                       m_asEntries[iEntry].YMax,
+                                       m_asEntries[iEntry].nBlockPtr);
             }
         }
     }
@@ -834,11 +851,11 @@ int TABMAPIndexBlock::SplitRootNode(int nNewEntryX, int nNewEntryY)
     m_numEntries = 0;
     for(int iEntry=0; iEntry<nSrcEntries; iEntry++)
     {
-        poNewNode->InsertEntry(m_pasEntries[iEntry].XMin, 
-                               m_pasEntries[iEntry].YMin,
-                               m_pasEntries[iEntry].XMax, 
-                               m_pasEntries[iEntry].YMax,
-                               m_pasEntries[iEntry].nBlockPtr);
+        poNewNode->InsertEntry(m_asEntries[iEntry].XMin, 
+                               m_asEntries[iEntry].YMin,
+                               m_asEntries[iEntry].XMax, 
+                               m_asEntries[iEntry].YMax,
+                               m_asEntries[iEntry].nBlockPtr);
     }
     
     /*-----------------------------------------------------------------
@@ -888,15 +905,15 @@ void TABMAPIndexBlock::RecomputeMBR()
 
     for(int i=0; i<m_numEntries; i++)
     {
-        if (m_pasEntries[i].XMin < m_nMinX)
-            m_nMinX = m_pasEntries[i].XMin;
-        if (m_pasEntries[i].XMax > m_nMaxX)
-            m_nMaxX = m_pasEntries[i].XMax;
+        if (m_asEntries[i].XMin < m_nMinX)
+            m_nMinX = m_asEntries[i].XMin;
+        if (m_asEntries[i].XMax > m_nMaxX)
+            m_nMaxX = m_asEntries[i].XMax;
     
-        if (m_pasEntries[i].YMin < m_nMinY)
-            m_nMinY = m_pasEntries[i].YMin;
-        if (m_pasEntries[i].YMax > m_nMaxY)
-            m_nMaxY = m_pasEntries[i].YMax;
+        if (m_asEntries[i].YMin < m_nMinY)
+            m_nMinY = m_asEntries[i].YMin;
+        if (m_asEntries[i].YMax > m_nMaxY)
+            m_nMaxY = m_asEntries[i].YMax;
     }
 
     if (m_poParentRef)
@@ -917,12 +934,12 @@ void TABMAPIndexBlock::UpdateCurChildMBR(GInt32 nXMin, GInt32 nYMin,
                                          GInt32 nBlockPtr)
 {
     CPLAssert(m_poCurChild);
-    CPLAssert(m_pasEntries[m_nCurChildIndex].nBlockPtr == nBlockPtr);
+    CPLAssert(m_asEntries[m_nCurChildIndex].nBlockPtr == nBlockPtr);
 
-    m_pasEntries[m_nCurChildIndex].XMin = nXMin;
-    m_pasEntries[m_nCurChildIndex].YMin = nYMin;
-    m_pasEntries[m_nCurChildIndex].XMax = nXMax;
-    m_pasEntries[m_nCurChildIndex].YMax = nYMax;
+    m_asEntries[m_nCurChildIndex].XMin = nXMin;
+    m_asEntries[m_nCurChildIndex].YMin = nYMin;
+    m_asEntries[m_nCurChildIndex].XMax = nXMax;
+    m_asEntries[m_nCurChildIndex].YMax = nYMax;
 
     m_nMinX = 1000000000;
     m_nMinY = 1000000000;
@@ -931,15 +948,15 @@ void TABMAPIndexBlock::UpdateCurChildMBR(GInt32 nXMin, GInt32 nYMin,
 
     for(int i=0; i<m_numEntries; i++)
     {
-        if (m_pasEntries[i].XMin < m_nMinX)
-            m_nMinX = m_pasEntries[i].XMin;
-        if (m_pasEntries[i].XMax > m_nMaxX)
-            m_nMaxX = m_pasEntries[i].XMax;
+        if (m_asEntries[i].XMin < m_nMinX)
+            m_nMinX = m_asEntries[i].XMin;
+        if (m_asEntries[i].XMax > m_nMaxX)
+            m_nMaxX = m_asEntries[i].XMax;
     
-        if (m_pasEntries[i].YMin < m_nMinY)
-            m_nMinY = m_pasEntries[i].YMin;
-        if (m_pasEntries[i].YMax > m_nMaxY)
-            m_nMaxY = m_pasEntries[i].YMax;
+        if (m_asEntries[i].YMin < m_nMinY)
+            m_nMinY = m_asEntries[i].YMin;
+        if (m_asEntries[i].YMax > m_nMaxY)
+            m_nMaxY = m_asEntries[i].YMax;
     }
 
     if (m_poParentRef)
@@ -1015,9 +1032,9 @@ void TABMAPIndexBlock::Dump(FILE *fpOut /*=NULL*/)
         for(int i=0; i<m_numEntries; i++)
         {
             fprintf(fpOut, "    %6d -> (%d, %d) - (%d, %d)\n",
-                    m_pasEntries[i].nBlockPtr,
-                    m_pasEntries[i].XMin, m_pasEntries[i].YMin,
-                    m_pasEntries[i].XMax, m_pasEntries[i].YMax );
+                    m_asEntries[i].nBlockPtr,
+                    m_asEntries[i].XMin, m_asEntries[i].YMin,
+                    m_asEntries[i].XMax, m_asEntries[i].YMax );
         }
 
     }

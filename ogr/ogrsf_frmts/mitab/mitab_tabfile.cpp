@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_tabfile.cpp,v 1.43 2001/03/15 03:57:51 daniel Exp $
+ * $Id: mitab_tabfile.cpp,v 1.45 2001/09/14 19:14:43 warmerda Exp $
  *
  * Name:     mitab_tabfile.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -32,6 +32,12 @@
  **********************************************************************
  *
  * $Log: mitab_tabfile.cpp,v $
+ * Revision 1.45  2001/09/14 19:14:43  warmerda
+ * added attribute query support
+ *
+ * Revision 1.44  2001/09/14 03:23:55  warmerda
+ * Substantial upgrade to support spatial queries using spatial indexes
+ *
  * Revision 1.43  2001/03/15 03:57:51  daniel
  * Added implementation for new OGRLayer::GetExtent(), returning data MBR.
  *
@@ -124,6 +130,8 @@ TABFile::TABFile()
     m_nCurFeatureId = 0;
     m_nLastFeatureId = 0;
     m_panIndexNo = NULL;
+
+    bUseSpatialTraversal = FALSE;
 }
 
 /**********************************************************************
@@ -137,21 +145,64 @@ TABFile::~TABFile()
 }
 
 
+/************************************************************************/
+/*                          GetFeatureCount()                           */
+/************************************************************************/
 int TABFile::GetFeatureCount (int bForce)
 {
     
-    if( m_poFilterGeom != NULL )
+    if( m_poFilterGeom != NULL || m_poAttrQuery != NULL )
         return OGRLayer::GetFeatureCount( bForce );
     else
         return m_nLastFeatureId;
-
 }
 
+/************************************************************************/
+/*                            ResetReading()                            */
+/************************************************************************/
 void TABFile::ResetReading()
 {
     m_nCurFeatureId = 0;
-}
+    if( m_poMAPFile != NULL )
+        m_poMAPFile->ResetReading();
 
+/* -------------------------------------------------------------------- */
+/*      Decide whether to operate in spatial traversal mode or not,     */
+/*      and ensure the current spatial filter is applied to the map     */
+/*      file object.                                                    */
+/* -------------------------------------------------------------------- */
+    if( m_poMAPFile )
+    {
+        bUseSpatialTraversal = FALSE;
+    
+        m_poMAPFile->ResetCoordFilter();
+
+        if( m_poFilterGeom != NULL )
+        {
+            OGREnvelope  sEnvelope;
+            TABVertex sMin, sMax;
+            TABMAPHeaderBlock *poHeader;
+    
+            poHeader = m_poMAPFile->GetHeaderBlock();
+
+            m_poFilterGeom->getEnvelope( &sEnvelope );
+            m_poMAPFile->GetCoordFilter( sMin, sMax );
+
+            if( sEnvelope.MinX > sMin.x 
+                || sEnvelope.MinY > sMin.y
+                || sEnvelope.MaxX < sMax.x
+                || sEnvelope.MaxY < sMax.y )
+            {
+                bUseSpatialTraversal = TRUE;
+                sMin.x = sEnvelope.MinX;
+                sMin.y = sEnvelope.MinY;
+                sMax.x = sEnvelope.MaxX;
+                sMax.y = sEnvelope.MaxY;
+                m_poMAPFile->SetCoordFilter( sMin, sMax );
+            }
+        }
+    }
+}
 
 /**********************************************************************
  *                   TABFile::Open()
@@ -990,8 +1041,6 @@ int TABFile::Close()
  **********************************************************************/
 int TABFile::GetNextFeatureId(int nPrevId)
 {
-    int nFeatureId = -1;
-
     if (m_eAccessMode != TABRead)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
@@ -1000,8 +1049,16 @@ int TABFile::GetNextFeatureId(int nPrevId)
     }
 
     /*-----------------------------------------------------------------
+     * Are we using spatial rather than .ID based traversal?
+     *----------------------------------------------------------------*/
+    if( bUseSpatialTraversal )
+        return m_poMAPFile->GetNextFeatureId( nPrevId );
+
+    /*-----------------------------------------------------------------
      * Establish what the next logical feature ID should be
      *----------------------------------------------------------------*/
+    int nFeatureId = -1;
+
     if (nPrevId <= 0 && m_nLastFeatureId > 0)
         nFeatureId = 1;       // Feature Ids start at 1
     else if (nPrevId > 0 && nPrevId < m_nLastFeatureId)
@@ -1009,7 +1066,7 @@ int TABFile::GetNextFeatureId(int nPrevId)
     else
     {
         // This was the last feature
-        return -1;
+        return OGRNullFID;
     }
 
     /*-----------------------------------------------------------------
@@ -1040,6 +1097,33 @@ int TABFile::GetNextFeatureId(int nPrevId)
     // If we reached this point, then we kept skipping deleted features
     // and stopped when EOF was reached.
     return -1;
+}
+
+/**********************************************************************
+ *                   TABFile::GetNextFeatureId_Spatial()
+ *
+ * Returns feature id that follows nPrevId, or -1 if it is the
+ * last feature id, but by traversing the spatial tree instead of the
+ * direct object index.  Generally speaking the feature id's will be
+ * returned in an unordered fashion.  
+ **********************************************************************/
+int TABFile::GetNextFeatureId_Spatial(int nPrevId)
+{
+    if (m_eAccessMode != TABRead)
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+            "GetNextFeatureId_Spatial() can be used only with Read access.");
+        return -1;
+    }
+
+    if( m_poMAPFile == NULL )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+            "GetNextFeatureId_Spatial() requires availability of .MAP file." );
+        return -1;
+    }
+
+    return m_poMAPFile->GetNextFeatureId( nPrevId );
 }
 
 /**********************************************************************

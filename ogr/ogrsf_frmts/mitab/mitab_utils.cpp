@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_utils.cpp,v 1.16 2001/01/23 21:23:42 daniel Exp $
+ * $Id: mitab_utils.cpp,v 1.17 2001/06/27 19:52:54 warmerda Exp $
  *
  * Name:     mitab_utils.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log: mitab_utils.cpp,v $
+ * Revision 1.17  2001/06/27 19:52:54  warmerda
+ * avoid multi byte support if _WIN32 and unix defined for cygwin support
+ *
  * Revision 1.16  2001/01/23 21:23:42  daniel
  * Added projection bounds lookup table, called from TABFile::SetProjInfo()
  *
