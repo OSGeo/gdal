@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  1999/11/26 16:17:58  warmerda
+ * added DSNM
+ *
  * Revision 1.12  1999/11/26 15:20:54  warmerda
  * Fixed multipoint.
  *
@@ -78,6 +81,7 @@ S57Reader::S57Reader( const char * pszFilename )
 
 {
     pszModuleName = CPLStrdup( pszFilename );
+    pszDSNM = NULL;
 
     poModule = NULL;
 
@@ -175,6 +179,9 @@ void S57Reader::Close()
         poModule = NULL;
 
         bFileIngested = FALSE;
+
+        CPLFree( pszDSNM );
+        pszDSNM = NULL;
     }
 }
 
@@ -332,7 +339,9 @@ void S57Reader::Ingest()
 
         else if( EQUAL(poKeyField->GetFieldDefn()->GetName(),"DSID") )
         {
-            // currently not used, but we don't want to generate a message.
+            CPLFree( pszDSNM );
+            pszDSNM =
+                CPLStrdup(poRecord->GetStringSubfield( "DSID", 0, "DSNM", 0 ));
         }
 
         else

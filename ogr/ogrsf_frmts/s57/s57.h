@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  1999/11/26 16:17:58  warmerda
+ * added DSNM
+ *
  * Revision 1.8  1999/11/26 15:08:38  warmerda
  * added setoptions, and LNAM support
  *
@@ -203,6 +206,7 @@ class S57Reader
     OGRFeatureDefn      **papoFDefnList;
 
     char                *pszModuleName;
+    char		*pszDSNM;
     
     DDFModule           *poModule;
 
@@ -256,6 +260,7 @@ class S57Reader
     int                 Open( int bTestOpen );
     void                Close();
     DDFModule           *GetModule() { return poModule; }
+    const char	        *GetDSNM() { return pszDSNM; }
 
     void                Ingest();
 
