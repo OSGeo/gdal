@@ -29,6 +29,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.18  2000/10/30 14:12:49  warmerda
+# Fixed bug in GetRasterColorTable().
+#
 # Revision 1.17  2000/10/06 15:31:34  warmerda
 # added nodata support
 #
@@ -306,7 +309,7 @@ class Band:
         if _ct is None:
             return None
         else:
-            return gdal.GDALColorTable( _ct )
+            return _gdal.GDALColorTable( _ct )
 
     def FlushCache(self):
         return _gdal.GDALFlushRasterCache(self._o)
