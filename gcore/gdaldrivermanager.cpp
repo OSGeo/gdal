@@ -25,6 +25,9 @@
  * The GDALDriverManager class from gdal_priv.h.
  * 
  * $Log$
+ * Revision 1.14  2002/12/03 04:41:41  warmerda
+ * call CPLFinderClean() to cleanup memory
+ *
  * Revision 1.13  2002/10/21 18:05:42  warmerda
  * added AutoSkipDrivers() method on driver manager
  *
@@ -173,6 +176,13 @@ GDALDriverManager::~GDALDriverManager()
 /* -------------------------------------------------------------------- */
     VSIFree( papoDrivers );
     VSIFree( pszHome );
+
+/* -------------------------------------------------------------------- */
+/*      Blow away all the finder hints paths.  We really shouldn't      */
+/*      be doing all of them, but it is currently hard to keep track    */
+/*      of those that actually belong to us.                            */
+/* -------------------------------------------------------------------- */
+    CPLFinderClean();
 
 /* -------------------------------------------------------------------- */
 /*      Ensure the global driver manager pointer is NULLed out.         */
