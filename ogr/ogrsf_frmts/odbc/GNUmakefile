@@ -6,7 +6,7 @@ include $(GDAL_ROOT)/GDALmake.opt
 OBJ	=	ogrodbcdatasource.o ogrodbclayer.o ogrodbcdriver.o \
 		ogrodbctablelayer.o
 
-CPPFLAGS	+=	-I.. -I../..
+CPPFLAGS	:=	-I.. -I../.. $(CPPFLAGS)
 
 default:	$(O_OBJ)
 

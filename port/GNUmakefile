@@ -19,8 +19,6 @@ ifeq ($(ODBC_SETTING),yes)
 OBJ	:= 	$(OBJ) cpl_odbc.o
 endif
 
-CPPFLAGS	:=
-
 default:	$(OBJ)
 
 clean:

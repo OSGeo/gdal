@@ -18,7 +18,7 @@ SUBLIBS	:= lib-geotiff $(SUBLIBS)
 TIFF_OPTS	:=	-Ilibgeotiff $(TIFF_OPTS)
 endif
 
-CPPFLAGS	=	$(GDAL_INCLUDE) $(TIFF_OPTS)
+CPPFLAGS	:=	$(GDAL_INCLUDE) $(TIFF_OPTS) $(CPPFLAGS)
 
 default:	$(OBJ) $(SUBLIBS)
 
