@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.23  2004/07/28 14:39:48  warmerda
+ * added jp2 subfile support
+ *
  * Revision 1.22  2004/07/23 19:13:41  warmerda
  * Added J2K_SUBFILE support
  *
@@ -210,6 +213,7 @@ class JP2KAKDataset : public GDALDataset
 {
     kdu_codestream oCodeStream;
     kdu_compressed_source *poInput;
+    kdu_compressed_source *poRawInput;
 #ifdef KAKADU4
     jp2_family_src  *family;
 #endif
@@ -904,6 +908,7 @@ JP2KAKDataset::JP2KAKDataset()
 
 {
     poInput = NULL;
+    poRawInput = NULL;
     pszProjection = NULL;
     nGCPCount = 0;
     pasGCPList = NULL;
@@ -940,6 +945,8 @@ JP2KAKDataset::~JP2KAKDataset()
             delete family;
         }
 #endif
+        if( poRawInput != NULL )
+            delete poRawInput;
 #ifdef USE_JPIP
         if( jpip_client != NULL )
         {
@@ -1013,9 +1020,11 @@ const GDAL_GCP *JP2KAKDataset::GetGCPs()
 GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
+    kdu_compressed_source *poRawInput = NULL;
     const char  *pszExtension = NULL;
     int         bIsJPIP = FALSE;
     int         bIsSubfile = FALSE;
+    GByte      *pabyHeader = NULL;
 
     if( poOpenInfo->fp == NULL )
     {
@@ -1029,6 +1038,16 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
         }
         else if( EQUALN(poOpenInfo->pszFilename,"J2K_SUBFILE:",12) )
         {
+            static GByte abySubfileHeader[16];
+
+            poRawInput = new subfile_source( poOpenInfo->pszFilename );
+            poRawInput->seek( 0 );
+
+            poRawInput->read( abySubfileHeader, 16 );
+            poRawInput->seek( 0 );
+            
+            pabyHeader = abySubfileHeader;
+
             bIsSubfile = TRUE;
         }
         else
@@ -1038,6 +1057,8 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         if( poOpenInfo->nHeaderBytes < 16 )
             return NULL;
+
+        pabyHeader = poOpenInfo->pabyHeader;
     }
 
 /* -------------------------------------------------------------------- */
@@ -1045,18 +1066,17 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      extensions are supported for JPC files since the standard       */
 /*      prefix is so short (two bytes).                                 */
 /* -------------------------------------------------------------------- */
-    if( !bIsJPIP && !bIsSubfile )
+    if( !bIsJPIP )
     {
-        if( memcmp(poOpenInfo->pabyHeader,jp2_header,sizeof(jp2_header)) == 0 )
+        if( memcmp(pabyHeader,jp2_header,sizeof(jp2_header)) == 0 )
             pszExtension = "jp2";
-        else if( memcmp( poOpenInfo->pabyHeader, jpc_header, 
-                         sizeof(jpc_header) ) == 0 )
+        else if( memcmp( pabyHeader, jpc_header, sizeof(jpc_header) ) == 0 )
         {
             pszExtension = CPLGetExtension( poOpenInfo->pszFilename );
             if( !EQUAL(pszExtension,"jpc") && !EQUAL(pszExtension,"j2k") 
                 && !EQUAL(pszExtension,"jp2") && !EQUAL(pszExtension,"jpx") 
                 && !EQUAL(pszExtension,"j2c") )
-                return NULL;
+                pszExtension = "jpc";
         }
         else
             return NULL;
@@ -1079,8 +1099,8 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Try to open the file in a manner depending on the extension.    */
 /* -------------------------------------------------------------------- */
-    kdu_client      *jpip_client = NULL;
     kdu_compressed_source *poInput = NULL;
+    kdu_client      *jpip_client = NULL;
     jp2_palette oJP2Palette;
     jp2_channels oJP2Channels;
 
@@ -1090,11 +1110,7 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
 
     try
     {
-        if( bIsSubfile )
-        {
-            poInput = new subfile_source( poOpenInfo->pszFilename );
-        }
-        else if( bIsJPIP )
+        if( bIsJPIP )
         {
 #ifdef USE_JPIP
             jp2_source *jp2_src;
@@ -1160,7 +1176,10 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
 
 #ifdef KAKADU4
             family = new jp2_family_src;
-            family->open( poOpenInfo->pszFilename, true );
+            if( poRawInput != NULL )
+                family->open( poRawInput );
+            else
+                family->open( poOpenInfo->pszFilename, true );
             jp2_src = new jp2_source;
             jp2_src->open( family );
             jp2_src->read_header();
@@ -1173,12 +1192,19 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
             oJP2Palette = jp2_src->access_palette();
             oJP2Channels = jp2_src->access_channels();
         }
-        else
+        else if( poRawInput == NULL )
+        {
 #ifndef FILEIO_DEBUG
             poInput = new kdu_simple_file_source( poOpenInfo->pszFilename );
 #else
             poInput = new dbg_simple_file_source( poOpenInfo->pszFilename );
-#endif
+#endif								       
+        }
+        else
+        {
+            poInput = poRawInput;
+            poRawInput = NULL;
+        }
     }
     catch( ... )
     {
@@ -1196,6 +1222,7 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS = new JP2KAKDataset();
 
         poDS->poInput = poInput;
+        poDS->poRawInput = poRawInput;
         poDS->oCodeStream.create( poInput );
         poDS->oCodeStream.set_fussy();
         poDS->oCodeStream.set_persistent();
