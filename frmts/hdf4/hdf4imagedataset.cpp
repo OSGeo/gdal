@@ -29,6 +29,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.21  2003/01/28 21:19:04  dron
+ * DFNT_CHAR8 type was used instead of DFNT_INT8
+ *
  * Revision 1.20  2003/01/27 16:45:16  dron
  * Fixed problems with wrong count in SDsetattr() calls.
  *
@@ -1123,7 +1126,7 @@ GDALDataset *HDF4ImageDataset::Create( const char * pszFilename,
 		break;
 		case GDT_Byte:
 		default:
-		poDS->iSDS = SDcreate( poDS->hSD, pszSDSName, DFNT_UCHAR8,
+		poDS->iSDS = SDcreate( poDS->hSD, pszSDSName, DFNT_UINT8,
 				       poDS->iRank, aiDimSizes );
 		break;
 	    }
@@ -1161,7 +1164,7 @@ GDALDataset *HDF4ImageDataset::Create( const char * pszFilename,
 	    break;
 	    case GDT_Byte:
 	    default:
-	    poDS->iSDS = SDcreate( poDS->hSD, pszSDSName, DFNT_UCHAR8,
+	    poDS->iSDS = SDcreate( poDS->hSD, pszSDSName, DFNT_UINT8,
 				   poDS->iRank, aiDimSizes );
 	    break;
 	}
@@ -1328,7 +1331,7 @@ HDF4ImageCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 		break;
 		case GDT_Byte:
 		default:
-		iSDS = SDcreate( hSD, pszSDSName, DFNT_UCHAR8, iRank, aiDimSizes );
+		iSDS = SDcreate( hSD, pszSDSName, DFNT_UINT8, iRank, aiDimSizes );
 		break;
 	    }
 #if 0
@@ -1394,7 +1397,7 @@ HDF4ImageCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 	    break;
 	    case GDT_Byte:
 	    default:
-	    iSDS = SDcreate( hSD, pszSDSName, DFNT_UCHAR8, iRank, aiDimSizes );
+	    iSDS = SDcreate( hSD, pszSDSName, DFNT_INT8, iRank, aiDimSizes );
 	    break;
 	}
 #if 0
