@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  1999/11/23 18:44:10  warmerda
+ * Fixed GDALCopyWords!
+ *
  * Revision 1.5  1999/07/23 19:36:09  warmerda
  * added support for data type translation and a swapping function
  *
@@ -403,7 +406,7 @@ void
 /*      Set the destination pixel, doing range clipping as needed.      */
 /* -------------------------------------------------------------------- */
         pabyDstWord = ((GByte *) pDstData) + iWord * nDstPixelOffset;
-        switch( eSrcType )
+        switch( eDstType )
         {
           case GDT_Byte:
           {
