@@ -26,6 +26,9 @@
  * serves as an early test harnass.
  *
  * $Log$
+ * Revision 1.26  2002/09/04 06:53:42  warmerda
+ * added GDALDestroyDriverManager() for cleanup
+ *
  * Revision 1.25  2002/05/29 15:53:14  warmerda
  * added GDALDumpOpenDatasets
  *
@@ -191,6 +194,7 @@ int main( int argc, char ** argv )
 
             OSRExportToPrettyWkt( hSRS, &pszPrettyWkt, FALSE );
             printf( "Coordinate System is:\n%s\n", pszPrettyWkt );
+            CPLFree( pszPrettyWkt );
         }
         else
             printf( "Coordinate System is `%s'\n",
@@ -403,6 +407,8 @@ int main( int argc, char ** argv )
     GDALClose( hDataset );
 
     GDALDumpOpenDatasets( stderr );
+
+    GDALDestroyDriverManager();
     
     exit( 0 );
 }
