@@ -28,6 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************
  * $Log$
+ * Revision 1.24  2001/10/17 16:20:45  warmerda
+ * make histograming work with complex data (r(treat as magnitude)
+ *
  * Revision 1.23  2001/07/18 04:04:30  warmerda
  * added CPL_CVSID
  *
@@ -1640,7 +1643,7 @@ CPLErr GDALRasterBand::GetHistogram( double dfMin, double dfMax,
          iSampleBlock < nBlocksPerRow * nBlocksPerColumn;
          iSampleBlock += nSampleRate )
     {
-        double dfValue = 0.0;
+        double dfValue = 0.0, dfReal, dfImag;
         int  iXBlock, iYBlock, nXCheck, nYCheck;
         GDALRasterBlock *poBlock;
 
@@ -1711,6 +1714,26 @@ CPLErr GDALRasterBand::GetHistogram( double dfMin, double dfMax,
                     break;
                   case GDT_Float64:
                     dfValue = ((double *) poBlock->GetDataRef())[iOffset];
+                    break;
+                  case GDT_CInt16:
+                    dfReal = ((GInt16 *) poBlock->GetDataRef())[iOffset*2];
+                    dfImag = ((GInt16 *) poBlock->GetDataRef())[iOffset*2+1];
+                    dfValue = sqrt( dfReal * dfReal + dfImag * dfImag );
+                    break;
+                  case GDT_CInt32:
+                    dfReal = ((GInt32 *) poBlock->GetDataRef())[iOffset*2];
+                    dfImag = ((GInt32 *) poBlock->GetDataRef())[iOffset*2+1];
+                    dfValue = sqrt( dfReal * dfReal + dfImag * dfImag );
+                    break;
+                  case GDT_CFloat32:
+                    dfReal = ((float *) poBlock->GetDataRef())[iOffset*2];
+                    dfImag = ((float *) poBlock->GetDataRef())[iOffset*2+1];
+                    dfValue = sqrt( dfReal * dfReal + dfImag * dfImag );
+                    break;
+                  case GDT_CFloat64:
+                    dfReal = ((double *) poBlock->GetDataRef())[iOffset*2];
+                    dfImag = ((double *) poBlock->GetDataRef())[iOffset*2+1];
+                    dfValue = sqrt( dfReal * dfReal + dfImag * dfImag );
                     break;
                   default:
                     CPLAssert( FALSE );
