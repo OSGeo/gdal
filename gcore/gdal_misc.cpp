@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  1999/07/23 19:35:47  warmerda
+ * added GDALGetDataTypeName
+ *
  * Revision 1.3  1999/05/17 02:00:45  vgough
  * made pure_virtual C linkage
  *
@@ -39,7 +42,7 @@
  *
  */
 
-#include "gdal_priv.h"
+#include "gdal.h"
 
 /************************************************************************/
 /*                           __pure_virtual()                           */
@@ -84,5 +87,40 @@ int GDALGetDataTypeSize( GDALDataType eDataType )
       default:
         CPLAssert( FALSE );
         return 0;
+    }
+}
+
+/************************************************************************/
+/*                        GDALGetDataTypeName()                         */
+/************************************************************************/
+
+const char *GDALGetDataTypeName( GDALDataType eDataType )
+
+{
+    switch( eDataType )
+    {
+      case GDT_Byte:
+        return "Byte";
+
+      case GDT_UInt16:
+        return "UInt16";
+
+      case GDT_Int16:
+        return "Int16";
+
+      case GDT_UInt32:
+        return "UInt32";
+        
+      case GDT_Int32:
+        return "Int32";
+        
+      case GDT_Float32:
+        return "Float32";
+
+      case GDT_Float64:
+        return "Float64";
+
+      default:
+        return NULL;
     }
 }
