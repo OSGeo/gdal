@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.8  2005/04/04 14:13:54  fwarmerdam
+ * Return true for 0 byte reads.
+ *
  * Revision 1.7  2005/04/02 21:17:01  fwarmerdam
  * add extra include files
  *
@@ -174,7 +177,7 @@ class VSIIOStream : public CNCSJPCIOStream
 
     virtual bool NCS_FASTCALL Read(void* buffer, UINT32 count) {
         if( count == 0 )
-            return false;
+            return true;
 
 //        return(1 == VSIFReadL( buffer, count, 1, fpVSIL ) );
 
