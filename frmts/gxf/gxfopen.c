@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2004/04/07 02:04:14  warmerda
+ * ensure CPLReadLine() buffer is cleared on close
+ *
  * Revision 1.11  2003/09/22 14:57:18  warmerda
  * Fixed bug recognising #MAP_PROJECTION when a #MAP_TRANSFORM was in
  * the file (see 1133_resmag.gxf).  Also fixed a bug with the allocation of
@@ -384,6 +387,8 @@ void GXFClose( GXFHandle hGXF )
     CPLFree( psGXF->pszTitle );
 
     VSIFClose( psGXF->fp );
+
+    CPLReadLine( NULL );
 
     CPLFree( psGXF );
 }
