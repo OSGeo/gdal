@@ -56,9 +56,6 @@ don't support more than 8K in a record, so significant sized geometries
 on a feature will trigger an errow about the INSERT command being to big
 for the buffer.  Upgrade to 7.1.x!<P>
 
-<li> Some features are not implemented properly.  For instance, spatial
-filtering is broken.<p>
-
 <li> A sequence object called <tablename>_ogc_fid_seq is created for new
 tables (layer), and must be dropped separately from the table when cleaning
 up.<p>
