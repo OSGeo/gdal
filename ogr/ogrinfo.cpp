@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2002/04/24 20:00:43  warmerda
+ * added the -sql command line switch
+ *
  * Revision 1.13  2002/03/27 22:50:16  warmerda
  * improve quiet support, and make WKT output be pretty
  *
@@ -95,6 +98,7 @@ int main( int nArgc, char ** papszArgv )
     char        **papszLayers = NULL;
     OGRGeometry *poSpatialFilter = NULL;
     int         nRepeatCount = 1;
+    const char  *pszSQLStatement = NULL;
     
 /* -------------------------------------------------------------------- */
 /*      Register format(s).                                             */
@@ -133,6 +137,10 @@ int main( int nArgc, char ** papszArgv )
         else if( EQUAL(papszArgv[iArg],"-where") && papszArgv[iArg+1] != NULL )
         {
             pszWHERE = papszArgv[++iArg];
+        }
+        else if( EQUAL(papszArgv[iArg],"-sql") && papszArgv[iArg+1] != NULL )
+        {
+            pszSQLStatement = papszArgv[++iArg];
         }
         else if( EQUAL(papszArgv[iArg],"-rc") && papszArgv[iArg+1] != NULL )
         {
@@ -203,6 +211,29 @@ int main( int nArgc, char ** papszArgv )
     }
 
 /* -------------------------------------------------------------------- */
+/*      Special case for -sql clause.  No source layers required.       */
+/* -------------------------------------------------------------------- */
+    if( pszSQLStatement != NULL )
+    {
+        OGRLayer *poResultSet;
+
+        nRepeatCount = 0;  // skip layer reporting.
+
+        if( pszWHERE != NULL )
+            printf( "-where clause ignored in combination with -sql.\n" );
+        if( CSLCount(papszLayers) > 0 )
+            printf( "layer names ignored in combination with -sql.\n" );
+        
+        poResultSet = poDS->ExecuteSQL( pszSQLStatement, NULL, NULL );
+
+        if( poResultSet != NULL )
+        {
+            ReportOnLayer( poResultSet, NULL, NULL );
+            poDS->ReleaseResultSet( poResultSet );
+        }
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Process each data source layer.                                 */
 /* -------------------------------------------------------------------- */
     for( int iRepeat = 0; iRepeat < nRepeatCount; iRepeat++ )
@@ -263,6 +294,7 @@ static void Usage()
 {
     printf( "Usage: ogrinfo [-ro] [-q] [-where restricted_where]\n"
             "               [-spat xmin ymin xmax ymax] [-fid fid]\n"
+            "               [-sql statement]\n"
             "               datasource_name [layer [layer ...]]\n");
     exit( 1 );
 }
