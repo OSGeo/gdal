@@ -46,6 +46,9 @@
  *					    Lou Steinberg
  *
  * $Log$
+ * Revision 1.3  2003/02/06 04:56:35  warmerda
+ * added documentation
+ *
  * Revision 1.2  2001/07/18 04:43:13  warmerda
  * added CPL_CVSID
  *
@@ -67,6 +70,31 @@ static void FindNearestColor( int nColors, int *panPCT, GByte *pabyColorMap );
 /************************************************************************/
 /*                      GDALComputeMedianCutPCT()                       */
 /************************************************************************/
+
+/**
+ * 24bit to 8bit conversion with dithering.
+ *
+ * This functions utilizes Floyd-Steinbert dithering in the process of 
+ * converting a 24bit RGB image into a pseudocolored 8bit image using a
+ * provided color table.  
+ *
+ * The red, green and blue input bands do not necessarily need to come
+ * from the same file, but they must be the same width and height.  They will
+ * be clipped to 8bit during reading, so non-eight bit bands are generally
+ * inappropriate.  Likewise the hTarget band will be written with 8bit values
+ * and must match the width and height of the source bands. 
+ *
+ * @param hRed Red input band. 
+ * @param hGreen Green input band. 
+ * @param hBlue Blue input band. 
+ * @param hTarget Output band. 
+ * @param hColorTable the color table to use with the output band. 
+ * @param pfnProgress callback for reporting algorithm progress matching the
+ * GDALProgressFunc() semantics.  May be NULL.
+ * @param pProgressArg callback argument passed to pfnProgress.
+ *
+ * @return CE_None on success or CE_Failure if an error occurs. 
+ */
 
 int GDALDitherRGB2PCT( GDALRasterBandH hRed, 
                        GDALRasterBandH hGreen, 

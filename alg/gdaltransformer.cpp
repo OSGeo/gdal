@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2003/02/06 04:56:35  warmerda
+ * added documentation
+ *
  * Revision 1.8  2002/12/13 15:55:27  warmerda
  * fix suggested output to preserve orig size exact on null transform
  *
@@ -61,6 +64,57 @@
 #include "ogr_spatialref.h"
 
 CPL_CVSID("$Id$");
+
+/************************************************************************/
+/*                          GDALTransformFunc                           */
+/*                                                                      */
+/*      Documentation for GDALTransformFunc typedef.                    */
+/************************************************************************/
+
+/*!
+
+\typedef int GDALTransformerFunc
+
+Generic signature for spatial point transformers.
+
+This function signature is used for a variety of functions that accept 
+passed in functions used to transform point locations between two coordinate
+spaces.  
+
+The GDALCreateGenImgProjTransformer(), GDALCreateReprojectionTransformer(), 
+GDALCreateGCPTransformer() and GDALCreateApproxTransformer() functions can
+be used to prepare argument data for some built-in transformers.  As well,
+applications can implement their own transformers to the following signature.
+
+\code
+typedef int 
+(*GDALTransformerFunc)( void *pTransformerArg, 
+                        int bDstToSrc, int nPointCount, 
+                        double *x, double *y, double *z, int *panSuccess );
+\endcode
+
+@param pTransformerArg application supplied callback data used by the
+transformer.  
+
+@param bDstToSrc if TRUE the transformation will be from the destination
+coordinate space to the source coordinate system, otherwise the transformation
+will be from the source coordinate system to the destination coordinate system.
+
+@param nPointCount number of points in the x, y and z arrays.
+
+@param x input X coordinates.  Results returned in same array.
+
+@param y input Y coordinates.  Results returned in same array.
+
+@param z input Z coordinates.  Results returned in same array.
+
+@param panSuccess array of ints in which success (TRUE) or failure (FALSE)
+flags are returned for the translation of each point.
+
+@return TRUE if the overall transformation succeeds (though some individual
+points may have failed) or FALSE if the overall transformation fails.
+
+*/
 
 /************************************************************************/
 /*                          InvGeoTransform()                           */
@@ -102,6 +156,45 @@ static int InvGeoTransform( double *gt_in, double *gt_out )
 /************************************************************************/
 /*                      GDALSuggestedWarpOutput()                       */
 /************************************************************************/
+
+/**
+ * Suggest output file size.
+ *
+ * This function is used to suggest the size, and georeferenced extents
+ * appropriate given the indicated transformation and input file.  It walks
+ * the edges of the input file (approximately 20 sample points along each
+ * edge) transforming into output coordinates in order to get an extents box.
+ *
+ * Then a resolution is computed with the intent that the length of the
+ * distance from the top left corner of the output imagery to the bottom right
+ * corner would represent the same number of pixels as in the source image. 
+ * Note that if the image is somewhat rotated the diagonal taken isnt of the
+ * whole output bounding rectangle, but instead of the locations where the
+ * top/left and bottom/right corners transform.  The output pixel size is 
+ * always square.  This is intended to approximately preserve the resolution
+ * of the input data in the output file. 
+ * 
+ * The values returned in padfGeoTransformOut, pnPixels and pnLines are
+ * the suggested number of pixels and lines for the output file, and the
+ * geotransform relating those pixels to the output georeferenced coordinates.
+ *
+ * The trickiest part of using the function is ensuring that the 
+ * transformer created is from source file pixel/line coordinates to 
+ * output file georeferenced coordinates.  This can be accomplished with 
+ * GDALCreateGenImProjTransformer() by passing a NULL for the hDstDS.  
+ *
+ * @param hSrcDS the input image (it is assumed the whole input images is
+ * being transformed). 
+ * @param pfnTransformer the transformer function.
+ * @param pTransformArg the callback data for the transformer function.
+ * @param padfGeoTransformOut the array of six doubles in which the suggested
+ * geotransform is returned. 
+ * @param pnPixels int in which the suggest pixel width of output is returned.
+ * @param pnLines int in which the suggest pixel height of output is returned.
+ *
+ * @return CE_None if successful or CE_Failure otherwise. 
+ */
+
 
 CPLErr GDALSuggestedWarpOutput( GDALDatasetH hSrcDS, 
                                 GDALTransformerFunc pfnTransformer, 
@@ -269,6 +362,51 @@ typedef struct {
 /*                  GDALCreateGenImgProjTransformer()                   */
 /************************************************************************/
 
+/**
+ * Create image to image transformer.
+ *
+ * This function creates a transformation object that maps from pixel/line
+ * coordinates on one image to pixel/line coordinates on another image.  The
+ * images may potentially be georeferenced in different coordinate systems, 
+ * and may used GCPs to map between their pixel/line coordinates and 
+ * georeferenced coordinates (as opposed to the default assumption that their
+ * geotransform should be used). 
+ *
+ * This transformer potentially performs three concatenated transformations.
+ *
+ * The first stage is from source image pixel/line coordinates to source
+ * image georeferenced coordinates, and may be done using the geotransform, 
+ * or if not defined using a polynomial model derived from GCPs.  If GCPs
+ * are used this stage is accomplished using GDALGCPTransform(). 
+ *
+ * The second stage is to change projections from the source coordinate system
+ * to the destination coordinate system, assuming they differ.  This is 
+ * accomplished internally using GDALReprojectionTransform().
+ *
+ * The third stage is converting from destination image georeferenced
+ * coordinates to destination image coordinates.  This is done using the
+ * destination image geotransform, or if not available, using a polynomial 
+ * model derived from GCPs. If GCPs are used this stage is accomplished using 
+ * GDALGCPTransform().  This stage is skipped if hDstDS is NULL when the
+ * transformation is created. 
+ * 
+ * @param hSrcDS source dataset.  
+ * @param pszSrcWKT the coordinate system for the source dataset.  If NULL, 
+ * it will be read from the dataset itself. 
+ * @param hDstDS destination dataset (or NULL). 
+ * @param pszDstWKT the coordinate system for the destination dataset.  If
+ * NULL, and hDstDS not NULL, it will be read from the destination dataset.
+ * @param bGCPUseOK TRUE if GCPs should be used if the geotransform is not
+ * available. 
+ * @param dfGCPErrorThreshold the maximum error allowed for the GCP model
+ * to be considered valid.  Exact semantics not yet defined. 
+ * @param nOrder the maximum order to use for GCP derived polynomials if 
+ * possible. 
+ * 
+ * @return handle suitable for use GDALGenImgProjTransform(), and to be
+ * deallocated with GDALDestroyGenImgProjTransformer().
+ */
+
 void *
 GDALCreateGenImgProjTransformer( GDALDatasetH hSrcDS, const char *pszSrcWKT,
                                  GDALDatasetH hDstDS, const char *pszDstWKT,
@@ -361,6 +499,15 @@ GDALCreateGenImgProjTransformer( GDALDatasetH hSrcDS, const char *pszSrcWKT,
 /*                  GDALDestroyGenImgProjTransformer()                  */
 /************************************************************************/
 
+/**
+ * GenImgProjTransformer deallocator.
+ *
+ * This function is used to deallocate the handle created with
+ * GDALCreateGenImgProjTransformer().
+ *
+ * @param hTransformArg the handle to deallocate. 
+ */
+
 void GDALDestroyGenImgProjTransformer( void *hTransformArg )
 
 {
@@ -382,6 +529,15 @@ void GDALDestroyGenImgProjTransformer( void *hTransformArg )
 /************************************************************************/
 /*                      GDALGenImgProjTransform()                       */
 /************************************************************************/
+
+/**
+ * Perform general image reprojection transformation.
+ *
+ * Actually performs the transformation setup in 
+ * GDALCreateGenImgProjTransformer().  This function matches the signature
+ * required by the GDALTransformerFunc(), and more details on the arguments
+ * can be found in that topic. 
+ */
 
 int GDALGenImgProjTransform( void *pTransformArg, int bDstToSrc, 
                              int nPointCount, 
@@ -508,6 +664,25 @@ typedef struct {
 /*                 GDALCreateReprojectionTransformer()                  */
 /************************************************************************/
 
+/**
+ * Create reprojection transformer.
+ *
+ * Creates a callback data structure suitable for use with 
+ * GDALReprojectionTransformation() to represent a transformation from
+ * one geographic or projected coordinate system to another.  On input
+ * the coordinate systems are described in OpenGIS WKT format. 
+ *
+ * Internally the OGRCoordinateTransformation object is used to implement
+ * the reprojection.
+ *
+ * @param pszSrcWKT the coordinate system for the source coordinate system.
+ * @param pszDstWKT the coordinate system for the destination coordinate 
+ * system.
+ *
+ * @return Handle for use with GDALReprojectionTransform(), or NULL if the 
+ * system fails to initialize the reprojection. 
+ **/
+
 void *GDALCreateReprojectionTransformer( const char *pszSrcWKT, 
                                          const char *pszDstWKT )
 
@@ -560,8 +735,15 @@ void *GDALCreateReprojectionTransformer( const char *pszSrcWKT,
 }
 
 /************************************************************************/
-/*                  GDALDestroyReprojectionTransform()                  */
+/*                 GDALDestroyReprojectionTransformer()                 */
 /************************************************************************/
+
+/**
+ * Destroy reprojection transformation.
+ *
+ * @param pTransformArg the transformation handle returned by
+ * GDALCreateReprojectionTransformer().
+ */
 
 void GDALDestroyReprojectionTransformer( void *pTransformAlg )
 
@@ -581,6 +763,15 @@ void GDALDestroyReprojectionTransformer( void *pTransformAlg )
 /************************************************************************/
 /*                     GDALReprojectionTransform()                      */
 /************************************************************************/
+
+/**
+ * Perform reprojection transformation.
+ *
+ * Actually performs the reprojection transformation described in 
+ * GDALCreateReprojectionTransformer().  This function matches the 
+ * GDALTransformerFunc() signature.  Details of the arguments are described
+ * there. 
+ */
 
 int GDALReprojectionTransform( void *pTransformArg, int bDstToSrc, 
                                 int nPointCount, 
@@ -625,6 +816,44 @@ typedef struct
 /*                    GDALCreateApproxTransformer()                     */
 /************************************************************************/
 
+/**
+ * Create an approximating transformer.
+ *
+ * This function creates a context for an approximated transformer.  Basically
+ * a high precision transformer is supplied as input and internally linear
+ * approximations are computed to generate results to within a defined
+ * precision. 
+ *
+ * The approximation is actually done at the point where GDALApproxTransform()
+ * calls are made, and depend on the assumption that the roughly linear.  The
+ * first and last point passed in must be the extreme values and the 
+ * intermediate values should describe a curve between the end points.  The
+ * approximator transforms and center using the approximate transformer, and
+ * then compares the true middle transformed value to a linear approximation
+ * based on the end points.  If the error is within the supplied threshold
+ * then the end points are used to linearly approximate all the values 
+ * otherwise the inputs points are split into two smaller sets, and the
+ * function recursively called till a sufficiently small set of points if found
+ * that the linear approximation is OK, or that all the points are exactly
+ * computed. 
+ *
+ * This function is very suitable for approximating transformation results
+ * from output pixel/line space to input coordinates for warpers that operate
+ * on one input scanline at a time.  Care should be taken using it in other
+ * circumstances as little internal validation is done, in order to keep things
+ * fast. 
+ *
+ * @param pfnBaseTransformer the high precision transformer which should be
+ * approximated. 
+ * @param pBaseTransformArg the callback argument for the high precision 
+ * transformer. 
+ * @param dfMaxError the maximum cartesian error in the "output" space that
+ * is to be accepted in the linear approximation.
+ * 
+ * @return callback pointer suitable for use with GDALApproxTransform().  It
+ * should be deallocated with GDALDestroyApproxTransformer().
+ */
+
 void *GDALCreateApproxTransformer( GDALTransformerFunc pfnBaseTransformer,
                                    void *pBaseTransformArg, double dfMaxError)
 
@@ -643,6 +872,15 @@ void *GDALCreateApproxTransformer( GDALTransformerFunc pfnBaseTransformer,
 /*                    GDALDestroyApproxTransformer()                    */
 /************************************************************************/
 
+/**
+ * Cleanup approximate transformer.
+ *
+ * Deallocates the resources allocated by GDALCreateApproxTransformer().
+ * 
+ * @param pCBData callback data originally returned by 
+ * GDALCreateApproxTransformer().
+ */
+
 void GDALDestroyApproxTransformer( void * pCBData )
 
 {
@@ -652,6 +890,15 @@ void GDALDestroyApproxTransformer( void * pCBData )
 /************************************************************************/
 /*                        GDALApproxTransform()                         */
 /************************************************************************/
+
+/**
+ * Perform approximate transformation.
+ *
+ * Actually performs the approximate transformation described in 
+ * GDALCreateApproxTransformer().  This function matches the 
+ * GDALTransformerFunc() signature.  Details of the arguments are described
+ * there. 
+ */
 
 int GDALApproxTransform( void *pCBData, int bDstToSrc, int nPoints, 
                          double *x, double *y, double *z, int *panSuccess )

@@ -35,6 +35,9 @@
  *      Heckbert, SIGGRAPH proceedings, 1982, pp. 297-307.
  * 
  * $Log$
+ * Revision 1.4  2003/02/06 04:56:35  warmerda
+ * added documentation
+ *
  * Revision 1.3  2002/04/16 17:48:36  warmerda
  * Ensure everything is initialized.
  *
@@ -84,6 +87,42 @@ static	Colorbox* largest_box(void);
 /************************************************************************/
 /*                      GDALComputeMedianCutPCT()                       */
 /************************************************************************/
+
+/**
+ * Compute optimal PCT for RGB image.
+ *
+ * This function implements a median cut algorithm to compute an "optimal"
+ * pseudocolor table for representing an input RGB image.  This PCT could
+ * then be used with GDALDitherRGB2PCT() to convert a 24bit RGB image into
+ * an eightbit pseudo-colored image. 
+ *
+ * This code was based on the tiffmedian.c code from libtiff (www.libtiff.org)
+ * which was based on a paper by Paul Heckbert:
+ *
+ * \verbatim
+ *   "Color  Image Quantization for Frame Buffer Display", Paul
+ *   Heckbert, SIGGRAPH proceedings, 1982, pp. 297-307.
+ * \endverbatim
+ *
+ * The red, green and blue input bands do not necessarily need to come
+ * from the same file, but they must be the same width and height.  They will
+ * be clipped to 8bit during reading, so non-eight bit bands are generally
+ * inappropriate. 
+ *
+ * @param hRed Red input band. 
+ * @param hGreen Green input band. 
+ * @param hBlue Blue input band. 
+ * @param pfnIncludePixel function used to test which pixels should be included
+ * in the analysis.  At this time this argument is ignored and all pixels are
+ * utilized.  This should normally be NULL.
+ * @param nColors the desired number of colors to be returned (2-256).
+ * @param hColorTable the colors will be returned in this color table object.
+ * @param pfnProgress callback for reporting algorithm progress matching the
+ * GDALProgressFunc() semantics.  May be NULL.
+ * @param pProgressArg callback argument passed to pfnProgress.
+ *
+ * @return returns CE_None on success or CE_Failure if an error occurs. 
+ */
 
 int GDALComputeMedianCutPCT( GDALRasterBandH hRed, 
                              GDALRasterBandH hGreen, 
