@@ -38,6 +38,9 @@
  *   GUInt16, and GByte are defined.
  *
  * $Log$
+ * Revision 1.2  1998/12/04 21:38:40  danmo
+ * Changed str*casecmp() to str*icmp() for WIN32
+ *
  * Revision 1.1  1998/12/03 18:26:02  warmerda
  * New
  *
@@ -107,8 +110,13 @@ typedef int		GBool;
 #endif
 
 #ifndef EQUAL
+#ifdef WIN32
+#  define EQUALN(a,b,n)           (strnicmp(a,b,n)==0)
+#  define EQUAL(a,b)              (stricmp(a,b)==0)
+#else
 #  define EQUALN(a,b,n)           (strncasecmp(a,b,n)==0)
 #  define EQUAL(a,b)              (strcasecmp(a,b)==0)
+#endif
 #endif
 
 #endif /* ndef CPL_BASE_H_INCLUDED */
