@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2003/01/04 23:21:56  mbp
+ * Minor bug fixes and field definition changes.  Cleaned
+ * up and commented code written for TIGER 2002 support.
+ *
  * Revision 1.17  2002/12/28 05:18:59  warmerda
  * Loosen candidate file constraints in Open() to include TST* files.
  *
@@ -697,7 +701,8 @@ int OGRTigerDataSource::Create( const char *pszNameIn, char **papszOptions )
 /*      Work out the version.                                           */
 /* -------------------------------------------------------------------- */
 //    nVersionCode = 1000; /* census 2000 */
-    nVersionCode = 1102; /* census 2002 */
+
+    nVersionCode = 1002; /* census 2002 */
     if( GetOption("VERSION") != NULL )
     {
         nVersionCode = atoi(GetOption("VERSION"));

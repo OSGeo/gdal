@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2003/01/04 23:21:56  mbp
+ * Minor bug fixes and field definition changes.  Cleaned
+ * up and commented code written for TIGER 2002 support.
+ *
  * Revision 1.9  2002/12/26 00:20:19  mbp
  * re-organized code to hold TIGER-version details in TigerRecordInfo structs;
  * first round implementation of TIGER_2002 support
@@ -68,7 +72,7 @@ CPL_CVSID("$Id$");
 static TigerFieldInfo rt8_fields[] = {
   // fieldname    fmt  type OFTType      beg  end  len  bDefine bSet bWrite
   { "MODULE",     ' ', ' ', OFTString,     0,   0,   8,       1,   0,     0 },
-  { "FILE",       'L', 'N', OFTInteger,    6,  10,   5,       1,   1,     1 },  //  otype mismatch
+  { "FILE",       'L', 'N', OFTString,     6,  10,   5,       1,   1,     1 },
   { "STATE",      'L', 'N', OFTInteger,    6,   7,   2,       1,   1,     1 },
   { "COUNTY",     'L', 'N', OFTInteger,    8,  10,   3,       1,   1,     1 },
   { "CENID",      'L', 'A', OFTString,    11,  15,   5,       1,   1,     1 },
@@ -162,7 +166,7 @@ OGRFeature *TigerAreaLandmarks::GetFeature( int nRecordId )
         return NULL;
     }
 
-    if( VSIFRead( achRecord, psRT8Info->reclen, 1, fpPrimary ) != 1 )
+    if( VSIFRead( achRecord, psRT8Info->nRecordLength, 1, fpPrimary ) != 1 )
     {
         CPLError( CE_Failure, CPLE_FileIO,
                   "Failed to read record %d of %s8",
@@ -189,14 +193,14 @@ OGRErr TigerAreaLandmarks::CreateFeature( OGRFeature *poFeature )
 {
     char        szRecord[OGR_TIGER_RECBUF_LEN];
 
-    if( !SetWriteModule( FILE_CODE, psRT8Info->reclen+2, poFeature ) )
+    if( !SetWriteModule( FILE_CODE, psRT8Info->nRecordLength+2, poFeature ) )
         return OGRERR_FAILURE;
 
-    memset( szRecord, ' ', psRT8Info->reclen );
+    memset( szRecord, ' ', psRT8Info->nRecordLength );
 
     WriteFields( psRT8Info, poFeature, szRecord);
 
-    WriteRecord( szRecord, psRT8Info->reclen, FILE_CODE );
+    WriteRecord( szRecord, psRT8Info->nRecordLength, FILE_CODE );
 
     return OGRERR_NONE;
 }

@@ -1,3 +1,4 @@
+/*-*-C++-*-*/
 /******************************************************************************
  * $Id$
  *
@@ -28,6 +29,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2003/01/04 23:21:56  mbp
+ * Minor bug fixes and field definition changes.  Cleaned
+ * up and commented code written for TIGER 2002 support.
+ *
  * Revision 1.11  2002/12/26 00:20:19  mbp
  * re-organized code to hold TIGER-version details in TigerRecordInfo structs;
  * first round implementation of TIGER_2002 support
@@ -74,15 +79,15 @@ class OGRTigerDataSource;
 /*
 ** TIGER Versions
 **
-** 0000           TIGER/Line Precensus Files, 1990 
-** 0002           TIGER/Line Initial Voting District Codes Files, 1990 
-** 0003           TIGER/Line Files, 1990 
-** 0005           TIGER/Line Files, 1992 
-** 0021           TIGER/Line Files, 1994 
-** 0024           TIGER/Line Files, 1995 
-** 0697 to 1098   TIGER/Line Files, 1997 
-** 1298 to 0499   TIGER/Line Files, 1998 
-** 0600 to 0800   TIGER/Line Files, 1999 
+** 0000           TIGER/Line Precensus Files, 1990
+** 0002           TIGER/Line Initial Voting District Codes Files, 1990
+** 0003           TIGER/Line Files, 1990
+** 0005           TIGER/Line Files, 1992
+** 0021           TIGER/Line Files, 1994
+** 0024           TIGER/Line Files, 1995
+** 0697 to 1098   TIGER/Line Files, 1997
+** 1298 to 0499   TIGER/Line Files, 1998
+** 0600 to 0800   TIGER/Line Files, 1999
 ** 1000 to 1100   TIGER/Line Files, Redistricting Census 2000
 ** 0301 to 0801	  TIGER/Line Files, Census 2000
 **
@@ -112,24 +117,34 @@ typedef enum {
 TigerVersion TigerClassifyVersion( int );
 char * TigerVersionString( TigerVersion );
 
-typedef struct TigerFieldInfo {
-  char 	       *fieldname;
-  char 	        fmt;
-  char          type;
-  OGRFieldType  OGRtype;
-  int		beg;
-  int		end;
-  int		len;
+/*****************************************************************************/
+/* The TigerFieldInfo and TigerRecordInfo structures hold information about  */
+/* the schema of a TIGER record type.  In each layer implementation file     */
+/* there are statically initalized variables of these types that describe    */
+/* the record types associated with that layer.  In the case where different */
+/* TIGER versions have different schemas, there is a                         */
+/* TigerFieldInfo/TigerRecordInfo for each version, and the constructor      */
+/* for the layer chooses a pointer to the correct set based on the version.  */
+/*****************************************************************************/
 
-  int		bDefine;	// whether to add this field to the FeatureDefn
-  int		bSet;		// whether to set this field in GetFeature()
-  int		bWrite; 	 // whether to write this field in CreateFeature()
+typedef struct TigerFieldInfo {
+  char 	       *pszFieldName;	// name of the field
+  char 	        cFmt;		// format of the field ('L' or 'R')
+  char          cType;		// type of the field ('A' or 'N')
+  OGRFieldType  OGRtype;	// OFTType of the field (OFTInteger, OFTString, ...?)
+  int		nBeg;		// beginning column number for field
+  int		nEnd;		// ending column number for field
+  int		nLen;		// length of field
+
+  int		bDefine;  	// whether to add this field to the FeatureDefn
+  int		bSet;	  	// whether to set this field in GetFeature()
+  int		bWrite;   	// whether to write this field in CreateFeature()
 } TigerFieldInfo;
 
 typedef struct TigerRecordInfo {
-  TigerFieldInfo *fields;
-  int		  nfields;
-  int		  reclen;
+  TigerFieldInfo *pasFields;
+  int		  nFieldCount;
+  int		  nRecordLength;
 } TigerRecordInfo;
 
 // OGR_TIGER_RECBUF_LEN should be a number that is larger than the
@@ -137,8 +152,9 @@ typedef struct TigerRecordInfo {
 // create arrays to hold the records.  At the time of this writing the
 // longest record (RT1) has length 228, but I'm choosing 500 because
 // it's a good round number and will allow for growth without having
-// to modify this file.  We never hold more than a few records in
-// memory at a time, so it won't affect the amount of memory required
+// to modify this file.  The code never holds more than a few records
+// in memory at a time, so having OGR_TIGER_RECBUF_LEN be much larger
+// than is really necessary won't affect the amount of memory required
 // in a substantial way.
 // mbp Fri Dec 20 19:19:59 2002
 #define OGR_TIGER_RECBUF_LEN 500
@@ -155,17 +171,17 @@ protected:
   char                *pszModule;
   char                *pszShortModule;
   FILE                *fpPrimary;
-    
+
   OGRFeatureDefn      *poFeatureDefn;
 
   int                 nFeatures;
   int                 nRecordLength;
-    
+
   int                 OpenFile( const char *, const char * );
   void                EstablishFeatureCount();
 
   static int          EstablishRecordLength( FILE * );
- 
+
   void                SetupVersion();
 
   int                 nVersionCode;
@@ -186,7 +202,7 @@ public:
   virtual int         GetFeatureCount() { return nFeatures; }
   virtual OGRFeature *GetFeature( int ) = 0;
 
-  virtual OGRErr      CreateFeature( OGRFeature *poFeature ) 
+  virtual OGRErr      CreateFeature( OGRFeature *poFeature )
                                 { return OGRERR_FAILURE; }
 
   OGRFeatureDefn     *GetFeatureDefn() { return poFeatureDefn; }
@@ -197,23 +213,23 @@ public:
 
   int                 WriteField( OGRFeature *, const char *, char *,
                                   int, int, char, char );
-  int                 WriteRecord( char *pachRecord, int nRecLen, 
+  int                 WriteRecord( char *pachRecord, int nRecLen,
                                    const char *pszType, FILE *fp = NULL );
-  int                 WritePoint( char *pachRecord, int nStart, 
+  int                 WritePoint( char *pachRecord, int nStart,
                                   double dfX, double dfY );
 
  protected:
-  void		      TigerFileBase::WriteFields(TigerRecordInfo *psRTInfo,
-						 OGRFeature      *poFeature,
-						 char            *szRecord);
+  void		      WriteFields(TigerRecordInfo *psRTInfo,
+				  OGRFeature      *poFeature,
+				  char            *szRecord);
 
-  void		      TigerFileBase::AddFieldDefns(TigerRecordInfo *psRTInfo,
-						   OGRFeatureDefn  *poFeatureDefn);
+  void		      AddFieldDefns(TigerRecordInfo *psRTInfo,
+				    OGRFeatureDefn  *poFeatureDefn);
 
 
-  void		      TigerFileBase::SetFields(TigerRecordInfo *psRTInfo,
-					       OGRFeature      *poFeature,
-					       char            *achRecord);
+  void		      SetFields(TigerRecordInfo *psRTInfo,
+				OGRFeature      *poFeature,
+				char            *achRecord);
 
 };
 
@@ -243,7 +259,7 @@ class TigerCompleteChain : public TigerFileBase
   TigerRecordInfo    *psRT1Info;
   TigerRecordInfo    *psRT2Info;
   TigerRecordInfo    *psRT3Info;
-    
+
 public:
                       TigerCompleteChain( OGRTigerDataSource *,
                                           const char * );
@@ -320,25 +336,39 @@ public:
   virtual OGRErr      CreateFeature( OGRFeature *poFeature );
 };
 
+/************************************************************************/
+/*                    TigerPoint                                        */
+/* This is an abstract base class for TIGER layers with point geometry. */
+/* Since much of the implementation of these layers is similar, I've    */
+/* put it into this base class to avoid duplication in the actual       */
+/* layer classes.  mbp Sat Jan  4 16:41:19 2003.                        */
+/************************************************************************/
+
 class TigerPoint : public TigerFileBase
 {
  protected:
   		      TigerPoint(int bRequireGeom);
 
+		      // The boolean bRequireGeom indicates whether
+		      // the layer requires each feature to actual
+		      // have a geom.  It's used in CreateFeature() to
+		      // decide whether to report an error when a
+		      // missing geom is detected.
+
  private:
- int		      bRequireGeom;		     
+ int		      bRequireGeom;
 
  public:
   virtual int         SetModule( const char *,
 				 char *pszFileCode );
 
-  virtual OGRFeature *GetFeature( int nRecordId,
+  virtual OGRFeature *GetFeature( int              nRecordId,
 				  TigerRecordInfo *psRTInfo,
 				  int nX0, int nX1,
 				  int nY0, int nY1 );
 
 
-  virtual OGRErr CreateFeature( OGRFeature *poFeature, 
+  virtual OGRErr CreateFeature( OGRFeature      *poFeature,
 				TigerRecordInfo *psRTInfo,
 				int nIndex,
 				char *pszFileCode );
@@ -638,7 +668,7 @@ class TigerZipPlus4 : public TigerFileBase
 class OGRTigerLayer : public OGRLayer
 {
     TigerFileBase      *poReader;
-    
+
     OGRGeometry        *poFilterGeom;
 
     OGRTigerDataSource   *poDS;
@@ -665,7 +695,7 @@ class OGRTigerLayer : public OGRLayer
     OGRFeatureDefn *    GetLayerDefn();
 
     int                 GetFeatureCount( int ) { return nFeatureCount; }
-    
+
     int                 TestCapability( const char * );
 
     virtual OGRSpatialReference *GetSpatialRef();
@@ -689,12 +719,12 @@ class OGRTigerDataSource : public OGRDataSource
     OGRSpatialReference *poSpatialRef;
 
     char                **papszOptions;
-    
+
     char                *pszPath;
 
     int                 nModules;
     char                **papszModules;
-    
+
     int                 nVersionCode;
     TigerVersion        nVersion;
 
@@ -711,12 +741,12 @@ class OGRTigerDataSource : public OGRDataSource
 
     void                SetOptionList( char ** );
     const char         *GetOption( const char * );
-    
+
     int                 Open( const char * pszName, int bTestOpen = FALSE,
                               char ** papszFileList = NULL );
 
     int                 Create( const char *pszName, char **papszOptions );
-    
+
     const char          *GetName() { return pszName; }
     int                 GetLayerCount();
     OGRLayer            *GetLayer( int );
@@ -730,7 +760,7 @@ class OGRTigerDataSource : public OGRDataSource
     const char          *GetDirPath() { return pszPath; }
     char                *BuildFilename( const char * pszModule,
                                         const char * pszExtension );
-    
+
 
     int                 GetModuleCount() { return nModules; }
     const char         *GetModule( int );
@@ -739,7 +769,7 @@ class OGRTigerDataSource : public OGRDataSource
 
     void                DeleteModuleFiles( const char *pszModule );
 
-    virtual OGRLayer    *CreateLayer( const char *, 
+    virtual OGRLayer    *CreateLayer( const char *,
                                       OGRSpatialReference * = NULL,
                                       OGRwkbGeometryType = wkbUnknown,
                                       char ** = NULL );
@@ -753,7 +783,7 @@ class OGRTigerDriver : public OGRSFDriver
 {
   public:
                 ~OGRTigerDriver();
-                
+
     const char *GetName();
 
     OGRDataSource *Open( const char *, int );

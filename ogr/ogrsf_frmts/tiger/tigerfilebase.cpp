@@ -29,6 +29,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2003/01/04 23:21:56  mbp
+ * Minor bug fixes and field definition changes.  Cleaned
+ * up and commented code written for TIGER 2002 support.
+ *
  * Revision 1.12  2002/12/26 00:20:19  mbp
  * re-organized code to hold TIGER-version details in TigerRecordInfo structs;
  * first round implementation of TIGER_2002 support
@@ -485,11 +489,11 @@ void TigerFileBase::AddFieldDefns(TigerRecordInfo *psRTInfo,
 {
   OGRFieldDefn        oField("",OFTInteger);
   int i;
-  for (i=0; i<psRTInfo->nfields; ++i) {
-    if (psRTInfo->fields[i].bDefine) {
-      oField.Set( psRTInfo->fields[i].fieldname,
-		  psRTInfo->fields[i].OGRtype,
-		  psRTInfo->fields[i].len );
+  for (i=0; i<psRTInfo->nFieldCount; ++i) {
+    if (psRTInfo->pasFields[i].bDefine) {
+      oField.Set( psRTInfo->pasFields[i].pszFieldName,
+		  psRTInfo->pasFields[i].OGRtype,
+		  psRTInfo->pasFields[i].nLen );
       poFeatureDefn->AddFieldDefn( &oField );
     }
   }
@@ -501,13 +505,13 @@ void TigerFileBase::SetFields(TigerRecordInfo *psRTInfo,
 			      char            *achRecord)
 {
   int i;
-  for (i=0; i<psRTInfo->nfields; ++i) {
-    if (psRTInfo->fields[i].bSet) {
+  for (i=0; i<psRTInfo->nFieldCount; ++i) {
+    if (psRTInfo->pasFields[i].bSet) {
       SetField( poFeature,
-		psRTInfo->fields[i].fieldname,
+		psRTInfo->pasFields[i].pszFieldName,
 		achRecord, 
-		psRTInfo->fields[i].beg,
-		psRTInfo->fields[i].end );
+		psRTInfo->pasFields[i].nBeg,
+		psRTInfo->pasFields[i].nEnd );
     }
   }
 }
@@ -517,15 +521,15 @@ void TigerFileBase::WriteFields(TigerRecordInfo *psRTInfo,
 				char            *szRecord)
 {
   int i;
-  for (i=0; i<psRTInfo->nfields; ++i) {
-    if (psRTInfo->fields[i].bWrite) {
+  for (i=0; i<psRTInfo->nFieldCount; ++i) {
+    if (psRTInfo->pasFields[i].bWrite) {
       WriteField( poFeature,
-		  psRTInfo->fields[i].fieldname,
+		  psRTInfo->pasFields[i].pszFieldName,
 		  szRecord, 
-		  psRTInfo->fields[i].beg,
-		  psRTInfo->fields[i].end,
-		  psRTInfo->fields[i].fmt,
-		  psRTInfo->fields[i].type );
+		  psRTInfo->pasFields[i].nBeg,
+		  psRTInfo->pasFields[i].nEnd,
+		  psRTInfo->pasFields[i].cFmt,
+		  psRTInfo->pasFields[i].cType );
     }
   }
 }

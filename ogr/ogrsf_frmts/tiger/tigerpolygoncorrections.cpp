@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2003/01/04 23:21:56  mbp
+ * Minor bug fixes and field definition changes.  Cleaned
+ * up and commented code written for TIGER 2002 support.
+ *
  * Revision 1.1  2002/12/26 00:20:19  mbp
  * re-organized code to hold TIGER-version details in TigerRecordInfo structs;
  * first round implementation of TIGER_2002 support
@@ -150,7 +154,7 @@ OGRFeature *TigerPolygonCorrections::GetFeature( int nRecordId )
         return NULL;
     }
 
-    if( VSIFRead( achRecord, psRTBInfo->reclen, 1, fpPrimary ) != 1 )
+    if( VSIFRead( achRecord, psRTBInfo->nRecordLength, 1, fpPrimary ) != 1 )
     {
         CPLError( CE_Failure, CPLE_FileIO,
                   "Failed to read record %d of %sZ",
@@ -178,14 +182,14 @@ OGRErr TigerPolygonCorrections::CreateFeature( OGRFeature *poFeature )
 {
     char        szRecord[OGR_TIGER_RECBUF_LEN];
 
-    if( !SetWriteModule( FILE_CODE, psRTBInfo->reclen+2, poFeature ) )
+    if( !SetWriteModule( FILE_CODE, psRTBInfo->nRecordLength+2, poFeature ) )
         return OGRERR_FAILURE;
 
-    memset( szRecord, ' ', psRTBInfo->reclen );
+    memset( szRecord, ' ', psRTBInfo->nRecordLength );
 
     WriteFields( psRTBInfo, poFeature, szRecord);
 
-    WriteRecord( szRecord, psRTBInfo->reclen, FILE_CODE );
+    WriteRecord( szRecord, psRTBInfo->nRecordLength, FILE_CODE );
 
     return OGRERR_NONE;
 }
