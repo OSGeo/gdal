@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2003/01/09 21:19:12  warmerda
+ * improved data type support, get/set precision
+ *
  * Revision 1.10  2003/01/07 22:24:35  warmerda
  * added SRS support
  *
@@ -1070,16 +1073,23 @@ OGRErr OGROCITableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK )
 /* -------------------------------------------------------------------- */
     if( oField.GetType() == OFTInteger )
     {
-        strcpy( szFieldType, "INTEGER" );
+        if( bPreservePrecision && oField.GetWidth() != 0 )
+            sprintf( szFieldType, "NUMBER(%d)", oField.GetWidth() );
+        else
+            strcpy( szFieldType, "INTEGER" );
     }
     else if( oField.GetType() == OFTReal )
     {
-        strcpy( szFieldType, "NUMBER" );
+        if( bPreservePrecision && oField.GetWidth() != 0 )
+            sprintf( szFieldType, "NUMBER(%d,%d)", 
+                     oField.GetWidth(), oField.GetPrecision() );
+        else
+            strcpy( szFieldType, "FLOAT(126)" );
     }
     else if( oField.GetType() == OFTString )
     {
         if( oField.GetWidth() == 0 || !bPreservePrecision )
-            strcpy( szFieldType, "VARCHAR(1024)" );
+            strcpy( szFieldType, "VARCHAR(2048)" );
         else
             sprintf( szFieldType, "CHAR(%d)", oField.GetWidth() );
     }
