@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2005/04/06 13:38:33  fwarmerdam
+ * Initialize nSchemaStart.
+ *
  * Revision 1.17  2005/01/27 16:34:56  fwarmerdam
  * Fixed gml test.  Don't try to read any old XML file!
  *
@@ -543,7 +546,7 @@ void OGRGMLDataSource::InsertHeader()
 
 {
     FILE        *fpSchema;
-    int         nSchemaStart;
+    int         nSchemaStart = 0;
 
     if( fpOutput == NULL || fpOutput == stdout )
         return;
