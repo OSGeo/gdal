@@ -5,8 +5,7 @@ tools) providing read (and sometimes write) access to a variety of vector file
 formats including ESRI Shapefiles, S-57, SDTS, PostGIS, Oracle Spatial, 
 and Mapinfo mid/mif and TAB formats.<p>
 
-OGR is a part of the <a href="http://www.remotesensing.org/gdal">GDAL</a> 
-library.<p>
+OGR is a part of the <a href="http://www.gdal.org/">GDAL</a> library.<p>
 
 <h2>Resources</h2>
 
@@ -42,7 +41,7 @@ or <a href="http://pobox.com/~warmerdam/projects/opengis/wkt_prop.doc">doc</a> f
 
 The best way to get OGR <a href="ogr_utilities.html">utilities</a>
 in ready-to-use form is to download the latest 
-<a href="ftp://ftp.remotesensing.org/gdal/openev/">OpenEV_FW</a> kit
+<a href="ftp://www.gdal.org/dl/openev">OpenEV_FW</a> kit
 for your platform.  While large, these include builds of the OGR utilities
 with lots of optional components built-in.  Once downloaded follow the 
 included instructions to setup your path and other environment variables
@@ -59,13 +58,8 @@ loosely coupled subcomponent of the
 of GDAL for the price of OGR, though you can build and use just the OGR 
 components.  See the <a href="http://www.remotesensing.org/gdal">GDAL</a> 
 page for the most recently released source including 
-<a href="ftp://ftp.remotesensing.org/gdal/daily/">nightly CVS snapshots</a>. 
-It can also <a href="http://pobox.com/~warmerdam/projects/opengis/cvs.html">be pulled directly from CVS</a>, or 
-<a href="http://www.remotesensing.org/cgi-bin/cvsweb.cgi/osrs/gdal/ogr/">
-browsed on the web</a>.<p>
-
-To build the source consult the
-<a href="http://pobox.com/~warmerdam/projects/opengis/build.html">OGR Building</a> instructions.<p>
+<a href="http://gdal.maptools.org/dl/daily">nightly CVS snapshots</a>. 
+<p>
 
 <h2>Bug Reporting</h2>
 
@@ -96,20 +90,15 @@ changes in the C++ API (such as const correctness changes) can cause changes
 in method and class signatures that prevent use of new DLLs with older clients.
 The C API is also generally easy to call from other languages which allow call
 out to DLLs functions, such as Visual Basic, or Delphi. The API can be
-explored in the 
-<a href="http://www.remotesensing.org/gdal/srctree/ogr/ogr_api.h">ogr_api.h</a>
-include file.  A
-<a href="http://www.remotesensing.org/gdal/srctree/ogr/ogr_capi_test.c">small 
-sample program</a> demonstrates use of the C API.<p>
+explored in the <a href="ogr__api_8h.html">ogr_api.h</a> include file.  
+The gdal/ogr/ogr_capi_test.c is a small sample program demonstrating use
+of the C API.<p>
 
 The Python API isn't really well documented at this time, but parallels the
-C/C++ APIs.  The interface classes can be browsed in the 
-<a href="http://www.remotesensing.org/gdal/srctree/pymod/ogr.py">ogr.py</a>
-(simple features) and
-<a href="http://www.remotesensing.org/gdal/srctree/pymod/osr.py">osr.py</a>
-(coordinate systems) python modules.  The 
-<a href="http://www.remotesensing.org/gdal/srctree/pymod/samples/assemblepoly.py">assemblepoly.py</a> sample script is one demonstration of using 
-the python API.<p>
+C/C++ APIs.  The interface classes can be browsed in the pymod/ogr.py
+(simple features) and pymod/osr.py
+(coordinate systems) python modules.  The pymod/samples/assemblepoly.py
+sample script is one demonstration of using the python API.<p>
 
 <h2>OGR and OpenGIS Simple Features for OLE DB</h2>
 
