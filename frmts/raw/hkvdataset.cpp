@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2001/06/13 19:42:10  warmerda
+ * Changed blob->image_data, and HKV to MFF2.
+ *
  * Revision 1.11  2000/12/14 17:34:13  warmerda
  * Added dataset delete method.
  *
@@ -684,7 +687,9 @@ GDALDataset *HKVDataset::Open( GDALOpenInfo * poOpenInfo )
     if( !poOpenInfo->bStatOK || !VSI_ISDIR(poOpenInfo->sStat.st_mode) )
         return NULL;
     
-    pszFilename = CPLFormFilename(poOpenInfo->pszFilename, "blob", NULL );
+    pszFilename = CPLFormFilename(poOpenInfo->pszFilename, "image_data", NULL);
+    if( VSIStat(pszFilename,&sStat) != 0 )
+        pszFilename = CPLFormFilename(poOpenInfo->pszFilename, "blob", NULL );
     if( VSIStat(pszFilename,&sStat) != 0 )
         return NULL;
 
@@ -823,7 +828,9 @@ GDALDataset *HKVDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Open the blob file.                                             */
 /* -------------------------------------------------------------------- */
-    pszFilename = CPLFormFilename(poDS->pszPath, "blob", NULL );
+    pszFilename = CPLFormFilename(poDS->pszPath, "image_data", NULL );
+    if( VSIStat(pszFilename,&sStat) != 0 )
+        pszFilename = CPLFormFilename(poDS->pszPath, "blob", NULL );
     if( poOpenInfo->eAccess == GA_ReadOnly )
     {
         poDS->fpBlob = VSIFOpen( pszFilename, "rb" );
@@ -1026,7 +1033,7 @@ GDALDataset *HKVDataset::Create( const char * pszFilenameIn,
 /* -------------------------------------------------------------------- */
 /*      Create the blob file.                                           */
 /* -------------------------------------------------------------------- */
-    pszFilename = CPLFormFilename( pszFilenameIn, "blob", NULL );
+    pszFilename = CPLFormFilename( pszFilenameIn, "image_data", NULL );
     fp = VSIFOpen( pszFilename, "wb" );
     if( fp == NULL )
     {
@@ -1117,9 +1124,9 @@ void GDALRegister_HKV()
     {
         poHKVDriver = poDriver = new GDALDriver();
         
-        poDriver->pszShortName = "HKV";
-        poDriver->pszLongName = "Atlantis HKV Raster";
-        poDriver->pszHelpTopic = "frmt_various.html#HKV";
+        poDriver->pszShortName = "MFF2";
+        poDriver->pszLongName = "Atlantis MFF2 (HKV) Raster";
+        poDriver->pszHelpTopic = "frmt_various.html#MFF2";
         
         poDriver->pfnOpen = HKVDataset::Open;
         poDriver->pfnCreate = HKVDataset::Create;
