@@ -28,6 +28,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.3  2001/06/11 13:47:07  warmerda
+ * initialize HighPart in VSIFTellL()
+ *
  * Revision 1.2  2001/01/19 21:16:41  warmerda
  * expanded tabs
  *
@@ -159,6 +162,7 @@ vsi_l_offset VSIFTellL( FILE * fp )
     DWORD  dwMoveHigh=0, dwMoveLow;
     LARGE_INTEGER   li;
 
+    li.HighPart = 0;
     li.LowPart = SetFilePointer( hFile, 0, (PLONG) &(li.HighPart), 
                                  FILE_CURRENT );
 
@@ -237,3 +241,4 @@ int VSIFEofL( FILE * fp )
 }
 
 #endif /* defined WIN32 */
+
