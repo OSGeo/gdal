@@ -99,7 +99,11 @@ AC_DEFUN(AC_LD_SHARED,
   if test -z "`${CXX} -shared conftest2.o -o libconftest.so 2>&1`" ; then
     if test -z "`${CC} conftest1.c libconftest.so -o conftest1 2>&1`"; then
       LD_LIBRARY_PATH_OLD="$LD_LIBRARY_PATH"
-      LD_LIBRARY_PATH="`pwd`"
+      if test -z "$LD_LIBRARY_PATH" ; then
+        LD_LIBRARY_PATH="`pwd`"
+      else
+        LD_LIBRARY_PATH="`pwd`:$LD_LIBRARY_PATH"
+      fi
       export LD_LIBRARY_PATH
       if test -z "`./conftest1 2>&1`" ; then
         echo "checking for ${CXX} -shared ... yes"
@@ -119,7 +123,11 @@ AC_DEFUN(AC_LD_SHARED,
           -a -z "`ld -shared conftest2.o -o libconftest.so 2>&1`" ; then
     if test -z "`${CC} conftest1.c libconftest.so -o conftest1 2>&1`"; then
       LD_LIBRARY_PATH_OLD="$LD_LIBRARY_PATH"
-      LD_LIBRARY_PATH="`pwd`"
+      if test -z "$LD_LIBRARY_PATH" ; then
+        LD_LIBRARY_PATH="`pwd`"
+      else
+        LD_LIBRARY_PATH="`pwd`:$LD_LIBRARY_PATH"
+      fi
       export LD_LIBRARY_PATH
       if test -z "`./conftest1 2>&1`" ; then
         echo "checking for ld -shared ... yes"
