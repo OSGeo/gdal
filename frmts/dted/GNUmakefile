@@ -25,5 +25,5 @@ install-obj:	$(foreach file,$(OBJ),../o/$(file))
 
 
 dted_test:	dted_test.o $(OBJ)
-	$(CC) -o dted_test dted_test.o dted_api.o dted_create.o dted_ptstream.o \
+	$(CXX) -o dted_test dted_test.o dted_api.o dted_create.o dted_ptstream.o \
 		 ../../port/cpl.a -lm 
