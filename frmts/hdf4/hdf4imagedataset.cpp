@@ -29,6 +29,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.18  2002/12/19 19:20:20  dron
+ * Wrong comments removed.
+ *
  * Revision 1.17  2002/12/02 19:07:55  dron
  * Added SetMetadata()/SetMetadataItem().
  *
@@ -195,7 +198,7 @@ HDF4ImageRasterBand::HDF4ImageRasterBand( HDF4ImageDataset *poDS, int nBand,
 /************************************************************************/
 
 CPLErr HDF4ImageRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                      void * pImage )
+                                        void * pImage )
 {
     HDF4ImageDataset	*poGDS = (HDF4ImageDataset *) poDS;
     int32		iStart[MAX_DIMS], iEdges[MAX_DIMS];
@@ -360,7 +363,6 @@ CPLErr HDF4ImageRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
 CPLErr HDF4ImageRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
 					 void * pImage )
-
 {
     HDF4ImageDataset	*poGDS = (HDF4ImageDataset *)poDS;
     int32		iStart[MAX_DIMS], iEdges[MAX_DIMS];
@@ -462,7 +464,6 @@ GDALColorInterp HDF4ImageRasterBand::GetColorInterpretation()
 /************************************************************************/
 
 HDF4ImageDataset::HDF4ImageDataset()
-
 {
     hSD = 0;
     hGR = 0;
@@ -480,7 +481,6 @@ HDF4ImageDataset::HDF4ImageDataset()
 /************************************************************************/
 
 HDF4ImageDataset::~HDF4ImageDataset()
-
 {
     FlushCache();
     
@@ -496,8 +496,10 @@ HDF4ImageDataset::~HDF4ImageDataset()
 	CSLDestroy( papszSubdatasetName );
     if ( papszLocalMetadata )
 	CSLDestroy( papszLocalMetadata );
-    if( poColorTable != NULL )
+    if ( poColorTable != NULL )
         delete poColorTable;
+    if ( pszProjection )
+	CPLFree( pszProjection );
 
 }
 
@@ -506,7 +508,6 @@ HDF4ImageDataset::~HDF4ImageDataset()
 /************************************************************************/
 
 CPLErr HDF4ImageDataset::GetGeoTransform( double * padfTransform )
-
 {
     memcpy( padfTransform, adfGeoTransform, sizeof(double) * 6 );
     return CE_None;
@@ -517,7 +518,6 @@ CPLErr HDF4ImageDataset::GetGeoTransform( double * padfTransform )
 /************************************************************************/
 
 CPLErr HDF4ImageDataset::SetGeoTransform( double * padfTransform )
-
 {
     const char		*pszValue;
     CPLErr		eErr = CE_None;
@@ -679,14 +679,14 @@ void HDF4ImageDataset::ToUTM( OGRSpatialReference *poProj,
 /* -------------------------------------------------------------------- */
 /*      Transform to latlong and report.                                */
 /* -------------------------------------------------------------------- */
-    if( poTransform != NULL 
-        && poTransform->Transform(1, pdfGeoX, pdfGeoY,NULL) == OGRERR_NONE )
-
     if( poTransform != NULL )
-        CPLFree( poTransform );
+	poTransform->Transform( 1, pdfGeoX, pdfGeoY, NULL );
+	
+    if( poTransform != NULL )
+        delete poTransform;
 
     if( poLatLong != NULL )
-        CPLFree( poLatLong );
+        delete poLatLong;
 }
 
 /************************************************************************/
@@ -709,7 +709,6 @@ void HDF4ImageDataset::ReadCoordinates( const char *pszString,
 /************************************************************************/
 
 GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
-
 {
     int		i;
     
@@ -851,7 +850,7 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 		poDS->TranslateHDF4Attributes( poDS->iGR, iAttribute,
 		    szAttrName, iAttrNumType, nValues, poDS->papszLocalMetadata );
 	}
-	// Read color table
+	// Read colour table
 	GDALColorEntry oEntry;
 	 
 	poDS->iPal = GRgetlutid ( poDS->iGR, poDS->iDataset );
@@ -906,7 +905,11 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 	case GDAL_HDF4:
 	if ( (pszValue =
 	      CSLFetchNameValue(poDS->papszGlobalMetadata, "Projection")) )
-	    poDS->pszProjection = (char *)pszValue;
+	{
+	    if ( poDS->pszProjection )
+		CPLFree( poDS->pszProjection );
+	    poDS->pszProjection = CPLStrdup( pszValue );
+	}
 	if ( (pszValue =
 	      CSLFetchNameValue(poDS->papszGlobalMetadata, "TransformationMatrix")) )
 	{
@@ -1055,8 +1058,7 @@ GDALDataset *HDF4ImageDataset::Create( const char * pszFilename,
     poDS = new HDF4ImageDataset();
 
 /* -------------------------------------------------------------------- */
-/*      Choose rank for the created dataset. Currently only 3D dataset  */
-/*      may be created dynamically                                      */
+/*      Choose rank for the created dataset.                            */
 /* -------------------------------------------------------------------- */
     poDS->iRank = 3;
     if ( CSLFetchNameValue( papszOptions, "RANK" ) != NULL &&
@@ -1174,7 +1176,7 @@ GDALDataset *HDF4ImageDataset::Create( const char * pszFilename,
     SDsetattr( poDS->hSD, "Signature", DFNT_CHAR8, strlen(pszGDALSignature),
 	       pszGDALSignature );
     
-    return poDS;
+    return (GDALDataset *) poDS;
 }
 
 /************************************************************************/
