@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.53  2004/04/02 17:32:40  warmerda
+ * added GDALGeneralCmdLineProcessor()
+ *
  * Revision 1.52  2004/02/25 09:03:15  dron
  * Added GDALPackedDMSToDec() and GDALDecToPackedDMS() functions.
  *
@@ -126,6 +129,7 @@
 
 #include "gdal_priv.h"
 #include "cpl_string.h"
+#include "cpl_minixml.h"
 #include <ctype.h>
 
 CPL_CVSID("$Id$");
@@ -1725,6 +1729,214 @@ int GDALGCPsToGeoTransform( int nGCPCount, const GDAL_GCP *pasGCPs,
 
     return TRUE;
 }
+
+/************************************************************************/
+/*                    GDALGeneralCmdLineProcessor()                     */
+/************************************************************************/
+
+/**
+ * General utility option processing.
+ *
+ * This function is intended to provide a variety of generic commandline 
+ * options for all GDAL commandline utilities.  It takes care of the following
+ * commandline options:
+ *  
+ *  --version: report version of GDAL in use. 
+ *  --formats: report all format drivers configured.
+ *  --format [format]: report details of one format driver. 
+ *  --optfile filename: expand an option file into the argument list. 
+ *  --config key value: set system configuration option. 
+ *  --debug [on/off/value]: set debug level.
+ *  --help-general: report detailed help on general options. 
+ *
+ * @return updated nArgc argument count.  Return of 0 requests terminate 
+ * without error, return of -1 requests exit with error code.
+ */
+
+int GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
+
+{
+    char **papszReturn = NULL;
+    int  iArg;
+    char **papszArgv = *ppapszArgv;
+
+    (void) nOptions;
+    
+/* -------------------------------------------------------------------- */
+/*      Preserve the program name.                                      */
+/* -------------------------------------------------------------------- */
+    papszReturn = CSLAddString( papszReturn, papszArgv[0] );
+
+/* ==================================================================== */
+/*      Loop over all arguments.                                        */
+/* ==================================================================== */
+    for( iArg = 1; iArg < nArgc; iArg++ )
+    {
+/* -------------------------------------------------------------------- */
+/*      --version                                                       */
+/* -------------------------------------------------------------------- */
+        if( EQUAL(papszArgv[iArg],"--version") )
+        {
+            printf( "%s\n", GDALVersionInfo( "--version" ) );
+            CSLDestroy( papszReturn );
+            return 0;
+        }
+
+/* -------------------------------------------------------------------- */
+/*      --config                                                        */
+/* -------------------------------------------------------------------- */
+        else if( EQUAL(papszArgv[iArg],"--config") )
+        {
+            if( iArg + 2 >= nArgc )
+            {
+                CPLError( CE_Failure, CPLE_AppDefined, 
+                          "--config option given without a key and value argument." );
+                CSLDestroy( papszReturn );
+                return -1;
+            }
+
+            CPLSetConfigOption( papszArgv[iArg+1], papszArgv[iArg+2] );
+
+            iArg += 2;
+        }
+
+/* -------------------------------------------------------------------- */
+/*      --debug                                                         */
+/* -------------------------------------------------------------------- */
+        else if( EQUAL(papszArgv[iArg],"--debug") )
+        {
+            if( iArg + 1 >= nArgc )
+            {
+                CPLError( CE_Failure, CPLE_AppDefined, 
+                          "--debug option given without debug level." );
+                CSLDestroy( papszReturn );
+                return -1;
+            }
+
+            CPLSetConfigOption( "CPL_DEBUG", papszArgv[iArg+1] );
+            iArg += 1;
+        }
+
+/* -------------------------------------------------------------------- */
+/*      --formats                                                       */
+/* -------------------------------------------------------------------- */
+        else if( EQUAL(papszArgv[iArg], "--formats") )
+        {
+            int iDr;
+
+            printf( "Supported Formats:\n" );
+            for( iDr = 0; iDr < GDALGetDriverCount(); iDr++ )
+            {
+                GDALDriverH hDriver = GDALGetDriver(iDr);
+                
+                printf( "  %s: %s\n",
+                        GDALGetDriverShortName( hDriver ),
+                        GDALGetDriverLongName( hDriver ) );
+            }
+
+            CSLDestroy( papszReturn );
+            return 0;
+        }
+
+/* -------------------------------------------------------------------- */
+/*      --format                                                        */
+/* -------------------------------------------------------------------- */
+        else if( EQUAL(papszArgv[iArg], "--format") )
+        {
+            GDALDriverH hDriver;
+            char **papszMD;
+
+            CSLDestroy( papszReturn );
+
+            if( iArg + 1 >= nArgc )
+            {
+                CPLError( CE_Failure, CPLE_AppDefined, 
+                          "--format option given without a format code." );
+                return -1;
+            }
+
+            hDriver = GDALGetDriverByName( papszArgv[iArg+1] );
+            if( hDriver == NULL )
+            {
+                CPLError( CE_Failure, CPLE_AppDefined, 
+                          "--format option given with format '%s', but that format not\n"
+                          "recognised.  Use the --formats option to get a list of available formats,\n"
+                          "and use the short code (ie. GTiff or HFA) as the format identifier.\n", 
+                          papszArgv[iArg+1] );
+                return -1;
+            }
+
+            printf( "Format Details:\n" );
+            printf( "  Short Name: %s\n", GDALGetDriverShortName( hDriver ) );
+            printf( "  Long Name: %s\n", GDALGetDriverLongName( hDriver ) );
+
+            papszMD = GDALGetMetadata( hDriver, NULL );
+
+            if( CSLFetchNameValue( papszMD, GDAL_DMD_EXTENSION ) )
+                printf( "  Extension: %s\n", 
+                        CSLFetchNameValue( papszMD, GDAL_DMD_EXTENSION ) );
+            if( CSLFetchNameValue( papszMD, GDAL_DMD_MIMETYPE ) )
+                printf( "  Mime Type: %s\n", 
+                        CSLFetchNameValue( papszMD, GDAL_DMD_MIMETYPE ) );
+            if( CSLFetchNameValue( papszMD, GDAL_DMD_HELPTOPIC ) )
+                printf( "  Help Topic: %s\n", 
+                        CSLFetchNameValue( papszMD, GDAL_DMD_HELPTOPIC ) );
+            
+            if( CSLFetchNameValue( papszMD, GDAL_DCAP_CREATE ) )
+                printf( "  Supports: Create() - Create writeable dataset.\n" );
+            if( CSLFetchNameValue( papszMD, GDAL_DCAP_CREATECOPY ) )
+                printf( "  Supports: CreateCopy() - Create dataset by copying another.\n" );
+            if( CSLFetchNameValue( papszMD, GDAL_DMD_CREATIONDATATYPES ) )
+                printf( "  Creation Datatypes: %s\n",
+                        CSLFetchNameValue( papszMD, GDAL_DMD_CREATIONDATATYPES ) );
+            if( CSLFetchNameValue( papszMD, GDAL_DMD_CREATIONOPTIONLIST ) )
+            {
+                CPLXMLNode *psCOL = 
+                    CPLParseXMLString( 
+                        CSLFetchNameValue( papszMD, 
+                                           GDAL_DMD_CREATIONOPTIONLIST ) );
+                char *pszFormattedXML = 
+                    CPLSerializeXMLTree( psCOL );
+
+                CPLDestroyXMLNode( psCOL );
+                
+                printf( "\n%s\n", pszFormattedXML );
+                CPLFree( pszFormattedXML );
+            }
+            return 0;
+        }
+
+/* -------------------------------------------------------------------- */
+/*      --help-general                                                  */
+/* -------------------------------------------------------------------- */
+        else if( EQUAL(papszArgv[iArg],"--help-general") )
+        {
+            printf( "Generic GDAL utility command options:\n" );
+            printf( "  --version: report version of GDAL in use.\n" );
+            printf( "  --formats: report all configured format drivers.\n" );
+            printf( "  --format [format]: details of one format.\n" );
+            printf( "  --optfile filename: expand an option file into the argument list.\n" );
+            printf( "  --config key value: set system configuration option.\n" );
+            printf( "  --debug [on/off/value]: set debug level.\n" );
+            printf( "  --help-general: report detailed help on general options.\n" );
+            CSLDestroy( papszReturn );
+            return 0;
+        }
+
+/* -------------------------------------------------------------------- */
+/*      carry through unrecognised options.                             */
+/* -------------------------------------------------------------------- */
+        else
+        {
+            papszReturn = CSLAddString( papszReturn, papszArgv[iArg] );
+        }
+    }
+
+    *ppapszArgv = papszReturn;
+
+    return CSLCount( *ppapszArgv );
+}
+
 
 /************************************************************************/
 /*                          _FetchDblFromMD()                           */

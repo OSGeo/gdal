@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2004/04/02 17:33:22  warmerda
+ * added GDALGeneralCmdLineProcessor()
+ *
  * Revision 1.5  2003/12/02 16:54:18  warmerda
  * fixed include paths now that shapelib is gone
  *
@@ -87,6 +90,10 @@ int main(int argc, char *argv[])
     DBFHandle	hDBF;
 
     GDALAllRegister();
+
+    argc = GDALGeneralCmdLineProcessor( argc, &argv, 0 );
+    if( argc < 1 )
+        exit( -argc );
 
 /* -------------------------------------------------------------------- */
 /*      Get commandline arguments other than the GDAL raster filenames. */

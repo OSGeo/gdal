@@ -28,6 +28,9 @@
  * ****************************************************************************
  *
  * $Log$
+ * Revision 1.19  2004/04/02 17:33:22  warmerda
+ * added GDALGeneralCmdLineProcessor()
+ *
  * Revision 1.18  2003/09/30 06:10:08  dron
  * Copy NoData value over the virtual dataset.
  *
@@ -140,7 +143,7 @@ static void Usage()
 {
     int	iDr;
         
-    printf( "Usage: gdal_translate [--version]\n"
+    printf( "Usage: gdal_translate [--help-general]\n"
             "       [-ot {Byte/Int16/UInt16/UInt32/Int32/Float32/Float64/\n"
             "             CInt16/CInt32/CFloat32/CFloat64}] [-not_strict]\n"
             "       [-of format] [-b band] [-outsize xsize[%%] ysize[%%]]\n"
@@ -207,9 +210,13 @@ int main( int argc, char ** argv )
     dfULX = dfULY = dfLRX = dfLRY = 0.0;
 
 /* -------------------------------------------------------------------- */
-/*      Register standard GDAL drivers, and identify output driver.     */
+/*      Register standard GDAL drivers, and process generic GDAL        */
+/*      command options.                                                */
 /* -------------------------------------------------------------------- */
     GDALAllRegister();
+    argc = GDALGeneralCmdLineProcessor( argc, &argv, 0 );
+    if( argc < 1 )
+        exit( -argc );
 
 /* -------------------------------------------------------------------- */
 /*      Handle command line arguments.                                  */
@@ -218,11 +225,6 @@ int main( int argc, char ** argv )
     {
         if( EQUAL(argv[i],"-of") && i < argc-1 )
             pszFormat = argv[++i];
-
-        else if( EQUAL(argv[i],"--version") )
-        {
-            printf( "%s\n", GDALVersionInfo( "--version" ) );
-        }
 
         else if( EQUAL(argv[i],"-quiet") )
         {

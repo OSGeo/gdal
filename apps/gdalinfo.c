@@ -26,6 +26,9 @@
  * serves as an early test harnass.
  *
  * $Log$
+ * Revision 1.32  2004/04/02 17:33:22  warmerda
+ * added GDALGeneralCmdLineProcessor()
+ *
  * Revision 1.31  2004/03/19 06:30:06  warmerda
  * Changed to compute exact min/max for -mm instead of approximate.
  *
@@ -137,7 +140,7 @@ GDALInfoReportCorner( GDALDatasetH hDataset,
 void Usage()
 
 {
-    printf( "Usage: gdalinfo [--version] [--formats] [-mm] [-nogcp] [-nomd] "
+    printf( "Usage: gdalinfo [--help-general] [-mm] [-nogcp] [-nomd] "
             "datasetname\n");
     exit( 1 );
 }
@@ -161,36 +164,17 @@ int main( int argc, char ** argv )
 
     GDALAllRegister();
 
+    argc = GDALGeneralCmdLineProcessor( argc, &argv, 0 );
+    if( argc < 1 )
+        exit( -argc );
+
 /* -------------------------------------------------------------------- */
 /*      Parse arguments.                                                */
 /* -------------------------------------------------------------------- */
     for( i = 1; i < argc; i++ )
     {
         if( EQUAL(argv[i], "-mm") )
-        {
             bComputeMinMax = TRUE;
-        }
-        else if( EQUAL(argv[i] ,"--version") )
-        {
-            printf( "%s\n", GDALVersionInfo( "--version" ) );
-            exit( 0 );
-        }
-        else if( EQUAL(argv[i], "--formats") )
-        {
-            int iDr;
-
-            printf( "Supported Formats:\n" );
-            for( iDr = 0; iDr < GDALGetDriverCount(); iDr++ )
-            {
-                GDALDriverH hDriver = GDALGetDriver(iDr);
-                
-                printf( "  %s: %s\n",
-                        GDALGetDriverShortName( hDriver ),
-                        GDALGetDriverLongName( hDriver ) );
-            }
-
-            exit( 0 );
-        }
         else if( EQUAL(argv[i], "-sample") )
             bSample = TRUE;
         else if( EQUAL(argv[i], "-nogcp") )
