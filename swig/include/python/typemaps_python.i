@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.18  2005/02/18 19:34:08  hobu
+ * typo in OGRErrMessages
+ *
  * Revision 1.17  2005/02/18 17:59:20  kruland
  * Added nicely worded OGR exception mapping mechanism.
  *
@@ -134,7 +137,7 @@
 static char const *
 OGRErrMessages( int rc ) {
   switch( rc ) {
-  case0:
+  case 0:
     return "OGR Error %d: None";
   case 1:
     return "OGR Error %d: Not enough data";
