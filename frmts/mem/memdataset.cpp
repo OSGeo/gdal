@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2005/03/08 16:35:05  fwarmerdam
+ * Fixed memory leak.
+ *
  * Revision 1.20  2005/03/08 16:31:08  fwarmerdam
  * Added handling of DATATYPE as a name, not just a number.
  *
@@ -711,6 +714,7 @@ GDALDataset *MEMDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Try to return a regular handle on the file.                     */
 /* -------------------------------------------------------------------- */
+    CSLDestroy( papszOptions );
     return poDS;
 }
 
