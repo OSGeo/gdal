@@ -13,6 +13,7 @@ The following utility programs are distributed with GDAL.
 <li> <a href="#gdaladdo">gdaladdo</a> - Add overviews to a file.
 <li> <a href="#gdalwarp">gdalwarp</a> - Warp an image into a new coordinate system.
 <li> <a href="#gdaltindex">gdaltindex</a> - Build a MapServer raster tileindex.
+<li> <a href="#gdal_contour">gdal_contour</a> - Contours from DEM.
 <li> <a href="#rgb2pct">rgb2pct.py</a> - Convert a 24bit RGB image to 8bit paletted.
 <li> <a href="#pct2rgb">pct2rgb.py</a> - Convert an 8bit palatted image to 24bit RGB.
 <li> <a href="#gdal_merge">gdal_merge.py</a> - Build a quick mosaic from a set of images.
@@ -558,6 +559,85 @@ Example:
 
 \verbatim
 gdaltindex doq_index.shp doq/*.tif
+\endverbatim
+
+<!-- ====================================================================== -->
+
+\if man
+\section wauthor AUTHOR
+Frank Warmerdam <warmerdam@pobox.com>
+
+builds vector contour lines from a raster elevation model
+\section isynopsis SYNOPSIS
+\endif
+
+\htmlonly
+<h2><a name="gdal_contour">gdal_contour</a></h2>
+Usage: 
+\endhtmlonly
+
+\verbatim
+Usage: gdal_contour [-b <band>] [-a <attribute_name>] [-3d] [-inodata]
+                    [-snodata n] [-f <formatname>] [-i <interval>]
+                    [-off <offset>] [-fl <level> <level>...]
+                    <src_filename> <dst_filename> <interval>
+\endverbatim
+
+
+\if man
+\section idescription DESCRIPTION
+\endif
+
+This program generates a vector contour file from the input raster elevation
+model (DEM). 
+
+<dl>
+<dt> <b>-s_srs</b> <em>srs def</em>:</dt><dd> source spatial reference
+ set. The coordinate systems that can be passed are anything supported
+ by the OGRSpatialReference.SetFromUserInput() call, which includes
+ EPSG PCS and GCSes (ie. EPSG:4296), PROJ.4 declarations (as above),
+ or the name of a .prf file containing well known text.</dd>
+</dl
+
+<dt> <b>-b</b> <em>band</em>:</dt><dd> picks a particular band to get the DEM from.  Defaults to band 1.</dd>
+
+<dt> <b>-a</b> <em>name</em>:</dt><dd>provides a name for the attribute in which to put the elevation. If not provided no elevation attribute is attached. </dd>
+<dt> <b>-3d</b>:</dt> <dd>
+      Force production of 3D vectors instead of 2D.  Includes elevation at
+      every vertex.</dd>
+
+<dt> <b>-inodata</b>:</dt> <dd> Ignore any nodata value implied in the dataset - treat all values as valid.</dd>
+
+<dt> <b>-snodata</b> <em>value</em>:</dt><dd>
+ Input pixel value to treat as "nodata". </dd>
+
+<dt> <b>-f</b> <em>format</em>:</dt> <dd>
+create output in a particular format, default is shapefiles.</dd>
+
+<dt> <b>-i</b> <em>interval</em>:</dt><dd>
+ elevation interval between contours.</dd>
+
+<dt> <b>-off</b> <em>offset</em>:</dt><dd>
+ Offset from zero relative to which to interpret intervals.</dd>
+
+<dt> <b>-fl</b> <em>level</em>:</dt>
+<dd> Name one or more "fixed levels" to extract.</dd>
+</dl>
+
+\if man
+\section iexample EXAMPLE
+\endif
+
+\htmlonly
+Example:
+\endhtmlonly
+
+This would create 10meter contours from the DEM data in dem.tif and produce
+a shapefile in contour.shp/shx/dbf with the contour elevations in the "elev"
+attribute.
+
+\verbatim
+gdal_contour -a elev dem.tif contour.shp 10.0
 \endverbatim
 
 <!-- ====================================================================== -->
