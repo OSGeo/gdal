@@ -5,7 +5,63 @@
 <title>GDAL Utilities</title>
 </center>
 
-The following utility programs are distributed with GDAL.
+The following utility programs are distributed with GDAL. 
+
+<ul>
+<li> <a href="#gdalinfo">gdalinfo</a> - report information about a file.
+<li> <a href="#gdal_translate">gdal_translate</a> - Copy a raster file, with control of output format.
+<li> <a href="#gdaladdo">gdaladdo</a> - Add overviews to a file.
+<li> <a href="#gdalwarp">gdalwarp</a> - Warp an image into a new coordinate system.
+<li> <a href="#gdaltindex">gdaltindex</a> - Build a MapServer raster tileindex.
+<li> <a href="#rgb2pct">rgb2pct.py</a> - Convert a 24bit RGB image to 8bit paletted.
+<li> <a href="#pct2rgb">rgb2pct.py</a> - Convert an 8bit palatted image to 24bit RGB.
+<li> <a href="#gdal_merge">gdal_merge.py</a> - Build a quick mosaic from a set of images.
+<li> <a href="#gdal-config">gdal-config</a> - Get options required to build 
+software using GDAL.
+against GDAL.
+</ul>
+
+All GDAL 
+commandline utility programs support the following "general" options.<p>
+
+<dl>
+<dt> <b>--version</b></dt><dd> Report the version of GDAL.</dd>
+
+<dt> <b>--formats</b></dt><dd> List all raster formats supported by this
+GDAL build (readonly and read-write)</dd>
+
+<dt> <b>--format</b> <i>format</i></dt><dd>
+List detailed information about a single format driver.  The <i>format</i> 
+should be the short name reported in the <b>--formats</b> list, such as 
+GTiff.</dd>
+
+<dt> <b>--optfile</b> <i>file</i></dt><dd>
+Read the named file and substitute the contents into the commandline
+options list.  Lines beginning with # will be ignored.  Multi-word arguments
+may be kept together with double quotes. 
+</dd>
+
+<dt> <b>--config</b> <i>key value</i></dt><dd>
+Sets the named configuration keyword to the given value, as opposed to 
+setting them as environment variables.  Some common configuration keywords
+are GDAL_CACHEMAX (memory used internally for caching in megabytes)
+and GDAL_DATA (path of the GDAL "data" directory).  Individual drivers may
+be influenced by other configuration options. 
+</dd>
+
+<dt> <b>--debug</b> <i>value</i></dt><dd>
+Control what debugging messages are emitted.  A value of <i>ON</i> will
+enable all debug messages.  A value of <i>OFF</i> will disable all debug
+messages.  Another value will select only debug messages containing that
+string in the debug prefix code. 
+</dd>
+
+<dt> <b>--help-generalg</b></dt><dd>
+Gives a brief usage message for the generic GDAL commandline options.
+</dd>
+
+</dl>
+
 
 \if man
 lists information about a raster dataset
@@ -19,7 +75,7 @@ Usage:
 \endhtmlonly
 
 \verbatim
-gdalinfo [--version] [--formats] [-mm] [-nogcp] [-nomd] datasetname
+gdalinfo [-mm] [-nogcp] [-nomd] datasetname
 \endverbatim
 
 \if man
@@ -29,8 +85,6 @@ gdalinfo [--version] [--formats] [-mm] [-nogcp] [-nomd] datasetname
 The gdalinfo program lists various information about a GDAL supported
 raster dataset. 
 <dl>
-<dt> <b>--version</b></dt><dd>Print version of the GDAL library and exit.</dd>
-<dt> <b>--formats</b></dt><dd> Print a list of supported file formats.</dd>
 <dt> <b>-mm</b></dt><dd> Force computation of the actual min/max values for each
 band in the dataset.</dd>
 <dt> <b>-nogcp</b></dt><dd> Suppress ground control points list printing. It may be
@@ -122,6 +176,7 @@ gdal_translate
        [-scale [src_min src_max [dst_min dst_max]]]       
        [-srcwin xoff yoff xsize ysize] [-a_srs srs_def]
        [-projwin xoff yoff xsize ysize] [-co "NAME=VALUE"]*
+       [-gcp pixel line easting northing]*
        [-mo "META-TAG=VALUE"]* [-quiet]
        src_dataset dst_dataset
 \endverbatim
@@ -168,6 +223,10 @@ format driver.  Multiple <b>-co</b> options may be listed.  See format
 specific documentation for legal creation options for each format.</dd>
 <dt> <b>-mo</b> <i>"META-TAG=VALUE"</i>:</dt><dd> Add the indicated metadata values
 to the output dataset.</dd>
+<dt> <b>-gcp</b> <i>pixel line easting northing</i>:</dt><dd>
+Add the indicated ground control point to the output dataset.  This option 
+may be provided multiple times to provide a set of GCPs. 
+</dd>
 <dt> <b>-quiet</b>:</dt><dd> Supress progress monitor and other non-error
 output.</dd>
 <dt> <i>src_dataset</i>:</dt><dd> The source file name.</dd>
@@ -261,7 +320,7 @@ Usage:
 \endhtmlonly
 
 \verbatim
-gdalwarp [--version] [--formats]
+gdalwarp 
     [-s_srs srs_def] [-t_srs srs_def] [-order n] [-et err_threshold]
     [-te xmin ymin xmax ymax] [-tr xres yres] [-ts width height]
 	[-wo "NAME=VALUE"] [-ot Byte/Int16/...] [-wt Byte/Int16]
