@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2004/10/30 18:54:58  fwarmerdam
+ * Added support for UInt16 data (magnitude detected), and also fixed
+ * so that the new "32bit void" tiff files can be read as CInt16.
+ *
  * Revision 1.1  2004/10/21 20:03:09  fwarmerdam
  * New
  *
@@ -81,6 +85,7 @@ class RS2RasterBand : public GDALRasterBand
 
   public:
     		RS2RasterBand( RS2Dataset *poDSIn, 
+                               GDALDataType eDataTypeIn,
                                const char *pszPole, 
                                GDALDataset *poBandFile );
     virtual     ~RS2RasterBand();
@@ -95,6 +100,7 @@ class RS2RasterBand : public GDALRasterBand
 /************************************************************************/
 
 RS2RasterBand::RS2RasterBand( RS2Dataset *poDSIn,
+                              GDALDataType eDataTypeIn,
                               const char *pszPole, 
                               GDALDataset *poBandFileIn )
 
@@ -108,7 +114,7 @@ RS2RasterBand::RS2RasterBand( RS2Dataset *poDSIn,
 
     poSrcBand->GetBlockSize( &nBlockXSize, &nBlockYSize );
     
-    eDataType = GDT_CInt16;
+    eDataType = eDataTypeIn;
 
     if( *pszPole != '\0' )
         SetMetadataItem( "POLARMETRIC_INTERP", pszPole );
@@ -126,20 +132,89 @@ RS2RasterBand::~RS2RasterBand()
 }
 
 /************************************************************************/
-/*                             cIReadBlock()                            */
+/*                             IReadBlock()                             */
 /************************************************************************/
 
 CPLErr RS2RasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                   void * pImage )
 
 {
-    return 
-        poBandFile->RasterIO( GF_Read, 
-                              nBlockXOff * nBlockXSize, 
-                              nBlockYOff * nBlockYSize,
-                              nBlockXSize, nBlockYSize, 
-                              pImage, nBlockXSize, nBlockYSize, GDT_Int16,
-                              2, NULL, 4, nBlockXSize * 4, 2 );
+    int nRequestYSize;
+
+/* -------------------------------------------------------------------- */
+/*      If the last strip is partial, we need to avoid                  */
+/*      over-requesting.  We also need to initialize the extra part     */
+/*      of the block to zero.                                           */
+/* -------------------------------------------------------------------- */
+    if( (nBlockYOff + 1) * nBlockYSize > nRasterYSize )
+    {
+        nRequestYSize = nRasterYSize - nBlockYOff * nBlockYSize;
+        memset( pImage, 0, (GDALGetDataTypeSize( eDataType ) / 8) * nBlockXSize * nBlockYSize );
+    }
+    else
+    {
+        nRequestYSize = nBlockYSize;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Each complex component is a seperate sample in the TIFF file    */
+/*      (old way)                                                       */
+/* -------------------------------------------------------------------- */
+    if( eDataType == GDT_CInt16 && poBandFile->GetRasterCount() == 2 )
+        return 
+            poBandFile->RasterIO( GF_Read, 
+                                  nBlockXOff * nBlockXSize, 
+                                  nBlockYOff * nBlockYSize,
+                                  nBlockXSize, nRequestYSize,
+                                  pImage, nBlockXSize, nRequestYSize, 
+                                  GDT_Int16,
+                                  2, NULL, 4, nBlockXSize * 4, 2 );
+
+/* -------------------------------------------------------------------- */
+/*      File has one sample marked as sample format void, a 32bits.     */
+/* -------------------------------------------------------------------- */
+    else if( eDataType == GDT_CInt16 && poBandFile->GetRasterCount() == 1 )
+    {
+        CPLErr eErr;
+
+        eErr = 
+            poBandFile->RasterIO( GF_Read, 
+                                  nBlockXOff * nBlockXSize, 
+                                  nBlockYOff * nBlockYSize,
+                                  nBlockXSize, nRequestYSize, 
+                                  pImage, nBlockXSize, nRequestYSize, 
+                                  GDT_UInt32,
+                                  1, NULL, 4, nBlockXSize * 4, 0 );
+
+#ifdef CPL_LSB
+        // First, undo the 32bit swap. 
+        GDALSwapWords( pImage, 4, nBlockXSize * nBlockYSize, 4 );
+
+        // Then apply 16 bit swap. 
+        GDALSwapWords( pImage, 2, nBlockXSize * nBlockYSize * 2, 2 );
+#endif        
+
+        return eErr;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      The 16bit case is straight forward.  The underlying file        */
+/*      looks like a 16bit unsigned data too.                           */
+/* -------------------------------------------------------------------- */
+    else if( eDataType == GDT_UInt16 )
+        return 
+            poBandFile->RasterIO( GF_Read, 
+                                  nBlockXOff * nBlockXSize, 
+                                  nBlockYOff * nBlockYSize,
+                                  nBlockXSize, nRequestYSize, 
+                                  pImage, nBlockXSize, nRequestYSize,
+                                  GDT_UInt16,
+                                  1, NULL, 2, nBlockXSize * 2, 0 );
+    else
+    {
+        CPLAssert( FALSE );
+        return CE_Failure;
+    }
 }
 
 /************************************************************************/
@@ -238,21 +313,26 @@ GDALDataset *RS2Dataset::Open( GDALOpenInfo * poOpenInfo )
                              "-1" ));
 
 /* -------------------------------------------------------------------- */
-/*      Confirm that this is a Complex product.  Eventually I would     */
-/*      like to generalize this driver to work for a variety of         */
-/*      Radarsat 2 products.                                            */
+/*      Get dataType (so we can recognise complex data), and the        */
+/*      bitsPerSample.                                                  */
 /* -------------------------------------------------------------------- */
-    if( !EQUAL(CPLGetXMLValue( psImageAttributes, 
-                               "rasterAttributes.dataType", "" ),
-               "Complex") 
-        || !EQUAL(CPLGetXMLValue( psImageAttributes, 
-                                  "rasterAttributes.bitsPerSample", "" ),
-                  "16") )
+    GDALDataType eDataType;
+
+    const char *pszDataType = 
+        CPLGetXMLValue( psImageAttributes, "rasterAttributes.dataType", "" );
+    int nBitsPerSample = 
+        atoi( CPLGetXMLValue( psImageAttributes, 
+                              "rasterAttributes.bitsPerSample", "" ) );
+
+    if( nBitsPerSample == 16 && EQUAL(pszDataType,"Complex") )
+        eDataType = GDT_CInt16;
+    else if( nBitsPerSample == 16 && EQUALN(pszDataType,"Mag",3) )
+        eDataType = GDT_UInt16;
+    else
     {
-        delete poDS;
         CPLError( CE_Failure, CPLE_AppDefined, 
-                  "This does not appear to be a 16 bit complex image.\n"
-                  "Other variations not yet supported." );
+                  "dataType=%s, bitsPerSample=%d: not a supported configuration.",
+                  pszDataType, nBitsPerSample );
         return NULL;
     }
 
@@ -298,7 +378,7 @@ GDALDataset *RS2Dataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create the band.                                                */
 /* -------------------------------------------------------------------- */
-        poBand = new RS2RasterBand( poDS,
+        poBand = new RS2RasterBand( poDS, eDataType,
                                     CPLGetXMLValue( psNode, "pole", "" ), 
                                     poBandFile ); 
 
