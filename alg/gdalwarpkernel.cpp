@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2003/02/20 21:53:06  warmerda
+ * partial implementation
+ *
  * Revision 1.1  2003/02/18 17:25:50  warmerda
  * New
  *
@@ -39,6 +42,8 @@
 #include "cpl_string.h"
 
 CPL_CVSID("$Id$");
+
+static CPLErr GWKGeneralCase( GDALWarpKernel * );
 
 /************************************************************************/
 /* ==================================================================== */
@@ -212,7 +217,7 @@ CPL_CVSID("$Id$");
  *       GUInt32 *panBandMask = poKern->papanBandSrcValid[nBand];
  *       int    iPixelOffset = nPixel + nLine * poKern->nSrcXSize;
  * 
- *       bIsValid = panBandMask[iPixelOffset>>32] 
+ *       bIsValid = panBandMask[iPixelOffset>>5] 
  *                  & (0x01 << (iPixelOffset & 0x1f));
  *   }
  * \endcode
@@ -440,6 +445,47 @@ CPL_CVSID("$Id$");
  */
 
 
+/************************************************************************/
+/*                           GDALWarpKernel()                           */
+/************************************************************************/
+
+GDALWarpKernel::GDALWarpKernel()
+
+{
+    eResample = GRA_NearestNeighbour;
+    eWorkingDataType = GDT_Unknown;
+    nBands = 0;
+    nDstXOff = 0;
+    nDstYOff = 0;
+    nDstXSize = 0;
+    nDstYSize = 0;
+    nSrcXOff = 0;
+    nSrcYOff = 0;
+    nSrcXSize = 0;
+    nSrcYSize = 0;
+    pafDstDensity = NULL;
+    pafUnifiedSrcDensity = NULL;
+    panDstValid = NULL;
+    panUnifiedSrcValid = NULL;
+    papabyDstImage = NULL;
+    papabySrcImage = NULL;
+    papanBandSrcValid = NULL;
+    pfnProgress = GDALDummyProgress;
+    pProgress = NULL;
+    dfProgressBase = 0.0;
+    dfProgressScale = 1.0;
+    pfnTransformer = NULL;
+    pTransformerArg = NULL;
+}
+
+/************************************************************************/
+/*                          ~GDALWarpKernel()                           */
+/************************************************************************/
+
+GDALWarpKernel::~GDALWarpKernel()
+
+{
+}
 
 /************************************************************************/
 /*                            PerformWarp()                             */
@@ -452,6 +498,17 @@ CPL_CVSID("$Id$");
  *
  * @return CE_None on success or CE_Failure if an error occurs.
  */
+
+CPLErr GDALWarpKernel::PerformWarp()
+
+{
+    CPLErr eErr;
+
+    if( (eErr = Validate()) != CE_None )
+        return eErr;
+
+    return GWKGeneralCase( this );
+}
                                   
 /************************************************************************/
 /*                              Validate()                              */
@@ -469,3 +526,407 @@ CPL_CVSID("$Id$");
  *
  * @return CE_None on success or CE_Failure if an error is detected.
  */
+
+CPLErr GDALWarpKernel::Validate()
+
+{
+    return CE_None;
+}
+
+/************************************************************************/
+/*                          GWKSetPixelValue()                          */
+/************************************************************************/
+
+static int GWKSetPixelValue( GDALWarpKernel *poWK, int iBand, 
+                             int iDstOffset, double dfDensity, 
+                             double dfReal, double dfImag )
+
+{
+    GByte *pabyDst = poWK->papabyDstImage[iBand];
+
+    // I need to add a bunch more stuff related to input density, setting
+    // the destination buffer density and setting the destination buffer
+    // valid flag. 
+
+
+    switch( poWK->eWorkingDataType )
+    {
+      case GDT_Byte:
+        if( dfReal < 0.0 )
+            pabyDst[iDstOffset] = 0;
+        else if( dfReal > 255.0 )
+            pabyDst[iDstOffset] = 255;
+        else
+            pabyDst[iDstOffset] = (GByte) dfReal;
+        break;
+
+      case GDT_Int16:
+        if( dfReal < -32768 )
+            ((GInt16 *) pabyDst)[iDstOffset] = -32768;
+        else if( dfReal > 32767 )
+            ((GInt16 *) pabyDst)[iDstOffset] = 32767;
+        else
+            ((GInt16 *) pabyDst)[iDstOffset] = (GInt16) dfReal;
+        break;
+
+      case GDT_UInt16:
+        if( dfReal < 0 )
+            ((GUInt16 *) pabyDst)[iDstOffset] = 0;
+        else if( dfReal > 65535 )
+            ((GUInt16 *) pabyDst)[iDstOffset] = 65535;
+        else
+            ((GUInt16 *) pabyDst)[iDstOffset] = (GUInt16) dfReal;
+        break;
+
+      case GDT_UInt32:
+        if( dfReal < 0 )
+            ((GUInt32 *) pabyDst)[iDstOffset] = 0;
+        else if( dfReal > 4294967295.0 )
+            ((GUInt32 *) pabyDst)[iDstOffset] = (GUInt32) 4294967295.0;
+        else
+            ((GUInt32 *) pabyDst)[iDstOffset] = (GUInt32) dfReal;
+        break;
+
+      case GDT_Int32:
+        if( dfReal < 2147483648.0 )
+            ((GInt32 *) pabyDst)[iDstOffset] = 0;
+        else if( dfReal > 2147483647.0 )
+            ((GInt32 *) pabyDst)[iDstOffset] = 2147483647;
+        else
+            ((GInt32 *) pabyDst)[iDstOffset] = (GInt32) dfReal;
+        break;
+
+      case GDT_Float32:
+        ((float *) pabyDst)[iDstOffset] = (float) dfReal;
+        break;
+
+      case GDT_Float64:
+        ((double *) pabyDst)[iDstOffset] = dfReal;
+        break;
+
+      case GDT_CInt16:
+        if( dfReal < -32768 )
+            ((GInt16 *) pabyDst)[iDstOffset*2] = -32768;
+        else if( dfReal > 32767 )
+            ((GInt16 *) pabyDst)[iDstOffset*2] = 32767;
+        else
+            ((GInt16 *) pabyDst)[iDstOffset*2] = (GInt16) dfReal;
+        if( dfImag < -32768 )
+            ((GInt16 *) pabyDst)[iDstOffset*2+1] = -32768;
+        else if( dfImag > 32767 )
+            ((GInt16 *) pabyDst)[iDstOffset*2+1] = 32767;
+        else
+            ((GInt16 *) pabyDst)[iDstOffset*2+1] = (GInt16) dfImag;
+        break;
+
+      case GDT_CInt32:
+        if( dfReal < -2147483648.0 )
+            ((GInt32 *) pabyDst)[iDstOffset*2] = (GInt32) -2147483648.0;
+        else if( dfReal > 2147483647.0 )
+            ((GInt32 *) pabyDst)[iDstOffset*2] = (GInt32) 2147483647.0;
+        else
+            ((GInt32 *) pabyDst)[iDstOffset*2] = (GInt32) dfReal;
+        if( dfImag < -2147483648.0 )
+            ((GInt32 *) pabyDst)[iDstOffset*2+1] = (GInt32) -2147483648.0;
+        else if( dfImag > 2147483647.0 )
+            ((GInt32 *) pabyDst)[iDstOffset*2+1] = (GInt32) 2147483647.0;
+        else
+            ((GInt32 *) pabyDst)[iDstOffset*2+1] = (GInt32) dfImag;
+        break;
+
+      case GDT_CFloat32:
+        ((float *) pabyDst)[iDstOffset*2] = (float) dfReal;
+        ((float *) pabyDst)[iDstOffset*2+1] = (float) dfImag;
+        break;
+
+      case GDT_CFloat64:
+        ((double *) pabyDst)[iDstOffset*2] = (double) dfReal;
+        ((double *) pabyDst)[iDstOffset*2+1] = (double) dfImag;
+        break;
+
+      default:
+        return FALSE;
+    }
+
+    return TRUE;
+}
+                             
+/************************************************************************/
+/*                          GWKGetPixelValue()                          */
+/************************************************************************/
+
+static int GWKGetPixelValue( GDALWarpKernel *poWK, int iBand, 
+                             int iSrcOffset, double *pdfDensity, 
+                             double *pdfReal, double *pdfImag )
+
+{
+    GByte *pabySrc = poWK->papabySrcImage[iBand];
+
+    if( poWK->panUnifiedSrcValid != NULL
+        && !(poWK->panUnifiedSrcValid[iSrcOffset>>5]
+             && (0x01 << (iSrcOffset & 0x1f)) ) )
+    {
+        *pdfDensity = 0.0;
+        return FALSE;
+    }
+
+    if( poWK->papanBandSrcValid != NULL
+        && poWK->papanBandSrcValid[iBand] != NULL
+        && !(poWK->papanBandSrcValid[iBand][iSrcOffset>>5]
+             && (0x01 << (iSrcOffset & 0x1f)) ) )
+    {
+        *pdfDensity = 0.0;
+        return FALSE;
+    }
+
+    switch( poWK->eWorkingDataType )
+    {
+      case GDT_Byte:
+        *pdfReal = pabySrc[iSrcOffset];
+        *pdfImag = 0.0;
+        break;
+
+      case GDT_Int16:
+        *pdfReal = ((GInt16 *) pabySrc)[iSrcOffset];
+        *pdfImag = 0.0;
+        break;
+
+      case GDT_UInt16:
+        *pdfReal = ((GUInt16 *) pabySrc)[iSrcOffset];
+        *pdfImag = 0.0;
+        break;
+ 
+      case GDT_Int32:
+        *pdfReal = ((GInt32 *) pabySrc)[iSrcOffset];
+        *pdfImag = 0.0;
+        break;
+ 
+      case GDT_UInt32:
+        *pdfReal = ((GUInt32 *) pabySrc)[iSrcOffset];
+        *pdfImag = 0.0;
+        break;
+ 
+      case GDT_Float32:
+        *pdfReal = ((float *) pabySrc)[iSrcOffset];
+        *pdfImag = 0.0;
+        break;
+ 
+      case GDT_Float64:
+        *pdfReal = ((double *) pabySrc)[iSrcOffset];
+        *pdfImag = 0.0;
+        break;
+ 
+      case GDT_CInt16:
+        *pdfReal = ((GInt16 *) pabySrc)[iSrcOffset*2];
+        *pdfImag = ((GInt16 *) pabySrc)[iSrcOffset*2+1];
+        break;
+ 
+      case GDT_CInt32:
+        *pdfReal = ((GInt32 *) pabySrc)[iSrcOffset*2];
+        *pdfImag = ((GInt32 *) pabySrc)[iSrcOffset*2+1];
+        break;
+ 
+      case GDT_CFloat32:
+        *pdfReal = ((float *) pabySrc)[iSrcOffset*2];
+        *pdfImag = ((float *) pabySrc)[iSrcOffset*2+1];
+        break;
+ 
+      case GDT_CFloat64:
+        *pdfReal = ((double *) pabySrc)[iSrcOffset*2];
+        *pdfImag = ((double *) pabySrc)[iSrcOffset*2+1];
+        break;
+
+      default:
+        *pdfDensity = 0.0;
+        return FALSE;
+    }
+
+    if( poWK->pafUnifiedSrcDensity != NULL )
+        *pdfDensity = poWK->pafUnifiedSrcDensity[iSrcOffset];
+    else
+        *pdfDensity = 1.0;
+
+    return *pdfDensity != 0.0;
+}
+                             
+/************************************************************************/
+/*                           GWKGeneralCase()                           */
+/*                                                                      */
+/*      This is the most general case.  It attempts to handle all       */
+/*      possible features with relatively little concern for            */
+/*      efficiency.                                                     */
+/************************************************************************/
+
+static CPLErr GWKGeneralCase( GDALWarpKernel *poWK )
+
+{
+    int iDstY;
+    int nDstXSize = poWK->nDstXSize, nDstYSize = poWK->nDstYSize;
+    int nSrcXSize = poWK->nSrcXSize, nSrcYSize = poWK->nSrcYSize;
+    CPLErr eErr = CE_None;
+
+    if( !poWK->pfnProgress( poWK->dfProgressBase + poWK->dfProgressScale *
+                            ((iDstY+1) / (double) nDstYSize), 
+                            "", poWK->pProgress ) )
+    {
+        CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
+        return CE_Failure;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      How much of a window around our source pixel might we need      */
+/*      to collect data from based on the resampling kernel?  Even      */
+/*      if the requested central pixel falls off the source image,      */
+/*      we may need to collect data if some portion of the              */
+/*      resampling kernel could be on-image.                            */
+/* -------------------------------------------------------------------- */
+    int nResWinSize = 0;
+
+    if( poWK->eResample == GRA_Bilinear )
+        nResWinSize = 1;
+    
+    if( poWK->eResample == GRA_Cubic )
+        nResWinSize = 2;
+
+/* -------------------------------------------------------------------- */
+/*      Allocate x,y,z coordinate arrays for transformation ... one     */
+/*      scanlines worth of positions.                                   */
+/* -------------------------------------------------------------------- */
+    double *padfX, *padfY, *padfZ;
+    int    *pabSuccess;
+
+    padfX = (double *) CPLMalloc(sizeof(double) * nDstXSize);
+    padfY = (double *) CPLMalloc(sizeof(double) * nDstXSize);
+    padfZ = (double *) CPLMalloc(sizeof(double) * nDstXSize);
+    pabSuccess = (int *) CPLMalloc(sizeof(int) * nDstXSize);
+
+/* ==================================================================== */
+/*      Loop over output lines.                                         */
+/* ==================================================================== */
+    for( iDstY = 0; iDstY < nDstYSize && eErr == CE_None; iDstY++ )
+    {
+        int iDstX;
+
+/* -------------------------------------------------------------------- */
+/*      Setup points to transform to source image space.                */
+/* -------------------------------------------------------------------- */
+        for( iDstX = 0; iDstX < nDstXSize; iDstX++ )
+        {
+            padfX[iDstX] = iDstX + 0.5 + poWK->nDstXOff;
+            padfY[iDstX] = iDstY + 0.5 + poWK->nDstYOff;
+            padfZ[iDstX] = 0.0;
+        }
+
+/* -------------------------------------------------------------------- */
+/*      Transform the points from destination pixel/line coordinates    */
+/*      to source pixel/line coordinates.                               */
+/* -------------------------------------------------------------------- */
+        poWK->pfnTransformer( poWK->pTransformerArg, TRUE, nDstXSize, 
+                              padfX, padfY, padfZ, pabSuccess );
+
+/* ==================================================================== */
+/*      Loop over pixels in output scanline.                            */
+/* ==================================================================== */
+        for( iDstX = 0; iDstX < nDstXSize; iDstX++ )
+        {
+            int iDstOffset;
+
+            if( !pabSuccess[iDstX] )
+                continue;
+
+/* -------------------------------------------------------------------- */
+/*      Figure out what pixel we want in our source raster, and skip    */
+/*      further processing if it is well off the source image.          */
+/* -------------------------------------------------------------------- */
+            // We test against the value before casting to avoid the
+            // problem of asymmetric truncation effects around zero.  That is
+            // -0.5 will be 0 when cast to an int. 
+            if( padfX[iDstX] < poWK->nSrcXOff + nResWinSize
+                || padfY[iDstX] < poWK->nSrcYOff + nResWinSize )
+                continue;
+
+            int iSrcX, iSrcY, iSrcOffset;
+
+            iSrcX = ((int) padfX[iDstX]) - poWK->nSrcXOff;
+            iSrcY = ((int) padfY[iDstX]) - poWK->nSrcYOff;
+
+            if( iSrcX >= nSrcXSize - nResWinSize 
+                || iSrcY >= nSrcYSize - nResWinSize )
+                continue;
+
+            iSrcOffset = iSrcX + iSrcY * nSrcXSize;
+
+/* -------------------------------------------------------------------- */
+/*      Don't generate output pixels for which the destination valid    */
+/*      mask exists and is already set.                                 */
+/* -------------------------------------------------------------------- */
+            iDstOffset = iDstX + iDstY * nDstXSize;
+            if( poWK->panDstValid != NULL
+                && (poWK->panDstValid[iDstOffset>>5]
+                    && (0x01 << (iDstOffset & 0x1f))) )
+                continue;
+
+/* ==================================================================== */
+/*      Loop processing each band.                                      */
+/* ==================================================================== */
+            int iBand;
+            
+            for( iBand = 0; iBand < poWK->nBands; iBand++ )
+            {
+                double dfDensity = 0.0;
+                double dfValueReal = 0.0;
+                double dfValueImag = 0.0;
+
+/* -------------------------------------------------------------------- */
+/*      Collect the source value.                                       */
+/* -------------------------------------------------------------------- */
+                if( poWK->eResample == GRA_NearestNeighbour )
+                {
+                    GWKGetPixelValue( poWK, iBand, iSrcOffset, &dfDensity, 
+                                      &dfValueReal, &dfValueImag );
+                }
+                else if( poWK->eResample == GRA_Bilinear )
+                {
+                    ;
+                }
+                else if( poWK->eResample == GRA_Cubic )
+                {
+                    ;
+                }
+
+                // If we didn't find any valid inputs skip to next band.
+                if( dfDensity == 0.0 )
+                    continue;
+
+/* -------------------------------------------------------------------- */
+/*      We have a computed value from the source.  Now apply it to      */
+/*      the destination pixel.                                          */
+/* -------------------------------------------------------------------- */
+                GWKSetPixelValue( poWK, iBand, iDstOffset,
+                                  dfDensity, dfValueReal, dfValueImag );
+
+            }
+        }
+
+/* -------------------------------------------------------------------- */
+/*      Report progress to the user, and optionally cancel out.         */
+/* -------------------------------------------------------------------- */
+        if( !poWK->pfnProgress( poWK->dfProgressBase + poWK->dfProgressScale *
+                                ((iDstY+1) / (double) nDstYSize), 
+                                "", poWK->pProgress ) )
+        {
+            CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
+            eErr = CE_Failure;
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Cleanup and return.                                             */
+/* -------------------------------------------------------------------- */
+    CPLFree( padfX );
+    CPLFree( padfY );
+    CPLFree( padfZ );
+    CPLFree( pabSuccess );
+
+    return eErr;
+}

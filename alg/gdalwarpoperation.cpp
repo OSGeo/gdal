@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2003/02/20 21:53:06  warmerda
+ * partial implementation
+ *
  * Revision 1.1  2003/02/18 17:25:50  warmerda
  * New
  *
@@ -113,29 +116,191 @@ GDALWarpKernel.
 */
 
 /************************************************************************/
+/*                         GDALWarpOperation()                          */
+/************************************************************************/
+
+GDALWarpOperation::GDALWarpOperation()
+
+{
+    psOptions = NULL;
+}
+
+/************************************************************************/
+/*                         ~GDALWarpOperation()                         */
+/************************************************************************/
+
+GDALWarpOperation::~GDALWarpOperation()
+
+{
+    WipeOptions();
+}
+
+/************************************************************************/
+/*                            WipeOptions()                             */
+/************************************************************************/
+
+void GDALWarpOperation::WipeOptions()
+
+{
+    if( psOptions != NULL )
+    {
+        GDALDestroyWarpOptions( psOptions );
+        psOptions = NULL;
+    }
+}
+
+/************************************************************************/
+/*                          ValidateOptions()                           */
+/************************************************************************/
+
+int GDALWarpOperation::ValidateOptions()
+
+{
+    if( psOptions == NULL )
+    {
+        CPLError( CE_Failure, CPLE_IllegalArg, 
+                  "GDALWarpOptions.Validate()\n"
+                  "  no options currently initialized." );
+        return FALSE;
+    }
+
+    if( psOptions->dfWarpMemoryLimit < 100000.0 )
+    {
+        CPLError( CE_Failure, CPLE_IllegalArg, 
+                  "GDALWarpOptions.Validate()\n"
+                  "  dfWarpMemoryLimit=%g is unreasonably small.",
+                  psOptions->dfWarpMemoryLimit );
+        return FALSE;
+    }
+
+    if( psOptions->eResampleAlg != GRA_NearestNeighbour 
+        && psOptions->eResampleAlg != GRA_Bilinear
+        && psOptions->eResampleAlg != GRA_Cubic )
+    {
+        CPLError( CE_Failure, CPLE_IllegalArg, 
+                  "GDALWarpOptions.Validate()\n"
+                  "  eResampleArg=%d is not a supported value.",
+                  psOptions->eResampleAlg );
+        return FALSE;
+    }
+
+    if( (int) psOptions->eWorkingDataType < 1
+        && (int) psOptions->eWorkingDataType >= GDT_TypeCount )
+    {
+        CPLError( CE_Failure, CPLE_IllegalArg, 
+                  "GDALWarpOptions.Validate()\n"
+                  "  eWorkingDataType=%d is not a supported value.",
+                  psOptions->eWorkingDataType );
+        return FALSE;
+    }
+
+    if( psOptions->hSrcDS == NULL )
+    {
+        CPLError( CE_Failure, CPLE_IllegalArg, 
+                  "GDALWarpOptions.Validate()\n"
+                  "  hSrcDS is not set." );
+        return FALSE;
+    }
+
+    if( psOptions->hDstDS == NULL )
+    {
+        CPLError( CE_Failure, CPLE_IllegalArg, 
+                  "GDALWarpOptions.Validate()\n"
+                  "  hDstDS is not set." );
+        return FALSE;
+    }
+
+    if( psOptions->nBandCount == 0 )
+    {
+        CPLError( CE_Failure, CPLE_IllegalArg, 
+                  "GDALWarpOptions.Validate()\n"
+                  "  nBandCount=0, not bands configured!" );
+        return FALSE;
+    }
+
+    if( psOptions->panSrcBands == NULL || psOptions->panDstBands == NULL )
+    {
+        CPLError( CE_Failure, CPLE_IllegalArg, 
+                  "GDALWarpOptions.Validate()\n"
+                  "  Either panSrcBands or panDstBands is NULL." );
+        return FALSE;
+    }
+
+    for( int iBand = 0; iBand < psOptions->nBandCount; iBand++ )
+    {
+        if( psOptions->panSrcBands[iBand] < 1 
+            || psOptions->panSrcBands[iBand] 
+            >= GDALGetRasterCount( psOptions->hSrcDS ) )
+        {
+            CPLError( CE_Failure, CPLE_IllegalArg,
+                      "panSrcBands[%d] = %d ... out of range for dataset.",
+                      iBand, psOptions->panSrcBands[iBand] );
+            return FALSE;
+        }
+        if( psOptions->panDstBands[iBand] < 1 
+            || psOptions->panDstBands[iBand]
+            >= GDALGetRasterCount( psOptions->hDstDS ) )
+        {
+            CPLError( CE_Failure, CPLE_IllegalArg,
+                      "panDstBands[%d] = %d ... out of range for dataset.",
+                      iBand, psOptions->panDstBands[iBand] );
+            return FALSE;
+        }
+
+        if( GDALGetRasterAccess( 
+                GDALGetRasterBand(psOptions->hDstDS,
+                                  psOptions->panDstBands[iBand]) )
+            == GA_ReadOnly )
+        {
+            CPLError( CE_Failure, CPLE_IllegalArg,
+                      "Destination band %d appears to be read-only.",
+                      psOptions->panDstBands[iBand] );
+            return FALSE;
+        }
+    }
+
+    if( psOptions->nBandCount == 0 )
+    {
+        CPLError( CE_Failure, CPLE_IllegalArg, 
+                  "GDALWarpOptions.Validate()\n"
+                  "  nBandCount=0, not bands configured!" );
+        return FALSE;
+    }
+
+    if( psOptions->padfSrcNoDataReal != NULL
+        && psOptions->padfSrcNoDataImag == NULL )
+    {
+        CPLError( CE_Failure, CPLE_IllegalArg, 
+                  "GDALWarpOptions.Validate()\n"
+                  "  padfSrcNoDataReal set, but padfSrcNoDataImag not set." );
+        return FALSE;
+    }
+
+    if( psOptions->pfnProgress == NULL )
+    {
+        CPLError( CE_Failure, CPLE_IllegalArg, 
+                  "GDALWarpOptions.Validate()\n"
+                  "  pfnProgress is NULL." );
+        return FALSE;
+    }
+
+    if( psOptions->pfnTransformer == NULL )
+    {
+        CPLError( CE_Failure, CPLE_IllegalArg, 
+                  "GDALWarpOptions.Validate()\n"
+                  "  pfnTransformer is NULL." );
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
+/************************************************************************/
 /*                             Initialize()                             */
 /************************************************************************/
 
 /**
- * \fn CPLErr GDALWarpOperation::Initialize( GDALWarpOptions * );
- *
- * This method initializes the GDALWarpOperation's concept of the warp
- * options in effect.  It creates an internal copy of the GDALWarpOptions
- * structure and defaults a variety of additional fields in the internal
- * copy if not set in the provides warp options.
- *
- * @param psOptions input set of warp options.  These are copied and may
- * be destroyed after this call by the application. 
- *
- * @return CE_None on success or CE_Failure if an error occurs.
- */
-
-/************************************************************************/
-/*                             Initialize()                             */
-/************************************************************************/
-
-/**
- * \fn CPLErr GDALWarpOperation::Initialize( GDALWarpOptions * );
+ * \fn CPLErr GDALWarpOperation::Initialize( const GDALWarpOptions * );
  *
  * This method initializes the GDALWarpOperation's concept of the warp
  * options in effect.  It creates an internal copy of the GDALWarpOptions
@@ -147,11 +312,68 @@ GDALWarpKernel.
  *    source image (which must match the output image) and the panSrcBands
  *    and panDstBands will be populated. 
  *
- * @param psOptions input set of warp options.  These are copied and may
+ * @param psNewOptions input set of warp options.  These are copied and may
  * be destroyed after this call by the application. 
  *
  * @return CE_None on success or CE_Failure if an error occurs.
  */
+
+CPLErr GDALWarpOperation::Initialize( const GDALWarpOptions *psNewOptions )
+
+{
+    CPLErr eErr = CE_None;
+
+/* -------------------------------------------------------------------- */
+/*      Copy the passed in options.                                     */
+/* -------------------------------------------------------------------- */
+    if( psOptions != NULL )
+        WipeOptions();
+
+    psOptions = GDALCloneWarpOptions( psNewOptions );
+
+/* -------------------------------------------------------------------- */
+/*      Default band mapping if missing.                                */
+/* -------------------------------------------------------------------- */
+
+    /* to do */
+
+/* -------------------------------------------------------------------- */
+/*      If no working data type was provided, set one now.              */
+/* -------------------------------------------------------------------- */
+    if( psOptions->eWorkingDataType == GDT_Unknown 
+        && psOptions->hDstDS != NULL 
+        && psOptions->nBandCount >= 1 )
+    {
+        GDALRasterBandH hBand = GDALGetRasterBand( psOptions->hDstDS, 
+                                                   psOptions->panDstBands[0] );
+                                                  
+        if( hBand != NULL )
+            psOptions->eWorkingDataType = GDALGetRasterDataType( hBand );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Default memory available.                                       */
+/*                                                                      */
+/*      For now we default to 64MB of RAM, but eventually we should     */
+/*      try various schemes to query physical RAM.  This can            */
+/*      certainly be done on Win32 and Linux.                           */
+/* -------------------------------------------------------------------- */
+    if( psOptions->dfWarpMemoryLimit == 0.0 )
+    {
+        psOptions->dfWarpMemoryLimit = 64.0 * 1024*1024;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      If the options don't validate, then wipe them.                  */
+/* -------------------------------------------------------------------- */
+    if( !ValidateOptions() )
+        eErr = CE_Failure;
+
+    if( eErr != CE_None )
+        WipeOptions();
+
+    return eErr;
+}
 
 /************************************************************************/
 /*                         ChunkAndWarpImage()                          */
@@ -179,6 +401,115 @@ GDALWarpKernel.
  *
  * @return CE_None on success or CE_Failure if an error occurs.
  */
+
+CPLErr GDALWarpOperation::ChunkAndWarpImage( 
+    int nDstXOff, int nDstYOff,  int nDstXSize, int nDstYSize )
+
+{
+/* -------------------------------------------------------------------- */
+/*      Compute the bounds of the input area corresponding to the       */
+/*      output area.                                                    */
+/* -------------------------------------------------------------------- */
+    int nSrcXOff, nSrcYOff, nSrcXSize, nSrcYSize;
+    CPLErr eErr;
+
+    eErr = ComputeSourceWindow( nDstXOff, nDstYOff, nDstXSize, nDstYSize,
+                                &nSrcXOff, &nSrcYOff, &nSrcXSize, &nSrcYSize );
+    
+    if( eErr != CE_None )
+        return eErr;
+
+/* -------------------------------------------------------------------- */
+/*      Based on the types of masks in use, how many bits will each     */
+/*      source pixel cost us?                                           */
+/* -------------------------------------------------------------------- */
+    int nSrcPixelCostInBits;
+
+    nSrcPixelCostInBits = 
+        GDALGetDataTypeSize( psOptions->eWorkingDataType ) 
+        * psOptions->nBandCount;
+
+    if( psOptions->pfnSrcDensityMaskFunc != NULL )
+        nSrcPixelCostInBits += 32; /* float mask */
+
+    if( psOptions->papfnSrcPerBandValidityMaskFunc != NULL 
+        || psOptions->padfSrcNoDataReal != NULL )
+        nSrcPixelCostInBits += psOptions->nBandCount; /* bit/band mask */
+
+    if( psOptions->pfnSrcValidityMaskFunc != NULL )
+        nSrcPixelCostInBits += 1; /* bit mask */
+
+/* -------------------------------------------------------------------- */
+/*      What about the cost for the destination.                        */
+/* -------------------------------------------------------------------- */
+    int nDstPixelCostInBits;
+
+    nDstPixelCostInBits = 
+        GDALGetDataTypeSize( psOptions->eWorkingDataType ) 
+        * psOptions->nBandCount;
+
+    if( psOptions->pfnDstDensityMaskFunc != NULL )
+        nDstPixelCostInBits += 32;
+
+    if( psOptions->padfDstNoDataReal != NULL
+        || psOptions->pfnDstValidityMaskFunc != NULL )
+        nDstPixelCostInBits += psOptions->nBandCount;
+
+/* -------------------------------------------------------------------- */
+/*      Does the cost of the current rectangle exceed our memory        */
+/*      limit? If so, split the destination along the longest           */
+/*      dimension and recurse.                                          */
+/* -------------------------------------------------------------------- */
+    double dfTotalMemoryUse;
+
+    dfTotalMemoryUse =
+        (((double) nSrcPixelCostInBits) * nSrcXSize * nSrcYSize
+         + ((double) nDstPixelCostInBits) * nDstXSize * nDstYSize) / 8.0;
+
+    if( dfTotalMemoryUse > psOptions->dfWarpMemoryLimit 
+        && (nDstXSize > 2 || nDstYSize > 2) )
+    {
+        if( nDstXSize > nDstYSize )
+        {
+            int nChunk1 = nDstXSize / 2;
+            int nChunk2 = nDstXSize - nChunk1;
+
+            eErr = ChunkAndWarpImage( nDstXOff, nDstYOff, 
+                                      nChunk1, nDstYSize );
+            if( eErr != CE_None )
+                return eErr;
+
+            eErr = ChunkAndWarpImage( nDstXOff+nChunk1, nDstYOff, 
+                                      nChunk2, nDstYSize );
+            if( eErr != CE_None )
+                return eErr;
+        }
+        else
+        {
+            int nChunk1 = nDstYSize / 2;
+            int nChunk2 = nDstYSize - nChunk1;
+
+            eErr = ChunkAndWarpImage( nDstXOff, nDstYOff, 
+                                      nDstXSize, nChunk1 );
+            if( eErr != CE_None )
+                return eErr;
+
+            eErr = ChunkAndWarpImage( nDstXOff, nDstYOff+nChunk1, 
+                                      nDstXSize, nChunk2 );
+            if( eErr != CE_None )
+                return eErr;
+        }
+
+        return CE_None;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      OK, everything fits, so proceed to handle this whole chunk      */
+/*      "in mmeory".                                                    */
+/* -------------------------------------------------------------------- */
+    return WarpRegion( nDstXOff, nDstYOff, nDstXSize, nDstYSize, 
+                       nSrcXOff, nSrcYOff, nSrcXSize, nSrcYSize );
+}
 
 
 /************************************************************************/
@@ -210,6 +541,141 @@ GDALWarpKernel.
  *
  * @return CE_None on success or CE_Failure if an error occurs.
  */
+
+CPLErr GDALWarpOperation::WarpRegion( int nDstXOff, int nDstYOff, 
+                                      int nDstXSize, int nDstYSize,
+                                      int nSrcXOff, int nSrcYOff,
+                                      int nSrcXSize, int nSrcYSize )
+
+{
+    CPLErr eErr;
+    int   iBand;
+
+/* -------------------------------------------------------------------- */
+/*      Allocate the output buffer.                                     */
+/* -------------------------------------------------------------------- */
+    void *pDstBuffer;
+    int  nWordSize = GDALGetDataTypeSize(psOptions->eWorkingDataType)/8;
+    int  nBandSize = nWordSize * nDstXSize * nDstYSize;
+
+    pDstBuffer = VSIMalloc( nBandSize * psOptions->nBandCount );
+    if( pDstBuffer == NULL )
+    {
+        CPLError( CE_Failure, CPLE_OutOfMemory,
+                  "Out of memory allocatint %d byte destination buffer.",
+                  nBandSize * psOptions->nBandCount );
+        return CE_Failure;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      If the INIT_DEST option is given the initialize the output      */
+/*      destination buffer to the indicated value without reading it    */
+/*      from the hDstDS.  This is sometimes used to optimize            */
+/*      operation to a new output file ... it doesn't have to           */
+/*      written out and read back for nothing.                          */
+/* -------------------------------------------------------------------- */
+    const char *pszInitDest = CSLFetchNameValue( psOptions->papszWarpOptions,
+                                                 "INIT_DEST" );
+
+    if( pszInitDest != NULL )
+    {
+        for( iBand = 0; iBand < psOptions->nBandCount; iBand++ )
+        {
+            double adfInitRealImag[2];
+            GByte *pBandData;
+
+            if( EQUAL(pszInitDest,"NO_DATA")
+                && psOptions->padfDstNoDataReal != NULL )
+            {
+                adfInitRealImag[0] = psOptions->padfDstNoDataReal[iBand];
+                adfInitRealImag[1] = psOptions->padfDstNoDataImag[iBand];
+            }
+            else
+            {
+                adfInitRealImag[0] = atof(pszInitDest);
+                adfInitRealImag[1] = 0.0;
+            }
+
+            pBandData = ((GByte *) pDstBuffer) + iBand * nBandSize;
+            
+            if( psOptions->eWorkingDataType == GDT_Byte )
+                memset( pBandData, 
+                        MAX(0,MIN(255,(int)adfInitRealImag[0])), 
+                        nBandSize);
+            else if( adfInitRealImag[0] == 0.0 && adfInitRealImag[1] == 0 )
+            {
+                memset( pBandData, 0, nBandSize );
+            }
+            else
+            {
+                GDALCopyWords( &adfInitRealImag, GDT_Float64, 0, 
+                               pBandData,psOptions->eWorkingDataType,nWordSize,
+                               nDstXSize * nDstYSize );
+            }
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      If we aren't doing fixed initialization of the output buffer    */
+/*      then read it from disk so we can overlay on existing imagery.   */
+/* -------------------------------------------------------------------- */
+    if( pszInitDest == NULL )
+    {
+        for( iBand = 0; iBand < psOptions->nBandCount; iBand++ )
+        {
+            GDALRasterBandH hBand = 
+                GDALGetRasterBand( psOptions->hDstDS,
+                                   psOptions->panDstBands[iBand] );
+
+            eErr = GDALRasterIO( hBand, GF_Read,
+                                 nDstXOff, nDstYOff, nDstXSize, nDstYSize,
+                                 ((GByte *) pDstBuffer) + iBand * nBandSize, 
+                                 nDstXSize, nDstYSize, 
+                                 psOptions->eWorkingDataType, 0, 0 );
+
+            if( eErr != CE_None )
+            {
+                CPLFree( pDstBuffer );
+                return eErr;
+            }
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Perform the warp.                                               */
+/* -------------------------------------------------------------------- */
+    eErr = WarpRegionToBuffer( nDstXOff, nDstYOff, nDstXSize, nDstYSize, 
+                               pDstBuffer, psOptions->eWorkingDataType, 
+                               nSrcXOff, nSrcYOff, nSrcXSize, nSrcYSize );
+
+/* -------------------------------------------------------------------- */
+/*      Write the output data back to disk if all went well.            */
+/* -------------------------------------------------------------------- */
+    if( eErr == CE_None )
+    {
+        for( iBand = 0; 
+             iBand < psOptions->nBandCount && eErr == CE_None; 
+             iBand++ )
+        {
+            GDALRasterBandH hBand = 
+                GDALGetRasterBand( psOptions->hDstDS,
+                                   psOptions->panDstBands[iBand] );
+
+            eErr = GDALRasterIO( hBand, GF_Write,
+                                 nDstXOff, nDstYOff, nDstXSize, nDstYSize,
+                                 ((GByte *) pDstBuffer) + iBand * nBandSize, 
+                                 nDstXSize, nDstYSize, 
+                                 psOptions->eWorkingDataType, 0, 0 );
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Cleanup and return.                                             */
+/* -------------------------------------------------------------------- */
+    VSIFree( pDstBuffer );
+    
+    return eErr;
+}
 
 /************************************************************************/
 /*                            WarpToBuffer()                            */
@@ -247,4 +713,159 @@ GDALWarpKernel.
  *
  * @return CE_None on success or CE_Failure if an error occurs.
  */
-                                  
+                                 
+CPLErr GDALWarpOperation::WarpRegionToBuffer( 
+    int nDstXOff, int nDstYOff, int nDstXSize, int nDstYSize, 
+    void *pDataBuf, GDALDataType eBufDataType,
+    int nSrcXOff, int nSrcYOff, int nSrcXSize, int nSrcYSize )
+
+{
+    CPLErr eErr;
+
+/* -------------------------------------------------------------------- */
+/*      If not given a corresponding source window compute one now.     */
+/* -------------------------------------------------------------------- */
+    if( nSrcXSize == 0 && nSrcYSize == 0 )
+    {
+        eErr = ComputeSourceWindow( nDstXOff, nDstYOff, nDstXSize, nDstYSize,
+                                    &nSrcXOff, &nSrcYOff, 
+                                    &nSrcXSize, &nSrcYSize );
+    
+        if( eErr != CE_None )
+            return eErr;
+    }
+
+    return CE_None;
+}
+
+/************************************************************************/
+/*                        ComputeSourceWindow()                         */
+/************************************************************************/
+
+CPLErr GDALWarpOperation::ComputeSourceWindow(int nDstXOff, int nDstYOff, 
+                                              int nDstXSize, int nDstYSize,
+                                              int *pnSrcXOff, int *pnSrcYOff, 
+                                              int *pnSrcXSize, int *pnSrcYSize)
+
+{
+/* -------------------------------------------------------------------- */
+/*      Setup sample points all around the edge of the input raster.    */
+/* -------------------------------------------------------------------- */
+    int    nSamplePoints=0, abSuccess[84];
+    double adfX[84], adfY[84], adfZ[84], dfRatio;
+
+    // Take 20 steps 
+    for( dfRatio = 0.0; dfRatio <= 1.01; dfRatio += 0.05 )
+    {
+        
+        // Ensure we end exactly at the end.
+        if( dfRatio > 0.99 )
+            dfRatio = 1.0;
+
+        // Along top 
+        adfX[nSamplePoints]   = dfRatio * nDstXSize + nDstXOff;
+        adfY[nSamplePoints]   = nDstYOff;
+        adfZ[nSamplePoints++] = 0.0;
+
+        // Along bottom 
+        adfX[nSamplePoints]   = dfRatio * nDstXSize + nDstXOff;
+        adfY[nSamplePoints]   = nDstYOff + nDstYSize;
+        adfZ[nSamplePoints++] = 0.0;
+
+        // Along left
+        adfX[nSamplePoints]   = nDstXOff;
+        adfY[nSamplePoints]   = dfRatio * nDstYSize + nDstYOff;
+        adfZ[nSamplePoints++] = 0.0;
+
+        // Along right
+        adfX[nSamplePoints]   = nDstXSize + nDstXOff;
+        adfY[nSamplePoints]   = dfRatio * nDstYSize + nDstYOff;
+        adfZ[nSamplePoints++] = 0.0;
+    }
+
+    CPLAssert( nSamplePoints == 84 );
+
+/* -------------------------------------------------------------------- */
+/*      Transform them to the output coordinate system.                 */
+/* -------------------------------------------------------------------- */
+    if( !psOptions->pfnTransformer( psOptions->pTransformerArg, 
+                                    TRUE, nSamplePoints, 
+                                    adfX, adfY, adfZ, abSuccess ) )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "GDALWarperOperation::ComputeSourceWindow() failed because\n"
+                  "the pfnTransformer failed." );
+        return CE_Failure;
+    }
+        
+/* -------------------------------------------------------------------- */
+/*      Collect the bounds, ignoring any failed points.                 */
+/* -------------------------------------------------------------------- */
+    double dfMinXOut, dfMinYOut, dfMaxXOut, dfMaxYOut;
+    int    bGotInitialPoint = FALSE;
+    int    nFailedCount = 0, i;
+
+    for( i = 0; i < nSamplePoints; i++ )
+    {
+        if( !abSuccess[i] )
+        {
+            nFailedCount++;
+            continue;
+        }
+
+        if( !bGotInitialPoint )
+        {
+            bGotInitialPoint = TRUE;
+            dfMinXOut = dfMaxXOut = adfX[i];
+            dfMinYOut = dfMaxYOut = adfY[i];
+        }
+        else
+        {
+            dfMinXOut = MIN(dfMinXOut,adfX[i]);
+            dfMinYOut = MIN(dfMinYOut,adfY[i]);
+            dfMaxXOut = MAX(dfMaxXOut,adfX[i]);
+            dfMaxYOut = MAX(dfMaxYOut,adfY[i]);
+        }
+    }
+
+    if( nFailedCount > nSamplePoints - 10 )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Too many points (%d out of %d) failed to transform,\n"
+                  "unable to compute output bounds.",
+                  nFailedCount, nSamplePoints );
+        return CE_Failure;
+    }
+
+    if( nFailedCount > 0 )
+        CPLDebug( "GDAL", 
+                  "GDALWarpOperation::ComputeSourceWindow() %d out of %d points failed to transform.", 
+                  nFailedCount, nSamplePoints );
+
+/* -------------------------------------------------------------------- */
+/*      How much of a window around our source pixel might we need      */
+/*      to collect data from based on the resampling kernel?  Even      */
+/*      if the requested central pixel falls off the source image,      */
+/*      we may need to collect data if some portion of the              */
+/*      resampling kernel could be on-image.                            */
+/* -------------------------------------------------------------------- */
+    int nResWinSize = 0;
+
+    if( psOptions->eResampleAlg == GRA_Bilinear )
+        nResWinSize = 1;
+    
+    if( psOptions->eResampleAlg == GRA_Cubic )
+        nResWinSize = 2;
+
+/* -------------------------------------------------------------------- */
+/*      return bounds.                                                  */
+/* -------------------------------------------------------------------- */
+    *pnSrcXOff = MAX(0,(int) floor( dfMinXOut ) + nResWinSize );
+    *pnSrcYOff = MAX(0,(int) floor( dfMinYOut ) + nResWinSize );
+    *pnSrcXSize = MIN( GDALGetRasterXSize(psOptions->hSrcDS) - *pnSrcXOff,
+                       ((int) ceil( dfMaxXOut )) - *pnSrcXOff + nResWinSize );
+    *pnSrcYSize = MIN( GDALGetRasterYSize(psOptions->hSrcDS) - *pnSrcYOff,
+                       ((int) ceil( dfMaxYOut )) - *pnSrcYOff + nResWinSize );
+
+    return CE_None;
+}
