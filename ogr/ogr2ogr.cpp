@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2000/12/05 23:09:05  warmerda
+ * improved error testing, added lots of CPLResetError calls
+ *
  * Revision 1.6  2000/10/17 02:23:33  warmerda
  * improve error reporting
  *
@@ -208,8 +211,16 @@ int main( int nArgc, char ** papszArgv )
             || CSLFindString( papszLayers,
                               poLayer->GetLayerDefn()->GetName() ) != -1 )
         {
-            if( !TranslateLayer( poDS, poLayer, poODS, papszLCO ) )
+            if( !TranslateLayer( poDS, poLayer, poODS, papszLCO ) 
+                && !bSkipFailures )
+            {
+                CPLError( CE_Failure, CPLE_AppDefined, 
+                          "Terminating translation prematurely after failed\n"
+                          "translation of layer %s\n", 
+                          poLayer->GetLayerDefn()->GetName() );
+
                 exit( 1 );
+            }
         }
     }
 
@@ -275,6 +286,8 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
     CPLAssert( poDstDS->TestCapability( ODsCCreateLayer ) );
     poFDefn = poSrcLayer->GetLayerDefn();
 
+    CPLErrorReset();
+
     poDstLayer = poDstDS->CreateLayer( poSrcLayer->GetLayerDefn()->GetName(),
                                        poSrcLayer->GetSpatialRef(),
                                        poFDefn->GetGeomType(),
@@ -304,6 +317,7 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
     {
         OGRFeature      *poDstFeature;
 
+        CPLErrorReset();
         poDstFeature = new OGRFeature( poDstLayer->GetLayerDefn() );
 
         if( poDstFeature->SetFrom( poFeature, TRUE ) != OGRERR_NONE )
@@ -318,6 +332,7 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
         
         delete poFeature;
         
+        CPLErrorReset();
         if( poDstLayer->CreateFeature( poDstFeature ) != OGRERR_NONE 
             && !bSkipFailures )
         {
