@@ -95,6 +95,7 @@ JPEG_SUPPORTED = 1
 # Uncomment the following for MrSID support.
 # You will likely require /MD and /EHsc in OPTFLAGS. 
 #MRSID_DIR =	d:\projects\mrsid
+# Following suitable for the MrSID DSDK version 3.x.x
 #MRSID_INCLUDE = -I$(MRSID_DIR)\include
 #MRSID_LIB =	/LIBPATH:$(MRSID_DIR)\lib \
 #		MrSIDDecode_md.lib lt_xTrans_md.lib advapi32.lib user32.lib
@@ -107,8 +108,7 @@ JPEG_SUPPORTED = 1
 #		-I$(MRSID_DIR)\include\metadata \
 #		-I$(MRSID_DIR)\include\mrsid_readers \
 #		-I$(MRSID_DIR)\include\j2k_readers
-#MRSID_LIB =	/LIBPATH:$(MRSID_DIR)\lib\Release_md \
-#		lti_dsdk.lib advapi32.lib user32.lib
+# MRSID_LIB =	$(MRSID_DIR)\lib\Release_md\lti_dsdk_dll.lib advapi32.lib user32.lib
 #MRSID_FLAGS =	-DMRSID_DSDK_VERSION_40
 
 # PostGIS Libraries
