@@ -6,7 +6,7 @@ PY_INST_DIR = D:\bin\pymod
 
 # Location of Visual C++ directory
 VCDIR   = 	D:\Software\VStudio\VC98
-PYDIR   =	D:\Software\Python20
+PYDIR   =	D:\Software\Python22
 
 # Uncomment the following to link OGR utilities against main GDAL DLL
 # instead of statically linking against OGR libraries.
@@ -45,8 +45,15 @@ OPTFLAGS=	/nologo /Zi /Fd$(GDAL_ROOT)\gdal.pdb
 #JASPER_INCLUDE = -I$(JASPER_DIR)\src\libjasper\include\jasper
 #JASPER_LIB = $(JASPER_DIR)src\msvc\Win32_Release\libjasper.lib
 
+# Uncommment if you have Frank's modified Kakadu build.
+#KAKDIR =	D:\warmerda\jp2\kakadu
+
 # Uncomment the following and update to enable FME support.
 #FME_DIR =	d:\Software\fme
+
+# Uncomment the following and update to enable FME support.
+#HDF4_DIR =	D:\warmerda\HDF41r5
+#HDF4_LIB =	/LIBPATH:$(HDF4_DIR)\lib
 
 ########### END OF STUFF THAT NORMALLY NEEDS TO BE UPDATED ##################
 
