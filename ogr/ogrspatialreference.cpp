@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.23  2000/11/09 06:21:32  warmerda
+ * added limited ESRI prj support
+ *
  * Revision 1.22  2000/10/20 04:20:17  warmerda
  * overwrite existing linear units node if one exists
  *
@@ -2594,6 +2597,38 @@ int OSRIsGeographic( OGRSpatialReferenceH hSRS )
 
 {
     return ((OGRSpatialReference *) hSRS)->IsGeographic();
+}
+
+/************************************************************************/
+/*                              IsLocal()                               */
+/************************************************************************/
+
+/**
+ * Check if local coordinate system.
+ *
+ * This method is the same as the C function OSRIsLocal().
+ *
+ * @return TRUE if this spatial reference is local ... that is the 
+ * root is a LOCAL_CS node. 
+ */
+
+int OGRSpatialReference::IsLocal() 
+
+{
+    if( GetRoot() == NULL )
+        return FALSE;
+
+    return EQUAL(GetRoot()->GetValue(),"LOCAL_CS");
+}
+
+/************************************************************************/
+/*                          OSRIsLocal()                                */
+/************************************************************************/
+
+int OSRIsLocal( OGRSpatialReferenceH hSRS )
+
+{
+    return ((OGRSpatialReference *) hSRS)->IsLocal();
 }
 
 /************************************************************************/

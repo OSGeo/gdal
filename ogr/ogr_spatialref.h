@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.25  2000/11/09 06:21:32  warmerda
+ * added limited ESRI prj support
+ *
  * Revision 1.24  2000/10/20 04:19:38  warmerda
  * added setstateplane
  *
@@ -209,6 +212,7 @@ class OGRSpatialReference
     OGRErr      exportToProj4( char ** );
     OGRErr      importFromProj4( const char * );
     OGRErr      importFromEPSG( int );
+    OGRErr      importFromESRI( char ** );
 
     OGRErr      Validate();
     OGRErr      StripCTParms( OGR_SRSNode * = NULL );
@@ -229,6 +233,7 @@ class OGRSpatialReference
 
     int         IsGeographic();
     int         IsProjected();
+    int         IsLocal();
     int         IsSameGeogCS( OGRSpatialReference * );
     int         IsSame( OGRSpatialReference * );
 
