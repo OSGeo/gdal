@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.30  2002/12/18 15:17:05  warmerda
+ * added errors in some unimplemented methods
+ *
  * Revision 1.29  2002/09/06 01:29:55  warmerda
  * added C entry points for GetAccess() and GetOpenDatasets()
  *
@@ -517,6 +520,8 @@ const char *GDALGetProjectionRef( GDALDatasetH hDS )
 CPLErr GDALDataset::SetProjection( const char * )
 
 {
+    CPLError( CE_Failure, CPLE_NotSupported, 
+              "Dataset does not support the SetProjection() method." );
     return CE_Failure;
 }
 
@@ -902,6 +907,9 @@ CPLErr GDALDataset::SetGCPs( int nGCPCount, const GDAL_GCP *pasGCPList,
                              const char *pszGCPProjection )
 
 {
+    CPLError( CE_Failure, CPLE_NotSupported, 
+              "Dataset does not support the SetGCPs() method." );
+
     return CE_Failure;
 }
 

@@ -28,6 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************
  * $Log$
+ * Revision 1.35  2002/12/18 15:19:26  warmerda
+ * added errors in some unimplemented methods
+ *
  * Revision 1.34  2002/11/11 16:02:06  dron
  * More error messages added.
  *
@@ -967,6 +970,9 @@ char **GDALGetRasterCategoryNames( GDALRasterBandH hBand )
 CPLErr GDALRasterBand::SetCategoryNames( char ** )
 
 {
+    CPLError( CE_Failure, CPLE_NotSupported,
+              "SetCategoryNames() not supported for this dataset." );
+    
     return CE_Failure;
 }
 
@@ -1041,6 +1047,8 @@ double GDALGetRasterNoDataValue( GDALRasterBandH hBand, int *pbSuccess )
 CPLErr GDALRasterBand::SetNoDataValue( double )
 
 {
+    CPLError( CE_Failure, CPLE_NotSupported,
+              "SetNoDataValue() not supported for this dataset." );
     return CE_Failure;
 }
 
@@ -1229,6 +1237,8 @@ GDALColorInterp GDALGetRasterColorInterpretation( GDALRasterBandH hBand )
 CPLErr GDALRasterBand::SetColorInterpretation( GDALColorInterp eColorInterp )
 
 {
+    CPLError( CE_Failure, CPLE_NotSupported,
+              "SetColorInterpretation() not supported for this dataset." );
     return CE_Failure;
 }
 
@@ -1297,6 +1307,8 @@ GDALColorTableH GDALGetRasterColorTable( GDALRasterBandH hBand )
 CPLErr GDALRasterBand::SetColorTable( GDALColorTable * poCT )
 
 {
+    CPLError( CE_Failure, CPLE_NotSupported,
+              "SetColorTable() not supported for this dataset." );
     return CE_Failure;
 }
 
