@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.50  2005/02/22 12:40:37  fwarmerdam
+ * added base OGRLayer spatial filter support
+ *
  * Revision 1.49  2005/02/02 20:00:01  fwarmerdam
  * added SetNextByIndex support
  *
@@ -202,12 +205,20 @@ class OGRLayerAttrIndex;
 
 class CPL_DLL OGRLayer
 {
+  protected:
+    int          m_bFilterIsEnvelope;
+    OGRGeometry  *m_poFilterGeom;
+    OGREnvelope  m_sFilterEnvelope;
+
+    int          FilterGeometry( OGRGeometry * );
+    int          InstallFilter( OGRGeometry * );
+
   public:
-                OGRLayer();
+    OGRLayer();
     virtual     ~OGRLayer();
 
-    virtual OGRGeometry *GetSpatialFilter() = 0;
-    virtual void        SetSpatialFilter( OGRGeometry * ) = 0;
+    virtual OGRGeometry *GetSpatialFilter();
+    virtual void        SetSpatialFilter( OGRGeometry * );
     virtual void        SetSpatialFilterRect( double dfMinX, double dfMinY,
                                               double dfMaxX, double dfMaxY );
 
