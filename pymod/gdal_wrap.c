@@ -1242,7 +1242,6 @@ py_GDALSetMetadata(PyObject *self, PyObject *args) {
             return NULL;
         }
 
-	printf( "Set %s=%s\n", pszKey, pszValue );
         papszMetadata = CSLSetNameValue( papszMetadata, pszKey, pszValue );
     }
 

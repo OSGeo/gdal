@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.47  2002/11/30 17:52:18  warmerda
+ * removed debugging statement
+ *
  * Revision 1.46  2002/11/25 16:11:39  warmerda
  * added GetAuthorityCode/Name
  *
@@ -1109,7 +1112,6 @@ py_GDALSetMetadata(PyObject *self, PyObject *args) {
             return NULL;
         }
 
-	printf( "Set %s=%s\n", pszKey, pszValue );
         papszMetadata = CSLSetNameValue( papszMetadata, pszKey, pszValue );
     }
 
