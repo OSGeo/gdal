@@ -495,6 +495,69 @@ AC_SUBST(PG_INC,$PG_INC)
 AC_SUBST(PG_LIB,$PG_LIB)
 
 dnl ---------------------------------------------------------------------------
+dnl Check for xerces configuration.
+dnl ---------------------------------------------------------------------------
+
+HAVE_XERCES=no
+
+AC_MSG_CHECKING([for Xerces C++])
+
+AC_ARG_WITH(xerces,[  --with-xerces           Include Xerces C++ XML Parser support (for GML)],,)
+AC_ARG_WITH(xerces_inc,[  --with-xerces-inc=dir   Xerces C++ include directory],,)
+AC_ARG_WITH(xerces_lib,
+[  --with-xerces-lib=opts  Xerces C++ link option(s)
+                             ie. -L/usr/local/lib -lxerces-c1_6_0 -lpthread],,)
+
+if test "$with_xerces" = "" -o "$with_xerces" = "no" ; then
+
+  AC_MSG_RESULT([disabled])
+
+else
+
+  if test "$with_xerces_lib" != "" ; then
+    LIBS="$with_xerces_lib $LIBS"
+  else
+    LIBS="-lxerces-c1_6_0 -lpthread $LIBS"
+    if test -f /usr/local/lib/libxerces-c1_6_0.so ; then
+      LIBS="-L/usr/local/lib $LIBS"
+    fi
+  fi
+  if test "$with_xerces_inc" != "" ; then
+    XERCES_INCLUDE="-I$with_xerces_inc"
+  else
+    if test -d /usr/local/include/xercesc ; then 
+      XERCES_INCLUDE="-I/usr/local/include/xercesc"
+    else
+      XERCES_INCLUDE=""
+    fi
+  fi
+
+  echo '#include <util/PlatformUtils.hpp>' > conftest.cpp
+  echo 'int main() {  XMLPlatformUtils::Initialize(); }' >> conftest.cpp
+  CMD="${CXX} ${XERCES_INCLUDE} ${CPPFLAGS} -o conftest conftest.cpp $LIBS"
+
+  if test -z "`$CMD 2>&1`" ; then
+    HAVE_XERCES=yes
+    AC_MSG_RESULT([yes])
+  else
+    AC_MSG_RESULT([requested, but compile or link fails!])
+
+    echo
+    echo $CMD
+    echo
+    $CMD
+    echo
+    
+    AC_MSG_ERROR([Please correct Xerces options, or don't enable Xerces.])
+  fi
+  rm -f conftest*
+
+fi
+
+AC_SUBST(HAVE_XERCES,$HAVE_XERCES)
+AC_SUBST(XERCES_INCLUDE,$XERCES_INCLUDE)
+
+dnl ---------------------------------------------------------------------------
 
 AC_COMPILER_WFLAGS
 AC_COMPILER_PIC
