@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2002/01/25 21:17:34  warmerda
+ * provided IGMLReader destructor implementation
+ *
  * Revision 1.3  2002/01/25 20:38:01  warmerda
  * added prescan and resetreading methods
  *
@@ -156,7 +159,7 @@ public:
 class CPL_DLL IGMLReader
 {
 public:
-    virtual 	~IGMLReader();
+    virtual 	~IGMLReader() {};
 
     virtual int  IsClassListLocked() const = 0;
     virtual void SetClassListLocked( int bFlag ) = 0;
