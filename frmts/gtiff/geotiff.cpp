@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.120  2004/10/19 13:18:17  fwarmerdam
+ * Added GetInternalHandle() method to fetch hTIFF.
+ *
  * Revision 1.119  2004/10/07 20:15:03  fwarmerdam
  * various improvements to alpha handling
  *
@@ -352,6 +355,7 @@ class GTiffDataset : public GDALDataset
     virtual CPLErr  SetMetadata( char **, const char * = "" );
     virtual CPLErr  SetMetadataItem( const char*, const char*, 
                                      const char* = "" );
+    virtual void   *GetInternalHandle( const char * );
 
     // only needed by createcopy and close code.
     static void	    WriteMetadata( GDALDataset *, TIFF * );
@@ -3700,6 +3704,16 @@ CPLErr GTiffDataset::SetMetadataItem( const char *pszName,
 {
     bMetadataChanged = TRUE;
     return GDALDataset::SetMetadataItem( pszName, pszValue, pszDomain );
+}
+
+/************************************************************************/
+/*                         GetInternalHandle()                          */
+/************************************************************************/
+
+void *GTiffDataset::GetInternalHandle( const char * pszHandleName )
+
+{
+    return hTIFF;
 }
 
 /************************************************************************/
