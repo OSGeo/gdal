@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2002/09/19 21:10:02  warmerda
+ * Fixed GetDriverByName call.
+ *
  * Revision 1.6  2002/09/04 06:50:37  warmerda
  * avoid static driver pointers
  *
@@ -304,7 +307,7 @@ void GDALRegister_PNM()
 {
     GDALDriver	*poDriver;
 
-    if( GDALGetDriverByName( "PNG" ) == NULL )
+    if( GDALGetDriverByName( "PNM" ) == NULL )
     {
         poDriver = new GDALDriver();
         
