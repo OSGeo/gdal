@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2004/12/13 19:39:21  fwarmerdam
+ * dont use the bilinear and cubic short funcs for GUInt16 per bug 709
+ *
  * Revision 1.20  2004/11/14 04:54:52  fwarmerdam
  * fixed some problems with density handlnig
  *
@@ -627,7 +630,7 @@ CPLErr GDALWarpKernel::PerformWarp()
         && pafDstDensity == NULL )
         return GWKNearestNoMasksShort( this );
 
-    if( (eWorkingDataType == GDT_Int16 || eWorkingDataType == GDT_UInt16)
+    if( (eWorkingDataType == GDT_Int16 )
         && eResample == GRA_Cubic
         && papanBandSrcValid == NULL
         && panUnifiedSrcValid == NULL
@@ -636,7 +639,7 @@ CPLErr GDALWarpKernel::PerformWarp()
         && pafDstDensity == NULL )
         return GWKCubicNoMasksShort( this );
 
-    if( (eWorkingDataType == GDT_Int16 || eWorkingDataType == GDT_UInt16)
+    if( (eWorkingDataType == GDT_Int16 )
         && eResample == GRA_CubicSpline
         && papanBandSrcValid == NULL
         && panUnifiedSrcValid == NULL
@@ -645,7 +648,7 @@ CPLErr GDALWarpKernel::PerformWarp()
         && pafDstDensity == NULL )
         return GWKCubicSplineNoMasksShort( this );
 
-    if( (eWorkingDataType == GDT_Int16 || eWorkingDataType == GDT_UInt16)
+    if( (eWorkingDataType == GDT_Int16 )
         && eResample == GRA_Bilinear
         && papanBandSrcValid == NULL
         && panUnifiedSrcValid == NULL
