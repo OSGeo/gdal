@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2001/03/16 22:16:10  warmerda
+ * added support for ESRI .prj files
+ *
  * Revision 1.4  2000/11/02 16:26:12  warmerda
  * fixed geometry type message
  *
@@ -197,6 +200,31 @@ int OGRShapeDataSource::OpenFile( const char *pszNewName, int bUpdate,
         hDBF = DBFOpen( pszNewName, "r" );
 
 /* -------------------------------------------------------------------- */
+/*      Is there an associated .prj file we can read?                   */
+/* -------------------------------------------------------------------- */
+    OGRSpatialReference *poSRS = NULL;
+    const char  *pszPrjFile = CPLResetExtension( pszNewName, "prj" );
+    FILE	*fp;
+
+    fp = VSIFOpen( pszPrjFile, "r" );
+    if( fp != NULL )
+    {
+        char	**papszLines;
+
+        VSIFClose( fp );
+        
+        papszLines = CSLLoad( pszPrjFile );
+
+        poSRS = new OGRSpatialReference();
+        if( poSRS->importFromESRI( papszLines ) != OGRERR_NONE )
+        {
+            delete poSRS;
+            poSRS = NULL;
+        }
+        CSLDestroy( papszLines );
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Extract the basename of the file.                               */
 /* -------------------------------------------------------------------- */
     char	*pszBasename;
@@ -208,7 +236,7 @@ int OGRShapeDataSource::OpenFile( const char *pszNewName, int bUpdate,
 /* -------------------------------------------------------------------- */
     OGRShapeLayer	*poLayer;
 
-    poLayer = new OGRShapeLayer( pszBasename, hSHP, hDBF, bUpdate );
+    poLayer = new OGRShapeLayer( pszBasename, hSHP, hDBF, poSRS, bUpdate );
     CPLFree( pszBasename );
 
 /* -------------------------------------------------------------------- */
@@ -227,7 +255,7 @@ int OGRShapeDataSource::OpenFile( const char *pszNewName, int bUpdate,
 
 OGRLayer *
 OGRShapeDataSource::CreateLayer( const char * pszLayerName,
-                                 OGRSpatialReference *,
+                                 OGRSpatialReference *poSRS,
                                  OGRwkbGeometryType eType,
                                  char ** papszOptions )
 
@@ -341,11 +369,33 @@ OGRShapeDataSource::CreateLayer( const char * pszLayerName,
     }
 
 /* -------------------------------------------------------------------- */
+/*      Create the .prj file, if required.                              */
+/* -------------------------------------------------------------------- */
+    if( poSRS != NULL )
+    {
+        char	*pszWKT = NULL;
+        const char *pszPrjFile = CPLFormFilename(pszName,pszLayerName,"prj");
+        FILE	*fp;
+
+        /* the shape layer needs it's own copy */
+        poSRS = poSRS->Clone();
+
+        if( poSRS->exportToWkt( &pszWKT ) == OGRERR_NONE 
+            && (fp = VSIFOpen( pszPrjFile, "wt" )) != NULL )
+        {
+            VSIFWrite( pszWKT, strlen(pszWKT), 1, fp );
+            VSIFClose( fp );
+
+            CPLFree( pszWKT );
+        }
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Create the layer object.                                        */
 /* -------------------------------------------------------------------- */
     OGRShapeLayer	*poLayer;
 
-    poLayer = new OGRShapeLayer( pszLayerName, hSHP, hDBF, TRUE );
+    poLayer = new OGRShapeLayer( pszLayerName, hSHP, hDBF, poSRS, TRUE );
 
 /* -------------------------------------------------------------------- */
 /*      Add layer to data source layer list.                            */

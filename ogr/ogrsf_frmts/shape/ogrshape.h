@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2001/03/16 22:16:10  warmerda
+ * added support for ESRI .prj files
+ *
  * Revision 1.6  2001/03/15 04:21:50  danmo
  * Added GetExtent()
  *
@@ -73,6 +76,7 @@ OGRErr SHPWriteOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
 
 class OGRShapeLayer : public OGRLayer
 {
+    OGRSpatialReference *poSRS;
     OGRFeatureDefn     *poFeatureDefn;
     OGRGeometry		*poFilterGeom;
     int			iNextShapeId;
@@ -86,6 +90,7 @@ class OGRShapeLayer : public OGRLayer
   public:
     			OGRShapeLayer( const char * pszName,
                                        SHPHandle hSHP, DBFHandle hDBF,
+                                       OGRSpatialReference *poSRS,
                                        int bUpdate );
     			~OGRShapeLayer();
 
@@ -106,6 +111,8 @@ class OGRShapeLayer : public OGRLayer
 
     virtual OGRErr      CreateField( OGRFieldDefn *poField,
                                      int bApproxOK = TRUE );
+
+    virtual OGRSpatialReference *GetSpatialRef();
     
     int                 TestCapability( const char * );
 };

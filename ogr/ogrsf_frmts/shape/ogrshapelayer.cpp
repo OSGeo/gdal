@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2001/03/16 22:16:10  warmerda
+ * added support for ESRI .prj files
+ *
  * Revision 1.2  2001/03/15 04:21:50  danmo
  * Added GetExtent()
  *
@@ -44,10 +47,12 @@
 /************************************************************************/
 
 OGRShapeLayer::OGRShapeLayer( const char * pszName,
-                              SHPHandle hSHPIn, DBFHandle hDBFIn, int bUpdate )
+                              SHPHandle hSHPIn, DBFHandle hDBFIn, 
+                              OGRSpatialReference *poSRSIn, int bUpdate )
 
 {
     poFilterGeom = NULL;
+    poSRS = poSRSIn;
     
     hSHP = hSHPIn;
     hDBF = hDBFIn;
@@ -68,6 +73,9 @@ OGRShapeLayer::~OGRShapeLayer()
 
 {
     delete poFeatureDefn;
+
+    if( poSRS != NULL )
+        delete poSRS;
 
     if( hDBF != NULL )
         DBFClose( hDBF );
@@ -315,4 +323,14 @@ OGRErr OGRShapeLayer::CreateField( OGRFieldDefn *poField, int bApproxOK )
 
         return OGRERR_FAILURE;
     }
+}
+
+/************************************************************************/
+/*                           GetSpatialRef()                            */
+/************************************************************************/
+
+OGRSpatialReference *OGRShapeLayer::GetSpatialRef()
+
+{
+    return poSRS;
 }
