@@ -13,6 +13,6 @@ Cover.res
 Cover.tlb
 CoverageIdl.h
 CoverageIdl_i.c
-CoverageIdl_i.p
+CoverageIdl_p.c
 Cover_i.c
 dlldata.c
