@@ -1113,15 +1113,18 @@ else
 
   MYSQL_VERSION="`$MYSQL_CONFIG --version`"
 
-  if test ${MYSQL_VERSION:0:1} -ge 4 ; then
+  case ${MYSQL_VERSION} in 
+    [0-3]*) 
+      HAVE_MYSQL=no
+      AC_MSG_RESULT([no, mysql is pre-4.x])
+	;;
+    *)
       HAVE_MYSQL=yes
       MYSQL_LIB="`$MYSQL_CONFIG --libs`"
       MYSQL_INC="`$MYSQL_CONFIG --include`"
       AC_MSG_RESULT([yes])
-   else
-      HAVE_MYSQL=no
-     AC_MSG_RESULT([no, mysql is pre-4.x])
-   fi
+	;;
+  esac
 fi
 
 AC_SUBST(HAVE_MYSQL,$HAVE_MYSQL)
