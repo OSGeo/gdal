@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.5  2002/10/08 07:58:05  dron
+ * Added encoding options.
+ *
  * Revision 1.4  2002/10/04 15:13:25  dron
  * WORLDFILE support
  *
@@ -300,6 +303,8 @@ GDALDataset *JPEG2000Dataset::Open( GDALOpenInfo * poOpenInfo )
     {
         jas_stream_close( sS );
 	delete poDS;
+	CPLDebug( "GDAL", "Unable to decode image %s.\n", 
+                  poOpenInfo->pszFilename );
         return NULL;
     }
 
@@ -441,7 +446,9 @@ JPEG2000CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             }
 	    
             if( eErr == CE_None &&
-            !pfnProgress((iLine + 1) / ((double) nYSize), NULL, pProgressData))
+            !pfnProgress( ((iLine + 1) + iBand * nYSize) /
+			  ((double) nYSize * nBands),
+			 NULL, pProgressData) )
             {
                 eErr = CE_Failure;
                 CPLError( CE_Failure, CPLE_UserInterrupt, 
@@ -450,9 +457,82 @@ JPEG2000CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         }
     }
 
+/* -------------------------------------------------------------------- */
+/*       Read compression parameters and encode image                   */
+/* -------------------------------------------------------------------- */
+    int		    i, j;
+    const int	    OPTSMAX = 4096;
+    const char	    *pszFormatName;
+    char	    pszOptionBuf[OPTSMAX + 1];
+
+    const char	*apszComprOptions[]=
+    {
+	"imgareatlx",
+	"imgareatly",
+	"tilegrdtlx",
+	"tilegrdtly",
+	"tilewidth",
+	"tileheight",
+	"prcwidth",
+	"prcheight",
+	"cblkwidth",
+	"cblkheight",
+	"mode",
+	"rate",
+	"ilyrrates",
+	"prg",
+	"numrlvls",
+	"sop",
+	"eph",
+	"lazy",
+	"termall",
+	"segsym",
+	"vcausal",
+	"pterm",
+	"resetprob",
+	"numgbits",
+	NULL
+    };
+    
+    pszFormatName = CSLFetchNameValue( papszOptions, "FORMAT" );
+    if ( !pszFormatName ||
+	 !EQUALN( pszFormatName, "jp2", 3 ) ||
+	 !EQUALN( pszFormatName, "jpc", 3 ) )
+	pszFormatName = "jp2";
+    
+    pszOptionBuf[0] = '\0';
+    if ( papszOptions )
+    {
+	CPLDebug( "GDAL", "User supplied parameters:" );
+	for ( i = 0; papszOptions[i] != NULL; i++ )
+	{
+	    CPLDebug( "GDAL", "%s\n", papszOptions[i] );
+	    for ( j = 0; apszComprOptions[j] != NULL; j++ )
+		if( EQUALN( apszComprOptions[j], papszOptions[i],
+			    strlen(apszComprOptions[j]) ) )
+		{
+		    int m, n;
+
+		    n = strlen( pszOptionBuf );
+		    m = n + strlen( papszOptions[i] ) + 1;
+		    if ( m > OPTSMAX )
+			break;
+		    if ( n > 0 )
+		    {
+			strcat( pszOptionBuf, "\n" );
+		    }
+		    strcat( pszOptionBuf, papszOptions[i] );
+		}
+	}
+    }
+    CPLDebug( "GDAL", "Parameters, delivered to the JasPer library:" );
+    CPLDebug( "GDAL", "%s", pszOptionBuf );
+
     // FIXME: 1. determine colormodel; 2. won't works
     // jas_image_setcolormodel( sImage, 0 );
-    if ( (jas_image_encode( sImage, sStream, jas_image_strtofmt("jp2"), 0 )) < 0 )
+    if ( (jas_image_encode( sImage, sStream,
+			    jas_image_strtofmt( (char*)pszFormatName ),
+			    pszOptionBuf )) < 0 )
     {
         CPLError( CE_Failure, CPLE_FileIO, "Unable to encode image %s.\n", 
                   pszFilename );
@@ -478,7 +558,7 @@ JPEG2000CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     jas_image_clearfmts();
 
 /* -------------------------------------------------------------------- */
-/*      Do we need a world file?                                          */
+/*      Do we need a world file?                                        */
 /* -------------------------------------------------------------------- */
     if( CSLFetchBoolean( papszOptions, "WORLDFILE", FALSE ) )
     {
@@ -492,7 +572,7 @@ JPEG2000CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 }
 
 /************************************************************************/
-/*                        GDALRegister_JPEG2000()				*/
+/*                        GDALRegister_JPEG2000()			*/
 /************************************************************************/
 
 void GDALRegister_JPEG2000()
