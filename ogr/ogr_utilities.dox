@@ -125,7 +125,7 @@ system or even reprojecting the features during translation.
 Usage: ogr2ogr [-skipfailures] [-append] [-update] [-f format_name]
                [-select field_list] [-where restricted_where]
                [-spat xmin ymin xmax ymax]
-               [-t_srs srs_def] [-a_srs srs_def]
+               [-a_srs srs_def] [-t_srs srs_def] [-s_srs srs_def]
                [[-dsco NAME=VALUE] ...] dst_datasource_name
                src_datasource_name
                [-lco NAME=VALUE] [-nln name] layer [layer ...]]
