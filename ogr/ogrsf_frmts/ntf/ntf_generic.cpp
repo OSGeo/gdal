@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2002/08/26 20:15:56  warmerda
+ * fixed _LIST if attributes split over multiple records for one feature
+ *
  * Revision 1.16  2002/02/08 20:43:06  warmerda
  * improved error checking and propagation
  *
@@ -240,6 +243,7 @@ void OGRNTFDataSource::WorkupGeneric( NTFFileReader * poReader )
 /*      Get the class corresponding to the anchor record.               */
 /* -------------------------------------------------------------------- */
         NTFGenericClass *poClass = GetGClass( papoGroup[0]->GetType() );
+        char           **papszFullAttList = NULL;
 
         poClass->nFeatureCount++;
         
@@ -271,12 +275,13 @@ void OGRNTFDataSource::WorkupGeneric( NTFFileReader * poReader )
                                                  strlen(papszValues[iAtt]) );
                       }
 
-                      /* Has this attribute already appeared on this record?*/
-                      for( int iAtt2 = 0; iAtt2 < iAtt; iAtt2++ )
-                      {
-                          if( EQUAL(papszTypes[iAtt2],papszTypes[iAtt]) )
-                              poClass->SetMultiple( poAttDesc->val_type );
-                      }
+                      if( CSLFindString( papszFullAttList, 
+                                         papszTypes[iAtt] ) == -1 )
+                          papszFullAttList = 
+                              CSLAddString( papszFullAttList, 
+                                            papszTypes[iAtt] );
+                      else
+                          poClass->SetMultiple( poAttDesc->val_type );
                   }
 
                   CSLDestroy( papszTypes );
@@ -327,6 +332,8 @@ void OGRNTFDataSource::WorkupGeneric( NTFFileReader * poReader )
                 break;
             }
         }
+
+        CSLDestroy( papszFullAttList );
     }
 
     if( GetOption("CACHING") != NULL
