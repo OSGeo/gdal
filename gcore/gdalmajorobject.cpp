@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2000/06/26 15:26:21  warmerda
+ * added GDALGetDescription
+ *
  * Revision 1.1  2000/04/20 20:52:03  warmerda
  * New
  *
@@ -62,6 +65,16 @@ GDALMajorObject::~GDALMajorObject()
 /*                           GetDescription()                           */
 /************************************************************************/
 
+/**
+ * Fetch object description. 
+ *
+ * The semantics of the returned description are specific to the derived
+ * type.  For GDALDatasets it is the dataset name, as could be (or perhaps
+ * was) used with GDALOpen(). 
+ * 
+ * @return pointer to internal description string.
+ */
+
 const char *GDALMajorObject::GetDescription() const
 
 {
@@ -69,6 +82,16 @@ const char *GDALMajorObject::GetDescription() const
         return "";
     else
         return pszDescription;
+}
+
+/************************************************************************/
+/*                         GDALGetDescription()                         */
+/************************************************************************/
+
+const char *GDALGetDescription( GDALMajorObjectH hObject )
+
+{
+    return ((GDALMajorObject *) hObject)->GetDescription();
 }
 
 /************************************************************************/

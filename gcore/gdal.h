@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.25  2000/06/26 15:26:21  warmerda
+ * added GDALGetDescription
+ *
  * Revision 1.24  2000/06/05 17:24:05  warmerda
  * added real complex support
  *
@@ -279,6 +282,7 @@ char CPL_DLL  **GDALGetMetadataItem( GDALMajorObjectH, const char * );
 CPLErr CPL_DLL  GDALSetMetadataItem( GDALMajorObjectH,
                                      const char *, const char *,
                                      const char * );
+const char CPL_DLL *GDALGetDescription( GDALMajorObjectH );
 
 /* ==================================================================== */
 /*      GDALDataset class ... normally this represents one file.        */
