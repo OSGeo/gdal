@@ -26,9 +26,11 @@ OBJ =	ogrgeometryfactory.o \
 	ogr_srs_esri.o \
 	ogr_srs_pci.o \
 	ogr_srs_usgs.o \
+	ogr_srs_dict.o \
 	swq.o \
 	ogr_srs_validate.o \
 	ogr_srs_xml.o \
 	ograssemblepolygon.o \
 	ogr2gmlgeometry.o \
 	gml2ogrgeometry.o
+	
