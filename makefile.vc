@@ -126,9 +126,7 @@ lib_dist:	default
 
 $(GDAL_DLL):	lib
 	link /dll /debug $(OGR_INCLUDE) $(BASE_INCLUDE) $(LIBOBJ) \
-		$(ECWLIB) $(OGDILIB) $(XERCES_LIB) $(FME_LIB) $(JASPER_LIB)\
-		$(HDF4_LIB) $(OCI_LIB) $(PNG_LIB) $(JPEG_LIB) $(PG_LIB) \
-		$(MRSID_LIB) $(FITS_LIB) \
+		$(EXTERNAL_LIBS) \
 		 /out:$(GDAL_DLL) /implib:gdal_i.lib $(LINKER_FLAGS)
 
 install: $(GDAL_DLL) apps_dir pymod_dir
