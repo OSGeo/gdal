@@ -29,6 +29,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.16  2005/01/24 20:15:24  fwarmerdam
+# added UnsignedInt16 hack for backward compatibility
+#
 # Revision 1.15  2004/11/20 02:02:14  gwalter
 # Add option to specify offsets in
 # CopyDatasetInfo (for geocoding info).
@@ -83,6 +86,10 @@ from Numeric import *
 
 UnsignedInteger = 'u'
 UnsignedInt = 'u'
+try:
+    UnsignedInt16
+except:
+    UnsignedInt16 = 'b'
     
 def OpenArray( array, prototype_ds = None ):
     ds = gdal.Open( GetArrayFilename(array) )
