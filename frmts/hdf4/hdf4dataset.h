@@ -3,10 +3,10 @@
  *
  * Project:  Hierarchical Data Format Release 4 (HDF4)
  * Purpose:  Header file for HDF4 datasets reader.
- * Author:   Andrey Kiselev, dron@at1895.spb.edu
+ * Author:   Andrey Kiselev, dron@remotesensing.org
  *
  ******************************************************************************
- * Copyright (c) 2002, Andrey Kiselev <dron@at1895.spb.edu>
+ * Copyright (c) 2002, Andrey Kiselev <dron@remotesensing.org>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.8  2003/05/21 14:11:43  dron
+ * MODIS Level 1B earth-view (EV) product now supported.
+ *
  * Revision 1.7  2002/11/08 17:57:43  dron
  * Type of pszDataType changet to const char*.
  *
@@ -77,6 +80,12 @@ typedef enum			// Types of data products:
     UNKNOWN
 } HDF4Datatype;
 
+struct HDF4EOSDimensionMap
+{
+    double  dfOffset;
+    double  dfIncrement;
+};
+
 /************************************************************************/
 /* ==================================================================== */
 /*				HDF4Dataset				*/
@@ -86,30 +95,37 @@ typedef enum			// Types of data products:
 class HDF4Dataset : public GDALDataset
 {
 
+  private:
+
+    char        **HDF4EOSTokenizeAttrs( const char *pszString );
+    char        **HDF4EOSGetObject( char **papszAttrList, char **ppszAttrName,
+                                    char **ppszAttrValue );
+    void        HDF4EOSParseStructMetadata( int32, int32, int32 );
+     
   protected:
-	  
+
     FILE	*fp;
     int32	hHDF4, hSD, hGR;
     int32	nDatasets, nImages;
     HDF4Datatype iDataType;
     const char	*pszDataType;
+
+    HDF4EOSDimensionMap sDimMap[2];
     
     char	**papszGlobalMetadata;
     char	**papszSubDatasets;
+
+    const char  *GetDataTypeName( int32 );
+    char        **TranslateHDF4Attributes( int32, int32, char *, int32, int32, char ** );
+    char        ** TranslateHDF4EOSAttributes( int32, int32, int32, char ** );
+    CPLErr      ReadGlobalAttributes( int32 );
 
   public:
                 HDF4Dataset();
 		~HDF4Dataset();
     
-    const char *HDF4Dataset::GetDataTypeName( int32 );
     virtual char **GetMetadata( const char * pszDomain = "" );
-    char** TranslateHDF4Attributes( int32, int32, char *, int32,
-				  int32, char **papszMetadata );
-    char** TranslateHDF4EOSAttributes( int32, int32, int32,
-				     char **papszMetadata );
-    CPLErr ReadGlobalAttributes( int32 );
     static GDALDataset *Open( GDALOpenInfo * );
-
 };
 
 #endif /* _HDF4DATASET_H_INCLUDED_ */

@@ -29,6 +29,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.24  2003/05/21 14:11:43  dron
+ * MODIS Level 1B earth-view (EV) product now supported.
+ *
  * Revision 1.23  2003/03/31 12:51:35  dron
  * GetNoData()/SetNoData() functions added.
  *
@@ -147,25 +150,33 @@ class HDF4ImageDataset : public HDF4Dataset
 
     GDALColorTable *poColorTable;
 
+    int         bHasGeoTransfom;
     double      adfGeoTransform[6];
     char        *pszProjection;
+    char        *pszGCPProjection;
+    GDAL_GCP    *pasGCPList;
+    int         nGCPCount;
+
+    void                ReadCoordinates( const char*, double*, double* );
+    void                ToUTM( OGRSpatialReference *, double *, double * );
 
   public:
                 HDF4ImageDataset();
                 ~HDF4ImageDataset();
     
-    static GDALDataset *Open( GDALOpenInfo * );
-    static GDALDataset *Create( const char * pszFilename,
-                                int nXSize, int nYSize, int nBands,
-                                GDALDataType eType, char ** papszParmList );
-    virtual void FlushCache( void );
-    CPLErr      GetGeoTransform( double * padfTransform );
-    virtual CPLErr SetGeoTransform( double * );
-    const char  *GetProjectionRef();
-    virtual CPLErr SetProjection( const char * );
-    GDALDataType GetDataType( int32 );
-    void        ReadCoordinates( const char*, double*, double* );
-    void        ToUTM( OGRSpatialReference *, double *, double * );
+    static GDALDataset  *Open( GDALOpenInfo * );
+    static GDALDataset  *Create( const char * pszFilename,
+                                 int nXSize, int nYSize, int nBands,
+                                 GDALDataType eType, char ** papszParmList );
+    virtual void        FlushCache( void );
+    CPLErr              GetGeoTransform( double * padfTransform );
+    virtual CPLErr      SetGeoTransform( double * );
+    const char          *GetProjectionRef();
+    virtual CPLErr      SetProjection( const char * );
+    virtual int         GetGCPCount();
+    virtual const char  *GetGCPProjection();
+    virtual const GDAL_GCP *GetGCPs();
+    GDALDataType        GetDataType( int32 );
 };
 
 /************************************************************************/
@@ -518,10 +529,19 @@ HDF4ImageDataset::HDF4ImageDataset()
     papszLocalMetadata = NULL;
     poColorTable = NULL;
     pszProjection = CPLStrdup( "" );
-    adfGeoTransform[0] = adfGeoTransform[2] =
-        adfGeoTransform[3] = adfGeoTransform[4] = 0.0;
-    adfGeoTransform[1] = adfGeoTransform[5] = 1.0;
- }
+    pszGCPProjection = CPLStrdup( "" );
+    bHasGeoTransfom = FALSE;
+    adfGeoTransform[0] = 0.0;
+    adfGeoTransform[1] = 1.0;
+    adfGeoTransform[2] = 0.0;
+    adfGeoTransform[3] = 0.0;
+    adfGeoTransform[4] = 0.0;
+    adfGeoTransform[5] = 1.0;
+
+    nGCPCount = 0;
+    pasGCPList = NULL;
+
+}
 
 /************************************************************************/
 /*                            ~HDF4ImageDataset()                       */
@@ -547,6 +567,20 @@ HDF4ImageDataset::~HDF4ImageDataset()
         delete poColorTable;
     if ( pszProjection )
         CPLFree( pszProjection );
+    if ( pszGCPProjection )
+        CPLFree( pszGCPProjection );
+    if( nGCPCount > 0 )
+    {
+        for( int i = 0; i < nGCPCount; i++ )
+        {
+            if ( pasGCPList[i].pszId )
+                CPLFree( pasGCPList[i].pszId );
+            if ( pasGCPList[i].pszInfo )
+                CPLFree( pasGCPList[i].pszInfo );
+        }
+
+        CPLFree( pasGCPList );
+    }
 }
 
 /************************************************************************/
@@ -556,6 +590,10 @@ HDF4ImageDataset::~HDF4ImageDataset()
 CPLErr HDF4ImageDataset::GetGeoTransform( double * padfTransform )
 {
     memcpy( padfTransform, adfGeoTransform, sizeof(double) * 6 );
+
+    if ( !bHasGeoTransfom )
+        return CE_Failure;
+
     return CE_None;
 }
 
@@ -565,8 +603,9 @@ CPLErr HDF4ImageDataset::GetGeoTransform( double * padfTransform )
 
 CPLErr HDF4ImageDataset::SetGeoTransform( double * padfTransform )
 {
+    bHasGeoTransfom = TRUE;
     memcpy( adfGeoTransform, padfTransform, sizeof(double) * 6 );
-   
+
     return CE_None;
 }
 
@@ -595,6 +634,38 @@ CPLErr HDF4ImageDataset::SetProjection( const char *pszNewProjection )
 }
 
 /************************************************************************/
+/*                            GetGCPCount()                             */
+/************************************************************************/
+
+int HDF4ImageDataset::GetGCPCount()
+
+{
+    return nGCPCount;
+}
+
+/************************************************************************/
+/*                          GetGCPProjection()                          */
+/************************************************************************/
+
+const char *HDF4ImageDataset::GetGCPProjection()
+
+{
+    if( nGCPCount > 0 )
+        return pszGCPProjection;
+    else
+        return "";
+}
+
+/************************************************************************/
+/*                               GetGCPs()                              */
+/************************************************************************/
+
+const GDAL_GCP *HDF4ImageDataset::GetGCPs()
+{
+    return pasGCPList;
+}
+
+/************************************************************************/
 /*                             FlushCache()                             */
 /************************************************************************/
 
@@ -606,6 +677,9 @@ void HDF4ImageDataset::FlushCache()
     const char  *pszValue;
     
     GDALDataset::FlushCache();
+
+    if( eAccess == GA_ReadOnly )
+        return;
 
     // Write out transformation matrix
     pszValue = CPLSPrintf( "%f, %f, %f, %f, %f, %f",
@@ -644,6 +718,8 @@ void HDF4ImageDataset::FlushCache()
                 CPLDebug( "HDF4Image",
                           "Cannot write metadata information to output file");
             }
+
+            CPLFree( pszName );
         }
     }
 
@@ -784,7 +860,7 @@ void HDF4ImageDataset::ReadCoordinates( const char *pszString,
 
 GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 {
-    int         i;
+    int         i, j;
     
     if( !EQUALN( poOpenInfo->pszFilename, "HDF4_SDS:", 9 ) &&
         !EQUALN( poOpenInfo->pszFilename, "HDF4_GR:", 8 ) )
@@ -822,10 +898,8 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->iDataType = AST14DEM;
     else if( EQUAL( poDS->papszSubdatasetName[1], "MODIS_L1B" ) )
         poDS->iDataType = MODIS_L1B;
-    else if( EQUAL( poDS->papszSubdatasetName[1], "MOD02QKM_L1B" ) )
-        poDS->iDataType = MOD02QKM_L1B;
     else if( EQUAL( poDS->papszSubdatasetName[1], "MODIS_UNK" ) )
-        poDS->iDataType = MOD02QKM_L1B;
+        poDS->iDataType = MODIS_UNK;
     else
         poDS->iDataType = UNKNOWN;
 
@@ -848,7 +922,7 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
         return( NULL );
 
 /* -------------------------------------------------------------------- */
-/*      Select SDS or GR for reading from.                              */
+/*      Select SDS or GR to read from.                                  */
 /* -------------------------------------------------------------------- */
     poDS->iDataset = atoi( poDS->papszSubdatasetName[3] );
     switch ( poDS->iSubdatasetType )
@@ -971,48 +1045,75 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Read projection information                                     */
 /* -------------------------------------------------------------------- */
+    // Variables for reading georeferencing
     int             iUTMZone;
     double          dfULX, dfULY, dfURX, dfURY, dfLLX, dfLLY, dfLRX, dfLRY;
     double          dfCenterX, dfCenterY;
-    const char      *pszValue;
     OGRSpatialReference oSRS;
-    //int32             iStart[MAX_NC_DIMS], iEdges[MAX_NC_DIMS];
 
-   switch ( poDS->iDataType )
+    // We will need this auxiliary variables to read geolocation SDSs
+    int32           iSDS, iRank, iNumType, nAttrs, nXPoints, nYPoints;
+    char            szName[VSNAMELENMAX + 1];
+    int32	    aiDimSizes[MAX_VAR_DIMS];
+    int32           iStart[MAX_NC_DIMS], iEdges[MAX_NC_DIMS];
+    float           *pfLat = NULL, *pfLong = NULL;
+    GInt16          *piHeight = NULL;
+    float           fLatNoData, fLongNoData;
+    GInt16          iHeightNoData;
+    int             bLatNoDataSet = FALSE, bLongNoDataSet = FALSE;
+    int             bHeightNoDataSet = FALSE;
+
+    const char      *pszValue;
+
+    // Now we will handle specific types of HDF products. Every HDF product
+    // has its own structure.
+    switch ( poDS->iDataType )
     {
+/* -------------------------------------------------------------------- */
+/*      HDF created by GDAL.                                            */
+/* -------------------------------------------------------------------- */
         case GDAL_HDF4:
-        if ( (pszValue =
-              CSLFetchNameValue(poDS->papszGlobalMetadata, "Projection")) )
-        {
-            if ( poDS->pszProjection )
-                CPLFree( poDS->pszProjection );
-            poDS->pszProjection = CPLStrdup( pszValue );
-        }
-        if ( (pszValue = CSLFetchNameValue(poDS->papszGlobalMetadata,
-                                           "TransformationMatrix")) )
-        {
-            int i = 0;
-            char *pszString = (char *) pszValue; 
-            while ( *pszValue && i < 6 )
+            CPLDebug( "HDF4Image", "Input dataset interpreted as GDAL_HDF4" );
+
+            if ( (pszValue =
+                  CSLFetchNameValue(poDS->papszGlobalMetadata, "Projection")) )
             {
-                poDS->adfGeoTransform[i++] = strtod( pszString, &pszString );
-                pszString++;
+                if ( poDS->pszProjection )
+                    CPLFree( poDS->pszProjection );
+                poDS->pszProjection = CPLStrdup( pszValue );
             }
-        }
-        for( i = 1; i <= poDS->nBands; i++ )
-        {
             if ( (pszValue = CSLFetchNameValue(poDS->papszGlobalMetadata,
-                                               CPLSPrintf("BandDesc%d", i))) )
-                poDS->GetRasterBand( i )->SetDescription( pszValue );
-        }
-        for( i = 1; i <= poDS->nBands; i++ )
-        {
-            if ( (pszValue = CSLFetchNameValue(poDS->papszGlobalMetadata,
-                                               CPLSPrintf("NoDataValue%d", i))) )
-                poDS->GetRasterBand( i )->SetNoDataValue( atof(pszValue) );
-        }
+                                               "TransformationMatrix")) )
+            {
+                int i = 0;
+                char *pszString = (char *) pszValue; 
+                while ( *pszValue && i < 6 )
+                {
+                    poDS->adfGeoTransform[i++] = strtod(pszString, &pszString);
+                    pszString++;
+                }
+                poDS->bHasGeoTransfom = TRUE;
+            }
+            for( i = 1; i <= poDS->nBands; i++ )
+            {
+                if ( (pszValue =
+                      CSLFetchNameValue(poDS->papszGlobalMetadata,
+                                        CPLSPrintf("BandDesc%d", i))) )
+                    poDS->GetRasterBand( i )->SetDescription( pszValue );
+            }
+            for( i = 1; i <= poDS->nBands; i++ )
+            {
+                if ( (pszValue =
+                      CSLFetchNameValue(poDS->papszGlobalMetadata,
+                                        CPLSPrintf("NoDataValue%d", i))) )
+                    poDS->GetRasterBand( i )->SetNoDataValue( atof(pszValue) );
+            }
         break;
+/* -------------------------------------------------------------------- */
+/*      ASTER Level 1B.                                                 */
+/* -------------------------------------------------------------------- */
         case ASTER_L1B:
+            CPLDebug( "HDF4Image", "Input dataset interpreted as ASTER_L1B" );
         // Read geolocation points
         /*poDS->iSDS = SDselect( poDS->hSD, poDS->iDataset );
         iStart[poGDS->iYDim] = nBlockYOff;
@@ -1057,9 +1158,12 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
             if( EQUAL(&poDS->szName[9], "1") || EQUAL(&poDS->szName[9], "2") ||
                 EQUAL(&poDS->szName[9], "3N") || EQUAL(&poDS->szName[9], "3B") )
                 poDS->adfGeoTransform[1] = poDS->adfGeoTransform[5] = 15;     // VNIR, 15 m
-            else if ( EQUAL(&poDS->szName[9], "4") || EQUAL(&poDS->szName[9], "5") ||
-                      EQUAL(&poDS->szName[9], "6") || EQUAL(&poDS->szName[9], "7") || 
-                      EQUAL(&poDS->szName[9], "8") || EQUAL(&poDS->szName[9], "9") )
+            else if ( EQUAL(&poDS->szName[9], "4")
+                      || EQUAL(&poDS->szName[9], "5")
+                      || EQUAL(&poDS->szName[9], "6")
+                      || EQUAL(&poDS->szName[9], "7")
+                      || EQUAL(&poDS->szName[9], "8")
+                      || EQUAL(&poDS->szName[9], "9") )
                 poDS->adfGeoTransform[1] = poDS->adfGeoTransform[5] = 30;     // SWIR, 30 m
             else
                 poDS->adfGeoTransform[1] = poDS->adfGeoTransform[5] = 90;     // TIR, 90 m
@@ -1070,9 +1174,15 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
             poDS->adfGeoTransform[3] = dfULY - poDS->adfGeoTransform[5] / 2;
             poDS->adfGeoTransform[2] = 0.0;
             poDS->adfGeoTransform[4] = 0.0;
+            poDS->bHasGeoTransfom = TRUE;
         }
         break;
+/* -------------------------------------------------------------------- */
+/*      ASTER DEM product.                                              */
+/* -------------------------------------------------------------------- */
         case AST14DEM:
+            CPLDebug( "HDF4Image", "Input dataset interpreted as AST14DEM" );
+
             oSRS.SetWellKnownGeogCS( "WGS84" );
             
             poDS->ReadCoordinates( CSLFetchNameValue( 
@@ -1111,6 +1221,200 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
             poDS->adfGeoTransform[3] = dfULY - poDS->adfGeoTransform[5] / 2;
             poDS->adfGeoTransform[2] = 0.0;
             poDS->adfGeoTransform[4] = 0.0;
+            poDS->bHasGeoTransfom = TRUE;
+        break;
+/* -------------------------------------------------------------------- */
+/*      MODIS Level 1B.                                                 */
+/* -------------------------------------------------------------------- */
+        case MODIS_L1B:
+        {
+            CPLDebug( "HDF4Image", "Input dataset interpreted as MODIS_L1B" );
+
+            // Read band descriptions and NoData value
+            char    **papszBandDesc =
+                CSLTokenizeString2( CSLFetchNameValue( poDS->papszLocalMetadata,
+                                                       "band_names" ),
+                                    ",", CSLT_HONOURSTRINGS );
+            i = 0;
+            while ( i < poDS->nBands && papszBandDesc[i] )
+            {
+                GDALRasterBand  *poBand = poDS->GetRasterBand( i + 1 );
+
+                poBand->SetNoDataValue(
+                    atof(CSLFetchNameValue( poDS->papszLocalMetadata,
+                                            "_FillValue" )) );
+                poBand->SetDescription( CPLSPrintf( "%s, band %s",
+                    CSLFetchNameValue( poDS->papszLocalMetadata, "long_name" ),
+                    papszBandDesc[i++] ) );
+            }
+
+            CSLDestroy( papszBandDesc );
+
+/* -------------------------------------------------------------------- */
+/*      Read geolocation points.                                        */
+/* -------------------------------------------------------------------- */
+            nXPoints = nYPoints = 0;
+            for ( i = 0; i < poDS->nDatasets; i++ )
+            {
+                int32   iAttribute, nValues;
+                char	szAttrName[MAX_NC_NAME];
+
+                iSDS = SDselect( poDS->hSD, i );
+
+                if ( SDgetinfo( iSDS, szName, &iRank, aiDimSizes,
+                                &iNumType, &nAttrs) == 0 )
+                {
+                    if ( EQUALN( szName, "Latitude", 8 )
+                         && iNumType == DFNT_FLOAT32 )
+                    {
+                        if ( (nXPoints && nXPoints != aiDimSizes[1])
+                             || (nYPoints && nYPoints != aiDimSizes[0]) )
+                        {
+                            // Error: geolocation arrays has different sizes
+                            break;
+                        }
+                        else
+                        {
+                            nXPoints = aiDimSizes[1];
+                            nYPoints = aiDimSizes[0];
+                        }
+
+                        iStart[1] = 0;
+                        iEdges[1] = nXPoints;
+
+                        iStart[0] = 0;
+                        iEdges[0] = nYPoints;
+                        pfLat = (float *)CPLMalloc( nXPoints * nYPoints *
+                                                    sizeof( float ) );
+                        SDreaddata( iSDS, iStart, NULL, iEdges, pfLat );
+
+                        iAttribute = SDfindattr( iSDS, "_FillValue" );
+                        SDattrinfo( iSDS, iAttribute, szAttrName,
+                                    &iNumType, &nValues );
+                        if ( iNumType == DFNT_FLOAT32 && nValues == 1 )
+                        {
+                            SDreadattr( iSDS, iAttribute, &fLatNoData );
+                            bLatNoDataSet = TRUE;
+                        }
+                    }
+                    else if ( EQUALN( szName, "Longitude", 9 )
+                              && iNumType == DFNT_FLOAT32 )
+                    {
+                        if ( (nXPoints && nXPoints != aiDimSizes[1])
+                             || (nYPoints && nYPoints != aiDimSizes[0]) )
+                        {
+                            // Error: geolocation arrays has different sizes
+                            break;
+                        }
+                        else
+                        {
+                            nXPoints = aiDimSizes[1];
+                            nYPoints = aiDimSizes[0];
+                        }
+
+                        iStart[1] = 0;
+                        iEdges[1] = nXPoints;
+
+                        iStart[0] = 0;
+                        iEdges[0] = nYPoints;
+                        pfLong = (float *)CPLMalloc( nXPoints * nYPoints *
+                                                     sizeof( float ) );
+                        SDreaddata( iSDS, iStart, NULL, iEdges, pfLong );
+
+                        iAttribute = SDfindattr( iSDS, "_FillValue" );
+                        SDattrinfo( iSDS, iAttribute, szAttrName,
+                                    &iNumType, &nValues );
+                        if ( iNumType == DFNT_FLOAT32 && nValues == 1 )
+                        {
+                            SDreadattr( iSDS, iAttribute, &fLongNoData );
+                            bLongNoDataSet = TRUE;
+                        }
+                    }
+                    else if ( EQUALN( szName, "Height", 6 )
+                              && iNumType == DFNT_INT16 )
+                    {
+                        if ( (nXPoints && nXPoints != aiDimSizes[1])
+                             || (nYPoints && nYPoints != aiDimSizes[0]) )
+                        {
+                            // Error: geolocation arrays has different sizes
+                            break;
+                        }
+                        else
+                        {
+                            nXPoints = aiDimSizes[1];
+                            nYPoints = aiDimSizes[0];
+                        }
+
+                        iStart[1] = 0;
+                        iEdges[1] = nXPoints;
+
+                        iStart[0] = 0;
+                        iEdges[0] = nYPoints;
+                        piHeight = (GInt16 *)CPLMalloc( nXPoints * nYPoints *
+                                                       sizeof( GInt16 ) );
+                        SDreaddata( iSDS, iStart, NULL, iEdges, piHeight );
+
+                        iAttribute = SDfindattr( iSDS, "_FillValue" );
+                        SDattrinfo( iSDS, iAttribute, szAttrName,
+                                    &iNumType, &nValues );
+                        if ( iNumType == DFNT_INT16 && nValues == 1 )
+                        {
+                            SDreadattr( iSDS, iAttribute, &iHeightNoData );
+                            bHeightNoDataSet = TRUE;
+                        }
+                    }
+                }
+
+                poDS->iSDS = SDendaccess( iSDS );
+            }
+
+            if ( pfLat && pfLong )
+            {
+                CPLDebug( "HDF4Image",
+                          "Reading geolocation points: nXPoints=%d, nYPoints=%d, "
+                          "Offset1=%f, Increment1=%f, Offset2=%f, Increment2=%f",
+                          nXPoints, nYPoints,
+                          poDS->sDimMap[0].dfOffset, poDS->sDimMap[0].dfIncrement,
+                          poDS->sDimMap[1].dfOffset, poDS->sDimMap[1].dfIncrement );
+                
+                poDS->nGCPCount = 0;
+                poDS->pasGCPList =
+                    (GDAL_GCP *) CPLCalloc( nXPoints * nYPoints,
+                                            sizeof(GDAL_GCP) );
+                GDALInitGCPs( nXPoints * nYPoints, poDS->pasGCPList );
+
+                for ( i = 0; i < nYPoints; i++ )
+                {
+                    for ( j = 0; j < nXPoints; j++ )
+                    {
+                        int index = i * nXPoints + j;
+
+                        if ( (bLatNoDataSet && pfLat[index] == fLatNoData) ||
+                             (bLongNoDataSet && pfLong[index] == fLongNoData) )
+                            continue;
+
+                        poDS->pasGCPList[index].dfGCPY = pfLat[index];
+                        poDS->pasGCPList[index].dfGCPX = pfLong[index];
+                        if ( piHeight && (bHeightNoDataSet &&
+                                          piHeight[index] != iHeightNoData) )
+                            poDS->pasGCPList[index].dfGCPZ = piHeight[index];
+                        else 
+                            poDS->pasGCPList[index].dfGCPZ = 0.0;
+                        poDS->pasGCPList[index].dfGCPPixel =
+                            j * poDS->sDimMap[1].dfIncrement
+                            + poDS->sDimMap[1].dfOffset + 0.5;
+                        poDS->pasGCPList[index].dfGCPLine =
+                            i * poDS->sDimMap[0].dfIncrement
+                            + poDS->sDimMap[0].dfOffset + 0.5;
+                        poDS->nGCPCount++;
+                    }
+                }
+
+                CPLFree( pfLat );
+                CPLFree( pfLong );
+                CPLFree( piHeight );
+            }
+        }
         break;
         default:
         break;
@@ -1562,6 +1866,7 @@ HDF4ImageCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         {
             pszValue = CPLParseNameValue( *papszMetadata++, &pszKey );
             SDsetattr( hSD, pszKey, DFNT_CHAR8, strlen(pszValue) + 1, pszValue );
+            CPLFree( pszKey );
         }
     }
     

@@ -30,6 +30,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.20  2003/05/21 14:11:43  dron
+ * MODIS Level 1B earth-view (EV) product now supported.
+ *
  * Revision 1.19  2003/03/01 15:54:43  dron
  * Significant improvements in HDF EOS metadata parsing.
  *
@@ -167,6 +170,7 @@ char **HDF4Dataset::GetMetadata( const char *pszDomain )
 /*	field delimiting strings.					*/
 /*	Pointer to filled buffer will be returned.			*/
 /************************************************************************/
+
 char *SPrintArray(signed char *piaDataArray, int nValues, char * pszDelimiter)
 {
     char *pszString, *pszField;
@@ -370,6 +374,7 @@ char *SPrintArray(double *pdfaDataArray, int nValues, char * pszDelimiter)
 /************************************************************************/
 /*		Return the human readable name of data type		*/
 /************************************************************************/
+
 const char *HDF4Dataset::GetDataTypeName( int32 iNumType )
 {
     switch (iNumType)
@@ -419,7 +424,8 @@ const char *HDF4Dataset::GetDataTypeName( int32 iNumType )
 /************************************************************************/
 /*         Tokenize HDF-EOS attributes.                                 */
 /************************************************************************/
-char ** TokenizeHDFEOSAttrs( const char * pszString )
+
+char **HDF4Dataset::HDF4EOSTokenizeAttrs( const char * pszString )
 
 {
     const char  *pszDelimiters = " \t\n\r";
@@ -436,16 +442,26 @@ char ** TokenizeHDFEOSAttrs( const char * pszString )
 
         nTokenLen = 0;
         
-        /* Try to find the next delimeter, marking end of token */
+        // Try to find the next delimeter, marking end of token
         for( ; *pszString != '\0'; pszString++ )
         {
 
-            /* End if this is a delimeter skip it and break. */
-            if( !bInBracket && !bInString && strchr(pszDelimiters, *pszString) != NULL )
+            // End if this is a delimeter skip it and break.
+            if ( !bInBracket && !bInString
+                 && strchr(pszDelimiters, *pszString) != NULL )
             {
                 pszString++;
                 break;
             }
+
+            // Sometimes in bracketed tokens we may found a sort of
+            // paragraph formatting. We will remove unneeded spaces and new
+            // lines. 
+            if ( bInBracket )
+                if ( strchr("\r\n", *pszString) != NULL
+                     || ( *pszString == ' '
+                          && strchr(" \r\n", *(pszString - 1)) != NULL ) )
+                continue;
             
             if ( *pszString == '"' )
             {
@@ -471,7 +487,7 @@ char ** TokenizeHDFEOSAttrs( const char * pszString )
 		continue;
 	    }
 
-	    if( nTokenLen >= nTokenMax-2 )
+	    if( nTokenLen >= nTokenMax - 2 )
             {
                 nTokenMax = nTokenMax * 2 + 10;
                 pszToken = (char *) CPLRealloc( pszToken, nTokenMax );
@@ -488,9 +504,8 @@ char ** TokenizeHDFEOSAttrs( const char * pszString )
             papszRetList = CSLAddString( papszRetList, pszToken );
         }
 
-        /* If the last token is an empty token, then we have to catch
-         * it now, otherwise we won't reenter the loop and it will be lost. 
-         */
+        // If the last token is an empty token, then we have to catch
+        // it now, otherwise we won't reenter the loop and it will be lost. 
         if ( *pszString == '\0' && strchr(pszDelimiters, *(pszString-1)) )
         {
             papszRetList = CSLAddString( papszRetList, "" );
@@ -498,7 +513,7 @@ char ** TokenizeHDFEOSAttrs( const char * pszString )
     }
 
     if( papszRetList == NULL )
-        papszRetList = (char **) CPLCalloc(sizeof(char *),1);
+        papszRetList = (char **) CPLCalloc( sizeof(char *), 1 );
 
     CPLFree( pszToken );
 
@@ -510,8 +525,9 @@ char ** TokenizeHDFEOSAttrs( const char * pszString )
 /*     Function returns pointer to the string in list next behind       */
 /*     recognized object.                                               */
 /************************************************************************/
-char **HDF4EOSGetObject( char **papszAttrList,
-			 char **ppszAttrName, char **ppszAttrValue)
+
+char **HDF4Dataset::HDF4EOSGetObject( char **papszAttrList, char **ppszAttrName,
+                                      char **ppszAttrValue )
 {
     int	    iCount, i, j;
     *ppszAttrName = NULL;
@@ -545,6 +561,7 @@ char **HDF4EOSGetObject( char **papszAttrList,
 /************************************************************************/
 /*         Translate HDF4-EOS attributes in GDAL metadata items         */
 /************************************************************************/
+
 char** HDF4Dataset::TranslateHDF4EOSAttributes( int32 iHandle,
     int32 iAttribute, int32 nValues, char **papszMetadata )
 {
@@ -599,7 +616,7 @@ char** HDF4Dataset::TranslateHDF4EOSAttributes( int32 iHandle,
     char *pszAddAttrName = NULL;
     char **papszAttrList, **papszAttrs;
     
-    papszAttrList = TokenizeHDFEOSAttrs( pszData );
+    papszAttrList = HDF4EOSTokenizeAttrs( pszData );
     papszAttrs = papszAttrList;
     while ( papszAttrs )
     {
@@ -635,6 +652,7 @@ char** HDF4Dataset::TranslateHDF4EOSAttributes( int32 iHandle,
 /************************************************************************/
 /*         Translate HDF4 attributes in GDAL metadata items             */
 /************************************************************************/
+
 char** HDF4Dataset::TranslateHDF4Attributes( int32 iHandle,
     int32 iAttribute, char *pszAttrName, int32 iNumType, int32 nValues,
     char **papszMetadata )
@@ -749,7 +767,64 @@ char** HDF4Dataset::TranslateHDF4Attributes( int32 iHandle,
 }
 
 /************************************************************************/
-/*                          ReadGlobalAttributes()                      */
+/*                    HDF4EOSParseStructMetadata()                      */
+/************************************************************************/
+
+void HDF4Dataset::HDF4EOSParseStructMetadata( int32 iHandle, int32 iAttribute,
+                                              int32 nValues )
+{
+    char	*pszData;
+    char        **papszAttrList;
+    int	        iCount, i, j;
+    int         nDims = 0;
+    
+    pszData = (char *)CPLMalloc( (nValues + 1) * sizeof(char) );
+    pszData[nValues] = '\0';
+    SDreadattr( iHandle, iAttribute, pszData );
+    
+    papszAttrList = CSLTokenizeString2( pszData, "\r\n\t =", CSLT_PRESERVEQUOTES );//HDF4EOSTokenizeAttrs( pszData );
+
+    iCount = CSLCount( papszAttrList );
+    for ( i = 0; i < iCount - 1; i++ )
+    {
+
+/* -------------------------------------------------------------------- */
+/*     Extract DimensionMap table.                                      */
+/* -------------------------------------------------------------------- */
+        if ( EQUAL( papszAttrList[i], "OBJECT" ) &&
+             EQUALN( papszAttrList[i + 1], "DimensionMap", 12 ) )
+        {
+            i++;
+            for ( j = 1; i + j < iCount - 1; j++ )
+            {
+                if ( EQUAL( papszAttrList[i + j], "END_OBJECT" ) ||
+                     EQUAL( papszAttrList[i + j], "OBJECT" ) )
+                {
+                    break;
+                }
+                else if ( EQUAL( papszAttrList[i + j], "Offset" ) )
+                {
+                    sDimMap[nDims].dfOffset = atof(papszAttrList[i + j + 1]);
+                }
+                else if ( EQUAL( papszAttrList[i + j], "Increment" ) )
+                {
+                    sDimMap[nDims].dfIncrement = atof(papszAttrList[i + j + 1]);
+                }
+            }
+
+            i += j;
+            nDims++;
+            if ( nDims > 1 )
+                break;
+        }
+    }
+
+    CSLDestroy( papszAttrList );
+    CPLFree( pszData );
+}
+
+/************************************************************************/
+/*                       ReadGlobalAttributes()                         */
 /************************************************************************/
 
 CPLErr HDF4Dataset::ReadGlobalAttributes( int32 iHandler )
@@ -776,11 +851,19 @@ CPLErr HDF4Dataset::ReadGlobalAttributes( int32 iHandler )
 	     EQUALN( szAttrName, "product_summary", 15 ) ||
 	     EQUALN( szAttrName, "dem_specific", 12 ) ||
 	     EQUALN( szAttrName, "level_1_carryover", 17 ) )
+        {
             papszGlobalMetadata = TranslateHDF4EOSAttributes( iHandler,
 		iAttribute, nValues, papszGlobalMetadata );
-	else if ( !EQUALN( szAttrName, "structmetadata.", 15 ) ) // Not interesting for us
+        }
+	else if ( EQUALN( szAttrName, "structmetadata.", 15 ) )
+        {
+            HDF4EOSParseStructMetadata( iHandler, iAttribute, nValues );
+        }
+        else
+        {
 	    papszGlobalMetadata = TranslateHDF4Attributes( iHandler,
 		iAttribute, szAttrName,	iNumType, nValues, papszGlobalMetadata );
+        }
     }
     return CE_None;
 }
@@ -872,16 +955,16 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
 	poDS->pszDataType = "AST14DEM";
     }
     else if ( (pszValue = CSLFetchNameValue(poDS->papszGlobalMetadata, "SHORTNAME"))
-	&& EQUAL( pszValue, "GSUB1" ) ) 
+	&& (EQUAL( pszValue, "GSUB1" )
+            // L1B EV 1km
+            || EQUAL( pszValue, "MOD021KM" ) || EQUAL( pszValue, "MYD021KM" )
+            // L1B EV 500m
+            || EQUAL( pszValue, "MOD02HKM" ) || EQUAL( pszValue, "MYD02HKM" )
+            // L1B EV 250m
+            || EQUAL( pszValue, "MOD02QKM" ) || EQUAL( pszValue, "MYD02QKM" )) ) 
     {
         poDS->iDataType = MODIS_L1B;
 	poDS->pszDataType = "MODIS_L1B";
-    }
-    else if ( (pszValue = CSLFetchNameValue(poDS->papszGlobalMetadata, "LONGNAME") )
-	&& EQUAL( pszValue, "MODIS/Terra Calibrated Radiances 5-Min L1B Swath 250m" ))
-    {
-        poDS->iDataType = MOD02QKM_L1B;
-	poDS->pszDataType = "MOD02QKM_L1B";
     }
     else if ( (pszValue = CSLFetchNameValue(poDS->papszGlobalMetadata, "ASSOCIATEDINSTRUMENTSHORTNAME"))
 	&& EQUAL( pszValue, "MODIS" ) )
@@ -916,7 +999,7 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*  Make a list of subdatasets from SDSs contained in input HDF file.	*/
 /* -------------------------------------------------------------------- */
-    char	szName[65], szTemp[1024];
+    char	szName[VSNAMELENMAX + 1], szTemp[1024];
     char	*pszString;
     int32	iSDS;
     int32	iRank; 			// Number of dimensions in the SDS
