@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_mapfile.cpp,v 1.13 2000/05/19 06:44:55 daniel Exp $
+ * $Id: mitab_mapfile.cpp,v 1.17 2000/11/23 21:11:07 daniel Exp $
  *
  * Name:     mitab_mapfile.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -31,6 +31,18 @@
  **********************************************************************
  *
  * $Log: mitab_mapfile.cpp,v $
+ * Revision 1.17  2000/11/23 21:11:07  daniel
+ * OOpps... VC++ didn't like the way TABPenDef, etc. were initialized
+ *
+ * Revision 1.16  2000/11/23 20:47:46  daniel
+ * Use MI defaults for Pen, Brush, Font, Symbol instead of all zeros
+ *
+ * Revision 1.15  2000/11/22 04:03:10  daniel
+ * Added warning when objects written outside of the +/-1e9 int. coord. range
+ *
+ * Revision 1.14  2000/11/15 04:13:49  daniel
+ * Fixed writing of TABMAPToolBlock to allocate a new block when full
+ *
  * Revision 1.13  2000/05/19 06:44:55  daniel
  * Modified generation of spatial index to split index nodes and produce a
  * more balanced tree.
@@ -362,6 +374,33 @@ int TABMAPFile::Close()
         }
     }
     
+    // Check for overflow of internal coordinates and produce a warning
+    // if that happened...
+    if (m_poHeader && (m_poHeader->m_nXMin < -1000000000 ||
+                       m_poHeader->m_nYMin < -1000000000 ||
+                       m_poHeader->m_nXMax > 1000000000 ||
+                       m_poHeader->m_nYMax > 1000000000 ) )
+    {
+        double dBoundsMinX, dBoundsMinY, dBoundsMaxX, dBoundsMaxY;
+        double dDataMinX, dDataMinY, dDataMaxX, dDataMaxY;
+        Int2Coordsys(-1000000000, -1000000000, dBoundsMinX, dBoundsMinY);
+        Int2Coordsys(1000000000, 1000000000, dBoundsMaxX, dBoundsMaxY);
+        Int2Coordsys(m_poHeader->m_nXMin, m_poHeader->m_nYMin, 
+                     dDataMinX, dDataMinY);
+        Int2Coordsys(m_poHeader->m_nXMax, m_poHeader->m_nYMax, 
+                     dDataMaxX, dDataMaxY);
+
+        CPLError(CE_Warning, TAB_WarningBoundsOverflow,
+                 "Some objects were written outside of the file's "
+                 "predefined bounds.\n"
+                 "These objects may have invalid coordinates when the file "
+                 "is reopened.\n"
+                 "Predefined bounds: (%.15g,%.15g)-(%.15g,%.15g)\n"
+                 "MBR of all objects written: (%.15g,%.15g)-(%.15g,%.15g)",
+                 dBoundsMinX, dBoundsMinY, dBoundsMaxX, dBoundsMaxY,
+                 dDataMinX, dDataMinY, dDataMaxX, dDataMaxY );
+    }
+
     // Delete all structures 
     if (m_poHeader)
         delete m_poHeader;
@@ -1178,7 +1217,8 @@ int TABMAPFile::CommitDrawingTools()
     
     poBlock = new TABMAPToolBlock(m_eAccessMode);
     poBlock->InitNewBlock(m_fp, 512, m_oBlockManager.AllocNewBlock());
-    
+    poBlock->SetMAPBlockManagerRef(&m_oBlockManager);
+
     m_poHeader->m_nFirstToolBlock = poBlock->GetStartAddress();
 
     m_poHeader->m_numPenDefs = m_poToolDefTable->GetNumPen();
@@ -1225,7 +1265,9 @@ int   TABMAPFile::ReadPenDef(int nPenIndex, TABPenDef *psDef)
     }
     else if (psDef)
     {
-        memset(psDef, 0, sizeof(TABPenDef));
+        /* Init to MapInfo default */
+        static const TABPenDef csDefaultPen = MITAB_PEN_DEFAULT;
+        *psDef = csDefaultPen;
         return -1;
     }
     return 0;
@@ -1280,7 +1322,9 @@ int   TABMAPFile::ReadBrushDef(int nBrushIndex, TABBrushDef *psDef)
     }
     else if (psDef)
     {
-        memset(psDef, 0, sizeof(TABBrushDef));
+        /* Init to MapInfo default */
+        static const TABBrushDef csDefaultBrush = MITAB_BRUSH_DEFAULT;
+        *psDef = csDefaultBrush;
         return -1;
     }
     return 0;
@@ -1335,7 +1379,9 @@ int   TABMAPFile::ReadFontDef(int nFontIndex, TABFontDef *psDef)
     }
     else if (psDef)
     {
-        memset(psDef, 0, sizeof(TABFontDef));
+        /* Init to MapInfo default */
+        static const TABFontDef csDefaultFont = MITAB_FONT_DEFAULT;
+        *psDef = csDefaultFont;
         return -1;
     }
     return 0;
@@ -1389,7 +1435,9 @@ int   TABMAPFile::ReadSymbolDef(int nSymbolIndex, TABSymbolDef *psDef)
     }
     else if (psDef)
     {
-        memset(psDef, 0, sizeof(TABSymbolDef));
+        /* Init to MapInfo default */
+        static const TABSymbolDef csDefaultSymbol = MITAB_SYMBOL_DEFAULT;
+        *psDef = csDefaultSymbol;
         return -1;
     }
     return 0;

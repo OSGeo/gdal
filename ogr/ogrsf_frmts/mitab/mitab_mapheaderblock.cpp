@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_mapheaderblock.cpp,v 1.17 2000/09/19 19:35:53 daniel Exp $
+ * $Id: mitab_mapheaderblock.cpp,v 1.18 2000/12/07 03:58:20 daniel Exp $
  *
  * Name:     mitab_mapheaderblock.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -31,6 +31,9 @@
  **********************************************************************
  *
  * $Log: mitab_mapheaderblock.cpp,v $
+ * Revision 1.18  2000/12/07 03:58:20  daniel
+ * Pass first arg of pow() as double
+ *
  * Revision 1.17  2000/09/19 19:35:53  daniel
  * Set default scale/displacement when reading V100 headers
  *
@@ -289,7 +292,7 @@ int     TABMAPHeaderBlock::InitBlockFromData(GByte *pabyBuf, int nSize,
      */
     if (m_nMAPVersionNumber <= 100)
     {
-        m_XScale = m_YScale = pow(10, m_nCoordPrecision);
+        m_XScale = m_YScale = pow(10.0, m_nCoordPrecision);
         m_XDispl = m_YDispl = 0.0;
     }
 

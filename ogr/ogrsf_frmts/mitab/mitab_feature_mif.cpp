@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_feature_mif.cpp,v 1.16 2000/10/03 19:29:51 daniel Exp $
+ * $Id: mitab_feature_mif.cpp,v 1.17 2001/01/22 16:03:58 warmerda Exp $
  *
  * Name:     mitab_feature.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -31,6 +31,9 @@
  **********************************************************************
  *
  * $Log: mitab_feature_mif.cpp,v $
+ * Revision 1.17  2001/01/22 16:03:58  warmerda
+ * expanded tabs
+ *
  * Revision 1.16  2000/10/03 19:29:51  daniel
  * Include OGR StyleString stuff (implemented by Stephane)
  *
@@ -116,16 +119,16 @@ int TABFeature::ReadRecordFromMIDFile(MIDDATAFile *fp)
     pszLine = fp->GetLastLine();
 
     papszToken = CSLTokenizeStringComplex(pszLine,
-					  fp->GetDelimiter(),TRUE,TRUE); 
+                                          fp->GetDelimiter(),TRUE,TRUE); 
     if (CSLCount(papszToken) != nFields)
     {
-	CSLDestroy(papszToken);
-	return -1;
+        CSLDestroy(papszToken);
+        return -1;
     }
 
     for (i=0;i<nFields;i++)
     {
-	SetField(i,papszToken[i]);
+        SetField(i,papszToken[i]);
     }
     
     fp->GetLine();
@@ -146,7 +149,7 @@ int TABFeature::ReadRecordFromMIDFile(MIDDATAFile *fp)
 int TABFeature::WriteRecordToMIDFile(MIDDATAFile *fp)
 {
     int                  iField, numFields;
-    OGRFieldDefn	*poFDefn = NULL;
+    OGRFieldDefn        *poFDefn = NULL;
 
     CPLAssert(fp);
     
@@ -154,17 +157,17 @@ int TABFeature::WriteRecordToMIDFile(MIDDATAFile *fp)
 
     for(iField=0; iField<numFields; iField++)
     {
-	if (iField != 0)
-	  fp->WriteLine(",");
-	poFDefn = GetFieldDefnRef( iField );
+        if (iField != 0)
+          fp->WriteLine(",");
+        poFDefn = GetFieldDefnRef( iField );
 
         switch(poFDefn->GetType())
         {
-	  case OFTString:
-	    fp->WriteLine("\"%s\"",GetFieldAsString(iField));
-            break;	    
+          case OFTString:
+            fp->WriteLine("\"%s\"",GetFieldAsString(iField));
+            break;          
           default:
-	    fp->WriteLine("%s",GetFieldAsString(iField));
+            fp->WriteLine("%s",GetFieldAsString(iField));
         }
     }
 
@@ -196,7 +199,7 @@ int TABFeature::ReadGeometryFromMIFFile(MIDDATAFile *fp)
     /* Go to the first line of the next feature */
 
     while (((pszLine = fp->GetLine()) != NULL) && 
-	   fp->IsValidFeature(pszLine) == FALSE)
+           fp->IsValidFeature(pszLine) == FALSE)
       ;
 
     return 0;
@@ -239,8 +242,8 @@ int TABPoint::ReadGeometryFromMIFFile(MIDDATAFile *fp)
      
     if (CSLCount(papszToken) !=3)
     {
-	CSLDestroy(papszToken);
-	return -1;
+        CSLDestroy(papszToken);
+        return -1;
     }
     
     dfX = fp->GetXTrans(atof(papszToken[1]));
@@ -304,7 +307,7 @@ int TABPoint::WriteGeometryToMIFFile(MIDDATAFile *fp)
 
     fp->WriteLine("Point %.16g %.16g\n",poPoint->getX(),poPoint->getY());
     fp->WriteLine("    Symbol (%d,%d,%d)\n",GetSymbolNo(),GetSymbolColor(),
-		  GetSymbolSize());
+                  GetSymbolSize());
 
     return 0; 
 }
@@ -323,8 +326,8 @@ int TABFontPoint::ReadGeometryFromMIFFile(MIDDATAFile *fp)
 
     if (CSLCount(papszToken) !=3)
     {
-	CSLDestroy(papszToken);
-	return -1;
+        CSLDestroy(papszToken);
+        return -1;
     }
 
     dfX = fp->GetXTrans(atof(papszToken[1]));
@@ -333,12 +336,12 @@ int TABFontPoint::ReadGeometryFromMIFFile(MIDDATAFile *fp)
     CSLDestroy(papszToken);
     
     papszToken = CSLTokenizeStringComplex(fp->GetLastLine()," ,()",
-					  TRUE,FALSE);
+                                          TRUE,FALSE);
 
     if (CSLCount(papszToken) !=7)
     {
-	CSLDestroy(papszToken);
-	return -1;
+        CSLDestroy(papszToken);
+        return -1;
     }
     
     SetSymbolNo(atoi(papszToken[1]));
@@ -359,7 +362,7 @@ int TABFontPoint::ReadGeometryFromMIFFile(MIDDATAFile *fp)
     /* Go to the first line of the next feature */
 
     while (((pszLine = fp->GetLine()) != NULL) && 
-	   fp->IsValidFeature(pszLine) == FALSE)
+           fp->IsValidFeature(pszLine) == FALSE)
       ;
     return 0; 
 }
@@ -387,9 +390,9 @@ int TABFontPoint::WriteGeometryToMIFFile(MIDDATAFile *fp)
 
     fp->WriteLine("Point %.16g %.16g\n",poPoint->getX(),poPoint->getY());
     fp->WriteLine("    Symbol (%d,%d,%d,\"%s\",%d,%.16g)\n",
-		  GetSymbolNo(),GetSymbolColor(),
-		  GetSymbolSize(),GetFontNameRef(),GetFontStyleMIFValue(),
-		  GetSymbolAngle());
+                  GetSymbolNo(),GetSymbolColor(),
+                  GetSymbolSize(),GetFontNameRef(),GetFontStyleMIFValue(),
+                  GetSymbolAngle());
 
     return 0; 
 }
@@ -410,8 +413,8 @@ int TABCustomPoint::ReadGeometryFromMIFFile(MIDDATAFile *fp)
     
     if (CSLCount(papszToken) !=3)
     {
-	CSLDestroy(papszToken);
-	return -1;
+        CSLDestroy(papszToken);
+        return -1;
     }
 
     dfX = fp->GetXTrans(atof(papszToken[1]));
@@ -420,12 +423,12 @@ int TABCustomPoint::ReadGeometryFromMIFFile(MIDDATAFile *fp)
     CSLDestroy(papszToken);
     
     papszToken = CSLTokenizeStringComplex(fp->GetLastLine()," ,()",
-					  TRUE,FALSE);
+                                          TRUE,FALSE);
     if (CSLCount(papszToken) !=5)
     {
-	
-	CSLDestroy(papszToken);
-	return -1;
+        
+        CSLDestroy(papszToken);
+        return -1;
     }
     
     SetFontName(papszToken[1]);
@@ -444,7 +447,7 @@ int TABCustomPoint::ReadGeometryFromMIFFile(MIDDATAFile *fp)
     /* Go to the first line of the next feature */
 
     while (((pszLine = fp->GetLine()) != NULL) && 
-	   fp->IsValidFeature(pszLine) == FALSE)
+           fp->IsValidFeature(pszLine) == FALSE)
       ;
  
     return 0; 
@@ -475,7 +478,7 @@ int TABCustomPoint::WriteGeometryToMIFFile(MIDDATAFile *fp)
 
     fp->WriteLine("Point %.16g %.16g\n",poPoint->getX(),poPoint->getY());
     fp->WriteLine("    Symbol (\"%s\",%d,%d,%d)\n",GetFontNameRef(),
-		  GetSymbolColor(), GetSymbolSize(),m_nCustomStyle);
+                  GetSymbolColor(), GetSymbolSize(),m_nCustomStyle);
 
     return 0; 
 }
@@ -498,80 +501,80 @@ int TABPolyline::ReadGeometryFromMIFFile(MIDDATAFile *fp)
     
     if (CSLCount(papszToken) < 1)
     {
-	CSLDestroy(papszToken);
-	return -1;
+        CSLDestroy(papszToken);
+        return -1;
     }
 
     if (EQUALN(papszToken[0],"LINE",4))
     {
-	if (CSLCount(papszToken) != 5)
-	  return -1;
+        if (CSLCount(papszToken) != 5)
+          return -1;
 
-	poLine = new OGRLineString();
-	poLine->setNumPoints(2);
-	poLine->setPoint(0, fp->GetXTrans(atof(papszToken[1])),
-			 fp->GetYTrans(atof(papszToken[2])));
-	poLine->setPoint(1, fp->GetXTrans(atof(papszToken[3])),
-			 fp->GetYTrans(atof(papszToken[4])));
-	SetGeometryDirectly(poLine);
-	poLine->getEnvelope(&sEnvelope);
-	SetMBR(sEnvelope.MinX, sEnvelope.MinY,sEnvelope.MaxX,sEnvelope.MaxY);
+        poLine = new OGRLineString();
+        poLine->setNumPoints(2);
+        poLine->setPoint(0, fp->GetXTrans(atof(papszToken[1])),
+                         fp->GetYTrans(atof(papszToken[2])));
+        poLine->setPoint(1, fp->GetXTrans(atof(papszToken[3])),
+                         fp->GetYTrans(atof(papszToken[4])));
+        SetGeometryDirectly(poLine);
+        poLine->getEnvelope(&sEnvelope);
+        SetMBR(sEnvelope.MinX, sEnvelope.MinY,sEnvelope.MaxX,sEnvelope.MaxY);
     }
     else if (EQUALN(papszToken[0],"PLINE",5))
     {
-	switch (CSLCount(papszToken))
-	{
-	  case 1:
-	    bMultiple = FALSE;
-	    pszLine = fp->GetLine();
-	    nNumPoints = atoi(pszLine);
-	    break;
-	  case 2:
-	    bMultiple = FALSE;
-	    nNumPoints = atoi(papszToken[1]);
-	    break;
-	  case 3:
-	    if (EQUALN(papszToken[1],"MULTIPLE",8))
-	    {
-		bMultiple = TRUE;
-		nNumSec = atoi(papszToken[2]);
-		pszLine = fp->GetLine();
-		nNumPoints = atoi(pszLine);
-		break;
-	    }
-	    else
-	    {
-	      CSLDestroy(papszToken);
-	      return -1;
-	    }
-	    break;
-	  case 4:
-	    if (EQUALN(papszToken[1],"MULTIPLE",8))
-	    {
-		bMultiple = TRUE;
-		nNumSec = atoi(papszToken[2]);
-	        nNumPoints = atoi(papszToken[3]);
-		break;
-	    }
-	    else
-	    {
-		CSLDestroy(papszToken);
-		return -1;
-	    }
-	    break;
-	  default:
-	    CSLDestroy(papszToken);
-	    return -1;
-	    break;
-	}
+        switch (CSLCount(papszToken))
+        {
+          case 1:
+            bMultiple = FALSE;
+            pszLine = fp->GetLine();
+            nNumPoints = atoi(pszLine);
+            break;
+          case 2:
+            bMultiple = FALSE;
+            nNumPoints = atoi(papszToken[1]);
+            break;
+          case 3:
+            if (EQUALN(papszToken[1],"MULTIPLE",8))
+            {
+                bMultiple = TRUE;
+                nNumSec = atoi(papszToken[2]);
+                pszLine = fp->GetLine();
+                nNumPoints = atoi(pszLine);
+                break;
+            }
+            else
+            {
+              CSLDestroy(papszToken);
+              return -1;
+            }
+            break;
+          case 4:
+            if (EQUALN(papszToken[1],"MULTIPLE",8))
+            {
+                bMultiple = TRUE;
+                nNumSec = atoi(papszToken[2]);
+                nNumPoints = atoi(papszToken[3]);
+                break;
+            }
+            else
+            {
+                CSLDestroy(papszToken);
+                return -1;
+            }
+            break;
+          default:
+            CSLDestroy(papszToken);
+            return -1;
+            break;
+        }
 
-	if (bMultiple)
-	{
-	    poMultiLine = new OGRMultiLineString();
-	    for (j=0;j<nNumSec;j++)
-	    {
-		poLine = new OGRLineString();
-		if (j != 0)
+        if (bMultiple)
+        {
+            poMultiLine = new OGRMultiLineString();
+            for (j=0;j<nNumSec;j++)
+            {
+                poLine = new OGRLineString();
+                if (j != 0)
                     nNumPoints = atoi(fp->GetLine());
                 if (nNumPoints < 2)
                 {
@@ -580,73 +583,73 @@ int TABPolyline::ReadGeometryFromMIFFile(MIDDATAFile *fp)
                              "MULTIPLE segment.", nNumPoints);
                     return -1;
                 }
-		poLine->setNumPoints(nNumPoints);
-		for (i=0;i<nNumPoints;i++)
-		{
+                poLine->setNumPoints(nNumPoints);
+                for (i=0;i<nNumPoints;i++)
+                {
                     CSLDestroy(papszToken);
-		    papszToken = CSLTokenizeString(fp->GetLine());
-		    poLine->setPoint(i,fp->GetXTrans(atof(papszToken[0])),
-				     fp->GetYTrans(atof(papszToken[1])));
-		}
+                    papszToken = CSLTokenizeString(fp->GetLine());
+                    poLine->setPoint(i,fp->GetXTrans(atof(papszToken[0])),
+                                     fp->GetYTrans(atof(papszToken[1])));
+                }
                 if (poMultiLine->addGeometryDirectly(poLine) != OGRERR_NONE)
                     CPLAssert(FALSE); // Just in case OGR is modified
-		
+                
             } 
             if (SetGeometryDirectly(poMultiLine) != OGRERR_NONE)
                 CPLAssert(FALSE); // Just in case OGR is modified
             poMultiLine->getEnvelope(&sEnvelope);
             SetMBR(sEnvelope.MinX, sEnvelope.MinY,
                    sEnvelope.MaxX,sEnvelope.MaxY);
-	}
-	else
-	{
-	    poLine = new OGRLineString();
-	    poLine->setNumPoints(nNumPoints);
-	    for (i=0;i<nNumPoints;i++)
-	    {
+        }
+        else
+        {
+            poLine = new OGRLineString();
+            poLine->setNumPoints(nNumPoints);
+            for (i=0;i<nNumPoints;i++)
+            {
                 CSLDestroy(papszToken);
-		papszToken = CSLTokenizeString(fp->GetLine());
+                papszToken = CSLTokenizeString(fp->GetLine());
     
-		if (CSLCount(papszToken) != 2)
-		  return -1;
-		poLine->setPoint(i,fp->GetXTrans(atof(papszToken[0])),
-				 fp->GetYTrans(atof(papszToken[1])));
-	    }
-	    SetGeometryDirectly(poLine);
-	    poLine->getEnvelope(&sEnvelope);
-	    SetMBR(sEnvelope.MinX, sEnvelope.MinY,
-		   sEnvelope.MaxX,sEnvelope.MaxY);
-	}
+                if (CSLCount(papszToken) != 2)
+                  return -1;
+                poLine->setPoint(i,fp->GetXTrans(atof(papszToken[0])),
+                                 fp->GetYTrans(atof(papszToken[1])));
+            }
+            SetGeometryDirectly(poLine);
+            poLine->getEnvelope(&sEnvelope);
+            SetMBR(sEnvelope.MinX, sEnvelope.MinY,
+                   sEnvelope.MaxX,sEnvelope.MaxY);
+        }
     }    
     
     CSLDestroy(papszToken);
     papszToken = NULL;
     
     while (((pszLine = fp->GetLine()) != NULL) && 
-	   fp->IsValidFeature(pszLine) == FALSE)
+           fp->IsValidFeature(pszLine) == FALSE)
     {
-	papszToken = CSLTokenizeStringComplex(pszLine,"() ,",
-					      TRUE,FALSE);
-	
-	if (CSLCount(papszToken) >= 1)
-	{
-	    if (EQUALN(papszToken[0],"PEN",3))
-	    {
-		
-		if (CSLCount(papszToken) == 4)
-		{		    
-		    SetPenWidthMIF(atoi(papszToken[1]));
-		    SetPenPattern(atoi(papszToken[2]));
-		    SetPenColor(atoi(papszToken[3]));
-		}
-		
-	    }
-	    else if (EQUALN(papszToken[0],"SMOOTH",6))
-	    {
-		m_bSmooth = TRUE;
-	    }             
-	}
-	CSLDestroy(papszToken);
+        papszToken = CSLTokenizeStringComplex(pszLine,"() ,",
+                                              TRUE,FALSE);
+        
+        if (CSLCount(papszToken) >= 1)
+        {
+            if (EQUALN(papszToken[0],"PEN",3))
+            {
+                
+                if (CSLCount(papszToken) == 4)
+                {                   
+                    SetPenWidthMIF(atoi(papszToken[1]));
+                    SetPenPattern(atoi(papszToken[2]));
+                    SetPenColor(atoi(papszToken[3]));
+                }
+                
+            }
+            else if (EQUALN(papszToken[0],"SMOOTH",6))
+            {
+                m_bSmooth = TRUE;
+            }             
+        }
+        CSLDestroy(papszToken);
     }
     return 0; 
 }
@@ -672,20 +675,20 @@ int TABPolyline::WriteGeometryToMIFFile(MIDDATAFile *fp)
          * Simple polyline
          *------------------------------------------------------------*/
         poLine = (OGRLineString*)poGeom;
-	nNumPoints = poLine->getNumPoints();
+        nNumPoints = poLine->getNumPoints();
         if (nNumPoints == 2)
         {
-	    fp->WriteLine("Line %.16g %.16g %.16g %.16g\n",poLine->getX(0),poLine->getY(0),
-			  poLine->getX(1),poLine->getY(1));
+            fp->WriteLine("Line %.16g %.16g %.16g %.16g\n",poLine->getX(0),poLine->getY(0),
+                          poLine->getX(1),poLine->getY(1));
         }
         else
         {
-	    
-	    fp->WriteLine("Pline %d\n",nNumPoints);
-	    for (i=0;i<nNumPoints;i++)
-	    {
-		fp->WriteLine("%.16g %.16g\n",poLine->getX(i),poLine->getY(i));
-	    }
+            
+            fp->WriteLine("Pline %d\n",nNumPoints);
+            for (i=0;i<nNumPoints;i++)
+            {
+                fp->WriteLine("%.16g %.16g\n",poLine->getX(i),poLine->getY(i));
+            }
         }
     }
     else if (poGeom && poGeom->getGeometryType() == wkbMultiLineString)
@@ -697,27 +700,27 @@ int TABPolyline::WriteGeometryToMIFFile(MIDDATAFile *fp)
         poMultiLine = (OGRMultiLineString*)poGeom;
         numLines = poMultiLine->getNumGeometries();
 
-	fp->WriteLine("PLINE MULTIPLE %d\n", numLines);
+        fp->WriteLine("PLINE MULTIPLE %d\n", numLines);
 
         for(iLine=0; iLine < numLines; iLine++)
         {
             poGeom = poMultiLine->getGeometryRef(iLine);
             if (poGeom && poGeom->getGeometryType() == wkbLineString)
             { 
-		poLine = (OGRLineString*)poGeom;
-		nNumPoints = poLine->getNumPoints();
+                poLine = (OGRLineString*)poGeom;
+                nNumPoints = poLine->getNumPoints();
         
-		fp->WriteLine("  %d\n",nNumPoints);
-		for (i=0;i<nNumPoints;i++)
-		{
-		    fp->WriteLine("%.16g %.16g\n",poLine->getX(i),poLine->getY(i));
-		}
+                fp->WriteLine("  %d\n",nNumPoints);
+                for (i=0;i<nNumPoints;i++)
+                {
+                    fp->WriteLine("%.16g %.16g\n",poLine->getX(i),poLine->getY(i));
+                }
             }
-	    else
-	    {
-		CPLError(CE_Failure, CPLE_AssertionFailed,
+            else
+            {
+                CPLError(CE_Failure, CPLE_AssertionFailed,
                          "TABPolyline: Object contains an invalid Geometry!");
-	    }
+            }
         }
     }
     else
@@ -728,7 +731,7 @@ int TABPolyline::WriteGeometryToMIFFile(MIDDATAFile *fp)
     
     if (GetPenPattern())
       fp->WriteLine("    Pen (%d,%d,%d)\n",GetPenWidthMIF(),GetPenPattern(),
-		    GetPenColor());
+                    GetPenColor());
     if (m_bSmooth)
       fp->WriteLine("    Smooth\n");
 
@@ -784,38 +787,38 @@ int TABRegion::ReadGeometryFromMIFFile(MIDDATAFile *fp)
 
     for(iSection=0; iSection<numLineSections; iSection++)
     {
-	int     numSectionVertices = 0;
+        int     numSectionVertices = 0;
 
         poPolygon = new OGRPolygon();
 
-	if ((pszLine = fp->GetLine()) != NULL)
-	{
-	    numSectionVertices = atoi(pszLine);
-	}
+        if ((pszLine = fp->GetLine()) != NULL)
+        {
+            numSectionVertices = atoi(pszLine);
+        }
 
-	poRing = new OGRLinearRing();
-	poRing->setNumPoints(numSectionVertices);
+        poRing = new OGRLinearRing();
+        poRing->setNumPoints(numSectionVertices);
 
 
-	for(i=0; i<numSectionVertices; i++)
-	{
-	    pszLine = fp->GetLine();
-	    if (pszLine)
-	    {
-		papszToken = CSLTokenizeStringComplex(pszLine," ,",
-						      TRUE,FALSE);
-		if (CSLCount(papszToken) == 2)
-		{	       
-		    dX = fp->GetXTrans(atof(papszToken[0]));
-		    dY = fp->GetYTrans(atof(papszToken[1]));
-		    poRing->setPoint(i, dX, dY);
-		}
-		CSLDestroy(papszToken);
+        for(i=0; i<numSectionVertices; i++)
+        {
+            pszLine = fp->GetLine();
+            if (pszLine)
+            {
+                papszToken = CSLTokenizeStringComplex(pszLine," ,",
+                                                      TRUE,FALSE);
+                if (CSLCount(papszToken) == 2)
+                {              
+                    dX = fp->GetXTrans(atof(papszToken[0]));
+                    dY = fp->GetYTrans(atof(papszToken[1]));
+                    poRing->setPoint(i, dX, dY);
+                }
+                CSLDestroy(papszToken);
                 papszToken = NULL;
-	    }	
-	}
-	poPolygon->addRingDirectly(poRing);
-	poRing = NULL;
+            }   
+        }
+        poPolygon->addRingDirectly(poRing);
+        poRing = NULL;
 
         if (numLineSections > 1)
             poMultiPolygon->addGeometryDirectly(poPolygon);
@@ -832,48 +835,48 @@ int TABRegion::ReadGeometryFromMIFFile(MIDDATAFile *fp)
     SetMBR(sEnvelope.MinX, sEnvelope.MinY, sEnvelope.MaxX, sEnvelope.MaxY);
 
     while (((pszLine = fp->GetLine()) != NULL) && 
-	   fp->IsValidFeature(pszLine) == FALSE)
+           fp->IsValidFeature(pszLine) == FALSE)
     {
-	papszToken = CSLTokenizeStringComplex(pszLine,"() ,",
-					      TRUE,FALSE);
-	
-	if (CSLCount(papszToken) > 1)
-	{
-	    if (EQUALN(papszToken[0],"PEN",3))
-	    {
-		
-		if (CSLCount(papszToken) == 4)
-		{	    
-		    SetPenWidthMIF(atoi(papszToken[1]));
-		    SetPenPattern(atoi(papszToken[2]));
-		    SetPenColor(atoi(papszToken[3]));
-		}
-		
-	    }
-	    else if (EQUALN(papszToken[0],"BRUSH", 5))
-	    {
-		if (CSLCount(papszToken) >= 3)
-		{
-		    SetBrushFGColor(atoi(papszToken[2]));
-		    SetBrushPattern(atoi(papszToken[1]));
-		    
-		    if (CSLCount(papszToken) == 4)
-		       SetBrushBGColor(atoi(papszToken[3]));
-		    else
-		      SetBrushTransparent(TRUE);
-		}
-		
-	    }
-	    else if (EQUALN(papszToken[0],"CENTER",6))
-	    {
-		if (CSLCount(papszToken) == 3)
-		{
+        papszToken = CSLTokenizeStringComplex(pszLine,"() ,",
+                                              TRUE,FALSE);
+        
+        if (CSLCount(papszToken) > 1)
+        {
+            if (EQUALN(papszToken[0],"PEN",3))
+            {
+                
+                if (CSLCount(papszToken) == 4)
+                {           
+                    SetPenWidthMIF(atoi(papszToken[1]));
+                    SetPenPattern(atoi(papszToken[2]));
+                    SetPenColor(atoi(papszToken[3]));
+                }
+                
+            }
+            else if (EQUALN(papszToken[0],"BRUSH", 5))
+            {
+                if (CSLCount(papszToken) >= 3)
+                {
+                    SetBrushFGColor(atoi(papszToken[2]));
+                    SetBrushPattern(atoi(papszToken[1]));
+                    
+                    if (CSLCount(papszToken) == 4)
+                       SetBrushBGColor(atoi(papszToken[3]));
+                    else
+                      SetBrushTransparent(TRUE);
+                }
+                
+            }
+            else if (EQUALN(papszToken[0],"CENTER",6))
+            {
+                if (CSLCount(papszToken) == 3)
+                {
                     SetCenter(fp->GetXTrans(atof(papszToken[1])),
                               fp->GetYTrans(atof(papszToken[2])) );
-		}
-	    }
-	}
-	CSLDestroy(papszToken);
+                }
+            }
+        }
+        CSLDestroy(papszToken);
         papszToken = NULL;
     }
     
@@ -908,9 +911,9 @@ int TABRegion::WriteGeometryToMIFFile(MIDDATAFile *fp)
         int     i, iRing, numRingsTotal, numPoints;
 
         numRingsTotal = GetNumRings();
-	
-	fp->WriteLine("Region %d\n",numRingsTotal);
-	
+        
+        fp->WriteLine("Region %d\n",numRingsTotal);
+        
         for(iRing=0; iRing < numRingsTotal; iRing++)
         {
             OGRLinearRing       *poRing;
@@ -925,33 +928,33 @@ int TABRegion::WriteGeometryToMIFFile(MIDDATAFile *fp)
 
             numPoints = poRing->getNumPoints();
 
-	    fp->WriteLine("  %d\n",numPoints);
+            fp->WriteLine("  %d\n",numPoints);
             for(i=0; i<numPoints; i++)
             {
                 fp->WriteLine("%.16g %.16g\n",poRing->getX(i), poRing->getY(i));
             }
         }
-	
-	if (GetPenPattern())
-	  fp->WriteLine("    Pen (%d,%d,%d)\n",
+        
+        if (GetPenPattern())
+          fp->WriteLine("    Pen (%d,%d,%d)\n",
                           GetPenWidthMIF(),GetPenPattern(),
-			  GetPenColor());
-	
+                          GetPenColor());
+        
 
-	if (GetBrushPattern())
-	{
-	    if (GetBrushTransparent() == 0)
-	      fp->WriteLine("    Brush (%d,%d,%d)\n",GetBrushPattern(),
-			    GetBrushFGColor(),GetBrushBGColor());
-	    else
-	      fp->WriteLine("    Brush (%d,%d)\n",GetBrushPattern(),
-			    GetBrushFGColor());
-	}
+        if (GetBrushPattern())
+        {
+            if (GetBrushTransparent() == 0)
+              fp->WriteLine("    Brush (%d,%d,%d)\n",GetBrushPattern(),
+                            GetBrushFGColor(),GetBrushBGColor());
+            else
+              fp->WriteLine("    Brush (%d,%d)\n",GetBrushPattern(),
+                            GetBrushFGColor());
+        }
 
-	if (m_bCenterIsSet)
-	{
-	    fp->WriteLine("    Center %.16g %.16g\n", m_dCenterX, m_dCenterY);
-	}
+        if (m_bCenterIsSet)
+        {
+            fp->WriteLine("    Center %.16g %.16g\n", m_dCenterX, m_dCenterY);
+        }
 
 
     }
@@ -980,8 +983,8 @@ int TABRectangle::ReadGeometryFromMIFFile(MIDDATAFile *fp)
 
     if (CSLCount(papszToken) <  5)
     {
-	CSLDestroy(papszToken);
-	return -1;
+        CSLDestroy(papszToken);
+        return -1;
     }
 
     dXMin = fp->GetXTrans(atof(papszToken[1]));
@@ -1002,16 +1005,16 @@ int TABRectangle::ReadGeometryFromMIFFile(MIDDATAFile *fp)
     
     if (EQUALN(papszToken[0],"ROUNDRECT",9))
     {
-	m_bRoundCorners = TRUE;
-	if (CSLCount(papszToken) == 6)
-	  m_dRoundXRadius = m_dRoundYRadius = atof(papszToken[5])/2.0;
-	else
-	{
-	    CSLDestroy(papszToken);
-	    papszToken = CSLTokenizeString(fp->GetLine());
-	    if (CSLCount(papszToken) !=1 )
-	      m_dRoundXRadius = m_dRoundYRadius = atof(papszToken[1])/2.0;
-	}
+        m_bRoundCorners = TRUE;
+        if (CSLCount(papszToken) == 6)
+          m_dRoundXRadius = m_dRoundYRadius = atof(papszToken[5])/2.0;
+        else
+        {
+            CSLDestroy(papszToken);
+            papszToken = CSLTokenizeString(fp->GetLine());
+            if (CSLCount(papszToken) !=1 )
+              m_dRoundXRadius = m_dRoundYRadius = atof(papszToken[1])/2.0;
+        }
     }
     CSLDestroy(papszToken);
     papszToken = NULL;
@@ -1019,7 +1022,7 @@ int TABRectangle::ReadGeometryFromMIFFile(MIDDATAFile *fp)
     /*-----------------------------------------------------------------
      * Create and fill geometry object
      *----------------------------------------------------------------*/
-	
+        
     poPolygon = new OGRPolygon;
     poRing = new OGRLinearRing();
     if (m_bRoundCorners && m_dRoundXRadius != 0.0 && m_dRoundYRadius != 0.0)
@@ -1073,29 +1076,29 @@ int TABRectangle::ReadGeometryFromMIFFile(MIDDATAFile *fp)
        if (CSLCount(papszToken) > 1)
        {
            if (EQUALN(papszToken[0],"PEN",3))
-	   {       
-	       if (CSLCount(papszToken) == 4)
-	       {   
-		   SetPenWidthMIF(atoi(papszToken[1]));
-		   SetPenPattern(atoi(papszToken[2]));
-		   SetPenColor(atoi(papszToken[3]));
-	       }
-	      
-	   }
-	   else if (EQUALN(papszToken[0],"BRUSH", 5))
-	   {
-	       if (CSLCount(papszToken) >=3)
-	       {
-		   SetBrushFGColor(atoi(papszToken[2]));
-		   SetBrushPattern(atoi(papszToken[1]));
+           {       
+               if (CSLCount(papszToken) == 4)
+               {   
+                   SetPenWidthMIF(atoi(papszToken[1]));
+                   SetPenPattern(atoi(papszToken[2]));
+                   SetPenColor(atoi(papszToken[3]));
+               }
+              
+           }
+           else if (EQUALN(papszToken[0],"BRUSH", 5))
+           {
+               if (CSLCount(papszToken) >=3)
+               {
+                   SetBrushFGColor(atoi(papszToken[2]));
+                   SetBrushPattern(atoi(papszToken[1]));
 
-		   if (CSLCount(papszToken) == 4)
-		       SetBrushBGColor(atoi(papszToken[3]));
-		   else
-		      SetBrushTransparent(TRUE);
-	       }
-	      
-	   }
+                   if (CSLCount(papszToken) == 4)
+                       SetBrushBGColor(atoi(papszToken[3]));
+                   else
+                      SetBrushTransparent(TRUE);
+               }
+              
+           }
        }
        CSLDestroy(papszToken);
        papszToken = NULL;
@@ -1136,29 +1139,29 @@ int TABRectangle::WriteGeometryToMIFFile(MIDDATAFile *fp)
 
     if (m_bRoundCorners == TRUE)
     {
-	fp->WriteLine("Roundrect %.16g %.16g %.16g %.16g %.16g\n", 
-		      sEnvelope.MinX, sEnvelope.MinY,
-		      sEnvelope.MaxX, sEnvelope.MaxY, m_dRoundXRadius*2.0);
+        fp->WriteLine("Roundrect %.16g %.16g %.16g %.16g %.16g\n", 
+                      sEnvelope.MinX, sEnvelope.MinY,
+                      sEnvelope.MaxX, sEnvelope.MaxY, m_dRoundXRadius*2.0);
     }
     else
     {
-	fp->WriteLine("Rect %.16g %.16g %.16g %.16g\n", 
-		      sEnvelope.MinX, sEnvelope.MinY,
-		      sEnvelope.MaxX, sEnvelope.MaxY);
+        fp->WriteLine("Rect %.16g %.16g %.16g %.16g\n", 
+                      sEnvelope.MinX, sEnvelope.MinY,
+                      sEnvelope.MaxX, sEnvelope.MaxY);
     }
     
     if (GetPenPattern())
       fp->WriteLine("    Pen (%d,%d,%d)\n",GetPenWidthMIF(),GetPenPattern(),
-		    GetPenColor());
+                    GetPenColor());
 
     if (GetBrushPattern())
     {
-	if (GetBrushTransparent() == 0)
-	  fp->WriteLine("    Brush (%d,%d,%d)\n",GetBrushPattern(),
-			GetBrushFGColor(),GetBrushBGColor());
-	else
-	  fp->WriteLine("    Brush (%d,%d)\n",GetBrushPattern(),
-			GetBrushFGColor());
+        if (GetBrushTransparent() == 0)
+          fp->WriteLine("    Brush (%d,%d,%d)\n",GetBrushPattern(),
+                        GetBrushFGColor(),GetBrushBGColor());
+        else
+          fp->WriteLine("    Brush (%d,%d)\n",GetBrushPattern(),
+                        GetBrushFGColor());
     }
     return 0; 
 }
@@ -1178,8 +1181,8 @@ int TABEllipse::ReadGeometryFromMIFFile(MIDDATAFile *fp)
 
     if (CSLCount(papszToken) != 5)
     {
-	CSLDestroy(papszToken);
-	return -1;
+        CSLDestroy(papszToken);
+        return -1;
     }
 
     dXMin = fp->GetXTrans(atof(papszToken[1]));
@@ -1220,40 +1223,40 @@ int TABEllipse::ReadGeometryFromMIFFile(MIDDATAFile *fp)
     SetGeometryDirectly(poPolygon);
 
     while (((pszLine = fp->GetLine()) != NULL) && 
-	   fp->IsValidFeature(pszLine) == FALSE)
+           fp->IsValidFeature(pszLine) == FALSE)
     {
-	papszToken = CSLTokenizeStringComplex(pszLine,"() ,",
-					      TRUE,FALSE);
-	
-	if (CSLCount(papszToken) > 1)
-	{
-	    if (EQUALN(papszToken[0],"PEN",3))
-	    {       
-		if (CSLCount(papszToken) == 4)
-		{   
-		    SetPenWidthMIF(atoi(papszToken[1]));
-		    SetPenPattern(atoi(papszToken[2]));
-		   SetPenColor(atoi(papszToken[3]));
-		}
-		
-	    }
-	    else if (EQUALN(papszToken[0],"BRUSH", 5))
-	    {
-		if (CSLCount(papszToken) >= 3)
-		{
-		    SetBrushFGColor(atoi(papszToken[2]));
-		    SetBrushPattern(atoi(papszToken[1]));
-		    
-		    if (CSLCount(papszToken) == 4)
-		      SetBrushBGColor(atoi(papszToken[3]));
-		    else
-		      SetBrushTransparent(TRUE);
-		    
-		}
-		
-	    }
-	}
-	CSLDestroy(papszToken);
+        papszToken = CSLTokenizeStringComplex(pszLine,"() ,",
+                                              TRUE,FALSE);
+        
+        if (CSLCount(papszToken) > 1)
+        {
+            if (EQUALN(papszToken[0],"PEN",3))
+            {       
+                if (CSLCount(papszToken) == 4)
+                {   
+                    SetPenWidthMIF(atoi(papszToken[1]));
+                    SetPenPattern(atoi(papszToken[2]));
+                   SetPenColor(atoi(papszToken[3]));
+                }
+                
+            }
+            else if (EQUALN(papszToken[0],"BRUSH", 5))
+            {
+                if (CSLCount(papszToken) >= 3)
+                {
+                    SetBrushFGColor(atoi(papszToken[2]));
+                    SetBrushPattern(atoi(papszToken[1]));
+                    
+                    if (CSLCount(papszToken) == 4)
+                      SetBrushBGColor(atoi(papszToken[3]));
+                    else
+                      SetBrushTransparent(TRUE);
+                    
+                }
+                
+            }
+        }
+        CSLDestroy(papszToken);
         papszToken = NULL;
     }
     return 0; 
@@ -1279,20 +1282,20 @@ int TABEllipse::WriteGeometryToMIFFile(MIDDATAFile *fp)
     }
       
     fp->WriteLine("Ellipse %.16g %.16g %.16g %.16g\n",sEnvelope.MinX, sEnvelope.MinY,
-		  sEnvelope.MaxX,sEnvelope.MaxY);
+                  sEnvelope.MaxX,sEnvelope.MaxY);
     
     if (GetPenPattern())
       fp->WriteLine("    Pen (%d,%d,%d)\n",GetPenWidthMIF(),GetPenPattern(),
-		    GetPenColor());
+                    GetPenColor());
     
     if (GetBrushPattern())
-    {	    
-	if (GetBrushTransparent() == 0)
-	  fp->WriteLine("    Brush (%d,%d,%d)\n",GetBrushPattern(),
-			GetBrushFGColor(),GetBrushBGColor());
-	else
-	  fp->WriteLine("    Brush (%d,%d)\n",GetBrushPattern(),
-			GetBrushFGColor());
+    {       
+        if (GetBrushTransparent() == 0)
+          fp->WriteLine("    Brush (%d,%d,%d)\n",GetBrushPattern(),
+                        GetBrushFGColor(),GetBrushBGColor());
+        else
+          fp->WriteLine("    Brush (%d,%d)\n",GetBrushPattern(),
+                        GetBrushFGColor());
     }
     return 0; 
 }
@@ -1312,35 +1315,35 @@ int TABArc::ReadGeometryFromMIFFile(MIDDATAFile *fp)
 
     if (CSLCount(papszToken) == 5)
     {
-	dXMin = fp->GetXTrans(atof(papszToken[1]));
-	dXMax = fp->GetXTrans(atof(papszToken[3]));
-	dYMin = fp->GetYTrans(atof(papszToken[2]));
-	dYMax = fp->GetYTrans(atof(papszToken[4]));
+        dXMin = fp->GetXTrans(atof(papszToken[1]));
+        dXMax = fp->GetXTrans(atof(papszToken[3]));
+        dYMin = fp->GetYTrans(atof(papszToken[2]));
+        dYMax = fp->GetYTrans(atof(papszToken[4]));
 
         CSLDestroy(papszToken);
-	papszToken = CSLTokenizeString(fp->GetLine());
-	if (CSLCount(papszToken) != 2)
+        papszToken = CSLTokenizeString(fp->GetLine());
+        if (CSLCount(papszToken) != 2)
         {
             CSLDestroy(papszToken);
             return -1;
         }
 
-	m_dStartAngle = atof(papszToken[0]);
-	m_dEndAngle = atof(papszToken[1]);
+        m_dStartAngle = atof(papszToken[0]);
+        m_dEndAngle = atof(papszToken[1]);
     }
     else if (CSLCount(papszToken) == 7)
     {
-	dXMin = fp->GetXTrans(atof(papszToken[1]));
-	dXMax = fp->GetXTrans(atof(papszToken[3]));
-	dYMin = fp->GetYTrans(atof(papszToken[2]));
-	dYMax = fp->GetYTrans(atof(papszToken[4]));
-	m_dStartAngle = atof(papszToken[5]);
-	m_dEndAngle = atof(papszToken[6]);
+        dXMin = fp->GetXTrans(atof(papszToken[1]));
+        dXMax = fp->GetXTrans(atof(papszToken[3]));
+        dYMin = fp->GetYTrans(atof(papszToken[2]));
+        dYMax = fp->GetYTrans(atof(papszToken[4]));
+        m_dStartAngle = atof(papszToken[5]);
+        m_dEndAngle = atof(papszToken[6]);
     }
     else
     {
-	CSLDestroy(papszToken);
-	return -1;
+        CSLDestroy(papszToken);
+        return -1;
     }
 
     CSLDestroy(papszToken);
@@ -1359,8 +1362,8 @@ int TABArc::ReadGeometryFromMIFFile(MIDDATAFile *fp)
 
     if (fp->GetXMultiplier() <= 0.0)
     {
-	m_dStartAngle = 360.0 - m_dStartAngle;
-	m_dEndAngle = 360.0 - m_dEndAngle;
+        m_dStartAngle = 360.0 - m_dStartAngle;
+        m_dEndAngle = 360.0 - m_dEndAngle;
     }
     
     m_dCenterX = (dXMin + dXMax) / 2.0;
@@ -1390,26 +1393,26 @@ int TABArc::ReadGeometryFromMIFFile(MIDDATAFile *fp)
     SetGeometryDirectly(poLine);
 
     while (((pszLine = fp->GetLine()) != NULL) && 
-	   fp->IsValidFeature(pszLine) == FALSE)
+           fp->IsValidFeature(pszLine) == FALSE)
     {
-	papszToken = CSLTokenizeStringComplex(pszLine,"() ,",
-					      TRUE,FALSE);
-	
-	if (CSLCount(papszToken) > 1)
-	{
-	    if (EQUALN(papszToken[0],"PEN",3))
-	    {
-		
-		if (CSLCount(papszToken) == 4)
-		{    
-		    SetPenWidthMIF(atoi(papszToken[1]));
-		    SetPenPattern(atoi(papszToken[2]));
-		    SetPenColor(atoi(papszToken[3]));
-		}
-		
-	    }
-	}
-	CSLDestroy(papszToken);
+        papszToken = CSLTokenizeStringComplex(pszLine,"() ,",
+                                              TRUE,FALSE);
+        
+        if (CSLCount(papszToken) > 1)
+        {
+            if (EQUALN(papszToken[0],"PEN",3))
+            {
+                
+                if (CSLCount(papszToken) == 4)
+                {    
+                    SetPenWidthMIF(atoi(papszToken[1]));
+                    SetPenPattern(atoi(papszToken[2]));
+                    SetPenColor(atoi(papszToken[3]));
+                }
+                
+            }
+        }
+        CSLDestroy(papszToken);
         papszToken = NULL;
    }
    return 0; 
@@ -1429,14 +1432,14 @@ int TABArc::WriteGeometryToMIFFile(MIDDATAFile *fp)
      
     // Write the Arc's actual MBR
      fp->WriteLine("Arc %.16g %.16g %.16g %.16g\n", m_dCenterX-m_dXRadius, 
-		   m_dCenterY-m_dYRadius, m_dCenterX+m_dXRadius, 
-		   m_dCenterY+m_dYRadius);
+                   m_dCenterY-m_dYRadius, m_dCenterX+m_dXRadius, 
+                   m_dCenterY+m_dYRadius);
 
      fp->WriteLine("  %.16g %.16g\n",m_dStartAngle,m_dEndAngle); 
      
      if (GetPenPattern())
        fp->WriteLine("    Pen (%d,%d,%d)\n",GetPenWidthMIF(),GetPenPattern(),
-		     GetPenColor());
+                     GetPenColor());
      
    
     return 0; 
@@ -1459,23 +1462,23 @@ int TABText::ReadGeometryFromMIFFile(MIDDATAFile *fp)
     if (CSLCount(papszToken) == 1)
     {
         CSLDestroy(papszToken);
-	papszToken = CSLTokenizeString(fp->GetLine());
-	if (CSLCount(papszToken) != 1)
- 	{
-	    CSLDestroy(papszToken);
-	    return -1;
-	}
-	else
-	  pszString = papszToken[0];
+        papszToken = CSLTokenizeString(fp->GetLine());
+        if (CSLCount(papszToken) != 1)
+        {
+            CSLDestroy(papszToken);
+            return -1;
+        }
+        else
+          pszString = papszToken[0];
     }
     else if (CSLCount(papszToken) == 2)
     {
-	pszString = papszToken[1];
+        pszString = papszToken[1];
     }
     else
      {
-	CSLDestroy(papszToken);
-	return -1;
+        CSLDestroy(papszToken);
+        return -1;
     }
 
     /*-------------------------------------------------------------
@@ -1488,23 +1491,23 @@ int TABText::ReadGeometryFromMIFFile(MIDDATAFile *fp)
     papszToken = CSLTokenizeString(fp->GetLine());
     if (CSLCount(papszToken) != 4)
     {
-	CSLDestroy(papszToken);
-	return -1;
+        CSLDestroy(papszToken);
+        return -1;
     }
     else
     {
-	dXMin = fp->GetXTrans(atof(papszToken[0]));
-	dXMax = fp->GetXTrans(atof(papszToken[2]));
-	dYMin = fp->GetYTrans(atof(papszToken[1]));
-	dYMax = fp->GetYTrans(atof(papszToken[3]));
+        dXMin = fp->GetXTrans(atof(papszToken[0]));
+        dXMax = fp->GetXTrans(atof(papszToken[2]));
+        dYMin = fp->GetYTrans(atof(papszToken[1]));
+        dYMax = fp->GetYTrans(atof(papszToken[3]));
 
-	m_dHeight = dYMax - dYMin;  //SetTextBoxHeight(dYMax - dYMin);
-	m_dWidth  = dXMax - dXMin;  //SetTextBoxWidth(dXMax - dXMin);
-	
-	if (m_dHeight <0.0)
-	  m_dHeight*=-1.0;
-	if (m_dWidth <0.0)
-	  m_dWidth*=-1.0;
+        m_dHeight = dYMax - dYMin;  //SetTextBoxHeight(dYMax - dYMin);
+        m_dWidth  = dXMax - dXMin;  //SetTextBoxWidth(dXMax - dXMin);
+        
+        if (m_dHeight <0.0)
+          m_dHeight*=-1.0;
+        if (m_dWidth <0.0)
+          m_dWidth*=-1.0;
     }
 
     CSLDestroy(papszToken);
@@ -1517,113 +1520,113 @@ int TABText::ReadGeometryFromMIFFile(MIDDATAFile *fp)
     GetMBR(dXMin, dYMin, dXMax, dYMax);
     
     while (((pszLine = fp->GetLine()) != NULL) && 
-	   fp->IsValidFeature(pszLine) == FALSE)
+           fp->IsValidFeature(pszLine) == FALSE)
     {
-	papszToken = CSLTokenizeStringComplex(pszLine,"() ,",
-					      TRUE,FALSE);
-	
-	if (CSLCount(papszToken) > 1)
-	{
-	    if (EQUALN(papszToken[0],"FONT",4))
-	    {
-		if (CSLCount(papszToken) >= 5)
-		{    
-		    SetFontName(papszToken[1]);
-		    SetFontFGColor(atoi(papszToken[4]));
-		    if (CSLCount(papszToken) ==6)
-		    {
-			SetFontBGColor(atoi(papszToken[5]));
-			SetFontStyleMIFValue(atoi(papszToken[2]),TRUE);
-		    }
-		    else
-		      SetFontStyleMIFValue(atoi(papszToken[2]));
+        papszToken = CSLTokenizeStringComplex(pszLine,"() ,",
+                                              TRUE,FALSE);
+        
+        if (CSLCount(papszToken) > 1)
+        {
+            if (EQUALN(papszToken[0],"FONT",4))
+            {
+                if (CSLCount(papszToken) >= 5)
+                {    
+                    SetFontName(papszToken[1]);
+                    SetFontFGColor(atoi(papszToken[4]));
+                    if (CSLCount(papszToken) ==6)
+                    {
+                        SetFontBGColor(atoi(papszToken[5]));
+                        SetFontStyleMIFValue(atoi(papszToken[2]),TRUE);
+                    }
+                    else
+                      SetFontStyleMIFValue(atoi(papszToken[2]));
 
-		    // papsztoken[3] = Size ???
-		}
-		
-	    }
-	    else if (EQUALN(papszToken[0],"SPACING",7))
-	    {
-		if (CSLCount(papszToken) >= 2)
-		{   
-		    if (EQUALN(papszToken[1],"2",1))
-		    {
-			SetTextSpacing(TABTSDouble);
-		    }
-		    else if (EQUALN(papszToken[1],"1.5",3))
-		    {
-			SetTextSpacing(TABTS1_5);
-		    }
-		}
-		
-		if (CSLCount(papszToken) == 7)
-		{
-		    if (EQUALN(papszToken[2],"LAbel",5))
-		    {
-			if (EQUALN(papszToken[4],"simple",6))
-			{
-			    SetTextLineType(TABTLSimple);
-			    m_dfLineX = fp->GetXTrans(atof(papszToken[5]));
-			    m_dfLineY = fp->GetYTrans(atof(papszToken[6]));
-			}
-			else if (EQUALN(papszToken[4],"arrow", 5))
-			{
-			    SetTextLineType(TABTLArrow);
-			    m_dfLineX = fp->GetXTrans(atof(papszToken[5]));
-			    m_dfLineY = fp->GetYTrans(atof(papszToken[6]));
-			}
-		    }
-		}		
-	    }
-	    else if (EQUALN(papszToken[0],"Justify",7))
-	    {
-		if (CSLCount(papszToken) == 2)
-		{
-		    if (EQUALN( papszToken[1],"Center",6))
-		    {
-			SetTextJustification(TABTJCenter);
-		    }
-		    else  if (EQUALN( papszToken[1],"Right",5))
-		    {
-			SetTextJustification(TABTJRight);
-		    }
-		    
-		}
-		
-	    }
-	    else if (EQUALN(papszToken[0],"Angle",5))
-	    {
-		if (CSLCount(papszToken) == 2)
-		{    
- 		    m_dAngle = atof(papszToken[1]);
+                    // papsztoken[3] = Size ???
+                }
+                
+            }
+            else if (EQUALN(papszToken[0],"SPACING",7))
+            {
+                if (CSLCount(papszToken) >= 2)
+                {   
+                    if (EQUALN(papszToken[1],"2",1))
+                    {
+                        SetTextSpacing(TABTSDouble);
+                    }
+                    else if (EQUALN(papszToken[1],"1.5",3))
+                    {
+                        SetTextSpacing(TABTS1_5);
+                    }
+                }
+                
+                if (CSLCount(papszToken) == 7)
+                {
+                    if (EQUALN(papszToken[2],"LAbel",5))
+                    {
+                        if (EQUALN(papszToken[4],"simple",6))
+                        {
+                            SetTextLineType(TABTLSimple);
+                            m_dfLineX = fp->GetXTrans(atof(papszToken[5]));
+                            m_dfLineY = fp->GetYTrans(atof(papszToken[6]));
+                        }
+                        else if (EQUALN(papszToken[4],"arrow", 5))
+                        {
+                            SetTextLineType(TABTLArrow);
+                            m_dfLineX = fp->GetXTrans(atof(papszToken[5]));
+                            m_dfLineY = fp->GetYTrans(atof(papszToken[6]));
+                        }
+                    }
+                }               
+            }
+            else if (EQUALN(papszToken[0],"Justify",7))
+            {
+                if (CSLCount(papszToken) == 2)
+                {
+                    if (EQUALN( papszToken[1],"Center",6))
+                    {
+                        SetTextJustification(TABTJCenter);
+                    }
+                    else  if (EQUALN( papszToken[1],"Right",5))
+                    {
+                        SetTextJustification(TABTJRight);
+                    }
+                    
+                }
+                
+            }
+            else if (EQUALN(papszToken[0],"Angle",5))
+            {
+                if (CSLCount(papszToken) == 2)
+                {    
+                    m_dAngle = atof(papszToken[1]);
 
-		    //SetTextAngle(atof(papszToken[1]));
-		}
-		
-	    }
-	    else if (EQUALN(papszToken[0],"LAbel",5))
-	    {
-		if (CSLCount(papszToken) == 5)
-		{    
-		    if (EQUALN(papszToken[2],"simple",6))
-		    {
-			SetTextLineType(TABTLSimple);
-			m_dfLineX = fp->GetXTrans(atof(papszToken[3]));
-			m_dfLineY = fp->GetYTrans(atof(papszToken[4]));
-		    }
-		    else if (EQUALN(papszToken[2],"arrow", 5))
-		    {
-			SetTextLineType(TABTLArrow);
-			m_dfLineX = fp->GetXTrans(atof(papszToken[3]));
-			m_dfLineY = fp->GetYTrans(atof(papszToken[4]));
-		    }
-		}
-		
+                    //SetTextAngle(atof(papszToken[1]));
+                }
+                
+            }
+            else if (EQUALN(papszToken[0],"LAbel",5))
+            {
+                if (CSLCount(papszToken) == 5)
+                {    
+                    if (EQUALN(papszToken[2],"simple",6))
+                    {
+                        SetTextLineType(TABTLSimple);
+                        m_dfLineX = fp->GetXTrans(atof(papszToken[3]));
+                        m_dfLineY = fp->GetYTrans(atof(papszToken[4]));
+                    }
+                    else if (EQUALN(papszToken[2],"arrow", 5))
+                    {
+                        SetTextLineType(TABTLArrow);
+                        m_dfLineX = fp->GetXTrans(atof(papszToken[3]));
+                        m_dfLineY = fp->GetYTrans(atof(papszToken[4]));
+                    }
+                }
+                
 
-		// What I do with the XY coordonate
-	    }
-	}
-	CSLDestroy(papszToken);
+                // What I do with the XY coordonate
+            }
+        }
+        CSLDestroy(papszToken);
         papszToken = NULL;
     }
     /*-----------------------------------------------------------------
@@ -1714,54 +1717,54 @@ int TABText::WriteGeometryToMIFFile(MIDDATAFile *fp)
  
     if (IsFontBGColorUsed())
       fp->WriteLine("    Font (\"%s\",%d,%d,%d,%d)\n", GetFontNameRef(), 
-		    GetFontStyleMIFValue(),0,GetFontFGColor(),
-		    GetFontBGColor());
+                    GetFontStyleMIFValue(),0,GetFontFGColor(),
+                    GetFontBGColor());
     else
       fp->WriteLine("    Font (\"%s\",%d,%d,%d)\n", GetFontNameRef(), 
-		    GetFontStyleMIFValue(),0,GetFontFGColor());
+                    GetFontStyleMIFValue(),0,GetFontFGColor());
 
     switch (GetTextSpacing())
     {
       case   TABTS1_5:
-	fp->WriteLine("    Spacing 1.5\n");
-	break;
+        fp->WriteLine("    Spacing 1.5\n");
+        break;
       case TABTSDouble:
-	fp->WriteLine("    Spacing 2.0\n");
-	break;    
+        fp->WriteLine("    Spacing 2.0\n");
+        break;    
       case TABTSSingle:
       default:
-	break;
+        break;
     }
 
     switch (GetTextJustification())
     {
       case TABTJCenter:
-	fp->WriteLine("    Justify Center\n");
-	break;
+        fp->WriteLine("    Justify Center\n");
+        break;
       case TABTJRight:
-	fp->WriteLine("    Justify Right\n");
-	break;
+        fp->WriteLine("    Justify Right\n");
+        break;
       case TABTJLeft:
       default:
-	break;
+        break;
     }
 
     if ((GetTextAngle() - 0.000001) >0.0)
-	fp->WriteLine("    Angle %.16g\n",GetTextAngle());
+        fp->WriteLine("    Angle %.16g\n",GetTextAngle());
 
     switch (GetTextLineType())
     {
       case TABTLSimple:
-	fp->WriteLine("    Label Line Simple %.16g %.16g \n",
-		      m_dfLineX,m_dfLineY );
-	break;
+        fp->WriteLine("    Label Line Simple %.16g %.16g \n",
+                      m_dfLineX,m_dfLineY );
+        break;
       case TABTLArrow:
-	fp->WriteLine("    Label Line Arrow %.16g %.16g \n",
-		      m_dfLineX,m_dfLineY );
-	break;
+        fp->WriteLine("    Label Line Arrow %.16g %.16g \n",
+                      m_dfLineX,m_dfLineY );
+        break;
       case TABTLNoLine:
       default:
-	break;
+        break;
     }
     return 0; 
 
@@ -1779,7 +1782,7 @@ int TABDebugFeature::ReadGeometryFromMIFFile(MIDDATAFile *fp)
    printf("%s\n", fp->GetLastLine());
 
    while (((pszLine = fp->GetLine()) != NULL) && 
-	  fp->IsValidFeature(pszLine) == FALSE)
+          fp->IsValidFeature(pszLine) == FALSE)
      ;
   
    return 0; 

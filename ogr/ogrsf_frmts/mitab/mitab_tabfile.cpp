@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_tabfile.cpp,v 1.37 2000/09/20 18:32:02 daniel Exp $
+ * $Id: mitab_tabfile.cpp,v 1.40 2001/01/22 16:03:58 warmerda Exp $
  *
  * Name:     mitab_tabfile.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -32,6 +32,16 @@
  **********************************************************************
  *
  * $Log: mitab_tabfile.cpp,v $
+ * Revision 1.40  2001/01/22 16:03:58  warmerda
+ * expanded tabs
+ *
+ * Revision 1.39  2000/12/15 05:32:31  daniel
+ * Handle table type LINKED the same way as table type NATIVE.
+ * Make sure max char field width is 254 in AddFieldNative().
+ *
+ * Revision 1.38  2000/10/18 03:53:16  daniel
+ * GetBounds() now calculates bounds based on +/- 1e9 integer coordinates limit
+ *
  * Revision 1.37  2000/09/20 18:32:02  daniel
  * Accept "FORMAT: DBF" in version 100 .tab headers
  *
@@ -239,6 +249,7 @@ int TABFile::Open(const char *pszFname, const char *pszAccess,
     char *pszTmpFname = NULL;
     int nFnameLen = 0;
 
+    CPLErrorReset();
    
     if (m_poMAPFile)
     {
@@ -446,7 +457,7 @@ int TABFile::Open(const char *pszFname, const char *pszAccess,
             else
                 CPLErrorReset();
 
-	    CPLFree(pszTmpFname);
+            CPLFree(pszTmpFname);
             Close();
             return -1;
         }
@@ -563,7 +574,7 @@ int TABFile::ParseTABFileFirstPass(GBool bTestOpenNoError)
         else if (bInsideTableDef && !bFoundTableFields &&
                  (EQUAL(papszTok[0], "Type") || EQUAL(papszTok[0],"FORMAT:")) )
         {
-            if (EQUAL(papszTok[1], "NATIVE"))
+            if (EQUAL(papszTok[1], "NATIVE") || EQUAL(papszTok[1], "LINKED"))
                 m_eTableType = TABTableNative;
             else if (EQUAL(papszTok[1], "DBF"))
                 m_eTableType = TABTableDBF;
@@ -1145,9 +1156,9 @@ TABFeature *TABFile::GetFeatureRef(int nFeatureId)
         m_poMAPFile->MoveToObjId(nFeatureId) != 0 ||
         m_poDATFile->GetRecordBlock(nFeatureId) == NULL )
     {
-	//     CPLError(CE_Failure, CPLE_IllegalArg,
-	//    "GetFeatureRef() failed: invalid feature id %d", 
-	//    nFeatureId);
+        //     CPLError(CE_Failure, CPLE_IllegalArg,
+        //    "GetFeatureRef() failed: invalid feature id %d", 
+        //    nFeatureId);
         return NULL;
     }
     
@@ -1539,6 +1550,25 @@ int TABFile::AddFieldNative(const char *pszName, TABFieldType eMapInfoType,
     }
 
     /*-----------------------------------------------------------------
+     * Validate field width... must be <= 254
+     *----------------------------------------------------------------*/
+    if (nWidth > 254)
+    {
+        CPLError(CE_Warning, CPLE_IllegalArg,
+                 "Invalid size (%d) for field '%s'.  "
+                 "Size must be 254 or less.", nWidth, pszName);
+        nWidth=254;
+    }
+
+    /*-----------------------------------------------------------------
+     * Map fields with width=0 (variable length in OGR) to a valid default
+     *----------------------------------------------------------------*/
+    if (eMapInfoType == TABFDecimal && nWidth == 0)
+        nWidth=20;
+    else if (nWidth == 0)
+        nWidth=254; /* char fields */
+
+    /*-----------------------------------------------------------------
      * Make sure field name is valid... check for special chars, etc.
      * (pszCleanName will have to be freed.)
      *----------------------------------------------------------------*/
@@ -1877,12 +1907,12 @@ int TABFile::GetBounds(double &dXMin, double &dYMin,
     if (m_poMAPFile && (poHeader=m_poMAPFile->GetHeaderBlock()) != NULL)
     {
         /*-------------------------------------------------------------
-         * Fetch dataset bounds from the header block...
+         * Projection bounds correspond to the +/- 1e9 integer coord. limits
          *------------------------------------------------------------*/
         double dX0, dX1, dY0, dY1;
-        m_poMAPFile->Int2Coordsys(poHeader->m_nXMin, poHeader->m_nYMin, 
+        m_poMAPFile->Int2Coordsys(-1000000000, -1000000000,  
                                   dX0, dY0);
-        m_poMAPFile->Int2Coordsys(poHeader->m_nXMax, poHeader->m_nYMax, 
+        m_poMAPFile->Int2Coordsys(1000000000, 1000000000, 
                                   dX1, dY1);
         /*-------------------------------------------------------------
          * ... and make sure that Min < Max
@@ -2071,11 +2101,11 @@ void TABFile::Dump(FILE *fpOut /*=NULL*/)
         fprintf(fpOut, "... end of TABLE file dump.\n\n");
         if( GetSpatialRef() != NULL )
         {
-            char	*pszWKT;
+            char        *pszWKT;
 
             GetSpatialRef()->exportToWkt( &pszWKT );
             fprintf( fpOut, "SRS = %s\n", pszWKT );
-            OGRFree( pszWKT );						
+            OGRFree( pszWKT );                                          
         }
         fprintf(fpOut, "Associated .MAP file ...\n\n");
         m_poMAPFile->Dump(fpOut);

@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_imapinfofile.cpp,v 1.9 2000/11/30 20:27:56 warmerda Exp $
+ * $Id: mitab_imapinfofile.cpp,v 1.10 2001/01/22 16:03:58 warmerda Exp $
  *
  * Name:     mitab_imapinfo
  * Project:  MapInfo mid/mif Tab Read/Write library
@@ -31,6 +31,9 @@
  **********************************************************************
  *
  * $Log: mitab_imapinfofile.cpp,v $
+ * Revision 1.10  2001/01/22 16:03:58  warmerda
+ * expanded tabs
+ *
  * Revision 1.9  2000/11/30 20:27:56  warmerda
  * make variable length string fields 254 wide, not 255
  *
@@ -85,8 +88,8 @@ IMapInfoFile::~IMapInfoFile()
 {
     if( m_poFilterGeom != NULL )
     {
-	delete m_poFilterGeom;
-	m_poFilterGeom = NULL;
+        delete m_poFilterGeom;
+        m_poFilterGeom = NULL;
     }
 }
 
@@ -179,9 +182,9 @@ OGRFeature *IMapInfoFile::GetNextFeature()
     poFeatureRef = GetFeatureRef(m_nCurFeatureId+1);
     if (poFeatureRef)
     {
-	poFeature = poFeatureRef->Clone();
-	poFeature->SetFID(poFeatureRef->GetFID());
-	return poFeature;
+        poFeature = poFeatureRef->Clone();
+        poFeature->SetFID(poFeatureRef->GetFID());
+        return poFeature;
     }
     else
       return NULL;
@@ -216,22 +219,22 @@ OGRErr     IMapInfoFile::CreateFeature(OGRFeature *poFeature)
        * POINT
        *------------------------------------------------------------*/
       case wkbPoint:
-	poTABFeature = new TABPoint(poFeature->GetDefnRef());
-	break;
+        poTABFeature = new TABPoint(poFeature->GetDefnRef());
+        break;
       /*-------------------------------------------------------------
        * REGION
        *------------------------------------------------------------*/
       case wkbPolygon:
       case wkbMultiPolygon:
-	poTABFeature = new TABRegion(poFeature->GetDefnRef());
-	break;
+        poTABFeature = new TABRegion(poFeature->GetDefnRef());
+        break;
       /*-------------------------------------------------------------
        * LINE/PLINE/MULTIPLINE
        *------------------------------------------------------------*/
       case wkbLineString:
       case wkbMultiLineString:
-	poTABFeature = new TABPolyline(poFeature->GetDefnRef());
-	break;
+        poTABFeature = new TABPolyline(poFeature->GetDefnRef());
+        break;
       /*-------------------------------------------------------------
        * Collection types that are not directly supported... convert
        * to multiple features in output file through recursive calls.
@@ -267,7 +270,7 @@ OGRErr     IMapInfoFile::CreateFeature(OGRFeature *poFeature)
     
     for (int i=0; i< poFeature->GetDefnRef()->GetFieldCount();i++)
     {
-	poTABFeature->SetField(i,poFeature->GetRawFieldRef( i ));
+        poTABFeature->SetField(i,poFeature->GetRawFieldRef( i ));
     }
     
 
@@ -292,10 +295,10 @@ OGRFeature *IMapInfoFile::GetFeature(long nFeatureId)
     poFeatureRef = GetFeatureRef(nFeatureId);
     if (poFeatureRef)
     {
-	poFeature = poFeatureRef->Clone();
-	poFeature->SetFID(poFeatureRef->GetFID());
-	
-	return poFeature;
+        poFeature = poFeatureRef->Clone();
+        poFeature->SetFID(poFeatureRef->GetFID());
+        
+        return poFeature;
     }
     else
       return NULL;
@@ -341,7 +344,7 @@ void IMapInfoFile::SetSpatialFilter (OGRGeometry * poGeomIn )
 OGRErr IMapInfoFile::CreateField( OGRFieldDefn *poField, int bApproxOK )
 
 {
-    TABFieldType	eTABType;
+    TABFieldType        eTABType;
     int                 nWidth = poField->GetWidth();
 
     if( poField->GetType() == OFTInteger )

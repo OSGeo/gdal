@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_ogr_driver.h,v 1.7 2000/01/26 18:17:00 warmerda Exp $
+ * $Id: mitab_ogr_driver.h,v 1.8 2001/01/22 16:03:59 warmerda Exp $
  *
  * Name:     mitab_ogr_drive.h
  * Project:  Mid/mif tab ogr support
@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log: mitab_ogr_driver.h,v $
+ * Revision 1.8  2001/01/22 16:03:59  warmerda
+ * expanded tabs
+ *
  * Revision 1.7  2000/01/26 18:17:00  warmerda
  * reimplement OGR driver
  *
@@ -69,19 +72,19 @@ class OGRTABDataSource : public OGRDataSource
 {
   private:
     char                *m_pszName;
-    char		*m_pszDirectory;
+    char                *m_pszDirectory;
 
-    int			m_nLayerCount;
-    IMapInfoFile	**m_papoLayers;
+    int                 m_nLayerCount;
+    IMapInfoFile        **m_papoLayers;
 
   public:
-		OGRTABDataSource();
-    virtual	~OGRTABDataSource();
+                OGRTABDataSource();
+    virtual     ~OGRTABDataSource();
 
-    int		Open( const char *pszName, int bTestOpen );
-    int		Create( const char *pszName, char ** papszOptions );
+    int         Open( const char *pszName, int bTestOpen );
+    int         Create( const char *pszName, char ** papszOptions );
 
-    const char	*GetName() { return m_pszName; }
+    const char  *GetName() { return m_pszName; }
     int          GetLayerCount() { return m_nLayerCount; }
     OGRLayer    *GetLayer( int );
     int          TestCapability( const char * );
@@ -99,7 +102,7 @@ class OGRTABDataSource : public OGRDataSource
 class OGRTABDriver : public OGRSFDriver
 {
 public:
-    virtual	~OGRTABDriver();
+    virtual     ~OGRTABDriver();
 
     const char  *GetName();
     OGRDataSource *Open ( const char *,int );

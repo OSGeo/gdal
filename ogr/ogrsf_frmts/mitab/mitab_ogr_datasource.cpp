@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_ogr_datasource.cpp,v 1.2 2000/07/04 01:46:23 warmerda Exp $
+ * $Id: mitab_ogr_datasource.cpp,v 1.3 2001/01/22 16:03:58 warmerda Exp $
  *
  * Name:     mitab_ogr_datasource.cpp
  * Project:  MapInfo Mid/Mif, Tab ogr support
@@ -30,6 +30,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log: mitab_ogr_datasource.cpp,v $
+ * Revision 1.3  2001/01/22 16:03:58  warmerda
+ * expanded tabs
+ *
  * Revision 1.2  2000/07/04 01:46:23  warmerda
  * Avoid warnings on unused arguments.
  *
@@ -87,7 +90,7 @@ OGRTABDataSource::~OGRTABDataSource()
 int OGRTABDataSource::Create( const char * pszName, char ** )
 
 {
-    VSIStatBuf	sStat;
+    VSIStatBuf  sStat;
 
     CPLAssert( m_pszName == NULL );
     
@@ -128,7 +131,7 @@ int OGRTABDataSource::Create( const char * pszName, char ** )
 /* -------------------------------------------------------------------- */
     else
     {
-        IMapInfoFile	*poFile;
+        IMapInfoFile    *poFile;
 
         poFile = new TABFile;
         if( poFile->Open( pszName, "wb", FALSE ) != 0 )
@@ -158,7 +161,7 @@ int OGRTABDataSource::Create( const char * pszName, char ** )
 int OGRTABDataSource::Open( const char * pszName, int bTestOpen )
 
 {
-    VSIStatBuf	stat;
+    VSIStatBuf  stat;
 
     CPLAssert( m_pszName == NULL );
     
@@ -186,7 +189,7 @@ int OGRTABDataSource::Open( const char * pszName, int bTestOpen )
 /* -------------------------------------------------------------------- */
     if( VSI_ISREG(stat.st_mode) )
     {
-        IMapInfoFile	*poFile;
+        IMapInfoFile    *poFile;
 
         poFile = IMapInfoFile::SmartOpen( pszName, bTestOpen );
         if( poFile == NULL )
@@ -205,7 +208,7 @@ int OGRTABDataSource::Open( const char * pszName, int bTestOpen )
 /* -------------------------------------------------------------------- */
     else
     {
-        char	**papszFileList = CPLReadDir( pszName );
+        char    **papszFileList = CPLReadDir( pszName );
         
         m_pszDirectory = CPLStrdup( pszName );
 
@@ -214,8 +217,8 @@ int OGRTABDataSource::Open( const char * pszName, int bTestOpen )
              iFile++ )
         {
             IMapInfoFile *poFile;
-            const char	*pszExtension = CPLGetExtension(papszFileList[iFile]);
-            char	*pszSubFilename;
+            const char  *pszExtension = CPLGetExtension(papszFileList[iFile]);
+            char        *pszSubFilename;
 
             if( !EQUAL(pszExtension,"tab") && !EQUAL(pszExtension,"mif") )
                 continue;
@@ -273,8 +276,8 @@ OGRTABDataSource::CreateLayer( const char * pszLayerName,
                                char ** /* papszOptions */ )
 
 {
-    IMapInfoFile	*poFile;
-    char		*pszFullFilename;
+    IMapInfoFile        *poFile;
+    char                *pszFullFilename;
 
     pszFullFilename = CPLStrdup( CPLFormFilename( m_pszDirectory,
                                                   pszLayerName, "tab" ) );

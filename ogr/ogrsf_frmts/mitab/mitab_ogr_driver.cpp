@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_ogr_driver.cpp,v 1.7 2000/01/26 18:17:00 warmerda Exp $
+ * $Id: mitab_ogr_driver.cpp,v 1.8 2001/01/22 16:03:58 warmerda Exp $
  *
  * Name:     mitab_ogr_driver.cpp
  * Project:  MapInfo Mid/Mif, Tab ogr support
@@ -31,6 +31,9 @@
  **********************************************************************
  *
  * $Log: mitab_ogr_driver.cpp,v $
+ * Revision 1.8  2001/01/22 16:03:58  warmerda
+ * expanded tabs
+ *
  * Revision 1.7  2000/01/26 18:17:00  warmerda
  * reimplement OGR driver
  *
@@ -87,11 +90,11 @@ OGRDataSource *OGRTABDriver::Open( const char * pszFilename,
                                    int bUpdate )
 
 {
-    OGRTABDataSource	*poDS;
+    OGRTABDataSource    *poDS;
     
     if( bUpdate )
     {
-	return NULL;
+        return NULL;
     }
 
     poDS = new OGRTABDataSource();
@@ -113,7 +116,7 @@ OGRDataSource *OGRTABDriver::CreateDataSource( const char * pszName,
                                                char ** papszOptions )
 
 {
-    VSIStatBuf	stat;
+    VSIStatBuf  stat;
     OGRTABDataSource *poDS;
 
 /* -------------------------------------------------------------------- */

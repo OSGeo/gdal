@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_utils.cpp,v 1.14 2000/09/28 16:39:44 warmerda Exp $
+ * $Id: mitab_utils.cpp,v 1.15 2001/01/19 06:06:18 daniel Exp $
  *
  * Name:     mitab_utils.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -8,7 +8,7 @@
  * Author:   Daniel Morissette, danmo@videotron.ca
  *
  **********************************************************************
- * Copyright (c) 1999, 2000, Daniel Morissette
+ * Copyright (c) 1999-2001, Daniel Morissette
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log: mitab_utils.cpp,v $
+ * Revision 1.15  2001/01/19 06:06:18  daniel
+ * Don't filter chars in TABCleanFieldName() if we're on a DBCS system
+ *
  * Revision 1.14  2000/09/28 16:39:44  warmerda
  * avoid warnings for unused, and unitialized variables
  *
@@ -81,6 +84,11 @@
 
 #include <math.h>       /* sin()/cos() */
 #include <ctype.h>      /* toupper()/tolower() */
+
+#ifdef _WIN32
+#  include <mbctype.h>  /* Multibyte chars stuff */
+#endif
+
 
 /**********************************************************************
  *                       TABGenerateArc()
@@ -575,6 +583,25 @@ char *TABCleanFieldName(const char *pszSrcName)
     char *pszNewName;
     int numInvalidChars = 0;
 
+    pszNewName = CPLStrdup(pszSrcName);
+
+    if (strlen(pszNewName) > 31)
+    {
+        pszNewName[31] = '\0';
+        CPLError(CE_Warning, TAB_WarningInvalidFieldName,
+                 "Field name '%s' is longer than the max of 31 characters. "
+                 "'%s' will be used instead.", pszSrcName, pszNewName);
+    }
+
+#ifdef _WIN32
+    /*-----------------------------------------------------------------
+     * On Windows, check if we're using a double-byte codepage, and
+     * if so then just keep the field name as is... 
+     *----------------------------------------------------------------*/
+    if (_getmbcp() != 0)
+        return pszNewName;
+#endif
+
     /*-----------------------------------------------------------------
      * According to the MapInfo User's Guide (p. 240, v5.5)
      * New Table Command:
@@ -589,7 +616,6 @@ char *TABCleanFieldName(const char *pszSrcName)
      * It was also verified that extended chars with accents are also 
      * accepted.
      *----------------------------------------------------------------*/
-    pszNewName = CPLStrdup(pszSrcName);
     for(int i=0; pszSrcName && pszSrcName[i] != '\0'; i++)
     {
         if ( !( pszSrcName[i] == '_' ||
@@ -607,14 +633,6 @@ char *TABCleanFieldName(const char *pszSrcName)
     {
         CPLError(CE_Warning, TAB_WarningInvalidFieldName,
                  "Field name '%s' contains invalid characters. "
-                 "'%s' will be used instead.", pszSrcName, pszNewName);
-    }
-
-    if (strlen(pszNewName) > 31)
-    {
-        pszNewName[31] = '\0';
-        CPLError(CE_Warning, TAB_WarningInvalidFieldName,
-                 "Field name '%s' is longer than the max of 31 characters. "
                  "'%s' will be used instead.", pszSrcName, pszNewName);
     }
 

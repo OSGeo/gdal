@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_middatafile.cpp,v 1.5 2000/01/15 22:30:44 daniel Exp $
+ * $Id: mitab_middatafile.cpp,v 1.6 2001/01/22 16:03:58 warmerda Exp $
  *
  * Name:     mitab_datfile.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -31,6 +31,9 @@
  **********************************************************************
  *
  * $Log: mitab_middatafile.cpp,v $
+ * Revision 1.6  2001/01/22 16:03:58  warmerda
+ * expanded tabs
+ *
  * Revision 1.5  2000/01/15 22:30:44  daniel
  * Switch to MIT/X-Consortium OpenSource license
  *
@@ -79,11 +82,11 @@ void MIDDATAFile::SaveLine(const char *pszLine)
 {
     if (pszLine == NULL)
     {
-	m_szSavedLine[0] = '\0';
+        m_szSavedLine[0] = '\0';
     }
     else
     {
-	strncpy(m_szSavedLine,pszLine,MIDMAXCHAR);
+        strncpy(m_szSavedLine,pszLine,MIDMAXCHAR);
     }
 }
 
@@ -165,20 +168,20 @@ const char *MIDDATAFile::GetLine()
     
     if (m_eAccessMode == TABRead)
     {
-	
-	pszLine = CPLReadLine(m_fp);
+        
+        pszLine = CPLReadLine(m_fp);
 
-	if (pszLine == NULL)
-	{
-	    m_szLastRead[0] = '\0';
-	}
-	else
-	{
-	    strncpy(m_szLastRead,pszLine,MIDMAXCHAR);
-	}
-	//if (pszLine)
-	//  printf("%s\n",pszLine);
-	return pszLine;
+        if (pszLine == NULL)
+        {
+            m_szLastRead[0] = '\0';
+        }
+        else
+        {
+            strncpy(m_szLastRead,pszLine,MIDMAXCHAR);
+        }
+        //if (pszLine)
+        //  printf("%s\n",pszLine);
+        return pszLine;
     }
     else
       CPLAssert(FALSE);
@@ -190,12 +193,12 @@ const char *MIDDATAFile::GetLastLine()
 {
     if (m_eAccessMode == TABRead)
     {
-	// printf("%s\n",m_szLastRead);
-	return m_szLastRead;
+        // printf("%s\n",m_szLastRead);
+        return m_szLastRead;
     }
     else
     {
-	CPLAssert(FALSE);
+        CPLAssert(FALSE);
     }
     // Never return NULL, don't need to test the string
     return "";
@@ -207,20 +210,20 @@ void MIDDATAFile::WriteLine(const char *pszFormat,...)
 
     if (m_eAccessMode == TABWrite  && m_fp)
     {
-	va_start(args, pszFormat);
-	 vfprintf( m_fp, pszFormat, args );
-	va_end(args);
+        va_start(args, pszFormat);
+         vfprintf( m_fp, pszFormat, args );
+        va_end(args);
     } 
     else
     {
-	CPLAssert(FALSE);
+        CPLAssert(FALSE);
     }
 }
 
 
 void MIDDATAFile::SetTranslation(double dfXMul,double dfYMul, 
-				 double dfXTran,
-				 double dfYTran)
+                                 double dfXTran,
+                                 double dfYTran)
 {
     m_dfXMultiplier = dfXMul;
     m_dfYMultiplier = dfYMul;
@@ -249,18 +252,18 @@ GBool MIDDATAFile::IsValidFeature(const char *pszString)
 
     if (CSLCount(papszToken) == 0)
     {
-	CSLDestroy(papszToken);
-	return FALSE;
+        CSLDestroy(papszToken);
+        return FALSE;
     }
 
     if (EQUAL(papszToken[0],"NONE")||EQUAL(papszToken[0],"POINT")||
-	EQUAL(papszToken[0],"LINE")||EQUAL(papszToken[0],"PLINE")||
-	EQUAL(papszToken[0],"REGION")||EQUAL(papszToken[0],"ARC")||
-	EQUAL(papszToken[0],"TEXT")||EQUAL(papszToken[0],"RECT")||
-	EQUAL(papszToken[0],"ROUNDRECT")||EQUAL(papszToken[0],"ELLIPSE"))
+        EQUAL(papszToken[0],"LINE")||EQUAL(papszToken[0],"PLINE")||
+        EQUAL(papszToken[0],"REGION")||EQUAL(papszToken[0],"ARC")||
+        EQUAL(papszToken[0],"TEXT")||EQUAL(papszToken[0],"RECT")||
+        EQUAL(papszToken[0],"ROUNDRECT")||EQUAL(papszToken[0],"ELLIPSE"))
     {
-	CSLDestroy(papszToken);
-	return TRUE;
+        CSLDestroy(papszToken);
+        return TRUE;
     }
 
     CSLDestroy(papszToken);

@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_feature.cpp,v 1.30 2000/10/03 19:29:51 daniel Exp $
+ * $Id: mitab_feature.cpp,v 1.34 2001/01/22 16:03:58 warmerda Exp $
  *
  * Name:     mitab_feature.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -30,6 +30,18 @@
  **********************************************************************
  *
  * $Log: mitab_feature.cpp,v $
+ * Revision 1.34  2001/01/22 16:03:58  warmerda
+ * expanded tabs
+ *
+ * Revision 1.33  2000/11/23 21:11:07  daniel
+ * OOpps... VC++ didn't like the way TABPenDef, etc. were initialized
+ *
+ * Revision 1.32  2000/11/23 20:47:45  daniel
+ * Use MI defaults for Pen, Brush, Font, Symbol instead of all zeros
+ *
+ * Revision 1.31  2000/10/18 03:23:37  warmerda
+ * ensure TABText::m_dWidth is initialized in constructor
+ *
  * Revision 1.30  2000/10/03 19:29:51  daniel
  * Include OGR StyleString stuff (implemented by Stephane)
  *
@@ -48,80 +60,7 @@
  * Revision 1.25  2000/02/28 16:44:10  daniel
  * Added support for indexed, unique, and for new V450 object types
  *
- * Revision 1.24  2000/02/05 19:33:04  daniel
- * Write regions with proper polygon/hole information in the coord. block
- * since MapInfo 5.0 appears to use that information for rendering of regions.
- *
- * Revision 1.23  2000/01/26 21:18:39  daniel
- * Fixed writing of arc angles... they were written in reversed order.
- *
- * Revision 1.22  2000/01/16 19:08:48  daniel
- * Added support for reading 'Table Type DBF' tables
- *
- * Revision 1.21  2000/01/15 22:30:43  daniel
- * Switch to MIT/X-Consortium OpenSource license
- *
- * Revision 1.20  2000/01/15 05:36:33  daniel
- * One more try to establish the way the quadrant setting affects the way to
- * read arc angles... hopefully it's right this time!
- *
- * Revision 1.19  2000/01/14 23:51:06  daniel
- * Fixed handling of "\n" in TABText strings... now the external interface
- * of the lib returns and expects escaped "\"+"n" as described in MIF specs
- *
- * Revision 1.18  1999/12/19 17:36:30  daniel
- * Fixed a problem with TABRegion::GetRingRef()
- *
- * Revision 1.17  1999/12/18 07:11:36  daniel
- * Return regions as OGRMultiPolygons instead of multiple rings OGRPolygons
- *
- * Revision 1.16  1999/12/16 17:15:50  daniel
- * Use addRing/GeometryDirectly() (prevents leak), and rounded rectangles
- * always return real corner radius from file even if it is bigger than MBR
- *
- * Revision 1.15  1999/12/14 02:04:54  daniel
- * Added CloneTABFeature() method
- *
- * Revision 1.14  1999/11/14 04:47:54  daniel
- * Fixed precision in writing angles.  Also changed the way ARCs start/end
- * angles are handled on read and write.
- *
- * Revision 1.13  1999/11/08 04:41:46  stephane
- * Modification in arc GeometryType
- *
- * Revision 1.12  1999/11/05 05:54:14  daniel
- * Fixed TABArc to expect wkbLineString instead of wkbPolygon geometry
- *
- * Revision 1.11  1999/10/19 06:13:38  daniel
- * Removed obsolete code and comments related to angles vs flipped axis
- *
- * Revision 1.10  1999/10/18 15:43:03  daniel
- * Several fixes/improvements mostly for writing of Arc/Ellipses/Text/Symbols
- *
- * Revision 1.9  1999/10/06 15:17:59  daniel
- * Fixed order of args in calls to GetFeatureMBR()
- *
- * Revision 1.8  1999/10/06 13:15:54  daniel
- * Added several Get/Set() methods to feature classes
- *
- * Revision 1.7  1999/10/01 03:54:46  daniel
- * Moved fix for writing string fields down in TABDATFile::WriteCharField()
- *
- * Revision 1.6  1999/10/01 02:09:25  warmerda
- * Ensure that WriteRecordToDATFile() doesn't try to write more bytes than
- * are returned by GetFieldAsString().
- *
- * Revision 1.5  1999/09/29 17:37:18  daniel
- * Fixed warnings
- *
- * Revision 1.4  1999/09/26 14:59:36  daniel
- * Implemented write support
- *
- * Revision 1.3  1999/09/16 02:39:16  daniel
- * Completed read support for most feature types
- *
- * Revision 1.2  1999/09/01 17:49:24  daniel
- * Changes to work with latest OGR
+ * ...
  *
  * Revision 1.1  1999/07/12 04:18:24  daniel
  * Initial checkin
@@ -460,14 +399,14 @@ int TABFeature::WriteGeometryToMAPFile(TABMAPFile * /* poMapFile*/)
  **********************************************************************/
 void TABFeature::DumpMID(FILE *fpOut /*=NULL*/)
 {
-    OGRFeatureDefn 	*poDefn = GetDefnRef();
+    OGRFeatureDefn      *poDefn = GetDefnRef();
 
     if (fpOut == NULL)
         fpOut = stdout;
 
     for( int iField = 0; iField < GetFieldCount(); iField++ )
     {
-        OGRFieldDefn	*poFDefn = poDefn->GetFieldDefn(iField);
+        OGRFieldDefn    *poFDefn = poDefn->GetFieldDefn(iField);
         
         fprintf( fpOut, "  %s (%s) = %s\n",
                  poFDefn->GetNameRef(),
@@ -4351,6 +4290,7 @@ TABText::TABText(OGRFeatureDefn *poDefnIn):
 
     m_nTextAlignment = 0;
     m_nFontStyle = 0;
+    m_dWidth = 0;
 }
 
 /**********************************************************************
@@ -5092,15 +5032,15 @@ const char *TABText::GetLabelStyleString()
     switch(GetTextJustification())
     {
       case TABTJCenter:
-	nJustification = 2;
-	break;
+        nJustification = 2;
+        break;
       case TABTJRight:
-	nJustification = 1;
-	break;
+        nJustification = 1;
+        break;
       case TABTJLeft:
       default:
-	nJustification =1;
-	break;
+        nJustification =1;
+        break;
     }
 
     
@@ -5316,6 +5256,21 @@ void TABDebugFeature::DumpMIF(FILE *fpOut /*=NULL*/)
  *====================================================================*/
 
 /**********************************************************************
+ *                   ITABFeaturePen::ITABFeaturePen()
+ **********************************************************************/
+
+ITABFeaturePen::ITABFeaturePen()
+{
+    static const TABPenDef csDefaultPen = MITAB_PEN_DEFAULT;
+
+    m_nPenDefIndex=-1;
+
+    /* MI default is PEN(1,2,0) */
+    m_sPenDef = csDefaultPen;
+}
+
+
+/**********************************************************************
  *                   ITABFeaturePen::GetPenWidthPixel()
  *                   ITABFeaturePen::SetPenWidthPixel()
  *                   ITABFeaturePen::GetPenWidthPoint()
@@ -5407,119 +5362,119 @@ const char *ITABFeaturePen::GetPenStyleString()
     switch (GetPenPattern())
     {
       case 1:
-	nOGRStyle =1; 
-	break;
+        nOGRStyle =1; 
+        break;
       case 2:
-	nOGRStyle = 0;
-	break;
+        nOGRStyle = 0;
+        break;
       case 3:
-	nOGRStyle = 3; 
-	strcpy(szPattern,"1 1");
-	break;
+        nOGRStyle = 3; 
+        strcpy(szPattern,"1 1");
+        break;
       case 4:
-	nOGRStyle = 3;
-	strcpy(szPattern,"2 1");
-	break;
+        nOGRStyle = 3;
+        strcpy(szPattern,"2 1");
+        break;
       case 5:
-	nOGRStyle = 3;
-	strcpy(szPattern,"3 1");
-	break;
+        nOGRStyle = 3;
+        strcpy(szPattern,"3 1");
+        break;
       case 6:
-	nOGRStyle = 3;
-	strcpy(szPattern,"6 1");
-	break;
+        nOGRStyle = 3;
+        strcpy(szPattern,"6 1");
+        break;
       case 7:
-	nOGRStyle = 4;
-	strcpy(szPattern,"12 2");
-	break;
+        nOGRStyle = 4;
+        strcpy(szPattern,"12 2");
+        break;
       case 8:
-	nOGRStyle = 4;
-	strcpy(szPattern,"24 4");
-	break;
+        nOGRStyle = 4;
+        strcpy(szPattern,"24 4");
+        break;
       case 9:
-	nOGRStyle = 3;
-	strcpy(szPattern,"4 3");
-	break;
+        nOGRStyle = 3;
+        strcpy(szPattern,"4 3");
+        break;
       case 10:
-	nOGRStyle = 5;
-	strcpy(szPattern,"1 4");
-	break;
+        nOGRStyle = 5;
+        strcpy(szPattern,"1 4");
+        break;
       case 11:
-	nOGRStyle = 3;
-	strcpy(szPattern,"4 6");
-	break;
+        nOGRStyle = 3;
+        strcpy(szPattern,"4 6");
+        break;
       case 12:
-	nOGRStyle = 3;
-	strcpy(szPattern,"6 4");
-	break;
+        nOGRStyle = 3;
+        strcpy(szPattern,"6 4");
+        break;
       case 13:
-	nOGRStyle = 4;
-	strcpy(szPattern,"12 12");
-	break;
+        nOGRStyle = 4;
+        strcpy(szPattern,"12 12");
+        break;
       case 14:
-	nOGRStyle = 6;
-	strcpy(szPattern,"8 2 1 2");
-	break;
+        nOGRStyle = 6;
+        strcpy(szPattern,"8 2 1 2");
+        break;
       case 15:
-	nOGRStyle = 6;
-	strcpy(szPattern,"12 1 1 1");
-	break;
+        nOGRStyle = 6;
+        strcpy(szPattern,"12 1 1 1");
+        break;
       case 16:
-	nOGRStyle = 6;
-	strcpy(szPattern,"12 1 3 1");
-	break;
+        nOGRStyle = 6;
+        strcpy(szPattern,"12 1 3 1");
+        break;
       case 17:
-	nOGRStyle = 6;
-	strcpy(szPattern,"24 6 4 6");
-	break;
+        nOGRStyle = 6;
+        strcpy(szPattern,"24 6 4 6");
+        break;
       case 18:
-	nOGRStyle = 7;
-	strcpy(szPattern,"24 3 3 3 3 3");
-	break;
+        nOGRStyle = 7;
+        strcpy(szPattern,"24 3 3 3 3 3");
+        break;
       case 19:
-	nOGRStyle = 7;
-	strcpy(szPattern,"24 3 3 3 3 3 3 3");
-	break;
+        nOGRStyle = 7;
+        strcpy(szPattern,"24 3 3 3 3 3 3 3");
+        break;
       case 20:
-	nOGRStyle = 7;
-	strcpy(szPattern,"6 3 1 3 1 3");
-	break;
+        nOGRStyle = 7;
+        strcpy(szPattern,"6 3 1 3 1 3");
+        break;
       case 21:
-	nOGRStyle = 7;
-	strcpy(szPattern,"12 2 1 2 1 2");
-	break;
+        nOGRStyle = 7;
+        strcpy(szPattern,"12 2 1 2 1 2");
+        break;
       case 22:
-	nOGRStyle = 7;
-	strcpy(szPattern,"12 2 1 2 1 2 1 2");
-	break;
+        nOGRStyle = 7;
+        strcpy(szPattern,"12 2 1 2 1 2 1 2");
+        break;
       case 23:
-	nOGRStyle = 6;
-	strcpy(szPattern,"4 1 1 1");
-	break;
+        nOGRStyle = 6;
+        strcpy(szPattern,"4 1 1 1");
+        break;
       case 24:
-	nOGRStyle = 7;
-	strcpy(szPattern,"4 1 1 1 1");
-	break;
+        nOGRStyle = 7;
+        strcpy(szPattern,"4 1 1 1 1");
+        break;
       case 25:
-	nOGRStyle = 6;
-	strcpy(szPattern,"4 1 1 1 2 1 1 1");
-	break;
+        nOGRStyle = 6;
+        strcpy(szPattern,"4 1 1 1 2 1 1 1");
+        break;
 
-	default:
-	nOGRStyle = 0;
-	break;
+        default:
+        nOGRStyle = 0;
+        break;
     }
     
     if (strlen(szPattern) != 0)
       pszStyle =CPLSPrintf("PEN(w:%dpx,c:#%6.6x,id:\"mapinfo-pen-%d."
-			   "ogr-pen-%d\",p:\"%spx\")",
-			   GetPenWidthPixel(),
-			   m_sPenDef.rgbColor,GetPenPattern(),nOGRStyle,
-			   szPattern);
+                           "ogr-pen-%d\",p:\"%spx\")",
+                           GetPenWidthPixel(),
+                           m_sPenDef.rgbColor,GetPenPattern(),nOGRStyle,
+                           szPattern);
     else
       pszStyle =CPLSPrintf("PEN(w:%dpx,c:#%6.6x,id:\"mapinfo-pen-%d.ogr-pen-%d\")",
-			   GetPenWidthPixel(),
-			   m_sPenDef.rgbColor,GetPenPattern(),nOGRStyle);
+                           GetPenWidthPixel(),
+                           m_sPenDef.rgbColor,GetPenPattern(),nOGRStyle);
 
     return pszStyle;
 }
@@ -5550,6 +5505,21 @@ void ITABFeaturePen::DumpPenDef(FILE *fpOut /*=NULL*/)
  *====================================================================*/
 
 /**********************************************************************
+ *                   ITABFeatureBrush::ITABFeatureBrush()
+ **********************************************************************/
+
+ITABFeatureBrush::ITABFeatureBrush()
+{
+    static const TABBrushDef csDefaultBrush = MITAB_BRUSH_DEFAULT;
+
+    m_nBrushDefIndex=-1;
+
+    /* MI default is BRUSH(2,16777215,16777215) */
+    m_sBrushDef = csDefaultBrush;
+}
+
+
+/**********************************************************************
  *                   ITABFeatureBrush::GetBrushStyleString()
  *
  *  Return a Brush() string. All representations info for the Brush are here.
@@ -5576,11 +5546,11 @@ const char *ITABFeatureBrush::GetBrushStyleString()
       nOGRStyle = 6;
     else if (m_sBrushDef.nFillPattern == 8)
       nOGRStyle = 7;
-	  
+          
     pszStyle =CPLSPrintf("BRUSH(fc:#%6.6x,bc:#%6.6x,id:\"mapinfo-brush-%d.ogr-brush-%d\")",
-			 m_sBrushDef.rgbFGColor,
-			 m_sBrushDef.rgbBGColor,
-			 m_sBrushDef.nFillPattern,nOGRStyle);
+                         m_sBrushDef.rgbFGColor,
+                         m_sBrushDef.rgbBGColor,
+                         m_sBrushDef.nFillPattern,nOGRStyle);
      
      return pszStyle;
     
@@ -5615,6 +5585,20 @@ void ITABFeatureBrush::DumpBrushDef(FILE *fpOut /*=NULL*/)
  *====================================================================*/
 
 /**********************************************************************
+ *                   ITABFeatureFont::ITABFeatureFont()
+ **********************************************************************/
+
+ITABFeatureFont::ITABFeatureFont()
+{
+    static const TABFontDef csDefaultFont = MITAB_FONT_DEFAULT;
+
+    m_nFontDefIndex=-1;
+
+    /* MI default is Font("Arial",0,0,0) */
+    m_sFontDef = csDefaultFont;
+}
+
+/**********************************************************************
  *                   ITABFeatureFont::DumpFontDef()
  *
  * Dump Font definition information.
@@ -5637,6 +5621,20 @@ void ITABFeatureFont::DumpFontDef(FILE *fpOut /*=NULL*/)
  *====================================================================*/
 
 /**********************************************************************
+ *                   ITABFeatureSymbol::ITABFeatureSymbol()
+ **********************************************************************/
+
+ITABFeatureSymbol::ITABFeatureSymbol()
+{
+    static const TABSymbolDef csDefaultSymbol = MITAB_SYMBOL_DEFAULT;
+
+    m_nSymbolDefIndex=-1;
+
+    /* MI default is Symbol(35,0,12) */
+    m_sSymbolDef = csDefaultSymbol;
+}
+
+/**********************************************************************
  *                   ITABFeatureSymbol::GetSymbolStyleString()
  *
  *  Return a Symbol() string. All representations info for the Symbol are here.
@@ -5656,8 +5654,8 @@ const char *ITABFeatureSymbol::GetSymbolStyleString(double dfAngle)
       nOGRStyle = 6;
     else if (m_sSymbolDef.nSymbolNo == 33)
     {
-	nAngle = 45;
-	nOGRStyle = 6;
+        nAngle = 45;
+        nOGRStyle = 6;
     }
     else if (m_sSymbolDef.nSymbolNo == 34)
       nOGRStyle = 4;
@@ -5667,15 +5665,15 @@ const char *ITABFeatureSymbol::GetSymbolStyleString(double dfAngle)
       nOGRStyle = 8;
     else if (m_sSymbolDef.nSymbolNo == 37)
     {
-	nAngle = 180;
-	nOGRStyle = 8;
+        nAngle = 180;
+        nOGRStyle = 8;
     }
     else if (m_sSymbolDef.nSymbolNo == 38)
       nOGRStyle = 5;
     else if (m_sSymbolDef.nSymbolNo == 39)
     {
-	nAngle = 45;
-	nOGRStyle = 5;
+        nAngle = 45;
+        nOGRStyle = 5;
     }
     else if (m_sSymbolDef.nSymbolNo == 40)
       nOGRStyle = 3;
@@ -5685,8 +5683,8 @@ const char *ITABFeatureSymbol::GetSymbolStyleString(double dfAngle)
       nOGRStyle = 7;
     else if (m_sSymbolDef.nSymbolNo == 43)
     {
-	nAngle = 180;
-	nOGRStyle = 7;
+        nAngle = 180;
+        nOGRStyle = 7;
     }
     else if (m_sSymbolDef.nSymbolNo == 44)
       nOGRStyle = 6;
@@ -5702,11 +5700,11 @@ const char *ITABFeatureSymbol::GetSymbolStyleString(double dfAngle)
     nAngle += (int)dfAngle;
     
     pszStyle=CPLSPrintf("SYMBOL(a:%d,c:#%6.6x,s:%dpt,id:\"mapinfo-sym-%d.ogr-sym-%d\")",
-			nAngle,
-			m_sSymbolDef.rgbColor,
-			m_sSymbolDef.nPointSize,
-			m_sSymbolDef.nSymbolNo,
-			nOGRStyle);
+                        nAngle,
+                        m_sSymbolDef.rgbColor,
+                        m_sSymbolDef.nPointSize,
+                        m_sSymbolDef.nSymbolNo,
+                        nOGRStyle);
      
     return pszStyle;
     

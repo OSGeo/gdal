@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_priv.h,v 1.18 2000/05/19 06:45:25 daniel Exp $
+ * $Id: mitab_priv.h,v 1.22 2000/11/23 21:11:07 daniel Exp $
  *
  * Name:     mitab_priv.h
  * Project:  MapInfo TAB Read/Write library
@@ -30,6 +30,18 @@
  **********************************************************************
  *
  * $Log: mitab_priv.h,v $
+ * Revision 1.22  2000/11/23 21:11:07  daniel
+ * OOpps... VC++ didn't like the way TABPenDef, etc. were initialized
+ *
+ * Revision 1.21  2000/11/23 20:47:46  daniel
+ * Use MI defaults for Pen, Brush, Font, Symbol instead of all zeros
+ *
+ * Revision 1.20  2000/11/15 04:13:50  daniel
+ * Fixed writing of TABMAPToolBlock to allocate a new block when full
+ *
+ * Revision 1.19  2000/11/13 22:19:30  daniel
+ * Added TABINDNode::UpdateCurChildEntry()
+ *
  * Revision 1.18  2000/05/19 06:45:25  daniel
  * Modified generation of spatial index to split index nodes and produce a
  * more balanced tree.
@@ -121,6 +133,14 @@ typedef enum
 #define TABMAP_GARB_BLOCK       4
 #define TABMAP_TOOL_BLOCK       5
 #define TABMAP_LAST_VALID_BLOCK_TYPE  5
+
+/*---------------------------------------------------------------------
+ * Drawing Tool types
+ *--------------------------------------------------------------------*/
+#define TABMAP_TOOL_PEN         1
+#define TABMAP_TOOL_BRUSH       2
+#define TABMAP_TOOL_FONT        3
+#define TABMAP_TOOL_SYMBOL      4
 
 /*---------------------------------------------------------------------
  * Limits related to .TAB version number.  If we pass any of those limits
@@ -252,6 +272,9 @@ typedef struct TABPenDef_t
     GInt32      rgbColor;
 } TABPenDef;
 
+/* MI Default = PEN(1,2,0) */
+#define MITAB_PEN_DEFAULT {0, 1, 2, 0, 0x000000}
+
 /*---------------------------------------------------------------------
  * TABBrushDef - Brush definition information
  *--------------------------------------------------------------------*/
@@ -264,6 +287,9 @@ typedef struct TABBrushDef_t
     GInt32      rgbBGColor;
 } TABBrushDef;
 
+/* MI Default = BRUSH(2,16777215,16777215) */
+#define MITAB_BRUSH_DEFAULT {0, 2, 0, 0xffffff, 0xffffff}
+
 /*---------------------------------------------------------------------
  * TABFontDef - Font Name information
  *--------------------------------------------------------------------*/
@@ -272,6 +298,9 @@ typedef struct TABFontDef_t
     GInt32      nRefCount;
     char        szFontName[33];
 } TABFontDef;
+
+/* MI Default = FONT("Arial",0,0,0) */
+#define MITAB_FONT_DEFAULT {0, "Arial"}
 
 /*---------------------------------------------------------------------
  * TABSymbolDef - Symbol definition information
@@ -285,6 +314,8 @@ typedef struct TABSymbolDef_t
     GInt32      rgbColor;
 } TABSymbolDef;
 
+/* MI Default = SYMBOL(35,0,12) */
+#define MITAB_SYMBOL_DEFAULT {0, 35, 12, 0, 0x000000}
 
 /*---------------------------------------------------------------------
  *                      class TABToolDefTable
@@ -769,6 +800,8 @@ class TABMAPToolBlock: public TABRawBinBlock
     GBool       EndOfChain();
     int         GetNumBlocksInChain() { return m_numBlocksInChain; };
 
+    int         CheckAvailableSpace(int nToolType);
+
 #ifdef DEBUG
     virtual void Dump(FILE *fpOut = NULL);
 #endif
@@ -989,6 +1022,7 @@ class TABINDNode
     int         SplitNode();
     int         SplitRootNode();
     GByte*      GetNodeKey();
+    int         UpdateCurChildEntry(GByte *pKeyValue, GInt32 nRecordNo);
     int         UpdateSplitChild(GByte *pKeyValue1, GInt32 nRecordNo1,
                                  GByte *pKeyValue2, GInt32 nRecordNo2,
                                  int nNewCurChildNo /* 1 or 2 */);

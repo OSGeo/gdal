@@ -43,9 +43,66 @@ ToDo - Open Questions:
    is not properly written.
 
 
+
 CHANGES - Current Version:
 --------------------------
+- Modified mitab_imapinfofile.cpp so that variable width fields (nWidth=0)
+  is translated to 254 characters, instead of 255 so it will actually be
+  a legal field width in TAB.  (NFW)
 
+- Make default and max char field with 254 chars in TABFile::AddFieldNative()
+
+- Added a warning (TAB_WarningBoundsOverflow) on close of .MAP file if any 
+  object was written with coordinates outside of the file's predefined 
+  bounds.  (Causing an overflow of the +/-1e9 integer coord. range)
+
+- Use MI defaults for Pen, Brush, Font, Symbol when creating new objects
+  and when reading objects with no Pen, Brush, etc. set (used to just set
+  everything to zero which was inconsistent with MI's behavior)
+  New defaults are: PEN(1,2,0), BRUSH(2,16777215,16777215), 
+  FONT("Arial",0,0,0), SYMBOL(35,0,12)
+
+- Accept "TABLE TYPE LINKED" and handle them the same way as type NATIVE
+  i.e. the link to the RDBMS is simply ignored.
+
+- Added support for Swiss Oblique Mercator/Cylindrical. (NFW)
+
+- Expand tabs (NFW)
+
+
+Version 1.0.4 - (2000-11-14)
+----------------------------
+
+- Fixed a problem writing indexes - When a new entry was inserted at the 
+  beginning of an index node (changing this node's key) then the parent was 
+  not properly updated and some records were not queriable through that index.
+
+- Handle '\t' just like a space when parsing mif files.
+
+- Fixed MIFFile::GotoFeature() to avoid calling ResetReading() before moving 
+  forward.
+
+- Fixed writing of drawing tool blocks - when more than 512 bytes worth of
+  drawing tool info had to be written, an error was produced instead of
+  automatically allocating a new block, resulting in a truncated file.
+
+
+Version 1.0.3 - (2000-10-19)
+----------------------------
+
+- Fixed reading of MAPCoordBlocks to accept text strings that overlap on
+  2 data blocks.
+
+- Added graceful recovery from NULL OGRSpatialReference pointers in 
+  mitab_capi.cpp, and mitab_spatialref.cpp (NFW).
+
+- Added what I hope to be working support for NonEarth translation 
+  (into LOCAL_CS in WKT format) (NFW).
+
+- Initialize m_dWidth to 0 in TABText constructor. (NFW)
+
+- Made TABFile::GetBounds() return bounds corresponding to the +/- 1e9 
+  integer coordinate limits instead of using min/max int. coord. from header
 
 
 Version 1.0.2 - (2000-10-03)
@@ -201,5 +258,5 @@ Version 0.1 - (1999-12-04)
 
 
 ------------
-$Id: HISTORY.TXT,v 1.27 2000/10/03 22:10:51 daniel Exp $
+$Id: HISTORY.TXT,v 1.42 2001/01/22 16:03:59 warmerda Exp $
 ------------

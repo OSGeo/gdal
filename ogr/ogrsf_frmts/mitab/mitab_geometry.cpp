@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_geometry.cpp,v 1.2 2000/09/28 16:39:44 warmerda Exp $
+ * $Id: mitab_geometry.cpp,v 1.3 2001/01/22 16:03:58 warmerda Exp $
  *
  * Name:     mitab_geometry.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -31,6 +31,9 @@
  **********************************************************************
  *
  * $Log: mitab_geometry.cpp,v $
+ * Revision 1.3  2001/01/22 16:03:58  warmerda
+ * expanded tabs
+ *
  * Revision 1.2  2000/09/28 16:39:44  warmerda
  * avoid warnings for unused, and unitialized variables
  *
@@ -225,18 +228,18 @@ int OGRPolygonLabelPoint(OGRPolygon *poPoly, OGRPoint *poLabelPoint)
             {
                 point2.x = poRing->getX(i);
                 point2.y = poRing->getY(i);
-	
+        
                 if(EDGE_CHECK(point1.y, y, point2.y) == CLIP_MIDDLE) 
                 {
                     if(point1.y == point2.y)
                         continue; /* ignore horizontal edges */
                     else
                         slope = (point2.x - point1.x) / (point2.y - point1.y);
-	  
+          
                     x = point1.x + (y - point1.y)*slope;
                     xintersect[nfound++] = x;
                 } /* End of checking this edge */
-	
+        
                 point1 = point2;  /* Go on to next edge */
             }
         } /* Finished the scanline */

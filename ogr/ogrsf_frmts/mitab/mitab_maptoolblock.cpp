@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_maptoolblock.cpp,v 1.4 2000/02/28 17:03:30 daniel Exp $
+ * $Id: mitab_maptoolblock.cpp,v 1.5 2000/11/15 04:13:50 daniel Exp $
  *
  * Name:     mitab_maptoollock.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -31,6 +31,9 @@
  **********************************************************************
  *
  * $Log: mitab_maptoolblock.cpp,v $
+ * Revision 1.5  2000/11/15 04:13:50  daniel
+ * Fixed writing of TABMAPToolBlock to allocate a new block when full
+ *
  * Revision 1.4  2000/02/28 17:03:30  daniel
  * Changed TABMAPBlockManager to TABBinBlockManager
  *
@@ -326,7 +329,7 @@ int     TABMAPToolBlock::ReadBytes(int numBytes, GByte *pabyDstBuf)
 int  TABMAPToolBlock::WriteBytes(int nBytesToWrite, GByte *pabySrcBuf)
 {
     if (m_eAccess == TABWrite && m_poBlockManagerRef &&
-        GetNumUnusedBytes() < nBytesToWrite)
+        (m_nBlockSize - m_nCurPos) < nBytesToWrite)
     {
         int nNewBlockOffset = m_poBlockManagerRef->AllocNewBlock();
         SetNextToolBlock(nNewBlockOffset);
@@ -342,6 +345,56 @@ int  TABMAPToolBlock::WriteBytes(int nBytesToWrite, GByte *pabySrcBuf)
     }
 
     return TABRawBinBlock::WriteBytes(nBytesToWrite, pabySrcBuf);
+}
+
+/**********************************************************************
+ *                   TABMAPToolBlock::CheckAvailableSpace()
+ *
+ * Check if an object of the specified type can fit in
+ * current block.  If it can't fit then force committing current block 
+ * and allocating a new one.
+ *
+ * Returns 0 if succesful or -1 if an error happened, in which case 
+ * CPLError() will have been called.
+ **********************************************************************/
+int  TABMAPToolBlock::CheckAvailableSpace(int nToolType)
+{
+    int nBytesToWrite = 0;
+
+    switch(nToolType)
+    {
+      case TABMAP_TOOL_PEN:
+        nBytesToWrite = 11;
+        break;
+      case TABMAP_TOOL_BRUSH:
+        nBytesToWrite = 13;
+        break;
+      case TABMAP_TOOL_FONT:
+        nBytesToWrite = 37;
+        break;
+      case TABMAP_TOOL_SYMBOL:
+        nBytesToWrite = 13;
+        break;
+      default:
+        CPLAssert(FALSE);
+    }
+
+    if (GetNumUnusedBytes() < nBytesToWrite)
+    {
+        int nNewBlockOffset = m_poBlockManagerRef->AllocNewBlock();
+        SetNextToolBlock(nNewBlockOffset);
+
+        if (CommitToFile() != 0 ||
+            InitNewBlock(m_fp, 512, nNewBlockOffset) != 0)
+        {
+            // An error message should have already been reported.
+            return -1;
+        }
+
+        m_numBlocksInChain ++;
+    }
+
+    return 0;
 }
 
 

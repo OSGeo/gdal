@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_tooldef.cpp,v 1.4 2000/02/28 17:06:54 daniel Exp $
+ * $Id: mitab_tooldef.cpp,v 1.5 2000/11/15 04:13:50 daniel Exp $
  *
  * Name:     mitab_tooldef.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -31,6 +31,9 @@
  **********************************************************************
  *
  * $Log: mitab_tooldef.cpp,v $
+ * Revision 1.5  2000/11/15 04:13:50  daniel
+ * Fixed writing of TABMAPToolBlock to allocate a new block when full
+ *
  * Revision 1.4  2000/02/28 17:06:54  daniel
  * Support pen width in points and V450 check
  *
@@ -125,7 +128,7 @@ int     TABToolDefTable::ReadAllToolDefs(TABMAPToolBlock *poBlock)
         nDefType = poBlock->ReadByte();
         switch(nDefType)
         {
-          case 1:       // PEN
+          case TABMAP_TOOL_PEN:       // PEN
             if (m_numPen >= m_numAllocatedPen)
             {
                 // Realloc array by blocks of 20 items
@@ -156,7 +159,7 @@ int     TABToolDefTable::ReadAllToolDefs(TABMAPToolBlock *poBlock)
             m_numPen++;
 
             break;
-          case 2:       // BRUSH
+          case TABMAP_TOOL_BRUSH:       // BRUSH
             if (m_numBrushes >= m_numAllocatedBrushes)
             {
                 // Realloc array by blocks of 20 items
@@ -180,7 +183,7 @@ int     TABToolDefTable::ReadAllToolDefs(TABMAPToolBlock *poBlock)
             m_numBrushes++;
 
             break;
-          case 3:       // FONT NAME
+          case TABMAP_TOOL_FONT:       // FONT NAME
             if (m_numFonts >= m_numAllocatedFonts)
             {
                 // Realloc array by blocks of 20 items
@@ -198,7 +201,7 @@ int     TABToolDefTable::ReadAllToolDefs(TABMAPToolBlock *poBlock)
             m_numFonts++;
 
             break;
-          case 4:       // SYMBOL
+          case TABMAP_TOOL_SYMBOL:       // SYMBOL
             if (m_numSymbols >= m_numAllocatedSymbols)
             {
                 // Realloc array by blocks of 20 items
@@ -268,7 +271,8 @@ int     TABToolDefTable::WriteAllToolDefs(TABMAPToolBlock *poBlock)
         else
             byPixelWidth = MIN(MAX(m_papsPen[i]->nPixelWidth, 1), 7);
 
-        poBlock->WriteByte(1);  // Def Type = Pen
+        poBlock->CheckAvailableSpace(TABMAP_TOOL_PEN);
+        poBlock->WriteByte(TABMAP_TOOL_PEN);  // Def Type = Pen
         poBlock->WriteInt32(m_papsPen[i]->nRefCount);
 
         poBlock->WriteByte(byPixelWidth);
@@ -290,7 +294,9 @@ int     TABToolDefTable::WriteAllToolDefs(TABMAPToolBlock *poBlock)
      *----------------------------------------------------------------*/
     for(i=0; nStatus == 0 && i< m_numBrushes; i++)
     {
-        poBlock->WriteByte(2);  // Def Type = Brush
+        poBlock->CheckAvailableSpace(TABMAP_TOOL_BRUSH);
+
+        poBlock->WriteByte(TABMAP_TOOL_BRUSH);  // Def Type = Brush
         poBlock->WriteInt32(m_papsBrush[i]->nRefCount);
 
         poBlock->WriteByte(m_papsBrush[i]->nFillPattern);
@@ -314,7 +320,9 @@ int     TABToolDefTable::WriteAllToolDefs(TABMAPToolBlock *poBlock)
      *----------------------------------------------------------------*/
     for(i=0; nStatus == 0 && i< m_numFonts; i++)
     {
-        poBlock->WriteByte(3);  // Def Type = Font name
+        poBlock->CheckAvailableSpace(TABMAP_TOOL_FONT);
+
+        poBlock->WriteByte(TABMAP_TOOL_FONT);  // Def Type = Font name
         poBlock->WriteInt32(m_papsFont[i]->nRefCount);
 
         poBlock->WriteBytes(32, (GByte*)m_papsFont[i]->szFontName);
@@ -331,7 +339,9 @@ int     TABToolDefTable::WriteAllToolDefs(TABMAPToolBlock *poBlock)
      *----------------------------------------------------------------*/
     for(i=0; nStatus == 0 && i< m_numSymbols; i++)
     {
-        poBlock->WriteByte(4);  // Def Type = Symbol
+        poBlock->CheckAvailableSpace(TABMAP_TOOL_SYMBOL);
+
+        poBlock->WriteByte(TABMAP_TOOL_SYMBOL);  // Def Type = Symbol
         poBlock->WriteInt32(m_papsSymbol[i]->nRefCount);
 
         poBlock->WriteInt16(m_papsSymbol[i]->nSymbolNo);

@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_indfile.cpp,v 1.6 2000/03/01 00:32:00 daniel Exp $
+ * $Id: mitab_indfile.cpp,v 1.7 2000/11/13 22:17:57 daniel Exp $
  *
  * Name:     mitab_indfile.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -32,6 +32,10 @@
  **********************************************************************
  *
  * $Log: mitab_indfile.cpp,v $
+ * Revision 1.7  2000/11/13 22:17:57  daniel
+ * When a (child) node's first entry is replaced by InsertEntry() then make
+ * sure that node's key is updated in its parent node.
+ *
  * Revision 1.6  2000/03/01 00:32:00  daniel
  * Added support for float keys, and completed support for generating indexes
  *
@@ -1551,8 +1555,54 @@ int TABINDNode::InsertEntry(GByte *pKeyValue, GInt32 nRecordNo,
     else if (m_nCurIndexEntry >= iInsertAt)
         m_nCurIndexEntry++;
 
+    /*-----------------------------------------------------------------
+     * If we replaced the first entry in the node, then this node's key
+     * changes and we have to update the reference in the parent node.
+     *----------------------------------------------------------------*/
+    if (iInsertAt == 0 && m_poParentNodeRef)
+    {
+        if (m_poParentNodeRef->UpdateCurChildEntry(GetNodeKey(),
+                                                   GetNodeBlockPtr()) != 0)
+            return -1;
+    }
+
     return 0;
 }
+
+
+/**********************************************************************
+ *                   TABINDNode::UpdateCurChildEntry()
+ *
+ * Update the key for the current child node.  This method is called by
+ * the child when its first entry (defining its node key) is changed.
+ *
+ * Returns 0 on success, -1 on error
+ **********************************************************************/
+int TABINDNode::UpdateCurChildEntry(GByte *pKeyValue, GInt32 nRecordNo)
+{
+
+    /*-----------------------------------------------------------------
+     * Update current child entry with the info for the first node.
+     *
+     * For some reason, the key for first entry of the first node of each
+     * level has to be set to 0 except for the leaf level.
+     *----------------------------------------------------------------*/
+    m_poDataBlock->GotoByteInBlock(12 + m_nCurIndexEntry*(m_nKeyLength+4));
+
+    if (m_nCurIndexEntry == 0 && m_nSubTreeDepth > 1 && m_nPrevNodePtr == 0)
+    {
+        m_poDataBlock->WriteZeros(m_nKeyLength);
+    }
+    else
+    {
+        m_poDataBlock->WriteBytes(m_nKeyLength, pKeyValue);
+    }
+    m_poDataBlock->WriteInt32(nRecordNo);
+
+    return 0;
+}
+
+
 
 /**********************************************************************
  *                   TABINDNode::UpdateSplitChild()
@@ -1964,7 +2014,7 @@ void TABINDNode::Dump(FILE *fpOut /*=NULL*/)
         fprintf(fpOut, "   m_nNextNodePtr       = %d\n", m_nNextNodePtr);
         fprintf(fpOut, "   m_nSubTreeDepth      = %d\n", m_nSubTreeDepth);
         fprintf(fpOut, "   m_nKeyLength         = %d\n", m_nKeyLength);
-        fprintf(fpOut, "   m_nFieldtype         = %s\n", 
+        fprintf(fpOut, "   m_eFieldtype         = %s\n", 
                                         TABFIELDTYPE_2_STRING(m_eFieldType) );
         if (m_nSubTreeDepth > 0)
         {
@@ -1993,7 +2043,13 @@ void TABINDNode::Dump(FILE *fpOut /*=NULL*/)
                                                          m_numEntriesInNode);
               }
 
-              if (m_nKeyLength != 4)
+              if (m_eFieldType == TABFChar)
+              {
+                  nRecordPtr = ReadIndexEntry(i, aKeyValBuf);
+                  fprintf(fpOut, "   nRecordPtr = %d\n", nRecordPtr);
+                  fprintf(fpOut, "   Char Val= \"%s\"\n", (char*)aKeyValBuf);
+              }
+              else if (m_nKeyLength != 4)
               {
                 nRecordPtr = ReadIndexEntry(i, aKeyValBuf);
                 fprintf(fpOut, "   nRecordPtr = %d\n", nRecordPtr);
@@ -2013,6 +2069,7 @@ void TABINDNode::Dump(FILE *fpOut /*=NULL*/)
               {
                 oChildNode.InitNode(m_fp, nRecordPtr, m_nKeyLength, 
                                     m_nSubTreeDepth - 1, FALSE);
+                oChildNode.SetFieldType(m_eFieldType);
                 oChildNode.Dump(fpOut);
               }
             }
