@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.27  2004/09/16 18:29:21  fwarmerdam
+ * Disable GEOS Insersect().  Is is very expensive for the common case of a
+ * bounding rectangle intersection.  We need something better eventually.
+ *
  * Revision 1.26  2004/08/20 21:21:28  warmerda
  * added support for managing a persistent geos::GeometryFactory
  *
@@ -265,9 +269,9 @@ void OGR_G_AssignSpatialReference( OGRGeometryH hGeom,
 /**
  * Do these features intersect?
  *
- * Currently this is not implemented in a rigerous fashion, and generally
- * just tests whether the envelopes of the two features intersect.  Eventually
- * this will be made rigerous.  
+ * Currently this is not implemented in a rigerous fashion (even if GEOS is
+ * available), and generally just tests whether the envelopes of the two 
+ * features intersect.  Eventually this will be made rigerous.  
  *
  * The poOtherGeom argument may be safely NULL, but in this case the method
  * will always return FALSE.  
@@ -302,6 +306,12 @@ OGRBoolean OGRGeometry::Intersect( OGRGeometry *poOtherGeom ) const
     return TRUE;
 #else
     
+    // temporary shortcut till we can add the proper rectangle shortcut. 
+    return TRUE;
+
+    // Is one of our geometries a simple unrotated rectangle?  If so, 
+    // the envelope overlap is sufficient. 
+
     // we should really have a special case for simple box geometries
     // to avoid the expense of using GEOS .. add later.
     
