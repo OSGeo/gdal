@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  1999/04/01 17:54:43  warmerda
+ * Added support for default binding of IUNKNOWN fields
+ *
  * Revision 1.2  1999/03/31 15:11:16  warmerda
  * Use char * instead of LPWSTR, better multi-provider support
  *
@@ -56,6 +59,8 @@ OledbSupRowset::OledbSupRowset()
 
    nBindings = 0;
    paoBindings = NULL;
+
+   pabyRecord = NULL;
 }
 
 /************************************************************************/
@@ -183,36 +188,47 @@ HRESULT OledbSupRowset::EstablishOneDefaultBinding(
             DWORD * pdwOffset )          // in-out
 
 {
-   if( poColumnInfo->wType & DBTYPE_VECTOR )
-      return ResultFromScode( S_FALSE );
+    if( poColumnInfo->wType & DBTYPE_VECTOR )
+        return ResultFromScode( S_FALSE );
 
-   poBinding->dwPart	= DBPART_VALUE | DBPART_LENGTH | DBPART_STATUS;
-   poBinding->eParamIO  = DBPARAMIO_NOTPARAM;                              
+    poBinding->dwPart	= DBPART_VALUE | DBPART_LENGTH | DBPART_STATUS;
+    poBinding->eParamIO  = DBPARAMIO_NOTPARAM;                              
 
-   poBinding->dwMemOwner = DBMEMOWNER_CLIENTOWNED;
+    poBinding->dwMemOwner = DBMEMOWNER_CLIENTOWNED;
 
-   poBinding->iOrdinal  = poColumnInfo->iOrdinal;
-   poBinding->pTypeInfo = NULL;
-   poBinding->obValue   = *pdwOffset + offsetof(COLUMNDATA,bData);
-   poBinding->obLength  = *pdwOffset + offsetof(COLUMNDATA,dwLength);
-   poBinding->obStatus  = *pdwOffset + offsetof(COLUMNDATA,dwStatus);
+    poBinding->iOrdinal  = poColumnInfo->iOrdinal;
+    poBinding->pTypeInfo = NULL;
+    poBinding->obValue   = *pdwOffset + offsetof(COLUMNDATA,bData);
+    poBinding->obLength  = *pdwOffset + offsetof(COLUMNDATA,dwLength);
+    poBinding->obStatus  = *pdwOffset + offsetof(COLUMNDATA,dwStatus);
 
-   if( poColumnInfo->wType & DBTYPE_BYTES )
-   {
-      poBinding->wType = DBTYPE_BYTES;
-      poBinding->cbMaxLen  = 150000;
-   }
-   else
-   {
-      poBinding->wType	  = DBTYPE_STR;
-      poBinding->cbMaxLen  = poColumnInfo->wType == DBTYPE_STR ? 
-         poColumnInfo->ulColumnSize + sizeof(char) : DEFAULT_CBMAXLENGTH;
-   }
-   poBinding->pObject	= NULL;
-   *pdwOffset += poBinding->cbMaxLen + offsetof( COLUMNDATA, bData );
-   *pdwOffset = ROUND_UP( *pdwOffset, COLUMN_ALIGNVAL );
+    if( poColumnInfo->wType == DBTYPE_BYTES )
+    {
+        poBinding->wType = DBTYPE_BYTES;
+        poBinding->cbMaxLen  = 150000;
+    }
+    else if( poColumnInfo->wType == DBTYPE_IUNKNOWN )
+    {
+        static DBOBJECT      oObjectInfo;
 
-   return ResultFromScode( S_OK );
+        oObjectInfo.iid = IID_IPersist;
+        oObjectInfo.dwFlags = STGM_READ;
+
+        poBinding->wType = DBTYPE_IUNKNOWN;
+        poBinding->cbMaxLen  = sizeof(IUnknown *);
+        poBinding->pObject = &oObjectInfo;
+    }
+    else
+    {
+        poBinding->wType	  = DBTYPE_STR;
+        poBinding->cbMaxLen  = poColumnInfo->wType == DBTYPE_STR ? 
+            poColumnInfo->ulColumnSize + sizeof(char) : DEFAULT_CBMAXLENGTH;
+    }
+    poBinding->pObject	= NULL;
+    *pdwOffset += poBinding->cbMaxLen + offsetof( COLUMNDATA, bData );
+    *pdwOffset = ROUND_UP( *pdwOffset, COLUMN_ALIGNVAL );
+
+    return ResultFromScode( S_OK );
 }
 
 /************************************************************************/
@@ -473,7 +489,7 @@ int OledbSupRowset::GetColumnOrdinal( const char * pszName )
 
       if( wcsicmp( pwszName, paoColumnInfo[i].pwszName ) == 0 )
       {
-         iReturn = i;
+         iReturn = paoColumnInfo[i].iOrdinal;
          break;
       }
    }
@@ -482,3 +498,20 @@ int OledbSupRowset::GetColumnOrdinal( const char * pszName )
 
    return( iReturn );
 }
+
+/************************************************************************/
+/*                           GetColumnInfo()                            */
+/************************************************************************/
+
+DBCOLUMNINFO *OledbSupRowset::GetColumnInfo( int iOrdinal )
+
+{
+    for( int iCol = 0; iCol < GetNumColumns(); iCol++ )
+    {
+        if( paoColumnInfo[iCol].iOrdinal == (ULONG) iOrdinal )
+            return paoColumnInfo + iCol;
+    }
+
+    return NULL;
+}
+
