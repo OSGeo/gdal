@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  1999/06/22 16:17:31  warmerda
+ * added debug statement
+ *
  * Revision 1.4  1999/06/22 15:52:56  kshih
  * Added Initialize error return for invalid data set.
  *
@@ -155,7 +158,9 @@ public:
 				DBFHandle hDBF;
 				
 				hr = E_FAIL;
-				
+
+				OGRComDebug( "info", "data source = %s\n",
+                                             pszDataSource );
 				if (NULL != (hSHP = SFGetSHPHandle(pszDataSource)))
 				{
 					SHPClose(hSHP);
