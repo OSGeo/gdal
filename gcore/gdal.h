@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.89  2005/02/10 04:30:29  fwarmerdam
+ * added support for YCbCr color space
+ *
  * Revision 1.88  2004/12/02 18:26:07  fwarmerdam
  * added CPL_DLL specifier on two functions.
  *
@@ -251,7 +254,10 @@ typedef enum
     /*! Magenta band of CMYK image */                     GCI_MagentaBand=11,
     /*! Yellow band of CMYK image */                      GCI_YellowBand=12,
     /*! Black band of CMLY image */                       GCI_BlackBand=13,
-    /*! Max current value */                              GCI_Max=13
+    /*! Y Luminance */                                    GCI_YCbCr_YBand=14,
+    /*! Cb Chroma */                                      GCI_YCbCr_CbBand=15,
+    /*! Cr Chroma */                                      GCI_YCbCr_CrBand=16,
+    /*! Max current value */                              GCI_Max=16
 } GDALColorInterp;
 
 /*! Translate a GDALColorInterp into a user displayable string. */
