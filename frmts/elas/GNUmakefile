@@ -13,10 +13,10 @@ clean:
 install-obj:	$(foreach file,$(OBJ),../o/$(file))
 
 %.o:    %.c
-        $(CC) -c $(GDAL_INCLUDE) $(CFLAGS) $*.c -o $*.o
+	$(CC) -c $(GDAL_INCLUDE) $(CFLAGS) $*.c -o $*.o
 
 %.o:    %.cpp
-        $(CXX) -c $(GDAL_INCLUDE) $(CXXFLAGS) $*.cpp -o $*.o
+	$(CXX) -c $(GDAL_INCLUDE) $(CXXFLAGS) $*.cpp -o $*.o
 
 ../o/%.o:	%.o
 	cp $*.o ../o

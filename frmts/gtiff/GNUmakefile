@@ -24,10 +24,10 @@ clean:
 	(cd libgeotiff; $(MAKE) clean)
 
 %.o:	%.c
-	$(CC) -c $(GDAL_INCLUDE) $(CFLAGS) $(TIFF_OPTS) $*.c -o $*.o
+	$(CC) -c $(GDAL_INCLUDE) $(TIFF_OPTS) $(CFLAGS) $*.c -o $*.o
 
 %.o:	%.cpp
-	$(CXX) -c $(GDAL_INCLUDE) $(CXXFLAGS) $(TIFF_OPTS) $*.cpp -o $*.o
+	$(CXX) -c $(GDAL_INCLUDE) $(TIFF_OPTS) $(CXXFLAGS) $*.cpp -o $*.o
 
 
 gt_test:	gt_test.o gt_gs.o cpl_csv.o
