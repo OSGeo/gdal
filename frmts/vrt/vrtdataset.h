@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2002/05/29 16:06:05  warmerda
+ * complete detailed band metadata
+ *
  * Revision 1.2  2001/11/18 15:46:45  warmerda
  * added SRS and GeoTransform
  *
@@ -46,8 +49,11 @@ CPL_C_START
 void	GDALRegister_VRT(void);
 CPL_C_END
 
+int VRTApplyMetadata( CPLXMLNode *, GDALMajorObject * );
+CPLXMLNode *VRTSerializeMetadata( GDALMajorObject * );
+
 /************************************************************************/
-/*				MEMDataset				*/
+/*                              VRTDataset                              */
 /************************************************************************/
 
 class VRTRasterBand;
@@ -59,14 +65,39 @@ class CPL_DLL VRTDataset : public GDALDataset
     int            bGeoTransformSet;
     double         adfGeoTransform[6];
 
+    int           nGCPCount;
+    GDAL_GCP      *pasGCPList;
+    char          *pszGCPProjection;
+
+    int            bNeedsFlush;
+
   public:
                  VRTDataset(int nXSize, int nYSize);
                 ~VRTDataset();
 
-    virtual const char *GetProjectionRef(void);
-    virtual CPLErr GetGeoTransform( double * );
+    void          SetNeedsFlush() { bNeedsFlush = TRUE; }
+    virtual void  FlushCache();
 
+    virtual const char *GetProjectionRef(void);
+    virtual CPLErr SetProjection( const char * );
+    virtual CPLErr GetGeoTransform( double * );
+    virtual CPLErr SetGeoTransform( double * );
+
+    virtual int    GetGCPCount();
+    virtual const char *GetGCPProjection();
+    virtual const GDAL_GCP *GetGCPs();
+    virtual CPLErr SetGCPs( int nGCPCount, const GDAL_GCP *pasGCPList,
+                            const char *pszGCPProjection );
+
+    virtual CPLErr AddBand( GDALDataType eType, 
+                            char **papszOptions=NULL );
+
+    CPLXMLNode *   SerializeToXML(void);
+ 
     static GDALDataset *Open( GDALOpenInfo * );
+    static GDALDataset *Create( const char * pszName,
+                                int nXSize, int nYSize, int nBands,
+                                GDALDataType eType, char ** papszOptions );
 };
 
 /************************************************************************/
@@ -79,6 +110,14 @@ class CPL_DLL VRTRasterBand : public GDALRasterBand
 {
     int		   nSources;
     VRTSimpleSource **papoSources;
+
+    int            bNoDataValueSet;
+    double         dfNoDataValue;
+
+    GDALColorTable *poColorTable;
+
+    GDALColorInterp eColorInterp;
+
     void           Initialize( int nXSize, int nYSize );
 
     virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
@@ -89,19 +128,38 @@ class CPL_DLL VRTRasterBand : public GDALRasterBand
     		   VRTRasterBand( GDALDataset *poDS, int nBand );
                    VRTRasterBand( GDALDataType eType, 
                                   int nXSize, int nYSize );
+                   VRTRasterBand( GDALDataset *poDS, int nBand, 
+                                  GDALDataType eType, 
+                                  int nXSize, int nYSize );
     virtual        ~VRTRasterBand();
 
     CPLErr         XMLInit( CPLXMLNode * );
+    CPLXMLNode *   SerializeToXML(void);
 
     CPLErr         AddSimpleSource( GDALRasterBand *poSrcBand, 
                                     int nSrcXOff=-1, int nSrcYOff=-1, 
                                     int nSrcXSize=-1, int nSrcYSize=-1, 
                                     int nDstXOff=-1, int nDstYOff=-1, 
-                                    int nDstXSize=-1, int nDstYSize=-1 );
+                                    int nDstXSize=-1, int nDstYSize=-1,
+                                    const char *pszResampling = "near" );
 
-    // should override RasterIO eventually.
-    
     virtual CPLErr IReadBlock( int, int, void * );
+
+    virtual CPLErr SetNoDataValue( double );
+    virtual double GetNoDataValue( int *pbSuccess = NULL );
+
+    virtual CPLErr SetColorTable( GDALColorTable * ); 
+    virtual GDALColorTable *GetColorTable();
+
+    virtual CPLErr SetColorInterpretation( GDALColorInterp );
+    virtual GDALColorInterp GetColorInterpretation();
 };
 
 #endif /* ndef VIRTUALDATASET_H_INCLUDED */
+
+
+
+
+
+
+

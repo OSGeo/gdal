@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2002/05/29 16:06:05  warmerda
+ * complete detailed band metadata
+ *
  * Revision 1.3  2002/04/19 19:43:38  warmerda
  * added CreateCopy method
  *
@@ -59,6 +62,8 @@ VRTDataset::VRTDataset( int nXSize, int nYSize )
     nRasterYSize = nYSize;
     pszProjection = NULL;
 
+    bNeedsFlush = FALSE;
+
     bGeoTransformSet = FALSE;
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
@@ -66,6 +71,10 @@ VRTDataset::VRTDataset( int nXSize, int nYSize )
     adfGeoTransform[3] = 0.0;
     adfGeoTransform[4] = 0.0;
     adfGeoTransform[5] = 1.0;
+
+    nGCPCount = 0;
+    pasGCPList = NULL;
+    pszGCPProjection = CPLStrdup("");
 }
 
 /************************************************************************/
@@ -77,6 +86,239 @@ VRTDataset::~VRTDataset()
 {
     FlushCache();
     CPLFree( pszProjection );
+
+    CPLFree( pszGCPProjection );
+    if( nGCPCount > 0 )
+    {
+        GDALDeinitGCPs( nGCPCount, pasGCPList );
+        CPLFree( pasGCPList );
+    }
+}
+
+/************************************************************************/
+/*                             FlushCache()                             */
+/************************************************************************/
+
+void VRTDataset::FlushCache()
+
+{
+    GDALDataset::FlushCache();
+
+    if( !bNeedsFlush )
+        return;
+
+    bNeedsFlush = FALSE;
+
+    // We don't write to disk if there is no filename.  This is a 
+    // memory only dataset.
+    if( strlen(GetDescription()) == 0 )
+        return;
+
+    /* -------------------------------------------------------------------- */
+    /*      Create the output file.                                         */
+    /* -------------------------------------------------------------------- */
+    FILE *fpVRT;
+
+    fpVRT = VSIFOpen( GetDescription(), "w" );
+
+
+    /* -------------------------------------------------------------------- */
+    /*      Convert tree to a single block of XML text.                     */
+    /* -------------------------------------------------------------------- */
+    CPLXMLNode *psDSTree = SerializeToXML();
+    char *pszXML;
+
+    pszXML = CPLSerializeXMLTree( psDSTree );
+
+    CPLDestroyXMLNode( psDSTree );
+
+    /* -------------------------------------------------------------------- */
+    /*      Write to disk.                                                  */
+    /* -------------------------------------------------------------------- */
+    VSIFWrite( pszXML, 1, strlen(pszXML), fpVRT );
+    VSIFClose( fpVRT );
+
+    CPLFree( pszXML );
+}
+
+/************************************************************************/
+/*                           SerializeToXML()                           */
+/************************************************************************/
+
+CPLXMLNode *VRTDataset::SerializeToXML()
+
+{
+    /* -------------------------------------------------------------------- */
+    /*      Setup root node and attributes.                                 */
+    /* -------------------------------------------------------------------- */
+    CPLXMLNode *psDSTree, *psMD;
+    char       szNumber[128];
+
+    psDSTree = CPLCreateXMLNode( NULL, CXT_Element, "VRTDataset" );
+
+    sprintf( szNumber, "%d", GetRasterXSize() );
+    CPLSetXMLValue( psDSTree, "#rasterXSize", szNumber );
+
+    sprintf( szNumber, "%d", GetRasterYSize() );
+    CPLSetXMLValue( psDSTree, "#rasterYSize", szNumber );
+
+ /* -------------------------------------------------------------------- */
+ /*      SRS                                                             */
+ /* -------------------------------------------------------------------- */
+    if( pszProjection != NULL && strlen(pszProjection) > 0 )
+        CPLSetXMLValue( psDSTree, "SRS", pszProjection );
+
+ /* -------------------------------------------------------------------- */
+ /*      Geotransform.                                                   */
+ /* -------------------------------------------------------------------- */
+    if( bGeoTransformSet )
+    {
+        CPLSetXMLValue( psDSTree, "GeoTransform", 
+                        CPLSPrintf( "%24.16e,%24.16e,%24.16e,%24.16e,%24.16e,%24.16e",
+                                    adfGeoTransform[0],
+                                    adfGeoTransform[1],
+                                    adfGeoTransform[2],
+                                    adfGeoTransform[3],
+                                    adfGeoTransform[4],
+                                    adfGeoTransform[5] ) );
+    }
+
+    /* -------------------------------------------------------------------- */
+    /*      Metadata                                                        */
+    /* -------------------------------------------------------------------- */
+    psMD = VRTSerializeMetadata( this );
+    if( psMD != NULL )
+        CPLAddXMLChild( psDSTree, psMD );
+
+ /* -------------------------------------------------------------------- */
+ /*      GCPs                                                            */
+ /* -------------------------------------------------------------------- */
+    if( nGCPCount > 0 )
+    {
+        CPLXMLNode *psGCPList = CPLCreateXMLNode( psDSTree, CXT_Element, 
+                                                  "GCPList" );
+
+        if( pszGCPProjection != NULL && strlen(pszGCPProjection) > 0 )
+            CPLSetXMLValue( psGCPList, "#Projection", pszGCPProjection );
+
+        for( int iGCP = 0; iGCP < nGCPCount; iGCP++ )
+        {
+            CPLXMLNode *psXMLGCP;
+            GDAL_GCP *psGCP = pasGCPList + iGCP;
+
+            psXMLGCP = CPLCreateXMLNode( psGCPList, CXT_Element, "GCP" );
+
+            CPLSetXMLValue( psXMLGCP, "#Id", psGCP->pszId );
+
+            if( psGCP->pszInfo != NULL && strlen(psGCP->pszInfo) > 0 )
+                CPLSetXMLValue( psXMLGCP, "Info", psGCP->pszInfo );
+
+            CPLSetXMLValue( psXMLGCP, "#Pixel", 
+                            CPLSPrintf( "%.4f", psGCP->dfGCPPixel ) );
+
+            CPLSetXMLValue( psXMLGCP, "#Line", 
+                            CPLSPrintf( "%.4f", psGCP->dfGCPLine ) );
+
+            CPLSetXMLValue( psXMLGCP, "#X", 
+                            CPLSPrintf( "%.12E", psGCP->dfGCPX ) );
+
+            CPLSetXMLValue( psXMLGCP, "#Y", 
+                            CPLSPrintf( "%.12E", psGCP->dfGCPY ) );
+
+            if( psGCP->dfGCPZ != 0.0 )
+                CPLSetXMLValue( psXMLGCP, "#GCPZ", 
+                                CPLSPrintf( "%.12E", psGCP->dfGCPZ ) );
+        }
+    }
+
+    /* -------------------------------------------------------------------- */
+    /*      Serialize bands.                                                */
+    /* -------------------------------------------------------------------- */
+    for( int iBand = 0; iBand < nBands; iBand++ )
+    {
+        CPLXMLNode *psBandTree;
+
+        psBandTree = ((VRTRasterBand *) papoBands[iBand])->SerializeToXML();
+        if( psBandTree != NULL )
+            CPLAddXMLChild( psDSTree, psBandTree );
+    }
+
+    return psDSTree;
+}
+
+
+/************************************************************************/
+/*                            GetGCPCount()                             */
+/************************************************************************/
+
+int VRTDataset::GetGCPCount()
+
+{
+    return nGCPCount;
+}
+
+/************************************************************************/
+/*                          GetGCPProjection()                          */
+/************************************************************************/
+
+const char *VRTDataset::GetGCPProjection()
+
+{
+    return pszGCPProjection;
+}
+
+/************************************************************************/
+/*                               GetGCPs()                              */
+/************************************************************************/
+
+const GDAL_GCP *VRTDataset::GetGCPs()
+
+{
+    return pasGCPList;
+}
+
+/************************************************************************/
+/*                              SetGCPs()                               */
+/************************************************************************/
+
+CPLErr VRTDataset::SetGCPs( int nGCPCount, const GDAL_GCP *pasGCPList,
+                            const char *pszGCPProjection )
+
+{
+    CPLFree( this->pszGCPProjection );
+    if( this->nGCPCount > 0 )
+    {
+        GDALDeinitGCPs( this->nGCPCount, this->pasGCPList );
+        CPLFree( this->pasGCPList );
+    }
+
+    this->pszGCPProjection = CPLStrdup(pszGCPProjection);
+
+    this->nGCPCount = nGCPCount;
+
+    this->pasGCPList = GDALDuplicateGCPs( nGCPCount, pasGCPList );
+
+    this->bNeedsFlush = TRUE;
+
+    return CE_None;
+}
+
+/************************************************************************/
+/*                           SetProjection()                            */
+/************************************************************************/
+
+CPLErr VRTDataset::SetProjection( const char *pszWKT )
+
+{
+    CPLFree( pszProjection );
+    pszProjection = NULL;
+
+    if( pszWKT != NULL )
+        pszProjection = CPLStrdup(pszWKT);
+
+    bNeedsFlush = TRUE;
+
+    return CE_None;
 }
 
 /************************************************************************/
@@ -86,7 +328,25 @@ VRTDataset::~VRTDataset()
 const char *VRTDataset::GetProjectionRef()
 
 {
-    return pszProjection;
+    if( pszProjection == NULL )
+        return "";
+    else
+        return pszProjection;
+}
+
+/************************************************************************/
+/*                          SetGeoTransform()                           */
+/************************************************************************/
+
+CPLErr VRTDataset::SetGeoTransform( double *padfGeoTransformIn )
+
+{
+    memcpy( adfGeoTransform, padfGeoTransformIn, sizeof(double) * 6 );
+    bGeoTransformSet = TRUE;
+
+    bNeedsFlush = TRUE;
+
+    return CE_None;
 }
 
 /************************************************************************/
@@ -97,7 +357,7 @@ CPLErr VRTDataset::GetGeoTransform( double * padfGeoTransform )
 
 {
     memcpy( padfGeoTransform, adfGeoTransform, sizeof(double) * 6 );
-    
+
     if( bGeoTransformSet )
         return CE_None;
     else
@@ -111,20 +371,20 @@ CPLErr VRTDataset::GetGeoTransform( double * padfGeoTransform )
 GDALDataset *VRTDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
-/* -------------------------------------------------------------------- */
-/*      Does this appear to be a virtual dataset definition XML         */
-/*      file?                                                           */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Does this appear to be a virtual dataset definition XML         */
+    /*      file?                                                           */
+    /* -------------------------------------------------------------------- */
     if( poOpenInfo->nHeaderBytes < 20 
         || !EQUALN((const char *)poOpenInfo->pabyHeader,"<VRTDataset",11) )
         return NULL;
 
-/* -------------------------------------------------------------------- */
-/*	Try to read the whole file into memory.				*/
-/* -------------------------------------------------------------------- */
+ /* -------------------------------------------------------------------- */
+ /*	Try to read the whole file into memory.				*/
+ /* -------------------------------------------------------------------- */
     unsigned int nLength;
     char        *pszXML;
-
+     
     VSIFSeek( poOpenInfo->fp, 0, SEEK_END );
     nLength = VSIFTell( poOpenInfo->fp );
     VSIFSeek( poOpenInfo->fp, 0, SEEK_SET );
@@ -139,7 +399,7 @@ GDALDataset *VRTDataset::Open( GDALOpenInfo * poOpenInfo )
                   nLength );
         return NULL;
     }
-    
+
     if( VSIFRead( pszXML, 1, nLength, poOpenInfo->fp ) != nLength )
     {
         CPLFree( pszXML );
@@ -148,12 +408,12 @@ GDALDataset *VRTDataset::Open( GDALOpenInfo * poOpenInfo )
                   nLength );
         return NULL;
     }
-    
+
     pszXML[nLength] = '\0';
 
-/* -------------------------------------------------------------------- */
-/*      Parse the XML.                                                  */
-/* -------------------------------------------------------------------- */
+ /* -------------------------------------------------------------------- */
+ /*      Parse the XML.                                                  */
+ /* -------------------------------------------------------------------- */
     CPLXMLNode	*psTree;
 
     psTree = CPLParseXMLString( pszXML );
@@ -173,9 +433,9 @@ GDALDataset *VRTDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Create the new virtual dataset object.                          */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Create the new virtual dataset object.                          */
+    /* -------------------------------------------------------------------- */
     VRTDataset *poDS;
 
     poDS = new VRTDataset(atoi(CPLGetXMLValue(psTree,"rasterXSize","0")),
@@ -184,15 +444,15 @@ GDALDataset *VRTDataset::Open( GDALOpenInfo * poOpenInfo )
 
     poDS->eAccess = GA_ReadOnly;
 
-/* -------------------------------------------------------------------- */
-/*	Check for an SRS node.						*/
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*	Check for an SRS node.						*/
+    /* -------------------------------------------------------------------- */
     if( strlen(CPLGetXMLValue(psTree, "SRS", "")) > 0 )
         poDS->pszProjection = CPLStrdup(CPLGetXMLValue(psTree, "SRS", ""));
 
-/* -------------------------------------------------------------------- */
-/*      Check for a GeoTransform node.                                  */
-/* -------------------------------------------------------------------- */
+ /* -------------------------------------------------------------------- */
+ /*      Check for a GeoTransform node.                                  */
+ /* -------------------------------------------------------------------- */
     if( strlen(CPLGetXMLValue(psTree, "GeoTransform", "")) > 0 )
     {
         const char *pszGT = CPLGetXMLValue(psTree, "GeoTransform", "");
@@ -213,6 +473,61 @@ GDALDataset *VRTDataset::Open( GDALOpenInfo * poOpenInfo )
 
         CSLDestroy( papszTokens );
     }
+
+    /* -------------------------------------------------------------------- */
+    /*      Check for GCPs.                                                 */
+    /* -------------------------------------------------------------------- */
+    CPLXMLNode *psGCPList = CPLGetXMLNode( psTree, "GCPList" );
+
+    if( psGCPList != NULL )
+    {
+        CPLXMLNode *psXMLGCP;
+
+        CPLFree( poDS->pszGCPProjection );
+        poDS->pszGCPProjection =
+            CPLStrdup(CPLGetXMLValue(psGCPList,"Projection",""));
+         
+        // Count GCPs.
+        int  nGCPMax = 0;
+         
+        for( psXMLGCP = psGCPList->psChild; psXMLGCP != NULL; 
+             psXMLGCP = psXMLGCP->psNext )
+            nGCPMax++;
+         
+        poDS->pasGCPList = (GDAL_GCP *) CPLCalloc(sizeof(GDAL_GCP),nGCPMax);
+         
+        for( psXMLGCP = psGCPList->psChild; psXMLGCP != NULL; 
+             psXMLGCP = psXMLGCP->psNext )
+        {
+            GDAL_GCP *psGCP = poDS->pasGCPList + poDS->nGCPCount;
+
+            if( !EQUAL(psXMLGCP->pszValue,"GCP") || 
+                psXMLGCP->eType != CXT_Element )
+                continue;
+             
+            GDALInitGCPs( 1, psGCP );
+             
+            CPLFree( psGCP->pszId );
+            psGCP->pszId = CPLStrdup(CPLGetXMLValue(psXMLGCP,"Id",""));
+             
+            CPLFree( psGCP->pszInfo );
+            psGCP->pszInfo = CPLStrdup(CPLGetXMLValue(psXMLGCP,"Info",""));
+             
+            psGCP->dfGCPPixel = atof(CPLGetXMLValue(psXMLGCP,"Pixel","0.0"));
+            psGCP->dfGCPLine = atof(CPLGetXMLValue(psXMLGCP,"Line","0.0"));
+             
+            psGCP->dfGCPX = atof(CPLGetXMLValue(psXMLGCP,"X","0.0"));
+            psGCP->dfGCPY = atof(CPLGetXMLValue(psXMLGCP,"Y","0.0"));
+            psGCP->dfGCPZ = atof(CPLGetXMLValue(psXMLGCP,"Z","0.0"));
+
+            poDS->nGCPCount++;
+        }
+    }
+     
+/* -------------------------------------------------------------------- */
+/*      Apply any dataset level metadata.                               */
+/* -------------------------------------------------------------------- */
+    VRTApplyMetadata( psTree, poDS );
 
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
@@ -249,6 +564,44 @@ GDALDataset *VRTDataset::Open( GDALOpenInfo * poOpenInfo )
 }
 
 /************************************************************************/
+/*                              AddBand()                               */
+/************************************************************************/
+
+CPLErr VRTDataset::AddBand( GDALDataType eType, char **papszOptions=NULL )
+
+{
+    SetBand( GetRasterCount() + 1, 
+             new VRTRasterBand( this, GetRasterCount() + 1, eType, 
+                                GetRasterXSize(), GetRasterYSize() ) );
+
+    return CE_None;
+}
+
+/************************************************************************/
+/*                             VRTCreate()                              */
+/************************************************************************/
+
+GDALDataset *
+VRTDataset::Create( const char * pszName,
+                    int nXSize, int nYSize, int nBands,
+                    GDALDataType eType, char ** papszOptions )
+
+{
+    VRTDataset *poDS;
+    int        iBand;
+
+    poDS = new VRTDataset( nXSize, nYSize );
+    poDS->SetDescription( pszName );
+
+    for( iBand = 0; iBand < nBands; iBand++ )
+        poDS->AddBand( eType, NULL );
+
+    poDS->bNeedsFlush = 1;
+    
+    return poDS;
+}
+
+/************************************************************************/
 /*                           VRTCreateCopy()                            */
 /************************************************************************/
 
@@ -258,33 +611,16 @@ VRTCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                GDALProgressFunc pfnProgress, void * pProgressData )
 
 {
-/* -------------------------------------------------------------------- */
-/*      Try to create the output file.                                  */
-/* -------------------------------------------------------------------- */
-    FILE	*fp;
-
-    fp = VSIFOpen( pszFilename, "wt" );
-    if( fp == NULL )
-    {
-        CPLError( CE_Failure, CPLE_OpenFailed, 
-                  "Unable to create file %s.",
-                  pszFilename );
-        return NULL;
-    }
+    VRTDataset *poVRTDS;
 
 /* -------------------------------------------------------------------- */
-/*      Create the root node.                                           */
+/*      Create the virtual dataset.                                     */
 /* -------------------------------------------------------------------- */
-    VSIFPrintf( fp, "<VRTDataset rasterXSize=\"%d\" rasterYSize=\"%d\">\n", 
-                poSrcDS->GetRasterXSize(), poSrcDS->GetRasterYSize() );
-
-/* -------------------------------------------------------------------- */
-/*      Do we have an SRS?                                              */
-/* -------------------------------------------------------------------- */
-    if( poSrcDS->GetProjectionRef() != NULL
-        && strlen(poSrcDS->GetProjectionRef()) > 0 )
-        VSIFPrintf( fp, "  <SRS>%s</SRS>\n", 
-                    poSrcDS->GetProjectionRef() );
+    poVRTDS = (VRTDataset *) 
+        VRTDataset::Create( pszFilename, 
+                            poSrcDS->GetRasterXSize(),
+                            poSrcDS->GetRasterYSize(),
+                            0, GDT_Byte, NULL );
 
 /* -------------------------------------------------------------------- */
 /*      Do we have a geotransform?                                      */
@@ -293,13 +629,27 @@ VRTCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
     if( poSrcDS->GetGeoTransform( adfGeoTransform ) == CE_None )
     {
-        VSIFPrintf( fp, "  <GeoTransform>%24.16e,%24.16e,%24.16e,%24.16e,%24.16e,%24.16e</GeoTransform>\n", 
-                    adfGeoTransform[0],
-                    adfGeoTransform[1],
-                    adfGeoTransform[2],
-                    adfGeoTransform[3],
-                    adfGeoTransform[4],
-                    adfGeoTransform[5] );
+        poVRTDS->SetGeoTransform( adfGeoTransform );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Copy projection                                                 */
+/* -------------------------------------------------------------------- */
+    poVRTDS->SetProjection( poSrcDS->GetProjectionRef() );
+
+/* -------------------------------------------------------------------- */
+/*      Emit dataset level metadata.                                    */
+/* -------------------------------------------------------------------- */
+    poVRTDS->SetMetadata( poSrcDS->GetMetadata() );
+
+/* -------------------------------------------------------------------- */
+/*      GCPs                                                            */
+/* -------------------------------------------------------------------- */
+    if( poSrcDS->GetGCPCount() > 0 )
+    {
+        poVRTDS->SetGCPs( poSrcDS->GetGCPCount(), 
+                          poSrcDS->GetGCPs(),
+                          poSrcDS->GetGCPProjection() );
     }
 
 /* -------------------------------------------------------------------- */
@@ -307,37 +657,108 @@ VRTCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
     for( int iBand = 0; iBand < poSrcDS->GetRasterCount(); iBand++ )
     {
-        GDALRasterBand *poBand = poSrcDS->GetRasterBand( iBand+1 );
-
-        VSIFPrintf( fp, "  <VRTRasterBand band=\"%d\">\n", iBand+1 );
+        GDALRasterBand *poSrcBand = poSrcDS->GetRasterBand( iBand+1 );
 
 /* -------------------------------------------------------------------- */
-/*      Setup SimpleSource mapping.                                     */
+/*      Create the band with the appropriate band type.                 */
 /* -------------------------------------------------------------------- */
-        VSIFPrintf( fp, "    <SimpleSource>\n" );
-        VSIFPrintf( fp, "      <SourceFilename>%s</SourceFilename>\n",
-                    poSrcDS->GetDescription() );
-        VSIFPrintf( fp, "      <SourceBand>%d</SourceBand>\n", iBand+1 );
-        VSIFPrintf( fp, "      <SrcRect xOff=\"%d\" yOff=\"%d\""
-                    " xSize=\"%d\" ySize=\"%d\"/>\n", 
-                    0, 0, 
-                    poSrcDS->GetRasterXSize(), poSrcDS->GetRasterYSize() );
-        VSIFPrintf( fp, "      <DstRect xOff=\"%d\" yOff=\"%d\""
-                    " xSize=\"%d\" ySize=\"%d\"/>\n", 
-                    0, 0, 
-                    poSrcDS->GetRasterXSize(), poSrcDS->GetRasterYSize() );
-        VSIFPrintf( fp, "    </SimpleSource>\n" );
+        poVRTDS->AddBand( poSrcBand->GetRasterDataType(), NULL );
 
-        VSIFPrintf( fp, "  </VRTRasterBand>\n" );
+        VRTRasterBand *poVRTBand = 
+			(VRTRasterBand *) poVRTDS->GetRasterBand( iBand+1 );
+
+/* -------------------------------------------------------------------- */
+/*      Setup source mapping.                                           */
+/* -------------------------------------------------------------------- */
+        poVRTBand->AddSimpleSource( poSrcBand );
+
+/* -------------------------------------------------------------------- */
+/*      Emit various band level metadata.                               */
+/* -------------------------------------------------------------------- */
+        poVRTBand->SetMetadata( poSrcBand->GetMetadata() );
+
+        poVRTBand->SetColorTable( poSrcBand->GetColorTable() );
+        poVRTBand->SetColorInterpretation(poSrcBand->GetColorInterpretation());
+
+        int bSuccess;
+
+        poSrcBand->GetNoDataValue( &bSuccess );
+        if( bSuccess )
+            poVRTBand->SetNoDataValue( poSrcBand->GetNoDataValue(NULL) );
     }
 
-    VSIFPrintf( fp, "</VRTDataset>\n" );
+    poVRTDS->FlushCache();
 
-    VSIFClose( fp );
-
-    return (GDALDataset *) GDALOpen( pszFilename, GA_ReadOnly );
+    return poVRTDS;
 }
 
+/************************************************************************/
+/*                          VRTApplyMetadata()                          */
+/************************************************************************/
+int VRTApplyMetadata( CPLXMLNode *psTree, GDALMajorObject *poMO )
+
+{
+    char **papszMD = NULL;
+    CPLXMLNode *psMetadata = CPLGetXMLNode( psTree, "Metadata" );
+    CPLXMLNode *psMDI;
+
+    if( psMetadata == NULL )
+        return FALSE;
+
+    /* Format is <MDI key="...">value_Text</MDI> */
+
+    for( psMDI = psMetadata->psChild; psMDI != NULL; psMDI = psMDI->psNext )
+    {
+        if( !EQUAL(psMDI->pszValue,"MDI") || psMDI->eType != CXT_Element 
+            || psMDI->psChild == NULL || psMDI->psChild->psNext == NULL 
+            || psMDI->psChild->eType != CXT_Attribute
+            || psMDI->psChild->psChild == NULL )
+            continue;
+
+        papszMD = 
+            CSLSetNameValue( papszMD, psMDI->psChild->psChild->pszValue, 
+                             psMDI->psChild->psNext->pszValue );
+    }
+
+    poMO->SetMetadata( papszMD );
+    CSLDestroy( papszMD );
+
+    return papszMD != NULL;
+}
+
+/************************************************************************/
+/*                        VRTSerializeMetadata()                        */
+/************************************************************************/
+
+CPLXMLNode *VRTSerializeMetadata( GDALMajorObject *poMO )
+
+{
+    char **papszMD = poMO->GetMetadata();
+
+    if( papszMD == NULL || CSLCount(papszMD) == 0 )
+        return NULL;
+
+    CPLXMLNode *psMD;
+
+    psMD = CPLCreateXMLNode( NULL, CXT_Element, "Metadata" );
+
+    for( int i = 0; papszMD[i] != NULL; i++ )
+    {
+        const char *pszRawValue;
+        char *pszKey;
+        CPLXMLNode *psMDI;
+
+        pszRawValue = CPLParseNameValue( papszMD[i], &pszKey );
+
+        psMDI = CPLCreateXMLNode( psMD, CXT_Element, "MDI" );
+        CPLSetXMLValue( psMDI, "#key", pszKey );
+        CPLCreateXMLNode( psMDI, CXT_Text, pszRawValue );
+
+        CPLFree( pszKey );
+    }
+
+    return psMD;
+}
 
 /************************************************************************/
 /*                          GDALRegister_VRT()                          */
@@ -357,6 +778,7 @@ void GDALRegister_VRT()
         
         poDriver->pfnOpen = VRTDataset::Open;
         poDriver->pfnCreateCopy = VRTCreateCopy;
+        poDriver->pfnCreate = VRTDataset::Create;
 
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
