@@ -10,8 +10,8 @@ model</a> to the calling application for all supported formats.
 The related <a href="ogr">OGR</a> 
 library (which lives within the GDAL source tree) provides
 a similar capability for simple features vector data.
-The <a href="NEWS.html">NEWS</a> page describes the April 2004 
-GDAL 1.2.0 release.<p>
+The <a href="NEWS.html">NEWS</a> page describes the June 2004 
+GDAL 1.2.1 release.<p>
 
 Master Page: <a href="http://www.remotesensing.org/gdal/index.html">
 http://www.remotesensing.org/gdal/index.html</a><br>
@@ -82,6 +82,9 @@ by Timothy H. Keitt.<p>
 
 <li> GDAL is available as an RPM on the FreeGIS CD's, and list is
 listed at <a href="http://www.freegis.org">FreeGIS.org</a>.<p>
+
+<li> Preliminary <a href="http://search.cpan.org/~sderle/Geo-GDAL/">
+perl GDAL bindings</a> have been implemented by Schuyler Erle.<p>
 
 </ul>
 
