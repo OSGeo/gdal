@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2003/01/08 18:23:45  warmerda
+ * ensure order is fixed up
+ *
  * Revision 1.18  2002/12/16 17:06:32  warmerda
  * ensure that prime meridian offsets are applied to angular proj parms
  *
@@ -1296,6 +1299,8 @@ static OGRErr SetEPSGProjCS( OGRSpatialReference * poSRS, int nPCSCode )
 OGRErr OGRSpatialReference::importFromEPSG( int nCode )
 
 {
+    OGRErr  eErr;
+
     bNormInfoSet = FALSE;
 
 /* -------------------------------------------------------------------- */
@@ -1311,11 +1316,17 @@ OGRErr OGRSpatialReference::importFromEPSG( int nCode )
 /*      Is this a GeogCS code?   this is inadequate as a criteria       */
 /* -------------------------------------------------------------------- */
     if( EPSGGetGCSInfo( nCode, NULL, NULL, NULL, NULL, NULL, NULL ) )
-        return SetEPSGGeogCS( this, nCode );
+        eErr = SetEPSGGeogCS( this, nCode );
     else
-        return SetEPSGProjCS( this, nCode );
+        eErr = SetEPSGProjCS( this, nCode );
+
+/* -------------------------------------------------------------------- */
+/*      Make sure any peculiarities in the ordering are fixed up.       */
+/* -------------------------------------------------------------------- */
+    if( eErr == OGRERR_NONE )
+        eErr = FixupOrdering();
         
-    return OGRERR_NONE;
+    return eErr;
 }
 
 /************************************************************************/
