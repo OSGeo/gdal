@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_imapinfofile.cpp,v 1.14 2001/03/09 04:16:02 daniel Exp $
+ * $Id: mitab_imapinfofile.cpp,v 1.15 2001/07/03 23:11:21 daniel Exp $
  *
  * Name:     mitab_imapinfo
  * Project:  MapInfo mid/mif Tab Read/Write library
@@ -31,6 +31,9 @@
  **********************************************************************
  *
  * $Log: mitab_imapinfofile.cpp,v $
+ * Revision 1.15  2001/07/03 23:11:21  daniel
+ * Test for NULL geometries if spatial filter enabled in GetNextFeature().
+ *
  * Revision 1.14  2001/03/09 04:16:02  daniel
  * Added TABSeamless for reading seamless TAB files
  *
@@ -210,6 +213,7 @@ IMapInfoFile *IMapInfoFile::SmartOpen(const char *pszFname,
 OGRFeature *IMapInfoFile::GetNextFeature()
 {
     OGRFeature *poFeatureRef;
+    OGRGeometry *poGeom;
     int nFeatureId;
 
     while( (nFeatureId = GetNextFeatureId(m_nCurFeatureId)) != -1 )
@@ -218,7 +222,8 @@ OGRFeature *IMapInfoFile::GetNextFeature()
         if (poFeatureRef == NULL)
             return NULL;
         else if (m_poFilterGeom == NULL ||
-                 m_poFilterGeom->Intersect( poFeatureRef->GetGeometryRef()))
+                 ((poGeom = poFeatureRef->GetGeometryRef()) != NULL &&
+                  m_poFilterGeom->Intersect( poGeom )) )
         {
             // Avoid cloning feature... return the copy owned by the class
             CPLAssert(poFeatureRef == m_poCurFeature);
