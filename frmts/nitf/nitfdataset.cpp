@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2003/08/21 15:02:38  gwalter
+ * Try to find a .nfw file if no other geotransform information is found.
+ *
  * Revision 1.9  2003/06/23 18:32:06  warmerda
  * dont return projectionref if we dont have a geotransform
  *
@@ -530,7 +533,14 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->adfGeoTransform[5] = 
             (psImage->dfLRY - psImage->dfULY) / poDS->nRasterYSize;
     }
-
+/* -------------------------------------------------------------------- */
+/*      Otherwise try looking for a .nfw file.                          */
+/* -------------------------------------------------------------------- */
+    else
+    {
+        poDS->bGotGeoTransform = 
+            GDALReadWorldFile( poOpenInfo->pszFilename, "nfw", poDS->adfGeoTransform );
+    }
 /* -------------------------------------------------------------------- */
 /*      Do we have RPC info.                                            */
 /* -------------------------------------------------------------------- */
