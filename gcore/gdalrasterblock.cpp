@@ -26,6 +26,9 @@
  *
  * 
  * $Log$
+ * Revision 1.5  2001/06/22 21:00:06  warmerda
+ * fixed support for caching override by environment variable
+ *
  * Revision 1.4  2001/06/22 20:09:13  warmerda
  * added GDAL_CACHEMAX environment variable support
  *
@@ -269,6 +272,7 @@ CPLErr GDALRasterBlock::Internalize()
 {
     void	*pNewData;
     int		nSizeInBytes;
+    int		nCurCacheMax = GDALGetCacheMax();
 
     nSizeInBytes = (nXSize * nYSize * GDALGetDataTypeSize( eType ) + 7) / 8;
 
@@ -285,7 +289,7 @@ CPLErr GDALRasterBlock::Internalize()
 /*      Flush old blocks if we are nearing our memory limit.            */
 /* -------------------------------------------------------------------- */
     nCacheUsed += nSizeInBytes;
-    while( nCacheUsed > nCacheMax )
+    while( nCacheUsed > nCurCacheMax )
     {
         int nOldCacheUsed = nCacheUsed;
 
