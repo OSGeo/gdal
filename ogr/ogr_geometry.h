@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.39  2003/01/07 16:44:27  warmerda
+ * added removeGeometry
+ *
  * Revision 1.38  2003/01/02 21:45:23  warmerda
  * move OGRBuildPolygonsFromEdges into C API
  *
@@ -568,6 +571,7 @@ class CPL_DLL OGRGeometryCollection : public OGRGeometry
     // Non standard
     virtual OGRErr addGeometry( OGRGeometry * );
     virtual OGRErr addGeometryDirectly( OGRGeometry * );
+    virtual OGRErr removeGeometry( int iIndex, int bDelete = TRUE );
 };
 
 /************************************************************************/

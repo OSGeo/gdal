@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2003/01/07 16:44:27  warmerda
+ * added removeGeometry
+ *
  * Revision 1.5  2003/01/06 21:37:00  warmerda
  * added CPL_DLL attribute on OGRBuildPolygon...
  *
@@ -124,6 +127,7 @@ int    CPL_DLL OGR_G_GetGeometryCount( OGRGeometryH );
 OGRGeometryH CPL_DLL OGR_G_GetGeometryRef( OGRGeometryH, int );
 OGRErr CPL_DLL OGR_G_AddGeometry( OGRGeometryH, OGRGeometryH );
 OGRErr CPL_DLL OGR_G_AddGeometryDirectly( OGRGeometryH, OGRGeometryH );
+OGRErr CPL_DLL OGR_G_RemoveGeometry( OGRGeometryH, int, int );
 
 OGRGeometryH CPL_DLL OGRBuildPolygonFromEdges( OGRGeometryH hLinesAsCollection,
                                        int bBestEffort, 
