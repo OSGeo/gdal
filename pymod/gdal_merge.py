@@ -26,6 +26,9 @@
 ###############################################################################
 # 
 #  $Log$
+#  Revision 1.17  2005/02/23 18:29:07  fwarmerdam
+#  Accept "either spelling" of separate.
+#
 #  Revision 1.16  2005/02/23 18:23:00  fwarmerdam
 #  Added -seperate to the usage message.
 #
@@ -276,7 +279,7 @@ def Usage():
     print 'Usage: gdal_merge.py [-o out_filename] [-of out_format] [-co NAME=VALUE]*'
     print '                     [-ps pixelsize_x pixelsize_y] [-separate] [-v] [-pct]'
     print '                     [-ul_lr ulx uly lrx lry] [-n nodata_value] [-init value]'
-    print '                     [-seperate] input_files'
+    print '                     input_files'
     print
 
 # =============================================================================
@@ -316,6 +319,9 @@ if __name__ == '__main__':
             verbose = 1
 
         elif arg == '-separate':
+            separate = 1
+
+        elif arg == '-seperate':
             separate = 1
 
         elif arg == '-pct':
