@@ -332,14 +332,27 @@ SDTS datasets consist of a number of files.  Each DEM should have one file
 with a name like XXXCATD.DDF.  This should be selected to open
 the dataset.<p>
 
-BUGS: <p>
-<ul>
-<li> Floating point SDTS DEMs are apparently not supported.<p>
-<li> Projection definitions are currently returned in PROJ.4 format, instead
-of OGC WKT format.<p>
-</ul>
-
 NOTE: Implemented as <tt>gdal/frmts/sdts/sdtsdataset.cpp</tt>.<p>
+
+<h2><a name="USGSDEM">USGSDEM -- USGS ASCII DEM</a></h2>
+
+GDAL includes support for reading USGS ASCII DEM files.  These are the
+traditional format used by USGS before being replaced by SDTS.  Most popular
+variations on USGS DEM files should be supported, including correct
+recognition of coordinate system, and georerenced positioning.<p>
+
+The 7.5 minute (UTM grid) USGS DEM files will generally have regions of
+missing data around the edges, and these are properly marked with
+a nodata value.  Elevation values in USGS DEM files may be in meters or
+feet, and this will be indicated by the return value of 
+GDALRasterBand::GetUnitType() (either "m" or "ft").<p>
+
+Note that USGS DEM files are represented as one big tile.  This may cause
+cache thrashing problems if the GDAL tile cache size is small.  It will also
+result in a substantial delay when the first pixel is read as the whole file
+will be ingested. <p>
+
+NOTE: Implemented as <tt>gdal/frmts/sdts/usgsdemdataset.cpp</tt>.<p>
 
 </body>
 </html>
