@@ -29,6 +29,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.43  2005/03/21 11:05:02  dron
+ * Added 1/2 pixel shift of origin of projected Grid datasets.
+ *
  * Revision 1.42  2005/03/14 21:32:26  fwarmerdam
  * Added special support for pulling parent metadata down in MODIS L1B
  * mode, and using the GRing to derive corner coordinates.
@@ -279,7 +282,7 @@ CPLErr HDF4ImageRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                 switch ( poGDS->iRank )
                 {
                     case 4:     // 4Dim: volume-time
-                    // FIXME: needs sample file. Does not works currently.
+                    // FIXME: needs sample file. Does not work currently.
                     iStart[3] = 0/* range: 0--aiDimSizes[3]-1 */;       iEdges[3] = 1;
                     iStart[2] = 0/* range: 0--aiDimSizes[2]-1 */;       iEdges[2] = 1;
                     iStart[1] = nBlockYOff; iEdges[1] = nBlockYSize;
@@ -1727,26 +1730,30 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
                         if ( iProjCode )
                         {
                             // For projected systems coordinates are in meters
-                            poDS->adfGeoTransform[0] = adfUpLeft[0];
-                            poDS->adfGeoTransform[3] = adfUpLeft[1];
                             poDS->adfGeoTransform[1] =
                                 (adfLowRight[0] - adfUpLeft[0]) / nXSize;
                             poDS->adfGeoTransform[5] =
                                 (adfLowRight[1] - adfUpLeft[1]) / nYSize;
+                            poDS->adfGeoTransform[0] =
+                                adfUpLeft[0] - poDS->adfGeoTransform[1] / 2;
+                            poDS->adfGeoTransform[3] =
+                                adfUpLeft[1] + poDS->adfGeoTransform[5] / 2;
                         }
                         else
                         {
                             // Handle angular geographic coordinates here
-                            poDS->adfGeoTransform[0] =
-                                CPLPackedDMSToDec(adfUpLeft[0]);
-                            poDS->adfGeoTransform[3] =
-                                CPLPackedDMSToDec(adfUpLeft[1]);
                             poDS->adfGeoTransform[1] =
                                 (CPLPackedDMSToDec(adfLowRight[0]) -
                                  CPLPackedDMSToDec(adfUpLeft[0])) / nXSize;
                             poDS->adfGeoTransform[5] =
                                 (CPLPackedDMSToDec(adfLowRight[1]) -
                                  CPLPackedDMSToDec(adfUpLeft[1])) / nYSize;
+                            poDS->adfGeoTransform[0] =
+                                CPLPackedDMSToDec(adfUpLeft[0])
+                                - poDS->adfGeoTransform[1] / 2;
+                            poDS->adfGeoTransform[3] =
+                                CPLPackedDMSToDec(adfUpLeft[1])
+                                + poDS->adfGeoTransform[5] / 2;
                         }
                         poDS->adfGeoTransform[2] = 0.0;
                         poDS->adfGeoTransform[4] = 0.0;
@@ -1816,11 +1823,13 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
             poDS->SetMetadata( poDS->papszLocalMetadata, "" );
             SDendaccess( iSDS );
 
+#ifdef DEBUG
             CPLDebug( "HDF4Image",
                       "aiDimSizes[0]=%d, aiDimSizes[1]=%d, "
                       "aiDimSizes[2]=%d, aiDimSizes[3]=%d",
                       poDS->aiDimSizes[0], poDS->aiDimSizes[1],
                       poDS->aiDimSizes[2], poDS->aiDimSizes[3] );
+#endif
 
             switch( poDS->iRank )
             {
