@@ -18,6 +18,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2002/08/08 13:41:36  warmerda
+ * added support for single quoted string constants
+ *
  * Revision 1.14  2002/04/30 18:19:01  warmerda
  * eat newlines as whitespace
  *
@@ -167,7 +170,14 @@ static char *swq_token( const char *expression, char **next, int *is_literal )
         {
             if( *expression == '\\' && expression[1] == '"' )
                 expression++;
+            else if( *expression == '\\' && expression[1] == '\'' )
+                expression++;
             else if( *expression == '"' )
+            {
+                expression++;
+                break;
+            }
+            else if( *expression == '\'' )
             {
                 expression++;
                 break;
