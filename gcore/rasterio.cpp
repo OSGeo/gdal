@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2003/03/13 15:36:59  warmerda
+ * fixed number of words copied in recent IRasterIO() special case
+ *
  * Revision 1.20  2003/03/09 10:09:15  dron
  * Speed up improvements in IRasterIO().
  *
@@ -175,12 +178,12 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                     GDALCopyWords( pabySrcBlock + nSrcByteOffset,
                                    eDataType, nBandDataSize,
                                    ((GByte *) pData) + iBufYOff * nLineSpace,
-                                   eBufType, nPixelSpace, nLineSpace );
+                                   eBufType, nPixelSpace, nBufXSize );
                 else
                     GDALCopyWords( ((GByte *) pData) + iBufYOff * nLineSpace,
                                    eBufType, nPixelSpace,
                                    pabySrcBlock + nSrcByteOffset,
-                                   eDataType, nBandDataSize, nLineSpace );
+                                   eDataType, nBandDataSize, nBufXSize );
             }
         }
 
