@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  1999/11/04 18:31:32  warmerda
+ * Improved efficiency of exportToWkt() for large line strings.
+ *
  * Revision 1.11  1999/09/13 14:34:07  warmerda
  * updated to use wkbZ of 0x8000 instead of 0x80000000
  *
@@ -733,6 +736,7 @@ OGRErr OGRLineString::exportToWkt( char ** ppszReturn )
 
 {
     int		nMaxString = nPointCount * 16 * 2 + 20;
+    int		nRetLen = 0;
 
     *ppszReturn = (char *) VSIMalloc( nMaxString );
     if( *ppszReturn == NULL )
@@ -748,16 +752,20 @@ OGRErr OGRLineString::exportToWkt( char ** ppszReturn )
             strcat( *ppszReturn, "," );
 
         if( getCoordinateDimension() == 3 )
-            strcat( *ppszReturn, OGRMakeWktCoordinate( paoPoints[i].x,
-                                                       paoPoints[i].y,
-                                                       padfZ[i] ) );
+            strcat( *ppszReturn + nRetLen,
+                    OGRMakeWktCoordinate( paoPoints[i].x,
+                                          paoPoints[i].y,
+                                          padfZ[i] ) );
         else
-            strcat( *ppszReturn, OGRMakeWktCoordinate( paoPoints[i].x,
-                                                       paoPoints[i].y,
-                                                       0.0 ) );
+            strcat( *ppszReturn + nRetLen,
+                    OGRMakeWktCoordinate( paoPoints[i].x,
+                                          paoPoints[i].y,
+                                          0.0 ) );
+
+        nRetLen += strlen(*ppszReturn + nRetLen);
     }
 
-    strcat( *ppszReturn, ")" );
+    strcat( *ppszReturn+nRetLen, ")" );
 
     return OGRERR_NONE;
 }
