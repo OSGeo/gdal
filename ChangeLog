@@ -1,3 +1,9 @@
+2001-09-04  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* ogr/ogrsf_frmts/shape: added support for deferred determination
+	of output file geometry type (from first feature), and added better
+	handling of NULL attribute fields when reading and writing. 
+
 2001-08-31  Frank Warmerdam  <warmerdam@pobox.com>
 
 	* frmts/ceos2/sar_ceosdataset.cpp: added support for the SAR Toolbox
