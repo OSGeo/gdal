@@ -31,6 +31,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.16  2004/12/10 21:59:55  fwarmerdam
+ * added ZRESOLUTION support from Hunter Blanks (bug 708)
+ *
  * Revision 1.15  2004/11/21 22:13:54  fwarmerdam
  * use new pointer encode/decode functions
  *
@@ -589,7 +592,6 @@ static int USGSDEMWriteARecord( USGSDEMWriteInfo *psWInfo )
             psWInfo->dfHorizStepSize*3600.0 );
         USGSDEMPrintSingle( achARec + 828,
             psWInfo->dfVertStepSize*3600.0 );
-        USGSDEMPrintSingle( achARec + 840, 1.0 );
     }
     else
     {
@@ -597,9 +599,32 @@ static int USGSDEMWriteARecord( USGSDEMWriteInfo *psWInfo )
             psWInfo->dfHorizStepSize );
         USGSDEMPrintSingle( achARec + 828,
             psWInfo->dfVertStepSize );
-        USGSDEMPrintSingle( achARec + 840, 1.0 );
     }
 
+/* -------------------------------------------------------------------- */
+/*      Allow override of z resolution, but default to 1.0.             */
+/* -------------------------------------------------------------------- */
+     const char *zResolution = CSLFetchNameValue(
+             psWInfo->papszOptions, "ZRESOLUTION" );
+
+     if( zResolution == NULL || EQUAL(zResolution,"DEFAULT") )
+     {
+         USGSDEMPrintSingle( achARec + 840, 1.0 );
+     }
+     else 
+     {
+         double zRes = CPLScanDouble(
+                 zResolution, strlen(zResolution), NULL);
+         if ( zRes <= 0 )
+         {
+             /* don't allow negative values */
+             USGSDEMPrintSingle( achARec + 840, 1.0);
+         }
+         else
+         {
+             USGSDEMPrintSingle( achARec + 840, zRes );
+         }
+     }
 
 /* -------------------------------------------------------------------- */
 /*      Rows and Columns of profiles.                                   */
