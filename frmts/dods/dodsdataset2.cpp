@@ -28,6 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************
  * $Log$
+ * Revision 1.4  2005/01/14 22:51:18  fwarmerdam
+ * implemented better url constrains, flipping, and transposing
+ *
  * Revision 1.3  2004/10/18 17:31:11  fwarmerdam
  * minor tweaks to work with older DAP version
  *
@@ -157,6 +160,36 @@ static string StripQuotes( string oInput )
     CPLFree( pszResult );
 
     return oInput;
+}
+
+/************************************************************************/
+/*                            GetDimension()                            */
+/*                                                                      */
+/*      Get the dimension for the named constrain dimension, -1 is      */
+/*      returned if not found.  We would pass in a CE like              */
+/*      "[band][x][y]" or "[1][x][y]" and a dimension name like "y"     */
+/*      and get back the dimension index (2 if it is the 3rd            */
+/*      dimension).                                                     */
+/*                                                                      */
+/*      eg. GetDimension("[1][y][x]","y") -> 1                          */
+/************************************************************************/
+
+static int GetDimension( string oCE, const char *pszDimName )
+
+{
+    int iCount = 0, i;
+    const char *pszCE = oCE.c_str();
+
+    for( i = 0; pszCE[i] != '\0'; i++ )
+    {
+        if( pszCE[i] == '[' && pszCE[i+1] == pszDimName[0] )
+            return iCount;
+
+        else if( pszCE[i] == '[' )
+            iCount++;
+    }
+
+    return -1;
 }
 
 /************************************************************************/
@@ -654,9 +687,9 @@ void DODSDataset::HarvestDAS()
 
     if( oNorth != "" && oSouth != "" && oEast != "" && oWest != "" )
     {
-        adfGeoTransform[0] = atof(oEast.c_str());
+        adfGeoTransform[0] = atof(oWest.c_str());
         adfGeoTransform[1] = 
-            (atof(oWest.c_str()) - atof(oEast.c_str())) / nRasterXSize;
+            (atof(oEast.c_str()) - atof(oWest.c_str())) / nRasterXSize;
         adfGeoTransform[2] = 0.0;
         adfGeoTransform[3] = atof(oNorth.c_str());
         adfGeoTransform[4] = 0.0;
@@ -937,18 +970,26 @@ DODSRasterBand::DODSRasterBand(DODSDataset *poDSIn, string oVarNameIn,
 /*      For now we hard code to assume that the two dimensions are      */
 /*      ysize and xsize.                                                */
 /* -------------------------------------------------------------------- */
-    if( poArray->dimensions() != 2 )
+    if( poArray->dimensions() < 2 )
     {
-        throw Error("Variable does not have 2 dimensions.  For now this is required." );
+        throw Error("Variable does not have even 2 dimensions.  For now this is required." );
     }
 
-    // TODO: This should clearly be based on the constraint!
+    int iXDim = GetDimension( oCE, "x" );
+    int iYDim = GetDimension( oCE, "y" );
 
-    Array::Dim_iter x_dim = poArray->dim_begin() + 1;
-    Array::Dim_iter y_dim = poArray->dim_begin() + 0;
+    if( iXDim == -1 || iYDim == -1 )
+    {
+        throw Error("Missing [x] or [y] in constraint." );
+    }
+
+    Array::Dim_iter x_dim = poArray->dim_begin() + iXDim;
+    Array::Dim_iter y_dim = poArray->dim_begin() + iYDim;
 
     nRasterXSize = poArray->dimension_size( x_dim ) / nOverviewFactor;
     nRasterYSize = poArray->dimension_size( y_dim ) / nOverviewFactor;
+
+    bTranspose = iXDim < iYDim;
 
 /* -------------------------------------------------------------------- */
 /*      Decide on a block size.  We aim for a block size of roughly     */
@@ -986,6 +1027,12 @@ DODSRasterBand::DODSRasterBand(DODSDataset *poDSIn, string oVarNameIn,
         nBlockYSize = nRasterYSize;
 
 /* -------------------------------------------------------------------- */
+/*      Get other information from the DAS for this band.               */
+/* -------------------------------------------------------------------- */
+    if( nOverviewFactorIn == 1 )
+        HarvestDAS();
+
+/* -------------------------------------------------------------------- */
 /*      Create overview band objects.                                   */
 /* -------------------------------------------------------------------- */
     if( nOverviewFactorIn == 1 )
@@ -1007,14 +1054,11 @@ DODSRasterBand::DODSRasterBand(DODSDataset *poDSIn, string oVarNameIn,
             papoOverviewBand[nOverviewCount++] = 
                 new DODSRasterBand( poDSIn, oVarNameIn, oCEIn, 
                                     nThisFactor );
+
+            papoOverviewBand[nOverviewCount-1]->bFlipX = bFlipX;
+            papoOverviewBand[nOverviewCount-1]->bFlipY = bFlipY;
         }
     }
-
-/* -------------------------------------------------------------------- */
-/*      Get other information from the DAS for this band.               */
-/* -------------------------------------------------------------------- */
-    if( nOverviewFactorIn == 1 )
-        HarvestDAS();
 }
 
 /************************************************************************/
@@ -1074,7 +1118,7 @@ void DODSRasterBand::HarvestDAS()
 /* -------------------------------------------------------------------- */
 /*      Get band description.                                           */
 /* -------------------------------------------------------------------- */
-    oValue = StripQuotes(poBandInfo->get_attr( "PhotometricInterpretation" ));
+    oValue = StripQuotes(poBandInfo->get_attr( "Description" ));
     if( oValue != "" )
         SetDescription( oValue.c_str() );
 
@@ -1112,6 +1156,17 @@ void DODSRasterBand::HarvestDAS()
             poCT->SetColorEntry( poCT->GetColorEntryCount(), &sEntry );
         }
     }
+
+/* -------------------------------------------------------------------- */
+/*      Check for flipping instructions.                                */
+/* -------------------------------------------------------------------- */
+    oValue = StripQuotes(poBandInfo->get_attr( "FlipX" ));
+    if( oValue != "no" && oValue != "NO" && oValue != "" )
+        bFlipX = TRUE;
+
+    oValue = StripQuotes(poBandInfo->get_attr( "FlipY" ));
+    if( oValue != "no" && oValue != "NO" && oValue != "" )
+        bFlipY = TRUE;
 }
 
 /************************************************************************/
@@ -1122,6 +1177,7 @@ CPLErr
 DODSRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
 {
     DODSDataset *poDODS = dynamic_cast<DODSDataset *>(poDS);
+    int nBytesPerPixel = GDALGetDataTypeSize(eDataType) / 8;
 
 /* -------------------------------------------------------------------- */
 /*      What is the actual rectangle we want to read?  We can't read    */
@@ -1138,6 +1194,16 @@ DODSRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
         nXSize = nRasterXSize - nXOff;
     if( nYOff + nYSize > nRasterYSize )
         nYSize = nRasterYSize - nYOff;
+
+/* -------------------------------------------------------------------- */
+/*      If we are working with a flipped image, we need to transform    */
+/*      the requested window accordingly.                               */
+/* -------------------------------------------------------------------- */
+    if( bFlipY )
+        nYOff = (nRasterYSize - nYOff - nYSize);
+
+    if( bFlipX )
+        nXOff = (nRasterXSize - nXOff - nXSize);
 
 /* -------------------------------------------------------------------- */
 /*      Prepare constraint expression for this request.                 */
@@ -1210,30 +1276,108 @@ DODSRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
         poA->buf2val(&pImage);	// !Suck the data out of the Array!
 
 /* -------------------------------------------------------------------- */
-/*      If we only read a partial block we need to re-organize the      */
-/*      data.                                                           */
+/*      If the [x] dimension comes before [y], we need to transpose     */
+/*      the data we just got back.                                      */
 /* -------------------------------------------------------------------- */
-        if( nXSize < nBlockXSize || nYSize < nBlockYSize )
+        if( bTranspose )
         {
-            int iLine;
-            int nBytesPerPixel = GDALGetDataTypeSize(eDataType) / 8;
-
-            for( iLine = nYSize-1; iLine >= 0; iLine-- )
+            GByte *pabyDataCopy;
+            int iY;
+            
+            CPLDebug( "DODS", "Applying transposition" );
+            
+            // make a copy of the original
+            pabyDataCopy = (GByte *) 
+                CPLMalloc(nBytesPerPixel * nXSize * nYSize);
+            memcpy( pabyDataCopy, pImage, nBytesPerPixel * nXSize * nYSize );
+            memset( pImage, 0, nBytesPerPixel * nXSize * nYSize );
+            
+            for( iY = 0; iY < nYSize; iY++ )
             {
-                memmove( ((GByte *) pImage) + iLine * nBlockXSize,
-                         ((GByte *) pImage) + iLine * nXSize,
-                         nBytesPerPixel * nXSize );
-                memset( ((GByte *) pImage) + iLine * nBlockXSize
-                        + nBytesPerPixel * nXSize, 
-                        0, nBytesPerPixel * (nBlockXSize - nXSize) );
+                GDALCopyWords( pabyDataCopy + iY * nBytesPerPixel, 
+                               eDataType, nBytesPerPixel * nYSize,
+                               ((GByte *) pImage) + iY * nXSize * nBytesPerPixel, 
+                               eDataType, nBytesPerPixel, nXSize );
             }
+            
+            // cleanup
+            CPLFree( pabyDataCopy );
+        }
+        
+/* -------------------------------------------------------------------- */
+/*      Do we need "x" flipping?                                        */
+/* -------------------------------------------------------------------- */
+        if( bFlipX )
+        {
+            GByte *pabyDataCopy;
+            int iY;
+            
+            CPLDebug( "DODS", "Applying X flip." );
+            
+            // make a copy of the original
+            pabyDataCopy = (GByte *) 
+                CPLMalloc(nBytesPerPixel * nXSize * nYSize);
+            memcpy( pabyDataCopy, pImage, nBytesPerPixel * nXSize * nYSize );
+            memset( pImage, 0, nBytesPerPixel * nXSize * nYSize );
+            
+            for( iY = 0; iY < nYSize; iY++ )
+            {
+                GDALCopyWords( pabyDataCopy + iY*nXSize*nBytesPerPixel,
+                               eDataType, nBytesPerPixel,
+                               ((GByte *) pImage) + ((iY+1)*nXSize-1)*nBytesPerPixel, 
+                               eDataType, -nBytesPerPixel, nXSize );
+            }
+            
+            // cleanup
+            CPLFree( pabyDataCopy );
         }
 
 /* -------------------------------------------------------------------- */
-/*      Eventually we need to add flipping and transposition support    */
-/*      here.                                                           */
+/*      Do we need "y" flipping?                                        */
 /* -------------------------------------------------------------------- */
+        if( bFlipY )
+        {
+            GByte *pabyDataCopy;
+            int iY;
+            
+            CPLDebug( "DODS", "Applying Y flip." );
+            
+            // make a copy of the original
+            pabyDataCopy = (GByte *) 
+                CPLMalloc(nBytesPerPixel * nXSize * nYSize);
+            memcpy( pabyDataCopy, pImage, nBytesPerPixel * nXSize * nYSize );
+            
+            for( iY = 0; iY < nYSize; iY++ )
+            {
+                GDALCopyWords( pabyDataCopy + iY*nXSize*nBytesPerPixel,
+                               eDataType, nBytesPerPixel,
+                               ((GByte *) pImage) + (nYSize-iY-1)*nXSize*nBytesPerPixel,
+                               eDataType, nBytesPerPixel,
+                               nXSize );
+            }
+            
+            // cleanup
+            CPLFree( pabyDataCopy );
+        }
 
+/* -------------------------------------------------------------------- */
+/*      If we only read a partial block we need to re-organize the      */
+/*      data.                                                           */
+/* -------------------------------------------------------------------- */
+        if( nXSize < nBlockXSize )
+        {
+            int iLine;
+
+            for( iLine = nYSize-1; iLine >= 0; iLine-- )
+            {
+                memmove( ((GByte *) pImage) + iLine*nBlockXSize*nBytesPerPixel,
+                         ((GByte *) pImage) + iLine * nXSize * nBytesPerPixel,
+                         nBytesPerPixel * nXSize );
+                memset( ((GByte *) pImage) 
+                        + (iLine*nBlockXSize + nXSize)*nBytesPerPixel,
+                        0, nBytesPerPixel * (nBlockXSize - nXSize) );
+            }
+        }
     }
 
 /* -------------------------------------------------------------------- */
