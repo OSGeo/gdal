@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2000/06/19 18:46:59  warmerda
+ * added -skipfailures
+ *
  * Revision 1.4  2000/06/09 21:15:19  warmerda
  * made CreateField and SetFrom forgiving
  *
@@ -52,6 +55,8 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
                            OGRLayer * poSrcLayer,
                            OGRDataSource *poDstDS,
                            char ** papszLSCO );
+
+static int bSkipFailures = FALSE;
 
 /************************************************************************/
 /*                                main()                                */
@@ -87,6 +92,10 @@ int main( int nArgc, char ** papszArgv )
         else if( EQUAL(papszArgv[iArg],"-lco") && iArg < nArgc-1 )
         {
             papszLCO = CSLAddString(papszLCO, papszArgv[++iArg] );
+        }
+        else if( EQUALN(papszArgv[iArg],"-skip",5) )
+        {
+            bSkipFailures = TRUE;
         }
         else if( papszArgv[iArg][0] == '-' )
         {
@@ -219,7 +228,7 @@ static void Usage()
 {
     OGRSFDriverRegistrar        *poR = OGRSFDriverRegistrar::GetRegistrar();
 
-    printf( "Usage: ogr2ogr [-f format_name]\n"
+    printf( "Usage: ogr2ogr [-skipfailures] [-f format_name]\n"
             "               [[-dsco NAME=VALUE] ...] dst_datasource_name\n"
             "               src_datasource_name\n"
             "               [-lco NAME=VALUE] layer [layer ...]]\n"
@@ -302,7 +311,8 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
         
         delete poFeature;
         
-        if( poDstLayer->CreateFeature( poDstFeature ) != OGRERR_NONE )
+        if( poDstLayer->CreateFeature( poDstFeature ) != OGRERR_NONE 
+            && !bSkipFailures )
         {
             delete poDstFeature;
             return FALSE;
