@@ -46,6 +46,13 @@ Windows.
 Release Notes
 =============
 
+Release 1.9 (dev)
+-----------
+
+ o Added DGNLoadTCB(), and fixed problem when writing new elements to an
+   existing file without having already read the TCB. 
+
+
 Release 1.8
 -----------
 
@@ -53,6 +60,7 @@ Release 1.8
    elements based on contributions from Marius Kintel. 
 
  o Main site moved to http://dgnlib.maptools.org/
+
 
 Release 1.7
 -----------
