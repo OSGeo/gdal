@@ -256,15 +256,16 @@ Usage:
 \endhtmlonly
 
 \verbatim
-gdal_translate 
-       [-ot {Byte/UInt16/UInt32/Int32/Float32/Float64/CInt16/
-             CInt32/CFloat32/CFloat64}] [-not_strict]
+gdal_translate [--help-general]
+       [-ot {Byte/Int16/UInt16/UInt32/Int32/Float32/Float64/
+             CInt16/CInt32/CFloat32/CFloat64}] [-not_strict]
        [-of format] [-b band] [-outsize xsize[%] ysize[%]]
-       [-scale [src_min src_max [dst_min dst_max]]]       
-       [-srcwin xoff yoff xsize ysize] [-a_srs srs_def]
-       [-projwin xoff yoff xsize ysize] [-co "NAME=VALUE"]*
+       [-scale [src_min src_max [dst_min dst_max]]]
+       [-srcwin xoff yoff xsize ysize] [-projwin ulx uly lrx lry]
+       [-a_srs srs_def] [-a_ullr ulx uly lrx lry]
        [-gcp pixel line easting northing]*
        [-mo "META-TAG=VALUE"]* [-quiet] [-sds]
+       [-co "NAME=VALUE"]*
        src_dataset dst_dataset
 \endverbatim
 
@@ -302,6 +303,10 @@ georeferenced coordinates. </dd>
 <dt> <b>-a_srs</b> <i>srs_def</i>:</dt><dd> Override the projection for the output
 file.  The srs_def may be any of the usual GDAL/OGR forms, complete WKT, 
 PROJ.4, EPSG:n or a file containing the wkt. </dd>
+<dt> <b>-a_ullr</b> <i>ulx uly lrx lry</i>:</dt><dd>
+Assign/override the georeferenced bounds of the output file.  This assigns 
+georeferenced bounds to the output file, ignoring what would have been derived 
+from the source file.</dd>
 <dt> <b>-mo</b> <i>"KEY=VALUE"</i>:</dt><dd> passes a metadata key and value to set
 on the output dataset if possible.</dd>
 <dt> <b>-co</b> <i>"NAME=VALUE"</i>:</dt><dd> passes a creation option to the output
