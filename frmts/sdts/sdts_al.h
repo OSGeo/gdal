@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  1999/04/21 04:38:32  warmerda
+ * Added new classes including SDTSPoint
+ *
  * Revision 1.2  1999/03/23 15:58:01  warmerda
  * some const fixes, and attr record fixes
  *
@@ -183,7 +186,10 @@ class SDTSRawLine
     SDTSModId	oRightPoly;		/* PIDR */
     SDTSModId	oStartNode;		/* SNID */
     SDTSModId	oEndNode;		/* ENID */
-    SDTSModId	oAttribute;		/* ATID - last used for now */
+
+#define MAX_RAWLINE_ATID	3    
+    int		nAttributes;
+    SDTSModId	aoATID[MAX_RAWLINE_ATID];  /* ATID (attribute) references */
 
     void	Dump( FILE * );
 };
@@ -237,6 +243,57 @@ class SDTSAttrRecord
     SDTSModId		oRecordId;
     
     const sc_Field	*GetSubfieldList() { return poATTP; }
+};
+
+/************************************************************************/
+/*                           SDTSPointReader                            */
+/*                                                                      */
+/*      Class for reading any of the point files.                       */
+/************************************************************************/
+
+class SDTSRawPoint;
+
+class SDTSPointReader
+{
+    ifstream	ifs;
+    sio_8211Reader	*po8211Reader;
+    sio_8211ForwardIterator *poIter;
+
+    SDTS_IREF	*poIREF;
+    
+  public:
+    		SDTSPointReader( SDTS_IREF * );
+                ~SDTSPointReader();
+
+    int         Open( const string );
+    SDTSRawPoint *GetNextPoint( void );
+    void	Close();
+};
+
+/************************************************************************/
+/*                             SDTSRawPoint                             */
+/*                                                                      */
+/*      Simple container for the information from a point.              */
+/************************************************************************/
+
+class SDTSRawPoint
+{
+  public:
+    		SDTSRawPoint();
+                ~SDTSRawPoint();
+
+    int         Read( SDTS_IREF *, scal_Record * );
+
+    SDTSModId	oPoint;			/* PNTS field */
+                
+    double	dfX;
+    double	dfY;
+    double	dfZ;
+
+#define MAX_RAWPOINT_ATID	3    
+    int		nAttributes;
+    SDTSModId	aoATID[MAX_RAWPOINT_ATID];  /* ATID (attribute) references */
+    SDTSModId   oAreaId;		/* ARID */
 };
 
 #endif /* ndef SDTS_AL_H_INCLUDED */
