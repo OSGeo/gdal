@@ -1,11 +1,9 @@
 /*!
 \page gdal_building
 
-<center>
-<title>Building GDAL From Source</title>
-</center>
+<center><title>Building GDAL From Source</title></center>
 
-<h2><a name="unix">Building on Unix</a></h2>
+<a name="unix"><h2>Building on Unix</h2></a>
 
 GDAL has been successfully built on Linux, IRIX, Solaris, BSD, and MacOS X.  
 On Unix platforms you might be able to build it as follows (assuming it is
@@ -27,9 +25,10 @@ you don't already have it.<p>
 built-in versions of libz, libtiff, libgeotiff, libpng, libgif, and libjpeg 
 if pre-installed versions are not available (or not desirable).  
 
-<li> There are quite a few optional drivers that depend on external libraries.
+<li> There are quite a few optional drivers that depend on
+<a href="#libraries">external libraries</a>.
 Use "configure --help" to see the configure options.  Some optional libraries
-include those for GRASS, FITS, OGDI, HDF4, and ECW.
+include those for GRASS, FITS, OGDI, HDF4, JPEG2000 and ECW.
 
 <li> The shared library building is pretty specific to the GNU tool chain. 
 If you are using something different than GNU C++, then you will likely 
@@ -65,11 +64,11 @@ set with --prefix) you will likelyhave problems with the python since it
 always tries to install under the site-packages directory for the installed
 python tree.  If you don't need python support you can supress it at
 configure using --without-python, or override the python module output
-directory at configure time with the --with-pymodir=<directory>.
+directory at configure time with the --with-pymodir=&lt;directory&gt;
 
 </ul>
 
-<h2><a name="win32">Building on Windows</a></h2>
+<a name="win32"><h2>Building on Windows</h2></a>
 
 GDAL can be built on Windows using MS VC++ 6.x and MS Visual Studio .NET (C++) 
 at the DOS command line.  For this to work you will normally have to have run 
@@ -77,14 +76,14 @@ the VCVAR32.BAT script that comes with the compiler.  For VC 6.x this might be
 found at:
 
 <pre>
-  C:\Program Files\Microsoft Visual Studio\VC98\bin\VCVARS32.BAT
+C:\\Program Files\\Microsoft Visual Studio\\VC98\\bin\\VCVARS32.BAT
 </pre>
 
 Once the environment is setup, you can cd to the GDAL root directory
 and do the following:<p>
 
 <pre>
-C:\GDAL\> nmake /f makefile.vc
+C:\\GDAL&gt; nmake /f makefile.vc
 </pre>
 
 There are lots of options that can be tweaked by hand in the nmake.opt
@@ -120,6 +119,13 @@ support, correcting ECWDIR to point to the install location on your system.
 <li> <b>OGDIDIR/OGDIVER/OGDILIB</b>: Uncomment these to enable OGDI 
 support, correcting the OGDIDIR and OGDIVER values as needed.
 
+<li> <b>HDF4_DIR</b>: Uncomment, and correct path to enable support for
+NCSA HDF Release 4. 
+
+<li> <b>JASPER_DIR/JASPER_INCLUDE/JASPER_LIB</b>: This variables should be
+pointed to appropriate directories where JasPer library was installed. JasPer
+toolkit needed for JPEG2000 support.
+
 <li> <b>XERCES_DIR/XERCES_INCLUDE/XERCES_LIB</b>: Uncomment these and
 correct XERCES_DIR to enable Xerces XML parser support for GML read support.
 
@@ -131,5 +137,40 @@ FMEObject vector access.
 I frequently forget to update the Windows makefiles when I add new files,
 so if something comes up missing consider comparing the file lists in the
 appropriate makefile.vc against the GNUmakefile or just contact me. <p>
+
+<a name="libraries"><h2>External Libraries</h2></a>
+
+Several drivers require additional libraries to be installed in your system.
+These are:
+
+<ul>
+	<li> NCSA HDF library can be downloaded from the
+	<a href="http://hdf.ncsa.uiuc.edu/">The NCSA HDF Home Page</a>
+	at the <a href="http://www.ncsa.uiuc.edu/">
+	National Center for Supercomputing Applications</a>.<p>
+
+	If your OS distribution already contains prebuilded HDF library you can
+	use one from the distribution.<p>
+
+	Please note, that NCSA HDF library compiled with several defaults which is
+	defined in <i>hlimits.h</i> file. For example, <i>hlimits.h</i> defines
+	the maximum number of opened files:
+
+<pre>
+#   define MAX_FILE   32
+</pre>
+
+	If you need open more HDF4 files simultaneously you should change this value
+	and rebuild HDF4 library (there is no need to rebuild GDAL if it is already
+	compiled with HDF4 support).
+
+	<li> JPEG2000 support based on JasPer toolkit which can be accessed
+	from the <a href="http://www.ece.uvic.ca/~mdadams/jasper/">
+	The JasPer Project Home Page</a>.<p>
+
+	JasPer itself is a bridge for working with several image file formats.
+	Only JP2 and JPC parts of JasPer used in GDAL.
+
+</ul>
 
 */
