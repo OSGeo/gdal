@@ -1,6 +1,6 @@
 /******************************************************************************
  * $Id$
-g *
+ *
  * Project:  GDAL 
  * Purpose:  ECW (ERMapper Wavelet Compression Format) Driver
  * Author:   Frank Warmerdam, warmerdam@pobox.com
@@ -28,6 +28,9 @@ g *
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.25  2004/12/17 14:50:30  fwarmerdam
+ * implement AdviseRead API
+ *
  * Revision 1.24  2004/12/10 19:18:05  fwarmerdam
  * Overhauled to use C++ ECW SDK classes.
  * Moved creation code into ecwcreatecopy.cpp
@@ -135,17 +138,34 @@ class CPL_DLL ECWDataset : public GDALDataset
     friend class ECWRasterBand;
 
     FILE        *fpVSIL;
-
+    
     CNCSJP2FileView *poFileView;
     NCSFileViewFileInfo *psFileInfo;
+
+    GDALDataType eRasterDataType;
 
     int         nFullResWindowBand;
     int         nLastScanlineRead;
     CPLErr      ResetFullResViewWindow(int nBand, int nStartLine );
 
+    // Current view window. 
+    int         bWinActive;
+    int         nWinXOff, nWinYOff, nWinXSize, nWinYSize;
+    int         nWinBufXSize, nWinBufYSize;
+    int         nWinBandCount;
+    int         *panWinBandList;
+    int         nWinBufLoaded;
+    void        **papCurLineBuf;
+
     char        *pszProjection;
 
     void        ECW2WKTProjection();
+
+    void        CleanupWindow();
+    int         TryWinRasterIO( GDALRWFlag, int, int, int, int,
+                                GByte *, int, int, GDALDataType,
+                                int, int *, int, int, int );
+    CPLErr      LoadNextLine();
 
   public:
     		ECWDataset();
@@ -159,6 +179,12 @@ class CPL_DLL ECWDataset : public GDALDataset
 
     virtual CPLErr GetGeoTransform( double * );
     virtual const char *GetProjectionRef();
+
+    virtual CPLErr AdviseRead( int nXOff, int nYOff, int nXSize, int nYSize,
+                               int nBufXSize, int nBufYSize, 
+                               GDALDataType eDT, 
+                               int nBandCount, int *panBandList,
+                               char **papszOptions );
 };
 
 /************************************************************************/
@@ -185,6 +211,10 @@ class ECWRasterBand : public GDALRasterBand
 
     virtual CPLErr IReadBlock( int, int, void * );
     virtual int    HasArbitraryOverviews() { return TRUE; }
+
+    virtual CPLErr AdviseRead( int nXOff, int nYOff, int nXSize, int nYSize,
+                               int nBufXSize, int nBufYSize, 
+                               GDALDataType eDT, char **papszOptions );
 };
 
 /************************************************************************/
@@ -198,7 +228,7 @@ ECWRasterBand::ECWRasterBand( ECWDataset *poDS, int nBand )
     poGDS = poDS;
 
     this->nBand = nBand;
-    eDataType = GDT_Byte;
+    eDataType = poDS->eRasterDataType;
     nBlockXSize = poDS->GetRasterXSize();
     nBlockYSize = 1;
 }
@@ -211,6 +241,20 @@ ECWRasterBand::~ECWRasterBand()
 
 {
     FlushCache();
+}
+
+/************************************************************************/
+/*                             AdviseRead()                             */
+/************************************************************************/
+
+CPLErr ECWRasterBand::AdviseRead( int nXOff, int nYOff, int nXSize, int nYSize,
+                                  int nBufXSize, int nBufYSize, 
+                                  GDALDataType eDT, 
+                                  char **papszOptions )
+{
+    return poDS->AdviseRead( nXOff, nYOff, nXSize, nYSize, 
+                             nBufXSize, nBufYSize, eDT, 
+                             1, &nBand, papszOptions );
 }
 
 /************************************************************************/
@@ -228,6 +272,15 @@ CPLErr ECWRasterBand::IRasterIO( GDALRWFlag eRWFlag,
     int          iBand, bDirect;
     int          nNewXSize = nBufXSize, nNewYSize = nBufYSize;
     GByte        *pabyWorkBuffer = NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Try to do it based on existing "advised" access.                */
+/* -------------------------------------------------------------------- */
+    if( poGDS->TryWinRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize, 
+                               (GByte *) pData, nBufXSize, nBufYSize, 
+                               eBufType, 1, &nBand, 
+                               nPixelSpace, nLineSpace, 0 ) )
+        return CE_None;
 
 /* -------------------------------------------------------------------- */
 /*      We will drop down to the block oriented API if only a single    */
@@ -417,7 +470,7 @@ CPLErr ECWRasterBand::IReadBlock( int, int nBlockYOff, void * pImage )
 
 
 /************************************************************************/
-/*                            ECWDataset()                            */
+/*                            ECWDataset()                              */
 /************************************************************************/
 
 ECWDataset::ECWDataset()
@@ -427,15 +480,19 @@ ECWDataset::ECWDataset()
     pszProjection = NULL;
     poFileView = NULL;
     fpVSIL = NULL;
+    bWinActive = FALSE;
+    panWinBandList = NULL;
+    eRasterDataType = GDT_Byte;
 }
 
 /************************************************************************/
-/*                           ~ECWDataset()                            */
+/*                           ~ECWDataset()                              */
 /************************************************************************/
 
 ECWDataset::~ECWDataset()
 
 {
+    CleanupWindow();
     CPLFree( pszProjection );
     if( poFileView != NULL )
     {
@@ -444,6 +501,215 @@ ECWDataset::~ECWDataset()
 
     if( fpVSIL != NULL )
         delete fpVSIL;
+
+}
+
+/************************************************************************/
+/*                             AdviseRead()                             */
+/************************************************************************/
+
+CPLErr ECWDataset::AdviseRead( int nXOff, int nYOff, int nXSize, int nYSize,
+                               int nBufXSize, int nBufYSize, 
+                               GDALDataType eDT, 
+                               int nBandCount, int *panBandList,
+                               char **papszOptions )
+
+{
+    printf( "ECWDataset::AdviseRead(%d,%d,%d,%d->%d,%d)\n",
+            nXOff, nYOff, nXSize, nYSize, nBufXSize, nBufYSize );
+
+/* -------------------------------------------------------------------- */
+/*      Cleanup old window cache information.                           */
+/* -------------------------------------------------------------------- */
+    CleanupWindow();
+
+/* -------------------------------------------------------------------- */
+/*      Set the new requested window.                                   */
+/* -------------------------------------------------------------------- */
+    CNCSError oErr;
+    
+    oErr = poFileView->SetView( nBandCount, (UINT32 *) panBandList, 
+                                nXOff, nYOff, 
+                                nXOff + nXSize-1, nYOff + nYSize-1,
+                                nBufXSize, nBufYSize );
+    
+    if( oErr.GetErrorNumber() != NCS_SUCCESS )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "%s", oErr.GetErrorMessage() );
+        bWinActive = FALSE;
+        return CE_Failure;
+    }
+
+    bWinActive = TRUE;
+
+/* -------------------------------------------------------------------- */
+/*      Record selected window.                                         */
+/* -------------------------------------------------------------------- */
+    nWinXOff = nXOff;
+    nWinYOff = nYOff;
+    nWinXSize = nXSize;
+    nWinYSize = nYSize;
+    nWinBufXSize = nBufXSize;
+    nWinBufYSize = nBufYSize;
+
+    panWinBandList = (int *) CPLMalloc(sizeof(int)*nBandCount);
+    memcpy( panWinBandList, panBandList, sizeof(int)* nBandCount);
+    nWinBandCount = nBandCount;
+
+    nWinBufLoaded = -1;
+
+/* -------------------------------------------------------------------- */
+/*      Allocate current scanline buffer.                               */
+/* -------------------------------------------------------------------- */
+    papCurLineBuf = (void **) CPLMalloc(sizeof(void*) * nWinBandCount );
+    for( int iBand = 0; iBand < nWinBandCount; iBand++ )
+        papCurLineBuf[iBand] = CPLMalloc(nBufXSize * 32);
+        
+    return CE_None;
+}
+
+/************************************************************************/
+/*                           TryWinRasterIO()                           */
+/*                                                                      */
+/*      Try to satisfy the given request based on the currently         */
+/*      defined window.  Return TRUE on success or FALSE on             */
+/*      failure.  On failure, the caller should satisfy the request     */
+/*      another way (not report an error).                              */
+/************************************************************************/
+
+int ECWDataset::TryWinRasterIO( GDALRWFlag eFlag, 
+                                int nXOff, int nYOff, int nXSize, int nYSize,
+                                GByte *pabyData, int nBufXSize, int nBufYSize, 
+                                GDALDataType eDT,
+                                int nBandCount, int *panBandList, 
+                                int nPixelSpace, int nLineSpace, 
+                                int nBandSpace )
+
+{
+    int iBand, i;
+
+/* -------------------------------------------------------------------- */
+/*      Do some simple tests to see if the current window can           */
+/*      satisfy our requirement.                                        */
+/* -------------------------------------------------------------------- */
+    if( !bWinActive )
+        return FALSE;
+    
+    if( nXOff != nWinXOff || nXSize != nWinXSize )
+        return FALSE;
+
+    if( nBufXSize != nWinBufXSize )
+        return FALSE;
+
+    for( iBand = 0; iBand < nBandCount; iBand++ )
+    {
+        for( i = 0; i < nWinBandCount; i++ )
+        {
+            if( panWinBandList[iBand] == panBandList[iBand] )
+                break;
+        }
+
+        if( i == nWinBandCount )
+            return FALSE;
+    }
+
+    if( nYOff < nWinYOff || nYOff + nYSize > nWinYOff + nWinYSize )
+        return FALSE;
+
+/* -------------------------------------------------------------------- */
+/*      Now we try more subtle tests.                                   */
+/* -------------------------------------------------------------------- */
+
+    CPLDebug( "ECWDataset", 
+              "TryWinRasterIO(%d,%d,%d,%d -> %dx%d) - doing advised read.", 
+              nXOff, nYOff, nXSize, nYSize, nBufXSize, nBufYSize );
+
+/* -------------------------------------------------------------------- */
+/*      Actually load data one buffer line at a time.                   */
+/* -------------------------------------------------------------------- */
+    int iBufLine;
+
+    for( iBufLine = 0; iBufLine < nBufYSize; iBufLine++ )
+    {
+        float fFileLine = ((iBufLine+0.5) / nBufYSize) * nYSize + nYOff;
+        int iWinLine = 
+            (int) (((fFileLine - nWinYOff) / nWinYSize) * nWinBufYSize);
+        
+        if( iWinLine == nWinBufLoaded + 1 )
+            LoadNextLine();
+
+        if( iWinLine != nWinBufLoaded )
+            return FALSE;
+
+/* -------------------------------------------------------------------- */
+/*      Copy out all our target bands.                                  */
+/* -------------------------------------------------------------------- */
+        int iWinBand;
+        for( iBand = 0; iBand < nBandCount; iBand++ )
+        {
+            for( iWinBand = 0; iWinBand < nWinBandCount; iWinBand++ )
+            {
+                if( panWinBandList[iWinBand] == panBandList[iBand] )
+                    break;
+            }
+
+            GDALCopyWords( papCurLineBuf, eRasterDataType,
+                           GDALGetDataTypeSize( eRasterDataType ) / 8, 
+                           pabyData + nBandSpace * iBand 
+                           + iBufLine * nLineSpace, eDT, nPixelSpace,
+                           nBufXSize );
+        }
+    }
+
+    return TRUE;
+}
+
+/************************************************************************/
+/*                            LoadNextLine()                            */
+/************************************************************************/
+
+CPLErr ECWDataset::LoadNextLine()
+
+{
+    if( !bWinActive )
+        return CE_Failure;
+
+    if( nWinBufLoaded == nWinBufYSize-1 )
+    {
+        CleanupWindow();
+        return CE_Failure;
+    }
+
+    NCSEcwReadStatus  eRStatus;
+    eRStatus = poFileView->ReadLineBIL( (UINT8 **) papCurLineBuf );
+
+    if( eRStatus != NCSECW_READ_OK )
+        return CE_Failure;
+
+    nWinBufLoaded++;
+
+    return CE_None;
+}
+
+/************************************************************************/
+/*                           CleanupWindow()                            */
+/************************************************************************/
+
+void ECWDataset::CleanupWindow()
+
+{
+    if( !bWinActive )
+        return;
+
+    bWinActive = FALSE;
+    CPLFree( panWinBandList );
+    panWinBandList = NULL;
+
+    for( int iBand = 0; iBand < nWinBandCount; iBand++ )
+        CPLFree( papCurLineBuf[iBand] );
+    CPLFree( papCurLineBuf );
+    papCurLineBuf = NULL;
 }
 
 /************************************************************************/
@@ -454,37 +720,9 @@ CPLErr ECWDataset::ResetFullResViewWindow( int nBand,
                                            int nStartLine )
 
 {
-    NCSError     eNCSErr;
-    unsigned int iBand = nBand-1;
-
-#ifdef nodef
-    CPLDebug( "ECWDataset", 
-              "NCScbmSetFileView( %d, %d, %d, %d, %d, %d, %d )", 
-              nBand,
-              0, nStartLine, 
-              nRasterXSize-1, nRasterYSize-1,
-              nRasterXSize, nRasterYSize-nStartLine );
-#endif
-    CNCSError oErr;
-
-    oErr = poFileView->SetView( 1, &iBand,
-                                0, nStartLine, 
-                                nRasterXSize-1, nRasterYSize-1,
-                                nRasterXSize, nRasterYSize-nStartLine );
-    eNCSErr = oErr.GetErrorNumber();
-
-    if( eNCSErr != NCS_SUCCESS )
-    {
-        nFullResWindowBand = -1;
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "%s", NCSGetErrorText(eNCSErr) );
-        return CE_Failure;
-    }
-
-    nFullResWindowBand = nBand;
-    nLastScanlineRead = nStartLine-1;
-
-    return CE_None;
+    return AdviseRead( 0, nStartLine, nRasterXSize, nRasterYSize - nStartLine,
+                       nRasterXSize, nRasterYSize - nStartLine, 
+                       eRasterDataType, 1, &nBand, NULL );
 }
 
 /************************************************************************/
@@ -499,6 +737,15 @@ CPLErr ECWDataset::IRasterIO( GDALRWFlag eRWFlag,
                               int nPixelSpace, int nLineSpace, int nBandSpace)
     
 {
+/* -------------------------------------------------------------------- */
+/*      Try to do it based on existing "advised" access.                */
+/* -------------------------------------------------------------------- */
+    if( TryWinRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize, 
+                        (GByte *) pData, nBufXSize, nBufYSize, 
+                        eBufType, nBandCount, panBandMap,
+                        nPixelSpace, nLineSpace, nBandSpace ) )
+        return CE_None;
+
 /* -------------------------------------------------------------------- */
 /*      If we are supersampling we need to fall into the general        */
 /*      purpose logic.  We also use the general logic if we are in      */
