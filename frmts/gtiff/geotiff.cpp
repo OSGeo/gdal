@@ -28,6 +28,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.128  2005/01/15 16:13:17  fwarmerdam
+ * Use GTiffRasterBand as base for 1bit and RGB band specialized types.
+ * Generalized metadata support, include band metadata.
+ * Added support for offset/scale as special metadata items.
+ *
  * Revision 1.127  2004/11/25 14:28:55  fwarmerdam
  * Use a more accurate format for the nodata value.
  *
@@ -398,6 +403,10 @@ class GTiffRasterBand : public GDALRasterBand
 
     GDALColorInterp         eBandInterp;
 
+    int    bHaveOffsetScale;
+    double dfOffset;
+    double dfScale;
+
   public:
 
                    GTiffRasterBand( GTiffDataset *, int );
@@ -413,6 +422,14 @@ class GTiffRasterBand : public GDALRasterBand
     virtual double	    GetNoDataValue( int * );
     virtual CPLErr	    SetNoDataValue( double );
 
+    virtual double GetOffset( int *pbSuccess = NULL );
+    virtual CPLErr SetOffset( double dfNewValue );
+    virtual double GetScale( int *pbSuccess = NULL );
+    virtual CPLErr SetScale( double dfNewValue );
+
+    virtual CPLErr  SetMetadata( char **, const char * = "" );
+    virtual CPLErr  SetMetadataItem( const char*, const char*, 
+                                     const char* = "" );
     virtual int    GetOverviewCount();
     virtual GDALRasterBand *GetOverview( int );
 };
@@ -426,6 +443,10 @@ GTiffRasterBand::GTiffRasterBand( GTiffDataset *poDS, int nBand )
 {
     this->poDS = poDS;
     this->nBand = nBand;
+
+    bHaveOffsetScale = FALSE;
+    dfOffset = 0.0;
+    dfScale = 1.0;
 
 /* -------------------------------------------------------------------- */
 /*      Get the GDAL data type.                                         */
@@ -734,6 +755,89 @@ CPLErr GTiffRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
 }
 
 /************************************************************************/
+/*                             GetOffset()                              */
+/************************************************************************/
+
+double GTiffRasterBand::GetOffset( int *pbSuccess )
+
+{
+    if( pbSuccess )
+        *pbSuccess = bHaveOffsetScale;
+    return dfOffset;
+}
+
+/************************************************************************/
+/*                             SetOffset()                              */
+/************************************************************************/
+
+CPLErr GTiffRasterBand::SetOffset( double dfNewValue )
+
+{
+    GTiffDataset	*poGDS = (GTiffDataset *) poDS;
+
+    poGDS->bMetadataChanged = TRUE;
+
+    bHaveOffsetScale = TRUE;
+    dfOffset = dfNewValue;
+    return CE_None;
+}
+
+/************************************************************************/
+/*                              GetScale()                              */
+/************************************************************************/
+
+double GTiffRasterBand::GetScale( int *pbSuccess )
+
+{
+    if( pbSuccess )
+        *pbSuccess = bHaveOffsetScale;
+    return dfScale;
+}
+
+/************************************************************************/
+/*                              SetScale()                              */
+/************************************************************************/
+
+CPLErr GTiffRasterBand::SetScale( double dfNewValue )
+
+{
+    GTiffDataset	*poGDS = (GTiffDataset *) poDS;
+
+    poGDS->bMetadataChanged = TRUE;
+
+    bHaveOffsetScale = TRUE;
+    dfScale = dfNewValue;
+    return CE_None;
+}
+
+/************************************************************************/
+/*                            SetMetadata()                             */
+/************************************************************************/
+CPLErr GTiffRasterBand::SetMetadata( char ** papszMD, const char *pszDomain )
+
+{
+    GTiffDataset	*poGDS = (GTiffDataset *) poDS;
+
+    poGDS->bMetadataChanged = TRUE;
+    return GDALRasterBand::SetMetadata( papszMD, pszDomain );
+}
+
+/************************************************************************/
+/*                          SetMetadataItem()                           */
+/************************************************************************/
+
+CPLErr GTiffRasterBand::SetMetadataItem( const char *pszName, 
+                                         const char *pszValue,
+                                         const char *pszDomain )
+
+{
+    GTiffDataset	*poGDS = (GTiffDataset *) poDS;
+
+    poGDS->bMetadataChanged = TRUE;
+    return GDALRasterBand::SetMetadataItem( pszName, pszValue, pszDomain );
+}
+
+/************************************************************************/
 /*                       GetColorInterpretation()                       */
 /************************************************************************/
 
@@ -934,7 +1038,7 @@ GDALRasterBand *GTiffRasterBand::GetOverview( int i )
 /* ==================================================================== */
 /************************************************************************/
 
-class GTiffRGBABand : public GDALRasterBand
+class GTiffRGBABand : public GTiffRasterBand
 {
     friend class GTiffDataset;
 
@@ -943,13 +1047,9 @@ class GTiffRGBABand : public GDALRasterBand
                    GTiffRGBABand( GTiffDataset *, int );
 
     virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IWriteBlock( int, int, void * );
 
     virtual GDALColorInterp GetColorInterpretation();
-    virtual double	    GetNoDataValue( int * );
-    virtual CPLErr	    SetNoDataValue( double );
-
-    virtual int    GetOverviewCount();
-    virtual GDALRasterBand *GetOverview( int );
 };
 
 
@@ -958,15 +1058,22 @@ class GTiffRGBABand : public GDALRasterBand
 /************************************************************************/
 
 GTiffRGBABand::GTiffRGBABand( GTiffDataset *poDS, int nBand )
+        : GTiffRasterBand( poDS, nBand )
 
 {
-    this->poDS = poDS;
-    this->nBand = nBand;
-
     eDataType = GDT_Byte;
+}
 
-    nBlockXSize = poDS->nBlockXSize;
-    nBlockYSize = poDS->nBlockYSize;
+/************************************************************************/
+/*                            IWriteBlock()                             */
+/************************************************************************/
+
+CPLErr GTiffRGBABand::IWriteBlock( int, int, void * )
+
+{
+    CPLError( CE_Failure, CPLE_AppDefined, 
+              "RGBA interpreted raster bands are read-only." );
+    return CE_Failure;
 }
 
 /************************************************************************/
@@ -1093,70 +1200,12 @@ GDALColorInterp GTiffRGBABand::GetColorInterpretation()
 }
 
 /************************************************************************/
-/*                           GetNoDataValue()                           */
-/************************************************************************/
-
-double GTiffRGBABand::GetNoDataValue( int * pbSuccess )
-
-{
-    GTiffDataset	*poGDS = (GTiffDataset *) poDS;
-
-    if( pbSuccess )
-        *pbSuccess = poGDS->bNoDataSet;
-
-    return poGDS->dfNoDataValue;
-}
-
-/************************************************************************/
-/*                           SetNoDataValue()                           */
-/************************************************************************/
-
-CPLErr GTiffRGBABand::SetNoDataValue( double dfNoData )
-
-{
-    GTiffDataset	*poGDS = (GTiffDataset *) poDS;
-
-    poGDS->bNoDataSet = TRUE;
-    poGDS->bNoDataChanged = TRUE;
-    poGDS->dfNoDataValue = dfNoData;
-
-    return CE_None;
-}
-
-/************************************************************************/
-/*                          GetOverviewCount()                          */
-/************************************************************************/
-
-int GTiffRGBABand::GetOverviewCount()
-
-{
-    GTiffDataset	*poGDS = (GTiffDataset *) poDS;
-
-    return poGDS->nOverviewCount;
-}
-
-/************************************************************************/
-/*                            GetOverview()                             */
-/************************************************************************/
-
-GDALRasterBand *GTiffRGBABand::GetOverview( int i )
-
-{
-    GTiffDataset	*poGDS = (GTiffDataset *) poDS;
-
-    if( i < 0 || i >= poGDS->nOverviewCount )
-        return NULL;
-    else
-        return poGDS->papoOverviewDS[i]->GetRasterBand(nBand);
-}
-
-/************************************************************************/
 /* ==================================================================== */
 /*                             GTiffBitmapBand                          */
 /* ==================================================================== */
 /************************************************************************/
 
-class GTiffBitmapBand : public GDALRasterBand
+class GTiffBitmapBand : public GTiffRasterBand
 {
     friend class GTiffDataset;
 
@@ -1168,11 +1217,10 @@ class GTiffBitmapBand : public GDALRasterBand
     virtual       ~GTiffBitmapBand();
 
     virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IWriteBlock( int, int, void * );
 
     virtual GDALColorInterp GetColorInterpretation();
     virtual GDALColorTable *GetColorTable();
-    virtual double	    GetNoDataValue( int * );
-    virtual CPLErr	    SetNoDataValue( double );
 };
 
 
@@ -1181,6 +1229,7 @@ class GTiffBitmapBand : public GDALRasterBand
 /************************************************************************/
 
 GTiffBitmapBand::GTiffBitmapBand( GTiffDataset *poDS, int nBand )
+        : GTiffRasterBand( poDS, nBand )
 
 {
 
@@ -1190,13 +1239,7 @@ GTiffBitmapBand::GTiffBitmapBand( GTiffDataset *poDS, int nBand )
                   "One bit deep TIFF files only supported with one sample per pixel (band)." );
     }
 
-    this->poDS = poDS;
-    this->nBand = nBand;
-
     eDataType = GDT_Byte;
-
-    nBlockXSize = poDS->nBlockXSize;
-    nBlockYSize = poDS->nBlockYSize;
 
     if( poDS->poColorTable != NULL )
         poColorTable = poDS->poColorTable->Clone();
@@ -1237,6 +1280,18 @@ GTiffBitmapBand::~GTiffBitmapBand()
 
 {
     delete poColorTable;
+}
+
+/************************************************************************/
+/*                            IWriteBlock()                             */
+/************************************************************************/
+
+CPLErr GTiffBitmapBand::IWriteBlock( int, int, void * )
+
+{
+    CPLError( CE_Failure, CPLE_AppDefined, 
+              "One bit raster bands are read-only." );
+    return CE_Failure;
 }
 
 /************************************************************************/
@@ -1312,37 +1367,6 @@ GDALColorTable *GTiffBitmapBand::GetColorTable()
 
 {
     return poColorTable;
-}
-
-/************************************************************************/
-/*                           GetNoDataValue()                           */
-/************************************************************************/
-
-double GTiffBitmapBand::GetNoDataValue( int * pbSuccess )
-
-{
-    GTiffDataset	*poGDS = (GTiffDataset *) poDS;
-
-    if( pbSuccess )
-        *pbSuccess = poGDS->bNoDataSet;
-
-    return poGDS->dfNoDataValue;
-}
-
-/************************************************************************/
-/*                           SetNoDataValue()                           */
-/************************************************************************/
-
-CPLErr GTiffBitmapBand::SetNoDataValue( double dfNoData )
-
-{
-    GTiffDataset	*poGDS = (GTiffDataset *) poDS;
-
-    poGDS->bNoDataSet = TRUE;
-    poGDS->bNoDataChanged = TRUE;
-    poGDS->dfNoDataValue = dfNoData;
-
-    return CE_None;
 }
 
 /************************************************************************/
@@ -1443,9 +1467,7 @@ GTiffDataset::~GTiffDataset()
 
     if( nGCPCount > 0 )
     {
-        for( int i = 0; i < nGCPCount; i++ )
-            CPLFree( pasGCPList[i].pszId );
-
+        GDALDeinitGCPs( nGCPCount, pasGCPList );
         CPLFree( pasGCPList );
     }
 
@@ -2033,6 +2055,44 @@ void GTiffDataset::WriteGeoTIFFInfo()
 }
 
 /************************************************************************/
+/*                         AppendMetadataItem()                         */
+/************************************************************************/
+
+static CPLXMLNode *AppendMetadataItem( CPLXMLNode *psRoot, 
+                                       const char *pszKey, 
+                                       const char *pszValue,
+                                       int nBand, const char *pszRole )
+
+{
+    char szBandId[32];
+    CPLXMLNode *psItem;
+
+    if( psRoot == NULL )
+        psRoot = CPLCreateXMLNode( NULL, CXT_Element, "GDALMetadata" );
+        
+    psItem = CPLCreateXMLNode( psRoot, CXT_Element, "Item" );
+    CPLCreateXMLNode( CPLCreateXMLNode( psItem, CXT_Attribute, "name"),
+                      CXT_Text, pszKey );
+
+    if( nBand > 0 )
+    {
+        sprintf( szBandId, "%d", nBand - 1 );
+        CPLCreateXMLNode( CPLCreateXMLNode( psItem,CXT_Attribute,"sample"),
+                          CXT_Text, szBandId );
+    }
+
+    if( pszRole != NULL )
+        CPLCreateXMLNode( CPLCreateXMLNode( psItem,CXT_Attribute,"role"),
+                          CXT_Text, pszRole );
+
+    char *pszEscapedItemValue = CPLEscapeString(pszValue,-1,CPLES_XML);
+    CPLCreateXMLNode( psItem, CXT_Text, pszEscapedItemValue );
+    CPLFree( pszEscapedItemValue );
+
+    return psRoot;
+}
+
+/************************************************************************/
 /*                           WriteMetadata()                            */
 /************************************************************************/
 
@@ -2070,18 +2130,52 @@ void GTiffDataset::WriteMetadata( GDALDataset *poSrcDS, TIFF *hTIFF )
             TIFFSetField( hTIFF, TIFFTAG_RESOLUTIONUNIT, atoi(pszItemValue) );
         else
         {
-            CPLXMLNode *psItem; 
-
-            if( psRoot == NULL )
-                psRoot = CPLCreateXMLNode( NULL, CXT_Element, "GDALMetadata" );
-
-            psItem = CPLCreateXMLNode( psRoot, CXT_Element, "Item" );
-            CPLCreateXMLNode( CPLCreateXMLNode( psItem, CXT_Attribute, "name"),
-                              CXT_Text, pszItemName );
-            CPLCreateXMLNode( psItem, CXT_Text, pszItemValue );
+            psRoot = AppendMetadataItem( psRoot, pszItemName, pszItemValue, 
+                                         0, NULL );
         }
 
         CPLFree( pszItemName );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      We also need to address band specific metadata.                 */
+/* -------------------------------------------------------------------- */
+    int nBand;
+    for( nBand = 1; nBand <= poSrcDS->GetRasterCount(); nBand++ )
+    {
+        GDALRasterBand *poBand = poSrcDS->GetRasterBand( nBand );
+
+        
+        papszMD = poBand->GetMetadata();
+        nItemCount = CSLCount(papszMD);
+
+        for( iItem = 0; iItem < nItemCount; iItem++ )
+        {
+            const char *pszItemValue;
+            char *pszItemName = NULL;
+
+            pszItemValue = CPLParseNameValue( papszMD[iItem], &pszItemName );
+
+            psRoot = AppendMetadataItem( psRoot, pszItemName, pszItemValue, 
+                                         nBand, NULL );
+            CPLFree( pszItemName );
+        }
+
+        int bSuccess;
+        double dfOffset = poBand->GetOffset( &bSuccess );
+        double dfScale = poBand->GetScale();
+
+        if( bSuccess )
+        {
+            char szValue[128];
+
+            sprintf( szValue, "%.16g", dfOffset );
+            psRoot = AppendMetadataItem( psRoot, "OFFSET", szValue, nBand, 
+                                         "offset" );
+            sprintf( szValue, "%.16g", dfScale );
+            psRoot = AppendMetadataItem( psRoot, "SCALE", szValue, nBand, 
+                                         "scale" );
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -2568,7 +2662,7 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, uint32 nDirOffsetIn,
 
                 sprintf( szID, "%d", iGCP+1 );
                 pasGCPList[iGCP].pszId = CPLStrdup( szID );
-                pasGCPList[iGCP].pszInfo = "";
+                pasGCPList[iGCP].pszInfo = CPLStrdup("");
                 pasGCPList[iGCP].dfGCPPixel = padfTiePoints[iGCP*6+0];
                 pasGCPList[iGCP].dfGCPLine = padfTiePoints[iGCP*6+1];
                 pasGCPList[iGCP].dfGCPX = padfTiePoints[iGCP*6+3];
@@ -2680,18 +2774,40 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, uint32 nDirOffsetIn,
 
             for( ; psItem != NULL; psItem = psItem->psNext )
             {
-                if( psItem->eType == CXT_Element
-                    && EQUAL(psItem->pszValue,"Item") 
-                    && psItem->psChild->eType == CXT_Attribute
-                    && EQUAL(psItem->psChild->pszValue,"name")
-                    && psItem->psChild->psChild != NULL
-                    && psItem->psChild->psChild->eType == CXT_Text
-                    && psItem->psChild->psNext != NULL
-                    && psItem->psChild->psNext->eType == CXT_Text )
+                const char *pszKey, *pszValue, *pszRole; 
+                char *pszUnescapedValue;
+                int nBand;
+
+                if( psItem->eType != CXT_Element
+                    || !EQUAL(psItem->pszValue,"Item") )
+                    continue;
+
+                pszKey = CPLGetXMLValue( psItem, "name", NULL );
+                pszValue = CPLGetXMLValue( psItem, NULL, NULL );
+                nBand = atoi(CPLGetXMLValue( psItem, "sample", "-1" )) + 1;
+                pszRole = CPLGetXMLValue( psItem, "role", "" );
+                
+                if( pszKey == NULL || pszValue == NULL )
+                    continue;
+
+                pszUnescapedValue = CPLUnescapeString( pszValue, NULL, 
+                                                       CPLES_XML );
+                if( nBand == 0 )
+                    SetMetadataItem( pszKey, pszUnescapedValue );
+                else
                 {
-                    SetMetadataItem( psItem->psChild->psChild->pszValue, 
-                                     psItem->psChild->psNext->pszValue );
+                    GDALRasterBand *poBand = GetRasterBand(nBand);
+                    if( poBand != NULL )
+                    {
+                        if( EQUAL(pszRole,"scale") )
+                            poBand->SetScale( atof(pszUnescapedValue) );
+                        else if( EQUAL(pszRole,"offset") )
+                            poBand->SetOffset( atof(pszUnescapedValue) );
+                        else
+                            poBand->SetMetadataItem(pszKey,pszUnescapedValue);
+                    }
                 }
+                CPLFree( pszUnescapedValue );
             }
 
             CPLDestroyXMLNode( psRoot );
@@ -3756,8 +3872,16 @@ CPLErr GTiffDataset::SetGCPs( int nGCPCount, const GDAL_GCP *pasGCPList,
 {
     if( GetAccess() == GA_Update )
     {
+        if( this->nGCPCount > 0 )
+        {
+            GDALDeinitGCPs( this->nGCPCount, this->pasGCPList );
+            CPLFree( this->pasGCPList );
+        }
+
 	this->nGCPCount = nGCPCount;
 	this->pasGCPList = GDALDuplicateGCPs(nGCPCount, pasGCPList);
+
+        CPLFree( this->pszProjection );
 	this->pszProjection = CPLStrdup( pszGCPProjection );
         bGeoTIFFInfoChanged = TRUE;
 
