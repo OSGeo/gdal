@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.22  2004/02/09 05:43:11  warmerda
+ * Fixed typo.
+ *
  * Revision 1.21  2004/02/09 05:18:07  warmerda
  * fixed up north/south MGRS support
  *
@@ -256,7 +259,7 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
                     if( nZone != psImage->nZone )
                     {
                         CPLError( CE_Warning, CPLE_AppDefined,
-                                  "Some IGEOGLO points are in different UTM\n"
+                                  "Some IGEOLO points are in different UTM\n"
                                   "zones, but this configuration isn't currently\n"
                                   "supported by GDAL, ignoring IGEOLO." );
                         psImage->nZone = -100;
