@@ -1,6 +1,16 @@
+2002-05-08  Andrey Kiselev  <dron@remotesensing.org>
+	
+	* /gdal/frmts/l1b/l1bdataset.cpp, GNUmakefile, makefile.vc: New driver
+	(read only) for the NOAA Polar Orbiter Level 1b Dataset
+
+2002-04-20  Andrey Kiselev  <dron@remotesensing.org>
+
+	* /gdal/frmts/png/pngdataset.cpp: Added support for
+	GDALWriteWolrldFile(). New option WORLDFILE=YES
+
 2002-04-19  Frank Warmerdam  <warmerdam@pobox.com>
 
-	* gdal/ogr/swq.{c,h}; Added support for [NOT] IN, [NOT] LIKE and IS 
+	* gdal/ogr/swq.{c,h}: Added support for [NOT] IN, [NOT] LIKE and IS 
 	[NOT] NULL predicates in WHERE clauses.
 
 	* gdal/frmts/vrt/vrtdataset.cpp: added CreateCopy() implementation.
