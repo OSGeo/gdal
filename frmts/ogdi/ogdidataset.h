@@ -29,6 +29,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.4  2000/08/25 21:31:04  warmerda
+ * added colortable support
+ *
  * Revision 1.3  2000/08/25 14:28:04  warmerda
  * preliminary support with IRasterIO
  *
@@ -100,6 +103,8 @@ class OGDIRasterBand : public GDALRasterBand
     char	*pszLayerName;
     ecs_Family  eFamily;
 
+    GDALColorTable *poCT;
+
     virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
                               void *, int, int, GDALDataType,
                               int, int );
@@ -114,6 +119,8 @@ class OGDIRasterBand : public GDALRasterBand
 
     virtual CPLErr IReadBlock( int, int, void * );
     virtual int    HasArbitraryOverviews();
+    virtual GDALColorInterp GetColorInterpretation();
+    virtual GDALColorTable *GetColorTable();
 };
 
 #endif /* ndef OGDIDATASET_H_INCLUDED */

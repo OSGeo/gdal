@@ -29,6 +29,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.4  2000/08/25 21:31:04  warmerda
+ * added colortable support
+ *
  * Revision 1.3  2000/08/25 14:28:04  warmerda
  * preliminary support with IRasterIO
  *
@@ -59,6 +62,7 @@ OGDIRasterBand::OGDIRasterBand( OGDIDataset *poDS, int nBand,
     this->nBand = nBand;
     this->eFamily = eFamily;
     this->pszLayerName = CPLStrdup(pszName);
+    poCT = NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Make this layer current.                                        */
@@ -73,6 +77,28 @@ OGDIRasterBand::OGDIRasterBand( OGDIDataset *poDS, int nBand,
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "%s", psResult->message );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Establish if we have meaningful colortable information.         */
+/* -------------------------------------------------------------------- */
+    if( eFamily == Matrix )
+    {
+        int     i;
+
+        poCT = new GDALColorTable();
+        
+        for( i = 0; i < (int) ECSRASTERINFO(psResult).cat.cat_len; i++ ) {
+            GDALColorEntry   sEntry;
+
+            sEntry.c1 = ECSRASTERINFO(psResult).cat.cat_val[i].r;
+            sEntry.c2 = ECSRASTERINFO(psResult).cat.cat_val[i].g;
+            sEntry.c3 = ECSRASTERINFO(psResult).cat.cat_val[i].b;
+            sEntry.c4 = 255;
+
+            poCT->SetColorEntry( ECSRASTERINFO(psResult).cat.cat_val[i].no_cat, 
+                                 &sEntry );
+        }
     }
     
 /* -------------------------------------------------------------------- */
@@ -286,6 +312,29 @@ CPLErr OGDIRasterBand::EstablishAccess( int nWinXOff, int nWinXSize,
     }
 
     return CE_None;
+}
+
+/************************************************************************/
+/*                       GetColorInterpretation()                       */
+/************************************************************************/
+
+GDALColorInterp OGDIRasterBand::GetColorInterpretation()
+
+{
+    if( poCT == NULL )
+        return GCI_Undefined;
+    else
+        return GCI_PaletteIndex;
+}
+
+/************************************************************************/
+/*                           GetColorTable()                            */
+/************************************************************************/
+
+GDALColorTable *OGDIRasterBand::GetColorTable()
+
+{
+    return poCT;
 }
     
 /************************************************************************/
