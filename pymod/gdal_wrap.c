@@ -33,8 +33,8 @@
  * and things like that.
  *
  * $Log$
- * Revision 1.73  2003/06/23 14:07:30  warmerda
- * fixed typedef int int problem
+ * Revision 1.74  2003/08/27 15:40:05  warmerda
+ * added OGRSetGenerate_DB2_V72_BYTE_ORDER()
  *
  ************************************************************************/
 
@@ -9250,6 +9250,19 @@ static PyObject *_wrap_OGRRegisterAll(PyObject *self, PyObject *args) {
     return _resultobj;
 }
 
+static PyObject *_wrap_OGRSetGenerate_DB2_V72_BYTE_ORDER(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    int  _result;
+    int  _arg0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"i:OGRSetGenerate_DB2_V72_BYTE_ORDER",&_arg0)) 
+        return NULL;
+    _result = (int )OGRSetGenerate_DB2_V72_BYTE_ORDER(_arg0);
+    _resultobj = Py_BuildValue("i",_result);
+    return _resultobj;
+}
+
 #define GDALColorEntry_c1_set(_swigobj,_swigval) (_swigobj->c1 = _swigval,_swigval)
 static PyObject *_wrap_GDALColorEntry_c1_set(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
@@ -9611,6 +9624,7 @@ static PyMethodDef _gdalMethods[] = {
 	 { "GDALColorEntry_c2_set", _wrap_GDALColorEntry_c2_set, 1 },
 	 { "GDALColorEntry_c1_get", _wrap_GDALColorEntry_c1_get, 1 },
 	 { "GDALColorEntry_c1_set", _wrap_GDALColorEntry_c1_set, 1 },
+	 { "OGRSetGenerate_DB2_V72_BYTE_ORDER", _wrap_OGRSetGenerate_DB2_V72_BYTE_ORDER, 1 },
 	 { "OGRBuildPolygonFromEdges", py_OGRBuildPolygonFromEdges, 1 },
 	 { "OGRRegisterAll", _wrap_OGRRegisterAll, 1 },
 	 { "OGRGetOpenDS", _wrap_OGRGetOpenDS, 1 },
