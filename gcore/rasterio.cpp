@@ -29,6 +29,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2002/05/31 22:18:50  warmerda
+ * Ensure that GDALCopyWords() rounds off (nearest) rather than rounding
+ * down copying from float to integer outputs, and uses floor() when assigning
+ * to signed integer output to ensure consistent rounding behaviour across 0.
+ *
  * Revision 1.14  2001/07/18 04:04:31  warmerda
  * added CPL_CVSID
  *
@@ -491,6 +496,8 @@ GDALCopyWords( void * pSrcData, GDALDataType eSrcType, int nSrcPixelOffset,
         {
           case GDT_Byte:
           {
+              dfPixelValue += 0.5;
+
               if( dfPixelValue < 0.0 )
                   *pabyDstWord = 0;
               else if( dfPixelValue > 255.0 )
@@ -504,6 +511,8 @@ GDALCopyWords( void * pSrcData, GDALDataType eSrcType, int nSrcPixelOffset,
           {
               GUInt16	nVal;
               
+              dfPixelValue += 0.5;
+
               if( dfPixelValue < 0.0 )
                   nVal = 0;
               else if( dfPixelValue > 65535.0 )
@@ -519,12 +528,14 @@ GDALCopyWords( void * pSrcData, GDALDataType eSrcType, int nSrcPixelOffset,
           {
               GInt16	nVal;
               
+              dfPixelValue += 0.5;
+
               if( dfPixelValue < -32768 )
                   nVal = -32768;
               else if( dfPixelValue > 32767 )
                   nVal = 32767;
               else
-                  nVal = (GInt16) dfPixelValue;
+                  nVal = (GInt16) floor(dfPixelValue);
 
               memcpy( pabyDstWord, &nVal, 2 );
           }
@@ -534,6 +545,8 @@ GDALCopyWords( void * pSrcData, GDALDataType eSrcType, int nSrcPixelOffset,
           {
               GUInt32	nVal;
               
+              dfPixelValue += 0.5;
+
               if( dfPixelValue < 0 )
                   nVal = 0;
               else if( dfPixelValue > 4294967295U )
@@ -549,12 +562,14 @@ GDALCopyWords( void * pSrcData, GDALDataType eSrcType, int nSrcPixelOffset,
           {
               GInt32	nVal;
               
+              dfPixelValue += 0.5;
+
               if( dfPixelValue < -2147483647.0 )
                   nVal = -2147483647;
               else if( dfPixelValue > 2147483647 )
                   nVal = 2147483647;
               else
-                  nVal = (GInt32) dfPixelValue;
+                  nVal = (GInt32) floor(dfPixelValue);
 
               memcpy( pabyDstWord, &nVal, 4 );
           }
@@ -578,12 +593,15 @@ GDALCopyWords( void * pSrcData, GDALDataType eSrcType, int nSrcPixelOffset,
           {
               GInt16	nVal;
               
+              dfPixelValue += 0.5;
+              dfPixelValueI += 0.5;
+
               if( dfPixelValue < -32768 )
                   nVal = -32768;
               else if( dfPixelValue > 32767 )
                   nVal = 32767;
               else
-                  nVal = (GInt16) dfPixelValue;
+                  nVal = (GInt16) floor(dfPixelValue);
               memcpy( pabyDstWord, &nVal, 2 );
 
               if( dfPixelValueI < -32768 )
@@ -591,7 +609,7 @@ GDALCopyWords( void * pSrcData, GDALDataType eSrcType, int nSrcPixelOffset,
               else if( dfPixelValueI > 32767 )
                   nVal = 32767;
               else
-                  nVal = (GInt16) dfPixelValueI;
+                  nVal = (GInt16) floor(dfPixelValueI);
               memcpy( pabyDstWord+2, &nVal, 2 );
           }
           break;
@@ -600,12 +618,15 @@ GDALCopyWords( void * pSrcData, GDALDataType eSrcType, int nSrcPixelOffset,
           {
               GInt32	nVal;
               
+              dfPixelValue += 0.5;
+              dfPixelValueI += 0.5;
+
               if( dfPixelValue < -2147483647.0 )
                   nVal = -2147483647;
               else if( dfPixelValue > 2147483647 )
                   nVal = 2147483647;
               else
-                  nVal = (GInt32) dfPixelValue;
+                  nVal = (GInt32) floor(dfPixelValue);
 
               memcpy( pabyDstWord, &nVal, 4 );
 
@@ -614,7 +635,7 @@ GDALCopyWords( void * pSrcData, GDALDataType eSrcType, int nSrcPixelOffset,
               else if( dfPixelValueI > 2147483647 )
                   nVal = 2147483647;
               else
-                  nVal = (GInt32) dfPixelValueI;
+                  nVal = (GInt32) floor(dfPixelValueI);
 
               memcpy( pabyDstWord+4, &nVal, 4 );
           }
