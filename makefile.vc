@@ -28,3 +28,6 @@ apps_dir:
 	$(MAKE) /f makefile.vc
 	cd ..
 
+ogr:      port_dir
+	cd ogr
+	$(MAKE) all 
