@@ -29,6 +29,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.37  2004/11/26 19:39:18  fwarmerdam
+ * avoid initialization warning from purify
+ *
  * Revision 1.36  2004/09/08 17:55:13  dron
  * Few problems fixed.
  *
@@ -1056,11 +1059,11 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
                 {
                     int32   hSW,  nDimensions, nStrBufSize;
                     char    **papszDimList = NULL,
-                            **papszGeolocations = NULL, **papszDimMap = NULL;
+                        **papszGeolocations = NULL, **papszDimMap = NULL;
                     char    *pszDimList = NULL,
-                            *pszGeoList = NULL, *pszDimMaps = NULL;
+                        *pszGeoList = NULL, *pszDimMaps = NULL;
                     int32   *paiRank = NULL, *paiNumType = NULL,
-                            *paiOffset = NULL, *paiIncrement = NULL;
+                        *paiOffset = NULL, *paiIncrement = NULL;
                     int     nDimCount;
                     
                     if( poOpenInfo->eAccess == GA_ReadOnly )
@@ -1098,13 +1101,13 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
                     {
                         poDS->nBands = poDS->aiDimSizes[0];
                         /*for ( i = 0; i < nDimCount; i++ )
-                        {
-                            if ( EQUALN( papszDimList[i], "Band", 4 ) )
-                            {
-                                poDS->nBands = poDS->aiDimSizes[i];
-                                break;
-                            }
-                        }*/
+                          {
+                          if ( EQUALN( papszDimList[i], "Band", 4 ) )
+                          {
+                          poDS->nBands = poDS->aiDimSizes[i];
+                          break;
+                          }
+                          }*/
                     }
 
                     // Search for the "XDim" and "YDim" names or take the last
@@ -1112,12 +1115,12 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
                     poDS->iXDim = nDimCount - 1;
                     poDS->iYDim = nDimCount - 2;
                     /*for ( i = 0; i < nDimCount; i++ )
-                    {
-                        if ( EQUALN( papszDimList[i], "X", 1 ) )
-                            poDS->iXDim = i;
-                        else if ( EQUALN( papszDimList[i], "Y", 1 ) )
-                            poDS->iYDim = i;
-                    }*/
+                      {
+                      if ( EQUALN( papszDimList[i], "X", 1 ) )
+                      poDS->iXDim = i;
+                      else if ( EQUALN( papszDimList[i], "Y", 1 ) )
+                      poDS->iYDim = i;
+                      }*/
 
                     // Retrieve NODATA value. FIXME: doesn't work.
                     //SWgetfillvalue( hGD, poDS->pszFieldName, );
@@ -1126,114 +1129,114 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 /*  Retrieve geolocation fields.                                        */
 /* -------------------------------------------------------------------- */
                     /*char    szXGeo[8192], szYGeo[8192];
-                    int32   nDataFields, nDimMaps;
+                      int32   nDataFields, nDimMaps;
 
-                    nDataFields = SWnentries( hSW, HDFE_NENTGFLD, &nStrBufSize );
-                    pszGeoList = (char *)CPLMalloc( nStrBufSize + 1 );
-                    paiRank = (int32 *)CPLMalloc( nDataFields * sizeof(int32) );
-                    paiNumType = (int32 *)CPLMalloc( nDataFields * sizeof(int32) );
-                    SWinqgeofields( hSW, pszGeoList, paiRank, paiNumType );
+                      nDataFields = SWnentries( hSW, HDFE_NENTGFLD, &nStrBufSize );
+                      pszGeoList = (char *)CPLMalloc( nStrBufSize + 1 );
+                      paiRank = (int32 *)CPLMalloc( nDataFields * sizeof(int32) );
+                      paiNumType = (int32 *)CPLMalloc( nDataFields * sizeof(int32) );
+                      SWinqgeofields( hSW, pszGeoList, paiRank, paiNumType );
 
-#if DEBUG
-                    CPLDebug( "HDF4Image",
-                              "Number of geolocation fields in swath %s: %d",
-                              poDS->pszSubdatasetName, nDataFields );
-                    CPLDebug( "HDF4Image",
-                              "List of geolocation fields in swath %s: %s",
-                              poDS->pszSubdatasetName, pszGeoList );
-                    CPLDebug( "HDF4Image", "Geolocation fields ranks: %s",
-                              SPrintArray( GDT_UInt32, paiRank, nDataFields, "," ) );
-#endif
-                    papszGeolocations = CSLTokenizeString2( pszGeoList, ",",
-                                                        CSLT_HONOURSTRINGS );
-                    // Read geolocation data
-                    nDimMaps = SWnentries( hSW, HDFE_NENTMAP, &nStrBufSize );
-                    pszDimMaps = (char *)CPLMalloc( nStrBufSize + 1 );
-                    paiOffset = (int32 *)CPLMalloc( nDataFields * sizeof(int32) );
-                    paiIncrement = (int32 *)CPLMalloc( nDataFields * sizeof(int32) );
-                    SWinqmaps( hSW, pszDimMaps, paiOffset, paiIncrement );
+                      #if DEBUG
+                      CPLDebug( "HDF4Image",
+                      "Number of geolocation fields in swath %s: %d",
+                      poDS->pszSubdatasetName, nDataFields );
+                      CPLDebug( "HDF4Image",
+                      "List of geolocation fields in swath %s: %s",
+                      poDS->pszSubdatasetName, pszGeoList );
+                      CPLDebug( "HDF4Image", "Geolocation fields ranks: %s",
+                      SPrintArray( GDT_UInt32, paiRank, nDataFields, "," ) );
+                      #endif
+                      papszGeolocations = CSLTokenizeString2( pszGeoList, ",",
+                      CSLT_HONOURSTRINGS );
+                      // Read geolocation data
+                      nDimMaps = SWnentries( hSW, HDFE_NENTMAP, &nStrBufSize );
+                      pszDimMaps = (char *)CPLMalloc( nStrBufSize + 1 );
+                      paiOffset = (int32 *)CPLMalloc( nDataFields * sizeof(int32) );
+                      paiIncrement = (int32 *)CPLMalloc( nDataFields * sizeof(int32) );
+                      SWinqmaps( hSW, pszDimMaps, paiOffset, paiIncrement );
 
-#if DEBUG
-                    CPLDebug( "HDF4Image",
-                              "List of geolocation maps in swath %s: %s",
-                              poDS->pszSubdatasetName, pszDimMaps );
-                    CPLDebug( "HDF4Image", "Geolocation map offsets: %s",
-                              SPrintArray( GDT_UInt32, paiOffset, nDataFields, "," ) );
-                    CPLDebug( "HDF4Image", "Geolocation map increments: %s",
-                              SPrintArray( GDT_UInt32, paiIncrement,
-                                           nDataFields, "," ) );
-#endif
+                      #if DEBUG
+                      CPLDebug( "HDF4Image",
+                      "List of geolocation maps in swath %s: %s",
+                      poDS->pszSubdatasetName, pszDimMaps );
+                      CPLDebug( "HDF4Image", "Geolocation map offsets: %s",
+                      SPrintArray( GDT_UInt32, paiOffset, nDataFields, "," ) );
+                      CPLDebug( "HDF4Image", "Geolocation map increments: %s",
+                      SPrintArray( GDT_UInt32, paiIncrement,
+                      nDataFields, "," ) );
+                      #endif
 
-                    papszDimMap = CSLTokenizeString2( pszDimMaps, ",",
-                                                      CSLT_HONOURSTRINGS );
-                    for ( i = 0; i < CSLCount(papszDimMap); i++ )
-                    {
-                        if ( strstr(papszDimMap[i], papszDimList[poDS->iXDim]) )
-                        {
-                            strncpy( szXGeo, papszDimList[poDS->iXDim], 8192 );
-                            char *pszTemp1 = papszDimMap[i];
-                            char *pszTemp2 = szXGeo;
-                            while ( *pszTemp1 && *pszTemp1 != '/' )
-                                *pszTemp2++ = *pszTemp1++;
-                            *pszTemp2 = '\0';
-                        }
+                      papszDimMap = CSLTokenizeString2( pszDimMaps, ",",
+                      CSLT_HONOURSTRINGS );
+                      for ( i = 0; i < CSLCount(papszDimMap); i++ )
+                      {
+                      if ( strstr(papszDimMap[i], papszDimList[poDS->iXDim]) )
+                      {
+                      strncpy( szXGeo, papszDimList[poDS->iXDim], 8192 );
+                      char *pszTemp1 = papszDimMap[i];
+                      char *pszTemp2 = szXGeo;
+                      while ( *pszTemp1 && *pszTemp1 != '/' )
+                      *pszTemp2++ = *pszTemp1++;
+                      *pszTemp2 = '\0';
+                      }
 
-                        else if ( strstr(papszDimMap[i], papszDimList[poDS->iYDim]) )
-                        {
-                            strncpy( szYGeo, papszDimList[poDS->iYDim], 8192 );
-                            char *pszTemp1 = papszDimMap[i];
-                            char *pszTemp2 = szYGeo;
-                            while ( *pszTemp1 && *pszTemp1 != '/' )
-                                *pszTemp2++ = *pszTemp1++;
-                            *pszTemp2 = '\0';
-                        }
-                    }
+                      else if ( strstr(papszDimMap[i], papszDimList[poDS->iYDim]) )
+                      {
+                      strncpy( szYGeo, papszDimList[poDS->iYDim], 8192 );
+                      char *pszTemp1 = papszDimMap[i];
+                      char *pszTemp2 = szYGeo;
+                      while ( *pszTemp1 && *pszTemp1 != '/' )
+                      *pszTemp2++ = *pszTemp1++;
+                      *pszTemp2 = '\0';
+                      }
+                      }
 
-                    for ( i = 0; i < CSLCount(papszGeolocations); i++ )
-                    {
-                        int32   *paiStart, *paiEdges;
-                        if ( EQUALN(papszGeolocations[i], "Latitude", 8) )
-                        {
-                            char    szGeoDimList[8192];
-                            char    **papszGeoDimList = NULL;
-                            int32   iRank, iNumType;
-                            int32   aiDimSizes[MAX_VAR_DIMS];
-                            double  *padfLat;
-                            int     iGCP;
+                      for ( i = 0; i < CSLCount(papszGeolocations); i++ )
+                      {
+                      int32   *paiStart, *paiEdges;
+                      if ( EQUALN(papszGeolocations[i], "Latitude", 8) )
+                      {
+                      char    szGeoDimList[8192];
+                      char    **papszGeoDimList = NULL;
+                      int32   iRank, iNumType;
+                      int32   aiDimSizes[MAX_VAR_DIMS];
+                      double  *padfLat;
+                      int     iGCP;
                             
-                            SWfieldinfo( hSW, papszGeolocations[i], &iRank,
-                                         aiDimSizes, &iNumType, szGeoDimList );
-                            papszGeoDimList = CSLTokenizeString2( szGeoDimList,
-                                              ",", CSLT_HONOURSTRINGS );
+                      SWfieldinfo( hSW, papszGeolocations[i], &iRank,
+                      aiDimSizes, &iNumType, szGeoDimList );
+                      papszGeoDimList = CSLTokenizeString2( szGeoDimList,
+                      ",", CSLT_HONOURSTRINGS );
 
-#if DEBUG
-                            CPLDebug( "HDF4Image",
-                                      "List of dimensions in geolocation field %s: %s",
-                                      papszGeolocations[i], szGeoDimList );
-#endif
+                      #if DEBUG
+                      CPLDebug( "HDF4Image",
+                      "List of dimensions in geolocation field %s: %s",
+                      papszGeolocations[i], szGeoDimList );
+                      #endif
 
-                            paiStart = (int32 *)CPLMalloc( iRank * sizeof(int32) );
-                            paiEdges = (int32 *)CPLMalloc( iRank * sizeof(int32) );
-                            paiStart[0] = 0;
-                            paiStart[1] = 0;
-                            paiEdges[0] =
-                                aiDimSizes[CSLFindString( papszGeoDimList,
-                                                          szXGeo )];
-                            paiEdges[1] =
-                                aiDimSizes[CSLFindString( papszGeoDimList,
-                                                          szYGeo )];
-                            poDS->nGCPCount = paiEdges[0] * paiEdges[1];
-                            poDS->pasGCPList = (GDAL_GCP *)
-                                CPLCalloc( poDS->nGCPCount, sizeof( GDAL_GCP ) );
-                            GDALInitGCPs( poDS->nGCPCount, poDS->pasGCPList );
-                            padfLat = (double *)
-                                CPLMalloc( poDS->nGCPCount * sizeof(double));
+                      paiStart = (int32 *)CPLMalloc( iRank * sizeof(int32) );
+                      paiEdges = (int32 *)CPLMalloc( iRank * sizeof(int32) );
+                      paiStart[0] = 0;
+                      paiStart[1] = 0;
+                      paiEdges[0] =
+                      aiDimSizes[CSLFindString( papszGeoDimList,
+                      szXGeo )];
+                      paiEdges[1] =
+                      aiDimSizes[CSLFindString( papszGeoDimList,
+                      szYGeo )];
+                      poDS->nGCPCount = paiEdges[0] * paiEdges[1];
+                      poDS->pasGCPList = (GDAL_GCP *)
+                      CPLCalloc( poDS->nGCPCount, sizeof( GDAL_GCP ) );
+                      GDALInitGCPs( poDS->nGCPCount, poDS->pasGCPList );
+                      padfLat = (double *)
+                      CPLMalloc( poDS->nGCPCount * sizeof(double));
                             
-                            SWreadfield( hSW, papszGeolocations[i],
-                                         paiStart, NULL, paiEdges, padfLat );
+                      SWreadfield( hSW, papszGeolocations[i],
+                      paiStart, NULL, paiEdges, padfLat );
 
-                            for ( iGCP = 0; iGCP < poDS->nGCPCount, iGCP++ )
-                            {
+                      for ( iGCP = 0; iGCP < poDS->nGCPCount, iGCP++ )
+                      {
                                 // GCPs in Level 1A dataset are in geocentric
                                 // coordinates. Convert them in geodetic (we
                                 // will convert latitudes only, longitudes
@@ -1241,23 +1244,23 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
                                 // they are the same).
                                 // This calculation valid for WGS84 datum only.
                                 poDS->pasGCPList[index].dfGCPY = 
-                                    atan(tan(padfLat[index]*PI/180)/0.99330562)*180/PI;
+                                atan(tan(padfLat[index]*PI/180)/0.99330562)*180/PI;
                                 poDS->pasGCPList[index].dfGCPX = 0.0;//pdfLong[index];
                                 poDS->pasGCPList[index].dfGCPZ = 0.0;
 
                                 poDS->pasGCPList[index].dfGCPPixel =
-                                    piLatticeX[index] + 0.5;
+                                piLatticeX[index] + 0.5;
                                 poDS->pasGCPList[index].dfGCPLine =
-                                    piLatticeY[index] + 0.5;
+                                piLatticeY[index] + 0.5;
                                 poDS->nGCPCount++;
-                            }
+                                }
 
-                            CPLFree( padfLat );
-                            CPLFree( paiStart );
-                            CPLFree( paiEdges );
-                            CSLDestroy( papszGeoDimList );
-                        }
-                    } */
+                                CPLFree( padfLat );
+                                CPLFree( paiStart );
+                                CPLFree( paiEdges );
+                                CSLDestroy( papszGeoDimList );
+                                }
+                                } */
 
                     CSLDestroy( papszDimMap );
                     CSLDestroy( papszGeolocations );
@@ -1409,7 +1412,7 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
                 break;
                 
                 default:
-                break;
+                    break;
             }
         }
         break;
@@ -1432,79 +1435,80 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
             if( poDS->hHDF4 <= 0 )
                 return( NULL );
 
-                poDS->hSD = SDstart( poDS->pszFilename, DFACC_READ );
-                if ( poDS->hSD == -1 )
-                    return NULL;
+            poDS->hSD = SDstart( poDS->pszFilename, DFACC_READ );
+            if ( poDS->hSD == -1 )
+                return NULL;
                 
-                if ( poDS->ReadGlobalAttributes( poDS->hSD ) != CE_None )
-                    return NULL;
-            
-                iSDS = SDselect( poDS->hSD, poDS->iDataset );
-                SDgetinfo( iSDS, poDS->szName, &poDS->iRank, poDS->aiDimSizes,
-                           &poDS->iNumType, &poDS->nAttrs);
+            if ( poDS->ReadGlobalAttributes( poDS->hSD ) != CE_None )
+                return NULL;
 
-                // We will duplicate global metadata for every subdataset
+            memset( poDS->aiDimSizes, 0, sizeof(int32) * MAX_VAR_DIMS );
+            iSDS = SDselect( poDS->hSD, poDS->iDataset );
+            SDgetinfo( iSDS, poDS->szName, &poDS->iRank, poDS->aiDimSizes,
+                       &poDS->iNumType, &poDS->nAttrs);
+
+            // We will duplicate global metadata for every subdataset
+            poDS->papszLocalMetadata =
+                CSLDuplicate( poDS->papszGlobalMetadata );
+
+            for ( iAttribute = 0; iAttribute < poDS->nAttrs; iAttribute++ )
+            {
+                SDattrinfo( iSDS, iAttribute, szAttrName,
+                            &iAttrNumType, &nValues );
                 poDS->papszLocalMetadata =
-                    CSLDuplicate( poDS->papszGlobalMetadata );
+                    poDS->TranslateHDF4Attributes( iSDS, iAttribute,
+                                                   szAttrName, iAttrNumType,
+                                                   nValues,
+                                                   poDS->papszLocalMetadata );
+            }
+            poDS->SetMetadata( poDS->papszLocalMetadata, "" );
+            SDendaccess( iSDS );
 
-                for ( iAttribute = 0; iAttribute < poDS->nAttrs; iAttribute++ )
-                {
-                    SDattrinfo( iSDS, iAttribute, szAttrName,
-                                &iAttrNumType, &nValues );
-                    poDS->papszLocalMetadata =
-                        poDS->TranslateHDF4Attributes( iSDS, iAttribute,
-                                                       szAttrName, iAttrNumType,
-                                                       nValues,
-                                                       poDS->papszLocalMetadata );
-                }
-                poDS->SetMetadata( poDS->papszLocalMetadata, "" );
-                SDendaccess( iSDS );
+            CPLDebug( "HDF4Image",
+                      "aiDimSizes[0]=%d, aiDimSizes[1]=%d, "
+                      "aiDimSizes[2]=%d, aiDimSizes[3]=%d",
+                      poDS->aiDimSizes[0], poDS->aiDimSizes[1],
+                      poDS->aiDimSizes[2], poDS->aiDimSizes[3] );
 
-                CPLDebug( "HDF4Image",
-                          "aiDimSizes[0]=%d, aiDimSizes[1]=%d, "
-                          "aiDimSizes[2]=%d, aiDimSizes[3]=%d",
-                          poDS->aiDimSizes[0], poDS->aiDimSizes[1],
-                          poDS->aiDimSizes[2], poDS->aiDimSizes[3] );
-
-                switch( poDS->iRank )
-                {
-                    case 2:
-                        poDS->nBands = 1;
-                        poDS->iXDim = 1;
-                        poDS->iYDim = 0;
-                        break;
-                    case 3:
-                        if( poDS->aiDimSizes[0] < poDS->aiDimSizes[2] )
+            switch( poDS->iRank )
+            {
+                case 2:
+                    poDS->nBands = 1;
+                    poDS->iXDim = 1;
+                    poDS->iYDim = 0;
+                    break;
+                case 3:
+                    if( poDS->aiDimSizes[0] < poDS->aiDimSizes[2] )
+                    {
+                        poDS->iBandDim = 0;
+                        poDS->iXDim = 2;
+                        poDS->iYDim = 1;
+                    }
+                    else
+                    {
+                        if( poDS->aiDimSizes[1] <= poDS->aiDimSizes[0] &&
+                            poDS->aiDimSizes[1] <= poDS->aiDimSizes[2] )
                         {
-                            poDS->iBandDim = 0;
+                            poDS->iBandDim = 1;
                             poDS->iXDim = 2;
-                            poDS->iYDim = 1;
+                            poDS->iYDim = 0;
                         }
                         else
                         {
-                            if( poDS->aiDimSizes[1] <= poDS->aiDimSizes[0] &&
-                                poDS->aiDimSizes[1] <= poDS->aiDimSizes[2] )
-                            {
-                                poDS->iBandDim = 1;
-                                poDS->iXDim = 2;
-                                poDS->iYDim = 0;
-                            }
-                            else
-                            {
-                                poDS->iBandDim = 2;
-                                poDS->iXDim = 1;
-                                poDS->iYDim = 0;
+                            poDS->iBandDim = 2;
+                            poDS->iXDim = 1;
+                            poDS->iYDim = 0;
 
-                            }
                         }
-                        poDS->nBands = poDS->aiDimSizes[poDS->iBandDim];
-                        break;
-                    case 4: // FIXME
-                        poDS->nBands = poDS->aiDimSizes[2] * poDS->aiDimSizes[3];
-                        break;
-                    default:
-                        break;
-                }
+                    }
+                    poDS->nBands = poDS->aiDimSizes[poDS->iBandDim];
+                    break;
+                case 4: // FIXME
+                    poDS->nBands = poDS->aiDimSizes[2] * poDS->aiDimSizes[3];
+                    break;
+                default:
+                    break;
+            }
         }
         break;
 
@@ -1520,53 +1524,53 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
             if( poDS->hHDF4 <= 0 )
                 return( NULL );
 
-                poDS->hGR = GRstart( poDS->hHDF4 );
-                if ( poDS->hGR == -1 )
-                   return NULL;
+            poDS->hGR = GRstart( poDS->hHDF4 );
+            if ( poDS->hGR == -1 )
+                return NULL;
                 
-                poDS->iGR = GRselect( poDS->hGR, poDS->iDataset );
-                if ( GRgetiminfo( poDS->iGR, poDS->szName,
-                                  &poDS->iRank, &poDS->iNumType,
-                                  &poDS->iInterlaceMode, poDS->aiDimSizes,
-                                  &poDS->nAttrs ) != 0 )
-                    return NULL;
+            poDS->iGR = GRselect( poDS->hGR, poDS->iDataset );
+            if ( GRgetiminfo( poDS->iGR, poDS->szName,
+                              &poDS->iRank, &poDS->iNumType,
+                              &poDS->iInterlaceMode, poDS->aiDimSizes,
+                              &poDS->nAttrs ) != 0 )
+                return NULL;
 
-                // We will duplicate global metadata for every subdataset
-                poDS->papszLocalMetadata = CSLDuplicate( poDS->papszGlobalMetadata );
+            // We will duplicate global metadata for every subdataset
+            poDS->papszLocalMetadata = CSLDuplicate( poDS->papszGlobalMetadata );
 
-                for ( iAttribute = 0; iAttribute < poDS->nAttrs; iAttribute++ )
-                {
-                    GRattrinfo( poDS->iGR, iAttribute, szAttrName,
-                                &iAttrNumType, &nValues );
-                    poDS->papszLocalMetadata = 
-                        poDS->TranslateHDF4Attributes( poDS->iGR, iAttribute,
-                            szAttrName, iAttrNumType, nValues, poDS->papszLocalMetadata );
-                }
-                poDS->SetMetadata( poDS->papszLocalMetadata, "" );
-                // Read colour table
-                GDALColorEntry oEntry;
+            for ( iAttribute = 0; iAttribute < poDS->nAttrs; iAttribute++ )
+            {
+                GRattrinfo( poDS->iGR, iAttribute, szAttrName,
+                            &iAttrNumType, &nValues );
+                poDS->papszLocalMetadata = 
+                    poDS->TranslateHDF4Attributes( poDS->iGR, iAttribute,
+                                                   szAttrName, iAttrNumType, nValues, poDS->papszLocalMetadata );
+            }
+            poDS->SetMetadata( poDS->papszLocalMetadata, "" );
+            // Read colour table
+            GDALColorEntry oEntry;
                  
-                poDS->iPal = GRgetlutid ( poDS->iGR, poDS->iDataset );
-                if ( poDS->iPal != -1 )
+            poDS->iPal = GRgetlutid ( poDS->iGR, poDS->iDataset );
+            if ( poDS->iPal != -1 )
+            {
+                GRgetlutinfo( poDS->iPal, &poDS->nComps, &poDS->iPalDataType,
+                              &poDS->iPalInterlaceMode, &poDS->nPalEntries );
+                GRreadlut( poDS->iPal, poDS->aiPaletteData );
+                poDS->poColorTable = new GDALColorTable();
+                for( i = 0; i < N_COLOR_ENTRIES; i++ )
                 {
-                    GRgetlutinfo( poDS->iPal, &poDS->nComps, &poDS->iPalDataType,
-                                  &poDS->iPalInterlaceMode, &poDS->nPalEntries );
-                    GRreadlut( poDS->iPal, poDS->aiPaletteData );
-                    poDS->poColorTable = new GDALColorTable();
-                    for( i = 0; i < N_COLOR_ENTRIES; i++ )
-                    {
-                        oEntry.c1 = poDS->aiPaletteData[i][0];
-                        oEntry.c2 = poDS->aiPaletteData[i][1];
-                        oEntry.c3 = poDS->aiPaletteData[i][2];
-                        oEntry.c4 = 255;
+                    oEntry.c1 = poDS->aiPaletteData[i][0];
+                    oEntry.c2 = poDS->aiPaletteData[i][1];
+                    oEntry.c3 = poDS->aiPaletteData[i][2];
+                    oEntry.c4 = 255;
                         
-                        poDS->poColorTable->SetColorEntry( i, &oEntry );
-                    }
+                    poDS->poColorTable->SetColorEntry( i, &oEntry );
                 }
+            }
 
-                poDS->iXDim = 0;
-                poDS->iYDim = 1;
-                poDS->nBands = poDS->iRank;
+            poDS->iXDim = 0;
+            poDS->iYDim = 1;
+            poDS->nBands = poDS->iRank;
             break;
         default:
             return NULL;
@@ -1588,7 +1592,7 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     for( i = 1; i <= poDS->nBands; i++ )
         poDS->SetBand( i, new HDF4ImageRasterBand( poDS, i,
-                                    poDS->GetDataType( poDS->iNumType ) ) );
+                                                   poDS->GetDataType( poDS->iNumType ) ) );
 
 /* -------------------------------------------------------------------- */
 /*      Now we will handle particular types of HDF products. Every      */
@@ -1604,49 +1608,49 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*  HDF, created by GDAL.                                               */
 /* -------------------------------------------------------------------- */
-                case GDAL_HDF4:
+        case GDAL_HDF4:
+        {
+            const char  *pszValue;
+
+            CPLDebug( "HDF4Image",
+                      "Input dataset interpreted as GDAL_HDF4" );
+
+            if ( (pszValue =
+                  CSLFetchNameValue(poDS->papszGlobalMetadata,
+                                    "Projection")) )
+            {
+                if ( poDS->pszProjection )
+                    CPLFree( poDS->pszProjection );
+                poDS->pszProjection = CPLStrdup( pszValue );
+            }
+            if ( (pszValue = CSLFetchNameValue(poDS->papszGlobalMetadata,
+                                               "TransformationMatrix")) )
+            {
+                int i = 0;
+                char *pszString = (char *) pszValue; 
+                while ( *pszValue && i < 6 )
                 {
-                    const char  *pszValue;
-
-                    CPLDebug( "HDF4Image",
-                              "Input dataset interpreted as GDAL_HDF4" );
-
-                    if ( (pszValue =
-                          CSLFetchNameValue(poDS->papszGlobalMetadata,
-                                            "Projection")) )
-                    {
-                        if ( poDS->pszProjection )
-                            CPLFree( poDS->pszProjection );
-                        poDS->pszProjection = CPLStrdup( pszValue );
-                    }
-                    if ( (pszValue = CSLFetchNameValue(poDS->papszGlobalMetadata,
-                                                       "TransformationMatrix")) )
-                    {
-                        int i = 0;
-                        char *pszString = (char *) pszValue; 
-                        while ( *pszValue && i < 6 )
-                        {
-                            poDS->adfGeoTransform[i++] = strtod(pszString, &pszString);
-                            pszString++;
-                        }
-                        poDS->bHasGeoTransfom = TRUE;
-                    }
-                    for( i = 1; i <= poDS->nBands; i++ )
-                    {
-                        if ( (pszValue =
-                              CSLFetchNameValue(poDS->papszGlobalMetadata,
-                                                CPLSPrintf("BandDesc%d", i))) )
-                            poDS->GetRasterBand( i )->SetDescription( pszValue );
-                    }
-                    for( i = 1; i <= poDS->nBands; i++ )
-                    {
-                        if ( (pszValue =
-                              CSLFetchNameValue(poDS->papszGlobalMetadata,
-                                                CPLSPrintf("NoDataValue%d", i))) )
-                            poDS->GetRasterBand(i)->SetNoDataValue(atof(pszValue));
-                    }
+                    poDS->adfGeoTransform[i++] = strtod(pszString, &pszString);
+                    pszString++;
                 }
-                break;
+                poDS->bHasGeoTransfom = TRUE;
+            }
+            for( i = 1; i <= poDS->nBands; i++ )
+            {
+                if ( (pszValue =
+                      CSLFetchNameValue(poDS->papszGlobalMetadata,
+                                        CPLSPrintf("BandDesc%d", i))) )
+                    poDS->GetRasterBand( i )->SetDescription( pszValue );
+            }
+            for( i = 1; i <= poDS->nBands; i++ )
+            {
+                if ( (pszValue =
+                      CSLFetchNameValue(poDS->papszGlobalMetadata,
+                                        CPLSPrintf("NoDataValue%d", i))) )
+                    poDS->GetRasterBand(i)->SetNoDataValue(atof(pszValue));
+            }
+        }
+        break;
 
 /* -------------------------------------------------------------------- */
 /*      SeaWiFS Level 3 Standard Mapped Image Products.                 */
@@ -1709,7 +1713,7 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
         break;
 
         default:
-        break;
+            break;
     }
 
     return( poDS );
