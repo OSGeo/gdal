@@ -29,6 +29,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.2  2000/06/05 17:24:06  warmerda
+# added real complex support
+#
 # Revision 1.1  2000/03/08 21:05:42  warmerda
 # New
 #
@@ -43,6 +46,10 @@ GDT_UInt32 = 4
 GDT_Int32 = 5
 GDT_Float32 = 6
 GDT_Float64 = 7
+GDT_Int16 = 8
+GDT_Int32 = 9
+GDT_Float32 = 10
+GDT_Float64 = 11
 
 # GDALAccess
 GA_ReadOnly = 0

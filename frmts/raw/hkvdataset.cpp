@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2000/06/05 17:24:06  warmerda
+ * added real complex support
+ *
  * Revision 1.4  2000/05/15 14:18:27  warmerda
  * added COMPLEX_INTERPRETATION metadata
  *
@@ -299,14 +302,22 @@ GDALDataset *HKVDataset::Open( GDALOpenInfo * poOpenInfo )
         eType = GDT_Byte;
     else if( nSize == 2 && strstr(pszEncoding,"*unsigned") != NULL )
         eType = GDT_UInt16;
+    else if( nSize == 4 && bComplex )
+        eType = GDT_CInt16;
     else if( nSize == 2 )
         eType = GDT_Int16;
     else if( nSize == 4 && strstr(pszEncoding,"*unsigned") != NULL )
         eType = GDT_UInt32;
+    else if( nSize == 8 && strstr(pszEncoding,"*two") != NULL && bComplex )
+        eType = GDT_CInt32;
     else if( nSize == 4 && strstr(pszEncoding,"*two") != NULL )
         eType = GDT_Int32;
+    else if( nSize == 8 && bComplex )
+        eType = GDT_CFloat32;
     else if( nSize == 4 )
         eType = GDT_Float32;
+    else if( nSize == 16 && bComplex )
+        eType = GDT_CFloat64;
     else if( nSize == 8 )
         eType = GDT_Float64;
     else
@@ -364,22 +375,6 @@ GDALDataset *HKVDataset::Open( GDALOpenInfo * poOpenInfo )
                                nOffset, nPixelOffset, nLineOffset, 
                                eType, bNative ) );
         nOffset += GDALGetDataTypeSize( eType ) / 8;
-        
-        if( bComplex )
-        {
-            poDS->GetRasterBand(poDS->nBands)->
-                SetMetadataItem( "COMPLEX_INTERPRETATION", "REAL" );
-
-            poDS->SetBand( poDS->GetRasterCount()+1, 
-               new RawRasterBand( poDS, poDS->GetRasterCount()+1, poDS->fpBlob,
-                                  nOffset, nPixelOffset, nLineOffset, 
-                                  eType, bNative ) );
-            nOffset += GDALGetDataTypeSize( eType ) / 8;
-
-            poDS->GetRasterBand(poDS->nBands)->
-                SetMetadataItem( "COMPLEX_INTERPRETATION", "IMAGINARY" );
-
-        }
     }
 
     return( poDS );
@@ -399,7 +394,9 @@ GDALDataset *HKVDataset::Create( const char * pszFilenameIn,
 /*      Verify input options.                                           */
 /* -------------------------------------------------------------------- */
     if( eType != GDT_Byte && eType != GDT_Float32 
-        && eType != GDT_UInt16 && eType != GDT_Int16 )
+        && eType != GDT_UInt16 && eType != GDT_Int16 
+        && eType != GDT_CInt16 && eType != GDT_CInt32
+        && eType != GDT_CFloat32 )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
               "Attempt to create HKV file with currently unsupported\n"
@@ -474,11 +471,13 @@ GDALDataset *HKVDataset::Create( const char * pszFilenameIn,
                  "{ *unsigned twos-complement ieee-754 }\n" );
         break;
 
+      case GDT_CInt16:
       case GDT_Int16:
         fprintf( fp, "pixel.encoding = "
                  "{ unsigned *twos-complement ieee-754 }\n" );
         break;
 
+      case GDT_CFloat32:
       case GDT_Float32:
         fprintf( fp, "pixel.encoding = "
                  "{ unsigned twos-complement *ieee-754 }\n" );
@@ -487,9 +486,13 @@ GDALDataset *HKVDataset::Create( const char * pszFilenameIn,
       default:
         CPLAssert( FALSE );
     }
-    
+
     fprintf( fp, "pixel.size = %d\n", GDALGetDataTypeSize(eType) );
-    fprintf( fp, "pixel.field = { *real complex }\n" );
+    if( GDALDataTypeIsComplex( eType ) )
+        fprintf( fp, "pixel.field = { real *complex }\n" );
+    else
+        fprintf( fp, "pixel.field = { *real complex }\n" );
+
 #ifdef CPL_MSB     
     fprintf( fp, "pixel.order = { lsbf *msbf }\n" );
 #else

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2000/06/05 17:24:06  warmerda
+ * added real complex support
+ *
  * Revision 1.7  2000/05/18 22:06:03  warmerda
  * added gcp and metadata support
  *
@@ -350,7 +353,6 @@ GDALDataset *MFFDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         const char  *pszExtension;
         int          nBand;
-        int         bComplex = FALSE;
         GDALDataType eDataType;
 
         /* Find the next raw band file. */
@@ -392,19 +394,13 @@ GDALDataset *MFFDataset::Open( GDALOpenInfo * poOpenInfo )
         {
             eDataType = GDT_Byte;
         }
-        else if( EQUALN(pszExtension,"c",1) )
-        {
-            eDataType = GDT_Byte;
-            bComplex = TRUE;
-        }
         else if( EQUALN(pszExtension,"i",1) )
         {
             eDataType = GDT_UInt16;
         }
         else if( EQUALN(pszExtension,"j",1) )
         {
-            eDataType = GDT_Int16;
-            bComplex = TRUE;
+            eDataType = GDT_CInt16;
         }
         else if( EQUALN(pszExtension,"r",1) )
         {
@@ -412,41 +408,19 @@ GDALDataset *MFFDataset::Open( GDALOpenInfo * poOpenInfo )
         }
         else if( EQUALN(pszExtension,"x",1) )
         {
-            eDataType = GDT_Float32;
-            bComplex = TRUE;
+            eDataType = GDT_CFloat32;
         }
         else
             continue;
 
         nBand = poDS->GetRasterCount() + 1;
 
-        int   nPixelOffset;
+        int nPixelOffset = GDALGetDataTypeSize(eDataType)/8;
 
-        if( bComplex )
-            nPixelOffset = (GDALGetDataTypeSize(eDataType)/8) * 2;
-        else
-            nPixelOffset = GDALGetDataTypeSize(eDataType)/8;
-            
         poDS->SetBand( nBand, 
-            new RawRasterBand( poDS, nBand, fpRaw,
-                               0, nPixelOffset, 
+            new RawRasterBand( poDS, nBand, fpRaw, 0, nPixelOffset,
                                nPixelOffset * poDS->GetRasterXSize(),
                                eDataType, bNative ) );
-
-        if( bComplex )
-        {
-            poDS->GetRasterBand(poDS->nBands)->
-                SetMetadataItem( "COMPLEX_INTERPRETATION", "REAL" );
-
-            poDS->SetBand( nBand+1, 
-               new RawRasterBand( poDS, nBand+1, fpRaw,
-                                  nPixelOffset/2, nPixelOffset, 
-                                  nPixelOffset * poDS->GetRasterXSize(),
-                                  eDataType, bNative ) );
-
-            poDS->GetRasterBand(poDS->nBands)->
-                SetMetadataItem( "COMPLEX_INTERPRETATION", "IMAGINARY" );
-        }
     }
     
 /* -------------------------------------------------------------------- */
@@ -507,7 +481,8 @@ GDALDataset *MFFDataset::Create( const char * pszFilenameIn,
 /* -------------------------------------------------------------------- */
 /*      Verify input options.                                           */
 /* -------------------------------------------------------------------- */
-    if( eType != GDT_Byte && eType != GDT_Float32 && eType != GDT_UInt16 )
+    if( eType != GDT_Byte && eType != GDT_Float32 && eType != GDT_UInt16 
+        && eType != GDT_CInt16 && eType != GDT_CFloat32 )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
               "Attempt to create MFF file with currently unsupported\n"
@@ -579,6 +554,10 @@ GDALDataset *MFFDataset::Create( const char * pszFilenameIn,
             sprintf( szExtension, "i%02d", iBand );
         else if( eType == GDT_Float32 )
             sprintf( szExtension, "r%02d", iBand );
+        else if( eType == GDT_CInt16 )
+            sprintf( szExtension, "j%02d", iBand );
+        else if( eType == GDT_CFloat32 )
+            sprintf( szExtension, "x%02d", iBand );
 
         pszFilename = CPLFormFilename( NULL, pszBaseFilename, szExtension );
         fp = VSIFOpen( pszFilename, "wb" );

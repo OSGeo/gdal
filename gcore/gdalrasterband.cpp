@@ -28,6 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************
  * $Log$
+ * Revision 1.17  2000/06/05 17:24:05  warmerda
+ * added real complex support
+ *
  * Revision 1.16  2000/04/21 21:56:59  warmerda
  * moved metadata to GDALMajorObject
  *
@@ -935,18 +938,22 @@ double GDALRasterBand::GetMaximum( int *pbSuccess )
         return 65535;
 
       case GDT_Int16:
+      case GDT_CInt16:
         return 32767;
 
       case GDT_Int32:
+      case GDT_CInt32:
         return 2147483647.0;
 
       case GDT_UInt32:
         return 4294967295.0;
 
       case GDT_Float32:
+      case GDT_CFloat32:
         return 4294967295.0; /* not actually accurate */
 
       case GDT_Float64:
+      case GDT_CFloat64:
         return 4294967295.0; /* not actually accurate */
 
       default:

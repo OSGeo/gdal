@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.24  2000/06/05 17:24:05  warmerda
+ * added real complex support
+ *
  * Revision 1.23  2000/04/30 23:22:16  warmerda
  * added CreateCopy support
  *
@@ -128,10 +131,15 @@ typedef enum {
     /*! Thirty two bit signed integer */        GDT_Int32 = 5,
     /*! Thirty two bit floating point */        GDT_Float32 = 6,
     /*! Sixty four bit floating point */        GDT_Float64 = 7,
-    GDT_TypeCount = 8		/* maximum type # + 1 */
+    /*! Complex Int16 */                        GDT_CInt16 = 8,
+    /*! Complex Int32 */                        GDT_CInt32 = 9,
+    /*! Complex Float32 */                      GDT_CFloat32 = 10,
+    /*! Complex Float64 */                      GDT_CFloat64 = 11,
+    GDT_TypeCount = 12		/* maximum type # + 1 */
 } GDALDataType;
 
 int CPL_DLL GDALGetDataTypeSize( GDALDataType );
+int CPL_DLL GDALDataTypeIsComplex( GDALDataType );
 const char CPL_DLL *GDALGetDataTypeName( GDALDataType );
 
 /*! Flag indicating read/write, or read-only access to data. */

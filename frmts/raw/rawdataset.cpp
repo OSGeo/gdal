@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2000/06/05 17:24:06  warmerda
+ * added real complex support
+ *
  * Revision 1.3  2000/03/31 13:36:40  warmerda
  * RawRasterBand no longer depends on RawDataset
  *
@@ -119,8 +122,18 @@ CPLErr RawRasterBand::AccessLine( int iLine )
 /* -------------------------------------------------------------------- */
     if( !bNativeOrder  && eDataType != GDT_Byte )
     {
-        GDALSwapWords( pLineBuffer, GDALGetDataTypeSize(eDataType)/8,
-                       nBlockXSize, nPixelOffset );
+        if( GDALDataTypeIsComplex( eDataType ) )
+        {
+            int nWordSize;
+
+            nWordSize = GDALGetDataTypeSize(eDataType)/16;
+            GDALSwapWords( pLineBuffer, nWordSize, nBlockXSize, nPixelOffset );
+            GDALSwapWords( ((GByte *) pLineBuffer)+nWordSize, 
+                           nWordSize, nBlockXSize, nPixelOffset );
+        }
+        else
+            GDALSwapWords( pLineBuffer, GDALGetDataTypeSize(eDataType)/8,
+                           nBlockXSize, nPixelOffset );
     }
 
     nLoadedScanline = iLine;
@@ -172,7 +185,7 @@ CPLErr RawRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
         eErr = AccessLine( nBlockYOff );
 
 /* -------------------------------------------------------------------- */
-/*      Copy data from disk buffer to user block buffer.                */
+/*	Copy data from user buffer into disk buffer.                    */
 /* -------------------------------------------------------------------- */
     GDALCopyWords( pImage, eDataType, GDALGetDataTypeSize(eDataType)/8,
                    pLineBuffer, eDataType, nPixelOffset,
@@ -183,8 +196,18 @@ CPLErr RawRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
 /* -------------------------------------------------------------------- */
     if( !bNativeOrder && eDataType != GDT_Byte )
     {
-        GDALSwapWords( pLineBuffer, GDALGetDataTypeSize(eDataType)/8,
-                       nBlockXSize, nPixelOffset );
+        if( GDALDataTypeIsComplex( eDataType ) )
+        {
+            int nWordSize;
+
+            nWordSize = GDALGetDataTypeSize(eDataType)/16;
+            GDALSwapWords( pLineBuffer, nWordSize, nBlockXSize, nPixelOffset );
+            GDALSwapWords( ((GByte *) pLineBuffer)+nWordSize, 
+                           nWordSize, nBlockXSize, nPixelOffset );
+        }
+        else
+            GDALSwapWords( pLineBuffer, GDALGetDataTypeSize(eDataType)/8,
+                           nBlockXSize, nPixelOffset );
     }
 
 /* -------------------------------------------------------------------- */

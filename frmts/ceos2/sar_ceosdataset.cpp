@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2000/06/05 17:24:06  warmerda
+ * added real complex support
+ *
  * Revision 1.6  2000/05/15 14:18:27  warmerda
  * added COMPLEX_INTERPRETATION metadata
  *
@@ -598,34 +601,37 @@ GDALDataset *SAR_CEOSDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Establish image type.                                           */
 /* -------------------------------------------------------------------- */
     GDALDataType eType;
-    int		 StartData, bComplex = FALSE;
+    int		 StartData;
 
     switch( psImageDesc->DataType )
     {
       case __CEOS_TYP_CHAR:
       case __CEOS_TYP_UCHAR:
-      case __CEOS_TYP_COMPLEX_CHAR:
-      case __CEOS_TYP_COMPLEX_UCHAR:
         eType = GDT_Byte;
         break;
 
       case __CEOS_TYP_SHORT:
-      case __CEOS_TYP_COMPLEX_SHORT:
         eType = GDT_Int16;
         break;
 
+      case __CEOS_TYP_COMPLEX_SHORT:
+        eType = GDT_CInt16;
+        break;
+
       case __CEOS_TYP_USHORT:
-      case __CEOS_TYP_COMPLEX_USHORT:
         eType = GDT_UInt16;
         break;
 
       case __CEOS_TYP_LONG:
       case __CEOS_TYP_ULONG:
-      case __CEOS_TYP_COMPLEX_LONG:
-      case __CEOS_TYP_COMPLEX_ULONG:
       case __CEOS_TYP_FLOAT:
       case __CEOS_TYP_DOUBLE:
         eType = GDT_Float32;
+        break;
+
+      case __CEOS_TYP_COMPLEX_FLOAT:
+      case __CEOS_TYP_COMPLEX_LONG:
+        eType = GDT_CFloat32;
         break;
 
       default:
@@ -640,9 +646,6 @@ GDALDataset *SAR_CEOSDataset::Open( GDALOpenInfo * poOpenInfo )
     CalcCeosSARImageFilePosition( psVolume, 1, 1, NULL, &StartData );
     
     StartData += psImageDesc->ImageDataStart;
-
-    if( psImageDesc->DataType >= __CEOS_TYP_COMPLEX_CHAR )
-        bComplex = TRUE;
 
 /* -------------------------------------------------------------------- */
 /*      Capture some information from the file that is of interest.     */
@@ -731,23 +734,6 @@ GDALDataset *SAR_CEOSDataset::Open( GDALOpenInfo * poOpenInfo )
                         poDS, poDS->nBands+1, poOpenInfo->fp, 
                         nStartData, nPixelOffset, nLineOffset, 
                         eType, bNative ) );
-
-            if( bComplex )
-            {
-                poDS->GetRasterBand(poDS->nBands)->
-                    SetMetadataItem( "COMPLEX_INTERPRETATION", "REAL" );
-
-                nStartData += psImageDesc->BytesPerPixel/2;
-
-                poDS->SetBand( poDS->nBands+1, 
-                               new RawRasterBand( 
-                                   poDS, poDS->nBands+1, poOpenInfo->fp, 
-                                   nStartData, nPixelOffset, nLineOffset, 
-                                   eType, bNative ) );
-
-                poDS->GetRasterBand(poDS->nBands)->
-                    SetMetadataItem( "COMPLEX_INTERPRETATION", "IMAGINARY" );
-            }
         }
     }
 

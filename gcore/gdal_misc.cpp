@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2000/06/05 17:24:05  warmerda
+ * added real complex support
+ *
  * Revision 1.13  2000/04/21 21:55:32  warmerda
  * made more robust if block read fails
  *
@@ -106,14 +109,40 @@ int GDALGetDataTypeSize( GDALDataType eDataType )
       case GDT_UInt32:
       case GDT_Int32:
       case GDT_Float32:
+      case GDT_CInt16:
         return 32;
 
       case GDT_Float64:
+      case GDT_CInt32:
+      case GDT_CFloat32:
         return 64;
+
+      case GDT_CFloat64:
+        return 128;
 
       default:
         CPLAssert( FALSE );
         return 0;
+    }
+}
+
+/************************************************************************/
+/*                       GDALDataTypeIsComplex()                        */
+/************************************************************************/
+
+int GDALDataTypeIsComplex( GDALDataType eDataType )
+
+{
+    switch( eDataType )
+    {
+      case GDT_CInt16:
+      case GDT_CInt32:
+      case GDT_CFloat32:
+      case GDT_CFloat64:
+        return TRUE;
+
+      default:
+        return FALSE;
     }
 }
 
@@ -146,6 +175,18 @@ const char *GDALGetDataTypeName( GDALDataType eDataType )
 
       case GDT_Float64:
         return "Float64";
+
+      case GDT_CInt16:
+        return "CInt16";
+
+      case GDT_CInt32:
+        return "CInt32";
+
+      case GDT_CFloat32:
+        return "CFloat32";
+
+      case GDT_CFloat64:
+        return "CFloat64";
 
       default:
         return NULL;
@@ -363,7 +404,6 @@ void GDALComputeRasterMinMax( GDALRasterBandH hBand, int bApproxOK,
                   case GDT_Byte:
                     dfValue = ((GByte *) poBlock->GetDataRef())[iOffset];
                     break;
-
                   case GDT_UInt16:
                     dfValue = ((GUInt16 *) poBlock->GetDataRef())[iOffset];
                     break;
@@ -381,6 +421,18 @@ void GDALComputeRasterMinMax( GDALRasterBandH hBand, int bApproxOK,
                     break;
                   case GDT_Float64:
                     dfValue = ((double *) poBlock->GetDataRef())[iOffset];
+                    break;
+                  case GDT_CInt16:
+                    dfValue = ((GInt16 *) poBlock->GetDataRef())[iOffset*2];
+                    break;
+                  case GDT_CInt32:
+                    dfValue = ((GInt32 *) poBlock->GetDataRef())[iOffset*2];
+                    break;
+                  case GDT_CFloat32:
+                    dfValue = ((float *) poBlock->GetDataRef())[iOffset*2];
+                    break;
+                  case GDT_CFloat64:
+                    dfValue = ((double *) poBlock->GetDataRef())[iOffset*2];
                     break;
                   default:
                     CPLAssert( FALSE );
@@ -508,7 +560,6 @@ int GDALGetRandomRasterSample( GDALRasterBandH hBand, int nSamples,
               case GDT_Byte:
                 dfValue = ((GByte *) poBlock->GetDataRef())[iOffset];
                 break;
-                
               case GDT_UInt16:
                 dfValue = ((GUInt16 *) poBlock->GetDataRef())[iOffset];
                 break;
@@ -526,6 +577,18 @@ int GDALGetRandomRasterSample( GDALRasterBandH hBand, int nSamples,
                 break;
               case GDT_Float64:
                 dfValue = ((double *) poBlock->GetDataRef())[iOffset];
+                break;
+              case GDT_CInt16:
+                dfValue = ((GInt16 *) poBlock->GetDataRef())[iOffset*2];
+                break;
+              case GDT_CInt32:
+                dfValue = ((GInt32 *) poBlock->GetDataRef())[iOffset*2];
+                break;
+              case GDT_CFloat32:
+                dfValue = ((float *) poBlock->GetDataRef())[iOffset*2];
+                break;
+              case GDT_CFloat64:
+                dfValue = ((double *) poBlock->GetDataRef())[iOffset*2];
                 break;
               default:
                 CPLAssert( FALSE );

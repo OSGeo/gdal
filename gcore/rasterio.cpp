@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2000/06/05 17:24:05  warmerda
+ * added real complex support
+ *
  * Revision 1.10  2000/05/15 14:33:49  warmerda
  * don't crash on read failure
  *
@@ -324,9 +327,9 @@ void GDALSwapWords( void *pData, int nWordSize, int nWordCount,
 /************************************************************************/
 
 void 
-    GDALCopyWords( void * pSrcData, GDALDataType eSrcType, int nSrcPixelOffset,
-                   void * pDstData, GDALDataType eDstType, int nDstPixelOffset,
-                   int nWordCount )
+GDALCopyWords( void * pSrcData, GDALDataType eSrcType, int nSrcPixelOffset,
+               void * pDstData, GDALDataType eDstType, int nDstPixelOffset,
+               int nWordCount )
 
 {
 /* -------------------------------------------------------------------- */
@@ -361,7 +364,7 @@ void
     for( int iWord = 0; iWord < nWordCount; iWord++ )
     {
         GByte 	*pabySrcWord, *pabyDstWord;
-        double	dfPixelValue;
+        double	dfPixelValue, dfPixelValueI=0.0;
 
         pabySrcWord = ((GByte *) pSrcData) + iWord * nSrcPixelOffset;
 
@@ -421,7 +424,47 @@ void
           
           case GDT_Float64:
           {
-              memcpy( &dfPixelValue, pabySrcWord, 4 );
+              memcpy( &dfPixelValue, pabySrcWord, 8 );
+          }
+          break;
+
+          case GDT_CInt16:
+          {
+              GInt16	nVal;
+
+              memcpy( &nVal, pabySrcWord, 2 );
+              dfPixelValue = nVal;
+              memcpy( &nVal, pabySrcWord+2, 2 );
+              dfPixelValueI = nVal;
+          }
+          break;
+          
+          case GDT_CInt32:
+          {
+              GInt32	nVal;
+
+              memcpy( &nVal, pabySrcWord, 4 );
+              dfPixelValue = nVal;
+              memcpy( &nVal, pabySrcWord+4, 4 );
+              dfPixelValueI = nVal;
+          }
+          break;
+          
+          case GDT_CFloat32:
+          {
+              float	fVal;
+
+              memcpy( &fVal, pabySrcWord, 4 );
+              dfPixelValue = fVal;
+              memcpy( &fVal, pabySrcWord+4, 4 );
+              dfPixelValueI = fVal;
+          }
+          break;
+          
+          case GDT_CFloat64:
+          {
+              memcpy( &dfPixelValue, pabySrcWord, 8 );
+              memcpy( &dfPixelValueI, pabySrcWord+8, 8 );
           }
           break;
 
@@ -518,6 +561,68 @@ void
 
           case GDT_Float64:
               memcpy( pabyDstWord, &dfPixelValue, 8 );
+              break;
+              
+          case GDT_CInt16:
+          {
+              GInt16	nVal;
+              
+              if( dfPixelValue < -32768 )
+                  nVal = -32768;
+              else if( dfPixelValue > 32767 )
+                  nVal = 32767;
+              else
+                  nVal = (GInt16) dfPixelValue;
+              memcpy( pabyDstWord, &nVal, 2 );
+
+              if( dfPixelValueI < -32768 )
+                  nVal = -32768;
+              else if( dfPixelValueI > 32767 )
+                  nVal = 32767;
+              else
+                  nVal = (GInt16) dfPixelValueI;
+              memcpy( pabyDstWord+2, &nVal, 2 );
+          }
+          break;
+          
+          case GDT_CInt32:
+          {
+              GInt32	nVal;
+              
+              if( dfPixelValue < -2147483647.0 )
+                  nVal = -2147483647;
+              else if( dfPixelValue > 2147483647 )
+                  nVal = 2147483647;
+              else
+                  nVal = (GInt32) dfPixelValue;
+
+              memcpy( pabyDstWord, &nVal, 4 );
+
+              if( dfPixelValueI < -2147483647.0 )
+                  nVal = -2147483647;
+              else if( dfPixelValueI > 2147483647 )
+                  nVal = 2147483647;
+              else
+                  nVal = (GInt32) dfPixelValueI;
+
+              memcpy( pabyDstWord+4, &nVal, 4 );
+          }
+          break;
+
+          case GDT_CFloat32:
+          {
+              float 	fVal;
+
+              fVal = dfPixelValue;
+              memcpy( pabyDstWord, &fVal, 4 );
+              fVal = dfPixelValueI;
+              memcpy( pabyDstWord+4, &fVal, 4 );
+          }
+          break;
+
+          case GDT_CFloat64:
+              memcpy( pabyDstWord, &dfPixelValue, 8 );
+              memcpy( pabyDstWord+8, &dfPixelValueI, 8 );
               break;
               
           default:
