@@ -24,6 +24,9 @@
  *               of GDALRasterBand::IRasterIO() which is rather complex.
  *
  * $Log$
+ * Revision 1.4  1999/01/11 15:38:38  warmerda
+ * Added optimized case for simple 1:1 copies.
+ *
  * Revision 1.3  1999/01/02 21:14:01  warmerda
  * Added write support
  *
@@ -55,7 +58,59 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
     int		nBandDataSize = GDALGetDataTypeSize( eDataType ) / 8;
     GByte	*pabySrcBlock = NULL;
     GDALRasterBlock *poBlock;
+    int		nLBlockX=-1, nLBlockY=-1, iBufYOff, iBufXOff, iSrcY;
 
+/* ==================================================================== */
+/*      A common case is the data requested with it's inherent data     */
+/*      type, the destination is packed, and the block width is the     */
+/*      raster width.                                                   */
+/* ==================================================================== */
+    if( eBufType == eDataType
+        && nPixelSpace == GDALGetDataTypeSize(eBufType)/8
+        && nLineSpace == nPixelSpace * nXSize
+        && nBlockXSize == poDS->GetRasterXSize()
+        && nBufXSize == nXSize )
+    {
+        for( iBufYOff = 0; iBufYOff < nBufYSize; iBufYOff++ )
+        {
+            int		nSrcByteOffset;
+            
+            iSrcY = iBufYOff + nYOff;
+            
+            if( iSrcY < nLBlockY * nBlockYSize
+                || iSrcY >= (nLBlockY+1) * nBlockYSize )
+            {
+                nLBlockY = iSrcY / nBlockYSize;
+
+                poBlock = GetBlockRef( 0, nLBlockY );
+                if( poBlock == NULL )
+                {
+                    return( CE_Failure );
+                }
+
+                if( eRWFlag == GF_Write )
+                    poBlock->MarkDirty();
+                
+                pabySrcBlock = (GByte *) poBlock->GetDataRef();
+            }
+
+            nSrcByteOffset = ((iSrcY-nLBlockY*nBlockYSize)*nBlockXSize + nXOff)
+                * nPixelSpace;
+            
+            if( eRWFlag == GF_Write )
+                memcpy( pabySrcBlock + nSrcByteOffset, 
+                        ((GByte *) pData) + iBufYOff * nLineSpace,
+                        nLineSpace );
+            else
+                memcpy( ((GByte *) pData) + iBufYOff * nLineSpace,
+                        pabySrcBlock + nSrcByteOffset, 
+                        nLineSpace );
+        }
+
+        return CE_None;
+    }
+    
+    
 /* ==================================================================== */
 /*      Loop reading required source blocks to satisfy output           */
 /*      request.  This is the most general implementation.              */
@@ -65,8 +120,7 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 /*      Compute stepping increment.                                     */
 /* -------------------------------------------------------------------- */
     double	dfSrcX, dfSrcY, dfSrcXInc, dfSrcYInc;
-    int		iSrcX, iSrcY;
-    int		nLBlockX=-1, nLBlockY=-1, iBufYOff, iBufXOff;
+    int		iSrcX;
     
     dfSrcXInc = nXSize / (double) nBufXSize;
     dfSrcYInc = nYSize / (double) nBufYSize;
@@ -137,6 +191,6 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
         }
     }
 
-    return( CE_Failure );
+    return( CE_None );
 }
 
