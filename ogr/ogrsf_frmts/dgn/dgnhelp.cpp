@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2003/09/11 20:00:28  warmerda
+ * avoid casting warning in Quat to Matrix func
+ *
  * Revision 1.19  2003/08/19 20:16:14  warmerda
  * Added support for CONE and 3D solid/surface header.
  * Implemented DGNQuaternionToMatrix function.
@@ -1216,15 +1219,15 @@ void DGNQuaternionToMatrix( int *quat, float *mat )
   double q[4];
   for (int i=0;i<4;i++) q[i] = 1.0 * quat[i] / (1<<31);
 
-  mat[0*3+0] = q[0]*q[0] - q[1]*q[1] - q[2]*q[2] + q[3]*q[3];
-  mat[0*3+1] = 2 * (q[2]*q[3] + q[0]*q[1]);
-  mat[0*3+2] = 2 * (q[0]*q[2] - q[1]*q[3]);
-  mat[1*3+0] = 2 * (q[0]*q[1] - q[2]*q[3]);
-  mat[1*3+1] = -q[0]*q[0] + q[1]*q[1] - q[2]*q[2] + q[3]*q[3];
-  mat[1*3+2] = 2 * (q[0]*q[3] + q[1]*q[2]);
-  mat[2*3+0] = 2 * (q[0]*q[2] + q[1]*q[3]); 
-  mat[2*3+1] = 2 * (q[1]*q[2] - q[0]*q[3]);
-  mat[2*3+2] = -q[0]*q[0] - q[1]*q[1] + q[2]*q[2] + q[3]*q[3];
+  mat[0*3+0] = (float) (q[0]*q[0] - q[1]*q[1] - q[2]*q[2] + q[3]*q[3]);
+  mat[0*3+1] = (float) (2 * (q[2]*q[3] + q[0]*q[1]));
+  mat[0*3+2] = (float) (2 * (q[0]*q[2] - q[1]*q[3]));
+  mat[1*3+0] = (float) (2 * (q[0]*q[1] - q[2]*q[3]));
+  mat[1*3+1] = (float) (-q[0]*q[0] + q[1]*q[1] - q[2]*q[2] + q[3]*q[3]);
+  mat[1*3+2] = (float) (2 * (q[0]*q[3] + q[1]*q[2]));
+  mat[2*3+0] = (float) (2 * (q[0]*q[2] + q[1]*q[3])); 
+  mat[2*3+1] = (float) (2 * (q[1]*q[2] - q[0]*q[3]));
+  mat[2*3+2] = (float) (-q[0]*q[0] - q[1]*q[1] + q[2]*q[2] + q[3]*q[3]);
 }
 
 /* FIXME: Add function to directly transform a vertex using a quaternion?
