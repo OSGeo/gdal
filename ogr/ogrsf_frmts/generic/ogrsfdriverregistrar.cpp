@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2003/03/14 02:28:07  danmo
+ * Prevent crash if poRegistrar==NULL in OGRGetDriverCount() and OGROpen()
+ *
  * Revision 1.8  2002/09/26 18:16:19  warmerda
  * added C entry points
  *
@@ -171,8 +174,11 @@ OGRDataSourceH OGROpen( const char *pszName, int bUpdate,
                         OGRSFDriverH *pahDriverList )
 
 {
-    return poRegistrar->Open( pszName, bUpdate, 
-                              (OGRSFDriver **) pahDriverList );
+    if (poRegistrar)
+        return poRegistrar->Open( pszName, bUpdate, 
+                                  (OGRSFDriver **) pahDriverList );
+
+    return NULL;
 }
 
 /************************************************************************/
@@ -229,7 +235,10 @@ int OGRSFDriverRegistrar::GetDriverCount()
 int OGRGetDriverCount()
 
 {
-    return poRegistrar->GetDriverCount();
+    if (poRegistrar)
+        return poRegistrar->GetDriverCount();
+
+    return 0;
 }
 
 /************************************************************************/
