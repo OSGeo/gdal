@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2003/04/10 17:53:17  warmerda
+ * added bindscalar and bindobject
+ *
  * Revision 1.8  2003/04/07 19:26:51  warmerda
  * use the OCI_ATTR_STMT_TYPE attribute to determine if statement is SELECT
  *
@@ -172,6 +175,59 @@ CPLErr OGROCIStatement::Prepare( const char *pszSQLStatement )
         return CE_Failure;
 
     return CE_None;
+}
+
+/************************************************************************/
+/*                             BindObject()                             */
+/************************************************************************/
+
+CPLErr OGROCIStatement::BindObject( const char *pszPlaceName, 
+                                    void *pahObjects, OCIType *hTDO )
+
+{
+    OCIBind *hBindOrd = NULL;
+
+    if( poSession->Failed( 
+            OCIBindByName( hStatement, &hBindOrd, poSession->hError,
+                           (text *) pszPlaceName, (sb4) strlen(pszPlaceName), 
+                           (dvoid *) 0, (sb4) 0, SQLT_NTY, (dvoid *)0, 
+                           (ub2 *)0, (ub2 *)0, (ub4)0, (ub4 *)0, 
+                           (ub4)OCI_DEFAULT),
+            "OCIBindByName()") )
+        return CE_Failure;
+    
+    if( poSession->Failed(
+            OCIBindObject( hBindOrd, poSession->hError, hTDO,
+                           (dvoid **) pahObjects, (ub4 *)0, 
+                           (dvoid **)0, (ub4 *)0),
+            "OCIBindObject()" ) )
+        return CE_Failure;
+
+    return CE_None;
+}
+
+/************************************************************************/
+/*                             BindScalar()                             */
+/************************************************************************/
+
+CPLErr OGROCIStatement::BindScalar( const char *pszPlaceName, 
+                                    void *pData, int nDataLen,
+                                    int nSQLType )
+
+{
+    OCIBind *hBindOrd = NULL;
+
+    if( poSession->Failed( 
+            OCIBindByName( hStatement, &hBindOrd, poSession->hError,
+                           (text *) pszPlaceName, (sb4) strlen(pszPlaceName), 
+                           (dvoid *) pData, (sb4) nDataLen, 
+                           nSQLType, (dvoid *)0, (ub2 *)0, 
+                           (ub2 *)0, (ub4)0, (ub4 *)0, 
+                           (ub4)OCI_DEFAULT),
+            "OCIBindByName()") )
+        return CE_Failure;
+    else
+        return CE_None;
 }
 
 /************************************************************************/

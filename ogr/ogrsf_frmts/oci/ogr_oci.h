@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2003/04/10 17:53:17  warmerda
+ * added bindscalar and bindobject
+ *
  * Revision 1.13  2003/04/04 22:04:28  warmerda
  * added incomplete support for variable mode
  *
@@ -161,6 +164,8 @@ class CPL_DLL OGROCISession {
 
     void     CleanName( char * );
 
+    OCIType *PinTDO( const char * );
+
   private:
     
 };
@@ -179,6 +184,10 @@ class CPL_DLL OGROCIStatement {
     virtual     ~OGROCIStatement();
 
     OCIStmt     *GetStatement() { return hStatement; }
+    CPLErr       BindScalar( const char *pszPlaceName, 
+                             void *pData, int nDataLen, int nSQLType );
+    CPLErr       BindObject( const char *pszPlaceName, void *pahObject,
+                             OCIType *hTDO );
 
     char        *pszCommandText;
 
@@ -434,6 +443,18 @@ class OGROCITableLayer : public OGROCIWritableLayer
     void                FinalizeNewLayer();
 
     void                TestForSpatialIndex( const char * );
+
+    int                nWriteCacheMax;
+    int                nWriteCacheUsed;
+
+    SDO_GEOMETRY_TYPE *pasWriteGeoms;
+    SDO_GEOMETRY_TYPE **papsWriteGeomMap;
+    SDO_GEOMETRY_ind  *pasWriteGeomInd;
+
+    
+    void              *papWriteFields;
+
+    
     
   public:
     			OGROCITableLayer( OGROCIDataSource *,
