@@ -26,6 +26,7 @@ clean:
 gxftest:	gxftest.o gxfopen.o
 	$(CXX) gxftest.o gxfopen.o $(GDAL_ROOT)/port/*.o $(LIBS) -o gxftest
 
-install-obj:	$(OBJ)
-	cp $(OBJ) ../o
+install-obj:	$(foreach file,$(OBJ),../o/$(file))
 
+../o/%.o:	%.o
+	cp $*.o ../o

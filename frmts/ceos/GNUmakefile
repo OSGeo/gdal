@@ -25,6 +25,8 @@ clean:
 ceostest:	ceostest.o ceosopen.o
 	$(CXX) ceostest.o ceosopen.o $(GDAL_ROOT)/port/*.o $(LIBS) -o ceostest
 
-install-obj:	$(OBJ)
-	cp $(OBJ) ../o
+install-obj:	$(foreach file,$(OBJ),../o/$(file))
+
+../o/%.o:	%.o
+	cp $*.o ../o
 

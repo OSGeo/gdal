@@ -22,6 +22,8 @@ clean:
 	$(CC) -c $(ALL_C_FLAGS) -I$(GDAL_ROOT)/core -I$(GDAL_ROOT)/port \
 		$*.c -o $*.o
 
-install-obj:	$(OBJ)
-	cp $(OBJ) ../o
+install-obj:	$(foreach file,$(OBJ),../o/$(file))
+
+../o/%.o:	%.o
+	cp $*.o ../o
 

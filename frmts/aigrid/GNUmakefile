@@ -27,8 +27,10 @@ clean:
 aitest:	aitest.o $(AIGOBJ)
 	$(CXX) aitest.o $(AIGOBJ) $(GDAL_ROOT)/port/*.o $(LIBS) -o aitest
 
-install-obj:	$(OBJ)
-	cp $(OBJ) ../o
+install-obj:	$(foreach file,$(OBJ),../o/$(file))
+
+../o/%.o:	%.o
+	cp $*.o ../o
 
 
 aitest-dist:

@@ -17,5 +17,7 @@ clean:
 	$(CXX) -c $(ALL_C_FLAGS) $*.cpp -o $*.o
 
 
-install-obj:	$(OBJ)
-	cp $(OBJ) ../o
+install-obj:	$(foreach file,$(OBJ),../o/$(file))
+
+../o/%.o:	%.o
+	cp $*.o ../o
