@@ -33,6 +33,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2003/07/08 20:28:09  warmerda
+ * avoid warings
+ *
  * Revision 1.11  2003/02/19 03:50:59  warmerda
  * hacks to support two apparently corrupt BSB files supplied by optech
  *
@@ -325,9 +328,9 @@ BSBInfo *BSBOpen( const char *pszFilename )
                 psInfo->nPCTSize = iPCT+1;
             }
 
-            psInfo->pabyPCT[iPCT*3+0] = atoi(papszTokens[1]);
-            psInfo->pabyPCT[iPCT*3+1] = atoi(papszTokens[2]);
-            psInfo->pabyPCT[iPCT*3+2] = atoi(papszTokens[3]);
+            psInfo->pabyPCT[iPCT*3+0] = (unsigned char)atoi(papszTokens[1]);
+            psInfo->pabyPCT[iPCT*3+1] = (unsigned char)atoi(papszTokens[2]);
+            psInfo->pabyPCT[iPCT*3+2] = (unsigned char)atoi(papszTokens[3]);
         }
         else if( EQUALN(pszLine,"VER/",4) && nCount >= 1 )
         {
@@ -427,7 +430,7 @@ static const char *BSBReadHeaderLine( FILE * fp, int bNO1 )
 
     while( !VSIFEof(fp) && nLineLen < sizeof(szLine)-1 )
     {
-        chNext = BSBGetc( fp, bNO1 );
+        chNext = (char) BSBGetc( fp, bNO1 );
         if( chNext == 0x1A )
         {
             BSBUngetc( chNext );
@@ -439,7 +442,7 @@ static const char *BSBReadHeaderLine( FILE * fp, int bNO1 )
         {
             char	chLF;
 
-            chLF = BSBGetc( fp, bNO1 );
+            chLF = (char) BSBGetc( fp, bNO1 );
             if( chLF != 10 && chLF != 13 )
                 BSBUngetc( chLF );
             chNext = '\n';
@@ -452,7 +455,7 @@ static const char *BSBReadHeaderLine( FILE * fp, int bNO1 )
         {
             char chTest;
 
-            chTest = BSBGetc(fp, bNO1);
+            chTest = (char) BSBGetc(fp, bNO1);
             /* Are we done? */
             if( chTest != ' ' )
             {
@@ -463,7 +466,7 @@ static const char *BSBReadHeaderLine( FILE * fp, int bNO1 )
 
             /* eat pending spaces */
             while( chTest == ' ' )
-                chTest = BSBGetc(fp,bNO1);
+                chTest = (char) BSBGetc(fp,bNO1);
             BSBUngetc( chTest );
 
             /* insert comma in data stream */
@@ -556,8 +559,10 @@ int BSBReadScanline( BSBInfo *psInfo, int nScanline,
 /*      Setup masking values.                                           */
 /* -------------------------------------------------------------------- */
     nValueShift = 7 - psInfo->nColorSize;
-    byValueMask = (((1 << psInfo->nColorSize)) - 1) << nValueShift;
-    byCountMask = (1 << (7 - psInfo->nColorSize)) - 1;
+    byValueMask = (unsigned char)
+        ((((1 << psInfo->nColorSize)) - 1) << nValueShift);
+    byCountMask = (unsigned char)
+        (1 << (7 - psInfo->nColorSize)) - 1;
     
 /* -------------------------------------------------------------------- */
 /*      Read and expand runs.                                           */
@@ -581,7 +586,7 @@ int BSBReadScanline( BSBInfo *psInfo, int nScanline,
             nRunCount = psInfo->nXSize - iPixel - 1;
 
         for( i = 0; i < nRunCount+1; i++ )
-            pabyScanlineBuf[iPixel++] = nPixValue;
+            pabyScanlineBuf[iPixel++] = (unsigned char) nPixValue;
     }
 
 /* -------------------------------------------------------------------- */
