@@ -30,6 +30,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.6  2004/09/24 23:06:42  fwarmerdam
+# various patches from Alessandro
+#
 # Revision 1.5  2004/04/25 19:28:45  aamici
 # core -> gcore update
 #
@@ -65,8 +68,8 @@ soversion=v[:3]
 
 SOURCES=glob.glob(os.path.join("pymod","*.c*"))
 print SOURCES
-INCLUDE_DIRS=[os.path.join("gcore"), os.path.join("port"), os.path.join("ogr"), os.path.join("pymod"), ] # only necessary
-LIBRARY_DIRS = ["./libs"]
+INCLUDE_DIRS=[os.path.join("gcore"), os.path.join("port"), os.path.join("ogr"), os.path.join("pymod"), os.path.join("alg")] # only necessary
+LIBRARY_DIRS = ["./.libs"]
 
 INCLUDE_FILES = [
 	glob.glob(os.path.join("gcore", "*.h")),
@@ -99,8 +102,12 @@ if os.name=="nt":
 	LIBRARIES = ["gdal_i"]
 	EXTRA_LINK_ARGS=[]
 else:
+	if os.name=="mac":
+		soext = "dylib"
+	else:
+		soext = "so"
 	DATA_FILES=[
-		("lib", ['libgdal.%s.so' % soversion]),
+		("lib", ['libgdal.%s.%s' % (soversion, soext)]),
 	]
 	LIBRARIES = []
 	#EXTRA_LINK_ARGS=[os.path.join("gdal.a")]
