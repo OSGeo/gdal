@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2002/04/11 21:02:20  warmerda
+ * Fix memory leak in case of parse error reported by Wanshou Jiang.
+ *
  * Revision 1.7  2002/01/16 04:00:25  warmerda
  * use CSLTokenizeString2() and avoid discarding quotes when splitting stuff
  *
@@ -907,6 +910,7 @@ GBool OGRStyleTool::Parse(OGRStyleParamId *pasStyle,
 
     if (CSLCount(papszToken) > 2 || CSLCount(papszToken) == 0)
     {
+        CSLDestroy( papszToken );
         CPLError(CE_Failure, CPLE_AppDefined, 
                  "Error in the format of the StyleTool %s\n",m_pszStyleString);
         return FALSE;
@@ -919,6 +923,8 @@ GBool OGRStyleTool::Parse(OGRStyleParamId *pasStyle,
     
     if (CSLCount(papszToken2) %2 != 0)
     {
+        CSLDestroy( papszToken );
+        CSLDestroy( papszToken2 );
         CPLError(CE_Failure, CPLE_AppDefined, 
                  "Error in the StyleTool String %s\n",m_pszStyleString);
         return FALSE;
@@ -932,6 +938,8 @@ GBool OGRStyleTool::Parse(OGRStyleParamId *pasStyle,
             CPLError(CE_Failure, CPLE_AppDefined, 
                      "Error in the Type of StyleTool %s should be a PEN Type\n",
                      papszToken[0]);
+            CSLDestroy( papszToken );
+            CSLDestroy( papszToken2 );
             return FALSE;
         }
         break;
@@ -941,6 +949,8 @@ GBool OGRStyleTool::Parse(OGRStyleParamId *pasStyle,
             CPLError(CE_Failure, CPLE_AppDefined, 
                      "Error in the Type of StyleTool %s should be a BRUSH Type\n",
                      papszToken[0]);
+            CSLDestroy( papszToken );
+            CSLDestroy( papszToken2 );
             return FALSE;
         }
         break;
@@ -950,6 +960,8 @@ GBool OGRStyleTool::Parse(OGRStyleParamId *pasStyle,
             CPLError(CE_Failure, CPLE_AppDefined, 
                      "Error in the Type of StyleTool %s should be a SYMBOL Type\n",
                      papszToken[0]);
+            CSLDestroy( papszToken );
+            CSLDestroy( papszToken2 );
             return FALSE;
         }
         break;
@@ -959,12 +971,16 @@ GBool OGRStyleTool::Parse(OGRStyleParamId *pasStyle,
             CPLError(CE_Failure, CPLE_AppDefined, 
                      "Error in the Type of StyleTool %s should be a LABEL Type\n",
                      papszToken[0]);
+            CSLDestroy( papszToken );
+            CSLDestroy( papszToken2 );
             return FALSE;
         }
         break;
       default:
         CPLError(CE_Failure, CPLE_AppDefined, 
                  "Error in the Type of StyleTool, Type undetermined\n");
+        CSLDestroy( papszToken );
+        CSLDestroy( papszToken2 );
         return FALSE;
         break;
     }
