@@ -63,6 +63,77 @@ as a fill color if provided.  Fill patterns are not supported.<p>
 Text elements will contain the text, angle, color and size information 
 (expressed in ground units) in the style string.<p>
 
+<h2>Creation Issues</h2>
+
+2D DGN files may be written with OGR with significant limitations:<P>
+
+<ul>
+<li> Output features have the usual fixed DGN attributes.  Attempts to create
+any other fields will fail.<p>
+
+<li> Virtual no effort is currently made to translate OGR feature style
+strings back into DGN representation information. <p>
+
+<li> POINT geometries that are not text (Text is NULL, and the feature
+style string is not a LABEL) will be translated as a degenerate (0 length)
+line element. <p>
+
+<li> Polygon, and multipolygon objects will be translated to simple polygons
+with all rings other than the first discarded.<p>
+
+<li> Polygons and line strings with too many vertices will be split into 
+a group of elmements prefixed with a Complex Shape Header or Complex Chain
+Header element as appropriate. <p>
+
+<li> A seed file must be provided (or if not provided, 
+$PREFIX/share/gdal/seed_2d.dgn will be used).  Many aspects of the resulting
+DGN file are determined by the seed file, and cannot be affected via OGR, 
+such as initial view window. <p>
+
+<li> The various collection geometries other than MultiPolygon are completely
+discarded at this time. <p>
+
+<li> Geometries which fall outside the "design plane" of the seed file will
+be discarded, or corrupted in unpredictable ways.<p>
+
+<li> DGN files can only have one layer.  Attempts
+to create more than one layer in a DGN file will fail.<p>
+
+</ul>
+
+The dataset creation supports the following options:<p>
+
+<ul>
+
+<li> <b>SEED=</b><i>filename</i>: Override the seed file to use.<p>
+
+<li> <b>COPY_WHOLE_SEED_FILE=</b><i>YES/NO</i>: Indicate whether the whole
+seed file should be copied.  If not, only the first three elements (and 
+potentially the color table) will be copied.  Default is NO.<p>
+
+<li> <b>COPY_SEED_FILE_COLOR_TABLEE=</b><i>YES/NO</i>: Indicates whether the
+color table should be copied from the seed file.  By default this is NO. <p>
+
+<li> <b>MASTER_UNIT_NAME=</b><i>name</i>: Override the master unit name from
+the seed file with the provided one or two character unit name. <p>
+
+<li> <b>SUB_UNIT_NAME=</b><i>name</i>: Override the sub unit name from
+the seed file with the provided one or two character unit name. <p>
+
+<li> <b>SUB_UNITS_PER_MASTER_UNIT=</b><i>count</i>: Override the number of
+subunits per master unit.  By default the seed file value is used.<p>
+
+<li> <b>UOR_PER_SUB_UNIT=</b><i>count</i>: Override the number of
+UORs (Units of Resolution) per sub unit.  By default the seed file value is 
+used.<p>
+
+<li> <b>ORIGIN</b>=<i>x,y,z</i>: Override the origin of the design plane.  By
+default the origin from the seed file is used.<p>
+
+</ul>
+
+<hr>
+
 <ul>
 <li> <a href="http://gdal.velocet.ca/projects/dgn/">Dgnlib Page</a>
 <li> <a href="http://gdal.velocet.ca/projects/opengis/ogr_feature_style.html">OGR Feature Style Specification</a>
