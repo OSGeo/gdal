@@ -9,7 +9,7 @@ GDAL 1.1.6 - Overview of Changes
 
  o Preliminary implementation of Virtual Datasets (gdal/frmts/vrt). 
 
- o Preliminary support for writing DTED files. 
+ o Support for writing DTED files. 
 
  o Some raw formats (ie. PAux, HKV) support files larger than 2GB.
 
@@ -59,6 +59,9 @@ OGR 1.1.6 - Overview of Changes
 
  o Added transform() and transformTo() methods for reprojecting geometries and
    added user options for this in ogr2ogr.
+
+ o Very preliminary GML read/write support.  Needs Xerces C++ XML parser for
+   read support. 
 
 ==============================================================================
 

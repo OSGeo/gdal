@@ -1,3 +1,11 @@
+2002-02-04  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* Release GDAL 1.1.6.
+
+2002-01-28  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* dted: added metadata read and write
+
 2002-01-25  Frank Warmerdam  <warmerdam@pobox.com>
 
 	* configure: add support for linking against Xerces library.
