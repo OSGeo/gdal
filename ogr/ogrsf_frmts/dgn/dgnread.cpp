@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2001/01/10 16:13:45  warmerda
+ * added docs and extents api
+ *
  * Revision 1.3  2000/12/28 21:28:59  warmerda
  * added element index support
  *
@@ -44,6 +47,20 @@
 /************************************************************************/
 /*                           DGNGotoElement()                           */
 /************************************************************************/
+
+/**
+ * Seek to indicated element.
+ *
+ * Changes what element will be read on the next call to DGNReadElement(). 
+ * Note that this function requires and index, and one will be built if
+ * not already available.
+ *
+ * @param hDGN the file to affect.
+ * @param element_id the element to seek to.  These values are sequentially
+ * ordered starting at zero for the first element.
+ * 
+ * @return returns TRUE on success or FALSE on failure. 
+ */
 
 int DGNGotoElement( DGNHandle hDGN, int element_id )
 
@@ -113,6 +130,23 @@ static int DGNLoadRawElement( DGNInfo *psDGN, int *pnType, int *pnLevel )
 /************************************************************************/
 /*                           DGNReadElement()                           */
 /************************************************************************/
+
+/**
+ * Read a DGN element.
+ *
+ * This function will return the next element in the file, starting with the
+ * first.  It is affected by DGNGotoElement() calls. 
+ *
+ * The element is read into a structure which includes the DGNElemCore 
+ * structure.  It is expected that applications will inspect the stype
+ * field of the returned DGNElemCore and use it to cast the pointer to the
+ * appropriate element structure type such as DGNElemMultiPoint. 
+ *
+ * @param hDGN the handle of the file to read from.
+ *
+ * @return pointer to element structure, or NULL on EOF or processing error.
+ * The structure should be freed with DGNFreeElement() when no longer needed.
+ */
 
 DGNElemCore *DGNReadElement( DGNHandle hDGN )
 
@@ -371,15 +405,37 @@ int DGNParseCore( DGNInfo *psDGN, DGNElemCore *psElement )
 /*                           DGNFreeElement()                           */
 /************************************************************************/
 
+/**
+ * Free an element structure.
+ *
+ * This function will deallocate all resources associated with any element
+ * structure returned by DGNReadElement(). 
+ *
+ * @param hDGN handle to file from which the element was read.
+ * @param psElement the element structure returned by DGNReadElement().
+ */
+
 void DGNFreeElement( DGNHandle hDGN, DGNElemCore *psElement )
 
 {
+    if( psElement->attr_data != NULL )
+        VSIFree( psElement->attr_data );
     CPLFree( psElement );
 }
 
 /************************************************************************/
 /*                             DGNRewind()                              */
 /************************************************************************/
+
+/**
+ * Rewind element reading.
+ *
+ * Rewind the indicated DGN file, so the next element read with 
+ * DGNReadElement() will be the first.  Does not require indexing like
+ * the more general DGNReadElement() function.
+ *
+ * @param hDGN handle to file.
+ */
 
 void DGNRewind( DGNHandle hDGN )
 
@@ -396,13 +452,25 @@ void DGNRewind( DGNHandle hDGN )
 /*                           DGNDumpElement()                           */
 /************************************************************************/
 
+/**
+ * Emit textual report of an element.
+ *
+ * This function exists primarily for debugging, and will produce a textual
+ * report about any element type to the designated file. 
+ *
+ * @param hDGN the file from which the element originated.
+ * @param psElement the element to report on.
+ * @param fp the file (such as stdout) to report the element information to.
+ */
+
 void DGNDumpElement( DGNHandle hDGN, DGNElemCore *psElement, FILE *fp )
 
 {
     fprintf( fp, "\n" );
-    fprintf( fp, "Element:%-12s Level:%2d ",
+    fprintf( fp, "Element:%-12s Level:%2d id:%-6d ",
              DGNTypeToName( psElement->type ),
-             psElement->level );
+             psElement->level, 
+             psElement->element_id );
 
     if( psElement->complex )
         fprintf( fp, "(Complex) " );
@@ -415,12 +483,33 @@ void DGNDumpElement( DGNHandle hDGN, DGNElemCore *psElement, FILE *fp )
 #endif    
 
     fprintf( fp, 
-             "  graphic_group:%-3d properties:%04x color:%d weight:%d style:%d\n", 
+             "  graphic_group:%-3d color:%d weight:%d style:%d\n", 
              psElement->graphic_group,
-             psElement->properties,
              psElement->color,
              psElement->weight,
              psElement->style );
+
+    if( psElement->properties != 0 )
+    {
+        fprintf( fp, "  properties=%d", psElement->properties );
+        if( psElement->properties & DGNPF_HOLE )
+            fprintf( fp, ",HOLE" );
+        if( psElement->properties & DGNPF_SNAPPABLE )
+            fprintf( fp, ",SNAPPABLE" );
+        if( psElement->properties & DGNPF_PLANAR )
+            fprintf( fp, ",PLANAR" );
+        if( psElement->properties & DGNPF_ORIENTATION )
+            fprintf( fp, ",ORIENTATION" );
+        if( psElement->properties & DGNPF_ATTRIBUTES )
+            fprintf( fp, ",ATTRIBUTES" );
+        if( psElement->properties & DGNPF_MODIFIED )
+            fprintf( fp, ",MODIFIED" );
+        if( psElement->properties & DGNPF_NEW )
+            fprintf( fp, ",NEW" );
+        if( psElement->properties & DGNPF_LOCKED )
+            fprintf( fp, ",LOCKED" );
+        fprintf( fp, "\n" );
+    }
 
     switch( psElement->stype )
     {
@@ -513,6 +602,17 @@ void DGNDumpElement( DGNHandle hDGN, DGNElemCore *psElement, FILE *fp )
 /*                           DGNTypeToName()                            */
 /************************************************************************/
 
+/**
+ * Convert type to name.
+ *
+ * Returns a human readable name for an element type such as DGNT_LINE.
+ *
+ * @param nType the DGNT_* type code to translate.
+ *
+ * @return a pointer to an internal string with the translation.  This string
+ * should not be modified or freed.
+ */
+
 const char *DGNTypeToName( int nType )
 
 {
@@ -596,6 +696,28 @@ void DGNTransformPoint( DGNInfo *psDGN, DGNPoint *psPoint )
 /*                         DGNGetElementIndex()                         */
 /************************************************************************/
 
+/**
+ * Fetch element index.
+ *
+ * This function will return an array with brief information about every
+ * element in a DGN file.  It requires one pass through the entire file to
+ * generate (this is not repeated on subsequent calls). 
+ *
+ * The returned array of DGNElementInfo structures contain the level, type, 
+ * stype, and other flags for each element in the file.  This can facilitate
+ * application level code representing the number of elements of various types
+ * effeciently. 
+ *
+ * Note that while building the index requires one pass through the whole file,
+ * it does not generally request much processing for each element. 
+ *
+ * @param hDGN the file to get an index for.
+ * @param pnElementCount the integer to put the total element count into. 
+ *
+ * @return a pointer to an array of DGNElementInfo structures (there will be
+ * *pnElementCount entries in the array), or NULL on failure. 
+ */
+
 const DGNElementInfo *DGNGetElementIndex( DGNHandle hDGN, int *pnElementCount )
 
 {
@@ -607,6 +729,61 @@ const DGNElementInfo *DGNGetElementIndex( DGNHandle hDGN, int *pnElementCount )
         *pnElementCount = psDGN->element_count;
     
     return psDGN->element_index;
+}
+
+/************************************************************************/
+/*                           DGNGetExtents()                            */
+/************************************************************************/
+
+/**
+ * Fetch overall file extents.
+ *
+ * The extents are collected for each element while building an index, so
+ * if an index has not already been built, it will be built when 
+ * DGNGetExtents() is called.  
+ * 
+ * The Z min/max values are generally meaningless (0 and 0xffffffff in uor
+ * space). 
+ * 
+ * @param hDGN the file to get extents for.
+ * @param padfExtents pointer to an array of six doubles into which are loaded
+ * the values xmin, ymin, zmin, xmax, ymax, and zmax.
+ *
+ * @return TRUE on success or FALSE on failure.
+ */
+
+int DGNGetExtents( DGNHandle hDGN, double * padfExtents )
+
+{
+    DGNInfo	*psDGN = (DGNInfo *) hDGN;
+    DGNPoint	sMin, sMax;
+
+    DGNBuildIndex( psDGN );
+
+    if( !psDGN->got_bounds )
+        return FALSE;
+
+    sMin.x = psDGN->min_x - 2147483648.0;
+    sMin.y = psDGN->min_y - 2147483648.0;
+    sMin.z = psDGN->min_z - 2147483648.0;
+    
+    DGNTransformPoint( psDGN, &sMin );
+
+    padfExtents[0] = sMin.x;
+    padfExtents[1] = sMin.y;
+    padfExtents[2] = sMin.z;
+    
+    sMax.x = psDGN->max_x - 2147483648.0;
+    sMax.y = psDGN->max_y - 2147483648.0;
+    sMax.z = psDGN->max_z - 2147483648.0;
+
+    DGNTransformPoint( psDGN, &sMax );
+
+    padfExtents[3] = sMax.x;
+    padfExtents[4] = sMax.y;
+    padfExtents[5] = sMax.z;
+
+    return TRUE;
 }
 
 /************************************************************************/
@@ -667,6 +844,44 @@ void DGNBuildIndex( DGNInfo *psDGN )
 
         else
             psEI->stype = DGNST_CORE;
+
+        if( psEI->stype == DGNST_MULTIPOINT 
+            || psEI->stype == DGNST_ELLIPSE
+            || psEI->stype == DGNST_TEXT )
+        {
+            GUInt32	anRegion[6];
+
+            anRegion[0] = DGN_INT32( psDGN->abyElem + 4 );
+            anRegion[1] = DGN_INT32( psDGN->abyElem + 8 );
+            anRegion[2] = DGN_INT32( psDGN->abyElem + 12 );
+            anRegion[3] = DGN_INT32( psDGN->abyElem + 16 );
+            anRegion[4] = DGN_INT32( psDGN->abyElem + 20 );
+            anRegion[5] = DGN_INT32( psDGN->abyElem + 24 );
+#ifdef notdef
+            printf( "panRegion[%d]=%.1f,%.1f,%.1f,%.1f,%.1f,%.1f\n", 
+                    psDGN->element_count,
+                    anRegion[0] - 2147483648.0,
+                    anRegion[1] - 2147483648.0,
+                    anRegion[2] - 2147483648.0,
+                    anRegion[3] - 2147483648.0,
+                    anRegion[4] - 2147483648.0,
+                    anRegion[5] - 2147483648.0 );
+#endif            
+            if( psDGN->got_bounds )
+            {
+                psDGN->min_x = MIN(psDGN->min_x, anRegion[0]);
+                psDGN->min_y = MIN(psDGN->min_y, anRegion[1]);
+                psDGN->min_z = MIN(psDGN->min_z, anRegion[2]);
+                psDGN->max_x = MAX(psDGN->max_x, anRegion[3]);
+                psDGN->max_y = MAX(psDGN->max_y, anRegion[4]);
+                psDGN->max_z = MAX(psDGN->max_z, anRegion[5]);
+            }
+            else
+            {
+                memcpy( &(psDGN->min_x), anRegion, sizeof(GInt32) * 6 );
+                psDGN->got_bounds = TRUE;
+            }
+        }
 
         psDGN->element_count++;
 
