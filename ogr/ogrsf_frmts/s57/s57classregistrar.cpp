@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2003/09/12 21:18:54  warmerda
+ * open csv files in binary mode, not text mode
+ *
  * Revision 1.7  2001/12/17 22:38:42  warmerda
  * restructure LoadInfo() to support in-code tables
  *
@@ -116,7 +119,7 @@ int S57ClassRegistrar::FindFile( const char *pszTarget,
         pszFilename = CPLFormFilename( pszDirectory, pszTarget, NULL );
     }
 
-    *pfp = VSIFOpen( pszFilename, "rt" );
+    *pfp = VSIFOpen( pszFilename, "rb" );
 
 #ifdef S57_BUILTIN_CLASSES
     if( *pfp == NULL )
