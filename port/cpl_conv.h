@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.27  2003/12/28 17:24:43  warmerda
+ * added CPLFreeConfig
+ *
  * Revision 1.26  2003/10/17 07:06:06  dron
  * Added locale selection option to CPLScanDouble() and CPLPrintDOuble().
  *
@@ -102,6 +105,7 @@ void CPL_DLL CPLVerifyConfiguration();
 
 const char CPL_DLL *CPLGetConfigOption( const char *, const char * );
 void CPL_DLL        CPLSetConfigOption( const char *, const char * );
+void CPL_DLL        CPLFreeConfig();
 
 /* -------------------------------------------------------------------- */
 /*      Safe malloc() API.  Thin cover over VSI functions with fatal    */

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.32  2003/12/28 17:24:43  warmerda
+ * added CPLFreeConfig
+ *
  * Revision 1.31  2003/10/17 07:06:06  dron
  * Added locale selection option to CPLScanDouble() and CPLPrintDOuble().
  *
@@ -1027,6 +1030,17 @@ void CPLSetConfigOption( const char *pszKey, const char *pszValue )
 {
     papszConfigOptions = 
         CSLSetNameValue( papszConfigOptions, pszKey, pszValue );
+}
+
+/************************************************************************/
+/*                           CPLFreeConfig()                            */
+/************************************************************************/
+
+void CPLFreeConfig()
+
+{
+    CSLDestroy(papszConfigOptions);
+    papszConfigOptions = NULL;
 }
 
 /************************************************************************/
