@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.2  2001/11/27 15:16:53  warmerda
+ * Added header check before trying to open.
+ *
  * Revision 1.1  2001/11/27 14:45:18  warmerda
  * New
  *
@@ -522,7 +525,15 @@ const char *USGSDEMDataset::GetProjectionRef()
 GDALDataset *USGSDEMDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
-    if( poOpenInfo->fp == NULL || poOpenInfo->nHeaderBytes < 50 )
+    if( poOpenInfo->fp == NULL || poOpenInfo->nHeaderBytes < 200 )
+        return NULL;
+
+    if( !EQUALN((const char *) poOpenInfo->pabyHeader+156, "     0",6)
+        && !EQUALN((const char *) poOpenInfo->pabyHeader+156, "     1",6)
+        && !EQUALN((const char *) poOpenInfo->pabyHeader+156, "     2",6) )
+        return NULL;
+
+    if( !EQUALN((const char *) poOpenInfo->pabyHeader+150, "     1",6) )
         return NULL;
 
 /* -------------------------------------------------------------------- */
@@ -539,7 +550,11 @@ GDALDataset *USGSDEMDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*	Read the file.							*/
 /* -------------------------------------------------------------------- */
-    poDS->LoadFromFile( poDS->fp );
+    if( !poDS->LoadFromFile( poDS->fp ) )
+    {
+        delete poDS;
+        return NULL;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
