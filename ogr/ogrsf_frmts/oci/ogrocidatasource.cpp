@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2003/01/07 22:24:35  warmerda
+ * added SRS support
+ *
  * Revision 1.6  2003/01/06 17:58:20  warmerda
  * Fix FID support, add DIM creation keyword
  *
@@ -155,14 +158,19 @@ int OGROCIDataSource::Open( const char * pszNewName, int bUpdate,
     OGROCIStatement oGetTables( poSession );
 
     if( oGetTables.Execute( 
-        "SELECT TABLE_NAME, COLUMN_NAME FROM USER_SDO_GEOM_METADATA" ) 
+        "SELECT TABLE_NAME, COLUMN_NAME, SRID FROM USER_SDO_GEOM_METADATA" ) 
         == CE_None )
     {
         char **papszRow;
 
         while( (papszRow = oGetTables.SimpleFetchRow()) != NULL )
         {
-            OpenTable( papszRow[0], bUpdate, FALSE );
+            int nSRID = -1;
+
+            if( papszRow[2] != NULL )
+                nSRID = atoi(papszRow[2]);
+
+            OpenTable( papszRow[0], papszRow[1], nSRID, bUpdate, FALSE );
         }
     }
 
@@ -173,8 +181,9 @@ int OGROCIDataSource::Open( const char * pszNewName, int bUpdate,
 /*                             OpenTable()                              */
 /************************************************************************/
 
-int OGROCIDataSource::OpenTable( const char *pszNewName, int bUpdate,
-                                int bTestOpen )
+int OGROCIDataSource::OpenTable( const char *pszNewName, 
+                                 const char *pszGeomCol,
+                                 int nSRID, int bUpdate, int bTestOpen )
 
 {
 /* -------------------------------------------------------------------- */
@@ -182,7 +191,8 @@ int OGROCIDataSource::OpenTable( const char *pszNewName, int bUpdate,
 /* -------------------------------------------------------------------- */
     OGROCILayer	*poLayer;
 
-    poLayer = new OGROCITableLayer( this, pszNewName, bUpdate, FALSE );
+    poLayer = new OGROCITableLayer( this, pszNewName, pszGeomCol, nSRID, 
+                                    bUpdate, FALSE );
 
 /* -------------------------------------------------------------------- */
 /*      Add layer to data source layer list.                            */
@@ -219,7 +229,7 @@ void OGROCIDataSource::DeleteLayer( const char *pszLayerName )
 /*      Blow away our OGR structures related to the layer.  This is     */
 /*      pretty dangerous if anything has a reference to this layer!     */
 /* -------------------------------------------------------------------- */
-    CPLDebug( "OGR_PG", "DeleteLayer(%s)", pszLayerName );
+    CPLDebug( "OCI", "DeleteLayer(%s)", pszLayerName );
 
     delete papoLayers[iLayer];
     memmove( papoLayers + iLayer, papoLayers + iLayer + 1, 
@@ -291,12 +301,12 @@ OGROCIDataSource::CreateLayer( const char * pszLayerName,
 /*      Try to get the SRS Id of this spatial reference system,         */
 /*      adding tot the srs table if needed.                             */
 /* -------------------------------------------------------------------- */
-#ifdef notdef
-    int nSRSId = -1;
+    char szSRSId[100];
 
     if( poSRS != NULL )
-        nSRSId = FetchSRSId( poSRS );
-#endif
+        sprintf( szSRSId, "%d", FetchSRSId( poSRS ) );
+    else
+        strcpy( szSRSId, "NULL" );
 
 /* -------------------------------------------------------------------- */
 /*      Create a basic table with the FID.  Also include the            */
@@ -321,10 +331,11 @@ OGROCIDataSource::CreateLayer( const char * pszLayerName,
 /*      setting the dimension information.  Do that later when          */
 /*      requesting an index to be built.                                */
 /* -------------------------------------------------------------------- */
+
     sprintf( szCommand, 
              "INSERT INTO USER_SDO_GEOM_METADATA VALUES "
-             "( '%s', '%s', NULL, NULL )", 
-             pszSafeLayerName, "ORA_GEOMETRY" );
+             "( '%s', '%s', NULL, %s )", 
+             pszSafeLayerName, "ORA_GEOMETRY", szSRSId );
 
     oStatement.Execute( szCommand );
 
@@ -333,7 +344,8 @@ OGROCIDataSource::CreateLayer( const char * pszLayerName,
 /* -------------------------------------------------------------------- */
     OGROCITableLayer	*poLayer;
 
-    poLayer = new OGROCITableLayer( this, pszSafeLayerName, TRUE, TRUE );
+    poLayer = new OGROCITableLayer( this, pszSafeLayerName, "ORA_GEOMETRY",
+                                    -1, TRUE, TRUE );
 
     poLayer->SetLaunderFlag( CSLFetchBoolean(papszOptions,"LAUNDER",FALSE) );
     poLayer->SetPrecisionFlag( CSLFetchBoolean(papszOptions,"PRECISION",TRUE));
@@ -424,5 +436,159 @@ void OGROCIDataSource::ReleaseResultSet( OGRLayer * poLayer )
 
 {
     delete poLayer;
+}
+
+/************************************************************************/
+/*                              FetchSRS()                              */
+/*                                                                      */
+/*      Return a SRS corresponding to a particular id.  Note that       */
+/*      reference counting should be honoured on the returned           */
+/*      OGRSpatialReference, as handles may be cached.                  */
+/************************************************************************/
+
+OGRSpatialReference *OGROCIDataSource::FetchSRS( int nId )
+
+{
+    if( nId < 0 )
+        return NULL;
+
+/* -------------------------------------------------------------------- */
+/*      First, we look through our SRID cache, is it there?             */
+/* -------------------------------------------------------------------- */
+    int  i;
+
+    for( i = 0; i < nKnownSRID; i++ )
+    {
+        if( panSRID[i] == nId )
+            return papoSRS[i];
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Try looking up in MDSYS.CS_SRS table.                           */
+/* -------------------------------------------------------------------- */
+    OGROCIStatement oStatement( GetSession() );
+    char            szSelect[200], **papszResult;
+
+    sprintf( szSelect, "SELECT WKTEXT FROM MDSYS.CS_SRS WHERE SRID = %d", nId );
+
+    if( oStatement.Execute( szSelect ) != CE_None )
+        return NULL;
+
+    papszResult = oStatement.SimpleFetchRow();
+    if( CSLCount(papszResult) != 1 )
+        return NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Turn into a spatial reference.                                  */
+/* -------------------------------------------------------------------- */
+    char *pszWKT = papszResult[0];
+    OGRSpatialReference *poSRS = NULL;
+
+    poSRS = new OGRSpatialReference();
+    if( poSRS->importFromWkt( &pszWKT ) != OGRERR_NONE )
+    {
+        delete poSRS;
+        poSRS = NULL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Add to the cache.                                               */
+/* -------------------------------------------------------------------- */
+    panSRID = (int *) CPLRealloc(panSRID,sizeof(int) * (nKnownSRID+1) );
+    papoSRS = (OGRSpatialReference **) 
+        CPLRealloc(papoSRS, sizeof(void*) * (nKnownSRID + 1) );
+    panSRID[nKnownSRID] = nId;
+    papoSRS[nKnownSRID] = poSRS;
+
+    return poSRS;
+}
+
+/************************************************************************/
+/*                             FetchSRSId()                             */
+/*                                                                      */
+/*      Fetch the id corresponding to an SRS, and if not found, add     */
+/*      it to the table.                                                */
+/************************************************************************/
+
+int OGROCIDataSource::FetchSRSId( OGRSpatialReference * poSRS )
+
+{
+    char		*pszWKT = NULL;
+    int			nSRSId;
+
+    if( poSRS == NULL )
+        return -1;
+
+/* -------------------------------------------------------------------- */
+/*      Convert SRS into old style format (SF-SQL 1.0).                 */
+/* -------------------------------------------------------------------- */
+    OGRSpatialReference *poSRS2 = poSRS->Clone();
+    
+    poSRS2->StripCTParms();
+
+/* -------------------------------------------------------------------- */
+/*      Translate SRS to WKT.                                           */
+/* -------------------------------------------------------------------- */
+    if( poSRS2->exportToWkt( &pszWKT ) != OGRERR_NONE )
+    {
+        delete poSRS2;
+        return -1;
+    }
+    
+    delete poSRS2;
+    
+/* -------------------------------------------------------------------- */
+/*      Try to find in the existing table.                              */
+/* -------------------------------------------------------------------- */
+    OGROCIStringBuf     oCmdText;
+    OGROCIStatement     oCmdStatement( GetSession() );
+    char                **papszResult = NULL;
+
+    oCmdText.Append( "SELECT SRID FROM MDSYS.CS_SRS WHERE WKTEXT = '" );
+    oCmdText.Append( pszWKT );
+    oCmdText.Append( "'" );
+
+    if( oCmdStatement.Execute( oCmdText.GetString() ) == CE_None )
+        papszResult = oCmdStatement.SimpleFetchRow() ;
+
+/* -------------------------------------------------------------------- */
+/*      We got it!  Return it.                                          */
+/* -------------------------------------------------------------------- */
+    if( CSLCount(papszResult) == 1 )
+    {
+        CPLFree( pszWKT );
+        return atoi( papszResult[0] );
+    }
+    
+/* -------------------------------------------------------------------- */
+/*      Get the current maximum srid in the srs table.                  */
+/* -------------------------------------------------------------------- */
+    if( oCmdStatement.Execute("SELECT MAX(SRID) FROM MDSYS.CS_SRS") == CE_None )
+        papszResult = oCmdStatement.SimpleFetchRow();
+    else
+        papszResult = NULL;
+        
+    if( CSLCount(papszResult) == 1 )
+        nSRSId = atoi(papszResult[0]) + 1;
+    else
+        nSRSId = 1;
+
+/* -------------------------------------------------------------------- */
+/*      Try adding the SRS to the SRS table.                            */
+/* -------------------------------------------------------------------- */
+    oCmdText.Clear();
+    oCmdText.Append( "INSERT INTO MDSYS.CS_SRS (SRID, WKTEXT, CS_NAME) " );
+    oCmdText.Appendf( 100, " VALUES (%d,'", nSRSId );
+    oCmdText.Append( pszWKT );
+    oCmdText.Append( "', '" );
+    oCmdText.Append( poSRS->GetRoot()->GetChild(0)->GetValue() );
+    oCmdText.Append( "' )" );
+
+    CPLFree( pszWKT );
+
+    if( oCmdStatement.Execute( oCmdText.GetString() ) != CE_None )
+        return -1;
+    else
+        return nSRSId;
 }
 
