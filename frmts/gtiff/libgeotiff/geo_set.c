@@ -10,6 +10,9 @@
  *  notice accompanies any products derived therefrom.
  *
  * $Log: geo_set.c,v $
+ * Revision 1.9  2003/01/15 03:37:19  warmerda
+ * avoid warning
+ *
  * Revision 1.8  2002/09/27 13:05:33  warmerda
  * allow dynamic set/delete of ASCII tags. ASCIIPARAMS now kept split
  *
@@ -102,7 +105,7 @@ int GTIFKeySet(GTIF *gtif, geokey_t keyID, tagtype_t type, int count,...)
     int index = gtif->gt_keyindex[ keyID ];
     int newvalues = 0;
     GeoKey *key;
-    char *data;
+    char *data = NULL;
     char *val;
     pinfo_t sval;
     double dval;

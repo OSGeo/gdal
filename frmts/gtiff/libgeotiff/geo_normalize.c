@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: geo_normalize.c,v 1.33 2002/12/05 19:21:01 warmerda Exp $
+ * $Id: geo_normalize.c,v 1.34 2003/01/15 03:37:40 warmerda Exp $
  *
  * Project:  libgeotiff
  * Purpose:  Code to normalize PCS and other composite codes in a GeoTIFF file.
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log: geo_normalize.c,v $
+ * Revision 1.34  2003/01/15 03:37:40  warmerda
+ * added GTIFFreeMemory()
+ *
  * Revision 1.33  2002/12/05 19:21:01  warmerda
  * fixed dfInDegrees to actually be in degrees, not radians!
  *
@@ -2289,4 +2292,18 @@ void GTIFPrintDefn( GTIFDefn * psDefn, FILE * fp )
     }
 
     CSVDeaccess( NULL );
+}
+
+/************************************************************************/
+/*                           GTIFFreeMemory()                           */
+/*                                                                      */
+/*      Externally visible function to free memory allocated within     */
+/*      geo_normalize.c.                                                */
+/************************************************************************/
+
+void GTIFFreeMemory( char * pMemory )
+
+{
+    if( pMemory != NULL )
+        VSIFree( pMemory );
 }

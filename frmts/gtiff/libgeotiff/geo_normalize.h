@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: geo_normalize.h,v 1.8 2002/11/28 22:27:42 warmerda Exp $
+ * $Id: geo_normalize.h,v 1.9 2003/01/15 03:37:40 warmerda Exp $
  *
  * Project:  libgeotiff
  * Purpose:  Include file related to geo_normalize.c containing Code to
@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log: geo_normalize.h,v $
+ * Revision 1.9  2003/01/15 03:37:40  warmerda
+ * added GTIFFreeMemory()
+ *
  * Revision 1.8  2002/11/28 22:27:42  warmerda
  * preliminary upgrade to EPSG 6.2.2 tables
  *
@@ -178,6 +181,9 @@ int CPL_DLL GTIFGetUOMLengthInfo( int nUOMLengthCode,
 int CPL_DLL GTIFGetUOMAngleInfo( int nUOMAngleCode,
                                  char **ppszUOMName,
                                  double * pdfInDegrees );
+
+/* this should be used to free strings returned by GTIFGet... funcs */
+void CPL_DLL GTIFFreeMemory( char * );
 
 int CPL_DLL GTIFGetDefn( GTIF *psGTIF, GTIFDefn * psDefn );
 void CPL_DLL GTIFPrintDefn( GTIFDefn *, FILE * );
