@@ -33,8 +33,8 @@
  * and things like that.
  *
  * $Log$
- * Revision 1.58  2003/03/07 16:31:12  warmerda
- * added GetLayerByName
+ * Revision 1.59  2003/03/18 06:05:12  warmerda
+ * Added GDALDataset::FlushCache()
  *
  ************************************************************************/
 
@@ -3072,6 +3072,26 @@ static PyObject *_wrap_GDALGetGCPProjection(PyObject *self, PyObject *args) {
     }
     _result = (char *)GDALGetGCPProjection(_arg0);
     _resultobj = Py_BuildValue("s", _result);
+    return _resultobj;
+}
+
+static PyObject *_wrap_GDALFlushCache(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    GDALDatasetH  _arg0;
+    char * _argc0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"s:GDALFlushCache",&_argc0)) 
+        return NULL;
+    if (_argc0) {
+        if (SWIG_GetPtr(_argc0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of GDALFlushCache. Expected _GDALDatasetH.");
+        return NULL;
+        }
+    }
+    GDALFlushCache(_arg0);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
     return _resultobj;
 }
 
@@ -7716,6 +7736,7 @@ static PyMethodDef _gdalMethods[] = {
 	 { "GDALGetRasterBandXSize", _wrap_GDALGetRasterBandXSize, 1 },
 	 { "GDALGetBlockSize", _wrap_GDALGetBlockSize, 1 },
 	 { "GDALGetRasterDataType", _wrap_GDALGetRasterDataType, 1 },
+	 { "GDALFlushCache", _wrap_GDALFlushCache, 1 },
 	 { "GDALGetGCPProjection", _wrap_GDALGetGCPProjection, 1 },
 	 { "GDALGetGCPCount", _wrap_GDALGetGCPCount, 1 },
 	 { "GDALDereferenceDataset", _wrap_GDALDereferenceDataset, 1 },
