@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  1999/11/04 21:17:25  warmerda
+ * support layer/ds creation, one ds is now many shapefiles
+ *
  * Revision 1.4  1999/07/27 00:52:17  warmerda
  * added random access, write and capability methods
  *
@@ -55,7 +58,8 @@
 OGRFeature *SHPReadOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
                                OGRFeatureDefn * poDefn, int iShape );
 OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape );
-OGRFeatureDefn *SHPReadOGRFeatureDefn( SHPHandle hSHP, DBFHandle hDBF );
+OGRFeatureDefn *SHPReadOGRFeatureDefn( const char * pszName,
+                                       SHPHandle hSHP, DBFHandle hDBF );
 OGRErr SHPWriteOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
                            OGRFeatureDefn *poFeatureDefn,
                            OGRFeature *poFeature );
@@ -75,9 +79,10 @@ class OGRShapeLayer : public OGRLayer
     DBFHandle		hDBF;
 
     int			bUpdateAccess;
-    
+
   public:
-    			OGRShapeLayer( SHPHandle hSHP, DBFHandle hDBF,
+    			OGRShapeLayer( const char * pszName,
+                                       SHPHandle hSHP, DBFHandle hDBF,
                                        int bUpdate );
     			~OGRShapeLayer();
 
@@ -95,6 +100,9 @@ class OGRShapeLayer : public OGRLayer
 
     int                 GetFeatureCount( int );
 
+    virtual OGRErr      CreateField( OGRFieldDefn *poField,
+                                     int bApproxOK = TRUE );
+    
     int                 TestCapability( const char * );
 };
 
@@ -104,17 +112,30 @@ class OGRShapeLayer : public OGRLayer
 
 class OGRShapeDataSource : public OGRDataSource
 {
-    OGRShapeLayer	*poLayer;
+    OGRShapeLayer     **papoLayers;
+    int			nLayers;
+    
     char		*pszName;
+
+    int			bDSUpdate;
     
   public:
-    			OGRShapeDataSource( const char * pszName,
-                                            OGRShapeLayer * poLayerIn );
+    			OGRShapeDataSource();
     			~OGRShapeDataSource();
 
+    int			Open( const char *, int bUpdate, int bTestOpen );
+    int                 OpenFile( const char *, int bUpdate, int bTestOpen );
+
     const char	        *GetName() { return pszName; }
-    int			GetLayerCount() { return 1; }
-    OGRLayer		*GetLayer( int ) { return poLayer; }
+    int			GetLayerCount() { return nLayers; }
+    OGRLayer		*GetLayer( int );
+
+    virtual OGRLayer    *CreateLayer( const char *, 
+                                      OGRSpatialReference * = NULL,
+                                      OGRwkbGeometryType = wkbUnknown,
+                                      char ** = NULL );
+
+    int                 TestCapability( const char * );
 };
 
 /************************************************************************/
@@ -128,6 +149,11 @@ class OGRShapeDriver : public OGRSFDriver
                 
     const char *GetName();
     OGRDataSource *Open( const char *, int );
+
+    virtual OGRDataSource *CreateDataSource( const char *pszName,
+                                             char ** = NULL );
+    
+    int                 TestCapability( const char * );
 };
 
 
