@@ -3,7 +3,7 @@
  *
  * Project:  Arc/Info Binary Grid Translator
  * Purpose:  Grid file reading code.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 1999, Frank Warmerdam
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2002/10/31 03:09:35  warmerda
+ * added support for FF blocks
+ *
  * Revision 1.17  2002/10/28 21:34:55  warmerda
  * made handling of corrupt files much more bulletproof
  *
@@ -279,7 +282,53 @@ CPLErr AIGProcessRawBlock( GByte *pabyCur, int nDataSize, int nMin,
 }
 
 /************************************************************************/
-/*                         AIGProcessD7Block()                          */
+/*                         AIGProcessFFBlock()                          */
+/*                                                                      */
+/*      Process a type 0xFF (CCITT RLE) compressed block.               */
+/************************************************************************/
+
+static 
+CPLErr AIGProcessFFBlock( GByte *pabyCur, int nDataSize, int nMin,
+                          int nBlockXSize, int nBlockYSize,
+                          GUInt32 * panData )
+
+{
+/* -------------------------------------------------------------------- */
+/*      Convert CCITT compress bitstream into 1bit raw data.            */
+/* -------------------------------------------------------------------- */
+    CPLErr eErr;
+    int i, nDstBytes = (nBlockXSize * nBlockYSize + 7) / 8;
+    unsigned char *pabyIntermediate;
+
+    pabyIntermediate = (unsigned char *) CPLMalloc(nDstBytes);
+    
+    eErr = DecompressCCITTRLETile( pabyCur, nDataSize, 
+                                   pabyIntermediate, nDstBytes,
+                                   nBlockXSize, nBlockYSize );
+    if( eErr != CE_None )
+        return eErr;
+
+/* -------------------------------------------------------------------- */
+/*      Convert the bit buffer into 32bit integers and account for      */
+/*      nMin.                                                           */
+/* -------------------------------------------------------------------- */
+    for( i = 0; i < nBlockXSize * nBlockYSize; i++ )
+    {
+        if( pabyIntermediate[i>>3] & (0x80 >> (i&0x7)) )
+            panData[i] = nMin+1;
+        else
+            panData[i] = nMin;
+    }
+
+    CPLFree( pabyIntermediate );
+
+    return( CE_None );
+}
+
+
+
+/************************************************************************/
+/*                          AIGProcessBlock()                           */
 /*                                                                      */
 /*      Process a block using ``D7'', ``E0'' or ``DF'' compression.     */
 /************************************************************************/
@@ -582,9 +631,9 @@ CPLErr AIGReadBlock( FILE * fp, int nBlockOffset, int nBlockSize,
     }
     else if( nMagic == 0xFF )
     {
-        /* just fill with no data value ... I can't figure this one out */
-        for( i = 0; i < nBlockXSize * nBlockYSize; i++ )
-            panData[i] = GRID_NO_DATA;
+        AIGProcessFFBlock( pabyCur, nDataSize, nMin,
+                           nBlockXSize, nBlockYSize,
+                           panData );
     }
     else
     {
