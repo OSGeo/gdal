@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.11  2002/12/18 21:36:12  danmo
+ * Disabled XML validation by default, -DOGR_GML_VALIDATION=1 can turn it on
+ *
  * Revision 1.10  2002/12/03 04:24:21  warmerda
  * Fixed leak of geometry in PrescanForSchema() ... fix from Duncan.
  *
@@ -201,10 +204,17 @@ int GMLReader::SetupParser()
     m_poSAXReader->setEntityResolver( m_poGMLHandler );
     m_poSAXReader->setDTDHandler( m_poGMLHandler );
 
+#if (OGR_GML_VALIDATION)
     m_poSAXReader->setFeature(
         XMLString::transcode("http://xml.org/sax/features/validation"), true);
     m_poSAXReader->setFeature(
         XMLString::transcode("http://xml.org/sax/features/namespaces"), true);
+#else
+    m_poSAXReader->setFeature(
+        XMLString::transcode("http://xml.org/sax/features/validation"), false);
+    m_poSAXReader->setFeature(
+        XMLString::transcode("http://xml.org/sax/features/namespaces"), false);
+#endif
 
     m_bReadStarted = FALSE;
 
