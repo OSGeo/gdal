@@ -47,7 +47,7 @@ test:	hfatest
 		     $(IMG_DATA_DIR)/Eprj/*.img \
 		     $(IMG_DATA_DIR)/fire/*.img \
 		     $(IMG_DATA_DIR)/usf/*.img \
-		     $(IMG_DATA_DIR)/colordo/*.img
+		     $(IMG_DATA_DIR)/colorado/*.img
 
 test_img2tif:	img2tif
 	./tst_img2tif_1.sh
@@ -56,4 +56,16 @@ test_img2tif:	img2tif
 install-obj:	$(OBJ)
 	cp $(OBJ) ../o
 
-
+img2tif-dist:
+	rm -rf img2tif_dist
+	mkdir img2tif_dist
+	cp img2tif_build.sh img2tif_dist/build.sh
+	cp hfaopen.cpp hfaentry.cpp hfadictionary.cpp hfafield.cpp \
+	   hfatype.cpp hfaband.cpp img2tif.cpp imggeotiff.c geoextra.c \
+	   hfa.h hfa_p.h img2tif_dist
+	mkdir img2tif_dist/port
+	cp $(GDAL_ROOT)/port/cpl_{conv.cpp,conv.h,error.cpp,error.h,port.h,string.cpp,string.h,vsi.h,vsisimple.cpp} img2tif_dist/port
+	mkdir img2tif_dist/libtiff
+	cp ../gtiff/libtiff/*.{c,h} img2tif_dist/libtiff
+	mkdir img2tif_dist/libgeotiff
+	cp ../gtiff/libgeotiff/*.{c,h,inc} img2tif_dist/libgeotiff
