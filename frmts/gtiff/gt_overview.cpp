@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2004/04/14 09:51:36  dron
+ * Added support for COMPRESS_OVERVIEW option.
+ *
  * Revision 1.10  2002/07/20 12:27:13  dron
  * Fixed building with externally preinstalled TIFF library.
  *
@@ -83,9 +86,10 @@ GTIFFBuildOverviews( const char * pszFilename,
                      GDALProgressFunc pfnProgress, void * pProgressData )
 
 {
-    TIFF  *hOTIFF;
-    int   nBitsPerPixel=0, nPhotometric=0, nSampleFormat=0, iOverview, iBand;
-    int   nXSize=0, nYSize=0;
+    TIFF    *hOTIFF;
+    int     nBitsPerPixel=0, nCompression=COMPRESSION_NONE, nPhotometric=0;
+    int     nSampleFormat=0, iOverview, iBand;
+    int     nXSize=0, nYSize=0;
 
     if( nBands == 0 || nOverviews == 0 )
         return CE_None;
@@ -188,6 +192,27 @@ GTIFFBuildOverviews( const char * pszFilename,
     }
 
 /* -------------------------------------------------------------------- */
+/*      Use specified compression method.                               */
+/* -------------------------------------------------------------------- */
+    const char *pszCompress = CPLGetConfigOption( "COMPRESS_OVERVIEW", NULL );
+
+    if( pszCompress )
+    {
+        if( EQUAL( pszCompress, "JPEG" ) )
+            nCompression = COMPRESSION_JPEG;
+        else if( EQUAL( pszCompress, "LZW" ) )
+            nCompression = COMPRESSION_LZW;
+        else if( EQUAL( pszCompress, "PACKBITS" ))
+            nCompression = COMPRESSION_PACKBITS;
+        else if( EQUAL( pszCompress, "DEFLATE" ) || EQUAL( pszCompress, "ZIP" ))
+            nCompression = COMPRESSION_ADOBE_DEFLATE;
+        else
+            CPLError( CE_Warning, CPLE_IllegalArg, 
+                      "COMPRESS_OVERVIEW=%s value not recognised, ignoring.",
+                      pszCompress );
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Figure out the photometric interpretation to use.               */
 /* -------------------------------------------------------------------- */
     if( nBands == 3 )
@@ -285,7 +310,7 @@ GTIFFBuildOverviews( const char * pszFilename,
 
         nDirOffset = 
             TIFF_WriteOverview( hOTIFF, nOXSize, nOYSize, nBitsPerPixel, 
-                                nBands, 128, 128, TRUE, COMPRESSION_NONE,
+                                nBands, 128, 128, TRUE, nCompression,
                                 nPhotometric, nSampleFormat, 
                                 panRed, panGreen, panBlue, 
                                 FALSE );
