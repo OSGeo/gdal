@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2002/10/20 03:45:53  warmerda
+ * quote table name in feature insert, and feature count commands
+ *
  * Revision 1.8  2002/10/09 18:30:10  warmerda
  * substantial upgrade to type handling, and preservations of width/precision
  *
@@ -462,7 +465,7 @@ OGRErr OGRPGTableLayer::CreateFeature( OGRFeature *poFeature )
 /* -------------------------------------------------------------------- */
 /*      Form the INSERT command.  					*/
 /* -------------------------------------------------------------------- */
-    sprintf( pszCommand, "INSERT INTO %s (", poFeatureDefn->GetName() );
+    sprintf( pszCommand, "INSERT INTO \"%s\" (", poFeatureDefn->GetName() );
 
     if( bHasWkb && poFeature->GetGeometryRef() != NULL )
         strcat( pszCommand, "WKB_GEOMETRY " );
@@ -500,7 +503,8 @@ OGRErr OGRPGTableLayer::CreateFeature( OGRFeature *poFeature )
         if( nSRSId == -2 )
             GetSpatialRef();
 
-        poFeature->GetGeometryRef()->exportToWkt( &pszWKT );
+        if( poFeature->GetGeometryRef() != NULL )
+            poFeature->GetGeometryRef()->exportToWkt( &pszWKT );
         
         if( pszWKT != NULL 
             && strlen(pszCommand) + strlen(pszWKT) > nCommandBufSize - 10000 )
@@ -800,7 +804,7 @@ int OGRPGTableLayer::GetFeatureCount( int bForce )
 
     sprintf( szCommand, 
              "DECLARE countCursor CURSOR for "
-             "SELECT count(*) FROM %s "
+             "SELECT count(*) FROM \"%s\" "
              "%s",
              poFeatureDefn->GetName(), pszWHERE );
 
