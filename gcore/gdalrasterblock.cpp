@@ -26,6 +26,9 @@
  *
  * 
  * $Log$
+ * Revision 1.4  2001/06/22 20:09:13  warmerda
+ * added GDAL_CACHEMAX environment variable support
+ *
  * Revision 1.3  2000/03/31 13:42:49  warmerda
  * added debugging code
  *
@@ -40,6 +43,7 @@
 #include "gdal_priv.h"
 
 static int nTileAgeTicker = 0; 
+static int bCacheMaxInitialized = FALSE;
 static int nCacheMax = 5 * 1024*1024;
 static int nCacheUsed = 0;
 
@@ -65,6 +69,17 @@ void GDALSetCacheMax( int nNewSize )
 
 int GDALGetCacheMax()
 {
+    if( !bCacheMaxInitialized )
+    {
+        if( getenv("GDAL_CACHEMAX") != NULL )
+        {
+            nCacheMax = atoi(getenv("GDAL_CACHEMAX"));
+            if( nCacheMax < 1000 )
+                nCacheMax *= 1024 * 1024;
+        }
+        bCacheMaxInitialized = TRUE;
+    }
+    
     return nCacheMax;
 }
 

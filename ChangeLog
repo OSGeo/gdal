@@ -1,5 +1,8 @@
 2001-06-22  Frank Warmerdam  <warmerdam@pobox.com>
 
+	* core/gdalrasterblock.cpp: added support for GDAL_CACHEMAX
+	environment variable.
+
 	* core/gdaladefaultoverviews.c: Fixed crash with refreshing overviews
 	during build.
 
