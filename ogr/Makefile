@@ -28,11 +28,17 @@ OBJ_OLEDB =	oledb_sup.obj \
 
 !IFDEF DLLBUILD
 LINKARGS =	..\gdal_i.lib $(LIBS)
+DEPLIBS	=	..\gdal_i.lib
 !ELSE
 LINKARGS =	$(OBJ_OGR) $(OGR_FRMTS) $(ALL_LIBS)
+DEPLIBS	=	$(OGR_FRMTS)
 !ENDIF
 
 default:        ogr.lib ogrinfo.exe test_ogrsf.exe ogr2ogr.exe
+
+ogrsf_frmts\ogrsf_frmts.lib:
+
+sublibs:	frmts
 
 frmts:
 	cd ogrsf_frmts
@@ -62,33 +68,33 @@ sfcdump.exe:	geometryidl.h sfcdump.obj ogr.lib ogroledb.lib
         cl $(LINKFLAGS) sfcdump.obj ogroledb.lib $(LINKARGS) \
 		/link $(LINKER_FLAGS)
 
-test1.exe:	test1.obj $(OBJ_OGR) 
+test1.exe:	test1.obj $(OBJ_OGR) $(DEPLIBS)
 	cl $(LINKFLAGS) test1.obj $(OBJ_OGR) $(ALL_LIBS) \
 		 /link $(LINKER_FLAGS)
 
-test2.exe:	test2.obj $(OBJ_OGR)
+test2.exe:	test2.obj $(OBJ_OGR) $(DEPLIBS)
 	cl $(LINKFLAGS) test2.obj $(OBJ_OGR) $(OGR_FRMTS) \
 			$(ALL_LIBS) /link $(LINKER_FLAGS)
 
-test3.exe:      test3.obj $(OBJ_OGR)
+test3.exe:      test3.obj $(OBJ_OGR) $(DEPLIBS)
         cl $(LINKFLAGS) test3.obj $(OBJ_OGR) $(OGR_FRMTS) \
 			$(ALL_LIBS) /link $(LINKER_FLAGS)
 
-test_ogrsf.exe:      test_ogrsf.obj $(OBJ_OGR)
+test_ogrsf.exe:      test_ogrsf.obj $(OBJ_OGR) $(DEPLIBS)
         cl $(LINKFLAGS) test_ogrsf.obj $(OBJ_OGR) $(OGR_FRMTS) \
 			$(ALL_LIBS) /link $(LINKER_FLAGS)
 
-test_rep.exe:      test_rep.obj $(OBJ_OGR)
+test_rep.exe:      test_rep.obj $(OBJ_OGR) $(DEPLIBS)
         cl $(LINKFLAGS) test_rep.obj $(OBJ_OGR) $(OGR_FRMTS) \
 			$(ALL_LIBS) /link $(LINKER_FLAGS)
 
-ogrinfo.exe:      ogrinfo.obj $(OBJ_OGR)
+ogrinfo.exe:      ogrinfo.obj $(OBJ_OGR) $(DEPLIBS)
         cl $(LINKFLAGS) ogrinfo.obj $(LINKARGS) /link $(LINKER_FLAGS)
 
-ogr2ogr.exe:      ogr2ogr.obj $(OBJ_OGR)
+ogr2ogr.exe:      ogr2ogr.obj $(OBJ_OGR) $(DEPLIBS)
         cl $(LINKFLAGS) ogr2ogr.obj $(LINKARGS) /link $(LINKER_FLAGS)
 
-sdts2mi.exe:      sdts2mi.obj $(OBJ_OGR)
+sdts2mi.exe:      sdts2mi.obj $(OBJ_OGR) $(DEPLIBS)
         cl $(LINKFLAGS) sdts2mi.obj $(OBJ_OGR) $(OGR_FRMTS) \
 			$(ALL_LIBS) /link $(LINKER_FLAGS)
 
