@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2002/01/21 21:36:16  warmerda
+ * removed DGNid
+ *
  * Revision 1.15  2002/01/21 20:55:10  warmerda
  * use dgnlib spatial filtering support
  *
@@ -95,15 +98,6 @@ OGRDGNLayer::OGRDGNLayer( const char * pszName, DGNHandle hDGN )
     poFeatureDefn = new OGRFeatureDefn( pszName );
     
     OGRFieldDefn	oField( "", OFTInteger );
-
-/* -------------------------------------------------------------------- */
-/*      Element type                                                    */
-/* -------------------------------------------------------------------- */
-    oField.SetName( "DGNId" );
-    oField.SetType( OFTInteger );
-    oField.SetWidth( 8 );
-    oField.SetPrecision( 0 );
-    poFeatureDefn->AddFieldDefn( &oField );
 
 /* -------------------------------------------------------------------- */
 /*      Element type                                                    */
@@ -228,7 +222,6 @@ OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement )
     OGRFeature	*poFeature = new OGRFeature( poFeatureDefn );
 
     poFeature->SetFID( psElement->element_id );
-    poFeature->SetField( "DGNId", psElement->element_id );
     poFeature->SetField( "Type", psElement->type );
     poFeature->SetField( "Level", psElement->level );
     poFeature->SetField( "GraphicGroup", psElement->graphic_group );
