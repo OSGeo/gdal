@@ -1,0 +1,38 @@
+/*!
+\page frmt_jpeg
+
+<title>JPEG -- JPEG JFIF File Format</title>
+
+The JPEG JFIF format is supported for reading, and batch writing, but not
+update in place.  JPEG files are represented as one band (greyscale) or three 
+band (RGB) datasets with Byte valued bands.
+
+There is currently no support for georeferencing information or metadata for
+JPEG files.  Overviews can be built for JPEG files as an external .ovr file.
+
+The GDAL JPEG Driver is built using the Independent JPEG Group's jpeg
+library.  Also note that the GeoTIFF driver supports tiled TIFF with JPEG
+compressed tiles.
+
+<h2>Creation Options</h2>
+
+JPEG files are created using the "JPEG" driver code.  Only Byte band types
+are supported, and only 1 and 3 band configurations.  JPEG file creation
+is implemented by the batch (CreateCopy) method.  
+
+<ul>
+
+<li> <b>QUALITY=n</b>: By default the quality flag is set to 75, but this
+option can be used to select other values.  Values must be in the
+range 10-100.  Low values result in higher compression ratios, but poorer
+image quality.  A value of 100 will result in lossless compression.<p>
+
+</ul>
+
+See Also:<p>
+
+<ul>
+<li> <a href="http://www.ijg.org/">Independent JPEG Group</a>
+</ul>
+
+*/
