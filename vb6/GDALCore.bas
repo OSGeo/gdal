@@ -1,3 +1,4 @@
+Attribute VB_Name = "GDALCore"
 '*****************************************************************************
 ' $Id$
 '
@@ -30,12 +31,14 @@
 '*****************************************************************************
 '
 ' $Log$
+' Revision 1.2  2005/03/16 23:34:55  fwarmerdam
+' added colortable support
+'
 ' Revision 1.1  2005/03/16 19:45:19  fwarmerdam
 ' new
 '
 '
 
-Attribute VB_Name = "GDALCore"
 
 ' ****************************************************************************
 '               Declarations for C API functions.
@@ -249,6 +252,16 @@ Public Declare Function GDALRasterIO _
      ByVal DataType As Long, _
      ByVal PixelSpace As Long, ByVal LineSpace As Long) As Long
 
+Public Declare Function GDALGetRasterColorTable _
+    Lib "D:\warmerda\fao\gdal\gdal12vb.dll" _
+    Alias "_GDALGetRasterColorTable@4" _
+    (ByVal Handle As Long) As Long
+
+Public Declare Function GDALSetRasterColorTable _
+    Lib "D:\warmerda\fao\gdal\gdal12vb.dll" _
+    Alias "_GDALGetRasterColorTable@8" _
+    (ByVal BandHandle As Long, ByVal TableHandle As Long) As Long
+
 ' ----------------------------------------------------------------------------
 '       GDALDriver
 ' ----------------------------------------------------------------------------
@@ -287,6 +300,52 @@ Public Declare Function GDALCreateCopy _
     (ByVal Handle As Long, ByVal Filename As String, _
      ByVal SrcDS As Long, ByVal ApproxOK As Long, ByVal Options As Long, _
      ByVal ProgressFunc As Long, ByVal ProgressArg As Long) As Long
+
+' ----------------------------------------------------------------------------
+'       GDALColorTable
+' ----------------------------------------------------------------------------
+Public Declare Function GDALCreateColorTable _
+        Lib "D:\warmerda\fao\gdal\gdal12vb.dll" _
+        Alias "_GDALCreateColorTable@4" _
+        (ByVal PaletteInterp As Long) As Long
+
+Public Declare Sub GDALDestroyColorTable _
+        Lib "D:\warmerda\fao\gdal\gdal12vb.dll" _
+        Alias "_GDALDestroyColorTable@4" _
+        (ByVal Handle As Long)
+
+Public Declare Function GDALCloneColorTable _
+        Lib "D:\warmerda\fao\gdal\gdal12vb.dll" _
+        Alias "_GDALCreateCloneTable@4" _
+        (ByVal Handle As Long) As Long
+
+Public Declare Function GDALGetPaletteInterpretation _
+        Lib "D:\warmerda\fao\gdal\gdal12vb.dll" _
+        Alias "_GDALGetPaletteInterpretation@4" _
+        (ByVal Handle As Long) As Long
+
+Public Declare Function GDALGetColorEntryCount _
+        Lib "D:\warmerda\fao\gdal\gdal12vb.dll" _
+        Alias "_GDALGetColorEntryCount@4" _
+        (ByVal Handle As Long) As Long
+
+Public Declare Function GDALGetColorEntryAsRGB _
+        Lib "D:\warmerda\fao\gdal\gdal12vb.dll" _
+        Alias "_GDALGetColorEntryAsRGB@12" _
+        (ByVal Handle As Long, ByVal ColorIndex As Long, _
+          ByRef ColorEntry As Integer) As Long
+
+Public Declare Function GDALGetColorEntry _
+        Lib "D:\warmerda\fao\gdal\gdal12vb.dll" _
+        Alias "_GDALGetColorEntry@12" _
+        (ByVal Handle As Long, ByVal ColorIndex As Long, _
+          ByRef ColorEntry As Integer) As Long
+     
+Public Declare Sub GDALSetColorEntry _
+        Lib "D:\warmerda\fao\gdal\gdal12vb.dll" _
+        Alias "_GDALSetColorEntry@12" _
+        (ByVal Handle As Long, ByVal ColorIndex As Long, _
+          ByRef ColorEntry As Integer)
 
 ' ----------------------------------------------------------------------------
 ' Special VB6 Support functions
