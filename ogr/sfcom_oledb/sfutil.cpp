@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  1999/07/20 17:09:57  kshih
+ * Use OGR code.
+ *
  * Revision 1.4  1999/06/25 18:17:25  kshih
  * Changes to get datasource from session/rowset/command
  *
@@ -43,119 +46,110 @@
  *
  */
 
-#include <windows.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <ctype.h>
+
 #include "cpl_conv.h"
-#include "shapefil.h"
 #include "sftraceback.h"
 #include "sfutil.h"
+#include "SF.h"
 
 
-static char szSFile[MAX_PATH] ="";
-static char szDFile[MAX_PATH] ="";
 
-/************************************************************************/
-/*                           SFGetFilenames()                           */
-/*                                                                      */
-/*      Get the two shape and dbf filenames.                            */
-/************************************************************************/
-void	SFGetFilenames(const char *pszFileIn, char **ppszSHPFile, 
-					   char **ppszDBFFile)
+typedef struct _IUnknownOGRInfo
 {
+	IDBProperties *pIDB;
+	OGRDataSource *pOGR;
+	struct _IUnknownOGRInfo	*next;
+}  IUnknownOGRInfo;
 
-	char szDrive[_MAX_DRIVE];   
-	char szDir[_MAX_DIR];
-  	char szFname[_MAX_FNAME];   
-	char szExt[_MAX_EXT];
+static IUnknownOGRInfo *pIUnkOGRInfo = NULL;
 
+/************************************************************************/
+/*                      SFGetOGRDataSource()                            */
+/*                                                                      */
+/*      Get a OGRData Source from a IUnknown Pointer of some sort		*/
+/************************************************************************/
+OGRDataSource *SFGetOGRDataSource(IUnknown *pUnk)
+{
+	IDBProperties	*pIDB  = NULL;
+	IUnknownOGRInfo	*pInfo = pIUnkOGRInfo;
+	OGRDataSource   *pOGR  = NULL;
 
-	_splitpath(pszFileIn,szDrive,szDir,szFname,szExt);
+	if (pInfo && pUnk)
+	{
+		pIDB = SFGetDataSourceProperties(pUnk);
+	}
 
-    // Shape file
+	while (pInfo && pIDB)
+	{
+		if (pInfo->pIDB == pIDB)
+		{
+			pOGR = pInfo->pOGR;
+			break;
+		}
 
-    strcpy(szExt,".SHP");
-    if (strlen(szExt))
-    {
-        if (islower(szExt[0]))
-        {
-            strcpy(szExt,".shp");
-        }
-
-    }
-    else if (strlen(szFname))
-    {
-        if (islower(szFname[strlen(szFname)-1]))
-        {
-            strcpy(szExt,".shp");
-        }
-    }
-
-    _makepath(szSFile,szDrive,szDir,szFname,szExt);
-    if (ppszSHPFile)
-        *ppszSHPFile = szSFile;
+		pInfo = pInfo->next;
+	}
 	
+	if (pIDB)
+		pIDB->Release();
 
-
-
-    // DBFFile
-    strcpy(szExt,".DBF");
-    if (strlen(szExt))
-    {
-        if (islower(szExt[1]))
-        {
-            strcpy(szExt,".dbf");
-        }
-
-    }
-    else if (strlen(szFname))
-    {
-        if (islower(szFname[strlen(szFname)-1]))
-        {
-            strcpy(szExt,".dbf");
-        }
-    }
-
-    _makepath(szDFile,szDrive,szDir,szFname,szExt);
-
-    if (ppszDBFFile)
-        *ppszDBFFile = szDFile;
+	return pOGR;
 }
 
 /************************************************************************/
-/*                          SFGetSHPHandle()                            */
+/*                          SFSetOGRDataSource()                        */
 /*                                                                      */
-/*      Get a shape file handle from any related name.					*/
+/*     Set the OGRData Source from an IUnknown pointer.					*/
 /************************************************************************/
-SHPHandle	SFGetSHPHandle(const char *pszName)
+void SFSetOGRDataSource(IUnknown *pUnk, OGRDataSource *pOGR)
 {
-    char *pszSHPFile;
+	IUnknownOGRInfo	*pNew;
+	IDBProperties	*pIDB;
 
-	if (pszName == NULL)
-		return NULL;
+	
+	if (NULL == (pIDB = SFGetDataSourceProperties(pUnk)))
+		return;
 
-    SFGetFilenames(pszName,&pszSHPFile, NULL);
-
-    return SHPOpen(pszSHPFile,"r");
+	if (pIDB)
+	{
+		pNew = new IUnknownOGRInfo;
+		
+		pNew->pIDB = pIDB;
+		pNew->pOGR = pOGR;
+		pNew->next = pIUnkOGRInfo;
+		pIUnkOGRInfo = pNew;
+		
+		pIDB->Release();
+	}
 }
 
 /************************************************************************/
-/*                          SFGetDBFHandle()                            */
+/*                          SFClearOGRDataSource                        */
 /*                                                                      */
-/*      Get a DBFFile handle from any related name.						*/
+/*     Set the OGRData Source from an IUnknown pointer.					*/
 /************************************************************************/
-DBFHandle	SFGetDBFHandle(const char *pszName)
+void SFClearOGRDataSource(IUnknown *pUnk)
 {
-    char *pszDBFFile;
+	IDBProperties   *pIDB;
+	IUnknownOGRInfo *pInfo  =  pIUnkOGRInfo;
+	IUnknownOGRInfo **pPrev = &pIUnkOGRInfo;
 
-	if (pszName == NULL)
-		return NULL;
+	if (NULL == (pIDB = SFGetDataSourceProperties(pUnk)))
+		return;
 
-    SFGetFilenames(pszName,NULL,&pszDBFFile);
-
-	return DBFOpen(pszDBFFile,"r");
+	while (pInfo && pIDB)
+	{
+		if (pInfo->pIDB == pIDB)
+		{
+			*pPrev = pInfo->next;		
+			delete pInfo;
+			break;
+		}
+		pPrev = &(pInfo->next);
+		pInfo = pInfo->next;
+	}
 }
+
 
 
 /************************************************************************/
@@ -258,4 +252,64 @@ void OGRComDebug( const char * pszDebugClass, const char * pszFormat, ... )
         fflush( fpDebug );
     }
 }
+/************************************************************************/
+/*                            SFReportError()                           */
+/************************************************************************/
 
+
+HRESULT		SFReportError(HRESULT passed_hr, IID iid, DWORD providerCode,char *pszText)
+{
+	static	IClassFactory *m_pErrorObjectFactory;
+
+	if (FAILED(passed_hr))
+	{
+		ERRORINFO		ErrorInfo;
+		IErrorInfo		*pErrorInfo;
+		IErrorRecords	*pErrorRecords;
+		HRESULT			hr;
+
+		SetErrorInfo(0, NULL);
+		
+		GetErrorInfo(0,&pErrorInfo);
+		
+		if (!pErrorInfo)
+		{
+			if (!m_pErrorObjectFactory)
+			{
+				CoGetClassObject(CLSID_EXTENDEDERRORINFO,
+					CLSCTX_INPROC_SERVER,
+					NULL	,
+					IID_IClassFactory,
+					(LPVOID *) &m_pErrorObjectFactory);
+			}
+			
+			hr = m_pErrorObjectFactory->CreateInstance(NULL, IID_IErrorInfo,
+				(void**) &pErrorInfo);
+		}
+
+		hr = pErrorInfo->QueryInterface(IID_IErrorRecords, (void **) &pErrorRecords);
+		
+		
+		VARIANTARG  varg;
+		VariantInit (&varg); 
+		DISPPARAMS  dispparams = {&varg, NULL, 1, 0};
+		varg.vt = VT_BSTR; 
+		varg.bstrVal = SysAllocString(A2BSTR(pszText));
+		// Fill in the ERRORINFO structure and add the error record.
+		
+		ErrorInfo.hrError = passed_hr; 
+		ErrorInfo.dwMinor = providerCode;
+		ErrorInfo.clsid   = CLSID_SF;
+		ErrorInfo.iid     = iid;
+
+		hr = pErrorRecords->AddErrorRecord(&ErrorInfo,ErrorInfo.dwMinor,&dispparams,NULL,0);
+		VariantClear(&varg);
+		// Call SetErrorInfo to pass the error object to the Automation DLL.
+		hr = SetErrorInfo(0, pErrorInfo);
+		// Release the interface pointers on the object to finish transferring ownership of
+		// the object to the Automation DLL. pErrorRecords->Release();
+		pErrorInfo->Release();
+
+	}
+	return passed_hr;
+}
