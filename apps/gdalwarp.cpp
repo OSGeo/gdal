@@ -29,6 +29,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2004/08/31 19:58:57  warmerda
+ * Added error check if dst srs given but no source srs available.
+ * http://208.24.120.44/show_bug.cgi?id=603
+ *
  * Revision 1.8  2004/08/11 21:10:29  warmerda
  * Removed extra dumpopendatasets call.
  *
@@ -356,6 +360,12 @@ int main( int argc, char ** argv )
             pszSourceSRS = CPLStrdup(GDALGetGCPProjection( hSrcDS ));
         else
             pszSourceSRS = CPLStrdup("");
+    }
+
+    if( pszTargetSRS != NULL && strlen(pszSourceSRS) == 0 )
+    {
+        fprintf( stderr, "A target coordinate system was specified, but there is no source coordinate\nsystem.  Consider using -s_srs option to provide a source coordinate system.\nOperation terminated.\n" );
+        exit( 1 );
     }
 
     if( pszTargetSRS == NULL )
