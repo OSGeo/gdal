@@ -25,7 +25,11 @@
  * The GeoTIFF driver implemenation.
  * 
  * $Log$
+ * Revision 1.3  1999/01/05 16:53:38  warmerda
+ * Added working creation support.
+ *
  * Revision 1.2  1998/12/03 18:37:58  warmerda
+ *
  * Use CPLErr, not GBSErr.
  *
  * Revision 1.1  1998/11/29 22:41:12  warmerda
@@ -33,7 +37,9 @@
  *
  */
 
-#include "tiffio.h"
+#include "tiffiop.h"
+#include "xtiffio.h"
+#include "geotiff.h"
 #include "gdal_priv.h"
 
 static GDALDriver	*poGTiffDriver = NULL;
@@ -57,12 +63,23 @@ class GTiffDataset : public GDALDataset
     
     TIFF	*hTIFF;
 
-    uint32	nPlanarConfig;
-    uint32	nSamplesPerPixel;
-    uint32	nBitsPerSample;
-    
+    uint16	nPlanarConfig;
+    uint16	nSamplesPerPixel;
+    uint16	nBitsPerSample;
+    uint32	nRowsPerStrip; 
+    int		nStripsPerBand;
+
+    int		nLoadedStrip;
+    int		bLoadedStripDirty;
+    GByte	*pabyStripBuf;
+
   public:
     static GDALDataset *Open( GDALOpenInfo * );
+    static GDALDataset *Create( const char * pszFilename,
+                                int nXSize, int nYSize, int nBands,
+                                GDALDataType eType, char ** papszParmList );
+
+    virtual void FlushCache( void );
 };
 
 /************************************************************************/
@@ -74,15 +91,15 @@ class GTiffDataset : public GDALDataset
 class GTiffRasterBand : public GDALRasterBand
 {
     friend	GTiffDataset;
-    
+
   public:
 
-                   GTiffRasterBand::GTiffRasterBand( GTiffDataset *, int );
-    
+                   GTiffRasterBand( GTiffDataset *, int );
+
     // should override RasterIO eventually.
     
-    virtual CPLErr ReadBlock( int, int, void * );
-    virtual CPLErr WriteBlock( int, int, void * ); 
+    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IWriteBlock( int, int, void * ); 
 };
 
 
@@ -95,7 +112,7 @@ GTiffRasterBand::GTiffRasterBand( GTiffDataset *poDS, int nBand )
 {
     this->poDS = poDS;
     this->nBand = nBand;
-    
+
 /* -------------------------------------------------------------------- */
 /*      Get the GDAL data type.                                         */
 /* -------------------------------------------------------------------- */
@@ -107,42 +124,211 @@ GTiffRasterBand::GTiffRasterBand( GTiffDataset *poDS, int nBand )
         eDataType = GDT_Unknown;
 
 /* -------------------------------------------------------------------- */
-/*      Set the access flag.  For now we set it the same as the         */
-/*      whole dataset, but eventually this should take account of       */
-/*      locked channels, or read-only secondary data files.             */
+/*	Currently only works for strips 				*/
 /* -------------------------------------------------------------------- */
-    /* ... */
+    nBlockXSize = poDS->GetRasterXSize();
+    nBlockYSize = poDS->nRowsPerStrip;
 }
 
 /************************************************************************/
-/*                             ReadBlock()                              */
+/*                             IReadBlock()                             */
 /************************************************************************/
 
-CPLErr GTiffRasterBand::ReadBlock( int nBlockXOff, int nBlockYOff,
-                                 void * pImage )
+CPLErr GTiffRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
+                                    void * pImage )
 
 {
-    GTiffDataset	*poGTiff_DS = (GTiffDataset *) poDS;
+    GTiffDataset	*poGDS = (GTiffDataset *) poDS;
+    int			nStripBufSize, nStripId;
+    CPLErr		eErr = CE_None;
 
+    CPLAssert( nBlockXOff == 0 );
+
+    nStripBufSize = TIFFStripSize( poGDS->hTIFF );
+
+    nStripId = nBlockYOff + (nBand-1) * poGDS->nStripsPerBand;
     
+/* -------------------------------------------------------------------- */
+/*	Handle the case of a strip in a writable file that doesn't	*/
+/*	exist yet, but that we want to read.  Just set to zeros and	*/
+/*	return.								*/
+/* -------------------------------------------------------------------- */
+    if( poGDS->eAccess == GA_Update
+        && (((int) poGDS->hTIFF->tif_dir.td_nstrips) <= nStripId
+            || poGDS->hTIFF->tif_dir.td_stripbytecount[nStripId] == 0) )
+    {
+        memset( pImage, 0,
+                nBlockXSize * nBlockYSize
+                * GDALGetDataTypeSize(eDataType) / 8 );
+        return CE_None;
+    }
 
-    return CE_None;
+/* -------------------------------------------------------------------- */
+/*      Handle simple case (separate, onesampleperpixel), and eight     */
+/*      bit data.                                                       */
+/* -------------------------------------------------------------------- */
+    if( poGDS->nBitsPerSample == 8
+        && (poGDS->nBands == 1
+            || poGDS->nPlanarConfig == PLANARCONFIG_SEPARATE) )
+    {
+        if( TIFFReadEncodedStrip( poGDS->hTIFF, nStripId, pImage,
+                                  nStripBufSize ) == -1 )
+        {
+            memset( pImage, 0, nStripBufSize );
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "TIFFReadEncodedStrip() failed.\n" );
+                      
+            eErr = CE_Failure;
+        }
+
+        return eErr;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Allocate a temporary buffer for this strip.                     */
+/* -------------------------------------------------------------------- */
+    if( poGDS->pabyStripBuf == NULL )
+    {
+        poGDS->pabyStripBuf = (GByte *) VSICalloc( 1, nStripBufSize );
+        if( poGDS->pabyStripBuf == NULL )
+        {
+            CPLError( CE_Failure, CPLE_OutOfMemory,
+                   "Unable to allocate %d bytes for a temporary strip buffer\n"
+                      "in GeoTIFF driver.",
+                      nStripBufSize );
+            
+            return( CE_Failure );
+        }
+    }
+    
+/* -------------------------------------------------------------------- */
+/*      Read the strip                                                  */
+/* -------------------------------------------------------------------- */
+    if( poGDS->nLoadedStrip != nStripId
+        && TIFFReadEncodedStrip(poGDS->hTIFF, nStripId, poGDS->pabyStripBuf,
+                                nStripBufSize) == -1 )
+    {
+        /* Once TIFFError() is properly hooked, this can go away */
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "TIFFReadEncodedStrip() failed." );
+
+        memset( poGDS->pabyStripBuf, 0, nStripBufSize );
+        
+        eErr = CE_Failure;
+    }
+
+    poGDS->nLoadedStrip = nStripId;
+                              
+/* -------------------------------------------------------------------- */
+/*      Handle simple case of eight bit data, and pixel interleaving.   */
+/* -------------------------------------------------------------------- */
+    if( poGDS->nBitsPerSample == 8 )
+    {
+        int	i;
+        GByte	*pabyImage;
+        
+        pabyImage = poGDS->pabyStripBuf + nBand - 1;
+        
+        for( i = 0; i < (int) (poGDS->nRasterXSize*poGDS->nRowsPerStrip); i++ )
+        {
+            ((GByte *) pImage)[i] = *pabyImage;
+            pabyImage += poGDS->nBands;
+        }
+    }
+    else
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Non eight bit samples not supported yet.\n" );
+        eErr = CE_Failure;
+    }
+
+    return eErr;
 }
 
 /************************************************************************/
-/*                             WriteBlock()                             */
+/*                            IWriteBlock()                             */
 /************************************************************************/
 
-CPLErr GTiffRasterBand::WriteBlock( int nBlockXOff, int nBlockYOff,
-                                 void * pImage )
+CPLErr GTiffRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
+                                     void * pImage )
 
 {
-    GTiffDataset	*poGTiff_DS = (GTiffDataset *) poDS;
+    GTiffDataset	*poGDS = (GTiffDataset *) poDS;
+    int		nStripId, nStripBufSize;
 
+    CPLAssert( poGDS != NULL
+               && nBlockXOff == 0
+               && nBlockYOff >= 0
+               && pImage != NULL );
+
+    CPLAssert( nBlockXOff == 0 );
+    CPLAssert( eDataType == GDT_Byte );
+
+    nStripBufSize = TIFFStripSize( poGDS->hTIFF );
+    nStripId = nBlockYOff + (nBand-1) * poGDS->nStripsPerBand;
     
-
-    return CE_None;
+    TIFFWriteEncodedStrip( poGDS->hTIFF, nStripId, pImage, nStripBufSize );
+    
+    return CE_Failure;
 }
+
+/************************************************************************/
+/* ==================================================================== */
+/*      GTiffDataset                                                    */
+/* ==================================================================== */
+/************************************************************************/
+
+
+/************************************************************************/
+/*                            GTiffDataset()                            */
+/************************************************************************/
+
+GTiffDataset::GTiffDataset()
+
+{
+    nLoadedStrip = -1;
+    bLoadedStripDirty = FALSE;
+    pabyStripBuf = NULL;
+    hTIFF = NULL;
+}
+
+/************************************************************************/
+/*                           ~GTiffDataset()                            */
+/************************************************************************/
+
+GTiffDataset::~GTiffDataset()
+
+{
+    FlushCache();
+
+    XTIFFClose( hTIFF );
+    hTIFF = NULL;
+}
+
+/************************************************************************/
+/*                             FlushCache()                             */
+/*                                                                      */
+/*      We override this so we can also flush out local tiff strip      */
+/*      cache if need be.                                               */
+/************************************************************************/
+
+void GTiffDataset::FlushCache()
+
+{
+    GDALDataset::FlushCache();
+
+    if( bLoadedStripDirty )
+    {
+        
+        
+        bLoadedStripDirty = FALSE;
+    }
+
+    CPLFree( pabyStripBuf );
+    pabyStripBuf = NULL;
+    nLoadedStrip = -1;
+}
+
 
 /************************************************************************/
 /*                                Open()                                */
@@ -153,14 +339,28 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
 {
     TIFF	*hTIFF;
     uint32	nXSize, nYSize;
+    uint16	nSamplesPerPixel;
+
+/* -------------------------------------------------------------------- */
+/*	First we check to see if the file has the expected header	*/
+/*	bytes.								*/    
+/* -------------------------------------------------------------------- */
+    if( poOpenInfo->nHeaderBytes < 2 )
+        return NULL;
+
+    if( (poOpenInfo->pabyHeader[0] != 'I' || poOpenInfo->pabyHeader[1] != 'I')
+     && (poOpenInfo->pabyHeader[0] != 'M' || poOpenInfo->pabyHeader[1] != 'M'))
+    {
+        return NULL;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Try opening the dataset.                                        */
 /* -------------------------------------------------------------------- */
     if( poOpenInfo->eAccess == GA_ReadOnly )
-        hTIFF = TIFFOpen( poOpenInfo->pszFilename, "r" );
+	hTIFF = XTIFFOpen( poOpenInfo->pszFilename, "r" );
     else
-        hTIFF = TIFFOpen( poOpenInfo->pszFilename, "r+" );
+        hTIFF = XTIFFOpen( poOpenInfo->pszFilename, "r+" );
     
     if( hTIFF == NULL )
         return( NULL );
@@ -176,7 +376,7 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
 
     poDS->hTIFF = hTIFF;
     poDS->poDriver = poGTiffDriver;
-    
+
 /* -------------------------------------------------------------------- */
 /*      Capture some information from the file that is of interest.     */
 /* -------------------------------------------------------------------- */
@@ -185,18 +385,25 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->nRasterXSize = nXSize;
     poDS->nRasterYSize = nYSize;
 
-    if( !TIFFGetField(hTIFF, TIFFTAG_SAMPLESPERPIXEL,
-                      &(poDS->nSamplesPerPixel)) )
-        poDS->nSamplesPerPixel = 1;
-    
-    poDS->nBands = poDS->nSamplesPerPixel;
+    if( !TIFFGetField(hTIFF, TIFFTAG_SAMPLESPERPIXEL, &nSamplesPerPixel ) )
+        poDS->nBands = 1;
+    else
+        poDS->nBands = nSamplesPerPixel;
     
     if( !TIFFGetField(hTIFF, TIFFTAG_BITSPERSAMPLE, &(poDS->nBitsPerSample)) )
         poDS->nBitsPerSample = 1;
     
-    if( !TIFFGetField( hTIFF, TIFFTAG_IMAGEWIDTH, &(poDS->nPlanarConfig) ) )
+    if( !TIFFGetField( hTIFF, TIFFTAG_PLANARCONFIG, &(poDS->nPlanarConfig) ) )
         poDS->nPlanarConfig = PLANARCONFIG_CONTIG;
     
+/* -------------------------------------------------------------------- */
+/*      Get strip layout (won't work for tiled images!)                 */
+/* -------------------------------------------------------------------- */
+    if( !TIFFGetField( hTIFF, TIFFTAG_ROWSPERSTRIP, &(poDS->nRowsPerStrip) ) )
+        poDS->nRowsPerStrip = 1; /* dummy value */
+
+    poDS->nStripsPerBand = nYSize / poDS->nRowsPerStrip;
+        
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
@@ -210,8 +417,107 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->papoBands[iBand] = new GTiffRasterBand( poDS, iBand+1 );
     }
 
+/* -------------------------------------------------------------------- */
+/*	Try and print out some useful names from the GeoTIFF file.	*/
+/* -------------------------------------------------------------------- */
+    geocode_t	nProjCS;
+    GTIF 	*hGTIF;
+    
+    hGTIF = GTIFNew(hTIFF);
+    if (GTIFKeyGet(hGTIF,ProjectedCSTypeGeoKey,&nProjCS, 0,1)!=0)
+    {
+        printf( "ProjectedCSTypeGeoKey = %s\n",
+                GTIFValueName( ProjectedCSTypeGeoKey, nProjCS ) );
+    }
+    GTIFFree( hGTIF );
+
     return( poDS );
 }
+
+/************************************************************************/
+/*                               Create()                               */
+/*                                                                      */
+/*      Create a new GeoTIFF or TIFF file.                              */
+/************************************************************************/
+
+GDALDataset *GTiffDataset::Create( const char * pszFilename,
+                                   int nXSize, int nYSize, int nBands,
+                                   GDALDataType eType,
+                                   char ** /* notdef: papszParmList */ )
+
+{
+    GTiffDataset *	poDS;
+    TIFF		*hTIFF;
+    
+/* -------------------------------------------------------------------- */
+/*	Setup values based on options.					*/
+/* -------------------------------------------------------------------- */
+
+/* -------------------------------------------------------------------- */
+/*      Try opening the dataset.                                        */
+/* -------------------------------------------------------------------- */
+    hTIFF = XTIFFOpen( pszFilename, "w+" );
+    if( hTIFF == NULL )
+    {
+        if( CPLGetLastErrorNo() == 0 )
+            CPLError( CE_Failure, CPLE_OpenFailed,
+                      "Attempt to create new tiff file `%s'\n"
+                      "failed in XTIFFOpen().\n",
+                      pszFilename );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Create the new GTiffDataset object.                             */
+/* -------------------------------------------------------------------- */
+    poDS = new GTiffDataset();
+    poDS->hTIFF = hTIFF;
+    poDS->poDriver = poGTiffDriver;
+
+    poDS->nRasterXSize = nXSize;
+    poDS->nRasterYSize = nYSize;
+    poDS->eAccess = GA_Update;
+        
+/* -------------------------------------------------------------------- */
+/*      Setup some standard flags.                                      */
+/* -------------------------------------------------------------------- */
+    TIFFSetField( hTIFF, TIFFTAG_IMAGEWIDTH, nXSize );
+    TIFFSetField( hTIFF, TIFFTAG_IMAGELENGTH, nYSize );
+    TIFFSetField( hTIFF, TIFFTAG_BITSPERSAMPLE,
+                  GDALGetDataTypeSize( eType ) );
+    poDS->nBitsPerSample = GDALGetDataTypeSize( eType );
+
+    TIFFSetField( hTIFF, TIFFTAG_SAMPLESPERPIXEL, nBands );
+
+    TIFFSetField( hTIFF, TIFFTAG_PLANARCONFIG, PLANARCONFIG_CONTIG );
+    poDS->nPlanarConfig = PLANARCONFIG_CONTIG;
+
+    if( nBands == 3 )
+        TIFFSetField( hTIFF, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_RGB );
+    else
+        TIFFSetField( hTIFF, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_MINISBLACK );
+
+    poDS->nRowsPerStrip = TIFFDefaultStripSize(hTIFF,0);
+    TIFFSetField( hTIFF, TIFFTAG_ROWSPERSTRIP, poDS->nRowsPerStrip );
+    
+    poDS->nStripsPerBand = nYSize / poDS->nRowsPerStrip;
+    
+/* -------------------------------------------------------------------- */
+/*      Create band information objects.                                */
+/* -------------------------------------------------------------------- */
+    int		iBand;
+
+    poDS->nBands = nBands;
+    poDS->papoBands = (GDALRasterBand **) VSICalloc(sizeof(GDALRasterBand *),
+                                                    nBands);
+
+    for( iBand = 0; iBand < nBands; iBand++ )
+    {
+        poDS->papoBands[iBand] = new GTiffRasterBand( poDS, iBand+1 );
+    }
+
+    return( poDS );
+}
+
 
 /************************************************************************/
 /*                          GDALRegister_GTiff()                        */
@@ -230,8 +536,8 @@ void GDALRegister_GTiff()
         poDriver->pszLongName = "GeoTIFF";
         
         poDriver->pfnOpen = GTiffDataset::Open;
+        poDriver->pfnCreate = GTiffDataset::Create;
 
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
 }
-
