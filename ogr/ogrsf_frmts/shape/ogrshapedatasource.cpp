@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.24  2004/03/01 18:41:00  warmerda
+ * added fix for bug 493: ignore pc arcinfo coverages
+ *
  * Revision 1.23  2003/07/13 23:06:28  warmerda
  * Added case for wkbMultiPoint25D to SHPT_MULTIPOINTZ.
  *
@@ -202,11 +205,15 @@ int OGRShapeDataSource::Open( const char * pszNewName, int bUpdate,
     {
         char      **papszCandidates = CPLReadDir( pszNewName );
         int       iCan, nCandidateCount = CSLCount( papszCandidates );
+        int       bMightBeOldCoverage = FALSE;
 
         for( iCan = 0; iCan < nCandidateCount; iCan++ )
         {
             char        *pszFilename;
             const char  *pszCandidate = papszCandidates[iCan];
+
+            if( EQUAL(pszCandidate,"ARC") )
+                bMightBeOldCoverage = TRUE;
 
             if( strlen(pszCandidate) < 4
                 || !EQUAL(pszCandidate+strlen(pszCandidate)-4,".shp") )
@@ -236,6 +243,12 @@ int OGRShapeDataSource::Open( const char * pszNewName, int bUpdate,
             const char  *pszCandidate = papszCandidates[iCan];
             const char  *pszLayerName;
             int         iLayer, bGotAlready = FALSE;
+
+            // We don't consume .dbf files in a directory that looks like
+            // an old style Arc/Info (for PC?) that unless we found at least
+            // some shapefiles.  See Bug 493. 
+            if( bMightBeOldCoverage && nLayers == 0 )
+                continue;
 
             if( strlen(pszCandidate) < 4
                 || !EQUAL(pszCandidate+strlen(pszCandidate)-4,".dbf") )
