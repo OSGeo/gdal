@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2000/01/06 14:51:27  warmerda
+ * Support reading non eight bit data directly if SEPARATE or 1 band.
+ *
  * Revision 1.13  1999/12/30 02:43:12  warmerda
  * allow an empty string in SetProjection
  *
@@ -172,11 +175,9 @@ GTiffRasterBand::GTiffRasterBand( GTiffDataset *poDS, int nBand )
 /* -------------------------------------------------------------------- */
 /*      Get the GDAL data type.                                         */
 /* -------------------------------------------------------------------- */
-    int16		nCount;
     uint16		nSampleFormat;
 
-    if( !TIFFGetField(poDS->hTIFF,TIFFTAG_SAMPLEFORMAT,
-                      &nCount,&nSampleFormat) )
+    if( !TIFFGetField(poDS->hTIFF,TIFFTAG_SAMPLEFORMAT,&nSampleFormat) )
         nSampleFormat = SAMPLEFORMAT_UINT;
         
     if( poDS->nBitsPerSample <= 8 )
@@ -190,6 +191,7 @@ GTiffRasterBand::GTiffRasterBand( GTiffDataset *poDS, int nBand )
     }
     else if( poDS->nBitsPerSample == 32 )
     {
+        printf( "nSampleFormat = %d\n", nSampleFormat );
         if( nSampleFormat == SAMPLEFORMAT_IEEEFP )
             eDataType = GDT_Float32;
         else if( nSampleFormat == SAMPLEFORMAT_INT )
@@ -250,12 +252,10 @@ CPLErr GTiffRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     }
 
 /* -------------------------------------------------------------------- */
-/*      Handle simple case (separate, onesampleperpixel), and eight     */
-/*      bit data.                                                       */
+/*      Handle simple case (separate, onesampleperpixel)		*/
 /* -------------------------------------------------------------------- */
-    if( poGDS->nBitsPerSample == 8
-        && (poGDS->nBands == 1
-            || poGDS->nPlanarConfig == PLANARCONFIG_SEPARATE) )
+    if( poGDS->nBands == 1
+        || poGDS->nPlanarConfig == PLANARCONFIG_SEPARATE )
     {
         if( TIFFIsTiled( poGDS->hTIFF ) )
         {
