@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2003/01/14 22:15:02  warmerda
+ * added logic to order rings properly
+ *
  * Revision 1.16  2003/01/14 16:59:03  warmerda
  * added field truncation support
  *
@@ -702,12 +705,11 @@ OGROCITableLayer::TranslateElementGroup( OGRGeometry *poGeometry,
       {
           OGRPolygon *poPoly = (OGRPolygon *) poGeometry;
           int iRing;
-          OGRErr eErr;
-
 
           for( iRing = -1; iRing < poPoly->getNumInteriorRings(); iRing++ )
           {
               OGRLinearRing *poRing;
+              int            iVert;
 
               if( iRing == -1 )
                   poRing = poPoly->getExteriorRing();
@@ -723,10 +725,27 @@ OGROCITableLayer::TranslateElementGroup( OGRGeometry *poGeometry,
               else
                   poElemInfo->Appendf( 20, "%d,2003,1", nOrdinalCount+1 );
 
-              // but recurse to add the ordinates.
-              eErr = TranslateElementGroup( poRing, NULL );
-              if( eErr != OGRERR_NONE )
-                  return eErr;
+              if( (iRing == -1 && poRing->isClockwise())
+                  || (iRing != -1 && !poRing->isClockwise()) )
+              {
+                  for( iVert = poRing->getNumPoints()-1; iVert >= 0; iVert-- )
+                  {
+                      PushOrdinal( poRing->getX(iVert) );
+                      PushOrdinal( poRing->getY(iVert) );
+                      if( nDimension == 3 )
+                          PushOrdinal( poRing->getZ(iVert) );
+                  }
+              }
+              else
+              {
+                  for( iVert = 0; iVert < poRing->getNumPoints(); iVert++ )
+                  {
+                      PushOrdinal( poRing->getX(iVert) );
+                      PushOrdinal( poRing->getY(iVert) );
+                      if( nDimension == 3 )
+                          PushOrdinal( poRing->getZ(iVert) );
+                  }
+              }
           }
 
           return OGRERR_NONE;
