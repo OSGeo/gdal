@@ -5,18 +5,12 @@ include $(GDAL_ROOT)/GDALmake.opt
 
 AIGOBJ  =	gridlib.o aigopen.o aigccitt.o
 OBJ	=	aigdataset.o giodataset.o $(AIGOBJ)
+CPPFLAGS	=	$(GDAL_INCLUDE)
 
 default:	$(OBJ)
 
 clean:
 	rm -f *.o aitest
-
-%.o:	%.c
-	$(CC) -c $(GDAL_INCLUDE) $(CFLAGS) $*.c -o $*.o
-
-%.o:	%.cpp
-	$(CXX) -c $(GDAL_INCLUDE) $(CXXFLAGS) $*.cpp -o $*.o
-
 
 aitest:	aitest.o $(AIGOBJ)
 	$(CXX) aitest.o $(AIGOBJ) $(GDAL_ROOT)/port/*.o -ldl -lm -o aitest

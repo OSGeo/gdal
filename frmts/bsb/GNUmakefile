@@ -1,3 +1,4 @@
+
 GDAL_ROOT	=	../..
 
 VERSION =	1.2
@@ -8,16 +9,12 @@ OBJ	=	bsb_read.o bsbdataset.o
 
 DISTDIR =	bsb-$(VERSION)
 
+CPPFLAGS	=	$(GDAL_INCLUDE)
+
 default:	$(OBJ)
 
 clean:
 	rm -f *.o
-
-%.o:	%.c
-	$(CC) -c $(GDAL_INCLUDE) $(CFLAGS) $*.c -o $*.o
-
-%.o:	%.cpp
-	$(CXX) -c $(GDAL_INCLUDE) $(CXXFLAGS) $*.cpp -o $*.o
 
 bsb2raw:	bsb2raw.o bsb_read.o
 	$(CXX) bsb2raw.o bsb_read.o $(GDAL_LIB) $(LIBS) -o bsb2raw
