@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.50  2004/11/11 18:28:45  fwarmerdam
+ * added Bonne projection support
+ *
  * Revision 1.49  2004/09/10 21:04:51  fwarmerdam
  * Various fixes for swiss oblique mercator (somerc) support.
  * http://bugzilla.remotesensing.org/show_bug.cgi?id=423
@@ -508,6 +511,14 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
     {
     }
     
+    else if( EQUAL(pszProj,"bonne") )
+    {
+        SetBonne( OSR_GDV( papszNV, "lat_1", 0.0 ), 
+                  OSR_GDV( papszNV, "lon_0", 0.0 ) + dfFromGreenwich, 
+                  OSR_GDV( papszNV, "x_0", 0.0 ), 
+                  OSR_GDV( papszNV, "y_0", 0.0 ) );
+    }
+
     else if( EQUAL(pszProj,"cass") )
     {
         SetCS( OSR_GDV( papszNV, "lat_0", 0.0 ), 
@@ -1047,6 +1058,17 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
     {
         sprintf( szProj4+strlen(szProj4),
            "+proj=cea +lon_0=%.16g +lat_ts=%.16g +x_0=%.16g +y_0=%.16g ",
+                 GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0) 
+                 - dfFromGreenwich,
+                 GetNormProjParm(SRS_PP_STANDARD_PARALLEL_1,0.0),
+                 GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
+                 GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0) );
+    }
+
+    else if( EQUAL(pszProjection,SRS_PT_BONNE) )
+    {
+        sprintf( szProj4+strlen(szProj4),
+           "+proj=bonne +lon_0=%.16g +lat_1=%.16g +x_0=%.16g +y_0=%.16g ",
                  GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0) 
                  - dfFromGreenwich,
                  GetNormProjParm(SRS_PP_STANDARD_PARALLEL_1,0.0),

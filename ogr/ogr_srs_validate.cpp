@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2004/11/11 18:28:45  fwarmerdam
+ * added Bonne projection support
+ *
  * Revision 1.5  2004/02/06 07:42:14  dron
  * Support for HOM projection, specified by two points on centerline.
  *
@@ -89,6 +92,7 @@ static char *papszParameters[] =
 static char *papszProjectionSupported[] =
 {
     SRS_PT_CASSINI_SOLDNER,
+    SRS_PT_BONNE,
     SRS_PT_EQUIDISTANT_CONIC,
     SRS_PT_EQUIRECTANGULAR,
     SRS_PT_ECKERT_IV,
@@ -168,6 +172,13 @@ static char *papszProjWithParms[] = {
     SRS_PT_AZIMUTHAL_EQUIDISTANT,
     SRS_PP_LATITUDE_OF_CENTER,
     SRS_PP_LONGITUDE_OF_CENTER,
+    SRS_PP_FALSE_EASTING,
+    SRS_PP_FALSE_NORTHING,
+    NULL,
+
+    SRS_PT_BONNE,
+    SRS_PP_STANDARD_PARALLEL_1,
+    SRS_PP_CENTRAL_MERIDIAN,
     SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
     NULL,
