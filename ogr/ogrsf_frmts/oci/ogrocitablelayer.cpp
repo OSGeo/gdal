@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2003/01/07 21:14:20  warmerda
+ * implement GetFeature() and SetFeature()
+ *
  * Revision 1.8  2003/01/07 18:16:01  warmerda
  * implement spatial filtering in Oracle, re-enable index build
  *
@@ -289,6 +292,73 @@ void OGROCITableLayer::BuildFullQueryStatement()
 }
 
 /************************************************************************/
+/*                             GetFeature()                             */
+/************************************************************************/
+
+OGRFeature *OGROCITableLayer::GetFeature( long nFeatureId )
+
+{
+
+/* -------------------------------------------------------------------- */
+/*      If we don't have an FID column scan for the desired feature.    */
+/* -------------------------------------------------------------------- */
+    if( pszFIDName == NULL )
+        return OGROCILayer::GetFeature( nFeatureId );
+
+/* -------------------------------------------------------------------- */
+/*      Clear any existing query.                                       */
+/* -------------------------------------------------------------------- */
+    ResetReading();
+
+/* -------------------------------------------------------------------- */
+/*      Build query for this specific feature.                          */
+/* -------------------------------------------------------------------- */
+    OGROCIStringBuf oCmd;
+    char *pszFields = BuildFields();
+
+    oCmd.Append( "SELECT " );
+    oCmd.Append( pszFields );
+    oCmd.Append( " FROM \"" );
+    oCmd.Append( poFeatureDefn->GetName() );
+    oCmd.Append( "\" " );
+    oCmd.Appendf( 50+strlen(pszFIDName), 
+                  " WHERE \"%s\" = %ld ", 
+                  pszFIDName, nFeatureId );
+
+/* -------------------------------------------------------------------- */
+/*      Execute the statement.                                          */
+/* -------------------------------------------------------------------- */
+    if( !ExecuteQuery( oCmd.GetString() ) )
+        return NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Get the feature.                                                */
+/* -------------------------------------------------------------------- */
+    OGRFeature *poFeature;
+
+    poFeature = GetNextRawFeature();
+
+/* -------------------------------------------------------------------- */
+/*      Cleanup the statement.                                          */
+/* -------------------------------------------------------------------- */
+    ResetReading();
+
+/* -------------------------------------------------------------------- */
+/*      verify the FID.                                                 */
+/* -------------------------------------------------------------------- */
+    if( poFeature != NULL && poFeature->GetFID() != nFeatureId )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "OGROCITableLayer::GetFeature(%d) ... query returned feature %d instead!",
+                  nFeatureId, poFeature->GetFID() );
+        delete poFeature;
+        return NULL;
+    }
+    else
+        return poFeature;
+}
+
+/************************************************************************/
 /*                           GetNextFeature()                           */
 /*                                                                      */
 /*      We override the next feature method because we know that we     */
@@ -407,12 +477,56 @@ OGRErr OGROCITableLayer::SetAttributeFilter( const char *pszQuery )
 
 /************************************************************************/
 /*                             SetFeature()                             */
+/*                                                                      */
+/*      We implement SetFeature() by deleting the existing row (if      */
+/*      it exists), and then using CreateFeature() to write it out      */
+/*      tot he table normally.  CreateFeature() will preserve the       */
+/*      existing FID if possible.                                       */
 /************************************************************************/
 
 OGRErr OGROCITableLayer::SetFeature( OGRFeature *poFeature )
 
 {
-    return OGRERR_FAILURE;
+/* -------------------------------------------------------------------- */
+/*      Do some validation.                                             */
+/* -------------------------------------------------------------------- */
+    if( pszFIDName == NULL )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "OGROCITableLayer::SetFeature(%d) failed because there is "
+                  "no apparent FID column on table %s.",
+                  poFeature->GetFID(), 
+                  poFeatureDefn->GetName() );
+
+        return OGRERR_FAILURE;
+    }
+
+    if( poFeature->GetFID() == OGRNullFID )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "OGROCITableLayer::SetFeature(%d) failed because the feature "
+                  "has no FID!", poFeature->GetFID() );
+
+        return OGRERR_FAILURE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Prepare the delete command, and execute.  We don't check the    */
+/*      error result of the execute, since attempting to Set a          */
+/*      non-existing feature may be OK.                                 */
+/* -------------------------------------------------------------------- */
+    OGROCIStringBuf     oCmdText;
+    OGROCIStatement     oCmdStatement( poDS->GetSession() );
+
+    oCmdText.Appendf( strlen(poFeatureDefn->GetName())+strlen(pszFIDName)+100,
+                      "DELETE FROM \"%s\" WHERE \"%s\" = %d",
+                      poFeatureDefn->GetName(), 
+                      pszFIDName, 
+                      poFeature->GetFID() );
+
+    oCmdStatement.Execute( oCmdText.GetString() );
+
+    return CreateFeature( poFeature );
 }
 
 /************************************************************************/
