@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2004/11/22 16:01:05  fwarmerdam
+ * added GDAL_PREFIX
+ *
  * Revision 1.6  2003/10/24 16:41:16  warmerda
  * Added /usr/local/share/gdal (not /usr/local/share) to default locations.
  *
@@ -69,7 +72,11 @@ static void CPLFinderInit()
     {
         bFinderInitialized = TRUE;
         CPLPushFileFinder( CPLDefaultFindFile );
+#ifdef GDAL_PREFIX
+        CPLPushFinderLocation( GDAL_PREFIX "/share/gdal" );
+#else
         CPLPushFinderLocation( "/usr/local/share/gdal" );
+#endif
         CPLPushFinderLocation( "." );
     }
 }

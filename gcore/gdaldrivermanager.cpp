@@ -25,6 +25,9 @@
  * The GDALDriverManager class from gdal_priv.h.
  * 
  * $Log$
+ * Revision 1.21  2004/11/22 16:01:29  fwarmerdam
+ * added GDAL_PREFIX
+ *
  * Revision 1.20  2004/09/23 16:21:32  fwarmerdam
  * added call to OSRCleanup()
  *
@@ -567,7 +570,11 @@ void GDALDriverManager::AutoLoadDrivers()
     }
     else
     {
+#ifdef GDAL_PREFIX
+        papszSearchPath = CSLAddString( papszSearchPath, GDAL_PREFIX "/lib" );
+#else
         papszSearchPath = CSLAddString( papszSearchPath, "/usr/local/lib" );
+#endif
 
         if( strlen(GetHome()) > 0 )
         {
