@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2005/03/08 16:31:08  fwarmerdam
+ * Added handling of DATATYPE as a name, not just a number.
+ *
  * Revision 1.19  2004/11/21 22:13:29  fwarmerdam
  * use new pointer encode/decode functions
  *
@@ -642,7 +645,34 @@ GDALDataset *MEMDataset::Open( GDALOpenInfo * poOpenInfo )
     if( pszOption == NULL )
         eType = GDT_Byte;
     else
-        eType = (GDALDataType) atoi(pszOption);
+    {
+        if( atoi(pszOption) > 0 && atoi(pszOption) < GDT_TypeCount )
+            eType = (GDALDataType) atoi(pszOption);
+        else
+        {
+            int iType;
+            
+            eType = GDT_Unknown;
+            for( iType = 0; iType < GDT_TypeCount; iType++ )
+            {
+                if( EQUAL(GDALGetDataTypeName((GDALDataType) iType),
+                          pszOption) )
+                {
+                    eType = (GDALDataType) iType;
+                    break;
+                }
+            }
+            
+            if( eType == GDT_Unknown )
+            {
+                CPLError( CE_Failure, CPLE_AppDefined,
+                          "DATATYPE=%s not recognised.", 
+                          pszOption );
+                delete poDS;
+                return NULL;
+            }
+        }
+    }
 
     pszOption = CSLFetchNameValue(papszOptions,"PIXELOFFSET");
     if( pszOption == NULL )
