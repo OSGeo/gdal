@@ -9,6 +9,11 @@
 
  *
  * $Log$
+ * Revision 1.21  2005/02/22 15:36:17  kruland
+ * Added ARRAY_TYPEMAP(4) for ogr.Geometry.GetEnvelope().
+ * Added a char* typemap (tostring argin), which calls str() on its argument
+ * to coerce into a string representation.
+ *
  * Revision 1.20  2005/02/21 19:03:17  kruland
  * Use Py_XDECREF() in the argout buffer typemap.
  * Added a convienence fragment for constructing python sequences from integer
@@ -291,6 +296,12 @@ CreateTupleFromDoubleArray( double *first, unsigned int size ) {
  * Used in Band::ComputeMinMax()
  */
 ARRAY_TYPEMAP(2);
+
+/*
+ * Typemap for double[4]
+ * Used in OGR::Geometry::GetEnvelope
+ */
+ARRAY_TYPEMAP(4);
 
 /*
  * Typemap for double c_transform[6]
@@ -610,3 +621,25 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
 %enddef
 
 OPTIONAL_POD(int,i);
+
+/*
+ * Typedef const char * <- Any object.
+ *
+ * Formats the object using str and returns the string representation
+ */
+%typemap(python,in) (tostring argin) (PyObject *str)
+{
+  /* %typemap(python,in) (tostring argin) */
+  str = PyObject_Str( $input );
+  if ( str == 0 ) {
+    PyErr_SetString( PyExc_RuntimeError, "Unable to format argument as string");
+    SWIG_fail;
+  }
+  Py_DECREF(str);
+  $1 = PyString_AsString(str); 
+}
+%typemap(python,typecheck,precedence=SWIG_TYPECHECK_POINTER) (tostring argin)
+{
+  /* %typemap(python,typecheck,precedence=SWIG_TYPECHECK_POINTER) (tostring argin) */
+  $1 = 1;
+}
