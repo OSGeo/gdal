@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  1999/11/18 18:57:45  warmerda
+ * utilize s57filecollector
+ *
  * Revision 1.3  1999/11/16 21:47:32  warmerda
  * updated class occurance collection
  *
@@ -56,57 +59,87 @@ int main( int nArgc, char ** papszArgv )
         exit( 1 );
     }
     
+/* -------------------------------------------------------------------- */
+/*      Load the class definitions into the registrar.                  */
+/* -------------------------------------------------------------------- */
     S57ClassRegistrar	oRegistrar;
-    S57Reader  	oReader( papszArgv[1] );
+    int			bRegistrarLoaded;
 
-    if( !oReader.Open( FALSE ) )
-        exit( 1 );
+    bRegistrarLoaded = oRegistrar.LoadInfo( "/home/warmerda/data/s57", TRUE );
 
+/* -------------------------------------------------------------------- */
+/*      Get a list of candidate files.                                  */
+/* -------------------------------------------------------------------- */
+    char	**papszFiles;
+    int		iFile;
 
-    if( oRegistrar.LoadInfo( "/home/warmerda/data/s57", TRUE ) )
+    papszFiles = S57FileCollector( papszArgv[1] );
+
+    for( iFile = 0; papszFiles != NULL && papszFiles[iFile] != NULL; iFile++ )
     {
-        int	i, anClassList[MAX_CLASSES];
+        printf( "Found: %s\n", papszFiles[iFile] );
+    }
 
-        for( i = 0; i < MAX_CLASSES; i++ )
-            anClassList[i] = 0;
+    for( iFile = 0; papszFiles != NULL && papszFiles[iFile] != NULL; iFile++ )
+    {
+        printf( "<------------------------------------------------------------------------->\n" );
+        printf( "\nFile: %s\n\n", papszFiles[iFile] );
         
-        oReader.CollectClassList(anClassList, MAX_CLASSES);
+        S57Reader  	oReader( papszFiles[iFile] );
 
-        oReader.SetClassBased( &oRegistrar );
+        if( !oReader.Open( FALSE ) )
+            continue;
 
-        printf( "Classes found:\n" );
-        for( i = 0; i < MAX_CLASSES; i++ )
+        if( bRegistrarLoaded )
         {
-            if( anClassList[i] == 0 )
-                continue;
-                
-            oRegistrar.SelectClass( i );
-            printf( "%d: %s/%s\n",
-                    i,
-                    oRegistrar.GetAcronym(),
-                    oRegistrar.GetDescription() );
+            int	i, anClassList[MAX_CLASSES];
             
-            oReader.AddFeatureDefn(
-                S57Reader::GenerateObjectClassDefn( &oRegistrar, i ) );
+            for( i = 0; i < MAX_CLASSES; i++ )
+                anClassList[i] = 0;
+        
+            oReader.CollectClassList(anClassList, MAX_CLASSES);
+
+            oReader.SetClassBased( &oRegistrar );
+
+            printf( "Classes found:\n" );
+            for( i = 0; i < MAX_CLASSES; i++ )
+            {
+                if( anClassList[i] == 0 )
+                    continue;
+                
+                oRegistrar.SelectClass( i );
+                printf( "%d: %s/%s\n",
+                        i,
+                        oRegistrar.GetAcronym(),
+                        oRegistrar.GetDescription() );
+            
+                oReader.AddFeatureDefn(
+                    S57Reader::GenerateObjectClassDefn( &oRegistrar, i ) );
+            }
         }
-    }
-    else
-    {
-        oReader.AddFeatureDefn(
-            S57Reader::GenerateGeomFeatureDefn( wkbPoint ) );
-        oReader.AddFeatureDefn(
-            S57Reader::GenerateGeomFeatureDefn( wkbLineString ) );
-        oReader.AddFeatureDefn(
-            S57Reader::GenerateGeomFeatureDefn( wkbPolygon ) );
-        oReader.AddFeatureDefn(
-            S57Reader::GenerateGeomFeatureDefn( wkbNone ) );
-    }
+        else
+        {
+            oReader.AddFeatureDefn(
+                S57Reader::GenerateGeomFeatureDefn( wkbPoint ) );
+            oReader.AddFeatureDefn(
+                S57Reader::GenerateGeomFeatureDefn( wkbLineString ) );
+            oReader.AddFeatureDefn(
+                S57Reader::GenerateGeomFeatureDefn( wkbPolygon ) );
+            oReader.AddFeatureDefn(
+                S57Reader::GenerateGeomFeatureDefn( wkbNone ) );
+        }
     
-    OGRFeature	*poFeature;
-    while( (poFeature = oReader.ReadNextFeature()) != NULL )
-    {
-        poFeature->DumpReadable( stdout );
-        delete poFeature;
+        OGRFeature	*poFeature;
+        int		nFeatures = 0;
+    
+        while( (poFeature = oReader.ReadNextFeature()) != NULL )
+        {
+            poFeature->DumpReadable( stdout );
+            nFeatures++;
+            delete poFeature;
+        }
+
+        printf( "Feature Count: %d\n", nFeatures );
     }
 
     return 0;
