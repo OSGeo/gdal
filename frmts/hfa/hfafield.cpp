@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2003/05/21 15:35:05  warmerda
+ * cleanup type conversion warnings
+ *
  * Revision 1.12  2003/04/22 19:40:36  warmerda
  * fixed email address
  *
@@ -496,7 +499,7 @@ HFAField::SetInstValue( const char * pszField, int nIndexValue,
               }
           }
 
-          unsigned short nNumber = nIntValue;
+          unsigned short nNumber = (unsigned short) nIntValue;
 
           HFAStandard( 2, &nNumber );
           memcpy( pabyData + nIndexValue*2, &nNumber, 2 );
@@ -507,7 +510,7 @@ HFAField::SetInstValue( const char * pszField, int nIndexValue,
       {
           short nNumber;
 
-          nNumber = nIntValue;
+          nNumber = (short) nIntValue;
           HFAStandard( 2, &nNumber );
           memcpy( pabyData + nIndexValue*2, &nNumber, 2 );
       }
