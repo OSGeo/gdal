@@ -31,6 +31,9 @@ Attribute VB_Name = "GDALCore"
 '*****************************************************************************
 '
 ' $Log$
+' Revision 1.4  2005/04/04 15:34:30  fwarmerdam
+' fixed in bindings for colortable stuff per bug 814
+'
 ' Revision 1.3  2005/04/04 15:32:35  fwarmerdam
 ' use gdal12.dll
 '
@@ -261,7 +264,7 @@ Public Declare Function GDALGetRasterColorTable _
 
 Public Declare Function GDALSetRasterColorTable _
     Lib "gdal12.dll" _
-    Alias "_GDALGetRasterColorTable@8" _
+    Alias "_GDALSetRasterColorTable@8" _
     (ByVal BandHandle As Long, ByVal TableHandle As Long) As Long
 
 ' ----------------------------------------------------------------------------
@@ -318,7 +321,7 @@ Public Declare Sub GDALDestroyColorTable _
 
 Public Declare Function GDALCloneColorTable _
         Lib "gdal12.dll" _
-        Alias "_GDALCreateCloneTable@4" _
+        Alias "_GDALCloneTable@4" _
         (ByVal Handle As Long) As Long
 
 Public Declare Function GDALGetPaletteInterpretation _
