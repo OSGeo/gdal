@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_mapfile.cpp,v 1.26 2002/04/25 16:05:24 julien Exp $
+ * $Id: mitab_mapfile.cpp,v 1.27 2002/07/30 13:54:12 julien Exp $
  *
  * Name:     mitab_mapfile.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -31,6 +31,9 @@
  **********************************************************************
  *
  * $Log: mitab_mapfile.cpp,v $
+ * Revision 1.27  2002/07/30 13:54:12  julien
+ * TABMAPFile::GetFeatureId() now return -1 when there's no geometry. (bug 169)
+ *
  * Revision 1.26  2002/04/25 16:05:24  julien
  * Disabled the overflow warning in SetCoordFilter() by adding bIgnoreOverflow
  * variable in Coordsys2Int of the TABMAPFile class and TABMAPHeaderBlock class
@@ -620,6 +623,13 @@ void TABMAPFile::ResetReading()
 int TABMAPFile::GetNextFeatureId( int nPrevId )
 
 {
+/* -------------------------------------------------------------------- */
+/*      m_fp is NULL when all geometry are NONE and/or there's          */
+/*          no .map file and/or there's no spatial indexes              */
+/* -------------------------------------------------------------------- */
+    if( m_fp == NULL )
+        return -1;
+
     if( nPrevId == 0 )
         nPrevId = -1;
 
