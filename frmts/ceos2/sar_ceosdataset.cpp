@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.25  2002/04/26 14:52:50  warmerda
+ * added EscapedRecord for metadata
+ *
  * Revision 1.24  2002/04/16 17:51:08  warmerda
  * Avoid unitialized variable warnings.
  *
@@ -459,15 +462,17 @@ char **SAR_CEOSDataset::GetMetadata( const char * pszDomain )
     else
         return NULL;
 
+    pszDomain += 8;
+
 /* -------------------------------------------------------------------- */
 /*      Identify the record type.                                       */
 /* -------------------------------------------------------------------- */
     CeosTypeCode_t sTypeCode;
     int  a, b, c, d, nRecordIndex = -1;
 
-    if( sscanf( pszDomain+8, "-%d-%d-%d-%d:%d", 
+    if( sscanf( pszDomain, "-%d-%d-%d-%d:%d", 
                 &a, &b, &c, &d, &nRecordIndex ) != 5 
-        && sscanf( pszDomain+8, "-%d-%d-%d-%d", 
+        && sscanf( pszDomain, "-%d-%d-%d-%d", 
                    &a, &b, &c, &d ) != 4 )
     {
         return NULL;
@@ -487,11 +492,26 @@ char **SAR_CEOSDataset::GetMetadata( const char * pszDomain )
         return NULL;
 
 /* -------------------------------------------------------------------- */
-/*      Massage the data into a safe textual format.  For now we        */
+/*      Massage the data into a safe textual format.  The RawRecord     */
+/*      just has zero bytes turned into spaces while the                */
+/*      EscapedRecord has regular backslash escaping applied to zero    */
+/*      chars, double quotes, and backslashes.                          */
 /*      just turn zero bytes into spaces.                               */
 /* -------------------------------------------------------------------- */
     char *pszSafeCopy;
     int  i;
+
+    CSLDestroy( papszTempMD );
+
+    // Escaped version
+    pszSafeCopy = CPLEscapeString( (char *) record->Buffer, 
+                                   record->Length, 
+                                   CPLES_BackslashQuotable );
+    papszTempMD = CSLSetNameValue( NULL, "EscapedRecord", pszSafeCopy );
+    CPLFree( pszSafeCopy );
+
+
+    // Copy with '\0' replaced by spaces.
 
     pszSafeCopy = (char *) CPLCalloc(1,record->Length+1);
     memcpy( pszSafeCopy, record->Buffer, record->Length );
@@ -499,9 +519,8 @@ char **SAR_CEOSDataset::GetMetadata( const char * pszDomain )
     for( i = 0; i < record->Length; i++ )
         if( pszSafeCopy[i] == '\0' )
             pszSafeCopy[i] = ' ';
-
-    CSLDestroy( papszTempMD );
-    papszTempMD = CSLSetNameValue( NULL, "RawRecord", pszSafeCopy );
+        
+    papszTempMD = CSLSetNameValue( papszTempMD, "RawRecord", pszSafeCopy );
 
     CPLFree( pszSafeCopy );
 
