@@ -29,6 +29,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.72  2004/12/19 21:40:58  fwarmerdam
+# added AdviseRead() method on Band object
+#
 # Revision 1.71  2004/12/17 18:48:56  fwarmerdam
 # added dataset level read/write methods
 #
@@ -942,6 +945,25 @@ class Band(MajorObject):
             raise ValueError, GetLastErrorMsg()
         else:
             return mean_stddev
+
+    def AdviseRead( self, nXOff, nYOff, nXSize, nYSize,
+                    nBufXSize = None, nBufYSize = None,
+                    eDT = None, options = [] ):
+        if eDT is None:
+            eDT = self.DataType
+        if nBufXSize is None:
+            nBufXSize = nXSize
+        if nBufYSize is None:
+            nBufYSize = nYSize
+
+        sl_options = _gdal.ListToStringList( options )
+        result = _gdal.GDALRasterAdviseRead( self._o,
+                                             nXOff, nYOff, nXSize, nYSize,
+                                             nBufXSize, nBufYSize, eDT,
+                                             sl_options )
+        _gdal.CSLDestroy( sl_options )
+        return result
+
 
 ###############################################################################
 
