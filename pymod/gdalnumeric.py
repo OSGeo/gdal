@@ -29,6 +29,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.5  2001/10/19 15:45:34  warmerda
+# added CopyDatasetInfo
+#
 # Revision 1.4  2001/03/12 19:59:56  warmerda
 # added numeric to gdal type translation
 #
@@ -47,8 +50,11 @@ import _gdal
 from gdalconst import *
 from Numeric import *
 
-def OpenArray( array ):
-    return gdal.Open( GetArrayFilename(array) )
+def OpenArray( array, prototype_ds = None ):
+    ds = gdal.Open( GetArrayFilename(array) )
+    if ds is not None and prototype_ds is not None:
+        CopyDatasetInfo( prototype_ds, ds )
+    return ds
 
 def GetArrayFilename( array ):
     _gdal.GDALRegister_NUMPY()
@@ -101,9 +107,9 @@ def BandReadAsArray( band, xoff, yoff, xsize, ysize ):
     into a numpy array.  Used by the gdal.Band.ReadaAsArray method."""
 
     if xsize is None:
-        xsize = self.XSize
+        xsize = band.XSize
     if ysize is None:
-        ysize = self.YSize
+        ysize = band.YSize
             
     shape = [ysize, xsize]
     datatype = band.DataType
@@ -168,4 +174,11 @@ def NumericTypeCodeToGDALTypeCode( numeric_code ):
     else:
         return None
     
+def CopyDatasetInfo( src, dst ):
+    if src.GetGCPCount() > 0:
+        dst.SetGCPs( src.GetGCPs(), src.GetGCPProjection() )
+
+    dst.SetGeoTransform( src.GetGeoTransform() )
+    dst.SetProjection( src.GetProjection() )
+    dst.SetMetadata( src.GetMetadata() )
 
