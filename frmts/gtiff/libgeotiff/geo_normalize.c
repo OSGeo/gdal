@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: geo_normalize.c,v 1.32 2002/11/30 16:01:11 warmerda Exp $
+ * $Id: geo_normalize.c,v 1.33 2002/12/05 19:21:01 warmerda Exp $
  *
  * Project:  libgeotiff
  * Purpose:  Code to normalize PCS and other composite codes in a GeoTIFF file.
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log: geo_normalize.c,v $
+ * Revision 1.33  2002/12/05 19:21:01  warmerda
+ * fixed dfInDegrees to actually be in degrees, not radians!
+ *
  * Revision 1.32  2002/11/30 16:01:11  warmerda
  * fixed some problems in GTIFGetUOMAngleInfo
  *
@@ -858,7 +861,7 @@ int GTIFGetUOMAngleInfo( int nUOMAngleCode,
 /* -------------------------------------------------------------------- */
     if( pszUOMName != NULL )
     {
-        double dfFactorB, dfFactorC;
+        double dfFactorB, dfFactorC, dfInRadians;
         
         dfFactorB = 
             atof(CSVGetField( pszFilename,
@@ -871,12 +874,19 @@ int GTIFGetUOMAngleInfo( int nUOMAngleCode,
                               "FACTOR_C" ));
 
         if( dfFactorC != 0.0 )
-            dfInDegrees = dfFactorB / dfFactorC;
+        {
+            dfInRadians = (dfFactorB / dfFactorC);
+            dfInDegrees = dfInRadians * 180.0 / PI;
+        }
+                          
 
         /* We do a special override of some of the DMS formats name */
         if( nUOMAngleCode == 9102 || nUOMAngleCode == 9107
             || nUOMAngleCode == 9108 || nUOMAngleCode == 9110 )
+        {
+            dfInDegrees = 1.0;
             pszUOMName = "degree";
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -888,7 +898,7 @@ int GTIFGetUOMAngleInfo( int nUOMAngleCode,
         {
           case 9101:
             pszUOMName = "radian";
-            dfInDegrees = 180.0 / 3.14159265358979;
+            dfInDegrees = 180.0 / PI;
             break;
         
           case 9102:
@@ -921,7 +931,7 @@ int GTIFGetUOMAngleInfo( int nUOMAngleCode,
         
           case 9109:
             pszUOMName = "microradian";
-            dfInDegrees = 180.0 / (3.14159265358979 * 1000000.0);
+            dfInDegrees = 180.0 / (PI * 1000000.0);
             break;
 
           default:
