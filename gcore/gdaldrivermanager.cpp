@@ -25,6 +25,9 @@
  * The GDALDriverManager class from gdal_priv.h.
  * 
  * $Log$
+ * Revision 1.5  2000/04/04 23:44:29  warmerda
+ * added AutoLoadDrivers() to GDALDriverManager
+ *
  * Revision 1.4  2000/03/06 02:21:39  warmerda
  * added GDALRegisterDriver func
  *
@@ -40,6 +43,7 @@
  */
 
 #include "gdal_priv.h"
+#include "cpl_string.h"
 
 /************************************************************************/
 /* ==================================================================== */
@@ -84,6 +88,7 @@ GDALDriverManager::GDALDriverManager()
 {
     nDrivers = 0;
     papoDrivers = NULL;
+    pszHome = CPLStrdup("");
 
     CPLAssert( poDM == NULL );
     poDM = this;
@@ -115,6 +120,7 @@ GDALDriverManager::~GDALDriverManager()
 /*      Cleanup local memory.                                           */
 /* -------------------------------------------------------------------- */
     VSIFree( papoDrivers );
+    VSIFree( pszHome );
 }
 
 /************************************************************************/
@@ -329,3 +335,100 @@ GDALDriverH GDALGetDriverByName( const char * pszName )
     return( GetGDALDriverManager()->GetDriverByName( pszName ) );
 }
 
+/************************************************************************/
+/*                              GetHome()                               */
+/************************************************************************/
+
+const char *GDALDriverManager::GetHome()
+
+{
+    return pszHome;
+}
+
+/************************************************************************/
+/*                              SetHome()                               */
+/************************************************************************/
+
+void GDALDriverManager::SetHome( const char * pszNewHome )
+
+{
+    CPLFree( pszHome );
+    pszHome = CPLStrdup(pszNewHome);
+}
+
+/************************************************************************/
+/*                          AutoLoadDrivers()                           */
+/************************************************************************/
+
+void GDALDriverManager::AutoLoadDrivers()
+
+{
+    char     **papszSearchPath = NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Where should we look for stuff?                                 */
+/* -------------------------------------------------------------------- */
+    if( getenv( "GDAL_DRIVER_PATH" ) != NULL )
+    {
+        papszSearchPath = 
+            CSLTokenizeStringComplex( getenv( "GDAL_DRIVER_PATH" ), ":", 
+                                      TRUE, FALSE );
+    }
+    else
+    {
+        papszSearchPath = CSLAddString( papszSearchPath, "/usr/local/lib" );
+
+        if( strlen(GetHome()) > 0 )
+        {
+            papszSearchPath = CSLAddString( papszSearchPath, 
+                                  CPLFormFilename( GetHome(), "lib", NULL ) );
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Scan each directory looking for files starting with gdal_       */
+/* -------------------------------------------------------------------- */
+    for( int iDir = 0; iDir < CSLCount(papszSearchPath); iDir++ )
+    {
+        char  **papszFiles = CPLReadDir( papszSearchPath[iDir] );
+
+        for( int iFile = 0; iFile < CSLCount(papszFiles); iFile++ )
+        {
+            char   *pszFuncName;
+            const char *pszFilename;
+            void   *pRegister;
+
+            if( !EQUALN(papszFiles[iFile],"gdal_",5) )
+                continue;
+
+            pszFuncName = (char *) CPLCalloc(strlen(papszFiles[iFile])+20,1);
+            sprintf( pszFuncName, "GDALRegister_%s", 
+                     CPLGetBasename(papszFiles[iFile]) + 5 );
+            
+            pszFilename = 
+                CPLFormFilename( papszSearchPath[iDir], 
+                                 papszFiles[iFile], NULL );
+
+            pRegister = CPLGetSymbol( pszFilename, pszFuncName );
+            if( pRegister == NULL )
+            {
+                strcpy( pszFuncName, "GDALRegisterMe" );
+                pRegister = CPLGetSymbol( pszFilename, pszFuncName );
+            }
+            
+            if( pRegister != NULL )
+            {
+                CPLDebug( "GDAL", "Auto register %s using %s\n", 
+                          pszFilename, pszFuncName );
+
+                ((void (*)()) pRegister)();
+            }
+
+            CPLFree( pszFuncName );
+        }
+
+        CSLDestroy( papszFiles );
+    }
+
+    CSLDestroy( papszSearchPath );
+}

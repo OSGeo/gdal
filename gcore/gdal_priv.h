@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2000/04/04 23:44:29  warmerda
+ * added AutoLoadDrivers() to GDALDriverManager
+ *
  * Revision 1.17  2000/03/31 13:41:24  warmerda
  * added gcps
  *
@@ -459,6 +462,8 @@ class CPL_DLL GDALDriverManager
     int		nDrivers;
     GDALDriver	**papoDrivers;
 
+    char        *pszHome;
+    
  public:
     		GDALDriverManager();
                 ~GDALDriverManager();
@@ -470,6 +475,11 @@ class CPL_DLL GDALDriverManager
     int		RegisterDriver( GDALDriver * );
     void	MoveDriver( GDALDriver *, int );
     void	DeregisterDriver( GDALDriver * );
+
+    void        AutoLoadDrivers();
+
+    const char *GetHome();
+    void        SetHome( const char * );
 };
 
 CPL_C_START
