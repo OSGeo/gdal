@@ -28,6 +28,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.2  2000/01/24 19:32:59  warmerda
+ * Fixed CPLGetExtension() to not include the dot.
+ *
  * Revision 1.1  1999/10/14 19:23:39  warmerda
  * New
  *
@@ -70,10 +73,10 @@ static int CPLFindFilenameStart( const char * pszFilename )
  * will be returned (not NULL).
  *
  * <pre>
- * CPLGetExtension( "abc/def.xyz" ) == "abc"
- * CPLGetExtension( "/abc/def/" ) == "abc/def"
- * CPLGetExtension( "/" ) == "/"
- * CPLGetExtension( "/abc/def" ) == "/abc"
+ * CPLGetPath( "abc/def.xyz" ) == "abc"
+ * CPLGetPath( "/abc/def/" ) == "abc/def"
+ * CPLGetPath( "/" ) == "/"
+ * CPLGetPath( "/abc/def" ) == "/abc"
  * </pre>
  *
  * @param pszFilename the filename potentially including a path.
@@ -117,9 +120,9 @@ const char *CPLGetPath( const char *pszFilename )
  * separator) an empty string is returned.
  *
  * <pre>
- * CPLGetExtension( "abc/def.xyz" ) == "def.xyz"
- * CPLGetExtension( "/abc/def/" ) == ""
- * CPLGetExtension( "abc/def" ) == "def"
+ * CPLGetFilename( "abc/def.xyz" ) == "def.xyz"
+ * CPLGetFilename( "/abc/def/" ) == ""
+ * CPLGetFilename( "abc/def" ) == "def"
  * </pre>
  *
  * @param pszFullFilename the full filename potentially including a path.
@@ -151,9 +154,9 @@ const char *CPLGetFilename( const char *pszFullFilename )
  * separator, or filename starts with a dot) an empty string is returned.
  *
  * <pre>
- * CPLGetExtension( "abc/def.xyz" ) == "def"
- * CPLGetExtension( "abc/def" ) == "def"
- * CPLGetExtension( "abc/def/" ) == ""
+ * CPLGetBasename( "abc/def.xyz" ) == "def"
+ * CPLGetBasename( "abc/def" ) == "def"
+ * CPLGetBasename( "abc/def/" ) == ""
  * </pre>
  *
  * @param pszFullFilename the full filename potentially including a path.
@@ -221,7 +224,7 @@ const char *CPLGetExtension( const char *pszFullFilename )
     if( iExtStart == iFileStart )
         iExtStart = strlen(pszFullFilename);
 
-    strcpy( szStaticResult, pszFullFilename+iExtStart );
+    strcpy( szStaticResult, pszFullFilename+iExtStart+1 );
 
     return szStaticResult;
 }
