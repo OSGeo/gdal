@@ -12,20 +12,10 @@ GDAL_ROOT = 	..\..
 
 #OLE_LIBS =	$(MSDASDK)\lib\oledb\oledb.lib ole32.lib oleaut32.lib 
 OLE_LIBS =	ole32.lib oleaut32.lib 
+OGR_LIBS =	..\ogrsf_frmts\ogrsf_frmts.lib ..\ogroledb.lib ..\ogr.lib \
+		$(GDAL_ROOT)\port\cpl.lib
 
 LOC_OBJ =       SF.obj SFRS.obj sfutil.obj sftraceback.obj
-
-SHR_OBJ =	..\ogrgeometryfactory.obj ..\ogrpoint.obj ..\ogrcurve.obj \
-		..\ogrlinestring.obj ..\ogrpolygon.obj ..\ogrlinearring.obj \
-		..\oledb_sup.obj ..\ogrgeometry.obj ..\ogrutils.obj \
-		..\ogrgeometrycollection.obj ..\ogrmultipolygon.obj \
-		..\ogrmultilinestring.obj ..\ogrmultipoint.obj \
-                ..\shape2ogr.obj ..\ogrfeature.obj ..\ogrfeaturedefn.obj \
-		..\ogrfielddefn.obj ..\ogrspatialreference.obj \
-		..\ogr_srsnode.obj \
-		..\..\frmts\shapelib\dbfopen.obj \
-		..\..\frmts\shapelib\shpopen.obj \
-		..\..\port\*.obj
 
 default:	SF.dll
 
@@ -36,10 +26,12 @@ SF.res:	SF.rc SF.h
 
 SF.dll:	SF.h $(LOC_OBJ) SF.res
 	link /debug /dll /def:SF.def /out:SF.dll \
-		$(LOC_OBJ) $(SHR_OBJ) $(OLE_LIBS) SF.res
+		$(LOC_OBJ) $(OGR_LIBS) $(OLE_LIBS) SF.res
 
 clean:
 	rm -f *.obj *.exe *.dll SF.h SF_i.c SF.tlb SF.res
 
 SF.h:      SF.idl
 	midl /tlb SF.tlb /h SF.h /Oicf /iid SF_i.c SF.idl
+
+
