@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2000/09/15 14:09:56  warmerda
+ * Added support for geotransforms.
+ *
  * Revision 1.6  2000/06/20 17:35:58  warmerda
  * added overview support
  *
@@ -66,13 +69,18 @@ CPL_C_END
 class PAuxDataset : public RawDataset
 {
     FILE	*fpImage;	// image data file.
-    
+
   public:
     		PAuxDataset();
     	        ~PAuxDataset();
     
+    char	*pszAuxFilename;
     char	**papszAuxLines;
+    int		bAuxUpdated;
     
+    virtual CPLErr GetGeoTransform( double * );
+    virtual CPLErr SetGeoTransform( double * );
+
     static GDALDataset *Open( GDALOpenInfo * );
     static GDALDataset *Create( const char * pszFilename,
                                 int nXSize, int nYSize, int nBands,
@@ -87,6 +95,8 @@ PAuxDataset::PAuxDataset()
 {
     papszAuxLines = NULL;
     fpImage = NULL;
+    bAuxUpdated = FALSE;
+    pszAuxFilename = NULL;
 }
 
 /************************************************************************/
@@ -97,9 +107,114 @@ PAuxDataset::~PAuxDataset()
 
 {
     FlushCache();
-    CSLDestroy( papszAuxLines );
     if( fpImage != NULL )
         VSIFClose( fpImage );
+
+    if( bAuxUpdated )
+        CSLSave( papszAuxLines, pszAuxFilename );
+
+    CPLFree( pszAuxFilename );
+    CSLDestroy( papszAuxLines );
+}
+
+/************************************************************************/
+/*                          GetGeoTransform()                           */
+/************************************************************************/
+
+CPLErr PAuxDataset::GetGeoTransform( double * padfGeoTransform )
+
+{
+    if( CSLFetchNameValue(papszAuxLines, "UpLeftX") != NULL 
+        && CSLFetchNameValue(papszAuxLines, "UpLeftY") != NULL 
+        && CSLFetchNameValue(papszAuxLines, "LoRightX") != NULL 
+        && CSLFetchNameValue(papszAuxLines, "LoRightY") != NULL )
+    {
+        double	dfUpLeftX, dfUpLeftY, dfLoRightX, dfLoRightY;
+
+        dfUpLeftX = atof(CSLFetchNameValue(papszAuxLines, "UpLeftX" ));
+        dfUpLeftY = atof(CSLFetchNameValue(papszAuxLines, "UpLeftY" ));
+        dfLoRightX = atof(CSLFetchNameValue(papszAuxLines, "LoRightX" ));
+        dfLoRightY = atof(CSLFetchNameValue(papszAuxLines, "LoRightY" ));
+
+        padfGeoTransform[0] = dfUpLeftX;
+        padfGeoTransform[1] = (dfLoRightX - dfUpLeftX) / GetRasterXSize();
+        padfGeoTransform[2] = 0.0;
+        padfGeoTransform[3] = dfUpLeftY;
+        padfGeoTransform[4] = 0.0;
+        padfGeoTransform[5] = (dfUpLeftY - dfLoRightY) / GetRasterYSize();
+
+        return CE_None;
+    }
+    else
+    {
+        return CE_Failure;
+    }
+}
+
+/************************************************************************/
+/*                          SetGeoTransform()                           */
+/************************************************************************/
+
+CPLErr PAuxDataset::SetGeoTransform( double * padfGeoTransform )
+
+{
+    char	szUpLeftX[128];
+    char	szUpLeftY[128];
+    char	szLoRightX[128];
+    char	szLoRightY[128];
+
+    if( ABS(padfGeoTransform[0]) < 181 
+        && ABS(padfGeoTransform[1]) < 1 )
+    {
+        sprintf( szUpLeftX, "%.12f", padfGeoTransform[0] );
+        sprintf( szUpLeftY, "%.12f", padfGeoTransform[3] );
+        sprintf( szLoRightX, "%.12f", 
+               padfGeoTransform[0] + padfGeoTransform[1] * GetRasterXSize() );
+        sprintf( szLoRightY, "%.12f", 
+               padfGeoTransform[3] + padfGeoTransform[5] * GetRasterYSize() );
+    }
+    else
+    {
+        sprintf( szUpLeftX, "%.3f", padfGeoTransform[0] );
+        sprintf( szUpLeftY, "%.3f", padfGeoTransform[3] );
+        sprintf( szLoRightX, "%.3f", 
+               padfGeoTransform[0] + padfGeoTransform[1] * GetRasterXSize() );
+        sprintf( szLoRightY, "%.3f", 
+               padfGeoTransform[3] + padfGeoTransform[5] * GetRasterYSize() );
+    }
+        
+    if( CSLFetchNameValue(papszAuxLines, "UpLeftX") != NULL )
+    {
+
+        papszAuxLines = CSLSetNameValue( papszAuxLines, 
+                                         "UpLeftX", szUpLeftX );
+        papszAuxLines = CSLSetNameValue( papszAuxLines, 
+                                         "UpLeftY", szUpLeftY );
+        papszAuxLines = CSLSetNameValue( papszAuxLines, 
+                                         "LoRightX", szLoRightX );
+        papszAuxLines = CSLSetNameValue( papszAuxLines, 
+                                         "LoRightY", szLoRightY );
+    }
+    else
+    {
+        char	szValue[128];
+        
+        sprintf( szValue, "UpLeftX: %s", szUpLeftX );
+        papszAuxLines = CSLAddString( papszAuxLines, szValue );
+        
+        sprintf( szValue, "UpLeftY: %s", szUpLeftY );
+        papszAuxLines = CSLAddString( papszAuxLines, szValue );
+        
+        sprintf( szValue, "LoRightX: %s", szLoRightX );
+        papszAuxLines = CSLAddString( papszAuxLines, szValue );
+        
+        sprintf( szValue, "LoRightY: %s", szLoRightY );
+        papszAuxLines = CSLAddString( papszAuxLines, szValue );
+    }
+
+    bAuxUpdated = TRUE;
+
+    return CE_None;
 }
 
 /************************************************************************/
@@ -188,7 +303,7 @@ GDALDataset *PAuxDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      searched with CSLFetchNameValue().                              */
 /* -------------------------------------------------------------------- */
     poDS->papszAuxLines = CSLLoad( pszHDRFilename );
-    CPLFree( pszHDRFilename );
+    poDS->pszAuxFilename = pszHDRFilename;
     
 /* -------------------------------------------------------------------- */
 /*      Find the RawDefinition line to establish overall parameters.    */
