@@ -91,6 +91,11 @@ HAVE_HDF4     = @HAVE_HDF4@
 HDF4_INCLUDE  = @HDF4_INCLUDE@
 
 #
+# JPEG2000 via Kakadu Support.
+#
+KAKDIR = @KAKDIR@
+
+#
 # JPEG-2000 Support (via JasPer library).
 #
 HAVE_JASPER     = @HAVE_JASPER@
