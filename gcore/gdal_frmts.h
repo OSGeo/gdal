@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2002/09/26 18:10:59  warmerda
+ * added JP2KAK
+ *
  * Revision 1.16  2002/09/19 14:49:54  warmerda
  * added jpeg2000
  *
@@ -108,6 +111,7 @@ void CPL_DLL GDALRegister_HKV(void);
 void CPL_DLL GDALRegister_PNG(void);
 void CPL_DLL GDALRegister_JPEG(void);
 void CPL_DLL GDALRegister_JPEG2000(void);
+void CPL_DLL GDALRegister_JP2KAK(void);
 void CPL_DLL GDALRegister_MEM(void);
 void CPL_DLL GDALRegister_JDEM(void);
 void CPL_DLL GDALRegister_GRASS(void);
