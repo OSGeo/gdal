@@ -25,6 +25,9 @@
  * Main format registration function.
  * 
  * $Log$
+ * Revision 1.59  2003/10/09 13:37:14  warmerda
+ * Remove GDALRegister_AIGrid2() ... too undependable.
+ *
  * Revision 1.58  2003/09/09 08:32:17  dron
  * PCIDSK added.
  *
@@ -279,7 +282,7 @@ void GDALAllRegister()
 #endif
     
 #ifdef FRMT_aigrid
-    GDALRegister_AIGrid2();
+//    GDALRegister_AIGrid2();
     GDALRegister_AIGrid();
 #endif
 
