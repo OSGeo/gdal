@@ -33,8 +33,8 @@
  * and things like that.
  *
  * $Log$
- * Revision 1.62  2003/03/25 05:58:37  warmerda
- * add better pointer and stringlist support
+ * Revision 1.63  2003/04/02 22:16:43  warmerda
+ * Convert 'rootless' XML documents with a pseduo-root
  *
  ************************************************************************/
 
@@ -2240,7 +2240,17 @@ py_CPLParseXMLString(PyObject *self, PyObject *args) {
 	return NULL;
     }
 
+    if( psXMLTree != NULL && psXMLTree->psNext != NULL )
+    {
+	CPLXMLNode *psFirst = psXMLTree;
+
+	/* create a "pseudo" root if we have multiple elements */
+        psXMLTree = CPLCreateXMLNode( NULL, CXT_Element, "" );
+	psXMLTree->psChild = psFirst;
+    }
+
     pyList = XMLTreeToPyList( psXMLTree );
+
     CPLDestroyXMLNode( psXMLTree );
 
     return pyList;
@@ -2297,7 +2307,33 @@ py_CPLSerializeXMLTree(PyObject *self, PyObject *args) {
     if( psXMLTree == NULL )
 	return NULL;
 
-    pszText = CPLSerializeXMLTree( psXMLTree );
+    if( psXMLTree->eType == CXT_Element 
+        && psXMLTree->pszValue[0] == '\0' )
+    {
+	CPLXMLNode *psChild;
+
+        /* We want to avoid including the root as an element level */
+        pszText = NULL;
+	for( psChild = psXMLTree->psChild; 
+             psChild != NULL; psChild = psChild->psNext )
+        {
+            char *pszTextChunk;
+
+            pszTextChunk = CPLSerializeXMLTree( psChild );
+            if( pszText == NULL )
+                pszText = pszTextChunk;
+            else
+            {
+		pszText = (char *)
+		    CPLRealloc(pszText, 
+                               strlen(pszText)+strlen(pszTextChunk)+1);
+                strcat( pszText, pszTextChunk );
+                CPLFree( pszTextChunk );
+            } 
+        }
+    }
+    else
+        pszText = CPLSerializeXMLTree( psXMLTree );
 
     CPLDestroyXMLNode( psXMLTree );
 
