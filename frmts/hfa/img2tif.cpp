@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  1999/03/21 21:32:45  warmerda
+ * added -s strip support
+ *
  * Revision 1.11  1999/03/15 20:18:29  warmerda
  * Fixed data range function.
  *
@@ -64,6 +67,7 @@
 #include "tiffiop.h"
 #include "xtiffio.h"
 #include <ctype.h>
+#include <assert.h>
 
 CPL_C_START
 CPLErr ImagineToGeoTIFFProjection( HFAHandle hHFA, TIFF * hTIFF );
@@ -72,7 +76,7 @@ void   TIFFBuildOverviews( const char *, int, int * );
 CPL_C_END
 
 static void ImagineToGeoTIFF( HFAHandle, HFABand *, HFABand *, HFABand *,
-                              const char *, int, int );
+                              const char *, int, int, int );
 static CPLErr RGBComboValidate( HFAHandle, int, int, int );
 static int    ValidateDataType( HFAHandle, int );
 static void   ReportOnBand( HFABand * poBand );
@@ -98,6 +102,7 @@ void Usage()
 "          where N = no. of bands.\n"
 "    -rgb  produce an RGB image file from the indicated band numbers\n"
 "          within an existing imagine file.\n"
+"    -s    output file is in strips (tiles is default)\n"
 "    -c    packbits compress flag (def=uncompressed)\n"
 "    -v    overview sampling increment(s) (0=single, 98=full set minus 2x,\n"
 "          99=full set)  Examples: -v 2 4 8   -v 0   -v 99\n"
@@ -119,7 +124,7 @@ int main( int nArgc, char ** papszArgv )
     HFAHandle   hHFA;
     int		nCompressFlag = COMPRESSION_NONE;
     int		nOverviewCount=0, anOverviews[100];
-    int		bDictDump = FALSE, bTreeDump = FALSE;
+    int		bDictDump = FALSE, bTreeDump = FALSE, bWriteInStrips = FALSE;
         
 /* -------------------------------------------------------------------- */
 /*      Parse commandline options.                                      */
@@ -148,6 +153,10 @@ int main( int nArgc, char ** papszArgv )
                 anOverviews[nOverviewCount++] = atoi(papszArgv[i+1]);
                 i++;
             }
+        }
+        else if( EQUAL(papszArgv[i],"-s") )
+        {
+            bWriteInStrips = TRUE;
         }
         else if( EQUAL(papszArgv[i],"-quiet") )
         {
@@ -324,7 +333,8 @@ int main( int nArgc, char ** papszArgv )
                           hHFA->papoBand[nBlue-1],
                           szFilename,
                           nCompressFlag,
-                          nOverviewCount == 0 );
+                          nOverviewCount == 0,
+                          bWriteInStrips );
 
         if( nOverviewCount > 0 )
         {
@@ -360,7 +370,8 @@ int main( int nArgc, char ** papszArgv )
         
             ImagineToGeoTIFF( hHFA, hHFA->papoBand[nBand-1], NULL, NULL,
                               szFilename, nCompressFlag,
-                              nOverviewCount == 0 );
+                              nOverviewCount == 0,
+                              bWriteInStrips );
 
             if( nOverviewCount > 0 )
             {
@@ -564,6 +575,164 @@ static CPLErr ImagineToGeoTIFFDataRange( HFABand * poBand, TIFF *hTIFF)
 }
 
 /************************************************************************/
+/*                           LoadRowOfTiles()                           */
+/*                                                                      */
+/*      Helper function for CopyOneBandToStrips() to load a row of      */
+/*      tiles into a line (rather than tile) interleaved strip but      */
+/*      with the height of a tile rather than the eventual strip        */
+/*      size.  Note that unneeded data in the last tile is              */
+/*      discarded.                                                      */
+/************************************************************************/
+
+static CPLErr LoadRowOfTiles( HFABand * poBand, unsigned char * pabyRowOfTiles,
+                              int nTileXSize, int nTileYSize,
+                              int nStripWidth, int nDataBits, int nTileRow,
+                              int nSample )
+
+{
+    unsigned char	*pabyTile;
+    int			iTileX;
+
+    pabyTile = (unsigned char *) VSIMalloc(nTileXSize*nTileYSize*nDataBits/8);
+    if( pabyTile == NULL )
+        return CE_Failure;
+
+    for( iTileX = 0; iTileX*nTileXSize < nStripWidth; iTileX++ )
+    {
+        int	nCopyBytes, nRowOffset, iTileLine;
+        
+        if( poBand->GetRasterBlock( iTileX, nTileRow, pabyTile ) != CE_None )
+            return( CE_Failure );
+
+        if( (iTileX+1) * nTileXSize > nStripWidth )
+            nCopyBytes = (nStripWidth - iTileX * nTileXSize) * nDataBits / 8;
+        else
+            nCopyBytes = nTileXSize * nDataBits / 8;
+
+        nRowOffset = iTileX * nTileXSize * nDataBits / 8;
+        
+        for( iTileLine = 0; iTileLine < nTileYSize; iTileLine++ )
+        {
+            memcpy( pabyRowOfTiles + nRowOffset
+                    + iTileLine * nStripWidth * nDataBits / 8,
+                    pabyTile + iTileLine * nTileXSize * nDataBits / 8,
+                    nCopyBytes );
+        }
+    }
+
+    VSIFree( pabyTile );
+
+    return( CE_None );
+}
+
+
+/************************************************************************/
+/*                        CopyOneBandToStrips()                         */
+/*                                                                      */
+/*      copy just the imagery tiles from an Imagine band (full res,     */
+/*      or overview) to a sample of a TIFF file with stripped,          */
+/*      rather than tiled organization..                                */
+/************************************************************************/
+
+static CPLErr CopyOneBandToStrips( HFABand * poBand, TIFF * hTIFF, int nSample)
+
+{
+    unsigned char *pabyRowOfTiles;
+    unsigned char *pabyStrip;
+    int		nTileXSize, nTileYSize, nStripWidth, nDataBits, iStrip;
+    int		nLoadedTileRow;
+    uint16	nRowsPerStrip;
+    
+/* -------------------------------------------------------------------- */
+/*	Collect various information in local variables.			*/
+/* -------------------------------------------------------------------- */
+    nTileXSize = poBand->nBlockXSize;
+    nTileYSize = poBand->nBlockYSize;
+    nStripWidth = poBand->nWidth;
+    nDataBits = HFAGetDataTypeBits( poBand->nDataType );
+
+    TIFFGetField( hTIFF, TIFFTAG_ROWSPERSTRIP, &(nRowsPerStrip) );
+
+/* -------------------------------------------------------------------- */
+/*      Verify that scanlines in tiles, and strips fall on byte         */
+/*      boundaries.                                                     */
+/* -------------------------------------------------------------------- */
+    assert( (nTileXSize * nDataBits) % 8 == 0 );
+    assert( (nStripWidth * nDataBits) % 8 == 0 );
+
+/* -------------------------------------------------------------------- */
+/*      Allocate a buffer big enough to hold a whole row of tiles,      */
+/*      and another big enough to hold a strip on the output file.      */
+/* -------------------------------------------------------------------- */
+    pabyRowOfTiles = (unsigned char *)
+        VSIMalloc((nStripWidth * nTileYSize * nDataBits) / 8);
+    pabyStrip = (unsigned char *)
+        VSIMalloc((nStripWidth * nRowsPerStrip * nDataBits) / 8);
+
+    if( pabyRowOfTiles == NULL || pabyStrip == NULL )
+    {
+        fprintf( stderr,
+                 "Out of memory allocating working buffer(s).\n" );
+        return( CE_Failure );
+    }
+
+/* -------------------------------------------------------------------- */
+/*	Loop through image one strip at a time. 			*/
+/* -------------------------------------------------------------------- */
+    nLoadedTileRow = -1;
+    for( iStrip = 0; iStrip * nRowsPerStrip < poBand->nHeight; iStrip++ )
+    {
+        int	iStripLine, nStripLines, iStripOffset;
+        int	iStripId;
+
+        iStripOffset = iStrip * nRowsPerStrip;
+        nStripLines = nRowsPerStrip;
+        if( iStrip + nRowsPerStrip > poBand->nHeight )
+            nStripLines = poBand->nHeight - iStrip;
+
+/* -------------------------------------------------------------------- */
+/*      Fill in the strip one line at a time, triggering the load of    */
+/*      a new row of tiles when a tile boundary is crossed.             */
+/* -------------------------------------------------------------------- */
+        for( iStripLine = 0; iStripLine < nStripLines; iStripLine++ )
+        {
+            int		iLineWithinTiles;
+
+            iLineWithinTiles =
+                iStripLine + iStripOffset - nLoadedTileRow * nTileYSize;
+            
+            if( iStripLine + iStripOffset >= (nLoadedTileRow+1) * nTileYSize )
+            {
+                nLoadedTileRow++;
+                iLineWithinTiles = 0;
+                LoadRowOfTiles( poBand, pabyRowOfTiles, nTileXSize, nTileYSize,
+                                nStripWidth, nDataBits, nLoadedTileRow,
+                                nSample );
+            }
+
+            memcpy( pabyStrip + (iStripLine * nStripWidth * nDataBits)/8,
+                    pabyRowOfTiles
+                    	     + (iLineWithinTiles * nStripWidth * nDataBits)/8,
+                    nStripWidth * nDataBits / 8 );
+        }
+
+/* -------------------------------------------------------------------- */
+/*      Write out the strip.                                            */
+/* -------------------------------------------------------------------- */
+        iStripId = TIFFComputeStrip( hTIFF, iStrip * nRowsPerStrip, nSample );
+        
+        if( TIFFWriteEncodedStrip( hTIFF, iStripId, pabyStrip,
+                            (nStripLines * nStripWidth * nDataBits)/ 8) < 0 )
+            return( CE_Failure );
+    }
+
+    VSIFree( pabyStrip );
+    VSIFree( pabyRowOfTiles );
+
+    return( CE_None );
+}
+
+/************************************************************************/
 /*                            CopyOneBand()                             */
 /*                                                                      */
 /*      copy just the imagery tiles from an Imagine band (full res,     */
@@ -626,7 +795,8 @@ static void ImagineToGeoTIFF( HFAHandle hHFA,
                               HFABand * poGreenBand,
                               HFABand * poBlueBand,
                               const char * pszDstFilename,
-                              int nCompressFlag, int bCopyOverviews )
+                              int nCompressFlag, int bCopyOverviews,
+                              int bWriteInStrips )
 
 {
     TIFF	*hTIFF;
@@ -695,8 +865,16 @@ static void ImagineToGeoTIFF( HFAHandle hHFA,
         
     TIFFSetField( hTIFF, TIFFTAG_SUBFILETYPE, 0 );
 
-    TIFFSetField( hTIFF, TIFFTAG_TILEWIDTH, nBlockXSize );
-    TIFFSetField( hTIFF, TIFFTAG_TILELENGTH, nBlockYSize );
+    if( bWriteInStrips )
+    {
+        TIFFSetField( hTIFF, TIFFTAG_ROWSPERSTRIP,
+                      TIFFDefaultStripSize( hTIFF, 0 ) );
+    }
+    else
+    {
+        TIFFSetField( hTIFF, TIFFTAG_TILEWIDTH, nBlockXSize );
+        TIFFSetField( hTIFF, TIFFTAG_TILELENGTH, nBlockYSize );
+    }
 
     if( nColors > 0 )
         TIFFSetField( hTIFF, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_PALETTE );
@@ -714,12 +892,26 @@ static void ImagineToGeoTIFF( HFAHandle hHFA,
 /* -------------------------------------------------------------------- */
 /*      Copy over one, or three bands of raster data.                   */
 /* -------------------------------------------------------------------- */
-    CopyOneBand( poRedBand, hTIFF, 0 );
 
-    if( poBlueBand != NULL )
+    if( bWriteInStrips )
     {
-        CopyOneBand( poGreenBand, hTIFF, 1 );
-        CopyOneBand( poBlueBand, hTIFF, 2 );
+        CopyOneBandToStrips( poRedBand, hTIFF, 0 );
+
+        if( poBlueBand != NULL )
+        {
+            CopyOneBandToStrips( poGreenBand, hTIFF, 1 );
+            CopyOneBandToStrips( poBlueBand, hTIFF, 2 );
+        }
+    }
+    else
+    {
+        CopyOneBand( poRedBand, hTIFF, 0 );
+
+        if( poBlueBand != NULL )
+        {
+            CopyOneBand( poGreenBand, hTIFF, 1 );
+            CopyOneBand( poBlueBand, hTIFF, 2 );
+        }
     }
     
 /* -------------------------------------------------------------------- */
