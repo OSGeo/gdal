@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_coordsys.cpp,v 1.6 1999/11/20 04:53:41 daniel Exp $
+ * $Id: mitab_coordsys.cpp,v 1.7 1999/12/19 17:35:16 daniel Exp $
  *
  * Name:     mitab_coordsys.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log: mitab_coordsys.cpp,v $
+ * Revision 1.7  1999/12/19 17:35:16  daniel
+ * Fixed memory leaks
+ *
  * Revision 1.6  1999/11/20 04:53:41  daniel
  * Fixed warning on return value in MITABExtractCoordSysBounds()
  *
@@ -69,6 +72,9 @@ static double GetMIFParm( char ** papszFields, int iField, double dfDefault )
 
 /************************************************************************/
 /*                      MITABCoordSys2SpatialRef()                      */
+/*                                                                      */
+/*      Convert a MIF COORDSYS string into a new OGRSpatialReference    */
+/*      object.                                                         */
 /************************************************************************/
 
 OGRSpatialReference *MITABCoordSys2SpatialRef( const char * pszCoordSys )
@@ -120,6 +126,7 @@ OGRSpatialReference *MITABCoordSys2SpatialRef( const char * pszCoordSys )
     }
     else
     {
+        CSLDestroy(papszFields);
         return NULL; // should we handle the units?
     }
 
@@ -178,6 +185,7 @@ OGRSpatialReference *MITABCoordSys2SpatialRef( const char * pszCoordSys )
          * we might want to include the units, but not for now.
          *-------------------------------------------------------------*/
       case 0:
+        CSLDestroy(papszFields);
         return poSR;
         break;
 
@@ -555,11 +563,19 @@ OGRSpatialReference *MITABCoordSys2SpatialRef( const char * pszCoordSys )
         CPLFree( pszWKT );
     }
 
+    CSLDestroy(papszFields);
+
     return poSR;
 }
 
 /************************************************************************/
 /*                      MITABSpatialRef2CoordSys()                      */
+/*                                                                      */
+/*      Converts a OGRSpatialReference object into a MIF COORDSYS       */
+/*      string.                                                         */
+/*                                                                      */
+/*      The function returns a newly allocated string that should be    */
+/*      CPLFree()'d by the caller.                                      */
 /************************************************************************/
 
 char *MITABSpatialRef2CoordSys( OGRSpatialReference * poSR )
@@ -800,10 +816,10 @@ char *MITABSpatialRef2CoordSys( OGRSpatialReference * poSR )
             adfDatumParm[7] = atof(papszFields[8]);
         }
 
-        CSLDestroy( papszFields );
-
         if( CSLCount(papszFields) < 5 )
             nDatum = 104; /* WGS84 */
+
+        CSLDestroy( papszFields );
     }
     
     /*-----------------------------------------------------------------

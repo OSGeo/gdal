@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab.h,v 1.21 1999/12/15 16:13:43 warmerda Exp $
+ * $Id: mitab.h,v 1.25 1999/12/19 01:10:36 stephane Exp $
  *
  * Name:     mitab.h
  * Project:  MapInfo MIF Read/Write library
@@ -28,6 +28,18 @@
  **********************************************************************
  *
  * $Log: mitab.h,v $
+ * Revision 1.25  1999/12/19 01:10:36  stephane
+ * Remove the automatic pre parsing for the GetBounds and GetFeatureCount
+ *
+ * Revision 1.24  1999/12/18 07:10:15  daniel
+ * Added GetNumrings()/GetRingRef() to TABRegion
+ *
+ * Revision 1.23  1999/12/17 02:05:00  daniel
+ * OOOPS! My RCS log msg with a closing comment in it confused the compiler!
+ *
+ * Revision 1.22  1999/12/17 01:41:58  daniel
+ * Avoid comment warning
+ *
  * Revision 1.21  1999/12/15 16:13:43  warmerda
  * Avoid unused parameter warnings.
  *
@@ -396,17 +408,17 @@ class TABView: public IMapInfoFile
     //
     virtual int SetBounds(double /*dXMin*/, double /*dYMin*/, 
                           double /*dXMax*/, double /*dYMax*/)  {return -1;};
-    virtual int SetFeatureDefn(OGRFeatureDefn */*poFeatureDefn*/,
-                            TABFieldType */*paeMapInfoNativeFieldTypes*/ =NULL)
+    virtual int SetFeatureDefn(OGRFeatureDefn * /*poFeatureDefn*/,
+                           TABFieldType * /*paeMapInfoNativeFieldTypes*/ =NULL)
                                                        {return -1;};
-    virtual int AddFieldNative(const char */*pszName*/,
+    virtual int AddFieldNative(const char * /*pszName*/,
                                TABFieldType /*eMapInfoType*/,
                                int /*nWidth*/, int /*nPrecision*/=0)
     							{return -1;};
-    virtual int SetSpatialRef(OGRSpatialReference */*poSpatialRef*/)
+    virtual int SetSpatialRef(OGRSpatialReference * /*poSpatialRef*/)
                                                        {return -1;};
 
-    virtual int SetFeature(TABFeature */*poFeature*/, int /*nFeatureId*/ = -1)
+    virtual int SetFeature(TABFeature * /*poFeature*/, int /*nFeatureId*/ = -1)
                                                        {return -1;};
 
     ///////////////
@@ -417,7 +429,7 @@ class TABView: public IMapInfoFile
     int          SetProjInfo(TABProjInfo *poPI)
 	    { return m_nMainTableIndex!=-1?
                      m_papoTABFiles[m_nMainTableIndex]->SetProjInfo(poPI):-1; }
-    int          SetMIFCoordSys(const char */*pszMIFCoordSys*/) {return -1;};
+    int          SetMIFCoordSys(const char * /*pszMIFCoordSys*/) {return -1;};
 
 #ifdef DEBUG
     virtual void Dump(FILE *fpOut = NULL);
@@ -462,7 +474,8 @@ class MIFFile: public IMapInfoFile
     OGRSpatialReference *m_poSpatialRef;
 
     TABFeature *m_poCurFeature;
-    int         m_nLastFeatureId;
+    int         m_nFeatureCount;
+    int         m_nWriteFeatureId;
     int         m_nAttribut;
 
     ///////////////
@@ -470,7 +483,7 @@ class MIFFile: public IMapInfoFile
     //
     int         ReadFeatureDefn();
     int         ParseMIFHeader();
-    int         CountNumberFeature();
+    void        PreParseFile();
     int         AddFields(const char *pszLine);
     int         GotoFeature(int nFeatureId);
     int         NextFeature();
@@ -479,6 +492,8 @@ class MIFFile: public IMapInfoFile
     // Private Write access specific stuff
     //
     GBool       m_bBoundsSet;
+    GBool       m_bPreParsed;
+    GBool       m_bHeaderWrote;
     
     int         WriteMIFHeader();
     void UpdateBounds(double dfX,double dfY);
@@ -1016,7 +1031,14 @@ class TABPolyline: public TABFeature,
  *     TAB_GEOM_REGION_C         0x0d
  *     TAB_GEOM_REGION           0x0e
  *
- * Feature geometry will be OGRPolygon
+ * Feature geometry will be returned as OGRPolygon (with a single ring)
+ * or OGRMultiPolygon (for multiple rings).
+ *
+ * REGIONs with multiple rings are returned as OGRMultiPolygon instead of
+ * as OGRPolygons since OGRPolygons require that the first ring be the
+ * outer ring, and the other all be inner rings, but this is not guaranteed
+ * inside MapInfo files.  However, when writing features, OGRPolygons with
+ * multiple rings will be accepted without problem.
  *--------------------------------------------------------------------*/
 class TABRegion: public TABFeature, 
                  public ITABFeaturePen, 
@@ -1033,6 +1055,12 @@ class TABRegion: public TABFeature,
     virtual int             ValidateMapInfoType();
 
     virtual TABFeature *CloneTABFeature(OGRFeatureDefn *poNewDefn = NULL );
+
+    /* 2 methods to make the REGION's gomeetry look like a single collection
+     * of OGRLinearRings 
+     */
+    int                 GetNumRings();
+    OGRLinearRing      *GetRingRef(int nRequestedRingIndex);
 
     virtual int ReadGeometryFromMAPFile(TABMAPFile *poMapFile);
     virtual int WriteGeometryToMAPFile(TABMAPFile *poMapFile);

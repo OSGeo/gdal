@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_tabview.cpp,v 1.3 1999/12/14 05:53:00 daniel Exp $
+ * $Id: mitab_tabview.cpp,v 1.4 1999/12/19 17:40:16 daniel Exp $
  *
  * Name:     mitab_tabfile.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log: mitab_tabview.cpp,v $
+ * Revision 1.4  1999/12/19 17:40:16  daniel
+ * Init + delete m_poRelation properly
+ *
  * Revision 1.3  1999/12/14 05:53:00  daniel
  * Fixed compile warnings
  *
@@ -71,6 +74,8 @@ TABView::TABView()
 
     m_papszFieldNames = NULL;
     m_papszWhereClause = NULL;
+
+    m_poRelation = NULL;
 }
 
 /**********************************************************************
@@ -496,6 +501,10 @@ int TABView::Close()
     m_papszWhereClause = NULL;
 
     m_nMainTableIndex = -1;
+
+    if (m_poRelation)
+        delete m_poRelation;
+    m_poRelation = NULL;
 
     return 0;
 }

@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_feature.cpp,v 1.15 1999/12/14 02:04:54 daniel Exp $
+ * $Id: mitab_feature.cpp,v 1.18 1999/12/19 17:36:30 daniel Exp $
  *
  * Name:     mitab_feature.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -28,6 +28,16 @@
  **********************************************************************
  *
  * $Log: mitab_feature.cpp,v $
+ * Revision 1.18  1999/12/19 17:36:30  daniel
+ * Fixed a problem with TABRegion::GetRingRef()
+ *
+ * Revision 1.17  1999/12/18 07:11:36  daniel
+ * Return regions as OGRMultiPolygons instead of multiple rings OGRPolygons
+ *
+ * Revision 1.16  1999/12/16 17:15:50  daniel
+ * Use addRing/GeometryDirectly() (prevents leak), and rounded rectangles
+ * always return real corner radius from file even if it is bigger than MBR
+ *
  * Revision 1.15  1999/12/14 02:04:54  daniel
  * Added CloneTABFeature() method
  *
@@ -151,7 +161,7 @@ void TABFeature::CopyTABFeatureBase(TABFeature *poDestFeature)
 
 
 /**********************************************************************
- *                     TABRegion::CloneTABFeature()
+ *                     TABFeature::CloneTABFeature()
  *
  * Duplicate feature, including stuff specific to each TABFeature type.
  *
@@ -1562,7 +1572,8 @@ int TABPolyline::ReadGeometryFromMAPFile(TABMAPFile *poMapFile)
                 pnXYPtr += 2;
             }
 
-            poMultiLine->addGeometry(poLine);
+            if (poMultiLine->addGeometryDirectly(poLine) != OGRERR_NONE)
+                CPLAssert(FALSE); // Just in case lower-level lib is modified
             poLine = NULL;
         }
 
@@ -1973,7 +1984,8 @@ int  TABRegion::ValidateMapInfoType()
      * Fetch and validate geometry
      *----------------------------------------------------------------*/
     poGeom = GetGeometryRef();
-    if (poGeom && poGeom->getGeometryType() == wkbPolygon)
+    if (poGeom && (poGeom->getGeometryType() == wkbPolygon ||
+                   poGeom->getGeometryType() == wkbMultiPolygon))
     {
         m_nMapInfoType = TAB_GEOM_REGION;
     }
@@ -2028,7 +2040,8 @@ int TABRegion::ReadGeometryFromMAPFile(TABMAPFile *poMapFile)
         GInt32  nCoordBlockPtr, numLineSections, nCenterX, nCenterY;
         GInt32  *panXY, nX, nY;
         TABMAPCoordBlock        *poCoordBlock;
-        OGRPolygon              *poPolygon;
+        OGRMultiPolygon         *poMultiPolygon = NULL;
+        OGRPolygon              *poPolygon = NULL;
         TABMAPCoordSecHdr       *pasSecHdrs;
 
         /*-------------------------------------------------------------
@@ -2086,15 +2099,25 @@ int TABRegion::ReadGeometryFromMAPFile(TABMAPFile *poMapFile)
         }
 
         /*-------------------------------------------------------------
-         * Create an OGRPolygon with one OGRLinearRing geometry for
-         * each coordinates section.  The first ring is the outer ring.
+         * For 1-ring regions, we return an OGRPolygon with one single
+         * OGRLinearRing geometry. 
+         *
+         * REGIONs with multiple rings are returned as OGRMultiPolygon
+         * instead of as OGRPolygons since OGRPolygons require that the
+         * first ring be the outer ring, and the other all be inner 
+         * rings, but this is not guaranteed inside MapInfo files.  
          *------------------------------------------------------------*/
-        poGeometry = poPolygon = new OGRPolygon();
+        if (numLineSections > 1)
+            poGeometry = poMultiPolygon = new OGRMultiPolygon;
+        else
+            poGeometry = NULL;  // Will be set later
 
         for(iSection=0; iSection<numLineSections; iSection++)
         {
             GInt32 *pnXYPtr;
             int     numSectionVertices;
+
+            poPolygon = new OGRPolygon();
 
             numSectionVertices = pasSecHdrs[iSection].numVertices;
             pnXYPtr = panXY + (pasSecHdrs[iSection].nVertexOffset * 2);
@@ -2109,8 +2132,15 @@ int TABRegion::ReadGeometryFromMAPFile(TABMAPFile *poMapFile)
                 pnXYPtr += 2;
             }
 
-            poPolygon->addRing(poRing);
+            poPolygon->addRingDirectly(poRing);
             poRing = NULL;
+
+            if (numLineSections > 1)
+                poMultiPolygon->addGeometryDirectly(poPolygon);
+            else
+                poGeometry = poPolygon;
+
+            poPolygon = NULL;
         }
 
         CPLFree(pasSecHdrs);
@@ -2147,7 +2177,6 @@ int TABRegion::WriteGeometryToMAPFile(TABMAPFile *poMapFile)
     GInt32              nX, nY;
     TABMAPObjectBlock   *poObjBlock;
     OGRGeometry         *poGeom;
-    OGRPolygon          *poPolygon=NULL;
 
     if (ValidateMapInfoType() == TAB_GEOM_NONE)
         return -1;      // Invalid Geometry... an error has already been sent
@@ -2159,12 +2188,17 @@ int TABRegion::WriteGeometryToMAPFile(TABMAPFile *poMapFile)
      *----------------------------------------------------------------*/
     poGeom = GetGeometryRef();
 
-    if (poGeom && poGeom->getGeometryType() == wkbPolygon)
+    if (poGeom && (poGeom->getGeometryType() == wkbPolygon ||
+                   poGeom->getGeometryType() == wkbMultiPolygon))
     {
         /*=============================================================
          * REGIONs are similar to PLINE MULTIPLE
+         *
+         * We accept both OGRPolygons (with one or multiple rings) and 
+         * OGRMultiPolygons as input.
          *============================================================*/
-        int     nStatus=0, i, iRing, numIntRings, numPointsTotal, numPoints;
+        int     nStatus=0, i, iRing, numPointsTotal, numPoints;
+        int     numRingsTotal;
         GUInt32 nCoordDataSize;
         GInt32  nCoordBlockPtr;
         GInt32  nXMin, nYMin, nXMax, nYMax;
@@ -2179,59 +2213,64 @@ int TABRegion::WriteGeometryToMAPFile(TABMAPFile *poMapFile)
         poCoordBlock->StartNewFeature();
         nCoordBlockPtr = poCoordBlock->GetCurAddress();
 
-        poPolygon = (OGRPolygon*)poGeom;
-        numIntRings = poPolygon->getNumInteriorRings();
-
         /*-------------------------------------------------------------
-         * Build and write array of coord sections headers
+         * Fetch total number of rings to build array of coord 
+         * sections headers 
+         * Note that we want to handle both OGRPolygons and OGRMultiPolygons
+         * that's why we use the GetNumRings()/GetRingRef() interface.
          *------------------------------------------------------------*/
-        pasSecHdrs = (TABMAPCoordSecHdr*)CPLCalloc(numIntRings+1,
+        numRingsTotal = GetNumRings();
+
+        pasSecHdrs = (TABMAPCoordSecHdr*)CPLCalloc(numRingsTotal,
                                                    sizeof(TABMAPCoordSecHdr));
 
         numPointsTotal = 0;
 
-        // In this loop, iRing=0 for the outer ring.
-        for(iRing=0; iRing <= numIntRings; iRing++)
+        /*-------------------------------------------------------------
+         * Go through all the rings in our OGRMultiPolygon or OGRPolygon
+         * to build the coord. section header
+         *------------------------------------------------------------*/
+
+        for(iRing=0; iRing < numRingsTotal; iRing++)
         {
             OGRLinearRing       *poRing;
 
-            if (iRing == 0)
-                poRing = poPolygon->getExteriorRing();
-            else
-                poRing = poPolygon->getInteriorRing(iRing-1);
-
+            poRing = GetRingRef(iRing);
             if (poRing == NULL)
             {
                 CPLError(CE_Failure, CPLE_AssertionFailed,
                          "TABRegion: Object Geometry contains NULL rings!");
                 return -1;
             }
-
+                
             numPoints = poRing->getNumPoints();
 
             poRing->getEnvelope(&sEnvelope);
 
             pasSecHdrs[iRing].numVertices = poRing->getNumPoints();
-            if (iRing == -1)
-                pasSecHdrs[iRing].numHoles = numIntRings;
+            if (iRing == 0)
+                pasSecHdrs[iRing].numHoles = numRingsTotal-1;
             else
                 pasSecHdrs[iRing].numHoles = 0;
-
+            
             poMapFile->Coordsys2Int(sEnvelope.MinX, sEnvelope.MinY,
-                                        pasSecHdrs[iRing].nXMin,
-                                        pasSecHdrs[iRing].nYMin);
+                                    pasSecHdrs[iRing].nXMin,
+                                    pasSecHdrs[iRing].nYMin);
             poMapFile->Coordsys2Int(sEnvelope.MaxX, sEnvelope.MaxY,
-                                        pasSecHdrs[iRing].nXMax,
-                                        pasSecHdrs[iRing].nYMax);
-            pasSecHdrs[iRing].nDataOffset = (numIntRings+1) * 24 +
-                                                numPointsTotal*4*2;
+                                    pasSecHdrs[iRing].nXMax,
+                                    pasSecHdrs[iRing].nYMax);
+            pasSecHdrs[iRing].nDataOffset = numRingsTotal * 24 +
+                                                     numPointsTotal*4*2;
             pasSecHdrs[iRing].nVertexOffset = numPointsTotal;
 
             numPointsTotal += numPoints;
-        }
+        }/* for iRing*/
 
+        /*-------------------------------------------------------------
+         * Write the Coord. Section Header
+         *------------------------------------------------------------*/
         if (nStatus == 0)
-            nStatus = poCoordBlock->WriteCoordSecHdrs(numIntRings+1,
+            nStatus = poCoordBlock->WriteCoordSecHdrs(numRingsTotal,
                                                       pasSecHdrs);
 
         CPLFree(pasSecHdrs);
@@ -2241,20 +2280,24 @@ int TABRegion::WriteGeometryToMAPFile(TABMAPFile *poMapFile)
             return nStatus;  // Error has already been reported.
 
         /*-------------------------------------------------------------
-         * Then write the coordinates themselves...
+         * Go through all the rings in our OGRMultiPolygon or OGRPolygon
+         * to write the coordinates themselves...
          *------------------------------------------------------------*/
-        // In this loop, iRing=0 for the outer ring.
-        for(iRing=0; iRing <= numIntRings; iRing++)
+
+        for(iRing=0; iRing < numRingsTotal; iRing++)
         {
             OGRLinearRing       *poRing;
 
-            if (iRing == 0)
-                poRing = poPolygon->getExteriorRing();
-            else
-                poRing = poPolygon->getInteriorRing(iRing-1);
+            poRing = GetRingRef(iRing);
+            if (poRing == NULL)
+            {
+                CPLError(CE_Failure, CPLE_AssertionFailed,
+                         "TABRegion: Object Geometry contains NULL rings!");
+                return -1;
+            }
 
             numPoints = poRing->getNumPoints();
-
+            
             for(i=0; nStatus == 0 && i<numPoints; i++)
             {
                 poMapFile->Coordsys2Int(poRing->getX(i), poRing->getY(i),
@@ -2265,7 +2308,7 @@ int TABRegion::WriteGeometryToMAPFile(TABMAPFile *poMapFile)
                     return nStatus;
                 }   
             }
-        }
+        }/* for iRing*/
 
         nCoordDataSize = poCoordBlock->GetFeatureDataSize();
 
@@ -2276,7 +2319,7 @@ int TABRegion::WriteGeometryToMAPFile(TABMAPFile *poMapFile)
          *------------------------------------------------------------*/
         poObjBlock->WriteInt32(nCoordBlockPtr);
         poObjBlock->WriteInt32(nCoordDataSize);
-        poObjBlock->WriteInt16(numIntRings+1);
+        poObjBlock->WriteInt16(numRingsTotal);
 
         // Polyline center
         poObjBlock->WriteIntCoord((nXMin+nXMax)/2, (nYMin+nYMax)/2);
@@ -2305,6 +2348,124 @@ int TABRegion::WriteGeometryToMAPFile(TABMAPFile *poMapFile)
 
 
 /**********************************************************************
+ *                   TABRegion::GetNumRings()
+ *
+ * Return the total number of rings in this object making it look like
+ * all parts of the OGRMultiPolygon (or OGRPolygon) are a single collection
+ * of rings... hides the complexity of handling OGRMultiPolygons vs 
+ * OGRPolygons, etc.
+ *
+ * Returns 0 if the geometry contained in the object is invalid or missing.
+ **********************************************************************/
+int TABRegion::GetNumRings()
+{
+    OGRGeometry         *poGeom;
+    int                 numRingsTotal = 0;
+
+    poGeom = GetGeometryRef();
+
+    if (poGeom && (poGeom->getGeometryType() == wkbPolygon ||
+                   poGeom->getGeometryType() == wkbMultiPolygon))
+    {
+        /*-------------------------------------------------------------
+         * Calculate total number of rings...
+         *------------------------------------------------------------*/
+        OGRPolygon      *poPolygon=NULL;
+        OGRMultiPolygon *poMultiPolygon = NULL;
+
+        if (poGeom->getGeometryType() == wkbMultiPolygon)
+        {
+            poMultiPolygon = (OGRMultiPolygon *)poGeom;
+            for(int iPoly=0; iPoly<poMultiPolygon->getNumGeometries(); iPoly++)
+            {
+                // We are guaranteed that all parts are OGRPolygons
+                poPolygon = (OGRPolygon*)poMultiPolygon->getGeometryRef(iPoly);
+                if (poPolygon)
+                    numRingsTotal += poPolygon->getNumInteriorRings()+1;
+            }
+        }
+        else
+        {
+            poPolygon = (OGRPolygon*)poGeom;
+            numRingsTotal = poPolygon->getNumInteriorRings()+1;
+        }
+    }
+
+    return numRingsTotal;
+}
+
+/**********************************************************************
+ *                   TABRegion::GetRingRef()
+ *
+ * Returns a reference to the specified ring number making it look like
+ * all parts of the OGRMultiPolygon (or OGRPolygon) are a single collection
+ * of rings... hides the complexity of handling OGRMultiPolygons vs 
+ * OGRPolygons, etc.
+ *
+ * Returns NULL if the geometry contained in the object is invalid or 
+ * missing or if the specified ring index is invalid.
+ **********************************************************************/
+OGRLinearRing *TABRegion::GetRingRef(int nRequestedRingIndex)
+{
+    OGRGeometry     *poGeom;
+    OGRLinearRing   *poRing = NULL;
+
+    poGeom = GetGeometryRef();
+
+    if (poGeom && (poGeom->getGeometryType() == wkbPolygon ||
+                   poGeom->getGeometryType() == wkbMultiPolygon))
+    {
+        /*-------------------------------------------------------------
+         * Establish number of polygons based on geometry type
+         *------------------------------------------------------------*/
+        OGRPolygon      *poPolygon=NULL;
+        OGRMultiPolygon *poMultiPolygon = NULL;
+        int             iCurRing = 0;
+        int             numOGRPolygons = 0;
+
+        if (poGeom->getGeometryType() == wkbMultiPolygon)
+        {
+            poMultiPolygon = (OGRMultiPolygon *)poGeom;
+            numOGRPolygons = poMultiPolygon->getNumGeometries();
+        }
+        else
+        {
+            poPolygon = (OGRPolygon*)poGeom;
+            numOGRPolygons = 1;
+        }
+
+        /*-------------------------------------------------------------
+         * Loop through polygons until we find the requested ring.
+         *------------------------------------------------------------*/
+        iCurRing = 0;
+        for(int iPoly=0; poRing == NULL && iPoly < numOGRPolygons; iPoly++)
+        {
+            if (poMultiPolygon)
+                poPolygon = (OGRPolygon*)poMultiPolygon->getGeometryRef(iPoly);
+            else
+                poPolygon = (OGRPolygon*)poGeom;
+
+            int numIntRings = poPolygon->getNumInteriorRings();
+
+            if (iCurRing == nRequestedRingIndex)
+            {
+                poRing = poPolygon->getExteriorRing();
+            }
+            else if (nRequestedRingIndex > iCurRing &&
+                     nRequestedRingIndex-(iCurRing+1) < numIntRings)
+           {
+                poRing = poPolygon->getInteriorRing(nRequestedRingIndex-
+                                                                (iCurRing+1) );
+            }
+            iCurRing += numIntRings+1;
+        }
+    }
+
+    return poRing;
+}
+
+
+/**********************************************************************
  *                   TABRegion::DumpMIF()
  *
  * Dump feature geometry in a format similar to .MIF REGIONs.
@@ -2312,7 +2473,6 @@ int TABRegion::WriteGeometryToMAPFile(TABMAPFile *poMapFile)
 void TABRegion::DumpMIF(FILE *fpOut /*=NULL*/)
 {
     OGRGeometry   *poGeom;
-    OGRPolygon    *poPolygon = NULL;
     int i, numPoints;
 
     if (fpOut == NULL)
@@ -2322,24 +2482,24 @@ void TABRegion::DumpMIF(FILE *fpOut /*=NULL*/)
      * Fetch and validate geometry
      *----------------------------------------------------------------*/
     poGeom = GetGeometryRef();
-    if (poGeom && poGeom->getGeometryType() == wkbPolygon)
+    if (poGeom && (poGeom->getGeometryType() == wkbPolygon ||
+                   poGeom->getGeometryType() == wkbMultiPolygon))
     {
         /*-------------------------------------------------------------
          * Generate output for region
+         *
+         * Note that we want to handle both OGRPolygons and OGRMultiPolygons
+         * that's why we use the GetNumRings()/GetRingRef() interface.
          *------------------------------------------------------------*/
-        int iRing, numIntRings;
-        poPolygon = (OGRPolygon*)poGeom;
-        numIntRings = poPolygon->getNumInteriorRings();
-        fprintf(fpOut, "REGION %d\n", numIntRings+1);
-        // In this loop, iRing=-1 for the outer ring.
-        for(iRing=-1; iRing < numIntRings; iRing++)
+        int iRing, numRingsTotal = GetNumRings();
+
+        fprintf(fpOut, "REGION %d\n", numRingsTotal);
+
+        for(iRing=0; iRing < numRingsTotal; iRing++)
         {
             OGRLinearRing       *poRing;
 
-            if (iRing == -1)
-                poRing = poPolygon->getExteriorRing();
-            else
-                poRing = poPolygon->getInteriorRing(iRing);
+            poRing = GetRingRef(iRing);
 
             if (poRing == NULL)
             {
@@ -2564,25 +2724,24 @@ int TABRectangle::ReadGeometryFromMAPFile(TABMAPFile *poMapFile)
          * segments for each corner.  We start with lower-left corner 
          * and proceed counterclockwise
          * We also have to make sure that rounding radius is not too
-         * large for the MBR
+         * large for the MBR in the generated polygon... however, we 
+         * always return the true X/Y radius (not adjusted) since this
+         * is the way MapInfo seems to do it when a radius bigger than
+         * the MBR is passed from TBA to MIF.
          *------------------------------------------------------------*/
-        m_dRoundXRadius = MIN(m_dRoundXRadius, (dXMax-dXMin)/2.0);
-        m_dRoundYRadius = MIN(m_dRoundYRadius, (dYMax-dYMin)/2.0);
+        double dXRadius = MIN(m_dRoundXRadius, (dXMax-dXMin)/2.0);
+        double dYRadius = MIN(m_dRoundYRadius, (dYMax-dYMin)/2.0);
         TABGenerateArc(poRing, 45, 
-                       dXMin + m_dRoundXRadius, dYMin + m_dRoundYRadius,
-                       m_dRoundXRadius, m_dRoundYRadius,
+                       dXMin + dXRadius, dYMin + dYRadius, dXRadius, dYRadius,
                        PI, 3.0*PI/2.0);
         TABGenerateArc(poRing, 45, 
-                       dXMax - m_dRoundXRadius, dYMin + m_dRoundYRadius,
-                       m_dRoundXRadius, m_dRoundYRadius,
+                       dXMax - dXRadius, dYMin + dYRadius, dXRadius, dYRadius,
                        3.0*PI/2.0, 2.0*PI);
         TABGenerateArc(poRing, 45, 
-                       dXMax - m_dRoundXRadius, dYMax - m_dRoundYRadius,
-                       m_dRoundXRadius, m_dRoundYRadius,
+                       dXMax - dXRadius, dYMax - dYRadius, dXRadius, dYRadius,
                        0.0, PI/2.0);
         TABGenerateArc(poRing, 45, 
-                       dXMin + m_dRoundXRadius, dYMax - m_dRoundYRadius,
-                       m_dRoundXRadius, m_dRoundYRadius,
+                       dXMin + dXRadius, dYMax - dYRadius, dXRadius, dYRadius,
                        PI/2.0, PI);
                        
         TABCloseRing(poRing);
@@ -2596,9 +2755,8 @@ int TABRectangle::ReadGeometryFromMAPFile(TABMAPFile *poMapFile)
         poRing->addPoint(dXMin, dYMin);
     }
 
-    poPolygon->addRing(poRing);
+    poPolygon->addRingDirectly(poRing);
     SetGeometryDirectly(poPolygon);
-
 
     return 0;
 }
@@ -2930,7 +3088,7 @@ int TABEllipse::ReadGeometryFromMAPFile(TABMAPFile *poMapFile)
                    0.0, 2.0*PI);
     TABCloseRing(poRing);
 
-    poPolygon->addRing(poRing);
+    poPolygon->addRingDirectly(poRing);
     SetGeometryDirectly(poPolygon);
 
     return 0;
@@ -3542,6 +3700,7 @@ TABText::TABText(OGRFeatureDefn *poDefnIn):
     m_pszString = NULL;
 
     m_dAngle = m_dHeight = 0.0;
+    m_dfLineX = m_dfLineY = 0.0;
 
     m_rgbForeground = 0x000000;
     m_rgbBackground = 0xffffff;

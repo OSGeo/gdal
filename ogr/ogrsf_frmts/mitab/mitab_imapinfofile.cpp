@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_imapinfofile.cpp,v 1.3 1999/12/14 02:14:50 daniel Exp $
+ * $Id: mitab_imapinfofile.cpp,v 1.4 2000/01/11 19:06:25 daniel Exp $
  *
  * Name:     mitab_imapinfo
  * Project:  MapInfo mid/mif Tab Read/Write library
@@ -9,7 +9,7 @@
  * Author:   Daniel Morissette, danmo@videotron.ca
  *
  **********************************************************************
- * Copyright (c) 1999, Daniel Morissette
+ * Copyright (c) 1999, 2000, Daniel Morissette
  *
  * All rights reserved.  This software may be copied or reproduced, in
  * all or in part, without the prior written consent of its author,
@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log: mitab_imapinfofile.cpp,v $
+ * Revision 1.4  2000/01/11 19:06:25  daniel
+ * Added support for conversion of collections in CreateFeature()
+ *
  * Revision 1.3  1999/12/14 02:14:50  daniel
  * Added static SmartOpen() method + TABView support
  *
@@ -179,23 +182,59 @@ OGRErr     IMapInfoFile::CreateFeature(OGRFeature *poFeature)
     TABFeature *poTABFeature;
     OGRGeometry   *poGeom;
 
+    /*-----------------------------------------------------------------
+     * MITAB won't accept new features unless they are in a type derived
+     * from TABFeature... so we have to do our best to map to the right
+     * feature type based on the geometry type.
+     *----------------------------------------------------------------*/
     poGeom = poFeature->GetGeometryRef();
 
     switch (poGeom->getGeometryType())
     {
+      /*-------------------------------------------------------------
+       * POINT
+       *------------------------------------------------------------*/
       case wkbPoint:
 	poTABFeature = new TABPoint(poFeature->GetDefnRef());
 	break;
+      /*-------------------------------------------------------------
+       * REGION
+       *------------------------------------------------------------*/
       case wkbPolygon:
+      case wkbMultiPolygon:
 	poTABFeature = new TABRegion(poFeature->GetDefnRef());
 	break;
+      /*-------------------------------------------------------------
+       * LINE/PLINE/MULTIPLINE
+       *------------------------------------------------------------*/
       case wkbLineString:
-      case wkbMultiPoint:
       case wkbMultiLineString:
-      case wkbMultiPolygon:
 	poTABFeature = new TABPolyline(poFeature->GetDefnRef());
 	break;
+      /*-------------------------------------------------------------
+       * Collection types that are not directly supported... convert
+       * to multiple features in output file through recursive calls.
+       *------------------------------------------------------------*/
       case wkbGeometryCollection:
+      case wkbMultiPoint:
+      {
+          OGRErr eStatus = OGRERR_NONE;
+          int i;
+          OGRGeometryCollection *poColl = (OGRGeometryCollection*)poGeom;
+          OGRFeature *poTmpFeature = poFeature->Clone();
+
+          for (i=0; eStatus==OGRERR_NONE && i<poColl->getNumGeometries(); i++)
+          {
+              poTmpFeature->SetGeometry(poColl->getGeometryRef(i));
+              eStatus = CreateFeature(poTmpFeature);
+          }
+          delete poTmpFeature;
+          return eStatus;
+        }
+        break;
+      /*-------------------------------------------------------------
+       * Unsupported type.... convert to MapInfo geometry NONE
+       *------------------------------------------------------------*/
       case wkbUnknown:
       default:
          poTABFeature = new TABFeature(poFeature->GetDefnRef()); 

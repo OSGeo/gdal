@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_utils.cpp,v 1.6 1999/12/14 02:08:37 daniel Exp $
+ * $Id: mitab_utils.cpp,v 1.7 1999/12/16 06:10:24 daniel Exp $
  *
  * Name:     mitab_utils.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -28,6 +28,9 @@
  **********************************************************************
  *
  * $Log: mitab_utils.cpp,v $
+ * Revision 1.7  1999/12/16 06:10:24  daniel
+ * TABGetBasename(): make sure last '/' of path is removed
+ *
  * Revision 1.6  1999/12/14 02:08:37  daniel
  * Added TABGetBasename() + TAB_CSLLoad()
  *
@@ -203,10 +206,14 @@ char *TABGetBasename(const char *pszFname)
     /*-----------------------------------------------------------------
      * Skip leading path
      *----------------------------------------------------------------*/
-    if ((pszTmp = strrchr(pszFname, '/')) == NULL &&
-        (pszTmp = strrchr(pszFname, '\\')) == NULL)
+    if ((pszTmp = strrchr(pszFname, '/')) != NULL ||
+        (pszTmp = strrchr(pszFname, '\\')) != NULL)
     {
-        pszTmp = pszFname;
+        pszTmp++; // Skip the last '/' of the path as well.
+    }
+    else
+    {
+        pszTmp = pszFname;  // No path to skip
     }
 
     /*-----------------------------------------------------------------

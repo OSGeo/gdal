@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_spatialref.cpp,v 1.15 1999/11/11 02:56:17 warmerda Exp $
+ * $Id: mitab_spatialref.cpp,v 1.16 1999/12/21 20:01:47 warmerda Exp $
  *
  * Name:     mitab_spatialref.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -28,6 +28,9 @@
  **********************************************************************
  *
  * $Log: mitab_spatialref.cpp,v $
+ * Revision 1.16  1999/12/21 20:01:47  warmerda
+ * added support for DATUM 0
+ *
  * Revision 1.15  1999/11/11 02:56:17  warmerda
  * fixed problems with stereographic
  *
@@ -90,6 +93,7 @@ MapInfoDatumInfo asDatumInfoList[] =
 {
 {104, "WGS_1984", 28, 0, 0, 0, 0, 0, 0, 0, 0},
 {74, "North_American_Datum_1983", 0, 0, 0, 0, 0, 0, 0, 0, 0},
+{0, "", 29, 0, 0, 0, 0, 0, 0, 0, 0},
 {1, "Adindan", 6, -162, -12, 206, 0, 0, 0, 0, 0},
 {2, "Afgooye", 3, -43, -163, 45, 0, 0, 0, 0, 0},
 {3, "Ain_el_Abd_1970", 4, -150, -251, -2, 0, 0, 0, 0, 0},
@@ -259,6 +263,7 @@ MapInfoSpheroidInfo asSpheroidInfoList[] =
     {27,"WGS 66",                               6378145.0,   298.25},
     {1, "WGS 72",                               6378135.0,   298.26},
     {28,"WGS 84",                               6378137.0,   298.257223563},
+    {29,"WGS 84 (MAPINFO Datum 0)",             6378137.01,  298.257223563},
     {-1,NULL,                                   0.0,         0.0}
 };
  
@@ -952,7 +957,6 @@ int TABFile::SetSpatialRef(OGRSpatialReference *poSpatialRef)
      * ============================================================== */
     const char *pszWKTDatum = poSpatialRef->GetAttrValue("DATUM");
     MapInfoDatumInfo *psDatumInfo = NULL;
-
     
     /*-----------------------------------------------------------------
      * Default to WGS83 if we have no datum at all.

@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_datfile.cpp,v 1.8 1999/12/14 03:58:29 daniel Exp $
+ * $Id: mitab_datfile.cpp,v 1.10 1999/12/20 18:59:20 daniel Exp $
  *
  * Name:     mitab_datfile.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -29,6 +29,12 @@
  **********************************************************************
  *
  * $Log: mitab_datfile.cpp,v $
+ * Revision 1.10  1999/12/20 18:59:20  daniel
+ * Dates again... now returned as "YYYYMMDD"
+ *
+ * Revision 1.9  1999/12/16 17:11:45  daniel
+ * Date fields: return as "YYYY/MM/DD", and accept 3 diff. formats as input
+ *
  * Revision 1.8  1999/12/14 03:58:29  daniel
  * Fixed date read/write (bytes were reversed)
  *
@@ -887,7 +893,7 @@ const char *TABDATFile::ReadLogicalField()
  * A date field is a 4 bytes binary value in which the first byte is
  * the day, followed by 1 byte for the month, and 2 bytes for the year.
  *
- * We return a 10 chars string in the format "DD/MM/YYYY"
+ * We return an 8 chars string in the format "YYYYMMDD"
  * 
  * Returns a reference to an internal buffer that will be valid only until
  * the next field is read, or "" if the operation failed, in which case
@@ -901,7 +907,7 @@ const char *TABDATFile::ReadDateField()
     // If current record has been deleted, then return an acceptable 
     // default value.
     if (m_bCurRecordDeletedFlag)
-        return "00/00/0000";
+        return "";
 
     if (m_poRecordBlock == NULL)
     {
@@ -914,10 +920,10 @@ const char *TABDATFile::ReadDateField()
     nMonth = m_poRecordBlock->ReadByte();
     nDay   = m_poRecordBlock->ReadByte();
 
-    if (CPLGetLastErrorNo() != 0)
+    if (CPLGetLastErrorNo() != 0 || (nYear==0 && nMonth==0 && nDay==0))
         return "";
 
-    sprintf(szBuf, "%2.2d/%2.2d/%4.4d", nDay, nMonth, nYear);
+    sprintf(szBuf, "%4.4d%2.2d%2.2d", nYear, nMonth, nDay);
 
     return szBuf;
 }
@@ -1097,7 +1103,8 @@ int TABDATFile::WriteLogicalField(const char *pszValue)
  * A date field is a 4 bytes binary value in which the first byte is
  * the day, followed by 1 byte for the month, and 2 bytes for the year.
  *
- * The expected input is a 10 chars string in the format "DD/MM/YYYY"
+ * The expected input is a 10 chars string in the format "YYYY/MM/DD"
+ * or "DD/MM/YYYY" or "YYYYMMDD"
  * 
  * Returns 0 on success, or -1 if the operation failed, in which case
  * CPLError() will have been called.
@@ -1114,22 +1121,58 @@ int TABDATFile::WriteDateField(const char *pszValue)
         return -1;
     }
 
-    papszTok = CSLTokenizeStringComplex(pszValue, "/", FALSE, FALSE);
+    /*-----------------------------------------------------------------
+     * Try to automagically detect date format, one of:
+     * "YYYY/MM/DD", "DD/MM/YYYY", or "YYYYMMDD"
+     *----------------------------------------------------------------*/
     
-    if (CSLCount(papszTok) != 3 ||
-        (nDay = atoi(papszTok[0])) < 1 || nDay > 31 ||
-        (nMonth = atoi(papszTok[1])) < 1 || nMonth > 12 ||
-        strlen(papszTok[2]) != 4 )
+    if (strlen(pszValue) == 8)
+    {
+        /*-------------------------------------------------------------
+         * "YYYYMMDD"
+         *------------------------------------------------------------*/
+        char szBuf[9];
+        strcpy(szBuf, pszValue);
+        nDay = atoi(szBuf+6);
+        szBuf[6] = '\0';
+        nMonth = atoi(szBuf+4);
+        szBuf[4] = '\0';
+        nYear = atoi(szBuf);
+    }
+    else if (strlen(pszValue) == 10 &&
+             (papszTok = CSLTokenizeStringComplex(pszValue, "/", 
+                                                  FALSE, FALSE)) != NULL &&
+             CSLCount(papszTok) == 3 &&
+             (strlen(papszTok[0]) == 4 || strlen(papszTok[2]) == 4) )
+    {
+        /*-------------------------------------------------------------
+         * Either "YYYY/MM/DD" or "DD/MM/YYYY"
+         *------------------------------------------------------------*/
+        if (strlen(papszTok[0]) == 4)
+        {
+            nYear = atoi(papszTok[0]);
+            nMonth = atoi(papszTok[1]);
+            nDay = atoi(papszTok[2]);
+        }
+        else
+        {
+            nYear = atoi(papszTok[2]);
+            nMonth = atoi(papszTok[1]);
+            nDay = atoi(papszTok[0]);
+        }
+    }
+    else if (strlen(pszValue) == 0)
+    {
+        nYear = nMonth = nDay = 0;
+    }
+    else
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Invalid date field value `%s'.  Date field values must "
-                 "be in the format `MM/DD/YYYY'");
+                 "be in the format `YYYY/MM/DD', `MM/DD/YYYY' or `YYYYMMDD'");
         CSLDestroy(papszTok);
         return -1;
     }
-
-    nYear = atoi(papszTok[2]);
-
     CSLDestroy(papszTok);
 
     m_poRecordBlock->WriteInt16(nYear);

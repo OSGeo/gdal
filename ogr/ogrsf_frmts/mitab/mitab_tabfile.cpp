@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_tabfile.cpp,v 1.23 1999/12/14 04:03:03 daniel Exp $
+ * $Id: mitab_tabfile.cpp,v 1.25 1999/12/19 17:38:55 daniel Exp $
  *
  * Name:     mitab_tabfile.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -30,6 +30,12 @@
  **********************************************************************
  *
  * $Log: mitab_tabfile.cpp,v $
+ * Revision 1.25  1999/12/19 17:38:55  daniel
+ * Fixed memory leaks
+ *
+ * Revision 1.24  1999/12/16 17:13:18  daniel
+ * GetBounds(): added a check to always return X/YMax > X/YMin
+ *
  * Revision 1.23  1999/12/14 04:03:03  daniel
  * Added bforceFlags to GetBounds() and GetFeatureCountByType()
  *
@@ -119,6 +125,7 @@
  **********************************************************************/
 TABFile::TABFile()
 {
+    m_eAccessMode = TABRead;
     m_pszFname = NULL;
     m_papszTABFile = NULL;
     m_pszVersion = NULL;
@@ -126,6 +133,7 @@ TABFile::TABFile()
 
     m_poMAPFile = NULL;
     m_poDATFile = NULL;
+    m_poINDFile = NULL;
     m_poDefn = NULL;
     m_poSpatialRef = NULL;
     m_poCurFeature = NULL;
@@ -653,6 +661,8 @@ int TABFile::ParseTABFile()
                  * the next one.
                  *----------------------------------------------------*/
                 m_poDefn->AddFieldDefn(poFieldDefn);
+                // AddFieldDenf() takes a copy, so we delete the original
+                if (poFieldDefn) delete poFieldDefn;
                 poFieldDefn = NULL;
             }
 
@@ -809,6 +819,13 @@ int TABFile::Close()
         m_poDATFile = NULL;
     }
 
+    if (m_poINDFile)
+    {
+        m_poINDFile->Close();
+        delete m_poINDFile;
+        m_poINDFile = NULL;
+    }
+
     if (m_poCurFeature)
     {
         delete m_poCurFeature;
@@ -828,7 +845,7 @@ int TABFile::Close()
     m_poSpatialRef = NULL;
     
 
-    CPLFree(m_papszTABFile);
+    CSLDestroy(m_papszTABFile);
     m_papszTABFile = NULL;
 
     CPLFree(m_pszFname);
@@ -1532,10 +1549,21 @@ int TABFile::GetBounds(double &dXMin, double &dYMin,
 
     if (m_poMAPFile && (poHeader=m_poMAPFile->GetHeaderBlock()) != NULL)
     {
+        /*-------------------------------------------------------------
+         * Fetch dataset bounds from the header block...
+         *------------------------------------------------------------*/
+        double dX0, dX1, dY0, dY1;
         m_poMAPFile->Int2Coordsys(poHeader->m_nXMin, poHeader->m_nYMin, 
-                                  dXMin, dYMin);
+                                  dX0, dY0);
         m_poMAPFile->Int2Coordsys(poHeader->m_nXMax, poHeader->m_nYMax, 
-                                  dXMax, dYMax);
+                                  dX1, dY1);
+        /*-------------------------------------------------------------
+         * ... and make sure that Min < Max
+         *------------------------------------------------------------*/
+        dXMin = MIN(dX0, dX1);
+        dXMax = MAX(dX0, dX1);
+        dYMin = MIN(dY0, dY1);
+        dYMax = MAX(dY0, dY1);
     }
     else
     {

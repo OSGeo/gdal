@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_mapfile.cpp,v 1.8 1999/11/14 04:43:31 daniel Exp $
+ * $Id: mitab_mapfile.cpp,v 1.9 1999/12/19 17:37:52 daniel Exp $
  *
  * Name:     mitab_mapfile.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log: mitab_mapfile.cpp,v $
+ * Revision 1.9  1999/12/19 17:37:52  daniel
+ * Fixed memory leaks
+ *
  * Revision 1.8  1999/11/14 04:43:31  daniel
  * Support dataset with no .MAP/.ID files
  *
@@ -298,7 +301,9 @@ int TABMAPFile::Open(const char *pszFname, const char *pszAccess,
  **********************************************************************/
 int TABMAPFile::Close()
 {
-    if (m_fp == NULL)
+    // Check if file is opened... it is possible to have a fake header
+    // without an actual file attached to it.
+    if (m_fp == NULL && m_poHeader == NULL)
         return 0;
 
     /*----------------------------------------------------------------
@@ -322,7 +327,8 @@ int TABMAPFile::Close()
     }
     
     // Delete all structures 
-    delete m_poHeader;
+    if (m_poHeader)
+        delete m_poHeader;
     m_poHeader = NULL;
 
     if (m_poIdIndex)
@@ -360,7 +366,8 @@ int TABMAPFile::Close()
     }
 
     // Close file
-    VSIFClose(m_fp);
+    if (m_fp)
+        VSIFClose(m_fp);
     m_fp = NULL;
 
     CPLFree(m_pszFname);

@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_miffile.cpp,v 1.7 1999/12/14 04:02:31 daniel Exp $
+ * $Id: mitab_miffile.cpp,v 1.10 1999/12/19 17:40:53 daniel Exp $
  *
  * Name:     mitab_tabfile.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -30,6 +30,16 @@
  **********************************************************************
  *
  * $Log: mitab_miffile.cpp,v $
+ * Revision 1.10  1999/12/19 17:40:53  daniel
+ * Fixed memory leaks
+ *
+ * Revision 1.9  1999/12/19 01:10:36  stephane
+ * Remove the automatic pre parsing for the GetBounds and GetFeatureCount
+ *
+ * Revision 1.8  1999/12/18 08:25:39  daniel
+ * Write OFTReals as Floats instead of Decimals (for which width ended up
+ * being 0 most of the time)
+ *
  * Revision 1.7  1999/12/14 04:02:31  daniel
  * Added bforceFlags to GetBounds() and GetFeatureCountByType()
  *
@@ -93,11 +103,14 @@ MIFFile::MIFFile()
     m_poSpatialRef = NULL;
 
     m_nCurFeatureId = 0;
-    m_nLastFeatureId = -1;
+    m_nFeatureCount = 0;
+    m_nWriteFeatureId = -1;
     m_poCurFeature = NULL;
    
     m_bBoundsSet = FALSE;
+    m_bPreParsed = FALSE;
     m_nAttribut = 0;
+    m_bHeaderWrote = FALSE;
 }
 
 /**********************************************************************
@@ -263,19 +276,6 @@ int MIFFile::Open(const char *pszFname, const char *pszAccess,
     {
 	m_pszVersion = CPLStrdup("300");
 	m_pszCharset = CPLStrdup("Neutral");
-    }
-
-    m_nLastFeatureId  = 0;
-    if (m_eAccessMode == TABRead && CountNumberFeature() != 0)
-    {
-        Close();
-        if (!bTestOpenNoError)
-            CPLError(CE_Failure, CPLE_NotSupported,
-                 "Unable to count the number of features in %s.", m_pszFname);
-        else
-            CPLErrorReset();
-
-       return -1;
     }
 
     /* Put the MID file at the correct location, on the first feature */
@@ -568,6 +568,8 @@ int  MIFFile::AddFields(const char *pszLine)
      * the next one.
      *----------------------------------------------------*/
     m_poDefn->AddFieldDefn(poFieldDefn);
+    if (poFieldDefn)
+        delete poFieldDefn;
     CSLDestroy(papszToken);
     
     return 0;
@@ -580,8 +582,17 @@ int MIFFile::GetFeatureCount (int bForce)
     if( m_poFilterGeom != NULL )
         return OGRLayer::GetFeatureCount( bForce );
     else
-        return m_nLastFeatureId ;
-
+    {
+	if (bForce == TRUE)
+	{
+	    PreParseFile();
+	    return m_nFeatureCount;
+	}
+	else if (m_bPreParsed)
+	  return m_nFeatureCount;
+	else
+	  return -1;
+    }
 }
 
 void MIFFile::ResetReading()
@@ -608,13 +619,22 @@ void MIFFile::ResetReading()
 }
 
 
-int MIFFile::CountNumberFeature()
+void MIFFile::PreParseFile()
 {
-    char **papszToken;
+    char **papszToken = NULL;
     const char *pszLine;
     
     GBool bPLine = FALSE;
     GBool bText = FALSE;
+
+    if (m_bPreParsed == TRUE)
+      return;
+
+    m_poMIFFile->Rewind();
+
+    while ((pszLine = m_poMIFFile->GetLine()) != NULL)
+      if (EQUALN(pszLine,"DATA",4))
+	break;
 
     while ((pszLine = m_poMIFFile->GetLine()) != NULL)
     {
@@ -622,9 +642,10 @@ int MIFFile::CountNumberFeature()
 	{
 	    bPLine = FALSE;
 	    bText = FALSE;
-	    m_nLastFeatureId++;
+	    m_nFeatureCount++;
 	}
 
+        CSLDestroy(papszToken);
 	papszToken = CSLTokenizeString(pszLine);
 
 	if (EQUALN(pszLine,"POINT",5))
@@ -679,6 +700,8 @@ int MIFFile::CountNumberFeature()
 	}
 	
       }
+
+    CSLDestroy(papszToken);
     
     m_poMIFFile->Rewind();
 
@@ -691,8 +714,12 @@ int MIFFile::CountNumberFeature()
 	if (m_poMIFFile->IsValidFeature(pszLine))
 	  break;
     }
-    
-    return 0;
+
+    m_poMIDFile->Rewind();
+    m_poMIDFile->GetLine();
+ 
+    m_bPreParsed = TRUE;
+
 }
 
 /**********************************************************************
@@ -714,6 +741,7 @@ int MIFFile::WriteMIFHeader()
         return -1;
     }
 
+    m_bHeaderWrote = TRUE;
     m_poMIFFile->WriteLine("Version %s\n", m_pszVersion);
     m_poMIFFile->WriteLine("Charset \"%s\"\n", m_pszCharset);
     m_poMIFFile->WriteLine("Delimiter \"%s\"\n", m_pszDelimiter);
@@ -739,10 +767,8 @@ int MIFFile::WriteMIFHeader()
 				       poFieldDefn->GetNameRef());
 		break;
               case OFTReal:
-		m_poMIFFile->WriteLine("  %s Decimal(%d,%d)\n",
-				       poFieldDefn->GetNameRef(),
-				       poFieldDefn->GetWidth(),
-				       poFieldDefn->GetPrecision());    
+		m_poMIFFile->WriteLine("  %s Float\n",
+				       poFieldDefn->GetNameRef());    
 		break;
               case OFTString:
               default:
@@ -773,8 +799,6 @@ int MIFFile::WriteMIFHeader()
  **********************************************************************/
 int MIFFile::Close()
 {
-    if (m_poMIDFile == NULL)
-        return 0;
 
     if (m_poMIDFile)
     {
@@ -807,7 +831,12 @@ int MIFFile::Close()
     if (m_poSpatialRef && m_poSpatialRef->Dereference() == 0)
         delete m_poSpatialRef;
     m_poSpatialRef = NULL;
-    
+
+    CPLFree(m_pszCoordSys);
+    m_pszCoordSys = NULL;
+
+    CPLFree(m_pszDelimiter);
+    m_pszDelimiter = NULL;
 
     CPLFree(m_pszFname);
     m_pszFname = NULL;
@@ -818,8 +847,8 @@ int MIFFile::Close()
     m_pszCharset = NULL;
 
     m_nCurFeatureId = 0;
-    m_nLastFeatureId = -1;
-
+    m_nFeatureCount =0;
+   
     return 0;
 }
 
@@ -838,9 +867,9 @@ int MIFFile::GetNextFeatureId(int nPrevId)
         return -1;
     }
 
-    if (nPrevId <= 0 && m_nLastFeatureId > 0)
+    if (nPrevId <= 0 && m_poMIFFile->GetLastLine() != NULL)
         return 1;       // Feature Ids start at 1
-    else if (nPrevId > 0 && nPrevId < m_nLastFeatureId)
+    else if (nPrevId > 0 && m_poMIFFile->GetLastLine() != NULL)
         return nPrevId + 1;
     else
         return -1;
@@ -851,8 +880,8 @@ int MIFFile::GetNextFeatureId(int nPrevId)
 int MIFFile::GotoFeature(int nFeatureId)
 {
     int i;
-    
-    if (nFeatureId <= 0 || nFeatureId-1 > m_nLastFeatureId)
+
+    if (nFeatureId <= 0)
       return -1;
 
     if ((nFeatureId -1) == m_nCurFeatureId) //CorrectPosition
@@ -864,24 +893,25 @@ int MIFFile::GotoFeature(int nFeatureId)
 	ResetReading();
 	for (i=0;i<nFeatureId;i++)
 	{
-	    NextFeature();
+	    if (NextFeature() == FALSE)
+	      return -1;
 	}
 	return 0;
     }
 }
 
-int MIFFile::NextFeature()
+GBool MIFFile::NextFeature()
 {
     const char *pszLine;
     while ((pszLine = m_poMIFFile->GetLine()) != NULL)
     {
 	if (m_poMIFFile->IsValidFeature(pszLine))
-	  break;
+	{
+	    m_poMIDFile->GetLine();
+	    return TRUE;
+	}
     }
-    
-    m_poMIDFile->GetLine();
-    m_nCurFeatureId++;
-    return 0;
+    return FALSE;
 }
 
 /**********************************************************************
@@ -901,7 +931,6 @@ int MIFFile::NextFeature()
 TABFeature *MIFFile::GetFeatureRef(int nFeatureId)
 {
     const char *pszLine;
-    char **papszToken;
     
     if (m_eAccessMode != TABRead)
     {
@@ -920,6 +949,7 @@ TABFeature *MIFFile::GetFeatureRef(int nFeatureId)
                  "GetFeatureRef() failed: file is not opened!");
         return NULL;
     }
+
     if (GotoFeature(nFeatureId)!= 0 )
     {
         CPLError(CE_Failure, CPLE_IllegalArg,
@@ -934,6 +964,10 @@ TABFeature *MIFFile::GetFeatureRef(int nFeatureId)
      *----------------------------------------------------------------*/
     if ((pszLine = m_poMIFFile->GetLastLine()) != NULL)
     {
+        // Delete previous feature... we'll start we a clean one.
+        delete m_poCurFeature;
+        m_poCurFeature = NULL;
+
 	if (EQUALN(pszLine,"NONE",4))
 	{
 	    m_poCurFeature = new TABFeature(m_poDefn);
@@ -941,16 +975,20 @@ TABFeature *MIFFile::GetFeatureRef(int nFeatureId)
 	else if (EQUALN(pszLine,"POINT",5))
 	{
 	    // Special case, we need to know two lines to decide the type
-
+            char **papszToken;
 	    papszToken = CSLTokenizeString(pszLine);
 	    
 	    if (CSLCount(papszToken) !=3)
-	      return NULL;
+            {
+                CSLDestroy(papszToken);
+                return NULL;
+            }
 	    
 	    m_poMIFFile->SaveLine(pszLine);
 
 	    if ((pszLine = m_poMIFFile->GetLine()) != NULL)
 	    {
+                CSLDestroy(papszToken);
 		papszToken = CSLTokenizeStringComplex(pszLine," ,()",
 						      TRUE,FALSE);
 		if (CSLCount(papszToken)> 0 &&EQUALN(papszToken[0],"SYMBOL",6))
@@ -967,11 +1005,13 @@ TABFeature *MIFFile::GetFeatureRef(int nFeatureId)
 			m_poCurFeature = new TABCustomPoint(m_poDefn);
 			break;
 		      default:
+                        CSLDestroy(papszToken);
 			return NULL;
 			break;
 		    }
 		}
 	    }
+            CSLDestroy(papszToken);
 	}
 	else if (EQUALN(pszLine,"LINE",4) ||
 		 EQUALN(pszLine,"PLINE",5))
@@ -1085,7 +1125,7 @@ int MIFFile::SetFeature(TABFeature *poFeature, int nFeatureId /*=-1*/)
         return -1;
     }
 
-    if (m_nLastFeatureId < 1)
+    if (m_bHeaderWrote == FALSE)
     {
         /*-------------------------------------------------------------
          * OK, this is the first feature in the dataset... make sure the
@@ -1098,12 +1138,11 @@ int MIFFile::SetFeature(TABFeature *poFeature, int nFeatureId /*=-1*/)
 	 }
 	 
 	 WriteMIFHeader();     
-
-	 nFeatureId = m_nLastFeatureId = 1;
+	 nFeatureId = 1;
     }
     else
     {
-        nFeatureId = ++ m_nLastFeatureId;
+        nFeatureId = ++ m_nWriteFeatureId;
     }
 
 
@@ -1322,6 +1361,13 @@ int MIFFile::GetBounds(double &dXMin, double &dYMin,
                        GBool bForce /*= TRUE*/ )
 {
     
+    if (m_bBoundsSet == FALSE && bForce == FALSE)
+    {
+	return -1;
+    }
+    else
+      PreParseFile();
+
     if (m_bBoundsSet == FALSE)
     {
 	return -1;
