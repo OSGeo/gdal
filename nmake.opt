@@ -11,8 +11,6 @@ INCDIR = $(GDAL_HOME)\include
 DATADIR = $(GDAL_HOME)\data
 HTMLDIR = $(GDAL_HOME)\html
 
-ORACLE_HOME =	C:/Software/Oracle/Product/10.1.0/db_1
-
 # Set this to the installed directory containing python.  If you don't
 # have python just let it point to a directory that does not exist (as now). 
 PYDIR   =	"C:\Software\Python24"
@@ -67,9 +65,9 @@ JPEG_SUPPORTED = 1
 #GEOTIFF_LIB =   C:/warmerda/libgeotiff/geotiff_i.lib
 
 # Uncomment the following and update to enable ECW support.
-ECWDIR  = 	C:\warmerda\supportlibs\ECWSDK3.1b
-ECWLIB  =       $(ECWDIR)\lib\NCSEcw.lib $(ECWDIR)\lib\NCSEcwC.lib \
-		$(ECWDIR)\lib\NCSUtil.lib
+#ECWDIR  = 	C:\warmerda\supportlibs\ECWSDK3.1b
+#ECWLIB  =       $(ECWDIR)\lib\NCSEcw.lib $(ECWDIR)\lib\NCSEcwC.lib \
+#		$(ECWDIR)\lib\NCSUtil.lib
 
 # Uncomment the following and update to enable OGDI support.
 #OGDIDIR =	D:\warmerda\iii\devdir
@@ -150,14 +148,18 @@ ECWLIB  =       $(ECWDIR)\lib\NCSEcw.lib $(ECWDIR)\lib\NCSEcwC.lib \
 #PROJ_INCLUDE = -Id:\projects\proj.4\src
 #PROJ_LIB = d:\projects\proj.4\src
 
+# Add ORACLE support.
+
+#ORACLE_HOME =	C:/Software/Oracle/Product/10.1.0/db_1
+
 !IFDEF ORACLE_HOME
 OCI_LIB =	$(ORACLE_HOME)\oci\lib\msvc\ociw32.lib \
 		$(ORACLE_HOME)\oci\lib\msvc\oci.lib
 !ENDIF
 
 # Uncomment for GEOS support
-GEOS_CFLAGS = -Ic:/warmerda/geos/source/headers -DHAVE_GEOS
-GEOS_LIB     = C:/warmerda/geos/source/geos.lib
+#GEOS_CFLAGS = -Ic:/warmerda/geos/source/headers -DHAVE_GEOS
+#GEOS_LIB     = C:/warmerda/geos/source/geos.lib
 
 # Any extra libraries needed on this platform?
 ADD_LIBS	=
