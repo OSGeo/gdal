@@ -43,7 +43,7 @@ gt_write:	gt_write.o gt_gs.o cpl_csv.o
 epsg_to_wkt:	epsg_to_wkt.o gt_wkt_srs.o 
 	$(CXX) epsg_to_wkt.o gt_wkt_srs.o $(GDAL_ROOT)/port/*.o \
 	    libgeotiff/libgeotiff.a libtiff/libtiff.a \
-	    $(CPL_LIB) $(LIBS) -o epsg_to_wkt
+	    $(GDAL_LIB) $(LIBS) -o epsg_to_wkt
 
 lib-tiff:
 	(cd libtiff; $(MAKE) install-obj)

@@ -16,7 +16,7 @@ OBJ	=	sdtsiref.o sdtscatd.o sdtslinereader.o sdtslib.o \
 ALL_CXX_FLAGS =	-I$(ISO8211DIR) $(GDAL_INCLUDE) $(CXXFLAGS)
 
 SDTSLIB	=	libsdts_al.a
-LIBS	:=	$(SDTSLIB) $(ISO8211DIR)/libiso8211.a $(CPL_LIB) $(LIBS)
+LIBS	:=	$(SDTSLIB) $(ISO8211DIR)/libiso8211.a $(GDAL_LIB) $(LIBS)
 
 
 

@@ -20,7 +20,7 @@ clean:
 	$(CXX) -c $(GDAL_INCLUDE) $(CXXFLAGS) $*.cpp -o $*.o
 
 bsb2raw:	bsb2raw.o bsb_read.o
-	$(CXX) bsb2raw.o bsb_read.o $(CPL_LIB) $(LIBS) -o bsb2raw
+	$(CXX) bsb2raw.o bsb_read.o $(GDAL_LIB) $(LIBS) -o bsb2raw
 
 
 install-obj:	$(foreach file,$(OBJ),../o/$(file))
