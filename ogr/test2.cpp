@@ -2,8 +2,6 @@
 #include "../frmts/shapelib/shapefil.h"
 #include <assert.h>
 
-#include "dbmalloc.h"
-
 OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape );
 OGRFeatureDefn *SHPReadOGRFeatureDefn( SHPHandle hSHP, DBFHandle hDBF );
 OGRFeature *SHPReadOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
@@ -44,6 +42,4 @@ int main( int argc, char ** argv )
 
     DBFClose( hDBF );
     SHPClose( hSHP );
-
-    malloc_dump(2);
 }
