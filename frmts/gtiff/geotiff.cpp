@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.59  2002/03/06 21:18:15  warmerda
+ * Don't try to write color table to non-eight bit files.
+ *
  * Revision 1.58  2001/12/06 18:42:38  warmerda
  * Restructure warning/error handlers to "escape" contents of module argument
  * when putting it into the format string.  I was experiencing a crash when
@@ -382,7 +385,6 @@ CPLErr GTiffRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /*	exist yet, but that we want to read.  Just set to zeros and	*/
 /*	return.								*/
 /* -------------------------------------------------------------------- */
-    
     if( poGDS->eAccess == GA_Update
         && (((int) poGDS->hTIFF->tif_dir.td_nstrips) <= nBlockIdBand0
             || poGDS->hTIFF->tif_dir.td_stripbytecount[nBlockId] == 0) )
@@ -2386,7 +2388,8 @@ GTiffCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /*      Does the source image consist of one band, with a palette?      */
 /*      If so, copy over.                                               */
 /* -------------------------------------------------------------------- */
-    if( nBands == 1 && poSrcDS->GetRasterBand(1)->GetColorTable() != NULL )
+    if( nBands == 1 && poSrcDS->GetRasterBand(1)->GetColorTable() != NULL 
+        && eType == GDT_Byte )
     {
         unsigned short	anTRed[256], anTGreen[256], anTBlue[256];
         GDALColorTable *poCT;
