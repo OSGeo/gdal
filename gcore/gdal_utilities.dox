@@ -13,11 +13,20 @@ The gdalinfo program lists various information about a GDAL supported
 raster dataset. 
 
 \verbatim
-Usage: gdalinfo [-mm] datasetname
+Usage: gdalinfo [--version] [--formats] [-mm] [-nogcp] [-nomd] datasetname
 \endverbatim
 
-The -mm switch will force computation of the actual min/max values for
-each band in the dataset. 
+<ul>
+<li> <b>--version</b>: Print version of the GDAL library and exit.
+<li> <b>--formats</b>: Print a list of supported file formats.
+<li> <b>-mm</b>: Force computation of the actual min/max values for each
+band in the dataset.
+<li> <b>-nogcp</b>: Suppress ground control points list printing. It may be
+useful for datasets with huge amount of GCPs, such as L1B AVHRR or HDF4 MODIS
+which contain thousands of the ones.
+<li> <b>-nomd</b>: Suppress metadata printing. Some datasets may contain a lot
+of metadata strings.
+</ul>
 
 The gdalinfo will report all of the following (if known):
 
