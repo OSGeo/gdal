@@ -1,0 +1,93 @@
+<html>
+<head>
+<title>PostgreSQL</title>
+</head>
+
+<body bgcolor="#ffffff">
+
+<h1>PostgreSQL</h1>
+
+This is an experimental driver for prototyping options for using PostgreSQL
+as a vector database.<p>
+
+When opening a database, it's name should be specified in the form
+"PG:dbname=<databasename>".  We use
+<a href="http://www.postgresql.org/docs/programmer/libpq-chapter.htm#AEN3240">
+PQconnectcb()</a> to make the connection, so any other options and defaults
+that would apply to it, apply to the name here.  The PG: prefix is used
+to mark the name as a postgress connection string.<p>
+
+Currently all regular user tables are assumed to be layers from an OGR
+point of view, with the table names as the layer names.  Named views are
+not currently support.<p>
+
+Regular (non-spatial) tables can be accessed, and will return features with
+attributes, but not geometry.  If the table has a "ogc_wkb" field, it will
+be treated as a binary field containing geometries in OpenGIS Well Known
+Binary format, and attempts made to read it accordingly.<p>
+
+If there is an "ogc_fid" field, it will be used to set the feature id of
+the features, and not treated as a regular field. <p>
+
+Currently there is no support for coordinate systems in the PostgreSQL driver.
+<p>
+
+<h2>Caveats</h2>
+
+<ul>
+
+<li> The type recognition logic is currently quite impoverished.  Only 
+the types "VARCHAR*", "INT*", and "FLOAT*" are recognised directly.  All
+other types are treated as VARCHAR.<p>
+
+<li> BYTEA fields in PostgreSQL version preceeding 7.1 (not yet released)
+don't support more than 8K in a record, so significant sized geometries
+on a feature will trigger an errow about the INSERT command being to big
+for the buffer.<P>
+
+<li> The driver is not performance tuned.  All geometry is passed back
+and forth in escaped BYTEA text form, there is no spatial indexing, etc.<p>
+
+<li> Some features are not implemented properly.  For instance, spatial
+filtering is broken. <p>
+
+<li> Special field names, and other mechanisms are likely to change in the
+near future.  This driver is only suitable to use for experimentation.<p>
+
+<li> A sequence object called <tablename>_ogc_fid_seq is created for new
+tables (layer), and must be dropped separately from the table when cleaning
+up.<p>
+
+<li> Sequential reading is done within a single transaction.  Any attempts
+to write to a layer within a sequential read will likely result in a "BEGIN"
+while already within a transaction type of error message.<p>
+
+</ul>
+
+<h2>Creation Issues</h2>
+
+The PostgreSQL driver does not support creation of new datasets (a database
+within PostgreSQL), but it does allow creation of new layers within an
+existing database.<P>
+
+As mentioned above the type system is impoverished, and many OGR types
+are not appropriate mapped into PostgreSQL.<p>
+
+Currently only sequential writing is supported.<p>
+
+<h3>Dataset Creation Options</h3>
+
+None<p>
+
+<h3>Layer Creation Options</h3>
+
+None<p>
+
+<h3>See Also</h3>
+
+<ul>
+<li> <a href="http://www.postgresql.org/">PostgreSQL Home Page</a><p>
+</ul>
+
+</body>
+</html>
