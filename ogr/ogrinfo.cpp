@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/09/13 14:34:20  warmerda
+ * added feature reporting
+ *
  * Revision 1.1  1999/09/09 20:40:19  warmerda
  * New
  *
@@ -207,5 +210,15 @@ static void ReportOnLayer( OGRLayer * poLayer )
                 poField->GetFieldTypeName( poField->GetType() ),
                 poField->GetWidth(),
                 poField->GetPrecision() );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Read, and dump features.                                        */
+/* -------------------------------------------------------------------- */
+    OGRFeature	*poFeature;
+    while( (poFeature = poLayer->GetNextFeature()) != NULL )
+    {
+        poFeature->DumpReadable( stdout );
+        delete poFeature;
     }
 }
