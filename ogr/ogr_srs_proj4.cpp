@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.33  2002/12/09 16:12:14  warmerda
+ * added +pm= support
+ *
  * Revision 1.32  2002/12/03 15:38:10  warmerda
  * dont write linear units to geograpic srs but avoid freaking out
  *
@@ -204,7 +207,7 @@ static double OSR_GDV( char **papszNV, const char * pszField,
     if( pszValue == NULL )
         return dfDefaultValue;
     else
-        return atof(pszValue);
+        return OSRDMSToDec(pszValue);
 }
 
 /************************************************************************/
@@ -562,6 +565,84 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
     }
 
 /* -------------------------------------------------------------------- */
+/*      Extract the prime meridian, if there is one set.                */
+/* -------------------------------------------------------------------- */
+    const char *pszPM = CSLFetchNameValue( papszNV, "pm" );
+    double dfFromGreenwich = 0.0;
+    int    nPMCode = -1;
+
+    if( pszPM != NULL )
+    {
+        if( EQUAL(pszPM,"lisbon") )
+        {
+            dfFromGreenwich = OSRDMSToDec( "9d07'54.862\"W" );
+            nPMCode = 8902;
+        }
+        else if( EQUAL(pszPM,"paris") )
+        {
+            dfFromGreenwich = OSRDMSToDec( "2d20'14.025\"E" );
+            nPMCode = 8903;
+        }
+        else if( EQUAL(pszPM,"bogota") )
+        {
+            dfFromGreenwich = OSRDMSToDec( "74d04'51.3\"E" );
+            nPMCode = 8904;
+        }
+        else if( EQUAL(pszPM,"madrid") )
+        {
+            dfFromGreenwich = OSRDMSToDec( "3d41'16.48\"W" );
+            nPMCode = 8905;
+        }
+        else if( EQUAL(pszPM,"rome") )
+        {
+            dfFromGreenwich = OSRDMSToDec( "12d27'8.4\"E" );
+            nPMCode = 8906;
+        }
+        else if( EQUAL(pszPM,"bern") )
+        {
+            dfFromGreenwich = OSRDMSToDec( "7d26'22.5\"E" );
+            nPMCode = 8907;
+        }
+        else if( EQUAL(pszPM,"jakarta") )
+        {
+            dfFromGreenwich = OSRDMSToDec( "106d48'27.79\"E" );
+            nPMCode = 8908;
+        }
+        else if( EQUAL(pszPM,"ferro") )
+        {
+            dfFromGreenwich = OSRDMSToDec( "17d40'W" );
+            nPMCode = 8909;
+        }
+        else if( EQUAL(pszPM,"brussels") )
+        {
+            dfFromGreenwich = OSRDMSToDec( "4d22'4.71\"E" );
+            nPMCode = 8910;
+        }
+        else if( EQUAL(pszPM,"stockholm") )
+        {
+            dfFromGreenwich = OSRDMSToDec( "18d3'29.8\"E" );
+            nPMCode = 8911;
+        }
+        else if( EQUAL(pszPM,"athens") )
+        {
+            dfFromGreenwich = OSRDMSToDec( "23d42'58.815\"E" );
+            nPMCode = 8912;
+        }
+        else if( EQUAL(pszPM,"oslo") )
+        {
+            dfFromGreenwich = OSRDMSToDec( "10d43'22.5\"E" );
+            nPMCode = 8913;
+        }
+        else
+        {
+            dfFromGreenwich = OSRDMSToDec( pszPM );
+            pszPM = "unnamed";
+        }
+    }
+    else
+        pszPM = "Greenwich";
+
+/* -------------------------------------------------------------------- */
 /*      Try to translate the datum.                                     */
 /* -------------------------------------------------------------------- */
     const char *pszValue;
@@ -572,8 +653,9 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
     {
         /* do nothing */
     }
-    else if( EQUAL(pszValue,"NAD27") || EQUAL(pszValue,"NAD83")
-             || EQUAL(pszValue,"WGS84") || EQUAL(pszValue,"WGS72") )
+    else if( (EQUAL(pszValue,"NAD27") || EQUAL(pszValue,"NAD83")
+              || EQUAL(pszValue,"WGS84") || EQUAL(pszValue,"WGS72")) 
+             && dfFromGreenwich == 0.0 )
     {
         SetWellKnownGeogCS( pszValue );
         bFullyDefined = TRUE;
@@ -613,7 +695,8 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
             }
             
             SetGeogCS( ogr_pj_ellps[i+3], "unknown", ogr_pj_ellps[i], 
-                       dfSemiMajor, dfInvFlattening );
+                       dfSemiMajor, dfInvFlattening,
+                       pszPM, dfFromGreenwich );
 
             bFullyDefined = TRUE;
             break;
@@ -655,7 +738,8 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
         }
         
         SetGeogCS( "unnamed ellipse", "unknown", "unnamed",
-                   dfSemiMajor, dfInvFlattening );
+                   dfSemiMajor, dfInvFlattening,
+                   pszPM, dfFromGreenwich );
         
         bFullyDefined = TRUE;
     }
@@ -1232,6 +1316,78 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
     {
         strcat( szProj4, pszPROJ4Datum );
         strcat( szProj4, " " );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Is there prime meridian info to apply?                          */
+/* -------------------------------------------------------------------- */
+    const OGR_SRSNode *poPRIMEM = GetAttrNode( "PRIMEM" );
+    if( poPRIMEM != NULL && poPRIMEM->GetChildCount() >= 2 
+        && atof(poPRIMEM->GetChild(1)->GetValue()) != 0.0 )
+    {
+        double dfFromGreenwich = atof(poPRIMEM->GetChild(1)->GetValue());
+        const char *pszAuthority = GetAuthorityName( "PRIMEM" );
+        char szPMValue[128];
+        int  nCode = -1;
+
+        if( pszAuthority != NULL && EQUAL(pszAuthority,"EPSG") )
+            nCode = atoi(GetAuthorityCode( "PRIMEM" ));
+
+        switch( nCode )
+        {
+          case 8902:
+            strcpy( szPMValue, "lisbon" );
+            break;
+
+          case 8903:
+            strcpy( szPMValue, "lisbon" );
+            break;
+
+          case 8904:
+            strcpy( szPMValue, "paris" );
+            break;
+
+          case 8905:
+            strcpy( szPMValue, "madrid" );
+            break;
+
+          case 8906:
+            strcpy( szPMValue, "rome" );
+            break;
+
+          case 8907:
+            strcpy( szPMValue, "bern" );
+            break;
+
+          case 8908:
+            strcpy( szPMValue, "jakarta" );
+            break;
+
+          case 8909:
+            strcpy( szPMValue, "ferro" );
+            break;
+
+          case 8910:
+            strcpy( szPMValue, "brussels" );
+            break;
+
+          case 8911:
+            strcpy( szPMValue, "stockholm" );
+            break;
+
+          case 8912:
+            strcpy( szPMValue, "athens" );
+            break;
+
+          case 8913:
+            strcpy( szPMValue, "oslo" );
+            break;
+
+          default:
+            sprintf( szPMValue, "%.16g", dfFromGreenwich );
+        }
+
+        sprintf( szProj4+strlen(szProj4), "+pm=%s ", szPMValue );
     }
     
 /* -------------------------------------------------------------------- */
