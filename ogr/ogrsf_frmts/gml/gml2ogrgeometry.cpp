@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.2  2002/03/06 20:07:12  warmerda
+ * fixed point reading
+ *
  * Revision 1.1  2002/01/24 17:39:22  warmerda
  * New
  *
@@ -382,7 +385,8 @@ static OGRGeometry *GML2OGRGeometry_XMLNode( CPLXMLNode *psNode )
 /* -------------------------------------------------------------------- */
 /*      PointType                                                       */
 /* -------------------------------------------------------------------- */
-    if( EQUAL(pszBaseGeometry,"PointType") )
+    if( EQUAL(pszBaseGeometry,"PointType") 
+        || EQUAL(pszBaseGeometry,"Point") )
     {
         OGRPoint *poPoint = new OGRPoint();
         
