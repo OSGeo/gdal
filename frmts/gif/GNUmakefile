@@ -11,16 +11,12 @@ else
 OBJ	=	gifdataset.o
 endif
 
+CPPFLAGS	=	$(GDAL_INCLUDE) $(XTRA_OPT)
+
 default:	$(OBJ)
 
 clean:
 	rm -f *.o
-
-%.o:	%.c
-	$(CC) -c $(XTRA_OPT) $(GDAL_INCLUDE) $(CFLAGS) $*.c -o $*.o
-
-%.o:	%.cpp
-	$(CXX) -c $(XTRA_OPT) $(GDAL_INCLUDE) $(CXXFLAGS) $*.cpp -o $*.o
 
 %.o:	libungif/%.c
 	$(CC) -c $(XTRA_OPT) $(GDAL_INCLUDE) $(CFLAGS) libungif/$*.c -o $*.o
