@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: avc.h,v 1.15 2002/02/13 20:35:24 warmerda Exp $
+ * $Id: avc.h,v 1.16 2002/02/14 16:34:15 warmerda Exp $
  *
  * Name:     avc.h
  * Project:  Arc/Info Vector coverage (AVC) BIN<->E00 conversion library
@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log: avc.h,v $
+ * Revision 1.16  2002/02/14 16:34:15  warmerda
+ * fixed prototype name for AVCBinReadNextPrj
+ *
  * Revision 1.15  2002/02/13 20:35:24  warmerda
  * added AVCBinReadObject
  *
@@ -641,7 +644,7 @@ AVCTol     *AVCBinReadNextTol(AVCBinFile *psFile);
 AVCTxt     *AVCBinReadNextTxt(AVCBinFile *psFile);
 AVCRxp     *AVCBinReadNextRxp(AVCBinFile *psFile);
 AVCField   *AVCBinReadNextTableRec(AVCBinFile *psFile);
-char      **AVCBinReadPrj(AVCBinFile *psFile);
+char      **AVCBinReadNextPrj(AVCBinFile *psFile);
 
 char      **AVCBinReadListTables(const char *pszInfoPath, 
                                  const char *pszCoverName,
