@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2000/08/16 15:51:39  warmerda
+ * added support for reading overviews
+ *
  * Revision 1.7  2000/08/15 19:28:26  warmerda
  * added help topic
  *
@@ -74,14 +77,17 @@ class HKVRasterBand : public RawRasterBand
 {
     friend	HKVDataset;
 
-    int         nOverviews;
-    RawRasterBand *papoOverviewBands;
+    RawRasterBand **papoOverviewBands;
 
   public:
     		HKVRasterBand( HKVDataset *poDS, int nBand, FILE * fpRaw, 
                                unsigned int nImgOffset, int nPixelOffset,
                                int nLineOffset,
                                GDALDataType eDataType, int bNativeOrder );
+    virtual     ~HKVRasterBand();
+
+    virtual int GetOverviewCount();
+    virtual GDALRasterBand *GetOverview(int);
 };
 
 /************************************************************************/
@@ -92,6 +98,8 @@ class HKVRasterBand : public RawRasterBand
 
 class HKVDataset : public RawDataset
 {
+    friend	HKVRasterBand;
+
     FILE	*fpBlob;
 
     int         nOverviews;
@@ -112,7 +120,7 @@ class HKVDataset : public RawDataset
                                     int, int *, GDALProgressFunc, void * );
   public:
     		HKVDataset();
-    	        ~HKVDataset();
+    virtual     ~HKVDataset();
     
     char	**papszAttrib;
     
@@ -148,13 +156,78 @@ HKVRasterBand::HKVRasterBand( HKVDataset *poDS, int nBand, FILE * fpRaw,
                          nLineOffset, eDataType, bNativeOrder )
 
 {
+    int          i;
+
     this->poDS = poDS;
     this->nBand = nBand;
     
-    eDataType = GDT_Byte;
-
     nBlockXSize = poDS->GetRasterXSize();
     nBlockYSize = 1;
+
+    if( poDS->nOverviews != 0 )
+        papoOverviewBands = (RawRasterBand **) 
+            CPLMalloc(poDS->nOverviews*sizeof(RawRasterBand*));
+    else
+        papoOverviewBands = NULL;
+            
+    for( i = 0; i < poDS->nOverviews; i++ )
+    {
+        int      nXSize, nYSize;
+        int      nLevel = poDS->panOverviewLevel[i];
+        
+        nXSize = (poDS->GetRasterXSize()+nLevel-1) / nLevel;
+        nYSize = (poDS->GetRasterYSize()+nLevel-1) / nLevel;
+
+        papoOverviewBands[i] = 
+            new RawRasterBand( poDS->pafpOverviewBlob[i], nImgOffset, 
+                               nPixelOffset, nPixelOffset * nXSize, 
+                               eDataType, bNativeOrder,
+                               nXSize, nYSize );
+    }
+}
+
+/************************************************************************/
+/*                           ~HKVRasterBand()                           */
+/************************************************************************/
+
+HKVRasterBand::~HKVRasterBand()
+
+{
+    int   i;
+
+    for( i = 0; i < ((HKVDataset *) poDS)->nOverviews; i++ )
+    {
+        delete papoOverviewBands[i];
+    }
+
+    CPLFree( papoOverviewBands );
+}
+
+/************************************************************************/
+/*                          GetOverviewCount()                          */
+/************************************************************************/
+
+int HKVRasterBand::GetOverviewCount()
+
+{
+    HKVDataset	*poHDS = (HKVDataset *) poDS;
+
+    return poHDS->nOverviews;
+}
+
+/************************************************************************/
+/*                            GetOverview()                             */
+/************************************************************************/
+
+GDALRasterBand *HKVRasterBand::GetOverview( int i )
+
+{
+    HKVDataset	*poHDS = (HKVDataset *) poDS;
+
+    if( i < 0 || i >= poHDS->nOverviews )
+        return NULL;
+    else
+        return papoOverviewBands[i];
 }
 
 /************************************************************************/
@@ -179,6 +252,9 @@ HKVDataset::HKVDataset()
     adfGeoTransform[3] = 0.0;
     adfGeoTransform[4] = 0.0;
     adfGeoTransform[5] = 1.0;
+    nOverviews = 0;
+    panOverviewLevel = NULL;
+    pafpOverviewBlob = NULL;
 }
 
 /************************************************************************/
@@ -188,6 +264,8 @@ HKVDataset::HKVDataset()
 HKVDataset::~HKVDataset()
 
 {
+    int       i;
+
     FlushCache();
     CSLDestroy( papszAttrib );
     if( fpBlob != NULL )
@@ -200,6 +278,13 @@ HKVDataset::~HKVDataset()
     }
 
     CPLFree( pszProjection );
+
+    for( i = 0; i < nOverviews; i++ )
+    {
+        VSIFClose( pafpOverviewBlob[i] );
+    }
+    CPLFree( pafpOverviewBlob );
+    CPLFree( panOverviewLevel );
 }
 
 /************************************************************************/
@@ -616,6 +701,33 @@ GDALDataset *HKVDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
 /* -------------------------------------------------------------------- */
+/*      Scan for and open overviews                                     */
+/* -------------------------------------------------------------------- */
+    for( int nLevel = 2; nLevel < 1024; nLevel = nLevel * 2 )
+    {
+        char         szBlobName[32];
+        FILE         *fp;
+
+        sprintf( szBlobName, "blob%d", nLevel );
+        pszFilename = CPLFormFilename(poOpenInfo->pszFilename, szBlobName, 
+                                      NULL );
+        
+        fp = VSIFOpen( pszFilename, "rb" );
+        if( fp == NULL )
+            continue;
+
+        poDS->nOverviews++;
+        poDS->panOverviewLevel = 
+            (int *) CPLRealloc(poDS->panOverviewLevel, 
+                               sizeof(int) * poDS->nOverviews );
+        poDS->panOverviewLevel[poDS->nOverviews-1] = nLevel;
+
+        poDS->pafpOverviewBlob = (FILE **) 
+            CPLRealloc(poDS->pafpOverviewBlob, sizeof(FILE*)*poDS->nOverviews);
+        poDS->pafpOverviewBlob[poDS->nOverviews-1] = fp;
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Define the bands.                                               */
 /* -------------------------------------------------------------------- */
     int    nPixelOffset, nLineOffset, nOffset;
@@ -627,7 +739,7 @@ GDALDataset *HKVDataset::Open( GDALOpenInfo * poOpenInfo )
     for( int iRawBand=0; iRawBand < nRawBands; iRawBand++ )
     {
         poDS->SetBand( poDS->GetRasterCount()+1, 
-            new RawRasterBand( poDS, poDS->GetRasterCount()+1, poDS->fpBlob,
+            new HKVRasterBand( poDS, poDS->GetRasterCount()+1, poDS->fpBlob,
                                nOffset, nPixelOffset, nLineOffset, 
                                eType, bNative ) );
         nOffset += GDALGetDataTypeSize( eType ) / 8;
