@@ -66,15 +66,17 @@ img2tif-dist:
 	mkdir img2tif_dist
 	cp img2tif_build.sh img2tif_dist/build.sh
 	cp buildwin.bat img2tif_dist
-	cp hfaopen.cpp hfaentry.cpp hfadictionary.cpp hfafield.cpp \
-	   hfatype.cpp hfaband.cpp img2tif.cpp imggeotiff.c \
-	   hfa.h hfa_p.h addtiffo_src/tif_overview.cpp \
-	   addtiffo_src/rawblocked* \
-	   img2tif_dist
 	mkdir img2tif_dist/port
+	cp $(GDAL_ROOT)/port/cpl_config.h.vc img2tif_dist/port
 	cp $(GDAL_ROOT)/port/cpl_{path.cpp,conv.cpp,conv.h,error.cpp,error.h,port.h,string.cpp,string.h,vsi.h,vsisimple.cpp,config.h} img2tif_dist/port
 	mkdir img2tif_dist/libtiff
 	cp ../gtiff/libtiff/*.{c,h} img2tif_dist/libtiff
-	rm img2tif_dist/libtiff/tif_unix.c
 	mkdir img2tif_dist/libgeotiff
 	cp ../gtiff/libgeotiff/*.{c,h,inc} img2tif_dist/libgeotiff
+	mkdir img2tif_dist/hfa
+	cp hfaopen.cpp hfaentry.cpp hfadictionary.cpp hfafield.cpp \
+	   hfatype.cpp hfaband.cpp  \
+	   hfa.h hfa_p.h img2tif_dist/hfa 
+	cp BUILD.TXT hfatest.cpp img2tif.cpp imggeotiff.c \
+	   addtiffo_src/tif_overview.cpp addtiffo_src/rawblocked* \
+	   img2tif_dist

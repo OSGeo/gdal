@@ -3,7 +3,7 @@
  *
  * Project:  Erdas Imagine (.img) Translator
  * Purpose:  Mainline for Imagine to TIFF translation.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 1999, Intergraph Corporation
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2001/07/25 14:26:44  warmerda
+ * various source dist related changes
+ *
  * Revision 1.16  2001/07/18 04:51:57  warmerda
  * added CPL_CVSID
  *
@@ -125,7 +128,7 @@ void Usage()
 "\n"
 "Visit http://gdal.velocet.ca/projects/imagine/hfa_index.html for more info.\n"
 "\n"
-"Author: Frank Warmerdam (warmerda@home.com)\n"
+"Author: Frank Warmerdam (warmerdam@pobox.com)\n"
 "Special thanks to Intergraph Corporation for funding this project\n" );
     exit( 1 );
 }

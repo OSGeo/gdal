@@ -1,19 +1,24 @@
 #!/bin/sh
 
+BLDDIR=`pwd`
 CC=gcc
 CPPC=gcc
-CFLAGS="-O -Ilibtiff -Ilibgeotiff -Iport"
+CFLAGS="-O -I$BLDDIR/hfa -I$BLDDIR/libtiff -I$BLDDIR/libgeotiff -I$BLDDIR/port"
 
 LINK=gcc
 XTRALIBS="-lm"
 
+
 for FILE in *.c */*.c ; do
-  echo $CC -c $CFLAGS  $FILE
-  $CC -c $CFLAGS  $FILE
+  echo cd `dirname $FILE`\; $CC -c $CFLAGS  `basename $FILE`
+  (cd `dirname $FILE`; $CC -c $CFLAGS  `basename $FILE`)
 done
 for FILE in *.cpp */*.cpp ; do
-  echo $CPPC -c $CFLAGS  $FILE
-  $CPPC -c $CFLAGS  $FILE
+  echo cd `dirname $FILE`\; $CPPC -c $CFLAGS  `basename $FILE`
+  (cd `dirname $FILE`; $CPPC -c $CFLAGS  `basename $FILE`)
 done
 
-$LINK *.o $XTRALIBS -o img2tif
+$LINK img2tif.o imggeotiff.o tif_overview.o rawblockedimage.o hfa/*.o libgeotiff/*.o libtiff/*.o port/*.o $XTRALIBS -o img2tif
+
+$LINK hfatest.o  hfa/*.o libgeotiff/*.o libtiff/*.o port/*.o $XTRALIBS -o hfatest
+
