@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.33  2003/12/11 22:11:35  warmerda
+ * clean up recipes when dataset destroyed to avoid memory noise
+ *
  * Revision 1.32  2003/12/10 18:02:21  warmerda
  * fixed some minor memory leaks
  *
@@ -392,6 +395,7 @@ SAR_CEOSDataset::~SAR_CEOSDataset()
         }
         DestroyList( sVolume.RecordList );
     }
+    FreeRecipes();
 }
 
 /************************************************************************/
