@@ -26,6 +26,9 @@
  * that calls the GDAL library.
  * 
  * $Log$
+ * Revision 1.3  1998/12/06 02:50:36  warmerda
+ * Added three new functions.
+ *
  * Revision 1.2  1998/12/03 18:34:05  warmerda
  * Update to use CPL
  *
@@ -56,6 +59,8 @@ typedef enum {
     GDT_Float32 = 6,
     GDT_Float64 = 7
 } GDALDataType;
+
+int CPL_DLL GDALGetDataTypeSize( GDALDataType );
 
 typedef enum {
     GA_ReadOnly = 0,
@@ -109,6 +114,8 @@ CPLErr CPL_DLL GDALRasterIO( GDALRasterBandH hRBand, GDALRWFlag eRWFlag,
                               void * pBuffer, int nBXSize, int nBYSize,
                               GDALDataType eBDataType,
                               int nPixelSpace, int nLineSpace );
+CPLErr CPL_DLL GDALReadBlock( GDALRasterBandH, int, int, void * );
+CPLErr CPL_DLL GDALWriteBlock( GDALRasterBandH, int, int, void * );
 
 CPL_C_END
 
