@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.36  2002/12/10 04:05:04  warmerda
+ * fixed some translation problems with prime meridians
+ *
  * Revision 1.35  2002/12/09 23:03:45  warmerda
  * Fixed translation of paris prime meridian.
  *
@@ -1343,15 +1346,15 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
         switch( nCode )
         {
           case 8902:
-            strcpy( szPMValue, "paris" );
-            break;
-
-          case 8903:
             strcpy( szPMValue, "lisbon" );
             break;
 
-          case 8904:
+          case 8903:
             strcpy( szPMValue, "paris" );
+            break;
+
+          case 8904:
+            strcpy( szPMValue, "bogota" );
             break;
 
           case 8905:
