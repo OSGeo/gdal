@@ -2,6 +2,8 @@
 #define DBINITCONSTANTS
 
 #include "oledb_sup.h"
+#include "oledb_sf.h"
+
 #include "ogr_geometry.h"
 
 // Get various classid.
@@ -36,7 +38,7 @@ void main( int nArgc, char ** papszArgv )
     CLSID       &hProviderCLSID = (CLSID) CLSID_JETOLEDB_3_51;
     const char *pszDataSource = "f:\\opengis\\SFData\\World.mdb";
     const char *pszTable = "worldmif_geometry";
-    const char *pszGeomColumn = "WKB_GEOMETRY";
+    const char *pszGeomColumn = NULL;
     HRESULT     hr;
     IOpenRowset *pIOpenRowset = NULL;
     const char  *pszAction = "dumpgeom";
@@ -139,9 +141,8 @@ static HRESULT SFDumpGeomColumn( IOpenRowset* pIOpenRowset,
                                  const char *pszColumnName )
 
 {
-    HRESULT            hr;
-    OledbSupRowset     oTable;
-    int                iColOrdinal;
+    HRESULT           hr;
+    OledbSFTable      oTable;
 
 /* -------------------------------------------------------------------- */
 /*      Open the table.                                                 */
@@ -151,17 +152,11 @@ static HRESULT SFDumpGeomColumn( IOpenRowset* pIOpenRowset,
         return hr;
 
 /* -------------------------------------------------------------------- */
-/*      Find the ordinal of the requested column.                       */
+/*      If a specific column was requested, select it now.              */
 /* -------------------------------------------------------------------- */
-    iColOrdinal = oTable.GetColumnOrdinal( pszColumnName );
-    if( iColOrdinal == -1 )
-    {
-        fprintf( stderr, "Unable to find column `%s'.\n", pszColumnName );
-        return ResultFromScode( S_FALSE );
-    }
-    else
-        fprintf( stdout, "Geometry Column Ordinal = %d\n", iColOrdinal );
-   
+    if( pszColumnName != NULL )
+        oTable.SelectGeometryColumn( pszColumnName );
+
 /* -------------------------------------------------------------------- */
 /*      For now we just read through, counting records to verify        */
 /*      things are working.                                             */
@@ -171,97 +166,30 @@ static HRESULT SFDumpGeomColumn( IOpenRowset* pIOpenRowset,
     while( oTable.GetNextRecord( &hr ) )
     {
         BYTE      *pabyData;
-        int       nSize, nDBType, nStatus;
+        int       nSize;
         OGRGeometry * poGeom;
 
-        pabyData = (BYTE *) 
-            oTable.GetFieldData( iColOrdinal, &nDBType, &nStatus, &nSize );
+/* -------------------------------------------------------------------- */
+/*      Get the raw geometry data.                                      */
+/* -------------------------------------------------------------------- */
+        pabyData = oTable.GetWKBGeometry( &nSize );
+
+        if( pabyData == NULL )
+            continue;
 
 /* -------------------------------------------------------------------- */
-/*      Handle raw binary data using our own client side classes.       */
+/*      Create and report geometry.                                     */
 /* -------------------------------------------------------------------- */
-        if( nDBType == DBTYPE_BYTES )
+        if( OGRGeometryFactory::createFromWkb( pabyData, &poGeom, nSize )
+            == OGRERR_NONE )
         {
-            if( OGRGeometryFactory::createFromWkb( pabyData, &poGeom, nSize )
-                == OGRERR_NONE )
-            {
-                poGeom->dumpReadable( stdout );
-                delete poGeom;
-            }
-            else 
-            {
-                fprintf( stderr, "Unable to decode record %d\n", 
-                         nRecordCount );
-            }
+            poGeom->dumpReadable( stdout );
+            delete poGeom;
         }
-
-/* -------------------------------------------------------------------- */
-/*      Try to instantiate persistent objects.                          */
-/* -------------------------------------------------------------------- */
-        else if( nDBType == DBTYPE_IUNKNOWN )
+        else 
         {
-            IUnknown * pIUnknown = *((IUnknown **) pabyData);
-            IStream *  pIStream = NULL;
-            
-            hr = pIUnknown->QueryInterface( IID_IStream,
-                                            (void**)&pIStream );
-            if( FAILED(hr) )
-            {
-                printf( "After QueryInterface hr=%d, pInterface=%p\n", 
-                        hr, pIStream );
-                if( FAILED(hr) )
-                    DumpErrorHResult( hr, "QueryInterfacE" );
-            }
-            else
-            {
-                STATSTG      oStreamStat;
-                BYTE         *pabyData = NULL;
-                ULONG        nSize;
-
-                hr = pIStream->Stat( &oStreamStat, STATFLAG_NONAME );
-                if( FAILED(hr) )
-                {
-                    DumpErrorHResult( hr, "IStream::Stat()" );
-                    break;
-                }
-                
-                nSize = oStreamStat.cbSize.LowPart;
-                printf( "Storage length = %d\n", nSize );
-
-                pabyData = (BYTE *) CoTaskMemAlloc( nSize );
-                hr = pIStream->Read( pabyData, nSize, NULL );
-                if( FAILED(hr) )
-                {
-                    DumpErrorHResult( hr, "IStream::Read()" );
-                }
-                else
-                {
-                    OGRGeometry      *poGeom;
-
-                    if( OGRGeometryFactory::createFromWkb( pabyData, &poGeom, 
-                                                           nSize )
-                        == OGRERR_NONE )
-                    {
-                        poGeom->dumpReadable( stdout );
-                        delete poGeom;
-                    }
-                    else 
-                    {
-                        fprintf( stderr, "Unable to decode record %d\n", 
-                                 nRecordCount );
-                    }
-                }
-                CoTaskMemFree( pabyData );
-                pIStream->Release();
-            }
-        }
-
-        else
-        {
-            fprintf( stdout, 
-                     "Geometry column not of appropriate type: %d\n",
-                     nDBType );
-            break;
+            fprintf( stderr, "Unable to decode record %d\n", 
+                     nRecordCount );
         }
 
         nRecordCount++;
