@@ -35,6 +35,9 @@
  * of the GDAL core, but dependent on the Common Portability Library.
  *
  * $Log$
+ * Revision 1.23  2003/03/13 14:38:00  warmerda
+ * added USE_SPILL creation option to force use of spill file.
+ *
  * Revision 1.22  2003/03/06 18:03:14  dron
  * Fixed problem with unknown field in .ige file.
  *
@@ -1323,7 +1326,8 @@ HFAHandle HFACreate( const char * pszFilename,
 {
     HFAHandle	psInfo;
     int		nBlockSize = 64;
-    int		bCreateLargeRaster = FALSE;
+    int		bCreateLargeRaster = CSLFetchBoolean(papszOptions,"USE_SPILL",
+                                                     FALSE);
     char	*pszFullFilename = NULL, *pszRawFilename = NULL;
 
 /* -------------------------------------------------------------------- */
