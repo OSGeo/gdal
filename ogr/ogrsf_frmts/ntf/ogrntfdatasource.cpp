@@ -28,9 +28,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/08/30 16:49:26  warmerda
+ * added feature class layer support
+ *
  * Revision 1.1  1999/08/28 03:13:35  warmerda
  * New
- *
  */
 
 #include "ntf.h"
@@ -53,6 +55,13 @@ OGRNTFDataSource::OGRNTFDataSource()
     pszName = NULL;
 
     iCurrentReader = -1;
+    iCurrentFC = 0;
+
+    nFCCount = 0;
+    panFCNum = NULL;
+    papszFCName = NULL;
+
+    poFCLayer = NULL;
 }
 
 /************************************************************************/
@@ -72,6 +81,9 @@ OGRNTFDataSource::~OGRNTFDataSource()
     for( i = 0; i < nLayers; i++ )
         delete papoLayers[i];
 
+    if( poFCLayer != NULL )
+        delete poFCLayer;
+    
     CPLFree( papoLayers );
 
     CPLFree( pszName );
@@ -113,8 +125,10 @@ void OGRNTFDataSource::AddLayer( OGRNTFLayer * poNewLayer )
 OGRLayer *OGRNTFDataSource::GetLayer( int iLayer )
 
 {
-    if( iLayer < 0 || iLayer >= nLayers )
+    if( iLayer < 0 || iLayer > nLayers )
         return NULL;
+    else if( iLayer == nLayers )
+        return poFCLayer;
     else
         return papoLayers[iLayer];
 }
@@ -126,7 +140,10 @@ OGRLayer *OGRNTFDataSource::GetLayer( int iLayer )
 int OGRNTFDataSource::GetLayerCount()
 
 {
-    return nLayers;
+    if( poFCLayer == NULL )
+        return nLayers;
+    else
+        return nLayers + 1;
 }
 
 
@@ -253,6 +270,47 @@ int OGRNTFDataSource::Open( const char * pszFilename, int bTestOpen )
     }
 
     CSLDestroy( papszFileList );
+
+/* -------------------------------------------------------------------- */
+/*      Loop over all the files, collecting a unique feature class      */
+/*      listing.                                                        */
+/* -------------------------------------------------------------------- */
+    for( int iSrcFile = 0; iSrcFile < nNTFFileCount; iSrcFile++ )
+    {
+        NTFFileReader	*poSrcReader = papoNTFFileReader[iSrcFile];
+        
+        for( int iSrcFC = 0; iSrcFC < poSrcReader->GetFCCount(); iSrcFC++ )
+        {
+            int		nSrcFCNum, iDstFC;
+            char       *pszSrcFCName;
+
+            poSrcReader->GetFeatureClass( iSrcFC, &nSrcFCNum, &pszSrcFCName );
+            
+            for( iDstFC = 0; iDstFC < nFCCount; iDstFC++ )
+            {
+                if( nSrcFCNum == panFCNum[iDstFC] )
+                    break;
+            }
+
+            if( iDstFC >= nFCCount )
+            {
+                nFCCount++;
+                panFCNum = (int *) CPLRealloc(panFCNum, sizeof(int)*nFCCount);
+                papszFCName = (char **) CPLRealloc(papszFCName,
+                                                   sizeof(char *) * nFCCount);
+                panFCNum[nFCCount-1] = nSrcFCNum;
+                papszFCName[nFCCount-1] = CPLStrdup( pszSrcFCName );
+            }
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Create a new layer specifically for feature classes.            */
+/* -------------------------------------------------------------------- */
+    if( nFCCount > 0 )
+        poFCLayer = new OGRNTFFeatureClassLayer( this );
+    else
+        poFCLayer = NULL;
     
     return TRUE;
 }
@@ -272,6 +330,7 @@ void OGRNTFDataSource::ResetReading()
     iCurrentReader = -1;
     nCurrentPos = -1;
     nCurrentFID = 1;
+    iCurrentFC = 0;
 }
 
 /************************************************************************/
@@ -284,10 +343,16 @@ OGRFeature *OGRNTFDataSource::GetNextFeature()
     OGRFeature	*poFeature = NULL;
 
 /* -------------------------------------------------------------------- */
-/*      Have we processed all features already?                         */
+/*	If we have already read all the conventional features, we 	*/
+/*	should try and return feature class features.			*/    
 /* -------------------------------------------------------------------- */
     if( iCurrentReader == nNTFFileCount )
-        return NULL;
+    {
+        if( iCurrentFC < nFCCount )
+            return poFCLayer->GetFeature( panFCNum[iCurrentFC++] );
+        else
+            return NULL;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Do we need to open a file?                                      */
@@ -333,4 +398,26 @@ OGRFeature *OGRNTFDataSource::GetNextFeature()
     }
 
     return poFeature;
+}
+
+/************************************************************************/
+/*                          GetFeatureClass()                           */
+/************************************************************************/
+
+int OGRNTFDataSource::GetFeatureClass( int iFCIndex, int *pnFCId,
+                                       char ** ppszFCName )
+
+{
+    if( iFCIndex < 0 || iFCIndex >= nFCCount )
+    {
+        *pnFCId = -1;
+        *ppszFCName = NULL;
+        return FALSE;
+    }
+    else
+    {
+        *pnFCId = panFCNum[iFCIndex];
+        *ppszFCName = papszFCName[iFCIndex];
+        return TRUE;
+    }
 }
