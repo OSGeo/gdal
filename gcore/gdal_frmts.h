@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.33  2004/12/20 16:14:00  fwarmerdam
+ * added GDALRegister_JP2ECW()
+ *
  * Revision 1.32  2004/11/30 16:59:37  lichun
  * Added ILWIS
  *
@@ -164,6 +167,7 @@ void CPL_DLL GDALRegister_GIF(void);
 void CPL_DLL GDALRegister_Envisat(void);
 void CPL_DLL GDALRegister_FITS(void);
 void CPL_DLL GDALRegister_ECW(void);
+void CPL_DLL GDALRegister_JP2ECW(void);
 void CPL_DLL GDALRegister_FujiBAS(void);
 void CPL_DLL GDALRegister_FIT(void);
 void CPL_DLL GDALRegister_VRT(void);
