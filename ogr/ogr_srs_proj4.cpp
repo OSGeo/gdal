@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.28  2002/11/25 03:28:16  warmerda
+ * added/improved documentation
+ *
  * Revision 1.27  2002/07/09 14:49:07  warmerda
  * Improved translation from/to polar stereographic as per
  * http://bugzilla.remotesensing.org/show_bug.cgi?id=172
@@ -195,6 +198,25 @@ static double OSR_GDV( char **papszNV, const char * pszField,
 /************************************************************************/
 /*                          importFromProj4()                           */
 /************************************************************************/
+
+/**
+ * Import PROJ.4 coordinate string.
+ *
+ * The OGRSpatialReference is initialized from the passed PROJ.4 style
+ * coordinate system string.  In addition to many +proj formulations which
+ * have OGC equivelents, it is also possible to import "+init=epsg:n" style
+ * definitions.  These are passed to importFromEPSG().  Other init strings
+ * (such as the state plane zones) are not currently supported.   
+ *
+ * Example:
+ *   pszProj4 = "+proj=utm +zone=11 +datum=WGS84" 
+ *
+ * This method is the equivelent of the C function OSRImportFromProj4().
+ *
+ * @param pszProj4 the PROJ.4 style string. 
+ *
+ * @return OGRERR_NONE on success or OGRERR_CORRUPT_DATA on failure.
+ */
 
 OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
 
@@ -659,6 +681,24 @@ OGRErr OSRExportToProj4( OGRSpatialReferenceH hSRS, char ** ppszReturn )
 /************************************************************************/
 /*                           exportToProj4()                            */
 /************************************************************************/
+
+/**
+ * Export coordinate system in PROJ.4 format.
+ *
+ * Converts the loaded coordinate reference system into PROJ.4 format
+ * to the extent possible.  The string returned in ppszProj4 should be
+ * deallocated by the caller with CPLFree() when no longer needed.
+ *
+ * LOCAL_CS coordinate systems are not translatable.  An empty string
+ * will be returned along with OGRERR_NONE.  
+ *
+ * This method is the equivelent of the C function OSRExportToProj4().
+ *
+ * @param ppszProj4 pointer to which dynamically allocated PROJ.4 definition 
+ * will be assigned. 
+ *
+ * @return OGRERR_NONE on success or an error code on failure. 
+ */
 
 OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
 
