@@ -36,8 +36,7 @@ clean:
 
 gmlview:	gmlview.cpp $(CORE_OBJ)
 	$(CXX) $(ALL_C_FLAGS) $(LNK_FLAGS) \
-		gmlview.cpp $(CORE_OBJ) \
-		../../ogr.a $(CPL_LIB) $(LIBS) \
+		gmlview.cpp $(CORE_OBJ) $(GDAL_LIB) $(LIBS) \
 		-o gmlview
 
 

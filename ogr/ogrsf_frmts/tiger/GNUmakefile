@@ -31,7 +31,7 @@ OBJ     =  ogrtigerdriver.o           \
 
 ALL_C_FLAGS	=	-I.. -I../.. -I$(GDAL_ROOT)/port $(CFLAGS)
 
-LIBS	:=	../../ogr.a $(CPL_LIB) $(LIBS)
+LIBS	:=	$(GDAL_LIB) $(LIBS)
 
 
 default:	$(O_OBJ)
