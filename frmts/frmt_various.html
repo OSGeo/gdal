@@ -25,7 +25,7 @@ Grids are treated as signed 16bit integer unless the first scanline contains
 decimal values in which case the image is treated as 32bit floating point.
 <p>
 
-The <a href="#AIG">AIG</a> <a href="#GIO">GIO</a> drivers are also available
+The <a href="#AIG">AIG</a> driver is also available
 for Arc/Info Binary Grid format.<p>
 
 NOTE: Implemented as <tt>gdal/frmts/aaigrid/aaigriddataset.cpp</tt>.<p>
@@ -49,9 +49,6 @@ description</a> for more details.<p>
 The projections support (read if a prj.adf file is available) is quite
 limited.  Additional sample prj.adf files may be sent to the maintainer,
 <a href="mailto:warmerdam@pobox.com">warmerdam@pobox.com</a>.<p>
-
-Note that another driver (<a href="#GIO">GIO</a>) is available for Windows 
-platforms with ArcView installed.<p>
 
 NOTE: Implemented as <tt>gdal/frmts/aigrid/aigdataset.cpp</tt>.<p>
 
@@ -218,20 +215,6 @@ the same was as any other header keywords, but they do not affect
 reading/writing of data values from/to the file.
 
 <p>NOTE: Implemented as <tt>gdal/frmts/fits/fitsdataset.cpp</tt>.<p>
-
-<h2><a name="GIO">GIO -- Arc/Info Binary Grid</a></h2>
-
-This is a second implementation for reading, and writing Arc/Info grids, and
-only works on Windows platforms with ArcView installed.  It uses the 
-AVGRIDIO.DLL installed with ArcView to implement full access.<p>
-
-This driver supports georeferencing bounds, but no projection definition. 
-New coverages can be created with a code of GIO. <p>
-
-Also see the <a href="#AIG">AIG</a> read-only driver available on all 
-platforms.<p>
-
-NOTE: Implemented as <tt>gdal/frmts/aigrid/giodataset.cpp</tt>.<p>
 
 <h2><a name="GXF">GXF -- Grid eXchange File</a></h2>
 
