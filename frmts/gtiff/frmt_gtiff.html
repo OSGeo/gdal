@@ -80,6 +80,10 @@ Set the photometric interpretation tag. Default is MINISBLACK, but if the
 input image has 3 or 4 bands of Byte type, then RGB will be selected. You can
 override default photometric using this option.<p>
 
+<li> <b>ALPHA=YES</b>: The first "extrasample" is marked as being alpha if
+there are any extra samples.  This is necessary if you want to produce
+a greyscale TIFF file with an alpha band (for instance). <p>
+
 </ul>
 
 GeoTIFF supports internal creation of overviews (with gdaladdo for instance).
