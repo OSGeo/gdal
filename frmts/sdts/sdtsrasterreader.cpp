@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/06/03 21:13:18  warmerda
+ * Added transform support.
+ *
  * Revision 1.1  1999/06/03 14:02:28  warmerda
  * New
  *
@@ -77,7 +80,8 @@ void SDTSRasterReader::Close()
 /*      information.                                                    */
 /************************************************************************/
 
-int SDTSRasterReader::Open( SDTS_CATD * poCATD, const char * pszModule )
+int SDTSRasterReader::Open( SDTS_CATD * poCATD, SDTS_IREF * poIREF,
+                            const char * pszModule )
 
 {
     strncpy( szModule, pszModule, sizeof(szModule) );
@@ -145,8 +149,110 @@ int SDTSRasterReader::Open( SDTS_CATD * poCATD, const char * pszModule )
         strcpy( szINTR, "CE" );
     }
 
+/* -------------------------------------------------------------------- */
+/*      Record the LDEF record number we used so we can find the        */
+/*      corresponding RSDF record.                                      */
+/* -------------------------------------------------------------------- */
+    int		nLDEF_RCID;
+
+    nLDEF_RCID = poRecord->GetIntSubfield( "LDEF", 0, "RCID", 0 );
+    
     oLDEF.Close();
 
+/* ==================================================================== */
+/*      Search the RSDF module for the requested cell module.           */
+/* ==================================================================== */
+    DDFModule	oRSDF;
+
+/* -------------------------------------------------------------------- */
+/*      Open the LDEF module, and report failure if it is missing.      */
+/* -------------------------------------------------------------------- */
+    if( poCATD->GetModuleFilePath("RSDF") == NULL )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Can't find RSDF entry in CATD module ... "
+                  "can't treat as raster.\n" );
+        return FALSE;
+    }
+    
+    if( !oRSDF.Open( poCATD->GetModuleFilePath("RSDF") ) )
+        return FALSE;
+
+/* -------------------------------------------------------------------- */
+/*      Read each record, till we find what we want.                    */
+/* -------------------------------------------------------------------- */
+    while( (poRecord = oRSDF.ReadRecord() ) != NULL )
+    {
+        if( poRecord->GetIntSubfield("LYID",0,"RCID",0) == nLDEF_RCID )
+            break;
+    }
+
+    if( poRecord == NULL )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Can't find LDEF:%d record in RSDF file.\n",
+                  nLDEF_RCID );
+        return FALSE;
+    }
+    
+/* -------------------------------------------------------------------- */
+/*      Establish the raster pixel/line to georef transformation.       */
+/* -------------------------------------------------------------------- */
+    double	dfZ;
+        
+    if( poRecord->FindField( "SADR" ) == NULL )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Can't find SADR field in RSDF record.\n" );
+        return FALSE;
+    }
+    
+    SDTSGetSADR( poIREF, poRecord->FindField( "SADR" ), 1,
+                 adfTransform + 0, adfTransform + 3, &dfZ );
+
+    adfTransform[0] += poIREF->dfXOffset;
+    adfTransform[3] += poIREF->dfYOffset;
+
+    adfTransform[1] = poIREF->dfXRes;
+    adfTransform[2] = 0.0;
+    adfTransform[4] = 0.0;
+    adfTransform[5] = -1 * poIREF->dfYRes;
+    
+/* -------------------------------------------------------------------- */
+/*      If the origin is the center of the pixel, then shift it back    */
+/*      half a pixel to the top left of the top left.                   */
+/* -------------------------------------------------------------------- */
+    if( EQUAL(szINTR,"CE") )
+    {
+        adfTransform[0] -= adfTransform[1] * 0.5;
+        adfTransform[3] -= adfTransform[5] * 0.5;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Verify some other assumptions.                                  */
+/* -------------------------------------------------------------------- */
+    const char	*pszString;
+    
+    pszString = poRecord->GetStringSubfield( "RSDF", 0, "OBRP", 0); 
+    if( !EQUAL(pszString,"G2") )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "OBRP value of `%s' not expected 2D raster code (G2).\n",
+                  pszString );
+        return FALSE;
+    }
+    
+    pszString = poRecord->GetStringSubfield( "RSDF", 0, "SCOR", 0); 
+    if( !EQUAL(pszString,"TL") )
+    {
+        CPLError( CE_Warning, CPLE_AppDefined,
+                  "SCOR (origin) is `%s' instead of expected top left.\n"
+                  "Georef coordinates will likely be incorrect.\n",
+                  pszString );
+    }
+    
+    oRSDF.Close();
+    
 /* -------------------------------------------------------------------- */
 /*      For now we will assume that the block size is one scanline.     */
 /*      We will blow a gasket later while reading the cell file if      */
@@ -255,6 +361,18 @@ int SDTSRasterReader::GetBlock( int nXOffset, int nYOffset, void * pData )
 #else    
     memcpy( pData, poCVLS->GetData(), nXSize * 2 );
 #endif    
+
+    return TRUE;
+}
+
+/************************************************************************/
+/*                            GetTransform()                            */
+/************************************************************************/
+
+int SDTSRasterReader::GetTransform( double * padfTransformOut )
+
+{
+    memcpy( padfTransformOut, adfTransform, sizeof(double)*6 );
 
     return TRUE;
 }
