@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2002/02/18 21:26:34  warmerda
+ * removed declaration for OGRBuildPolygonFromEdges
+ *
  * Revision 1.17  2001/12/19 22:44:53  warmerda
  * added ADD_SOUNDG_DEPTH support
  *
@@ -88,9 +91,6 @@
 
 #include "ogr_feature.h"
 #include "iso8211.h"
-
-OGRPolygon *OGRBuildPolygonFromEdges( OGRGeometryCollection * poLines,
-                                      int bBestEffort, OGRErr * peErr = NULL );
 
 class S57Reader;
 
