@@ -25,6 +25,9 @@
  * Main format registration function.
  * 
  * $Log$
+ * Revision 1.67  2004/10/16 14:58:01  fwarmerdam
+ * added GMT
+ *
  * Revision 1.66  2004/09/16 18:24:13  fwarmerdam
  * added airsar
  *
@@ -373,6 +376,7 @@ void GDALAllRegister()
 #endif
 
 #ifdef FRMT_netcdf
+    GDALRegister_GMT();
     GDALRegister_netCDF();
 #endif
 
