@@ -10,3 +10,6 @@ val_repl.py		Script to replace specified values from the input
 			and want replace it with other value. Input file
 			remains unchanged, results stored in other file.
 
+gdal2grd.py		Script to write out ASCII GRD rasters (used in Golden
+			Software Surfer) from any source supported by GDAL.
+
