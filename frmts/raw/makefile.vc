@@ -1,7 +1,8 @@
 
 OBJ	=	rawdataset.obj ehdrdataset.obj pauxdataset.obj doq1dataset.obj\
 		hkvdataset.obj mffdataset.obj effdataset.obj pnmdataset.obj \
-		fujibasdataset.obj doq2dataset.obj envidataset.obj
+		fujibasdataset.obj doq2dataset.obj envidataset.obj \
+		gscdataset.obj
 
 GDAL_ROOT	=	..\..
 
