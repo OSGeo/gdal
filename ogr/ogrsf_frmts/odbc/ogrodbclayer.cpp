@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2004/03/04 17:16:05  warmerda
+ * Cleanup featuredefn on exit.
+ *
  * Revision 1.5  2004/01/05 22:38:17  warmerda
  * stripped out some junk
  *
@@ -93,6 +96,12 @@ OGRODBCLayer::~OGRODBCLayer()
 
     if( poFilterGeom != NULL )
         delete poFilterGeom;
+
+    if( poFeatureDefn != NULL )
+    {
+        delete poFeatureDefn;
+        poFeatureDefn = NULL;
+    }
 
     if( poSRS != NULL )
         poSRS->Dereference();
