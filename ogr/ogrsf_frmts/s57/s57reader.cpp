@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  1999/11/26 13:26:03  warmerda
+ * fixed up sounding support
+ *
  * Revision 1.7  1999/11/25 20:53:49  warmerda
  * added sounding and S57_SPLIT_MULTIPOINT support
  *
@@ -324,7 +327,7 @@ OGRFeature * S57Reader::ReadNextFeature( OGRFeatureDefn * poTarget )
 
     if( poMultiPoint != NULL )
     {
-        if( poTarget == poMultiPoint->GetDefnRef() )
+        if( poTarget == NULL || poTarget == poMultiPoint->GetDefnRef() )
         {
             return NextPendingMultiPoint();
         }
@@ -344,7 +347,8 @@ OGRFeature * S57Reader::ReadNextFeature( OGRFeatureDefn * poTarget )
         if( poFeature != NULL )
         {
 #ifdef S57_SPLIT_MULTIPOINT            
-            if(poFeature->GetGeometryRef()->getGeometryType() == wkbMultiPoint)
+            if(poFeature->GetGeometryRef() != NULL
+            && poFeature->GetGeometryRef()->getGeometryType() == wkbMultiPoint)
             {
                 poMultiPoint = poFeature;
                 iPointOffset = 0;
@@ -668,7 +672,8 @@ void S57Reader::AssembleLineGeometry( DDFRecord * poFRecord,
         poSRecord = oVE_Index.FindRecord( nRCID );
         if( poSRecord == NULL )
         {
-            printf( "Couldn't find spatial record %d.\n", nRCID );
+            CPLError( CE_Warning, CPLE_AppDefined,
+                      "Couldn't find spatial record %d.\n", nRCID );
             continue;
         }
     
@@ -1111,11 +1116,13 @@ OGRFeatureDefn *S57Reader::GenerateObjectClassDefn( S57ClassRegistrar *poCR,
     }
     else if( EQUAL(papszGeomPrim[0],"Point") )
     {
-#ifndef S57_SPLIT_MULTIPOINT        
         if( EQUAL(poCR->GetAcronym(),"SOUNDG") )
+#ifndef S57_SPLIT_MULTIPOINT        
             poFDefn->SetGeomType( wkbMultiPoint );
+#else
+            poFDefn->SetGeomType( wkbPoint25D );
+#endif
         else
-#endif            
             poFDefn->SetGeomType( wkbPoint );
     }
     else if( EQUAL(papszGeomPrim[0],"Area") )
