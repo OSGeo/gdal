@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.25  2003/05/20 19:03:24  warmerda
+ * suggest GDAL_DATA in error message
+ *
  * Revision 1.24  2003/05/20 18:43:31  warmerda
  * added error reporting
  *
@@ -1368,7 +1371,7 @@ OGRErr OGRSpatialReference::importFromEPSG( int nCode )
     {
         CPLError( CE_Failure, CPLE_OpenFailed, 
                   "Unable to open EPSG support file %s.\n"
-                  "Try setting the GEOTIFF_CSV environment variable to point to the\n"
+                  "Try setting the GDAL_DATA environment variable to point to the\n"
                   "directory containing EPSG csv files.", 
                   CSVFilename( "gcs.csv" ) );
         return OGRERR_FAILURE;
