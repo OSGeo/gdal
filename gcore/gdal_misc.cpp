@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.27  2001/11/26 20:14:01  warmerda
+ * added GDALProjDef stubs for old 'bridges'
+ *
  * Revision 1.26  2001/11/19 16:03:16  warmerda
  * moved GDALDectoDMS here
  *
@@ -1150,3 +1153,37 @@ const char *GDALDecToDMS( double dfAngle, const char * pszAxis,
     return( szBuffer );
 }
 
+/************************************************************************/
+/* -------------------------------------------------------------------- */
+/*      The following stubs are present to ensure that older GDAL       */
+/*      bridges don't fail with newer libraries.                        */
+/* -------------------------------------------------------------------- */
+/************************************************************************/
+
+CPL_C_START
+
+void *GDALCreateProjDef( const char * pszDef )
+{
+    CPLDebug( "GDAL", "GDALCreateProjDef no longer supported." );
+    return NULL;
+}
+
+CPLErr GDALReprojectToLongLat( void *pDef, double *, double * )
+{
+    CPLDebug( "GDAL", "GDALReprojectToLatLong no longer supported." );
+    return CE_Failure;
+}
+
+CPLErr GDALReprojectFromLongLat( void *pDef, double *, double * )
+{
+    CPLDebug( "GDAL", "GDALReprojectFromLatLong no longer supported." );
+    return CE_Failure;
+}
+
+void GDALDestroyProjDef( void *pDef )
+
+{
+    CPLDebug( "GDAL", "GDALDestroyProjDef no longer supported." );
+}
+
+CPL_C_END
