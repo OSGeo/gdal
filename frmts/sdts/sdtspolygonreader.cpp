@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2004/04/29 13:45:48  warmerda
+ * fixed bug with assembling polygons if edges not read
+ *
  * Revision 1.12  2002/04/16 17:51:57  warmerda
  * Avoid warnings.
  *
@@ -262,6 +265,9 @@ int SDTSRawPolygon::AssembleRings()
     if( nRings > 0 )
         return TRUE;
 
+    if( nEdges == 0 )
+        return FALSE;
+
 /* -------------------------------------------------------------------- */
 /*      Allocate ring arrays.                                           */
 /* -------------------------------------------------------------------- */
@@ -433,7 +439,7 @@ int SDTSRawPolygon::AssembleRings()
     panRingStart = (int *) CPLMalloc(sizeof(int) * nRawRings);
     nVertices = 0;
     nRings = 0;
-    
+
     if( iBiggestRing == nRawRings - 1 )
         nRingVertices = nRawVertices - panRawRingStart[iBiggestRing];
     else
