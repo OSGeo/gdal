@@ -1,0 +1,268 @@
+ALABAMA         EAST                   1                    NAD83       101
+ALABAMA         WEST                   1                    NAD83       102
+ALASKA          ZONE NO. 10            2                    NAD83      5010
+AMERICAN SAMOA                         0                    NAD83      5300
+ARIZONA         EAST                   1                    NAD83       201
+ARIZONA         CENTRAL                1                    NAD83       202
+ARIZONA         WEST                   1                    NAD83       203
+ARKANSAS        NORTH                  2                    NAD83       301
+ARKANSAS        SOUTH                  2                    NAD83       302
+CALIFORNIA      I                      2                    NAD83       401
+CALIFORNIA      II                     2                    NAD83       402
+CALIFORNIA      III                    2                    NAD83       403
+CALIFORNIA      IV                     2                    NAD83       404
+CALIFORNIA      V                      2                    NAD83       405
+CALIFORNIA      VI                     2                    NAD83       406
+CALIFORNIA      VII                    0                    NAD83       407
+COLORADO        NORTH                  2                    NAD83       501
+COLORADO        CENTRAL                2                    NAD83       502
+COLORADO        SOUTH                  2                    NAD83       503
+CONNECTICUT     ---                    2                    NAD83       600
+DELAWARE        ---                    1                    NAD83       700
+FLORIDA         EAST                   1                    NAD83       901
+FLORIDA         WEST                   1                    NAD83       902
+FLORIDA         NORTH                  2                    NAD83       903
+GEORGIA         EAST                   1                    NAD83      1001
+GEORGIA         WEST                   1                    NAD83      1002
+HAWAII          1                      1                    NAD83      5101
+HAWAII          2                      1                    NAD83      5102
+HAWAII          3                      1                    NAD83      5103
+HAWAII          4                      1                    NAD83      5104
+HAWAII          5                      1                    NAD83      5105
+IDAHO           EAST                   1                    NAD83      1101
+IDAHO           CENTRAL                1                    NAD83      1102
+IDAHO           WEST                   1                    NAD83      1103
+ILLINOIS        EAST                   1                    NAD83      1201
+ILLINOIS        WEST                   1                    NAD83      1202
+INDIANA         EAST                   1                    NAD83      1301
+INDIANA         WEST                   1                    NAD83      1302
+IOWA            NORTH                  2                    NAD83      1401
+IOWA            SOUTH                  2                    NAD83      1402
+KANSAS          NORTH                  2                    NAD83      1501
+KANSAS          SOUTH                  2                    NAD83      1502
+KENTUCKY        NORTH                  2                    NAD83      1601
+KENTUCKY        SOUTH                  2                    NAD83      1602
+LOUISIANA       NORTH                  2                    NAD83      1701
+LOUISIANA       SOUTH                  2                    NAD83      1702
+LOUISIANA       OFFSHORE               2                    NAD83      1703
+MAINE           EAST                   1                    NAD83      1801
+MAINE           WEST                   1                    NAD83      1802
+MARYLAND        ---                    2                    NAD83      1900
+MASSACHUSETTS   MAINLAND               2                    NAD83      2001
+MASSACHUSETTS   ISLAND                 2                    NAD83      2002
+MICHIGAN        EAST                   0                    NAD83      2101
+MICHIGAN        CENTRAL/M              0                    NAD83      2102
+MICHIGAN        WEST                   0                    NAD83      2103
+MICHIGAN        NORTH                  2                    NAD83      2111
+MICHIGAN        CENTRAL/L              2                    NAD83      2112
+MICHIGAN        SOUTH                  2                    NAD83      2113
+MINNESOTA       NORTH                  2                    NAD83      2201
+MINNESOTA       CENTRAL                2                    NAD83      2202
+MINNESOTA       SOUTH                  2                    NAD83      2203
+MISSISSIPPI     EAST                   1                    NAD83      2301
+MISSISSIPPI     WEST                   1                    NAD83      2302
+MISSOURI        EAST                   1                    NAD83      2401
+MISSOURI        CENTRAL                1                    NAD83      2402
+MISSOURI        WEST                   1                    NAD83      2403
+MONTANA                                2                    NAD83      2500
+MONTANA                                0                    NAD83      2502
+MONTANA                                0                    NAD83      2503
+NEBRASKA                               2                    NAD83      2600
+NEBRASKA                               0                    NAD83      2602
+NEVADA          EAST                   1                    NAD83      2701
+NEVADA          CENTRAL                1                    NAD83      2702
+NEVADA          WEST                   1                    NAD83      2703
+NEW HAMPSHIRE   ---                    1                    NAD83      2800
+NEW JERSEY      ---                    1                    NAD83      2900
+NEW MEXICO      EAST                   1                    NAD83      3001
+NEW MEXICO      CENTRAL                1                    NAD83      3002
+NEW MEXICO      WEST                   1                    NAD83      3003
+NEW YORK        EAST                   1                    NAD83      3101
+NEW YORK        CENTRAL                1                    NAD83      3102
+NEW YORK        WEST                   1                    NAD83      3103
+NEW YORK        LONG ISLAND            2                    NAD83      3104
+NORTH CAROLINA  ---                    2                    NAD83      3200
+NORTH DAKOTA    NORTH                  2                    NAD83      3301
+NORTH DAKOTA    SOUTH                  2                    NAD83      3302
+OHIO            NORTH                  2                    NAD83      3401
+OHIO            SOUTH                  2                    NAD83      3402
+OKLAHOMA        NORTH                  2                    NAD83      3501
+OKLAHOMA        SOUTH                  2                    NAD83      3502
+OREGON          NORTH                  2                    NAD83      3601
+OREGON          SOUTH                  2                    NAD83      3602
+PENNSYLVANIA    NORTH                  2                    NAD83      3701
+PENNSYLVANIA    SOUTH                  2                    NAD83      3702
+RHODE ISLAND    ---                    1                    NAD83      3800
+SOUTH CAROLINA                         2                    NAD83      3900
+SOUTH CAROLINA                         0                    NAD83      3902
+SOUTH DAKOTA    NORTH                  2                    NAD83      4001
+SOUTH DAKOTA    SOUTH                  2                    NAD83      4002
+TENNESSEE       ---                    2                    NAD83      4100
+TEXAS           NORTH                  2                    NAD83      4201
+TEXAS           NORTH CENTRAL          2                    NAD83      4202
+TEXAS           CENTRAL                2                    NAD83      4203
+TEXAS           SOUTH CENTRAL          2                    NAD83      4204
+TEXAS           SOUTH                  2                    NAD83      4205
+UTAH            NORTH                  2                    NAD83      4301
+UTAH            CENTRAL                2                    NAD83      4302
+UTAH            SOUTH                  2                    NAD83      4303
+VERMONT         ---                    1                    NAD83      4400
+VIRGINIA        NORTH                  2                    NAD83      4501
+VIRGINIA        SOUTH                  2                    NAD83      4502
+WASHINGTON      NORTH                  2                    NAD83      4601
+WASHINGTON      SOUTH                  2                    NAD83      4602
+WEST VIRGINIA   NORTH                  2                    NAD83      4701
+WEST VIRGINIA   SOUTH                  2                    NAD83      4702
+WISCONSIN       NORTH                  2                    NAD83      4801
+WISCONSIN       CENTRAL                2                    NAD83      4802
+WISCONSIN       SOUTH                  2                    NAD83      4803
+WYOMING         EAST                   1                    NAD83      4901
+WYOMING         EAST CENTRAL           1                    NAD83      4902
+WYOMING         WEST CENTRAL           1                    NAD83      4903
+WYOMING         WEST                   1                    NAD83      4904
+ALASKA          ZONE NO. 1             4                    NAD83      5001
+ALASKA          ZONE NO. 2             1                    NAD83      5002
+ALASKA          ZONE NO. 3             1                    NAD83      5003
+ALASKA          ZONE NO. 4             1                    NAD83      5004
+ALASKA          ZONE NO. 5             1                    NAD83      5005
+ALASKA          ZONE NO. 6             1                    NAD83      5006
+ALASKA          ZONE NO. 7             1                    NAD83      5007
+ALASKA          ZONE NO. 8             1                    NAD83      5008
+ALASKA          ZONE NO. 9             1                    NAD83      5009
+PUERTO RICO AND VIRGIN ISLANDS         2                    NAD83      5200
+VIRGIN ISLANDS  ST. CROIX              0                    NAD83      5202
+GUAM ISLAND                            0                    NAD83      5400
+ALABAMA         EAST                   1                    NAD27       101
+ALABAMA         WEST                   1                    NAD27       102
+ALASKA          ZONE NO. 10            2                    NAD27      5010
+AMERICAN SAMOA                         2                    NAD27      5300
+ARIZONA         EAST                   1                    NAD27       201
+ARIZONA         CENTRAL                1                    NAD27       202
+ARIZONA         WEST                   1                    NAD27       203
+ARKANSAS        NORTH                  2                    NAD27       301
+ARKANSAS        SOUTH                  2                    NAD27       302
+CALIFORNIA      I                      2                    NAD27       401
+CALIFORNIA      II                     2                    NAD27       402
+CALIFORNIA      III                    2                    NAD27       403
+CALIFORNIA      IV                     2                    NAD27       404
+CALIFORNIA      V                      2                    NAD27       405
+CALIFORNIA      VI                     2                    NAD27       406
+CALIFORNIA      VII                    2                    NAD27       407
+COLORADO        NORTH                  2                    NAD27       501
+COLORADO        CENTRAL                2                    NAD27       502
+COLORADO        SOUTH                  2                    NAD27       503
+CONNECTICUT     ---                    2                    NAD27       600
+DELAWARE        ---                    1                    NAD27       700
+FLORIDA         EAST                   1                    NAD27       901
+FLORIDA         WEST                   1                    NAD27       902
+FLORIDA         NORTH                  2                    NAD27       903
+GEORGIA         EAST                   1                    NAD27      1001
+GEORGIA         WEST                   1                    NAD27      1002
+HAWAII          1                      1                    NAD27      5101
+HAWAII          2                      1                    NAD27      5102
+HAWAII          3                      1                    NAD27      5103
+HAWAII          4                      1                    NAD27      5104
+HAWAII          5                      1                    NAD27      5105
+IDAHO           EAST                   1                    NAD27      1101
+IDAHO           CENTRAL                1                    NAD27      1102
+IDAHO           WEST                   1                    NAD27      1103
+ILLINOIS        EAST                   1                    NAD27      1201
+ILLINOIS        WEST                   1                    NAD27      1202
+INDIANA         EAST                   1                    NAD27      1301
+INDIANA         WEST                   1                    NAD27      1302
+IOWA            NORTH                  2                    NAD27      1401
+IOWA            SOUTH                  2                    NAD27      1402
+KANSAS          NORTH                  2                    NAD27      1501
+KANSAS          SOUTH                  2                    NAD27      1502
+KENTUCKY        NORTH                  2                    NAD27      1601
+KENTUCKY        SOUTH                  2                    NAD27      1602
+LOUISIANA       NORTH                  2                    NAD27      1701
+LOUISIANA       SOUTH                  2                    NAD27      1702
+LOUISIANA       OFFSHORE               2                    NAD27      1703
+MAINE           EAST                   1                    NAD27      1801
+MAINE           WEST                   1                    NAD27      1802
+MARYLAND        ---                    2                    NAD27      1900
+MASSACHUSETTS   MAINLAND               2                    NAD27      2001
+MASSACHUSETTS   ISLAND                 2                    NAD27      2002
+MICHIGAN        EAST                   1                    NAD27      2101
+MICHIGAN        CENTRAL/M              1                    NAD27      2102
+MICHIGAN        WEST                   1                    NAD27      2103
+MICHIGAN        NORTH                  2                    NAD27      2111
+MICHIGAN        CENTRAL/L              2                    NAD27      2112
+MICHIGAN        SOUTH                  2                    NAD27      2113
+MINNESOTA       NORTH                  2                    NAD27      2201
+MINNESOTA       CENTRAL                2                    NAD27      2202
+MINNESOTA       SOUTH                  2                    NAD27      2203
+MISSISSIPPI     EAST                   1                    NAD27      2301
+MISSISSIPPI     WEST                   1                    NAD27      2302
+MISSOURI        EAST                   1                    NAD27      2401
+MISSOURI        CENTRAL                1                    NAD27      2402
+MISSOURI        WEST                   1                    NAD27      2403
+MONTANA         NORTH                  2                    NAD27      2501
+MONTANA         CENTRAL                2                    NAD27      2502
+MONTANA         SOUTH                  2                    NAD27      2503
+NEBRASKA        NORTH                  2                    NAD27      2601
+NEBRASKA        SOUTH                  2                    NAD27      2602
+NEVADA          EAST                   1                    NAD27      2701
+NEVADA          CENTRAL                1                    NAD27      2702
+NEVADA          WEST                   1                    NAD27      2703
+NEW HAMPSHIRE   ---                    1                    NAD27      2800
+NEW JERSEY      ---                    1                    NAD27      2900
+NEW MEXICO      EAST                   1                    NAD27      3001
+NEW MEXICO      CENTRAL                1                    NAD27      3002
+NEW MEXICO      WEST                   1                    NAD27      3003
+NEW YORK        EAST                   1                    NAD27      3101
+NEW YORK        CENTRAL                1                    NAD27      3102
+NEW YORK        WEST                   1                    NAD27      3103
+NEW YORK        LONG ISLAND            2                    NAD27      3104
+NORTH CAROLINA  ---                    2                    NAD27      3200
+NORTH DAKOTA    NORTH                  2                    NAD27      3301
+NORTH DAKOTA    SOUTH                  2                    NAD27      3302
+OHIO            NORTH                  2                    NAD27      3401
+OHIO            SOUTH                  2                    NAD27      3402
+OKLAHOMA        NORTH                  2                    NAD27      3501
+OKLAHOMA        SOUTH                  2                    NAD27      3502
+OREGON          NORTH                  2                    NAD27      3601
+OREGON          SOUTH                  2                    NAD27      3602
+PENNSYLVANIA    NORTH                  2                    NAD27      3701
+PENNSYLVANIA    SOUTH                  2                    NAD27      3702
+RHODE ISLAND    ---                    1                    NAD27      3800
+SOUTH CAROLINA  NORTH                  2                    NAD27      3901
+SOUTH CAROLINA  SOUTH                  2                    NAD27      3902
+SOUTH DAKOTA    NORTH                  2                    NAD27      4001
+SOUTH DAKOTA    SOUTH                  2                    NAD27      4002
+TENNESSEE       ---                    2                    NAD27      4100
+TEXAS           NORTH                  2                    NAD27      4201
+TEXAS           NORTH CENTRAL          2                    NAD27      4202
+TEXAS           CENTRAL                2                    NAD27      4203
+TEXAS           SOUTH CENTRAL          2                    NAD27      4204
+TEXAS           SOUTH                  2                    NAD27      4205
+UTAH            NORTH                  2                    NAD27      4301
+UTAH            CENTRAL                2                    NAD27      4302
+UTAH            SOUTH                  2                    NAD27      4303
+VERMONT         ---                    1                    NAD27      4400
+VIRGINIA        NORTH                  2                    NAD27      4501
+VIRGINIA        SOUTH                  2                    NAD27      4502
+WASHINGTON      NORTH                  2                    NAD27      4601
+WASHINGTON      SOUTH                  2                    NAD27      4602
+WEST VIRGINIA   NORTH                  2                    NAD27      4701
+WEST VIRGINIA   SOUTH                  2                    NAD27      4702
+WISCONSIN       NORTH                  2                    NAD27      4801
+WISCONSIN       CENTRAL                2                    NAD27      4802
+WISCONSIN       SOUTH                  2                    NAD27      4803
+WYOMING         EAST                   1                    NAD27      4901
+WYOMING         EAST CENTRAL           1                    NAD27      4902
+WYOMING         WEST CENTRAL           1                    NAD27      4903
+WYOMING         WEST                   1                    NAD27      4904
+ALASKA          ZONE NO. 1             4                    NAD27      5001
+ALASKA          ZONE NO. 2             1                    NAD27      5002
+ALASKA          ZONE NO. 3             1                    NAD27      5003
+ALASKA          ZONE NO. 4             1                    NAD27      5004
+ALASKA          ZONE NO. 5             1                    NAD27      5005
+ALASKA          ZONE NO. 6             1                    NAD27      5006
+ALASKA          ZONE NO. 7             1                    NAD27      5007
+ALASKA          ZONE NO. 8             1                    NAD27      5008
+ALASKA          ZONE NO. 9             1                    NAD27      5009
+PUERTO RICO AND VIRGIN ISLANDS         2                    NAD27      5201
+VIRGIN ISLANDS  ST. CROIX              2                    NAD27      5202
+GUAM ISLAND                            3                    NAD27      5400
