@@ -16,8 +16,8 @@ HTMLDIR = $(GDAL_HOME)\html
 PYDIR   =	"D:\Program Files\Python22"
 
 # Uncomment the first for an optimized build or the second for a debug build.
-OPTFLAGS=	/nologo /Ox /MD /GX
-#OPTFLAGS=	/nologo /Zi /GX /Fd$(GDAL_ROOT)\gdal.pdb
+OPTFLAGS=	/nologo /MD /GX /Ox 
+#OPTFLAGS=	/nologo /MD /GX /Zi /Fd$(GDAL_ROOT)\gdal.pdb
 
 # Version number embedded in DLL name. 
 VERSION =	12
