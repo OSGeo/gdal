@@ -85,9 +85,9 @@ const char *pcs = "ProjectionCS";	//<
 const char *norm_proj_param = "Norm_Proj_Param"; //<
 //@}
 
-/** Register DODS' driver with the GDAL driver manager. This C function
-    registers the DODS GDAL driver so that when the library is asked to open
-    up a DODS data source, it can find the DODSDataset::Open function.
+/** Register OPeNDAP' driver with the GDAL driver manager. This C function
+    registers the OPeNDAP GDAL driver so that when the library is asked to
+    open up a DODS data source, it can find the DODSDataset::Open function.
 
     @see DODSDataset::Open */
 void 
@@ -113,16 +113,16 @@ GDALRegister_DODS()
 }
 
 /** Find the variable in the DDS or DataDDS, given its name. This function
-    first looks for the name as given. If that can't be found, it finds the
-    leaf name of a fully qualified name and looks for that. The DAP supports
-    searching for leaf names as a short cut. In this case we're using it
-    because of an odd problem in the responses returned by some servers when
-    they are asked for a single array variable from a Grid. Instead of
-    returning GRID_NAME.ARRAY_NAME, they return just ARRAY_NAME. That's
-    really a bug in the spec (we'll fix it soon). However, it means that if
-    a CE says GRID_NAME.ARRAY_NAME and the code looks only for that, it may
-    not be found because the nesting has been removed and only an array
-    called ARRAY_NAME returned. 
+    first looks for the name as given. If that can't be found, it determines
+    the leaf name of a fully qualified name and looks for that. The DAP
+    supports searching for leaf names as a short cut. In this case we're
+    using it because of an odd problem in the responses returned by some
+    servers when they are asked for a single array variable from a Grid.
+    Instead of returning GRID_NAME.ARRAY_NAME, they return just ARRAY_NAME.
+    That's really a bug in the spec (we'll fix it soon). However, it means
+    that if a CE says GRID_NAME.ARRAY_NAME and the code looks only for that,
+    it may not be found because the nesting has been removed and only an
+    array called ARRAY_NAME returned.
 
     @param dds Look in this DDS object
     @param n Names the variable to find.
@@ -372,7 +372,7 @@ get_geo_ref_error(const string &var_name, const string &param) throw(Error)
 }
 
 /** Extract geo-referencing information from the layer. This uses a set of
-    well-know attributes to determine the latitude and longitude of the top,
+    well-known attributes to determine the latitude and longitude of the top,
     bottom, left and right sides of the image. It also uses well-known
     attributes to determine the OGC/WKT string and projection name. If these
     attributes are missing from the dataset, they can be added using the
@@ -489,16 +489,17 @@ DODSDataset::get_geo_info(DAS &das, DDS &dds) throw(Error)
     instance of DODSDataset. 
 
     This assumes Band Numbers use zero-indexing. Also, note that DAP Array
-    index constraints use the starting and ending \e index, so an X offset of
-    4 and a X size of 4 produces a dimension constraint of [4:7], the four
-    elements 4, 5, 6, and 7.
+    index constraints use the starting and ending index numbers and that DAP
+    arrays use zero-based indexing. An X offset of 4 and a X size of 4
+    produces a DAP dimension constraint of [4:7], the four elements 4, 5, 6,
+    7.
 
     @return The constraint expression.
-    @param iXOffset Start at this X element
-    @param iYOffset Start at this Y element
+    @param iXOffset Start at this X element (zero-based indexing).
+    @param iYOffset Start at this Y element (zero-based indexing).
     @param iXSize Extract this many elements on the X axis
     @param iYSize Extract this many elements on the Y axis
-    @param iBandNum Get this band (uses zero-based indexing).
+    @param iBandNum Get this band (uses ones-based indexing).
     @exception Error thrown if this method is called and the instance lacks
     information needed to build the constraint or any of the actual
     parameters are outside the bounds of the values for the variable in this
@@ -508,6 +509,8 @@ DODSDataset::BuildConstraint(int iXOffset, int iYOffset,
 			     int iXSize, int iYSize,
 			     int iBandNum) throw(Error, InternalErr)
 {
+    // DAP indexing is zero-based, but Raster{X,Y}Size is the number of
+    // elements, not the maximum index value.
     if (iXOffset + iXSize - 1 > nRasterXSize
 	|| iYOffset + iYSize - 1 > nRasterYSize)
 	throw Error(string("While processing a request for '")
@@ -530,7 +533,7 @@ DODSDataset::BuildConstraint(int iXOffset, int iYOffset,
 	    oss << "[" << i->start << "]";
 	    break;
 	  case dim_spec::range: 
-	    oss << "[" << i->start + iBandNum << "]";
+	    oss << "[" << i->start + iBandNum-1 << "]";
 	    break;
 	  case dim_spec::unknown: 
 	    throw InternalErr(__FILE__, __LINE__,
@@ -564,7 +567,7 @@ DODSDataset::BuildConstraint(int iBandNum) throw(Error, InternalErr)
 	    oss << "[" << i->start << "]";
 	    break;
 	  case dim_spec::range: 
-	    oss << "[" << i->start + iBandNum << "]";
+	    oss << "[" << i->start + iBandNum-1 << "]";
 	    break;
 	  case dim_spec::unknown: 
 	    throw InternalErr(__FILE__, __LINE__,
@@ -577,19 +580,76 @@ bracket sub-expressions could not be parsed."); break;
     return oss.str();
 }
 
-/** This method is the generic DODS driver's open routine. The GDALOpenInfo
-    parameter contains the fully constrained URL for a DODS Data source.
-    Currently the constraint associated with this URL must list exactly one
-    array variable in the dataset. The class creates a virtual connection to
-    a DODS dataset and reads that dataset's (constrained) DDS.
+/** Read the raster associated with a specific band number into a buffer.
+    This method reads an Array or Grid variable from an OPeNDAP server and
+    dumps the bytes into the buffer <tt>pImage</tt>. It knows how to read
+    just a portion of the image using the offset and size parameters.
 
-    To read in the data in a Grid, use the dot operator to access the Array
-    component of the Grid. 
+    @note The caller must allocate sufficient memory to <tt>pImage</tt>
+    before calling this method.
+
+    @param iXOffset Use this as the starting index for the horizontal
+    dimenstion. 
+    @param iYOffset Use that as the starting index for the verticle
+    dimension. 
+    @param iXSize number of pixels to read.
+    @param iYSize number of pixels to read.
+    @param iBandNum For multiband images, access this band. Uses one-based
+    indexing. 
+    @param pImage Dump the bytes here. 
+    @see GetDatatype() to determine how many bytes each pixel will hold.
+    <tt>pImage</tt> should reference <tt>iXSize</tt> * <tt>iYSize</tt> * the
+    width of the type returned by GetDatatype().
+*/
+void
+DODSDataset::GetRaster(int iXOffset, int iYOffset, int iXSize, int iYSize,
+		       int iBandNum, void *pImage) throw(Error, InternalErr)
+{
+    // Grab the DataDDS
+    AISConnect *poUrl = GetConnect();
+    DataDDS data;
+    poUrl->request_data(data, BuildConstraint(iXOffset, iYOffset, 
+					      iXSize, iYSize, iBandNum));
+
+    // Get the Array from it. We know there's only one var, et c., already.
+    BaseType *poBt = get_variable(data, GetVarName());
+    if (!poBt)
+	throw Error(string("I could not read the variable '")
+		    + GetVarName()
+		    + string("' from the data source at:\n")
+		    + GetUrl());
+    Array *poA;
+    switch (poBt->type()) {
+      case dods_grid_c:
+	poA = dynamic_cast<Array*>(dynamic_cast<Grid*>(poBt)->array_var());
+	break;
+
+      case dods_array_c:
+	poA = dynamic_cast<Array *>(poBt);
+	break;
+
+      default:
+	throw InternalErr("Expected an Array or Grid variable!");
+    }
+	
+	
+    poA->buf2val(&pImage);	// !Suck the data out of the Array!
+}
+
+/** This method is the generic OPeNDAP driver's open routine. The
+    GDALOpenInfo parameter contains the fully constrained URL for a OPeNDAP
+    data source. Currently the constraint associated with this URL must list
+    exactly one array variable in the dataset. The class creates a virtual
+    connection to a OPeNDAP data source and reads that data source's
+    (constrained) DDS.
 
     @param poOpenInfo A pointer to a GDALOpenInfo object. See the definition
-    in gdal_priv.h. Currently we use only the pszFilename, which holds the
+    in gdal_priv.h. Currently we use only the pszFilename, which holds a
     specially constrained URL for the dataset, and the eAccess field, which
-    should be GA_ReadOnly (see gdal.h). */
+    should be GA_ReadOnly (see gdal.h). 
+    @see The documentation that comes with the driver for information about
+    OPeNDAP URLs, data sources and configuration of data sources for use with
+    this driver. */
 GDALDataset *
 DODSDataset::Open(GDALOpenInfo *poOpenInfo)
 {
@@ -644,6 +704,31 @@ DODSDataset::Open(GDALOpenInfo *poOpenInfo)
     return poDS;
 }
 
+#if 0
+/** This specialization of GDALDataset::IRasterIO() reads a raster from an
+    OPeNDAP server. The default implementation passes the read off to
+    GDALRasterBand::IRasterIO(). We implement the read here because future
+    versions of MapServer will combine requests for multiple bands using this
+    interface and we (OPeNDAP) can take advantage of that. Note that
+    DODSRasterBand::IRasterIO() is implemented to call \e this method; the
+    oposite of the default versions of th two methods.
+
+    @note Optimize to use OPeNDAP's sub-sampling.
+    @note Optimize to perform read-aheads when callers access data using
+    scanline access mode.
+
+    @see GDALDataset::IRasterIO() */
+CPLErr 
+DODSDataset::IRasterIO(GDALRWFlag eRWFlag,
+		       int nXOff, int nYOff, int nXSize, int nYSize,
+		       void * pData, int nBufXSize, int nBufYSize,
+		       GDALDataType eBufType, 
+		       int nBandCount, int *panBandMap,
+		       int nPixelSpace, int nLineSpace, int nBandSpace)
+{
+}    
+#endif
+
 /** @see GDALDataset::GetGeoTransform() */
 CPLErr 
 DODSDataset::GetGeoTransform( double * padfTransform )
@@ -667,7 +752,11 @@ DODSDataset::GetProjectionRef()
     return d_oWKT.c_str();
 }
 
-/** Build an instance for the gien band
+////////////////////////////////////////////////////////////////////////////
+//
+// DODSRasterBand implementation follows.
+
+/** Build an instance for the give band
 
     @param DS The DODSDataset instance for the collection of rasters
     @param band_num The band. Uses ones-based indexing. */
@@ -680,6 +769,194 @@ DODSRasterBand::DODSRasterBand(DODSDataset *DS, int band_num)
 
     nBlockXSize = poDS->GetRasterXSize();
     nBlockYSize = poDS->GetRasterYSize();
+}
+
+/** A specialization of the protected method GDALRasterBand::IRasterIO().
+    This version knows how to read from OPeNDAP servers. It can efficiently
+    read parts of rasters (Arrays and Grids) and can use the DAP's
+    sub-sampling capabilities.
+
+    Because the DAP does not support writing to remote data sources, this
+    implementation of IRaserIO() returns an error if the caller asks it to
+    write data.
+
+    @note This is implementation is based on Frank's version of the method
+    from the source file gdalrasterband.cpp.
+    @param eRWFlag Read/Write flag. Since the DAP does not support writing,
+    using any value other than GF_Read is an error. 
+    @param nXOff The pixel offset to the top left corner of the region of the
+    band to be accessed. This would be zero to start from the left side.
+    @param nYOff The line offset to the top left corner of the region of the
+    band to be accessed. This would be zero to start from the top. 
+    @param nXSize The width of the region of the band to be accessed in pixels.
+    @param nYSize The height of the region of the band to be accessed in lines.
+    @param pData  The buffer into which the data should be read, or from
+    which it should be written. This buffer must contain at least nBufXSize *
+    nBufYSize words of type eBufType. It is organized in left to right, top
+    to bottom pixel order. Spacing is controlled by the nPixelSpace, and
+    nLineSpace parameters. 
+    @param nBufXSize The width of the buffer image into which the desired
+    region is to be read, or from which it is to be written. 
+    @param nBufYSize The height of the buffer image into which the desired
+    region is to be read, or from which it is to be written. 
+    @param eBufType The type of the pixel values in the pData data buffer.
+    The pixel values will automatically be translated to/from the
+    GDALRasterBand data type as needed. 
+    @param nPixelSpace The byte offset from the start of one pixel value in
+    pData to the start of the next pixel value within a scanline. If
+    defaulted (0) the size of the datatype eBufType is used. 
+    @param nLineSpace The byte offset from the start of one scanline in pData
+    to the start of the next. If defaulted the size of the datatype eBufType
+    * nBufXSize is used.
+
+    @return Returns CE_Failure if the access fails, otherwise CE_None. */ 
+CPLErr 
+DODSRasterBand::IRasterIO(GDALRWFlag eRWFlag,
+			  int nXOff, int nYOff, int nXSize, int nYSize,
+			  void * pData, int nBufXSize, int nBufYSize,
+			  GDALDataType eBufType,
+			  int nPixelSpace, int nLineSpace)
+{
+    // Grab the DODSDataset object pointer
+    DODSDataset *poDODS = dynamic_cast<DODSDataset*>(poDS);
+
+    // NB: The parameters nPixelSpace and nLineSpace are for data that are
+    // pixel- and line-interlaced. The DAP does not normally externalize data
+    // that way, even if it is stored.
+
+    int nBufDataSize = GDALGetDataTypeSize( eBufType ) / 8;
+    if (nPixelSpace != nBufDataSize || nLineSpace != nPixelSpace * nBufXSize) {
+        CPLError(CE_Failure, CPLE_AppDefined, 
+"nPixelSpace or nLineSpace are invalid for an OPeNDAP data\n\
+source. These data sources should never provide pixel- or\n\
+band-interleaved rasters. Reading data using values anything\n\
+other than the defaults for these parameters is not supported\n\
+by this driver.");
+	return CE_Failure;
+    }
+
+    // If the nXOff and nXSize are too big, it's an error. Same for the Y
+    // dimension.
+
+    if (nXOff + nXSize > poDODS->GetRasterXSize() 
+	|| nYOff + nYSize > poDODS->GetRasterYSize()) {
+        CPLError(CE_Failure, CPLE_AppDefined, 
+"The values given for either the X or Y Size and/or Offset exceeded\n\
+the raster size.");
+	return CE_Failure;
+    }
+
+    // If the buffer and the raster are the same data type and the size of
+    // the buffer matches the size of the request, read directly into the
+    // buffer (pData).
+
+    if (eDataType == eBufType
+	&& nXSize == nBufXSize
+	&& nYSize == nBufYSize) {
+	try {
+	    DBG(cerr << "GetRaster(" << nXOff << ", " << nYOff << ", " 
+		<< nXSize << ", " << nYSize << ", " << nBand << "...)" 
+		<< endl);
+	    poDODS->GetRaster(nXOff, nYOff, nXSize, nYSize, nBand, pData);
+	}
+	catch (Error &e) {
+	    CPLError(CE_Failure, CPLE_AppDefined, 
+		     e.get_error_message().c_str());
+	    return CE_Failure;
+	}
+
+	return CE_None;
+    }
+
+    // OK, what if the request and the buffer sizes are the same but the
+    // types differ?
+
+    int nBandDataSize = GDALGetDataTypeSize( eDataType ) / 8;
+    if (nXSize == nBufXSize
+	&& nYSize == nBufYSize) {
+	char *pabLocal = new char[nBandDataSize * nXSize * nYSize];
+	try {
+	    poDODS->GetRaster(nXOff, nYOff, nXSize, nYSize, nBand, pabLocal);
+
+	    GDALCopyWords(static_cast<void*>(pabLocal), eDataType, 
+			  nBandDataSize,
+			  pData, eBufType, nBufDataSize,
+			  nBufXSize * nBufYSize);
+	    delete[] pabLocal;
+	}
+	catch (Error &e) {
+	    CPLError(CE_Failure, CPLE_AppDefined, 
+		     e.get_error_message().c_str());
+	    delete[] pabLocal;
+	    return CE_Failure;
+	}
+
+	return CE_None;
+    }
+
+    // This is the most general implementation. This is just about verbatim
+    // from Frank's code.
+
+    // Compute stepping increment.
+    double dfSrcX, dfSrcY, dfSrcXInc, dfSrcYInc;
+    
+    dfSrcXInc = nXSize / (double) nBufXSize;
+    dfSrcYInc = nYSize / (double) nBufYSize;
+
+    // Read the data. OPTIMIZE ME! Use the Increments above to build a
+    // constraint!. 01/16/04 jhrg
+    char *pabLocal = new char[nBandDataSize * nXSize * nYSize];
+    try {
+	poDODS->GetRaster(nXOff, nYOff, nXSize, nYSize, nBand, pabLocal);
+
+	// Loop over buffer computing source locations.
+	int  iSrcY, iBufYOff;
+	for( iBufYOff = 0; iBufYOff < nBufYSize; iBufYOff++ ) {
+	    dfSrcY = (iBufYOff+0.5) * dfSrcYInc;
+	    iSrcY = (int) dfSrcY;
+
+	    int iBufOffset = iBufYOff * nLineSpace;
+
+	    int iSrcX, iBufXOff;
+	    for( iBufXOff = 0; iBufXOff < nBufXSize; iBufXOff++ ) {
+		dfSrcX = (iBufXOff+0.5) * dfSrcXInc;
+            
+		iSrcX = (int) dfSrcX;
+
+		// Copy over this pixel of data.
+		int iSrcOffset = (iSrcX + (iSrcY * nXSize)) * nBandDataSize;
+
+		DBG(cerr << "iSrcOffset: " << iSrcOffset << endl);
+		DBG(cerr << "iBufOffset: " << iBufOffset << endl);
+
+		if( eDataType == eBufType ) {
+		    memcpy( ((GByte *) pData) + iBufOffset,
+			    pabLocal + iSrcOffset, nBandDataSize );
+		}
+		else {
+		    /* type to type conversion ... ouch, this is expensive way
+		       of handling single words */
+		    GDALCopyWords(pabLocal + iSrcOffset, eDataType, 
+				  nBandDataSize,
+				  ((GByte *) pData) + iBufOffset, 
+				  eBufType, nBufDataSize,
+				  1);
+		}
+
+		iBufOffset += nPixelSpace;
+	    }
+	}
+
+	delete[] pabLocal;
+    }
+    catch (Error &e) {
+	CPLError(CE_Failure, CPLE_AppDefined, 
+		 e.get_error_message().c_str());
+	delete[] pabLocal;
+	return CE_Failure;
+    }
+
+    return CE_None;
 }
 
 /** We define a Block to be the entire raster; this method reads the entire
@@ -700,7 +977,7 @@ DODSRasterBand::DODSRasterBand(DODSDataset *DS, int band_num)
     used to build the DODSRasterBand instance could not be found (see
     get_variable()). If successful, returns CE_None. */
 CPLErr 
-DODSRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void * pImage)
+DODSRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
 {
     DODSDataset *poDODS = dynamic_cast<DODSDataset *>(poDS);
 
@@ -709,34 +986,7 @@ DODSRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void * pImage)
 	if (nBlockXOff != 0 || nBlockYOff != 0)
 	    throw InternalErr("Got a non-zero block offset!");
 
-	// Grab the DataDDS
-	AISConnect *poUrl = poDODS->GetConnect();
-	DataDDS data;
-	poUrl->request_data(data, poDODS->BuildConstraint(nBand));
-
-	// Get the Array from it. We know there's only one var, et c. already.
-	BaseType *poBt = get_variable(data, poDODS->GetVarName());
-	if (!poBt)
-	    throw Error(string("I could not read the variable '")
-			+ poDODS->GetVarName()
-			+ string("' from the data source at:\n")
-			+ poDODS->GetUrl());
-	Array *poA;
-	switch (poBt->type()) {
-	  case dods_grid_c:
-	    poA = dynamic_cast<Array*>(dynamic_cast<Grid*>(poBt)->array_var());
-	    break;
-
-	  case dods_array_c:
-	    poA = dynamic_cast<Array *>(poBt);
-	    break;
-
-	  default:
-	    throw InternalErr("Expected an Array variable!");
-	}
-	
-	
-	poA->buf2val(&pImage);	// !Suck the data out of the Array!
+	poDODS->GetRaster(0, 0, nBlockXSize, nBlockYSize, nBand, pImage);
     }
     catch (Error &e) {
         CPLError(CE_Failure, CPLE_AppDefined, e.get_error_message().c_str());
@@ -747,6 +997,16 @@ DODSRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void * pImage)
 }
 
 // $Log$
+// Revision 1.5  2004/01/20 16:35:54  jimg
+// This version of the OPeNDAP driver uses GDALRasterBand::IRasterIO() to read
+// from the remote servers. Using this protected method, it is possible to read
+// portions of an entire raster (the previous version used IReadBlock() which
+// could read only the entire raster). Note that both IRasterIO() and
+// IReadBlock() are specializations of the protected methods from in
+// GDALRasterBand. A better version of this driver would move the implementation
+// into the class DODSDataset so that it could read several bands with one
+// remote access.
+//
 // Revision 1.4  2004/01/08 20:23:28  warmerda
 // allow https datasets as well.
 //
