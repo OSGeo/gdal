@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2004/08/17 15:41:31  warmerda
+ * dont compute extents for wkbNone layers
+ *
  * Revision 1.19  2003/10/09 15:30:07  warmerda
  * added OGRLayer::DeleteFeature() support
  *
@@ -232,9 +235,31 @@ OGRErr OGRLayer::GetExtent(OGREnvelope *psExtent, int bForce )
     OGREnvelope oEnv;
     GBool       bExtentSet = FALSE;
 
+/* -------------------------------------------------------------------- */
+/*      If this layer has a none geometry type, then we can             */
+/*      reasonably assume there are not extents available.              */
+/* -------------------------------------------------------------------- */
+    if( GetLayerDefn()->GetGeomType() == wkbNone )
+    {
+        psExtent->MinX = 0.0;
+        psExtent->MaxX = 0.0;
+        psExtent->MinY = 0.0;
+        psExtent->MaxY = 0.0;
+        
+        return OGRERR_FAILURE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      If not forced, we should avoid having to scan all the           */
+/*      features and just return a failure.                             */
+/* -------------------------------------------------------------------- */
     if( !bForce )
         return OGRERR_FAILURE;
 
+/* -------------------------------------------------------------------- */
+/*      OK, we hate to do this, but go ahead and read through all       */
+/*      the features to collect geometries and build extents.           */
+/* -------------------------------------------------------------------- */
     ResetReading();
     while( (poFeature = GetNextFeature()) != NULL )
     {
