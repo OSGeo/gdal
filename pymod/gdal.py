@@ -29,6 +29,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.38  2003/01/18 22:22:12  gwalter
+# Lengthened strings in GCP serialize function to avoid truncation.
+#
 # Revision 1.37  2002/12/06 16:59:58  gwalter
 # Added serialize() methods to GCP and ColorTable classes.
 #
@@ -270,11 +273,11 @@ class GCP:
     def serialize(self,with_Z=0):
         base = [CXT_Element,'GCP']
         base.append([CXT_Attribute,'Id',[CXT_Text,self.Id]])
-        pixval = '%0.4E' % self.GCPPixel       
-        lineval = '%0.4E' % self.GCPLine
-        xval = '%0.12E' % self.GCPX
-        yval = '%0.12E' % self.GCPY
-        zval = '%0.12E' % self.GCPZ
+        pixval = '%0.15E' % self.GCPPixel       
+        lineval = '%0.15E' % self.GCPLine
+        xval = '%0.15E' % self.GCPX
+        yval = '%0.15E' % self.GCPY
+        zval = '%0.15E' % self.GCPZ
         base.append([CXT_Attribute,'Pixel',[CXT_Text,pixval]])
         base.append([CXT_Attribute,'Line',[CXT_Text,lineval]])
         base.append([CXT_Attribute,'X',[CXT_Text,xval]])
