@@ -59,9 +59,9 @@ dist:	docs
 	mkdir $(DISTDIR)
 	mkdir $(DISTDIR)/html
 	cp html/* $(DISTDIR)/html
-	mkdir $(DISTDIR)/testdata
-	cp testdata/*.* $(DISTDIR)/testdata
-	cp teststream.sh teststream.out $(DISTDIR)
+#	mkdir $(DISTDIR)/testdata
+#	cp testdata/*.* $(DISTDIR)/testdata
+#	cp teststream.sh teststream.out $(DISTDIR)
 	autoconf
 	cp *.cpp *.h configure Makefile.in $(DISTDIR)
 	rm configure
@@ -87,6 +87,5 @@ test:	8211dump
 	    echo "******* Stream 1 Failed *********"; \
 	    diff t1.out teststream.out; \
 	fi
-
 
 install-obj:	$(O_OBJ)
