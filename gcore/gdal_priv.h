@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.37  2002/09/11 14:17:52  warmerda
+ * make SetDescription() and GetDescription() virtual
+ *
  * Revision 1.36  2002/09/04 06:52:05  warmerda
  * added unload driver support to GDALDriver
  *
@@ -176,8 +179,8 @@ class CPL_DLL GDALMajorObject
                         GDALMajorObject();
     virtual            ~GDALMajorObject();
                         
-    const char *        GetDescription() const;
-    void                SetDescription( const char * );
+    virtual const char *GetDescription() const;
+    virtual void        SetDescription( const char * );
 
     virtual char      **GetMetadata( const char * pszDomain = "" );
     virtual CPLErr      SetMetadata( char ** papszMetadata,
