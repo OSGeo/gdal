@@ -25,6 +25,9 @@
  * The GDALDriverManager class from gdal_priv.h.
  * 
  * $Log$
+ * Revision 1.3  1999/10/21 13:24:08  warmerda
+ * Added documentation and C callable functions.
+ *
  * Revision 1.2  1998/12/31 18:53:33  warmerda
  * Add GDALGetDriverByName
  *
@@ -49,6 +52,16 @@ static GDALDriverManager	*poDM = NULL;
 /*      A freestanding function to get the only instance of the         */
 /*      GDALDriverManager.                                              */
 /************************************************************************/
+
+/**
+ * Fetch the global GDAL driver manager.
+ *
+ * This function fetches the pointer to the singleton global driver manager.
+ * If the driver manager doesn't exist it is automatically created.
+ *
+ * @return pointer to the global driver manager.  This should not be able
+ * to fail.
+ */
 
 GDALDriverManager *GetGDALDriverManager()
 
@@ -105,6 +118,14 @@ GDALDriverManager::~GDALDriverManager()
 /*                           GetDriverCount()                           */
 /************************************************************************/
 
+/**
+ * Fetch the number of registered drivers.
+ *
+ * This C analog to this is GDALGetDriverCount().
+ *
+ * @return the number of registered drivers.
+ */
+
 int GDALDriverManager::GetDriverCount()
 
 {
@@ -112,22 +133,70 @@ int GDALDriverManager::GetDriverCount()
 }
 
 /************************************************************************/
+/*                         GDALGetDriverCount()                         */
+/************************************************************************/
+
+int GDALGetDriverCount()
+
+{
+    return GetGDALDriverManager()->GetDriverCount();
+}
+
+/************************************************************************/
 /*                             GetDriver()                              */
 /************************************************************************/
 
-GDALDriver * GDALDriverManager::GetDriver( int i )
+/**
+ * Fetch driver by index.
+ *
+ * This C analog to this is GDALGetDriver().
+ *
+ * @param iDriver the driver index from 0 to GetDriverCount()-1.
+ *
+ * @return the number of registered drivers.
+ */
+
+GDALDriver * GDALDriverManager::GetDriver( int iDriver )
 
 {
-    if( i < 0 || i >= nDrivers )
+    if( iDriver < 0 || iDriver >= nDrivers )
         return NULL;
     else
-        return papoDrivers[i];
+        return papoDrivers[iDriver];
 }
 
+/************************************************************************/
+/*                           GDALGetDriver()                            */
+/************************************************************************/
+
+GDALDriverH GDALGetDriver( int iDriver )
+
+{
+    return (GDALDriverH) GetGDALDriverManager()->GetDriver(iDriver);
+}
 
 /************************************************************************/
 /*                           RegisterDriver()                           */
 /************************************************************************/
+
+/**
+ * Register a driver for use.
+ *
+ * The C analog is GDALRegisterDriver().
+ *
+ * Normally this method is used by format specific C callable registration
+ * entry points such as GDALRegister_GTiff() rather than being called
+ * directly by application level code.
+ *
+ * If this driver (based on the object pointer, not short name) is already
+ * registered, then no change is made, and the index of the existing driver
+ * is returned.  Otherwise the driver list is extended, and the new driver
+ * is added at the end.
+ *
+ * @param poDriver the driver to register.
+ *
+ * @return the index of the new installed driver.
+ */
 
 int GDALDriverManager::RegisterDriver( GDALDriver * poDriver )
 
@@ -165,6 +234,16 @@ int GDALDriverManager::RegisterDriver( GDALDriver * poDriver )
 /*                          DeregisterDriver()                          */
 /************************************************************************/
 
+/**
+ * Deregister the passed driver.
+ *
+ * If the driver isn't found no change is made.
+ *
+ * The C analog is GDALDeregisterDriver().
+ *
+ * @param poDriver the driver to deregister.
+ */
+
 void GDALDriverManager::DeregisterDriver( GDALDriver * poDriver )
 
 {
@@ -188,8 +267,29 @@ void GDALDriverManager::DeregisterDriver( GDALDriver * poDriver )
 }
 
 /************************************************************************/
+/*                        GDALDeregisterDriver()                        */
+/************************************************************************/
+
+void GDALDeregisterDriver( GDALDriverH hDriver )
+
+{
+    GetGDALDriverManager()->DeregisterDriver( (GDALDriver *) hDriver );
+}
+
+
+/************************************************************************/
 /*                          GetDriverByName()                           */
 /************************************************************************/
+
+/**
+ * Fetch a driver based on the short name.
+ *
+ * The C analog is the GDALGetDriverByName() function.
+ *
+ * @param pszName the short name, such as GTiff, being searched for.
+ *
+ * @return the identified driver, or NULL if no match is found.
+ */
 
 GDALDriver * GDALDriverManager::GetDriverByName( const char * pszName )
 
