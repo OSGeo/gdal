@@ -3,7 +3,7 @@
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  The OGRSFDriverRegistrar class implementation.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 1999,  Les Technologies SoftMap Inc.
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2003/03/19 20:37:09  warmerda
+ * added OpenShared() mechanism
+ *
  * Revision 1.9  2003/03/14 02:28:07  danmo
  * Prevent crash if poRegistrar==NULL in OGRGetDriverCount() and OGROpen()
  *
@@ -78,6 +81,11 @@ OGRSFDriverRegistrar::OGRSFDriverRegistrar()
     nDrivers = 0;
     papoDrivers = NULL;
 
+    nOpenDSCount = 0;
+    papszOpenDSRawName = NULL;
+    papoOpenDS = NULL;
+    papoOpenDSDriver = NULL;
+
 /* -------------------------------------------------------------------- */
 /*      We want to push a location to search for data files             */
 /*      supporting GDAL/OGR such as EPSG csv files, S-57 definition     */
@@ -113,6 +121,9 @@ OGRSFDriverRegistrar::~OGRSFDriverRegistrar()
     {
         delete papoDrivers[i];
     }
+
+    CPLFree( papoDrivers );
+    papoDrivers = NULL;
 
     poRegistrar = NULL;
 }
@@ -155,6 +166,8 @@ OGRDataSource *OGRSFDriverRegistrar::Open( const char * pszName,
         {
             if( ppoDriver != NULL )
                 *ppoDriver = poRegistrar->papoDrivers[iDriver];
+
+            poDS->Reference();
             
             return poDS;
         }
@@ -179,6 +192,222 @@ OGRDataSourceH OGROpen( const char *pszName, int bUpdate,
                                   (OGRSFDriver **) pahDriverList );
 
     return NULL;
+}
+
+/************************************************************************/
+/*                             OpenShared()                             */
+/************************************************************************/
+
+OGRDataSource *
+OGRSFDriverRegistrar::OpenShared( const char * pszName, int bUpdate,
+                                  OGRSFDriver ** ppoDriver )
+
+{
+    OGRDataSource       *poDS;
+
+    if( ppoDriver != NULL )
+        *ppoDriver = NULL;
+
+    CPLErrorReset();
+
+/* -------------------------------------------------------------------- */
+/*      First try finding an existing open dataset matching exactly     */
+/*      on the original datasource raw name used to open the            */
+/*      datasource.                                                     */
+/*                                                                      */
+/*      NOTE: It is an error, but currently we ignore the bUpdate,      */
+/*      and return whatever is open even if it is read-only and the     */
+/*      application requested update access.                            */
+/* -------------------------------------------------------------------- */
+    int iDS;
+
+    for( iDS = 0; iDS < nOpenDSCount; iDS++ )
+    {
+        poDS = papoOpenDS[iDS];
+
+        if( strcmp( pszName, papszOpenDSRawName[iDS]) == 0 )
+        {
+            poDS->Reference();
+
+            if( ppoDriver != NULL )
+                *ppoDriver = papoOpenDSDriver[iDS];
+            return poDS;
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      If that doesn't match, try matching on the name returned by     */
+/*      the datasource itself.                                          */
+/* -------------------------------------------------------------------- */
+    for( iDS = 0; iDS < nOpenDSCount; iDS++ )
+    {
+        poDS = papoOpenDS[iDS];
+
+        if( strcmp( pszName, poDS->GetName()) == 0 )
+        {
+            poDS->Reference();
+
+            if( ppoDriver != NULL )
+                *ppoDriver = papoOpenDSDriver[iDS];
+            return poDS;
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      We don't have the datasource.  Open it normally.                */
+/* -------------------------------------------------------------------- */
+    OGRSFDriver *poTempDriver = NULL;
+
+    poDS = Open( pszName, bUpdate, &poTempDriver );
+
+    if( poDS == NULL )
+        return poDS;
+
+/* -------------------------------------------------------------------- */
+/*      We don't have this datasource already.  Grow our list to        */
+/*      hold the new datasource.                                        */
+/* -------------------------------------------------------------------- */
+    papszOpenDSRawName = (char **) 
+        CPLRealloc( papszOpenDSRawName, sizeof(char*) * (nOpenDSCount+1) );
+    
+    papoOpenDS = (OGRDataSource **) 
+        CPLRealloc( papoOpenDS, sizeof(char*) * (nOpenDSCount+1) );
+    
+    papoOpenDSDriver = (OGRSFDriver **) 
+        CPLRealloc( papoOpenDSDriver, sizeof(char*) * (nOpenDSCount+1) );
+
+
+    papszOpenDSRawName[nOpenDSCount] = CPLStrdup( pszName );
+    papoOpenDS[nOpenDSCount] = poDS;
+    papoOpenDSDriver[nOpenDSCount] = poTempDriver;
+
+    nOpenDSCount++;
+
+    if( ppoDriver != NULL )
+        *ppoDriver = poTempDriver;
+
+    return poDS;
+}
+
+/************************************************************************/
+/*                           OGROpenShared()                            */
+/************************************************************************/
+
+OGRDataSourceH OGROpenShared( const char *pszName, int bUpdate,
+                              OGRSFDriverH *pahDriverList )
+
+{
+    OGRSFDriverRegistrar::GetRegistrar();
+    return poRegistrar->OpenShared( pszName, bUpdate, 
+                                    (OGRSFDriver **) pahDriverList );
+}
+
+/************************************************************************/
+/*                         ReleaseDataSource()                          */
+/************************************************************************/
+
+OGRErr OGRSFDriverRegistrar::ReleaseDataSource( OGRDataSource * poDS )
+
+{
+    int iDS;
+
+    for( iDS = 0; iDS < nOpenDSCount; iDS++ )
+    {
+        if( poDS == papoOpenDS[iDS] )
+            break;
+    }
+
+    if( iDS == nOpenDSCount )
+    {
+        delete poDS;
+        return OGRERR_FAILURE;
+    }
+
+    if( poDS->GetRefCount() > 0 )
+        poDS->Dereference();
+
+    if( poDS->GetRefCount() > 0 )
+        return OGRERR_NONE;
+
+    if( poDS->GetSummaryRefCount() > 0 )
+    {
+        CPLDebug( "OGR", 
+                  "OGRSFDriverRegistrar::ReleaseDataSource(%s)\n"
+                  "Datasource reference count is now zero, but some layers\n"
+                  "are still referenced ... not closing datasource.",
+                  poDS->GetName() );
+        return OGRERR_FAILURE;
+    }
+
+    delete poDS;
+
+    CPLFree( papszOpenDSRawName[iDS] );
+    memmove( papszOpenDSRawName + iDS, papszOpenDSRawName + iDS + 1, 
+             sizeof(char *) * (nOpenDSCount - iDS - 1) );
+    memmove( papoOpenDS + iDS, papoOpenDS + iDS + 1, 
+             sizeof(char *) * (nOpenDSCount - iDS - 1) );
+    memmove( papoOpenDSDriver + iDS, papoOpenDSDriver + iDS + 1, 
+             sizeof(char *) * (nOpenDSCount - iDS - 1) );
+
+    nOpenDSCount--;
+
+    if( nOpenDSCount == 0 )
+    {
+        CPLFree( papszOpenDSRawName );
+        papszOpenDSRawName = NULL;
+        CPLFree( papoOpenDS );
+        papoOpenDS = NULL;
+        CPLFree( papoOpenDSDriver );
+        papoOpenDSDriver = NULL;
+    }
+
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                        OGRReleaseDataSource()                        */
+/************************************************************************/
+
+OGRErr OGRReleaseDataSource( OGRDataSourceH hDS )
+
+{
+    OGRSFDriverRegistrar::GetRegistrar();
+    return poRegistrar->ReleaseDataSource((OGRDataSource *) hDS);
+}
+
+/************************************************************************/
+/*                         OGRGetOpenDSCount()                          */
+/************************************************************************/
+
+int OGRGetOpenDSCount()
+
+{
+    OGRSFDriverRegistrar::GetRegistrar();
+    return poRegistrar->GetOpenDSCount();
+}
+
+/************************************************************************/
+/*                             GetOpenDS()                              */
+/************************************************************************/
+
+OGRDataSource *OGRSFDriverRegistrar::GetOpenDS( int iDS )
+
+{
+    if( iDS < 0 || iDS >= nOpenDSCount )
+        return NULL;
+    else
+        return papoOpenDS[iDS];
+}
+
+/************************************************************************/
+/*                            OGRGetOpenDS()                            */
+/************************************************************************/
+
+OGRDataSourceH OGRGetOpenDS( int iDS )
+
+{
+    OGRSFDriverRegistrar::GetRegistrar();
+    return (OGRDataSourceH) poRegistrar->GetOpenDS( iDS );
 }
 
 /************************************************************************/
