@@ -28,6 +28,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.6  2003/06/26 19:42:31  warmerda
+ * Was starting a new feature in the middle of geometry, see place.xml
+ *
  * Revision 1.5  2003/05/21 03:48:35  warmerda
  * Expand tabs
  *
@@ -104,15 +107,6 @@ void GMLHandler::startElement(const XMLCh* const    uri,
     }
 
 /* -------------------------------------------------------------------- */
-/*      Is it a feature?  If so push a whole new state, and return.     */
-/* -------------------------------------------------------------------- */
-    if( m_poReader->IsFeatureElement( szElementName ) )
-    {
-        m_poReader->PushFeature( szElementName, attrs );
-        return;
-    }
-
-/* -------------------------------------------------------------------- */
 /*      If we are collecting geometry, or if we determine this is a     */
 /*      geometry element then append to the geometry info.              */
 /* -------------------------------------------------------------------- */
@@ -142,6 +136,15 @@ void GMLHandler::startElement(const XMLCh* const    uri,
         strcat( m_pszGeometry+nGLen+nLNLen, ">" );
     }
     
+/* -------------------------------------------------------------------- */
+/*      Is it a feature?  If so push a whole new state, and return.     */
+/* -------------------------------------------------------------------- */
+    else if( m_poReader->IsFeatureElement( szElementName ) )
+    {
+        m_poReader->PushFeature( szElementName, attrs );
+        return;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      If it is (or at least potentially is) a simple attribute,       */
 /*      then start collecting it.                                       */
