@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2004/02/19 13:58:26  warmerda
+ * complete extra_containers support for grids
+ *
  * Revision 1.5  2004/02/17 18:47:05  warmerda
  * added geometry support
  *
@@ -225,10 +228,33 @@ public:
     int  iLastValue;
 };
 
+class OGRDODSArrayRef
+{
+public:
+    OGRDODSArrayRef() { 
+        pszName = NULL;
+        iFieldIndex = -1;
+        poArray = NULL;
+        pRawData = NULL;
+            }
+    ~OGRDODSArrayRef() {
+        CPLFree( pszName );
+        CPLFree( pRawData );
+    }
+
+    char *pszName;
+    int   iFieldIndex;
+    Array *poArray;
+    void  *pRawData;
+};
+
 class OGRDODSGridLayer : public OGRDODSLayer
 {
-    Array              *poTargetArray;
     Grid               *poTargetGrid; // NULL if simple array used.
+    Array              *poTargetArray;
+
+    int                 nArrayRefCount;
+    OGRDODSArrayRef    *paoArrayRefs;  // includes poTargetArray.
 
     OGRDODSFieldDefn    oXField;
     OGRDODSFieldDefn    oYField;
