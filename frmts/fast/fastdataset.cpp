@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.5  2002/10/04 16:06:06  dron
+ * Some redundancy removed.
+ *
  * Revision 1.4  2002/10/04 12:33:02  dron
  * Added calibration coefficients extraction.
  *
@@ -73,7 +76,6 @@ class FASTDataset : public GDALDataset
 
     FILE	*fpHeader;
     FILE	*fpChannels[6];
-    char	*pszDirname;
     GDALDataType eDataType;
 
     void	ComputeGeoref();
@@ -134,7 +136,7 @@ FASTDataset::FASTDataset()
 
 {
     fpHeader = NULL;
-    pszProjection = "";
+    pszProjection = NULL;
     nBands = 0;
 }
 
@@ -146,11 +148,12 @@ FASTDataset::~FASTDataset()
 
 {
     int i;
+    if ( pszProjection )
+	CPLFree( pszProjection );
     for ( i = 0; i < nBands; i++ )
 	VSIFClose( fpChannels[i] );
     if( fpHeader != NULL )
         VSIFClose( fpHeader );
-    CPLFree( pszDirname );
 }
 
 /************************************************************************/
@@ -182,8 +185,6 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
     int		i;
-    
-    char        *pszPrefixName = (char *)CPLMalloc(23);
 	
     if( poOpenInfo->fp == NULL ||
             strlen(poOpenInfo->pszFilename) < FAST_FILENAME_SIZE )
@@ -199,20 +200,17 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
 	!EQUALN((const char *) poOpenInfo->pabyHeader + 183, " LOCATION =", 11) )
         return NULL;
     
-    strncpy( pszPrefixName, poOpenInfo->pszFilename +
-	    strlen(poOpenInfo->pszFilename) - FAST_FILENAME_SIZE, 22);
-    pszPrefixName[22] = '\0';
-	
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
     FASTDataset	*poDS;
+    char	*pszDirname;
 
     poDS = new FASTDataset();
 
     poDS->fpHeader = poOpenInfo->fp;
     poOpenInfo->fp = NULL;
-    poDS->pszDirname = CPLStrdup( CPLGetDirname( poOpenInfo->pszFilename ) );
+    pszDirname = CPLStrdup( CPLGetDirname( poOpenInfo->pszFilename ) );
     
 /* -------------------------------------------------------------------- */
 /*      Read the administrative header.                                 */
@@ -230,7 +228,7 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
     if ( pszHeader[1130] != ' ' )
     {
 	memcpy( pszTempName, pszHeader + 1130, FAST_FILENAME_SIZE );
-	pszChannelFilename = CPLFormFilename( poDS->pszDirname, pszTempName, NULL );
+	pszChannelFilename = CPLFormFilename( pszDirname, pszTempName, NULL );
         poDS->fpChannels[poDS->nBands] = VSIFOpen( pszChannelFilename, "rb" );
 	if ( poDS->fpChannels[poDS->nBands] )
 	    poDS->nBands++;
@@ -238,8 +236,7 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
     if ( pszHeader[1169] != ' ' )
     {
 	memcpy( pszTempName, pszHeader + 1169, FAST_FILENAME_SIZE );
-	pszChannelFilename =
-	    CPLStrdup( CPLFormFilename( poDS->pszDirname, pszTempName, NULL ) );
+	pszChannelFilename = CPLFormFilename( pszDirname, pszTempName, NULL );
 	poDS->fpChannels[poDS->nBands] = VSIFOpen( pszChannelFilename, "rb" );
 	if ( poDS->fpChannels[poDS->nBands] )
 	    poDS->nBands++;
@@ -247,8 +244,7 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
     if ( pszHeader[1210] != ' ' )
     {
 	memcpy( pszTempName, pszHeader + 1210, FAST_FILENAME_SIZE );
-	pszChannelFilename =
-	    CPLStrdup( CPLFormFilename( poDS->pszDirname, pszTempName, NULL ) );
+	pszChannelFilename = CPLFormFilename( pszDirname, pszTempName, NULL );
         poDS->fpChannels[poDS->nBands] = VSIFOpen( pszChannelFilename, "rb" );
 	if ( poDS->fpChannels[poDS->nBands] )
 	    poDS->nBands++;
@@ -256,8 +252,7 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
     if ( pszHeader[1249] != ' ' )
     {
 	memcpy( pszTempName, pszHeader + 1249, FAST_FILENAME_SIZE );
-	pszChannelFilename =
-	    CPLStrdup( CPLFormFilename( poDS->pszDirname, pszTempName, NULL ) );
+	pszChannelFilename = CPLFormFilename( pszDirname, pszTempName, NULL );
         poDS->fpChannels[poDS->nBands] = VSIFOpen( pszChannelFilename, "rb" );
 	if ( poDS->fpChannels[poDS->nBands] )
 	    poDS->nBands++;
@@ -265,8 +260,7 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
     if ( pszHeader[1290] != ' ' )
     {
 	memcpy( pszTempName, pszHeader + 1290, FAST_FILENAME_SIZE );
-	pszChannelFilename =
-	    CPLStrdup( CPLFormFilename( poDS->pszDirname, pszTempName, NULL ) );
+	pszChannelFilename = CPLFormFilename( pszDirname, pszTempName, NULL );
         poDS->fpChannels[poDS->nBands] = VSIFOpen( pszChannelFilename, "rb" );
 	if ( poDS->fpChannels[poDS->nBands] )
 	    poDS->nBands++;
@@ -274,8 +268,7 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
     if ( pszHeader[1329] != ' ' )
     {
 	memcpy( pszTempName, pszHeader + 1329, FAST_FILENAME_SIZE );
-	pszChannelFilename =
-	    CPLStrdup( CPLFormFilename( poDS->pszDirname, pszTempName, NULL ) );
+	pszChannelFilename = CPLFormFilename( pszDirname, pszTempName, NULL );
         poDS->fpChannels[poDS->nBands] = VSIFOpen( pszChannelFilename, "rb" );
 	if ( poDS->fpChannels[poDS->nBands] )
 	    poDS->nBands++;
@@ -361,7 +354,7 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->SetBand( i, new FASTRasterBand( poDS, i, poDS->fpChannels[i - 1],
 	    0, 1, poDS->nRasterXSize, poDS->eDataType, TRUE));
 
-    CPLFree( pszPrefixName );
+    CPLFree( pszDirname );
     CPLFree( pszHeader );
 
     return( poDS );
