@@ -35,6 +35,9 @@
  * of the GDAL core, but dependent on the Common Portability Library.
  *
  * $Log$
+ * Revision 1.25  2003/03/25 11:13:02  dron
+ * Handle path properly in HFADelete().
+ *
  * Revision 1.24  2003/03/18 21:05:31  dron
  * Added HFARemove() and HFADelete() functions.
  *
@@ -466,7 +469,7 @@ CPLErr HFADelete( const char *pszFilename )
         const char *pszRawFilename =
             poDMS->GetStringField( "fileName.string" );
         
-        HFARemove( pszRawFilename );
+        HFARemove( CPLFormFilename( psInfo->pszPath, pszRawFilename, NULL ) );
     }
 
     HFAClose( psInfo );
