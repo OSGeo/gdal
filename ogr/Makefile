@@ -17,12 +17,13 @@ OBJ_OGR	=	ogrgeometryfactory.obj ogrpoint.obj ogrcurve.obj \
 		ogrlinestring.obj ogrpolygon.obj ogrlinearring.obj \
 		ogrutils.obj ogrgeometry.obj ogrgeometrycollection.obj \
 		ogrmultipolygon.obj ogrmultilinestring.obj \
-                ogrmultipoint.obj
+                ogrmultipoint.obj ogrfeature.obj ogrfeaturedefn.obj \
+		ogrfielddefn.obj 
 
 OBJ_OLEDB =	oledb_sup.obj oledbsuprowset.obj oledb_sf.obj \
 		sfcenumerator.obj sfcdatasource.obj sfctable.obj
 
-default:        test1.exe sfdump.exe shape2ogr.obj sfcdump.exe
+default:        test1.exe sfdump.exe shape2ogr.obj sfcdump.exe test2.exe
 
 geometryidl.h: geometryidl.idl spatialreferenceidl.h
 	midl geometryidl.idl
@@ -38,6 +39,12 @@ sfcdump.exe:	geometryidl.h sfcdump.obj $(OBJ_OLEDB) $(OBJ_OGR)
 
 test1.exe:	test1.obj $(OBJ_OGR) 
 	cl test1.obj $(OBJ_OGR) $(ALL_LIBS)
+
+test2.exe:	test2.obj $(OBJ_OGR) shape2ogr.obj
+	cl /Zi test2.obj $(OBJ_OGR) shape2ogr.obj \
+		..\frmts\shapelib\shpopen.obj \
+		..\frmts\shapelib\dbfopen.obj \
+			$(ALL_LIBS)
 
 clean:
 	del *.obj
