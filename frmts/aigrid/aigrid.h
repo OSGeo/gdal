@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  1999/08/12 19:10:54  warmerda
+ * added ESRI_GRID_NO_DATA
+ *
  * Revision 1.3  1999/04/21 16:51:30  warmerda
  * fixed up floating point support
  *
@@ -47,6 +50,8 @@
 CPL_C_START
 
 #define GRID_NO_DATA 65536
+
+#define ESRI_GRID_NO_DATA -2147483647
 
 /* ==================================================================== */
 /*      Grid Instance                                                   */
