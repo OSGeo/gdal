@@ -89,4 +89,4 @@ test:	8211dump
 	fi
 
 
-install-obj:	$(ISOLIB) $(O_OBJ)
+install-obj:	$(O_OBJ)
