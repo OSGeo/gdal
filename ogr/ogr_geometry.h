@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.52  2005/02/22 12:48:09  fwarmerdam
+ * added OGRGeometryFactory::haveGEOS()
+ *
  * Revision 1.51  2005/02/22 12:37:26  fwarmerdam
  * rename Equal/Intersect to Equals/Intersects
  *
@@ -737,6 +740,8 @@ class CPL_DLL OGRGeometryFactory
     static OGRGeometry * forceToMultiLineString( OGRGeometry * );
 
     static geos::GeometryFactory *getGEOSGeometryFactory();
+
+    static int haveGEOS();
 
 };
 

@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.23  2005/02/22 12:48:09  fwarmerdam
+ * added OGRGeometryFactory::haveGEOS()
+ *
  * Revision 1.22  2004/08/20 21:21:28  warmerda
  * added support for managing a persistent geos::GeometryFactory
  *
@@ -855,5 +858,28 @@ geos::GeometryFactory *OGRGeometryFactory::getGEOSGeometryFactory()
 
     return poSavedFactory;
 #endif /* HAVE_GEOS */
+}
+
+/************************************************************************/
+/*                              haveGEOS()                              */
+/************************************************************************/
+
+/**
+ * Test if GEOS enabled.
+ *
+ * This static method returns TRUE if GEOS support is built into OGR,
+ * otherwise it returns FALSE.
+ *
+ * @return TRUE if available, otherwise FALSE.
+ */
+
+int OGRGeometryFactor::haveGEOS()
+
+{
+#ifndef HAVE_GEOS 
+    return FALSE;
+#else
+    return TRUE;
+#endif
 }
 
