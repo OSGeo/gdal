@@ -309,8 +309,9 @@ elif test "$with_jpeg" = "yes" -o "$with_jpeg" = "" ; then
     AC_MSG_CHECKING([for width_in_blocks in jpeglib.h])
 
     rm -f conftest.c
+    echo '#include <stdio.h>' >> conftest.c
     echo '#include "jpeglib.h"' >> conftest.c
-    echo 'int main() { jpeg_component_info *compptr=0; int i; i = comptr->width_in_blocks; }' >> conftest.c
+    echo 'int main() { jpeg_component_info *comptr=0; int i; i = comptr->width_in_blocks; }' >> conftest.c
     if test -z "`${CC} -o conftest conftest.c 2>&1`" ; then
       AC_MSG_RESULT([yes])
     else
