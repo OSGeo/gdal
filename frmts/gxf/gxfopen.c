@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2000/11/16 14:55:55  warmerda
+ * ensure correct operation if no title available
+ *
  * Revision 1.8  2000/07/28 16:33:07  warmerda
  * Fixed mixup between RawXSize and RawYSize in GXFGetRawScanline().
  * See http://bugzilla.remotesensing.org/show_bug.cgi?id=5
@@ -205,6 +208,7 @@ GXFHandle GXFOpen( const char * pszFilename )
     psGXF->dfSetDummyTo = -1e12;
 
     psGXF->dfUnitToMeter = 1.0;
+    psGXF->pszTitle = VSIStrdup("");
     
 /* -------------------------------------------------------------------- */
 /*      Read the header, one line at a time.                            */
@@ -213,6 +217,7 @@ GXFHandle GXFOpen( const char * pszFilename )
     {
         if( EQUALN(szTitle,"#TITL",5) )
         {
+            CPLFree( psGXF->pszTitle );
             psGXF->pszTitle = CPLStrdup( papszList[0] );
         }
         else if( EQUALN(szTitle,"#POIN",5) )
