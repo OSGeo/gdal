@@ -25,6 +25,9 @@
  * Main format registration function.
  * 
  * $Log$
+ * Revision 1.42  2002/05/08 16:34:26  dron
+ * NOAA Polar Orbiter Dataset reader added
+ *
  * Revision 1.41  2002/04/12 20:19:25  warmerda
  * added xpm
  *
@@ -313,5 +316,9 @@ void GDALAllRegister()
 
 #ifdef FRMT_grass
     GDALRegister_GRASS();
+#endif
+
+#ifdef FRMT_l1b
+    GDALRegister_L1B();
 #endif
 }

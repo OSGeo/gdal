@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2002/05/08 16:33:25  dron
+ * NOAA Polar Orbiter Dataset reader added
+ *
  * Revision 1.12  2002/04/12 20:19:15  warmerda
  * added xpm
  *
@@ -107,6 +110,7 @@ void CPL_DLL GDALRegister_FujiBAS(void);
 void CPL_DLL GDALRegister_FIT(void);
 void CPL_DLL GDALRegister_VRT(void);
 void CPL_DLL GDALRegister_USGSDEM(void);
+void CPL_DLL GDALRegister_L1B(void);
 void CPL_DLL GDALRegister_LDF(void);
 void CPL_DLL GDALRegister_BSB(void);
 void CPL_DLL GDALRegister_XPM(void);
