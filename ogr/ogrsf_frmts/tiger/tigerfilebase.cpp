@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2003/10/15 19:09:23  warmerda
+ * fix featuredefn memory leak
+ *
  * Revision 1.16  2003/10/15 19:04:21  warmerda
  * ensure primary file gets closed - bug 414
  *
@@ -112,6 +115,12 @@ TigerFileBase::~TigerFileBase()
 {
     CPLFree( pszModule );
     CPLFree( pszShortModule );
+
+    if( poFeatureDefn != NULL )
+    {
+        delete poFeatureDefn;
+        poFeatureDefn = NULL;
+    }
 
     if( fpPrimary != NULL )
     {
