@@ -29,6 +29,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.33  2002/09/11 14:30:06  warmerda
+# added GDALMajorObject.SetDescription()
+#
 # Revision 1.32  2002/06/27 15:41:49  warmerda
 # added minixml read/write stuff
 #
@@ -318,6 +321,9 @@ class Dataset:
     def GetDescription(self):
         return _gdal.GDALGetDescription( self._o )
     
+    def SetDescription(self, description ):
+        _gdal.GDALSetDescription( self._o, description )
+    
     def GetRasterBand(self, i):
         if i > 0 & i <= self.RasterCount:
             return self._band[i-1]
@@ -436,6 +442,9 @@ class Band:
 
     def GetDescription(self):
         return _gdal.GDALGetDescription( self._o )
+    
+    def SetDescription(self, description ):
+        _gdal.GDALSetDescription( self._o, description )
     
     def ReadRaster(self, xoff, yoff, xsize, ysize,
                    buf_xsize = None, buf_ysize = None, buf_type = None):

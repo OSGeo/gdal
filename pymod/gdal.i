@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.41  2002/09/11 14:30:06  warmerda
+ * added GDALMajorObject.SetDescription()
+ *
  * Revision 1.40  2002/08/15 15:34:58  warmerda
  * fixed problem with options passing in py_GDALCreate (bug 180)
  *
@@ -1144,6 +1147,44 @@ py_GDALGetDescription(PyObject *self, PyObject *args) {
 %}
 
 %native(GDALGetDescription) py_GDALGetDescription;
+
+%{
+/************************************************************************/
+/*                         GDALSetDescription()                         */
+/************************************************************************/
+static PyObject *
+py_GDALSetDescription(PyObject *self, PyObject *args) {
+
+    GDALMajorObjectH  hObject;
+    char *_argc0 = NULL;
+    char *pszDesc = NULL;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"ss:GDALSetDescription",&_argc0, &pszDesc))
+        return NULL;
+
+    if (_argc0) {
+#ifdef SWIGTYPE_GDALDatasetH
+        if (SWIG_ConvertPtr(_argc0,(void **) &hObject,NULL,0) ) 
+#else
+        if (SWIG_GetPtr(_argc0,(void **) &hObject,NULL )) 
+#endif
+	{
+            PyErr_SetString(PyExc_TypeError,
+                          "Type error in argument 1 of GDALGetDescription."
+                          "  Expected _GDALMajorObjectH.");
+            return NULL;
+        }
+    }
+
+    GDALSetDescription( hObject, pszDesc );
+
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+%}
+
+%native(GDALSetDescription) py_GDALSetDescription;
 
 %{
 /************************************************************************/
