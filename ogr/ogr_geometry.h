@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.53  2005/03/25 06:31:12  fwarmerdam
+ * added addSubLineString
+ *
  * Revision 1.52  2005/02/22 12:48:09  fwarmerdam
  * added OGRGeometryFactory::haveGEOS()
  *
@@ -442,6 +445,9 @@ class CPL_DLL OGRLineString : public OGRCurve
                            double *padfZ = NULL );
     void        addPoint( OGRPoint * );
     void        addPoint( double, double, double = 0.0 );
+
+    void        addSubLineString( const OGRLineString *, 
+                                  int nStartVertex = 0, int nEndVertex = -1 );
 
     // non-standard from OGRGeometry
     virtual OGRwkbGeometryType getGeometryType() const;
