@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2002/01/13 01:45:54  warmerda
+ * improve cleanup
+ *
  * Revision 1.11  2001/11/20 16:42:47  warmerda
  * added repeat count flag for stress testing
  *
@@ -327,7 +330,8 @@ int SFCDump( int nArgc, char ** papszArgv )
         if( EQUAL(pszAction,"dumptables") )
         {
             SFCDumpTables( poDS );
-            return 0;
+            delete poDS;
+            continue;
         }
 
 /* -------------------------------------------------------------------- */
@@ -337,7 +341,8 @@ int SFCDump( int nArgc, char ** papszArgv )
         if( EQUAL(pszAction,"dumpsftables") )
         {
             SFCDumpSFTables( poDS );
-            return 0;
+            delete poDS;
+            continue;
         }
 
 /* -------------------------------------------------------------------- */
