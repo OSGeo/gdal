@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  1999/03/02 16:19:06  warmerda
+ * Fixed bug with -v list termination, and added support for ``-v 0''.
+ *
  * Revision 1.6  1999/03/02 14:18:32  warmerda
  * Fixed bug with writing min/max sample value
  *
@@ -48,6 +51,7 @@
 
 #include "tiffiop.h"
 #include "xtiffio.h"
+#include <ctype.h>
 
 CPL_C_START
 CPLErr ImagineToGeoTIFFProjection( HFAHandle hHFA, TIFF * hTIFF );
@@ -126,7 +130,8 @@ int main( int nArgc, char ** papszArgv )
         }
         else if( EQUAL(papszArgv[i],"-v") )
         {
-            while( atoi(papszArgv[i+1]) > 0 )
+            while( i+1 < nArgc
+                   && isdigit(papszArgv[i+1][0]) > 0 )
             {
                 anOverviews[nOverviewCount++] = atoi(papszArgv[i+1]);
                 i++;
@@ -227,6 +232,34 @@ int main( int nArgc, char ** papszArgv )
             nRes = nRes * 2;
             nXSize = nXSize / 2;
             nYSize = nYSize / 2;
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      A zero is translated into the largest integer downsampled       */
+/*      overview smaller than 1 million pixels.                         */
+/* -------------------------------------------------------------------- */
+    if( nOverviewCount == 1 && anOverviews[0] == 0 )
+    {
+        int		nXSize = hHFA->nXSize/2;
+        int		nYSize = hHFA->nYSize/2;
+        int		nRes = 2;
+
+        while( nXSize * nYSize > 1000000 )
+        {
+            nRes += 1;
+            nXSize = hHFA->nXSize / nRes;
+            nYSize = hHFA->nYSize / nRes;
+        }
+
+        if( hHFA->nXSize * hHFA->nYSize < 1000000 )
+        {
+            nOverviewCount = 0;
+        }
+        else
+        {
+            nOverviewCount = 1;
+            anOverviews[0] = nRes;
         }
     }
 
