@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.12  2005/02/16 18:40:34  kruland
+ * Added typedef for GDALColorInterp.
+ *
  * Revision 1.11  2005/02/16 16:55:49  kruland
  * Added typedef for CPLErr to prevent wrapping of the enum.
  * Moved the AllRegister method definition.
@@ -73,6 +76,7 @@ typedef double double_2[2];
 
 %import gdal_typemaps.i
 
+typedef int GDALColorInterp;
 typedef int GDALAccess;
 typedef int GDALDataType;
 typedef int CPLErr;
