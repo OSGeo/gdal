@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2002/11/29 20:49:10  warmerda
+ * fixed GetTRFInfo filename corruption
+ *
  * Revision 1.12  2002/11/28 15:59:58  warmerda
  * rewritten to use EPSG 6.2.2 tables
  *
@@ -610,7 +613,7 @@ EPSGGetProjTRFInfo( int nPCS, int * pnProjMethod,
     int         nProjMethod, i;
     double      adfProjParms[7];
     char        szTRFCode[16];
-    const char *pszFilename = CSVFilename( "pcs.csv" );
+    char       *pszFilename = CPLStrdup(CSVFilename( "pcs.csv" ));
 
 /* -------------------------------------------------------------------- */
 /*      Get the proj method.  If this fails to return a meaningful      */
@@ -622,7 +625,10 @@ EPSGGetProjTRFInfo( int nPCS, int * pnProjMethod,
                            "COORD_REF_SYS_CODE", szTRFCode, CC_Integer,
                            "COORD_OP_METHOD_CODE" ) );
     if( nProjMethod == 0 )
+    {
+        CPLFree( pszFilename );
         return FALSE;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Get the parameters for this projection.  For the time being     */
@@ -677,6 +683,8 @@ EPSGGetProjTRFInfo( int nPCS, int * pnProjMethod,
         for( i = 0; i < 7; i++ )
             padfProjParms[i] = adfProjParms[i];
     }
+
+    CPLFree( pszFilename );
 
     return TRUE;
 }
@@ -1143,7 +1151,7 @@ OGRErr OGRSpatialReference::SetStatePlane( int nZone, int bNAD83 )
     if( bNAD83 )
         nAdjustedId = nZone;
     else
-        nAdjustedId = nZone + 1000;
+        nAdjustedId = nZone + 10000;
 
 /* -------------------------------------------------------------------- */
 /*      Turn this into a PCS code.  We assume there will only be one    */
