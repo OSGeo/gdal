@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab.h,v 1.58 2001/11/17 21:54:05 daniel Exp $
+ * $Id: mitab.h,v 1.61 2002/03/26 19:27:43 daniel Exp $
  *
  * Name:     mitab.h
  * Project:  MapInfo MIF Read/Write library
@@ -8,7 +8,7 @@
  * Author:   Daniel Morissette, danmo@videotron.ca
  *
  **********************************************************************
- * Copyright (c) 1999-2001, Daniel Morissette
+ * Copyright (c) 1999-2002, Daniel Morissette
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -30,9 +30,19 @@
  **********************************************************************
  *
  * $Log: mitab.h,v $
+ * Revision 1.61  2002/03/26 19:27:43  daniel
+ * Got rid of tabs in source
+ *
+ * Revision 1.60  2002/03/26 03:17:13  daniel
+ * Added Get/SetCenter() to MultiPoint
+ *
+ * Revision 1.59  2002/03/26 01:48:40  daniel
+ * Added Multipoint object type (V650)
+ *
  * Revision 1.58  2001/11/17 21:54:05  daniel
- * Made several changes in order to support writing objects in 16 bits coordinate format.
- * New TABMAPObjHdr-derived classes are used to hold object info in mem until block is full.
+ * Made several changes in order to support writing objects in 16 bits 
+ * coordinate format. New TABMAPObjHdr-derived classes are used to hold 
+ * object info in mem until block is full.
  *
  * Revision 1.57  2001/11/02 17:27:21  daniel
  * Version 1.1.3
@@ -130,7 +140,7 @@
 /*---------------------------------------------------------------------
  * Current version of the MITAB library... always useful!
  *--------------------------------------------------------------------*/
-#define MITAB_VERSION "1.1.3 (2001-11-16)"
+#define MITAB_VERSION "1.2.0-dev (2002-03-25)"
 
 #ifndef PI
 #  define PI 3.14159265358979323846
@@ -318,7 +328,7 @@ class TABFile: public IMapInfoFile
     // Read access specific stuff
     //
 
-    int		GetNextFeatureId_Spatial( int nPrevId );
+    int         GetNextFeatureId_Spatial( int nPrevId );
 
     virtual int GetNextFeatureId(int nPrevId);
     virtual TABFeature *GetFeatureRef(int nFeatureId);
@@ -789,6 +799,11 @@ class MIFFile: public IMapInfoFile
 #define TAB_GEOM_V450_REGION    0x2f
 #define TAB_GEOM_V450_MULTIPLINE_C 0x31
 #define TAB_GEOM_V450_MULTIPLINE   0x32
+/* Version 650 object types: */
+#define TAB_GEOM_MULTIPOINT_C   0x34
+#define TAB_GEOM_MULTIPOINT     0x35
+#define TAB_GEOM_COLLECTION_C   0x37
+#define TAB_GEOM_COLLECTION     0x38
 
 
 /*---------------------------------------------------------------------
@@ -806,6 +821,8 @@ typedef enum
     TABFCRegion = 7,
     TABFCRectangle = 8,
     TABFCEllipse = 9,
+    TABFCMultiPoint = 10,
+    TABFCCollection = 11,
     TABFCDebugFeature
 } TABFeatureClass;
 
@@ -1584,6 +1601,55 @@ class TABText: public TABFeature,
     int         GetFontStyleTABValue()           {return m_nFontStyle;};
     void        SetFontStyleTABValue(int nStyle){m_nFontStyle=(GInt16)nStyle;};
 
+};
+
+
+/*---------------------------------------------------------------------
+ *                      class TABMultiPoint
+ *
+ * Feature class to handle MapInfo Multipoint features:
+ *
+ *     TAB_GEOM_MULTIPOINT_C        0x34
+ *     TAB_GEOM_MULTIPOINT          0x35
+ *
+ * Feature geometry will be a OGRMultiPoint
+ *
+ * The symbol number is in the range [31..67], with 31=None and corresponds
+ * to one of the 35 predefined "Old MapInfo Symbols"
+ *--------------------------------------------------------------------*/
+class TABMultiPoint: public TABFeature, 
+                     public ITABFeatureSymbol
+{
+  private:
+    // We call it center, but it's more like a label point
+    // Its value default to be the location of the first point
+    GBool       m_bCenterIsSet;
+    double      m_dCenterX, m_dCenterY;
+
+  public:
+             TABMultiPoint(OGRFeatureDefn *poDefnIn);
+    virtual ~TABMultiPoint();
+
+    virtual TABFeatureClass GetFeatureClass() { return TABFCMultiPoint; };
+    virtual int             ValidateMapInfoType(TABMAPFile *poMapFile = NULL);
+
+    virtual TABFeature *CloneTABFeature(OGRFeatureDefn *poNewDefn = NULL );
+
+    int         GetXY(int i, double &dX, double &dY);
+    int         GetNumPoints();
+
+    int         GetCenter(double &dX, double &dY);
+    void        SetCenter(double dX, double dY);
+
+    virtual int ReadGeometryFromMAPFile(TABMAPFile *poMapFile, TABMAPObjHdr *);
+    virtual int WriteGeometryToMAPFile(TABMAPFile *poMapFile, TABMAPObjHdr *);
+
+    virtual int ReadGeometryFromMIFFile(MIDDATAFile *fp);
+    virtual int WriteGeometryToMIFFile(MIDDATAFile *fp);
+
+    virtual const char *GetStyleString();
+
+    virtual void DumpMIF(FILE *fpOut = NULL);
 };
 
 

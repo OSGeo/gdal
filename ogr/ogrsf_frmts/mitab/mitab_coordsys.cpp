@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_coordsys.cpp,v 1.22 2002/03/01 19:00:15 warmerda Exp $
+ * $Id: mitab_coordsys.cpp,v 1.23 2002/04/01 19:49:24 warmerda Exp $
  *
  * Name:     mitab_coordsys.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -31,6 +31,9 @@
  **********************************************************************
  *
  * $Log: mitab_coordsys.cpp,v $
+ * Revision 1.23  2002/04/01 19:49:24  warmerda
+ * added support for cassini/soldner - proj 30
+ *
  * Revision 1.22  2002/03/01 19:00:15  warmerda
  * False Easting/Northing should be in the linear units of measure in MapInfo,
  * but in OGRSpatialReference/WKT they are always in meters.  Convert accordingly.
@@ -528,6 +531,17 @@ OGRSpatialReference *MITABCoordSys2SpatialRef( const char * pszCoordSys )
         break;
 
         /*--------------------------------------------------------------
+         * CassiniSoldner
+         *-------------------------------------------------------------*/
+      case 30:
+        poSR->SetCS( 
+            GetMIFParm( papszNextField, 1, 0.0 ),
+            GetMIFParm( papszNextField, 0, 0.0 ),
+            GetMIFParm( papszNextField, 2, 0.0 ) * dfUnitsConv,
+            GetMIFParm( papszNextField, 3, 0.0 ) * dfUnitsConv );
+        break;
+
+        /*--------------------------------------------------------------
          * Swiss Oblique Mercator / Cylindrical
          *-------------------------------------------------------------*/
       case 25:
@@ -896,6 +910,16 @@ char *MITABSpatialRef2CoordSys( OGRSpatialReference * poSR )
         parms[3] = poSR->GetProjParm(SRS_PP_FALSE_EASTING,0.0) / dfLinearConv;
         parms[4] = poSR->GetProjParm(SRS_PP_FALSE_NORTHING,0.0) / dfLinearConv;
         nParmCount = 5;
+    }
+
+    else if( EQUAL(pszProjection,SRS_PT_CASSINI_SOLDNER) )
+    {
+        nProjection = 30;
+        parms[0] = poSR->GetProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0);
+        parms[1] = poSR->GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0);
+        parms[2] = poSR->GetProjParm(SRS_PP_FALSE_EASTING,0.0) / dfLinearConv;
+        parms[3] = poSR->GetProjParm(SRS_PP_FALSE_NORTHING,0.0) / dfLinearConv;
+        nParmCount = 4;
     }
 
     else if( EQUAL(pszProjection,SRS_PT_TRANSVERSE_MERCATOR) )

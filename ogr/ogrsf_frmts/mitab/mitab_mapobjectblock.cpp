@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_mapobjectblock.cpp,v 1.11 2001/12/05 22:40:27 daniel Exp $
+ * $Id: mitab_mapobjectblock.cpp,v 1.12 2002/03/26 01:48:40 daniel Exp $
  *
  * Name:     mitab_mapobjectblock.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -31,6 +31,9 @@
  **********************************************************************
  *
  * $Log: mitab_mapobjectblock.cpp,v $
+ * Revision 1.12  2002/03/26 01:48:40  daniel
+ * Added Multipoint object type (V650)
+ *
  * Revision 1.11  2001/12/05 22:40:27  daniel
  * Init MBR to 0 in TABMAPObjHdr and modif. SetMBR() to validate min/max
  *
@@ -684,6 +687,10 @@ TABMAPObjHdr *TABMAPObjHdr::NewObj(GByte nNewObjType, GInt32 nId /*=0*/)
       case TAB_GEOM_TEXT:
         poObj = new TABMAPObjText;
         break;
+      case TAB_GEOM_MULTIPOINT_C:
+      case TAB_GEOM_MULTIPOINT:
+        poObj = new TABMAPObjMultiPoint;
+        break;
       default:
         CPLError(CE_Failure, CPLE_AssertionFailed, 
                  "TABMAPObjHdr::NewObj(): Unsupported object type %d",
@@ -1314,6 +1321,163 @@ int TABMAPObjText::WriteObj(TABMAPObjectBlock *poObjBlock)
                                  IsCompressedType());
 
     poObjBlock->WriteByte(m_nPenId);      // Pen index
+
+    if (CPLGetLastErrorNo() != 0)
+        return -1;
+
+    return 0;
+}
+
+/**********************************************************************
+ *                   class TABMAPObjMultiPoint
+ *
+ * Applies to PLINE, MULTIPLINE and REGION object types
+ **********************************************************************/
+
+/**********************************************************************
+ *                   TABMAPObjMultiPoint::ReadObj()
+ *
+ * Read Object information starting after the object id which should 
+ * have been read by TABMAPObjHdr::ReadNextObj() already.
+ * This function should be called only by TABMAPObjHdr::ReadNextObj().
+ *
+ * Returns 0 on success, -1 on error.
+ **********************************************************************/
+int TABMAPObjMultiPoint::ReadObj(TABMAPObjectBlock *poObjBlock)
+{
+    m_nCoordBlockPtr = poObjBlock->ReadInt32();
+    m_nNumPoints = poObjBlock->ReadInt32();
+
+    if (IsCompressedType())
+    {
+        m_nCoordDataSize = m_nNumPoints * 2 * 2;
+    }
+    else
+    {
+        m_nCoordDataSize = m_nNumPoints * 2 * 4;
+    }
+
+
+#ifdef TABDUMP
+    printf("MULTIPOINT: id=%d, type=%d, "
+           "CoordBlockPtr=%d, CoordDataSize=%d, numPoints=%d\n",
+           m_nId, m_nType, m_nCoordBlockPtr, m_nCoordDataSize, m_nNumPoints);
+#endif
+
+    // ?????
+    poObjBlock->ReadInt32();
+    poObjBlock->ReadInt32();
+    poObjBlock->ReadInt32();
+    poObjBlock->ReadByte();
+    poObjBlock->ReadByte();
+    poObjBlock->ReadByte();
+
+    m_nSymbolId = poObjBlock->ReadByte();
+
+    // ?????
+    poObjBlock->ReadByte();
+
+    if (IsCompressedType())
+    {
+        // Region center/label point, relative to compr. coord. origin
+        // No it's not relative to the Object block center
+        m_nLabelX = poObjBlock->ReadInt16();
+        m_nLabelY = poObjBlock->ReadInt16();
+
+        // Compressed coordinate origin
+        m_nComprOrgX = poObjBlock->ReadInt32();
+        m_nComprOrgY = poObjBlock->ReadInt32();
+
+        m_nLabelX += m_nComprOrgX;
+        m_nLabelY += m_nComprOrgY;
+
+        m_nMinX = m_nComprOrgX + poObjBlock->ReadInt16();  // Read MBR
+        m_nMinY = m_nComprOrgY + poObjBlock->ReadInt16();
+        m_nMaxX = m_nComprOrgX + poObjBlock->ReadInt16();
+        m_nMaxY = m_nComprOrgY + poObjBlock->ReadInt16();
+    }
+    else
+    {
+        // Region center/label point
+        m_nLabelX = poObjBlock->ReadInt32();
+        m_nLabelY = poObjBlock->ReadInt32();
+
+        m_nMinX = poObjBlock->ReadInt32();    // Read MBR
+        m_nMinY = poObjBlock->ReadInt32();
+        m_nMaxX = poObjBlock->ReadInt32();
+        m_nMaxY = poObjBlock->ReadInt32();
+
+        // Init. Compr. Origin to a default value in case type is ever changed
+        m_nComprOrgX = (m_nMinX + m_nMaxX) / 2;
+        m_nComprOrgY = (m_nMinY + m_nMaxY) / 2;
+    }
+
+    if (CPLGetLastErrorNo() != 0)
+        return -1;
+
+    return 0;
+}
+
+
+/**********************************************************************
+ *                   TABMAPObjMultiPoint::WriteObj()
+ *
+ * Write Object information with the type+object id
+ *
+ * Returns 0 on success, -1 on error.
+ **********************************************************************/
+int TABMAPObjMultiPoint::WriteObj(TABMAPObjectBlock *poObjBlock)
+{
+    // Write object type and id
+    TABMAPObjHdr::WriteObjTypeAndId(poObjBlock);
+
+    poObjBlock->WriteInt32(m_nCoordBlockPtr);
+
+    // Number of points
+    poObjBlock->WriteInt32(m_nNumPoints);
+
+//  unknown bytes
+    poObjBlock->WriteInt32(0);
+    poObjBlock->WriteInt32(0);
+    poObjBlock->WriteInt32(0);
+    poObjBlock->WriteByte(0);
+    poObjBlock->WriteByte(0);
+    poObjBlock->WriteByte(0);
+
+    // Symbol Id
+    poObjBlock->WriteByte(m_nSymbolId);
+
+    // ????
+    poObjBlock->WriteByte(0);
+
+    // MBR
+    if (IsCompressedType())
+    {
+        // Region center/label point, relative to compr. coord. origin
+        // No it's not relative to the Object block center
+        poObjBlock->WriteInt16(m_nLabelX - m_nComprOrgX);
+        poObjBlock->WriteInt16(m_nLabelY - m_nComprOrgY);
+
+        poObjBlock->WriteInt32(m_nComprOrgX);
+        poObjBlock->WriteInt32(m_nComprOrgY);
+
+        // MBR relative to object origin (and not object block center)
+        poObjBlock->WriteInt16(m_nMinX - m_nComprOrgX);
+        poObjBlock->WriteInt16(m_nMinY - m_nComprOrgY);
+        poObjBlock->WriteInt16(m_nMaxX - m_nComprOrgX);
+        poObjBlock->WriteInt16(m_nMaxY - m_nComprOrgY);
+    }
+    else
+    {
+        // Region center/label point
+        poObjBlock->WriteInt32(m_nLabelX);
+        poObjBlock->WriteInt32(m_nLabelY);
+
+        poObjBlock->WriteInt32(m_nMinX);
+        poObjBlock->WriteInt32(m_nMinY);
+        poObjBlock->WriteInt32(m_nMaxX);
+        poObjBlock->WriteInt32(m_nMaxY);
+    }
 
     if (CPLGetLastErrorNo() != 0)
         return -1;

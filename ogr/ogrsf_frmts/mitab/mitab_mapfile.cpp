@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_mapfile.cpp,v 1.23 2002/02/20 13:53:40 daniel Exp $
+ * $Id: mitab_mapfile.cpp,v 1.26 2002/04/25 16:05:24 julien Exp $
  *
  * Name:     mitab_mapfile.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -31,6 +31,16 @@
  **********************************************************************
  *
  * $Log: mitab_mapfile.cpp,v $
+ * Revision 1.26  2002/04/25 16:05:24  julien
+ * Disabled the overflow warning in SetCoordFilter() by adding bIgnoreOverflow
+ * variable in Coordsys2Int of the TABMAPFile class and TABMAPHeaderBlock class
+ *
+ * Revision 1.25  2002/03/26 19:27:43  daniel
+ * Got rid of tabs in source
+ *
+ * Revision 1.24  2002/03/26 01:48:40  daniel
+ * Added Multipoint object type (V650)
+ *
  * Revision 1.23  2002/02/20 13:53:40  daniel
  * Prevent an infinite loop of calls to LoadNextMatchingObjectBlock() in
  * GetNextFeatureId() if no objects found in spatial index.
@@ -539,7 +549,7 @@ int TABMAPFile::LoadNextMatchingObjectBlock( int bFirstObject )
 
     while( m_poSpIndexLeaf != NULL )
     {
-        int		iEntry = m_poSpIndexLeaf->GetCurChildIndex();
+        int     iEntry = m_poSpIndexLeaf->GetCurChildIndex();
 
         if( iEntry >= m_poSpIndexLeaf->GetNumEntries()-1 )
         {
@@ -696,12 +706,13 @@ int TABMAPFile::Int2Coordsys(GInt32 nX, GInt32 nY, double &dX, double &dY)
  *
  * Returns 0 on success, -1 on error.
  **********************************************************************/
-int TABMAPFile::Coordsys2Int(double dX, double dY, GInt32 &nX, GInt32 &nY)
+int TABMAPFile::Coordsys2Int(double dX, double dY, GInt32 &nX, GInt32 &nY, 
+                             GBool bIgnoreOverflow/*=FALSE*/)
 {
     if (m_poHeader == NULL)
         return -1;
 
-    return m_poHeader->Coordsys2Int(dX, dY, nX, nY);
+    return m_poHeader->Coordsys2Int(dX, dY, nX, nY, bIgnoreOverflow);
 }
 
 /**********************************************************************
@@ -987,6 +998,17 @@ int   TABMAPFile::PrepareNewObj(int nObjId, GByte nObjType)
          nObjType == TAB_GEOM_V450_MULTIPLINE_C) )
     {
         m_nMinTABVersion = 450;
+    }
+    /*-----------------------------------------------------------------
+     * Check for V460-specific object types (multipoint and collection)
+     *----------------------------------------------------------------*/
+    if (m_nMinTABVersion < 650 &&
+        (nObjType == TAB_GEOM_MULTIPOINT   ||
+         nObjType == TAB_GEOM_MULTIPOINT_C ||
+         nObjType == TAB_GEOM_COLLECTION   ||
+         nObjType == TAB_GEOM_COLLECTION_C    ) )
+    {
+        m_nMinTABVersion = 650;
     }
 
     /*-----------------------------------------------------------------
@@ -1728,8 +1750,8 @@ void TABMAPFile::SetCoordFilter(TABVertex sMin, TABVertex sMax)
     m_sMinFilter = sMin;
     m_sMaxFilter = sMax;
 
-    Coordsys2Int(sMin.x, sMin.y, m_XMinFilter, m_YMinFilter);
-    Coordsys2Int(sMax.x, sMax.y, m_XMaxFilter, m_YMaxFilter);
+    Coordsys2Int(sMin.x, sMin.y, m_XMinFilter, m_YMinFilter, TRUE);
+    Coordsys2Int(sMax.x, sMax.y, m_XMaxFilter, m_YMaxFilter, TRUE);
 
     ORDER_MIN_MAX(int,m_XMinFilter,m_XMaxFilter);
     ORDER_MIN_MAX(int,m_YMinFilter,m_YMaxFilter);

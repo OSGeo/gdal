@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_middatafile.cpp,v 1.7 2001/09/19 14:49:49 warmerda Exp $
+ * $Id: mitab_middatafile.cpp,v 1.10 2002/04/26 14:16:49 julien Exp $
  *
  * Name:     mitab_datfile.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -31,6 +31,15 @@
  **********************************************************************
  *
  * $Log: mitab_middatafile.cpp,v $
+ * Revision 1.10  2002/04/26 14:16:49  julien
+ * Finishing the implementation of Multipoint (support for MIF)
+ *
+ * Revision 1.9  2002/04/24 18:37:39  daniel
+ * Added return statement at end of GetLastLine()
+ *
+ * Revision 1.8  2002/04/22 13:49:09  julien
+ * Add EOF validation in MIDDATAFile::GetLastLine() (Bug 819)
+ *
  * Revision 1.7  2001/09/19 14:49:49  warmerda
  * use VSIRewind() instead of rewind()
  *
@@ -136,6 +145,7 @@ int MIDDATAFile::Open(const char *pszFname, const char *pszAccess)
         return -1;
     }
 
+    SetEof(VSIFEof(m_fp));
     return 0;
 }
 
@@ -145,7 +155,10 @@ int MIDDATAFile::Rewind()
         return -1;
 
     else
+    {
         VSIRewind(m_fp);
+        SetEof(VSIFEof(m_fp));
+    }
     return 0;
 }
 
@@ -174,6 +187,8 @@ const char *MIDDATAFile::GetLine()
         
         pszLine = CPLReadLine(m_fp);
 
+        SetEof(VSIFEof(m_fp));
+
         if (pszLine == NULL)
         {
             m_szLastRead[0] = '\0';
@@ -194,17 +209,20 @@ const char *MIDDATAFile::GetLine()
 
 const char *MIDDATAFile::GetLastLine()
 {
-    if (m_eAccessMode == TABRead)
+    // Return NULL if EOF
+    if(GetEof())
+    {
+        return NULL;
+    }
+    else if (m_eAccessMode == TABRead)
     {
         // printf("%s\n",m_szLastRead);
         return m_szLastRead;
     }
-    else
-    {
-        CPLAssert(FALSE);
-    }
-    // Never return NULL, don't need to test the string
-    return "";
+
+    // We should never get here (Read/Write mode not implemented)
+    CPLAssert(FALSE);
+    return NULL;
 }
 
 void MIDDATAFile::WriteLine(const char *pszFormat,...)
@@ -263,7 +281,8 @@ GBool MIDDATAFile::IsValidFeature(const char *pszString)
         EQUAL(papszToken[0],"LINE")||EQUAL(papszToken[0],"PLINE")||
         EQUAL(papszToken[0],"REGION")||EQUAL(papszToken[0],"ARC")||
         EQUAL(papszToken[0],"TEXT")||EQUAL(papszToken[0],"RECT")||
-        EQUAL(papszToken[0],"ROUNDRECT")||EQUAL(papszToken[0],"ELLIPSE"))
+        EQUAL(papszToken[0],"ROUNDRECT")||EQUAL(papszToken[0],"ELLIPSE")||
+        EQUAL(papszToken[0],"MULTIPOINT"))
     {
         CSLDestroy(papszToken);
         return TRUE;
@@ -272,4 +291,16 @@ GBool MIDDATAFile::IsValidFeature(const char *pszString)
     CSLDestroy(papszToken);
     return FALSE;
 
+}
+
+
+GBool MIDDATAFile::GetEof()
+{
+    return m_bEof;
+}
+
+
+void MIDDATAFile::SetEof(GBool bEof)
+{
+    m_bEof = bEof;
 }

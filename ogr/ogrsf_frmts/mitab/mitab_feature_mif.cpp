@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_feature_mif.cpp,v 1.20 2002/01/23 20:31:21 daniel Exp $
+ * $Id: mitab_feature_mif.cpp,v 1.22 2002/04/26 14:16:49 julien Exp $
  *
  * Name:     mitab_feature.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -31,6 +31,12 @@
  **********************************************************************
  *
  * $Log: mitab_feature_mif.cpp,v $
+ * Revision 1.22  2002/04/26 14:16:49  julien
+ * Finishing the implementation of Multipoint (support for MIF)
+ *
+ * Revision 1.21  2002/03/26 01:48:40  daniel
+ * Added Multipoint object type (V650)
+ *
  * Revision 1.20  2002/01/23 20:31:21  daniel
  * Fixed warning produced by CPLAssert() in non-DEBUG mode.
  *
@@ -1783,6 +1789,134 @@ int TABText::WriteGeometryToMIFFile(MIDDATAFile *fp)
     return 0; 
 
 }
+
+/**********************************************************************
+ *
+ **********************************************************************/
+int TABMultiPoint::ReadGeometryFromMIFFile(MIDDATAFile *fp)
+{
+    OGRPoint            *poPoint;
+    OGRMultiPoint       *poMultiPoint;
+    char                **papszToken;
+    const char          *pszLine;
+    int                 nNumPoint, i;
+    double              dfX,dfY;
+    OGREnvelope         sEnvelope;
+
+    papszToken = CSLTokenizeString(fp->GetLastLine());
+     
+    if (CSLCount(papszToken) !=2)
+    {
+        CSLDestroy(papszToken);
+        return -1;
+    }
+    
+    nNumPoint = atoi(papszToken[1]);
+    poMultiPoint = new OGRMultiPoint;
+
+    CSLDestroy(papszToken);
+    papszToken = NULL;
+
+    // Get each point and add them to the multipoint feature
+    for(i=0; i<nNumPoint; i++)
+    {
+        pszLine = fp->GetLine();
+        papszToken = CSLTokenizeString(fp->GetLastLine());
+        if (CSLCount(papszToken) !=2)
+        {
+            CSLDestroy(papszToken);
+            return -1;
+        }
+
+        dfX = fp->GetXTrans(atof(papszToken[0]));
+        dfY = fp->GetXTrans(atof(papszToken[1]));
+        poPoint = new OGRPoint(dfX, dfY);
+        if ( poMultiPoint->addGeometryDirectly( poPoint ) != OGRERR_NONE)
+        {
+            CPLAssert(FALSE); // Just in case OGR is modified
+        }
+
+        // Set center
+        if(i == 0)
+        {
+            SetCenter( dfX, dfY );
+        }
+    }
+
+    if( SetGeometryDirectly( poMultiPoint ) != OGRERR_NONE)
+    {
+        CPLAssert(FALSE); // Just in case OGR is modified
+    }
+
+    poMultiPoint->getEnvelope(&sEnvelope);
+    SetMBR(sEnvelope.MinX, sEnvelope.MinY,
+           sEnvelope.MaxX,sEnvelope.MaxY);
+
+    // Read optional SYMBOL line...
+
+    while (((pszLine = fp->GetLine()) != NULL) && 
+           fp->IsValidFeature(pszLine) == FALSE)
+    {
+        papszToken = CSLTokenizeStringComplex(pszLine," ,()",
+                                              TRUE,FALSE);
+        if (CSLCount(papszToken) == 4 && EQUAL(papszToken[0], "SYMBOL") )
+        {
+            SetSymbolNo(atoi(papszToken[1]));
+            SetSymbolColor(atoi(papszToken[2]));
+            SetSymbolSize(atoi(papszToken[3]));
+        }
+    }
+
+    return 0; 
+}
+
+/**********************************************************************
+ *
+ **********************************************************************/
+int TABMultiPoint::WriteGeometryToMIFFile(MIDDATAFile *fp)
+{ 
+    OGRGeometry         *poGeom;
+    OGRPoint            *poPoint;
+    OGRMultiPoint       *poMultiPoint;
+    int                 nNumPoints, iPoint;
+ 
+    /*-----------------------------------------------------------------
+     * Fetch and validate geometry
+     *----------------------------------------------------------------*/
+    poGeom = GetGeometryRef();
+    if (poGeom && poGeom->getGeometryType() == wkbMultiPoint)
+    {
+        poMultiPoint = (OGRMultiPoint*)poGeom;
+        nNumPoints = poMultiPoint->getNumGeometries();
+
+        fp->WriteLine("MultiPoint %d\n", nNumPoints);
+
+        for(iPoint=0; iPoint < nNumPoints; iPoint++)
+        {
+            /*------------------------------------------------------------
+             * Validate each point
+             *-----------------------------------------------------------*/
+            poGeom = poMultiPoint->getGeometryRef(iPoint);
+            if (poGeom && poGeom->getGeometryType() == wkbPoint)
+            { 
+                poPoint = (OGRPoint*)poGeom;
+                fp->WriteLine("%.16g %.16g\n",poPoint->getX(),poPoint->getY());
+            }
+            else
+            {
+                CPLError(CE_Failure, CPLE_AssertionFailed,
+                         "TABMultiPoint: Missing or Invalid Geometry!");
+                return -1;
+            }
+        }
+        // Write symbol
+        fp->WriteLine("    Symbol (%d,%d,%d)\n",GetSymbolNo(),GetSymbolColor(),
+                      GetSymbolSize());
+    }
+
+    return 0; 
+}
+
 
 /**********************************************************************
  *
