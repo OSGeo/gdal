@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2001/09/26 19:23:27  warmerda
+ * added CollectDSDMetadata
+ *
  * Revision 1.6  2001/09/24 18:40:17  warmerda
  * Added MDS2 support, and metadata support
  *
@@ -80,6 +83,7 @@ class EnvisatDataset : public RawDataset
     void        ScanForGCPs();
 
     void	CollectMetadata( EnvisatFile_HeaderFlag );
+    void        CollectDSDMetadata();
 
   public:
     		EnvisatDataset();
@@ -268,7 +272,60 @@ void EnvisatDataset::ScanForGCPs()
 }
 
 /************************************************************************/
+/*                         CollectDSDMetadata()                         */
+/*                                                                      */
+/*      Collect metadata based on any DSD entries with filenames        */
+/*      associated.                                                     */
+/************************************************************************/
+
+void EnvisatDataset::CollectDSDMetadata()
+
+{
+    char	*pszDSName, *pszFilename;
+    int		iDSD;
+
+    for( iDSD = 0; 
+         EnvisatFile_GetDatasetInfo( hEnvisatFile, iDSD, &pszDSName, NULL, 
+                             &pszFilename, NULL, NULL, NULL, NULL ) == SUCCESS;
+         iDSD++ )
+    {
+        if( pszFilename == NULL 
+            || strlen(pszFilename) == 0 
+            || EQUALN(pszFilename,"NOT USED",8)
+            || EQUALN(pszFilename,"        ",8))
+            continue;
+
+        char	szKey[128], szTrimmedName[128];
+        int	i;
+        
+        strcpy( szKey, "DS_" );
+        strcat( szKey, pszDSName );
+
+        // strip trailing spaces. 
+        for( i = strlen(szKey)-1; i && szKey[i] == ' '; i-- )
+            szKey[i] = '\0';
+
+        // convert spaces into underscores.
+        for( i = 0; szKey[i] != '\0'; i++ )
+        {
+            if( szKey[i] == ' ' )
+                szKey[i] = '_';
+        }
+
+        strcat( szKey, "_NAME" );
+
+        strcpy( szTrimmedName, pszFilename );
+        for( i = strlen(szTrimmedName)-1; i && szTrimmedName[i] == ' '; i--)
+            szTrimmedName[i] = '\0';
+
+        SetMetadataItem( szKey, szTrimmedName );
+    }
+}
+
+/************************************************************************/
 /*                          CollectMetadata()                           */
+/*                                                                      */
+/*      Collect metadata from the SPH or MPH header fields.             */
 /************************************************************************/
 
 void EnvisatDataset::CollectMetadata( EnvisatFile_HeaderFlag  eMPHOrSPH )
@@ -440,6 +497,7 @@ GDALDataset *EnvisatDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     poDS->CollectMetadata( MPH );
     poDS->CollectMetadata( SPH );
+    poDS->CollectDSDMetadata();
 
 /* -------------------------------------------------------------------- */
 /*      Check for overviews.                                            */
