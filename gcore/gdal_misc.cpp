@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.39  2002/12/09 20:05:31  warmerda
+ * fixed return flag from GDALReadTabFile
+ *
  * Revision 1.38  2002/12/09 18:53:25  warmerda
  * GDALDecToDMS() now calls CPLDecToDMS()
  *
@@ -1245,7 +1248,7 @@ int GDALReadTabFile( const char * pszBaseFilename,
      
     CSLDestroy(papszTok);
     CSLDestroy(papszLines);
-    return FALSE;
+    return *pnGCPCount == 0;
 }
 
 /************************************************************************/
