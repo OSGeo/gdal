@@ -74,10 +74,10 @@ ftp://gdal.velocet.ca/pub/outgoing/sdts-1.0.tar.gz</a>.<p>
 
 
 <li> Untar the source.<p>
-<code>
+<pre>
 % gzip -d sdts-1.0.tar.gz
 % tar xzvf sdts-1.0.tar.gz
-</code>
+</pre>
 
 If for some reason you don't have gzip, or tar (perhaps you work on Windows)
 just <a href="mailto:warmerda@home.com">let me know</a>, 
