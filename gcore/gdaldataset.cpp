@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2000/04/21 21:56:23  warmerda
+ * move metadata to GDALMajorObject, added BuildOverviews
+ *
  * Revision 1.14  2000/03/31 13:42:06  warmerda
  * added gcp support methods
  *
@@ -80,7 +83,6 @@ GDALDataset::GDALDataset()
     nBands = 0;
     papoBands = NULL;
     nRefCount = 1;
-    papszMetadata = NULL;
 }
 
 /************************************************************************/
@@ -111,7 +113,6 @@ GDALDataset::~GDALDataset()
     }
 
     CPLFree( papoBands );
-    CSLDestroy( papszMetadata );
 }
 
 /************************************************************************/
@@ -630,41 +631,6 @@ int GDALDereferenceDataset( GDALDatasetH hDataset )
 }
 
 /************************************************************************/
-/*                            GetMetadata()                             */
-/************************************************************************/
-
-/**
- * Fetch dataset wide metadata.
- *
- * The returned string list is owned by the GDALDataset, and may change at
- * any time.  It is formated as a "Name=value" list with the last pointer
- * value being NULL.  Use the the CPL StringList functions such as 
- * CSLFetchNameValue() to manipulate it. 
- *
- * Note that relatively few formats return any metadata at this time. 
- *
- * This method does the same thing as the C function GDALGetDatasetMetadata().
- * 
- * @return NULL or a string list. 
- */
-
-char **GDALDataset::GetMetadata()
-
-{
-    return papszMetadata;
-}
-
-/************************************************************************/
-/*                       GDALGetDatasetMetadata()                       */
-/************************************************************************/
-
-char **GDALGetDatasetMetadata( GDALDatasetH hDataset )
-
-{
-    return ((GDALDataset *) hDataset)->GetMetadata();
-}
-
-/************************************************************************/
 /*                            GetGCPCount()                             */
 /************************************************************************/
 
@@ -749,5 +715,84 @@ const GDAL_GCP *GDALGetGCPs( GDALDatasetH hDS )
 
 {
     return ((GDALDataset *) hDS)->GetGCPs();
+}
+
+/************************************************************************/
+/*                           BuildOverviews()                           */
+/************************************************************************/
+
+/**
+ * Build raster overview(s)
+ *
+ * If the operation is unsupported for the indicated dataset, then 
+ * CE_Failure is returned, and CPLGetLastError() will return CPLE_NonSupported.
+ *
+ * @param pszResampling one of "NEAREST", "AVERAGE" or "MODE" controlling
+ * the downsampling method applied.
+ * @param nOverviews number of overviews to build. 
+ * @param panOverviewList the list of overview decimation factors to build. 
+ * @param nBand number of bands to build overviews for in panBandList.  Build
+ * for all bands if this is 0. 
+ * @param panBandList list of band numbers. 
+ * @param pfnProgress a function to call to report progress, or NULL.
+ * @param pProgressData application data to pass to the progress function.
+ *
+ * @return CE_None on success or CE_Failure if the operation doesn't work. 
+ */
+
+CPLErr GDALDataset::BuildOverviews( const char *pszResampling, 
+                                    int nOverviews, int *panOverviewList, 
+                                    int nBands, int *panBandList,
+                                    GDALProgressFunc pfnProgress, 
+                                    void * pProgressData )
+    
+{
+    CPLErr   eErr;
+    int      *panAllBandList = NULL;
+
+    if( nBands == 0 )
+    {
+        nBands = GetRasterCount();
+        panAllBandList = (int *) CPLMalloc(sizeof(int) * nBands);
+        for( int i = 0; i < nBands; i++ )
+            panAllBandList[i] = i+1;
+
+        panBandList = panAllBandList;
+    }
+
+    eErr = IBuildOverviews( pszResampling, nOverviews, panOverviewList, 
+                            nBands, panBandList, pfnProgress, pProgressData );
+
+    if( panAllBandList != NULL )
+        CPLFree( panAllBandList );
+
+    return eErr;
+}
+
+/************************************************************************/
+/*                          IBuildOverviews()                           */
+/*                                                                      */
+/*      Default implementation.                                         */
+/************************************************************************/
+
+CPLErr GDALDataset::IBuildOverviews( const char *pszResampling, 
+                                     int nOverviews, int *panOverviewList, 
+                                     int nBands, int *panBandList,
+                                     GDALProgressFunc pfnProgress, 
+                                     void * pProgressData )
+    
+{
+    if( oOvManager.IsInitialized() )
+        return oOvManager.BuildOverviews( NULL, pszResampling, 
+                                          nOverviews, panOverviewList,
+                                          nBands, panBandList,
+                                          pfnProgress, pProgressData );
+    else
+    {
+        CPLError( CE_Failure, CPLE_NotSupported,
+                  "BuildOverviews() not supported for this dataset." );
+        
+        return( CE_Failure );
+    }
 }
 
