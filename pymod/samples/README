@@ -36,3 +36,5 @@ gdalfilter.py           Example script for applying kernel based filters to
                         an image using GDAL.  Demonstrates use of virtual
                         files as an intermediate representation. 
 
+rel.py			Script to produce a shaded relief image from the
+			elevation data.
