@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2002/01/10 14:07:57  warmerda
+ * Verify that poOpenInfo->fp is not NULL in Open() as per:
+ * http://bugzilla.remotesensing.org/show_bug.cgi?id=95
+ *
  * Revision 1.11  2001/07/18 04:51:57  warmerda
  * added CPL_CVSID
  *
@@ -166,7 +170,7 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*	We assume the user is pointing to the binary (ie. .bil) file.	*/
 /* -------------------------------------------------------------------- */
-    if( poOpenInfo->nHeaderBytes < 1 && poOpenInfo->fp != NULL )
+    if( poOpenInfo->fp == NULL )
         return NULL;
 
 /* -------------------------------------------------------------------- */
