@@ -11,6 +11,9 @@ default:
 ifeq ($(HAVE_OGDI),yes)
 	(cd ogdi; $(MAKE) $*)
 endif
+ifeq ($(HAVE_OGR_PG),yes)
+	(cd pg; $(MAKE) $*)
+endif
 
 clean:
 	rm -f ogrsf_frmts.a
@@ -23,6 +26,9 @@ clean:
 	(cd mitab; $(MAKE) clean)
 ifeq ($(HAVE_OGDI),yes)
 	(cd ogdi; $(MAKE) clean)
+endif
+ifeq ($(HAVE_OGR_PG),yes)
+	(cd pg; $(MAKE) clean)
 endif
 
 

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2000/10/17 17:54:53  warmerda
+ * added postgresql support
+ *
  * Revision 1.14  2000/08/24 04:44:05  danmo
  * Added optional OGDI driver in OGR
  *
@@ -252,6 +255,7 @@ void	RegisterOGRS57();
 void    RegisterOGRTAB();
 void    RegisterOGRMIF();
 void    RegisterOGROGDI();
+void    RegisterOGRPG();
 CPL_C_END
 
 
