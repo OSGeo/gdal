@@ -38,6 +38,9 @@
  *   GUInt16, and GByte are defined.
  *
  * $Log$
+ * Revision 1.20  2000/10/13 17:32:42  warmerda
+ * check for unix instead of IGNORE_WIN32
+ *
  * Revision 1.19  2000/09/25 19:58:43  warmerda
  * ensure win32 doesn't get defined in Cygnus builds
  *
@@ -120,7 +123,12 @@
 
 #include "cpl_config.h"
 
-#ifdef IGNORE_WIN32
+/* ==================================================================== */
+/*      This will disable most WIN32 stuff in a Cygnus build which      */
+/*      defines unix to 1.                                              */
+/* ==================================================================== */
+
+#ifdef unix
 #  undef WIN32
 #endif
 
