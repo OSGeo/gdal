@@ -30,6 +30,12 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2001/08/23 14:47:31  warmerda
+ * Added support for adding an _LIST attribute to the OGRFeatures in
+ * cases of GENERIC features for which an attribute appears more than
+ * once per features.  This has occured with the SAMPE1250.NTF Irish
+ * dataset which has multiple feature codes for some line features.
+ *
  * Revision 1.13  2001/07/18 04:55:16  warmerda
  * added CPL_CSVID
  *
@@ -1683,6 +1689,23 @@ void NTFFileReader::EstablishLayer( const char * pszLayerName,
                 }
 
                 poDefn->AddFieldDefn( &oFieldDefn );
+
+                /* 
+                ** If this field can appear multiple times, create an
+                ** additional attribute to hold lists of values.  This
+                ** is always created as a variable length string field.
+                */
+                if( poClass->pabAttrMultiple[iGAtt] )
+                {
+                    char szName[128];
+
+                    sprintf( szName, "%s_LIST", 
+                             poClass->papszAttrNames[iGAtt] );
+
+                    OGRFieldDefn oFieldDefnL( szName, OFTString );
+
+                    poDefn->AddFieldDefn( &oFieldDefnL );
+                }
             }
         }
 

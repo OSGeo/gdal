@@ -28,6 +28,12 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2001/08/23 14:47:31  warmerda
+ * Added support for adding an _LIST attribute to the OGRFeatures in
+ * cases of GENERIC features for which an attribute appears more than
+ * once per features.  This has occured with the SAMPE1250.NTF Irish
+ * dataset which has multiple feature codes for some line features.
+ *
  * Revision 1.15  2001/05/01 13:47:36  warmerda
  * keep track if generic geometry is 3D
  *
@@ -188,11 +194,13 @@ public:
     char        **papszAttrNames;
     char        **papszAttrFormats;
     int         *panAttrMaxWidth;
+    int		*pabAttrMultiple;
 
                 NTFGenericClass();
                 ~NTFGenericClass();
     
     void        CheckAddAttr( const char *, const char *, int );
+    void        SetMultiple( const char * );
 };
 
 /************************************************************************/

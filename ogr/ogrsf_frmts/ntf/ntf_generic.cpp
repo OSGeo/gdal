@@ -28,6 +28,12 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2001/08/23 14:47:31  warmerda
+ * Added support for adding an _LIST attribute to the OGRFeatures in
+ * cases of GENERIC features for which an attribute appears more than
+ * once per features.  This has occured with the SAMPE1250.NTF Irish
+ * dataset which has multiple feature codes for some line features.
+ *
  * Revision 1.12  2001/07/18 04:55:16  warmerda
  * added CPL_CSVID
  *
@@ -98,6 +104,7 @@ NTFGenericClass::NTFGenericClass()
     papszAttrNames = NULL;
     papszAttrFormats = NULL;
     panAttrMaxWidth = NULL;
+    pabAttrMultiple = NULL;
 }
 
 /************************************************************************/
@@ -110,6 +117,7 @@ NTFGenericClass::~NTFGenericClass()
     CSLDestroy( papszAttrNames );
     CSLDestroy( papszAttrFormats );
     CPLFree( panAttrMaxWidth );
+    CPLFree( pabAttrMultiple );
 }
 
 /************************************************************************/
@@ -136,19 +144,50 @@ void NTFGenericClass::CheckAddAttr( const char * pszName,
     
     if( iAttrOffset == -1 )
     {
+        nAttrCount++;
+
         papszAttrNames = CSLAddString( papszAttrNames, pszName );
         papszAttrFormats = CSLAddString( papszAttrFormats, pszFormat );
 
         panAttrMaxWidth = (int *)
-            CPLRealloc( panAttrMaxWidth, sizeof(int) * (++nAttrCount) );
+            CPLRealloc( panAttrMaxWidth, sizeof(int) * nAttrCount );
 
         panAttrMaxWidth[nAttrCount-1] = nWidth;
+
+        pabAttrMultiple = (int *)
+            CPLRealloc( pabAttrMultiple, sizeof(int) * nAttrCount );
+
+        pabAttrMultiple[nAttrCount-1] = FALSE;
     }
     else
     {
         if( panAttrMaxWidth[iAttrOffset] < nWidth )
             panAttrMaxWidth[iAttrOffset] = nWidth;
     }
+}
+
+/************************************************************************/
+/*                            SetMultiple()                             */
+/*                                                                      */
+/*      Mark this attribute as appearing multiple times on some         */
+/*      features.                                                       */
+/************************************************************************/
+
+void NTFGenericClass::SetMultiple( const char *pszName )
+
+{
+    int         iAttrOffset;
+
+    if( EQUAL(pszName,"TX") )
+        pszName = "TEXT";
+    if( EQUAL(pszName,"FC") )
+        pszName = "FEAT_CODE";
+
+    iAttrOffset = CSLFindString( papszAttrNames, pszName );
+    if( iAttrOffset == -1 )
+        return;
+
+    pabAttrMultiple[iAttrOffset] = TRUE;
 }
 
 /************************************************************************/
@@ -217,6 +256,13 @@ void OGRNTFDataSource::WorkupGeneric( NTFFileReader * poReader )
                           poClass->CheckAddAttr( poAttDesc->val_type,
                                                  poAttDesc->finter,
                                                  strlen(papszValues[iAtt]) );
+                      }
+
+                      /* Has this attribute already appeared on this record?*/
+                      for( int iAtt2 = 0; iAtt2 < iAtt; iAtt2++ )
+                      {
+                          if( EQUAL(papszTypes[iAtt2],papszTypes[iAtt]) )
+                              poClass->SetMultiple( poAttDesc->val_type );
                       }
                   }
 
@@ -303,6 +349,42 @@ static void AddGenericAttributes( NTFFileReader * poReader,
 
         poReader->ApplyAttributeValue( poFeature, iField, papszTypes[iAtt],
                                        papszTypes, papszValues );
+
+/* -------------------------------------------------------------------- */
+/*      Do we have a corresponding list field we should be              */
+/*      accumulating this into?                                         */
+/* -------------------------------------------------------------------- */
+        char  szListName[128];
+        int   iListField;
+
+        sprintf( szListName, "%s_LIST", 
+                 poFeature->GetFieldDefnRef(iField)->GetNameRef() );
+        iListField = poFeature->GetFieldIndex( szListName );
+
+/* -------------------------------------------------------------------- */
+/*      Yes, so perform processing similar to ApplyAttributeValue(),    */
+/*      and append to list value.                                       */
+/* -------------------------------------------------------------------- */
+        if( iListField != -1 )
+        {
+            char        *pszAttLongName, *pszAttValue, *pszCodeDesc;
+            
+            poReader->ProcessAttValue( papszTypes[iAtt], papszValues[iAtt],
+                                       &pszAttLongName, &pszAttValue, 
+                                       &pszCodeDesc );
+
+            if( poFeature->IsFieldSet( iListField ) )
+            {
+                poFeature->SetField( iListField, 
+                    CPLSPrintf( "%s,%s", 
+                                poFeature->GetFieldAsString( iListField ), 
+                                pszAttValue ) );
+            }
+            else
+            {
+                poFeature->SetField( iListField, pszAttValue );
+            }
+        }
     }
 
     CSLDestroy( papszTypes );
