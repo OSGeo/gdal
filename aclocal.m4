@@ -1,35 +1,4 @@
 dnl ---------------------------------------------------------------------------
-dnl Try to establish the endianness of the platform
-dnl ---------------------------------------------------------------------------
-
-AC_DEFUN(MY_TEST_BIGENDIAN,
-[
-  AC_MSG_CHECKING([whether byte ordering is bigendian])
-
-  echo 'int main() { int i = 1; if( *((unsigned char *) &i) == 0 ) printf( "BIGENDIAN"); return 0; }' >> conftest.c
-  if test -z "`${CC} -o conftest conftest.c 2>&1`" ; then
-    if test "`./conftest`" = "BIGENDIAN" ; then
-        AC_MSG_RESULT([yes])
-	ac_cv_c_bigendian=yes
-    else
-        AC_MSG_RESULT([no])
-	ac_cv_c_bigendian=no
-    fi
-  else
-    AC_MSG_RESULT([Unable to build and link bigendian test program, guess no.])    ac_cv_c_bigendian=no
-  fi
-
-  rm -f conftest*
-
-  if test $ac_cv_c_bigendian = yes ; then
-    AC_DEFINE(WORDS_BIGENDIAN, 1,
-             [Define to 1 if your processor stores words with the most
-	     significant byte first (like Motorola and SPARC, unlike Intel
-	     and VAX).])
-  fi
-])
-
-dnl ---------------------------------------------------------------------------
 dnl Try to establish a 64 bit integer type.
 dnl ---------------------------------------------------------------------------
 
