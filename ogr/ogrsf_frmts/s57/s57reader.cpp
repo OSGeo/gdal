@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.41  2003/09/12 21:18:06  warmerda
+ * fixed width of AGEN field
+ *
  * Revision 1.40  2003/09/09 18:11:17  warmerda
  * capture TOPI field from VRPT
  *
@@ -1756,7 +1759,7 @@ void S57Reader::GenerateStandardAttributes( OGRFeatureDefn *poFDefn )
 /* -------------------------------------------------------------------- */
 /*      AGEN                                                            */
 /* -------------------------------------------------------------------- */
-    oField.Set( "AGEN", OFTInteger, 2, 0 );
+    oField.Set( "AGEN", OFTInteger, 5, 0 );
     poFDefn->AddFieldDefn( &oField );
 
 /* -------------------------------------------------------------------- */
