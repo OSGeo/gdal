@@ -38,6 +38,9 @@
  *   GUInt16, and GByte are defined.
  *
  * $Log$
+ * Revision 1.11  1999/05/13 19:19:06  warmerda
+ * Only use dbmalloc if DEBUG is set.
+ *
  * Revision 1.10  1999/03/02 21:08:11  warmerda
  * autoconf switch
  *
@@ -93,7 +96,7 @@
 #include <string.h>
 #include <errno.h>
 
-#if defined(HAVE_LIB_DBMALLOC) && defined(HAVE_DBMALLOC_H)
+#if defined(HAVE_LIBDBMALLOC) && defined(HAVE_DBMALLOC_H) && defined(DEBUG)
 #  define DBMALLOC
 #  include <dbmalloc.h>
 #endif
