@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_feature.cpp,v 1.37 2001/06/25 01:04:21 daniel Exp $
+ * $Id: mitab_feature.cpp,v 1.38 2001/07/03 03:14:52 daniel Exp $
  *
  * Name:     mitab_feature.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -30,6 +30,10 @@
  **********************************************************************
  *
  * $Log: mitab_feature.cpp,v $
+ * Revision 1.38  2001/07/03 03:14:52  daniel
+ * GetLabelStyleString(): take line spacing and num. of lines into account
+ * when calculating text height.
+ *
  * Revision 1.37  2001/06/25 01:04:21  daniel
  * StyleString fixes: include font name in text style string, and placed
  * brush before pen in region style strings.
@@ -5127,15 +5131,39 @@ const char *TABText::GetLabelStyleString()
         break;
     }
 
+    // Compute real font size, taking number of lines ("\\n") and line
+    // spacing into account.
+    int numLines = 1;
+    const char *pszNewline = GetTextString();
+    while((pszNewline = strstr(pszNewline, "\\n")) != NULL)
+    {
+        numLines++;
+        pszNewline +=2;
+    }
     
+    double dHeight = GetTextBoxHeight()/numLines;
+
+    // In all cases, take out 20% of font height to account for line spacing
+    switch(GetTextSpacing())
+    {
+      case TABTS1_5:
+        dHeight *= (0.67 * 0.8);
+        break;
+      case TABTSDouble:
+        dHeight *= (0.5 * 0.8);
+        break;
+      default:
+        dHeight *= 0.8;
+    }
+
     if (IsFontBGColorUsed())
-        pszStyle=CPLSPrintf("LABEL(t:\"%s\",a:%f,s:%f,c:#%6.6x,b:#%6.6x,p:%d,f:\"%s\")",
-                            GetTextString(),GetTextAngle(), GetTextBoxHeight(),
+        pszStyle=CPLSPrintf("LABEL(t:\"%s\",a:%f,s:%fg,c:#%6.6x,b:#%6.6x,p:%d,f:\"%s\")",
+                            GetTextString(),GetTextAngle(), dHeight,
                             GetFontFGColor(),GetFontBGColor(),nJustification,
                             GetFontNameRef());
     else
-        pszStyle=CPLSPrintf("LABEL(t:\"%s\",a:%f,s:%f,c:#%6.6x,p:%d,f:\"%s\")",
-                            GetTextString(),GetTextAngle(), GetTextBoxHeight(),
+        pszStyle=CPLSPrintf("LABEL(t:\"%s\",a:%f,s:%fg,c:#%6.6x,p:%d,f:\"%s\")",
+                            GetTextString(),GetTextAngle(), dHeight,
                             GetFontFGColor(),nJustification,
                             GetFontNameRef());
      
