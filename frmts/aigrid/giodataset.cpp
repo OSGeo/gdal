@@ -28,6 +28,10 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.22  2003/02/13 19:24:12  warmerda
+ * Added support for using aigridio.dll instead of avgridio.dll if found.
+ * Apparently in ArcGIS 8, the DLL is called aigridio.dll.
+ *
  * Revision 1.21  2003/02/13 19:15:37  warmerda
  * Implemented GIODataset::CreateCopy(), threw away Create() method
  *
@@ -135,6 +139,7 @@ static int LoadGridIOFunctions()
 
 {
     static int      bInitialized = FALSE;
+    const char     *pszDLL = "avgridio.dll";
     
     if( bInitialized )
         return pfnGridIOSetup != NULL;
@@ -143,36 +148,42 @@ static int LoadGridIOFunctions()
 
     CPLPushErrorHandler( CPLQuietErrorHandler );
     pfnGridIOSetup = (int (*)(void)) 
-        CPLGetSymbol( "avgridio.dll", "GridIOSetup" );
+        CPLGetSymbol( pszDLL, "GridIOSetup" );
+    if( pfnGridIOSetup == NULL )
+    {
+        pszDLL = "aigridio.dll";
+        pfnGridIOSetup = (int (*)(void)) 
+            CPLGetSymbol( pszDLL, "GridIOSetup" );
+    }
     CPLPopErrorHandler();
 
     if( pfnGridIOSetup == NULL )
         return FALSE;
 
     pfnGridIOExit = (int (*)(void)) 
-        CPLGetSymbol( "avgridio.dll", "GridIOExit" );
+        CPLGetSymbol( pszDLL, "GridIOExit" );
 
     pfnCellLayerOpen = (int (*)(char *, int, int, int*, double*))
-        CPLGetSymbol( "avgridio.dll", "CellLayerOpen" );
+        CPLGetSymbol( pszDLL, "CellLayerOpen" );
     pfnCellLayerCreate = (int (*)(char *, int, int, int, double, double*))
-        CPLGetSymbol( "avgridio.dll", "CellLayerCreate" );
+        CPLGetSymbol( pszDLL, "CellLayerCreate" );
     pfnDescribeGridDbl = 
         (int (*)(char*,double*,int*,double*,double*,int*,int*,int*))
-        CPLGetSymbol( "avgridio.dll", "DescribeGridDbl" );
+        CPLGetSymbol( pszDLL, "DescribeGridDbl" );
     pfnAccessWindowSet = (int (*)(double*,double,double*))
-        CPLGetSymbol( "avgridio.dll", "AccessWindowSet" );
+        CPLGetSymbol( pszDLL, "AccessWindowSet" );
     pfnGetWindowRowFloat = (int (*)(int,int,float*))
-        CPLGetSymbol( "avgridio.dll", "GetWindowRowFloat" );
+        CPLGetSymbol( pszDLL, "GetWindowRowFloat" );
     pfnPutWindowRow = (int (*)(int,int,float*))
-        CPLGetSymbol( "avgridio.dll", "PutWindowRow" );
+        CPLGetSymbol( pszDLL, "PutWindowRow" );
     pfnCellLayerClose = (int (*)(int))
-        CPLGetSymbol( "avgridio.dll", "CellLayerClose" );
+        CPLGetSymbol( pszDLL, "CellLayerClose" );
     pfnGridDelete = (int (*)(char*))
-        CPLGetSymbol( "avgridio.dll", "GridDelete" );
+        CPLGetSymbol( pszDLL, "GridDelete" );
     pfnGetMissingFloat = (void (*)(float *))
-        CPLGetSymbol( "avgridio.dll", "GetMissingFloat" );
+        CPLGetSymbol( pszDLL, "GetMissingFloat" );
     pfnGetWindowRow = (int (*)(int, int, float*))
-        CPLGetSymbol( "avgridio.dll", "GetWindowRow" ); 
+        CPLGetSymbol( pszDLL, "GetWindowRow" ); 
 
     if( pfnCellLayerOpen == NULL || pfnDescribeGridDbl == NULL
         || pfnAccessWindowSet == NULL || pfnGetWindowRowFloat == NULL
