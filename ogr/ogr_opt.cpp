@@ -3,7 +3,7 @@
  *
  * Project:  OpenGIS Simple Features
  * Purpose:  Functions for getting list of projection types, and their parms.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 2000, Frank Warmerdam
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2005/02/21 03:49:47  fwarmerdam
+ * added goode and geos to validation list
+ *
  * Revision 1.5  2004/05/06 07:15:39  dron
  * Added Hotine Oblique Mercator Two Point Natural Origin projection.
  *
@@ -69,6 +72,7 @@ static char *papszParameterDefinitions[] = {
     SRS_PP_LONGITUDE_OF_POINT_3,"Longitude of Point 3", "Long",  "0.0",
     SRS_PP_LATITUDE_OF_POINT_3, "Latitude of Point 3",  "Lat",   "0.0",
     SRS_PP_RECTIFIED_GRID_ANGLE,"Rectified Grid Angle", "Angle", "0.0", 
+    SRS_PP_SATELLITE_HEIGHT,    "Satellite Height",     "m",   "35785831.0", 
     NULL
 };
 
@@ -170,6 +174,21 @@ static char *papszProjectionDefinitions[] = {
     SRS_PT_GALL_STEREOGRAPHIC,
     "Gall Stereographic",
     SRS_PP_CENTRAL_MERIDIAN, 
+    SRS_PP_FALSE_EASTING, 
+    SRS_PP_FALSE_NORTHING,
+
+    "*",
+    SRS_PT_GOODE_HOMOLOSINE,
+    "Goode Homolosine",
+    SRS_PP_CENTRAL_MERIDIAN, 
+    SRS_PP_FALSE_EASTING, 
+    SRS_PP_FALSE_NORTHING,
+
+    "*",
+    SRS_PT_GEOSTATIONARY_SATELLITE,
+    "Geostationary Satellite",
+    SRS_PP_CENTRAL_MERIDIAN, 
+    SRS_PP_SATELLITE_HEIGHT,
     SRS_PP_FALSE_EASTING, 
     SRS_PP_FALSE_NORTHING,
 
