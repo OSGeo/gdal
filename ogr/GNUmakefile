@@ -12,17 +12,46 @@ OBJ	=	ogrgeometryfactory.o ogrpoint.o ogrcurve.o ogrlinestring.o \
 
 LIBS	:=	$(CPL_LIB) $(LIBS) 
 
+OGR_LIB  =	ogr.a
+FRMTS_LIB = 	ogrsf_frmts/ogrsf_frmts.a
+
 LINCLUDE =	-Iogrsf_frmts -I. -I$(GDAL_ROOT)/port
 
-default:	$(OBJ)
+default:	$(OGR_LIB)
 
-all:	test1 docs
+all:	sublibs test1 test2 test_ogrsf docs
 
 clean:
-	rm -f *.o test1
+	rm -f *.o test1 test2 
+	(cd ogrsf_frmts; $(MAKE) clean)
 
 very-clean: clean
 	rm -rf html
+
+test1:	test1.o $(OGR_LIB)
+	$(CXX) $(LNK_FLAGS) test1.o $(OGR_LIB) $(LIBS) -o test1
+
+test2:	test2.o $(OGR_LIB) $(FRMTS_LIB)
+	$(CXX) $(LNK_FLAGS) test2.o $(FRMTS_LIB) $(OGR_LIB) \
+						$(LIBS) -o test2
+
+test_ogrsf:	test_ogrsf.o $(OGR_LIB) $(FRMTS_LIB)
+	$(CXX) $(LNK_FLAGS) test_ogrsf.o $(FRMTS_LIB) $(OGR_LIB) \
+						$(LIBS) -o test_ogrsf
+
+$(FRMTS_LIB):
+	(cd ogrsf_frmts; $(MAKE))
+
+sublibs:
+	(cd ogrsf_frmts; $(MAKE))
+
+docs:
+	rm -rf html/*
+	doxygen
+
+
+$(OGR_LIB):	$(OBJ)
+	ar r $(OGR_LIB) $?
 
 %.o:	%.c
 	$(CC) -c $(LINCLUDE) $(CFLAGS) $*.c -o $*.o
@@ -31,14 +60,3 @@ very-clean: clean
 	$(CXX) -c $(LINCLUDE) $(CFLAGS) $*.cpp -o $*.o
 
 
-test1:	$(OBJ) test1.o
-	$(CXX) $(LNK_FLAGS) test1.o $(OBJ) $(LIBS) -o test1
-
-test2:	$(OBJ) test2.o 
-	$(CXX) $(LNK_FLAGS) test2.o $(OBJ) ogrsf_frmts/ogrsf_frmts.a \
-						$(LIBS) -o test2
-
-
-docs:
-	rm -rf html/*
-	doxygen
