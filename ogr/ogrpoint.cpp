@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2001/11/01 17:01:28  warmerda
+ * pass output buffer into OGRMakeWktCoordinate
+ *
  * Revision 1.15  2001/09/21 16:24:20  warmerda
  * added transform() and transformTo() methods
  *
@@ -404,8 +407,10 @@ OGRErr OGRPoint::exportToWkt( char ** ppszReturn )
 
 {
     char        szTextEquiv[100];
+    char        szCoordinate[80];
 
-    sprintf( szTextEquiv, "POINT (%s)", OGRMakeWktCoordinate(x, y, z) );
+    OGRMakeWktCoordinate(szCoordinate, x, y, z);
+    sprintf( szTextEquiv, "POINT (%s)", szCoordinate );
     *ppszReturn = CPLStrdup( szTextEquiv );
     
     return OGRERR_NONE;

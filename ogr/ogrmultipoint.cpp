@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2001/11/01 17:01:28  warmerda
+ * pass output buffer into OGRMakeWktCoordinate
+ *
  * Revision 1.7  2001/07/19 18:25:07  warmerda
  * expanded tabs
  *
@@ -144,15 +147,15 @@ OGRErr OGRMultiPoint::exportToWkt( char ** ppszReturn )
             strcat( *ppszReturn + nRetLen, "," );
 
         if( poPoint->getCoordinateDimension() == 3 )
-            strcat( *ppszReturn + nRetLen,
-                    OGRMakeWktCoordinate( poPoint->getX(), 
-                                          poPoint->getY(),
-                                          poPoint->getZ() ));
+            OGRMakeWktCoordinate( *ppszReturn + nRetLen,
+                                  poPoint->getX(), 
+                                  poPoint->getY(),
+                                  poPoint->getZ() );
         else
-            strcat( *ppszReturn + nRetLen,
-                    OGRMakeWktCoordinate( poPoint->getX(),
-                                          poPoint->getY(),
-                                          0.0 ) );
+            OGRMakeWktCoordinate( *ppszReturn + nRetLen,
+                                  poPoint->getX(), 
+                                  poPoint->getY(),
+                                  0.0 );
 
         nRetLen += strlen(*ppszReturn + nRetLen);
     }

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.22  2001/11/01 17:01:28  warmerda
+ * pass output buffer into OGRMakeWktCoordinate
+ *
  * Revision 1.21  2001/09/21 16:24:20  warmerda
  * added transform() and transformTo() methods
  *
@@ -815,21 +818,32 @@ OGRErr OGRLineString::exportToWkt( char ** ppszReturn )
 
     for( int i = 0; i < nPointCount; i++ )
     {
-        assert( nMaxString > (int) strlen(*ppszReturn+nRetLen) + 32 + nRetLen);
+        if( nMaxString <= (int) strlen(*ppszReturn+nRetLen) + 32 + nRetLen )
+        {
+            CPLDebug( "OGR", 
+                      "OGRLineString::exportToWkt() ... buffer overflow.\n"
+                      "nMaxString=%d, strlen(*ppszReturn) = %d, i=%d\n"
+                      "*ppszReturn = %s", 
+                      nMaxString, strlen(*ppszReturn), i, *ppszReturn );
+
+            VSIFree( *ppszReturn );
+            *ppszReturn = NULL;
+            return OGRERR_NOT_ENOUGH_MEMORY;
+        }
         
         if( i > 0 )
             strcat( *ppszReturn + nRetLen, "," );
 
         if( getCoordinateDimension() == 3 )
-            strcat( *ppszReturn + nRetLen,
-                    OGRMakeWktCoordinate( paoPoints[i].x,
-                                          paoPoints[i].y,
-                                          padfZ[i] ) );
+            OGRMakeWktCoordinate( *ppszReturn + nRetLen,
+                                  paoPoints[i].x,
+                                  paoPoints[i].y,
+                                  padfZ[i] );
         else
-            strcat( *ppszReturn + nRetLen,
-                    OGRMakeWktCoordinate( paoPoints[i].x,
-                                          paoPoints[i].y,
-                                          0.0 ) );
+            OGRMakeWktCoordinate( *ppszReturn + nRetLen,
+                                  paoPoints[i].x,
+                                  paoPoints[i].y,
+                                  0.0 );
 
         nRetLen += strlen(*ppszReturn + nRetLen);
     }

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2001/11/01 17:01:28  warmerda
+ * pass output buffer into OGRMakeWktCoordinate
+ *
  * Revision 1.6  1999/11/18 19:02:20  warmerda
  * expanded tabs
  *
@@ -72,14 +75,14 @@
 #ifdef _OGR_GEOMETRY_H_INCLUDED
 #define OGR_WKT_TOKEN_MAX       64
 
-const char * OGRWktReadToken( const char * pszInput, char * pszToken );
+const char CPL_DLL * OGRWktReadToken( const char * pszInput, char * pszToken );
 
-const char * OGRWktReadPoints( const char * pszInput,
+const char CPL_DLL * OGRWktReadPoints( const char * pszInput,
                                OGRRawPoint **ppaoPoints, double **ppadfZ,
                                int * pnMaxPoints,
                                int * pnReadPoints );
 
-const char *OGRMakeWktCoordinate( double, double, double );
+void CPL_DLL OGRMakeWktCoordinate( char *, double, double, double );
 #endif
 
 #endif /* ndef _OGR_P_H_INCLUDED */
