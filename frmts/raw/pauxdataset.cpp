@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.23  2003/02/03 05:10:18  warmerda
+ * fix expectation that GDALOpenInfo.fp is set, not necessarily for large files
+ *
  * Revision 1.22  2002/11/23 18:54:17  warmerda
  * added CREATIONDATATYPES metadata for drivers
  *
@@ -729,7 +732,7 @@ GDALDataset *PAuxDataset::Open( GDALOpenInfo * poOpenInfo )
     char	**papszTokens;
     char	*pszTarget;
     
-    if( poOpenInfo->nHeaderBytes < 1 || poOpenInfo->fp == NULL )
+    if( poOpenInfo->nHeaderBytes < 1 )
         return NULL;
 
 /* -------------------------------------------------------------------- */
