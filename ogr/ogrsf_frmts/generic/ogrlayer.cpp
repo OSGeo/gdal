@@ -3,7 +3,7 @@
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  The generic portions of the OGRSFLayer class.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 1999,  Les Technologies SoftMap Inc.
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2002/09/26 18:16:19  warmerda
+ * added C entry points
+ *
  * Revision 1.11  2002/03/27 21:25:25  warmerda
  * added working default implementation of GetFeature()
  *
@@ -64,6 +67,7 @@
  */
 
 #include "ogrsf_frmts.h"
+#include "ogr_api.h"
 #include "ogr_p.h"
 
 CPL_CVSID("$Id$");
@@ -118,6 +122,16 @@ int OGRLayer::GetFeatureCount( int bForce )
 }
 
 /************************************************************************/
+/*                       OGR_L_GetFeatureCount()                        */
+/************************************************************************/
+
+int OGR_L_GetFeatureCount( OGRLayerH hLayer, int bForce )
+
+{
+    return ((OGRLayer *) hLayer)->GetFeatureCount(bForce);
+}
+
+/************************************************************************/
 /*                             GetExtent()                              */
 /************************************************************************/
 
@@ -157,6 +171,16 @@ OGRErr OGRLayer::GetExtent(OGREnvelope *psExtent, int bForce )
     ResetReading();
 
     return (bExtentSet ? OGRERR_NONE : OGRERR_FAILURE);
+}
+
+/************************************************************************/
+/*                          OGR_L_GetExtent()                           */
+/************************************************************************/
+
+OGRErr OGR_L_GetExtent( OGRLayerH hLayer, OGREnvelope *psExtent, int bForce )
+
+{
+    return ((OGRLayer *) hLayer)->GetExtent( psExtent, bForce );
 }
 
 /************************************************************************/
@@ -201,6 +225,16 @@ OGRErr OGRLayer::SetAttributeFilter( const char *pszQuery )
 }
 
 /************************************************************************/
+/*                      OGR_L_SetAttributeFilter()                      */
+/************************************************************************/
+
+OGRErr OGR_L_SetAttributeFilter( OGRLayerH hLayer, const char *pszQuery )
+
+{
+    return ((OGRLayer *) hLayer)->SetAttributeFilter( pszQuery );
+}
+
+/************************************************************************/
 /*                             GetFeature()                             */
 /************************************************************************/
 
@@ -222,6 +256,26 @@ OGRFeature *OGRLayer::GetFeature( long nFeatureId )
 }
 
 /************************************************************************/
+/*                          OGR_L_GetFeature()                          */
+/************************************************************************/
+
+OGRFeatureH OGR_L_GetFeature( OGRLayerH hLayer, long nFeatureId )
+
+{
+    return (OGRFeatureH) ((OGRLayer *)hLayer)->GetFeature( nFeatureId );
+}
+
+/************************************************************************/
+/*                        OGR_L_GetNextFeature()                        */
+/************************************************************************/
+
+OGRFeatureH OGR_L_GetNextFeature( OGRLayerH hLayer )
+
+{
+    return (OGRFeatureH) ((OGRLayer *)hLayer)->GetNextFeature();
+}
+
+/************************************************************************/
 /*                             SetFeature()                             */
 /************************************************************************/
 
@@ -232,6 +286,16 @@ OGRErr OGRLayer::SetFeature( OGRFeature * )
 }
 
 /************************************************************************/
+/*                          OGR_L_SetFeature()                          */
+/************************************************************************/
+
+OGRErr OGR_L_SetFeature( OGRLayerH hLayer, OGRFeatureH hFeat )
+
+{
+    return ((OGRLayer *)hLayer)->SetFeature( (OGRFeature *) hFeat );
+}
+
+/************************************************************************/
 /*                           CreateFeature()                            */
 /************************************************************************/
 
@@ -239,6 +303,16 @@ OGRErr OGRLayer::CreateFeature( OGRFeature * )
 
 {
     return OGRERR_UNSUPPORTED_OPERATION;
+}
+
+/************************************************************************/
+/*                        OGR_L_CreateFeature()                         */
+/************************************************************************/
+
+OGRErr OGR_L_CreateFeature( OGRLayerH hLayer, OGRFeatureH hFeat )
+
+{
+    return ((OGRLayer *) hLayer)->CreateFeature( (OGRFeature *) hFeat );
 }
 
 /************************************************************************/
@@ -265,6 +339,18 @@ OGRErr OGRLayer::CreateField( OGRFieldDefn * poField, int bApproxOK )
 }
 
 /************************************************************************/
+/*                         OGR_L_CreateField()                          */
+/************************************************************************/
+
+OGRErr OGR_L_CreateField( OGRLayerH hLayer, OGRFieldDefnH hField, 
+                          int bApproxOK )
+
+{
+    return ((OGRLayer *) hLayer)->CreateField( (OGRFieldDefn *) hField, 
+                                               bApproxOK );
+}
+
+/************************************************************************/
 /*                          StartTransaction()                          */
 /************************************************************************/
 
@@ -272,6 +358,16 @@ OGRErr OGRLayer::StartTransaction()
 
 {
     return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                       OGR_L_StartTransaction()                       */
+/************************************************************************/
+
+OGRErr OGR_L_StartTransaction( OGRLayerH hLayer )
+
+{
+    return ((OGRLayer *)hLayer)->StartTransaction();
 }
 
 /************************************************************************/
@@ -285,6 +381,16 @@ OGRErr OGRLayer::CommitTransaction()
 }
 
 /************************************************************************/
+/*                       OGR_L_CommitTransaction()                      */
+/************************************************************************/
+
+OGRErr OGR_L_CommitTransaction( OGRLayerH hLayer )
+
+{
+    return ((OGRLayer *)hLayer)->CommitTransaction();
+}
+
+/************************************************************************/
 /*                        RollbackTransaction()                         */
 /************************************************************************/
 
@@ -293,3 +399,75 @@ OGRErr OGRLayer::RollbackTransaction()
 {
     return OGRERR_UNSUPPORTED_OPERATION;
 }
+
+/************************************************************************/
+/*                     OGR_L_RollbackTransaction()                      */
+/************************************************************************/
+
+OGRErr OGR_L_RollbackTransaction( OGRLayerH hLayer )
+
+{
+    return ((OGRLayer *)hLayer)->RollbackTransaction();
+}
+
+/************************************************************************/
+/*                         OGR_L_GetLayerDefn()                         */
+/************************************************************************/
+
+OGRFeatureDefnH OGR_L_GetLayerDefn( OGRLayerH hLayer )
+
+{
+    return (OGRFeatureDefnH) ((OGRLayer *)hLayer)->GetLayerDefn();
+}
+
+/************************************************************************/
+/*                        OGR_L_GetSpatialRef()                         */
+/************************************************************************/
+
+OGRSpatialReferenceH OGR_L_GetSpatialRef( OGRLayerH hLayer )
+
+{
+    return (OGRSpatialReferenceH) ((OGRLayer *) hLayer)->GetSpatialRef();
+}
+
+/************************************************************************/
+/*                        OGR_L_TestCapability()                        */
+/************************************************************************/
+
+int OGR_L_TestCapability( OGRLayerH hLayer, const char *pszCap )
+
+{
+    return ((OGRLayer *) hLayer)->TestCapability( pszCap );
+}
+
+/************************************************************************/
+/*                       OGR_L_GetSpatialFilter()                       */
+/************************************************************************/
+
+OGRGeometryH OGR_L_GetSpatialFilter( OGRLayerH hLayer )
+
+{
+    return (OGRGeometryH) ((OGRLayer *) hLayer)->GetSpatialFilter();
+}
+
+/************************************************************************/
+/*                       OGR_L_SetSpatialFilter()                       */
+/************************************************************************/
+
+void OGR_L_SetSpatialFilter( OGRLayerH hLayer, OGRGeometryH hGeom )
+
+{
+    ((OGRLayer *) hLayer)->SetSpatialFilter( (OGRGeometry *) hGeom );
+}
+
+/************************************************************************/
+/*                         OGR_L_ResetReading()                         */
+/************************************************************************/
+
+void OGR_L_ResetReading( OGRLayerH hLayer )
+
+{
+    ((OGRLayer *) hLayer)->ResetReading();
+}
+
+

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2002/09/26 18:16:19  warmerda
+ * added C entry points
+ *
  * Revision 1.7  2002/05/14 21:38:00  warmerda
  * make INST_DATA overidable with binary patch
  *
@@ -52,6 +55,7 @@
  */
 
 #include "ogrsf_frmts.h"
+#include "ogr_api.h"
 #include "ogr_p.h"
 
 CPL_CVSID("$Id$");
@@ -160,6 +164,18 @@ OGRDataSource *OGRSFDriverRegistrar::Open( const char * pszName,
 }
 
 /************************************************************************/
+/*                              OGROpen()                               */
+/************************************************************************/
+
+OGRDataSourceH OGROpen( const char *pszName, int bUpdate,
+                        OGRSFDriverH *pahDriverList )
+
+{
+    return poRegistrar->Open( pszName, bUpdate, 
+                              (OGRSFDriver **) pahDriverList );
+}
+
+/************************************************************************/
 /*                           RegisterDriver()                           */
 /************************************************************************/
 
@@ -187,6 +203,16 @@ void OGRSFDriverRegistrar::RegisterDriver( OGRSFDriver * poNewDriver )
 }
 
 /************************************************************************/
+/*                         OGRRegisterDriver()                          */
+/************************************************************************/
+
+void OGRRegisterDriver( OGRSFDriverH hDriver )
+
+{
+    poRegistrar->RegisterDriver( (OGRSFDriver *) hDriver );
+}
+
+/************************************************************************/
 /*                           GetDriverCount()                           */
 /************************************************************************/
 
@@ -194,6 +220,16 @@ int OGRSFDriverRegistrar::GetDriverCount()
 
 {
     return nDrivers;
+}
+
+/************************************************************************/
+/*                         OGRGetDriverCount()                          */
+/************************************************************************/
+
+int OGRGetDriverCount()
+
+{
+    return poRegistrar->GetDriverCount();
 }
 
 /************************************************************************/
@@ -207,4 +243,14 @@ OGRSFDriver *OGRSFDriverRegistrar::GetDriver( int i )
         return NULL;
     else
         return papoDrivers[i];
+}
+
+/************************************************************************/
+/*                            OGRGetDriver()                            */
+/************************************************************************/
+
+OGRSFDriverH OGRGetDriver( int iDriver )
+
+{
+    return (OGRSFDriverH) poRegistrar->GetDriver( iDriver );
 }

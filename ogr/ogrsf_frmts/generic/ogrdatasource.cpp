@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2002/09/26 18:16:19  warmerda
+ * added C entry points
+ *
  * Revision 1.7  2002/05/01 18:26:27  warmerda
  * Fixed reporting of error on table.
  *
@@ -52,6 +55,7 @@
  */
 
 #include "ogrsf_frmts.h"
+#include "ogr_api.h"
 #include "ogr_p.h"
 #include "ogr_gensql.h"
 
@@ -81,6 +85,16 @@ OGRDataSource::~OGRDataSource()
 }
 
 /************************************************************************/
+/*                           OGR_DS_Destroy()                           */
+/************************************************************************/
+
+void OGR_DS_Destroy( OGRDataSourceH hDS )
+
+{
+    delete (OGRDataSource *) hDS;
+}
+
+/************************************************************************/
 /*                            CreateLayer()                             */
 /************************************************************************/
 
@@ -94,6 +108,21 @@ OGRLayer *OGRDataSource::CreateLayer( const char * pszName,
               "CreateLayer() not supported by this data source.\n" );
               
     return NULL;
+}
+
+/************************************************************************/
+/*                         OGR_DS_CreateLayer()                         */
+/************************************************************************/
+
+OGRLayerH OGR_DS_CreateLayer( OGRDataSourceH hDS, 
+                              const char * pszName,
+                              OGRSpatialReferenceH hSpatialRef,
+                              OGRwkbGeometryType eType,
+                              char ** papszOptions )
+
+{
+    return ((OGRDataSource *)hDS)->CreateLayer( 
+        pszName, (OGRSpatialReference *) hSpatialRef, eType, papszOptions );
 }
 
 /************************************************************************/
@@ -216,6 +245,22 @@ OGRLayer * OGRDataSource::ExecuteSQL( const char *pszSQLCommand,
 }
 
 /************************************************************************/
+/*                         OGR_DS_ExecuteSQL()                          */
+/************************************************************************/
+
+OGRLayerH OGR_DS_ExecuteSQL( OGRDataSourceH hDS, 
+                             const char *pszSQLCommand,
+                             OGRGeometryH hSpatialFilter,
+                             const char *pszDialect )
+
+{
+    return (OGRLayerH) 
+        ((OGRDataSource *)hDS)->ExecuteSQL( pszSQLCommand,
+                                            (OGRGeometry *) hSpatialFilter,
+                                            pszDialect );
+}
+
+/************************************************************************/
 /*                          ReleaseResultSet()                          */
 /************************************************************************/
 
@@ -223,4 +268,54 @@ void OGRDataSource::ReleaseResultSet( OGRLayer * poLayer )
 
 {
     delete poLayer;
+}
+
+/************************************************************************/
+/*                      OGR_DS_ReleaseResultSet()                       */
+/************************************************************************/
+
+void OGR_DS_ReleaseResultSet( OGRDataSourceH hDS, OGRLayerH hLayer )
+
+{
+    ((OGRDataSource *) hDS)->ReleaseResultSet( (OGRLayer *) hLayer );
+}
+
+/************************************************************************/
+/*                       OGR_DS_TestCapability()                        */
+/************************************************************************/
+
+int OGR_DS_TestCapability( OGRDataSourceH hDS, const char *pszCap )
+
+{
+    return ((OGRDataSource *) hDS)->TestCapability( pszCap );
+}
+
+/************************************************************************/
+/*                        OGR_DS_GetLayerCount()                        */
+/************************************************************************/
+
+int OGR_DS_GetLayerCount( OGRDataSourceH hDS )
+
+{
+    return ((OGRDataSource *)hDS)->GetLayerCount();
+}
+
+/************************************************************************/
+/*                          OGR_DS_GetLayer()                           */
+/************************************************************************/
+
+OGRLayerH OGR_DS_GetLayer( OGRDataSourceH hDS, int iLayer )
+
+{
+    return (OGRLayerH) ((OGRDataSource*)hDS)->GetLayer( iLayer );
+}
+
+/************************************************************************/
+/*                           OGR_DS_GetName()                           */
+/************************************************************************/
+
+const char *OGR_DS_GetName( OGRDataSourceH hDS )
+
+{
+    return ((OGRDataSource *)hDS)->GetName();
 }
