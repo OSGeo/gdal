@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.28  2003/05/21 04:40:13  warmerda
+ * avoid warnings
+ *
  * Revision 1.27  2003/05/07 19:11:48  warmerda
  * fixed bug in one case of bJustInitialize setting
  *
@@ -608,7 +611,7 @@ GDALCopyWords( void * pSrcData, GDALDataType eSrcType, int nSrcPixelOffset,
     for( int iWord = 0; iWord < nWordCount; iWord++ )
     {
         GByte   *pabySrcWord, *pabyDstWord;
-        double  dfPixelValue, dfPixelValueI=0.0;
+        double  dfPixelValue=0.0, dfPixelValueI=0.0;
 
         pabySrcWord = ((GByte *) pSrcData) + iWord * nSrcPixelOffset;
 
@@ -724,7 +727,7 @@ GDALCopyWords( void * pSrcData, GDALDataType eSrcType, int nSrcPixelOffset,
         {
           case GDT_Byte:
           {
-              dfPixelValue += 0.5;
+              dfPixelValue += (float) 0.5;
 
               if( dfPixelValue < 0.0 )
                   *pabyDstWord = 0;
@@ -807,7 +810,7 @@ GDALCopyWords( void * pSrcData, GDALDataType eSrcType, int nSrcPixelOffset,
           {
               float     fVal;
 
-              fVal = dfPixelValue;
+              fVal = (float) dfPixelValue;
 
               memcpy( pabyDstWord, &fVal, 4 );
           }
@@ -873,9 +876,9 @@ GDALCopyWords( void * pSrcData, GDALDataType eSrcType, int nSrcPixelOffset,
           {
               float     fVal;
 
-              fVal = dfPixelValue;
+              fVal = (float) dfPixelValue;
               memcpy( pabyDstWord, &fVal, 4 );
-              fVal = dfPixelValueI;
+              fVal = (float) dfPixelValueI;
               memcpy( pabyDstWord+4, &fVal, 4 );
           }
           break;
@@ -1024,9 +1027,9 @@ GDALDataset::BlockBasedRasterIO( GDALRWFlag eRWFlag,
     GDALRasterBlock *poBlock;
     GDALRasterBlock **papoBlocks;
     int         nLBlockX=-1, nLBlockY=-1, iBufYOff, iBufXOff, iSrcY, iBand;
-    int         nBlockXSize, nBlockYSize;
+    int         nBlockXSize=1, nBlockYSize=1;
     CPLErr      eErr = CE_None;
-    GDALDataType eDataType;
+    GDALDataType eDataType = GDT_Byte;
 
 /* -------------------------------------------------------------------- */
 /*      Ensure that all bands share a common block size and data type.  */
