@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.4  1999/08/13 03:27:50  warmerda
+ * added support for GDT_Int32 and GDT_Float32 access
+ *
  * Revision 1.3  1999/07/23 14:28:26  warmerda
  * supress errors in AIGOpen() since we don't know if it's really AIG yet
  *
@@ -101,7 +104,20 @@ AIGRasterBand::AIGRasterBand( AIGDataset *poDS, int nBand )
 
     nBlockXSize = poDS->psInfo->nBlockXSize;
     nBlockYSize = poDS->psInfo->nBlockYSize;
-    eDataType = GDT_Byte;
+
+    if( poDS->psInfo->nCellType == AIG_CELLTYPE_INT
+        && poDS->psInfo->dfMin >= 0.0 && poDS->psInfo->dfMax <= 255.0 )
+    {
+        eDataType = GDT_Byte;
+    }
+    else if( poDS->psInfo->nCellType == AIG_CELLTYPE_INT )
+    {
+        eDataType = GDT_Int32;
+    }
+    else
+    {
+        eDataType = GDT_Float32;
+    }
 }
 
 /************************************************************************/
@@ -116,22 +132,36 @@ CPLErr AIGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     GUInt32	*panGridRaster;
     int		i;
 
-    panGridRaster = (GUInt32 *) CPLMalloc(4*nBlockXSize*nBlockYSize);
-    if( AIGReadTile( poODS->psInfo, nBlockXOff, nBlockYOff, panGridRaster )
-        != CE_None )
+    if( poODS->psInfo->nCellType == AIG_CELLTYPE_INT )
     {
+        panGridRaster = (GUInt32 *) CPLMalloc(4*nBlockXSize*nBlockYSize);
+        if( AIGReadTile( poODS->psInfo, nBlockXOff, nBlockYOff, panGridRaster )
+            != CE_None )
+        {
+            CPLFree( panGridRaster );
+            return CE_Failure;
+        }
+
+        if( eDataType == GDT_Byte )
+        {
+            for( i = 0; i < nBlockXSize * nBlockYSize; i++ )
+                ((GByte *) pImage)[i] = panGridRaster[i];
+        }
+        else
+        {
+            for( i = 0; i < nBlockXSize * nBlockYSize; i++ )
+                ((GInt32 *) pImage)[i] = panGridRaster[i];
+        }
+        
         CPLFree( panGridRaster );
-        return CE_Failure;
-    }
 
-    for( i = 0; i < nBlockXSize * nBlockYSize; i++ )
+        return CE_None;
+    }
+    else
     {
-        ((GByte *) pImage)[i] = panGridRaster[i];
+        return AIGReadFloatTile( poODS->psInfo, nBlockXOff, nBlockYOff,
+                                 (float *) pImage );
     }
-
-    CPLFree( panGridRaster );
-
-    return( CE_None );
 }
 
 
