@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2000/07/19 20:50:35  warmerda
+ * better debug file location
+ *
  * Revision 1.9  1999/11/25 04:09:57  kshih
  * Added code to delete OGR dataset when no longer in use.
  *
@@ -232,7 +235,7 @@ void OGRComDebug( const char * pszDebugClass, const char * pszFormat, ... )
 /* -------------------------------------------------------------------- */
     if( fpDebug == NULL )
     {
-        fpDebug = fopen( "f:\\gdal\\ogr\\sfcom_oledb\\Debug", "w" );
+        fpDebug = fopen( "f:\\Debug", "w" );
     }
 
 /* -------------------------------------------------------------------- */
