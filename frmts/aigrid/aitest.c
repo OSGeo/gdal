@@ -17,11 +17,14 @@ static void DumpMagic( AIGInfo_t * psInfo, int bVerbose )
     {
         GByte	byMagic;
         int	bReport = bVerbose;
+        unsigned char abyBlockSize[2];
+        const char *pszMessage = "";
         
         if( psInfo->panBlockSize[i] == 0 )
             continue;
 
-        VSIFSeek( psInfo->fpGrid, psInfo->panBlockOffset[i]+2, SEEK_SET );
+        VSIFSeek( psInfo->fpGrid, psInfo->panBlockOffset[i], SEEK_SET );
+        VSIFRead( abyBlockSize, 2, 1, psInfo->fpGrid );
 
         if( psInfo->nCellType == AIG_CELLTYPE_INT )
         {
@@ -33,23 +36,40 @@ static void DumpMagic( AIGInfo_t * psInfo, int bVerbose )
                 && byMagic != 0xf8 && byMagic != 0xff && byMagic != 0x41
                 && byMagic != 0x40 && byMagic != 0x42 && byMagic != 0xf0
                 && byMagic != 0xcf && byMagic != 0x01 )
+            {
+                pszMessage = "(unhandled magic number)";
                 bReport = TRUE;
+            }
 
             if( byMagic == 0 && psInfo->panBlockSize[i] > 8 )
+            {
+                pszMessage = "(wrong size for 0x00 block, should be 8 bytes)";
                 bReport = TRUE;
+            }
+
+            if( (abyBlockSize[0] * 256 + abyBlockSize[1])*2 != 
+                psInfo->panBlockSize[i] )
+            {
+                pszMessage = "(block size in data doesn't match index)";
+                bReport = TRUE;
+            }
         }
         else
         {
             if( psInfo->panBlockSize[i] !=
                 psInfo->nBlockXSize*psInfo->nBlockYSize*sizeof(float) )
+            {
+                pszMessage = "(floating point block size is wrong)";
                 bReport = TRUE;
+            }
         }
 
         if( bReport )
         {
-            printf( " %02x %d/%d@%d\n", byMagic, i,
+            printf( " %02x %5d %5d @ %d %s\n", byMagic, i,
                     psInfo->panBlockSize[i],
-                    psInfo->panBlockOffset[i] );
+                    psInfo->panBlockOffset[i],
+                    pszMessage );
         }
     }
 }
@@ -65,7 +85,7 @@ int main( int argc, char ** argv )
     AIGInfo_t	*psInfo;
     GUInt32 	*panRaster;
     int		i, j;
-    int		bMagic = FALSE;
+    int		bMagic = FALSE, bSupressMagic = FALSE;
 
 /* -------------------------------------------------------------------- */
 /*      Process arguments.                                              */
@@ -75,12 +95,15 @@ int main( int argc, char ** argv )
         if( EQUAL(argv[1],"-magic") )
             bMagic = TRUE;
 
+        else if( EQUAL(argv[1],"-nomagic") )
+            bSupressMagic = TRUE;
+
         argc--;
         argv++;
     }
     
     if( argc < 2 ) {
-        printf( "Usage: aitest [-magic] coverage\n" );
+        printf( "Usage: aitest [-magic] coverage [block numbers...]\n" );
         exit( 1 );
     }
 
@@ -118,7 +141,8 @@ int main( int argc, char ** argv )
 /*      Do we want a dump of all the ``magic'' numbers for              */
 /*      instantated blocks?                                             */
 /* -------------------------------------------------------------------- */
-    DumpMagic( psInfo, bMagic );
+    if( !bSupressMagic )
+        DumpMagic( psInfo, bMagic );
     
 /* -------------------------------------------------------------------- */
 /*      Read a block, and report it's contents.                         */
