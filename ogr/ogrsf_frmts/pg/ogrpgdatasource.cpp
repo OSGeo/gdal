@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2002/05/09 16:48:08  warmerda
+ * upgrade to quote table and field names
+ *
  * Revision 1.12  2002/05/09 16:03:19  warmerda
  * major upgrade to support SRS better and add ExecuteSQL
  *
@@ -472,13 +475,13 @@ OGRPGDataSource::CreateLayer( const char * pszLayerName,
 
     if( !bHavePostGIS )
         sprintf( szCommand, 
-                 "CREATE TABLE %s ( "
+                 "CREATE TABLE \"%s\" ( "
                  "   OGC_FID SERIAL, "
                  "   WKB_GEOMETRY %s )",
                  pszLayerName, pszGeomType );
     else
         sprintf( szCommand, 
-                 "CREATE TABLE %s ( OGC_FID SERIAL )", 
+                 "CREATE TABLE \"%s\" ( OGC_FID SERIAL )", 
                  pszLayerName );
 
     hResult = PQexec(hPGConn, szCommand);

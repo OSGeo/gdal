@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2002/05/09 16:48:08  warmerda
+ * upgrade to quote table and field names
+ *
  * Revision 1.1  2002/05/09 16:03:46  warmerda
  * New
  *
@@ -266,8 +269,7 @@ void OGRPGTableLayer::BuildFullQueryStatement()
     char *pszFields = BuildFields();
 
     sprintf( szCommand, 
-             "SELECT %s FROM %s "
-             "%s", 
+             "SELECT %s FROM \"%s\" %s", 
              pszFields, poFeatureDefn->GetName(), pszWHERE );
     
     CPLFree( pszFields );
@@ -305,7 +307,7 @@ char *OGRPGTableLayer::BuildFields()
         nSize += strlen(pszGeomColumn);
 
     for( i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
-        nSize += strlen(poFeatureDefn->GetFieldDefn(i)->GetNameRef()) + 2;
+        nSize += strlen(poFeatureDefn->GetFieldDefn(i)->GetNameRef()) + 4;
 
     pszFieldList = (char *) CPLMalloc(nSize);
 
@@ -313,11 +315,11 @@ char *OGRPGTableLayer::BuildFields()
     {
         if( bHasPostGISGeometry )
         {
-            sprintf( pszFieldList, "AsText(%s)", pszGeomColumn );
+            sprintf( pszFieldList, "AsText(\"%s\")", pszGeomColumn );
         }
         else
         {
-            sprintf( pszFieldList, "%s", pszGeomColumn );
+            sprintf( pszFieldList, "\"%s\"", pszGeomColumn );
         }
     }
     else
@@ -330,7 +332,9 @@ char *OGRPGTableLayer::BuildFields()
         if( strlen(pszFieldList) > 0 )
             strcat( pszFieldList, ", " );
 
+        strcat( pszFieldList, "\"" );
         strcat( pszFieldList, pszName );
+        strcat( pszFieldList, "\"" );
     }
 
     CPLAssert( (int) strlen(pszFieldList) < nSize );
@@ -412,7 +416,8 @@ OGRErr OGRPGTableLayer::CreateFeature( OGRFeature *poFeature )
         else
             strcat( pszCommand, ", " );
 
-        strcat( pszCommand, poFeatureDefn->GetFieldDefn(i)->GetNameRef() );
+        sprintf( pszCommand + strlen(pszCommand), "\"%s\"",
+                 poFeatureDefn->GetFieldDefn(i)->GetNameRef() );
     }
 
     strcat( pszCommand, ") VALUES (" );
@@ -624,7 +629,7 @@ OGRErr OGRPGTableLayer::CreateField( OGRFieldDefn *poField, int bApproxOK )
     hResult = PQexec(hPGConn, "BEGIN");
     PQclear( hResult );
 
-    sprintf( szCommand, "ALTER TABLE %s ADD COLUMN %s %s", 
+    sprintf( szCommand, "ALTER TABLE \"%s\" ADD COLUMN \"%s\" %s", 
              poFeatureDefn->GetName(), poField->GetNameRef(), szFieldType );
     hResult = PQexec(hPGConn, szCommand);
     if( PQresultStatus(hResult) != PGRES_COMMAND_OK )
