@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.25  2003/09/13 03:48:36  warmerda
+ * actually use the papaeFieldInd to write NULL fields properly in bound create
+ *
  * Revision 1.24  2003/05/21 03:54:01  warmerda
  * expand tabs
  *
@@ -1400,8 +1403,8 @@ int OGROCITableLayer::AllocAndBindForWrite()
 /* -------------------------------------------------------------------- */
     panWriteFIDs = (int *) CPLMalloc(sizeof(int) * nWriteCacheMax );
         
-    if( poBoundStatement->BindScalar( ":fid", panWriteFIDs,
-                                      sizeof(int), SQLT_INT ) != CE_None )
+    if( poBoundStatement->BindScalar( ":fid", panWriteFIDs, sizeof(int), 
+                                      SQLT_INT ) != CE_None )
         return FALSE;
 
 /* -------------------------------------------------------------------- */
@@ -1420,6 +1423,9 @@ int OGROCITableLayer::AllocAndBindForWrite()
 
         sprintf( szFieldPlaceholderName, ":field_%d", i );
 
+        papaeWriteFieldInd[i] = (OCIInd *) 
+            CPLCalloc(sizeof(OCIInd), nWriteCacheMax );
+
         if( poFldDefn->GetType() == OFTInteger )
         {
             papWriteFields[i] = 
@@ -1427,7 +1433,7 @@ int OGROCITableLayer::AllocAndBindForWrite()
 
             if( poBoundStatement->BindScalar( 
                     szFieldPlaceholderName, papWriteFields[i],
-                    sizeof(int), SQLT_INT ) != CE_None )
+                    sizeof(int), SQLT_INT, papaeWriteFieldInd[i] ) != CE_None )
                 return FALSE;
         }
         else if( poFldDefn->GetType() == OFTReal )
@@ -1437,7 +1443,7 @@ int OGROCITableLayer::AllocAndBindForWrite()
 
             if( poBoundStatement->BindScalar( 
                     szFieldPlaceholderName, papWriteFields[i],
-                    sizeof(double), SQLT_FLT ) != CE_None )
+                    sizeof(double), SQLT_FLT, papaeWriteFieldInd[i] ) != CE_None )
                 return FALSE;
         }
         else 
@@ -1453,12 +1459,9 @@ int OGROCITableLayer::AllocAndBindForWrite()
 
             if( poBoundStatement->BindScalar( 
                     szFieldPlaceholderName, papWriteFields[i],
-                    nEachBufSize, SQLT_STR ) != CE_None )
+                    nEachBufSize, SQLT_STR, papaeWriteFieldInd[i]) != CE_None )
                 return FALSE;
         }
-        
-        papaeWriteFieldInd[i] = (OCIInd *) 
-            CPLCalloc(sizeof(OCIInd), nWriteCacheMax );
     }
 
     return TRUE;
