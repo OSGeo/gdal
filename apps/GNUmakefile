@@ -4,7 +4,7 @@ include ../GDALmake.opt
 
 INCLUDE		=	$(GDAL_INCLUDE) -I$(GDAL_ROOT)/frmts
 DEP_LIBS	=	$(GDAL_LIB) $(CPL_LIB) $(XTRAOBJ)
-BIN_LIST	=	gdalinfo gdal_translate gdaladdo
+BIN_LIST	=	gdalinfo$(EXE) gdal_translate$(EXE) gdaladdo$(EXE)
 
 ifeq ($(HAVE_LD_SHARED),yes)					
 CONFIG_LIBS	=	$(GDAL_SLIB_LINK)
@@ -21,35 +21,35 @@ lib-depend:
 	(cd ../core ; $(MAKE) )
 	(cd ../port ; $(MAKE) )
 
-gdalinfo:	gdalinfo.o $(DEP_LIBS)
+gdalinfo$(EXE):	gdalinfo.o $(DEP_LIBS)
 	$(CXX) $(LNK_FLAGS) gdalinfo.o $(XTRAOBJ) $(GDAL_LIBS) $(LIBS) \
-		 -o gdalinfo
+		 -o gdalinfo$(EXE)
 
-gdal_translate:	gdal_translate.o  $(DEP_LIBS)
+gdal_translate$(EXE):	gdal_translate.o  $(DEP_LIBS)
 	$(CXX) $(LNK_FLAGS) gdal_translate.o $(XTRAOBJ) \
-		$(CONFIG_LIBS) -o gdal_translate
+		$(CONFIG_LIBS) -o gdal_translate$(EXE)
 
-gdaladdo:	gdaladdo.o  $(DEP_LIBS)
+gdaladdo$(EXE):	gdaladdo.o  $(DEP_LIBS)
 	$(CXX) $(LNK_FLAGS) gdaladdo.o $(XTRAOBJ) \
-		$(CONFIG_LIBS) -o gdaladdo
+		$(CONFIG_LIBS) -o gdaladdo$(EXE)
 
-gdal2raw:	gdal2raw.o $(DEP_LIBS)
+gdal2raw$(EXE):	gdal2raw.o $(DEP_LIBS)
 	$(CXX) $(LNK_FLAGS) gdal2raw.o $(XTRAOBJ) $(CONFIG_LIBS) \
-		-o gdal2raw
+		-o gdal2raw$(EXE)
 
-gdal_chksum:	gdal_chksum.o $(DEP_LIBS)
-	$(CXX) $(LNK_FLAGS) gdal_chksum.o $(CONFIG_LIBS) -o gdal_chksum
+gdal_chksum$(EXE):	gdal_chksum.o $(DEP_LIBS)
+	$(CXX) $(LNK_FLAGS) gdal_chksum.o $(CONFIG_LIBS) -o gdal_chksum$(EXE)
 
-gdaltindex:	gdaltindex.o $(DEP_LIBS)
+gdaltindex$(EXE):	gdaltindex.o $(DEP_LIBS)
 	$(CXX) $(LNK_FLAGS) gdaltindex.o $(XTRAOBJ) $(CONFIG_LIBS) \
-		-o gdaltindex
+		-o gdaltindex$(EXE)
 
-test1:	test1.o $(DEP_LIBS)
+test1$(EXE):	test1.o $(DEP_LIBS)
 	$(CXX) $(LNK_FLAGS) test1.o $(XTRAOBJ) $(CONFIG_LIBS) \
-		 -o test1
+		 -o test1$(EXE)
 
 clean:
-	rm -f *.o gdalinfo core
+	rm -f *.o $(BIN_LIST) core
 
 $(DEP_LIBS):
 
