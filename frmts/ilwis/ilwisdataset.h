@@ -55,6 +55,7 @@ CPL_C_END
 
 #define shUNDEF	-32767
 #define iUNDEF  -2147483647
+#define flUNDEF ((float)-1e38)
 #define	rUNDEF  ((double)-1e308)
 
 enum ilwisStoreType
@@ -62,6 +63,7 @@ enum ilwisStoreType
 		stByte,
 		stInt,
 		stLong,
+    stFloat,
 		stReal
 };
 
