@@ -29,6 +29,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.35  2003/05/30 17:30:46  warmerda
+ * Avoid use of goto.
+ *
  * Revision 1.34  2003/05/30 15:40:35  warmerda
  * improved state plane handling with unusual units
  *
@@ -1340,7 +1343,18 @@ CPLErr HFADataset::ReadProjection()
     if( psPro == NULL )
     {
         if( oSRS.IsLocal() )
-            goto exportFromSRS;
+        {
+            CPLFree( pszProjection );
+            pszProjection = NULL;
+            
+            if( oSRS.exportToWkt( &pszProjection ) == OGRERR_NONE )
+                return CE_None;
+            else
+            {
+                pszProjection = NULL;
+                return CE_Failure;
+            }
+        }
         else
             return CE_Failure;
     }
@@ -1572,7 +1586,6 @@ CPLErr HFADataset::ReadProjection()
 /* -------------------------------------------------------------------- */
 /*      Get the WKT representation of the coordinate system.            */
 /* -------------------------------------------------------------------- */
-  exportFromSRS:
     CPLFree( pszProjection );
     pszProjection = NULL;
 
