@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2001/01/22 14:00:28  warmerda
+ * added untested support for Swiss Oblique Cylindrical
+ *
  * Revision 1.15  2001/01/19 21:10:46  warmerda
  * replaced tabs
  *
@@ -822,6 +825,17 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 )
                  GetProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
                  GetProjParm(SRS_PP_AZIMUTH,0.0),
                  GetProjParm(SRS_PP_SCALE_FACTOR,1.0),
+                 GetProjParm(SRS_PP_FALSE_EASTING,0.0),
+                 GetProjParm(SRS_PP_FALSE_NORTHING,0.0) );
+    }
+
+    else if( EQUAL(pszProjection,SRS_PT_SWISS_OBLIQUE_CYLINDRICAL) )
+    {
+        sprintf( szProj4+strlen(szProj4),
+                 "+proj=omerc +lat_0=%.9f +lonc=%.9f"
+                 " +x_0=%.3f +y_0=%.3f ",
+                 GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
+                 GetProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
                  GetProjParm(SRS_PP_FALSE_EASTING,0.0),
                  GetProjParm(SRS_PP_FALSE_NORTHING,0.0) );
     }
