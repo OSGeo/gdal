@@ -97,10 +97,10 @@ int main( int argc, char ** argv )
             printf( "angle=%g ", fValue );
 
             memcpy( &unValue, abyRecord + 25 + 132 + sample*4, 4 );
-            printf( "(%g,", CPL_SWAP32(unValue) * 0.000001 );
+            printf( "(%.9f,", ((int) CPL_SWAP32(unValue)) * 0.000001 );
 
             memcpy( &unValue, abyRecord + 25 + 176 + sample*4, 4 );
-            printf( "%g)\n", CPL_SWAP32(unValue) * 0.000001 );
+            printf( "%.9f)\n", ((int) CPL_SWAP32(unValue)) * 0.000001 );
         }
 
         /* field 8 */
@@ -129,10 +129,10 @@ int main( int argc, char ** argv )
             printf( "angle=%g ", fValue );
 
             memcpy( &unValue, abyRecord + 279 + 132 + sample*4, 4 );
-            printf( "(%g,", CPL_SWAP32(unValue) * 0.000001 );
+            printf( "(%.9f,", ((int) CPL_SWAP32(unValue)) * 0.000001 );
 
             memcpy( &unValue, abyRecord + 279 + 176 + sample*4, 4 );
-            printf( "%g)\n", CPL_SWAP32(unValue) * 0.000001 );
+            printf( "%.9f)\n", ((int) CPL_SWAP32(unValue)) * 0.000001 );
         }
     }
 
