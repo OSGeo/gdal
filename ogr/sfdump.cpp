@@ -28,8 +28,8 @@
  ******************************************************************************
  *
  * $Log$
- * Revision 1.7  1999/04/19 19:13:08  warmerda
- * added code to create a spatial reference
+ * Revision 1.8  1999/05/14 13:32:25  warmerda
+ * added temporary debugging stuff
  *
  */
 
@@ -194,7 +194,9 @@ static HRESULT SFDumpGeomColumn( IOpenRowset* pIOpenRowset,
 {
     HRESULT           hr;
     OledbSFTable      oTable;
-    
+    IGeometryFactory *pIGeometryFactory = NULL;
+    ISpatialReference *pISR = NULL;
+
 /* -------------------------------------------------------------------- */
 /*      Open the table.                                                 */
 /* -------------------------------------------------------------------- */
@@ -211,8 +213,7 @@ static HRESULT SFDumpGeomColumn( IOpenRowset* pIOpenRowset,
 /* -------------------------------------------------------------------- */
 /*      Try and instantiate a Cadcorp geometry factory.                 */
 /* -------------------------------------------------------------------- */ 
-    IGeometryFactory *pIGeometryFactory = NULL;
-
+#ifdef notdef
     hr = CoCreateInstance( CLSID_CadcorpSFGeometryFactory, NULL, 
                            CLSCTX_INPROC_SERVER, 
                            IID_IGeometryFactory, (void **)&pIGeometryFactory); 
@@ -226,8 +227,6 @@ static HRESULT SFDumpGeomColumn( IOpenRowset* pIOpenRowset,
 /*      If we got a geometry factory, try to make a spatial             */
 /*      reference factory.                                              */
 /* -------------------------------------------------------------------- */
-    ISpatialReference *pISR = NULL;
-
     if( pIGeometryFactory != NULL )
     {
         ISpatialReferenceFactory *pISRFactory = NULL;
@@ -270,6 +269,7 @@ static HRESULT SFDumpGeomColumn( IOpenRowset* pIOpenRowset,
             pIGeometryFactory = NULL;
         }
     }
+#endif
 
 /* -------------------------------------------------------------------- */
 /*      For now we just read through, counting records to verify        */
@@ -291,6 +291,8 @@ static HRESULT SFDumpGeomColumn( IOpenRowset* pIOpenRowset,
         if( pabyData == NULL )
             continue;
 
+        printf( "Read %d bytes.\n", nSize );
+
 /* -------------------------------------------------------------------- */
 /*      Create and report geometry using built in class.                */
 /* -------------------------------------------------------------------- */
@@ -299,13 +301,26 @@ static HRESULT SFDumpGeomColumn( IOpenRowset* pIOpenRowset,
             if( OGRGeometryFactory::createFromWkb( pabyData, &poGeom, nSize )
                 == OGRERR_NONE )
             {
+                printf( "(0x%02x%02x%02x%02x%02x)\n", 
+                        pabyData[0], 
+                        pabyData[1], 
+                        pabyData[2], 
+                        pabyData[3], 
+                        pabyData[4] );
                 poGeom->dumpReadable( stdout );
                 delete poGeom;
             }
             else 
             {
-                fprintf( stderr, "Unable to decode record %d\n", 
-                         nRecordCount );
+                fprintf( stderr, 
+                         "Unable to decode record %d "
+                         "(0x%02x%02x%02x%02x%02x)\n", 
+                         nRecordCount,
+                         pabyData[0], 
+                         pabyData[1], 
+                         pabyData[2], 
+                         pabyData[3], 
+                         pabyData[4] );
             }
         }
 
@@ -352,7 +367,7 @@ static HRESULT SFDumpGeomColumn( IOpenRowset* pIOpenRowset,
 
     printf( "Read %d records.\n", nRecordCount );
 
-    if( pIGeometryFactory == NULL )
+    if( pIGeometryFactory != NULL )
         pIGeometryFactory->Release();
 
     if( pISR != NULL )
