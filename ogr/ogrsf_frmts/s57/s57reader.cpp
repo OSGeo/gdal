@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.24  2001/08/30 14:55:23  warmerda
+ * Treat SAT_LIST attributes as strings.
+ *
  * Revision 1.23  2001/08/30 03:48:43  warmerda
  * preliminary implementation of S57 Update Support
  *
@@ -1437,7 +1440,7 @@ OGRFeatureDefn *S57Reader::GenerateObjectClassDefn( S57ClassRegistrar *poCR,
             break;
 
           case SAT_LIST:
-            // what to do?
+            oField.SetType( OFTString );
             break;
         }
 
