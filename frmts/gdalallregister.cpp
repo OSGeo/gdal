@@ -25,6 +25,9 @@
  * Main format registration function.
  * 
  * $Log$
+ * Revision 1.18  2000/04/04 23:44:45  warmerda
+ * also call auto register function
+ *
  * Revision 1.17  2000/03/31 13:35:32  warmerda
  * added SAR_CEOS
  *
@@ -136,6 +139,8 @@ static char *szConfiguredFormats = "GDAL_FORMATS";
 void GDALAllRegister()
 
 {
+    GetGDALDriverManager()->AutoLoadDrivers();
+
 #ifdef FRMT_gdb    
     GDALRegister_GDB();
 #endif    
