@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2002/02/11 17:04:45  warmerda
+ * cleanup tabs
+ *
  * Revision 1.6  2002/02/11 17:04:03  warmerda
  * tolerate somewhat longer lines, irish data has long lines
  *
@@ -156,8 +159,8 @@ NTFRecord::~NTFRecord()
 int NTFRecord::ReadPhysicalLine( FILE *fp, char *pszLine )
 
 {
-    int	        nBytesRead = 0;
-    int	        nRecordStart, nRecordEnd, i, nLength = 0;
+    int         nBytesRead = 0;
+    int         nRecordStart, nRecordEnd, i, nLength = 0;
 
 /* -------------------------------------------------------------------- */
 /*      Read enough data that we are sure we have a whole record.       */
