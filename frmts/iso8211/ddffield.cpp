@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  1999/11/03 14:04:57  warmerda
+ * Made use of GetSubfieldData() with repeated fixed length
+ * fields much more efficient.
+ *
  * Revision 1.7  1999/09/21 16:25:32  warmerda
  * Fixed bug with repeating variable length fields and running out of data.
  *
@@ -169,6 +173,12 @@ const char *DDFField::GetSubfieldData( DDFSubfieldDefn *poSFDefn,
     
     if( poSFDefn == NULL )
         return NULL;
+
+    if( iSubfieldIndex > 0 && poDefn->GetFixedWidth() > 0 )
+    {
+        iOffset = poDefn->GetFixedWidth() * iSubfieldIndex;
+        iSubfieldIndex = 0;
+    }
 
     while( iSubfieldIndex >= 0 )
     {
