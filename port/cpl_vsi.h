@@ -32,6 +32,9 @@
  * specific checking, io redirection and so on. 
  * 
  * $Log$
+ * Revision 1.9  2001/01/03 17:41:44  warmerda
+ * added #define for VSIFFlushL
+ *
  * Revision 1.8  2001/01/03 16:17:50  warmerda
  * added large file API
  *
@@ -146,6 +149,7 @@ typedef long vsi_l_offset;
 #define VSIFReadL      VSIFRead
 #define VSIFWriteL     VSIFWrite
 #define VSIFEofL       VSIFEof
+#define VSIFFlushL     VSIFFlush
 
 #endif
 
