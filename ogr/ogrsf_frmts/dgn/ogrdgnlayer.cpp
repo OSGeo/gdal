@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2001/11/06 14:44:41  warmerda
+ * Removed printf() statement.
+ *
  * Revision 1.8  2001/07/18 04:55:16  warmerda
  * added CPL_CSVID
  *
@@ -339,7 +342,6 @@ OGRFeature *OGRDGNLayer::GetNextFeature()
 
         if( psElement->deleted )
         {
-            printf( "Found deleted, skipping.\n" );
             DGNFreeElement( hDGN, psElement );
             continue;
         }
