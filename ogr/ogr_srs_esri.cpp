@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.32  2004/05/04 13:11:49  warmerda
+ * Added support for KRASOVSKY spheroid
+ *
  * Revision 1.31  2004/04/24 15:45:04  warmerda
  * Added GRS80 spheroid support.
  *
@@ -827,6 +830,13 @@ OGRErr OGRSpatialReference::importFromESRI( char **papszPrj )
             {
                 OGRSpatialReference oGCS;
                 oGCS.importFromEPSG( 4019 );
+                CopyGeogCSFrom( &oGCS );
+            }
+            else if( EQUAL(pszSpheroid,"KRASOVSKY") 
+                     || EQUAL(pszSpheroid,"KRASSOVSKY") )
+            {
+                OGRSpatialReference oGCS;
+                oGCS.importFromEPSG( 4024 );
                 CopyGeogCSFrom( &oGCS );
             }
             else
