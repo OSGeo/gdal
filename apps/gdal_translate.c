@@ -28,6 +28,9 @@
  * ****************************************************************************
  *
  * $Log$
+ * Revision 1.15  2000/08/25 14:23:06  warmerda
+ * added progress counter
+ *
  * Revision 1.14  2000/06/09 21:19:30  warmerda
  * dump formats with usage message
  *
@@ -292,7 +295,7 @@ int main( int argc, char ** argv )
         
         hOutDS = GDALCreateCopy( hDriver, pszDest, hDataset, 
                                  TRUE, papszCreateOptions, 
-                                 GDALDummyProgress, NULL );
+                                 GDALTermProgress, NULL );
         if( hOutDS != NULL )
             GDALClose( hOutDS );
         
@@ -319,6 +322,7 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
 /*      Create the output database.                                     */
 /* -------------------------------------------------------------------- */
+    GDALTermProgress( 0.0, NULL, NULL );
     hOutDS = GDALCreate( hDriver, pszDest, nOXSize, nOYSize, 
                          nBandCount, eOutputType, papszCreateOptions );
     if( hOutDS == NULL )
@@ -375,6 +379,7 @@ int main( int argc, char ** argv )
         for( iBlockY = 0; iBlockY < nOYSize; iBlockY++ )
         {
             int		iSrcYOff;
+            double      dfComplete;
 
             if( nOYSize == anSrcWin[3] )
                 iSrcYOff = iBlockY + anSrcWin[1];
@@ -396,6 +401,11 @@ int main( int argc, char ** argv )
                           pabyBlock, nOXSize, 1,
                           GDALGetRasterDataType(hBand),
                           0, 0 );
+
+            dfComplete = (i / (double) nBandCount)
+                + ((iBlockY+1) / (double) nOYSize*nBandCount);
+            
+            GDALTermProgress( dfComplete, NULL, NULL );
         }
 
         CPLFree( pabyBlock );
