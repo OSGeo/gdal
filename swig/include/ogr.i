@@ -9,6 +9,10 @@
 
  *
  * $Log$
+ * Revision 1.10  2005/02/18 23:47:11  hobu
+ * Feature and FeatureDefn
+ * except for the field handling methods on Feature
+ *
  * Revision 1.9  2005/02/18 22:03:51  hobu
  * Finished up Layer
  *
@@ -562,6 +566,198 @@ layer[0:4] would return a list of the first four features."""
 
 
 
+%rename (Feature) OGRFeatureH;
+%apply (THROW_OGR_ERROR) {OGRErr};
+class OGRFeatureH {
+  OGRFeatureH();
+  ~OGRFeatureH();
+public:
+%extend {
+
+  void Destroy() {
+    OGR_F_Destroy(self);
+  }
+  
+  %newobject GetDefnRef;
+  OGRFeatureDefnH *GetDefnRef() {
+    return (OGRFeatureDefnH*) OGR_F_GetDefnRef(self);
+  }
+  
+  OGRErr SetGeometry(OGRGeometryH geom) {
+    OGRErr err = OGR_F_SetGeometry(self, geom);
+    if (err != 0)
+      throw err;
+    return 0;
+  }
+
+  OGRErr SetGeometryDirectly(OGRGeometryH geom) {
+    OGRErr err = OGR_F_SetGeometryDirectly(self, geom);
+    if (err != 0)
+      throw err;
+    return 0;
+  }
+  
+  %newobject GetGeometryRef;
+  OGRGeometryH *GetGeometryRef() {
+    return (OGRGeometryH*) OGR_F_GetGeometryRef(self);
+  }
+  
+  %newobject Clone;
+  OGRFeatureH *Clone() {
+    return (OGRFeatureH*) OGR_F_Clone(self);
+  }
+  
+  int Equal(OGRFeatureH feature) {
+    return OGR_F_Equal(self, feature);
+  }
+  
+  int GetFieldCount() {
+    return OGR_F_GetFieldCount(self);
+  }
+  
+  %newobject GetFieldDefnRef_ByID;
+  OGRFieldDefnH *GetFieldDefnRef_ByID(int id) {
+    return (OGRFieldDefnH *) OGR_F_GetFieldDefnRef(self, id);
+  }
+
+  %newobject GetFieldDefnRef_ByString;
+  OGRFieldDefnH *GetFieldDefnRef_ByString(const char* name) {
+    return (OGRFieldDefnH *) OGR_F_GetFieldDefnRef(self, OGR_F_GetFieldIndex(self, name));
+  }
+  
+  int GetFieldIndex(const char* name) {
+    return OGR_F_GetFieldIndex(self, name);
+  }
+  
+  int GetFID() {
+    return OGR_F_GetFID(self);
+  }
+  
+  OGRErr SetFID(int fid) {
+    OGRErr err = OGR_F_SetFID(self, fid);
+    if (err != 0)
+      throw err;
+    return 0;
+  }
+  
+  void DumpReadable() {
+    OGR_F_DumpReadable(self, NULL);
+  }
+
+  %feature(" kwargs ") SetFrom;
+  OGRErr SetFrom(OGRFeatureH other, int forgiving=1) {
+    OGRErr err = OGR_F_SetFrom(self, other, forgiving);
+    if (err != 0)
+      throw err;
+    return 0;
+  }
+  
+  const char *GetStyleString() {
+    return (const char*) OGR_F_GetStyleString(self);
+  }
+  
+  void SetStyleString(const char* the_string) {
+    OGR_F_SetStyleString(self, the_string);
+  }
+  
+  %pythoncode {
+    def __del__(self):
+        if self.thisown:
+            self.Destroy()
+
+    def __cmp__(self, other):
+        """Compares a feature to another for equality"""
+        return _gdal.OGR_F_Equal( self._o, other._o )
+
+    def __copy__(self):
+        return self.Clone()
+
+    def __getattr__(self, name):
+        """Returns the values of fields by the given name"""
+        try:
+            names = []
+            for i in range(self.GetFieldCount()):
+                names.append(self.GetFieldDefnRef(i).GetName())
+            if name in names:
+                return self.GetField(name)
+            else:
+                raise
+        except:
+            raise AttributeError, name
+}
+} /* %extend */
+
+
+}; /* class OGRFeatureH */
+
+%clear (OGRErr);
+
+
+%rename (FeatureDefn) OGRFeatureDefnH;
+%apply (THROW_OGR_ERROR) {OGRErr};
+class OGRFeatureDefnH {
+  
+  ~OGRFeatureDefnH();
+public:
+%extend {
+
+  %feature(" kwargs ") OGRFeatureDefnH;
+  OGRFeatureDefnH* OGRFeatureDefnH(const char* name=NULL) {
+    return (OGRFeatureDefnH* )OGR_FD_Create(name);
+  }
+  
+  void Destroy() {
+    OGR_FD_Destroy(self);
+  }
+
+  const char* GetName(){
+    return OGR_FD_GetName(self);
+  }
+  
+  int GetFieldCount(){
+    return OGR_FD_GetFieldCount(self);
+  }
+  
+  %newobject GetFieldDefn;
+  OGRFieldDefnH* GetFieldDefn(int i){
+    return (OGRFieldDefnH*) OGR_FD_GetFieldDefn(self, i);
+  }
+  
+  int GetFieldIndex(const char* name) {
+    return OGR_FD_GetFieldIndex(self, name);
+  }
+  
+  void AddFieldDefn(OGRFieldDefnH defn) {
+    OGR_FD_AddFieldDefn(self, defn);
+  }
+  
+  OGRwkbGeometryType GetGeomType() {
+    return (OGRwkbGeometryType) OGR_FD_GetGeomType(self);
+  }
+  
+  void SetGeomType(OGRwkbGeometryType geom_type) {
+    OGR_FD_SetGeomType(self, geom_type);
+  }
+  
+  int Reference() {
+    return OGR_FD_Reference(self);
+  }
+  
+  int Dereference() {
+    return OGR_FD_Dereference(self);
+  }
+  
+  int GetReferenceCount(){
+    return OGR_FD_GetReferenceCount(self);
+  }
+} /* %extend */
+
+
+}; /* class OGRFeatureDefnH */
+
+%clear (OGRErr);
+
+
 %{
 char const *OGRSFDriverH_name_get( OGRSFDriverH *h ) {
   return OGR_Dr_GetName( h );
@@ -661,7 +857,6 @@ char const *OGRDataSourceH_name_get( OGRDataSourceH *h ) {
 %newobject CreateGeometryFromGML;
 %inline %{
   OGRGeometryH *CreateGeometryFromGML( const char * input_string ) {
-
     OGRGeometryH* geom = (OGRGeometryH*)OGR_G_CreateFromGML(input_string);
     return geom;
   }
@@ -672,7 +867,6 @@ char const *OGRDataSourceH_name_get( OGRDataSourceH *h ) {
 %newobject Open;
 %inline %{
   OGRDataSourceH *Open( const char * filename, int update=0 ) {
-
     OGRDataSourceH* ds = (OGRDataSourceH*)OGROpen(filename,update, NULL);
     return ds;
   }
@@ -683,7 +877,6 @@ char const *OGRDataSourceH_name_get( OGRDataSourceH *h ) {
 %newobject OpenShared;
 %inline %{
   OGRDataSourceH *OpenShared( const char * filename, int update=0 ) {
-
     OGRDataSourceH* ds = (OGRDataSourceH*)OGROpenShared(filename,update, NULL);
     return ds;
   }
