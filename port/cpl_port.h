@@ -38,6 +38,9 @@
  *   GUInt16, and GByte are defined.
  *
  * $Log$
+ * Revision 1.6  1999/01/28 18:36:06  warmerda
+ * Ensure WIN32 is defined on Windows.
+ *
  * Revision 1.5  1999/01/28 05:26:12  danmo
  * Added byte swapping macros.
  *
@@ -57,6 +60,27 @@
 
 #ifndef CPL_BASE_H_INCLUDED
 #define CPL_BASE_H_INCLUDED
+
+/* ==================================================================== */
+/*      Base portability stuff ... this stuff may need to be            */
+/*      modified for new platforms.                                     */
+/* ==================================================================== */
+
+#define CPL_LSB
+
+typedef int		GInt32;
+typedef unsigned int 	GUInt32;
+typedef short		GInt16;
+typedef unsigned short	GUInt16;
+typedef unsigned char	GByte;
+typedef int		GBool;
+
+/* ==================================================================== */
+/*      We will use WIN32 as a standard windows define.                 */
+/* ==================================================================== */
+#if defined(_WIN32) && !defined(WIN32)
+#  define WIN32
+#endif
 
 /* ==================================================================== */
 /*	Standard include files.						*/
@@ -169,7 +193,7 @@ typedef int             GBool;
             (((GUInt32)(x) & (GUInt32)0xff000000UL) >> 24) ))
 
 /* Until we have a safe 64 bits integer data type defined, we'll replace
- * this version of the CPL_SWAP64() macro with a less efficient one.
+m * this version of the CPL_SWAP64() macro with a less efficient one.
  */
 /*
 #define CPL_SWAP64(x) \
