@@ -1,3 +1,8 @@
+2000-12-14  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* Added HKVDataset::Delete() implementation, made accessable from
+	python.
+
 2000-12-13  Frank Warmerdam  <warmerdam@pobox.com>
 
 	* Various improvements to build.  
