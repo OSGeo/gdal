@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tiffiop.h,v 1.4 2002/02/24 15:02:00 warmerda Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tiffiop.h,v 1.5 2002/04/08 15:32:05 dron Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -110,9 +110,11 @@ struct tiff {
 	ttile_t		tif_curtile;	/* current tile for read/write */
 	tsize_t		tif_tilesize;	/* # of bytes in a tile */
 /* compression scheme hooks */
+	int		tif_decodestatus;
 	TIFFBoolMethod	tif_setupdecode;/* called once before predecode */
 	TIFFPreMethod	tif_predecode;	/* pre- row/strip/tile decoding */
 	TIFFBoolMethod	tif_setupencode;/* called once before preencode */
+	int		tif_encodestatus;
 	TIFFPreMethod	tif_preencode;	/* pre- row/strip/tile encoding */
 	TIFFBoolMethod	tif_postencode;	/* post- row/strip/tile encoding */
 	TIFFCodeMethod	tif_decoderow;	/* scanline decoding routine */

@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_dirinfo.c,v 1.15 2002/04/03 20:14:20 warmerda Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_dirinfo.c,v 1.20 2002/09/12 12:50:21 dron Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -280,6 +280,19 @@ void
 _TIFFSetupFieldInfo(TIFF* tif)
 {
 	if (tif->tif_fieldinfo) {
+        	int  i;
+
+        	for (i = 0; i < tif->tif_nfields; i++) 
+		{
+	    		TIFFFieldInfo *fld = tif->tif_fieldinfo[i];
+ 	    		if (fld->field_bit == FIELD_CUSTOM && 
+				strncmp("Tag ", fld->field_name, 4) == 0) 
+	    			{
+				_TIFFfree(fld->field_name);
+                		_TIFFfree(fld);
+	    			}
+        	}   
+      
 		_TIFFfree(tif->tif_fieldinfo);
 		tif->tif_nfields = 0;
 	}
@@ -368,7 +381,7 @@ TIFFDataWidth(TIFFDataType type)
 	case 12: /* TIFF_DOUBLE */
 		return 8;
 	default:
-		return 1; /* will return safe value for unknown sizes */
+		return 1; /* will return safe value for unknown types */
 	}
 }
 
@@ -463,7 +476,11 @@ _TIFFCreateAnonFieldInfo(TIFF *tif, ttag_t tag, TIFFDataType field_type)
     fld->field_oktochange = TRUE;
     fld->field_passcount = TRUE;
     fld->field_name = (char *) _TIFFmalloc(32);
-    sprintf( fld->field_name, "Tag %d", (int) tag );
+
+    /* note that this name is a special sign to TIFFClose() and
+     * _TIFFSetupFieldInfo() to free the field
+     */
+    sprintf(fld->field_name, "Tag %d", (int) tag);
 
     return fld;    
 }

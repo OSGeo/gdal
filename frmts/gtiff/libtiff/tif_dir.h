@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_dir.h,v 1.8 2002/03/27 06:33:59 warmerda Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_dir.h,v 1.10 2002/09/12 12:33:30 dron Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -207,9 +207,10 @@ typedef	struct {
 #define FIELD_MATRIX_WORLDTOCAMERA	61
 #define FIELD_COPYRIGHT			62
 #define FIELD_XMLPACKET			63
-/* end of support for well-known tags; codec-private tags follow */
-#define	FIELD_CODEC			64	/* base of codec-private tags */
 /*      FIELD_CUSTOM (see tiffio.h)     65 */
+/* end of support for well-known tags; codec-private tags follow */
+#define	FIELD_CODEC			66	/* base of codec-private tags */
+
 
 /*
  * Pseudo-tags don't normally need field bits since they
@@ -247,7 +248,6 @@ typedef	struct {
 #if defined(__cplusplus)
 extern "C" {
 #endif
-extern	int TIFFDataWidth(TIFFDataType);	/* table of tag datatype widths */
 extern	void _TIFFSetupFieldInfo(TIFF*);
 extern	void _TIFFPrintFieldInfo(TIFF*, FILE*);
 extern	TIFFDataType _TIFFSampleToTagType(TIFF*);

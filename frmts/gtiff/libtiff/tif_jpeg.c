@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_jpeg.c,v 1.8 2002/03/06 14:07:27 warmerda Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_jpeg.c,v 1.12 2002/10/07 00:17:52 warmerda Exp $ */
 
 /*
  * Copyright (c) 1994-1997 Sam Leffler
@@ -42,15 +42,26 @@
 #include <stdio.h>
 #include <setjmp.h>
 
+int TIFFFillStrip(TIFF*, tstrip_t);
+int TIFFFillTile(TIFF*, ttile_t);
+
 /* We undefine FAR to avoid conflict with JPEG definition */
 
 #ifdef FAR
 #undef FAR
 #endif
 
-/* The windows RPCNDR.H file defines boolean. */
-#ifdef __RPCNDR_H__
+/*
+   The windows RPCNDR.H file defines boolean, but defines it with the
+   wrong size.  So we declare HAVE_BOOLEAN so that the jpeg include file
+   won't try to typedef boolean, but #define it to override the rpcndr.h
+   definition.
+
+   http://bugzilla.remotesensing.org/show_bug.cgi?id=188
+*/
+#if defined(__RPCNDR_H__)
 #define HAVE_BOOLEAN
+#define boolean unsigned int
 #endif
 
 #include "jpeglib.h"
@@ -116,6 +127,8 @@ typedef	struct {
 	int		jpegquality;	/* Compression quality level */
 	int		jpegcolormode;	/* Auto RGB<=>YCbCr convert? */
 	int		jpegtablesmode;	/* What to put in JPEGTables */
+
+        int             ycbcrsampling_fetched;
 } JPEGState;
 
 #define	JState(tif)	((JPEGState*)(tif)->tif_data)
@@ -681,7 +694,7 @@ JPEGPreDecode(TIFF* tif, tsample_t s)
 		    sp->cinfo.d.comp_info[0].v_samp_factor != sp->v_sampling) {
 			TIFFWarning(module, 
                                     "Improper JPEG sampling factors %d,%d\n"
-                                    "Apparently should be %d,%d,"
+                                    "Apparently should be %d,%d, "
                                     "decompressor will try reading with "
                                     "sampling %d,%d",
                                     sp->cinfo.d.comp_info[0].h_samp_factor,
@@ -759,23 +772,32 @@ JPEGPreDecode(TIFF* tif, tsample_t s)
 /*ARGSUSED*/ static int
 JPEGDecode(TIFF* tif, tidata_t buf, tsize_t cc, tsample_t s)
 {
-	JPEGState *sp = JState(tif);
-	tsize_t nrows;
+    JPEGState *sp = JState(tif);
+    tsize_t nrows;
 
-	/* data is expected to be read in multiples of a scanline */
-	if (nrows = sp->cinfo.d.image_height)
-		do {
-			JSAMPROW bufptr = (JSAMPROW)buf;
+    nrows = cc / sp->bytesperline;
+    if (cc % sp->bytesperline)
+        TIFFWarning(tif->tif_name, "fractional scanline not read");
 
-			if (TIFFjpeg_read_scanlines(sp, &bufptr, 1) != 1)
-				return (0);
-			++tif->tif_row;
-			buf += sp->bytesperline;
-			cc -= sp->bytesperline;
-		} while (--nrows > 0);
-	/* Close down the decompressor if we've finished the strip or tile. */
-	return sp->cinfo.d.output_scanline < sp->cinfo.d.output_height
-	    || TIFFjpeg_finish_decompress(sp);
+    if( nrows > sp->cinfo.d.image_height )
+        nrows = sp->cinfo.d.image_height;
+
+    /* data is expected to be read in multiples of a scanline */
+    if (nrows)
+    {
+        do {
+            JSAMPROW bufptr = (JSAMPROW)buf;
+
+            if (TIFFjpeg_read_scanlines(sp, &bufptr, 1) != 1)
+                return (0);
+            ++tif->tif_row;
+            buf += sp->bytesperline;
+            cc -= sp->bytesperline;
+        } while (--nrows > 0);
+    }
+    /* Close down the decompressor if we've finished the strip or tile. */
+    return sp->cinfo.d.output_scanline < sp->cinfo.d.output_height
+        || TIFFjpeg_finish_decompress(sp);
 }
 
 /*
@@ -1352,11 +1374,80 @@ JPEGVSetField(TIFF* tif, ttag_t tag, va_list ap)
 	case TIFFTAG_JPEGTABLESMODE:
 		sp->jpegtablesmode = va_arg(ap, int);
 		return (1);			/* pseudo tag */
+	case TIFFTAG_YCBCRSUBSAMPLING:
+                /* mark the fact that we have a real ycbcrsubsampling! */
+		sp->ycbcrsampling_fetched = 1;
+		return (*sp->vsetparent)(tif, tag, ap);
 	default:
 		return (*sp->vsetparent)(tif, tag, ap);
 	}
 	tif->tif_flags |= TIFF_DIRTYDIRECT;
 	return (1);
+}
+
+/*
+ * Some JPEG-in-TIFF produces do not emit the YCBCRSUBSAMPLING values in
+ * the TIFF tags, but still use non-default (2,2) values within the jpeg
+ * data stream itself.  In order for TIFF applications to work properly
+ * - for instance to get the strip buffer size right - it is imperative
+ * that the subsampling be available before we start reading the image
+ * data normally.  This function will attempt to load the first strip in
+ * order to get the sampling values from the jpeg data stream.  Various
+ * hacks are various places are done to ensure this function gets called
+ * before the td_ycbcrsubsampling values are used from the directory structure,
+ * including calling TIFFGetField() for the YCBCRSUBSAMPLING field from 
+ * TIFFStripSize(), and the printing code in tif_print.c. 
+ *
+ * Note that JPEGPreDeocode() will produce a fairly loud warning when the
+ * discovered sampling does not match the default sampling (2,2) or whatever
+ * was actually in the tiff tags. 
+ *
+ * Problems:
+ *  o This code will cause one whole strip/tile of compressed data to be
+ *    loaded just to get the tags right, even if the imagery is never read.
+ *    It would be more efficient to just load a bit of the header, and
+ *    initialize things from that. 
+ *
+ * See the bug in bugzilla for details:
+ *
+ * http://bugzilla.remotesensing.org/show_bug.cgi?id=168
+ *
+ * Frank Warmerdam, July 2002
+ */
+
+static void 
+JPEGFixupTestSubsampling( TIFF * tif )
+{
+#if CHECK_JPEG_YCBCR_SUBSAMPLING == 1
+    JPEGState *sp = JState(tif);
+    TIFFDirectory *td = &tif->tif_dir;
+
+    /*
+     * Some JPEG-in-TIFF files don't provide the ycbcrsampling tags, 
+     * and use a sampling schema other than the default 2,2.  To handle
+     * this we actually have to scan the header of a strip or tile of
+     * jpeg data to get the sampling.  
+     */
+    if( !sp->cinfo.comm.is_decompressor 
+        || sp->ycbcrsampling_fetched  
+        || td->td_photometric != PHOTOMETRIC_YCBCR )
+        return;
+
+    sp->ycbcrsampling_fetched = 1;
+    if( TIFFIsTiled( tif ) )
+    {
+        if( !TIFFFillTile( tif, 0 ) )
+            return;
+    }
+    else
+    {
+        if( !TIFFFillStrip( tif, 0 ) )
+            return;
+    }
+
+    TIFFSetField( tif, TIFFTAG_YCBCRSUBSAMPLING, 
+                  (uint16) sp->h_sampling, (uint16) sp->v_sampling );
+#endif /* CHECK_JPEG_YCBCR_SUBSAMPLING == 1 */
 }
 
 static int
@@ -1379,6 +1470,10 @@ JPEGVGetField(TIFF* tif, ttag_t tag, va_list ap)
 		break;
 	case TIFFTAG_JPEGTABLESMODE:
 		*va_arg(ap, int*) = sp->jpegtablesmode;
+		break;
+	case TIFFTAG_YCBCRSUBSAMPLING:
+                JPEGFixupTestSubsampling( tif );
+		return (*sp->vgetparent)(tif, tag, ap);
 		break;
 	default:
 		return (*sp->vgetparent)(tif, tag, ap);
@@ -1456,6 +1551,8 @@ TIFFInitJPEG(TIFF* tif, int scheme)
 	sp->jpegcolormode = JPEGCOLORMODE_RAW;
 	sp->jpegtablesmode = JPEGTABLESMODE_QUANT | JPEGTABLESMODE_HUFF;
 
+        sp->ycbcrsampling_fetched = 0;
+
 	/*
 	 * Install codec methods.
 	 */
@@ -1483,6 +1580,12 @@ TIFFInitJPEG(TIFF* tif, int scheme)
 	if (tif->tif_mode == O_RDONLY) {
 		if (!TIFFjpeg_create_decompress(sp))
 			return (0);
+
+                /*
+                 * Mark the TIFFTAG_YCBCRSAMPLES as present even if it is not
+                 * see: JPEGFixupTestSubsampling().
+                 */
+                TIFFSetFieldBit( tif, FIELD_YCBCRSUBSAMPLING );
 	} else {
 		if (!TIFFjpeg_create_compress(sp))
 			return (0);

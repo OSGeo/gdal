@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_write.c,v 1.5 2000/02/11 19:28:17 warmerda Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_write.c,v 1.7 2002/07/31 20:53:15 warmerda Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -47,7 +47,6 @@
 
 static	int TIFFGrowStrips(TIFF*, int, const char*);
 static	int TIFFAppendToStrip(TIFF*, tstrip_t, tidata_t, tsize_t);
-static	int TIFFSetupStrips(TIFF*);
 
 int
 TIFFWriteScanline(TIFF* tif, tdata_t buf, uint32 row, tsample_t sample)
@@ -155,7 +154,9 @@ TIFFWriteScanline(TIFF* tif, tdata_t buf, uint32 row, tsample_t sample)
 	}
 	status = (*tif->tif_encoderow)(tif, (tidata_t) buf,
 	    tif->tif_scanlinesize, sample);
-	tif->tif_row++;
+
+        /* we are now poised at the beginning of the next row */
+	tif->tif_row = row + 1;
 	return (status);
 }
 
@@ -429,7 +430,7 @@ TIFFWriteRawTile(TIFF* tif, ttile_t tile, tdata_t data, tsize_t cc)
 #define	isUnspecified(tif, f) \
     (TIFFFieldSet(tif,f) && (tif)->tif_dir.td_imagelength == 0)
 
-static int
+int
 TIFFSetupStrips(TIFF* tif)
 {
 	TIFFDirectory* td = &tif->tif_dir;

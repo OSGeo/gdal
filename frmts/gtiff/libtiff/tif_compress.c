@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_compress.c,v 1.4 1999/12/21 17:03:03 mwelles Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_compress.c,v 1.5 2002/04/08 15:32:05 dron Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -133,11 +133,13 @@ static void _TIFFvoid(TIFF* tif) { (void) tif; }
 void
 _TIFFSetDefaultCompressionState(TIFF* tif)
 {
+	tif->tif_decodestatus = TRUE;
 	tif->tif_setupdecode = _TIFFtrue;
 	tif->tif_predecode = _TIFFNoPreCode;
 	tif->tif_decoderow = _TIFFNoRowDecode;
 	tif->tif_decodestrip = _TIFFNoStripDecode;
 	tif->tif_decodetile = _TIFFNoTileDecode;
+	tif->tif_encodestatus = TRUE;
 	tif->tif_setupencode = _TIFFtrue;
 	tif->tif_preencode = _TIFFNoPreCode;
 	tif->tif_postencode = _TIFFtrue;

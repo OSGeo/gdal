@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tiffio.h,v 1.13 2002/03/27 03:53:49 dbmalloc Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tiffio.h,v 1.15 2002/09/12 12:33:30 dron Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -264,6 +264,7 @@ extern	tstrip_t TIFFCurrentStrip(TIFF*);
 extern	ttile_t TIFFCurrentTile(TIFF*);
 extern	int TIFFReadBufferSetup(TIFF*, tdata_t, tsize_t);
 extern	int TIFFWriteBufferSetup(TIFF*, tdata_t, tsize_t);
+extern	int TIFFSetupStrips(TIFF *);
 extern  int TIFFWriteCheck(TIFF*, int, const char *);
 extern  int TIFFCreateDirectory(TIFF*);
 extern	int TIFFLastDirectory(TIFF*);
@@ -273,6 +274,7 @@ extern	int TIFFUnlinkDirectory(TIFF*, tdir_t);
 extern	int TIFFSetField(TIFF*, ttag_t, ...);
 extern	int TIFFVSetField(TIFF*, ttag_t, va_list);
 extern	int TIFFWriteDirectory(TIFF *);
+extern	int TIFFCheckpointDirectory(TIFF *);
 extern	int TIFFRewriteDirectory(TIFF *);
 extern	int TIFFReassignTagToIgnore(enum TIFFIgnoreSense, int);
 
@@ -325,6 +327,7 @@ extern	tsize_t TIFFWriteEncodedStrip(TIFF*, tstrip_t, tdata_t, tsize_t);
 extern	tsize_t TIFFWriteRawStrip(TIFF*, tstrip_t, tdata_t, tsize_t);
 extern	tsize_t TIFFWriteEncodedTile(TIFF*, ttile_t, tdata_t, tsize_t);
 extern	tsize_t TIFFWriteRawTile(TIFF*, ttile_t, tdata_t, tsize_t);
+extern	int TIFFDataWidth(TIFFDataType);	/* table of tag datatype widths */
 extern	void TIFFSetWriteOffset(TIFF*, toff_t);
 extern	void TIFFSwabShort(uint16*);
 extern	void TIFFSwabLong(uint32*);

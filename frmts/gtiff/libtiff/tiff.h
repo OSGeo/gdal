@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tiff.h,v 1.13 2002/03/27 03:55:42 dbmalloc Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tiff.h,v 1.15 2002/10/06 23:31:21 warmerda Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -51,7 +51,7 @@
  *
  * See http://bugzilla.remotesensing.org/show_bug.cgi?id=39
  */
-#if defined(_H_INTTYPES) && defined(_ALL_SOURCE)
+#if defined(_H_INTTYPES) && defined(_ALL_SOURCE) && defined(USING_VISUALAGE)
 
 #define _TIFF_DATA_TYPEDEFS_
 typedef unsigned char uint8;
@@ -194,6 +194,7 @@ typedef	enum {
 #define	    COMPRESSION_JBIG		34661	/* ISO JBIG */
 #define     COMPRESSION_SGILOG		34676	/* SGI Log Luminance RLE */
 #define     COMPRESSION_SGILOG24	34677	/* SGI Log 24-bit packed */
+#define     COMPRESSION_JP2000          34712   /* Leadtools JPEG2000 */
 #define	TIFFTAG_PHOTOMETRIC		262	/* photometric interpretation */
 #define	    PHOTOMETRIC_MINISWHITE	0	/* min value is white */
 #define	    PHOTOMETRIC_MINISBLACK	1	/* min value is black */

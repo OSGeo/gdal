@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tiffconf.h,v 1.6 2002/03/27 03:52:54 dbmalloc Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tiffconf.h,v 1.7 2002/07/31 20:55:12 warmerda Exp $ */
 /*
  * Copyright (c) 1988-1997 Sam Leffler
  * Copyright (c) 1991-1997 Silicon Graphics, Inc.
@@ -138,6 +138,11 @@
  *                      no EXTRASAMPLE_ value as being ASSOCALPHA.  Many
  *                      packages produce RGBA files but don't mark the alpha
  *                      properly.
+ * CHECK_JPEG_YCBCR_SUBSAMPLING
+ *                      Enable picking up YCbCr subsampling info from the
+ *                      JPEG data stream to support files lacking the tag.
+ *                      See Bug 168 in Bugzilla, and JPEGFixupTestSubsampling()
+ *                      for details. 
  */
 #ifndef STRIPCHOP_DEFAULT
 #define	STRIPCHOP_DEFAULT	TIFF_STRIPCHOP	/* default is to enable */
@@ -147,6 +152,9 @@
 #endif
 #ifndef DEFAULT_EXTRASAMPLE_AS_ALPHA
 #define DEFAULT_EXTRASAMPLE_AS_ALPHA 1
+#endif
+#ifndef CHECK_JPEG_YCBCR_SUBSAMPLING
+#define CHECK_JPEG_YCBCR_SUBSAMPLING 1
 #endif
 
 #endif /* _TIFFCONF_ */
