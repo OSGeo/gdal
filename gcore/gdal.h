@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.70  2003/06/27 20:03:11  warmerda
+ * updated version to 1.1.9
+ *
  * Revision 1.69  2003/06/03 19:44:00  warmerda
  * added GDALRPCInfo support
  *
@@ -127,13 +130,13 @@
 /*      GDAL Version Information.                                       */
 /* -------------------------------------------------------------------- */
 #ifndef GDAL_VERSION_NUM
-#  define GDAL_VERSION_NUM      1180
+#  define GDAL_VERSION_NUM      1190
 #endif
 #ifndef GDAL_RELEASE_DATE
-#  define GDAL_RELEASE_DATE     20021221
+#  define GDAL_RELEASE_DATE     20030627
 #endif
 #ifndef GDAL_RELEASE_NAME
-#  define GDAL_RELEASE_NAME     "1.1.8.0"
+#  define GDAL_RELEASE_NAME     "1.1.9.0"
 #endif
 
 /* -------------------------------------------------------------------- */
