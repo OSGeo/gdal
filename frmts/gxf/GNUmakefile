@@ -1,9 +1,10 @@
+WEB_DIR =	/u/www/projects/gxf
 
 GDAL_ROOT	=	../..
 
 include $(GDAL_ROOT)/GDALmake.opt
 
-OBJ	=	gxfopen.o gxfdataset.o
+OBJ	=	gxfopen.o gxfdataset.o gxf_proj4.o
 
 ALL_C_FLAGS	=	$(GDAL_INCLUDE) $(CFLAGS)
 
@@ -30,3 +31,13 @@ install-obj:	$(foreach file,$(OBJ),../o/$(file))
 
 ../o/%.o:	%.o
 	cp $*.o ../o
+
+docs:
+	rm -rf html
+	mkdir html
+	doxygen
+
+update-web:	docs
+	cp html/* $(WEB_DIR)
+
+
