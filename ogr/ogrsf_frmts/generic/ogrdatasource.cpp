@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2003/03/20 19:11:55  warmerda
+ * added debug messages
+ *
  * Revision 1.13  2003/03/19 20:35:49  warmerda
  * Added support for reference counting.
  * Added support for joins from tables in other datasources.
@@ -100,6 +103,7 @@ OGRDataSource::OGRDataSource()
 OGRDataSource::~OGRDataSource()
 
 {
+    CPLDebug( "OGR", "~OGRDDataSource(%p)", this );
 }
 
 /************************************************************************/
