@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2003/01/24 20:15:34  warmerda
+ * added polar stereographic support
+ *
  * Revision 1.18  2002/12/16 17:07:42  warmerda
  * dont alter projection parameter units ... ESRI was right!
  *
@@ -562,6 +565,15 @@ OGRErr OGRSpatialReference::importFromESRI( char **papszPrj )
                OSR_GDV( papszPrj, "PARAM_1", 0.0 ), 
                OSR_GDV( papszPrj, "PARAM_4", 0.0 ), 
                OSR_GDV( papszPrj, "PARAM_5", 0.0 ) );
+    }
+
+    else if( EQUAL(pszProj,"POLAR") )
+    {
+        SetPS( OSR_GDV( papszPrj, "PARAM_2", 0.0 ), 
+               OSR_GDV( papszPrj, "PARAM_1", 0.0 ), 
+               1.0,
+               OSR_GDV( papszPrj, "PARAM_3", 0.0 ), 
+               OSR_GDV( papszPrj, "PARAM_4", 0.0 ) );
     }
 
     else
