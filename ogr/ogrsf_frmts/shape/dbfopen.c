@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: dbfopen.c,v 1.33 2001/05/31 19:20:13 warmerda Exp $
+ * $Id: dbfopen.c,v 1.37 2001/07/04 05:18:09 warmerda Exp $
  *
  * Project:  Shapelib
  * Purpose:  Implementation of .dbf access API documented in dbf_api.html.
@@ -34,6 +34,15 @@
  ******************************************************************************
  *
  * $Log: dbfopen.c,v $
+ * Revision 1.37  2001/07/04 05:18:09  warmerda
+ * do last fix properly
+ *
+ * Revision 1.36  2001/07/04 05:16:09  warmerda
+ * fixed fieldname comparison in DBFGetFieldIndex
+ *
+ * Revision 1.35  2001/06/22 02:10:06  warmerda
+ * fixed NULL shape support with help from Jim Matthews
+ *
  * Revision 1.33  2001/05/31 19:20:13  warmerda
  * added DBFGetFieldIndex()
  *
@@ -141,12 +150,13 @@
  */
 
 static char rcsid[] = 
-  "$Id: dbfopen.c,v 1.33 2001/05/31 19:20:13 warmerda Exp $";
+  "$Id: dbfopen.c,v 1.37 2001/07/04 05:18:09 warmerda Exp $";
 
 #include "shapefil.h"
 
 #include <math.h>
 #include <stdlib.h>
+#include <ctype.h>
 #include <string.h>
 
 #ifndef FALSE
@@ -277,7 +287,7 @@ DBFOpen( const char * pszFilename, const char * pszAccess )
 
     if( strcmp(pszAccess,"r") == 0 )
         pszAccess = "rb";
-
+ 
     if( strcmp(pszAccess,"r+") == 0 )
         pszAccess = "rb+";
 
@@ -779,6 +789,10 @@ DBFReadStringAttribute( DBFHandle psDBF, int iRecord, int iField )
 
 /************************************************************************/
 /*                         DBFIsAttributeNULL()                         */
+/*                                                                      */
+/*      Return TRUE if value for field is NULL.                         */
+/*                                                                      */
+/*      Contributed by Jim Matthews.                                    */
 /************************************************************************/
 
 int SHPAPI_CALL
@@ -786,17 +800,29 @@ DBFIsAttributeNULL( DBFHandle psDBF, int iRecord, int iField )
 
 {
     const char	*pszValue;
-    int		i;
 
     pszValue = DBFReadStringAttribute( psDBF, iRecord, iField );
 
-    for( i = 0; pszValue[i] != '\0'; i++ )
+    switch(psDBF->pachFieldType[iField])
     {
-        if( pszValue[i] != ' ' )
-            return FALSE;
-    }
+      case 'N':
+      case 'F':
+        /* NULL numeric fields have value "****************" */
+        return pszValue[0] == '*';
 
-    return TRUE;
+      case 'D':
+        /* NULL date fields have value "00000000" */
+        return strncmp(pszValue,"00000000",8) == 0;
+
+      case 'L':
+        /* NULL boolean fields have value "?" */ 
+        return pszValue[0] == '?';
+
+      default:
+        /* empty string fields are considered NULL */
+        return strlen(pszValue) == 0;
+    }
+    return FALSE;
 }
 
 /************************************************************************/
@@ -925,18 +951,43 @@ static int DBFWriteAttribute(DBFHandle psDBF, int hEntity, int iField,
 
     pabyRec = (unsigned char *) psDBF->pszCurrentRecord;
 
-/* -------------------------------------------------------------------- */
-/*      Is this field being NULLed?  If so, just write spaces to the    */
-/*      whole field.                                                    */
-/* -------------------------------------------------------------------- */
     psDBF->bCurrentRecordModified = TRUE;
     psDBF->bUpdated = TRUE;
 
+/* -------------------------------------------------------------------- */
+/*      Translate NULL value to valid DBF file representation.          */
+/*                                                                      */
+/*      Contributed by Jim Matthews.                                    */
+/* -------------------------------------------------------------------- */
     if( pValue == NULL )
     {
-        memset( (char *) (pabyRec+psDBF->panFieldOffset[iField]), ' ', 
-                psDBF->panFieldSize[iField] );
+        switch(psDBF->pachFieldType[iField])
+        {
+          case 'N':
+          case 'F':
+	    /* NULL numeric fields have value "****************" */
+            memset( (char *) (pabyRec+psDBF->panFieldOffset[iField]), '*', 
+                    psDBF->panFieldSize[iField] );
+            break;
 
+          case 'D':
+	    /* NULL date fields have value "00000000" */
+            memset( (char *) (pabyRec+psDBF->panFieldOffset[iField]), '0', 
+                    psDBF->panFieldSize[iField] );
+            break;
+
+          case 'L':
+	    /* NULL boolean fields have value "?" */ 
+            memset( (char *) (pabyRec+psDBF->panFieldOffset[iField]), '?', 
+                    psDBF->panFieldSize[iField] );
+            break;
+
+          default:
+            /* empty string fields are considered NULL */
+            memset( (char *) (pabyRec+psDBF->panFieldOffset[iField]), '\0', 
+                    psDBF->panFieldSize[iField] );
+            break;
+        }
         return TRUE;
     }
 
@@ -1262,10 +1313,10 @@ DBFGetFieldIndex(DBFHandle psDBF, const char *pszFieldName)
     for( i = 0; i < DBFGetFieldCount(psDBF); i++ )
     {
         DBFGetFieldInfo( psDBF, i, name, NULL, NULL );
-        strcpy(name2,name);
+        strncpy(name2,name,11);
         str_to_upper(name2);
 
-        if(!strcmp(name1,name2))
+        if(!strncmp(name1,name2,10))
             return(i);
     }
     return(-1);

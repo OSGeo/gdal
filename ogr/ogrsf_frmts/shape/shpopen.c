@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: shpopen.c,v 1.31 2001/05/31 19:35:29 warmerda Exp $
+ * $Id: shpopen.c,v 1.33 2001/07/03 12:18:15 warmerda Exp $
  *
  * Project:  Shapelib
  * Purpose:  Implementation of core Shapefile read/write functions.
@@ -34,6 +34,12 @@
  ******************************************************************************
  *
  * $Log: shpopen.c,v $
+ * Revision 1.33  2001/07/03 12:18:15  warmerda
+ * Improved cleanup if SHX not found, provied by Riccardo Cohen.
+ *
+ * Revision 1.32  2001/06/22 01:58:07  warmerda
+ * be more careful about establishing initial bounds in face of NULL shapes
+ *
  * Revision 1.31  2001/05/31 19:35:29  warmerda
  * added support for writing null shapes
  *
@@ -135,7 +141,7 @@
  */
 
 static char rcsid[] = 
-  "$Id: shpopen.c,v 1.31 2001/05/31 19:35:29 warmerda Exp $";
+  "$Id: shpopen.c,v 1.33 2001/07/03 12:18:15 warmerda Exp $";
 
 #include "shapefil.h"
 
@@ -143,6 +149,7 @@ static char rcsid[] =
 #include <limits.h>
 #include <assert.h>
 #include <stdlib.h>
+#include <string.h>
 
 typedef unsigned char uchar;
 
@@ -396,7 +403,13 @@ SHPOpen( const char * pszLayer, const char * pszAccess )
     }
     
     if( psSHP->fpSHX == NULL )
+    {
+        fclose( psSHP->fpSHX );
+        free( psSHP );
+        free( pszBasename );
+        free( pszFullname );
         return( NULL );
+    }
 
     free( pszFullname );
     free( pszBasename );
@@ -919,9 +932,9 @@ SHPWriteObject(SHPHandle psSHP, int nShapeId, SHPObject * psObject )
 	psSHP->nMaxRecords =(int) ( psSHP->nMaxRecords * 1.3 + 100);
 
 	psSHP->panRecOffset = (int *) 
-	  SfRealloc(psSHP->panRecOffset,sizeof(int) * psSHP->nMaxRecords );
+            SfRealloc(psSHP->panRecOffset,sizeof(int) * psSHP->nMaxRecords );
 	psSHP->panRecSize = (int *) 
-	  SfRealloc(psSHP->panRecSize,sizeof(int) * psSHP->nMaxRecords );
+            SfRealloc(psSHP->panRecSize,sizeof(int) * psSHP->nMaxRecords );
     }
 
 /* -------------------------------------------------------------------- */
@@ -1211,12 +1224,16 @@ SHPWriteObject(SHPHandle psSHP, int nShapeId, SHPObject * psObject )
 /* -------------------------------------------------------------------- */
 /*	Expand file wide bounds based on this shape.			*/
 /* -------------------------------------------------------------------- */
-    if( psSHP->nRecords == 1 )
+    if( psSHP->adBoundsMin[0] == 0.0
+        && psSHP->adBoundsMax[0] == 0.0
+        && psSHP->adBoundsMin[1] == 0.0
+        && psSHP->adBoundsMax[1] == 0.0 
+        && psObject->nSHPType != SHPT_NULL )
     {
-	psSHP->adBoundsMin[0] = psSHP->adBoundsMax[0] = psObject->padfX[0];
-	psSHP->adBoundsMin[1] = psSHP->adBoundsMax[1] = psObject->padfY[0];
-	psSHP->adBoundsMin[2] = psSHP->adBoundsMax[2] = psObject->padfZ[0];
-	psSHP->adBoundsMin[3] = psSHP->adBoundsMax[3] = psObject->padfM[0];
+        psSHP->adBoundsMin[0] = psSHP->adBoundsMax[0] = psObject->padfX[0];
+        psSHP->adBoundsMin[1] = psSHP->adBoundsMax[1] = psObject->padfY[0];
+        psSHP->adBoundsMin[2] = psSHP->adBoundsMax[2] = psObject->padfZ[0];
+        psSHP->adBoundsMin[3] = psSHP->adBoundsMax[3] = psObject->padfM[0];
     }
 
     for( i = 0; i < psObject->nVertices; i++ )

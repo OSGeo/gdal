@@ -37,7 +37,7 @@
  ******************************************************************************
  *
  * $Log$
- * Revision 1.3  2001/06/01 15:47:57  warmerda
+ * Revision 1.4  2001/07/20 12:35:02  warmerda
  * updated
  *
  * Revision 1.19  2001/05/31 19:20:13  warmerda
@@ -96,7 +96,9 @@
  *
  */
 
-#include <stdio.h>
+#include "cpl_port.h"
+
+#define SHPAPI_CALL CPL_DLL
 
 #ifdef USE_DBMALLOC
 #include <dbmalloc.h>
