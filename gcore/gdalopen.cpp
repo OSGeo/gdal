@@ -26,6 +26,9 @@
  *
  * 
  * $Log$
+ * Revision 1.8  2000/04/21 21:55:53  warmerda
+ * set filename as description of GDALDatasets.
+ *
  * Revision 1.7  2000/01/10 15:43:06  warmerda
  * Fixed debug statement.
  *
@@ -148,12 +151,14 @@ GDALDatasetH GDALOpen( const char * pszFilename, GDALAccess eAccess )
         poDS = poDriver->pfnOpen( &oOpenInfo );
         if( poDS != NULL )
         {
+            poDS->SetDescription( pszFilename );
+
             if( poDS->poDriver == NULL )
                 poDS->poDriver = poDriver;
 
             CPLDebug( "GDAL", "GDALOpen(%s) succeeds as %s.\n",
                       pszFilename, poDriver->pszLongName );
-            
+
             return (GDALDatasetH) poDS;
         }
 
