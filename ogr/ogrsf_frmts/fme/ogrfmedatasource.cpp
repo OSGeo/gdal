@@ -23,6 +23,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2002/08/13 13:41:54  warmerda
+ * removed MEDC stuff
+ *
  * Revision 1.4  2002/07/24 19:25:53  warmerda
  * Initialize pszReaderName.
  *
@@ -159,12 +162,7 @@
 #include <ilogfile.h>
 #include <icrdsysmgr.h>
 
-//20020417 - ryan
-#ifdef MEDC_SDP
-const char* kPROVIDERNAME = "FME_MEDC";
-#else
 const char* kPROVIDERNAME = "FME_OLEDB";
-#endif //MEDC_SDP
 
 CPL_CVSID("$Id$");
 
@@ -603,39 +601,7 @@ int OGRFMEDataSource::Open( const char * pszCompositeName )
     }
     else
     {
-//20020417 - ryan
-#ifdef MEDC_SDP
-        //20020327 - ryan
-        //Parse the pszCompositeName into oUserDirectives.
-        char      **papszTokens;
-        papszTokens = CSLTokenizeStringComplex(pszCompositeName, ";", FALSE, TRUE );
-
-        //set the dataset and name
-        pszName = CPLStrdup(papszTokens[0]);
-
-        //get the other directive if there are any
-        if (CSLCount(papszTokens) > 1)
-        {
-            //get the rest of the things into oUserDirectives.
-            for (int i = 1; i < CSLCount(papszTokens); i += 2)
-            {
-                if ((!EQUAL(papszTokens[i], "")) && (!EQUAL(papszTokens[i+1], "")))
-                {
-                    poUserDirectives->append(CPLStrdup(papszTokens[i]));
-                    poUserDirectives->append(CPLStrdup(papszTokens[i+1]));
-                }
-            }
-        }
-        else
-        {
-            printf( "Unknown tokens from data source string: %s\n", 
-                    pszCompositeName );
-        }
-
-        CSLDestroy( papszTokens );
-#else
         pszName = CPLStrdup( pszCompositeName );
-#endif //MEDC_SDP
     }
 
 /* -------------------------------------------------------------------- */
