@@ -1,5 +1,12 @@
 /******************************************************************************
- * Copyright (c) 1998, Frank Warmerdam
+ * $Id$
+ *
+ * Project:  GDAL Core
+ * Purpose:  Free standing functions for GDAL.
+ * Author:   Frank Warmerdam, warmerda@home.com
+ *
+ ******************************************************************************
+ * Copyright (c) 1999, Frank Warmerdam
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -20,11 +27,10 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************
  *
- * gdal_misc.cpp
- *
- * Freestanding functions for GDAL.
- * 
  * $Log$
+ * Revision 1.2  1999/05/16 19:32:13  warmerda
+ * Added __pure_virtual.
+ *
  * Revision 1.1  1998/12/06 02:50:16  warmerda
  * New
  *
@@ -32,6 +38,25 @@
 
 #include "gdal_priv.h"
 
+/************************************************************************/
+/*                           __pure_virtual()                           */
+/*                                                                      */
+/*      The following is a gross hack to remove the last remaining      */
+/*      dependency on the GNU C++ standard library.                     */
+/************************************************************************/
+
+#ifdef __GNUC__
+
+void __pure_virtual()
+
+{
+}
+
+#endif
+
+/************************************************************************/
+/*                        GDALGetDataTypeSize()                         */
+/************************************************************************/
 int GDALGetDataTypeSize( GDALDataType eDataType )
 
 {
