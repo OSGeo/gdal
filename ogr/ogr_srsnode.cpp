@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  1999/07/29 18:09:20  warmerda
+ * Avoid use of isdigit()
+ *
  * Revision 1.2  1999/07/29 18:00:44  warmerda
  * modified quoting rules for WKT to more closely match standard examples
  *
@@ -298,7 +301,8 @@ OGRErr OGR_SRSNode::exportToWkt( char ** ppszResult )
     {
         for( i = 0; pszValue[i] != '\0'; i++ )
         {
-            if( !isdigit(pszValue[i]) && pszValue[i] != '.'
+            if( (pszValue[i] < '0' || pszValue[i] > '9')
+                && pszValue[i] != '.'
                 && pszValue[i] != '-' && pszValue[i] != '+'
                 && pszValue[i] != 'e' && pszValue[i] != 'E' )
                 bNeedQuoting = TRUE;
