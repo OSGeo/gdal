@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2004/09/29 13:21:08  fwarmerdam
+ * Don't try and use relative include paths.
+ *
  * Revision 1.5  2004/08/24 20:30:28  warmerda
  * fixed size passed into GDALCopyWords() - irvine.pix bug
  *
@@ -48,7 +51,7 @@
 #include "vrtdataset.h"
 #include "cpl_minixml.h"
 #include "cpl_string.h"
-#include "../../alg/gdalwarper.h"
+#include "gdalwarper.h"
 
 CPL_CVSID("$Id$");
 
