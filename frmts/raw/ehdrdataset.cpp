@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2000/07/17 17:10:24  warmerda
+ * fixed default geotransform to match expected values for raw images
+ *
  * Revision 1.5  2000/07/07 15:29:09  warmerda
  * Removed the restriction that all lines must have two or more tokens.
  * In Spot GeoSPOT files there are comment lines (#...) with just one
@@ -174,7 +177,7 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
     const char *	pszLine;
     int			nRows = -1, nCols = -1, nBands = 1;
     int			nSkipBytes = 0;
-    double		dfULXMap=0.0, dfULYMap = 0.0;
+    double		dfULXMap=0.5, dfULYMap = 0.5;
     double		dfXDim = 1.0, dfYDim = 1.0;
     int			nLineCount = 0;
     GDALDataType	eDataType = GDT_Byte;
