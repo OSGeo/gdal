@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.44  2004/02/22 10:09:16  dron
+ * Fix compirison casting problems in Equal() method.
+ *
  * Revision 1.43  2004/02/21 15:36:14  warmerda
  * const correctness updates for geometry: bug 289
  *
@@ -1089,7 +1092,7 @@ OGRBoolean OGRLineString::Equal( OGRGeometry * poOther ) const
 {
     OGRLineString       *poOLine = (OGRLineString *) poOther;
     
-    if( poOther == this )
+    if( poOLine == this )
         return TRUE;
     
     if( poOther->getGeometryType() != getGeometryType() )
