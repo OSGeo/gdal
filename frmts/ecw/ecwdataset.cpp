@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.40  2005/04/02 21:22:21  fwarmerdam
+ * added GML and GeoTIFF box direct reading
+ *
  * Revision 1.39  2005/03/03 17:05:40  fwarmerdam
  * fixed up serious problems with non-8bit data in ECWDataset::IRasterIO
  *
@@ -157,6 +160,9 @@
 #include "cpl_string.h"
 #include "cpl_conv.h"
 #include "vsiiostream.h"
+#include "cpl_minixml.h"
+#include "ogr_api.h"
+#include "ogr_geometry.h"
 
 CPL_CVSID("$Id$");
 
@@ -168,6 +174,16 @@ static unsigned char jp2_header[] =
 
 static int    gnTriedCSFile = FALSE;
 static char **gpapszCSLookup = NULL;
+
+CPL_C_START
+CPLErr CPL_DLL GTIFMemBufFromWkt( const char *pszWKT, 
+                                  const double *padfGeoTransform,
+                                  int nGCPCount, const GDAL_GCP *pasGCPList,
+                                  int *pnSize, unsigned char **ppabyBuffer );
+CPLErr CPL_DLL GTIFWktFromMemBuf( int nSize, unsigned char *pabyBuffer, 
+                          char **ppszWKT, double *padfGeoTransform,
+                          int *pnGCPCount, GDAL_GCP **ppasGCPList );
+CPL_C_END
 
 /************************************************************************/
 /* ==================================================================== */
@@ -198,9 +214,17 @@ class CPL_DLL ECWDataset : public GDALDataset
     int         nWinBufLoaded;
     void        **papCurLineBuf;
 
+    double      adfGeoTransform[6];
     char        *pszProjection;
+    int         nGCPCount;
+    GDAL_GCP    *pasGCPList;
+
+    char        **papszGMLMetadata;
 
     void        ECW2WKTProjection();
+    int         ReadJP2GeoTIFF();
+    int         ReadGMLCoverageDesc();
+    int         ParseGMLCoverageDesc();
 
     void        CleanupWindow();
     int         TryWinRasterIO( GDALRWFlag, int, int, int, int,
@@ -224,6 +248,12 @@ class CPL_DLL ECWDataset : public GDALDataset
 
     virtual CPLErr GetGeoTransform( double * );
     virtual const char *GetProjectionRef();
+
+    virtual int    GetGCPCount();
+    virtual const char *GetGCPProjection();
+    virtual const GDAL_GCP *GetGCPs();
+
+    virtual char      **GetMetadata( const char * pszDomain = "" );
 
     virtual CPLErr AdviseRead( int nXOff, int nYOff, int nXSize, int nYSize,
                                int nBufXSize, int nBufYSize, 
@@ -600,6 +630,16 @@ ECWDataset::ECWDataset()
     panWinBandList = NULL;
     eRasterDataType = GDT_Byte;
     poIOStream = NULL;
+    nGCPCount = 0;
+    pasGCPList = NULL;
+    papszGMLMetadata = NULL;
+    
+    adfGeoTransform[0] = 0.0;
+    adfGeoTransform[1] = 1.0;
+    adfGeoTransform[2] = 0.0;
+    adfGeoTransform[3] = 0.0;
+    adfGeoTransform[4] = 0.0;
+    adfGeoTransform[5] = 1.0;
 }
 
 /************************************************************************/
@@ -611,6 +651,7 @@ ECWDataset::~ECWDataset()
 {
     CleanupWindow();
     CPLFree( pszProjection );
+    CSLDestroy( papszGMLMetadata );
     if( poFileView != NULL )
     {
         delete poFileView;
@@ -1004,9 +1045,6 @@ CPLErr ECWDataset::IRasterIO( GDALRWFlag eRWFlag,
         }
     }
 
-    CPLFree( papabyBIL );
-    CPLFree( pabyBILScanline );
-
     return CE_None;
 }
 
@@ -1237,9 +1275,46 @@ GDALDataset *ECWDataset::Open( GDALOpenInfo * poOpenInfo )
     for( i=0; i < poDS->psFileInfo->nBands; i++ )
         poDS->SetBand( i+1, new ECWRasterBand( poDS, i+1 ) );
 
-    poDS->ECW2WKTProjection();
+    poDS->ReadGMLCoverageDesc();
+
+    if( !poDS->ParseGMLCoverageDesc()
+        && !poDS->ReadJP2GeoTIFF() )
+        poDS->ECW2WKTProjection();
 
     return( poDS );
+}
+
+/************************************************************************/
+/*                            GetGCPCount()                             */
+/************************************************************************/
+
+int ECWDataset::GetGCPCount()
+
+{
+    return nGCPCount;
+}
+
+/************************************************************************/
+/*                          GetGCPProjection()                          */
+/************************************************************************/
+
+const char *ECWDataset::GetGCPProjection()
+
+{
+    if( nGCPCount > 0 )
+        return pszProjection;
+    else
+        return "";
+}
+
+/************************************************************************/
+/*                               GetGCP()                               */
+/************************************************************************/
+
+const GDAL_GCP *ECWDataset::GetGCPs()
+
+{
+    return pasGCPList;
 }
 
 /************************************************************************/
@@ -1262,13 +1337,7 @@ const char *ECWDataset::GetProjectionRef()
 CPLErr ECWDataset::GetGeoTransform( double * padfTransform )
 
 {
-    padfTransform[0] = psFileInfo->fOriginX;
-    padfTransform[1] = psFileInfo->fCellIncrementX;
-    padfTransform[2] = 0.0;
-
-    padfTransform[3] = psFileInfo->fOriginY;
-    padfTransform[4] = 0.0;
-    padfTransform[5] = psFileInfo->fCellIncrementY;
+    memcpy( padfTransform, adfGeoTransform, sizeof(double) * 6 );
 
     return( CE_None );
 }
@@ -1299,6 +1368,284 @@ char **ECWGetCSList()
 }
 
 /************************************************************************/
+/*                            GetMetadata()                             */
+/************************************************************************/
+
+char **ECWDataset::GetMetadata( const char *pszDomain )
+
+{
+    if( pszDomain == NULL || !EQUAL(pszDomain,"GML") )
+        return GDALDataset::GetMetadata( pszDomain );
+    else
+        return papszGMLMetadata;
+}
+
+/************************************************************************/
+/*                        ParseGMLCoverageDesc()                        */
+/************************************************************************/
+
+int ECWDataset::ParseGMLCoverageDesc() 
+
+{
+/* -------------------------------------------------------------------- */
+/*      Do we have an XML doc that is apparently a coverage             */
+/*      description?                                                    */
+/* -------------------------------------------------------------------- */
+    const char *pszCoverage = CSLFetchNameValue( papszGMLMetadata, 
+                                                 "COVERAGE" );
+
+    if( pszCoverage == NULL )
+        return FALSE;
+
+/* -------------------------------------------------------------------- */
+/*      Try parsing the XML.  Wipe any namespace prefixes.              */
+/* -------------------------------------------------------------------- */
+    CPLXMLNode *psXML = CPLParseXMLString( pszCoverage );
+
+    if( psXML == NULL )
+        return FALSE;
+
+    CPLStripXMLNamespace( psXML, NULL, TRUE );
+
+/* -------------------------------------------------------------------- */
+/*      Isolate RectifiedGrid.  Eventually we will need to support      */
+/*      other georeferencing objects.                                   */
+/* -------------------------------------------------------------------- */
+    CPLXMLNode *psRG = CPLSearchXMLNode( psXML, "=RectifiedGrid" );
+    CPLXMLNode *psOriginPoint = NULL;
+    const char *pszOffset1, *pszOffset2;
+
+    if( psRG != NULL )
+    {
+        psOriginPoint = CPLGetXMLNode( psRG, "origin.Point" );
+
+        
+        CPLXMLNode *psOffset1 = CPLGetXMLNode( psRG, "offsetVector" );
+        if( psOffset1 != NULL )
+        {
+            pszOffset1 = CPLGetXMLValue( psOffset1, "", NULL );
+            pszOffset2 = CPLGetXMLValue( psOffset1->psNext, "=offsetVector", 
+                                         NULL );
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      If we are missing any of the origin or 2 offsets then give up.  */
+/* -------------------------------------------------------------------- */
+    if( psOriginPoint == NULL || pszOffset1 == NULL || pszOffset2 == NULL )
+    {
+        CPLDestroyXMLNode( psXML );
+        return FALSE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Extract origin location.                                        */
+/* -------------------------------------------------------------------- */
+    OGRPoint *poOriginGeometry = NULL;
+    const char *pszSRSName = NULL;
+
+    if( psOriginPoint != NULL )
+    {
+        poOriginGeometry = (OGRPoint *) 
+            OGR_G_CreateFromGMLTree( psOriginPoint );
+
+        if( poOriginGeometry != NULL 
+            && wkbFlatten(poOriginGeometry->getGeometryType()) != wkbPoint )
+        {
+            delete poOriginGeometry;
+            poOriginGeometry = NULL;
+        }
+
+        // SRS?
+        pszSRSName = CPLGetXMLValue( psOriginPoint, "srsName", NULL );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Extract offset(s)                                               */
+/* -------------------------------------------------------------------- */
+    char **papszOffset1Tokens = NULL;
+    char **papszOffset2Tokens = NULL;
+    int bSuccess = FALSE;
+
+    papszOffset1Tokens = 
+        CSLTokenizeStringComplex( pszOffset1, " ,", FALSE, FALSE );
+    papszOffset2Tokens = 
+        CSLTokenizeStringComplex( pszOffset2, " ,", FALSE, FALSE );
+
+    if( CSLCount(papszOffset1Tokens) >= 2
+        && CSLCount(papszOffset2Tokens) >= 2
+        && poOriginGeometry != NULL )
+    {
+        adfGeoTransform[0] = poOriginGeometry->getX();
+        adfGeoTransform[1] = atof(papszOffset1Tokens[0]);
+        adfGeoTransform[2] = atof(papszOffset1Tokens[1]);
+        adfGeoTransform[3] = poOriginGeometry->getY();
+        adfGeoTransform[4] = atof(papszOffset2Tokens[0]);
+        adfGeoTransform[5] = atof(papszOffset2Tokens[1]);
+        bSuccess = TRUE;
+    }
+
+    CSLDestroy( papszOffset1Tokens );
+    CSLDestroy( papszOffset2Tokens );
+
+    if( poOriginGeometry != NULL )
+        delete poOriginGeometry;
+
+/* -------------------------------------------------------------------- */
+/*      If we have gotten a geotransform, then try to interprete the    */
+/*      srsName.                                                        */
+/* -------------------------------------------------------------------- */
+    if( bSuccess && pszSRSName != NULL && pszProjection == NULL )
+    {
+        if( EQUALN(pszSRSName,"epsg:",5) )
+        {
+            OGRSpatialReference oSRS;
+            if( oSRS.SetFromUserInput( pszSRSName ) == OGRERR_NONE )
+                oSRS.exportToWkt( &pszProjection );
+        }
+        else if( EQUALN(pszSRSName,"urn:ogc:def:crs:EPSG::",22) )
+        {
+            OGRSpatialReference oSRS;
+            if( oSRS.importFromEPSG( atoi(pszSRSName + 22) ) == OGRERR_NONE )
+                oSRS.exportToWkt( &pszProjection );
+        }
+        else if( EQUALN(pszSRSName,"urn:ogc:def:crs:EPSG:",21) )
+        {
+            const char *pszCode = pszSRSName+21;
+            while( *pszCode != ':' && *pszCode != '\0' )
+                pszCode++;
+
+            OGRSpatialReference oSRS;
+            if( oSRS.importFromEPSG( atoi(pszCode+1) ) == OGRERR_NONE )
+                oSRS.exportToWkt( &pszProjection );
+        }
+    }
+
+    return pszProjection != NULL && bSuccess;
+}
+
+/************************************************************************/
+/*                        ReadGMLCoverageDesc()                         */
+/************************************************************************/
+
+int ECWDataset::ReadGMLCoverageDesc()
+
+{
+    if( poFileView == NULL )
+        return FALSE;
+
+/* -------------------------------------------------------------------- */
+/*      Loop processing XML boxes.                                      */
+/* -------------------------------------------------------------------- */
+    CNCSJP2Box *poBox = NULL;
+
+    while( (poBox = poFileView->GetXMLBox( poBox )) != NULL )
+    {
+        char *pszData = (char *) CPLMalloc( poBox->m_nLDBox+1 );
+        CNCSJPCIOStream *pStream = NULL;
+        INT64   nOldOffset;
+
+        pStream = poFileView->GetFile()->m_pStream;
+        nOldOffset = pStream->Tell();
+        pStream->Seek( poBox->m_nDBoxOffset, CNCSJPCIOStream::START );
+        if( !pStream->Read( pszData, poBox->m_nLDBox ) )
+        {
+            CPLFree( pszData );
+            return FALSE;
+        }
+        
+        pStream->Seek( nOldOffset, CNCSJPCIOStream::START );
+        pszData[poBox->m_nLDBox] = '\0';
+
+        if( strstr(pszData, "RectifiedGrid") != NULL )
+            papszGMLMetadata = 
+                CSLSetNameValue( papszGMLMetadata, 
+                                 "COVERAGE", pszData );
+        
+        CPLDebug( "ECW", "XML:%s\n", pszData );
+        CPLFree( pszData );
+    }
+
+    if( poBox == NULL )
+        return FALSE;
+
+    return FALSE;
+}
+
+/************************************************************************/
+/*                           ReadJP2GeoTIFF()                           */
+/*                                                                      */
+/*      This methods searches for a GeoJP2 style degenerate GeoTIFF,    */
+/*      and if found extracts the georeferencing from it.               */
+/************************************************************************/
+
+int ECWDataset::ReadJP2GeoTIFF()
+
+{
+    if( poFileView == NULL )
+        return FALSE;
+
+/* -------------------------------------------------------------------- */
+/*      Do we have the GeoJP2 UUID Box?                                 */
+/* -------------------------------------------------------------------- */
+    const UINT8 PCS_UUID_Bytes[16] = { 0xb1,0x4b,0xf8,0xbd,0x08,0x3d,0x4b,0x43,
+                                       0xa5,0xae,0x8c,0xd7,0xd5,0xa6,0xce,0x03 };
+    NCSUUID PCS_UUID( PCS_UUID_Bytes);
+
+    CNCSJP2Box *poBox = poFileView->GetUUIDBox( PCS_UUID );
+    
+    if( poBox == NULL )
+        return FALSE;
+
+    CNCSJP2File::CNCSJP2UUIDBox *poUUIDBox = 
+        dynamic_cast<CNCSJP2File::CNCSJP2UUIDBox *>( poBox );
+
+    if( poUUIDBox == NULL )
+        return FALSE;
+/* -------------------------------------------------------------------- */
+/*      Read the raw data.  The raw data for this box was already       */
+/*      read once as part of parsing the geotiff info in                */
+/*      NCSJP2PCSBox, but we need to refetch it now.                    */
+/* -------------------------------------------------------------------- */
+    GByte *pabyData = (GByte *) CPLMalloc( poUUIDBox->m_nLength );
+    CNCSJPCIOStream *pStream = NULL;
+    INT64   nOldOffset;
+
+    pStream = poFileView->GetFile()->m_pStream;
+    nOldOffset = pStream->Tell();
+    pStream->Seek( poUUIDBox->m_nDBoxOffset+16, CNCSJPCIOStream::START );
+    if( !pStream->Read( pabyData, poUUIDBox->m_nLength ) )
+    {
+        CPLFree( pabyData );
+        return FALSE;
+    }
+    pStream->Seek( nOldOffset, CNCSJPCIOStream::START );
+    
+/* -------------------------------------------------------------------- */
+/*      Convert raw data into projection and geotransform.              */
+/* -------------------------------------------------------------------- */
+    int bSuccess = TRUE;
+
+    if( GTIFWktFromMemBuf( poUUIDBox->m_nLength, pabyData, 
+                           &pszProjection, adfGeoTransform,
+                           &nGCPCount, &pasGCPList ) != CE_None )
+    {
+        bSuccess = FALSE;
+    }
+
+    CPLFree( pabyData );
+    
+    if( pszProjection == NULL || strlen(pszProjection) == 0 )
+        bSuccess = FALSE;
+
+    if( bSuccess )
+        CPLDebug( "JP2ECW", "Got projection from GeoJP2 (geotiff) box: %s", 
+                 pszProjection );
+
+    return bSuccess;;
+}
+
+/************************************************************************/
 /*                         ECW2WKTProjection()                          */
 /*                                                                      */
 /*      Set the dataset pszProjection string in OGC WKT format by       */
@@ -1317,6 +1664,20 @@ void ECWDataset::ECW2WKTProjection()
     if( psFileInfo == NULL )
         return;
 
+/* -------------------------------------------------------------------- */
+/*      Capture Geotransform.                                           */
+/* -------------------------------------------------------------------- */
+    adfGeoTransform[0] = psFileInfo->fOriginX;
+    adfGeoTransform[1] = psFileInfo->fCellIncrementX;
+    adfGeoTransform[2] = 0.0;
+
+    adfGeoTransform[3] = psFileInfo->fOriginY;
+    adfGeoTransform[4] = 0.0;
+    adfGeoTransform[5] = psFileInfo->fCellIncrementY;
+
+/* -------------------------------------------------------------------- */
+/*      do we have projection and datum?                                */
+/* -------------------------------------------------------------------- */
     CPLDebug( "ECW", "projection=%s, datum=%s",
               psFileInfo->szProjection, psFileInfo->szDatum );
 
@@ -1386,6 +1747,21 @@ void ECWDataset::ECW2WKTProjection()
 #endif /* def FRMT_ecw */
 
 /************************************************************************/
+/*                         GDALDeregister_ECW()                         */
+/************************************************************************/
+
+void GDALDeregister_ECW( GDALDriver * )
+
+{
+    if( gpapszCSLookup )
+    {
+        CSLDestroy( gpapszCSLookup );
+        gpapszCSLookup = NULL;
+        gnTriedCSFile = FALSE;
+    }
+}
+
+/************************************************************************/
 /*                          GDALRegister_ECW()                        */
 /************************************************************************/
 
@@ -1407,6 +1783,7 @@ void GDALRegister_ECW()
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "ecw" );
         
         poDriver->pfnOpen = ECWDataset::OpenECW;
+        poDriver->pfnUnloadDriver = GDALDeregister_ECW;
 #ifdef HAVE_COMPRESS
 // The create method seems not to work properly.
 //        poDriver->pfnCreate = ECWCreateECW;  
@@ -1488,4 +1865,5 @@ void GDALRegister_JP2ECW()
     }
 #endif /* def FRMT_ecw */
 }
+
 
