@@ -1,3 +1,7 @@
+2001-07-18  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* aclocal.m4: modified to identify -all for IRIX. 
+
 2001-07-17  Frank Warmerdam  <warmerdam@pobox.com>
 
 	* png: ensure we have png.h before accepting system png.  Moved 
