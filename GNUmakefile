@@ -15,7 +15,7 @@ GDAL_OBJ += $(addprefix ./ogr/,$(OBJ))
 
 default:	lib-target py-target apps-target
 
-lib-target:	check-lib
+lib-target:	check-lib;
 
 force-lib:
 	$(AR) r $(GDAL_LIB) $(GDAL_OBJ)
@@ -64,9 +64,9 @@ ogr-apps:	lib-target
 #	We only make python a default target if we think python is installed.
 #
 ifeq ($(PYTHON),no)
-py-target:
+py-target: ;
 else
-py-target:	py-module
+py-target:	py-module;
 endif
 
 clean:	lclean
