@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2004/10/07 15:50:18  fwarmerdam
+ * added preliminary alpha band support
+ *
  * Revision 1.14  2004/08/11 20:11:47  warmerda
  * added GDALInitializeWarpedVRT
  *
@@ -104,11 +107,17 @@ typedef int
                  GByte **papabyImageData, 
                  int bMaskIsFloat, void *pMask );
 
-CPLErr GDALWarpNoDataMasker( void *pMaskFuncArg, int nBandCount, 
-                             GDALDataType eType,
-                             int nXOff, int nYOff, int nXSize, int nYSize,
-                             GByte **papabyImageData, int bMaskIsFloat,
-                             void *pValidityMask );
+CPLErr CPL_DLL 
+GDALWarpNoDataMasker( void *pMaskFuncArg, int nBandCount, GDALDataType eType,
+                      int nXOff, int nYOff, int nXSize, int nYSize,
+                      GByte **papabyImageData, int bMaskIsFloat,
+                      void *pValidityMask );
+
+CPLErr CPL_DLL 
+GDALWarpDstAlphaMasker( void *pMaskFuncArg, int nBandCount, GDALDataType eType,
+                        int nXOff, int nYOff, int nXSize, int nYSize,
+                        GByte ** /*ppImageData */,
+                        int bMaskIsFloat, void *pValidityMask );
 
 /************************************************************************/
 /*                           GDALWarpOptions                            */
@@ -143,6 +152,12 @@ typedef struct {
 
     /*! The band numbers for the destination bands to process (1 based) */
     int                *panDstBands;
+
+    /*! The source band so use as an alpha (transparency) value, 0=disabled */
+    int                nSrcAlphaBand;
+
+    /*! The dest. band so use as an alpha (transparency) value, 0=disabled */
+    int                nDstAlphaBand;
 
     /*! The "nodata" value real component for each input band, if NULL there isn't one */
     double             *padfSrcNoDataReal;

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2004/10/07 15:50:18  fwarmerdam
+ * added preliminary alpha band support
+ *
  * Revision 1.15  2004/08/11 21:20:47  warmerda
  * avoid crash if transformer does not serialize
  *
@@ -507,6 +510,151 @@ GDALWarpNoDataMasker( void *pMaskFuncArg, int nBandCount, GDALDataType eType,
     return CE_None;
 }
 
+/************************************************************************/
+/*                       GDALWarpSrcAlphaMasker()                       */
+/*                                                                      */
+/*      GDALMaskFunc for reading source simple 8bit alpha mask          */
+/*      information and building a floating point density mask from     */
+/*      it.                                                             */
+/************************************************************************/
+
+CPLErr 
+GDALWarpSrcAlphaMasker( void *pMaskFuncArg, int nBandCount, GDALDataType eType, 
+                        int nXOff, int nYOff, int nXSize, int nYSize,
+                        GByte ** /*ppImageData */,
+                        int bMaskIsFloat, void *pValidityMask )
+
+{
+    GDALWarpOptions *psWO = (GDALWarpOptions *) pMaskFuncArg;
+    float *pafMask = (float *) pValidityMask;
+
+/* -------------------------------------------------------------------- */
+/*      Do some minimal checking.                                       */
+/* -------------------------------------------------------------------- */
+    if( !bMaskIsFloat )
+    {
+        CPLAssert( FALSE );
+        return CE_Failure;
+    }
+
+    if( psWO == NULL || psWO->nSrcAlphaBand < 1 )
+    {
+        CPLAssert( FALSE );
+        return CE_Failure;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Read the alpha band.                                            */
+/* -------------------------------------------------------------------- */
+    CPLErr eErr;
+    GDALRasterBandH hAlphaBand = GDALGetRasterBand( psWO->hSrcDS, 
+                                                    psWO->nSrcAlphaBand );
+
+    eErr = GDALRasterIO( hAlphaBand, GF_Read, nXOff, nYOff, nXSize, nYSize, 
+                         pafMask, nXSize, nYSize, GDT_Float32, 0, 0 );
+
+    if( eErr != CE_None )
+        return eErr;
+
+/* -------------------------------------------------------------------- */
+/*      Rescale from 0-255 to 0.0-1.0.                                  */
+/* -------------------------------------------------------------------- */
+    for( int iPixel = nXSize * nYSize - 1; iPixel >= 0; iPixel-- )
+    {                                    //  (1/255)
+        pafMask[iPixel] = pafMask[iPixel] * 0.00392157; 
+        pafMask[iPixel] = MIN(1.0,pafMask[iPixel]);
+    }
+
+    return CE_None;
+}
+
+/************************************************************************/
+/*                       GDALWarpDstAlphaMasker()                       */
+/*                                                                      */
+/*      GDALMaskFunc for reading or writing the destination simple      */
+/*      8bit alpha mask information and building a floating point       */
+/*      density mask from it.   Note, writing is distinguished          */
+/*      negative bandcount.                                             */
+/************************************************************************/
+
+CPLErr 
+GDALWarpDstAlphaMasker( void *pMaskFuncArg, int nBandCount, GDALDataType eType,
+                        int nXOff, int nYOff, int nXSize, int nYSize,
+                        GByte ** /*ppImageData */,
+                        int bMaskIsFloat, void *pValidityMask )
+
+{
+    GDALWarpOptions *psWO = (GDALWarpOptions *) pMaskFuncArg;
+    float *pafMask = (float *) pValidityMask;
+    int iPixel;
+    CPLErr eErr;
+
+/* -------------------------------------------------------------------- */
+/*      Do some minimal checking.                                       */
+/* -------------------------------------------------------------------- */
+    if( !bMaskIsFloat )
+    {
+        CPLAssert( FALSE );
+        return CE_Failure;
+    }
+
+    if( psWO == NULL || psWO->nDstAlphaBand < 1 )
+    {
+        CPLAssert( FALSE );
+        return CE_Failure;
+    }
+
+    GDALRasterBandH hAlphaBand = 
+        GDALGetRasterBand( psWO->hDstDS, psWO->nDstAlphaBand );
+
+/* -------------------------------------------------------------------- */
+/*      Read alpha case.						*/
+/* -------------------------------------------------------------------- */
+    if( nBandCount >= 0 )
+    {
+        const char *pszInitDest = 
+            CSLFetchNameValue( psWO->papszWarpOptions, "INIT_DEST" );
+
+        // Special logic for destinations being initialized on the fly.
+        if( pszInitDest != NULL )
+        {
+            for( iPixel = nXSize * nYSize - 1; iPixel >= 0; iPixel-- )
+                pafMask[iPixel] = 0.0;
+            return CE_None;
+        }
+
+        // Read data.
+        eErr = GDALRasterIO( hAlphaBand, GF_Read, nXOff, nYOff, nXSize, nYSize,
+                             pafMask, nXSize, nYSize, GDT_Float32, 0, 0 );
+        
+        if( eErr != CE_None )
+            return eErr;
+
+        // rescale.
+        for( iPixel = nXSize * nYSize - 1; iPixel >= 0; iPixel-- )
+        {
+            pafMask[iPixel] = pafMask[iPixel] * 0.00392157;
+            pafMask[iPixel] = MIN(1.0,pafMask[iPixel]);
+        }
+
+        return CE_None;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Write alpha case.                                               */
+/* -------------------------------------------------------------------- */
+    else
+    {
+        for( iPixel = nXSize * nYSize - 1; iPixel >= 0; iPixel-- )
+            pafMask[iPixel] = (int) (pafMask[iPixel] * 255.1);
+        
+        // Read data.
+        eErr = GDALRasterIO( hAlphaBand, GF_Write, 
+                             nXOff, nYOff, nXSize, nYSize, 
+                             pafMask, nXSize, nYSize, GDT_Float32, 0, 0 );
+        return eErr;
+    }
+}
 
 /************************************************************************/
 /* ==================================================================== */
@@ -763,6 +911,19 @@ CPLXMLNode *GDALSerializeWarpOptions( const GDALWarpOptions *psWO )
                 CPLSPrintf( "%.16g", psWO->padfDstNoDataImag[i] ) );
     }
 
+/* -------------------------------------------------------------------- */
+/*      Alpha bands.                                                    */
+/* -------------------------------------------------------------------- */
+    if( psWO->nSrcAlphaBand > 0 )
+        CPLCreateXMLElementAndValue( 
+            psTree, "SrcAlphaBand", 
+            CPLSPrintf( "%d", psWO->nSrcAlphaBand ) );
+
+    if( psWO->nDstAlphaBand > 0 )
+        CPLCreateXMLElementAndValue( 
+            psTree, "DstAlphaBand", 
+            CPLSPrintf( "%d", psWO->nDstAlphaBand ) );
+
     return psTree;
 }
 
@@ -944,6 +1105,14 @@ GDALWarpOptions *GDALDeserializeWarpOptions( CPLXMLNode *psTree )
         
         iBand++;
     }
+
+/* -------------------------------------------------------------------- */
+/*      Alpha bands.                                                    */
+/* -------------------------------------------------------------------- */
+    psWO->nSrcAlphaBand = 
+        atoi( CPLGetXMLValue( psTree, "SrcAlphaBand", "0" ) );
+    psWO->nDstAlphaBand = 
+        atoi( CPLGetXMLValue( psTree, "DstAlphaBand", "0" ) );
 
 /* -------------------------------------------------------------------- */
 /*      Transformation.                                                 */
