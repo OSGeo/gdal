@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.3  1998/12/15 19:02:27  warmerda
+ * Avoid use of errno as a variable
+ *
  * Revision 1.2  1998/12/06 02:52:52  warmerda
  * Implement assert support
  *
@@ -56,7 +59,7 @@ static void (*gpfnCPLErrorHandler)(CPLErr, int, const char *) = NULL;
  *
  * The error code can be accessed later using CPLGetLastErrNo()
  **********************************************************************/
-void    CPLError(CPLErr eErrClass, int errno, const char *fmt, ...)
+void    CPLError(CPLErr eErrClass, int err_no, const char *fmt, ...)
 {
     va_list args;
 
@@ -69,11 +72,11 @@ void    CPLError(CPLErr eErrClass, int errno, const char *fmt, ...)
     /* If the user provided his own error handling function, then call
      * it, otherwise print the error to stderr and return.
      */
-    gnCPLLastErrNo = errno;
+    gnCPLLastErrNo = err_no;
 
     if (gpfnCPLErrorHandler != NULL)
     {
-        gpfnCPLErrorHandler(eErrClass, errno, gszCPLLastErrMsg);
+        gpfnCPLErrorHandler(eErrClass, err_no, gszCPLLastErrMsg);
     }
     else
     {

@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.4  1998/12/15 19:02:27  warmerda
+ * Avoid use of errno as a variable
+ *
  * Revision 1.3  1998/12/06 22:20:42  warmerda
  * Added error code.
  *
@@ -60,7 +63,7 @@ typedef enum
   
 } CPLErr;
 
-void CPL_DLL CPLError(CPLErr eErrClass, int errno, const char *fmt, ...);
+void CPL_DLL CPLError(CPLErr eErrClass, int err_no, const char *fmt, ...);
 void CPL_DLL CPLErrorReset();
 int CPL_DLL CPLGetLastErrorNo();
 const char CPL_DLL * CPLGetLastErrorMsg();
