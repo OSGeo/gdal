@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2001/04/02 17:12:01  warmerda
+ * Added ecw support.
+ *
  * Revision 1.3  2001/03/12 15:17:03  warmerda
  * added aaigrid
  *
@@ -73,6 +76,7 @@ void CPL_DLL GDALRegister_PNM(void);
 void CPL_DLL GDALRegister_GIF(void);
 void CPL_DLL GDALRegister_Envisat(void);
 void CPL_DLL GDALRegister_FITS(void);
+void CPL_DLL GDALRegister_ECW(void);
 CPL_C_END
 
 #endif /* ndef GDAL_FRMTS_H_INCLUDED */
