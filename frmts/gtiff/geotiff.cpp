@@ -1,4 +1,11 @@
 /******************************************************************************
+ * $Id$
+ *
+ * Project:  GeoTIFF Driver
+ * Purpose:  GDAL GeoTIFF support.
+ * Author:   Frank Warmerdam, warmerda@home.com
+ *
+ ******************************************************************************
  * Copyright (c) 1998, Frank Warmerdam
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -20,11 +27,10 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************
  *
- * geotiff.cpp
- *
- * The GeoTIFF driver implemenation.
- * 
  * $Log$
+ * Revision 1.11  1999/10/29 17:28:11  warmerda
+ * Added projection support, and odd pixel data types
+ *
  * Revision 1.10  1999/08/12 18:23:15  warmerda
  * Fixed the ability to write non GDT_Byte data.
  *
@@ -70,6 +76,7 @@ static GDALDriver	*poGTiffDriver = NULL;
 CPL_C_START
 void	GDALRegister_GTiff(void);
 char *  GTIFGetOGISDefn( GTIFDefn * );
+int     GTIFSetFromOGISDefn( GTIF *, const char * );
 CPL_C_END
 
 
@@ -113,6 +120,7 @@ class GTiffDataset : public GDALDataset
                  ~GTiffDataset();
 
     virtual const char *GetProjectionRef(void);
+    virtual CPLErr SetProjection( const char * );
     virtual CPLErr GetGeoTransform( double * );
     virtual CPLErr SetGeoTransform( double * );
 
@@ -158,10 +166,31 @@ GTiffRasterBand::GTiffRasterBand( GTiffDataset *poDS, int nBand )
 /* -------------------------------------------------------------------- */
 /*      Get the GDAL data type.                                         */
 /* -------------------------------------------------------------------- */
+    int16		nCount;
+    uint16		nSampleFormat;
+
+    if( !TIFFGetField(poDS->hTIFF,TIFFTAG_SAMPLEFORMAT,
+                      &nCount,&nSampleFormat) )
+        nSampleFormat = SAMPLEFORMAT_UINT;
+        
     if( poDS->nBitsPerSample <= 8 )
         eDataType = GDT_Byte;
     else if( poDS->nBitsPerSample <= 16 )
-        eDataType = GDT_UInt16;
+    {
+        if( nSampleFormat == SAMPLEFORMAT_INT )
+            eDataType = GDT_Int16;
+        else
+            eDataType = GDT_UInt16;
+    }
+    else if( poDS->nBitsPerSample == 32 )
+    {
+        if( nSampleFormat == SAMPLEFORMAT_IEEEFP )
+            eDataType = GDT_Float32;
+        else if( nSampleFormat == SAMPLEFORMAT_INT )
+            eDataType = GDT_Int32;
+        else
+            eDataType = GDT_UInt32;
+    }
     else
         eDataType = GDT_Unknown;
 
@@ -458,9 +487,17 @@ void GTiffDataset::WriteGeoTIFFInfo()
     TIFFSetField( hTIFF, TIFFTAG_GEOTIEPOINTS, 6, adfTiePoints );
 
 /* -------------------------------------------------------------------- */
-/*      notdef: add writing of GeoTIFF projection definition.           */
+/*	Write out projection definition.				*/
 /* -------------------------------------------------------------------- */
-    
+    if( !EQUAL(pszProjection,"") )
+    {
+        GTIF	*psGTIF;
+
+        psGTIF = GTIFNew( hTIFF );
+        GTIFSetFromOGISDefn( psGTIF, pszProjection );
+        GTIFWriteKeys( psGTIF );
+        GTIFFree( psGTIF );
+    }
 }
 
 
@@ -661,6 +698,7 @@ GDALDataset *GTiffDataset::Create( const char * pszFilename,
     poDS->nRasterYSize = nYSize;
     poDS->eAccess = GA_Update;
     poDS->bNewDataset = TRUE;
+    poDS->pszProjection = CPLStrdup("");
         
 /* -------------------------------------------------------------------- */
 /*      Setup some standard flags.                                      */
@@ -670,6 +708,15 @@ GDALDataset *GTiffDataset::Create( const char * pszFilename,
     TIFFSetField( hTIFF, TIFFTAG_BITSPERSAMPLE,
                   GDALGetDataTypeSize( eType ) );
     poDS->nBitsPerSample = GDALGetDataTypeSize( eType );
+
+    if( eType == GDT_Int16 || eType == GDT_Int32 )
+    {
+        TIFFSetField( hTIFF, TIFFTAG_SAMPLEFORMAT, SAMPLEFORMAT_INT );
+    }
+    else if( eType == GDT_Float32 || eType == GDT_Float64 )
+    {
+        TIFFSetField( hTIFF, TIFFTAG_SAMPLEFORMAT, SAMPLEFORMAT_IEEEFP );
+    }
 
     TIFFSetField( hTIFF, TIFFTAG_SAMPLESPERPIXEL, nBands );
 
@@ -715,6 +762,30 @@ const char *GTiffDataset::GetProjectionRef()
 
 {
     return( pszProjection );
+}
+
+/************************************************************************/
+/*                          GetProjectionRef()                          */
+/************************************************************************/
+
+CPLErr GTiffDataset::SetProjection( const char * pszNewProjection )
+
+{
+    if( !EQUALN(pszNewProjection,"GEOGCS",6)
+        && !EQUALN(pszNewProjection,"PROJCS",6) )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                "Only OGC WKT Projections supported for writing to GeoTIFF.\n"
+                "%s not supported.",
+                  pszNewProjection );
+        
+        return CE_Failure;
+    }
+    
+    CPLFree( pszProjection );
+    pszProjection = CPLStrdup( pszNewProjection );
+
+    return CE_None;
 }
 
 /************************************************************************/
