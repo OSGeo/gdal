@@ -161,7 +161,7 @@ ftp://gdal.velocet.ca/pub/outgoing/iso8211lib-1.0.tar.gz</a>.<p>
 </code>
 
 If for some reason you don't have gzip, or tar (perhaps you work on Windows)
-just <a href="mailto:warmerda@home.com">let me know</a>, 
+just <a href="mailto:warmerdam@pobox.com">let me know</a>, 
 and I will prepare a zip or similar archive of the source.<p>
 
 <li> On unix you can now type ``configure'' to establish configuration 
@@ -181,9 +181,9 @@ makefile.<p>
 
 <h2>Author and Acknowledgements</h2>
 
-The primary author of ISO8211Lib is <a href="http://members.home.com/warmerda">
+The primary author of ISO8211Lib is <a href="http://pobox.com/~warmerdam">
 Frank Warmerdam</a>, and I can be reached at 
-<a href="mailto:warmerda@home.com">warmerda@home.com</a>.  I am eager to 
+<a href="mailto:warmerdam@pobox.com">warmerdam@pobox.com</a>.  I am eager to 
 receive bug reports, and also open to praise or suggestions.<p>
 
 I would like to thank:<p>
