@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2002/12/28 21:45:05  warmerda
+ * oncall uses spaces instead of zero for null vertices in .RT2 file
+ *
  * Revision 1.11  2002/12/26 00:20:19  mbp
  * re-organized code to hold TIGER-version details in TigerRecordInfo structs;
  * first round implementation of TIGER_2002 support
@@ -514,7 +517,8 @@ void TigerCompleteChain::AddShapePoints( int nTLID, int nRecordId,
         for( iVertex = 0; iVertex < 10; iVertex++ )
         {
             int         iStart = 19 + 19*iVertex;
-            if( EQUALN(achShapeRec+iStart-1,"+000000000+00000000",19) )
+            if( EQUALN(achShapeRec+iStart-1,"+000000000+00000000",19)
+                || EQUALN(achShapeRec+iStart-1,"                   ",19) )
                 break;
 
             poLine->addPoint(atoi(GetField(achShapeRec,iStart,iStart+9))
