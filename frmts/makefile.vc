@@ -67,7 +67,7 @@ subdirs:
 		&& nmake /NOLOGO /f makefile.vc \
 		&& cd ..
 
-o\gdalallregister.obj:	gdalallregister.cpp
+o\gdalallregister.obj:	gdalallregister.cpp ..\nmake.opt
 	$(CC) $(CFLAGS) $(MOREEXTRA) /c gdalallregister.cpp
 	copy gdalallregister.obj o
 
