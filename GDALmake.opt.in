@@ -3,10 +3,15 @@ CXX	=	@CXX@
 INSTALL = 	$(GDAL_ROOT)/install-sh -c
 INSTALL_DIR = 	$(GDAL_ROOT)/install-sh -d
 
+#Flags to build optimized relese version
 CXX_OPTFLAGS =	@CXXFLAGS@
 C_OPTFLAGS =	@CFLAGS@
+# Flags to build debug version
 CXX_DBGFLAGS =	-g -DDEBUG
 C_DBGFLAGS =	-g -DDEBUG
+# Flags to build profiling version
+CXX_PROFFLAGS =	-g3 -pg -DDEBUG
+C_PROFFLAGS =	-g3 -pg -DDEBUG
 
 LIBS	=	@LIBS@ -lm
 
@@ -31,14 +36,14 @@ INST_PYMOD      =       @pymoddir@
 #	the CFG environment variable.  Set to debug for debug builds.
 #	This is similar to the OGDI builds. 
 #
-ifeq ($(CFG),debug)
+ifeq (,$(findstring debug,$(CFG)))
 C_ODFLAGS 	= $(C_DBGFLAGS)
 CXX_ODFLAGS 	= $(CXX_DBGFLAGS)
 endif
 
-ifeq ($(CFG),gprof)
-C_ODFLAGS =	-pg
-CXX_ODFLAGS =	-pg
+ifneq (,$(findstring gprof,$(CFG)))
+C_ODFLAGS =	$(CXX_PROFFLAGS)
+CXX_ODFLAGS =	$(C_PROFFLAGS)
 LNK_FLAGS =	-pg
 LIBS		:= $(filter-out -ldbmalloc,$(LIBS))
 endif
@@ -96,9 +101,18 @@ HDF4_INCLUDE  = @HDF4_INCLUDE@
 KAKDIR = @KAKDIR@
 
 #
-# JPEG-2000 Support (via JasPer library).
+# JPEG-2000 Support via JasPer library.
 #
 HAVE_JASPER     = @HAVE_JASPER@
+
+#
+# MrSID support via LizardTech's DSDK
+#
+MRSID_HOME =	@MRSID_HOME@
+ifneq ($(MRSID_HOME),)
+MRSID_INCLUDE =	-I$(MRSID_HOME)/include
+MRSID_LIB =	-L$(MRSID_HOME)/bin/lib -lMrSIDDecode -llt_xTrans
+endif
 
 #
 # Xerces C++ XML Parser for GML.
@@ -157,7 +171,7 @@ GDAL_OBJ	=	$(GDAL_ROOT)/frmts/o/*.o \
 			$(GDAL_ROOT)/ogr/ogr_api.o
 
 ifeq ($(OGR_ENABLED),yes)
-GDAL_LIBS := $(OGRFRMTS_LIB) $(PG_LIB) $(OCI_LIB) $(GDAL_LIBS)
+GDAL_LIBS := $(OGRFRMTS_LIB) $(PG_LIB) $(OCI_LIB) $(MRSID_LIB) $(GDAL_LIBS)
 GDALA_DEP := $(GDALA_DEP) $(OGRFRMTS_LIB)
 
 GDAL_OBJ := $(GDAL_OBJ) $(GDAL_ROOT)/ogr/ogrsf_frmts/generic/ogrregisterall.o \

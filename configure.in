@@ -712,6 +712,32 @@ fi
 AC_SUBST(KAKDIR,$KAKDIR)
 
 dnl ---------------------------------------------------------------------------
+dnl Select MrSID library or disable driver.
+dnl ---------------------------------------------------------------------------
+
+AC_MSG_CHECKING([for MrSID support])
+
+AC_ARG_WITH(mrsid,[  --with-mrsid[=ARG]      Include MrSID support (ARG=path to MrSID DSDK or no)],,)
+
+if test "$with_mrsid" = "no" -o "$with_mrsid" = "" ; then
+  MRSID_HOME=
+  AC_MSG_RESULT([not requested.])
+elif test "$with_mrsid" = "yes" ; then
+  AC_MSG_ERROR([
+For MrSID support you need provide the path to the LizardTech's MrSID DSDK
+directory. Note that MrSID DSDK is *not* free software.])
+else
+  MRSID_HOME=$with_mrsid
+  OPT_GDAL_FORMATS="mrsid $OPT_GDAL_FORMATS"
+  CFLAGS="-D_REENTRANT $CFLAGS"
+  CPPFLAGS="-D_REENTRANT $CPPFLAGS"
+  LIBS="$LIBS -lpthread"
+  AC_MSG_RESULT([requested.])
+fi
+
+AC_SUBST(MRSID_HOME,$MRSID_HOME)
+
+dnl ---------------------------------------------------------------------------
 
 AC_SUBST(OPT_GDAL_FORMATS,$OPT_GDAL_FORMATS)
 AC_SUBST(EXTRA_INCLUDES,$EXTRA_INCLUDES)
