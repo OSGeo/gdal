@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.22  2002/04/25 16:06:26  warmerda
+ * don't copy style string if not set during clone
+ *
  * Revision 1.21  2002/04/24 20:00:30  warmerda
  * fix clone to copy fid as well
  *
@@ -343,7 +346,8 @@ OGRFeature *OGRFeature::Clone()
         poNew->SetField( i, pauFields + i );
     }
 
-    poNew->SetStyleString(GetStyleString());
+    if( GetStyleString() != NULL )
+        poNew->SetStyleString(GetStyleString());
 
     poNew->SetFID( GetFID() );
 
