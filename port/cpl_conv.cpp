@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2000/04/17 15:56:11  warmerda
+ * make configuration tests always happen
+ *
  * Revision 1.8  2000/04/05 21:02:47  warmerda
  * Added CPLVerifyConfiguration()
  *
@@ -324,6 +327,11 @@ void CPLVerifyConfiguration()
     CPLAssert( sizeof(GInt16) == 2 );
     CPLAssert( sizeof(GByte) == 1 );
 
+    if( sizeof(GInt32) != 4 )
+        CPLError( CE_Fatal, CPLE_AppDefined, 
+                  "sizeof(GInt32) == %d ... yow!\n", 
+                  sizeof(GInt32) );
+
 /* -------------------------------------------------------------------- */
 /*      Verify byte order                                               */
 /* -------------------------------------------------------------------- */
@@ -332,9 +340,14 @@ void CPLVerifyConfiguration()
     nTest = 1;
 
 #ifdef CPL_LSB
-    CPLAssert( ((GByte *) &nTest)[0] == 1 );
+    if( ((GByte *) &nTest)[0] != 1 )
 #endif
 #ifdef CPL_MSB
-    CPLAssert( ((uchar *) &nTest)[3] == 1 );
+    if( ((GByte *) &nTest)[3] != 1 )
 #endif    
+        CPLError( CE_Fatal, CPLE_AppDefined, 
+                  "CPLVerifyConfiguration(): byte order set wrong.\n" );
 }
+
+
+
