@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_compress.c,v 1.1.1.1 1999/07/27 21:50:27 mike Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_compress.c,v 1.4 1999/12/21 17:03:03 mwelles Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -36,13 +36,21 @@ TIFFNoEncode(TIFF* tif, char* method)
 {
 	const TIFFCodec* c = TIFFFindCODEC(tif->tif_dir.td_compression);
 
-	if (c)
-		TIFFError(tif->tif_name, "%s %s encoding is not implemented",
-		    c->name, method);
-	else
+	if (c) { 
+	  if (! strncmp(c->name, "LZW", 3) ){ 
+	    TIFFError(tif->tif_name, 
+		      "%s %s encoding is no longer implemented due to Unisys patent enforcement", 
+		      c->name, method); 
+	  } else { 
+	    TIFFError(tif->tif_name, "%s %s encoding is not implemented",
+		      c->name, method);
+	  }
+	}
+	else { 
 		TIFFError(tif->tif_name,
-		    "Compression scheme %u %s encoding is not implemented",
+			  "Compression scheme %u %s encoding is not implemented",
 		    tif->tif_dir.td_compression, method);
+	}
 	return (-1);
 }
 
@@ -147,7 +155,7 @@ _TIFFSetDefaultCompressionState(TIFF* tif)
 int
 TIFFSetCompressionScheme(TIFF* tif, int scheme)
 {
-	const TIFFCodec *c = TIFFFindCODEC(scheme);
+	const TIFFCodec *c = TIFFFindCODEC((uint16) scheme);
 
 	_TIFFSetDefaultCompressionState(tif);
 	/*

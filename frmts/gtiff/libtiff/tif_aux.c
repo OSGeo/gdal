@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_aux.c,v 1.1.1.1 1999/07/27 21:50:27 mike Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_aux.c,v 1.3 2000/03/03 15:22:00 warmerda Exp $ */
 
 /*
  * Copyright (c) 1991-1997 Sam Leffler
@@ -143,6 +143,9 @@ TIFFVGetFieldDefaulted(TIFF* tif, ttag_t tag, va_list ap)
 	case TIFFTAG_DATATYPE:
 		*va_arg(ap, uint16 *) = td->td_sampleformat-1;
 		return (1);
+	case TIFFTAG_SAMPLEFORMAT:
+		*va_arg(ap, uint16 *) = td->td_sampleformat;
+                return(1);
 	case TIFFTAG_IMAGEDEPTH:
 		*va_arg(ap, uint32 *) = td->td_imagedepth;
 		return (1);

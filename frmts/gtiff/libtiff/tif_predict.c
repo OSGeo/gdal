@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_predict.c,v 1.1.1.1 1999/07/27 21:50:27 mike Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_predict.c,v 1.2 1999/11/27 21:43:28 warmerda Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -160,7 +160,7 @@ static void
 horAcc8(TIFF* tif, tidata_t cp0, tsize_t cc)
 {
 	TIFFPredictorState* sp = PredictorState(tif);
-	u_int stride = sp->stride;
+	tsize_t stride = sp->stride;
 
 	char* cp = (char*) cp0;
 	if (cc > stride) {
@@ -203,7 +203,7 @@ static void
 swabHorAcc16(TIFF* tif, tidata_t cp0, tsize_t cc)
 {
 	TIFFPredictorState* sp = PredictorState(tif);
-	u_int stride = sp->stride;
+	tsize_t stride = sp->stride;
 	uint16* wp = (uint16*) cp0;
 	tsize_t wc = cc / 2;
 
@@ -220,7 +220,7 @@ swabHorAcc16(TIFF* tif, tidata_t cp0, tsize_t cc)
 static void
 horAcc16(TIFF* tif, tidata_t cp0, tsize_t cc)
 {
-	u_int stride = PredictorState(tif)->stride;
+	tsize_t stride = PredictorState(tif)->stride;
 	uint16* wp = (uint16*) cp0;
 	tsize_t wc = cc / 2;
 
@@ -283,7 +283,7 @@ static void
 horDiff8(TIFF* tif, tidata_t cp0, tsize_t cc)
 {
 	TIFFPredictorState* sp = PredictorState(tif);
-	u_int stride = sp->stride;
+	tsize_t stride = sp->stride;
 	char* cp = (char*) cp0;
 
 	if (cc > stride) {
@@ -328,7 +328,7 @@ static void
 horDiff16(TIFF* tif, tidata_t cp0, tsize_t cc)
 {
 	TIFFPredictorState* sp = PredictorState(tif);
-	u_int stride = sp->stride;
+	tsize_t stride = sp->stride;
 	int16 *wp = (int16*) cp0;
 	tsize_t wc = cc/2;
 

@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_next.c,v 1.1.1.1 1999/07/27 21:50:27 mike Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_next.c,v 1.2 1999/11/27 21:43:28 warmerda Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -111,7 +111,7 @@ NeXTDecode(TIFF* tif, tidata_t buf, tsize_t occ, tsample_t s)
 				n &= 0x3f;
 				while (n-- > 0)
 					SETPIXEL(op, grey);
-				if (npixels >= imagewidth)
+				if (npixels >= (int) imagewidth)
 					break;
 				if (cc == 0)
 					goto bad;

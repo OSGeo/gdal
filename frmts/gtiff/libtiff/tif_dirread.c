@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_dirread.c,v 1.2 1999/09/08 12:21:13 warmerda Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_dirread.c,v 1.5 2000/01/28 21:00:20 warmerda Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -88,7 +88,7 @@ TIFFReadDirectory(TIFF* tif)
 	const TIFFFieldInfo* fip;
 	int fix;
 	uint16 dircount;
-	uint32 nextdiroff;
+	toff_t nextdiroff;
 	char* cp;
 	int diroutoforderwarning = 0;
 
@@ -598,7 +598,8 @@ EstimateStripByteCounts(TIFF* tif, TIFFDirEntry* dir, uint16 dircount)
 		 * of data in the strip and trim this number back accordingly.
 		 */ 
 		i--;
-		if (td->td_stripoffset[i] + td->td_stripbytecount[i] > filesize)
+		if (((toff_t)(td->td_stripoffset[i]+td->td_stripbytecount[i]))
+                                                               > filesize)
 			td->td_stripbytecount[i] =
 			    filesize - td->td_stripoffset[i];
 	} else {
@@ -755,28 +756,28 @@ TIFFFetchFloat(TIFF* tif, TIFFDirEntry* dir)
 static int
 TIFFFetchByteArray(TIFF* tif, TIFFDirEntry* dir, uint16* v)
 {
-	if (dir->tdir_count <= 4) {
-		/*
-		 * Extract data from offset field.
-		 */
-		if (tif->tif_header.tiff_magic == TIFF_BIGENDIAN) {
-			switch (dir->tdir_count) {
-			case 4: v[3] = dir->tdir_offset & 0xff;
-			case 3: v[2] = (dir->tdir_offset >> 8) & 0xff;
-			case 2: v[1] = (dir->tdir_offset >> 16) & 0xff;
-			case 1: v[0] = dir->tdir_offset >> 24;
-			}
-		} else {
-			switch (dir->tdir_count) {
-			case 4: v[3] = dir->tdir_offset >> 24;
-			case 3: v[2] = (dir->tdir_offset >> 16) & 0xff;
-			case 2: v[1] = (dir->tdir_offset >> 8) & 0xff;
-			case 1: v[0] = dir->tdir_offset & 0xff;
-			}
-		}
-		return (1);
-	} else
-		return (TIFFFetchData(tif, dir, (char*) v) != 0);	/* XXX */
+    if (dir->tdir_count <= 4) {
+        /*
+         * Extract data from offset field.
+         */
+        if (tif->tif_header.tiff_magic == TIFF_BIGENDIAN) {
+            switch (dir->tdir_count) {
+                case 4: v[3] = (uint16)(dir->tdir_offset & 0xff);
+                case 3: v[2] = (uint16)((dir->tdir_offset >> 8) & 0xff);
+                case 2: v[1] = (uint16)((dir->tdir_offset >> 16) & 0xff);
+                case 1: v[0] = (uint16)(dir->tdir_offset >> 24);
+            }
+        } else {
+            switch (dir->tdir_count) {
+                case 4: v[3] = (uint16)(dir->tdir_offset >> 24);
+                case 3: v[2] = (uint16)((dir->tdir_offset >> 16) & 0xff);
+                case 2: v[1] = (uint16)((dir->tdir_offset >> 8) & 0xff);
+                case 1: v[0] = (uint16)(dir->tdir_offset & 0xff);
+            }
+        }
+        return (1);
+    } else
+        return (TIFFFetchData(tif, dir, (char*) v) != 0);	/* XXX */
 }
 
 /*
@@ -788,13 +789,13 @@ TIFFFetchShortArray(TIFF* tif, TIFFDirEntry* dir, uint16* v)
 	if (dir->tdir_count <= 2) {
 		if (tif->tif_header.tiff_magic == TIFF_BIGENDIAN) {
 			switch (dir->tdir_count) {
-			case 2: v[1] = dir->tdir_offset & 0xffff;
-			case 1: v[0] = dir->tdir_offset >> 16;
+			case 2: v[1] = (uint16) (dir->tdir_offset & 0xffff);
+			case 1: v[0] = (uint16) (dir->tdir_offset >> 16);
 			}
 		} else {
 			switch (dir->tdir_count) {
-			case 2: v[1] = dir->tdir_offset >> 16;
-			case 1: v[0] = dir->tdir_offset & 0xffff;
+			case 2: v[1] = (uint16) (dir->tdir_offset >> 16);
+			case 1: v[0] = (uint16) (dir->tdir_offset & 0xffff);
 			}
 		}
 		return (1);
@@ -1354,7 +1355,7 @@ ChopUpSingleUncompressedStrip(TIFF* tif)
 	 * the broken-up format.
 	 */
 	for (strip = 0; strip < nstrips; strip++) {
-		if (stripbytes > bytecount)
+		if (stripbytes > (tsize_t) bytecount)
 			stripbytes = bytecount;
 		newcounts[strip] = stripbytes;
 		newoffsets[strip] = offset;

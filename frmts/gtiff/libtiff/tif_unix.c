@@ -1,4 +1,4 @@
-/* $Header: /usr/cvsroot/gdal/frmts/gtiff/libtiff/tif_unix.c,v 1.7 1999/11/17 15:29:56 warmerda Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_unix.c,v 1.3 2000/01/28 21:46:30 warmerda Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -29,19 +29,13 @@
  */
 #include "tiffiop.h"
 #include <sys/types.h>
-#ifndef _WIN32
 #include <unistd.h>
-#endif
 #include <stdlib.h>
 
 static tsize_t
 _tiffReadProc(thandle_t fd, tdata_t buf, tsize_t size)
 {
-    tsize_t      ret;
-
-    ret = (tsize_t) read((int) fd, buf, (size_t) size);
-
-    return ret;
+	return ((tsize_t) read((int) fd, buf, (size_t) size));
 }
 
 static tsize_t
@@ -53,7 +47,11 @@ _tiffWriteProc(thandle_t fd, tdata_t buf, tsize_t size)
 static toff_t
 _tiffSeekProc(thandle_t fd, toff_t off, int whence)
 {
+#if USE_64BIT_API == 1
+	return ((toff_t) lseek64((int) fd, (off64_t) off, whence));
+#else
 	return ((toff_t) lseek((int) fd, (off_t) off, whence));
+#endif
 }
 
 static int
@@ -71,8 +69,13 @@ _tiffSizeProc(thandle_t fd)
 	long fsize;
 	return ((fsize = lseek((int) fd, 0, SEEK_END)) < 0 ? 0 : fsize);
 #else
+#if USE_64BIT_API == 1
+	struct stat64 sb;
+	return (toff_t) (fstat64((int) fd, &sb) < 0 ? 0 : sb.st_size);
+#else
 	struct stat sb;
 	return (toff_t) (fstat((int) fd, &sb) < 0 ? 0 : sb.st_size);
+#endif
 #endif
 }
 
@@ -146,9 +149,10 @@ TIFFOpen(const char* name, const char* mode)
 	if (m == -1)
 		return ((TIFF*)0);
 
+/* for cygwin */        
 #ifdef O_BINARY
         m |= O_BINARY;
-#endif
+#endif        
         
 #ifdef _AM29K
 	fd = open(name, m);

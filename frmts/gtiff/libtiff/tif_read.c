@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_read.c,v 1.1.1.1 1999/07/27 21:50:27 mike Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_read.c,v 1.4 2000/01/28 21:07:40 warmerda Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -256,7 +256,7 @@ TIFFFillStrip(TIFF* tif, tstrip_t strip)
 		if ((tif->tif_flags & TIFF_MYBUFFER) && tif->tif_rawdata)
 			_TIFFfree(tif->tif_rawdata);
 		tif->tif_flags &= ~TIFF_MYBUFFER;
-		if (td->td_stripoffset[strip] + bytecount > tif->tif_size) {
+		if ( td->td_stripoffset[strip] + bytecount > tif->tif_size) {
 			/*
 			 * This error message might seem strange, but it's
 			 * what would happen if a read were done instead.
@@ -453,7 +453,7 @@ TIFFFillTile(TIFF* tif, ttile_t tile)
 		if ((tif->tif_flags & TIFF_MYBUFFER) && tif->tif_rawdata)
 			_TIFFfree(tif->tif_rawdata);
 		tif->tif_flags &= ~TIFF_MYBUFFER;
-		if (td->td_stripoffset[tile] + bytecount > tif->tif_size) {
+		if ( td->td_stripoffset[tile] + bytecount > tif->tif_size) {
 			tif->tif_curtile = NOTILE;
 			return (0);
 		}

@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_fax3.c,v 1.1.1.1 1999/07/27 21:50:27 mike Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_fax3.c,v 1.9 2000/03/17 20:33:44 warmerda Exp $ */
 
 /*
  * Copyright (c) 1990-1997 Sam Leffler
@@ -78,17 +78,18 @@ typedef struct {
 	int	bit;			/* current i/o bit in byte */
 	int	EOLcnt;			/* count of EOL codes recognized */
 	TIFFFaxFillFunc fill;		/* fill routine */
-	uint16*	runs;			/* b&w runs for current/previous row */
-	uint16*	refruns;		/* runs for reference line */
-	uint16*	curruns;		/* runs for current line */
+	uint32*	runs;			/* b&w runs for current/previous row */
+	uint32*	refruns;		/* runs for reference line */
+	uint32*	curruns;		/* runs for current line */
 } Fax3DecodeState;
 #define	DecoderState(tif)	((Fax3DecodeState*) Fax3State(tif))
 
+typedef enum { G3_1D, G3_2D } Ttag;
 typedef struct {
 	Fax3BaseState b;
 	int	data;			/* current i/o byte */
 	int	bit;			/* current i/o bit in byte */
-	enum { G3_1D, G3_2D } tag;	/* encoding state */
+	Ttag    tag;	                /* encoding state */
 	u_char*	refline;		/* reference line for 2d decoding */
 	int	k;			/* #rows left that can be 2d encoded */
 	int	maxk;			/* max #rows that can be 2d encoded */
@@ -117,15 +118,15 @@ typedef struct {
     int RunLength;			/* length of current run */	\
     u_char* cp;				/* next byte of input data */	\
     u_char* ep;				/* end of input data */		\
-    uint16* pa;				/* place to stuff next run */	\
-    uint16* thisrun;			/* current row's run array */	\
+    uint32* pa;				/* place to stuff next run */	\
+    uint32* thisrun;			/* current row's run array */	\
     int EOLcnt;				/* # EOL codes recognized */	\
     const u_char* bitmap = sp->bitmap;	/* input data bit reverser */	\
     const TIFFFaxTabEnt* TabEnt
 #define	DECLARE_STATE_2D(tif, sp, mod)					\
     DECLARE_STATE(tif, sp, mod);					\
     int b1;				/* next change on prev line */	\
-    uint16* pb				/* next run in reference line */\
+    uint32* pb				/* next run in reference line */\
 /*
  * Load any state that may be changed during decoding.
  */
@@ -170,7 +171,7 @@ Fax3PreDecode(TIFF* tif, tsample_t s)
 	sp->bitmap =
 	    TIFFGetBitRevTable(tif->tif_dir.td_fillorder != FILLORDER_LSB2MSB);
 	if (sp->refruns) {		/* init reference line to white */
-		sp->refruns[0] = sp->b.rowpixels;
+		sp->refruns[0] = (uint16) sp->b.rowpixels;
 		sp->refruns[1] = 0;
 	}
 	return (1);
@@ -295,7 +296,7 @@ Fax3Decode2D(TIFF* tif, tidata_t buf, tsize_t occ, tsample_t s)
 			EXPAND2D(EOF2Da);
 		(*sp->fill)(buf, thisrun, pa, lastx);
 		SETVAL(0);		/* imaginary change for reference */
-		SWAP(uint16*, sp->curruns, sp->refruns);
+		SWAP(uint32*, sp->curruns, sp->refruns);
 		buf += sp->b.rowbytes;
 		occ -= sp->b.rowbytes;
 		if (occ != 0)
@@ -358,7 +359,7 @@ Fax3Decode2D(TIFF* tif, tidata_t buf, tsize_t occ, tsample_t s)
  * runs generated during G3/G4 decoding.
  */
 void
-_TIFFFax3fillruns(u_char* buf, uint16* runs, uint16* erun, uint32 lastx)
+_TIFFFax3fillruns(u_char* buf, uint32* runs, uint32* erun, uint32 lastx)
 {
 	static const unsigned char _fillmasks[] =
 	    { 0x00, 0x80, 0xc0, 0xe0, 0xf0, 0xf8, 0xfc, 0xfe, 0xff };
@@ -372,8 +373,8 @@ _TIFFFax3fillruns(u_char* buf, uint16* runs, uint16* erun, uint32 lastx)
 	x = 0;
 	for (; runs < erun; runs += 2) {
 	    run = runs[0];
-	    if (x+run > lastx)
-		run = runs[0] = lastx - x;
+	    if (x+run > lastx || run > lastx )
+		run = runs[0] = (uint16) (lastx - x);
 	    if (run) {
 		cp = buf + (x>>3);
 		bx = x&7;
@@ -411,7 +412,7 @@ _TIFFFax3fillruns(u_char* buf, uint16* runs, uint16* erun, uint32 lastx)
 		x += runs[0];
 	    }
 	    run = runs[1];
-	    if (x+run > lastx)
+	    if (x+run > lastx || run > lastx )
 		run = runs[1] = lastx - x;
 	    if (run) {
 		cp = buf + (x>>3);
@@ -499,7 +500,29 @@ Fax3SetupState(TIFF* tif)
 		uint32 nruns = needsRefLine ?
 		     2*TIFFroundup(rowpixels,32) : rowpixels;
 
-		dsp->runs = (uint16*) _TIFFmalloc(nruns*sizeof (uint16));
+                /* 
+Problem
+-------
+
+Decoding the file frle_bug.tif causes a crash (such as with tiff2rgba). 
+
+In particular the array dsp->runs allocated in Fax3SetupState() is overrun 
+by 4-8 bytes.  This occurs when Fax3DecodeRLE() processes the first
+scanline.  The EXPAND1D() macro advances "pa" to be thisrun+512 (an
+alias for dsp->runs), pointing just beyond the end of the array.  Then 
+the call to _TIFFFax3fillruns() does an "*erun++ = 0;" which writes beyond 
+the end of the array.
+
+In the short term I have modified the dsp->runs allocation to add eight
+extra bytes to the runs buffer; however, I am only doing this because I
+don't understand the algorithm well enough to change it without risking
+more adverse side effects.
+
+Frank Warmerdam (warmerda@home.com)
+
+                */
+
+		dsp->runs = (uint32*) _TIFFmalloc(8+nruns*sizeof (uint32));
 		if (dsp->runs == NULL) {
 			TIFFError("Fax3SetupState",
 			    "%s: No space for Group 3/4 run arrays",
@@ -578,7 +601,7 @@ static void
 Fax3PutBits(TIFF* tif, u_int bits, u_int length)
 {
 	Fax3EncodeState* sp = EncoderState(tif);
-	int bit = sp->bit;
+	u_int bit = sp->bit;
 	int data = sp->data;
 
 	_PutBits(tif, bits, length);
@@ -613,7 +636,7 @@ static void
 putspan(TIFF* tif, int32 span, const tableentry* tab)
 {
 	Fax3EncodeState* sp = EncoderState(tif);
-	int bit = sp->bit;
+	u_int bit = sp->bit;
 	int data = sp->data;
 	u_int code, length;
 
@@ -656,9 +679,9 @@ static void
 Fax3PutEOL(TIFF* tif)
 {
 	Fax3EncodeState* sp = EncoderState(tif);
-	int bit = sp->bit;
+	u_int bit = sp->bit;
 	int data = sp->data;
-	u_int code, length;
+	u_int code, length, tparm;
 
 	if (sp->b.groupoptions & GROUP3OPT_FILLBITS) {
 		/*
@@ -673,7 +696,8 @@ Fax3PutEOL(TIFF* tif)
 			else
 				align = sp->bit - align;
 			code = 0;
-			_PutBits(tif, 0, align);
+			tparm=align; 
+			_PutBits(tif, 0, tparm);
 		}
 	}
 	code = EOL, length = 12;
@@ -920,7 +944,8 @@ static int
 Fax3Encode1DRow(TIFF* tif, u_char* bp, uint32 bits)
 {
 	Fax3EncodeState* sp = EncoderState(tif);
-	int32 bs = 0, span;
+	int32 span;
+        uint32 bs = 0;
 
 	for (;;) {
 		span = find0span(bp, bs, bits);		/* white span */
@@ -966,10 +991,10 @@ static int
 Fax3Encode2DRow(TIFF* tif, u_char* bp, u_char* rp, uint32 bits)
 {
 #define	PIXEL(buf,ix)	((((buf)[(ix)>>3]) >> (7-((ix)&7))) & 1)
-	int32 a0 = 0;
-	int32 a1 = (PIXEL(bp, 0) != 0 ? 0 : finddiff(bp, 0, bits, 0));
-	int32 b1 = (PIXEL(rp, 0) != 0 ? 0 : finddiff(rp, 0, bits, 0));
-	int32 a2, b2;
+        uint32 a0 = 0;
+	uint32 a1 = (PIXEL(bp, 0) != 0 ? 0 : finddiff(bp, 0, bits, 0));
+	uint32 b1 = (PIXEL(rp, 0) != 0 ? 0 : finddiff(rp, 0, bits, 0));
+	uint32 a2, b2;
 
 	for (;;) {
 		b2 = finddiff2(rp, b1, bits, PIXEL(rp,b1));
@@ -1280,9 +1305,12 @@ InitCCITTFax3(TIFF* tif)
 	 * Allocate state block so tag methods have storage to record values.
 	 */
 	if (tif->tif_mode == O_RDONLY)
-		tif->tif_data = _TIFFmalloc(sizeof (Fax3DecodeState));
+		tif->tif_data = (tidata_t)
+                    _TIFFmalloc(sizeof (Fax3DecodeState));
 	else
-		tif->tif_data = _TIFFmalloc(sizeof (Fax3EncodeState));
+		tif->tif_data = (tidata_t)
+                    _TIFFmalloc(sizeof (Fax3EncodeState));
+        
 	if (tif->tif_data == NULL) {
 		TIFFError("TIFFInitCCITTFax3",
 		    "%s: No space for state block", tif->tif_name);
@@ -1375,7 +1403,7 @@ Fax4Decode(TIFF* tif, tidata_t buf, tsize_t occ, tsample_t s)
 		EXPAND2D(EOFG4);
 		(*sp->fill)(buf, thisrun, pa, lastx);
 		SETVAL(0);		/* imaginary change for reference */
-		SWAP(uint16*, sp->curruns, sp->refruns);
+		SWAP(uint32*, sp->curruns, sp->refruns);
 		buf += sp->b.rowbytes;
 		occ -= sp->b.rowbytes;
 		if (occ != 0)

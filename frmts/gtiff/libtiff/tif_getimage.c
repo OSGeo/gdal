@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_getimage.c,v 1.2 1999/08/16 17:40:52 warmerda Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_getimage.c,v 1.4 1999/11/27 21:32:10 warmerda Exp $ */
 
 /*
  * Copyright (c) 1991-1997 Sam Leffler
@@ -1628,10 +1628,10 @@ setupMap(TIFFRGBAImage* img)
     }
     if (img->photometric == PHOTOMETRIC_MINISWHITE) {
 	for (x = 0; x <= range; x++)
-	    img->Map[x] = ((range - x) * 255) / range;
+	    img->Map[x] = (TIFFRGBValue) (((range - x) * 255) / range);
     } else {
 	for (x = 0; x <= range; x++)
-	    img->Map[x] = (x * 255) / range;
+	    img->Map[x] = (TIFFRGBValue) ((x * 255) / range);
     }
     if (img->bitspersample <= 8 &&
 	(img->photometric == PHOTOMETRIC_MINISBLACK ||
@@ -1955,7 +1955,7 @@ TIFFReadRGBATile(TIFF* tif, uint32 col, uint32 row, uint32 * raster)
     int 	ok;
     uint32	tile_xsize, tile_ysize;
     uint32	read_xsize, read_ysize;
-    int		i_row;
+    uint32	i_row;
 
     /*
      * Verify that our request is legal - on a tile file, and on a

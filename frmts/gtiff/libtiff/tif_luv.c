@@ -465,9 +465,9 @@ LogLuvEncode24(TIFF* tif, tidata_t bp, tsize_t cc, tsample_t s)
 			op = tif->tif_rawcp;
 			occ = tif->tif_rawdatasize - tif->tif_rawcc;
 		}
-		*op++ = *tp >> 16;
-		*op++ = *tp >> 8 & 0xff;
-		*op++ = *tp++ & 0xff;
+		*op++ = (tidataval_t)(*tp >> 16);
+		*op++ = (tidataval_t)(*tp >> 8 & 0xff);
+		*op++ = (tidataval_t)(*tp++ & 0xff);
 		occ -= 3;
 	}
 	tif->tif_rawcp = op;
@@ -529,8 +529,8 @@ LogLuvEncode32(TIFF* tif, tidata_t bp, tsize_t cc, tsample_t s)
 				j = i+1;
 				while ((tp[j++] & mask) == b)
 					if (j == beg) {
-						*op++ = 128-2+j-i;
-						*op++ = b >> shft;
+						*op++ = (tidataval_t)(128-2+j-i);
+						*op++ = (tidataval_t)(b >> shft);
 						occ -= 2;
 						i = beg;
 						break;
@@ -548,13 +548,13 @@ LogLuvEncode32(TIFF* tif, tidata_t bp, tsize_t cc, tsample_t s)
 				}
 				*op++ = j; occ--;
 				while (j--) {
-					*op++ = tp[i++] >> shft & 0xff;
+					*op++ = (tidataval_t)(tp[i++] >> shft & 0xff);
 					occ--;
 				}
 			}
 			if (rc >= MINRUN) {		/* write out run */
 				*op++ = 128-2+rc;
-				*op++ = tp[beg] >> shft & 0xff;
+				*op++ = (tidataval_t)(tp[beg] >> shft & 0xff);
 				occ -= 2;
 			} else
 				rc = 0;
@@ -648,7 +648,7 @@ L16toY(LogLuvState* sp, tidata_t op, int n)
 	float* yp = (float*) op;
 
 	while (n-- > 0)
-		*yp++ = pix16toY(*l16++);
+		*yp++ = (float)pix16toY(*l16++);
 }
 
 static void
@@ -695,12 +695,12 @@ uv_encode(double u, double v)		/* encode (u',v') coordinates */
 
 	if (v < UV_VSTART)
 		return(-1);
-	vi = (v - UV_VSTART)*(1./UV_SQSIZ);
+	vi = (int)((v - UV_VSTART)*(1./UV_SQSIZ));
 	if (vi >= UV_NVS)
 		return(-1);
 	if (u < uv_row[vi].ustart)
 		return(-1);
-	ui = (u - uv_row[vi].ustart)*(1./UV_SQSIZ);
+	ui = (int)((u - uv_row[vi].ustart)*(1./UV_SQSIZ));
 	if (ui >= uv_row[vi].nus)
 		return(-1);
 	return(uv_row[vi].ncum + ui);
@@ -754,9 +754,9 @@ pix24toXYZ(uint32 p, float XYZ[3])
 	x = 9.*u * s;
 	y = 4.*v * s;
 					/* convert to XYZ */
-	XYZ[0] = x/y * L;
-	XYZ[1] = L;
-	XYZ[2] = (1.-x-y)/y * L;
+	XYZ[0] = (float)(x/y * L);
+	XYZ[1] = (float)L;
+	XYZ[2] = (float)((1.-x-y)/y * L);
 }
 
 static uint32
@@ -771,7 +771,7 @@ pix24fromXYZ(float XYZ[3])
 	else if (L <= 1./4096.)
 		Le = 0;
 	else
-		Le = 64.*(log2(L) + 12.);
+		Le = (int)(64.*(log2(L) + 12.));
 					/* encode color */
 	s = XYZ[0] + 15.*XYZ[1] + 3.*XYZ[2];
 	if (s == 0.) {
@@ -810,13 +810,13 @@ Luv24toLuv48(LogLuvState* sp, tidata_t op, int n)
 	while (n-- > 0) {
 		double u, v;
 
-		*luv3++ = (*luv >> 12 & 0xffd) + 13314;
+		*luv3++ = (int16)((*luv >> 12 & 0xffd) + 13314);
 		if (uv_decode(&u, &v, *luv&0x3fff) < 0) {
 			u = U_NEU;
 			v = V_NEU;
 		}
-		*luv3++ = u * (1L<<15);
-		*luv3++ = v * (1L<<15);
+		*luv3++ = (int16)(u * (1L<<15));
+		*luv3++ = (int16)(v * (1L<<15));
 		luv++;
 	}
 }
@@ -888,9 +888,9 @@ pix32toXYZ(uint32 p, float XYZ[3])
 	x = 9.*u * s;
 	y = 4.*v * s;
 					/* convert to XYZ */
-	XYZ[0] = x/y * L;
-	XYZ[1] = L;
-	XYZ[2] = (1.-x-y)/y * L;
+	XYZ[0] = (float)(x/y * L);
+	XYZ[1] = (float)L;
+	XYZ[2] = (float)((1.-x-y)/y * L);
 }
 
 static uint32
@@ -910,10 +910,10 @@ pix32fromXYZ(float XYZ[3])
 		v = 9.*XYZ[1] / s;
 	}
 	if (u <= 0.) ue = 0;
-	else ue = UVSCALE * u;
+	else ue = (unsigned int)(UVSCALE * u);
 	if (ue > 255) ue = 255;
 	if (v <= 0.) ve = 0;
-	else ve = UVSCALE * v;
+	else ve = (unsigned int)(UVSCALE * v);
 	if (ve > 255) ve = 255;
 					/* combine encodings */
 	return (Le << 16 | ue << 8 | ve);
@@ -940,11 +940,11 @@ Luv32toLuv48(LogLuvState* sp, tidata_t op, int n)
 	while (n-- > 0) {
 		double u, v;
 
-		*luv3++ = *luv >> 16;
+		*luv3++ = (int16)(*luv >> 16);
 		u = 1./UVSCALE * ((*luv>>8 & 0xff) + .5);
 		v = 1./UVSCALE * ((*luv & 0xff) + .5);
-		*luv3++ = u * (1L<<15);
-		*luv3++ = v * (1L<<15);
+		*luv3++ = (int16)(u * (1L<<15));
+		*luv3++ = (int16)(v * (1L<<15));
 		luv++;
 	}
 }
@@ -1043,7 +1043,7 @@ LogL16InitState(TIFF* tif)
 		    "No support for converting user data format to LogL");
 		return (0);
 	}
-	sp->tbuflen = td->td_imagewidth * td->td_rowsperstrip;
+	sp->tbuflen = (short)(td->td_imagewidth * td->td_rowsperstrip);
 	sp->tbuf = (tidata_t*) _TIFFmalloc(sp->tbuflen * sizeof (int16));
 	if (sp->tbuf == NULL) {
 		TIFFError(module, "%s: No space for SGILog translation buffer",
@@ -1141,7 +1141,7 @@ LogLuvInitState(TIFF* tif)
 		    "No support for converting user data format to LogLuv");
 		return (0);
 	}
-	sp->tbuflen = td->td_imagewidth * td->td_rowsperstrip;
+	sp->tbuflen = (short)(td->td_imagewidth * td->td_rowsperstrip);
 	sp->tbuf = (tidata_t*) _TIFFmalloc(sp->tbuflen * sizeof (uint32));
 	if (sp->tbuf == NULL) {
 		TIFFError(module, "%s: No space for SGILog translation buffer",

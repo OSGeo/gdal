@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tiffconf.h,v 1.1.1.1 1999/07/27 21:50:27 mike Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tiffconf.h,v 1.2 2000/01/28 21:46:30 warmerda Exp $ */
 /*
  * Copyright (c) 1988-1997 Sam Leffler
  * Copyright (c) 1991-1997 Silicon Graphics, Inc.
@@ -51,6 +51,8 @@
  * HOST_BIGENDIAN	native cpu byte order: 1 if big-endian (Motorola)
  *			or 0 if little-endian (Intel); this may be used
  *			in codecs to optimize code
+ * USE_64BIT_API	set to 1 if tif_unix.c should use lseek64(),
+ *                      fstat64() and stat64 allowing 2-4GB files.
  */
 #ifndef HAVE_IEEEFP
 #define	HAVE_IEEEFP	1
@@ -60,6 +62,10 @@
 #endif
 #ifndef	HOST_BIGENDIAN
 #define	HOST_BIGENDIAN	1
+#endif
+
+#ifndef USE_64BIT_API
+#  define USE_64BIT_API	0
 #endif
 
 #ifndef FEATURE_SUPPORT

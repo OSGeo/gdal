@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_dir.c,v 1.2 1999/09/08 12:21:13 warmerda Exp $ */
+/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_dir.c,v 1.11 2000/03/03 15:15:57 warmerda Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -167,8 +167,16 @@ _TIFFVSetField(TIFF* tif, ttag_t tag, va_list ap)
 		/*
 		 * Setup new compression routine state.
 		 */
+		if ( ! tif->tif_mode == O_RDONLY ) { 
+		  /* Handle removal of LZW compression */ 
+		  if ( v == COMPRESSION_LZW ) { 
+		    TIFFError(tif->tif_name, 
+			      "LZW compression no longer supported due to Unisys patent enforcement"); 
+		    v=COMPRESSION_NONE;
+		  }
+		}
 		if( (status = TIFFSetCompressionScheme(tif, v)) != 0 )
-			td->td_compression = v;
+		  td->td_compression = v;
 		break;
 	case TIFFTAG_PHOTOMETRIC:
 		td->td_photometric = (uint16) va_arg(ap, int);
@@ -350,6 +358,33 @@ _TIFFVSetField(TIFF* tif, ttag_t tag, va_list ap)
 			goto badvaluedbl;
 		td->td_stonits = d;
 		break;
+
+	/* Begin Pixar Tags */
+ 	case TIFFTAG_PIXAR_IMAGEFULLWIDTH:
+ 		td->td_imagefullwidth = va_arg(ap, uint32);
+ 		break;
+ 	case TIFFTAG_PIXAR_IMAGEFULLLENGTH:
+ 		td->td_imagefulllength = va_arg(ap, uint32);
+ 		break;
+ 	case TIFFTAG_PIXAR_TEXTUREFORMAT:
+ 		_TIFFsetString(&td->td_textureformat, va_arg(ap, char*));
+ 		break;
+ 	case TIFFTAG_PIXAR_WRAPMODES:
+ 		_TIFFsetString(&td->td_wrapmodes, va_arg(ap, char*));
+ 		break;
+ 	case TIFFTAG_PIXAR_FOVCOT:
+ 		td->td_fovcot = (float) va_arg(ap, dblparam_t);
+ 		break;
+ 	case TIFFTAG_PIXAR_MATRIX_WORLDTOSCREEN:
+ 		_TIFFsetFloatArray(&td->td_matrixWorldToScreen,
+ 			va_arg(ap, float*), 16);
+ 		break;
+ 	case TIFFTAG_PIXAR_MATRIX_WORLDTOCAMERA:
+ 		_TIFFsetFloatArray(&td->td_matrixWorldToCamera,
+ 			va_arg(ap, float*), 16);
+ 		break;
+ 	/* End Pixar Tags */	       
+
 #if SUBIFD_SUPPORT
 	case TIFFTAG_SUBIFD:
 		if ((tif->tif_flags & TIFF_INSUBIFD) == 0) {
@@ -784,6 +819,30 @@ _TIFFVGetField(TIFF* tif, ttag_t tag, va_list ap)
  		*va_arg(ap, void**) = td->td_richtiffiptcData;
  		break;
 #endif
+ 	/* Begin Pixar Tags */
+ 	case TIFFTAG_PIXAR_IMAGEFULLWIDTH:
+ 		*va_arg(ap, uint32*) = td->td_imagefullwidth;
+ 		break;
+ 	case TIFFTAG_PIXAR_IMAGEFULLLENGTH:
+ 		*va_arg(ap, uint32*) = td->td_imagefulllength;
+ 		break;
+ 	case TIFFTAG_PIXAR_TEXTUREFORMAT:
+ 		*va_arg(ap, char**) = td->td_textureformat;
+ 		break;
+ 	case TIFFTAG_PIXAR_WRAPMODES:
+ 		*va_arg(ap, char**) = td->td_wrapmodes;
+ 		break;
+ 	case TIFFTAG_PIXAR_FOVCOT:
+ 		*va_arg(ap, float*) = td->td_fovcot;
+ 		break;
+ 	case TIFFTAG_PIXAR_MATRIX_WORLDTOSCREEN:
+ 		*va_arg(ap, float**) = td->td_matrixWorldToScreen;
+ 		break;
+ 	case TIFFTAG_PIXAR_MATRIX_WORLDTOCAMERA:
+ 		*va_arg(ap, float**) = td->td_matrixWorldToCamera;
+ 		break;
+ 	/* End Pixar Tags */
+
 	default:
 		/*
 		 * This can happen if multiple images are open with
@@ -889,6 +948,12 @@ TIFFFreeDirectory(TIFF* tif)
 #endif
 	CleanupField(td_stripoffset);
 	CleanupField(td_stripbytecount);
+ 	/* Begin Pixar Tags */
+ 	CleanupField(td_textureformat);
+ 	CleanupField(td_wrapmodes);
+ 	CleanupField(td_matrixWorldToScreen);
+ 	CleanupField(td_matrixWorldToCamera);
+ 	/* End Pixar Tags */
 }
 #undef CleanupField
 
@@ -903,6 +968,26 @@ TIFFSetTagExtender(TIFFExtendProc extender)
 	TIFFExtendProc prev = _TIFFextender;
 	_TIFFextender = extender;
 	return (prev);
+}
+
+/*
+ * Setup for a new directory.  Should we automatically call
+ * TIFFWriteDirectory() if the current one is dirty?
+ *
+ * The newly created directory will not exist on the file till
+ * TIFFWriteDirectory(), TIFFFlush() or TIFFClose() is called.
+ */
+int
+TIFFCreateDirectory(TIFF* tif)
+{
+    TIFFDefaultDirectory(tif);
+    tif->tif_diroff = 0;
+    tif->tif_nextdiroff = 0;
+    tif->tif_curoff = 0;
+    tif->tif_row = (uint32) -1;
+    tif->tif_curstrip = (tstrip_t) -1;
+
+    return 0;
 }
 
 /*
@@ -925,7 +1010,7 @@ TIFFDefaultDirectory(TIFF* tif)
 	td->td_tilelength = (uint32) -1;
 	td->td_tiledepth = 1;
 	td->td_resolutionunit = RESUNIT_INCH;
-	td->td_sampleformat = SAMPLEFORMAT_VOID;
+	td->td_sampleformat = SAMPLEFORMAT_UINT;
 	td->td_imagedepth = 1;
 #ifdef YCBCR_SUPPORT
 	td->td_ycbcrsubsampling[0] = 2;
@@ -962,31 +1047,59 @@ TIFFDefaultDirectory(TIFF* tif)
 static int
 TIFFAdvanceDirectory(TIFF* tif, uint32* nextdir, toff_t* off)
 {
-	static const char module[] = "TIFFAdvanceDirectory";
-	uint16 dircount;
-
-	if (!SeekOK(tif, *nextdir) ||
-	    !ReadOK(tif, &dircount, sizeof (uint16))) {
-		TIFFError(module, "%s: Error fetching directory count",
-		    tif->tif_name);
-		return (0);
-	}
-	if (tif->tif_flags & TIFF_SWAB)
-		TIFFSwabShort(&dircount);
-	if (off != NULL)
-		*off = TIFFSeekFile(tif,
-		    dircount*sizeof (TIFFDirEntry), SEEK_CUR);
-	else
-		(void) TIFFSeekFile(tif,
-		    dircount*sizeof (TIFFDirEntry), SEEK_CUR);
-	if (!ReadOK(tif, nextdir, sizeof (uint32))) {
-		TIFFError(module, "%s: Error fetching directory link",
-		    tif->tif_name);
-		return (0);
-	}
-	if (tif->tif_flags & TIFF_SWAB)
-		TIFFSwabLong(nextdir);
-	return (1);
+    static const char module[] = "TIFFAdvanceDirectory";
+    uint16 dircount;
+    if (isMapped(tif))
+    {
+        toff_t poff=*nextdir;
+        if (poff+sizeof(uint16) > tif->tif_size)
+        {
+            TIFFError(module, "%s: Error fetching directory count",
+                      tif->tif_name);
+            return (0);
+        }
+        _TIFFmemcpy(&dircount, tif->tif_base+poff, sizeof (uint16));
+        if (tif->tif_flags & TIFF_SWAB)
+            TIFFSwabShort(&dircount);
+        poff+=sizeof (uint16)+dircount*sizeof (TIFFDirEntry);
+        if (off != NULL)
+            *off = poff;
+        if (((toff_t) (poff+sizeof (uint32))) > tif->tif_size)
+        {
+            TIFFError(module, "%s: Error fetching directory link",
+                      tif->tif_name);
+            return (0);
+        }
+        _TIFFmemcpy(nextdir, tif->tif_base+poff, sizeof (uint32));
+        if (tif->tif_flags & TIFF_SWAB)
+            TIFFSwabLong(nextdir);
+        return (1);
+    }
+    else
+    {
+        if (!SeekOK(tif, *nextdir) ||
+            !ReadOK(tif, &dircount, sizeof (uint16))) {
+            TIFFError(module, "%s: Error fetching directory count",
+                      tif->tif_name);
+            return (0);
+        }
+        if (tif->tif_flags & TIFF_SWAB)
+            TIFFSwabShort(&dircount);
+        if (off != NULL)
+            *off = TIFFSeekFile(tif,
+                                dircount*sizeof (TIFFDirEntry), SEEK_CUR);
+        else
+            (void) TIFFSeekFile(tif,
+                                dircount*sizeof (TIFFDirEntry), SEEK_CUR);
+        if (!ReadOK(tif, nextdir, sizeof (uint32))) {
+            TIFFError(module, "%s: Error fetching directory link",
+                      tif->tif_name);
+            return (0);
+        }
+        if (tif->tif_flags & TIFF_SWAB)
+            TIFFSwabLong(nextdir);
+        return (1);
+    }
 }
 
 /*
@@ -995,12 +1108,12 @@ TIFFAdvanceDirectory(TIFF* tif, uint32* nextdir, toff_t* off)
 tdir_t
 TIFFNumberOfDirectories(TIFF* tif)
 {
-	uint32 nextdir = tif->tif_header.tiff_diroff;
-	tdir_t n = 0;
-
-	while (nextdir != 0 && TIFFAdvanceDirectory(tif, &nextdir, NULL))
-		n++;
-	return (n);
+    toff_t nextdir = tif->tif_header.tiff_diroff;
+    tdir_t n = 0;
+    
+    while (nextdir != 0 && TIFFAdvanceDirectory(tif, &nextdir, NULL))
+        n++;
+    return (n);
 }
 
 /*
@@ -1010,7 +1123,7 @@ TIFFNumberOfDirectories(TIFF* tif)
 int
 TIFFSetDirectory(TIFF* tif, tdir_t dirn)
 {
-	uint32 nextdir;
+	toff_t nextdir;
 	tdir_t n;
 
 	nextdir = tif->tif_header.tiff_diroff;
@@ -1066,7 +1179,7 @@ int
 TIFFUnlinkDirectory(TIFF* tif, tdir_t dirn)
 {
 	static const char module[] = "TIFFUnlinkDirectory";
-	uint32 nextdir;
+	toff_t nextdir;
 	toff_t off;
 	tdir_t n;
 
@@ -1173,7 +1286,6 @@ TIFFReassignTagToIgnore (enum TIFFIgnoreSense task, int TIFFtagID)
       case TIS_EMPTY:
         tagcount = 0 ;			/* Clear the list */
         return (TRUE) ;
-        break;
         
       default:
         break;

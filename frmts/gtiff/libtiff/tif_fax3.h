@@ -1,4 +1,4 @@
-/* $Id: tif_fax3.h,v 1.1.1.1 1999/07/27 21:50:27 mike Exp $ */
+/* $Id: tif_fax3.h,v 1.2 1999/09/17 04:08:59 mwelles Exp $ */
 
 /*
  * Copyright (c) 1990-1997 Sam Leffler
@@ -43,7 +43,7 @@
  * The routine must have the type signature given below;
  * for example:
  *
- * fillruns(unsigned char* buf, uint16* runs, uint16* erun, uint32 lastx)
+ * fillruns(unsigned char* buf, uint32* runs, uint32* erun, uint32 lastx)
  *
  * where buf is place to set the bits, runs is the array of b&w run
  * lengths (white then black), erun is the last run in the array, and
@@ -52,7 +52,7 @@
  * data in the run array as needed (e.g. to append zero runs to bring
  * the count up to a nice multiple).
  */
-typedef	void (*TIFFFaxFillFunc)(unsigned char*, uint16*, uint16*, uint32);
+typedef	void (*TIFFFaxFillFunc)(unsigned char*, uint32*, uint32*, uint32);
 
 /*
  * The default run filler; made external for other decoders.
@@ -60,7 +60,7 @@ typedef	void (*TIFFFaxFillFunc)(unsigned char*, uint16*, uint16*, uint32);
 #if defined(__cplusplus)
 extern "C" {
 #endif
-extern	void _TIFFFax3fillruns(unsigned char*, uint16*, uint16*, uint32);
+extern	void _TIFFFax3fillruns(unsigned char*, uint32*, uint32*, uint32);
 #if defined(__cplusplus)
 }
 #endif
@@ -84,7 +84,7 @@ extern	void _TIFFFax3fillruns(unsigned char*, uint16*, uint16*, uint32);
 typedef struct {		/* state table entry */
 	unsigned char State;	/* see above */
 	unsigned char Width;	/* width of code in bits */
-	uint16	Param;		/* unsigned 16-bit run length in bits */
+	uint32	Param;		/* unsigned 32-bit run length in bits */
 } TIFFFaxTabEnt;
 
 extern	const TIFFFaxTabEnt TIFFFaxMainTable[];
