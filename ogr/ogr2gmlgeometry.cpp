@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.2  2003/03/07 21:30:15  warmerda
+ * expand tabs
+ *
  * Revision 1.1  2003/03/06 20:28:38  warmerda
  * Migrated to here (gdal/ogr) from gdal/ogr/ogrsf_frmts/gml.
  * Changed to implement the C API entry points (OGR_G_*).
@@ -122,8 +125,8 @@ static void AppendCoordinateList( OGRLineString *poLine,
                                   int *pnMaxLength )
 
 {
-    char	szCoordinate[256];
-    int		b3D = (poLine->getGeometryType() & 0x8000);
+    char        szCoordinate[256];
+    int         b3D = (poLine->getGeometryType() & 0x8000);
 
     *pnLength += strlen(*ppszText + *pnLength);
     _GrowBuffer( *pnLength + 20, ppszText, pnMaxLength );
@@ -168,7 +171,7 @@ static int OGR2GMLGeometryAppend( OGRGeometry *poGeometry,
 /* -------------------------------------------------------------------- */
     if( poGeometry->getGeometryType() == wkbPoint )
     {
-        char	szCoordinate[256];
+        char    szCoordinate[256];
         OGRPoint *poPoint = (OGRPoint *) poGeometry;
 
         MakeGMLCoordinate( szCoordinate, 
@@ -188,7 +191,7 @@ static int OGR2GMLGeometryAppend( OGRGeometry *poGeometry,
 /* -------------------------------------------------------------------- */
     else if( poGeometry->getGeometryType() == wkbPoint25D )
     {
-        char	szCoordinate[256];
+        char    szCoordinate[256];
         OGRPoint *poPoint = (OGRPoint *) poGeometry;
 
         MakeGMLCoordinate( szCoordinate, 
@@ -237,7 +240,7 @@ static int OGR2GMLGeometryAppend( OGRGeometry *poGeometry,
     else if( poGeometry->getGeometryType() == wkbPolygon 
              || poGeometry->getGeometryType() == wkbPolygon25D )
     {
-        OGRPolygon	*poPolygon = (OGRPolygon *) poGeometry;
+        OGRPolygon      *poPolygon = (OGRPolygon *) poGeometry;
 
         AppendString( ppszText, pnLength, pnMaxLength,
                       "<gml:Polygon>" );
@@ -280,7 +283,7 @@ static int OGR2GMLGeometryAppend( OGRGeometry *poGeometry,
     else if( poGeometry->getGeometryType() == wkbMultiPolygon 
              || poGeometry->getGeometryType() == wkbMultiPolygon25D )
     {
-        OGRMultiPolygon	*poMPoly = (OGRMultiPolygon *) poGeometry;
+        OGRMultiPolygon *poMPoly = (OGRMultiPolygon *) poGeometry;
         int             iMember;
 
         AppendString( ppszText, pnLength, pnMaxLength,
@@ -338,8 +341,8 @@ CPLXMLNode *OGR_G_ExportToGMLTree( OGRGeometryH hGeometry )
 char *OGR_G_ExportToGML( OGRGeometryH hGeometry )
 
 {
-    char	*pszText;
-    int		nLength = 0, nMaxLength = 1;
+    char        *pszText;
+    int         nLength = 0, nMaxLength = 1;
 
     if( hGeometry == NULL )
         return CPLStrdup( "" );

@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.3  2003/03/07 21:30:15  warmerda
+ * expand tabs
+ *
  * Revision 1.2  2003/03/07 14:52:40  warmerda
  * fixed type casting issing
  *
@@ -164,7 +167,7 @@ static int AddPoint( OGRGeometry *poGeometry,
     else
     {
         CPLAssert( FALSE );
-        return FALSE;							
+        return FALSE;                                                   
     }
 }
 
@@ -370,7 +373,7 @@ static OGRGeometry *GML2OGRGeometry_XMLNode( CPLXMLNode *psNode )
 /* -------------------------------------------------------------------- */
     if( EQUAL(pszBaseGeometry,"LinearRing") )
     {
-        OGRLinearRing	*poLinearRing = new OGRLinearRing();
+        OGRLinearRing   *poLinearRing = new OGRLinearRing();
         
         if( !ParseGMLCoordinates( psNode, poLinearRing ) )
         {
@@ -386,7 +389,7 @@ static OGRGeometry *GML2OGRGeometry_XMLNode( CPLXMLNode *psNode )
 /* -------------------------------------------------------------------- */
     if( EQUAL(pszBaseGeometry,"LineString") )
     {
-        OGRLineString	*poLine = new OGRLineString();
+        OGRLineString   *poLine = new OGRLineString();
         
         if( !ParseGMLCoordinates( psNode, poLine ) )
         {
