@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.14  2003/07/17 15:04:43  warmerda
+ * Fixed problem with non-JPIP JP2 introduced when adding JPIP support.
+ *
  * Revision 1.13  2003/07/08 19:12:41  warmerda
  * JPIP support now working ... at least sometimes
  *
@@ -1133,10 +1136,8 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
         if( !bIsJPIP )
         {
 #ifdef KAKADU4
-            CPLDebug( "JP2KAK", "Just before oBox.open()" );
             for( family == NULL || oBox.open( family ); 
                  oBox.exists(); oBox.open_next() )
-                CPLDebug( "JP2KAK", "Just after oBox.open()" );
 #else
             VSIFSeek( poOpenInfo->fp, 0, SEEK_SET );
             while( oBox.open(poOpenInfo->fp).exists() 
