@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.23  2004/07/09 07:07:39  warmerda
+ * Added OGRSQL dialect support.
+ *
  * Revision 1.22  2003/09/18 14:45:47  warmerda
  * return -1 from FetchSRSId() for SRS if not GEOGCS or PROJCS
  *
@@ -590,6 +593,14 @@ OGRLayer * OGROCIDataSource::ExecuteSQL( const char *pszSQLCommand,
                                         const char *pszDialect )
 
 {
+/* -------------------------------------------------------------------- */
+/*      Use generic implementation for OGRSQL dialect.                  */
+/* -------------------------------------------------------------------- */
+    if( pszDialect != NULL && EQUAL(pszDialect,"OGRSQL") )
+        return OGRDataSource::ExecuteSQL( pszSQLCommand, 
+                                          poSpatialFilter, 
+                                          pszDialect );
+
 /* -------------------------------------------------------------------- */
 /*      Ensure any pending stuff is flushed to the database.            */
 /* -------------------------------------------------------------------- */

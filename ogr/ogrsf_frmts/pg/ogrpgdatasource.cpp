@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.28  2004/07/09 07:05:37  warmerda
+ * Added OGRSQL dialect support.
+ *
  * Revision 1.27  2004/04/30 18:30:05  warmerda
  * Fixed pszLayerName typo.
  *
@@ -1027,6 +1030,14 @@ OGRLayer * OGRPGDataSource::ExecuteSQL( const char *pszSQLCommand,
         CPLDebug( "OGR_PG", 
           "Spatial filter ignored for now in OGRPGDataSource::ExecuteSQL()" );
     }
+
+/* -------------------------------------------------------------------- */
+/*      Use generic implementation for OGRSQL dialect.                  */
+/* -------------------------------------------------------------------- */
+    if( pszDialect != NULL && EQUAL(pszDialect,"OGRSQL") )
+        return OGRDataSource::ExecuteSQL( pszSQLCommand, 
+                                          poSpatialFilter, 
+                                          pszDialect );
 
 /* -------------------------------------------------------------------- */
 /*      Special case DELLAYER: command.                                 */
