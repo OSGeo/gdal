@@ -461,7 +461,7 @@ print \"-I%s -I%s\" % (includepy, libpl)'`"
     if test ! -z "`uname -a | grep CYGWIN`" ; then 
       PYTHON_LIBS="`$PYTHON -c '
 import sys
-print \"-L%s/lib/python%s/config -lpython%s.dll" % (sys.prefix, sys.version[:3], sys.version[:3])'`"
+print \"-L%s/lib/python%s/config -lpython%s.dll\" % (sys.prefix, sys.version[:3], sys.version[:3])'`"
     fi 
     py_makefile="`$PYTHON -c '
 import sys
