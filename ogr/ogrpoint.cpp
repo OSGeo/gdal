@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  1999/11/18 19:02:19  warmerda
+ * expanded tabs
+ *
  * Revision 1.12  1999/09/13 14:34:07  warmerda
  * updated to use wkbZ of 0x8000 instead of 0x80000000
  *
@@ -118,7 +121,7 @@ OGRPoint::~OGRPoint()
 OGRGeometry *OGRPoint::clone()
 
 {
-    OGRPoint	*poNewPoint = new OGRPoint( x, y, z );
+    OGRPoint    *poNewPoint = new OGRPoint( x, y, z );
 
     poNewPoint->assignSpatialReference( getSpatialReference() );
 
@@ -207,7 +210,7 @@ OGRErr OGRPoint::importFromWkb( unsigned char * pabyData,
                                 int nBytesAvailable )
 
 {
-    OGRwkbByteOrder	eByteOrder;
+    OGRwkbByteOrder     eByteOrder;
     
     if( nBytesAvailable < 21 && nBytesAvailable != -1 )
         return OGRERR_NOT_ENOUGH_DATA;
@@ -224,7 +227,7 @@ OGRErr OGRPoint::importFromWkb( unsigned char * pabyData,
 /*      one byte.                                                       */
 /* -------------------------------------------------------------------- */
     OGRwkbGeometryType eGeometryType;
-    int		       bIs3D;
+    int                bIs3D;
     
     if( eByteOrder == wkbNDR )
     {
@@ -271,7 +274,7 @@ OGRErr OGRPoint::importFromWkb( unsigned char * pabyData,
 /*      Build a well known binary representation of this object.        */
 /************************************************************************/
 
-OGRErr	OGRPoint::exportToWkb( OGRwkbByteOrder eByteOrder,
+OGRErr  OGRPoint::exportToWkb( OGRwkbByteOrder eByteOrder,
                                unsigned char * pabyData )
 
 {
@@ -343,8 +346,8 @@ OGRErr	OGRPoint::exportToWkb( OGRwkbByteOrder eByteOrder,
 OGRErr OGRPoint::importFromWkt( char ** ppszInput )
 
 {
-    char	szToken[OGR_WKT_TOKEN_MAX];
-    const char	*pszInput = *ppszInput;
+    char        szToken[OGR_WKT_TOKEN_MAX];
+    const char  *pszInput = *ppszInput;
 
 /* -------------------------------------------------------------------- */
 /*      Read and verify the ``POINT'' keyword token.                    */
@@ -357,9 +360,9 @@ OGRErr OGRPoint::importFromWkt( char ** ppszInput )
 /* -------------------------------------------------------------------- */
 /*      Read the point list which should consist of exactly one point.  */
 /* -------------------------------------------------------------------- */
-    OGRRawPoint		*poPoints = NULL;
-    double		*padfZ = NULL;
-    int			nMaxPoint = 0, nPoints = 0;
+    OGRRawPoint         *poPoints = NULL;
+    double              *padfZ = NULL;
+    int                 nMaxPoint = 0, nPoints = 0;
 
     pszInput = OGRWktReadPoints( pszInput, &poPoints, &padfZ,
                                  &nMaxPoint, &nPoints );
@@ -392,7 +395,7 @@ OGRErr OGRPoint::importFromWkt( char ** ppszInput )
 OGRErr OGRPoint::exportToWkt( char ** ppszReturn )
 
 {
-    char	szTextEquiv[100];
+    char        szTextEquiv[100];
 
     sprintf( szTextEquiv, "POINT (%s)", OGRMakeWktCoordinate(x, y, z) );
     *ppszReturn = CPLStrdup( szTextEquiv );
@@ -475,7 +478,7 @@ void OGRPoint::getEnvelope( OGREnvelope * poEnvelope )
 OGRBoolean OGRPoint::Equal( OGRGeometry * poOther )
 
 {
-    OGRPoint	*poOPoint = (OGRPoint *) poOther;
+    OGRPoint    *poOPoint = (OGRPoint *) poOther;
     
     if( poOther == this )
         return TRUE;

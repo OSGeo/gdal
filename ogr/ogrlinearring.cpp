@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  1999/11/18 19:02:19  warmerda
+ * expanded tabs
+ *
  * Revision 1.5  1999/07/08 20:25:39  warmerda
  * Remove getGeometryType() method ... now returns wkbLineString.
  *
@@ -134,7 +137,7 @@ OGRErr OGRLinearRing::_importFromWkb( OGRwkbByteOrder eByteOrder,
 /* -------------------------------------------------------------------- */
 /*      Get the vertex count.                                           */
 /* -------------------------------------------------------------------- */
-    int		nNewNumPoints;
+    int         nNewNumPoints;
     
     memcpy( &nNewNumPoints, pabyData, 4 );
     
@@ -167,7 +170,7 @@ OGRErr OGRLinearRing::_importFromWkb( OGRwkbByteOrder eByteOrder,
 /*      exportToWkb() METHOD!                                           */
 /************************************************************************/
 
-OGRErr	OGRLinearRing::_exportToWkb( OGRwkbByteOrder eByteOrder,
+OGRErr  OGRLinearRing::_exportToWkb( OGRwkbByteOrder eByteOrder,
                                      unsigned char * pabyData )
 
 {
@@ -186,7 +189,7 @@ OGRErr	OGRLinearRing::_exportToWkb( OGRwkbByteOrder eByteOrder,
 /* -------------------------------------------------------------------- */
     if( OGR_SWAP( eByteOrder ) )
     {
-        int	nCount;
+        int     nCount;
 
         nCount = CPL_SWAP32( nPointCount );
         memcpy( pabyData+4, &nCount, 4 );
@@ -223,7 +226,7 @@ int OGRLinearRing::_WkbSize()
 OGRGeometry *OGRLinearRing::clone()
 
 {
-    OGRLinearRing	*poNewLinearRing;
+    OGRLinearRing       *poNewLinearRing;
 
     poNewLinearRing = new OGRLinearRing();
     poNewLinearRing->assignSpatialReference( getSpatialReference() );

@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/11/18 19:01:25  warmerda
+ * expanded tabs
+ *
  * Revision 1.1  1999/11/18 18:57:13  warmerda
  * New
  *
@@ -46,8 +49,8 @@
 char **S57FileCollector( const char *pszDataset )
 
 {
-    VSIStatBuf	sStatBuf;
-    char	**papszRetList = NULL;
+    VSIStatBuf  sStatBuf;
+    char        **papszRetList = NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Stat the dataset, and fail if it isn't a file or directory.     */
@@ -67,15 +70,15 @@ char **S57FileCollector( const char *pszDataset )
 /* -------------------------------------------------------------------- */
     if( VSI_ISDIR(sStatBuf.st_mode) )
     {
-        char	**papszDirFiles = CPLReadDir( pszDataset );
-        int	iFile;
+        char    **papszDirFiles = CPLReadDir( pszDataset );
+        int     iFile;
         DDFModule oModule;
 
         for( iFile = 0;
              papszDirFiles != NULL && papszDirFiles[iFile] != NULL;
              iFile++ )
         {
-            char	*pszFullFile;
+            char        *pszFullFile;
 
             pszFullFile = CPLStrdup(
                 CPLFormFilename( pszDataset, papszDirFiles[iFile], NULL ) );
@@ -96,10 +99,10 @@ char **S57FileCollector( const char *pszDataset )
     }
 
 /* -------------------------------------------------------------------- */
-/*      If this is a regular file, but not a catalog just return it.  	*/
-/*	Note that the caller may still open it and fail.		*/
+/*      If this is a regular file, but not a catalog just return it.    */
+/*      Note that the caller may still open it and fail.                */
 /* -------------------------------------------------------------------- */
-    DDFModule	oModule;
+    DDFModule   oModule;
 
     if( !oModule.Open( pszDataset, TRUE )
         || oModule.FindFieldDefn( "CATD" ) == NULL
@@ -114,8 +117,8 @@ char **S57FileCollector( const char *pszDataset )
 /*      IMPL of BIN.  Shouldn't there be a better way of testing        */
 /*      whether a file is a data file or another catalog file?          */
 /* -------------------------------------------------------------------- */
-    DDFRecord	*poRecord;
-    char	*pszDir = CPLStrdup( CPLGetPath( pszDataset ) );
+    DDFRecord   *poRecord;
+    char        *pszDir = CPLStrdup( CPLGetPath( pszDataset ) );
     
     for( poRecord = oModule.ReadRecord();
          poRecord != NULL;
@@ -124,7 +127,7 @@ char **S57FileCollector( const char *pszDataset )
         if( poRecord->FindField( "CATD" ) != NULL
             && EQUAL(poRecord->GetStringSubfield("CATD",0,"IMPL",0),"BIN") )
         {
-            const char	*pszFile;
+            const char  *pszFile;
 
             pszFile = poRecord->GetStringSubfield("CATD",0,"FILE",0);
             

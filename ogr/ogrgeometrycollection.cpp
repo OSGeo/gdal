@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  1999/11/18 19:02:19  warmerda
+ * expanded tabs
+ *
  * Revision 1.8  1999/11/04 16:26:29  warmerda
  * Implemented addGeometryDirectly().
  *
@@ -110,7 +113,7 @@ void OGRGeometryCollection::empty()
 OGRGeometry *OGRGeometryCollection::clone()
 
 {
-    OGRGeometryCollection	*poNewGC;
+    OGRGeometryCollection       *poNewGC;
 
     poNewGC = new OGRGeometryCollection;
     poNewGC->assignSpatialReference( getSpatialReference() );
@@ -239,8 +242,8 @@ OGRGeometry * OGRGeometryCollection::getGeometryRef( int i )
 OGRErr OGRGeometryCollection::addGeometry( OGRGeometry * poNewGeom )
 
 {
-    OGRGeometry	*poClone = poNewGeom->clone();
-    OGRErr	eErr;
+    OGRGeometry *poClone = poNewGeom->clone();
+    OGRErr      eErr;
 
     eErr = addGeometryDirectly( poClone );
     if( eErr != OGRERR_NONE )
@@ -296,7 +299,7 @@ OGRErr OGRGeometryCollection::addGeometryDirectly( OGRGeometry * poNewGeom )
 int OGRGeometryCollection::WkbSize()
 
 {
-    int		nSize = 9;
+    int         nSize = 9;
 
     for( int i = 0; i < nGeomCount; i++ )
     {
@@ -317,8 +320,8 @@ OGRErr OGRGeometryCollection::importFromWkb( unsigned char * pabyData,
                                              int nBytesAvailable )
 
 {
-    OGRwkbByteOrder	eByteOrder;
-    int			nDataOffset;
+    OGRwkbByteOrder     eByteOrder;
+    int                 nDataOffset;
     
     if( nBytesAvailable < 9 && nBytesAvailable != -1 )
         return OGRERR_NOT_ENOUGH_DATA;
@@ -379,7 +382,7 @@ OGRErr OGRGeometryCollection::importFromWkb( unsigned char * pabyData,
 /* -------------------------------------------------------------------- */
     for( int iGeom = 0; iGeom < nGeomCount; iGeom++ )
     {
-        OGRErr	eErr;
+        OGRErr  eErr;
 
         eErr = OGRGeometryFactory::
             createFromWkb( pabyData + nDataOffset, NULL,
@@ -406,11 +409,11 @@ OGRErr OGRGeometryCollection::importFromWkb( unsigned char * pabyData,
 /*      Build a well known binary representation of this object.        */
 /************************************************************************/
 
-OGRErr	OGRGeometryCollection::exportToWkb( OGRwkbByteOrder eByteOrder,
+OGRErr  OGRGeometryCollection::exportToWkb( OGRwkbByteOrder eByteOrder,
                                             unsigned char * pabyData )
 
 {
-    int		nOffset;
+    int         nOffset;
     
 /* -------------------------------------------------------------------- */
 /*      Set the byte order.                                             */
@@ -440,7 +443,7 @@ OGRErr	OGRGeometryCollection::exportToWkb( OGRwkbByteOrder eByteOrder,
 /* -------------------------------------------------------------------- */
     if( OGR_SWAP( eByteOrder ) )
     {
-        int	nCount;
+        int     nCount;
 
         nCount = CPL_SWAP32( nGeomCount );
         memcpy( pabyData+5, &nCount, 4 );
@@ -473,9 +476,9 @@ OGRErr OGRGeometryCollection::importFromWkt( char ** ppszInput )
 
 {
 
-    char	szToken[OGR_WKT_TOKEN_MAX];
-    const char	*pszInput = *ppszInput;
-    int		iGeom;
+    char        szToken[OGR_WKT_TOKEN_MAX];
+    const char  *pszInput = *ppszInput;
+    int         iGeom;
 
 /* -------------------------------------------------------------------- */
 /*      Clear existing Geoms.                                           */
@@ -500,7 +503,7 @@ OGRErr OGRGeometryCollection::importFromWkt( char ** ppszInput )
 
 /* -------------------------------------------------------------------- */
 /*      The next character should be a ( indicating the start of the    */
-/*      list of objects.						*/
+/*      list of objects.                                                */
 /* -------------------------------------------------------------------- */
     pszInput = OGRWktReadToken( pszInput, szToken );
     if( szToken[0] != '(' )
@@ -512,7 +515,7 @@ OGRErr OGRGeometryCollection::importFromWkt( char ** ppszInput )
     do
     {
         OGRGeometry *poGeom = NULL;
-        OGRErr	    eErr;
+        OGRErr      eErr;
     
         eErr = OGRGeometryFactory::createFromWkt( (char **) &pszInput,
                                                   NULL, &poGeom );
@@ -550,9 +553,9 @@ OGRErr OGRGeometryCollection::importFromWkt( char ** ppszInput )
 OGRErr OGRGeometryCollection::exportToWkt( char ** ppszReturn )
 
 {
-    char	**papszGeoms;
-    int		iGeom, nCumulativeLength = 0;
-    OGRErr	eErr;
+    char        **papszGeoms;
+    int         iGeom, nCumulativeLength = 0;
+    OGRErr      eErr;
 
 /* -------------------------------------------------------------------- */
 /*      Build a list of strings containing the stuff for each Geom.     */
@@ -583,7 +586,7 @@ OGRErr OGRGeometryCollection::exportToWkt( char ** ppszReturn )
     strcat( *ppszReturn, " (" );
 
     for( iGeom = 0; iGeom < nGeomCount; iGeom++ )
-    {								
+    {                                                           
         if( iGeom > 0 )
             strcat( *ppszReturn, "," );
         
@@ -605,7 +608,7 @@ OGRErr OGRGeometryCollection::exportToWkt( char ** ppszReturn )
 void OGRGeometryCollection::getEnvelope( OGREnvelope * poEnvelope )
 
 {
-    OGREnvelope		oGeomEnv;
+    OGREnvelope         oGeomEnv;
     
     if( nGeomCount == 0 )
         return;

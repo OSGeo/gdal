@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  1999/11/18 19:01:25  warmerda
+ * expanded tabs
+ *
  * Revision 1.2  1999/11/08 22:23:00  warmerda
  * added object class support
  *
@@ -46,35 +49,35 @@
 class OGRS57DataSource;
 
 /************************************************************************/
-/*      		       OGRS57Layer                              */
+/*                             OGRS57Layer                              */
 /*                                                                      */
 /*      Represents all features of a particular S57 object class.       */
 /************************************************************************/
 
 class OGRS57Layer : public OGRLayer
 {
-    OGRGeometry	       *poFilterGeom;
+    OGRGeometry        *poFilterGeom;
 
     OGRS57DataSource   *poDS;
 
     OGRFeatureDefn     *poFeatureDefn;
 
-    int			nCurrentModule;
-    int			nNextFEIndex;
+    int                 nCurrentModule;
+    int                 nNextFEIndex;
 
   public:
-    			OGRS57Layer( OGRS57DataSource * poDS,
+                        OGRS57Layer( OGRS57DataSource * poDS,
                                      OGRFeatureDefn * );
-    virtual		~OGRS57Layer();
+    virtual             ~OGRS57Layer();
 
-    OGRGeometry *	GetSpatialFilter() { return poFilterGeom; }
-    void		SetSpatialFilter( OGRGeometry * );
+    OGRGeometry *       GetSpatialFilter() { return poFilterGeom; }
+    void                SetSpatialFilter( OGRGeometry * );
 
-    void		ResetReading();
-    OGRFeature *	GetNextFeature();
+    void                ResetReading();
+    OGRFeature *        GetNextFeature();
     OGRFeature *        GetNextUnfilteredFeature();
     
-    OGRFeatureDefn *	GetLayerDefn() { return poFeatureDefn; }
+    OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
 
     int                 TestCapability( const char * );
 
@@ -87,38 +90,38 @@ class OGRS57Layer : public OGRLayer
 
 class OGRS57DataSource : public OGRDataSource
 {
-    char		*pszName;
+    char                *pszName;
 
-    int			nLayers;
-    OGRS57Layer		**papoLayers;
+    int                 nLayers;
+    OGRS57Layer         **papoLayers;
 
     OGRSpatialReference *poSpatialRef;
 
-    char		**papszOptions;
+    char                **papszOptions;
     
-    int			nModules;
-    S57Reader		**papoModules;
+    int                 nModules;
+    S57Reader           **papoModules;
 
     static S57ClassRegistrar *poRegistrar;
     
   public:
-    			OGRS57DataSource();
-    			~OGRS57DataSource();
+                        OGRS57DataSource();
+                        ~OGRS57DataSource();
 
-    void		SetOptionList( char ** );
-    const char	       *GetOption( const char * );
+    void                SetOptionList( char ** );
+    const char         *GetOption( const char * );
     
     int                 Open( const char * pszName, int bTestOpen = FALSE );
 
-    const char	        *GetName() { return pszName; }
-    int			GetLayerCount() { return nLayers; }
-    OGRLayer		*GetLayer( int );
+    const char          *GetName() { return pszName; }
+    int                 GetLayerCount() { return nLayers; }
+    OGRLayer            *GetLayer( int );
     void                AddLayer( OGRS57Layer * );
     int                 TestCapability( const char * );
 
     OGRSpatialReference *GetSpatialRef() { return poSpatialRef; }
 
-    int			GetModuleCount() { return nModules; }
+    int                 GetModuleCount() { return nModules; }
     S57Reader          *GetModule( int );
 };
 
@@ -129,7 +132,7 @@ class OGRS57DataSource : public OGRDataSource
 class OGRS57Driver : public OGRSFDriver
 {
   public:
-    		~OGRS57Driver();
+                ~OGRS57Driver();
                 
     const char *GetName();
     OGRDataSource *Open( const char *, int );

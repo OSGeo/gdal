@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/11/18 19:01:25  warmerda
+ * expanded tabs
+ *
  * Revision 1.1  1999/11/03 22:12:43  warmerda
  * New
  *
@@ -62,7 +65,7 @@ const char *OGRS57Driver::GetName()
 OGRDataSource *OGRS57Driver::Open( const char * pszFilename, int bUpdate )
 
 {
-    OGRS57DataSource	*poDS = new OGRS57DataSource;
+    OGRS57DataSource    *poDS = new OGRS57DataSource;
 
     if( !poDS->Open( pszFilename, TRUE ) )
     {

@@ -4,7 +4,7 @@ int main( int argc, char ** argv )
 
 {
     OGRDataSource *poDS;
-    int		iLayer;
+    int         iLayer;
 
     RegisterOGRShape();
 
@@ -16,8 +16,8 @@ int main( int argc, char ** argv )
 
     for( iLayer = 0; iLayer < poDS->GetLayerCount(); iLayer++ )
     {
-        OGRLayer	*poLayer;
-        OGRFeature	*poFeature;
+        OGRLayer        *poLayer;
+        OGRFeature      *poFeature;
 
         poLayer = poDS->GetLayer( iLayer );
         

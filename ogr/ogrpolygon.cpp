@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  1999/11/18 19:02:19  warmerda
+ * expanded tabs
+ *
  * Revision 1.11  1999/09/22 13:18:55  warmerda
  * Added the addRingDirectly() method.
  *
@@ -98,7 +101,7 @@ OGRPolygon::~OGRPolygon()
 OGRGeometry *OGRPolygon::clone()
 
 {
-    OGRPolygon	*poNewPolygon;
+    OGRPolygon  *poNewPolygon;
 
     poNewPolygon = new OGRPolygon;
     poNewPolygon->assignSpatialReference( getSpatialReference() );
@@ -315,7 +318,7 @@ void OGRPolygon::addRingDirectly( OGRLinearRing * poNewRing )
 int OGRPolygon::WkbSize()
 
 {
-    int		nSize = 9;
+    int         nSize = 9;
 
     for( int i = 0; i < nRingCount; i++ )
     {
@@ -336,8 +339,8 @@ OGRErr OGRPolygon::importFromWkb( unsigned char * pabyData,
                                   int nBytesAvailable )
 
 {
-    OGRwkbByteOrder	eByteOrder;
-    int			nDataOffset;
+    OGRwkbByteOrder     eByteOrder;
+    int                 nDataOffset;
     
     if( nBytesAvailable < 21 && nBytesAvailable != -1 )
         return OGRERR_NOT_ENOUGH_DATA;
@@ -395,7 +398,7 @@ OGRErr OGRPolygon::importFromWkb( unsigned char * pabyData,
 /* -------------------------------------------------------------------- */
     for( int iRing = 0; iRing < nRingCount; iRing++ )
     {
-        OGRErr	eErr;
+        OGRErr  eErr;
         
         papoRings[iRing] = new OGRLinearRing();
         eErr = papoRings[iRing]->_importFromWkb( eByteOrder,
@@ -422,11 +425,11 @@ OGRErr OGRPolygon::importFromWkb( unsigned char * pabyData,
 /*      Build a well known binary representation of this object.        */
 /************************************************************************/
 
-OGRErr	OGRPolygon::exportToWkb( OGRwkbByteOrder eByteOrder,
+OGRErr  OGRPolygon::exportToWkb( OGRwkbByteOrder eByteOrder,
                                  unsigned char * pabyData )
 
 {
-    int		nOffset;
+    int         nOffset;
     
 /* -------------------------------------------------------------------- */
 /*      Set the byte order.                                             */
@@ -456,7 +459,7 @@ OGRErr	OGRPolygon::exportToWkb( OGRwkbByteOrder eByteOrder,
 /* -------------------------------------------------------------------- */
     if( OGR_SWAP( eByteOrder ) )
     {
-        int	nCount;
+        int     nCount;
 
         nCount = CPL_SWAP32( nRingCount );
         memcpy( pabyData+5, &nCount, 4 );
@@ -492,9 +495,9 @@ OGRErr	OGRPolygon::exportToWkb( OGRwkbByteOrder eByteOrder,
 OGRErr OGRPolygon::importFromWkt( char ** ppszInput )
 
 {
-    char	szToken[OGR_WKT_TOKEN_MAX];
-    const char	*pszInput = *ppszInput;
-    int		iRing;
+    char        szToken[OGR_WKT_TOKEN_MAX];
+    const char  *pszInput = *ppszInput;
+    int         iRing;
 
 /* -------------------------------------------------------------------- */
 /*      Clear existing rings.                                           */
@@ -529,13 +532,13 @@ OGRErr OGRPolygon::importFromWkt( char ** ppszInput )
 /*      point list buffer from ring to ring to cut down on              */
 /*      allocate/deallocate overhead.                                   */
 /* ==================================================================== */
-    OGRRawPoint	*paoPoints = NULL;
-    int		nMaxPoints = 0, nMaxRings = 0;
+    OGRRawPoint *paoPoints = NULL;
+    int         nMaxPoints = 0, nMaxRings = 0;
     double      *padfZ = NULL;
     
     do
     {
-        int	nPoints = 0;
+        int     nPoints = 0;
 
 /* -------------------------------------------------------------------- */
 /*      Read points for one ring from input.                            */
@@ -597,9 +600,9 @@ OGRErr OGRPolygon::importFromWkt( char ** ppszInput )
 OGRErr OGRPolygon::exportToWkt( char ** ppszReturn )
 
 {
-    char	**papszRings;
-    int		iRing, nCumulativeLength = 0;
-    OGRErr	eErr;
+    char        **papszRings;
+    int         iRing, nCumulativeLength = 0;
+    OGRErr      eErr;
 
 /* -------------------------------------------------------------------- */
 /*      Build a list of strings containing the stuff for each ring.     */
@@ -631,7 +634,7 @@ OGRErr OGRPolygon::exportToWkt( char ** ppszReturn )
     strcpy( *ppszReturn, "POLYGON (" );
 
     for( iRing = 0; iRing < nRingCount; iRing++ )
-    {								
+    {                                                           
         if( iRing > 0 )
             strcat( *ppszReturn, "," );
         
@@ -689,7 +692,7 @@ int OGRPolygon::PointOnSurface( OGRPoint * )
 void OGRPolygon::getEnvelope( OGREnvelope * poEnvelope )
 
 {
-    OGREnvelope		oRingEnv;
+    OGREnvelope         oRingEnv;
     
     if( nRingCount == 0 )
         return;

@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/11/18 19:01:25  warmerda
+ * expanded tabs
+ *
  * Revision 1.1  1999/11/03 22:12:43  warmerda
  * New
  *
@@ -134,11 +137,11 @@ DDFRecord * DDFRecordIndex::FindRecord( int nKey )
 /* -------------------------------------------------------------------- */
 /*      Do a binary search based on the key to find the desired record. */
 /* -------------------------------------------------------------------- */
-    int		nMinIndex = 0, nMaxIndex = nRecordCount-1;
+    int         nMinIndex = 0, nMaxIndex = nRecordCount-1;
 
     while( nMinIndex <= nMaxIndex )
     {
-        int	nTestIndex = (nMaxIndex + nMinIndex) / 2;
+        int     nTestIndex = (nMaxIndex + nMinIndex) / 2;
 
         if( panRecordKey[nTestIndex] < nKey )
             nMinIndex = nTestIndex + 1;
@@ -167,7 +170,7 @@ void DDFRecordIndex::Sort()
     if( bSorted )
         return;
 
-    int		i=0, j, bModified;
+    int         i=0, j, bModified;
 
     do
     {
@@ -176,7 +179,7 @@ void DDFRecordIndex::Sort()
         {
             if( panRecordKey[j] > panRecordKey[j+1] )
             {
-                int	nTemp;
+                int     nTemp;
                 DDFRecord * poRecord;
 
                 nTemp = panRecordKey[j];

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  1999/11/18 19:01:25  warmerda
+ * expanded tabs
+ *
  * Revision 1.3  1999/11/16 21:47:31  warmerda
  * updated class occurance collection
  *
@@ -69,7 +72,7 @@ OGRS57DataSource::OGRS57DataSource()
 OGRS57DataSource::~OGRS57DataSource()
 
 {
-    int		i;
+    int         i;
 
     for( i = 0; i < nLayers; i++ )
         delete papoLayers[i];
@@ -121,7 +124,7 @@ int OGRS57DataSource::TestCapability( const char * )
 int OGRS57DataSource::Open( const char * pszFilename, int bTestOpen )
 
 {
-    int		iModule;
+    int         iModule;
     
     pszName = CPLStrdup( pszFilename );
     
@@ -131,8 +134,8 @@ int OGRS57DataSource::Open( const char * pszFilename, int bTestOpen )
 /* -------------------------------------------------------------------- */
     if( bTestOpen )
     {
-        FILE	*fp;
-        char	pachLeader[10];
+        FILE    *fp;
+        char    pachLeader[10];
 
         fp = VSIFOpen( pszFilename, "rb" );
         if( fp == NULL )
@@ -157,7 +160,7 @@ int OGRS57DataSource::Open( const char * pszFilename, int bTestOpen )
 /*      Eventually this should check for catalogs, and if found         */
 /*      instantiate a whole series of modules.                          */
 /* -------------------------------------------------------------------- */
-    S57Reader	*poModule;
+    S57Reader   *poModule;
 
     poModule = new S57Reader( pszFilename );
     if( !poModule->Open( bTestOpen ) )
@@ -172,7 +175,7 @@ int OGRS57DataSource::Open( const char * pszFilename, int bTestOpen )
     papoModules[0] = poModule;
     
 /* -------------------------------------------------------------------- */
-/*	Instantiate the class registrar if possible.			*/
+/*      Instantiate the class registrar if possible.                    */
 /* -------------------------------------------------------------------- */
     if( poRegistrar == NULL )
     {
@@ -186,12 +189,12 @@ int OGRS57DataSource::Open( const char * pszFilename, int bTestOpen )
     }
 
 /* -------------------------------------------------------------------- */
-/*	Initialize a layer for each type of geometry.  Eventually	*/
-/*	we will do this by object class.				*/
+/*      Initialize a layer for each type of geometry.  Eventually       */
+/*      we will do this by object class.                                */
 /* -------------------------------------------------------------------- */
     if( poRegistrar == NULL )
     {
-        OGRFeatureDefn	*poDefn;
+        OGRFeatureDefn  *poDefn;
 
         poDefn = S57Reader::GenerateGeomFeatureDefn( wkbPoint );
         AddLayer( new OGRS57Layer( this, poDefn ) );
@@ -212,9 +215,9 @@ int OGRS57DataSource::Open( const char * pszFilename, int bTestOpen )
 /* -------------------------------------------------------------------- */
     else
     {
-        OGRFeatureDefn	*poDefn;
-        int		*panClassCount;
-        int		iClass;
+        OGRFeatureDefn  *poDefn;
+        int             *panClassCount;
+        int             iClass;
 
         panClassCount = (int *) CPLCalloc(sizeof(int),MAX_CLASSES);
 

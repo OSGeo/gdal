@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  1999/11/18 19:02:19  warmerda
+ * expanded tabs
+ *
  * Revision 1.6  1999/05/31 15:01:59  warmerda
  * OGRCurve now an abstract base class with essentially no implementation.
  * Everything moved down to OGRLineString where it belongs.  Also documented
@@ -71,7 +74,7 @@
 int OGRCurve::get_IsClosed()
 
 {
-    OGRPoint		oStartPoint, oEndPoint;
+    OGRPoint            oStartPoint, oEndPoint;
 
     StartPoint( &oStartPoint );
     EndPoint( &oEndPoint );

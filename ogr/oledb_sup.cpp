@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  1999/11/18 19:02:19  warmerda
+ * expanded tabs
+ *
  * Revision 1.6  1999/09/07 12:05:59  warmerda
  * trimmed out some old oledbsup related stuff
  *
@@ -68,7 +71,7 @@ int OleSupInitialize()
 {
    DWORD   dwVersion;
    HRESULT hr;
-	
+        
    dwVersion = OleBuildVersion();
    if (HIWORD(dwVersion) != rmm)
    {
@@ -206,30 +209,30 @@ HRESULT AnsiToBSTR( const char *pszInput, BSTR * ppszOutput )
 /*                        GetNoteStringBitvals()                        */
 /************************************************************************/
 
-static char*	GetNoteStringBitvals
-	(
-	Note* 	rgNote,
-	int     cNote,
-	DWORD   dwValue 
-	)
+static char*    GetNoteStringBitvals
+        (
+        Note*   rgNote,
+        int     cNote,
+        DWORD   dwValue 
+        )
 {
-	static char buff[400];
-	int j;
+        static char buff[400];
+        int j;
 
-	assert(rgNote != NULL);
+        assert(rgNote != NULL);
 
-	// Make a string that combines all the bits ORed together.
+        // Make a string that combines all the bits ORed together.
 
-	strcpy(buff, "");
-	for (j=0; j < cNote; j++) {
-		if (rgNote[j].dwFlag & dwValue) {
-			if (buff[0])
-				strcat( buff, " | " );
-			strcat( buff, rgNote[j].szText );
-		}
-	}
-	assert(strlen(buff) < sizeof(buff));
-	return buff;
+        strcpy(buff, "");
+        for (j=0; j < cNote; j++) {
+                if (rgNote[j].dwFlag & dwValue) {
+                        if (buff[0])
+                                strcat( buff, " | " );
+                        strcat( buff, rgNote[j].szText );
+                }
+        }
+        assert(strlen(buff) < sizeof(buff));
+        return buff;
 }
 
 /************************************************************************/
@@ -239,29 +242,29 @@ static char*	GetNoteStringBitvals
 char* GetNoteString( Note * rgNote, int cNote, DWORD dwValue )
 
 {
-	int j;
+        int j;
 
-	assert(rgNote != NULL);
+        assert(rgNote != NULL);
 
-	// Scan a table of value/string,
-	// return ptr to string found.
+        // Scan a table of value/string,
+        // return ptr to string found.
 
-	for (j=0; j < cNote; j++) {
-		if (rgNote[j].dwFlag == dwValue)
-			return rgNote[j].szText;
-	}
-	return "<unknown>";
+        for (j=0; j < cNote; j++) {
+                if (rgNote[j].dwFlag == dwValue)
+                        return rgNote[j].szText;
+        }
+        return "<unknown>";
 }
 
 /************************************************************************/
 /*                          DumpErrorHResult()                          */
 /************************************************************************/
 HRESULT DumpErrorHResult
-	(
-	HRESULT      hr_return,
-	const char  *format,			// can be NULL
-	... 
-	)
+        (
+        HRESULT      hr_return,
+        const char  *format,                    // can be NULL
+        ... 
+        )
 {
    char     buff[100];
    int      cBytesWritten;
@@ -414,9 +417,9 @@ HRESULT DumpErrorHResult
 void OledbSupWriteColumnInfo(FILE *fp, DBCOLUMNINFO* p )
 
 {
-    DBID 	    *pCol;
+    DBID            *pCol;
     DBKIND      eKind;
-    wchar_t 	wszGuidBuff[MAX_GUID_STRING];
+    wchar_t     wszGuidBuff[MAX_GUID_STRING];
     wchar_t     wszNameBuff[MAX_GUID_STRING];    
     
     static char *szDbcolkind[] = { "Guid+Name", "Guid+PropID", "Name", 
@@ -539,7 +542,7 @@ void OledbSupWriteColumnInfo(FILE *fp, DBCOLUMNINFO* p )
     fprintf(fp, "  bScale        = %d\n",  p->bScale );
     fprintf(fp, "  dwFlags       = %s\n\n",
              GetNoteStringBitvals( flagnotes, NUMELEM(flagnotes), p->dwFlags ) );
-	
+        
 
 }
 
@@ -548,25 +551,25 @@ void OledbSupWriteColumnInfo(FILE *fp, DBCOLUMNINFO* p )
 /************************************************************************/
 
 static void PrintColumn
-	(
+        (
         FILE          *fp,
         DBCOLUMNINFO  *pColumnInfo,
-	COLUMNDATA    *pColumn,
-	DBBINDING     *rgBind,
-	ULONG          iBind,
-	ULONG          cMaxColWidth 
-	)
+        COLUMNDATA    *pColumn,
+        DBBINDING     *rgBind,
+        ULONG          iBind,
+        ULONG          cMaxColWidth 
+        )
 {
-    void*	p;
+    void*       p;
     ULONG   ulPrintWidth;
     ULONG   ulPrintPrecision;
     DWORD   dwStatus;
     DWORD   dwLength;
     BOOL    fDidVariant;
     BOOL    fIsUnicode;
-    char*	sFormat;
+    char*       sFormat;
     HRESULT hr;
-	
+        
     assert(pColumn != NULL);
     assert(rgBind != NULL);
 
@@ -628,10 +631,10 @@ static void PrintColumn
                 // We have a variant in our buffer, so convert to string.
                 p = (void *) &pColumn->bData;
                 hr = VariantChangeTypeEx(
-                    (VARIANT *) p,			// Destination (convert in place)
-                    (VARIANT *) p,			// Source
-                    LOCALE_SYSTEM_DEFAULT,	// LCID
-                    0,						// dwFlags
+                    (VARIANT *) p,                      // Destination (convert in place)
+                    (VARIANT *) p,                      // Source
+                    LOCALE_SYSTEM_DEFAULT,      // LCID
+                    0,                                          // dwFlags
                     VT_BSTR );
                 if (FAILED(hr))
                 {
@@ -678,23 +681,23 @@ static void PrintColumn
 /************************************************************************/
 
 void OledbSupDumpRow
-	(
+        (
     FILE        *fp,
     DBCOLUMNINFO* paoColumnInfo,
     int         nColumns,
-    DBBINDING* 	rgBind,
-    ULONG	cBind,
-    ULONG	cMaxColWidth,
-    BYTE* 	pData
+    DBBINDING*  rgBind,
+    ULONG       cBind,
+    ULONG       cMaxColWidth,
+    BYTE*       pData
     )
 {
-    ULONG 	     iBind;
+    ULONG            iBind;
     COLUMNDATA*      pColumn;
     DBCOLUMNINFO*      pColumnInfo;
     int              i;
     
     assert(rgBind);
-    assert( offsetof(COLUMNDATA, dwLength) == 0);	
+    assert( offsetof(COLUMNDATA, dwLength) == 0);       
     
     // Print each column we're bound to.
     for (iBind=0; iBind < cBind; iBind++)

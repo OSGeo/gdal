@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  1999/11/18 19:02:19  warmerda
+ * expanded tabs
+ *
  * Revision 1.10  1999/11/14 20:11:33  danmo
  * Use "%.16g" by default in double to string conversion to keep max. precision
  *
@@ -109,7 +112,7 @@ OGRFeature::~OGRFeature()
 
     for( int i = 0; i < poDefn->GetFieldCount(); i++ )
     {
-        OGRFieldDefn	*poFDefn = poDefn->GetFieldDefn(i);
+        OGRFieldDefn    *poFDefn = poDefn->GetFieldDefn(i);
 
         switch( poFDefn->GetType() )
         {
@@ -242,7 +245,7 @@ OGRErr OGRFeature::SetGeometry( OGRGeometry * poGeomIn )
 OGRFeature *OGRFeature::Clone()
 
 {
-    OGRFeature	*poNew = new OGRFeature( poDefn );
+    OGRFeature  *poNew = new OGRFeature( poDefn );
 
     poNew->SetGeometry( poGeometry );
 
@@ -332,7 +335,7 @@ OGRFeature *OGRFeature::Clone()
 int OGRFeature::GetFieldAsInteger( int iField )
 
 {
-    OGRFieldDefn	*poFDefn = poDefn->GetFieldDefn( iField );
+    OGRFieldDefn        *poFDefn = poDefn->GetFieldDefn( iField );
     
     CPLAssert( poFDefn != NULL || iField == -1 );
     if( poFDefn == NULL )
@@ -372,7 +375,7 @@ int OGRFeature::GetFieldAsInteger( int iField )
 double OGRFeature::GetFieldAsDouble( int iField )
 
 {
-    OGRFieldDefn	*poFDefn = poDefn->GetFieldDefn( iField );
+    OGRFieldDefn        *poFDefn = poDefn->GetFieldDefn( iField );
     
     CPLAssert( poFDefn != NULL || iField == -1 );
     if( poFDefn == NULL )
@@ -413,8 +416,8 @@ double OGRFeature::GetFieldAsDouble( int iField )
 const char *OGRFeature::GetFieldAsString( int iField )
 
 {
-    OGRFieldDefn	*poFDefn = poDefn->GetFieldDefn( iField );
-    static char		szTempBuffer[80];
+    OGRFieldDefn        *poFDefn = poDefn->GetFieldDefn( iField );
+    static char         szTempBuffer[80];
 
     CPLAssert( poFDefn != NULL || iField == -1 );
     if( poFDefn == NULL )
@@ -434,7 +437,7 @@ const char *OGRFeature::GetFieldAsString( int iField )
     }
     else if( poFDefn->GetType() == OFTReal )
     {
-        char	szFormat[64];
+        char    szFormat[64];
 
         if( poFDefn->GetWidth() != 0 )
         {
@@ -450,8 +453,8 @@ const char *OGRFeature::GetFieldAsString( int iField )
     }
     else if( poFDefn->GetType() == OFTIntegerList )
     {
-        char	szItem[32];
-        int	i, nCount = pauFields[iField].IntegerList.nCount;
+        char    szItem[32];
+        int     i, nCount = pauFields[iField].IntegerList.nCount;
 
         sprintf( szTempBuffer, "(%d:", nCount );
         for( i = 0; i < nCount; i++ )
@@ -478,9 +481,9 @@ const char *OGRFeature::GetFieldAsString( int iField )
     }
     else if( poFDefn->GetType() == OFTRealList )
     {
-        char	szItem[40];
-        char	szFormat[64];
-        int	i, nCount = pauFields[iField].RealList.nCount;
+        char    szItem[40];
+        char    szFormat[64];
+        int     i, nCount = pauFields[iField].RealList.nCount;
 
         if( poFDefn->GetWidth() != 0 )
         {
@@ -515,12 +518,12 @@ const char *OGRFeature::GetFieldAsString( int iField )
     }
     else if( poFDefn->GetType() == OFTStringList )
     {
-        int	i, nCount = pauFields[iField].StringList.nCount;
+        int     i, nCount = pauFields[iField].StringList.nCount;
 
         sprintf( szTempBuffer, "(%d:", nCount );
         for( i = 0; i < nCount; i++ )
         {
-            const char	*pszItem = pauFields[iField].StringList.paList[i];
+            const char  *pszItem = pauFields[iField].StringList.paList[i];
             
             if( strlen(szTempBuffer) + strlen(pszItem)  + 6
                 > sizeof(szTempBuffer) )
@@ -565,7 +568,7 @@ const char *OGRFeature::GetFieldAsString( int iField )
 const int *OGRFeature::GetFieldAsIntegerList( int iField, int *pnCount )
 
 {
-    OGRFieldDefn	*poFDefn = poDefn->GetFieldDefn( iField );
+    OGRFieldDefn        *poFDefn = poDefn->GetFieldDefn( iField );
 
     CPLAssert( poFDefn != NULL || iField == -1 );
     if( poFDefn == NULL )
@@ -607,7 +610,7 @@ const int *OGRFeature::GetFieldAsIntegerList( int iField, int *pnCount )
 const double *OGRFeature::GetFieldAsDoubleList( int iField, int *pnCount )
 
 {
-    OGRFieldDefn	*poFDefn = poDefn->GetFieldDefn( iField );
+    OGRFieldDefn        *poFDefn = poDefn->GetFieldDefn( iField );
 
     CPLAssert( poFDefn != NULL || iField == -1 );
     if( poFDefn == NULL )
@@ -647,7 +650,7 @@ const double *OGRFeature::GetFieldAsDoubleList( int iField, int *pnCount )
 char **OGRFeature::GetFieldAsStringList( int iField )
 
 {
-    OGRFieldDefn	*poFDefn = poDefn->GetFieldDefn( iField );
+    OGRFieldDefn        *poFDefn = poDefn->GetFieldDefn( iField );
 
     CPLAssert( poFDefn != NULL || iField == -1 );
     if( poFDefn == NULL )
@@ -682,7 +685,7 @@ char **OGRFeature::GetFieldAsStringList( int iField )
 void OGRFeature::SetField( int iField, int nValue )
 
 {
-    OGRFieldDefn	*poFDefn = poDefn->GetFieldDefn( iField );
+    OGRFieldDefn        *poFDefn = poDefn->GetFieldDefn( iField );
 
     CPLAssert( poFDefn != NULL || iField == -1 );
     if( poFDefn == NULL )
@@ -698,7 +701,7 @@ void OGRFeature::SetField( int iField, int nValue )
     }
     else if( poFDefn->GetType() == OFTString )
     {
-        char	szTempBuffer[64];
+        char    szTempBuffer[64];
 
         sprintf( szTempBuffer, "%d", nValue );
 
@@ -728,7 +731,7 @@ void OGRFeature::SetField( int iField, int nValue )
 void OGRFeature::SetField( int iField, double dfValue )
 
 {
-    OGRFieldDefn	*poFDefn = poDefn->GetFieldDefn( iField );
+    OGRFieldDefn        *poFDefn = poDefn->GetFieldDefn( iField );
 
     CPLAssert( poFDefn != NULL || iField == -1 );
     if( poFDefn == NULL )
@@ -744,7 +747,7 @@ void OGRFeature::SetField( int iField, double dfValue )
     }
     else if( poFDefn->GetType() == OFTString )
     {
-        char	szTempBuffer[128];
+        char    szTempBuffer[128];
 
         sprintf( szTempBuffer, "%.16g", dfValue );
 
@@ -773,7 +776,7 @@ void OGRFeature::SetField( int iField, double dfValue )
 void OGRFeature::SetField( int iField, const char * pszValue )
 
 {
-    OGRFieldDefn	*poFDefn = poDefn->GetFieldDefn( iField );
+    OGRFieldDefn        *poFDefn = poDefn->GetFieldDefn( iField );
 
     CPLAssert( poFDefn != NULL || iField == -1 );
     if( poFDefn == NULL )
@@ -813,7 +816,7 @@ void OGRFeature::SetField( int iField, const char * pszValue )
 void OGRFeature::SetField( int iField, int nCount, int *panValues )
 
 {
-    OGRFieldDefn	*poFDefn = poDefn->GetFieldDefn( iField );
+    OGRFieldDefn        *poFDefn = poDefn->GetFieldDefn( iField );
 
     CPLAssert( poFDefn != NULL || iField == -1 );
     if( poFDefn == NULL )
@@ -821,7 +824,7 @@ void OGRFeature::SetField( int iField, int nCount, int *panValues )
     
     if( poFDefn->GetType() == OFTIntegerList )
     {
-        OGRField	uField;
+        OGRField        uField;
 
         uField.IntegerList.nCount = nCount;
         uField.IntegerList.paList = panValues;
@@ -847,7 +850,7 @@ void OGRFeature::SetField( int iField, int nCount, int *panValues )
 void OGRFeature::SetField( int iField, int nCount, double * padfValues )
 
 {
-    OGRFieldDefn	*poFDefn = poDefn->GetFieldDefn( iField );
+    OGRFieldDefn        *poFDefn = poDefn->GetFieldDefn( iField );
 
     CPLAssert( poFDefn != NULL || iField == -1 );
     if( poFDefn == NULL )
@@ -855,7 +858,7 @@ void OGRFeature::SetField( int iField, int nCount, double * padfValues )
     
     if( poFDefn->GetType() == OFTRealList )
     {
-        OGRField	uField;
+        OGRField        uField;
         
         uField.RealList.nCount = nCount;
         uField.RealList.paList = padfValues;
@@ -880,7 +883,7 @@ void OGRFeature::SetField( int iField, int nCount, double * padfValues )
 void OGRFeature::SetField( int iField, char ** papszValues )
 
 {
-    OGRFieldDefn	*poFDefn = poDefn->GetFieldDefn( iField );
+    OGRFieldDefn        *poFDefn = poDefn->GetFieldDefn( iField );
 
     CPLAssert( poFDefn != NULL || iField == -1 );
     if( poFDefn == NULL )
@@ -888,7 +891,7 @@ void OGRFeature::SetField( int iField, char ** papszValues )
     
     if( poFDefn->GetType() == OFTStringList )
     {
-        OGRField	uField;
+        OGRField        uField;
         
         uField.StringList.nCount = CSLCount(papszValues);
         uField.StringList.paList = papszValues;
@@ -916,7 +919,7 @@ void OGRFeature::SetField( int iField, char ** papszValues )
 void OGRFeature::SetField( int iField, OGRField * puValue )
 
 {
-    OGRFieldDefn	*poFDefn = poDefn->GetFieldDefn( iField );
+    OGRFieldDefn        *poFDefn = poDefn->GetFieldDefn( iField );
 
     CPLAssert( poFDefn != NULL || iField == -1 );
     if( poFDefn == NULL )
@@ -937,7 +940,7 @@ void OGRFeature::SetField( int iField, OGRField * puValue )
     }
     else if( poFDefn->GetType() == OFTIntegerList )
     {
-        int	nCount = puValue->IntegerList.nCount;
+        int     nCount = puValue->IntegerList.nCount;
         
         CPLFree( pauFields[iField].IntegerList.paList );
         pauFields[iField].IntegerList.paList =
@@ -949,7 +952,7 @@ void OGRFeature::SetField( int iField, OGRField * puValue )
     }
     else if( poFDefn->GetType() == OFTRealList )
     {
-        int	nCount = puValue->RealList.nCount;
+        int     nCount = puValue->RealList.nCount;
         
         CPLFree( pauFields[iField].RealList.paList );
         pauFields[iField].RealList.paList =
@@ -993,7 +996,7 @@ void OGRFeature::DumpReadable( FILE * fpOut )
     fprintf( fpOut, "OGRFeature(%s):%ld\n", poDefn->GetName(), GetFID() );
     for( int iField = 0; iField < GetFieldCount(); iField++ )
     {
-        OGRFieldDefn	*poFDefn = poDefn->GetFieldDefn(iField);
+        OGRFieldDefn    *poFDefn = poDefn->GetFieldDefn(iField);
         
         fprintf( fpOut, "  %s (%s) = %s\n",
                  poFDefn->GetNameRef(),
@@ -1107,7 +1110,7 @@ OGRBoolean OGRFeature::Equal( OGRFeature * poFeature )
 OGRErr OGRFeature::SetFrom( OGRFeature * poSrcFeature, int bForgiving )
 
 {
-    OGRErr	eErr;
+    OGRErr      eErr;
 
     SetFID( OGRNullFID );
 
@@ -1121,7 +1124,7 @@ OGRErr OGRFeature::SetFrom( OGRFeature * poSrcFeature, int bForgiving )
 /* -------------------------------------------------------------------- */
 /*      Set the fields by name.                                         */
 /* -------------------------------------------------------------------- */
-    int		iField, iDstField;
+    int         iField, iDstField;
 
     for( iField = 0; iField < poSrcFeature->GetFieldCount(); iField++ )
     {

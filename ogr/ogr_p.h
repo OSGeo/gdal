@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  1999/11/18 19:02:20  warmerda
+ * expanded tabs
+ *
  * Revision 1.5  1999/09/13 02:27:33  warmerda
  * incorporated limited 2.5d support
  *
@@ -57,9 +60,9 @@
 #include "cpl_conv.h"
 
 #ifdef CPL_MSB 
-#  define OGR_SWAP(x) 	(x == wkbNDR)
+#  define OGR_SWAP(x)   (x == wkbNDR)
 #else
-#  define OGR_SWAP(x) 	(x == wkbXDR)
+#  define OGR_SWAP(x)   (x == wkbXDR)
 #endif
 
 /* -------------------------------------------------------------------- */
@@ -67,7 +70,7 @@
 /* -------------------------------------------------------------------- */
 
 #ifdef _OGR_GEOMETRY_H_INCLUDED
-#define OGR_WKT_TOKEN_MAX	64
+#define OGR_WKT_TOKEN_MAX       64
 
 const char * OGRWktReadToken( const char * pszInput, char * pszToken );
 

@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  1999/11/18 19:02:20  warmerda
+ * expanded tabs
+ *
  * Revision 1.8  1999/06/26 05:27:08  warmerda
  * Separate out GetWKTFromSRSId static method for use of SFCTable
  *
@@ -93,7 +96,7 @@ class SFCTable;
 class SFCDataSource : public CDataSource
 {
     int         nSRInitialized;
-    char	**papszSRName;
+    char        **papszSRName;
 
     int         UseOGISFeaturesTables();
     void        UseTables();
@@ -105,13 +108,13 @@ class SFCDataSource : public CDataSource
                 SFCDataSource();
                 ~SFCDataSource();
 
-    void	Reinitialize();
+    void        Reinitialize();
 
-    int		GetSFTableCount();
+    int         GetSFTableCount();
 
-    const char	*GetSFTableName( int );
+    const char  *GetSFTableName( int );
     
-    SFCTable	*CreateSFCTable( const char * pszTablename,
+    SFCTable    *CreateSFCTable( const char * pszTablename,
                                  OGRGeometry * poFilterGeometry = NULL,
                                  const char * pszFilterOperator = NULL );
 

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  1999/11/18 19:03:04  warmerda
+ * expanded tabs
+ *
  * Revision 1.3  1999/05/06 14:25:15  warmerda
  * added support for binary strings
  *
@@ -54,8 +57,8 @@ static int ViewSubfield( DDFSubfieldDefn *poSFDefn,
 int main( int nArgc, char ** papszArgv )
 
 {
-    DDFModule	oModule;
-    const char	*pszFilename;
+    DDFModule   oModule;
+    const char  *pszFilename;
 
     if( nArgc > 1 )
         pszFilename = papszArgv[1];
@@ -77,20 +80,20 @@ int main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
 /*      Loop reading records till there are none left.                  */
 /* -------------------------------------------------------------------- */
-    DDFRecord	*poRecord;
-    int		iRecord = 0;
+    DDFRecord   *poRecord;
+    int         iRecord = 0;
     
     while( (poRecord = oModule.ReadRecord()) != NULL )
     {
         printf( "Record %d (%d bytes)\n",
                 ++iRecord, poRecord->GetDataSize() );
                 
-	/* ------------------------------------------------------------ */
-	/*      Loop over each field in this particular record.         */
-	/* ------------------------------------------------------------ */
+        /* ------------------------------------------------------------ */
+        /*      Loop over each field in this particular record.         */
+        /* ------------------------------------------------------------ */
         for( int iField = 0; iField < poRecord->GetFieldCount(); iField++ )
         {
-            DDFField	*poField = poRecord->GetField( iField );
+            DDFField    *poField = poRecord->GetField( iField );
 
             ViewRecordField( poField );
         }
@@ -106,7 +109,7 @@ int main( int nArgc, char ** papszArgv )
 static void ViewRecordField( DDFField * poField )
 
 {
-    int		nBytesRemaining;
+    int         nBytesRemaining;
     const char  *pachFieldData;
     DDFFieldDefn *poFieldDefn = poField->GetFieldDefn();
     
@@ -121,25 +124,25 @@ static void ViewRecordField( DDFField * poField )
     nBytesRemaining = poField->GetDataSize();
                 
     /* -------------------------------------------------------- */
-    /*	    Loop over the repeat count for this fields 		*/
-    /*	    subfields.  The repeat count will almost		*/
-    /*	    always be one.					*/
+    /*      Loop over the repeat count for this fields          */
+    /*      subfields.  The repeat count will almost            */
+    /*      always be one.                                      */
     /* -------------------------------------------------------- */
-    int		iRepeat;
+    int         iRepeat;
             
     for( iRepeat = 0; iRepeat < poField->GetRepeatCount(); iRepeat++ )
     {
 
         /* -------------------------------------------------------- */
         /*   Loop over all the subfields of this field, advancing   */
-        /*   the data pointer as we consume data.		    */
+        /*   the data pointer as we consume data.                   */
         /* -------------------------------------------------------- */
-        int	iSF;
+        int     iSF;
         
         for( iSF = 0; iSF < poFieldDefn->GetSubfieldCount(); iSF++ )
         {
             DDFSubfieldDefn *poSFDefn = poFieldDefn->GetSubfield( iSF );
-            int		nBytesConsumed;
+            int         nBytesConsumed;
 
             nBytesConsumed = ViewSubfield( poSFDefn, pachFieldData,
                                            nBytesRemaining );
@@ -159,7 +162,7 @@ static int ViewSubfield( DDFSubfieldDefn *poSFDefn,
                          int nBytesRemaining )
 
 {
-    int		nBytesConsumed = 0;
+    int         nBytesConsumed = 0;
     
     switch( poSFDefn->GetType() )
     {
@@ -186,8 +189,8 @@ static int ViewSubfield( DDFSubfieldDefn *poSFDefn,
         
       case DDFBinaryString:
       {
-          int	i;
-          GByte	*pabyBString = (GByte *)
+          int   i;
+          GByte *pabyBString = (GByte *)
               poSFDefn->ExtractStringData( pachFieldData, nBytesRemaining,
                                            &nBytesConsumed );
 

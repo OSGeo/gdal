@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  1999/11/18 19:02:19  warmerda
+ * expanded tabs
+ *
  * Revision 1.5  1999/07/07 04:23:07  danmo
  * Fixed typo in  #define _OGR_..._H_INCLUDED  line
  *
@@ -58,16 +61,16 @@ void   OGRFree( void * );
 
 typedef int OGRErr;
 
-#define OGRERR_NONE		   0
-#define OGRERR_NOT_ENOUGH_DATA	   1	/* not enough data to deserialize */
+#define OGRERR_NONE                0
+#define OGRERR_NOT_ENOUGH_DATA     1    /* not enough data to deserialize */
 #define OGRERR_NOT_ENOUGH_MEMORY   2
 #define OGRERR_UNSUPPORTED_GEOMETRY_TYPE 3
 #define OGRERR_UNSUPPORTED_OPERATION 4
-#define OGRERR_CORRUPT_DATA	   5
-#define OGRERR_FAILURE		   6
-#define OGRERR_UNSUPPORTED_SRS	   7
+#define OGRERR_CORRUPT_DATA        5
+#define OGRERR_FAILURE             6
+#define OGRERR_UNSUPPORTED_SRS     7
 
-typedef int	OGRBoolean;
+typedef int     OGRBoolean;
 
 
 #endif /* ndef _OGR_CORE_H_INCLUDED */

@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/11/18 19:01:25  warmerda
+ * expanded tabs
+ *
  * Revision 1.1  1999/11/08 22:22:55  warmerda
  * New
  *
@@ -73,8 +76,8 @@ S57ClassRegistrar::~S57ClassRegistrar()
 int S57ClassRegistrar::LoadInfo( const char * pszDirectory, int bReportErr )
 
 {
-    const char	*pszFilename;
-    FILE	*fp;
+    const char  *pszFilename;
+    FILE        *fp;
 
 /* ==================================================================== */
 /*      Read the s57objectclasses file.                                 */
@@ -182,11 +185,11 @@ int S57ClassRegistrar::LoadInfo( const char * pszDirectory, int bReportErr )
 /* -------------------------------------------------------------------- */
 /*      Read and form string list.                                      */
 /* -------------------------------------------------------------------- */
-    int		iAttr;
+    int         iAttr;
     
     while( (pszLine = CPLReadLine(fp)) != NULL )
     {
-        char	**papszTokens = CSLTokenizeStringComplex( pszLine, ",",
+        char    **papszTokens = CSLTokenizeStringComplex( pszLine, ",",
                                                           TRUE, TRUE );
 
         if( CSLCount(papszTokens) < 5 )
@@ -214,7 +217,7 @@ int S57ClassRegistrar::LoadInfo( const char * pszDirectory, int bReportErr )
     VSIFClose( fp );
     
 /* -------------------------------------------------------------------- */
-/*	Build unsorted index of attributes.				*/
+/*      Build unsorted index of attributes.                             */
 /* -------------------------------------------------------------------- */
     nAttrCount = 0;
     for( iAttr = 0; iAttr < nAttrMax; iAttr++ )
@@ -226,7 +229,7 @@ int S57ClassRegistrar::LoadInfo( const char * pszDirectory, int bReportErr )
 /* -------------------------------------------------------------------- */
 /*      Sort index by acronym.                                          */
 /* -------------------------------------------------------------------- */
-    int		bModified;
+    int         bModified;
 
     do
     {
@@ -236,7 +239,7 @@ int S57ClassRegistrar::LoadInfo( const char * pszDirectory, int bReportErr )
             if( strcmp(papszAttrAcronym[panAttrIndex[iAttr]],
                        papszAttrAcronym[panAttrIndex[iAttr+1]]) > 0 )
             {
-                int	nTemp;
+                int     nTemp;
 
                 nTemp = panAttrIndex[iAttr];
                 panAttrIndex[iAttr] = panAttrIndex[iAttr+1];
@@ -372,7 +375,7 @@ char **S57ClassRegistrar::GetAttributeList( const char * pszType )
         if( pszType != NULL && iColumn == 5 && !EQUAL(pszType,"c") )
             continue;
 
-        char	**papszTokens;
+        char    **papszTokens;
 
         papszTokens =
             CSLTokenizeStringComplex( papszCurrentFields[iColumn], ";",
@@ -425,17 +428,17 @@ char **S57ClassRegistrar::GetPrimitives()
 /*                         FindAttrByAcronym()                          */
 /************************************************************************/
 
-int	S57ClassRegistrar::FindAttrByAcronym( const char * pszName )
+int     S57ClassRegistrar::FindAttrByAcronym( const char * pszName )
 
 {
-    int		iStart, iEnd, iCandidate;
+    int         iStart, iEnd, iCandidate;
 
     iStart = 0;
     iEnd = nAttrCount-1;
 
     while( iStart <= iEnd )
     {
-        int	nCompareValue;
+        int     nCompareValue;
         
         iCandidate = (iStart + iEnd)/2;
         nCompareValue =

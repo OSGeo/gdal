@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/11/18 19:02:19  warmerda
+ * expanded tabs
+ *
  * Revision 1.1  1999/11/04 21:07:53  warmerda
  * New
  *
@@ -51,7 +54,7 @@ int main( int nArgc, char ** papszArgv )
 
 {
     const char  *pszFormat = "ESRI Shapefile";
-    const char	*pszDataSource = NULL;
+    const char  *pszDataSource = NULL;
     const char  *pszDestDataSource = NULL;
     char        **papszLayers = NULL;
     
@@ -87,7 +90,7 @@ int main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
 /*      Open data source.                                               */
 /* -------------------------------------------------------------------- */
-    OGRDataSource	*poDS;
+    OGRDataSource       *poDS;
 
     poDS = OGRSFDriverRegistrar::Open( pszDataSource, FALSE );
 
@@ -96,7 +99,7 @@ int main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
     if( poDS == NULL )
     {
-        OGRSFDriverRegistrar	*poR = OGRSFDriverRegistrar::GetRegistrar();
+        OGRSFDriverRegistrar    *poR = OGRSFDriverRegistrar::GetRegistrar();
         
         printf( "FAILURE:\n"
                 "Unable to open datasource `%s' with the following drivers.\n",
@@ -113,9 +116,9 @@ int main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
 /*      Find the output driver.                                         */
 /* -------------------------------------------------------------------- */
-    OGRSFDriverRegistrar	*poR = OGRSFDriverRegistrar::GetRegistrar();
-    OGRSFDriver			*poDriver = NULL;
-    int				iDriver;
+    OGRSFDriverRegistrar        *poR = OGRSFDriverRegistrar::GetRegistrar();
+    OGRSFDriver                 *poDriver = NULL;
+    int                         iDriver;
 
     for( iDriver = 0;
          iDriver < poR->GetDriverCount() && poDriver == NULL;
@@ -149,7 +152,7 @@ int main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
 /*      Create the output data source.                                  */
 /* -------------------------------------------------------------------- */
-    OGRDataSource	*poODS;
+    OGRDataSource       *poODS;
     
     poODS = poDriver->CreateDataSource( pszDestDataSource );
     if( poODS == NULL )
@@ -160,7 +163,7 @@ int main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
     for( int iLayer = 0; iLayer < poDS->GetLayerCount(); iLayer++ )
     {
-        OGRLayer	*poLayer = poDS->GetLayer(iLayer);
+        OGRLayer        *poLayer = poDS->GetLayer(iLayer);
 
         if( poLayer == NULL )
         {
@@ -213,7 +216,7 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
                            OGRDataSource *poDstDS )
 
 {
-    OGRLayer	*poDstLayer;
+    OGRLayer    *poDstLayer;
     OGRFeatureDefn *poFDefn;
     
 /* -------------------------------------------------------------------- */
@@ -233,7 +236,7 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Add fields.                                                     */
 /* -------------------------------------------------------------------- */
-    int		iField;
+    int         iField;
 
     for( iField = 0; iField < poFDefn->GetFieldCount(); iField++ )
     {
@@ -245,13 +248,13 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Transfer features.                                              */
 /* -------------------------------------------------------------------- */
-    OGRFeature	*poFeature;
+    OGRFeature  *poFeature;
     
     poSrcLayer->ResetReading();
     
     while( (poFeature = poSrcLayer->GetNextFeature()) != NULL )
     {
-        OGRFeature	*poDstFeature;
+        OGRFeature      *poDstFeature;
 
         poDstFeature = new OGRFeature( poDstLayer->GetLayerDefn() );
 

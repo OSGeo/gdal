@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  1999/11/18 19:02:19  warmerda
+ * expanded tabs
+ *
  * Revision 1.7  1999/09/13 02:27:33  warmerda
  * incorporated limited 2.5d support
  *
@@ -87,19 +90,19 @@ int main( int nArgc, char ** papszArgv )
     {
         if( strcmp( papszArgv[3], "point") == 0 )
         {
-            OGRPoint	oPoint( 100, 200 );
+            OGRPoint    oPoint( 100, 200 );
             
             CreateBin( &oPoint, papszArgv[2] );
         }
         else if( strcmp( papszArgv[3], "point25d") == 0 )
         {
-            OGRPoint	oPoint( 100, 200, 300 );
+            OGRPoint    oPoint( 100, 200, 300 );
             
             CreateBin( &oPoint, papszArgv[2] );
         }
         else if( strcmp( papszArgv[3], "line") == 0 )
         {
-            OGRLineString	oLine;
+            OGRLineString       oLine;
 
             oLine.addPoint( 200, 300 );
             oLine.addPoint( 300, 400 );
@@ -109,7 +112,7 @@ int main( int nArgc, char ** papszArgv )
         }
         else if( strcmp( papszArgv[3], "line25d") == 0 )
         {
-            OGRLineString	oLine;
+            OGRLineString       oLine;
 
             oLine.addPoint( 200, 300, 400 );
             oLine.addPoint( 300, 400, 500 );
@@ -119,7 +122,7 @@ int main( int nArgc, char ** papszArgv )
         }
         else if( strcmp( papszArgv[3], "polygon") == 0 )
         {
-            OGRPolygon	oPolygon;
+            OGRPolygon  oPolygon;
             OGRLinearRing oRing;
 
             oRing.addPoint( 0, 0 );
@@ -141,7 +144,7 @@ int main( int nArgc, char ** papszArgv )
         }
         else if( strcmp( papszArgv[3], "multipolygon") == 0 )
         {
-            OGRPolygon	oPolygon;
+            OGRPolygon  oPolygon;
             OGRLinearRing oRing;
             OGRMultiPolygon oMPoly;
 
@@ -180,11 +183,11 @@ int main( int nArgc, char ** papszArgv )
 void ReportBin( const char * pszFilename )
 
 {
-    FILE	*fp;
-    long	length;
+    FILE        *fp;
+    long        length;
     unsigned char * pabyData;
     OGRGeometry *poGeom;
-    OGRErr	eErr;
+    OGRErr      eErr;
     
 /* -------------------------------------------------------------------- */
 /*      Open source file.                                               */
@@ -225,7 +228,7 @@ void ReportBin( const char * pszFilename )
     poGeom = NULL;
     if( pabyData[0] > 31 )
     {
-        char	*pszInput = (char *) pabyData;
+        char    *pszInput = (char *) pabyData;
         
         eErr = OGRGeometryFactory::createFromWkt( &pszInput, NULL, &poGeom );
     }
@@ -266,9 +269,9 @@ void ReportBin( const char * pszFilename )
 void CreateBin( OGRGeometry * poGeom, const char * pszFilename )
 
 {
-    FILE	*fp;
+    FILE        *fp;
     unsigned char *pabyData;
-    long	nWkbSize;
+    long        nWkbSize;
 
 /* -------------------------------------------------------------------- */
 /*      Translate geometry into a binary representation.                */

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  1999/11/18 19:03:04  warmerda
+ * expanded tabs
+ *
  * Revision 1.2  1999/05/08 20:15:19  warmerda
  * Added malloc_dump to watch for memory leaks
  *
@@ -46,15 +49,15 @@
 int main( int nArgc, char ** papszArgv )
 
 {
-    DDFModule	oModule;
-    const char	*pszFilename = "SC01CATD.DDF";
+    DDFModule   oModule;
+    const char  *pszFilename = "SC01CATD.DDF";
 
     if( nArgc > 1 )
         pszFilename = papszArgv[1];
 
     if( oModule.Open( pszFilename ) )
     {
-        DDFRecord	*poRecord;
+        DDFRecord       *poRecord;
         
         oModule.Dump( stdout );
 

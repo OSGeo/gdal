@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/11/18 19:02:20  warmerda
+ * expanded tabs
+ *
  * Revision 1.1  1999/06/10 19:34:33  warmerda
  * New
  *
@@ -53,29 +56,29 @@ class COGISFeatureTableInfo
 {
 public:
 // Constructors
-	COGISFeatureTableInfo()
-	{
-		memset(this, 0, sizeof(*this));
-	}
+        COGISFeatureTableInfo()
+        {
+                memset(this, 0, sizeof(*this));
+        }
 
 // Attributes
 
-	TCHAR   m_szFeatureTableAlias[129];
-	TCHAR   m_szCatalog[129];
-	TCHAR   m_szSchema[129];
-	TCHAR   m_szName[129];
-	TCHAR   m_szIdColumnName[129];
-	TCHAR   m_szDGColumnName[129];
+        TCHAR   m_szFeatureTableAlias[129];
+        TCHAR   m_szCatalog[129];
+        TCHAR   m_szSchema[129];
+        TCHAR   m_szName[129];
+        TCHAR   m_szIdColumnName[129];
+        TCHAR   m_szDGColumnName[129];
 
 
 // Binding Map
 BEGIN_COLUMN_MAP(COGISFeatureTableInfo)
-	COLUMN_ENTRY(1, m_szFeatureTableAlias)
-	COLUMN_ENTRY(2, m_szCatalog)
-	COLUMN_ENTRY(3, m_szSchema)
-	COLUMN_ENTRY(4, m_szName)
-	COLUMN_ENTRY(5, m_szIdColumnName)
-	COLUMN_ENTRY(6, m_szDGColumnName)
+        COLUMN_ENTRY(1, m_szFeatureTableAlias)
+        COLUMN_ENTRY(2, m_szCatalog)
+        COLUMN_ENTRY(3, m_szSchema)
+        COLUMN_ENTRY(4, m_szName)
+        COLUMN_ENTRY(5, m_szIdColumnName)
+        COLUMN_ENTRY(6, m_szDGColumnName)
 END_COLUMN_MAP()
 };
 
@@ -93,28 +96,28 @@ class COGISGeometryColumnInfo
 {
 public:
 // Constructors
-	COGISGeometryColumnInfo()
-	{
-		memset(this, 0, sizeof(*this));
-	}
+        COGISGeometryColumnInfo()
+        {
+                memset(this, 0, sizeof(*this));
+        }
 
 // Attributes
 
-	TCHAR   m_szCatalog[129];
-	TCHAR   m_szSchema[129];
-	TCHAR   m_szName[129];
-	TCHAR   m_szColumnName[129];
+        TCHAR   m_szCatalog[129];
+        TCHAR   m_szSchema[129];
+        TCHAR   m_szName[129];
+        TCHAR   m_szColumnName[129];
         ULONG   m_nGeomType;
         ULONG   m_nSRS_ID;
 
 // Binding Map
 BEGIN_COLUMN_MAP(COGISGeometryColumnInfo)
-	COLUMN_ENTRY(1, m_szCatalog)
-	COLUMN_ENTRY(2, m_szSchema)
-	COLUMN_ENTRY(3, m_szName)
-	COLUMN_ENTRY(4, m_szColumnName)
-	COLUMN_ENTRY(5, m_nGeomType)
-	COLUMN_ENTRY(6, m_nSRS_ID)
+        COLUMN_ENTRY(1, m_szCatalog)
+        COLUMN_ENTRY(2, m_szSchema)
+        COLUMN_ENTRY(3, m_szName)
+        COLUMN_ENTRY(4, m_szColumnName)
+        COLUMN_ENTRY(5, m_nGeomType)
+        COLUMN_ENTRY(6, m_nSRS_ID)
 END_COLUMN_MAP()
 };
 
@@ -132,24 +135,24 @@ class COGISSpatialRefSystemsInfo
 {
 public:
 // Constructors
-	COGISSpatialRefSystemsInfo()
-	{
-		memset(this, 0, sizeof(*this));
-	}
+        COGISSpatialRefSystemsInfo()
+        {
+                memset(this, 0, sizeof(*this));
+        }
 
 // Attributes
 
         ULONG   m_nSRS_ID;
-	TCHAR   m_szAuthorityName[129];
+        TCHAR   m_szAuthorityName[129];
         ULONG   m_nAuthorityID;
-	TCHAR   m_szSpatialRefSystemWKT[2048];
+        TCHAR   m_szSpatialRefSystemWKT[2048];
 
 // Binding Map
 BEGIN_COLUMN_MAP(COGISSpatialRefSystemsInfo)
-	COLUMN_ENTRY(1, m_nSRS_ID)
-	COLUMN_ENTRY(2, m_szAuthorityName)
-	COLUMN_ENTRY(3, m_nAuthorityID)
-	COLUMN_ENTRY(4, m_szSpatialRefSystemWKT)
+        COLUMN_ENTRY(1, m_nSRS_ID)
+        COLUMN_ENTRY(2, m_szAuthorityName)
+        COLUMN_ENTRY(3, m_nAuthorityID)
+        COLUMN_ENTRY(4, m_szSpatialRefSystemWKT)
 END_COLUMN_MAP()
 };
 

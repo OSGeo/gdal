@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  1999/11/18 19:02:19  warmerda
+ * expanded tabs
+ *
  * Revision 1.3  1999/11/04 21:07:09  warmerda
  * Added the Set() method.
  *
@@ -92,8 +95,8 @@ void OGRFieldDefn::Initialize( const char * pszNameIn, OGRFieldType eTypeIn )
     eType = eTypeIn;
     eJustify = OJUndefined;
 
-    nWidth = 0;		// should these be defined in some particular way
-    nPrecision = 0;	// for numbers?
+    nWidth = 0;         // should these be defined in some particular way
+    nPrecision = 0;     // for numbers?
 
     memset( &uDefault, 0, sizeof(OGRField) );
 }
@@ -323,7 +326,7 @@ const char * OGRFieldDefn::GetFieldTypeName( OGRFieldType eType )
  * Set defining parameters for a field in one call.
  *
  * @param pszNameIn the new name to assign.
- * @param eTypeIn the new type (one of the OFT values like OFTInteger).	
+ * @param eTypeIn the new type (one of the OFT values like OFTInteger). 
  * @param nWidthIn the preferred formatting width.  Defaults to zero indicating
  * undefined.
  * @param nPrecisionIn number of decimals places for formatting, defaults to

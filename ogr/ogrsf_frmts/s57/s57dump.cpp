@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  1999/11/18 19:01:25  warmerda
+ * expanded tabs
+ *
  * Revision 1.4  1999/11/18 18:57:45  warmerda
  * utilize s57filecollector
  *
@@ -62,16 +65,16 @@ int main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
 /*      Load the class definitions into the registrar.                  */
 /* -------------------------------------------------------------------- */
-    S57ClassRegistrar	oRegistrar;
-    int			bRegistrarLoaded;
+    S57ClassRegistrar   oRegistrar;
+    int                 bRegistrarLoaded;
 
     bRegistrarLoaded = oRegistrar.LoadInfo( "/home/warmerda/data/s57", TRUE );
 
 /* -------------------------------------------------------------------- */
 /*      Get a list of candidate files.                                  */
 /* -------------------------------------------------------------------- */
-    char	**papszFiles;
-    int		iFile;
+    char        **papszFiles;
+    int         iFile;
 
     papszFiles = S57FileCollector( papszArgv[1] );
 
@@ -85,14 +88,14 @@ int main( int nArgc, char ** papszArgv )
         printf( "<------------------------------------------------------------------------->\n" );
         printf( "\nFile: %s\n\n", papszFiles[iFile] );
         
-        S57Reader  	oReader( papszFiles[iFile] );
+        S57Reader       oReader( papszFiles[iFile] );
 
         if( !oReader.Open( FALSE ) )
             continue;
 
         if( bRegistrarLoaded )
         {
-            int	i, anClassList[MAX_CLASSES];
+            int i, anClassList[MAX_CLASSES];
             
             for( i = 0; i < MAX_CLASSES; i++ )
                 anClassList[i] = 0;
@@ -129,8 +132,8 @@ int main( int nArgc, char ** papszArgv )
                 S57Reader::GenerateGeomFeatureDefn( wkbNone ) );
         }
     
-        OGRFeature	*poFeature;
-        int		nFeatures = 0;
+        OGRFeature      *poFeature;
+        int             nFeatures = 0;
     
         while( (poFeature = oReader.ReadNextFeature()) != NULL )
         {

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  1999/11/18 19:03:04  warmerda
+ * expanded tabs
+ *
  * Revision 1.4  1999/05/10 17:36:23  warmerda
  * Strip trailing spaces off subfield names.
  *
@@ -85,7 +88,7 @@ DDFSubfieldDefn::~DDFSubfieldDefn()
 void DDFSubfieldDefn::SetName( const char * pszNewName )
 
 {
-    int		i;
+    int         i;
     
     CPLFree( pszName );
 
@@ -129,7 +132,7 @@ int DDFSubfieldDefn::SetFormat( const char * pszFormat )
     switch( pszFormatString[0] )
     {
       case 'A':
-      case 'C':		// It isn't clear to me how this is different than 'A'
+      case 'C':         // It isn't clear to me how this is different than 'A'
         eType = DDFString;
         break;
 
@@ -260,7 +263,7 @@ int DDFSubfieldDefn::GetDataLength( const char * pachSourceData,
     }
     else
     {
-        int	nLength = 0;
+        int     nLength = 0;
         
         while( nLength < nMaxBytes
                && pachSourceData[nLength] != chFormatDelimeter 
@@ -321,7 +324,7 @@ DDFSubfieldDefn::ExtractStringData( const char * pachSourceData,
                                     int nMaxBytes, int * pnConsumedBytes )
 
 {
-    int		nLength = GetDataLength( pachSourceData, nMaxBytes,
+    int         nLength = GetDataLength( pachSourceData, nMaxBytes,
                                          pnConsumedBytes );
 
 /* -------------------------------------------------------------------- */
@@ -389,7 +392,7 @@ DDFSubfieldDefn::ExtractFloatData( const char * pachSourceData,
 
       case 'B':
       case 'b':
-        unsigned char	abyData[8];
+        unsigned char   abyData[8];
 
         CPLAssert( nFormatWidth <= nMaxBytes );
         if( pnConsumedBytes != NULL )
@@ -514,7 +517,7 @@ DDFSubfieldDefn::ExtractIntData( const char * pachSourceData,
 
       case 'B':
       case 'b':
-        unsigned char	abyData[8];
+        unsigned char   abyData[8];
 
         CPLAssert( nFormatWidth <= nMaxBytes );
         if( pnConsumedBytes != NULL )
@@ -624,8 +627,8 @@ void DDFSubfieldDefn::DumpData( const char * pachData, int nMaxBytes,
                  ExtractIntData( pachData, nMaxBytes, NULL ) );
     else if( eType == DDFBinaryString )
     {
-        int	nBytes, i;
-        GByte	*pabyBString = (GByte *) ExtractStringData( pachData, nMaxBytes, &nBytes );
+        int     nBytes, i;
+        GByte   *pabyBString = (GByte *) ExtractStringData( pachData, nMaxBytes, &nBytes );
 
         fprintf( fp, "      Subfield `%s' = 0x", pszName );
         for( i = 0; i < MIN(nBytes,24); i++ )

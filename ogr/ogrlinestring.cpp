@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  1999/11/18 19:02:19  warmerda
+ * expanded tabs
+ *
  * Revision 1.13  1999/11/17 19:38:22  warmerda
  * Further performance tweaks to exportToWkt().
  *
@@ -132,7 +135,7 @@ const char * OGRLineString::getGeometryName()
 OGRGeometry *OGRLineString::clone()
 
 {
-    OGRLineString	*poNewLineString;
+    OGRLineString       *poNewLineString;
 
     poNewLineString = new OGRLineString();
 
@@ -234,7 +237,7 @@ void OGRLineString::Make3D()
  * @param poPoint a point to initialize with the fetched point.
  */
 
-void	OGRLineString::getPoint( int i, OGRPoint * poPoint )
+void    OGRLineString::getPoint( int i, OGRPoint * poPoint )
 
 {
     assert( i >= 0 );
@@ -476,7 +479,7 @@ void OGRLineString::setPoints( int nPointsIn, double * padfX, double * padfY,
                                double * padfZ )
 
 {
-    int		i;
+    int         i;
 
     if( padfZ == NULL )
         Make2D();
@@ -506,7 +509,7 @@ OGRErr OGRLineString::importFromWkb( unsigned char * pabyData,
                                      int nBytesAvailable )
 
 {
-    OGRwkbByteOrder	eByteOrder;
+    OGRwkbByteOrder     eByteOrder;
     
     if( nBytesAvailable < 21 && nBytesAvailable != -1 )
         return OGRERR_NOT_ENOUGH_DATA;
@@ -523,7 +526,7 @@ OGRErr OGRLineString::importFromWkb( unsigned char * pabyData,
 /*      one byte.                                                       */
 /* -------------------------------------------------------------------- */
     OGRwkbGeometryType eGeometryType;
-    int		       bIs3D;
+    int                bIs3D;
 
     if( eByteOrder == wkbNDR )
     {
@@ -541,7 +544,7 @@ OGRErr OGRLineString::importFromWkb( unsigned char * pabyData,
 /* -------------------------------------------------------------------- */
 /*      Get the vertex count.                                           */
 /* -------------------------------------------------------------------- */
-    int		nNewNumPoints;
+    int         nNewNumPoints;
     
     memcpy( &nNewNumPoints, pabyData + 5, 4 );
     
@@ -558,7 +561,7 @@ OGRErr OGRLineString::importFromWkb( unsigned char * pabyData,
 /* -------------------------------------------------------------------- */
 /*      Get the vertex.                                                 */
 /* -------------------------------------------------------------------- */
-    int		i;
+    int         i;
     
     if( bIs3D )
     {
@@ -602,7 +605,7 @@ OGRErr OGRLineString::importFromWkb( unsigned char * pabyData,
 /*      Build a well known binary representation of this object.        */
 /************************************************************************/
 
-OGRErr	OGRLineString::exportToWkb( OGRwkbByteOrder eByteOrder,
+OGRErr  OGRLineString::exportToWkb( OGRwkbByteOrder eByteOrder,
                                unsigned char * pabyData )
 
 {
@@ -647,7 +650,7 @@ OGRErr	OGRLineString::exportToWkb( OGRwkbByteOrder eByteOrder,
 /* -------------------------------------------------------------------- */
 /*      Copy in the raw data.                                           */
 /* -------------------------------------------------------------------- */
-    int		i;
+    int         i;
     
     if( getCoordinateDimension() == 3 )
     {
@@ -665,7 +668,7 @@ OGRErr	OGRLineString::exportToWkb( OGRwkbByteOrder eByteOrder,
 /* -------------------------------------------------------------------- */
     if( OGR_SWAP( eByteOrder ) )
     {
-        int	nCount;
+        int     nCount;
 
         nCount = CPL_SWAP32( nPointCount );
         memcpy( pabyData+5, &nCount, 4 );
@@ -689,8 +692,8 @@ OGRErr	OGRLineString::exportToWkb( OGRwkbByteOrder eByteOrder,
 OGRErr OGRLineString::importFromWkt( char ** ppszInput )
 
 {
-    char	szToken[OGR_WKT_TOKEN_MAX];
-    const char	*pszInput = *ppszInput;
+    char        szToken[OGR_WKT_TOKEN_MAX];
+    const char  *pszInput = *ppszInput;
 
     if( paoPoints != NULL )
     {
@@ -714,7 +717,7 @@ OGRErr OGRLineString::importFromWkt( char ** ppszInput )
 /* -------------------------------------------------------------------- */
 /*      Read the point list which should consist of exactly one point.  */
 /* -------------------------------------------------------------------- */
-    int			nMaxPoint = 0;
+    int                 nMaxPoint = 0;
 
     nPointCount = 0;
 
@@ -738,8 +741,8 @@ OGRErr OGRLineString::importFromWkt( char ** ppszInput )
 OGRErr OGRLineString::exportToWkt( char ** ppszReturn )
 
 {
-    int		nMaxString = nPointCount * 16 * 2 + 20;
-    int		nRetLen = 0;
+    int         nMaxString = nPointCount * 16 * 2 + 20;
+    int         nRetLen = 0;
 
     *ppszReturn = (char *) VSIMalloc( nMaxString );
     if( *ppszReturn == NULL )
@@ -872,7 +875,7 @@ void OGRLineString::Value( double dfDistance, OGRPoint * poPoint )
 void OGRLineString::getEnvelope( OGREnvelope * poEnvelope )
 
 {
-    double	dfMinX, dfMinY, dfMaxX, dfMaxY;
+    double      dfMinX, dfMinY, dfMaxX, dfMaxY;
     
     dfMinX = dfMaxX = paoPoints[0].x;
     dfMinY = dfMaxY = paoPoints[0].y;
@@ -902,7 +905,7 @@ void OGRLineString::getEnvelope( OGREnvelope * poEnvelope )
 OGRBoolean OGRLineString::Equal( OGRGeometry * poOther )
 
 {
-    OGRLineString	*poOLine = (OGRLineString *) poOther;
+    OGRLineString       *poOLine = (OGRLineString *) poOther;
     
     if( poOther == this )
         return TRUE;

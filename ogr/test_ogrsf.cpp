@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  1999/11/18 19:02:19  warmerda
+ * expanded tabs
+ *
  * Revision 1.7  1999/11/04 21:07:35  warmerda
  * Changed to use OGRRegisterAll().
  *
@@ -54,8 +57,8 @@
 #include "ogrsf_frmts.h"
 #include "cpl_conv.h"
 
-int	bReadOnly = FALSE;
-int	bVerbose = TRUE;
+int     bReadOnly = FALSE;
+int     bVerbose = TRUE;
 
 static void Usage();
 static void TestOGRLayer( OGRLayer * );
@@ -67,7 +70,7 @@ static void TestOGRLayer( OGRLayer * );
 int main( int nArgc, char ** papszArgv )
 
 {
-    const char	*pszDataSource = NULL;
+    const char  *pszDataSource = NULL;
     
 /* -------------------------------------------------------------------- */
 /*      Register format(s).                                             */
@@ -97,8 +100,8 @@ int main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
 /*      Open data source.                                               */
 /* -------------------------------------------------------------------- */
-    OGRDataSource	*poDS;
-    OGRSFDriver		*poDriver;
+    OGRDataSource       *poDS;
+    OGRSFDriver         *poDriver;
 
     poDS = OGRSFDriverRegistrar::Open( pszDataSource, !bReadOnly, &poDriver );
     if( poDS == NULL && !bReadOnly )
@@ -116,7 +119,7 @@ int main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
     if( poDS == NULL )
     {
-        OGRSFDriverRegistrar	*poR = OGRSFDriverRegistrar::GetRegistrar();
+        OGRSFDriverRegistrar    *poR = OGRSFDriverRegistrar::GetRegistrar();
         
         printf( "FAILURE:\n"
                 "Unable to open datasource `%s' with the following drivers.\n",
@@ -149,7 +152,7 @@ int main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
     for( int iLayer = 0; iLayer < poDS->GetLayerCount(); iLayer++ )
     {
-        OGRLayer	*poLayer = poDS->GetLayer(iLayer);
+        OGRLayer        *poLayer = poDS->GetLayer(iLayer);
 
         if( poLayer == NULL )
         {
@@ -196,10 +199,10 @@ static void Usage()
 static void TestOGRLayerFeatureCount( OGRLayer *poLayer )
 
 {
-    int 	nFC = 0, nClaimedFC = poLayer->GetFeatureCount();
+    int         nFC = 0, nClaimedFC = poLayer->GetFeatureCount();
     OGRFeature  *poFeature;
     OGRSpatialReference * poSRS = poLayer->GetSpatialRef();
-    int		bWarnAboutSRS = FALSE;
+    int         bWarnAboutSRS = FALSE;
 
     poLayer->ResetReading();
 
@@ -211,7 +214,7 @@ static void TestOGRLayerFeatureCount( OGRLayer *poLayer )
             && poFeature->GetGeometryRef()->getSpatialReference() != poSRS
             && !bWarnAboutSRS )
         {
-            char	*pszLayerSRSWKT, *pszFeatureSRSWKT;
+            char        *pszLayerSRSWKT, *pszFeatureSRSWKT;
             
             bWarnAboutSRS = TRUE;
 
@@ -255,7 +258,7 @@ static void TestOGRLayerFeatureCount( OGRLayer *poLayer )
 
 /************************************************************************/
 /*                       TestOGRLayerRandomRead()                       */
-/*									*/
+/*                                                                      */
 /*      Read the first 5 features, and then try to use random           */
 /*      reading to reread 2 and 5 and verify that this works OK.        */
 /*      Don't attempt if there aren't at least 5 features.              */
@@ -264,8 +267,8 @@ static void TestOGRLayerFeatureCount( OGRLayer *poLayer )
 static void TestOGRLayerRandomRead( OGRLayer *poLayer )
 
 {
-    OGRFeature	*papoFeatures[5], *poFeature;
-    int		iFeature;
+    OGRFeature  *papoFeatures[5], *poFeature;
+    int         iFeature;
 
     poLayer->SetSpatialFilter( NULL );
     
@@ -342,9 +345,9 @@ static void TestOGRLayerRandomRead( OGRLayer *poLayer )
 static void TestOGRLayerRandomWrite( OGRLayer *poLayer )
 
 {
-    OGRFeature	*papoFeatures[5], *poFeature;
-    int		iFeature;
-    long	nFID2, nFID5;
+    OGRFeature  *papoFeatures[5], *poFeature;
+    int         iFeature;
+    long        nFID2, nFID5;
 
     poLayer->SetSpatialFilter( NULL );
     
@@ -401,7 +404,7 @@ static void TestOGRLayerRandomWrite( OGRLayer *poLayer )
     }
 
 /* -------------------------------------------------------------------- */
-/*      Now re-read feature 2 to verify the effect stuck.		*/
+/*      Now re-read feature 2 to verify the effect stuck.               */
 /* -------------------------------------------------------------------- */
     poFeature = poLayer->GetFeature( nFID5 );
     if( !poFeature->Equal(papoFeatures[1]) )
@@ -435,11 +438,11 @@ static void TestOGRLayerRandomWrite( OGRLayer *poLayer )
 static void TestSpatialFilter( OGRLayer *poLayer )
 
 {
-    OGRFeature	*poFeature, *poTargetFeature;
+    OGRFeature  *poFeature, *poTargetFeature;
     OGRPolygon  oInclusiveFilter, oExclusiveFilter;
     OGRLinearRing oRing;
     OGREnvelope sEnvelope;
-    int		nInclusiveCount;
+    int         nInclusiveCount;
 
 /* -------------------------------------------------------------------- */
 /*      Read the target feature.                                        */
@@ -469,7 +472,7 @@ static void TestSpatialFilter( OGRLayer *poLayer )
 /* -------------------------------------------------------------------- */
 /*      Construct inclusive filter.                                     */
 /* -------------------------------------------------------------------- */
-    double	dfMaxX, dfMaxY;
+    double      dfMaxX, dfMaxY;
 
     dfMaxX = 0.5 * (sEnvelope.MinX+sEnvelope.MaxX) + 0.1;
     dfMaxY = 0.5 * (sEnvelope.MinY+sEnvelope.MaxY) + 0.1;

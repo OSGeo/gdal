@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  1999/11/18 19:01:25  warmerda
+ * expanded tabs
+ *
  * Revision 1.5  1999/11/18 18:58:37  warmerda
  * added s57FileCollector()
  *
@@ -64,9 +67,9 @@ char **S57FileCollector( const char * pszDataset );
 /*      RCNM values.                                                    */
 /* -------------------------------------------------------------------- */
 
-#define RCNM_FE		100     /* Feature record */
+#define RCNM_FE         100     /* Feature record */
 
-#define RCNM_VI		110	/* Isolated Node */
+#define RCNM_VI         110     /* Isolated Node */
 #define RCNM_VC         120     /* Connected Node */
 #define RCNM_VE         130     /* Edge */
 #define RCNM_VF         140     /* Face */
@@ -74,10 +77,10 @@ char **S57FileCollector( const char * pszDataset );
 /* -------------------------------------------------------------------- */
 /*      FRID PRIM values.                                               */
 /* -------------------------------------------------------------------- */
-#define PRIM_P		1	/* point feature */
-#define PRIM_L		2	/* line feature */
-#define PRIM_A		3	/* area feature */
-#define PRIM_N		4	/* non-spatial feature  */
+#define PRIM_P          1       /* point feature */
+#define PRIM_L          2       /* line feature */
+#define PRIM_A          3       /* area feature */
+#define PRIM_N          4       /* non-spatial feature  */
 
 /************************************************************************/
 /*                          S57ClassRegistrar                           */
@@ -89,18 +92,18 @@ char **S57FileCollector( const char * pszDataset );
 class S57ClassRegistrar
 {
     // Class information:
-    int		nClasses;
+    int         nClasses;
     char      **papszClassesInfo;
 
-    int		iCurrentClass;
+    int         iCurrentClass;
 
     char      **papszCurrentFields;
 
     char      **papszTempResult;
 
     // Attribute Information:
-    int		nAttrMax;
-    int		nAttrCount;
+    int         nAttrMax;
+    int         nAttrCount;
     char      **papszAttrNames;
     char      **papszAttrAcronym;
     char     ***papapszAttrValues;
@@ -109,35 +112,35 @@ class S57ClassRegistrar
     int        *panAttrIndex; // sorted by acronym.
 
 public:
-    		S57ClassRegistrar();
-    	       ~S57ClassRegistrar();
+                S57ClassRegistrar();
+               ~S57ClassRegistrar();
 
-    int		LoadInfo( const char *, int );
+    int         LoadInfo( const char *, int );
 
     // class table methods.
-    int		SelectClassByIndex( int );
-    int		SelectClass( int );
-    int		SelectClass( const char * );
+    int         SelectClassByIndex( int );
+    int         SelectClass( int );
+    int         SelectClass( const char * );
 
-    int		Rewind() { return SelectClassByIndex(0); }
-    int		NextClass() { return SelectClassByIndex(iCurrentClass+1); }
+    int         Rewind() { return SelectClassByIndex(0); }
+    int         NextClass() { return SelectClassByIndex(iCurrentClass+1); }
 
-    int		GetOBJL();
+    int         GetOBJL();
     const char *GetDescription();
     const char *GetAcronym();
 
     char      **GetAttributeList( const char * = NULL );
 
-    char	GetClassCode();
+    char        GetClassCode();
     char      **GetPrimitives();
 
     // attribute table methods.
-    int		GetMaxAttrIndex() { return nAttrMax; }
+    int         GetMaxAttrIndex() { return nAttrMax; }
     const char *GetAttrName( int i ) { return papszAttrNames[i]; }
     const char *GetAttrAcronym( int i ) { return papszAttrAcronym[i]; }
     char      **GetAttrValues( int i ) { return papapszAttrValues[i]; }
     char        GetAttrType( int i ) { return pachAttrType[i]; }
-#define SAT_ENUM	'E'
+#define SAT_ENUM        'E'
 #define SAT_LIST        'L'
 #define SAT_FLOAT       'F'
 #define SAT_INT         'I'
@@ -159,26 +162,26 @@ public:
 
 class DDFRecordIndex
 {
-    int		bSorted;
+    int         bSorted;
     
-    int		nRecordCount;
-    int		nRecordMax;
-    int		*panRecordKey;
-    DDFRecord	**papoRecordList;
+    int         nRecordCount;
+    int         nRecordMax;
+    int         *panRecordKey;
+    DDFRecord   **papoRecordList;
 
-    void	Sort();
+    void        Sort();
 
 public:
-    		DDFRecordIndex();
-    	       ~DDFRecordIndex();
+                DDFRecordIndex();
+               ~DDFRecordIndex();
 
     void        AddRecord( int nKey, DDFRecord * );
 
     DDFRecord  *FindRecord( int nKey );
 
-    void	Clear();
+    void        Clear();
 
-    int		GetCount() { return nRecordCount; }
+    int         GetCount() { return nRecordCount; }
     DDFRecord  *GetByIndex( int i );
 };
 
@@ -190,62 +193,62 @@ class S57Reader
 {
     S57ClassRegistrar  *poRegistrar;
 
-    int			nFDefnCount;
-    OGRFeatureDefn	**papoFDefnList;
+    int                 nFDefnCount;
+    OGRFeatureDefn      **papoFDefnList;
 
-    char		*pszModuleName;
+    char                *pszModuleName;
     
-    DDFModule		*poModule;
+    DDFModule           *poModule;
 
-    int			nCOMF;  /* Coordinate multiplier */
-    int			nSOMF;  /* Vertical (sounding) multiplier */
+    int                 nCOMF;  /* Coordinate multiplier */
+    int                 nSOMF;  /* Vertical (sounding) multiplier */
 
-    int			bFileIngested;
-    DDFRecordIndex	oVI_Index;
-    DDFRecordIndex	oVC_Index;
-    DDFRecordIndex	oVE_Index;
-    DDFRecordIndex	oVF_Index;
+    int                 bFileIngested;
+    DDFRecordIndex      oVI_Index;
+    DDFRecordIndex      oVC_Index;
+    DDFRecordIndex      oVE_Index;
+    DDFRecordIndex      oVF_Index;
 
-    int			nNextFEIndex;
-    DDFRecordIndex	oFE_Index;
+    int                 nNextFEIndex;
+    DDFRecordIndex      oFE_Index;
 
     OGRFeature         *AssembleFeature( DDFRecord  *, OGRFeatureDefn * );
 
-    void		ApplyObjectClassAttributes( DDFRecord *, OGRFeature *);
+    void                ApplyObjectClassAttributes( DDFRecord *, OGRFeature *);
     
     void                AssemblePointGeometry( DDFRecord *, OGRFeature * );
     void                AssembleLineGeometry( DDFRecord *, OGRFeature * );
     void                AssembleAreaGeometry( DDFRecord *, OGRFeature * );
 
-    int			FetchPoint( int, int,
+    int                 FetchPoint( int, int,
                                     double *, double *, double * = NULL );
 
     OGRFeatureDefn     *FindFDefn( DDFRecord * );
-    int			ParseName( DDFField *, int = 0, int * = NULL );
+    int                 ParseName( DDFField *, int = 0, int * = NULL );
 
-static void		GenerateStandardAttributes( OGRFeatureDefn * );
+static void             GenerateStandardAttributes( OGRFeatureDefn * );
 
   public:
-    			S57Reader( const char * );
-    		       ~S57Reader();
+                        S57Reader( const char * );
+                       ~S57Reader();
 
-    void		SetClassBased( S57ClassRegistrar * );
+    void                SetClassBased( S57ClassRegistrar * );
 
-    int			Open( int bTestOpen );
-    void		Close();
-    DDFModule		*GetModule() { return poModule; }
+    int                 Open( int bTestOpen );
+    void                Close();
+    DDFModule           *GetModule() { return poModule; }
 
-    void		Ingest();
+    void                Ingest();
 
-    void		Rewind();
-    OGRFeature		*ReadNextFeature( OGRFeatureDefn * = NULL );
+    void                Rewind();
+    OGRFeature          *ReadNextFeature( OGRFeatureDefn * = NULL );
 
-    int			GetNextFEIndex() { return nNextFEIndex; }
-    void		SetNextFEIndex( int );
+    int                 GetNextFEIndex() { return nNextFEIndex; }
+    void                SetNextFEIndex( int );
 
-    void		AddFeatureDefn( OGRFeatureDefn * );
+    void                AddFeatureDefn( OGRFeatureDefn * );
 
-    int		        CollectClassList( int *, int);
+    int                 CollectClassList( int *, int);
 
 static OGRFeatureDefn  *GenerateGeomFeatureDefn( OGRwkbGeometryType );
 static OGRFeatureDefn  *GenerateObjectClassDefn( S57ClassRegistrar *, int );

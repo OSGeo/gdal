@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  1999/11/18 19:03:04  warmerda
+ * expanded tabs
+ *
  * Revision 1.7  1999/11/18 19:02:38  warmerda
  * added failquietly to open
  *
@@ -77,8 +80,8 @@ char *DDFFetchVariable( const char *pszString, int nMaxChars,
                         int nDelimChar1, int nDelimChar2,
                         int *pnConsumedChars );
 
-#define DDF_FIELD_TERMINATOR	30
-#define DDF_UNIT_TERMINATOR	31
+#define DDF_FIELD_TERMINATOR    30
+#define DDF_UNIT_TERMINATOR     31
 
 /************************************************************************/
 /*                           Predeclarations                            */
@@ -103,41 +106,41 @@ class DDFField;
 class DDFModule
 {
   public:
-    		DDFModule();
+                DDFModule();
                 ~DDFModule();
                 
-    int		Open( const char * pszFilename, int bFailQuietly = FALSE );
-    void	Close();
+    int         Open( const char * pszFilename, int bFailQuietly = FALSE );
+    void        Close();
 
-    void	Dump( FILE * fp );
+    void        Dump( FILE * fp );
 
     DDFRecord   *ReadRecord( void );
-    void	Rewind( long nOffset = -1 );
+    void        Rewind( long nOffset = -1 );
 
     DDFFieldDefn *FindFieldDefn( const char * );
 
     /** Fetch the number of defined fields. */
 
-    int		GetFieldCount() { return nFieldDefnCount; }
+    int         GetFieldCount() { return nFieldDefnCount; }
     DDFFieldDefn *GetField(int);
     
     // This is really just for internal use.
-    int		GetFieldControlLength() { return _fieldControlLength; }
-    void	AddCloneRecord( DDFRecord * );
-    void	RemoveCloneRecord( DDFRecord * );
+    int         GetFieldControlLength() { return _fieldControlLength; }
+    void        AddCloneRecord( DDFRecord * );
+    void        RemoveCloneRecord( DDFRecord * );
     
     // This is just for DDFRecord.
-    FILE	*GetFP() { return fpDDF; }
+    FILE        *GetFP() { return fpDDF; }
     
   private:
-    FILE	*fpDDF;
-    long	nFirstRecordOffset;
+    FILE        *fpDDF;
+    long        nFirstRecordOffset;
 
-    char 	_interchangeLevel;
-    char	_inlineCodeExtensionIndicator;
-    char 	_versionNumber;
-    char 	_appIndicator;
-    int 	_fieldControlLength;
+    char        _interchangeLevel;
+    char        _inlineCodeExtensionIndicator;
+    char        _versionNumber;
+    char        _appIndicator;
+    int         _fieldControlLength;
 
     long _recLength;
     char _leaderIden;
@@ -147,13 +150,13 @@ class DDFModule
     long _sizeFieldTag;
 
     // One DirEntry per field.  
-    int		nFieldDefnCount;
+    int         nFieldDefnCount;
     DDFFieldDefn *paoFieldDefns;
 
-    DDFRecord	*poRecord;
+    DDFRecord   *poRecord;
 
-    int		nCloneCount;
-    int		nMaxCloneCount;
+    int         nCloneCount;
+    int         nMaxCloneCount;
     DDFRecord   **papoClones;
 };
 
@@ -171,26 +174,26 @@ class DDFModule
 class DDFFieldDefn
 {
   public:
-    		DDFFieldDefn();
-    		~DDFFieldDefn();
+                DDFFieldDefn();
+                ~DDFFieldDefn();
 
     int         Initialize( DDFModule * poModule, const char *pszTag,
                             int nSize, const char * pachRecord );
     
-    void	Dump( FILE * fp );
+    void        Dump( FILE * fp );
 
     /** Fetch a pointer to the field name (tag).
      * @return this is an internal copy and shouldn't be freed.
      */
-    const char	*GetName() { return pszTag; }
+    const char  *GetName() { return pszTag; }
 
     /** Fetch a longer descriptio of this field.
      * @return this is an internal copy and shouldn't be freed.
      */
-    const char	*GetDescription() { return _fieldName; }
+    const char  *GetDescription() { return _fieldName; }
 
     /** Get the number of subfields. */
-    int		GetSubfieldCount() { return nSubfieldCount; }
+    int         GetSubfieldCount() { return nSubfieldCount; }
     
     DDFSubfieldDefn *GetSubfield( int i );
     DDFSubfieldDefn *FindSubfieldDefn( const char * );
@@ -202,14 +205,14 @@ class DDFFieldDefn
      * @return The width of the field in bytes, or zero if the field is not
      * apparently of a fixed width.
      */
-    int		GetFixedWidth() { return nFixedWidth; }
+    int         GetFixedWidth() { return nFixedWidth; }
 
     /**
      * Fetch repeating flag.
      * @see DDFField::GetRepeatCount()
      * @return TRUE if the field is marked as repeating.
      */
-    int		IsRepeating() { return bRepeatingSubfields; }
+    int         IsRepeating() { return bRepeatingSubfields; }
 
   typedef enum { elementary, vector, array, concatenated } data_struct_code;
   typedef enum { char_string, 
@@ -222,24 +225,24 @@ class DDFFieldDefn
 
   private:
 
-    DDFModule *	poModule;
-    char *	pszTag;
+    DDFModule * poModule;
+    char *      pszTag;
 
-    char *	_fieldName;
-    char *	_arrayDescr;
-    char *	_formatControls;
+    char *      _fieldName;
+    char *      _arrayDescr;
+    char *      _formatControls;
 
-    int		bRepeatingSubfields;
-    int		nFixedWidth;	// zero if variable. 
+    int         bRepeatingSubfields;
+    int         nFixedWidth;    // zero if variable. 
 
-    int		BuildSubfields();
-    int		ApplyFormats();
+    int         BuildSubfields();
+    int         ApplyFormats();
 
     DDFFieldDefn::data_struct_code _data_struct_code;
 
     DDFFieldDefn::data_type_code   _data_type_code;
 
-    int	     	nSubfieldCount;
+    int         nSubfieldCount;
     DDFSubfieldDefn *paoSubfields;
 };
 
@@ -261,17 +264,17 @@ class DDFSubfieldDefn
 {
 public:
 
-    		DDFSubfieldDefn();
+                DDFSubfieldDefn();
                 ~DDFSubfieldDefn();
 
-    void	SetName( const char * pszName );
+    void        SetName( const char * pszName );
 
     /** Get pointer to subfield name. */
     const char  *GetName() { return pszName; }
     
     /** Get pointer to subfield format string */
     const char  *GetFormat() { return pszFormatString; }
-    int		SetFormat( const char * pszFormat );
+    int         SetFormat( const char * pszFormat );
 
     /**
      * Get the general type of the subfield.  This can be used to
@@ -281,21 +284,21 @@ public:
      * DDFBinaryString.
      */
       
-    DDFDataType	GetType() { return eType; }
+    DDFDataType GetType() { return eType; }
 
-    double	ExtractFloatData( const char *pachData, int nMaxBytes,
+    double      ExtractFloatData( const char *pachData, int nMaxBytes,
                                   int * pnConsumedBytes );
-    int		ExtractIntData( const char *pachData, int nMaxBytes,
+    int         ExtractIntData( const char *pachData, int nMaxBytes,
                                 int * pnConsumedBytes );
-    const char	*ExtractStringData( const char *pachData, int nMaxBytes,
+    const char  *ExtractStringData( const char *pachData, int nMaxBytes,
                                     int * pnConsumedBytes );
-    int	    	GetDataLength( const char *, int, int * );
-    void	DumpData( const char *pachData, int nMaxBytes, FILE * fp );
+    int         GetDataLength( const char *, int, int * );
+    void        DumpData( const char *pachData, int nMaxBytes, FILE * fp );
 
     /** Get the subfield width (zero for variable). */
-    int		GetWidth() { return nFormatWidth; } // zero for variable.
+    int         GetWidth() { return nFormatWidth; } // zero for variable.
     
-    void	Dump( FILE * fp );
+    void        Dump( FILE * fp );
 
 private:
 
@@ -312,27 +315,27 @@ typedef enum {
     FloatComplex=5
 } DDFBinaryFormat;
 
-  char      *pszName;	// a.k.a. subfield mnemonic
-  char	    *pszFormatString; 
+  char      *pszName;   // a.k.a. subfield mnemonic
+  char      *pszFormatString; 
 
-  DDFDataType		eType;
-  DDFBinaryFormat	eBinaryFormat;
+  DDFDataType           eType;
+  DDFBinaryFormat       eBinaryFormat;
 
 /* -------------------------------------------------------------------- */
 /*      bIsVariable determines whether we using the                     */
 /*      chFormatDelimeter (TRUE), or the fixed width (FALSE).           */
 /* -------------------------------------------------------------------- */
-  int	     bIsVariable;
+  int        bIsVariable;
   
-  char 	     chFormatDelimeter;
-  int  	     nFormatWidth;
+  char       chFormatDelimeter;
+  int        nFormatWidth;
 
 /* -------------------------------------------------------------------- */
 /*      Fetched string cache.  This is where we hold the values         */
 /*      returned from ExtractStringData().                              */
 /* -------------------------------------------------------------------- */
-  int	     nMaxBufChars;
-  char 	     *pachBuffer;
+  int        nMaxBufChars;
+  char       *pachBuffer;
 };
 
 /************************************************************************/
@@ -351,28 +354,28 @@ typedef enum {
 class DDFRecord
 {
   public:
-    		DDFRecord( DDFModule * );
-    		~DDFRecord();
+                DDFRecord( DDFModule * );
+                ~DDFRecord();
 
     DDFRecord  *Clone();
     
-    void	Dump( FILE * );
+    void        Dump( FILE * );
 
     /** Get the number of DDFFields on this record. */
-    int		GetFieldCount() { return nFieldCount; }
+    int         GetFieldCount() { return nFieldCount; }
 
-    DDFField	*FindField( const char *, int = 0 );
+    DDFField    *FindField( const char *, int = 0 );
     DDFField    *GetField( int );
 
-    int		GetIntSubfield( const char *, int, const char *, int,
+    int         GetIntSubfield( const char *, int, const char *, int,
                                 int * = NULL );
-    double	GetFloatSubfield( const char *, int, const char *, int,
+    double      GetFloatSubfield( const char *, int, const char *, int,
                                   int * = NULL );
     const char *GetStringSubfield( const char *, int, const char *, int,
                                    int * = NULL );
 
     /** Fetch size of records raw data (GetData()) in bytes. */
-    int		GetDataSize() { return nDataSize; }
+    int         GetDataSize() { return nDataSize; }
 
     /**
      * Fetch the raw data for this record.  The returned pointer is effectively
@@ -388,26 +391,26 @@ class DDFRecord
     DDFModule * GetModule() { return poModule; }
 
     // This is really just for the DDFModule class.
-    int		Read();
-    void	Clear();
+    int         Read();
+    void        Clear();
     
   private:
 
-    int		ReadHeader();
+    int         ReadHeader();
     
-    DDFModule	*poModule;
+    DDFModule   *poModule;
 
-    int		nReuseHeader;	
+    int         nReuseHeader;   
 
-    int		nFieldOffset;	// field data area, not dir entries.
+    int         nFieldOffset;   // field data area, not dir entries.
 
-    int		nDataSize;	// Whole record except leader with header
-    char	*pachData;
+    int         nDataSize;      // Whole record except leader with header
+    char        *pachData;
 
-    int		nFieldCount;
-    DDFField	*paoFields;
+    int         nFieldCount;
+    DDFField    *paoFields;
 
-    int		bIsClone;
+    int         bIsClone;
 };
 
 /************************************************************************/
@@ -428,10 +431,10 @@ class DDFRecord
 class DDFField
 {
   public:
-    void		Initialize( DDFFieldDefn *, const char *pszData,
+    void                Initialize( DDFFieldDefn *, const char *pszData,
                                     int nSize );
 
-    void		Dump( FILE * fp );
+    void                Dump( FILE * fp );
 
     const char         *GetSubfieldData( DDFSubfieldDefn *,
                                          int * = NULL, int = 0 );
@@ -443,19 +446,19 @@ class DDFField
     const char         *GetData() { return pachData; }
 
     /** Return the number of bytes in the data block returned by GetData(). */
-    int			GetDataSize() { return nDataSize; }
+    int                 GetDataSize() { return nDataSize; }
 
-    int			GetRepeatCount();
+    int                 GetRepeatCount();
 
     /** Fetch the corresponding DDFFieldDefn. */
-    DDFFieldDefn	*GetFieldDefn() { return poDefn; }
+    DDFFieldDefn        *GetFieldDefn() { return poDefn; }
     
   private:
-    DDFFieldDefn	*poDefn;
+    DDFFieldDefn        *poDefn;
 
-    int			nDataSize;
+    int                 nDataSize;
 
-    const char		*pachData;
+    const char          *pachData;
 };
 
 

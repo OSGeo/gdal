@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  1999/11/18 19:02:19  warmerda
+ * expanded tabs
+ *
  * Revision 1.6  1999/05/31 20:41:27  warmerda
  * Cleaned up functions substantially, by moving shared code to end of case
  * statements.  createFromWkt() now updates pointer to text to indicate how
@@ -95,7 +98,7 @@ OGRErr OGRGeometryFactory::createFromWkb(unsigned char *pabyData,
 {
     OGRwkbGeometryType eGeometryType;
     OGRwkbByteOrder eByteOrder;
-    OGRErr	eErr;
+    OGRErr      eErr;
     OGRGeometry *poGeom;
 
     *ppoReturn = NULL;
@@ -206,9 +209,9 @@ OGRErr OGRGeometryFactory::createFromWkt(char **ppszData,
                                          OGRGeometry **ppoReturn )
 
 {
-    OGRErr	eErr;
-    char	szToken[OGR_WKT_TOKEN_MAX];
-    char	*pszInput = *ppszData;
+    OGRErr      eErr;
+    char        szToken[OGR_WKT_TOKEN_MAX];
+    char        *pszInput = *ppszData;
     OGRGeometry *poGeom;
 
     *ppoReturn = NULL;

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  1999/11/18 19:02:19  warmerda
+ * expanded tabs
+ *
  * Revision 1.2  1999/06/25 20:44:43  warmerda
  * implemented assignSpatialReference, carry properly
  *
@@ -83,7 +86,7 @@ OGRErr OGRMultiPolygon::addGeometry( OGRGeometry * poNewGeom )
 OGRGeometry *OGRMultiPolygon::clone()
 
 {
-    OGRMultiPolygon	*poNewGC;
+    OGRMultiPolygon     *poNewGC;
 
     poNewGC = new OGRMultiPolygon;
     poNewGC->assignSpatialReference( getSpatialReference() );

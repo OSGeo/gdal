@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  1999/11/18 19:02:19  warmerda
+ * expanded tabs
+ *
  * Revision 1.7  1999/10/05 17:53:11  warmerda
  * GetLinearUnits() should look for UNIT not UNITS.
  *
@@ -292,7 +295,7 @@ const char *OGRSpatialReference::GetAttrValue( const char * pszNodeName,
                                                int iAttr )
 
 {
-    OGR_SRSNode	*poNode;
+    OGR_SRSNode *poNode;
 
     poNode = GetAttrNode( pszNodeName );
     if( poNode == NULL )
@@ -348,8 +351,8 @@ OGRErr OGRSpatialReference::Validate()
 /* -------------------------------------------------------------------- */
     if( EQUAL(poRoot->GetValue(),"PROJCS") )
     {
-        OGR_SRSNode	*poNode;
-        int		i;
+        OGR_SRSNode     *poNode;
+        int             i;
 
         for( i = 1; i < poRoot->GetChildCount(); i++ )
         {
@@ -444,12 +447,12 @@ OGRErr OGRSpatialReference::Validate()
 /* -------------------------------------------------------------------- */
 /*      Validate GEOGCS if found.                                       */
 /* -------------------------------------------------------------------- */
-    OGR_SRSNode	*poGEOGCS = poRoot->GetNode( "GEOGCS" );
+    OGR_SRSNode *poGEOGCS = poRoot->GetNode( "GEOGCS" );
 
     if( poGEOGCS != NULL )
     {
-        OGR_SRSNode	*poNode;
-        int		i;
+        OGR_SRSNode     *poNode;
+        int             i;
 
         for( i = 1; i < poRoot->GetChildCount(); i++ )
         {
@@ -503,11 +506,11 @@ OGRErr OGRSpatialReference::Validate()
 /* -------------------------------------------------------------------- */
 /*      Validate DATUM/SPHEROID.                                        */
 /* -------------------------------------------------------------------- */
-    OGR_SRSNode	*poDATUM = poRoot->GetNode( "DATUM" );
+    OGR_SRSNode *poDATUM = poRoot->GetNode( "DATUM" );
 
     if( poDATUM != NULL )
     {
-        OGR_SRSNode	*poSPHEROID;
+        OGR_SRSNode     *poSPHEROID;
 
         if( poDATUM->GetChildCount() != 2 )
         {
@@ -567,7 +570,7 @@ OGRErr OGRSpatialReference::Validate()
 OGRSpatialReference *OGRSpatialReference::Clone()
 
 {
-    OGRSpatialReference	*poNewRef;
+    OGRSpatialReference *poNewRef;
 
     poNewRef = new OGRSpatialReference();
 
@@ -592,7 +595,7 @@ OGRSpatialReference *OGRSpatialReference::Clone()
  * is possible error conditions will develop. 
  */
  
-OGRErr	OGRSpatialReference::exportToWkt( char ** ppszResult )
+OGRErr  OGRSpatialReference::exportToWkt( char ** ppszResult )
 
 {
     if( poRoot == NULL )
@@ -645,9 +648,9 @@ OGRErr OGRSpatialReference::SetNode( const char * pszNodePath,
                                      const char * pszNewNodeValue )
 
 {
-    char	**papszPathTokens;
-    int		i;
-    OGR_SRSNode	*poNode;
+    char        **papszPathTokens;
+    int         i;
+    OGR_SRSNode *poNode;
 
     papszPathTokens = CSLTokenizeStringComplex(pszNodePath, "|", TRUE, FALSE);
 
@@ -662,7 +665,7 @@ OGRErr OGRSpatialReference::SetNode( const char * pszNodePath,
     poNode = GetRoot();
     for( i = 1; papszPathTokens[i] != NULL; i++ )
     {
-        int	j;
+        int     j;
         
         for( j = 0; j < poNode->GetChildCount(); j++ )
         {
@@ -675,7 +678,7 @@ OGRErr OGRSpatialReference::SetNode( const char * pszNodePath,
 
         if( j == poNode->GetChildCount() )
         {
-            OGR_SRSNode	*poNewNode = new OGR_SRSNode( papszPathTokens[i] );
+            OGR_SRSNode *poNewNode = new OGR_SRSNode( papszPathTokens[i] );
             poNode->AddChild( poNewNode );
             poNode = poNewNode;
         }
@@ -699,7 +702,7 @@ OGRErr OGRSpatialReference::SetNode( const char *pszNodePath,
                                      double dfValue )
 
 {
-    char	szValue[64];
+    char        szValue[64];
 
     if( ABS(dfValue - (int) dfValue) == 0.0 )
         sprintf( szValue, "%d", (int) dfValue );
@@ -718,9 +721,9 @@ OGRErr OGRSpatialReference::SetLinearUnits( const char * pszUnitsName,
                                             double dfInMeters )
 
 {
-    OGR_SRSNode	*poPROJCS = GetAttrNode( "PROJCS" );
+    OGR_SRSNode *poPROJCS = GetAttrNode( "PROJCS" );
     OGR_SRSNode *poUnits;
-    char	szValue[128];
+    char        szValue[128];
 
     if( poPROJCS == NULL )
         return OGRERR_FAILURE;
@@ -747,7 +750,7 @@ OGRErr OGRSpatialReference::SetLinearUnits( const char * pszUnitsName,
 double OGRSpatialReference::GetLinearUnits( char ** ppszName )
 
 {
-    OGR_SRSNode	*poPROJCS = GetAttrNode( "PROJCS" );
+    OGR_SRSNode *poPROJCS = GetAttrNode( "PROJCS" );
 
     if( ppszName != NULL )
         *ppszName = "unknown";
@@ -757,7 +760,7 @@ double OGRSpatialReference::GetLinearUnits( char ** ppszName )
 
     for( int iChild = 0; iChild < poPROJCS->GetChildCount(); iChild++ )
     {
-        OGR_SRSNode	*poChild = poPROJCS->GetChild(iChild);
+        OGR_SRSNode     *poChild = poPROJCS->GetChild(iChild);
         
         if( EQUAL(poChild->GetValue(),"UNIT")
             && poChild->GetChildCount() == 2 )
@@ -811,8 +814,8 @@ OGRSpatialReference::SetGeogCS( const char * pszGeogName,
 /* -------------------------------------------------------------------- */
 /*      Build the GEOGCS object.                                        */
 /* -------------------------------------------------------------------- */
-    char	        szValue[128];
-    OGR_SRSNode		*poGeogCS, *poSpheroid, *poDatum, *poPM, *poUnits;
+    char                szValue[128];
+    OGR_SRSNode         *poGeogCS, *poSpheroid, *poDatum, *poPM, *poUnits;
 
     poGeogCS = new OGR_SRSNode( "GEOGCS" );
     poGeogCS->AddChild( new OGR_SRSNode( pszGeogName ) );
@@ -885,7 +888,7 @@ OGRSpatialReference::SetGeogCS( const char * pszGeogName,
 double OGRSpatialReference::GetSemiMajor( OGRErr * pnErr )
 
 {
-    OGR_SRSNode	*poSpheroid = GetAttrNode( "SPHEROID" );
+    OGR_SRSNode *poSpheroid = GetAttrNode( "SPHEROID" );
     
     if( pnErr != NULL )
         *pnErr = OGRERR_NONE;
@@ -910,7 +913,7 @@ double OGRSpatialReference::GetSemiMajor( OGRErr * pnErr )
 double OGRSpatialReference::GetInvFlattening( OGRErr * pnErr )
 
 {
-    OGR_SRSNode	*poSpheroid = GetAttrNode( "SPHEROID" );
+    OGR_SRSNode *poSpheroid = GetAttrNode( "SPHEROID" );
     
     if( pnErr != NULL )
         *pnErr = OGRERR_NONE;
@@ -935,7 +938,7 @@ double OGRSpatialReference::GetInvFlattening( OGRErr * pnErr )
 double OGRSpatialReference::GetSemiMinor( OGRErr * pnErr )
 
 {
-    double	dfInvFlattening, dfSemiMajor;
+    double      dfInvFlattening, dfSemiMajor;
 
     dfSemiMajor = GetSemiMajor( pnErr );
     dfInvFlattening = GetInvFlattening( pnErr );
@@ -966,9 +969,9 @@ OGRErr OGRSpatialReference::SetProjParm( const char * pszParmName,
                                          double dfValue )
 
 {
-    OGR_SRSNode	*poPROJCS = GetAttrNode( "PROJCS" );
+    OGR_SRSNode *poPROJCS = GetAttrNode( "PROJCS" );
     OGR_SRSNode *poParm;
-    char	szValue[64];
+    char        szValue[64];
 
     if( poPROJCS == NULL || GetAttrNode( pszParmName ) != NULL )
         return OGRERR_FAILURE;
@@ -1004,7 +1007,7 @@ double OGRSpatialReference::GetProjParm( const char * pszName,
                                          OGRErr *pnErr )
 
 {
-    OGR_SRSNode	*poPROJCS = GetAttrNode( "PROJCS" );
+    OGR_SRSNode *poPROJCS = GetAttrNode( "PROJCS" );
     OGR_SRSNode *poParameter = NULL;
 
     if( pnErr != NULL )
@@ -1032,8 +1035,8 @@ double OGRSpatialReference::GetProjParm( const char * pszName,
 /* -------------------------------------------------------------------- */
 /*      Try similar names, for selected parameters.                     */
 /* -------------------------------------------------------------------- */
-    double	dfValue;
-    OGRErr	nSubErr;
+    double      dfValue;
+    OGRErr      nSubErr;
     
     if( EQUAL(pszName,SRS_PP_LATITUDE_OF_ORIGIN) )
     {
@@ -1236,7 +1239,7 @@ OGRErr OGRSpatialReference::SetEckertVI( double dfCentralMeridian,
 /************************************************************************/
 
 OGRErr OGRSpatialReference::SetEquirectangular(
-    				   double dfCenterLat, double dfCenterLong,
+                                   double dfCenterLat, double dfCenterLong,
                                    double dfFalseEasting,
                                    double dfFalseNorthing )
 
@@ -1272,7 +1275,7 @@ OGRErr OGRSpatialReference::SetGS( double dfCentralMeridian,
 /************************************************************************/
 
 OGRErr OGRSpatialReference::SetGnomonic(
-    				   double dfCenterLat, double dfCenterLong,
+                                   double dfCenterLat, double dfCenterLong,
                                    double dfFalseEasting,
                                    double dfFalseNorthing )
 
@@ -1487,7 +1490,7 @@ OGRErr OGRSpatialReference::SetOS( double dfOriginLat, double dfCMeridian,
 /************************************************************************/
 
 OGRErr OGRSpatialReference::SetOrthographic(
-    				double dfCenterLat, double dfCenterLong,
+                                double dfCenterLat, double dfCenterLong,
                                 double dfFalseEasting, double dfFalseNorthing )
 
 {
@@ -1505,7 +1508,7 @@ OGRErr OGRSpatialReference::SetOrthographic(
 /************************************************************************/
 
 OGRErr OGRSpatialReference::SetPolyconic(
-    				double dfCenterLat, double dfCenterLong,
+                                double dfCenterLat, double dfCenterLong,
                                 double dfFalseEasting, double dfFalseNorthing )
 
 {
@@ -1526,7 +1529,7 @@ OGRErr OGRSpatialReference::SetPolyconic(
 /************************************************************************/
 
 OGRErr OGRSpatialReference::SetPS(
-    				double dfCenterLat, double dfCenterLong,
+                                double dfCenterLat, double dfCenterLong,
                                 double dfScale,
                                 double dfFalseEasting, double dfFalseNorthing )
 
@@ -1580,8 +1583,8 @@ OGRErr OGRSpatialReference::SetSinusoidal( double dfCenterLong,
 /************************************************************************/
 
 OGRErr OGRSpatialReference::SetStereographic(
-			    double dfOriginLat, double dfCMeridian,
-			    double dfScale,
+                            double dfOriginLat, double dfCMeridian,
+                            double dfScale,
                             double dfFalseEasting,
                             double dfFalseNorthing )
 

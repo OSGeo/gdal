@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  1999/11/18 19:03:04  warmerda
+ * expanded tabs
+ *
  * Revision 1.7  1999/09/03 14:14:39  warmerda
  * fix cloning
  *
@@ -145,7 +148,7 @@ int DDFRecord::Read()
 /*      the previous records data without disturbing the rest of the    */
 /*      record.                                                         */
 /* -------------------------------------------------------------------- */
-    size_t	nReadBytes;
+    size_t      nReadBytes;
 
     nReadBytes = VSIFRead( pachData + nFieldOffset, 1,
                            nDataSize - nFieldOffset,
@@ -215,8 +218,8 @@ int DDFRecord::ReadHeader()
 /* -------------------------------------------------------------------- */
 /*      Read the 24 byte leader.                                        */
 /* -------------------------------------------------------------------- */
-    char	achLeader[nLeaderSize];
-    int		nReadBytes;
+    char        achLeader[nLeaderSize];
+    int         nReadBytes;
 
     nReadBytes = VSIFRead(achLeader,1,nLeaderSize,poModule->GetFP());
     if( nReadBytes == 0 && VSIFEof( poModule->GetFP() ) )
@@ -234,12 +237,12 @@ int DDFRecord::ReadHeader()
 /* -------------------------------------------------------------------- */
 /*      Extract information from leader.                                */
 /* -------------------------------------------------------------------- */
-    int		_recLength, _fieldAreaStart, _sizeFieldLength;
-    int		_sizeFieldPos, _sizeFieldTag;
-    char	_leaderIden;
+    int         _recLength, _fieldAreaStart, _sizeFieldLength;
+    int         _sizeFieldPos, _sizeFieldTag;
+    char        _leaderIden;
     
-    _recLength			  = DDFScanInt( achLeader+0, 5 );
-    _leaderIden 		  = achLeader[6];
+    _recLength                    = DDFScanInt( achLeader+0, 5 );
+    _leaderIden                   = achLeader[6];
     _fieldAreaStart               = DDFScanInt(achLeader+12,5);
     
     _sizeFieldLength = achLeader[20] - '0';
@@ -281,8 +284,8 @@ int DDFRecord::ReadHeader()
 /* -------------------------------------------------------------------- */
 /*      Loop over the directory entries, making a pass counting them.   */
 /* -------------------------------------------------------------------- */
-    int		i;
-    int		nFieldEntryWidth;
+    int         i;
+    int         nFieldEntryWidth;
 
     nFieldEntryWidth = _sizeFieldLength + _sizeFieldPos + _sizeFieldTag;
     nFieldCount = 0;
@@ -301,9 +304,9 @@ int DDFRecord::ReadHeader()
     
     for( i = 0; i < nFieldCount; i++ )
     {
-        char	szTag[128];
-        int	nEntryOffset = i*nFieldEntryWidth;
-        int	nFieldLength, nFieldPos;
+        char    szTag[128];
+        int     nEntryOffset = i*nFieldEntryWidth;
+        int     nFieldLength, nFieldPos;
         
 /* -------------------------------------------------------------------- */
 /*      Read the position information and tag.                          */
@@ -320,7 +323,7 @@ int DDFRecord::ReadHeader()
 /* -------------------------------------------------------------------- */
 /*      Find the corresponding field in the module directory.           */
 /* -------------------------------------------------------------------- */
-        DDFFieldDefn	*poFieldDefn = poModule->FindFieldDefn( szTag );
+        DDFFieldDefn    *poFieldDefn = poModule->FindFieldDefn( szTag );
 
         if( poFieldDefn == NULL )
         {
@@ -421,8 +424,8 @@ int DDFRecord::GetIntSubfield( const char * pszField, int iFieldIndex,
                                int * pnSuccess )
 
 {
-    DDFField	*poField;
-    int		nDummyErr;
+    DDFField    *poField;
+    int         nDummyErr;
 
     if( pnSuccess == NULL )
         pnSuccess = &nDummyErr;
@@ -439,7 +442,7 @@ int DDFRecord::GetIntSubfield( const char * pszField, int iFieldIndex,
 /* -------------------------------------------------------------------- */
 /*      Get the subfield definition                                     */
 /* -------------------------------------------------------------------- */
-    DDFSubfieldDefn	*poSFDefn;
+    DDFSubfieldDefn     *poSFDefn;
 
     poSFDefn = poField->GetFieldDefn()->FindSubfieldDefn( pszSubfield );
     if( poSFDefn == NULL )
@@ -448,7 +451,7 @@ int DDFRecord::GetIntSubfield( const char * pszField, int iFieldIndex,
 /* -------------------------------------------------------------------- */
 /*      Get a pointer to the data.                                      */
 /* -------------------------------------------------------------------- */
-    int		nBytesRemaining;
+    int         nBytesRemaining;
     
     const char *pachData = poField->GetSubfieldData(poSFDefn,
                                                     &nBytesRemaining,
@@ -487,8 +490,8 @@ double DDFRecord::GetFloatSubfield( const char * pszField, int iFieldIndex,
                                     int * pnSuccess )
 
 {
-    DDFField	*poField;
-    int		nDummyErr;
+    DDFField    *poField;
+    int         nDummyErr;
 
     if( pnSuccess == NULL )
         pnSuccess = &nDummyErr;
@@ -505,7 +508,7 @@ double DDFRecord::GetFloatSubfield( const char * pszField, int iFieldIndex,
 /* -------------------------------------------------------------------- */
 /*      Get the subfield definition                                     */
 /* -------------------------------------------------------------------- */
-    DDFSubfieldDefn	*poSFDefn;
+    DDFSubfieldDefn     *poSFDefn;
 
     poSFDefn = poField->GetFieldDefn()->FindSubfieldDefn( pszSubfield );
     if( poSFDefn == NULL )
@@ -514,7 +517,7 @@ double DDFRecord::GetFloatSubfield( const char * pszField, int iFieldIndex,
 /* -------------------------------------------------------------------- */
 /*      Get a pointer to the data.                                      */
 /* -------------------------------------------------------------------- */
-    int		nBytesRemaining;
+    int         nBytesRemaining;
     
     const char *pachData = poField->GetSubfieldData(poSFDefn,
                                                     &nBytesRemaining,
@@ -556,8 +559,8 @@ DDFRecord::GetStringSubfield( const char * pszField, int iFieldIndex,
                               int * pnSuccess )
 
 {
-    DDFField	*poField;
-    int		nDummyErr;
+    DDFField    *poField;
+    int         nDummyErr;
 
     if( pnSuccess == NULL )
         pnSuccess = &nDummyErr;
@@ -574,7 +577,7 @@ DDFRecord::GetStringSubfield( const char * pszField, int iFieldIndex,
 /* -------------------------------------------------------------------- */
 /*      Get the subfield definition                                     */
 /* -------------------------------------------------------------------- */
-    DDFSubfieldDefn	*poSFDefn;
+    DDFSubfieldDefn     *poSFDefn;
 
     poSFDefn = poField->GetFieldDefn()->FindSubfieldDefn( pszSubfield );
     if( poSFDefn == NULL )
@@ -583,7 +586,7 @@ DDFRecord::GetStringSubfield( const char * pszField, int iFieldIndex,
 /* -------------------------------------------------------------------- */
 /*      Get a pointer to the data.                                      */
 /* -------------------------------------------------------------------- */
-    int		nBytesRemaining;
+    int         nBytesRemaining;
     
     const char *pachData = poField->GetSubfieldData(poSFDefn,
                                                     &nBytesRemaining,
@@ -620,7 +623,7 @@ DDFRecord::GetStringSubfield( const char * pszField, int iFieldIndex,
 DDFRecord * DDFRecord::Clone()
 
 {
-    DDFRecord	*poNR;
+    DDFRecord   *poNR;
 
     poNR = new DDFRecord( poModule );
 
@@ -635,7 +638,7 @@ DDFRecord * DDFRecord::Clone()
     poNR->paoFields = new DDFField[nFieldCount];
     for( int i = 0; i < nFieldCount; i++ )
     {
-        int	nOffset;
+        int     nOffset;
 
         nOffset = (paoFields[i].GetData() - pachData);
         poNR->paoFields[i].Initialize( paoFields[i].GetFieldDefn(),

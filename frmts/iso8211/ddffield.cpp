@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  1999/11/18 19:03:04  warmerda
+ * expanded tabs
+ *
  * Revision 1.8  1999/11/03 14:04:57  warmerda
  * Made use of GetSubfieldData() with repeated fixed length
  * fields much more efficient.
@@ -112,7 +115,7 @@ void DDFField::Dump( FILE * fp )
 /* -------------------------------------------------------------------- */
 /*      dump the data of the subfields.                                 */
 /* -------------------------------------------------------------------- */
-    int		iOffset = 0, nLoopCount;
+    int         iOffset = 0, nLoopCount;
 
     for( nLoopCount = 0; nLoopCount < GetRepeatCount(); nLoopCount++ )
     {
@@ -124,7 +127,7 @@ void DDFField::Dump( FILE * fp )
         
         for( int i = 0; i < poDefn->GetSubfieldCount(); i++ )
         {
-            int		nBytesConsumed;
+            int         nBytesConsumed;
 
             poDefn->GetSubfield(i)->DumpData( pachData + iOffset,
                                               nDataSize - iOffset, fp );
@@ -169,7 +172,7 @@ const char *DDFField::GetSubfieldData( DDFSubfieldDefn *poSFDefn,
                                        int *pnMaxBytes, int iSubfieldIndex )
 
 {
-    int		iOffset = 0;
+    int         iOffset = 0;
     
     if( poSFDefn == NULL )
         return NULL;
@@ -184,7 +187,7 @@ const char *DDFField::GetSubfieldData( DDFSubfieldDefn *poSFDefn,
     {
         for( int iSF = 0; iSF < poDefn->GetSubfieldCount(); iSF++ )
         {
-            int	nBytesConsumed;
+            int nBytesConsumed;
             DDFSubfieldDefn * poThisSFDefn = poDefn->GetSubfield( iSF );
             
             if( poThisSFDefn == poSFDefn && iSubfieldIndex == 0 )
@@ -246,7 +249,7 @@ int DDFField::GetRepeatCount()
 /*      variable length field, but the count is one, so it isn't        */
 /*      much value for testing.                                         */
 /* -------------------------------------------------------------------- */
-    int		iOffset = 0, iRepeatCount = 1;
+    int         iOffset = 0, iRepeatCount = 1;
     
     while( TRUE )
     {

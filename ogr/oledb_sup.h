@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  1999/11/18 19:02:20  warmerda
+ * expanded tabs
+ *
  * Revision 1.9  1999/09/07 12:05:59  warmerda
  * trimmed out some old oledbsup related stuff
  *
@@ -61,18 +64,18 @@
 #ifndef OLEDB_SUP_H_INCLUDED
 #define OLEDB_SUP_H_INCLUDED
 
-#define WIN32_LEAN_AND_MEAN		// avoid the world
-#define INC_OLE2				// tell windows.h to always include ole2.h
+#define WIN32_LEAN_AND_MEAN             // avoid the world
+#define INC_OLE2                                // tell windows.h to always include ole2.h
 
-#include <windows.h>			// 
-#include <ole2ver.h>			// OLE2.0 build version
-#include <cguid.h>				// GUID_NULL
-#include <stdio.h>				// vsnprintf, etc.
-#include <stddef.h>				// offsetof
-#include <stdarg.h>				// va_arg
-#include <assert.h>				// assert
+#include <windows.h>                    // 
+#include <ole2ver.h>                    // OLE2.0 build version
+#include <cguid.h>                              // GUID_NULL
+#include <stdio.h>                              // vsnprintf, etc.
+#include <stddef.h>                             // offsetof
+#include <stdarg.h>                             // va_arg
+#include <assert.h>                             // assert
 
-//	OLE DB headers
+//      OLE DB headers
 #include <oledb.h>
 #include <oledberr.h>
 
@@ -106,14 +109,14 @@ void OledbSupDumpRow( FILE *, DBCOLUMNINFO *, int, DBBINDING *,
 // Worst case is double or __int64 (8 bytes).
 #define COLUMN_ALIGNVAL 8
 
-#define MAX_GUID_STRING     42	// size of a GUID, in characters
+#define MAX_GUID_STRING     42  // size of a GUID, in characters
 #define MAX_NAME_STRING     60  // size of DBCOLOD name or propid string
-#define MAX_BINDINGS       100	// size of binding array
-#define NUMROWS_CHUNK       20	// number of rows to grab at a time
-#define DEFAULT_CBMAXLENGTH 40	// cbMaxLength for binding
+#define MAX_BINDINGS       100  // size of binding array
+#define NUMROWS_CHUNK       20  // number of rows to grab at a time
+#define DEFAULT_CBMAXLENGTH 40  // cbMaxLength for binding
 
 //-----------------------------------
-//	macros 
+//      macros 
 //------------------------------------
 
 // Rounding amount is always a power of two.
@@ -124,24 +127,24 @@ void OledbSupDumpRow( FILE *, DBCOLUMNINFO *, int, DBBINDING *,
 #endif
 
 //-----------------------------------
-//	type and structure definitions 
+//      type and structure definitions 
 //------------------------------------
 
 // How to lay out each column in memory.
 // Issue? we depend on the dwLength field being first in memory (see assert)
 // is there another way to handle this?
 struct COLUMNDATA 
-	{
-	DWORD		dwLength;	// length of data (not space allocated)
-	DWORD		dwStatus;	// status of column
-	BYTE		bData[1];	// data here and beyond
-	};
+        {
+        DWORD           dwLength;       // length of data (not space allocated)
+        DWORD           dwStatus;       // status of column
+        BYTE            bData[1];       // data here and beyond
+        };
 
 
 // Lists of value/string pairs.
 typedef struct {
-	DWORD dwFlag;
-	char *szText;
+        DWORD dwFlag;
+        char *szText;
 } Note;
 
 char * GetNoteString( Note *, int, DWORD );

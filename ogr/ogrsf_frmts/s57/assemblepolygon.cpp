@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  1999/11/18 19:01:25  warmerda
+ * expanded tabs
+ *
  * Revision 1.3  1999/11/18 18:57:28  warmerda
  * Added error reporting
  *
@@ -58,8 +61,8 @@ static void AddEdgeToRing( OGRLinearRing * poRing, OGRLineString * poLine,
 /* -------------------------------------------------------------------- */
 /*      Establish order and range of traverse.                          */
 /* -------------------------------------------------------------------- */
-    int		iStart, iEnd, iStep;
-    int		nVertToAdd = poLine->getNumPoints();
+    int         iStart, iEnd, iStep;
+    int         nVertToAdd = poLine->getNumPoints();
 
     if( bDropVertex && bReverse )
     {
@@ -89,7 +92,7 @@ static void AddEdgeToRing( OGRLinearRing * poRing, OGRLineString * poLine,
 /* -------------------------------------------------------------------- */
 /*      Append points to ring.                                          */
 /* -------------------------------------------------------------------- */
-    int		iOutVertex = poRing->getNumPoints();
+    int         iOutVertex = poRing->getNumPoints();
 
     poRing->setNumPoints( iOutVertex + ABS(iEnd-iStart) + 1 );
     
@@ -125,15 +128,15 @@ OGRPolygon *OGRBuildPolygonFromEdges( OGRGeometryCollection * poLines,
                                       int bBestEffort, OGRErr * peErr )
 
 {
-    int		bSuccess = TRUE;
+    int         bSuccess = TRUE;
     OGRPolygon  *poPolygon = new OGRPolygon();
 
 /* -------------------------------------------------------------------- */
 /*      Setup array of line markers indicating if they have been        */
 /*      added to a ring yet.                                            */
 /* -------------------------------------------------------------------- */
-    int		nEdges = poLines->getNumGeometries();
-    int		*panEdgeConsumed, nRemainingEdges = nEdges;
+    int         nEdges = poLines->getNumGeometries();
+    int         *panEdgeConsumed, nRemainingEdges = nEdges;
 
     panEdgeConsumed = (int *) CPLCalloc(sizeof(int),nEdges);
 
@@ -142,8 +145,8 @@ OGRPolygon *OGRBuildPolygonFromEdges( OGRGeometryCollection * poLines,
 /* ==================================================================== */
     while( nRemainingEdges > 0 )
     {
-        int		iEdge;
-        OGRLineString	*poLine;
+        int             iEdge;
+        OGRLineString   *poLine;
         
 /* -------------------------------------------------------------------- */
 /*      Find the first unconsumed edge.                                 */
@@ -155,7 +158,7 @@ OGRPolygon *OGRBuildPolygonFromEdges( OGRGeometryCollection * poLines,
 /* -------------------------------------------------------------------- */
 /*      Start a new ring, copying in the current line directly          */
 /* -------------------------------------------------------------------- */
-        OGRLinearRing	*poRing = new OGRLinearRing();
+        OGRLinearRing   *poRing = new OGRLinearRing();
         
         AddEdgeToRing( poRing, poLine,
                        FALSE, FALSE );
@@ -167,7 +170,7 @@ OGRPolygon *OGRBuildPolygonFromEdges( OGRGeometryCollection * poLines,
 /*      Loop adding edges to this ring until we make a whole pass       */
 /*      within finding anything to add.                                 */
 /* ==================================================================== */
-        int		bWorkDone = TRUE;
+        int             bWorkDone = TRUE;
 
         while( !PointsEqual(poRing,0,poRing,poRing->getNumPoints()-1)
                && nRemainingEdges > 0

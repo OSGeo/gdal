@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  1999/11/18 19:03:04  warmerda
+ * expanded tabs
+ *
  * Revision 1.10  1999/11/18 19:02:38  warmerda
  * added failquietly to open
  *
@@ -200,7 +203,7 @@ int DDFModule::Open( const char * pszFilename, int bFailQuietly )
 /* -------------------------------------------------------------------- */
 /*      Read the 24 byte leader.                                        */
 /* -------------------------------------------------------------------- */
-    char	achLeader[nLeaderSize];
+    char        achLeader[nLeaderSize];
     
     if( VSIFRead( achLeader, 1, nLeaderSize, fpDDF ) != nLeaderSize )
     {
@@ -218,7 +221,7 @@ int DDFModule::Open( const char * pszFilename, int bFailQuietly )
 /* -------------------------------------------------------------------- */
 /*      Verify that this appears to be a valid DDF file.                */
 /* -------------------------------------------------------------------- */
-    int		i, bValid = TRUE;
+    int         i, bValid = TRUE;
 
     for( i = 0; i < (int)nLeaderSize; i++ )
     {
@@ -240,8 +243,8 @@ int DDFModule::Open( const char * pszFilename, int bFailQuietly )
 
     if( bValid )
     {
-        _recLength			  = DDFScanInt( achLeader+0, 5 );
-        _interchangeLevel 		  = achLeader[5];
+        _recLength                        = DDFScanInt( achLeader+0, 5 );
+        _interchangeLevel                 = achLeader[5];
         _leaderIden                   = achLeader[6];
         _inlineCodeExtensionIndicator = achLeader[7];
         _versionNumber                = achLeader[8];
@@ -278,9 +281,9 @@ int DDFModule::Open( const char * pszFilename, int bFailQuietly )
     }
 
 /* -------------------------------------------------------------------- */
-/*	Read the whole record info memory.				*/
+/*      Read the whole record info memory.                              */
 /* -------------------------------------------------------------------- */
-    char	*pachRecord;
+    char        *pachRecord;
 
     pachRecord = (char *) CPLMalloc(_recLength);
     memcpy( pachRecord, achLeader, nLeaderSize );
@@ -299,7 +302,7 @@ int DDFModule::Open( const char * pszFilename, int bFailQuietly )
 /* -------------------------------------------------------------------- */
 /*      First make a pass counting the directory entries.               */
 /* -------------------------------------------------------------------- */
-    int		nFieldEntryWidth;
+    int         nFieldEntryWidth;
 
     nFieldEntryWidth = _sizeFieldLength + _sizeFieldPos + _sizeFieldTag;
 
@@ -319,9 +322,9 @@ int DDFModule::Open( const char * pszFilename, int bFailQuietly )
     
     for( i = 0; i < nFieldDefnCount; i++ )
     {
-        char	szTag[128];
-        int	nEntryOffset = nLeaderSize + i*nFieldEntryWidth;
-        int	nFieldLength, nFieldPos;
+        char    szTag[128];
+        int     nEntryOffset = nLeaderSize + i*nFieldEntryWidth;
+        int     nFieldLength, nFieldPos;
         
         strncpy( szTag, pachRecord+nEntryOffset, _sizeFieldTag );
         szTag[_sizeFieldTag] = '\0';
@@ -405,7 +408,7 @@ void DDFModule::Dump( FILE * fp )
 DDFFieldDefn *DDFModule::FindFieldDefn( const char *pszFieldName )
 
 {
-    int		i;
+    int         i;
     
 /* -------------------------------------------------------------------- */
 /*      This pass tries to reduce the cost of comparing strings by      */
@@ -516,7 +519,7 @@ void DDFModule::AddCloneRecord( DDFRecord * poRecord )
 void DDFModule::RemoveCloneRecord( DDFRecord * poRecord )
 
 {
-    int		i;
+    int         i;
  
     for( i = 0; i < nCloneCount; i++ )
     {

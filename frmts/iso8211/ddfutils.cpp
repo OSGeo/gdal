@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  1999/11/18 19:03:04  warmerda
+ * expanded tabs
+ *
  * Revision 1.4  1999/09/20 19:29:16  warmerda
  * make forgiving of UNIT/FIELD terminator mixup in Tiger SDTS files
  *
@@ -55,7 +58,7 @@
 long DDFScanInt( const char * pszString, int nMaxChars )
 
 {
-    char	szWorking[33];
+    char        szWorking[33];
 
     if( nMaxChars > 32 || nMaxChars == 0 )
         nMaxChars = 32;
@@ -76,7 +79,7 @@ long DDFScanInt( const char * pszString, int nMaxChars )
 int DDFScanVariable( const char *pszRecord, int nMaxChars, int nDelimChar )
 
 {
-    int		i;
+    int         i;
     
     for( i = 0; i < nMaxChars-1 && pszRecord[i] != nDelimChar; i++ ) {}
 
@@ -95,8 +98,8 @@ char * DDFFetchVariable( const char *pszRecord, int nMaxChars,
                          int *pnConsumedChars )
 
 {
-    int 	i;
-    char	*pszReturn;
+    int         i;
+    char        *pszReturn;
 
     for( i = 0; i < nMaxChars-1 && pszRecord[i] != nDelimChar1
                                 && pszRecord[i] != nDelimChar2; i++ ) {}

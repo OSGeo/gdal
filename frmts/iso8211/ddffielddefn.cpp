@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  1999/11/18 19:03:04  warmerda
+ * expanded tabs
+ *
  * Revision 1.2  1999/09/20 19:29:16  warmerda
  * make forgiving of UNIT/FIELD terminator mixup in Tiger SDTS files
  *
@@ -84,8 +87,8 @@ int DDFFieldDefn::Initialize( DDFModule * poModuleIn,
                               const char * pachFieldArea )
 
 {
-    int		iFDOffset = poModuleIn->GetFieldControlLength();
-    int		nCharsConsumed;
+    int         iFDOffset = poModuleIn->GetFieldControlLength();
+    int         nCharsConsumed;
 
     poModule = poModuleIn;
     
@@ -208,7 +211,7 @@ int DDFFieldDefn::Initialize( DDFModule * poModuleIn,
 void DDFFieldDefn::Dump( FILE * fp )
 
 {
-    const char	*pszValue = "";
+    const char  *pszValue = "";
     
     fprintf( fp, "  DDFFieldDefn:\n" );
     fprintf( fp, "      Tag = `%s'\n", pszTag );
@@ -294,8 +297,8 @@ void DDFFieldDefn::Dump( FILE * fp )
 int DDFFieldDefn::BuildSubfields()
 
 {
-    char	**papszSubfieldNames;
-    const char	*pszSublist = _arrayDescr;
+    char        **papszSubfieldNames;
+    const char  *pszSublist = _arrayDescr;
 
     if( pszSublist[0] == '*' )
     {
@@ -361,7 +364,7 @@ static void FixupExtraBrackets( char * pszToken )
 /* -------------------------------------------------------------------- */
 /*      Count open and close brackets.                                  */
 /* -------------------------------------------------------------------- */
-    int		nOpenCount=0, nCloseCount=0;
+    int         nOpenCount=0, nCloseCount=0;
 
     for( int i = 0; pszToken[i] != '\0'; i++ )
     {
@@ -391,8 +394,8 @@ static void FixupExtraBrackets( char * pszToken )
 int DDFFieldDefn::ApplyFormats()
 
 {
-    char	*pszFormatList;
-    char	**papszFormatItems;
+    char        *pszFormatList;
+    char        **papszFormatItems;
     
 /* -------------------------------------------------------------------- */
 /*      Verify that the format string is contained within brackets.     */
@@ -428,13 +431,13 @@ int DDFFieldDefn::ApplyFormats()
 /*      of subfields.  For instance a format like "3A" would result     */
 /*      in the format "A" being applied to three subfields.             */
 /* -------------------------------------------------------------------- */
-    int		iNextSubfield = 0;
+    int         iNextSubfield = 0;
 
     for( int iFormatItem = 0;
          papszFormatItems[iFormatItem] != NULL;
          iFormatItem++ )
     {
-        const char	*pszPastPrefix;
+        const char      *pszPastPrefix;
 
         FixupExtraBrackets( papszFormatItems[iFormatItem] );
 
@@ -442,7 +445,7 @@ int DDFFieldDefn::ApplyFormats()
         while( *pszPastPrefix >= '0' && *pszPastPrefix <= '9' )
             pszPastPrefix++;
 
-        int	nRepeatCount = atoi(papszFormatItems[iFormatItem]);
+        int     nRepeatCount = atoi(papszFormatItems[iFormatItem]);
 
         if( nRepeatCount == 0 )
             nRepeatCount = 1;

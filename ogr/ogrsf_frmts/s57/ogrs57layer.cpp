@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/11/18 19:01:25  warmerda
+ * expanded tabs
+ *
  * Revision 1.1  1999/11/03 22:12:43  warmerda
  * New
  *
@@ -106,7 +109,7 @@ void OGRS57Layer::ResetReading()
 OGRFeature *OGRS57Layer::GetNextUnfilteredFeature()
 
 {
-    OGRFeature 	*poFeature = NULL;
+    OGRFeature  *poFeature = NULL;
     
 /* -------------------------------------------------------------------- */
 /*      Are we out of modules to request features from?                 */
@@ -118,7 +121,7 @@ OGRFeature *OGRS57Layer::GetNextUnfilteredFeature()
 /*      Set the current position on the current module and fetch a      */
 /*      feature.                                                        */
 /* -------------------------------------------------------------------- */
-    S57Reader	*poReader = poDS->GetModule(nCurrentModule);
+    S57Reader   *poReader = poDS->GetModule(nCurrentModule);
     
     if( poReader != NULL )
     {
@@ -154,7 +157,7 @@ OGRFeature *OGRS57Layer::GetNextUnfilteredFeature()
 OGRFeature *OGRS57Layer::GetNextFeature()
 
 {
-    OGRFeature	*poFeature = NULL;
+    OGRFeature  *poFeature = NULL;
     
 /* -------------------------------------------------------------------- */
 /*      Read features till we find one that satisfies our current       */

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  1999/11/18 19:02:20  warmerda
+ * expanded tabs
+ *
  * Revision 1.9  1999/11/04 21:05:49  warmerda
  * Added the Set() method on OGRFieldDefn to set all info in one call,
  * and the SetFrom() method on OGRFeature to copy the contents of one
@@ -78,9 +81,9 @@
 
 enum OGRFieldType
 {
-  /** Simple 32bit integer */    		OFTInteger = 0,
-  /** List of 32bit integers */  		OFTIntegerList = 1,
-  /** Double Precision floating point */  	OFTReal = 2,
+  /** Simple 32bit integer */                   OFTInteger = 0,
+  /** List of 32bit integers */                 OFTIntegerList = 1,
+  /** Double Precision floating point */        OFTReal = 2,
   /** List of doubles */                        OFTRealList = 3,
   /** String of ASCII chars */                  OFTString = 4,
   /** Array of strings */                       OFTStringList = 5,
@@ -111,29 +114,29 @@ enum OGRJustification
  */
 
 typedef union {
-    int		Integer;
-    double	Real;
+    int         Integer;
+    double      Real;
     char       *String;
-    // wchar	*WideString;
+    // wchar    *WideString;
     
     struct {
-        int	nCount;
-        int	*paList;
+        int     nCount;
+        int     *paList;
     } IntegerList;
     
     struct {
-        int	nCount;
-        double	*paList;
+        int     nCount;
+        double  *paList;
     } RealList;
     
     struct {
-        int	nCount;
-        char	**paList;
+        int     nCount;
+        char    **paList;
     } StringList;
 
 //    union {
-//        int	nCount;
-//        wchar	*paList;
+//        int   nCount;
+//        wchar *paList;
 //    } WideStringList;
 } OGRField;
 
@@ -148,42 +151,42 @@ typedef union {
 class OGRFieldDefn
 {
   private:
-    char		*pszName;
-    OGRFieldType	eType;			
-    OGRJustification	eJustify;		
-    int			nWidth;			/* zero is variable */
-    int			nPrecision;
-    OGRField		uDefault;
+    char                *pszName;
+    OGRFieldType        eType;                  
+    OGRJustification    eJustify;               
+    int                 nWidth;                 /* zero is variable */
+    int                 nPrecision;
+    OGRField            uDefault;
 
-    void		Initialize( const char *, OGRFieldType );
+    void                Initialize( const char *, OGRFieldType );
     
   public:
-        		OGRFieldDefn( const char *, OGRFieldType );
+                        OGRFieldDefn( const char *, OGRFieldType );
                         OGRFieldDefn( OGRFieldDefn * );
-    			~OGRFieldDefn();
+                        ~OGRFieldDefn();
 
-    void		SetName( const char * );
-    const char	       *GetNameRef() { return pszName; }
+    void                SetName( const char * );
+    const char         *GetNameRef() { return pszName; }
 
-    OGRFieldType	GetType() { return eType; }
+    OGRFieldType        GetType() { return eType; }
     void                SetType( OGRFieldType eTypeIn ) { eType = eTypeIn;}
     static const char  *GetFieldTypeName( OGRFieldType );
 
     OGRJustification    GetJustify() { return eJustify; }
     void                SetJustify( OGRJustification eJustifyIn )
-					        { eJustify = eJustifyIn; }
+                                                { eJustify = eJustifyIn; }
 
-    int			GetWidth() { return nWidth; }
+    int                 GetWidth() { return nWidth; }
     void                SetWidth( int nWidthIn ) { nWidth = nWidthIn; }
 
-    int			GetPrecision() { return nPrecision; }
+    int                 GetPrecision() { return nPrecision; }
     void                SetPrecision( int nPrecisionIn )
-        				        { nPrecision = nPrecisionIn; }
+                                                { nPrecision = nPrecisionIn; }
 
-    void		Set( const char *, OGRFieldType, int = 0, int = 0,
+    void                Set( const char *, OGRFieldType, int = 0, int = 0,
                              OGRJustification = OJUndefined );
 
-    void		SetDefault( const OGRField * );
+    void                SetDefault( const OGRField * );
     const OGRField     *GetDefaultRef() { return &uDefault; }
 };
 
@@ -210,33 +213,33 @@ class OGRFieldDefn
 class OGRFeatureDefn
 {
   private:
-    int		nRefCount;
+    int         nRefCount;
     
-    int		nFieldCount;
+    int         nFieldCount;
     OGRFieldDefn **papoFieldDefn;
 
     OGRwkbGeometryType eGeomType;
 
-    char	*pszFeatureClassName;
+    char        *pszFeatureClassName;
     
   public:
-    		OGRFeatureDefn( const char * pszName = NULL );
+                OGRFeatureDefn( const char * pszName = NULL );
     virtual    ~OGRFeatureDefn();
 
-    const char	*GetName() { return pszFeatureClassName; }
+    const char  *GetName() { return pszFeatureClassName; }
 
-    int		GetFieldCount() { return nFieldCount; }
+    int         GetFieldCount() { return nFieldCount; }
     OGRFieldDefn *GetFieldDefn( int i );
-    int		GetFieldIndex( const char * );
+    int         GetFieldIndex( const char * );
 
-    void	AddFieldDefn( OGRFieldDefn * );
+    void        AddFieldDefn( OGRFieldDefn * );
 
     OGRwkbGeometryType GetGeomType() { return eGeomType; }
     void        SetGeomType( OGRwkbGeometryType );
 
-    int		Reference() { return ++nRefCount; }
-    int		Dereference() { return --nRefCount; }
-    int		GetReferenceCount() { return nRefCount; }
+    int         Reference() { return ++nRefCount; }
+    int         Dereference() { return --nRefCount; }
+    int         GetReferenceCount() { return nRefCount; }
 };
 
 /************************************************************************/
@@ -251,46 +254,46 @@ class OGRFeature
 {
   private:
 
-    long		nFID;
-    OGRFeatureDefn 	*poDefn;
-    OGRGeometry		*poGeometry;
-    OGRField		*pauFields;
+    long                nFID;
+    OGRFeatureDefn      *poDefn;
+    OGRGeometry         *poGeometry;
+    OGRField            *pauFields;
     
   public:
-    			OGRFeature( OGRFeatureDefn * );
+                        OGRFeature( OGRFeatureDefn * );
     virtual            ~OGRFeature();                        
 
     OGRFeatureDefn     *GetDefnRef() { return poDefn; }
     
-    OGRErr		SetGeometryDirectly( OGRGeometry * );
-    OGRErr		SetGeometry( OGRGeometry * );
+    OGRErr              SetGeometryDirectly( OGRGeometry * );
+    OGRErr              SetGeometry( OGRGeometry * );
     OGRGeometry        *GetGeometryRef() { return poGeometry; }
 
-    OGRFeature	       *Clone();
+    OGRFeature         *Clone();
     virtual OGRBoolean  Equal( OGRFeature * poFeature );
 
-    int			GetFieldCount() { return poDefn->GetFieldCount(); }
+    int                 GetFieldCount() { return poDefn->GetFieldCount(); }
     OGRFieldDefn       *GetFieldDefnRef( int iField )
-        			      { return poDefn->GetFieldDefn(iField); }
-    int			GetFieldIndex( const char * pszName)
+                                      { return poDefn->GetFieldDefn(iField); }
+    int                 GetFieldIndex( const char * pszName)
                                       { return poDefn->GetFieldIndex(pszName);}
     
-    OGRField	       *GetRawFieldRef( int i ) { return pauFields + i; }
+    OGRField           *GetRawFieldRef( int i ) { return pauFields + i; }
 
-    int			GetFieldAsInteger( int i );
-    double		GetFieldAsDouble( int i );
-    const char	       *GetFieldAsString( int i );
-    const int 	       *GetFieldAsIntegerList( int i, int *pnCount );
+    int                 GetFieldAsInteger( int i );
+    double              GetFieldAsDouble( int i );
+    const char         *GetFieldAsString( int i );
+    const int          *GetFieldAsIntegerList( int i, int *pnCount );
     const double       *GetFieldAsDoubleList( int i, int *pnCount );
     char              **GetFieldAsStringList( int i );
 
-    int			GetFieldAsInteger( const char *pszFName )
+    int                 GetFieldAsInteger( const char *pszFName )
                       { return GetFieldAsInteger( GetFieldIndex(pszFName) ); }
-    double		GetFieldAsDouble( const char *pszFName )
+    double              GetFieldAsDouble( const char *pszFName )
                       { return GetFieldAsDouble( GetFieldIndex(pszFName) ); }
-    const char	       *GetFieldAsString( const char *pszFName )
+    const char         *GetFieldAsString( const char *pszFName )
                       { return GetFieldAsString( GetFieldIndex(pszFName) ); }
-    const int 	       *GetFieldAsIntegerList( const char *pszFName,
+    const int          *GetFieldAsIntegerList( const char *pszFName,
                                                int *pnCount )
                       { return GetFieldAsIntegerList( GetFieldIndex(pszFName),
                                                       pnCount ); }
@@ -301,37 +304,37 @@ class OGRFeature
     char              **GetFieldAsStringList( const char *pszFName )
                       { return GetFieldAsStringList(GetFieldIndex(pszFName)); }
 
-    void		SetField( int i, int nValue );
-    void		SetField( int i, double dfValue );
-    void		SetField( int i, const char * pszValue );
-    void		SetField( int i, int nCount, int * panValues );
-    void		SetField( int i, int nCount, double * padfValues );
-    void		SetField( int i, char ** papszValues );
-    void		SetField( int i, OGRField * puValue );
+    void                SetField( int i, int nValue );
+    void                SetField( int i, double dfValue );
+    void                SetField( int i, const char * pszValue );
+    void                SetField( int i, int nCount, int * panValues );
+    void                SetField( int i, int nCount, double * padfValues );
+    void                SetField( int i, char ** papszValues );
+    void                SetField( int i, OGRField * puValue );
 
-    void		SetField( const char *pszFName, int nValue )
+    void                SetField( const char *pszFName, int nValue )
                            { SetField( GetFieldIndex(pszFName), nValue ); }
-    void		SetField( const char *pszFName, double dfValue )
+    void                SetField( const char *pszFName, double dfValue )
                            { SetField( GetFieldIndex(pszFName), dfValue ); }
-    void		SetField( const char *pszFName, const char * pszValue)
+    void                SetField( const char *pszFName, const char * pszValue)
                            { SetField( GetFieldIndex(pszFName), pszValue ); }
-    void		SetField( const char *pszFName, int nCount,
+    void                SetField( const char *pszFName, int nCount,
                                   int * panValues )
                          { SetField(GetFieldIndex(pszFName),nCount,panValues);}
-    void		SetField( const char *pszFName, int nCount,
+    void                SetField( const char *pszFName, int nCount,
                                   double * padfValues )
                          {SetField(GetFieldIndex(pszFName),nCount,padfValues);}
-    void		SetField( const char *pszFName, char ** papszValues )
+    void                SetField( const char *pszFName, char ** papszValues )
                            { SetField( GetFieldIndex(pszFName), papszValues); }
-    void		SetField( const char *pszFName, OGRField * puValue )
+    void                SetField( const char *pszFName, OGRField * puValue )
                            { SetField( GetFieldIndex(pszFName), puValue ); }
 
-    long		GetFID() { return nFID; }
-    virtual OGRErr	SetFID( long );
+    long                GetFID() { return nFID; }
+    virtual OGRErr      SetFID( long );
 
-    void		DumpReadable( FILE * );
+    void                DumpReadable( FILE * );
 
-    OGRErr		SetFrom( OGRFeature *, int = TRUE);
+    OGRErr              SetFrom( OGRFeature *, int = TRUE);
 };
 
 #endif /* ndef _OGR_FEATURE_H_INCLUDED */

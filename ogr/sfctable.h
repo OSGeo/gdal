@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  1999/11/18 19:02:20  warmerda
+ * expanded tabs
+ *
  * Revision 1.6  1999/07/08 20:26:48  warmerda
  * Added concept of an OGRFeatureDefn being associated with SFCTable.
  *
@@ -101,7 +104,7 @@ class SFCTable : public CTable<CDynamicAccessor>
     ULONG        *panColOrdinal;
 
   public:
-    		SFCTable();
+                SFCTable();
     virtual     ~SFCTable();
 
     void        SetTableName( const char * );
@@ -113,7 +116,7 @@ class SFCTable : public CTable<CDynamicAccessor>
     
     int         GetSpatialRefID();
 
-    int		GetGeometryColumn();
+    int         GetGeometryColumn();
 
     int         HasGeometry();
 

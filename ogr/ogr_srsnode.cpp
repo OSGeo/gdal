@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  1999/11/18 19:02:19  warmerda
+ * expanded tabs
+ *
  * Revision 1.3  1999/07/29 18:09:20  warmerda
  * Avoid use of isdigit()
  *
@@ -238,7 +241,7 @@ void OGR_SRSNode::SetValue( const char * pszNewValue )
 OGR_SRSNode *OGR_SRSNode::Clone()
 
 {
-    OGR_SRSNode	*poNew;
+    OGR_SRSNode *poNew;
 
     poNew = new OGR_SRSNode( pszValue );
 
@@ -270,9 +273,9 @@ OGR_SRSNode *OGR_SRSNode::Clone()
 OGRErr OGR_SRSNode::exportToWkt( char ** ppszResult )
 
 {
-    char	**papszChildrenWkt = NULL;
-    int		nLength = strlen(pszValue)+4;
-    int		i;
+    char        **papszChildrenWkt = NULL;
+    int         nLength = strlen(pszValue)+4;
+    int         i;
 
 /* -------------------------------------------------------------------- */
 /*      Build a list of the WKT format for the children.                */
@@ -295,7 +298,7 @@ OGRErr OGR_SRSNode::exportToWkt( char ** ppszResult )
 /*      Do we need to quote this value?  Determine whether or not       */
 /*      this is a terminal string value.                                */
 /* -------------------------------------------------------------------- */
-    int		bNeedQuoting = FALSE;
+    int         bNeedQuoting = FALSE;
 
     if( GetChildCount() == 0 )
     {
@@ -367,7 +370,7 @@ OGRErr OGR_SRSNode::importFromWkt( char ** ppszInput )
 
 {
     const char  *pszInput = *ppszInput;
-    int		bInQuotedString = FALSE;
+    int         bInQuotedString = FALSE;
     
 /* -------------------------------------------------------------------- */
 /*      Clear any existing children of this node.                       */
@@ -377,8 +380,8 @@ OGRErr OGR_SRSNode::importFromWkt( char ** ppszInput )
 /* -------------------------------------------------------------------- */
 /*      Read the ``value'' for this node.                               */
 /* -------------------------------------------------------------------- */
-    char	szToken[512];
-    int		nTokenLen = 0;
+    char        szToken[512];
+    int         nTokenLen = 0;
     
     while( *pszInput != '\0' && nTokenLen < (int) sizeof(szToken)-1 )
     {
@@ -413,10 +416,10 @@ OGRErr OGR_SRSNode::importFromWkt( char ** ppszInput )
     {
         do
         {
-            OGR_SRSNode	*poNewChild;
-            OGRErr	eErr;
+            OGR_SRSNode *poNewChild;
+            OGRErr      eErr;
 
-            pszInput++;	// Skip bracket or comma.
+            pszInput++; // Skip bracket or comma.
 
             poNewChild = new OGR_SRSNode();
 

@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  1999/11/18 19:02:19  warmerda
+ * expanded tabs
+ *
  * Revision 1.2  1999/09/13 02:27:33  warmerda
  * incorporated limited 2.5d support
  *
@@ -52,7 +55,7 @@
 const char *OGRMakeWktCoordinate( double x, double y, double z )
 
 {
-    static char	szCoordinate[80];
+    static char szCoordinate[80];
 
     if( z == 0 )
     {
@@ -112,7 +115,7 @@ const char *OGRWktReadToken( const char * pszInput, char * pszToken )
 /* -------------------------------------------------------------------- */
     else
     {
-        int		iChar = 0;
+        int             iChar = 0;
         
         while( iChar < OGR_WKT_TOKEN_MAX-1
                && ((*pszInput >= 'a' && *pszInput <= 'z')
@@ -178,14 +181,14 @@ const char * OGRWktReadPoints( const char * pszInput,
 /*      run out of well formed points, or a closing bracket is          */
 /*      encountered.                                                    */
 /* ==================================================================== */
-    char	szDelim[OGR_WKT_TOKEN_MAX];
+    char        szDelim[OGR_WKT_TOKEN_MAX];
     
     do {
 /* -------------------------------------------------------------------- */
 /*      Read the X and Y values, verify they are numeric.               */
 /* -------------------------------------------------------------------- */
-        char	szTokenX[OGR_WKT_TOKEN_MAX];
-        char	szTokenY[OGR_WKT_TOKEN_MAX];
+        char    szTokenX[OGR_WKT_TOKEN_MAX];
+        char    szTokenY[OGR_WKT_TOKEN_MAX];
 
         pszInput = OGRWktReadToken( pszInput, szTokenX );
         pszInput = OGRWktReadToken( pszInput, szTokenY );

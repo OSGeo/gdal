@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  1999/11/18 19:02:19  warmerda
+ * expanded tabs
+ *
  * Revision 1.5  1999/07/06 21:36:47  warmerda
  * tenatively added getEnvelope() and Intersect()
  *
@@ -84,7 +87,7 @@ OGRGeometry::~OGRGeometry()
 void OGRGeometry::dumpReadable( FILE * fp, const char * pszPrefix )
 
 {
-    char	*pszWkt = NULL;
+    char        *pszWkt = NULL;
     
     if( pszPrefix == NULL )
         pszPrefix = "";
@@ -144,7 +147,7 @@ void OGRGeometry::assignSpatialReference( OGRSpatialReference * poSR )
 OGRBoolean OGRGeometry::Intersect( OGRGeometry *poOtherGeom )
 
 {
-    OGREnvelope		oEnv1, oEnv2;
+    OGREnvelope         oEnv1, oEnv2;
 
     this->getEnvelope( &oEnv1 );
     poOtherGeom->getEnvelope( &oEnv2 );

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  1999/11/18 19:01:25  warmerda
+ * expanded tabs
+ *
  * Revision 1.5  1999/11/18 18:58:16  warmerda
  * make permissive of missing geometry so that update files work
  *
@@ -177,19 +180,19 @@ void S57Reader::Rewind()
 void S57Reader::Ingest()
 
 {
-    DDFRecord	*poRecord;
+    DDFRecord   *poRecord;
     
     if( poModule == NULL || bFileIngested )
         return;
 
     while( (poRecord = poModule->ReadRecord()) != NULL )
     {
-        DDFField	*poKeyField = poRecord->GetField(1);
+        DDFField        *poKeyField = poRecord->GetField(1);
         
         if( EQUAL(poKeyField->GetFieldDefn()->GetName(),"VRID") )
         {
-            int		nRCNM = poRecord->GetIntSubfield( "VRID",0, "RCNM",0);
-            int		nRCID = poRecord->GetIntSubfield( "VRID",0, "RCID",0);
+            int         nRCNM = poRecord->GetIntSubfield( "VRID",0, "RCNM",0);
+            int         nRCID = poRecord->GetIntSubfield( "VRID",0, "RCID",0);
 
             switch( nRCNM )
             {
@@ -223,7 +226,7 @@ void S57Reader::Ingest()
 
         else if( EQUAL(poKeyField->GetFieldDefn()->GetName(),"FRID") )
         {
-            int		nRCID = poRecord->GetIntSubfield( "FRID",0, "RCID",0);
+            int         nRCID = poRecord->GetIntSubfield( "FRID",0, "RCID",0);
             
             oFE_Index.AddRecord( nRCID, poRecord->Clone() );
         }
@@ -266,7 +269,7 @@ OGRFeature * S57Reader::ReadNextFeature( OGRFeatureDefn * poTarget )
     
     while( nNextFEIndex < oFE_Index.GetCount() )
     {
-        OGRFeature	*poFeature;
+        OGRFeature      *poFeature;
 
         poFeature = AssembleFeature( oFE_Index.GetByIndex(nNextFEIndex++),
                                      poTarget );
@@ -287,7 +290,7 @@ OGRFeature *S57Reader::AssembleFeature( DDFRecord * poRecord,
                                         OGRFeatureDefn * poTarget )
 
 {
-    int		nPRIM;
+    int         nPRIM;
     OGRFeatureDefn *poFDefn;
 
 /* -------------------------------------------------------------------- */
@@ -310,7 +313,7 @@ OGRFeature *S57Reader::AssembleFeature( DDFRecord * poRecord,
 /* -------------------------------------------------------------------- */
 /*      Create the new feature object.                                  */
 /* -------------------------------------------------------------------- */
-    OGRFeature		*poFeature;
+    OGRFeature          *poFeature;
 
     poFeature = new OGRFeature( poFDefn );
 
@@ -331,7 +334,7 @@ OGRFeature *S57Reader::AssembleFeature( DDFRecord * poRecord,
                          poRecord->GetIntSubfield( "FOID", 0, "FIDS", 0 ));
 
 /* -------------------------------------------------------------------- */
-/*	Apply object class specific attributes, if supported.		*/
+/*      Apply object class specific attributes, if supported.           */
 /* -------------------------------------------------------------------- */
     if( poRegistrar != NULL )
         ApplyObjectClassAttributes( poRecord, poFeature );
@@ -365,8 +368,8 @@ void S57Reader::ApplyObjectClassAttributes( DDFRecord * poRecord,
                                             OGRFeature * poFeature )
 
 {
-    DDFField	*poATTF = poRecord->FindField( "ATTF" );
-    int		nAttrCount, iAttr;
+    DDFField    *poATTF = poRecord->FindField( "ATTF" );
+    int         nAttrCount, iAttr;
 
     if( poATTF == NULL )
         return;
@@ -374,7 +377,7 @@ void S57Reader::ApplyObjectClassAttributes( DDFRecord * poRecord,
     nAttrCount = poATTF->GetRepeatCount();
     for( iAttr = 0; iAttr < nAttrCount; iAttr++ )
     {
-        int	nAttrId = poRecord->GetIntSubfield("ATTF",0,"ATTL",iAttr);
+        int     nAttrId = poRecord->GetIntSubfield("ATTF",0,"ATTL",iAttr);
         
         poFeature->SetField( poRegistrar->GetAttrAcronym(nAttrId),
                           poRecord->GetStringSubfield("ATTF",0,"ATVL",iAttr) );
@@ -391,7 +394,7 @@ int S57Reader::FetchPoint( int nRCNM, int nRCID,
                            double * pdfX, double * pdfY, double * pdfZ )
 
 {
-    DDFRecord	*poSRecord;
+    DDFRecord   *poSRecord;
     
     if( nRCNM == RCNM_VI )
         poSRecord = oVI_Index.FindRecord( nRCID );
@@ -401,7 +404,7 @@ int S57Reader::FetchPoint( int nRCNM, int nRCID,
     if( poSRecord == NULL )
         return FALSE;
 
-    double	dfX = 0.0, dfY = 0.0, dfZ = 0.0;
+    double      dfX = 0.0, dfY = 0.0, dfZ = 0.0;
 
     if( poSRecord->FindField( "SG2D" ) != NULL )
     {
@@ -435,8 +438,8 @@ void S57Reader::AssemblePointGeometry( DDFRecord * poFRecord,
                                        OGRFeature * poFeature )
 
 {
-    DDFField	*poFSPT;
-    int		nRCNM, nRCID;
+    DDFField    *poFSPT;
+    int         nRCNM, nRCID;
 
 /* -------------------------------------------------------------------- */
 /*      Feature the spatial record containing the point.                */
@@ -449,7 +452,7 @@ void S57Reader::AssemblePointGeometry( DDFRecord * poFRecord,
         
     nRCID = ParseName( poFSPT, 0, &nRCNM );
 
-    double	dfX = 0.0, dfY = 0.0, dfZ = 0.0;
+    double      dfX = 0.0, dfY = 0.0, dfZ = 0.0;
 
     if( !FetchPoint( nRCNM, nRCID, &dfX, &dfY, &dfZ ) )
     {
@@ -468,8 +471,8 @@ void S57Reader::AssembleLineGeometry( DDFRecord * poFRecord,
                                       OGRFeature * poFeature )
 
 {
-    DDFField	*poFSPT;
-    int		nEdgeCount;
+    DDFField    *poFSPT;
+    int         nEdgeCount;
     OGRLineString *poLine = new OGRLineString();
 
 /* -------------------------------------------------------------------- */
@@ -486,8 +489,8 @@ void S57Reader::AssembleLineGeometry( DDFRecord * poFRecord,
 /* ==================================================================== */
     for( int iEdge = 0; iEdge < nEdgeCount; iEdge++ )
     {
-        DDFRecord	*poSRecord;
-        int		nRCID;
+        DDFRecord       *poSRecord;
+        int             nRCID;
 
 /* -------------------------------------------------------------------- */
 /*      Find the spatial record for this edge.                          */
@@ -505,9 +508,9 @@ void S57Reader::AssembleLineGeometry( DDFRecord * poFRecord,
 /*      Establish the number of vertices, and whether we need to        */
 /*      reverse or not.                                                 */
 /* -------------------------------------------------------------------- */
-        int		nVCount;
-        int		nStart, nEnd, nInc;
-        DDFField	*poSG2D = poSRecord->FindField( "SG2D" );
+        int             nVCount;
+        int             nStart, nEnd, nInc;
+        DDFField        *poSG2D = poSRecord->FindField( "SG2D" );
         DDFSubfieldDefn *poXCOO, *poYCOO;
 
         if( poSG2D != NULL )
@@ -538,8 +541,8 @@ void S57Reader::AssembleLineGeometry( DDFRecord * poFRecord,
 /* -------------------------------------------------------------------- */
         if( iEdge == 0 )
         {
-            int		nVC_RCID;
-            double	dfX, dfY;
+            int         nVC_RCID;
+            double      dfX, dfY;
             
             if( nInc == 1 )
                 nVC_RCID = ParseName( poSRecord->FindField( "VRPT" ), 0 );
@@ -553,15 +556,15 @@ void S57Reader::AssembleLineGeometry( DDFRecord * poFRecord,
 /* -------------------------------------------------------------------- */
 /*      Collect the vertices.                                           */
 /* -------------------------------------------------------------------- */
-        int		nVBase = poLine->getNumPoints();
+        int             nVBase = poLine->getNumPoints();
         
         poLine->setNumPoints( nVCount+nVBase );
 
         for( int i = nStart; i != nEnd+nInc; i += nInc )
         {
-            double	dfX, dfY;
+            double      dfX, dfY;
             const char  *pachData;
-            int	    	nBytesRemaining;
+            int         nBytesRemaining;
 
             pachData = poSG2D->GetSubfieldData(poXCOO,&nBytesRemaining,i);
                 
@@ -580,8 +583,8 @@ void S57Reader::AssembleLineGeometry( DDFRecord * poFRecord,
 /*      Add the end node.                                               */
 /* -------------------------------------------------------------------- */
         {
-            int		nVC_RCID;
-            double	dfX, dfY;
+            int         nVC_RCID;
+            double      dfX, dfY;
             
             if( nInc == 1 )
                 nVC_RCID = ParseName( poSRecord->FindField( "VRPT" ), 1 );
@@ -605,8 +608,8 @@ void S57Reader::AssembleAreaGeometry( DDFRecord * poFRecord,
                                          OGRFeature * poFeature )
 
 {
-    DDFField	*poFSPT;
-    int		nEdgeCount;
+    DDFField    *poFSPT;
+    int         nEdgeCount;
     OGRGeometryCollection * poLines = new OGRGeometryCollection();
 
 /* -------------------------------------------------------------------- */
@@ -623,8 +626,8 @@ void S57Reader::AssembleAreaGeometry( DDFRecord * poFRecord,
 /* ==================================================================== */
     for( int iEdge = 0; iEdge < nEdgeCount; iEdge++ )
     {
-        DDFRecord	*poSRecord;
-        int		nRCID;
+        DDFRecord       *poSRecord;
+        int             nRCID;
 
 /* -------------------------------------------------------------------- */
 /*      Find the spatial record for this edge.                          */
@@ -644,8 +647,8 @@ void S57Reader::AssembleAreaGeometry( DDFRecord * poFRecord,
 /* -------------------------------------------------------------------- */
         OGRLineString *poLine = new OGRLineString();
         
-        int		nVCount;
-        DDFField	*poSG2D = poSRecord->FindField( "SG2D" );
+        int             nVCount;
+        DDFField        *poSG2D = poSRecord->FindField( "SG2D" );
         DDFSubfieldDefn *poXCOO, *poYCOO;
 
         if( poSG2D != NULL )
@@ -662,8 +665,8 @@ void S57Reader::AssembleAreaGeometry( DDFRecord * poFRecord,
 /*      Add the start node.                                             */
 /* -------------------------------------------------------------------- */
         {
-            int		nVC_RCID;
-            double	dfX, dfY;
+            int         nVC_RCID;
+            double      dfX, dfY;
             
             nVC_RCID = ParseName( poSRecord->FindField( "VRPT" ), 0 );
 
@@ -674,15 +677,15 @@ void S57Reader::AssembleAreaGeometry( DDFRecord * poFRecord,
 /* -------------------------------------------------------------------- */
 /*      Collect the vertices.                                           */
 /* -------------------------------------------------------------------- */
-        int		nVBase = poLine->getNumPoints();
+        int             nVBase = poLine->getNumPoints();
         
         poLine->setNumPoints( nVCount+nVBase );
 
         for( int i = 0; i < nVCount; i++ )
         {
-            double	dfX, dfY;
+            double      dfX, dfY;
             const char  *pachData;
-            int	    	nBytesRemaining;
+            int         nBytesRemaining;
 
             pachData = poSG2D->GetSubfieldData(poXCOO,&nBytesRemaining,i);
                 
@@ -701,8 +704,8 @@ void S57Reader::AssembleAreaGeometry( DDFRecord * poFRecord,
 /*      Add the end node.                                               */
 /* -------------------------------------------------------------------- */
         {
-            int		nVC_RCID;
-            double	dfX, dfY;
+            int         nVC_RCID;
+            double      dfX, dfY;
             
             nVC_RCID = ParseName( poSRecord->FindField( "VRPT" ), 1 );
 
@@ -716,8 +719,8 @@ void S57Reader::AssembleAreaGeometry( DDFRecord * poFRecord,
 /* -------------------------------------------------------------------- */
 /*      Build lines into a polygon.                                     */
 /* -------------------------------------------------------------------- */
-    OGRPolygon	*poPolygon;
-    OGRErr	eErr;
+    OGRPolygon  *poPolygon;
+    OGRErr      eErr;
 
     poPolygon = OGRBuildPolygonFromEdges( poLines, TRUE, &eErr );
     if( eErr != OGRERR_NONE )
@@ -742,7 +745,7 @@ OGRFeatureDefn * S57Reader::FindFDefn( DDFRecord * poRecord )
 {
     if( poRegistrar != NULL )
     {
-        int	nOBJL = poRecord->GetIntSubfield( "FRID", 0, "OBJL", 0 );
+        int     nOBJL = poRecord->GetIntSubfield( "FRID", 0, "OBJL", 0 );
 
         if( !poRegistrar->SelectClass( nOBJL ) )
             return NULL;
@@ -758,7 +761,7 @@ OGRFeatureDefn * S57Reader::FindFDefn( DDFRecord * poRecord )
     }
     else
     {
-        int	nPRIM = poRecord->GetIntSubfield( "FRID", 0, "PRIM", 0 );
+        int     nPRIM = poRecord->GetIntSubfield( "FRID", 0, "PRIM", 0 );
         OGRwkbGeometryType eGType;
         
         if( nPRIM == PRIM_P )
@@ -790,7 +793,7 @@ OGRFeatureDefn * S57Reader::FindFDefn( DDFRecord * poRecord )
 int S57Reader::ParseName( DDFField * poField, int nIndex, int * pnRCNM )
 
 {
-    unsigned char	*pabyData;
+    unsigned char       *pabyData;
 
     pabyData = (unsigned char *)
         poField->GetSubfieldData(
@@ -829,7 +832,7 @@ void S57Reader::AddFeatureDefn( OGRFeatureDefn * poFDefn )
 void S57Reader::GenerateStandardAttributes( OGRFeatureDefn *poFDefn )
 
 {
-    OGRFieldDefn	oField( "", OFTInteger );
+    OGRFieldDefn        oField( "", OFTInteger );
 
 /* -------------------------------------------------------------------- */
 /*      GRUP                                                            */
@@ -875,9 +878,9 @@ void S57Reader::GenerateStandardAttributes( OGRFeatureDefn *poFDefn )
 OGRFeatureDefn *S57Reader::GenerateGeomFeatureDefn( OGRwkbGeometryType eGType )
 
 {
-    OGRFeatureDefn	*poFDefn = NULL;
+    OGRFeatureDefn      *poFDefn = NULL;
     
-    if( eGType == wkbPoint )						
+    if( eGType == wkbPoint )                                            
     {
         poFDefn = new OGRFeatureDefn( "Point" );
         poFDefn->SetGeomType( eGType );
@@ -913,8 +916,8 @@ OGRFeatureDefn *S57Reader::GenerateObjectClassDefn( S57ClassRegistrar *poCR,
                                                     int nOBJL )
 
 {
-    OGRFeatureDefn	*poFDefn = NULL;
-    char	       **papszGeomPrim;
+    OGRFeatureDefn      *poFDefn = NULL;
+    char               **papszGeomPrim;
 
     if( !poCR->SelectClass( nOBJL ) )
         return NULL;
@@ -959,13 +962,13 @@ OGRFeatureDefn *S57Reader::GenerateObjectClassDefn( S57ClassRegistrar *poCR,
 /* -------------------------------------------------------------------- */
 /*      Add the attributes specific to this object class.               */
 /* -------------------------------------------------------------------- */
-    char	**papszAttrList = poCR->GetAttributeList();
+    char        **papszAttrList = poCR->GetAttributeList();
 
     for( int iAttr = 0;
          papszAttrList != NULL && papszAttrList[iAttr] != NULL;
          iAttr++ )
     {
-        int	iAttrIndex = poCR->FindAttrByAcronym( papszAttrList[iAttr] );
+        int     iAttrIndex = poCR->FindAttrByAcronym( papszAttrList[iAttr] );
 
         if( iAttrIndex == -1 )
         {
@@ -976,7 +979,7 @@ OGRFeatureDefn *S57Reader::GenerateObjectClassDefn( S57ClassRegistrar *poCR,
             continue;
         }
 
-        OGRFieldDefn	oField( papszAttrList[iAttr], OFTInteger );
+        OGRFieldDefn    oField( papszAttrList[iAttr], OFTInteger );
         
         switch( poCR->GetAttrType( iAttrIndex ) )
         {
@@ -1015,7 +1018,7 @@ OGRFeatureDefn *S57Reader::GenerateObjectClassDefn( S57ClassRegistrar *poCR,
 int S57Reader::CollectClassList(int *panClassCount, int nMaxClass )
 
 {
-    int		bSuccess = TRUE;
+    int         bSuccess = TRUE;
 
     if( !bFileIngested )
         Ingest();
@@ -1023,7 +1026,7 @@ int S57Reader::CollectClassList(int *panClassCount, int nMaxClass )
     for( int iFEIndex = 0; iFEIndex < oFE_Index.GetCount(); iFEIndex++ )
     {
         DDFRecord *poRecord = oFE_Index.GetByIndex( iFEIndex );
-        int	nOBJL = poRecord->GetIntSubfield( "FRID", 0, "OBJL", 0 );
+        int     nOBJL = poRecord->GetIntSubfield( "FRID", 0, "OBJL", 0 );
 
         if( nOBJL >= nMaxClass )
             bSuccess = FALSE;

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/11/18 19:02:19  warmerda
+ * expanded tabs
+ *
  * Revision 1.1  1999/07/29 17:29:15  warmerda
  * New
  *
@@ -43,7 +46,7 @@
 OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 )
 
 {
-    char	szProj4[512];
+    char        szProj4[512];
     const char *pszProjection = GetAttrValue("PROJECTION");
 
     szProj4[0] = '\0';

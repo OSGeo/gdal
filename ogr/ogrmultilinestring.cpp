@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  1999/11/18 19:02:19  warmerda
+ * expanded tabs
+ *
  * Revision 1.2  1999/06/25 20:44:43  warmerda
  * implemented assignSpatialReference, carry properly
  *
@@ -79,7 +82,7 @@ OGRErr OGRMultiLineString::addGeometry( OGRGeometry * poNewGeom )
 OGRGeometry *OGRMultiLineString::clone()
 
 {
-    OGRMultiLineString	*poNewGC;
+    OGRMultiLineString  *poNewGC;
 
     poNewGC = new OGRMultiLineString;
     poNewGC->assignSpatialReference( getSpatialReference() );
