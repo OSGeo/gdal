@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.47  2001/05/01 19:00:14  warmerda
+ * added special support for 1bit bitmaps
+ *
  * Revision 1.46  2001/05/01 18:09:53  warmerda
  * upgraded world file reading support
  *
@@ -146,11 +149,13 @@ CPL_C_END
 
 class GTiffRasterBand;
 class GTiffRGBABand;
+class GTiffBitmapBand;
 
 class GTiffDataset : public GDALDataset
 {
     friend	GTiffRasterBand;
     friend	GTiffRGBABand;
+    friend	GTiffBitmapBand;
     
     TIFF	*hTIFF;
 
@@ -692,7 +697,7 @@ CPLErr GTiffRGBABand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
     nBlockBufSize = 4 * nBlockXSize * nBlockYSize;
     nBlockId = nBlockXOff + nBlockYOff * nBlocksPerRow;
-        
+
 /* -------------------------------------------------------------------- */
 /*      Allocate a temporary buffer for this strip.                     */
 /* -------------------------------------------------------------------- */
@@ -791,6 +796,211 @@ GDALColorInterp GTiffRGBABand::GetColorInterpretation()
         return GCI_BlueBand;
     else
         return GCI_AlphaBand;
+}
+
+/************************************************************************/
+/* ==================================================================== */
+/*                             GTiffBitmapBand                          */
+/* ==================================================================== */
+/************************************************************************/
+
+class GTiffBitmapBand : public GDALRasterBand
+{
+    friend	GTiffDataset;
+
+    GDALColorTable *poColorTable;
+
+  public:
+
+                   GTiffBitmapBand( GTiffDataset *, int );
+    virtual       ~GTiffBitmapBand();
+
+    virtual CPLErr IReadBlock( int, int, void * );
+
+    virtual GDALColorInterp GetColorInterpretation();
+    virtual GDALColorTable *GetColorTable();
+};
+
+
+/************************************************************************/
+/*                           GTiffBitmapBand()                            */
+/************************************************************************/
+
+GTiffBitmapBand::GTiffBitmapBand( GTiffDataset *poDS, int nBand )
+
+{
+
+    if( nBand != 1 )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported, 
+                  "One bit deep TIFF files only supported with one sample per pixel (band)." );
+    }
+
+    this->poDS = poDS;
+    this->nBand = nBand;
+
+    eDataType = GDT_Byte;
+
+    nBlockXSize = poDS->nBlockXSize;
+    nBlockYSize = poDS->nBlockYSize;
+
+    if( poDS->poColorTable != NULL )
+        poColorTable = poDS->poColorTable->Clone();
+    else
+    {
+        GDALColorEntry	oWhite, oBlack;
+
+        oWhite.c1 = 255;
+        oWhite.c2 = 255;
+        oWhite.c3 = 255;
+        oWhite.c4 = 255;
+
+        oBlack.c1 = 0;
+        oBlack.c2 = 0;
+        oBlack.c3 = 0;
+        oBlack.c4 = 255;
+
+        poColorTable = new GDALColorTable();
+        
+        if( poDS->nPhotometric == PHOTOMETRIC_MINISWHITE )
+        {
+            poColorTable->SetColorEntry( 0, &oWhite );
+            poColorTable->SetColorEntry( 1, &oBlack );
+        }
+        else
+        {
+            poColorTable->SetColorEntry( 0, &oBlack );
+            poColorTable->SetColorEntry( 1, &oWhite );
+        }
+    }
+}
+
+/************************************************************************/
+/*                          ~GTiffBitmapBand()                          */
+/************************************************************************/
+
+GTiffBitmapBand::~GTiffBitmapBand()
+
+{
+    delete poColorTable;
+}
+
+/************************************************************************/
+/*                             IReadBlock()                             */
+/************************************************************************/
+
+CPLErr GTiffBitmapBand::IReadBlock( int nBlockXOff, int nBlockYOff,
+                                    void * pImage )
+
+{
+    GTiffDataset	*poGDS = (GTiffDataset *) poDS;
+    int			nBlockBufSize, nBlockId;
+    CPLErr		eErr = CE_None;
+
+    poGDS->SetDirectory();
+
+    if( TIFFIsTiled(poGDS->hTIFF) )
+        nBlockBufSize = TIFFTileSize( poGDS->hTIFF );
+    else
+    {
+        CPLAssert( nBlockXOff == 0 );
+        nBlockBufSize = TIFFStripSize( poGDS->hTIFF );
+    }
+
+    nBlockId = nBlockXOff + nBlockYOff * nBlocksPerRow;
+
+/* -------------------------------------------------------------------- */
+/*      Allocate a temporary buffer for this strip.                     */
+/* -------------------------------------------------------------------- */
+    if( poGDS->pabyBlockBuf == NULL )
+    {
+        poGDS->pabyBlockBuf = (GByte *) VSICalloc( 1, nBlockBufSize );
+        if( poGDS->pabyBlockBuf == NULL )
+        {
+            CPLError( CE_Failure, CPLE_OutOfMemory,
+                   "Unable to allocate %d bytes for a temporary strip buffer\n"
+                      "in GeoTIFF driver.",
+                      nBlockBufSize );
+            
+            return( CE_Failure );
+        }
+    }
+    
+/* -------------------------------------------------------------------- */
+/*      Read the strip                                                  */
+/* -------------------------------------------------------------------- */
+    if( poGDS->nLoadedBlock != nBlockId )
+    {
+        if( TIFFIsTiled( poGDS->hTIFF ) )
+        {
+            if( TIFFReadEncodedTile( poGDS->hTIFF, nBlockId, 
+                                     poGDS->pabyBlockBuf,
+                                     nBlockBufSize ) == -1 )
+            {
+                memset( poGDS->pabyBlockBuf, 0, nBlockBufSize );
+                CPLError( CE_Failure, CPLE_AppDefined,
+                          "TIFFReadEncodedStrip() failed.\n" );
+                
+                eErr = CE_Failure;
+            }
+        }
+        else
+        {
+            
+            if( TIFFReadEncodedStrip( poGDS->hTIFF, nBlockId, 
+                                      poGDS->pabyBlockBuf,
+                                      nBlockBufSize ) == -1 )
+            {
+                memset( poGDS->pabyBlockBuf, 0, nBlockBufSize );
+                CPLError( CE_Failure, CPLE_AppDefined,
+                          "TIFFReadEncodedStrip() failed.\n" );
+                
+                eErr = CE_Failure;
+            }
+        }
+
+        if( eErr != CE_None )
+            return eErr;
+
+        poGDS->nLoadedBlock = nBlockId;
+    }
+                              
+/* -------------------------------------------------------------------- */
+/*      Translate 1bit data to eight bit.                               */
+/* -------------------------------------------------------------------- */
+    int	  iOffset, iMaxOffset;
+    register GByte *pabyBlockBuf = poGDS->pabyBlockBuf;
+
+    iMaxOffset = nBlockXSize * nBlockYSize;
+    for( iOffset = 0; iOffset < iMaxOffset; iOffset++ )
+    {
+        if( pabyBlockBuf[iOffset >>3] & (0x80 >> (iOffset & 0x7)) )
+            ((GByte *) pImage)[iOffset] = 1;
+        else
+            ((GByte *) pImage)[iOffset] = 0;
+    }
+    
+    return CE_None;
+}
+
+/************************************************************************/
+/*                       GetColorInterpretation()                       */
+/************************************************************************/
+
+GDALColorInterp GTiffBitmapBand::GetColorInterpretation()
+
+{
+    return GCI_PaletteIndex;
+}
+
+/************************************************************************/
+/*                           GetColorTable()                            */
+/************************************************************************/
+
+GDALColorTable *GTiffBitmapBand::GetColorTable()
+
+{
+    return poColorTable;
 }
 
 /************************************************************************/
@@ -1288,6 +1498,7 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, uint32 nDirOffsetIn,
 
 {
     uint32	nXSize, nYSize;
+    int		bTreatAsBitmap = FALSE;
 
     hTIFF = hTIFFIn;
 
@@ -1352,13 +1563,20 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, uint32 nDirOffsetIn,
       * ((nXSize + nBlockXSize  - 1) / nBlockXSize);
 
 /* -------------------------------------------------------------------- */
+/*      Should we handle this using the GTiffBitmapBand?                */
+/* -------------------------------------------------------------------- */
+    if( nBitsPerSample == 1 && nBands == 1 )
+        bTreatAsBitmap = TRUE;
+
+/* -------------------------------------------------------------------- */
 /*      Should we treat this via the RGBA interface?                    */
 /* -------------------------------------------------------------------- */
-    if( nPhotometric == PHOTOMETRIC_YCBCR
-        || nPhotometric == PHOTOMETRIC_CIELAB
-        || nPhotometric == PHOTOMETRIC_LOGL
-        || nPhotometric == PHOTOMETRIC_LOGLUV
-        || nBitsPerSample < 8 )
+    if( !bTreatAsBitmap
+        && (nPhotometric == PHOTOMETRIC_YCBCR
+            || nPhotometric == PHOTOMETRIC_CIELAB
+            || nPhotometric == PHOTOMETRIC_LOGL
+            || nPhotometric == PHOTOMETRIC_LOGLUV
+            || nBitsPerSample < 8 ) )
     {
         char	szMessage[1024];
 
@@ -1380,6 +1598,8 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, uint32 nDirOffsetIn,
     {
         if( bTreatAsRGBA )
             SetBand( iBand+1, new GTiffRGBABand( this, iBand+1 ) );
+        else if( bTreatAsBitmap )
+            SetBand( iBand+1, new GTiffBitmapBand( this, iBand+1 ) );
         else
             SetBand( iBand+1, new GTiffRasterBand( this, iBand+1 ) );
     }
