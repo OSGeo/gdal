@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2003/02/22 02:04:11  warmerda
+ * added dfMaxError to reproject function
+ *
  * Revision 1.3  2003/02/21 15:41:55  warmerda
  * rename data member
  *
@@ -72,6 +75,8 @@ CPL_CVSID("$Id$");
  * API is allowed to use for caching.  This is in addition to the memory
  * already allocated to the GDAL caching (as per GDALSetCacheMax()).  May be
  * 0.0 to use default memory settings.
+ * @param dfMaxError maximum error measured in input pixels that is allowed
+ * in approximating the transformation (0.0 for exact calculations).
  * @param pfnProgress a GDALProgressFunc() compatible callback function for
  * reporting progress or NULL. 
  * @param pProgressArg argument to be passed to pfnProgress.  May be NULL.
@@ -83,7 +88,8 @@ CPL_CVSID("$Id$");
 CPLErr GDALReprojectImage( GDALDatasetH hSrcDS, const char *pszSrcWKT, 
                            GDALDatasetH hDstDS, const char *pszDstWKT,
                            GDALResampleAlg eResampleAlg, 
-                           double dfWarpMemoryLimit,
+                           double dfWarpMemoryLimit, 
+                           double dfMaxError,
                            GDALProgressFunc pfnProgress, void *pProgressArg, 
                            GDALWarpOptions *psOptions )
 
@@ -123,8 +129,19 @@ CPLErr GDALReprojectImage( GDALDatasetH hSrcDS, const char *pszSrcWKT,
 /* -------------------------------------------------------------------- */
 /*      Set transform.                                                  */
 /* -------------------------------------------------------------------- */
-    psWOptions->pfnTransformer = GDALGenImgProjTransform;
-    psWOptions->pTransformerArg = hTransformArg;
+    if( dfMaxError > 0.0 )
+    {
+        psWOptions->pTransformerArg = 
+            GDALCreateApproxTransformer( GDALGenImgProjTransform, 
+                                         hTransformArg, dfMaxError );
+
+        psWOptions->pfnTransformer = GDALApproxTransform;
+    }
+    else
+    {
+        psWOptions->pfnTransformer = GDALGenImgProjTransform;
+        psWOptions->pTransformerArg = hTransformArg;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Set file and band mapping.                                      */
@@ -209,9 +226,12 @@ CPLErr GDALReprojectImage( GDALDatasetH hSrcDS, const char *pszSrcWKT,
 /* -------------------------------------------------------------------- */
 /*      Cleanup.                                                        */
 /* -------------------------------------------------------------------- */
-    GDALDestroyWarpOptions( psWOptions );
-
     GDALDestroyGenImgProjTransformer( hTransformArg );
+
+    if( dfMaxError > 0.0 )
+        GDALDestroyApproxTransformer( psWOptions->pTransformerArg );
+        
+    GDALDestroyWarpOptions( psWOptions );
 
     return eErr;
 }
@@ -224,8 +244,9 @@ CPLErr GDALReprojectImage( GDALDatasetH hSrcDS, const char *pszSrcWKT,
 
 CPLErr GDALCreateAndReprojectImage( 
     GDALDatasetH hSrcDS, const char *pszSrcWKT, 
-    const char *pszDstFilename, GDALDriverH hDstDriver, const char *pszDstWKT,
-    GDALResampleAlg eResampleAlg, double dfWarpMemoryLimit,
+    const char *pszDstFilename, const char *pszDstWKT,
+    GDALDriverH hDstDriver, char **papszCreateOptions,
+    GDALResampleAlg eResampleAlg, double dfWarpMemoryLimit, double dfMaxError,
     GDALProgressFunc pfnProgress, void *pProgressArg, 
     GDALWarpOptions *psOptions )
     
@@ -277,7 +298,7 @@ CPLErr GDALCreateAndReprojectImage(
     hDstDS = GDALCreate( hDstDriver, pszDstFilename, nPixels, nLines, 
                          GDALGetRasterCount(hSrcDS),
                          GDALGetRasterDataType(GDALGetRasterBand(hSrcDS,1)),
-                         NULL );
+                         papszCreateOptions );
 
     if( hDstDS == NULL )
         return CE_Failure;
@@ -295,7 +316,7 @@ CPLErr GDALCreateAndReprojectImage(
 
     eErr = 
         GDALReprojectImage( hSrcDS, pszSrcWKT, hDstDS, pszDstWKT, 
-                            eResampleAlg, dfWarpMemoryLimit, 
+                            eResampleAlg, dfWarpMemoryLimit, dfMaxError,
                             pfnProgress, pProgressArg, psOptions );
 
     GDALClose( hDstDS );

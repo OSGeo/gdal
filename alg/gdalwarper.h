@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2003/02/22 02:04:11  warmerda
+ * added dfMaxError to reproject function
+ *
  * Revision 1.3  2003/02/21 15:41:37  warmerda
  * added progressbase/scale for operation
  *
@@ -154,14 +157,16 @@ CPLErr CPL_DLL
 GDALReprojectImage( GDALDatasetH hSrcDS, const char *pszSrcWKT, 
                     GDALDatasetH hDstDS, const char *pszDstWKT,
                     GDALResampleAlg eResampleAlg, double dfWarpMemoryLimit,
+                    double dfMaxError,
                     GDALProgressFunc pfnProgress, void *pProgressArg, 
                     GDALWarpOptions *psOptions );
 
 CPLErr CPL_DLL 
 GDALCreateAndReprojectImage( GDALDatasetH hSrcDS, const char *pszSrcWKT, 
-                    const char *pszDstFilename, GDALDriverH hDstDriver, 
-                    const char *pszDstWKT,
+                    const char *pszDstFilename, const char *pszDstWKT,
+                    GDALDriverH hDstDriver, char **papszCreateOptions,
                     GDALResampleAlg eResampleAlg, double dfWarpMemoryLimit,
+                    double dfMaxError,
                     GDALProgressFunc pfnProgress, void *pProgressArg, 
                     GDALWarpOptions *psOptions );
 
@@ -184,6 +189,8 @@ class CPL_DLL GDALWarpKernel
 public:
                        GDALWarpKernel();
     virtual           ~GDALWarpKernel();
+
+    char              **papszWarpOptions;
 
     GDALResampleAlg	eResample;
     GDALDataType        eWorkingDataType;
