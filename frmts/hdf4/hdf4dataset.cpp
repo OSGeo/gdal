@@ -30,6 +30,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.22  2003/06/12 15:07:04  dron
+ * Added support for SeaWiFS Level 3 Standard Mapped Image Products.
+ *
  * Revision 1.21  2003/06/10 09:32:31  dron
  * Added support for MODIS Level 3 products.
  *
@@ -983,12 +986,28 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
             poDS->iDataType = MODIS_L3;
             poDS->pszDataType = "MODIS_L3";
         }
-    }
-    else if ( (pszValue = CSLFetchNameValue(poDS->papszGlobalMetadata, "ASSOCIATEDINSTRUMENTSHORTNAME"))
-	&& EQUAL( pszValue, "MODIS" ) )
-    {
-        poDS->iDataType = MODIS_UNK;
-	poDS->pszDataType = "MODIS_UNK";
+        else if ( EQUAL( pszValue, "MODOCL2" )
+                  || EQUAL( pszValue, "MYDOCL2" )
+                  || EQUAL( pszValue, "MODOCL2A" )
+                  || EQUAL( pszValue, "MYDOCL2A" )
+                  || EQUAL( pszValue, "MODOCL2B" )
+                  || EQUAL( pszValue, "MYDOCL2B" )
+                  || EQUAL( pszValue, "MODOCQC" )
+                  || EQUAL( pszValue, "MYDOCQC" )
+                  || EQUAL( pszValue, "MOD28L2" )
+                  || EQUAL( pszValue, "MYD28L2" )
+                  || EQUAL( pszValue, "MOD28QC" )
+                  || EQUAL( pszValue, "MYD28QC" ) )
+
+        {
+            poDS->iDataType = MODIS_L2;
+            poDS->pszDataType = "MODIS_L2";
+        }
+        else
+        {
+            poDS->iDataType = UNKNOWN;
+            poDS->pszDataType = "UNKNOWN";
+        }
     }
     else if ( (pszValue = CSLFetchNameValue(poDS->papszGlobalMetadata, "Title"))
 	 && EQUAL( pszValue, "SeaWiFS Level-1A Data" ) )
@@ -1018,6 +1037,7 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
 /*  Make a list of subdatasets from SDSs contained in input HDF file.	*/
 /* -------------------------------------------------------------------- */
     char	szName[VSNAMELENMAX + 1], szTemp[1024];
+    const char  *pszName;
     char	*pszString;
     int32	iSDS;
     int32	iRank; 			// Number of dimensions in the SDS
@@ -1041,10 +1061,168 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
 	else if ( (poDS->iDataType == AST14DEM ) && !EQUALN( szName, "Band", 4 ) )
 		continue;
 	else if ( (poDS->iDataType == MODIS_L1B ) && !EQUALN( szName, "EV_", 3 ) )
+        {
 		continue;
+        }
+	else if ( poDS->iDataType == MODIS_L2 || poDS->iDataType == MODIS_L3 )
+        {
+            // MODIS Ocean Parameters
+            if ( EQUALN( szName, "nLw_412", 7 ) )
+                pszName =
+                    CPLSPrintf( "%s: Normalized water-leaving radiance at 412 nm",
+                                szName );
+            else if ( EQUALN( szName, "nLw_443", 7 ) )
+                pszName =
+                    CPLSPrintf( "%s: Normalized water-leaving radiance at 443 nm",
+                                szName );
+            else if ( EQUALN( szName, "nLw_488", 7 ) )
+                pszName =
+                    CPLSPrintf( "%s: Normalized water-leaving radiance at 488 nm",
+                                szName );
+            else if ( EQUALN( szName, "nLw_531", 7 ) )
+                pszName =
+                    CPLSPrintf( "%s: Normalized water-leaving radiance at 531 nm",
+                                szName );
+            else if ( EQUALN( szName, "nLw_551", 7 ) )
+                pszName =
+                    CPLSPrintf( "%s: Normalized water-leaving radiance at 551 nm",
+                                szName );
+            else if ( EQUALN( szName, "nLw_667", 7 ) )
+                pszName =
+                    CPLSPrintf( "%s: Normalized water-leaving radiance at 667 nm",
+                                szName );
+            else if ( EQUALN( szName, "nLw_678", 7 ) )
+                pszName =
+                    CPLSPrintf( "%s: Normalized water-leaving radiance at 678 nm",
+                                szName );
+            else if ( EQUALN( szName, "Tau_865", 7 ) )
+                pszName =
+                    CPLSPrintf( "%s: Aerosol optical thickness, 865 nm",
+                                szName );
+            else if ( EQUALN( szName, "Eps_78", 6 ) )
+                pszName =
+                    CPLSPrintf( "%s: Epsilon of aerosol correction, 765 & 865 nm",
+                                szName );
+            else if ( EQUALN( szName, "aer_model1", 10 ) )
+                pszName =
+                    CPLSPrintf( "%s: Aerosol model identification number 1",
+                                szName );
+            else if ( EQUALN( szName, "aer_model2", 10 ) )
+                pszName =
+                    CPLSPrintf( "%s: Aerosol model identification number 2",
+                                szName );
+            else if ( EQUALN( szName, "eps_clr_water", 13 ) )
+                pszName =
+                    CPLSPrintf( "%s: Epsilon of clear water aerosol correction, 531 & 667 nm",
+                                szName );
+            else if ( EQUALN( szName, "CZCS_pigment", 12 ) )
+                pszName =
+                    CPLSPrintf( "%s: Chlorophyll-a + phaeopigment, fluorometric, empirical",
+                                szName );
+            else if ( EQUALN( szName, "chlor_MODIS", 11 ) )
+                pszName =
+                    CPLSPrintf( "%s: Chlorophyll-a concentration, HPLC, empirical",
+                                szName );
+            else if ( EQUALN( szName, "pigment_c1_total", 16 ) )
+                pszName =
+                    CPLSPrintf( "%s: Total pigment concentration, HPLC, empirical",
+                                szName );
+            else if ( EQUALN( szName, "chlor_fluor_ht", 14 ) )
+                pszName =
+                    CPLSPrintf( "%s: Chlorophyll fluorescence line height",
+                                szName );
+            else if ( EQUALN( szName, "chlor_fluor_base", 16 ) )
+                pszName =
+                    CPLSPrintf( "%s: Chlorophyll fluorescence baseline",
+                                szName );
+            else if ( EQUALN( szName, "chlor_fluor_effic", 17 ) )
+                pszName =
+                    CPLSPrintf( "%s: Chlorophyll fluorescence efficiency",
+                                szName );
+            else if ( EQUALN( szName, "susp_solids_conc", 16 ) )
+                pszName =
+                    CPLSPrintf( "%s: Total suspended matter concentration in ocean",
+                                szName );
+            else if ( EQUALN( szName, "cocco_pigmnt_conc", 17 ) )
+                pszName =
+                    CPLSPrintf( "%s: Pigment concentration in voccolithophore blooms",
+                                szName );
+            else if ( EQUALN( szName, "cocco_conc_detach", 17 ) )
+                pszName =
+                    CPLSPrintf( "%s: Detached coccolithophore concentration",
+                                szName );
+            else if ( EQUALN( szName, "calcite_conc", 12 ) )
+                pszName = CPLSPrintf( "%s: Calcite concentration", szName );
+            else if ( EQUALN( szName, "K_490", 5 ) )
+                pszName =
+                    CPLSPrintf( "%s: Diffuse attenuation coefficient at 490 nm",
+                                szName );
+            else if ( EQUALN( szName, "phycoeryth_conc", 15 ) )
+                pszName =
+                    CPLSPrintf( "%s: Phycoerythrobilin concentration", szName );
+            else if ( EQUALN( szName, "phycou_conc", 11 ) )
+                pszName =
+                    CPLSPrintf( "%s: Phycourobilin concentration", szName );
+            else if ( EQUALN( szName, "chlor_a_2", 9 ) )
+                pszName =
+                    CPLSPrintf( "%s: Chlorophyll-a concentration, SeaWiFS analog - OC3M",
+                                szName );
+            else if ( EQUALN( szName, "chlor_a_3", 9 ) )
+                pszName =
+                    CPLSPrintf( "%s: Chlorophyll-a concentration, semianalytic",
+                                szName );
+            else if ( EQUALN( szName, "ipar", 4 ) )
+                pszName =
+                    CPLSPrintf( "%s: Instantaneous photosynthetically available radiation",
+                                szName );
+            else if ( EQUALN( szName, "arp", 3 ) )
+                pszName =
+                    CPLSPrintf( "%s: Instantaneous absorbed radiation by phytoplankton for fluorescence",
+                                szName );
+            else if ( EQUALN( szName, "absorp_coef_gelb", 16 ) )
+                pszName =
+                    CPLSPrintf( "%s: Gelbstoff absorption coefficient at 400 nm",
+                                szName );
+            else if ( EQUALN( szName, "chlor_absorb", 12 ) )
+                pszName =
+                    CPLSPrintf( "%s: Phytoplankton absorption coefficient at 675 nm",
+                                szName );
+            else if ( EQUALN( szName, "tot_absorb_412", 14 ) )
+                pszName =
+                    CPLSPrintf( "%s: Total absorption coefficient, 412 nm",
+                                szName );
+            else if ( EQUALN( szName, "tot_absorb_443", 14 ) )
+                pszName =
+                    CPLSPrintf( "%s: Total absorption coefficient, 443 nm",
+                                szName );
+            else if ( EQUALN( szName, "tot_absorb_488", 14 ) )
+                pszName =
+                    CPLSPrintf( "%s: Total absorption coefficient, 488 nm",
+                                szName );
+            else if ( EQUALN( szName, "tot_absorb_531", 14 ) )
+                pszName =
+                    CPLSPrintf( "%s: Total absorption coefficient, 531 nm",
+                                szName );
+            else if ( EQUALN( szName, "tot_absorb_551", 14 ) )
+                pszName =
+                    CPLSPrintf( "%s: Total absorption coefficient, 551 nm",
+                                szName );
+            else if ( EQUALN( szName, "sst", 3 ) )
+                pszName =
+                    CPLSPrintf( "%s: Sea surface temperature, daytime, 11 micron",
+                                szName );
+            else if ( EQUALN( szName, "sst4", 4 ) )
+                pszName =
+                    CPLSPrintf( "%s: Sea surface temperature, daytime, 4 micron",
+                                szName );
+            else
+		pszName = szName;
+        }
 	else if ( (poDS->iDataType == SEAWIFS_L1A ) &&
 		  !EQUALN( szName, "l1a_data", 8 ) )
 		continue;
+        else
+            pszName = szName;
 	
 	// Add datasets with multiple dimensions to the list of GDAL subdatasets
         nCount = CSLCount( poDS->papszSubDatasets ) / 2;
@@ -1052,13 +1230,13 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
 	// We will use SDS index as an identificator, because SDS names
 	// are not unique. Filename also needed for further file opening
         poDS->papszSubDatasets = CSLSetNameValue(poDS->papszSubDatasets, szTemp, 
-              CPLSPrintf("HDF4_SDS:%s:\"%s\":%d", poDS->pszDataType,
-			 poOpenInfo->pszFilename, i));
+              CPLSPrintf( "HDF4_SDS:%s:\"%s\":%d", poDS->pszDataType,
+			  poOpenInfo->pszFilename, i) );
         sprintf( szTemp, "SUBDATASET_%d_DESC", nCount + 1 );
 	pszString = SPrintArray( (GInt32 *)aiDimSizes, iRank, "x" );
         poDS->papszSubDatasets = CSLSetNameValue(poDS->papszSubDatasets, szTemp,
 	    CPLSPrintf( "[%s] %s (%s)", pszString,
-		        szName, poDS->GetDataTypeName(iNumType)) );
+		        pszName, poDS->GetDataTypeName(iNumType)) );
 	CPLFree( pszString );
 
 	SDendaccess( iSDS );

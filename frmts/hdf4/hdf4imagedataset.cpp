@@ -29,6 +29,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.26  2003/06/12 15:07:56  dron
+ * Added support for SeaWiFS Level 3 Standard Mapped Image Products.
+ *
  * Revision 1.25  2003/06/10 09:32:31  dron
  * Added support for MODIS Level 3 products.
  *
@@ -887,8 +890,6 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
     
     if( EQUAL( poDS->papszSubdatasetName[1], "GDAL_HDF4" ) )
         poDS->iDataType = GDAL_HDF4;
-    else if( EQUAL( poDS->papszSubdatasetName[1], "SEAWIFS_L1A" ) )
-        poDS->iDataType = SEAWIFS_L1A;
     else if( EQUAL( poDS->papszSubdatasetName[1], "ASTER_L1B" ) )
         poDS->iDataType = ASTER_L1B;
     else if( EQUAL( poDS->papszSubdatasetName[1], "AST14DEM" ) )
@@ -899,6 +900,8 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->iDataType = MODIS_L3;
     else if( EQUAL( poDS->papszSubdatasetName[1], "MODIS_UNK" ) )
         poDS->iDataType = MODIS_UNK;
+    else if( EQUAL( poDS->papszSubdatasetName[1], "SEAWIFS_L3" ) )
+        poDS->iDataType = SEAWIFS_L3;
     else
         poDS->iDataType = UNKNOWN;
 
@@ -1064,8 +1067,10 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 
     const char      *pszValue;
 
-    // Now we will handle specific types of HDF products. Every HDF product
-    // has its own structure.
+/* -------------------------------------------------------------------- */
+/*      Now we will handle particular types of HDF products. Every      */
+/*      HDF product has its own structure.                              */
+/* -------------------------------------------------------------------- */
     switch ( poDS->iDataType )
     {
 
@@ -1448,6 +1453,57 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
                     poBand->SetNoDataValue( 255.0 );
                 poBand->SetDescription(
                     CSLFetchNameValue( poDS->papszLocalMetadata, "Long_name" ) );
+            }
+
+            // Read coordinate system and geotransform matrix
+            oSRS.SetWellKnownGeogCS( "WGS84" );
+            
+            if ( EQUAL(CSLFetchNameValue(poDS->papszGlobalMetadata,
+                                         "Map Projection"),
+                       "Equidistant Cylindrical") )
+            {
+                oSRS.SetEquirectangular( 0.0, 0.0, 0.0, 0.0 );
+                oSRS.SetLinearUnits( SRS_UL_METER, 1 );
+                if ( poDS->pszProjection )
+                    CPLFree( poDS->pszProjection );
+                oSRS.exportToWkt( &poDS->pszProjection );
+            }
+
+            dfULX = atof( CSLFetchNameValue(poDS->papszGlobalMetadata,
+                                            "Westernmost Longitude") );
+            dfULY = atof( CSLFetchNameValue(poDS->papszGlobalMetadata,
+                                            "Northernmost Latitude") );
+            dfLRX = atof( CSLFetchNameValue(poDS->papszGlobalMetadata,
+                                            "Easternmost Longitude") );
+            dfLRY = atof( CSLFetchNameValue(poDS->papszGlobalMetadata,
+                                            "Southernmost Latitude") );
+            poDS->ToUTM( &oSRS, &dfULX, &dfULY );
+            poDS->ToUTM( &oSRS, &dfLRX, &dfLRY );
+            poDS->adfGeoTransform[0] = dfULX;
+            poDS->adfGeoTransform[3] = dfULY;
+            poDS->adfGeoTransform[1] = (dfLRX - dfULX) / poDS->nRasterXSize;
+            poDS->adfGeoTransform[5] = (dfULY - dfLRY) / poDS->nRasterYSize;
+            if ( dfULY > 0)     // Northern hemisphere
+                poDS->adfGeoTransform[5] = - poDS->adfGeoTransform[5];
+            poDS->adfGeoTransform[2] = 0.0;
+            poDS->adfGeoTransform[4] = 0.0;
+            poDS->bHasGeoTransfom = TRUE;
+        }
+        break;
+
+/* -------------------------------------------------------------------- */
+/*      SeaWiFS Level 3 Standard Mapped Image Products.                 */
+/*      Organized similar to MODIS Level 3 products.                    */
+/* -------------------------------------------------------------------- */
+        case SEAWIFS_L3:
+        {
+            CPLDebug( "HDF4Image", "Input dataset interpreted as SEAWIFS_L3" );
+
+            // Read band description
+            for ( i = 1; i <= poDS->nBands; i++ )
+            {
+                poDS->GetRasterBand( i )->SetDescription(
+                    CSLFetchNameValue( poDS->papszGlobalMetadata, "Parameter" ) );
             }
 
             // Read coordinate system and geotransform matrix
