@@ -1,4 +1,4 @@
-/* $Id: tif_jpeg.c,v 1.21 2004/09/14 06:50:22 dron Exp $ */
+/* $Id: tif_jpeg.c,v 1.26 2004/11/04 12:40:11 dron Exp $ */
 
 /*
  * Copyright (c) 1994-1997 Sam Leffler
@@ -38,8 +38,6 @@
  *
  * Contributed by Tom Lane <tgl@sss.pgh.pa.us>.
  */
-#include <assert.h>
-#include <stdio.h>
 #include <setjmp.h>
 
 int TIFFFillStrip(TIFF*, tstrip_t);
@@ -153,7 +151,7 @@ static  int JPEGInitializeLibJPEG( TIFF * tif );
 #define	FIELD_JPEGTABLES	(FIELD_CODEC+0)
 
 static const TIFFFieldInfo jpegFieldInfo[] = {
-    { TIFFTAG_JPEGTABLES,	 -1,-1,	TIFF_UNDEFINED,	FIELD_JPEGTABLES,
+    { TIFFTAG_JPEGTABLES,	 -3,-3,	TIFF_UNDEFINED,	FIELD_JPEGTABLES,
       FALSE,	TRUE,	"JPEGTables" },
     { TIFFTAG_JPEGQUALITY,	 0, 0,	TIFF_ANY,	FIELD_PSEUDO,
       TRUE,	FALSE,	"" },
@@ -1397,7 +1395,7 @@ JPEGVSetField(TIFF* tif, ttag_t tag, va_list ap)
 		 * Must recalculate cached tile size
 		 * in case sampling state changed.
 		 */
-		tif->tif_tilesize = TIFFTileSize(tif);
+		tif->tif_tilesize = isTiled(tif) ? TIFFTileSize(tif) : (tsize_t) -1;
 		return (1);			/* pseudo tag */
 	case TIFFTAG_JPEGTABLESMODE:
 		sp->jpegtablesmode = va_arg(ap, int);
@@ -1487,10 +1485,7 @@ JPEGVGetField(TIFF* tif, ttag_t tag, va_list ap)
 
 	switch (tag) {
 	case TIFFTAG_JPEGTABLES:
-		/* unsigned short is bogus --- should be uint32 ??? */
-		/* TIFFWriteNormalTag needs fixed  XXX */
-		*va_arg(ap, unsigned short*) =
-                        (unsigned short) sp->jpegtables_length;
+		*va_arg(ap, uint32*) = sp->jpegtables_length;
 		*va_arg(ap, void**) = sp->jpegtables;
 		break;
 	case TIFFTAG_JPEGQUALITY:
@@ -1628,7 +1623,7 @@ TIFFInitJPEG(TIFF* tif, int scheme)
 		TIFFError("TIFFInitJPEG", "No space for JPEG state block");
 		return (0);
 	}
-        memset( tif->tif_data, 0, sizeof(JPEGState));
+        _TIFFmemset( tif->tif_data, 0, sizeof(JPEGState));
 
 	sp = JState(tif);
 	sp->tif = tif;				/* back link */

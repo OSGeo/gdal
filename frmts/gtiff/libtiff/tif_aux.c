@@ -1,4 +1,4 @@
-/* $Header: /cvs/maptools/cvsroot/libtiff/libtiff/tif_aux.c,v 1.7 2004/10/02 13:29:41 dron Exp $ */
+/* $Id: tif_aux.c,v 1.8 2004/11/10 21:08:11 dron Exp $ */
 
 /*
  * Copyright (c) 1991-1997 Sam Leffler
@@ -81,9 +81,24 @@ TIFFDefaultRefBlackWhite(TIFFDirectory* td)
 
 	if (!(td->td_refblackwhite = (float *)_TIFFmalloc(6*sizeof (float))))
 		return 0;
-	for (i = 0; i < 3; i++) {
-	    td->td_refblackwhite[2*i+0] = 0;
-	    td->td_refblackwhite[2*i+1] = (float)((1L<<td->td_bitspersample)-1L);
+        if (td->td_photometric == PHOTOMETRIC_YCBCR) {
+		/*
+		 * YCbCr (Class Y) images must have the ReferenceBlackWhite
+		 * tag set. Fix the broken images, which lacks that tag.
+		 */
+		td->td_refblackwhite[0] = 0.0F;
+		td->td_refblackwhite[1] = td->td_refblackwhite[3] =
+			td->td_refblackwhite[5] = 255.0F;
+		td->td_refblackwhite[2] = td->td_refblackwhite[4] = 128.0F;
+	} else {
+		/*
+		 * Assume RGB (Class R)
+		 */
+		for (i = 0; i < 3; i++) {
+		    td->td_refblackwhite[2*i+0] = 0;
+		    td->td_refblackwhite[2*i+1] =
+			    (float)((1L<<td->td_bitspersample)-1L);
+		}
 	}
 	return 1;
 }
@@ -246,3 +261,5 @@ TIFFGetFieldDefaulted(TIFF* tif, ttag_t tag, ...)
 	va_end(ap);
 	return (ok);
 }
+
+/* vim: set ts=8 sts=8 sw=8 noet: */

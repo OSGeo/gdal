@@ -1,4 +1,4 @@
-/* $Id: tif_dirinfo.c,v 1.35 2004/10/12 06:46:50 dron Exp $ */
+/* $Id: tif_dirinfo.c,v 1.37 2004/11/05 13:07:54 dron Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -190,10 +190,10 @@ const TIFFFieldInfo tiffFieldInfo[] = {
     { TIFFTAG_TARGETPRINTER,	-1,-1, TIFF_ASCII,	FIELD_TARGETPRINTER,
       TRUE,	FALSE,	"TargetPrinter" },
     { TIFFTAG_EXTRASAMPLES,	-1,-1, TIFF_SHORT,	FIELD_EXTRASAMPLES,
-      FALSE,	FALSE,	"ExtraSamples" },
+      FALSE,	TRUE,	"ExtraSamples" },
 /* XXX for bogus Adobe Photoshop v2.5 files */
     { TIFFTAG_EXTRASAMPLES,	-1,-1, TIFF_BYTE,	FIELD_EXTRASAMPLES,
-      FALSE,	FALSE,	"ExtraSamples" },
+      FALSE,	TRUE,	"ExtraSamples" },
     { TIFFTAG_SAMPLEFORMAT,	-1,-1, TIFF_SHORT,	FIELD_SAMPLEFORMAT,
       FALSE,	FALSE,	"SampleFormat" },
     { TIFFTAG_SMINSAMPLEVALUE,	-2,-1, TIFF_ANY,	FIELD_SMINSAMPLEVALUE,
@@ -245,7 +245,7 @@ const TIFFFieldInfo tiffFieldInfo[] = {
     { TIFFTAG_COPYRIGHT,	-1,-1, TIFF_ASCII,	FIELD_COPYRIGHT,
       TRUE,	FALSE,	"Copyright" },
 /* end Pixar tags */
-    { TIFFTAG_RICHTIFFIPTC, -1,-1, TIFF_LONG,   FIELD_RICHTIFFIPTC, 
+    { TIFFTAG_RICHTIFFIPTC, -1,-3, TIFF_LONG,   FIELD_RICHTIFFIPTC, 
       FALSE,    TRUE,   "RichTIFFIPTC" },
     { TIFFTAG_PHOTOSHOP,    -1,-3, TIFF_BYTE,   FIELD_PHOTOSHOP, 
       FALSE,    TRUE,   "Photoshop" },

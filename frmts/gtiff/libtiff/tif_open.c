@@ -1,4 +1,4 @@
-/* $Id: tif_open.c,v 1.21 2004/10/01 18:52:58 fwarmerdam Exp $ */
+/* $Id: tif_open.c,v 1.22 2004/11/05 17:51:35 fwarmerdam Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -410,7 +410,6 @@ bad:
 	tif->tif_mode = O_RDONLY;	/* XXX avoid flush */
         TIFFCleanup(tif);
 bad2:
-	(void) (*closeproc)(clientdata);
 	return ((TIFF*)0);
 }
 
