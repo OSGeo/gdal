@@ -3,7 +3,7 @@ GDAL_ROOT	=	../../..
 
 include $(GDAL_ROOT)/GDALmake.opt
 
-OBJ	=	shape2ogr.o shpopen.o dbfopen.o \
+OBJ	=	shape2ogr.o shpopen.o dbfopen.o shptree.o \
 		ogrshapedriver.o ogrshapedatasource.o ogrshapelayer.o
 
 ALL_C_FLAGS	=	-I.. -I../.. -I$(GDAL_ROOT)/port $(CFLAGS)
