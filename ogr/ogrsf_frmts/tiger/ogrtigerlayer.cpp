@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2005/02/15 02:24:45  fwarmerdam
+ * fixed GetFeatureCount() when filters in place
+ *
  * Revision 1.9  2005/02/02 20:54:27  fwarmerdam
  * track m_nFeaturesRead
  *
@@ -320,3 +323,15 @@ OGRErr OGRTigerLayer::CreateFeature( OGRFeature *poFeature )
     return poReader->CreateFeature( poFeature );
 }
 
+/************************************************************************/
+/*                          GetFeatureCount()                           */
+/************************************************************************/
+
+int OGRTigerLayer::GetFeatureCount( int bForce )
+
+{
+    if( poFilterGeom == NULL && m_poAttrQuery == NULL )
+        return nFeatureCount;
+    else
+        return OGRLayer::GetFeatureCount( bForce );
+}
