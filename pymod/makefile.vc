@@ -1,0 +1,19 @@
+
+OBJ	=	gdal_wrap.obj gdal_custom.obj
+PYGDAL_DLL	=	_gdal.dll
+
+GDAL_ROOT	=	..
+
+!INCLUDE ..\nmake.opt
+
+EXTRAFLAGS =	-I$(PYDIR)/include
+
+default:	$(PYGDAL_DLL)
+
+$(PYGDAL_DLL):	$(OBJ)
+	link /dll /def:_gdal.def $(OBJ) $(GDALLIB) /LIBPATH:$(PYDIR)/libs \
+		/out:$(PYGDAL_DLL)
+	
+clean:
+	del *.obj *.exe *.dll *.lib
+
