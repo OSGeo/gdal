@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2004/03/17 06:53:28  warmerda
+ * Make command string arbitrary length in BuildFullQueryStatement() as
+ * per report from Stephen Frost.
+ *
  * Revision 1.14  2003/09/11 20:03:36  warmerda
  * avoid warning
  *
@@ -358,16 +362,16 @@ void OGRPGTableLayer::BuildFullQueryStatement()
         pszQueryStatement = NULL;
     }
 
-    char szCommand[6000];
     char *pszFields = BuildFields();
 
-    sprintf( szCommand, 
+    pszQueryStatement = (char *) 
+        CPLMalloc(strlen(pszFields)+strlen(pszWHERE)
+                  +strlen(poFeatureDefn->GetName()) + 40);
+    sprintf( pszQueryStatement,
              "SELECT %s FROM \"%s\" %s", 
              pszFields, poFeatureDefn->GetName(), pszWHERE );
     
     CPLFree( pszFields );
-
-    pszQueryStatement = CPLStrdup( szCommand );
 }
 
 /************************************************************************/
