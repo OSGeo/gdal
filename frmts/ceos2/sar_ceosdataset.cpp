@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2001/09/28 14:43:06  warmerda
+ * Added true and platform heading metadata.
+ * Added ERS2 DATASET SUMMARY record code.
+ *
  * Revision 1.17  2001/08/31 15:17:48  warmerda
  * added ASF SAR Toolbox naming convention support
  *
@@ -129,6 +133,7 @@ static CeosTypeCode_t QuadToTC( int a, int b, int c, int d )
 }
 
 #define LEADER_DATASET_SUMMARY_TC          QuadToTC( 18, 10, 18, 20 )
+#define LEADER_DATASET_SUMMARY_ERS2_TC     QuadToTC( 10, 10, 31, 20 )
 #define LEADER_RADIOMETRIC_COMPENSATION_TC QuadToTC( 18, 51, 18, 20 )
 #define VOLUME_DESCRIPTOR_RECORD_TC        QuadToTC( 192, 192, 18, 18 )
 #define IMAGE_HEADER_RECORD_TC             QuadToTC( 63, 192, 18, 18 )
@@ -445,6 +450,11 @@ void SAR_CEOSDataset::ScanForMetadata()
         record = FindCeosRecord( sVolume.RecordList, LEADER_DATASET_SUMMARY_TC,
                                  __CEOS_TRAILER_FILE, -1, -1 );
 
+    if( record == NULL )
+        record = FindCeosRecord( sVolume.RecordList, 
+                                 LEADER_DATASET_SUMMARY_ERS2_TC,
+                                 __CEOS_LEADER_FILE, -1, -1 );
+
     if( record != NULL )
     {
 /* -------------------------------------------------------------------- */
@@ -499,6 +509,25 @@ void SAR_CEOSDataset::ScanForMetadata()
 
         if( !EQUALN(szField,"                ",16 ) )
             SetMetadataItem( "CEOS_SEMI_MINOR", szField );
+
+/* -------------------------------------------------------------------- */
+/*      True heading - at least for ERS2.                               */
+/* -------------------------------------------------------------------- */
+        GetCeosField( record, 149, "A16", szField );
+        szField[16] = '\0';
+
+        if( !EQUALN(szField,"                ",16 ) )
+            SetMetadataItem( "CEOS_TRUE_HEADING", szField );
+
+/* -------------------------------------------------------------------- */
+/*      Platform heading - at least for ERS2.                           */
+/* -------------------------------------------------------------------- */
+        GetCeosField( record, 469, "A8", szField );
+        szField[8] = '\0';
+
+        if( !EQUALN(szField,"                ",8 ) )
+            SetMetadataItem( "CEOS_PLATFORM_HEADING", szField );
+
     }
 
 /* -------------------------------------------------------------------- */
