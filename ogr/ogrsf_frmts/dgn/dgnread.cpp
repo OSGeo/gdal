@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.29  2002/09/24 14:34:19  warmerda
+ * fix collection of background color
+ *
  * Revision 1.28  2002/05/30 19:24:38  warmerda
  * add partial support for tag type 5
  *
@@ -911,7 +914,8 @@ static DGNElemCore *DGNParseColorTable( DGNInfo * psDGN )
     memcpy( psColorTable->color_info, psDGN->abyElem+41, 768 );	
     if( !psDGN->got_color_table )
     {
-        memcpy( psDGN->color_table, psColorTable->color_info, 768 );
+        memcpy( psColorTable->color_info[255], psDGN->abyElem+38, 3 );
+        memcpy( psColorTable->color_info, psDGN->abyElem+41, 765 );
         psDGN->got_color_table = 1;
     }
     
