@@ -116,7 +116,8 @@ FULL_PATH_NAMES = NO
 # with spaces.
 
 INPUT            =	port core frmts/gdalallregister.cpp \
-			frmts/gtiff/frmt_gtiff.dox
+			frmts/gtiff/frmt_gtiff.dox \
+			frmts/jpeg/frmt_jpeg.dox
 
 # If the value of the INPUT tag contains directories, you can use the 
 # FILE_PATTERNS tag to specify one or more wildcard patterns (like *.cpp 
