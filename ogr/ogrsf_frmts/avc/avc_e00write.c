@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: avc_e00write.c,v 1.13 2002/02/18 21:16:33 warmerda Exp $
+ * $Id: avc_e00write.c,v 1.14 2002/03/18 19:00:44 daniel Exp $
  *
  * Name:     avc_e00write.c
  * Project:  Arc/Info vector coverage (AVC)  E00->BIN conversion library
@@ -31,6 +31,9 @@
  **********************************************************************
  *
  * $Log: avc_e00write.c,v $
+ * Revision 1.14  2002/03/18 19:00:44  daniel
+ * Use VSIMkdir() and not VSIMkDir()
+ *
  * Revision 1.13  2002/02/18 21:16:33  warmerda
  * modified to use VSIMkDir
  *
@@ -176,7 +179,7 @@ AVCE00WritePtr  AVCE00WriteOpen(const char *pszCoverPath,
          * Create new pszCoverPath directory.  
          * This will fail if a file with the same name already exists.
          *------------------------------------------------------------*/
-        if( VSIMkDir(pszCoverPath, 0777) != 0 )
+        if( VSIMkdir(pszCoverPath, 0777) != 0 )
         {
             CPLError(CE_Failure, CPLE_OpenFailed, 
                      "Unable to create coverage directory: %s.", pszCoverPath);
