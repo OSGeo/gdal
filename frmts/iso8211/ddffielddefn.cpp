@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2003/09/03 20:36:26  warmerda
+ * added subfield writing support
+ *
  * Revision 1.13  2003/07/18 20:45:30  warmerda
  * be careful to avoid pszDest buffer overrun
  *
@@ -827,4 +830,64 @@ DDFSubfieldDefn *DDFFieldDefn::GetSubfield( int i )
     }
              
     return papoSubfields[i];
+}
+
+/************************************************************************/
+/*                          GetDefaultValue()                           */
+/************************************************************************/
+
+/**
+ * Return default data for field instance.
+ */
+
+char *DDFFieldDefn::GetDefaultValue( int *pnSize )
+
+{									
+/* -------------------------------------------------------------------- */
+/*      Loop once collecting the sum of the subfield lengths.           */
+/* -------------------------------------------------------------------- */
+    int iSubfield;
+    int nTotalSize = 0;
+
+    for( iSubfield = 0; iSubfield < nSubfieldCount; iSubfield++ )
+    {
+        int nSubfieldSize;
+
+        if( !papoSubfields[iSubfield]->GetDefaultValue( NULL, 0, 
+                                                        &nSubfieldSize ) )
+            return NULL;
+        nTotalSize += nSubfieldSize;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Allocate buffer.                                                */
+/* -------------------------------------------------------------------- */
+    nTotalSize++;
+    char *pachData = (char *) CPLMalloc( nTotalSize );
+
+    if( pnSize != NULL )
+        *pnSize = nTotalSize;
+
+/* -------------------------------------------------------------------- */
+/*      Loop again, collecting actual default values.                   */
+/* -------------------------------------------------------------------- */
+    int nOffset = 0;
+    for( iSubfield = 0; iSubfield < nSubfieldCount; iSubfield++ )
+    {
+        int nSubfieldSize;
+
+        if( !papoSubfields[iSubfield]->GetDefaultValue( 
+                pachData + nOffset, nTotalSize - nOffset, &nSubfieldSize ) )
+        {
+            CPLAssert( FALSE );
+            return NULL;
+        }
+
+        nOffset += nSubfieldSize;
+    }
+
+    CPLAssert( nOffset == nTotalSize-1 );
+    pachData[nOffset] = DDF_FIELD_TERMINATOR;
+
+    return pachData;
 }

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2003/09/03 20:36:26  warmerda
+ * added subfield writing support
+ *
  * Revision 1.16  2003/08/21 21:21:44  warmerda
  * expose the binary format type for a subfield defn
  *
@@ -275,6 +278,8 @@ class DDFFieldDefn
 
     /** this is just for an S-57 hack for swedish data */
     void SetRepeatingFlag( int n ) { bRepeatingSubfields = n; }
+
+    char        *GetDefaultValue( int *pnSize );
     
   private:
 
@@ -350,8 +355,21 @@ public:
     int         GetDataLength( const char *, int, int * );
     void        DumpData( const char *pachData, int nMaxBytes, FILE * fp );
 
+    int         FormatStringValue( char *pachData, int nBytesAvailable, 
+                                   int *pnBytesUsed, const char *pszValue, 
+                                   int nValueLength = -1 );
+
+    int         FormatIntValue( char *pachData, int nBytesAvailable, 
+                                int *pnBytesUsed, int nNewValue );
+
+    int         FormatFloatValue( char *pachData, int nBytesAvailable, 
+                                  int *pnBytesUsed, double dfNewValue );
+
     /** Get the subfield width (zero for variable). */
     int         GetWidth() { return nFormatWidth; } // zero for variable.
+
+    int         GetDefaultValue( char *pachData, int nBytesAvailable, 
+                                 int *pnBytesUsed );
     
     void        Dump( FILE * fp );
 
@@ -433,6 +451,16 @@ class DDFRecord
     const char *GetStringSubfield( const char *, int, const char *, int,
                                    int * = NULL );
 
+    int         SetIntSubfield( const char *pszField, int iFieldIndex, 
+                                const char *pszSubfield, int iSubfieldIndex,
+                                int nValue );
+    int         SetStringSubfield( const char *pszField, int iFieldIndex, 
+                                   const char *pszSubfield, int iSubfieldIndex,
+                                   const char *pszValue, int nValueLength=-1 );
+    int         SetFloatSubfield( const char *pszField, int iFieldIndex, 
+                                  const char *pszSubfield, int iSubfieldIndex,
+                                  double dfNewValue );
+
     /** Fetch size of records raw data (GetData()) in bytes. */
     int         GetDataSize() { return nDataSize; }
 
@@ -453,8 +481,13 @@ class DDFRecord
     int DeleteField( DDFField *poField );
     DDFField* AddField( DDFFieldDefn * );
 
+    int CreateDefaultFieldInstance( DDFField *poField, int iIndexWithinField );
+
     int SetFieldRaw( DDFField *poField, int iIndexWithinField, 
                      const char *pachRawData, int nRawDataSize );
+    int UpdateFieldRaw( DDFField *poField, int iIndexWithinField, 
+                        int nStartOffset, int nOldSize,
+                        const char *pachRawData, int nRawDataSize );
 
     int         Write();
     
@@ -538,6 +571,3 @@ class DDFField
 
 
 #endif /* ndef _ISO8211_H_INCLUDED */
-
-
-

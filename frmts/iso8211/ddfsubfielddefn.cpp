@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2003/09/03 20:36:26  warmerda
+ * added subfield writing support
+ *
  * Revision 1.8  2001/07/18 04:51:57  warmerda
  * added CPL_CVSID
  *
@@ -691,4 +694,257 @@ void DDFSubfieldDefn::DumpData( const char * pachData, int nMaxBytes,
         fprintf( fp, "      Subfield `%s' = `%s'\n",
                  pszName,
                  ExtractStringData( pachData, nMaxBytes, NULL ) );
+}
+
+/************************************************************************/
+/*                          GetDefaultValue()                           */
+/************************************************************************/
+
+/**
+ * Get default data. 
+ *
+ * Returns the default subfield data contents for this subfield definition.
+ * For variable length numbers this will normally be "0<unit-terminator>". 
+ * For variable length strings it will be "<unit-terminator>".  For fixed
+ * length numbers it is zero filled.  For fixed length strings it is space
+ * filled.  For binary numbers it is binary zero filled. 
+ *
+ * @param pachData the buffer into which the returned default will be placed.
+ * May be NULL if just querying default size.
+ * @param nBytesAvailable the size of pachData in bytes. 
+ * @param pnBytesUsed will receive the size of the subfield default data in
+ * bytes.
+ *
+ * @return TRUE on success or FALSE on failure or if the passed buffer is too
+ * small to hold the default.
+ */
+
+int DDFSubfieldDefn::GetDefaultValue( char *pachData, int nBytesAvailable, 
+                                      int *pnBytesUsed )
+
+{
+    int nDefaultSize;
+
+    if( !bIsVariable )
+        nDefaultSize = nFormatWidth;
+    else
+        nDefaultSize = 1;
+
+    if( pnBytesUsed != NULL )
+        *pnBytesUsed = nDefaultSize;
+
+    if( pachData == NULL )
+        return TRUE;
+
+    if( nBytesAvailable < nDefaultSize )
+        return FALSE;
+
+    if( bIsVariable )
+    {
+        pachData[0] = DDF_UNIT_TERMINATOR;
+    }
+    else
+    {
+        if( GetBinaryFormat() == NotBinary )
+        {
+            if( GetType() == DDFInt || GetType() == DDFFloat )
+                memset( pachData, '0', nDefaultSize );
+            else
+                memset( pachData, ' ', nDefaultSize );
+        }
+        else
+            memset( pachData, 0, nDefaultSize );
+    }
+
+    return TRUE;
+}
+
+/************************************************************************/
+/*                         FormatStringValue()                          */
+/************************************************************************/
+
+/**
+ * Format string subfield value.
+ *
+ * Returns a buffer with the passed in string value reformatted in a way
+ * suitable for storage in a DDFField for this subfield.  
+ */
+
+int DDFSubfieldDefn::FormatStringValue( char *pachData, int nBytesAvailable, 
+                                        int *pnBytesUsed, 
+                                        const char *pszValue,
+                                        int nValueLength )
+
+{
+    int nSize;
+
+    if( nValueLength == -1 )
+        nValueLength = strlen(pszValue);
+
+    if( bIsVariable )
+    {
+        nSize = nValueLength + 1;
+    }
+    else
+    {								       
+        nSize = nFormatWidth;
+    }
+
+    if( pnBytesUsed != NULL )
+        *pnBytesUsed = nSize;
+
+    if( pachData == NULL )
+        return TRUE;
+
+    if( nBytesAvailable < nSize )
+        return FALSE;
+
+    if( bIsVariable )
+    {
+        strncpy( pachData, pszValue, nSize-1 );
+        pachData[nSize-1] = DDF_UNIT_TERMINATOR;
+    }
+    else
+    {
+        if( GetBinaryFormat() == NotBinary )
+        {
+            memset( pachData, ' ', nSize );
+            memcpy( pachData, pszValue, MIN(nValueLength,nSize) );
+        }
+        else
+        {
+            memset( pachData, 0, nSize );
+            memcpy( pachData, pszValue, MIN(nValueLength,nSize) );
+        }
+    }
+
+    return TRUE;
+}
+
+/************************************************************************/
+/*                           FormatIntValue()                           */
+/************************************************************************/
+
+/**
+ * Format int subfield value.
+ *
+ * Returns a buffer with the passed in int value reformatted in a way
+ * suitable for storage in a DDFField for this subfield.  
+ */
+
+int DDFSubfieldDefn::FormatIntValue( char *pachData, int nBytesAvailable, 
+                                     int *pnBytesUsed, int nNewValue )
+
+{
+    int nSize;
+    char szWork[30];
+
+    sprintf( szWork, "%d", nNewValue );
+
+    if( bIsVariable )
+    {
+        nSize = strlen(szWork) + 1;
+    }
+    else
+    {								       
+        nSize = nFormatWidth;
+
+        if( GetBinaryFormat() == NotBinary && (int) strlen(szWork) > nSize )
+            return FALSE;
+    }
+
+    if( pnBytesUsed != NULL )
+        *pnBytesUsed = nSize;
+
+    if( pachData == NULL )
+        return TRUE;
+
+    if( nBytesAvailable < nSize )
+        return FALSE;
+
+    if( bIsVariable )
+    {
+        strncpy( pachData, szWork, nSize-1 );
+        pachData[nSize-1] = DDF_UNIT_TERMINATOR;
+    }
+    else
+    {
+        if( GetBinaryFormat() == NotBinary )
+        {
+            memset( pachData, '0', nSize );
+            strncpy( pachData + nSize - strlen(szWork), szWork,
+                     strlen(szWork) );
+        }
+        else
+        {
+            CPLAssert( FALSE );
+            /* implement me */
+        }
+    }
+
+    return TRUE;
+}
+
+/************************************************************************/
+/*                          FormatFloatValue()                          */
+/************************************************************************/
+
+/**
+ * Format int subfield value.
+ *
+ * Returns a buffer with the passed in int value reformatted in a way
+ * suitable for storage in a DDFField for this subfield.  
+ */
+
+int DDFSubfieldDefn::FormatFloatValue( char *pachData, int nBytesAvailable, 
+                                       int *pnBytesUsed, double dfNewValue )
+
+{
+    int nSize;
+    char szWork[120];
+
+    sprintf( szWork, "%.16g", dfNewValue );
+
+    if( bIsVariable )
+    {
+        nSize = strlen(szWork) + 1;
+    }
+    else
+    {
+        nSize = nFormatWidth;
+
+        if( GetBinaryFormat() == NotBinary && (int) strlen(szWork) > nSize )
+            return FALSE;
+    }
+
+    if( pnBytesUsed != NULL )
+        *pnBytesUsed = nSize;
+
+    if( pachData == NULL )
+        return TRUE;
+
+    if( nBytesAvailable < nSize )
+        return FALSE;
+
+    if( bIsVariable )
+    {
+        strncpy( pachData, szWork, nSize-1 );
+        pachData[nSize-1] = DDF_UNIT_TERMINATOR;
+    }
+    else
+    {
+        if( GetBinaryFormat() == NotBinary )
+        {
+            memset( pachData, '0', nSize );
+            strncpy( pachData + nSize - strlen(szWork), szWork,
+                     strlen(szWork) );
+        }
+        else
+        {
+            CPLAssert( FALSE );
+            /* implement me */
+        }
+    }
+
+    return TRUE;
 }

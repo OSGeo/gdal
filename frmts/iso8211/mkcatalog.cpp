@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2003/09/03 20:36:26  warmerda
+ * added subfield writing support
+ *
  * Revision 1.1  2003/07/03 15:40:13  warmerda
  * new
  *
@@ -109,7 +112,36 @@ int main( int nArgc, char ** papszArgv )
     poRec->SetFieldRaw( poField, 0, "\0\0\036", 3 );
 
     poField = poRec->AddField( oModule.FindFieldDefn( "CATD" ) );
-//    poRec->SetFieldRaw( poField, 0, "\0\0\036", 3 );
-
+    poRec->SetStringSubfield( "CATD", 0, "RCNM", 0, "CD" );
+    poRec->SetIntSubfield   ( "CATD", 0, "RCID", 0, 1 );
+    poRec->SetStringSubfield( "CATD", 0, "FILE", 0, "CATALOG.030" );
+    poRec->SetStringSubfield( "CATD", 0, "VOLM", 0, "V01X01" );
+    poRec->SetStringSubfield( "CATD", 0, "IMPL", 0, "ASC" );
+    poRec->SetStringSubfield( "CATD", 0, "COMT", 0, 
+                              "Exchange Set Catalog file" );
     poRec->Write();
+    delete poRec;
+
+/* -------------------------------------------------------------------- */
+/*      Create a record.                                                */
+/* -------------------------------------------------------------------- */
+    poRec = new DDFRecord( &oModule );
+
+    poField = poRec->AddField( oModule.FindFieldDefn( "0001" ) );
+    poRec->SetFieldRaw( poField, 0, "\1\0\036", 3 );
+
+    poField = poRec->AddField( oModule.FindFieldDefn( "CATD" ) );
+    poRec->SetStringSubfield( "CATD", 0, "RCNM", 0, "CD" );
+    poRec->SetIntSubfield   ( "CATD", 0, "RCID", 0, 2 );
+    poRec->SetStringSubfield( "CATD", 0, "FILE", 0, "No410810.000" );
+    poRec->SetStringSubfield( "CATD", 0, "VOLM", 0, "V01X01" );
+    poRec->SetStringSubfield( "CATD", 0, "IMPL", 0, "BIN" );
+    poRec->SetFloatSubfield ( "CATD", 0, "SLAT", 0, 59.000005 );
+    poRec->SetFloatSubfield ( "CATD", 0, "WLON", 0, 4.999996 );
+    poRec->SetFloatSubfield ( "CATD", 0, "NLAT", 0, 59.500003 );
+    poRec->SetFloatSubfield ( "CATD", 0, "ELON", 0, 5.499997 );
+    poRec->SetStringSubfield( "CATD", 0, "CRCS", 0, "555C3AD4" );
+    poRec->Write();
+    delete poRec;
+
 }
