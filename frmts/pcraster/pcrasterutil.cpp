@@ -300,7 +300,8 @@ double missingValue(CSF_CR cellRepresentation)
       break;
     }
     case CR_REAL4: {
-      missingValue = 1e-30;
+      assert(std::numeric_limits<REAL4>::is_iec559);
+      missingValue = -std::numeric_limits<REAL4>::max();
       break;
     }
     default: {
