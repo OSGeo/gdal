@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2001/10/02 14:24:24  warmerda
+ * added SetAttributeFilter docs
+ *
  * Revision 1.6  2001/03/15 04:01:43  danmo
  * Added OGRLayer::GetExtent()
  *
@@ -328,6 +331,34 @@
  be altered or deleted by the caller.  
 
  @return spatial filter geometry.
+ 
+ */
+
+/** 
+ \fn void OGRLayer::SetAttributeFilter( const char *pszQuery );
+
+ Set a new attribute query.
+
+ This method sets the attribute query string to be used when 
+ fetching features via the GetNextFeature() method.  Only features for which
+ the query evaluates as true will be returned.
+
+ The query string should be in the format of an SQL WHERE clause.  For
+ instance "population > 1000000 and population < 5000000" where population
+ is an attribute in the layer.  The query format is a restricted form of SQL
+ WHERE clause as defined "eq_format=restricted_where" about half way through
+ this document:
+
+   http://ogdi.sourceforge.net/prop/6.2.CapabilitiesMetadata.html
+
+ Note that installing a query string will generally result in resetting
+ the current reading position (ala ResetReading()).  
+
+ @param pszQuery query in restricted SQL WHERE format, or NULL to clear the
+ current query.
+
+ @return OGRERR_NONE if successfully installed, or an error code if the 
+ query expression is in error, or some other failure occurs. 
  
  */
 
