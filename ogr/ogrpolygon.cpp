@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.27  2004/07/10 04:51:42  warmerda
+ * added closeRings
+ *
  * Revision 1.26  2004/02/22 09:56:54  dron
  * Fix compirison casting problems in OGRPolygon::Equal().
  *
@@ -894,3 +897,13 @@ OGRErr OGRPolygon::transform( OGRCoordinateTransformation *poCT )
 }
 
 
+/************************************************************************/
+/*                             closeRings()                             */
+/************************************************************************/
+
+void OGRPolygon::closeRings()
+
+{
+    for( int iRing = 0; iRing < nRingCount; iRing++ )
+        papoRings[iRing]->closeRings();
+}
