@@ -27,3 +27,12 @@ tolatlong.py		Script to read coordinate system and geotransformation
 			matrix from input file and report latitude/longitude
 			coordinates for the specified pixel.
 
+get_soundg.py           Script to copy the SOUNDG layer from an S-57 file to
+                        a Shapefile, splitting up features with MULTIPOINT
+                        geometries into many POINT feature, and appending
+                        the point elevations as an attribute. 
+
+gdalfilter.py           Example script for applying kernel based filters to
+                        an image using GDAL.  Demonstrates use of virtual
+                        files as an intermediate representation. 
+
