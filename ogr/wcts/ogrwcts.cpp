@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2003/03/11 21:48:38  warmerda
+ * Fixed test/xml to be text/xml.
+ *
  * Revision 1.5  2003/03/11 21:32:09  warmerda
  * Added preliminary KVP support
  *
@@ -359,7 +362,7 @@ void WCTSGetCapabilities( CPLXMLNode *psOperation )
     VSIFRead( pszDoc, 1, nLen, fp );
     VSIFClose( fp );
 
-    printf( "Content-type: test/xml%c%c", 10, 10 );
+    printf( "Content-type: text/xml%c%c", 10, 10 );
 
     VSIFWrite( pszDoc, 1, nLen, stdout );
     fflush( stdout );
