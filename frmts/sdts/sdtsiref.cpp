@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  1999/06/03 14:03:34  warmerda
+ * Added offset/res info from iref
+ *
  * Revision 1.2  1999/05/07 13:45:01  warmerda
  * major upgrade to use iso8211lib
  *
@@ -47,6 +50,10 @@ SDTS_IREF::SDTS_IREF()
 {
     dfXScale = 1.0;
     dfYScale = 1.0;
+    dfXOffset = 0.0;
+    dfYOffset = 0.0;
+    dfXRes = 1.0;
+    dfYRes = 1.0;
 
     pszXAxisName = CPLStrdup("");
     pszYAxisName = CPLStrdup("");
@@ -110,10 +117,16 @@ int SDTS_IREF::Read( const char * pszFilename )
         CPLStrdup( poRecord->GetStringSubfield( "IREF", 0, "HFMT", 0 ) );
 
 /* -------------------------------------------------------------------- */
-/*      Get the scaling factors.                                        */
+/*      Get the transformation information, and resolution.             */
 /* -------------------------------------------------------------------- */
     dfXScale = poRecord->GetFloatSubfield( "IREF", 0, "SFAX", 0 );
     dfYScale = poRecord->GetFloatSubfield( "IREF", 0, "SFAY", 0 );
+
+    dfXOffset = poRecord->GetFloatSubfield( "IREF", 0, "XORG", 0 );
+    dfYOffset = poRecord->GetFloatSubfield( "IREF", 0, "YORG", 0 );
+
+    dfXRes = poRecord->GetFloatSubfield( "IREF", 0, "XHRS", 0 );
+    dfYRes = poRecord->GetFloatSubfield( "IREF", 0, "YHRS", 0 );
 
     return TRUE;
 }
