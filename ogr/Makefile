@@ -26,6 +26,12 @@ OBJ_OGR	=	ogrgeometryfactory.obj ogrpoint.obj ogrcurve.obj \
 OBJ_OLEDB =	oledb_sup.obj \
 		sfcenumerator.obj sfcdatasource.obj sfctable.obj
 
+!IFDEF DLLBUILD
+LINKARGS =	..\gdal_i.lib $(LIBS)
+!ELSE
+LINKARGS =	$(OBJ_OGR) $(OGR_FRMTS) $(ALL_LIBS)
+!ENDIF
+
 default:        ogr.lib ogrinfo.exe test_ogrsf.exe ogr2ogr.exe
 
 frmts:
@@ -77,16 +83,18 @@ test_rep.exe:      test_rep.obj $(OBJ_OGR)
 			$(ALL_LIBS) /link $(LINKER_FLAGS)
 
 ogrinfo.exe:      ogrinfo.obj $(OBJ_OGR)
-        cl $(LINKFLAGS) ogrinfo.obj $(OBJ_OGR) $(OGR_FRMTS) \
-			$(ALL_LIBS) /link $(LINKER_FLAGS)
+        cl $(LINKFLAGS) ogrinfo.obj $(LINKARGS) /link $(LINKER_FLAGS)
 
 ogr2ogr.exe:      ogr2ogr.obj $(OBJ_OGR)
-        cl $(LINKFLAGS) ogr2ogr.obj $(OBJ_OGR) $(OGR_FRMTS) \
-			$(ALL_LIBS) /link $(LINKER_FLAGS)
+        cl $(LINKFLAGS) ogr2ogr.obj $(LINKARGS) /link $(LINKER_FLAGS)
 
 sdts2mi.exe:      sdts2mi.obj $(OBJ_OGR)
         cl $(LINKFLAGS) sdts2mi.obj $(OBJ_OGR) $(OGR_FRMTS) \
 			$(ALL_LIBS) /link $(LINKER_FLAGS)
+
+install:	default
+	copy ogrinfo.exe $(BINDIR)
+	copy ogr2ogr.exe $(BINDIR)
 
 clean:
 	-del *.obj
