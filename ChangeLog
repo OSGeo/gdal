@@ -1,3 +1,8 @@
+2001-10-10  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* frmts/gtiff/geotiff.cpp: Substantial restructuring to support 
+	pixel interleaved output products.
+
 2001-10-02  Frank Warmerdam  <warmerdam@pobox.com>
 
 	* ogr/sfcom_oledb/SFDS.h: added properties required by MapGuide.
