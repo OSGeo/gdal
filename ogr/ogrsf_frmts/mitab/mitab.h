@@ -241,8 +241,6 @@ class IMapInfoFile : public OGRLayer
 
     ///////////////
     //  OGR methods for read support
-    virtual OGRGeometry *GetSpatialFilter();
-    virtual void        SetSpatialFilter( OGRGeometry * );
     virtual void        ResetReading() = 0;
     virtual int         GetFeatureCount (int bForce) = 0;
     virtual OGRFeature *GetNextFeature();
