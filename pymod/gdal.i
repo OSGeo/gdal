@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.27  2001/01/22 22:34:06  warmerda
+ * added median cut, and dithering algorithms
+ *
  * Revision 1.26  2000/12/14 17:38:49  warmerda
  * added GDALDriver.Delete
  *
@@ -52,67 +55,13 @@
  *
  * Revision 1.19  2000/08/30 20:06:14  warmerda
  * added projection method list functions
- *
- * Revision 1.18  2000/07/27 21:34:08  warmerda
- * added description, and driver access
- *
- * Revision 1.17  2000/07/25 17:45:03  warmerda
- * added access to CPLDebug
- *
- * Revision 1.16  2000/07/19 19:43:29  warmerda
- * updated for numpy support
- *
- * Revision 1.15  2000/07/13 17:37:32  warmerda
- * added CloneGeogCS
- *
- * Revision 1.14  2000/07/11 01:02:06  warmerda
- * added ExportToProj4()
- *
- * Revision 1.13  2000/07/09 20:56:38  warmerda
- * added exportToPrettyWkt
- *
- * Revision 1.12  2000/06/27 16:48:57  warmerda
- * added progress func support
- *
- * Revision 1.11  2000/06/26 19:54:23  warmerda
- * added options support in GDALCreateCopy
- *
- * Revision 1.10  2000/06/26 18:46:31  warmerda
- * Added Dataset.BuildOverviews
- *
- * Revision 1.9  2000/06/26 17:58:15  warmerda
- * added driver, createcopy support
- *
- * Revision 1.8  2000/06/13 18:14:19  warmerda
- * added control of the gdal raster cache
- *
- * Revision 1.7  2000/04/21 22:05:56  warmerda
- * updated metadata support
- *
- * Revision 1.6  2000/03/31 14:25:28  warmerda
- * added metadata and gcp support
- *
- * Revision 1.5  2000/03/22 01:10:42  warmerda
- * added OSR and OCT wrappers for coordinate systems
- *
- * Revision 1.4  2000/03/10 13:55:33  warmerda
- * removed constants, added gethistogram
- *
- * Revision 1.3  2000/03/08 20:01:04  warmerda
- * added geotransforms
- *
- * Revision 1.2  2000/03/06 03:30:51  warmerda
- * Added geotransform stuff
- *
- * Revision 1.1  2000/03/06 02:24:48  warmerda
- * New
- *
  */
 
 %module _gdal
 
 %{
 #include "gdal.h"
+#include "../alg/gdal_alg.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
 #include "ogr_srs_api.h"
@@ -945,6 +894,119 @@ py_GDALGetRasterNoDataValue(PyObject *self, PyObject *args) {
 %}
 
 %native(GDALGetRasterNoDataValue) py_GDALGetRasterNoDataValue;
+
+/* -------------------------------------------------------------------- */
+/*      Algorithms                                                      */
+/* -------------------------------------------------------------------- */
+
+%{
+/************************************************************************/
+/*                           GDALBuildOverviews()                       */
+/************************************************************************/
+static PyObject *
+py_GDALComputeMedianCutPCT(PyObject *self, PyObject *args) {
+
+    char *pszSwigRed, *pszSwigGreen, *pszSwigBlue;
+    char *pszSwigCT = NULL;
+    GDALRasterBandH   hRed, hGreen, hBlue;
+    GDALColorTableH   hColorTable = NULL;
+    int               nColors = 256;
+    int               eErr;
+    PyProgressData sProgressInfo;
+
+    self = self;
+    sProgressInfo.psPyCallback = NULL;
+    sProgressInfo.psPyCallbackData = NULL;
+    if(!PyArg_ParseTuple(args,"sssis|OO:GDALComputeMedianCutPCT",	
+			 &pszSwigRed, &pszSwigGreen, &pszSwigBlue,
+			 &nColors, &pszSwigCT,
+                         &(sProgressInfo.psPyCallback), 
+		         &(sProgressInfo.psPyCallbackData) ) )
+        return NULL;
+
+    if (SWIG_GetPtr_2(pszSwigRed,(void **) &hRed,_GDALRasterBandH)
+	|| SWIG_GetPtr_2(pszSwigGreen,(void **) &hGreen,_GDALRasterBandH)
+	|| SWIG_GetPtr_2(pszSwigBlue,(void **) &hBlue,_GDALRasterBandH))
+    {
+        PyErr_SetString(PyExc_TypeError,
+   	      "Type error with raster band in GDALComputeMedianCutPCT."
+	      " Expected _GDALRasterBandH." );
+        return NULL;
+    }
+
+    if (SWIG_GetPtr_2(pszSwigCT,(void **) &hColorTable,_GDALColorTableH))
+    {
+        PyErr_SetString(PyExc_TypeError,
+   	      "Type error with argument 5 in GDALComputeMedianCutPCT."
+	      " Expected _GDALColorTableH." );
+        return NULL;
+    }
+
+    eErr = GDALComputeMedianCutPCT( hRed, hGreen, hBlue, NULL,
+	                            nColors, hColorTable, 
+	                            PyProgressProxy, &sProgressInfo );
+
+    return Py_BuildValue( "i", eErr );
+}
+
+%}
+
+%native(GDALComputeMedianCutPCT) py_GDALComputeMedianCutPCT;
+
+%{
+/************************************************************************/
+/*                         GDALDitherRGB2PCT()                          */
+/************************************************************************/
+static PyObject *
+py_GDALDitherRGB2PCT(PyObject *self, PyObject *args) {
+
+    char *pszSwigRed, *pszSwigGreen, *pszSwigBlue, *pszSwigTarget;
+    char *pszSwigCT = NULL;
+    GDALRasterBandH   hRed, hGreen, hBlue, hTarget;
+    GDALColorTableH   hColorTable = NULL;
+    int               eErr;
+    PyProgressData sProgressInfo;
+
+    self = self;
+    sProgressInfo.psPyCallback = NULL;
+    sProgressInfo.psPyCallbackData = NULL;
+    if(!PyArg_ParseTuple(args,"sssss|OO:GDALDitherRGB2PCT",	
+			 &pszSwigRed, &pszSwigGreen, &pszSwigBlue,
+	                 &pszSwigTarget,
+			 &pszSwigCT,
+                         &(sProgressInfo.psPyCallback), 
+		         &(sProgressInfo.psPyCallbackData) ) )
+        return NULL;
+
+    if (SWIG_GetPtr_2(pszSwigRed,(void **) &hRed,_GDALRasterBandH)
+	|| SWIG_GetPtr_2(pszSwigGreen,(void **) &hGreen,_GDALRasterBandH)
+	|| SWIG_GetPtr_2(pszSwigBlue,(void **) &hBlue,_GDALRasterBandH)
+	|| SWIG_GetPtr_2(pszSwigTarget,(void **) &hTarget,_GDALRasterBandH))
+    {
+        PyErr_SetString(PyExc_TypeError,
+   	      "Type error with raster band in GDALDitherRGB2PCT."
+	      " Expected _GDALRasterBandH." );
+        return NULL;
+    }
+
+    if (SWIG_GetPtr_2(pszSwigCT,(void **) &hColorTable,_GDALColorTableH))
+    {
+        PyErr_SetString(PyExc_TypeError,
+   	      "Type error with argument 5 in GDALDitherRGB2PCT."
+	      " Expected _GDALColorTableH." );
+        return NULL;
+    }
+
+    eErr = GDALDitherRGB2PCT( hRed, hGreen, hBlue, hTarget, 
+		              hColorTable, 	
+	                      PyProgressProxy, &sProgressInfo );
+
+    return Py_BuildValue( "i", eErr );
+}
+
+%}
+
+%native(GDALDitherRGB2PCT) py_GDALDitherRGB2PCT;
 
 /* -------------------------------------------------------------------- */
 /*      OGRSpatialReference stuff.                                      */

@@ -29,6 +29,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.21  2001/01/22 22:34:06  warmerda
+# added median cut, and dithering algorithms
+#
 # Revision 1.20  2000/12/14 17:38:49  warmerda
 # added GDALDriver.Delete
 #
@@ -122,6 +125,17 @@ def Open(file,access=GA_ReadOnly):
     else:
         _gdal.GDALDereferenceDataset( _obj )
         return Dataset(_obj)
+
+def ComputeMedianCutPCT( red, green, blue, color_count, ct,
+                         callback = None, callback_data = None ):
+    return _gdal.GDALComputeMedianCutPCT( red._o, green._o, blue._o,
+                                          color_count, ct._o,
+                                          callback, callback_data )
+
+def DitherRGB2PCT( red, green, blue, target, ct,
+                   callback = None, callback_data = None ):
+    return _gdal.GDALDitherRGB2PCT( red._o, green._o, blue._o, target._o,
+                                    ct._o, callback, callback_data )
 
 def GetDriverList():
     list = []
@@ -330,6 +344,9 @@ class Band:
         else:
             return _gdal.GDALColorTable( _ct )
 
+    def SetRasterColorTable(self, ct):
+        return _gdal.GDALSetRasterColorTable( self._o, ct._o )
+    
     def FlushCache(self):
         return _gdal.GDALFlushRasterCache(self._o)
 
@@ -348,3 +365,36 @@ class Band:
         return _gdal.GDALSetRasterNoDataValue(self._o,value)
 
 
+class ColorTable:
+    def __init__(self, _obj = None):
+        if _obj is None:
+            self.own_o = 1
+            self._o = _gdal.GDALCreateColorTable( GPI_RGB )
+        else:
+            self.own_o = 0
+            self._o = _obj
+
+    def __del__(self):
+        if self.own_o:
+            _gdal.GDALDestroyColorTable( self._o )
+
+    def Clone(self):
+        new_ct = ColorTable( _gdal.GDALCloneColorTable( self._o ) )
+        new_ct.own_o = 1
+        return new_ct
+
+    def GetPaletteInterpretation( self ):
+        return _gdal.GDALGetPaletteInterpretation( self._o )
+
+    def GetCount( self ):
+        return _gdal.GDALGetColorEntryCount( self._o )
+
+    def GetColorEntry( self, i ):
+        entry = _gdal.GDALGetColorEntry( self._o, i )
+        if entry is None:
+            return (0,0,0,0)
+        else:
+            return (_gdal.GDALColorEntry_c1_get( entry ),
+                    _gdal.GDALColorEntry_c2_get( entry ),
+                    _gdal.GDALColorEntry_c3_get( entry ),
+                    _gdal.GDALColorEntry_c4_get( entry ))

@@ -33,8 +33,8 @@
  * and things like that.
  *
  * $Log$
- * Revision 1.25  2000/12/14 17:38:49  warmerda
- * added GDALDriver.Delete
+ * Revision 1.26  2001/01/22 22:34:06  warmerda
+ * added median cut, and dithering algorithms
  *
  ************************************************************************/
 
@@ -557,6 +557,7 @@ char *SWIG_GetPtr(char *_c, void **ptr, char *_t)
 #define SWIG_name    "_gdal"
 
 #include "gdal.h"
+#include "../alg/gdal_alg.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
 #include "ogr_srs_api.h"
@@ -1196,6 +1197,107 @@ py_GDALGetRasterNoDataValue(PyObject *self, PyObject *args) {
 
     return Py_BuildValue("d", GDALGetRasterNoDataValue(hObject,NULL) );
 }
+
+/************************************************************************/
+/*                           GDALBuildOverviews()                       */
+/************************************************************************/
+static PyObject *
+py_GDALComputeMedianCutPCT(PyObject *self, PyObject *args) {
+
+    char *pszSwigRed, *pszSwigGreen, *pszSwigBlue;
+    char *pszSwigCT = NULL;
+    GDALRasterBandH   hRed, hGreen, hBlue;
+    GDALColorTableH   hColorTable = NULL;
+    int               nColors = 256;
+    int               eErr;
+    PyProgressData sProgressInfo;
+
+    self = self;
+    sProgressInfo.psPyCallback = NULL;
+    sProgressInfo.psPyCallbackData = NULL;
+    if(!PyArg_ParseTuple(args,"sssis|OO:GDALComputeMedianCutPCT",	
+			 &pszSwigRed, &pszSwigGreen, &pszSwigBlue,
+			 &nColors, &pszSwigCT,
+                         &(sProgressInfo.psPyCallback), 
+		         &(sProgressInfo.psPyCallbackData) ) )
+        return NULL;
+
+    if (SWIG_GetPtr_2(pszSwigRed,(void **) &hRed,_GDALRasterBandH)
+	|| SWIG_GetPtr_2(pszSwigGreen,(void **) &hGreen,_GDALRasterBandH)
+	|| SWIG_GetPtr_2(pszSwigBlue,(void **) &hBlue,_GDALRasterBandH))
+    {
+        PyErr_SetString(PyExc_TypeError,
+   	      "Type error with raster band in GDALComputeMedianCutPCT."
+	      " Expected _GDALRasterBandH." );
+        return NULL;
+    }
+
+    if (SWIG_GetPtr_2(pszSwigCT,(void **) &hColorTable,_GDALColorTableH))
+    {
+        PyErr_SetString(PyExc_TypeError,
+   	      "Type error with argument 5 in GDALComputeMedianCutPCT."
+	      " Expected _GDALColorTableH." );
+        return NULL;
+    }
+
+    eErr = GDALComputeMedianCutPCT( hRed, hGreen, hBlue, NULL,
+	                            nColors, hColorTable, 
+	                            PyProgressProxy, &sProgressInfo );
+
+    return Py_BuildValue( "i", eErr );
+}
+
+
+/************************************************************************/
+/*                         GDALDitherRGB2PCT()                          */
+/************************************************************************/
+static PyObject *
+py_GDALDitherRGB2PCT(PyObject *self, PyObject *args) {
+
+    char *pszSwigRed, *pszSwigGreen, *pszSwigBlue, *pszSwigTarget;
+    char *pszSwigCT = NULL;
+    GDALRasterBandH   hRed, hGreen, hBlue, hTarget;
+    GDALColorTableH   hColorTable = NULL;
+    int               eErr;
+    PyProgressData sProgressInfo;
+
+    self = self;
+    sProgressInfo.psPyCallback = NULL;
+    sProgressInfo.psPyCallbackData = NULL;
+    if(!PyArg_ParseTuple(args,"sssss|OO:GDALDitherRGB2PCT",	
+			 &pszSwigRed, &pszSwigGreen, &pszSwigBlue,
+	                 &pszSwigTarget,
+			 &pszSwigCT,
+                         &(sProgressInfo.psPyCallback), 
+		         &(sProgressInfo.psPyCallbackData) ) )
+        return NULL;
+
+    if (SWIG_GetPtr_2(pszSwigRed,(void **) &hRed,_GDALRasterBandH)
+	|| SWIG_GetPtr_2(pszSwigGreen,(void **) &hGreen,_GDALRasterBandH)
+	|| SWIG_GetPtr_2(pszSwigBlue,(void **) &hBlue,_GDALRasterBandH)
+	|| SWIG_GetPtr_2(pszSwigTarget,(void **) &hTarget,_GDALRasterBandH))
+    {
+        PyErr_SetString(PyExc_TypeError,
+   	      "Type error with raster band in GDALDitherRGB2PCT."
+	      " Expected _GDALRasterBandH." );
+        return NULL;
+    }
+
+    if (SWIG_GetPtr_2(pszSwigCT,(void **) &hColorTable,_GDALColorTableH))
+    {
+        PyErr_SetString(PyExc_TypeError,
+   	      "Type error with argument 5 in GDALDitherRGB2PCT."
+	      " Expected _GDALColorTableH." );
+        return NULL;
+    }
+
+    eErr = GDALDitherRGB2PCT( hRed, hGreen, hBlue, hTarget, 
+		              hColorTable, 	
+	                      PyProgressProxy, &sProgressInfo );
+
+    return Py_BuildValue( "i", eErr );
+}
+
 
 /************************************************************************/
 /*                          OSRImportFromESRI()                         */
@@ -3556,6 +3658,8 @@ static PyMethodDef _gdalMethods[] = {
 	 { "OSRReference", _wrap_OSRReference, 1 },
 	 { "OSRDestroySpatialReference", _wrap_OSRDestroySpatialReference, 1 },
 	 { "OSRNewSpatialReference", _wrap_OSRNewSpatialReference, 1 },
+	 { "GDALDitherRGB2PCT", py_GDALDitherRGB2PCT, 1 },
+	 { "GDALComputeMedianCutPCT", py_GDALComputeMedianCutPCT, 1 },
 	 { "GDALGetRasterNoDataValue", py_GDALGetRasterNoDataValue, 1 },
 	 { "GDALGetDescription", py_GDALGetDescription, 1 },
 	 { "GDALGetMetadata", py_GDALGetMetadata, 1 },
