@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  1999/09/13 14:36:45  warmerda
+ * Mark PROFILE_POINT and PROFILE_LINE as 3D features.
+ *
  * Revision 1.4  1999/09/13 14:09:10  warmerda
  * added oscar comment, profile and landline chg_date
  *
@@ -1523,14 +1526,14 @@ void NTFFileReader::EstablishLayers()
     }
     else if( GetProductId() == NPC_LANDFORM_PROFILE_CONT )
     {
-        EstablishLayer( "PROFILE_POINT", wkbPoint,
+        EstablishLayer( "PROFILE_POINT", wkbPoint25D,
                         TranslateProfilePoint, NRT_POINTREC,
                         "POINT_ID", OFTInteger, 6, 0,
                         "FEAT_CODE", OFTInteger, 4, 0,
                         "HEIGHT", OFTReal, 7, 2,
                         NULL );
                         
-        EstablishLayer( "PROFILE_LINE", wkbLineString,
+        EstablishLayer( "PROFILE_LINE", wkbLineString25D,
                         TranslateProfileLine, NRT_LINEREC,
                         "LINE_ID", OFTInteger, 6, 0,
                         "FEAT_CODE", OFTInteger, 4, 0,
