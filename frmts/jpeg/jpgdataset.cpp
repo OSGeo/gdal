@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.5  2001/06/01 14:13:12  warmerda
+ * Improved magic number testing.
+ *
  * Revision 1.4  2001/05/01 18:18:28  warmerda
  * added world file support
  *
@@ -312,12 +315,17 @@ GDALDataset *JPGDataset::Open( GDALOpenInfo * poOpenInfo )
 
     if( poOpenInfo->pabyHeader[0] != 0xff
         || poOpenInfo->pabyHeader[1] != 0xd8
-        || poOpenInfo->pabyHeader[2] != 0xff
-        || poOpenInfo->pabyHeader[3] != 0xe0
-        || poOpenInfo->pabyHeader[6] != 'J'
-        || poOpenInfo->pabyHeader[7] != 'F'
-        || poOpenInfo->pabyHeader[8] != 'I'
-        || poOpenInfo->pabyHeader[9] != 'F' )
+        || poOpenInfo->pabyHeader[2] != 0xff )
+        return NULL;
+
+    /* Some files lack the JFIF marker, like IMG_0519.JPG. For these we
+       require the .jpg extension */
+    if( (poOpenInfo->pabyHeader[3] != 0xe0
+         || poOpenInfo->pabyHeader[6] != 'J'
+         || poOpenInfo->pabyHeader[7] != 'F'
+         || poOpenInfo->pabyHeader[8] != 'I'
+         || poOpenInfo->pabyHeader[9] != 'F')
+        && !EQUAL(CPLGetExtension(poOpenInfo->pszFilename),"jpg") )
         return NULL;
 
     if( poOpenInfo->eAccess == GA_Update )
