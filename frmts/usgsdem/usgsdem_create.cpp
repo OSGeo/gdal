@@ -31,6 +31,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.11  2004/05/03 13:45:33  warmerda
+ * correct old double formatting of MSVC++ (3 digit exponent)
+ *
  * Revision 1.10  2004/04/29 13:46:46  warmerda
  * flush CPLReadLine() memory
  *
@@ -174,6 +177,55 @@ static void TextFillR( char *pszTarget, unsigned int nMaxChars,
     }
     else
         memcpy( pszTarget, pszSrc, nMaxChars );
+}
+
+/************************************************************************/
+/*                         USGSDEMPrintDouble()                         */
+/*                                                                      */
+/*      On MS Visual C++ system the C runtime library uses 3 digits     */
+/*      for the exponent.  This causes various problems, so we try      */
+/*      to correct it here.                                             */
+/************************************************************************/
+
+static void USGSDEMPrintDouble( char *pszBuffer, double dfValue )
+
+{
+#define DOUBLE_BUFFER_SIZE 64
+
+    char    szTemp[DOUBLE_BUFFER_SIZE];
+    int     i;
+#ifdef _MSC_VER
+    const char *pszFormat = "%25.15e";
+#else
+    const char *pszFormat = "%24.15e";
+#endif
+
+    if ( !pszBuffer )
+        return;
+
+#if defined(HAVE_SNPRINTF)
+    snprintf( szTemp, DOUBLE_BUFFER_SIZE, pszFormat, dfValue );
+#else
+    sprintf( szTemp, pszFormat, dfValue );
+#endif
+    szTemp[DOUBLE_BUFFER_SIZE - 1] = '\0';
+
+    for( i = 0; szTemp[i] != '\0'; i++ )
+    {
+        if( szTemp[i] == 'E' || szTemp[i] == 'e' )
+        {
+            szTemp[i] = 'D';
+            if( szTemp[i+1] == '0' && isdigit(szTemp[i+2]) 
+                && isdigit(szTemp[i+3]) && szTemp[i+4] == '\0' )
+            {
+                memmove( szTemp+i+1, szTemp+i+2, 2 );
+                szTemp[i+3] = '\0';
+                break;
+            }
+        }
+    }
+
+    TextFillR( pszBuffer, 24, szTemp );
 }
 
 /************************************************************************/
@@ -344,24 +396,24 @@ static int USGSDEMWriteARecord( USGSDEMWriteInfo *psWInfo )
 /*      Corners are in 24.15 format in arc seconds.                     */
 /* -------------------------------------------------------------------- */
     // SW - longitude
-    CPLPrintDouble( achARec + 546, "%24.15e", psWInfo->dfLLX * 3600.0, NULL );
+    USGSDEMPrintDouble( achARec + 546, psWInfo->dfLLX * 3600.0 );
     // SW - latitude
-    CPLPrintDouble( achARec + 570, "%24.15e", psWInfo->dfLLY * 3600.0, NULL );
+    USGSDEMPrintDouble( achARec + 570, psWInfo->dfLLY * 3600.0 );
 
     // NW - longitude
-    CPLPrintDouble( achARec + 594, "%24.15e", psWInfo->dfULX * 3600.0, NULL );
+    USGSDEMPrintDouble( achARec + 594, psWInfo->dfULX * 3600.0 );
     // NW - latitude
-    CPLPrintDouble( achARec + 618, "%24.15e", psWInfo->dfULY * 3600.0, NULL );
+    USGSDEMPrintDouble( achARec + 618, psWInfo->dfULY * 3600.0 );
 
     // NE - longitude
-    CPLPrintDouble( achARec + 642, "%24.15e", psWInfo->dfURX * 3600.0, NULL );
+    USGSDEMPrintDouble( achARec + 642, psWInfo->dfURX * 3600.0 );
     // NE - latitude
-    CPLPrintDouble( achARec + 666, "%24.15e", psWInfo->dfURY * 3600.0, NULL );
+    USGSDEMPrintDouble( achARec + 666, psWInfo->dfURY * 3600.0 );
 
     // SE - longitude
-    CPLPrintDouble( achARec + 690, "%24.15e", psWInfo->dfLRX * 3600.0, NULL );
+    USGSDEMPrintDouble( achARec + 690, psWInfo->dfLRX * 3600.0 );
     // SE - latitude
-    CPLPrintDouble( achARec + 714, "%24.15e", psWInfo->dfLRY * 3600.0, NULL );
+    USGSDEMPrintDouble( achARec + 714, psWInfo->dfLRY * 3600.0 );
 
 /* -------------------------------------------------------------------- */
 /*      Minimum and Maximum elevations for this cell.                   */
@@ -388,8 +440,8 @@ static int USGSDEMWriteARecord( USGSDEMWriteInfo *psWInfo )
             nVoid++;
     }
 
-    CPLPrintDouble( achARec + 738, "%24.15e", (double) nMin, NULL );
-    CPLPrintDouble( achARec + 762, "%24.15e", (double) nMax, NULL );
+    USGSDEMPrintDouble( achARec + 738, (double) nMin );
+    USGSDEMPrintDouble( achARec + 762, (double) nMax );
 
 /* -------------------------------------------------------------------- */
 /*      Counter Clockwise angle (in radians).  Normally 0               */
@@ -574,19 +626,17 @@ static int USGSDEMWriteProfile( USGSDEMWriteInfo *psWInfo, int iProfile )
 /*      Format D24.15.  In arc-seconds.                                 */
 /* -------------------------------------------------------------------- */
     // longitude
-    TextFillR( achBuffer +  24, 24, 
-               CPLSPrintf( "%24.15e", 
-                           3600 * (psWInfo->dfLLX 
-                           + iProfile * psWInfo->dfHorizStepSize) ) );
+    USGSDEMPrintDouble( achBuffer +  24, 
+                        3600 * (psWInfo->dfLLX 
+                                + iProfile * psWInfo->dfHorizStepSize) );
 
     // latitude
-    TextFillR( achBuffer +  48, 24, 
-               CPLSPrintf( "%24.15e", psWInfo->dfLLY * 3600.0 ) );
+    USGSDEMPrintDouble( achBuffer +  48, psWInfo->dfLLY * 3600.0 );
 
 /* -------------------------------------------------------------------- */
 /*      Local vertical datum offset.                                    */
 /* -------------------------------------------------------------------- */
-    TextFillR( achBuffer + 72, 24, "0.000000e+00" );
+    TextFillR( achBuffer + 72, 24, "0.000000D+00" );
 
 /* -------------------------------------------------------------------- */
 /*      Min/Max elevation values for this profile.                      */
@@ -612,10 +662,8 @@ static int USGSDEMWriteProfile( USGSDEMWriteInfo *psWInfo, int iProfile )
         }
     }
 
-    TextFillR( achBuffer +  96, 24, 
-               CPLSPrintf( "%24.15e", (double) nMin ) );
-    TextFillR( achBuffer +  120, 24, 
-               CPLSPrintf( "%24.15e", (double) nMax ) );
+    USGSDEMPrintDouble( achBuffer +  96, (double) nMin );
+    USGSDEMPrintDouble( achBuffer +  120, (double) nMax );
 
 /* -------------------------------------------------------------------- */
 /*      Output all the actually elevation values, flushing blocks       */
@@ -1006,7 +1054,8 @@ static int USGSDEMLoadRaster( USGSDEMWriteInfo *psWInfo,
     char szDataPointer[100];
     char *apszOptions[] = { szDataPointer, NULL };
 
-    sprintf( szDataPointer, "DATAPOINTER=%ul", (unsigned long) psWInfo->panData );
+    sprintf( szDataPointer, "DATAPOINTER=%ul", 
+             (unsigned long) psWInfo->panData );
 
     if( poMemDS->AddBand( GDT_Int16, apszOptions ) != CE_None )
         return FALSE;
