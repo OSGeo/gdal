@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.10  2000/03/23 23:03:08  warmerda
+ * Fixed Create() method to use SetBand().
+ *
  * Revision 1.9  2000/03/22 23:52:59  pgs
  * use SetBand dork
  *
@@ -610,9 +613,7 @@ GDALDataset *GIODataset::Create( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
-    poDS->papoBands = (GDALRasterBand **)VSICalloc(sizeof(GDALRasterBand *),
-                                                   poDS->nBands);
-    poDS->papoBands[0] = new GIORasterBand( poDS, 1 );
+    poDS->SetBand( 0, new GIORasterBand( poDS, 1 ) );
 
     return poDS;
 }
