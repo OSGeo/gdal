@@ -54,6 +54,6 @@ web-update:	docs dist
 
 
 pge_test:	pge_test.cpp dgn_pge.cpp $(OBJ)
-	gcc -g pge_test.cpp dgn_pge.cpp $(OBJ) $(GDAL_HOME)/port/cpl.a -lm -o pge_test
+	gcc -Wall -g pge_test.cpp dgn_pge.cpp $(OBJ) $(GDAL_HOME)/port/cpl.a -lm -o pge_test
 
 
