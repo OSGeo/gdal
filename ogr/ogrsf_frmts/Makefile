@@ -6,7 +6,8 @@ default:
 	cd ..\ntf
 	$(MAKE) $*
 	cd ..
-	lib /out:ogrsf_frmts.lib generic\*.obj shape\*.obj ntf\*.obj
+	lib /out:ogrsf_frmts.lib generic\*.obj shape\*.obj ntf\*.obj \
+				 fme\*.obj
 
 clean:
 	del ogrsf_frmts.lib

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  1999/09/09 21:04:55  warmerda
+ * added fme support
+ *
  * Revision 1.7  1999/08/28 03:12:43  warmerda
  * Added NTF.
  *
@@ -189,6 +192,7 @@ class OGRSFDriverRegistrar
 CPL_C_START
 void	RegisterOGRShape();
 void	RegisterOGRNTF();
+void	RegisterOGRFME();
 CPL_C_END
 
 
