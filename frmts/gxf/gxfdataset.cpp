@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.8  2000/11/16 14:56:16  warmerda
+ * fail testopen on zero char, reduce min header size
+ *
  * Revision 1.7  2000/02/28 16:33:49  warmerda
  * use SetBand method
  *
@@ -216,17 +219,18 @@ GDALDataset *GXFDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
     GXFHandle	hGXF;
-    int		i, bFoundKeyword;
+    int		i, bFoundKeyword, bFoundIllegal;
     
 /* -------------------------------------------------------------------- */
 /*      Before trying GXFOpen() we first verify that there is at        */
 /*      least one "\n#keyword" type signature in the first chunk of     */
 /*      the file.                                                       */
 /* -------------------------------------------------------------------- */
-    if( poOpenInfo->fp == NULL || poOpenInfo->nHeaderBytes < 100 )
+    if( poOpenInfo->fp == NULL || poOpenInfo->nHeaderBytes < 50 )
         return NULL;
 
     bFoundKeyword = FALSE;
+    bFoundIllegal = FALSE;
     for( i = 0; i < poOpenInfo->nHeaderBytes-1; i++ )
     {
         if( (poOpenInfo->pabyHeader[i] == 10
@@ -234,16 +238,21 @@ GDALDataset *GXFDataset::Open( GDALOpenInfo * poOpenInfo )
             && poOpenInfo->pabyHeader[i+1] == '#' )
         {
             bFoundKeyword = TRUE;
+        }
+        if( poOpenInfo->pabyHeader[i] == 0 )
+        {
+            bFoundIllegal = TRUE;
             break;
         }
     }
 
-    if( !bFoundKeyword )
+    if( !bFoundKeyword || bFoundIllegal )
         return NULL;
     
 /* -------------------------------------------------------------------- */
 /*      Try opening the dataset.                                        */
 /* -------------------------------------------------------------------- */
+    
     hGXF = GXFOpen( poOpenInfo->pszFilename );
     
     if( hGXF == NULL )
