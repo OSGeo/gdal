@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.12  2002/06/20 19:57:04  warmerda
+ * ensure GetGeoTransform always sets geotransform.
+ *
  * Revision 1.11  2002/06/18 02:50:20  warmerda
  * fixed multiline string constants
  *
@@ -318,12 +321,10 @@ void JPGDataset::Restart()
 CPLErr JPGDataset::GetGeoTransform( double * padfTransform )
 
 {
+    memcpy( padfTransform, adfGeoTransform, sizeof(double)*6 );
 
     if( bGeoTransformValid )
-    {
-        memcpy( padfTransform, adfGeoTransform, sizeof(double)*6 );
         return CE_None;
-    }
     else
         return CE_Failure;
 }
