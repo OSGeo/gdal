@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.132  2005/03/07 14:23:49  fwarmerdam
+ * Added PROFILE support in CreateCopy().
+ *
  * Revision 1.131  2005/02/15 16:08:34  fwarmerdam
  * dont put out scale and offset if defaulted
  *
@@ -3126,21 +3129,46 @@ GTiffCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             if ( bStrict )
             {
                 CPLError( CE_Failure, CPLE_AppDefined,
-            "Unable to export GeoTIFF file with different datatypes per\n"
-            "different bands. All bands should have the same types in TIFF." );
+                          "Unable to export GeoTIFF file with different datatypes per\n"
+                          "different bands. All bands should have the same types in TIFF." );
                 return NULL;
             }
             else
             {
                 CPLError( CE_Warning, CPLE_AppDefined,
-            "Unable to export GeoTIFF file with different datatypes per\n"
-            "different bands. All bands should have the same types in TIFF." );
+                          "Unable to export GeoTIFF file with different datatypes per\n"
+                          "different bands. All bands should have the same types in TIFF." );
             }
         }
     }
 
     if( !pfnProgress( 0.0, NULL, pProgressData ) )
         return NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Capture the profile.                                            */
+/* -------------------------------------------------------------------- */
+    const char          *pszProfile;
+    int                 bGeoTIFF;
+
+    pszProfile = CSLFetchNameValue(papszOptions,"PROFILE");
+    if( pszProfile == NULL )
+        pszProfile = "GDALGeoTIFF";
+
+    if( !EQUAL(pszProfile,"BASELINE") 
+        && !EQUAL(pszProfile,"GeoTIFF") 
+        && !EQUAL(pszProfile,"GDALGeoTIFF") )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "PROFILE=%s not supported in GTIFF driver.", 
+                  pszProfile );
+        return NULL;
+    }
+    
+    if( EQUAL(pszProfile,"BASELINE") )
+        bGeoTIFF = FALSE;
+    else
+        bGeoTIFF = TRUE;
 
 /* -------------------------------------------------------------------- */
 /*      Create the file.                                                */
@@ -3238,17 +3266,21 @@ GTiffCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
 /* 	Transfer some TIFF specific metadata, if available.             */
 /* -------------------------------------------------------------------- */
-    GTiffDataset::WriteMetadata( poSrcDS, hTIFF );
+    if( EQUAL(pszProfile,"GDALGeoTIFF") )
+        GTiffDataset::WriteMetadata( poSrcDS, hTIFF );
 
 /* -------------------------------------------------------------------- */
 /* 	Write NoData value, if exist.                                   */
 /* -------------------------------------------------------------------- */
-    int		bSuccess;
-    double	dfNoData;
+    if( EQUAL(pszProfile,"GDALGeoTIFF") )
+    {
+        int		bSuccess;
+        double	dfNoData;
     
-    dfNoData = poSrcDS->GetRasterBand(1)->GetNoDataValue( &bSuccess );
-    if ( bSuccess )
-	GTiffDataset::WriteNoDataValue( hTIFF, dfNoData );
+        dfNoData = poSrcDS->GetRasterBand(1)->GetNoDataValue( &bSuccess );
+        if ( bSuccess )
+            GTiffDataset::WriteNoDataValue( hTIFF, dfNoData );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Write affine transform if it is meaningful.                     */
@@ -3261,46 +3293,48 @@ GTiffCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             || adfGeoTransform[2] != 0.0 || adfGeoTransform[3] != 0.0
             || adfGeoTransform[4] != 0.0 || ABS(adfGeoTransform[5]) != 1.0 ))
     {
-
-        if( adfGeoTransform[2] == 0.0 && adfGeoTransform[4] == 0.0 
-            && adfGeoTransform[5] < 0.0 )
+        if( bGeoTIFF )
         {
+            if( adfGeoTransform[2] == 0.0 && adfGeoTransform[4] == 0.0 
+                && adfGeoTransform[5] < 0.0 )
+            {
 
-            double	adfPixelScale[3], adfTiePoints[6];
+                double	adfPixelScale[3], adfTiePoints[6];
 
-            adfPixelScale[0] = adfGeoTransform[1];
-            adfPixelScale[1] = fabs(adfGeoTransform[5]);
-            adfPixelScale[2] = 0.0;
+                adfPixelScale[0] = adfGeoTransform[1];
+                adfPixelScale[1] = fabs(adfGeoTransform[5]);
+                adfPixelScale[2] = 0.0;
 
-            TIFFSetField( hTIFF, TIFFTAG_GEOPIXELSCALE, 3, adfPixelScale );
+                TIFFSetField( hTIFF, TIFFTAG_GEOPIXELSCALE, 3, adfPixelScale );
             
-            adfTiePoints[0] = 0.0;
-            adfTiePoints[1] = 0.0;
-            adfTiePoints[2] = 0.0;
-            adfTiePoints[3] = adfGeoTransform[0];
-            adfTiePoints[4] = adfGeoTransform[3];
-            adfTiePoints[5] = 0.0;
+                adfTiePoints[0] = 0.0;
+                adfTiePoints[1] = 0.0;
+                adfTiePoints[2] = 0.0;
+                adfTiePoints[3] = adfGeoTransform[0];
+                adfTiePoints[4] = adfGeoTransform[3];
+                adfTiePoints[5] = 0.0;
         
-            TIFFSetField( hTIFF, TIFFTAG_GEOTIEPOINTS, 6, adfTiePoints );
-        }
-        else
-        {
-            double	adfMatrix[16];
+                TIFFSetField( hTIFF, TIFFTAG_GEOTIEPOINTS, 6, adfTiePoints );
+            }
+            else
+            {
+                double	adfMatrix[16];
 
-            memset(adfMatrix,0,sizeof(double) * 16);
+                memset(adfMatrix,0,sizeof(double) * 16);
 
-            adfMatrix[0] = adfGeoTransform[1];
-            adfMatrix[1] = adfGeoTransform[2];
-            adfMatrix[3] = adfGeoTransform[0];
-            adfMatrix[4] = adfGeoTransform[4];
-            adfMatrix[5] = adfGeoTransform[5];
-            adfMatrix[7] = adfGeoTransform[3];
-            adfMatrix[15] = 1.0;
+                adfMatrix[0] = adfGeoTransform[1];
+                adfMatrix[1] = adfGeoTransform[2];
+                adfMatrix[3] = adfGeoTransform[0];
+                adfMatrix[4] = adfGeoTransform[4];
+                adfMatrix[5] = adfGeoTransform[5];
+                adfMatrix[7] = adfGeoTransform[3];
+                adfMatrix[15] = 1.0;
 
-            TIFFSetField( hTIFF, TIFFTAG_GEOTRANSMATRIX, 16, adfMatrix );
-        }
+                TIFFSetField( hTIFF, TIFFTAG_GEOTRANSMATRIX, 16, adfMatrix );
+            }
             
-        pszProjection = poSrcDS->GetProjectionRef();
+            pszProjection = poSrcDS->GetProjectionRef();
+        }
 
 /* -------------------------------------------------------------------- */
 /*      Do we need a TFW file?                                          */
@@ -3314,7 +3348,7 @@ GTiffCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Otherwise write tiepoints if they are available.                */
 /* -------------------------------------------------------------------- */
-    else if( poSrcDS->GetGCPCount() > 0 )
+    else if( poSrcDS->GetGCPCount() > 0 && bGeoTIFF )
     {
         const GDAL_GCP *pasGCPs = poSrcDS->GetGCPs();
         double	*padfTiePoints;
@@ -3346,7 +3380,7 @@ GTiffCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Write the projection information, if possible.                  */
 /* -------------------------------------------------------------------- */
-    if( pszProjection != NULL && strlen(pszProjection) > 0 )
+    if( pszProjection != NULL && strlen(pszProjection) > 0 && bGeoTIFF )
     {
         GTIF	*psGTIF;
 
@@ -3462,8 +3496,8 @@ GTiffCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                                          pabyLine, nXSize, 1, eType, 
                                          0, 0 );
                 if( eErr == CE_None 
-                  && TIFFWriteScanline( hTIFF, pabyLine, iLine, 
-                                        (tsample_t) iBand ) == -1 )
+                    && TIFFWriteScanline( hTIFF, pabyLine, iLine, 
+                                          (tsample_t) iBand ) == -1 )
                 {
                     CPLError( CE_Failure, CPLE_AppDefined,
                               "TIFFWriteScanline failed." );
@@ -4015,6 +4049,11 @@ void GDALRegister_GTiff()
 "       <Value>CIELAB</Value>"
 "       <Value>ICCLAB</Value>"
 "       <Value>ITULAB</Value>"
+"   </Option>"
+"   <Option name='PROFILE' type='string-select'>"
+"       <Value>GDALGeoTIFF</Value>"
+"       <Value>GeoTIFF</value>"
+"       <Value>BASELINE</Value>"
 "   </Option>"
 "</CreationOptionList>" );
                  
