@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2000/04/21 21:59:26  warmerda
+ * added overview support
+ *
  * Revision 1.4  2000/03/24 20:00:46  warmerda
  * Don't require IMAGE_FILE_FORMAT.
  *
@@ -307,6 +310,11 @@ GDALDataset *MFFDataset::Open( GDALOpenInfo * poOpenInfo )
                                   eDataType, bNative ) );
     }
     
+/* -------------------------------------------------------------------- */
+/*      Check for overviews.                                            */
+/* -------------------------------------------------------------------- */
+    poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
+
 /* -------------------------------------------------------------------- */
 /*      Cleanup                                                         */
 /* -------------------------------------------------------------------- */
