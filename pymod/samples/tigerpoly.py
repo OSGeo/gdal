@@ -1,0 +1,220 @@
+#!/usr/bin/env python
+###############################################################################
+# $Id$
+#
+# Project:  OGR Python samples
+# Purpose:  Assemble TIGER Polygons.
+# Author:   Frank Warmerdam, warmerdam@pobox.com
+#
+###############################################################################
+# Copyright (c) 2003, Frank Warmerdam <warmerdam@pobox.com>
+# 
+# Permission is hereby granted, free of charge, to any person obtaining a
+# copy of this software and associated documentation files (the "Software"),
+# to deal in the Software without restriction, including without limitation
+# the rights to use, copy, modify, merge, publish, distribute, sublicense,
+# and/or sell copies of the Software, and to permit persons to whom the
+# Software is furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included
+# in all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+# DEALINGS IN THE SOFTWARE.
+###############################################################################
+# 
+#  $Log$
+#  Revision 1.1  2003/03/03 05:17:06  warmerda
+#  New
+#
+#
+
+import osr
+import ogr
+import string
+import sys
+
+#############################################################################
+class Module:
+
+    def __init__( self ):
+        self.lines = {}
+        self.poly_line_links = {}
+
+#############################################################################
+def Usage():
+    print 'Usage: tigerpoly.py infile [outfile].shp'
+    print
+    sys.exit(1)
+
+#############################################################################
+# Argument processing.
+
+infile = None
+outfile = None
+
+i = 1
+while i < len(sys.argv):
+    arg = sys.argv[i]
+
+    if infile is None:
+	infile = arg
+
+    elif outfile is None:
+	outfile = arg
+
+    else:
+	Usage()
+
+    i = i + 1
+
+if outfile is None:
+    outfile = 'poly.shp'
+
+if infile is None:
+    Usage()
+
+#############################################################################
+#	Create output file for the composed polygons.
+
+shp_driver = ogr.GetDriverByName( 'ESRI Shapefile' )
+shp_driver.DeleteDataSource( outfile )
+
+shp_ds = shp_driver.CreateDataSource( outfile )
+
+shp_layer = shp_ds.CreateLayer( 'out', geom_type = ogr.wkbPolygon )
+
+fd = ogr.FieldDefn( 'POLYID', ogr.OFTInteger )
+shp_layer.CreateField( fd )
+
+#############################################################################
+# Open the datasource to operate on.
+
+ds = ogr.Open( '/u/data/tiger/2002/tst35006.rt1', update = 0 )
+
+#############################################################################
+# Read all features in the line layer, holding just the geometry in a hash
+# for fast lookup by TLID.
+
+line_layer = ds.GetLayerByName( 'CompleteChain' )
+line_count = 0
+
+modules_hash = {}
+
+feat = line_layer.GetNextFeature()
+geom_id_field = feat.GetFieldIndex( 'TLID' )
+tile_ref_field = feat.GetFieldIndex( 'MODULE' )
+while feat is not None:
+    geom_id = feat.GetField( geom_id_field )
+    tile_ref = feat.GetField( tile_ref_field )
+
+    try:
+        module = modules_hash[tile_ref]
+    except:
+        module = Module()
+        modules_hash[tile_ref] = module
+
+    module.lines[geom_id] = feat.GetGeometryRef().Clone()
+    line_count = line_count + 1
+
+    feat.Destroy()
+
+    feat = line_layer.GetNextFeature()
+
+print 'Got %d lines in %d modules.' % (line_count,len(modules_hash))
+
+#############################################################################
+# Read all polygon/chain links and build a hash keyed by POLY_ID listing
+# the chains (by TLID) attached to it. 
+
+link_layer = ds.GetLayerByName( 'PolyChainLink' )
+
+feat = link_layer.GetNextFeature()
+geom_id_field = feat.GetFieldIndex( 'TLID' )
+tile_ref_field = feat.GetFieldIndex( 'MODULE' )
+lpoly_field = feat.GetFieldIndex( 'POLYIDL' )
+rpoly_field = feat.GetFieldIndex( 'POLYIDR' )
+
+link_count = 0
+
+while feat is not None:
+    module = modules_hash[feat.GetField( tile_ref_field )]
+
+    tlid = feat.GetField( geom_id_field )
+
+    lpoly_id = feat.GetField( lpoly_field )
+    rpoly_id = feat.GetField( rpoly_field )
+
+    try:
+        module.poly_line_links[lpoly_id].append( tlid )
+    except:
+        module.poly_line_links[lpoly_id] = [ tlid ]
+
+    try:
+        module.poly_line_links[rpoly_id].append( tlid )
+    except:
+        module.poly_line_links[rpoly_id] = [ tlid ]
+
+    link_count = link_count + 1
+
+    feat.Destroy()
+
+    feat = link_layer.GetNextFeature()
+
+print 'Processed %d links.' % link_count
+
+#############################################################################
+# Process all polygon features.
+
+poly_layer = ds.GetLayerByName( 'Polygon' )
+
+feat = poly_layer.GetNextFeature()
+tile_ref_field = feat.GetFieldIndex( 'MODULE' )
+polyid_field = feat.GetFieldIndex( 'POLYID' )
+
+poly_count = 0
+
+while feat is not None:
+    module = modules_hash[feat.GetField( tile_ref_field )]
+    polyid = feat.GetField( polyid_field )
+
+    tlid_list = module.poly_line_links[polyid]
+
+    link_coll = ogr.Geometry( type = ogr.wkbGeometryCollection )
+    for tlid in tlid_list:
+        geom = module.lines[tlid]
+        link_coll.AddGeometry( geom )
+
+    try:
+        poly = ogr.BuildPolygonFromEdges( link_coll )
+
+        #print poly.ExportToWkt()
+        #feat.SetGeometryDirectly( poly )
+
+        feat2 = ogr.Feature(feature_def=shp_layer.GetLayerDefn())
+        feat2.SetField( 0, polyid )
+        feat2.SetGeometryDirectly( poly )
+
+        shp_layer.CreateFeature( feat2 )
+        feat2.Destroy()
+
+        poly_count = poly_count + 1
+    except:
+        print 'BuildPolygonFromEdges failed.'
+
+    feat.Destroy()
+
+    feat = poly_layer.GetNextFeature()
+
+print 'Built %d polygons.' % poly_count
+
+#############################################################################
+# Cleanup
+
+shp_ds.Destroy()
+ds.Destroy()
