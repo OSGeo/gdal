@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2003/01/06 17:58:20  warmerda
+ * Fix FID support, add DIM creation keyword
+ *
  * Revision 1.5  2003/01/02 21:48:52  warmerda
  * uppercaseify layer names when creating tables
  *
@@ -179,7 +182,7 @@ int OGROCIDataSource::OpenTable( const char *pszNewName, int bUpdate,
 /* -------------------------------------------------------------------- */
     OGROCILayer	*poLayer;
 
-    poLayer = new OGROCITableLayer( this, pszNewName, bUpdate );
+    poLayer = new OGROCITableLayer( this, pszNewName, bUpdate, FALSE );
 
 /* -------------------------------------------------------------------- */
 /*      Add layer to data source layer list.                            */
@@ -303,7 +306,7 @@ OGROCIDataSource::CreateLayer( const char * pszLayerName,
     
     sprintf( szCommand, 
              "CREATE TABLE \"%s\" ( "
-             "OGC_FID NUMBER, "
+             "OGR_FID NUMBER, "
              "ORA_GEOMETRY %s )",
              pszSafeLayerName, SDO_GEOMETRY );
 
@@ -330,10 +333,14 @@ OGROCIDataSource::CreateLayer( const char * pszLayerName,
 /* -------------------------------------------------------------------- */
     OGROCITableLayer	*poLayer;
 
-    poLayer = new OGROCITableLayer( this, pszSafeLayerName, TRUE );
+    poLayer = new OGROCITableLayer( this, pszSafeLayerName, TRUE, TRUE );
 
     poLayer->SetLaunderFlag( CSLFetchBoolean(papszOptions,"LAUNDER",FALSE) );
     poLayer->SetPrecisionFlag( CSLFetchBoolean(papszOptions,"PRECISION",TRUE));
+
+    if( CSLFetchNameValue(papszOptions,"DIM") != NULL )
+        ((OGROCITableLayer *) poLayer)->SetDimension(
+            atoi(CSLFetchNameValue(papszOptions,"DIM")) );
 
 /* -------------------------------------------------------------------- */
 /*      Add layer to data source layer list.                            */
