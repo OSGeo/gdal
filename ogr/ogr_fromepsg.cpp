@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2002/11/30 15:45:07  warmerda
+ * be careful about how UOM codes are linear
+ *
  * Revision 1.13  2002/11/29 20:49:10  warmerda
  * fixed GetTRFInfo filename corruption
  *
@@ -660,7 +663,7 @@ EPSGGetProjTRFInfo( int nPCS, int * pnProjMethod,
 
         if( nUOM >= 9100 && nUOM < 9200 )
             adfProjParms[i] = EPSGAngleStringToDD( pszValue, nUOM );
-        else if( nUOM > 9000 )
+        else if( nUOM > 9000 && nUOM < 9100 )
         {
             double dfInMeters;
 
