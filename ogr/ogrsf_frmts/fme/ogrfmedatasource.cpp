@@ -23,6 +23,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2002/07/11 16:09:04  warmerda
+ * added creation time, improved temp path handling
+ *
  * Revision 1.2  2002/05/29 20:37:07  warmerda
  * add indirect load of fme.dll
  *
@@ -162,10 +165,17 @@ const char* kPROVIDERNAME = "FME_OLEDB";
 
 CPL_CVSID("$Id$");
 
+#ifdef WIN32
+#define FMEDLL_NAME "fme.dll"
+#define PATH_CHAR '\\'
+#else
+#define FMEDLL_NAME "libfmeobj.so"
+#define PATH_CHAR '/'
+#endif
+
 static IFMESession      *poSharedSession = NULL;
 static int               nSharedSessionRefCount = 0;
 static void             *hSessionMutex = NULL;
-static int               nSessionThreadId = 0;
 
 typedef struct {
     IFMEUniversalReader      *poReader;
@@ -253,11 +263,11 @@ static char *BuildTmpNam( const char *pszLayerName )
     for( i = -1; TRUE; i++ )
     {
         if( i == -1 )
-            sprintf( szFilename, "%s\\%s_%s", 
-                     pszTmpDir, kPROVIDERNAME, pszLayerName );
+            sprintf( szFilename, "%s%c%s_%s", 
+                     pszTmpDir, PATH_CHAR, kPROVIDERNAME, pszLayerName );
         else
-            sprintf( szFilename, "%s\\%s_%s_%d", 
-                     pszTmpDir, kPROVIDERNAME, pszLayerName, i );
+            sprintf( szFilename, "%s%c%s_%s_%d", 
+                     pszTmpDir, PATH_CHAR, kPROVIDERNAME, pszLayerName, i );
         
         if( VSIStat( szFilename, &sStat ) != 0 )
             break;
@@ -355,7 +365,7 @@ OGRFMEDataSource::~OGRFMEDataSource()
             int (*pfnFME_destroySession)(void *);
 
             pfnFME_destroySession = (int (*)(void*)) 
-                CPLGetSymbol("fme.dll", "FME_DestroySession" );
+                CPLGetSymbol(FMEDLL_NAME, "FME_DestroySession" );
             if( pfnFME_destroySession == NULL )
                 CPLError( CE_Warning, CPLE_AppDefined, 
                           "Failed to fetch FME_DestroySession entry point." );
@@ -418,7 +428,6 @@ char *OGRFMEDataSource::PromptForSource()
 char *OGRFMEDataSource::ReadFileSource( const char *pszFilename )
 
 {
-    IFMEDialog      *poDialog = NULL;
     FILE            *fp;
     char            **papszLines = NULL;
     const char      *pszLine;
@@ -539,7 +548,7 @@ int OGRFMEDataSource::Open( const char * pszCompositeName )
     FME_MsgNum          err;
 
     CPLDebug( kPROVIDERNAME, "OGRFMEDataSource::Open(%s):%p/%d", 
-              pszCompositeName, this, GetCurrentThreadId() );
+              pszCompositeName, this, CPLGetPID() );
 
     CPLAssert( poSession == NULL );  // only open once
 
@@ -575,7 +584,7 @@ int OGRFMEDataSource::Open( const char * pszCompositeName )
         if( pszName == NULL )
         {
             ReleaseSession();
-            return NULL;
+            return FALSE;
         }
     }
     else if( CPLGetExtension( pszCompositeName ) != NULL
@@ -585,7 +594,7 @@ int OGRFMEDataSource::Open( const char * pszCompositeName )
         if( pszName == NULL )
         {
             ReleaseSession();
-            return NULL;
+            return FALSE;
         }
     }
     else
@@ -696,13 +705,14 @@ int OGRFMEDataSource::Open( const char * pszCompositeName )
 
     if( bUseCaching && oCacheIndex.Lock() && oCacheIndex.Load() )
     {
+        int bNeedSave = oCacheIndex.ExpireOldCaches( poSession );
+
         psMatchDS = oCacheIndex.FindMatch( pszReaderName, pszDataset, 
                                            *poUserDirectives );
 
         if( psMatchDS != NULL )
         {
             oCacheIndex.Reference( psMatchDS );
-            oCacheIndex.ExpireOldCaches( poSession );
             oCacheIndex.Save();
 
             psMatchDS = CPLCloneXMLTree( psMatchDS );
@@ -711,7 +721,7 @@ int OGRFMEDataSource::Open( const char * pszCompositeName )
         }
         else
         {
-            if( oCacheIndex.ExpireOldCaches( poSession ) )
+            if( bNeedSave )
                 oCacheIndex.Save();
 
             oCacheIndex.Unlock();
@@ -1578,11 +1588,11 @@ IFMESession *OGRFMEDataSource::AcquireSession()
 #ifdef SUPPORT_INDIRECT_FMEDLL
         FME_MsgNum (*pfnFME_CreateSession)( void * );
         pfnFME_CreateSession = (FME_MsgNum (*)(void*)) 
-            CPLGetSymbol( "fme.dll", "FME_CreateSession" );
+            CPLGetSymbol( FMEDLL_NAME, "FME_CreateSession" );
         if( pfnFME_CreateSession == NULL )
         {
             CPLReleaseMutex( hSessionMutex );
-            CPLDebug( kPROVIDERNAME, "Unable to load FME_CreateSession from fme.dll, skipping FME Driver." );
+            CPLDebug( kPROVIDERNAME, "Unable to load FME_CreateSession from %s, skipping FME Driver.", FMEDLL_NAME );
             return NULL;
         }
 
@@ -1663,6 +1673,7 @@ CPLXMLNode *OGRFMEDataSource::SerializeToXML()
     CPLCreateXMLElementAndValue( psDS, "Driver", pszReaderName );
     CPLCreateXMLElementAndValue( psDS, "DSName", pszDataset );
     CPLCreateXMLElementAndValue( psDS, "RefCount", "0" );
+    CPLCreateXMLElementAndValue( psDS, "CreationTime", "0" );
     CPLCreateXMLElementAndValue( psDS, "LastUseTime", "0" );
 
 /* -------------------------------------------------------------------- */
