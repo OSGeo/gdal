@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2002/10/18 14:32:02  warmerda
+ * Added -s_srs to usage option list.
+ *
  * Revision 1.17  2002/10/03 13:20:31  warmerda
  * improve docs for -append and -update in ogr2ogr
  *
@@ -450,7 +453,7 @@ static void Usage()
     printf( "Usage: ogr2ogr [-skipfailures] [-append] [-update] [-f format_name]\n"
             "               [-select field_list] [-where restricted_where]\n"
             "               [-spat xmin ymin xmax ymax]\n"
-            "               [-t_srs srs_def] [-a_srs srs_def]\n"
+            "               [-a_srs srs_def] [-t_srs srs_def] [-s_srs srs_def]\n"
             "               [[-dsco NAME=VALUE] ...] dst_datasource_name\n"
             "               src_datasource_name\n"
             "               [-lco NAME=VALUE] [-nln name] layer [layer ...]]\n"
