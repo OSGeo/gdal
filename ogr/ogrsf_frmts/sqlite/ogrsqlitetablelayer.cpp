@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2004/07/12 21:50:59  warmerda
+ * fixed up SQL escaping
+ *
  * Revision 1.3  2004/07/12 20:50:46  warmerda
  * table/database creation now implemented
  *
@@ -110,7 +113,7 @@ CPLErr OGRSQLiteTableLayer::Initialize( const char *pszTableName,
 /* -------------------------------------------------------------------- */
     CPLErr eErr;
     sqlite3_stmt *hColStmt = NULL;
-    const char *pszSQL = CPLSPrintf( "SELECT _rowid_, * FROM %s LIMIT 1",
+    const char *pszSQL = CPLSPrintf( "SELECT _rowid_, * FROM '%s' LIMIT 1",
                                      pszTableName );
 
     if( sqlite3_prepare( hDB, pszSQL, strlen(pszSQL), &hColStmt, NULL )
@@ -206,11 +209,12 @@ OGRErr OGRSQLiteTableLayer::ResetStatement()
     iNextShapeId = 0;
 
     if( pszQuery != NULL )
-        pszSQL = CPLStrdup( CPLSPrintf( "SELECT _rowid_, * FROM %s WHERE %s", 
-				        poFeatureDefn->GetName(), 
-					pszQuery ) );
+        pszSQL = CPLStrdup( 
+            CPLSPrintf( "SELECT _rowid_, * FROM '%s' WHERE %s", 
+                        poFeatureDefn->GetName(), 
+                        pszQuery ) );
     else
-        pszSQL = CPLStrdup( CPLSPrintf( "SELECT _rowid_, * FROM %s", 
+        pszSQL = CPLStrdup( CPLSPrintf( "SELECT _rowid_, * FROM '%s'", 
 				        poFeatureDefn->GetName() ) );
 
     rc = sqlite3_prepare( poDS->GetDB(), pszSQL, strlen(pszSQL), 
@@ -269,7 +273,7 @@ OGRFeature *OGRSQLiteTableLayer::GetFeature( long nFeatureId )
     iNextShapeId = nFeatureId;
 
     pszSQL =
-        CPLSPrintf( "SELECT _rowid_, * FROM %s WHERE %s = %d", 
+        CPLSPrintf( "SELECT _rowid_, * FROM '%s' WHERE '%s' = %d", 
                     poFeatureDefn->GetName(), 
                     pszFIDColumn, nFeatureId );
 
@@ -352,10 +356,10 @@ int OGRSQLiteTableLayer::GetFeatureCount( int bForce )
     const char *pszSQL;
 
     if( pszQuery != NULL )
-        pszSQL = CPLSPrintf( "SELECT count(*) FROM %s WHERE %s",
+        pszSQL = CPLSPrintf( "SELECT count(*) FROM '%s' WHERE %s",
                              poFeatureDefn->GetName(), pszQuery );
     else
-        pszSQL = CPLSPrintf( "SELECT count(*) FROM %s",
+        pszSQL = CPLSPrintf( "SELECT count(*) FROM '%s'",
                              poFeatureDefn->GetName() );
 
 /* -------------------------------------------------------------------- */
@@ -509,10 +513,10 @@ OGRErr OGRSQLiteTableLayer::CreateField( OGRFieldDefn *poFieldIn,
             pszType = "VARCHAR";
         
         sprintf( pszOldFieldList+strlen(pszOldFieldList), 
-                 ", %s", poFldDefn->GetNameRef() );
+                 ", '%s'", poFldDefn->GetNameRef() );
 
         sprintf( pszNewFieldList+strlen(pszNewFieldList), 
-                 ", %s %s", poFldDefn->GetNameRef(), pszType );
+                 ", '%s' %s", poFldDefn->GetNameRef(), pszType );
 
         iNextOrdinal++;
     }
@@ -528,7 +532,7 @@ OGRErr OGRSQLiteTableLayer::CreateField( OGRFieldDefn *poFieldIn,
         pszType = "VARCHAR";
     
     sprintf( pszNewFieldList+strlen(pszNewFieldList), 
-             ", %s %s", oField.GetNameRef(), pszType );
+             ", '%s' %s", oField.GetNameRef(), pszType );
 
 /* ==================================================================== */
 /*      Backup, destroy, recreate and repopulate the table.  SQLite     */
@@ -557,7 +561,7 @@ OGRErr OGRSQLiteTableLayer::CreateField( OGRFieldDefn *poFieldIn,
 
     if( rc == SQLITE_OK )
         rc = sqlite3_exec( hDB, 
-                           CPLSPrintf( "INSERT INTO t1_back SELECT %s FROM %s",
+                           CPLSPrintf( "INSERT INTO t1_back SELECT %s FROM '%s'",
                                        pszOldFieldList, 
                                        poFeatureDefn->GetName() ),
                            NULL, NULL, &pszErrMsg );
@@ -568,16 +572,21 @@ OGRErr OGRSQLiteTableLayer::CreateField( OGRFieldDefn *poFieldIn,
 /* -------------------------------------------------------------------- */
     if( rc == SQLITE_OK )
         rc = sqlite3_exec( hDB, 
-                           CPLSPrintf( "DROP TABLE %s", 
+                           CPLSPrintf( "DROP TABLE '%s'", 
                                        poFeatureDefn->GetName() ),
                            NULL, NULL, &pszErrMsg );
 
     if( rc == SQLITE_OK )
-        rc = sqlite3_exec( hDB, 
-                           CPLSPrintf( "CREATE TABLE %s(%s)", 
-                                       poFeatureDefn->GetName(),
-                                       pszNewFieldList ),
+    {
+        const char *pszCmd = 
+            CPLSPrintf( "CREATE TABLE '%s' (%s)", 
+                        poFeatureDefn->GetName(),
+                        pszNewFieldList );
+        rc = sqlite3_exec( hDB, pszCmd, 
                            NULL, NULL, &pszErrMsg );
+
+        CPLDebug( "OGR_SQLITE", "exec(%s)", pszCmd );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Copy backup field values into new table.                        */
@@ -585,7 +594,7 @@ OGRErr OGRSQLiteTableLayer::CreateField( OGRFieldDefn *poFieldIn,
     
     if( rc == SQLITE_OK )
         rc = sqlite3_exec( hDB, 
-                           CPLSPrintf( "INSERT INTO %s SELECT %s, NULL FROM t1_back",
+                           CPLSPrintf( "INSERT INTO '%s' SELECT %s, NULL FROM t1_back",
                                        poFeatureDefn->GetName(),
                                        pszOldFieldList ),
                            NULL, NULL, &pszErrMsg );
@@ -660,7 +669,7 @@ OGRErr OGRSQLiteTableLayer::CreateFeature( OGRFeature *poFeature )
 /* -------------------------------------------------------------------- */
 /*      Form the INSERT command.                                        */
 /* -------------------------------------------------------------------- */
-    oCommand += CPLSPrintf( "INSERT INTO \"%s\" (", poFeatureDefn->GetName() );
+    oCommand += CPLSPrintf( "INSERT INTO '%s' (", poFeatureDefn->GetName() );
 
 /* -------------------------------------------------------------------- */
 /*      Add FID if we have a cleartext FID column.                      */
@@ -690,9 +699,9 @@ OGRErr OGRSQLiteTableLayer::CreateFeature( OGRFeature *poFeature )
         oCommand += pszGeomColumn;
 
         poFeature->GetGeometryRef()->exportToWkt( &pszWKT );
-        oValues += "\"";
+        oValues += "'";
         oValues += pszWKT;
-        oValues += "\"";
+        oValues += "'";
         CPLFree( pszWKT );
 
         bNeedComma = TRUE;
@@ -705,6 +714,8 @@ OGRErr OGRSQLiteTableLayer::CreateFeature( OGRFeature *poFeature )
 
     for( iField = 0; iField < poFeatureDefn->GetFieldCount(); iField++ )
     {
+        const char *pszRawValue;
+
         if( !poFeature->IsFieldSet( iField ) )
             continue;
 
@@ -714,14 +725,28 @@ OGRErr OGRSQLiteTableLayer::CreateFeature( OGRFeature *poFeature )
             oValues += ",";
         }
 
-        oCommand += "\"";
+        oCommand += "'";
         oCommand +=poFeatureDefn->GetFieldDefn(iField)->GetNameRef();
-        oCommand += "\"";
+        oCommand += "'";
 
-        oValues += "\"";
-        oValues += poFeature->GetFieldAsString( iField );
-        oValues += "\"";
+        pszRawValue = poFeature->GetFieldAsString( iField );
+        if( strchr( pszRawValue, '\'' ) != NULL )
+        {
+            char *pszEscapedValue = 
+                CPLEscapeString( pszRawValue, -1, CPLES_SQL );
+            oValues += "'";
+            oValues += pszEscapedValue;
+            oValues += "'";
 
+            CPLFree( pszEscapedValue );
+        }
+        else
+        {
+            oValues += "'";
+            oValues += pszRawValue;
+            oValues += "'";
+        }
+            
         bNeedComma = TRUE;
     }
 
@@ -737,6 +762,8 @@ OGRErr OGRSQLiteTableLayer::CreateFeature( OGRFeature *poFeature )
 /* -------------------------------------------------------------------- */
     int rc;
     char *pszErrMsg = NULL;
+
+    CPLDebug( "OGR_SQLITE", "exec(%s)", oCommand.c_str() );
 
     rc = sqlite3_exec( poDS->GetDB(), oCommand.c_str(), 
                        NULL, NULL, &pszErrMsg );

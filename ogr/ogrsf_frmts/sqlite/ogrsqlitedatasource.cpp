@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2004/07/12 21:50:59  warmerda
+ * fixed up SQL escaping
+ *
  * Revision 1.3  2004/07/12 20:50:46  warmerda
  * table/database creation now implemented
  *
@@ -380,12 +383,12 @@ OGRSQLiteDataSource::CreateLayer( const char * pszLayerNameIn,
 
     if( eType == wkbNone )
         sprintf( szCommand, 
-                 "CREATE TABLE \"%s\" ( OGC_FID INTEGER PRIMARY KEY )", 
+                 "CREATE TABLE '%s' ( OGC_FID INTEGER PRIMARY KEY )", 
                  pszLayerName );
     else
     {
         sprintf( szCommand, 
-                 "CREATE TABLE \"%s\" ( "
+                 "CREATE TABLE '%s' ( "
                  "  OGC_FID INTEGER PRIMARY KEY,"
                  "  WKT_GEOMETRY VARCHAR )", 
                  pszLayerName );
@@ -575,7 +578,7 @@ void OGRSQLiteDataSource::DeleteLayer( const char *pszLayerName )
     int rc;
     char *pszErrMsg;
 
-    rc = sqlite3_exec( hDB, CPLSPrintf( "DROP TABLE \"%s\"", pszLayerName ),
+    rc = sqlite3_exec( hDB, CPLSPrintf( "DROP TABLE '%s'", pszLayerName ),
                        NULL, NULL, &pszErrMsg );
     if( rc != SQLITE_OK )
     {
