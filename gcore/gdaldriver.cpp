@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2000/10/06 15:26:49  warmerda
+ * make buffer size for copying image data the exact size, fixing bug with complex data
+ *
  * Revision 1.16  2000/07/13 17:34:11  warmerda
  * Set description for CopyCreate() method.
  *
@@ -292,7 +295,7 @@ GDALDataset *GDALDriver::CreateCopy( const char * pszFilename,
 
         void           *pData;
 
-        pData = CPLMalloc(nXSize * 8);
+        pData = CPLMalloc(nXSize * GDALGetDataTypeSize(eType) / 8);
 
         for( int iLine = 0; iLine < nYSize; iLine++ )
         {
