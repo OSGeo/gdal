@@ -28,12 +28,16 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.2  2002/10/24 16:51:17  warmerda
+# added lots of OGRGeometryH support
+#
 # Revision 1.1  2002/09/26 18:14:32  warmerda
 # New
 #
 #
 
 import _gdal
+import osr
 
 # OGRwkbGeometryType
 
@@ -72,6 +76,8 @@ OJUndefined = 0
 OJLeft = 1
 OJRight = 2
 
+wkbXDR = 0
+wkbNDR = 1
 
 
 def Open( filename, update = 0 ):
@@ -305,13 +311,123 @@ class FieldDefn:
             raise ValueError, 'ogr.FieldDefn may not be directly instantiated.'
         self._o = obj
 
-        
+
+def CreateGeometryFromWkb( bin_string, srs = None ):
+    _obj = _gdal.OGR_G_CreateFromWkb( bin_string, srs )
+    return Geometry( obj = _obj )
+
+def CreateGeometryFromWkt( string, srs = None ):
+    _obj = _Gdal.OGR_G_CreateFromWkt( string, srs )
+    return Geometry( obj = _obj )
+
 class Geometry:
-    def __init__(self,obj=None):
-        if obj is None:
+    def __init__(self, type=None, obj=None):
+        if obj is not None:
+            self._o = obj
+        elif type is not None:
+            self._o = _gdal.OGR_G_CreateGeometry( type )
+        else:
             raise ValueError, 'OGRGeometry may not be directly instantiated.'
-        self._o = obj
+
+    def Destroy( self ):
+        _gdal.OGR_G_DestroyGeometry( self._o )
+        self._o = None
+
+    def ExportToWkb( self, byte_order = None ):
+        if byte_order is None:
+            byte_order = wkbXDR
+        return _gdal.OGR_G_ExportToWkb( self._o, byte_order )
+
+    def ExportToWkt( self):
+        return _gdal.OGR_G_ExportToWkt( self._o )
+
+    def GetDimension( self ):
+        return _gdal.OGR_G_GetDimension( self._o )
     
+    def GetCoordinateDimension( self ):
+        return _gdal.OGR_G_GetCoordinateDimension( self._o )
+    
+    def WkbSize( self ):
+        return _gdal.OGR_G_WkbSize( self._o )
+
+    def Clone( self ):
+        _obj = _gdal.OGR_G_Clone( self._o )
+        if _obj is not None:
+            return Geometry( obj = _obj )
+        else:
+            return None
+
+    def GetGeometryType( self ):
+        return _gdal.OGR_G_GetGeometryType( self._o )
+    
+    def GetGeometryName( self ):
+        return _gdal.OGR_G_GetGeometryName( self._o )
+    
+    def FlattenTo2D( self ):
+        _gdal.OGR_G_FlattenTo2D( self._o )
+    
+    def AssignSpatialReference( self, srs ):
+        _gdal.OGR_G_AssignSpatialReference( self._o, srs._o )
+    
+    def GetSpatialReference( self ):
+        srs_o = _gdal.OGR_G_GetSpatialReference( self._o )
+        if srs_o is not None:
+            return osr.SpatialReference( srs_o )
+        else:
+            return None
+
+    def Transform( self, coord_tran ):
+        return _gdal.OGR_G_Transform( self._o, coord_tran._o )
+    
+    def TransformTo( self, srs_out ):
+        return _gdal.OGR_G_Transform( self._o, srs_out._o )
+    
+    def Intersect( self, other_geom ):
+        return _gdal.OGR_G_Intersect( self._o, other_geom._o )
+
+    def Equal( self, other_geom ):
+        return _gdal.OGR_G_Equal( self._o, other_geom._o )
+
+    def Empty( self, other_geom ):
+        return _gdal.OGR_G_Empty( self._o, other_geom._o )
+
+    def GetPointCount( self):
+        return _gdal.OGR_G_GetPointCount( self._o )
+
+    def GetX( self, i ):
+        return _gdal.OGR_G_GetX( self._o, i )
+
+    def GetY( self, i ):
+        return _gdal.OGR_G_GetY( self._o, i )
+
+    def GetZ( self, i ):
+        return _gdal.OGR_G_GetZ( self._o, i )
+
+    def SetPoint( self, i, x, y, z ):
+        return _gdal.OGR_G_SetPoint( self._o, i, x, y, z )
+
+    def AddPoint( self, x, y, z ):
+        return _gdal.OGR_G_AddPoint( self._o, x, y, z )
+
+    def GetGeometryCount( self ):
+        return _gdal.OGR_G_GetGeometryCount( self._o )
+
+    def GetGeometryRef( self, i ):
+        geom = _gdal.OGR_G_GetGeometryRef( self._o, i )
+        if geom is not None:
+            return Geometry( obj = geom )
+        else:
+            return None
+        
+    def AddGeometry( self, subgeom ):
+        return _gdal.OGR_G_AddGeometry( self._o, subgeom._o )
+
+    def AddGeometryDirectly( self, subgeom ):
+        return _gdal.OGR_G_AddGeometryDirectly( self._o, subgeom._o )
+
+
+    
+
     
                   
         
