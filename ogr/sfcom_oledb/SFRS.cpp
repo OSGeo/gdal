@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2001/06/01 18:05:06  warmerda
+ * added more debugging, add resetreading on Initialize
+ *
  * Revision 1.20  2001/05/31 02:55:49  warmerda
  * formatting
  *
@@ -401,6 +404,7 @@ ATLCOLUMNINFO CShapeFile::colInfo;
 CVirtualArray::CVirtualArray()
 {
 	mBuffer = NULL;
+        m_nBufferSize = 0;
 	m_nLastRecordAccessed = -1;
 	m_nPackedRecordLength = 0;
 	m_nArraySize = 0;
@@ -433,12 +437,14 @@ void CVirtualArray::RemoveAll()
 
 void	CVirtualArray::Initialize(int nArraySize, OGRLayer *pLayer,int nBufferSize)
 {
-	mBuffer			= (BYTE *) malloc(nBufferSize);
+        m_nBufferSize  = nBufferSize;
+	mBuffer	       = (BYTE *) malloc(nBufferSize);
 	m_nArraySize   = nArraySize;
 	m_pOGRLayer    = pLayer;
 	m_pFeatureDefn = pLayer->GetLayerDefn();
 
         CPLDebug( "OGR_OLEDB", "CVirtualArray::Initialize()" );
+        m_pOGRLayer->ResetReading();
 }
 
 /************************************************************************/
@@ -454,9 +460,13 @@ BYTE &CVirtualArray::operator[](int iIndex)
 
     CPLDebug( "OGR_OLEDB", "CVirtualArray::operator[%d]", iIndex );
 
+    // Pre-initialize output buffer.
+    memset( mBuffer, 0, m_nBufferSize );
+
     // Make sure we are at the correct position to read the next record.
     if (iIndex -1 != m_nLastRecordAccessed)
     {
+        CPLDebug( "OGR_OLEDB", "ResetReading() and skip:[" );
         m_pOGRLayer->ResetReading();
         m_nLastRecordAccessed = -1;
 
@@ -464,16 +474,26 @@ BYTE &CVirtualArray::operator[](int iIndex)
         {
             poFeature = m_pOGRLayer->GetNextFeature();
             if( poFeature )
+            {
+                CPLDebug( "OGR_OLEDB", "." );
                 delete poFeature;
+            }
             else
+            {
+                CPLDebug( "OGR_OLEDB", "Didn't get feature at %s:%d\n", 
+                          __FILE__, __LINE__ );
                 break;
+            }
 
             m_nLastRecordAccessed++;
         }
+        CPLDebug( "OGR_OLEDB", "]\n" );
     }
 
     if (iIndex -1 != m_nLastRecordAccessed)
     {
+        CPLDebug( "OGR_OLEDB", "Assertion failed at %s:%d\n", 
+                  __FILE__, __LINE__ );
         // Error condition; // Assertion failure!
         return *mBuffer;
     }
@@ -484,9 +504,14 @@ BYTE &CVirtualArray::operator[](int iIndex)
 
     if (!poFeature)
     {
+        CPLDebug( "OGR_OLEDB", "Failed to get feature at %s:%d\n", 
+                  __FILE__, __LINE__ );
         // Error condition; // Assertion failure!
         return *mBuffer;
     }
+
+    CPLDebug( "OGR_OLEDB", "Operate on feature %d\n", 
+              poFeature->GetFID() );
 
     // Fill in the FID
     int nOffset = 0;
@@ -569,6 +594,7 @@ BYTE &CVirtualArray::operator[](int iIndex)
     }
     else
     {
+        CPLDebug( "OGR_OLEDB", "NULL Geometry\n" );
         *((void **) &(mBuffer[nOffset])) = NULL;
     }
 #endif
