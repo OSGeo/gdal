@@ -1116,7 +1116,9 @@ fi
 AC_SUBST(HAVE_OCI,$HAVE_OCI)
 AC_SUBST(OCI_INCLUDE,$OCI_INCLUDE)
 
+dnl ---------------------------------------------------------------------------
 dnl Check for DODS.
+dnl ---------------------------------------------------------------------------
 
 HAVE_DODS=no
 
@@ -1160,6 +1162,36 @@ fi
 
 dnl This is used by the GNUmakefile in frmts/dods (via GDALmake.opt)
 AC_SUBST(DODS_INC)
+
+dnl ---------------------------------------------------------------------------
+dnl Check for SQLite.
+dnl ---------------------------------------------------------------------------
+
+HAVE_SQLITE=no
+
+AC_MSG_CHECKING(Checking for SQLite)
+AC_ARG_WITH(sqlite,
+    [  --with-sqlite[=ARG]     Include SQLite support (ARG=no or absolute path)],
+    ,,)
+    
+if test -z "$with_sqlite" -o "$with_sqlite" = "no"; then
+    AC_MSG_RESULT(disabled)
+else
+    if test "$with_sqlite" = "yes" ; then 
+        LIBS="$LIBS -lsqlite"
+        SQLITE_INC=""
+        AC_MSG_RESULT(enabled)
+    else
+        LIBS="$LIBS -L$with_sqlite/lib -lsqlite"
+        SQLITE_INC="-I$with_sqlite/include"
+        AC_MSG_RESULT(setting DODS root directory to $with_sqlite)_
+    fi
+    HAVE_SQLITE=yes
+fi
+
+dnl This is used by the GNUmakefile in frmts/dods (via GDALmake.opt)
+AC_SUBST(SQLITE_INC)
+AC_SUBST(HAVE_SQLITE)
 
 dnl ---------------------------------------------------------------------------
 dnl PROJ.4 related stuff.
@@ -1329,6 +1361,7 @@ LOC_MSG([  XERCES support:            ${HAVE_XERCES}])
 LOC_MSG([  ODBC support:              ${ODBC_SETTING}])
 LOC_MSG([  OCI support:               ${HAVE_OCI}])
 LOC_MSG([  DODS support:              ${HAVE_DODS}])
+LOC_MSG([  SQLite support:            ${HAVE_SQLITE}])
 LOC_MSG()
 LOC_MSG([  Statically link PROJ.4:    ${PROJ_STATIC}])
 LOC_MSG()
