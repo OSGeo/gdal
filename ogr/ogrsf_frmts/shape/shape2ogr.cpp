@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2001/12/06 18:14:22  warmerda
+ * handle case where there is no DBF file
+ *
  * Revision 1.13  2001/09/27 14:53:31  warmerda
  * added proper 3D support for all element types
  *
@@ -483,7 +486,9 @@ OGRFeatureDefn *SHPReadOGRFeatureDefn( const char * pszName,
     OGRFeatureDefn	*poDefn = new OGRFeatureDefn( pszName );
     int			iField;
 
-    for( iField = 0; iField < DBFGetFieldCount( hDBF ); iField++ )
+    for( iField = 0; 
+         hDBF != NULL && iField < DBFGetFieldCount( hDBF ); 
+         iField++ )
     {
         char		szFieldName[20];
         int		nWidth, nPrecision;
