@@ -1,11 +1,11 @@
-/**********************************************************************
+/******************************************************************************
  * $Id$
  *
  * Project:  GML Reader
  * Purpose:  Private Declarations for OGR free GML Reader code.
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
- **********************************************************************
+ ******************************************************************************
  * Copyright (c) 2002, Frank Warmerdam
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -25,14 +25,15 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
  * DEALINGS IN THE SOFTWARE.
- **********************************************************************
+ ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2002/01/24 17:38:37  warmerda
+ * Converted TrString to C funcs, added various methods
+ *
  * Revision 1.1  2002/01/04 19:46:30  warmerda
  * New
- *
- *
- **********************************************************************/
+ */
 
 #ifndef _CPL_GMLREADERP_H_INCLUDED
 #define _CPL_GMLREADERP_H_INCLUDED
@@ -47,25 +48,13 @@
 #include <sax2/XMLReaderFactory.hpp>
 
 /************************************************************************/
-/*                             MyXMLString                              */
+/*          XMLCh / char translation functions - trstring.cpp           */
 /************************************************************************/
-
-class TrString
-{
-private:
-    char	*pszCString;
-    DOMString   oXMLString;
-    
-public:
-    TrString( const char *pszIn );
-    TrString( const XMLCh *pachInput );
-    ~TrString();
-
-    const char *GetCString() const { return pszCString; }
-    const XMLCh *GetXMLString() const { return oXMLString.rawBuffer(); }
-    operator const char *(void) const { return pszCString; }
-    operator const XMLCh *(void) const { return oXMLString.rawBuffer(); }
-};
+int tr_strcmp( const char *, const XMLCh * );
+void tr_strcpy( XMLCh *, const char * );
+void tr_strcpy( char *, const XMLCh * );
+char *tr_strdup( const XMLCh * );
+int tr_strlen( const XMLCh * );
 
 
 class GMLReader;
@@ -78,6 +67,10 @@ class GMLHandler : public DefaultHandler
     GMLReader  *m_poReader;
 
     char       *m_pszCurField;
+    char       *m_pszGeometry;
+
+    int        m_nGeometryDepth;
+    int        IsGeometryElement( const char * );
 
 public:
     GMLHandler( GMLReader *poReader );
@@ -115,6 +108,7 @@ public:
     void        PushPath( const char *pszElement );
     void        PopPath();
 
+    int         MatchPath( const char *pszPathInput );
     const char  *GetPath() const { return m_pszPath; }
     const char  *GetLastComponent() const;
 
@@ -168,8 +162,14 @@ public:
     GMLFeatureClass *GetClass( const char *pszName ) const;
 
     int              AddClass( GMLFeatureClass *poClass );
+    void             ClearClasses();
 
     GMLFeature       *NextFeature();
+
+    int              LoadClasses( const char *pszFile = NULL );
+    int              SaveClasses( const char *pszFile = NULL );
+
+// --- 
 
     GMLReadState     *GetState() const { return m_poState; }
     void             PopState();
@@ -180,6 +180,9 @@ public:
 
     void	PushFeature( const char *pszElement, 
                              const Attributes &attrs );
+
+    void        SetFeatureProperty( const char *pszElement,
+                                    const char *pszValue );
 
 };
 
